@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical getInstance/initPadSubSystem
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include <stddef.h>
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -9,6 +10,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlMoveEne.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "monolib/math/Random.hpp"
@@ -18,13 +20,7 @@ namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // From CtrlNpc.cpp (do not include CtrlNpc.hpp here - its C-ABI decls
 // clash with CtrlMoveEne.hpp on ColiSetAxisBlockInverse / scnImN4DynStart).
-// CfObjectActor UVF6 - forced-name call avoids including CfObjectActor.hpp
-// (that pulls CtrlMoveEne.hpp and clashes with this TU's func_8004B9D4 decl).
-namespace cf { class CfObjectActor; }
-extern "C" float CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(
-    cf::CfObjectActor* self);
 
-// In-TU forward declarations (definitions below).
 void CtrlMoveEne_ResetMoveState(cf::CtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
 
 // Enemy move-controller constructor: runs the base
@@ -115,9 +111,9 @@ void CtrlMoveEne_UpdateBattleAI(cf::CtrlMoveEne* self) {
                 (cf::CFunc8008FE8CSub*)self->mpDataPtr->mPosObj;
             f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_getMoveHeadAngle();
             view->mVelocity.z =
-                CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+                nw4r::math::CosFIdx(lbl_eu_806665CC * h);
             view->mVelocity.x =
-                SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+                nw4r::math::SinFIdx(lbl_eu_806665CC * h);
             view->mVelocity.y = lbl_eu_806665C0;
         }
         s16 t = (s16)(view->field_0x198 + 1);
@@ -374,7 +370,7 @@ void CtrlMoveEne_UpdateBattleAI(cf::CtrlMoveEne* self) {
                 view->field_0x17C &= 0xF9FFFFFF;
                 return;
             }
-            getInstance__Q22cf13CfGameManagerFv();
+            cf::CfGameManager::getInstance();
             if (isGlobalCamFlagSet(0x400) != 0) return;
             cf::CFunc8008A2C8BMan* bm = (cf::CFunc8008A2C8BMan*)
                 getInstance__Q22cf14CBattleManagerFv();
@@ -418,11 +414,12 @@ void CtrlMoveEne_UpdateBattleAI(cf::CtrlMoveEne* self) {
                             (cf::CFunc8008B580Obj*)CPartsChange_ResolveLinkedObj();
                         if (ro->field_3F60 != 0) {
                             // mSub2 = Move at +0x3E9C; +0x110 = CfObject::UVF48 -> void*.
-                            void* tgt = reinterpret_cast<cf::CfObject*>(&ro->mSub2)
-                                            ->CfObject_getCurrentTarget();
+                            cf::CFunc80091864Target* tgt =
+                                static_cast<cf::CFunc80091864Target*>(
+                                    reinterpret_cast<cf::CfObject*>(&ro->mSub2)
+                                        ->CfObject_getCurrentTarget());
                             if (tgt != 0 &&
-                                (*(u32*)((u8*)tgt + 0x200) &
-                                 0x08000000u) != 0) {
+                                (tgt->field_200 & 0x08000000u) != 0) {
                                 view->field_0x196 = 0;
                                 int r0b = 0;
                                 if ((self->field_0x180 & 0x40u) != 0) {
@@ -650,13 +647,14 @@ void CtrlMoveEne_UpdateBattleAI(cf::CtrlMoveEne* self) {
                         if (cand != 0) {
                             cf::CFunc8008B580Obj* ro =
                                 (cf::CFunc8008B580Obj*)cand;
-                            void* tgt = reinterpret_cast<cf::CfObject*>(&ro->mSub2)
-                                            ->CfObject_getCurrentTarget();
+                            cf::CFunc80091864Target* tgt =
+                                static_cast<cf::CFunc80091864Target*>(
+                                    reinterpret_cast<cf::CfObject*>(&ro->mSub2)
+                                        ->CfObject_getCurrentTarget());
                             if (tgt != 0) {
-                                u32 w = *(u32*)((u8*)tgt + 0x200);
+                                u32 w = tgt->field_200;
                                 if ((w & 0x08000000u) != 0) {
-                                    *(u32*)((u8*)tgt + 0x200) =
-                                        w | 0x40000000;
+                                    tgt->field_200 = w | 0x40000000;
                                 }
                             }
                         }
@@ -704,9 +702,9 @@ extern "C" void CtrlMoveEne_UpdateBattleMove(cf::CtrlMoveEne* self) {
     if ((flags & 0x1000u) != 0) return;
     if ((flags & 0x08000000u) == 0) {
         // Face the +0xCC heading: velocity = {sin, 0, cos} of the scaled index.
-        f32 cz = CosFIdx__Q24nw4r4mathFf(
+        f32 cz = nw4r::math::CosFIdx(
             lbl_eu_806665CC * self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle());
-        v->mVelocity.x = SinFIdx__Q24nw4r4mathFf(
+        v->mVelocity.x = nw4r::math::SinFIdx(
             lbl_eu_806665CC * self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle());
         v->mVelocity.y = lbl_eu_806665C0;
         v->mVelocity.z = cz;
@@ -845,10 +843,10 @@ int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self,
     }
     // Candidate point around `other` at angle ang, radius dist.
     ml::CVec3 pos;
-    pos.x = dist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
+    pos.x = dist * nw4r::math::SinFIdx(lbl_eu_806665CC * ang) +
             ((ml::CVec3*)other)->x;
     pos.y = ((ml::CVec3*)other)->y;
-    pos.z = dist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
+    pos.z = dist * nw4r::math::CosFIdx(lbl_eu_806665CC * ang) +
             ((ml::CVec3*)other)->z;
     // Reject points inside the keep-away radius around the move sub.
     ml::CVec3 diff;
@@ -1061,15 +1059,15 @@ void CtrlMoveEne_TrackMoveTarget(cf::CtrlMoveEne* self, ml::CVec3* out, f32 f1) 
         tgt.x = sub->CfObject_getPosVector()->x;
         tgt.y = lbl_eu_8066661C + sub->CfObject_getPosVector()->y;
         tgt.z = sub->CfObject_getPosVector()->z;
-        f32 ang = Atan2FIdx__Q24nw4r4mathFff(out->x, out->z);
+        f32 ang = nw4r::math::Atan2FIdx(out->x, out->z);
         f32 f4 = lbl_eu_80666638 * ang;
         f32 f5 = (v->field_0x18A & 1) ? lbl_eu_806665E4 : lbl_eu_8066663C;
         f32 r = (f32)((v->field_0x18A >> 1) & 0x7FFF);
         f32 f29 = ml::halfpi * ((lbl_eu_806665E4 + r) * f5) + f4;
         // Heading direction: cosine first (survives the sine call in f30),
         // then the sine; the probe offset is the scaled direction.
-        f32 cos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f29);
-        f32 sin = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f29);
+        f32 cos = nw4r::math::CosFIdx(lbl_eu_806665CC * f29);
+        f32 sin = nw4r::math::SinFIdx(lbl_eu_806665CC * f29);
         ml::CVec3 dir;
         dir.x = sin;
         dir.y = lbl_eu_806665C0;
@@ -1184,7 +1182,7 @@ int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
     if ((view->field_0x17C & 0x20000000u) != 0) {
         // Battle-state track: refresh the +0x168 accumulator, then reset the
         // battle object once it crosses the threshold.
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
             if (view->field_0x18E != 0) {
@@ -1211,7 +1209,7 @@ int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
             view->field_0x19C = lbl_eu_806665C0;
             view->field_0x184 = 0;
             CPartsChange_ClearElemTimerForObj(obj);
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
         }
         keepMoving = 0;
@@ -1239,7 +1237,7 @@ int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
             if (view->field_0x18E != 0) {
                 reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveTargetVec(&view->mVec144);
             }
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             view->field_0x17C |= 0x20000000;
             D51CZeroSlots(obj);
@@ -1279,7 +1277,7 @@ int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
                                *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_getMoveRateScale();
                     setMoveFacing(self, &dir, rate);
                 } else {
-                    ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+                    self->mpDataPtr->field_0x14 =
                         lbl_eu_806665C0;
                 }
             } else {
@@ -1293,7 +1291,7 @@ int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
     } else {
         // Timer / flag gate: reset the object and hand off to the +0x150 slot.
         reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(&view->mVec144);
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         view->field_0x17C |= 0x20000000;
         D51CZeroSlots(obj);
@@ -1316,7 +1314,7 @@ int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
 d51c_780:
     // No flag object: reset and hand off.
     reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(&view->mVec144);
-    ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+    self->mpDataPtr->field_0x14 =
         lbl_eu_806665C0;
     view->field_0x17C |= 0x20000000;
     D51CZeroSlots(obj);
@@ -1391,7 +1389,7 @@ void CtrlMoveEne_InitMoveHook(cf::CtrlMoveEne* self) {
         (cf::CFunc8008D444Obj*)(self->mpDataPtr->mPosObj
                                     ? (u8*)self->mpDataPtr->mPosObj - 0x3E9C
                                     : 0);
-    ((cf::CfObjectMove4CView*)self)->field_4C = 0;
+    self->field_0x4C_bits = 0;
     union {
         u32 w;
         u8 b;
@@ -1415,7 +1413,7 @@ void CtrlMoveEne_InitMoveHook(cf::CtrlMoveEne* self) {
             self->field_0x18C = 2;
             f32 angle = (f32)ml::math::mtRand(0x168) * ml::deg2rad;
             reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveHeadAngle(angle);
-            ((cf::CfObjectMove4CView*)self)->field_4C |= 4;
+            self->field_0x4C_bits |= 4;
         } else {
             maskMoveBaseFlags(self);
             self->mMoveHook = lbl_eu_80527830.hook130;
@@ -1495,7 +1493,7 @@ void CtrlMoveEne_InitMoveList(cf::CtrlMoveEne* self) {
         rate = *((cf::CtrlMoveEneSub*)sub2)->CfObjectMove_getMovementRate() / denom;
     }
     view->field_0x60 = (s32)rate;
-    int count = initPadSubSystem__Q22cf13CfGameManagerFv();
+    int count = cf::CfGameManager::initPadSubSystem();
     int idx = 0;
     cf::CfMoveSubEntry* entry = view->field_0x78;
     for (int i = 0; i < count; i++) {
@@ -1697,8 +1695,8 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
                 // +0x5B4 = CfObjectActor::UVF6 -> float; +0xC4 = CfObject::UVF29(float).
                 // First call leaves f1 live into UVF29 (retail Fv on both).
                 {
-                    f32 h = CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(
-                                reinterpret_cast<cf::CfObjectActor*>(player));
+                    f32 h = reinterpret_cast<cf::CfObjectActor*>(player)
+                                ->CfObject_getMoveHeadAngle();
                     reinterpret_cast<cf::CfObject*>(&obj->mSub)
                         ->CfObject_setMoveHeadAngle(h);
                 }
@@ -1712,8 +1710,8 @@ void CtrlMoveEne_InitBattleMove(cf::CtrlMoveEne* self) {
                     f31 += obj->field_44D8;
                 }
                 ml::CVec3 tmp20 = *reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector();
-                f32 f1 = CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(
-                             reinterpret_cast<cf::CfObjectActor*>(player));
+                f32 f1 = reinterpret_cast<cf::CfObjectActor*>(player)
+                             ->CfObject_getMoveHeadAngle();
                 f32 sum = obj->field_44D8 + player->field_44D8;
                 cf::CFunc8008E760PartyInfo info;
                 InitRecord(&info, &tmp20, f1, esc, seedOrCount, f31, sum);
@@ -1856,7 +1854,7 @@ void CtrlMoveEne_UpdateMoveHeading(cf::CtrlMoveEne* self) {
                 func_8004B9D4(sub->field_C4, 1, 0, -1, 0);
             }
         } else if (sub->field_C4 != 0 && ((cf::CfObject*)sub)->checkStateFlags(4) != 0) {
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             done = 1;
             goto check;
@@ -1870,14 +1868,14 @@ check:
     if (done == 0) {
         // Heading logic: compare the sub's heading with the +0x4C target
         // heading through the cos of their difference.
-        f32 cosA = CosFIdx__Q24nw4r4mathFf(
+        f32 cosA = nw4r::math::CosFIdx(
             lbl_eu_806665CC *
                 self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle());
-        f32 cosB = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * self->field_0x4C);
-        f32 sinA = SinFIdx__Q24nw4r4mathFf(
+        f32 cosB = nw4r::math::CosFIdx(lbl_eu_806665CC * self->field_0x4C);
+        f32 sinA = nw4r::math::SinFIdx(
             lbl_eu_806665CC *
                 self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle());
-        f32 sinB = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * self->field_0x4C);
+        f32 sinB = nw4r::math::SinFIdx(lbl_eu_806665CC * self->field_0x4C);
         if (cosB * cosA + sinB * sinA <= lbl_eu_806665DC) {
             // Facing the target: turn toward +0x4C and engage the +0x98 state
             // unless its +0x8000 bit is set.
@@ -1923,14 +1921,14 @@ check:
             }
         }
         // Commit the heading as the movement direction and zero the move data.
-        f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
+        f32 c = nw4r::math::CosFIdx(lbl_eu_806665CC *
                                         self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle());
-        f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
+        f32 s = nw4r::math::SinFIdx(lbl_eu_806665CC *
                                         self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle());
         v->mVelocity.x = s;
         v->mVelocity.z = c;
         v->mVelocity.y = lbl_eu_806665C0;
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
     }
 }
@@ -1939,9 +1937,11 @@ void CtrlMoveEne_UpdatePursuit(){}
 
 // Returns bit 8 of the +0x270 state word of the +0xC4 target object, or 1
 // when the target is absent.
-extern "C" int CfObject_checkTargetState__Q22cf12CfObjectMoveFv(cf::CtrlMoveEne* self) {
-    if (self->mTargetC4 != 0) {
-        return (self->mTargetC4->field_0x270 >> 8) & 1;
+int cf::CfObjectMove::CfObject_checkTargetState() {
+    if (mTargetC4 != 0) {
+        cf::CfObjectMoveC4Target* target =
+            static_cast<cf::CfObjectMoveC4Target*>(mTargetC4);
+        return (target->field_0x270 >> 8) & 1;
     }
     return 1;
 }
@@ -1980,44 +1980,44 @@ void CtrlMoveEne_UpdateFleeWander(cf::CtrlMoveEne* self) {
                  lbl_eu_80666610);
             // Cosine is evaluated first into a temp (live across the sine
             // call), then the direction vector is filled in x, y, z order.
-            f32 cz = CosFIdx__Q24nw4r4mathFf(
+            f32 cz = nw4r::math::CosFIdx(
                 lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle());
             ml::CVec3 dir;
-            dir.x = SinFIdx__Q24nw4r4mathFf(
+            dir.x = nw4r::math::SinFIdx(
                 lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle());
             dir.y = lbl_eu_806665C0;
             dir.z = cz;
             setMoveFacing(self, &dir, v->field_0x58);
         } else {
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
         }
         self->field_0x184 = 0;
         self->field_0x54 = 0;
-        ((cf::CfObjectMove4CView*)self)->field_4C &= ~3u;
+        self->field_0x4C_bits &= ~3u;
         return;
     }
 
     // Flee path.
     ml::CVec3 dir(lbl_eu_806665C0, lbl_eu_806665C0, lbl_eu_806665C0);
     int cont = 1;
-    if (((cf::CfObjectMove4CView*)self)->field_4C & 1u) {
+    if (self->field_0x4C_bits & 1u) {
         // Run from the marked target: heading opposite the target direction,
         // half-turn offset depending on the +0x4C bit 1 parity.
         f32 dx = self->mpDataPtr->mPosObj->CfObject_getPosVector()->x - v->mPosition.x;
         f32 dz = self->mpDataPtr->mPosObj->CfObject_getPosVector()->z - v->mPosition.z;
-        f32 ang = lbl_eu_80666638 * Atan2FIdx__Q24nw4r4mathFff(dx, dz);
-        if (((cf::CfObjectMove4CView*)self)->field_4C & 2u) {
+        f32 ang = lbl_eu_80666638 * nw4r::math::Atan2FIdx(dx, dz);
+        if (self->field_0x4C_bits & 2u) {
             ang += ml::quarterpi;
         } else {
             ang -= ml::quarterpi;
         }
         ml::CVec3 tgt;
         tgt.x = v->field_0x60 *
-                    SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
+                    nw4r::math::SinFIdx(lbl_eu_806665CC * ang) +
                 v->mPosition.x;
         tgt.z = v->field_0x60 *
-                    CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
+                    nw4r::math::CosFIdx(lbl_eu_806665CC * ang) +
                 v->mPosition.z;
         tgt.y = v->mPosition.y;
         moveBaseChase(self, &dir, &tgt);
@@ -2031,10 +2031,10 @@ void CtrlMoveEne_UpdateFleeWander(cf::CtrlMoveEne* self) {
         f32 dz = v->mPosition.z -
                  self->mpDataPtr->mPosObj->CfObject_getPosVector()->z;
         if (dx * dx + dz * dz <= v->field_0x60 * v->field_0x60) {
-            ((cf::CfObjectMove4CView*)self)->field_4C |= 1u;
+            self->field_0x4C_bits |= 1u;
             self->field_0x54 = ml::math::mtRand(0x12c) + 0x1c2;
             if ((self->field_0x54 & 1u) != 0) {
-                ((cf::CfObjectMove4CView*)self)->field_4C |= 2u;
+                self->field_0x4C_bits |= 2u;
             }
         }
     }
@@ -2097,7 +2097,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
             view->field_0x160 = view->mPosition.y;
         }
         view->field_0x17C &= 0xFBFFFFFF;
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         flag = 1;
     } else {
@@ -2146,7 +2146,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
                 *(u32*)&view->mVelocity.x = *(u32*)&d.x;
                 *(u32*)&view->mVelocity.y = *(u32*)&d.y;
                 *(u32*)&view->mVelocity.z = *(u32*)&d.z;
-                f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
                 reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
@@ -2177,7 +2177,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
                 *(u32*)&view->mVelocity.x = *(u32*)&d.x;
                 *(u32*)&view->mVelocity.y = *(u32*)&d.y;
                 *(u32*)&view->mVelocity.z = *(u32*)&d.z;
-                f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
                 reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
@@ -2188,7 +2188,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
                 }
             }
             if ((view->field_0x70 & 0x80u) != 0) {
-                ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+                self->mpDataPtr->field_0x14 =
                     lbl_eu_806665C0;
                 return;
             }
@@ -2200,12 +2200,12 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
         u32 t = view->field_0x60;
         view->field_0x60 = t - 1;
         if (t > 0) {
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
         sub = (cf::CFunc8008FE8CSub*)self->mpDataPtr->mPosObj;
-        f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+        f32 ang = nw4r::math::Atan2FIdx(dir.x, dir.z);
         reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
@@ -2218,7 +2218,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
         *(u32*)&view->mVelocity.y = *(u32*)&dir.y;
         *(u32*)&view->mVelocity.z = *(u32*)&dir.z;
         view->field_0x17C &= ~0x100000u;
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -2236,7 +2236,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
         } else {
             if (sub->field_C4 != 0 &&
                 reinterpret_cast<cf::CObjectState*>(sub)->checkStateFlags(4) != 0) {
-                ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+                self->mpDataPtr->field_0x14 =
                     lbl_eu_806665C0;
                 r0 = 1;
             }
@@ -2282,13 +2282,13 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
         moveBaseUpdate(self, &dir74, &view->mPosition, 0, 0);
         view->mVelocity = vel;
         f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_getMoveHeadAngle();
-        f32 cos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
-        f32 sin = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+        f32 cos = nw4r::math::CosFIdx(lbl_eu_806665CC * h);
+        f32 sin = nw4r::math::SinFIdx(lbl_eu_806665CC * h);
         f32 dot = dir74.x * sin + dir74.z * cos;
         if (dot <= lbl_eu_806665C0) {
             view->field_0x60 = 6;
             view->field_0x17C |= 0x100000;
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
@@ -2320,9 +2320,9 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
         view->field_0x72 = view->field_0x72 - 1;
         f32 f30 = view->field_0x68 +
                   lbl_eu_80666638 *
-                      Atan2FIdx__Q24nw4r4mathFff(dir74.x, dir74.z);
-        dir74.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f30);
-        dir74.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f30);
+                      nw4r::math::Atan2FIdx(dir74.x, dir74.z);
+        dir74.x = nw4r::math::SinFIdx(lbl_eu_806665CC * f30);
+        dir74.z = nw4r::math::CosFIdx(lbl_eu_806665CC * f30);
     }
     // mVec138 pursuit-distance gate.
     ml::CVec3* p2 = reinterpret_cast<cf::CfObject*>(sub)->CfObject_getPosVector();
@@ -2383,7 +2383,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
             self->mMoveHook = lbl_eu_80527830.hook190;
             view->field_0x4C = self->mpDataPtr->mPosObj->CfObject_getMoveHeadAngle();
             self->field_0x180 |= 0x800;
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
@@ -2391,7 +2391,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
             self->mMoveHook = lbl_eu_80527830.hook19C;
             view->field_0x70 |= 0x4;
             view->field_0x72 = entry5->field_0xF * 30;
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
@@ -2418,7 +2418,7 @@ void CtrlMoveEne_StepMoveList(cf::CtrlMoveEne* self) {
         if ((f32)view->field_0x60 == lbl_eu_806665C0) {
             view->field_0x70 |= 0x100;
         } else {
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             view->field_0x70 &= ~0x100u;
         }
@@ -2452,7 +2452,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
             view->field_0x160 = view->mPosition.y;
         }
         view->field_0x17C &= 0xFBFFFFFF;
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         flag = 1;
     } else {
@@ -2491,7 +2491,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
         }
         view->field_0x60 = 0;
         view->field_0x17C &= 0xFFE9FFDF;
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         view->field_0x184 = 0;
         return;
@@ -2532,7 +2532,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
                         PSVECNormalize(dir, dir);
                     }
                 }
-                f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+                f32 ang = nw4r::math::Atan2FIdx(dir.x, dir.z);
                 reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
@@ -2546,7 +2546,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
                 *(u32*)&view->mVelocity.z = *(u32*)&dir.z;
             }
         }
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         view->field_0x184 = 0;
         return;
@@ -2563,7 +2563,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
             view->field_0x60 = 0;
             cf::CFunc80090DB4Sub* sub2 =
                 (cf::CFunc80090DB4Sub*)self->mpDataPtr->mPosObj;
-            f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+            f32 ang = nw4r::math::Atan2FIdx(dir.x, dir.z);
             reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
             if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                 (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
@@ -2577,7 +2577,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
             *(u32*)&view->mVelocity.z = *(u32*)&dir.z;
             view->field_0x17C &= ~0x100000u;
         }
-        ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+        self->mpDataPtr->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -2596,7 +2596,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
         } else {
             if (sub->field_C4 != 0 &&
                 reinterpret_cast<cf::CObjectState*>(sub)->checkStateFlags(4) != 0) {
-                ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+                self->mpDataPtr->field_0x14 =
                     lbl_eu_806665C0;
                 done = 1;
             }
@@ -2658,7 +2658,7 @@ void CtrlMoveEne_StepMoveEntry(cf::CtrlMoveEne* self) {
     view->field_0x60 = entry->field_0xE * 30;
     view->field_0x186 = 0;
     view->field_0x17C &= 0xFFE9FFDF;
-    ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+    self->mpDataPtr->field_0x14 =
         lbl_eu_806665C0;
 }
 
@@ -2728,7 +2728,7 @@ void CtrlMoveEne_ScanGimmickTargets(cf::CtrlMoveEne* self) {
             }
             v->field_0x17C &= ~0x8000u;
         } else {
-            ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+            self->mpDataPtr->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
@@ -2739,7 +2739,7 @@ void CtrlMoveEne_ScanGimmickTargets(cf::CtrlMoveEne* self) {
     v->field_0x17C &= ~0x04000000u;
     v->field_0x72 = 0;
     v->field_0x60 = 0;
-    ((cf::CFunc8009DataView*)self->mpDataPtr)->field_0x14 =
+    self->mpDataPtr->field_0x14 =
         lbl_eu_806665C0;
 }
 
@@ -2756,7 +2756,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
     u32 seedOrCount = 0;
     {
         cf::CCtrlMoveData* data = self->field_0x34;
-        cf::CFunc8009DataView* data14 = (cf::CFunc8009DataView*)data;
+        cf::CCtrlMoveData* data14 = data;
         cf::CfObject* moveObj = data->mPosObj;
         ene = (cf::CFunc80091864Actor*)moveObj;
         if (ene != 0) {
@@ -2770,9 +2770,8 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
 
     b89 = (cf::CFunc8008E760B89*)lookupCA0ById(ene->field_45C0);
     if (b89 == 0) {
-        ((cf::CFunc8009DataView*)((cf::CFunc80091864View*)selfRaw)
-             ->field_0x34)
-            ->field_0x14 = lbl_eu_806665C0;
+        ((cf::CFunc80091864View*)selfRaw)
+             ->field_0x34->field_0x14 = lbl_eu_806665C0;
         return;
     }
 
@@ -2781,7 +2780,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
         if ((self->field_0x180 & 0x8) != 0) {
             self->field_0x160 = self->field_0x4;
         }
-        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+        self->field_0x34->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -2803,7 +2802,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
         } else if (movesub->field_C4 != 0 &&
                    ((cf::CfObject*)movesub)->checkStateFlags(4) !=
                        0) {
-            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            self->field_0x34->field_0x14 =
                 lbl_eu_806665C0;
             blocked = 1;
         }
@@ -2814,7 +2813,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
     if (blocked != 0) return;
 
     if (player->field_3F60 == 0) {
-        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+        self->field_0x34->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -2889,8 +2888,8 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
                 ml::CVec3 pred =
                     *reinterpret_cast<cf::CfObject*>(&player->mSub)
                          ->CfObject_getPosVector();
-                pred.x += dist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
-                pred.z += dist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
+                pred.x += dist * nw4r::math::SinFIdx(lbl_eu_806665CC * head);
+                pred.z += dist * nw4r::math::CosFIdx(lbl_eu_806665CC * head);
 
                 int found = 0;
                 for (s32 idx = (s32)ene->field_45C6 - 1; idx >= 0; idx--) {
@@ -2919,9 +2918,9 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
                     ml::CVec3 ip =
                         *reinterpret_cast<cf::CfObject*>(&cand->mSub)
                              ->CfObject_getPosVector();
-                    ip.x += idist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
+                    ip.x += idist * nw4r::math::SinFIdx(lbl_eu_806665CC *
                                                             ihead);
-                    ip.z += idist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
+                    ip.z += idist * nw4r::math::CosFIdx(lbl_eu_806665CC *
                                                             ihead);
                     f32 dx = pred.x - ip.x;
                     f32 dz = pred.z - ip.z;
@@ -3107,13 +3106,13 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
             give = 1;
         }
         if (give == 0) {
-            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            self->field_0x34->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
         self->field_0x70 = 0;
         self->field_0x58 = (u16)(self->field_0x58 & ~0x460u);
-        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+        self->field_0x34->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -3141,12 +3140,12 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
         f32 ph =
             (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)player + 0x5B4))(
                 player);
-        f32 align = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
-                        CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph) +
-                    SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
-                        SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+        f32 align = nw4r::math::CosFIdx(lbl_eu_806665CC * eh) *
+                        nw4r::math::CosFIdx(lbl_eu_806665CC * ph) +
+                    nw4r::math::SinFIdx(lbl_eu_806665CC * eh) *
+                        nw4r::math::SinFIdx(lbl_eu_806665CC * ph);
         if (align > lbl_eu_80666694) {
-            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            self->field_0x34->field_0x14 =
                 lbl_eu_806665C0;
             return;
         }
@@ -3159,12 +3158,12 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
             ((cf::CfObject*)sub)->setStateBitFlag(4);
             self->field_0x17C |= 1;
         }
-        f32 ps = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
-        f32 pc = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+        f32 ps = nw4r::math::SinFIdx(lbl_eu_806665CC * ph);
+        f32 pc = nw4r::math::CosFIdx(lbl_eu_806665CC * ph);
         self->mVelocity.x = pc;
         self->mVelocity.y = lbl_eu_806665C0;
         self->mVelocity.z = ps;
-        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+        self->field_0x34->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -3191,7 +3190,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
                 f32 len = distSq;
                 if (distSq > lbl_eu_806665C0) {
                     if (distSq <= lbl_eu_806665C0) {
-                        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                        nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                                      lbl_eu_80526300);
                     }
                     if (distSq > lbl_eu_806665C0) {
@@ -3206,7 +3205,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
                 f32 len = distSq;
                 if (distSq > lbl_eu_806665C0) {
                     if (distSq <= lbl_eu_806665C0) {
-                        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                        nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                                      lbl_eu_80526300);
                     }
                     if (distSq > lbl_eu_806665C0) {
@@ -3285,7 +3284,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
         self->field_50 = pw[1];
         self->field_54 = pw[2];
         self->field_0x70 = 0;
-        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+        self->field_0x34->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -3307,8 +3306,8 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
     if (sub63->field_63C >= lbl_eu_806665E4) {
         f32 eh =
             (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)ene + 0x5B4))(ene);
-        f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh);
-        f32 s = SinFIdx__Q24nw4r4mathFf(
+        f32 c = nw4r::math::CosFIdx(lbl_eu_806665CC * eh);
+        f32 s = nw4r::math::SinFIdx(
             lbl_eu_806665CC *
             (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)ene + 0x5B4))(ene));
         f32 dot = dir.x * s + dir.z * c;
@@ -3317,7 +3316,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
                 self->mVelocity = dir;
                 cf::CFunc8008EF04Sub* sub =
                     (cf::CFunc8008EF04Sub*)self->field_0x34->mPosObj;
-                f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+                f32 ang = nw4r::math::Atan2FIdx(dir.x, dir.z);
                 ((cf::CfObject*)sub)
                     ->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
@@ -3349,7 +3348,7 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
         self->field_50 = pw[1];
         self->field_54 = pw[2];
         self->field_0x70 = 0;
-        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+        self->field_0x34->field_0x14 =
             lbl_eu_806665C0;
         return;
     }
@@ -3379,7 +3378,9 @@ void CtrlMoveEne_RunMoveStateMachine(cf::CtrlMoveEne* selfRaw) {
 }
 
 
-void* CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
+void* CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv(void* self) {
+    return &reinterpret_cast<cf::CfObjectMove*>(self)->mField6E8;
+}
 
 void cf::CtrlMoveEne::RateZeroFlat(u32* out1, f32* out2) {
     *out1 = 0;

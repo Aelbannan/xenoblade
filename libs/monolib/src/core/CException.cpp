@@ -87,7 +87,6 @@ extern "C" {
 
     // C-style allocation helpers used by the retail factory.
     mtl::ALLOC_HANDLE getWorkMem__17CWorkThreadSystemFv();
-    void* allocate__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
     void entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(CWorkThread* child,
                                                                CWorkThread* parent,
                                                                bool prepend);
@@ -163,9 +162,9 @@ extern "C" void* __dt__10CExceptionFv(CException* self, int flag) {
 }
 
 // Type check function
-extern "C" bool isFadedIn__10CExceptionFv(CException* self) {
+bool CException::isFadedIn() {
     extern const f32 lbl_eu_8066A484;
-    return lbl_eu_8066A484 == self->mAlpha;
+    return lbl_eu_8066A484 == mAlpha;
 }
 
 // Static factory function
@@ -190,7 +189,7 @@ CException* CException::createException(CWorkThread* pThread, const wchar_t* mes
         CView* view = getView__8CDesktopFv();
         CWorkThread* parent = getException__8CDesktopFv();
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
-        result = (CException*)allocate__Q23mtl10MemManagerFUlUl(0x218, handle);
+        result = (CException*)mtl::MemManager::allocate(0x218, handle);
         if (result != nullptr) {
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
@@ -200,7 +199,7 @@ CException* CException::createException(CWorkThread* pThread, const wchar_t* mes
     } else {
         CWorkThread* parent = (CWorkThread*)CDeviceException_getInstance();
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
-        result = (CException*)allocate__Q23mtl10MemManagerFUlUl(0x218, handle);
+        result = (CException*)mtl::MemManager::allocate(0x218, handle);
         if (result != nullptr) {
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
@@ -601,10 +600,10 @@ void CException::AddToGlobalArray(IException* pException) {
 }
 
 // Remove from global array
-extern "C" void RemoveFromGlobalArray__10CExceptionFP10IException(CException* self) {
+void CException::RemoveFromGlobalArray(IException* pException) {
     int count = lbl_eu_806656C4;
     for (int index = 0; index < count; ++index) {
-        if (lbl_eu_80657B50[index] == self) {
+        if (lbl_eu_80657B50[index] == (CException*)pException) {
             int last = count - 1;
             // Shift the tail entries down one slot.
             for (int shift = index; shift < last; ++shift) {

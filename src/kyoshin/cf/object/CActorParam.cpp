@@ -20,57 +20,57 @@
 
 // .sdata2 0x80 pool in retail order (individual typed labels; types match
 // the hpp decls exactly so MWCC's const-scheduling is undisturbed).
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const double lbl_eu_806677F0 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const double lbl_eu_806677F8 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667800 = 2.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667804 = 3.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667808 = 40.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_8066780C = 10.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667810 = 18.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667814 = 0.05f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667818 = 100.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const double lbl_eu_80667820 = 0.15;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667828 = -1.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_8066782C = 0.5f;
 __declspec(section ".sdata2") __attribute__((used))
 float lbl_eu_80667830 = 0.01f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667834 = 0.9f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667838 = 0.1f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_8066783C = 5.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667840 = 2.5f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667844 = 4.0f;
 __declspec(section ".sdata2") __attribute__((used))
 double lbl_eu_80667848 = 0.5;
 __declspec(section ".sdata2") __attribute__((used))
 double lbl_eu_80667850 = -0.5;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667858 = 0.7f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_8066785C = 0.001f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667860 = 9999.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667864 = 30000.0f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_80667868 = 1.5f;
-__declspec(section ".sdata2") __attribute__((used))
+__attribute__((used))
 const float lbl_eu_8066786C = 0.3f;
 
 // Pool anchor: MWCC emits referenced sdata2 scalars in first-use order and
@@ -214,12 +214,12 @@ void CActorParam_addSecondGauge__Q22cf11CActorParamFv(cf::CActorParam* self, int
     }
 }
 
-extern "C" void CActorParam_clearGauge__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->unk160C = 0;
+void cf::CActorParam::CActorParam_clearGauge() {
+    unk160C = 0;
 }
 
-extern "C" void CActorParam_clearSecondGauge__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->unk1614 = 0;
+void cf::CActorParam::CActorParam_clearSecondGauge() {
+    unk1614 = 0;
 }
 // Retail symbol is Fv; the real ABI passes (self, id). Scans the 8
 // CActorParam_UnkStruct5 entries at +0x1928 for id; on hit, resets the
@@ -737,7 +737,7 @@ void CActorParam_updateTick(cf::CActorParam* self, int arg, float f1) {
     self->CActorParam_decayArtsMatrix(f31);
 }
 
-extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActorParam* self, float dt) {
+void cf::CActorParam::CActorParam_updateStatusEntries(float dt) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CheckUnk84Flag(0x10)) return;
@@ -746,14 +746,14 @@ extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActor
 
     bool flag = true;
     if (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk20C8.unk0 == 0) {
-        u8 b = ((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.unk0[2];
+        u8 b = ((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2;
         bool ok = (b >= 1 && b <= 0x18);
         if (!ok) flag = false;
     }
-    SysWinLog_LatchOneShot(self);
+    SysWinLog_LatchOneShot(this);
 
     cf::CBattleStateEntry* entries =
-        (cf::CBattleStateEntry*)static_cast<cf::CBattleState&>(*self).unk8;
+        (cf::CBattleStateEntry*)static_cast<cf::CBattleState&>(*this).unk8;
     for (int i = 0; i < 0x68; i++) {
         cf::CBattleStateEntry* e = &entries[i];
         if (e->unk0C == 0) continue;
@@ -763,9 +763,9 @@ extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActor
             if (!flag) {
                 if (e->unk20 > 0.0f) {
                     if (e->unk0C == 0x10) {
-                        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData());
+                        u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(this->CActorState::unk4)->getStateData());
                         if ((t & 0x3F) == 0x16) goto unk20_done;
-                        if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xF) || isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) goto unk20_done;
+                        if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0xF) || isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 9)) goto unk20_done;
                     }
                     e->unk20 -= dt;
                     if (e->unk20 < 0.0f) e->unk20 = 0.0f;
@@ -775,9 +775,9 @@ extern "C" void CActorParam_updateStatusEntries__Q22cf11CActorParamFf(cf::CActor
 unk20_done:
         if (e->unk28 > 0.0f) {
             if (e->unk0C == 0x10) {
-                u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData());
+                u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(this->CActorState::unk4)->getStateData());
                 if ((t & 0x3F) == 0x16) goto unk28_done;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xF) || isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) goto unk28_done;
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0xF) || isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 9)) goto unk28_done;
             }
             e->unk28 -= dt;
         }
@@ -786,92 +786,92 @@ unk28_done:
             e->unk28 += e->unk24;
             switch (e->unk0C) {
             case 0x35: {
-                if (self->CActorParam_isBattleLocked()) break;
-                if (self->CActorParam_getDamageScale() == self->CActorParam_getHp()) break;
-                int a = (int)(0.05f * self->CActorParam_getDamageScale());
-                int b = (int)((float)e->unk14 / 100.0f * self->CActorParam_getDamageScale());
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0xE7)) {
-                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0xE7);
-                    a += (int)((float)d->unk10 / 100.0f * self->CActorParam_getDamageScale());
+                if (this->CActorParam_isBattleLocked()) break;
+                if (this->CActorParam_getDamageScale() == this->CActorParam_getHp()) break;
+                int a = (int)(0.05f * this->CActorParam_getDamageScale());
+                int b = (int)((float)e->unk14 / 100.0f * this->CActorParam_getDamageScale());
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0xE7)) {
+                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0xE7);
+                    a += (int)((float)d->unk10 / 100.0f * this->CActorParam_getDamageScale());
                 }
                 a += b;
-                int cl = countBattleStatusEntries(reinterpret_cast<cf::CBattleState*>(self), 0x69);
+                int cl = countBattleStatusEntries(reinterpret_cast<cf::CBattleState*>(this), 0x69);
                 if (cl < 0) cl = 0;
                 else if (cl > 3) cl = 3;
                 double rate = 0.15 * (double)cl;
                 a = (int)((double)a - (double)a * rate);
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x8F)) {
-                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x8F);
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x8F)) {
+                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x8F);
                     a *= d->unk10 / 100 + 1;
-                } else if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x8E)) {
-                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x8E);
+                } else if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x8E)) {
+                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x8E);
                     a *= 1 - d->unk10 / 100;
                 }
-                self->CActorParam_setHp((float)a + self->CActorParam_getHp());
+                this->CActorParam_setHp((float)a + this->CActorParam_getHp());
                 break;
             }
             case 0x34: {
-                if (self->CActorParam_isBattleLocked()) break;
-                if (self->CActorParam_getHp() == self->CActorParam_getDamageScale()) break;
-                int a = e->unk10 + (int)((float)e->unk14 / 100.0f * self->CActorParam_getDamageScale());
-                int cl = countBattleStatusEntries(reinterpret_cast<cf::CBattleState*>(self), 0x69);
+                if (this->CActorParam_isBattleLocked()) break;
+                if (this->CActorParam_getHp() == this->CActorParam_getDamageScale()) break;
+                int a = e->unk10 + (int)((float)e->unk14 / 100.0f * this->CActorParam_getDamageScale());
+                int cl = countBattleStatusEntries(reinterpret_cast<cf::CBattleState*>(this), 0x69);
                 if (cl < 0) cl = 0;
                 else if (cl > 3) cl = 3;
                 double rate = 0.15 * (double)cl;
                 a = (int)((double)a - (double)a * rate);
                 getInstance__Q22cf14CBattleManagerFv();
-                float f = calcBattleDamage(0, self->CBattleState_getOwner(), 0);
+                float f = calcBattleDamage(0, this->CBattleState_getOwner(), 0);
                 a = (int)((float)a * f);
-                if (a > 0) self->CActorParam_addHp((float)a);
+                if (a > 0) this->CActorParam_addHp((float)a);
                 break;
             }
             case 0x65: {
-                if (self->CActorParam_isBattleLocked()) break;
+                if (this->CActorParam_isBattleLocked()) break;
                 float f15 = (float)e->unk10;
                 if (f15 < 1.0f) f15 = 1.0f;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 1)) f15 = 0.0f;
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 1)) f15 = 0.0f;
                 int dmgKind = (f15 < 0.0f) ? 3 : 1;
-                self->CActorParam_applyDamage((float)(-(int)f15), dmgKind, 0, 0);
-                SysWinLog_GateDevice(self);
+                this->CActorParam_applyDamage((float)(-(int)f15), dmgKind, 0, 0);
+                SysWinLog_GateDevice(this);
                 break;
             }
             case 0x66: case 0x67: case 0x68: case 0x69: {
-                if (self->CActorParam_isBattleLocked()) break;
+                if (this->CActorParam_isBattleLocked()) break;
                 float f15 = (float)e->unk10;
                 if (f15 < 1.0f) f15 = 1.0f;
                 switch (e->unk0C) {
                 case 0x66:
-                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x86)) {
-                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x86);
+                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x86)) {
+                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x86);
                         f15 = f15 / 100.0f * (float)(100 - d->unk10);
                     }
                     break;
                 case 0x67:
-                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x88)) {
-                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x88);
+                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x88)) {
+                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x88);
                         f15 = f15 / 100.0f * (float)(100 - d->unk10);
                     }
                     break;
                 case 0x68:
-                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x8A)) {
-                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x8A);
+                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x8A)) {
+                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x8A);
                         f15 = f15 / 100.0f * (float)(100 - d->unk10);
                     }
                     break;
                 case 0x69:
-                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x8C)) {
-                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x8C);
+                    if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x8C)) {
+                        cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x8C);
                         f15 = f15 / 100.0f * (float)(100 - d->unk10);
                     }
                     break;
                 default: break;
                 }
                 if (f15 <= 0.0f) break;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 1)) f15 = 0.0f;
-                if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x13)) {
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 1)) f15 = 0.0f;
+                if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x13)) {
                 int type = classifyBattleCommand(e->unk0C);
                 cf::CActorParam_UnkStruct3* block =
-                    (cf::CActorParam_UnkStruct3*)self->CActorParam_getBattleParams();
+                    (cf::CActorParam_UnkStruct3*)this->CActorParam_getBattleParams();
                 int v = 0;
                 if ((u32)(type - 1) <= 2) {
                     switch (type) {
@@ -914,7 +914,7 @@ unk28_done:
                         f15 *= -1.0f;
                     } else {                int type = classifyBattleCommand(e->unk0C);
                 cf::CActorParam_UnkStruct3* block =
-                    (cf::CActorParam_UnkStruct3*)self->CActorParam_getBattleParams();
+                    (cf::CActorParam_UnkStruct3*)this->CActorParam_getBattleParams();
                 int v = 0;
                 if ((u32)(type - 1) <= 2) {
                     switch (type) {
@@ -960,22 +960,22 @@ unk28_done:
                 }
                 }
                 int dmgKind = (f15 < 0.0f) ? 3 : 1;
-                self->CActorParam_applyDamage((float)(-(int)f15), dmgKind, 0, 0);
-                SysWinLog_GateDevice(self);
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) self->CBattleState_clearStatusId(9);
+                this->CActorParam_applyDamage((float)(-(int)f15), dmgKind, 0, 0);
+                SysWinLog_GateDevice(this);
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 9)) this->CBattleState_clearStatusId(9);
                 break;
             }
             case 0x6A: case 0x6B: case 0x6C: case 0x6D: {
-                if (self->CActorParam_isBattleLocked()) break;
+                if (this->CActorParam_isBattleLocked()) break;
                 int a = e->unk10;
                 float f15 = 1.0f;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x8D)) {
-                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(self), 0x8D);
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x8D)) {
+                    cf::CBattleStateEntry* d = (cf::CBattleStateEntry*)findBattleStatusEntry(reinterpret_cast<cf::CBattleState*>(this), 0x8D);
                     f15 = 1.0f - 0.01f * (float)d->unk10;
                 }
-                if (self->CActorParam_getStatusTable()) {
+                if (this->CActorParam_getStatusTable()) {
                     int sv;
-                    if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x57, &sv)) {
+                    if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x57, &sv)) {
                         f15 = f15 - 0.01f * (float)sv;
                     }
                 }
@@ -984,7 +984,7 @@ unk28_done:
                 if (a < 1) a = 0;
                 int type = classifyBattleCommand(e->unk0C);
                 cf::CActorParam_UnkStruct3* block =
-                    (cf::CActorParam_UnkStruct3*)self->CActorParam_getBattleParams();
+                    (cf::CActorParam_UnkStruct3*)this->CActorParam_getBattleParams();
                 int v = 0;
                 if ((u32)(type - 1) <= 2) {
                     switch (type) {
@@ -1027,12 +1027,12 @@ unk28_done:
                     a = -a;
                 } else {
                     cf::CActorParam_UnkStruct3* block =
-                    (cf::CActorParam_UnkStruct3*)self->CActorParam_getBattleParams();
+                    (cf::CActorParam_UnkStruct3*)this->CActorParam_getBattleParams();
                     float ratio = (float)block->field_62 / 100.0f;
-                    if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x13)) {
+                    if (!isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x13)) {
                 int type = classifyBattleCommand(e->unk0C);
                 cf::CActorParam_UnkStruct3* block =
-                    (cf::CActorParam_UnkStruct3*)self->CActorParam_getBattleParams();
+                    (cf::CActorParam_UnkStruct3*)this->CActorParam_getBattleParams();
                 int v = 0;
                 if ((u32)(type - 1) <= 2) {
                     switch (type) {
@@ -1078,10 +1078,10 @@ unk28_done:
                     }
                 }
                 if (a <= 0) break;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 1)) a = 0;
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 1)) a = 0;
                 int dmgKind = (a >= 0) ? 2 : 3;
-                self->CActorParam_applyDamage((float)(-a), dmgKind, 0, 0);
-                SysWinLog_GateDevice(self);
+                this->CActorParam_applyDamage((float)(-a), dmgKind, 0, 0);
+                SysWinLog_GateDevice(this);
                 int code;
                 switch (classifyBattleCommand(e->unk0C)) {
                 case 4: code = 0x42; break;
@@ -1093,44 +1093,44 @@ unk28_done:
                 default: code = 0; break;
                 }
                 cf::CfObjectMove* move =
-                    (cf::CfObjectMove*)(cf::CfObjectActor*)self->CBattleState_getOwner();
+                    (cf::CfObjectMove*)(cf::CfObjectActor*)this->CBattleState_getOwner();
                 if (move) bindIndexedEffect(code, static_cast<cf::CfObjectMove*>(move));
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) self->CBattleState_clearStatusId(9);
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 9)) this->CBattleState_clearStatusId(9);
                 break;
             }
             case 0x7D: {
-                if (self->CActorParam_isBattleLocked()) break;
+                if (this->CActorParam_isBattleLocked()) break;
                 float f15 = (float)e->unk10;
                 if (f15 < 1.0f) f15 = 1.0f;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 1)) f15 = 0.0f;
-                self->CActorParam_applyDamage((float)(-(int)f15), 0xA, 0, 0);
-                SysWinLog_ScanDeviceOwners(self);
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 9)) self->CBattleState_clearStatusId(9);
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 1)) f15 = 0.0f;
+                this->CActorParam_applyDamage((float)(-(int)f15), 0xA, 0, 0);
+                SysWinLog_ScanDeviceOwners(this);
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 9)) this->CBattleState_clearStatusId(9);
                 break;
             }
             case 0x94: {
-                self->CActorParam_addArtsGauge((float)(-e->unk10));
-                if (self->CActorParam_getArtsGauge() > 0.0f) break;
+                this->CActorParam_addArtsGauge((float)(-e->unk10));
+                if (this->CActorParam_getArtsGauge() > 0.0f) break;
                 e->unk30 &= ~1;
-                self->CBattleState_applyEventEntry(e);
+                this->CBattleState_applyEventEntry(e);
                 break;
             }
             case 0x97: {
-                self->CActorParam_addArtsGauge((float)e->unk14 / 10.0f * (float)e->unk16 + (float)e->unk10 / 10.0f);
+                this->CActorParam_addArtsGauge((float)e->unk14 / 10.0f * (float)e->unk16 + (float)e->unk10 / 10.0f);
                 break;
             }
             case 0xC5: {
-                void* p = self->CBattleState_getOwner();
+                void* p = this->CBattleState_getOwner();
                 if (!p) break;
                 int v = ((cf::CfObjectActor*)p)->CObjectParam_getSelfObjectId();
                 void* actor = MapFx_ResolveOwner(findObjectById(v));
                 if (!actor) break;
                 if (reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_isBattleLocked()) break;
-                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_addHate(self->CBattleState_getOwner(), (float)e->unk10, (float)e->unk14, (float)e->unk16);
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_addHate(this->CBattleState_getOwner(), (float)e->unk10, (float)e->unk14, (float)e->unk16);
                 break;
             }
             case 0xC6: {
-                void* dmgSrc = self->CBattleState_getOwner();
+                void* dmgSrc = this->CBattleState_getOwner();
                 broadcastBattleDamage(getInstance__Q22cf14CBattleManagerFv(), dmgSrc, e->unk10, e->unk14, e->unk16, 0, 0);
                 break;
             }
@@ -1142,7 +1142,7 @@ unk28_done:
                 if (e->unk10 == -1) break;
                 void* actor = MapFx_ResolveOwner(findObjectById(e->unk10));
                 if (actor && !reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_isBattleLocked()) break;
-                self->CBattleState_clearStatusId(0x11);
+                this->CBattleState_clearStatusId(0x11);
                 break;
             }
             case 0x112: {
@@ -1162,42 +1162,42 @@ unk28_done:
                 break;
             }
             case 0x10: {
-                if (!self->CBattleState_getOwner()) break;
-                if (((cf::CfObjectActor*)self->CBattleState_getOwner())->mTargetC4 == 0) break;
+                if (!this->CBattleState_getOwner()) break;
+                if (((cf::CfObjectActor*)this->CBattleState_getOwner())->mTargetC4 == 0) break;
                 // mTargetC4 points at the move-target data (UnkTargetData,
                 // declared by code_8027513C.cpp).
                 UnkTargetData* target = (UnkTargetData*)
-                    ((cf::CfObjectActor*)self->CBattleState_getOwner())->mTargetC4;
+                    ((cf::CfObjectActor*)this->CBattleState_getOwner())->mTargetC4;
                 if (!(target->field_0x4EC & 2)) break;
-                if (!(((cf::CfObjectActor*)self->CBattleState_getOwner())->unk64 & 2)) break;
-                self->CBattleState_applyEventEntry(e);
+                if (!(((cf::CfObjectActor*)this->CBattleState_getOwner())->unk64 & 2)) break;
+                this->CBattleState_applyEventEntry(e);
                 break;
             }
             case 0x73: case 0x74: case 0x75: case 0x76:
             case 0x77: case 0x78: case 0x79: case 0x7A:
             case 0x7B: case 0x7C: {
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x117)) break;
-                void* p = self->CBattleState_getOwner();
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x117)) break;
+                void* p = this->CBattleState_getOwner();
                 if (!p) break;
-                if (self->unk3374 & 0x40000) {
-                    u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData());
+                if (this->unk3374 & 0x40000) {
+                    u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(this->CActorState::unk4)->getStateData());
                     if ((t & 0x3F) == 0x16) break;
                 }
                 {
                     CfEnumListHolder holder;
                     void* list = holder.get();
-                    if (((cf::CfObjectActor*)self->CBattleState_getOwner())->unk64 & 2) {
+                    if (((cf::CfObjectActor*)this->CBattleState_getOwner())->unk64 & 2) {
                         startEnumObjects(list, 0x4000, 0x800);
-                        void* tgt = ((cf::CfObjectActor*)self->CBattleState_getOwner())->CfObject_getPosVector();
+                        void* tgt = ((cf::CfObjectActor*)this->CBattleState_getOwner())->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, (float)e->unk14);
                     } else {
                         startEnumObjects(list, 0x20, 0x800);
-                        void* tgt = ((cf::CfObjectActor*)self->CBattleState_getOwner())->CfObject_getPosVector();
+                        void* tgt = ((cf::CfObjectActor*)this->CBattleState_getOwner())->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, (float)e->unk14);
                     }
                     cf::CBattleStateEntry st;
                     std::memset(&st, 0, sizeof(st));
-                    st.unk00 = ((cf::CfObjectActor*)self->CBattleState_getOwner())->field_0x74;
+                    st.unk00 = ((cf::CfObjectActor*)this->CBattleState_getOwner())->field_0x74;
                     st.unk04 = 0;
                     u16 id = e->unk0C;
                     if (id - 0x73 <= 3) {
@@ -1214,9 +1214,9 @@ unk28_done:
                         st.unk20 = st.unk24;
                     }
                     if (id == 0x74 || id == 0x79) {
-                        if (self->CActorParam_getStatusTable()) {
+                        if (this->CActorParam_getStatusTable()) {
                             int sv;
-                            if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x5B, &sv)) {
+                            if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x5B, &sv)) {
                                 st.unk10 = (int)((float)st.unk10 * (1.0f + (float)sv / 100.0f));
                             }
                         }
@@ -1226,7 +1226,7 @@ unk28_done:
                 loop73:
                     {
                         void* actor = MapFx_ResolveOwner(getObjectAt(holder.get(), i2));
-                        if (self->CBattleState_getOwner() != actor) {
+                        if (this->CBattleState_getOwner() != actor) {
                             if (!isBattleStatusActive((u8*)actor + 8, st.unk0C)) {
                                 CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
                             }
@@ -1241,25 +1241,25 @@ unk28_done:
                 break;
             }
             case 0x125: case 0x126: case 0x127: case 0x128: case 0x129: case 0x12A: {
-                void* p = self->CBattleState_getOwner();
+                void* p = this->CBattleState_getOwner();
                 if (!p) break;
                 float f15 = (float)e->unk14;
-                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(self), 0x109)) f15 *= 2.5f;
+                if (isBattleStatusActive(reinterpret_cast<cf::CBattleState*>(this), 0x109)) f15 *= 2.5f;
                 {
                     CfEnumListHolder holder;
                     void* list = holder.get();
-                    if (((cf::CfObjectActor*)self->CBattleState_getOwner())->unk64 & 2) {
+                    if (((cf::CfObjectActor*)this->CBattleState_getOwner())->unk64 & 2) {
                         startEnumObjects(list, 0x20, 0x800);
-                        void* tgt = ((cf::CfObjectActor*)self->CBattleState_getOwner())->CfObject_getPosVector();
+                        void* tgt = ((cf::CfObjectActor*)this->CBattleState_getOwner())->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, f15);
                     } else {
                         startEnumObjects(list, 0x4000, 0x800);
-                        void* tgt = ((cf::CfObjectActor*)self->CBattleState_getOwner())->CfObject_getPosVector();
+                        void* tgt = ((cf::CfObjectActor*)this->CBattleState_getOwner())->CfObject_getPosVector();
                         __ct__800FB044(holder.get(), tgt, 0, f15);
                     }
                     cf::CBattleStateEntry st;
                     std::memset(&st, 0, sizeof(st));
-                    st.unk00 = ((cf::CfObjectActor*)self->CBattleState_getOwner())->field_0x74;
+                    st.unk00 = ((cf::CfObjectActor*)this->CBattleState_getOwner())->field_0x74;
                     st.unk20 = 1.0f;
                     int slotId = 0;
                     switch (e->unk0C) {
@@ -1283,7 +1283,7 @@ unk28_done:
                             found->unk20 = st.unk20;
                             if (found->unk10 != nv) {
                                 found->unk10 = nv;
-                                if (nv == 0) self->CBattleState_applyEventEntry(found);
+                                if (nv == 0) this->CBattleState_applyEventEntry(found);
                                 releaseVisionSlot((void*)actor, 0);
                             }
                         } else {
@@ -1304,7 +1304,7 @@ unk28_done:
             }
         }
         if (!(e->unk30 & 1) && e->unk20 <= 0.0f) {
-            reinterpret_cast<cf::CBattleState*>(self)->CBattleState_reapplyStatusEntry(i);
+            reinterpret_cast<cf::CBattleState*>(this)->CBattleState_reapplyStatusEntry(i);
         }
     }
 }
@@ -2298,14 +2298,14 @@ void cf::CActorParam::CActorParam_updateHateEntries(float dt) {
 // 0x2B/0x2D into another), clamps the sums, derives per-axis gauge deltas
 // from f1, applies arts-param percentage scaling (0x5C/0x5D/0x9D/0x5E/0x5F),
 // then decays the 3x8 arts matrix (unk7C/unk80) with the scaled deltas.
-void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, float f1) {
+void cf::CActorParam::CActorParam_decayArtsMatrix(float f1) {
     cf::CBattleManager* bm = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
-    u8 ch = bm->mChain.unk0[2];
+    u8 ch = bm->mChain.mHead.field_2;
     if (ch >= 1 && ch <= 0x18) return;
     int sum4 = 0;
     int sum5 = 0;
     cf::CBattleStateEntry* es = reinterpret_cast<cf::CBattleStateEntry*>(
-        static_cast<cf::CBattleState&>(*self).unk8);
+        static_cast<cf::CBattleState&>(*this).unk8);
     for (int i = 0; i < 0x34; i++) {
         cf::CBattleStateEntry* e = &es[2 * i];
         switch (e->unk0C) {
@@ -2339,24 +2339,24 @@ void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, fl
     float f29 = f31;
     float f28 = f30;
     cf::CActorParamF64Conv ux;
-    if (self->CActorParam_getStatusTable() != NULL) {
+    if (this->CActorParam_getStatusTable() != NULL) {
         int sv;
-        if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x5C, &sv)) {
+        if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x5C, &sv)) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
             f31 /= (float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818;
         }
-        if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x5D, &sv)) {
+        if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x5D, &sv)) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
             f29 = f31 / ((float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818);
         }
-        if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x9D, &sv)) {
+        if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x9D, &sv)) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
             f28 = f30 / ((float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818);
         }
-        if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x5E, &sv) &&
+        if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x5E, &sv) &&
             cf::CfGameManager::getCurrentSlotIndex() != 4) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
@@ -2365,7 +2365,7 @@ void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, fl
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
             f1 /= (float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818;
         }
-        if (IdTable_GetSum(self->CActorParam_getStatusTable(), 0x5F, &sv) &&
+        if (IdTable_GetSum(this->CActorParam_getStatusTable(), 0x5F, &sv) &&
             cf::CfGameManager::getCurrentSlotIndex() == 4) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
@@ -2378,16 +2378,16 @@ void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, fl
     float f26 = lbl_eu_806677E4;
     for (int artsRow = 0; artsRow < 3; artsRow++) {
         for (int artsCol = 0; artsCol < 8; artsCol++) {
-            void* arts = self->CActorParam_getArtsSet();
+            void* arts = this->CActorParam_getArtsSet();
             if (!getArtsSlotRC(arts, artsRow, artsCol)) continue;
-            void* arts2 = self->CActorParam_getArtsSet();
+            void* arts2 = this->CActorParam_getArtsSet();
             cf::CAttackParam* p = (cf::CAttackParam*)getArtsParamRC2(arts2, artsRow, artsCol);
-            u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F;
+            u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(this->CActorState::unk4)->getStateData()) & 0x3F;
             if (t == 0x16 || t == 0x17 || t == 0xF) {
                 // no unk7C decay for these actor states
             } else {
-                u32 t2 = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->getStateData()) & 0x3F;
-                if (t2 != 0x18 && !isBattleStatusActive((u8*)self + 8, 0xF)) {
+                u32 t2 = *(u32*)(reinterpret_cast<cf::CObjectState*>(this->CActorState::unk4)->getStateData()) & 0x3F;
+                if (t2 != 0x18 && !isBattleStatusActive((u8*)this + 8, 0xF)) {
                     switch (p->unk48) {
                     case 0xD5: case 0x11E: case 0x107: case 0xFA:
                         if (p->unk7C > f26) {
@@ -2404,8 +2404,8 @@ void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(cf::CActorParam* self, fl
                     }
                 }
             }
-            if (!isBattleStatusActive((u8*)self + 8, 0xF) && !isBattleStatusActive((u8*)self + 8, 0xC) &&
-                !isBattleStatusActive((u8*)self + 8, 0xF6)) {
+            if (!isBattleStatusActive((u8*)this + 8, 0xF) && !isBattleStatusActive((u8*)this + 8, 0xC) &&
+                !isBattleStatusActive((u8*)this + 8, 0xF6)) {
                 switch (p->unk48) {
                 case 0xD5: case 0x11E: case 0x107: case 0xFA:
                     if (p->unk80 > f26) {
@@ -2776,46 +2776,46 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc6(int val) {
 // idle at the default gauge with the 0x1C busy mask clear. Finally, when
 // the actor's arts-gauge type is the 0x3F28==5 group, feed the default
 // gauge value to slot 0x150.
-extern "C" void CActorParam_refreshBattleStatus__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    u32 cue = *(u32*)static_cast<cf::CBattleState&>(*self).unk1528;
+void cf::CActorParam::CActorParam_refreshBattleStatus() {
+    u32 cue = *(u32*)static_cast<cf::CBattleState&>(*this).unk1528;
     if (cue != 0) {
-        self->CBattleState_clearStatusId(cue);
+        this->CBattleState_clearStatusId(cue);
     }
     // Real inherited virtual calls: retail dispatches per call site on the
     // base subobject (adjust-this + vptr reload each time; no cached pointer).
     for (int i = 0; i < 0x20; i++) {
-        cf::CBattleStateEntry* e = self->CBattleState_getEventEntry(i);
+        cf::CBattleStateEntry* e = this->CBattleState_getEventEntry(i);
         if (e->unk0C != 0) {
-            cf::CBattleStateEntry* e2 = self->CBattleState_getEventEntry(i);
-            if (!(e2->unk08 & 0x7000) || self->CBattleState_getEventEntry(i)->unk20 != lbl_eu_806677E4) {
-                self->CBattleState_applyEventEntry(self->CBattleState_getEventEntry(i));
+            cf::CBattleStateEntry* e2 = this->CBattleState_getEventEntry(i);
+            if (!(e2->unk08 & 0x7000) || this->CBattleState_getEventEntry(i)->unk20 != lbl_eu_806677E4) {
+                this->CBattleState_applyEventEntry(this->CBattleState_getEventEntry(i));
             }
         }
     }
     for (int i = 0; i < 0x20; i++) {
-        cf::CBattleStateEntry* e = self->CBattleState_fetchStatusEntry(i);
+        cf::CBattleStateEntry* e = this->CBattleState_fetchStatusEntry(i);
         if (e->unk0C != 0) {
-            cf::CBattleStateEntry* e2 = self->CBattleState_fetchStatusEntry(i);
-            if (!(e2->unk08 & 0x7000) || self->CBattleState_fetchStatusEntry(i)->unk20 != lbl_eu_806677E4) {
-                self->CBattleState_applyEventEntry(self->CBattleState_fetchStatusEntry(i));
+            cf::CBattleStateEntry* e2 = this->CBattleState_fetchStatusEntry(i);
+            if (!(e2->unk08 & 0x7000) || this->CBattleState_fetchStatusEntry(i)->unk20 != lbl_eu_806677E4) {
+                this->CBattleState_applyEventEntry(this->CBattleState_fetchStatusEntry(i));
             }
         }
     }
     for (int i = 0; i < 0x20; i++) {
-        cf::CBattleStateEntry* e = self->CBattleState_getStatusEntry(i);
+        cf::CBattleStateEntry* e = this->CBattleState_getStatusEntry(i);
         if (e->unk0C != 0) {
-            cf::CBattleStateEntry* e2 = self->CBattleState_getStatusEntry(i);
-            if (!(e2->unk08 & 0x7000) || self->CBattleState_getStatusEntry(i)->unk20 != lbl_eu_806677E4) {
-                self->CBattleState_applyEventEntry(self->CBattleState_getStatusEntry(i));
+            cf::CBattleStateEntry* e2 = this->CBattleState_getStatusEntry(i);
+            if (!(e2->unk08 & 0x7000) || this->CBattleState_getStatusEntry(i)->unk20 != lbl_eu_806677E4) {
+                this->CBattleState_applyEventEntry(this->CBattleState_getStatusEntry(i));
             }
         }
     }
-    if (self->CBattleState_getOwner() != NULL) {
-        cf::CfObjectActor* o1 = (cf::CfObjectActor*)self->CBattleState_getOwner();
+    if (this->CBattleState_getOwner() != NULL) {
+        cf::CfObjectActor* o1 = (cf::CfObjectActor*)this->CBattleState_getOwner();
         if (o1->unk64 & 2) {
-            cf::CfObjectActor* o2 = (cf::CfObjectActor*)self->CBattleState_getOwner();
+            cf::CfObjectActor* o2 = (cf::CfObjectActor*)this->CBattleState_getOwner();
             if (o2->unk8C_3 == 5) {
-                self->CActorParam_setTensionPoints(lbl_eu_806677E4);
+                this->CActorParam_setTensionPoints(lbl_eu_806677E4);
             }
         }
     }
@@ -3214,9 +3214,9 @@ int cf::CActorParam::CActorParam_getCurrencyBalance() {
 // (Func26) + 1; returns 1 when the row index exceeds the 0x63-row table.
 // The bdat pointer is read before the virtual call (retail keeps it in r31
 // across the call).
-extern "C" u32 CActorParam_getLevelExp__Q22cf11CActorParamFv(cf::CActorParam* self) {
+u32 cf::CActorParam::CActorParam_getLevelExp() {
     void* bdat = lbl_eu_806640DC;
-    u32 row = self->CActorParam_getArtsLevel() + 1;
+    u32 row = this->CActorParam_getArtsLevel() + 1;
     if (row > 0x63) {
         return 1;
     }
@@ -3255,32 +3255,32 @@ void cf::CActorParam::CActorParam_reinitBattleStats() {
 // us-8017fd2c: (re)initialize the 10 CActorParam_UnkStruct1 entries at
 // 0x2A84: zero the int/flag fields, -1 the unk4C id, and stamp the float
 // gauge fields (unk54..unk6C) with the sdata2 default instead of 0.
-extern "C" void CActorParam_initBattleStats__Q22cf11CActorParamFv(cf::CActorParam* self) {
+void cf::CActorParam::CActorParam_initBattleStats() {
     // Layout now matches retail (CArtsSet/CAttackSet de-virtualized); the
     // entry base is this+0x2A84 with absolute displacements.
-    cf::CActorParam_UnkStruct1* s = self->unk2A84;
+    cf::CActorParam_UnkStruct1* s = this->unk2A84;
     for (int i = 0; i < 10; i++, s++) {
-        self->unk2A84[i].unk0 = 0;
-        self->unk2A84[i].unk4 = 0;
-        self->unk2A84[i].unk48 = 0;
-        self->unk2A84[i].unk4C = -1;
-        self->unk2A84[i].unk50 = 0;
-        self->unk2A84[i].unk54 = lbl_eu_806677E4;
-        self->unk2A84[i].unk58 = lbl_eu_806677E4;
-        self->unk2A84[i].unk5C = lbl_eu_806677E4;
-        self->unk2A84[i].unk60 = lbl_eu_806677E4;
-        self->unk2A84[i].unk64 = lbl_eu_806677E4;
-        self->unk2A84[i].unk7C = 0;
-        self->unk2A84[i].unk80 = 0;
-        self->unk2A84[i].unkB8 = 0;
-        self->unk2A84[i].unk68 = lbl_eu_806677E4;
-        self->unk2A84[i].unk6C = lbl_eu_806677E4;
-        self->unk2A84[i].unk70 = 0;
-        self->unk2A84[i].unk72 = 0;
+        this->unk2A84[i].unk0 = 0;
+        this->unk2A84[i].unk4 = 0;
+        this->unk2A84[i].unk48 = 0;
+        this->unk2A84[i].unk4C = -1;
+        this->unk2A84[i].unk50 = 0;
+        this->unk2A84[i].unk54 = lbl_eu_806677E4;
+        this->unk2A84[i].unk58 = lbl_eu_806677E4;
+        this->unk2A84[i].unk5C = lbl_eu_806677E4;
+        this->unk2A84[i].unk60 = lbl_eu_806677E4;
+        this->unk2A84[i].unk64 = lbl_eu_806677E4;
+        this->unk2A84[i].unk7C = 0;
+        this->unk2A84[i].unk80 = 0;
+        this->unk2A84[i].unkB8 = 0;
+        this->unk2A84[i].unk68 = lbl_eu_806677E4;
+        this->unk2A84[i].unk6C = lbl_eu_806677E4;
+        this->unk2A84[i].unk70 = 0;
+        this->unk2A84[i].unk72 = 0;
         std::memset(s->unk8, 0, sizeof(s->unk8));
         std::memset(s->unk84, 0, sizeof(s->unk84));
-        self->unk2A84[i].mFlagsArray[0].flags = 0;
-        self->unk2A84[i].mFlagsArray[1].flags = 0;
+        this->unk2A84[i].mFlagsArray[0].flags = 0;
+        this->unk2A84[i].mFlagsArray[1].flags = 0;
     }
 }
 // us-8017fe00: push a new CActorParam_UnkStruct1 slot onto the unk2A84
@@ -3323,16 +3323,16 @@ void CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv(cf::CActorParam* self) 
 
 
 // us-8017e9xx family: thin float-forwarders onto owned gauge slots.
-extern "C" void CActorParam_applyStoredHp__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->CActorParam_addHp(self->unk17E4.field_10);
+void cf::CActorParam::CActorParam_applyStoredHp() {
+    CActorParam_addHp(unk17E4.field_10);
 }
 
-extern "C" void CActorParam_applyStoredHitCharge__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->CActorParam_addHitCharge(self->unk17E4.field_14);
+void cf::CActorParam::CActorParam_applyStoredHitCharge() {
+    CActorParam_addHitCharge(unk17E4.field_14);
 }
 
-extern "C" void CActorParam_applyStoredArtsGauge__Q22cf11CActorParamFv(cf::CActorParam* self) {
-    self->CActorParam_addArtsGauge(self->unk17E4.field_18);
+void cf::CActorParam::CActorParam_applyStoredArtsGauge() {
+    CActorParam_addArtsGauge(unk17E4.field_18);
 }
 
 // .rodata 0x10: BDAT column-name block with a leading NUL (the name is

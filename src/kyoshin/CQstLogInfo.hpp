@@ -69,27 +69,26 @@ struct CQstLogInfoFontView {
 class CQstLogInfo;
 
 // Same-TU helpers called by QstLogInfo_StepStateMachine etc. (retail names unmangled).
-// noinline: retail callers emit real `bl` branches - leaf bodies would
-// otherwise be inlined away by MWCC. extern "C" binds the call relocs to the
-// unmangled retail symbol names.
-extern "C" __declspec(noinline) void QstLogInfo_AdvanceState1To2(CQstLogInfo* self);
-extern "C" __declspec(noinline) void QstLogInfo_AdvanceState2To3(CQstLogInfo* self);
-extern "C" __declspec(noinline) void QstLogInfo_RewindState4To5(CQstLogInfo* self);
-extern "C" __declspec(noinline) void QstLogInfo_RewindState5To0(CQstLogInfo* self);
-extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnablePair(CQstLogInfo* self);
-extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* self);
+// Retail callers emit real `bl` branches. extern "C" binds the call relocs to
+// the unmangled retail symbol names.
+extern "C" void QstLogInfo_AdvanceState1To2(CQstLogInfo* self);
+extern "C" void QstLogInfo_AdvanceState2To3(CQstLogInfo* self);
+extern "C" void QstLogInfo_RewindState4To5(CQstLogInfo* self);
+extern "C" void QstLogInfo_RewindState5To0(CQstLogInfo* self);
+extern "C" void QstLogInfo_SwapAnimEnablePair(CQstLogInfo* self);
+extern "C" void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* self);
 // Quest-log sub-widget updates (called from QstLogInfo_RefreshQuestDisplay).
-extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateNameIconPane(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
-extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
     const char* table, u32 key);
-extern "C" __declspec(noinline) void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self,
     const char* table, u32 key);
-extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateBandObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
-extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v);
-extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self);
+extern "C" void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self);
 
 /* Quest-log info panel; receives its arcs through IWorkEvent::OnFileEvent. */
 class CQstLogInfo : public IWorkEvent {

@@ -16,4 +16,13 @@ class CScn;
 //
 // NOTE: deliberately NOT included by CScn.cpp - the provisional
 // u32(u8*) definition there must stay verbatim for its match.
-extern "C" void* Scn_QueryUnk80State(CScn* scene);
+// The returned object is the scene's fade-color block; its four floats live
+// at +0/+4/+8/+C (retail compares +0xC against the remaining fade fraction).
+struct ScnFadeColor {
+    f32 field_00;
+    f32 field_04;
+    f32 field_08;
+    f32 field_0C;
+};
+
+extern "C" ScnFadeColor* Scn_QueryUnk80State(CScn* scene);

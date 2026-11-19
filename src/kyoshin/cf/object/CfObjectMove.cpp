@@ -7,22 +7,15 @@
 #include "kyoshin/cf/CfResObjImpl.hpp"
 // no shield needed (CfResObjImpl.hpp decl spelling aligned).
 // Owning-class virtuals for the +0xC4 target (CActParamAnim family: this TU's
-// mTargetC4 is the +0xD0 CActParamAnimGame). Five of this header's canonical
-// decls clash with TU-visible forms (same clash family as
-// CModelDispEquip.hpp's hidden form): 5-arg func_8004B9D4 vs the TU-local
-// 4-arg form, s32-id Scn_FindCamItem vs the TU-local int-index form, int
-// ScnRes_VertRayForward_E398 vs harness_catalog's void* form, void* simGetLeafActData vs the
-// harness form, and float lbl_eu_8066A200 vs the const-f32 form. None is used
-// by inline code in that header (decls only), so hide them for the include;
-// all TU call sites resolve after the #undefs and are unaffected.
-#define func_8004B9D4 func_8004B9D4_hidden
-// Scn_FindCamItem: unified on `void*(void*, int)`
-#define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_hidden
-#define simGetLeafActData simGetLeafActData_hidden
+// mTargetC4 is the +0xD0 CActParamAnimGame). The former three declaration
+// shields have been removed: CActParamAnim.hpp now declares func_8004B9D4 with
+// the canonical (void*, int, int, int, int) shape used by this TU and its other
+// callers, and the ScnRes_VertRayForward_E398 / simGetLeafActData forms visible
+// here already agree. Scn_FindCamItem is unified on `void*(void*, int)`;
+// no declaration is renamed around this include any more.
+// Canonical declarations live with their owning headers only.
 #include "kyoshin/action/CActParamAnim.hpp"
-#undef ScnRes_VertRayForward_E398
-#undef simGetLeafActData
-#undef func_8004B9D4
+
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
 #include <math.h>
@@ -147,22 +140,22 @@ cf::CfObjectMove::~CfObjectMove() {
 
 // Wave-63: override of CfObject_runMoveUpdate (+0x60). Free-function Fv
 // form keeps the Unk linker name that hand-built tables reference.
-extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
     // Per-frame movement update: run the base position/state pair, then (when
     // no menu/battle state is active) refresh the movement (CfObjectMove_refreshPosition) and
     // release the two +0xC8/+0xCC targets. With a model sub-object present the
     // +0x1AC slot forwards the +0xB4/+0xB8 words, and the +0x38 sub-object
     // receives the mode-dependent advance notification before the movement
     // value is fed to the CCharEffect slot helper.
-    self->CfObject_refreshSubB0();
-    self->CfObject_updateMoveRate();
+    this->CfObject_refreshSubB0();
+    this->CfObject_updateMoveRate();
     if (func_800829B8__Q22cf13CfGameManagerFv() == 0) {
-        CfObjectMove_refreshPosition(self);
+        CfObjectMove_refreshPosition(this);
         // Pointer-induction release walk (retail steps the slot pointer by 4
         // with a separate counter).
         void** slot;
         int i = 0;
-        slot = &self->mTargetC8;
+        slot = &this->mTargetC8;
         while (i < 2) {
             if (*slot != 0) {
                 tickAnimFrame(*slot);
@@ -171,19 +164,19 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
             slot++;
         }
     }
-    if (CfModel_GetFlag7A8(self) != 0) {
-        u32 b4 = ((cf::CfObjectMoveB4View*)self)->field_B4;
+    if (CfModel_GetFlag7A8(this) != 0) {
+        u32 b4 = (u32)this->field_B4;
         if (b4 != 0) {
-            self->CfObjectModel_bindModelTo((cf::CfObject*)b4, (const char*)((cf::CfObjectMoveB4View*)self)->field_B8);
+            this->CfObjectModel_bindModelTo((cf::CfObject*)b4, this->field_B8);
         }
     }
     int pointEnable = 0;
     int cond = 0;
     int effReady = 0;
     int scaleHi = 0;
-    if (self->mSubObj38 != 0) {
+    if (this->mSubObj38 != 0) {
         // Global-mode gate: the two flag reads are kept separate (volatile
-        // casts; the extern itself is non-volatile to match CSystemWindow.hpp
+        // casts; the extern itthis is non-volatile to match CSystemWindow.hpp
         // and the CUICfManager.cpp definition) so MWCC emits the retail double
         // lwz of lbl_eu_80663E24 (r0 for the mode test, r5 for the +0x40000
         // advance gate).
@@ -194,24 +187,24 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
             cond = 0;
         }
         if (cond == 0) {
-            ((cf::CfObject*)self->mSubObj38)->CfObject_setPosXYZ();
-        } else if (((self->unk64 & 0x8) != 0 || (self->unk64 & 0x4) != 0) && (g1 & 0x40000) != 0) {
-            ((cf::CfObject*)self->mSubObj38)->CfObject_setPosXYZ();
+            ((cf::CfObject*)this->mSubObj38)->CfObject_setPosXYZ();
+        } else if (((this->unk64 & 0x8) != 0 || (this->unk64 & 0x4) != 0) && (g1 & 0x40000) != 0) {
+            ((cf::CfObject*)this->mSubObj38)->CfObject_setPosXYZ();
         }
-        if ((self->unk64 & 0x2) != 0 || (self->unk64 & 0x4) != 0) {
-            if (self->mSubObj98 != 0) {
-                effReady = (self->mSubObj98->field_7A4 & 0x04000000) == 0;
+        if ((this->unk64 & 0x2) != 0 || (this->unk64 & 0x4) != 0) {
+            if (this->mSubObj98 != 0) {
+                effReady = (this->mSubObj98->field_7A4 & 0x04000000) == 0;
             }
-            if (((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect() != 0) {
-                if (self->mSubObj98 != 0) {
-                    if (((CScnItemModel*)self->mSubObj98)->vfunc4C() > lbl_eu_80666A8C) {
+            if (((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect() != 0) {
+                if (this->mSubObj98 != 0) {
+                    if (((CScnItemModel*)this->mSubObj98)->vfunc4C() > lbl_eu_80666A8C) {
                         scaleHi = 1;
                     }
                 }
-if (cond == 0 && self->CfObject_checkSubReady() != 0 && effReady != 0 && scaleHi == 0) {
+if (cond == 0 && this->CfObject_checkSubReady() != 0 && effReady != 0 && scaleHi == 0) {
                     pointEnable = 1;
                 }
-                int q = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
+                int q = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
                 CharEffSetPointEnabled((void*)q, pointEnable);
             }
         }
@@ -221,11 +214,11 @@ if (cond == 0 && self->CfObject_checkSubReady() != 0 && effReady != 0 && scaleHi
 
 // Wave-63: override of CfObject_notifySubEffect (+0x6C). Free-function Fv
 // form keeps the Unk linker name that hand-built tables reference.
-extern "C" void CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+void cf::CfObjectMove::CfObject_UnkVirtualFunc7() {
     // Forward to the sub-object's vtable slot +0xA8 (tail virtual call).
     // No-arg CScnItemModel::getEffectActOwner matches retail's leave-r4-live
     // bctr (CfObject::syncMoveTarget would load r4).
-    cf::CfObject* sub = (cf::CfObject*)self->mSubObj38;
+    cf::CfObject* sub = (cf::CfObject*)this->mSubObj38;
     if (sub != 0) {
         reinterpret_cast<CScnItemModel*>(sub)->getEffectActOwner();
     }
@@ -234,24 +227,24 @@ extern "C" void CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 // Wave-62: override of CfObject_releaseMoveTargets (+0x68). Free-function
 // Fv form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+void cf::CfObjectMove::CfObject_releaseMoveTargets() {
     // Teardown pair (vtable +0x17C then +0x178), then release the C4 target
     // (vtable +0xE0) and the NPC movement target (vtable +0x8, flag 1),
     // clearing both pointers.
-    self->CfObjectModel_releaseModelList();  // vtable +0x17C
-    self->CfObjectModel_releaseModelSub();  // vtable +0x178
-    if (self->mTargetC4 != 0) {
+    this->CfObjectModel_releaseModelList();  // vtable +0x17C
+    this->CfObjectModel_releaseModelSub();  // vtable +0x178
+    if (this->mTargetC4 != 0) {
         // C4 target is the +0xD0 CActParamAnimGame: +0xE0 is CActParamAnim::
         // initAnimState (retail table lbl_eu_80526458, method 54).
-        reinterpret_cast< ::CActParamAnim*>(self->mTargetC4)->initAnimState();
-        self->mTargetC4 = 0;
+        reinterpret_cast< ::CActParamAnim*>(this->mTargetC4)->initAnimState();
+        this->mTargetC4 = 0;
     }
-    if (self->mTarget6C0 != 0) {
+    if (this->mTarget6C0 != 0) {
         // Redundant nested check mirrors retail's two beq targets.
-        if (self->mTarget6C0 != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->mTarget6C0)->setStateBitMask(1);
+        if (this->mTarget6C0 != 0) {
+            reinterpret_cast<cf::CObjectState*>(this->mTarget6C0)->setStateBitMask(1);
         }
-        self->mTarget6C0 = 0;
+        this->mTarget6C0 = 0;
     }
 }
 
@@ -370,15 +363,15 @@ extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
 // Wave-62: override of CfObject_updateMoveRate (+0x64). Free-function Fv
 // form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
-extern "C" void CfObject_updateMoveRate__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+void cf::CfObjectMove::CfObject_updateMoveRate() {
     float v = Scn_GetFrameDelta(lbl_eu_80663E14);
-    cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
+    cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)this;
     // The flag word is read once for the direction tests (kept in a local)
     // while the clamp-path clears re-read the member - retail reloads
     // mFlags68 (lwz r0,0x68) at each clear, so keep the test value separate.
     // :: on the constants avoids the namespace-cf copy (mangled
     // lbl_eu_80666A88__2cf) so the SDA relocs keep the retail names.
-    u32 flags = self->mFlags68;
+    u32 flags = this->mFlags68;
     if ((flags & 0x4000) != 0) {
         // Decreasing state: step the +0xA4 rate down toward the low clamp.
         // The clamp-path clears go through a separate view type so MWCC
@@ -388,9 +381,9 @@ extern "C" void CfObject_updateMoveRate__Q22cf12CfObjectMoveFv(cf::CfObjectMove*
         view->field_A4 = f;
         if (f <= ::lbl_eu_80666A88) {
             view->field_A4 = ::lbl_eu_80666A88;
-            ((cf::CfObjectMoveFlags68View*)self)->flags68 &= ~0x4000;
+            this->mFlags68 &= ~0x4000;
             if (lbl_eu_80665958 != 0) {
-                Coli_ListRemoveNode(lbl_eu_80665958, self->_60C_region);
+                Coli_ListRemoveNode(lbl_eu_80665958, this->_60C_region);
             }
         }
     } else if ((flags & 0x2000) != 0) {
@@ -399,37 +392,37 @@ extern "C" void CfObject_updateMoveRate__Q22cf12CfObjectMoveFv(cf::CfObjectMove*
         view->field_A4 = f;
         if (f >= lbl_eu_80666A94) {
             view->field_A4 = lbl_eu_80666A94;
-            ((cf::CfObjectMoveFlags68View*)self)->flags68 &= ~0x2000;
+            this->mFlags68 &= ~0x2000;
             if (lbl_eu_80665958 != 0) {
-                ColiListAppend(lbl_eu_80665958, self->_60C_region);
+                ColiListAppend(lbl_eu_80665958, this->_60C_region);
             }
         }
     }
-    if (self->mSubObj98 != 0) {
-        float spd = self->mMoveSpeed;
+    if (this->mSubObj98 != 0) {
+        float spd = this->mMoveSpeed;
         if (spd == ::lbl_eu_80666A88) {
             spd = lbl_eu_80666A94;
         }
         float factor = lbl_eu_80666A94 / spd;
-        u32 flags2 = self->mFlags68;
+        u32 flags2 = this->mFlags68;
         if ((flags2 & 0x800) != 0) {
             // Move the +0xA0 position toward the high clamp.
-            float f = factor * v + self->field_A0;
-            self->field_A0 = f;
+            float f = factor * v + this->field_A0;
+            this->field_A0 = f;
             if (f >= lbl_eu_80666A94) {
-                self->field_A0 = lbl_eu_80666A94;
-                self->mFlags68 &= ~0x800;
+                this->field_A0 = lbl_eu_80666A94;
+                this->mFlags68 &= ~0x800;
             }
         } else if ((flags2 & 0x400) != 0) {
             // Move the +0xA0 position toward the low clamp.
-            float f = self->field_A0 - factor * v;
-            self->field_A0 = f;
+            float f = this->field_A0 - factor * v;
+            this->field_A0 = f;
             if (f <= ::lbl_eu_80666A88) {
-                self->field_A0 = ::lbl_eu_80666A88;
-                self->mFlags68 &= ~0x400;
+                this->field_A0 = ::lbl_eu_80666A88;
+                this->mFlags68 &= ~0x400;
             }
         }
-        CfObjectMove_tickSpeed(self);
+        CfObjectMove_tickSpeed(this);
     }
 }
 
@@ -717,24 +710,24 @@ ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
 // Wave-62: override of CfObject_setRotVec (+0xBC). Free-function FPv form
 // keeps the Unk linker name that hand-built tables / CREvtModel reference.
 extern "C" void CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(cf::CfObjectModel* self, void* src);
-extern "C" void CfObject_setRotVec__Q22cf12CfObjectMoveFPv(cf::CfObjectMove* self, void* src) {
+void cf::CfObjectMove::CfObject_setRotVec(void* src) {
     // Z-only movement (X within epsilon but Z outside it) marks the target
     // with the 0x20 flag so its next update re-aims instead of sliding.
     const ml::CVec3* vec = (const ml::CVec3*)src;
-    if ((self->unk64 & 0x80) != 0) {
+    if ((this->unk64 & 0x80) != 0) {
         if (ml::math::abs(vec->x) > ml::epsilon ||
             ml::math::abs(vec->z) > ml::epsilon) {
-            CfObjectMoveC4FlagsView* c4 = (CfObjectMoveC4FlagsView*)self->mTargetC4;
+            CfObjectMoveC4FlagsView* c4 = (CfObjectMoveC4FlagsView*)this->mTargetC4;
             if (c4 != 0) {
                 c4->flags |= 0x20;
             }
         }
     }
-    CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
-    if (target != 0 && (self->mFlags68 & 0x4) != 0) {
+    CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)this->mTargetC4;
+    if (target != 0 && (this->mFlags68 & 0x4) != 0) {
         setTurnAngle(target, vec->y);
     }
-    CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(self, src);
+    CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv(this, src);
 }
 
 // Retail symbol is Fv but the body consumes f1 (base call, C4-gated
@@ -783,8 +776,8 @@ void CfObject_setMoveYaw__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float va
 // calcAnimBlendWeight (retail table lbl_eu_80526458, method 30) - called on
 // the owning type instead of the old CfC4Target single-slot proxy (which
 // emitted +0x08: retail reads 128(r12)).
-extern "C" int CfObject_queryTargetState__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    ::CActParamAnim* target = (::CActParamAnim*)self->mTargetC4;
+int cf::CfObjectMove::CfObject_queryTargetState() {
+    ::CActParamAnim* target = (::CActParamAnim*)this->mTargetC4;
     if (target != 0) {
         return target->calcAnimBlendWeight(0);
     }
@@ -808,19 +801,18 @@ extern "C" void CfObject_setMoveValue__Q22cf12CfObjectMoveFf(cf::CfObjectMove* s
 // Retail symbol is Fv but the body consumes f1 (store to self and to the
 // C4 target) - forced-name form with the hidden float arg (same scheme as
 // CfObject_UnkVirtualFunc32/33 below).
-extern "C" void CfObjectMove_recordMoveValue__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
-    void* target = self->mTargetC4;
-    self->mField6E8 = value;
+void cf::CfObjectMove::CfObjectMove_recordMoveValue(float value) {
+    void* target = this->mTargetC4;
+    this->mField6E8 = value;
     if (target != 0) {
         *(float*)((char*)target + 0x434) = value;
     }
 }
 
 // Wave-63: override of CObjectParam slot +0x40. Fv keeps Unk linker name
-// from lbl_eu_80529690; base call targets Model's retail UnkVirtualFunc2.
-extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
+// from lbl_eu_80529690; base call targets Model's real UnkVirtualFunc2 member.
 void* cf::CfObjectMove::CObjectParam_getParamPtr() {
-    return CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(this);
+    return this->CObjectParam_UnkVirtualFunc2();
 }
 
 
@@ -851,27 +843,27 @@ void* cf::CfObjectMove::CfObject_pushRefreshValue(float value) {
 // (ocUnit walkR feeds it the walk range). Forced-name Fv form keeps the
 // Unk linker name CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf with
 // the hidden float arg (same scheme as the writeTargetField sibling below).
-extern "C" void CfObjectMove_setNpcMoveRange__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
-    void* o = *(void**)((u8*)self + 0x6c0);
+void cf::CfObjectMove::CfObjectMove_setNpcMoveRange(float value) {
+    void* o = this->mTarget6C0;
     if (o != 0) {
         *(float*)((u8*)o + 0xd4) = value;
     }
 }
 
-extern "C" void CfObjectMove_writeTargetField__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, u16 v) {
-    void* o = *(void**)((u8*)self + 0x6c0);
+void cf::CfObjectMove::CfObjectMove_writeTargetField(int v) {
+    void* o = this->mTarget6C0;
     if (o) *(u16*)((u8*)o + 0xde) = v;
 }
 
 // Retail symbols are Fv but both bodies return a float (load from the C4
 // target, else the shared time source) - forced-name forms carrying the
 // float return (the base header declares the overrides void).
-extern "C" float CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+float cf::CfObjectMove::CfObject_getMoveSpeedRate() {
     // Getter for the value CfObject_pushRefreshValue's target writes at
     // +0x388; falls back to the shared time source when no target. The
     // shared header declares CfT_PlayRateGet void; it really returns float,
     // so call it through a cast (same as CtrlNpc.cpp).
-    void* target = self->mTargetC4;
+    void* target = this->mTargetC4;
     if (target != 0) {
         return *(float*)((char*)target + 0x388);
     }
@@ -890,10 +882,10 @@ float cf::CfObjectMove::CfObject_readRefreshValue() {
 // the bctr (ignored here; tail call takes r3 only) - forced-name form with
 // hidden args (recordMoveValue precedent). Converted from a method so the
 // widened class decl keeps compiling; same Fv symbol, same body.
-extern "C" void CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFiiiPCQ22ml5CVec3d(cf::CfObjectMove* self, int modeA, int modeB, int count, const ml::CVec3* start, double angle) {
+void cf::CfObjectMove::CfObjectMove_refreshNpcState(int modeA, int modeB, int count, const ml::CVec3* start, double angle) {
     (void)modeA; (void)modeB; (void)count; (void)start; (void)angle;
     // Dispatch to the NPC movement-target handler (tail call, r3 only).
-    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+    cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
         CtrlNpcInitMoveWindow(target);
     }
@@ -903,37 +895,37 @@ extern "C" void CfObjectMove_refreshNpcState__Q22cf12CfObjectMoveFiiiPCQ22ml5CVe
 // the bctr (ignored here; tail call takes r3 only) - forced-name form with
 // hidden args (refreshNpcState precedent). Converted from a method so the
 // widened class decl keeps compiling; same Fv symbol, same body.
-extern "C" void CfObjectMove_updateNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3fii(cf::CfObjectMove* self, const ml::CVec3* vec, float step, int flag, int angle) {
+void cf::CfObjectMove::CfObjectMove_updateNpcTarget(const ml::CVec3* vec, float step, int flag, int angle) {
     (void)vec;
     (void)step;
     (void)flag;
     (void)angle;
-    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+    cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
         CtrlNpcSetupAction(target);
     }
 }
 
-extern "C" void CfObjectMove_advanceNpcTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3(cf::CfObjectMove* self, const ml::CVec3* vec) {
+void cf::CfObjectMove::CfObjectMove_advanceNpcTarget(const ml::CVec3* vec) {
     (void)vec;
-    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+    cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
         CtrlNpcStoreTargetActivate(target);
     }
 }
 
-extern "C" void CfObjectMove_commandNpcTarget__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, int arg) {
+void cf::CfObjectMove::CfObjectMove_commandNpcTarget(int arg) {
     (void)arg;
-    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+    cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
         func_80094E44(target);
     }
 }
 
-extern "C" void CfObjectMove_restartNpcTarget__Q22cf12CfObjectMoveFiii(cf::CfObjectMove* self, int a, int b, int c) {
+void cf::CfObjectMove::CfObjectMove_restartNpcTarget(int a, int b, int c) {
     (void)a; (void)b; (void)c;
     // Tail-call the NPC movement-target handler (r3 only); see Func7/8/12/13.
-    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+    cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
         CtrlNpcArmMoveTarget5(target);
     }
@@ -1087,11 +1079,11 @@ void cf::CfObjectMove::CfObjectModel_detachEffectSlot(void* arg) {
 
 // Retail symbol is Fv but the body takes a hidden arg (r4) and returns a
 // pointer (the CfGameManager loader result, or 0) - forced-name form.
-extern "C" void* CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* self, void* param) {
-    void* a = self->mField6DC;
-    bool cond = (a != 0 && self->mField6E0 != 0);
+void* cf::CfObjectMove::CfObjectMove_loadResourceById(u32 param) {
+    void* a = this->mField6DC;
+    bool cond = (a != 0 && this->mField6E0 != 0);
     if (cond) {
-        return createEffectForPlayer__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
+        return createEffectForPlayer__Q22cf13CfGameManagerFv(param, (u32)a, (u32)this->mField6E0);
     }
     return 0;
 }
@@ -1166,11 +1158,11 @@ extern "C" void CfObjectMove_setSubB0FieldE(cf::CfObjectMove* self, unsigned sho
 }
 
 extern "C" void CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_IsInUse_C860();
+    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->ResObj_IsInUse_C860();
 }
 
 void cf::CfObjectMove::CfObject_forwardSubObject() {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->CfObjectMove_relaySubB0Slot14();
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfObjectMove_relaySubB0Slot14();
 }
 
 void cf::CfObjectMove::virtCall10(){
@@ -1181,25 +1173,25 @@ void cf::CfObjectMove::virtCall10(){
 
 // Retail symbol is Fv but the body is a bcctr thunk that leaves the caller's
 // r4/r5 live into CfResObjImpl::ResObj_SetWork_CD68 (slot +0x30).
-extern "C" void CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFUlUl(cf::CfObjectMove* self, int idx, int value) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)self + 0xb0))->ResObj_SetWork_CD68(idx, value);
+void cf::CfObjectMove::CfObject_setAnimSlotEntry(u32 idx, u32 value) {
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->ResObj_SetWork_CD68(idx, value);
 }
 
 // Retail symbol is Fv but the body is a bcctr thunk that leaves the caller's
 // r4 live into CfResObjImpl::ResObj_GetWork_CCBC (slot +0x34).
 u32 cf::CfObjectMove::CfObject_getSlotBits(u32 idx) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->ResObj_GetWork_CCBC(idx);
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->ResObj_GetWork_CCBC(idx);
 }
 
 // Wave-62: override of CfObject_refreshSubB0 (+0x80). Free-function Fv form
 // keeps the Unk linker name that hand-built tables / CREvtModel reference.
-extern "C" void CfObject_refreshSubB0__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+void cf::CfObjectMove::CfObject_refreshSubB0() {
     // Double-hop through the +0xB0 sub-object's vtable slots +0x0C and
     // +0x10 (Shift-padded view: the vptr sits at object+0x10). Retail
     // reloads mSubObjB0 for each call, so keep the two calls as separate
     // member accesses rather than a cached pointer.
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->ResObj_DispatchState_CCE0();
-    reinterpret_cast<cf::CfResObjImpl*>(self->mSubObjB0)->CfResObj_noop10();
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->ResObj_DispatchState_CCE0();
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_noop10();
 }
 
 
@@ -1272,7 +1264,7 @@ void cf::CfObjectMove::CfObjectModel_setModelVisible(int flag) {
 }
 
 void* cf::CfObjectMove::CfObjectModel_checkTargetNode(void* arg) {
-    reinterpret_cast<cf::CfResObjImpl*>(*(void**)((u8*)this + 0xb0))->CfResObj_unk48();
+    reinterpret_cast<cf::CfResObjImpl*>(this->mSubObjB0)->CfResObj_unk48();
 }
 
 
@@ -2239,29 +2231,29 @@ extern "C" void CfResObj_noop40() {}
 extern "C" void CfResObj_noop28() {}
 
 // typed data sections - source shape for retail bytes (replaces absorb blobs)
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC550[0x20] = "mapATR\0def_mount\0bat_mount";
+__attribute__((used)) const char lbl_eu_804FC550[0x20] = "mapATR\0def_mount\0bat_mount";
 
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A88 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A8C = 0.9f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A90 = 30.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A94 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A98 = 3.2399998f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A9C = 0.4f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AA0 = 1.4f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AA4 = 0.1f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AA8 = 0.7f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AAC = 0.03f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AB0 = 0.06f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AB4 = 0.05f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AB8 = 0.009259259f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666ABC = 40.743664f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AC0 = -0.1f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AC4 = 0.3f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AC8 = 10.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666ACC = 10000.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AD0 = 0.5f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AD4 = 4.0f;
-__declspec(section ".sdata2") __attribute__((used, aligned(8))) const float lbl_eu_80666AD8[2] = {2.4f, 0.0f};
+__attribute__((used)) const float lbl_eu_80666A88 = 0.0f;
+__attribute__((used)) const float lbl_eu_80666A8C = 0.9f;
+__attribute__((used)) const float lbl_eu_80666A90 = 30.0f;
+__attribute__((used)) const float lbl_eu_80666A94 = 1.0f;
+__attribute__((used)) const float lbl_eu_80666A98 = 3.2399998f;
+__attribute__((used)) const float lbl_eu_80666A9C = 0.4f;
+__attribute__((used)) const float lbl_eu_80666AA0 = 1.4f;
+__attribute__((used)) const float lbl_eu_80666AA4 = 0.1f;
+__attribute__((used)) const float lbl_eu_80666AA8 = 0.7f;
+__attribute__((used)) const float lbl_eu_80666AAC = 0.03f;
+__attribute__((used)) const float lbl_eu_80666AB0 = 0.06f;
+__attribute__((used)) const float lbl_eu_80666AB4 = 0.05f;
+__attribute__((used)) const float lbl_eu_80666AB8 = 0.009259259f;
+__attribute__((used)) const float lbl_eu_80666ABC = 40.743664f;
+__attribute__((used)) const float lbl_eu_80666AC0 = -0.1f;
+__attribute__((used)) const float lbl_eu_80666AC4 = 0.3f;
+__attribute__((used)) const float lbl_eu_80666AC8 = 10.0f;
+__attribute__((used)) const float lbl_eu_80666ACC = 10000.0f;
+__attribute__((used)) const float lbl_eu_80666AD0 = 0.5f;
+__attribute__((used)) const float lbl_eu_80666AD4 = 4.0f;
+__attribute__((used, aligned(8))) const float lbl_eu_80666AD8[2] = {2.4f, 0.0f};
 
 // Hand-assembled vtable data for this unit (the class is still
 // __declspec(novtable)); retail keeps it in this TU's .data.

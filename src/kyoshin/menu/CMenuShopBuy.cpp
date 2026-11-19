@@ -153,7 +153,7 @@ extern "C" bool ShopBuy_HasInstance() { return lbl_eu_806642F8 != 0; }
 // Phase 0 -> 1 (open): once the background, title bar and item box line are
 // all ready, run the open sequence (title bar + item box line) and play the
 // open sound, then advance the phase byte at 0x6F8.
-extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
+extern "C" void ShopBuy_OpenPhase(CMenuShopBuy* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
         if (isInitialized(&self->mTitleAHelp) != 0) {
             if (self->mItemBoxLine.GetSelectReady() != 0) {
@@ -168,7 +168,7 @@ extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self) {
 
 // Phase 1 -> 2 (advance): once the title bar is idle and the item box line
 // is ready, move to the next phase.
-extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
+extern "C" void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
         if (self->mItemBoxLine.IsReadyFlag() != 0) {
             self->mState = 2;
@@ -179,7 +179,7 @@ extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
 // Phase 2 (interaction): poll the pad and drive the item-box line. The two
 // branches differ only in the flag layout (input-enabled vs pointer-input
 // controller); each handler ends by jumping to the shared focus-refresh.
-extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
+extern "C" void ShopBuy_HandleInput(CMenuShopBuy* self) {
     if (MenuTutorialIsCreated() != 0) return;
 
     // Timer clamped to lbl_eu_80667A28, reset to lbl_eu_80667A20 on confirm.
@@ -268,7 +268,7 @@ extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self) {
 
 // Close: same idle+ready guard as ShopBuy_AdvancePhase, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
-extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self) {
+extern "C" void ShopBuy_MarkClosing(CMenuShopBuy* self) {
     if (self->mTitleAHelp.isIdle() != 0) {
         if (self->mItemBoxLine.IsReadyFlag() != 0) {
             self->mField54 = 1;

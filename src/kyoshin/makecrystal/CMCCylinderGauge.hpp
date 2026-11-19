@@ -23,14 +23,14 @@ public:
     void decrementLevel();
     u8 getLevel();
     void setLevel(u8);
-    DECOMP_DONT_INLINE void updateIn();
-    DECOMP_DONT_INLINE void updateFill();
-    DECOMP_DONT_INLINE void updateOut();
-    DECOMP_DONT_INLINE void updateFull();
-    DECOMP_DONT_INLINE void bindInAnim();
-    DECOMP_DONT_INLINE void bindUpAnim();
-    DECOMP_DONT_INLINE void bindFullAnim();
-    DECOMP_DONT_INLINE void bindOutAnim();
+    void updateIn();
+    void updateFill();
+    void updateOut();
+    void updateFull();
+    void bindInAnim();
+    void bindUpAnim();
+    void bindFullAnim();
+    void bindOutAnim();
 
     nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; //0x4
     nw4r::lyt::Layout* mLayout;                           //0x8

@@ -64,12 +64,11 @@ extern "C" {
     void MenuSnd_SetSlotsPause_8890(u32);
     void CfSoundMan_PlayRequest(f32, int, int, int);
     void func_800853C8__Q22cf13CfGameManagerFv();
-    void setPresentationFlag__Q22cf13CfGameManagerFv(bool);
+    // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
     // CMenuPause factory constructor imports.
     void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
     u32 getWorkMem__17CWorkThreadSystemFv();
-    void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 
     // Init() resource/layout helpers.
     void* getHandleMEM2__Q23mtl10MemManagerFv();

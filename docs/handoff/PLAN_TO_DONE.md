@@ -24,16 +24,16 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 7 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 8 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 14,473 / 19,310 (74.9%); checkpoint 6 was 14,427 (+46; 107 better, 49 worse; 3 functions lost 100%, see §5 c7 debts) |
-| Units complete (linked) | 618 / 1,199 |
-| Matched code / data bytes | 43.0% / 52.4% |
-| Unmatched functions by area | kyoshin 3,238 · monolib 885 · CriWare 340 · nw4r 227 · RVL_SDK 191 · PowerPC_EABI_Support 2 |
-| Faithful hard counts | label 45,864 · mangled_c 2,585 · section 1,414 · offset_cast 2,669 · view_struct 2,736 · noinline 485 · decl_shield 32 · volatile 153 · rule 275 · rtti_off 18 · foreign_data 555 |
-| Faithful soft counts | field_0x 28,228 · unk_name 1,082 · addr_func 1,011 |
+| Functions at 100% | 14,502 / 19,310 (75.1%); checkpoint 7 was 14,473 (+29; 151 better, 65 worse; 10 objdiff-only drops, see §5 c8 debts) |
+| Units complete (linked) | 617 / 1,198 |
+| Matched code / data bytes | 43.2% / 53.0% |
+| Unmatched functions by area | kyoshin 3,177 · monolib 875 · CriWare 337 · nw4r 226 · RVL_SDK 191 · PowerPC_EABI_Support 2 |
+| Faithful hard counts | label 44,589 · mangled_c 2,222 · section 1,126 · offset_cast 1,865 · view_struct 1,222 · noinline 136 · decl_shield 22 · volatile 150 · rule 274 · rtti_off 15 · foreign_data 531 |
+| Faithful soft counts | field_0x 27,882 · unk_name 1,129 · addr_func 992 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
 Wave c6/c7 was a faithfulness wave: offset_cast 4,230 → 2,675 (CActorParam 894 → 11, CBattleManager 587 → 232,
@@ -52,7 +52,7 @@ spellings. Match count barely moved because the work was source-shape, not new m
 CfGameManager, LODMemMan, code_804CC2B8, code_804E36DC, AXSPB — `-O4,s` dropped CfRes 211 → 141. Under
 `-inline noauto` helpers retail does fold need the explicit `inline` keyword.
 
-Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 118/253, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109, `CFloorMap` 47/75, `CPassiveSkill` 45/127, `cf/CPartsChange` 45/84, `cf/CfCam` 43/181, `code_80135FDC` 43/124, `cf/CfNandManager` 43/48.
+Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 116/253, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109, `CFloorMap` 47/75, `cf/CPartsChange` 45/84, `CPassiveSkill` 44/127, `code_80135FDC` 43/124, `cf/CfNandManager` 43/48, `cf/CfSoundMan` 40/63.
 
 Checkpoint 7 (wave c8 + hy4 stopgap): noinline 1,108 → 485 via real unit flags (`-inline noauto`; `-O4,s` always
 paired with `-func_align 4` because `-O4,s` resets func_align to 16), real CScn/CScnRoot/CVirtualLight classes with
@@ -63,6 +63,25 @@ Gate state at checkpoint 7: link OK (missing 43), extab OK (ratcheted), text-ord
 CScn_80496B0C pad 0x130 → 0x40 ratcheted), registry OK, faithful OK (ratcheted, 68 units).
 Report: `/tmp/xb_ckpt/report_c7.json` (c6: `report_c6.json`).
 NB `run.py progress` only rebuilds `build/us/report.json` when it is missing — move it aside first.
+
+Checkpoint 8 (hy4-flash-free wave, ~60 agents in match + cleanup pipelines): noinline 485 → 136, view_struct
+2,736 → 1,222, offset_cast 2,669 → 1,865, mangled_c 2,585 → 2,222, label 45,864 → 44,589. Compiler-emitted
+vtables replaced hand tables in `_reslist_base<IUIWindow*>`, CLibCriMoviePlay, CUIBattleManager and CLoad; real
+`nw4r::lyt::Pane` visibility API replaced views; RTTI on for CBattleManager. Registry: 169 stale `FULL_MATCH`
+rows (accepted on objdiff-era 100%, failing the current byte gate on pool relocs) downgraded to `CODE_MATCH`;
+census in `/tmp/xb/h22/census_summary.md` (content alone can't pick a retail pool name: 199 `.sdata2` slots hold
+the same 2^52 magic). Orchestrator reverted hy4 counter dodges: `#define` offset names (adx_fs/mwsfdsvr), a
+TU-local CVec3 pun (CfCamEvent_1), a blank-line padding swap (CFloorMap.hpp, cost CMenuMapSelectSC 6), invented
+vtable/singleton names (CUIBattleManager, redone with compiler-emitted tables). Those bans are now in the wave brief.
+
+**`-ipa off` lesson:** CCollepedia's `-ipa off` was compensating for a `{ return 0; }` stub that `-ipa file`
+folded into callers; with the real bodies restored (they existed under invented names) the flag is neutral-to-worse
+and was dropped. Treat any `-ipa off` as suspect until the TU has no stubs.
+
+Gate state at checkpoint 8: link OK (missing 43), extab OK (26), text-order OK (ratcheted, CLibCriMoviePlay 9 → 8),
+frozen rules OK, registry OK, faithful OK (ratcheted, 109 units; COption raised 1 → 7 by hand because removing
+its `*Imports.hpp` side header exposed 6 labels the header hid — honest rise, not a regression).
+Report: `/tmp/xb_ckpt/report_c8.json`.
 
 ## 3. What this session established (do not re-derive)
 
@@ -181,6 +200,27 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0a. **Checkpoint 8 debts (2026-11-19).**
+   - CSkipTimer (wave h, h12): BeginLoad/OnFileEvent use a hand-expanded member-wise copy from a block-scoped temporary instead of the probable original `mSysWin = CSysWin(0);` / `mSkipTimer2 = CSkipTimer2(mLayout);` (implicit operator= is not inlined under the unit's real -ipa off). Accepted because it replaced 26 noinline + 19 pragmas; revisit.
+   - CTaskGame (h49): volatile re-reads moved to `volatile` field declarations on UnkClass_8004041C (counter no longer
+     sees them). Plausible if the stream state is written from a callback thread; unverified. Removing volatility
+     costs CTaskGame_updateStream 100->97.8%.
+   - CfCamEvent_1 ctor (us-80075c34) 37.6%: retail inline word copies of ml::CVec3::zero; h46's u32[3] pun reverted
+     by orchestrator. h54 researching a faithful trivially-copyable CVec3.
+   - Next-wave leads (h42): CActorParam.hpp virtual return types (UnkVirtualFunc17/32/44/45/79/80/93/97/99/104/128/139/151/162/169/172 declared void, bodies return values); CBattleState.hpp readStatusSlot/getEventSlot/fetchStatusSlot real types; CfObjectMove real member at +0x6EC and MI subobject offsets.
+   - Next-wave leads (h57): CSaveLoad 5 mangled_c (CfAward dtor address for __register_global_object; processAward Fv with hidden int).
+   - CTaskGameCf::create (h50) calls ctor by mangled ABI name to avoid placement-new null guard — counted; find the real allocation shape.
+   - String-pool blobs renamed (sMakeCrystalStrings 0x8050888C, CPresentStringPool, UIBattleArcPathStrings, sMenuEnemyNamePool, sBdatColumnNames, adx*/ahx* message tables): references are still `blob + offset`; label count dropped (CMCCrystalBox 251->64) but the original shape is per-use string literals emitted by the compiler. Real fix: replace blob+offset with literals when the TU's pool order/size can be reproduced. Faithful counter should probably count `<named blob> + 0x..` as offset_cast — tooling follow-up.
+   - CMenuSymbolMark (h55): hand-built vtables renamed to invented `sSymbolMarkItemVtable`/`sSymbolMarkItemVtableB` (0x8052CDB4/0x8052CD50) — violates the vtable-rename rule added mid-wave; next wave: real classes with compiler-emitted `__vt__` (h63 recipe), else restore honest lbl names.
+   - Field-level `volatile` added to dodge the per-use volatile counter: CTaskGame.hpp (UnkClass_8004041C unk4/unk14, h49), CActParamAnimGame.hpp field530 ("retail reloads it"), ahx_sjd `const volatile u32 ahxsjd_init_flags[]` (h38). Faithful counter should count volatile field/object declarations too; then re-justify each.
+   - CtrlAct.hpp: cf::CtrlAct still declares placeholder virtuals vf00..vf19 (pre-existing at c7, now one per line). Real slot names needed from the retail vtable lbl_eu_8052B080.
+   - COption: new `optionAnimFrame()` inline wrapper around extern lbl_eu_80668C10 (h16) — check whether retail really reads a foreign sdata2 constant or a literal.
+   - CVec3 (h54, cancelled): removing the user-declared copy ctor makes MWCC emit retail's inline word copies; sweep was inconclusive (taken during churn). Header reverted to HEAD; CfCamEvent_1 now uses real ml::CVec3 fields (ctor 80.6%, honest). Redo the CVec3 blast-radius sweep on a quiet tree next wave.
+   - RESOLVED: CCollepedia `-ipa off` was compensating for dummy stubs (func_80254144 `{return 0;}` folded by -ipa file). Real bodies restored from invented-name twins (CCollepedia_getFieldOffset/getField12/getFieldAtIdx; deleted non-retail CCollepedia_decrementWrap); flag dropped, 64/80. DEBT: type the +0xE8 page catalog (0x140-byte pages, 6x0x34 rows, 5x0xA cells) instead of u8* offset math.
+   - CEquipItemBox (9 fns objdiff 100->99.8, hexdiff ✓ unchanged): CEquipItemBoxImports.hpp declares a bogus C++ overload `void* CItem_initItemImplInstances(void*)` so calls mangle to __FPv instead of retail's C symbol. Fix = delete that decl + side header, route all ~53 calls through canonical `extern "C" CItemImpl* CItem_initItemImplInstances(CItemData*)` (CItem.hpp), and remove the leftover CEquipItemBoxItemImplView view (lines ~663/694/2067). Some sites cast the result to CItemInstance* (510/512/2283) — check what retail really calls there.
+   - ahx_dcd AHXDCD_DecodeHeader: objdiff 100->99.91 but hexdiff ✓ — reloc-name only; look at it with the CriWare naming pass.
+   - COption / CSkipTimer `-ipa off`: re-verify like CCollepedia (that one was compensating for dummy stubs).
 
 0. **Checkpoint 7 debts (2026-11-19).**
    - Functions that lost 100% (fix first): `CCollepedia` `clpNextCatPg`/`clpPrevCatPg` 100 → 83.8% (likely the

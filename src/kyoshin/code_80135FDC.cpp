@@ -130,18 +130,18 @@ __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667360 = 450360
 // shim; the raw data gate reports MISMATCH (.data tail tables and the .sdata2
 // pool are further residuals). No aligned(8): that+section combo is suspected
 // of voiding the section.)
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 unsigned char jumptable_eu_8052E488[0x38] = { 1 };
 
 // NW4R assert strings (writable .data in retail; u8[] matches header decls).
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E4C0[0x24] = "NW4R:Pointer must not be NULL (p)";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E4E4[0xC] = "LinkList.h";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E4F0[0x34] = "NW4R:Failed assertion texMapIdx < mGXMemNum.texMap";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E524[0xC] = "material.h";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E530[0x28] = "NW4R:Failed assertion idx < TevColorMax";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E558[0x10] = "material.h";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E568[0x28] = "NW4R:Failed assertion idx < TevColorMax";
-__declspec(section ".data") __attribute__((used)) u8 lbl_eu_8052E590[0x10] = "material.h";
+__attribute__((used)) u8 lbl_eu_8052E4C0[0x24] = "NW4R:Pointer must not be NULL (p)";
+__attribute__((used)) u8 lbl_eu_8052E4E4[0xC] = "LinkList.h";
+__attribute__((used)) u8 lbl_eu_8052E4F0[0x34] = "NW4R:Failed assertion texMapIdx < mGXMemNum.texMap";
+__attribute__((used)) u8 lbl_eu_8052E524[0xC] = "material.h";
+__attribute__((used)) u8 lbl_eu_8052E530[0x28] = "NW4R:Failed assertion idx < TevColorMax";
+__attribute__((used)) u8 lbl_eu_8052E558[0x10] = "material.h";
+__attribute__((used)) u8 lbl_eu_8052E568[0x28] = "NW4R:Failed assertion idx < TevColorMax";
+__attribute__((used)) u8 lbl_eu_8052E590[0x10] = "material.h";
 /* ===== END typified .data ===== */
 
 // ---------- globals ----------
@@ -687,7 +687,7 @@ extern "C" void LayoutBindAnimResource(
     // land in r30 and mem in r31 to match retail.
     void* mem;
     void* resource = accessor->GetResource(0, name, 0);
-    mem = allocate__Q23mtl10MemManagerFUlUl(0x10, CLibLayout::getAllocHandle());
+    mem = mtl::MemManager::allocate(0x10, CLibLayout::getAllocHandle());
     if (mem != NULL) {
         Set__Q34nw4r3lyt12AnimResourceFPCv(mem, resource);
     }
@@ -2042,14 +2042,14 @@ extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d) {
 extern "C" void InitCol6LodTables(const char* arg) {
     Bdat_GetTable_AA34(arg);
     getFP(&lbl_eu_80500664[0x1F9]);
-    void* gm = cf::CfGameManager::getGameSubManager();
+    UnkClass_80083298* gm = cf::CfGameManager::getGameSubManager();
     if (gm == NULL) return;
 
     for (u8 i = 0; i <= 0x63; i++) {
         deactivateLOD__8CTaskLODFv(i);
         void* snd = getScnHandle();
         ScnData_FwdB7DD4(snd, i);
-        forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, i);
+        forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, i);
     }
 
     struct B21 {
@@ -2071,7 +2071,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
         activateLOD__8CTaskLODFv(ch);
         void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, ch);
-        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, ch);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, ch);
         j++;
     }
 
@@ -2079,15 +2079,15 @@ extern "C" void InitCol6LodTables(const char* arg) {
         activateLOD__8CTaskLODFv(0x50);
         void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x50);
-        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
         activateLOD__8CTaskLODFv(0x63);
         snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x63);
-        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x63);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x63);
         activateLOD__8CTaskLODFv(0x09);
         snd = getScnHandle();
         ScnData_FwdB7D9C(snd, 0x09);
-        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x09);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x09);
     }
 
     for (u8 i = 0; i < 4; i++) {
@@ -2098,206 +2098,206 @@ extern "C" void InitCol6LodTables(const char* arg) {
             activateLOD__8CTaskLODFv(v1);
             void* snd = getScnHandle();
             ScnData_FwdB7D9C(snd, v1);
-            forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v1);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
 
             u8 v2 = (u8)(k + 0x3C);
             activateLOD__8CTaskLODFv(v2);
             snd = getScnHandle();
             ScnData_FwdB7D9C(snd, v2);
-            forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v2);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v2);
 
             u8 v3 = (u8)(k + 0x46);
             deactivateLOD__8CTaskLODFv(v3);
             snd = getScnHandle();
             ScnData_FwdB7DD4(snd, v3);
-            forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v3);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v3);
 
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x55);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x55);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
             }
             if (v2 == 0x3E) {
                 activateLOD__8CTaskLODFv(0x56);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x56);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x56);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x56);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x57);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x57);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x58);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x58);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
             }
             if (CtrlRemote_TouchBitByArg(0x20) >= 0x16E) {
                 activateLOD__8CTaskLODFv(0x59);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x59);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
                 if (v1 == 0x0E) {
                     activateLOD__8CTaskLODFv(0x5A);
                     snd = getScnHandle();
                     ScnData_FwdB7D9C(snd, 0x5A);
-                    forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5A);
+                    forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5A);
                 }
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x5B);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5B);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5B);
             }
             if (v2 == 0x3D) {
                 activateLOD__8CTaskLODFv(0x5C);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5C);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5C);
             }
             if (v2 == 0x3E) {
                 activateLOD__8CTaskLODFv(0x5D);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5D);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5D);
             }
             if (v2 == 0x3F) {
                 activateLOD__8CTaskLODFv(0x5E);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5E);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5E);
             }
             if (v2 == 0x40) {
                 activateLOD__8CTaskLODFv(0x5F);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x5F);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5F);
             }
             if (v2 == 0x40) {
                 activateLOD__8CTaskLODFv(0x60);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x60);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
             }
             if (v2 == 0x41) {
                 activateLOD__8CTaskLODFv(0x61);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x61);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
             }
             if (v2 == 0x41) {
                 activateLOD__8CTaskLODFv(0x62);
                 snd = getScnHandle();
                 ScnData_FwdB7D9C(snd, 0x62);
-                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
             }
 
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x50);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x50);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x51);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x51);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x51);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x51);
             }
             if (getLODData__8CTaskLODFv(0x2A)) {
                 deactivateLOD__8CTaskLODFv(0x52);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x52);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x52);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x52);
             }
             if (getLODData__8CTaskLODFv(0x22)) {
                 deactivateLOD__8CTaskLODFv(0x53);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x53);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x53);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x53);
             }
             if (getLODData__8CTaskLODFv(0x23)) {
                 deactivateLOD__8CTaskLODFv(0x54);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x54);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x54);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x54);
             }
             if (getLODData__8CTaskLODFv(0x3E)) {
                 deactivateLOD__8CTaskLODFv(0x55);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x55);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
             }
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x57);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x57);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
             }
             if (getLODData__8CTaskLODFv(0x2D)) {
                 deactivateLOD__8CTaskLODFv(0x58);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x58);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x59);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x59);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
             }
             if (getLODData__8CTaskLODFv(0x0B)) {
                 deactivateLOD__8CTaskLODFv(0x5B);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5B);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5B);
             }
             if (getLODData__8CTaskLODFv(0x15)) {
                 deactivateLOD__8CTaskLODFv(0x5C);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5C);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5C);
             }
             if (getLODData__8CTaskLODFv(0x0C)) {
                 deactivateLOD__8CTaskLODFv(0x5D);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5D);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5D);
             }
             if (getLODData__8CTaskLODFv(0x0D)) {
                 deactivateLOD__8CTaskLODFv(0x5E);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5E);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5E);
             }
             if (getLODData__8CTaskLODFv(0x0E)) {
                 deactivateLOD__8CTaskLODFv(0x5F);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x5F);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5F);
             }
             if (getLODData__8CTaskLODFv(0x2C)) {
                 deactivateLOD__8CTaskLODFv(0x60);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x60);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
             }
             if (getLODData__8CTaskLODFv(0x0F)) {
                 deactivateLOD__8CTaskLODFv(0x61);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x61);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
             }
             if (getLODData__8CTaskLODFv(0x19)) {
                 deactivateLOD__8CTaskLODFv(0x62);
                 snd = getScnHandle();
                 ScnData_FwdB7DD4(snd, 0x62);
-                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
+                forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
             }
         }
     }
@@ -2308,7 +2308,7 @@ extern "C" void InitCol6LodTables(const char* arg) {
         activateLOD__8CTaskLODFv(v);
         void* snd = getScnHandle();
         ScnData_FwdB7D9C(snd, v);
-        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);
     }
 }
 
@@ -2861,8 +2861,8 @@ extern "C" void SetAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimRes
 extern "C" int StepAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
-        nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
-        f32 f = *(f32*)((u8*)anim + 0x10);
+        nw4r::lyt::AnimTransform* anim = ((nw4r::lyt::AnimationLink*)t)->GetAnimTransform();
+        f32 f = anim->GetFrame();
         u16 fs = anim->GetFrameSize();
         f32 limit = (f32)(u32)(fs - 1);
         if (f >= limit) return 1;
@@ -2883,7 +2883,7 @@ extern "C" void AnimResetToFirst(nw4r::lyt::Pane* self, const nw4r::lyt::AnimRes
 extern "C" void AnimJumpToLast(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     void* t = (void*)FindAnimLink(self, arg);
     if (t != 0) {
-        nw4r::lyt::AnimTransform* anim = ((AnimLinkItemView*)t)->anim8;
+        nw4r::lyt::AnimTransform* anim = ((nw4r::lyt::AnimationLink*)t)->GetAnimTransform();
         // Signed conversion (retail xoris r0,r3,0x8000): (u32) would emit the
         // unsigned double-trick without the sign flip.
         f32 f = (f32)(s32)(anim->GetFrameSize() - 1);
@@ -3039,41 +3039,41 @@ u8 lbl_eu_80500230[0x18] = {
 };
 
 // Face pane names; each [0x0C] spans its 3-byte retail pad gap.
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500248[0x0C] = "face_n01";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500254[0x0C] = "face_m01";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500260[0x0C] = "face_n02";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_8050026C[0x0C] = "face_m02";
+__attribute__((used)) extern const char lbl_eu_80500248[0x0C] = "face_n01";
+__attribute__((used)) extern const char lbl_eu_80500254[0x0C] = "face_m01";
+__attribute__((used)) extern const char lbl_eu_80500260[0x0C] = "face_n02";
+__attribute__((used)) extern const char lbl_eu_8050026C[0x0C] = "face_m02";
 
 // Minimap list names (contiguous 0x10 each).
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500278[0x10] = "minimaplist0101";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500288[0x10] = "minimaplist0201";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500298[0x10] = "minimaplist0301";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805002A8[0x10] = "minimaplist0401";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805002B8[0x10] = "minimaplist0402";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805002C8[0x10] = "minimaplist0501";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805002D8[0x10] = "minimaplist0601";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805002E8[0x10] = "minimaplist0701";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805002F8[0x10] = "minimaplist0901";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500308[0x10] = "minimaplist1001";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500318[0x10] = "minimaplist1101";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500328[0x10] = "minimaplist1201";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500338[0x10] = "minimaplist1202";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500348[0x10] = "minimaplist1301";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500358[0x10] = "minimaplist1401";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500368[0x10] = "minimaplist1501";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500378[0x10] = "minimaplist1601";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500388[0x10] = "minimaplist1701";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500398[0x10] = "minimaplist1901";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805003A8[0x10] = "minimaplist2001";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805003B8[0x10] = "minimaplist2101";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805003C8[0x10] = "minimaplist2201";
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_805003D8[0x10] = "minimaplist2301";
+__attribute__((used)) extern const char lbl_eu_80500278[0x10] = "minimaplist0101";
+__attribute__((used)) extern const char lbl_eu_80500288[0x10] = "minimaplist0201";
+__attribute__((used)) extern const char lbl_eu_80500298[0x10] = "minimaplist0301";
+__attribute__((used)) extern const char lbl_eu_805002A8[0x10] = "minimaplist0401";
+__attribute__((used)) extern const char lbl_eu_805002B8[0x10] = "minimaplist0402";
+__attribute__((used)) extern const char lbl_eu_805002C8[0x10] = "minimaplist0501";
+__attribute__((used)) extern const char lbl_eu_805002D8[0x10] = "minimaplist0601";
+__attribute__((used)) extern const char lbl_eu_805002E8[0x10] = "minimaplist0701";
+__attribute__((used)) extern const char lbl_eu_805002F8[0x10] = "minimaplist0901";
+__attribute__((used)) extern const char lbl_eu_80500308[0x10] = "minimaplist1001";
+__attribute__((used)) extern const char lbl_eu_80500318[0x10] = "minimaplist1101";
+__attribute__((used)) extern const char lbl_eu_80500328[0x10] = "minimaplist1201";
+__attribute__((used)) extern const char lbl_eu_80500338[0x10] = "minimaplist1202";
+__attribute__((used)) extern const char lbl_eu_80500348[0x10] = "minimaplist1301";
+__attribute__((used)) extern const char lbl_eu_80500358[0x10] = "minimaplist1401";
+__attribute__((used)) extern const char lbl_eu_80500368[0x10] = "minimaplist1501";
+__attribute__((used)) extern const char lbl_eu_80500378[0x10] = "minimaplist1601";
+__attribute__((used)) extern const char lbl_eu_80500388[0x10] = "minimaplist1701";
+__attribute__((used)) extern const char lbl_eu_80500398[0x10] = "minimaplist1901";
+__attribute__((used)) extern const char lbl_eu_805003A8[0x10] = "minimaplist2001";
+__attribute__((used)) extern const char lbl_eu_805003B8[0x10] = "minimaplist2101";
+__attribute__((used)) extern const char lbl_eu_805003C8[0x10] = "minimaplist2201";
+__attribute__((used)) extern const char lbl_eu_805003D8[0x10] = "minimaplist2301";
 
 // Minimap pointer tables: name + pointer slots (NULLs, strings, self).
 struct MinimapPtrTable { char name[16]; const void* entries[34]; };
 
 // 0x805003E8: self-pointer at entries[27].
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 extern const MinimapPtrTable lbl_eu_805003E8 = {
     "minimaplist2401",
     { NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, NULL, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, NULL, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL, NULL, NULL }
@@ -3086,10 +3086,10 @@ extern const void* lbl_eu_80500480[32] = {
 };
 
 // 0x80500500: out-of-order minimap name (retail layout).
-__declspec(section ".rodata") __attribute__((used)) extern const char lbl_eu_80500500[0x10] = "minimaplist0801";
+__attribute__((used)) extern const char lbl_eu_80500500[0x10] = "minimaplist0801";
 
 // 0x80500510: table-08 entry + self at entries[21].
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 extern const MinimapPtrTable lbl_eu_80500510 = {
     "minimaplist1801",
     { NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, lbl_eu_80500500, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, &lbl_eu_80500510, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL, NULL, NULL }
@@ -3106,7 +3106,7 @@ __declspec(section ".rodata") __attribute__((used))
 FloatTable13 lbl_eu_80500630 = {{1.5f, 2.0f, 1.7f, 1.7f, 3.7f, 1.5f, 1.9f, 1.7f, 1.7f, 1.6f, 1.5f, 1.7f, 1.7f}};
 
 // 0x80500664: BDAT column-name pool (68 NUL-separated strings, tail-padded).
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 extern const char lbl_eu_80500664[0x27C] =
     /* 0x000 */ "%s\0"
     /* 0x003 */ "TXT\0"
@@ -3188,8 +3188,8 @@ __attribute__((aligned(8))) __attribute__((used)) char lbl_eu_80573B30[0x80];
 __attribute__((used)) char lbl_eu_80573BB0[0x80];
 __attribute__((used)) char lbl_eu_80573C30[0x20];
 
-__declspec(section ".sdata") __attribute__((used)) u8 lbl_eu_806621F0 = 1;
-__declspec(section ".sdata") __attribute__((used)) u32 lbl_eu_806621F4 = (u32)&lbl_eu_80500108;
+__attribute__((used)) u8 lbl_eu_806621F0 = 1;
+__attribute__((used)) u32 lbl_eu_806621F4 = (u32)&lbl_eu_80500108;
 
 __attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80664058;
 __attribute__((used)) u8 lbl_eu_80664059;

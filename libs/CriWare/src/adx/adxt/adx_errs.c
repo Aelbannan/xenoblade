@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 #include <string.h>
 
-extern char lbl_eu_80517498[];
+extern const char adxerr_default_message[];
 
 u8 lbl_eu_805E6380[264];
 char lbl_eu_805E6488[32];
@@ -48,11 +48,11 @@ void ADXERR_Finish(void) {
 
 // Report one error message: copy it into the work-area buffer, pass it to the
 // user error callback if one is installed, then hand it to SVM_CallErr.
-// A NULL message reports the generic "Error" string (lbl_eu_80517498).
+// A NULL message reports the generic "Error" string (adxerr_default_message).
 void ADXERR_CallErrFunc1_(const char* msg) {
     ADXERR_Work* w = ADXERR_WORK;
     if (!msg) {
-        SVM_CallErr(lbl_eu_80517498);
+        SVM_CallErr(adxerr_default_message);
         return;
     }
 
@@ -70,7 +70,7 @@ void ADXERR_CallErrFunc1_(const char* msg) {
 void ADXERR_CallErrFunc2_(const char* a, const char* b) {
     ADXERR_Work* w = ADXERR_WORK;
     if (!a || !b) {
-        SVM_CallErr(lbl_eu_80517498);
+        SVM_CallErr(adxerr_default_message);
         return;
     }
 
@@ -112,12 +112,18 @@ void ADXERR_ItoA(s32 value, char* buf, s32 buf_size) {
     }
 }
 
-// Format two integers into buf, separated by a space (lbl_eu_80517498 + 6 is
+// Format two integers into buf, separated by a space (adxerr_default_message + 6 is
 // the " " after "Error\0"). ADXERR_ItoA is applied to each value in turn.
 void ADXERR_ItoA2(s32 a, s32 b, char* buf, s32 buf_size) {
     ADXERR_ItoA(a, buf, buf_size);
 
-    CRICRW_Strncat(buf, (void*)buf_size, lbl_eu_80517498 + 6, buf_size - (s32)strlen(buf) - 1);
+    CRICRW_Strncat(buf, (void*)buf_size, adxerr_default_message + 6, buf_size - (s32)strlen(buf) - 1);
 
     ADXERR_ItoA(b, buf + (s32)strlen(buf), 4 - (s32)strlen(buf));
 }
+
+/* Generic ADXERR message ("Error", plus the " " separator). */
+const char adxerr_default_message[8] = {
+    0x45,0x72,0x72,0x6F,0x72,0x00,0x20,0x00
+};
+

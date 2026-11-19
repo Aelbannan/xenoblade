@@ -56,7 +56,7 @@ extern void __ct__8CProcessFv(void* self);
 extern u32 __ptmf_null[3];
 extern const u8 lbl_eu_8052E670[0x10];
 extern const u8 lbl_eu_8052E628[0x10];
-CUIWindowManager* lbl_eu_80664088;
+CUIWindowManager* CUIWindowManager::spInstance;
 s16 lbl_eu_8066408C;
 
 // C-ABI helpers used by the retail dtor/free-function shapes below.
@@ -153,7 +153,7 @@ void CUIWindowManager::Init() {
         inst->vtable = (void*)&lbl_eu_8052E628;
     }
     unk9C = (IUIWindow*)inst;
-    Regist__8CProcessFP8CProcessb(this, lbl_eu_80664088, false);
+    Regist__8CProcessFP8CProcessb(this, CUIWindowManager::spInstance, false);
     CtrlRemote_FetchSharedBufPtr();
     CtrlRemote_ResetSlotArrayObj(this);
 }
@@ -164,11 +164,11 @@ void CUIWindowManager::Term() {
     CtrlRemote_ResetSlotArrayByIndex(flagEvent);
 
     unk9C->SetRemove();
-    lbl_eu_80664088 = NULL;
+    CUIWindowManager::spInstance = NULL;
 }
 
 void CUIWindowManager::Move() {
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return;
     }
@@ -284,14 +284,14 @@ void CUIWindowManager::Move() {
 }
 
 extern "C" u32 UIWin_GetInstance() {
-    return (u32)lbl_eu_80664088;
+    return (u32)CUIWindowManager::spInstance;
 }
 // Window-queue sweep (retail UIWin_SweepQueue): walk the secondary queue. With
 // mode == 0 mark each window for removal (mIsRemove + field_0x66) and collect
 // the nodes; with mode != 0 just set the update-mark (field_0x65). Collected
 // nodes are unlinked from the list (MWCC auto-unrolls the unlink loop by 8).
 void UIWin_SweepQueue(int mode) {
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return;
     }
@@ -342,34 +342,34 @@ void UIWin_ControlWindowLists(bool arg1, bool arg2) {
     // global in every loop condition/init (only the null-check load is CSE'd
     // into the first head fetch), and a cached local forces callee-saved
     // register spills that retail does not have.
-    if (lbl_eu_80664088 == NULL) {
+    if (CUIWindowManager::spInstance == NULL) {
         return;
     }
 
     if (arg1) {
         if (arg2) {
             for (WindowNode* n =
-                     lbl_eu_80664088->mWindowList1.mStartNodePtr->mNext;
-                 n != lbl_eu_80664088->mWindowList1.mStartNodePtr;
+                     CUIWindowManager::spInstance->mWindowList1.mStartNodePtr->mNext;
+                 n != CUIWindowManager::spInstance->mWindowList1.mStartNodePtr;
                  n = n->mNext) {
                 n->mItem->field_0x66 = true;
             }
             for (WindowNode* n =
-                     lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
-                 n != lbl_eu_80664088->mWindowList2.mStartNodePtr;
+                     CUIWindowManager::spInstance->mWindowList2.mStartNodePtr->mNext;
+                 n != CUIWindowManager::spInstance->mWindowList2.mStartNodePtr;
                  n = n->mNext) {
                 n->mItem->field_0x66 = true;
             }
         } else {
             for (WindowNode* n =
-                     lbl_eu_80664088->mWindowList1.mStartNodePtr->mNext;
-                 n != lbl_eu_80664088->mWindowList1.mStartNodePtr;
+                     CUIWindowManager::spInstance->mWindowList1.mStartNodePtr->mNext;
+                 n != CUIWindowManager::spInstance->mWindowList1.mStartNodePtr;
                  n = n->mNext) {
                 n->mItem->field_0x65 = true;
             }
             for (WindowNode* n =
-                     lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
-                 n != lbl_eu_80664088->mWindowList2.mStartNodePtr;
+                     CUIWindowManager::spInstance->mWindowList2.mStartNodePtr->mNext;
+                 n != CUIWindowManager::spInstance->mWindowList2.mStartNodePtr;
                  n = n->mNext) {
                 n->mItem->field_0x65 = true;
             }
@@ -381,8 +381,8 @@ void UIWin_ControlWindowLists(bool arg1, bool arg2) {
         count = 0;
 
         for (WindowNode* n =
-                 lbl_eu_80664088->mWindowList1.mStartNodePtr->mNext;
-             n != lbl_eu_80664088->mWindowList1.mStartNodePtr;
+                 CUIWindowManager::spInstance->mWindowList1.mStartNodePtr->mNext;
+             n != CUIWindowManager::spInstance->mWindowList1.mStartNodePtr;
              n = n->mNext) {
             IUIWindow* window = n->mItem;
             window->SetRemove();
@@ -402,8 +402,8 @@ void UIWin_ControlWindowLists(bool arg1, bool arg2) {
 
         count = 0;
         for (WindowNode* n =
-                 lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
-             n != lbl_eu_80664088->mWindowList2.mStartNodePtr;
+                 CUIWindowManager::spInstance->mWindowList2.mStartNodePtr->mNext;
+             n != CUIWindowManager::spInstance->mWindowList2.mStartNodePtr;
              n = n->mNext) {
             n->mItem->field_0x66 = true;
             n->mItem->SetRemove();
@@ -519,21 +519,21 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
         }
         // Null-check the singleton, but do not keep it live across the
         // flag-memory calls below (retail re-reads the global each phase).
-        if (lbl_eu_80664088 == NULL) {
+        if (CUIWindowManager::spInstance == NULL) {
             return;
         }
         if (BdatGetU8Direct(
                 (const void*)lbl_eu_80573D18[SearchThresholdIdx(id - 0x220)],
-                (const char*)lbl_eu_8050097C, id - 0x220) == 2) {
+                (const char*)sQuestWindowText, id - 0x220) == 2) {
             return;
         }
-        u32 winRet = (u32)MenuUpdate_SpawnProcessForMode((CProcess*)lbl_eu_80664088->unk9C,
-                                        lbl_eu_80664088->unk58, 1, 0, 0, 0);
+        u32 winRet = (u32)MenuUpdate_SpawnProcessForMode((CProcess*)CUIWindowManager::spInstance->unk9C,
+                                        CUIWindowManager::spInstance->unk58, 1, 0, 0, 0);
         questWin = winRet;
         if (winRet == 0) {
             return;
         }
-        CUIWindowManager* instQ = lbl_eu_80664088;
+        CUIWindowManager* instQ = CUIWindowManager::spInstance;
         {
             // Inlined mWindowList1.push_back (matches retail's duplicated
             // empty-slot scan + setItem + link sequence).
@@ -576,7 +576,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
     }
     case 0xa21 ... 0xb4b: {
         // Plain update window.
-        CUIWindowManager* inst = lbl_eu_80664088;
+        CUIWindowManager* inst = CUIWindowManager::spInstance;
         if (inst == NULL) {
             return;
         }
@@ -586,7 +586,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
         if (winRet == 0) {
             return;
         }
-        inst = lbl_eu_80664088;
+        inst = CUIWindowManager::spInstance;
         {
             int i = 0;
             int byteOff = 0;
@@ -642,7 +642,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
                 }
             }
         }
-        CUIWindowManager* inst = lbl_eu_80664088;
+        CUIWindowManager* inst = CUIWindowManager::spInstance;
         if (inst == NULL) {
             return;
         }
@@ -699,14 +699,14 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
         }
         // Per-slot window: id encodes base 0x20c8 + slot index. The trailing
         // lookup runs even when the singleton/window is absent.
-        CUIWindowManager* inst = lbl_eu_80664088;
+        CUIWindowManager* inst = CUIWindowManager::spInstance;
         if (inst != NULL) {
             u32 winRet = (u32)createLandTelop((CProcess*)inst->unk9C,
                                             inst->unk58,
                                             (u16)(id - 0x20c8), 0);
             slotWin = winRet;
             if (winRet != 0) {
-                inst = lbl_eu_80664088;
+                inst = CUIWindowManager::spInstance;
                 int i = 0;
                 int byteOff = 0;
                 WindowNode* temp;
@@ -744,8 +744,8 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
                 startNode->mPrev = temp;
             }
         }
-        u8 v = BdatGetU8ByTableKey(&lbl_eu_8050097C[0xa],
-                             &lbl_eu_8050097C[0x17], id - 0x20c8);
+        u8 v = BdatGetU8ByTableKey(&sQuestWindowText[0xa],
+                             &sQuestWindowText[0x17], id - 0x20c8);
         TryRevealMapArea(v);
         break;
     }
@@ -769,8 +769,8 @@ extern "C" __declspec(noinline) void* __ct__CUIWindowManager(
 // cache it in the global singleton slot.
 extern "C" CUIWindowManager* UIWin_CreateManager(CProcess* pParent, CScn* pScene,
                                            mtl::ALLOC_HANDLE mHandle) {
-    if (lbl_eu_80664088 != NULL) {
-        return lbl_eu_80664088;
+    if (CUIWindowManager::spInstance != NULL) {
+        return CUIWindowManager::spInstance;
     }
     if ((u32)mHandle == 0xFFFFFFFF) {
         mHandle = mtl::MemManager::getHandleMEM2();
@@ -783,91 +783,17 @@ extern "C" CUIWindowManager* UIWin_CreateManager(CProcess* pParent, CScn* pScene
     if (inst != NULL) {
         inst = (CUIWindowManager*)__ct__CUIWindowManager(inst, pScene, mHandle);
     }
-    lbl_eu_80664088 = inst;
+    CUIWindowManager::spInstance = inst;
     Regist__8CProcessFP8CProcessb(inst, pParent, false);
-    return lbl_eu_80664088;
+    return CUIWindowManager::spInstance;
 }
 
-// reslist_base destructor (retail __dt___reslist_base_IUIWindow): install the
-// vtable, walk the node chain nulling each node's next pointer (the nodes are
-// pool-allocated, not freed here), reset the sentinel to an empty circular
-// list, free the grown node-array buffer when it is not fixed-capacity, then
-// delete-this behind the flags guard.
-struct ResListNode {
-    ResListNode* mNext; //0x00
-    ResListNode* mPrev; //0x04
-};
-struct ResListBase {
-    void* mVTable;        //0x00
-    ResListNode* mStart;  //0x04 - start/sentinel node pointer (reloaded)
-    u8 unk08[0x14 - 0x08];
-    void* field_0x14;     //0x14 - grown node array (heap)
-    u8 unk18[0x1C - 0x18];
-    u8 field_0x1C;        //0x1C - nonzero: fixed capacity (no heap buffer)
-};
-extern "C" void* __dt___reslist_base_IUIWindow(void* self, s32 flags) {
-    ResListBase* list = (ResListBase*)self;
-    if (list != NULL) {
-        list->mVTable = (void*)lbl_eu_8052E61C;
-        ResListNode* node = list->mStart->mNext;
-        while (node != list->mStart) {
-            ResListNode* cur = node;
-            node = cur->mNext;
-            cur->mNext = NULL;
-        }
-        list->mStart->mNext = list->mStart;
-        list->mStart->mPrev = list->mStart;
-        if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
-            operator delete[](list->field_0x14);
-            list->field_0x14 = NULL;
-        }
-        if (flags > 0) {
-            operator delete(list);
-        }
-    }
-    return self;
-}
-// reslist<IUIWindow*> destructor (retail __dt__reslist_IUIWindow): the derived
-// dtor adds nothing, so retail is the base-dtor body fully inlined inside the
-// derived guard (doubled null guard = inlining artifact).
-extern "C" void* __dt__reslist_IUIWindow(void* self, s32 flags) {
-    ResListBase* list = (ResListBase*)self;
-    ResListNode* node;
-    ResListNode* cur;
-    if (list == NULL) {
-        goto end;
-    }
-    if (list == NULL) {
-        goto cleanup;
-    }
-    // Inlined base-dtor body (retail duplicates it verbatim here).
-    list->mVTable = (void*)lbl_eu_8052E61C;
-    node = list->mStart->mNext;
-    while (node != list->mStart) {
-        cur = node;
-        node = cur->mNext;
-        cur->mNext = NULL;
-    }
-    list->mStart->mNext = list->mStart;
-    list->mStart->mPrev = list->mStart;
-    if (list->field_0x1C == 0 && list->field_0x14 != NULL) {
-        operator delete[](list->field_0x14);
-        list->field_0x14 = NULL;
-    }
-cleanup:
-    // Retail's inlined-base-guard path still reaches the delete guard.
-    if (flags > 0) {
-        operator delete(list);
-    }
-end:
-    return self;
-}
-// Window factory: create a talk window on the secondary queue, removing any
+
 // existing window with the same id first (retail splices the node out of the
 // reslist). Returns 0 when the singleton or layout manager is absent.
 extern "C" IUIWindow* UIWin_CreateTalkWin(u32 id, const u8* msgSrc, u32 a3) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -880,8 +806,8 @@ extern "C" IUIWindow* UIWin_CreateTalkWin(u32 id, const u8* msgSrc, u32 a3) {
         // Retail unlinks the first match only, walking test-at-bottom through
         // the reloaded singleton. n is defined before sentinel on purpose:
         // that def order makes MWCC put the sentinel in r3 (retail alloc).
-        WindowNode* n = lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
-        WindowNode* sentinel = lbl_eu_80664088->mWindowList2.mStartNodePtr;
+        WindowNode* n = CUIWindowManager::spInstance->mWindowList2.mStartNodePtr->mNext;
+        WindowNode* sentinel = CUIWindowManager::spInstance->mWindowList2.mStartNodePtr;
         goto check;
     body:
         if (n->mItem->field_0x68 == id) {
@@ -906,12 +832,12 @@ extern "C" IUIWindow* UIWin_CreateTalkWin(u32 id, const u8* msgSrc, u32 a3) {
     {
         // NOTE: retail does NOT null-check the factory result here - the
         // window (or 0) is queued regardless.
-        u32 tempRet = (u32)TalkWin_Create_CC78((CProcess*)lbl_eu_80664088->unk9C,
-                                         (u32)lbl_eu_80664088->unk58, id,
+        u32 tempRet = (u32)TalkWin_Create_CC78((CProcess*)CUIWindowManager::spInstance->unk9C,
+                                         (u32)CUIWindowManager::spInstance->unk58, id,
                                          msgSrc, found, 0, a3);
         savedRet = tempRet;
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -951,7 +877,7 @@ queue_found:
 // Window-list lookup: find the secondary-queue window whose id matches,
 // then dynamic_cast it to the talk-window type and set its +0xAC show flag.
 void UIWin_ShowTalkWindow(u32 id) {
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return;
     }
@@ -978,7 +904,7 @@ void UIWin_ShowTalkWindow(u32 id) {
 // ready, or the factory declined (message handed to the existing window).
 extern "C" IUIWindow* UIWin_CreateEveTalkWin(u32 text, const u8* msgSrc) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -988,15 +914,15 @@ extern "C" IUIWindow* UIWin_CreateEveTalkWin(u32 text, const u8* msgSrc) {
     {
         // Retail reloads the singleton for the factory args (its live range
         // ends at the guard check) instead of keeping it in a saved register.
-        u32 tempRet = (u32)eveTalkWinCreateRegister((CProcess*)lbl_eu_80664088->unk9C,
-                                         lbl_eu_80664088->unk58, text, msgSrc,
+        u32 tempRet = (u32)eveTalkWinCreateRegister((CProcess*)CUIWindowManager::spInstance->unk9C,
+                                         CUIWindowManager::spInstance->unk58, text, msgSrc,
                                          0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1041,7 +967,7 @@ queue_found:
 // the string is empty, or the entry check rejects the request.
 extern "C" IUIWindow* UIWin_CreateSysWin0(const char* str, void* arg1, u32 arg2) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1055,14 +981,14 @@ extern "C" IUIWindow* UIWin_CreateSysWin0(const char* str, void* arg1, u32 arg2)
         // Volatile stack-homed result: the store lands between the compare
         // and the branch, as in retail.
         u32 tempRet = (u32)SysWinCreateSingleton(
-            (CProcess*)lbl_eu_80664088->unk9C,
-            arg1 != NULL ? arg1 : lbl_eu_80664088->unk58, 0, (u32)str, 0);
+            (CProcess*)CUIWindowManager::spInstance->unk9C,
+            arg1 != NULL ? arg1 : CUIWindowManager::spInstance->unk58, 0, (u32)str, 0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1106,7 +1032,7 @@ queue_found:
 // variant). Returns 0 when the singleton is absent or the entry check rejects.
 extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 arg3) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1114,16 +1040,16 @@ extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 
         return NULL;
     }
     {
-        u32 tempRet = (u32)SysWinCreateSingleton((CProcess*)lbl_eu_80664088->unk9C,
+        u32 tempRet = (u32)SysWinCreateSingleton((CProcess*)CUIWindowManager::spInstance->unk9C,
                                          arg2 != NULL ? arg2
-                                                      : lbl_eu_80664088->unk58,
+                                                      : CUIWindowManager::spInstance->unk58,
                                          1, arg0, (u32)arg1);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1169,7 +1095,7 @@ queue_found:
 // walk the free-slot list with an i/byteOff cursor pair, then setItem+splice.
 extern "C" IUIWindow* UIWin_CreateSysWinBuff(u32 id) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1180,7 +1106,7 @@ extern "C" IUIWindow* UIWin_CreateSysWinBuff(u32 id) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1226,7 +1152,7 @@ queue_found:
 extern "C" IUIWindow* SysWinLog_Create(CProcess* pProc, CScn* pScene);
 int UIWin_CreateExtraWin() {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
@@ -1237,7 +1163,7 @@ int UIWin_CreateExtraWin() {
             return 0;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1277,7 +1203,7 @@ queue_found:
 // Retail window creator (same body shape as UIWin_CreateSysWinBuff).
 extern "C" IUIWindow* UIWin_Create25070Win(u32 a1, u32 a2, u32 a3) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1289,7 +1215,7 @@ extern "C" IUIWindow* UIWin_Create25070Win(u32 a1, u32 a2, u32 a3) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1331,7 +1257,7 @@ queue_found:
 // note this creator does NOT null-check the factory result before queueing.
 extern "C" IUIWindow* UIWin_CreateQuestWin(u32 id, void* arg1, u32 arg2) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1341,12 +1267,12 @@ extern "C" IUIWindow* UIWin_CreateQuestWin(u32 id, void* arg1, u32 arg2) {
     {
         // Note this creator does NOT null-check the factory result before
         // queueing - retail stores it and walks the list unconditionally.
-        u32 tempRet = (u32)createQuestWindow((CProcess*)lbl_eu_80664088->unk9C,
-                                         lbl_eu_80664088->unk58, id,
+        u32 tempRet = (u32)createQuestWindow((CProcess*)CUIWindowManager::spInstance->unk9C,
+                                         CUIWindowManager::spInstance->unk58, id,
                                          (u32)arg1);
         savedRet = tempRet;
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1392,27 +1318,27 @@ queue_found:
 extern "C" IUIWindow* UIWin_CreateMenuUpdate(int first, u32 second, s32 third,
                                     s32 fourth) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
     if (first == 1) {
         int idx = (int)SearchThresholdIdx(second);
-        if ((u8)BdatGetU8Direct((const void*)lbl_eu_80573D18[idx], (const char*)lbl_eu_8050097C,
+        if ((u8)BdatGetU8Direct((const void*)lbl_eu_80573D18[idx], (const char*)sQuestWindowText,
                               second) == 2) {
             return NULL;
         }
     }
     {
         u32 tempRet = (u32)MenuUpdate_SpawnProcessForMode(
-            (CProcess*)lbl_eu_80664088->unk9C, lbl_eu_80664088->unk58,
+            (CProcess*)CUIWindowManager::spInstance->unk9C, CUIWindowManager::spInstance->unk58,
             (int)first, (int)second, (int)third, (int)fourth);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1452,7 +1378,7 @@ queue_found:
 // Retail window creator (same body shape as UIWin_CreateSysWinBuff).
 extern "C" IUIWindow* UIWin_Create44EE4Win(u32 a1, u32 a2) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1464,7 +1390,7 @@ extern "C" IUIWindow* UIWin_Create44EE4Win(u32 a1, u32 a2) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1511,7 +1437,7 @@ queue_found:
 // on the primary window list.
 extern "C" IUIWindow* UIWin_Create602F4Win() {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1524,7 +1450,7 @@ extern "C" IUIWindow* UIWin_Create602F4Win() {
     }
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1565,7 +1491,7 @@ queue_found:
 // primary window list.
 extern "C" IUIWindow* UIWin_Create5DCD0Win() {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1578,7 +1504,7 @@ extern "C" IUIWindow* UIWin_Create5DCD0Win() {
     }
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1625,7 +1551,7 @@ queue_found:
 // flagged child window and queue the resulting window handle.
 extern "C" IUIWindow* UIWin_CreateCol6Invite(u32 a1, u32 a2, u32 a3) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1638,7 +1564,7 @@ extern "C" IUIWindow* UIWin_CreateCol6Invite(u32 a1, u32 a2, u32 a3) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1682,7 +1608,7 @@ queue_found:
 extern "C" void* __ct__CCol6CheckBat(void* self);
 int UIWin_CreateCol6Check() {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
@@ -1693,7 +1619,7 @@ int UIWin_CreateCol6Check() {
             return 0;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1737,19 +1663,19 @@ queue_found:
 // can veto the creation.
 extern "C" IUIWindow* UIWin_CreateShopWin(u32 id) {
     volatile u32 savedRet;
-    if (lbl_eu_80664088 == NULL) {
+    if (CUIWindowManager::spInstance == NULL) {
         return NULL;
     }
     if (QstCnt_HasInstance_6B94()) {
         return NULL;
     }
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     u32 tempRet = (u32)ShopSel_CreateSingleton((CProcess*)inst->unk9C, inst->unk58, id);
     savedRet = tempRet;
     if (tempRet == 0) {
         return NULL;
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1793,7 +1719,7 @@ queue_found:
 // primary window list.
 extern "C" IUIWindow* UIWin_CreateBEDE0Win(u32 id) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1807,7 +1733,7 @@ extern "C" IUIWindow* UIWin_CreateBEDE0Win(u32 id) {
     }
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1854,7 +1780,7 @@ extern "C" IUIWindow* UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 
     // Retail homes the stack byte arg into a callee-saved register with a
     // single lbz at entry and forwards it unmasked.
     u32 flag = a9;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1862,15 +1788,15 @@ extern "C" IUIWindow* UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 
         return NULL;
     }
     {
-        u32 tempRet = (u32)GetItemMulti_CreateInstance((CProcess*)lbl_eu_80664088->unk9C,
-                                         lbl_eu_80664088->unk58, a1, a2, a3,
+        u32 tempRet = (u32)GetItemMulti_CreateInstance((CProcess*)CUIWindowManager::spInstance->unk9C,
+                                         CUIWindowManager::spInstance->unk58, a1, a2, a3,
                                          a4, a6, a8, flag);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1912,7 +1838,7 @@ queue_found:
 // consulted when arg2 is clear), or the factory returned 0.
 extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -1920,14 +1846,14 @@ extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2) {
         return NULL;
     }
     {
-        u32 tempRet = (u32)GetItemMulti_CreateSimple((CProcess*)lbl_eu_80664088->unk9C,
-                                         lbl_eu_80664088->unk58, arg1);
+        u32 tempRet = (u32)GetItemMulti_CreateSimple((CProcess*)CUIWindowManager::spInstance->unk9C,
+                                         CUIWindowManager::spInstance->unk58, arg1);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1970,20 +1896,20 @@ queue_found:
 // primary window list.
 extern "C" IUIWindow* UIWin_CreateKizunaTalk(u32 charId) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
     {
         u32 tempRet =
-            (u32)createKizunaTalkSingleton((CProcess*)lbl_eu_80664088->unk9C,
-                               lbl_eu_80664088->unk58, charId);
+            (u32)createKizunaTalkSingleton((CProcess*)CUIWindowManager::spInstance->unk9C,
+                               CUIWindowManager::spInstance->unk58, charId);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2027,7 +1953,7 @@ queue_found:
 // The trailing entry byte passed to the factory is a literal 0 here.
 extern "C" IUIWindow* UIWin_CreateQuestLog0(u32 a1, u32 a2, u32 a3, u32 a4) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -2040,7 +1966,7 @@ extern "C" IUIWindow* UIWin_CreateQuestLog0(u32 a1, u32 a2, u32 a3, u32 a4) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2083,7 +2009,7 @@ queue_found:
 // Same shape as UIWin_CreateQuestLog0 with the literal entry byte set to 1.
 extern "C" IUIWindow* UIWin_CreateQuestLog1(u32 a1, u32 a2, u32 a3, u32 a4) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -2096,7 +2022,7 @@ extern "C" IUIWindow* UIWin_CreateQuestLog1(u32 a1, u32 a2, u32 a3, u32 a4) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2140,7 +2066,7 @@ queue_found:
 // expanded setItem + splice.
 extern "C" IUIWindow* UIWin_Create6F8B0Win(u32 id) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -2152,7 +2078,7 @@ extern "C" IUIWindow* UIWin_Create6F8B0Win(u32 id) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2197,7 +2123,7 @@ extern "C" IUIWindow* UIWin_CreatePTChange(u32 flag) {
     volatile u32 savedRet;
     // No local caching of the singleton here: retail reloads the global
     // around each call instead of keeping it in a saved register.
-    if (lbl_eu_80664088 == NULL) {
+    if (CUIWindowManager::spInstance == NULL) {
         return NULL;
     }
     if (flag == 0 && CUICfManager_tryResetSlots()) {
@@ -2205,13 +2131,13 @@ extern "C" IUIWindow* UIWin_CreatePTChange(u32 flag) {
     }
     {
         u32 tempRet = (u32)PTNotice_Create_3B9C(
-            (CProcess*)lbl_eu_80664088->unk9C, lbl_eu_80664088->unk58);
+            (CProcess*)CUIWindowManager::spInstance->unk9C, CUIWindowManager::spInstance->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2254,7 +2180,7 @@ queue_found:
 // the primary window list.
 extern "C" IUIWindow* UIWin_CreateSaveWin() {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -2267,7 +2193,7 @@ extern "C" IUIWindow* UIWin_CreateSaveWin() {
     }
     // Re-read the singleton: its live range ends at the factory call, so
     // retail reloads the global for the inlined push_back.
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2308,7 +2234,7 @@ queue_found:
 // Retail window creator (same body shape as UIWin_CreateSysWinBuff).
 extern "C" IUIWindow* UIWin_CreateAA2A0Win(u32 id) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return NULL;
     }
@@ -2320,7 +2246,7 @@ extern "C" IUIWindow* UIWin_CreateAA2A0Win(u32 id) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    inst = CUIWindowManager::spInstance;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -2365,7 +2291,7 @@ extern "C" int isFadeActive();
 extern "C" int ItemEx_HasInstance();
 int UIWin_HasPendingUpdate() {
     WindowNode* node;
-    CUIWindowManager* inst = lbl_eu_80664088;
+    CUIWindowManager* inst = CUIWindowManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
@@ -2419,7 +2345,7 @@ extern "C" void UIWin_FlagBufClear(void* self) {
 // Release any pending flag-memory writes for this buffer's quest page: the
 // 0xFC/0xFD deferred states are committed as 0xFE/0xFF.
 void UIWin_FlagBufCommit(CFlagBuffer* self) {
-    CFlagBuffer* global = (CFlagBuffer*)lbl_eu_80573C50;
+    CFlagBuffer* global = (CFlagBuffer*)sWindowFlagBuffer;
     if (global->field_0x6C[0] == 0) {
         return;
     }
@@ -2559,7 +2485,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
 
     int v60 = flagBuf->field_0x60;
     if (v60 != 0) {
-        colA.w = getBdatStringColumnValue(lbl_eu_80664098, lbl_eu_80500A50,
+        colA.w = getBdatStringColumnValue(lbl_eu_80664098, sBdatColumnNames,
                                           v60);
         id = -1;
         if ((int)(u16)colA.h < 0x12C) {
@@ -2575,7 +2501,7 @@ int UIWin_FlagBufCanShow(CFlagBuffer* flagBuf) {
 
     int v62 = flagBuf->field_0x62;
     if (v62 != 0) {
-        colB.w = getBdatStringColumnValue(lbl_eu_80664098, lbl_eu_80500A50,
+        colB.w = getBdatStringColumnValue(lbl_eu_80664098, sBdatColumnNames,
                                           v62);
         id = -1;
         if ((int)(u16)colB.h < 0x12C) {
@@ -2621,7 +2547,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
     u32 saved04 = self->field_0x04;
     // Pick the owned slot: when both shared-buffer rows are populated, ask
     // them; otherwise trust their population bytes alone.
-    CFlagBuffer* glob = (CFlagBuffer*)lbl_eu_80573C50;
+    CFlagBuffer* glob = (CFlagBuffer*)sWindowFlagBuffer;
     // Retail re-tests the active bit here (shared cr0 with the first test);
     // the guarded default is unreachable but present in retail.
     if ((self->field_0x00 & 1) != 0) {
@@ -2752,7 +2678,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
                             }
                             if (stored) {
                                 u32 col = getBdatStringColumnValue(
-                                    lbl_eu_806640EC, &lbl_eu_80500A50[9],
+                                    lbl_eu_806640EC, &sBdatColumnNames[9],
                                     (u32)(u16)arg2);
                                 if ((u32)((u16)col - 0xA) <= 1) {
                                     CItem_consumeFamilyCnt((u32)(u16)arg2,
@@ -2810,7 +2736,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
                                             }
                                             u32 col = getBdatStringColumnValue(
                                                 lbl_eu_806640EC,
-                                                &lbl_eu_80500A50[9], val);
+                                                &sBdatColumnNames[9], val);
                                             if ((u32)((u16)col - 0xA) <= 1) {
                                                 CItem_consumeFamilyCnt(
                                                     val,
@@ -2842,7 +2768,7 @@ int UIWin_UpdateItemAvail(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 a
                                         }
                                         u32 col = getBdatStringColumnValue(
                                             lbl_eu_806640EC,
-                                            &lbl_eu_80500A50[9], val);
+                                            &sBdatColumnNames[9], val);
                                         if ((u32)((u16)col - 0xA) <= 1) {
                                             CItem_consumeFamilyCnt(
                                                 val, row->field_0x12[j]);
@@ -3064,8 +2990,8 @@ u8* UIWin_BuildFlagBufBySlot(u32 target) {
     u8* entry;
     int i;
 
-    memset(lbl_eu_80573C50, 0, 0xC8);
-    lbl_eu_80573C50[0] |= 1;
+    memset(sWindowFlagBuffer, 0, 0xC8);
+    sWindowFlagBuffer[0] |= 1;
     Bdat_GetTable_AA34();
 
     table = lbl_eu_80573D18;
@@ -3081,32 +3007,32 @@ u8* UIWin_BuildFlagBufBySlot(u32 target) {
         for (int j = 0; j < count; ++j) {
             tmp = work;
             int v = j + (int)*off;
-            u16 col = getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
+            u16 col = getBdatStringColumnValue(entry, &sBdatColumnNames[0x32],
                                                v);
             if (col == target) {
-                UIWin_SetTableFlag(lbl_eu_80573C50, entry, (u32)v);
-                if (((CFlagBuffer*)lbl_eu_80573C50)->field_0x09 == 0) {
+                UIWin_SetTableFlag(sWindowFlagBuffer, entry, (u32)v);
+                if (((CFlagBuffer*)sWindowFlagBuffer)->field_0x09 == 0) {
                     int id = -1;
-                    if (((CFlagBuffer*)lbl_eu_80573C50)->field_0x52 < 0x3E8) {
+                    if (((CFlagBuffer*)sWindowFlagBuffer)->field_0x52 < 0x3E8) {
                         id =
-                            ((CFlagBuffer*)lbl_eu_80573C50)->field_0x52 + 0x220;
+                            ((CFlagBuffer*)sWindowFlagBuffer)->field_0x52 + 0x220;
                     }
                     if (id == -1) {
                         return NULL;
                     }
                     u32 res = CtrlRemote_TouchBitByArg((u32)id);
-                    ((CFlagBuffer*)lbl_eu_80573C50)->field_0x04 = res;
+                    ((CFlagBuffer*)sWindowFlagBuffer)->field_0x04 = res;
                     if (res == 1) {
-                        return (u8*)lbl_eu_80573C50;
+                        return (u8*)sWindowFlagBuffer;
                     }
                     if (res == 2) {
-                        return (u8*)lbl_eu_80573C50;
+                        return (u8*)sWindowFlagBuffer;
                     }
                     if (res == 0xFC) {
-                        return (u8*)lbl_eu_80573C50;
+                        return (u8*)sWindowFlagBuffer;
                     }
                     if (res == 0xFD) {
-                        return (u8*)lbl_eu_80573C50;
+                        return (u8*)sWindowFlagBuffer;
                     }
                 }
             }
@@ -3122,7 +3048,7 @@ u8* UIWin_BuildFlagBufBySlot(u32 target) {
 // (flagBuf[9] == 0 and UIWin_FlagBufCanShow accepts), clear the +4 slot and return
 // the buffer, otherwise 0.
 extern "C" u8* UIWin_BuildFlagBufCanShow(u32 target) {
-    u8* flagBuf = lbl_eu_80573C50;
+    u8* flagBuf = sWindowFlagBuffer;
     memset(flagBuf, 0, 0xC8);
     flagBuf[0] |= 1;
     Bdat_GetTable_AA34();
@@ -3142,7 +3068,7 @@ extern "C" u8* UIWin_BuildFlagBufCanShow(u32 target) {
                 ((u64*)tmp)[k] = ((u64*)work)[k];
             }
             u32 v = j + tmp[i];
-            if ((u16)getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
+            if ((u16)getBdatStringColumnValue(entry, &sBdatColumnNames[0x32],
                                               (int)v) == target) {
                 UIWin_SetTableFlag(flagBuf, entry, v);
                 if (flagBuf[9] == 0 && UIWin_FlagBufCanShow((CFlagBuffer*)flagBuf) != 0) {
@@ -3187,8 +3113,8 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
     u32* off;
     int i;
 
-    memset(lbl_eu_80573C50, 0, 0xC8);
-    lbl_eu_80573C50[0] |= 1;
+    memset(sWindowFlagBuffer, 0, 0xC8);
+    sWindowFlagBuffer[0] |= 1;
     Bdat_GetTable_AA34();
 
     table = lbl_eu_80573D18;
@@ -3203,8 +3129,8 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
             tmp = work;
             int v = j + (int)*off;
             if (v == (int)target) {
-                UIWin_SetTableFlag(lbl_eu_80573C50, entry, (u32)v);
-                return lbl_eu_80573C50;
+                UIWin_SetTableFlag(sWindowFlagBuffer, entry, (u32)v);
+                return sWindowFlagBuffer;
             }
         }
         ++i;
@@ -3212,15 +3138,15 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target) {
     return NULL;
 }
 void sinit_801413F8() {
-    CFlagBuffer* buf = (CFlagBuffer*)lbl_eu_80573C50;
+    CFlagBuffer* buf = (CFlagBuffer*)sWindowFlagBuffer;
     CItemQueryRow* rowEnd = buf->field_0x6E + 2;
     CItemQueryRow* row = buf->field_0x6E;
-    lbl_eu_80573C50[0] = 0;
+    sWindowFlagBuffer[0] = 0;
     buf->field_0x0C[0] = 0;
     buf->field_0x4C = 0;
     for (; row < rowEnd; ++row) {
         memset(row, 0, sizeof(CItemQueryRow));
     }
     memset(buf, 0, sizeof(CFlagBuffer));
-    lbl_eu_80573C50[0] |= 1;
+    sWindowFlagBuffer[0] |= 1;
 }

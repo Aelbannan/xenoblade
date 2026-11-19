@@ -44,7 +44,7 @@ extern "C" {
 
     // CF / ui helpers (retail-unmangled names).
     void CUICfManager_setTimeout30();
-    void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
+    // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
     // CfGameManager controller-type query: retail loads r3=-1 into the symbol
     // (the no-arg member wrapper drops it), so call through the C name directly.
 

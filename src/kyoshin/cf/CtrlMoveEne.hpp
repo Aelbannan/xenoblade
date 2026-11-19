@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include <nw4r/math/math_triangular.h>
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
@@ -26,7 +27,10 @@ class __declspec(novtable) CtrlMoveEne : public CCtrlMoveBase {
 public:
     CtrlMoveEne(CtrlEnemy* owner);
 
-    f32 field_0x4C;                   // 0x4C (ctor / CtrlMoveEne_InitMoveHook store the move-sub +0xCC result)
+    union {
+        f32 field_0x4C;                 // 0x4C (ctor / CtrlMoveEne_InitMoveHook store the move-sub +0xCC result)
+        u32 field_0x4C_bits;            // same word read as integer flags by the move hook tests
+    };
     u32 field_0x50;                   // 0x50 (CtrlMoveEne_InitMoveHook stores the bdat-derived state)
     u32 field_0x54;                   // 0x54 (CtrlMoveEne_InitMoveHook zeroes)
     f32 field_0x58;                   // 0x58 (CtrlMoveEne_InitMoveHook stores the movement-rate divisor)
@@ -119,13 +123,6 @@ struct CfObjectMoveView9 {
     s16 field_0x18E;                  // 0x18E
     u8 _pad190[0x198 - 0x190];        // 0x190-0x197
     s16 field_0x198;                  // 0x198
-};
-
-// Word view of CtrlMoveEne::field_0x4C: CtrlMoveEne_InitMoveHook clears it with an
-// integer store and ORs bit 2 into it, while the ctor stores a float there.
-struct CfObjectMove4CView {
-    u8 _pad[0x4C];                  // 0x00-0x4B
-    u32 field_4C;                   // 0x4C
 };
 
 // View of the battle-object sub at +0x3F60 (CtrlMoveEne_TickMoveControl toggles bit flags
@@ -259,17 +256,6 @@ public:
     virtual void CfObjectMove_releaseSlotById(int arg);  //0x1D0
     virtual void CfObjectMove_recordMoveValue(float value);  //0x1D4
     virtual float* CfObjectMove_getMovementRate();  //0x1D8 (movement-rate query)
-};
-
-// View of the movement-data object CtrlMoveEne_CommitHeadAngle operates on (same layout as
-// CCtrlMoveNpc::mBaseData / CNpcBaseData in CtrlMoveNpc.cpp): +0xC holds a
-// float, +0x28 the movement sub-object.
-
-// CtrlMoveEne_UpdateMoveHeading / CtrlMoveEne_UpdateFleeWander / CtrlMoveEne_ScanGimmickTargets extension of the move-data
-// block: the +0x14 float they clear when idling.
-struct CFunc8009DataView {
-    u8 _pad[0x14];                  // 0x00-0x13
-    f32 field_0x14;                 // 0x14
 };
 
 // View of the movement-controller object CtrlMoveEne_TryLatchTargetActor / CtrlMoveEne_MarkActiveSteady /
@@ -853,13 +839,8 @@ extern "C" int moveBaseQuery(cf::CtrlMoveEne* self, ml::CVec3* pos);
 // call-site relocs in CtrlMoveEne_UpdateFleeWander / CtrlMoveEne_UpdatePursuit at the unmangled name.
 extern "C" int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self, ml::CVec3* out,
                              cf::CtrlMoveEne* other, f32 f1, f32 f2, int arg);
-// nw4r fixed-point math kernels (C-ABI SDK functions; names are the retail
-// mangled identifiers - keep C linkage so the call relocs match).
-extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
-extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-// CfGameManager member-count accessor (retail mangled name kept verbatim).
-extern "C" int initPadSubSystem__Q22cf13CfGameManagerFv();
+// CfGameManager member-count accessor: canonical static int initPadSubSystem()
+// is declared in include/kyoshin/cf/CfGameManager.hpp.
 // CtrlMoveEne_InitBattleMove call sites: battle-object probe helpers (code_800B06A4.cpp),
 // parts-element lookup (CPartsChange.cpp), party-info state builder/dispatch
 // (CPartsChange.cpp) and the file/bdat column readers (retail C-ABI names).
@@ -874,7 +855,6 @@ extern "C" int CPartsChange_ProcessPartyInfo(void* a, void* b);
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
 extern "C" void aimMoveTarget(void* self, ml::CVec3* dst, const ml::CVec3* src,
                               int flag);
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 // CtrlMoveEne_CheckKeepMoving call sites:
@@ -892,7 +872,7 @@ extern "C" int findObjectById__Fi(int id);
 extern "C" void* MapFx_ResolveOwner(void* src);
 extern "C" int isBattleStatusActive(void* self, int id);
 extern "C" int CPartsChange_GetEnemySlotAt(void* self, int index);
-extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+// CfGameManager::getInstance is declared in include/kyoshin/cf/CfGameManager.hpp.
 // NOTE: deliberately no extern "C" - matches the plain-C++-linkage form
 // used by CPartsChange.hpp / CfGimmickObject.hpp / CtrlEnemy.hpp; an
 // extern "C" duplicate here collides when those headers are visible.

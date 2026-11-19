@@ -110,7 +110,7 @@ extern u32 lbl_eu_80538888[];        // CMenuPTChangeNotice primary vtable
 extern const f32 lbl_eu_80668B90;    // animation frame target
 extern const f32 lbl_eu_80668B80;    // pad-input disable timer
 extern const char* lbl_eu_80662AF8;  // file path for the notice layout
-void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 handle, const char* path,
                                                    IWorkEvent* evt, int, int);
 void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,

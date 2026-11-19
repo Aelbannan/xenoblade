@@ -995,7 +995,7 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
     }
 
     CItemData_enableFamFlag(item);
-    CItemImpl* impl = (CItemImpl*)CItem_initItemImplInstances(item);
+    CItemImpl* impl = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
     impl->vf1C(item);
 
     u8 colA;
@@ -1041,9 +1041,9 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
     u8 hi = lbl_eu_80662750[rangeIdx * 2 + 1];
 
     for (int k = 0; k < 4; k++) {
-        CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances(item);
+        CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
         im->vf50(item, k, 0);
-        CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances(item);
+        CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
         im2->vf68(item, k, 0);
     }
 
@@ -1088,9 +1088,9 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
             }
             if (dup == 0) {
                 u16 qty = mtRand__Q22ml4mathFii(lo, hi);
-                CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances(item);
+                CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
                 im->vf50(item, got, itemId);
-                CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances(item);
+                CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
                 im2->vf68(item, got, qty);
                 *dst++ = itemId;
                 got++;
@@ -1156,7 +1156,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     lbl_eu_80663E24 &= ~0x80000000u;
     mineFindNearestPoint(&nearest, mgr, (CfMapMineManager*)((u8*)mgr + 0x4), pos);
     if (nearest == 0) return;
-    if (isTimerActive__Q22cf13CfGameManagerFv() != 0) return;
+    if (cf::CfGameManager::isTimerActive() != 0) return;
 
     u32 fl = nearest->mItem.mFlags;
     int ready = 0;
@@ -1256,7 +1256,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     // Push a message into the ring buffer (evicting the oldest when full).
     char msgText[0x40];
     msgText[0] = 0;
-    CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances(&drop);
+    CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)&drop);
     const char* nm = im->vf20(&drop);
     u32 msgLen = strlen(nm);
     strcpy(msgText, nm);
@@ -1290,7 +1290,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     else if (cval == 0x32) queueEventId__Q22cf13CfGameManagerFv(0x71);
     else if (cval == 0x1F4) queueEventId__Q22cf13CfGameManagerFv(0x72);
 
-    CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances(&drop);
+    CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances((CItemData*)&drop);
     u32 rarity = im2->vf08(&drop);
     if ((rarity & 0xFFFF) >= 5) {
         queueEventId__Q22cf13CfGameManagerFv(0x76);

@@ -177,7 +177,7 @@ void CfMapEffectManager::updateSceneFx() {
                 }
             }
         }
-        if (type != 0 && isTimerActive__Q22cf13CfGameManagerFv() == 0) {
+        if (type != 0 && cf::CfGameManager::isTimerActive() == 0) {
             CfMapEffectHandle* obj = self->field_0x134;
             self->field_0x12C = -1;
             self->field_0x12E = -1;

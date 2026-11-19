@@ -150,4 +150,4 @@ extern s16 lbl_eu_80664710[4];
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).
-extern "C" void* CItem_initItemImplInstances(void*);
+// CItem_initItemImplInstances: canonical decl from CfGameManager.hpp.

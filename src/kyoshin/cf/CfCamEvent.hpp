@@ -164,7 +164,6 @@ extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(void* self, void* arg1, void* a
 
 // Camera-event factory imports.
 extern "C" u32 CfRes_getHeapHandle();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup
 void cleanupMapEffects__Q22cf13CfGameManagerFv();
 extern const volatile unsigned char lbl_eu_80527048[];                          // CfCamEvent vtable label
@@ -172,8 +171,8 @@ extern const volatile unsigned char lbl_eu_80527048[];                          
 // Per-frame update (CfCamEvt_Update) imports.
 extern "C" void stubEmptyE__Q22cf13CfGameManagerFv(u32);
 extern "C" int getNullPtrC__Q22cf13CfGameManagerFv(u32);
-extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" cf::CfCamNodeList* getFirstGimmick__Q22cf13CfGameManagerFv();
+
 extern "C" void cfCam_nopVirtFloat(void*);
 extern "C" void cfCam_syncCamFlags(void*, void*);
 extern "C" void* func_800BBC0C(void*);
@@ -197,5 +196,5 @@ extern const f32 lbl_eu_8066627C;
 extern const f32 lbl_eu_80666280;
 extern const f32 lbl_eu_80666284;
 extern f32 lbl_eu_80661B58;
-extern char lbl_eu_805262F0[];
-extern char lbl_eu_805262C8[];
+extern const char lbl_eu_805262F0[];
+extern const char lbl_eu_805262C8[];

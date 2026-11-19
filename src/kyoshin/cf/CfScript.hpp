@@ -87,17 +87,17 @@ public:
 // The array is embedded at offset 0. Singleton accessed via getInstance().
 class CfScriptManager {
 public:
-    static __declspec(noinline) CfScriptManager* getInstance();
+    static CfScriptManager* getInstance();
     void init();
 
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0 (total 0x108)
 
     // Script loading thunks for each slot.
-    // noinline: these are retail `bl`-thunks (forward this+name to CfScript_LoadScript);
-    // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
-    void __declspec(noinline) loadSlotZero(const char* name);  // load slot 0 (this == &mScripts[0])
-    void __declspec(noinline) CfScript_PutSlot1(const char* name);  // load slot 1 (offset 0x58)
-    void __declspec(noinline) CfScript_PutSlot2(const char* name);  // load slot 2 (offset 0xB0)
+    // Retail `bl`-thunks forward this+name to CfScript_LoadScript; `-inline noauto`
+    // keeps them out of line without an explicit per-function directive.
+    void loadSlotZero(const char* name);  // load slot 0 (this == &mScripts[0])
+    void CfScript_PutSlot1(const char* name);  // load slot 1 (offset 0x58)
+    void CfScript_PutSlot2(const char* name);  // load slot 2 (offset 0xB0)
 
     // Set "ready" flag on each slot
     void CfScript_SetFlag0();  // set flag on slot 0
@@ -113,7 +113,7 @@ public:
     void CfScript_ClearSlot2();  // reset slot 2
 
     // Main update and exec
-    void __declspec(noinline) updateScript();
+    void updateScript();
     void resetScripts();
 };
 

@@ -43,7 +43,7 @@ extern "C" void teardown(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void NandTeardown();
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
 // (retail symbols are unmangled / non-namespace, so C linkage is required).

@@ -26,7 +26,7 @@ struct CItemQueryRow {
     u8  field_0x12[24];  //+0x12 - per-arg2 byte
 }; //size 0x2A
 
-// 0xC8-byte flag buffer (retail BSS at lbl_eu_80573C50): a build/active flag,
+// 0xC8-byte flag buffer (retail BSS at sWindowFlagBuffer): a build/active flag,
 // per-table byte flags, and the quest/mission slot ids consumed by the
 // flag-buffer helpers UIWin_FlagBufCanShow / UIWin_BuildFlagBufBySlot in this unit.
 struct CFlagBuffer {
@@ -185,11 +185,7 @@ void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
 // array delete (C-ABI import).
 }
 
-// reslist_base vtable (retail data, other split). Sized >= 8 bytes so MWCC
-// addresses it via lis/addi (retail form), not small-data SDA21.
-extern const u8 lbl_eu_8052E61C[0x10];
 
-// Presentation/event bitfield (.sbss, other splits) - talk-event bit gates
 // the 0x608 window path of UIWin_OpenWindow.
 
 // Actor id -> actor object lookup (plain decl so the call reloc binds to the
@@ -212,7 +208,7 @@ struct CActorFlagsView {
 };
 
 // Global data used by UIWin_BuildFlagBuf (retail BSS/rodata in other splits).
-extern u8 lbl_eu_80573C50[0xC8];     // flag buffer (0xC8 bytes, byte flags)
+extern u8 sWindowFlagBuffer[0xC8];     // flag buffer (0xC8 bytes, byte flags)
 extern void* lbl_eu_80573D18[0x1C];  // per-table entry pointers (filled at runtime)
 extern const u8 lbl_804FC1D0[0x70];  // per-table base offsets (rodata)
 
@@ -235,8 +231,8 @@ struct CFlagOffsets {
 };
 
 // Shared rodata string blobs (other splits).
-extern char lbl_eu_8050097C[];  // quest window text (BdatGetU8Direct source)
-extern char lbl_eu_80500A50[];  // bdat column-name blob (getBdatStringColumnValue)
+extern char sQuestWindowText[];  // quest window text (BdatGetU8Direct source)
+extern char sBdatColumnNames[];  // bdat column-name blob (getBdatStringColumnValue)
 
 // bdat pointer used by the flag-buffer column reads (.sdata, other split).
 extern u8* lbl_eu_80664098;
@@ -290,8 +286,10 @@ public:
     // symbols) that push newly created windows onto mWindowList1, so the data
     // members above are public for them. The singleton ctor/dtor stay private.
 
-private:
+public:
     static CUIWindowManager* spInstance;
+
+private:
     virtual ~CUIWindowManager();
     void Init();
 

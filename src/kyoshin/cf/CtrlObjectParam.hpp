@@ -10,6 +10,8 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+struct CItemExt;
+
 // C-ABI imports used by CtrlObjectParam_ClaimArtsSlotRow (bdat file lookup / bdat init hook).
 extern "C" void* Bdat_GetTable_AA34();
 
@@ -32,10 +34,10 @@ extern u32 lbl_eu_804FBC50[8];   // arts-learn offset table B (.rodata, CtrlObje
 extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_80664158;   // arts-table bdat handle (.sbss, sda21, CtrlObjectParam_ReapplyArtsSet)
-extern u32 lbl_eu_806640F4;    // item/weapon bdat file pointer (.sbss, sda21)
-extern u32 lbl_eu_806640D8;    // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_WriteArtsSlotIn)
+extern void* lbl_eu_806640F4;  // item/weapon bdat file pointer (.sbss, sda21)
+extern void* lbl_eu_806640D8;  // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_WriteArtsSlotIn)
 extern void* lbl_eu_806640DC;   // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_AdjustPartyArtsLevel)
-extern u32 lbl_eu_806640F8;    // armor bdat file pointer (.sbss, sda21, CtrlObjectParam_RefreshEquipSlotBlock)
+extern void* lbl_eu_806640F8;  // armor bdat file pointer (.sbss, sda21, CtrlObjectParam_RefreshEquipSlotBlock)
 extern void* lbl_eu_80664090;  // arts stat bdat file pointer (.sbss, sda21, CtrlObjectParam_RampArtsStatStep)
 extern char lbl_eu_804FBCB0[]; // bdat column-name string table (.rodata)
 extern const f32 lbl_eu_806667A0;    // arts-set float constant (.sdata2, CtrlObjectParam_SyncParamFromActorEx)
@@ -76,7 +78,7 @@ extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg);        
 
 extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);  // code_800AA008.cpp (token formatter)
 
-extern "C" void* CItem_kindPtr(u32 index, s16 value);                           // CItemBoxInfo.cpp
+extern "C" CItemExt* CItem_kindPtr(u32 index, s16 value);                       // CItem.cpp (canonical decl)
 
 extern "C" void* getArtsParamRC2(void* base, int row, int slot);               // CAttackSet.cpp (arts-slot record)
 extern "C" void setArtsSlotRC(void* base, int artsId, int row, int slot);     // CAttackSet.cpp (arts-slot write)
@@ -89,9 +91,8 @@ extern "C" u16 CItem_getNameIdFromFam(u16 value);                               
 
 extern "C" void* getAtkParam(void* base, int index);                           // CAttackSet.cpp (attack-parameter record lookup)
 
-extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);                  // CItemBoxInfo.cpp (item family resolver)
+extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);               // CItem.cpp (canonical decl)
 
-extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32 bit);               // CfGameManager.cpp (flag-bit test)
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);                                // CfGameManager.cpp (resource lookup)
 
 extern "C" int Counter_TestBit(void* data, u32 flag);                          // code_8025FB10.cpp (status lookup)
@@ -207,12 +208,6 @@ namespace cf {
     struct CtrlObjectParamActorOwner {
         u8 pad_0000[0x17C];
         CActorParam mParam;   // vtable at 0x17C
-    };
-
-    // -- Word-at-offset-0 view of the object returned by getArtsDataBlock ----
-    // CtrlObjectParam_GetArtsDataWord reads the low 16 bits of the first word.
-    struct CtrlObjectParamWordView {
-        u32 word0;
     };
 
     // -- Opaque work-buffer type for the global destructor's typed delete ----

@@ -37,9 +37,9 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 
 // Named .sdata2 conversion magic: defining it lets MWCC's constant pool reuse
 // the retail symbol for the (f32)u16 casts in CPassiveSkillInfo_init instead of
-// emitting a TU-local @N label (CfResReloadImpl / CSuddenCommu idiom, same as
+// emitting a TU-local @N label
 // CMiniMap.cpp's 806670A8). Value is 2^52 = 0x4330000000000000.
-extern const double lbl_eu_80668910 = 4503599627370496.0; // exact bits 0x4330000000000000 (2^52); an integer literal like 0x4330000000000000ll gets VALUE-converted to double and lands as 0x43d0cc0000000000, which defeats pool merging
+extern const double lbl_eu_80668910 = 4503599627370496.0;
 
 // Per-character slot-spacing table read by CPassiveSkillLine_refreshLearnGrid (retail .sdata2,
 // read at (id-1)*2 with an 8-byte per-character stride; 2 elements keep it
@@ -986,8 +986,9 @@ extern "C" void* __ct__UI_CPassiveSkillLine(UI::CPassiveSkillLine* self, nw4r::l
     __ct__UI_CPassiveSkillInfo(reinterpret_cast<UI_CPassiveSkillInfo*>(&self->mInfo), 0);
     __ct__UI_CPassiveSkillCur(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mInfo.field_3C), 0);
     self->mInfo.field_54 = 0;
-    __ct__CCur18(&self->mCur, 0);
-    memset(&self->cells, 0, 0xC8);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCur, 0);
+    memset(self->cells, 0, sizeof(self->cells));
+
     return self;
 }
 
@@ -1010,7 +1011,7 @@ void CPassiveSkillLine_rebuildLayouts(UI::CPassiveSkillLine* self){}
 // destination.
 UI_CPassiveSkillInfo* CPassiveSkillInfo_copy(UI_CPassiveSkillInfo* dst,
                                     const UI_CPassiveSkillInfo* src) {
-    // Volatile-sourced accesses: retail emits strict load/store interleaving
+    // Volatile-sourced accesses:
     // through one scratch register per member (conservative aliasing); with
     // plain member copies -ipa proves the call-site operands disjoint and
     // batches all loads into separate registers first.

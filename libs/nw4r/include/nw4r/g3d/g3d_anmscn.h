@@ -127,7 +127,7 @@ public:
     virtual void G3dProc(u32 task, u32 arg, void* pArg); // at 0x18
 
     static AnmScnRes* Construct(MEMAllocator* pAllocator, u32* pSize,
-                                ResAnmScn res, void* pUserData);
+                                ResAnmScn res, bool pUserData);
 
     NW4R_G3D_RTTI_DECL_DERIVED(AnmScnRes, AnmScn);
 

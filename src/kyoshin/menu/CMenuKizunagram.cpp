@@ -66,7 +66,7 @@ extern "C" void __dt__11CKizunagramFv(UnkKizunaMenuSub98* _this, int flags);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // code_80135FDC helpers (retail-unmangled).
 extern "C" void CUICfManager_createQueuedMenus();

@@ -146,7 +146,7 @@ struct CSysWinData {
 // is declared below as a normal C++ function to let MWCC mangle it.)
 extern "C" {
 void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
-void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void __ct__8CProcessFv(CProcess* self);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);

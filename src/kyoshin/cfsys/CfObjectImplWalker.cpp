@@ -457,6 +457,7 @@ void Walker_DispatchBattleCmd(cf::CfObjectImplWalker* self, u32 battleId, u32 cm
     }
 }
 
+
 // Party/battle-state update: mirrors the PC battle flags into the move
 // sub-object, sweeps the party list feeding the move's fight state, and
 // arms the area's battle-exit notification when nothing else is fighting.

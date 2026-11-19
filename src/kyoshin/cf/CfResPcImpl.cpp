@@ -11,6 +11,7 @@
 #include <nw4r/math/math_types.h>
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
@@ -1247,7 +1248,7 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
 // id 4 and pokes character slots 1..13.
 int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
     if (!(lbl_eu_80663E24 & 0x400000)) {
-        func_8008413C__Q22cf13CfGameManagerFv(arg2, 1);
+        cf::CfGameManager::func_8008413C(arg2, 1);
         cf::CfGameManager::enablePadFlags(0x1FE01EFF, true);
         lbl_eu_80663E46 = 0x5A;
     }

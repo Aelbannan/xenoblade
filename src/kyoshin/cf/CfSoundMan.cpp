@@ -528,8 +528,6 @@ void* __dt__801C0334(CfSoundSlot* _this, int flags) {
     return _this;
 }
 
-#pragma push
-#pragma auto_inline off
 // Deleting dtor for the 4-byte SoundHandle wrapper (retail symbol is
 // address-named, so a plain free function): detach any attached sound,
 // then free when requested.
@@ -542,7 +540,6 @@ void* __dt__801C0374(CfSoundHandle* _this, int flags) {
     }
     return _this;
 }
-#pragma pop
 
 // Writes the sound slot's current position into out (3 words) and reports
 // success. When the slot has an active voice handle (field_0x2C != 0 and a
@@ -620,8 +617,8 @@ fallback:
     return result;
 }
 
-// Kept out-of-line (auto_inline off) so the retail call from CfSoundMan_SweepIdleSlots
-// survives; the full teardown body is a separate target.
+// Retail calls this out of line from CfSoundMan_SweepIdleSlots;
+// the full teardown body is a separate target.
 // Bitfield view of CfSoundSlot::field_0x2A: reading the active bit through a
 // named bitfield keeps MWCC's load + bool-conversion chain (plain mask-and-
 // test folds straight into a flag branch).
@@ -630,8 +627,6 @@ struct SlotActiveView {
     u16 active : 1;
 };
 
-#pragma push
-#pragma auto_inline off
 // Per-slot update (retail CfSoundMan_UpdateSlot): refreshes the slot's position from
 // its voice source, computes the camera-relative distance, and either fades /
 // stops / tears down the slot (out-of-range paths) or restarts and re-gains
@@ -728,10 +723,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
         }
     }
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Stops every sound slot whose flag word has any bit set in `mask`. The
 // double null-check (outer && guard plus inner re-check) reuses one CR1
 // compare - MWCC keeps the first compare in CR1 because the mask test
@@ -760,10 +752,7 @@ CfSoundSlot* CfSoundMan_FindSlotById(u32 id) {
     }
     return 0;
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Sweeps the 64-entry sound-slot table, tearing down (CfSoundMan_UpdateSlot) every
 // slot that is in use - either a live sound or a valid id with the in-use
 // flag (bit 4 of field_0x2A) set - and resetting idle slots to the unused
@@ -781,14 +770,10 @@ void CfSoundMan_SweepIdleSlots() {
         }
     }
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Sweeps the 64-entry sound-slot table: stops any playing sound with the
 // given fade frames, then resets each slot's id/flag state to idle.
-// Kept out-of-line (auto_inline off) so the retail call from CfSoundMan_StopAllModes
-// survives.
+// Retail calls this out of line from CfSoundMan_StopAllModes.
 void CfSoundMan_ResetAllSlots(s32 stopFlag) {
     for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
         if (p->mSound != 0) {
@@ -799,10 +784,7 @@ void CfSoundMan_ResetAllSlots(s32 stopFlag) {
         p->field_0x2E = -1;
     }
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Stops the sound whose id matches `soundId` (if any slot is playing it),
 // then resets the slot's id/flag state to idle. The double null-check (outer
 // && guard plus inner re-check) reuses one CR1 compare - MWCC keeps the first
@@ -822,7 +804,6 @@ void CfSoundMan_StopSlotsOfSound(u32 soundId, s32 stopFlag) {
         }
     }
 }
-#pragma pop
 
 // Constructor for a sound-slot record (CfSoundRecord): clears the control
 // words, marks the record id invalid, and constructs the embedded
@@ -839,10 +820,8 @@ extern "C" CfSoundRecord* CfSoundMan_CtorRecord(CfSoundRecord* _this) {
     return _this;
 }
 
-// Empty stubs called by matched functions; auto_inline off keeps the calls
-// (MWCC would otherwise inline the empty bodies and delete the call sites).
-#pragma push
-#pragma auto_inline off
+// Empty stubs called by matched functions; retail keeps the call sites
+// instead of inlining the empty bodies.
 // Shuts down an active record: stops its archive player and archive, frees
 // any sound-data buffer, then resets the record's id/flag state.
 extern "C" void CfSoundMan_ReleaseRecord(CfSoundRecord* rec) {
@@ -915,10 +894,7 @@ extern "C" bool CfSoundMan_CommitRecordSetup(CfSoundRecord* rec, u32 a, u32 b, u
     }
     return ok;
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Applies the FX-send volume `volume` to every player of an active record.
 // The player count is re-queried every iteration (retail keeps the
 // GetPlayerCount call in the loop test). Kept out-of-line so the retail call
@@ -931,10 +907,7 @@ extern "C" void CfSoundMan_SetRecordFxSend(CfSoundRecord* rec, nw4r::snd::AuxBus
         rec->mArchivePlayer.GetSoundPlayer(i).SetFxSend(bus, volume);
     }
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // If the sound slot is active (mFlag bit 0), advance its embedded
 // SoundArchivePlayer. Tail-called into nw4r Update. Kept out-of-line so
 // the retail call from CfSoundMan_UpdateAllRecords survives.
@@ -944,10 +917,7 @@ void CfSoundMan_TickRecordPlayer(CfSoundRecord* rec) {
     }
     rec->mArchivePlayer.Update();
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Binary search over the record's sound archive by user parameter: returns
 // the sound id whose user param equals `target`, or -1. Guarded on the record
 // being active (mFlag bit 0) and a non-sentinel target.
@@ -977,16 +947,11 @@ extern "C" int CfSoundMan_LookupSoundByParam(CfSoundRecord* rec, s32 target) {
     }
     return -1;
 }
-#pragma pop
 
 // No-op: called when nw4r sound playback starts successfully.
-// Retained as an empty hook in the retail binary (single blr). Kept
-// out-of-line (auto_inline off) so the retail call from CfSoundMan_StartSlotSound's
-// failure path survives.
-#pragma push
-#pragma auto_inline off
+// Retained as an empty hook in the retail binary (single blr). Retail
+// calls it from CfSoundMan_StartSlotSound's failure path, out of line.
 void CfSoundMan_PlayFailHook() {}
-#pragma pop
 
 // Scan the 64-entry sound-slot table for a free slot (mId == 0xFFFF).
 // Kept as a static helper so MWCC inlines it (same rationale as
@@ -1004,8 +969,6 @@ static inline CfSoundSlot* findFreeSlot() {
     return 0;
 }
 
-#pragma push
-#pragma auto_inline off
 // Starts playback on the record's player using a sound slot: resolves the
 // slot (a caller-provided one, or a free table slot scanned for by id),
 // calls detail_StartSound through the player's SoundStartable, and on
@@ -1067,18 +1030,15 @@ extern "C" u32 CfSoundMan_StartSlotSound(CfSoundRecord* rec, s32 id, float volum
     }
     return slotId;
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Starts playback on the record's player: resolves the sound slot
 // (CfSoundMan_LookupSoundByParam, which also consumes the retail pass-through r4 user param)
 // and on failure returns 0xFFFF, otherwise forwards the request to
 // CfSoundMan_StartSlotSound with the resolved slot id and volume and returns its result.
 // The retail ABI is (r3 record, r4 search param, f1 volume, r5 forwarded
 // value) - the 4th param b is the value forwarded to CfSoundMan_StartSlotSound.
-// Kept out-of-line (auto_inline off) so the retail call from CfSoundMan_PlayRequest
-// survives; C linkage binds the reloc to the retail-unmangled name.
+// Retail calls this out of line from CfSoundMan_PlayRequest;
+// C linkage binds the reloc to the retail-unmangled name.
 extern "C" u32 CfSoundMan_StartRecordSound(u32 a, s32 userParam, float f1, u32 b) {
     int result = CfSoundMan_LookupSoundByParam((CfSoundRecord*)a, userParam);
     if (result == -1) {
@@ -1086,10 +1046,7 @@ extern "C" u32 CfSoundMan_StartRecordSound(u32 a, s32 userParam, float f1, u32 b
     }
     return CfSoundMan_StartSlotSound((CfSoundRecord*)a, result, f1, b, 0);
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Scan the 64-entry sound-slot table for a slot whose 16-bit id matches.
 // Kept as a static helper so MWCC inlines it into the callers (see
 // CfSoundMan_PlaySoundSimple).
@@ -1168,8 +1125,6 @@ static inline CfSoundSlot* findSlotById(u32 id) {
     return 0;
 }
 
-#pragma push
-#pragma auto_inline off
 // Actor-linked variant of CfSoundMan_StartTableSound: resolves the voice source first
 // (findObjectById, null -> 0xFFFF), resolves the record's sound id by user
 // param (CfSoundMan_LookupSoundByParam), starts playback (CfSoundMan_StartSlotSound), and on success
@@ -1216,10 +1171,7 @@ extern "C" u32 CfSoundMan_PlaySoundSimple(CfSoundRecord* rec, s32 param, u32 sou
     }
     return res;
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Pauses or resumes every player of an active record. The player count is
 // re-queried every iteration (retail keeps GetPlayerCount in the loop test).
 void CfSoundMan_PauseRecordVoices(CfSoundRecord* rec, bool pause, int fade) {
@@ -1230,10 +1182,7 @@ void CfSoundMan_PauseRecordVoices(CfSoundRecord* rec, bool pause, int fade) {
         rec->mArchivePlayer.GetSoundPlayer(i).PauseAllSound(pause, fade);
     }
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Stops every player in the record's SoundArchivePlayer with the given fade
 // frames. The player count is re-queried every iteration (retail keeps the
 // GetPlayerCount call in the loop test).
@@ -1342,10 +1291,7 @@ void CfSoundMan_StopRecordSounds(CfSoundRecord* rec, s32 mode, u32 fadeFrames) {
         }
     }
 }
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // Stops every sound slot whose 16-bit id matches `soundId` and resets the
 // slot's id/flag state to idle. The 0xFFFF id store comes from a hoisted
 // 0x10000 base minus one (zero-extended 0xFFFF needs the lis/subi pair).
@@ -1404,8 +1350,6 @@ extern "C" void CfSoundMan_PauseMatchingSlot(CfSoundSlot* slot) {
     }
 }
 
-#pragma push
-#pragma auto_inline off
 // Stop request for every sound playing through the record: resolves the
 // target sound id by user param (CfSoundMan_LookupSoundByParam), publishes the pause/fade
 // request block read back by CfSoundMan_PauseMatchingSlot, then walks each player's
@@ -1446,7 +1390,6 @@ extern "C" void CfSoundMan_PauseRecordSounds(CfSoundRecord* rec, s32 targetId, u
         }
     }
 }
-#pragma pop
 
 // Sets the pan of every slot whose 16-bit id matches `soundId` (only while
 // the record is active, mFlag bit 0). The pan float is kept in f31 across the

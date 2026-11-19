@@ -74,7 +74,7 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
     obj->mFieldA0 = 0;
     obj->mFieldA4 = 0;
 
-    __ct__CCur18(&obj->mCur, 0);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&obj->mCur, 0);
     return obj;
 }
 

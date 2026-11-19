@@ -1,4 +1,6 @@
 #include "kyoshin/cf/CfCamEvent.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical isTimerActive declaration
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <string.h>
@@ -171,7 +173,7 @@ void CfCamEvt_RequestFollowAlt64(CfCamEvent* self, s32 cond) {
 // vtable, then attach the event object returned by the camera manager.
 extern "C" CfCamEvent* __ct__8006B310(void* self, void* arg2) {
     u32 heap = CfRes_getHeapHandle();
-    CfCamEvent* obj = (CfCamEvent*)allocate__Q23mtl10MemManagerFUlUl(0x298, heap);
+    CfCamEvent* obj = (CfCamEvent*)mtl::MemManager::allocate(0x298, heap);
     if (obj != nullptr) {
         __ct__cf_CfCamFollow(obj, self, arg2);
         ((CfCamFollowSlot*)obj)->table = (void*)lbl_eu_80527048;
@@ -246,7 +248,7 @@ void CfCamEvt_Update(CfCamEvent* self) {
     if ((evtFlags & 0x00400000) != 0 || (evtFlags & 0x00040000) != 0) {
         flagByte = 0;
         follow = 0;
-    } else if (isTimerActive__Q22cf13CfGameManagerFv() != 0) {
+    } else if (cf::CfGameManager::isTimerActive() != 0) {
         follow = 1;
     }
 

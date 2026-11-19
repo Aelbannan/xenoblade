@@ -13,7 +13,7 @@
 // (CtrlObjectParam_GetCharEntry is declared by kyoshin/cf/object/CAIAction.hpp - u16 form;
 // including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 // Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
 // retail declaration order (emission follows first use; code uses alone
 // would permute the two conversion doubles).
@@ -60,7 +60,7 @@ struct PcAiSubView {
 // place on the CfObjectMove subobject (the upcast carries the retail null
 // guard), then runs the enable hook.
 cf::CfObjectPc::CfObjectPc() {
-    u8* res = (u8*)allocate__Q23mtl10MemManagerFUlUl(0x44, CfRes_getAllocHandle());
+    u8* res = (u8*)mtl::MemManager::allocate(0x44, CfRes_getAllocHandle());
     if (res != NULL) {
         res = (u8*)__ct__cf_CfResPcImpl(res, static_cast<cf::CfObjectMove*>(this));
     }
@@ -453,7 +453,7 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc173() {}
 // implementation (same naming quirk) after touching the battle singleton.
 void cf::CfObjectPc::CActorParam_decayArtsMatrix(float value) {
     getInstance__Q22cf14CBattleManagerFv();
-    CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(this, value);
+    cf::CActorParam::CActorParam_decayArtsMatrix(value);
 }
 
 // Retail symbol CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv (vtable slot

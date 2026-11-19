@@ -39,7 +39,7 @@ struct CfPadDataView {
 extern "C" {
 void deleteRegion__17UnkClass_8045F564Fv(void* region);
 void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
-void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 }
 
 // Global data imports (MWCC does not mangle global-scope data names).

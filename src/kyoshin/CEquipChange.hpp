@@ -38,7 +38,7 @@ public:
     void DrawLayouts(nw4r::lyt::DrawInfo* drawInfo);
     void CleanupFiles();
     int GetSelWhenReady();
-    u8 IsActiveFlag();
+    u32 IsActiveFlag();
     int CheckBoxOpen();
     int IsSortOrSubPage();
     int IsWeaponRow();
@@ -64,7 +64,7 @@ public:
     int GetLockedState();
     int GetMenuId();
     int GetEquippedResId(u32 param);
-    u8 GetBoxTailByte();
+    u32 GetBoxTailByte();
     void OnAnim38ToSt2();
     void OnAnim3CToSt3();
     void OnAnim3CToSt5();

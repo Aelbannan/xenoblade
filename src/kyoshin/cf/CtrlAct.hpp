@@ -10,10 +10,7 @@
 #include "kyoshin/cf/CtrlPc.hpp"
 
 namespace cf {
-class CtrlAct {
-public:
-    virtual ~CtrlAct();
-};
+class CtrlAct;
 } // namespace cf
 
 // u32 -> double conversion magic: the retail code builds the 0x43300000-
@@ -25,7 +22,7 @@ union F64Conv {
     double d;
 };
 
-// 4-byte flag word at CtrlActView+0x58. MWCC lays bitfields out MSB-first:
+// 4-byte flag word at cf::CtrlAct+0x58. MWCC lays bitfields out MSB-first:
 // the first-declared field occupies the most significant bits, so
 // mKind(28-31)/mPhase(26-27)/mAngleState(24-25)/mParam(16-23) map to the
 // retail rlwimi masks (28,0-3), (26,4-5), (24,6-7), (16,8-15).
@@ -90,19 +87,6 @@ public:
     virtual void vf27();  virtual void vf28();  virtual void vf29();
     virtual void vf30();  virtual void vf31();  virtual void vf32();
     virtual f32 getHeight();               // 0x8C
-};
-
-// player->mField3F60 (voice/battle target) view for the fields this TU
-// touches: flag word at +0x4EC, timer/height at +0x4F8, threshold at +0x508.
-struct CtrlActTargetView {
-    u8 _00[0x4EC];
-    u32 mField4EC;           // 0x4EC (bit 8 test by testHeightGap)
-    u8 _4F0[0x4F8 - 0x4F0];
-    f32 mField4F8;           // 0x4F8 (active timer gate, isMoveBlocked)
-    u8 _4FC[0x508 - 0x4FC];
-    f32 mField508;           // 0x508 (height-delta threshold, testHeightGap)
-    u8 _50C[0x510 - 0x50C];
-    f32 mField510;           // 0x510
 };
 
 // player->vf167() (vtable slot 0x2A4) result view: the action/attack state
@@ -588,7 +572,7 @@ struct CtrlActPlayerView {
     u8 _3F04[0x3F10 - 0x3F04];
     u32 mField3F10;              // 0x3F10 (battle-target actor id, runArtsAttack)
     u8 _3F14[0x3F60 - 0x3F14];
-    CtrlActTargetView* mField3F60;  // 0x3F60 (voice/battle target)
+    CtrlPlayerSub3F60* mField3F60;  // 0x3F60 (voice/battle target)
     u8 _3F64[0x44D8 - 0x3F64];
     f32 mField44D8;              // 0x44D8 (proximity radius, scanPlayerTgt)
 };
@@ -632,12 +616,6 @@ struct ArtsTable {
     void (*method20)(void* self, int id);      // 0x20
 };
 
-// Battle-manager field views used by runArtsAttack.
-struct CtrlActBmView {
-    u8 _00[0x1A8];
-    void* mField1A8;           // 0x1A8 chain region (CChain_ValidateTarget, updateActMain)
-    u8 mField1AA;              // 0x1AA (range gate [1, 0x18])
-};
 struct CtrlActBattleSubView {
     u32 mField0;               // 0x00
     u8 _4[0x824 - 0x4];
@@ -658,21 +636,32 @@ struct CtrlActAtkArg {
     u32 mField18;              // 0x18
 };
 
-// Layout view of the player-control object (cf::CtrlPc-family) used by the
-// CtrlAct action handlers. With -RTTI on, MWCC emits two leading vtable
-// entries, so the Nth declared virtual sits at vtable offset (N+2)*4. The
-// class is only used as a view (never instantiated), so no vtable is
-// emitted.
-class CtrlActView {
+// Real cf::CtrlAct layout (cf::CtrlPc-family action controller). With -RTTI
+// on, MWCC emits two leading vtable entries, so the Nth declared virtual sits
+// at vtable offset (N+2)*4.
+namespace cf {
+class __declspec(novtable) CtrlAct {
 public:
-    virtual void vf00();  virtual void vf01();  virtual int CtrlNpcAlwaysFalse();  // 0x10 (def in CtrlNpc.cpp)
+    virtual void vf00();
+    virtual void vf01();
+    virtual int CtrlNpcAlwaysFalse();  // 0x10 (def in CtrlNpc.cpp)
     virtual unsigned long ctrlActIsFlagBit15Clear();  // 0x14
-    virtual void vf04();  virtual void vf05();
-    virtual void vf06();  virtual void vf07();  virtual void vf08();
-    virtual void vf09();  virtual void vf10();  virtual void vf11();
-    virtual void vf12();  virtual void vf13();  virtual void vf14();
-    virtual void vf15();  virtual void vf16();  virtual void vf17();
-    virtual void vf18();  virtual void vf19();
+    virtual void vf04();
+    virtual void vf05();
+    virtual void vf06();
+    virtual void vf07();
+    virtual void vf08();
+    virtual void vf09();
+    virtual void vf10();
+    virtual void vf11();
+    virtual void vf12();
+    virtual void vf13();
+    virtual void vf14();
+    virtual void vf15();
+    virtual void vf16();
+    virtual void vf17();
+    virtual void vf18();
+    virtual void vf19();
     // Retail vtable lbl_eu_8052B080 (36 words, see CBattleManager.cpp): the
     // word at (N+2)*4 holds the named free function, so these virtuals carry
     // the retail names with call-site-exact arity (name-only change).
@@ -686,7 +675,8 @@ public:
     virtual int ctrlActCheckBlockedProbe(ml::CVec3* out);                                   // 0x74
     virtual int ctrlActDispatchEntry(void* entry);  // 0x78 (arts entry)
     virtual int runArtsAttack(void* entry);  // 0x7C (arts entry)
-    virtual int vf30();  virtual int vf31();  // 0x80/0x84 shared ret stubs
+    virtual int vf30();
+    virtual int vf31();  // 0x80/0x84 shared ret stubs
     virtual int handleActKind();  // 0x88
     virtual void vf33();  // 0x8C pure (retail word is 0)
     // NOTE: the retail table ends at +0x8C; there are no vf34+ slots.
@@ -722,6 +712,7 @@ public:
     u8 mField7A;               // 0x7A (cleared by handleActKind kind 9/10)
     u8 mField7B;               // 0x7B (probe counter, scanPlayerTgt)
 };
+} // namespace cf
 
 // Extended view of the +0x3E9C voice-owner interface exposing the vtable
 // slot 0x1AC used by aimVoiceOwner (the CVoiceOwnerIntfPc view in CtrlPc.hpp
@@ -874,7 +865,7 @@ extern "C" void* CPartsChange_GetActorTable(void* p);
 extern "C" void* CPartsChange_FindActorById(void* p, u16 arg);
 // CChain_TryActivateChain is declared in CtrlPc.hpp (C-ABI, (void*, int)).
 // In-TU kind setter used by the parseActEntry switch arms.
-void ctrlActSetupActionKind(CtrlActView* self, u32 kind, int param);
+void ctrlActSetupActionKind(cf::CtrlAct* self, u32 kind, int param);
 // Collision-query API: ScnRes_VertRayForward_E398 is declared in CtrlMoveBase.hpp
 // (retail C-ABI name; 6-arg probe passing two FP args after the GPR args).
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);
@@ -887,7 +878,7 @@ extern "C" void* getAtkParam(void* base, int index);
 // Enum-list actor-id query (target 5 scan loop).
 // findFirstCleanObjectId is declared in CtrlPc.hpp (extern "C" void* form).
 // In-TU facing helper called by progressPhase (retail plain C name).
-extern "C" int testFacingGap(CtrlActView* self, CtrlActSrc* src);
+extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src);
 
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 void* findObjectById(int id);
@@ -898,20 +889,20 @@ bool isGlobalCamFlagSet(int mask);
 
 // In-TU action-handler entry points: C linkage so the call relocs carry the
 // retail plain names (testFacingGap convention).
-extern "C" int handleActKind(CtrlActView* self);
-extern "C" void setupActTimer(CtrlActView* self);
-extern "C" void progressPhase(CtrlActView* self);
-extern "C" void rotateActPose(CtrlActView* self);
-extern "C" void ctrlActState4Handler(CtrlActView* self);
-extern "C" void testAimWobble(CtrlActView* self);
-extern "C" void stepActMotion(CtrlActView* self);
-extern "C" void loadActionSrc(CtrlActView* self);
-extern "C" void ctrlActHandleCase4Move(CtrlActView* self);
-extern "C" void aimNearestFoe(CtrlActView* self);
-extern "C" void snapFacingAng(CtrlActView* self);
-extern "C" void scanPlayerTgt(CtrlActView* self, ml::CVec3* pos);
-extern "C" int isMoveBlocked(CtrlActView* self);
-extern "C" int testHeightGap(CtrlActView* self, int flag);
+extern "C" int handleActKind(cf::CtrlAct* self);
+extern "C" void setupActTimer(cf::CtrlAct* self);
+extern "C" void progressPhase(cf::CtrlAct* self);
+extern "C" void rotateActPose(cf::CtrlAct* self);
+extern "C" void ctrlActState4Handler(cf::CtrlAct* self);
+extern "C" void testAimWobble(cf::CtrlAct* self);
+extern "C" void stepActMotion(cf::CtrlAct* self);
+extern "C" void loadActionSrc(cf::CtrlAct* self);
+extern "C" void ctrlActHandleCase4Move(cf::CtrlAct* self);
+extern "C" void aimNearestFoe(cf::CtrlAct* self);
+extern "C" void snapFacingAng(cf::CtrlAct* self);
+extern "C" void scanPlayerTgt(cf::CtrlAct* self, ml::CVec3* pos);
+extern "C" int isMoveBlocked(cf::CtrlAct* self);
+extern "C" int testHeightGap(cf::CtrlAct* self, int flag);
 
 // Scene object pointer fed to Scn_GetFrameDelta (.sbss).
 class CScn;
@@ -920,9 +911,9 @@ class CScn;
 extern const u32 lbl_eu_80527BB0[];
 extern const u32 lbl_eu_8052B080[];
 
-// Sub-object / player resolvers used by the CtrlActView ctor.
+// Sub-object / player resolvers used by the cf::CtrlAct ctor.
 typedef void CtrlActorObj;
-// Sub-object resolver used by the CtrlActView ctor (retail plain C name).
+// Sub-object resolver used by the cf::CtrlAct ctor (retail plain C name).
 extern "C" CtrlActorObj* func_800BBC0C(void* param);
 
 // sdata2 float constants (const so MWCC references the retail pool slots).
@@ -1001,5 +992,5 @@ extern const char lbl_eu_80526300[];
 
 // In-TU action entry points matched to retail (C linkage keeps the plain
 // call reloc names).
-extern "C" void updateActMain(CtrlActView* self);
-extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos, CtrlActSrc* src, int flag);
+extern "C" void updateActMain(cf::CtrlAct* self);
+extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos, CtrlActSrc* src, int flag);

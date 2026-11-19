@@ -2647,7 +2647,7 @@ CFloorMap::CFloorMap() {
     cursor_idx_5C = 0;
     field_5D = 0;
     __ct__10CScrollBarFUc(&mScrollBar[0], 0);
-    __ct__CCur18(&mCursorA0, 0);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&mCursorA0, 0);
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&mSysWinB8[0]), 0);
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&mSysWinF4[0]), 0);
     layout_130 = 0;
@@ -3054,9 +3054,10 @@ void FloorMap_Draw(void* self, void* drawInfo) {
             drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(s), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         }
     }
-    if (p->field_208) {
-        if (p->mLayout1FC)
-            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout1FC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+    if (!p->field_208) goto draw_331c;
+    if (!p->mLayout1FC) goto after_331c;
+    {
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout1FC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if (p->mLayout32D4 && p->field_32E5)
             drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32D4), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if (p->field_204 && p->mLayout32EC && p->field_32FD)
@@ -3079,9 +3080,11 @@ void FloorMap_Draw(void* self, void* drawInfo) {
                 }
             }
         }
-        if (p->mLayout331C && p->field_332D)
-            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     }
+draw_331c:
+    if (p->mLayout331C && p->field_332D)
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+after_331c:
     if (p->field_208)
         reinterpret_cast<CScrollBar*>(&p->mScrollBar)->draw(static_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     if (p->field_333C && p->mLayout3334)
@@ -4293,7 +4296,6 @@ void FloorMap_Log2Field208(void* self) {
     if (p[0x58]) return;
     if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened()) return;
-    u8 val = p[0x208];
     p[0x208] = (u32)__cntlzw(p[0x208]) >> 5;
 }
 
@@ -4629,7 +4631,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         FloorMap_BuildLayoutBaseArc((CFloorMapLayoutData0*)&this->layout_3334);
 
         CCur18 tmpCur;
-        __ct__CCur18(&tmpCur, CUICfManager_getArcResourceAccessor());
+        __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&tmpCur, CUICfManager_getArcResourceAccessor());
         this->mCursorA0 = tmpCur;
         __dt__6CCur18Fv(&tmpCur, -1);
         this->mCursorA0.initLayout();

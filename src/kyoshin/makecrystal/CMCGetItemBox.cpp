@@ -3,6 +3,7 @@
 
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical CItem_initItemImplInstances decl
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -26,6 +27,8 @@
 template <> void ml::FixStr<128>::format(const char* fmt, ...);
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
+
+#include "kyoshin/CTagProcessor.hpp"
 
 // ---- C-linkage / foreign retail helper declarations ----------------------
 // Only unmangled retail symbols (confirmed via config/us/symbols.txt) are
@@ -173,7 +176,7 @@ s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
     if (idx < x->count) {
         CMCItemBoxEntry* p = base + x->table[idx];
         if (p != 0) {
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(p);
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)p);
             u32 r = inst->getKind(p);
             return (s8)(u16)r;
         }
@@ -197,13 +200,13 @@ char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
     // The s16 table offset sign-extends before the *52 scale (retail lhax/mulli).
     CMCItemBoxEntry* p = base + x->table[idx];
     if (p == 0) return 0;
-    CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(p);
+    CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)p);
     // Keep only x/p/strTbl live across calls: recompute &x->shortName
     // at every use so MWCC holds just three callee-saved regs (retail r29-r31).
     ((ml::FixStr<64>*)&x->shortName)->format(strTbl, inst->getName(p));
     if (x->pad_102 == 3) {
         // Gem slot: rebuild the name as "<kind suffix><saved name>".
-        CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(p);
+        CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)p);
         u32 kind = (u8)inst2->getKind(p);
         char* itemName = BdatTouchStringCell(&strTbl[3], &strTbl[0xc],
                                        0x1e - (kind - 1));
@@ -237,7 +240,7 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
     if (p == 0) return 0;
     if (IsSkillItem(p) != 0) {
         // bdat-managed entry: name comes from the item database.
-        void* inst = CItem_initItemImplInstances(p);
+        void* inst = CItem_initItemImplInstances((CItemData*)p);
         u32 v = (u32)((u32(*)(void*, void*))(*(void***)inst)[0x22])(inst, p);
         char* s = BdatGetPtrDirect((void*)lbl_eu_80664100, &lbl_eu_8050FF8C[0x16], (u16)v);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
@@ -258,11 +261,11 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         // Declared in this order so MWCC lays the buffers out at the retail
         // stack offsets (tbl / fmtBuf / buf48 / tail / copy).
         void* db = (void*)lbl_eu_806640D8;
-        void* inst1 = CItem_initItemImplInstances(p);
+        void* inst1 = CItem_initItemImplInstances((CItemData*)p);
         u32 icon = (u32)((u32(*)(void*, void*))(*(void***)inst1)[0x15])(inst1, p);
-        void* inst2 = CItem_initItemImplInstances(p);
+        void* inst2 = CItem_initItemImplInstances((CItemData*)p);
         u8 kind = (u8)((u32(*)(void*, void*))(*(void***)inst2)[2])(inst2, p);
-        void* inst3 = CItem_initItemImplInstances(p);
+        void* inst3 = CItem_initItemImplInstances((CItemData*)p);
         char* nm = (char*)((void*(*)(void*, void*))(*(void***)inst3)[0x24])(inst3, p);
         CMCItemMsgTbl tbl;
         char fmtBuf[0x20];
@@ -468,9 +471,7 @@ void teardownMCGetItemBox(CMCGetItemBox* self) {
         self->memManagerPtr = 0;
     }
     if (self->layout40 != 0) {
-        if (self->layout40 != 0) {
-            (*(void(**)(void*, u32))((void**)self->layout40)[2])(self->layout40, 1);
-        }
+        delete self->layout40;
         self->layout40 = 0;
     }
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc1);
@@ -479,9 +480,7 @@ void teardownMCGetItemBox(CMCGetItemBox* self) {
     self->arcAcc1 = 0;
     self->arcAcc2 = 0;
     if (o != 0) {
-        if (o != 0) {
-            (*(void(**)(void*, u32))((void**)o)[2])(o, 1);
-        }
+        delete (CTagProcessor*)o;
         self->objAt50 = 0;
     }
     self->memRegion1.deleteRegion();
@@ -933,7 +932,7 @@ extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* 
         u32 type = (e->field_00 >> 16) & 0xF;
         if (type == 3) {
             h = 0;
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
             u32 k = inst->getIcon(e);
             u8 r = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050FF8C[0x128], (u16)k);
             switch (r) {
@@ -949,7 +948,7 @@ extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* 
             else
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
             u32 cnt = inst->getCount(e);
             if ((u16)cnt == 0) {
                 // Empty slot: a bdat-managed entry uses the 0x155 chain,
@@ -1014,7 +1013,7 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
         u32 type = (e->field_00 >> 16) & 0xF;
         if (type == 3) {
             h = 0;
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
             switch ((u16)inst->getKind(e)) {
                 case 1: h = MakeTplNameSysFile(0x197); break;
                 case 2: h = MakeTplNameSysFile(0x196); break;
@@ -1028,7 +1027,7 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
             else
                 h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
-            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+            CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
             if ((u16)inst->getCount(e) == 0) {
                 // Empty slot: only resolve a name when the entry is a valid
                 // type-9 item (bdat-managed or flagged in byte 7).
@@ -1040,7 +1039,7 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
                         if (f == 0 && ex != 9) break;
                     }
                     h = 0;
-                    CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+                    CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
                     switch ((u16)inst2->getKind(e)) {
                         case 1: h = MakeTplNameSysFile(0x191); break;
                         case 2: h = MakeTplNameSysFile(0x190); break;
@@ -1056,7 +1055,7 @@ void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n
             } else {
                 // Item present: kind-keyed name chain 0x19c..
                 h = 0;
-                CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances(e);
+                CMCItemImplShim* inst2 = (CMCItemImplShim*)CItem_initItemImplInstances((CItemData*)e);
                 switch ((u16)inst2->getKind(e)) {
                     case 1: h = MakeTplNameSysFile(0x19c); break;
                     case 2: h = MakeTplNameSysFile(0x19b); break;

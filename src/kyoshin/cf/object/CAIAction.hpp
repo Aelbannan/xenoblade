@@ -307,17 +307,14 @@ extern "C" void* getObjectAt(void*, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void sortEntriesByDistance(void*, void*);
 extern "C" void resortByActorValue(void*);
-extern "C" void __ct__800FBF08(void*, u32, u32);
 extern "C" void __ct__800FC040(void*, u32, u32, u32);
 extern "C" void __ct__800FC19C(void*, u32, u32);
-extern "C" void __ct__800FC4FC(void*, u32, f32);
 extern "C" void __ct__800FC648(void*, u32, f32);
 extern "C" void __ct__800FC790(void*, u32, f32);
 extern "C" void __ct__800FC8DC(void*, u32, f32);
 extern "C" void __ct__800FCA24(void*, void*, u32);
 extern "C" void __ct__800FCB80(void*, void*, u32);
 extern "C" void __ct__800FCD10(void*, void*, u32);
-extern "C" void __ct__800FCF1C(void*, u32, u32);
 extern "C" void __ct__800FD250(void*);
 extern "C" void* firstReslistB28(void*);
 extern "C" void* nextReslistB28(void*, void*);
@@ -327,7 +324,6 @@ extern "C" int isBattleStatusActive(void*, int);
 extern "C" void* findBattleStatusEntry(void*, u32);
 extern "C" void* CBattleMan_FetchVisionObj(void*);
 
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int);
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int rand(void);
 extern "C" f32 CREvtLight_DistToTarget(void*, void*);

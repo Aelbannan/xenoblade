@@ -46,7 +46,7 @@
 // CItem_initItemImplInstances comes from CfGameManager.hpp (harness chain).
 
 // Item-instance vtable shim (crystal-id getter lives at vtable offset 8). The
-// object comes from CItem_initItemImplInstances(obj); only the getter is
+// object comes from CItem_initItemImplInstances((CItemData*)obj); only the getter is
 // dispatched. The first declared virtual lands at memory slot 2 because MWCC
 // reserves two RTTI slots (0x0/0x4) at the head of the vtable.
 struct CrystalItemImpl {
@@ -111,7 +111,7 @@ void CMCCrystalData::collectByTarget(u8 target) {
             (CMCCrystalItemObj*)CItem_kindPtr(category, (s16)i);
         if (obj != 0 && obj->word0 != 0) {
                 CrystalItemImpl* inst =
-                    (CrystalItemImpl*)CItem_initItemImplInstances(obj);
+                    (CrystalItemImpl*)CItem_initItemImplInstances((CItemData*)obj);
             u32 rid = inst->getCrystalItemId(obj);
             if (target == (u16)rid) {
                 u16 n = count;
@@ -205,7 +205,7 @@ void CMCCrystalBox::refreshCrystalBoxName() {
     }
     u8 limit = d->limit != 0 ? d->limit : 1;
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)this->mLayout,
-                  lbl_eu_8050888C + 0x12e, limit);
+                  sMakeCrystalStrings + 0x12e, limit);
     updateCrystalBoxRows();
     setCrystalNameLabel();
     rebuildCrystalSortMenu();
@@ -223,7 +223,7 @@ void CMCCrystalBox::setCrystalNameLabel() {
     CMCCrystalData* d = &this->data;
     char* name = d->getItemName(idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout,
-                  lbl_eu_8050888C + 0x18e, name, 0);
+                  sMakeCrystalStrings + 0x18e, name, 0);
     if (func_8021A8EC(&this->crystalInfo) != 0) {
         if ((s8)this->unk2CD < 3) {
             // Retail evaluates MakeCrystal_GetItemObject before MakeCrystal_GetSubCategory and keeps
@@ -248,9 +248,9 @@ char* CMCCrystalData::getItemName(int v) {
     if ((u32)adj < count) {
         void* obj = CItem_kindPtr(category, entries[adj].id);
         if (obj != 0 && *(void**)obj != 0) {
-            void* inst = CItem_initItemImplInstances(obj);
+            void* inst = CItem_initItemImplInstances((CItemData*)obj);
             char* itemName = ((CItemImplDispatch*)inst)->getName(obj);
-            sprintf(name, lbl_eu_8050888C, itemName);
+            sprintf(name, sMakeCrystalStrings, itemName);
             return name;
         }
     }
@@ -308,10 +308,10 @@ void CMCCrystalData::sortIdOrder() {
             a = IsSkillItem(o1);
             b = IsSkillItem(o2);
             // A non-zero boxed getter zeroes that side's key.
-            if (((CItemImplFacade3*)CItem_initItemImplInstances(o1))->GetBoxed(o1) != 0) {
+            if (((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)o1))->GetBoxed(o1) != 0) {
                 a = 0;
             }
-            if (((CItemImplFacade3*)CItem_initItemImplInstances(o2))->GetBoxed(o2) != 0) {
+            if (((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)o2))->GetBoxed(o2) != 0) {
                 b = 0;
             }
             if (a != 0 || b != 0) {
@@ -396,11 +396,11 @@ void CMCCrystalBox::initCrystalBoxResources() {
     // (+0x2C). The first two use the heap handle, the third the common-archive
     // file after KyoshinHeap_GetField44's handle setup.
     this->mFileHandle0 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)getHandleMEM1__Q23mtl10MemManagerFv(), lbl_eu_8050888C + 0xc, this, 0, 0);
+        (unsigned long)getHandleMEM1__Q23mtl10MemManagerFv(), sMakeCrystalStrings + 0xc, this, 0, 0);
     this->mFileHandle1 = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), lbl_eu_8050888C + 0x25, this, 0, 0);
+        (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), sMakeCrystalStrings + 0x25, this, 0, 0);
     this->mFileHandle2 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (unsigned long)KyoshinHeap_GetField44(), lbl_eu_8050888C + 0x3e, this, 0, 0);
+        (unsigned long)KyoshinHeap_GetField44(), sMakeCrystalStrings + 0x3e, this, 0, 0);
 
     // Re-init the sort menu from a default temp: copy every member except the
     // +0x6C s32 array (retail copies the mem region, pointer fields, flags,
@@ -671,7 +671,7 @@ void CMCCrystalBox::stepCrystalBoxCursorPrev() {
         // chain jumps into the step code (beq/blt) or over it to the exit
         // (the trailing `b`), so the guards must share a single `if`.
         if (this->data.count == 0 ||
-            (this->mSelTable.mCount != 8 && (int)getCrystalSelTopCount() == 0 &&
+            (this->mSelTable.mCount != 8 && getCrystalSelTopCount() == 0 &&
              (this->mSelTable.mCount < 2 || this->data.allFlagsSet() == 0))) {
             // Step the item cursor down, wrapping -3 back to 2.
             s8 v = this->unk2CD - 1;
@@ -739,7 +739,7 @@ void CMCCrystalBox::stepCrystalBoxCursorNext() {
         // into the step code (beq/blt) or over it to the exit (trailing `b`).
         if (this->unk2D1 == 0 &&
             (this->data.count == 0 ||
-             (this->mSelTable.mCount != 8 && (int)getCrystalSelTopCount() == 0 &&
+             (this->mSelTable.mCount != 8 && getCrystalSelTopCount() == 0 &&
               (this->mSelTable.mCount < 2 || this->data.allFlagsSet() == 0)))) {
             // Step the item cursor (s8 unk2CD), wrapping at 2.
             s8 v = this->unk2CD + 1;
@@ -1011,7 +1011,7 @@ void CMCCrystalBox::toggleCrystalSortMenu() {
         playUISound(6);
     } else {
         if (this->sortMenu.IsIdle() == 0) return;
-        char* base = lbl_eu_8050888C;
+        char* base = sMakeCrystalStrings;
         CLytVf3C* sub = ((CrystalBoxSubObj5*)this->mLayout)->layout;
         // MWCC evaluates the two inline vf_3C argument calls right-to-left,
         // matching retail's pane-fetch order (base+0x63 before base+0x5a).
@@ -1074,7 +1074,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
                 playCrystalAnim13();
             }
             setPaneVisible((*(CLytVf3C**)((u8*)this->mLayout + 0x10))
-                              ->vf_3C(lbl_eu_8050888C + 0x72, 1),
+                              ->vf_3C(sMakeCrystalStrings + 0x72, 1),
                           1);
         }
     } else {
@@ -1082,7 +1082,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
         u8 a0 = this->mSelTable.mCount;
         CMCCrystalSelTable* selTable = &this->mSelTable;
         if (count != 0 &&
-            (a0 == 8 || (int)getCrystalSelTopCount() != 0 ||
+            (a0 == 8 || getCrystalSelTopCount() != 0 ||
              this->data.allFlagsSet() != 0)) {
             // scan #1: walk the 10 rows x 30 columns for the selected slot
             void* sel = (void*)selTable->getSelectEntry();
@@ -1149,7 +1149,7 @@ void CMCCrystalBox::advanceCrystalBoxSortMenu(int a) {
             }
         }
         setPaneVisible((*(CLytVf3C**)((u8*)this->mLayout + 0x10))
-                          ->vf_3C(lbl_eu_8050888C + 0x7c, 1),
+                          ->vf_3C(sMakeCrystalStrings + 0x7c, 1),
                       selTable->mCount < 2);
     }
     if (a != 0) playUISound(6);
@@ -1196,12 +1196,12 @@ void CMCCrystalSelTable::buildIdList() {
             // Call the virtual directly on the returned instance pointer:
             // retail never names the facade temp (it would claim a
             // callee-saved register).
-            u16 id = ((CItemImplFacadeAgg*)CItem_initItemImplInstances(item))
+            u16 id = ((CItemImplFacadeAgg*)CItem_initItemImplInstances((CItemData*)item))
                          ->GetName(item, j);
             if (id == 0) continue;
             // Raw 32-bit result: retail folds it into the count unmasked.
             s32 cnt =
-                ((CItemImplFacadeAgg*)CItem_initItemImplInstances(item))->GetFlag(item, j);
+                ((CItemImplFacadeAgg*)CItem_initItemImplInstances((CItemData*)item))->GetFlag(item, j);
             int found = 0;
             // u8 bounds replicate retail's masked counters (n==0 still runs
             // the (u8)(n-1) == 0xFF sort passes harmlessly).
@@ -1258,7 +1258,144 @@ void CMCCrystalSelTable::buildIdList() {
     }
 }
 
-void handleCrystalBoxConfirm(){}
+extern "C" void handleCrystalBoxConfirm(CMCCrystalBox* self)
+{
+    CMCCrystalItemObj* item;
+    CMCCrystalData* data;
+    u8 idx;
+    u8 sel;
+
+    if (reinterpret_cast<CSysWin*>(&self->sysWin)->isOpened() != 0) {
+        if (reinterpret_cast<CSysWin*>(&self->sysWin)->isActive() == 0) return;
+        reinterpret_cast<CSysWin*>(&self->sysWin)->advancePhase3();
+        if (self->unk1500 != 0) {
+            self->mCur18B.SetVisible(1);
+        }
+    } else if (self->unk1500 != 0) {
+        return;
+    } else if (self->unk2CE != 0) {
+        if (self->sortMenu.IsIdle() == 0) return;
+        sel = self->sortMenu.GetSelect();
+        CItemBlock_setFlag120EC(9, (u8)sel);
+        self->field_1506 = (u8)self->sortMenu.GetCursor();
+        self->field_1507 = (u8)self->sortMenu.GetTop();
+        self->advanceCrystalBoxSortMenu(0);
+        data = &self->data;
+        data->sortIdOrder();
+        if ((CItemBlock_getFlag120EC(9) & 0xffffU) == 0) {
+            data->sortKeyOrder();
+        }
+        self->unk2CC = 0;
+        if ((s8)self->unk2CD > 0) {
+            self->unk2CD = 0;
+        }
+        self->refreshCrystalBoxCursors();
+        data->current = 0;
+        self->updateCrystalBoxRows();
+        self->setCrystalNameLabel();
+        self->rebuildCrystalSortMenu();
+        self->rebuildCrystalGridTable();
+        playUISound(3);
+    } else if (self->unk2D1 != 0) {
+        if (self->unk64 != 3) return;
+        if ((s8)self->unk2D3 == 2) {
+            self->unk2D1 = 0;
+            self->unk69 = 0;
+        } else {
+            self->unk2D3 = self->unk2D3 + 1;
+            if ((s8)self->unk2D3 == 1) {
+                self->unk2D5 = self->unk2D4 + 1;
+                if ((s8)self->unk2D5 >= (int)code80135FDC_getByte_64077()) {
+                    self->unk2D5 = 0;
+                }
+            }
+            self->showCrystalBoxStatus();
+            self->refreshCrystalBoxCursors();
+            if ((s8)self->unk2D3 == 1) {
+                self->unk64 = 10;
+                self->playCrystalAnim11();
+            }
+            if ((s8)self->unk2D3 >= 2) {
+                setPaneVisible(((CrystalBoxSubObj5*)self->mLayout)->layout
+                                   ->vf_3C(sMakeCrystalStrings + 0x72, 1),
+                               0);
+            }
+        }
+        playUISound(3);
+    } else {
+        s8 sel = (s8)self->unk2CD;
+        CMCCrystalSelTable* table;
+        if (sel == -1) return;
+        if (sel != -2) {
+        idx = self->unk2CC + sel * 10;
+        data = &self->data;
+        item = data->getItemObject(idx);
+        if (item == 0) return;
+        table = &self->mSelTable;
+        if (self->data.getFlag(idx) != 0) {
+            if (item != 0 && table->mCount != 0) {
+                for (u8 i = 0; i < 8; i++) {
+                    if (table->mItems[i] == (unsigned long)item) {
+                        table->mItems[i] = 0;
+                        u8 slot = i;
+                        table->mCount--;
+                        for (u8 j = 0; j < 8; j++) {
+                            if ((s8)table->mOrder[j] == slot) {
+                                table->mOrder[j] = -1;
+                                for (u8 k = j; k < table->mTop - 1; k++) {
+                                    u8 tmp = table->mOrder[k];
+                                    table->mOrder[k] = table->mOrder[k + 1];
+                                    table->mOrder[k + 1] = tmp;
+                                }
+                                table->mTop--;
+                            }
+                        }
+                        table->buildIdList();
+                        break;
+                    }
+                }
+            }
+            data->setFlag(idx, false);
+        } else {
+            if (item != 0 && table->mCount < 8) {
+                for (u8 i = 0; i < 8; i++) {
+                    if (table->mItems[i] == 0) {
+                        table->mItems[i] = (unsigned long)item;
+                        u8 slot = i;
+                        u8 top = table->mTop;
+                        table->mCount++;
+                        table->mOrder[top] = slot;
+                        table->mTop = top + 1;
+                        table->buildIdList();
+                        break;
+                    }
+                }
+            }
+            data->setFlag(idx, true);
+        }
+
+        self->refreshCrystalBoxName();
+        self->placeCrystalBoxSlots();
+        if (table->mCount >= 8 || self->getCrystalSelTopCount() != 0 ||
+            self->data.allFlagsSet() != 0) {
+            if (table->mCount >= 2) {
+                self->unk2CD = -2;
+                self->refreshCrystalBoxCursors();
+            }
+        }
+        setPaneVisible(((CrystalBoxSubObj5*)self->mLayout)->layout
+                           ->vf_3C(sMakeCrystalStrings + 0x7C, 1),
+                       table->mCount < 2);
+        self->setCrystalNameLabel();
+        self->rebuildCrystalGridTable();
+        playUISound(3);
+        } else {
+            self->unk2D1 = 1;
+            self->unk69 = 0;
+            playUISound(3);
+        }
+    }
+}
 
 u8 CMCCrystalBox::getCrystalBoxKindA() { return this->unk2D4; }
 
@@ -1298,7 +1435,7 @@ CMCCrystalParamTable* CMCCrystalBox::rebuildCrystalBoxSelTable() {
         wk = tb->getItem((u8)ii);
         if (wk == 0 || *(unsigned long*)wk == 0) continue;
         for (jj = 0; jj < 4; jj++) {
-            CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
+            CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((CItemData*)(unsigned long*)wk);
             nm = inst->GetName((unsigned long*)wk, (u8)jj);
             if (nm == 0) continue;
             u16 flag = inst->GetFlag((unsigned long*)wk, (u8)jj);
@@ -1342,14 +1479,14 @@ CMCCrystalParamTable* CMCCrystalBox::rebuildCrystalBoxSelTable() {
     for (ii = 0; ii < 8; ii++) {
         wk = tb->getItem((u8)ii);
         if (wk == 0 || *(unsigned long*)wk == 0) continue;
-        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
+        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((CItemData*)(unsigned long*)wk);
         mParamTable.mItemId = (u8)inst->GetCount((unsigned long*)wk);
         break;
     }
     for (ii = 0; ii < 8; ii++) {
         wk = tb->getItem((u8)ii);
         if (wk == 0 || *(unsigned long*)wk == 0) continue;
-        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((unsigned long*)wk);
+        CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances((CItemData*)(unsigned long*)wk);
         inst->vf_08((unsigned long*)wk);
     }
 
@@ -1429,8 +1566,8 @@ void CMCCrystalBox::refreshCrystalPagePair(int dir) {
     for (u32 i = 0; i < 2; i++) {
         // val is formed inline at both call sites; retail keeps only the raw
         // pair[] byte live across the sprintf calls.
-        sprintf(bufSel, lbl_eu_8050888C + 0x86, (s8)pair[(u8)i] + 1);
-        sprintf(bufOther, lbl_eu_8050888C + 0x95, (s8)pair[(u8)i] + 1);
+        sprintf(bufSel, sMakeCrystalStrings + 0x86, (s8)pair[(u8)i] + 1);
+        sprintf(bufOther, sMakeCrystalStrings + 0x95, (s8)pair[(u8)i] + 1);
         // Both flags are initialised eagerly and re-assigned in each branch,
         // with the entry lookup between the two initialisers (retail order).
         bool flagA = false;
@@ -1457,7 +1594,7 @@ void CMCCrystalBox::refreshCrystalPagePair(int dir) {
 // from whether that page is enabled / is the selected one. Ends by
 // refreshing the neighbouring-page pair (refreshCrystalPagePair).
 void CMCCrystalBox::initCrystalPageLabels() {
-    char* base = lbl_eu_8050888C;
+    char* base = sMakeCrystalStrings;
     char bufA[0x20];
     char bufB[0x20];
     int val;
@@ -1539,7 +1676,7 @@ void CMCCrystalBox::updateCrystalBoxSysWin() {
             // the 3-arg BdatGetPtrDirect key (retail hoists the r5 load above the
             // branch that also tests it).
             char* msg = BdatGetPtrDirect((const void*)lbl_eu_806646D0,
-                                      lbl_eu_8050888C + 0xa4, this->unk1504);
+                                      sMakeCrystalStrings + 0xa4, this->unk1504);
             reinterpret_cast<CSysWin*>(&this->sysWin)->switchKindPane(0);
             reinterpret_cast<CSysWin*>(&this->sysWin)->setKindContent(reinterpret_cast<char*>((u32)msg), 0);
             reinterpret_cast<CSysWin*>(&this->sysWin)->applyKind(1);
@@ -1722,7 +1859,7 @@ void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
     if (it != 0) {
-        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances(it);
+        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it);
         if (inst->GetBoxed(it) == 0) {
             if (IsSkillItem(it) != 0) {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
@@ -1745,7 +1882,7 @@ void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
                 } else {
                     msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                               this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
                 }
             }
         } else {
@@ -1765,7 +1902,7 @@ void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
             } else {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         }
     }
@@ -1776,23 +1913,23 @@ void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
                       ->GetResource(
                           0x74696D67,
                           MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
-                                                       lbl_eu_8050888C + 0xbc,
+                                                       sMakeCrystalStrings + 0xbc,
                                                        id)),
                           0);
             if (msg == 0) {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         } else {
             msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                       this->mArcAcc0)
-                      ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                      ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
         }
     }
     if (msg != 0) {
         char buf[0x20];
-        sprintf(buf, lbl_eu_8050888C + 0xc6, i + 1);
+        sprintf(buf, sMakeCrystalStrings + 0xc6, i + 1);
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
     }
 }
@@ -1803,7 +1940,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
     if (it != 0) {
-        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances(it);
+        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it);
         if (inst->GetBoxed(it) == 0) {
             if (IsSkillItem(it) != 0) {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
@@ -1826,7 +1963,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
                 } else {
                     msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                               this->mArcAcc0)
-                              ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                              ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
                 }
             }
         } else {
@@ -1846,7 +1983,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
             } else {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         }
     }
@@ -1857,23 +1994,23 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
                       ->GetResource(
                           0x74696D67,
                           MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
-                                                       lbl_eu_8050888C + 0xbc,
+                                                       sMakeCrystalStrings + 0xbc,
                                                        id)),
                           0);
             if (msg == 0) {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         } else {
             msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                       this->mArcAcc0)
-                      ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                      ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
         }
     }
     if (msg != 0) {
         char buf[0x20];
-        sprintf(buf, lbl_eu_8050888C + 0xd4, i + 1);
+        sprintf(buf, sMakeCrystalStrings + 0xd4, i + 1);
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
     }
 }
@@ -1893,12 +2030,12 @@ void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
     if (it != 0) {
-        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances(it);
+        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it);
         if (inst->GetBoxed(it) == 0) {
             if (IsSkillItem(it) != 0 || isCrystalKindGem(it) != 0 ||
                 ((((const CrystalItemHead*)it)->word00 >> 16) & 0xF) == 9) {
                 const char* m = 0;
-                switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances(it))
+                switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it))
                             ->GetCount(it)) {
                 case 1: m = MakeTplNameSysFile(0x191); break;
                 case 2: m = MakeTplNameSysFile(0x190); break;
@@ -1913,12 +2050,12 @@ void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
                 } else {
                     msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                               this->mArcAcc0)
-                              ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                              ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
                 }
             }
         } else {
             const char* m = 0;
-            switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances(it))
+            switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it))
                         ->GetCount(it)) {
             case 1: m = MakeTplNameSysFile(0x19c); break;
             case 2: m = MakeTplNameSysFile(0x19b); break;
@@ -1933,7 +2070,7 @@ void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
             } else {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         }
     }
@@ -1944,33 +2081,33 @@ void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
                       ->GetResource(
                           0x74696D67,
                           MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
-                                                       lbl_eu_8050888C + 0xe2,
+                                                       sMakeCrystalStrings + 0xe2,
                                                        id)),
                           0);
             if (msg == 0) {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         } else {
             msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                       this->mArcAcc0)
-                      ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                      ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
         }
     }
     if (msg != 0) {
         char buf[0x20];
         int i1 = i + 1;
-        sprintf(buf, lbl_eu_8050888C + 0xe7, i1);
+        sprintf(buf, sMakeCrystalStrings + 0xe7, i1);
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
         const char* cap = 0;
         if (it != 0) {
-            u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances(it))
+            u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it))
                           ->GetCount(it);
-            cap = BdatTouchStringCell(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd,
+            cap = BdatTouchStringCell(sMakeCrystalStrings + 0xf4, sMakeCrystalStrings + 0xfd,
                                 30 - ((u8)cnt - 1));
         }
-        sprintf(buf, lbl_eu_8050888C + 0x102, i1);
+        sprintf(buf, sMakeCrystalStrings + 0x102, i1);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, buf, (char*)cap, 0);
     }
 }
@@ -1981,12 +2118,12 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
     if (it != 0) {
-        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances(it);
+        CItemImplFacade3* inst = (CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it);
         if (inst->GetBoxed(it) == 0) {
             if (IsSkillItem(it) != 0 || isCrystalKindGem(it) != 0 ||
                 ((((const CrystalItemHead*)it)->word00 >> 16) & 0xF) == 9) {
                 const char* m = 0;
-                switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances(it))
+                switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it))
                             ->GetCount(it)) {
                 case 1: m = MakeTplNameSysFile(0x191); break;
                 case 2: m = MakeTplNameSysFile(0x190); break;
@@ -2001,12 +2138,12 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
                 } else {
                     msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                               this->mArcAcc0)
-                              ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                              ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
                 }
             }
         } else {
             const char* m = 0;
-            switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances(it))
+            switch ((u16)((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it))
                         ->GetCount(it)) {
             case 1: m = MakeTplNameSysFile(0x19c); break;
             case 2: m = MakeTplNameSysFile(0x19b); break;
@@ -2021,7 +2158,7 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
             } else {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         }
     }
@@ -2032,33 +2169,33 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
                       ->GetResource(
                           0x74696D67,
                           MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_806640EC,
-                                                       lbl_eu_8050888C + 0xe2,
+                                                       sMakeCrystalStrings + 0xe2,
                                                        id)),
                           0);
             if (msg == 0) {
                 msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                           this->mArcAcc0)
-                          ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                          ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
             }
         } else {
             msg = (const char*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                       this->mArcAcc0)
-                      ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                      ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
         }
     }
     if (msg != 0) {
         char buf[0x20];
         int i1 = i + 1;
-        sprintf(buf, lbl_eu_8050888C + 0x10e, i1);
+        sprintf(buf, sMakeCrystalStrings + 0x10e, i1);
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, (const char*)buf, (TPLPalette*)((char*)msg));
         const char* cap = 0;
         if (it != 0) {
-            u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances(it))
+            u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances((CItemData*)it))
                           ->GetCount(it);
-            cap = BdatTouchStringCell(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd,
+            cap = BdatTouchStringCell(sMakeCrystalStrings + 0xf4, sMakeCrystalStrings + 0xfd,
                                 30 - ((u8)cnt - 1));
         }
-        sprintf(buf, lbl_eu_8050888C + 0x11e, i1);
+        sprintf(buf, sMakeCrystalStrings + 0x11e, i1);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, buf, (char*)cap, 0);
     }
 }
@@ -2085,19 +2222,19 @@ void CMCCrystalBox::updateCrystalBoxRows() {
     if (active > 1) {
         // Row-count header pane plus the ten per-row number panes.
         setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
-                          lbl_eu_8050888C + 0x137, 1),
+                          sMakeCrystalStrings + 0x137, 1),
                       1);
         for (u8 n = 0; n < 10; n++) {
-            sprintf(buf, lbl_eu_8050888C + 0x13e, n + 1);
+            sprintf(buf, sMakeCrystalStrings + 0x13e, n + 1);
             setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
                               buf, 1),
                           n < active);
         }
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)this->mLayout,
-                      lbl_eu_8050888C + 0x14d, (u8)(d->current + 1));
+                      sMakeCrystalStrings + 0x14d, (u8)(d->current + 1));
         nw4r::lyt::Pane* pane =
             ((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
-                lbl_eu_8050888C + 0x156, 1);
+                sMakeCrystalStrings + 0x156, 1);
         vec[0] = this->field_14F4;
         vec[1] = this->field_14F8;
         vec[2] = this->field_14FC;
@@ -2115,7 +2252,7 @@ void CMCCrystalBox::updateCrystalBoxRows() {
         copyVEC3(&((PaneTranslateMirror*)pane)->mX, vec);
     } else {
         setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
-                          lbl_eu_8050888C + 0x137, 1),
+                          sMakeCrystalStrings + 0x137, 1),
                       0);
     }
     for (u8 i = 0; i < 0x1E; i++) {
@@ -2125,7 +2262,7 @@ void CMCCrystalBox::updateCrystalBoxRows() {
         setCrystalSlotTexture(v, obj, i);
         setCrystalSlotCapacity(v, obj, i);
         u8 i1 = i + 1;
-        sprintf(buf2, lbl_eu_8050888C + 0x164, i1);
+        sprintf(buf2, sMakeCrystalStrings + 0x164, i1);
         // Unsigned counts: retail compares the slot state with cmplw.
         // Inline slot-state call keeps the result out of a callee-saved
         // register (retail passes it straight through).
@@ -2146,7 +2283,7 @@ void CMCCrystalBox::updateCrystalBoxRows() {
                     u8 j = 0;
                     do {
                         CItemImplFacade2* inst =
-                            (CItemImplFacade2*)CItem_initItemImplInstances(obj);
+                            (CItemImplFacade2*)CItem_initItemImplInstances((CItemData*)obj);
                         if (id2 == inst->GetName(obj, j)) {
                             found = true;
                             break;
@@ -2158,11 +2295,11 @@ void CMCCrystalBox::updateCrystalBoxRows() {
                 k++;
             }
         }
-        sprintf(buf2, lbl_eu_8050888C + 0x170, i1);
+        sprintf(buf2, sMakeCrystalStrings + 0x170, i1);
         setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
                           buf2, 1),
                       found);
-        sprintf(buf2, lbl_eu_8050888C + 0x17f, i1);
+        sprintf(buf2, sMakeCrystalStrings + 0x17f, i1);
         setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
                           buf2, 1),
                       found);
@@ -2179,17 +2316,17 @@ void CMCCrystalBox::rebuildCrystalSortMenu() {
     arr[2] = *src++;
     unsigned long id = CItemBlock_getFlag120EC(9);
     int idx = (int)id & 0xFFFF;
-    char* s1 = (char*)BdatTouchStringCell(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd, arr[idx]);
+    char* s1 = (char*)BdatTouchStringCell(sMakeCrystalStrings + 0xf4, sMakeCrystalStrings + 0xfd, arr[idx]);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout,
-                  lbl_eu_8050888C + 0x1ca, s1, 0);
+                  sMakeCrystalStrings + 0x1ca, s1, 0);
     if (this->sortMenu.IsReady() != 0) {
         this->sortMenu.Clear();
         u8 i = 0;
         while (1) {
             if (arr[i] <= 0) break;
             this->sortMenu.Add(
-                          (char*)BdatTouchStringCell(lbl_eu_8050888C + 0xf4,
-                                        lbl_eu_8050888C + 0xfd, arr[i]));
+                          (char*)BdatTouchStringCell(sMakeCrystalStrings + 0xf4,
+                                        sMakeCrystalStrings + 0xfd, arr[i]));
             i++;
         }
         this->sortMenu.SetSelect(this->field_1506 + this->field_1507);
@@ -2247,34 +2384,34 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
         if (this->unk2D1 == 0) {
             if ((s8)this->unk2CD == -2) {
                 // sort-menu path: page label + the two panes into +0xCC.
-                sprintf(bufD0, lbl_eu_8050888C + 0x197);
+                sprintf(bufD0, sMakeCrystalStrings + 0x197);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(bufD0, 1);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
-                                             ->vf_3C(lbl_eu_8050888C + 0x63, 1);
+                                             ->vf_3C(sMakeCrystalStrings + 0x63, 1);
                 ScalePaneWorldPos((nw4r::math::VEC3*)buf20, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur16.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf20));
                 this->mCur16.SetVisible(1);
                 this->mCur07.SetVisible(0);
             } else if ((s8)this->unk2CD == -1) {
                 // countdown path: ticker + 1 into +0x6C.
-                sprintf(bufB0, lbl_eu_8050888C + 0x1a2, (s8)this->field_14F2 + 1);
+                sprintf(bufB0, sMakeCrystalStrings + 0x1a2, (s8)this->field_14F2 + 1);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(bufB0, 1);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
-                                             ->vf_3C(lbl_eu_8050888C + 0x63, 1);
+                                             ->vf_3C(sMakeCrystalStrings + 0x63, 1);
                 ScalePaneWorldPos((nw4r::math::VEC3*)buf14, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur07.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf14));
                 this->mCur07.SetVisible(1);
                 this->mCur16.SetVisible(0);
             } else {
                 // normal path: the current crystal index + 1 into +0x6C.
-                sprintf(buf90, lbl_eu_8050888C + 0xe7,
+                sprintf(buf90, sMakeCrystalStrings + 0xe7,
                         (s8)this->unk2CC + (s8)this->unk2CD * 10 + 1);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(buf90, 1);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
-                                             ->vf_3C(lbl_eu_8050888C + 0x63, 1);
+                                             ->vf_3C(sMakeCrystalStrings + 0x63, 1);
                 ScalePaneWorldPos((nw4r::math::VEC3*)buf8, paneA, paneB, (nw4r::lyt::Pane*)(((CrystalBoxSubObj5*)this->mLayout)->layout));
                 this->mCur07.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf8));
                 this->mCur07.SetVisible(1);
@@ -2283,12 +2420,12 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
         } else {
             if ((s8)this->unk2D3 < 2) {
                 // window-kind counter path: scale the quad by the pane float.
-                sprintf(buf70, lbl_eu_8050888C + 0x1ae, (s8)this->unk2D3 + 1);
+                sprintf(buf70, sMakeCrystalStrings + 0x1ae, (s8)this->unk2D3 + 1);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(buf70, 1);
                 AccumPaneWorldPos((nw4r::math::VEC3*)((char*)buf44), paneA);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
-                                             ->vf_3C(lbl_eu_8050888C + 0x63, 1);
+                                             ->vf_3C(sMakeCrystalStrings + 0x63, 1);
                 buf44[0] *= ((PaneW44*)paneB)->w44;
                 this->mCur11.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf44));
                 this->mCur11.SetVisible(1);
@@ -2300,12 +2437,12 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
                 this->mCur11.ShowTwoPanes(flag);
             } else {
                 // window-kind done path: +0xCC cursor.
-                sprintf(buf50, lbl_eu_8050888C + 0x1bd);
+                sprintf(buf50, sMakeCrystalStrings + 0x1bd);
                 nw4r::lyt::Pane* paneA = (((CrystalBoxSubObj5*)this->mLayout)->layout)
                                              ->vf_3C(buf50, 1);
                 AccumPaneWorldPos((nw4r::math::VEC3*)((char*)buf38), paneA);
                 nw4r::lyt::Pane* paneB = (((CrystalBoxSubObj5*)this->mLayout)->layout)
-                                             ->vf_3C(lbl_eu_8050888C + 0x63, 1);
+                                             ->vf_3C(sMakeCrystalStrings + 0x63, 1);
                 buf38[0] *= ((PaneW44*)paneB)->w44;
                 this->mCur16.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf38));
                 this->mCur16.SetVisible(1);
@@ -2354,10 +2491,10 @@ void CMCCrystalBox::rebuildCrystalGridTable() {
             continue;
         }
         for (k = 0; k < 4; k++) {
-            inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+            inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances((CItemData*)obj);
             id = inst->GetName(obj, k);
             if (id != 0) {
-                inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+                inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances((CItemData*)obj);
                 qty = inst->GetQuantity(obj, k);
                 // Merge into an existing record with the same id, else append.
                 found = 0;
@@ -2386,10 +2523,10 @@ void CMCCrystalBox::rebuildCrystalGridTable() {
             if (obj != 0 && *(void**)obj != 0) {
                 flag = 1;
                 for (k = 0; k < 4; k++) {
-                    inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+                    inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances((CItemData*)obj);
                     id = inst->GetName(obj, k);
                     if (id != 0) {
-                        inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances(obj);
+                        inst = (CItemImplFacadeGrid*)CItem_initItemImplInstances((CItemData*)obj);
                         qty = inst->GetQuantity(obj, k);
                         found = 0;
                         for (u8 m = 0; m < count; m++) {
@@ -2531,97 +2668,97 @@ void CMCCrystalBox::playCrystalAnim14() {
 void CMCCrystalBox::showCrystalBoxStatus() {
     if ((s8)this->unk2D3 == 0) {
         int v = GetCollectedFlagByte(this->unk2D4);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x1e6,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, (u8)v + 10), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x1f5,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, (u8)v + 18), 0);
-        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050888C + 0x204, (u8)v));
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x1e6,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, (u8)v + 10), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x1f5,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, (u8)v + 18), 0);
+        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_80664090, sMakeCrystalStrings + 0x204, (u8)v));
         void* res = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                         ->GetResource(0x74696D67, msg, 0);
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x20f, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x20f, (TPLPalette*)res);
         }
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x21c,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x22c,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x23b,
-                      lbl_eu_8050888C + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x21c,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x22c,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x23b,
+                      sMakeCrystalStrings + 0x22b, 0);
         void* res2 = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
-                         ->GetResource(0x74696D67, lbl_eu_8050888C + 0xa9, 0);
+                         ->GetResource(0x74696D67, sMakeCrystalStrings + 0xa9, 0);
         if (res2 != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x24a, (TPLPalette*)res2);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x24a, (TPLPalette*)res2);
         }
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x257,
-                      lbl_eu_8050888C + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x257,
+                      sMakeCrystalStrings + 0x22b, 0);
     } else if ((s8)this->unk2D3 == 1) {
         int v = GetCollectedFlagByte(this->unk2D5);
         int row = ((u8)v - 1) * 3;
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x21c,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, row + 0x40), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x22c,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, row + 0x41), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x23b,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, row + 0x42), 0);
-        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050888C + 0x204, (u8)v));
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x21c,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, row + 0x40), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x22c,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, row + 0x41), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x23b,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, row + 0x42), 0);
+        char* msg = MakeTplNameSysFile((u16)BdatGetU16Direct(lbl_eu_80664090, sMakeCrystalStrings + 0x204, (u8)v));
         void* res = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                         ->GetResource(0x74696D67, msg, 0);
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x24a, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x24a, (TPLPalette*)res);
         }
         u8 d4 = (u8)GetCollectedFlagByte(this->unk2D4);
         u8 d5 = (u8)GetCollectedFlagByte(this->unk2D5);
         u16 id = LookupRelateValue(d4, d5);
         // u16-param view: retail emits clrlwi 16 on the id argument here.
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)this->mLayout,
-                                                lbl_eu_8050888C + 0x257, id);
+                                                sMakeCrystalStrings + 0x257, id);
         // Rank message thresholds (1000/2000/3000/5000/10001).
         const char* s = 0;
         if (id < 0xBB8) {
             if (id < 0x7D0) {
                 if (id < 0x3E8) {
-                    s = lbl_eu_8050888C + 0x264;
+                    s = sMakeCrystalStrings + 0x264;
                 } else {
-                    s = lbl_eu_8050888C + 0x279;
+                    s = sMakeCrystalStrings + 0x279;
                 }
             } else {
-                s = lbl_eu_8050888C + 0x28e;
+                s = sMakeCrystalStrings + 0x28e;
             }
         } else if (id < 0x2711) {
             if (id < 0x1388) {
-                s = lbl_eu_8050888C + 0x2a3;
+                s = sMakeCrystalStrings + 0x2a3;
             } else {
-                s = lbl_eu_8050888C + 0x2b8;
+                s = sMakeCrystalStrings + 0x2b8;
             }
         }
         void* res2 = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                          ->GetResource(0x74696D67, s, 0);
         if (res2 != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x2cd, (TPLPalette*)res2);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x2cd, (TPLPalette*)res2);
         }
         // Second rank message set with the complementary thresholds.
         const char* s2 = 0;
         if (id < 0xBB8) {
             if (id < 0x7D0) {
                 if (id < 0x3E8) {
-                    s2 = lbl_eu_8050888C + 0x2d9;
+                    s2 = sMakeCrystalStrings + 0x2d9;
                 } else {
-                    s2 = lbl_eu_8050888C + 0x2f1;
+                    s2 = sMakeCrystalStrings + 0x2f1;
                 }
             } else {
-                s2 = lbl_eu_8050888C + 0x309;
+                s2 = sMakeCrystalStrings + 0x309;
             }
         } else if (id < 0x2711) {
             if (id < 0x1388) {
-                s2 = lbl_eu_8050888C + 0x321;
+                s2 = sMakeCrystalStrings + 0x321;
             } else {
-                s2 = lbl_eu_8050888C + 0x339;
+                s2 = sMakeCrystalStrings + 0x339;
             }
         }
         void* res3 = (void*)reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->mArcAcc0)
                          ->GetResource(0x74696D67, s2, 0);
         if (res3 != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x351, (TPLPalette*)res3);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x351, (TPLPalette*)res3);
         }
         // Countdown pane: scale id into a screen coordinate, then format
         // id/30 and id/20 into the +0x365 label. Manual uint->double
@@ -2638,21 +2775,21 @@ void CMCCrystalBox::showCrystalBoxStatus() {
         cvt.hi = 0x43300000;
         u16 val = (u16)(lbl_eu_80668484 * (*(double*)&cvt - lbl_eu_80668460)
                         + lbl_eu_80668480);
-        char* num = BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
+        char* num = BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1,
                                   0x30);
-        sprintf((char*)buf.b, lbl_eu_8050888C + 0x35e, (u8)(val / 30), num,
+        sprintf((char*)buf.b, sMakeCrystalStrings + 0x35e, (u8)(val / 30), num,
                 (u8)(val / 20));
-        LayoutSetTextBoxText((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x365,
+        LayoutSetTextBoxText((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x365,
                       (char*)buf.b, 0);
     }
 }
 
 // Retail 0x80219AF0: aggregate the placed crystal items at +0x1480 into
 // (id, quantity) pairs, bubble-sort by descending quantity, and return
-// (first pair count - 100). Retail's epilogue extends the result to 64 bits
-// (subfc/subfze), so the prototype returns s64; call sites truncate to int.
+// (first pair count - 100). The s32 prototype is load-bearing: the s64 view
+// made callers compare the high result word and cost the sort-menu caller 100%.
 // stmw r26 frame is the -O4,s shape (unit flag).
-s64 CMCCrystalBox::getCrystalSelTopCount() {
+s32 CMCCrystalBox::getCrystalSelTopCount() {
     // Register-coloring notes (retail): z:r31 is 0 through the init pass and
     // becomes the outer loop counter; n:r30; tableBase:r29 (the init-pass
     // index k dies before tableBase is computed and shares its register);
@@ -2679,10 +2816,10 @@ s64 CMCCrystalBox::getCrystalSelTopCount() {
         if (item == NULL || *(u32*)item == 0) continue;
         for (j = 0; j < 4; j++) {
             u16 id =
-                ((CItemImplFacade2*)CItem_initItemImplInstances(item))->GetName(item, j);
+                ((CItemImplFacade2*)CItem_initItemImplInstances((CItemData*)item))->GetName(item, j);
             if (id > 0) {
                 // Raw 32-bit result folded into the halfword stores.
-                s32 cnt = ((CItemImplFacade2*)CItem_initItemImplInstances(item))
+                s32 cnt = ((CItemImplFacade2*)CItem_initItemImplInstances((CItemData*)item))
                               ->GetFlag(item, j);
                 int found = 0;
                 for (u8 q = 0; q < n; q++) {
@@ -2736,7 +2873,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         // --- main crystal-box layout arc ---
         mMemRegion1.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x40000,
-            lbl_eu_8050888C + 0x371, 0);
+            sMakeCrystalStrings + 0x371, 0);
         Class_8045F858 host(&mMemRegion1);
         char buf[0x20];
         CFileHandle* fh = (CFileHandle*)mFileHandle0;
@@ -2744,17 +2881,17 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         mtl::MemManager::setMemInitFlag(0);
         mArcAcc0 = CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)mArcAcc0)
-            ->Attach(data, lbl_eu_8050888C + 0x37f);
-        buildLayout((nw4r::lyt::Layout**)&mLayout, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x383);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim0, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x39a);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim1, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x3b4);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim2, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x3d3);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim3, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x3f3);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim4, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x40e);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim5, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x42d);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim6, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x44c);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim7, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x46c);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim8, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, lbl_eu_8050888C + 0x48b);
+            ->Attach(data, sMakeCrystalStrings + 0x37f);
+        buildLayout((nw4r::lyt::Layout**)&mLayout, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x383);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim0, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x39a);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim1, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x3b4);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim2, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x3d3);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim3, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x3f3);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim4, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x40e);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim5, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x42d);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim6, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x44c);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim7, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x46c);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, &mAnim8, (nw4r::lyt::ArcResourceAccessor*)mArcAcc0, sMakeCrystalStrings + 0x48b);
 
         // Bind the shared font into the layout's root pane.
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)mLayout + 0x10);
@@ -2766,59 +2903,59 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         u32 cnt = (u32)getPackedFont();
         if (cnt != 0) {
             setLayoutTextBoxFont(
-                (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x14d, cnt);
+                (nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x14d, cnt);
             setLayoutTextBoxFont(
-                (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x12e, cnt);
+                (nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x12e, cnt);
             setLayoutTextBoxFont(
-                (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x365, cnt);
+                (nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x365, cnt);
         }
         u32 cnt2 = (u32)CUICfManager_getPackedFont9C();
         if (cnt2 != 0) {
             for (u8 i = 1; i <= 30; i++) {
-                sprintf(buf, lbl_eu_8050888C + 0x102, i);
+                sprintf(buf, sMakeCrystalStrings + 0x102, i);
                 setLayoutTextBoxFont(
                     (nw4r::lyt::Layout*)mLayout, buf, cnt2);
             }
             for (u8 i = 1; i <= 8; i++) {
-                sprintf(buf, lbl_eu_8050888C + 0x11e, i);
+                sprintf(buf, sMakeCrystalStrings + 0x11e, i);
                 setLayoutTextBoxFont(
                     (nw4r::lyt::Layout*)mLayout, buf, cnt2);
             }
             setLayoutTextBoxFont(
-                (nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x257, cnt2);
+                (nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x257, cnt2);
         }
 
         playCrystalAnim6();
         ((CLytVf38*)mLayout)->vf_30(0);
 
         // Static labels for the window-kind counter rows.
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x4a6,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 2), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x1bd,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 4), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x4b3,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 3), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x4bf,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0x2e), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x4c8,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0x2f), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x4d1,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd, 4), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x1ca,
-                      lbl_eu_8050888C + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x4a6,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 2), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x1bd,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 4), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x4b3,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 3), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x4bf,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 0x2e), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x4c8,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 0x2f), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x4d1,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0xf4, sMakeCrystalStrings + 0xfd, 4), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x1ca,
+                      sMakeCrystalStrings + 0x22b, 0);
 
         // Window title: pick the message by game-manager flag, resolve the
         // timg texture and publish it onto the pane.
         const char* msgName = cf::CfGameManager::isClassicController(-1)
-                                  ? lbl_eu_8050888C + 0x4dd
-                                  : lbl_eu_8050888C + 0x4e6;
-        u16 id = (u16)BdatGetU16ByTableKey(lbl_eu_8050888C + 0x4ef, msgName, 0x49);
+                                  ? sMakeCrystalStrings + 0x4dd
+                                  : sMakeCrystalStrings + 0x4e6;
+        u16 id = (u16)BdatGetU16ByTableKey(sMakeCrystalStrings + 0x4ef, msgName, 0x49);
         void* msg = MakeTplNameSysFile(id);
         void* res = ((nw4r::lyt::ArcResourceAccessor*)CUICfManager_getArcResourceAccessor())
                         ->GetResource(0x74696D67, (const char*)msg, 0);
         if (res != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mLayout,
-                          lbl_eu_8050888C + 0x4fd, (TPLPalette*)res);
+                          sMakeCrystalStrings + 0x4fd, (TPLPalette*)res);
             // Mirror the timg-resource u16 position header onto the pane. The
             // double deref of res+8 rides as the vf_3C extra arg (r6) and is
             // reused as the base of the two u16 reads (retail schedule).
@@ -2827,7 +2964,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
             u16 w0 = *(u16*)d;
             nw4r::lyt::Pane* pane =
                 ((CLytVf3C3*)(*(void**)((u8*)mLayout + 0x10)))
-                    ->vf_3C(lbl_eu_8050888C + 0x4fd, 1, d);
+                    ->vf_3C(sMakeCrystalStrings + 0x4fd, 1, d);
             if (pane != 0) {
                 f32 fx;
                 f32 fy;
@@ -2842,46 +2979,46 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         }
 
         BuildSlotItemLists(1);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x257,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x1e6,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x1f5,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x21c,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x22c,
-                      lbl_eu_8050888C + 0x22b, 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x23b,
-                      lbl_eu_8050888C + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x257,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x1e6,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x1f5,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x21c,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x22c,
+                      sMakeCrystalStrings + 0x22b, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x23b,
+                      sMakeCrystalStrings + 0x22b, 0);
 
         u8 v = GetCollectedFlagByte(0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x509,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 9), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x516,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0xa), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x1e6,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x509,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 9), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x516,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1, 0xa), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x1e6,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1,
                                     (u8)v + 10),
                       0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, lbl_eu_8050888C + 0x1f5,
-                      BdatTouchStringCell(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, sMakeCrystalStrings + 0x1f5,
+                      BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1,
                                     (u8)v + 0x12),
                       0);
 
         void* msg2 = MakeTplNameSysFile(
-            (u16)BdatGetU16Direct(lbl_eu_80664090, lbl_eu_8050888C + 0x204, (u8)v));
+            (u16)BdatGetU16Direct(lbl_eu_80664090, sMakeCrystalStrings + 0x204, (u8)v));
         void* res2 = ((nw4r::lyt::ArcResourceAccessor*)mArcAcc0)
                          ->GetResource(0x74696D67, (const char*)msg2, 0);
         if (res2 != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mLayout,
-                          lbl_eu_8050888C + 0x20f, (TPLPalette*)res2);
+                          sMakeCrystalStrings + 0x20f, (TPLPalette*)res2);
         }
 
         // Mirror the window-size pane's translate onto field_14F4.
         nw4r::lyt::Pane* sizePane =
             ((CLytVf3C*)(*(void**)((u8*)mLayout + 0x10)))
-                ->vf_3C(lbl_eu_8050888C + 0x523, 1);
+                ->vf_3C(sMakeCrystalStrings + 0x523, 1);
         copyVEC3(&field_14F4, (u8*)sizePane + 0x2c);
 
         // Re-init all six cursor sub-objects from temps (accessor or the
@@ -2923,14 +3060,14 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         // --- crystal-info arc ---
         mMemRegion2.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x100,
-            lbl_eu_8050888C + 0x530, 0);
+            sMakeCrystalStrings + 0x530, 0);
         Class_8045F858 host2(&mMemRegion2);
         CFileHandle* fh2 = (CFileHandle*)mFileHandle1;
         void* data2 = fh2->getData();
         mtl::MemManager::setMemInitFlag(0);
         mArcAcc1 = CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)mArcAcc1)
-            ->Attach(data2, lbl_eu_8050888C + 0x37f);
+            ->Attach(data2, sMakeCrystalStrings + 0x37f);
         loadCrystalBoxArchive();
         mFileHandle1 = 0;
         mMemRegion2.validateHeap();
@@ -2941,11 +3078,11 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         CFileHandle* fh3 = (CFileHandle*)mFileHandle2;
         void* data3 = fh3->getData();
         Bdat_GetTable_AA34();
-        if (getFP(lbl_eu_8050888C + 0x541) == 0) {
+        if (getFP(sMakeCrystalStrings + 0x541) == 0) {
             CBdat::setBdatEntry(2, data3);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_806646D0 = (unsigned long)getFP(lbl_eu_8050888C + 0x550);
+        lbl_eu_806646D0 = (unsigned long)getFP(sMakeCrystalStrings + 0x550);
         loadCrystalBoxArchive();
         mFileHandle2 = 0;
         return true;

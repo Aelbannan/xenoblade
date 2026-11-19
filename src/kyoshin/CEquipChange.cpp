@@ -63,7 +63,7 @@ void CEquipChange::LoadFiles() {
 // bodies into callers like EquipChange_GetLockedState / EquipChange_OnApplyToStA, which must emit the
 // retail `bl` (external) calls.
 
-u8 CEquipChange::IsActiveFlag() { return field_4D; }
+u32 CEquipChange::IsActiveFlag() { return field_4D; }
 
 int CEquipChange::CheckBoxOpen() { return mEquipItemBox.getEIBOpenFlag(); }
 
@@ -685,7 +685,7 @@ int CEquipChange::GetEquippedResId(u32 param) {
 }
 
 // Target us-80205994: lift the last box byte if the box gate is open.
-u8 CEquipChange::GetBoxTailByte() {
+u32 CEquipChange::GetBoxTailByte() {
     if (mEquipItemBox.getEIBOpenFlag() != 0)
         return mEquipItemBox.unk_37c;
     return 0;
@@ -774,7 +774,7 @@ void CEquipChange::OnApplyToStA() {
     u8 f99 = field_99;
     int lo = MapCursorToCat();
     int hi = MapCursorToSlot();
-    int packed = (hi & 0xF) | ((lo & 0xF) << 4);
+    int packed = ((lo & 0xF) << 4) | (hi & 0xF);
     int m = (int)ResolveEquipItem();
     mItemBoxInfo.SetItem((u16)(packed | ((u32)f99 << 8)), (void*)m, 1);}
 
@@ -1202,10 +1202,10 @@ void CEquipChange::RebuildCursorList() {
 }
 
 void EquipChange_CopyCursorRec(CEqChCursorRec* dst, CEqChCursorRec* src) {
-    u16 a = *(u16*)src;
-    u32 b = *(u32*)((u8*)src + 4);
-    *(u16*)dst = a;
-    *(u32*)((u8*)dst + 4) = b;
+    u16 a = src->field_00;
+    u32 b = src->field_04;
+    dst->field_04 = b;
+    dst->field_00 = a;
 }
 
 // Target us-802073c8: file-load event handler for the two bind files loaded

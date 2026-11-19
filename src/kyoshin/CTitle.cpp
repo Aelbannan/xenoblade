@@ -22,20 +22,20 @@
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
 // (retail calls them, so the call must survive).
-extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self);
-extern "C" void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self);
+extern "C" void CTitleLogo_bindIntro(CTitleLogo* self);
+extern "C" void CTitleLogo_bindAnim1(CTitleLogo* self);
 // (memberized: CTitleMenu_bindAnim1 -> CTitleMenu::bindAnim1; declaration moved into class CTitleMenu)
-extern "C" void __declspec(noinline) CTitleMenu_bindAnim4(CTitleLogo* self);
-extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self);
-extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self);
-void __declspec(noinline) CTitleMenu_bindAnim4(CTitleMenu* self);
-extern "C" void __declspec(noinline) CTitleMenu_bindAnim2(CTitleMenu* self);
-extern "C" __declspec(noinline) void CTitleMenu_bindOutro(CTitleMenu* self);
+extern "C" void CTitleMenu_bindAnim4(CTitleLogo* self);
+extern "C" void CTitleLogo_bindAnim2(CTitleLogo* self);
+extern "C" void CTitleMenu_bindIntro(CTitleMenu* self);
+void CTitleMenu_bindAnim4(CTitleMenu* self);
+extern "C" void CTitleMenu_bindAnim2(CTitleMenu* self);
+extern "C" void CTitleMenu_bindOutro(CTitleMenu* self);
 
 // ---------------------------------------------------------------------------
 // CTitleLogo: vtable + six zero fields; field_0x19 starts at 1.
 // ---------------------------------------------------------------------------
-extern "C" __declspec(noinline) CTitleLogo* __ct__CTitleLogo(CTitleLogo* self) {
+extern "C" CTitleLogo* __ct__CTitleLogo(CTitleLogo* self) {
     *(void**)self = lbl_eu_8053B368;
     self->mAccessor = 0;
     self->mLayout = 0;
@@ -71,7 +71,7 @@ extern "C" __declspec(noinline) void CTitleLogo_build(CTitleLogo* self, nw4r::ly
 // sjrbf_PutChunk pattern).
 // extern "C": retail keeps these callsites as unmangled R_PPC_REL24 relocs
 // from CTitle_update.
-extern "C" void __declspec(noinline) CTitleLogo_update(CTitleLogo* self) {
+extern "C" void CTitleLogo_update(CTitleLogo* self) {
     if (self->mLayout != 0 && self->field_0x18 != 0) {
         goto body;
     }
@@ -82,7 +82,7 @@ body:
     (self->*lbl_eu_8053B1F0[self->field_0x1A])();
     self->mLayout->Animate(0);
 }
-extern "C" __declspec(noinline) void CTitleLogo_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
+extern "C" void CTitleLogo_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
     CTitleLogo* logo = (CTitleLogo*)self;
     if (logo->mLayout != 0 && logo->field_0x18 != 0) {
         goto call;
@@ -96,7 +96,7 @@ call:
 // Release the logo layout: delete the +0x08 member, then clear it.
 // delete emits the deleting-dtor vcall (flag 1) and MWCC inserts its own
 // null-check before it, giving the retail branch-over-branch gate.
-extern "C" __declspec(noinline) void CTitleLogo_release(CTitleLogo* self) {
+extern "C" void CTitleLogo_release(CTitleLogo* self) {
     if (self->mLayout != NULL) {
         delete self->mLayout;
         self->mLayout = NULL;
@@ -114,7 +114,7 @@ extern "C" __declspec(noinline) void CTitleLogo_activate(CTitleLogo* self) {  //
 }
 #pragma optimize_for_size off
 
-extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo* self) {
+extern "C" void CTitleLogo_beginOutro(CTitleLogo* self) {
     if (self->field_0x1A == 2) {
         self->field_0x1A = 3;
         CTitleLogo_bindAnim2(self);
@@ -125,7 +125,7 @@ extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo* self) {
 // Logo state 1: park the first animation on its final frame (frame count minus
 // the per-frame delta), advance the layout, then step into state 2 and mark
 // the phase flag so the caller can proceed.
-extern "C" __declspec(noinline) void CTitleLogo_stepState1(CTitleLogo* self) {
+extern "C" void CTitleLogo_stepState1(CTitleLogo* self) {
     if (self->field_0x1A == 1) {
         self->mAnimTrans0->SetFrame((float)self->mAnimTrans0->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
@@ -163,7 +163,7 @@ extern "C" void CTitleLogo_onAnim2Done(CTitleLogo* self) {
 
 // Logo intro: bind the logo "in" animation, reset it to frame 0, and advance
 // the layout once so it is ready to play.
-extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self) {
+extern "C" void CTitleLogo_bindIntro(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
@@ -173,7 +173,7 @@ extern "C" void __declspec(noinline) CTitleLogo_bindIntro(CTitleLogo* self) {
 
 // Logo phase 2: unbind the intro animation, bind animation 1, reset it to
 // frame 0, and advance the layout (mirrors CTitleLogo_bindIntro with the next slot).
-void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self) {
+void CTitleLogo_bindAnim1(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans0);
     self->mLayout->BindAnimation(self->mAnimTrans1);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
@@ -182,7 +182,7 @@ void __declspec(noinline) CTitleLogo_bindAnim1(CTitleLogo* self) {
 }
 
 // Logo phase 3: same switch pattern, moving from animation 1 to animation 2.
-extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self) {
+extern "C" void CTitleLogo_bindAnim2(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans1);
     self->mLayout->BindAnimation(self->mAnimTrans2);
     self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
@@ -193,7 +193,7 @@ extern "C" void __declspec(noinline) CTitleLogo_bindAnim2(CTitleLogo* self) {
 // ---------------------------------------------------------------------------
 // CTitleMenu: vtable + nine zero fields; field_0x25 starts at 1.
 // ---------------------------------------------------------------------------
-extern "C" __declspec(noinline) CTitleMenu* __ct__CTitleMenu(CTitleMenu* self) {
+extern "C" CTitleMenu* __ct__CTitleMenu(CTitleMenu* self) {
     *(void**)self = lbl_eu_8053B35C;
     self->mAccessor = 0;
     self->mLayout = 0;
@@ -242,7 +242,7 @@ extern "C" __declspec(noinline) void CTitleMenu_build(CTitleMenu* self, nw4r::ly
 // CTitleMenu per-frame update: run the state-machine entry selected by
 // field_0x26, then advance the layout animation (same gate shape as
 // CTitleLogo_update).
-extern "C" void __declspec(noinline) CTitleMenu_update(CTitleMenu* self) {
+extern "C" void CTitleMenu_update(CTitleMenu* self) {
     if (self->mLayout != 0 && self->field_0x24 != 0) {
         goto body;
     }
@@ -254,7 +254,7 @@ body:
     self->mLayout->Animate(0);
 }
 
-extern "C" __declspec(noinline) void CTitleMenu_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
+extern "C" void CTitleMenu_draw(void* self, void* drawInfo) {  // noinline: retail keeps bl from CTitle_draw
     CTitleMenu* menu = (CTitleMenu*)self;
     if (menu->mLayout != 0 && menu->field_0x24 != 0) {
         goto call;
@@ -265,25 +265,15 @@ call:
         menu->mLayout, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 }
 
-// Menu-side sibling of CTitleLogo_release. Retail calls vtable slot +0x08 with an
-// int flag of 1 (not a dtor call, which would pass -1), so go through a view
-// class with a plain virtual taking the flags argument.
-class CTitleLayoutView {
-public:
-    virtual void vf00(int flags);
-};
 
-// Two sequential null-tests mirror the retail's doubled `beq` (the second
 // branch is dead - MWCC CSEs the compare but keeps both branches).
 // Retail calls this via bl from the teardown path, so keep it out of line;
 // C linkage binds to the retail unmangled name.
-extern "C" __declspec(noinline) void CTitleMenu_release(CTitleMenu* self) {
+extern "C" void CTitleMenu_release(CTitleMenu* self) {
     if (self->mLayout == NULL) {
         return;
     }
-    if (self->mLayout != NULL) {
-        ((CTitleLayoutView*)self->mLayout)->vf00(1);
-    }
+    delete self->mLayout;
     self->mLayout = NULL;
 }
 
@@ -298,7 +288,7 @@ extern "C" __declspec(noinline) void CTitleMenu_activate(CTitleMenu* self) {
 }
 #pragma optimize_for_size off
 
-extern "C" __declspec(noinline) void CTitleMenu_beginOutro(CTitleMenu* self) {
+extern "C" void CTitleMenu_beginOutro(CTitleMenu* self) {
     if (self->field_0x26 == 2) {
         self->field_0x26 = 3;
         CTitleMenu_bindAnim2(self);
@@ -306,7 +296,7 @@ extern "C" __declspec(noinline) void CTitleMenu_beginOutro(CTitleMenu* self) {
     }
 }
 
-extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu*);
+extern "C" void CTitleMenu_bindAnim3(CTitleMenu*);
 extern "C" __declspec(noinline) void CTitleMenu_advanceToState4(CTitleMenu* self) {
     if (self->field_0x26 != 3)
         return;
@@ -316,7 +306,7 @@ extern "C" __declspec(noinline) void CTitleMenu_advanceToState4(CTitleMenu* self
     self->field_0x25 = 0;
 }
 
-extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu* self) {
+extern "C" void CTitleMenu_beginFinal(CTitleMenu* self) {
     if (self->field_0x26 == 5) {
         self->field_0x26 = 6;
         CTitleMenu_bindOutro(self);
@@ -344,7 +334,7 @@ extern "C" __declspec(noinline) void CTitleMenu_calcCursorPos(nw4r::math::VEC3* 
 // Menu state 4: park animation 3 on its final frame (frame count minus the
 // per-frame delta), advance the layout, step into state 5, and mark the
 // phase flag so the caller can proceed.
-extern "C" __declspec(noinline) void CTitleMenu_stepState4(CTitleMenu* self) {
+extern "C" void CTitleMenu_stepState4(CTitleMenu* self) {
     if (self->field_0x26 == 4) {
         self->mAnimTrans3->SetFrame((float)self->mAnimTrans3->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
@@ -401,7 +391,7 @@ extern "C" void CTitleMenu_onAnim5Done(CTitleMenu* self) {
 
 // Menu intro: unbind the last animation, bind animation 0, reset it to
 // frame 0, and advance the layout once so it is ready to play.
-extern "C" void __declspec(noinline) CTitleMenu_bindIntro(CTitleMenu* self) {
+extern "C" void CTitleMenu_bindIntro(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans5);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
@@ -421,7 +411,7 @@ void CTitleMenu::bindAnim1() {
 
 // Menu phase 3: unbind the intro animation, bind animation 2, reset it to
 // frame 0, and advance the layout.
-extern "C" void __declspec(noinline) CTitleMenu_bindAnim2(CTitleMenu* self) {
+extern "C" void CTitleMenu_bindAnim2(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans1);
     self->mLayout->BindAnimation(self->mAnimTrans2);
     self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
@@ -431,7 +421,7 @@ extern "C" void __declspec(noinline) CTitleMenu_bindAnim2(CTitleMenu* self) {
 
 // Menu phase 4: unbind animation 2, bind animation 3, enable it, park it on
 // its start frame, and advance the layout once.
-extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu* self) {
+extern "C" void CTitleMenu_bindAnim3(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans3);
     self->mLayout->SetAnimationEnable(self->mAnimTrans3, true);
@@ -441,7 +431,7 @@ extern "C" void __declspec(noinline) CTitleMenu_bindAnim3(CTitleMenu* self) {
 
 // Menu phase 5: unbind animation 3, bind animation 4, enable it, park it on
 // its start frame, and advance the layout once.
-void __declspec(noinline) CTitleMenu_bindAnim4(CTitleMenu* self) {
+void CTitleMenu_bindAnim4(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans3);
     self->mLayout->BindAnimation(self->mAnimTrans4);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, true);
@@ -451,7 +441,7 @@ void __declspec(noinline) CTitleMenu_bindAnim4(CTitleMenu* self) {
 
 // Menu outro: unbind animation 4, bind animation 5, enable it, park it on
 // its start frame, and advance the layout once.
-extern "C" __declspec(noinline) void CTitleMenu_bindOutro(CTitleMenu* self) {
+extern "C" void CTitleMenu_bindOutro(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans4);
     self->mLayout->BindAnimation(self->mAnimTrans5);
     self->mLayout->SetAnimationEnable(self->mAnimTrans5, true);
@@ -474,7 +464,7 @@ extern "C" CTitle* __ct__6CTitleFv(CTitle* self) {
     self->field_0x25 = -1;
     __ct__CTitleLogo(&self->mLogo);
     __ct__CTitleMenu(&self->mMenu);
-    __ct__CCur18(&self->mCur, 0);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCur, 0);
     return self;
 }
 
@@ -488,7 +478,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 extern "C" void* __dt__6CTitleFv(void* self, int flags) {
     if (self != 0) {
         __dt__6CCur18Fv(&static_cast<CTitle*>(self)->mCur, -1);
-        __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>((u8*)self + 0x04), -1);
+        __dt__17UnkClass_8045F564Fv(&static_cast<CTitle*>(self)->mMemRegion, -1);
         if (flags > 0)
             operator delete(self);
     }
@@ -568,8 +558,8 @@ extern "C" void CTitle_showMenu(CTitle* self) {
 
 // State-5 gate: advance +0x24 to 6, then run the +0x2C/+0x48 sub-objects
 // and the +0x70 layout with a zero flag.
-extern "C" void __declspec(noinline) CTitleLogo_beginOutro(CTitleLogo*);
-extern "C" void __declspec(noinline) CTitleMenu_beginFinal(CTitleMenu*);
+extern "C" void CTitleLogo_beginOutro(CTitleLogo*);
+extern "C" void CTitleMenu_beginFinal(CTitleMenu*);
 extern "C" void CTitle_beginLogoOutro(CTitle* self) {
     if (self->field_0x24 == 5) {
         self->field_0x24 = 6;

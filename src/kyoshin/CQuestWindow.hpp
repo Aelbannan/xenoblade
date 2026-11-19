@@ -227,7 +227,7 @@ u32 menuPTStateIsActive();                       // party-state screen active?
 // cursor per-frame update (CCur)
 // cursor draw
 extern "C" int KyoshinHeap_GetField44(void);        // common-archive handle
-void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 
@@ -253,7 +253,6 @@ void enablePadFlags__Q22cf13CfGameManagerFUlb(u32 enableFlags, bool enable);
 void* getCurrentPad__Q22cf13CfGameManagerFv();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
-u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 
 // C-ABI UI / misc imports used by Term, closeQuestWindow, handleQuestInput.
 u32 GetItemMulti_IsActiveFlag();
@@ -291,25 +290,20 @@ void writePanePos(u8* self, const float* src);
 
 // Same-TU quest-window free functions. The retail names are unmangled, so the
 // calls from updateWindow keep C linkage (the definitions below inherit it).
-// noinline: placeQuestCursor/80122C08/80122EF8 are still empty stubs; without it
-// MWCC inlines their empty bodies into updateWindow's switch and collapses
-// the case-2/3 dispatch (retail keeps the calls).
 extern "C" {
 void updateWindow(QuestWinObj* self);
 void completeWindowOpen(QuestWinObj* self);
 void enableAnimA(QuestWinObj* self);
-__attribute__((noinline)) void handleQuestInput(QuestWinObj* self);
-__attribute__((noinline)) void closeQuestWindow(QuestWinObj* self);
-__attribute__((noinline)) void placeQuestCursor(QuestWinObj* self);
+void handleQuestInput(QuestWinObj* self);
+void closeQuestWindow(QuestWinObj* self);
+void placeQuestCursor(QuestWinObj* self);
 CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3);
 // CQuestWindow::OnFileEvent tail-calls onQuestFileEvent with this - 0x6C; the
 // event's file handle selects the window-arc (field_0x88) or common-archive
 // (field_0x8C) build branch. refreshQuestContent refreshes the window content after
 // either branch completes.
 bool onQuestFileEvent(CQuestWindow* self, CEventFile* event);
-// noinline: refreshQuestContent is still an empty stub; without it MWCC inlines its
-// empty body into onQuestFileEvent's two call sites (retail keeps the calls).
-__attribute__((noinline)) void refreshQuestContent(CQuestWindow* self);
+void refreshQuestContent(CQuestWindow* self);
 }
 
 #include "kyoshin/CTaskGame.hpp"

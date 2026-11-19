@@ -406,7 +406,7 @@ extern "C" void PartyStateWin_TeardownWindow(u8* obj);
 extern "C" void CUICfManager_setTimeout30();
 extern "C" void processEventList__Q22cf13CfGameManagerFv();
 extern "C" void processEffectList__Q22cf13CfGameManagerFv();
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // System-window open query + sound helpers (Move, state 3).
 extern "C" int CMainMenu_GetInstancePtr();

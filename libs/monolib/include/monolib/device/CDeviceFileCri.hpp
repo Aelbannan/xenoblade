@@ -84,7 +84,6 @@ extern "C" {
 
 extern "C" {
     void AddToGlobalArray__10CExceptionFP10IException(CException* self, IException* pException);
-    void RemoveFromGlobalArray__10CExceptionFP10IException(CException* self);
     void setGlobalMessage__10CExceptionFv(CException* self);
     CException* createException__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
     void removeFileJob__11CDeviceFileFP14CDeviceFileJob(CDeviceFileJob* job);

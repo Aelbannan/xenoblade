@@ -253,10 +253,9 @@ extern "C" void refreshPartyPanel(CPartyState* self) {
     }
 }
 
-// Destroys the embedded cursor and scratch-memory sub-objects (reverse
-// declaration order); MWCC emits the delete guard from the incoming flag.
+// The cursor and scratch-memory sub-objects are real members, so their
+// destructors run implicitly in reverse declaration order.
 CPartyState::~CPartyState() {
-    __dt__6CCur22Fv(&mCur22, -1);
 }
 
 // Intro-animation finish handler: when the +0x24 anim transform reaches the

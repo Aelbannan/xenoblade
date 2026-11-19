@@ -164,9 +164,8 @@ struct CScnEffectActMgr {
     /* 0x147c */ CScnEffectActMgrActTable* field_0x147c;
 };
 
-// Import from monolib/src/scn/CScnItemModel.cpp: base pointer of the
-// manager's act data (caller applies the slot offset).
-extern "C" u8* simGetLeafActData(CScnEffectActMgr* mgr);
+// Import from monolib/src/scn/CScnItemModel.cpp: canonical void*(void*)
+// act-data accessor (declared in CScnItemModel.hpp).
 
 // Cross-TU imports behind the CScnEffectActNw4r vtable thunks and update
 // hooks (unrecovered retail plain-name symbols).

@@ -35,9 +35,8 @@ extern "C" {
 extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
 extern "C" u8 lbl_eu_80538858[];
 extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u8 lbl_eu_8050F7CC[];
+
 extern "C" u32 lbl_eu_80662AD0;
 extern "C" s32 lbl_eu_80662AC8;
 extern "C" u32 lbl_eu_80662ACC;
@@ -48,15 +47,14 @@ extern "C" void invalidateQstFlag();
 extern "C" void CTaskGame_offerLoadCap();
 extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
-extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-// CCur per-frame update
+
 extern "C" void awardCollectCount(int val);
 extern "C" void awardQuestFlags(void);
 extern "C" u32 chkAwardFlags99(void);
 extern "C" u32 chkAwardFlags9B(void);
 extern "C" u8 bdatLookupRes(u16, u8);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" int isCollepediaId(int v);
+
 extern "C" void NandRegHeapCb(void*, int, void (*)(int, int, u8));
 extern "C" void DevFile_SetByteA9(int);
 extern "C" void NandQueueChk860(int, void*);
@@ -91,8 +89,6 @@ extern void* lbl_eu_806640A8;
 extern CSLData* lbl_eu_806649F0;
 extern CSaveLoad* lbl_eu_806649F4;
 
-#pragma push
-#pragma dont_inline on
 CSLData::CSLData() {
     mBuf[0] = nullptr;
     mBuf[1] = nullptr;
@@ -104,26 +100,25 @@ CSLData::CSLData() {
     mValid[1] = 0;
     mValid[2] = 0;
 }
-#pragma pop
 
 CSLData::~CSLData() {}
 
 // Allocate the three 0xA000-byte slot header buffers from MEM2
-__declspec(noinline) void CSLData::allocBufs() {
+void CSLData::allocBufs() {
     lbl_eu_806649F0 = this;
-    mBuf[0] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
-    mBuf[1] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
-    mBuf[2] = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
+    mBuf[0] = (CSLBuffer*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
+    mBuf[1] = (CSLBuffer*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
+    mBuf[2] = (CSLBuffer*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
 }
 
-__declspec(noinline) void CSLData::freeBufs() {
+void CSLData::freeBufs() {
     mtl::MemManager::deallocate(mBuf[0]);
     mtl::MemManager::deallocate(mBuf[1]);
     mtl::MemManager::deallocate(mBuf[2]);
     lbl_eu_806649F0 = nullptr;
 }
 
-__declspec(noinline) void CSLData::bindSlots() {
+void CSLData::bindSlots() {
     NandRegHeapCb(mBuf[0], 1, onSlotRead);
     NandRegHeapCb(mBuf[1], 2, onSlotRead);
     NandRegHeapCb(mBuf[2], 3, onSlotRead);
@@ -135,7 +130,7 @@ __declspec(noinline) void CSLData::bindSlots() {
     mValid[2] = 0;
 }
 
-__declspec(noinline) int CSLData::isReady() {
+int CSLData::isReady() {
     int result = 0;
     if (mRead[0] != 0) {
         if (mRead[1] != 0) {
@@ -148,14 +143,14 @@ __declspec(noinline) int CSLData::isReady() {
 }
 
 // Slot record (+0x20 into the header buffer) when the slot holds valid data.
-__declspec(noinline) int CSLData::getSlot(u8 index) {
-    if (index >= 3) return 0;
-    void* ptr = mBuf[index];
-    if (ptr == nullptr) return 0;
+CSLSaveSlot* CSLData::getSlot(u8 index) {
+    if (index >= 3) return nullptr;
+    CSLBuffer* buf = mBuf[index];
+    if (buf == nullptr) return nullptr;
     if (mValid[index] != 0) {
-        return (int)((u8*)ptr + 0x20);
+        return &buf->mSlot;
     }
-    return 0;
+    return nullptr;
 }
 
 // NAND read callback: slot numbers are 1-based.
@@ -165,16 +160,13 @@ void CSLData::onSlotRead(int, int index, u8 valid) {
     (lbl_eu_806649F0->mValid - 1)[index] = valid;
 }
 
-#pragma push
-#pragma dont_inline on
 CSLCur::CSLCur(nw4r::lyt::ArcResourceAccessor* accessor)
     : mAccessor(accessor), mLayout(nullptr), mAnimLoop(nullptr), mAnimPush(nullptr), mVisible(0),
       mState(0) {}
-#pragma pop
 
 CSLCur::~CSLCur() {}
 
-__declspec(noinline) void CSLCur::createLayout() {
+void CSLCur::createLayout() {
     buildLayout(&mLayout, mAccessor, (const char*)&lbl_eu_8050F7CC);
     bindLayoutAnimTransform(mLayout, &mAnimLoop, mAccessor, (char*)&lbl_eu_8050F7CC[0x18]);
     bindLayoutAnimTransform(mLayout, &mAnimPush, mAccessor, (char*)&lbl_eu_8050F7CC[0x35]);
@@ -182,7 +174,7 @@ __declspec(noinline) void CSLCur::createLayout() {
     bindPane();
 }
 
-__declspec(noinline) void CSLCur::update() {
+void CSLCur::update() {
     if (mLayout == nullptr) return;
 
     switch (mState) {
@@ -197,13 +189,13 @@ __declspec(noinline) void CSLCur::update() {
     mLayout->Animate(0);
 }
 
-__declspec(noinline) void CSLCur::draw(nw4r::lyt::DrawInfo* drawInfo) {
+void CSLCur::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (mLayout == nullptr) return;
     if (mVisible == 0) return;
     drawLayout(mLayout, drawInfo, 0, 1);
 }
 
-__declspec(noinline) void CSLCur::destroy() {
+void CSLCur::destroy() {
     mVisible = 0;
     mAnimLoop = nullptr;
     mAnimPush = nullptr;
@@ -213,18 +205,18 @@ __declspec(noinline) void CSLCur::destroy() {
     }
 }
 
-__declspec(noinline) void CSLCur::setPos(const nw4r::math::VEC3* pos) {
+void CSLCur::setPos(const nw4r::math::VEC3* pos) {
     mLayout->GetRootPane()->SetTranslate(*pos);
 }
 
-__declspec(noinline) void CSLCur::tickAnim() {
+void CSLCur::tickAnim() {
     if (advanceAnimTransform(mAnimPush, lbl_eu_80668B68) != 0) {
         mState = 0;
         bindPane();
     }
 }
 
-__declspec(noinline) void CSLCur::bindPane() {
+void CSLCur::bindPane() {
     mLayout->UnbindAnimation(mAnimPush);
     mLayout->BindAnimation(mAnimLoop);
     mLayout->SetAnimationEnable(mAnimLoop, true);
@@ -232,15 +224,12 @@ __declspec(noinline) void CSLCur::bindPane() {
     mLayout->Animate(0);
 }
 
-#pragma push
-#pragma dont_inline on
 CSLSub::CSLSub(nw4r::lyt::ArcResourceAccessor* accessor)
     : mAccessor(accessor), mLayout(nullptr), mAnimTrans(nullptr), mState(0), mShown(0), mIdle(1) {}
-#pragma pop
 
 CSLSub::~CSLSub() {}
 
-__declspec(noinline) void CSLSub::create() {
+void CSLSub::create() {
     buildLayout(&mLayout, mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
     bindLayoutAnimTransform(mLayout, &mAnimTrans, mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
     ApplyFontToTxtPanes(mLayout->GetRootPane(),
@@ -249,7 +238,7 @@ __declspec(noinline) void CSLSub::create() {
     bindPane();
 }
 
-__declspec(noinline) void CSLSub::update() {
+void CSLSub::update() {
     if (mLayout == nullptr) return;
 
     switch (mState) {
@@ -264,26 +253,26 @@ __declspec(noinline) void CSLSub::update() {
     mLayout->Animate(0);
 }
 
-__declspec(noinline) void CSLSub::destroy() {
+void CSLSub::destroy() {
     if (mLayout == nullptr) return;
     delete mLayout;
     mLayout = nullptr;
 }
 
-__declspec(noinline) void CSLSub::setBusy() {
+void CSLSub::setBusy() {
     mState = 1;
     mShown = 1;
     mIdle = 0;
 }
 
-__declspec(noinline) void CSLSub::tickIn() {
+void CSLSub::tickIn() {
     if (advanceAnimTransform(mAnimTrans, lbl_eu_80668B68) != 0) {
         mState = 2;
         mIdle = 1;
     }
 }
 
-__declspec(noinline) void CSLSub::tickOut() {
+void CSLSub::tickOut() {
     if (AnimRewindFrame(mAnimTrans, lbl_eu_80668B68) != 0) {
         mState = 0;
         mShown = 0;
@@ -291,7 +280,7 @@ __declspec(noinline) void CSLSub::tickOut() {
     }
 }
 
-__declspec(noinline) void CSLSub::bindPane() {
+void CSLSub::bindPane() {
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mAnimTrans->SetFrame(lbl_eu_80668B6C);
     mLayout->Animate(0);
@@ -794,23 +783,23 @@ u8 CSaveLoad::getHelpKind() {
 
     if (mField129 != 0) {
         // Cursor active: return 0x6B if valid, 0 otherwise
-        int rv = mData.getSlot(mField124);
-        return rv > 0 ? 0x6B : 0;
+        CSLSaveSlot* rv = mData.getSlot(mField124);
+        return rv != nullptr ? 0x6B : 0;
     } else {
         // Cursor inactive: return 0x6A if valid, 0x69 otherwise
-        int rv = mData.getSlot(mField124);
-        return rv > 0 ? 0x6A : 0x69;
+        CSLSaveSlot* rv = mData.getSlot(mField124);
+        return rv != nullptr ? 0x6A : 0x69;
     }
 }
 
-__declspec(noinline) void CSaveLoad::tickOpenA() {
+void CSaveLoad::tickOpenA() {
     if (advanceAnimTransform(mAnimTransA, lbl_eu_80668B68) != 0) {
         mField121 = 2;
         enAnimB();
     }
 }
 
-__declspec(noinline) void CSaveLoad::tickOpenB() {
+void CSaveLoad::tickOpenB() {
     if (advanceAnimTransform(mAnimTransB, lbl_eu_80668B68) != 0) {
         mField121 = 3;
         mCur.mVisible = 1;
@@ -819,21 +808,21 @@ __declspec(noinline) void CSaveLoad::tickOpenB() {
     }
 }
 
-__declspec(noinline) void CSaveLoad::tickCloseB() {
+void CSaveLoad::tickCloseB() {
     if (AnimRewindFrame(mAnimTransB, lbl_eu_80668B68) != 0) {
         mField121 = 5;
         enAnimA();
     }
 }
 
-__declspec(noinline) void CSaveLoad::tickCloseA() {
+void CSaveLoad::tickCloseA() {
     if (AnimRewindFrame(mAnimTransA, lbl_eu_80668B68) != 0) {
         mField121 = 0;
         mField123 = 1;
     }
 }
 
-__declspec(noinline) void CSaveLoad::tickConf() {
+void CSaveLoad::tickConf() {
     if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() != 0) {
         mField121 = 3;
         mCur40.SetVisible(1);
@@ -843,7 +832,7 @@ __declspec(noinline) void CSaveLoad::tickConf() {
 
 // Handle save/load operation execution (state 5).
 // Checks window state, cursor status, and dispatches to delete/load/save logic.
-__declspec(noinline) void CSaveLoad::execOp() {
+void CSaveLoad::execOp() {
     if (reinterpret_cast<CSysWin*>(&mSysWin98)->isActive() == 0) return;
 
     mField121 = 3;
@@ -879,8 +868,8 @@ __declspec(noinline) void CSaveLoad::execOp() {
         // Retail runs the slot update only when the presentation bit is CLEAR
         // (rlwinm./bne skips over it otherwise).
         if ((lbl_eu_80663E28 & 0x01000000u) == 0) {
-            int result = mData.getSlot(mField124);
-            clearGlobalState__Q22cf13CfGameManagerFv(*(u16*)(result + 0x0E), *(u8*)(result + 0x11), 1);
+            CSLSaveSlot* result = mData.getSlot(mField124);
+            clearGlobalState__Q22cf13CfGameManagerFv(result->mStartPlace, result->mGender, 1);
         }
     } else {
         // Save path
@@ -905,7 +894,7 @@ __declspec(noinline) void CSaveLoad::execOp() {
     playUISound(0x80);
 }
 
-__declspec(noinline) void CSaveLoad::finish() {
+void CSaveLoad::finish() {
     if (!reinterpret_cast<CSysWin*>(&mSysWinD4)->isActive()) return;
 
     if (mField129 == 0) goto setError3;
@@ -933,7 +922,7 @@ setError3:
     mField121 = 3;
 }
 
-__declspec(noinline) void CSaveLoad::tickWait() {
+void CSaveLoad::tickWait() {
     if (mSub.mIdle != 0) {
         mField121 = 3;
     }
@@ -942,7 +931,7 @@ __declspec(noinline) void CSaveLoad::tickWait() {
 // Handle save/load window state machine.
 // Checks mSub.mIdle, mField12E, mField12C, mField129, mField12B
 // and sets up the appropriate syswin with strings.
-__declspec(noinline) void CSaveLoad::tickWindow() {
+void CSaveLoad::tickWindow() {
     char* s1;
     char* s2;
     char* s3;
@@ -1034,7 +1023,7 @@ clear12E:
     playUISound(0x28);
 }
 
-__declspec(noinline) void CSaveLoad::tickSlot() {
+void CSaveLoad::tickSlot() {
     if (mData.isReady() != 0) {
         mField121 = 0xb;
         mSub.mState = 3;
@@ -1043,20 +1032,20 @@ __declspec(noinline) void CSaveLoad::tickSlot() {
     }
 }
 
-__declspec(noinline) void CSaveLoad::enAnimA() {
+void CSaveLoad::enAnimA() {
     // Enable animation B, disable animation A
     mLayout->SetAnimationEnable(mAnimTransB, false);
     mLayout->SetAnimationEnable(mAnimTransA, true);
 }
 
-__declspec(noinline) void CSaveLoad::enAnimB() {
+void CSaveLoad::enAnimB() {
     // Enable animation A, disable animation B
     mLayout->SetAnimationEnable(mAnimTransA, false);
     mLayout->SetAnimationEnable(mAnimTransB, true);
 }
 
 // Refresh cursor/button display state for the save/load screen.
-__declspec(noinline) void CSaveLoad::refresh() {
+void CSaveLoad::refresh() {
     if (reinterpret_cast<CSysWin*>(&mSysWin98)->isOpened() != 0) {
         // Window open: refresh the L/R button highlight on the cursor object
         char btnBuf[0xC];
@@ -1080,7 +1069,7 @@ __declspec(noinline) void CSaveLoad::refresh() {
 // Render the save/load screen for all 3 slots.
 // Gets localized strings, sets up text elements, buttons, and scrollbar
 // for each save slot based on slot data (or empty if no data).
-__declspec(noinline) void CSaveLoad::renderSlots() {
+void CSaveLoad::renderSlots() {
     char* strBase = (char*)lbl_eu_8050F7CC;
 
     char* str4a = (char*)BdatTouchStringCell(&strBase[0xa7], &strBase[0xb2], 0x4a);
@@ -1108,7 +1097,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
         LayoutSetTextBoxFmtValue(mLayout, slotNameBuf, str4c, 0u);
 
         // Check if the slot has save data
-        u8* slotData = (u8*)mData.getSlot(slot);
+        CSLSaveSlot* slotData = mData.getSlot(slot);
         if (slotData == NULL) {
             // Empty slot
             sprintf(textBuf, (const char*)&strBase[0xde], str4d, str4d);
@@ -1171,16 +1160,16 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
         } else {
             // Slot has save data
             // Format slot data strings
-            sprintf(textBuf, (const char*)&strBase[0x1aa], *(u16*)(slotData + 0x64));
+            sprintf(textBuf, (const char*)&strBase[0x1aa], slotData->mLevel);
             sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
             LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
-            LayoutSetTextBoxText(mLayout, slotNameBuf, (char*)(slotData + 0x44), 0u);
+            LayoutSetTextBoxText(mLayout, slotNameBuf, slotData->mPlayerName, 0u);
 
             // Format time played string (minutes clamped to 59 when over an hour cap)
-            u16 playTime = *(u16*)(slotData + 0xa);
-            u16 minutes = *(u16*)(slotData + 0xc);
+            u16 playTime = slotData->mPlayTime;
+            u16 minutes = slotData->mMinutes;
             if (playTime > 0x63) {
                 if (playTime > 0x3e7 || minutes > 0x3b) minutes = 0x3b;
                 u16 hours = (playTime > 0x3e7) ? 0x3e7 : playTime;
@@ -1197,26 +1186,26 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
             // Format slot details based on language and save data
             if (isJapanese != 0) {
                 sprintf(textBuf, (const char*)&strBase[0x1c5],
-                        *(u16*)(slotData + 0x4), str4b,
-                        *(u16*)(slotData + 0x6), str4b,
-                        *(u8*)(slotData + 0x9));
+                        slotData->mPriority04, str4b,
+                        slotData->mPriority06, str4b,
+                        slotData->mPriority09);
             } else if (isGerman != 0) {
                 sprintf(textBuf, (const char*)&strBase[0x1d6],
-                        *(u8*)(slotData + 0x9),
-                        *(u16*)(slotData + 0x6),
-                        *(u16*)(slotData + 0x4));
+                        slotData->mPriority09,
+                        slotData->mPriority06,
+                        slotData->mPriority04);
             } else {
                 sprintf(textBuf, (const char*)&strBase[0x1e5],
-                        *(u8*)(slotData + 0x9), str4b,
-                        *(u16*)(slotData + 0x6), str4b,
-                        *(u16*)(slotData + 0x4));
+                        slotData->mPriority09, str4b,
+                        slotData->mPriority06, str4b,
+                        slotData->mPriority04);
             }
 
             sprintf(slotNameBuf, (const char*)&strBase[0x13f], slotNum);
             LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
             sprintf(textBuf, (const char*)&strBase[0x1ba],
-                    *(u8*)(slotData + 0x8), str4a, *(u8*)(slotData + 0x2));
+                    slotData->mPriority08, str4a, slotData->mPriority02);
             sprintf(slotNameBuf, (const char*)&strBase[0x14c], slotNum);
             LayoutSetTextBoxText(mLayout, slotNameBuf, textBuf, 0u);
 
@@ -1227,7 +1216,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
                     mLayout->GetRootPane()->FindPaneByName(dataBtnBuf, 1);
 
                 // Record presence flag lives in the low byte of a word entry
-                u32 rec = *(u32*)(slotData + btn * 4 + 0x14);
+                u32 rec = slotData->mAwardRecord[btn];
                 if ((u8)rec != 0) {
                     if (pane != 0) {
                         setPaneVisible(pane, 1u);
@@ -1251,16 +1240,16 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
             }
 
             // Resolve the character-class indicator string
-            u8 charResult = bdatLookupRes(*(u16*)(slotData + 0xe), *(u8*)(slotData + 0x11));
+            u8 charResult = bdatLookupRes(slotData->mStartPlace, slotData->mGender);
             char* slotIndicator;
             // NOTE: retail reloads the +0x66 class byte for each test (no cached local).
-            if (*(u8*)(slotData + 0x66) != 0) {
+            if (slotData->mClassFlag != 0) {
                 slotIndicator = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x53);
             } else {
                 slotIndicator = BdatGetPtrDirect(lbl_eu_806640A8, &strBase[0xb2], (u16)charResult);
             }
 
-            if (*(u8*)(slotData + 0x67) != 0 && charResult == 1) {
+            if (slotData->mClassIndex != 0 && charResult == 1) {
                 slotIndicator = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x30);
             }
 
@@ -1268,12 +1257,12 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
             LayoutSetTextBoxFmtValue(mLayout, slotNameBuf, slotIndicator, 0u);
 
             // Copy slot data to the heap buffer and flush it for GX
-            memcpy(mSlotTex[slot], (const void*)(slotData + 0x80), 0x9C00);
+            memcpy(mSlotTex[slot], slotData->mThumbnail, 0x9C00);
             DCStoreRange(mSlotTex[slot], 0x9C00);
 
             // Handle class-specific data
             void* classData;
-            if (*(u8*)(slotData + 0x66) != 0) {
+            if (slotData->mClassFlag != 0) {
                 classData = mArcAccessor->GetResource(0x74696D67, (const char*)&strBase[0x211], 0);
             } else {
                 classData = mSlotTex[slot];
@@ -1288,7 +1277,7 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
             sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
             nw4r::lyt::Pane* pane =
                 mLayout->GetRootPane()->FindPaneByName(slotNameBuf, 1);
-            setPaneVisible(pane, (*(u8*)(slotData + 0x67) != 0) ? 1u : 0u);
+            setPaneVisible(pane, (slotData->mClassIndex != 0) ? 1u : 0u);
         }
     }
 }
@@ -1296,10 +1285,8 @@ __declspec(noinline) void CSaveLoad::renderSlots() {
 // Find the best save slot by comparing fields in priority order.
 // If global value >= 0, use it directly. Otherwise iterate slots 0-2
 // and find the one with the highest field values (lexicographic comparison).
-// TU-local view of the CSLCur_getSlot record (+0x20 into the slot object):
-// priority fields at +2/+3 (bytes), +4/+6 (halfwords), +8/+9 (bytes).
-struct SaveSlotView { u8 b00; u8 b01; u8 b02; u8 b03; u16 w04; u16 w06; u8 b08; u8 b09; };
-__declspec(noinline) void CSaveLoad::bestSlot() {
+// Slot records are the CSLSaveSlot entries returned by CSLData::getSlot.
+void CSaveLoad::bestSlot() {
     s32 globalVal = (s32)lbl_eu_80662ACC;
     if (globalVal >= 0) {
         mField124 = (u8)globalVal;
@@ -1309,32 +1296,32 @@ __declspec(noinline) void CSaveLoad::bestSlot() {
     s32 best = -1;
     u32 i;
     for (i = 0; i < 3; i++) {
-        SaveSlotView* slot = (SaveSlotView*)mData.getSlot((u8)i);
+        CSLSaveSlot* slot = mData.getSlot((u8)i);
         if (slot == nullptr) continue;
 
         // Compare fields in priority order: +4, +6, +9, +8, +2, +3
         if (best >= 0) {
-            SaveSlotView* bestSlot = (SaveSlotView*)mData.getSlot((u8)best);
-            if (bestSlot->w04 < slot->w04) {
+            CSLSaveSlot* bestSlot = mData.getSlot((u8)best);
+            if (bestSlot->mPriority04 < slot->mPriority04) {
                 best = i & 0xFF;
-            } else if (bestSlot->w04 == slot->w04) {
-                if (bestSlot->w06 < slot->w06) {
+            } else if (bestSlot->mPriority04 == slot->mPriority04) {
+                if (bestSlot->mPriority06 < slot->mPriority06) {
                     best = i & 0xFF;
-                } else if (bestSlot->w06 == slot->w06) {
-                    if (bestSlot->b09 < slot->b09) {
+                } else if (bestSlot->mPriority06 == slot->mPriority06) {
+                    if (bestSlot->mPriority09 < slot->mPriority09) {
                         best = i & 0xFF;
-                    } else if (bestSlot->b09 == slot->b09) {
-                        if (bestSlot->b08 < slot->b08) {
+                    } else if (bestSlot->mPriority09 == slot->mPriority09) {
+                        if (bestSlot->mPriority08 < slot->mPriority08) {
                             best = i & 0xFF;
-                        } else if (bestSlot->b08 == slot->b08) {
-                            if (bestSlot->b02 < slot->b02) {
+                        } else if (bestSlot->mPriority08 == slot->mPriority08) {
+                            if (bestSlot->mPriority02 < slot->mPriority02) {
                                 best = i & 0xFF;
                                 continue;
                             }
                             // Retail reuses the cr0 result here (bge) rather than
                             // testing equality, leaving the +3 check unreachable.
-                            if (bestSlot->b02 >= slot->b02) continue;
-                            if (bestSlot->b03 < slot->b03) {
+                            if (bestSlot->mPriority02 >= slot->mPriority02) continue;
+                            if (bestSlot->mPriority03 < slot->mPriority03) {
                                 best = i & 0xFF;
                             }
                         }

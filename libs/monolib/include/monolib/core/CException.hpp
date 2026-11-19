@@ -26,7 +26,7 @@ public:
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
     void AddToGlobalArray(IException* pException);
-    void RemoveFromGlobalArray(IException* pException);
+    static void RemoveFromGlobalArray(IException* pException);
     void setGlobalMessage();
     // Renders every registered exception, then shows `message` forever
     // (halts outright when there is no message or no display).

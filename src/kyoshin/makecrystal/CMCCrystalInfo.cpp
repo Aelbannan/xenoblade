@@ -3,6 +3,7 @@
 
 // Inline-empty ~IWorkEvent: the retail destructor elides the base call.
 #define IWORK_EVENT_INLINE_DTOR
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical CItem_initItemImplInstances decl
 #include "kyoshin/makecrystal/CMCCrystalInfo.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -360,19 +361,19 @@ void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data,
     }
     BdatGetItemType(data);
     BdatGetItemId(data);
-    CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
+    CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
     u8 count = inst->GetCount(item2);
     buf.count = count;
     buf.str = (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
                                    0x1e - (count - 1));
     buf.field21 = 0;
     for (u32 i = 0; i < 4; i++) {
-        CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
+        CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
         u16 n = inst2->GetName(item2, (u8)i);
         if (n > 0) {
             buf.names[buf.field21] = BdatGetPtrDirect((char*)lbl_eu_806640D8,
                                                    &lbl_eu_80508DF8[0x36], n);
-            CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
+            CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
             buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
             buf.field21++;
         }

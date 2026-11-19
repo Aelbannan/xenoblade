@@ -47,7 +47,7 @@ void showPresentRank(CPresentWin* self) {
     if (rank == 8) rank = 3;
 
     // String-pool base kept in a callee-saved register by retail.
-    char* pool = lbl_eu_8050A84C;
+    char* pool = CPresentStringPool;
 
     char buf[0x20];
     sprintf(buf, pool + 0x12a, rank);
@@ -125,15 +125,15 @@ tail:
     self->mField38 = 0;
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, false);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, true);
-    self->mpAnimTrans1->SetFrame(lbl_eu_80668628);
+    self->mpAnimTrans1->SetFrame(CPresentFrameResetValue);
 }
 
 // Store the anim index (+0x34), call the anim loader, then bind the loaded
 // frame (+0xB7 offset string) through the +8 layout.
-extern "C" void setPresentAnimText(void* self, u16 idx) {
-    *(u16*)((u8*)self + 0x34) = idx;
+extern "C" void setPresentAnimText(CPresentWin* self, u16 idx) {
+    self->mField34 = idx;
     void* anim = BuildItemNameStr(idx);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)self + 8), lbl_eu_8050A84C + 0xB7, (char*)anim, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, CPresentStringPool + 0xB7, (char*)anim, 0);
 }
 
 // Constructor: zero every field, except mField38 which starts at 1.
@@ -195,8 +195,8 @@ void togglePresentPath(CPresentWin* self) {
         }
         repaintPresentItemB(self);
     } else {
-        SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
-        void* tex = self->mAccessor->GetResource(0x74696D67, &lbl_eu_8050A84C[0x117], NULL);
+        SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &CPresentStringPool[0xc4], 0);
+        void* tex = self->mAccessor->GetResource(0x74696D67, &CPresentStringPool[0x117], NULL);
         if (tex) {
             PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);
         }
@@ -221,34 +221,34 @@ extern "C" u8 getPresentRankA(CPresentWin* self) { return lookupPresentRank(self
 extern "C" u8 getPresentRankB(CPresentWin* self) { return lookupPresentRank(self, self->mField33); }
 
 extern "C" void stepPresentOpenAnim(CPresentWin* self) {
-    if (advanceAnimTransform(self->mpAnimTrans0, lbl_eu_8066862C) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans0, CPresentAnimStepDelta) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
     }
 }
 
-extern const f32 lbl_eu_8066862C;
+extern const f32 CPresentAnimStepDelta;
 extern "C" void stepPresentCloseAnim(CPresentWin* self) {
-    if (AnimRewindFrame((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066862C)) {
-        *((u8*)self + 0x37) = 0;
-        *((u8*)self + 0x38) = 1;
-        *((u8*)self + 0x31) = 0;
-        *((u8*)self + 0x36) = 0;
-        *((u8*)self + 0x30) = 0;
+    if (AnimRewindFrame(self->mpAnimTrans0, CPresentAnimStepDelta)) {
+        self->mField37 = 0;
+        self->mField38 = 1;
+        self->mField31 = 0;
+        self->mField36 = 0;
+        self->mField30 = 0;
     }
 }
 
 // Frame-update handler: when animTrans1 finishes, switch to state 2, enable
 // both animations, show the window and reset the two labelled panes.
 extern "C" void stepPresentResultAnim(CPresentWin* self) {
-    if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_8066862C) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans1, CPresentAnimStepDelta) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
         self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, false);
         self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, true);
         self->mField36 = 1;
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x133], 1), 0);
-        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x13e], 1), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&CPresentStringPool[0x133], 1), 0);
+        setPaneVisible(self->mpLayout->GetRootPane()->FindPaneByName(&CPresentStringPool[0x13e], 1), 0);
     }
 }
 
@@ -258,9 +258,9 @@ extern "C" void stepPresentResultAnim(CPresentWin* self) {
 // message texture to mPane28.
 extern "C" void repaintPresentItemA(CPresentWin* self) {
     u8 idx = lookupPresentRank(self, self->mField32);
-    char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
+    char* name = BdatGetPtrDirect(lbl_eu_80664090, &CPresentStringPool[0x1cb], idx);
     SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane20, name, 0);
-    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
+    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &CPresentStringPool[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
         PaneSetTexPalette(self->mPane28, (TPLPalette*)tex);
@@ -270,9 +270,9 @@ extern "C" void repaintPresentItemA(CPresentWin* self) {
 // Same repaint for the mField33 (secondary) item, targeting mPane24/mPane2C.
 extern "C" void repaintPresentItemB(CPresentWin* self) {
     u8 idx = lookupPresentRank(self, self->mField33);
-    char* name = BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_8050A84C[0x1cb], idx);
+    char* name = BdatGetPtrDirect(lbl_eu_80664090, &CPresentStringPool[0x1cb], idx);
     SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, name, 0);
-    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_8050A84C[0x1d0], idx) & 0xFFFF;
+    u32 msgId = BdatGetU16Direct(lbl_eu_80664090, &CPresentStringPool[0x1d0], idx) & 0xFFFF;
     void* tex = self->mAccessor->GetResource(0x74696D67, MakeTplNameSysFile(msgId), NULL);
     if (tex != NULL) {
         PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);
@@ -303,9 +303,7 @@ extern "C" void termPresentWin(CPresentWin* self) {
     self->mField30 = 0;
     if (self->mpLayout != NULL) {
         nw4r::lyt::Layout* p = self->mpLayout;
-        if (p != NULL) {
-            ((CPresentLayoutSlot2View*)p)->mSlot2(1);
-        }
+        delete p;
         self->mpLayout = NULL;
     }
     self->mAccessor = NULL;
@@ -347,36 +345,36 @@ void openPresentWin(CPresentWin* self) {
     collectPresentData(self);
     repaintPresentItemA(self);
 
-    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &lbl_eu_8050A84C[0xc4], 0);
-    void* tex = self->mAccessor->GetResource(0x74696D67, &lbl_eu_8050A84C[0x117], NULL);
+    SetLayoutSelfText((nw4r::lyt::Layout*)self->mPane24, &CPresentStringPool[0xc4], 0);
+    void* tex = self->mAccessor->GetResource(0x74696D67, &CPresentStringPool[0x117], NULL);
     if (tex) {
         PaneSetTexPalette(self->mPane2C, (TPLPalette*)tex);
     }
 
-    char* s1 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x2b);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050A84C[0xd8], s1, 0);
-    char* s2 = BdatTouchStringCell(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x9b);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_8050A84C[0x100], s2, 0);
+    char* s1 = BdatTouchStringCell(&CPresentStringPool[0xc5], &CPresentStringPool[0xd3], 0x2b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &CPresentStringPool[0xd8], s1, 0);
+    char* s2 = BdatTouchStringCell(&CPresentStringPool[0xc5], &CPresentStringPool[0xd3], 0x9b);
+    LayoutSetTextBoxFmtValue(self->mpLayout, &CPresentStringPool[0x100], s2, 0);
 
     const char* msgName = cf::CfGameManager::isClassicController(-1)
-                              ? &lbl_eu_8050A84C[0xe4]
-                              : &lbl_eu_8050A84C[0xed];
-    char* handle = MakeTplNameSysFile(BdatGetU16ByTableKey(&lbl_eu_8050A84C[0xc5], msgName, 0x9b));
+                              ? &CPresentStringPool[0xe4]
+                              : &CPresentStringPool[0xed];
+    char* handle = MakeTplNameSysFile(BdatGetU16ByTableKey(&CPresentStringPool[0xc5], msgName, 0x9b));
     nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
     void* tex2 = mgr->GetResource(0x74696D67, handle, NULL);
     if (tex2) {
-        PaneSetTexPaletteByName(self->mpLayout, &lbl_eu_8050A84C[0x10d], (TPLPalette*)tex2);
+        PaneSetTexPaletteByName(self->mpLayout, &CPresentStringPool[0x10d], (TPLPalette*)tex2);
         // Texture dimensions are read before the pane lookup so the loads
         // schedule above the call (retail interleaves them).
         CPresentTexDims* dims = ((CPresentTexObj*)tex2)->mChain->mDims;
         u16 h = dims->mH;
         u16 w = dims->mW;
-        nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A84C[0x10d], 1);
+        nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(&CPresentStringPool[0x10d], 1);
         if (pane) {
             float src[2];
             // u32->float via the 2^52 magic: build 0x43300000_<v> on the stack
             // and subtract the NAMED .sdata2 double so the pool reloc stays on
-            // lbl_eu_80668620 (a plain (f32) cast synthesizes a TU-local @N).
+            // CPresentU32ToFloatMagic (a plain (f32) cast synthesizes a TU-local @N).
             union {
                 struct { u32 hi; u32 lo; } w;
                 double d;
@@ -385,8 +383,8 @@ void openPresentWin(CPresentWin* self) {
             conv[0].w.hi = 0x43300000u;
             conv[1].w.lo = w;
             conv[1].w.hi = 0x43300000u;
-            src[0] = (f32)(conv[0].d - lbl_eu_80668620);
-            src[1] = (f32)(conv[1].d - lbl_eu_80668620);
+            src[0] = (f32)(conv[0].d - CPresentU32ToFloatMagic);
+            src[1] = (f32)(conv[1].d - CPresentU32ToFloatMagic);
             writePanePos(pane, src);
         }
     }
@@ -407,14 +405,14 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
     self->mAccessor = accessor;
 
     // String-pool base kept in a callee-saved register by retail.
-    char* pool = lbl_eu_8050A84C;
+    char* pool = CPresentStringPool;
 
     buildLayout(&self->mpLayout, accessor, pool);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mAccessor, pool + 0x19);
     bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mAccessor, pool + 0x35);
 
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mpLayout);
-    u32 fontResult = ((CPresentFontView*)fontObj)->sf9();
+    u32 fontResult = (u32)static_cast<CDeviceFontInfo*>(fontObj)->getFont();
     // No persistent rootPane local: retail reloads GetRootPane() per use,
     // keeping callee-saved pressure down to r29-r31.
     ApplyFontToTxtPanes(self->mpLayout->GetRootPane(), (const nw4r::ut::Font*)fontResult);
@@ -455,8 +453,8 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
             float src1[2];
             conv.w[0].lo = h1;
             conv.w[1].lo = w1;
-            src1[0] = (f32)(conv.d[0] - lbl_eu_80668620);
-            src1[1] = (f32)(conv.d[1] - lbl_eu_80668620);
+            src1[0] = (f32)(conv.d[0] - CPresentU32ToFloatMagic);
+            src1[1] = (f32)(conv.d[1] - CPresentU32ToFloatMagic);
             writePanePos(pane1, src1);
         }
     }
@@ -478,8 +476,8 @@ void initPresentWin(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor)
             float src2[2];
             conv.w[0].lo = h2;
             conv.w[1].lo = w2;
-            src2[0] = (f32)(conv.d[0] - lbl_eu_80668620);
-            src2[1] = (f32)(conv.d[1] - lbl_eu_80668620);
+            src2[0] = (f32)(conv.d[0] - CPresentU32ToFloatMagic);
+            src2[1] = (f32)(conv.d[1] - CPresentU32ToFloatMagic);
             writePanePos(pane2, src2);
         }
     }

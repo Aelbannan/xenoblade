@@ -1170,14 +1170,14 @@ extern "C" void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
                                                    CLightEnv* env) {
     const f32 zeroF = kLgtZeroShared;
     // Clear both slot-color quads unconditionally (before the count gate).
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x54[0] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x54[1] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x54[2] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x54[3] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x64[0] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x64[1] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x64[2] = zeroF;
-    ((CScnEnvLgtCtrlLgtView*)self)->field_0x64[3] = zeroF;
+    self->lgtRows.lgtColors54[0] = zeroF;
+    self->lgtRows.lgtColors54[1] = zeroF;
+    self->lgtRows.lgtColors54[2] = zeroF;
+    self->lgtRows.lgtColors54[3] = zeroF;
+    self->lgtRows.lgtColors64[0] = zeroF;
+    self->lgtRows.lgtColors64[1] = zeroF;
+    self->lgtRows.lgtColors64[2] = zeroF;
+    self->lgtRows.lgtColors64[3] = zeroF;
     if (((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountA == 0) return;
     const f32 oneF = kLgtOneShared;
     for (u32 layer = 0; layer < 4; layer++) {
@@ -1239,13 +1239,13 @@ extern "C" void scnLgtRebuildSlotColors(CScnEnvLgtCtrl* self,
         resetLightSlotIndex(env);
         if (layer == 1) {
             self->flags |= 0x200;
-            ((CScnEnvLgtCtrlLgtView*)self)->field_0x54_pairs[0] = acc.pairs[0];
-            ((CScnEnvLgtCtrlLgtView*)self)->field_0x54_pairs[1] = acc.pairs[1];
+            self->lgtRows.lgtPairs54[0] = acc.pairs[0];
+            self->lgtRows.lgtPairs54[1] = acc.pairs[1];
         }
         if (layer == 3) {
             self->flags |= 0x400;
-            ((CScnEnvLgtCtrlLgtView*)self)->field_0x64_pairs[0] = acc.pairs[0];
-            ((CScnEnvLgtCtrlLgtView*)self)->field_0x64_pairs[1] = acc.pairs[1];
+            self->lgtRows.lgtPairs64[0] = acc.pairs[0];
+            self->lgtRows.lgtPairs64[1] = acc.pairs[1];
         }
     }
 }
@@ -1337,7 +1337,7 @@ extern "C" int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* vi
         out.w = kLgtOneShared;
         LightCtlSetAttnMode(view, 1);
         LightCtlSetColor(view, &out);
-        LightCtlSetDir(view, (const u8*)ctl + 0x30);
+        LightCtlSetDir(view, (const u8*)&ctl->field_0x30[0]);
         LightCtlSetEnable(view, 1);
         return 1;
     }
@@ -1385,7 +1385,7 @@ extern "C" int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightVi
         out.w = kLgtOneShared;
         LightCtlSetAttnMode(view, 3);
         LightCtlSetColor(view, &out);
-        LightCtlSetPos(view, (const u8*)ctl + 0x30);
+        LightCtlSetPos(view, (const u8*)&ctl->field_0x30[0]);
         LightCtlInitDistAttn(view, ctl->field_0x44, ctl->field_0x48, ctl->field_0x4C);
         LightCtlSetEnable(view, 1);
         return 1;
@@ -1435,8 +1435,8 @@ extern "C" int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* 
         out.w = kLgtOneShared;
         LightCtlSetAttnMode(view, 4);
         LightCtlSetColor(view, &out);
-        LightCtlSetPos(view, (const u8*)ctl + 0x30);
-        LightCtlSetDir(view, (const u8*)ctl + 0x44);
+        LightCtlSetPos(view, (const u8*)&ctl->field_0x30[0]);
+        LightCtlSetDir(view, (const u8*)&ctl->field_0x44);
         LightCtlInitDistAttn(view, ctl->field_0x50, ctl->field_0x54, ctl->field_0x58);
         LightCtlInitSpot(view, ctl->field_0x5C, ctl->field_0x60);
         LightCtlSetEnable(view, 1);
@@ -2139,11 +2139,8 @@ void* __dt__804C0E48(CScnEnvLgtCtrlResList* self, int deleting) {
 extern "C" bool scnLgtReadLightDataWords(CScnEnvLgtCtrlLgtView* self, CScnEnvLgtCtrlLgtData* out) {
     if (self->flags & 0x200) {
         const CScnEnvLgtCtrlLgtData* src = &self->data;
-        // Decl order fixes the register colors; assignment order keeps the
-        // retail load sequence.
+        // Ascending loads are hoisted into r7/r6/r5/r0; retail stores +C,+4,+8,+0.
         const u32* s = &src->field_0x00;
-        // Decl order fixes the register colors; the deferred descending
-        // assignment order keeps the retail load sequence.
         u32 v8;
         u32 v4;
         u32 v0;
@@ -2153,8 +2150,8 @@ extern "C" bool scnLgtReadLightDataWords(CScnEnvLgtCtrlLgtView* self, CScnEnvLgt
         v8 = s[2];
         vC = s[3];
         out->field_0x0C = vC;
-        out->field_0x08 = v8;
         out->field_0x04 = v4;
+        out->field_0x08 = v8;
         out->field_0x00 = v0;
         return true;
     }
@@ -2172,8 +2169,8 @@ extern "C" bool scnLgtReadLightDataRaw(void* view, void* out) {
         t2 = *(unsigned int*)((char*)view + 0x6c);
         t3 = *(unsigned int*)((char*)view + 0x70);
         *(unsigned int*)((char*)out + 0xc) = t3;
-        *(unsigned int*)((char*)out + 8) = t2;
         *(unsigned int*)((char*)out + 4) = t1;
+        *(unsigned int*)((char*)out + 8) = t2;
         *(unsigned int*)((char*)out + 0) = t0;
         return true;
     }
@@ -3156,7 +3153,6 @@ extern "C" int scnLgtFillTargetBack(u8* entry,
                                                     int row) {
     CScnEnvLgtCtrlLgtTypeEntry* e = (CScnEnvLgtCtrlLgtTypeEntry*)entry;
     // Blend temps are declared at their first use below.
-    f32 v0, v1, v2, v3;
     if (e->field_0x14 & 1) return 0;
     switch (e->field_0x04w) {
     case 0:
@@ -3205,6 +3201,7 @@ extern "C" int scnLgtFillTargetBack(u8* entry,
             return 0;
         }
     }
+    f32 v0, v1, v2, v3;
     v3 = dst[3];
     v2 = dst[2];
     v1 = dst[1];
@@ -4138,20 +4135,19 @@ extern "C" void __dt__14CScnEnvLgtCtrlFv();  // member dtor (this TU)
 extern "C" void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
                                                     nw4r::g3d::ScnRoot* root,
                                                     u32 flag) {
-    CScnEnvLgtCtrlRowsView* view = (CScnEnvLgtCtrlRowsView*)self;
     // Fog refresh: walk the 0x3C-stride fog-entry list selected by the
     // +0x40 gate, push each entry's color/start/end into its scene fog slot,
     // then (gate bit 0) fetch the two per-view fog parameter sets into mFog
     // and blend the stored color triples when `flag` is set.
-    CScnEnvLgtCtrlFogGate* gate = view->gate40;
+    CScnEnvLgtCtrlFogGate* gate = self->alt2.field_0x40;
     if (gate == NULL) {
         return;
     }
-    u8* entries = view->base2C + gate->mOffset;
+    u8* entries = self->field_0x2C + gate->mOffset;
     f32 scale = *(const f32*)((const u8*)&kLgtByteScale + gate->mOffset);
     for (u32 i = 0; i < gate->mCount; i++, entries += 0x3c) {
         nw4r::g3d::Fog fog = root->GetFog((int) * (u16*)(entries + 0x38));
-        CScnEnvLgtCtrlRow1C* row = &view->rows10[*(u16*)(entries + 0x10)];
+        CScnEnvLgtCtrlRow1C* row = &self->rows10[*(u16*)(entries + 0x10)];
         GXColor col;
         col.r = (u8)(int)(scale * *(f32*)&row->field_0x00);
         col.g = (u8)(int)(scale * *(f32*)&row->field_0x04);
@@ -4188,7 +4184,7 @@ extern "C" void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
         }
     }
     // Re-fetch the gate: the loop calls may have aliased it.
-    gate = view->gate40;
+    gate = self->alt2.field_0x40;
     if ((gate->mFlags & 1) == 0) {
         return;
     }

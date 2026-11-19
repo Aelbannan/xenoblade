@@ -26,7 +26,7 @@ typedef struct AHXSJD {
     /*0x58*/ void* fltCtx;
 } AHXSJD;
 
-extern volatile u32 lbl_eu_80517598;
+extern const volatile u32 ahxsjd_init_flags[];
 // Kept non-volatile so MWCC allocates the address temporaries in the same
 // order as retail (r3=counter base, r4=flag base) in AHXSJD_Init.
 unsigned char lbl_eu_805E64C0[8];
@@ -64,8 +64,8 @@ void AHXSJD_Init(void) {
 
     // Two dead volatile reads of the table flag reproduce the retail load
     // schedule (the scheduler also emits one between compare and branch).
-    f = lbl_eu_80517598;
-    f = lbl_eu_80517598;
+    f = ahxsjd_init_flags[0];
+    f = ahxsjd_init_flags[0];
 
     if (*(s32*)lbl_eu_805E64C0 == 0) {
         AHXTBL_GetAtblInfo(&i0, &i1);
@@ -358,3 +358,15 @@ void AHXSJD_SetLnkSw(void* self, s32 val) {
         ((AHXSJD*)self)->lnkSw = 1;
     }
 }
+
+/* Retail build banner and init flags. */
+const char ahxsjd_version_string[0x30] = {
+    0x0A,0x41,0x48,0x58,0x2F,0x57,0x49,0x49,0x20,0x56,0x65,0x72,0x2E,0x31,0x2E,0x39,
+    0x30,0x20,0x42,0x75,0x69,0x6C,0x64,0x3A,0x4F,0x63,0x74,0x20,0x32,0x38,0x20,0x32,
+    0x30,0x30,0x39,0x20,0x32,0x31,0x3A,0x31,0x31,0x3A,0x32,0x32,0x0A,0x00,0x00,0x00
+};
+
+const volatile u32 ahxsjd_init_flags[] = {
+    0, 0,
+};
+

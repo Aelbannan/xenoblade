@@ -77,7 +77,7 @@ extern "C" int CUICfManager_claimFreeSlotByIndex(u8* base, u8 index);
 extern "C" void CUICfManager_sortSlotsByFlag(u8* base);          // slot-rebuild helper (this unit)
 extern "C" void CUICfManager_sortSlotList(u8* base);          // slot re-sort helper (this unit)
 extern "C" void CUICfManager_dispatchFreeSlot(u8* base);          // slot dispatch + rebuild (this unit)
-
+extern "C" int CUICfManager_prepareMenus(); // flat helper using the real manager fields
 // --- flat imports for the free-menu helpers (CUICfManager_dispatchFreeSlot family) ---
 // Caller-shape CTaskGame imports (the full CTaskGame.hpp conflicts with this
 // TU's local flat decls for Scn_QueryUnk80State / lbl_eu_80663E14; declared with
@@ -106,21 +106,6 @@ extern const f32 lbl_eu_806672D0;      // player-pose constant
 // .sdata slot-list format strings (4-byte entries, sda21 li loads).
 extern char lbl_eu_806621EC[4];
 extern char lbl_eu_806621E8[4];
-
-// Read-only queue-helper view over the lbl_eu_80664054 singleton: factory
-// ctx at +0x144, scene id at +0x11C, reslist head at +0x128, free-slot array
-// at +0x138 with count at +0x13C (used by the CUICfManager_queueSkipTimerMenu family).
-struct CUICfQueueMgrView {
-    u8 pad0[0x11C];
-    u32 field_11C;
-    u8 pad1[0x128 - 0x120];
-    void* field_128;             // reslist head node
-    u8 pad2[0x138 - 0x12C];
-    void* field_138;             // free-slot array base (0xC stride)
-    int field_13C;               // slot capacity
-    u8 pad3[0x144 - 0x140];
-    u32 field_144;               // menu-factory ctx
-};
 
 // 0x168-stride view over mInitSlots[].unk04 (CUICfManager_hasInUseSlot's flag scan).
 struct CUICfSlotFlagView {
@@ -315,26 +300,6 @@ struct CUICfEventQueue {
     u8 ownsList;            // +0x1C (0x140)
 };
 
-// Public-layout mirror of the CUICfManager fields the free menu-create
-// helpers (CUICfManager_queueQuestLogMenu family) touch; the real fields are private.
-struct CUICfManagerCreateView {
-    u8 field_0x00[0x5C];
-    void* field_0x5C;              // 0x5C - resource accessor (mArcResourceAccessor)
-    u8 field_0x60[0x11C - 0x60];
-    u32 field_0x11C;               // 0x11C - owning scene
-    int field_0x120;               // 0x120 - Move countdown (signed)
-    u8 field_0x124[0x128 - 0x124];
-    CUICfListNode* field_0x128;    // 0x128 - event queue head
-    u8 field_0x12C[0x138 - 0x12C];
-    CUICfListNode* field_0x138;    // 0x138 - event node array
-    int field_0x13C;               // 0x13C - node array count
-    u8 field_0x140[0x144 - 0x140];
-    CUICfUnk144* field_0x144;      // 0x144 - menu context (CProcess-ish)
-    u8 field_0x148[0xC90 - 0x148];
-    u16 field_0xC90;               // 0xC90 - Move bitflags (mFlags)
-    u8 field_0xC92[0xC94 - 0xC92];
-};
-
 // 27-entry, 0-terminated id table copied onto the stack by eventDispatch
 // (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
 struct CUICfIdTable {
@@ -346,13 +311,6 @@ class CUICfManager;
 // Retail flat (unmangled) ctor symbol; the placement-new shim in the .cpp.
 extern "C" void* __ct__CUICfManager(CUICfManager* self, class CScnNw4r* pScene,
                                     unsigned long mHandle);
-
-// The body reads r4/r5/r6 as real event-dispatch arguments and never touches
-// `self` (all state comes from the lbl_eu_80664054 singleton); declared
-// extern "C" here (before the class, so the in-class friend declaration
-// below binds to this same linkage) so its ABI is r3=<unused self>, r4=id,
-// r5=a1, r6=a2. Named with the retail mangling (`Fiii`).
-extern "C" void eventDispatch__12CUICfManagerFiii(CUICfManager* self, int id, int a1, int a2);
 
 // Same hidden-arg ABI: the retail OnFileEvent symbol is a no-arg member
 // (`Fv`) but the body reads r4 as the CEventFile* from the IWorkEvent
@@ -435,6 +393,8 @@ public:
         ~CTest();
     };
 
+    static CUICfManager* spInstance;
+
     static CUICfManager* getInstance() {
         return spInstance;
     }
@@ -443,6 +403,7 @@ public:
     void Init();
     void Term();
     void Move();
+    void eventDispatch(int id, int a1, int a2);
 
     void setTimeout30() { unk120 = 30; }
     void setFlagState(bool value) {
@@ -459,6 +420,7 @@ public:
     void setFieldC8C(u8 value) {
         unkC88[4] = value;
     }
+    nw4r::ut::PackedFont* getPackedFont60() { return &mPackedFont60; }
     nw4r::ut::PackedFont* getPackedFont9C() { return &mPackedFont9C; }
     nw4r::ut::PackedFont* getPackedFontD8() { return &mPackedFontD8; }
     int prepareMenus() {
@@ -475,9 +437,11 @@ private:
     // placement-new ctor shim (retail flat symbol) in the .cpp
     friend void* __ct__CUICfManager(CUICfManager*, CScnNw4r*,
                                     mtl::ALLOC_HANDLE);
+    friend int CUICfManager_prepareMenus();
     // 0x000-0x054 CTTask
     // 0x054-0x058 IWorkEvent
     // 0x058-0x05C cf::IFlagEvent
+public:
     nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; // 0x05C
     nw4r::ut::PackedFont mPackedFont60;                  // 0x060
     nw4r::ut::PackedFont mPackedFont9C;                  // 0x09C
@@ -499,7 +463,7 @@ private:
     u16 mFlags;                                          // 0xC90 - Move bitflags
     u8 unkC92[2];                                        // 0xC92
 
-    static CUICfManager* spInstance;
+private:
     CUICfManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
     virtual ~CUICfManager();
     void OnFileEvent();
@@ -510,7 +474,6 @@ private:
     // is emitted under the extern "C" flat name (see .cpp).
     void eventDispatchThunk();
     void dtorThunk58();
-    void eventDispatch(int id, int a1, int a2);
     IWorkEvent* cfWorkEvent();
 
     // The retail OnFileEvent body is emitted under this extern "C" free

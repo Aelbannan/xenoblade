@@ -29,14 +29,9 @@ struct PTMF3 {
 extern char lbl_eu_80538AD8[];
 extern char lbl_eu_80538BC0[];
 
-// Color/vec4 helper imported from another TU. Retail symbol is the *unmangled*
-// `CTaskGame_setVec4` (see include/functions.hpp), so it must be declared extern
-// "C" here; including functions.hpp instead mangles it to
-// CTaskGame_setVec4__FP17CTaskGame_setVec4_tmpffff and drifts the reloc sites.
-struct CTaskGame_setVec4_tmp {
-    f32 unk00[4];
-};
-extern "C" CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGame_setVec4_tmp*, f32, f32, f32, f32);
+// Vec4 helper + its parameter struct are declared once in include/functions.hpp
+// (retail unmangled CTaskGame_setVec4 symbol).
+#include "functions.hpp"
 
 // Shared .sdata2 float used as the GX texture LOD bias in the file-event
 // handler (OnFileEvent). `const` routes it into the readonly sdata2 pool so

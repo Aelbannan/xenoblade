@@ -17,6 +17,8 @@ class CLoad;
 extern "C" void CLoadBeginFileRequest(CLoad* self);
 extern "C" void CLoadTeardownLayout(CLoad* self);
 #include "kyoshin/CLoad.hpp"
+#include "kyoshin/CBattery.hpp"
+#include "kyoshin/CTaskGamePic.hpp"
 #include "kyoshin/menu/CMenuTitle.hpp"
 
 // --- CTTask<CTaskGame> out-of-line specializations ---
@@ -61,7 +63,7 @@ struct Fields {
 // a5 is u32 (not u8): retail call sites (CTaskGame_openVision) pass the value with
 // a plain mr, no rlwinm truncation; field10 is u8 so the store still emits
 // stb.
-extern "C" __declspec(noinline) void CTaskGame_setVisionParam(Fields* self, u8 a1, float a2, int a3, u32 a4, u32 a5, u32 a6, u32 a7) {
+extern "C" void CTaskGame_setVisionParam(Fields* self, u8 a1, float a2, int a3, u32 a4, u32 a5, u32 a6, u32 a7) {
     Fields& f = *self;
     f.field0 = a1;
     f.field4 = a2;
@@ -300,13 +302,11 @@ extern "C" __declspec(noinline) CTaskGame_setVec4_tmp* CTaskGame_setVec4(CTaskGa
     self->unk00[3] = f4;
     return self;
 }
-// Word view over the busy-flag object behind CTaskGame::unkCC (+0x64).
-struct CTaskGameCC64View { u8 _00[0x64]; u32 field64; };
-
 extern "C" void CTaskGame_moveWaitReady(CTaskGame* self) {
     self->unk100++;
-    void* obj = reinterpret_cast<void*>(self->unkCC);
-    if (((CTaskGameCC64View*)obj)->field64 != 0) {
+    // unkCC is the CTaskGamePic work object; +0x64 is its loaded-data pointer.
+    CTaskGamePic* pic = reinterpret_cast<CTaskGamePic*>(self->unkCC);
+    if (pic->field_64 != 0) {
         self->unk78 = 1;
         extern u32 lbl_eu_80525580[3];
         u32 v0;
@@ -404,7 +404,7 @@ extern "C" void CTaskGame_moveHook24(CTaskGame* self) {
 extern "C" void CTaskGame_nop() {}
 // __declspec(noinline): retail callers (CTaskGame_moveReqExit) call this out of
 // line; without it MWCC inlines the instance/flag test into the caller.
-__declspec(noinline) bool CTaskGame::isFlag01Set() {
+bool CTaskGame::isFlag01Set() {
     extern CTaskGame* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == nullptr) return 1;
     return lbl_eu_80663D18->unk68 & 1;
@@ -468,7 +468,7 @@ extern "C" __declspec(noinline) int CTaskGame_fileEventStub(void* self) { return
 // CTaskGame instance's 4-entry object registry, mark it busy, and return
 // its object; null when all four slots are busy. __declspec(noinline):
 // retail callers (CTaskGame_enumListCtor / CTaskGame_enumListFill) call it out of line.
-extern "C" __declspec(noinline) void* CTaskGame_allocObjSlot() {
+extern "C" void* CTaskGame_allocObjSlot() {
     CTaskGame* game = lbl_eu_80663D18;
     CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(game);
     for (u32 i = 0; i < 4; i++) {
@@ -486,7 +486,7 @@ extern "C" __declspec(noinline) void* CTaskGame_allocObjSlot() {
 // u32 offset). Early-returns when the handle is null.
 // noinline: retail __dt__80043E88 calls this out-of-line (bl CTaskGame_freeObjSlot);
 // without it MWCC inlines the registry scan into the dtor.
-extern "C" __declspec(noinline) void CTaskGame_freeObjSlot(void* obj) {
+extern "C" void CTaskGame_freeObjSlot(void* obj) {
     if (obj == 0) return;
     CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(lbl_eu_80663D18);
     for (u32 i = 0; i < 4; i++) {
@@ -497,7 +497,7 @@ extern "C" __declspec(noinline) void CTaskGame_freeObjSlot(void* obj) {
     }
 }
 extern "C" __declspec(noinline) bool CTaskGame_alwaysTrue(CTaskGame* self) { (void)self; return true; }
-extern "C" __declspec(noinline) void CTaskGame_setFlag200(CTaskGame* inst, u32 a, u32 b) {
+extern "C" void CTaskGame_setFlag200(CTaskGame* inst, u32 a, u32 b) {
     unsigned int flags = inst->unk68;
     flags &= ~0x100u;
     inst->unk68 = flags;
@@ -522,7 +522,7 @@ extern "C" __declspec(noinline) void CTaskGame_setFlag200(CTaskGame* inst, u32 a
     flags |= 0x40000u;
     inst->unk68 = flags;
 }
-extern "C" __declspec(noinline) void CTaskGame_setFlag400(CTaskGame* inst, u32 a, u32 b, u32 c) {
+extern "C" void CTaskGame_setFlag400(CTaskGame* inst, u32 a, u32 b, u32 c) {
     unsigned int flags = inst->unk68;
     flags &= ~0x100u;
     inst->unk68 = flags;
@@ -569,7 +569,7 @@ void CTaskGame_setFlag_800(CTaskGame* this_, int enabled, int unused, unsigned i
     this_->unk68 = flags;
     this_->unkFC = value;
 }
-extern "C" __declspec(noinline) void CTaskGame_setFlag100000(CTaskGame* inst, u32 a, u32 b, u32 c) {
+extern "C" void CTaskGame_setFlag100000(CTaskGame* inst, u32 a, u32 b, u32 c) {
     (void)b;
     unsigned int flags = inst->unk68;
     flags &= ~0x00000100u;
@@ -583,7 +583,7 @@ extern "C" __declspec(noinline) void CTaskGame_setFlag100000(CTaskGame* inst, u3
     }
     inst->unkFC = c;
 }
-extern "C" __declspec(noinline) void CTaskGame_setFlag1000000(CTaskGame* self, u32 enabled) {
+extern "C" void CTaskGame_setFlag1000000(CTaskGame* self, u32 enabled) {
     unsigned int flags = self->unk68 & ~0x00000100u;
     self->unk68 = flags;
     if (enabled != 0) {
@@ -593,7 +593,7 @@ extern "C" __declspec(noinline) void CTaskGame_setFlag1000000(CTaskGame* self, u
     }
 }
 void CTaskGame_stub_8004350C(){}
-extern "C" __declspec(noinline) void CTaskGame_setFlag800000(CTaskGame* self, int enabled) {
+extern "C" void CTaskGame_setFlag800000(CTaskGame* self, int enabled) {
     unsigned int flags = self->unk68 & ~0x00000100u;
     self->unk68 = flags;
     if (enabled != 0) {
@@ -652,7 +652,7 @@ struct CTaskGameFlag1000Object {
     volatile u8 flagEA;
 };
 
-extern "C" __declspec(noinline) void CTaskGame_enableFlag1000(CTaskGame* self, int value) {
+extern "C" void CTaskGame_enableFlag1000(CTaskGame* self, int value) {
     unsigned int flags = self->unk68;
     if ((flags & 0x2000) != 0 && value == 1) return;
     void* object = reinterpret_cast<void*>(self->unkF0);
@@ -678,7 +678,7 @@ extern "C" int CTaskGame_isStreamPaused() {
 }
 // noinline: retail callers (moveTitleTick / openVision / setStreamVol) bl this.
 // -O4,s: retail uses addic/subfe on (unkD8 + 1) != 0.
-extern "C" __declspec(noinline) int CTaskGame_playTimeGate() {
+extern "C" int CTaskGame_playTimeGate() {
     extern CTaskGame* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == nullptr) return 0;
     return (lbl_eu_80663D18->unkD8 + 1) != 0;
@@ -754,7 +754,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
         } else if (lbl_eu_80663D24 == 1) {
             if (CLoadIsAnimSettled(lbl_eu_80663D1C) != 0) {
-                if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_C < lbl_eu_80665D78) {
+                if (Scn_QueryUnk80State(scene)->field_0C < lbl_eu_80665D78) {
                     lbl_eu_80663D24++;
                     CLoadStartRetryStep(lbl_eu_80663D1C);
                 }
@@ -770,7 +770,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             if (lbl_eu_80663D1C != 0) {
                 // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete
                 // expansion supplies the redundant pointer test (two beq).
-                delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+                delete lbl_eu_80663D1C;
             }
             lbl_eu_80663D1C = 0;
         }
@@ -784,9 +784,9 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             self->unk8C++;
             if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
                 if ((s16)self->unk8C > 0x1e) {
-                    if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 &&
-                        ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_8 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 &&
-                        ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 == lbl_eu_80665D74) {
+                    if (Scn_QueryUnk80State(scene)->field_04 == Scn_QueryUnk80State(scene)->field_00 &&
+                        Scn_QueryUnk80State(scene)->field_08 == Scn_QueryUnk80State(scene)->field_04 &&
+                        Scn_QueryUnk80State(scene)->field_00 == lbl_eu_80665D74) {
                         lbl_eu_80663D28 = 1;
                     }
                 }
@@ -805,9 +805,9 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
         }
         // Camera at idle pose with non-origin x -> skip the draw.
-        if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 &&
-            ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_8 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 &&
-            ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 != lbl_eu_80665D74) {
+        if (Scn_QueryUnk80State(scene)->field_04 == Scn_QueryUnk80State(scene)->field_00 &&
+            Scn_QueryUnk80State(scene)->field_08 == Scn_QueryUnk80State(scene)->field_04 &&
+            Scn_QueryUnk80State(scene)->field_00 != lbl_eu_80665D74) {
             goto L_8004316C;
         }
         if (EvtSeqGetStateBit10() != 0) {
@@ -860,7 +860,7 @@ L_8004321C:
                     lbl_eu_80663D20->releaseLayout();
                 }
                 if (lbl_eu_80663D20 != 0) {
-                    delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+                    delete lbl_eu_80663D20;
                     lbl_eu_80663D20 = 0;
                 }
                 flag = true;
@@ -870,7 +870,7 @@ L_8004321C:
                         lbl_eu_80663D20->releaseLayout();
                     }
                     if (lbl_eu_80663D20 != 0) {
-                        delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+                        delete lbl_eu_80663D20;
                         lbl_eu_80663D20 = 0;
                     }
                     flag = true;
@@ -885,7 +885,7 @@ L_8004321C:
                 if (lbl_eu_80663D20 != 0) {
                     lbl_eu_80663D20->releaseLayout();
                     if (lbl_eu_80663D20 != 0) {
-                        delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+                        delete lbl_eu_80663D20;
                         lbl_eu_80663D20 = 0;
                     }
                     flag = true;
@@ -902,9 +902,9 @@ L_8004321C:
             }
             lbl_eu_80663D20->mLayoutReady = (lbl_eu_806649F4 == 0);
             // Camera at idle pose with non-origin x -> D34-gated draw.
-            if (((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 &&
-                ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_8 == ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_4 &&
-                ((CTaskGameCamView*)Scn_QueryUnk80State(scene))->field_0 != lbl_eu_80665D74) {
+            if (Scn_QueryUnk80State(scene)->field_04 == Scn_QueryUnk80State(scene)->field_00 &&
+                Scn_QueryUnk80State(scene)->field_08 == Scn_QueryUnk80State(scene)->field_04 &&
+                Scn_QueryUnk80State(scene)->field_00 != lbl_eu_80665D74) {
                 goto L_80043454;
             }
             if (EvtSeqGetStateBit10() != 0) {
@@ -947,7 +947,7 @@ L_800434CC:
     if (lbl_eu_80663D20 != 0) {
         lbl_eu_80663D20->releaseLayout();
         if (lbl_eu_80663D20 != 0) {
-            delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+            delete lbl_eu_80663D20;
             lbl_eu_80663D20 = 0;
         }
     }
@@ -992,7 +992,7 @@ void CTaskGame::Term() {
     if (lbl_eu_80663D1C != nullptr) {
         CLoadTeardownLayout(lbl_eu_80663D1C);
         if (lbl_eu_80663D1C != nullptr) {
-            delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+            delete lbl_eu_80663D1C;
             lbl_eu_80663D1C = nullptr;
         }
     }
@@ -1007,7 +1007,7 @@ void CTaskGame::Term() {
 // is live, poke its +0x60 flag word. -O4,s: retail saves r29-r31
 // with a single stmw (MWCC merges the callee-saved saves only under size
 // optimization).
-__declspec(noinline) void CTaskGame::setLoadingCaption(u16 titleId, u16 textId, const char* caption, s16 capMode) {
+void CTaskGame::setLoadingCaption(u16 titleId, u16 textId, const char* caption, s16 capMode) {
     unk86 = titleId;
     unk88 = textId;
     if (caption != nullptr) {
@@ -2190,14 +2190,14 @@ extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
 // its virtual deleting-dtor slot and clears the global pointer.
 // dont_inline: retail callers keep this as a real bl call (e.g.
 // CTaskGame_moveShowTitle); without this IPA folds the small body into its callers.
-extern "C" void DECOMP_DONT_INLINE CTaskGame_deleteLoad() {
+extern "C" void CTaskGame_deleteLoad() {
     if (lbl_eu_80663D1C != nullptr) {
         lbl_eu_80663D24 = 0;
         CLoadTeardownLayout(lbl_eu_80663D1C);
         // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete expansion
         // supplies the redundant pointer test (two beq).
         if (lbl_eu_80663D1C != nullptr) {
-            delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+            delete lbl_eu_80663D1C;
             lbl_eu_80663D1C = nullptr;
         }
     }
@@ -2251,7 +2251,7 @@ void CTaskGame_setLoadScreen(int a, int b) {
             // helper released the loader itself, nothing is stored (retail
             // branches straight to the epilogue).
             if (lbl_eu_80663D1C != nullptr) {
-                delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+                delete lbl_eu_80663D1C;
                 lbl_eu_80663D1C = nullptr;
             }
         }
@@ -2271,7 +2271,7 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self);
 // (MWCC only emits it under size optimization, cf. CPartyStateWin).
 // __declspec(noinline): retail keeps every caller's bl out-of-line (the
 // attribute only affects call sites; the body itself is untouched).
-extern "C" __declspec(noinline) int CTaskGame_padConfirm(CTaskGame*) {
+extern "C" int CTaskGame_padConfirm(CTaskGame*) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 pressed = pad->mPressedButtonFlags;
@@ -2284,7 +2284,7 @@ extern "C" __declspec(noinline) int CTaskGame_padConfirm(CTaskGame*) {
 // pool entry is passed by value so MWCC copies it onto the stack and compares
 // via __ptmf_cmpr(&self->mMoveFunc, &local).
 extern "C" s32 CTaskGame_isMoveHook(CTaskGame* self);
-extern "C" __declspec(noinline) s32 CTaskGame_isMoveHook(CTaskGame* self) {
+extern "C" s32 CTaskGame_isMoveHook(CTaskGame* self) {
     return self->isMoveFunc(lbl_eu_80525850);
 }
 // Defined after CTaskGame_isMoveHook so MWCC keeps the real call/tail-branch instead
@@ -2438,7 +2438,7 @@ extern "C" int CTaskGame_playTimeGate();
 // __declspec(noinline): retail CTaskGame_openStream calls it out of line
 // (fmr f1, f31; bl CTaskGame_setStreamVol); without it MWCC inlines the 5-instruction
 // gate body into the caller.
-extern "C" __declspec(noinline) void CTaskGame_setStreamVol(float f1) {
+extern "C" void CTaskGame_setStreamVol(float f1) {
     if (lbl_eu_80663D18 != nullptr && CTaskGame_playTimeGate() != 0) {
         setStreamVolume__7CLibCriFv(lbl_eu_80663D18->unkD8, f1);
     }
@@ -2465,7 +2465,7 @@ extern "C" s32 CTaskGame_getStreamPos() {
 // the callee-saved saves only under size optimization).
 // __declspec(noinline): retail callers (CTaskGame_stopVision / CTaskGame_updateStream) call
 // this out of line; without it MWCC inlines the 0xC4 body into them.
-extern "C" __declspec(noinline) void CTaskGame_resetStream() {
+extern "C" void CTaskGame_resetStream() {
     if (lbl_eu_80663D18 != nullptr) {
         if ((u32)(lbl_eu_80663D18->unkD8 + 0x10000) != 0xFFFF) {
             stopStream__7CLibCriFv(lbl_eu_80663D18->unkD8);
@@ -2499,7 +2499,7 @@ extern "C" void CTaskGame_stopVision() {
 // exists with an active stream handle, convert the frame count to seconds
 // ((f32)count * frame time) and forward (handle, volume, seconds, 2) to the
 // CRI streaming-play setter. The global instance is re-read for the handle.
-extern "C" __declspec(noinline) void CTaskGame_fadeStream(int frames, float volume) {
+extern "C" void CTaskGame_fadeStream(int frames, float volume) {
     if (lbl_eu_80663D18 != nullptr && (u32)lbl_eu_80663D18->unkD8 != 0xFFFFFFFFu) {
         fadeStreamVolume__7CLibCriFv(lbl_eu_80663D18->unkD8, volume,
                                   (float)frames * getSecPerFrame__9CDeviceVIFv(), 2);
@@ -2569,7 +2569,7 @@ CfEnumListHolder::CfEnumListHolder(u32 type, u32 filter) {
 // twice under two symbols (CTaskGame_strAppend / CTaskGame_strAppend2). The retail frame
 // is stmw r29 - MWCC merges the 3 callee-saved saves only under
 // -O4,s (same pattern as the CTTask/reslist dtors in this TU).
-extern "C" __declspec(noinline) char* CTaskGame_strAppend(ml::FixStr<32>* str, const char* s) {
+extern "C" char* CTaskGame_strAppend(ml::FixStr<32>* str, const char* s) {
     str->operator+=(s);
     return str->mString;
 }
@@ -2629,8 +2629,8 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self) {
         // volatile pins the float load at its statement position.
         // Both loads volatile-pinned so their statement order survives
         // scheduling (retail: a into r3, then the float into f1).
-        u32 a = *(volatile u32*)&self->unk18C.unk14;
-        const float f = *(volatile const float*)&self->unk18C.unk4;
+        u32 a = self->unk18C.unk14;
+        const float f = self->unk18C.unk4;
         if (CTaskGame_openVision(a, self->unk18C.unk18,
                           static_cast<u32>(self->unk18C.unk8),
                           self->unk18C.unkC, self->unk18C.unk10,
@@ -2647,7 +2647,7 @@ void CTaskGame::Draw() {
     CTaskGame_updateStream(this);
 }
 
-extern "C" __declspec(noinline) void CTaskGame_setNandFlag80000(CTaskGame* inst, u32 a, u32 b, u32 c) {
+extern "C" void CTaskGame_setNandFlag80000(CTaskGame* inst, u32 a, u32 b, u32 c) {
     inst->unk68 &= ~0x00000100;
     if (a != 0) {
         inst->unk68 |= 0x00080000;
@@ -2658,7 +2658,7 @@ extern "C" __declspec(noinline) void CTaskGame_setNandFlag80000(CTaskGame* inst,
 }
 // __declspec(noinline): retail CTaskGame_nandCallback tail-calls these out of line;
 // without it MWCC inlines the stub bodies into the dispatcher.
-extern "C" __declspec(noinline) void CTaskGame_setNandFlag800(CTaskGame* inst, u32 a, u32 b, u32 c) {
+extern "C" void CTaskGame_setNandFlag800(CTaskGame* inst, u32 a, u32 b, u32 c) {
     inst->unk68 &= ~0x00000100;
     if (a != 0) {
         inst->unk68 |= 0x00000800;
@@ -2668,7 +2668,7 @@ extern "C" __declspec(noinline) void CTaskGame_setNandFlag800(CTaskGame* inst, u
     inst->unkFC = c;
 }
 // Target us-80044660: identical body to CTaskGame_strAppend (second retail symbol).
-extern "C" __declspec(noinline) char* CTaskGame_strAppend2(ml::FixStr<32>* str, const char* s) {
+extern "C" char* CTaskGame_strAppend2(ml::FixStr<32>* str, const char* s) {
     str->operator+=(s);
     return str->mString;
 }
@@ -2680,7 +2680,7 @@ extern "C" __declspec(noinline) char* CTaskGame_strAppend2(ml::FixStr<32>* str, 
 // reproduces retail's per-iteration reload of mStartNodePtr.
 // __declspec(noinline): retail callers (CfObjEnumList dtor / reslist dtor)
 // call this out of line; without it MWCC inlines the 0xAC body into them.
-extern "C" __declspec(noinline) void* __dt___reslist_base_cf_CfObject(void* self, int flag) {
+extern "C" void* __dt___reslist_base_cf_CfObject(void* self, int flag) {
     _reslist_base<cf::CfObject*>* base = static_cast<_reslist_base<cf::CfObject*>*>(self);
     if (base != nullptr) {
         *(void**)base = lbl_eu_8052585C;

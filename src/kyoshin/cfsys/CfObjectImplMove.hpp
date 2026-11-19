@@ -82,7 +82,9 @@ public:
     // vptr occupies 0x00-0x03; fields keep their absolute retail offsets.
     u8 _04_63[0x60];              // 0x04-0x63
     u32 field_0x64;               // 0x64 (flags: bit 1 = 0x2, bit 7 = 0x80)
-    u8 _68_73[0x74 - 0x68];       // 0x68-0x73
+    u8 _68_6B[0x6c - 0x68];       // 0x68-0x6b
+    u32 mPresentFlags;            // 0x6c (presentation flag word)
+    u8 _70_73[0x74 - 0x70];       // 0x70-0x73
     u32 field_0x74;               // 0x74 (sound-arg handle word)
     u8 _78_8B[0x8c - 0x78];       // 0x78-0x8b
     u16 field_0x8C;               // 0x8c (halfword compared against 6)
@@ -386,6 +388,7 @@ struct CfMoveEvt60 {
     u32 field_4AC;                // 0x4ac (state id)
     u8 _4B0_B[0x4ec - 0x4b0];
     u32 field_4EC;                // 0x4ec (flag word)
+    u8 _4F0_F7[0x4f8 - 0x4f0];    // 0x4f0-0x4f7
     f32 field_4F8;                // 0x4f8 (elapsed timer)
     f32 field_4FC;                // 0x4fc
     u8 _500_5F[0x760 - 0x500];

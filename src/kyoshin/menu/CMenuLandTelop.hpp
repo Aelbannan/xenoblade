@@ -175,7 +175,6 @@ unsigned char CMenuGetItem_IsActive();
 unsigned char CMenuGetItem_GetField90();
 f32 MenuSnd_GetMasterVol_95EC();                      // scene BGM volume
 void CTaskGame_openStream(u32, const char*, u32, u32, u32, u32, f32);
-u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
                                                          nw4r::lyt::Layout*);
 int Counter_TestBit(void* data, u32 flag);

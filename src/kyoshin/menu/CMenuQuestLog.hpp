@@ -83,13 +83,11 @@ extern "C" void markReplayClose(CTitleAHelp* self);
 extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 
 // Init() imports (retail unmangled names).
-extern char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
+extern "C" const char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
-extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
-extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
-extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
+// Embedded widgets are torn down through their owning helpers above.
 
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
@@ -125,7 +123,7 @@ extern "C" void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo
 extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
 
 // CfGameManager helpers (retail pre-mangled names).
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // Save/skip system busy queries (retail unmangled).
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();

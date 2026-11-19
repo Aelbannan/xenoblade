@@ -318,12 +318,12 @@ void ADXB_ExecOneWav4(struct AdxBwav* self)
     }
 }
 
-extern char lbl_eu_80517418[];
+extern const char adxbwav_riff_codes[];
 extern int memcmp(const void* a, const void* b, unsigned long n);
 
 s32 ADXB_CheckWav(const u8* self) {
-    if (memcmp(self, lbl_eu_80517418, 4) == 0 &&
-        memcmp(self + 8, lbl_eu_80517418 + 5, 4) == 0)
+    if (memcmp(self, adxbwav_riff_codes, 4) == 0 &&
+        memcmp(self + 8, adxbwav_riff_codes + 5, 4) == 0)
         return 1;
     return 0;
 }
@@ -342,7 +342,7 @@ s32 ADX_ScanInfoCodeWav(const u8* codes, s32 size, u16* out) {
     s32 i;
     s32 found = 0x7FFFFFFF;
     for (i = 0; i < size - 3; i++) {
-        if (memcmp(codes + i, lbl_eu_80517418, 4) == 0) {
+        if (memcmp(codes + i, adxbwav_riff_codes, 4) == 0) {
             found = 0x7FFFFFFF;
             if (i < found)
                 found = i;
@@ -356,3 +356,17 @@ s32 ADX_ScanInfoCodeWav(const u8* codes, s32 size, u16* out) {
     *out = 0;
     return -1;
 }
+
+/* RIFF chunk tags used by ADXB_DecodeInfoWav. */
+const char adxbwav_fmt_chunk[8] = {
+    0x66,0x6D,0x74,0x20,0x00,0x00,0x00,0x00
+};
+
+const char adxbwav_data_chunk[8] = {
+    0x64,0x61,0x74,0x61,0x00,0x00,0x00,0x00
+};
+
+const char adxbwav_riff_codes[0x10] = {
+    0x52,0x49,0x46,0x46,0x00,0x57,0x41,0x56,0x45,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+

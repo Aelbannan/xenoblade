@@ -58,12 +58,7 @@ struct ArtsModeIds {
 extern const ArtsModeIds lbl_eu_804FD138;
 extern const ArtsModeIds lbl_eu_804FD148;
 
-// Read-only view of the CfObjectMove fields refreshPaneTextures needs (the real
-// cf::CfObjectMove is opaque in this TU's include closure).
-struct CfObjectMoveArtsView {
-    u8 _00[0x8c];
-    u16 field_8C; // 0x8C - same u16 as BattleActor::mField3F28
-};
+namespace cf { class CfObjectModel; }
 
 class CMenuArtsSelect {
 public:

@@ -18,6 +18,7 @@
 #include <revolution/gx/GXPixel.h>
 
 #include <new>
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // cf::CBattleManager::getInstance() - declared in CMenuLandTelop.hpp
@@ -210,7 +211,7 @@ void CMenuLandTelop::Move() {
                     if (i == 3 &&
                         (u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1d)
                         continue;
-                    if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) == 0)
+                    if (cf::CfGameManager::isResourceFlagSet(i) == 0)
                         continue;
 
                     u32 data = (u32)CtrlObjectParam_GetCharEntry((u16)i);

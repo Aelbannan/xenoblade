@@ -331,9 +331,9 @@ extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
 // us-80467bf4  uploadLodMatrix  (matrix slot upload with 1-entry cache)
 // ===========================================================================
 void uploadLodMatrix(s32 index, s32 offset, const Mtx* mtx) {
+    s32 slot = (index << 3) + ((lbl_eu_806657A0 + offset) & 7);
     LodGlobal* g = &lbl_eu_80657FB0;
 
-    s32 slot = (index << 3) + ((lbl_eu_806657A0 + offset) & 7);
     if (!(lbl_eu_806657B0 & 0x4)) {
         goto update;
     }
@@ -352,8 +352,8 @@ update:
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x1A4), work[1]);
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x174), work[2]);
 
-    Mtx* workCursor = work;
     Mtx* normalCursor = g->nrm;
+    Mtx* workCursor = work;
     u32 mtxId = 6;
     s32 i = 0;
     while (i < 3) {

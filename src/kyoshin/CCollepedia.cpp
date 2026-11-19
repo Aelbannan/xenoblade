@@ -519,7 +519,7 @@ extern "C" void clpSelectItem(u8* self, u32 row, u32 col) {
     // Grant path falls through first in retail; consume call is branched to
     if (remaining <= 0) {
         // Grant the item via its impl instance (virtual method at slot 0x10)
-        void* itemInst = CItem_initItemImplInstances((void*)res);
+        void* itemInst = CItem_initItemImplInstances((CItemData*)res);
         ((void (*)(void*, u32))(*(void***)itemInst)[4])(itemInst, res);
     } else {
         CItemData_initFromFamily((void*)res, itemId, remaining);
@@ -543,10 +543,6 @@ extern "C" void clpPrevPageIx(unsigned char* obj) {
     }
 }
 
-void CCollepedia_decrementWrap(unsigned char* obj) {
-    clpPrevPageIx(obj);
-}
-
 extern "C" char* clpGetPageNam(u8* self) {
     s8 idx = (s8)self[1];
     u8* base = self + idx * 0x140;
@@ -558,7 +554,7 @@ extern "C" char* clpGetPageNam(u8* self) {
     }
 }
 
-unsigned char CCollepedia_getFieldAtIdx(u8* thisPtr) {
+extern "C" u8 clpGetPageCat(u8* thisPtr) {
     s8 idx = (s8)thisPtr[1];
     u8* base = thisPtr + idx * 320;
     return base[4];
@@ -575,7 +571,7 @@ extern "C" char* clpGetRowName(u8* self, u32 index) {
     return 0;
 }
 
-unsigned char CCollepedia_getFieldOffset(const unsigned char* ptr) {
+extern "C" u32 func_80254144(u8* ptr) {
     int idx = (signed char)ptr[1];
     return ptr[5 + idx * 0x140];
 }
@@ -592,7 +588,7 @@ extern "C" u8 clpGetCelStat(u8* self, u32 arg2, u32 arg3) {
     return ptr[arg3 * 0xA + 0x16];
 }
 
-u16 CCollepedia_getField12(u8* p1, u32 arg2, u32 arg3) {
+extern "C" u16 func_80254204(u8* p1, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)p1[1];
@@ -826,7 +822,7 @@ CCollepedia::CCollepedia() {
 
     __ct__CCur07((u8*)this + 0x54, nullptr);
     __ct__CCLPCur((CCLPCur*)((u8*)this + 0x6C), nullptr);
-    __ct__CCur18((CCur18*)((u8*)this + 0x84), nullptr);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor((CCur18*)((u8*)this + 0x84), nullptr);
     __ct__7CSysWinFUc((CSysWin*)((u8*)this + 0x9C), 0);
 
     field_D8 = 0;
@@ -1559,12 +1555,6 @@ void clpSetPageVis(CCollepedia* this_) {
     setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], 1);
 }
 
-// Stubs for functions called by targets
-extern "C" u8 clpGetPageCat(u8* self) {
-    s8 idx = (s8)self[1];
-    return *(u8*)(self + idx * 0x140 + 4);
-}
-extern "C" u32 func_80254144(u8*){ return 0; }
 // Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i idiom,
 // see CArtsInfo ConvS32ToF64): build the 0x4330000080000000 bit pattern and
 // subtract the shared sdata2 magic so the lfd references lbl_eu_80668818
@@ -1702,7 +1692,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         void* fileData = reinterpret_cast<CFileHandle*>(field_24)->getData();
         mtl::MemManager::setMemInitFlag(false);
 
-        void* tagMem = allocate__Q23mtl10MemManagerFUlUl(
+        void* tagMem = mtl::MemManager::allocate(
             CLibLayout::getAllocHandle(), 0x858);
         if (tagMem != NULL) {
             tagMem = __ct__CTagProcessor(tagMem);

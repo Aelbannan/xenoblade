@@ -1,4 +1,5 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CPartsChange
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical isResourceFlagSet decl
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
@@ -113,10 +114,10 @@ extern const char lbl_eu_80503C48[];
 u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
 // Manager-object helpers used by TeardownContainer.
-__declspec(noinline) void CPartsChange_RemoveBattleEntry(void* mgr, void* obj);
-__declspec(noinline) void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b);
+void CPartsChange_RemoveBattleEntry(void* mgr, void* obj);
+void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b);
 void CPartsChange_NotifySlotStates(u8* self);
-__declspec(noinline) void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* pRecord, int flags);
+void CPartsChange_DispatchChangeRecord(void* mgr, void* elem, void* pRecord, int flags);
 
 // Slot-name format string ("%s%s") and the "_ppp" name prefix pointer.
 extern const char lbl_eu_80503BFC[];
@@ -126,7 +127,6 @@ extern const char* lbl_eu_806624E8;
 extern u32 lbl_eu_80663E24;
 void awardCollectCount(void* self);
 int isCollepediaId(void* self);
-int isResourceFlagSet__Q22cf13CfGameManagerFv(void* self);
 void* CtrlObjectParam_GetCharEntry(u16 id);
 void CtrlObjectParam_BumpArtsCounter(void* p, int flag);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
@@ -151,12 +151,12 @@ extern const f32 lbl_eu_80667AD4;
 
 // Same-TU helpers referenced before their definitions below. noinline keeps
 // MWCC from inlining the (stub) bodies and collapsing retail's bl sites.
-__declspec(noinline) void* CPartsChange_FindActorById(u8* self, u32 id);
-__declspec(noinline) void* CPartsChange_FindEntryById(u8* self, u32 id);
+void* CPartsChange_FindActorById(u8* self, u32 id);
+void* CPartsChange_FindEntryById(u8* self, u32 id);
 
 // Same lookup, but TU-local so MWCC inlines it at the FireIdEffect site
 // (retail inlines the scan there and keeps a bl at ResolveActorEntry).
-static CfPartsElem4C* FindEntryByIdInline(u8* self, u32 id) {
+static inline CfPartsElem4C* FindEntryByIdInline(u8* self, u32 id) {
     if (id != 0) {
         u32 n = reinterpret_cast<PartsMgrView*>(self)->count9800;
         CfPartsElem4C* p = reinterpret_cast<PartsMgrView*>(self)->entries;
@@ -167,9 +167,9 @@ static CfPartsElem4C* FindEntryByIdInline(u8* self, u32 id) {
     }
     return 0;
 }
-__declspec(noinline) void CPartsChange_InitActorEntry(u8* self);
-__declspec(noinline) int CPartsChange_CountListNodes(u8* self);
-__declspec(noinline) void CPartsChange_RemoveListNode(u8* self, void** key);
+void CPartsChange_InitActorEntry(u8* self);
+int CPartsChange_CountListNodes(u8* self);
+void CPartsChange_RemoveListNode(u8* self, void** key);
 
 }
 
@@ -666,7 +666,7 @@ extern "C" void* CPartsChange_FindActorById(u8* self, u32 id) {
 
 void CPartsChange_InitActorTable(){}
 // 0x54: wipe the 0x80-byte actor entry then re-seed its 0x90..0x9A block.
-extern "C" __declspec(noinline) void CPartsChange_InitActorEntry(u8* self) {
+extern "C" void CPartsChange_InitActorEntry(u8* self) {
     memset(self, 0, 0x80);
     f32 zero = lbl_eu_80667AD4;
     *(u16*)(self + 0xA2) = 0;
@@ -677,7 +677,7 @@ extern "C" __declspec(noinline) void CPartsChange_InitActorEntry(u8* self) {
     *(u16*)(self + 0x9A) = 0;
 }
 
-__declspec(noinline) u16 CfActorAccessors::GetField9E() { return mField9E; }
+u16 CfActorAccessors::GetField9E() { return mField9E; }
 
 void CPartsChange_FindActorByObj(){}
 void CPartsChange_LoadBdatTables(){}
@@ -835,7 +835,7 @@ extern "C" void CPartsChange_UpdateCollectionState(u8* self) {
     awardCollectCount(self);
     if (isCollepediaId(self) == 0) return;
     for (s32 i = 1; i <= 8; i++) {
-        if (isResourceFlagSet__Q22cf13CfGameManagerFv((void*)(u32)i) != 0) {
+        if (cf::CfGameManager::isResourceFlagSet((u32)i) != 0) {
             CtrlObjectParam_BumpArtsCounter(CtrlObjectParam_GetCharEntry((u16)i), 1);
         }
     }
@@ -1033,12 +1033,10 @@ extern "C" void* CPartsChange_FindPartsElem(u8* self, u8* obj) {
     return 0;
 }
 
-extern "C" __declspec(noinline) void CPartsChange_RemoveBattleEntry(void* mgr, void* obj){}
+extern "C" void CPartsChange_RemoveBattleEntry(void* mgr, void* obj){}
 
 // 0x88: clear the actor's slot entry (0x9E index), reset the actor entry,
 // then unlink it from the +0xA808 list if that list is non-empty.
-#pragma push
-#pragma auto_inline off
 extern "C" void CPartsChange_ResolveActorEntry(u8* self, u32 id) {
     u8* actor = (u8*)CPartsChange_FindActorById(self, id);
     if (actor != 0) {
@@ -1051,7 +1049,6 @@ extern "C" void CPartsChange_ResolveActorEntry(u8* self, u32 id) {
         }
     }
 }
-#pragma pop
 
 extern "C" int CPartsChange_CountListNodes(u8* self) {
     // Retail colours: end=r5, cur=r4, n=r3. Declare cur before end so the
@@ -1161,7 +1158,7 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, lbl_eu_80662528[n], 0, 0, lbl_eu_80667AD0);
 }
 
-extern "C" __declspec(noinline) void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b){}
+extern "C" void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b){}
 
 int lbl_eu_80664308;
 u32 lbl_eu_8066430C;
@@ -1388,10 +1385,10 @@ extern "C" int CPartsChange_ProcessPartyInfo(cf::CfPartyInfo* info, void* arg) {
     return (info->*tbl[info->field_0C])(arg);
 }
 
-extern "C" __declspec(noinline) void CPartsChange_ProbePartyCollisions(u32* src, u32* dst);
+extern "C" void CPartsChange_ProbePartyCollisions(u32* src, u32* dst);
 // 0x320: not decoded yet -- every pose variant tail-calls it, so the stub
 // keeps the symbol resolvable for the TU link.
-extern "C" __declspec(noinline) void CPartsChange_ProbePartyCollisions(u32* src, u32* dst) {}
+extern "C" void CPartsChange_ProbePartyCollisions(u32* src, u32* dst) {}
 
 // Pose records consumed/produced by the spawn-pose helpers: a 12-byte
 // position followed by the 0x0C..0x1C scalars.

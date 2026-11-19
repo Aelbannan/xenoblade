@@ -71,21 +71,6 @@ struct CTaskGamePtmfWords {
 };
 
 
-// Minimal CBattery view (members used by cbRenderBefore). The full
-// CBattery.hpp pulls monolib/lib.hpp (revolution GX/HBM); only the used
-// members are declared here.
-class CBattery {
-public:
-    CBattery(u8 batteryLevel);
-    void loadBatteryArchive();
-    void updateLayout();
-    void drawBattery(void*);
-    void releaseLayout();
-    void setBatteryLevel(u8 level);
-    bool mLayoutReady; // 0x20
-};
-
-
 #include "kyoshin/CTaskGame.hpp"
 
 
@@ -508,11 +493,5 @@ extern "C" int getWiimoteBattery__Q22cf9CfPadTaskFv();
 // nw4r DrawInfo raw-storage helpers (retail pre-mangled names; same scheme
 // as CQuestWindow.hpp).
 
-// Virtual-delete views for the loading screen / battery objects (vtable dtor
-// at +8, flag 1); same scheme as CfObjEnumListVtView.
-struct CLoadVtView {
-    virtual ~CLoadVtView();
-};
-struct CBatteryVtView {
-    virtual ~CBatteryVtView();
-};
+// CLoad derives from IWorkEvent with a real virtual destructor; its deletes
+// dispatch directly through the compiler-emitted __vt__5CLoad.

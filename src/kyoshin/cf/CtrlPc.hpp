@@ -352,7 +352,11 @@ struct CtrlPlayerSub3F60 {
     u32 mFieldC;             // 0x0C (bit 1 tested)
     u8 _10[0x4EC - 0x10];
     u32 mField4EC;           // 0x4EC (bits 1/4 set/clear)
-    u8 _4F0[0x510 - 0x4F0];
+    u8 _4F0[0x4F8 - 0x4F0];
+    f32 mField4F8;           // 0x4F8 active timer
+    u8 _4FC[0x508 - 0x4FC];
+    f32 mField508;           // 0x508 height threshold
+    u8 _50C[0x510 - 0x50C];
     f32 mField510;           // 0x510 (target position y snapshot)
 };
 

@@ -4,6 +4,7 @@
 #define CTTASK_INLINE_DTOR
 #define IUIWINDOW_INLINE_DTOR
 #include "kyoshin/CSysWinBuff.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical setPresentationFlag decl
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 // Forward decls for retail data labels (defs at file end). Char blobs carry

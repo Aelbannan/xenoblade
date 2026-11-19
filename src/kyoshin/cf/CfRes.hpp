@@ -149,7 +149,6 @@ extern u32 __ptmf_null[3];
 // relocs carrying the retail unmangled names (plain global declarations get
 // an `__F...` arg suffix appended by the MWCC mangler).
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" void __ct__8CProcessFv(CProcess* p);
 extern "C" void __ct__80066F9C(u8* self);
 
@@ -457,4 +456,69 @@ struct CfResCleanupEntry {
 // state fields (defined in CfRes.cpp; the first arg is the +0x2C resource
 // object, passed through but unused by the cleanup).
 void CfRes_cancelPendingRead(CfResCleanupEntry* child, CfResCleanupEntry* parent);
+
+// Layout of the object addressed by the singleton at lbl_eu_80663D7C. The
+// ctor stores the address of CfResManager's +0x54 storage-vtable subobject,
+// so the two entry tables are fields of this object at +0x1ED8 (3 slots) and
+// +0x1EFC (7 slots), ending exactly at the 0x1FA4-byte allocation.
+struct CfResInstance {
+    u8 _pad0[0x18 - 0x0];
+    u8 mField18[4];
+    // 0x18
+    u8 _pad1C[0x7C - 0x1C];
+    u8 mField7C;
+    // 0x7C
+    u8 _pad7D[0x80 - 0x7D];
+    u8 mField80;
+    // 0x80
+    u8 _pad81[0xB8 - 0x81];
+    u8 mFieldB8;
+    // 0xB8
+    u8 _padB9[0xBC - 0xB9];
+    u8 mFieldBC;
+    // 0xBC
+    u8 _padBD[0xF4 - 0xBD];
+    u8 mFieldF4;
+    // 0xF4
+    u8 _padF5[0xF8 - 0xF5];
+    u8 mFieldF8;
+    // 0xF8
+    u8 _padF9[0x130 - 0xF9];
+    u8 mField130;
+    // 0x130
+    u8 _pad131[0x134 - 0x131];
+    u8 mField134;
+    // 0x134
+    u8 _pad135[0x16C - 0x135];
+    u8 mField16C;
+    // 0x16C
+    u8 _pad16D[0x170 - 0x16D];
+    u8 mField170;
+    // 0x170
+    u8 _pad171[0x1A8 - 0x171];
+    u8 mField1A8[4];
+    // 0x1A8
+    u8 _pad1AC[0x1E4 - 0x1AC];
+    u8 mField1E4[4];
+    // 0x1E4
+    u8 _pad1E8[0x220 - 0x1E8];
+    u8 mField220;
+    // 0x220
+    u8 _pad221[0x224 - 0x221];
+    u8 mField224;
+    // 0x224
+    u8 _pad225[0x25C - 0x225];
+    u8 mField25C;
+    // 0x25C
+    u8 _pad25D[0x298 - 0x25D];
+    u8 mField298;
+    // 0x298
+    u8 _pad299[0x29C - 0x299];
+    u8 mField29C;
+    // 0x29C
+    u8 _pad29D[0x1ED8 - 0x29D];
+    CfResSlot mTable3[3];  // 0x1ED8
+    CfResSlot mTable7[7];  // 0x1EFC
+};
+
 

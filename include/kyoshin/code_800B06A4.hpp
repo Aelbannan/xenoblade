@@ -11,10 +11,12 @@ extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 extern "C" void CfObjectMap_refreshRegion(void* self);
 extern "C" int isBattleStatusActive(void* obj, int id);
 #include "kyoshin/cf/object/CfObject.hpp"
+
 namespace cf {
 class CfMapItemManager;
 struct TboxInfo { char _pad[4]; };
 struct IFactoryEvent { char _pad[4]; };
+struct CVoiceRec;  // canonical cfCam_queryVoxArts view (CfCam.hpp)
 }
 
 // Fixed-size pool node used by reslist<cf::IFactoryEvent*> (0xc bytes per entry).
@@ -693,18 +695,7 @@ struct ResPoolNode {
     ResPoolNode() : mNext(0) {}
 };
 
-// Field accessor view over a CfObject payload walked by the reslist search
-// helpers (walkReslistByMask / walkReslistByType).
-struct CfObjFieldView {
-    u8 _pad00[0x64];
-    u32 field_0x64;   // mask bits tested by walkReslistByMask
-    u8 _pad68[0x94 - 0x68];
-    s32 field_0x94;   // type id compared by walkReslistByType
-    u8 _pad98[0x9C - 0x98];
-    u32 field_0x9C;
-};
 
-// Virtual-dispatch interfaces matching the retail vtable shapes:
 // IDispB79A4: iteration nodes with the target method at slot 0x67.
 class IDispB79A4 {
 public:
@@ -1032,6 +1023,7 @@ extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 extern "C" int func_800AC470(void* item);
 extern "C" void func_800AC460(void* item, int flag);
 extern "C" void func_8013DCAC(u32 a, u32 b);
+extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
@@ -1043,13 +1035,7 @@ extern const float lbl_eu_80666A28;
 extern const float lbl_eu_80666A2C;
 extern const float lbl_eu_80666A30;
 
-// View of a ring-buffer element's sort key (offset 0x74).
-struct RingSortKeyView {
-    u8 _pad00[0x74];
-    u32 sortKey;   // +0x74
-};
 
-// Object record walked by func_800B7AF0 (field view).
 struct B7AF0Obj {
     u8 _pad00[0x64];
     u32 flags64;                 // +0x64 (bit17 tested)
@@ -1178,7 +1164,6 @@ struct B20B4Payload {
 
 // Imports used by func_800B20B4 (retail symbol names).
 extern "C" void* func_80061FE8();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(unsigned long size, unsigned long heap);
 extern "C" void __ct__Q22cf13CfObjectModelFv(void* self);
 extern "C" void __ct__Q22cf11CfObjectNpcFi(void* self, int flag);
 extern "C" void __ct__Q22cf10CfObjectPcFv(void* self);
@@ -1579,7 +1564,6 @@ extern "C" void gmNotifyCA0(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* findWorkById(UnkClass_805764CC* self, int arg);
 extern "C" void gflagSetOrClear(int arg, void* ptr);
-extern "C" void* get_u32_74__17UnkClass_805764CCFv(void* arg);
 extern "C" void CfObjectMove_setMoveSpeedGated(void* obj, float val);
 extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
@@ -1599,7 +1583,6 @@ extern "C" void __dt__8047BDA8(void*);
 extern "C" void allocNodePool(UnkClass_805764CC* self, unsigned long handle, s32 count);
 extern "C" void walkReslistByMask(void* object, u32 arg);
 extern "C" void walkReslistByType(void* object, u32 arg);
-extern "C" unsigned long get_u32_18__17UnkClass_805764CCFv(void* self);
 extern "C" void allocEventPool(void* self, unsigned long handle, unsigned long count);
 extern "C" void* spawnMaskedObject(UnkClass_805764CC* self, u32 arg1,
                                 const B20B4Payload* arg2, u32 arg3);
@@ -1624,7 +1607,7 @@ extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" void* func_8006A6D0();
 extern "C" u8 func_800AF7E4(void* container, const char* name);
 extern "C" int CPartsChange_CheckReloadGate(void* ctx);
-extern "C" int cfCam_queryVoxArts(void* container, u16 flag);
+extern "C" int cfCam_queryVoxArts(cf::CVoiceRec* self, int flags);  // canonical CfCam.hpp view
 extern "C" void CfObjectMove_setRegionAttached(void* data, int flag);
 extern "C" void orObj68bit6(void* data);
 extern "C" void orObj68bits5_6(void* data);
@@ -1642,8 +1625,7 @@ extern "C" int testObj64bit9(void* obj);
 extern "C" void unlinkMatchingNode(void* list, void* obj);
 
 // --- imports for func_800B83AC (us-800b8cc8) ---
-extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
-extern "C" void* CtrlObjectParam_GetSlotTableBase();
+
 extern "C" void* CtrlObjectParam_GetCharEntry(u16 index);
 extern "C" void* func_8009EC9C(u32 index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
@@ -1654,7 +1636,6 @@ extern "C" f32 Scn_GetFrameDelta(void* view);
 extern "C" void CActorParam_updateTick(void* obj, int arg);
 
 // --- imports for scanTboxByXY (us-800b7d30) ---
-extern "C" void maskField_6C__17UnkClass_805764CCFUli(void* obj, unsigned long mask, int flag);
 extern float lbl_eu_80666A10;
 extern float lbl_eu_80666A08;
 extern float lbl_eu_80663EC8;
@@ -1842,9 +1823,7 @@ struct B83ACCharObj {
 // (retail names; begin/end/iterator primitives used by func_800B4D84).
 void** sortBufIdentity(void* buf);
 extern "C" void** sortBufEnd(void* buf);
-extern "C" void clear_380__17UnkClass_805764CCFv(void* it);
 extern "C" u32* sortBufAt(void* it, u32 index);
-extern "C" u32 get_u32_380__17UnkClass_805764CCFv(void* it);
 extern "C" int cmpFloatAt4(const void* a, const void* b);
 extern "C" void qsortEntries(void** first, void** last, int (*cmp)(const void*, const void*));
 extern "C" void* testCamBit15(void* p);
@@ -2389,7 +2368,7 @@ extern "C" int testObj64bit16(void* obj);
 bool isGlobalCamFlagSet(int mask);
 extern "C" int testObj68mask(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
-extern "C" float cfCam_xzLength(void* p);
+extern "C" float cfCam_xzLength(const ml::CVec3* v);  // canonical CfCam.hpp view
 extern "C" void refreshCamItems(void* self);
 extern "C" void* CfRes_getInstanceField();
 extern "C" void func_80067DB4();
@@ -2404,7 +2383,8 @@ extern "C" void func_80068358(void* obj);
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; this TU's use
 // site casts to the local IDispB3A88Mgr vtable proxy.)
 #include "kyoshin/cf/CfGameManagerApi.hpp"
-extern "C" void* cfCam_getEventMgr();
+class CfCamEventManager;
+extern "C" CfCamEventManager* cfCam_getEventMgr();  // canonical CfCam.hpp view
 extern "C" void* func_800755B0(void* mgr, int index);
 extern "C" s32 CfObjectMove_getSubB0FieldE(void* obj);
 extern "C" void func_80063900(u32 id);
@@ -2596,8 +2576,7 @@ public:
 
 // --- imports for func_800B5994 dispatch (retail symbol names) ---
 extern "C" void emitSpeedEvent(const F8C0ListSource* src, void* rec);
-extern "C" float cfCam_absFloat();
+extern "C" float cfCam_absFloat(const f32* self);  // canonical CfCam.hpp view
 extern "C" B5994Obj* getObjField98(void* obj);
-extern "C" u32 get_u16_45C0__17UnkClass_805764CCFv(void* ctrl);
 extern "C" int testObj64bit26(void* obj);
 #endif

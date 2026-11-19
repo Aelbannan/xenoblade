@@ -309,11 +309,11 @@ done:
 void CMenuPTGauge::cbRenderBefore() {
     // getInstance result discarded; feeds static isFlag01Set call schedule
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set()) {
-        goto done;
-    }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) { // IBM bit 10 = realtime event busy
-        goto done;
+    // OR-combined guard: MWCC emits the second disjunct as the unreduced
+    // `beq cont; b done` pair (retail shape, MWCC_CASES RFCOMM OR-guard).
+    if (CTaskGame::isFlag01Set() != 0 ||
+        (lbl_eu_80663E28 & 0x200000) != 0) { // IBM bit 10 = realtime event busy
+        return;
     }
     if (!IsMenuState621F0()) {
         goto done;
@@ -526,19 +526,9 @@ extern const float lbl_eu_80667A00;
 // the .sdata2 double path, clamp at zero (resetting action/base state), then
 // when the value changed resize the gauge pane proportionally.
 void PTGaugeTickDn(CMenuPTGauge* self) {
-    // Manual s32->double conversion (MWCC_PATTERNS 7i): xoris word first, then
-    // 0x43300000; subtracting the shared bias blob completes the conversion.
-    // lbl_eu_806679F0 is declaration-only here, so the fsubs keeps the named
-    // .sdata2 reloc instead of folding to a private literal.
     // Decrement step, read early like retail's schedule.
     const f32 step = lbl_eu_806679F8;
-    union {
-        double d;
-        u32 w[2];
-    } cv;
-    cv.w[1] = (u32)self->unk9C ^ 0x80000000;
-    cv.w[0] = 0x43300000;
-    s32 v = (s32)(cv.d - lbl_eu_806679F0 - step);
+    s32 v = (s32)((f32)self->unk9C - step);
     self->unk9C = v;
     if (v < 0) {
         self->mActionIdx = 0;
@@ -553,11 +543,9 @@ void PTGaugeTickDn(CMenuPTGauge* self) {
             self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true); // +0xd8 = gauge pane name
         if (pane != NULL) {
             nw4r::lyt::Size size;
-            cv.w[1] = (u32)cur ^ 0x80000000;
-            cv.w[0] = 0x43300000;
             size.height = pane->GetSize().height;
-            // 128.0f scaled by cur / 300.0f (cur converted via the bias blob).
-            size.width = lbl_eu_806679E8 * ((cv.d - lbl_eu_806679F0) / lbl_eu_806679E4);
+            // 128.0f scaled by cur / 300.0f.
+            size.width = lbl_eu_806679E8 * ((f32)cur / lbl_eu_806679E4);
             pane->SetSize(size);
         }
     }
@@ -630,19 +618,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
     // Advance the close animation one frame (result unused).
     advanceAnimTransform(self->mAnimClose, lbl_eu_806679EC);
 
-    // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
-    // 0x4330000080000000 bit pattern so the fsubs names the shared .sdata2
-    // magic lbl_eu_806679F0 (a plain C cast pools a private constant).
-    // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
-    // 0x4330000080000000 bit pattern so the fsubs names the shared .sdata2
-    // magic lbl_eu_806679F0 (a plain C cast pools a private constant).
-    union {
-        double d;
-        u32 w[2];
-    } cv;
-    cv.w[1] = (u32)partyVal ^ 0x80000000;
-    cv.w[0] = 0x43300000;
-    if (cv.d - lbl_eu_806679F0 >= lbl_eu_806679E4) {
+    if ((float)partyVal >= lbl_eu_806679E4) {
         self->mGaugeBase = 3;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();
@@ -667,17 +643,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
 // reset the gauge base state to 1 and re-bind the open animation from frame 0
 // with SE 0x65.
 void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
-    // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
-    // 0x4330000080000000 bit pattern and subtract the shared .sdata2 magic
-    // lbl_eu_806679F0 so the fsubs names the retail blob.
-    union {
-        double d;
-        u32 w[2];
-    } cv;
-    // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
-    cv.w[1] = (u32)partyVal ^ 0x80000000;
-    cv.w[0] = 0x43300000;
-    if (cv.d - lbl_eu_806679F0 >= lbl_eu_806679FC) {
+    if ((float)partyVal >= lbl_eu_806679FC) {
         self->mGaugeBase = 1;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();

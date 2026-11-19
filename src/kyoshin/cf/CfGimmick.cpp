@@ -27,30 +27,30 @@ struct CfGimmickColliderView {
 // typed retail data (replaces old byte blobs): declared up top so MWCC emits
 // them before its own code-literal pool (else the int->double magics land at
 // the sdata2 head and shift the pool). Order within each section matches retail.
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508598[0x0C] = "A_area_x";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085A4[0x0C] = "A_area_py";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085B0[0x0C] = "A_area_my";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085BC[0x0C] = "A_area_z";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085C8[0x0C] = "A_area_rx";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085D4[0x0C] = "A_area_ry";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085E0[0x0C] = "A_area_rz";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085EC[0x0C] = "A_rectype";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805085F8[0x0C] = "S_FLG_MIN";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508604[0x0C] = "S_FLG_MAX";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508610[0x0C] = "quest_FLG";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050861C[0x0C] = "quest_STFLG";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508628[0x0C] = "MESS ERR";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508634[0x34] = "cl_area_x\0cl_area_py\0cl_area_my\0cl_area_z\0%s";
+__attribute__((used)) const char lbl_eu_80508598[0x0C] = "A_area_x";
+__attribute__((used)) const char lbl_eu_805085A4[0x0C] = "A_area_py";
+__attribute__((used)) const char lbl_eu_805085B0[0x0C] = "A_area_my";
+__attribute__((used)) const char lbl_eu_805085BC[0x0C] = "A_area_z";
+__attribute__((used)) const char lbl_eu_805085C8[0x0C] = "A_area_rx";
+__attribute__((used)) const char lbl_eu_805085D4[0x0C] = "A_area_ry";
+__attribute__((used)) const char lbl_eu_805085E0[0x0C] = "A_area_rz";
+__attribute__((used)) const char lbl_eu_805085EC[0x0C] = "A_rectype";
+__attribute__((used)) const char lbl_eu_805085F8[0x0C] = "S_FLG_MIN";
+__attribute__((used)) const char lbl_eu_80508604[0x0C] = "S_FLG_MAX";
+__attribute__((used)) const char lbl_eu_80508610[0x0C] = "quest_FLG";
+__attribute__((used)) const char lbl_eu_8050861C[0x0C] = "quest_STFLG";
+__attribute__((used)) const char lbl_eu_80508628[0x0C] = "MESS ERR";
+__attribute__((used)) const char lbl_eu_80508634[0x34] = "cl_area_x\0cl_area_py\0cl_area_my\0cl_area_z\0%s";
 extern "C" {
-__declspec(section ".sdata") __attribute__((used)) float lbl_eu_80662784 = 1.0f;
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662788[2] = { lbl_eu_80508628, nullptr };
+__attribute__((used)) float lbl_eu_80662784 = 1.0f;
+__attribute__((used)) const void* lbl_eu_80662788[2] = { lbl_eu_80508628, nullptr };
 }
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668320[0x08] = "A_posX";
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668328[0x08] = "A_posY";
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668330[0x08] = "A_posZ";
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668338[0x08] = "gimID";
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668340[0x08] = "MSGID";
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668348[0x08] = "name1";
+__attribute__((used)) const char lbl_eu_80668320[0x08] = "A_posX";
+__attribute__((used)) const char lbl_eu_80668328[0x08] = "A_posY";
+__attribute__((used)) const char lbl_eu_80668330[0x08] = "A_posZ";
+__attribute__((used)) const char lbl_eu_80668338[0x08] = "gimID";
+__attribute__((used)) const char lbl_eu_80668340[0x08] = "MSGID";
+__attribute__((used)) const char lbl_eu_80668348[0x08] = "name1";
 // Individual SDA number labels (retail addressing): each constant is its own
 // .sdata2 symbol so MWCC emits SDA21 loads through the small-data base.
 // The previous single-struct pool forced absolute addressing (li + lfs via a
@@ -59,12 +59,12 @@ __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668348[0
 // addresses match retail: 68350..68364 floats, 68368/68370 doubles,
 // 68378 float pair. Total 0x30 bytes, same as the struct.
 extern "C" {
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668350 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80668354 = 40.743664f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668358 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066835C = 30.0f;
-__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80668360 = 30000.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668364 = 0.01f;
+__attribute__((used)) const float lbl_eu_80668350 = 0.0f;
+__attribute__((used)) const f32 lbl_eu_80668354 = 40.743664f;
+__attribute__((used)) const float lbl_eu_80668358 = 1.0f;
+__attribute__((used)) const float lbl_eu_8066835C = 30.0f;
+__attribute__((used)) const f32 lbl_eu_80668360 = 30000.0f;
+__attribute__((used)) const float lbl_eu_80668364 = 0.01f;
 // Tail doubles stay in a struct: as individual labels MWCC literal-dedups
 // the 2^52 against the code-gen int->float pool, drops the slot and pulls
 // the 68378 pair up to 0x50 (data regression). The aggregate forces the
@@ -78,7 +78,7 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 const Sdata2Tail_CfGimmick sdata2tail_CfGimmick = {
     4503601774854144.0, 4503599627370496.0
 };
-__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80668378[2] = {1.5f, 0.0f};
+__attribute__((used)) const f32 lbl_eu_80668378[2] = {1.5f, 0.0f};
 }
 
 // typed .bss/.sbss zero-fill (replaces old nobits blobs): sizes must total
@@ -1145,7 +1145,7 @@ extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick* self, const CfGimmick
 // jumptable_eu_80535830: placement-checker dispatch (5 checkers defined in
 // this TU). Layout from build/us/asm/kyoshin/cf/CfGimmick.s.
 extern "C" {
-__declspec(section ".data") __attribute__((used, aligned(8)))
+__attribute__((used, aligned(8)))
 const void* lbl_eu_805357E8[18] = {
     lbl_eu_80668320, lbl_eu_80668328, lbl_eu_80668330,
     lbl_eu_80508598, lbl_eu_805085A4, lbl_eu_805085B0,
@@ -1155,7 +1155,7 @@ const void* lbl_eu_805357E8[18] = {
     lbl_eu_805085F8, lbl_eu_80508604, lbl_eu_80508610,
     lbl_eu_8050861C, lbl_eu_80668348,
 };
-__declspec(section ".data") __attribute__((used))
+__attribute__((used))
 CfGimmickChecker jumptable_eu_80535830[5] = {
     (CfGimmickChecker)CfGimmick_CheckerKind0Always,
     (CfGimmickChecker)CfGimmick_CheckerCylinderXZ,

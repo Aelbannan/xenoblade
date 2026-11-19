@@ -23,8 +23,8 @@ class CProcess;
 class CUIBattleManager;
 struct CUIBattleFileEvt;
 
-// Minimal battle-UI child type (IUIWindow-like) for Move's mark/remove walk.
-class CUIBattleChild {
+// Battle-UI child item (retail IUIBattle): the reslist node payload.
+class IUIBattle {
 private:
     u8 unk00[0x39];
     bool mIsRemove; // 0x39
@@ -36,6 +36,8 @@ public:
     u8 unk54; // 0x54 - pending-remove request
     u8 unk55; // 0x55 - pending update-mark
 };
+
+typedef IUIBattle CUIBattleChild;
 
 // Opaque battle-side object returned by MapFx_ResolveOwner (touched by Move).
 struct CUIBattleActor {
@@ -61,31 +63,10 @@ struct CUIBattleAction {
 // Battle-UI helpers. Retail binds these by their plain (unmangled) names.
 extern "C" bool CMenuArtsSelect_isFinished();
 extern "C" void UIBattleCancelPendingLoads(CUIBattleManager* self);
-extern "C" CUIBattleManager* __ct__CUIBattleManager(
-    CUIBattleManager* self, CScnNw4r* pScene, mtl::ALLOC_HANDLE handle);
 extern "C" CUIBattleChild* UIBattleCreatePlayerState();
 extern "C" CUIBattleChild* UIBattleCreateVisionMenu(u32 arg);
 extern "C" void UIBattleReleaseAll();
 extern "C" void UIBattleRemoveAll(u32 arg);
-
-// Minimal IUIBattle interface tag. Retail instantiates reslist<IUIBattle>
-// (dtors __dt___reslist_base_IUIBattle / __dt__reslist_IUIBattle) whose nodes
-// are POD (the array delete emits a bare __dla__ with no per-element dtor
-// loop), so a trivially-destructible empty class matches the node layout.
-class IUIBattle {};
-
-// reslist<IUIBattle> / _reslist_base<IUIBattle> layout mirror (reslist.hpp).
-// The retail dtor symbols use the old flat template mangling, so the deleting
-// destructors are emitted as plain global functions over this layout instead
-// of the modern-mangled member dtors MWCC 1.1 would emit.
-struct ResListIUIBattle {
-    void* mVtable;                        // 0x0 - lbl_eu_8052E1B4
-    _reslist_node<IUIBattle>* mHead;      // 0x4 - &mStartNode
-    _reslist_node<IUIBattle> mStartNode;  // 0x8
-    _reslist_node<IUIBattle>* mList;      // 0x14 - slot array
-    int mCapacity;                        // 0x18
-    u8 mOwnsList;                         // 0x1C
-};
 
 // Retail texture lookup helpers (unmangled symbols; defined in
 // CUIBattleManager.cpp, which accesses private members via friend decls
@@ -97,29 +78,39 @@ extern "C" void* UIBattleFindPartyTimg(const char* name);
 
 class CUIBattleManager : public CTTask<CUIBattleManager>, public IWorkEvent {
 public:
+    static CUIBattleManager* spInstance;
+
+    CUIBattleManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE handle);
     static CUIBattleManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
 
     static void UIBattleRemoveAll(u32);
 
-    void Init();
+    virtual void Init();
+    virtual void Term();
+    virtual int OnFileEvent(CUIBattleFileEvt* evt);
     void Move();
     void parkMoveHandler();
+    void UIBattleMoveNoopMember();
     IWorkEvent* battleWorkEvent() { return static_cast<IWorkEvent*>(this); }
 
     // Battle-UI child task type (retail nested class). The CTTask<CTest>
     // out-of-line Move/Draw specializations are emitted in CUIBattleManager.cpp
-    // (mangling Q216CUIBattleManager5CTest); CTest's own vtable entries are
-    // still the extern "C" stubs in the cpp.
+    // (mangling Q216CUIBattleManager5CTest); CTest's vtable is emitted from
+    // these real member functions.
     class CTest : public CTTask<CTest> {
     public:
         ~CTest();
+        void Init();
+        void Term();
+        void Move();
+        void Draw();
     };
 
 private:
     // 0x00-0x54 CTTask
     // 0x54-0x58 IWorkEvent
     u8* unk58;                           // 0x58 - scene / create arg
-    reslist<CUIBattleChild*> mChildList;   // 0x5C
+    reslist<IUIBattle*> mChildList;       // 0x5C
     CProcess* unk7C;                       // 0x7C - Init child process
     u8 unk80;                              // 0x80 - remove-all request
     u8 unk81;                              // 0x81 - mark-all request
@@ -150,30 +141,16 @@ private:
     friend void UIBattleCancelPendingLoads(CUIBattleManager* self);
     friend int UIBattleHasPendingLoads();
     // Teardown / create-bind / release helpers over the private fields.
-    friend void __dt__8012E534(CUIBattleManager* self);
-    friend int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt);
     friend CUIBattleChild* UIBattleCreatePlayerState();
     friend CUIBattleChild* UIBattleCreateVisionMenu(u32 arg);
     friend void UIBattleReleaseAll();
     friend void UIBattleRemoveAll(u32 arg);
-    // Flat retail ctor symbol (CQuestWindow idiom): global free function with
-    // C linkage, friended for member access during construction.
-    friend CUIBattleManager* __ct__CUIBattleManager(CUIBattleManager* self,
-                                                    CScnNw4r* pScene,
-                                                    mtl::ALLOC_HANDLE handle);
-    CUIBattleManager();
     virtual ~CUIBattleManager();
-    void OnFileEvent();
 }; // size = 0xF0
 
 // 3-word member-function-pointer pool in retail .data (split1 unit).
-// parkMoveHandler copies this pmf ({0, -1, UIBattleMoveNoop}) into mMoveFunc.
-extern CUIBattleManager::MoveFunc lbl_eu_8052E0B4;
+// parkMoveHandler copies this pmf ({0, -1, no-op member}) into mMoveFunc.
+extern CUIBattleManager::MoveFunc UIBattleParkMovePmf;
 
 // Array-delete / delete helpers (C-ABI imports).
 
-// _reslist_base<IUIBattle> vtable (split1 .data). The reslist deleting
-// destructors store this into the object header (retail lbl_eu_8052E1B4).
-// Sized array decl so MWCC addresses it via lis/addi (retail form), not
-// small-data SDA21.
-extern const u8 lbl_eu_8052E1B4[0x10];

@@ -12,12 +12,8 @@
 // definitions (CActParamAnim, CScnItemModel) come through intact.
 // writeVec3f: unified to `void*` (the call sites consume r3; decl now matches
 // the definition in CActParamAnim.cpp) - no shield needed.
-#define func_8004B9D4 func_8004B9D4_hidden
-#define Scn_SetupAnimDefault Scn_SetupAnimDefault_1arg_hidden
 // Scn_FindCamItem: unified on `void*(void*, int)` (CActParamAnim.hpp was s32)
 // Scn_IsAnimActiveOrNull: unified on `bool(void*)` (CScn.cpp definition)
-#define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
-#define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -25,10 +21,6 @@
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
-#undef func_8004B9D4
-#undef Scn_SetupAnimDefault
-#undef lbl_eu_805262F0
-#undef lbl_eu_805262C8
 
 namespace cf { class CActParamAnimGame; class CfObjectMove; }
 
@@ -344,7 +336,7 @@ extern "C" bool setTurnScale(void*, f32);
 extern "C" void* Scn_FindCamItem(void*, int);
 extern "C" void ScnCamPointAt(void*, f32, void*, void*);
 extern "C" void* getAnimChain(void* self);
-extern "C" void func_8004B9D4(void* self, void* arg, u32, s32, u32);
+// func_8004B9D4: canonical CActParamAnim.hpp declaration (void*, int,int,int,int).
 extern "C" void __destroy_arr(void*, void*, int, int);
 // cf::CActParamAnimGame destructor address (defined in kyoshin/cf/CActParamAnimGame.cpp).
 extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
@@ -383,8 +375,9 @@ extern "C" void simSetLeafFlag4000(void* model, int flag);
 extern "C" void simMarkTree100000(void* model, int flag);
 extern "C" CModelDispObj* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" CScnItemModel* Scn_SetupAnim(u32 global, u32 id, int a, int b);
-extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 global, CModelDispNameParam* param);
-extern "C" CModelDispObj* Scn_InitGlobalA(u32 global, u8* mDataAdj, const char* name);
+// Loader helper defined in CScn.cpp; callers consume the model in r3.
+extern "C" void* Scn_InitGlobalA(u32 global, void* data, void* buf);
+
 extern "C" bool Scn_IsAnimActiveOrNull(void* obj);
 extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* move); // int return: callers store
 // into an s16 local, forcing the extsh into the home register at assignment.

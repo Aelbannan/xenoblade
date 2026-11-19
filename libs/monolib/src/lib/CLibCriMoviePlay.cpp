@@ -24,12 +24,7 @@ using namespace ml;
 #define sInstance lbl_eu_806656E0
 CLibCriMoviePlay* lbl_eu_806656E0 = nullptr;
 
-// Own retail-named data (defined at the bottom of this file, retail order).
-extern "C" {
-    extern u32 lbl_eu_8056CF48[48];          // __vt__16CLibCriMoviePlay (+ sub-vtable)
-    extern u32 __RTTI__16CLibCriMoviePlay[2];           // .sdata RTTI locator pair
-    extern const char lbl_eu_8052301C[0x34]; // wkUpdate status strings
-}
+extern u32 __vt__16CLibCriMoviePlay[]; // emitted by MWCC from the class
 
 // External globals from sdata2
 extern "C" {
@@ -86,15 +81,15 @@ extern "C" CLibCriMoviePlay* __ct__CLibCriMoviePlay(CLibCriMoviePlay* mem, const
     // Install the vtables into the CWorkThread slot (offset 0) and the
     // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
     CLibCriMoviePlayVptrView* vp = (CLibCriMoviePlayVptrView*)mem;
-    vp->vtPrimary = &lbl_eu_8056CF48[0];
-    vp->vtViCb = (u32*)((char*)&lbl_eu_8056CF48 + 0xA0);
+    vp->vtPrimary = __vt__16CLibCriMoviePlay;
+    vp->vtViCb = __vt__16CLibCriMoviePlay + 0x28;
 
     // Clear the active flag / filename length of all four entries (retail
     // keeps these stores even though memset below overwrites them).
     // Install the vtables into the CWorkThread slot (offset 0) and the
     // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
-    vp->vtPrimary = &lbl_eu_8056CF48[0];
-    vp->vtViCb = (u32*)((char*)&lbl_eu_8056CF48 + 0xA0);
+    vp->vtPrimary = __vt__16CLibCriMoviePlay;
+    vp->vtViCb = __vt__16CLibCriMoviePlay + 0x28;
 
     // Entry 0 explicitly, then walk entries 1..3 (retail keeps these stores
     // even though memset below overwrites them).
@@ -445,10 +440,10 @@ extern "C" bool renderMovie__16CLibCriMoviePlayFv(int id, const ml::CRect16& rec
 
 // ============================================================================
 // updateMovies (us-8045eeb0)
-// CLibCriMoviePlay::updateMovieTextures()
+// CLibCriMoviePlay::viBeforeDrawDone()
 // Updates texture buffers for all active movie entries
 // ============================================================================
-void CLibCriMoviePlay::updateMovieTextures() {
+void CLibCriMoviePlay::viBeforeDrawDone() {
     MovieEntry* entry = mEntries;
 
     for (u32 i = 0; i < 4; i++) {
@@ -640,7 +635,7 @@ void CLibCriMoviePlay::OnPauseTrigger(bool pause) {
 // ============================================================================
 void CLibCriMoviePlay::wkUpdate() {
     const char* str;
-    const char* table = lbl_eu_8052301C;
+    const char* table = "\x92\xe2\x8e\x7e\x92\x86\x00\x8d\xc4\x90\xb6\x8f\x80\x94\xf5\x92\x86\x00\x8d\xc4\x90\xb6\x92\x86\x00\x8d\xc4\x90\xb6\x8f\x49\x97\xb9\x00\x83\x47\x83\x89\x81\x5b\x94\xad\x90\xb6\x00\x00\x00\x00\x00\x00\x00";
     bool hasActive = false;
     MovieEntry* entry = &mEntries[0];
     u32 i;
@@ -788,14 +783,6 @@ bool CLibCriMoviePlay::wkStandbyLogout() {
     return false;
 }
 
-// ============================================================================
-// viBeginFrame (us-8045f400)
-// CDeviceVICb virtual override - thunk adjusts this by -0x1C4
-// ============================================================================
-void CLibCriMoviePlay::viBeginFrame() {
-    // Called every video frame - update movie textures
-    updateMovieTextures();
-}
 
 // ============================================================================
 // External linkage wrappers (called from CLibCri forwarding stubs)
@@ -972,8 +959,6 @@ stop:
     extern "C" void wkUpdate__16CLibCriMoviePlayFv();
     extern "C" bool wkStandbyLogout__16CLibCriMoviePlayFv();
 
-    void onMovieViBegin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self);
-
     // Sets the pause override flag on the movie matching id (id == -1
     // matches none). The player handle is loaded before evaluating the pause
     // conditions so the call argument is ready ahead of the branches.
@@ -1001,163 +986,10 @@ stop:
         }
     }
 
-    // Virtual thunks: handleViBeginFrame (viBeginFrame) is the subi+b thunk
-    // defined near the bottom of this file (thunk_452_dt/thunk_456 pattern);
-    // a C++ body gets erased because a tail call to the empty
-    // onMovieViBegin is indistinguishable from a plain return.
-
-    void forwardUpdateMovies__16CLibCriMoviePlayFv(CDeviceVICb* self) {
-        // Thunk for CDeviceVICb update: self is the +0x1C4 VICb subobject.
-        // Recover the full object from the typed vptr view's vtViCb slot.
-        CLibCriMoviePlayVptrView* vp =
-            (CLibCriMoviePlayVptrView*)((char*)self - 0x1C4);
-        ((CLibCriMoviePlay*)vp)->updateMovieTextures();
-    }
-
-    // Defined below its callers so the inliner cannot fold the empty body
-    // into the handleViBeginFrame thunk; dont_inline keeps the retail tail
-    // branch (`subi r3,r3,0x1C4; b onMovieViBegin`) from being folded away.
-#pragma push
-    void onMovieViBegin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        // Empty
-    }
-#pragma pop
-
 }
 
-// ===== BISECT D2: + blob def =====
-extern "C" const char lbl_eu_80523008[0x11] = "CLibCriMoviePlay";
-
-extern "C" const char lbl_eu_8052301C[0x34] = {
-    0x92, 0xE2, 0x8E, 0x7E, 0x92, 0x86, 0x00, 0x8D,
-    0xC4, 0x90, 0xB6, 0x8F, 0x80, 0x94, 0xF5, 0x92,
-    0x86, 0x00, 0x8D, 0xC4, 0x90, 0xB6, 0x92, 0x86,
-    0x00, 0x8D, 0xC4, 0x90, 0xB6, 0x8F, 0x49, 0x97,
-    0xB9, 0x00, 0x83, 0x47, 0x83, 0x89, 0x81, 0x5B,
-    0x94, 0xAD, 0x90, 0xB6, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-};
-
-// CDeviceVICb adjustor thunks (retail .text @0x8045F410 / @0x8045F400):
-// recover the full object from the +0x1C4 CDeviceVICb subobject and tail-call
-// the real body. High-level adjustor form (CLibCri.cpp precedent): the
-// "@N@"-prefixed retail symbols cannot be spelled in C++, so the placeholder
-// name is renamed by UNIT_RULES exact_renames (tools/postprocess_reloc_names.py).
-extern "C" void __dt__16CLibCriMoviePlayFv(void* self, int flag);
-extern "C" void thunk_452_dt(void* self, int flag) {
-    __dt__16CLibCriMoviePlayFv((char*)self - 0x1C4, flag);
+void CLibCriMoviePlay::viAfterDrawDone() {
 }
 
-extern "C" void handleViBeginFrame__16CLibCriMoviePlayFv(void* self) {
-    onMovieViBegin__16CLibCriMoviePlayFv((CLibCriMoviePlay*)((char*)self - 0x1C4));
-}
-#pragma auto_inline on
 
-// ===== Vtable + RTTI + locator (dissolved monolibdata2) =====
-// Foreign function words (retail-named; C-linkage decls emit the mangled
-// names verbatim). __RTTI__10IWorkEvent / __RTTI__11CWorkThread are NOT
-// declared here: under -RTTI on MWCC auto-generates those typeinfo symbols
-// and an extern "C" declaration collides (10322) - those two slots stay 0
-// and get UNIT_RULES inject_relocs (CDevice.o pattern).
-extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
-extern "C" int WorkEvent3__10IWorkEventFPv(void*);
-extern "C" int WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__16CLibCriMoviePlayFb(int);
-extern "C" int WorkEvent6__10IWorkEventFv();
-extern "C" int WorkEvent7__10IWorkEventFv();
-extern "C" int WorkEvent8__10IWorkEventFv();
-extern "C" int WorkEvent9__10IWorkEventFv();
-extern "C" int WorkEvent10__10IWorkEventFv();
-extern "C" int WorkEvent11__10IWorkEventFv();
-extern "C" int WorkEvent12__10IWorkEventFv();
-extern "C" int WorkEvent13__10IWorkEventFv();
-extern "C" int WorkEvent14__10IWorkEventFv();
-extern "C" int WorkEvent15__10IWorkEventFv();
-extern "C" int WorkEvent16__10IWorkEventFv();
-extern "C" int WorkEvent17__10IWorkEventFv();
-extern "C" int WorkEvent18__10IWorkEventFv();
-extern "C" int WorkEvent19__10IWorkEventFv();
-extern "C" int WorkEvent20__10IWorkEventFv();
-extern "C" int WorkEvent21__10IWorkEventFv();
-extern "C" int WorkEvent22__10IWorkEventFv();
-extern "C" int WorkEvent23__10IWorkEventFv();
-extern "C" int WorkEvent24__10IWorkEventFv();
-extern "C" int WorkEvent25__10IWorkEventFv();
-extern "C" int WorkEvent26__10IWorkEventFv();
-extern "C" int WorkEvent27__10IWorkEventFv();
-extern "C" int WorkEvent28__10IWorkEventFv();
-extern "C" int WorkEvent29__10IWorkEventFv();
-extern "C" int WorkEvent30__10IWorkEventFv();
-extern "C" int WorkEvent31__10IWorkEventFv();
-extern "C" void wkRender__11CWorkThreadFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" bool wkStandbyLogin__16CLibCriMoviePlayFv();
-extern "C" void updateMovieTextures__16CLibCriMoviePlayFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-extern "C" void viBeginFrame__11CDeviceVICbFv();
 
-// [.data] 0x8056CF48-0x8056D008 (0xC0): __vt__16CLibCriMoviePlay (40-slot
-// CWorkThread chain) followed by the CDeviceVICb sub-vtable (-0x1C4). Both
-// bases are __declspec(novtable), so the vtable is spelled by hand
-// (CLibG3d.cpp pattern); every word is an explicit &reloc so the object
-// reproduces the retail reloc names exactly.
-extern "C" u32 lbl_eu_8056CF48[48] = {
-    (u32)&__RTTI__16CLibCriMoviePlay, 0x00000000,
-    (u32)&__dt__16CLibCriMoviePlayFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__16CLibCriMoviePlayFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__16CLibCriMoviePlayFv,
-    (u32)&wkRender__11CWorkThreadFv, (u32)&wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__16CLibCriMoviePlayFv,
-    (u32)&wkStandbyLogout__16CLibCriMoviePlayFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-    // CDeviceVICb sub-vtable (this -0x1C4)
-    (u32)&__RTTI__16CLibCriMoviePlay, 0xFFFFFE3C,
-    (u32)&thunk_452_dt,
-    (u32)&forwardUpdateMovies__16CLibCriMoviePlayFv,
-    (u32)&handleViBeginFrame__16CLibCriMoviePlayFv,
-    (u32)&viBeginFrame__11CDeviceVICbFv,
-    (u32)&updateMovieTextures__16CLibCriMoviePlayFv,
-    (u32)&onMovieViBegin__16CLibCriMoviePlayFv,
-};
-
-// [.data] 0x8056D008-0x8056D028 (0x20): typeinfo / base-list block
-// ([type_info vtbl, 0x1C4], [__RTTI__10IWorkEvent, 0], [__RTTI__11CWorkThread, 0], [0, 0]).
-// The typeinfo word is the class's own RTTI record; the rest are the public
-// base list. The __RTTI__ records themselves are defined by the TUs that own
-// them, so this TU only references them - declared inside RTTIExterns because
-// a namespace-scope extern "C" decl avoids MWCC's implicit RTTI-on
-// declaration of the same name (10322).
-namespace RTTIExterns {
-extern "C" u32 __RTTI__10IWorkEvent[];
-extern "C" u32 __RTTI__11CWorkThread[];
-extern "C" u32 __RTTI__11CDeviceVICb[];
-}
-extern "C" u32 lbl_eu_8056D008[8] = {
-    (u32)&RTTIExterns::__RTTI__11CDeviceVICb, 0x000001C4,
-    (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0x00000000,
-    (u32)&RTTIExterns::__RTTI__11CWorkThread, 0x00000000,
-    0x00000000, 0x00000000,
-};
-
-// [.sdata] 0x80663798-0x806637A0 (0x8): RTTI locator pair
-// { class-name string, typeinfo block } referenced by both vtable halves.
-extern "C" u32 __RTTI__16CLibCriMoviePlay[2] = {
-    (u32)(const char*)lbl_eu_80523008,
-    (u32)(const u32*)lbl_eu_8056D008,
-};

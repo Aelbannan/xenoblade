@@ -6,6 +6,7 @@
 #include "kyoshin/menu/CMenuItemExchange.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CTaskGame.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include <revolution/GX.h>
 
@@ -183,7 +184,7 @@ extern "C" CMenuItemExchange* ItemEx_Create(CProcess* registParent, CScn* scene,
     if (lbl_eu_80664428 != 0) {
         return NULL;
     }
-    CMenuItemExchange* obj = new (allocate__Q23mtl10MemManagerFUlUl(
+    CMenuItemExchange* obj = new (mtl::MemManager::allocate(
         0x5124, reinterpret_cast<u32>(getWorkMem__17CWorkThreadSystemFv())))
         CMenuItemExchange(scene, arg);
     lbl_eu_80664428 = reinterpret_cast<u32>(obj);

@@ -7,6 +7,8 @@
 #include "monolib/math/CVec3.hpp"  // ml::CVec3 for alignAnimQuat (same-TU helper)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
+class CActParamAnim; // real retail class; owning declaration for global-scope users
+
 // Full object layout for C-linkage accessors
 struct CActParamAnimFull {
     u8 _00[0x10];
@@ -148,6 +150,7 @@ struct CActParamAnimStateView {
     u16 field4DC;               // +0x4DC
     u8 _pad_4DE[0x4E4 - 0x4DE]; // +0x4DE..+0x4E3
     u32 field4E4;               // +0x4E4
+
 };
 
 // Word-copy view of the sub-object returned by simGetLeafActData: the anim
@@ -312,7 +315,7 @@ extern "C" void saveParamShadow(CActParamData* self);
 extern "C" void clearParamTags(void* self);
 extern "C" void resetParamShorts(void* self);
 extern "C" int hasParamSubObjB(CActParamData* self);
-extern "C" void checkParamBlks(void* data);
+extern "C" int checkParamBlks(void* data);
 extern "C" void clearParamShadow(void* data);
 extern "C" void blendAnimHeading(CActParamAnim* self);
 extern "C" void updateLeafDist(CActParamAnim* self);
@@ -449,10 +452,157 @@ public:
     void mulVec3Y(float param_2);
     int getChainInt();
 
-private:
-    u8 _pad_04[0x08];      // +0x04..+0x0B
-    u32 mField0C;          // +0x0C: zero-initialized in ctor
-    CActParamData mChildData; // +0x10: embedded CActParamData sub-object
+public:
+    // Real retail layout. The whole state block is part of CActParamAnim;
+    // derived classes add only their own tail at +0x4E8.
+
+    u32 field04;                // +0x04
+    CActParamAnimOwner* owner08;  // +0x08: owner object
+    u32 field0C;                // +0x0C: flags
+    u8 mChildData10[0x24 - 0x10];   // +0x10..+0x23 (embedded CActParamData base, start)
+    f32 field24;                // +0x24 (anim scale, updateLeafDist)
+    u8 _pad_28[0x2C - 0x28];
+    s32 field2C;                // +0x2C (copied to field374 in switchSubAnim)
+    s32 field30;                // +0x30 (copied to field374 in dispatchAnimSlot)
+    u8 _pad_34[0x260 - 0x34];   // +0x34..+0x25F (rest of embedded CActParamData base)
+    u32 field260;               // +0x260 (flag word tested by testAnimBit5/13/16/18)
+    u8 _pad_264[0x26C - 0x264]; // +0x264..+0x26B
+    u8* field26C;               // +0x26C: eff request record (NULL = none)
+    u32 field270;               // +0x270
+    u32 field274;               // +0x274 (guard flag, blendAnimHeading)
+    u32 field278;               // +0x278
+    u32 field27C;               // +0x27C
+    u8 _pad_280[0x28C - 0x280]; // +0x280..+0x28B
+    u32 field28C;               // +0x28C (anim id used by func_8004E9EC dispatch)
+    u8 _pad_290[0x2A4 - 0x290]; // +0x290..+0x2A3
+    u32 field2A4;               // +0x2A4
+    u8 _pad_2A8[0x2B4 - 0x2A8];
+    f32 field2B4;               // +0x2B4 (start heading, sel==0)
+    u8 _pad_2B8[0x2BC - 0x2B8];
+    u32 field2BC;               // +0x2BC
+    u8 _pad_2C0[0x2EC - 0x2C0];
+    s16 field2EC;               // +0x2EC (start frame half, sel==0)
+    u8 _pad_2EE[0x2FC - 0x2EE];
+    u32 field2FC;               // +0x2FC
+    u8 _pad_300[0x304 - 0x300]; // +0x300..+0x303
+    f32 field304;               // +0x304 (sub-object anim value, updateLeafDist)
+    u8 _pad_308[0x334 - 0x308];
+    f32 field334;               // +0x334 (start heading, sel!=0)
+    u8 _pad_338[0x33C - 0x338];
+    u32 field33C;               // +0x33C
+    u8 _pad_340[0x36C - 0x340];
+    s16 field36C;               // +0x36C (start frame half, sel!=0)
+    u8 _pad_36E[0x370 - 0x36E];
+    s32 field370;               // +0x370
+    s32 field374;               // +0x374: anim counter (setAnimCounter)
+    s32 field378;               // +0x378
+    s32 field37C;               // +0x37C (guard counter, fireTwinCount)
+    f32 field380;               // +0x380
+    f32 field384;               // +0x384 (anim blend, fireBlendCust)
+    f32 field388;               // +0x388 (anim speed scale, tickAnimFrame)
+    f32 field38C;               // +0x38C (updateLeafDist)
+    f32 field390;               // +0x390: anim speed (tickAnimFrame stores here)
+    f32 field394;               // +0x394: anim speed
+    f32 field398;               // +0x398
+    f32 field39C;               // +0x39C
+    u8* object3A0;              // +0x3A0: attached sub-object
+    u32 state3A4;               // +0x3A4: sub-object state
+    f32 field3A8;               // +0x3A8
+    f32 field3AC;               // +0x3AC
+    f32 field3B0;               // +0x3B0
+    f32 field3B4;               // +0x3B4
+    f32 field3B8;               // +0x3B8
+    f32 field3BC;               // +0x3BC
+    f32 field3C0;               // +0x3C0
+    f32 field3C4;               // +0x3C4
+    f32 field3C8;               // +0x3C8
+    f32 field3CC;               // +0x3CC (anim direction x, func_8004E9EC)
+    f32 field3D0;               // +0x3D0 (anim direction y)
+    f32 field3D4;               // +0x3D4 (anim direction z, func_8004E9EC)
+    f32 field3D8;               // +0x3D8
+    f32 field3DC;               // +0x3DC
+    f32 field3E0;               // +0x3E0
+    f32 field3E4;               // +0x3E4
+    f32 field3E8;               // +0x3E8
+    f32 field3EC;               // +0x3EC
+    f32 field3F0;               // +0x3F0 (stored anim offset x)
+    f32 field3F4;               // +0x3F4
+    f32 field3F8;               // +0x3F8
+    f32 field3FC;               // +0x3FC (ground normal x)
+    f32 field400;               // +0x400
+    f32 field404;               // +0x404
+    f32 field408;               // +0x408
+    f32 field40C;               // +0x40C
+    f32 field410;               // +0x410
+    f32 field414;               // +0x414 (rotation quat x)
+    f32 field418;               // +0x418 (rotation quat y)
+    f32 field41C;               // +0x41C (rotation quat z)
+    f32 field420;               // +0x420 (rotation quat w)
+    f32 field424;               // +0x424 (turn axis x)
+    f32 field428;               // +0x428 (turn axis y)
+    f32 field42C;               // +0x42C (turn axis z)
+    f32 field430;               // +0x430
+    f32 field434;               // +0x434
+    f32 field438;               // +0x438
+    f32 field43C;               // +0x43C (turn radius, func_80053198)
+    f32 field440;               // +0x440
+    f32 field444;               // +0x444
+    f32 field448;               // +0x448 (updateLeafDist: anim blend accumulator)
+    f32 field44C;               // +0x44C
+    f32 field450;               // +0x450
+    f32 field454;               // +0x454
+    f32 field458;               // +0x458
+    f32 field45C;               // +0x45C (switchSubAnim blend reset)
+    f32 field460;               // +0x460
+    f32 field464;               // +0x464
+    f32 field468;               // +0x468
+    f32 field46C;               // +0x46C
+    f32 field470;               // +0x470
+    f32 field474;               // +0x474
+    f32 field478;               // +0x478
+    f32 field47C;               // +0x47C
+    f32 field480;               // +0x480
+    f32 field484;               // +0x484
+    f32 field488;               // +0x488: last anim value (stored as f32)
+    f32 field48C;               // +0x48C
+    f32 field490;               // +0x490
+    f32 field494;               // +0x494
+    u8 field498;                // +0x498
+    u8 _pad_499[0x49C - 0x499];
+    f32 field49C;               // +0x49C (snap position, func_8004E9EC)
+    f32 field4A0;               // +0x4A0
+    f32 field4A4;               // +0x4A4 (fallback anim ratio)
+    u32 field4A8;               // +0x4A8 (collision filter)
+    u32 field4AC;               // +0x4AC
+    u32 field4B0;               // +0x4B0 (tickAnimFrame: cleared each frame)
+    u32 field4B4;               // +0x4B4 (eff timer fallback when no owner)
+    u32 field4B8;               // +0x4B8 (anim id matched in fireOwnerIdGt)
+    u8 field4BC;                // +0x4BC
+    u8 field4BD;                // +0x4BD
+    u8 field4BE;                // +0x4BE
+    u8 field4BF;                // +0x4BF
+    u32 field4C0;               // +0x4C0 (eff object timer, func_8004DAE0)
+    u32 field4C4;               // +0x4C4
+    s32 field4C8;               // +0x4C8 (anim request/owner id, -1 = none)
+    f32 field4CC;               // +0x4CC
+    f32 field4D0;               // +0x4D0
+    s16 field4D4;               // +0x4D4 (signed anim guard, lha in retail)
+    s16 field4D6;               // +0x4D6 (frame counter)
+    s16 field4D8;               // +0x4D8 (anim-stay counter, tickAnimFrame)
+    u8 field4DA;                // +0x4DA
+    u8 _pad_4DB;                // +0x4DB
+    u16 field4DC;               // +0x4DC
+    u8 _pad_4DE[0x4E4 - 0x4DE]; // +0x4DE..+0x4E3
+    u32 field4E4;               // +0x4E4
+    // Contiguous triples are also addressed as vectors by the action code.
+    ml::CVec3& vec3A8()  { return *reinterpret_cast<ml::CVec3*>(&field3A8); }
+    ml::CVec3& vec3B4()  { return *reinterpret_cast<ml::CVec3*>(&field3B4); }
+    ml::CVec3& vec3C0()  { return *reinterpret_cast<ml::CVec3*>(&field3C0); }
+    ml::CVec3& vec3CC()  { return *reinterpret_cast<ml::CVec3*>(&field3CC); }
+    ml::CVec3& vec3D8()  { return *reinterpret_cast<ml::CVec3*>(&field3D8); }
+    ml::CVec3& vec3E4()  { return *reinterpret_cast<ml::CVec3*>(&field3E4); }
+    ml::CVec3& vec3F0()  { return *reinterpret_cast<ml::CVec3*>(&field3F0); }
+
 };
 
 // Same-TU helper (target us-80053ac8), forward-declared for solveHeadRate.
@@ -473,7 +623,7 @@ extern "C" void walkParamBlkB(void* self);
 extern "C" void* getSubObjPlus14(void* param);
 // resetParamSubB is a CActParamData member (CActParamData.hpp).
 extern "C" void flushParamPair(void* data, u32 flag);
-extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
+extern "C" void func_8004B9D4(void* self, int, int, int, int);
 extern "C" void switchSubAnim(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" void updateLeafDist(CActParamAnim* self);
 extern "C" u32 ScnRes_ResolveGroundHeight(void* a, void* b, u32 c, u32 d, u32 e, u32 f,

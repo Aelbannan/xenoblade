@@ -19,6 +19,27 @@ namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; class ArcR
 // releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor (see CItemBoxLine.hpp).
 
 
+// Item record shared by the item-box grid/equip/info widgets: packed kind
+// word, 16-bit class/price key, tier byte and state/flag byte. This is the
+// object handed out by CItem_kindPtr and by CItemImpl::vf2C.
+struct CItemBoxItem {
+    u32 mWord;   // +0x00
+    u16 mFlags;  // +0x04
+    u8 mTier;    // +0x06
+    u8 mState;   // +0x07
+};
+
+// Character-param entry returned by CtrlObjectParam_GetCharEntry. The six
+// s16 values at +0x1C..+0x27 are the equipped item ids for the six slots
+// (the weapon sits at +0x26), and +0x3534 is the counter/arts area. Shared by
+// the item-box grid, equip box, info popup and line widgets.
+struct CItemBoxCharEntry {
+    u8 _00[0x1C];
+    s16 slotIds[6];          // +0x1C..+0x27
+    u8 _28[0x3534 - 0x28];
+    u8 counterArea[0x8A0];   // +0x3534
+};
+
 // Opaque item sub-record returned by CItemImpl::vf2C: a u32 at +0 and a
 // u16 flag field at +4 whose bits [16..27] select the equip state.
 struct CItemBoxSubRecord {

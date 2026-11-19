@@ -65,7 +65,7 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);

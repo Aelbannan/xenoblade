@@ -8,7 +8,8 @@
 // objdiff can pair them exactly with the retail object.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
-#include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+
 #include "kyoshin/cf/CtrlMovePC.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -18,6 +19,11 @@
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 using cf::CCtrlMovePC;
+
+typedef int (CCtrlMovePC::*MoveFn)();
+struct MoveFnTable {
+    MoveFn mEntries[36];
+};
 
 // ---- external runtime / engine symbols (exact retail names) ----
 extern "C" {
@@ -142,22 +148,14 @@ CCtrlMovePC::CCtrlMovePC(void* owner, void* obj) : CCtrlMoveBase(owner) {
     mTask = 0;
 }
 
-// Sub-object at the game-sub-manager slot +0x2F2C (cf. CCtrlMoveMgr2F2C in
-// CtrlMoveBase.hpp): the node pointer is reached through this TU-local view
-// instead of raw byte arithmetic.
-struct CCGMNodeView {
-    u8 _pad00[0x2f2c];
-    u32 node00;
-};
 
-// ============================================================================
 // movePcReleaseTaskReset - release active task, reset base (0x60 bytes)
 // ============================================================================
 extern "C" void movePcReleaseTaskReset(CCtrlMovePC* self) {
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
-            void* p = &((CCGMNodeView*)gm)->node00;
+            void* p = &((cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2f2c))->field_0x00;
             if (p != 0) {
                 releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
             }
@@ -258,13 +256,7 @@ struct CfWrapMoveAnchor {
     u8 moveObj;
 };
 
-// Battle-state byte at manager +0x1AA (retail lbz; range gate [1, 0x18]).
-struct CBattleMgrStateView {
-    u8 _pad00[0x1aa];
-    u8 state1AA;
-};
 
-// ============================================================================
 // movePcTopTickDispatch - top-level tick: query object, gate on battle state, run the
 // state-machine dispatch loop (0xAC).
 // ============================================================================
@@ -277,7 +269,7 @@ extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
 
     // Ternary materialization: MWCC emits li 0 / cmplwi / blt / cmplwi /
     // bgt / li 1 for the nested ternary form (avoids the range-fold).
-    int battleState = ((CBattleMgrStateView*)getInstance__Q22cf14CBattleManagerFv())->state1AA;
+    int battleState = ((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.unk0[2];
     bool inBattle = (u32)battleState >= 1 && (u32)battleState <= 0x18;
     if (inBattle) {
         return;
@@ -990,9 +982,9 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
 
     s16 cnt = self->mArr124[7];              // 0x132 tick counter
     self->mArr124[7] = (s16)(cnt + 1);
-    const MoveFn* tbl = &lbl_eu_80532B60;
+    const MoveFnTable* tbl = (const MoveFnTable*)&lbl_eu_80532B60;
     if (cnt > 12) {
-        self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xcc);
+        self->mStateFunc = tbl->mEntries[17];
     }
 
     u32 f4C = self->mFlags4C;
@@ -1022,7 +1014,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 }
             }
             if (bail != 0) {
-                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xd8);
+                self->mStateFunc = tbl->mEntries[18];
                 movePcUpdateFollow(self);
                 return 0;
             }
@@ -1034,7 +1026,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 speed = lbl_eu_80667B6C;
             }
             if (self->mDistFC >= lbl_eu_80667BC4) {
-                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xe4);
+                self->mStateFunc = tbl->mEntries[19];
             }
         }
     } else if (f4C & 0x00000400u) {
@@ -1046,17 +1038,17 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             lim = lbl_eu_80667C00;
         }
         if (self->mDistFC >= lim) {
-            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xf0);
+            self->mStateFunc = tbl->mEntries[20];
         }
     } else if (f4C & 0x00010000u) {
         speed = lbl_eu_80667BA8 * (f32)self->mShort122;
         if (self->mDistFC >= speed) {
-            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xfc);
+            self->mStateFunc = tbl->mEntries[21];
         }
     } else {
         speed = lbl_eu_80667B68;
         if (self->mDistFC >= lbl_eu_80667B70) {
-            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x108);
+            self->mStateFunc = tbl->mEntries[22];
         }
     }
 
@@ -1176,7 +1168,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                             if (self->mArr124[17] <= 0) {
                                 u32 g = self->mFlags4C;
                                 self->mFlags4C = (g & ~0x380u) | 0x8u;
-                                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x114);
+                                self->mStateFunc = tbl->mEntries[23];
                                 self->mArr124[7] = 0;
                             }
                         }
@@ -1207,7 +1199,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                         self->mArr124[1] = (s16)(c + 1);
                         if (c >= 0xa) {
                             self->mArr124[1] = 0;
-                            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x120);
+                            self->mStateFunc = tbl->mEntries[24];
                             moved = 1;
                         }
                     }
@@ -1225,7 +1217,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 self->mArr124[2] = (s16)(c + 1);
                 if (c >= 0x1e) {
                     self->mArr124[2] = 0;
-                    self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x12c);
+                    self->mStateFunc = tbl->mEntries[25];
                     moved = 1;
                 }
             }
@@ -1268,7 +1260,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
 // ============================================================================
 extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     typedef int (cf::CCtrlMovePC::*MoveFn)();
-    const MoveFn* tbl = &lbl_eu_80532B60;   // ptmf constant table
+    const MoveFnTable* tbl = (const MoveFnTable*)&lbl_eu_80532B60;   // ptmf constant table
 
     if ((self->mFlags4C & 0x800000u) == 0) {
         self->mFlags4C |= 0x00800000u;
@@ -1291,7 +1283,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         // Retail interleaves the ptmf-table address calc between the array
         // zeroing stores, so the assignment sits lexically after [17].
         self->mArr124[17] = 0;
-        const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x30);
+        const MoveFn* sel = &tbl->mEntries[4];
         self->mStateFunc = *sel;
         self->mArr124[16] = 0;
         self->mArr124[15] = 0;
@@ -1580,21 +1572,21 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
             if (((cf::CObjectState*)((char*)self->mPlayer + 0x3e9c))->checkStateFlags(0x100) != 0) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                    const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x3c);
+                    const MoveFn* sel = &tbl->mEntries[5];
                     self->mStateFunc = *sel;
                     self->mArr124[7] = 0;
                 }
             } else if (self->mFlags4C & 0x100u || self->mDistFC >= lbl_eu_80667B80) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                    const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x48);
+                    const MoveFn* sel = &tbl->mEntries[6];
                     self->mStateFunc = *sel;
                     self->mArr124[7] = 0;
                 }
             } else if ((self->mFlags50 & 0x100u) && self->mDistFC < lbl_eu_80667B84) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                    const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x54);
+                    const MoveFn* sel = &tbl->mEntries[7];
                     self->mStateFunc = *sel;
                     self->mArr124[7] = 0;
                 }
@@ -1606,14 +1598,14 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                     if (d4.magnitude() < lbl_eu_80667B88) {   // 16
                         if (self->mArr124[17] <= 0) {
                             self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                            const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x60);
+                            const MoveFn* sel = &tbl->mEntries[8];
                             self->mStateFunc = *sel;
                             self->mArr124[7] = 0;
                         }
                     } else if ((self->mFlags4C & 0x40000u) && self->mDistFC < lbl_eu_80667B8C) {  // 40
                         if (self->mArr124[17] <= 0) {
                             self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                            const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x6c);
+                            const MoveFn* sel = &tbl->mEntries[9];
                             self->mStateFunc = *sel;
                             self->mArr124[7] = 0;
                         }
@@ -1624,7 +1616,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                             self->mArr124[9] = 0;
                             if (self->mArr124[17] <= 0) {
                                 self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                                const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x78);
+                                const MoveFn* sel = &tbl->mEntries[10];
                                 self->mStateFunc = *sel;
                                 self->mArr124[7] = 0;
                             }
@@ -1641,7 +1633,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                                     self->mArr124[10] = 0;
                                     if (self->mArr124[17] <= 0) {
                                         self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
-                                        const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x84);
+                                        const MoveFn* sel = &tbl->mEntries[11];
                                         self->mStateFunc = *sel;
                                         self->mArr124[7] = 0;
                                     }
@@ -2318,12 +2310,12 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
 // ============================================================================
 extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
     typedef int (cf::CCtrlMovePC::*MoveFn)();
-    const MoveFn* tbl = &lbl_eu_80532B60;   // ptmf constant table
+    const MoveFnTable* tbl = (const MoveFnTable*)&lbl_eu_80532B60;   // ptmf constant table
     int flag = 1;
     int blocked = 0;
 
     if (self->mFlags50 & 0x00010000u) {
-        self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x180);
+        self->mStateFunc = tbl->mEntries[32];
         flag = 0;
     } else {
         u32 f = self->mFlags4C;
@@ -2332,11 +2324,11 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
                 && ((((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u) == 0)
                 && ((((cf::CfObjWrap*)self->mPlayer)->mSub->mField4EC & 0x100u) != 0)) {
                 if (self->mDistFC > lbl_eu_80667B90) {
-                    self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x18c);
+                    self->mStateFunc = tbl->mEntries[33];
                     flag = 0;
                 }
             } else if (self->mDistFC > lbl_eu_80667B68) {
-                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x198);
+                self->mStateFunc = tbl->mEntries[34];
                 flag = 0;
             }
         } else if (f & 0x00000400u) {
@@ -2378,7 +2370,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
                 lim = lbl_eu_80667C3C;
             }
             if (self->mDistFC > lim) {
-                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x1a4);
+                self->mStateFunc = tbl->mEntries[35];
                 flag = 0;
             }
         } else {
@@ -2386,11 +2378,11 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
                 // Limit arithmetic runs in double precision in retail.
                 f64 limit = (f64)lbl_eu_80667BA8 * self->mShort122 + (f64)lbl_eu_80667BDC;
                 if (self->mDistFC > limit) {
-                    self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x1b0);
+                    self->mStateFunc = tbl->mEntries[36];
                     flag = 0;
                 }
             } else if (self->mDistFC > lbl_eu_80667BA8) {
-                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x1bc);
+                self->mStateFunc = tbl->mEntries[37];
                 flag = 0;
             }
         }

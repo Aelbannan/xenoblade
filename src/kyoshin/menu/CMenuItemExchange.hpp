@@ -106,7 +106,6 @@ extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
 class CProcess;
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names).
@@ -118,7 +117,7 @@ extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 // Input-handler callees (retail unmangled names). isClassicController keeps the
 // u32 return declared by CItemBoxGrid.hpp (included above) - do not redeclare.
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int MenuTutorialIsCreated();
 
 // Move()/phase-handler callees (retail unmangled names).

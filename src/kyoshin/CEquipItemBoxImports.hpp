@@ -221,17 +221,9 @@ struct CEquipItemBoxSlotTable {
     CEquipItemBoxSlotDef slots[6];
 };
 
-/* Item object returned by CtrlObjectParam_GetCharEntry: 6 slot-id shorts at 0x1c..0x26
-   supply the item ids patched into the slot table by findEIBEquipSlot. */
-struct CEquipItemBoxItemView {
-    u8 _pad00[0x1c];
-    s16 field_1c;   // 0x1c
-    s16 field_1e;   // 0x1e
-    s16 field_20;   // 0x20
-    s16 field_22;   // 0x22
-    s16 field_24;   // 0x24
-    s16 field_26;   // 0x26
-};
+/* The CtrlObjectParam_GetCharEntry item list is CItemBoxCharEntry in
+   CItemBoxInfo.hpp; its six s16 slotIds at +0x1C..+0x27 supply the ids
+   patched into the slot table by findEIBEquipSlot. */
 
 // 36-byte equipment-slot table (data import, same .data block as the string pool).
 extern CEquipItemBoxSlotTable lbl_eu_8050EF90;

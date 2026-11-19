@@ -26,7 +26,7 @@
 // C++ mangling inside the identifier). Declared extern "C" so MWCC emits the
 // retail reloc names verbatim (same scheme as CfTFile.hpp / code_800A75FC.hpp).
 extern "C" {
-void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void BgTex_Release_3D9C(CBgTex* self);
 void teardown(CTitleAHelp* self);
 void CfRes_getInstPtrBC();

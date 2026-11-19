@@ -5,6 +5,7 @@
 // CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/action/CActParamData.hpp"
+#include "kyoshin/action/CActParamAnim.hpp"
 
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
 #include "monolib/util/FixStr.hpp"
@@ -165,59 +166,59 @@ struct CActParamAnimView {
 };
 // alias removed - CActParamAnimView is the view type
 
-extern "C" void actAnimVt40(void* self) { ((CActParamAnimView*)self)->fireSpeedOkGt(); }
-extern "C" void actAnimVt38(void* self) { ((CActParamAnimView*)self)->startUnfinishedAnim(); }
-extern "C" void actAnimVt3C(void* self) { ((CActParamAnimView*)self)->startFinishedAnim(); }
-extern "C" void actAnimVt44(void* self) { ((CActParamAnimView*)self)->fireAnimParam(); }
-extern "C" void actAnimVt48(void* self) { ((CActParamAnimView*)self)->__vt_48(); }
-extern "C" void actAnimVt4C(void* self) { ((CActParamAnimView*)self)->startOwnerFlag8Anim(); }
-extern "C" void actAnimVt50(void* self) { ((CActParamAnimView*)self)->startOwnerFlag2Anim(); }
-extern "C" void actAnimVt58(void* self) { ((CActParamAnimView*)self)->stepAnimState(); }
-extern "C" void actAnimVt20(void* self) { ((CActParamAnimView*)self)->startFlag2000Anim(); }
-extern "C" void actAnimVt24(void* self) { ((CActParamAnimView*)self)->startFlag0800Anim(); }
-extern "C" void actAnimVt28(void* self) { ((CActParamAnimView*)self)->startFlag0400Anim(); }
-extern "C" void actAnimVt2C(void* self) { ((CActParamAnimView*)self)->startFlag1000Anim(); }
-extern "C" void actAnimVt5C(void* self) { ((CActParamAnimView*)self)->fireCountGate(); }
-extern "C" void actAnimVt60(void* self) { ((CActParamAnimView*)self)->fireWord378Gt(); }
-extern "C" void actAnimVt64(void* self) { ((CActParamAnimView*)self)->func_8004F884(); }
+extern "C" void actAnimVt40(void* self) { ((CActParamAnim*)self)->fireSpeedOkGt(); }
+extern "C" void actAnimVt38(void* self) { ((CActParamAnim*)self)->startUnfinishedAnim(); }
+extern "C" void actAnimVt3C(void* self) { ((CActParamAnim*)self)->startFinishedAnim(); }
+extern "C" void actAnimVt44(void* self) { ((CActParamAnim*)self)->fireAnimParam(); }
+extern "C" void actAnimVt48(void* self) { ((CActParamAnim*)self)->__vt_48(); }
+extern "C" void actAnimVt4C(void* self) { ((CActParamAnim*)self)->startOwnerFlag8Anim(); }
+extern "C" void actAnimVt50(void* self) { ((CActParamAnim*)self)->startOwnerFlag2Anim(); }
+extern "C" void actAnimVt58(void* self) { ((CActParamAnim*)self)->stepAnimState(); }
+extern "C" void actAnimVt20(void* self) { ((CActParamAnim*)self)->startFlag2000Anim(); }
+extern "C" void actAnimVt24(void* self) { ((CActParamAnim*)self)->startFlag0800Anim(); }
+extern "C" void actAnimVt28(void* self) { ((CActParamAnim*)self)->startFlag0400Anim(); }
+extern "C" void actAnimVt2C(void* self) { ((CActParamAnim*)self)->startFlag1000Anim(); }
+extern "C" void actAnimVt5C(void* self) { ((CActParamAnim*)self)->fireCountGate(); }
+extern "C" void actAnimVt60(void* self) { ((CActParamAnim*)self)->fireWord378Gt(); }
+extern "C" void actAnimVt64(void* self) { ((CActParamAnim*)self)->func_8004F884(); }
 extern "C" void actAnimVt68(void* self) { ((CActParamAnimView*)self)->fireBlendDflt(); }
-extern "C" void actAnimVt6C(void* self) { ((CActParamAnimView*)self)->fireParamGate(); }
-extern "C" void actAnimVt70(void* self) { ((CActParamAnimView*)self)->fireBlendCust(); }
-extern "C" void actAnimVt74(void* self) { ((CActParamAnimView*)self)->startIfActive(); }
-extern "C" void actAnimVt78(void* self) { ((CActParamAnimView*)self)->__vt_78(); }
-extern "C" void actAnimVt9C(void* self) { ((CActParamAnimView*)self)->fireTwinCount(); }
-extern "C" void callAnimFrame(void* self) { (void)((CActParamAnimView*)self)->isAnimFrameActive(); }
-extern "C" void callAnimTrans(void* self) { (void)((CActParamAnimView*)self)->isAnimTransActive(); }
-extern "C" void callAnimEffect(void* self) { (void)((CActParamAnimView*)self)->isAnimEffectActive(); }
-extern "C" void actAnimVtC8(void* self) { ((CActParamAnimView*)self)->fireFlag4D4Gt(); }
-extern "C" void actAnimVtCC(void* self) { ((CActParamAnimView*)self)->fire4D4ZeroGt(); }
-extern "C" void callAnimChain(void* self) { (void)((CActParamAnimView*)self)->isAnimChainActive(); }
-extern "C" void callAnimLoop(void* self) { (void)((CActParamAnimView*)self)->isAnimLoopActive(); }
-extern "C" void callAnimMotion(void* self) { (void)((CActParamAnimView*)self)->isAnimMotionActive(); }
-extern "C" void callAnimBlend(void* self) { (void)((CActParamAnimView*)self)->isAnimBlendActive(); }
+extern "C" void actAnimVt6C(void* self) { ((CActParamAnim*)self)->fireParamGate(); }
+extern "C" void actAnimVt70(void* self) { ((CActParamAnim*)self)->fireBlendCust(); }
+extern "C" void actAnimVt74(void* self) { ((CActParamAnim*)self)->startIfActive(); }
+extern "C" void actAnimVt78(void* self) { ((CActParamAnim*)self)->__vt_78(); }
+extern "C" void actAnimVt9C(void* self) { ((CActParamAnim*)self)->fireTwinCount(); }
+extern "C" void callAnimFrame(void* self) { (void)((CActParamAnim*)self)->isAnimFrameActive(); }
+extern "C" void callAnimTrans(void* self) { (void)((CActParamAnim*)self)->isAnimTransActive(); }
+extern "C" void callAnimEffect(void* self) { (void)((CActParamAnim*)self)->isAnimEffectActive(); }
+extern "C" void actAnimVtC8(void* self) { ((CActParamAnim*)self)->fireFlag4D4Gt(); }
+extern "C" void actAnimVtCC(void* self) { ((CActParamAnim*)self)->fire4D4ZeroGt(); }
+extern "C" void callAnimChain(void* self) { (void)((CActParamAnim*)self)->isAnimChainActive(); }
+extern "C" void callAnimLoop(void* self) { (void)((CActParamAnim*)self)->isAnimLoopActive(); }
+extern "C" void callAnimMotion(void* self) { (void)((CActParamAnim*)self)->isAnimMotionActive(); }
+extern "C" void callAnimBlend(void* self) { (void)((CActParamAnim*)self)->isAnimBlendActive(); }
 
-extern "C" void callAnimBlendW(void* self, u32 a, u32 b) { ((CActParamAnimView*)self)->startRandAnim(a, (u32)(u16)b); }
-extern "C" void actAnimSlot01(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 1); }
-extern "C" void actAnimSlot02(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 2); }
-extern "C" void actAnimSlot32(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x20); }
-extern "C" void actAnimSlot33(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x21); }
-extern "C" void actAnimSlot34(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x22); }
-extern "C" void actAnimSlot35(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x23); }
-extern "C" void actAnimSlot36(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x24); }
-extern "C" void actAnimSlot37(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x25); }
-extern "C" void actAnimSlot38(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x26); }
-extern "C" void actAnimSlot39(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x27); }
-extern "C" void actAnimSlot40(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x28); }
-extern "C" void actAnimSlot41(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x29); }
-extern "C" void actAnimSlot42(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2a); }
-extern "C" void actAnimSlot43(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2b); }
-extern "C" void actAnimSlot44(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2c); }
-extern "C" void actAnimSlot45(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2d); }
-extern "C" void actAnimSlot46(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2e); }
-extern "C" void actAnimSlot47(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x2f); }
-extern "C" void callAnimMode0(void* self, u32 a) { ((CActParamAnimView*)self)->fireOwnerIdGt(a, 0); }
-extern "C" void callAnimMode1(void* self, u32 a) { ((CActParamAnimView*)self)->fireOwnerIdGt(a, 1); }
-extern "C" void callAnimMode2(void* self, u32 a) { ((CActParamAnimView*)self)->fireOwnerIdGt(a, 2); }
+extern "C" void callAnimBlendW(void* self, u32 a, u32 b) { ((CActParamAnim*)self)->startRandAnim(a, (u32)(u16)b); }
+extern "C" void actAnimSlot01(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 1); }
+extern "C" void actAnimSlot02(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 2); }
+extern "C" void actAnimSlot32(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x20); }
+extern "C" void actAnimSlot33(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x21); }
+extern "C" void actAnimSlot34(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x22); }
+extern "C" void actAnimSlot35(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x23); }
+extern "C" void actAnimSlot36(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x24); }
+extern "C" void actAnimSlot37(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x25); }
+extern "C" void actAnimSlot38(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x26); }
+extern "C" void actAnimSlot39(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x27); }
+extern "C" void actAnimSlot40(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x28); }
+extern "C" void actAnimSlot41(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x29); }
+extern "C" void actAnimSlot42(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x2a); }
+extern "C" void actAnimSlot43(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x2b); }
+extern "C" void actAnimSlot44(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x2c); }
+extern "C" void actAnimSlot45(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x2d); }
+extern "C" void actAnimSlot46(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x2e); }
+extern "C" void actAnimSlot47(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x2f); }
+extern "C" void callAnimMode0(void* self, u32 a) { ((CActParamAnim*)self)->fireOwnerIdGt(a, 0); }
+extern "C" void callAnimMode1(void* self, u32 a) { ((CActParamAnim*)self)->fireOwnerIdGt(a, 1); }
+extern "C" void callAnimMode2(void* self, u32 a) { ((CActParamAnim*)self)->fireOwnerIdGt(a, 2); }
 // Boolean getters; retail still materializes a selector in r5 before the
 // virtual call (vt+0xB0 scale / 0xB4 rotate / 0xAC update).
 extern "C" void callAnimScale0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimScaleActive(a, 0); }
@@ -229,42 +230,42 @@ extern "C" void callAnimRot1(void* self, u32 a) { ((CActParamAnimView*)self)->is
 extern "C" void callAnimUpdate0(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 0); }
 extern "C" void callAnimUpdate1(void* self, u32 a) { ((CActParamAnimView*)self)->isAnimUpdateActive(a, 1); }
 
-extern "C" void actAnimVt90(void* self) { ((CActParamAnimView*)self)->fireAngleBand(); }
-extern "C" void actAnimVt94(void* self) { ((CActParamAnimView*)self)->fireAngleHiGt(); }
-extern "C" void actAnimVt30(void* self) { ((CActParamAnimView*)self)->fireSpeedGate(); }
-extern "C" int actAnimSlot03(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 3); }
-extern "C" int actAnimSlot04(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 4); }
-extern "C" int actAnimSlot05(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 5); }
-extern "C" int actAnimSlot06(void* self, int a) { return ((CActParamAnimView*)self)->fireTimerGate((u32)a, 6); }
-extern "C" int actAnimSlot07(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 7); }
-extern "C" int actAnimSlot08(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 8); }
-extern "C" int actAnimSlot09(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 9); }
-extern "C" int actAnimSlot10(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 10); }
-extern "C" int actAnimSlot11(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 11); }
-extern "C" int actAnimSlot12(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 12); }
-extern "C" int actAnimSlot13(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 13); }
-extern "C" int actAnimSlot14(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 14); }
-extern "C" int actAnimSlot15(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 15); }
-extern "C" int actAnimSlot16(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 16); }
-extern "C" int actAnimSlot17(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 17); }
-extern "C" int actAnimSlot19(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 19); }
-extern "C" int actAnimSlot20(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 20); }
-extern "C" int actAnimSlot21(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 21); }
-extern "C" int actAnimSlot22(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 22); }
-extern "C" int actAnimSlot23(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 23); }
-extern "C" int actAnimSlot24(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 24); }
-extern "C" int actAnimSlot25(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 25); }
-extern "C" int actAnimSlot26(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 26); }
-extern "C" int actAnimSlot27(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 27); }
-extern "C" int actAnimSlot28(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 28); }
-extern "C" int actAnimSlot29(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 29); }
-extern "C" int actAnimSlot30(void* self, int a) { return ((CActParamAnimView*)self)->fireTimerGate((u32)a, 30); }
-extern "C" int actAnimSlot31(void* self, u32 a) { return ((CActParamAnimView*)self)->fireTimerGate(a, 31); }
+extern "C" void actAnimVt90(void* self) { ((CActParamAnim*)self)->fireAngleBand(); }
+extern "C" void actAnimVt94(void* self) { ((CActParamAnim*)self)->fireAngleHiGt(); }
+extern "C" void actAnimVt30(void* self) { ((CActParamAnim*)self)->fireSpeedGate(); }
+extern "C" int actAnimSlot03(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 3); }
+extern "C" int actAnimSlot04(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 4); }
+extern "C" int actAnimSlot05(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 5); }
+extern "C" int actAnimSlot06(void* self, int a) { return ((CActParamAnim*)self)->fireTimerGate((u32)a, 6); }
+extern "C" int actAnimSlot07(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 7); }
+extern "C" int actAnimSlot08(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 8); }
+extern "C" int actAnimSlot09(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 9); }
+extern "C" int actAnimSlot10(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 10); }
+extern "C" int actAnimSlot11(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 11); }
+extern "C" int actAnimSlot12(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 12); }
+extern "C" int actAnimSlot13(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 13); }
+extern "C" int actAnimSlot14(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 14); }
+extern "C" int actAnimSlot15(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 15); }
+extern "C" int actAnimSlot16(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 16); }
+extern "C" int actAnimSlot17(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 17); }
+extern "C" int actAnimSlot19(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 19); }
+extern "C" int actAnimSlot20(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 20); }
+extern "C" int actAnimSlot21(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 21); }
+extern "C" int actAnimSlot22(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 22); }
+extern "C" int actAnimSlot23(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 23); }
+extern "C" int actAnimSlot24(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 24); }
+extern "C" int actAnimSlot25(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 25); }
+extern "C" int actAnimSlot26(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 26); }
+extern "C" int actAnimSlot27(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 27); }
+extern "C" int actAnimSlot28(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 28); }
+extern "C" int actAnimSlot29(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 29); }
+extern "C" int actAnimSlot30(void* self, int a) { return ((CActParamAnim*)self)->fireTimerGate((u32)a, 30); }
+extern "C" int actAnimSlot31(void* self, u32 a) { return ((CActParamAnim*)self)->fireTimerGate(a, 31); }
 
-extern "C" void actAnimVt34(void* self) { ((CActParamAnimView*)self)->fireBlendGate(); }
-extern "C" void actAnimVt98(void* self) { ((CActParamAnimView*)self)->fireOpenGate1(); }
-extern "C" void actAnimVt88(void* self) { ((CActParamAnimView*)self)->fireAngleGate(); }
-extern "C" void actAnimVt8C(void* self) { ((CActParamAnimView*)self)->fireAngleLoGt(); }
+extern "C" void actAnimVt34(void* self) { ((CActParamAnim*)self)->fireBlendGate(); }
+extern "C" void actAnimVt98(void* self) { ((CActParamAnim*)self)->fireOpenGate1(); }
+extern "C" void actAnimVt88(void* self) { ((CActParamAnim*)self)->fireAngleGate(); }
+extern "C" void actAnimVt8C(void* self) { ((CActParamAnim*)self)->fireAngleLoGt(); }
 
 
 // View over sub-object A/B for the ref-entry reads in getParamRefS16A/B:
@@ -458,7 +459,8 @@ extern "C" void* getLiveParamPtr(CActParamData* self) {
 // flushParamPair: flush the pending tag/value pair of sub-object A (sel == 0)
 // or B (sel != 0), then notify the callback object at 0x24 via its vt+0x28
 // slot with the data object, the two vals words, and the getAnimTick tick.
-extern "C" void flushParamPair(CActParamData* self, int sel) {
+extern "C" void flushParamPair(void* data, u32 sel) {
+    CActParamData* self = static_cast<CActParamData*>(data);
     // Word view of the selected 0x80-byte reset block (A at 0x260, B at 0x2E0).
     u32* blk = sel != 0 ? (u32*)&self->mField2E0 : (u32*)&self->mA260;
     if ((blk[0] & 0x80000) != 0) {
@@ -659,8 +661,6 @@ extern "C" bool hasParamByteVal(CActParamByteList* list, u8 value) {
     } while (0)
 
 void updateParamFloats(CActParamData* self, float arg1, float arg2);
-extern "C" int evalParamChain(CActParamData* data, u32* out,
-                               ActParamT1Src* rec, u8 initFlag, u32 gate);
 extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 initFlag,
                   u32 gate) {
     if (data->mByte216 == 0) {
@@ -720,7 +720,7 @@ extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 i
         res = 0;
     foundB:
         data->mField314 = res;
-        evalParamChain(data, out, rec, data->mByte216, gate);
+        evalParamChain(reinterpret_cast<u8*>(data), out, reinterpret_cast<u32>(rec), data->mByte216, gate);
         data->mFloat330 = lbl_eu_80665F80;
         data->mFloat334 = lbl_eu_80665F80;
         data->mField338 = 0;
@@ -755,7 +755,7 @@ extern "C" u32 evalParamBySlot(CActParamData* data, u32* out, u32 paramIdx, u8 i
     res = 0;
 foundA:
     data->mA294 = res;
-    evalParamChain(data, out, rec, data->mByte216, gate);
+    evalParamChain(reinterpret_cast<u8*>(data), out, reinterpret_cast<u32>(rec), data->mByte216, gate);
     data->mA2B0 = lbl_eu_80665F80;
     data->mFloat2B4 = lbl_eu_80665F80;
     data->mA2B8 = 0;
@@ -868,8 +868,9 @@ extern "C" void walkParamRecords(CActParamData* self, ActParamD3CMember* member)
 // - Confirmed semantics: active==0 (NOT !=0) gates the bit10 sub-select;
 //   retail fail blocks are DUPLICATED per guard (two separate early-return
 //   guards, not one shared tail); sub uses li0/tests/li1 form, not ternary.
-extern "C" int evalParamChain(CActParamData* data, u32* out,
-                               ActParamT1Src* rec, u8 initFlag, u32 gate) {
+extern "C" u32 evalParamChain(u8* dataRaw, u32* out, u32 recRaw, u32 initFlag, u32 gate) {
+    CActParamData* data = reinterpret_cast<CActParamData*>(dataRaw);
+    ActParamT1Src* rec = reinterpret_cast<ActParamT1Src*>(recRaw);
     if (data->mByte216 == 0) {
         data->mByte216 = initFlag;
     }
@@ -1950,7 +1951,7 @@ extern "C" void clearParamShadow(void* data) {
     self->mField34C = 0;
     self->mFloat350 = defaultValue;
 }
-extern "C" void actAnimSlot18(void* self, u32 a) { ((CActParamAnimView*)self)->fireTimerGate(a, 0x12); }
+extern "C" void actAnimSlot18(void* self, u32 a) { ((CActParamAnim*)self)->fireTimerGate(a, 0x12); }
 // Save the SubObjA flag/float and SubObjB tag/float into their shadow slots.
 extern "C" void saveParamShadow(CActParamData* self) {
     self->mField2CC = self->mField274;

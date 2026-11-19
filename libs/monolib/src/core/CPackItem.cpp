@@ -236,19 +236,19 @@ bool CPackItem::isNotLoaded(){
 /* Handles async file read completion events.
    On success, takes ownership of the file data as a PackHeader and sets up the hash table.
    On failure, sets mFileReadFailed to move the state machine past the file-open phase. */
-extern "C" bool OnFileEvent__9CPackItemFP10CEventFile(CPackItem* self, CEventFile* pEventFile){
-    if(pEventFile->mFileHandle == self->mFileHandle){
+bool CPackItem::OnFileEvent(CEventFile* pEventFile){
+    if(pEventFile->mFileHandle == mFileHandle){
         if(pEventFile->unk0 == 1){
             // Local void* is required for matching (R7 overrides R1/R3)
-            void* data = self->mFileHandle->mData;
-            self->mFileHandle->mData = nullptr;
-            self->mPackHeader = static_cast<PackHeader*>(data);
-            self->setupHashTable();
+            void* data = mFileHandle->mData;
+            mFileHandle->mData = nullptr;
+            mPackHeader = static_cast<PackHeader*>(data);
+            setupHashTable();
         }else{
-            self->mFileReadFailed = 1;
+            mFileReadFailed = 1;
         }
 
-        self->mFileHandle = nullptr;
+        mFileHandle = nullptr;
         return true;
     }
 

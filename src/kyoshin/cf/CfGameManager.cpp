@@ -166,10 +166,8 @@ extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
                                                         int flag);
 // Definition lives (renamed away) in CfGameManagerUnityHelpers.hpp; retail
-// calls it out-of-line.
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
-
-// Circular gimmick list returned by getReslistB68 (same shape as
+// calls it out-of-line. Its own definition below precedes every use.
+// Circular gimmick list
 // CfGimmick.hpp's CfGimmickList; kept TU-local to avoid pulling the header).
 struct Func800B6BECNode {
     Func800B6BECNode* next;  // 0x00
@@ -183,20 +181,9 @@ struct Func800B6BECList {
 extern "C" Func800B6BECList* getReslistB68();
 
 // Real cf::CfObjectColl tree for func_80085978's copyCollPosition (+0xB8 Fv)
-// call. CfObjectColl.hpp recovers lbl_eu_80528600 with Coll's no-arg +0xB8
-// override; the main cf::CfObject.hpp tree spells that slot as
-// applyMoveOffset(vec,float). Macro-rename the Coll TU's intermediate bases
-// so they do not ODR-clash with the already-included main object headers.
+// call: Coll's no-arg override of that slot, shared with the main object tree.
 // Include-only: CfObjectColl.cpp / .hpp owned elsewhere; nothing redefined.
-#define CObjectState GmColl_CObjectState
-#define CObjectParam GmColl_CObjectParam
-#define CfObject GmColl_CfObject
-#define CfObjectPoint GmColl_CfObjectPoint
 #include "kyoshin/cf/object/CfObjectColl.hpp"
-#undef CfObjectPoint
-#undef CfObject
-#undef CObjectParam
-#undef CObjectState
 
 // --- imports for func_80080F48 / func_80085FB8 / func_800838F4 ---
 class UnkClass_8009EC9C;
@@ -1448,7 +1435,7 @@ void cf::CfGameManager::clearGimmickFlags() { getReslistBE8(); }
 extern "C" bool lookupWorkAtAddr();
 void cf::CfGameManager::isGimmickActive() { lookupWorkAtAddr(); }
 
-void cf::CfGameManager::initPadSubSystem() { bdatTotalRows(); }
+int cf::CfGameManager::initPadSubSystem() { bdatTotalRows(); }
 
 float cf::CfGameManager::updatePadState() { return CfT_PlayRateGet(); }
 
@@ -2122,7 +2109,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
     float total = lbl_eu_80666498;
     int count = 0;
     for (int i = 1; i <= 8; ++i) {
-        if (i != 3 && isResourceFlagSet__Q22cf13CfGameManagerFv(i)) {
+        if (i != 3 && cf::CfGameManager::isResourceFlagSet(i)) {
             u16 c = static_cast<u16>(
                 CtrlObjectParam_GetArtsDataWord(CtrlObjectParam_GetCharEntry(static_cast<u16>(i))));
             ++count;
@@ -2201,7 +2188,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
 }
 void cf::CfGameManager::func_8007F9C4() {}
 void cf::CfGameManager::func_80080888() {}
-void cf::CfGameManager::func_8008413C() {}
+void cf::CfGameManager::func_8008413C(u16, u32) {}
 void cf::CfGameManager::func_80084654() {}
 // cf::CfGameManager::resetBattlePresentation - in-battle presentation reset: on the
 // E24 bit-16 "title/battle setup" flag, resets the battle manager

@@ -216,10 +216,8 @@ extern "C" {
     // Voice/battle-manager helpers.
     void SysWinLog_TickCounter5A();
     void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
-    // CfGameManager gate used by the commu re-arm (retail pre-mangled name;
-    // the class member is declared in CfGameManager.hpp, this is the bare
-    // Fv-form import so the call reloc keeps the retail symbol verbatim).
-    bool isTimerActive__Q22cf13CfGameManagerFv();
+    // CfGameManager gate used by the commu re-arm: call
+    // cf::CfGameManager::isTimerActive() from the canonical class header.
     bool isGlobalCamFlagSet__Fi(int mask);
     // Commu camera/trigger helpers (retail pre-mangled names; the Fv suffix
     // does not reflect the actual argument counts - see addTableValueWithClamp).

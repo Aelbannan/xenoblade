@@ -495,8 +495,7 @@ extern "C" void notifyGroupChain(CScnItemModelNw4rSub16C8* sub, u32 param,
                               CScnItemModelNw4r* obj);
 
 // Act-data base getter (walks the chain-last node, returns node+0x1F8;
-// defined in CScnItemModel.cpp).
-extern "C" ml::CAttrTransform* simGetLeafActData(CScnItemModelNw4r* self);
+// defined in CScnItemModel.cpp with the canonical void*(void*) ABI).
 // Env-light propagation (defined in CScnItemModel.cpp): with a null env,
 // self's own +0x31C env data is pushed to every linked model.
 extern "C" void simPropagateEnvLgt(CScnItemModel* self, CScnEnvLgtData* param);

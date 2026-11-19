@@ -611,7 +611,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         // Allocate the tag processor (0x858 bytes, layout memory pool).
-        void* tagProc = allocate__Q23mtl10MemManagerFUlUl(
+        void* tagProc = mtl::MemManager::allocate(
             0x858, CLibLayout::getAllocHandle());
         if (tagProc != 0) {
             tagProc = __ct__CTagProcessor(tagProc);

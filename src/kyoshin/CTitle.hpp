@@ -58,7 +58,7 @@ public:
     /* 0x24 */ u8 field_0x24; // active flag
     /* 0x25 */ u8 field_0x25; // phase flag (init 1)
     /* 0x26 */ u8 field_0x26; // state machine index (0..6)
-    void __declspec(noinline) bindAnim1();
+    void bindAnim1();
 };
 
 // Opaque controller behind CTitle::field_0x20: only the virtual at vtable
@@ -104,14 +104,14 @@ extern CTitleMenuStateFn lbl_eu_8053B220[];
 // C-linkage imports / retail short-name decls (retail stripped manglings in
 // this TU; keep linkage/signatures verbatim). noinline: retail calls each sub
 // ctor via bl, so the call must survive.
-extern "C" __declspec(noinline) CTitleLogo* __ct__CTitleLogo(CTitleLogo* self);
-extern "C" __declspec(noinline) CTitleMenu* __ct__CTitleMenu(CTitleMenu* self);
+extern "C" CTitleLogo* __ct__CTitleLogo(CTitleLogo* self);
+extern "C" CTitleMenu* __ct__CTitleMenu(CTitleMenu* self);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void CTitle_fileEventCallback(void* a, unsigned int b, unsigned char v);
 extern "C" int NandTitleFile(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to playUISound__FUl).
 // Cursor-position builder (retail calls it via bl, so keep it out of line).
-extern "C" void __declspec(noinline) CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
+extern "C" void CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
 
 // Shared string pool (split1 .rodata) - "/menu/Title.arc" etc.
 extern char lbl_eu_80513628[];

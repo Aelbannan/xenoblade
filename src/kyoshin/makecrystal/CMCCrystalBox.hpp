@@ -203,7 +203,7 @@ public:
     void playCrystalAnim13();
     void playCrystalAnim14();
     void showCrystalBoxStatus();
-    s64 getCrystalSelTopCount();
+    s32 getCrystalSelTopCount();
 
     UnkClass_8045F564 mMemRegion1;      // +0x04
     UnkClass_8045F564 mMemRegion2;      // +0x14
@@ -425,7 +425,7 @@ extern "C" int func_8021A8EC(void*);
 extern "C" void MCCrystal_PlayAnim3B(void*);
 extern "C" void MCCrystal_PlayOutro(void*);
 extern "C" void MCCrystal_PlayAnim3A(void*);
-extern "C" char lbl_eu_8050888C[];
+extern "C" char sMakeCrystalStrings[];
 extern "C" unsigned long lbl_eu_80508870[];
 // BDAT table pointer loaded via sda21 at the BdatGetPtrDirect call sites.
 extern unsigned long lbl_eu_806646D0;
@@ -442,15 +442,8 @@ extern "C" void MCCrystal_DrawLayout(void*, void*);
 extern "C" void MCCrystal_ShowItem(void*, unsigned short, void*);
 extern "C" void MCCrystal_ClearSlots(void*);   // crystal-info grid refresh (CMCCrystalInfo.cpp)
 extern "C" void MCCrystal_FillSlot(void*, unsigned char, unsigned short, unsigned short, unsigned char); // set crystal slot
-// Item-impl singleton import: CfGameManager.hpp (pulled in via
-// harness_catalog/CTaskGameEff) already declares the no-arg form at global
-// scope, so a second differently-prototyped extern "C" would be an illegal
-// overload. Keep the item-pointer form (same unmangled symbol) in a
-// namespace and shim call sites through it (same shape as CItemBoxInfo.hpp).
-namespace itemimplshim {
-extern "C" void* CItem_initItemImplInstances(void*);
-}
-#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
+// CItem_initItemImplInstances: canonical CItemImpl*(CItemData*) declaration
+// comes from kyoshin/cf/CfGameManager.hpp; call sites cast the item pointer.
 extern "C" u16 CItemBlock_getFlag120EC(int);
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
 // linkage; getPackedFont uses the plain C++ form that re-derives the retail
@@ -484,9 +477,9 @@ extern float lbl_eu_80668484;
 // retail names. copyCrystalParamRet returns its first argument (callers chain it as
 // the copy source for copyCrystalBoxParam); its definition lives in this TU under
 // the name copyCrystalParamRet (linked by address via symbols.txt).
-// Retail's epilogue extends the result to 64 bits (subfc/subfze); every
-// call site reads the value truncated to the int in r3, hence the (int)
-// casts at the use sites.
+// getCrystalSelTopCount's s32 prototype is load-bearing: an s64 return made
+// callers compare the high result word (r3/r4 swap) and lost a full match.
+// No casts are needed at the use sites.
 // noinline: these update-callback helpers must stay out-of-line (retail
 // emits bl to them); without it MWCC inlines their bodies into the callers.
 

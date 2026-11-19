@@ -9,16 +9,6 @@
 
 #include "kyoshin/cf/CfGameManager.hpp"
 
-// Exact-layout prefix view of cf::CfObject data (0x00-0x6F): the TU-local
-// CfObject decl pads 0x04-0x67, so byte-offset readers spell through this.
-struct CfObjectDataView {
-    u8 _00[0x60];
-    float f60;     // 0x60 scale (UVF35/36)
-    u32 w64;       // 0x64 flag word (HasFlag bit 15 / bit 5)
-    u32 mFlags68;  // 0x68 shared flag word
-    u32 w6C;       // 0x6C holder word (UVF11 bit 0)
-};
-
 // Retail callee keeps its flat, unmangled name (reloc-name fix, PLAN.md 17.6).
 extern "C" u32 Tok_Pack08(u32 a, u32 b);
 extern "C" u32 Tok_ParseFile(const char* path);
@@ -26,7 +16,7 @@ extern "C" u32 Tok_ParseFile(const char* path);
 // Null-guarded bit-15 flag test on +0x64
 // set (retail keeps r3 = self and tests with r0 via bclr 4,2).
 extern "C" void* CollObjHasFlag64Bit15(void* self) {
-    if (self && (((CfObjectDataView*)self)->w64 & 0x8000))
+    if (self && (((cf::CfObject*)self)->unk64 & 0x8000))
         return self;
     return 0;
 }
@@ -36,7 +26,7 @@ extern "C" void* CollObjHasFlag64Bit15(void* self) {
 // above the LR-save store (load-hoist family).
 int cf::CfObjectColl::resetCollTimer() {
     field_0x154 = lbl_eu_80666910;
-    this->setChildPoint();
+    this->CfObject_notifyEventDone();
     return true;
 }
 
@@ -44,7 +34,7 @@ int cf::CfObjectColl::resetCollTimer() {
 // the CfObjectPoint slot at +0x68 (releasePointLink), then runs the base
 // destructor and the flag-guarded operator delete (compiler-generated).
 cf::CfObjectColl::~CfObjectColl() {
-    this->releasePointLink();
+    this->CfObject_releaseMoveTargets();
 }
 
 // Set/clear the coll-enable flag through the CfObjectPoint slot at vtable
@@ -99,7 +89,7 @@ void cf::CfObjectColl::refreshCollLink(const ml::CVec3* pos) {
 extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec3* out, float f1) {
     if (obj == NULL)
         return 0;
-    u32 flags = self->field_0x68;
+    u32 flags = self->mFlags68;
     // IBM bits 13/15 of the shared flag word.
     if (flags & 0x00040000)
         return 0;
@@ -168,13 +158,13 @@ extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* ob
 // the widened header decl serves call-site codegen only.
 extern "C" void copyCollPosition__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, ml::CVec3* pos, float scale) {
     self->CfObject_snapMoveTarget(pos, scale);
-    self->func_80047814(&self->pad04[0x38]);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)&self->mPos3C);
 }
 
 // Pointers stay non-const: retail interleaves loads with stores (aliasing).
 // Locals declared in store order to steer MWCC's register coloring.
 void CollObjSetupVecsState5(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     u32 v4 = a->w4;
     u32 v0 = a->w0;
     self->field_0xA4 = v4;
@@ -203,7 +193,7 @@ void CollObjSetupVecsState5(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec*
 // regresses or leaves the shape unchanged.
 void CollObjSetupVecsState6(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b,
                    u16 p4, u16 p5, u16 p6, u16 p7, float val) {
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     // Pointers stay non-const: retail interleaves loads with the self stores.
     u32 v0 = a->w0;
     self->field_0xA4 = a->w4;
@@ -235,7 +225,7 @@ void CollObjSetupVecsState6(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec*
 // b->w0 load); every source shape tried yields ori at the first free ALU slot
 // and base-grouped loads (open-item packet in session notes).
 void CollObjSetupVecsState1(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     u32 v0 = a->w0;
     u32 v4 = a->w4;
     self->field_0xA4 = v4;
@@ -259,7 +249,7 @@ void CollObjSetupVecsState1(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec*
 // Copy two 12-byte vector blocks into the object and store the pair of
 // scalars, after refreshing the packed resource through virtual slot 0x9C.
 void CollObjSetupVecPair(cf::CfObjectColl* self, cf::CollVec* vecA, cf::CollVec* vecB, float f1, float f2) {
-    self->func_80047814(vecA);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)vecA);
     u32 t = vecA->w0;
     self->field_0xC0 = vecA->w4;
     u32 bw0 = vecB->w0;
@@ -296,7 +286,7 @@ void CollObjSetupRotBoxFromAVec(cf::CfObjectColl* self, cf::CollVec* a, const ml
     self->field_0xAC = t0;
     self->field_0xB4 = a->w8;
     self->field_0xB8 = lbl_eu_80666910;
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     Mtx& m = self->field_0xF0;
     self->field_0xD8 = -ext->x;
     self->field_0xDC = lbl_eu_80666910;
@@ -368,7 +358,7 @@ void CollObjScaledVecSum(ml::CVec3* out, cf::CfObjectColl* self) {
 // Copy two 12-byte vector blocks into the 0xA0/0xAC region, store the scalar,
 // then stamp the state marker words at 0x94/0x98.
 void CollObjSetupVecsState0(cf::CfObjectColl* self, const cf::CollVec* a, const cf::CollVec* b, float val) {
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     // Retail interleaves each load with the following store instead of
     // batching all six loads up front.
     u32 v0 = a->w0;
@@ -389,7 +379,7 @@ void CollObjSetupVecsState0(cf::CfObjectColl* self, const cf::CollVec* a, const 
 // Pointers stay non-const: retail interleaves each load with the following
 // store, which requires potential aliasing between self and a/b.
 void CollObjSetupVecsState2(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec* b, float val) {
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     u32 v0 = a->w0;
     u32 v4 = a->w4;
     self->field_0xA4 = v4;
@@ -411,7 +401,7 @@ void CollObjSetupVecsState2(cf::CfObjectColl* self, cf::CollVec* a, cf::CollVec*
 // trailing loads by (offset, base reg), so the low base must belong to `b`
 // for the reused register to land on b->w8 like retail.
 void CollObjSetupVecsState3(cf::CfObjectColl* self, const cf::CollVec* b, cf::CollVec* a, float val) {
-    self->func_80047814(b);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)b);
     u32 v0 = a->w0;
     u32 v4 = a->w4;
     self->field_0xA4 = v4;
@@ -433,7 +423,7 @@ void CollObjSetupVecsState3(cf::CfObjectColl* self, const cf::CollVec* b, cf::Co
 // 0xD8 block, build a Y-rotation matrix at +0xF0 (angle scaled to FIdx space),
 // invert it in place, then stamp the state words 0x98=3 / 0x94=5.
 void CollObjSetupRotBoxState5(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext, float angle) {
-    self->func_80047814(pos);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
     Mtx& m = self->field_0xF0;
     ml::CVec3 e;
     e.x = ext->x;
@@ -477,7 +467,7 @@ void CollObjSetupRotBoxState5(cf::CfObjectColl* self, ml::CVec3* pos, const ml::
 // volatile) either regresses scheduling or leaves the swap unchanged.
 void CollObjSetupVecsState4(cf::CfObjectColl* self, cf::CollVec* a, const cf::CollVec* b, float val) {
     self->field_0x154 = lbl_eu_80666910;
-    self->func_80047814(a);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)a);
     u32 v0 = a->w0;
     self->field_0xA4 = a->w4;
     u32 t0 = b->w0;
@@ -501,7 +491,7 @@ void CollObjSetupVecsState4(cf::CfObjectColl* self, cf::CollVec* a, const cf::Co
 // the matrix block, which keeps both translation stores alive.
 void CollObjSetupRotBoxState4Timed(cf::CfObjectColl* self, ml::CVec3* pos, const ml::CVec3* ext,
                    float angle) {
-    self->func_80047814(pos);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
     Mtx& m = self->field_0xF0;
     ml::CVec3 e;
     e.x = ext->x;
@@ -584,125 +574,121 @@ extern "C" bool CollObjTestResIdReady(void* self) {
 
 extern "C" void CollObjStoreResIdRaw(void* self, u32 val) { ((cf::CfObjectColl*)self)->field_0x9C = val; }
 
-extern const float lbl_eu_80666914;
-extern "C" float CfObject_getProgressHigh__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
+// The base CfObject stubs below are real members of cf::CfObject, declared in
+// CfObject.hpp in retail vtable order. Their linker names are unchanged.
 
-extern "C" void CfObject_setProgressHigh__Q22cf8CfObjectFf() {}
+float cf::CfObject::CfObject_getProgressHigh() { return lbl_eu_80666914; }
 
-extern const float lbl_eu_80666910;
-extern "C" float CfObject_getProgressLow__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+void cf::CfObject::CfObject_setProgressHigh(float value) {}
 
-extern "C" void CfObject_syncModelRate__Q22cf8CfObjectFf() {}
+float cf::CfObject::CfObject_getProgressLow() { return lbl_eu_80666910; }
 
-extern "C" int CfObject_isVisibleFlag__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+void cf::CfObject::CfObject_syncModelRate(float value) {}
 
-// Retail symbol is Fv even though the body reads r4; defined at global scope
-// under the retail-mangled identifier with an explicit (self, flag) pair.
+u32 cf::CfObject::CfObject_isVisibleFlag() { return 0; }
+
 // Set/clear bit 22 of the shared flag word at +0x68.
 void cf::CfObject::CfObject_setVisibleFlag(int flag) {
     if (flag != 0) {
-        field_0x68 |= 0x00400000;
+        mFlags68 |= 0x00400000;
     } else {
-        field_0x68 &= ~0x00400000;
+        mFlags68 &= ~0x00400000;
     }
 }
 
 // Set/clear bit 25 of the shared flag word at +0x68.
 void cf::CfObject::CfObject_setMoveReadyFlag(int flag) {
     if (flag != 0) {
-        field_0x68 |= 0x02000000;
+        mFlags68 |= 0x02000000;
     } else {
-        field_0x68 &= ~0x02000000;
+        mFlags68 &= ~0x02000000;
     }
 }
 
-extern "C" int CfObject_getSlotBits__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
+u32 cf::CfObject::CfObject_getSlotBits(u32 arg) { return 0; }
 
-extern "C" void CfObject_setAnimSlotEntry__Q22cf8CfObjectFUlUl() {}
+void cf::CfObject::CfObject_setAnimSlotEntry(u32 a, u32 b) {}
 
-extern const float lbl_eu_80666910;
-extern "C" float CfObject_getMoveFactor__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+float cf::CfObject::CfObject_getMoveFactor() { return lbl_eu_80666910; }
 
-extern "C" void CfObject_setMoveScale__Q22cf8CfObjectFf(float /*value*/) {}
+void cf::CfObject::CfObject_setMoveScale(float value) {}
 
-extern "C" void CfObject_setMoveValue__Q22cf8CfObjectFf() {}
+void cf::CfObject::CfObject_setMoveValue(float value) {}
 
-extern "C" int CfObject_getNpcTargetAction__Q22cf8CfObjectFv(cf::CfObject* self) { return -1; }
+int cf::CfObject::CfObject_getNpcTargetAction() { return -1; }
 
-extern "C" void CfObject_rearmAnimSlot__Q22cf8CfObjectFUlUl() {}
+void cf::CfObject::CfObject_rearmAnimSlot(u32 value, u32 index) {}
 
-extern "C" int CfObject_armAnimSlot1__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_armAnimSlot1(u32 id, u32 tag) { return 0; }
 
-extern "C" int CfObject_armAnimSlot1N__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_armAnimSlot1N(u32 id, u32 nameIdx) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_UnkVirtualFunc44() { return 0; }
 
-extern "C" int CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_armAnimSlot0(u32 id, u32 tag) { return 0; }
 
-extern "C" int CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_armAnimSlot0N(u32 id, u32 nameIdx) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_UnkVirtualFunc41() { return 0; }
 
-extern "C" int CfObject_clearAnimEntry__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_clearAnimEntry(u32 arg) { return 0; }
 
-extern "C" int CfObject_resetAnimSlots__Q22cf8CfObjectFUl(cf::CfObject* self) { return 0; }
+int cf::CfObject::CfObject_resetAnimSlots(u32 arg) { return 0; }
 
-extern "C" float CfObject_getObjScale__Q22cf8CfObjectFv(cf::CfObject* self) { return ((CfObjectDataView*)self)->f60; }
+float cf::CfObject::CfObject_getObjScale() { return mFloat60; }
 
-extern "C" void CfObject_setObjScale__Q22cf8CfObjectFf(cf::CfObject* self, float val) { ((CfObjectDataView*)self)->f60 = val; }
+void cf::CfObject::CfObject_setObjScale(float value) { mFloat60 = value; }
 
-extern "C" void* CfObject_getField48__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x44]; }
+void* cf::CfObject::CfObject_getField48() { return &_pad48[0]; }
 
-extern "C" void* CfObject_getPosTriple__Q22cf8CfObjectFv(cf::CfObject* self) { return &self->pad04[0x38]; }
+void* cf::CfObject::CfObject_getPosTriple() { return &mPos3C; }
 
+// Retail Fv spelling: the three floats arrive in f1..f3 and are stored to
+// +0x3C/0x40/0x44 in that order. Kept as the counted Fv stub until the retail
+// symbol can be renamed to the real (float, float, float) signature.
 extern "C" void CfObject_setPosXYZ__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b, float c) {
     *(float*)((char*)self + 0x3c) = a;
     *(float*)((char*)self + 0x40) = b;
     *(float*)((char*)self + 0x44) = c;
 }
 
-extern "C" int CfObject_checkTargetState__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
+int cf::CfObject::CfObject_checkTargetState() { return 1; }
 
-extern const float lbl_eu_80666910;
-extern "C" float CfObject_readRefreshValue__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+float cf::CfObject::CfObject_readRefreshValue() { return lbl_eu_80666910; }
 
-extern "C" void* CfObject_pushRefreshExtra__Q22cf8CfObjectFf(cf::CfObject* self) { return self; }
+void* cf::CfObject::CfObject_pushRefreshExtra(float value) { return this; }
 
-extern const float lbl_eu_80666910;
-extern "C" float CfObject_getMoveSpeedRate__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+float cf::CfObject::CfObject_getMoveSpeedRate() { return lbl_eu_80666910; }
 
 void* cf::CfObject::CfObject_pushRefreshValue(float value) { return this; }
 
-extern "C" int CfObject_queryTargetState__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
+int cf::CfObject::CfObject_queryTargetState() { return 1; }
 
-extern "C" void CfObject_refreshSubB0__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_refreshSubB0() {}
 
 int cf::CfObject::CfObject_notifyMemberRemoved() {
-    return ((CfObjectDataView*)this)->w6C & 1;
+    return *(u32*)_pad6C & 1;
 }
 
 void cf::CfObject::CfObject_forwardSubObject() {
     this->CfObject_isMoveActiveNow();
 }
 
-extern "C" void CfObject_updateMoveRate__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_updateMoveRate() {}
 
 int cf::CfObjectPoint::isCollEnabled() {
-    return (field_0x68 >> 20) & 1;
+    return (mFlags68 >> 20) & 1;
 }
 
 extern "C" void* CollObjHasFlag64Bit5(void* param_1) {
-    if (param_1 != NULL && (((CfObjectDataView*)param_1)->w64 & 0x20)) {
+    if (param_1 != NULL && (((cf::CfObject*)param_1)->unk64 & 0x20)) {
         return param_1;
     }
     return NULL;
 }
 
-// Forward the position refresh through the CfObjectPoint slot at vtable
-// +0x9C (func_80047814). Retail keeps the Fv linker name even though the
-// callee's r4 (the forwarded param) flows straight through to the virtual.
+// Forward the position refresh through the Point slot at vtable +0x9C.
+// Retail keeps the Fv linker name even though the forwarded param is r4.
 extern "C" void syncCollVectors__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, void* param) {
-    self->func_80047814(param);
+    self->CfObject_setMoveTargetVec((const ml::CVec3*)param);
 }
-
-extern "C" void CfObject_forwardSubObject__Q22cf8CfObjectFv(cf::CfObject* self) { self->CfObject_isMoveActiveNow(); }

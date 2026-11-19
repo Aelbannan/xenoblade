@@ -11,7 +11,7 @@ namespace {
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 #include "functions.hpp"  // CTaskGame_setVec4 (vec4 setter)
-
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 // CViewRoot::getRootView is defined in CViewRoot.cpp as a C-linkage free
 // function (retail symbol getRootView__9CViewRootFP5CView); the read-only
 // CViewRoot.hpp only stubs a no-arg member form.
@@ -64,9 +64,10 @@ struct CWorkEvent3Param {
 CDesktop::CDesktop(const char* pName, CWorkThread* pParent) :
 CProc(pName, pParent, MAX_CHILD),
 mView(nullptr) {
-    lbl_eu_806656AC = this;
-    *(u32**)this = (u32*)lbl_eu_8056CBC8;
+    u32* vt = (u32*)lbl_eu_8056CBC8;
     mType = THREAD_CDESKTOP;
+    *(u32**)this = vt;
+    lbl_eu_806656AC = this;
     unk1EC.set(0.5f, 0.5f, 0.5f, 1.0f);
     CView::setDefaultFrameColor(unk1EC);
 }
@@ -186,7 +187,7 @@ bool CDesktop::wkStandbyLogin(){
     // thread.
     CProcRoot* root = CProcRoot::getInstance();
 
-    void* bgMem = allocate__Q23mtl10MemManagerFUlUl(0x1F0, getWorkMem__17CWorkThreadSystemFv());
+    void* bgMem = mtl::MemManager::allocate(0x1F0, getWorkMem__17CWorkThreadSystemFv());
     if(bgMem != nullptr){
         __ct__5CProcFPCcP11CWorkThreads(bgMem, lbl_eu_80522F44, root, 8);
         *(u32**)bgMem = (u32*)lbl_eu_8056CB08;
@@ -195,7 +196,7 @@ bool CDesktop::wkStandbyLogin(){
     entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(static_cast<CWorkThread*>(bgMem), root, false);
     *reinterpret_cast<u32*>(static_cast<u8*>(bgMem) + 0x1E4) = getView()->mWorkID;
 
-    void* exMem = allocate__Q23mtl10MemManagerFUlUl(0x1F0, getWorkMem__17CWorkThreadSystemFv());
+    void* exMem = mtl::MemManager::allocate(0x1F0, getWorkMem__17CWorkThreadSystemFv());
     if(exMem != nullptr){
         __ct__5CProcFPCcP11CWorkThreads(exMem, lbl_eu_80522F44 + 0x13, root, 0x40);
         *(u32**)exMem = (u32*)lbl_eu_8056CA48;

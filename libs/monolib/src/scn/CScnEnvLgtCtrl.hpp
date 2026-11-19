@@ -21,6 +21,13 @@ namespace ml { struct CVec3; struct CVec4; }  // monolib/math
 // 0x30-byte light-slot entry in the array at CScnEnvLgtCtrl+0x24.
 // scnLgtClearSlotEn / 5FB0 / 6010 poke the u16 word at +0x28 (control flags:
 // bit 0 and bit 2 cleared/set there) and the three u16 params at +0x2A..+0x2E.
+// Two-word row pair used by the controller's row-block members and the
+// accumulator copies in scnLgtRebuildSlotColors.
+struct CScnEnvLgtPairU {
+    u32 a;
+    u32 b;
+};
+
 // 12-byte vec3 used by the light-slot entries; copied wholesale by
 // scnLgtWriteSlotVecs (word moves - retail treats the triple as u32 words).
 struct CScnEnvLgtCtrlLgtVec3 {
@@ -473,6 +480,7 @@ struct CScnEnvLgtCtrlLgtLimit;
 struct CScnEnvLgtCtrlCtorCtl;
 struct CScnEnvLgtCtrlGrad;
 struct CScnEnvLgtCtrlWorkDst40;
+struct CScnEnvLgtCtrlRow1C;   // 0x1c-stride row array installed at +0x10
 
 // +0x90..0xA8 region of CScnEnvLgtCtrl written by the ctor (two 3-word
 // copies of lbl_eu_80656C58 plus the light-count cap at +0xA8).
@@ -512,8 +520,13 @@ public:
     };
     void* field_0x08;                       // +0x08 owned buffer (dtor deallocates) /* 0x08 */
     CScnEnvLgtCtrlListNode* field_0x0C;     // +0x0C light-list ring sentinel /* 0x0C */
-    u16 field_0x10;                         // +0x10 /* 0x10 */
-    u16 field_0x12;                         // +0x12 light count /* 0x12 */
+    union {
+        struct {
+            u16 field_0x10;                 // +0x10 /* 0x10 */
+            u16 field_0x12;                 // +0x12 light count /* 0x12 */
+        };
+        CScnEnvLgtCtrlRow1C* rows10;        // +0x10 0x1c-stride row array
+    };
     union {
         u8 field_0x14[8];                            // +0x14 /* 0x14 */
         CScnEnvLgtCtrlLgtTypeEntry* field_0x14_ptr;  // +0x14 (0xd8-stride entry array) /* 0x14 */
@@ -555,6 +568,23 @@ public:
     // scnLgtPushSlotBlend reads it as a word).
     union {
         f32 field_0x38[0x20];               // +0x38 /* 0x38 */
+        // The two ambient-color quads at +0x54/+0x64 are part of this
+        // controller's own row block (scnLgtCopyAmbBase / scnLgtReadLightDataWords
+        // scnLgtRebuildSlotColors); declare them here instead of casting a
+        // separate view over `this`.
+        struct {
+            u8 _rowPad[0x54 - 0x38];
+            union {
+                u32 lgtWords54[4];
+                f32 lgtColors54[4];
+                CScnEnvLgtPairU lgtPairs54[2];
+            };
+            union {
+                u32 lgtWords64[4];
+                f32 lgtColors64[4];
+                CScnEnvLgtPairU lgtPairs64[2];
+            };
+        } lgtRows;
         struct {
             u8 pad_0x38[0x04];              // +0x38 /* 0x38 */
             void* field_0x3C;               // +0x3C /* 0x3C */
@@ -1229,11 +1259,6 @@ struct CScnEnvLgtCtrlLgtItem30 {
     u16 field_0x1E;   // +0x1E (0x40-stride row index at self+0x20)
     u16 field_0x20;   // +0x20 (0x14-stride row index at self+0x0C)
     u8 _24[0x0C];
-};
-
-struct CScnEnvLgtPairU {
-    u32 a;
-    u32 b;
 };
 
 // 4-float slot accumulator pushed to the CLightEnv by scnLgtRebuildSlotColors.

@@ -39,6 +39,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 // Retail helper forms used by this TU (kept out of CItemBoxGrid.hpp: owners
 // that also include CItemBoxInfo.hpp declare them with other parameter types).
@@ -121,10 +122,6 @@ void CopyTabSlotVec(u32*, void*, u32);
 
 // TU-local cast-only views over grid-family objects (CItemBoxGridFull in the
 // header covers the 0x2800 cell array + count/category/row/page fields):
-// - CItemBoxGridItemView: the item record returned by CItem_kindPtr
-//   (cf/CItem.hpp's CItemExt names bytes +0x00..+0x07 but has no u16 at
-//   +0x04, which the price sort reads). Moved up: the cell accessors below
-//   read item bytes +0x06/+0x07 through it.
 // - CibgIdList: the u16 id pool shared by the CVisionItem/CQuestItem/
 //   CArtsBookItem objects (ids at +0x04, count at +0x804).
 // - CibgGridTail: grid words past CItemBoxGridFull (page index at +0x2804,
@@ -133,12 +130,6 @@ void CopyTabSlotVec(u32*, void*, u32);
 //   __dt__12CItemBoxGridFv (each slot starts at its dtor offset and runs to
 //   the next slot's start; only the starts are load-bearing).
 // - CibgTabSlot12: 12-byte tab-slot payload copied by CopyTabSlotVec.
-struct CItemBoxGridItemView {
-    u32 word00;   // +0x00 kind word (>> 20 feeds BdatGetItemId)
-    u16 field_04; // +0x04 price/class halfword
-    u8 field_06;  // +0x06 tier byte
-    u8 field_07;  // +0x07 flag byte
-};
 struct CibgIdList {
     u8 _00[4];
     u16 ids[0x400]; // +0x04, ends +0x804
@@ -195,7 +186,7 @@ void CQuestItem::Rebuild() {
     u16 end;
     u8 tp;
     u16 v;
-    *(u16*)((u8*)this + 0x804) = 0;
+    mCount = 0;
     for (cat = 1; cat < 0x1b; cat++) {
         u32 start = GetU16PairEntry((u16)cat);
         if ((u16)start == 0) continue;
@@ -265,7 +256,7 @@ void CQuestItem::Rebuild() {
 // noinline: RegisterLearnedSkills (and the other callers in this TU) must emit `bl`
 // to the retail symbol - the unit builds with -inline and would otherwise
 // fold this body into every call site (tripling RegisterLearnedSkills).
-__declspec(noinline) void CQuestItem::PushUniqueItemId(u32 id) {
+void CQuestItem::PushUniqueItemId(u32 id) {
     if (HasSlotIdMatch(id)) return;
     if ((BdatGetItemType(id) & 0xFFFF) == 12) return;
     u16 count = mCount;
@@ -276,7 +267,7 @@ __declspec(noinline) void CQuestItem::PushUniqueItemId(u32 id) {
 // Search for a matching short id in an array, return 1 if found.
 // noinline: retail PushUniqueItemId keeps a `bl HasSlotIdMatch` call; u32 id
 // (retail compares the full register, no call-site mask).
-__declspec(noinline) int CQuestItem::HasSlotIdMatch(u32 id) {
+int CQuestItem::HasSlotIdMatch(u32 id) {
     u16 count = mCount;
     u16 i = 0;
     while (i < count) {
@@ -381,7 +372,7 @@ CItemBoxGridFull::CItemBoxGridFull()
 }
 
 // Cell ctor (retail SetEntry9Bytes).
-__declspec(noinline) CItemBoxGridEntry::CItemBoxGridEntry(s16 a, u8 b, u8 c, u8 d, u8 e, u8 f, u8 g, bool h) {
+CItemBoxGridEntry::CItemBoxGridEntry(s16 a, u8 b, u8 c, u8 d, u8 e, u8 f, u8 g, bool h) {
     id = a;
     flags[0] = b;
     flags[1] = c;
@@ -394,7 +385,7 @@ __declspec(noinline) CItemBoxGridEntry::CItemBoxGridEntry(s16 a, u8 b, u8 c, u8 
 
 // Copy a 9-byte entry from src to dst. noinline: retail callers emit `bl`
 // (the unit builds with -inline and would otherwise fold this body in).
-extern "C" __declspec(noinline) void CopyGridEntry9(void* dst, void* src) {
+extern "C" void CopyGridEntry9(void* dst, void* src) {
     volatile u8* d = (volatile u8*)dst;
     volatile u8* s = (volatile u8*)src;
     short h = *(volatile short*)(s + 0);
@@ -428,7 +419,7 @@ CItemBoxGridFull::~CItemBoxGridFull() {
 void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, int valueMode) {
     u8* p = (u8*)this;
     u32 i;
-    *(u16*)(p + 0x2800) = 0;
+    ((CItemBoxGridFull*)p)->field_2800 = 0;
     // Reset the three sub-objects through their vtables (+0x0C method).
     ((CVisionItem*)(p + 0x34b0))->Rebuild();
     ((CQuestItem*)(p + 0x2ca8))->Rebuild();
@@ -452,9 +443,9 @@ void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, 
             u32 v2 = ((CItemBoxGridFull*)((CItemBoxGridFull*)this))->GetScaledItemValue(kind, item, (int)valueMode);
             if (v1 > v2) continue;
         }
-        u16 count = *(u16*)(p + 0x2800);
+        u16 count = ((CItemBoxGridFull*)p)->field_2800;
         u32 off = count * 10;
-        *(u16*)(p + 0x2800) = count + 1;
+        ((CItemBoxGridFull*)p)->field_2800 = count + 1;
         *(s16*)(p + off) = id;
         u8* entry = p + off;
         if (cat == 3) {
@@ -491,12 +482,12 @@ void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, 
                             void* obj2 = (void*)CtrlObjectParam_GetCharEntry(pn & 0xFF);
                             s16 equipCheck = 0;
                             switch (subCat) {
-                                case 2: equipCheck = *(s16*)((u8*)obj2 + 0x26); break;
-                                case 4: equipCheck = *(s16*)((u8*)obj2 + 0x1c); break;
-                                case 5: equipCheck = *(s16*)((u8*)obj2 + 0x1e); break;
-                                case 6: equipCheck = *(s16*)((u8*)obj2 + 0x20); break;
-                                case 7: equipCheck = *(s16*)((u8*)obj2 + 0x22); break;
-                                case 8: equipCheck = *(s16*)((u8*)obj2 + 0x24); break;
+                                case 2: equipCheck = ((CItemBoxCharEntry*)obj2)->slotIds[5]; break;
+                                case 4: equipCheck = ((CItemBoxCharEntry*)obj2)->slotIds[0]; break;
+                                case 5: equipCheck = ((CItemBoxCharEntry*)obj2)->slotIds[1]; break;
+                                case 6: equipCheck = ((CItemBoxCharEntry*)obj2)->slotIds[2]; break;
+                                case 7: equipCheck = ((CItemBoxCharEntry*)obj2)->slotIds[3]; break;
+                                case 8: equipCheck = ((CItemBoxCharEntry*)obj2)->slotIds[4]; break;
                             }
                             if (equipCheck == (s16)keptSubId) {
                                 entry[2] = 1;
@@ -523,8 +514,8 @@ void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, 
                 sprintf(nameBuf, fmt, ownerIdx);
                 if (!BdatGetU8Direct((const void*)ownerTbl, (const char*)nameBuf, shortKind & 0xFFFF)) {
                     *(s16*)entry = -1;
-                    count = *(u16*)(p + 0x2800);
-                    *(u16*)(p + 0x2800) = count - 1;
+                    count = ((CItemBoxGridFull*)p)->field_2800;
+                    ((CItemBoxGridFull*)p)->field_2800 = count - 1;
                     goto check_next;
                 }
             }
@@ -534,12 +525,12 @@ void CItemBoxGridFull::PopulateGridEntries(u8 cat, int ownerIdx, int refItemId, 
                 void* obj3 = (void*)CtrlObjectParam_GetCharEntry(pn & 0xFF);
                 s16 equipCheck = 0;
                 switch (cat) {
-                    case 2: equipCheck = *(s16*)((u8*)obj3 + 0x26); break;
-                    case 4: equipCheck = *(s16*)((u8*)obj3 + 0x1c); break;
-                    case 5: equipCheck = *(s16*)((u8*)obj3 + 0x1e); break;
-                    case 6: equipCheck = *(s16*)((u8*)obj3 + 0x20); break;
-                    case 7: equipCheck = *(s16*)((u8*)obj3 + 0x22); break;
-                    case 8: equipCheck = *(s16*)((u8*)obj3 + 0x24); break;
+                    case 2: equipCheck = ((CItemBoxCharEntry*)obj3)->slotIds[5]; break;
+                    case 4: equipCheck = ((CItemBoxCharEntry*)obj3)->slotIds[0]; break;
+                    case 5: equipCheck = ((CItemBoxCharEntry*)obj3)->slotIds[1]; break;
+                    case 6: equipCheck = ((CItemBoxCharEntry*)obj3)->slotIds[2]; break;
+                    case 7: equipCheck = ((CItemBoxCharEntry*)obj3)->slotIds[3]; break;
+                    case 8: equipCheck = ((CItemBoxCharEntry*)obj3)->slotIds[4]; break;
                 }
                 if (equipCheck == (s16)*(s16*)entry) {
                     if ((pn & 0xFF) > 8) entry[3] = 1;
@@ -569,9 +560,9 @@ entry_done:
 check_next:;
     }
     // Update grid metadata
-    if (*(u8*)(p + 0x2802) != cat) {
-        u32 cnt = *(u16*)(p + 0x2800);
-        *(u8*)(p + 0x2802) = cat;
+    if (((CItemBoxGridFull*)p)->field_2802 != cat) {
+        u32 cnt = ((CItemBoxGridFull*)p)->field_2800;
+        ((CItemBoxGridFull*)p)->field_2802 = cat;
         // Compute row count: cnt / 30, rounded up with tie-breaking
         float fcnt = (float)(s32)cnt;
         float f30 = lbl_eu_80667F30;
@@ -580,10 +571,10 @@ check_next:;
         float frac = fdiv - (float)rows;
         if (lbl_eu_80667F34 != frac) rows++;
         if (!(u8)rows) rows = 1;
-        *(u8*)(p + 0x2803) = (u8)rows;
-        *(u8*)(p + 0x2804) = 0;
+        ((CItemBoxGridFull*)p)->field_2803 = (u8)rows;
+        ((CItemBoxGridFull*)p)->field_2804 = 0;
     } else {
-        u32 cnt = *(u16*)(p + 0x2800);
+        u32 cnt = ((CItemBoxGridFull*)p)->field_2800;
         float fcnt = (float)(s32)cnt;
         float f30 = lbl_eu_80667F30;
         float fdiv = fcnt / f30;
@@ -591,9 +582,9 @@ check_next:;
         float frac = fdiv - (float)rows;
         if (lbl_eu_80667F34 != frac) rows++;
         if (!(u8)rows) rows = 1;
-        *(u8*)(p + 0x2803) = (u8)rows;
-        if ((s8)*(u8*)(p + 0x2804) >= (s8)*(u8*)(p + 0x2803)) {
-            *(u8*)(p + 0x2804) = *(u8*)(p + 0x2803) - 1;
+        ((CItemBoxGridFull*)p)->field_2803 = (u8)rows;
+        if ((s8)((CItemBoxGridFull*)p)->field_2804 >= (s8)((CItemBoxGridFull*)p)->field_2803) {
+            ((CItemBoxGridFull*)p)->field_2804 = ((CItemBoxGridFull*)p)->field_2803 - 1;
         }
     }
     // For equipment/armor categories (2-8) or category 11: set overlay byte
@@ -606,7 +597,7 @@ check_next:;
         s32 k;
         if (last >= diff) {
             for (k = last; k >= diff; k--) {
-                p[k * 10 + 7] = 1;
+                ((CItemBoxGridFull*)p)->entries[k].flags[5] = 1;
             }
         }
         // Compute some threshold
@@ -617,7 +608,7 @@ check_next:;
         for (;;) {
             int diff2 = threshold - (j + 1) * 3;
             if (diff2 < 0) {
-                p[j + 0x28a5] = (u8)(diff2 + 3);
+                ((CItemBoxGridFull*)p)->field_28A5[j] = (u8)(diff2 + 3);
                 break;
             }
             j++;
@@ -629,7 +620,7 @@ check_next:;
 
 // Convert category to timing value - complex float math
 // Compute grid row count.
-__declspec(noinline) u32 CItemBoxGridFull::CalcGridRowCount() {
+u32 CItemBoxGridFull::CalcGridRowCount() {
     u8* p = (u8*)this;
     u32 val = CItemBlock_countKindSlots(p[0x2802]);
     float f = (float)(s32)val;
@@ -643,7 +634,7 @@ __declspec(noinline) u32 CItemBoxGridFull::CalcGridRowCount() {
 
 // Increment a sub-index counter; wrap to 0 when reaching the limit.
 // noinline: retail callers emit `bl` (the unit builds with -inline).
-__declspec(noinline) void CItemBoxGridFull::IncGridPageIndex() {
+void CItemBoxGridFull::IncGridPageIndex() {
     u8 idx = this->field_2804 + 1;
     this->field_2804 = idx;
     if ((s8)idx >= this->field_2803) {
@@ -653,7 +644,7 @@ __declspec(noinline) void CItemBoxGridFull::IncGridPageIndex() {
 
 // Decrement a sub-index counter; borrow from the limit field when underflowing.
 // noinline: retail callers emit `bl` (the unit builds with -inline).
-__declspec(noinline) void CItemBoxGridFull::DecGridPageIndex() {
+void CItemBoxGridFull::DecGridPageIndex() {
     u8 idx = this->field_2804 - 1;
     this->field_2804 = idx;
     if ((s8)idx < 0) {
@@ -679,7 +670,7 @@ s16 CItemBoxGridFull::GetCellItemId(u16 idx) {
 // range or the referenced item object is invalid. Otherwise the item's base
 // price (GetItemBasePrice) scaled by kind type (0xB unchanged, 0xD half, else
 // tenth), then multiplied by 100 + the party's skill-0x93 bonus and rounded.
-__declspec(noinline) u32 CItemBoxGridFull::GetCellSellPrice(u16 idx) {
+u32 CItemBoxGridFull::GetCellSellPrice(u16 idx) {
     s8 base = (s8)this->field_2804;
     u32 offset = (u16)(base * 0x1e + idx);
     if (offset >= (u32)this->field_2800) return 0;
@@ -707,7 +698,7 @@ __declspec(noinline) u32 CItemBoxGridFull::GetCellSellPrice(u16 idx) {
     for (i = 0; (u32)(u8)i < (u32)partyCount; i++) {
         u32 member = GetCollectedFlagByte((u8)i);
         void* charData = (void*)CtrlObjectParam_GetCharEntry((u32)(u8)member);
-        void* ptr = (void*)((u8*)charData + 0x3534);
+        void* ptr = (void*)(((CItemBoxCharEntry*)charData)->counterArea);
         if (Counter_TestBit(ptr, 0x93)) {
             basePrice += IdTable_SumValues(ptr, 0x93);
         }
@@ -717,7 +708,7 @@ __declspec(noinline) u32 CItemBoxGridFull::GetCellSellPrice(u16 idx) {
 }
 
 // Round a double to nearest integer with .5 tie-breaking biased away from zero.
-extern "C" __declspec(noinline) long RoundHalfAway0(double f) {
+extern "C" long RoundHalfAway0(double f) {
     return (long)(f + (f > lbl_eu_80667F34 ? lbl_eu_80667F60 : lbl_eu_80667F68));
 }
 
@@ -745,7 +736,7 @@ u32 CItemBoxGridFull::GetScaledItemValue(u32 id, void* item, int reserved) {
         for (i = 0; i < partyCount; i++) {
             u8 member = (u8)GetCollectedFlagByte(i);
             void* charData = (void*)CtrlObjectParam_GetCharEntry(member);
-            void* ptr = (void*)((u8*)charData + 0x3534);
+            void* ptr = (void*)(((CItemBoxCharEntry*)charData)->counterArea);
             if (Counter_TestBit(ptr, 0x8f)) {
                 base += IdTable_SumValues(ptr, 0x8f);
             }
@@ -757,7 +748,7 @@ u32 CItemBoxGridFull::GetScaledItemValue(u32 id, void* item, int reserved) {
 }
 
 // Lookup entry, check category; return word >> 20 or 0.
-__declspec(noinline) u32 CItemBoxGridFull::GetCellKind(u16 idx) {
+u32 CItemBoxGridFull::GetCellKind(u16 idx) {
     s8 base = (s8)this->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset < this->field_2800) {
@@ -772,7 +763,7 @@ __declspec(noinline) u32 CItemBoxGridFull::GetCellKind(u16 idx) {
 }
 
 // Lookup entry, check category; return obj ptr or 0.
-__declspec(noinline) void* CItemBoxGridFull::GetCellItemPtr(u16 idx) {
+void* CItemBoxGridFull::GetCellItemPtr(u16 idx) {
     s8 base = (s8)this->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset < this->field_2800) {
@@ -790,7 +781,7 @@ __declspec(noinline) void* CItemBoxGridFull::GetCellItemPtr(u16 idx) {
 // vt+0x40, equipped-state fetch via vt+0x2C); category 3 collapses the cell's
 // state byte to a boolean. -O4,s merges the r29-r31 saves into
 // retail's stmw prologue; all failure paths share one return-0 block at end.
-__declspec(noinline) s32 CItemBoxGridFull::CheckCellState(u16 idx) {
+s32 CItemBoxGridFull::CheckCellState(u16 idx) {
     s8 base = (s8)this->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset >= this->field_2800) goto fail;
@@ -836,7 +827,7 @@ __declspec(noinline) s32 CItemBoxGridFull::CheckCellState(u16 idx) {
     case 11:
     case 12:
     case 13:
-        return (s8)((CItemBoxGridItemView*)obj)->field_06;
+        return (s8)((CItemBoxItem*)obj)->mTier;
     default:
         goto fail;
     }
@@ -845,7 +836,7 @@ fail:
 }
 
 // Lookup entry, check category; return flag byte 2 (equip kind) or 0.
-__declspec(noinline) u8 CItemBoxGridFull::GetCellFlag0(u16 idx) {
+u8 CItemBoxGridFull::GetCellFlag0(u16 idx) {
     s8 base = (s8)this->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset < this->field_2800) {
@@ -859,7 +850,7 @@ __declspec(noinline) u8 CItemBoxGridFull::GetCellFlag0(u16 idx) {
 }
 
 // Lookup entry, check category; return flag byte 4 or 0.
-__declspec(noinline) u8 CItemBoxGridFull::GetCellFlag2(u16 idx) {
+u8 CItemBoxGridFull::GetCellFlag2(u16 idx) {
     s8 base = (s8)this->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset < this->field_2800) {
@@ -873,7 +864,7 @@ __declspec(noinline) u8 CItemBoxGridFull::GetCellFlag2(u16 idx) {
 }
 
 // Lookup entry, check category; return flag byte 5 or 0.
-__declspec(noinline) u8 CItemBoxGridFull::GetCellFlag3(u16 idx) {
+u8 CItemBoxGridFull::GetCellFlag3(u16 idx) {
     s8 base = (s8)this->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset < this->field_2800) {
@@ -902,7 +893,7 @@ int CItemBoxGridFull::GetCellFlag1(u16 idx) {
 
 // Lookup a byte from a 10-byte-entry table indexed by (field_2804 * 0x1e + idx).
 // Returns byte at offset 7 within the entry, or 0 if out of bounds.
-__declspec(noinline) u8 CItemBoxGridFull::GetCellByte7(u16 idx) {
+u8 CItemBoxGridFull::GetCellByte7(u16 idx) {
     s32 tmp = (s8)this->field_2804 * 0x1e + idx;
     u32 offset = (u32)(u16)tmp;
     if (offset < 0x400) {
@@ -911,7 +902,7 @@ __declspec(noinline) u8 CItemBoxGridFull::GetCellByte7(u16 idx) {
     return 0;
 }
 
-__declspec(noinline) bool CItemBoxGridFull::GetCellByte8(u16 idx) {
+bool CItemBoxGridFull::GetCellByte8(u16 idx) {
     s32 tmp = (s8)this->field_2804 * 0x1e + idx;
     u32 offset = (u32)(u16)tmp;
     if (offset < 0x400) {
@@ -935,7 +926,7 @@ void CItemBoxGridFull::ToggleCellMark(u16 idx) {
 }
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.
-__declspec(noinline) u8 CItemBoxGridFull::CountMarkedCells() {
+u8 CItemBoxGridFull::CountMarkedCells() {
     u16 count = this->field_2800;
     u16 result = 0;
     u16 i;
@@ -949,7 +940,7 @@ __declspec(noinline) u8 CItemBoxGridFull::CountMarkedCells() {
 }
 
 // Return a duration/stride value based on the category byte at offset 0x2802.
-__declspec(noinline) u8 CItemBoxGridFull::GetCategoryCap() {
+u8 CItemBoxGridFull::GetCategoryCap() {
     int cat = this->field_2802;
     switch (cat) {
     case 2:
@@ -966,7 +957,7 @@ __declspec(noinline) u8 CItemBoxGridFull::GetCategoryCap() {
     }
 }
 
-__declspec(noinline) int CItemBoxGridFull::LookupIndexedByte() {
+int CItemBoxGridFull::LookupIndexedByte() {
     char* obj = (char*)this;
     char off = ((CibgGridTail*)obj)->page2804;
     if (off >= 0x400) return 0;
@@ -1035,7 +1026,7 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
     u16 offset = (u16)(base * 0x1e + idx);
     void* item;
 
-    if (offset >= *(u16*)(p + 0x2800)) goto fail;
+    if (offset >= ((CItemBoxGridFull*)p)->field_2800) goto fail;
 
     item = CItem_kindPtr(p[0x2802], *(s16*)(p + offset * 0xa));
     if (!item) goto fail;
@@ -1156,12 +1147,12 @@ fail:
 // Check if an object has type 9 (extracted from vtable bits) and subtype 2.
 // noinline: retail callers emit `bl` (the unit builds with -inline and would
 // otherwise fold this body into every call site).
-extern "C" __declspec(noinline) int IsSkillItem(void* obj) {
+extern "C" int IsSkillItem(void* obj) {
     u32 w = *(u32*)obj;
     u32 type = (w >> 16) & 0xF;
     int result = 0;
     if (type == 9) {
-        u8 sub = ((CItemBoxGridItemView*)obj)->field_07 & 3;
+        u8 sub = ((CItemBoxItem*)obj)->mState & 3;
         if (sub == 2) {
             result = 1;
         }
@@ -1561,7 +1552,7 @@ void CItemBoxGridFull::CompactGridEntries() {
 // call sites' `bl` (retail calls it; -inline would fold the body in).
 // Returns dst: retail sorters reuse the caller-preserved r3 (the CopyEntry9Bytes
 // result) for the following CopyGridEntry9 src argument instead of recomputing.
-__declspec(noinline) char* CopyEntry9Bytes(char* dst, const char* src) {
+char* CopyEntry9Bytes(char* dst, const char* src) {
     *(short*)((char*)dst + 0) = *(short*)((char*)src + 0);
     *(char*)((char*)dst + 2) = *(char*)((char*)src + 2);
     *(char*)((char*)dst + 3) = *(char*)((char*)src + 3);
@@ -1581,7 +1572,7 @@ __declspec(noinline) char* CopyEntry9Bytes(char* dst, const char* src) {
 //   0x67F38; the common tail applies an extra x10.
 // - types 2..8: price row scaled by 0x67F78 + 0x67F7C per slot count.
 // - anything else: plain price row lookup.
-__declspec(noinline) u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
+u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
     u32 word = *(u32*)item;
     u32 kind = word >> 20;
     u32 type = (word >> 16) & 0xF;
@@ -1630,7 +1621,7 @@ __declspec(noinline) u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
 // name-table lookups); type 9 values at 0; types 2-8 price off the row
 // scaled by 0x67F78 + 0x67F7C per slot; everything else is the plain row.
 // Result is always x10.
-__declspec(noinline) s32 CItemBoxGridFull::GetShopItemValue(u32 id, void* item) {
+s32 CItemBoxGridFull::GetShopItemValue(u32 id, void* item) {
     void* obj;
     u32 type;
     u32 kind;
@@ -1718,9 +1709,9 @@ void CItemBoxGridFull::SortGridEntries(u32 mode) {
                     }
                 } else {
                     // Both keys zeroed: tie-break on flag-byte-7 bits 2..7.
-                    CItemSortView* v1 = (CItemSortView*)obj1;
-                    CItemSortView* v2 = (CItemSortView*)obj2;
-                    if ((v1->flags7 >> 2 & 0x3f) > (v2->flags7 >> 2 & 0x3f)) {
+                    CItemBoxItem* v1 = (CItemBoxItem*)obj1;
+                    CItemBoxItem* v2 = (CItemBoxItem*)obj2;
+                    if ((v1->mState >> 2 & 0x3f) > (v2->mState >> 2 & 0x3f)) {
                         char tmp1[9];
                         char tmp2[9];
                         char tmp3[9];
@@ -1731,10 +1722,10 @@ void CItemBoxGridFull::SortGridEntries(u32 mode) {
                     }
                 }
             } else {
-                CItemSortView* v1 = (CItemSortView*)obj1;
-                CItemSortView* v2 = (CItemSortView*)obj2;
-                u32 key1 = (u16)BdatGetItemId(v1->word00 >> 20);
-                u32 key2 = (u16)BdatGetItemId(v2->word00 >> 20);
+                CItemBoxItem* v1 = (CItemBoxItem*)obj1;
+                CItemBoxItem* v2 = (CItemBoxItem*)obj2;
+                u32 key1 = (u16)BdatGetItemId(v1->mWord >> 20);
+                u32 key2 = (u16)BdatGetItemId(v2->mWord >> 20);
                 if (key1 > key2) {
                     char tmp1[9];
                     char tmp2[9];
@@ -1750,58 +1741,6 @@ void CItemBoxGridFull::SortGridEntries(u32 mode) {
     }
 }
 
-// TU-local cast-only views over the grid object (CItemBoxGridFull in the
-// header covers the 0x2800 cell array + count/category/row/page fields; the
-// low object header below overlaps the cell storage and is only described
-// by untyped decls shared with other TUs, so its offsets live here):
-// - CItemBoxGridHeadView: the low object header (file handles, resource
-//   accessors, layout + animation slots, ready/state words, list slots
-//   and the 0x525..0x548 flag cluster).
-//   (CItemBoxGridItemView and the other cast-only views moved near the top
-//   of the TU so the early cell accessors can use them.)
-struct CItemBoxGridHeadView {
-    u8 _00[0x28];
-    void* field_28; // +0x28 file handle
-    void* field_2C; // +0x2C file handle
-    void* field_30; // +0x30 file handle
-    void* field_34; // +0x34 file handle
-    void* field_38; // +0x38 heap block
-    nw4r::lyt::ArcResourceAccessor* field_3C; // +0x3C resource accessor
-    nw4r::lyt::ArcResourceAccessor* field_40; // +0x40 resource accessor
-    nw4r::lyt::Layout* field_44;              // +0x44 layout
-    nw4r::lyt::AnimTransform* field_48;       // +0x48 animation
-    nw4r::lyt::AnimTransform* field_4C;       // +0x4C animation
-    nw4r::lyt::AnimTransform* field_50;       // +0x50 animation
-    u8 field_54;  // +0x54 ready byte
-    u8 _55[3];
-    u32 field_58; // +0x58 state word
-    void* field_5C; // +0x5C tag processor
-    u8 field_60;  // +0x60
-    u8 field_61;  // +0x61
-    u8 field_62[0x0C]; // +0x62 12 list slots
-    u8 _6E;
-    u8 field_6F;  // +0x6F list index
-    u8 _70[0x525 - 0x70];
-    s8 field_525; // +0x525 signed category byte
-    u8 field_526; // +0x526
-    u8 field_527; // +0x527 mode byte
-    u8 field_528; // +0x528 flag
-    u8 _529;
-    u16 field_52A; // +0x52A
-    u8 field_52C; // +0x52C
-    u8 _52D;
-    u16 field_52E; // +0x52E
-    u8 _530[0x540 - 0x530];
-    s8 field_540; // +0x540 signed flag
-    u8 _541;
-    u8 field_542; // +0x542
-    u8 field_543; // +0x543 file-present flag
-    u8 field_544; // +0x544
-    u8 _545[0x547 - 0x545];
-    u8 field_547; // +0x547
-    u8 field_548; // +0x548
-};
-
 // Bubble-sort grid entries ascending by the item object's +4 value. The two
 // item lookups (CItem_kindPtr) gate the swap; the 3-slot temp shuffle keeps
 // the retail bl sequence (CopyEntry9Bytes x3 / CopyGridEntry9 x2).
@@ -1816,7 +1755,7 @@ void CItemBoxGridFull::SortByItemU16() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            if (((CItemBoxGridItemView*)obj1)->field_04 <= ((CItemBoxGridItemView*)obj2)->field_04) continue;
+            if (((CItemBoxItem*)obj1)->mFlags <= ((CItemBoxItem*)obj2)->mFlags) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -1869,9 +1808,9 @@ void CItemBoxGridFull::SortByKindNameD() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u16 k1 = BdatGetItemId(w1 >> 20);
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
@@ -1898,7 +1837,7 @@ void CItemBoxGridFull::SortByItemByte6() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            if (((CItemBoxGridItemView*)obj1)->field_06 >= ((CItemBoxGridItemView*)obj2)->field_06) continue;
+            if (((CItemBoxItem*)obj1)->mTier >= ((CItemBoxItem*)obj2)->mTier) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             CopyGridEntry9(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             CopyGridEntry9(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2242,11 +2181,11 @@ void CItemBoxGridFull::SortGridByKindName() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u32 t1 = (u32)(size_t)lbl_eu_806640F4;
             u32 k1 = BdatGetItemId(w1 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)t1, (const char*)&lbl_eu_8050566C[0x227], k1 & 0xFFFF);
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u32 t2 = (u32)(size_t)lbl_eu_806640F4;
             u32 k2 = BdatGetItemId(w2 >> 20);
             u8 c2 = BdatGetU8Direct((const void*)t2, (const char*)&lbl_eu_8050566C[0x227], k2 & 0xFFFF);
@@ -2276,11 +2215,11 @@ void CItemBoxGridFull::SortGridByKindNameAlt() {
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             // Owner-table row is selected by the raw item word used as a
             // byte offset into the table data.
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u8 c1 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w1)),
                                    (const char*)&lbl_eu_8050566C[0x22f],
                                    BdatGetItemId(w1 >> 20));
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u8 c2 = BdatGetU8Direct((const void*)(*(u32*)((u8*)lbl_eu_806640F4 + w2)),
                                    (const char*)&lbl_eu_8050566C[0x22f],
                                    BdatGetItemId(w2 >> 20));
@@ -2309,9 +2248,9 @@ void CItemBoxGridFull::SortByCapKeyAsc() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u16 k1 = BdatGetItemId(w1 >> 20);
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x238], k2 & 0xFFFF);
@@ -2339,9 +2278,9 @@ void CItemBoxGridFull::SortByCapKey2Asc() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u16 k1 = BdatGetItemId(w1 >> 20);
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x240], k2 & 0xFFFF);
@@ -2411,9 +2350,9 @@ void CItemBoxGridFull::SortByCapKeyDesc() {
             CItemBoxGridEntry* e2 = &this->entries[j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u16 k1 = BdatGetItemId(w1 >> 20);
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u16 k2 = BdatGetItemId(w2 >> 20);
             u8 c1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k1 & 0xFFFF);
             u8 c2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)&lbl_eu_8050566C[0x251], k2 & 0xFFFF);
@@ -2473,10 +2412,10 @@ void CItemBoxGridFull::SortGridByMsgKeyDesc() {
             CItemBoxGridEntry* e2 = &this->entries[(u16)j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, *(s16*)((u8*)this + (u16)j * 10));
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             tbl= (u32)lbl_eu_80664110;
             u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w1 >> 20));
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u32 tbl2= (u32)lbl_eu_80664110;
             u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w2 >> 20));
             if (c1 <= c2) continue;
@@ -2504,10 +2443,10 @@ void CItemBoxGridFull::GroupByKindName(u32 target) {
             CItemBoxGridEntry* e2 = &this->entries[(u16)j + 1];
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
-            u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
+            u32 w1 = ((CItemBoxItem*)obj1)->mWord;
             u32 tbl= (u32)lbl_eu_80664110;
             u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w1 >> 20));
-            u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
+            u32 w2 = ((CItemBoxItem*)obj2)->mWord;
             u32 tbl2= (u32)lbl_eu_80664110;
             u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w2 >> 20));
             u32 m1 = c1 == target;
@@ -2552,7 +2491,7 @@ float CItemBoxGridFull::GetItemValueFloat(void* entry) {
     return (float)((double)(u16)idx - lbl_eu_80667F40);
 }
 
-__declspec(noinline) u32 CItemBoxGridFull::HasEquippedSlot(void* item) {
+u32 CItemBoxGridFull::HasEquippedSlot(void* item) {
     CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
     u16 count = (u16)inst->vf30((CItemData*)item);
     u8 i;
@@ -2565,7 +2504,7 @@ __declspec(noinline) u32 CItemBoxGridFull::HasEquippedSlot(void* item) {
 }
 
 // Check if entry kind exists in pool.
-__declspec(noinline) u32 CItemBoxGridFull::FindKindPoolIdx(void* entry) {
+u32 CItemBoxGridFull::FindKindPoolIdx(void* entry) {
     u32 val = *(u32*)entry;
     u32 obj = (u32)lbl_eu_806640F4;
     u16 kind = BdatGetItemId(val >> 20);
@@ -2694,8 +2633,8 @@ void CItemBoxGrid::LoadItemBoxFiles() {
 // computed-jump switch, then run the common per-frame update tail.
 void CItemBoxGrid::UpdateItemBox() {
     u8* p = (u8*)this;
-    if (!((CItemBoxGridHeadView*)p)->field_54) return;
-    u32 state = ((CItemBoxGridHeadView*)p)->field_58;
+    if (!this->field_54) return;
+    u32 state = this->field_58;
     if (!state) return;
 
     // Bare switch: MWCC emits the single cmplwi 0x1a/bgt range check plus
@@ -2719,7 +2658,7 @@ void CItemBoxGrid::UpdateItemBox() {
             break;
         case 6:
             if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
-                ((CItemBoxGridHeadView*)p)->field_58 = 0x19;
+                this->field_58 = 0x19;
             }
             break;
         case 8:
@@ -2733,12 +2672,12 @@ void CItemBoxGrid::UpdateItemBox() {
             break;
         case 12:
             if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
-                ((CItemBoxGridHeadView*)p)->field_58 = 0xA;
+                this->field_58 = 0xA;
             }
             break;
         case 14:
             if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
-                ((CItemBoxGridHeadView*)p)->field_58 = 0x3;
+                this->field_58 = 0x3;
             }
             break;
         case 15:
@@ -2761,7 +2700,7 @@ void CItemBoxGrid::UpdateItemBox() {
             break;
         case 24:
             if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) {
-                ((CItemBoxGridHeadView*)p)->field_58 = 0x13;
+                this->field_58 = 0x13;
             }
             break;
         case 26:
@@ -2771,7 +2710,7 @@ void CItemBoxGrid::UpdateItemBox() {
 
     // Virtual dispatch through the +0x44 layout object (vtable+0x38 slot);
     // method takes only the flag - this comes in r3, arg in r4.
-    nw4r::lyt::Layout* layout = ((CItemBoxGridHeadView*)p)->field_44;
+    nw4r::lyt::Layout* layout = this->field_44;
     layout->Animate(0);
 
     ((CBaseCur*)(p + 0x70))->Update();
@@ -2795,10 +2734,10 @@ void CItemBoxGrid::UpdateItemBox() {
 void CItemBoxGrid::DrawItemBoxGrid(nw4r::lyt::DrawInfo* drawInfo) {
     u8* p = (u8*)this;
     if (!p[0x54]) return;
-    if (!((CItemBoxGridHeadView*)p)->field_58) return;
+    if (!this->field_58) return;
 
     ((CItemBoxInfo*)(p + 0x1d8))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
-    drawLayout(((CItemBoxGridHeadView*)p)->field_44, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
+    drawLayout(this->field_44, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 
     u8 r = p[0x2d4f];
     u8 v = (r != 0) ? r : 1;
@@ -2826,33 +2765,33 @@ void CItemBoxGrid::DrawItemBoxGrid(nw4r::lyt::DrawInfo* drawInfo) {
 void CItemBoxGrid::UnloadItemBox() {
     u8* p = (u8*)this;
 
-    if (((CItemBoxGridHeadView*)p)->field_543) {
+    if (this->field_543) {
         CBdat::getEntry(2);
         CBdat::getEntry(5);
     }
 
-    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_28);
-    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_2C);
-    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_30);
-    closeFileHandle((CFileHandle**)&((CItemBoxGridHeadView*)p)->field_34);
+    closeFileHandle((CFileHandle**)&this->field_28);
+    closeFileHandle((CFileHandle**)&this->field_2C);
+    closeFileHandle((CFileHandle**)&this->field_30);
+    closeFileHandle((CFileHandle**)&this->field_34);
 
-    void* ptr38 = ((CItemBoxGridHeadView*)p)->field_38;
-    ((CItemBoxGridHeadView*)p)->field_54 = 0;
+    void* ptr38 = this->field_38;
+    this->field_54 = 0;
     if (ptr38) {
         deallocate__Q23mtl10MemManagerFPv(ptr38);
-        ((CItemBoxGridHeadView*)p)->field_38 = 0;
+        this->field_38 = 0;
     }
 
-    void* obj44 = ((CItemBoxGridHeadView*)p)->field_44;
+    void* obj44 = this->field_44;
     if (obj44) {
         delete (nw4r::lyt::Layout*)obj44;
-        ((CItemBoxGridHeadView*)p)->field_44 = 0;
+        this->field_44 = 0;
     }
 
-    releaseArcResourceAccessor(((CItemBoxGridHeadView*)p)->field_3C);
-    releaseArcResourceAccessor(((CItemBoxGridHeadView*)p)->field_40);
+    releaseArcResourceAccessor(this->field_3C);
+    releaseArcResourceAccessor(this->field_40);
 
-    void* obj5c = ((CItemBoxGridHeadView*)p)->field_5C;
+    void* obj5c = this->field_5C;
     if (obj5c) {
         // CTagProcessor (built by __ct__CTagProcessor above) derives from
         // CTagProcessorBase : nw4r::ut::TagProcessorBase<wchar_t> (virtual
@@ -2860,7 +2799,7 @@ void CItemBoxGrid::UnloadItemBox() {
         // deleting-dtor dispatch without pulling CTagProcessor.hpp (whose
         // C++ AccumPaneWorldPos decl clashes with this TU's extern "C" one).
         delete (nw4r::ut::TagProcessorBase<wchar_t>*)obj5c;
-        ((CItemBoxGridHeadView*)p)->field_5C = 0;
+        this->field_5C = 0;
     }
 
     deleteRegion__17UnkClass_8045F564Fv(p + 0x8);
@@ -2908,9 +2847,9 @@ u32 CItemBoxGrid::IsItemBoxActive() {
 // Get field depending on window state.
 int CItemBoxGrid::GetIdleFlag542() {
     if (reinterpret_cast<CSysWin*>(((CibgOuterSlots*)this)->m4E8)->isOpened()) return 0;
-    s32 state = (s32)((CItemBoxGridHeadView*)this)->field_58;
+    s32 state = (s32)this->field_58;
     if (state != 3) return 0;
-    return ((CItemBoxGridHeadView*)this)->field_542;
+    return this->field_542;
 }
 
 u8 CItemBoxGrid::GetField549() { return field_549; }
@@ -2955,19 +2894,19 @@ void CItemBoxGrid::InitItemDisplay() {
 // Advance item box state.
 void CItemBoxGrid::AdvanceBoxState() {
     u8* p = (u8*)this;
-    if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return;
+    if ((s32)this->field_58 != 3) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
-    ((CItemBoxGridHeadView*)p)->field_58 = 4;
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 0);
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 1);
-    ((CItemBoxGridHeadView*)p)->field_61 = 0;
+    this->field_58 = 4;
+    this->field_44->SetAnimationEnable(this->field_50, 0);
+    this->field_44->SetAnimationEnable(this->field_48, 0);
+    this->field_44->SetAnimationEnable(this->field_4C, 1);
+    this->field_61 = 0;
     ((CBaseCur*)(p + 0x70))->SetVisible(0);
     ((CBaseCur*)(p + 0x88))->SetVisible(0);
     ((CBaseCur*)(p + 0xd0))->SetVisible(0);
     ((CBaseCur*)(p + 0xb8))->SetVisible(0);
     ((CItemBoxInfo*)(p + 0x1d8))->Close();
-    if (!((CItemBoxGridHeadView*)p)->field_52C) playUISound(6);
+    if (!this->field_52C) playUISound(6);
 }
 
 // Clear a 14-byte region (list/array init). Retail uses memset for the
@@ -2976,7 +2915,7 @@ void CItemBoxGrid::ClearListSlots() {
     u8* p = (u8*)this;
     memset(p + 0x62, 0, 12);
     p[0x6e] = 0;
-    p[0x6f] = 0;
+    this->field_6F = 0;
 }
 
 void CItemBoxGrid::PushToList(unsigned char val) {
@@ -2990,14 +2929,14 @@ void CItemBoxGrid::PushToList(unsigned char val) {
 }
 
 // Increment list counter with wrap.
-__declspec(noinline) void CItemBoxGrid::IncListIndex() {
+void CItemBoxGrid::IncListIndex() {
     u8* p = (u8*)this;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
-    u8 idx = p[0x6f] + 1;
-    p[0x6f] = idx;
+    u8 idx = this->field_6F + 1;
+    this->field_6F = idx;
     if ((s8)idx >= p[0x6e]) {
-        p[0x6f] = 0;
+        this->field_6F = 0;
     }
     MoveTabPage(0);
     RebuildGridCat();
@@ -3005,14 +2944,14 @@ __declspec(noinline) void CItemBoxGrid::IncListIndex() {
 }
 
 // Decrement a list counter with wrap.
-__declspec(noinline) void CItemBoxGrid::DecListIndex() {
+void CItemBoxGrid::DecListIndex() {
     u8* p = (u8*)this;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x528]) return;
-    u8 idx = p[0x6f] - 1;
-    p[0x6f] = idx;
+    u8 idx = this->field_6F - 1;
+    this->field_6F = idx;
     if ((s8)idx < 0) {
-        p[0x6f] = p[0x6e] - 1;
+        this->field_6F = p[0x6e] - 1;
     }
     MoveTabPage(1);
     RebuildGridCat();
@@ -3133,7 +3072,7 @@ sound_and_return:
     playUISound(1);
 }
 
-__declspec(noinline) unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
+unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     if (i < 12) {
         return p[i];
     }
@@ -3148,7 +3087,7 @@ __declspec(noinline) unsigned short ArrayGet12(const unsigned short* p, unsigned
 // (value loads into freed r4); MWCC always bases in r4 (value in r5), same
 // ABI-boundary r4<->r5 class as reslistCount. Decl-order and word-indexed
 // variants invariant; witness rejects (no bijection in [3,11)).
-__declspec(noinline) void CopyTabSlotVec(u32* dst, void* src, u32 idx) {
+void CopyTabSlotVec(u32* dst, void* src, u32 idx) {
     if (idx >= 12) return;
     u32 v24, v28;
     CibgTabSlot12* slots = (CibgTabSlot12*)src;
@@ -3448,7 +3387,7 @@ void CItemBoxGrid::GridMoveCursorUp() {
 // Grid state update.
 // -O4,s: retail uses stmw r30/lmw r30; sub (r31) is declared
 // before p (r30) so MWCC colors it to the higher saved register.
-__declspec(noinline) void CItemBoxGrid::NextGridPage() {
+void CItemBoxGrid::NextGridPage() {
     u8* sub;
     u8* p = (u8*)this;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
@@ -3472,7 +3411,7 @@ __declspec(noinline) void CItemBoxGrid::NextGridPage() {
 }
 
 // Grid state update (decrement variant).
-__declspec(noinline) void CItemBoxGrid::PrevGridPage() {
+void CItemBoxGrid::PrevGridPage() {
     u8* sub;
     u8* p = (u8*)this;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
@@ -3497,9 +3436,9 @@ __declspec(noinline) void CItemBoxGrid::PrevGridPage() {
 // the epilogue), so express the checks as one && chain.
 void CItemBoxGrid::OpenSortMenu() {
     u8* p = (u8*)this;
-    if (!((CItemBoxGridHeadView*)p)->field_542 && !((CItemBoxGridHeadView*)p)->field_528 && !reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened() &&
+    if (!this->field_542 && !this->field_528 && !reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened() &&
         !reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened() && !((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag() &&
-        !isPresentActive(p + 0x468) && !((CItemBoxGridHeadView*)p)->field_544) {
+        !isPresentActive(p + 0x468) && !this->field_544) {
         if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
             if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
             UpdateCursors();
@@ -3509,11 +3448,11 @@ void CItemBoxGrid::OpenSortMenu() {
             return;
         }
         // state word is compared signed (retail cmpwi)
-        if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return;
+        if ((s32)this->field_58 != 3) return;
         if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
         // fetch the layout pane and resolve two tag strings through its
         // vtable+0x3C accessor, then merge them back into the window text.
-        nw4r::lyt::Layout* obj = ((CItemBoxGridHeadView*)p)->field_44;
+        nw4r::lyt::Layout* obj = this->field_44;
         const char* strs = lbl_eu_8050566C;
         nw4r::lyt::Pane* pane = obj->GetRootPane();
         // MWCC evaluates args right-to-left, so listing the 0x301 fetch as
@@ -3522,14 +3461,14 @@ void CItemBoxGrid::OpenSortMenu() {
         ScalePaneWorldPos(&basePos, pane->FindPaneByName((char*)&lbl_eu_8050566C[0x2f8], 1),
                       pane->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1), pane);
         ((CSortMenu*)(p + 0xe8))->SetPos(&basePos);
-        ((CSortMenu*)(p + 0xe8))->SetSelect((u8)(((CItemBoxGridHeadView*)p)->field_547 + ((CItemBoxGridHeadView*)p)->field_548));
+        ((CSortMenu*)(p + 0xe8))->SetSelect((u8)(this->field_547 + this->field_548));
         nw4r::math::VEC3 pos = ((CSortMenu*)(p + 0xe8))->GetCursorPos();
         ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate(&pos);
         ((CBaseCur*)(p + 0xa0))->SetVisible(1);
         ((CBaseCur*)(p + 0x70))->SetVisible(0);
         ((CBaseCur*)(p + 0xb8))->SetVisible(0);
         ((CSortMenu*)(p + 0xe8))->Open();
-        ((CItemBoxGridHeadView*)p)->field_526 = 0;
+        this->field_526 = 0;
         playUISound(2);
     }
 }
@@ -3544,15 +3483,15 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
         if (!reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) goto exit;
         reinterpret_cast<CSysWin*>(p + 0x4ac)->advancePhase3();
         ((CBaseCur*)(p + 0xa0))->SetVisible(0);
-        ((CItemBoxGridHeadView*)p)->field_540 = 1;
-        ((CItemBoxGridHeadView*)p)->field_58 = 0x17;
+        this->field_540 = 1;
+        this->field_58 = 0x17;
         goto exit;
     }
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) {
         if (!reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) goto exit;
         reinterpret_cast<CSysWin*>(p + 0x4e8)->advancePhase3();
         ((CBaseCur*)(p + 0x70))->SetVisible(0);
-        ((CItemBoxGridHeadView*)p)->field_58 = 0x14;
+        this->field_58 = 0x14;
         goto exit;
     }
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) {
@@ -3562,8 +3501,8 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
         ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_ClearSelection();
         ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_AdvanceState2To3();
-        ((CItemBoxGridHeadView*)p)->field_58 = 8;
-        ((CItemBoxGridHeadView*)p)->field_528 = 0;
+        this->field_58 = 8;
+        this->field_528 = 0;
         // retail inlines the r4-check tail here (copy 1 of 3)
         if (!confirmed) playUISound(6);
         goto exit;
@@ -3572,7 +3511,7 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
         if (!isPresentSettled(p + 0x468)) goto exit;
         if (isPresentBusy(p + 0x468)) {
             advancePresentState(p + 0x468);
-            ((CItemBoxGridHeadView*)p)->field_58 = 0x11;
+            this->field_58 = 0x11;
             UpdateCursors();
             ((CBaseCur*)(p + 0x70))->SetVisible(1);
             ((CBaseCur*)(p + 0xd0))->SetVisible(0);
@@ -3583,7 +3522,7 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
             ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         } else {
             advancePresentState(p + 0x468);
-            ((CItemBoxGridHeadView*)p)->field_58 = 0x11;
+            this->field_58 = 0x11;
             UpdateCursors();
             ((CBaseCur*)(p + 0x70))->SetVisible(1);
             ((CBaseCur*)(p + 0xd0))->SetVisible(0);
@@ -3592,24 +3531,24 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
         if (!confirmed) playUISound(6);
         goto exit;
     }
-    if (((CItemBoxGridHeadView*)p)->field_528) {
-        if (((CItemBoxGridHeadView*)p)->field_527 == 1) {
+    if (this->field_528) {
+        if (this->field_527 == 1) {
             if (!reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) goto exit;
-            if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 0x19) goto exit;
+            if ((s32)this->field_58 != 0x19) goto exit;
             reinterpret_cast<CNumSelect*>(p + 0x3e4)->Close();
-            ((CItemBoxGridHeadView*)p)->field_58 = 0x1a;
-        } else if (((CItemBoxGridHeadView*)p)->field_527 == 2) {
+            this->field_58 = 0x1a;
+        } else if (this->field_527 == 2) {
             if (!((CExchangeWin*)(p + 0x440))->getField27()) goto exit;
             ((CExchangeWin*)(p + 0x440))->ExWin_RequestClose();
-            ((CItemBoxGridHeadView*)p)->field_58 = 0x0e;
+            this->field_58 = 0x0e;
             ((CBaseCur*)(p + 0x70))->SetVisible(1);
             ((CBaseCur*)(p + 0xa0))->SetVisible(0);
             UpdateCursors();
         }
         goto check_tail;
     }
-    if (((CItemBoxGridHeadView*)p)->field_544) {
-        ((CItemBoxGridHeadView*)p)->field_544 = 0;
+    if (this->field_544) {
+        this->field_544 = 0;
         ((CBaseCur*)(p + 0x70))->SetVisible(1);
         ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         goto check_tail;
@@ -3619,8 +3558,8 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
         UpdateCursors();
         ((CBaseCur*)(p + 0xa0))->SetVisible(0);
         ((CSortMenu*)(p + 0xe8))->Close();
-    } else if (((CItemBoxGridHeadView*)p)->field_527 == 4) {
-        ((CItemBoxGridHeadView*)p)->field_525 = -2;
+    } else if (this->field_527 == 4) {
+        this->field_525 = -2;
         UpdateCursors();
     }
 check_tail:
@@ -3677,7 +3616,7 @@ void CItemBoxGrid::func_801CCAF0() {
             playUISound(0x7a);
             UpdateCursors();
         } else {
-            u8* listRow = p + (s8)p[0x6f];
+            u8* listRow = p + (s8)this->field_6F;
             if (listRow[0x62] == 0xa) {
                 s32 count2 = 0;
                 void* ec = CtrlObjectParam_GetSlotTableBase();
@@ -3769,7 +3708,7 @@ void CItemBoxGrid::func_801CCAF0() {
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
         if (((CSortMenu*)(p + 0xe8))->IsIdle()) {
             u32 val = ((CSortMenu*)(p + 0xe8))->GetSelect();
-            CItemBlock_setFlag120EC((p + (s8)p[0x6f])[0x62], val & 0xFF);
+            CItemBlock_setFlag120EC((p + (s8)this->field_6F)[0x62], val & 0xFF);
             p[0x547] = (u8)((CSortMenu*)(p + 0xe8))->GetCursor();
             p[0x548] = (u8)((CSortMenu*)(p + 0xe8))->GetTop();
             ((CItemBoxGrid*)p)->HandleCancelBtn(1);
@@ -3903,7 +3842,7 @@ void CItemBoxGrid::func_801CCAF0() {
                     p[0x540] = 1;
                 }
             } else {
-                u8 listVal2 = p[0x62 + (s8)p[0x6f]];
+                u8 listVal2 = p[0x62 + (s8)this->field_6F];
                 if (listVal2 == 0xd) {
                     u32 k12 = ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->GetCellKind((u16)entry);
                     if (IsItemTeachable(k12 & 0xFFFF)) {
@@ -3922,7 +3861,7 @@ void CItemBoxGrid::func_801CCAF0() {
                     }
                 } else {
                 sell_qty:
-                    u32 lv = (p + (s8)p[0x6f])[0x62];
+                    u32 lv = (p + (s8)this->field_6F)[0x62];
                     if (lv - 2 <= 7) {
                         reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(0);
                     } else {
@@ -4017,7 +3956,7 @@ void CItemBoxGrid::func_801CCAF0() {
             playUISound(5);
             return;
         }
-        u8 listVal3 = p[0x62 + (s8)p[0x6f]];
+        u8 listVal3 = p[0x62 + (s8)this->field_6F];
         if (listVal3 == 0xc) {
             playUISound(5);
             return;
@@ -4043,9 +3982,9 @@ void CItemBoxGrid::SetInfoMsgId(u16 val) {
 // Get field depending on obj state.
 int CItemBoxGrid::GetExchFlag52C() {
     if (!((CExchangeWin*)(((CibgOuterSlots*)this)->m440))->getField27()) return 0;
-    s32 state = (s32)((CItemBoxGridHeadView*)this)->field_58;
+    s32 state = (s32)this->field_58;
     if (state != 3) return 0;
-    return ((CItemBoxGridHeadView*)this)->field_52C;
+    return this->field_52C;
 }
 
 int CItemBoxGrid::GetField52D() { return field_52D; }
@@ -4124,16 +4063,16 @@ void CItemBoxGrid::TickItemBoxGrid() {
 // Check conditions and update state.
 void CItemBoxGrid::SelectCatRow() {
     u8* p = (u8*)this;
-    if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return;
-    if (((CItemBoxGridHeadView*)p)->field_528) return;
-    if (((CItemBoxGridHeadView*)p)->field_525 == -1) return;
+    if ((s32)this->field_58 != 3) return;
+    if (this->field_528) return;
+    if (this->field_525 == -1) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
     if (isPresentActive(p + 0x468)) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
-    if (((CItemBoxGridHeadView*)p)->field_544) return;
-    ((CItemBoxGridHeadView*)p)->field_525 = -1;
+    if (this->field_544) return;
+    this->field_525 = -1;
     UpdateCursors();
     RefreshSelectedCellText();
     playUISound(2);
@@ -4145,7 +4084,7 @@ void CItemBoxGrid::SelectCatRow() {
 // (0x527) and the pending-selection byte (0x525).
 u8 CItemBoxGrid::GetPromptState() {
     u8* p = (u8*)this;
-    if ((s32)((CItemBoxGridHeadView*)p)->field_58 != 3) return 0;
+    if ((s32)this->field_58 != 3) return 0;
     if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsOpen()) return 0;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return 0;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 0;
@@ -4167,29 +4106,29 @@ u8 CItemBoxGrid::GetPromptState() {
 }
 
 // Animate grid panels (alt variant).
-__declspec(noinline) void CItemBoxGrid::AdvanceOpenAnim() {
+void CItemBoxGrid::AdvanceOpenAnim() {
     u8* p = (u8*)this;
-    if (!advanceAnimTransform(((CItemBoxGridHeadView*)p)->field_48, lbl_eu_80667F78)) return;
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 0);
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 1);
-    ((CItemBoxGridHeadView*)p)->field_58 = 2;
+    if (!advanceAnimTransform(this->field_48, lbl_eu_80667F78)) return;
+    this->field_44->SetAnimationEnable(this->field_50, 0);
+    this->field_44->SetAnimationEnable(this->field_48, 0);
+    this->field_44->SetAnimationEnable(this->field_4C, 1);
+    this->field_58 = 2;
 }
 
-__declspec(noinline) void CItemBoxGrid::FinishOpenAnim() {
+void CItemBoxGrid::FinishOpenAnim() {
     u8* p = (u8*)this;
-    if (advanceAnimTransform(((CItemBoxGridHeadView*)p)->field_4C, lbl_eu_80667F78)) {
-        ((CItemBoxGridHeadView*)p)->field_58 = 3;
-        ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 0);
-        ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 0);
-        ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 1);
+    if (advanceAnimTransform(this->field_4C, lbl_eu_80667F78)) {
+        this->field_58 = 3;
+        this->field_44->SetAnimationEnable(this->field_48, 0);
+        this->field_44->SetAnimationEnable(this->field_4C, 0);
+        this->field_44->SetAnimationEnable(this->field_50, 1);
         p[0x61] = 1;
         RefreshSelectedCellText();
         ((CBaseCur*)((p + 0x70)))->SetVisible(1);
         ((CBaseCur*)((p + 0x88)))->SetVisible(1);
         UpdateCursors();
         if (p[0x542]) {
-            ((CItemBoxGridHeadView*)p)->field_58 = 0x12;
+            this->field_58 = 0x12;
             {
                 u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x27);
                 reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->switchKindPane(0);
@@ -4205,46 +4144,46 @@ __declspec(noinline) void CItemBoxGrid::FinishOpenAnim() {
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
 
-__declspec(noinline) void CItemBoxGrid::CheckState4_Animate() {
+void CItemBoxGrid::CheckState4_Animate() {
     char* self = (char*)this; // noinline: dispatch table calls keep `bl`
-    if (((CItemBoxGridHeadView*)self)->field_527 != 4) {
+    if (this->field_527 != 4) {
         return;
     }
-    advanceAnimTransform(((CItemBoxGridHeadView*)self)->field_50, lbl_eu_80667F78);
+    advanceAnimTransform(this->field_50, lbl_eu_80667F78);
 }
 
 
 // Animate grid panels.
-__declspec(noinline) void CItemBoxGrid::AdvanceCloseAnim() {
+void CItemBoxGrid::AdvanceCloseAnim() {
     u8* p = (u8*)this;
-    if (!AnimRewindFrame(((CItemBoxGridHeadView*)p)->field_4C, lbl_eu_80667F78)) return;
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_4C, 0);
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_50, 0);
-    ((CItemBoxGridHeadView*)p)->field_44->SetAnimationEnable(((CItemBoxGridHeadView*)p)->field_48, 1);
-    ((CItemBoxGridHeadView*)p)->field_58 = 5;
+    if (!AnimRewindFrame(this->field_4C, lbl_eu_80667F78)) return;
+    this->field_44->SetAnimationEnable(this->field_4C, 0);
+    this->field_44->SetAnimationEnable(this->field_50, 0);
+    this->field_44->SetAnimationEnable(this->field_48, 1);
+    this->field_58 = 5;
 }
 
-__declspec(noinline) void CItemBoxGrid::FinishCloseAnim() {
+void CItemBoxGrid::FinishCloseAnim() {
     void* self = this; // noinline: dispatch table calls keep `bl`
     float f = lbl_eu_80667F78;
     u8* p = (u8*)self;
-    nw4r::lyt::AnimTransform* obj = ((CItemBoxGridHeadView*)p)->field_48;
+    nw4r::lyt::AnimTransform* obj = this->field_48;
     if (AnimRewindFrame(obj, f)) {
         p[0x61] = 1;
-        ((CItemBoxGridHeadView*)p)->field_58 = 0;
+        this->field_58 = 0;
         ((CBaseCur*)(p + 0x70))->SetVisible(0);
     }
 }
-__declspec(noinline) void CItemBoxGrid::FinishNumSelect() {
+void CItemBoxGrid::FinishNumSelect() {
     u8* p = (u8*)this;
     if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsIdle()) {
-        ((CItemBoxGridHeadView*)p)->field_58 = 3;
+        this->field_58 = 3;
         p[0x528] = 0;
         ((CBaseCur*)((p + 0x70)))->SetVisible(1);
         UpdateCursors();
         if (p[0x541]) {
             p[0x541] = 0;
-            ((CItemBoxGridHeadView*)p)->field_58 = 0x12;
+            this->field_58 = 0x12;
             {
                 u32 msg = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x10);
                 reinterpret_cast<CSysWin*>((void*)(p + 0x4e8))->switchKindPane(0);
@@ -4257,10 +4196,10 @@ __declspec(noinline) void CItemBoxGrid::FinishNumSelect() {
     }
 }
 // Handle sub-object activation.
-__declspec(noinline) void CItemBoxGrid::ShowSubMenuCur() {
+void CItemBoxGrid::ShowSubMenuCur() {
     u8* p = (u8*)this;
     if (!((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) return;
-    ((CItemBoxGridHeadView*)p)->field_58 = 7;
+    this->field_58 = 7;
     u8 temp[16];
     GridSubMenu_GetCursorPos(temp, p + 0x418);
     ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
@@ -4268,14 +4207,14 @@ __declspec(noinline) void CItemBoxGrid::ShowSubMenuCur() {
 }
 
 
-__declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
+void CItemBoxGrid::DispatchSubmenuConfirm() {
     void* self = this; // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) return;
     *(u32*)(p + 0x58) = 3;
     if ((GridSubMenu_GetOptionCount(p + 0x418) & 0xFF) == 2) {
         // Confirmed: dispatch on the selected cell's category byte.
-        s32 val = (s8)p[0x6f];
+        s32 val = (s8)this->field_6F;
         if (p[val + 0x62] == 0xa) {
         // Category 0xa cell: feed the picked item kind into the exchange view.
         u8* sub = p + 0x54c;
@@ -4305,7 +4244,7 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
         char* subMsg = 0;   // optional second dialog line
         u32 showDetail = 0;
 
-        if (isResourceFlagSet__Q22cf13CfGameManagerFv(nameIdx & 0xFF)) {
+        if (cf::CfGameManager::isResourceFlagSet(nameIdx & 0xFF)) {
             u8* save = (u8*)CtrlObjectParam_GetCharEntry(nameIdx & 0xFF);
             u32 cnt = CtrlObjectParam_GetCurrentRowKey(save) & 0xFF;
             // Per-(character, slot) record in the collection-save area.
@@ -4396,10 +4335,10 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
 }
 
 // Handle sub-object activation with copy.
-__declspec(noinline) void CItemBoxGrid::ShowExchangeCur() {
+void CItemBoxGrid::ShowExchangeCur() {
     u8* p = (u8*)this;
     if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
-    ((CItemBoxGridHeadView*)p)->field_58 = 0xd;
+    this->field_58 = 0xd;
     ((CBaseCur*)(p + 0xa0))->SetVisible(1);
     u8 temp[16];
     u8 val529 = p[0x529];
@@ -4408,19 +4347,19 @@ __declspec(noinline) void CItemBoxGrid::ShowExchangeCur() {
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
-__declspec(noinline) void CItemBoxGrid::FinishExchange() {
+void CItemBoxGrid::FinishExchange() {
     u8* p = (u8*)this;
     if (((CExchangeWin*)(p + 0x440))->getField27()) {
-        ((CItemBoxGridHeadView*)p)->field_58 = 3;
+        this->field_58 = 3;
         p[0x528] = 0;
     }
 }
 
 // Handle sub-object activation (variant).
-__declspec(noinline) void CItemBoxGrid::ShowPresentCur() {
+void CItemBoxGrid::ShowPresentCur() {
     u8* p = (u8*)this;
     if (!isPresentSettled(p + 0x468)) return;
-    ((CItemBoxGridHeadView*)p)->field_58 = 0x10;
+    this->field_58 = 0x10;
     u8 temp[16];
     getPresentPaneWorldPos(temp, p + 0x468);
     ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
@@ -4428,19 +4367,19 @@ __declspec(noinline) void CItemBoxGrid::ShowPresentCur() {
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
-__declspec(noinline) void CItemBoxGrid::FinishPresent() {
+void CItemBoxGrid::FinishPresent() {
     u8* p = (u8*)this;
     if (isPresentSettled(p + 0x468)) {
-        ((CItemBoxGridHeadView*)p)->field_58 = 3;
+        this->field_58 = 3;
         p[0x528] = 0;
     }
 }
 
 // Check system window; if active, set state and call helpers.
-__declspec(noinline) void CItemBoxGrid::OnSysWinOpen() {
+void CItemBoxGrid::OnSysWinOpen() {
     u8* p = (u8*)this;
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) {
-        ((CItemBoxGridHeadView*)p)->field_58 = 0x16;
+        this->field_58 = 0x16;
         ((CBaseCur*)(p + 0xa0))->SetVisible(1);
         UpdateCursors();
     }
@@ -4450,9 +4389,9 @@ __declspec(noinline) void CItemBoxGrid::OnSysWinOpen() {
 void CItemBoxGrid::HandleSysWinOK() {
     u8* p = (u8*)this;
     if (!reinterpret_cast<CSysWin*>(p + 0x4ac)->isActive()) return;
-    if (!((CItemBoxGridHeadView*)p)->field_540) {
-        u8 idx = ((CItemBoxGridHeadView*)p)->field_6F;
-        u8 cat = ((CItemBoxGridHeadView*)this)->field_62[(s8)idx];
+    if (!this->field_540) {
+        u8 idx = this->field_6F;
+        u8 cat = this->field_62[(s8)idx];
         u32 diff = cat - 2;
         if (diff <= 7) {
             reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(0);
@@ -4460,20 +4399,20 @@ void CItemBoxGrid::HandleSysWinOK() {
             reinterpret_cast<CNumSelect*>(p + 0x3e4)->SetArrowVisible(1);
         }
         reinterpret_cast<CNumSelect*>(p + 0x3e4)->Open();
-        ((CItemBoxGridHeadView*)p)->field_58 = 0x18;
-        ((CItemBoxGridHeadView*)p)->field_528 = 1;
+        this->field_58 = 0x18;
+        this->field_528 = 1;
     } else {
-        ((CItemBoxGridHeadView*)p)->field_58 = 3;
+        this->field_58 = 3;
         ((CBaseCur*)(p + 0x70))->SetVisible(1);
         UpdateCursors();
     }
 }
 
 // Handle system window activation.
-__declspec(noinline) void CItemBoxGrid::FinishSysWin() {
+void CItemBoxGrid::FinishSysWin() {
     u8* p = (u8*)this;
     if (!reinterpret_cast<CSysWin*>(p + 0x4e8)->isActive()) return;
-    ((CItemBoxGridHeadView*)p)->field_58 = 3;
+    this->field_58 = 3;
     if (!p[0x542] && !p[0x544]) {
         ((CBaseCur*)(p + 0x70))->SetVisible(1);
     }
@@ -4491,8 +4430,8 @@ void CItemBoxGrid::SetGridReady() {
     // live, and the three global table pointers must all be non-null, before
     // the busy/dirty flags are set.  The exit label keeps retail's
     // `bne store; blr` gate layout (see MWCC_CASES goto-gate pattern).
-    if (((CItemBoxGridHeadView*)this)->field_44 == 0) goto exit;
-    if (((CItemBoxGridHeadView*)this)->field_40 == 0) goto exit;
+    if (this->field_44 == 0) goto exit;
+    if (this->field_40 == 0) goto exit;
     if (lbl_eu_80664508 == 0) goto exit;
     if (lbl_eu_8066450C == 0) goto exit;
     if (lbl_eu_80664510 != 0) goto store;
@@ -4500,8 +4439,8 @@ void CItemBoxGrid::SetGridReady() {
 exit:
     return;
 store:
-    ((CItemBoxGridHeadView*)this)->field_60 = 1;
-    ((CItemBoxGridHeadView*)this)->field_54 = 1;
+    this->field_60 = 1;
+    this->field_54 = 1;
     return;
 }
 
@@ -4516,7 +4455,7 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
     void* obj = item ? item : 0;
     u32 msgId = 0;
     if (obj) {
-        u32 type = (((CItemSortView*)obj)->word00 >> 16) & 0xF;
+        u32 type = (((CItemBoxItem*)obj)->mWord >> 16) & 0xF;
         if (type == 3) {
             msgId = 0;
             CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
@@ -4531,10 +4470,10 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
             case 9: msgId = (u32)MakeTplNameSysFile(0x149); break;
             }
             if (msgId) {
-                msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                msgId = (u32)this->field_40->GetResource(
                     0x74696d67, (char*)msgId, 0);
             } else {
-                msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                msgId = (u32)this->field_3C->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else if (type == 9) {
@@ -4543,11 +4482,11 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
             if (hasArts == 0) {
                 if (IsSkillItem(obj)) {
                     msgId = (u32)MakeTplNameSysFile(0x155);
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                    msgId = (u32)this->field_40->GetResource(
                         0x74696d67, (char*)msgId, 0);
                 } else {
                     u32 sub = 0;
-                    int v = (((CItemSortView*)obj)->flags7 >> 2) & 0x3F;
+                    int v = (((CItemBoxItem*)obj)->mState >> 2) & 0x3F;
                     switch (v) {
                     case 4: sub = (u32)MakeTplNameSysFile(0x144); break;
                     case 5: sub = (u32)MakeTplNameSysFile(0x145); break;
@@ -4557,17 +4496,17 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
                     case 9: sub = (u32)MakeTplNameSysFile(0x149); break;
                     }
                     if (sub) {
-                        msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                        msgId = (u32)this->field_40->GetResource(
                             0x74696d67, (char*)sub, 0);
                     } else {
-                        msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                        msgId = (u32)this->field_3C->GetResource(
                             0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                     }
                 }
             } else {
                 // origin arts - same byte7>>2 subtype mapping
                 u32 sub2 = 0;
-                int v = (((CItemSortView*)obj)->flags7 >> 2) & 0x3F;
+                int v = (((CItemBoxItem*)obj)->mState >> 2) & 0x3F;
                 switch (v) {
                 case 4: sub2 = (u32)MakeTplNameSysFile(0x144); break;
                 case 5: sub2 = (u32)MakeTplNameSysFile(0x145); break;
@@ -4577,10 +4516,10 @@ void CItemBoxGrid::ShowCellIcon(u32 kind, void* item, u16 idx, u32 bt) {
                 case 9: sub2 = (u32)MakeTplNameSysFile(0x149); break;
                 }
                 if (sub2) {
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                    msgId = (u32)this->field_40->GetResource(
                         0x74696d67, (char*)sub2, 0);
                 } else {
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                    msgId = (u32)this->field_3C->GetResource(
                         0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                 }
             }
@@ -4593,31 +4532,31 @@ done:
         if (kind) {
             u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x34d], kind);
             msgId = (u32)MakeTplNameSysFile(v);
-            msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+            msgId = (u32)this->field_40->GetResource(
                 0x74696d67, (char*)msgId, 0);
             if (!msgId) {
-                msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                msgId = (u32)this->field_3C->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else {
-            msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+            msgId = (u32)this->field_3C->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
         }
     }
     if (bt) {
-        u8 cat = ((CItemBoxGridHeadView*)p)->field_62[(s8)((CItemBoxGridHeadView*)p)->field_6F];
+        u8 cat = this->field_62[(s8)this->field_6F];
         if (cat == 3) {
-            msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+            msgId = (u32)this->field_40->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x357], 0);
         } else {
-            msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+            msgId = (u32)this->field_40->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x36d], 0);
         }
     }
     if (msgId) {
         char buf[32];
         sprintf(buf, (const char*)&lbl_eu_8050566C[0x383], idx + 1);
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)buf, (TPLPalette*)((void*)msgId));
+        PaneSetTexPaletteByName(this->field_44, (const char*)buf, (TPLPalette*)((void*)msgId));
     }
 }
 
@@ -4631,7 +4570,7 @@ void CItemBoxGrid::ShowCellBadge(u32 kind, void* item, u16 idx) {
     void* obj = item ? item : 0;
     u32 msgId = 0;
     if (obj) {
-        u32 type = (((CItemSortView*)obj)->word00 >> 16) & 0xF;
+        u32 type = (((CItemBoxItem*)obj)->mWord >> 16) & 0xF;
         if (type == 3) {
             msgId = 0;
             CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
@@ -4645,10 +4584,10 @@ void CItemBoxGrid::ShowCellBadge(u32 kind, void* item, u16 idx) {
             case 6: msgId = (u32)MakeTplNameSysFile(0x192); break;
             }
             if (msgId) {
-                msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                msgId = (u32)this->field_40->GetResource(
                     0x74696d67, (char*)msgId, 0);
             } else {
-                msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                msgId = (u32)this->field_3C->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else if (type == 9) {
@@ -4658,10 +4597,10 @@ void CItemBoxGrid::ShowCellBadge(u32 kind, void* item, u16 idx) {
                 if (IsSkillItem(obj)) {
                     // skill item - use the 0x191..0x18d mapping below
                 } else {
-                    u32 w = ((CItemSortView*)obj)->word00;
+                    u32 w = ((CItemBoxItem*)obj)->mWord;
                     int isArts = 0;
                     u32 t = (w >> 16) & 0xF;
-                    if (t == 9 && (u8)(((CItemSortView*)obj)->flags7 & 3) == 1) isArts = 1;
+                    if (t == 9 && (u8)(((CItemBoxItem*)obj)->mState & 3) == 1) isArts = 1;
                     if (!isArts && t != 9) goto done_item;
                 }
                 msgId = 0;
@@ -4675,10 +4614,10 @@ void CItemBoxGrid::ShowCellBadge(u32 kind, void* item, u16 idx) {
                 case 5: msgId = (u32)MakeTplNameSysFile(0x18d); break;
                 }
                 if (msgId) {
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                    msgId = (u32)this->field_40->GetResource(
                         0x74696d67, (char*)msgId, 0);
                 } else {
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                    msgId = (u32)this->field_3C->GetResource(
                         0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                 }
             } else {
@@ -4694,10 +4633,10 @@ void CItemBoxGrid::ShowCellBadge(u32 kind, void* item, u16 idx) {
                 case 5: msgId = (u32)MakeTplNameSysFile(0x198); break;
                 }
                 if (msgId) {
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+                    msgId = (u32)this->field_40->GetResource(
                         0x74696d67, (char*)msgId, 0);
                 } else {
-                    msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                    msgId = (u32)this->field_3C->GetResource(
                         0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                 }
             }
@@ -4710,21 +4649,21 @@ done_item:
         if (kind) {
             u16 v = BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x391], kind);
             msgId = (u32)MakeTplNameSysFile(v);
-            msgId = (u32)((CItemBoxGridHeadView*)p)->field_40->GetResource(
+            msgId = (u32)this->field_40->GetResource(
                 0x74696d67, (char*)msgId, 0);
             if (!msgId) {
-                msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+                msgId = (u32)this->field_3C->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else {
-            msgId = (u32)((CItemBoxGridHeadView*)p)->field_3C->GetResource(
+            msgId = (u32)this->field_3C->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
         }
     }
     if (msgId) {
         char buf[32];
         sprintf(buf, (const char*)&lbl_eu_8050566C[0x396], idx + 1);
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)buf, (TPLPalette*)((void*)msgId));
+        PaneSetTexPaletteByName(this->field_44, (const char*)buf, (TPLPalette*)((void*)msgId));
     }
 }
 
@@ -4749,7 +4688,7 @@ void CItemBoxGrid::SetCellCaption(s8 kind, void* item, u16 idx) {
     // Kind nibble of the item's descriptor word; 0 when there is no item.
     u32 sel;
     if (it != 0) {
-        sel = ((((CItemSortView*)it)->word00 >> 16) & 0xF);
+        sel = ((((CItemBoxItem*)it)->mWord >> 16) & 0xF);
     } else {
         sel = 0;
     }
@@ -4760,22 +4699,22 @@ void CItemBoxGrid::SetCellCaption(s8 kind, void* item, u16 idx) {
         char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158],
                                   (u32)(0x1e - ((cnt & 0xFF) - 1)));
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x14c], msg);
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644D8, (const GXColorS10*)&lbl_eu_806644E0);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644D8, (const GXColorS10*)&lbl_eu_806644E0);
     } else if (kind > 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x162], kind);
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644D8, (const GXColorS10*)&lbl_eu_806644E0);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644D8, (const GXColorS10*)&lbl_eu_806644E0);
     } else if (kind == 0) {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     } else if (kind == -2) {
         sprintf(msgBuf, getErrMesText16());
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644E8, (const GXColorS10*)&lbl_eu_806644F0);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644E8, (const GXColorS10*)&lbl_eu_806644F0);
     } else if (kind == -3) {
         sprintf(msgBuf, getErrMesText15());
-        PaneMatSetTevColorsByName(((CItemBoxGridHeadView*)p)->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644F8, (const GXColorS10*)&lbl_eu_80664500);
+        PaneMatSetTevColorsByName(this->field_44, nameBuf, (const GXColorS10*)&lbl_eu_806644F8, (const GXColorS10*)&lbl_eu_80664500);
     } else {
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
     }
-    LayoutSetTextBoxText(((CItemBoxGridHeadView*)p)->field_44, nameBuf, msgBuf, 0);
+    LayoutSetTextBoxText(this->field_44, nameBuf, msgBuf, 0);
 }
 
 // Show the cell-count label on the item box: format "x N" into a stack
@@ -4790,27 +4729,27 @@ void CItemBoxGrid::ShowCellCount(u32 kind, void* flag2, void* flag3, u32 idx) {
 
     void* acc;
     void* pane;
-    acc = ((CItemBoxGridHeadView*)p)->field_3C;
+    acc = this->field_3C;
     pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     if (kind == 1) {
-        acc = ((CItemBoxGridHeadView*)p)->field_3C;
+        acc = this->field_3C;
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3bb], 0);
     } else if (kind == 2) {
-        acc = ((CItemBoxGridHeadView*)p)->field_3C;
+        acc = this->field_3C;
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3cf], 0);
     }
     if (flag3) {
-        acc = ((CItemBoxGridHeadView*)p)->field_3C;
+        acc = this->field_3C;
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3e3], 0);
     }
     if (flag2) {
-        acc = ((CItemBoxGridHeadView*)p)->field_3C;
+        acc = this->field_3C;
         pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3f7], 0);
     }
 
     if (pane) {
         // pane rides in r5 straight into the call (retail never reloads r5)
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)buf, (TPLPalette*)((void*)pane));
+        PaneSetTexPaletteByName(this->field_44, (const char*)buf, (TPLPalette*)((void*)pane));
     }
 }
 
@@ -4843,16 +4782,16 @@ void CItemBoxGrid::SetTabHeader(int cat, int idx) {
         case 12: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4dd]); break;
         case 13: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4f2]); break;
         }
-        result = (int)((CItemBoxGridHeadView*)p)->field_40->GetResource(0x74696d67, buf, 0);
+        result = (int)this->field_40->GetResource(0x74696d67, buf, 0);
         if (!result) {
-            result = (int)((CItemBoxGridHeadView*)p)->field_3C->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
+            result = (int)this->field_3C->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
         }
     } else {
-        result = (int)((CItemBoxGridHeadView*)p)->field_3C->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
+        result = (int)this->field_3C->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     }
     if (result) {
         sprintf(tmp, (const char*)&lbl_eu_8050566C[0x507], idx + 1);
-        PaneSetTexPaletteByName(((CItemBoxGridHeadView*)p)->field_44, (const char*)tmp, (TPLPalette*)((void*)result));
+        PaneSetTexPaletteByName(this->field_44, (const char*)tmp, (TPLPalette*)((void*)result));
     }
 }
 
@@ -4861,7 +4800,7 @@ void CItemBoxGrid::SetCellMarkVis(bool val, u32 idx) {
     u8* p = (u8*)this;
     char buf[32];
     sprintf(buf, (const char*)&lbl_eu_8050566C[0x513], idx + 1);
-    nw4r::lyt::Layout* obj = ((CItemBoxGridHeadView*)p)->field_44;
+    nw4r::lyt::Layout* obj = this->field_44;
     nw4r::lyt::Pane* sub = obj->GetRootPane();
     nw4r::lyt::Pane* ret = sub->FindPaneByName(buf, 1);
     setPaneVisible(ret, val);
@@ -4886,7 +4825,7 @@ void CItemBoxGrid::RefreshCategoryTabs() {
         isCurTab = false;
         bool isOtherTab = false;
         u8 cat = p[(u8)i + 0x62];        if (cat != 0) {
-            if ((u8)i == (s8)p[0x6f]) {
+            if ((u8)i == (s8)this->field_6F) {
                 isCurTab = true;
                 isOtherTab = false;
             } else {
@@ -4926,18 +4865,18 @@ void CItemBoxGrid::RefreshCategoryTabs() {
 void CItemBoxGrid::RebuildGridCat() {
     u8* p = (u8*)this;
     u8* sub = p + 0x54c;
-    ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->PopulateGridEntries(((CItemBoxGridHeadView*)p)->field_62[(s8)((CItemBoxGridHeadView*)p)->field_6F], 0, ((CItemBoxGridHeadView*)p)->field_52E, ((CItemBoxGridHeadView*)p)->field_52A);
-    if (((CItemBoxGridHeadView*)p)->field_527 == 4) {
+    ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->PopulateGridEntries(this->field_62[(s8)this->field_6F], 0, this->field_52E, this->field_52A);
+    if (this->field_527 == 4) {
         ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->CompactGridEntries();
     }
-    setLayoutTextBoxNumber(((CItemBoxGridHeadView*)p)->field_44,
+    setLayoutTextBoxNumber(this->field_44,
                   const_cast<char*>(&lbl_eu_8050566C[0x53e]),
                   (u8)((CItemBoxGridFull*)((void*)sub))->CalcGridRowCount());
     RebuildGridUI();
     RefreshSelectedCellText();
     func_801D0BD8();
     if (((CItemBoxInfo*)(p + 0x1d8))->GetState() != 0) {
-        ((CItemBoxInfo*)(p + 0x1d8))->HidePanes(((CItemBoxGridHeadView*)p)->field_62[(s8)((CItemBoxGridHeadView*)p)->field_6F]);
+        ((CItemBoxInfo*)(p + 0x1d8))->HidePanes(this->field_62[(s8)this->field_6F]);
     }
 }
 
@@ -5030,7 +4969,7 @@ void CItemBoxGrid::RebuildGridUI() {
 // Refreshes the grid UI text for the selected cell. Retail computes the
 // selected index unconditionally from the raw bytes, then special-cases the
 // "no selection" rows (-1/-2).
-__declspec(noinline) void CItemBoxGrid::RefreshSelectedCellText() {
+void CItemBoxGrid::RefreshSelectedCellText() {
     u8* p = (u8*)this;
     CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
     s8 row = (s8)p[0x525];
@@ -5092,8 +5031,8 @@ __declspec(noinline) void CItemBoxGrid::RefreshSelectedCellText() {
 void CItemBoxGrid::MoveTabPage(int val) {
     u8* p = (u8*)this;
     u8 buf[2];
-    buf[0] = p[0x6f];
-    s8 v = (s8)p[0x6f];
+    buf[0] = this->field_6F;
+    s8 v = (s8)this->field_6F;
     buf[1] = (u8)((val != 0) ? v + 1 : v - 1);
     if ((s8)buf[1] < 0) {
         buf[1] = p[0x6e] - 1;
@@ -5109,7 +5048,7 @@ void CItemBoxGrid::MoveTabPage(int val) {
         s32 idx = (s8)buf[(u8)i];
         bool isOtherTab = false;
         if (p[0x62 + idx] != 0) {
-            if (idx == (s8)p[0x6f]) {
+            if (idx == (s8)this->field_6F) {
                 isCurTab = true;
                 isOtherTab = false;
             } else {
@@ -5121,7 +5060,7 @@ void CItemBoxGrid::MoveTabPage(int val) {
         setPaneVisible(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane2, 1), isOtherTab);
     }
     {
-        u8 cat = ((CItemBoxGridHeadView*)p)->field_62[(s8)p[0x6f]];
+        u8 cat = this->field_62[(s8)this->field_6F];
         if ((u32)(cat - 4) <= 4 || (s32)cat == 2 || (s32)cat == 0xB) {
             // Layout pointer re-derived per call: PaneMatSetTevColorsByName clobbers
             // memory, so MWCC reloads *(p+0x44) before every call.
@@ -5158,7 +5097,7 @@ void CItemBoxGrid::MoveTabPage(int val) {
 // its cursor position into the +0xa0 cursor; otherwise compute the selected
 // cell's pane position (AccumPaneWorldPos), scale its x by the label pane's
 // +0x44 factor, and drive the +0x70/+0xb8 cursors with it.
-__declspec(noinline) void CItemBoxGrid::UpdateCursors() {
+void CItemBoxGrid::UpdateCursors() {
     u8* p = (u8*)this;
     nw4r::math::VEC3 posT2;
     nw4r::math::VEC3 posT1;
@@ -5171,9 +5110,9 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     }
     s8 idx = (s8)p[0x525];
     if (idx == -2) {
-        nw4r::lyt::Pane* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
+        nw4r::lyt::Pane* t1 = this->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
         AccumPaneWorldPos(&posT2, (nw4r::lyt::Pane*)((void*)t1));
-        nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
+        nw4r::lyt::Pane* t2 = this->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT2.x = posT2.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT2));
         ((CBaseCur*)(p + 0x70))->SetVisible(0);
@@ -5182,10 +5121,10 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     }
     if (idx == -1) {
         char str[32];
-        sprintf(str, (const char*)&lbl_eu_8050566C[0x507], (s8)p[0x6f] + 1);
-        nw4r::lyt::Pane* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
+        sprintf(str, (const char*)&lbl_eu_8050566C[0x507], (s8)this->field_6F + 1);
+        nw4r::lyt::Pane* t1 = this->field_44->GetRootPane()->FindPaneByName(str, 1);
         AccumPaneWorldPos(&posT1, (nw4r::lyt::Pane*)((void*)t1));
-        nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
+        nw4r::lyt::Pane* t2 = this->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT1.x = posT1.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT1));
         ((CBaseCur*)(p + 0x70))->SetVisible(1);
@@ -5195,9 +5134,9 @@ __declspec(noinline) void CItemBoxGrid::UpdateCursors() {
     {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x396], (s8)p[0x524] + idx * 10 + 1);
-        nw4r::lyt::Pane* t1 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName(str, 1);
+        nw4r::lyt::Pane* t1 = this->field_44->GetRootPane()->FindPaneByName(str, 1);
         AccumPaneWorldPos(&posDef, (nw4r::lyt::Pane*)((void*)t1));
-        nw4r::lyt::Pane* t2 = ((CItemBoxGridHeadView*)p)->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
+        nw4r::lyt::Pane* t2 = this->field_44->GetRootPane()->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posDef.x = posDef.x * ((const nw4r::lyt::Pane*)t2)->GetScale().x;
         ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posDef));
         ((CBaseCur*)(p + 0x70))->SetVisible(1);
@@ -5265,37 +5204,37 @@ void CItemBoxGrid::UnequipPartyItem(int kind, int id) {
             // Equipment slots: only a member actually wearing `id` proceeds.
             switch (kind) {
             case 2: {
-                int v = *(s16*)((u8*)obj + 0x26);
+                int v = ((CItemBoxCharEntry*)obj)->slotIds[5];
                 if (v == -1 || v != id) continue;
                 CtrlObjectParam_SetEquipSlot5(obj, -1);
                 break;
             }
             case 4: {
-                int v = *(s16*)((u8*)obj + 0x1c);
+                int v = ((CItemBoxCharEntry*)obj)->slotIds[0];
                 if (v == -1 || v != id) continue;
                 CtrlObjectParam_SetEquipSlot0(obj, -1);
                 break;
             }
             case 5: {
-                int v = *(s16*)((u8*)obj + 0x1e);
+                int v = ((CItemBoxCharEntry*)obj)->slotIds[1];
                 if (v == -1 || v != id) continue;
                 CtrlObjectParam_SetEquipSlot1(obj, -1);
                 break;
             }
             case 6: {
-                int v = *(s16*)((u8*)obj + 0x20);
+                int v = ((CItemBoxCharEntry*)obj)->slotIds[2];
                 if (v == -1 || v != id) continue;
                 CtrlObjectParam_SetEquipSlot2(obj, -1);
                 break;
             }
             case 7: {
-                int v = *(s16*)((u8*)obj + 0x22);
+                int v = ((CItemBoxCharEntry*)obj)->slotIds[3];
                 if (v == -1 || v != id) continue;
                 CtrlObjectParam_SetEquipSlot3(obj, -1);
                 break;
             }
             case 8: {
-                int v = *(s16*)((u8*)obj + 0x24);
+                int v = ((CItemBoxCharEntry*)obj)->slotIds[4];
                 if (v == -1 || v != id) continue;
                 CtrlObjectParam_SetEquipSlot4(obj, -1);
                 break;
@@ -5339,7 +5278,7 @@ void CItemBoxGrid::DispatchItemEvt(void* item, int eventType) {
     if (eventType < 1) {
         CItem_initItemImplInstances((CItemData*)item)->vf10((CItemData*)item);
     } else {
-        u32 w = ((CItemSortView*)item)->word00;
+        u32 w = ((CItemBoxItem*)item)->mWord;
         CItemData_initFromFamily(item, w >> 20);
     }
 }
@@ -5352,7 +5291,7 @@ void CItemBoxGrid::DispatchItemEvt(void* item, int eventType) {
 // Dispatch based on entry category.
 u32 CItemBoxGrid::GetCatLabelMsg() {
     u8* p = (u8*)this;
-    u8* entry = p + (s8)p[0x6f];
+    u8* entry = p + (s8)this->field_6F;
     u8 cat = entry[0x62];
     u32 result = 0;
     switch (cat) {
@@ -5440,7 +5379,7 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     fileData[1] = 0;
     setMemInitFlag__Q23mtl10MemManagerFb(0);
     mtl::ALLOC_HANDLE allocHandle = CLibLayout::getAllocHandle();
-    void* tpMem = allocate__Q23mtl10MemManagerFUlUl(0x858, allocHandle);
+    void* tpMem = mtl::MemManager::allocate(0x858, allocHandle);
     if (tpMem != NULL) __ct__CTagProcessor(tpMem);
     *(void**)(p + 0x5c) = tpMem;
     nw4r::lyt::ArcResourceAccessor* arcRes = CLibLayout::createArcResourceAccessor();

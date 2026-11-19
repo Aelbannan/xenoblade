@@ -241,11 +241,11 @@ public:
     u32 field_0x48;     // 0x48 - flag/state word
     u32 field_0x4C;     // 0x4C
     u32 field_0x50;     // 0x50 - flags word
-    // POD word regions (ml::CVec3 has a non-trivial default ctor; the manager
-    // ctor in retail never calls it - these are filled with raw GPR stores).
-    CamEventVecWords field_0x54;       // 0x54
-    CamEventVecWords field_0x60;       // 0x60
-    CamEventVecWords field_0x6C;       // 0x6C
+    // Vector regions: implicit CVec3 assignment reproduces retail's GPR
+    // word copies from the zero global without a ctor or __as__ call.
+    ml::CVec3 field_0x54;       // 0x54
+    ml::CVec3 field_0x60;       // 0x60
+    ml::CVec3 field_0x6C;       // 0x6C
     f32 field_0x78;     // 0x78
     CfCamEventShakeTable tab0;  // 0x7C - full 0x178 shake state (table payload
                                 // + tail flags/counts). The state tail doubles
@@ -1365,8 +1365,8 @@ extern "C" f32 lbl_eu_80666440;
 extern "C" f32 lbl_eu_80666468;   // acos-range lower bound
 // nw4r debug warning (CamEvtCheckAimAngles range violations)
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
-extern char lbl_eu_805262F0[];   // warning file name
-extern char lbl_eu_805262C8[];   // warning format string
+extern const char lbl_eu_805262F0[];   // warning file name
+extern const char lbl_eu_805262C8[];   // warning format string
 extern "C" f32 lbl_eu_8066646C;   // acos-angle scale
 // Dynamic-cast result region (getCameraDataBlock -> __dynamic_cast): a single
 // flag byte is stored at +0x294 by the cam-event setup.

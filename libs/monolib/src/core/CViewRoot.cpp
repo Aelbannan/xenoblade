@@ -960,7 +960,7 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     u32 historyNode;
 
     name = lbl_eu_8052266C;
-    root = (CViewRoot*)allocate__Q23mtl10MemManagerFUlUl(
+    root = (CViewRoot*)mtl::MemManager::allocate(
         0x520, getWorkMem__17CWorkThreadSystemFv());
 
     if (root == nullptr) {

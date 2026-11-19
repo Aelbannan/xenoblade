@@ -16,11 +16,12 @@
 #include "kyoshin/cf/ICamControl.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
-
-// CfGameManager gate query (retail 0x8007F91C); called as a free function -
-// the real body ignores its this pointer.
-int isTimerActive__Q22cf13CfGameManagerFv();
 #include "kyoshin/cf/object/CfObjectEff.hpp"
+
+// CfGameManager gate query (retail 0x8007F91C): use the canonical static
+// member declaration from the owning header, not a TU-local free spelling.
+#include "kyoshin/cf/CfGameManager.hpp"
+
 #include <nw4r/math/math_types.h>
 
 class CScn;
@@ -348,9 +349,9 @@ void tboxUpdateAll(UnkCode8027513C* self) {
     
     // If bit 20 was set, query game manager and update child effect state
     if (bit != 0) {
-        // isTimerActive ignores its 'this' pointer; called as a free
-        // function so r3 carries the leftover bit value like retail.
-        if (isTimerActive__Q22cf13CfGameManagerFv()) {
+        // The static member leaves r3 (the extracted bit) live across the
+        // call, as retail does.
+        if (cf::CfGameManager::isTimerActive()) {
             if (self->field_0x74 != nullptr && self->field_0x78 != 1) {
                 setChildB59__(self->field_0x74, 1);
                 self->field_0x78 = 1;

@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+/* Sub-record offsets inside the SVM trace records the server writes. */
+/* One player-server handle slot inside the library work area. */
 /* Owned elsewhere in the Sofdec .data pool; this TU only references them. */
 extern u8 lbl_eu_80566C70[];
 extern u8 lbl_eu_80567094[];
@@ -45,13 +47,17 @@ typedef struct MWSstHn {
 } MWSstHn;
 
 typedef struct MwPlySvr {
-    u8 _00[0x58];
+    u8 _00[0x04];
+    s32 state;      // 0x04
+    u8 _08[0x50];
     void* hn;       // 0x58
     u8 _5C[0x36];
     s8 muteFlag;    // 0x92
     u8 _93[0x545];
     MWSstHn sst0;   // 0x5D8
     MWSstHn sst1;   // 0x600
+    u8 _628[0x50];  // 0x628..0x677
+    s32 sfdSvrFlag; // 0x678
 } MwPlySvr;
 
 // Start both sound streams once the decoder handle is ready; pause immediately
@@ -145,19 +151,20 @@ extern s32 MWSST_GetStat(void* sst);
 #pragma push
 #pragma auto_inline off  // noinline-ok: retail keeps mwsfd_ExecSvrHndl's bl to this; without it that fn drops 97.6%->3.1%
 void mwlSfdExecDecSvrPlaying(void* self) {
-    void* sst = *(void**)((u8*)self + 0x58);
-    if (*(s32*)((u8*)self + 0x678) == 0) {
+    MwPlySvr* ply = (MwPlySvr*)self;
+    void* sst = ply->hn;
+    if (ply->sfdSvrFlag == 0) {
         s32 s = SFD_GetHnStat(sst);
         s32 a = 4;
         s32 b = 4;
         if (mwPlyGetSstCoreHnByIdx(self, 0) != 0) {
-            a = MWSST_GetStat((u8*)self + 0x5D8);
+            a = MWSST_GetStat(&ply->sst0);
         }
         if (mwPlyGetSstCoreHnByIdx(self, 1) != 0) {
-            b = MWSST_GetStat((u8*)self + 0x600);
+            b = MWSST_GetStat(&ply->sst1);
         }
         if (s == 6 && a != 2 && b != 2) {
-            *(s32*)((u8*)self + 4) = 3;
+            ply->state = 3;
         }
     }
 }
@@ -177,6 +184,41 @@ extern void SFD_VbIn(void);
 
 // Shared library work area for the sofdec player servers.
 typedef void (*MWSFSVR_Callback)(void*);
+
+struct MwPlySvrHndl {
+    s32 flag00;               // 0x00: must be 1 on entry
+    s32 state;                // 0x04: 0 idle / 1 starting / 2 playing / 4 error
+    u8 _08[0x50];
+    void* hn;                 // 0x58: SFD handle
+    void* stm;                // 0x5C: stream handle
+    u8 _60[0x04];
+    void* lsc;                // 0x64: LSC handle
+    u8 _68[0x10];             // 0x68..0x77
+    s32 sleepFlag;            // 0x78
+    s32 busyFlag;             // 0x7C: set while the server runs this handle
+    s32 sfdFlag;              // 0x80
+    s32 unk84;                // 0x84
+    u8 _88[0x08];
+    s8 flag90;                // 0x90
+    s8 flag91;                // 0x91
+    s8 muteFlag;              // 0x92
+    u8 _93[0x45D];            // 0x93..0x4EF
+    s32 queuedFlag;           // 0x4F0
+    u8 _4F4[0x30];            // 0x4F4..0x523
+    void* obj;      // 0x524
+    u8 _528[0x08];
+    u8 timeBuf;     // 0x530: time buffer passed to the setter below
+    u8 _531[0x07];
+    s32 statFlag;   // 0x538
+    s32 numChunk;             // 0x53C
+    u8 _540[0x98];            // 0x540..0x5D7
+    MWSstHn sst0;             // 0x5D8
+    MWSstHn sst1;             // 0x600
+    u8 _628[0x50];            // 0x628..0x677
+    s32 stopFlag;             // 0x678
+};
+
+typedef struct MwPlySvrHndl MwPlySvrHndl;
 
 typedef struct MWSFLibWork {
     u8 _00[0x10];
@@ -207,7 +249,7 @@ s32 MWSFSVR_VsyncThrdProc(void) {
     h = lbl_eu_805FF3A0;
     if (h != NULL) {
         /* Handle object: method table slot 9 dispatches a player callback. */
-        ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80566C70 + 4);
+        ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80566C70 + 0x04);
     }
     local = 0;
     h = lbl_eu_805FF3A0;
@@ -235,42 +277,13 @@ s32 MWSFSVR_VsyncThrdProc(void) {
     local = 0;
     h = lbl_eu_805FF3A0;
     if (h != NULL) {
-        *(void**)((u8*)lbl_eu_80566C70 + 0x74) = &local;
-        ((VtableFn)(*(void***)h)[9])(h, (u8*)lbl_eu_80566C70 + 0x6C);
+        *(void**)(lbl_eu_80566C70 + 0x74) = &local;
+        ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80566C70 + 0x6c);
     }
     return local;
 }
 
 // Player stream handle entry within a server handle (stride 0x690).
-typedef struct MwPlySvrHndl {
-    s32 flag00;               // 0x00: must be 1 on entry
-    s32 state;                // 0x04: 0 idle / 1 starting / 2 playing / 4 error
-    u8 _08[0x50];
-    void* hn;                 // 0x58: SFD handle
-    void* stm;                // 0x5C: stream handle
-    u8 _60[0x04];
-    void* lsc;                // 0x64: LSC handle
-    u8 _68[0x14];
-    s32 busyFlag;             // 0x7C: set while the server runs this handle
-    s32 sfdFlag;              // 0x80
-    s32 unk84;                // 0x84
-    u8 _88[0x08];
-    s8 flag90;                // 0x90
-    s8 flag91;                // 0x91
-    s8 muteFlag;              // 0x92
-    u8 _93[0x45D];            // 0x93..0x4EF
-    s32 queuedFlag;           // 0x4F0
-    u8 _4F4[0x30];            // 0x4F4..0x523
-    void* obj;      // 0x524
-    u8 _528[0x08];
-    u8 timeBuf;     // 0x530: time buffer passed to the setter below
-    u8 _531[0x07];
-    s32 statFlag;   // 0x538
-    s32 numChunk;             // 0x53C
-    u8 _540[0x98];            // 0x540..0x5D7
-    MWSstHn sst0;             // 0x5D8
-    MWSstHn sst1;             // 0x600
-} MwPlySvrHndl;
 
 // Main sound-server thread: run pre-callback, service all 8 handles, tick the
 // infinite-loop handlers, process start/stop requests, then run the decoder.
@@ -282,13 +295,13 @@ s32 MWSFSVR_MainThrdProc(void* self) {
 
     if (lbl_eu_805FF3A0 != NULL) {
         ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-            lbl_eu_805FF3A0, lbl_eu_80566D44 + 4);
+            lbl_eu_805FF3A0, lbl_eu_80566D44 + 0x04);
     }
     local_c = 0;
     if (lbl_eu_805FF39C == 1) {
         MWSFLibWork* wk = MWSFLIB_GetLibWorkPtr();
         if (MWSFLIB_GetLibWorkPtr()->prohibitFlag != 1) {
-            MwPlySvrHndl* h = (MwPlySvrHndl*)((u8*)wk + 0x70);
+            MwPlySvrHndl* h = (MwPlySvrHndl*)wk->svrHndls;
             for (i = 0; i < 8; i++) {
                 if (h != NULL) {
                     if (h->obj != NULL) {
@@ -312,7 +325,7 @@ s32 MWSFSVR_MainThrdProc(void* self) {
     if (lbl_eu_805FF39C == 1) {
         MWSFLibWork* wk = MWSFLIB_GetLibWorkPtr();
         if (MWSFLIB_GetLibWorkPtr()->prohibitFlag != 1) {
-            MwPlySvrHndl* h = (MwPlySvrHndl*)((u8*)wk + 0x70);
+            MwPlySvrHndl* h = (MwPlySvrHndl*)wk->svrHndls;
             for (i = 0; i < 8; i++) {
                 if (h != NULL) {
                     mwPlyExecInfiniteLoopHandle(h);
@@ -325,20 +338,20 @@ s32 MWSFSVR_MainThrdProc(void* self) {
     if (MWSFLIB_GetLibWorkPtr()->state10 == 1) {
         if (lbl_eu_805FF3A0 != NULL) {
             ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-                lbl_eu_805FF3A0, lbl_eu_80566EEC + 4);
+                lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x04);
         }
         local_8 = mwsfsvr_DecodeServer(self);
         if (lbl_eu_805FF3A0 != NULL) {
-            *(void**)((u8*)lbl_eu_80566EEC + 0x74) = &local_8;
+            *(void**)(lbl_eu_80566EEC + 0x74) = &local_8;
             ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-                lbl_eu_805FF3A0, (u8*)lbl_eu_80566EEC + 0x6C);
+                lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x6c);
         }
         local_c = local_8;
     }
     if (lbl_eu_805FF3A0 != NULL) {
-        *(void**)((u8*)lbl_eu_80566D44 + 0x74) = &local_c;
+        *(void**)(lbl_eu_80566D44 + 0x74) = &local_c;
         ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-            lbl_eu_805FF3A0, (u8*)lbl_eu_80566D44 + 0x6C);
+            lbl_eu_805FF3A0, lbl_eu_80566D44 + 0x6c);
     }
     return local_c;
 }
@@ -349,22 +362,22 @@ static s32 criware_803A2908(void* self) {
     s32 local;
     if (lbl_eu_805FF3A0 != NULL) {
         ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-            lbl_eu_805FF3A0, lbl_eu_80566E18 + 4);
+            lbl_eu_805FF3A0, lbl_eu_80566E18 + 0x04);
     }
     local = 0;
     {
-        void* lw = MWSFLIB_GetLibWorkPtr();
-        if (*(s32*)((u8*)lw + 0x10) != 1) {
+        MWSFLibWork* lw = MWSFLIB_GetLibWorkPtr();
+        if (lw->state10 != 1) {
             if (lbl_eu_805FF3A0 != NULL) {
                 ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                    lbl_eu_805FF3A0, lbl_eu_80566EEC + 4);
+                    lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x04);
             }
             {
                 s32 r = mwsfsvr_DecodeServer(self);
                 if (lbl_eu_805FF3A0 != NULL) {
                     *(void**)(lbl_eu_80566EEC + 0x74) = &r;
                     ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                        lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x6C);
+                        lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x6c);
                 }
                 local = r;
             }
@@ -372,7 +385,7 @@ static s32 criware_803A2908(void* self) {
         if (lbl_eu_805FF3A0 != NULL) {
             *(void**)(lbl_eu_80566E18 + 0x74) = &local;
             ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                lbl_eu_805FF3A0, lbl_eu_80566E18 + 0x6C);
+                lbl_eu_805FF3A0, lbl_eu_80566E18 + 0x6c);
         }
     }
     return local;
@@ -385,6 +398,7 @@ extern s32 mwply_ExecSvrHndl(void* self);
 // bracketed by the library's pre/exec/post callbacks.
 s32 mwsfsvr_DecodeServer(void* self) {
     MWSFLibWork* w;
+    MwPlySvrHndl* h;
     void* cbArg;
     s32 i;
     s32 found;
@@ -402,15 +416,15 @@ s32 mwsfsvr_DecodeServer(void* self) {
     }
     found = 0;
     if (((MWSFLibWork*)MWSFLIB_GetLibWorkPtr())->prohibitFlag != 1) {
-        /* Advance onto the 8 server-handle array and walk it in place. */
-        w = (MWSFLibWork*)w->svrHndls;
+        /* Walk the 8 server-handle array in place. */
+        h = (MwPlySvrHndl*)w->svrHndls;
         for (i = 0; i < 8; i++) {
-            if (w != NULL) {
-                if (mwply_ExecSvrHndl(w) == 1) {
+            if (h != NULL) {
+                if (mwply_ExecSvrHndl(h) == 1) {
                     found = 1;
                 }
             }
-            w = (MWSFLibWork*)((u8*)w + 0x690);
+            h = (MwPlySvrHndl*)((u8*)h + 0x690);
         }
     }
     w = MWSFLIB_GetLibWorkPtr();
@@ -437,26 +451,27 @@ extern u8 lbl_eu_80566FC0[];
 extern s32 mwsfd_ExecSvrHndl(MwPlySvrHndl* self);
 
 s32 mwply_ExecSvrHndl(void* self) {
+    MwPlySvrHndl* ply = (MwPlySvrHndl*)self;
     if ((s32)lbl_eu_805FF39C != 1) return 0;
     if (self == NULL) {
         MWSFSVM_Error(lbl_eu_8051BE68 + 0x29);
         return 0;
     }
-    if (*(s32*)self != 1) return 0;
-    if (*(s32*)((u8*)self + 0x7C) == 1) return 0;
-    if (*(s32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x24) == 1) return 0;
-    if (*(s32*)((u8*)self + 0x678) == 1) return 0;
+    if (ply->flag00 != 1) return 0;
+    if (ply->busyFlag == 1) return 0;
+    if (((MWSFLibWork*)MWSFLIB_GetLibWorkPtr())->pauseFlag == 1) return 0;
+    if (ply->stopFlag == 1) return 0;
     if (lbl_eu_805FF3A0 != NULL) {
         *(void**)(lbl_eu_80566FC0 + 0xC) = self;
         ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-            lbl_eu_805FF3A0, lbl_eu_80566FC0 + 4);
+            lbl_eu_805FF3A0, lbl_eu_80566FC0 + 0x04);
     }
     {
         s32 local = mwsfd_ExecSvrHndl(self);
         if (lbl_eu_805FF3A0 != NULL) {
             *(void**)(lbl_eu_80566FC0 + 0x74) = &local;
             ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                lbl_eu_805FF3A0, lbl_eu_80566FC0 + 0x6C);
+                lbl_eu_805FF3A0, lbl_eu_80566FC0 + 0x6c);
         }
         return local;
     }
@@ -574,9 +589,9 @@ void MWSFSVR_SetMwsfdSvrFlg(int flag) {
     ((MWSFDServerWork*)MWSFLIB_GetLibWorkPtr())->serverFlag = flag;
 }
 
-void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x7c) = val; }
+void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { ((MwPlySvrHndl*)self)->busyFlag = val; }
 
-void MWSFSVR_SetHnSfdSvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x80) = val; }
+void MWSFSVR_SetHnSfdSvrFlg(void* self, u32 val) { ((MwPlySvrHndl*)self)->sfdFlag = val; }
 
 extern int MWSFD_IsEnableHndl(void *);
 extern void MWSFSVM_Error(const char *, ...);
@@ -586,7 +601,7 @@ int MWSFSVR_IsSvrBdrHndl(void *h) {
         MWSFSVM_Error(lbl_eu_8051BE68 + 0x51);
         return 0;
     }
-    return *(u32 *)((u8 *)h + 0x7C) != 1;
+    return ((MwPlySvrHndl*)h)->busyFlag != 1;
 }
 
 extern void ADXM_WaitVsync(void);
@@ -595,36 +610,37 @@ extern void mwPlySaveRsc(void);
 extern void mwPlyRestoreRsc(void);
 
 void mwlSfdSleepDecSvr(void* self) {
-    void* w;
+    MWSFLibWork* lw;
+    MwPlySvrHndl* ply = (MwPlySvrHndl*)self;
     int i;
 
     mwPlySaveRsc();
-    w = MWSFLIB_GetLibWorkPtr();
+    lw = MWSFLIB_GetLibWorkPtr();
     if (self != NULL) {
-        *(u32*)((u8*)self + 0x78) = 1;
+        ply->sleepFlag = 1;
     }
-    *(u32*)((u8*)w + 0x24) = 1;
+    lw->pauseFlag = 1;
     MWSFSVM_GotoIdleBorder();
-    w = MWSFLIB_GetLibWorkPtr();
+    lw = MWSFLIB_GetLibWorkPtr();
     if (self != NULL) {
-        *(u32*)((u8*)self + 0x78) = 0;
+        ply->sleepFlag = 0;
     }
-    *(u32*)((u8*)w + 0x24) = 0;
+    lw->pauseFlag = 0;
     mwPlyRestoreRsc();
-    if ((s32)*(u32*)((u8*)self + 0x7C) == 1) {
+    if ((s32)ply->busyFlag == 1) {
         for (i = 0; i < 10; i++) {
-            w = MWSFLIB_GetLibWorkPtr();
+            lw = MWSFLIB_GetLibWorkPtr();
             if (self != NULL) {
-                *(u32*)((u8*)self + 0x78) = 1;
+                ply->sleepFlag = 1;
             }
-            *(u32*)((u8*)w + 0x24) = 1;
+            lw->pauseFlag = 1;
             ADXM_WaitVsync();
-            w = MWSFLIB_GetLibWorkPtr();
+            lw = MWSFLIB_GetLibWorkPtr();
             if (self != NULL) {
-                *(u32*)((u8*)self + 0x78) = 0;
+                ply->sleepFlag = 0;
             }
-            *(u32*)((u8*)w + 0x24) = 0;
-            if ((s32)*(u32*)((u8*)self + 0x7C) != 1) {
+            lw->pauseFlag = 0;
+            if ((s32)ply->busyFlag != 1) {
                 break;
             }
         }

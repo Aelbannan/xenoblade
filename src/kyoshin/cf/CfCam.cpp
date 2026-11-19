@@ -1,6 +1,7 @@
 #include "kyoshin/cf/CfCam.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -15,6 +16,7 @@
 // call), so this TU keeps a private no-arg declaration and must not include
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
 extern "C" void* Scn_QueryUnk80State();
+extern "C" void ScnCamPointAt(void* cam, f32 f, void* pos, void* arg);
 extern "C" float CfT_PlayRateGet();
 // TEMP unblock: monolib/core/CPadManager.hpp currently fails under MWCC
 // (C++11 static_assert / illegal offsetof constant expressions) and
@@ -145,14 +147,14 @@ int cfcam_sbss_pad_DF4 = 0;
 // ----- typified retail data (replaces copy_data_sections) -----
 // .rodata RTTI class names (exact sizes; 804FB4E0's 6-byte pad gap to
 // 804FB4F0 is filled by MWCC's alignment of the blob array).
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_804FB4D0[0x10] = "cf::CfCamFollow";
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_804FB4E0[0x0A] = "cf::CfCam";
+__attribute__((used, aligned(8)))
+const char lbl_eu_804FB4D0[0x10] = "cf::CfCamFollow";
+__attribute__((used, aligned(8)))
+const char lbl_eu_804FB4E0[0x0A] = "cf::CfCam";
 // .rodata camera message-format pool. Offsets match every
 // lbl_eu_804FB4F0+N site in code; tail zero-pads to 0xE0.
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_804FB4F0[0xE0] =
+__attribute__((used, aligned(8)))
+const char lbl_eu_804FB4F0[0xE0] =
     "opt_camlist\0"
     "at\0"
     "pitch\0"
@@ -169,9 +171,9 @@ char lbl_eu_804FB4F0[0xE0] =
 // .sdata typeinfo pairs (Select precedent). B28/B30 point at this TU's
 // rodata names above; the dispatch halves ship from other TUs.
 extern char lbl_eu_80527154[];
-__declspec(section ".sdata") __attribute__((used, aligned(8)))
+__attribute__((used, aligned(8)))
 const void* __RTTI__Q22cf11CfCamFollow[2] = { lbl_eu_804FB4D0, lbl_eu_80527154 };
-__declspec(section ".sdata") __attribute__((used, aligned(8)))
+__attribute__((used, aligned(8)))
 const void* lbl_eu_80661B30[2] = { lbl_eu_804FB4E0, 0 };
 // .sdata scalar pool as a struct (Eve/Item recipe): individual scalars with
 // duplicated values would merge, and the code writes several members, so the
@@ -183,69 +185,69 @@ const void* lbl_eu_80661B30[2] = { lbl_eu_804FB4E0, 0 };
 // Mutable (never const): same-valued objects must keep distinct addresses
 // (no merging) and visible values must not fold code loads. Only this TU
 // uses these names (verified), and sdata holds no zeros (no exile risk).
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B38 = 1.25f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B3C = 0.07f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B40 = 0.3f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B44 = 0.3f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B48 = 0.65f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B4C = 7.5f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B50 = 40.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B54 = 0.5f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B58 = 0.5f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B5C = 1.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B60 = 8.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B64 = 2.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B68 = 20.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B6C = 20.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B70 = 0.25f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B74 = 0.07f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B78 = 24.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 u32 lbl_eu_80661B7C = 4;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B80 = 0.3f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B84 = 0.25f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B88 = 0.5f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B8C = 12.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B90 = 18.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B94 = 30.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B98 = 20.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661B9C = 30.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661BA0 = 45.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 u32 lbl_eu_80661BA4 = 1;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661BA8 = 0.13f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661BAC = 30.0f;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 u8 lbl_eu_80661BB0 = 1;
-__declspec(section ".sdata") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 float lbl_eu_80661BB4 = 0.4f;
 // .sdata2 storage (const cam_-named; unread by code so values never
 // fold; code uses the added lbl_ symbols via extern decls, compiling to
@@ -607,8 +609,8 @@ extern "C" void cfCam_nopBef8(void* self) {}
 void cfCam_storeZeroU32(void* self) { *(u32*)self = 0; }
 extern "C" u32 cfCam_getUnk08(cf::CfCamFollow* self) { return self->field_0x08; }
 extern "C" bool cfCam_testUnk04Bits(const cf::CfCamFollow* self, unsigned int mask) { return (self->field_0x04 & mask) != 0; }
-extern "C" int cfCam_getBit1_0x64(void* p) {
-    return (*(int*)((char*)p + 0x64) >> 1) & 1;
+extern "C" int cfCam_getBit1_0x64(cf::CfCamFollow* p) {
+    return (p->field_0x64 >> 1) & 1;
 }
 extern "C" void cfCam_setField1E0AndGlobal(cf::CfCamFollow* ptr, float f) {
     lbl_eu_80661B50 = f;
@@ -686,17 +688,17 @@ extern "C" bool cfCam_testUnk04Bit8(void* param_1) {
     return ((bool (*)(void*, int))cfCam_testUnk04Bits)(param_1, 256);
 }
 unsigned int cf::CfCamFollow::getBit26_0x4EC() {
-    return (*(unsigned int*)((u8*)this + 0x4ec) >> 26) & 1;
+    return (field_0x4EC >> 26) & 1;
 }
-extern "C" int cfCam_getBit24_0x4EC(void* p) {
-    return (*(unsigned int*)((char*)p + 0x4EC) >> 24) & 1;
+extern "C" int cfCam_getBit24_0x4EC(cf::CfCamFollow* p) {
+    return (p->field_0x4EC >> 24) & 1;
 }
-extern "C" int cfCam_testUnk4ECBits(void* self, unsigned int mask) { return ((*((unsigned int*)((char*)self + 0x4ec)) & mask) != 0); }
-extern "C" uint32_t cfCam_getBit25_0x4EC(void* self) {
-    return (*(uint32_t*)((char*)self + 0x4ec) >> 25) & 1;
+extern "C" int cfCam_testUnk4ECBits(cf::CfCamFollow* self, unsigned int mask) { return (self->field_0x4EC & mask) != 0; }
+extern "C" uint32_t cfCam_getBit25_0x4EC(cf::CfCamFollow* self) {
+    return (self->field_0x4EC >> 25) & 1;
 }
-extern "C" int cfCam_getBit23_0x4EC(void* self) {
-    return (*(const unsigned int*)((const char*)self + 0x4ec) >> 23) & 1;
+extern "C" int cfCam_getBit23_0x4EC(const cf::CfCamFollow* self) {
+    return (self->field_0x4EC >> 23) & 1;
 }
 float cf::CfCam::getUnk4FC() {
     return *(float *)((char *)this + 0x4FC);
@@ -705,14 +707,14 @@ extern "C" float cfCam_getUnk4F8(void* self) { return *(float*)((char*)self + 0x
 extern "C" float cfCam_getUnk508(const void* self) {
     return *(const float*)((const char*)self + 0x508);
 }
-extern "C" int cfCam_getBit13_0x4EC(void* self) { return (*(uint32_t*)((char*)self + 0x4ec) >> 13) & 1; }
-extern "C" unsigned int cfCam_getBit2_0x64(void* self) {
-    unsigned int val = *(unsigned int*)((unsigned char*)self + 0x64);
+extern "C" int cfCam_getBit13_0x4EC(cf::CfCamFollow* self) { return (self->field_0x4EC >> 13) & 1; }
+extern "C" unsigned int cfCam_getBit2_0x64(cf::CfCamFollow* self) {
+    unsigned int val = self->field_0x64;
     return (val >> 2) & 1U;
 }
 extern "C" int cfCam_getUnk90E4(u8* self) { return *(int *)((char *)self + 0x90e4); }
-extern "C" unsigned int cfCam_getBit27_0x64(u8* self) {
-    unsigned int word = *(unsigned int *)((char *)self + 0x64);
+extern "C" unsigned int cfCam_getBit27_0x64(cf::CfCamFollow* self) {
+    unsigned int word = self->field_0x64;
     return (word >> 27) & 1U;
 }
 extern "C" f32 cfCam_vecLenSq(const nw4r::math::VEC3* vector) {
@@ -1953,7 +1955,7 @@ extern "C" int cfCam_artsGateClr(void* obj) {
     if (a == 0) {
         return 0;
     }
-    if (isTimerActive__Q22cf13CfGameManagerFv() == 0) {
+    if (cf::CfGameManager::isTimerActive() == 0) {
         return 0;
     }
     if (cfCam_queryVoxArts(a, 3) != 0) {
@@ -4308,7 +4310,7 @@ int runCamAction(cf::CfCamFollow* self, int id) {
 // construct it with (self, arg2).
 extern "C" void cfCam_newFollowCam(void* self, void* arg2) {
     u32 heap = CfRes_getHeapHandle();
-    cf::CfCamFollow* cam = (cf::CfCamFollow*)allocate__Q23mtl10MemManagerFUlUl(0x25c, heap);
+    cf::CfCamFollow* cam = (cf::CfCamFollow*)mtl::MemManager::allocate(0x25c, heap);
     if (cam != 0) {
         __ct__cf_CfCamFollow(cam, self, arg2);
     }

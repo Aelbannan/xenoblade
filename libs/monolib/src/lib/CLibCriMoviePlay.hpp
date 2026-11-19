@@ -80,7 +80,7 @@ struct MovieEntry {
 // Size check: 0x124 = 292 bytes
 // static_assert(sizeof(MovieEntry) == 0x124, "MovieEntry must be 0x124 bytes");
 
-class __declspec(novtable) CLibCriMoviePlay : public CWorkThread, public CDeviceVICb {
+class CLibCriMoviePlay : public CWorkThread, public CDeviceVICb {
 public:
     virtual ~CLibCriMoviePlay();
 
@@ -89,8 +89,12 @@ public:
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
 
-    // CDeviceVICb virtual override (thunk adjusts this by -0x1C4)
-    virtual void viBeginFrame();
+    // IWorkEvent virtual override
+    virtual void OnPauseTrigger(bool pause);
+
+    // CDeviceVICb virtual overrides (secondary vtable at object +0x1C4)
+    virtual void viBeforeDrawDone();
+    virtual void viAfterDrawDone();
 
     // Movie player methods
     // (setupMovieGfx / startMovie / renderMovie are retail-named free
@@ -99,10 +103,7 @@ public:
     static MovieEntry* findFreeMovieEntry();               // findFreeMovieEntry
     // (startMovie: retail-named free function defined in the .cpp; its
     // retail ABI passes five arguments that do not match the () mangling.)
-    void onMovieViBegin() {}                            // onMovieViBegin (empty)
     int getMovieWorkSize();                               // getMovieWorkSize
-    void OnPauseTrigger(bool pause);                   // OnPauseTrigger
-    void updateMovieTextures();                              // per-frame texture update
 
     static CLibCriMoviePlay* getInstance() { return lbl_eu_806656E0; }
 

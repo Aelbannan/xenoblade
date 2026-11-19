@@ -279,16 +279,16 @@ void completeWindowOpen(QuestWinObj* self) {
     }
 }
 
-// Empty stubs must stay noinline: their bodies are visible in this TU and
-// MWCC would otherwise inline them into updateWindow's switch, collapsing
-// the case-2/3 dispatch and the placeQuestCursor call (retail keeps the calls).
+// Empty stubs are real calls in retail: their bodies are visible in this TU
+// but updateWindow's switch keeps the case-2/3 dispatch and the
+// placeQuestCursor call out of line.
 // ---------------------------------------------------------------------------
 // handleQuestInput (us-801236e4): quest-window input handling for the open
 // window. Confirm button closes it; the turbo/edge flags on the cf pad move
 // the cursor selection (field_0xC0, clamped per state byte). Always advances
 // anim B at the tail.
 // ---------------------------------------------------------------------------
-__attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
+void handleQuestInput(QuestWinObj* self) {
     if (self->field_0xC8 != 0) {
         CPadView* pad = (CPadView*)getCurrentPad__Q22cf13CfGameManagerFv();
         int classic = cf::CfGameManager::isClassicController(-1) != 0;
@@ -386,7 +386,7 @@ __attribute__((noinline)) void handleQuestInput(QuestWinObj* self) {
 // loop (indexed by field_0xDC), then plays the quest-complete jingle and the
 // close-sequence sounds for the window's quest id.
 // ---------------------------------------------------------------------------
-__attribute__((noinline)) void closeQuestWindow(QuestWinObj* self) {
+void closeQuestWindow(QuestWinObj* self) {
     if (AnimRewindFrame(self->mAnimA, lbl_eu_80667140) == 0) return;
     if (self->field_0xCC > 0) {
         bindIndexedEffect(self->field_0xCC, getPlayer__Q22cf13CfGameManagerFi(0));
@@ -397,7 +397,7 @@ __attribute__((noinline)) void closeQuestWindow(QuestWinObj* self) {
         f64 two52 = lbl_eu_80667160;
         for (int i = 1; i <= 8; i++) {
             void* obj = CtrlObjectParam_GetCharEntry((u16)i);
-            if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) != 0 ||
+            if (cf::CfGameManager::isResourceFlagSet(i) != 0 ||
                 (i == 4 && CtrlObjectParam_GetCurrentRowKey(obj) != 0)) {
                 char* p = (char*)obj + 0x3534;
                 int v = 0x64;
@@ -806,7 +806,7 @@ void QuestWinObj::enableAnimB() {
 // (their 4 bytes spell the name), resolves them via FindPaneByName, derives a
 // point with ScalePaneWorldPos and moves the cursor there.
 // ---------------------------------------------------------------------------
-__attribute__((noinline)) void placeQuestCursor(QuestWinObj* self) {
+void placeQuestCursor(QuestWinObj* self) {
     if (self->field_0xC0 < 0) return;
     if (self->field_0xC8 == 0) {
         if (self->field_0xC4 == 0) {

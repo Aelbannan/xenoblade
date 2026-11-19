@@ -14,6 +14,29 @@ typedef struct MpvSjChunk {
     s32 size;
 } MpvSjChunk;
 
+/* SJ object method table (same layout as the retail SJRBF/SJMEM vtable:
+ * slot 6 = GetChunk @0x18, slot 7 = UngetChunk @0x1C,
+ * slot 8 = PutChunk @0x20). */
+struct MpvSjVtbl {
+    void (*reserved0)(void* self);
+    void (*reserved1)(void* self);
+    void (*reserved2)(void* self);
+    void (*destroy)(void* self);
+    void* (*getUuid)(void* self);
+    void (*reset)(void* self);
+    int (*getChunk)(void* self, int mode, int size, void* out);   /* 0x18 */
+    int (*ungetChunk)(void* self, int mode, void* chunk);         /* 0x1C */
+    int (*putChunk)(void* self, int mode, void* chunk);           /* 0x20 */
+};
+
+#define MPV_SJ_VT(obj) (*(struct MpvSjVtbl**)(obj))
+
+/* Byte offsets of the five function blocks in the shared header-decode table. */
+#define MPV_HDEC_TBL_B 0x28
+#define MPV_HDEC_TBL_C 0x78
+#define MPV_HDEC_TBL_D 0xa0
+#define MPV_HDEC_TBL_E 0xc8
+
 /* Per-codec user-data handler record (retail stride 12 from 0xD5C). */
 typedef struct MpvUdEntry {
     void* udsc;               /* SJ chunk-reader object (0xD5C + 12*i) */
@@ -23,7 +46,10 @@ typedef struct MpvUdEntry {
 
 /* MPV header-decode work structure (retail layout, offsets from self). */
 typedef struct MpvHdec {
-    u8  pad00[0x9AC];
+    u8  pad00[0x300];         /* 0x000..0x2ff */
+    u8  intraQuant[0x40];     /* 0x300 intra quant matrix */
+    u8  nonIntraQuant[0x40];  /* 0x340 non-intra quant matrix */
+    u8  pad380[0x9AC - 0x380];/* 0x380..0x9ab */
     u32 t9ac;                 /* 0x9AC: quant-table id/base */
     u8  pad9B0[0xB14 - 0x9B0];
     s32 b14;                  /* 0xB14 */
@@ -163,24 +189,26 @@ void MPVHDEC_Init(void) {
 }
 
 void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c) {
-    void* base = (u8*)self + idx * 0xc;
-    *(u32*)((u8*)base + 0xd5c) = a;
-    *(u32*)((u8*)base + 0xd60) = b;
-    *(u32*)((u8*)base + 0xd64) = c;
+    MpvHdec* h = (MpvHdec*)self;
+    h->ud[idx].udsc = (void*)(intptr_t)a;
+    h->ud[idx].notify = (void*)(intptr_t)b;
+    h->ud[idx].ctx = (void*)(intptr_t)c;
 }
 
 void MPV_SetPicUsrBuf(void* self, void* a, void* b) {
-    *(void**)((u8*)self + 0xd8c) = a;
-    *(void**)((u8*)self + 0xd90) = b;
-    *(u32*)((u8*)self + 0xd94) = 0;
+    MpvHdec* h = (MpvHdec*)self;
+    h->d8c = a;
+    h->d90 = b;
+    h->d94 = 0;
 }
 
 void MPV_GetPicUsr(void* self, u32* out_top, u32* out_bot) {
+    MpvHdec* h = (MpvHdec*)self;
     if (out_top != NULL) {
-        *out_top = *(u32*)((u8*)self + 0xd8c);
+        *out_top = (u32)(intptr_t)h->d8c;
     }
     if (out_bot != NULL) {
-        *out_bot = *(u32*)((u8*)self + 0xd94);
+        *out_bot = (u32)h->d94;
     }
 }
 
@@ -197,17 +225,18 @@ extern s32 mpvhdec_DecUdscSj(void* self, void* sj, s32 codec);
 extern s32 MPV_GoNextDelimSj(void* a);
 
 s32 MPVHDEC_RecoverSj(void* self, s32 mask, void* sj) {
-    s32 r = *(s32*)((u8*)self + 0xd24);
-    s32 v = *(s32*)((u8*)self + 0xb14);
+    MpvHdec* h = (MpvHdec*)self;
+    s32 r = h->d24;
+    s32 v = h->b14;
     s32 ret;
     s32 sp[2];
     if (r != 0) {
-        *(s32*)((u8*)self + 0xd24) = 0;
-        *(s32*)((u8*)self + 0xd28) += 1;
-        *(s32*)((u8*)self + 0xbe8) += 1;
+        h->d24 = 0;
+        h->d28 += 1;
+        h->be8 += 1;
         if (v == 0)
             return -2;
-        *(s32*)((u8*)self + 0xbec) += 1;
+        h->bec += 1;
     }
     ret = -3;
     if (v == 0)
@@ -220,8 +249,8 @@ s32 MPVHDEC_RecoverSj(void* self, s32 mask, void* sj) {
             ret = 0;
             break;
         }
-        ((void (*)(void*, s32, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x18))(sj, 1, 4, sp);
-        ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x20))(sj, 0, sp);
+        MPV_SJ_VT(sj)->getChunk(sj, 1, 4, sp);
+        MPV_SJ_VT(sj)->putChunk(sj, 0, sp);
         if (sp[1] != 4)
             break;
     }
@@ -250,21 +279,6 @@ s32 MPV_DecodePicAtr(void* self, MpvSjChunk* chunk, s32* out) {
     SjDelete(sj);
     return ret;
 }
-
-/* SJ object method table (same layout as the retail SJRBF/SJMEM vtable:
- * slot 6 = GetChunk @0x18, slot 7 = UngetChunk @0x1C). */
-struct MpvSjVtbl {
-    void (*reserved0)(void* self);
-    void (*reserved1)(void* self);
-    void (*reserved2)(void* self);
-    void (*destroy)(void* self);
-    void* (*getUuid)(void* self);
-    void (*reset)(void* self);
-    int (*getChunk)(void* self, int mode, int size, void* out);   /* 0x18 */
-    int (*ungetChunk)(void* self, int mode, void* chunk);         /* 0x1C */
-};
-
-#define MPV_SJ_VT(obj) (*(struct MpvSjVtbl**)(obj))
 
 s32 MPV_DecodePicAtrSj(MpvHdec* self, void* sj) {
     MpvSjChunk st;
@@ -316,26 +330,27 @@ extern s32 MPV_SearchDelim(const u8* data, s32 size, s32 limit);
 extern s32 MPV_CheckDelim(const u8* p);
 
 s32 mpvhdec_GetCodec(void* self, s32* param) {
+    MpvHdec* h = (MpvHdec*)self;
     s32 p;
-    if (*(s32*)((u8*)self + 0xCFC) != 0)
-        return *(s32*)((u8*)self + 0xCFC);
+    if (h->cfc != 0)
+        return h->cfc;
     p = MPV_SearchDelim(*(const u8**)param, *(s32*)((u8*)param + 4), 64);
     if (p == 0)
-        return *(s32*)((u8*)self + 0xCFC);
+        return h->cfc;
     p = MPV_SearchDelim((const u8*)p + 4,
                         *(s32*)((u8*)param + 4) - ((const u8*)p + 4 - *(const u8**)param),
                         -1);
     if (p == 0)
-        return *(s32*)((u8*)self + 0xCFC);
+        return h->cfc;
     {
         s32 v = MPV_CheckDelim((const u8*)p);
         if (v & 0x10) {
-            *(s32*)((u8*)self + 0xCFC) = 2;
+            h->cfc = 2;
         } else if (v != 0) {
-            *(s32*)((u8*)self + 0xCFC) = 1;
+            h->cfc = 1;
         }
     }
-    return *(s32*)((u8*)self + 0xCFC);
+    return h->cfc;
 }
 
 extern u32 lbl_eu_8051C1D8[];
@@ -388,8 +403,7 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     u32 mis;
 
     self->d58 = 3;
-    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-        sj, 1, 0x7FFFFFFF, &self->chunk);
+    MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &self->chunk);
 
     p = (u32)(intptr_t)self->chunk.p;
     base = p & ~3u;
@@ -442,10 +456,10 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
     idx = flag * 0x14;
     self->c60 = *(u32*)((char*)lbl_eu_8051C1D8 + off);
     self->c64 = *(u32*)((char*)tbl + off + idx);
-    self->c70 = *(u32*)((char*)tbl + 0x28 + off + self->b20 * 0x28 + idx);
-    self->c78 = *(u32*)((char*)tbl + 0xa0 + off + idx);
-    self->c7c = *(u32*)((char*)tbl + 0x78 + off + idx);
-    self->c80 = *(u32*)((char*)tbl + 0xc8 + off + idx);
+    self->c70 = *(u32*)((char*)tbl + MPV_HDEC_TBL_B + off + self->b20 * MPV_HDEC_TBL_B + idx);
+    self->c78 = *(u32*)((char*)tbl + MPV_HDEC_TBL_D + off + idx);
+    self->c7c = *(u32*)((char*)tbl + MPV_HDEC_TBL_C + off + idx);
+    self->c80 = *(u32*)((char*)tbl + MPV_HDEC_TBL_E + off + idx);
     self->c74 = self->c7c;
 
     /* scan forward for the next slice start marker */
@@ -478,9 +492,9 @@ s32 mpvhdec_DecPscSj(void* selfp, void* sj) {
                   (s32)((u32)(intptr_t)ptr + ((sh + 7) >> 3) - 8) -
                       (s32)(intptr_t)self->chunk.p,
                   &self->chunk, &rest);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(
+    MPV_SJ_VT(sj)->putChunk(
         sj, 0, &self->chunk);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+    MPV_SJ_VT(sj)->ungetChunk(
         sj, 1, &rest);
     return 0;
 }
@@ -498,8 +512,7 @@ s32 mpvhdec_DecGscSj(MpvHdec* self, void* sj) {
     self->d9c = 0;
     self->da0 = 0;
     self->bc4 = 0;
-    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-        sj, 1, 0x7FFFFFFF, &self->chunk);
+    MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &self->chunk);
 
     p = (s32)(intptr_t)self->chunk.p;
     base = p & ~3;
@@ -560,9 +573,9 @@ s32 mpvhdec_DecGscSj(MpvHdec* self, void* sj) {
                   (s32)((u32)(intptr_t)ptr + ((sh + 7) >> 3) - 8) -
                       (s32)(intptr_t)self->chunk.p,
                   &self->chunk, &rest);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(
+    MPV_SJ_VT(sj)->putChunk(
         sj, 0, &self->chunk);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+    MPV_SJ_VT(sj)->ungetChunk(
         sj, 1, &rest);
     return 0;
 }
@@ -588,8 +601,7 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
     self->d9c = 0;
     self->da0 = 0;
     self->bc4 = 0;
-    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-        sj, 1, 0x7FFFFFFF, &self->chunk);
+    MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &self->chunk);
 
     p = (u32)(intptr_t)self->chunk.p;
     base = p & ~3u;
@@ -614,12 +626,12 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
     if (self->c50 != 0) {
         for (i = 0; i < 64; i += 2) {
             HDEC_READ(v, hi, lo, sh, ptr, 8);
-            ((u8*)self + 0x300)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i]] = (u8)v;
+            self->intraQuant[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i]] = (u8)v;
             HDEC_READ(v, hi, lo, sh, ptr, 8);
-            ((u8*)self + 0x300)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i + 1]] = (u8)v;
+            self->intraQuant[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i + 1]] = (u8)v;
         }
     } else {
-        UTY_MemcpyDword((u8*)self + 0x300, (const char*)lbl_eu_80602A5C + 8, 16);
+        UTY_MemcpyDword(self->intraQuant, (const char*)lbl_eu_80602A5C + 8, 16);
     }
 
     /* optional non-intra-quantisation matrix (defaults to a flat 16 table) */
@@ -627,12 +639,12 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
     if (v != 0) {
         for (i = 0; i < 64; i += 2) {
             HDEC_READ(v, hi, lo, sh, ptr, 8);
-            ((u8*)self + 0x340)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i]] = (u8)v;
+            self->nonIntraQuant[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i]] = (u8)v;
             HDEC_READ(v, hi, lo, sh, ptr, 8);
-            ((u8*)self + 0x340)[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i + 1]] = (u8)v;
+            self->nonIntraQuant[(s32)(s8)((u8*)(intptr_t)self->t9ac)[i + 1]] = (u8)v;
         }
     } else {
-        UTY_MemsetDword((u8*)self + 0x340, 0x10101010, 16);
+        UTY_MemsetDword(self->nonIntraQuant, 0x10101010, 16);
     }
 
     self->b64 = (self->b5c + 15) >> 4; /* macroblocks per line */
@@ -647,9 +659,9 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
                   (s32)((u32)(intptr_t)ptr + ((sh + 7) >> 3) - 8) -
                       (s32)(intptr_t)self->chunk.p,
                   &self->chunk, &rest);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(
+    MPV_SJ_VT(sj)->putChunk(
         sj, 0, &self->chunk);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+    MPV_SJ_VT(sj)->ungetChunk(
         sj, 1, &rest);
     return 0;
 }
@@ -657,16 +669,15 @@ s32 mpvhdec_DecShcSj(void* selfp, void* sj) {
 s32 mpvhdec_DecEscSj(void* selfp, void* sj, s32 codec) {
     MpvHdec* self = (MpvHdec*)selfp;
     MpvSjChunk rest;
-    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-        sj, 1, 0x7FFFFFFF, &self->chunk);
+    MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &self->chunk);
     {
         s32 p = (s32)(intptr_t)self->chunk.p;
         s32 a = p & ~3;
         SJ_SplitChunk(&self->chunk, a + ((((p - a) * 8) + 7) >> 3) + 4 - p, &self->chunk, &rest);
     }
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(
+    MPV_SJ_VT(sj)->putChunk(
         sj, 0, &self->chunk);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+    MPV_SJ_VT(sj)->ungetChunk(
         sj, 1, &rest);
     MPV_GoNextDelimSj(sj);
     return 0;
@@ -678,8 +689,7 @@ s32 mpvhdec_DecUdscSj(void* selfp, void* sj, s32 codec) {
     s32 p;
     s32 a;
     s32 r;
-    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
-        sj, 1, 0x7FFFFFFF, &((MpvHdec*)selfp)->chunk);
+    MPV_SJ_VT(sj)->getChunk(sj, 1, 0x7FFFFFFF, &((MpvHdec*)selfp)->chunk);
     self = (MpvHdec*)selfp;
     p = (s32)(intptr_t)self->chunk.p;
     a = p & ~3;
@@ -687,9 +697,9 @@ s32 mpvhdec_DecUdscSj(void* selfp, void* sj, s32 codec) {
     SJ_SplitChunk(&self->chunk,
                   a + ((((p - a) * 8) + 7) >> 3) + 4 - (s32)(intptr_t)self->chunk.p,
                   &self->chunk, &rest);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(
+    MPV_SJ_VT(sj)->putChunk(
         sj, 0, &self->chunk);
-    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+    MPV_SJ_VT(sj)->ungetChunk(
         sj, 1, &rest);
     MPV_GoNextDelimSj(sj);
     return r;
@@ -722,16 +732,14 @@ s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) {
         if (fn != NULL) {
             MpvSjChunk st;
             MpvSjChunk rest;
-            ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x18))(
-                fn, 0, i, &st);
+            MPV_SJ_VT(fn)->getChunk(fn, 0, i, &st);
             memcpy(st.p, p, st.size);
-            ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x20))(
+            MPV_SJ_VT(fn)->putChunk(
                 fn, 1, &st);
             if (st.size < i) {
-                ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x18))(
-                    fn, 0, i - st.size, &rest);
+                MPV_SJ_VT(fn)->getChunk(fn, 0, i - st.size, &rest);
                 memcpy(rest.p, p + st.size, rest.size);
-                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x20))(
+                MPV_SJ_VT(fn)->putChunk(
                     fn, 1, &rest);
             }
             /* notify callback only runs when the reader object exists */
@@ -792,11 +800,9 @@ s32 MPV_GoNextDelimSj(void* self) {
     MpvSjChunk rest;
     s32 ret;
     for (;;) {
-        ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x18))(
-            self, 1, 0x7FFFFFFF, &st);
+        MPV_SJ_VT(self)->getChunk(self, 1, 0x7FFFFFFF, &st);
         if (st.size < 4) {
-            ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x1C))(
-                self, 1, &st);
+            MPV_SJ_VT(self)->ungetChunk(self, 1, &st);
             ret = 0;
             break;
         }
@@ -804,19 +810,15 @@ s32 MPV_GoNextDelimSj(void* self) {
             s32 found = MPV_SearchDelim((const u8*)st.p, st.size, -1);
             if (found == 0) {
                 SJ_SplitChunk(&st, st.size - 3, &st, &rest);
-                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x20))(
-                    self, 0, &st);
-                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x1C))(
-                    self, 1, &rest);
+                MPV_SJ_VT(self)->putChunk(self, 0, &st);
+                MPV_SJ_VT(self)->ungetChunk(self, 1, &rest);
                 continue;
             }
             {
                 s32 r = MPV_CheckDelim((const u8*)found);
                 SJ_SplitChunk(&st, found - (s32)(intptr_t)st.p, &st, &rest);
-                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x20))(
-                    self, 0, &st);
-                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x1C))(
-                    self, 1, &rest);
+                MPV_SJ_VT(self)->putChunk(self, 0, &st);
+                MPV_SJ_VT(self)->ungetChunk(self, 1, &rest);
                 ret = r;
                 break;
             }
@@ -829,7 +831,7 @@ s32 MPV_GoNextDelimSj(void* self) {
 s32 MPV_MoveChunk(void* self, s32 b, s32 c) {
     s32 sp[2];
     s32 n = (b == 0) ? 1 : 0;
-    ((s32 (*)(void*, s32, s32, s32*))*(void**)((u8*)*(void**)((u8*)self) + 0x18))(self, b, c, sp);
-    ((s32 (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)self) + 0x20))(self, n, sp);
+    MPV_SJ_VT(self)->getChunk(self, b, c, sp);
+    MPV_SJ_VT(self)->putChunk(self, n, sp);
     return sp[1];
 }

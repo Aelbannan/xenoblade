@@ -1,7 +1,7 @@
 #include <harness_catalog.h>
 
 /* Signed-nibble table: tbl[n] = n for 0..7, n-16 for 8..15 */
-extern s32 lbl_eu_80517428[];
+extern const s32 adxdcd_nibble_table[];
 extern s32 lbl_eu_805F2AF0;
 
 /* ADX version 4 mono decoder
@@ -54,7 +54,7 @@ int ADX_DecodeMono4(const u8 *in, int nblocks, s16 *out, s16 *prev,
         }
             out[0] = (s16)pcm;
 
-            tbl_val = lbl_eu_80517428[byte & 0xF];
+            tbl_val = adxdcd_nibble_table[byte & 0xF];
             pcm2 = ((c1 * pcm + c2 * prev_lo) >> 12) + tbl_val * scale_val;
             if ((u32)(pcm2 + 0x8000) > 0xFFFF) {
                 if (pcm2 < -0x8000)
@@ -151,7 +151,7 @@ int ADX_DecodeSte4AsMono(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             out2[0] = (s16)avg_a;
             out1[0] = (s16)avg_a;
 
-            tbl1 = lbl_eu_80517428[byte1 & 0xF];
+            tbl1 = adxdcd_nibble_table[byte1 & 0xF];
             pcm1b = ((c1 * pcm1a + c2 * ch1_lo) >> 12) + tbl1 * scale1;
             if ((u32)(pcm1b + 0x8000) > 0xFFFF) {
             if (pcm1b < -0x8000)
@@ -160,7 +160,7 @@ int ADX_DecodeSte4AsMono(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
                 pcm1b = 0x7FFF;
         }
 
-            tbl2 = lbl_eu_80517428[byte2 & 0xF];
+            tbl2 = adxdcd_nibble_table[byte2 & 0xF];
             pcm2b = ((c1 * pcm2a + c2 * ch2_lo) >> 12) + tbl2 * scale2;
             if ((u32)(pcm2b + 0x8000) > 0xFFFF) {
             if (pcm2b < -0x8000)
@@ -262,7 +262,7 @@ int ADX_DecodeSte4AsSte(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
         }
             out2[0] = (s16)pcm2a;
 
-            tbl1 = lbl_eu_80517428[byte1 & 0xF];
+            tbl1 = adxdcd_nibble_table[byte1 & 0xF];
             pcm1b = ((c1 * pcm1a + c2 * ch1_lo) >> 12) + tbl1 * scale1;
             if ((u32)(pcm1b + 0x8000) > 0xFFFF) {
             if (pcm1b < -0x8000)
@@ -272,7 +272,7 @@ int ADX_DecodeSte4AsSte(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
         }
             out1[1] = (s16)pcm1b;
 
-            tbl2 = lbl_eu_80517428[byte2 & 0xF];
+            tbl2 = adxdcd_nibble_table[byte2 & 0xF];
             pcm2b = ((c1 * pcm2a + c2 * ch2_lo) >> 12) + tbl2 * scale2;
             if ((u32)(pcm2b + 0x8000) > 0xFFFF) {
             if (pcm2b < -0x8000)
@@ -314,3 +314,10 @@ int ADX_DecodeSte4(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             out2, prev2, c1, c2, hist, v1, v2);
     }
 }
+
+/* Signed-nibble lookup table for the ADX version 4 decoder. */
+const s32 adxdcd_nibble_table[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5,
+    -4, -3, -2, -1,
+};
+

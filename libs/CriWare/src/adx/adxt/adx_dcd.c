@@ -5,15 +5,13 @@
 #include <math.h>
 #include <string.h>
 
-// ADX coefficient constant pool (rodata 0x80517468, size 0x30):
+// ADX coefficient constant pool (retail .rodata 0x80517468, size 0x30):
 //   [0] f32  2*pi
 //   [1] f64  2.0
 //   [2] f32  1.0
 //   [3] f32  4096.0
 //   [4] f32  2.0
 //   [5] f64  0x4330000080000000 (u32->double magic)
-extern const double lbl_eu_80517468[];
-
 void ADX_GetCoefficient(int highpass_frequency, int sample_rate, s16* coef1_ptr, s16* coef2_ptr)
 {
     float f21;
@@ -246,3 +244,6 @@ int ADX_DecodeFooter(void* info, int size, u16* out) {
     *out = (u16)(*(s16*)((u8*)info + 2) + 4);
     return 0;
 }
+
+/* Trailer of the ADX coefficient literal pool: CRI copyright tag. */
+const char adxdcd_copyright[8] = { 0x28, 0x63, 0x29, 0x43, 0x52, 0x49, 0x00, 0x00 };

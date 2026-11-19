@@ -199,9 +199,12 @@ extern "C" u32 scn80496BindChrAnmPack(u8* self, CScnItemAnimResFile* anim, int i
                               u32 c, s32 f, u32 g, u32 h);
 extern "C" u32 scn80496HasChild1Node(u8* self);
 
-// Cross-TU query: returns the model owned by the given scene owner's pool
-// (called by simAttachModel; defined in CScn_80496B0C.cpp).
-extern "C" CScnItemModel* Scn_SetupAnimDefault(CScnItemModelOwner* owner);
+// Cross-TU query: returns the model owned by the given scene owner's pool.
+// Retail forwards two arguments (owner in r3, name param in r4) and returns
+// the created model in r3; defined in CScn.cpp.
+extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 owner, void* param);
+
+extern "C" void* simGetLeafActData(void* object);
 
 // Fragment-anchored destructors of sub-objects destroyed by the
 // CScnItemModel dtor (defined in code_804BF59C.cpp / CScn_80496B0C.cpp).

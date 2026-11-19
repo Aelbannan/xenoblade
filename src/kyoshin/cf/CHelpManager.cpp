@@ -174,12 +174,12 @@ void clearHelpToAttackFlags__Q22cf14CHelp_ToAttackFv(void* self) {
     ((unsigned char*)self)[0xd] = 0;
 }
 
-extern "C" DECOMP_DONT_INLINE void clearHelpListHolder(cf::CHelpListHolder* self) {
+extern "C" void clearHelpListHolder(cf::CHelpListHolder* self) {
     *(unsigned long*)self = 0;
     ((unsigned char*)self)[4] = 0;
 }
 
-extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag) {
+extern "C" void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag) {
     self->mItems = items;
     self->mFlag = flag;
     if (items != NULL) {
@@ -191,10 +191,8 @@ extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, 
     }
 }
 
-// DECOMP_DONT_INLINE: retail calls this through real `bl`s from
-// DECOMP_DONT_INLINE: retail calls this through real `bl`s from
-// updateHelpManager / the sinit; MWCC would otherwise inline the body.
-extern "C" DECOMP_DONT_INLINE void clearHelpList(cf::CHelpListHolder* self) {
+// Retail calls this through real `bl`s from updateHelpManager / the sinit.
+extern "C" void clearHelpList(cf::CHelpListHolder* self) {
     if (self->mItems == NULL) return;
     if (CHelp_ForwardPartyNotice() != 0) return;
     int keep = 1;

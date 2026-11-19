@@ -74,8 +74,10 @@ extern void ScnRes_Notify4Word_E3E0(const void* cb, void* mtx, u32 unk, int flag
 extern bool ScnRes_CopyEntryHead(mlCVec3* v, int flag);
 extern bool ScnRes_CopyEntryMid(mlCVec3* v, int flag);
 extern void* ScnRes_GetEntryPtr_E50C(int idx);
-extern void* simGetLeafActData(ShadowCtx* ctx);
+// Canonical void*(void*) act-data accessor from CScnItemModel.cpp.
+extern "C" void* simGetLeafActData(void* object);
 extern void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float scale);
+
 } // extern "C"
 
 // Foreign .sdata2 constants used by the draw path.

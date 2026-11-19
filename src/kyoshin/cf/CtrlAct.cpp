@@ -12,6 +12,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 #include "kyoshin/cf/CArtsSet.hpp"  // real cf::CAttackParam (vptr at +0x84; slot +0x0C/+0x14)
@@ -21,7 +22,7 @@
 // TU's absorbed split (CtrlAct.s @ 800D34CC), so its out-of-line definition
 // stays here and dispatches through the real base virtuals.
 
-// Target us-800d1bc4. CtrlActView-family base constructor: clear the state
+// Target us-800d1bc4. cf::CtrlAct-family base constructor: clear the state
 // words, run the two vtable writes (base then derived, novtable convention),
 // resolve the sub-object via func_800BBC0C and the player via MapFx_ResolveOwner,
 // zero the 0x2C position block and the tail bytes.
@@ -30,7 +31,7 @@
 // Retail signature has a third (unused) argument. Dropping it does not
 // change codegen (verified); kept for ABI fidelity with the CtrlPc.hpp /
 // CtrlEnemy.hpp declarations.
-CtrlActView* __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
+cf::CtrlAct* __ct__800D10DC(cf::CtrlAct* self, void* posObj, void* arg5) {
     self->mField4 = 0;
     self->mField8 = lbl_eu_80666CF8;
     self->mFieldC = lbl_eu_80666CF8;
@@ -61,7 +62,7 @@ CtrlActView* __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
 // scan the battle list for the lowest probe height, then blend the anchor
 // position, pick the clearance margin and drive the facing/positioning
 // probes (tickTargetAct / scanPlayerTgt / atan2 aim).
-extern "C" void updateActMain(CtrlActView* self) {
+extern "C" void updateActMain(cf::CtrlAct* self) {
     // Long-lived locals declared first so MWCC's saved-register coloring
     // matches retail: src->r31, r30->r30, r29->r29, self->r28 (param),
     // player-cache->r27. The gate flag below stays volatile (r0).
@@ -73,8 +74,7 @@ extern "C" void updateActMain(CtrlActView* self) {
     // probe reads exactly 0 (otherwise the source resolution below runs).
     {
         u8 rangeByte =
-            ((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
-                ->mField1AA;
+            (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
         if ((rangeByte >= 1 && rangeByte <= 0x18) == 0) {
             if (((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v33() ==
                 lbl_eu_80666CF8) {
@@ -269,13 +269,11 @@ extern "C" void updateActMain(CtrlActView* self) {
         // positive-f27 branch positions the action.
         {
             u8 rangeByte2 =
-                ((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
-                    ->mField1AA;
+                (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
             if ((rangeByte2 >= 1 && rangeByte2 <= 0x18) != 0
                 && lbl_eu_80666D18 > f28) {
                 int r = CChain_ValidateTarget(
-                    &((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
-                         ->mField1A8,
+                    &((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain,
                     self->mPlayer);
                 // Retail lowers this via cntlzw/srwi: nonzero result picks
                 // D1C, zero keeps CF8.
@@ -426,7 +424,7 @@ extern "C" void updateActMain(CtrlActView* self) {
 // 0x1AC, and re-aim the owner at the resolved source unless the battle
 // target is in a reserved state-page range (0x21..0x2A). The second
 // 0x1000 gate then marks the owner with v02(1) + dispatchItemLoad.
-void aimVoiceOwner(CtrlActView* self) {
+void aimVoiceOwner(cf::CtrlAct* self) {
     // Initialized here so the interference range starts before the gate
     // blocks; the dead store itself is removed by the optimizer.
     CtrlActSrc* src = NULL;
@@ -486,7 +484,7 @@ void aimVoiceOwner(CtrlActView* self) {
 // body fetches a 0x20-byte action entry via aiFetchAction and either rebuilds
 // the +0x2A4 action-state block or dispatches the entry's kind byte through a
 // 25-way switch; the no-entry path re-checks the current state instead.
-void parseActEntry(CtrlActView* self) {
+void parseActEntry(cf::CtrlAct* self) {
     // NOTE: no cached mPlayer local - retail reloads 0x5c(r30) at every use.
     // Typed virtuals keep retail's register flow (no temp-register copies).
     if (((CtrlActPlayerReal*)self->mPlayer)->vf173() != 0) {
@@ -785,7 +783,7 @@ void parseActEntry(CtrlActView* self) {
             break;
         }
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        CChain_TryActivateChain(&((CtrlActBmView*)bm)->mField1A8, (int)self->mPlayer);
+        CChain_TryActivateChain(&((cf::CBattleManager*)bm)->mChain, (int)self->mPlayer);
         break;
     }
     default:
@@ -808,7 +806,7 @@ float cf::CAttackParam::CAttackParam_getArtsGaugeMax() {
 // (attack index, actor id, kind flags 0x54/0x55 select the 0x78 flag bits).
 // (gate helper experiments reverted: direct calls reproduce retail's
 // stack-slot order)
-int ctrlActDispatchEntry(CtrlActView* self, CtrlActAtkArg* arg) {
+int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     // self->mPlayer is re-read at every use site (no cached local) so the
     // compiler reloads it per block like the retail code; the casts only
     // select real virtual dispatch (see CtrlActPlayerReal in CtrlAct.hpp).
@@ -921,7 +919,7 @@ int ctrlActDispatchEntry(CtrlActView* self, CtrlActAtkArg* arg) {
 // into the 0x78 flag word). The block is snapshotted to the stack while the
 // arts container and battle state are probed, restored, and the facing
 // virtuals run before the block is committed.
-extern "C" int runArtsAttack(CtrlActView* self, CtrlActAtkArg* arg) {
+extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     s16 atkIndex = arg->mField12;
     CtrlActSrc* src = (CtrlActSrc*)MapFx_ResolveOwner(findObjectById((int)arg->mField0));
     // Each arts-set lookup reloads self->mPlayer fresh (scoped locals):
@@ -1057,8 +1055,7 @@ extern "C" int runArtsAttack(CtrlActView* self, CtrlActAtkArg* arg) {
     }
     if (isBattleEventKind3(atk->mField48) != 0) {
         if (self->mPlayer->mField1530 != 0) {
-            u8 v = ((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
-                      ->mField1AA;
+            u8 v = (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
             if (v < 1 || v > 0x18) {
                 if ((self->mPlayer->mField3E6C & 0x1000) == 0
                     && self->mPlayer->mField1530 == atk->mField48) {
@@ -1120,7 +1117,7 @@ extern "C" int runArtsAttack(CtrlActView* self, CtrlActAtkArg* arg) {
     return 1;
 }
 
-extern "C" int handleActKind(CtrlActView* self) {
+extern "C" int handleActKind(cf::CtrlAct* self) {
     // Positive-condition wrap (MWCC_CASES §798): retail lays the guard as
     // beq -> shared tail and the body inline; the early-return form inverts
     // the first branch.
@@ -1274,13 +1271,13 @@ return 0;
 }
 
 
-extern "C" void setupActTimer(CtrlActView* self) {
+extern "C" void setupActTimer(cf::CtrlAct* self) {
     // Saved-register coloring (retail): src->r31, s (param copy) ->r30,
     // gate player cache ->r29. Every access goes through the local copy so
     // the raw parameter itself is never colored; clear blocks deliberately
     // re-read s->mPlayer after memset (retail reloads 0x5c(r30) there).
     CtrlActSrc* src;
-    CtrlActView* s = self;
+    cf::CtrlAct* s = self;
     CtrlActPlayerView* player = s->mPlayer;
     u32 local = *player->mField4->vf30();
     if (testActorStatus(player, &local, 0x807) == 0) {
@@ -1380,7 +1377,7 @@ extern "C" void setupActTimer(CtrlActView* self) {
 // source (voice position snapshot, timer from the attack param, aim at the
 // source, angle-state latch + phase+1); phase 1 decays the action timer and
 // refreshes the facing helper. Timer expiry resets the 0x30 state block.
-extern "C" void progressPhase(CtrlActView* self) {
+extern "C" void progressPhase(cf::CtrlAct* self) {
     // Cached player pointer: MWCC keeps it in a saved register across the
     // state gate.
     CtrlActPlayerView* player = self->mPlayer;
@@ -1459,7 +1456,7 @@ extern "C" void progressPhase(CtrlActView* self) {
 // (only when mParam==0) bails out when the source gets too close to either
 // the player or the stored anchor. The common tail walks the action toward
 // the player while the timer is live and re-aims via vf26 + ground probe.
-extern "C" void rotateActPose(CtrlActView* self) {
+extern "C" void rotateActPose(cf::CtrlAct* self) {
     u32 local = *self->mPlayer->mField4->vf30();
     if (testActorStatus(self->mPlayer, &local, 0x807) == 0) {
         memset(&self->mPos30, 0, 0x2c);
@@ -1629,7 +1626,7 @@ extern "C" void rotateActPose(CtrlActView* self) {
 // slots and store the facing angle. Falling out of the timer or failing the
 // vf24 probe resets the 0x30 state block.
 
-extern "C" void ctrlActState4Handler(CtrlActView* self) {
+extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
     ml::CVec3 vec1c;
     ml::CVec3 vec10;
     f32 x8;
@@ -1690,7 +1687,7 @@ int ctrlActComputeAimVec(void* self) { return 0; }
 // the heading delta against the source-facing reference offset by the two
 // wobble bands (D88 then D8C) - being inside either band ends the action,
 // otherwise the shared facing helper re-aims.
-extern "C" void testAimWobble(CtrlActView* self) {
+extern "C" void testAimWobble(cf::CtrlAct* self) {
     {
         CtrlActPlayerView* player = self->mPlayer;
         u32 local = *player->mField4->vf30();
@@ -1828,7 +1825,7 @@ extern "C" void testAimWobble(CtrlActView* self) {
     }
 }
 
-extern "C" void stepActMotion(CtrlActView* self) {
+extern "C" void stepActMotion(cf::CtrlAct* self) {
     {
         CtrlActPlayerView* player = self->mPlayer;
         u32 local = *player->mField4->vf30();
@@ -1932,7 +1929,7 @@ extern "C" void stepActMotion(CtrlActView* self) {
     }
 }
 
-void loadActionSrc(CtrlActView* self) {
+void loadActionSrc(cf::CtrlAct* self) {
     // Declared first so MWCC's saved-register coloring matches retail
     // (same idiom as setupActTimer/updateActMain).
     CtrlActSrc* src;
@@ -2023,7 +2020,7 @@ void loadActionSrc(CtrlActView* self) {
 // re-aim at the current facing target while the timer is live (vf25 probe),
 // with the aim/fx state value written from either the success or failure
 // path.
-extern "C" void ctrlActHandleCase4Move(CtrlActView* self) {
+extern "C" void ctrlActHandleCase4Move(cf::CtrlAct* self) {
     CtrlActPlayerView* player = self->mPlayer;
     u32 id = *player->mField4->vf30();
     u32 local = id;
@@ -2057,12 +2054,12 @@ extern "C" void ctrlActHandleCase4Move(CtrlActView* self) {
 int ctrlActFaceTargetVec(void* self) { return 0; }
 
 void ctrlActClearState30(void* self) {
-    memset(&((CtrlActView*)self)->mPos30, 0, 0x2C);
-    requestItemLoad(((CtrlActView*)self)->mPlayer, 0x40);
+    memset(&((cf::CtrlAct*)self)->mPos30, 0, 0x2C);
+    requestItemLoad(((cf::CtrlAct*)self)->mPlayer, 0x40);
 }
 
 unsigned long ctrlActIsFlagBit15Clear(void* self) {
-    unsigned long v = *(unsigned long*)&((CtrlActView*)self)->mFlags58;
+    unsigned long v = *(unsigned long*)&((cf::CtrlAct*)self)->mFlags58;
     return !((v >> 15) & 1);
 }
 
@@ -2071,7 +2068,7 @@ unsigned long ctrlActIsFlagBit15Clear(void* self) {
 // (y offset by a constant), then apply the kind-specific parameter:
 // kind 3 stores the raw parameter, kinds 4/0xA set the timer constant, and
 // kind 2 maps the parameter through the 0x28..0x2C ladder.
-void ctrlActSetupActionKind(CtrlActView* self, u32 kindParam, int param2) {
+void ctrlActSetupActionKind(cf::CtrlAct* self, u32 kindParam, int param2) {
     memset(&self->mPos30, 0, 0x2c);
     self->mFlags58.mKind = kindParam;
     self->mFlags58.mBit15 = 1;
@@ -2127,7 +2124,7 @@ void ctrlActUpdateData70(void* obj) {
         unsigned char u7a;
         unsigned char u7b;
     };
-    Data70* data = (Data70*)&((CtrlActView*)obj)->mField70;
+    Data70* data = (Data70*)&((cf::CtrlAct*)obj)->mField70;
     unsigned short temp = data->u74;
     f32 v = lbl_eu_80666CFC;  // 1.0f (SDA2 float pool)
     data->u78 = 0;
@@ -2144,7 +2141,7 @@ void ctrlActUpdateData70(void* obj) {
 // the voice positions), aim at the nearer of the first two and latch the turn
 // direction into mAngleState (wrapped into (-pi, pi]); otherwise - or with no
 // candidates - pick a random turn.
-extern "C" void aimNearestFoe(CtrlActView* self) {
+extern "C" void aimNearestFoe(cf::CtrlAct* self) {
     CtrlActPlayerView* player = self->mPlayer;
     if (((u32)__cntlzw((u32)__cntlzw(player->mField3F00 & 2) >> 5) >> 5) != 0) {
         void* list[3] = {0, 0};
@@ -2226,7 +2223,7 @@ extern "C" void aimNearestFoe(CtrlActView* self) {
 // player position vs the 0x30 position block, then pick the facing-state
 // table (kind 6/5) for the 0x48 base angle, wrap both deltas into (-pi, pi]
 // and latch the chosen delta's sign into the 0x58 angle-state bits.
-void snapFacingAng(CtrlActView* self) {
+void snapFacingAng(cf::CtrlAct* self) {
     CVoicePos* pos = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 diff;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
@@ -2273,7 +2270,7 @@ void snapFacingAng(CtrlActView* self) {
     }
 }
 
-extern "C" int testFacingGap(CtrlActView* self, CtrlActSrc* src) {
+extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
     // Facing helper shared by the action handlers. Re-aims the target angle
     // at the action source, wraps the heading into (-pi, pi], latches the
     // heading-band flags into the 0x04 word, then projects a unit circle
@@ -2380,9 +2377,9 @@ int ctrlActProbeTargetReset(void* self) { return 0; }
 // player position, and scan the collision results for the highest point below
 // the probe - if the tallest hit leaves a gap wider than the threshold the
 // facing is clear (return 0).
-extern "C" int isMoveBlocked(CtrlActView* self) {
+extern "C" int isMoveBlocked(cf::CtrlAct* self) {
     if ((self->mPlayer->mField3374 & 0x10000) != 0) {
-        CtrlActTargetView* target = self->mPlayer->mField3F60;
+        CtrlPlayerSub3F60* target = self->mPlayer->mField3F60;
         if (target != 0 && target->mField4F8 > lbl_eu_80666CF8) {
             f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
             f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
@@ -2430,9 +2427,9 @@ extern "C" int isMoveBlocked(CtrlActView* self) {
 // probe a unit circle along mFieldC at the player position, find the highest
 // collision hit; depending on its height vs the player, gate on 0x40000/0x20000
 // flags and the target's 0x4EC bit 8, and latch the result into mField74.
-extern "C" int testHeightGap(CtrlActView* self, int flag) {
+extern "C" int testHeightGap(cf::CtrlAct* self, int flag) {
     self->mField74 &= 0xfff1;
-    CtrlActTargetView* target = self->mPlayer->mField3F60;
+    CtrlPlayerSub3F60* target = self->mPlayer->mField3F60;
     if (target != 0) {
     f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
     f32 y;
@@ -2501,7 +2498,7 @@ return 0;
 // facing loop (segment probe + vf26 walk), and the 0x40-clear branch
 // resolves the facing from the player's base-facing angle. The common tail
 // decrements the mParam countdown or re-aims through vf23.
-extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
+extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                               CtrlActSrc* src, int flag) {
     ml::CVec3* target = pos;
     if (flag != 0) {
@@ -2747,7 +2744,7 @@ extern "C" void tickTargetAct(CtrlActView* self, ml::CVec3* pos,
     }
 }
 
-extern "C" void scanPlayerTgt(CtrlActView* self, ml::CVec3* pos) {
+extern "C" void scanPlayerTgt(cf::CtrlAct* self, ml::CVec3* pos) {
     int segProbe = 0;
     ml::CVec3 out;
     f32 x8;
@@ -2807,7 +2804,7 @@ probe_done:
             u16 v = self->mField74;
             if (v & 0x400) {
                 self->mField14 = lbl_eu_80666CF8;
-                CtrlActTargetView* target = self->mPlayer->mField3F60;
+                CtrlPlayerSub3F60* target = self->mPlayer->mField3F60;
                 if (target != 0 && (target->mField4EC & 1) == 0) {
                     self->mField7B = self->mField7B + 1;
                 } else {
@@ -2818,7 +2815,7 @@ probe_done:
                     self->mField74 &= ~0x800;
                 }
             } else {
-                CtrlActTargetView* target = self->mPlayer->mField3F60;
+                CtrlPlayerSub3F60* target = self->mPlayer->mField3F60;
                 if (target != 0 && (target->mField4EC & 1) != 0) {
                     self->mField7B = self->mField7B + 1;
                     if (self->mField7B >= 0xF) {

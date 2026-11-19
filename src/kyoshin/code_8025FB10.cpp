@@ -903,7 +903,7 @@ FSTORE:
     return best != 0.0f;
 }
 
-// us-80262bb8 - dual accessor.  Stores the +0x08 sum chain total for
+// us-80262bb8 - dual accessor.
 // the ID through out1, and (only when that sum is non-zero) the +0x0C
 // halfword max through out2; returns whether the second total is non-zero.
 bool IdTable_GetSumMax(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {

@@ -1,3 +1,5 @@
+#define IWORK_EVENT_INLINE_DTOR
+
 // Loading-screen layout controller (kyoshin/CLoad).
 // Owns the lyt layout shown while a file request completes; the file-load
 // callback builds the layout from the loaded archive and drives a small
@@ -25,10 +27,13 @@ extern char lbl_eu_80510CC8[];
 // Retail-evidence shadow: __ct__CLoad bls the member ctor directly with no
 // placement-new null guard, so the TU calls it by its retail mangled name.
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+// MWCC emits the vtable from the real IWorkEvent inheritance; the retail
+// flat-named ctor installs its address at +0 before constructing members.
+extern void* __vt__5CLoad[34];
 void CLoadMarkFileArrived(CLoadFull* self);
 
 extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg) {
-    self->mVtbl = lbl_eu_8053A340;
+    *(void**)self = __vt__5CLoad;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = nullptr;
     self->mAccessor = nullptr;
@@ -255,87 +260,6 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80510CC8[0x98] =
     "mf00_load00_roop.brlan\0";
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF0 = 1.0f;
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF4 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80668DF8[8] = "CLoad";
 
-// [.sdata]/[.data] vtable pair + RTTI blocks (retail .data 0x130, all zeros
-// in-file; reloc slots read as zeros). 8053A2A8 is CTutorialList's vtable
-// (read by CTutorialList code), 8053A340 is CLoad's own. Layout per table:
-// [0] sdata descriptor, [1] null, [2] dtor, [3] W1, [4] OnFileEvent,
-// [5..33] W3..W31, then a 4-word RTTI block (RTTI word + zeros; the RTTI
-// symbol is unspellable in source, cf. CFade, so the word stays zero).
-// Cross-TU vtable slots (flat retail names; CFade vtable idiom).
-extern "C" void __dt__5CLoadFv();
-extern "C" bool OnFileEvent__5CLoadFP10CEventFile(CLoad* self, CEventFile* ev);
-extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void WorkEvent3__10IWorkEventFPv();
-extern "C" void WorkEvent4__10IWorkEventFv();
-extern "C" void WorkEvent6__10IWorkEventFv();
-extern "C" void WorkEvent7__10IWorkEventFv();
-extern "C" void WorkEvent8__10IWorkEventFv();
-extern "C" void WorkEvent9__10IWorkEventFv();
-extern "C" void WorkEvent10__10IWorkEventFv();
-extern "C" void WorkEvent11__10IWorkEventFv();
-extern "C" void WorkEvent12__10IWorkEventFv();
-extern "C" void WorkEvent13__10IWorkEventFv();
-extern "C" void WorkEvent14__10IWorkEventFv();
-extern "C" void WorkEvent15__10IWorkEventFv();
-extern "C" void WorkEvent16__10IWorkEventFv();
-extern "C" void WorkEvent17__10IWorkEventFv();
-extern "C" void WorkEvent18__10IWorkEventFv();
-extern "C" void WorkEvent19__10IWorkEventFv();
-extern "C" void WorkEvent20__10IWorkEventFv();
-extern "C" void WorkEvent21__10IWorkEventFv();
-extern "C" void WorkEvent22__10IWorkEventFv();
-extern "C" void WorkEvent23__10IWorkEventFv();
-extern "C" void WorkEvent24__10IWorkEventFv();
-extern "C" void WorkEvent25__10IWorkEventFv();
-extern "C" void WorkEvent26__10IWorkEventFv();
-extern "C" void WorkEvent27__10IWorkEventFv();
-extern "C" void WorkEvent28__10IWorkEventFv();
-extern "C" void WorkEvent29__10IWorkEventFv();
-extern "C" void WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb();
-extern u32 lbl_eu_8053A3C8[];
-#pragma section data_type ".sdata" ".sdata"
-extern __declspec(section ".sdata") u32 lbl_eu_80662DF8[2] = {
-    (u32)&lbl_eu_80668DF8, (u32)&lbl_eu_8053A3C8,
-};
-#pragma section data_type ".data" ".data"
-__declspec(section ".data") __attribute__((used, aligned(8)))
-void* lbl_eu_8053A340[34] = {
-    (void*)&lbl_eu_80662DF8, (void*)0,
-    (void*)&__dt__5CLoadFv, (void*)&WorkEvent1__10IWorkEventFPvPCc,
-    (void*)&OnFileEvent__5CLoadFP10CEventFile,
-    (void*)&WorkEvent3__10IWorkEventFPv,
-    (void*)&WorkEvent4__10IWorkEventFv, (void*)&OnPauseTrigger__10IWorkEventFb,
-    (void*)&WorkEvent6__10IWorkEventFv,
-    (void*)&WorkEvent7__10IWorkEventFv,
-    (void*)&WorkEvent8__10IWorkEventFv,
-    (void*)&WorkEvent9__10IWorkEventFv,
-    (void*)&WorkEvent10__10IWorkEventFv,
-    (void*)&WorkEvent11__10IWorkEventFv,
-    (void*)&WorkEvent12__10IWorkEventFv,
-    (void*)&WorkEvent13__10IWorkEventFv,
-    (void*)&WorkEvent14__10IWorkEventFv,
-    (void*)&WorkEvent15__10IWorkEventFv,
-    (void*)&WorkEvent16__10IWorkEventFv,
-    (void*)&WorkEvent17__10IWorkEventFv,
-    (void*)&WorkEvent18__10IWorkEventFv,
-    (void*)&WorkEvent19__10IWorkEventFv,
-    (void*)&WorkEvent20__10IWorkEventFv,
-    (void*)&WorkEvent21__10IWorkEventFv,
-    (void*)&WorkEvent22__10IWorkEventFv,
-    (void*)&WorkEvent23__10IWorkEventFv,
-    (void*)&WorkEvent24__10IWorkEventFv,
-    (void*)&WorkEvent25__10IWorkEventFv,
-    (void*)&WorkEvent26__10IWorkEventFv,
-    (void*)&WorkEvent27__10IWorkEventFv,
-    (void*)&WorkEvent28__10IWorkEventFv,
-    (void*)&WorkEvent29__10IWorkEventFv,
-    (void*)&WorkEvent30__10IWorkEventFv,
-    (void*)&WorkEvent31__10IWorkEventFv,
-};
-__declspec(section ".data") __attribute__((used, aligned(8)))
-u32 lbl_eu_8053A3C8[4] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
-#pragma section data_type ".data" ".data"
+// __vt__5CLoad, its .sdata RTTI descriptor and the IWorkEvent base list are
+// emitted by MWCC from the real IWorkEvent inheritance declared in CLoad.hpp.

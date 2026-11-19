@@ -244,7 +244,7 @@
     },
     {
       "id": "battle-mgr-init",
-      "description": "CUIBattleManager::Init CProcess alloc, __ptmf_null copy, Regist via lbl_eu_80664048 (~99.1%)",
+"description": "CUIBattleManager::Init CProcess alloc, __ptmf_null copy, Regist via UIBattleManagerInstance (~99.1%)"
       "unit": "kyoshin/CUIBattleManager",
       "symbol": "Init__16CUIBattleManagerFv",
       "ppc_eligible": false,

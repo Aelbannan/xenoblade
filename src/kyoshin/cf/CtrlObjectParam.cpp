@@ -775,14 +775,14 @@ extern "C" int CtrlObjectParam_InitItemSlotArea(u8* self) {
 }
 
 extern "C" void CtrlObjectParam_CompactSlotArrays(u8* self) {
+    cf::CtrlObjectParamSwap* slots = reinterpret_cast<cf::CtrlObjectParamSwap*>(self);
     for (int a = 0; a < 3; a++) {
-        void* cur = (u8*)self + a * 4;
-        if (*(u32*)((u8*)cur + 4) == 0) {
+        if (slots->intArr1[a] == 0) {
             int found = 0;
             for (int i = a + 1; i < 3; i++) {
-                if (*(u32*)((u8*)self + (i * 4) + 4) != 0) {
-                    *(u32*)((u8*)cur + 4) = *(u32*)((u8*)self + (i * 4) + 4);
-                    *(u32*)((u8*)self + (i * 4) + 4) = 0;
+                if (slots->intArr1[i] != 0) {
+                    slots->intArr1[a] = slots->intArr1[i];
+                    slots->intArr1[i] = 0;
                     found = 1;
                     break;
                 }
@@ -790,12 +790,11 @@ extern "C" void CtrlObjectParam_CompactSlotArrays(u8* self) {
             if (!found) {
                 int done = 0;
                 for (int j = 0; j < 6; j++) {
-                    void* cur2 = (u8*)self + j * 4;
-                    if (*(u32*)((u8*)cur2 + 0x10) == 0) {
+                    if (slots->intArr2[j] == 0) {
                         for (int i = j + 1; i < 6; i++) {
-                            if (*(u32*)((u8*)self + (i * 4) + 0x10) != 0) {
-                                *(u32*)((u8*)cur2 + 0x10) = *(u32*)((u8*)self + (i * 4) + 0x10);
-                                *(u32*)((u8*)self + (i * 4) + 0x10) = 0;
+                            if (slots->intArr2[i] != 0) {
+                                slots->intArr2[j] = slots->intArr2[i];
+                                slots->intArr2[i] = 0;
                                 done = 1;
                                 break;
                             }
@@ -1335,9 +1334,9 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* selfV) {
     // Virtual dispatch to CActorParam_getArtsDataBlock (vtable slot 0x20C)
     // through the param embedded at +0x17C; the caller uses the low 16 bits
     // of the returned struct's first word.
-    cf::CtrlObjectParamWordView* p =
-        reinterpret_cast<cf::CtrlObjectParamWordView*>(self->mParam.CActorParam_getArtsDataBlock());
-    return p->word0 & 0xFFFF;
+    u32* p =
+        reinterpret_cast<u32*>(self->mParam.CActorParam_getArtsDataBlock());
+    return *p & 0xFFFF;
 }
 
 // -- CtrlObjectParam_RampEntryArtsLevel (us-800a1238) -------------------------------------------
@@ -1391,22 +1390,22 @@ extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* selfV, u16 val) {
     f32 f31 = lbl_eu_80666784;   // D6 scale
     int cap = 0x3E7;             // display-field cap
     while ((u32)count < val) {
-        cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+        u32* v94 = reinterpret_cast<u32*>(
             self->mParam.CActorParam_getArtsDataBlock());
-        u16 target = (u16)(v94->word0 + 1);
-        u32 cur = v94->word0;
+        u16 target = (u16)(*v94 + 1);
+        u32 cur = *v94;
         while (cur < target && cur < 99) {
             CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(cur + 1));
-            cur = v94->word0;
+            cur = *v94;
         }
         void* item = 0;
         if (self->shortArr[5] > -1) {
             item = CItem_kindPtr(2, self->shortArr[5]);
         }
         if (item != 0) {
-            cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+            u32* v94b = reinterpret_cast<u32*>(
                 self->mParam.CActorParam_getArtsDataBlock());
-            u16 w0 = (u16)v94b->word0;
+            u16 w0 = (u16)*v94b;
             if ((self->field_E6 & 4) != 0) {
                 u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x22]);
                 convB.w[1] = (u32)(w0 * v1) ^ 0x80000000;
@@ -1437,9 +1436,9 @@ extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* selfV, u16 val) {
         item2 = CItem_kindPtr(2, self->shortArr[5]);
     }
     if (item2 != 0) {
-        cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+        u32* v94 = reinterpret_cast<u32*>(
             self->mParam.CActorParam_getArtsDataBlock());
-        u16 w0 = (u16)v94->word0;
+        u16 w0 = (u16)*v94;
         if ((self->field_E6 & 4) != 0) {
             u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf28(reinterpret_cast<CItemData*>(item2), &lbl_eu_804FBCB0[0x22]);
             convB.w[1] = (u32)(w0 * v1) ^ 0x80000000;
@@ -1564,21 +1563,21 @@ void CtrlObjectParam_RaiseArtsLevelBy(cf::CtrlObjectParamEntry11A4* self, int am
     // fields from the item impl's label tables when the E6 bit-2 flag is set.
     union { u32 w[2]; double d; } c1;
     union { u32 w[2]; double d; } c2;
-    cf::CtrlObjectParamWordView* view = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+    u32* view = reinterpret_cast<u32*>(
         self->mParam.CActorParam_getArtsDataBlock());
-    u16 target = (u16)(view->word0 + amount);
-    while (amount != 0 && view->word0 < target && view->word0 < 0x63) {
-        // one level per iteration; CtrlObjectParam_RampArtsStatStep updates view->word0
-        CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(view->word0 + 1));
+    u16 target = (u16)(*view + amount);
+    while (amount != 0 && *view < target && *view < 0x63) {
+        // one level per iteration; CtrlObjectParam_RampArtsStatStep updates *view
+        CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(*view + 1));
     }
     void* item = 0;
     if (self->shortArr[5] > -1) {
         item = CItem_kindPtr(2, *const_cast<volatile s16*>(&self->field_26));
     }
     if (item != 0) {
-        cf::CtrlObjectParamWordView* view2 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+        u32* view2 = reinterpret_cast<u32*>(
             self->mParam.CActorParam_getArtsDataBlock());
-        u32 w0 = (u16)view2->word0;
+        u32 w0 = (u16)*view2;
         if ((self->field_E6 & 4) != 0) {
             CItemImpl* impl1 = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item));
             u32 v1raw = impl1->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x22]);
@@ -1609,7 +1608,7 @@ extern "C" void CtrlObjectParam_SyncParamFromActor(cf::CtrlObjectParamArtsView* 
     }
 }
 
-extern "C" void CActorParam_getCopyParam__Q22cf11CActorParamFv() {}
+void* cf::CActorParam::CActorParam_getCopyParam() {}
 
 // Resolve the actor for this arts type id, then hand the vtable-0x28C result
 // (a pointer) plus the arts-data write target at +0x17C to CActorParam_copyAll
@@ -1765,7 +1764,7 @@ u32 cf::CActorParam::CActorParam_getArtsLevel() {
     return *reinterpret_cast<u32*>(reinterpret_cast<cf::CActorParamRetailView*>(this)->field_1650);
 }
 
-extern "C" void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc166() {}
 
 // -- CtrlObjectParam_ClaimArtsSlotRow (us-800a227c) -------------------------------------------
 // Arts-slot update: resolve the actor for the type id, refresh the embedded
@@ -1893,22 +1892,22 @@ extern "C" void CtrlObjectParam_ApplyArtsRankUp(void* selfV, u32 value, u32 a, u
             deficit = (int)col - (int)self->mParam.CActorParam_getSpentCurrency();
         }
         if (deficit > 0) break;
-        cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+        u32* v94 = reinterpret_cast<u32*>(
             self->mParam.CActorParam_getArtsDataBlock());
-        u16 target = (u16)(v94->word0 + 1);
-        u32 cur = v94->word0;
+        u16 target = (u16)(*v94 + 1);
+        u32 cur = *v94;
         while (cur < target && cur < 0x63) {
             CtrlObjectParam_RampArtsStatStep(reinterpret_cast<u8*>(self), (u16)(cur + 1));
-            cur = v94->word0;
+            cur = *v94;
         }
         void* item = 0;
         if (self->shortArr[5] > -1) {
             item = CItem_kindPtr(2, self->shortArr[5]);
         }
         if (item != 0) {
-            cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+            u32* v94b = reinterpret_cast<u32*>(
                 self->mParam.CActorParam_getArtsDataBlock());
-            u16 w0 = (u16)v94b->word0;
+            u16 w0 = (u16)*v94b;
             if ((self->field_E6 & 4) != 0) {
                 union { u32 w[2]; f64 d; } c1;
                 union { u32 w[2]; f64 d; } c2;
@@ -1931,7 +1930,7 @@ extern "C" void CtrlObjectParam_ApplyArtsRankUp(void* selfV, u32 value, u32 a, u
         if (type < 9) {
             found = isPartySlotMatch(type);
         }
-        if (found == 0 && isResourceFlagSet__Q22cf13CfGameManagerFv(type) == 0) {
+        if (found == 0 && cf::CfGameManager::isResourceFlagSet(type) == 0) {
             // not a party member: skip the arts-change gate
         } else {
             if (self->field_00 == 3) {
@@ -2118,7 +2117,7 @@ extern "C" void CtrlObjectParam_AvgPartyArtsLevel(u8* self, int* outLevel, int* 
                         reinterpret_cast<u8*>(lbl_eu_80663E88) + (u16)id * 0x3DD4);
                 void* result = owner->mParam.CActorParam_getArtsDataBlock();
                 ++count;
-                sum += (u16)(reinterpret_cast<cf::CtrlObjectParamWordView*>(result)->word0);
+                sum += (u16)(*reinterpret_cast<u32*>(result));
             }
             ++i;
             off += 4;
@@ -2191,7 +2190,7 @@ extern "C" void CtrlObjectParam_RunPartyArtsFlow(cf::CtrlObjectParamTypeView* se
         }
     probed:
         if (found == 0) {
-            if (isResourceFlagSet__Q22cf13CfGameManagerFv(self->field_00) == 0) return;
+            if (cf::CfGameManager::isResourceFlagSet(self->field_00) == 0) return;
         }
         if (self->field_00 == 3) {
             // Unsigned compare (retail cmpli cr0,0,r3,0x1D).
@@ -2229,7 +2228,7 @@ extern "C" void CtrlObjectParam_BumpArtsCounter(cf::CtrlObjectParamTypeView* sel
     }
 probed:
     if (!found) {
-        if (isResourceFlagSet__Q22cf13CfGameManagerFv(type) == 0) return;
+        if (cf::CfGameManager::isResourceFlagSet(type) == 0) return;
     }
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
@@ -2282,7 +2281,7 @@ extern "C" void CtrlObjectParam_WriteArtsCounter(void* selfV, u16 arg2) {
     }
 probed:
     if (!found) {
-        if (isResourceFlagSet__Q22cf13CfGameManagerFv(type) == 0) return;
+        if (cf::CfGameManager::isResourceFlagSet(type) == 0) return;
     }
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;

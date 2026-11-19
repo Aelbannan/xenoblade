@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include <revolution/os/OSCache.h>  // DCFlushRange (C linkage)
 
@@ -597,7 +598,7 @@ extern "C" int CfRes_tryResolveByBits(s32 a, u32 b, u32 c) {
     return ret;
 }
 
-extern "C" u32 CfRes_getField18(u8* self) { return ((CfResField18View*)self)->field_18; }
+extern "C" u32 CfRes_getField18(u8* self) { return *(u32*)((CfResInstance*)self)->mField18; }
 
 // CfRes_tryResolveType0: forward (a, b, c) into the manager's resource resolver
 // (CfRes_resolveTokenType0) when the CfRes manager exists; `b` otherwise.
@@ -841,7 +842,7 @@ extern "C" char* CfRes_getEntryPtrAt(char* self, int a, int b) {
     return getEntryPtr(&self[4], a, b);
 }
 
-extern "C" void* CfRes_ptrPlus80(void* self) { return &((CfResByteView*)self)->byte[0x80]; }
+extern "C" void* CfRes_ptrPlus80(void* self) { return &((CfResInstance*)self)->mField80; }
 
 // CfRes_getInstPtr80: return the manager's +0x80 region if the CfRes manager exists
 extern "C" char* CfRes_getInstPtr80() {
@@ -851,9 +852,9 @@ extern "C" char* CfRes_getInstPtr80() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlus7C(void* self) { return &((CfResByteView*)self)->byte[0x7c]; }
+extern "C" void* CfRes_ptrPlus7C(void* self) { return &((CfResInstance*)self)->mField7C; }
 
-extern "C" void* CfRes_ptrPlusBC(void* self) { return &((CfResByteView*)self)->byte[0xbc]; }
+extern "C" void* CfRes_ptrPlusBC(void* self) { return &((CfResInstance*)self)->mFieldBC; }
 
 // CfRes_getInstPtrBC: return the manager's +0xbc region if the CfRes manager exists
 char* CfRes_getInstPtrBC() {
@@ -863,9 +864,9 @@ char* CfRes_getInstPtrBC() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlusB8(void* self) { return &((CfResByteView*)self)->byte[0xb8]; }
+extern "C" void* CfRes_ptrPlusB8(void* self) { return &((CfResInstance*)self)->mFieldB8; }
 
-extern "C" void* CfRes_ptrPlusF8(void* self) { return &((CfResByteView*)self)->byte[0xf8]; }
+extern "C" void* CfRes_ptrPlusF8(void* self) { return &((CfResInstance*)self)->mFieldF8; }
 
 // CfRes_getInstPtrF8: return the manager's +0xf8 region if the CfRes manager exists
 extern "C" char* CfRes_getInstPtrF8() {
@@ -875,9 +876,9 @@ extern "C" char* CfRes_getInstPtrF8() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlusF4(void* self) { return &((CfResByteView*)self)->byte[0xf4]; }
+extern "C" void* CfRes_ptrPlusF4(void* self) { return &((CfResInstance*)self)->mFieldF4; }
 
-extern "C" void* CfRes_ptrPlus134(void* self) { return &((CfResByteView*)self)->byte[0x134]; }
+extern "C" void* CfRes_ptrPlus134(void* self) { return &((CfResInstance*)self)->mField134; }
 
 // CfRes_getInstPtr134: return the manager's +0x134 region if the CfRes manager exists
 extern "C" char* CfRes_getInstPtr134() {
@@ -887,9 +888,9 @@ extern "C" char* CfRes_getInstPtr134() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlus130(void* self) { return &((CfResByteView*)self)->byte[0x130]; }
+extern "C" void* CfRes_ptrPlus130(void* self) { return &((CfResInstance*)self)->mField130; }
 
-extern "C" void* CfRes_ptrPlus170(void* self) { return &((CfResByteView*)self)->byte[0x170]; }
+extern "C" void* CfRes_ptrPlus170(void* self) { return &((CfResInstance*)self)->mField170; }
 
 // CfRes_getInstPtr170: return the manager's +0x170 region if the CfRes manager exists
 extern "C" char* CfRes_getInstPtr170() {
@@ -899,7 +900,7 @@ extern "C" char* CfRes_getInstPtr170() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlus16C(void* self) { return &((CfResByteView*)self)->byte[0x16c]; }
+extern "C" void* CfRes_ptrPlus16C(void* self) { return &((CfResInstance*)self)->mField16C; }
 
 // CfRes_getInstPtr29C: return the manager's +0x29c region if the CfRes manager exists
 extern "C" void* CfRes_ptrPlus29C(void* self);
@@ -910,9 +911,9 @@ extern "C" char* CfRes_getInstPtr29C() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlus29C(void* self) { return &((CfResByteView*)self)->byte[0x29c]; }
+extern "C" void* CfRes_ptrPlus29C(void* self) { return &((CfResInstance*)self)->mField29C; }
 
-extern "C" void* CfRes_ptrPlus298(void* self) { return &((CfResByteView*)self)->byte[0x298]; }
+extern "C" void* CfRes_ptrPlus298(void* self) { return &((CfResInstance*)self)->mField298; }
 
 // CfRes_getInstPtr224: return the manager's +0x224 region if the CfRes manager exists
 extern "C" void* CfRes_ptrPlus224(void* self);
@@ -923,13 +924,13 @@ extern "C" char* CfRes_getInstPtr224() {
     return 0;
 }
 
-extern "C" void* CfRes_ptrPlus224(void* self) { return &((CfResByteView*)self)->byte[0x224]; }
+extern "C" void* CfRes_ptrPlus224(void* self) { return &((CfResInstance*)self)->mField224; }
 
-extern "C" void* CfRes_ptrPlus220(void* self) { return &((CfResByteView*)self)->byte[0x220]; }
+extern "C" void* CfRes_ptrPlus220(void* self) { return &((CfResInstance*)self)->mField220; }
 
-extern "C" void* CfRes_ptrPlus25C(void* self) { return &((CfResByteView*)self)->byte[0x25c]; }
+extern "C" void* CfRes_ptrPlus25C(void* self) { return &((CfResInstance*)self)->mField25C; }
 
-extern "C" void* CfRes_ptrPlus1A8(void* self) { return &((CfResByteView*)self)->byte[0x1a8]; }
+extern "C" void* CfRes_ptrPlus1A8(void* self) { return &((CfResInstance*)self)->mField1A8; }
 
 // CfRes_initArchiveTables: stash the archive id, init the embedded subobject, and
 // register it into both lookup tables with a -1 id
@@ -952,12 +953,13 @@ extern "C" void CfRes_dtorStoragePlus4(u8* self) { __dt__80067670(self + 4); }
 // in range (<= 6), otherwise init all 7 slots.
 extern "C" void CfRes_initResEntries(u32 arg) {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0) {
         if (arg <= 6) {
-            CfResEntry_init((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), arg));
+            CfResEntry_init((u8*)CfRes_getResEntry((u8*)tables->mTable7, arg));
         } else {
             for (u32 i = 0; i < 7; i++) {
-                CfResEntry_init((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+                CfResEntry_init((u8*)CfRes_getResEntry((u8*)tables->mTable7, i));
             }
         }
     }
@@ -979,12 +981,13 @@ extern "C" void* CfRes_getResEntry(u8* self, u32 idx) {
 // in range (<= 2), otherwise init all 3 slots.
 extern "C" void CfRes_initTblEntries(u32 arg) {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0) {
         if (arg <= 2) {
-            CfResEntry_init((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), arg));
+            CfResEntry_init((u8*)CfRes_getTblEntry((u8*)tables->mTable3, arg));
         } else {
             for (u32 i = 0; i < 3; i++) {
-                CfResEntry_init((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i));
+                CfResEntry_init((u8*)CfRes_getTblEntry((u8*)tables->mTable3, i));
             }
         }
     }
@@ -1001,9 +1004,10 @@ extern "C" u32 CfResEntry_getHandle(u8* self) { return ((CfResSlot*)self)->field
 // or -1 when the manager is missing, the handle is null, or nothing matched.
 extern "C" int CfRes_findResByHandle(int handle) {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0 && handle != 0) {
         for (u32 i = 0; i < 7; i++) {
-            if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i))) {
+            if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getResEntry((u8*)tables->mTable7, i))) {
                 return (int)i;
             }
         }
@@ -1015,9 +1019,10 @@ extern "C" int CfRes_findResByHandle(int handle) {
 // exists, 0 otherwise.
 extern "C" int CfRes_hasTblHandle(int handle) {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0) {
         for (u32 i = 0; i < 3; i++) {
-            if (handle != 0 && (u32)handle == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i))) {
+            if (handle != 0 && (u32)handle == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)tables->mTable3, i))) {
                 return 1;
             }
         }
@@ -1068,16 +1073,17 @@ extern "C" void CfResEntry_clearField8(u8* self) { ((CfResSlot*)self)->field_08 
 // the leftover of (field_04 - field_08) into field_04 and clear field_08.
 void CfRes_rolloverResFields() {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0) {
         for (u32 i = 0; i < 7; i++) {
-            u32 f4 = CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
-            u32 f8 = CfResEntry_getField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+            u32 f4 = CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)tables->mTable7, i));
+            u32 f8 = CfResEntry_getField8((u8*)CfRes_getResEntry((u8*)tables->mTable7, i));
             int diff = (int)f4 - (int)f8;
             if (diff < 0) {
                 diff = 0;
             }
-            CfResEntry_setField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i), (u32)diff);
-            CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+            CfResEntry_setField4((u8*)CfRes_getResEntry((u8*)tables->mTable7, i), (u32)diff);
+            CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)tables->mTable7, i));
         }
     }
 }
@@ -1209,8 +1215,9 @@ extern "C" void CfRes_clearField4(u8* self) { ((CfResSlot*)self)->field_04 = 0; 
 // non-negative index (entry table lives at manager + 0x1ed8).
 extern "C" void CfRes_decTblRefByIdx(int idx) {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0 && idx >= 0) {
-        CfResEntry_decRefCount((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), idx));
+        CfResEntry_decRefCount((u8*)CfRes_getTblEntry((u8*)tables->mTable3, idx));
     }
 }
 
@@ -1219,11 +1226,12 @@ extern "C" void CfRes_decTblRefByIdx(int idx) {
 extern "C" void CfRes_decResRefByHandle(int handle) {
     if (handle > 0) {
         int inst = CfRes_getInstance();
+        CfResInstance* tables = (CfResInstance*)inst;
         if (inst != 0) {
             for (u32 i = 0; i < 7; i++) {
-                if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i))) {
+                if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getResEntry((u8*)tables->mTable7, i))) {
                     // Re-resolve the entry (retail re-calls getResEntry here).
-                    CfResEntry_decRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+                    CfResEntry_decRefCount((u8*)CfRes_getResEntry((u8*)tables->mTable7, i));
                     break;
                 }
             }
@@ -2273,7 +2281,7 @@ extern "C" int CfRes_resolveSlot1E4(int inst, int a, int b, int c) {
     return result;
 }
 
-extern "C" void* CfRes_ptrPlus1E4(void* self) { return &((CfResByteView*)self)->byte[0x1e4]; }
+extern "C" void* CfRes_ptrPlus1E4(void* self) { return &((CfResInstance*)self)->mField1E4; }
 
 // CfRes_resolveSlot220: twin of CfRes_resolveSlot16C over the +0x220 slot (see there).
 extern "C" int CfRes_resolveSlot220(int inst, int a, int b) {
@@ -2412,12 +2420,13 @@ extern "C" int CfResEntry_incRefCount(u8* self) {
 // instead of re-registering.
 void CfRes_setTblHandle(int a, int b) {
     int inst = CfRes_getInstance();
+    CfResInstance* tables = (CfResInstance*)inst;
     if (inst != 0) {
-        if ((u32)b == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a))) {
-            CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a));
+        if ((u32)b == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)tables->mTable3, (u32)a))) {
+            CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)tables->mTable3, (u32)a));
         } else {
-            CfResEntry_setHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a), (u32)b);
-            CfResEntry_setField4((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a), 1);
+            CfResEntry_setHandle((u8*)CfRes_getTblEntry((u8*)tables->mTable3, (u32)a), (u32)b);
+            CfResEntry_setField4((u8*)CfRes_getTblEntry((u8*)tables->mTable3, (u32)a), 1);
         }
     }
 }
@@ -2500,7 +2509,7 @@ static inline void CfRes_zeroSlots(CfResSlot* slot, CfResSlot* end) {
 
 CfResManager* __ct__Q22cf5CfResFv(CProcess* parent, int archiveId) {
     u32 handle = getWorkMem__17CWorkThreadSystemFv();
-    CfResManager* mgr = (CfResManager*)allocate__Q23mtl10MemManagerFUlUl(0x1fa4, handle);
+    CfResManager* mgr = (CfResManager*)mtl::MemManager::allocate(0x1fa4, handle);
     if (mgr != NULL) {
         __ct__8CProcessFv((CProcess*)mgr);
         // Hand-built construction: interim CTTask vtable, null PTMF slots for

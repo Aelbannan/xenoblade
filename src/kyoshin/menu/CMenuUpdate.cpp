@@ -28,6 +28,7 @@ extern "C" void* Scn_QueryUnk80State();
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 extern u32 lbl_eu_80664198;
 extern u32 lbl_eu_806640E0;
@@ -227,7 +228,7 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
         return 0;
     }
     void* workMem = getWorkMem__17CWorkThreadSystemFv();
-    CMenuUpdate* obj = new (allocate__Q23mtl10MemManagerFUlUl(0x130, (u32)workMem))
+    CMenuUpdate* obj = new (mtl::MemManager::allocate(0x130, (u32)workMem))
         CMenuUpdate((CScn*)pScene, mode, arg1, arg2, arg3);
     lbl_eu_80664198 = (u32)obj;
     Regist__8CProcessFP8CProcessb((void*)(u32)lbl_eu_80664198, self, 0);

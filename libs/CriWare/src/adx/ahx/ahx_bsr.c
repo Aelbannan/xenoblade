@@ -40,7 +40,7 @@ typedef struct AHXBSR {
     /*0x28*/ u8* dataPtr;
 } AHXBSR;
 
-extern const u32 lbl_eu_805175A0[];
+extern const u32 ahxbsr_bit_masks[];
 
 void* AHXBSR_Create(void* allocator, void* buf, s32 minSize) {
     AHXBSR* bsr;
@@ -204,7 +204,7 @@ u32 AHXBSR_GetBitStm(AHXBSR* bsr, s32 bits) {
     }
 
     shift = bsr->bitCnt - bits;
-    result = lbl_eu_805175A0[bits] & ((s32)bsr->bitBuf >> shift);
+    result = ahxbsr_bit_masks[bits] & ((s32)bsr->bitBuf >> shift);
     bsr->bitCnt -= bits;
     bsr->position += bits;
     return result;
@@ -285,3 +285,13 @@ s32 AHXBSR_SearchSync(AHXBSR* bsr) {
 
     return -1;
 }
+
+/* Bit-count to sign-extension mask table. */
+const u32 ahxbsr_bit_masks[] = {
+    0, 1, 3, 7, 15, 31, 63, 127,
+    255, 511, 1023, 2047, 4095, 8191, 16383, 32767,
+    65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607,
+    16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823, 2147483647,
+    4294967295, 0,
+};
+

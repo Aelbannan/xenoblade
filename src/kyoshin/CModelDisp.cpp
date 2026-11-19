@@ -336,7 +336,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
             pushAnimNode(&h->actParam, h->field_0x04, actor->field_3F30);
             // Clear act-param busy bit 23, then restart its chain buffer.
             ((CDispHolderWordView*)h)->flags18 &= ~0x800000;
-            func_8004B9D4(&h->actParam, (void*)1, 0, -1, 0);
+            func_8004B9D4(&h->actParam, 1, 0, -1, 0);
             // Per-slot color triple (f1 differs when the weapon id is 6).
             f32 f0 = lbl_eu_806681EC;
             f32 f1 = lbl_eu_806681EC;
@@ -401,7 +401,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
                 CModelDispMca mca;
                 __ct__CMcaFile(
                     &mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
-                h->unk_55C = Scn_InitGlobalA((u32)self->mInitParam, mca.mDataAdj,
+                h->unk_55C = (CModelDispObj*)Scn_InitGlobalA((u32)self->mInitParam, mca.mDataAdj,
                                            nameBase + 8);
                 for (u8 j = 0; j < 2; j++) {
                     CScnItemModel* mp = (CScnItemModel*)h->animModelPtrs[j];
@@ -412,7 +412,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
                         attachAnimObj(
                             ap, mp, h->unk_55C,
                             reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
-                        func_8004B9D4(ap, (void*)1, 0, -1, 0);
+                        func_8004B9D4(ap, 1, 0, -1, 0);
                     }
                 }
             }
@@ -470,7 +470,7 @@ extern "C" __declspec(noinline) void ModelDispFlushSlotAnims(CModelDisp* self) {
             continue;
         }
         if (sub->field_550 <= 0) {
-            func_8004B9D4((u8*)sub + 0x14, (void*)1, 0, -1, 0);
+            func_8004B9D4((u8*)sub + 0x14, 1, 0, -1, 0);
             sub->field_550 = 150;
         }
         tickAnimFrame((CActParamAnimView*)((u8*)sub + 0x14));
@@ -588,12 +588,12 @@ void ModelDispDispatchChain(CModelDisp* self, void* param, void* chainArg) {
         if ((u32)sub->mpController == *(u32*)((u8*)param + 0x3A0)) {
             if (sub->mFlagFD0 != 0) {
                 sub->mResultA = getAnimChain((u8*)sub + 0x14);
-                func_8004B9D4(sub->mBuffer, chainArg, 0, -1, 0);
+                func_8004B9D4(sub->mBuffer, (int)(u32)chainArg, 0, -1, 0);
             }
 
             if (sub->mFlagFD4 != 0) {
                 sub->mResultB = getAnimChain((u8*)sub + 0x14);
-                func_8004B9D4(sub->_A94, chainArg, 0, -1, 0);
+                func_8004B9D4(sub->_A94, (int)(u32)chainArg, 0, -1, 0);
             }
 
             break;

@@ -158,7 +158,7 @@ extern "C" CTitleAHelp* ItemEx_CopyTitle(CTitleAHelp* dest, CTitleAHelp* src);
 
 extern "C" {
 extern char lbl_eu_8050B498[];
-void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void waitForDrawDone__9CDeviceVIFv();
 void Scn_SetPauseFlag(CScn* scn, int flag);
 void BgTex_Release_3D9C(CBgTex* self);
@@ -167,7 +167,6 @@ void FloorMap_Teardown(CFloorMap* self);
 void UIWin_ControlWindowLists(u32, u32);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CMainMenu_IsOpen();
-void func_8008413C__Q22cf13CfGameManagerFv(u32, u32);
 int BgTex_IsLoaded_3E34(CBgTex* self);
 void BgTex_Tick_3D54(CBgTex* self);
 void updateHelp(CTitleAHelp* self);
@@ -493,7 +492,7 @@ void CMenuMapSelect::Move() {
 
     case 10:
         if (CFade_IsVisible(&mFade) == 0) break;
-        func_8008413C__Q22cf13CfGameManagerFv(FloorMap_GetU16Field5A(&mFloorMap), 0);
+        cf::CfGameManager::func_8008413C(FloorMap_GetU16Field5A(&mFloorMap), 0);
         mState = 0xb;
         if (CMainMenu_IsOpen()) {
             CMainMenu_GetInstancePtr();

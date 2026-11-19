@@ -2733,16 +2733,13 @@ s32 sfmpv_ReprocessShc(SfdHandle* self, SfdMpvSession* shc, s32* out) {
     *out = 0;
     v = (s32)self->see.avplay;
     hd = self->trn[2].hdr;
-    if (v != 0) {
-        if (hd->frmSeq <= 0) {
-            p = &self->see.avplay->audHd;
-            goto join_p;
-        }
+    if (v == 0) {
         p = NULL;
-        goto join_p;
+    } else if (hd->frmSeq > 0) {
+        p = &self->see.avplay->audHd;
+    } else {
+        p = NULL;
     }
-    p = NULL;
-join_p:
     if (p == NULL) {
         return 0;
     }

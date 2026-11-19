@@ -29,8 +29,6 @@
 // ctor, store it in the .sbss global and register it as a CProcess child of
 // `parent`. Returns 0 when the singleton already exists.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
                                           void* a3) {
     if (lbl_eu_806642E8 != 0)
@@ -43,22 +41,18 @@ extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
     return (CMenuSelectShop*)lbl_eu_806642E8;
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuSelectShop ctor (us-8018b39c)
 // The -O4,s unit gives retail's `stmw r28,16(sp)` and keeps the ctor out of
 // line (retail 0x8018b39c; the factory is a 0x7C `bl __ct__...`).
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 CMenuSelectShop::CMenuSelectShop(void* scene, void* a3)
     : mScene((CScn*)scene), mMemRegion(), mSelShop(), mCursor(0) {
     mState = 0;
     mSelIndex = 0;
     mFieldD0 = (u32)a3;
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuSelectShop::~CMenuSelectShop()  (us-8018b48c)
@@ -173,17 +167,14 @@ void CMenuSelectShop::Move() {
 // ---------------------------------------------------------------------------
 // ShopSel_State0Show  (us-8018b7b4)
 // When the shop window has finished loading, start its show animation and flag
-// the menu state. auto_inline off keeps retail's out-of-line `bl` from Move.
+// the menu state.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
     if (isShopWinLoaded(&self->mSelShop) != 0) {
         showShopWin(&self->mSelShop);
         self->mState = 1;
     }
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // ShopSel_State1Cursor  (us-8018b7fc)
@@ -191,8 +182,6 @@ extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
 // selected item's screen position into a stack VEC3 (getShopWinPanePos), hand it to
 // the cursor move virtual, and advance the menu state.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
     if (isShopWinAnimActive(&self->mSelShop) != 0) {
         self->mCursor.SetVisible(1);
@@ -202,7 +191,6 @@ extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
         self->mState = 2;
     }
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // ShopSel_State2Input  (us-8018b874)
@@ -215,8 +203,6 @@ extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
 // + rlwimi(28,28); the dpad bits are MSB-relative in retail (extrwi 1,10/1,9
 // and 1,27/1,26), i.e. LSB bits 21/22 and 4/5.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" void ShopSel_State2Input(CMenuSelectShop* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
@@ -284,22 +270,18 @@ extern "C" void ShopSel_State2Input(CMenuSelectShop* self) {
         self->mCursor.SetVisible(0);
     }
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // ShopSel_State3Done  (us-8018ba54)
 // When the shop window animation is running, mark the menu state and the field
 // 0x64 busy flag.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
     if (isShopWinAnimActive(&self->mSelShop) != 0) {
         self->mState = 4;
         self->mField64 = 1;
     }
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuSelectShop::cbRenderBefore  (us-8018ba9c)

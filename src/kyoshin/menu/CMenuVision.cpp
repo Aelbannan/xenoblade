@@ -449,7 +449,7 @@ extern "C" CMenuVision* createVisionMenu(CProcess* self, CProcess* parent) {
         obj = __ct__CMenuVision(obj, parent);
     }
     lbl_eu_80664388 = obj;
-    Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(obj), self, 0);
+    reinterpret_cast<CProcess*>(obj)->Regist(self, false);
     return lbl_eu_80664388;
 }
 

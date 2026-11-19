@@ -30,6 +30,7 @@ const Sdata2_GimmickObject sdata2_GimmickObject = {
 #define lbl_eu_806681C8 (sdata2_GimmickObject.fC8a)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
 static float delta = 0.0f;
 // Free-function targets of the PMF tables below (defined later in this TU).
@@ -606,9 +607,9 @@ void GimObjRefreshLodTasks(cf::CfGimmickObject* self, int mode) {
     if (self->field_68 != 0) {
         ::CfGimmickObject* obj = (::CfGimmickObject*)ArtsSelect_GetEntry(self->field_68);
         if (obj != 0) {
-            // Slot 0x158 through the abstract vtable view so MWCC emits the
-            // canonical virtual-call register chain.
-            (void)obj; // stubbed
+            cf::CfGimmickObject* mapObj = (cf::CfGimmickObject*)obj;
+            ((cf::CfObject*)mapObj)->setPointEnabled(mode);
+            ColiSetMoveEnableFlag(mapObj->field_60C, mode);
         }
     }
 }

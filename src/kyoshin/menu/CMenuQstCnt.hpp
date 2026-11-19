@@ -94,7 +94,6 @@ extern "C" int getLandTelopE0(void);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" int PTNotice_IsActive_3C10();

@@ -62,8 +62,9 @@ extern "C" {
 
     void Scn_SetPalFixFlag(int, int);
     int isTvFormatPal__9CDeviceVIFv();
-    // CItem_initItemImplInstances: CfGameManager.hpp declares it returning
-    // CItemImplInstances* - local void* form conflicts (10197).
+    // CItem_initItemImplInstances now uses its definition's
+    // CItemImpl*(CItemData*) signature from CfGameManager.hpp; item pointers
+    // are cast at the call sites.
     void* getInstance__14Class_80296898Fv();
     void walkListByItemId(int, int);
     int scanBattleReady();
@@ -1364,7 +1365,7 @@ int equipItem(VMThread* vmThread) {
             // Same item type already equipped: nothing to do
             if (itemId >= 0 && itemId != (*slotRec >> 20)) {
                 // Item-type probe via the singleton (result discarded)
-                ((CItemImplInstance*)CItem_initItemImplInstances(slotRec))
+                ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)slotRec))
                     ->getItemId(slotRec);
                 changed = 1;
                 act = 1;
@@ -1400,7 +1401,7 @@ int equipItem(VMThread* vmThread) {
                 void* invSlot = CItemBlock_getKindSlot(type, charId, 0);
                 if (itemId == 0) {
                     // Empty equip: refresh the inventory entry's item view
-                    ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))
+                    ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot))
                         ->getItemId(invSlot);
                 } else {
                     CItemData_initFromFamily(invSlot, itemId & 0xFFFF, 1);
@@ -1453,7 +1454,7 @@ int equipWeapon(VMThread* pThread) {
             return 0;
         }
         // Item-type probe via the item implementation singleton (result unused)
-        ((CItemImplInstance*)CItem_initItemImplInstances(weaponSlot))->getItemId(weaponSlot);
+        ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)weaponSlot))->getItemId(weaponSlot);
         short slotVal;
         int unkVal;
         CItem_findOrCreateRec(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
@@ -1468,7 +1469,7 @@ int equipWeapon(VMThread* pThread) {
             void* invSlot = CItemBlock_getKindSlot(2, charId, 0);
             if (weaponId == 0) {
                 // Empty equip: refresh the inventory entry's item view (discarded)
-                ((CItemImplInstance*)CItem_initItemImplInstances(invSlot))->getItemId(invSlot);
+                ((CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot))->getItemId(invSlot);
             } else {
                 CItemData_initFromFamily(invSlot, weaponId & 0xFFFF, 1);
                 CItem_reCount(invSlot);
@@ -1502,7 +1503,7 @@ int getWeaponSlot(VMThread* vmThread) {
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(slotData);
+        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)slotData);
         itemId = inst->getWeaponSlot(slotData) & 0xFFFF;
     } else {
         // Swapped first guard blocks MWCC's unsigned-range fusion so the
@@ -1514,7 +1515,7 @@ int getWeaponSlot(VMThread* vmThread) {
             // Item-type nibble sits at bits 16-19; reading it unsigned lets
             // MWCC fold shift+mask into a single rotate and emit cmpli.
             if ((*invSlot >> 16 & 0xF) == 2) {
-                CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((void*)invSlot);
+                CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot);
                 itemId = inst->getWeaponSlot((void*)invSlot) & 0xFFFF;
             }
         } while (0);
@@ -1544,7 +1545,7 @@ int setWeaponSlot(VMThread* vmThread) {
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(slotData);
+        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)slotData);
         inst->setWeaponSlot(slotData, itemId);
     } else {
         // Swapped-operand guards block MWCC's range-check fusion (see getWeaponSlot).
@@ -1552,7 +1553,7 @@ int setWeaponSlot(VMThread* vmThread) {
             if (1 > charId) break;
             if (11 < charId) break;
             int* invSlot = (int*)CItemBlock_getKindSlot(2, charId, 0);
-            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances(invSlot);
+            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances((CItemData*)invSlot);
             inst->setWeaponSlot(invSlot, itemId);
         } while (0);
     }

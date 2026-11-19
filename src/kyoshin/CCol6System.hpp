@@ -18,13 +18,14 @@
 #include "monolib/math/CVec3.hpp"
 
 #include <nw4r/lyt.h>
+#include "monolib/device/CDeviceFontInfo.hpp"
 #include <revolution/GX.h>
 
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
-class CCol6AnimHostView;  // layout anim host view (defined below)
+class UnkClass_80083298;  // cf::CfGameManager::getGameSubManager() result
 
 class CCol6Hint : public CProcess {
 public:
@@ -37,7 +38,7 @@ public:
 
     /* 0x3C */ u8 mCallbackA[12];          // pointer-to-member-function null (3 words)
     /* 0x48 */ u8 mCallbackB[12];          // pointer-to-member-function null (3 words)
-    /* 0x54 */ CCol6AnimHostView* mAnimHost;   // layout anim host (vtable +0x2C/+0x38)
+    /* 0x54 */ nw4r::lyt::Layout* mAnimHost;    // layout anim host (SetAnimationEnable/Animate)
     /* 0x58 */ u32 mField58;               // init 0
     /* 0x5C */ u32 mField5C;               // init 0
     /* 0x60 */ s32 mIndex;                 // init -1
@@ -65,51 +66,6 @@ public:
     /* 0x13C */ CScrollBar mScrollBar;
 };
 
-// Layout-animation host (the object behind CCol6Hint::mField54): its vtable
-// carries the anim-swap setter at +0x2C (virtual index 9) and the per-frame
-// update at +0x38 (virtual index 12); its +0x10 data slot is the Pane whose
-// vtable +0x3C virtual (index 13) sets label text. Virtuals are declared
-// FIRST so MWCC places the vptr at +0 (a data member before the virtuals
-// would push the vptr to +0x10 and break the dispatch).
-class CCol6AnimHostView {
-public:
-    virtual void v00(int) = 0;  // +0x08 - Term releases the host with arg 1
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void setAnim(nw4r::lyt::AnimTransform* anim, int index) = 0;  // +0x2C
-    virtual void v0A() = 0;
-    virtual void v0B() = 0;
-    virtual void update(int) = 0;  // +0x38
-
-    u8 _04[0x0C];                 // +0x04..0x0F
-    nw4r::lyt::Pane* mPane10;     // +0x10 - text pane (vtable +0x3C setter)
-};
-
-// Pane vtable view exposing the label-text setter at +0x3C (virtual index 13).
-class CCol6PaneView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v0A() = 0;
-    virtual void v0B() = 0;
-    virtual void v0C() = 0;
-    virtual nw4r::lyt::Pane* setText(const char* text, int flag) = 0;  // +0x3C
-};
-
 // cf::CPad view: only the pressed-button flags word this unit reads.
 struct CCol6Pad {
     u32 mHeldButtonFlags;       // 0x00
@@ -123,46 +79,6 @@ struct CCol6PadData {
     u32 mField04;      // +0x04 held-button flags
     u8  _08[0x104 - 8];
     u32 mField104;     // +0x104 short-press flags
-};
-
-// nw4r::lyt::Layout view exposing the +0x10 root-pane slot (the retail Layout
-// stores the root pane at +0x10; the SDK header keeps it private).
-struct CCol6LayoutView {
-    void* vtable;                 // 0x00
-    u8 _04[0x0C];                 // 0x04..0x0F
-    nw4r::lyt::Pane* mpRootPane;  // 0x10
-};
-
-// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (virtual index 7, no args) yields the u32 bound into the layout's font pane
-// by ApplyFontToTxtPanes. All-pure so no vtable is emitted.
-class CCol6FontView {
-public:
-    virtual void vf0() = 0; // index 0 -> +0x08
-    virtual void vf1() = 0; // index 1 -> +0x0C
-    virtual void vf2() = 0; // index 2 -> +0x10
-    virtual void vf3() = 0; // index 3 -> +0x14
-    virtual void vf4() = 0; // index 4 -> +0x18
-    virtual void vf5() = 0; // index 5 -> +0x1C
-    virtual void vf6() = 0; // index 6 -> +0x20
-    virtual u32 vf7() = 0;  // index 7 -> +0x24
-};
-
-// Byte-at-+0xBB view of a pane (mFlag in the game's nw4r layout; the SDK
-// header's member offsets do not match retail).
-struct CCol6PaneFlagView {
-    u8 _00[0xBB];
-    u8 mFlag;   // 0xBB
-};
-
-// Cast-only view of the object returned by CItem_initItemImplInstances: MWCC
-// reserves vtable slots 0/1, so the first user virtuals land at +0x08/+0x0C
-// and slot 4 at +0x10 is the per-item sync callback invoked by Col6_SyncBoxSlot_0EE4.
-class CCol6ItemInstancesView {
-public:
-    virtual void vf2(int) = 0;         // vtable + 0x08
-    virtual void vf3() = 0;            // vtable + 0x0C
-    virtual void vf4(void* item) = 0;  // vtable + 0x10 (called with the item)
 };
 
 class CCol6System : public CProcess {
@@ -248,54 +164,6 @@ struct CSysWinData {
     u8    f_39;    // 0x39
 };
 
-// CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
-// invoked by CCol6System::Init. Leading pure virtuals occupy inherited slots
-// so the target lands at virtual index 32 (-> vtable +0x88 after the RTTI
-// prefix). Same shape as CSysWinSave.hpp / CSysWinSelect.hpp.
-class CSysWinView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v0A() = 0;
-    virtual void v0B() = 0;
-    virtual void v0C() = 0;
-    virtual void v0D() = 0;
-    virtual void v0E() = 0;
-    virtual void v0F() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v1A() = 0;
-    virtual void v1B() = 0;
-    virtual void v1C() = 0;
-    virtual void v1D() = 0;
-    virtual void v1E() = 0;
-    virtual void v1F() = 0;
-    virtual void v20() = 0;  // index 32 -> +0x88 - Init
-};
-
-// Minimal view of the object returned by cf::CfGameManager::getGameSubManager:
-// only the +0xF0 subobject (UnkClass_8047BB54) is accessed in this unit.
-struct UnkClass_80083298View {
-    u8 field_0x00[0xF0];
-    u8 field_0xF0[0x14];
-};
-
 // CMenuFade object (opaque here; getFadeMenu/isFadeActive gate on it).
 class CCol6Fade;
 
@@ -328,7 +196,7 @@ int isCameraReady__Q22cf13CfGameManagerFv();                          // CfGameM
 void lookupEffectForResource__Q22cf13CfGameManagerFv(u32, u32, u32);           // CfGameManager.cpp
 void* CfSoundMan_TouchSlotById(u16 handle);                                      // CfSoundMan.cpp
 void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
-UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
+UnkClass_80083298* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
 extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
 // CScrollBar / CCur18 helpers (retail-unmangled C-linkage names).
 // CCur.cpp
@@ -354,7 +222,7 @@ int sprintf(char*, const char*, ...);                                // stdio (C
 // etc.); declare with the full mangled name so the call-site relocs bind
 // verbatim (same convention as CItemBoxGrid.hpp / CTalkWindow.hpp).
 extern "C" {
-void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+CDeviceFontInfo* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 }
 

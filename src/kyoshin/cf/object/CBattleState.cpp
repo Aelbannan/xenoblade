@@ -31,7 +31,7 @@ CBattleState::CBattleState() {
     memset(unk8, 0, 0x1520);
 
     p = unk152C;
-    end = (u8*)this + 0x15AC;
+    end = this->unk15AC;
     do {
         memset(p, 0, 0x10);
         p += 0x10;
@@ -88,7 +88,7 @@ void CBattleState::CBattleState_clearStagingEntries() {
     CBattleStateEntry* entry;
     int i;
 
-    entry = (CBattleStateEntry*)((u8*)this + 0x1388);
+    entry = (CBattleStateEntry*)(this->unk8 + 0x1380);
     for (i = 0; i < 8; i++, entry++) {
         u32 id;
         int found;
@@ -137,7 +137,7 @@ void cf::CBattleState::CBattleState_addStagingEntry(cf::CBattleStateEntry* arg) 
     // offset = (id >> 3) & ~3, bit position = id & 0x1F). Retail schedules
     // li r0,8 (loop trip) before the rlwinm chain.
     id = arg->unk0C;
-    entries = (cf::CBattleStateEntry*)((u8*)this + 0x1388);
+    entries = (cf::CBattleStateEntry*)(this->unk8 + 0x1380);
     one = 1;
     n = 8;
     *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= one << (id & 0x1F);
@@ -270,7 +270,7 @@ void cf::CBattleState::CBattleState_clearEntriesByMask(u32 mask) {
     i = 0;
     u32 one = 1;
     int thirteen = 0xd;
-    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)((u8*)this + 0x8);
+    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)this->unk8;
     do {
         u32 id;
         int stillActive;
@@ -448,7 +448,7 @@ void cf::CBattleState::CBattleState_applyArtsTable(const cf::CBattleStateSrcEntr
     // Retail: mtctr/bdnz + lwzu/stwu from this+0x1528 / src-4. do-while(--i)
     // stays compact (for!=0 fully unrolls to 0x208); addic./bne soft-cap.
     {
-        u32* dst = (u32*)((u8*)this + 0x1528);
+        u32* dst = (u32*)this->unk1528;
         u32* s = (u32*)src - 1;
         u32 i = 0x10;
 
@@ -665,7 +665,7 @@ kind_done:
 
     // Retail init order after the first vt+0x2C call:
     //   slot=this+8, i=0, then one=1 / thirteen=13 into r26/r27.
-    slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
+    slot = (cf::CBattleStateEntry*)this->unk8;
     i = 0;
     one = 1;
     thirteen = 0xd;
@@ -737,7 +737,7 @@ kind_done:
             (cf::CBattleStateEntry*)savedWords);
 
         // Load halfword id into a wide local first (retail lhz -> r5).
-        savedId = *(u16*)((u8*)savedWords + 0xc);
+        savedId = *(u16*)&savedWords[3];
         if (savedId >= 0x12f) {
             stillActive = 0;
         } else {
@@ -809,7 +809,7 @@ void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* ar
 
     // Match key = lhz of low half of word at arg+0x2C (unk2E). a04/a08 stay
     // live in GPRs (retail r29/r30); a00 is only read back from the spill.
-    key = *(u16*)((u8*)stackedWords + 0x2e);
+    key = ((u16*)stackedWords)[0x17];
     flagBit = stackedWords[12] & 0x200;
     a04 = stackedWords[1];
     a08 = stackedWords[2];
@@ -817,7 +817,7 @@ void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* ar
     one = 1;
     thirteen = 0xd;
     zero = 0;
-    slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
+    slot = (cf::CBattleStateEntry*)this->unk8;
     i = 0;
 
     for (; i < 0x68; i++, slot++) {
@@ -1043,7 +1043,7 @@ void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* ar
         memset(clearPtr, clearVal, clearLen);
 
         // Load halfword id into a wide local first (retail lhz -> r5).
-        savedId = *(u16*)((u8*)savedWords + 0xc);
+        savedId = *(u16*)&savedWords[3];
         if (savedId >= 0x12f) {
             stillActive = 0;
         } else {
@@ -1923,7 +1923,7 @@ kind_done:
 }
 extern "C" bool isBattleStatusKind0(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
 extern "C" bool isBattleStatusValid(unsigned int value) { return value - 0x125u <= 5u; }
-extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
+void cf::CBattleState::CBattleState_UnkVirtualFunc19() {}
 void* cf::CBattleState::CBattleState_getOwner() { return 0; }
 void cf::CBattleState::CBattleState_notifyEntryUpdated(CBattleStateEntry* entry) {}
 void cf::CBattleState::CBattleState_getLinkedActorId(CBattleStateEntry* entry) {}
@@ -1936,7 +1936,7 @@ void cf::CBattleState::CBattleState_getLinkedActorId(CBattleStateEntry* entry) {
 // explicit self/id params emits the exact Fv symbol (MWCC_CASES sect.3908).
 // Walks the 8-entry array at self+0x1388 (stride 0x34); on an id match,
 // whole slot via a tail-call to memset (retail `b memset`).
-extern "C" void CBattleState_clearStagingEntry__Q22cf12CBattleStateFUl(cf::CBattleState* self, u32 id) {
+void cf::CBattleState::CBattleState_clearStagingEntry(u32 id) {
     if (id >= 0x12f) {
         return;
     }
@@ -1944,7 +1944,7 @@ extern "C" void CBattleState_clearStagingEntry__Q22cf12CBattleStateFUl(cf::CBatt
         return;
     }
 
-    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)((u8*)self + 0x1388);
+    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)(this->unk8 + 0x1380);
     for (u32 i = 0; i < 8; i++, entry++) {
         if (entry->unk0C == id) {
             memset(entry, 0, 0x34);
@@ -1961,7 +1961,7 @@ extern "C" void* CBattleState_fetchStatusSlot__Q22cf12CBattleStateFv(cf::CBattle
     return (char*)&((cf::CBattleStateEntryArray*)self)->entries[idx];
 }
 extern "C" void* CBattleState_getEventSlot__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
-    return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x688))[idx];
+    return (char*)&((cf::CBattleStateEntry*)(self->unk8 + 0x680))[idx];
 }
 // Recovered extern "C" forms keep the retail Fv symbol (vfunc15 precedent).
 extern "C" void* CBattleState_readStatusSlot__Q22cf12CBattleStateFv(void* self, int idx) {
@@ -2085,11 +2085,11 @@ extern "C" cf::CBattleStateEntry* matchBattleStatusEntry(cf::CBattleState* self,
     }
     return 0;
 }
-extern "C" void CBattleState_addStatusBits4__Q22cf12CBattleStateFUl(cf::CBattleState* self, u32 flags) {
-    *(u16*)((u8*)self + 0x4) = (u16)(*(u16*)((u8*)self + 0x4) | flags);
+void cf::CBattleState::CBattleState_addStatusBits4(u32 flags) {
+    unk4 = (u16)(unk4 | flags);
 }
-extern "C" void CBattleState_addStatusBits6__Q22cf12CBattleStateFUl(cf::CBattleState* self, u32 flags) {
-    *(u16*)((u8*)self + 0x6) = (u16)(*(u16*)((u8*)self + 0x6) | flags);
+void cf::CBattleState::CBattleState_addStatusBits6(u32 flags) {
+    unk6 = (u16)(unk6 | flags);
 }
 void* cf::CBattleState::CObjectParam_getParamPtr() { return &lbl_eu_80662248; }
 void* cf::CBattleState::CBattleState_callOwnerObject() { return 0; }
@@ -2113,8 +2113,8 @@ extern "C" u8 classifyBattleCommand(int index) {
     u.w = getBdatStringColumnValue(lbl_eu_806640E0, &lbl_eu_805018A8[0xf], index);
     return u.b;
 }
-extern "C" void CBattleState_setBattleParam__Q22cf12CBattleStateFi(cf::CBattleState* self, u32 id) {
-    if (id >= 0x12f) {
+void cf::CBattleState::CBattleState_setBattleParam(int id) {
+    if ((u32)id >= 0x12f) {
         return;
     }
     if (id == 0) {
@@ -2125,7 +2125,7 @@ extern "C" void CBattleState_setBattleParam__Q22cf12CBattleStateFi(cf::CBattleSt
     memset(&entry, 0, sizeof(entry));
     entry.unk0C = (u16)id;
     entry.unk30 |= 1;
-    self->CBattleState_enterStatusEntry(&entry);
+    this->CBattleState_enterStatusEntry(&entry);
 }
 // isArtsUsable: r3 = id, r4 = flag. When flag != 0 the three always-on ids
 // 0xd5/0x107/0xdd return true. When flag == 0, ids in [0xd5, 0x107] are
@@ -2164,8 +2164,7 @@ extern "C" int isArtsUsable(u32 id, u32 flag) {
 // 13-word block (lwz/stw pairs): struct assignment would emit per-field
 // widths (lhz/lha) and memcpy would call out -- explicit u32-pair copies
 // reproduce the word copy (same convention as vfunc8/10).
-extern "C" void CBattleState_reapplyStatusEntry__Q22cf12CBattleStateFi(
-    cf::CBattleState* self, u32 id) {
+void cf::CBattleState::CBattleState_reapplyStatusEntry(int id) {
     // Pure-u32 block view: a struct copy of this shape makes MWCC's block
     // copy backend emit the paired lwz/stw schedule with retail's r5/r0
     // allocation (a struct copy of CBattleStateEntry itself would emit
@@ -2176,10 +2175,10 @@ extern "C" void CBattleState_reapplyStatusEntry__Q22cf12CBattleStateFi(
     cf::CBattleStateEntry entry;
     WordBlock* dst = (WordBlock*)&entry;
     const WordBlock* src =
-        (const WordBlock*)&((cf::CBattleStateEntryArray*)self)->entries[id];
+        (const WordBlock*)&((cf::CBattleStateEntryArray*)this)->entries[id];
 
     *dst = *src;
-    self->CBattleState_applyEventEntry(&entry);
+    this->CBattleState_applyEventEntry(&entry);
 }
 
 // Batch 2026-08: battlestate-vfunc7 owns CBattleState_clearStatusId
@@ -2188,8 +2187,7 @@ extern "C" void CBattleState_reapplyStatusEntry__Q22cf12CBattleStateFi(
 // id == 0, and isBattleStatusActive(self, id) == 0 all bail early. Otherwise
 // builds a zeroed CBattleStateEntry (unk0C = id, unk30 |= 0x200,
 // unk2E = id) and dispatches it through vt+0x24 (UnkVirtualFunc8).
-extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFUl(
-    cf::CBattleState* self, u32 id) {
+void cf::CBattleState::CBattleState_clearStatusId(u32 id) {
     cf::CBattleStateEntry entry;
 
     if (id >= 0x12f) {
@@ -2198,7 +2196,7 @@ extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFUl(
     if (id == 0) {
         return;
     }
-    if (isBattleStatusActive(self, id) == 0) {
+    if (isBattleStatusActive(this, id) == 0) {
         return;
     }
 
@@ -2206,7 +2204,7 @@ extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFUl(
     entry.unk0C = id;
     entry.unk30 |= 0x200;
     entry.unk2E = id;
-    self->CBattleState_applyEventEntry(&entry);
+    this->CBattleState_applyEventEntry(&entry);
 }
 
 // isBattleStatusActive: r3 = self, r4 = status id. Returns whether status `id` is
@@ -2410,7 +2408,7 @@ case131:
         if (kind == 0) {
             wordOff = (i >> 3) & ~3u;
             bitPos = i & 0x1F;
-            if ((one << bitPos) & *(u32*)((u8*)self + 0x15AC + wordOff)) {
+            if ((one << bitPos) & *(u32*)(self->unk15AC + wordOff)) {
                 return 1;
             }
         }
@@ -2564,7 +2562,7 @@ case132:
         if (kind == 1) {
             wordOff = (i >> 3) & ~3u;
             bitPos = i & 0x1F;
-            if ((one << bitPos) & *(u32*)((u8*)self + 0x15AC + wordOff)) {
+            if ((one << bitPos) & *(u32*)(self->unk15AC + wordOff)) {
                 return 1;
             }
         }
@@ -2591,7 +2589,7 @@ case133_138:
                 wordOff = (i >> 3) & ~3u;
                 bitPos = i & 0x1F;
                 if ((one << bitPos) &
-                    *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                    *(u32*)(self->unk15AC + wordOff)) {
                     return 1;
                 }
             }
@@ -2754,7 +2752,7 @@ case139_13E:
                 wordOff = (i >> 3) & ~3u;
                 bitPos = i & 0x1F;
                 if ((one << bitPos) &
-                    *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                    *(u32*)(self->unk15AC + wordOff)) {
                     return 1;
                 }
             }
@@ -2917,7 +2915,7 @@ case13F_144:
                 wordOff = (i >> 3) & ~3u;
                 bitPos = i & 0x1F;
                 if ((one << bitPos) &
-                    *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                    *(u32*)(self->unk15AC + wordOff)) {
                     return 1;
                 }
             }
@@ -2933,7 +2931,7 @@ simple_test:
         u32 wordOff = (id >> 3) & ~3u;
         u32 bitPos = id & 0x1F;
         return ((1u << bitPos) &
-                *(u32*)((u8*)self + 0x15AC + wordOff)) != 0;
+                *(u32*)(self->unk15AC + wordOff)) != 0;
     }
 }
 

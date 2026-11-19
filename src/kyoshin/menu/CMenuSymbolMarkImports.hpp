@@ -27,23 +27,23 @@
 
 // Global float constant pool (SDA-relative float loads). Declared const so
 // MWCC treats the loads as constants and hoists them above the frame stores.
-extern const f32 lbl_eu_806670D4;
-extern const f32 lbl_eu_806670D8;
-extern const f32 lbl_eu_806670DC;
-extern const f32 lbl_eu_806670E0;
-extern const f32 lbl_eu_806670E4;
-extern const f32 lbl_eu_806670E8;
-extern const f32 lbl_eu_806670EC;
-extern const f32 lbl_eu_806670F0;
-extern const f32 lbl_eu_806670F4;
-extern const f32 lbl_eu_806670F8;
-extern const f32 lbl_eu_806670FC;
-extern const f32 lbl_eu_80667100;
-extern const f32 lbl_eu_80667104;
-extern const f32 lbl_eu_80667108;
-extern f32 lbl_eu_8066710C;
+extern const f32 sMarkZero;
+extern const f32 sMarkResetB;
+extern const f32 sMarkResetC;
+extern const f32 sMarkTimerLimit;
+extern const f32 sMarkTimerExpired;
+extern const f32 sMarkStep;
+extern const f32 sMarkRangeLimitSq;
+extern const f32 sMarkFarYOffset;
+extern const f32 sWideScaleFactor;
+extern const f32 sMarkScaleBase;
+extern const f32 sMarkCenterX;
+extern const f32 sMarkCenterY;
+extern const f32 sMarkSlideRate;
+extern const f32 sMarkSlideMin;
+extern f32 sMarkSlideMax;
 // Magic int-to-float conversion bias (MWCC 0x4330/xoris idiom).
-extern const f64 lbl_eu_80667110;
+extern const f64 sS16ToF64Bias;
 
 
 // Object tracked at CMenuSymbolMark+0x8B0: Term flags the byte at +0x39
@@ -229,29 +229,18 @@ void Warning(const char* file, int line, const char* msg, ...);
 
 
 // Extra float constant pool entries used by CArrow3D::cbRenderBefore.
-extern const f32 lbl_eu_80667118;
-extern const f32 lbl_eu_8066711C;
-extern const f32 lbl_eu_80667120;
-extern const f32 lbl_eu_80667124;
-extern const f32 lbl_eu_80667128;
-extern const f32 lbl_eu_8066712C;
-extern const f32 lbl_eu_80667130;
+extern const f32 sArrowAngleScale;
+extern const f32 sFidxUnitScale;
+extern const f32 sArrowProjNear;
+extern const f32 sArrowProjFar;
+extern const f32 sArrowLightScale;
+extern const f32 sArrowLightZ;
+extern const f32 sArrowLodBias;
 
 // Real CActorParam provides CActorParam_getHp at 0x128 (replaces PlayerHpGate pad)
 
-// Raw field views over the arrow resource blob pointed to by mDataPtr (+0x5C).
-struct ArrowResPtrView {
-    u32 arrPosOff;   // 0x00: vertex array for attr 9 (stride 0xC)
-    u32 arrUvOff;    // 0x04: attr 0xA (stride 0xC)
-    u32 arrColOff;   // 0x08: attr 0xB (stride 4)
-    u32 arrIdxOff;   // 0x0C: attr 0xD index array (stride 8), 0 = none
-    u8 pad10[4];
-    u32 dlListOff;   // 0x10: display-list entry table offset
-    u32 dlCount;     // 0x14: number of display-list entries
-};
-
 struct ArrowDLEntry {
-    u32 dlOff;      // 0x00: display list offset into the archive blob
+    u32 dlOff;
     u32 dlSize;     // 0x04: display list byte size
     u16 texIdx;     // 0x08: texture index
     u16 pltIdx;     // 0x0A: palette index

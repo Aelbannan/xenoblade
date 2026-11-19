@@ -25,11 +25,11 @@ namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParamAnimGameLink* arg) {
     __ct__13CActParamAnimFv(self);
     *(void**)self = (void*)lbl_eu_80526458;
-    ((cf::CActParamAnimGameView*)self)->flags4EC = 0;
-    ((cf::CActParamAnimGameView*)self)->flags4F0 = 0;
-    ((cf::CActParamAnimGameView*)self)->flags530 = 0;
+    ((cf::CActParamAnimGame*)self)->field4EC = 0;
+    ((cf::CActParamAnimGame*)self)->field4F0 = 0;
+    ((cf::CActParamAnimGame*)self)->field530 = 0;
     self->initAnimState();
-    ((cf::CActParamAnimGameView*)self)->link4E8 = arg;
+    ((cf::CActParamAnimGame*)self)->field4E8 = arg;
     return self;
 }
 
@@ -37,9 +37,9 @@ cf::CActParamAnimGame::CActParamAnimGame() {
     // Base ctor (__ct__13CActParamAnimFv) runs first; the retail vtable is
     // stored manually because the class is __declspec(novtable).
     *(void**)this = (void*)lbl_eu_80526458;
-    ((CActParamAnimGameView*)this)->flags4EC = 0;
-    ((CActParamAnimGameView*)this)->flags4F0 = 0;
-    ((CActParamAnimGameView*)this)->flags530 = 0;
+    ((CActParamAnimGame*)this)->field4EC = 0;
+    ((CActParamAnimGame*)this)->field4F0 = 0;
+    ((CActParamAnimGame*)this)->field530 = 0;
     this->initAnimState();
 }
 
@@ -63,19 +63,19 @@ void cf::CActParamAnimGame::resetAnimGame() {
     // compiles 0x36C larger, so class-member displacements shift; per-statement
     // view casts fold each retail offset into its store exactly like the raw
     // form did).
-    CActParamAnimGameView* v = (CActParamAnimGameView*)this;
-    v->link4E8 = 0;
-    v->link4F4 = 0;
-    v->f4F8 = lbl_eu_80666040;
-    v->f500 = lbl_eu_80666044;
-    v->f508 = lbl_eu_80666044;
-    v->f50C = lbl_eu_80666048;
-    v->state52C = 0;
-    v->f504 = lbl_eu_80666048;
-    v->state532 = 0;
-    v->state534 = 0;
-    v->state536 = 2;
-    v->state538 = 0;
+    CActParamAnimGame* v = (CActParamAnimGame*)this;
+    v->field4E8 = 0;
+    v->field4F4 = 0;
+    v->field4F8 = lbl_eu_80666040;
+    v->field500 = lbl_eu_80666044;
+    v->field508 = lbl_eu_80666044;
+    v->field50C = lbl_eu_80666048;
+    v->field52C = 0;
+    v->field504 = lbl_eu_80666048;
+    v->field532 = 0;
+    v->field534 = 0;
+    v->field536 = 2;
+    v->field538 = 0;
 }
 
 // Stubs for retail C-linkage functions that func_8005D2C4 tail-calls;
@@ -105,26 +105,26 @@ bool setAnimSubPos(void*, const ml::CVec3*);
 // Retail symbol is an unmangled C-ABI global; extern "C" keeps the call-site
 // reloc on the retail name (approved fix, PLAN.md §17.6).
 extern "C" void applyFallMove(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     shiftAnimPos(self);
-    self->f394 = lbl_eu_806660B0;
-    self->f398 = lbl_eu_806660B4;
-    if ((self->flags0C & 0x100) == 0) {
+    self->field394 = lbl_eu_806660B0;
+    self->field398 = lbl_eu_806660B4;
+    if ((self->field0C & 0x100) == 0) {
         ml::CVec3 pos;
-        pos.x = self->pos3A8.x;
-        pos.y = self->pos3A8.y;
-        pos.z = self->pos3A8.z;
+        pos.x = self->field3A8;
+        pos.y = self->field3AC;
+        pos.z = self->field3B0;
         // Mirror (inverted) the air/fall bit from the snapshot flag word.
         // Volatile read keeps MWCC from fusing the test into a record-form
         // rotate (retail lowers it via cntlzw/srwi).
-        volatile u32& snap4F0 = self->flags4F0;
+        volatile u32& snap4F0 = self->field4F0;
         if (!(snap4F0 & 2)) {
-            self->flags4EC |= 0x400000;
+            self->field4EC |= 0x400000;
         } else {
-            self->flags4EC &= ~0x400000;
+            self->field4EC &= ~0x400000;
         }
         // Fall-timer overshoot penalty: past the cap the penalty saturates.
-        f32 drop = self->f4FC - (self->f508 + self->pos3A8.y);
+        f32 drop = self->field4FC - (self->field508 + self->field3AC);
         if (drop > lbl_eu_80666040) {
             f32 scale = lbl_eu_806660B8;
             if (!(drop >= lbl_eu_806660C0)) {
@@ -132,36 +132,36 @@ extern "C" void applyFallMove(cf::CActParamAnimGame* selfV) {
             }
             addAnimHeight(self, scale);
         }
-        addAnimHeight(self, -self->f380);
+        addAnimHeight(self, -self->field380);
         mulAnimHeight(self, lbl_eu_806660C4);
         clampAnimMove(self);
         // Advance velocity and move vec over the frame time; the accumulated
         // drift is (vel*dt + face dir) + move*dt. The intermediate copies are
         // kept so each stage lands in its own stack temporary (retail layout).
-        f32 speed = self->f390;
+        f32 speed = self->field390;
         f32 dt = speed * getSecPerFrame__9CDeviceVIFv();
-        ml::CVec3 velStep = self->vel3C0 * dt;
-        ml::CVec3 moveStep = self->move3F0 * dt;
-        ml::CVec3 faceSum = velStep + self->face3CC;
+        ml::CVec3 velStep = self->vec3C0() * dt;
+        ml::CVec3 moveStep = self->vec3F0() * dt;
+        ml::CVec3 faceSum = velStep + self->vec3CC();
         ml::CVec3 sumA = faceSum;
         ml::CVec3 delta = sumA + moveStep;
         // Fold in the +0x3A0 chain's airborne accumulator.
-        if (self->obj3A0 != 0) {
-            cf::CActParamAnimGameObj3A0* obj = (cf::CActParamAnimGameObj3A0*)self->obj3A0;
+        if (self->object3A0 != 0) {
+            cf::CActParamAnimGameObj3A0* obj = (cf::CActParamAnimGameObj3A0*)self->object3A0;
             delta += obj->pos7CC;
         }
         // Ground clamp: pull y toward the ground height once past the bound.
         {
-            f32 t = self->f4FC - (delta.y + pos.y) - lbl_eu_806660C8;
+            f32 t = self->field4FC - (delta.y + pos.y) - lbl_eu_806660C8;
             if (t > lbl_eu_80666040) {
                 pos.y += t;
             }
         }
         {
-            f32 t = self->f4FC - (delta.y + pos.y) - lbl_eu_80666050;
+            f32 t = self->field4FC - (delta.y + pos.y) - lbl_eu_80666050;
             if (t > lbl_eu_80666040) {
-                self->f394 = lbl_eu_80666040;
-                self->flags4EC |= 0x40000000;
+                self->field394 = lbl_eu_80666040;
+                self->field4EC |= 0x40000000;
             }
         }
         // Normalize the horizontal speed into +0x448.
@@ -173,14 +173,14 @@ extern "C" void applyFallMove(cf::CActParamAnimGame* selfV) {
         if (sp2 > lbl_eu_80666040) {
             len = sp2 * nw4r::math::FrSqrt(sp2);
         }
-        self->f448 = len;
+        self->field448 = len;
         getScnHandle();
         if (ScnData_FwdBC9A0() != 0) {
             // Paused: probe the +0xE8 hook (initAnimBlendVectors) with the
             // position/delta pair; land only when the vertical speed is
             // positive or the hook reports failure.
             int ret = selfV->initAnimBlendVectors(&pos, &delta);
-            f32 vy = self->vel3C0.y;
+            f32 vy = self->field3C4;
             if (vy > lbl_eu_80666040 || ret == 0) {
                 setActiveBit(self, 0);
             }
@@ -192,11 +192,11 @@ extern "C" void applyFallMove(cf::CActParamAnimGame* selfV) {
         }
         setAnimSubPos(self, &pos);
     }
-    if ((self->flags0C & 0x40) == 0) {
+    if ((self->field0C & 0x40) == 0) {
         steerAnimHead(self);
     }
     stopAnimMove(self);
-    self->flags0C &= ~0x80;
+    self->field0C &= ~0x80;
 }
 
 typedef unsigned char u8;
@@ -284,35 +284,35 @@ struct CActParamAnimGameBeObj {
 // compiles 0x36C larger than retail, so direct member access shifts every
 // displacement.
 extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
-    self->f47C = lbl_eu_8066604C;
-    self->flags0C &= ~0x800;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
+    self->field47C = lbl_eu_8066604C;
+    self->field0C &= ~0x800;
     self->field4AC = 0;
-    self->probe520 = zero__Q22ml5CVec3;
+    self->vec520() = zero__Q22ml5CVec3;
 
-    if (self->flags4EC & 0x40) {
-        self->flags4EC &= ~0x40;
+    if (self->field4EC & 0x40) {
+        self->field4EC &= ~0x40;
         goto shared;
     }
 
-    if (self->flags270 & 0x20) {
+    if (self->field270 & 0x20) {
         // Ground contact already tracked: probe straight down, then commit.
         ml::CVec3 vecA(lbl_eu_80666040, lbl_eu_80666050, lbl_eu_80666040);
-        ml::CVec3 vec220 = self->pos3A8 + vecA;
-        if (ScnRes_Notify5Ptr_E470(&vec220, &self->probe520, 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
+        ml::CVec3 vec220 = self->vec3A8() + vecA;
+        if (ScnRes_Notify5Ptr_E470(&vec220, &self->vec520(), 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
             CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(0);
             if (obj->y < 0.0f) {
-                self->flags4EC |= 0x20000000;
+                self->field4EC |= 0x20000000;
             } else {
-                ml::CVec3 vec88 = self->pos3A8 + self->probe520;
-                self->f488 += self->probe520.y;
+                ml::CVec3 vec88 = self->vec3A8() + self->vec520();
+                self->field488 += self->field524;
                 setAnimSubPos(self, &vec88);
-                if (self->obj3A0) scnImN4DynStop(self->obj3A0, &self->probe520);
+                if (self->object3A0) scnImN4DynStop(self->object3A0, &self->vec520());
             }
         }
-        if ((self->flags0C & 0x80) == 0) {
-            if (self->f488 - self->pos3A8.y > lbl_eu_80666058) {
-                self->flags4EC |= 0x80;
+        if ((self->field0C & 0x80) == 0) {
+            if (self->field488 - self->field3AC > lbl_eu_80666058) {
+                self->field4EC |= 0x80;
             }
         }
         goto shared;
@@ -322,55 +322,55 @@ extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
         // Probe down; the f2-height path re-aims the actor when the probe
         // point lies beyond the facing half-plane.
         ml::CVec3 vecA(lbl_eu_80666040, lbl_eu_80666050, lbl_eu_80666040);
-        ml::CVec3 vec214 = self->pos3A8 + vecA;
+        ml::CVec3 vec214 = self->vec3A8() + vecA;
         f32 localF = 0.0f;
-        if (self->face3CC.x == 0.0f && self->face3CC.z == 0.0f) {
-            if (ScnRes_Notify5Ptr_E470(&vec214, &self->probe520, &localF, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
+        if (self->field3CC == 0.0f && self->field3D4 == 0.0f) {
+            if (ScnRes_Notify5Ptr_E470(&vec214, &self->vec520(), &localF, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
                 CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(0);
                 if (obj->y < 0.0f) {
-                    self->flags4EC |= 0x20000000;
+                    self->field4EC |= 0x20000000;
                 } else {
-                    ml::CVec3 vec = self->pos3A8 + self->probe520;
-                    self->f488 += self->probe520.y;
+                    ml::CVec3 vec = self->vec3A8() + self->vec520();
+                    self->field488 += self->field524;
                     setAnimSubPos(self, &vec);
-                    if (localF != 0.0f) setTurnScale(self, localF + self->f444);
-                    if (self->obj3A0) scnImN4DynStop(self->obj3A0, &self->probe520);
+                    if (localF != 0.0f) setTurnScale(self, localF + self->field444);
+                    if (self->object3A0) scnImN4DynStop(self->object3A0, &self->vec520());
                 }
             }
         } else {
-            if (ScnRes_Notify5Ptr_E470(&vec214, &self->probe520, 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
+            if (ScnRes_Notify5Ptr_E470(&vec214, &self->vec520(), 0, 0, 0, lbl_eu_80666054, lbl_eu_80666040)) {
                 CActParamAnimGameBeObj* obj = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(0);
                 if (obj->y < 0.0f) {
-                    self->flags4EC |= 0x20000000;
+                    self->field4EC |= 0x20000000;
                 } else {
-                    ml::CVec3 vec = self->pos3A8 + self->probe520;
-                    self->f488 += self->probe520.y;
+                    ml::CVec3 vec = self->vec3A8() + self->vec520();
+                    self->field488 += self->field524;
                     setAnimSubPos(self, &vec);
-                    if (self->obj3A0) scnImN4DynStop(self->obj3A0, &self->probe520);
+                    if (self->object3A0) scnImN4DynStop(self->object3A0, &self->vec520());
                 }
             }
         }
-        self->flags4EC &= ~0x40000;
+        self->field4EC &= ~0x40000;
         goto shared;
     }
 
 shared:
     {
         ml::CVec3 vecA(lbl_eu_80666040, lbl_eu_80666060, lbl_eu_80666040);
-        ml::CVec3 vec58 = self->pos3A8 + vecA;
-        *(u32*)&self->tgt3E4.x = *(u32*)&vec58.x;
-        *(u32*)&self->tgt3E4.y = *(u32*)&vec58.y;
-        *(u32*)&self->tgt3E4.z = *(u32*)&vec58.z;
+        ml::CVec3 vec58 = self->vec3A8() + vecA;
+        *(u32*)&self->field3E4 = *(u32*)&vec58.x;
+        *(u32*)&self->field3E8 = *(u32*)&vec58.y;
+        *(u32*)&self->field3EC = *(u32*)&vec58.z;
         f32 f31v = lbl_eu_8066605C;
         ml::CVec3 vecB(lbl_eu_80666040, lbl_eu_80666064, lbl_eu_80666040);
-        ml::CVec3 vec4C = self->pos3A8 + vecB;
+        ml::CVec3 vec4C = self->vec3A8() + vecB;
         ml::CVec3 vec124 = vec4C;
         int needDefault = 1;
         if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec124, 0xa04, 0, 1, lbl_eu_80666060, lbl_eu_80666040)) {
             int count = ScnRes_GetEntryCount_E4AC();
-            f32 f30 = lbl_eu_80666068 + self->pos3A8.y;
+            f32 f30 = lbl_eu_80666068 + self->field3AC;
             int lowerIdx = -1;
-            f32 f29 = lbl_eu_8066606C + self->pos3A8.y;
+            f32 f29 = lbl_eu_8066606C + self->field3AC;
             int upperIdx = -1;
             f32 f28 = f30 - lbl_eu_80666070;
             f32 f24 = lbl_eu_80666050;
@@ -389,7 +389,7 @@ shared:
                     if (y >= f29) {
                         if (f27 > y) { f27 = y; upperIdx = faceFlag; }
                     } else {
-                        if (f24 + self->pos3A8.y > y) {
+                        if (f24 + self->field3AC > y) {
                             if (f26 < y) { f26 = y; refIdx = faceFlag; }
                             if (f23 < y) { f23 = y; secIdx = faceFlag; }
                         }
@@ -412,41 +412,41 @@ shared:
             }
             if (lowerIdx != -1) {
                 selIdx = lowerIdx;
-                if (self->vel3C0.y <= 0.0f) {
-                    if (ml::math::abs(self->pos3A8.y - f28) <= lbl_eu_8066606C) {
-                        if ((self->flags4EC & 4) == 0) {
+                if (self->field3C4 <= 0.0f) {
+                    if (ml::math::abs(self->field3AC - f28) <= lbl_eu_8066606C) {
+                        if ((self->field4EC & 4) == 0) {
                             ml::CVec3 vec1fc;
                             if (ScnRes_FetchScaleRow_E53C(&vec1fc, lowerIdx)) {
                                 f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                                 vec1fc *= fr;
-                                *(u32*)&self->move3F0.x = *(u32*)&vec1fc.x;
-                                *(u32*)&self->move3F0.y = *(u32*)&vec1fc.y;
-                                *(u32*)&self->move3F0.z = *(u32*)&vec1fc.z;
+                                *(u32*)&self->field3F0 = *(u32*)&vec1fc.x;
+                                *(u32*)&self->field3F4 = *(u32*)&vec1fc.y;
+                                *(u32*)&self->field3F8 = *(u32*)&vec1fc.z;
                                 needDefault = 0;
                             }
                         }
                     }
                 }
-                self->f47C = f28;
+                self->field47C = f28;
             }
             if (upperIdx != -1) {
                 faceFlag = 0;
-                self->f4FC = f27;
-                if (lowerIdx != -1) self->f4F8 = f27 - f28;
+                self->field4FC = f27;
+                if (lowerIdx != -1) self->field4F8 = f27 - f28;
                 selIdx = upperIdx;
-                if ((self->flags4EC & 4) == 0) {
+                if ((self->field4EC & 4) == 0) {
                     ml::CVec3 vec1f0;
                     if (ScnRes_FetchScaleRow_E53C(&vec1f0, upperIdx)) {
                         f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                         vec1f0 *= fr;
-                        *(u32*)&self->move3F0.x = *(u32*)&vec1f0.x;
-                        *(u32*)&self->move3F0.y = *(u32*)&vec1f0.y;
-                        *(u32*)&self->move3F0.z = *(u32*)&vec1f0.z;
+                        *(u32*)&self->field3F0 = *(u32*)&vec1f0.x;
+                        *(u32*)&self->field3F4 = *(u32*)&vec1f0.y;
+                        *(u32*)&self->field3F8 = *(u32*)&vec1f0.z;
                         needDefault = 0;
                     }
                 }
-                if (self->f4F8 > self->f508) {
-                    f23 = lbl_eu_80666044 + self->pos3A8.y;
+                if (self->field4F8 > self->field508) {
+                    f23 = lbl_eu_80666044 + self->field3AC;
                     int bandIdx = -1;
                     f27 = lbl_eu_8066607C;
                     f29 = lbl_eu_80666040;
@@ -462,7 +462,7 @@ shared:
                     if (bandIdx != -1) {
                         ml::CVec3 vec1e4;
                         ScnRes_CopyEntryMid(&vec1e4, bandIdx);
-                        if (vec1e4.x * self->face3CC.x + vec1e4.z * self->face3CC.z <= 0.0f) {
+                        if (vec1e4.x * self->field3CC + vec1e4.z * self->field3D4 <= 0.0f) {
                             ml::CVec3 vec1d8;
                             vec1d8.x = vec1e4.x;
                             vec1d8.y = 0.0f;
@@ -482,16 +482,16 @@ shared:
                             } else {
                                 PSVECNormalize((const Vec*)&cross, (Vec*)&cross);
                             }
-                            f32 dot = cross.x * self->face3CC.x + cross.z * self->face3CC.z;
+                            f32 dot = cross.x * self->field3CC + cross.z * self->field3D4;
                             f32 fz = 0.0f;
                             f32 fx = cross.x * dot;
                             f32 fz2 = cross.z * dot;
-                            *(u32*)&self->face3CC.y = *(u32*)&fz;
-                            *(u32*)&self->face3CC.x = *(u32*)&fx;
-                            *(u32*)&self->face3CC.z = *(u32*)&fz2;
-                            *(u32*)&self->move3F0.x = *(u32*)&vec1d8.x;
-                            *(u32*)&self->move3F0.y = *(u32*)&vec1d8.y;
-                            *(u32*)&self->move3F0.z = *(u32*)&vec1d8.z;
+                            *(u32*)&self->field3D0 = *(u32*)&fz;
+                            *(u32*)&self->field3CC = *(u32*)&fx;
+                            *(u32*)&self->field3D4 = *(u32*)&fz2;
+                            *(u32*)&self->field3F0 = *(u32*)&vec1d8.x;
+                            *(u32*)&self->field3F4 = *(u32*)&vec1d8.y;
+                            *(u32*)&self->field3F8 = *(u32*)&vec1d8.z;
                             faceFlag = 1;
                             needDefault = 0;
                         }
@@ -500,25 +500,25 @@ shared:
             }
             if (selIdx != -1) {
                 CActParamAnimGameBeObj* o = (CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(selIdx);
-                *(u32*)&self->tgt3E4.x = *(u32*)&o->x;
-                *(u32*)&self->tgt3E4.y = *(u32*)&o->y;
-                *(u32*)&self->tgt3E4.z = *(u32*)&o->z;
+                *(u32*)&self->field3E4 = *(u32*)&o->x;
+                *(u32*)&self->field3E8 = *(u32*)&o->y;
+                *(u32*)&self->field3EC = *(u32*)&o->z;
                 CActParamAnimGameBeObj* o2 = (CActParamAnimGameBeObj*)ScnRes_GetEntryHead2_E520(selIdx);
-                *(u32*)&self->hit3D8.x = *(u32*)&o2->x;
-                *(u32*)&self->hit3D8.y = *(u32*)&o2->y;
-                *(u32*)&self->hit3D8.z = *(u32*)&o2->z;
-                void* sub = ((cf::CActParamAnimGameObj3A0*)self->obj3A0)->sub7EC;
+                *(u32*)&self->field3D8 = *(u32*)&o2->x;
+                *(u32*)&self->field3DC = *(u32*)&o2->y;
+                *(u32*)&self->field3E0 = *(u32*)&o2->z;
+                void* sub = ((cf::CActParamAnimGameObj3A0*)self->object3A0)->sub7EC;
                 if (sub != 0) {
                     ml::CVec3 vec;
-                    vec.x = self->tgt3E4.x;
-                    vec.y = self->tgt3E4.y;
-                    vec.z = self->tgt3E4.z;
+                    vec.x = self->field3E4;
+                    vec.y = self->field3E8;
+                    vec.z = self->field3EC;
                     ((CActParam7ECTarget*)sub)->func14(&vec);
                 }
-                if ((self->flags4EC & 0x20000000) && faceFlag == 0) {
-                    f32 dot = self->hit3D8.x * self->face3CC.x + self->tgt3E4.z * self->face3CC.z;
+                if ((self->field4EC & 0x20000000) && faceFlag == 0) {
+                    f32 dot = self->field3D8 * self->field3CC + self->field3EC * self->field3D4;
                     if (dot <= 0.0f) {
-                        ml::CVec3 v1c0(self->hit3D8.x, 0.0f, self->tgt3E4.z);
+                        ml::CVec3 v1c0(self->field3D8, 0.0f, self->field3EC);
                         ml::CVec3 up2(0.0f, 1.0f, 0.0f);
                         ml::CVec3 cross2;
                         PSVECCrossProduct((const Vec*)&v1c0, (const Vec*)&up2, (Vec*)&cross2);
@@ -528,13 +528,13 @@ shared:
                         } else {
                             PSVECNormalize((const Vec*)&cross2, (Vec*)&cross2);
                         }
-                        f32 dot2 = cross2.x * self->face3CC.x + cross2.z * self->face3CC.z;
+                        f32 dot2 = cross2.x * self->field3CC + cross2.z * self->field3D4;
                         f32 fz = 0.0f;
                         f32 fx = cross2.x * dot2;
                         f32 fz2 = cross2.z * dot2;
-                        *(u32*)&self->face3CC.y = *(u32*)&fz;
-                        *(u32*)&self->face3CC.x = *(u32*)&fx;
-                        *(u32*)&self->face3CC.z = *(u32*)&fz2;
+                        *(u32*)&self->field3D0 = *(u32*)&fz;
+                        *(u32*)&self->field3CC = *(u32*)&fx;
+                        *(u32*)&self->field3D4 = *(u32*)&fz2;
                     }
                 }
                 u32 local8 = 0;
@@ -549,11 +549,11 @@ shared:
                 }
                 self->field4AC = local8;
                 if (ScnRes_IsEntryValued_E604(selIdx)) {
-                    self->flags4EC |= 0x1000000;
+                    self->field4EC |= 0x1000000;
                 }
                 if (ScnRes_EntryFlagThunk_E5A4(0x4000, selIdx)) {
-                    if (ml::math::abs(self->pos3A8.y - f28) <= lbl_eu_80666050) {
-                        self->flags4EC |= 0x80;
+                    if (ml::math::abs(self->field3AC - f28) <= lbl_eu_80666050) {
+                        self->field4EC |= 0x80;
                     }
                 }
                 if (refIdx != -1 && upperIdx == -1) {
@@ -563,26 +563,26 @@ shared:
                 }
                 if (ScnRes_EntryFlagThunk_E5A4(0x20000, refIdx)) {
                     f32 objY = ((CActParamAnimGameBeObj*)ScnRes_GetEntryPtr_E50C(refIdx))->y;
-                    if (self->pos3A8.y - objY <= lbl_eu_80666044) {
-                        self->flags4EC |= 0x1000000;
+                    if (self->field3AC - objY <= lbl_eu_80666044) {
+                        self->field4EC |= 0x1000000;
                         ScnRes_TableByteThunk_E5A8(&local8, 0x20000, refIdx, 1);
-                        self->id4B0 = local8;
+                        self->field4B0 = local8;
                     }
                 }
                 if (ScnRes_EntryFlagThunk_E5A4(0x8000, selIdx)) {
-                    self->flags4EC |= 0x800000;
+                    self->field4EC |= 0x800000;
                 } else {
-                    self->flags4EC &= ~0x800000;
+                    self->field4EC &= ~0x800000;
                 }
                 if (ScnRes_EntryFlagThunk_E5A4(0x400, selIdx)) {
-                    if ((self->flags0C & 2) != 0 && (self->flags270 & 0x20) == 0) {
+                    if ((self->field0C & 2) != 0 && (self->field270 & 0x20) == 0) {
                         ml::CVec3 vec1a8;
                         ScnRes_CopyEntryMid(&vec1a8, selIdx);
-                        ml::CVec3 vec19c = self->move3F0;
-                        f32 f5 = self->f390 * getSecPerFrame__9CDeviceVIFv();
-                        ml::CVec3 tmp = self->vel3C0 * f5;
+                        ml::CVec3 vec19c = self->vec3F0();
+                        f32 f5 = self->field390 * getSecPerFrame__9CDeviceVIFv();
+                        ml::CVec3 tmp = self->vec3C0() * f5;
                         ml::CVec3 vec190 = tmp;
-                        vec190 += self->face3CC;
+                        vec190 += self->vec3CC();
                         if (vec190.x == 0.0f && vec190.z == 0.0f) {
                             f31v = lbl_eu_80666090;
                             if (vec1a8.y <= f31v) {
@@ -591,7 +591,7 @@ shared:
                             }
                         } else {
                             if (f5 != 0.0f) f5 = 1.0f / f5;
-                            if (self->flags0C & 0x200000) {
+                            if (self->field0C & 0x200000) {
                                 vec19c += vec190 * (lbl_eu_80666084 * f5);
                             } else {
                                 vec19c += vec190 * (lbl_eu_80666080 * f5);
@@ -628,35 +628,35 @@ shared:
                             }
                             f31v = lbl_eu_8066609C;
                         }
-                        *(u32*)&self->move3F0.x = *(u32*)&vec19c.x;
-                        *(u32*)&self->move3F0.y = *(u32*)&vec19c.y;
-                        *(u32*)&self->move3F0.z = *(u32*)&vec19c.z;
-                        self->flags0C |= 0x30;
+                        *(u32*)&self->field3F0 = *(u32*)&vec19c.x;
+                        *(u32*)&self->field3F4 = *(u32*)&vec19c.y;
+                        *(u32*)&self->field3F8 = *(u32*)&vec19c.z;
+                        self->field0C |= 0x30;
                     } else {
-                        self->flags0C &= ~0x40000;
+                        self->field0C &= ~0x40000;
                     }
                 } else {
-                    self->flags0C &= ~0x40000;
+                    self->field0C &= ~0x40000;
                 }
                 if (secIdx != -1) {
-                    self->flags4EC |= 0x8000000;
+                    self->field4EC |= 0x8000000;
                 }
-                if (self->flags530 & 0x400) {
-                    if (self->flags270 & 0x20) {
-                        ml::CVec3 diff = self->pos3A8 - self->ground3B4;
+                if (self->field530 & 0x400) {
+                    if (self->field270 & 0x20) {
+                        ml::CVec3 diff = self->vec3A8() - self->vec3B4();
                         f32 len2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
                         if (len2 <= lbl_eu_806660A0) {
-                            if (ScnRes_SegQueryForward_E348(&self->pos3A8, &self->ground3B4, 0, 0x4000, 0)) {
-                                self->flags4EC |= 0x80;
+                            if (ScnRes_SegQueryForward_E348(&self->vec3A8(), &self->vec3B4(), 0, 0x4000, 0)) {
+                                self->field4EC |= 0x80;
                             }
                         }
                     }
                 }
                 if (needDefault != 0) {
-                    ml::CVec3 v = self->move3F0 * f31v;
-                    *(u32*)&self->move3F0.x = *(u32*)&v.x;
-                    *(u32*)&self->move3F0.y = *(u32*)&v.y;
-                    *(u32*)&self->move3F0.z = *(u32*)&v.z;
+                    ml::CVec3 v = self->vec3F0() * f31v;
+                    *(u32*)&self->field3F0 = *(u32*)&v.x;
+                    *(u32*)&self->field3F4 = *(u32*)&v.y;
+                    *(u32*)&self->field3F8 = *(u32*)&v.z;
                 }
             }
         }
@@ -664,64 +664,17 @@ shared:
 }
 
 
-struct CActParamAnimGameViewBC14 {
-    u8 _00[0x08];
-    void* owner;            // 0x08
-    u32 flags0C;            // 0x0C
-    u8 _10[0x260];
-    u32 flags270;           // 0x270
-    u8 _274[0x11C];
-    f32 f390;               // 0x390
-    f32 f394;               // 0x394
-    f32 f398;               // 0x398
-    u8 _39C[0x4];
-    void* obj3A0;           // 0x3A0
-    u8 _3A4[0x4];
-    f32 posX3A8;            // 0x3A8
-    f32 posY3AC;            // 0x3AC
-    f32 posZ3B0;            // 0x3B0
-    u8 _3B4[0x0C];
-    f32 vec3C0[3];          // 0x3C0
-    u8 _3CC[0x24];
-    f32 vec3F0[3];          // 0x3F0
-    u8 _3FC[0x34];
-    f32 f430;               // 0x430
-    f32 f434;               // 0x434
-    u8 _438[0x04];
-    f32 f43C;               // 0x43C
-    f32 f440;               // 0x440
-    f32 f444;               // 0x444
-    u8 _448[0x34];
-    f32 f47C;               // 0x47C
-    u8 _480[0x08];
-    f32 f488;               // 0x488
-    u8 _48C[0x1C];
-    u32 filter4A8;          // 0x4A8
-    u8 _4AC[0x3C];
-    void* region4E8;        // 0x4E8
-    u32 flags4EC;           // 0x4EC
-    u8 _4F0[0x8];           // 0x4F0
-    f32 f4F8;               // 0x4F8
-    u8 _4FC[0xC];           // 0x4FC
-    f32 f508;               // 0x508
-    u8 _50C[0x8];           // 0x50C
-    f32 f514;               // 0x514
-    f32 f518;               // 0x518
-    f32 f51C;               // 0x51C
-    u8 _520[0x0C];
-    u32 state52C;           // 0x52C
-    u16 flags530;           // 0x530
-};
+
 
 // Sets flag bits on the actor object: 0x160 in the +0xC word and bit 0 in
 // the +0x4EC word (retail: two independent read-modify-write pairs).
-void AnimGame_SetStateFlags(CActParamAnimGameViewBC14* self) {
-    self->flags0C |= 0x160;
-    self->flags4EC |= 1;
+void AnimGame_SetStateFlags(cf::CActParamAnimGame* self) {
+    self->field0C |= 0x160;
+    self->field4EC |= 1;
 }
 
 extern "C" void runBattleMove(void* selfV) {
-    CActParamAnimGameViewBC14* self = (CActParamAnimGameViewBC14*)selfV;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     s32 moved = 0;
     u32 flags;
     f32 f28v = 0.0f;
@@ -737,36 +690,36 @@ extern "C" void runBattleMove(void* selfV) {
     ml::CVec3 target;
     ml::CVec3 dirM;
 
-    self->flags530 &= 0xFF3F;
-    self->state52C = 0;
-    self->flags4EC &= ~0xC0000;
-    self->f394 = 1.0f;
-    self->f398 = 1.0f;
+    self->field530 &= 0xFF3F;
+    self->field52C = 0;
+    self->field4EC &= ~0xC0000;
+    self->field394 = 1.0f;
+    self->field398 = 1.0f;
     *(ml::CVec3*)((u8*)self + 0x3F0) = zero__Q22ml5CVec3;
     setAnimPosVec(self, &zero__Q22ml5CVec3);
     shiftAnimPos(self);
 
-    if ((self->flags0C & 0x100) != 0) goto exit;
-    if (self->obj3A0 == 0) goto exit;
+    if ((self->field0C & 0x100) != 0) goto exit;
+    if (self->object3A0 == 0) goto exit;
 
     moved = 1;
-    flags = self->flags530 | 0x800;
-    self->flags530 = (u16)flags;
-    pos.x = self->posX3A8;
-    pos.y = self->posY3AC;
-    pos.z = self->posZ3B0;
+    flags = self->field530 | 0x800;
+    self->field530 = (u16)flags;
+    pos.x = self->field3A8;
+    pos.y = self->field3AC;
+    pos.z = self->field3B0;
     if ((flags & 0xC) == 0) goto mode0;
 
-    self->flags530 |= 0x80;
-    if ((self->flags530 & 2) == 0) goto bit1clear;
+    self->field530 |= 0x80;
+    if ((self->field530 & 2) == 0) goto bit1clear;
 
-    if (self->flags530 & 4) pos.y += 0.5f;
-    if (self->flags530 & 8) {
+    if (self->field530 & 4) pos.y += 0.5f;
+    if (self->field530 & 8) {
         pos.y -= 2.0f;
-        pos.x = self->f514 - 2.0f * SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444);
-        pos.z = self->f51C - 2.0f * CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444);
+        pos.x = self->field514 - 2.0f * SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444);
+        pos.z = self->field51C - 2.0f * CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444);
     }
-    self->flags530 &= 0xFFF1;
+    self->field530 &= 0xFFF1;
     goto commit;
 
 bit1clear:
@@ -777,17 +730,17 @@ bit1clear:
         f32 f29b = ((CActParamAnim*)self)->getAttachedAnimTime();
         if (((CActParamAnim*)self)->getAttachedAnimScale() * f31v + f29b >= f30v) {
         } else {
-            self->flags530 |= 2;
+            self->field530 |= 2;
         }
     }
     moved = 0;
-    pos.x += 0.1f * (self->f514 - pos.x);
-    pos.z += 0.1f * (self->f51C - pos.z);
+    pos.x += 0.1f * (self->field514 - pos.x);
+    pos.z += 0.1f * (self->field51C - pos.z);
     {
-        dir = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
-        up = pos + ((self->flags530 & 4) ? ml::CVec3(0.0f, 1.0f, 0.0f) : ml::CVec3(0.0f, -1.5f, 0.0f));
+        dir = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
+        up = pos + ((self->field530 & 4) ? ml::CVec3(0.0f, 1.0f, 0.0f) : ml::CVec3(0.0f, -1.5f, 0.0f));
         ml::CVec3 t3 = up + dir * 3.0f;
-        if (ScnRes_SegQueryForward_E348(&up, &t3, self->filter4A8, 0, 0) != 0
+        if (ScnRes_SegQueryForward_E348(&up, &t3, self->field4A8, 0, 0) != 0
             && ScnRes_EntryFlagThunk_E5A4(8192, 0) != 0) {
             ml::CVec3 v;
             ScnRes_CopyEntryMid(&v, 0);
@@ -797,16 +750,16 @@ bit1clear:
         }
     }
 commit:
-    if (self->region4E8 != 0) ColiSetAxisBlockInverse((u8*)self->region4E8 + 0x60C, &pos);
+    if (self->field4E8 != 0) ColiSetAxisBlockInverse((u8*)self->field4E8 + 0x60C, &pos);
     setAnimSubPos(self, &pos);
     goto next;
 
 mode0:
     if ((flags & 0x30) != 0) {
         up2 = pos + ml::CVec3(0.0f, 1.0f, 0.0f);
-        dir2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
+        dir2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
         ml::CVec3 t3b = up2 + dir2 * 2.0f;
-        if (ScnRes_SegQueryForward_E348(&up2, &t3b, self->filter4A8, 0, 0) != 0
+        if (ScnRes_SegQueryForward_E348(&up2, &t3b, self->field4A8, 0, 0) != 0
             && ScnRes_EntryFlagThunk_E5A4(8192, 0) != 0) {
             ml::CVec3 v;
             ScnRes_CopyEntryMid(&v, 0);
@@ -814,18 +767,18 @@ mode0:
                 setTurnScale(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
             }
         }
-        if (self->flags530 & 0x20) {
-            pos.y += 0.1f * (self->f518 - pos.y);
+        if (self->field530 & 0x20) {
+            pos.y += 0.1f * (self->field518 - pos.y);
             setAnimSubPos(self, &pos);
         }
         moved = 0;
         goto next;
     }
-    if ((self->flags530 & 0x100) != 0) {
-        f32 dx = self->f514 - pos.x;
-        f32 dz = self->f51C - pos.z;
+    if ((self->field530 & 0x100) != 0) {
+        f32 dx = self->field514 - pos.x;
+        f32 dz = self->field51C - pos.z;
         if (dx * dx + dz * dz < 0.0001f) {
-            self->flags530 &= 0xFEFF;
+            self->field530 &= 0xFEFF;
         } else {
             pos.x += 0.3f * dx;
             pos.z += 0.3f * dz;
@@ -834,15 +787,15 @@ mode0:
         }
     }
 next:
-    if (self->flags530 & 0x200) {
-        if (((cf::CBattleState*)self->owner)->CObjectParam_getParamPtr() != 0 || isSpeedBelow(self) != 0) {
-            self->flags530 &= 0xFDFF;
+    if (self->field530 & 0x200) {
+        if (((cf::CBattleState*)self->owner08)->CObjectParam_getParamPtr() != 0 || isSpeedBelow(self) != 0) {
+            self->field530 &= 0xFDFF;
         } else {
             if (lbl_eu_80663D64 == 0) { lbl_eu_80663D60 = 60.0f * 0.017453292f; lbl_eu_80663D64 = 1; }
             if (lbl_eu_80663D6C == 0) { lbl_eu_80663D68 = -60.0f * 0.017453292f; lbl_eu_80663D6C = 1; }
-            f32 ang = *(f32*)((u8*)self->owner + 0xC);
+            f32 ang = *(f32*)((u8*)self->owner08 + 0xC);
             if (!(ang <= lbl_eu_80663D60) || ang <= lbl_eu_80663D68) {
-                self->flags530 &= 0xFDFF;
+                self->field530 &= 0xFDFF;
             }
         }
     }
@@ -850,18 +803,18 @@ next:
 
     f28v = 0.0f;
     accel = ml::CVec3(0.0f, 0.0f, 0.0f);
-    if ((self->flags530 & 0x200) == 0) {
-        f29v = *(f32*)((u8*)self->owner + 0x14);
-        if (f29v * self->f430 >= getAnimMinSpeed()) {
-            f28v = *(f32*)((u8*)self->owner + 0x14) * self->f394;
+    if ((self->field530 & 0x200) == 0) {
+        f29v = *(f32*)((u8*)self->owner08 + 0x14);
+        if (f29v * self->field430 >= getAnimMinSpeed()) {
+            f28v = *(f32*)((u8*)self->owner08 + 0x14) * self->field394;
         }
-        f31v = f28v * (1000.0f * getAnimWalkKmh(self) / 3600.0f) * (self->f390 * getSecPerFrame__9CDeviceVIFv());
-        if (self->flags530 & 0x400) {
-            f32 a = *(f32*)((u8*)self->owner + 0xC);
+        f31v = f28v * (1000.0f * getAnimWalkKmh(self) / 3600.0f) * (self->field390 * getSecPerFrame__9CDeviceVIFv());
+        if (self->field530 & 0x400) {
+            f32 a = *(f32*)((u8*)self->owner08 + 0xC);
             f30v = fabsf(f31v * SinFIdx__Q24nw4r4mathFf(40.743663f * a));
             accel.y = f31v * CosFIdx__Q24nw4r4mathFf(40.743663f * a);
-            ml::CVec3 d2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
-            ml::CVec3 d3 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f440), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f440));
+            ml::CVec3 d2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
+            ml::CVec3 d3 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field440), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field440));
             ml::CVec3 upv = ml::CVec3(0.0f, 1.0f, 0.0f);
             ml::CVec3 cross;
             PSVECCrossProduct((const Vec*)&d2, (const Vec*)&upv, (Vec*)&cross);
@@ -876,10 +829,10 @@ next:
             accel.x = cross.x * f30v;
             accel.z = cross.z * f30v;
         } else {
-            accel.x = f31v * SinFIdx__Q24nw4r4mathFf(40.743663f * self->f440);
-            accel.z = f31v * CosFIdx__Q24nw4r4mathFf(40.743663f * self->f440);
-            ml::CVec3 d4 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
-            ml::CVec3 d5 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f440), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f440));
+            accel.x = f31v * SinFIdx__Q24nw4r4mathFf(40.743663f * self->field440);
+            accel.z = f31v * CosFIdx__Q24nw4r4mathFf(40.743663f * self->field440);
+            ml::CVec3 d4 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
+            ml::CVec3 d5 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field440), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field440));
             f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&d4, (const nw4r::math::VEC3*)&d5);
             accel.y = f31v * dot;
             f32 scale = 1.0f - fabsf(dot);
@@ -888,10 +841,10 @@ next:
         }
     }
     {
-        target.x = self->posX3A8;
-        target.y = self->posY3AC;
-        target.z = self->posZ3B0;
-        dirM = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
+        target.x = self->field3A8;
+        target.y = self->field3AC;
+        target.z = self->field3B0;
+        dirM = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
         moved = 1;
         u32 hit;
         if (accel.x == 0.0f && accel.y == 0.0f && accel.z == 0.0f) {
@@ -964,13 +917,13 @@ next:
             if (lbl_eu_80663D74 == 0) { lbl_eu_80663D70 = ml::pi * 0.25f; lbl_eu_80663D74 = 1; }
             f32 p4 = lbl_eu_80663D70;
             if (p4 >= f2v && f2v >= -p4) {
-                self->state52C = 1;
+                self->field52C = 1;
             } else if (ml::pi - p4 <= f2v || f2v <= -(ml::pi - p4)) {
-                self->state52C = 2;
+                self->field52C = 2;
             } else if (p4 < f2v && f2v < 3.0f * p4) {
-                self->state52C = 4;
+                self->field52C = 4;
             } else if (-p4 > f2v && f2v > 3.0f * -p4) {
-                self->state52C = 3;
+                self->field52C = 3;
             }
         }
 ground:
@@ -984,14 +937,14 @@ ground:
                 pos.z = v2.z - 0.08f * nz;
             }
         }
-        if (self->flags270 & 0x100) {
+        if (self->field270 & 0x100) {
             accel *= 0.2f;
             ml::CVec3 v2;
             ScnRes_CopyEntryHead(&v2, 0);
-            if (self->region4E8 != 0) {
+            if (self->field4E8 != 0) {
                 ml::CVec3 out;
                 ml::CVec3 sum = v2 + accel;
-                ColiResolveMoveDefault((u8*)self->region4E8 + 0x60C, &out, &sum, &sum, &v2);
+                ColiResolveMoveDefault((u8*)self->field4E8 + 0x60C, &out, &sum, &sum, &v2);
                 accel += out;
             }
             {
@@ -1005,16 +958,16 @@ ground:
                         f32 mag = PSVECMag((const Vec*)&v2c0);
                         v2c0 *= 1.0f / mag * (0.4f + mag);
                         ml::CVec3 tp = target2 + v2c0;
-                        if (ScnRes_SegQueryForward_E348(&target2, &tp, self->filter4A8, 0, 0) != 0) {
+                        if (ScnRes_SegQueryForward_E348(&target2, &tp, self->field4A8, 0, 0) != 0) {
                             ScnRes_CopyEntryHead(&v2c0, 0);
                             accel.x = v2c0.x - target2.x;
                             accel.z = v2c0.z - target2.z;
                         }
                     }
-                    ((BD94CFn6)ScnRes_ResolveGroundHeight)(&target2, &accel, self->filter4A8, 0, (self->flags0C & 0x100) != 0, 0);
+                    ((BD94CFn6)ScnRes_ResolveGroundHeight)(&target2, &accel, self->field4A8, 0, (self->field0C & 0x100) != 0, 0);
                 }
                 target2.y += 0.9f;
-                if (((BE398Fn4)ScnRes_VertRayForward_E398)(&target2, self->filter4A8, 0, 0) != 0) {
+                if (((BE398Fn4)ScnRes_VertRayForward_E398)(&target2, self->field4A8, 0, 0) != 0) {
                     void* e = ScnRes_GetEntryPtr_E50C(0);
                     target2.y -= 1.4f - (*(f32*)((u8*)e + 0x4) - target2.y);
                 }
@@ -1044,105 +997,105 @@ ground:
 after_hit:
     setAnimSubPos(self, &pos);
     if (moved == 0) goto exit;
-    self->flags530 &= 0xF7FF;
-    self->flags4EC |= 0x40000;
+    self->field530 &= 0xF7FF;
+    self->field4EC |= 0x40000;
     // func_8004B9D4 is declared in kyoshin/action/CActParamAnim.hpp
     // (CActParamAnim* first arg); cast the view pointer at the call site.
     func_8004B9D4((CActParamAnim*)self, 6, 0, -1, 0);
-    setTurnScale(self, self->f444);
+    setTurnScale(self, self->field444);
     {
         ml::CVec3 zero2 = ml::CVec3(0.0f, 0.0f, 0.0f);
         setAnimPosVec(self, &zero2);
-        ml::CVec3 d = ml::CVec3(0.2f * SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, 0.2f * CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
+        ml::CVec3 d = ml::CVec3(0.2f * SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, 0.2f * CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
         pos = pos - d;
         setAnimSubPos(self, &pos);
     }
 exit:
-    self->f488 = self->f47C = self->posY3AC;
+    self->field488 = self->field47C = self->field3AC;
     stopAnimMove(self);
 }
 
 void cf::CActParamAnimGame::dispatchState() {
-    CActParamAnimGameView* v = (CActParamAnimGameView*)this;
+    CActParamAnimGame* v = (CActParamAnimGame*)this;
     // Snapshot the flag word, clear it to the run mask, and reset the
     // air/height state; the +0x530 flags lose their low bit. The first
     // +0x4EC read is done through a volatile cast so MWCC keeps two loads
     // (retail feeds the copy and the mask from separate loads).
-    v->flags4F0 = *(volatile u32*)&v->flags4EC;
-    v->f4F8 = lbl_eu_80666040;
-    v->f4FC = lbl_eu_80666040;
-    v->flags4EC &= 0x14AE5A7D;
-    v->flags530 &= 0xFFFE;
+    v->field4F0 = *(volatile u32*)&v->field4EC;
+    v->field4F8 = lbl_eu_80666040;
+    v->field4FC = lbl_eu_80666040;
+    v->field4EC &= 0x14AE5A7D;
+    v->field530 &= 0xFFFE;
 
     // Child-data timers: keep the current value only when it is non-negative.
-    f32 timerA = ((CActParamData*)v->_10)->getParamFloat0C();
-    if (timerA >= lbl_eu_80666040) v->f500 = timerA;
-    if (v->f504 >= lbl_eu_80666040) v->f500 = v->f504;
-    f32 timerB = ((CActParamData*)v->_10)->getParamFloat08();
-    if (timerB >= lbl_eu_80666040) v->f508 = timerB;
-    if (v->f50C >= lbl_eu_80666040) v->f508 = v->f50C;
+    f32 timerA = ((CActParamData*)v->mChildData10)->getParamFloat0C();
+    if (timerA >= lbl_eu_80666040) v->field500 = timerA;
+    if (v->field504 >= lbl_eu_80666040) v->field500 = v->field504;
+    f32 timerB = ((CActParamData*)v->mChildData10)->getParamFloat08();
+    if (timerB >= lbl_eu_80666040) v->field508 = timerB;
+    if (v->field50C >= lbl_eu_80666040) v->field508 = v->field50C;
 
     getScnHandle();
-    if (ScnData_FwdBC9A0() != 0 && (v->flags4EC & 1) == 0) {
+    if (ScnData_FwdBC9A0() != 0 && (v->field4EC & 1) == 0) {
         trackGroundAt(this);
     }
 
-    if (v->state374 == 2) {
+    if (v->field374 == 2) {
         // In-battle mode: mark ready and run the full movement/step logic.
         // Load +0x530 first (colors r4 at retail), then +0xC.
-        u16 flags530 = v->flags530;
-        u32 flags0C = v->flags0C;
-        v->flags530 = flags530 | 1;
-        v->flags0C = flags0C & ~0x80000;
+        u16 field530 = v->field530;
+        u32 field0C = v->field0C;
+        v->field530 = field530 | 1;
+        v->field0C = field0C & ~0x80000;
         runBattleMove(this);
     } else {
-        bool over = v->f4F8 > v->f508;
-        if (over && (v->flags0C & 0x10000) == 0) {
+        bool over = v->field4F8 > v->field508;
+        if (over && (v->field0C & 0x10000) == 0) {
             // Air timer exceeded the fall timer: switch to falling state.
-            v->flags4EC |= 2;
-            v->flags0C &= ~0x80000;
+            v->field4EC |= 2;
+            v->field0C &= ~0x80000;
             applyFallMove(this);
             goto d2c4_fall_done;
         }
         {
-            u16 flags = v->flags530;
+            u16 flags = v->field530;
             if (flags & 0x30) {
-                v->flags530 &= 0xF5CF;
-                setAnimSubPos(this, (ml::CVec3*)&v->f514);
+                v->field530 &= 0xF5CF;
+                setAnimSubPos(this, (ml::CVec3*)&v->field514);
             } else if (flags & 0x800) {
                 // Small lateral pull toward the facing direction. Build the
                 // position member-wise, clear the flag between the position
                 // setup and the trig calls (retail interleave), and phrase
-                // each offset as const*trig so fmuls colors f0=const,f1=f444.
+                // each offset as const*trig so fmuls colors f0=const,f1=field444.
                 ml::CVec3 p;
-                p.x = v->pos3A8.x;
-                p.y = v->pos3A8.y;
-                p.z = v->pos3A8.z;
-                v->flags530 &= 0xF7FF;
-                p.x -= lbl_eu_80666068 * nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC);
-                p.z -= lbl_eu_80666068 * nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC);
+                p.x = v->field3A8;
+                p.y = v->field3AC;
+                p.z = v->field3B0;
+                v->field530 &= 0xF7FF;
+                p.x -= lbl_eu_80666068 * nw4r::math::SinFIdx(v->field444 * lbl_eu_806660CC);
+                p.z -= lbl_eu_80666068 * nw4r::math::CosFIdx(v->field444 * lbl_eu_806660CC);
                 setAnimSubPos(this, &p);
             }
-            if (v->f4F8 > lbl_eu_80666040) {
+            if (v->field4F8 > lbl_eu_80666040) {
                 // Airborne: pick the ground-following scale pair from the
                 // height delta below the actor.
-                f32 drop = v->f4FC - v->pos3A8.y;
-                if (v->flags4EC & 0x100) {
-                    v->f394 = lbl_eu_80666080;
-                    v->f398 = lbl_eu_8066610C;
+                f32 drop = v->field4FC - v->field3AC;
+                if (v->field4EC & 0x100) {
+                    v->field394 = lbl_eu_80666080;
+                    v->field398 = lbl_eu_8066610C;
                 } else if (drop < lbl_eu_806660D4) {
-                    v->f394 = lbl_eu_80666044;
-                    v->f398 = lbl_eu_80666044;
+                    v->field394 = lbl_eu_80666044;
+                    v->field398 = lbl_eu_80666044;
                 } else if (drop < lbl_eu_80666110) {
-                    v->f394 = lbl_eu_80666044;
-                    v->f398 = lbl_eu_80666114;
+                    v->field394 = lbl_eu_80666044;
+                    v->field398 = lbl_eu_80666114;
                 } else {
-                    v->f394 = lbl_eu_80666110;
-                    v->f398 = lbl_eu_80666118;
+                    v->field394 = lbl_eu_80666110;
+                    v->field398 = lbl_eu_80666118;
                 }
             } else {
-                v->f394 = lbl_eu_80666044;
-                v->f398 = lbl_eu_80666044;
+                v->field394 = lbl_eu_80666044;
+                v->field398 = lbl_eu_80666044;
             }
             ((CActParamAnim*)this)->stepAnimFrame(nullptr);
         }
@@ -1152,17 +1105,17 @@ void cf::CActParamAnimGame::dispatchState() {
     // Notify the +0x3A0 chain's +0x7EC sub-object when the fall state and
     // distance from ground allow it. The +0x4AC word is read before the
     // sub-object null test (retail interleave).
-    void* obj = v->obj3A0;
+    void* obj = v->object3A0;
     if (obj != 0) {
         void* sub = ((CActParamAnimGameObj3A0*)obj)->sub7EC;
         u32 ac = v->field4AC;
         if (sub != 0) {
-            // Forward f4F8 as the float arg so f1 stays live from the
+            // Forward field4F8 as the float arg so f1 stays live from the
             // compare into CActParam7ECTarget::func08 (+0x08), matching
             // retail (no second lfs before the bctrl).
-            f32 air = v->f4F8;
+            f32 air = v->field4F8;
             int arg = 0;
-            if (ac < 5 && air < lbl_eu_806660D4 && (v->flags4EC & 0x8000000) == 0) {
+            if (ac < 5 && air < lbl_eu_806660D4 && (v->field4EC & 0x8000000) == 0) {
                 arg = 1;
             }
             ((CActParam7ECTarget*)sub)->func08(arg, air);
@@ -1171,8 +1124,8 @@ void cf::CActParamAnimGame::dispatchState() {
 
     // Link handoff: when the falling flag was newly set, detach the linked
     // region and reset its two virtual state slots.
-    if ((v->flags4EC & 2) != 0 && (v->flags4F0 & 2) == 0) {
-        void* link = MapFx_ResolveOwner(v->link4E8);
+    if ((v->field4EC & 2) != 0 && (v->field4F0 & 2) == 0) {
+        void* link = MapFx_ResolveOwner(v->field4E8);
         if (link != 0) {
             ((cf::CActorParam*)link)->CActorParam_clearSecondGauge();
             ((cf::CActorParam*)link)->CActorParam_clearGauge();
@@ -1181,16 +1134,7 @@ void cf::CActParamAnimGame::dispatchState() {
 }
 
 // Typed view for isActionReady: keeps the +0x8 link as a typed pointer.
-struct CActParamAnimGameViewD608 {
-    u8 _00[0x08];
-    CActParamAnimGameOwner* owner;  // 0x08
-    u8 _0C[0x4A8 - 0x0C];
-    u32 filter4A8;                  // 0x4A8
-    u8 _4AC[0x4F8 - 0x4AC];
-    f32 f4F8;                       // 0x4F8
-    u8 _4FC[0x508 - 0x4FC];
-    f32 f508;                       // 0x508
-};
+
 
 // Action-readiness query: requires a +0x8 link object, the collision filter
 // inside the [0x4,0x4A09] window, the move vec NOT past the fall vec (the
@@ -1199,19 +1143,19 @@ struct CActParamAnimGameViewD608 {
 // forwarded to startAnimDual untouched (retail leaves r4 as-is), so keeping
 // it a live parameter pins r4 and colors the locals into retail's r5/r6.
 bool cf::CActParamAnimGame::isActionReady(u32 type) {
-    CActParamAnimGameViewD608* self = reinterpret_cast<CActParamAnimGameViewD608*>(this);
-    CActParamAnimGameOwner* owner = self->owner;
+    cf::CActParamAnimGame* self = reinterpret_cast<cf::CActParamAnimGame*>(this);
+    CActParamAnimOwner* owner = self->owner08;
     if (owner == 0) return false;
     // Filter gate: retail folds the compare against 0x44a05 (too big for a
     // cmpli immediate) into addis(-0x40000)+cmpli(0x4a05).
-    if ((u32)(self->filter4A8 - 0x40000) != 0x4a05) goto flags;
+    if ((u32)(self->field4A8 - 0x40000) != 0x4a05) goto flags;
     {
         // Explicit bool keeps MWCC's dead mfcr/extrwi GT capture of the fcmpo.
-        bool over = self->f4F8 > self->f508;
+        bool over = self->field4F8 > self->field508;
         if (over) goto fail;
     }
 flags:
-    if ((owner->flags04 & 4) == 0) goto fail;
+    if ((owner->field04 & 4) == 0) goto fail;
     ((void (*)(void*, u32))startAnimDual)(this, type);
     return true;
 fail:
@@ -1224,8 +1168,8 @@ fail:
 // region is then notified via startAnimDual. The explicit bool local keeps
 // MWCC's dead mfcr/rlwinm capture of the fcmpo result (retail `extrwi.` shape).
 bool cf::CActParamAnimGame::checkHeightThreshold() {
-    CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    bool cond = self->f4F8 > self->f508;
+    cf::CActParamAnimGame* self = reinterpret_cast<cf::CActParamAnimGame*>(this);
+    bool cond = self->field4F8 > self->field508;
     if (cond) {
         startAnimDual(this);
         return true;
@@ -1236,8 +1180,8 @@ bool cf::CActParamAnimGame::checkHeightThreshold() {
 // Mirror of checkHeightThreshold phrased with <= (retail `cntlzw`/`srwi.` shape).
 // The negated comparison keeps MWCC's dead mfcr/cntlzw capture chain.
 bool cf::CActParamAnimGame::checkHeightBelow() {
-    CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    bool cond = !(self->f4F8 > self->f508);
+    cf::CActParamAnimGame* self = reinterpret_cast<cf::CActParamAnimGame*>(this);
+    bool cond = !(self->field4F8 > self->field508);
     if (cond) {
         startAnimDual(this);
         return true;
@@ -1247,7 +1191,7 @@ bool cf::CActParamAnimGame::checkHeightBelow() {
 
 bool stepAnimState__13CActParamAnimFv(void* self);
 bool checkNotFalling__Q22cf17CActParamAnimGame(void* self) {
-    if (((cf::CActParamAnimGameView*)self)->flags4EC & 2) {
+    if (((cf::CActParamAnimGame*)self)->field4EC & 2) {
         return false;
     }
     return stepAnimState__13CActParamAnimFv(self);
@@ -1256,9 +1200,9 @@ bool checkNotFalling__Q22cf17CActParamAnimGame(void* self) {
 // Clears the +0x4EC bit-12 (0x80000) flag and notifies the linked region.
 // Volatile re-read reproduces the retail's second lwz before the mask.
 bool cf::CActParamAnimGame::clearFlag80000() {
-    CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    if ((self->flags4EC & 0x80000) != 0) {
-        self->flags4EC = *(volatile u32*)&self->flags4EC & ~0x80000;
+    cf::CActParamAnimGame* self = reinterpret_cast<cf::CActParamAnimGame*>(this);
+    if ((self->field4EC & 0x80000) != 0) {
+        self->field4EC = *(volatile u32*)&self->field4EC & ~0x80000;
         startAnimDual(this);
         return true;
     }
@@ -1270,18 +1214,18 @@ bool cf::CActParamAnimGame::clearFlag80000() {
 // both clear is
 // the 0x200 flag raised before notifying the region.
 bool cf::CActParamAnimGame::startMoveGate(u32 type, u32 state) {
-    CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
+    cf::CActParamAnimGame* self = reinterpret_cast<cf::CActParamAnimGame*>(this);
     if (state == 0) {
         if (probeGroundAt(this)) {
-            field_530 = (field_530 | 4) & ~0x100;
+            field530 = (field530 | 4) & ~0x100;
             ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     } else if (state == 1) {
         if (refineHitNorm(this)) {
-            field_530 = (field_530 | 8) & ~0x100;
-            if (((cf::CBattleState*)self->owner)->CObjectParam_getParamPtr() == 0 && isSpeedBelow(this) == 0) {
-                field_530 |= 0x200;
+            field530 = (field530 | 8) & ~0x100;
+            if (((cf::CBattleState*)self->owner08)->CObjectParam_getParamPtr() == 0 && isSpeedBelow(this) == 0) {
+                field530 |= 0x200;
             }
             ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
@@ -1295,29 +1239,29 @@ bool cf::CActParamAnimGame::startMoveGate(u32 type, u32 state) {
 // +0x52C state matches the requested one. r4 = type forwarded to
 // startAnimDual, r5 = requested state (0..3).
 bool cf::CActParamAnimGame::fireStateGate(u32 type, u32 state) {
-    if (field_530 & 0x1C0) return false;
+    if (field530 & 0x1C0) return false;
     if (isSpeedAbove(this) != 0 || isSpeedInRange(this) != 0) {
         if (state == 0) {
-            if (field_52C == 1 && (field_530 & 0x200) == 0) {
-                field_530 |= 0x40;
+            if (field52C == 1 && (field530 & 0x200) == 0) {
+                field530 |= 0x40;
                 ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         } else if (state == 1) {
-            if (field_52C == 2) {
-                field_530 |= 0x40;
+            if (field52C == 2) {
+                field530 |= 0x40;
                 ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         } else if (state == 2) {
-            if (field_52C == 4) {
-                field_530 |= 0x40;
+            if (field52C == 4) {
+                field530 |= 0x40;
                 ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
         } else if (state == 3) {
-            if (field_52C == 3) {
-                field_530 |= 0x40;
+            if (field52C == 3) {
+                field530 |= 0x40;
                 ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;
             }
@@ -1330,22 +1274,22 @@ bool cf::CActParamAnimGame::fireStateGate(u32 type, u32 state) {
 // (snapActorDown), state 0 the waiting probe (probeStandGnd); on success the
 // matching 0x20/0x10 bit goes up and the 0x100 bit comes down.
 bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
-    CActParamAnimGameViewBC14* view = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
+    cf::CActParamAnimGame* view = reinterpret_cast<cf::CActParamAnimGame*>(this);
     if (state == 1) {
         if (snapActorDown(this)) {
-            u16 flags = view->flags530;
+            u16 flags = view->field530;
             flags |= 0x20;
             flags &= ~0x100;
-            view->flags530 = flags;
+            view->field530 = flags;
             ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
     } else if (state == 0) {
         if (probeStandGnd(this)) {
-            u16 flags = view->flags530;
+            u16 flags = view->field530;
             flags |= 0x10;
             flags &= ~0x100;
-            view->flags530 = flags;
+            view->field530 = flags;
             ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
         }
@@ -1357,10 +1301,10 @@ bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
 // (probeWallPair), raises the 0x100 flag, zeroes the move vec, resets the
 // move-vec accumulator, requests mode 2, then notifies the region.
 bool cf::CActParamAnimGame::dashStartGate(u32 type) {
-    if (!(field_270 & 0x40)) return false;
+    if (!(field270 & 0x40)) return false;
     if (probeWallPair(this) == false) return false;
-    field_530 |= 0x100;
-    field_3F0 = zero__Q22ml5CVec3;
+    field530 |= 0x100;
+    vec3F0() = zero__Q22ml5CVec3;
     setAnimPosVec(this, &zero__Q22ml5CVec3);
     setAnimCount(this, 2);
     ((void (*)(void*, u32))startAnimDual)(this, type);
@@ -1368,7 +1312,7 @@ bool cf::CActParamAnimGame::dashStartGate(u32 type) {
 }
 
 bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
-    if (((cf::CActParamAnimGameView*)self)->flags4EC & 0x00040000) {
+    if (((cf::CActParamAnimGame*)self)->field4EC & 0x00040000) {
         startAnimDual(self);
         return true;
     }
@@ -1382,7 +1326,7 @@ bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
 // re-fetched from the manager every iteration (retail reloads it at the loop
 // bottom).
 bool cf::CActParamAnimGame::scanActorList(u32 type) {
-    CActParamAnimGameObj3A0* obj = (CActParamAnimGameObj3A0*)field_3A0;
+    CActParamAnimGameObj3A0* obj = (CActParamAnimGameObj3A0*)object3A0;
     if (obj == 0) return false;
     if (*(u32*)obj->_00 != (u32)lbl_eu_80663E14) return false;
 
@@ -1423,13 +1367,13 @@ float cf::CActorParam::CActorParam_getDamageScale() { return ((CActorParamDamage
 // parameter keeps r4 busy as a call-arg register so the CSE'd link pointer
 // lands in r5 like retail (__wpadInfoCallback precedent).
 bool cf::CActParamAnimGame::tryLinkActive(u32 type) {
-    CActParamAnimGameLink* link = field_4F4;
+    CActParamAnimGameLink* link = field4F4;
     if (link != 0 && link->active != 0) {
         ((void (*)(void*, u32))startAnimDual)(this, type);
         return true;
     }
     if (link == 0) {
-        link = field_4E8;
+        link = field4E8;
         if (link != 0 && link->active != 0) {
             ((void (*)(void*, u32))startAnimDual)(this, type);
             return true;
@@ -1451,12 +1395,12 @@ bool isAlwaysFalse__Q22cf17CActParamAnimGame() { return false; }
 // callee-saved FPRs live like retail); the second pair reads field_444
 // directly so MWCC reloads it fresh each time.
 void cf::CActParamAnimGame::snapFacingYaw() {
-    CActParamAnimGameView* v = (CActParamAnimGameView*)this;
-    if (v->state374 != 2) {
+    CActParamAnimGame* v = (CActParamAnimGame*)this;
+    if (v->field374 != 2) {
         solveHeadRate();
         return;
     }
-    f32 ang = v->f444;
+    f32 ang = v->field444;
     f32 m[3][4];
     ml::CVec3 d;
     m[0][0] = lbl_eu_80666040;
@@ -1481,20 +1425,20 @@ void cf::CActParamAnimGame::snapFacingYaw() {
     rot.z = m[0][0] * (f32)(double)cosv + m[0][1] * lbl_eu_80666040 + m[0][2] * (f32)(double)sinv;
     setAnimPosVec(this, &rot);
     setAnimCount(this, 0);
-    d.x = lbl_eu_80666104 * nw4r::math::SinFIdx(v->f444 * lbl_eu_806660CC);
+    d.x = lbl_eu_80666104 * nw4r::math::SinFIdx(v->field444 * lbl_eu_806660CC);
     d.y = lbl_eu_80666040;
-    d.z = lbl_eu_80666104 * nw4r::math::CosFIdx(v->f444 * lbl_eu_806660CC);
-    ml::CVec3 delta(v->pos3A8.x - d.x, v->pos3A8.y - d.y, v->pos3A8.z - d.z);
+    d.z = lbl_eu_80666104 * nw4r::math::CosFIdx(v->field444 * lbl_eu_806660CC);
+    ml::CVec3 delta(v->field3A8 - d.x, v->field3AC - d.y, v->field3B0 - d.z);
     ml::CVec3 target;
     target.x = delta.x;
     target.y = delta.y;
     target.z = delta.z;
     ((bool (*)(void*, ml::CVec3*, const ml::CVec3*, const ml::CVec3*))setAnimSubPos)(this, &target, &delta, &d);
     // Interleaved RMW pair: compute both masked words, then store (retail shape).
-    u32 flags4ec = v->flags4EC | 0x40000;
-    u32 flags0c = v->flags0C & ~0x80;
-    v->flags4EC = flags4ec;
-    v->flags0C = flags0c;
+    u32 flags4ec = v->field4EC | 0x40000;
+    u32 flags0c = v->field0C & ~0x80;
+    v->field4EC = flags4ec;
+    v->field0C = flags0c;
 }
 
 // Ground-hit record written by ScnRes_CopyEntryMid/ScnRes_CopyEntryHead: contact x/z plus
@@ -1513,23 +1457,23 @@ struct CActParamAnimGameHitRec {
 // cone (dot >= lbl_8066605C), probes ahead, refines the yaw against the hit
 // normal, and records the ground point at +0x514.
 bool probeGroundAt(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     ml::CVec3 vecUp;
     vecUp.x = lbl_eu_80666040;
     vecUp.y = lbl_eu_80666044;
     vecUp.z = lbl_eu_80666040;
-    ml::CVec3 vec50 = self->pos3A8 + vecUp;
+    ml::CVec3 vec50 = self->vec3A8() + vecUp;
     ml::CVec3 vecEC(vec50);
     ml::CVec3 sincos;
-    sincos.x = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
+    sincos.x = nw4r::math::SinFIdx(lbl_eu_806660CC * self->field444);
     sincos.y = lbl_eu_80666040;
-    sincos.z = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
+    sincos.z = nw4r::math::CosFIdx(lbl_eu_806660CC * self->field444);
     // Normalize the facing dir; a zero-length dir stays zero.
     ml::CVec3 dir;
-    dir.x = self->face3CC.x;
-    dir.y = self->face3CC.y;
-    f32 len2 = self->face3CC.y * self->face3CC.y;
-    dir.z = self->face3CC.z;
+    dir.x = self->field3CC;
+    dir.y = self->field3D0;
+    f32 len2 = self->field3D0 * self->field3D0;
+    dir.z = self->field3D4;
     len2 = dir.x * dir.x + len2;
     len2 = dir.z * dir.z + len2;
     if (len2 == lbl_eu_80666040) {
@@ -1574,7 +1518,7 @@ bool probeGroundAt(cf::CActParamAnimGame* selfV) {
     ml::CVec3 vec08 = vecEC + vec5C;
     ml::CVec3 vec68(vec08);
     ml::CVec3 vec74(vec20);
-    if (ScnRes_SegQueryForward_E348(&vec74, &vec68, self->filter4A8, 0, 0) == 0) {
+    if (ScnRes_SegQueryForward_E348(&vec74, &vec68, self->field4A8, 0, 0) == 0) {
         return false;
     }
     ml::CVec3 hit2;
@@ -1589,17 +1533,17 @@ bool probeGroundAt(cf::CActParamAnimGame* selfV) {
     // Refine the ground point along the wall normal, re-aim the actor,
     // then record the validated step destination at +0x514.
     vecEC.x = -norm.x * lbl_eu_806619F8 + hit.x;
-    vecEC.y = self->pos3A8.y + lbl_eu_80666080;
+    vecEC.y = self->field3AC + lbl_eu_80666080;
     vecEC.z = -norm.z * lbl_eu_806619F8 + hit.z;
     setTurnScale(selfV,
                   lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
-    if (((BE398Fn)ScnRes_VertRayForward_E398)(&vecEC, self->filter4A8, 0, 0,
+    if (((BE398Fn)ScnRes_VertRayForward_E398)(&vecEC, self->field4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
-        ScnRes_CopyEntryHead(&self->f514, 0);
+        ScnRes_CopyEntryHead(&self->field514, 0);
     } else {
-        self->f514 = vecEC.x;
-        self->f518 = vecEC.y;
-        self->f51C = vecEC.z;
+        self->field514 = vecEC.x;
+        self->field518 = vecEC.y;
+        self->field51C = vecEC.z;
     }
     return true;
 }
@@ -1610,12 +1554,12 @@ bool probeGroundAt(cf::CActParamAnimGame* selfV) {
 // then refines the facing vector against the hit normal and records the new
 // ground point at +0x514. Returns false when any probe misses.
 bool refineHitNorm(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     ml::CVec3 up(lbl_eu_80666040, lbl_eu_80666044, lbl_eu_80666040);
-    ml::CVec3 start = self->pos3A8 + up;
+    ml::CVec3 start = self->vec3A8() + up;
     ml::CVec3 base(start);
     // Normalize the facing dir; a zero-length dir stays zero.
-    ml::CVec3 dir(self->face3CC);
+    ml::CVec3 dir(self->vec3CC());
     f32 len2 = dir.y * dir.y;
     len2 = dir.x * dir.x + len2;
     len2 = dir.z * dir.z + len2;
@@ -1628,10 +1572,10 @@ bool refineHitNorm(cf::CActParamAnimGame* selfV) {
     ml::CVec3 aheadC(ahead);
     ml::CVec3 dest = aheadC + base;
     ml::CVec3 destC(dest);
-    if (ScnRes_SegQueryForward_E348(&base, &destC, self->filter4A8, 0, 0) != 0) {
+    if (ScnRes_SegQueryForward_E348(&base, &destC, self->field4A8, 0, 0) != 0) {
         return false;
     }
-    if (((BE398Fn)ScnRes_VertRayForward_E398)(&destC, self->filter4A8, 0, 0,
+    if (((BE398Fn)ScnRes_VertRayForward_E398)(&destC, self->field4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
         return false;
     }
@@ -1647,8 +1591,8 @@ bool refineHitNorm(cf::CActParamAnimGame* selfV) {
     // Landing point must stay within lbl_806619FC of the actor (x/z only).
     ml::CVec3 land;
     ScnRes_CopyEntryHead(&land, 0);
-    f32 dx = land.x - self->pos3A8.x;
-    f32 dz = land.z - self->pos3A8.z;
+    f32 dx = land.x - self->field3A8;
+    f32 dz = land.z - self->field3B0;
     f32 d2 = dz * dz;
     d2 = dx * dx + d2;
     if (!(d2 <= lbl_eu_806619FC * lbl_eu_806619FC)) {
@@ -1661,15 +1605,15 @@ bool refineHitNorm(cf::CActParamAnimGame* selfV) {
                   lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     // Retail reuses the dead 'base' slot for the retarget point.
     base.x = -norm.x * lbl_eu_806619FC + land.x;
-    base.y = self->pos3A8.y + lbl_eu_80666044;
+    base.y = self->field3AC + lbl_eu_80666044;
     base.z = -norm.z * lbl_eu_806619FC + land.z;
-    if (((BE398Fn)ScnRes_VertRayForward_E398)(&base, self->filter4A8, 0, 0,
+    if (((BE398Fn)ScnRes_VertRayForward_E398)(&base, self->field4A8, 0, 0,
                                  lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
-        ScnRes_CopyEntryHead(&self->f514, 0);
+        ScnRes_CopyEntryHead(&self->field514, 0);
     } else {
-        self->f514 = base.x;
-        self->f518 = base.y;
-        self->f51C = base.z;
+        self->field514 = base.x;
+        self->field518 = base.y;
+        self->field51C = base.z;
     }
     return true;
 }
@@ -1679,31 +1623,31 @@ bool refineHitNorm(cf::CActParamAnimGame* selfV) {
 // offset), and when a ground hit is found within lbl_80666050 of the current
 // height, snaps the actor to it and records the ground point.
 extern "C" bool probeStandGnd(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
-    if (self->state52C == 1 || (u32)(self->state52C - 3) <= 1) {
-        ml::CVec3 vec(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->filter4A8, 0, 0, lbl_eu_806660BC, lbl_eu_80666040) == 0) {
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
+    if (self->field52C == 1 || (u32)(self->field52C - 3) <= 1) {
+        ml::CVec3 vec(self->field3A8, self->field3AC, self->field3B0);
+        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->field4A8, 0, 0, lbl_eu_806660BC, lbl_eu_80666040) == 0) {
             vec.y += lbl_eu_806660BC;
-            f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
+            f32 sinv = nw4r::math::SinFIdx(lbl_eu_806660CC * self->field444);
             ml::CVec3 dir;
             dir.x = sinv;
-            f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
+            f32 cosv = nw4r::math::CosFIdx(lbl_eu_806660CC * self->field444);
             dir.y = lbl_eu_80666040;
             dir.z = cosv;
             dir.x = dir.x * lbl_eu_80666044 + vec.x;
             dir.y = dir.y * lbl_eu_80666044 + vec.y;
             dir.z = dir.z * lbl_eu_80666044 + vec.z;
-            if (ScnRes_SegQueryForward_E348(&vec, &dir, self->filter4A8, 0, 0) == 0) {
-                if (((BE398Fn)ScnRes_VertRayForward_E398)(&dir, self->filter4A8, 0, 0, lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
+            if (ScnRes_SegQueryForward_E348(&vec, &dir, self->field4A8, 0, 0) == 0) {
+                if (((BE398Fn)ScnRes_VertRayForward_E398)(&dir, self->field4A8, 0, 0, lbl_eu_80666124, lbl_eu_8066AF20) != 0) {
                     ml::CVec3 g;
                     ScnRes_CopyEntryHead(&g, 0);
-                    if (g.y - self->pos3A8.y <= lbl_eu_80666050) {
-                        ml::CVec3 t(self->pos3A8.x, self->pos3A8.y, self->pos3A8.z);
+                    if (g.y - self->field3AC <= lbl_eu_80666050) {
+                        ml::CVec3 t(self->field3A8, self->field3AC, self->field3B0);
                         t.y = g.y - lbl_eu_80666050;
                         setAnimSubPos(selfV, &t);
-                        self->f514 = g.x;
-                        self->f518 = g.y;
-                        self->f51C = g.z;
+                        self->field514 = g.x;
+                        self->field518 = g.y;
+                        self->field51C = g.z;
                         return true;
                     }
                 }
@@ -1717,38 +1661,38 @@ extern "C" bool probeStandGnd(cf::CActParamAnimGame* selfV) {
 // direction, probes down, and when a ground hit is found, records the ground
 // point, re-probes, and snaps the actor to it.
 extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     ml::CVec3 vec;
-    if ((u32)(self->state52C - 2) <= 2u) {
-        vec.x = self->pos3A8.x;
-        vec.y = self->pos3A8.y;
-        vec.z = self->pos3A8.z;
-        f32 sinv = nw4r::math::SinFIdx(self->f444 * lbl_eu_806660CC);
+    if ((u32)(self->field52C - 2) <= 2u) {
+        vec.x = self->field3A8;
+        vec.y = self->field3AC;
+        vec.z = self->field3B0;
+        f32 sinv = nw4r::math::SinFIdx(self->field444 * lbl_eu_806660CC);
         vec.x = vec.x + lbl_eu_806660D4 * (-sinv);
-        f32 cosv = nw4r::math::CosFIdx(self->f444 * lbl_eu_806660CC);
+        f32 cosv = nw4r::math::CosFIdx(self->field444 * lbl_eu_806660CC);
         vec.z = vec.z + lbl_eu_806660D4 * (-cosv);
         vec.y = vec.y + lbl_eu_80666044;
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->filter4A8, 0, 0, lbl_eu_80666048, lbl_eu_80666040) != 0) {
+        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->field4A8, 0, 0, lbl_eu_80666048, lbl_eu_80666040) != 0) {
             ml::CVec3 g;
             ScnRes_CopyEntryHead(&g, 0);
-            if (self->pos3A8.y - g.y <= lbl_eu_80666080) {
-                f32 sinv2 = nw4r::math::SinFIdx(self->f444 * lbl_eu_806660CC);
-                self->f514 = self->pos3A8.x - sinv2;
-                f32 cosv2 = nw4r::math::CosFIdx(self->f444 * lbl_eu_806660CC);
-                self->f51C = self->pos3A8.z - cosv2;
-                self->f518 = g.y;
-                *(u32*)&vec.y = *(u32*)&self->f518;
-                *(u32*)&vec.x = *(u32*)&self->f514;
-                *(u32*)&vec.z = *(u32*)&self->f51C;
-                vec.y = lbl_eu_80666044 + self->pos3A8.y;
-                if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->filter4A8, 0, 0, lbl_eu_806660D8, lbl_eu_80666040) != 0) {
+            if (self->field3AC - g.y <= lbl_eu_80666080) {
+                f32 sinv2 = nw4r::math::SinFIdx(self->field444 * lbl_eu_806660CC);
+                self->field514 = self->field3A8 - sinv2;
+                f32 cosv2 = nw4r::math::CosFIdx(self->field444 * lbl_eu_806660CC);
+                self->field51C = self->field3B0 - cosv2;
+                self->field518 = g.y;
+                *(u32*)&vec.y = *(u32*)&self->field518;
+                *(u32*)&vec.x = *(u32*)&self->field514;
+                *(u32*)&vec.z = *(u32*)&self->field51C;
+                vec.y = lbl_eu_80666044 + self->field3AC;
+                if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->field4A8, 0, 0, lbl_eu_806660D8, lbl_eu_80666040) != 0) {
                     ScnRes_CopyEntryHead(&g, 0);
-                    self->f518 = g.y;
+                    self->field518 = g.y;
                 }
-                *(u32*)&vec.y = *(u32*)&self->pos3A8.y;
-                *(u32*)&vec.x = *(u32*)&self->pos3A8.x;
-                *(u32*)&vec.z = *(u32*)&self->pos3A8.z;
-                vec.y = self->f518;
+                *(u32*)&vec.y = *(u32*)&self->field3AC;
+                *(u32*)&vec.x = *(u32*)&self->vec3A8();
+                *(u32*)&vec.z = *(u32*)&self->field3B0;
+                vec.y = self->field518;
                 setAnimSubPos(selfV, &vec);
                 return true;
             }
@@ -1763,9 +1707,9 @@ extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
 // ray shape (lifted anchor +/- facing dir): wall probes without the region
 // filter first, then the filtered probe whose contact pair must agree.
 bool probeWallPair(cf::CActParamAnimGame* selfV) {
-    cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
+    cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     // Copy the facing dir once; normalization below happens in place.
-    ml::CVec3 dir = self->face3CC;
+    ml::CVec3 dir = self->vec3CC();
     // Degenerate facing (no x/z components): nothing to probe against.
     if (dir.x == lbl_eu_80666040 && dir.z == lbl_eu_80666040) {
         return false;
@@ -1773,8 +1717,8 @@ bool probeWallPair(cf::CActParamAnimGame* selfV) {
     ml::CVec3 sincos;
     // The trig results live only inside this struct (retail reloads them
     // from its stack slot around each probe).
-    sincos.x = nw4r::math::SinFIdx(lbl_eu_806660CC * self->f444);
-    sincos.z = nw4r::math::CosFIdx(lbl_eu_806660CC * self->f444);
+    sincos.x = nw4r::math::SinFIdx(lbl_eu_806660CC * self->field444);
+    sincos.z = nw4r::math::CosFIdx(lbl_eu_806660CC * self->field444);
     // Normalize the facing dir; a zero-length dir stays zero.
     f32 len2 = dir.y * dir.y;
     len2 = dir.x * dir.x + len2;
@@ -1792,7 +1736,7 @@ bool probeWallPair(cf::CActParamAnimGame* selfV) {
 
     // Sweep 1: unfiltered wall probe around pos+(0,lbl_80666050).
     ml::CVec3 lift1(lbl_eu_80666040, lbl_eu_80666050, lbl_eu_80666040);
-    ml::CVec3 vec80 = self->pos3A8 + lift1;
+    ml::CVec3 vec80 = self->vec3A8() + lift1;
     ml::CVec3 anchorC(vec80);
     ml::CVec3 vec74;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec74, anchorC, sincos);
@@ -1816,7 +1760,7 @@ bool probeWallPair(cf::CActParamAnimGame* selfV) {
 
     // Sweep 2: second unfiltered wall probe around pos+(0,lbl_80666080).
     ml::CVec3 lift2(lbl_eu_80666040, lbl_eu_80666080, lbl_eu_80666040);
-    ml::CVec3 vec50 = self->pos3A8 + lift2;
+    ml::CVec3 vec50 = self->vec3A8() + lift2;
     anchorC = vec50;
     ml::CVec3 vec44;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&vec44, anchorC, sincos);
@@ -1840,7 +1784,7 @@ bool probeWallPair(cf::CActParamAnimGame* selfV) {
     ml::CVec3 vec8 = anchorC + vec14;
     ml::CVec3 vec98b(vec20);
     ml::CVec3 vecA4(vec8);
-    if (ScnRes_SegQueryForward_E348(&vecA4, &vec98b, self->filter4A8, 0, 0) == 0) {
+    if (ScnRes_SegQueryForward_E348(&vecA4, &vec98b, self->field4A8, 0, 0) == 0) {
         return false;
     }
     ml::CVec3 land;
@@ -1857,9 +1801,9 @@ bool probeWallPair(cf::CActParamAnimGame* selfV) {
     setTurnScale(selfV,
                   lbl_eu_806660E0 * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     // Commit the refined ground point.
-    self->f514 = lbl_eu_80666100 * norm.x + hit.x;
-    self->f518 = self->pos3A8.y;
-    self->f51C = lbl_eu_80666100 * norm.z + hit.z;
+    self->field514 = lbl_eu_80666100 * norm.x + hit.x;
+    self->field518 = self->field3AC;
+    self->field51C = lbl_eu_80666100 * norm.z + hit.z;
     return true;
 }
 
@@ -1871,18 +1815,18 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
     ml::CVec3 v134(0.0f, 0.0f, 0.0f);
     int groundOk = 0;
 
-    if (field_4E8 != 0) {
-        if (field_4EC & 0x8) {
+    if (field4E8 != 0) {
+        if (field4EC & 0x8) {
             if (move->x != 0.0f || move->y != 0.0f) {
                 ml::CVec3 v128(*pos);
                 ml::CVec3 v11c(*move);
                 ml::CVec3 v110(0.0f, 0.0f, 0.0f);
-                v128.y = field_510;
+                v128.y = field510;
                 v11c.y = 0.0f;
-                u16 saved = field_4E8->f6BE;
-                field_4E8->f6BE = 0x1f4;
-                ColiResolveNodeMove(&field_4E8->f60C, &v128, &v11c, &v110);
-                field_4E8->f6BE = saved;
+                u16 saved = field4E8->f6BE;
+                field4E8->f6BE = 0x1f4;
+                ColiResolveNodeMove(&field4E8->f60C, &v128, &v11c, &v110);
+                field4E8->f6BE = saved;
                 if (v110.x != 0.0f || v110.z != 0.0f) {
                     v128.x += v110.x;
                     v128.z += v110.z;
@@ -1917,25 +1861,25 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                 }
             }
         }
-        if (ColiResolveNodeMove(&field_4E8->f60C, &v134, pos, move)) {
+        if (ColiResolveNodeMove(&field4E8->f60C, &v134, pos, move)) {
             if (v134.y > lbl_eu_8066606C) {
-                field_47C = pos->y + v134.y;
+                field47C = pos->y + v134.y;
                 groundOk = 1;
             }
         } else {
             if (v134.y > lbl_eu_8066606C) {
-                if (field_3C0.y < 0.0f && field_3C0.y <= lbl_eu_80666128) {
-                    setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
+                if (field3C4 < 0.0f && field3C4 <= lbl_eu_80666128) {
+                    setAnimHeight(this, field3C4 * lbl_eu_8066612C);
                 }
             }
         }
         if (v134.x != 0.0f || v134.y != 0.0f || v134.z != 0.0f) {
-            field_4EC |= 0x20000000;
+            field4EC |= 0x20000000;
         }
         moveV += v134;
     }
 
-    if (field_4EC & 0x28) {
+    if (field4EC & 0x28) {
         ml::CVec3 v38 = moveV * lbl_eu_80666098;
         ml::CVec3 v8c = v38;
         ml::CVec3 v2c = *pos + v8c;
@@ -1943,8 +1887,8 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         ml::CVec3 v80(0.0f, lbl_eu_806660BC, 0.0f);
         ml::CVec3 v20 = v98 + v80;
         ml::CVec3 va4 = v20;
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&va4, field_4A8 & ~0x2000, 0, 1, lbl_eu_80666130, lbl_eu_8066AF20)) {
-            if (field_4EC & 0x8) {
+        if (((BE398Fn)ScnRes_VertRayForward_E398)(&va4, field4A8 & ~0x2000, 0, 1, lbl_eu_80666130, lbl_eu_8066AF20)) {
+            if (field4EC & 0x8) {
                 f32 f29v = lbl_eu_80666134;
                 int topIdx = -1;
                 f32 f31v = 0.0f;
@@ -1969,13 +1913,13 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                                 }
                             }
                         }
-                        if (f29v - f30v > field_508) {
+                        if (f29v - f30v > field508) {
                             moveV = ml::CVec3(0.0f, 0.0f, 0.0f);
                         }
                     }
                 }
             } else {
-                if (field_4EC & 0x20) {
+                if (field4EC & 0x20) {
                     if (v134.x != 0.0f || v134.z != 0.0f) {
                         moveV = zero__Q22ml5CVec3;
                     }
@@ -1984,13 +1928,13 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         }
     }
 
-    if (field_4EC & 0x8) {
+    if (field4EC & 0x8) {
         ml::CVec3 v104(*pos);
         ml::CVec3 vF8(moveV.x, 0.0f, moveV.z);
-        v104.y = field_510;
-        ((BD94CFn)ScnRes_ResolveGroundHeight)(&v104, &vF8, field_4A8, 0, (field_0C & 0x10000) != 0, 1,
-                                 field_494, field_490, lbl_eu_80666048, lbl_eu_8066AF20, field_484);
-        field_510 = v104.y;
+        v104.y = field510;
+        ((BD94CFn)ScnRes_ResolveGroundHeight)(&v104, &vF8, field4A8, 0, (field0C & 0x10000) != 0, 1,
+                                 field494, field490, lbl_eu_80666048, lbl_eu_8066AF20, field484);
+        field510 = v104.y;
         v104.x -= pos->x;
         v104.z -= pos->z;
         f32 len2 = v104.x * v104.x + v104.z * v104.z;
@@ -2025,7 +1969,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
     }
 
     if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() == 0x31) {
-        if (field_4E8 != 0 && (field_4E8->f64 & 4)) {
+        if (field4E8 != 0 && (field4E8->f64 & 4)) {
             if (PSVECMag((const Vec*)&moveV) > lbl_eu_80666104) {
                 f32 len2 = moveV.x * moveV.x + moveV.y * moveV.y + moveV.z * moveV.z;
                 if (len2 == 0.0f) {
@@ -2038,46 +1982,46 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         }
     }
 
-    if (field_4EC & 0x1000) {
-        field_488 = pos->y;
+    if (field4EC & 0x1000) {
+        field488 = pos->y;
         groundOk = 1;
-        field_4EC &= ~0x1000;
+        field4EC &= ~0x1000;
         ml::CVec3 zz(0.0f, 0.0f, 0.0f);
         setAnimPosVec(this, &zz);
         goto l60418;
     }
 
-    if (field_270 & 0x20) {
+    if (field270 & 0x20) {
         f32 f31v = pos->y + moveV.y;
         f32 f29v;
-        if (field_3D8.y <= lbl_eu_806660C4) {
+        if (field3DC <= lbl_eu_806660C4) {
             f29v = lbl_eu_8066613C;
-        } else if (field_3D8.y <= lbl_eu_8066605C) {
+        } else if (field3DC <= lbl_eu_8066605C) {
             f29v = lbl_eu_80666140;
         } else {
             f29v = lbl_eu_80666144;
         }
         if (v134.y > lbl_eu_8066606C) f29v = 0.0f;
-        if (field_4EC & 0x20000000) {
+        if (field4EC & 0x20000000) {
             moveV.x = 0.0f;
             moveV.z = 0.0f;
         }
-        if (field_530 & 0x400) {
+        if (field530 & 0x400) {
             ScnRes_XCrossCbThunk_E628(1);
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
-                        (field_0C & 0x10000) != 0, 1,
-                        field_494, field_490, f29v, lbl_eu_8066AF20, field_484)) != 0;
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+                        (field0C & 0x10000) != 0, 1,
+                        field494, field490, f29v, lbl_eu_8066AF20, field484)) != 0;
             ScnRes_XCrossCbThunk_E628(0);
         } else {
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
-                        (field_0C & 0x10000) != 0, 1,
-                        field_494, field_490, f29v, lbl_eu_8066AF20, field_484)) != 0;
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+                        (field0C & 0x10000) != 0, 1,
+                        field494, field490, f29v, lbl_eu_8066AF20, field484)) != 0;
         }
         if (ScnRes_GetCrossFlagA_E5B8()) {
-            field_4EC |= 0x2000000;
-            ml::CVec3 v68 = field_3C0 * lbl_eu_8066609C;
+            field4EC |= 0x2000000;
+            ml::CVec3 v68 = vec3C0() * lbl_eu_8066609C;
             setAnimPosVec(this, &v68);
-            if (lbl_eu_80666090 + field_464 < pos->y && lbl_eu_80666148 + f31v < pos->y) {
+            if (lbl_eu_80666090 + field464 < pos->y && lbl_eu_80666148 + f31v < pos->y) {
                 if (move->x != 0.0f || move->z != 0.0f) {
                     ml::CVec3 vEC(move->x, 0.0f, move->z);
                     f32 clen2 = vEC.x * vEC.x + vEC.y * vEC.y + vEC.z * vEC.z;
@@ -2086,31 +2030,31 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                     } else {
                         PSVECNormalize((const Vec*)&vEC, (Vec*)&vEC);
                     }
-                    field_0C |= 0x1000;
-                    *(u32*)&field_3FC = *(u32*)&vEC.x;
-                    *(u32*)&field_400 = *(u32*)&vEC.y;
-                    *(u32*)&field_404 = *(u32*)&vEC.z;
+                    field0C |= 0x1000;
+                    *(u32*)&field3FC = *(u32*)&vEC.x;
+                    *(u32*)&field400 = *(u32*)&vEC.y;
+                    *(u32*)&field404 = *(u32*)&vEC.z;
                 }
             }
         }
-        if (moveV.y < 0.0f && pos->y - f31v <= lbl_eu_806660D4 && field_3C0.y <= lbl_eu_80666128) {
-            setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
+        if (moveV.y < 0.0f && pos->y - f31v <= lbl_eu_806660D4 && field3C4 <= lbl_eu_80666128) {
+            setAnimHeight(this, field3C4 * lbl_eu_8066612C);
         }
-        if (pos->y - field_464 <= lbl_eu_80666098 && field_3C0.y > 0.0f && !(field_4EC & 0x1000000)) {
+        if (pos->y - field464 <= lbl_eu_80666098 && field3C4 > 0.0f && !(field4EC & 0x1000000)) {
             groundOk = 0;
         }
-        field_534 = 0;
-        if (field_4EC & 2) groundOk = 1;
+        field534 = 0;
+        if (field4EC & 2) groundOk = 1;
         goto l60418;
     }
 
     {
         f32 f29v = pos->y + moveV.y;
         f32 f30v;
-        if (field_4EC & 2) {
+        if (field4EC & 2) {
             f30v = 0.0f;
             groundOk = 1;
-        } else if (field_0C & 0x10000) {
+        } else if (field0C & 0x10000) {
             f30v = 0.0f;
         } else {
             f32 len2 = move->x * move->x + move->z * move->z;
@@ -2122,147 +2066,147 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
                 }
                 f32 len = len2 <= 0.0f ? 0.0f : len2 * nw4r::math::FrSqrt(len2);
                 f30v = -len;
-                if (field_0C & 0x200000) f30v *= lbl_eu_80666050;
+                if (field0C & 0x200000) f30v *= lbl_eu_80666050;
             }
         }
         if (v134.y > lbl_eu_8066606C) f30v = 0.0f;
         ml::CVec3 vE0 = *pos;
-        if (field_530 & 0x400) {
+        if (field530 & 0x400) {
             ScnRes_XCrossCbThunk_E628(1);
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
-                        (field_0C & 0x10000) != 0, 1,
-                        field_494, field_490, f30v, lbl_eu_8066AF20, field_484)) != 0;
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+                        (field0C & 0x10000) != 0, 1,
+                        field494, field490, f30v, lbl_eu_8066AF20, field484)) != 0;
             ScnRes_XCrossCbThunk_E628(0);
         } else {
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field_4A8, 0,
-                        (field_0C & 0x10000) != 0, 1,
-                        field_494, field_490, f30v, lbl_eu_8066AF20, field_484)) != 0;
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+                        (field0C & 0x10000) != 0, 1,
+                        field494, field490, f30v, lbl_eu_8066AF20, field484)) != 0;
         }
         if (groundOk != 0) {
-            field_4EC |= 0x8000;
+            field4EC |= 0x8000;
         } else {
-            field_4EC &= ~0x8000;
+            field4EC &= ~0x8000;
         }
         if (ScnRes_GetCrossFlagA_E5B8()) {
-            field_4EC |= 0x200000;
+            field4EC |= 0x200000;
         } else {
-            field_4EC &= ~0x200000;
+            field4EC &= ~0x200000;
         }
-        if (moveV.y < 0.0f && pos->y - f29v <= lbl_eu_806660D4 && field_3C0.y <= lbl_eu_80666128) {
-            setAnimHeight(this, field_3C0.y * lbl_eu_8066612C);
+        if (moveV.y < 0.0f && pos->y - f29v <= lbl_eu_806660D4 && field3C4 <= lbl_eu_80666128) {
+            setAnimHeight(this, field3C4 * lbl_eu_8066612C);
         }
         if (groundOk == 0) {
-            if (field_4EC & 0x40000) {
-                if (field_4EC & 0x1000) {
-                    if (field_4EC & 0x800) {
+            if (field4EC & 0x40000) {
+                if (field4EC & 0x1000) {
+                    if (field4EC & 0x800) {
                         if (v134.x == 0.0f && v134.z == 0.0f) {
                             if (vE0.y + moveV.y < pos->y) {
-                                field_534 = 0;
+                                field534 = 0;
                                 groundOk = 1;
                             } else {
-                                s16 a = (s16)field_534;
-                                s16 b = (s16)field_536;
-                                field_534 = (u16)(a + 1);
+                                s16 a = (s16)field534;
+                                s16 b = (s16)field536;
+                                field534 = (u16)(a + 1);
                                 if (a > b) {
-                                    field_534 = (u16)(b + 1);
+                                    field534 = (u16)(b + 1);
                                 } else {
                                     groundOk = 1;
                                 }
                             }
                         } else {
                             *pos = vE0;
-                            field_534 = 0;
-                            field_4EC |= 0x400;
+                            field534 = 0;
+                            field4EC |= 0x400;
                             groundOk = 1;
                         }
                     } else {
-                        s16 a = (s16)field_534;
-                        s16 b = (s16)field_536;
-                        field_534 = (u16)(a + 1);
+                        s16 a = (s16)field534;
+                        s16 b = (s16)field536;
+                        field534 = (u16)(a + 1);
                         if (a > b) {
-                            field_534 = (u16)(b + 1);
+                            field534 = (u16)(b + 1);
                         } else {
                             groundOk = 1;
                         }
                     }
                 } else {
-                    field_534 = 0;
+                    field534 = 0;
                 }
             } else {
-                field_534 = 0;
+                field534 = 0;
             }
         } else {
-            field_534 = 0;
+            field534 = 0;
         }
-        if (field_3C0.y > 0.0f) groundOk = 0;
+        if (field3C4 > 0.0f) groundOk = 0;
     }
 
 l60418:
     if (ScnRes_GetCrossFlagB_E5C0()) {
-        field_4EC |= 0x80000000;
+        field4EC |= 0x80000000;
     } else {
-        field_4EC &= ~0x80000000;
+        field4EC &= ~0x80000000;
     }
     if (groundOk == 0) {
-        if (!(field_0C & 0x10000)) {
-            if (field_4EC & 0x40000) {
-                field_4EC = (field_4EC & 0xFFF5FFFF) | 0x40000;
+        if (!(field0C & 0x10000)) {
+            if (field4EC & 0x40000) {
+                field4EC = (field4EC & 0xFFF5FFFF) | 0x40000;
             }
-            if (field_488 < pos->y || field_3B4.y - field_3A8.y > lbl_eu_806660C8) {
-                field_488 = pos->y;
+            if (field488 < pos->y || field3B8 - field3AC > lbl_eu_806660C8) {
+                field488 = pos->y;
             } else {
-                f32 d = field_488 - pos->y;
-                if (d > lbl_eu_80666154 || (field_0C & 0x80)) {
+                f32 d = field488 - pos->y;
+                if (d > lbl_eu_80666154 || (field0C & 0x80)) {
                 } else {
-                    field_4EC |= 0x100000;
-                    if (field_488 - pos->y <= lbl_eu_80666154) {
-                        int n = (int)(field_488 - pos->y);
+                    field4EC |= 0x100000;
+                    if (field488 - pos->y <= lbl_eu_80666154) {
+                        int n = (int)(field488 - pos->y);
                         int q = n / 10;
                         int res = q * 20;
                         if (res >= 100) res = 100;
-                        field_532 = (u16)res;
+                        field532 = (u16)res;
                     }
                 }
             }
         }
     } else {
-        if (field_4EC & 0x40000) {
-            if (!(field_0C & 0x80) && field_488 - pos->y <= lbl_eu_80666154) {
-                if (field_4EC & 2) {
-                    if ((field_530 & 0x400) && field_488 - pos->y <= lbl_eu_80666158) {
+        if (field4EC & 0x40000) {
+            if (!(field0C & 0x80) && field488 - pos->y <= lbl_eu_80666154) {
+                if (field4EC & 2) {
+                    if ((field530 & 0x400) && field488 - pos->y <= lbl_eu_80666158) {
                         if (getEventValue40__Q22cf13CfGameManagerFv(0x83) == 0) {
                             setEventManagerValue__Q22cf13CfGameManagerFv(0x83, 1);
                             queueEventId__Q22cf13CfGameManagerFv(0x83);
                         }
                     }
                 } else {
-                    int n = (int)(field_488 - pos->y);
+                    int n = (int)(field488 - pos->y);
                     int q = n / 10;
                     int res = q * 20;
                     if (res >= 100) res = 100;
-                    field_532 = (u16)res;
-                    field_538 = 0;
-                    field_4EC |= 0x90000;
+                    field532 = (u16)res;
+                    field538 = 0;
+                    field4EC |= 0x90000;
                 }
             }
-            field_4EC &= ~0x40000;
-        } else if (field_4EC & 0x80000) {
+            field4EC &= ~0x40000;
+        } else if (field4EC & 0x80000) {
             if (this->getAttachedAnimScale() > 0.0f) {
-                s16 c = (s16)field_538;
-                field_538 = (u16)(c + 1);
-                if (c > 6) field_4EC &= ~0x80000;
+                s16 c = (s16)field538;
+                field538 = (u16)(c + 1);
+                if (c > 6) field4EC &= ~0x80000;
             }
         }
     }
-    field_488 = pos->y;
-    field_4EC |= 0x20000;
-    if (field_47C <= pos->y) field_47C = pos->y;
-    if (field_4EC & 2) {
-        field_4EC &= 0xFFE2FFFF;
+    field488 = pos->y;
+    field4EC |= 0x20000;
+    if (field47C <= pos->y) field47C = pos->y;
+    if (field4EC & 2) {
+        field4EC &= 0xFFE2FFFF;
     }
-    if (field_4EC & 0x4000) {
-        if (field_3A0 != 0) {
-            void* sub = ((cf::CActParamAnimGameObj3A0*)field_3A0)->sub7EC;
+    if (field4EC & 0x4000) {
+        if (object3A0 != 0) {
+            void* sub = ((cf::CActParamAnimGameObj3A0*)object3A0)->sub7EC;
             if (sub != 0) {
                 ml::CVec3 v14 = *pos + ml::CVec3(0.0f, 1.0f, 0.0f);
                 ml::CVec3 vBC = v14;
@@ -2271,7 +2215,7 @@ l60418:
                 ml::CVec3 vD4;
                 ml::CVec3 vC8;
                 if (Coli_WalkReport((void*)lbl_eu_80665958, &vD4, &vC8, &vBC, &vB0)) {
-                    if (vD4.y > field_3E4.y - lbl_eu_80666160) {
+                    if (vD4.y > field3E8 - lbl_eu_80666160) {
                         ml::CVec3 v44 = vD4;
                         ((CActParam7ECTarget*)sub)->func14(&v44);
                         ((CActParam7ECTarget*)sub)->func18(1);
@@ -2291,18 +2235,18 @@ l60418:
 // link toward the actor (CfObject_setMoveHeadAngle) with the heading from
 // Atan2FIdx.
 void cf::CActParamAnimGame::aimAtActorPos() {
-    CActParamAnimGameView* v = (CActParamAnimGameView*)this;
+    CActParamAnimGame* v = (CActParamAnimGame*)this;
     // Retail reloads the +0x4E8 link for every dispatch; keep the loads
     // independent so MWCC colors them like retail.
-    if (v->link4E8 == 0) return;
-    if (((cf::CfObject*)v->link4E8)->CObjectParam_getSelfObjectId() == 0) return;
-    void* src = findObjectById((int)((cf::CfObject*)v->link4E8)->CObjectParam_getSelfObjectId());
+    if (v->field4E8 == 0) return;
+    if (((cf::CfObject*)v->field4E8)->CObjectParam_getSelfObjectId() == 0) return;
+    void* src = findObjectById((int)((cf::CfObject*)v->field4E8)->CObjectParam_getSelfObjectId());
     if (src == 0) return;
     ml::CVec3* p = ((cf::CfObject*)src)->CfObject_getPosVector();
     ml::CVec3 d;
     nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(&d),
                          reinterpret_cast<const nw4r::math::VEC3*>(p),
-                         reinterpret_cast<const nw4r::math::VEC3*>(&v->pos3A8));
+                         reinterpret_cast<const nw4r::math::VEC3*>(&v->field3A8));
     f32 dx = d.x;
     f32 dy = d.y;
     f32 dz = d.z;
@@ -2312,18 +2256,18 @@ void cf::CActParamAnimGame::aimAtActorPos() {
     bool b3 = nw4r::math::FAbs(dz) <= ml::epsilon;
     bool nearAll = nearXY && b3;
     if (nearAll) return;
-    v->flags0C |= 0x1000000;
-    ((cf::CfObject*)v->link4E8)->CfObject_setMoveHeadAngle(lbl_eu_806660E0 * nw4r::math::Atan2FIdx(dx, dz));
+    v->field0C |= 0x1000000;
+    ((cf::CfObject*)v->field4E8)->CfObject_setMoveHeadAngle(lbl_eu_806660E0 * nw4r::math::Atan2FIdx(dx, dz));
 }
 
 // Forwards the +0x444 scalar to the +0xC4 virtual slot of the object at
 // +0x4E8 (tail call; retail keeps no stack frame). Real virtual dispatch
 // (CfObject_setMoveHeadAngle) so MWCC emits the r12 vtable load.
 void cf::CActParamAnimGame::syncYawToLink() {
-    CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    cf::CfObject* region = (cf::CfObject*)self->region4E8;
+    cf::CActParamAnimGame* self = reinterpret_cast<cf::CActParamAnimGame*>(this);
+    cf::CfObject* region = (cf::CfObject*)self->field4E8;
     if (region == 0) return;
-    f32 value = self->f444;
+    f32 value = self->field444;
     region->CfObject_setMoveHeadAngle(value);
 }
 

@@ -2533,7 +2533,7 @@ void CMenuArtsSet_resetSubList(CArtsList* self) {
 
 void CArtsList::CMenuArtsSet_setArmedFlag(u8 val) { mSubObj124.field_0x15 = val; }
 
-u32 CArtsList::CMenuArtsSet_isSlotWindowEmpty() { return ((u32(*)(void*))ArtsSlot_isWindowEmpty)((char*)this + 0x148); }
+u32 CArtsList::CMenuArtsSet_isSlotWindowEmpty() { return ArtsSlot_isWindowEmpty((SArtsSub8022FA58*)&mSubObj148); }
 
 // Arm the CSysWin sub-object with a new label pair and mark the 0x2A6 flag.
 // Guarded by the syswin/info busy checks; the string pair is built from the

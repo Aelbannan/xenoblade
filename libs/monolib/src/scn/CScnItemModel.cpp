@@ -251,7 +251,8 @@ void simSetFlag2000000(){}
 // self tail-call, mirroring simSetLeafDist7B0 (MWCC does not auto-unroll
 // pointer-chasing loops; retail is this shape). extern "C" keeps the self
 // tail-call reloc name verbatim (reloc-site gate, same as simSetLeafDist7B0).
-extern "C" u8* simGetLeafActData(CScnItemModel* self) {
+extern "C" void* simGetLeafActData(void* object) {
+    CScnItemModel* self = (CScnItemModel*)object;
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
         CScnItemModel* n2 = n1->field_0x7C4;
@@ -281,8 +282,8 @@ extern "C" u8* simGetLeafActData(CScnItemModel* self) {
 // shape, recursing simMarkTree80000(c, 1) at depth 3), then sync bit 9 of
 // self->flags7A4 onto the model (set 0x40 / clear 0x400000), notify via
 // vtable 0x64 and return 1. extern "C" keeps the call reloc names verbatim.
-extern "C" u32 simAttachModel(CScnItemModel* self) {
-    CScnItemModel* model = Scn_SetupAnimDefault(self->field_04);
+extern "C" u32 simAttachModel(CScnItemModel* self, void* nameParam) {
+    CScnItemModel* model = Scn_SetupAnimDefault((u32)self->field_04, nameParam);
     if (model == 0) {
         return 0;
     }
@@ -378,11 +379,11 @@ extern "C" u32 simAttachModel(CScnItemModel* self) {
 // model tree with the 0x80000 flag (simMarkTree80000 walk shape, recursing
 // simMarkTree80000(c, 1) at depth 3), then notify via vtable 0x64 and return 1.
 // extern "C" keeps the call reloc names verbatim (reloc-site gate).
-extern "C" u32 simCoupleModel(CScnItemModel* self) {
+extern "C" u32 simCoupleModel(CScnItemModel* self, void* nameParam) {
     if (self->field_0x7C4 != 0) {
         return 1;
     }
-    CScnItemModel* model = Scn_SetupAnimDefault(self->field_04);
+    CScnItemModel* model = Scn_SetupAnimDefault((u32)self->field_04, nameParam);
     if (model == 0) {
         return 0;
     }

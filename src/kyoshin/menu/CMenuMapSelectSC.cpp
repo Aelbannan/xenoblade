@@ -55,9 +55,7 @@ extern "C" void FloorMap_ScrollRight(CFloorMap* self);
 extern "C" void FloorMap_ScrollLeft(CFloorMap* self);
 extern "C" void FloorMap_MoveToCursorRow(CFloorMap* self);
 
-// Retail symbol keeps its mangled form (CfGameManager static member); the
-// call site passes (u16 value, 0) even though the name says Fv.
-extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
+// func_8008413C is declared in CfGameManager.hpp with its retail (u16,u32) form.
 
 
 
@@ -87,17 +85,15 @@ extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 // (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 // UI/sound + scene-active helpers.
 extern "C" void UIWin_ControlWindowLists(u32 a, u32 b);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // Ctor/re-init helpers for the embedded widgets (retail-unmangled).
 extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void __dt__9CFloorMapFv(CFloorMap* _this, int flags);
-extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
 extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
 
-// C++-linkage helpers - retail emits the mangled forms
+#include "kyoshin/CScrollBar.hpp"
 // playUISound__FUl / SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
 
 // Data imports (MWCC does not mangle global-scope data names).
@@ -147,7 +143,7 @@ void CMenuMapSelectSC::Init() {
     u8 tempTitle[0x38];
     __ct__11CTitleAHelpFPcUc(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 0x4a);
 
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x64, tempTitle + 0x4);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mTitleAHelp.unk4, &reinterpret_cast<CTitleAHelp*>(tempTitle)->unk4);
     CTitleAHelp* tmpTitle = reinterpret_cast<CTitleAHelp*>(tempTitle);
     mTitleAHelp.mFileHandle = tmpTitle->mFileHandle;
     mTitleAHelp.mArcResourceAccessor = tmpTitle->mArcResourceAccessor;
@@ -168,7 +164,7 @@ void CMenuMapSelectSC::Init() {
     // --- Re-initialise the embedded CFade via a temporary ---
     {
         CFade tmpFade;
-        __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x9c, (u8*)&tmpFade + 0x4);
+        __as__17UnkClass_8045F564FRC17UnkClass_8045F564(&mFade.mMemRegion, &tmpFade.mMemRegion);
         mFade.mFileHandle = tmpFade.mFileHandle;
         mFade.mArcResAcc = tmpFade.mArcResAcc;
         mFade.mLayout = tmpFade.mLayout;
@@ -185,84 +181,84 @@ void CMenuMapSelectSC::Init() {
     u8 tempFloor[0x3348];
     __ct__CFloorMap(reinterpret_cast<CFloorMap*>(tempFloor));
 
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0xc4, tempFloor + 0x4);
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0xd4, tempFloor + 0x14);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mFloorMap.mMemRegion04, reinterpret_cast<CFloorMap*>(tempFloor)->mMemRegion04);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mFloorMap.mMemRegion14, reinterpret_cast<CFloorMap*>(tempFloor)->mMemRegion14);
 
     // File handles / buffers / visibility flags (member 0x24-0x5D).
-    *(u32*)((u8*)this + 0xe4) = *(u32*)(tempFloor + 0x24);
-    *(u32*)((u8*)this + 0xe8) = *(u32*)(tempFloor + 0x28);
-    *(u32*)((u8*)this + 0xec) = *(u32*)(tempFloor + 0x2c);
-    *(u32*)((u8*)this + 0xf0) = *(u32*)(tempFloor + 0x30);
-    *(u32*)((u8*)this + 0xf4) = *(u32*)(tempFloor + 0x34);
-    *(u32*)((u8*)this + 0xf8) = *(u32*)(tempFloor + 0x38);
-    *(u32*)((u8*)this + 0xfc) = *(u32*)(tempFloor + 0x3c);
-    *(u8*)((u8*)this + 0x100) = *(u8*)(tempFloor + 0x40);
-    *(u8*)((u8*)this + 0x101) = *(u8*)(tempFloor + 0x41);
-    *(u8*)((u8*)this + 0x102) = *(u8*)(tempFloor + 0x42);
-    *(u8*)((u8*)this + 0x103) = *(u8*)(tempFloor + 0x43);
-    *(f32*)((u8*)this + 0x104) = *(f32*)(tempFloor + 0x44);
-    *(f32*)((u8*)this + 0x108) = *(f32*)(tempFloor + 0x48);
-    *(f32*)((u8*)this + 0x10c) = *(f32*)(tempFloor + 0x4c);
-    *(f32*)((u8*)this + 0x110) = *(f32*)(tempFloor + 0x50);
-    *(f32*)((u8*)this + 0x114) = *(f32*)(tempFloor + 0x54);
-    *(u8*)((u8*)this + 0x118) = *(u8*)(tempFloor + 0x58);
-    *(u16*)((u8*)this + 0x11a) = *(u16*)(tempFloor + 0x5a);
-    *(u8*)((u8*)this + 0x11c) = *(u8*)(tempFloor + 0x5c);
-    *(u8*)((u8*)this + 0x11d) = *(u8*)(tempFloor + 0x5d);
+    mFloorMap.field_24 = reinterpret_cast<CFloorMap*>(tempFloor)->field_24;
+    mFloorMap.field_28 = reinterpret_cast<CFloorMap*>(tempFloor)->field_28;
+    mFloorMap.field_2C = reinterpret_cast<CFloorMap*>(tempFloor)->field_2C;
+    mFloorMap.field_30 = reinterpret_cast<CFloorMap*>(tempFloor)->field_30;
+    mFloorMap.field_34 = reinterpret_cast<CFloorMap*>(tempFloor)->field_34;
+    mFloorMap.field_38 = reinterpret_cast<CFloorMap*>(tempFloor)->field_38;
+    mFloorMap.allocated_buf_3C = reinterpret_cast<CFloorMap*>(tempFloor)->allocated_buf_3C;
+    mFloorMap.field_40 = reinterpret_cast<CFloorMap*>(tempFloor)->field_40;
+    mFloorMap.field_41 = reinterpret_cast<CFloorMap*>(tempFloor)->field_41;
+    mFloorMap.field_42 = reinterpret_cast<CFloorMap*>(tempFloor)->field_42;
+    mFloorMap.field_43 = reinterpret_cast<CFloorMap*>(tempFloor)->field_43;
+    mFloorMap.pos_x_44 = reinterpret_cast<CFloorMap*>(tempFloor)->pos_x_44;
+    mFloorMap.pos_y_48 = reinterpret_cast<CFloorMap*>(tempFloor)->pos_y_48;
+    mFloorMap.field_4C = reinterpret_cast<CFloorMap*>(tempFloor)->field_4C;
+    mFloorMap.field_50 = reinterpret_cast<CFloorMap*>(tempFloor)->field_50;
+    mFloorMap.field_54 = reinterpret_cast<CFloorMap*>(tempFloor)->field_54;
+    mFloorMap.cursor_active_58 = reinterpret_cast<CFloorMap*>(tempFloor)->cursor_active_58;
+    mFloorMap.field_5A = reinterpret_cast<CFloorMap*>(tempFloor)->field_5A;
+    mFloorMap.cursor_idx_5C = reinterpret_cast<CFloorMap*>(tempFloor)->cursor_idx_5C;
+    mFloorMap.field_5D = reinterpret_cast<CFloorMap*>(tempFloor)->field_5D;
 
-    __as__17UnkClass_8045F564FRC17UnkClass_8045F564((u8*)this + 0x124, tempFloor + 0x64);
+    __as__17UnkClass_8045F564FRC17UnkClass_8045F564(mFloorMap.mScrollBar + 4, reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar + 4);
 
     // Cursor / scroll state (member 0x74-0xB5).
-    *(u32*)((u8*)this + 0x134) = *(u32*)(tempFloor + 0x74);
-    *(u32*)((u8*)this + 0x138) = *(u32*)(tempFloor + 0x78);
-    *(u32*)((u8*)this + 0x13c) = *(u32*)(tempFloor + 0x7c);
-    *(u32*)((u8*)this + 0x140) = *(u32*)(tempFloor + 0x80);
-    *(u8*)((u8*)this + 0x144) = *(u8*)(tempFloor + 0x84);
-    *(u8*)((u8*)this + 0x145) = *(u8*)(tempFloor + 0x85);
-    *(u8*)((u8*)this + 0x146) = *(u8*)(tempFloor + 0x86);
-    *(u8*)((u8*)this + 0x147) = *(u8*)(tempFloor + 0x87);
-    *(f32*)((u8*)this + 0x148) = *(f32*)(tempFloor + 0x88);
-    *(f32*)((u8*)this + 0x14c) = *(f32*)(tempFloor + 0x8c);
-    *(f32*)((u8*)this + 0x150) = *(f32*)(tempFloor + 0x90);
-    *(f32*)((u8*)this + 0x154) = *(f32*)(tempFloor + 0x94);
-    *(f32*)((u8*)this + 0x158) = *(f32*)(tempFloor + 0x98);
-    *(u8*)((u8*)this + 0x15c) = *(u8*)(tempFloor + 0x9c);
-    *(u32*)((u8*)this + 0x164) = *(u32*)(tempFloor + 0xa4);
-    *(u32*)((u8*)this + 0x168) = *(u32*)(tempFloor + 0xa8);
-    *(u32*)((u8*)this + 0x16c) = *(u32*)(tempFloor + 0xac);
-    *(u32*)((u8*)this + 0x170) = *(u32*)(tempFloor + 0xb0);
-    *(u8*)((u8*)this + 0x174) = *(u8*)(tempFloor + 0xb4);
-    *(u8*)((u8*)this + 0x175) = *(u8*)(tempFloor + 0xb5);
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mFileHandle = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mFileHandle;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mAccessor = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mAccessor;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mLayout = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mLayout;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mAnimTransform = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mAnimTransform;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mReady = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mReady;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mVisible = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mVisible;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mState = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mState;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mActive = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mActive;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mAnimOffset = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mAnimOffset;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mScrollPosY = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mScrollPosY;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mScrollRatio = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mScrollRatio;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mThumbHeight = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mThumbHeight;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mContentHeight = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mContentHeight;
+    reinterpret_cast<CScrollBar*>(&mFloorMap.mScrollBar)->mDirection = reinterpret_cast<CScrollBar*>(&reinterpret_cast<CFloorMap*>(tempFloor)->mScrollBar)->mDirection;
+    (&mFloorMap.mCursorA0)->mArcResAcc = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mArcResAcc;
+    (&mFloorMap.mCursorA0)->mpLayout = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mpLayout;
+    (&mFloorMap.mCursorA0)->mpAnimTrans0 = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mpAnimTrans0;
+    (&mFloorMap.mCursorA0)->mpAnimTrans1 = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mpAnimTrans1;
+    (&mFloorMap.mCursorA0)->mActive = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mActive;
+    (&mFloorMap.mCursorA0)->mVisible = (&reinterpret_cast<CFloorMap*>(tempFloor)->mCursorA0)->mVisible;
 
     *reinterpret_cast<CSysWin*>(mFloorMap.mSysWinB8) = *reinterpret_cast<const CSysWin*>(tempFloor + 0xb8);
     *reinterpret_cast<CSysWin*>(mFloorMap.mSysWinF4) = *reinterpret_cast<const CSysWin*>(tempFloor + 0xf4);
 
     // Layout pointer array (member 0x130-0x14C) + 20 8-byte entries.
-    *(u32*)((u8*)this + 0x1f0) = *(u32*)(tempFloor + 0x130);
-    *(u32*)((u8*)this + 0x1f4) = *(u32*)(tempFloor + 0x134);
-    *(u32*)((u8*)this + 0x1f8) = *(u32*)(tempFloor + 0x138);
-    *(u32*)((u8*)this + 0x1fc) = *(u32*)(tempFloor + 0x13c);
-    *(u32*)((u8*)this + 0x200) = *(u32*)(tempFloor + 0x140);
-    *(u32*)((u8*)this + 0x204) = *(u32*)(tempFloor + 0x144);
-    *(u32*)((u8*)this + 0x208) = *(u32*)(tempFloor + 0x148);
-    *(u8*)((u8*)this + 0x20c) = *(u8*)(tempFloor + 0x14c);
+    mFloorMap.layout_130 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_130;
+    mFloorMap.field_134 = reinterpret_cast<CFloorMap*>(tempFloor)->field_134;
+    mFloorMap.layout_138 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_138;
+    mFloorMap.field_13C = reinterpret_cast<CFloorMap*>(tempFloor)->field_13C;
+    mFloorMap.layout_140 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_140;
+    mFloorMap.field_144 = reinterpret_cast<CFloorMap*>(tempFloor)->field_144;
+    mFloorMap.field_148 = reinterpret_cast<CFloorMap*>(tempFloor)->field_148;
+    mFloorMap.field_14C = reinterpret_cast<CFloorMap*>(tempFloor)->field_14C;
     // 20 8-byte entries, copied as a mtctr/bdnz loop in retail.
     for (int i = 0; i < 0x14; i++) {
-        *(u32*)((u8*)this + 0x210 + i * 8) = *(u32*)(tempFloor + 0x150 + i * 8);
-        *(u32*)((u8*)this + 0x214 + i * 8) = *(u32*)(tempFloor + 0x154 + i * 8);
+        mFloorMap.layouts_150[i].mPtr = reinterpret_cast<CFloorMap*>(tempFloor)->layouts_150[i].mPtr;
+        mFloorMap.layouts_150[i].mUnk = reinterpret_cast<CFloorMap*>(tempFloor)->layouts_150[i].mUnk;
     }
 
     // Entry count / draw flags (member 0x1F0-0x208).
-    *(u8*)((u8*)this + 0x2b0) = *(u8*)(tempFloor + 0x1f0);
-    *(u32*)((u8*)this + 0x2b4) = *(u32*)(tempFloor + 0x1f4);
-    *(u8*)((u8*)this + 0x2b8) = *(u8*)(tempFloor + 0x1f8);
-    *(u32*)((u8*)this + 0x2bc) = *(u32*)(tempFloor + 0x1fc);
-    *(u32*)((u8*)this + 0x2c0) = *(u32*)(tempFloor + 0x200);
-    *(u8*)((u8*)this + 0x2c4) = *(u8*)(tempFloor + 0x204);
-    *(u8*)((u8*)this + 0x2c5) = *(u8*)(tempFloor + 0x205);
-    *(u8*)((u8*)this + 0x2c6) = *(u8*)(tempFloor + 0x206);
-    *(u8*)((u8*)this + 0x2c7) = *(u8*)(tempFloor + 0x207);
-    *(u8*)((u8*)this + 0x2c8) = *(u8*)(tempFloor + 0x208);
+    mFloorMap.layout_count_1F0 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_count_1F0;
+    mFloorMap.field_1F4 = reinterpret_cast<CFloorMap*>(tempFloor)->field_1F4;
+    mFloorMap.field_1F8 = reinterpret_cast<CFloorMap*>(tempFloor)->field_1F8;
+    mFloorMap.layout_1FC = reinterpret_cast<CFloorMap*>(tempFloor)->layout_1FC;
+    *(u32*)&mFloorMap._200 = *(u32*)&reinterpret_cast<CFloorMap*>(tempFloor)->_200;
+    mFloorMap.field_204 = reinterpret_cast<CFloorMap*>(tempFloor)->field_204;
+    mFloorMap.field_205 = reinterpret_cast<CFloorMap*>(tempFloor)->field_205;
+    mFloorMap.field_206 = reinterpret_cast<CFloorMap*>(tempFloor)->field_206;
+    mFloorMap.field_207 = reinterpret_cast<CFloorMap*>(tempFloor)->field_207;
+    mFloorMap.field_208 = reinterpret_cast<CFloorMap*>(tempFloor)->field_208;
 
     // Map-data blob (member 0x20C, 0x30C0 bytes): 0x618 8-byte entries.
     for (int j = 0; j < 0x618; j++) {
@@ -270,7 +266,7 @@ void CMenuMapSelectSC::Init() {
         *(u32*)((u8*)this + 0x2d0 + j * 8) = *(u32*)(tempFloor + 0x210 + j * 8);
     }
 
-    *(u8*)((u8*)this + 0x338c) = *(u8*)(tempFloor + 0x32cc);
+    mFloorMap.field_32CC = reinterpret_cast<CFloorMap*>(tempFloor)->field_32CC;
 
     // Four 0x18-byte sub-object copies.
     MapSelectSCCopyWidgetState((S*)((u8*)this + 0x3390), (const S*)(tempFloor + 0x3338));
@@ -279,14 +275,14 @@ void CMenuMapSelectSC::Init() {
     MapSelectSCCopyWidgetState((S*)((u8*)this + 0x33d8), (const S*)(tempFloor + 0x3380));
 
     // Tail fields (member 0x3330-0x344).
-    *(u32*)((u8*)this + 0x33f0) = *(u32*)(tempFloor + 0x3330);
-    *(u32*)((u8*)this + 0x33f4) = *(u32*)(tempFloor + 0x3334);
-    *(u32*)((u8*)this + 0x33f8) = *(u32*)(tempFloor + 0x3338);
-    *(u8*)((u8*)this + 0x33fc) = *(u8*)(tempFloor + 0x333c);
-    *(u32*)((u8*)this + 0x3400) = *(u32*)(tempFloor + 0x3340);
-    *(u32*)((u8*)this + 0x3404) = *(u32*)(tempFloor + 0x3344);
+    mFloorMap.field_3330 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3330;
+    mFloorMap.layout_3334 = reinterpret_cast<CFloorMap*>(tempFloor)->layout_3334;
+    mFloorMap.field_3338 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3338;
+    mFloorMap.field_333C = reinterpret_cast<CFloorMap*>(tempFloor)->field_333C;
+    mFloorMap.field_3340 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3340;
+    mFloorMap.field_3344 = reinterpret_cast<CFloorMap*>(tempFloor)->field_3344;
 
-    __dt__9CFloorMapFv(reinterpret_cast<CFloorMap*>(tempFloor), -1);
+    reinterpret_cast<CFloorMap*>(tempFloor)->~CFloorMap();
 
     // Register the widget as an IScnRender render callback on its parent scene.
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(this, 0xd, 1);
@@ -669,7 +665,7 @@ extern "C" void MapSelectSCResetFloorMapIdle(CMenuMapSelectSC* self) {
 // floor-map cursor index to the game manager and move to phase 7 (idle).
 extern "C" void MapSelectSCCommitCursorIdle(CMenuMapSelectSC* self) {
     if (CFade_IsVisible(&self->mFade)) {
-        func_8008413C__Q22cf13CfGameManagerFv(FloorMap_GetU16Field5A(&self->mFloorMap), 0);
+        cf::CfGameManager::func_8008413C(FloorMap_GetU16Field5A(&self->mFloorMap), 0);
         self->mState = 7;
     }
 }

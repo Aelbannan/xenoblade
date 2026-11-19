@@ -228,8 +228,10 @@ extern "C" bool Scn_HasWorkItem(u8* self) {
 extern "C" void* Scn_SetupAnim(void* a, void* b, void* c, void* d) {
     return simFwdAnimSetup102(a, b, c, d, 0);
 }
-extern "C" void Scn_SetupAnimDefault(s32 param_1, s32 param_2) {
-    simFwdAnimSetup102((void*)param_1, (void*)param_2, (void*)-1, (void*)0, 0);
+class CScnItemModel; // pointer-only owner of this cross-TU scene helper
+extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 param_1, u32 param_2) {
+    return (CScnItemModel*)simFwdAnimSetup102(
+        (void*)param_1, (void*)param_2, (void*)-1, (void*)0, 0);
 }
 extern "C" int Scn_ResetAnim(int a, int b) {
     return simFwdAnimReset(a, b, 8);

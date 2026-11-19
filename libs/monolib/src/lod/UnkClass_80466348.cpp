@@ -24,15 +24,15 @@ struct UnkClass_80466348 {
     u8 field_0x2;   // ambient color B
     u8 field_0x3;   // unknown; unused by this TU
     u32 field_0x4;  // unknown; its address is used as the tex-gen source
-    void setColorChanRegReg1();
-    void setColorChanRegReg2();
-    void setColorChanRegVtx1();
-    void setColorChanRegVtx2();
-    void setColorChanRegReg3();
-    void setColorChanRegVtx3();
-    void setColorChanDisable();
-    void setAlphaChanVtx();
-    void setAlphaChanReg();
+    static void setColorChanRegReg1();
+    static void setColorChanRegReg2();
+    static void setColorChanRegVtx1();
+    static void setColorChanRegVtx2();
+    static void setColorChanRegReg3();
+    static void setColorChanRegVtx3();
+    static void setColorChanDisable();
+    static void setAlphaChanVtx();
+    static void setAlphaChanReg();
     void tevStageTexRasc();
     void tevStageTexC0AlphaA0();
     void tevStageTexKonstC0();
@@ -54,14 +54,14 @@ struct UnkClass_80466348 {
     void setupVtxDescPnPosNrmClrTex();
     void setupVtxDescPnPosNrmTex3();
     void setupVtxDescPnPosNrmClrTex3();
-    void setAlphaCompareAlways();
-    void setAlphaCompareGe80();
-    void setAlphaCompareGe1();
-    void setBlendModeNone();
-    void setBlendModeBlend();
-    void setBlendModeAdd();
-    void setBlendModeReplace();
-    void setBlendModeSubtract();
+    static void setAlphaCompareAlways();
+    static void setAlphaCompareGe80();
+    static void setAlphaCompareGe1();
+    static void setBlendModeNone();
+    static void setBlendModeBlend();
+    static void setBlendModeAdd();
+    static void setBlendModeReplace();
+    static void setBlendModeSubtract();
     void setTexGenMtx2x4Field();
     void setTexGenMtx3x4Nrm();
     void setTexGenMtx3x4Pos();
@@ -851,23 +851,6 @@ extern "C" void sinit_804683E8() {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // unit monolib/src/lod/UnkClass_80466348
 // foreign refs
-extern "C" void setColorChanRegReg1__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setColorChanRegReg2__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setColorChanRegVtx1__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setColorChanRegVtx2__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setColorChanRegReg3__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setColorChanRegVtx3__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setColorChanDisable__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setAlphaChanReg__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setAlphaCompareAlways__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setAlphaCompareGe80__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setAlphaCompareGe1__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setBlendModeNone__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setBlendModeBlend__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setBlendModeAdd__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setBlendModeReplace__Q23LOD17UnkClass_80466348Fv();
-extern "C" void setBlendModeSubtract__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setTexGenMtx2x4Field__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setTexGenMtx3x4Pos__Q23LOD17UnkClass_80466348Fv();
@@ -881,6 +864,6 @@ extern u32 lbl_eu_8056D7A8[118];
 
 // [.data] 0x258 bytes align 8
 extern "C" LodTexCoordSetup lbl_eu_8056D728[13] = { (LodTexCoordSetup)&setupVtxDescPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrIndexed__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex3__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex3__Q23LOD17UnkClass_80466348Fv };
-u32 lbl_eu_8056D75C[19] = { (u32)&tevStageTexRasc__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareAlways__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareGe80__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareGe1__Q23LOD17UnkClass_80466348Fv, 0x00000000 };
-u32 lbl_eu_8056D7A8[118] = { (u32)&setTexGenMtx2x4Field__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Pos__Q23LOD17UnkClass_80466348Fv, (u32)&loadTexMtxAndSetGen__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeNone__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeBlend__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeAdd__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeReplace__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeSubtract__Q23LOD17UnkClass_80466348Fv, 0x00000000, (u32)&setAmbColorScaled1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorDirect__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaled2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorAlphaSimple__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha0__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite3__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg2__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx2__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg3__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx3__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanDisable__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000002, 0x00000002, 0xFFFFFFFF, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x00000000 };
+u32 lbl_eu_8056D75C[19] = { (u32)&tevStageTexRasc__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setAlphaCompareAlways, (u32)&LOD::UnkClass_80466348::setAlphaCompareGe80, (u32)&LOD::UnkClass_80466348::setAlphaCompareGe1, 0x00000000 };
+u32 lbl_eu_8056D7A8[118] = { (u32)&setTexGenMtx2x4Field__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Pos__Q23LOD17UnkClass_80466348Fv, (u32)&loadTexMtxAndSetGen__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setBlendModeNone, (u32)&LOD::UnkClass_80466348::setBlendModeBlend, (u32)&LOD::UnkClass_80466348::setBlendModeAdd, (u32)&LOD::UnkClass_80466348::setBlendModeReplace, (u32)&LOD::UnkClass_80466348::setBlendModeSubtract, 0x00000000, (u32)&setAmbColorScaled1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorDirect__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaled2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorAlphaSimple__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha0__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite3__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setColorChanRegReg1, (u32)&LOD::UnkClass_80466348::setColorChanRegReg2, (u32)&LOD::UnkClass_80466348::setColorChanRegReg1, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx1, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx2, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx1, (u32)&LOD::UnkClass_80466348::setColorChanRegReg3, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx3, (u32)&LOD::UnkClass_80466348::setColorChanDisable, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000002, 0x00000002, 0xFFFFFFFF, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x00000000 };
 

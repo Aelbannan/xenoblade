@@ -1280,7 +1280,8 @@ struct MenuBpsMoveActorFields {
     u32 unk1530; // +0x1530: level icon id (u16)
 };
 
-// Pane flag byte view (layout-visible visible-gauge enable bit at +0xBB).
+// Pane flag byte view: the +0xBB visibility byte plus the retail's mask of
+// bit 0x100 (a promoted-int mask stored back through this byte field).
 struct MenuBpsPaneFlagsView {
     u8 pad00[0xBB];
     u8 flagsBB;
@@ -1478,8 +1479,8 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
     if (slot->unk25C & 0x4) {
         slot->unk25C &= ~0x4u;
         f32 ratio = slot->unk224 / slot->unk228;
-        MenuBpsGaugePaneView* pane =
-            reinterpret_cast<MenuBpsGaugePaneView*>(slot->unk58);
+        nw4r::lyt::Pane* pane =
+            reinterpret_cast<nw4r::lyt::Pane*>(slot->unk58);
         if (pane != NULL) {
             f32 scaled = lbl_eu_80666FD0 * ratio;
             f32 widthF = lbl_eu_80666FCC * scaled;
@@ -1494,13 +1495,13 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
             // bias (lbl_eu_80666FB8 == 0x4330000080000000), not __cvt_fp2unsigned.
             s32 w = widthF;
             slot->unk24C = w;
-            f32 prevMax = pane->unk50;
+            f32 prevMax = pane->GetSize().height;
             // u32 -> f32 goes through a biased double in MWCC.
             f32 frac = ratio - lbl_eu_80666FD8 * w;
             f32 q = frac / lbl_eu_80666FD8;
             f32 val = lbl_eu_80666FD4 * q + widths[w];
-            pane->unk4C = val;
-            pane->unk50 = prevMax;
+            pane->SetSRTElement(8, val);
+            pane->SetSRTElement(9, prevMax);
         }
     }
 
@@ -1510,41 +1511,34 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
 
     // Star-pane visibility follows the smoothed HP ratio.
     if (slot->unk220 == lbl_eu_80666F94) {
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB |= 0x01;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB |= 0x01;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB &=
-            static_cast<u8>(~0x01);
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &=
-            static_cast<u8>(~0x01);
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk08->GetRootPane())
-            ->flagsBB &= static_cast<u8>(~0x01);
+        slot->unk5C->SetVisible(true);
+        slot->unk60->SetVisible(true);
+        slot->unk64->SetVisible(false);
+        slot->unk68->SetVisible(false);
+        slot->unk08->GetRootPane()->SetVisible(false);
     } else {
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB &=
-            static_cast<u8>(~0x01);
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB &=
-            static_cast<u8>(~0x01);
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB |= 0x01;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB |= 0x01;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk08->GetRootPane())
-            ->flagsBB |= 0x01;
+        slot->unk5C->SetVisible(false);
+        slot->unk60->SetVisible(false);
+        slot->unk64->SetVisible(true);
+        slot->unk68->SetVisible(true);
+        slot->unk08->GetRootPane()->SetVisible(true);
     }
 
     slot->unk28->UnbindAllAnimation();
     slot->unk254 = 0xB;
-    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk24)->frame =
-        lbl_eu_80666F94;
-    reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk20->GetRootPane())
-        ->flagsBB |= 0x01;
+    reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk24)->SetFrame(
+lbl_eu_80666F94);
+    slot->unk20->GetRootPane()->SetVisible(true);
     slot->unk25C &= ~0x40000000u;
-    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
-        lbl_eu_80666F94;
-    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk10)->frame =
-        lbl_eu_80666F94;
+    reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk0C)->SetFrame(
+lbl_eu_80666F94);
+    reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk10)->SetFrame(
+lbl_eu_80666F94);
     slot->unk08->SetAnimationEnable(slot->unk10, false);
     slot->unk08->SetAnimationEnable(slot->unk14, false);
     slot->unk08->SetAnimationEnable(slot->unk0C, true);
-    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
-        lbl_eu_80666F94;
+    reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk0C)->SetFrame(
+lbl_eu_80666F94);
     slot->unk08->Animate(0);
     slot->unk248 = 4;
     slot->unk24C = 0;
@@ -1602,8 +1596,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
     if (slot->unk25C & 4) {
         slot->unk25C &= ~4u;
         f32 ratio = slot->unk224 / slot->unk228;
-        MenuBpsGaugePaneView* pane =
-            reinterpret_cast<MenuBpsGaugePaneView*>(slot->unk58);
+        nw4r::lyt::Pane* pane =
+            reinterpret_cast<nw4r::lyt::Pane*>(slot->unk58);
         if (pane != NULL) {
             f32 scaled = lbl_eu_80666FD0 * ratio;
             f32 widthF = lbl_eu_80666FCC * scaled;
@@ -1616,30 +1610,22 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
             widths[4] = lbl_eu_804FD6E0[4];
             s32 w = widthF;
             slot->unk24C = w;
-            f32 prevMax = pane->unk50;
+            f32 prevMax = pane->GetSize().height;
             f32 q = (ratio - lbl_eu_80666FD8 * w) / lbl_eu_80666FD8;
             f32 val = lbl_eu_80666FD4 * q + widths[w];
-            pane->unk4C = val;
-            pane->unk50 = prevMax;
+            pane->SetSRTElement(8, val);
+            pane->SetSRTElement(9, prevMax);
         }
     }
 
     if (slot->unk220 <= lbl_eu_80666F94) {
         // HP empty: light the party/tension stars, hide the arts/heal stars.
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB =
-            (reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB &
-             ~0x100u) |
-            1u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB =
-            (reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB &
-             ~0x100u) |
-            1u;
+        slot->unk5C->SetVisible(true);
+        slot->unk60->SetVisible(true);
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB &
-            ~0x100u;
+            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB & ~0x100u;
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &
-            ~0x100u;
+            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB & ~0x100u;
         MenuBpsPaneFlagsView* mainRoot = reinterpret_cast<MenuBpsPaneFlagsView*>(
             slot->unk08->GetRootPane());
         mainRoot->flagsBB = mainRoot->flagsBB & ~0x100u;
@@ -1659,8 +1645,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
                                                                    false);
             slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk14)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk14)->SetFrame(
+lbl_eu_80666F94);
             slot->unk08->Animate(0);
             slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    false);
@@ -1668,8 +1654,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
                                                                    false);
             slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk10)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk10)->SetFrame(
+lbl_eu_80666F94);
             slot->unk08->Animate(0);
             slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    false);
@@ -1677,8 +1663,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
                                                                    false);
             slot->unk08->SetAnimationEnable(slot->unk0C,
                                                                    true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk0C)->SetFrame(
+lbl_eu_80666F94);
             slot->unk08->Animate(0);
             slot->unk250 = 6;
         }
@@ -1688,25 +1674,12 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         u32 f5 = slot->unk25C;
         slot->unk25C = f5 & ~0x1000u;
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB &
-            ~0x100u;
+            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB & ~0x100u;
         reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB =
-            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB &
-            ~0x100u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB =
-            (reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB &
-             ~0x100u) |
-            1u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB =
-            (reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &
-             ~0x100u) |
-            1u;
-        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk08->GetRootPane())
-            ->flagsBB = (reinterpret_cast<MenuBpsPaneFlagsView*>(
-                             slot->unk08->GetRootPane())
-                             ->flagsBB &
-                         ~0x100u) |
-            1u;
+            reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB & ~0x100u;
+        slot->unk64->SetVisible(true);
+        slot->unk68->SetVisible(true);
+        slot->unk08->GetRootPane()->SetVisible(true);
     }
 
     {
@@ -1742,34 +1715,22 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
                     // Pane::FindPaneByName (+0x3C); retail keeps the returned
                     // pane in r3 and toggles its +0xBB flag byte directly.
                     if (delta < 0) {
-                        MenuBpsPaneFlagsView* flashA =
-                            reinterpret_cast<MenuBpsPaneFlagsView*>(
-                                slot->unk20->GetRootPane()->FindPaneByName(
-                                    tbl + 0x430, true));
-                        flashA->flagsBB &= static_cast<u8>(~0x01);
-                        MenuBpsPaneFlagsView* flashB =
-                            reinterpret_cast<MenuBpsPaneFlagsView*>(
-                                slot->unk20->GetRootPane()->FindPaneByName(
-                                    tbl + 0x43b, true));
-                        flashB->flagsBB =
-                            (flashB->flagsBB & static_cast<u8>(~0x01)) |
-                            0x01;
+                        nw4r::lyt::Pane* flashA = slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x430, true);
+                        flashA->SetVisible(false);
+                        nw4r::lyt::Pane* flashB = slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x43b, true);
+                        flashB->SetVisible(true);
                         if (!GetZealObjPtr()) {
                             playUISound(0x63);
                         }
                     } else if (delta > 0) {
-                        MenuBpsPaneFlagsView* flashA =
-                            reinterpret_cast<MenuBpsPaneFlagsView*>(
-                                slot->unk20->GetRootPane()->FindPaneByName(
-                                    tbl + 0x430, true));
-                        flashA->flagsBB =
-                            (flashA->flagsBB & static_cast<u8>(~0x01)) |
-                            0x01;
-                        MenuBpsPaneFlagsView* flashB =
-                            reinterpret_cast<MenuBpsPaneFlagsView*>(
-                                slot->unk20->GetRootPane()->FindPaneByName(
-                                    tbl + 0x43b, true));
-                        flashB->flagsBB &= static_cast<u8>(~0x01);
+                        nw4r::lyt::Pane* flashA = slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x430, true);
+                        flashA->SetVisible(true);
+                        nw4r::lyt::Pane* flashB = slot->unk20->GetRootPane()->FindPaneByName(
+                                    tbl + 0x43b, true);
+                        flashB->SetVisible(false);
                         if (!GetZealObjPtr()) {
                             playUISound(0x64);
                         }
@@ -1788,8 +1749,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
     if (slot->unk25C & 0x40000000) {
         slot->unk25C = slot->unk25C | 0x400;
         if (advanceAnimTransform(slot->unk24, lbl_eu_80666F90) != 0) {
-            reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk24)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk24)->SetFrame(
+lbl_eu_80666F94);
             slot->unk25C = slot->unk25C & ~0x40000000u;
         }
     }
@@ -1921,8 +1882,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
                 lay->UnbindAllAnimation();
                 lay->BindAnimation(anm);
                 lay->SetAnimationEnable(anm, true);
-                reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
-                    lbl_eu_80666F94;
+                reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
+lbl_eu_80666F94);
                 lay->Animate(0);
                 slot->unk254 = 0xC;
             } else if (slot->unk230 == 0) {
@@ -1933,8 +1894,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
                 lay->UnbindAllAnimation();
                 lay->BindAnimation(anm);
                 lay->SetAnimationEnable(anm, true);
-                reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
-                    lbl_eu_80666F94;
+                reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
+lbl_eu_80666F94);
                 lay->Animate(0);
                 slot->unk254 = 0xF;
             }
@@ -1949,8 +1910,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
             lay->UnbindAllAnimation();
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
+lbl_eu_80666F94);
             lay->Animate(0);
             slot->unk254 = 0xD;
         }
@@ -1973,8 +1934,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
             lay->UnbindAllAnimation();
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
+lbl_eu_80666F94);
             lay->Animate(0);
             slot->unk254 = 0xE;
         }
@@ -1995,8 +1956,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
             lay->UnbindAllAnimation();
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
+lbl_eu_80666F94);
             lay->Animate(0);
             slot->unk254 = 0x10;
         }
@@ -2017,8 +1978,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
             lay->UnbindAllAnimation();
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
-            reinterpret_cast<MenuBpsAnimFrameView*>(anm)->frame =
-                lbl_eu_80666F94;
+            reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
+lbl_eu_80666F94);
             lay->Animate(0);
             slot->unk254 = 0x11;
         }
@@ -2041,8 +2002,8 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         if (slot->unk80 == 1) {
             if (advanceAnimTransform(slot->unk7C, lbl_eu_80666F90) != 0) {
                 slot->unk80 = 2;
-                reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk7C)->frame =
-                    lbl_eu_80666F94;
+                reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk7C)->SetFrame(
+lbl_eu_80666F94);
             }
         } else if (slot->unk80 == 2) {
             BtlDmg_QueueDraw(

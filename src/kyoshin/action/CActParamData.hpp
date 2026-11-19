@@ -525,7 +525,7 @@ class CScnItemAnim;
 // retail references it under an unmangled symbol.
 extern "C" int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
-extern "C" __declspec(noinline) int registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
+extern "C" int registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int copyParamNameRec(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);
 // getParamFloat08 / getParamFloat0C / resetParamSubB are CActParamData members
 // (declared in the class above); the flat C-linkage views were retired when the
@@ -664,7 +664,7 @@ struct ActParamCbViewD3C {
     virtual void invoke18(void* obj, void* src);  // vt+0x18
 };
 extern "C" void walkParamRecords(CActParamData* self, ActParamD3CMember* member);
-__declspec(noinline) int evalParamTiming(CActParamData* self,
+int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate);
 
@@ -744,7 +744,7 @@ struct ActParamT1Host {
     u32 mField25C;
 };
 extern "C" void* initParamBlock(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src);
-extern "C" __declspec(noinline) void unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
+extern "C" void unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream);
 void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b);
 // Retail no-op stubs (blr only)
 extern "C" void actParamNop0();

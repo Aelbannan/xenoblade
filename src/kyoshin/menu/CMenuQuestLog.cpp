@@ -144,7 +144,7 @@ body:
     QstLogInfo_StepStateMachine(&mQstLogInfo);
 }
 
-__declspec(noinline) void CMenuQuestLog::cbRenderBefore() {
+void CMenuQuestLog::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
         goto exit;
@@ -179,7 +179,7 @@ body:
 // already exists). Regist is called even when the allocation failed, matching
 // retail.
 // ---------------------------------------------------------------------------
-extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool b);
+// CProcess::Regist is declared in monolib/work/CProcess.hpp.
 
 extern "C" CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80663FC0[0] != 0) {
@@ -187,7 +187,7 @@ extern "C" CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u
     }
     CMenuQuestLog* obj = new (CWorkThreadSystem::getWorkMem()) CMenuQuestLog(parent, arg2);
     lbl_eu_80663FC0[0] = obj;
-    Regist__8CProcessFP8CProcessb(obj, self, false);
+    obj->Regist(self, false);
     return lbl_eu_80663FC0[0];
 }
 
@@ -225,7 +225,7 @@ extern "C" void gateQuestLogList(CMenuQuestLog* self) {
 // and drives the list widget: confirm opens the info pane, up/down scroll,
 // cancel/dir/confirm/menu shortcuts, and the sort trigger re-sorts + updates
 // the title-help mode depending on whether sorting is available.
-extern "C" __declspec(noinline) void handleQuestLogInput(CMenuQuestLog* self) {
+extern "C" void handleQuestLogInput(CMenuQuestLog* self) {
     CQuestLogPadData* pad = (CQuestLogPadData*)cf::CfGameManager::getCfPadData();
     int cancel, trigger3, trigger1, trigger2, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote.
@@ -378,73 +378,73 @@ CMenuQuestLog* lbl_eu_80663FC0[2] = { 0, 0 };
 // --- hand-built retail data (splits: .rodata 804FE508-804FE6F0,
 // .data 8052CC10-8052CD50, .sdata 80661E70-80661E78) ---
 // .rodata menu-text pool (BdatTouchStringCell reads +0x0/+0xA in Init).
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-char lbl_eu_804FE518[0x10] = "MNU_quest\0name";
+extern "C" __attribute__((used, aligned(8)))
+const char lbl_eu_804FE518[0x10] = "MNU_quest\0name";
 // .rodata marker-name table (each 0xF content+null, MWCC zero-pads to 0x10;
 // referenced by the .data string-pointer table below).
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE528[0x10] = "markerlist0000";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE538[0x10] = "markerlist0101";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE548[0x10] = "markerlist0201";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE558[0x10] = "markerlist0301";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE568[0x10] = "markerlist0401";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE578[0x10] = "markerlist0402";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE588[0x10] = "markerlist0501";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE598[0x10] = "markerlist0601";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE5A8[0x10] = "markerlist0701";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE5B8[0x10] = "markerlist0801";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE5C8[0x10] = "markerlist0901";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE5D8[0x10] = "markerlist1001";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE5E8[0x10] = "markerlist1101";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE5F8[0x10] = "markerlist1201";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE608[0x10] = "markerlist1202";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE618[0x10] = "markerlist1301";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE628[0x10] = "markerlist1401";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE638[0x10] = "markerlist1501";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE648[0x10] = "markerlist1601";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE658[0x10] = "markerlist1701";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE668[0x10] = "markerlist1801";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE678[0x10] = "markerlist1901";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE688[0x10] = "markerlist2001";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE698[0x10] = "markerlist2101";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE6A8[0x10] = "markerlist2201";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE6B8[0x10] = "markerlist2301";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_804FE6C8[0x10] = "markerlist2401";
+extern "C" __attribute__((used)) const char lbl_eu_804FE528[0x10] = "markerlist0000";
+extern "C" __attribute__((used)) const char lbl_eu_804FE538[0x10] = "markerlist0101";
+extern "C" __attribute__((used)) const char lbl_eu_804FE548[0x10] = "markerlist0201";
+extern "C" __attribute__((used)) const char lbl_eu_804FE558[0x10] = "markerlist0301";
+extern "C" __attribute__((used)) const char lbl_eu_804FE568[0x10] = "markerlist0401";
+extern "C" __attribute__((used)) const char lbl_eu_804FE578[0x10] = "markerlist0402";
+extern "C" __attribute__((used)) const char lbl_eu_804FE588[0x10] = "markerlist0501";
+extern "C" __attribute__((used)) const char lbl_eu_804FE598[0x10] = "markerlist0601";
+extern "C" __attribute__((used)) const char lbl_eu_804FE5A8[0x10] = "markerlist0701";
+extern "C" __attribute__((used)) const char lbl_eu_804FE5B8[0x10] = "markerlist0801";
+extern "C" __attribute__((used)) const char lbl_eu_804FE5C8[0x10] = "markerlist0901";
+extern "C" __attribute__((used)) const char lbl_eu_804FE5D8[0x10] = "markerlist1001";
+extern "C" __attribute__((used)) const char lbl_eu_804FE5E8[0x10] = "markerlist1101";
+extern "C" __attribute__((used)) const char lbl_eu_804FE5F8[0x10] = "markerlist1201";
+extern "C" __attribute__((used)) const char lbl_eu_804FE608[0x10] = "markerlist1202";
+extern "C" __attribute__((used)) const char lbl_eu_804FE618[0x10] = "markerlist1301";
+extern "C" __attribute__((used)) const char lbl_eu_804FE628[0x10] = "markerlist1401";
+extern "C" __attribute__((used)) const char lbl_eu_804FE638[0x10] = "markerlist1501";
+extern "C" __attribute__((used)) const char lbl_eu_804FE648[0x10] = "markerlist1601";
+extern "C" __attribute__((used)) const char lbl_eu_804FE658[0x10] = "markerlist1701";
+extern "C" __attribute__((used)) const char lbl_eu_804FE668[0x10] = "markerlist1801";
+extern "C" __attribute__((used)) const char lbl_eu_804FE678[0x10] = "markerlist1901";
+extern "C" __attribute__((used)) const char lbl_eu_804FE688[0x10] = "markerlist2001";
+extern "C" __attribute__((used)) const char lbl_eu_804FE698[0x10] = "markerlist2101";
+extern "C" __attribute__((used)) const char lbl_eu_804FE6A8[0x10] = "markerlist2201";
+extern "C" __attribute__((used)) const char lbl_eu_804FE6B8[0x10] = "markerlist2301";
+extern "C" __attribute__((used)) const char lbl_eu_804FE6C8[0x10] = "markerlist2401";
 // .rodata float table (read cross-TU by CMenuSymbolMark as f32s).
-__declspec(section ".rodata") __attribute__((used, aligned(8)))
-extern const float lbl_eu_804FE6D8[6] = { -0.2f, 1.81f, -260.26f, -0.18f, 1.76f, -338.3f };
+extern "C" __attribute__((used, aligned(8)))
+const float lbl_eu_804FE6D8[6] = { -0.2f, 1.81f, -260.26f, -0.18f, 1.76f, -338.3f };
 
 // .data string-pointer table (28 marker addresses + 8 zero words) and the
 // resource table below need the retail names visible here.
-extern "C" char lbl_eu_804FE528[];
-extern "C" char lbl_eu_804FE538[];
-extern "C" char lbl_eu_804FE548[];
-extern "C" char lbl_eu_804FE558[];
-extern "C" char lbl_eu_804FE568[];
-extern "C" char lbl_eu_804FE578[];
-extern "C" char lbl_eu_804FE588[];
-extern "C" char lbl_eu_804FE598[];
-extern "C" char lbl_eu_804FE5A8[];
-extern "C" char lbl_eu_804FE5B8[];
-extern "C" char lbl_eu_804FE5C8[];
-extern "C" char lbl_eu_804FE5D8[];
-extern "C" char lbl_eu_804FE5E8[];
-extern "C" char lbl_eu_804FE5F8[];
-extern "C" char lbl_eu_804FE608[];
-extern "C" char lbl_eu_804FE618[];
-extern "C" char lbl_eu_804FE628[];
-extern "C" char lbl_eu_804FE638[];
-extern "C" char lbl_eu_804FE648[];
-extern "C" char lbl_eu_804FE658[];
-extern "C" char lbl_eu_804FE668[];
-extern "C" char lbl_eu_804FE678[];
-extern "C" char lbl_eu_804FE688[];
-extern "C" char lbl_eu_804FE698[];
-extern "C" char lbl_eu_804FE6A8[];
-extern "C" char lbl_eu_804FE6B8[];
-extern "C" char lbl_eu_804FE6C8[];
+extern "C" const char lbl_eu_804FE528[];
+extern "C" const char lbl_eu_804FE538[];
+extern "C" const char lbl_eu_804FE548[];
+extern "C" const char lbl_eu_804FE558[];
+extern "C" const char lbl_eu_804FE568[];
+extern "C" const char lbl_eu_804FE578[];
+extern "C" const char lbl_eu_804FE588[];
+extern "C" const char lbl_eu_804FE598[];
+extern "C" const char lbl_eu_804FE5A8[];
+extern "C" const char lbl_eu_804FE5B8[];
+extern "C" const char lbl_eu_804FE5C8[];
+extern "C" const char lbl_eu_804FE5D8[];
+extern "C" const char lbl_eu_804FE5E8[];
+extern "C" const char lbl_eu_804FE5F8[];
+extern "C" const char lbl_eu_804FE608[];
+extern "C" const char lbl_eu_804FE618[];
+extern "C" const char lbl_eu_804FE628[];
+extern "C" const char lbl_eu_804FE638[];
+extern "C" const char lbl_eu_804FE648[];
+extern "C" const char lbl_eu_804FE658[];
+extern "C" const char lbl_eu_804FE668[];
+extern "C" const char lbl_eu_804FE678[];
+extern "C" const char lbl_eu_804FE688[];
+extern "C" const char lbl_eu_804FE698[];
+extern "C" const char lbl_eu_804FE6A8[];
+extern "C" const char lbl_eu_804FE6B8[];
+extern "C" const char lbl_eu_804FE6C8[];
 // .data marker-pointer table (retail lbl_eu_8052CCA8, 28 addresses + zero fill).
 struct QuestLogStrTable { const char* p[28]; u32 reserved[8]; };
-__declspec(section ".data") __attribute__((used, aligned(4)))
+__attribute__((used, aligned(4)))
 struct QuestLogStrTable lbl_eu_8052CCA8 = {
     {
         lbl_eu_804FE528, lbl_eu_804FE538, lbl_eu_804FE548, lbl_eu_804FE558,
@@ -458,5 +458,5 @@ struct QuestLogStrTable lbl_eu_8052CCA8 = {
     { 0 },
 };
 // .data float table (retail lbl_eu_8052CD38).
-__declspec(section ".data") __attribute__((used, aligned(4)))
-extern const float lbl_eu_8052CD38[6] = { 1.0f, 1.0f, 1.0f, 0.9f, 0.7f, 0.9f };
+extern "C" __attribute__((used, aligned(4)))
+float lbl_eu_8052CD38[6] = { 1.0f, 1.0f, 1.0f, 0.9f, 0.7f, 0.9f };

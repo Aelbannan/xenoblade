@@ -898,9 +898,7 @@ void* CfRes_findIdInRange(u8* self, u32 id, int start, int end) {
     // Counted for-loop with live-out index: MWCC emits subf/mtctr guard +
     // bdnz (retail). Pointer IV advances first in the header.
     for (i = start; i < end; entry++, i++) {
-        if (id == entry->id) {
-            goto found;
-        }
+        if (id == entry->id) goto found;
     }
     i = -1;
 found:

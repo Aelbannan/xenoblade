@@ -489,7 +489,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 if ((actor->field_3F08 & 0x20000) != 0) {
                     if (reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags() != 0) {
                         __ct__CMcaFile(&mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
-                        holder->unk_55C = Scn_InitGlobalA(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
+                        holder->unk_55C = (CModelDispObj*)Scn_InitGlobalA(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
                         for (u8 i = 0; i < 2; i++) {
                             CScnItemModel* am =
                                 reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
@@ -500,7 +500,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                             attachAnimObj(&holder->actParams[i], am, holder->unk_55C,
                                           reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
                             func_8004B9D4(&holder->actParams[i],
-                                          getAnimModelId(&holder->actParam), 0, -1, 0);
+                                          (int)(u32)getAnimModelId(&holder->actParam), 0, -1, 0);
                         }
                     }
                 }
@@ -746,7 +746,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
 
     u32 f8 = (u32)self->fileSlots[8].data;
     __ct__CMcaFile(&mca, f8);
-    holder->unk_55C = Scn_InitGlobalA(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
+    holder->unk_55C = (CModelDispObj*)Scn_InitGlobalA(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
 
     // Wire both anim-model slots into the act-param array and start their anims.
     for (u8 i = 0; i < 2; i++) {
@@ -755,7 +755,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
             holder->actParams[i].field_0x378 = i;
             AnimGame_SetStateFlags(&holder->actParams[i]);
             attachAnimObj(&holder->actParams[i], am, holder->unk_55C, f8);
-            func_8004B9D4(&holder->actParams[i], getAnimModelId(&holder->actParam), 0, -1, 0);
+            func_8004B9D4(&holder->actParams[i], (int)(u32)getAnimModelId(&holder->actParam), 0, -1, 0);
         }
     }
 
@@ -832,7 +832,7 @@ void ModelDispEquip_TickAnim(CModelDispEquip* self) {
         s32 anim = lbl_eu_80662738[sign];
         if ((anim == 0x12 && holder->actParam.field_0x374 == 0) ||
             (anim == 0x7 && holder->actParam.field_0x374 == 0xb)) {
-            func_8004B9D4(&holder->actParam, reinterpret_cast<void*>(anim), 0, -1, 0);
+            func_8004B9D4(&holder->actParam, (int)anim, 0, -1, 0);
         }
         holder->timer = 0x96;
     }
@@ -1057,7 +1057,7 @@ extern "C" void ModelDispEquip_ReplaySlotAnims(CModelDispEquip* self, u32 unused
         if (holder->animModelPtrs[i] != 0) {
             void* p = getAnimChain(&holder->actParam);
             holder->actParams[i].field_0x4B4 = p;
-            func_8004B9D4(&holder->actParams[i], arg, 0, -1, 0);
+            func_8004B9D4(&holder->actParams[i], (int)(u32)arg, 0, -1, 0);
         }
     }
 }

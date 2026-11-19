@@ -43,7 +43,7 @@ struct CMenuBattleDamageEntry {
     u32 field_24;                     // 0x24 actor/target id
     f32 field_28;                     // 0x28 x position
     f32 field_2C;                     // 0x2C y position
-    u8 field_30;                      // 0x30 direction
+    s8 field_30;                      // 0x30 direction (signed in retail comparisons)
     u8 field_31;                      // 0x31 z-order (cbRenderBefore sort key)
     u8 field_32;                      // 0x32 which layout to draw
     u8 _pad33;                        // 0x33

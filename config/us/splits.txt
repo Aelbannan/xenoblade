@@ -4522,11 +4522,13 @@ CriWare/src/adx/adxt/adx_baif.c:
 	.rodata        start:0x80516b20 end:0x80516b30
 CriWare/src/adx/adxt/adx_bsc.c:
 	.text       start:0x80389B08 end:0x8038B640
+	.rodata     start:0x80516B30 end:0x80517408
 
 	.bss        start:0x805e5358 end:0x805e6378
 	.data        start:0x80560048 end:0x80560050
 CriWare/src/adx/adxt/adx_bwav.c:
 	.text       start:0x8038B640 end:0x8038C628
+	.rodata     start:0x80517408 end:0x80517428
 
 	.data        start:0x80560050 end:0x805620d8
 CriWare/src/adx/adxt/adx_crs.c:
@@ -4535,12 +4537,15 @@ CriWare/src/adx/adxt/adx_crs.c:
 	.bss        start:0x805e6378 end:0x805e6380
 CriWare/src/adx/adxt/adx_dcd5.c:
 	.text       start:0x8038C690 end:0x8038CD48
+	.rodata     start:0x80517428 end:0x80517468
 
 CriWare/src/adx/adxt/adx_dcd.c:
 	.text       start:0x8038CD48 end:0x8038D40C
+	.rodata     start:0x80517468 end:0x80517498
 
 CriWare/src/adx/adxt/adx_errs.c:
 	.text       start:0x8038D40C end:0x8038D8EC
+	.rodata     start:0x80517498 end:0x805174A0
 
 	.bss        start:0x805e6380 end:0x805e64a8
 CriWare/src/adx/ahx/ahx_ftbl.c:
@@ -4549,12 +4554,15 @@ CriWare/src/adx/ahx/ahx_ftbl.c:
 	.data        start:0x805620d8 end:0x805620e0
 CriWare/src/adx/ahx/ahx_link.c:
 	.text       start:0x8038D918 end:0x8038DC50
+	.rodata     start:0x805174A0 end:0x80517548
 
 CriWare/src/adx/ahx/ahx_mflt_c.c:
 	.text       start:0x8038DC50 end:0x8038E148
+	.rodata     start:0x80517548 end:0x80517550
 
 CriWare/src/adx/ahx/ahx_mwin2_c.c:
 	.text       start:0x8038E148 end:0x8038F608
+	.rodata     start:0x80517550 end:0x80517560
 
 CriWare/src/adx/ahx/ahx_sbf2.c:
 	.text       start:0x8038F608 end:0x8038F6CC
@@ -4562,10 +4570,12 @@ CriWare/src/adx/ahx/ahx_sbf2.c:
 	.data        start:0x805620e0 end:0x805629a0
 CriWare/src/adx/ahx/ahx_sbf.c:
 	.text       start:0x8038F6CC end:0x8038FA00
+	.rodata     start:0x80517560 end:0x80517568
 
 	.bss        start:0x805e64a8 end:0x805e64c0
 CriWare/src/adx/ahx/ahx_sjd.c:
 	.text       start:0x8038FA00 end:0x803901C4
+	.rodata     start:0x80517568 end:0x805175A0
 
 	.bss        start:0x805e64c0 end:0x805e64c8
 CriWare/src/adx/ahx/ahx_wtbl.c:
@@ -4581,6 +4591,7 @@ CriWare/src/adx/ahx/ahx_atbl.c:
 	.data        start:0x80565aa8 end:0x80565ab8
 CriWare/src/adx/ahx/ahx_bsr.c:
 	.text       start:0x803905A0 end:0x80390C64
+	.rodata     start:0x805175A0 end:0x80517628
 
 CriWare/src/adx/ahx/ahx_cmn.c:
 	.text       start:0x80390C64 end:0x80390C84
@@ -4588,10 +4599,10 @@ CriWare/src/adx/ahx/ahx_cmn.c:
 	.bss        start:0x805e64c8 end:0x805e64d0
 CriWare/src/adx/ahx/ahx_dcd.c:
 	.text       start:0x80390C84 end:0x80392748
+	.rodata     start:0x80517628 end:0x80517640
 
 	.bss        start:0x805e64d0 end:0x805e66e0
 	.data        start:0x80565ab8 end:0x80565b30
-	.rodata        start:0x80516b30 end:0x80517640
 CriWare/src/adx/cricfg/cfg_lib.c:
 	.text       start:0x80392748 end:0x803927FC
 

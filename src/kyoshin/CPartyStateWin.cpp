@@ -109,12 +109,10 @@ extern "C" u8* PartyStateWin_CopyBlockFF0(u8* dst, u8* src) {
     // words load first (second via a pre-increment walk, giving lwzu), then
     // both stores land (second via pre-increment, giving stwu).
     for (int i = 0; i < 4; i++) {
-        u32 a = ws[1];
-        ws += 2;
-        u32 b = ws[0];
-        wd[1] = a;
+        wd[1] = ws[1];
+        wd[2] = ws[2];
         wd += 2;
-        wd[0] = b;
+        ws += 2;
     }
     return dst;
 }

@@ -639,28 +639,20 @@ CfCamEventManager::CfCamEventManager() {
     }
     lbl_eu_80663DF0 = (CfCamEventGlobal*)this;
     memset(this, 0, 0xc);
-    // Word-region copies: ml::CVec3 assignment emits an out-of-line __as__ call
-    // and member-wise float copies emit lfs/stfs chains; retail inlines these
-    // as raw GPR word copies from the zero global.
-    // OPEN ITEM (us-80075c34, 37.6%): retail inline-expands the three 12-byte
-    // zero-vector copies as lwzu/lwz GPR loads + stw stores; every source shape
-    // tried (CVec3 operator= [outlined __as__], member-wise floats [lfs/stfs
-    // chain], POD word-struct assign [outlined __as__], memcpy [bl memcpy call])
-    // fails to inline. Header operator= on ml::CVec3 also stayed out-of-line.
-    // Next angles: hand-rolled u32* copy loop, per-field u32 reads from an
-    // extern "C" zero region, or checking how other matched TUs fill CVec3 fields.
-    memcpy(&field_0x54, &ml::CVec3::zero, 0xC);
-    memcpy(&field_0x60, &ml::CVec3::zero, 0xC);
-    memcpy(&field_0x6C, &ml::CVec3::zero, 0xC);
-    field_0x78 = lbl_eu_80666440;
-    field_0x42 = 0;
-    field_0x44 = 0;
-    field_0x46 = 0;
+    // The implicit CVec3 copy emits retail's GPR word copies (lwzu/lwz + stw)
+    // from the zero global. No memcpy or u32 pun view is needed.
     // Declared end-first: MWCC colors these locals in reverse declaration
     // order (p -> r28, mem -> r29, end -> r30), matching retail.
     u8* end;
     u8* mem;
     u8* p;
+    field_0x54 = ml::CVec3::zero;
+    field_0x60 = ml::CVec3::zero;
+    field_0x6C = ml::CVec3::zero;
+    field_0x78 = lbl_eu_80666440;
+    field_0x42 = 0;
+    field_0x44 = 0;
+    field_0x46 = 0;
     mem = (u8*)mtl::MemManager::allocate(0xc40, CfRes_getAllocHandle());
     if (mem != 0) {
         end = mem + 0xc40;
@@ -736,14 +728,13 @@ void* CamEvtFetchSlotPtr(void* self, unsigned long idx) {
 // manager pointer in r3 is unused by this helper. The declaration in
 // CfCamEvent_1.hpp keeps the call reloc name unmangled (retail symbol
 // CamEvtClassId).
-// NOTE: retail lays the four result blocks at the end (checks fall through
-// with jump-on-true); Wii/1.1 -O4,p inlines them with jump-on-false, and a
-// goto/switch form that reproduces the end layout instead normalizes the
-// == 0xb equality into a setnz chain (same version wall as CamEvtBusyChk's
-// two-cmpi range check).
-// Retail calls these outlined from CamEvtCreateSlotObj; dont_inline keeps IPA from
-// folding their bodies into the caller (repo convention, cf. CfGameManager).
-#pragma dont_inline on
+// Retail lays the four result blocks at the end. The three range/id guards
+// reproduce with goto tails; the == 11 id must be a switch case (an if emits
+// the branchless subfic/nor/srawi/rlwinm idiom). Residual (50.0%, 0 reg_swap):
+// retail materializes li r3,0 before the first cmpli, while MWCC sinks it to
+// the default-return block for every tested result-variable shape.
+// Retail calls these outlined from CamEvtCreateSlotObj; their bodies stay
+// out of line (cf. CfGameManager).
 int CamEvtClassId(CfCamEventManager* /*unused*/, int idx) {
     // Goto-to-end result blocks: retail is `li r3,0` then ble/beq
     // forward to dedicated `li r3,N; blr` tails (PLAN §17.6 gate chain).
@@ -751,7 +742,10 @@ int CamEvtClassId(CfCamEventManager* /*unused*/, int idx) {
     if ((u32)(idx - 0x10) <= 27) goto ret1;
     if ((u32)(idx - 8) <= 2) goto ret2;
     if ((u32)idx <= 1) goto ret0;
-    if (idx == 11) goto ret2b;
+    switch (idx) {
+    case 11: goto ret2b;
+    default: break;
+    }
     return result;
 ret0:
     return 0;
@@ -762,7 +756,6 @@ ret2:
 ret2b:
     return 2;
 }
-#pragma dont_inline reset
 
 // True when the global cam state exists and is in a "busy" frame range.
 // NOTE: canonical shape for the [0x10, 0x2b] two-compare range check
@@ -814,19 +807,19 @@ void CamEvtCopyBlk(CfCamEventManager* dst, CfCamEventCopySrc* src) {
     u32 lo;
     lo = src->w_10C;
     hi = src->w_110;
-    dst->field_0x54.w[1] = hi;
-    dst->field_0x54.w[0] = lo;
-    dst->field_0x54.w[2] = src->w_114;
+    ((CamEventVecWords*)&dst->field_0x54)->w[1] = hi;
+    ((CamEventVecWords*)&dst->field_0x54)->w[0] = lo;
+    ((CamEventVecWords*)&dst->field_0x54)->w[2] = src->w_114;
     lo = src->w_138;
     hi = src->w_13C;
-    dst->field_0x60.w[1] = hi;
-    dst->field_0x60.w[0] = lo;
-    dst->field_0x60.w[2] = src->w_140;
+    ((CamEventVecWords*)&dst->field_0x60)->w[1] = hi;
+    ((CamEventVecWords*)&dst->field_0x60)->w[0] = lo;
+    ((CamEventVecWords*)&dst->field_0x60)->w[2] = src->w_140;
     lo = src->w_118;
     hi = src->w_11C;
-    dst->field_0x6C.w[1] = hi;
-    dst->field_0x6C.w[0] = lo;
-    dst->field_0x6C.w[2] = src->w_120;
+    ((CamEventVecWords*)&dst->field_0x6C)->w[1] = hi;
+    ((CamEventVecWords*)&dst->field_0x6C)->w[0] = lo;
+    ((CamEventVecWords*)&dst->field_0x6C)->w[2] = src->w_120;
     dst->field_0x78 = src->f_1E0;
 }
 
@@ -1392,8 +1385,7 @@ cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_getBattleStats() {
 // manager's shake groups, and feeds the two aim pairs into the shared pose
 // solver (CamEvtSolveAimPair / CamEvtPushCamEntry). The shake-table tail duplicates
 // CamEvtStepShk's busy/flag logic. Returns 1 on success.
-// __declspec(noinline): retail calls it outlined from CamEvtCreateSlotObj.
-#pragma dont_inline on
+// Retail calls it outlined from CamEvtCreateSlotObj.
 void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam) {
     CamEventSrc* src = (CamEventSrc*)MapFx_ResolveOwner(srcArg);
@@ -1706,7 +1698,6 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
     }
     return (void*)1;
 }
-#pragma dont_inline reset
 
 // Union temp reproducing MWCC's 0x4330-magic int->double conversion slots.
 // Hand-built (like CItemBoxGrid's converters) so the pool references are the
@@ -1730,8 +1721,7 @@ union CamWordBits {
 // local CfCamDataTable from the row's byte/angle columns, run the shared
 // pose setup (CamEvtSetupFollowCam), then patch the cam-table entry selected by
 // the row's speed columns. Returns 1 on success.
-// __declspec(noinline): retail calls it outlined from CamEvtCreateSlotObj.
-#pragma dont_inline on
+// Retail calls it outlined from CamEvtCreateSlotObj.
 void* CamEvtBuildFollowState(
     CfCamEventManager* self, int unk34, void* srcArg,
     u32 rowOverride) {
@@ -1878,15 +1868,12 @@ void* CamEvtBuildFollowState(
     return (void*)1;
 }
 
-// Compile-only stub; retail calls it outlined (dont_inline keeps the bl).
-#pragma dont_inline on
+// Compile-only stub; retail calls it outlined.
 void CamEvtBlendSlotVecs(void* out, void* a,
                                                      void* b, u16 c, u16 d,
                                                      void* e) {}
-#pragma dont_inline reset
 
 // Maps an (action, parameter) pair to a campaign-state id; default 5.
-#pragma dont_inline on
 int CamEvtMapActionToCampaign(int action, int param) {
     int result = 5;
     if (action == 1 && param == 1) { result = 1; goto done; }
@@ -1899,7 +1886,6 @@ int CamEvtMapActionToCampaign(int action, int param) {
 done:
     return result;
 }
-#pragma dont_inline reset
 
 void CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
     u32 n = (u32)CamEvtClassId(self, idx);
@@ -2564,21 +2550,20 @@ void CamEvtDeadStp(f32 step, CfCamEventShakeElem* e) {
     }
 }
 
-// NOTE: retail materializes the sub pointer (addi r3,r3,0x1f4) and keeps the
-// three checks branchy with separate return blocks. Advancing a byte pointer
-// in-source pins the addi so the optimizer cannot refold it into the load
-// displacements.
+// Retail keeps the three checks branchy with separate return blocks and
+// materializes base+0x1F4 via `addi r3,r3,500` before the 2nd/3rd byte tests.
 bool CamEvtShkActv(CfCamEventManager* manager) {
-    // NOTE: retail materializes base+0x1F4 via `addi r3,r3,500` before the
-    // 2nd/3rd byte tests, and keeps the final check branchy. Tried: raw
-    // u8* indexing, &shake[0] unit pointer (u[0]/u[1]), tab0-first ordering
-    // for r3 reuse, mutating `p += 0x1F4` step - ALL fold to direct 854/1230
-    // displacements and the trailing `return x != 0` if-converts to
-    // neg/or/rlwinm under GC/3.0a5.2 (same trailing-diamond wall as
-    // CamEvtClassId's == 11). Needs flag/version investigation.
+    // The constant-bounds loop unrolls to the branchy chain. Residual: MWCC
+    // folds the shake base into 854/1230 displacements instead of emitting the
+    // addi. Tried raw u8* indexing, &shake[0] unit pointer, tab0-first ordering,
+    // `p += 0x1F4`, and pointer-walk variants; all fold or unroll to a runtime loop.
     if (manager->tab0.flag_active != 0) return true;
-    if (manager->shake[0].field_0x162 != 0) return true;
-    return manager->shake[1].field_0x162 != 0;
+    CfCamEventShakeUnit* sub = manager->shake;
+    for (int i = 0; i < 2; i++) {
+        if (sub->field_0x162 != 0) return true;
+        sub++;
+    }
+    return false;
 }
 
 // One composition step of the fixed 3x3 recurrence used by the CamEvtUpdateFrame

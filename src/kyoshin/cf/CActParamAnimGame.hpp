@@ -62,69 +62,33 @@ public:
     void checkNotFalling();
     void checkFlag40000();
 
-    // base ::CActParamAnim vptr occupies 0x00-0x03; retail base payload pads
-    // to 0x4E8 before this class's own fields.
-    u8 _04[0x0C - 0x04];                  // 0x04-0x0B base-class payload
-    volatile u32 field_0C;                // +0x0C flags (volatile: retail reloads it in func_8005D2C4's fall branch)
-    u8 _10[0x270 - 0x10];                 // 0x10-0x26F base-class payload
-    u32 field_270;                        // +0x270 base-class flags (trackGroundAt)
-    u8 _274[0x374 - 0x274];               // 0x274-0x373 base-class payload
-    int field_374;                        // +0x374 (signed: retail compares it with cmpwi)
-    u8 _378[0x390 - 0x378];               // 0x378-0x38F base-class payload
-    f32 field_390;                        // +0x390 speed scale (trackGroundAt)
-    f32 field_394;                        // +0x394
-    f32 field_398;                        // +0x398
-    u8 _39C[0x3A0 - 0x39C];               // 0x39C-0x39F base-class payload
-    void* field_3A0;                      // +0x3A0
-    u8 _3A4[0x3A8 - 0x3A4];               // 0x3A4-0x3A7 base-class payload
-    ml::CVec3 field_3A8;                  // +0x3A8 position
-    ml::CVec3 field_3B4;                  // +0x3B4 ground-probe ref (trackGroundAt)
-    ml::CVec3 field_3C0;                  // +0x3C0 velocity (trackGroundAt)
-    ml::CVec3 field_3CC;                  // +0x3CC facing dir (trackGroundAt)
-    ml::CVec3 field_3D8;                  // +0x3D8 hit pos (trackGroundAt)
-    ml::CVec3 field_3E4;                  // +0x3E4 target pos (trackGroundAt)
-    ml::CVec3 field_3F0;                  // +0x3F0 move vec (trackGroundAt)
-    f32 field_3FC;                        // +0x3FC (func_8005EEB4 normal x)
-    f32 field_400;                        // +0x400 (func_8005EEB4 normal y)
-    f32 field_404;                        // +0x404 (func_8005EEB4 normal z)
-    u8 _408[0x444 - 0x408];               // 0x408-0x443 base-class payload
-    f32 field_444;                        // +0x444
-    u8 _448[0x464 - 0x448];               // 0x448-0x463 base-class payload
-    f32 field_464;                        // +0x464 (func_8005EEB4 height)
-    u8 _468[0x47C - 0x468];               // 0x468-0x47B base-class payload
-    f32 field_47C;                        // +0x47C
-    u8 _480[0x484 - 0x480];               // 0x480-0x483 base-class payload
-    f32 field_484;                        // +0x484 (func_8005EEB4 probe arg)
-    f32 field_488;                        // +0x488
-    u8 _48C[0x490 - 0x48C];               // 0x48C-0x48F base-class payload
-    f32 field_490;                        // +0x490 (func_8005EEB4 probe arg)
-    f32 field_494;                        // +0x494 (func_8005EEB4 probe arg)
-    u8 _498[0x4A8 - 0x498];               // 0x498-0x4A7 base-class payload
-    u32 field_4A8;                        // +0x4A8 filter
-    s32 field_4AC;                        // +0x4AC
-    u32 field_4B0;                        // +0x4B0 (trackGroundAt)
-    u8 _4B4[0x4E8 - 0x4B4];               // 0x4B4-0x4E7 base-class payload
-    CActParamAnimGameLink* field_4E8;     // +0x4E8 region/link pointer
-    u32 field_4EC;                         // +0x4EC flags
-    u32 field_4F0;                         // +0x4F0
-    CActParamAnimGameLink* field_4F4;      // +0x4F4
-    f32 field_4F8;                         // +0x4F8
-    f32 field_4FC;                         // +0x4FC
-    f32 field_500;                         // +0x500
-    f32 field_504;                         // +0x504
-    f32 field_508;                         // +0x508
-    f32 field_50C;                         // +0x50C
-    f32 field_510;                         // +0x510 (func_8005EEB4 y-replace)
-    f32 field_514;                         // +0x514
-    f32 field_518;                         // +0x518
-    f32 field_51C;                         // +0x51C
-    ml::CVec3 field_520;                  // +0x520 (trackGroundAt step vec)
-    int field_52C;                         // +0x52C
-    volatile u16 field_530;                // +0x530 (volatile: retail reloads it across the flag-check branch in fireStateGate)
-    u16 field_532;                         // +0x532
-    u16 field_534;                         // +0x534
-    u16 field_536;                         // +0x536
-    u16 field_538;                         // +0x538
+    // Only the class's own tail lives here; all fields up to +0x4E7 are
+    // declared in ::CActParamAnim.
+    CActParamAnimGameLink* field4E8;     // +0x4E8 region/link pointer
+    u32 field4EC;                         // +0x4EC flags
+    u32 field4F0;                         // +0x4F0
+    CActParamAnimGameLink* field4F4;      // +0x4F4
+    f32 field4F8;                         // +0x4F8
+    f32 field4FC;                         // +0x4FC
+    f32 field500;                         // +0x500
+    f32 field504;                         // +0x504
+    f32 field508;                         // +0x508
+    f32 field50C;                         // +0x50C
+    f32 field510;                         // +0x510 (func_8005EEB4 y-replace)
+    f32 field514;                         // +0x514
+    f32 field518;                         // +0x518
+    f32 field51C;                         // +0x51C
+    f32 field520;                         // +0x520 (trackGroundAt step vec x)
+    f32 field524;                         // +0x524
+    f32 field528;                         // +0x528
+    int field52C;                         // +0x52C
+    volatile u16 field530;                // +0x530 (volatile: retail reloads it across the flag-check branch in fireStateGate)
+    u16 field532;                         // +0x532
+    u16 field534;                         // +0x534
+    u16 field536;                         // +0x536
+    u16 field538;                         // +0x538
+
+    ml::CVec3& vec520() { return *reinterpret_cast<ml::CVec3*>(&field520); }
 };
 
 // Absolute-offset view of the whole actor object. The ::CActParamAnim base
@@ -213,9 +177,9 @@ struct CActParamAnimGameListNode {
 
 // Retail data symbols (global scope: variable names are not mangled).
 // const-qualified so MWCC treats the sdata2 loads as constants and schedules them at retail's hoisted position (see MWCC_CASES SDA-const hoist).
-extern const float lbl_eu_80666040;   // sdata2: 0.0f (field_4F8 initializer)
-extern const float lbl_eu_80666044;   // sdata2: 1.0f (field_500 / field_508 initializer)
-extern const float lbl_eu_80666048;   // sdata2: field_50C / field_504 initializer
+extern const float lbl_eu_80666040;   // sdata2: 0.0f (field4F8 initializer)
+extern const float lbl_eu_80666044;   // sdata2: 1.0f (field500 / field508 initializer)
+extern const float lbl_eu_80666048;   // sdata2: field50C / field504 initializer
 extern const float lbl_eu_8066604C;   // sdata2: field_47C initializer (trackGroundAt)
 extern const float lbl_eu_80666050;   // sdata2: ground-probe threshold (probeStandGnd)
 extern const float lbl_eu_80666054;   // sdata2: ScnRes_Notify5Ptr_E470 probe arg (trackGroundAt)

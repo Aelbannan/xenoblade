@@ -113,11 +113,11 @@ public:
     virtual ~CCur18();
 };
 
-// Retail ctor/dtor of the embedded-cursor leaf (the US split only kept the
-// stripped C name for the ctor). Owners that embed a CCur18 by value call
-// these explicitly; copying a stack-constructed CCur18 into the member is the
-// implicit operator= (copies +0x04..+0x15, keeps the vptr).
-extern "C" CCur18* __ct__CCur18(CCur18* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc);
+// Retail ctor/dtor of the embedded-cursor leaf. Owners that embed a CCur18 by
+// value call the constructor explicitly on the member; copying a stack-built
+// CCur18 into the member is the implicit operator= (copies +0x04..+0x15,
+// keeps the vptr).
+extern "C" CCur18* __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(CCur18* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc);
 extern "C" void* __dt__6CCur18Fv(CCur18* _this, int flags);
 
 class CCur22 : public CBaseCur {

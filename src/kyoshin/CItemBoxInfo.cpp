@@ -31,7 +31,6 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void SplitU32ToS16s(void*, u32);
 extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
 extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
-extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" char lbl_eu_8052E590[];
 extern "C" char lbl_eu_8052E568[];
 extern "C" void copyVEC3(void*, const void*);
@@ -60,8 +59,6 @@ extern "C" void* CItemBlock_getPtr20E8();
 
 // Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep
 // signature shapes verbatim so the mangled names line up).
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 extern u32 lbl_eu_80664098;
 
@@ -175,6 +172,8 @@ __attribute__((used)) u32 lbl_eu_806645D4;
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
+#include "monolib/lib/CLibLayout.hpp"  // CLibLayout::createArcResourceAccessor
+#include <nw4r/db/db_assert.h>  // nw4r::db::Panic
 #include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam slots (+0xA4/+0x108/...) for char-data stats
 #include <new>
 
@@ -187,7 +186,9 @@ namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransfo
 void func_80127BD8(void*, float*);
 u32 func_801392C0();
 
-// Root-pane view of nw4r::lyt::Layout (mpRootPane at +0x10).
+// Root-pane view of nw4r::lyt::Layout (mpRootPane at +0x10). The two
+// GetSlotPos bodies still need this spelling: Layout::GetRootPane() is a
+// pure reg-swap regression there (8 reg-swaps, 100% -> 80%); measured.
 struct LayoutRootPaneView {
     u8 _00[0x10];
     nw4r::lyt::Pane* rootPane10;
@@ -286,20 +287,13 @@ void func_80127BD8(void*, float*);
 // TU-local cast-only views (CItemBoxInfo.hpp is shared, so these live here):
 // - CItemBoxVecTable: the info+0xB0 table (the header keeps the raw _B0 u8
 //   view): 12 s16 ids followed by twelve 3-float VEC3 slots at +0x18.
-// - CItemBoxCharEntryView: the CtrlObjectParam_GetCharEntry record; the
-//   equip-slot ids are the s16[6] at +0x1C (cf. CtrlObjectParamEquipRow::
-//   shortArr in cf/CtrlObjectParam.hpp; shortArr[5] sits at +0x26), and the
-//   counter/arts area at +0x3534 feeds Counter_TestBit/IdTable_SumValues.
+// The CtrlObjectParam_GetCharEntry record is CItemBoxCharEntry in the header;
+// its six s16 slotIds and counterArea are shared with the other item-box UIs.
 struct CItemBoxVecTable {
     s16 ids[12];       // +0x00 twelve slot ids
     float vecs[12][3]; // +0x18 twelve VEC3 slots
 };
-struct CItemBoxCharEntryView {
-    u8 _00[0x1C];
-    s16 slotIds[6];        // +0x1C..+0x27 equipped-item ids by slot
-    u8 _28[0x3534 - 0x28];
-    u8 counterArea[0x8A0]; // +0x3534 counter/arts storage
-};
+//
 
 void CItemBoxPage::Clear() {
     float f = 0.0f;
@@ -354,8 +348,8 @@ nw4r::math::VEC3 CItemBoxInfo::GetSlotPos(u32 arg2) {
     // order, so child (declared later) colors first into this's dead r30 and
     // first reuses the pool base's r31 (matches retail r29/r30/r31 layout).
     nw4r::lyt::Pane* first;
-    nw4r::lyt::Pane* second;
     nw4r::lyt::Pane* child;
+    nw4r::lyt::Pane* second;
     char* base = lbl_eu_805063BC;
     nw4r::math::VEC3 pos;
     sprintf(buf, base + 0x161, arg2 + 1);
@@ -368,7 +362,7 @@ nw4r::math::VEC3 CItemBoxInfo::GetSlotPos(u32 arg2) {
 
 void CItemBoxInfo::SetResultPane(bool visible) {
     if (mpLayout == 0) return;
-    nw4r::lyt::Pane* child = ((LayoutRootPaneView*)mpLayout)->rootPane10;
+    nw4r::lyt::Pane* child = mpLayout->GetRootPane();
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
     setPaneVisible(result, visible);
 }
@@ -447,7 +441,7 @@ CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
         if (rec.flags[0][i] == 0) continue;
         rec.f38 += GetFloatTableEntry((u8)slot);
         void* lookup = CtrlObjectParam_GetCharEntry((u8)slot);
-        void* item = CItem_kindPtr(2, *(s16*)((u8*)lookup + 0x26));
+        void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)lookup)->slotIds[5]);
         if (item == NULL || *(u32*)item == 0) continue;
         // cat is likewise narrow-typed for per-site promotion.
         u16 cat = BdatGetItemId(*(u32*)item >> 20);
@@ -494,7 +488,7 @@ CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
         sprintf(buf, base + 0x1f4, (u8)slot);
         rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)buf, id) != 0;
         if (rec.equipable[(u8)i] == 0) continue;
-        CItemBoxCharEntryView* member = (CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry((u8)slot);
+        CItemBoxCharEntry* member = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry((u8)slot);
         void* counters = member->counterArea;
         if ((u8)reqKind == 3) {
             if (Counter_TestBit(counters, 0x85) == 0) rec.equipable[(u8)i] = 0;
@@ -874,7 +868,7 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
             if (slot != 0) {
                 void* member = CtrlObjectParam_GetCharEntry(slot);
                 // Fixed equip category 2: candidate value read at member+0x26.
-                void* item = CItem_kindPtr(2, *(s16*)((u8*)member + 0x26));
+                void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)member)->slotIds[5]);
                 if (item != NULL && *(u32*)item != 0 && arg3 == item) {
                     sprintf(label, base + 0x30e, (u8)i + 1);
                     u32 tex;
@@ -906,7 +900,7 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
 #pragma optimize_for_size off
 void setItemBoxVtxColor(void* arr, u32 index, const void* color) {
     if (index >= 3) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052E590, 0x8f, lbl_eu_8052E568);
+        nw4r::db::Panic(lbl_eu_8052E590, 0x8f, lbl_eu_8052E568);
     }
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
@@ -1044,11 +1038,11 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
         u32 cat = BdatGetItemType((u32)itemId);
         s16 value = -1;
         switch (cat & 0xFFFF) {
-            case 4: value = *(s16*)((u8*)lookup + 0x1C); break;
-            case 5: value = *(s16*)((u8*)lookup + 0x1E); break;
-            case 6: value = *(s16*)((u8*)lookup + 0x20); break;
-            case 7: value = *(s16*)((u8*)lookup + 0x22); break;
-            case 8: value = *(s16*)((u8*)lookup + 0x24); break;
+            case 4: value = ((CItemBoxCharEntry*)lookup)->slotIds[0]; break;
+            case 5: value = ((CItemBoxCharEntry*)lookup)->slotIds[1]; break;
+            case 6: value = ((CItemBoxCharEntry*)lookup)->slotIds[2]; break;
+            case 7: value = ((CItemBoxCharEntry*)lookup)->slotIds[3]; break;
+            case 8: value = ((CItemBoxCharEntry*)lookup)->slotIds[4]; break;
         }
         void* r = CItem_kindPtr(cat & 0xFFFF, value);
         if (r == NULL || *(u32*)r == 0 || r != record) continue;
@@ -1447,12 +1441,12 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
         void* lookup = CtrlObjectParam_GetCharEntry(flag);
         cur.tbl = *(u32*)((u8*)lookup + 8);
         cur.h = *(u16*)((u8*)lookup + 0xc);
-        vals.v26 = *(s16*)((u8*)lookup + 0x26);
-        vals.v1C = *(s16*)((u8*)lookup + 0x1c);
-        vals.v1E = *(s16*)((u8*)lookup + 0x1e);
-        vals.v20 = *(s16*)((u8*)lookup + 0x20);
-        vals.v22 = *(s16*)((u8*)lookup + 0x22);
-        vals.v24 = *(s16*)((u8*)lookup + 0x24);
+        vals.v26 = ((CItemBoxCharEntry*)lookup)->slotIds[5];
+        vals.v1C = ((CItemBoxCharEntry*)lookup)->slotIds[0];
+        vals.v1E = ((CItemBoxCharEntry*)lookup)->slotIds[1];
+        vals.v20 = ((CItemBoxCharEntry*)lookup)->slotIds[2];
+        vals.v22 = ((CItemBoxCharEntry*)lookup)->slotIds[3];
+        vals.v24 = ((CItemBoxCharEntry*)lookup)->slotIds[4];
         for (u32 k = 0; k < 6; k++) {
             void* hit = CItem_kindPtr(((u8*)&cur)[k], vals.s[k]);
             if (hit == NULL || *(u32*)hit == 0) continue;
@@ -1658,7 +1652,7 @@ void CItemBoxInfo::ClearTripleRows() {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        nw4r::lyt::Pane* r = ((LayoutRootPaneView*)mpLayout)->rootPane10->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* r = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
@@ -2064,7 +2058,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
     D8EStatB* stB = (D8EStatB*)stats->CActorParam_getArtsDataBlock();
     D8EStatC* stC = (D8EStatC*)stats->CActorParam_getBonusStats();
-    CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
+    CtrlObjectParam_GetArtsStatsRow((u8*)((CItemBoxCharEntry*)charObj)->slotIds, 5);
 
     // ---- arts sum ----
     s32 artsSum = (s32)SumTypeCounts(member, NULL);
@@ -2106,7 +2100,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 (f32)(stC->s06 + eq + GetEffect(member, 0x11, NULL))));
 
             // ---- current weapon block ----
-            void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+            void* item2 = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
             if (item2 != NULL && *(u32*)item2 != 0) {
                 D8EEntry e1;
                 e1.rec = BuildCmpRecord((void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
@@ -2293,12 +2287,12 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
         // (was switch: retail compiles this dispatch as compares)
-        if (type == 2) slotId = *(s16*)((u8*)charObj + 0x26);
-        else if (type == 4) slotId = *(s16*)((u8*)charObj + 0x1C);
-        else if (type == 5) slotId = *(s16*)((u8*)charObj + 0x1E);
-        else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
-        else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
-        else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
+        if (type == 2) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[5];
+        else if (type == 4) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[0];
+        else if (type == 5) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[1];
+        else if (type == 6) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[2];
+        else if (type == 7) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[3];
+        else if (type == 8) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[4];
         void* item = CItem_kindPtr(type, slotId);
         D8EComparisonStorage comparisonStorage;
         if (type == 2) {
@@ -2571,7 +2565,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 if (v468 < 0) v468 = 0;
             }
             // slot sum
-            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            s32 ssum = (s32)((CItemBoxCharEntry*)charObj)->slotIds[3] + ((CItemBoxCharEntry*)charObj)->slotIds[2] + ((CItemBoxCharEntry*)charObj)->slotIds[4] + ((CItemBoxCharEntry*)charObj)->slotIds[0] + ((CItemBoxCharEntry*)charObj)->slotIds[1];
             if (ssum <= -5) {
                 GetCondStat((void*)(u32)member, 0x1A);
             }
@@ -2598,7 +2592,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             s16 agilityDelta;
             s16 b14;
             // embedded weapon block
-            void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+            void* item2 = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
             if (item2 != NULL && *(u32*)item2 != 0) {
                 D8EEntry previewWeapon;
                 previewWeapon.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
@@ -2963,7 +2957,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         PaneMatSetTevColors(panes[(17)], (const GXColorS10*)&labelTop, (const GXColorS10*)&labelBottom);
 }
 
-        void* currentWeaponItem = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+        void* currentWeaponItem = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
         s16 attackDelta = 0;
         if (currentWeaponItem != NULL && *(u32*)currentWeaponItem != 0) {
             D8EEntry currentWeapon;
@@ -3029,12 +3023,12 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             // (was switch: retail compiles this dispatch as compares)
-            if (type == 2) slotId = *(s16*)((u8*)charObj + 0x26);
-            else if (type == 4) slotId = *(s16*)((u8*)charObj + 0x1C);
-            else if (type == 5) slotId = *(s16*)((u8*)charObj + 0x1E);
-            else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
-            else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
-            else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
+            if (type == 2) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[5];
+            else if (type == 4) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[0];
+            else if (type == 5) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[1];
+            else if (type == 6) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[2];
+            else if (type == 7) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[3];
+            else if (type == 8) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[4];
             void* item = CItem_kindPtr(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry e_cur;
@@ -3153,7 +3147,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 if (v430 < 0) v430 = 0;
             }
             // slot sum
-            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            s32 ssum = (s32)((CItemBoxCharEntry*)charObj)->slotIds[3] + ((CItemBoxCharEntry*)charObj)->slotIds[2] + ((CItemBoxCharEntry*)charObj)->slotIds[4] + ((CItemBoxCharEntry*)charObj)->slotIds[0] + ((CItemBoxCharEntry*)charObj)->slotIds[1];
             if (ssum <= -5) {
                 GetCondStat((void*)(u32)member, 0x1A);
             }
@@ -3177,7 +3171,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 (f32)((stA->s1E - (s16)v430) + c2)));
             if (b14 <= 0) b14 = 1;
             // embedded weapon block
-            void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+            void* item2 = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
             if (item2 != NULL && *(u32*)item2 != 0) {
                 D8EEntry ew;
                 ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
@@ -3290,12 +3284,12 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
 
     // weapon slot
     {
-        s16 weaponId = *(s16*)((u8*)charObj + 0x26);
-        s16 headId = *(s16*)((u8*)charObj + 0x1C);
-        s16 torsoId = *(s16*)((u8*)charObj + 0x1E);
-        s16 armId = *(s16*)((u8*)charObj + 0x20);
-        s16 legId = *(s16*)((u8*)charObj + 0x22);
-        s16 footId = *(s16*)((u8*)charObj + 0x24);
+        s16 weaponId = ((CItemBoxCharEntry*)charObj)->slotIds[5];
+        s16 headId = ((CItemBoxCharEntry*)charObj)->slotIds[0];
+        s16 torsoId = ((CItemBoxCharEntry*)charObj)->slotIds[1];
+        s16 armId = ((CItemBoxCharEntry*)charObj)->slotIds[2];
+        s16 legId = ((CItemBoxCharEntry*)charObj)->slotIds[3];
+        s16 footId = ((CItemBoxCharEntry*)charObj)->slotIds[4];
         void* itemW = CItem_kindPtr(2, weaponId);
         void* items[5];
         items[0] = CItem_kindPtr(4, headId);
@@ -3475,9 +3469,9 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             EquippedTypes equippedTypes =
                 *(const EquippedTypes*)lbl_eu_80506368;
             s16 equippedIds[6] = {
-                *(s16*)((u8*)charObj + 0x26), *(s16*)((u8*)charObj + 0x1C),
-                *(s16*)((u8*)charObj + 0x1E), *(s16*)((u8*)charObj + 0x20),
-                *(s16*)((u8*)charObj + 0x22), *(s16*)((u8*)charObj + 0x24)
+                ((CItemBoxCharEntry*)charObj)->slotIds[5], ((CItemBoxCharEntry*)charObj)->slotIds[0],
+                ((CItemBoxCharEntry*)charObj)->slotIds[1], ((CItemBoxCharEntry*)charObj)->slotIds[2],
+                ((CItemBoxCharEntry*)charObj)->slotIds[3], ((CItemBoxCharEntry*)charObj)->slotIds[4]
             };
             u8 destination = 0;
             for (u8 equipmentIndex = 0; equipmentIndex < 6 && destination == 0;
@@ -3811,12 +3805,12 @@ s32 CItemBoxInfo::CalcBonus2(u16 b, s32 arg2, void* d) {
 u32 CItemBoxInfo::GetEffect(u16 lookup_key, u32 category, void* arg3) {
     void* lookup = CtrlObjectParam_GetCharEntry(lookup_key);
     s16 slotIds[6];
-    slotIds[0] = *(s16*)((u8*)lookup + 0x26);
-    slotIds[1] = *(s16*)((u8*)lookup + 0x1C);
-    slotIds[2] = *(s16*)((u8*)lookup + 0x1E);
-    slotIds[3] = *(s16*)((u8*)lookup + 0x20);
-    slotIds[4] = *(s16*)((u8*)lookup + 0x22);
-    slotIds[5] = *(s16*)((u8*)lookup + 0x24);
+    slotIds[0] = ((CItemBoxCharEntry*)lookup)->slotIds[5];
+    slotIds[1] = ((CItemBoxCharEntry*)lookup)->slotIds[0];
+    slotIds[2] = ((CItemBoxCharEntry*)lookup)->slotIds[1];
+    slotIds[3] = ((CItemBoxCharEntry*)lookup)->slotIds[2];
+    slotIds[4] = ((CItemBoxCharEntry*)lookup)->slotIds[3];
+    slotIds[5] = ((CItemBoxCharEntry*)lookup)->slotIds[4];
     u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     u32 result = 0;
     for (u32 slot = 0; slot < 6; slot++) {
@@ -3931,12 +3925,12 @@ u32 CItemBoxInfo::SumGemBonus(void* member, u32 category, void* candidate, s32 s
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed
     // block at 0x1C..0x24 (retail load order).
-    ids[0] = ((CItemBoxCharEntryView*)lookup)->slotIds[5];
-    ids[1] = ((CItemBoxCharEntryView*)lookup)->slotIds[0];
-    ids[2] = ((CItemBoxCharEntryView*)lookup)->slotIds[1];
-    ids[3] = ((CItemBoxCharEntryView*)lookup)->slotIds[2];
-    ids[4] = ((CItemBoxCharEntryView*)lookup)->slotIds[3];
-    ids[5] = ((CItemBoxCharEntryView*)lookup)->slotIds[4];
+    ids[0] = ((CItemBoxCharEntry*)lookup)->slotIds[5];
+    ids[1] = ((CItemBoxCharEntry*)lookup)->slotIds[0];
+    ids[2] = ((CItemBoxCharEntry*)lookup)->slotIds[1];
+    ids[3] = ((CItemBoxCharEntry*)lookup)->slotIds[2];
+    ids[4] = ((CItemBoxCharEntry*)lookup)->slotIds[3];
+    ids[5] = ((CItemBoxCharEntry*)lookup)->slotIds[4];
     // 6-byte slot table copied from two .sdata2 constants.
     u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     s32 sum = 0;
@@ -4024,7 +4018,7 @@ u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
     // highest saved register); the result=0 init lands before the call.
     void* obj;
     u32 result = 0;
-    obj = ((CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry(arg1))->counterArea;
+    obj = ((CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry(arg1))->counterArea;
     if (Counter_TestBit(obj, arg2) != 0) {
         result = IdTable_SumValues(obj, arg2);
     }
@@ -4060,11 +4054,11 @@ u32 CItemBoxInfo::SumTypeCounts(u16 arg2, void* arg3) {
         if (ii == v1) continue;
         s16 val = -1;
         switch (ii) {
-            case 4: val = ((CItemBoxCharEntryView*)lookup)->slotIds[0]; break;
-            case 5: val = ((CItemBoxCharEntryView*)lookup)->slotIds[1]; break;
-            case 6: val = ((CItemBoxCharEntryView*)lookup)->slotIds[2]; break;
-            case 7: val = ((CItemBoxCharEntryView*)lookup)->slotIds[3]; break;
-            case 8: val = ((CItemBoxCharEntryView*)lookup)->slotIds[4]; break;
+            case 4: val = ((CItemBoxCharEntry*)lookup)->slotIds[0]; break;
+            case 5: val = ((CItemBoxCharEntry*)lookup)->slotIds[1]; break;
+            case 6: val = ((CItemBoxCharEntry*)lookup)->slotIds[2]; break;
+            case 7: val = ((CItemBoxCharEntry*)lookup)->slotIds[3]; break;
+            case 8: val = ((CItemBoxCharEntry*)lookup)->slotIds[4]; break;
         }
         if (val == -1) continue;
         // Retail passes the slot id (u8)i and the slot value val (2-arg form).
@@ -4084,12 +4078,12 @@ u32 CItemBoxInfo::CheckGemChain(u16 lookup_key, void* arg3, void* unused2) {
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed
     // block at 0x1C..0x24 (retail load order).
-    ids[0] = ((CItemBoxCharEntryView*)lookup)->slotIds[5];
-    ids[1] = ((CItemBoxCharEntryView*)lookup)->slotIds[0];
-    ids[2] = ((CItemBoxCharEntryView*)lookup)->slotIds[1];
-    ids[3] = ((CItemBoxCharEntryView*)lookup)->slotIds[2];
-    ids[4] = ((CItemBoxCharEntryView*)lookup)->slotIds[3];
-    ids[5] = ((CItemBoxCharEntryView*)lookup)->slotIds[4];
+    ids[0] = ((CItemBoxCharEntry*)lookup)->slotIds[5];
+    ids[1] = ((CItemBoxCharEntry*)lookup)->slotIds[0];
+    ids[2] = ((CItemBoxCharEntry*)lookup)->slotIds[1];
+    ids[3] = ((CItemBoxCharEntry*)lookup)->slotIds[2];
+    ids[4] = ((CItemBoxCharEntry*)lookup)->slotIds[3];
+    ids[5] = ((CItemBoxCharEntry*)lookup)->slotIds[4];
     // 6-byte slot table copied from two .sdata2 constants.
     u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     for (u8 i = 0; i < 6; i++) {
@@ -4160,14 +4154,14 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         Class_8045F858 host(&mRegion1);
         u8* data = (u8*)mFileHandle1->getData();
         mtl::MemManager::setMemInitFlag(false);
-        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         mArcResAcc = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
         buildLayout(&mpLayout, acc, &lbl_eu_805063BC[0x535]);
         bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, &lbl_eu_805063BC[0x54a]);
         bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = mpLayout->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+        void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
@@ -4307,9 +4301,9 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         // alpha halves propagated to the paired globals.
         nw4r::lyt::Pane* hl = root->FindPaneByName(&lbl_eu_805063BC[0x7ee], true);
         GXColorS10 c1 = PaneMatGetS16Quad(hl, 0);
-        __as__11_GXColorS10FRC11_GXColorS10((u8*)this + 0x9C, &c1);
+        __as__11_GXColorS10FRC11_GXColorS10(&mColorA, &c1);
         GXColorS10 c2 = PaneMatGetS16Quad(hl, 1);
-        __as__11_GXColorS10FRC11_GXColorS10((u8*)this + 0xA4, &c2);
+        __as__11_GXColorS10FRC11_GXColorS10(&mColorB, &c2);
 
         nw4r::lyt::Pane* p71e = root->FindPaneByName(&lbl_eu_805063BC[0x71e], true);
         GXColorS10 c3 = PaneMatGetS16Quad(p71e, 0);
@@ -4394,7 +4388,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         Class_8045F858 host(&mRegion2);
         u8* data = (u8*)mFileHandle2->getData();
         mtl::MemManager::setMemInitFlag(false);
-        nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* acc2 = CLibLayout::createArcResourceAccessor();
         mTexArcResAcc = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
         Activate();
@@ -4604,8 +4598,8 @@ nw4r::math::VEC3 CItemBoxInfo2::GetSlotPos(u32 arg2) {
     char buf[0x20];
     // Same declaration-order trick as calcItemBoxPaneVec: `first` before `child`
     // so child colors into dead this's r30 and first reuses base's r31.
-    nw4r::lyt::Pane* first;
     nw4r::lyt::Pane* second;
+    nw4r::lyt::Pane* first;
     nw4r::lyt::Pane* child;
     char* base = lbl_eu_805063BC;
     sprintf(buf, base + 0x161, arg2 + 1);
@@ -4698,7 +4692,7 @@ CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
             // Accumulate the slot's stat contribution into the ratio total.
             rec.f38 += GetFloatTableEntry(slot);
             void* lookup = CtrlObjectParam_GetCharEntry(slot);
-            void* item = CItem_kindPtr(2, *(s16*)((u8*)lookup + 0x26));
+            void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)lookup)->slotIds[5]);
             if (item == NULL || *(u32*)item == 0) continue;
             u16 cat = (u16)BdatGetItemId(*(u32*)item >> 20);
             s16 n1 = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x19c)), (int)cat);
@@ -4753,7 +4747,7 @@ CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
         sprintf(buf, base + 0x1f4, (u8)slot);
         rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)buf, id) != 0;
         if (rec.equipable[(u8)i] == 0) continue;
-        CItemBoxCharEntryView* member = (CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry((u8)slot);
+        CItemBoxCharEntry* member = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry((u8)slot);
         void* counters = member->counterArea;
         if ((u8)reqKind == 3) {
             if (Counter_TestBit(counters, 0x85) == 0) rec.equipable[(u8)i] = 0;
@@ -5055,7 +5049,7 @@ void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
             if (slot != 0) {
                 void* member = CtrlObjectParam_GetCharEntry(slot);
                 // Fixed equip category 2: candidate value read at member+0x26.
-                void* item = CItem_kindPtr(2, *(s16*)((u8*)member + 0x26));
+                void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)member)->slotIds[5]);
                 if (item != NULL && *(u32*)item != 0) {
                     if (arg2 == item || arg1 == (u32)(*(u32*)item >> 20)) {
                         sprintf(label, base + 0x30e, (u8)i + 1);
@@ -5124,11 +5118,11 @@ void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
                 u16 category = (u16)BdatGetItemType((u32)arg2);
                 s16 value = -1;
                 switch (category) {
-                    case 4: value = *(s16*)((u8*)member + 0x1C); break;
-                    case 5: value = *(s16*)((u8*)member + 0x1E); break;
-                    case 6: value = *(s16*)((u8*)member + 0x20); break;
-                    case 7: value = *(s16*)((u8*)member + 0x22); break;
-                    case 8: value = *(s16*)((u8*)member + 0x24); break;
+                    case 4: value = ((CItemBoxCharEntry*)member)->slotIds[0]; break;
+                    case 5: value = ((CItemBoxCharEntry*)member)->slotIds[1]; break;
+                    case 6: value = ((CItemBoxCharEntry*)member)->slotIds[2]; break;
+                    case 7: value = ((CItemBoxCharEntry*)member)->slotIds[3]; break;
+                    case 8: value = ((CItemBoxCharEntry*)member)->slotIds[4]; break;
                 }
                 void* item = CItem_kindPtr(category, value);
                 if (item != NULL && *(u32*)item != 0) {
@@ -5294,12 +5288,12 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
         void* lookup = CtrlObjectParam_GetCharEntry(slot);
         entry.tbl = stage.tbl;
         entry.h = stage.h;
-        entry.vals[0] = *(s16*)((u8*)lookup + 0x26);
-        entry.vals[1] = *(s16*)((u8*)lookup + 0x1C);
-        entry.vals[2] = *(s16*)((u8*)lookup + 0x1E);
-        entry.vals[3] = *(s16*)((u8*)lookup + 0x20);
-        entry.vals[4] = *(s16*)((u8*)lookup + 0x22);
-        entry.vals[5] = *(s16*)((u8*)lookup + 0x24);
+        entry.vals[0] = ((CItemBoxCharEntry*)lookup)->slotIds[5];
+        entry.vals[1] = ((CItemBoxCharEntry*)lookup)->slotIds[0];
+        entry.vals[2] = ((CItemBoxCharEntry*)lookup)->slotIds[1];
+        entry.vals[3] = ((CItemBoxCharEntry*)lookup)->slotIds[2];
+        entry.vals[4] = ((CItemBoxCharEntry*)lookup)->slotIds[3];
+        entry.vals[5] = ((CItemBoxCharEntry*)lookup)->slotIds[4];
         for (u32 j = 0; (u8)j < 6; j++) {
             void* cand = CItem_kindPtr((u8)j, entry.vals[(u8)j]);
             if (cand == NULL || *(u32*)cand == 0) continue;
@@ -5487,7 +5481,7 @@ void CItemBoxInfo2::ClearTripleRows() {
     for (i = 0; i < 3; i++) {
         index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        nw4r::lyt::Pane* r = ((LayoutRootPaneView*)mpLayout)->rootPane10->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* r = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         setPaneVisible(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         LayoutSetTextBoxFmtValue(mpLayout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
@@ -5759,7 +5753,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
     E43StatA* stA = (E43StatA*)stats->CActorParam_getBaseStats();
     E43StatB* stB = (E43StatB*)stats->CActorParam_getArtsDataBlock();
     E43StatC* stC = (E43StatC*)stats->CActorParam_getBonusStats();
-    CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
+    CtrlObjectParam_GetArtsStatsRow((u8*)((CItemBoxCharEntry*)charObj)->slotIds, 5);
 
     // ---- arts sum ----
     s32 artsSum = (s32)SumTypeCounts(member, NULL);
@@ -5788,7 +5782,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             RoundHalfAway0(0.01f * stB->f10 * (f32)(stC->s06 + eq + GetEffect(member, 0x11, NULL)));
 
             // ---- current weapon block ----
-            void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+            void* item2 = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
             if (item2 != NULL && *(u32*)item2 != 0) {
                 E43Entry e1;
                 e1.rec = BuildCmpRecord((void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
@@ -5962,12 +5956,12 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
         // (was switch: retail compiles this dispatch as compares)
-        if (type == 2) slotId = *(s16*)((u8*)charObj + 0x26);
-        else if (type == 4) slotId = *(s16*)((u8*)charObj + 0x1C);
-        else if (type == 5) slotId = *(s16*)((u8*)charObj + 0x1E);
-        else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
-        else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
-        else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
+        if (type == 2) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[5];
+        else if (type == 4) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[0];
+        else if (type == 5) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[1];
+        else if (type == 6) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[2];
+        else if (type == 7) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[3];
+        else if (type == 8) slotId = ((CItemBoxCharEntry*)charObj)->slotIds[4];
         void* item = CItem_kindPtr(type, slotId);
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
@@ -6207,7 +6201,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 v468 = (u16)t2;
             }
             // slot sum
-            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            s32 ssum = (s32)((CItemBoxCharEntry*)charObj)->slotIds[3] + ((CItemBoxCharEntry*)charObj)->slotIds[2] + ((CItemBoxCharEntry*)charObj)->slotIds[4] + ((CItemBoxCharEntry*)charObj)->slotIds[0] + ((CItemBoxCharEntry*)charObj)->slotIds[1];
             if (ssum <= -5) {
                 GetCondStatById(member, 0x1A);
             }
@@ -6228,7 +6222,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             if (b14 <= 0) b14 = 1;
             s16 dW = (s16)(b14 - b27);
             // embedded weapon block
-            void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+            void* item2 = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
             if (item2 != NULL && *(u32*)item2 != 0) {
                 E43Entry ew;
                 ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
@@ -6338,11 +6332,11 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             switch (type) {
-                case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
-                case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
-                case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
-                case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
-                case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
+                case 4: slotId = ((CItemBoxCharEntry*)charObj)->slotIds[0]; break;
+                case 5: slotId = ((CItemBoxCharEntry*)charObj)->slotIds[1]; break;
+                case 6: slotId = ((CItemBoxCharEntry*)charObj)->slotIds[2]; break;
+                case 7: slotId = ((CItemBoxCharEntry*)charObj)->slotIds[3]; break;
+                case 8: slotId = ((CItemBoxCharEntry*)charObj)->slotIds[4]; break;
             }
             void* item = CItem_kindPtr(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
@@ -6434,7 +6428,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 v430 = (u16)t2;
             }
             // slot sum
-            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            s32 ssum = (s32)((CItemBoxCharEntry*)charObj)->slotIds[3] + ((CItemBoxCharEntry*)charObj)->slotIds[2] + ((CItemBoxCharEntry*)charObj)->slotIds[4] + ((CItemBoxCharEntry*)charObj)->slotIds[0] + ((CItemBoxCharEntry*)charObj)->slotIds[1];
             if (ssum <= -5) {
                 GetCondStatById(member, 0x1A);
             }
@@ -6451,7 +6445,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq2) * (f32)((stA->s1E - (s16)v430) + c2)));
             if (b14 <= 0) b14 = 1;
             // embedded weapon block
-            void* item2 = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+            void* item2 = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
             if (item2 != NULL && *(u32*)item2 != 0) {
                 E43Entry ew;
                 ew.rec = BuildCmpRecord((void*)(u32)(u16)(*(u32*)item2 >> 20));
@@ -6558,13 +6552,13 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
 
     // weapon slot
     {
-        void* itemW = CItem_kindPtr(2, *(s16*)((u8*)charObj + 0x26));
+        void* itemW = CItem_kindPtr(2, ((CItemBoxCharEntry*)charObj)->slotIds[5]);
         void* items[5];
-        items[0] = CItem_kindPtr(4, *(s16*)((u8*)charObj + 0x1C));
-        items[1] = CItem_kindPtr(5, *(s16*)((u8*)charObj + 0x1E));
-        items[2] = CItem_kindPtr(6, *(s16*)((u8*)charObj + 0x20));
-        items[3] = CItem_kindPtr(7, *(s16*)((u8*)charObj + 0x22));
-        items[4] = CItem_kindPtr(8, *(s16*)((u8*)charObj + 0x24));
+        items[0] = CItem_kindPtr(4, ((CItemBoxCharEntry*)charObj)->slotIds[0]);
+        items[1] = CItem_kindPtr(5, ((CItemBoxCharEntry*)charObj)->slotIds[1]);
+        items[2] = CItem_kindPtr(6, ((CItemBoxCharEntry*)charObj)->slotIds[2]);
+        items[3] = CItem_kindPtr(7, ((CItemBoxCharEntry*)charObj)->slotIds[3]);
+        items[4] = CItem_kindPtr(8, ((CItemBoxCharEntry*)charObj)->slotIds[4]);
         if (itemW != NULL) {
             u8 cnt = (u8)((u32(*)(void*))((void**)itemW)[0x0C])(itemW);
             for (u8 i = 0; i < 3; i++) {
@@ -6929,12 +6923,12 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
     u8 equipSlot = (u8)BdatGetItemType((u32)d);
     char* base = lbl_eu_805063BC;
     s16 slotIds[6];
-    slotIds[0] = *(s16*)((u8*)lookup + 0x26);
-    slotIds[1] = *(s16*)((u8*)lookup + 0x1C);
-    slotIds[2] = *(s16*)((u8*)lookup + 0x1E);
-    slotIds[3] = *(s16*)((u8*)lookup + 0x20);
-    slotIds[4] = *(s16*)((u8*)lookup + 0x22);
-    slotIds[5] = *(s16*)((u8*)lookup + 0x24);
+    slotIds[0] = ((CItemBoxCharEntry*)lookup)->slotIds[5];
+    slotIds[1] = ((CItemBoxCharEntry*)lookup)->slotIds[0];
+    slotIds[2] = ((CItemBoxCharEntry*)lookup)->slotIds[1];
+    slotIds[3] = ((CItemBoxCharEntry*)lookup)->slotIds[2];
+    slotIds[4] = ((CItemBoxCharEntry*)lookup)->slotIds[3];
+    slotIds[5] = ((CItemBoxCharEntry*)lookup)->slotIds[4];
     u8 bytes[6] = { 2, 4, 5, 6, 7, 8 };
     char buf[0x20];
     u32 result = 0;
@@ -7026,11 +7020,11 @@ u32 CItemBoxInfo2::SumTypeCounts(u16 arg2, void* arg3) {
         if (ii == v1) continue;
         s16 val = -1;
         switch (ii) {
-            case 4: val = ((CItemBoxCharEntryView*)lookup)->slotIds[0]; break;
-            case 5: val = ((CItemBoxCharEntryView*)lookup)->slotIds[1]; break;
-            case 6: val = ((CItemBoxCharEntryView*)lookup)->slotIds[2]; break;
-            case 7: val = ((CItemBoxCharEntryView*)lookup)->slotIds[3]; break;
-            case 8: val = ((CItemBoxCharEntryView*)lookup)->slotIds[4]; break;
+            case 4: val = ((CItemBoxCharEntry*)lookup)->slotIds[0]; break;
+            case 5: val = ((CItemBoxCharEntry*)lookup)->slotIds[1]; break;
+            case 6: val = ((CItemBoxCharEntry*)lookup)->slotIds[2]; break;
+            case 7: val = ((CItemBoxCharEntry*)lookup)->slotIds[3]; break;
+            case 8: val = ((CItemBoxCharEntry*)lookup)->slotIds[4]; break;
         }
         if (val == -1) continue;
         // Retail passes the slot id (u8)i and the slot value val (2-arg form).
@@ -7050,7 +7044,7 @@ bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
     // for each of the six slots either the indexed item names must still
     // resolve (when the slot holds the equipped item) or no indexed entry may
     // be occupied/in-use.
-    CItemBoxCharEntryView* lookup = (CItemBoxCharEntryView*)CtrlObjectParam_GetCharEntry(b);
+    CItemBoxCharEntry* lookup = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry(b);
     u32 nameObj = (u32)((char* (*)(void*))LookupItemTypeTable)(c);
     // u16 local: MWCC saves the raw callee return (or-copy) and re-extracts
     // (u16) per argument site, matching retail's def-then-per-site rlwinm.
@@ -7121,14 +7115,14 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         Class_8045F858 host(&mRegion1);
         u8* data = (u8*)mFileHandle1->getData();
         mtl::MemManager::setMemInitFlag(false);
-        nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         mArcResAcc = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
         buildLayout(&mpLayout, acc, &lbl_eu_805063BC[0x535]);
         bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, &lbl_eu_805063BC[0x54a]);
         bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = mpLayout->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+        void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
@@ -7250,9 +7244,9 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         // halves propagated to the paired globals.
         nw4r::lyt::Pane* hl = root->FindPaneByName(&lbl_eu_805063BC[0x7ee], true);
         GXColorS10 c1 = PaneMatGetS16Quad(hl, 0);
-        __as__11_GXColorS10FRC11_GXColorS10((u8*)this + 0x9C, &c1);
+        __as__11_GXColorS10FRC11_GXColorS10(&mColorA, &c1);
         GXColorS10 c2 = PaneMatGetS16Quad(hl, 1);
-        __as__11_GXColorS10FRC11_GXColorS10((u8*)this + 0xA4, &c2);
+        __as__11_GXColorS10FRC11_GXColorS10(&mColorB, &c2);
 
         nw4r::lyt::Pane* p71e = root->FindPaneByName(&lbl_eu_805063BC[0x71e], true);
         GXColorS10 c3 = PaneMatGetS16Quad(p71e, 0);
@@ -7350,7 +7344,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         Class_8045F858 host(&mRegion2);
         u8* data = (u8*)mFileHandle2->getData();
         mtl::MemManager::setMemInitFlag(false);
-        nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
+        nw4r::lyt::ArcResourceAccessor* acc2 = CLibLayout::createArcResourceAccessor();
         mTexArcResAcc = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
         Activate();
@@ -7559,7 +7553,7 @@ void CItemBoxInfo::HidePanes(u16 arg2) {
 
 
 u8 func_801E13D8(CItemBoxInfo2* info) {
-    return *(u8*)((u8*)info + 0x90);
+    return info->mActive;
 }
 
 // GXColorS10::operator=

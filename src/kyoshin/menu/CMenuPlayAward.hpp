@@ -232,30 +232,29 @@ extern "C" int KyoshinHeap_GetField44();
 // declared with C++ linkage so MWCC re-derives the mangled reloc).
 
 // Retail-unmangled free functions of this unit (US retail strips the
-// mangling). C linkage keeps call relocs on the bare retail names;
-// __declspec(noinline) keeps the same-TU calls as real `bl` instructions.
+// mangling). C linkage keeps call relocs on the bare retail names.
 // Return types are int (not u8) so callers compare with cmpwi directly.
-extern "C" int __declspec(noinline) PlayAward_IsReadyFlag(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_BindCloseAnims(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_BindOpenAnims(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_RefreshCursor(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_ReleaseList(CPlayAwardList* self);
-extern "C" int __declspec(noinline) PlayAward_IsListReady(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_RequestOpen(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_FinishOpenAnimA(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_FinishOpenAnimB(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_FinishCloseAnimA(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_FinishCloseAnimB(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_RefreshEntryPanes(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_FlipPage(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_MoveCursorUp(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_ScrollPageDown(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_MoveCursorDown(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_LoadEntries(CPlayAwardList* self);
-extern "C" void __declspec(noinline) PlayAward_RefreshPageTitles(CPlayAwardList* self);
+extern "C" int PlayAward_IsReadyFlag(CPlayAwardList* self);
+extern "C" void PlayAward_BindCloseAnims(CPlayAwardList* self);
+extern "C" void PlayAward_BindOpenAnims(CPlayAwardList* self);
+extern "C" void PlayAward_RefreshCursor(CPlayAwardList* self);
+extern "C" void PlayAward_ReleaseList(CPlayAwardList* self);
+extern "C" int PlayAward_IsListReady(CPlayAwardList* self);
+extern "C" void PlayAward_RequestOpen(CPlayAwardList* self);
+extern "C" void PlayAward_FinishOpenAnimA(CPlayAwardList* self);
+extern "C" void PlayAward_FinishOpenAnimB(CPlayAwardList* self);
+extern "C" void PlayAward_FinishCloseAnimA(CPlayAwardList* self);
+extern "C" void PlayAward_FinishCloseAnimB(CPlayAwardList* self);
+extern "C" void PlayAward_RefreshEntryPanes(CPlayAwardList* self);
+extern "C" void PlayAward_FlipPage(CPlayAwardList* self);
+extern "C" void PlayAward_MoveCursorUp(CPlayAwardList* self);
+extern "C" void PlayAward_ScrollPageDown(CPlayAwardList* self);
+extern "C" void PlayAward_MoveCursorDown(CPlayAwardList* self);
+extern "C" void PlayAward_LoadEntries(CPlayAwardList* self);
+extern "C" void PlayAward_RefreshPageTitles(CPlayAwardList* self);
 extern "C" void PlayAward_BuildEntries(CPlayAwardEntryArray* self);
-extern "C" void __declspec(noinline) PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" __declspec(noinline) u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param);
+extern "C" void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" u8* PlayAward_FindEntry(CPlayAwardEntryArray* self, int param);
 
 // Menu phase handlers + per-frame list update (retail-unmangled names; same
 // C-linkage scheme as the rest of this unit -- keeps call relocs on the bare
@@ -268,10 +267,10 @@ extern "C" void PlayAward_UpdateList(CPlayAwardList* self);
 extern "C" void PlayAward_LoadLayouts(CPlayAwardList* self);
 extern "C" void PlayAward_CopyEntry(CPlayAwardEntry* dst, const CPlayAwardEntry* src);
 extern "C" void PlayAward_ScrollPageUp(CPlayAwardList* self);
-extern "C" s32 __declspec(noinline) PlayAward_GetPageCue(CPlayAwardList* self);
+extern "C" s32 PlayAward_GetPageCue(CPlayAwardList* self);
 
 // Award-list state handlers / helpers (retail-unmangled names; see above).
-extern "C" void __declspec(noinline) PlayAward_RequestClose(CPlayAwardList* self);
+extern "C" void PlayAward_RequestClose(CPlayAwardList* self);
 
 
 // Title/help bar idle query -- free-function form of CTitleAHelp::isIdle()
@@ -307,7 +306,7 @@ extern "C" void ArtsInfo_SetReadyFlag();
 
 // CfGameManager controller-type query (retail pre-mangled name; declared
 // under C linkage so calls bind the literal identifier).
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // Cursor draw import (retail-unmangled name).
 

@@ -12,6 +12,7 @@ extern char lbl_eu_8053AE90[];
 extern const char lbl_eu_80513580[];
 extern char lbl_eu_80513568[];
 #include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/cf/CfHikariItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -116,7 +117,7 @@ CfHikariItemRecord* hikariAddRecord(cf::CfHikariItemManager* self, const u32* sr
         return NULL;
     }
 
-    CfHikariItemRecord* rec = (CfHikariItemRecord*)allocate__Q23mtl10MemManagerFUlUl(
+    CfHikariItemRecord* rec = (CfHikariItemRecord*)mtl::MemManager::allocate(
         0x44, CfRes_getAllocHandle());
     if (rec != NULL) {
         hikariInitFreshRecord(rec, value);
@@ -1197,65 +1198,60 @@ __declspec(section ".data") char lbl_eu_8053AE90[0x10] = {0x00, 0x00, 0x00, 0x00
 __declspec(section ".data") char lbl_eu_8053AEA0[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 __declspec(section ".sdata2") float lbl_eu_80668EC8 = 0.0f;
 __declspec(section ".sdata2") u32 lbl_eu_80668ECC = 0xFFFFFFFFu;
-__declspec(section ".sdata2") const float lbl_eu_80668ED0 = 1.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668ED4 = 0.4f;
-__declspec(section ".sdata2") const float lbl_eu_80668ED8 = -0.4f;
-__declspec(section ".sdata2") const float lbl_eu_80668EDC = 0.5f;
-__declspec(section ".sdata2") const float lbl_eu_80668EE0 = -0.5f;
-__declspec(section ".sdata2") const float lbl_eu_80668EE4 = 0.125f;
-__declspec(section ".sdata2") const float lbl_eu_80668EE8 = -0.125f;
+const float lbl_eu_80668ED0 = 1.0f;
+const float lbl_eu_80668ED4 = 0.4f;
+const float lbl_eu_80668ED8 = -0.4f;
+const float lbl_eu_80668EDC = 0.5f;
+const float lbl_eu_80668EE0 = -0.5f;
+const float lbl_eu_80668EE4 = 0.125f;
+const float lbl_eu_80668EE8 = -0.125f;
 __declspec(section ".sdata2") float lbl_eu_80668EEC = 0.00999999978f;
 __declspec(section ".sdata2") double lbl_eu_80668EF0 = 4503601774854144;
-__declspec(section ".sdata2") const float lbl_eu_80668EF8 = 0.0f;
+const float lbl_eu_80668EF8 = 0.0f;
 __declspec(section ".sdata2") float lbl_eu_80668EFC = 0.1f;
 __declspec(section ".sdata2") float lbl_eu_80668F00 = 1.5f;
-__declspec(section ".sdata2") const float lbl_eu_80668F04 = 10.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F08 = 15.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F0C = 2.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F10 = 2500.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F14 = 4225.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F18 = 0.75f;
-__declspec(section ".sdata2") const float lbl_eu_80668F1C = 0.005f;
-__declspec(section ".sdata2") const float lbl_eu_80668F20 = 20.0f;
-__declspec(section ".sdata2") const double lbl_eu_80668F28 = 20.0;
-__declspec(section ".sdata2") const float lbl_eu_80668F30 = 225.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F34 = 0.2f;
-__declspec(section ".sdata2") const double lbl_eu_80668F38 = 4503601774854144;
-__declspec(section ".sdata2") const float lbl_eu_80668F40 = 0.025f;
-__declspec(section ".sdata2") const float lbl_eu_80668F44 = 0.5f;
-__declspec(section ".sdata2") const float lbl_eu_80668F48 = 0.9f;
-__declspec(section ".sdata2") const float lbl_eu_80668F4C = 0.7f;
-__declspec(section ".sdata2") const float lbl_eu_80668F50 = -0.3f;
-__declspec(section ".sdata2") const float lbl_eu_80668F54 = 1.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F58 = 0.00100000005f;
-__declspec(section ".sdata2") const float lbl_eu_80668F5C = 0.00200000009f;
-__declspec(section ".sdata2") const float lbl_eu_80668F60 = 40.0f;
+const float lbl_eu_80668F04 = 10.0f;
+const float lbl_eu_80668F08 = 15.0f;
+const float lbl_eu_80668F0C = 2.0f;
+const float lbl_eu_80668F10 = 2500.0f;
+const float lbl_eu_80668F14 = 4225.0f;
+const float lbl_eu_80668F18 = 0.75f;
+const float lbl_eu_80668F1C = 0.005f;
+const float lbl_eu_80668F20 = 20.0f;
+const double lbl_eu_80668F28 = 20.0;
+const float lbl_eu_80668F30 = 225.0f;
+const float lbl_eu_80668F34 = 0.2f;
+const double lbl_eu_80668F38 = 4503601774854144;
+const float lbl_eu_80668F40 = 0.025f;
+const float lbl_eu_80668F44 = 0.5f;
+const float lbl_eu_80668F48 = 0.9f;
+const float lbl_eu_80668F4C = 0.7f;
+const float lbl_eu_80668F50 = -0.3f;
+const float lbl_eu_80668F54 = 1.0f;
+const float lbl_eu_80668F58 = 0.00100000005f;
+const float lbl_eu_80668F5C = 0.00200000009f;
+const float lbl_eu_80668F60 = 40.0f;
 __declspec(section ".sdata2") float lbl_eu_80668F64 = 0.0500000007f;
 __declspec(section ".sdata2") float lbl_eu_80668F68 = 0.4f;
 __declspec(section ".sdata2") float lbl_eu_80668F6C = 0.449999988f;
-__declspec(section ".sdata2") const float lbl_eu_80668F70 = 255.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F74 = 102.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F78 = 114.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F7C = 155.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F80 = 149.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F84 = 157.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F88 = 32.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F8C = 170.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F90 = 100.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F94 = 64.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F98 = 200.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668F9C = 196.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668FA0 = 215.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668FA4 = 218.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668FA8 = 150.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668FAC = 250.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668FB0 = 96.0f;
-__declspec(section ".sdata2") const float lbl_eu_80668FB4 = 190.0f;
-__declspec(section ".sdata2") char lbl_eu_80668FB8[0x4] = {0x3f, 0xe0, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80668FBC[0x4] = {0x3f, 0x40, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80668FC0[0x4] = {0x3d, 0xcc, 0xcc, 0xcd};
-__declspec(section ".sdata2") char lbl_eu_80668FC4[0x4] = {0x3f, 0x80, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80668FC8[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const float lbl_eu_80668F70 = 255.0f;
+const float lbl_eu_80668F74 = 102.0f;
+const float lbl_eu_80668F78 = 114.0f;
+const float lbl_eu_80668F7C = 155.0f;
+const float lbl_eu_80668F80 = 149.0f;
+const float lbl_eu_80668F84 = 157.0f;
+const float lbl_eu_80668F88 = 32.0f;
+const float lbl_eu_80668F8C = 170.0f;
+const float lbl_eu_80668F90 = 100.0f;
+const float lbl_eu_80668F94 = 64.0f;
+const float lbl_eu_80668F98 = 200.0f;
+const float lbl_eu_80668F9C = 196.0f;
+const float lbl_eu_80668FA0 = 215.0f;
+const float lbl_eu_80668FA4 = 218.0f;
+const float lbl_eu_80668FA8 = 150.0f;
+const float lbl_eu_80668FAC = 250.0f;
+const float lbl_eu_80668FB0 = 96.0f;
+const float lbl_eu_80668FB4 = 190.0f;
 // .sbss counters (MWCC rejects __declspec(section ".sbss") (33044); plain
 // zero-init tentatives auto-route to .sbss).
 unsigned long lbl_eu_80664C18 = 0;

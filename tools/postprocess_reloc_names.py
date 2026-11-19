@@ -3095,14 +3095,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
 
-    "CUIWindowManager.o": UnitRules(
-        # Data dissolve: same pattern; vtables map onto split1.s blobs
-        # (content-verified: dtor slot names match our members).
-        exact_renames=(
-            ("__vt__26_reslist_base<P9IUIWindow>", "lbl_eu_8052E61C"),
-        ),
-    ),
-
     "CActorParam.o": UnitRules(
         # Typified (no blobs remain): .rodata string + .sdata2 pool are
         # typed source defs; the .data jumptables are compiler-generated.

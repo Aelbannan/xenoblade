@@ -75,25 +75,26 @@ extern "C" CMenuBattleDamage* __ct__CMenuBattleDamage(
     __ct__17UnkClass_8045F564Fv(&obj->mMemRegion);
 
     const f32 zeroF = lbl_eu_80666F68;
-    for (u8 i = 0; i < 0x20; i++) {
-        CMenuBattleDamageEntry& e = obj->mEntries[i];
-        e.mLayout0 = NULL;
-        e.field_04 = 0;
-        e.mAnim0 = NULL;
-        e.mAnim1 = NULL;
-        e.mAnim2 = NULL;
-        e.mLayout1 = NULL;
-        e.mAnim3 = NULL;
-        e.mActive = 0;
-        e.field_20 = 0;
-        e.field_24 = 0;
-        e.field_28 = zeroF;
-        e.field_2C = zeroF;
-        e.field_30 = 0;
-        e.field_31 = 0;
-        e.field_32 = 0;
-        e.field_34 = zeroF;
-    }
+    CMenuBattleDamageEntry* e = obj->mEntries;
+    do {
+        e->mLayout0 = NULL;
+        e->field_04 = 0;
+        e->mAnim0 = NULL;
+        e->mAnim1 = NULL;
+        e->mAnim2 = NULL;
+        e->mLayout1 = NULL;
+        e->mAnim3 = NULL;
+        e->mActive = 0;
+        e->field_20 = 0;
+        e->field_24 = 0;
+        e->field_28 = zeroF;
+        e->field_2C = zeroF;
+        e->field_30 = 0;
+        e->field_31 = 0;
+        e->field_32 = 0;
+        e->field_34 = zeroF;
+        ++e;
+    } while (e != obj->mEntries + 0x20);
     obj->mDamageType = (u8)z;
     obj->mDamageDir = (u8)z;
     obj->_pad776[0] = (u8)z;

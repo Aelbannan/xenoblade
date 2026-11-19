@@ -41,7 +41,6 @@ extern "C" void ScnRes_CopyEntryHead(void*, int);
 extern "C" void* ScnRes_CopyEntryMid(void*, int);
 extern "C" float scaleByGlobal(float val);
 extern "C" u32 CfRes_getHeapHandle();                          // mtl heap handle for cf allocations
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 // cfCam_selectCamTarget callees (flat retail names, same naming class)
 extern "C" int CamEvtIsIntro();
 extern "C" int cfCam_testPad100(void* self);
@@ -101,8 +100,8 @@ extern "C" f32 atan2AnimFIdx(f32 a, f32 b); // sin wrapper; CfCam call sites pas
 extern "C" f32 wrapAnglePi(f32 value);   // wrap angle into [-pi, pi) (retail 0x8004C300)
 extern char lbl_eu_80526324[];              // nw4r FSqrt assert source-file string (retail .data)
 extern char lbl_eu_80526300[];              // nw4r FSqrt assert message string (retail .data)
-extern char lbl_eu_805262F0[];              // nw4r assert source-file string (retail .data)
-extern char lbl_eu_805262C8[];              // nw4r assert message string (retail .data)
+extern const char lbl_eu_805262F0[];   // nw4r assert source-file string (retail .data)
+extern const char lbl_eu_805262C8[];   // nw4r assert message string (retail .data)
 // frameDriver cross-TU imports (flat retail names).
 extern "C" int CamEvtBusyChk();             // gate probe
 extern "C" void cfCam_nopVirtFloat(void* self, float f);
@@ -342,8 +341,7 @@ ml::CVec3* copyVec3f(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (
 void cfCam_setClear1D4(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
 int getNullPtrC__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
 void cfCam_prepFollowVec(void* out, cf::CfCamFollow* self, void* dir, void* sel); // follow-cam vector prep
-int isTimerActive__Q22cf13CfGameManagerFv();             // CfGameManager gate (retail 0x8007F91C)
-void ScnCamPointAt(void* obj, f32 f, void* a, void* b);  // retail 0x8049EFF8 (pose/scale apply)
+
 int cfCam_getSignBit04(void* self);                           // CfCam sibling (retail 0x8006D374)
 cf::CfCamFollow* cfCam_getActiveCam();                    // CfCam sibling (retail 0x80072708)
 ml::CVec3* cfCam_getPlus60(cf::CfCamFollow* self);     // CfCam sibling (retail 0x80072710)
@@ -382,7 +380,7 @@ extern CamDefaultsBlock lbl_eu_80570A20;
 extern const void* lbl_eu_80527244[7];               // .data joint-name table (retail 0x80527244)
 float lbl_eu_80570A74[3];                            // .bss vec3 (retail 0x80570A74)
 float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x80570A80)
-extern char lbl_eu_804FB4F0[];                       // .data message string (retail 0x804FB4F0)
+extern const char lbl_eu_804FB4F0[];                       // .rodata message string (retail 0x804FB4F0)
 void cfCam_zero1D4Word(cf::CfCamFollow* self);           // CfCam sibling: zero the 0x1D4 flag word (retail 0x8006D870)
 int cfCam_testWordMask(void* obj, u32 mask);              // CfCam sibling pad-action dispatcher (retail 0x80075568)
 void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)

@@ -91,7 +91,7 @@ extern "C" void ArtsInfo_SetReadyFlag();
 // (retail loads r3=-1 even though the no-arg function ignores it).
 
 // CfGameManager one-arg init flag (retail loads r3=1 into the no-arg symbol).
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 
 CMenuKizunaTalkList::CMenuKizunaTalkList(CProcess* parent)

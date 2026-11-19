@@ -356,7 +356,7 @@ public:
     void isFieldDataReady();
     void clearQueuedEvents();
     void getResourceFromTable();
-    void isResourceFlagSet();
+    static bool isResourceFlagSet(u32 bit);
     void setResourceFlag();
     void getTableIndexForPair();
     void getTableValueByPair();
@@ -376,7 +376,6 @@ public:
     CfMapEffectManager* getMapEffectManager();
     u32 getEffectFlagState();
     void linkEffectObjects();
-    void setPresentationFlag();
     void resetBattleGauge();
     void syncBattleState();
     void processFieldEffects();
@@ -420,7 +419,7 @@ public:
     void resetPlayerEffectsA();
     void resetPlayerEffectsB();
     void triggerPlayerEffects();
-    void func_8008413C();
+    static void func_8008413C(u16 first, u32 second);
     void func_80084654();
     void handleFieldTransition();
     void processMapChange();
@@ -461,7 +460,7 @@ public:
     static u32 getGlobalPtr640A8();
     void getGlobalWord640A4();
     void getGlobalWord640F4();
-    void initPadSubSystem();
+    static int initPadSubSystem();
     static float updatePadState();
     void loadControllerConfigA();
     void loadControllerConfigB();
@@ -746,6 +745,8 @@ extern const double lbl_eu_80666518;
 extern const double lbl_eu_80666520;
 extern u32 lbl_eu_805276F0[];
 
+// Retail definition in CfGameManager.cpp keeps the Fv mangled name.
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // --- imports for func_80084654 / func_80085978 / func_8007E9CC / func_8008413C ---
 namespace ml { class CVec3; }
 // Mangled global C++ function (retail func_800AD860__FPv) - NOT extern "C";
@@ -763,7 +764,11 @@ extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
 extern "C" void* CItemBlock_setKindFlag(u32 kind, u32 slot, u32 mode);
 extern "C" u32 CItem_getKindFromFamily(u32 value);
 class CItemImplInstances;
-extern "C" void* CItem_initItemImplInstances(void* item);
+struct CItemData;
+class CItemImpl;
+// Canonical declaration from the definition in kyoshin/cf/CItem.cpp; this
+// unity header reaches it without pulling in all of CItem.hpp.
+extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 extern "C" void func_8009DB28(void* data, u32 index);
 extern "C" void func_8009D790_full(void* data, u32 index);
 extern "C" void func_80141D48(void* dst, void* src, u8 value);

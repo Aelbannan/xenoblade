@@ -618,8 +618,7 @@ extern "C" bool scanNeighbors__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                 f32 dv = nodes[value].xPos;
                 if (dv < dn) {
                     // byte-granular threshold slot selected by leading zeros
-                    f32 thr = *(const f32*)((const u8*)self + 0x24
-                        + ((u32)__cntlzw(slotSel) >> 3));
+                    f32 thr = ((const f32*)&self->field_0x24)[(u32)__cntlzw(slotSel) >> 5];
                     if (!(thr >= dn - dv))
                         goto fail;
                     return true;
@@ -627,7 +626,7 @@ extern "C" bool scanNeighbors__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
                     if (dv == dn)
                         return true;
                     // stride-4 threshold slot indexed by the selector
-                    f32 thr = ((const f32*)((const u8*)self + 0x24))[slotSel];
+                    f32 thr = ((const f32*)&self->field_0x24)[slotSel];
                     if (!(thr >= dv - dn))
                         goto fail;
                     return true;

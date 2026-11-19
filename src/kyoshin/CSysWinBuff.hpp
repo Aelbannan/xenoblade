@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CfGameManager.hpp"  // canonical setPresentationFlag decl
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
@@ -31,7 +32,7 @@ void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void Bdat_GetTable_AA34();
 s32 MenuTutorialIsCreated();
-void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // CDeviceFile common-archive loader + work-memory handle query (unmangled
 // retail C symbols; declared with C linkage so the call reloc keeps the

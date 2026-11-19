@@ -1,5 +1,7 @@
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
@@ -1506,7 +1508,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                     goto done1;
             fallback1:
                 if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
-                    obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_getSelfObjectId();
+                    obj = (void*)(uintptr_t)((cf::CObjectParam*)cf::CfGameManager::getPlayer(0))->CObjectParam_getSelfObjectId();
             }
         done1:
             appendObjectById(holder.get(), (u32)(uintptr_t)obj);
@@ -1530,7 +1532,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
                     goto done2;
             fallback2:
                 if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
-                    obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_getSelfObjectId();
+                    obj = (void*)(uintptr_t)((cf::CObjectParam*)cf::CfGameManager::getPlayer(0))->CObjectParam_getSelfObjectId();
             }
         done2:
             appendObjectById(holder.get(), (u32)(uintptr_t)obj);
@@ -2217,7 +2219,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 void* obj = MapFx_ResolveOwner(findObjectById((int)id));
                 if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
-                        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+                        void* player = cf::CfGameManager::getPlayer(0);
                         id = (u32)(uintptr_t)((cf::CObjectParam*)player)->CObjectParam_getSelfObjectId();
                     }
                 }
@@ -2240,7 +2242,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
                 void* obj = MapFx_ResolveOwner(findObjectById((int)id));
                 if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
-                        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+                        void* player = cf::CfGameManager::getPlayer(0);
                         id = (u32)(uintptr_t)((cf::CObjectParam*)player)->CObjectParam_getSelfObjectId();
                     }
                 }

@@ -66,6 +66,8 @@ IFlagEvent::~IFlagEvent() {}
 }
 IWorkEvent::~IWorkEvent() {}
 
+CUICfManager* CUICfManager::spInstance;
+
 // High-level Init (no asm void). Best ~94.8% HIGH_MATCH.
 // Tail: scalars + u8 mid[8] + lone u32@+0x0E + pair-unroll chunks; zeros via u16* overlay.
 
@@ -77,7 +79,6 @@ struct CUICfInitProcess {
 };
 
 extern "C" {
-CProcess* lbl_eu_80664054;
 const char* lbl_eu_806621A8;
 char lbl_eu_8052E404[];
 char lbl_eu_8052E3BC[];
@@ -114,7 +115,7 @@ void CUICfManager::dtorThunk54() {
 // name so the exact retail symbol is produced (OnFileEvent precedent); the
 // in-class no-arg declaration stays declared-only.
 extern "C" void eventDispatchThunk__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
-    eventDispatch__12CUICfManagerFiii((CUICfManager*)((char*)self - 0x58), id, a1, a2);
+    ((CUICfManager*)((char*)self - 0x58))->eventDispatch(id, a1, a2);
 }
 
 // us-80136aa8
@@ -165,7 +166,7 @@ void CUICfManager::Init() {
         process->vtable = vtFinal;
     }
     unk144 = reinterpret_cast<CUICfUnk144*>(process);
-    reinterpret_cast<CProcess*>(process)->Regist(lbl_eu_80664054, false);
+    reinterpret_cast<CProcess*>(process)->Regist((CProcess*)CUICfManager::spInstance, false);
 
     // Retail: r27=&tail end, r26/r25/r24 = blocks, r22 = 0x34 stride.
     clearEnd = reinterpret_cast<CUICfInitBlock*>(&tmpl.tail);
@@ -239,7 +240,7 @@ void CUICfManager::Term() {
     CtrlRemote_ResetSlotArrayByIndex(flagEvent);
 
     unk144->unk39 = 1;
-    lbl_eu_80664054 = NULL;
+    CUICfManager::spInstance = NULL;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,7 +248,7 @@ void CUICfManager::Term() {
 //
 // Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
 // reads r4/r5/r6 as real event-dispatch arguments and never touches `this`
-// (all state comes from the `lbl_eu_80664054` singleton). Declared as a free
+// (all state comes from the `CUICfManager::spInstance` singleton). Declared as a free
 // `extern "C"` function so the ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
 //
 // Event-queue insert is the same shape as reslist::push_back -> setItem
@@ -325,12 +326,12 @@ void* __ct__8011C1B8(void* ctx, u32 scene);
 // Busy/state probe called by CUICfManager_queueWorldMapMenu with the singleton as its arg
 // (retail passes the just-loaded singleton through r3). noinline keeps
 // the retail bl (MWCC would fold the trivial body otherwise).
-int __declspec(noinline) CUICfManager_isWorldMapBusy(CUICfManagerCreateView* singleton) {
+int CUICfManager_isWorldMapBusy(CUICfManager* singleton) {
     u8 mode = (u8)lbl_eu_80664184;
     if (mode == 0x1a || mode == 0x1c) {
         return 1;
     }
-    if (singleton->field_0x120 > 0) {
+    if ((int)singleton->unk120 > 0) {
         return 1;
     }
     int st = CUICfManager_checkMenuOpenGate((u8*)singleton);
@@ -497,12 +498,12 @@ range_312c_31f3: {
 
     code80135FDC_setByte_6407F(codePersist);
 
-    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst != NULL) {
         int tempRet = (int)CMenuGetItem_CreateMulti(inst->unk144, inst->unk11C, codePersist, 1);
         savedRet = tempRet;
         if (tempRet != 0) {
-            inst = (CUICfManager*)lbl_eu_80664054;
+            inst = (CUICfManager*)CUICfManager::spInstance;
 
             // Decl capacity before startNode so Chaitin colors capacity=r7, startNode=r8;
             // assign startNode then capacity to keep retail load order (296 then 316).
@@ -638,7 +639,7 @@ end:
 // CUICfManager::Move
 //
 // Early r4 is NOT a fake-Fv arg -- retail does `lhz r4, 0xc90(r3)` (mFlags).
-// Bitflag-driven create/teardown against lbl_eu_80664054, then optional
+// Bitflag-driven create/teardown against CUICfManager::spInstance, then optional
 // enum-list proximity spawn, then mark/clear walks of the menu queue.
 // ---------------------------------------------------------------------------
 
@@ -733,7 +734,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xfffb);
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         if (inst == NULL) {
             goto after_flags;
         }
@@ -742,15 +743,15 @@ void CUICfManager::Move() {
             goto after_flags;
         }
         inst->mFlags = (u16)(inst->mFlags & 0xfffb);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         inst->mFlags = (u16)(inst->mFlags | 0x8);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         inst->mFlags = (u16)(inst->mFlags | 0x10);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         inst->mFlags = (u16)(inst->mFlags | 0x20);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         inst->mFlags = (u16)(inst->mFlags | 0x40);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         inst->mFlags = (u16)(inst->mFlags | 0x80);
         goto after_flags;
     }
@@ -759,7 +760,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xfff7);
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         if (inst == NULL) {
             goto after_flags;
         }
@@ -771,10 +772,10 @@ void CUICfManager::Move() {
             goto after_flags;
         }
         inst->mFlags = (u16)(inst->mFlags & 0xfff7);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         *home18 = CMenuKeyAssign::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home18 != NULL) {
-            inst = (CUICfManager*)lbl_eu_80664054;
+            inst = (CUICfManager*)CUICfManager::spInstance;
             i = 0;
             byteOff = 0;
             startNode = (_reslist_node<void*>*)inst->unk128;
@@ -805,7 +806,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xffef);
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         if (inst == NULL) {
             goto after_flags;
         }
@@ -817,10 +818,10 @@ void CUICfManager::Move() {
             goto after_flags;
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffef);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         *home14 = CMenuEnemyState::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C), NULL);
         if (*home14 != NULL) {
-            inst = (CUICfManager*)lbl_eu_80664054;
+            inst = (CUICfManager*)CUICfManager::spInstance;
             i = 0;
             byteOff = 0;
             startNode = (_reslist_node<void*>*)inst->unk128;
@@ -851,7 +852,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xffdf);
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         if (inst == NULL) {
             goto after_flags;
         }
@@ -863,10 +864,10 @@ void CUICfManager::Move() {
             goto after_flags;
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffdf);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         *home10 = CMenuSymbolMark::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home10 != NULL) {
-            inst = (CUICfManager*)lbl_eu_80664054;
+            inst = (CUICfManager*)CUICfManager::spInstance;
             i = 0;
             byteOff = 0;
             startNode = (_reslist_node<void*>*)inst->unk128;
@@ -897,7 +898,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xffbf);
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         if (inst == NULL) {
             goto after_flags;
         }
@@ -909,10 +910,10 @@ void CUICfManager::Move() {
             goto after_flags;
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffbf);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         *home0C = CMenuBattleMode::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home0C != NULL) {
-            inst = (CUICfManager*)lbl_eu_80664054;
+            inst = (CUICfManager*)CUICfManager::spInstance;
             i = 0;
             byteOff = 0;
             startNode = (_reslist_node<void*>*)inst->unk128;
@@ -943,7 +944,7 @@ void CUICfManager::Move() {
             volatile u16* fp = &mFlags;
             *fp = (u16)(*fp & 0xff7f);
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         if (inst == NULL) {
             goto after_flags;
         }
@@ -955,10 +956,10 @@ void CUICfManager::Move() {
             goto after_flags;
         }
         inst->mFlags = (u16)(inst->mFlags & 0xff7f);
-        inst = (CUICfManager*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         *home08 = CMenuLvUp::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C));
         if (*home08 != NULL) {
-            inst = (CUICfManager*)lbl_eu_80664054;
+            inst = (CUICfManager*)CUICfManager::spInstance;
             i = 0;
             byteOff = 0;
             startNode = (_reslist_node<void*>*)inst->unk128;
@@ -1213,56 +1214,56 @@ extern "C" void CUICfManager_initEventTriplet(CUICfManager* self) {
 }
 extern "C" void CUICfManager_emptyStub() {}
 extern "C" int CUICfManager_prepareMenus() {
-    CUICfManagerCreateView* inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
-    if (inst->field_0x5C == NULL) {
-        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x4);
+    if (inst->mArcResourceAccessor == NULL) {
+        inst->mFlags = (u16)(inst->mFlags | 0x4);
         return 0;
     }
-    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffb);
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
-    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x8);
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
-    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x10);
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
-    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x20);
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
-    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x40);
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
-    inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x80);
+    inst->mFlags = (u16)(inst->mFlags & 0xfffb);
+    inst = (CUICfManager*)CUICfManager::spInstance;
+    inst->mFlags = (u16)(inst->mFlags | 0x8);
+    inst = (CUICfManager*)CUICfManager::spInstance;
+    inst->mFlags = (u16)(inst->mFlags | 0x10);
+    inst = (CUICfManager*)CUICfManager::spInstance;
+    inst->mFlags = (u16)(inst->mFlags | 0x20);
+    inst = (CUICfManager*)CUICfManager::spInstance;
+    inst->mFlags = (u16)(inst->mFlags | 0x40);
+    inst = (CUICfManager*)CUICfManager::spInstance;
+    inst->mFlags = (u16)(inst->mFlags | 0x80);
     return 0;
 }
 extern "C" void CUICfManager_setTimeout30() {
-    if (lbl_eu_80664054 != 0) {
-        static_cast<CUICfManager*>(lbl_eu_80664054)->setTimeout30();
+    if (CUICfManager::spInstance != 0) {
+        static_cast<CUICfManager*>(CUICfManager::spInstance)->setTimeout30();
     }
 }
 extern "C" void CUICfManager_setFlagState(int value) {
-    CUICfManagerCreateView* base = (CUICfManagerCreateView*)lbl_eu_80664054;
-    CUICfManagerCreateView* reload;
+    CUICfManager* base = (CUICfManager*)CUICfManager::spInstance;
+    CUICfManager* reload;
     if (base == NULL) {
         return;
     }
     if (value != 0) {
-        base->field_0x148[1] = 1;
+        base->mInitSlots[0].unk00[1] = 1;
     } else {
-        base->field_0x148[0] = 1;
+        base->mInitSlots[0].unk00[0] = 1;
     }
-    reload = (CUICfManagerCreateView*)lbl_eu_80664054;
-    reload->field_0xC90 = 0;
+    reload = (CUICfManager*)CUICfManager::spInstance;
+    reload->mFlags = 0;
 }
 nw4r::ut::PackedFont* getPackedFont() {
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
-    return m == 0 ? 0 : reinterpret_cast<nw4r::ut::PackedFont*>(reinterpret_cast<CUICfManagerCreateView*>(m)->field_0x60);
+    CUICfManager* m = (CUICfManager*)CUICfManager::spInstance;
+    return m == 0 ? 0 : m->getPackedFont60();
 }
 extern "C" nw4r::ut::PackedFont* CUICfManager_getPackedFontD8() {
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* m = (CUICfManager*)CUICfManager::spInstance;
     return m == 0 ? 0 : m->getPackedFontD8();
 }
 extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor() {
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* m = (CUICfManager*)CUICfManager::spInstance;
     return m == 0 ? 0 : static_cast<nw4r::lyt::ArcResourceAccessor*>(m->getArcResourceAccessor());
 }
 // Retail linker name for the slot-reset helper below (flat); declaring it
@@ -1270,7 +1271,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* CUICfManager_getArcResourceAccessor()
 extern "C" int CUICfManager_tryResetFreeSlot(u8* base);
 
 int CUICfManager_tryResetSlots() {
-    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
@@ -1282,7 +1283,7 @@ int CUICfManager_tryResetSlots() {
 // flat retail symbol.
 extern "C" int CUICfManager_claimFreeSlotByCopy(u8* base, CUICfSrcCopyView* src);
 extern "C" int CUICfManager_claimSlotByTemplate(CUICfSrcCopyView* src) {
-    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
@@ -1293,7 +1294,7 @@ extern "C" int CUICfManager_claimSlotByTemplate(CUICfSrcCopyView* src) {
 // CUICfManager_claimFreeSlotByIds after the null gate (retail shifts the arg registers up).
 extern "C" int CUICfManager_claimFreeSlotByIds(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5);
 extern "C" int CUICfManager_claimSlotByIds(u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
-    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
@@ -1305,7 +1306,7 @@ extern "C" int CUICfManager_claimSlotByIds(u16 a1, u16 a2, u16 a3, u16 a4, u16 a
 // CUICfManager_claimFreeSlotByIdState after the null gate (retail: or r5,r4,r4; or r4,r3,r3).
 extern "C" int CUICfManager_claimFreeSlotByIdState(u8* base, u16 id, u8 state);
 extern "C" int CUICfManager_claimSlotByIdState(u16 id, u8 state) {
-    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
@@ -1317,7 +1318,7 @@ extern "C" int CUICfManager_claimSlotByIdState(u16 id, u8 state) {
 // slot helpers).
 extern "C" int CUICfManager_claimFreeSlotFormatted(u8* base, u16 arg1);
 extern "C" int CUICfManager_claimSlotFormatted(u16 arg1) {
-    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
@@ -1327,7 +1328,7 @@ extern "C" int CUICfManager_claimSlotFormatted(u16 arg1) {
 // CUICfManager_claimSlotByTwoIds: same two-arg forward to CUICfManager_claimFreeSlotByTwoIds (slot claim with id + arg).
 extern "C" int CUICfManager_claimFreeSlotByTwoIds(u8* base, u16 a1, u16 a2);
 extern "C" int CUICfManager_claimSlotByTwoIds(u16 a1, u16 a2) {
-    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    CUICfManager* m = static_cast<CUICfManager*>(CUICfManager::spInstance);
     if (m == 0) {
         return 0;
     }
@@ -1335,7 +1336,7 @@ extern "C" int CUICfManager_claimSlotByTwoIds(u16 a1, u16 a2) {
         reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), a1, a2);
 }
 extern "C" int CUICfManager_hasInUseSlot() {
-    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == 0) {
         return 0;
     }
@@ -1351,7 +1352,7 @@ extern "C" int CUICfManager_hasInUseSlot() {
     return 0;
 }
 extern "C" void CUICfManager_setMessageWindowVisible(u8 value) {
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* m = (CUICfManager*)CUICfManager::spInstance;
     if (m == NULL)
         return;
     m->setFieldC8C(value);
@@ -1374,7 +1375,7 @@ void Init__Q212CUICfManager5CTestFv(){}
 extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
     volatile u32 savedRet;
     CUICfSlotDispView* slot;
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     int i;
     int byteOff;
     int capacity;
@@ -1434,20 +1435,20 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
         UIWin_CreatePTChange(1);
         break;
     case 1: {
-        inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+        inst = (CUICfManager*)CUICfManager::spInstance;
         u8 idx = slot->field_0x01;
         if (inst != NULL) {
-            u32 tempRet = reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), idx));
+            u32 tempRet = reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C), idx));
             savedRet = tempRet;
             if (tempRet != 0) {
-                inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+                inst = (CUICfManager*)CUICfManager::spInstance;
                 i = 0;
                 byteOff = 0;
-                startNode = inst->field_0x128;
-                capacity = inst->field_0x13C;
+                startNode = inst->unk128;
+                capacity = inst->unk13C;
                 goto slot_check;
             slot_body:
-                if (((CUICfListNode*)((u8*)inst->field_0x138 + byteOff))->next == 0) {
+                if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
                     goto slot_found;
                 }
                 byteOff += 0xc;
@@ -1458,7 +1459,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
                 }
             slot_found:
                 {
-                    CUICfListNode* temp = &inst->field_0x138[i];
+                    CUICfListNode* temp = &inst->unk138[i];
                     u32* ptr = &temp->item;
                     if (ptr != 0) {
                         try {
@@ -1909,7 +1910,7 @@ extern "C" void CUICfManager_sortSlotsByFlag(u8* base) {
                     CUICfInitBlock* clear = &slots[2].block2;
                     CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&slots[2].wordD4);
                     if (clear < clearEnd) {
-                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
                         do {
                             clear->unk04 = 0;
                             clear->unk00 = 0;
@@ -1942,7 +1943,7 @@ extern "C" void CUICfManager_sortSlotsByFlag(u8* base) {
                     CUICfInitBlock* clear = &slots[1].block2;
                     CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&slots[1].wordD4);
                     if (clear < clearEnd) {
-                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
                         do {
                             clear->unk04 = 0;
                             clear->unk00 = 0;
@@ -1993,7 +1994,7 @@ extern "C" void CUICfManager_sortSlotsByFlag(u8* base) {
                     CUICfInitBlock* clear = &slots[0].block2;
                     CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&slots[0].wordD4);
                     if (clear < clearEnd) {
-                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
                         do {
                             clear->unk04 = 0;
                             clear->unk00 = 0;
@@ -2074,7 +2075,7 @@ extern "C" void CUICfManager_sortSlotList(u8* base) {
                     CUICfInitBlock* clear = &tpl.block2;
                     CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&tpl.wordD4);
                     if (clear < clearEnd) {
-                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
                         do {
                             clear->unk04 = 0;
                             clear->unk00 = 0;
@@ -2107,7 +2108,7 @@ extern "C" void CUICfManager_sortSlotList(u8* base) {
                     CUICfInitBlock* clear = &bufB.block2;
                     CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufB.wordD4);
                     if (clear < clearEnd) {
-                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
                         do {
                             clear->unk04 = 0;
                             clear->unk00 = 0;
@@ -2158,7 +2159,7 @@ extern "C" void CUICfManager_sortSlotList(u8* base) {
                     CUICfInitBlock* clear = &bufA.block2;
                     CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufA.wordD4);
                     if (clear < clearEnd) {
-                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
                         do {
                             clear->unk04 = 0;
                             clear->unk00 = 0;
@@ -2276,7 +2277,7 @@ extern "C" void* __ct__CUICfManager(CUICfManager* self, CScnNw4r* pScene,
         CUICfInitBlock* clear = &s.unk3C;
         CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&s.unkD8);
         if (clear < clearEnd) {
-            u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+            u32 n = (clearEnd - clear + sizeof(CUICfInitBlock) - 1) / sizeof(CUICfInitBlock);
             do {
                 clear->unk04 = 0;
                 clear->unk00 = 0;
@@ -2315,9 +2316,9 @@ extern "C" CUICfManager* CUICfManager_createInstance(CProcess* pParent, CScnNw4r
     if (mem != NULL) {
         mem = __ct__CUICfManager((CUICfManager*)mem, pScene, mHandle);
     }
-    lbl_eu_80664054 = (CProcess*)mem;
+    CUICfManager::spInstance = (CUICfManager*)mem;
     Regist__8CProcessFP8CProcessb((CProcess*)mem, pParent, 0);
-    return (CUICfManager*)lbl_eu_80664054;
+    return (CUICfManager*)CUICfManager::spInstance;
 }
 // CUICfManager_queueMoveBaseMenu (us-80134244): teardown/create of the base menu for Move's
 // mFlags bit 0x1. Gates on the singleton + resource accessor, probes the
@@ -2325,24 +2326,24 @@ extern "C" CUICfManager* CUICfManager_createInstance(CProcess* pParent, CScnNw4r
 // the menu via CMainMenu_Create and pushes it onto the event queue (same
 // reslist shape as the CUICfManager_queueQuestLogMenu family).
 extern "C" u32 CUICfManager_queueMoveBaseMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
-    if (inst->field_0x5C == NULL) {
-        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x1);
+    if (inst->mArcResourceAccessor == NULL) {
+        inst->mFlags = (u16)(inst->mFlags | 0x1);
         return 0;
     }
-    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffe);
+    inst->mFlags = (u16)(inst->mFlags & 0xfffe);
     {
-        int st = CUICfManager_checkMenuOpenGate((u8*)lbl_eu_80664054);
+        int st = CUICfManager_checkMenuOpenGate((u8*)CUICfManager::spInstance);
         if (st != 0) {
             if ((lbl_eu_80663E24 & 0x40000000u) == 0) {
                 if (CtrlRemote_TouchBitByArg(0x20) > 4 && st == 2) {
@@ -2352,22 +2353,22 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     {
-        u32 tempRet = reinterpret_cast<u32>(CMainMenu::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMainMenu::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2378,7 +2379,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2397,25 +2398,25 @@ slot_found:
 // CUICfManager_createQueuedMenus: create the menu via __ct__8011C1B8 and queue it
 // (mFlags bit 0x2; busy-bit/accessor gates + scene-mode guard).
 extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
         return 0;
     }
-    if (inst->field_0x5C == NULL) {
-        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x2);
+    if (inst->mArcResourceAccessor == NULL) {
+        inst->mFlags = (u16)(inst->mFlags | 0x2);
         return 0;
     }
-    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffd);
+    inst->mFlags = (u16)(inst->mFlags & 0xfffd);
     // Best-known shape (94%): retail emits a redundant second clrlwi here
     // (one lwz, clrlwi per check, shared return-0 block). Every source lever
     // tried (%0x100, &0xFF, shift-pair, intrinsic, distinct locals, switch)
@@ -2423,22 +2424,22 @@ extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
     if ((u8)lbl_eu_80664184 <= 1 || (u8)lbl_eu_80664184 == 0x1d) {
         return 0;
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     {
-        u32 tempRet = (u32)__ct__8011C1B8(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = (u32)__ct__8011C1B8(inst->unk144, inst->unk11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)inst->field_0x138 + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2449,7 +2450,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2469,7 +2470,7 @@ slot_found:
 // Menu-create + event-queue push helpers (CUICfManager_queueQuestLogMenu family).
 //
 // Shared skeleton (same slot walk as eventDispatch's queue push):
-//   1) null-check the lbl_eu_80664054 singleton,
+//   1) null-check the CUICfManager::spInstance singleton,
 //   2) call a menu factory; the result is kept in volatile savedRet@0x8
 //      (spilled right after the call, reloaded for the setItem store and
 //      again for the return value),
@@ -2482,32 +2483,32 @@ slot_found:
 
 // CUICfManager_queueOptionMenu: create the option menu and queue it.
 u32 CUICfManager_queueOptionMenu(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = createOptionMenu(inst->field_0x144, inst->field_0x11C, arg);
+        u32 tempRet = createOptionMenu(inst->unk144, inst->unk11C, arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2518,7 +2519,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2537,32 +2538,32 @@ slot_found:
 
 // CUICfManager_queueGetItemMenuById: create the get-item menu and queue it.
 u32 CUICfManager_queueGetItemMenuById(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = CMenuGetItem_CreateVariant(inst->field_0x144, inst->field_0x11C, arg);
+        u32 tempRet = CMenuGetItem_CreateVariant(inst->unk144, inst->unk11C, arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2573,7 +2574,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2592,32 +2593,32 @@ slot_found:
 
 // CUICfManager_queueQuestLogMenu: create the quest-log menu and queue it (id narrowed to u16).
 u32 CUICfManager_queueQuestLogMenu(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = createQuestLogMenu(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        u32 tempRet = createQuestLogMenu(inst->unk144, inst->unk11C, (u16)arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2628,7 +2629,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2647,32 +2648,32 @@ slot_found:
 
 // CUICfManager_queueBaseMenuItem: construct the base menu item and queue it.
 u32 CUICfManager_queueBaseMenuItem() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuItem::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), 0, 1));
+        u32 tempRet = reinterpret_cast<u32>(CMenuItem::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C), 0, 1));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2683,7 +2684,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2702,32 +2703,32 @@ slot_found:
 
 // CUICfManager_queueTutorialListMenu: create the tutorial-list menu and queue it (id narrowed to u16).
 u32 CUICfManager_queueTutorialListMenu(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuTutorialList::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), (u16)arg));
+        u32 tempRet = reinterpret_cast<u32>(CMenuTutorialList::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C), (u16)arg));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2738,7 +2739,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2758,41 +2759,41 @@ slot_found:
 // CUICfManager_queueEventMenu: create the event menu via CMenuEnemyState::create and queue it
 // (mFlags bit 0x10; busy-bit and accessor gates, same as Move's flag path).
 extern "C" u32 CUICfManager_queueEventMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
         return 0;
     }
-    if (inst->field_0x5C == NULL) {
-        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x10);
+    if (inst->mArcResourceAccessor == NULL) {
+        inst->mFlags = (u16)(inst->mFlags | 0x10);
         return 0;
     }
-    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xffef);
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst->mFlags = (u16)(inst->mFlags & 0xffef);
+    inst = (CUICfManager*)CUICfManager::spInstance;
     {
-        u32 tempRet = (u32)CMenuEnemyState::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), 0);
+        u32 tempRet = (u32)CMenuEnemyState::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C), 0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2803,7 +2804,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2820,32 +2821,32 @@ slot_found:
     return savedRet;
 }
 // Shared shape of us-80134774/us-80134bd4/us-80134cac/us-80134d84/us-80134e5c:
-// call the menu factory with (unk144, unk11C) from the lbl_eu_80664054
+// call the menu factory with (unk144, unk11C) from the CUICfManager::spInstance
 // singleton, bail on NULL, then reslist push_back the new node onto the
 // manager's free-slot list (first slot whose +0 word is clear, 0xC stride).
 // The goto loop keeps MWCC's retail register split (i=r5, byteOff=r6,
 // head=r8, capacity=r7); setItem's try/catch emits the 0x24(sp) frame home.
 #define CF_QUEUE_MENU(fn)                                                      \
     u32 savedRet;                                                              \
-    CUICfQueueMgrView* inst = (CUICfQueueMgrView*)lbl_eu_80664054;             \
+    CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;             \
     if (inst == NULL) {                                                        \
         return 0;                                                              \
     }                                                                          \
-    savedRet = (u32)fn(inst->field_144, inst->field_11C);                      \
+    savedRet = (u32)fn(inst->unk144, inst->unk11C);                      \
     if (savedRet == 0) {                                                       \
         return 0;                                                              \
     }                                                                          \
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;                                \
+    inst = (CUICfManager*)CUICfManager::spInstance;                                \
     int i = 0;                                                                 \
     int byteOff = 0;                                                           \
     _reslist_node<void*>* startNode;                                           \
     _reslist_node<void*>* temp;                                                \
     int capacity;                                                              \
-    startNode = (_reslist_node<void*>*)inst->field_128;                        \
-    capacity = inst->field_13C;                                                \
+    startNode = (_reslist_node<void*>*)inst->unk128;                        \
+    capacity = inst->unk13C;                                                \
     goto queue_check;                                                          \
 queue_body:                                                                    \
-    if (((_reslist_node<void*>*)inst->field_138 + i)->mNext == 0) {                        \
+    if (((_reslist_node<void*>*)inst->unk138 + i)->mNext == 0) {                        \
         goto queue_found;                                                      \
     }                                                                          \
     byteOff += 0xc;                                                            \
@@ -2855,7 +2856,7 @@ queue_check:                                                                   \
         goto queue_body;                                                       \
     }                                                                          \
 queue_found:                                                                   \
-    temp = ((_reslist_node<void*>*)inst->field_138 + i);            \
+    temp = ((_reslist_node<void*>*)inst->unk138 + i);            \
     temp->setItem((void*)savedRet);                                            \
     temp->mNext = startNode;                                                   \
     temp->mPrev = startNode->mPrev;                                            \
@@ -2868,32 +2869,32 @@ queue_found:                                                                   \
 // Flat-prototype decl makes the definition below emit the retail symbol.
 extern "C" u32 CUICfManager_queueSkipTimerMenu();
 u32 CUICfManager_queueSkipTimerMenu() {
-    CUICfQueueMgrView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     _reslist_node<void*>* startNode;
 
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuSkipTimer::create(reinterpret_cast<CProcess*>(inst->field_144), reinterpret_cast<CProcess*>(inst->field_11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMenuSkipTimer::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (_reslist_node<void*>*)inst->field_128;
-    capacity = inst->field_13C;
+    startNode = (_reslist_node<void*>*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManager*)inst)->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2905,7 +2906,7 @@ slot_check:
 slot_found:
     {
         _reslist_node<void*>* temp =
-            (_reslist_node<void*>*)&((CUICfManagerCreateView*)inst)->field_0x138[i];
+            (_reslist_node<void*>*)&((CUICfManager*)inst)->unk138[i];
         void** ptr = &temp->mItem;
         if (ptr != 0) {
             try {
@@ -2925,34 +2926,34 @@ slot_found:
 // it. The 3rd factory arg is the u8-narrowed first param, the 2nd is the
 // caller's scene id or the manager's own unk11C when 0.
 u32 CUICfManager_queuePauseItemMenu(CUICfManager* self, u32 arg1, u32 arg2) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
         u32 tempRet = reinterpret_cast<u32>(CMenuItem::create(
-            reinterpret_cast<CProcess*>(inst->field_0x144),
-            reinterpret_cast<CScn*>(arg1 != 0 ? arg1 : inst->field_0x11C), (u8)self, arg2));
+            reinterpret_cast<CProcess*>(inst->unk144),
+            reinterpret_cast<CScn*>(arg1 != 0 ? arg1 : inst->unk11C), (u8)self, arg2));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -2963,7 +2964,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -2983,7 +2984,7 @@ slot_found:
 // u32 param passes straight through as the factory's 3rd arg (kept live in
 // r5 across the singleton loads). Same shape as CUICfManager_queueMapSelectMenu otherwise.
 u32 CUICfManager_queueFactoryMenu(u32 param, f32 value) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
@@ -2991,26 +2992,26 @@ u32 CUICfManager_queueFactoryMenu(u32 param, f32 value) {
     CUICfListNode* startNode;
     CUICfListNode* temp;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
         u32 tempRet =
-            reinterpret_cast<u32>(CMenuZeal::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C), param, value));
+            reinterpret_cast<u32>(CMenuZeal::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C), param, value));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3021,7 +3022,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp2 = &inst->field_0x138[i];
+        CUICfListNode* temp2 = &inst->unk138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3041,33 +3042,33 @@ slot_found:
 // passed straight through as the factory's 3rd arg (kept live in r5 across
 // the singleton loads). Same shape as CUICfManager_queueShopSellMenu otherwise.
 u32 CUICfManager_queueShopBuyMenu(u32 param) {
-    CUICfQueueMgrView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = ShopBuy_CreateMenu(inst->field_144, inst->field_11C, param);
+        u32 tempRet = ShopBuy_CreateMenu((u32)inst->unk144, inst->unk11C, param);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
     // Reload after the factory call so MWCC re-reads the singleton.
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_128;
-    capacity = inst->field_13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManager*)inst)->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3079,7 +3080,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem: null-check &item, store with the try/catch frame home.
-        CUICfListNode* temp = &((CUICfManagerCreateView*)inst)->field_0x138[i];
+        CUICfListNode* temp = &((CUICfManager*)inst)->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3102,19 +3103,19 @@ slot_found:
 // capacity-before-startNode decls color capacity=r7 / startNode=r8; the
 // expanded setItem try/catch emits the fp idiom and the 0x24(sp) frame home.
 u32 CUICfManager_queueShopSellMenu() {
-    CUICfQueueMgrView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuShopSell::create(reinterpret_cast<CProcess*>(inst->field_144), reinterpret_cast<CScn*>(inst->field_11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMenuShopSell::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3122,14 +3123,14 @@ u32 CUICfManager_queueShopSellMenu() {
     }
     // Reload after the factory call so MWCC re-reads the singleton (retail
     // emits a second sda21 reloc here).
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_128;
-    capacity = inst->field_13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManager*)inst)->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3141,7 +3142,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem: null-check &item, store with the try/catch frame home.
-        CUICfListNode* temp = &((CUICfManagerCreateView*)inst)->field_0x138[i];
+        CUICfListNode* temp = &((CUICfManager*)inst)->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3160,19 +3161,19 @@ slot_found:
 // us-80134cac: create + queue the CMenuPTState-style menu. Same create+queue
 // body as CUICfManager_queueShopSellMenu above; only the factory (CMenuPTState::create) differs.
 u32 CUICfManager_queuePTStateMenu() {
-    CUICfQueueMgrView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = (u32)CMenuPTState::create(reinterpret_cast<CProcess*>(inst->field_144), reinterpret_cast<CProcess*>(inst->field_11C));
+        u32 tempRet = (u32)CMenuPTState::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -3180,14 +3181,14 @@ u32 CUICfManager_queuePTStateMenu() {
     }
     // Reload after the factory call so MWCC re-reads the singleton (retail
     // emits a second sda21 reloc here).
-    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_128;
-    capacity = inst->field_13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&((CUICfManagerCreateView*)inst)->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&((CUICfManager*)inst)->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3199,7 +3200,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem: null-check &item, store with the try/catch frame home.
-        CUICfListNode* temp = &((CUICfManagerCreateView*)inst)->field_0x138[i];
+        CUICfListNode* temp = &((CUICfManager*)inst)->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3218,7 +3219,7 @@ slot_found:
 // us-80134d84: create + queue the CMenuMakeCrystal-style menu. Explicit body
 // (same shape as CUICfManager_queueMapSelectMenu below); only the factory call differs.
 u32 CUICfManager_queueMakeCrystalMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
@@ -3226,25 +3227,25 @@ u32 CUICfManager_queueMakeCrystalMenu() {
     CUICfListNode* startNode;
     CUICfListNode* temp;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuMakeCrystal::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMenuMakeCrystal::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3256,7 +3257,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem so temp lands in r4 before the savedRet reload.
-        CUICfListNode* temp2 = &inst->field_0x138[i];
+        CUICfListNode* temp2 = &inst->unk138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3274,7 +3275,7 @@ slot_found:
 }
 // us-80134e5c: create + queue the CMenuArtsSet-style menu.
 u32 CUICfManager_queueArtsSetMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
@@ -3282,27 +3283,27 @@ u32 CUICfManager_queueArtsSetMenu() {
     CUICfListNode* startNode;
     CUICfListNode* temp;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
         u32 tempRet =
             reinterpret_cast<u32>(CMenuArtsSet::create(
-                reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
+                reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3313,7 +3314,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp2 = &inst->field_0x138[i];
+        CUICfListNode* temp2 = &inst->unk138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3331,12 +3332,12 @@ slot_found:
 }
 // us-80134f34: create + queue the CMenuMapSelect-style menu.
 // Shared body shape with CUICfManager_queueWorldMapMenu/CUICfManager_queuePauseMenu below: null-check the
-// singleton, call the factory with (field_0x144, field_0x11C), bail on 0,
+// singleton, call the factory with (unk144, unk11C), bail on 0,
 // then push the node into the free-slot circular list. The goto loop keeps
 // MWCC's retail register split; setItem's try/catch emits the 0x24(sp) frame
 // home and the volatile save keeps the result in a stack slot.
 u32 CUICfManager_queueMapSelectMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
@@ -3344,25 +3345,25 @@ u32 CUICfManager_queueMapSelectMenu() {
     CUICfListNode* startNode;
     CUICfListNode* temp;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuMapSelect::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMenuMapSelect::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3374,7 +3375,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem so temp lands in r4 before the savedRet reload.
-        CUICfListNode* temp2 = &inst->field_0x138[i];
+        CUICfListNode* temp2 = &inst->unk138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3393,36 +3394,36 @@ slot_found:
 // us-8013500c: probe CUICfManager_isWorldMapBusy, then create the world-map menu via
 // MapSelectSCCreate and queue it.
 u32 CUICfManager_queueWorldMapMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
-    if (CUICfManager_isWorldMapBusy(inst) != 0) {
+    if (CUICfManager_isWorldMapBusy((CUICfManager*)inst) != 0) {
         return 0;
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     {
-        u32 tempRet = MapSelectSCCreate(inst->field_0x144, inst->field_0x11C);
+        u32 tempRet = MapSelectSCCreate(inst->unk144, inst->unk11C);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3433,7 +3434,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3452,14 +3453,14 @@ slot_found:
 // us-801350fc: create the pause menu via __ct__CMenuPause and queue it
 // (gated on the lbl_eu_80663E28 busy bit).
 u32 CUICfManager_queuePauseMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
@@ -3467,20 +3468,20 @@ u32 CUICfManager_queuePauseMenu() {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuPause::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMenuPause::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3491,7 +3492,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3509,12 +3510,12 @@ slot_found:
 }
 // us-801351e8: create + queue the CMenuCollepedia-style menu.
 // Same create+queue body as CUICfManager_queueMapSelectMenu above; only the factory differs.
-#define CF_QUEUE_EXPLICIT(fn) CF_QUEUE_BODY(fn(inst->field_0x144, inst->field_0x11C))
+#define CF_QUEUE_EXPLICIT(fn) CF_QUEUE_BODY(fn(inst->unk144, inst->unk11C))
 #define CF_QUEUE_CREATE(cls, T)                                                \
     CF_QUEUE_BODY(reinterpret_cast<u32>(cls::create(                           \
-        reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<T*>(inst->field_0x11C))))
+        reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<T*>(inst->unk11C))))
 #define CF_QUEUE_BODY(createExpr)                                                  \
-    CUICfManagerCreateView* inst = (CUICfManagerCreateView*)lbl_eu_80664054;   \
+    CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;   \
     volatile u32 savedRet;                                                     \
     int i;                                                                     \
     int byteOff;                                                               \
@@ -3531,14 +3532,14 @@ slot_found:
             return 0;                                                          \
         }                                                                      \
     }                                                                          \
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;                           \
+    inst = (CUICfManager*)CUICfManager::spInstance;                           \
     i = 0;                                                                     \
     byteOff = 0;                                                               \
-    startNode = (CUICfListNode*)inst->field_0x128;                             \
-    capacity = inst->field_0x13C;                                              \
+    startNode = (CUICfListNode*)inst->unk128;                             \
+    capacity = inst->unk13C;                                              \
     goto slot_check;                                                           \
 slot_body:                                                                     \
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {                      \
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {                      \
         goto slot_found;                                                       \
     }                                                                          \
     byteOff += 0xc;                                                            \
@@ -3550,7 +3551,7 @@ slot_check:                                                                    \
 slot_found:                                                                    \
     {                                                                          \
         CUICfListNode* temp2 =                                                 \
-            &inst->field_0x138[i];                \
+            &inst->unk138[i];                \
         u32* ptr = &temp2->item;                                               \
         if (ptr != 0) {                                                        \
             try {                                                              \
@@ -3570,32 +3571,32 @@ u32 CUICfManager_queueCollepediaMenu() { CF_QUEUE_EXPLICIT(CollepediaCreateSingl
 // CUICfManager_queueMapSelectMenu above; only the factory differs (this helper's own argument
 // becomes the factory's third parameter, materialized in the prologue).
 u32 CUICfManager_queueKizunagramMenu(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = KizunagramCreateSingleton(inst->field_0x144, inst->field_0x11C, arg);
+        u32 tempRet = KizunagramCreateSingleton(inst->unk144, inst->unk11C, arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = (CUICfListNode*)inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = (CUICfListNode*)inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3607,7 +3608,7 @@ slot_check:
 slot_found:
     {
         // Expand setItem so temp lands in r4 before the savedRet reload.
-        CUICfListNode* temp2 = &inst->field_0x138[i];
+        CUICfListNode* temp2 = &inst->unk138[i];
         u32* ptr = &temp2->item;
         if (ptr != 0) {
             try {
@@ -3632,32 +3633,32 @@ u32 CUICfManager_queueKizunaTalkMenu() { CF_QUEUE_CREATE(CMenuKizunaTalkList, CP
 // CUICfManager_queueSaveMenu: create the save menu and queue it, forwarding both own args
 // (retail keeps them in r6/r7 across the singleton check for the call).
 u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuSave::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), 0, arg0, arg1));
+        u32 tempRet = reinterpret_cast<u32>(CMenuSave::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C), 0, arg0, arg1));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3668,7 +3669,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3687,32 +3688,32 @@ slot_found:
 
 // CUICfManager_openSaveMenu: create the save menu with fixed ctor args (1, 0, 1) and queue it.
 u32 CUICfManager_openSaveMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuSave::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), 1, 0, 1));
+        u32 tempRet = reinterpret_cast<u32>(CMenuSave::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C), 1, 0, 1));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)inst->field_0x138 + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)inst->unk138 + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3723,7 +3724,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3744,14 +3745,14 @@ slot_found:
 // arg0 = slot index (u8), arg1 = scene id (or the manager's own when 0),
 // arg2 = skip-reset flag (0 resets the slot via CUICfManager_claimFreeSlotByIndex first).
 extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
@@ -3762,29 +3763,29 @@ extern "C" u32 CUICfManager_queueTutorialMenu(u32 a0, u32 a1, u32 a2) {
         if (inst == NULL) {
             reset = 0;
         } else {
-            reset = CUICfManager_claimFreeSlotByIndex(&inst->field_0x148[4], (u8)a0);
+            reset = CUICfManager_claimFreeSlotByIndex(&inst->mInitSlots[0].unk00[4], (u8)a0);
         }
         if (reset != 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     {
         u32 tempRet =
-            reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(a1 != 0 ? a1 : inst->field_0x11C), (u8)a0));
+            reinterpret_cast<u32>(CMenuTutorial::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(a1 != 0 ? a1 : inst->unk11C), (u8)a0));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3795,7 +3796,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3815,32 +3816,32 @@ slot_found:
 // the CUICfManager_queueQuestLogMenu family but with no script argument; the factory is the
 // CMenuGameClear singleton ctor.
 u32 CUICfManager_queueGameClearMenu() {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuGameClear::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CScn*>(inst->field_0x11C)));
+        u32 tempRet = reinterpret_cast<u32>(CMenuGameClear::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CScn*>(inst->unk11C)));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3851,7 +3852,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3870,32 +3871,32 @@ slot_found:
 
 // CUICfManager_queueGCItemMenu: create the GC-item menu and queue it (id narrowed to u8).
 u32 CUICfManager_queueGCItemMenu(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = reinterpret_cast<u32>(CMenuGCItem::create(reinterpret_cast<CProcess*>(inst->field_0x144), reinterpret_cast<CProcess*>(inst->field_0x11C), (u8)arg));
+        u32 tempRet = reinterpret_cast<u32>(CMenuGCItem::create(reinterpret_cast<CProcess*>(inst->unk144), reinterpret_cast<CProcess*>(inst->unk11C), (u8)arg));
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3906,7 +3907,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3925,32 +3926,32 @@ slot_found:
 
 // CUICfManager_queueGetItemMenuNarrowed: create the get-item menu and queue it (id narrowed to u16).
 u32 CUICfManager_queueGetItemMenuNarrowed(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = CMenuGetItem_CreateSingle(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        u32 tempRet = CMenuGetItem_CreateSingle(inst->unk144, inst->unk11C, (u16)arg);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -3961,7 +3962,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -3980,32 +3981,32 @@ slot_found:
 
 // CUICfManager_queueMultiGetItemMenu: create the multi get-item menu and queue it (id narrowed to u8).
 u32 CUICfManager_queueMultiGetItemMenu(u32 arg) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = CMenuGetItem_CreateMulti(inst->field_0x144, inst->field_0x11C, (u8)arg, 0);
+        u32 tempRet = CMenuGetItem_CreateMulti(inst->unk144, inst->unk11C, (u8)arg, 0);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -4016,7 +4017,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -4037,32 +4038,32 @@ slot_found:
 // them with mr r5,r3 / mr r6,r4 at the prologue) and the float params are
 // swapped (retail fmr f0,f1 / f1=f2 / f2=f0).
 u32 CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y) {
-    CUICfManagerCreateView* inst;
+    CUICfManager* inst;
     volatile u32 savedRet;
     int i;
     int byteOff;
     int capacity;
     CUICfListNode* startNode;
 
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
     {
-        u32 tempRet = createFadeMenu(inst->field_0x144, inst->field_0x11C, a, b, y, x);
+        u32 tempRet = createFadeMenu(inst->unk144, inst->unk11C, a, b, y, x);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
         }
     }
-    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     i = 0;
     byteOff = 0;
-    startNode = inst->field_0x128;
-    capacity = inst->field_0x13C;
+    startNode = inst->unk128;
+    capacity = inst->unk13C;
     goto slot_check;
 slot_body:
-    if (((CUICfListNode*)((u8*)&inst->field_0x138[0] + byteOff))->next == 0) {
+    if (((CUICfListNode*)((u8*)&inst->unk138[0] + byteOff))->next == 0) {
         goto slot_found;
     }
     byteOff += 0xc;
@@ -4073,7 +4074,7 @@ slot_check:
     }
 slot_found:
     {
-        CUICfListNode* temp = &inst->field_0x138[i];
+        CUICfListNode* temp = &inst->unk138[i];
         u32* ptr = &temp->item;
         if (ptr != 0) {
             try {
@@ -4093,7 +4094,7 @@ slot_found:
 // flag variable (shared compare), then the slot scan is fully unrolled by
 // MWCC (per-index li/mulli/lbzx).
 int CUICfManager_isUIBusy() {
-    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         return 0;
     }
@@ -4241,7 +4242,7 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
             return 2;
         }
     }
-    inst = (CUICfManager*)lbl_eu_80664054;
+    inst = (CUICfManager*)CUICfManager::spInstance;
     if (inst == NULL) {
         slotUsed = 0;
     } else {
@@ -4361,10 +4362,10 @@ void CUICfManager::onFileEventThunk() {
     reinterpret_cast<CUICfManager*>(reinterpret_cast<char*>(this) - 0x54)->OnFileEvent();
 }
 
-// retail: lwz r3,lbl_eu_80664054; cmpi r3,0; beq -> 0; addi r3,r3,0x9C
+// retail: lwz r3,CUICfManager::spInstance; cmpi r3,0; beq -> 0; addi r3,r3,0x9C
 // returns the process sub-object at +0x9C, or null when the process is absent.
 extern "C" nw4r::ut::PackedFont* CUICfManager_getPackedFont9C() {
-    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    CUICfManager* m = (CUICfManager*)CUICfManager::spInstance;
     if (m == 0) return 0;
     return m->getPackedFont9C();
 }

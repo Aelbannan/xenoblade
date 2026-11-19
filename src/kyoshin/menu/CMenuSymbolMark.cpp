@@ -6,8 +6,10 @@
 #include "kyoshin/menu/CMenuSymbolMarkImports.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/core/CViewRoot.hpp"
+#include "monolib/device/CGXCache.hpp"
 #include "kyoshin/CTaskGame.hpp"
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+
 #include <nw4r/lyt/lyt_drawInfo.h>   // nw4r::lyt::DrawInfo
 #include <nw4r/lyt/lyt_layout.h>    // nw4r::lyt::Layout
 #include <nw4r/lyt/lyt_arcResourceAccessor.h> // ArcResourceAccessor
@@ -32,27 +34,25 @@
 extern "C" u8 CtrlRemote_TouchBitByArg(u32);
 // Naturally-mangled retail import (findObjectById__Fi).
 void* findObjectById(int id);
-extern u32 lbl_eu_804FE720[];
+extern u32 sSymbolMarkStrings[];
 extern u32 lbl_eu_8052CCA8[];
 extern u32 lbl_eu_80573D18[];
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
-// Flat retail helper imports for the timer/list walkers and layout glue.
+
 extern "C" void* getReslistB68();
 extern "C" void* getReslistBC8();
 // Scene pose block comes from the typed view in the header
 // (ScnXformBlock, returned by Scn_FindCamItem).
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
-extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void __ct__8CProcessFv(void* self);
-extern "C" __declspec(noinline) void SymMark_Place(
+extern "C" void SymMark_Place(
     CMenuSymbolMark* self, SymbolMarkEntry* entry,
     nw4r::math::VEC3* worldIn, EntryInputPos* posSrc, u32 flag);
 extern const PtmfTriple __ptmf_null;
 // Panic/format string blobs and render-item interface vtables.
 extern u8 lbl_eu_8052637C[];
 extern u8 lbl_eu_80526354[];
-extern u8 lbl_eu_8052CDB4[];
-extern u8 lbl_eu_8052CD50[];
+extern u8 sSymbolMarkItemVtable[];
+extern u8 sSymbolMarkItemVtableB[];
 
 
 // Zero-body stubs for matching
@@ -67,7 +67,7 @@ extern "C" int SymMark_IsNew(u32 regionBase) {
     (void)regionBase;
     // Both table bases are hoisted into nonvolatile address registers by MWCC.
     // Both table bases are hoisted into nonvolatile address registers by MWCC.
-    const char* str = (const char*)&lbl_eu_804FE720[0];
+    const char* str = (const char*)&sSymbolMarkStrings[0];
     u32* tbl = lbl_eu_80573D18;
     for (u32 rank = 1; rank < 0x1b; rank++) {
         u32 start = GetU16PairEntry((u16)rank);
@@ -96,14 +96,13 @@ extern "C" int SymMark_IsNew(u32 regionBase) {
 extern u32 lbl_eu_80663E28;
 // C++-linkage helpers - retail emits the mangled forms
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / drawLayout__FPQ34nw4r3lyt6Layout...
-extern "C" void __dt__Q34nw4r3lyt6LayoutFv(void* self, int flags);
 
 // Retail singletons used by the menu create helpers.
-extern const f32 lbl_eu_806670D4;              // timer reset value
-extern const f32 lbl_eu_806670E0;              // timer threshold
-extern const f32 lbl_eu_806670E8;              // timer tick delta
-extern "C" void* getWorkMem__17CWorkThreadSystemFv();
+extern const f32 sMarkZero;              // timer reset value
+extern const f32 sMarkTimerLimit;              // timer threshold
+extern const f32 sMarkStep;              // timer tick delta
 extern "C" void __dt__8CProcessFv(void* self, int flags);
+
 
 // Destructor of the member sub-object at +0x70 (trivial body; the retail
 // exception table of the constructor names it as that member's destructor).
@@ -120,7 +119,7 @@ extern "C" void* __dt__8011D2F8(void* self, int mode) {
 // fields 0x54/0x55) are set up by the compiler; the body zeroes every entry
 // record and pulls the menu tables/file pointers.
 CMenuSymbolMark::CMenuSymbolMark(CScn* scn) : mScn(scn) {
-    const char* S = (const char*)&lbl_eu_804FE720[0];
+    const char* S = (const char*)&sSymbolMarkStrings[0];
     // Clear every entry record; the world floats copy uninitialized stack
     // homes. Pointer-walk form: MWCC expands this as peel + x8 unroll with a
     // remainder loop (trip count computed by pointer subtraction).
@@ -138,7 +137,7 @@ CMenuSymbolMark::CMenuSymbolMark(CScn* scn) : mScn(scn) {
         *pCur = clearEntry;
         ++pCur;
     }
-    mTimer = lbl_eu_806670D4;
+    mTimer = sMarkZero;
     mField_274 = 0;
     mEntryCount = 0;
     mArchiveFP = 0;
@@ -149,11 +148,11 @@ CMenuSymbolMark::CMenuSymbolMark(CScn* scn) : mScn(scn) {
     mSomeValue3 = 0;
     mSomeValue4 = 0;
     mField_498 = 0;
-    mField_49C = lbl_eu_806670D4;
+    mField_49C = sMarkZero;
     mField_6A0 = 0;
-    mField_6A4 = lbl_eu_806670D8;
+    mField_6A4 = sMarkResetB;
     mField_8A8 = 0;
-    mField_8AC = lbl_eu_806670DC;
+    mField_8AC = sMarkResetC;
     mRenderItem = 0;
     // Second entry-record pass: retail emits the entry clear twice; this
     // later copy lowers as an indexed x4-unrolled countdown loop.
@@ -196,12 +195,12 @@ void CMenuSymbolMark::Init() {
     if (mArchiveFP == 0) {
         return;
     }
-    mUnkClass.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(), 0x5400,
-                           (const char*)&lbl_eu_804FE720[0x53], 0);
+mUnkClass.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x5400,
+                           (const char*)&sSymbolMarkStrings[0x53], 0);
     Class_8045F858 regionGuard(&mUnkClass);
     for (u32 i = 0; i < 16; i++) {
         buildLayout((nw4r::lyt::Layout**)&mEntries[i].layout, CUICfManager_getArcResourceAccessor(),
-                      (const char*)&lbl_eu_804FE720[0x63]);
+                      (const char*)&sSymbolMarkStrings[0x63]);
         // Re-read the layout pointer at every use so nothing spans the virtual
         // calls (retail reloads the slot from the entry base each time).
         ((nw4r::lyt::Layout*)mEntries[i].layout)->Animate();
@@ -212,13 +211,13 @@ void CMenuSymbolMark::Init() {
     mScn->addRenderCB(this, 7, 0);
     mUnkClass.validateHeap();
     SymbolMarkRenderItem* item = (SymbolMarkRenderItem*)mtl::MemManager::allocate(
-        0x7c, (u32)getWorkMem__17CWorkThreadSystemFv());
+        0x7c, (u32)CWorkThreadSystem::getWorkMem());
     if (item != 0) {
         // Construct the CProcess base over the raw allocation, then patch the
         // interface vtables and clear the move/draw ptmf triples. Statement
         // order mirrors the retail load/store interleave.
         __ct__8CProcessFv(item);
-        item->vt10 = (void*)&lbl_eu_8052CDB4[0];
+        item->vt10 = (void*)&sSymbolMarkItemVtable[0];
         u32* ptmf = (u32*)&__ptmf_null;
         u32 ptmf1 = ptmf[1];
         u32 ptmf0 = ptmf[0];
@@ -236,8 +235,8 @@ void CMenuSymbolMark::Init() {
         // Retail stores the CD50 vtable over BOTH interface slots (+0x24 for
         // the second interface); the earlier vt10 store survives as a dead
         // store in the retail bytes.
-        item->vt10 = (void*)&lbl_eu_8052CD50[0];
-        item->vt54 = (void*)&lbl_eu_8052CD50[0x24];
+        item->vt10 = (void*)&sSymbolMarkItemVtableB[0];
+        item->vt54 = (void*)&sSymbolMarkItemVtableB[0x24];
         item->state70 = 0;
         item->field78 = 0;
     }
@@ -266,7 +265,7 @@ void CMenuSymbolMark::Term() {
             entry.layout = 0;
         }
     }
-    deleteRegion__17UnkClass_8045F564Fv(&mUnkClass);
+    mUnkClass.deleteRegion();
     sInstance = 0;
 }
 
@@ -296,7 +295,7 @@ struct EntryClearView {
 // both call sites expand inline like the retail copies.
 #define HIDE_ALL_ENTRY_PANES(jx, jy, jz)                                       \
     {                                                                          \
-        const char* sBase = (const char*)&lbl_eu_804FE720[0];                  \
+        const char* sBase = (const char*)&sSymbolMarkStrings[0];                  \
         for (u8 i = 0; i < 16; i++) {                                          \
             EntryClearView& clr =                                              \
                 reinterpret_cast<EntryClearView&>(mEntries[i]);                \
@@ -349,7 +348,7 @@ public:
 // stands within distLimit.
 #define SCAN_MARKERS(kindTest, kindId, listArr, countField, argD)              \
     do {                                                                       \
-        const f32 distLimit = lbl_eu_806670EC;                                 \
+        const f32 distLimit = sMarkRangeLimitSq;                                 \
         for (u32 mi = 0; mi < self->countField; mi++) {                         \
             cf::CfObject* actorV =                                              \
                 (cf::CfObject*)findObjectById(self->listArr[mi]);                 \
@@ -417,24 +416,24 @@ void CMenuSymbolMark::Move() {
     JunkTrio junkMain, junkExp;
     if (lbl_eu_80663E24 & 0xAFA40000) {
         // Display expired: hide everything once the timer passes.
-        if (mTimer <= lbl_eu_806670E0) {
-            mTimer = lbl_eu_806670E4;
+        if (mTimer <= sMarkTimerLimit) {
+            mTimer = sMarkTimerExpired;
             mEntryCount = 0;
             HIDE_ALL_ENTRY_PANES(junkExp.x, junkExp.y, junkExp.z);
-            mField_49C = lbl_eu_806670D4;
+            mField_49C = sMarkZero;
             mField_6A0 = 0;
-            mField_6A4 = lbl_eu_806670D8;
+            mField_6A4 = sMarkResetB;
             mField_8A8 = 0;
-            mField_8AC = lbl_eu_806670DC;
+            mField_8AC = sMarkResetC;
         }
         return;
     }
     this->SymMark_RebuildEntryBuf();
     this->SymMark_RebuildIdsA();
     this->SymMark_RebuildIdsB();
-    mTimer += lbl_eu_806670E8;
-    if (mTimer >= lbl_eu_806670E0) {
-        mTimer = lbl_eu_806670D4;
+    mTimer += sMarkStep;
+    if (mTimer >= sMarkTimerLimit) {
+        mTimer = sMarkZero;
         mEntryCount = 0;
         HIDE_ALL_ENTRY_PANES(junkMain.x, junkMain.y, junkMain.z);
         this->SymMark_AddTouchMark();
@@ -527,7 +526,7 @@ void CMenuSymbolMark::SymMark_Store(u32 id, Vec* pos, void* argC, u32 argD, u32 
             diff.y = delta.y;
             diff.z = delta.z;
             s32 frames = (s32)PSVECMag(&diff);
-            const char* S = (const char*)&lbl_eu_804FE720[0];
+            const char* S = (const char*)&sSymbolMarkStrings[0];
             setLayoutTextBoxNumber((nw4r::lyt::Layout*)entry->layout, (char*)S + 0x14,
                           frames);
             SymbolMarkRenderItem* item = this->mRenderItem;
@@ -553,7 +552,7 @@ void CMenuSymbolMark::SymMark_Store(u32 id, Vec* pos, void* argC, u32 argD, u32 
     SymMark_Place(this, entry, (nw4r::math::VEC3*)pos,
                   (EntryInputPos*)argC, argE);
     // String pool base materialized again only after the projection helper.
-    const char* S = (const char*)&lbl_eu_804FE720[0];
+    const char* S = (const char*)&sSymbolMarkStrings[0];
     char* markerName = BdatGetPtrDirect(this->mAnotherFP, S + 0x7b, id);
     ml::FixStr<32> name;
     name.format(S + 0x86, markerName);
@@ -578,7 +577,7 @@ void CMenuSymbolMark::SymMark_Store(u32 id, Vec* pos, void* argC, u32 argD, u32 
 // and scale the pane from the measured edge distance (flag2 set) or run the
 // bounded vertical slide (flag2 clear). When posSrc is null the world position
 // comes straight from worldIn (with a fixed y lift chosen by flag).
-extern "C" __declspec(noinline) void SymMark_Place(
+extern "C" void SymMark_Place(
     CMenuSymbolMark* self, SymbolMarkEntry* entry,
     nw4r::math::VEC3* worldIn, EntryInputPos* posSrc, u32 flag) {
 // Re-derive the root pane at every use: the pane stores can alias the layout
@@ -600,15 +599,15 @@ extern "C" __declspec(noinline) void SymMark_Place(
     ScnXformBlock* pose = (ScnXformBlock*)Scn_FindCamItem(self->mScn, -1);
     if (posSrc == 0) {
         if (flag != 0) {
-            worldPos.y += lbl_eu_806670F0;
+            worldPos.y += sMarkFarYOffset;
         } else {
-            worldPos.y += lbl_eu_806670E8;
+            worldPos.y += sMarkStep;
         }
     }
     CamMan_ProjectToScreen(&screen, pose, &worldPos);
     // Hidden only when both projected coordinates exceed the bound.
     LytPaneFields* pane = ((LytLayoutFields*)entry->layout)->rootPane;
-    if (screen.x <= lbl_eu_806670D4 || screen.y <= lbl_eu_806670D4) {
+    if (screen.x <= sMarkZero || screen.y <= sMarkZero) {
         pane->flagBB &= 0xFE;
     } else {
         pane->flagBB |= 1;
@@ -616,18 +615,18 @@ extern "C" __declspec(noinline) void SymMark_Place(
     if (entry->flag2 != 0) {
         // Distance-based placement: transform a unit offset by the pose matrix,
         // project the far edge and derive an inverse-distance scale.
-        t.x = lbl_eu_806670E8;
-        t.y = lbl_eu_806670E8;
-        t.z = lbl_eu_806670D4;
+        t.x = sMarkStep;
+        t.y = sMarkStep;
+        t.z = sMarkZero;
         VEC3TransformNormal(&t, (const nw4r::math::MTX34*)&pose->mtx9C, &t);
         edge = worldPos + t;
         CamMan_ProjectToScreen(&screen, pose, &edge);
-        f32 scaleX = lbl_eu_806670E8 / __fabs(screen.x - t.x);
-        f32 scaleY = lbl_eu_806670E8 / __fabs(screen.y - t.y);
+        f32 scaleX = sMarkStep / __fabs(screen.x - t.x);
+        f32 scaleY = sMarkStep / __fabs(screen.y - t.y);
         if (!CDeviceVI::isWideAspectRatio()) {
-            scaleX *= lbl_eu_806670F4;
+            scaleX *= sWideScaleFactor;
         }
-        f32 baseScale = lbl_eu_806670F8 / ml::pi;
+        f32 baseScale = sMarkScaleBase / ml::pi;
         SYM_ROOT_PANE()->trX = worldPos.x;
         SYM_ROOT_PANE()->trY = worldPos.y;
         SYM_ROOT_PANE()->trZ = worldPos.z;
@@ -641,18 +640,18 @@ extern "C" __declspec(noinline) void SymMark_Place(
         SYM_ROOT_PANE()->scY = scaleY;
     } else {
         // Vertical slide clamped into a band around the screen edge.
-        f32 slideY = (screen.y - lbl_eu_80667100) * lbl_eu_80667104;
-        f32 shiftedX = screen.x - lbl_eu_806670FC;
-        f32 z = lbl_eu_806670D4;
-        f32 limit = lbl_eu_80667108 + slideY;
+        f32 slideY = (screen.y - sMarkCenterY) * sMarkSlideRate;
+        f32 shiftedX = screen.x - sMarkCenterX;
+        f32 z = sMarkZero;
+        f32 limit = sMarkSlideMin + slideY;
         screen.y = slideY;
         screen.x = shiftedX;
-        if (limit > lbl_eu_80667100) {
-            screen.y = slideY - (limit - lbl_eu_80667100);
+        if (limit > sMarkCenterY) {
+            screen.y = slideY - (limit - sMarkCenterY);
         } else {
-            f32 g = slideY - lbl_eu_80667108;
-            if (g < lbl_eu_8066710C) {
-                screen.y = slideY + (lbl_eu_8066710C - g);
+            f32 g = slideY - sMarkSlideMin;
+            if (g < sMarkSlideMax) {
+                screen.y = slideY + (sMarkSlideMax - g);
             }
         }
         pane->trX = screen.x;
@@ -699,15 +698,15 @@ void CMenuSymbolMark::SymMark_Refresh() {
 // then resets and rebuilds the unlocked-id list in mBuffer from the archive.
 void CMenuSymbolMark::SymMark_RebuildEntryBuf() {
     // Increment applied first; body runs only past the threshold.
-    this->mField_49C = this->mField_49C + lbl_eu_806670E8;
-    if (this->mField_49C < lbl_eu_806670E0) {
+    this->mField_49C = this->mField_49C + sMarkStep;
+    if (this->mField_49C < sMarkTimerLimit) {
         return;
     }
-    this->mField_49C = lbl_eu_806670D4;
+    this->mField_49C = sMarkZero;
     this->mField_498 = 0;
     memset(this->mBuffer, 0, 0x200);
     // Archive pointer and string base are hoisted into nonvolatile regs.
-    const char* names = (const char*)&lbl_eu_804FE720[0];
+    const char* names = (const char*)&sSymbolMarkStrings[0];
     void* archive = this->mArchiveFP;
     for (u32 id = 1; id <= this->mSomeValue2; id++) {
         if (func_80138574((const char*)archive, id) == 0) {
@@ -732,12 +731,12 @@ void CMenuSymbolMark::SymMark_RebuildEntryBuf() {
 // getReslistB68.
 void CMenuSymbolMark::SymMark_RebuildIdsA() {
     // Global loaded before the object field to match MWCC's operand order.
-    f32 t = this->mField_6A4 + lbl_eu_806670E8;
+    f32 t = this->mField_6A4 + sMarkStep;
     this->mField_6A4 = t;
-    if (t < lbl_eu_806670E0) {
+    if (t < sMarkTimerLimit) {
         return;
     }
-    this->mField_6A4 = lbl_eu_806670D4;
+    this->mField_6A4 = sMarkZero;
     this->mField_6A0 = 0;
     // Retail expands the inner 32-element clear fully and keeps the 4-iteration
     // outer loop as a countdown on an advancing row pointer (+0x80 per pass).
@@ -774,12 +773,12 @@ void CMenuSymbolMark::SymMark_RebuildIdsA() {
 // bit 0x10000 or 0x20000 and whose measured position lands inside the scene
 // bounds box tested by CheckViewAngle60.
 void CMenuSymbolMark::SymMark_RebuildIdsB() {
-    f32 t = this->mField_8AC + lbl_eu_806670E8;
+    f32 t = this->mField_8AC + sMarkStep;
     this->mField_8AC = t;
-    if (t < lbl_eu_806670E0) {
+    if (t < sMarkTimerLimit) {
         return;
     }
-    this->mField_8AC = lbl_eu_806670D4;
+    this->mField_8AC = sMarkZero;
     this->mField_8A8 = 0;
     // Retail's ctr=4 / 32-stw run is MWCC's x32 unroll of a flat zero loop.
     for (u32 i = 0; i < 0x80; i++) {
@@ -845,7 +844,7 @@ void CMenuSymbolMark::SymMark_RebuildIdsB() {
         u8 ok = (SymMark_IsNew((u32)&it->state70) == 0);                       \
         it->field6C = ok;                                                      \
         it->field74 = ok;                                                      \
-        const char* Sb = (const char*)&lbl_eu_804FE720[0];                     \
+        const char* Sb = (const char*)&sSymbolMarkStrings[0];                     \
         nw4r::lyt::Layout* lay2 = (nw4r::lyt::Layout*)it->state70;             \
         lay2->GetRootPane()->FindPaneByName(Sb + 0x14, true)->SetVisible(ok);  \
         lay2->GetRootPane()->FindPaneByName(Sb + 0x1C, true)->SetVisible(ok);  \
@@ -857,7 +856,7 @@ void CMenuSymbolMark::SymMark_RebuildIdsB() {
     })
 
 void CMenuSymbolMark::SymMark_AddTouchMark() {
-    const char* S = (const char*)&lbl_eu_804FE720[0];
+    const char* S = (const char*)&sSymbolMarkStrings[0];
     SymbolMarkRenderItem* item = this->mRenderItem;
     // Reset the live flags and hide both marker panes before the re-scan.
     item->field6C = 0;
@@ -1063,7 +1062,7 @@ void CMenuSymbolMark::SymMark_AddTouchMark() {
 // value matches a table row inside the scene bounds box, claim an entry slot
 // and add kind-0xa marks when the player stands within range.
 void CMenuSymbolMark::SymMark_AddRangeMarks() {
-    const f32 distLimit = lbl_eu_806670EC;
+    const f32 distLimit = sMarkRangeLimitSq;
     // Function-scope diff buffers; MWCC pins their addresses pre-loop
     // (retail anchors sp+8 / sp+0x14 across the whole body).
     Vec scratch;
@@ -1079,7 +1078,7 @@ void CMenuSymbolMark::SymMark_AddRangeMarks() {
         for (u32 j = this->mSomeValue3; j < this->mSomeValue4; j++) {
             u16 id =
                 (u16)BdatGetU16Direct((const void*)this->mSomeValue,
-                                   (const char*)&lbl_eu_804FE720[0xa6], j);
+                                   (const char*)&sSymbolMarkStrings[0xa6], j);
             if (id != actor->field8C) {
                 continue;
             }
@@ -1173,7 +1172,7 @@ extern "C" void bdatGetPosXYZ(Vec* out, int id);
 
 // Signed s16 -> double conversion through MWCC's 0x4330/extsh/xoris bit
 // trick, subtracting the shared retail magic so the pool label names
-// lbl_eu_80667110 instead of an anonymous TU-local constant.
+// sS16ToF64Bias instead of an anonymous TU-local constant.
 static double SymConvS16ToF64(s16 x, const f64& bias) {
     union {
         double d;
@@ -1188,7 +1187,7 @@ void CMenuSymbolMark::SymMark_SyncBufMarks() {
     SymbolMarkRenderItem* item = this->mRenderItem;
     // String pool base scoped to the pane-sync block only - retail frees this
     // register afterwards and re-materializes the base inside the id loop.
-    const char* sHead = (const char*)&lbl_eu_804FE720[0];
+    const char* sHead = (const char*)&sSymbolMarkStrings[0];
     // Sync the shared marker panes: always hide the S+0x26 pane; show it
     // (and hide S+0x14) only while the unlock scan reports a live target.
     // Every FindPaneByName result is consumed immediately - no pane locals
@@ -1214,12 +1213,12 @@ void CMenuSymbolMark::SymMark_SyncBufMarks() {
     }
     // Fresh copies hoisted out of the id loop (retail pins both in
     // nonvolatiles before the loop header).
-    const char* S = (const char*)&lbl_eu_804FE720[0];
+    const char* S = (const char*)&sSymbolMarkStrings[0];
     // Loaded before the distance limit so MWCC pins the magic double into
     // f31 ahead of the f30 limit load (retail pool order).
-    const f64 convBias = lbl_eu_80667110;
+    const f64 convBias = sS16ToF64Bias;
     void* archive = this->mArchiveFP;
-    const f32 distLimit = lbl_eu_806670EC;
+    const f32 distLimit = sMarkRangeLimitSq;
     for (u32 i = 0; i < this->mField_498; i++) {
         u32 id = this->mBuffer[i];
         // Per-id dispatch keys out of the archive.
@@ -1467,7 +1466,7 @@ void CMenuSymbolMark::SymMark_SyncBufMarks() {
 
 // ---------- SymMark_AddKindMarks ----------
 void CMenuSymbolMark::SymMark_AddKindMarks() {
-    const f32 distLimit = lbl_eu_806670EC;
+    const f32 distLimit = sMarkRangeLimitSq;
     for (u32 i = 0; i < this->mField_8A8; i++) {
         cf::CfObject* actorV = (cf::CfObject*)findObjectById(this->mArray6A8[i]);
         if (actorV == 0 || actorV->CfObject_checkSubReady() == 0) {
@@ -1623,8 +1622,6 @@ void CMenuSymbolMark::SymMark_AddKindMarks() {
 // __dt__8CProcessFv(self, 0); } } if (flags > 0) operator delete(self);
 // end: return self; - the redundant `if (self != 0)` re-check reproduces the
 // retail's dead double-beq (CMenuBattleChain/CMenuArtsSelect idiom).
-#pragma push
-#pragma auto_inline off
 extern "C" void* __dt__8CArrow3DFv(CArrow3D* self, int flags) {
     if (self == 0) goto end;
     if (self != 0) {
@@ -1634,7 +1631,6 @@ extern "C" void* __dt__8CArrow3DFv(CArrow3D* self, int flags) {
 end:
     return self;
 }
-#pragma pop
 
 // ---------- CTTask<CArrow3D>::Move ----------
 // MWCC lowers the PTMF dispatch to the retail __ptmf_test/__ptmf_scall calls
@@ -1669,17 +1665,15 @@ CTTask<CArrow3D>::~CTTask() {}
 // model matrix, then replays the resource display lists twice (first with
 // color update off for the light pass, then normally).
 // Render-gate imports.
-extern "C" void updateViewRoot__9CViewRootFv();
-extern "C" void resetGXStateA__8CGXCacheFv(void* cache);
 extern "C" void makePerspProj__8CGXCacheFv(void* cache, void* proj, f32 a,
                                            f32 b, f32 c);
-// CGXCache singleton (static data member, symbol cacheInstance__9CDeviceGX).
+
 extern void* cacheInstance__9CDeviceGX;
 // Warning/Panic string blobs.
 extern u8 lbl_eu_80526324[];
 extern u8 lbl_eu_80526300[];
-extern u8 lbl_eu_805262F0[];
-extern u8 lbl_eu_805262C8[];
+extern const char lbl_eu_805262F0[];
+extern const char lbl_eu_805262C8[];
 extern u8 lbl_eu_8052CF10[];
 extern u8 lbl_eu_8052CEF4[];
 extern u8 lbl_eu_8052CF6C[];
@@ -1688,12 +1682,12 @@ extern u8 lbl_eu_8052CF3C[];
 extern u8 lbl_eu_8052CF20[];
 // Panic vararg module-name globals (addresses only).
 extern u32 lbl_eu_80661E98;
-extern u32 lbl_eu_80661EA0;
+extern u32 sPanicArgA0;
 extern u32 lbl_eu_80661EA8;
-extern u32 lbl_eu_80661EB0;
-extern u32 lbl_eu_80661EB4;
+extern u32 sPanicArgB0;
+extern u32 sPanicArgB4;
 // Chan-mat color seed word + view matrix pair (wide/normal).
-extern u32 lbl_eu_806670D0;
+extern u32 sArrowChanMatSeed;
 extern const f32 lbl_eu_804FE6D8[12];
 // Current scene pointer (also used by Term/Init).
 // Light color floats (rgb triple) used by both light and chan setup.
@@ -1702,8 +1696,6 @@ extern const f32 lbl_eu_8052CD38[8];
 // zero__Q22ml5CVec3 provided by CfObjectModel.hpp
 extern u32 identity__Q22ml6CMat34[12];
 
-#pragma push
-#pragma auto_inline off
 void CArrow3D::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() != 0) {
         return;
@@ -1784,9 +1776,9 @@ void CArrow3D::cbRenderBefore() {
         if (lenSq != 0.0f) {
             norm = lenSq * nw4r::math::FrSqrt(lenSq);
         }
-        float yaw = lbl_eu_80667118 *
+        float yaw = sArrowAngleScale *
                     nw4r::math::Atan2FIdx(dy, norm); // elevation
-        float azim = lbl_eu_80667118 * nw4r::math::Atan2FIdx(dx, -dz);
+        float azim = sArrowAngleScale * nw4r::math::Atan2FIdx(dx, -dz);
         // Wrap the azimuth into (-2pi, 2pi] around the scene heading.
         float roll = -azim - (ml::pi + pose->proj120[1]);
         if (roll >= ml::pi) {
@@ -1826,34 +1818,34 @@ void CArrow3D::cbRenderBefore() {
         }
         yaw += pose->proj118[0];
         // Clamp the cosine into the acos domain.
-        const float loBound = lbl_eu_80667104;
+        const float loBound = sMarkSlideRate;
         if (dot < loBound) {
             dot = loBound;
-        } else if (dot > lbl_eu_806670E8) {
-            dot = lbl_eu_806670E8;
+        } else if (dot > sMarkStep) {
+            dot = sMarkStep;
         }
-        if (dot < loBound || dot > lbl_eu_806670E8) {
+        if (dot < loBound || dot > sMarkStep) {
             nw4r::db::Warning((const char*)lbl_eu_805262F0, 0xef,
                               (const char*)lbl_eu_805262C8);
         }
-        float pitch = (lbl_eu_806670E0 * ml::deg2rad) *
-                      nw4r::math::SinFIdx((f32)acos(dot) * lbl_eu_8066711C);
+        float pitch = (sMarkTimerLimit * ml::deg2rad) *
+                      nw4r::math::SinFIdx((f32)acos(dot) * sFidxUnitScale);
         if (roll < 0.0f) {
-            pitch *= lbl_eu_80667104;
+            pitch *= sMarkSlideRate;
         }
         // Camera projection from the GX cache, then pick the view matrix.
         void* cache = cacheInstance__9CDeviceGX;
-        resetGXStateA__8CGXCacheFv(cache);
+        ((CGXCache*)cache)->resetGXStateA();
         f32 proj44[16];
-        makePerspProj__8CGXCacheFv(cache, &proj44[0], lbl_eu_806670E8,
-                                   lbl_eu_80667120, lbl_eu_80667124);
+        makePerspProj__8CGXCacheFv(cache, &proj44[0], sMarkStep,
+                                   sArrowProjNear, sArrowProjFar);
         GXSetProjection((const f32 (*)[4])&proj44[0], (GXProjectionType)0);
         const f32* viewBase = &lbl_eu_804FE6D8[0];
         const f32* view = CDeviceVI::isWideAspectRatio() ? viewBase : viewBase + 3;
         // Model matrix: pitch, then yaw, then roll concatenations.
         float m1[12];
-        float sP = nw4r::math::SinFIdx(lbl_eu_8066711C * pitch);
-        float cP = nw4r::math::CosFIdx(lbl_eu_8066711C * pitch);
+        float sP = nw4r::math::SinFIdx(sFidxUnitScale * pitch);
+        float cP = nw4r::math::CosFIdx(sFidxUnitScale * pitch);
         m1[0] = cP;
         m1[1] = -sP;
         m1[2] = 1.0f;
@@ -1866,8 +1858,8 @@ void CArrow3D::cbRenderBefore() {
         m1[9] = 1.0f;
         m1[10] = 1.0f;
         m1[11] = 1.0f;
-        float sY = nw4r::math::SinFIdx(lbl_eu_8066711C * (-yaw));
-        float cY = nw4r::math::CosFIdx(lbl_eu_8066711C * (-yaw));
+        float sY = nw4r::math::SinFIdx(sFidxUnitScale * (-yaw));
+        float cY = nw4r::math::CosFIdx(sFidxUnitScale * (-yaw));
         float m2[12];
         m2[0] = 1.0f;
         m2[1] = 0.0f;
@@ -1882,8 +1874,8 @@ void CArrow3D::cbRenderBefore() {
         m2[10] = 0.0f;
         m2[11] = 0.0f;
         PSMTXConcat((f32(*)[4])&m2[0], (f32(*)[4])&m1[0], (f32(*)[4])&m1[0]);
-        float sR = nw4r::math::SinFIdx(lbl_eu_8066711C * roll);
-        float cR = nw4r::math::CosFIdx(lbl_eu_8066711C * roll);
+        float sR = nw4r::math::SinFIdx(sFidxUnitScale * roll);
+        float cR = nw4r::math::CosFIdx(sFidxUnitScale * roll);
         float m3[12];
         m3[0] = cR;
         m3[1] = 0.0f;
@@ -1926,7 +1918,7 @@ void CArrow3D::cbRenderBefore() {
         // Light color: scaled rgb triple + full alpha.
         {
             const f32* lc = &lbl_eu_8052CD38[0];
-            float k = lbl_eu_80667128;
+            float k = sArrowLightScale;
             GXLightObj lightBuf;
             u32 col;
             col = (u32)(s32)(k * lc[0]);           // r
@@ -1934,10 +1926,10 @@ void CArrow3D::cbRenderBefore() {
             col |= (u32)(s32)(k * lc[2]) << 16;    // b
             col |= (u32)(s32)(k * 1.0f) << 24;     // a
             GXInitLightColor(&lightBuf, *(GXColor*)&col);
-            GXInitLightPos(&lightBuf, 0.0f, 0.0f, lbl_eu_8066712C);
+            GXInitLightPos(&lightBuf, 0.0f, 0.0f, sArrowLightZ);
             GXLoadLightObjImm(&lightBuf, (GXLightID)1);
         }
-        ArrowResPtrView* rp = (ArrowResPtrView*)mDataPtr;
+ArrowResourceHeader* rp = (ArrowResourceHeader*)mDataPtr;
         u8* handle = mDataHandle;
         GXSetArray((GXAttr)9, handle + rp->arrPosOff, 0xC);
         GXSetArray((GXAttr)0xa, handle + rp->arrUvOff, 0xC);
@@ -1980,8 +1972,8 @@ void CArrow3D::cbRenderBefore() {
         // Channel material color: seeded word with scaled rgb bytes patched in.
         {
             const f32* lc = &lbl_eu_8052CD38[0];
-            float k = lbl_eu_80667128;
-            u32 matCol = lbl_eu_806670D0;
+            float k = sArrowLightScale;
+            u32 matCol = sArrowChanMatSeed;
             ((u8*)&matCol)[0] = (u8)(s32)(k * lc[3]);
             ((u8*)&matCol)[1] = (u8)(s32)(k * lc[4]);
             ((u8*)&matCol)[2] = (u8)(s32)(k * lc[5]);
@@ -2010,7 +2002,7 @@ void CArrow3D::cbRenderBefore() {
                 if (tex.ptr() == 0) {
                     nw4r::db::Panic((const char*)lbl_eu_8052CF10, 0x26,
                                     (const char*)lbl_eu_8052CEF4,
-                                    &lbl_eu_80661E98, &lbl_eu_80661EA0);
+                                    &lbl_eu_80661E98, &sPanicArgA0);
                 }
                 GXTexObj texObj;
                 if (tex.ref().flag & 1) {
@@ -2031,19 +2023,19 @@ void CArrow3D::cbRenderBefore() {
                     if (pltt.ptr() == 0) {
                         nw4r::db::Panic((const char*)lbl_eu_8052CF6C, 0x2a,
                                         (const char*)lbl_eu_8052CF50,
-                                        &lbl_eu_80661EA8, &lbl_eu_80661EB4);
+                                        &lbl_eu_80661EA8, &sPanicArgB4);
                     }
                     u16 entries = pltt.ref().numEntries;
                     if (pltt.ptr() == 0) {
                         nw4r::db::Panic((const char*)lbl_eu_8052CF6C, 0x2a,
                                         (const char*)lbl_eu_8052CF50,
-                                        &lbl_eu_80661EA8, &lbl_eu_80661EB4);
+                                        &lbl_eu_80661EA8, &sPanicArgB4);
                     }
                     u32 fmtWord = (u32)pltt.ref().fmt;
                     if (pltt.ptr() == 0) {
                         nw4r::db::Panic((const char*)lbl_eu_8052CF3C, 0x2a,
                                         (const char*)lbl_eu_8052CF20,
-                                        &lbl_eu_80661EA8, &lbl_eu_80661EB0);
+                                        &lbl_eu_80661EA8, &sPanicArgB0);
                     }
                     void* pltImg = pltt.ref().toPlttData != 0
                                        ? (void*)((u8*)&pltt.ref() +
@@ -2059,7 +2051,7 @@ void CArrow3D::cbRenderBefore() {
                     if ((u8)mipMap != 0) {
                         GXInitTexObjLOD(&texObj, (GXTexFilter)5,
                                         (GXTexFilter)1, minLod, maxLod,
-                                        lbl_eu_80667130, GX_TRUE, GX_FALSE,
+                                        sArrowLodBias, GX_TRUE, GX_FALSE,
                                         (GXAnisotropy)0);
                     } else {
                         GXInitTexObjLOD(&texObj, (GXTexFilter)1,
@@ -2079,7 +2071,7 @@ void CArrow3D::cbRenderBefore() {
                     if ((u8)mipMap != 0) {
                         GXInitTexObjLOD(&texObj, (GXTexFilter)5,
                                         (GXTexFilter)1, minLod, maxLod,
-                                        lbl_eu_80667130, GX_TRUE, GX_FALSE,
+                                        sArrowLodBias, GX_TRUE, GX_FALSE,
                                         (GXAnisotropy)0);
                     } else {
                         GXInitTexObjLOD(&texObj, (GXTexFilter)1,
@@ -2093,8 +2085,8 @@ void CArrow3D::cbRenderBefore() {
         }
     }
 restore:
-    resetGXStateA__8CGXCacheFv(cacheInstance__9CDeviceGX);
-    updateViewRoot__9CViewRootFv();
+    ((CGXCache*)cacheInstance__9CDeviceGX)->resetGXStateA();
+    CViewRoot::updateViewRoot();
     if (mLayout != 0) {
         nw4r::lyt::DrawInfo drawInfo;
         SetWideLocAdjust(&drawInfo);
@@ -2102,9 +2094,8 @@ restore:
                       &drawInfo, 0, 1);
     }
 }
-#pragma pop
 
-// ---------- CArrow3D::Move (retail empty override, kept as extern "C" stub;
+// ---------- CArrow3D::Move (retail empty override
 // the class deliberately declares no Move() so the vtable keeps the
 // CTTask<CArrow3D>::Move dispatch - see CMenuSymbolMark.hpp) ----------
 extern "C" void Move__8CArrow3DFv() {
@@ -2113,7 +2104,6 @@ extern "C" void Move__8CArrow3DFv() {
 // ---------- CArrow3D::Term ----------
 // Wait for the draw to finish, release the layout (vtable+0x8 with flags=1),
 // then remove the IScnRender callback at +0x54 from the current scene.
-extern "C" void removeRenderCB__4CScnFP10IScnRender(void* self, void* cb);
 void CArrow3D::Term() {
     CDeviceVI::waitForDrawDone();
     // delete through the Layout type: the retail dispatches vtable slot 2
@@ -2131,7 +2121,7 @@ void CArrow3D::Term() {
     if (this != 0) {
         render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
     }
-    removeRenderCB__4CScnFP10IScnRender(lbl_eu_80663E14, render);
+    reinterpret_cast<CScn*>(lbl_eu_80663E14)->removeRenderCB(render);
 }
 
 // ---------- CArrow3D::Init ----------
@@ -2139,7 +2129,7 @@ void CArrow3D::Term() {
 // (asserting its 32-byte alignment), builds the layout and hides two panes by
 // name.
 void CArrow3D::Init() {
-    const char* S = (const char*)&lbl_eu_804FE720[0];
+    const char* S = (const char*)&sSymbolMarkStrings[0];
     // The `if (this)` idiom splits the IScnRender subobject address
     // (this+0x54) into its own addi; the call itself is unconditional.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
@@ -2151,9 +2141,9 @@ void CArrow3D::Init() {
     CLibStaticData::getStaticFileData(S, (StaticDataHandle**)&handle, 0);
     mDataHandle = handle;
     mDataPtr = handle;
-    mPosX = lbl_eu_806670D4;
-    mPosY = lbl_eu_806670D4;
-    mPosZ = lbl_eu_806670D4;
+    mPosX = sMarkZero;
+    mPosY = sMarkZero;
+    mPosZ = sMarkZero;
     mFlag6C = 0;
     StaticDataObj* sd = (StaticDataObj*)handle;
     if (sd->dataOffset != 0) {
@@ -2183,8 +2173,6 @@ void CArrow3D::Init() {
 // retail thunk ABI - only r3 is set before the tail branch; the flags arg is
 // caller-leftover, as retail).
 extern "C" void* __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self, int flags);
-extern "C" void cbRenderBefore__15CMenuSymbolMarkFv(CMenuSymbolMark* self);
-extern "C" void cbRenderBefore__8CArrow3DFv(CArrow3D* self);
 
 extern "C" void SymMark_ThunkDtor58(void* self) {
     // One-arg pointer view: retail thunk leaves r4 (delete flag) untouched.
@@ -2192,7 +2180,7 @@ extern "C" void SymMark_ThunkDtor58(void* self) {
 }
 
 extern "C" void SymMark_ThunkRender5C(void* self) {
-    cbRenderBefore__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x5C));
+    ((CMenuSymbolMark*)((char*)self - 0x5C))->cbRenderBefore();
 }
 
 extern "C" void SymMark_ThunkDtor5C(void* self) {
@@ -2200,7 +2188,7 @@ extern "C" void SymMark_ThunkDtor5C(void* self) {
 }
 
 extern "C" void SymMark_ArrowRender54(void* self) {
-    cbRenderBefore__8CArrow3DFv((CArrow3D*)((char*)self - 0x54));
+    ((CArrow3D*)((char*)self - 0x54))->cbRenderBefore();
 }
 
 extern "C" void SymMark_ArrowDtor54(void* self) {

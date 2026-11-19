@@ -853,7 +853,7 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* _thi
 
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
 // but takes a vestigial bool arg - same convention as isClassicController above).
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // closeFileHandle__FPP11CFileHandle / releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor).

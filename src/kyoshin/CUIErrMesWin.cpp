@@ -166,13 +166,9 @@ void ErrWin_MarkActive4_4FA8(CUIErrMesWin* self) {
 // classic controller mask when isClassicController reports classic), close the
 // embedded CSysWin and advance the state byte to 5.
 void ErrWin_OnConfirm_4FE8(CUIErrMesWin* self) {
-    CErrMesPad* pad = reinterpret_cast<CErrMesPad*>(getCurrentPad__Q22cf13CfGameManagerFv());
-    // Button mask: 0x10 by default; the classic-controller path uses 0x20000000.
-    u32 mask = 0x10;
-    if (cf::CfGameManager::isClassicController(-1) != 0) {
-        mask = 0x20000000;
-    }
-    if (pad->field_0x4 & mask) {
+    CErrMesPad* pad = reinterpret_cast<CErrMesPad*>(cf::CfGameManager::getCurrentPad());
+    // Classic-controller button bit is 0x200000 (retail lis r3, 0x20).
+    if (pad->field_0x4 & (cf::CfGameManager::isClassicController(-1) ? 0x200000 : 0x10)) {
         self->mSysWin.advancePhase3();
         self->field_0x9C = 5;
     }

@@ -19,7 +19,7 @@ extern const char lbl_eu_804FC5EC[];    // .rodata column-name string table
 // __ct__Q22cf11CfResPcImplF..., so the C-linkage form keeps the retail name;
 // declared returning the object pointer (MWCC ctor ABI keeps this in r3).
 extern "C" u8* __ct__cf_CfResPcImpl(u8* obj, cf::CfObjectMove* parent);
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
+// mtl::MemManager::allocate is declared once by monolib/util/MemManager.hpp.
 
 
 // Arts data object returned by CtrlObjectParam_GetCharEntry: the per-entry table scanned by
@@ -67,8 +67,6 @@ extern "C" void aiActionStoreIndexedBytes(u8* self, int index, int a2, int a3, i
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
 // getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
 // (pulled in via CAIAction.hpp).
-extern "C" void CActorParam_decayArtsMatrix__Q22cf11CActorParamFf(
-    cf::CActorParam* self, float value);   // CActorParam virtual 0x354 (Fv name, float in f1)
 extern "C" void CtrlObjectParam_RaiseArtsLevelBy(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(u8* obj, int flag);         // CtrlObjectParam.cpp

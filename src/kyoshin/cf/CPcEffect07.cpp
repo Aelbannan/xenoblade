@@ -220,20 +220,20 @@ s32 getSlotEffectId(int index) {
 
 int findActiveEntryID(int index)
 {
-    if (lbl_eu_80664398 == 0)
+    PcEffectData* data = lbl_eu_80664398;
+    if (data == 0)
         return -1;
 
     if (index < 0)
     {
-        if (lbl_eu_80664398->entries[2].mActive == 1) return lbl_eu_80664398->entries[2].mId;
-        if (lbl_eu_80664398->entries[1].mActive == 1) return lbl_eu_80664398->entries[1].mId;
-        if (lbl_eu_80664398->entries[0].mActive == 1) return lbl_eu_80664398->entries[0].mId;
+        int slot;
+        for (slot = 2; slot >= 0; slot--) {
+            if (data->entries[slot].mActive == 1) return data->entries[slot].mId;
+        }
         return -1;
     }
 
-    if (index == 0) { if (lbl_eu_80664398->entries[0].mActive == 1) return lbl_eu_80664398->entries[0].mId; }
-    else if (index == 1) { if (lbl_eu_80664398->entries[1].mActive == 1) return lbl_eu_80664398->entries[1].mId; }
-    else if (index == 2) { if (lbl_eu_80664398->entries[2].mActive == 1) return lbl_eu_80664398->entries[2].mId; }
+    if (data->entries[index].mActive == 1) return data->entries[index].mId;
     return -1;
 }
 
@@ -311,9 +311,9 @@ s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
 s32 getFirstFreeSlot() {
     PcEffectData* data = lbl_eu_80664398;
     if (!data) return -1;
-    if (data->entries[0].mActive == 0) return 0;
-    if (data->entries[1].mActive == 0) return 1;
-    if (data->entries[2].mActive == 0) return 2;
+    for (s32 i = 0; i < 3; i++) {
+        if (data->entries[i].mActive == 0) return i;
+    }
     return -1;
 }
 
@@ -332,19 +332,20 @@ int isSlotActive(int index) {
 bool hasAnyActiveSlot() {
     PcEffectData* data = lbl_eu_80664398;
     if (!data) return false;
-    if (data->entries[0].mActive != 0) return true;
-    if (data->entries[1].mActive != 0) return true;
-    if (data->entries[2].mActive != 0) return true;
+    for (int i = 0; i < 3; i++) {
+        if (data->entries[i].mActive != 0) return true;
+    }
     return false;
 }
 
 int countActiveSlots() {
     PcEffectData* data = lbl_eu_80664398;
-    if (!data) return 0;
     int result = 0;
-    if (data->entries[0].mActive == 1) result = 1;
-    if (data->entries[1].mActive == 1) result++;
-    if (data->entries[2].mActive == 1) result++;
+    if (data != 0) {
+        if (data->entries[0].mActive == 1) result = 1;
+        if (data->entries[1].mActive == 1) result++;
+        if (data->entries[2].mActive == 1) result++;
+    }
     return result;
 }
 

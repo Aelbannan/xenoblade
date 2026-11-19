@@ -94,7 +94,7 @@ extern "C" void unlinkFactoryById(UnkClass_805764CC* holder, cf::IFactoryEvent* 
 // real virtual directly.)
 
 extern "C" {
-extern const u8 __RTTI__Q22cf7CtrlAct[];  // CtrlAct typeinfo pair (CtrlMoveBase TU .sdata)
+extern const u8 __RTTI__Q22cf7CtrlAct[];
 extern void __dt__Q22cf7CtrlActFv();  // cf::CtrlAct::~CtrlAct (defined in CtrlEnemy.cpp)
 extern void CtrlNpcAlwaysFalse();
 extern void ctrlActIsFlagBit15Clear();
@@ -139,9 +139,8 @@ extern void gateVisionByFusionParam();
 // externs and resolve when their TUs are typified; pre-link bytes are zeros
 // either way. lbl_eu_8052B110 (0xC) is the default-handler PMF triplet
 // {delta=0, vindex=-1, func} copied wholesale by initBattleActorState.
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_8052B080[36] = {
+__attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_8052B080[36] = {
     (const void*)__RTTI__Q22cf7CtrlAct,
-    (const void*)0,
     (const void*)__dt__Q22cf7CtrlActFv,
     (const void*)0,
     (const void*)CtrlNpcAlwaysFalse,
@@ -177,7 +176,7 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) co
     (const void*)handleActKind,
     (const void*)0
 };
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_8052B110[3] = {
+__attribute__((used)) const void* lbl_eu_8052B110[3] = {
     (const void*)0,
     (const void*)-1,
     (const void*)runVisionResetWindows
@@ -257,12 +256,10 @@ extern "C" u8 lbl_eu_8052AEC8[];
 extern "C" u8 lbl_eu_8052BD20[];
 extern "C" u8 lbl_eu_8052BD38[];
 extern "C" u8 lbl_eu_8052BD5C[];
-__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf15CfObjectImplEne[2] = { lbl_eu_804FC7F8, lbl_eu_8052AEC8 };
-__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf14CBattleManager[2] = { lbl_eu_804FCB70, lbl_eu_8052BD20 };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D60[2] = { lbl_eu_804FCB84, lbl_eu_8052BD38 };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D68[2] = { lbl_eu_804FCBA0, 0 };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D70[2] = { lbl_eu_804FCBC4, lbl_eu_8052BD5C };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D78[2] = { lbl_eu_804FCBE4, 0 };
+__attribute__((used)) const void* lbl_eu_80661D60[2] = { lbl_eu_804FCB84, lbl_eu_8052BD38 };
+__attribute__((used)) const void* lbl_eu_80661D68[2] = { lbl_eu_804FCBA0, 0 };
+__attribute__((used)) const void* lbl_eu_80661D70[2] = { lbl_eu_804FCBC4, lbl_eu_8052BD5C };
+__attribute__((used)) const void* lbl_eu_80661D78[2] = { lbl_eu_804FCBE4, 0 };
 
 // ============================================================
 // Retail .rodata (lbl_eu_804FC828..lbl_eu_804FCBE4) as typed definitions
@@ -1351,7 +1348,7 @@ extern "C" s32 func_800EC918(
                     resistanceChance += 0x1E;
                 }
 
-                u8 byte1AA = ((cf::CBattleManager*)self)->mChain.unk0[2];
+                u8 byte1AA = ((cf::CBattleManager*)self)->mChain.mHead.field_2;
                 if (byte1AA >= 1) {
                     if (byte1AA <= 24) {
                         resistanceChance = 0;
@@ -3880,12 +3877,12 @@ CtrlObjectParam_RunPartyArtsFlow(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorPar
 // emitBattleMoveEvents x4) plus MWCC shape drift (two 0x20 tables, E08E8 0x38 for
 // retail 0x68). Volatile so MWCC keeps the zeros in .data (never .bss).
 // Shrink by 4 per restored table slot as switches are reimplemented.
-__declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run1a[9] = {
+__attribute__((used)) const void* cbm_data_reserve_run1a[9] = {
     (const void*)func_800EC918,
     (const void*)0,
     (const void*)0
 };
-__declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run1b[0x41] = {
+__attribute__((used)) const void* cbm_data_reserve_run1b[0x41] = {
     (const void*)func_800EC918,
     (const void*)0,
     (const void*)0
@@ -3893,12 +3890,12 @@ __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_r
 // lbl_eu_8052B784 / lbl_eu_8052B790 (0xC each): confirmation-handler PMF
 // triplets {delta=0, vindex=-1, func}, copied wholesale and compared with
 // __ptmf_cmpr (non-virtual PMF, so dispatch stays a direct call).
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_8052B784[3] = {
+__attribute__((used)) const void* lbl_eu_8052B784[3] = {
     (const void*)0,
     (const void*)-1,
     (const void*)runVisionTierWindows
 };
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_8052B790[3] = {
+__attribute__((used)) const void* lbl_eu_8052B790[3] = {
     (const void*)0,
     (const void*)-1,
     (const void*)gateVisionByFusionParam
@@ -4576,7 +4573,7 @@ void initBattleActorState(void* self_, void* actor_) {
         // Chapter-gated chain gauge overrides the hit position with the facing vec.
     f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
         {
-            u8 chapter = lbl_eu_80663F00->mChain.unk0[2];
+            u8 chapter = lbl_eu_80663F00->mChain.mHead.field_2;
             if (chapter >= 1 && chapter <= 0x18) {
                 hitPos = *(ml::CVec3*)static_cast<cf::CfObject*>(actor)->CfObject_getPosVector();
             }
@@ -4698,7 +4695,7 @@ void initBattleActorState(void* self_, void* actor_) {
     getInstance__Q22cf13CfGameManagerFv();
     if (!isGlobalCamFlagSet__Fi(0x04000000)) {
         if (!isBattleStatusActive(static_cast<cf::CBattleState*>(actor), 0x2F)) {
-            *(f32*)((u8*)subObj + 0x80) = artsSubGetF14(subObj);
+            subObj->field_80 = artsSubGetF14(subObj);
         }
         if (!isBattleStatusActive(static_cast<cf::CBattleState*>(actor), 0x30)) {
             ((cf::CActorParam*)actor)->CActorParam_addHitCharge(lbl_eu_80666DDC);
@@ -6931,25 +6928,25 @@ static void func_staleMove(void* self, void* arg1, void* arg2, BattleTargetData*
 
     move->field_60 = lbl_eu_80666DDC;
     move->field_64 = lbl_eu_80666DDC;
-    void* subObj = (void*)move->artsData;      // r31
+    cf::CActorParam_UnkStruct2* subObj = (cf::CActorParam_UnkStruct2*)move->artsData;      // r31
 
     ((cf::CActorParam*)(arg1))->CActorParam_getBattleParams();
     ((cf::CActorParam*)(arg2))->CActorParam_getBattleParams();
 
     if (move->field_74 & 0x08) {
-        if (!(*(u32*)((u8*)subObj + 0x78) & 0x1000)) goto done1744_1B8C;
+        if (!(subObj->unk78 & 0x1000)) goto done1744_1B8C;
     }
 
     s32 shouldEmit = 0;
-    if (*(u32*)((u8*)subObj + 0x78) & 0x2000) {
-        u8 slot = *(u8*)((u8*)subObj + 0x44);
+    if (subObj->unk78 & 0x2000) {
+        u8 slot = subObj->field_44;
         if (slot != (u8)(((cf::CActorParam*)(arg1))->CActorParam_getStatsSlot() + 1)) {
             goto done1744_1B8C;
         }
     }
 
     // Arts-type jump table (byte +0x66 of the sub-object).
-    u8 type = *(u8*)((u8*)subObj + 0x66);
+    u8 type = subObj->field_66;
     if (type <= 0x19) {
         switch (type) {
         case 0x00: {
@@ -6992,7 +6989,7 @@ static void func_staleMove(void* self, void* arg1, void* arg2, BattleTargetData*
             if (move->field_5C >= ((cf::CActorParam*)(arg2))->CActorParam_getHp()) shouldEmit = 1;
             break;
         case 0x0A:
-            if (*(u8*)((u8*)subObj + 0x67) != 0) shouldEmit = 1;
+            if (subObj->field_67 != 0) shouldEmit = 1;
             break;
         case 0x0B:
             if (((u16)getReloadParam0()) == (u16)(type - 0x0A)) shouldEmit = 1;
@@ -7014,7 +7011,7 @@ static void func_staleMove(void* self, void* arg1, void* arg2, BattleTargetData*
     }
 
 done1744_1B8C:;
-    if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+    if (subObj->unk78 & 0x1000) {
         if (findFreeBattleSlot((D7D24_Obj*)move) == 0) shouldEmit = 0;
     }
     if (!(move->field_74 & 0x10)) {
@@ -7026,13 +7023,13 @@ done1744_1B8C:;
     // ---- event emission (dispatch on subObj->0x67) ----
     BattleEvent ev;
     std::memset(&ev, 0, sizeof(ev));
-    u8 emitType = *(u8*)((u8*)subObj + 0x67);
+    u8 emitType = subObj->field_67;
     switch (emitType) {
     case 0x03: {
         if (move->field_78 & 0x10) break;
         cf::CfActorF64Conv conv;
         conv.w[0] = 0x43300000;
-        s16 hp = *(s16*)((u8*)subObj + 0x68);
+        s16 hp = subObj->field_68;
         conv.w[1] = (u32)(hp - 1) ^ 0x80000000;
         f32 add = (f32)(conv.d - lbl_eu_80666DE0);
         move->field_58 = move->field_58 + add;
@@ -7040,7 +7037,7 @@ done1744_1B8C:;
         if ((void*)((cf::CActorParam*)(arg1))->CActorParam_getStatusTable() != 0) {
             void* p = (void*)((cf::CActorParam*)(arg1))->CActorParam_getStatusTable();
             if (Counter_TestBit(p, 0x9C) != 0) {
-                if (*(u8*)((u8*)subObj + 0x66) == 3) {
+                if (subObj->field_66 == 3) {
                     move->field_58 = move->field_58 + 1.0f;
                 }
             }
@@ -7055,11 +7052,11 @@ done1744_1B8C:;
         {
             cf::CfActorF64Conv conv;
             conv.w[0] = 0x43300000;
-            conv.w[1] = (u32)(*(s16*)((u8*)subObj + 0x68)) ^ 0x80000000;
+            conv.w[1] = (u32)(subObj->field_68) ^ 0x80000000;
             ev.field_20 = (f32)(conv.d - lbl_eu_80666DE0);
         }
         ev.field_24 = lbl_eu_80666DDC;
-        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+        if (subObj->unk78 & 0x1000) {
             emitBattleMoveEvents(self, arg1, arg1, &ev, move);
         } else {
             emitBattleMoveEvents(self, arg1, arg2, &ev, move);
@@ -7073,11 +7070,11 @@ done1744_1B8C:;
         {
             cf::CfActorF64Conv conv;
             conv.w[0] = 0x43300000;
-            conv.w[1] = (u32)(*(s16*)((u8*)subObj + 0x68)) ^ 0x80000000;
+            conv.w[1] = (u32)(subObj->field_68) ^ 0x80000000;
             ev.field_20 = (f32)(conv.d - lbl_eu_80666DE0);
         }
         ev.field_24 = lbl_eu_80666DDC;
-        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+        if (subObj->unk78 & 0x1000) {
             emitBattleMoveEvents(self, arg1, arg1, &ev, move);
         } else {
             emitBattleMoveEvents(self, arg1, arg2, &ev, move);
@@ -7113,8 +7110,8 @@ done1744_1B8C:;
         ev.field_00 = ((cf::CfObjectActor*)arg1)->field_0x74;
         ev.field_04 = (u32)(uintptr_t)subObj;
         ev.eventType = 0xDC;
-        ev.field_10 = *(s16*)((u8*)subObj + 0x68);
-        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+        ev.field_10 = subObj->field_68;
+        if (subObj->unk78 & 0x1000) {
             emitBattleMoveEvents(self, arg1, arg1, &ev, move);
         } else {
             emitBattleMoveEvents(self, arg1, arg2, &ev, move);
@@ -7123,18 +7120,18 @@ done1744_1B8C:;
     case 0x01: {
         ev.field_00 = ((cf::CfObjectActor*)arg1)->field_0x74;
         ev.field_04 = (u32)(uintptr_t)subObj;
-        ev.eventType = *(s16*)((u8*)subObj + 0x68);
-        ev.field_10 = *(s16*)((u8*)subObj + 0x6A);
+        ev.eventType = subObj->field_68;
+        ev.field_10 = subObj->field_6A;
         s32 sv = artsSubGetMax(subObj) - 1;
         cf::CfActorF64Conv conv;
         conv.w[0] = 0x43300000;
-        conv.w[1] = (u32)(u8)(*(u8*)((u8*)subObj + 0x6E)) ^ 0x80000000;
+        conv.w[1] = (u32)(u8)(subObj->field_6E) ^ 0x80000000;
         f32 f1 = (f32)(conv.d - lbl_eu_80666E08);
         conv.w[1] = (u32)sv ^ 0x80000000;
         f32 f2 = (f32)(conv.d - lbl_eu_80666DE0);
-        ev.field_20 = *(float*)((u8*)subObj + 0x50) + f1 / 10.0f * f2;
-        ev.field_24 = *(float*)((u8*)subObj + 0x54);
-        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+        ev.field_20 = subObj->field_50 + f1 / 10.0f * f2;
+        ev.field_24 = subObj->field_54;
+        if (subObj->unk78 & 0x1000) {
             emitBattleMoveEvents(self, arg1, arg1, &ev, move);
         } else {
             emitBattleMoveEvents(self, arg1, arg2, &ev, move);
@@ -7152,28 +7149,28 @@ postEmit:
     }
 
     // Second sub-object event block (+0x48 id).
-    if (!(move->field_74 & 0x08) || (*(u32*)((u8*)subObj + 0x78) & 0x400)) {
-        if (!(*(u32*)((u8*)subObj + 0x78) & 0x2000) ||
-            (*(u8*)((u8*)subObj + 0x44) ==
+    if (!(move->field_74 & 0x08) || (subObj->unk78 & 0x400)) {
+        if (!(subObj->unk78 & 0x2000) ||
+            (subObj->field_44 ==
              (u8)(((cf::CActorParam*)(arg1))->CActorParam_getStatsSlot() + 1))) {
-            if (*(u16*)((u8*)subObj + 0x48) != 0) {
+            if (subObj->field_48 != 0) {
                 BattleEvent ev2;
                 std::memset(&ev2, 0, sizeof(ev2));
                 ev2.field_00 = ((cf::CfObjectActor*)arg1)->field_0x74;
                 ev2.field_04 = (u32)(uintptr_t)subObj;
-                ev2.eventType = *(u16*)((u8*)subObj + 0x48);
+                ev2.eventType = subObj->field_48;
                 s32 sv2 = artsSubGetMax(subObj) - 1;
-                ev2.field_10 = *(s16*)((u8*)subObj + 0x4A) + (u32)(*(u8*)((u8*)subObj + 0x6F)) * (u32)sv2;
-                ev2.field_14 = (u16)*(s16*)((u8*)subObj + 0x4C);
+                ev2.field_10 = subObj->field_4A + (u32)(subObj->field_6F) * (u32)sv2;
+                ev2.field_14 = (u16)subObj->field_4C;
                 cf::CfActorF64Conv conv;
                 conv.w[0] = 0x43300000;
-                conv.w[1] = (u32)(u8)(*(u8*)((u8*)subObj + 0x6E)) ^ 0x80000000;
+                conv.w[1] = (u32)(u8)(subObj->field_6E) ^ 0x80000000;
                 f32 f1 = (f32)(conv.d - lbl_eu_80666E08);
                 conv.w[1] = (u32)sv2 ^ 0x80000000;
                 f32 f2 = (f32)(conv.d - lbl_eu_80666DE0);
-                ev2.field_20 = *(float*)((u8*)subObj + 0x50) + f1 / 10.0f * f2;
-                ev2.field_24 = *(float*)((u8*)subObj + 0x54);
-                if (*(u32*)((u8*)subObj + 0x78) & 0x400) {
+                ev2.field_20 = subObj->field_50 + f1 / 10.0f * f2;
+                ev2.field_24 = subObj->field_54;
+                if (subObj->unk78 & 0x400) {
                     emitBattleMoveEvents(self, arg1, arg1, &ev2, move);
                 } else {
                     emitBattleMoveEvents(self, arg1, arg2, &ev2, move);
@@ -7282,7 +7279,7 @@ postEmit:
 
 afterCounter:
     // Arts-type 3 dot/regeneration block.
-    if (*(u16*)((u8*)subObj + 0x3C) == 3) {
+    if (subObj->field_3C == 3) {
         s32 ival = 0;
         f32 sum = move->field_5C + move->field_60;
         if (sum >= lbl_eu_80666DDC && !(move->field_74 & 0x80)) {
@@ -7673,8 +7670,8 @@ lateBlock:
         ev2.field_04 = (u32)subObj;
         ev2.eventType = subObj->field_48;
         s32 sv2 = artsSubGetMax(subObj) - 1;
-        ev2.field_10 = (u32)*(s16*)((u8*)subObj + 0x4A) + (u32)*(u8*)((u8*)subObj + 0x6F) * (u32)sv2;
-        ev2.field_14 = (u16)*(s16*)((u8*)subObj + 0x4C);
+        ev2.field_10 = (u32)subObj->field_4A + (u32)subObj->field_6F * (u32)sv2;
+        ev2.field_14 = (u16)subObj->field_4C;
         cvtA.w[1] = (u32)subObj->field_6E ^ 0x80000000;
         f32 u1 = (f32)(cvtA.d - lbl_eu_80666E08);
         cvtB.w[1] = (u32)sv2 ^ 0x80000000;
@@ -8894,7 +8891,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 // ---- 0x4C48 / 0x4CC0 ----
                 if (((cf::CActorParam*)(target))->CActorParam_isBattleLocked() != 0) {
                     if (!(move->field_78 & 0x1)) dispatchItemLoad(attacker, 0x400000);
-                    if (((cf::CBattleManager*)self)->mChain.unk0[2] >= 1 && ((cf::CBattleManager*)self)->mChain.unk0[2] <= 0x18) {
+                    if (((cf::CBattleManager*)self)->mChain.mHead.field_2 >= 1 && ((cf::CBattleManager*)self)->mChain.mHead.field_2 <= 0x18) {
                         PartyGaugeAddClamped(&self->unk194, 0x64);
                     }
                     SysWinLog_DrivePair(target, attacker);
@@ -9014,8 +9011,8 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                         break;
                     case 0x72:
                     case 0x7C:
-                        if (((cf::CBattleManager*)self)->mChain.unk0[2] >= 1 &&
-                            ((cf::CBattleManager*)self)->mChain.unk0[2] <= 0x18) {
+                        if (((cf::CBattleManager*)self)->mChain.mHead.field_2 >= 1 &&
+                            ((cf::CBattleManager*)self)->mChain.mHead.field_2 <= 0x18) {
                             break;                     // r25 stays 0
                         }
                         if (entry->unk14 == 0) {
@@ -9190,7 +9187,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                                 *(f32*)((u8*)st2 + 0x46C) =
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                             }
-                            if (((cf::CBattleManager*)self)->mChain.unk0[2] < 1 || ((cf::CBattleManager*)self)->mChain.unk0[2] > 0x18) {
+                            if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
                                 *(f32*)((u8*)st2 + 0x468) = getArtsFacing(sub);
                             } else {
                                 *(f32*)((u8*)st2 + 0x468) = lbl_eu_80666DDC;
@@ -9213,7 +9210,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                                 *(f32*)((u8*)st2 + 0x478) =
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                             }
-                            if (((cf::CBattleManager*)self)->mChain.unk0[2] < 1 || ((cf::CBattleManager*)self)->mChain.unk0[2] > 0x18) {
+                            if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
                                 *(f32*)((u8*)st2 + 0x470) = getArtsClampedRate(sub);
                                 *(f32*)((u8*)st2 + 0x474) = getArtsScaledSpeed(sub);
                             } else {
@@ -10232,12 +10229,12 @@ afterType3:
 // bytes, covering the retail 0xC5C gap word too, anchored like run 1): pads
 // the remaining switch block out so the MWCC vtable run lands at retail
 // 0xC60. Same shrink-as-restored rule as run 1.
-__declspec(section ".data") __attribute__((used)) __declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run2a[9] = {
+__attribute__((used)) __attribute__((used)) const void* cbm_data_reserve_run2a[9] = {
     (const void*)processBattleMove,
     (const void*)0,
     (const void*)0
 };
-__declspec(section ".data") __attribute__((used)) const void* cbm_data_reserve_run2b[0x91] = {
+__attribute__((used)) const void* cbm_data_reserve_run2b[0x91] = {
     (const void*)processBattleMove,
     (const void*)0,
     (const void*)0
@@ -11132,7 +11129,7 @@ extern "C" s32 emitBattleMoveEvents(void* mgr /*r24*/, void* actorA /*r25*/, voi
                 threshold += 50;
             }
             if (((BattleActor*)actorB)->flags_3374 & 0x100) threshold += 30;
-            u8 b = ((cf::CBattleManager*)mgr)->mChain.unk0[2];
+            u8 b = ((cf::CBattleManager*)mgr)->mChain.mHead.field_2;
             if (b >= 1 && b <= 24) threshold = 0;
         }
         if (stat != nullptr) {
@@ -12192,6 +12189,6 @@ early_return:
 // tentative definition is enough: MWCC auto-routes small zero-init data to
 // .sbss, and an explicit section declspec is rejected here (error 33044).
 // Typed so the section raw-matches without an absorb blob.
-unsigned int lbl_eu_80663F00_tail[1];
 // (sdata absorb deleted: typified above as six .sdata pointer tables)
+unsigned int lbl_eu_80663F00_tail[1];
 // (sdata2 absorb deleted: typified above as individual .sdata2 defs)

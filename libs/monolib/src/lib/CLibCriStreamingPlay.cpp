@@ -104,8 +104,6 @@ extern "C" {
     extern u32 lbl_eu_8056D0DC[5];
     extern u32 __RTTI__20CLibCriStreamingPlay[2];
 
-    // CException second-base teardown (free-function call form)
-    extern void RemoveFromGlobalArray__10CExceptionFP10IException(void*);
 
     // Vtable slot targets: IWorkEvent/CWorkThread defaults
     extern void WorkEvent1__10IWorkEventFPvPCc();
@@ -271,7 +269,7 @@ extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreaming
         if (base != nullptr) {
             exc = base + 0x1C4;
         }
-        RemoveFromGlobalArray__10CExceptionFP10IException((CException*)exc);
+        CException::RemoveFromGlobalArray((IException*)exc);
 
         // Free audio buffer
         if (lbl_eu_806656EC) {

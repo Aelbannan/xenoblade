@@ -8,6 +8,7 @@
 // vfunc_24 are defined in CTaskREvtSequence.cpp (retail text order).
 
 #include "kyoshin/realtimeevt/CREvtModel.hpp"
+extern "C" void simSetFlag2OnTree(void* model, int flag);
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 #include "kyoshin/realtimeevt/CREvtModelObj.hpp"
 #include "kyoshin/realtimeevt/CREvtModelPc.hpp"
@@ -29,8 +30,7 @@ extern u32  REvtCam_GetFieldA5Flag(void);
 extern u32  REvtCam_IsField98Set(void);
 extern int EvtSeqGetCounter104(void);
 extern void ScnEnvLgt_EnableFlag100(void* ptr, int flag);
-extern void* simGetLeafActData(void* model);
-extern void simSetFlag2OnTree(void* model, int flag);
+
 extern void simMarkTree100000(void* model, int flag);
 extern void simBindChrAnim(void* model, u32 resId, void* animIdx, u32 frame, u32 gateBit, u32 flag, u32 half);
 extern "C" void simSetValue7E8(void* model, int value);

@@ -15,7 +15,7 @@
 // every conversion lfd/lfs reloc onto the retail symbols
 // (MWCC_CASES "naming ONE pooled scale constant unifies the WHOLE pool").
 
-// Fake vtables removed - folded onto owning classes cf::CfObject / cf::CfObjectMove / cf::CActorParam etc.
+// Fake vtables removed
 
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {

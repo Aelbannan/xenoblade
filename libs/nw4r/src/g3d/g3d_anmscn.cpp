@@ -74,9 +74,18 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScn")> lbl_eu_8051D620 = {sizeof("AnmScn"), "AnmScn"};
 
+// G3dObj base-chain check as an inlined by-value helper: the parameter copy
+// is the CSE barrier that makes MWCC reload `other` at the base link, the
+// same shape used by ScnRoot/ScnProc/AnmObj in their own TUs.
+static bool anmScnBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+}
+
 bool AnmScn::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D620) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D620)) {
+        return true;
+    }
+    return anmScnBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmScn::GetTypeObj() const {
@@ -93,10 +102,18 @@ extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScnRes")> lbl_eu_805
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D640 = {7, "G3dObj"};
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D650 = {7, "AnmObj"};
 
+// AnmScn/G3dObj base-chain check, same inlined-helper convention as
+// anmScnBaseIsDerivedFrom above.
+static bool anmScnResBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other == G3dObj::TypeObj(lbl_eu_8051D620) ? true
+         : (other == G3dObj::TypeObj(lbl_eu_8051D640));
+}
+
 bool AnmScnRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D630) ? true
-         : other == TypeObj(lbl_eu_8051D620) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D630)) {
+        return true;
+    }
+    return anmScnResBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmScnRes::GetTypeObj() const {
@@ -264,7 +281,7 @@ u32 AnmScnRes::GetCameraMaxRefNumber() const {
 }
 
 AnmScnRes* AnmScnRes::Construct(MEMAllocator* pAllocator, u32* pSize,
-                                ResAnmScn res, void* pUserData) {
+                                ResAnmScn res, bool pUserData) {
     if (!res.IsValid()) {
         return NULL;
     }
@@ -295,7 +312,7 @@ AnmScnRes* AnmScnRes::Construct(MEMAllocator* pAllocator, u32* pSize,
 
     u32 camNum;
 
-    if (pUserData != NULL) {
+    if (pUserData) {
         camNum = res.GetResAnmCameraNumEntries();
     } else {
         camNum = 0;

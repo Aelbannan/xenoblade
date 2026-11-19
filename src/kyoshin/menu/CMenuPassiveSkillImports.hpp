@@ -238,7 +238,7 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 
 // cf pad enable/disable (retail pre-mangled name), sound-op helper.
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // Scene-active gate + TaskGame queries used by cbRenderBefore.
 

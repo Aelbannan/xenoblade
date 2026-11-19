@@ -2,7 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfPadData.hpp"
+
 #include "kyoshin/CTagProcessor.hpp"
 
 #include <wchar.h>  // wcstol (MSL, C-linkage)
@@ -751,13 +752,12 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                     if (speed < lbl_eu_80667208) {
                         msg->field_824 += lbl_eu_806671F4;
                     } else {
-                        TagPadView* pad =
-                            (TagPadView*)cf::CfGameManager::getCurrentPad();
+                        CPad* pad = cf::CfGameManager::getCurrentPad();
                         int pressed;
                         if (cf::CfGameManager::isClassicController(-1) != 0)
-                            pressed = (pad->field_04 & 0x00600000) != 0;
+                            pressed = (pad->mPressedButtonFlags & 0x00600000) != 0;
                         else
-                            pressed = (pad->field_04 & 0x00000030) != 0;
+                            pressed = (pad->mPressedButtonFlags & 0x00000030) != 0;
                         if (pressed != 0) {
                             msg->field_824 = lbl_eu_806671F0;
                             msg->field_810 += 2;
@@ -1078,21 +1078,20 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                     return 2;
                 }
                 // ---- subsequent calls: directional input handling ----
-                TagPadDataView* pad =
-                    (TagPadDataView*)cf::CfGameManager::getCfPadData();
+                cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
                 int btn;
                 bool upDown;
                 bool leftRight;
                 if (cf::CfGameManager::isClassicController(-1) != 0) {
-                    btn = (pad->field_04 >> 22) & 1;
-                    upDown = (pad->field_104 & 0x8004) != 0;
-                    leftRight = (pad->field_104 & 0x8000) != 0 ||
-                                (pad->field_104 & 0x8) != 0;
+                    btn = (pad->mPad.mPressedButtonFlags >> 22) & 1;
+                    upDown = (pad->mTurboPressButtonFlags & 0x8004) != 0;
+                    leftRight = (pad->mTurboPressButtonFlags & 0x8000) != 0 ||
+                                (pad->mTurboPressButtonFlags & 0x8) != 0;
                 } else {
-                    btn = (pad->field_04 >> 4) & 1;
-                    upDown = (pad->field_104 & 0x8004) != 0;
-                    leftRight = (pad->field_104 & 0x8000) != 0 ||
-                                (pad->field_104 & 0x8) != 0;
+                    btn = (pad->mPad.mPressedButtonFlags >> 4) & 1;
+                    upDown = (pad->mTurboPressButtonFlags & 0x8004) != 0;
+                    leftRight = (pad->mTurboPressButtonFlags & 0x8000) != 0 ||
+                                (pad->mTurboPressButtonFlags & 0x8) != 0;
                 }
                 u32 hold = msg->field_844 + 1;
                 msg->field_844 = hold;
@@ -1836,14 +1835,13 @@ int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
                     msg->field_824 = lbl_eu_80667234;
                 }
                 // Button-driven auto-advance: poll the active pad style.
-                TagPadView* pad =
-                    (TagPadView*)cf::CfGameManager::getCurrentPad();
+                CPad* pad = cf::CfGameManager::getCurrentPad();
                 member = (TagMemberObj*)pad;  // retail reuses r23 here
                 u32 bits;
                 if (cf::CfGameManager::isClassicController(-1) != 0)
-                    bits = pad->field_04 & 0x00600000;
+                    bits = pad->mPressedButtonFlags & 0x00600000;
                 else
-                    bits = pad->field_04 & 0x00000030;
+                    bits = pad->mPressedButtonFlags & 0x00000030;
                 if (bits != 0) {
                     msg->field_824 = lbl_eu_806671F0;
                     msg->field_810 += 2;

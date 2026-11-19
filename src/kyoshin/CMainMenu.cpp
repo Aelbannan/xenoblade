@@ -105,7 +105,7 @@ extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 extern "C" void CUICfManager_queueMapSelectMenu();
 extern "C" void CUICfManager_queuePTStateMenu();
 // Pad-enable/disable and mode gates (cf::CfGameManager).
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // cf::CPad view: only the three flag words this unit reads.

@@ -16,6 +16,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 
@@ -53,7 +54,7 @@
 #include "kyoshin/cf/chain/CChain.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-// CfObjectModel.hpp (via CBattleManager/CfGameManager chain) declares
+#include "kyoshin/cf/object/CfObjectModel.hpp" // declares
 // zero__Q22ml5CVec3 as ml::CVec3; code_80135FDC.hpp re-types it as
 // nw4r::math::VEC3 -> MWCC 10563. This TU never touches the zero vector,
 // so rename the header-local decl away (same pattern as
@@ -162,7 +163,7 @@ struct ArtsEnumList {
 // One enum-list slot (getEntryAt result): +0x4 object, compared by +0x8C.
 struct ArtsEnumSlot {
     u8 _pad00[4];
-    CfObjectMoveArtsView* mObj;  // +0x04
+    cf::CfObjectModel* mObj;  // +0x04
 };
 
 // 5-byte mode table assembled on stack in handleConfirm (word copy + byte).
@@ -266,7 +267,6 @@ extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
 // (lbl_eu_80666F50 is 100.0f -- declared below with the other floats)
 
 // Init-only declarations
-void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
 u8* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
@@ -533,7 +533,7 @@ void CMenuArtsSelect::Init() {
     Class_8045F858 regionGuard(&unk6C);
 
     mtl::MemManager::setMemInitFlag(0);
-    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, CLibLayout::getAllocHandle());
+    void* tagProc = mtl::MemManager::allocate(0x858, CLibLayout::getAllocHandle());
     if (tagProc != NULL) {
         __ct__CTagProcessor(tagProc);
     }
@@ -1492,7 +1492,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         void* pl = cf::CfGameManager::getPlayer(0);
         void* adj = pl;
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
-        if (*(u16*)((char*)adj + 0x3F28) == 1) {
+        if (reinterpret_cast<cf::CfObjectModel*>(adj)->unk8C_3 == 1) {
             for (s32 i = 0; i < 104; i++) {
                 void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
@@ -1507,7 +1507,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         void* pl = cf::CfGameManager::getPlayer(0);
         void* adj = pl;
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
-        if (*(u16*)((char*)adj + 0x3F28) == 1) {
+        if (reinterpret_cast<cf::CfObjectModel*>(adj)->unk8C_3 == 1) {
             for (s32 i = 0; i < 104; i++) {
                 void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
@@ -1958,7 +1958,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (self->unk324 == 4 && self->unk328 == 4) {
             void* pl = cf::CfGameManager::getPlayer(0);
             if (pl != NULL) {
-                u8 v = (u8)(*(u16*)((char*)pl + 0x8C));
+                u8 v = (u8)(reinterpret_cast<cf::CfObjectModel*>(pl)->unk8C_3);
                 if (v == 5 || v == 7) {
                     /* ok */
                 } else {
@@ -2261,9 +2261,9 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
             int* cfg = CtrlObjectParam_GetSlotTableBase();            u32 id = cfg[self->unk330 + 1];
             BattleActor* cand =
                 static_cast<BattleActor*>(findObjB28ById(id));
-            CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
+            cf::CfObjectModel* mv = reinterpret_cast<cf::CfObjectModel*>(cand);
             if (mv != NULL) {
-                mv = reinterpret_cast<CfObjectMoveArtsView*>(
+                mv = reinterpret_cast<cf::CfObjectModel*>(
                     reinterpret_cast<char*>(mv) + 0x3e9c);
             }
             s32 matchIdx = 0;
@@ -2283,7 +2283,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
                     ArtsEnumSlot* slot =
                         static_cast<ArtsEnumSlot*>(getEntryAt(list, 0));
                     if (slot->mObj == NULL) continue;
-                    if (mv->field_8C == slot->mObj->field_8C) {
+                    if (mv->unk8C_3 == slot->mObj->unk8C_3) {
                         matchIdx = k;
                         break;
                     }
@@ -2349,9 +2349,9 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
     for (s32 i = 0; i < 3; i++) {
         u32 entryId = cfg[i + 1];
         BattleActor* cand = static_cast<BattleActor*>(findObjB28ById(entryId));
-        CfObjectMoveArtsView* mv = reinterpret_cast<CfObjectMoveArtsView*>(cand);
+        cf::CfObjectModel* mv = reinterpret_cast<cf::CfObjectModel*>(cand);
         if (mv != NULL) {
-            mv = reinterpret_cast<CfObjectMoveArtsView*>(
+            mv = reinterpret_cast<cf::CfObjectModel*>(
                 reinterpret_cast<char*>(mv) + 0x3e9c);
         }
         if (mv == NULL) continue;
@@ -2928,7 +2928,7 @@ void CMenuArtsSelect::refreshPaneTextures() {
     u16 gaugeId = tabB.id[unk328];
 
     if (unk328 == 4) {
-        u16 mode = reinterpret_cast<CfObjectMoveArtsView*>(move)->field_8C;
+        u16 mode = reinterpret_cast<cf::CfObjectModel*>(move)->unk8C_3;
         u32 code = 0;
         switch (mode) {
         case 1:

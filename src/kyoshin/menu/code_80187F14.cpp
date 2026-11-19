@@ -259,15 +259,12 @@ extern "C" void MenuSnd_SetSlotVolume_88488(SoundSlot* slot, u32 type, float f1,
     slot->x = f1;
     slot->y = f2;
     if (type == 2) {
-        // Local z lets the lfs schedule at block top; the volatile-qualified
-        // store pins the stfs at its program position (last), matching
-        // retail's emission order.
         float z = lbl_eu_80667A08;
         slot->handle = -1;
         slot->field_0x54 = 0;
         slot->field_0x56 = 0;
         slot->status = 0;
-        *(volatile float*)&slot->field_0x48 = z;
+        slot->field_0x48 = z;
     }
 }
 

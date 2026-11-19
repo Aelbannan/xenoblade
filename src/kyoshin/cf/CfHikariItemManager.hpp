@@ -11,7 +11,6 @@ class CScn;
 // Global-scope data/function names are not mangled by MWCC; lbl_* keeps the
 // exact retail label.
 extern char lbl_eu_8053AE90[];    // CfHikariItemManager vtable (.data)
-void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 u32 CfRes_getAllocHandle();
 
 namespace cf {

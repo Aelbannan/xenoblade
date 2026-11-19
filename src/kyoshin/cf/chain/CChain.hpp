@@ -74,12 +74,39 @@ namespace cf {
     //size: 0x1F0C?
     class CChain {
     public:
+        // The head sub-object is part of CChain's real layout: the chain
+        // state machine and CBattleManager read these fields through mHead.
         CChain();
+
+        // Head fields of CChain used by CChain_TickChain's state machine: the
+        // 0x18-byte head region with typed fields (s8 index bytes, u8 state/flag
+        // bytes, the u32 arts-index word at +0xC and the f32 gauge at +0x14).
+        struct CChainHeadFields {
+            s8 field_0;      //0x0 current member index
+            s8 field_1;      //0x1 last member index
+            u8 field_2;      //0x2 chain state
+            u8 field_3;      //0x3
+            u8 field_4;      //0x4
+            u8 field_5;      //0x5 chain-direction flag
+            u8 field_6;      //0x6
+            u8 field_7;      //0x7
+            u8 field_8;      //0x8
+            u8 field_9;      //0x9
+            u8 field_A;      //0xA
+            u8 field_B;      //0xB
+            u32 field_C;     //0xC arts index
+            u8 field_10;     //0x10
+            u8 field_11[3];  //0x11
+            f32 field_14;    //0x14 chain gauge
+        };
         ~CChain(){}
         void CChain_ResetChainState();
         bool chkActorList();
 
-        u8 unk0[0x18];
+        union {
+            u8 unk0[0x18];           // legacy byte view still used by menu callers
+            CChainHeadFields mHead;  // typed head member used by the chain state machine
+        };
         CChainActorList mChainActorList; //0x18
         CChainMemberInit mChainMember; //0x1DC8
         CChainTimerInit mChainTimer1; //0x1EB4
@@ -170,28 +197,6 @@ namespace cf {
         CChainActorList mChainActorList; //0x18
         CChainList mChainMember;         //0x1DC8
         u8 unk1EB4[0x1F0C - 0x1EB4];
-    };
-
-    // Head-field view of CChain used by CChain_TickChain's state machine: the
-    // unk0[0x18] byte region with typed fields (s8 index bytes, u8 state/flag
-    // bytes, the u32 arts-index word at +0xC and the f32 gauge at +0x14).
-    struct CChainHeadView {
-        s8 field_0;      //0x0 current member index
-        s8 field_1;      //0x1 last member index
-        u8 field_2;      //0x2 chain state
-        u8 field_3;      //0x3
-        u8 field_4;      //0x4
-        u8 field_5;      //0x5 chain-direction flag
-        u8 field_6;      //0x6
-        u8 field_7;      //0x7
-        u8 field_8;      //0x8
-        u8 field_9;      //0x9
-        u8 field_A;      //0xA
-        u8 field_B;      //0xB
-        u32 field_C;     //0xC arts index
-        u8 field_10;     //0x10
-        u8 field_11[3];  //0x11
-        f32 field_14;    //0x14 chain gauge
     };
 
     // 0x20-byte stack scratch written by CChain_TickChain case 5: the 0xe-byte

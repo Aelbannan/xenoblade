@@ -69,67 +69,29 @@ class CfObjectPc;
 #include "decomp.h"
 #include "functions.hpp"
 #include <cstdio>
-
-// _reslist_base<CUIBattleChild*>::~_reslist_base()
-// Implicit-member-destruction body for mChildList; spelled out so the
-// base-vtable store references the split1 pool symbol lbl_eu_8052E1B4 instead
-// of the compiler's auto-mangled __vt__ name. Must appear before any ODR-use
-// of the template so it overrides the inline definition in reslist.hpp.
-template <>
-_reslist_base<CUIBattleChild*>::~_reslist_base() {
-    *(void**)this = (void*)lbl_eu_8052E1B4;
-    _reslist_node<CUIBattleChild*>* old;
-    _reslist_node<CUIBattleChild*>* cur = mStartNodePtr->mNext;
-    while (cur != mStartNodePtr) {
-        old = cur;
-        cur = cur->mNext;
-        old->mNext = nullptr;
-    }
-    mStartNodePtr->mNext = mStartNodePtr;
-    mStartNodePtr->mPrev = mStartNodePtr;
-
-    if (!unk1C && mList != nullptr) {
-        operator delete[](mList);
-        mList = nullptr;
-    }
-}
+#include <new>
 
 // Initial Move-callback pmf pool (retail .data 0x8052E0A8, the first user
 // object of this unit's slice): the {delta = 0, index = -1, fn} record MWCC
 // emits for a constant pointer-to-member-function. CUIBattleManager's
 // constructor copies it into CTTask<CUIBattleManager>::mMoveFunc.
-CUIBattleManager::MoveFunc lbl_eu_8052E0A8 = &CUIBattleManager::parkMoveHandler;
-
-// 3-word null-pmf constant mirror (retail __ptmf_null). Struct access keeps
-// MWCC on a single materialised base register instead of folding the offset-0
-// word into `lwz @l(r5)` (which would add a reloc retail lacks).
-struct CUIBattlePtmfWords {
-    u32 w0; // 0x0
-    u32 w1; // 0x4
-    u32 w2; // 0x8
-};
+CUIBattleManager::MoveFunc UIBattleInitialMovePmf = &CUIBattleManager::parkMoveHandler;
+CUIBattleManager::MoveFunc UIBattleParkMovePmf = &CUIBattleManager::UIBattleMoveNoopMember;
 
 struct CUIBattleInitProcess {
-    u8 unk00[0x10];
-    void* vtable;
-    u8 unk14[0x28];
+    u8 unk00[0x3C];
     u32 callbacks[6]; // 0x3C-0x53 - two null-pmf triples
 };
 
 extern "C" {
-CUIBattleManager* lbl_eu_80664048;
-void* lbl_eu_8066404C;
-char lbl_eu_8052E208[];
-char lbl_eu_8052E1C0[];
-char lbl_eu_804FFF2C[];
+void* UIBattleArtsSelectHandle;
+char UIBattleArcPathStrings[];
 u32 __ptmf_null[3];
 u32 lbl_eu_80663E28;
-// Ctor vtable / pmf-pool constants (split1 .data).
-void* lbl_eu_8052E248[]; // interim CTTask<CUIBattleManager> vtable
-void* lbl_eu_8052E0C0[]; // final CUIBattleManager vtable
-void* lbl_eu_8052E19C[]; // reslist<CUIBattleChild*> vtable
-void __ct__8CProcessFv(CProcess*);
 
+CUIBattleManager* CUIBattleManager::spInstance;
+
+void __ct__8CProcessFv(CProcess*);
 void* BtlDmg_Create(void* proc, void* scn);
 void* createVisionMenu(void* proc, void* scn);
 void* PTGaugeCreate(void* proc, void* scn);
@@ -170,33 +132,12 @@ static IWorkEvent* battleWorkEvent(CUIBattleManager* self) {
 
 void CUIBattleManager::Init() {
     CUIBattleInitProcess* process;
-    const CUIBattlePtmfWords* ptmf;
-    u32 ptmfWord1;
-    u32 ptmfWord0;
-    u32 ptmfWord2;
 
     process = static_cast<CUIBattleInitProcess*>(
         mtl::MemManager::allocate(0x54, CWorkThreadSystem::getWorkMem()));
-    if (process != NULL) {
-        __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
-        process->vtable = lbl_eu_8052E208;
-        ptmf = reinterpret_cast<const CUIBattlePtmfWords*>(__ptmf_null);
-        ptmfWord1 = ptmf->w1;
-        ptmfWord0 = ptmf->w0;
-        process->callbacks[0] = ptmfWord0;
-        process->callbacks[1] = ptmfWord1;
-        ptmfWord2 = ptmf->w2;
-        process->callbacks[2] = ptmfWord2;
-        ptmfWord1 = ptmf->w1;
-        ptmfWord0 = ptmf->w0;
-        process->callbacks[3] = ptmfWord0;
-        process->callbacks[4] = ptmfWord1;
-        ptmfWord2 = ptmf->w2;
-        process->callbacks[5] = ptmfWord2;
-        process->vtable = lbl_eu_8052E1C0;
-    }
+    new (process) CUIBattleManager::CTest();
     unk7C = reinterpret_cast<CProcess*>(process);
-    reinterpret_cast<CProcess*>(process)->Regist(lbl_eu_80664048, false);
+    reinterpret_cast<CProcess*>(process)->Regist(CUIBattleManager::spInstance, false);
 }
 
 // Insert helper shape used six times below (retail inlines it each site):
@@ -204,7 +145,7 @@ void CUIBattleManager::Init() {
 void CUIBattleManager::Move() {
     char pathBuf178[0x8C];
     char pathBufF8[0x80];
-    _reslist_node<CUIBattleChild*>* pending[8];
+    _reslist_node<IUIBattle*>* pending[8];
     void* retCreate96B8;
     void* retCreateACCE0;
     void* retCreate87694;
@@ -213,11 +154,11 @@ void CUIBattleManager::Move() {
     void* retMarkA;
     void* retMarkB;
     CUIBattleManager* inst;
-    _reslist_node<CUIBattleChild*>* temp;
-    _reslist_node<CUIBattleChild*>* node;
-    _reslist_node<CUIBattleChild*>* prev;
-    _reslist_node<CUIBattleChild*>* next;
-    _reslist_node<CUIBattleChild*>* it;
+    _reslist_node<IUIBattle*>* temp;
+    _reslist_node<IUIBattle*>* node;
+    _reslist_node<IUIBattle*>* prev;
+    _reslist_node<IUIBattle*>* next;
+    _reslist_node<IUIBattle*>* it;
     cf::CfObjectMove* player;
     CUIBattleActor* actor;
     cf::CfObjectPc* objPc;
@@ -246,15 +187,15 @@ void CUIBattleManager::Move() {
 
     if ((unk82 & 2) != 0 && getPackedFont() != 0) {
         unk82 &= 0xfd;
-        if (lbl_eu_80664048 != NULL) {
+        if (CUIBattleManager::spInstance != NULL) {
             if (CUICfManager_getArcResourceAccessor() == NULL) {
-                lbl_eu_80664048->unk82 |= 2;
+                CUIBattleManager::spInstance->unk82 |= 2;
             } else {
-                lbl_eu_80664048->unk82 &= 0xfd;
+                CUIBattleManager::spInstance->unk82 &= 0xfd;
                 retCreate96B8 =
-                    BtlDmg_Create(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    BtlDmg_Create(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
                 if (retCreate96B8 != NULL) {
-                    inst = lbl_eu_80664048;
+                    inst = CUIBattleManager::spInstance;
                     i = 0;
                     while (i < inst->mChildList.mCapacity &&
                            inst->mChildList.mList[i].mItem == NULL) {
@@ -262,7 +203,7 @@ void CUIBattleManager::Move() {
                     }
                     // First free pool slot; prepend to the active list.
                     temp = &inst->mChildList.mList[i];
-                    temp->setItem((CUIBattleChild*)retCreate96B8);
+                    temp->setItem((IUIBattle*)retCreate96B8);
                     temp->mNext = inst->mChildList.mStartNodePtr;
                     temp->mPrev = inst->mChildList.mStartNodePtr->mPrev;
                     inst->mChildList.mStartNodePtr->mPrev->mNext = temp;
@@ -274,22 +215,22 @@ void CUIBattleManager::Move() {
 
     if ((unk82 & 8) != 0 && getPackedFont() != 0) {
         unk82 &= 0xf7;
-        if (lbl_eu_80664048 != NULL) {
+        if (CUIBattleManager::spInstance != NULL) {
             if (CUICfManager_getArcResourceAccessor() == NULL) {
-                lbl_eu_80664048->unk82 |= 8;
+                CUIBattleManager::spInstance->unk82 |= 8;
             } else {
-                lbl_eu_80664048->unk82 &= 0xf7;
+                CUIBattleManager::spInstance->unk82 &= 0xf7;
                 retCreateACCE0 =
-                    createVisionMenu(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    createVisionMenu(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
                 if (retCreateACCE0 != NULL) {
-                    inst = lbl_eu_80664048;
+                    inst = CUIBattleManager::spInstance;
                     i = 0;
                     while (i < inst->mChildList.mCapacity &&
                            inst->mChildList.mList[i].mItem == NULL) {
                         i++;
                     }
                     temp = &inst->mChildList.mList[i];
-                    temp->setItem((CUIBattleChild*)retCreateACCE0);
+                    temp->setItem((IUIBattle*)retCreateACCE0);
                     temp->mNext = inst->mChildList.mStartNodePtr;
                     temp->mPrev = inst->mChildList.mStartNodePtr->mPrev;
                     inst->mChildList.mStartNodePtr->mPrev->mNext = temp;
@@ -301,24 +242,24 @@ void CUIBattleManager::Move() {
 
     if ((unk82 & 0x10) != 0 && getPackedFont() != 0) {
         unk82 &= 0xef;
-        if (lbl_eu_80664048 != NULL) {
+        if (CUIBattleManager::spInstance != NULL) {
             // Retail: cntlzw/srwi zero-test on CtrlRemote_TouchBitByArg(0x3357).
             if (__cntlzw((u32)CtrlRemote_TouchBitByArg(0x3357)) >> 5 != 0 ||
                 CUICfManager_getArcResourceAccessor() == NULL) {
-                lbl_eu_80664048->unk82 |= 0x10;
+                CUIBattleManager::spInstance->unk82 |= 0x10;
             } else {
-                lbl_eu_80664048->unk82 &= 0xef;
+                CUIBattleManager::spInstance->unk82 &= 0xef;
                 retCreate87694 =
-                    PTGaugeCreate(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    PTGaugeCreate(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
                 if (retCreate87694 != NULL) {
-                    inst = lbl_eu_80664048;
+                    inst = CUIBattleManager::spInstance;
                     i = 0;
                     while (i < inst->mChildList.mCapacity &&
                            inst->mChildList.mList[i].mItem == NULL) {
                         i++;
                     }
                     temp = &inst->mChildList.mList[i];
-                    temp->setItem((CUIBattleChild*)retCreate87694);
+                    temp->setItem((IUIBattle*)retCreate87694);
                     temp->mNext = inst->mChildList.mStartNodePtr;
                     temp->mPrev = inst->mChildList.mStartNodePtr->mPrev;
                     inst->mChildList.mStartNodePtr->mPrev->mNext = temp;
@@ -330,22 +271,22 @@ void CUIBattleManager::Move() {
 
     if ((unk82 & 0x20) != 0 && getPackedFont() != 0) {
         unk82 &= 0xdf;
-        if (lbl_eu_80664048 != NULL) {
+        if (CUIBattleManager::spInstance != NULL) {
             if (CUICfManager_getArcResourceAccessor() == NULL) {
-                lbl_eu_80664048->unk82 |= 0x20;
+                CUIBattleManager::spInstance->unk82 |= 0x20;
             } else {
-                lbl_eu_80664048->unk82 &= 0xdf;
+                CUIBattleManager::spInstance->unk82 &= 0xdf;
                 retCreateB0E0C =
-                    battleCommuCreateRegister(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    battleCommuCreateRegister(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
                 if (retCreateB0E0C != NULL) {
-                    inst = lbl_eu_80664048;
+                    inst = CUIBattleManager::spInstance;
                     i = 0;
                     while (i < inst->mChildList.mCapacity &&
                            inst->mChildList.mList[i].mItem == NULL) {
                         i++;
                     }
                     temp = &inst->mChildList.mList[i];
-                    temp->setItem((CUIBattleChild*)retCreateB0E0C);
+                    temp->setItem((IUIBattle*)retCreateB0E0C);
                     temp->mNext = inst->mChildList.mStartNodePtr;
                     temp->mPrev = inst->mChildList.mStartNodePtr->mPrev;
                     inst->mChildList.mStartNodePtr->mPrev->mNext = temp;
@@ -359,11 +300,11 @@ void CUIBattleManager::Move() {
         if (cf::CfGameManager::getPlayer(0) != NULL) {
             if (mFileArtsElemDone == NULL) {
                 mFileArtsElem = CDeviceFile::readFile(
-                    mHeap, lbl_eu_804FFF2C + 0xA, battleWorkEvent(), 0, 0);
+                    mHeap, UIBattleArcPathStrings + 0xA, battleWorkEvent(), 0, 0);
             }
             if (mFileArtsSysDone == NULL) {
                 mFileArtsSys = CDeviceFile::readFile(
-                    mHeap, lbl_eu_804FFF2C + 0x24, battleWorkEvent(), 0, 0);
+                    mHeap, UIBattleArcPathStrings + 0x24, battleWorkEvent(), 0, 0);
             }
             for (i = 0; i < 3; i++) {
                 partyId = CtrlObjectParam_GetSlotTableBase()[i + 1];
@@ -376,11 +317,11 @@ void CUIBattleManager::Move() {
                             (int)CtrlRemote_TouchBitByArg(0x3508) == 0) {
                             faceId = 0xC;
                         }
-                        sprintf(pathBuf178, lbl_eu_804FFF2C + 0x3D, faceId);
+                        sprintf(pathBuf178, UIBattleArcPathStrings + 0x3D, faceId);
                         mFileArtsPc[i] = CDeviceFile::readFile(
                             mHeap, pathBuf178, battleWorkEvent(), 0, 0);
                     }
-                    sprintf(pathBufF8, lbl_eu_804FFF2C + 0x59, partyId);
+                    sprintf(pathBufF8, UIBattleArcPathStrings + 0x59, partyId);
                     mFileFacePc[i] = CDeviceFile::readFile(
                         mHeap, pathBufF8, battleWorkEvent(), 0, 0);
                 }
@@ -411,7 +352,7 @@ void CUIBattleManager::Move() {
         }
     }
 
-    inst = lbl_eu_80664048;
+    inst = CUIBattleManager::spInstance;
     if (inst != NULL && inst->unkE8 != 0 &&
         CMenuArtsSelect_isFinished() == 0) {
         cf::CfGameManager::getInstance();
@@ -424,19 +365,19 @@ void CUIBattleManager::Move() {
                     if (CMenuArtsSelect_isCreated() == 0) {
                         handle = vslot<GetIntFn>(actor->field_3E9C, 0x4C)(
                             actor->field_3E9C);
-                        lbl_eu_8066404C = (void*)handle;
-                        if (lbl_eu_80664048 != NULL) {
-                            retMarkB = CMenuArtsSelect_CreateMenu(lbl_eu_80664048->unk7C,
-                                                     lbl_eu_80664048->unk58);
+                        UIBattleArtsSelectHandle = (void*)handle;
+                        if (CUIBattleManager::spInstance != NULL) {
+                            retMarkB = CMenuArtsSelect_CreateMenu(CUIBattleManager::spInstance->unk7C,
+                                                     CUIBattleManager::spInstance->unk58);
                             if (retMarkB != NULL) {
-                                inst = lbl_eu_80664048;
+                                inst = CUIBattleManager::spInstance;
                                 i = 0;
                                 while (i < inst->mChildList.mCapacity &&
                                        inst->mChildList.mList[i].mItem == NULL) {
                                     i++;
                                 }
                                 temp = &inst->mChildList.mList[i];
-                                temp->setItem((CUIBattleChild*)retMarkB);
+                                temp->setItem((IUIBattle*)retMarkB);
                                 temp->mNext = inst->mChildList.mStartNodePtr;
                                 temp->mPrev = inst->mChildList.mStartNodePtr->mPrev;
                                 inst->mChildList.mStartNodePtr->mPrev->mNext = temp;
@@ -451,7 +392,7 @@ void CUIBattleManager::Move() {
                         objPc = getCfObjectPc(player);
                         handle = vslot<GetIntFn>(objPc, 0x4C)(objPc);
                         if (handle == 0) {
-                            lbl_eu_8066404C = NULL;
+                            UIBattleArtsSelectHandle = NULL;
                         } else {
                             obj = findObjectById(handle);
                             if (obj != NULL &&
@@ -459,15 +400,15 @@ void CUIBattleManager::Move() {
                                 cf::CfGameManager::getInstance();
                                 if (isGlobalCamFlagSet__Fi(0x1000000) == 0 &&
                                     CMainMenu_IsOpen() == 0) {
-                                    if (lbl_eu_8066404C != (void*)handle ||
+                                    if (UIBattleArtsSelectHandle != (void*)handle ||
                                         CMenuArtsSelect_isCreated() == 0) {
-                                        lbl_eu_8066404C = (void*)handle;
-                                        if (lbl_eu_80664048 != NULL) {
+                                        UIBattleArtsSelectHandle = (void*)handle;
+                                        if (CUIBattleManager::spInstance != NULL) {
                                             retMarkA = CMenuArtsSelect_CreateMenu(
-                                                lbl_eu_80664048->unk7C,
-                                                lbl_eu_80664048->unk58);
+                                                CUIBattleManager::spInstance->unk7C,
+                                                CUIBattleManager::spInstance->unk58);
                                             if (retMarkA != NULL) {
-                                                inst = lbl_eu_80664048;
+                                                inst = CUIBattleManager::spInstance;
                                                 i = 0;
                                                 while (i < inst->mChildList.mCapacity &&
                                                        inst->mChildList.mList[i].mItem ==
@@ -476,7 +417,7 @@ void CUIBattleManager::Move() {
                                                 }
                                                 temp = &inst->mChildList.mList[i];
                                                 temp->setItem(
-                                                    (CUIBattleChild*)retMarkA);
+                                                    (IUIBattle*)retMarkA);
                                                 temp->mNext =
                                                     inst->mChildList.mStartNodePtr;
                                                 temp->mPrev =
@@ -534,7 +475,7 @@ void CUIBattleManager::Move() {
 }
 
 int UIBattleHasPendingLoads() {
-    CUIBattleManager* self = lbl_eu_80664048;
+    CUIBattleManager* self = CUIBattleManager::spInstance;
     int i;
 
     if (self == NULL) return 0;
@@ -548,76 +489,72 @@ int UIBattleHasPendingLoads() {
     return 0;
 }
 void CUIBattleManager::parkMoveHandler() {
-    // Swap the Move callback to the retail no-op pmf {0, -1, UIBattleMoveNoop}.
+    // Swap the Move callback to the retail no-op pmf {0, -1, fn}.
     // (Reached via the pmf installed by __ct__CUIBattleManager.)
-    mMoveFunc = lbl_eu_8052E0B4;
+    mMoveFunc = UIBattleParkMovePmf;
 }
-extern "C" void UIBattleMoveNoop() {}
+void CUIBattleManager::UIBattleMoveNoopMember() {}
 extern "C" void UIBattleMarkFlags82() {
-    if (lbl_eu_80664048 != 0) {
-        reinterpret_cast<unsigned char *>(lbl_eu_80664048)[0x82] |= 0x3b;
+    if (CUIBattleManager::spInstance != 0) {
+        reinterpret_cast<unsigned char *>(CUIBattleManager::spInstance)[0x82] |= 0x3b;
     }
 }
 // Retail UIBattleRemoveAll: remove-request processor. arg != 0 defers removal to
 // a mark-all (unk81); arg == 0 unlinks every child from the list immediately.
-// Do NOT cache the singleton in a local: retail re-spells lbl_eu_80664048 for
+// Do NOT cache the singleton in a local: retail re-spells CUIBattleManager::spInstance for
 // the null check, every walk-condition test, and the final clear, and a cached
 // local collapses those into one SDA21 load (reloc drift).
 extern "C" void UIBattleRemoveAll(u32 arg) {
-    _reslist_node<CUIBattleChild*>* removed[16];
+    _reslist_node<IUIBattle*>* removed[16];
     int count;
-    _reslist_node<CUIBattleChild*>* node;
+    _reslist_node<IUIBattle*>* node;
 
-    if (lbl_eu_80664048 == NULL) {
+    if (CUIBattleManager::spInstance == NULL) {
         return;
     }
     if (arg != 0) {
-        lbl_eu_80664048->unk81 = 1;
+        CUIBattleManager::spInstance->unk81 = 1;
         return;
     }
     count = 0;
-    node = lbl_eu_80664048->mChildList.mStartNodePtr->mNext;
-    while (node != lbl_eu_80664048->mChildList.mStartNodePtr) {
+    node = CUIBattleManager::spInstance->mChildList.mStartNodePtr->mNext;
+    while (node != CUIBattleManager::spInstance->mChildList.mStartNodePtr) {
         node->mItem->SetRemove();
         removed[count++] = node;
         node = node->mNext;
     }
     for (int i = 0; i < count; i++) {
-        _reslist_node<CUIBattleChild*>* cur = removed[i];
-        _reslist_node<CUIBattleChild*>* prev = cur->mPrev;
-        _reslist_node<CUIBattleChild*>* next = cur->mNext;
+        _reslist_node<IUIBattle*>* cur = removed[i];
+        _reslist_node<IUIBattle*>* prev = cur->mPrev;
+        _reslist_node<IUIBattle*>* next = cur->mNext;
         prev->mNext = next;
         next->mPrev = prev;
         cur->mNext = NULL;
     }
     // Final request-bit clear re-reads the singleton in retail.
-    lbl_eu_80664048->unk82 = 0;
+    CUIBattleManager::spInstance->unk82 = 0;
 }
-extern "C" unsigned char UIBattleGetFlagE8() { return lbl_eu_80664048 == 0 ? 0 : *(unsigned char *)((char *)lbl_eu_80664048 + 0xe8); }
-extern "C" void* UIBattleGetTableB8() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
-extern "C" int UIBattleGetWordEC() { if (lbl_eu_80664048 == 0) return -1; return *(int*)((char*)lbl_eu_80664048 + 0xec); }
-extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
-extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
-extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
-extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
+extern "C" unsigned char UIBattleGetFlagE8() { return CUIBattleManager::spInstance == 0 ? 0 : *(unsigned char *)((char *)CUIBattleManager::spInstance + 0xe8); }
+extern "C" void* UIBattleGetTableB8() { void* p = CUIBattleManager::spInstance; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
+extern "C" int UIBattleGetWordEC() { if (CUIBattleManager::spInstance == 0) return -1; return *(int*)((char*)CUIBattleManager::spInstance + 0xec); }
+void CUIBattleManager::CTest::Draw() {}
+void CUIBattleManager::CTest::Move() {}
+void CUIBattleManager::CTest::Term() {}
+void CUIBattleManager::CTest::Init() {}
 void __dt__16CUIBattleManagerFv(void*);
 extern "C" void UIBattleDelete(void* p) {
-    __dt__16CUIBattleManagerFv((char*)p - 0x54);
+    __dt__16CUIBattleManagerFv(reinterpret_cast<CUIBattleManager*>((char*)p - 0x54));
 }
 
-// noinline: the retail ctor is a real 0x1FC-byte function with a stripped
-// (no length/params) symbol; without this the empty same-TU stub is IPA'd away
-// and UIBattleGetOrCreate loses its ctor call.
-// Returns this (like retail), so callers can reuse r3 instead of preserving
-// the pointer across the call in a callee-saved register.
-// Body mirrors the retail store order exactly: interim/final vtables at 0x10,
-// null move/draw PTMF triples into 0x3C..0x50 (each triple stores its middle
-// word first), secondary vtable slots 0x54-0x58, child reslist at 0x5C with
-// the sentinel node self-looped at 0x64, per-party resource slots zeroed in
-// the retail interleaved pass order, then the node-pool allocation and the
-// battle heap install.
-extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
-    CUIBattleManager* self_, CScnNw4r* pScene, mtl::ALLOC_HANDLE handle) {
+// The real constructor lets MWCC emit the CTTask/base and CUIBattleManager
+// vtables (including the IWorkEvent secondary vptr) in retail order.
+// The body mirrors the retail store order: null move/draw PTMF triples into
+// 0x3C..0x50 (each triple stores its middle word first), child reslist at
+// 0x5C with the sentinel node self-looped at 0x64, per-party resource slots
+// zeroed in the retail interleaved pass order, then the node-pool allocation
+// and the battle heap install.
+CUIBattleManager::CUIBattleManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE handle)
+    : unk58((u8*)pScene) {
     u32 movePmf0;
     u32 movePmf1;
     u32 drawPmf2;
@@ -625,11 +562,8 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
     u32 hookPmf2;
     u32 zero;
 
-    u32* const self = reinterpret_cast<u32*>(self_);
+    u32* const self = reinterpret_cast<u32*>(this);
     zero = 0;
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
-    // Interim CTTask<CUIBattleManager> vtable.
-    reinterpret_cast<u32*>(self)[4] = reinterpret_cast<u32>(lbl_eu_8052E248);
     {
         // Null move/draw PTMF copies from __ptmf_null (first word read with
         // update addressing, as in retail).
@@ -644,14 +578,8 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
     reinterpret_cast<u32*>(self)[0x13] = movePmf1;
     reinterpret_cast<u32*>(self)[0x12] = movePmf0;
     reinterpret_cast<u32*>(self)[0x14] = drawPmf2;
-    // Composite CUIBattleManager vtable + secondary sub-object slots.
-    reinterpret_cast<u32*>(self)[4] = reinterpret_cast<u32>(lbl_eu_8052E0C0);
-    reinterpret_cast<u32*>(self)[0x15] =
-        reinterpret_cast<u32>(lbl_eu_8052E0C0) + 0x24;
-    reinterpret_cast<u32*>(self)[0x16] = reinterpret_cast<u32>(pScene);
-    // Child reslist at 0x5C: base vtable first, empty slot array/capacity,
-    // sentinel node self-looped at 0x64, then the derived reslist vtable.
-    reinterpret_cast<u32*>(self)[0x17] = reinterpret_cast<u32>(lbl_eu_8052E1B4);
+    // Child reslist at 0x5C: empty slot array/capacity and sentinel node
+    // self-looped at 0x64 (the reslist base ctor installs the vptr).
     reinterpret_cast<u32*>(self)[0x1C] = zero;
     reinterpret_cast<u32*>(self)[0x1D] = zero;
     reinterpret_cast<u8*>(self)[0x78] = (u8)zero;
@@ -661,48 +589,47 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
         sentinel[0] = reinterpret_cast<u32>(sentinel);
         sentinel[1] = reinterpret_cast<u32>(sentinel);
     }
-    reinterpret_cast<u32*>(self)[0x17] = reinterpret_cast<u32>(lbl_eu_8052E19C);
     reinterpret_cast<u32*>(self)[0x1F] = zero;
     reinterpret_cast<u8*>(self)[0x80] = (u8)zero;
     reinterpret_cast<u8*>(self)[0x81] = (u8)zero;
     // Arc-handle/accessor slots.
-    self_->mFileArtsElem = NULL;
-    self_->mFileArtsElemDone = NULL;
-    self_->mFileArtsSys = NULL;
-    self_->mFileArtsSysDone = NULL;
-    self_->unkE8 = 0;
-    self_->unkE9 = 0;
-    self_->mHeap = static_cast<mtl::ALLOC_HANDLE>(-1);
+    mFileArtsElem = NULL;
+    mFileArtsElemDone = NULL;
+    mFileArtsSys = NULL;
+    mFileArtsSysDone = NULL;
+    unkE8 = 0;
+    unkE9 = 0;
+    mHeap = static_cast<mtl::ALLOC_HANDLE>(-1);
     // Per-party resource slots; MWCC unrolls this into the retail
     // three-pass interleaved store order (arts arc, busy accessor, face arc,
     // three face textures, face accessor per party).
     {
         int i;
         for (i = zero; i < 3; i++) {
-            self_->mFileArtsPc[i] = NULL;
-            self_->mFileArtsPcBusy[i] = NULL;
-            self_->mFileFacePc[i] = NULL;
-            self_->mFaceTex[i][0] = NULL;
-            self_->mFaceTex[i][1] = NULL;
-            self_->mFaceTex[i][2] = NULL;
-            self_->mFaceAccessor[i] = NULL;
+            mFileArtsPc[i] = NULL;
+            mFileArtsPcBusy[i] = NULL;
+            mFileFacePc[i] = NULL;
+            mFaceTex[i][0] = NULL;
+            mFaceTex[i][1] = NULL;
+            mFaceTex[i][2] = NULL;
+            mFaceAccessor[i] = NULL;
         }
     }
-    self_->unk82 = (u8)(zero | 8);
+    unk82 = (u8)(zero | 8);
     {
         // Child-node slot array (8 x 0xC nodes) from the scene's alloc region.
         u32* list = reinterpret_cast<u32*>(
             mtl::MemManager::allocate_array(0x60, Scn_CallUnk8C_V10(pScene)));
         int i;
-        self_->mChildList.mList = reinterpret_cast<_reslist_node<CUIBattleChild*>*>(list);
+        mChildList.mList = reinterpret_cast<_reslist_node<IUIBattle*>*>(list);
         for (i = 0; i < 8; i++) {
             list[i * 3] = zero;
         }
-        self_->mChildList.mCapacity = 8;
+        mChildList.mCapacity = 8;
     }
     // Initial move-hook pmf from the split1 pool (w1 word stored first).
     {
-        u32* ip = reinterpret_cast<u32*>(&lbl_eu_8052E0A8);
+        u32* ip = reinterpret_cast<u32*>(&UIBattleInitialMovePmf);
         movePmf0 = *ip++;   // w0
         hookPmf1 = *ip;     // w1
         hookPmf2 = *(ip + 1); // w2
@@ -712,52 +639,51 @@ extern "C" __declspec(noinline) CUIBattleManager* __ct__CUIBattleManager(
     reinterpret_cast<u32*>(self)[0x11] = hookPmf2;
     mtl::MemManager::getHandleMEM2();
     reinterpret_cast<u32*>(self)[0x3B] = mtl::MemManager::create(
-        mtl::MemManager::getHandleMEM1(), 0x44800, lbl_eu_804FFF2C);
+        mtl::MemManager::getHandleMEM1(), 0x44800, UIBattleArcPathStrings);
     CMenuArtsSelect_clearArtsRef();
-    lbl_eu_8066404C = reinterpret_cast<void*>(zero);
-    return self_;
+    UIBattleArtsSelectHandle = reinterpret_cast<void*>(zero);
 }
 
-// Retail __dt__8012E534: battle-UI teardown helper (flat global symbol).
+// Retail __dt__8012E534: battle-UI teardown helper (the Term virtual).
 // Cancels pending file loads, destroys every arc accessor, marks the init
 // child for removal, clears the child list, and releases the manager heap.
-extern "C" void __dt__8012E534(CUIBattleManager* self) {
+void CUIBattleManager::Term() {
     int i;
 
-    UIBattleCancelPendingLoads(self);
+    UIBattleCancelPendingLoads(this);
     for (i = 0; i < 3; i++) {
-        self->mFaceTex[i][0] = NULL;
-        self->mFaceTex[i][1] = NULL;
-        self->mFaceTex[i][2] = NULL;
-        releaseArcResourceAccessor(self->mFaceAccessor[i]);
-        releaseArcResourceAccessor(self->mFileArtsPcBusy[i]);
+        mFaceTex[i][0] = NULL;
+        mFaceTex[i][1] = NULL;
+        mFaceTex[i][2] = NULL;
+        releaseArcResourceAccessor(mFaceAccessor[i]);
+        releaseArcResourceAccessor(mFileArtsPcBusy[i]);
     }
-    releaseArcResourceAccessor(self->mFileArtsSysDone);
-    releaseArcResourceAccessor(self->mFileArtsElemDone);
-    reinterpret_cast<CUIBattleChild*>(self->unk7C)->SetRemove();
+    releaseArcResourceAccessor(mFileArtsSysDone);
+    releaseArcResourceAccessor(mFileArtsElemDone);
+    reinterpret_cast<CUIBattleChild*>(unk7C)->SetRemove();
     // Unlink every child node without destroying items, then reset the list.
     // Retail re-spells mStartNodePtr on every access (no caching).
     {
-        _reslist_node<CUIBattleChild*>* node =
-            self->mChildList.mStartNodePtr->mNext;
-        while (node != self->mChildList.mStartNodePtr) {
-            _reslist_node<CUIBattleChild*>* prev = node;
+        _reslist_node<IUIBattle*>* node =
+            mChildList.mStartNodePtr->mNext;
+        while (node != mChildList.mStartNodePtr) {
+            _reslist_node<IUIBattle*>* prev = node;
             node = node->mNext;
             prev->mNext = NULL;
         }
-        self->mChildList.mStartNodePtr->mNext =
-            self->mChildList.mStartNodePtr;
-        self->mChildList.mStartNodePtr->mPrev =
-            self->mChildList.mStartNodePtr;
+        mChildList.mStartNodePtr->mNext =
+            mChildList.mStartNodePtr;
+        mChildList.mStartNodePtr->mPrev =
+            mChildList.mStartNodePtr;
     }
-    if (self->mChildList.unk1C == false && self->mChildList.mList != NULL) {
-        delete[] self->mChildList.mList;
-        self->mChildList.mList = NULL;
+    if (mChildList.unk1C == false && mChildList.mList != NULL) {
+        delete[] mChildList.mList;
+        mChildList.mList = NULL;
     }
-    self->mChildList.mCapacity = 0;
-    mtl::MemManager::erase(self->mHeap);
-    self->mHeap = mtl::INVALID_HANDLE;
-    lbl_eu_80664048 = NULL;
+    mChildList.mCapacity = 0;
+    mtl::MemManager::erase(mHeap);
+    mHeap = mtl::INVALID_HANDLE;
+    CUIBattleManager::spInstance = NULL;
 }
 
 extern "C" void UIBattleCancelPendingLoads(CUIBattleManager* self) {
@@ -783,113 +709,58 @@ extern "C" void UIBattleCancelPendingLoads(CUIBattleManager* self) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// reslist<IUIBattle> deleting destructors (retail __dt___reslist_base_IUIBattle
-// / __dt__reslist_IUIBattle). The retail symbols use the old flat template
-// mangling, so these are plain global functions (MWCC leaves `__`-prefixed
-// names unmangled) over the ResListIUIBattle layout mirror.
-// ---------------------------------------------------------------------------
-void* __dt___reslist_base_IUIBattle(ResListIUIBattle* self, int mode) {
-    if (self != NULL) {
-        self->mVtable = (void*)lbl_eu_8052E1B4;
-        // Walk the node chain nulling each next pointer (nodes are
-        // pool-allocated, not freed here), then reset the sentinel.
-        _reslist_node<IUIBattle>* node = self->mHead->mNext;
-        while (node != self->mHead) {
-            _reslist_node<IUIBattle>* cur = node;
-            node = cur->mNext;
-            cur->mNext = NULL;
-        }
-        self->mHead->mNext = self->mHead;
-        self->mHead->mPrev = self->mHead;
-        if (self->mOwnsList == 0 && self->mList != NULL) {
-            operator delete[](self->mList);
-            self->mList = NULL;
-        }
-        if (mode > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-
-void* __dt__reslist_IUIBattle(ResListIUIBattle* self, int mode) {
-    // Doubled null check mirrors retail: MWCC keeps the dead second beq.
-    if (self != NULL) {
-        if (self != NULL) {
-            self->mVtable = (void*)lbl_eu_8052E1B4;
-            _reslist_node<IUIBattle>* node = self->mHead->mNext;
-            while (self->mHead != node) {
-                _reslist_node<IUIBattle>* cur = node;
-                node = cur->mNext;
-                cur->mNext = NULL;
-            }
-            self->mHead->mNext = self->mHead;
-            self->mHead->mPrev = self->mHead;
-            if (self->mOwnsList == 0 && self->mList != NULL) {
-                operator delete[](self->mList);
-                self->mList = NULL;
-            }
-        }
-        if (mode > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-
 // File-event descriptor passed to UIBattleOnFileEvent (OnFileEvent worker).
 struct CUIBattleFileEvt {
     s32 unk00;              // 0x0 - completion kind (1 = party arts arc; retail compares SIGNED cmpi)
     CFileHandle* unk04;     // 0x4 - completed file handle
 };
 
-// Retail UIBattleOnFileEvent: dispatches a completed file load. Elem/sys arcs get an
+// CUIBattleManager::OnFileEvent: dispatches a completed file load. Elem/sys arcs get an
 // ArcResourceAccessor attached immediately; per-party arts arcs (kind 1) also
 // pull the three face 'timg' textures out of the face accessor. getData()
 // detaches the arc buffer (reads +4, stores NULL back).
-int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
+int CUIBattleManager::OnFileEvent(CUIBattleFileEvt* evt) {
     int i;
     u32 partyId;
     void* tex;
     nw4r::lyt::ArcResourceAccessor* acc;
     CFileHandle* fh;
 
-    if (self->mFileArtsElem == evt->unk04) {
-        void* buf = self->mFileArtsElem->getData();
+    if (mFileArtsElem == evt->unk04) {
+        void* buf = mFileArtsElem->getData();
         acc = CLibLayout::createArcResourceAccessor();
-        self->mFileArtsElemDone = acc;
-        acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
-        self->mFileArtsElem = NULL;
+        mFileArtsElemDone = acc;
+        acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
+        mFileArtsElem = NULL;
         return 1;
     }
-    if (self->mFileArtsSys == evt->unk04) {
-        void* buf = self->mFileArtsSys->getData();
+    if (mFileArtsSys == evt->unk04) {
+        void* buf = mFileArtsSys->getData();
         acc = CLibLayout::createArcResourceAccessor();
-        self->mFileArtsSysDone = acc;
-        acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
-        self->mFileArtsSys = NULL;
+        mFileArtsSysDone = acc;
+        acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
+        mFileArtsSys = NULL;
         return 1;
     }
     for (i = 0; i < 3; i++) {
-        if (self->mFileArtsPc[i] == evt->unk04) {
+        if (mFileArtsPc[i] == evt->unk04) {
             if (evt->unk00 == 1) {
-                void* buf = self->mFileArtsPc[i]->getData();
+                void* buf = mFileArtsPc[i]->getData();
                 acc = CLibLayout::createArcResourceAccessor();
-                self->mFileArtsPcBusy[i] = acc;
-                acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
+                mFileArtsPcBusy[i] = acc;
+                acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
             }
-            self->mFileArtsPc[i] = NULL;
+            mFileArtsPc[i] = NULL;
             return 1;
         }
-        if (self->mFileFacePc[i] != evt->unk04) {
+        if (mFileFacePc[i] != evt->unk04) {
             continue;
         }
-        void* buf = self->mFileFacePc[i]->getData();
-        self->mFileFacePc[i] = NULL;
+        void* buf = mFileFacePc[i]->getData();
+        mFileFacePc[i] = NULL;
         acc = CLibLayout::createArcResourceAccessor();
-        self->mFaceAccessor[i] = acc;
-        acc->Attach(buf, &lbl_eu_804FFF2C[0x75]);
+        mFaceAccessor[i] = acc;
+        acc->Attach(buf, &UIBattleArcPathStrings[0x75]);
         // Pointer-arithmetic spelling: reduces to retail's bare i*4
         // induction (add r3,base,i*4 / lwz r0,4(r3)) instead of an indexed
         // load.
@@ -900,27 +771,27 @@ int UIBattleOnFileEvent(CUIBattleManager* self, CUIBattleFileEvt* evt) {
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_804FFF2C[0x79],
+            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &UIBattleArcPathStrings[0x79],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
-            self->mFaceTex[i][0] = tex;
+            mFaceTex[i][0] = tex;
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_804FFF2C[0x84],
+            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &UIBattleArcPathStrings[0x84],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
-            self->mFaceTex[i][1] = tex;
+            mFaceTex[i][1] = tex;
         }
         tex = acc->GetResource(
             0x74696D67,
-            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &lbl_eu_804FFF2C[0x8f],
+            MakeTplNameSysFile(BdatGetU16Direct(lbl_eu_80664090, &UIBattleArcPathStrings[0x8f],
                                         (int)(u8)partyId)),
             0);
         if (tex != NULL) {
-            self->mFaceTex[i][2] = tex;
+            mFaceTex[i][2] = tex;
         }
         return 1;
     }
@@ -930,20 +801,18 @@ CUIBattleManager* UIBattleGetOrCreate(CProcess* pParent, CScnNw4r* pScene,
                                 mtl::ALLOC_HANDLE handle) {
     CUIBattleManager* mgr;
 
-    if (lbl_eu_80664048 != NULL) {
-        return lbl_eu_80664048;
+    if (CUIBattleManager::spInstance != NULL) {
+        return CUIBattleManager::spInstance;
     }
     if (handle == mtl::INVALID_HANDLE) {
         handle = mtl::MemManager::getHandleMEM2();
     }
     mgr = static_cast<CUIBattleManager*>(
         mtl::MemManager::allocate(sizeof(CUIBattleManager), CWorkThreadSystem::getWorkMem()));
-    if (mgr != NULL) {
-        mgr = __ct__CUIBattleManager(mgr, pScene, handle);
-    }
-    lbl_eu_80664048 = mgr;
+    mgr = new (mgr) CUIBattleManager(pScene, handle);
+    CUIBattleManager::spInstance = mgr;
     mgr->Regist(pParent, false);
-    return lbl_eu_80664048;
+    return CUIBattleManager::spInstance;
 }
 // Retail UIBattleCreatePlayerState: create/bind request for the main battle window.
 // Returns the created child, or NULL (re-arming the unk82 bit 1 request on
@@ -953,31 +822,31 @@ extern "C" CUIBattleChild* UIBattleCreatePlayerState() {
     int i;
     int byteOff;
     int capacity;
-    _reslist_node<CUIBattleChild*>* startNode;
-    _reslist_node<CUIBattleChild*>* temp;
+    _reslist_node<IUIBattle*>* startNode;
+    _reslist_node<IUIBattle*>* temp;
     CUIBattleManager* inst;
 
-    if (lbl_eu_80664048 == NULL) {
+    if (CUIBattleManager::spInstance == NULL) {
         return NULL;
     }
     if (CUICfManager_getArcResourceAccessor() == NULL) {
-        lbl_eu_80664048->unk82 |= 1;
+        CUIBattleManager::spInstance->unk82 |= 1;
         return NULL;
     }
-    if (lbl_eu_80664048->unkE8 == 0) {
-        lbl_eu_80664048->unk82 |= 1;
+    if (CUIBattleManager::spInstance->unkE8 == 0) {
+        CUIBattleManager::spInstance->unk82 |= 1;
         return NULL;
     }
     if (evtIsActiveSeq() != 0) {
-        lbl_eu_80664048->unk82 |= 1;
+        CUIBattleManager::spInstance->unk82 |= 1;
         return NULL;
     }
-    lbl_eu_80664048->unk82 &= ~1u;
-    savedRet = BpsStateCreateSingleton(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+    CUIBattleManager::spInstance->unk82 &= ~1u;
+    savedRet = BpsStateCreateSingleton(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
     if (savedRet == NULL) {
         return NULL;
     }
-    inst = lbl_eu_80664048;
+    inst = CUIBattleManager::spInstance;
     i = 0;
     byteOff = 0;
     startNode = inst->mChildList.mStartNodePtr;
@@ -989,13 +858,13 @@ extern "C" CUIBattleChild* UIBattleCreatePlayerState() {
         byteOff += 0xc;
         i++;
     }
-    temp = (_reslist_node<CUIBattleChild*>*)((u8*)inst->mChildList.mList + i * 0xc);
-    temp->setItem((CUIBattleChild*)savedRet);
+    temp = (_reslist_node<IUIBattle*>*)((u8*)inst->mChildList.mList + i * 0xc);
+    temp->setItem((IUIBattle*)savedRet);
     temp->mNext = startNode;
     temp->mPrev = startNode->mPrev;
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
-    return (CUIBattleChild*)savedRet;
+    return (IUIBattle*)savedRet;
 }
 
 // Retail UIBattleCreateVisionMenu: create/bind request variant using bit 3 of unk82 and
@@ -1008,23 +877,23 @@ extern "C" CUIBattleChild* UIBattleCreateVisionMenu(u32 arg) {
     int i;
     int byteOff;
     int capacity;
-    _reslist_node<CUIBattleChild*>* startNode;
-    _reslist_node<CUIBattleChild*>* temp;
+    _reslist_node<IUIBattle*>* startNode;
+    _reslist_node<IUIBattle*>* temp;
     CUIBattleManager* inst;
 
-    if (lbl_eu_80664048 == NULL) {
+    if (CUIBattleManager::spInstance == NULL) {
         return NULL;
     }
     if (CUICfManager_getArcResourceAccessor() == NULL) {
-        lbl_eu_80664048->unk82 |= 8;
+        CUIBattleManager::spInstance->unk82 |= 8;
         return NULL;
     }
-    lbl_eu_80664048->unk82 &= ~8u;
-    savedRet = createVisionMenu(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+    CUIBattleManager::spInstance->unk82 &= ~8u;
+    savedRet = createVisionMenu(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
     if (savedRet == NULL) {
         return NULL;
     }
-    inst = lbl_eu_80664048;
+    inst = CUIBattleManager::spInstance;
     i = 0;
     byteOff = 0;
     startNode = inst->mChildList.mStartNodePtr;
@@ -1036,13 +905,13 @@ extern "C" CUIBattleChild* UIBattleCreateVisionMenu(u32 arg) {
         byteOff += 0xc;
         i++;
     }
-    temp = (_reslist_node<CUIBattleChild*>*)((u8*)inst->mChildList.mList + i * 0xc);
-    temp->setItem((CUIBattleChild*)savedRet);
+    temp = (_reslist_node<IUIBattle*>*)((u8*)inst->mChildList.mList + i * 0xc);
+    temp->setItem((IUIBattle*)savedRet);
     temp->mNext = startNode;
     temp->mPrev = startNode->mPrev;
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
-    return (CUIBattleChild*)savedRet;
+    return (IUIBattle*)savedRet;
 }
 
 // Retail UIBattleReleaseAll: full battle-UI release. Waits for draw done, cancels
@@ -1050,10 +919,10 @@ extern "C" CUIBattleChild* UIBattleCreateVisionMenu(u32 arg) {
 // face/party accessors and re-arms the create request.
 extern "C" void UIBattleReleaseAll() {
     CDeviceVI::waitForDrawDone();
-    if (lbl_eu_80664048 == NULL) {
+    if (CUIBattleManager::spInstance == NULL) {
         return;
     }
-    UIBattleCancelPendingLoads(lbl_eu_80664048);
+    UIBattleCancelPendingLoads(CUIBattleManager::spInstance);
     {
         CUIBattleChild* matchItem = static_cast<CUIBattleChild*>(BpsStateSingletonToInt());
         if (matchItem != NULL) {
@@ -1062,13 +931,13 @@ extern "C" void UIBattleReleaseAll() {
                 // Retail walks the child reslist with the condition checked
                 // first, re-reading the singleton (and thus the sentinel)
                 // every iteration.
-                _reslist_node<CUIBattleChild*>* node =
-                    lbl_eu_80664048->mChildList.mStartNodePtr->mNext;
-                while (node != lbl_eu_80664048->mChildList.mStartNodePtr) {
+                _reslist_node<IUIBattle*>* node =
+                    CUIBattleManager::spInstance->mChildList.mStartNodePtr->mNext;
+                while (node != CUIBattleManager::spInstance->mChildList.mStartNodePtr) {
                     if (node->mItem == matchItem) {
                         node->mItem->SetRemove();
-                        _reslist_node<CUIBattleChild*>* prev = node->mPrev;
-                        _reslist_node<CUIBattleChild*>* next = node->mNext;
+                        _reslist_node<IUIBattle*>* prev = node->mPrev;
+                        _reslist_node<IUIBattle*>* next = node->mNext;
                         prev->mNext = next;
                         next->mPrev = prev;
                         node->mNext = NULL;
@@ -1085,42 +954,42 @@ extern "C" void UIBattleReleaseAll() {
         for (i = 0; i < 3; i++) {
             int j;
             for (j = 0; j < 3; j++) {
-                lbl_eu_80664048->mFaceTex[i][j] = NULL;
+                CUIBattleManager::spInstance->mFaceTex[i][j] = NULL;
             }
             // Detach returns the arc buffer; deleting dtor frees the object,
             // then the detached buffer is released back to the heap. Retail
             // re-spells the singleton for every access so MWCC reloads the
             // SDA21 base each time.
-            if (lbl_eu_80664048->mFaceAccessor[i] != NULL) {
-                void* arcBuf = lbl_eu_80664048->mFaceAccessor[i]->Detach();
-                if (lbl_eu_80664048->mFaceAccessor[i] != NULL) {
-                    delete lbl_eu_80664048->mFaceAccessor[i];
+            if (CUIBattleManager::spInstance->mFaceAccessor[i] != NULL) {
+                void* arcBuf = CUIBattleManager::spInstance->mFaceAccessor[i]->Detach();
+                if (CUIBattleManager::spInstance->mFaceAccessor[i] != NULL) {
+                    delete CUIBattleManager::spInstance->mFaceAccessor[i];
                 }
-                lbl_eu_80664048->mFaceAccessor[i] = NULL;
+                CUIBattleManager::spInstance->mFaceAccessor[i] = NULL;
                 if (arcBuf != NULL) {
                     mtl::MemManager::deallocate(arcBuf);
                 }
             }
-            if (lbl_eu_80664048->mFileArtsPcBusy[i] != NULL) {
-                void* arcBuf = lbl_eu_80664048->mFileArtsPcBusy[i]->Detach();
-                if (lbl_eu_80664048->mFileArtsPcBusy[i] != NULL) {
-                    delete lbl_eu_80664048->mFileArtsPcBusy[i];
+            if (CUIBattleManager::spInstance->mFileArtsPcBusy[i] != NULL) {
+                void* arcBuf = CUIBattleManager::spInstance->mFileArtsPcBusy[i]->Detach();
+                if (CUIBattleManager::spInstance->mFileArtsPcBusy[i] != NULL) {
+                    delete CUIBattleManager::spInstance->mFileArtsPcBusy[i];
                 }
-                lbl_eu_80664048->mFileArtsPcBusy[i] = NULL;
+                CUIBattleManager::spInstance->mFileArtsPcBusy[i] = NULL;
                 if (arcBuf != NULL) {
                     mtl::MemManager::deallocate(arcBuf);
                 }
             }
         }
     }
-    lbl_eu_80664048->unkE9 = 0;
-    lbl_eu_80664048->unkE8 = 0;
+    CUIBattleManager::spInstance->unkE9 = 0;
+    CUIBattleManager::spInstance->unkE8 = 0;
     UIBattleCreatePlayerState();
 }
 // Check the arts-sys arc accessor (0x90) for a named 'timg' texture resource.
 // Returns the resource pointer, or NULL if the accessor is not ready / missing.
 void* UIBattleFindSysTimg(const char* name) {
-    nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsSysDone;
+    nw4r::lyt::ArcResourceAccessor* acc = CUIBattleManager::spInstance->mFileArtsSysDone;
     if (acc != NULL) {
         void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
         if (result != NULL) {
@@ -1132,7 +1001,7 @@ void* UIBattleFindSysTimg(const char* name) {
 
 // Same as UIBattleFindSysTimg but for the arts-elem arc accessor (0x88).
 void* UIBattleFindElemTimg(const char* name) {
-    nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsElemDone;
+    nw4r::lyt::ArcResourceAccessor* acc = CUIBattleManager::spInstance->mFileArtsElemDone;
     if (acc != NULL) {
         void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
         if (result != NULL) {
@@ -1147,7 +1016,7 @@ void* UIBattleFindElemTimg(const char* name) {
 void* UIBattleFindPartyTimg(const char* name) {
     u8 i;
     for (i = 0; i < 3; i++) {
-        nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsPcBusy[i];
+        nw4r::lyt::ArcResourceAccessor* acc = CUIBattleManager::spInstance->mFileArtsPcBusy[i];
         if (acc != NULL) {
             void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
             if (result != NULL) {
@@ -1163,10 +1032,10 @@ void* UIBattleFindPartyTimg(const char* name) {
 // the inlined empty CTTask<CUIBattleManager> dtor's __dt__8CProcessFv call.
 CUIBattleManager::~CUIBattleManager() {}
 
-// This-adjusting thunk: subi r3, r3, 0x54; b UIBattleOnFileEvent
+// This-adjusting thunk: subi r3, r3, 0x54; b OnFileEvent member
 // MWCC does not generate this automatically for non-dtor virtual overrides.
-// Accepting as-is; may need DECOMP_ASM_INSN for exact match.
+// A real member override emits a 0x2C-byte body (11 structural diffs, 0%) instead.
 extern "C" void OnFileEvent__16CUIBattleManagerFP10CEventFile(void* self, void* file) {
-    UIBattleOnFileEvent(reinterpret_cast<CUIBattleManager*>((char*)self - 0x54),
-                  static_cast<CUIBattleFileEvt*>(file));
+    reinterpret_cast<CUIBattleManager*>((char*)self - 0x54)->CUIBattleManager::OnFileEvent(
+        static_cast<CUIBattleFileEvt*>(file));
 }

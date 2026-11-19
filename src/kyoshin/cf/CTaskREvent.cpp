@@ -243,11 +243,11 @@ void evtFillCharEntry(u32 index) {
     // Byte rows are indexed 1..7 (row 0 unused): the retail offsets start at
     // 5*1 / 4*1 and step by 5 / 4 per row.
     for (int row = 1; row < 8; row++) {
-        for (int col = 0; col <= 4;) {
+        for (int col = 0; col <= 4; col++) {
             // Retail order: call getBdatEntryColumn, narrow to a byte while it
             // lives in a callee-saved reg, then fetch the blob for the store.
             u8 b = (u8)((getBdatEntryColumn__Q22cf13CfGameManagerFv(row, col) >> 10) & 0xFF);
-            evtCharBlob()->mByteRows[index][5 * row + col++] = b;
+            evtCharBlob()->mByteRows[index][5 * row + col] = b;
         }
         u32 w = getBdatEntryColumn__Q22cf13CfGameManagerFv(row, 5);
         CEventCharBlob* blobW = evtCharBlob();

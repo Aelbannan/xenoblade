@@ -147,7 +147,7 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-extern "C" void* CItem_initItemImplInstances(void*);
+// CItem_initItemImplInstances: canonical decl from CfGameManager.hpp.
 extern "C" int   IsSkillItem(void*);
 extern "C" void CItemData_lookupOrAlloc(CMCItemBoxEntry*, int);
 extern "C" u32 CItemBlock_countEmpty(u8);

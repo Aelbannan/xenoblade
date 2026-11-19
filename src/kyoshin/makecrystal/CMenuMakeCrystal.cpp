@@ -44,7 +44,7 @@ void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* self, const void* src
 void Scn_SetPauseFlag(void*, int);
 void BgTex_Release_3D9C(void*);
 void mkCrystalTeardown(void*);
-void setPresentationFlag__Q22cf13CfGameManagerFv(int);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // Retail symbol keeps its Fv mangling even though it takes the pad index.
 // Unmangled local helper (bound literally).
 extern "C" void MakeCrystalInitWin(void* self);

@@ -78,6 +78,18 @@ public:
     void SymMark_Store(u32 id, Vec* pos, void* argC, u32 argD, u32 argE);
 };
 
+// Header of the arrow resource blob held by CArrow3D::mDataPtr: offsets are
+// measured from the start of the aligned resource handle.
+struct ArrowResourceHeader {
+    u32 arrPosOff;   // 0x00: vertex array for attr 9 (stride 0xC)
+    u32 arrUvOff;    // 0x04: attr 0xA (stride 0xC)
+    u32 arrColOff;   // 0x08: attr 0xB (stride 4)
+    u32 arrIdxOff;   // 0x0C: attr 0xD index array (stride 8), 0 = none
+    u8 pad10[4];
+    u32 dlListOff;   // 0x10: display-list entry table offset
+    u32 dlCount;     // 0x14: number of display-list entries
+};
+
 class CArrow3D : public CTTask<CArrow3D> {
 public:
     virtual ~CArrow3D();

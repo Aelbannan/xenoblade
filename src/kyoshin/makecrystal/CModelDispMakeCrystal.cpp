@@ -45,19 +45,13 @@
 // (CActParamAnim, CScnItemModel, CfObject, CResLookup, CSysWin) come through
 // intact while this TU keeps its own prototypes.
 // writeVec3f: unified to `void*` (decl matches the CActParamAnim.cpp definition)
-#define func_8004B9D4 func_8004B9D4_hidden
-#define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
-#define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
-// Scn_FindCamItem: unified on `void*(void*, int)` (CActParamAnim.hpp was s32)
+
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
-#undef func_8004B9D4
-#undef lbl_eu_805262F0
-#undef lbl_eu_805262C8
 
 // Typified wave7: retail .data color table (8 rows of 3 bytes; struct + use
 // site already exist in the hpp: `lbl_eu_80535D90->c`).
@@ -151,9 +145,9 @@ void releaseAnimObj(void*, void*);
 bool Scn_IsAnimActiveOrNull(void*);
 void* Scn_SetupAnim(void*, int, int, ...);
 void simSetLeafFlag4000(void*, int);
+extern "C" void simAttachModel(void*, void*);
 void simMarkTree100000(void*, int);
-void* simGetLeafActData(void*);
-void simAttachModel(void*, void*);
+
 void schedClearFlag15Update(void*);
 void schedAttachChildSlot(void*, void*);
 void EffSched_LookupB(void*, void*);
@@ -176,7 +170,7 @@ void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void schedDetachChildSlot(void*, void*);
 int getMCGetItemBoxKeyCode(void*);
-void func_8004B9D4(void*, int, int, int, int);
+// func_8004B9D4: canonical CActParamAnim.hpp declaration.
 void MakeCrystal_SpawnCrystalItem(void*, int, u8);
 void openMCGetItemBox(void*, int, void*, u8);
 void crystalListAlignSlot(void*, void*, u8);
@@ -332,8 +326,8 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) c
 //    0x04 word. Zero words therefore live where MWCC leaves them: A4's 0.0
 //    is the orphan pad MWCC emits before the 8-aligned arr08, the 0x43 gap
 //    hides in E2's u8[2], and the unreferenced 0.0 tails ride in wider
-//    const arrays. A4 itself reads from zeroAnchor[0] in the (dropped)
-//    pool tail -- same shape as CfGimmickJump's trimmed literal pool.
+//    const arrays. A4 itself is the pad, named by its retail label rather
+//    than a second object in the pool tail (which landed in List's slice).
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A0[1] = {1.0f};
 #define lbl_eu_806684A0 (lbl_eu_806684A0[0])
 __declspec(section ".sdata2") __attribute__((used)) const float arr08[1] __attribute__((aligned(8))) = {0.063f};
@@ -392,10 +386,10 @@ __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80668528 = 30.0
 __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_8066852C = 0.01f;
 __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_80668530 = 4503601774854144.0;
 __declspec(section ".sdata2") __attribute__((used)) const float arr98[3] = {1.0f, 0.0f, 0.0f};
-// A4's readable zero (see above); lands in the MWCC pool tail past 0xA4
-// next to the conversion double, trimmed by drop_data_tail like Jump's.
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A4[2] = {0.0f, 1.0f};
-#define lbl_eu_806684A4 (lbl_eu_806684A4[0])
+// 0x806684A4 is the alignment pad before the 8-aligned arr08, emitted by
+// this TU already; no second object may own it (the old tail copy landed in
+// CMCCrystalList's slice at 0x80668548). Name the pad, don't duplicate it.
+extern const f32 lbl_eu_806684A4;
 #define lbl_eu_806684A8 (arr08[0])
 #define lbl_eu_80668518 (lbl_eu_80668510[2])
 #define lbl_eu_80668538 (arr98)
@@ -1740,16 +1734,16 @@ void MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* self)
     item.field_00 = 0;
     *reinterpret_cast<u16*>(&item.field_04) = 0;
     CItem_initKind9Rec(&item, 1);
-    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf1C((CItemData*)&item);
-    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf84((CItemData*)&item, 1);
+    ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf1C((CItemData*)&item);
+    ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf84((CItemData*)&item, 1);
     CItemData_callVf0C(&item, entries[1]);
     for (u8 i = 0; i < 4; i++) {
-        ((CItemImpl*)CItem_initItemImplInstances(&item))->vf50((CItemData*)&item, i, 0);
-        ((CItemImpl*)CItem_initItemImplInstances(&item))->vf68((CItemData*)&item, i, 0);
+        ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf50((CItemData*)&item, i, 0);
+        ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf68((CItemData*)&item, i, 0);
     }
     u16 idx = (u16)((s8)((u8*)self)[0x2dc1] + (s8)((u8*)self)[0x2dc2]);
-    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf50((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 2));
-    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf68((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 4));
+    ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf50((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 2));
+    ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf68((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 4));
     u8 n = ((u8*)self)[0x2dc0];
     ((u8*)self)[0x2dc0] = n + 1;
     CItem_copyRecMasked((u8*)self + n * 0x34 + 0x13c0, &item);
@@ -2672,7 +2666,7 @@ void MakeCrystal_AppendItemSteps(void* selfp)
         tier = ch;
     }
     CItem_initSlot(&item, idx, n, tier);
-    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf58((CItemData*)&item, n);
+    ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf58((CItemData*)&item, n);
     void* g2 = lbl_eu_806640D8;
     u32 first = 0;
     u32 second = 0;
@@ -2731,7 +2725,7 @@ void MakeCrystal_AppendItemSteps(void* selfp)
         u16 countB = (u16)(count - b);
         result = (u8)((s32)((float)diff * ((float)countB * lbl_eu_806684EC)) + first);
     }
-    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf94((CItemData*)&item, result);
+    ((CItemImpl*)CItem_initItemImplInstances((CItemData*)&item))->vf94((CItemData*)&item, result);
     // Append the step record (stride 0x34 at +0x13c0) the requested times.
     for (u8 k = 0; k < copyCount; k++) {
         u8 stepN = base[0x2dc0];
@@ -3390,11 +3384,11 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__14CMCEffCylinderFv(effCylinder, -1);
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->init();
         // Cursor objects: build on stack, install via MenuShopSellCopyCursor, destroy.
-        __ct__CCur18(&cur1, CUICfManager_getArcResourceAccessor());
+        __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&cur1, CUICfManager_getArcResourceAccessor());
         *reinterpret_cast<CBaseCur*>(base + 0xe20) = *reinterpret_cast<const CBaseCur*>(&cur1);
         __dt__6CCur18Fv(&cur1, -1);
         reinterpret_cast<CBaseCur*>(base + 0xe20)->initLayout();
-        __ct__CCur18(&cur2, CUICfManager_getArcResourceAccessor());
+        __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&cur2, CUICfManager_getArcResourceAccessor());
         *reinterpret_cast<CBaseCur*>(base + 0xeb4) = *reinterpret_cast<const CBaseCur*>(&cur2);
         __dt__6CCur18Fv(&cur2, -1);
         reinterpret_cast<CBaseCur*>(base + 0xeb4)->initLayout();

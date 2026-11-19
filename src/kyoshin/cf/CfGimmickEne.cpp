@@ -5,6 +5,10 @@ extern "C" void dummy();
 #include <revolution/GX.h>
 #include "monolib/math/CMat34.hpp"
 
+// Empty vtable override and empty dispatch entry (retail bodies are `blr`).
+extern "C" void gimmickEneNoopVtable20() {}
+extern "C" void gimmickEneNoopDispatch5() {}
+
 // Color/alpha view of CfGimmickEne for the marker-quad renderer. Kept
 // local so this data-only TU does not pull CfGimmickEne.hpp's label
 // externs (they conflict with the section-placed definitions below).

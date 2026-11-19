@@ -1118,6 +1118,7 @@ extern "C" void EffFxInitStructLinks(CEffectNode* node);
 // base/count, run the node initializer over each element, then zero the
 // follow-on table (returning its end pointer).
 extern "C" void* SchedNode_AllocPool(u32 size, u32 count) {
+    s32 i;
     u32 a = (size + 0x1f) & ~0x1f;
     u32 base = (a + 0x1f) & ~0x1f;
     lbl_eu_80661738.mCount = count;
@@ -1126,7 +1127,6 @@ extern "C" void* SchedNode_AllocPool(u32 size, u32 count) {
     lbl_eu_80661738.mLastHandle = 0;
     // Retail keeps both a per-element byte cursor and the loop index.
     u32 off = 0;
-    s32 i;
     for (i = 0; i < (s32)count; i++) {
         EffFxInitStructLinks((CEffectNode*)((u8*)lbl_eu_80661738.mBase + off));
         off += 0x338;
@@ -1906,12 +1906,12 @@ extern "C" void SchedAnim_AdvanceCursor(CSchedAnimItem* item, CEntryElem* entrie
 // blob is present) load the run's slot handles and set the 0x04 flag bits
 // according to whether the run extends to the blob terminator.
 extern "C" void SchedAnim_InitSlots(CSchedAnimItem* item, u8* base) {
+    CScheduleItem* si = (CScheduleItem*)item;
     item->mField00 = 0.0f;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
     item->mField06 = 1;
-    CScheduleItem* si = (CScheduleItem*)item;
     si->mSlots[2] = -1;
     si->mSlots[3] = -1;
     if (base != NULL) {
@@ -2072,7 +2072,7 @@ extern "C" void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entrie
                   rate);
     // deviate bit 5: x/y
     u8 devXY = 0;
-    if (item->mField0C != 0.0f || item->mField10 != 0.0f) {
+    if (item->mField0C || item->mField10) {
         devXY = 1;
     }
     u8 sf2;
@@ -2085,7 +2085,7 @@ extern "C" void SchedAnim_AdvanceScale4(CSchedAnimItem* item, CEntryElem* entrie
     item->mScaleFlag = sf;
     // deviate bit 6: z/w
     u8 devZW = 0;
-    if (item->mField14 != 0.0f || item->mField18 != 0.0f) {
+    if (item->mField14 || item->mField18) {
         devZW = 1;
     }
     if (devZW != 0) {
@@ -2594,8 +2594,7 @@ extern "C" void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entr
                   rate);
     // flag starts cleared and is set only when the vector deviates from 1.0
     u8 flag = false;
-    if (item->mField0C != 0.0f || item->mField10 != 0.0f ||
-        item->mField14 != 0.0f) {
+    if (item->mField0C || item->mField10 || item->mField14) {
         flag = true;
     }
     item->mScaleFlag = flag;

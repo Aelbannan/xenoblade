@@ -540,8 +540,8 @@ haveOk:
                                                  lbl_eu_806665A0,
                                                  (int)arg) == 0)
             goto ret0;
-        self->mByte1 = 0;
         *out = self->field_0x24;
+        self->mByte1 = 0;
         self->mFlagsU16_1 |= 0x4;
         return 1;
     }

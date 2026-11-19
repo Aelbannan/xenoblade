@@ -449,7 +449,7 @@ extern "C" void SuddenCommuRearmTimer(CSuddenCommu* self) {
     // Single "current player" slot reused across the probe blocks (retail r30).
     CSuddenCommuActor* player;
     self->field_24 &= ~1;
-    if (isTimerActive__Q22cf13CfGameManagerFv() != 0) {
+    if (cf::CfGameManager::isTimerActive() != 0) {
         self->field_18 -= lbl_eu_80667E38;
         if (cf::CfGameManager::getPlayer(0) != 0) {
             void* spotP = cf::CfGameManager::getPlayer(0);

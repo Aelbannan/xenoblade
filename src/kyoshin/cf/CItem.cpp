@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CItem.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
 
@@ -798,8 +799,8 @@ void CItem_rerank4(u32 unused, CItemData* self) {
         u8 b[4];
     } tmp;
     tmp.value = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, (u16)v);
-    u32 f18 = __rlwimi(self->field_18, v, 0, 17, 31);
     u32 f7 = __rlwimi(self->field_07, tmp.b[0], 2, 24, 29);
+    u32 f18 = __rlwimi(self->field_18, v, 0, 17, 31);
     self->field_07 = (u8)f7;
     self->field_18 = (u16)f18;
     u16* slots = (u16*)self->field_08;
@@ -2230,8 +2231,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
                 CItem_initItemImplInstances(rec)->vf48(rec);
             }
             t = ((u16*)cd)[(u16)s + 1];
-            *sc = (s16)CtrlObjectParam_ReadItemDataU16(cd, (u32)s,
-                                     (void*)((unsigned long)cd + (unsigned long)((u16)s * 2)));
+            *sc = (s16)((cf::CtrlObjectParamData*)cd)->getShortAt1C((u32)s);
             CtrlObjectParam_WriteEquipSlotValue(cd, (u32)s, (void*)-1);
             CtrlObjectParam_WriteU16RowEntry(cd, (u16)s, t);
             sc++;

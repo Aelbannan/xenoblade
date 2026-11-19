@@ -30,7 +30,6 @@ extern const f32 lbl_eu_8066AC20;
 extern const f32 lbl_eu_8066AC24;
 extern const f32 lbl_eu_8066AC28;
 extern const f32 lbl_eu_8066AC04;     // viewport aspect-ratio scale (ScnCamViewReg)
-extern const f64 lbl_eu_8066AC08;     // 2^52 (u16 -> float conversion magic)
 extern const f64 lbl_eu_8066AC30;     // signed int->float magic (2^52 + 2^31)
 
 // Named-magic conversion helpers (retail references the shared pool labels
@@ -56,6 +55,7 @@ union SCamDefaultTable {
 };
 
 extern SCamDefaultTable lbl_eu_80658658;
+extern f32 lbl_eu_80658664[7];
 
 // ============================================================
 // FULL_MATCH functions
@@ -541,9 +541,9 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
     strcpy(obj->mName, name);
 
     obj->mTransform.mFlags = 0;
-    obj->mCamParam0 = lbl_eu_80658658.v[3];
-    obj->mCamParam1 = lbl_eu_80658658.v[4];
-    obj->mCamParam2 = lbl_eu_80658658.v[5];
+    obj->mCamParam0 = lbl_eu_80658664[0];
+    obj->mCamParam1 = lbl_eu_80658664[1];
+    obj->mCamParam2 = lbl_eu_80658664[2];
     obj->mDepthNear = lbl_eu_8066ABF0;
     obj->mDepthMid = lbl_eu_8066ABF0;
     obj->mDepthFarNear = lbl_eu_8066ABF0;
@@ -843,9 +843,9 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
     lay->mPosX = *(const u32*)&lbl_eu_80658658.v[0];
     lay->mPosY = *(const u32*)&lbl_eu_80658658.v[1];
     lay->mPosZ = *(const u32*)&lbl_eu_80658658.v[2];
-    lay->mCamParam0 = *(const u32*)&lbl_eu_80658658.v[3];
-    lay->mCamParam1 = *(const u32*)&lbl_eu_80658658.v[4];
-    lay->mCamParam2 = *(const u32*)&lbl_eu_80658658.v[5];
+    lay->mCamParam0 = *(const u32*)&lbl_eu_80658664[0];
+    lay->mCamParam1 = *(const u32*)&lbl_eu_80658664[1];
+    lay->mCamParam2 = *(const u32*)&lbl_eu_80658664[2];
     cam->mTransform.mRot.z = lbl_eu_8066ABF0;
 
     // diff = aim point - table origin; distance + yaw/pitch derive from it.

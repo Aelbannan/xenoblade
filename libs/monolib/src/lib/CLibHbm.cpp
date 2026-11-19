@@ -544,7 +544,6 @@ void CLibHbm::renderHbmstopIcon(){
 // all manual-vtable TUs). Only this class's own overrides are declared here.
 namespace HbmBlob {
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
-extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
 extern "C" void WorkEvent3__10IWorkEventFPv();
 extern "C" void WorkEvent4__10IWorkEventFv();
 extern "C" void OnPauseTrigger__10IWorkEventFb();

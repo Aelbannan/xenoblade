@@ -64,7 +64,7 @@ extern "C" void* lookupWorkAtAddr(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* ArtsSelect_GetEntry(int id);
 extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
-extern "C" void* CItem_initItemImplInstances(void* item);
+// CItem_initItemImplInstances: canonical decl from CfGameManager.hpp.
 extern "C" void CItemData_enableFamFlag(void* item);
 extern "C" void CItemData_callVf0C(void* item, u16 v);
 extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);
@@ -85,10 +85,10 @@ extern "C" int CMainMenu_IsOpen();
 extern "C" void UIWin_CreateSysWin0(void* a, u32 b, u32 c);
 extern "C" void* Selector_GetInstance();
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void* isTimerActive__Q22cf13CfGameManagerFv();
-extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
+
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
 extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
+extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 id);

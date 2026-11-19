@@ -5,6 +5,7 @@
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "monolib/util/reslist.hpp"
 #include <nw4r/math.h>
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 namespace cf {
 class CfObject;
@@ -18,7 +19,6 @@ class CfObject;
 // C linkage so the relocs reference the exact retail names.
 extern "C" void __ct__cf_CfObjEnumList(u8* self);
 extern "C" u8* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" u8* allocate__Q23mtl10MemManagerFUlUl(u32 size, u8* heap);
 // KEEP (extern-C cleanup 2026-10-23): calling these through operator delete/delete[]
 // changes the extab cleanup actions (retail keeps the may-throw call shape).
 extern "C" void __dl__FPv(void* p);
@@ -711,7 +711,7 @@ void Selector_ReinitState(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
 // ---------------------------------------------------------------------
 void __ct__800FDB4C() {
     if (lbl_eu_80663F14 == NULL) {
-        cf::CfObjectSelectorData* obj = (cf::CfObjectSelectorData*)allocate__Q23mtl10MemManagerFUlUl(0xC188, getHandleMEM2__Q23mtl10MemManagerFv());
+        cf::CfObjectSelectorData* obj = (cf::CfObjectSelectorData*)mtl::MemManager::allocate(0xC188, (u32)getHandleMEM2__Q23mtl10MemManagerFv());
         if (obj != NULL) {
             __ct__cf_CfObjEnumList((u8*)&obj->mList1);
             __ct__cf_CfObjEnumList((u8*)&obj->mList2);

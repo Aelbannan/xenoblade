@@ -4,6 +4,7 @@
 #include <revolution/MTX.h>
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail data symbols referenced from this unit.
 extern const float lbl_eu_80666910;
@@ -23,149 +24,16 @@ extern "C" float VecMath_SegmentParam(const ml::CVec3& a, const ml::CVec3& b, co
 
 namespace cf {
 
-// ---------------------------------------------------------------------------
-// Real class tree, recovered from the retail vtable lbl_eu_80528600
-// (= split1.s __vt__Q22cf12CfObjectColl, 0x178 bytes: RTTI, 0, 92 slots).
-//
-// Slot ownership follows the linker symbols that fill each entry in the
-// retail table (JP __RTTI__ / *_typestr confirm the classes):
-//
-//   cf::CObjectState   +0x08..+0x38 (UnkVirtualFunc1..13)
-//   cf::CObjectParam   +0x3C..+0x50 (UnkVirtualFunc1..6)
-//   cf::CfObject       +0x54..+0x174 (dtor slot + the UnkVirtualFunc zoo)
-//   cf::CfObjectPoint  overrides +0x48/+0x60/+0x68/+0x70/+0x9C/+0xA0/
-//                                 +0x158/+0x160 (loadPointData..AC604)
-//   cf::CfObjectColl   overrides +0x54/+0x58/+0x5C/+0x6C/+0xA8/+0xB8
-//
-// Intermediate tables are never constructed as most-derived in this TU and no
-// compiler __vt__ survives the build (postprocess strips .data and points the
-// dtor's lis/addi vptr store at the retail label), so only displacement
-// positions and the definitions compiled here matter.
-// ---------------------------------------------------------------------------
-
-class CObjectState {
-public:
-    virtual void setStateBitMask();    // +0x08
-    virtual void checkStateFlags();    // +0x0C
-    virtual void setStateBitFlag();    // +0x10
-    virtual void clearStateWord4();    // +0x14
-    virtual void applyStateFlags();    // +0x18
-    virtual void clearStateWord8();    // +0x1C
-    virtual void clearStateFlags8();    // +0x20
-    virtual void CObjectState_UnkVirtualFunc8();    // +0x24
-    virtual void CObjectState_UnkVirtualFunc9();    // +0x28
-    virtual void setStateBitMask0();   // +0x2C
-    virtual void* getStateData();   // +0x30
-    virtual void setStateBitMask2();   // +0x34
-    virtual void setStateBitMask3();   // +0x38
-};
-
-class CObjectParam : public CObjectState {
-public:
-    virtual void CObjectParam_UnkVirtualFunc1();    // +0x3C
-    virtual void CObjectParam_UnkVirtualFunc2();    // +0x40
-    virtual void CObjectParam_hasObjectName();    // +0x44
-    virtual void loadPointData();                   // +0x48 (overridden by CfObjectPoint)
-    virtual void CObjectParam_getSelfObjectId();    // +0x4C
-    virtual void CObjectParam_signalActionEnd();    // +0x50
-};
-
-class CfObject : public CObjectParam {
-public:
-    virtual ~CfObject() {}                                          // +0x54 (empty; not in retail D1/D2 chain)
-
-    virtual int resetCollTimer();                    // +0x58 (overridden by CfObjectColl)
-    virtual void enableCollision();                   // +0x5C (overridden by CfObjectColl)
-    virtual void updatePointState();                   // +0x60 (overridden by CfObjectPoint)
-    virtual void CfObject_updateMoveRate();        // +0x64
-    virtual void releasePointLink();                   // +0x68 (overridden by CfObjectPoint)
-    virtual void refreshCollLink(const ml::CVec3* pos); // +0x6C (overridden by CfObjectColl)
-    virtual void setChildPoint();                   // +0x70 (overridden by CfObjectPoint)
-    virtual int CfObject_isMoveActiveNow();         // +0x74
-    virtual void CfObject_forwardSubObject();       // +0x78
-    virtual int CfObject_notifyMemberRemoved();        // +0x7C
-    virtual void CfObject_refreshSubB0();       // +0x80
-    virtual void CfObject_queryTargetState();       // +0x84
-    virtual void* CfObject_pushRefreshValue(float value); // +0x88
-    virtual float CfObject_getMoveSpeedRate();      // +0x8C
-    virtual void* CfObject_pushRefreshExtra();      // +0x90
-    virtual float CfObject_readRefreshValue();      // +0x94
-    virtual int CfObject_checkTargetState();        // +0x98
-    virtual void func_80047814(const void* pos);          // +0x9C (overridden by CfObjectPoint)
-    virtual void setPointPosition();                   // +0xA0 (overridden by CfObjectPoint)
-    virtual void CfObject_setPosXYZ();       // +0xA4
-    virtual void syncCollVectors(const void* pos);          // +0xA8 (see spell-out definition in the .cpp)
-    virtual ml::CVec3* CfObject_getPosVector(); // +0xAC
-    virtual void* CfObject_getPosTriple();      // +0xB0
-    virtual void CfObject_snapMoveTarget(ml::CVec3* pos, float scale); // +0xB4
-    virtual void copyCollPosition();                   // +0xB8 (overridden by CfObjectColl)
-    virtual void* CfObject_UnkVirtualFunc27(void* param); // +0xBC
-    virtual void* CfObject_getField48();      // +0xC0
-    virtual float CfObject_setMoveHeadAngle(float value); // +0xC4
-    virtual void CfObject_setMoveYaw();       // +0xC8
-    virtual void CfObject_getMoveHeadAngle();       // +0xCC
-    virtual void CfObject_UnkVirtualFunc32();       // +0xD0
-    virtual void CfObject_applyMoveYaw();       // +0xD4
-    virtual void CfObject_getScaledAngle();       // +0xD8
-    virtual void CfObject_setObjScale(float value); // +0xDC
-    virtual float CfObject_getObjScale();      // +0xE0
-    virtual void CfObject_resetAnimSlots();       // +0xE4
-    virtual int CfObject_clearAnimEntry();        // +0xE8
-    virtual int CfObject_UnkVirtualFunc39();        // +0xEC
-    virtual int CfObject_UnkVirtualFunc40();        // +0xF0
-    virtual int CfObject_UnkVirtualFunc41();        // +0xF4
-    virtual int CfObject_UnkVirtualFunc42();        // +0xF8
-    virtual int CfObject_UnkVirtualFunc43();        // +0xFC
-    virtual int CfObject_UnkVirtualFunc44();        // +0x100
-    virtual void CfObject_UnkVirtualFunc45();       // +0x104
-    virtual void CfObject_setMoveTargetPtr(void*);       // +0x108
-    virtual void CfObject_createMoveTarget();       // +0x10C
-    virtual void* CfObject_getCurrentTarget();       // +0x110
-    virtual void CfObject_forwardNpcAction();       // +0x114
-    virtual void CfObject_getNpcActionState();       // +0x118
-    virtual int CfObject_getNpcTargetAction();        // +0x11C
-    virtual void CfObject_findNodeMatrix();       // +0x120
-    virtual void CfObject_UnkVirtualFunc53();       // +0x124
-    virtual void CfObject_getSubPosWord();       // +0x128
-    virtual void CfObject_getPosSample();       // +0x12C
-    virtual void CfObject_UnkVirtualFunc56();       // +0x130
-    virtual void CfObject_setMoveValue();       // +0x134
-    virtual void CfObject_getMoveRateScale();       // +0x138
-    virtual void CfObject_setMoveScale(float value); // +0x13C
-    virtual float CfObject_getMoveFactor();      // +0x140
-    virtual void CfObject_setAnimSlotEntry();       // +0x144
-    virtual int CfObject_getSlotBits();        // +0x148
-    virtual void CfObject_UnkVirtualFunc63();       // +0x14C
-    virtual int CfObject_setMoveBusyState(int id);  // +0x150
-    virtual void CfObject_setMoveReadyFlag(int flag); // +0x154
-    virtual void setPointEnabled(u32 flag);           // +0x158 (overridden by CfObjectPoint)
-    virtual void CfObject_setVisibleFlag(int flag); // +0x15C
-    virtual int isCollEnabled();                    // +0x160 (defined by CfObjectPoint)
-    virtual int CfObject_isVisibleFlag();        // +0x164
-    virtual void CfObject_syncModelRate();       // +0x168
-    virtual float CfObject_getProgressLow();      // +0x16C
-    virtual void CfObject_UnkVirtualFunc72();       // +0x170
-    virtual float CfObject_getProgressHigh();      // +0x174
-
-    u8 pad04[0x68 - 0x04];
-    u32 field_0x68;                    // shared flag word
-    u32 field_0x6C;
-};
+// CfObject / CObjectParam / CObjectState virtuals and fields are declared once
+// on the real classes in kyoshin/cf/object/CfObject.hpp, in retail vtable order
+// (lbl_eu_80528600). This header only adds the Point/Coll family on top.
 
 class CfObjectPoint : public CfObject {
 public:
     virtual ~CfObjectPoint();          // +0x54 override; defined in CfObjectPoint.cpp
 
     void notifyChildUpdate(const ml::CVec3* pos); // non-virtual helper (external)
-
-    virtual void loadPointData();      // +0x48
-    virtual void updatePointState();      // +0x60
-    virtual void releasePointLink();      // +0x68
-    virtual void setChildPoint();      // +0x70
-    virtual void func_80047814(const void* pos); // +0x9C: copies pos[0..2] to this+0x3C
-    virtual void setPointPosition();      // +0xA0
-    virtual void setPointEnabled(u32 flag); // +0x158
-    virtual int isCollEnabled();       // +0x160
+    int isCollEnabled();                          // +0x160 retail spelling
 };
 
 class __declspec(novtable) CfObjectColl : public CfObjectPoint {

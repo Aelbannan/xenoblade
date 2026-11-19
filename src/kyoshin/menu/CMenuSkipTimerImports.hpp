@@ -18,7 +18,7 @@ extern "C" int CSkipTimerGetSkipButton(CSkipTimer* self);
 extern "C" void CSkipTimerTeardown(CSkipTimer* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // Secondary mode bitfield (bit 21 / IBM bit 10 = realtime event busy).
 extern u32 lbl_eu_80663E28;

@@ -144,7 +144,8 @@ CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
     self->field_0x5A = 0;
 
     // Construct embedded CCur18 cursor
-    __ct__CCur18(&self->mCursor, 0);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCursor, 0);
+
     return self;
 }
 
@@ -195,14 +196,14 @@ void CArtsInfo_UpdateAnims(CArtsInfo* self) {
     case 6: CArtsInfo_AnimState6(self); break;
     case 7: CArtsInfo_AnimState7(self); break;
     case 8: CArtsInfo_AnimState8(self); break;
-    case 9: CArtsInfo_AnimState9(self); break;
-    // Cases 0xA-0xC share the post-dispatch with default and with the
-    // cmpli-bgt tail, so MWCC folds the table bound to 9. `return` would
-    // keep bound 12 but skip Animate (wrong table targets). Left as
-    // explicit empty cases for the 13-slot range; bound residual stands.
+    // Retail's 13-slot jump table maps states 0xA-0xC onto the state-9 body
+    // (the table entries all point at its `bl CArtsInfo_AnimState9`), so the
+    // switch bound stays 12 and the post-dispatch tail is shared.
+    case 9:
     case 0xA:
     case 0xB:
     case 0xC:
+        CArtsInfo_AnimState9(self);
         break;
     default:
         break;
@@ -2522,7 +2523,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         // Build a temporary cursor against the shared accessor and copy its
         // body over the embedded one (vptr at +0 preserved; word copies).
         CCur18 tmpCursor;
-        __ct__CCur18(&tmpCursor, CUICfManager_getArcResourceAccessor());
+        __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&tmpCursor, CUICfManager_getArcResourceAccessor());
         mCursor = tmpCursor;
         __dt__6CCur18Fv(&tmpCursor, -1);
         mCursor.initLayout();

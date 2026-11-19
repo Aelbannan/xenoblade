@@ -1086,8 +1086,9 @@ void setupDrawCmds__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         arg->field_0x18 = src + prod;
     } else {
         if (arg->field_0x2 & 2) {
-            // Parenthesised scaled term keeps MWCC's add operand order.
-            arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600) + 0x300;        } else {
+            u8* dst = (u8*)s->field_0x2c + arg->field_0x0 * 0x600;
+            arg->field_0x18 = dst + 0x300;
+        } else {
             arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600);
         }
         s32 n = (arg->field_0x4 + 1) * 3;

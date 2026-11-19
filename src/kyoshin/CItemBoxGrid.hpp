@@ -170,14 +170,7 @@ struct CItemBoxGridEntry {
     CItemBoxGridEntry(s16 id = -1, u8 f0 = 0, u8 f1 = 0, u8 f2 = 0, u8 f3 = 0, u8 f4 = 0, u8 f5 = 0, bool marked = false);
 };
 
-// Sort view over a fetched item object: the first word feeds the generic
-// comparison key (word >> 20 through BdatGetItemId), the flag byte at +0x07
-// feeds the mode-9 tie-break (bits 24..29).
-struct CItemSortView {
-    u32 word00;
-    u8 _04[3];
-    u8 flags7;
-};
+// Sort keys come from CItemBoxItem (CItemBoxInfo.hpp).
 
 // Item-cell grid embedded in CItemBoxGrid at +0x54C (retail ctor
 // __ct__801C5514, dtor __dt__801C5670): 0x400 cells plus count/category/
@@ -459,7 +452,6 @@ extern "C" u32 getPresentRankA(void*);
 extern "C" u32 getPresentRankB(void*);
 extern "C" void CItem_thunkAllocRecord(u32, u32);
 extern "C" void UIWin_BuildFlagBufRec(u32, u32, u32);
-extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(void*, u8);
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
@@ -467,7 +459,6 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, void*, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
  extern "C" CBaseCur* __ct__CCur07(void*, void*);

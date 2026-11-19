@@ -123,7 +123,7 @@ CDeviceFileCri::~CDeviceFileCri() {
     if (pException != nullptr) {
         pException = (IException*)((u8*)pException + 0x1C4);
     }
-    RemoveFromGlobalArray__10CExceptionFP10IException((CException*)pException);
+    CException::RemoveFromGlobalArray(pException);
     lbl_eu_80665668 = nullptr;
     if (mBuffer != nullptr) {
         mtl::MemManager::deallocate(mBuffer);

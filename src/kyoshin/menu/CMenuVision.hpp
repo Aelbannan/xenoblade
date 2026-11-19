@@ -84,8 +84,8 @@ extern "C" void* __dt__11CMenuVisionFv(void*, int);
 extern "C" void cbRenderBefore__11CMenuVisionFv(void*);
 extern "C" void __ct__8CProcessFv(CProcess* self);                     // CProcess base ctor (C-ABI import)
 extern "C" void __dt__8CProcessFv(CProcess* self, int flags);          // CProcess base dtor (C-ABI import)
-extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop); // CProcess::Regist (C-ABI import)
-extern "C" CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent); // retail-unmangled ctor
+// CProcess::Regist is declared in monolib/work/CProcess.hpp.
+
 // CDeviceFont font-handle lookup; retail Init calls it with a single argument
 // (the second Layout* parameter is left unset at this call site).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);

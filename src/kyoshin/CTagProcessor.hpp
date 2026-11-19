@@ -626,18 +626,6 @@ struct TagTalkSrc {
     TagC4Obj* field_C4;    // +0xC4
 };
 
-/* Pad-data views for the CfGameManager pad getters used by TagProcStepMessage. */
-struct TagPadView {
-    u8  pad[0x4];
-    u32 field_04;   // +0x04 button bits
-};
-struct TagPadDataView {
-    u8  pad[0x4];
-    u32 field_04;    // +0x04 button bits
-    u8  pad_08[0xFC];
-    u32 field_104;   // +0x104
-};
-
 /* Tag-processor objects (0x858 heap block). Retail layout: vtable pointer at
  * +0x00 (the nw4r TagProcessorBase subobject), then the 0x800-byte message
  * buffer, then state fields. The classes are real C++ classes deriving from

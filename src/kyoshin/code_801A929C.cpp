@@ -1083,9 +1083,9 @@ extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
 
 void BattleWork_CopyPairToWork(unsigned int* pSrcA, unsigned int* pSrcB) {
     extern unsigned char lbl_eu_80664330;
-    unsigned int *p = (unsigned int *)&lbl_eu_80664330;
-    if (!*p) return;
-    unsigned int *dst = (unsigned int *)*p;
+    void* p = *(void**)(&lbl_eu_80664330);
+    if (!p) return;
+    unsigned int *dst = *(unsigned int **)p;
     unsigned int *src1 = pSrcA;
     unsigned int *src2 = pSrcB;
     dst[0] = src1[0];

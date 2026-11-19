@@ -2,6 +2,7 @@
 // Self-contained includes: the file has no other includes and is parsed
 // standalone by the label-centralization gate.
 #include "kyoshin/cf/CItemBlockApi.hpp"
+
 #include <types.h>
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -10,7 +11,6 @@ void* getFP(const char* pName);
 namespace cf {
 class UnkClass_80082D90;
 }
-
 namespace ml {
 template <>
 FixStr<64>::FixStr() {
@@ -397,7 +397,8 @@ extern "C" u32 cfCam_loadUnkC4(cf::CfObjectMove* player);
 extern "C" bool isField4ECFlag16__Q22cf13CfGameManagerFv(u32 state);
 extern "C" bool isField4ECFlag07__Q22cf13CfGameManagerFv(u32 state);
 extern "C" bool testAnimMoveBit(u32 state);
-extern "C" bool cfCam_getBit1_4EC(u32 state);
+// Canonical signature from CfCam.hpp; the +0xC4 word is an object pointer.
+extern "C" unsigned int cfCam_getBit1_4EC(const void* self);
 extern "C" u32 isStateFlag20Set__Q22cf13CfGameManagerFv(const u8* state);
 extern "C" s32 getStateTimer532__Q22cf13CfGameManagerFv(const u8* state);
 extern "C" float lbl_eu_80666530;
@@ -462,7 +463,8 @@ extern "C" bool isPlayerInEventRange__Q22cf13CfGameManagerFv() {
                         reinterpret_cast<ContainerRootInterface*>(container);
                     if (root->getGaugeFloat128() <= lbl_eu_80666498) {
                         result = false;
-                    } else if (testAnimMoveBit(state) || cfCam_getBit1_4EC(state)) {
+} else if (testAnimMoveBit(state) ||
+                             cfCam_getBit1_4EC(reinterpret_cast<const void*>(state))) {
                         if (!isField4ECFlag07__Q22cf13CfGameManagerFv(state)) {
                             result = true;
                         }
@@ -1192,17 +1194,15 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
     return object;
 }
 
-// Unified pointer-arg form (owner ABI: CItem.cpp dispatches on the item);
-// retail callers here leave the live record in r3, so passing it adds no code.
-extern "C" void* CItem_initItemImplInstances(void* item);
+// Canonical CItem_initItemImplInstances(CItemData*) comes from CfGameManager.hpp.
 extern "C" u16 getItemCountForGroup__Q22cf13CfGameManagerFv(u32 value) {
-    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)value))->getItemCount(value);
+    return ((CItemImplInstances*)CItem_initItemImplInstances((CItemData*)value))->getItemCount(value);
 }
 extern "C" UnkF0ACData* getItemSlotData__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->getItemSlot(first, second);
+    return ((CItemImplInstances*)CItem_initItemImplInstances((CItemData*)first))->getItemSlot(first, second);
 }
 extern "C" void resetItemSlotA__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->resetItemSlot(first, second);
+    ((CItemImplInstances*)CItem_initItemImplInstances((CItemData*)first))->resetItemSlot(first, second);
 }
 extern "C" void bdatGetItemName(u16 value);
 extern "C" CfGameManagerData1C* loadBdatGroupData__Q22cf13CfGameManagerFv(
@@ -1316,7 +1316,7 @@ extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 first, s32 second
     return CtrlRemote_TouchBitByArg(index + 40);
 }
 
-extern "C" bool isResourceFlagSet__Q22cf13CfGameManagerFv(u32 bit) {
+bool cf::CfGameManager::isResourceFlagSet(u32 bit) {
     return (CtrlRemote_TouchBitByArg(0x108) & (1U << bit)) != 0;
 }
 extern "C" bool setResourceFlag__Q22cf13CfGameManagerFv(u32 bit, bool enable) {
@@ -2057,7 +2057,6 @@ extern "C" void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate) {
         syncBdatDataCache__Q22cf13CfGameManagerFv(value, &fallback, size);
     }
 }
-
 extern "C" bool CtrlObjectParam_FindSlotTypeIndex(UnkClass_8009ECB0* object, u32 value, s32* firstOut,
                                 s32* secondOut);
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value) {
@@ -3006,4 +3005,3 @@ extern "C" void sinit_80087470() {
     *(volatile u32*)(base + 0xA5C) = 0;
     *(volatile float*)(base + 0xA60) = lbl_eu_80666548;
 }
-

@@ -260,7 +260,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
 
     // Fresh overlay pane appended under the shared root.
     nw4r::lyt::Pane* newPane = NULL;
-    void* paneMem = allocate__Q23mtl10MemManagerFUlUl(
+    void* paneMem = mtl::MemManager::allocate(
         0xD8, CLibLayout::getAllocHandle());
     if (paneMem != NULL) {
         newPane = new (paneMem) nw4r::lyt::Pane();
@@ -314,7 +314,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
                 (TPLPalette*)self->texSrc->getTex(0x74696D67, (u32)tplName, 0);
             if (pal != 0) {
                 nw4r::lyt::Picture* pic = NULL;
-                void* picMem = allocate__Q23mtl10MemManagerFUlUl(
+                void* picMem = mtl::MemManager::allocate(
                     0xF0, CLibLayout::getAllocHandle());
                 if (picMem != NULL) {
                     nw4r::lyt::TexMap texMap(pal, 0);
@@ -997,7 +997,7 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
             nw4r::lyt::Picture* pic = NULL;
             if (pal != 0) {
                 void* raw =
-                    allocate__Q23mtl10MemManagerFUlUl(0xf0, CLibLayout::getAllocHandle());
+                    mtl::MemManager::allocate(0xf0, CLibLayout::getAllocHandle());
                 if (raw != 0) {
                     nw4r::lyt::TexMap texMap(reinterpret_cast<TPLPalette*>(pal), 0);
                     pic = new (raw) nw4r::lyt::Picture(texMap);

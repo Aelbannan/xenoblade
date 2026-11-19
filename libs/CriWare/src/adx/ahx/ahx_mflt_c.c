@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 
-extern f32 lbl_eu_80517548[];
+extern const f32 ahxmflt_window_scale[];
 
 /* AHX SBF filter multiply (extended).
  * a   = 32-tap filter coefficient array (fixed across both passes)
@@ -9,7 +9,7 @@ extern f32 lbl_eu_80517548[];
  *
  * Result layout (float indices):
  *   out[0..15]   = dot(a, b + 32*i)              i = 0..15
- *   out[16]      = shared window-table constant (lbl_eu_80517548[0])
+ *   out[16]      = shared window-table constant (ahxmflt_window_scale[0])
  *   out[17..32]  = -dot(a, b + 32*i), reversed    out[32-i] = -out[i]
  *   out[33..47]  = dot(a, b + 32*(33+i))         i = 0..14
  *   out[48]      = -sum(a[0..31])
@@ -39,7 +39,7 @@ extern f32 lbl_eu_80517548[];
  * 24..31 chain (`... + p31 + sum`; reg_swap 161 vs 162, still +8) and
  * shortening the chained tail to taps 28..31 with individual statements
  * through tap 27 (structural 117 but reg_swap 172, still +8). Moving the
- * lbl_eu_80517548 extern into "lbls_criware.hpp" is codegen-neutral.
+ * ahxmflt_window_scale extern into "lbls_criware.hpp" is codegen-neutral.
  */
 
 #define AHX_DOT(sum, a, bb) \
@@ -89,7 +89,7 @@ void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
     } while (--i != 0);
 
     b = b0 + 0x420;
-    out[0x10] = lbl_eu_80517548[0];
+    out[0x10] = ahxmflt_window_scale[0];
     i = 0xF;
     do {
         AHX_DOT(sum, a, b)
@@ -132,3 +132,7 @@ void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
     s += a[31];
     out[0x30] = -s;
 }
+
+/* Shared synthesis-window scale constant (zero). */
+const f32 ahxmflt_window_scale[2] = { 0.0f, 0.0f };
+

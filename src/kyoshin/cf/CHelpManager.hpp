@@ -302,11 +302,11 @@ struct CHelpTableFull {
 } // namespace cf
 
 // TU-local helpers (retail symbols are unmangled free functions, so these
-// keep C linkage; defined in CHelpManager.cpp). DECOMP_DONT_INLINE keeps
+// keep C linkage; defined in CHelpManager.cpp). keeps
 // retail's real `bl` calls (MWCC would otherwise inline the small bodies).
-extern "C" DECOMP_DONT_INLINE void clearHelpListHolder(cf::CHelpListHolder* self);
-extern "C" DECOMP_DONT_INLINE void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag);
-extern "C" DECOMP_DONT_INLINE void clearHelpList(cf::CHelpListHolder* self);
+extern "C" void clearHelpListHolder(cf::CHelpListHolder* self);
+extern "C" void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 flag);
+extern "C" void clearHelpList(cf::CHelpListHolder* self);
 // Help-popup gate (CHelpManager.cpp; also called by CHelp_GameOver).
 extern "C" int isHelpPopupReady(cf::CHelpManager* self);
 

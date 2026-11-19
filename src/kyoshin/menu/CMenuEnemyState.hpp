@@ -12,8 +12,7 @@
 // pointer is needed for the memberized EneSt_ScanSlotHighlight declaration).
 struct Actor2Layout;
 
-extern "C" const f32 lbl_eu_80666FEC;
-extern "C" const f32 lbl_eu_80667004;
+extern "C" const f32 sEnemyPanelAnimMarker;
 
 // Panel entry in the 24-slot panel array at offset 0xA4, each 0x4C bytes.
 // Initialised in the ctor do-while loop.  The entry-pointer trick
@@ -49,7 +48,7 @@ struct MenuEnemyPanel {
 
     MenuEnemyPanel()
         : actorId(0), layout1(NULL), unk08(0), layout2(NULL), unk10(0),
-          drawLayout0Flag(0), visible(0), animMarker(lbl_eu_80666FEC), unk1C(0),
+          drawLayout0Flag(0), visible(0), animMarker(sEnemyPanelAnimMarker), unk1C(0),
           unk1D(0), unk1E(0), unk1F(0), unk20(0), unk21(0), unk22(0), unk24(0),
           panelType(0), unk29(1), obj1(NULL), obj2(NULL), obj3(NULL), unk38(0),
           unk3C(0), unk40(0), unk44(0), unk48(0) {}

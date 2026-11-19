@@ -71,7 +71,6 @@ extern "C" {
 // Block A - imports
 
 extern nw4r::lyt::Layout* createLayout__10CLibLayoutFv();
-extern void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern void deallocate__Q23mtl10MemManagerFPv(void*);
 extern void Set__Q34nw4r3lyt12AnimResourceFPCv(void*, const void*);
 extern void PSVECNormalize(const Vec*, Vec*);
@@ -169,8 +168,8 @@ extern u8 lbl_eu_8052E558[];
 extern u8 lbl_eu_8052E530[];
 extern const char lbl_eu_80526324[]; // const: matches CActParamAnimGame.cpp definition + CfSoundMan.hpp chain
 extern const char lbl_eu_80526300[];  // const char: matches CfSoundMan.hpp chain (u8/char variants broke CMiniMap TU)
-extern u8 lbl_eu_805262F0[];
-extern u8 lbl_eu_805262C8[];
+extern const char lbl_eu_805262F0[];
+extern const char lbl_eu_805262C8[];
 extern u8 lbl_eu_80500108[];
 extern u8 lbl_eu_80500230[];
 // Minimap pointer tables: heterogeneous (strings + NULLs); entries are relocs.

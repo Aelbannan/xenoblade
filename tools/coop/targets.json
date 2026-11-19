@@ -3695,7 +3695,7 @@
       "unit": "kyoshin/plugin/ocBdat",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc028"
@@ -4444,7 +4444,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4498,7 +4498,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4527,7 +4527,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4556,7 +4556,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -5120,7 +5120,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -5181,7 +5181,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -5211,7 +5211,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -5922,7 +5922,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bea98",
@@ -7104,7 +7104,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800ac890",
@@ -10498,7 +10498,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "constructor",
-      "symbol": "__ct__cf_CTaskGameCf",
+      "symbol": "__ct__Q22cf11CTaskGameCfFP8CProcessi",
       "address": "0x80044704",
       "size": "0xC8",
       "unit": "kyoshin/cf/CTaskGameCf",
@@ -10669,7 +10669,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [],
@@ -10804,7 +10804,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [],
@@ -10830,7 +10830,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [],
@@ -10856,7 +10856,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [],
@@ -10882,7 +10882,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [],
@@ -10908,7 +10908,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [],
@@ -11077,7 +11077,7 @@
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
       "called_functions": [
@@ -12461,7 +12461,7 @@
       "unit": "kyoshin/plugin/pluginUi",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginUi.cpp",
       "called_functions": [
@@ -12491,7 +12491,7 @@
       "unit": "kyoshin/plugin/pluginUi",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginUi.cpp",
       "called_functions": [
@@ -15305,7 +15305,7 @@
       "unit": "kyoshin/plugin/pluginCfs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80086034",
@@ -15370,7 +15370,7 @@
       "unit": "kyoshin/plugin/pluginCfs",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800b10b4",
@@ -17848,7 +17848,7 @@
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004cca0",
@@ -17883,7 +17883,7 @@
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80488ee8",
@@ -25742,7 +25742,7 @@
       "unit": "kyoshin/cf/CTaskEnvironment",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -38256,7 +38256,7 @@
       "unit": "kyoshin/cf/CfTFile",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -51448,7 +51448,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "cf::CfGameManager::isResourceFlagSet()",
-      "symbol": "isResourceFlagSet__Q22cf13CfGameManagerFv",
+      "symbol": "isResourceFlagSet__Q22cf13CfGameManagerFUl",
       "address": "0x80082CE0",
       "size": "0x48",
       "unit": "kyoshin/cf/CfGameManager",
@@ -53445,7 +53445,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "cf::CfGameManager::func_8008413C()",
-      "symbol": "func_8008413C__Q22cf13CfGameManagerFv",
+      "symbol": "func_8008413C__Q22cf13CfGameManagerFUsUl",
       "address": "0x80084AF8",
       "size": "0x518",
       "unit": "kyoshin/cf/CfGameManager",
@@ -54163,9 +54163,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfGameManager.s",
       "abi_helper_calls": [],
-      "instruction_match": 0.0,
-      "source_present": false,
-      "equivalence_status": "equivalent"
+      "instruction_match": 98.9,
+      "source_present": true
     },
     {
       "id": "us-80086980",
@@ -65478,7 +65477,7 @@
       "unit": "kyoshin/code_800A3B24",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040d090",
@@ -67975,7 +67974,7 @@
       "unit": "kyoshin/cf/CfCollCircleImpl",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bca9c",
@@ -68007,7 +68006,7 @@
       "unit": "kyoshin/cf/CfCollCircleImpl",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800a5974",
@@ -91411,7 +91410,7 @@
       "unit": "kyoshin/cfsys/CfObjectImplPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-instance",
@@ -93994,7 +93993,7 @@
       "unit": "kyoshin/cf/CtrlAct",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -96450,7 +96449,7 @@
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [
@@ -96572,7 +96571,7 @@
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [
@@ -97488,7 +97487,7 @@
       "unit": "kyoshin/cf/code_800F42AC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-instance",
@@ -99487,7 +99486,7 @@
       "unit": "kyoshin/CMainMenu",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137800",
@@ -99516,7 +99515,7 @@
       "unit": "kyoshin/CMainMenu",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -99768,7 +99767,7 @@
       "unit": "kyoshin/CMainMenu",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80100408",
@@ -100250,7 +100249,7 @@
       "unit": "kyoshin/CMainMenu",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -101337,7 +101336,7 @@
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "called_functions": [
@@ -111220,7 +111219,7 @@
       "unit": "kyoshin/CTagProcessor",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -111690,7 +111689,7 @@
       "unit": "kyoshin/CTagProcessor",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801263d4",
@@ -112008,7 +112007,7 @@
       "unit": "kyoshin/CTagProcessor",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80129dd8",
@@ -113901,7 +113900,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "constructor",
-      "symbol": "__ct__CUIBattleManager",
+      "symbol": "__ct__16CUIBattleManagerFP8CScnNw4rUl",
       "address": "0x8012EA60",
       "size": "0x1FC",
       "unit": "kyoshin/CUIBattleManager",
@@ -113962,7 +113961,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "destructor",
-      "symbol": "__dt___reslist_base_IUIBattle",
+      "symbol": "__dt__26_reslist_base<P9IUIBattle>Fv",
       "address": "0x8012ECB4",
       "size": "0xB4",
       "unit": "kyoshin/CUIBattleManager",
@@ -113990,7 +113989,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "destructor",
-      "symbol": "__dt__reslist_IUIBattle",
+      "symbol": "__dt__20reslist<P9IUIBattle>Fv",
       "address": "0x8012ED68",
       "size": "0xB8",
       "unit": "kyoshin/CUIBattleManager",
@@ -114102,7 +114101,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "destructor",
-      "symbol": "__dt__8012E534",
+      "symbol": "Term__16CUIBattleManagerFv",
       "address": "0x8012F008",
       "size": "0xFC",
       "unit": "kyoshin/CUIBattleManager",
@@ -114258,7 +114257,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "UIBattleMoveNoop",
-      "symbol": "UIBattleMoveNoop",
+      "symbol": "UIBattleMoveNoopMember__16CUIBattleManagerFv",
       "address": "0x8012FD90",
       "size": "0x4",
       "unit": "kyoshin/CUIBattleManager",
@@ -114284,7 +114283,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "UIBattleOnFileEvent",
-      "symbol": "UIBattleOnFileEvent",
+      "symbol": "OnFileEvent__16CUIBattleManagerFP16CUIBattleFileEvt",
       "address": "0x8012FD94",
       "size": "0x298",
       "unit": "kyoshin/CUIBattleManager",
@@ -118355,7 +118354,7 @@
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040ad24",
@@ -118384,7 +118383,7 @@
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040ad24",
@@ -119527,7 +119526,7 @@
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -120141,7 +120140,7 @@
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8013c370",
@@ -120169,7 +120168,7 @@
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8013c370",
@@ -120977,7 +120976,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "destructor",
-      "symbol": "__dt___reslist_base_IUIWindow",
+      "symbol": "__dt__26_reslist_base<P9IUIWindow>Fv",
       "address": "0x8013CC84",
       "size": "0xB4",
       "unit": "kyoshin/CUIWindowManager",
@@ -121005,7 +121004,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "destructor",
-      "symbol": "__dt__reslist_IUIWindow",
+      "symbol": "__dt__20reslist<P9IUIWindow>Fv",
       "address": "0x8013CD38",
       "size": "0xB8",
       "unit": "kyoshin/CUIWindowManager",
@@ -129889,7 +129888,7 @@
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009d964"
@@ -130026,7 +130025,7 @@
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -142300,7 +142299,7 @@
       "unit": "kyoshin/cf/object/CfObjectActor",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CfObjectActor.cpp",
       "called_functions": [
@@ -142587,7 +142586,7 @@
       "unit": "kyoshin/cf/object/CfObjectActor",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CfObjectActor.cpp",
       "called_functions": [
@@ -144277,7 +144276,7 @@
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [
@@ -144369,7 +144368,7 @@
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [
@@ -144600,7 +144599,7 @@
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
       "called_functions": [],
@@ -147117,7 +147116,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800a9c10",
@@ -147147,7 +147146,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8016d094",
@@ -147175,7 +147174,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc790"
@@ -147393,7 +147392,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8016b668",
@@ -147718,7 +147717,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8016b668",
@@ -147805,7 +147804,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8016d094"
@@ -150038,7 +150037,7 @@
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "called_functions": [
@@ -150145,7 +150144,7 @@
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "called_functions": [
@@ -154470,7 +154469,7 @@
       "unit": "kyoshin/cf/code_8018F8D8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8049a0a4"
@@ -157781,7 +157780,7 @@
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80199ec0",
@@ -157839,7 +157838,7 @@
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80199ec0",
@@ -157868,7 +157867,7 @@
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80199ec0",
@@ -157897,7 +157896,7 @@
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80199ec0",
@@ -159242,7 +159241,7 @@
       "unit": "kyoshin/COccCulling",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/COccCulling.cpp",
       "called_functions": [
@@ -164210,8 +164209,8 @@
       "size": "0x80",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164220,8 +164219,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CPcEffect07.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": true,
       "notes": "[registry 2026-10-23: demoted REVALIDATION_REQUIRED/COMPILES -> ACTIVE: re-measured COMPILES 0.0% eq=inconclusive_smt_disabled; witness did not certify, not byte-identical]"
     },
@@ -164289,8 +164288,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164299,8 +164298,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CPcEffect07.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": false,
       "notes": "[registry 2026-10-23: demoted REVALIDATION_REQUIRED/COMPILES -> ACTIVE: re-measured COMPILES 0.0% eq=inconclusive_smt_disabled; witness did not certify, not byte-identical]"
     },
@@ -164341,8 +164340,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164351,8 +164350,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CPcEffect07.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": false,
       "notes": "[registry 2026-10-23: demoted REVALIDATION_REQUIRED/COMPILES -> ACTIVE: re-measured COMPILES 0.0% eq=inconclusive_smt_disabled; witness did not certify, not byte-identical]"
     },
@@ -164367,8 +164366,8 @@
       "size": "0x44",
       "unit": "kyoshin/cf/CPcEffect07",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -164377,8 +164376,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CPcEffect07.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CPcEffect07.cpp",
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": false,
       "notes": "[registry 2026-10-23: demoted REVALIDATION_REQUIRED/COMPILES -> ACTIVE: re-measured COMPILES 0.0% eq=inconclusive_smt_disabled; witness did not certify, not byte-identical]"
     },
@@ -168784,7 +168783,7 @@
       "unit": "kyoshin/cf/CfSoundMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040ece8"
@@ -172695,7 +172694,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801586ec"
@@ -176708,7 +176707,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c64"
@@ -185375,7 +185374,7 @@
       "unit": "kyoshin/CItemBoxLine",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80124d4c",
@@ -185967,7 +185966,7 @@
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80124d4c",
@@ -186001,7 +186000,7 @@
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801380ec",
@@ -186029,7 +186028,7 @@
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137dc0"
@@ -186056,7 +186055,7 @@
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137ea4"
@@ -193393,7 +193392,7 @@
       "unit": "kyoshin/CEquipChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801d3a78",
@@ -193820,7 +193819,7 @@
       "unit": "kyoshin/CEquipChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -193857,7 +193856,7 @@
       "unit": "kyoshin/CEquipChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -194063,7 +194062,7 @@
       "unit": "kyoshin/CEquipChange",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -195921,7 +195920,7 @@
       "unit": "kyoshin/CItemBoxGridSubMenu",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137dc0"
@@ -196133,7 +196132,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801c16e0"
@@ -196160,7 +196159,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801c16e0"
@@ -196214,7 +196213,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -196243,7 +196242,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -196321,7 +196320,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196351,7 +196350,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196378,7 +196377,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196405,7 +196404,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196435,7 +196434,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196465,7 +196464,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196492,7 +196491,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003b148"
@@ -196604,7 +196603,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040d090",
@@ -196938,7 +196937,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -196966,7 +196965,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -196994,7 +196993,7 @@
       "unit": "kyoshin/cf/CfGimmick",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800b74e8"
@@ -205115,8 +205114,8 @@
       "size": "0x180",
       "unit": "kyoshin/makecrystal/CModelDispMakeCrystal",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004c0ac",
@@ -205131,8 +205130,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8021f3bc",
@@ -208810,7 +208809,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [],
@@ -209360,7 +209359,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [],
@@ -209627,7 +209626,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -209656,7 +209655,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -210068,7 +210067,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -210098,7 +210097,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -210128,7 +210127,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -210156,7 +210155,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -210975,7 +210974,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -211003,7 +211002,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -211031,7 +211030,7 @@
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -221251,7 +221250,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -221288,7 +221287,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -231425,7 +231424,7 @@
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137dc0",
@@ -231861,7 +231860,7 @@
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137628",
@@ -233823,7 +233822,7 @@
       "unit": "kyoshin/CKizunagram",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040ad24"
@@ -235754,7 +235753,7 @@
       "unit": "kyoshin/CPcKizunagram",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137dc0",
@@ -236258,7 +236257,7 @@
       "unit": "kyoshin/CPcKizunagram",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80124d4c",
@@ -236315,7 +236314,7 @@
       "unit": "kyoshin/CPcKizunagram",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137ea4"
@@ -237469,7 +237468,7 @@
       "unit": "kyoshin/code_8025FB10",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80263e48",
@@ -238568,7 +238567,7 @@
       "unit": "kyoshin/CPassiveSkill",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80087974",
@@ -244054,7 +244053,7 @@
       "unit": "kyoshin/menu/code_80272AD8",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae8c",
@@ -247910,7 +247909,7 @@
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [
@@ -250699,7 +250698,7 @@
       "unit": "kyoshin/cf/chain/CChainTimer",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f688",
@@ -253271,7 +253270,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801586ec"
@@ -254299,7 +254298,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -256810,7 +256809,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c64"
@@ -262830,7 +262829,7 @@
       "unit": "kyoshin/makecrystal/CMCGetItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -263217,8 +263216,8 @@
       "size": "0x158",
       "unit": "kyoshin/makecrystal/CMCGetItemBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae74",
@@ -263236,8 +263235,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/CMCGetItemBox.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8029a388",
@@ -278406,7 +278405,7 @@
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -280368,7 +280367,7 @@
       "unit": "kyoshin/cf/CfHikariItemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804388e0"
@@ -282214,7 +282213,7 @@
       "unit": "kyoshin/CTitle",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802b922c",
@@ -282724,7 +282723,7 @@
       "unit": "kyoshin/CTitle",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802b9c34",
@@ -327727,7 +327726,7 @@
       "unit": "RVL_SDK/src/revolution/gx/GXInit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dd510",
@@ -327783,7 +327782,7 @@
       "unit": "RVL_SDK/src/revolution/gx/GXInit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dd5f0",
@@ -342488,7 +342487,7 @@
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharWriter",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharWriter.cpp",
       "called_functions": [
@@ -360281,7 +360280,7 @@
       "unit": "RVL_SDK/src/revolution/os/OSNet",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OSNet.c",
       "called_functions": [
@@ -362242,7 +362241,7 @@
       "unit": "RVL_SDK/src/revolution/si/SIBios",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/si/SIBios.c",
       "called_functions": [
@@ -366091,7 +366090,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
       "called_functions": [
@@ -366121,7 +366120,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
       "called_functions": [
@@ -366183,7 +366182,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
       "called_functions": [
@@ -366607,7 +366606,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
       "called_functions": [
@@ -367150,7 +367149,7 @@
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -374672,7 +374671,7 @@
       "unit": "CriWare/src/adx/adxt/adx_tlk",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80386398",
@@ -375378,7 +375377,7 @@
       "unit": "CriWare/src/adx/adxt/adx_tlk",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bca9c",
@@ -390872,7 +390871,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -396874,7 +396873,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpvabdec",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -396899,7 +396898,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpvabdec",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -414852,7 +414851,7 @@
       "unit": "nw4r/src/db/db_assert",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/db/db_assert.cpp",
       "called_functions": [
@@ -446392,7 +446391,7 @@
       "unit": "nw4r/src/snd/snd_BasicSound",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_BasicSound.cpp",
       "called_functions": [],
@@ -446444,7 +446443,7 @@
       "unit": "nw4r/src/snd/snd_BasicSound",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_BasicSound.cpp",
       "called_functions": [
@@ -446897,7 +446896,7 @@
       "unit": "nw4r/src/snd/snd_BasicSound",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_BasicSound.cpp",
       "called_functions": [],
@@ -456643,7 +456642,7 @@
       "unit": "nw4r/src/snd/snd_SoundSystem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SoundSystem.cpp",
       "called_functions": [
@@ -466952,7 +466951,7 @@
       "unit": "nw4r/src/ut/ut_TextWriterBase",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/ut/ut_TextWriterBase.cpp",
       "called_functions": [],
@@ -467033,7 +467032,7 @@
       "unit": "nw4r/src/ut/ut_TextWriterBase",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/ut/ut_TextWriterBase.cpp",
       "called_functions": [],
@@ -467402,7 +467401,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -467850,7 +467849,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -468009,7 +468008,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [],
@@ -468275,7 +468274,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -468304,7 +468303,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -481107,7 +481106,7 @@
       "unit": "monolib/src/device/CDevice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDevice.cpp",
       "called_functions": [
@@ -481179,7 +481178,7 @@
       "unit": "monolib/src/device/CDevice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDevice.cpp",
       "called_functions": [
@@ -481242,7 +481241,7 @@
       "unit": "monolib/src/device/CDevice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDevice.cpp",
       "called_functions": [
@@ -486059,7 +486058,7 @@
       "unit": "monolib/src/device/CDeviceFontLayer",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bca9c",
@@ -490539,7 +490538,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "CLibCriMoviePlay::updateMovieTextures()",
-      "symbol": "updateMovieTextures__16CLibCriMoviePlayFv",
+      "symbol": "viBeforeDrawDone__16CLibCriMoviePlayFv",
       "address": "0x8045EEB0",
       "size": "0x358",
       "unit": "monolib/src/lib/CLibCriMoviePlay",
@@ -490577,7 +490576,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "CLibCriMoviePlay::onMovieViBegin()",
-      "symbol": "onMovieViBegin__16CLibCriMoviePlayFv",
+      "symbol": "viAfterDrawDone__16CLibCriMoviePlayFv",
       "address": "0x8045F208",
       "size": "0x4",
       "unit": "monolib/src/lib/CLibCriMoviePlay",
@@ -490685,7 +490684,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "CLibCriMoviePlay::handleViBeginFrame()",
-      "symbol": "handleViBeginFrame__16CLibCriMoviePlayFv",
+      "symbol": "@452@viAfterDrawDone__16CLibCriMoviePlayFv",
       "address": "0x8045F400",
       "size": "0x8",
       "unit": "monolib/src/lib/CLibCriMoviePlay",
@@ -490712,7 +490711,7 @@
       "kind": "function",
       "milestone": "unassigned",
       "function": "CLibCriMoviePlay::forwardUpdateMovies()",
-      "symbol": "forwardUpdateMovies__16CLibCriMoviePlayFv",
+      "symbol": "@452@viBeforeDrawDone__16CLibCriMoviePlayFv",
       "address": "0x8045F408",
       "size": "0x8",
       "unit": "monolib/src/lib/CLibCriMoviePlay",
@@ -491585,7 +491584,7 @@
       "unit": "monolib/src/lib/CLibHbm",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/lib/CLibHbm.cpp",
       "called_functions": [
@@ -491746,7 +491745,7 @@
       "unit": "monolib/src/lib/CLibHbm",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/lib/CLibHbm.cpp",
       "called_functions": [
@@ -492278,7 +492277,7 @@
       "unit": "monolib/src/lib/CLibHbm",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/lib/CLibHbm.cpp",
       "called_functions": [
@@ -496023,7 +496022,7 @@
       "unit": "monolib/src/lod/code_804645CC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -496048,7 +496047,7 @@
       "unit": "monolib/src/lod/code_804645CC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -498028,7 +498027,7 @@
       "unit": "monolib/src/lod/UnkClass_80466348",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -512738,7 +512737,7 @@
       "unit": "monolib/src/scn/CScnMem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804369d8"
@@ -514339,7 +514338,7 @@
       "unit": "monolib/src/scn/CScnTexWorkMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803dba10",
@@ -525193,7 +525192,7 @@
       "unit": "monolib/src/scn/CScnItemCamera",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8044e590",
@@ -543559,7 +543558,7 @@
       "unit": "monolib/src/effect/code_804D854C",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8031ee50",
@@ -544507,7 +544506,7 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNand.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNand.cpp",
-      "instruction_match": 98.235,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent",
       "source_present": true,
       "equivalence_confidence": "C",
@@ -549770,7 +549769,7 @@
       "unit": "monolib/src/core/code_804E36DC",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804e844c",

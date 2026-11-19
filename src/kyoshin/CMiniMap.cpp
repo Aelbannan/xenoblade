@@ -343,8 +343,8 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
 
         // Scale the map-name textbox from the shared picture's size; retail
         // reads these fields even when the picture failed to load.
-        f32 picW = *(f32*)((u8*)pic + 0x4C);
-        f32 picH = *(f32*)((u8*)pic + 0x50);
+        f32 picW = reinterpret_cast<nw4r::lyt::Pane*>(pic)->GetSize().width;
+        f32 picH = reinterpret_cast<nw4r::lyt::Pane*>(pic)->GetSize().height;
         f32 scaleY = lbl_eu_806670B4 * picH;
         ((CMMMapEntry*)pic)->field_2C = lbl_eu_80667090;
         ml::CVec3 sizeKeep;   // dead frame records (retail stores them)
@@ -514,6 +514,12 @@ struct MiniMapCase2Elem {
     u8 pad1E[0x4C - 0x1E];           // stride 76
 };
 
+// Fixed-stride landmark table: 0x200 elements then the count word.
+struct MiniMapCase2Table {
+    MiniMapCase2Elem mElems[0x200];
+    s32 mCount;
+};
+
 // Typed reset views over the marker-table (+0x3C) / gimmick-view (+0x178)
 // regions used only by the teardown below (integer/float split matches the
 // retail store widths).
@@ -565,9 +571,9 @@ extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
                     nw4r::db::Panic((const char*)lbl_eu_8052CB40, 573, (const char*)lbl_eu_8052CB1C);
                 }
                 pane = (nw4r::lyt::Pane*)lay->mgr->FindPaneByName(node->name, true);
-                if (pane && *(void**)((u8*)pane + 0x0C)) {
+                if (pane && pane->GetParent()) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
-                        *(void**)((u8*)pane + 0x0C), pane);
+                        pane->GetParent(), pane);
                     pane->~Pane();
                     deleteTextboxOrPicture__10CLibLayoutFv(pane);
                 }
@@ -576,23 +582,23 @@ extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
         }
         // Fixed clock-label textboxes created by OnFileEvent.
         pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x202], true);
-        if (pane && *(void**)((u8*)pane + 0x0C)) {
+        if (pane && pane->GetParent()) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
-                *(void**)((u8*)pane + 0x0C), pane);
+                pane->GetParent(), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
         pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x20A], true);
-        if (pane && *(void**)((u8*)pane + 0x0C)) {
+        if (pane && pane->GetParent()) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
-                *(void**)((u8*)pane + 0x0C), pane);
+                pane->GetParent(), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
         pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->FindPaneByName(&lbl_eu_804FE1FC[0x212], true);
-        if (pane && *(void**)((u8*)pane + 0x0C)) {
+        if (pane && pane->GetParent()) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
-                *(void**)((u8*)pane + 0x0C), pane);
+                pane->GetParent(), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
@@ -610,9 +616,9 @@ extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
                 nw4r::db::Panic(pf, 573, ps);
             }
             pane = (nw4r::lyt::Pane*)lay->mgr->FindPaneByName(node->name, true);
-            if (pane && *(void**)((u8*)pane + 0x0C)) {
+            if (pane && pane->GetParent()) {
                 RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
-                    *(void**)((u8*)pane + 0x0C), pane);
+                    pane->GetParent(), pane);
                 pane->~Pane();
                 deleteTextboxOrPicture__10CLibLayoutFv(pane);
             }
@@ -706,21 +712,21 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                 }
                 MiniMapCleanupNode* next = node->next;
                 nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)self->m0C->m10->FindPaneByName(node->name, true);
-                if (pane && *(void**)((u8*)pane + 0x0C)) {
+                if (pane && pane->GetParent()) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
-                        *(void**)((u8*)pane + 0x0C), pane);
+                        pane->GetParent(), pane);
                     pane->~Pane();
                     deleteTextboxOrPicture__10CLibLayoutFv(pane);
                 }
                 node = next;
             }
         }
-        MiniMapRebuildGimmickPanes((u8*)self + 0x17C);
-        clearFrmHeap__17UnkClass_8045F564Fv((u8*)self + 0x834);
+        MiniMapRebuildGimmickPanes(self->m17C);
+        clearFrmHeap__17UnkClass_8045F564Fv(self->m834);
     }
     {
         u8 guard[0x10];
-        __ct__14Class_8045F858FP17UnkClass_8045F564(guard, (u8*)self + 0x834);
+        __ct__14Class_8045F858FP17UnkClass_8045F564(guard, self->m834);
         {
             u16 row = (u16)CtrlRemote_TouchBitByArg(32);
             if (row != 0) {
@@ -807,9 +813,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 convB.w[1] = (u32)gz ^ 0x80000000;
                                 f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                                 f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                                *(f32*)((u8*)pane + 0x2C) = fgx;
-                                *(f32*)((u8*)pane + 0x30) = fgz;
-                                *(f32*)((u8*)pane + 0x34) = zero;
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                             } else {
                                 void* pic = 0;
                                 void* texName = MakeIconTplName(7);
@@ -818,11 +824,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, name1);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
                                     convB.w[1] = (u32)gz ^ 0x80000000;
-                                    *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x34) = zero;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                                     PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->FindPaneByName(
@@ -841,7 +847,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                         switch (type) {
                         case 2: {
                             MiniMapCase2Elem* arr = (MiniMapCase2Elem*)CPartsChange_GetLandmarkTable();
-                            s32 count = *(s32*)((u8*)arr + 0x9800);
+                            s32 count = ((MiniMapCase2Table*)arr)->mCount;
                             for (MiniMapCase2Elem* el = arr; el < arr + count; el++) {
                                 if (el->m1C != mapId) continue;
                                 f32 objY = el->y;
@@ -1075,9 +1081,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 convB.w[1] = (u32)gz ^ 0x80000000;
                                 f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                                 f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                                *(f32*)((u8*)pane + 0x2C) = fgx;
-                                *(f32*)((u8*)pane + 0x30) = fgz;
-                                *(f32*)((u8*)pane + 0x34) = zero;
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                             } else {
                                 void* pic = 0;
                                 void* texName = MakeIconTplName(7);
@@ -1086,11 +1092,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, name2);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
                                     convB.w[1] = (u32)gz ^ 0x80000000;
-                                    *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x34) = zero;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                                     PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->FindPaneByName(
@@ -1109,7 +1115,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
         // ---- mode-32 section ----
     mode32:
         {
-            gimmickView = (void*)((CMiniMapGimmickView*)((u8*)self + 0x17C))->FillMarkerEntry();
+            gimmickView = (void*)((CMiniMapGimmickView*)self->m17C)->FillMarkerEntry();
             {
 #undef __cntlzw
                 u32 cf8cVal = (u32)CtrlRemote_TouchBitByArg(0x3334);
@@ -1175,9 +1181,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                             convB.w[1] = (u32)gz ^ 0x80000000;
                             f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                             f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                            *(f32*)((u8*)pane + 0x2C) = fgx;
-                            *(f32*)((u8*)pane + 0x30) = fgz;
-                            *(f32*)((u8*)pane + 0x34) = zero;
+                            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                         } else if (o->m91 == 6) {
                             void* pic = 0;
                             void* texName = MakeIconTplName(15);
@@ -1186,11 +1192,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 SetName__Q34nw4r3lyt4PaneFPCc(pic, buf3);
                                 convA.w[1] = (u32)gx ^ 0x80000000;
                                 convB.w[1] = (u32)gz ^ 0x80000000;
-                                *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                                *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                                *(f32*)((u8*)pic + 0x34) = zero;
+                                reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                                reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                                reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                                 PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                                *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                                reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                             }
                             if (pic) {
                                 void* parent = self->m0C->m10->FindPaneByName(
@@ -1275,9 +1281,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 convB.w[1] = (u32)gz ^ 0x80000000;
                                 f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                                 f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                                *(f32*)((u8*)pane + 0x2C) = fgx;
-                                *(f32*)((u8*)pane + 0x30) = fgz;
-                                *(f32*)((u8*)pane + 0x34) = zero;
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                             } else {
                                 void* pic = 0;
                                 void* texName = MakeIconTplName(10);
@@ -1286,11 +1292,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf4);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
                                     convB.w[1] = (u32)gz ^ 0x80000000;
-                                    *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x34) = zero;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                                     PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->FindPaneByName(
@@ -1366,9 +1372,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                         convB.w[1] = (u32)gz ^ 0x80000000;
                         f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                         f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                        *(f32*)((u8*)pane + 0x2C) = fgx;
-                        *(f32*)((u8*)pane + 0x30) = fgz;
-                        *(f32*)((u8*)pane + 0x34) = zero;
+                        reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                        reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                        reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                     } else {
                         void* pic = 0;
                         void* texName = MakeIconTplName(12);
@@ -1377,11 +1383,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                             SetName__Q34nw4r3lyt4PaneFPCc(pic, buf5);
                             convA.w[1] = (u32)gx ^ 0x80000000;
                             convB.w[1] = (u32)gz ^ 0x80000000;
-                            *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                            *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                            *(f32*)((u8*)pic + 0x34) = zero;
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                             PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                            *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                         }
                         if (pic) {
                             void* parent = self->m0C->m10->FindPaneByName(
@@ -1455,9 +1461,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                         convB.w[1] = (u32)gz ^ 0x80000000;
                         f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                         f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                        *(f32*)((u8*)pane + 0x2C) = fgx;
-                        *(f32*)((u8*)pane + 0x30) = fgz;
-                        *(f32*)((u8*)pane + 0x34) = zero;
+                        reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                        reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                        reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                     } else {
                         void* pic = 0;
                         void* texName = MakeIconTplName(16);
@@ -1466,11 +1472,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                             SetName__Q34nw4r3lyt4PaneFPCc(pic, buf6);
                             convA.w[1] = (u32)gx ^ 0x80000000;
                             convB.w[1] = (u32)gz ^ 0x80000000;
-                            *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                            *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                            *(f32*)((u8*)pic + 0x34) = zero;
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                             PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                            *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                            reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                         }
                         if (pic) {
                             void* parent = self->m0C->m10->FindPaneByName(
@@ -1543,9 +1549,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                             convB.w[1] = (u32)gz ^ 0x80000000;
                             f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                             f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                            *(f32*)((u8*)pane + 0x2C) = fgx;
-                            *(f32*)((u8*)pane + 0x30) = fgz;
-                            *(f32*)((u8*)pane + 0x34) = zero;
+                            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                         } else {
                             s32 type2 = 0;
                             u32 arg2 = 0xFFFFFFFF;
@@ -1573,11 +1579,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf7);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
                                     convB.w[1] = (u32)gz ^ 0x80000000;
-                                    *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x34) = zero;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                                     PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, arg2);
-                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                                 }
                             }
                             if (pic) {
@@ -1654,9 +1660,9 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                 convB.w[1] = (u32)gz ^ 0x80000000;
                                 f32 fgx = (f32)(convA.d - lbl_eu_80667098);
                                 f32 fgz = (f32)(convB.d - lbl_eu_80667098);
-                                *(f32*)((u8*)pane + 0x2C) = fgx;
-                                *(f32*)((u8*)pane + 0x30) = fgz;
-                                *(f32*)((u8*)pane + 0x34) = zero;
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, fgx);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, fgz);
+                                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                             } else {
                                 void* pic = 0;
                                 void* texName = MakeIconTplName(3);
@@ -1665,11 +1671,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
                                     SetName__Q34nw4r3lyt4PaneFPCc(pic, buf8);
                                     convA.w[1] = (u32)gx ^ 0x80000000;
                                     convB.w[1] = (u32)gz ^ 0x80000000;
-                                    *(f32*)((u8*)pic + 0x2C) = (f32)(convA.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x30) = (f32)(convB.d - lbl_eu_80667098);
-                                    *(f32*)((u8*)pic + 0x34) = zero;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(0, (f32)(convA.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(1, (f32)(convB.d - lbl_eu_80667098));
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetSRTElement(2, zero);
                                     PaneSetVtxColorAll((nw4r::lyt::Pane*)pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
+                                    reinterpret_cast<nw4r::lyt::Pane*>(pic)->SetVisible(true);
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->FindPaneByName(
@@ -1684,7 +1690,7 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
             }
         }
 
-        MiniMapPlaceMarkers((u8*)self + 0x3C, lbl_eu_80664184);
+        MiniMapPlaceMarkers(&self->m3C, lbl_eu_80664184);
         __dt__14Class_8045F858Fv(guard, -1);
     }
 }
@@ -1726,32 +1732,7 @@ struct MiniMapB05CPaneView {
     ml::CVec3 tr;                    // 0x38 - pane translate
 };
 
-// Object view tuned so v01C/GetPos/v0CC land at vtable+0x1C/+0xAC/+0xCC
-// (MWCC prepends a hidden two-slot dtor pair to these memberless views).
-struct MiniMapB05CObjView {
-    virtual void _d000() = 0; virtual void _d004() = 0; virtual void _d008() = 0;
-    virtual void _d00C() = 0; virtual void _d010() = 0;
-    virtual void* v01C() = 0;
-    virtual void _d020() = 0; virtual void _d024() = 0; virtual void _d028() = 0;
-    virtual void _d02C() = 0; virtual void _d030() = 0; virtual void _d034() = 0;
-    virtual void _d038() = 0; virtual void _d03C() = 0; virtual void _d040() = 0;
-    virtual void _d044() = 0; virtual void _d048() = 0; virtual void _d04C() = 0;
-    virtual void _d050() = 0; virtual void _d054() = 0; virtual void _d058() = 0;
-    virtual void _d05C() = 0; virtual void _d060() = 0; virtual void _d064() = 0;
-    virtual void _d068() = 0; virtual void _d06C() = 0; virtual void _d070() = 0;
-    virtual void _d074() = 0; virtual void _d078() = 0; virtual void _d07C() = 0;
-    virtual void _d080() = 0; virtual void _d084() = 0; virtual void _d088() = 0;
-    virtual void _d08C() = 0; virtual void _d090() = 0; virtual void _d094() = 0;
-    virtual void _d098() = 0; virtual void _d09C() = 0; virtual void _d0A0() = 0;
-    virtual void _d0A4() = 0; virtual void _d0A8() = 0;
-    virtual ml::CVec3* GetPos() = 0;     // vtable+0xAC
-    virtual void _d0B0() = 0; virtual void _d0B4() = 0; virtual void _d0B8() = 0;
-    virtual void _d0BC() = 0; virtual void _d0C0() = 0; virtual void _d0C4() = 0;
-    virtual void _d0C8() = 0; virtual void _d0CC() = 0; virtual void _d0D0() = 0;
-    virtual f32 v0CC() = 0;              // vtable+0xCC
-};
 
-// (Former MiniMapB05CIf/B05CMgr pads were retail's nw4r::lyt::Pane vtables:
 // +0x3C FindPaneByName(const char*, bool) on the root pane at Layout+0x10
 // and +0x68 GetMaterial() on a child pane.)
 
@@ -1782,9 +1763,9 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
     ml::CVec3 pos;
     MiniMapObj* player = (MiniMapObj*)cf::CfGameManager::getPlayer(0);
     if (player != NULL) {
-        pos = *(((MiniMapB05CObjView*)player)->GetPos());
+        pos = *(((MiniMapObj*)player)->GetPos());
         scale = lbl_eu_806670BC *
-                ((MiniMapB05CObjView*)player)->v0CC() / ml::pi;
+                ((MiniMapObj*)player)->v0CC() / ml::pi;
     } else {
         pos.set(lbl_eu_80667090, lbl_eu_80667090, lbl_eu_80667090);
     }
@@ -1855,7 +1836,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
         MiniMapObj* tgt =
             (MiniMapObj*)cf::CfGameManager::getInstance()->getCameraDataBlock();
         f32 ty = ((MiniMapB05CVec4*)(
-            (MiniMapB05CObjView*)tgt)->v01C())->field_4;
+            (MiniMapObj*)tgt)->v01C())->field_4;
         f64 t = lbl_eu_806670BC * ty / ml::pi;
         f32 zz = lbl_eu_806670BC + (scale - t);
         ((MiniMapB05CPaneView*)group)->tr =
@@ -1889,7 +1870,7 @@ extern "C" void MiniMapUpdateMapView(MiniMapSelf* self) {
             MiniMapObj* tgt = (MiniMapObj*)(
                 cf::CfGameManager::getInstance()->getCameraDataBlock());
             f32 ty = ((MiniMapB05CVec4*)(
-                (MiniMapB05CObjView*)tgt)->v01C())->field_4;
+                (MiniMapObj*)tgt)->v01C())->field_4;
             f32 t = lbl_eu_806670BC * ty / ml::pi;
             ((MiniMapB05CPaneView*)pic)->tr =
                 ml::CVec3(lbl_eu_80667090, lbl_eu_80667090, t);
@@ -2536,14 +2517,14 @@ void MiniMapTable::BuildMarkerPanes(void* table, void* layout, f32 scale) {
         } else {
             pane = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
             SetName__Q34nw4r3lyt4PaneFPCc(pane, buf);
-            *(f32*)((u8*)pane + 0x2C) = zero;
-            *(f32*)((u8*)pane + 0x30) = zero;
+            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, zero);
+            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, zero);
             // Dead origin record (retail stores it to the frame).
             pos.x = zero;
             pos.y = zero;
             pos.z = zero;
-            *(f32*)((u8*)pane + 0x34) = zero;
-            PaneSetVtxColorAll(pane, -1);            *(u8*)((u8*)pane + 0xBB) = (*(u8*)((u8*)pane + 0xBB) & 0xFE) | 1;
+            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
+            PaneSetVtxColorAll(pane, -1);            reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetVisible(true);
         }
         if (pane == 0) continue;
         this->field_100[0][n] = pane;
@@ -2865,7 +2846,7 @@ extern "C" void MiniMapRebuildGimmickPanes(void* self) {
     nw4r::lyt::Pane* tblMgr = *(nw4r::lyt::Pane**)((u8*)view->field_0x04 + 0x10);
     nw4r::lyt::Pane* clockPane = (nw4r::lyt::Pane*)tblMgr->FindPaneByName(&strings[0x69], true);
     if (clockPane != NULL) {
-        *(u8*)((u8*)clockPane + 0xBB) = (*(u8*)((u8*)clockPane + 0xBB) & 0xFE) | 1;
+        reinterpret_cast<nw4r::lyt::Pane*>(clockPane)->SetVisible(true);
     }
 
     // Player height band: first row whose threshold exceeds the player's y.
@@ -2956,7 +2937,7 @@ extern "C" void MiniMapRebuildGimmickPanes(void* self) {
         case 3: {
             // Fixed-stride element array (count word at base+0x9800).
             MiniMapCase2Elem* arr = (MiniMapCase2Elem*)CPartsChange_GetLandmarkTable();
-            s32 count = *(s32*)((u8*)arr + 0x9800);
+            s32 count = ((MiniMapCase2Table*)arr)->mCount;
             for (MiniMapCase2Elem* el = arr; el < arr + count; el++) {
                 if (el->m1C != (u16)dispId) continue;
                 bool hit = false;
@@ -3074,7 +3055,7 @@ extern "C" void MiniMapRebuildGimmickPanes(void* self) {
             if (clockPane == NULL) {
                 kind = 5;
             } else {
-                *(u8*)((u8*)clockPane + 0xBB) = (*(u8*)((u8*)clockPane + 0xBB) & 0xFE) | 1;
+                reinterpret_cast<nw4r::lyt::Pane*>(clockPane)->SetVisible(true);
             }
         }
 
@@ -3091,11 +3072,11 @@ extern "C" void MiniMapRebuildGimmickPanes(void* self) {
             } else {
                 pane = (nw4r::lyt::Pane*)createPicture__10CLibLayoutFv();
                 SetName__Q34nw4r3lyt4PaneFPCc(pane, buf);
-                *(f32*)((u8*)pane + 0x2C) = zero;
-                *(f32*)((u8*)pane + 0x30) = zero;
-                *(f32*)((u8*)pane + 0x34) = zero;
+                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(0, zero);
+                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(1, zero);
+                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetSRTElement(2, zero);
                 PaneSetVtxColorAll(pane, -1);
-                *(u8*)((u8*)pane + 0xBB) = (*(u8*)((u8*)pane + 0xBB) & 0xFE) | 1;
+                reinterpret_cast<nw4r::lyt::Pane*>(pane)->SetVisible(true);
             }
         }
         if (pane == NULL) continue;

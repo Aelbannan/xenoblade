@@ -108,7 +108,7 @@ extern "C" void CArtsInfo_LoadFiles(CArtsInfo* self);
 
 // Table lookup helper (defined later in this TU). Plain-C retail symbol;
 // kept out-of-line so callers emit a real bl instead of inlining.
-extern "C" __declspec(noinline) u8 ArtsCharList_getId(SArtsSub8022FA58* self, u32 idx);
+extern "C" u8 ArtsCharList_getId(SArtsSub8022FA58* self, u32 idx);
 
 // BDAT message-table / texture-name helpers used by ArtsCharList_refreshDisplay (imports).
 extern void* lbl_eu_80664090;
@@ -147,9 +147,9 @@ extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key);
 extern "C" void ArtsTableCursor_refresh(SArts327B0* self);
 extern "C" void artsRenderRow(SArts327B0* self);
 extern "C" void copyVEC2(float* dst, const float* src);
-extern "C" __declspec(noinline) int CMenuArtsSet_isListBusy(SArts34C84* self);
-extern "C" __declspec(noinline) int CMenuArtsSet_isLockedArtOpen(SArts34D14* self);
-extern "C" __declspec(noinline) int CMenuArtsSet_isDemoLockedArt(SArts34D14* self);
+extern "C" int CMenuArtsSet_isListBusy(SArts34C84* self);
+extern "C" int CMenuArtsSet_isLockedArtOpen(SArts34D14* self);
+extern "C" int CMenuArtsSet_isDemoLockedArt(SArts34D14* self);
 extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self);
 
 // Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
@@ -205,10 +205,10 @@ extern "C" void CMenuArtsSet_returnFromInfo(CArtsList* self);
 extern "C" void ArtsLayoutPair_releaseSlots(SArts3066C* self);
 // SArtsSub8022FA58 cursor-store helper (CMenuArtsSet_completeLayoutOut). Same-TU definition;
 // noinline so callers emit a real bl (retail shape).
-extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, bool val);
+extern "C" void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, bool val);
 // Same-TU release helpers kept out-of-line for retail bl parity.
-extern "C" __declspec(noinline) void ArtsLayoutPair_release(SArts2FDF4* self);
-extern "C" __declspec(noinline) void ArtsTableLayout_release(SArts3066C* self);
+extern "C" void ArtsLayoutPair_release(SArts2FDF4* self);
+extern "C" void ArtsTableLayout_release(SArts3066C* self);
 
 // CMenuArtsSet state-machine / teardown / driver entry points (defined in
 // this TU; C linkage matches the retail unmangled symbols).
@@ -341,7 +341,7 @@ extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern u32 lbl_eu_80663E28; // mode bitfield (bit 21 = realtime event busy)
 extern "C" void artsMenuInput(CMenuArtsSet* self);
 u8 CArtsList_isReady(CArtsList* self);

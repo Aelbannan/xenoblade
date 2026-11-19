@@ -194,62 +194,6 @@ struct CfEnumPosBlock {
     float z;                 // 0x2C
 };
 
-// Object position/state view for the position-filtering list-rebuild ctors:
-// vtable 0xAC returns a plain position vector; 0x128/0x12C return a
-// CfEnumPosBlock (position floats at +0xC/+0x1C/+0x2C).
-class CfEnumObjPosView {
-public:
-    ENUM_VIEW_DUMMY(0);   ENUM_VIEW_DUMMY(1);   ENUM_VIEW_DUMMY(2);   ENUM_VIEW_DUMMY(3);
-    ENUM_VIEW_DUMMY(4);   ENUM_VIEW_DUMMY(5);   ENUM_VIEW_DUMMY(6);   ENUM_VIEW_DUMMY(7);
-    ENUM_VIEW_DUMMY(8);   ENUM_VIEW_DUMMY(9);   ENUM_VIEW_DUMMY(10);  ENUM_VIEW_DUMMY(11);
-    ENUM_VIEW_DUMMY(12);  ENUM_VIEW_DUMMY(13);  ENUM_VIEW_DUMMY(14);  ENUM_VIEW_DUMMY(15);
-    ENUM_VIEW_DUMMY(16);  ENUM_VIEW_DUMMY(17);  ENUM_VIEW_DUMMY(18);  ENUM_VIEW_DUMMY(19);
-    ENUM_VIEW_DUMMY(20);  ENUM_VIEW_DUMMY(21);  ENUM_VIEW_DUMMY(22);  ENUM_VIEW_DUMMY(23);
-    ENUM_VIEW_DUMMY(24);  ENUM_VIEW_DUMMY(25);  ENUM_VIEW_DUMMY(26);  ENUM_VIEW_DUMMY(27);
-    ENUM_VIEW_DUMMY(28);  ENUM_VIEW_DUMMY(29);  ENUM_VIEW_DUMMY(30);  ENUM_VIEW_DUMMY(31);
-    ENUM_VIEW_DUMMY(32);  ENUM_VIEW_DUMMY(33);  ENUM_VIEW_DUMMY(34);  ENUM_VIEW_DUMMY(35);
-    ENUM_VIEW_DUMMY(36);  ENUM_VIEW_DUMMY(37);  ENUM_VIEW_DUMMY(38);  ENUM_VIEW_DUMMY(39);
-    ENUM_VIEW_DUMMY(40);
-    virtual void* vAC();        // index 41 -> vtable 0xAC (position vector)
-    ENUM_VIEW_DUMMY(42); ENUM_VIEW_DUMMY(43); ENUM_VIEW_DUMMY(44); ENUM_VIEW_DUMMY(45);
-    ENUM_VIEW_DUMMY(46); ENUM_VIEW_DUMMY(47); ENUM_VIEW_DUMMY(48); ENUM_VIEW_DUMMY(49);
-    ENUM_VIEW_DUMMY(50); ENUM_VIEW_DUMMY(51); ENUM_VIEW_DUMMY(52); ENUM_VIEW_DUMMY(53);
-    ENUM_VIEW_DUMMY(54); ENUM_VIEW_DUMMY(55); ENUM_VIEW_DUMMY(56); ENUM_VIEW_DUMMY(57);
-    ENUM_VIEW_DUMMY(58); ENUM_VIEW_DUMMY(59); ENUM_VIEW_DUMMY(60); ENUM_VIEW_DUMMY(61);
-    ENUM_VIEW_DUMMY(62); ENUM_VIEW_DUMMY(63); ENUM_VIEW_DUMMY(64); ENUM_VIEW_DUMMY(65);
-    ENUM_VIEW_DUMMY(66); ENUM_VIEW_DUMMY(67); ENUM_VIEW_DUMMY(68); ENUM_VIEW_DUMMY(69);
-    ENUM_VIEW_DUMMY(70); ENUM_VIEW_DUMMY(71);
-    virtual CfEnumPosBlock* v128();        // index 72 -> vtable 0x128
-    virtual CfEnumPosBlock* v12C(int a);   // index 73 -> vtable 0x12C
-};
-
-// Object view used by sortEntriesByScreenX's projection pass: vtable 0xAC (index
-// 41) returns the plain position vector; 0x120 (index 70) returns a
-// CfEnumPosBlock given a context pointer.
-class CfEnumProjView {
-public:
-    ENUM_VIEW_DUMMY(0);   ENUM_VIEW_DUMMY(1);   ENUM_VIEW_DUMMY(2);   ENUM_VIEW_DUMMY(3);
-    ENUM_VIEW_DUMMY(4);   ENUM_VIEW_DUMMY(5);   ENUM_VIEW_DUMMY(6);   ENUM_VIEW_DUMMY(7);
-    ENUM_VIEW_DUMMY(8);   ENUM_VIEW_DUMMY(9);   ENUM_VIEW_DUMMY(10);  ENUM_VIEW_DUMMY(11);
-    ENUM_VIEW_DUMMY(12);  ENUM_VIEW_DUMMY(13);  ENUM_VIEW_DUMMY(14);  ENUM_VIEW_DUMMY(15);
-    ENUM_VIEW_DUMMY(16);  ENUM_VIEW_DUMMY(17);  ENUM_VIEW_DUMMY(18);  ENUM_VIEW_DUMMY(19);
-    ENUM_VIEW_DUMMY(20);  ENUM_VIEW_DUMMY(21);  ENUM_VIEW_DUMMY(22);  ENUM_VIEW_DUMMY(23);
-    ENUM_VIEW_DUMMY(24);  ENUM_VIEW_DUMMY(25);  ENUM_VIEW_DUMMY(26);  ENUM_VIEW_DUMMY(27);
-    ENUM_VIEW_DUMMY(28);  ENUM_VIEW_DUMMY(29);  ENUM_VIEW_DUMMY(30);  ENUM_VIEW_DUMMY(31);
-    ENUM_VIEW_DUMMY(32);  ENUM_VIEW_DUMMY(33);  ENUM_VIEW_DUMMY(34);  ENUM_VIEW_DUMMY(35);
-    ENUM_VIEW_DUMMY(36);  ENUM_VIEW_DUMMY(37);  ENUM_VIEW_DUMMY(38);  ENUM_VIEW_DUMMY(39);
-    ENUM_VIEW_DUMMY(40);
-    virtual void* vAC();                    // index 41 -> vtable 0xAC
-    ENUM_VIEW_DUMMY(42);  ENUM_VIEW_DUMMY(43);  ENUM_VIEW_DUMMY(44);  ENUM_VIEW_DUMMY(45);
-    ENUM_VIEW_DUMMY(46);  ENUM_VIEW_DUMMY(47);  ENUM_VIEW_DUMMY(48);  ENUM_VIEW_DUMMY(49);
-    ENUM_VIEW_DUMMY(50);  ENUM_VIEW_DUMMY(51);  ENUM_VIEW_DUMMY(52);  ENUM_VIEW_DUMMY(53);
-    ENUM_VIEW_DUMMY(54);  ENUM_VIEW_DUMMY(55);  ENUM_VIEW_DUMMY(56);  ENUM_VIEW_DUMMY(57);
-    ENUM_VIEW_DUMMY(58);  ENUM_VIEW_DUMMY(59);  ENUM_VIEW_DUMMY(60);  ENUM_VIEW_DUMMY(61);
-    ENUM_VIEW_DUMMY(62);  ENUM_VIEW_DUMMY(63);  ENUM_VIEW_DUMMY(64);  ENUM_VIEW_DUMMY(65);
-    ENUM_VIEW_DUMMY(66);  ENUM_VIEW_DUMMY(67);  ENUM_VIEW_DUMMY(68);  ENUM_VIEW_DUMMY(69);
-    virtual CfEnumPosBlock* vX120(u8* ctx); // index 70 -> vtable 0x120
-};
-
 // Actor view whose vtable slot 0x128 (index 72) returns a float sort value
 // directly (used by resortByActorValue's distance refresh).
 class CfEnumActorValueView {
@@ -285,9 +229,18 @@ extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e
 extern "C" int ColiCheckMoveScaled(void* self, void* spot, float a, float b, float c);
 // ColiQuerySegment (object enum probe) is declared above; do not redeclare here.
 extern "C" int ColiCheckMoveGate(void* self, void* spot, float threshold); // distance probe on aux+0x60C block
+
+// List-rebuild constructors defined in CfObjectEnumList.cpp. Their retail
+// linker names are flat, so callers take these canonical declarations from
+// the owning header instead of keeping per-TU copies.
+extern "C" void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags);
+extern "C" void __ct__800FC4FC(cf::CfObjEnumList* list, u32 flags, float threshold);
+extern "C" void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options);
+
 // sdata: global coli probe object (accessed via sda21)
 extern void* lbl_eu_80665958;
-// Data import used by the list-rebuild ctor __ct__800FD250 (reslist-ish sort
+
+// Data import used by the list-rebuild ctor __ct__800FD250
 // descriptor table; only its address is taken, at +0 and +8).
 extern u8 gCfEnumListSortDispatch[0x20];
 

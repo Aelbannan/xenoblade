@@ -228,7 +228,8 @@ extern "C" void MakeCrystal_SpawnCrystalItem(void*, int, u8);
 extern "C" void CItem_initKind9Rec(void* item, int mode);
 extern "C" void CItemData_callVf0C(void* item, u8 flag);
 extern "C" void CItem_copyRecMasked(void* dst, const void* src);
-extern "C" void* CItem_initItemImplInstances(void* item);
+// CItem_initItemImplInstances: canonical CItemImpl*(CItemData*) declaration
+// comes from kyoshin/cf/CfGameManager.hpp.
 
 // C-linkage imports for the constructor (retail bare-name symbols - the
 // member ctors in the sub-object headers would mangle differently).

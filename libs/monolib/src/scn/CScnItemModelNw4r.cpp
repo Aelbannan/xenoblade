@@ -467,7 +467,7 @@ extern "C" void  scnImN4UpdateXform(CScnItemModelNw4r* self) {
             self->field_0x2DC[0] = self->field_0x14B4.x;
             self->field_0x2DC[1] = self->field_0x14B4.y;
             self->field_0x2DC[2] = self->field_0x14B4.z;
-            PSMTXMultVec(simGetLeafActData(self)->mLocalMat.m,
+            PSMTXMultVec(((ml::CAttrTransform*)simGetLeafActData(self))->mLocalMat.m,
                          (const Vec*)&self->field_0x2DC[0],
                          (Vec*)&self->field_0x2DC[0]);
         } else {
@@ -488,7 +488,7 @@ extern "C" void  scnImN4UpdateXform(CScnItemModelNw4r* self) {
                 mx = self->field_0x30C;
             }
             self->field_0x2E8 = self->field_0x7AC * mx;
-            PSMTXMultVec(simGetLeafActData(self)->mLocalMat.m,
+            PSMTXMultVec(((ml::CAttrTransform*)simGetLeafActData(self))->mLocalMat.m,
                          (const Vec*)&self->field_0x2DC[0],
                          (Vec*)&self->field_0x2DC[0]);
         }
@@ -1239,10 +1239,10 @@ extern "C" void  scnImN4UpdateBounds(CScnItemModelNw4r* self, int param) {
         f32 mag = PSVECMag((const Vec*)src);
         self->field_0x2E8 = self->field_0x7AC * mag;
         if (self->field_854 != 0) {
-            ml::CAttrTransform* t = simGetLeafActData(self);
+            ml::CAttrTransform* t = (ml::CAttrTransform*)simGetLeafActData(self);
             t->mMtx1 = *(const ml::CMat34*)src;
             t->mFlags |= ml::CAttrTransform::FLAG_0;
-            simGetLeafActData(self)->update();
+            ((ml::CAttrTransform*)simGetLeafActData(self))->update();
         }
     } else {
         self->field_0x2DC[0] =
@@ -1262,7 +1262,7 @@ extern "C" void  scnImN4UpdateBounds(CScnItemModelNw4r* self, int param) {
             mx = self->field_0x30C;
         }
         self->field_0x2E8 = self->field_0x7AC * mx;
-        ml::CAttrTransform* t = simGetLeafActData(self);
+        ml::CAttrTransform* t = (ml::CAttrTransform*)simGetLeafActData(self);
         PSMTXMultVec(t->mLocalMat.m, (const Vec*)&self->field_0x2DC[0],
                      (Vec*)&self->field_0x2DC[0]);
     }
@@ -1302,18 +1302,18 @@ extern "C" void  scnImN4PoseHook(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResul
             out->SetTranslate(&v);
             {
                 const nw4r::math::MTX34* mtx =
-                    (const nw4r::math::MTX34*)&simGetLeafActData(self)->mLocalMat;
+                    (const nw4r::math::MTX34*)&((ml::CAttrTransform*)simGetLeafActData(self))->mLocalMat;
                 nw4r::math::VEC3TransformNormal(&self->vec7CC, mtx,
                                                 &self->vec7CC);
             }
             {
                 const nw4r::math::MTX34* mtx =
-                    (const nw4r::math::MTX34*)&simGetLeafActData(self)->mLocalMat;
+                    (const nw4r::math::MTX34*)&((ml::CAttrTransform*)simGetLeafActData(self))->mLocalMat;
                 nw4r::math::VEC3TransformNormal(&self->vec7D8, mtx,
                                                 &self->vec7D8);
             }
             {
-            ml::CAttrTransform* t = simGetLeafActData(self);
+            ml::CAttrTransform* t = (ml::CAttrTransform*)simGetLeafActData(self);
             nw4r::math::VEC3Add((nw4r::math::VEC3*)&t->mPos,
                                 (nw4r::math::VEC3*)&t->mPos,
                                 &self->vec7CC);
@@ -2435,7 +2435,7 @@ extern "C" void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
             (self->field_0x2EC[5] + self->field_0x2EC[2]) * c;
         self->field_0x2E8 = lbl_eu_8066A8E0;
     }
-    ml::CAttrTransform* t = simGetLeafActData(self);
+    ml::CAttrTransform* t = (ml::CAttrTransform*)simGetLeafActData(self);
     *(nw4r::math::VEC3*)&self->field_0x2DC[0] += *(nw4r::math::VEC3*)&t->mPrevPos;
     f32 maxDist = lbl_eu_8066A8E0;
     // Each candidate mixes components from the two stored vec3s: x from

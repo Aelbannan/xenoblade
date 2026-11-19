@@ -12,7 +12,7 @@ void AHXDCD_SetupFtbl(u32 val) { *(u32*)lbl_eu_805E64B8 = val; }
 
 void AHXDCD_SetupWtbl(u32 val) { *(u32*)lbl_eu_805E64BC = val; }
 
-extern const float lbl_eu_80517560[];
+extern const float ahxsbf_scale_table[];
 
 void ahxsbf_init_filter(void);
 
@@ -59,9 +59,9 @@ void ahxsbf_init_filter(void) {
         dst[i] = src[i];
     }
 
-    /* Scale factor comes from MWCC's literal pool (lbl_eu_80517560). */
+    /* Scale factor comes from MWCC's literal pool (ahxsbf_scale_table). */
     for (j = 0; j < 0x200; j++) {
-        ((float*)w->dstW)[j] *= lbl_eu_80517560[0];
+        ((float*)w->dstW)[j] *= ahxsbf_scale_table[0];
     }
 
     /* Copy the filter table to its aligned scratch buffer. */
@@ -89,3 +89,7 @@ AhxSbfWork* AHXSBF_Create(AhxSbfWork* self, u32 size) {
 }
 
 void AHXSBF_Destroy(void* self) { memset(self, 0, 0x1014); }
+
+/* SBF synthesis scale factor. */
+const f32 ahxsbf_scale_table[2] = { 2147483648.0f, 0.0f };
+

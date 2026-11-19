@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "monolib/math.hpp"      // ml::CVec3
@@ -1190,7 +1191,7 @@ void sortEntriesByDistance(cf::CfObjEnumList* self, ml::CVec3* spot) {
     for (u32 i = 0; i < self->mPtrCount; i++) {
         cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
         nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
-            reinterpret_cast<CfEnumObjPosView*>(p->object)->vAC());
+            reinterpret_cast<cf::CfObject*>(p->object)->CfObject_getPosVector());
         nw4r::math::VEC3 delta;
         nw4r::math::VEC3Sub(&delta, pos,
                             reinterpret_cast<const nw4r::math::VEC3*>(spot));
@@ -1234,8 +1235,8 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
         if ((p->field_18 & 1) != 0) {
             continue;
         }
-        CfEnumProjView* obj = reinterpret_cast<CfEnumProjView*>(p->object);
-        CfEnumPosBlock* blk = obj->vX120(lbl_eu_804FCD24);
+        cf::CfObject* obj = reinterpret_cast<cf::CfObject*>(p->object);
+        CfEnumPosBlock* blk = reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_findNodeMatrix((const char*)lbl_eu_804FCD24));
         ml::CVec3 tmp;   // transform source copy (retail sp+0x18)
         if (blk != 0) {
             // Position floats sit at +0xC/+0x1C/+0x2C of the block.
@@ -1251,7 +1252,7 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
             tmp.y = src->y;
             tmp.z = src->z;
         } else {
-            ml::CVec3* src = reinterpret_cast<ml::CVec3*>(obj->vAC());
+            ml::CVec3* src = reinterpret_cast<ml::CVec3*>(obj->CfObject_getPosVector());
             tmp.x = src->x;
             tmp.y = src->y;
             tmp.z = src->z;
@@ -1370,9 +1371,9 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
 
     for (u32 i = 0; i < ctx.count; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumObjPosView* obj = reinterpret_cast<CfEnumObjPosView*>(p->object);
+        cf::CfObject* obj = reinterpret_cast<cf::CfObject*>(p->object);
         ml::CVec3 t[2];
-        CfEnumPosBlock* blk = obj->v128();
+        CfEnumPosBlock* blk = reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_getSubPosWord());
         if (blk != 0) {
             float pz = blk->z;
             float py = blk->y;
@@ -1385,14 +1386,14 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
             t[1] = tmp;
             // Blend the second slot's z toward the object's raw y by 0.2.
             CfEnumPosBlock* ac1 =
-                reinterpret_cast<CfEnumPosBlock*>(obj->vAC());
+                reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_getPosVector());
             float ay = ac1->y;
             CfEnumPosBlock* ac2 =
-                reinterpret_cast<CfEnumPosBlock*>(obj->vAC());
+                reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_getPosVector());
             t[1].z = depthScale * (t[1].z - ac2->y) + ay;
         } else {
             ml::CVec3* src = reinterpret_cast<ml::CVec3*>(
-                reinterpret_cast<CfEnumPosBlock*>(obj->vAC()));
+                reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_getPosVector()));
             t[0] = *src;
             t[1] = t[0];
         }
@@ -1498,11 +1499,11 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumObjPosView* objView =
-            reinterpret_cast<CfEnumObjPosView*>(p->object);
-        CfEnumPosBlock* v = objView->v12C(0x64);
+        cf::CfObject* objView =
+            reinterpret_cast<cf::CfObject*>(p->object);
+        CfEnumPosBlock* v = reinterpret_cast<CfEnumPosBlock*>(objView->CfObject_getPosSample(0x64));
         if (v == 0) {
-            v = objView->v128();
+            v = reinterpret_cast<CfEnumPosBlock*>(objView->CfObject_getSubPosWord());
         }
         ml::CVec3 vec;   // declared first -> higher frame slot (retail sp+20)
         ml::CVec3 tmp;   // second         -> lower frame slot (retail sp+8)
@@ -1518,7 +1519,7 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
             tmp.z = tz;
             src = &tmp;
         } else {
-            src = reinterpret_cast<ml::CVec3*>(objView->vAC());
+            src = reinterpret_cast<ml::CVec3*>(objView->CfObject_getPosVector());
         }
         vec.x = src->x;
         vec.y = src->y;
@@ -1548,7 +1549,7 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
 }
 
 // __ct__800FB044: rebuild the object list by distance from spot.  dist =
-// PSVECMag(obj->vAC() - spot), minus aux->field_63C when aux exists.  The
+// PSVECMag(obj->CfObject_getPosVector() - spot), minus aux->field_63C when aux exists.  The
 // entry is marked 0x20 / kept when dist < threshold and either the aux cone
 // probe accepts (ColiCheckMoveGate on aux+0x60C, accept-on-zero) or the
 // probePartnerSegment fallback accepts (also inverted, options bit 3).  Options
@@ -1594,7 +1595,7 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
         nw4r::math::VEC3Sub(
             &tmp[0],
             reinterpret_cast<nw4r::math::VEC3*>(
-                reinterpret_cast<CfEnumObjPosView*>(obj)->vAC()),
+                reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector()),
             reinterpret_cast<const nw4r::math::VEC3*>(spot));
         tmp[1].x = tmp[0].x;
         tmp[1].y = tmp[0].y;
@@ -1631,7 +1632,7 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
 }
 
 // us-800fbd58 | rebuildByDistanceCone: rebuild the list by distance + facing cone from
-// spot.  dist = PSVECMag(obj->vAC() - spot); the heading is wrapped into
+// spot.  dist = PSVECMag(obj->CfObject_getPosVector() - spot); the heading is wrapped into
 // [-pi, pi] and must fall inside +-cone*halfScale of angleOffset (arg3) while
 // targetDist (range + aux radius) reaches dist.  Options bit 2 inverts the
 // keep decision; kept entries get the 0x40 mark and are only re-appended when
@@ -1679,7 +1680,7 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                 reinterpret_cast<CfEnumActorView*>(aux)->field_63C;
         }
         nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
-            reinterpret_cast<CfEnumObjPosView*>(obj)->vAC());
+            reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
         nw4r::math::VEC3Sub(deltap, pos,
                             reinterpret_cast<const nw4r::math::VEC3*>(spot));
         d.x = deltap->x;
@@ -1767,7 +1768,7 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
                 reinterpret_cast<CfEnumActorView*>(aux)->field_63C;
         }
         nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
-            reinterpret_cast<CfEnumObjPosView*>(obj)->vAC());
+            reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
         nw4r::math::VEC3 delta;
         nw4r::math::VEC3Sub(&delta, pos,
                             reinterpret_cast<const nw4r::math::VEC3*>(spot));
@@ -1789,7 +1790,7 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
             // Second probe pass: recompute against the angleMax offset and
             // the cone2 half-angle.
             pos = reinterpret_cast<nw4r::math::VEC3*>(
-                reinterpret_cast<CfEnumObjPosView*>(obj)->vAC());
+                reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
             nw4r::math::VEC3Sub(&delta, pos,
                                 reinterpret_cast<const nw4r::math::VEC3*>(spot));
             nw4r::math::VEC3 d2;
@@ -1940,7 +1941,7 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
         CfEnumObject* obj = reinterpret_cast<CfEnumObject*>(p->object);
         CfEnumActor* aux = func_800BBC0C(obj);
         nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
-            reinterpret_cast<CfEnumObjPosView*>(obj)->vAC());
+            reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
         // Segment direction and projection parameter of pos onto PA-PB.
         nw4r::math::VEC3 dv;
         nw4r::math::VEC3Sub(&dv, reinterpret_cast<nw4r::math::VEC3*>(&pb),
@@ -2006,7 +2007,7 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
 // arts-state gate: MapFx_ResolveOwner(object) then isBattleStatusActive(actor+8, tag).
 // flags bit 1 inverts the accept decision; accepted entries get the 0x70
 // mark and are only re-appended when flags bit 0 is set.
-extern "C" void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
+void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2231,7 +2232,7 @@ extern "C" void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 
 
 // __ct__800FC4FC: like __ct__800FC648 but keeps entries whose value() is
 // greater-or-equal to the threshold (inverse comparison).
-extern "C" void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
+void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     if (self->mPtrCount == 0) {
         return;
     }
@@ -2643,7 +2644,7 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
 // __ct__800FCF1C: rebuild the object list keeping only entries whose actor's
 // arts-state gate (testActorStatus, mode 0x806) fails, or whose vf298() battle
 // block byte at +0x42 differs from arg1 (or is missing).
-extern "C" void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
+void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
     if (list->mPtrCount == 0) {
         return;
     }
@@ -2867,7 +2868,7 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
     spotCopy.x = sx;
     spotCopy.y = sy;
     spotCopy.z = sz;
-    CfEnumPosBlock* blk = reinterpret_cast<CfEnumObjPosView*>(actor)->v128();
+    CfEnumPosBlock* blk = reinterpret_cast<CfEnumPosBlock*>(reinterpret_cast<cf::CfObject*>(actor)->CfObject_getSubPosWord());
     if (blk != 0) {
         float tz = blk->z;
         float ty = blk->y;
@@ -2878,7 +2879,7 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
         objPos = tmp;   // word copy (retail lwz/stw)
     } else {
         objPos = *reinterpret_cast<ml::CVec3*>(
-            reinterpret_cast<CfEnumObjPosView*>(actor)->vAC());
+            reinterpret_cast<cf::CfObject*>(actor)->CfObject_getPosVector());
     }
     // Pointers declared before the nudges so the compare schedule matches
     // retail (fcmpo on f1=spotCopy.y vs f0=objPos.y).

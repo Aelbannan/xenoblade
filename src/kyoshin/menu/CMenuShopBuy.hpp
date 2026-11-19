@@ -129,19 +129,19 @@ extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // DrawInfo setup helper (C++ mangled name).
 
 // Phase handlers (same TU, extern "C" definitions in CMenuShopBuy.cpp) plus
-// the factory (retail unmangled name). __declspec(noinline) stops
+// the factory (retail unmangled name). stops
 // -inline auto from inlining the small phase handlers into Move (retail keeps
 // real bls; see MWCC_CASES -inline auto same-TU helpers).
-extern "C" __declspec(noinline) void ShopBuy_OpenPhase(CMenuShopBuy* self);
-extern "C" __declspec(noinline) void ShopBuy_AdvancePhase(CMenuShopBuy* self);
-extern "C" __declspec(noinline) void ShopBuy_HandleInput(CMenuShopBuy* self);
-extern "C" __declspec(noinline) void ShopBuy_MarkClosing(CMenuShopBuy* self);
+extern "C" void ShopBuy_OpenPhase(CMenuShopBuy* self);
+extern "C" void ShopBuy_AdvancePhase(CMenuShopBuy* self);
+extern "C" void ShopBuy_HandleInput(CMenuShopBuy* self);
+extern "C" void ShopBuy_MarkClosing(CMenuShopBuy* self);
 extern "C" CMenuShopBuy* ShopBuy_CreateMenu(CProcess* parent, CScn* scene, u32 arg);
 
 // Other retail-named helpers.
 // unsigned int (not u32 = unsigned long): must match CItemBoxLine.hpp's
 // declaration so the two extern "C" redeclarations merge.
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CScn.hpp pulls broken monolib umbrella headers (kyoshin headers already
 // define an opaque CScn), so the render-callback removal is called through
 // its retail C name (same scheme as CMenuBattleEnd / CMenuCollepedia).

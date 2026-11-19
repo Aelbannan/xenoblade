@@ -167,7 +167,7 @@ void __dt__8CProcessFv(CProcess*, int);
 u8* __ct__801B2794(u8*, u32, u32);
 }
 
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(int);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
 
@@ -257,7 +257,7 @@ CMenuGetItemMulti* __ct__CMenuGetItemMulti(
 
     pThis->mEntryCount = zero;
 
-    __ct__CCur18(&pThis->mCursor, NULL);
+    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&pThis->mCursor, NULL);
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&pThis->mSystemWindow[0]), 0);
 
     // Second zero constant for the tail clear (retail reuses the freed scn
@@ -397,18 +397,15 @@ void CMenuGetItemMulti::Init() {
         setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x11b], font);
         setLayoutTextBoxFont(mLayout, &lbl_eu_80504A3C[0x127], font);
 
-    CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
-        mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x63], true));
-    pane->flags = (pane->flags & 0xfe) | 1;
-    pane = reinterpret_cast<CMenuGetItemPaneView*>(
-        mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x6d], true));
-    pane->flags = (pane->flags & 0xfe) | 1;
-    pane = reinterpret_cast<CMenuGetItemPaneView*>(
-        mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x77], true));
-    pane->flags = (pane->flags & 0xfe) | 1;
-    pane = reinterpret_cast<CMenuGetItemPaneView*>(
-        mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x81], true));
-    pane->flags = (pane->flags & 0xfe) | 1;
+    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x63], true);
+    pane->SetVisible(true);
+    pane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x6d], true);
+    pane->SetVisible(true);
+    pane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x77], true);
+    pane->SetVisible(true);
+    pane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x81], true);
+    pane->SetVisible(true);
 
     LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_80504A3C[0x146],
                    BdatTouchStringCell(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 43), 0);
@@ -538,10 +535,10 @@ void CMenuGetItemMulti::Init() {
                 }
 
                 sprintf(itemPaneName, &lbl_eu_80504A3C[0x25e], mVisibleItemCount + 1);
-                CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
-                    mLayout->GetRootPane()->FindPaneByName(itemPaneName, true));
+                nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(
+                    itemPaneName, true);
                 if (pane != NULL) {
-                    pane->flags = (pane->flags & 0xfe) | 1;
+                    pane->SetVisible(true);
                 }
 
                 char* textureName = &lbl_eu_80504A3C[0x26b];
@@ -793,16 +790,12 @@ void CMenuGetItemMulti::Init() {
             }
 
             sprintf(initialItemPaneName, &lbl_eu_80504A3C[0x25e], sourceIndex + 1);
-            CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
-                mLayout->GetRootPane()->FindPaneByName(initialItemPaneName, true));
+            nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(
+                initialItemPaneName, true);
             if (pane != NULL) {
-                // Retail: neg r0 / lbz r5 / or r4 / rlwinm / rlwimi r0,r4,1,31,31.
-                // Bool-first | gets the rlwimi SH=1 but wrong neg/lbz colors;
-                // explicit neg|id + __rlwimi(..., 1, 31, 31) matches both.
-                u32 flags = pane->flags;
                 u32 neg = -(s32)itemId;
                 u32 t = neg | itemId;
-                pane->flags = __rlwimi(flags & 0xfe, t, 1, 31, 31);
+                pane->SetVisible(((t >> 30) & 1) != 0);
             }
 
             char* textureName = &lbl_eu_80504A3C[0x26b];
@@ -911,9 +904,9 @@ void CMenuGetItemMulti::Init() {
         for (i = 0; i < 4; ++i) {
             sprintf(fullPaneName, &lbl_eu_80504A3C[0x3bc], i + 1);
             visible = mPaneVisible[i];
-            CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
-                mLayout->GetRootPane()->FindPaneByName(fullPaneName, true));
-            pane->flags = (pane->flags & 0xfe) | visible;
+            nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(
+                fullPaneName, true);
+            pane->SetVisible(visible != 0);
         }
     }
 
@@ -1313,7 +1306,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
         sprintf(buf, &lbl_eu_80504A3C[0x25e], i + 1);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != 0) {
-            reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+            pane->SetVisible(false);
         }
         self->mPaneVisible[i] = 0;
     }
@@ -1401,9 +1394,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             sprintf(texPaneName, &lbl_eu_80504A3C[0x25e], i + 1);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(texPaneName, true);
             if (pane != 0) {
-                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-                    (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) |
-                    (entry != 0);
+                pane->SetVisible(entry != 0);
             }
 
             char* textureName = &lbl_eu_80504A3C[0x26b];
@@ -1538,8 +1529,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
                 paneName, true);
             if (pane != 0) {
                 u8 visible = itemId != 0;
-                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-                    (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | visible;
+                pane->SetVisible(visible != 0);
             }
 
             char* textureName = &lbl_eu_80504A3C[0x26b];
@@ -1617,8 +1607,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
         sprintf(buf, &lbl_eu_80504A3C[0x3bc], i + 1);
         u8 visible = self->mPaneVisible[i];
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
-        reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-            (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | visible;
+        pane->SetVisible(visible != 0);
     }
     if (self->mHasSpecialItem != 0) {
         PaneSetVtxColorByName(self->mLayout, &lbl_eu_80504A3C[0x16b], 0x777777ff);
@@ -1687,76 +1676,76 @@ void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
     // Hide every rank/slot pane; the two name panes are also blanked.
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x418], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x424], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x430], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x43c], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xeb], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xeb], &lbl_eu_80504A3C[0x19f], 0);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1ca], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1d5], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1e0], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1eb], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1f6], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x201], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x238], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x448], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x453], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x8b], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xaf], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xbb], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x97], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xa3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xc7], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x45e], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x46b], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x478], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x485], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x48f], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x499], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x20c], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4a3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xd3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xdf], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x217], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x222], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4ae], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4ba], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xf7], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+    pane->SetVisible(false);
     LayoutSetTextBoxFmtValue(self->mLayout, &lbl_eu_80504A3C[0xf7], &lbl_eu_80504A3C[0x19f], 0);
 
     // Blank the four per-rank text/slot panes.
@@ -1781,8 +1770,7 @@ void GetItemMulti_ShowDetail(CMenuGetItemMulti* self, int arg2, CMenuGetItemMult
     if (pane != 0) {
         // Retail shape: neg+or builds the non-zero test, the flags byte is
         // loaded in parallel (r5), and bit 0 is merged with a single rlwimi.
-        CMenuGetItemPaneView* view = reinterpret_cast<CMenuGetItemPaneView*>(pane);
-        view->flags = (arg2 != 0) | (view->flags & 0xfe);
+        pane->SetVisible(arg2 != 0);
     }
     if (arg2 != 0) {
         // Inline ternary: branches compute into the arg register (r3), the
@@ -1832,68 +1820,47 @@ void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
                                         CMenuGetItemMultiEntry* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x40c], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1ca], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1d5], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1e0], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1eb], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1f6], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x201], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x238], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x448], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x453], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x8b], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xaf], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xbb], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x97], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xa3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x45e], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x46b], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x478], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x485], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x48f], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x499], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
 
     // Item-window font pointer + id -> table id (retail keeps both in saved
     // regs across all the lookups; results stay full-width u32 with masks
@@ -1993,62 +1960,43 @@ void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
 void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x40c], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1ca], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1d5], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1e0], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1eb], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x1f6], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x201], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x238], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x448], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x453], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x97], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xa3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xc7], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x45e], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x46b], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x478], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x485], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x48f], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x499], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
 
     // Cache the item-window font pointer in a saved register (retail keeps it
     // in r24 across the pane calls); the rank block below re-reads the global.
@@ -2150,20 +2098,15 @@ rankDone:
 void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x424], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x20c], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4a3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xd3], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0xdf], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
 
     u32 itemId = (u32)arg2;
     if (arg3 != 0) {
@@ -2231,20 +2174,15 @@ void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
     // Show the five panes this category touches.
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x430], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x217], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x222], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4ae], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4ba], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
 
     // Item id -> table id, then fill the rank-name and description panes.
     void* tbl = lbl_eu_80664104;
@@ -2282,8 +2220,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
 
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x418], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
 
     u16 rankCount = (u16)CItem_initItemImplInstances(arg3)->getRankCount(arg3);
     char* rankName = BdatTouchStringCell(&lbl_eu_80504A3C[0x1c1],
@@ -2346,8 +2283,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
 void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int arg2) {
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x43c], true);
-    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane->SetVisible(true);
 
     void* tbl = (void*)lbl_eu_80664110;
     // No-entry path validates the id through the item table (result unused).
@@ -2421,8 +2357,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
             s16 slotVal = 0;
             if ((u8)i < count) {
                 void* texture = 0;
-                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-                    (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+                pane->SetVisible(true);
                 CMenuGetItemRankSlot* slot = reinterpret_cast<CMenuGetItemRankSlot*>(
                     CItem_initItemImplInstances(arg3)->getSlot(arg3, i));
                 if (slot != 0 && (slot->bits04 & 1) != 0) {
@@ -2489,8 +2424,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                     PaneSetTexPalette(pane, (TPLPalette*)texture);
                 }
             } else {
-                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-                    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe;
+                pane->SetVisible(false);
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)i + 1);
                 LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
             }
@@ -2533,8 +2467,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
                 self->mLayout->GetRootPane()->FindPaneByName(buf, true);
             if ((u8)j < count) {
                 void* texture = 0;
-                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
-                    (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+                pane->SetVisible(true);
                 str.format(&lbl_eu_80504A3C[0x3a7], (u8)j + 1);
                 u16 id = BdatGetU16Direct(itemTable, str.mString, (u16)tableId);
                 if (id == 0) {
@@ -2600,7 +2533,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
             } else {
                 sprintf(buf, &lbl_eu_80504A3C[0x65f], (u8)j + 1);
                 LayoutSetTextBoxFmtValue(self->mLayout, buf, &lbl_eu_80504A3C[0x19f], 0);
-                reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags &= 0xfe;
+                pane->SetVisible(false);
             }
 
             nw4r::lyt::Pane* refPane = self->mLayout->GetRootPane()->FindPaneByName(
@@ -2898,7 +2831,7 @@ void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
         // filled one).
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
             &lbl_eu_80504A3C[0x404], true);
-        if ((reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 1) != 0) {
+        if (pane->IsVisible()) {
             if (self->field_20C != 0) {
                 if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isOpened() != 0) {
                     if (reinterpret_cast<CSysWin*>(&self->mSystemWindow[0])->isActive() == 0) {

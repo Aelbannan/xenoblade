@@ -39,7 +39,7 @@ namespace cf {
         virtual void CfObject_notifyEventDone() = 0;  //0x70
         virtual bool CfObject_isMoveActiveNow();      //0x74
         virtual void CfObject_forwardSubObject();     //0x78
-        virtual void CfObject_notifyMemberRemoved();     //0x7C
+        virtual int CfObject_notifyMemberRemoved();      //0x7C
         virtual void CfObject_refreshSubB0();         //0x80 (was UnkVirtualFunc12)
         virtual int CfObject_queryTargetState();     //0x84
         virtual void* CfObject_pushRefreshValue(float value);     //0x88
@@ -93,10 +93,10 @@ namespace cf {
         // is the named bdat arm for slot 0 (armAnimSlot0N alias); float
         // callers use getActorScale (CfResReloadImpl). Same Fv arity.
         virtual int CfObject_armAnimSlot0N(u32 id, u32 nameIdx);     //0xF0 (named bdat arm, slot 0)
-        virtual void CfObject_UnkVirtualFunc41();     //0xF4
+        virtual int CfObject_UnkVirtualFunc41();      //0xF4
         virtual int CfObject_armAnimSlot1(u32 id, u32 tag);     //0xF8 (bdat arm, slot 1)
         virtual int CfObject_armAnimSlot1N(u32 id, u32 nameIdx);     //0xFC (named bdat arm, slot 1)
-        virtual void CfObject_UnkVirtualFunc44();     //0x100
+        virtual int CfObject_UnkVirtualFunc44();      //0x100
         virtual void CfObject_rearmAnimSlot(u32 value, u32 index);     //0x104
         virtual void CfObject_setMoveTargetPtr(void* arg);     //0x108
         virtual void CfObject_createMoveTarget(int kind);     //0x10C
@@ -249,7 +249,8 @@ namespace cf {
     };
 
     class CfObjectModel;
-    // mSubObj38 (+0x38) is a polymorphic sub-object. Recovered slot map
+
+    // mSubObj38 (+0x38) is a polymorphic sub-object.
     // (CfObjectModel UVF6 + notifyEventDone, both FULL):
     //   +0x08 = setStateBitMask(r4=1)
     //   +0x2C = CScnItemModel::attachModelParent(u32) (r4=parent, r5 residue)

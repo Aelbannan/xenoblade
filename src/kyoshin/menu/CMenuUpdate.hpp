@@ -146,7 +146,6 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp

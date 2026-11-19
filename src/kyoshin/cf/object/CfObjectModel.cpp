@@ -154,7 +154,7 @@ int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 // unregister from the manager when bit 0x40000000 is set, run the slot-0x68
 // cleanup, destroy the +0xB0 sub-object, then restore the model vtable and
 // run slot-0x68 once more before the delete-flag wrapper.
-extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
+extern "C" cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
     cf::CfObjectModel* self, s32 deleteFlag) {
     // Null guard branches straight past the whole body including the
     // delete-flag wrapper (retail beq lands on the shared epilogue).
@@ -510,7 +510,7 @@ ml::CVec3* cf::CfObjectModel::CfObject_getPosVector() {
     return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(this) + 0x3C);
 }
 
-void* cf::CfObjectModel::CfObject_getPosTriple() { void* p = *(void**)((u8*)this + 0x98); if (p != 0) { return (u8*)p + 0x310; } return (u8*)this + 0x3c; }
+void* cf::CfObjectModel::CfObject_getPosTriple() { void* p = this->mSubObj98; if (p != 0) { return (u8*)p + 0x310; } return (u8*)this + 0x3c; }
 
 // Copies the vector into the sub-object transform's rotation and refreshes
 // it, then mirrors the vector into this object's +0x48 position (retail
@@ -575,16 +575,16 @@ float cf::CfObjectModel::CfObject_getScaledAngle() {
 }
 
 void cf::CfObjectModel::CfObject_setObjScale(float f) {
-    void* p = *(void**)((u8*)this + 0x98);
+    void* p = this->mSubObj98;
     if (p != 0) {
         *(float*)((u8*)p + 0x304) = f;
         *(float*)((u8*)p + 0x308) = f;
         *(float*)((u8*)p + 0x30c) = f;
     }
-    *(float*)((u8*)this + 0x60) = f;
+    this->mFloat60 = f;
 }
 
-float cf::CfObjectModel::CfObject_getObjScale() { return *(float*)((u8*)this + 0x60); }
+float cf::CfObjectModel::CfObject_getObjScale() { return this->mFloat60; }
 
 // Returns bit 4 of the sub-object's +0x7A4 flag word (0 when no sub-object).
 u32 CfModel_GetEffOwner(cf::CfObjectModel* self) {
@@ -686,22 +686,18 @@ void* cf::CfObjectModel::CfObject_getPosSample(int arg) const {
 
 // Returns this+0x10 when the vtable+0x44 flag is set, else the vtable+0x180
 // (CfObjectModel_getModelName) result. Retail symbol is UnkVirtualFunc2.
-extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
-    struct Param10View {
-        u8 pad[0x10];
-        void* mPtr10;
-    };
-    if (self->CObjectParam_hasObjectName() != 0) {
-        return reinterpret_cast<void*>(&reinterpret_cast<Param10View*>(self)->mPtr10);
+void* cf::CfObjectModel::CObjectParam_UnkVirtualFunc2() {
+    if (this->CObjectParam_hasObjectName() != 0) {
+        return reinterpret_cast<void*>(&this->mPtr10);
     }
-    return self->CfObjectModel_getModelName();
+    return this->CfObjectModel_getModelName();
 }
 
 // Return the sub-object's vtable+0x18 result, or a static null placeholder
 // when there is no sub-object (retail tail-calls the sub-object's slot).
-extern "C" void* CfObjectModel_getModelName__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
-    if (self->mSubObj98 != 0) {
-        return (void*)reinterpret_cast<CScnItemModel*>(self->mSubObj98)->getModelNameStr();
+void* cf::CfObjectModel::CfObjectModel_getModelName() {
+    if (this->mSubObj98 != 0) {
+        return (void*)reinterpret_cast<CScnItemModel*>(this->mSubObj98)->getModelNameStr();
     }
     return lbl_eu_804FC548;
 }
@@ -840,12 +836,12 @@ void CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc(
     }
 }
 
-extern "C" void CfObjectModel_snapToBone__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc(cf::CfObjectModel* self, cf::CfObject* other, const char* name) {
+void cf::CfObjectModel::CfObjectModel_snapToBone(cf::CfObject* other, const char* name) {
     // Store (other != 0) at field_BC, then tail-call the virtual
     // CfObjectModel_bindModelTo (vtable+0x1AC; UnkVirtualFunc14 is the Fv alias)
     // with the same args.
-    self->field_BC = (u8)(other != nullptr);
-    self->CfObjectModel_bindModelTo(other, name);
+    this->field_BC = (u8)(other != nullptr);
+    this->CfObjectModel_bindModelTo(other, name);
 }
 
 extern "C" u32 CfModel_GetFlag7A8(cf::CfObjectModel* self) {
@@ -872,15 +868,15 @@ u32 cf::CfObjectModel::CfObject_isVisibleFlag() {
 // floats in retail though the base header declares them void, so they are
 // reached through the real CfObject_getProgressLow/High virtuals. The
 // sub-object check reproduces the retail's redundant second li r31,0.
-extern "C" int CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3(cf::CfObjectModel* self, const ml::CVec3* vec) {
+int cf::CfObjectModel::CfObject_UnkVirtualFunc68(const ml::CVec3* vec) {
     (void)vec;
     int result = 0;
-    cf::CfObjectModelSub98* sub = self->mSubObj98;
+    cf::CfObjectModelSub98* sub = this->mSubObj98;
     if (sub != 0) {
         result = 0;
         if ((sub->field_7A4 & 0x2) != 0) {
-            if (self->CfObject_getProgressLow() < lbl_eu_80666A6C &&
-                self->CfObject_getProgressHigh() > lbl_eu_80666A68) {
+            if (this->CfObject_getProgressLow() < lbl_eu_80666A6C &&
+                this->CfObject_getProgressHigh() > lbl_eu_80666A68) {
                 result = 1;
             }
         }
@@ -914,9 +910,9 @@ void CfModel_GetSpeedRate(cf::CfObjectModel* self, f32* vec) {
 // Return bit 4 of the sub-object's +0x7A4 flag word (0 when no sub-object).
 // Free-function form keeps the Unk Fv linker name the hand-built vtables
 // reference; the header virtual is CfObjectModel_getSubFlag04 (Wave-60).
-extern "C" u32 CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
-    if (self->mSubObj98 != 0) {
-        return (self->mSubObj98->field_7A4 >> 4) & 1;
+u32 cf::CfObjectModel::CfObjectModel_getSubFlag04() {
+    if (this->mSubObj98 != 0) {
+        return (this->mSubObj98->field_7A4 >> 4) & 1;
     }
     return 0;
 }
@@ -1163,6 +1159,10 @@ void CfObject_findNodeMatrix__Q22cf13CfObjectModelCFPCc();
 void CfObject_getIndexedNodeMatrix__Q22cf13CfObjectModelCFUl();
 void CfObject_getSubPosWord__Q22cf13CfObjectModelFv();
 void CfObject_getPosSample__Q22cf13CfObjectModelCFi();
+void CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3();
+void CfObjectModel_getModelName__Q22cf13CfObjectModelFv();
+void CfObjectModel_snapToBone__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc();
+void CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv();
 void CfObject_setVisibleFlag__Q22cf13CfObjectModelFi();
 void CfObject_setProgressHigh__Q22cf13CfObjectModelFf();
 void CfObject_isVisibleFlag__Q22cf13CfObjectModelFv();

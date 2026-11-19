@@ -25,12 +25,9 @@ extern "C" void* __dt__10CViewFrameFv(void* self, int flags) {
 
 /* CViewRoot::getCurrent / ::invalidCurrent come from CViewRoot.hpp
  * (monolib/core.hpp) -- no pre-mangled local spellings needed. */
-extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
-extern "C" void updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
 extern "C" void CViewFrame_ComputeContentRect(ml::CRect16* rect, const CViewFrame* frame);
-extern "C" void setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
 extern "C" void __ct__CViewFrame(CViewFrame* frame);
 // CFontLayer base ctor (un-mangled retail symbol; defined in the shipped
 // CFontLayer.o, which is NonMatching so no C++ declaration exists anywhere).
@@ -123,46 +120,6 @@ struct CViewMsgPayload {
 };
 
 
-extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
-extern "C" int WorkEvent3__10IWorkEventFPv(void*);
-extern "C" int WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb(int);
-extern "C" int WorkEvent6__10IWorkEventFv();
-extern "C" int WorkEvent7__10IWorkEventFv();
-extern "C" int WorkEvent8__10IWorkEventFv();
-extern "C" int WorkEvent9__10IWorkEventFv();
-extern "C" int WorkEvent10__10IWorkEventFv();
-extern "C" int WorkEvent11__10IWorkEventFv();
-extern "C" int WorkEvent12__10IWorkEventFv();
-extern "C" int WorkEvent13__10IWorkEventFv();
-extern "C" int WorkEvent14__10IWorkEventFv();
-extern "C" int WorkEvent15__10IWorkEventFv();
-extern "C" int WorkEvent16__10IWorkEventFv();
-extern "C" int WorkEvent17__10IWorkEventFv();
-extern "C" int WorkEvent18__10IWorkEventFv();
-extern "C" int WorkEvent19__10IWorkEventFv();
-extern "C" int WorkEvent20__10IWorkEventFv();
-extern "C" int WorkEvent21__10IWorkEventFv();
-extern "C" int WorkEvent22__10IWorkEventFv();
-extern "C" int WorkEvent23__10IWorkEventFv();
-extern "C" int WorkEvent24__10IWorkEventFv();
-extern "C" int WorkEvent25__10IWorkEventFv();
-extern "C" int WorkEvent26__10IWorkEventFv();
-extern "C" int WorkEvent27__10IWorkEventFv();
-extern "C" int WorkEvent28__10IWorkEventFv();
-extern "C" int WorkEvent29__10IWorkEventFv();
-extern "C" int WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void wkUpdate__11CWorkThreadFv();
-extern "C" void wkRender__11CWorkThreadFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-extern "C" bool wkStandbyLogin__11CWorkThreadFv(CView* self);
-extern "C" bool wkStandbyLogout__11CWorkThreadFv(CWorkThread* self);
-extern "C" bool wkStandbyLogin__5CViewFv(CView* self);
-extern "C" bool wkStandbyLogout__5CViewFv(CView* self);
-extern "C" void wkUpdate__5CViewFv();
 
 #include "decomp.h"
 
@@ -410,21 +367,19 @@ void CView::setRect(const ml::CRect16& rect) {
         }
 
         if (sourceParent != nullptr) {
-            updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &mRectData, static_cast<CView*>(sourceParent)->mRectData.mBoundsSize);
+            mRectData.updateScrollForSize(static_cast<CView*>(sourceParent)->mRectData.mBoundsSize);
         } else {
             {
                 u16 modeHeight;
                 u16 modeWidth;
 
-                renderMode = getRenderModeObj__9CDeviceVIFv();
+                renderMode = CDeviceVI::getRenderModeObj();
                 modeHeight = renderMode->efbHeight;
-                renderMode = getRenderModeObj__9CDeviceVIFv();
+                renderMode = CDeviceVI::getRenderModeObj();
                 modeWidth = renderMode->fbWidth;
                 modeSize.x = modeWidth;
                 modeSize.y = modeHeight;
-                updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                    &mRectData, *(const ml::CPnt16*)&modeSize);
+                mRectData.updateScrollForSize(*(const ml::CPnt16*)&modeSize);
             }
         }
         goto setRect_tail;
@@ -435,11 +390,11 @@ void CView::setRect(const ml::CRect16& rect) {
     normalSize.x = rect.mPos.x - normalPos.x;
     normalSize.y = rect.mPos.y - normalPos.y;
     *(u32*)&mFrame.mContentX = *(u32*)&normalSize;
-    updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
+    mRectData.updateScrollForSize(rect.mSize);
 
 setRect_tail:
     if ((unk278 & 0x10) == 0) {
-        setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
+        mRectData.setBoundsSize(rect.mSize);
     }
 }
 
@@ -1118,7 +1073,7 @@ bool CView::wkStandbyLogout() {
     if (this->mChildren.empty() && this->unk45C == nullptr &&
         ResListWorkSize(&this->mWorkIDList) == 0) {
         CViewRoot::invalidCurrent(this);
-        return wkStandbyLogout__11CWorkThreadFv(this);
+        return this->CWorkThread::wkStandbyLogout();
     }
     return false;
 }
@@ -2111,9 +2066,8 @@ void CView::accumRectToView(ml::CRect& rect, CView* other) {
     }
 }
 
-// CLib/CViewRoot init guards (static members; literal retail symbol names).
-extern "C" bool isInitialized__4CLibFv();
-extern "C" bool isInitialized__9CViewRootFv();
+// CLib/CViewRoot init guards are static class members (monolib headers).
+#include "monolib/lib/CLib.hpp"
 
 CView* CView::updateViewState() {
     CWorkThread* parentSnap;
@@ -2132,10 +2086,10 @@ CView* CView::updateViewState() {
 // then forwards to the CWorkThread base login. Bit set skips straight to the
 // base call.
 bool CView::wkStandbyLogin() {
-    if (!isInitialized__4CLibFv()) {
+    if (!CLib::isInitialized()) {
         goto login_fail;
     }
-    if (!isInitialized__9CViewRootFv()) {
+    if (!CViewRoot::isInitialized()) {
         goto login_fail;
     }
     if ((this->unk278 & 8) == 0) {
@@ -2164,7 +2118,7 @@ bool CView::wkStandbyLogin() {
         mContextMsg.mRing.mSize = writeIdx;
         mContextMsg.mRing.field6 = prevIdx;
     }
-    return wkStandbyLogin__11CWorkThreadFv(this);
+    return this->CWorkThread::wkStandbyLogin();
 
 login_fail:
     return false;
@@ -2435,18 +2389,15 @@ void CView::updateViewRect(ml::CRect16* rect) {
         }
 
         if (parentView != nullptr) {
-            updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &this->mRectData,
-                static_cast<CView*>(parentView)->mRectData.mBoundsSize);
+            this->mRectData.updateScrollForSize(static_cast<CView*>(parentView)->mRectData.mBoundsSize);
         } else {
-            GXRenderModeObj* renderMode = getRenderModeObj__9CDeviceVIFv();
+            GXRenderModeObj* renderMode = CDeviceVI::getRenderModeObj();
             u16 modeHeight = renderMode->efbHeight;
-            renderMode = getRenderModeObj__9CDeviceVIFv();
+            renderMode = CDeviceVI::getRenderModeObj();
             u16 modeW = renderMode->fbWidth;
             modeSize.x = modeW;
             modeSize.y = modeHeight;
-            updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &this->mRectData, *(const ml::CPnt16*)&modeSize);
+            this->mRectData.updateScrollForSize(*(const ml::CPnt16*)&modeSize);
         }
     } else {
         getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
@@ -2455,10 +2406,10 @@ void CView::updateViewRect(ml::CRect16* rect) {
         elseOff.y = tmp.mPos.y - elsePos.y;
         *(u32*)&this->mFrame.mContentX = *(u32*)&elseOff;
         // NOTE: passes tmp.mSize (first-call rect), not the computed extent.
-        updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&this->mRectData, tmp.mSize);
+        this->mRectData.updateScrollForSize(tmp.mSize);
     }
 
     if ((this->unk278 & 0x10) == 0) {
-        setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&this->mRectData, tmp.mSize);
+        this->mRectData.setBoundsSize(tmp.mSize);
     }
 }

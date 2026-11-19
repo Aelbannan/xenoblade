@@ -1679,13 +1679,14 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
         return;
     }
     CfMovePosObj* obj = (CfMovePosObj*)res;
-    // Buffered component temps: retail allocates x/y/z in source order
-    // (f1/f0/f2) but schedules the loads z/y/x between the id constants.
-    f32 vz = obj->field_0x2C;
+    // Buffered component temps: retail declares y/x/z and schedules the
+    // member loads z/y/x between the id constants.
+    f32 vy, vx, vz;
     u32 flag = 0;      // set when the shake counter is positive
-    f32 vy = obj->field_0x1C;
     u32 kind = 0x2e;   // default effect id
-    f32 vx = obj->field_0xC;
+    vz = obj->field_0x2C;
+    vy = obj->field_0x1C;
+    vx = obj->field_0xC;
     u32 sndId = 0xd9;  // default impact sound
     CfMoveVec3f vec;
     vec.x = vx;
@@ -1707,7 +1708,7 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
         if ((int)lbl_eu_80663EF0 > 0) {
             flag = 1;
         }
-    } else if ((sub->field_0x64 & 0x8000) != 0) {
+    } else if ((sub->mPresentFlags & 0x10000) != 0) {
         lbl_eu_80663EF0 = 0x3c;
     }
     CfMoveMgrEfView* mgr =

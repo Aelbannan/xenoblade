@@ -56,7 +56,7 @@ extern "C" void ArtsInfo_SetReadyFlag();
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);

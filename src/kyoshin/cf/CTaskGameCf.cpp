@@ -12,6 +12,7 @@
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/code_80296898.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 // Minimal local declaration of cf::CTaskREvent: CTaskREvent.hpp currently
 // conflicts with CfGameManager.hpp (both declare a global CtrlRemote_GetFileEventIds with
@@ -30,45 +31,30 @@ namespace cf {
 // last). MWCC emits functions in definition order, so keeping this order
 // aligns decomp .text offsets with the retail split object.
 
-extern const u32 lbl_eu_80525B9C[];
-extern const u32 lbl_eu_80525B54[];
-// __ptmf_null: declared (non-const u32[3]) by CfNandManager.hpp etc -
+
 // local const form conflicts (10563)
 extern u32 __ptmf_null[3];
 
 // optimize_for_size: retail prologue/epilogue use stmw/lmw r29.
+// Retail's ctor is a real cf::CTaskGameCf constructor: MWCC emits the base
+// CTTask ctor (vtable + null PTMFs) and the derived vtable/member stores, then
+// create() calls it directly (no placement-new null guard).
+// optimize_for_size emits the retail stmw/lmw r29 frame (0xc8).
 #pragma optimize_for_size on
-extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
-    __ct__8CProcessFv(pThis);
-
-    u32* p = reinterpret_cast<u32*>(pThis);
-
-    // Interim CTTask<CTaskGameCf> vtable, written before the callback slots
-    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B9C[0]);
-
-    // Null PTMF copied into the CTTask move/draw callback slots
-    typedef void (cf::CTaskGameCf::*Ptmf)();
-    *(Ptmf*)((char*)pThis + 0x3C) = *(const Ptmf*)&__ptmf_null[0];
-    *(Ptmf*)((char*)pThis + 0x48) = *(const Ptmf*)&__ptmf_null[0];
-
-    // Final CTaskGameCf vtable (overwrites CTTask vtable)
-    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B54[0]);
-
-    pThis->unk_54 = 0;
-    pThis->pTaskGame = reinterpret_cast<CTaskGame*>(pParent);
-    pThis->unk_5C = 1;
-    pThis->unk_5E = 1;
-    pThis->unk_60 = 16;
-    pThis->unk_62 = 0;
-    pThis->unk_64.mString[0] = 0;
-    pThis->unk_64.mLength = 0;
-
+cf::CTaskGameCf::CTaskGameCf(CProcess* taskGame, BOOL arg2)
+    : unk_54(0),
+      pTaskGame(reinterpret_cast<CTaskGame*>(taskGame)),
+      unk_5C(1),
+      unk_5E(1),
+      unk_60(16),
+      unk_62(0) {
+    unk_64.mString[0] = 0;
+    unk_64.mLength = 0;
     if (arg2 != 0) {
-        pThis->unk_54 |= 8;
+        unk_54 |= 8;
     } else {
-        pThis->unk_54 = 0;
+        unk_54 = 0;
     }
-    return pThis;
 }
 #pragma optimize_for_size off
 
@@ -83,10 +69,7 @@ CTTask<cf::CTaskGameCf>::~CTTask() {}
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;
 
-    // Retail has no mangled ctor: the class ctor is the extern "C" __ct__cf_CTaskGameCf
-    // wrapper above (0xc8). The C++ ctor definition was removed to eliminate the extra
-    // 0xd8 function that inflated the unit past its split budget.
-    // optimize_for_size emits the retail stmw/lmw r30 frame (0x54, not 0x5c).
+
     #pragma optimize_for_size on
     CTaskGameCf::~CTaskGameCf(){}
     #pragma optimize_for_size off
@@ -330,13 +313,17 @@ void CTaskGameCf::finishExit() {
 
 } //namespace cf
 
+// Direct call to the real constructor: placement new would insert a null
+// guard that retail's create() does not have.
+extern "C" cf::CTaskGameCf* __ct__Q22cf11CTaskGameCfFP8CProcessi(cf::CTaskGameCf* self, CProcess* taskGame, BOOL arg2);
+
 #pragma optimize_for_size on
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2) {
     u32 handle = getWorkMem__17CWorkThreadSystemFv();
-    cf::CTaskGameCf* task = (cf::CTaskGameCf*)allocate__Q23mtl10MemManagerFUlUl(0x90, handle);
+    cf::CTaskGameCf* task = (cf::CTaskGameCf*)mtl::MemManager::allocate(0x90, handle);
 
     if (task != nullptr) {
-        task = __ct__cf_CTaskGameCf(task, pParent, arg2);
+        task = __ct__Q22cf11CTaskGameCfFP8CProcessi(task, pParent, arg2);
     }
 
     Regist__8CProcessFP8CProcessb(task, pParent, false);

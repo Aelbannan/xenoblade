@@ -58,6 +58,41 @@ public:
     u8 mIdle;                                  // 0x0E
 };
 
+/* Save-slot record stored at +0x20 of each NAND header buffer. The
+unknown bytes are real fields of the on-disk record whose meaning has not
+been recovered yet. */
+struct CSLSaveSlot {
+    u8 mUnk00;                 // 0x00
+    u8 mUnk01;                 // 0x01
+    u8 mPriority02;            // 0x02
+    u8 mPriority03;            // 0x03
+    u16 mPriority04;           // 0x04
+    u16 mPriority06;           // 0x06
+    u8 mPriority08;            // 0x08
+    u8 mPriority09;            // 0x09
+    u16 mPlayTime;             // 0x0A
+    u16 mMinutes;              // 0x0C
+    u16 mStartPlace;           // 0x0E
+    u8 mUnk10;                 // 0x10
+    u8 mGender;                // 0x11
+    u16 mUnk12;                // 0x12
+    u32 mAwardRecord[7];       // 0x14
+    u8 mUnk30[0x14];           // 0x30
+    char mPlayerName[0x20];    // 0x44
+    u16 mLevel;                // 0x64
+    u8 mClassFlag;             // 0x66
+    u8 mClassIndex;            // 0x67
+    u8 mUnk68[0x18];           // 0x68
+    u8 mThumbnail[0x9C00];     // 0x80
+};
+
+/* NAND header buffer: the first 0x20 bytes are the transfer header, then
+ the save record. */
+struct CSLBuffer {
+    u8 mNandHeader[0x20];      // 0x00
+    CSLSaveSlot mSlot;         // 0x20
+};
+
 /* Save-slot header buffers read through the NAND queue (no vtable;
 CSaveLoad +0x13C). */
 class CSLData {
@@ -68,10 +103,10 @@ public:
     void freeBufs();
     void bindSlots();
     int isReady();
-    int getSlot(u8 index);
+    CSLSaveSlot* getSlot(u8 index);
     static void onSlotRead(int, int index, u8 valid);
 
-    void* mBuf[3];   // 0x00
+    CSLBuffer* mBuf[3]; // 0x00
     u8 mRead[3];     // 0x0C - header read finished
     u8 mValid[3];    // 0x0F - header valid
 };

@@ -33,46 +33,32 @@ void* getEffOwner(void* obj);
 // CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
 // (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)
 // String pool base (EneSt_ScalePaneWidths pane names at +0xd3/+0xdd/+0x11d).
-extern char lbl_eu_804FDBF8[];
+extern char sMenuEnemyNamePool[];
 // sdata2 constants used by the panel-highlight helpers.
-extern const f32 lbl_eu_80667008;
-extern const f32 lbl_eu_8066703C;
-extern const f32 lbl_eu_80667040;
-extern const f32 lbl_eu_80667044;
-extern const f32 lbl_eu_80667048;
-extern const f32 lbl_eu_8066704C;
-extern const f32 lbl_eu_80667050;
-extern const f32 lbl_eu_80667054;
-extern const f32 lbl_eu_80667038;
+// The ctor's animMarker initializer reads the retail UNDEF pool label;
+// later uses go through the typed sdata2_MESPool object below.
+extern const f32 lbl_eu_80667004;
+extern const f32 sEnemyHighlightScale;
+extern const f32 sEnemyHighlightUnknown3C;
 // Enemy-data table pointer (sdata) used by the highlight-scan helpers.
 extern u8* lbl_eu_806640E0;
 // Texture-index table for the panel-highlight search (EneSt_SearchHighlightTexture).
-extern u32 lbl_eu_804FDBC8[];
+extern u32 sEnemyTextureNameTable[];
 // sdata colour/scale quads + s16 pairs used by EneSt_RegisterPanel's pane setup.
 // Declared as 4-element s16 arrays so direct element access keeps the retail
 // sda21 addressing (li lbl@sda21 + halfword ops).
-extern s16 lbl_eu_80663F58[];
-extern u32 lbl_eu_80663F5C;
-extern s16 lbl_eu_80663F60[];
-extern u32 lbl_eu_80663F64;
-extern s16 lbl_eu_80663F68[];
-extern s16 lbl_eu_80663F70[];
-extern s16 lbl_eu_80663F78[];
-extern s16 lbl_eu_80663F80[];
-extern s16 lbl_eu_80663F88[];
-extern s16 lbl_eu_80663F90[];
+extern s16 sEnemyColorQuad0[];
+extern u32 sEnemyColorWord0;
+extern s16 sEnemyColorQuad1[];
+extern u32 sEnemyColorWord1;
+extern s16 sEnemyColorQuad2[];
+extern s16 sEnemyColorQuad3[];
+extern s16 sEnemyColorQuad4[];
+extern s16 sEnemyColorQuad5[];
+extern s16 sEnemyColorQuad6[];
+extern s16 sEnemyColorQuad7[];
 extern u32 lbl_eu_806640CC;
 // sdata2 constants used by the position-marker helpers.
-extern const f32 lbl_eu_80666FF0;
-extern const f32 lbl_eu_80666FF4;
-extern const f32 lbl_eu_80666FF8;
-extern const f32 lbl_eu_80666FFC;
-extern const f32 lbl_eu_80667000;
-extern const f32 lbl_eu_80667018;
-extern const f32 lbl_eu_8066701C;
-extern const f32 lbl_eu_80667020;
-extern const f32 lbl_eu_80667024;
-extern const f32 lbl_eu_80667028;
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -120,25 +106,25 @@ char lbl_eu_804FD720[0x448] =
 "BTL_PSVskill\0point_PP\0icon\0nul_icon_l\0nul_icon_h\0\0";
 // .rodata texture names (sizes = gaps to next label).
 __declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FDB68[0x18] = "mf71_btl00_pnmk00.tpl";
+char sEnemyTexture0Name[0x18] = "mf71_btl00_pnmk00.tpl";
 __declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FDB80[0x18] = "mf71_btl00_pnmk01.tpl";
+char sEnemyTexture1Name[0x18] = "mf71_btl00_pnmk01.tpl";
 __declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FDB98[0x18] = "mf71_btl00_pnmk02.tpl";
+char sEnemyTexture2Name[0x18] = "mf71_btl00_pnmk02.tpl";
 __declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FDBB0[0x18] = "mf71_btl00_pnmk03.tpl";
+char sEnemyTexture3Name[0x18] = "mf71_btl00_pnmk03.tpl";
 // .rodata 0x10: texture-name pointer table (u32 words, as rendered in retail;
 // the reader loads them as U32x4, matching the hpp u32[] decl).
 __declspec(section ".rodata") __attribute__((used))
-u32 lbl_eu_804FDBC8[4] = {(u32)lbl_eu_804FDB68, (u32)lbl_eu_804FDB80, (u32)lbl_eu_804FDB98, (u32)lbl_eu_804FDBB0};
+u32 sEnemyTextureNameTable[4] = {(u32)sEnemyTexture0Name, (u32)sEnemyTexture1Name, (u32)sEnemyTexture2Name, (u32)sEnemyTexture3Name};
 // .rodata type names.
 __declspec(section ".rodata") __attribute__((used))
-const char lbl_eu_804FDBD8[0x10] = "CMenuEnemyState";
+const char sMenuEnemyStateTypeName[0x10] = "CMenuEnemyState";
 __declspec(section ".rodata") __attribute__((used))
-const char lbl_eu_804FDBE8[0x10] = "CPcSelectCursor";
+const char sCursorTypeName[0x10] = "CPcSelectCursor";
 // .rodata 0x2A0: layout/pane-name block.
 __declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FDBF8[0x2A0] =
+char sMenuEnemyNamePool[0x2A0] =
 "CPcSelectCursor\0mf80_info00_target_pc.brlyt\0mf80_info00_target_pc_in.brlan\0"
 "mf80_info00_target_pc_on.brlan\0nul_crs\0nul_crs_f\0pic_crs02\0pic_crs03\0pic_crs_f02\0pic_crs_f03\0"
 "CMenuEnemyState\0mf71_battle10_hpgage.brlyt\0pic_pcbar\0pic_enbar\0pic_tgbar_f\0pic_pic_death\0"
@@ -175,26 +161,26 @@ const Sdata2_MESPool sdata2_MESPool = {1.0f, 0.0f, 320.0f, 224.0f, -1.0f, 160.0f
     0.0f, 1.0f, 25.0f, 0u, 4503599627370496.0};
 // .bss 0x10: mutable pulse vector (retail single object; last word unnamed,
 // so the array completes to [4]. A small static pad would fall into .sbss.)
-f32 lbl_eu_80573A60[4];
+f32 sEnemyPulseVector[4];
 // .sbss 0x50: menu state (retail sizes; the u16 gaps at 5A/5E/62/66 ride
 // inside the s16[4] overlays, so 63F5C/64 stay UNDEF decls; 63F54 and the
 // 63F98 tail are unnamed).
 CMenuEnemyState* CMenuEnemyState::sInstance;
 __attribute__((used))
 static u32 s_MESSbssPad54;
-s16 lbl_eu_80663F58[4];
-s16 lbl_eu_80663F60[4];
-s16 lbl_eu_80663F68[4];
-s16 lbl_eu_80663F70[4];
-s16 lbl_eu_80663F78[4];
-s16 lbl_eu_80663F80[4];
-s16 lbl_eu_80663F88[4];
-s16 lbl_eu_80663F90[4];
+s16 sEnemyColorQuad0[4];
+s16 sEnemyColorQuad1[4];
+s16 sEnemyColorQuad2[4];
+s16 sEnemyColorQuad3[4];
+s16 sEnemyColorQuad4[4];
+s16 sEnemyColorQuad5[4];
+s16 sEnemyColorQuad6[4];
+s16 sEnemyColorQuad7[4];
 // (pad first: MWCC 4-aligns array objects in .sbss, so a pad after the u8
 // scalar would leave a 3-byte gap; this order packs to exactly 0x50.)
 __attribute__((used))
 static u8 s_MESSbssPad98[7];
-u8 lbl_eu_80663F98;
+u8 sEnemyMenuOnceFlag;
 
 
 
@@ -384,8 +370,8 @@ struct AnimTransformOverlay {
 CMenuEnemyState::CMenuEnemyState(CScn* scn)
     : unk60(scn), unk74(NULL), unk78(NULL), field7C(0), field80(0), field84(0),
       field88(0), field8C(0), field90(0), field94(0), field98(0), field9C(0),
-      fieldA0(0), field7C4(0), field7C8(lbl_eu_80666FEC), field7CC(lbl_eu_80666FEC),
-      field7D0(lbl_eu_80666FEC), field7D4(0), field7D8(lbl_eu_80666FEC), field7DC(0),
+      fieldA0(0), field7C4(0), field7C8(sEnemyPanelAnimMarker), field7CC(sEnemyPanelAnimMarker),
+      field7D0(sEnemyPanelAnimMarker), field7D4(0), field7D8(sEnemyPanelAnimMarker), field7DC(0),
       field7E0(0), field82C(0), unk830(0), unk834(0), unk838(lbl_eu_80667004) {
     selectCursor = CPcSelectCursor();
 }
@@ -405,9 +391,9 @@ CMenuEnemyState::~CMenuEnemyState() {
 // CPcSelectCursor ctor (us-8010f540): retail stores the vtable address at
 // +0x00 (a plain u32 field in this deliberately non-polymorphic model),
 // zeroes field04, constructs the embedded UnkClass_8045F564 region, zeroes
-// the rest, sets byte40 and returns this. The vtable value is a plain linker
-// constant (lbl_eu_8052C534), so no __vt__ symbol / automatic vptr store is
-// emitted anywhere.
+// the rest, sets byte40 and returns this. The vptr store uses the real
+// CPcSelectCursor vtable (__vt__15CPcSelectCursor), emitted by this TU with
+// the out-of-line virtual destructor.
 // ---------------------------------------------------------------------------
 CPcSelectCursor::CPcSelectCursor()
     : field04(0), mem08() {
@@ -480,42 +466,13 @@ extern "C" {
 // touching that shared header.
 int isSceneActive__Q22cf13CfGameManagerFv();
 
-extern u8 lbl_eu_80663F98;        // once-guard byte
-extern f32 lbl_eu_80573A60[];    // mutable pulse vector (shake/scale-like)
-extern const f32 lbl_eu_80666FE8; // 1.0f
-extern const f32 lbl_eu_80667004; // 0.0f
-extern const f32 lbl_eu_8066700C; // pulse step
-extern const f32 lbl_eu_80667010; // pulse frequency
-extern const f32 lbl_eu_80667014; // distance^2 threshold
-extern const f32 lbl_eu_80666FEC; // anim-state marker value
-extern const f32 lbl_eu_8066702C; // indicator pane y reset value
-extern const f64 lbl_eu_80667030; // damage-text double bias
+extern u8 sEnemyMenuOnceFlag;        // once-guard byte
+extern f32 sEnemyPulseVector[];    // mutable pulse vector (shake/scale-like)
+extern const f32 sEnemyPanelAnimMarker; // anim-state marker value
+extern const f64 sEnemyTextDoubleBias; // damage-text double bias
 
 extern "C" void* MapFx_ResolveOwner(void* obj);
 // sdata2 member aliases (after the last local decl, before later uses).
-#define lbl_eu_80666FE8 (sdata2_MESPool.fE8)
-#define lbl_eu_80666FF0 (sdata2_MESPool.fF0)
-#define lbl_eu_80666FF4 (sdata2_MESPool.fF4)
-#define lbl_eu_80666FF8 (sdata2_MESPool.fF8)
-#define lbl_eu_80666FFC (sdata2_MESPool.fFC)
-#define lbl_eu_80667000 (sdata2_MESPool.f00)
-#define lbl_eu_80667004 (sdata2_MESPool.f04)
-#define lbl_eu_8066700C (sdata2_MESPool.f0C)
-#define lbl_eu_80667010 (sdata2_MESPool.f10)
-#define lbl_eu_80667014 (sdata2_MESPool.f14)
-#define lbl_eu_80667018 (sdata2_MESPool.f18)
-#define lbl_eu_8066701C (sdata2_MESPool.f1C)
-#define lbl_eu_80667020 (sdata2_MESPool.f20)
-#define lbl_eu_80667024 (sdata2_MESPool.f24)
-#define lbl_eu_80667028 (sdata2_MESPool.f28)
-#define lbl_eu_8066702C (sdata2_MESPool.f2C)
-#define lbl_eu_80667038 (sdata2_MESPool.f38)
-#define lbl_eu_80667040 (sdata2_MESPool.f40)
-#define lbl_eu_80667044 (sdata2_MESPool.f44)
-#define lbl_eu_80667048 (sdata2_MESPool.f48)
-#define lbl_eu_8066704C (sdata2_MESPool.f4C)
-#define lbl_eu_80667050 (sdata2_MESPool.f50)
-#define lbl_eu_80667054 (sdata2_MESPool.f54)
 void CfModel_NotifyReady(void* model);
 void CfModel_GetSpeedRate(void* model);
 
@@ -742,23 +699,23 @@ void CMenuEnemyState::Move() {
                 }
                 {
                         if (unk834 != 0) {
-                            f32 v = unk838 - lbl_eu_8066700C;
+                            f32 v = unk838 - (sdata2_MESPool.f0C);
                             unk838 = v;
-                            if (v <= lbl_eu_80667004) {
-                                unk838 = lbl_eu_80667004;
+                            if (v <= (sdata2_MESPool.f04)) {
+                                unk838 = (sdata2_MESPool.f04);
                             }
                         } else {
-                            f32 v = unk838 + lbl_eu_8066700C;
+                            f32 v = unk838 + (sdata2_MESPool.f0C);
                             unk838 = v;
-                            if (v >= lbl_eu_80666FE8) {
-                                unk838 = lbl_eu_80666FE8;
+                            if (v >= (sdata2_MESPool.fE8)) {
+                                unk838 = (sdata2_MESPool.fE8);
                                 unk834 = 1;
                             }
                         }
 
                         if (lastId != unk830) {
                             unk834 = 0;
-                            unk838 = lbl_eu_80667004;
+                            unk838 = (sdata2_MESPool.f04);
 
                             void* oldObj = findObjectById(static_cast<int>(unk830));
                             // Double guard matches retail's paired beq before the call.
@@ -770,17 +727,17 @@ void CMenuEnemyState::Move() {
                             unk830 = lastId;
                         }
 
-                        if (!lbl_eu_80663F98) {
-                            lbl_eu_80663F98 = 1;
+                        if (!sEnemyMenuOnceFlag) {
+                            sEnemyMenuOnceFlag = 1;
                         }
 
                         {
                             f32 t = ml::pi * unk838;
-                            t = lbl_eu_80667010 * t;
+                            t = (sdata2_MESPool.f10) * t;
                             f32 s = nw4r::math::SinFIdx(t);
-                            lbl_eu_80573A60[0] = s;
-                            lbl_eu_80573A60[1] = s;
-                            lbl_eu_80573A60[2] = lbl_eu_80666FE8;
+                            sEnemyPulseVector[0] = s;
+                            sEnemyPulseVector[1] = s;
+                            sEnemyPulseVector[2] = (sdata2_MESPool.fE8);
                             CfModel_GetSpeedRate(obj);
                         }
 
@@ -809,11 +766,11 @@ void CMenuEnemyState::Move() {
     // f30/r30/f31/r29/f28/r28/r27/r31 - declare in that dependence order.
     cf::CfObjectPc* pc =
         getCfObjectPc(cf::CfGameManager::getPlayer(0));
-    f32 animMarker = lbl_eu_80666FEC;
-    f32 distThresh = lbl_eu_80667014;
+    f32 animMarker = sEnemyPanelAnimMarker;
+    f32 distThresh = (sdata2_MESPool.f14);
     nw4r::math::VEC3 scratch;
     nw4r::math::VEC3* pScratch = &scratch;
-    f32 one = lbl_eu_80666FE8;
+    f32 one = (sdata2_MESPool.fE8);
     nw4r::math::VEC3 delta;
     nw4r::math::VEC3* pDelta = &delta;
     u8 i = 0;
@@ -1050,25 +1007,25 @@ void CMenuEnemyState::Move() {
         }
     }
 
-    advanceAnimTransform(unk78, lbl_eu_80666FE8);
+    advanceAnimTransform(unk78, (sdata2_MESPool.fE8));
     unk74->Animate(0);
 
     switch (selectCursor.field44) {
     case 1:
-        if (advanceAnimTransform(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
+        if (advanceAnimTransform(selectCursor.anim20, (sdata2_MESPool.fE8)) != 0) {
             selectCursor.byte40 = 1;
             selectCursor.field44 = 2;
         }
         break;
     case 3:
-        if (AnimRewindFrame(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
+        if (AnimRewindFrame(selectCursor.anim20, (sdata2_MESPool.fE8)) != 0) {
             selectCursor.byte40 = 1;
             selectCursor.field44 = 0;
         }
         break;
     case 4:
-        if (advanceAnimTransform(selectCursor.anim24, lbl_eu_80666FE8) != 0) {
-            reinterpret_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = lbl_eu_80666FEC;
+        if (advanceAnimTransform(selectCursor.anim24, (sdata2_MESPool.fE8)) != 0) {
+            reinterpret_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = sEnemyPanelAnimMarker;
             selectCursor.layout1C->Animate(0);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim24, false);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim20, true);
@@ -1095,7 +1052,7 @@ done:
 // anim20. Called after the ctor from the owning menu's file-event path.
 void CPcSelectCursor::EneSt_CursorBuild() {
     this->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
-                             &lbl_eu_804FDBF8[0x00], 0);
+                             &sMenuEnemyNamePool[0x00], 0);
     Class_8045F858 regionGuard(&this->mem08);
     mtl::MemManager::setMemInitFlag(false);
 
@@ -1103,26 +1060,26 @@ void CPcSelectCursor::EneSt_CursorBuild() {
     // of caching them in locals, so each is re-loaded from the object.
     buildLayout(&this->layout1C,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
-                  &lbl_eu_804FDBF8[0x10]);
+                  &sMenuEnemyNamePool[0x10]);
     bindLayoutAnimTransform(this->layout1C, &this->anim20,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
-                  &lbl_eu_804FDBF8[0x2c]);
+                  &sMenuEnemyNamePool[0x2c]);
     bindLayoutAnimTransform(this->layout1C, &this->anim24,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(this->field18),
-                  &lbl_eu_804FDBF8[0x4b]);
+                  &sMenuEnemyNamePool[0x4b]);
 
     this->field28 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x6a], true);
+        &sMenuEnemyNamePool[0x6a], true);
     this->field34 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x72], true);
+        &sMenuEnemyNamePool[0x72], true);
     this->field2C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x7c], true);
+        &sMenuEnemyNamePool[0x7c], true);
     this->field30 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x86], true);
+        &sMenuEnemyNamePool[0x86], true);
     this->field38 = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x90], true);
+        &sMenuEnemyNamePool[0x90], true);
     this->field3C = (u32)this->layout1C->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x9c], true);
+        &sMenuEnemyNamePool[0x9c], true);
 
     this->layout1C->SetAnimationEnable(this->anim24, false);
     this->layout1C->SetAnimationEnable(this->anim20, true);
@@ -1172,7 +1129,7 @@ void EneSt_CursorToState4(CPcSelectCursor* self) {
 // anim advance) and mark it ready.
 void EneSt_CursorReset(CPcSelectCursor* self) {
     self->field44 = 0;
-    reinterpret_cast<AnimTransformOverlay*>(self->anim20)->field10 = lbl_eu_80666FEC;
+    reinterpret_cast<AnimTransformOverlay*>(self->anim20)->field10 = sEnemyPanelAnimMarker;
     self->layout1C->Animate(0);
     self->byte40 = 1;
 }
@@ -1181,11 +1138,11 @@ void EneSt_CursorReset(CPcSelectCursor* self) {
 // panes by a clamped v128/v12c ratio, then animate the panel layout. t starts
 // at the anim marker and is only replaced when both input floats exceed it.
 void EneSt_ScalePaneWidths(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
-    f32 t = lbl_eu_80666FEC;
-    if (v12c > lbl_eu_80666FEC && v128 > lbl_eu_80666FEC) {
+    f32 t = sEnemyPanelAnimMarker;
+    if (v12c > sEnemyPanelAnimMarker && v128 > sEnemyPanelAnimMarker) {
         t = v128 / v12c;
-        if (t > lbl_eu_80666FE8) {
-            t = lbl_eu_80666FE8;
+        if (t > (sdata2_MESPool.fE8)) {
+            t = (sdata2_MESPool.fE8);
         }
     }
 
@@ -1196,19 +1153,19 @@ void EneSt_ScalePaneWidths(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     // 0x8/0xc spill pair.
     nw4r::lyt::Pane* p;
     p = panel->layout1->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0xd3], true);
+        &sMenuEnemyNamePool[0xd3], true);
     nw4r::lyt::Size sz = p->GetSize();
     sz.width = self->field7C8 * t;
     p->SetSize(sz);
 
     p = panel->layout1->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0xdd], true);
+        &sMenuEnemyNamePool[0xdd], true);
     sz.height = p->GetSize().height;
     sz.width = self->field7CC * t;
     p->SetSize(sz);
 
     p = panel->layout1->GetRootPane()->FindPaneByName(
-        &lbl_eu_804FDBF8[0x11d], true);
+        &sMenuEnemyNamePool[0x11d], true);
     sz.height = p->GetSize().height;
     sz.width = self->field7D0 * t;
     p->SetSize(sz);
@@ -1289,7 +1246,7 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
 
     panel->actorId = actorId;
     panel->visible = 1;
-    panel->animMarker = lbl_eu_80666FEC;
+    panel->animMarker = sEnemyPanelAnimMarker;
     panel->drawLayout0Flag = 1;
     panel->unk24 = 0;
     panel->panelType = 0;
@@ -1319,37 +1276,37 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
 
     // Colour/scale quads from sdata; the four words are individual retail
     // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
-    quadA.w[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[0]);
-    quadA.w[1] = lbl_eu_80663F5C;
-    quadB.w[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F60[0]);
-    quadB.w[1] = lbl_eu_80663F64;
+    quadA.w[0] = *reinterpret_cast<u32*>(&sEnemyColorQuad0[0]);
+    quadA.w[1] = sEnemyColorWord0;
+    quadB.w[0] = *reinterpret_cast<u32*>(&sEnemyColorQuad1[0]);
+    quadB.w[1] = sEnemyColorWord1;
     if (panel->unk1D != 0) {
-        quadA.h[0] = lbl_eu_80663F68[0];
-        quadA.h[1] = lbl_eu_80663F68[1];
-        quadA.h[2] = lbl_eu_80663F68[2];
-        quadA.h[3] = lbl_eu_80663F68[3];
-        quadB.h[0] = lbl_eu_80663F70[0];
-        quadB.h[1] = lbl_eu_80663F70[1];
-        quadB.h[2] = lbl_eu_80663F70[2];
-        quadB.h[3] = lbl_eu_80663F70[3];
+        quadA.h[0] = sEnemyColorQuad2[0];
+        quadA.h[1] = sEnemyColorQuad2[1];
+        quadA.h[2] = sEnemyColorQuad2[2];
+        quadA.h[3] = sEnemyColorQuad2[3];
+        quadB.h[0] = sEnemyColorQuad3[0];
+        quadB.h[1] = sEnemyColorQuad3[1];
+        quadB.h[2] = sEnemyColorQuad3[2];
+        quadB.h[3] = sEnemyColorQuad3[3];
     } else if (panel->unk1E != 0) {
-        quadA.h[0] = lbl_eu_80663F78[0];
-        quadA.h[1] = lbl_eu_80663F78[1];
-        quadA.h[2] = lbl_eu_80663F78[2];
-        quadA.h[3] = lbl_eu_80663F78[3];
-        quadB.h[0] = lbl_eu_80663F80[0];
-        quadB.h[1] = lbl_eu_80663F80[1];
-        quadB.h[2] = lbl_eu_80663F80[2];
-        quadB.h[3] = lbl_eu_80663F80[3];
+        quadA.h[0] = sEnemyColorQuad4[0];
+        quadA.h[1] = sEnemyColorQuad4[1];
+        quadA.h[2] = sEnemyColorQuad4[2];
+        quadA.h[3] = sEnemyColorQuad4[3];
+        quadB.h[0] = sEnemyColorQuad5[0];
+        quadB.h[1] = sEnemyColorQuad5[1];
+        quadB.h[2] = sEnemyColorQuad5[2];
+        quadB.h[3] = sEnemyColorQuad5[3];
     } else if (panel->unk1F != 0) {
-        quadA.h[0] = lbl_eu_80663F88[0];
-        quadA.h[1] = lbl_eu_80663F88[1];
-        quadA.h[2] = lbl_eu_80663F88[2];
-        quadA.h[3] = lbl_eu_80663F88[3];
-        quadB.h[0] = lbl_eu_80663F90[0];
-        quadB.h[1] = lbl_eu_80663F90[1];
-        quadB.h[2] = lbl_eu_80663F90[2];
-        quadB.h[3] = lbl_eu_80663F90[3];
+        quadA.h[0] = sEnemyColorQuad6[0];
+        quadA.h[1] = sEnemyColorQuad6[1];
+        quadA.h[2] = sEnemyColorQuad6[2];
+        quadA.h[3] = sEnemyColorQuad6[3];
+        quadB.h[0] = sEnemyColorQuad7[0];
+        quadB.h[1] = sEnemyColorQuad7[1];
+        quadB.h[2] = sEnemyColorQuad7[2];
+        quadB.h[3] = sEnemyColorQuad7[3];
     }
     PaneMatSetTevColors((nw4r::lyt::Pane*)(reinterpret_cast<void*>(panel->unk38)), (const GXColorS10*)quadA.w, (const GXColorS10*)quadB.w);
 
@@ -1377,15 +1334,15 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId) {
     switch (*p258) {
     case 1:
         tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
+                  ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x20e], 0);
         break;
     case 2:
         tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
+                  ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x226], 0);
         break;
     case 3:
         tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                  ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
+                  ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x23e], 0);
         break;
     default:
         break;
@@ -1460,7 +1417,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
 
         panel->actorId = lastId;
         panel->visible = 1;
-        panel->animMarker = lbl_eu_80666FEC;
+        panel->animMarker = sEnemyPanelAnimMarker;
         panel->drawLayout0Flag = 1;
         panel->unk24 = 0;
         panel->panelType = 1;
@@ -1487,43 +1444,43 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
         u32 a[2];
         u32 b[2];
-        a[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[0]);
-        a[1] = lbl_eu_80663F5C;
-        b[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F60[0]);
-        b[1] = lbl_eu_80663F64;
+        a[0] = *reinterpret_cast<u32*>(&sEnemyColorQuad0[0]);
+        a[1] = sEnemyColorWord0;
+        b[0] = *reinterpret_cast<u32*>(&sEnemyColorQuad1[0]);
+        b[1] = sEnemyColorWord1;
         if (panel->unk1D != 0) {
             u16* au = reinterpret_cast<u16*>(a);
             u16* bu = reinterpret_cast<u16*>(b);
-            au[0] = static_cast<u16>(lbl_eu_80663F68[0]);
-            au[1] = static_cast<u16>(lbl_eu_80663F68[1]);
-            au[2] = static_cast<u16>(lbl_eu_80663F68[2]);
-            au[3] = static_cast<u16>(lbl_eu_80663F68[3]);
-            bu[0] = static_cast<u16>(lbl_eu_80663F70[0]);
-            bu[1] = static_cast<u16>(lbl_eu_80663F70[1]);
-            bu[2] = static_cast<u16>(lbl_eu_80663F70[2]);
-            bu[3] = static_cast<u16>(lbl_eu_80663F70[3]);
+            au[0] = static_cast<u16>(sEnemyColorQuad2[0]);
+            au[1] = static_cast<u16>(sEnemyColorQuad2[1]);
+            au[2] = static_cast<u16>(sEnemyColorQuad2[2]);
+            au[3] = static_cast<u16>(sEnemyColorQuad2[3]);
+            bu[0] = static_cast<u16>(sEnemyColorQuad3[0]);
+            bu[1] = static_cast<u16>(sEnemyColorQuad3[1]);
+            bu[2] = static_cast<u16>(sEnemyColorQuad3[2]);
+            bu[3] = static_cast<u16>(sEnemyColorQuad3[3]);
         } else if (panel->unk1E != 0) {
             u16* au = reinterpret_cast<u16*>(a);
             u16* bu = reinterpret_cast<u16*>(b);
-            au[0] = static_cast<u16>(lbl_eu_80663F78[0]);
-            au[1] = static_cast<u16>(lbl_eu_80663F78[1]);
-            au[2] = static_cast<u16>(lbl_eu_80663F78[2]);
-            au[3] = static_cast<u16>(lbl_eu_80663F78[3]);
-            bu[0] = static_cast<u16>(lbl_eu_80663F80[0]);
-            bu[1] = static_cast<u16>(lbl_eu_80663F80[1]);
-            bu[2] = static_cast<u16>(lbl_eu_80663F80[2]);
-            bu[3] = static_cast<u16>(lbl_eu_80663F80[3]);
+            au[0] = static_cast<u16>(sEnemyColorQuad4[0]);
+            au[1] = static_cast<u16>(sEnemyColorQuad4[1]);
+            au[2] = static_cast<u16>(sEnemyColorQuad4[2]);
+            au[3] = static_cast<u16>(sEnemyColorQuad4[3]);
+            bu[0] = static_cast<u16>(sEnemyColorQuad5[0]);
+            bu[1] = static_cast<u16>(sEnemyColorQuad5[1]);
+            bu[2] = static_cast<u16>(sEnemyColorQuad5[2]);
+            bu[3] = static_cast<u16>(sEnemyColorQuad5[3]);
         } else if (panel->unk1F != 0) {
             u16* au = reinterpret_cast<u16*>(a);
             u16* bu = reinterpret_cast<u16*>(b);
-            au[0] = static_cast<u16>(lbl_eu_80663F88[0]);
-            au[1] = static_cast<u16>(lbl_eu_80663F88[1]);
-            au[2] = static_cast<u16>(lbl_eu_80663F88[2]);
-            au[3] = static_cast<u16>(lbl_eu_80663F88[3]);
-            bu[0] = static_cast<u16>(lbl_eu_80663F90[0]);
-            bu[1] = static_cast<u16>(lbl_eu_80663F90[1]);
-            bu[2] = static_cast<u16>(lbl_eu_80663F90[2]);
-            bu[3] = static_cast<u16>(lbl_eu_80663F90[3]);
+            au[0] = static_cast<u16>(sEnemyColorQuad6[0]);
+            au[1] = static_cast<u16>(sEnemyColorQuad6[1]);
+            au[2] = static_cast<u16>(sEnemyColorQuad6[2]);
+            au[3] = static_cast<u16>(sEnemyColorQuad6[3]);
+            bu[0] = static_cast<u16>(sEnemyColorQuad7[0]);
+            bu[1] = static_cast<u16>(sEnemyColorQuad7[1]);
+            bu[2] = static_cast<u16>(sEnemyColorQuad7[2]);
+            bu[3] = static_cast<u16>(sEnemyColorQuad7[3]);
         }
         PaneMatSetTevColors((nw4r::lyt::Pane*)(reinterpret_cast<void*>(panel->unk38)), (const GXColorS10*)(reinterpret_cast<void*>(a)),
                       (const GXColorS10*)(reinterpret_cast<void*>(b)));
@@ -1552,15 +1509,15 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
                 switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                              ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
+                              ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x20e], 0);
                     break;
                 case 2:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                              ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
+                              ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x226], 0);
                     break;
                 case 3:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                              ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
+                              ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x23e], 0);
                     break;
                 }
                 if (tex != NULL) {
@@ -1577,7 +1534,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         // Reset the highlight-scan panes and the scan timer.
         reinterpret_cast<ObjBBFlag*>(this->field94)->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(this->field98)->flagBB &= 0xFE;
-        this->field7D8 = lbl_eu_80667038;
+        this->field7D8 = (sdata2_MESPool.f38);
         this->field7DC = 0;
         this->field7E0 = 0;
         playUISound(0x59);
@@ -1622,7 +1579,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
 
         panel->actorId = lastId;
         panel->visible = 1;
-        panel->animMarker = lbl_eu_80666FEC;
+        panel->animMarker = sEnemyPanelAnimMarker;
         panel->drawLayout0Flag = 1;
         panel->unk24 = 0;
         panel->panelType = 1;
@@ -1649,43 +1606,43 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
         u32 a2[2];
         u32 b2[2];
-        a2[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[0]);
-        a2[1] = lbl_eu_80663F5C;
-        b2[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F60[0]);
-        b2[1] = lbl_eu_80663F64;
+        a2[0] = *reinterpret_cast<u32*>(&sEnemyColorQuad0[0]);
+        a2[1] = sEnemyColorWord0;
+        b2[0] = *reinterpret_cast<u32*>(&sEnemyColorQuad1[0]);
+        b2[1] = sEnemyColorWord1;
         if (panel->unk1D != 0) {
             u16* au2 = reinterpret_cast<u16*>(a2);
             u16* bu2 = reinterpret_cast<u16*>(b2);
-            au2[0] = static_cast<u16>(lbl_eu_80663F68[0]);
-            au2[1] = static_cast<u16>(lbl_eu_80663F68[1]);
-            au2[2] = static_cast<u16>(lbl_eu_80663F68[2]);
-            au2[3] = static_cast<u16>(lbl_eu_80663F68[3]);
-            bu2[0] = static_cast<u16>(lbl_eu_80663F70[0]);
-            bu2[1] = static_cast<u16>(lbl_eu_80663F70[1]);
-            bu2[2] = static_cast<u16>(lbl_eu_80663F70[2]);
-            bu2[3] = static_cast<u16>(lbl_eu_80663F70[3]);
+            au2[0] = static_cast<u16>(sEnemyColorQuad2[0]);
+            au2[1] = static_cast<u16>(sEnemyColorQuad2[1]);
+            au2[2] = static_cast<u16>(sEnemyColorQuad2[2]);
+            au2[3] = static_cast<u16>(sEnemyColorQuad2[3]);
+            bu2[0] = static_cast<u16>(sEnemyColorQuad3[0]);
+            bu2[1] = static_cast<u16>(sEnemyColorQuad3[1]);
+            bu2[2] = static_cast<u16>(sEnemyColorQuad3[2]);
+            bu2[3] = static_cast<u16>(sEnemyColorQuad3[3]);
         } else if (panel->unk1E != 0) {
             u16* au2 = reinterpret_cast<u16*>(a2);
             u16* bu2 = reinterpret_cast<u16*>(b2);
-            au2[0] = static_cast<u16>(lbl_eu_80663F78[0]);
-            au2[1] = static_cast<u16>(lbl_eu_80663F78[1]);
-            au2[2] = static_cast<u16>(lbl_eu_80663F78[2]);
-            au2[3] = static_cast<u16>(lbl_eu_80663F78[3]);
-            bu2[0] = static_cast<u16>(lbl_eu_80663F80[0]);
-            bu2[1] = static_cast<u16>(lbl_eu_80663F80[1]);
-            bu2[2] = static_cast<u16>(lbl_eu_80663F80[2]);
-            bu2[3] = static_cast<u16>(lbl_eu_80663F80[3]);
+            au2[0] = static_cast<u16>(sEnemyColorQuad4[0]);
+            au2[1] = static_cast<u16>(sEnemyColorQuad4[1]);
+            au2[2] = static_cast<u16>(sEnemyColorQuad4[2]);
+            au2[3] = static_cast<u16>(sEnemyColorQuad4[3]);
+            bu2[0] = static_cast<u16>(sEnemyColorQuad5[0]);
+            bu2[1] = static_cast<u16>(sEnemyColorQuad5[1]);
+            bu2[2] = static_cast<u16>(sEnemyColorQuad5[2]);
+            bu2[3] = static_cast<u16>(sEnemyColorQuad5[3]);
         } else if (panel->unk1F != 0) {
             u16* au2 = reinterpret_cast<u16*>(a2);
             u16* bu2 = reinterpret_cast<u16*>(b2);
-            au2[0] = static_cast<u16>(lbl_eu_80663F88[0]);
-            au2[1] = static_cast<u16>(lbl_eu_80663F88[1]);
-            au2[2] = static_cast<u16>(lbl_eu_80663F88[2]);
-            au2[3] = static_cast<u16>(lbl_eu_80663F88[3]);
-            bu2[0] = static_cast<u16>(lbl_eu_80663F90[0]);
-            bu2[1] = static_cast<u16>(lbl_eu_80663F90[1]);
-            bu2[2] = static_cast<u16>(lbl_eu_80663F90[2]);
-            bu2[3] = static_cast<u16>(lbl_eu_80663F90[3]);
+            au2[0] = static_cast<u16>(sEnemyColorQuad6[0]);
+            au2[1] = static_cast<u16>(sEnemyColorQuad6[1]);
+            au2[2] = static_cast<u16>(sEnemyColorQuad6[2]);
+            au2[3] = static_cast<u16>(sEnemyColorQuad6[3]);
+            bu2[0] = static_cast<u16>(sEnemyColorQuad7[0]);
+            bu2[1] = static_cast<u16>(sEnemyColorQuad7[1]);
+            bu2[2] = static_cast<u16>(sEnemyColorQuad7[2]);
+            bu2[3] = static_cast<u16>(sEnemyColorQuad7[3]);
         }
         PaneMatSetTevColors((nw4r::lyt::Pane*)(reinterpret_cast<void*>(panel->unk38)), (const GXColorS10*)(reinterpret_cast<void*>(a2)),
                       (const GXColorS10*)(reinterpret_cast<void*>(b2)));
@@ -1714,15 +1671,15 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
                 switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
+                               ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x20e], 0);
                     break;
                 case 2:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
+                               ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x226], 0);
                     break;
                 case 3:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor())
-                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
+                               ->GetResource(0x74696D67, &sMenuEnemyNamePool[0x23e], 0);
                     break;
                 }
                 if (tex2 != NULL) {
@@ -1739,7 +1696,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
         // Reset the highlight-scan panes and the scan timer.
         reinterpret_cast<ObjBBFlag*>(this->field94)->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(this->field98)->flagBB &= 0xFE;
-        this->field7D8 = lbl_eu_80667038;
+        this->field7D8 = (sdata2_MESPool.f38);
         this->field7DC = 0;
         this->field7E0 = 0;
         playUISound(0x57);
@@ -1839,24 +1796,24 @@ void CPcSelectCursor::EneSt_CursorUpdate() {
         // separate loads, matching retail.
         // Highlight stays lit only while the projected X sits left of the
         // marker bound.
-        if (!(out.x <= lbl_eu_80666FEC)) {
+        if (!(out.x <= sEnemyPanelAnimMarker)) {
             arrow->flagBB &= 0xFE;
         }
 
         // Marker Y moves only downward: scale, clamp, then snap to the live
         // position when it is below the clamped value. The dead `dead` copy
         // (word-wise lwz/stw block) is present in retail and must be kept.
-        out.y = (out.y - lbl_eu_80666FF4) * lbl_eu_80666FF8;
-        out.z = lbl_eu_80666FEC;
-        out.x = out.x - lbl_eu_80666FF0;
+        out.y = (out.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8);
+        out.z = sEnemyPanelAnimMarker;
+        out.x = out.x - (sdata2_MESPool.fF0);
         // Retail retains this copy: &pos escaped into CamMan_ProjectToScreen above, so
         // MWCC cannot prove pos dead and emits the word-wise copy block.
         pos = out;
-        if (out.y > lbl_eu_80666FFC) {
-            out.y = lbl_eu_80666FFC;
+        if (out.y > (sdata2_MESPool.fFC)) {
+            out.y = (sdata2_MESPool.fFC);
             ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector();
             CamMan_ProjectToScreen(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
-            tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667000;
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f00);
             f32 sel = (tmp.y >= out.y) ? tmp.y : out.y;
             if (sel > out.y) {
                 if (tmp.y >= out.y) {
@@ -1908,7 +1865,7 @@ void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
 
     if (special != 0) {
         nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
-            &lbl_eu_804FDBF8[0x28e], true);
+            &sMenuEnemyNamePool[0x28e], true);
         PaneSetVtxColorPairs(pane, 0xFF5A0000 + 0x3CFF, 0xFF5A0000 + 0x3CFF);
         if (panel->panelType != 0) {
             // Retail hoists the second call's pane pointer (r28) ahead of the
@@ -1919,7 +1876,7 @@ void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
         }
     } else {
         nw4r::lyt::Pane* pane = panel->layout2->GetRootPane()->FindPaneByName(
-            &lbl_eu_804FDBF8[0x28e], true);
+            &sMenuEnemyNamePool[0x28e], true);
         tgt = static_cast<s32>(panel->unk24) - tgt;
         // Colours are written as hi/lo halves so MWCC emits them literally
         // (lis hi / addi lo) instead of re-splitting the folded constant.
@@ -2041,17 +1998,17 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
         reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB =
             (reinterpret_cast<ObjBBFlag*>(this->field7C)->flagBB & 0xFE) | 1;
         if (panel->unk20 != 0) {
-            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x266],
-                          BdatTouchStringCell(&lbl_eu_804FDBF8[0x256],
-                                        &lbl_eu_804FDBF8[0x261], 8),
+            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x266],
+                          BdatTouchStringCell(&sMenuEnemyNamePool[0x256],
+                                        &sMenuEnemyNamePool[0x261], 8),
                           0);
         } else if (panel->unk1F != 0) {
-            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x266],
                           reinterpret_cast<char*>(
                               reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr()),
                           0);
         } else {
-            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x266],
+            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x266],
                           GetBdatNameByNumId(reinterpret_cast<char*>(
                               reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr())),
                           0);
@@ -2073,13 +2030,13 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
         s32 a2id = static_cast<s32>(static_cast<u32>(
             reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
         if (special != 0) {
-            LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x1b2],
-                          BdatTouchStringCell(&lbl_eu_804FDBF8[0x256],
-                                        &lbl_eu_804FDBF8[0x261], 7),
+            LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x1b2],
+                          BdatTouchStringCell(&sMenuEnemyNamePool[0x256],
+                                        &sMenuEnemyNamePool[0x261], 7),
                           0);
         } else {
-            sprintf(buf, &lbl_eu_804FDBF8[0x273], a2id);
-            LayoutSetTextBoxText(this->unk74, &lbl_eu_804FDBF8[0x1b2], buf, 0);
+            sprintf(buf, &sMenuEnemyNamePool[0x273], a2id);
+            LayoutSetTextBoxText(this->unk74, &sMenuEnemyNamePool[0x1b2], buf, 0);
         }
         a2id = static_cast<s32>(static_cast<u32>(
             reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
@@ -2088,18 +2045,18 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
                 reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel());
             this->EneSt_RefreshNameColor(panelData);
         }
-        LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x278],
+        LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x278],
                       reinterpret_cast<char*>(
                           const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorName())),
                       0);
         // Retail materialises 0xEDE8DAFF as lis 0xEDE8 / subi 0x2501.
-        PaneSetVtxColorByName(this->unk74, &lbl_eu_804FDBF8[0x278],
+        PaneSetVtxColorByName(this->unk74, &sMenuEnemyNamePool[0x278],
                       0xEDE80000 - 0x2501);
         this->EneSt_ScanSlotHighlight(actor2);
 
         void* sub = getEffOwner____FPv(obj);
         if (sub != NULL) {
-            u8 v = BdatGetU8Direct((const void*)lbl_eu_806640CC, &lbl_eu_804FDBF8[0x288],
+            u8 v = BdatGetU8Direct((const void*)lbl_eu_806640CC, &sMenuEnemyNamePool[0x288],
                                  static_cast<AD860Result*>(sub)->id3F28);
             // Retail clrlwi's the result - keep the u8 narrowing.
             switch (v) {
@@ -2127,17 +2084,17 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
             reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getBattleStats());
         if (v298->field50 != NULL) {
             Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
-            if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == lbl_eu_80666FEC) {
-                LayoutSetTextBoxFmtValue(this->unk74, &lbl_eu_804FDBF8[0x278],
+            if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == sEnemyPanelAnimMarker) {
+                LayoutSetTextBoxFmtValue(this->unk74, &sMenuEnemyNamePool[0x278],
                               reinterpret_cast<char*>(o50), 0);
-                PaneSetVtxColorByName(this->unk74, &lbl_eu_804FDBF8[0x278], 0xF52819FF);
+                PaneSetVtxColorByName(this->unk74, &sMenuEnemyNamePool[0x278], 0xF52819FF);
             }
         }
     }
 tail:
     PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
     Vec3f tmp = v->scale;
-    tmp.y = lbl_eu_80667028;
+    tmp.y = (sdata2_MESPool.f28);
     v->scale = tmp;
 }
 
@@ -2163,28 +2120,28 @@ void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB)
         (reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB & 0xFE) | 1;
     reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB =
         (reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB & 0xFE) | 1;
-    if (v.x <= lbl_eu_80666FEC) {
+    if (v.x <= sEnemyPanelAnimMarker) {
         reinterpret_cast<ObjBBFlag*>(panel->layout1->GetRootPane())->flagBB &= 0xFE;
         reinterpret_cast<ObjBBFlag*>(panel->layout2->GetRootPane())->flagBB &= 0xFE;
     }
 
     if (panel->panelType == 0) {
         nw4r::math::VEC3 t;
-        t.x = lbl_eu_80666FE8;
-        t.y = lbl_eu_80666FE8;
-        t.z = lbl_eu_80666FEC;
+        t.x = (sdata2_MESPool.fE8);
+        t.y = (sdata2_MESPool.fE8);
+        t.z = sEnemyPanelAnimMarker;
         VEC3TransformNormal(&t, &pose->mtx9C, &t);
         // Retail keeps the added temp and the projection dest as two distinct
         // stack homes (elementwise copy between them).
         nw4r::math::VEC3 sum = *pa + t;
         nw4r::math::VEC3 out;
         CamMan_ProjectToScreen(&out, pose, &sum);
-        f32 scaleX = lbl_eu_80666FE8 / fabsf(v.x - t.x);
-        f32 scaleY = lbl_eu_80666FE8 / fabsf(v.y - t.y);
+        f32 scaleX = (sdata2_MESPool.fE8) / fabsf(v.x - t.x);
+        f32 scaleY = (sdata2_MESPool.fE8) / fabsf(v.y - t.y);
         if (!CDeviceVI::isWideAspectRatio()) {
-            scaleX *= lbl_eu_80667018;
+            scaleX *= (sdata2_MESPool.f18);
         }
-        f32 s = lbl_eu_8066701C / ml::pi;
+        f32 s = (sdata2_MESPool.f1C) / ml::pi;
         PanePosLayout* pane = reinterpret_cast<PanePosLayout*>(panel->layout2->GetRootPane());
         pane->v2C = pa->x;
         pane->v30 = pa->y;
@@ -2206,8 +2163,8 @@ void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB)
         pane->v38 = zero__Q22ml5CVec3.x;
         pane->v3C = zero__Q22ml5CVec3.y;
         pane->v40 = zero__Q22ml5CVec3.z;
-        pane->v44 = lbl_eu_80666FE8;
-        pane->v48 = lbl_eu_80666FE8;
+        pane->v44 = (sdata2_MESPool.fE8);
+        pane->v48 = (sdata2_MESPool.fE8);
     }
 
     panel->unk29 = 1;
@@ -2227,42 +2184,42 @@ void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB)
 
     // Marker Y moves only downward: scale, clamp per panelType, snap.
     // Retail keeps named memory homes for the transformed coords.
-    f32 vx = v.x - lbl_eu_80666FF0;
-    f32 vy = (v.y - lbl_eu_80666FF4) * lbl_eu_80666FF8;
+    f32 vx = v.x - (sdata2_MESPool.fF0);
+    f32 vy = (v.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8);
     v.x = vx;
     v.y = vy;
-    v.z = lbl_eu_80666FEC;
+    v.z = sEnemyPanelAnimMarker;
     if (panel->panelType != 0) {
-        if (vy > lbl_eu_80667020) {
-            vy = lbl_eu_80667020;
+        if (vy > (sdata2_MESPool.f20)) {
+            vy = (sdata2_MESPool.f20);
             v.y = vy;
             nw4r::math::VEC3 tmp;
             CamMan_ProjectToScreen(&tmp, pose, pb);
-            tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667024;
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f24);
             if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
                 v.y = (tmp.y >= v.y ? tmp.y : v.y);
             }
             reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
         }
     } else if (panel->unk1C != 0) {
-        if (vy > lbl_eu_80666FFC) {
-            vy = lbl_eu_80666FFC;
+        if (vy > (sdata2_MESPool.fFC)) {
+            vy = (sdata2_MESPool.fFC);
             v.y = vy;
             nw4r::math::VEC3 tmp;
             CamMan_ProjectToScreen(&tmp, pose, pb);
-            tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667000;
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f00);
             if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
                 v.y = (tmp.y >= v.y ? tmp.y : v.y);
             }
             reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
         }
     } else {
-        if (vy > lbl_eu_80667020) {
-            vy = lbl_eu_80667020;
+        if (vy > (sdata2_MESPool.f20)) {
+            vy = (sdata2_MESPool.f20);
             v.y = vy;
             nw4r::math::VEC3 tmp;
             CamMan_ProjectToScreen(&tmp, pose, pb);
-            tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667024;
+            tmp.y = (tmp.y - (sdata2_MESPool.fF4)) * (sdata2_MESPool.fF8) - (sdata2_MESPool.f24);
             if (v.y < (tmp.y >= v.y ? tmp.y : v.y)) {
                 v.y = (tmp.y >= v.y ? tmp.y : v.y);
             }
@@ -2294,9 +2251,9 @@ void CMenuEnemyState::EneSt_PositionPanel(u8* panelData, void* posA, void* posB)
 // 0x20 sentinel from actor2->field1530 and scan field98 from field7E0+1
 // (wrapping at 0x21) the same way.
 void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
-    this->field7D8 += lbl_eu_80666FE8;
-    if (this->field7D8 > lbl_eu_80667038) {
-        this->field7D8 = lbl_eu_80666FEC;
+    this->field7D8 += (sdata2_MESPool.fE8);
+    if (this->field7D8 > (sdata2_MESPool.f38)) {
+        this->field7D8 = sEnemyPanelAnimMarker;
         u8 idx = (u8)(this->field7DC + 1);
         for (;;) {
             if (idx >= 0x20) {
@@ -2309,7 +2266,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
             if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
                 res->id0C != 0x10 && res->id0C != 0x12) {
                 u16 id = BdatGetU16Direct(lbl_eu_806640E0,
-                                       &lbl_eu_804FDBF8[0x295], res->id0C);
+                                       &sMenuEnemyNamePool[0x295], res->id0C);
                 if (id != 0) {
                     char* name = MakeTplNameSysFile(id);
                     nw4r::lyt::ArcResourceAccessor* accessor =
@@ -2360,7 +2317,7 @@ void CMenuEnemyState::EneSt_ScanSlotHighlight(Actor2Layout* actor2) {
                         }
                     } else {
                         u16 id = BdatGetU16Direct(lbl_eu_806640E0,
-                                               &lbl_eu_804FDBF8[0x295], v);
+                                               &sMenuEnemyNamePool[0x295], v);
                         if (id != 0) {
                             char* name = MakeTplNameSysFile(id);
                             nw4r::lyt::ArcResourceAccessor* accessor =
@@ -2396,9 +2353,9 @@ void CMenuEnemyState::EneSt_HighlightPane(u8* panelData, int which) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
 
     ObjBBFlag* f1 = reinterpret_cast<ObjBBFlag*>(
-        panel->layout1->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x10b], true));
+        panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x10b], true));
     ObjBBFlag* f2 = reinterpret_cast<ObjBBFlag*>(
-        panel->layout1->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x112], true));
+        panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true));
     ObjBBFlag* f3 = reinterpret_cast<ObjBBFlag*>(panel->unk44);
 
     switch (which) {
@@ -2421,17 +2378,17 @@ void CMenuEnemyState::EneSt_HighlightPane(u8* panelData, int which) {
         f1->flagBB &= 0xFE;
         f2->flagBB &= 0xFE;
         f3->flagBB = (f3->flagBB & 0xFE) | 1;
-        PaneSetVtxColorByName(panel->layout1, &lbl_eu_804FDBF8[0x11d],
+        PaneSetVtxColorByName(panel->layout1, &sMenuEnemyNamePool[0x11d],
                       (panel->unk1C != 0) ? 0x0CD8FDFF : 0xFAF01EFF);
         if (panel->unk1C != 0) {
             PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
             Vec3f tmp = v->scale;
-            tmp.y = lbl_eu_80666FEC;
+            tmp.y = sEnemyPanelAnimMarker;
             v->scale = tmp;
         } else if (panel->unk1D != 0 && panel->panelType == 0) {
             PaneScaleVec3* v = reinterpret_cast<PaneScaleVec3*>(panel->unk44);
             Vec3f tmp = v->scale;
-            tmp.y = lbl_eu_80667008;
+            tmp.y = sEnemyHighlightScale;
             v->scale = tmp;
         }
         break;
@@ -2460,11 +2417,11 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     // root pane, the third is the stored unk48 handle). paneE7 stays live:
     // it is re-highlighted below on the target path.
     nw4r::lyt::Pane* paneE7 =
-        panel->layout1->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0xe7], true);
+        panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0xe7], true);
     reinterpret_cast<ObjBBFlag*>(paneE7)->flagBB &= 0xFE;
     {
         ObjBBFlag* p = reinterpret_cast<ObjBBFlag*>(
-            panel->layout1->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0xf3], true));
+            panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0xf3], true));
         p->flagBB &= 0xFE;
     }
     reinterpret_cast<ObjBBFlag*>(panel->unk48)->flagBB &= 0xFE;
@@ -2507,13 +2464,13 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     // fsubs pair sits between the compare and the branch (retail schedule).
     // hp-adjusted ratio: the double difference is formed before the tests.
     f64 dmgVal = ScMain_GetSummedInt(bmRes);
-    f64 dmgAdj = dmgVal - lbl_eu_80667030;
+    f64 dmgAdj = dmgVal - sEnemyTextDoubleBias;
     f64 hpDiff = v128 - dmgAdj;
-    f32 ratio = lbl_eu_80666FEC;
-    if (v12c > lbl_eu_80666FEC && hpDiff > lbl_eu_80666FEC) {
+    f32 ratio = sEnemyPanelAnimMarker;
+    if (v12c > sEnemyPanelAnimMarker && hpDiff > sEnemyPanelAnimMarker) {
         ratio = hpDiff / v12c;
-        if (ratio > lbl_eu_80666FE8) {
-            ratio = lbl_eu_80666FE8;
+        if (ratio > (sdata2_MESPool.fE8)) {
+            ratio = (sdata2_MESPool.fE8);
         }
     }
     {
@@ -2522,7 +2479,7 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
         pv->width = self->field7D0 * ratio;
         pv->height = h;
     }
-    PaneSetVtxColorByName(panel->layout1, &lbl_eu_804FDBF8[0xe7],
+    PaneSetVtxColorByName(panel->layout1, &sMenuEnemyNamePool[0xe7],
                   (panel->unk1C != 0) ? 0x0CD8FDFF : 0xFAF01EFF);
 
     // Pane f3: only when either battle-status bit is set - re-highlight and
@@ -2530,35 +2487,35 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     if (((bm->flags824 & 0x400) != 0) || ((bm->flags824 & 0x20000) != 0)) {
         PanePosLayout* pp = reinterpret_cast<PanePosLayout*>(
             panel->layout1->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0xf3], true));
+                ->FindPaneByName(&sMenuEnemyNamePool[0xf3], true));
         pp->flagBB = (pp->flagBB & 0xFE) | 1;
         Vec3f tmp = *reinterpret_cast<const Vec3f*>(&pp->v2C);
-        tmp.y = lbl_eu_8066702C;
+        tmp.y = (sdata2_MESPool.f2C);
         *reinterpret_cast<Vec3f*>(&pp->v2C) = tmp;
     }
 
     // Pane 11d: always rescaled by the plain clamped ratio + fixed sound.
-    f32 ratio2 = lbl_eu_80666FEC;
-    if (v12c > lbl_eu_80666FEC && v128 > lbl_eu_80666FEC) {
+    f32 ratio2 = sEnemyPanelAnimMarker;
+    if (v12c > sEnemyPanelAnimMarker && v128 > sEnemyPanelAnimMarker) {
         ratio2 = v128 / v12c;
-        if (ratio2 > lbl_eu_80666FE8) {
-            ratio2 = lbl_eu_80666FE8;
+        if (ratio2 > (sdata2_MESPool.fE8)) {
+            ratio2 = (sdata2_MESPool.fE8);
         }
     }
     {
         PanePosLayout* pp11d = reinterpret_cast<PanePosLayout*>(
-            panel->layout1->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x11d], true));
+            panel->layout1->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x11d], true));
         PaneSizeView* pv = reinterpret_cast<PaneSizeView*>(pp11d);
         f32 h = pv->height;
         pv->width = self->field7D0 * ratio2;
         pv->height = h;
     }
-    PaneSetVtxColorByName(panel->layout1, &lbl_eu_804FDBF8[0x11d], 0xD81710FF);
+    PaneSetVtxColorByName(panel->layout1, &sMenuEnemyNamePool[0x11d], 0xD81710FF);
 }
 
 // EneSt_SearchHighlightTexture (us-80113d84): panel-highlight texture search. Scans the
 // actor's 32 sub8 slots for a u16 id matching one of the four byte patterns
-// taken from lbl_eu_8066703C; on a match, loads the corresponding texture
+// taken from sEnemyHighlightUnknown3C; on a match, loads the corresponding texture
 // (tbl32 index) through the shared arc accessor and raises field48's bit-0.
 // When the flag is set, the 5-float vector on field48 (+0x2C..+0x48) is
 // re-derived from the panel's highlight state. (arg1 `self` is unused.)
@@ -2568,8 +2525,8 @@ void EneSt_SearchHighlightTexture(CMenuEnemyState* self, u8* panelData, void* ac
     Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(actor);
     obj48->flagBB &= 0xFE;
 
-    u32 bits = *(const u32*)&lbl_eu_8066703C;
-    U32x4 tbl32 = *reinterpret_cast<const U32x4*>(lbl_eu_804FDBC8);
+    u32 bits = *(const u32*)&sEnemyHighlightUnknown3C;
+    U32x4 tbl32 = *reinterpret_cast<const U32x4*>(sEnemyTextureNameTable);
 
     for (u8 oi = 0; oi < 4; oi++) {
         for (u8 ii = 0; ii < 0x20; ii++) {
@@ -2598,32 +2555,32 @@ void EneSt_SearchHighlightTexture(CMenuEnemyState* self, u8* panelData, void* ac
         // Re-derive the 5-float scale/colour vector from panel state.
         Vec3f v3 = *reinterpret_cast<Vec3f*>(&obj48->v2C);
         Vec2f v2 = *reinterpret_cast<Vec2f*>(&obj48->v44);
-        v3.z = lbl_eu_80666FEC;
+        v3.z = sEnemyPanelAnimMarker;
         if (panel->panelType != 0) {
-            v3.x = lbl_eu_80667040;
-            v3.y = lbl_eu_80667044;
-            v2.x = lbl_eu_80666FE8;
-            v2.y = lbl_eu_80666FE8;
+            v3.x = (sdata2_MESPool.f40);
+            v3.y = (sdata2_MESPool.f44);
+            v2.x = (sdata2_MESPool.fE8);
+            v2.y = (sdata2_MESPool.fE8);
         } else {
-            v2.x = lbl_eu_80667048;
-            v2.y = lbl_eu_80667048;
+            v2.x = (sdata2_MESPool.f48);
+            v2.y = (sdata2_MESPool.f48);
             if (panel->unk1C != 0) {
                 ObjBBFlag* p44 = reinterpret_cast<ObjBBFlag*>(panel->unk44);
                 if (p44->flagBB & 1) {
-                    v3.x = lbl_eu_8066704C;
-                    v3.y = lbl_eu_80666FEC;
+                    v3.x = (sdata2_MESPool.f4C);
+                    v3.y = sEnemyPanelAnimMarker;
                 } else {
-                    v3.x = lbl_eu_80667050;
-                    v3.y = lbl_eu_80666FEC;
+                    v3.x = (sdata2_MESPool.f50);
+                    v3.y = sEnemyPanelAnimMarker;
                 }
             } else if (panel->unk1D != 0) {
                 ObjBBFlag* p44 = reinterpret_cast<ObjBBFlag*>(panel->unk44);
                 if (p44->flagBB & 1) {
-                    v3.x = lbl_eu_8066704C;
-                    v3.y = lbl_eu_80667008;
+                    v3.x = (sdata2_MESPool.f4C);
+                    v3.y = sEnemyHighlightScale;
                 } else {
-                    v3.x = lbl_eu_80667054;
-                    v3.y = lbl_eu_80667008;
+                    v3.x = (sdata2_MESPool.f54);
+                    v3.y = sEnemyHighlightScale;
                 }
             }
         }
@@ -2647,13 +2604,13 @@ void CMenuEnemyState::Init() {
     // Scratch region for all menu layouts (freed by the RAII guard). Retail
     // re-derives this+0x64 at every use - no cached region pointer.
     mem64.createRegion(
-        mtl::MemManager::getHandleMEM2(), 0x3EC00, &lbl_eu_804FDBF8[0xa8], 0);
+        mtl::MemManager::getHandleMEM2(), 0x3EC00, &sMenuEnemyNamePool[0xa8], 0);
     Class_8045F858 regionGuard(&mem64);
 
     // Loop-invariant values hoisted by retail before the loop (f30/f31 +
     // r21-r24): the anim marker, the marker y value, zero, one and the two
     // pane sound/colour constants.
-    f32 markerY = lbl_eu_80667008;
+    f32 markerY = sEnemyHighlightScale;
     u32 zero = 0;
     u8 one = 1;
     u32 colD3 = 0xCD8FDFF;
@@ -2667,23 +2624,23 @@ void CMenuEnemyState::Init() {
         // ---- layout1 arc + panes ----
         buildLayout(pLayout1,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                      &lbl_eu_804FDBF8[0xb8]);
-        PaneSetVtxColorByName(*pLayout1, &lbl_eu_804FDBF8[0xd3], colD3);
-        PaneSetVtxColorByName(*pLayout1, &lbl_eu_804FDBF8[0xdd], colDD);
+                      &sMenuEnemyNamePool[0xb8]);
+        PaneSetVtxColorByName(*pLayout1, &sMenuEnemyNamePool[0xd3], colD3);
+        PaneSetVtxColorByName(*pLayout1, &sMenuEnemyNamePool[0xdd], colDD);
 
         {
             nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0xe7], true);
+                ->FindPaneByName(&sMenuEnemyNamePool[0xe7], true);
             reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
         }
         {
             nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0xf3], true);
+                ->FindPaneByName(&sMenuEnemyNamePool[0xf3], true);
             reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
         }
         {
             nw4r::lyt::Pane* p = (*pLayout1)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0x101], true);
+                ->FindPaneByName(&sMenuEnemyNamePool[0x101], true);
             reinterpret_cast<ObjBBFlag*>(p)->flagBB &= 0xFE;
         }
 
@@ -2694,26 +2651,26 @@ void CMenuEnemyState::Init() {
             V3WordFloat tmp;
             {
                 PanePosLayout* s = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x10b], true));
+                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x10b], true));
                 tmp.w[0] = s->wx;
                 tmp.w[2] = s->wz;
                 PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x10b], true));
+                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x10b], true));
                 d->v2C = tmp.f[0];
-                d->v30 = lbl_eu_80666FEC;
+                d->v30 = sEnemyPanelAnimMarker;
                 d->v34 = tmp.f[2];
             }
             // Copy pane 0x112 the same way, y = markerY.
             {
                 PanePosLayout* s = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x112], true));
+                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true));
                 tmp.f[0] = s->v2C;
                 tmp.f[1] = markerY;
                 tmp.f[2] = s->v34;
                 PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
-                    ->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x112], true));
+                    ->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true));
                 d->v2C = tmp.f[0];
-                d->v30 = lbl_eu_80667008;
+                d->v30 = sEnemyHighlightScale;
                 d->v34 = tmp.f[2];
             }
         }
@@ -2721,91 +2678,91 @@ void CMenuEnemyState::Init() {
         // First pass: snapshot the indicator-pane widths for the scale math.
         if (i == 0) {
             field7C8 = reinterpret_cast<PaneSizeView*>((*pLayout1)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0xd3], true))->width;
+                ->FindPaneByName(&sMenuEnemyNamePool[0xd3], true))->width;
             field7CC = reinterpret_cast<PaneSizeView*>((*pLayout1)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0xdd], true))->width;
+                ->FindPaneByName(&sMenuEnemyNamePool[0xdd], true))->width;
             field7D0 = reinterpret_cast<PaneSizeView*>((*pLayout1)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0x11d], true))->width;
+                ->FindPaneByName(&sMenuEnemyNamePool[0x11d], true))->width;
         }
 
         panel->unk44 = (u32)(*pLayout1)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x127], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x127], true);
         panel->unk48 = (u32)(*pLayout1)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x101], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x101], true);
 
         // ---- layout2 arc + panes ----
         nw4r::lyt::Layout** pLayout2 = &panel->layout2;
         buildLayout(pLayout2,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                      &lbl_eu_804FDBF8[0x12e]);
+                      &sMenuEnemyNamePool[0x12e]);
 
         // First pass: pull the four shared colour quads off pane 0x147 and
         // propagate the last channel into the three alternate quads.
         if (i == 0) {
             nw4r::lyt::Pane* pane = (*pLayout2)->GetRootPane()
-                ->FindPaneByName(&lbl_eu_804FDBF8[0x147], true);
+                ->FindPaneByName(&sMenuEnemyNamePool[0x147], true);
             GXColorS10 fs0 = PaneMatGetS16Quad(pane, 0);
-            lbl_eu_80663F58[0] = fs0.r;
-            lbl_eu_80663F58[1] = fs0.g;
-            lbl_eu_80663F58[2] = fs0.b;
-            lbl_eu_80663F58[3] = fs0.a;
+            sEnemyColorQuad0[0] = fs0.r;
+            sEnemyColorQuad0[1] = fs0.g;
+            sEnemyColorQuad0[2] = fs0.b;
+            sEnemyColorQuad0[3] = fs0.a;
             GXColorS10 fs1 = PaneMatGetS16Quad(pane, 1);
-            lbl_eu_80663F60[0] = fs1.r;
-            lbl_eu_80663F60[1] = fs1.g;
-            lbl_eu_80663F60[2] = fs1.b;
-            lbl_eu_80663F60[3] = fs1.a;
-            lbl_eu_80663F68[3] = lbl_eu_80663F58[3];
-            lbl_eu_80663F70[3] = lbl_eu_80663F60[3];
-            lbl_eu_80663F78[3] = lbl_eu_80663F58[3];
-            lbl_eu_80663F80[3] = lbl_eu_80663F60[3];
-            lbl_eu_80663F88[3] = lbl_eu_80663F58[3];
-            lbl_eu_80663F90[3] = lbl_eu_80663F60[3];
+            sEnemyColorQuad1[0] = fs1.r;
+            sEnemyColorQuad1[1] = fs1.g;
+            sEnemyColorQuad1[2] = fs1.b;
+            sEnemyColorQuad1[3] = fs1.a;
+            sEnemyColorQuad2[3] = sEnemyColorQuad0[3];
+            sEnemyColorQuad3[3] = sEnemyColorQuad1[3];
+            sEnemyColorQuad4[3] = sEnemyColorQuad0[3];
+            sEnemyColorQuad5[3] = sEnemyColorQuad1[3];
+            sEnemyColorQuad6[3] = sEnemyColorQuad0[3];
+            sEnemyColorQuad7[3] = sEnemyColorQuad1[3];
         }
 
         panel->obj1 = (*pLayout2)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x151], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x151], true);
         panel->obj2 = (*pLayout2)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x158], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x158], true);
         panel->obj3 = (*pLayout2)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x160], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x160], true);
         panel->unk38 = (u32)(*pLayout2)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x147], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x147], true);
         panel->unk3C = (u32)(*pLayout2)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x6a], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x6a], true);
         panel->unk40 = (u32)(*pLayout2)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_804FDBF8[0x169], true);
+            ->FindPaneByName(&sMenuEnemyNamePool[0x169], true);
     }
 
     // ---- main menu layout ----
     buildLayout(&unk74,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                  &lbl_eu_804FDBF8[0x173]);
+                  &sMenuEnemyNamePool[0x173]);
     bindLayoutAnimTransform(unk74, &unk78,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(CUICfManager_getArcResourceAccessor()),
-                  &lbl_eu_804FDBF8[0x190]);
+                  &sMenuEnemyNamePool[0x190]);
 
     // Bind the font: root pane + font object slot 0x24, push back onto root.
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(reinterpret_cast<cf::CObjectState*>(fontObj)->checkStateFlags8(0)));
 
-    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], (u32)CUICfManager_getPackedFontD8());
-    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], (u32)CUICfManager_getPackedFontD8());
+    setLayoutTextBoxFont(unk74, &sMenuEnemyNamePool[0x1b2], (u32)CUICfManager_getPackedFontD8());
+    setLayoutTextBoxFont(unk74, &sMenuEnemyNamePool[0x1bb], (u32)CUICfManager_getPackedFontD8());
 
     unk74->SetAnimationEnable(unk78, true);
-    reinterpret_cast<AnimTransformOverlay*>(unk78)->field10 = lbl_eu_80666FEC;
+    reinterpret_cast<AnimTransformOverlay*>(unk78)->field10 = sEnemyPanelAnimMarker;
     unk74->Animate(0);
 
-    field7C = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x1c4], true);
-    field80 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x112], true);
-    field84 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x1cc], true);
-    field88 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x1d5], true);
-    field8C = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x1de], true);
-    field90 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x1e9], true);
-    field94 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x1f4], true);
-    field98 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x201], true);
-    field9C = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x158], true);
-    fieldA0 = (u32)unk74->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x160], true);
+    field7C = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1c4], true);
+    field80 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x112], true);
+    field84 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1cc], true);
+    field88 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1d5], true);
+    field8C = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1de], true);
+    field90 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1e9], true);
+    field94 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x1f4], true);
+    field98 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x201], true);
+    field9C = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x158], true);
+    fieldA0 = (u32)unk74->GetRootPane()->FindPaneByName(&sMenuEnemyNamePool[0x160], true);
 
     // Cursor: stash the shared arc accessor + scene, then build the layouts.
     u32 scn = (u32)unk60;
@@ -2865,38 +2822,38 @@ void CMenuEnemyState::Term() {
 // LLM-HARNESS-END: us-80111b50
 // LLM-HARNESS-BEGIN: us-80113fc4
 extern "C" void sinit_801134E8() {
-    lbl_eu_80663F58[3] = 0;
-    lbl_eu_80663F58[2] = 0;
-    lbl_eu_80663F58[1] = 0;
-    lbl_eu_80663F58[0] = 0;
-    lbl_eu_80663F60[3] = 0;
-    lbl_eu_80663F60[2] = 0;
-    lbl_eu_80663F60[1] = 0;
-    lbl_eu_80663F60[0] = 0;
-    lbl_eu_80663F68[3] = 0;
-    lbl_eu_80663F68[2] = 0;
-    lbl_eu_80663F68[1] = 0;
-    lbl_eu_80663F68[0] = 120;
-    lbl_eu_80663F70[3] = 0;
-    lbl_eu_80663F70[2] = 50;
-    lbl_eu_80663F70[1] = 90;
-    lbl_eu_80663F70[0] = 255;
-    lbl_eu_80663F78[3] = 0;
-    lbl_eu_80663F78[2] = 0;
-    lbl_eu_80663F78[1] = 67;
-    lbl_eu_80663F78[0] = 84;
-    lbl_eu_80663F80[3] = 0;
-    lbl_eu_80663F80[2] = 0;
-    lbl_eu_80663F80[1] = 255;
-    lbl_eu_80663F80[0] = 255;
-    lbl_eu_80663F88[3] = 0;
-    lbl_eu_80663F88[2] = 110;
-    lbl_eu_80663F88[1] = 35;
-    lbl_eu_80663F88[0] = 0;
-    lbl_eu_80663F90[3] = 0;
-    lbl_eu_80663F90[2] = 255;
-    lbl_eu_80663F90[1] = 180;
-    lbl_eu_80663F90[0] = 70;
+    sEnemyColorQuad0[3] = 0;
+    sEnemyColorQuad0[2] = 0;
+    sEnemyColorQuad0[1] = 0;
+    sEnemyColorQuad0[0] = 0;
+    sEnemyColorQuad1[3] = 0;
+    sEnemyColorQuad1[2] = 0;
+    sEnemyColorQuad1[1] = 0;
+    sEnemyColorQuad1[0] = 0;
+    sEnemyColorQuad2[3] = 0;
+    sEnemyColorQuad2[2] = 0;
+    sEnemyColorQuad2[1] = 0;
+    sEnemyColorQuad2[0] = 120;
+    sEnemyColorQuad3[3] = 0;
+    sEnemyColorQuad3[2] = 50;
+    sEnemyColorQuad3[1] = 90;
+    sEnemyColorQuad3[0] = 255;
+    sEnemyColorQuad4[3] = 0;
+    sEnemyColorQuad4[2] = 0;
+    sEnemyColorQuad4[1] = 67;
+    sEnemyColorQuad4[0] = 84;
+    sEnemyColorQuad5[3] = 0;
+    sEnemyColorQuad5[2] = 0;
+    sEnemyColorQuad5[1] = 255;
+    sEnemyColorQuad5[0] = 255;
+    sEnemyColorQuad6[3] = 0;
+    sEnemyColorQuad6[2] = 110;
+    sEnemyColorQuad6[1] = 35;
+    sEnemyColorQuad6[0] = 0;
+    sEnemyColorQuad7[3] = 0;
+    sEnemyColorQuad7[2] = 255;
+    sEnemyColorQuad7[1] = 180;
+    sEnemyColorQuad7[0] = 70;
 }
 // LLM-HARNESS-END: us-80113fc4
 // LLM-HARNESS-BEGIN: us-801140a4

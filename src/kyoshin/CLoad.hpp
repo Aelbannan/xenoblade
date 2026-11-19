@@ -3,6 +3,7 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 class CFileHandle;
 class CEventFile;
@@ -18,26 +19,14 @@ struct CLoadFull {
     u8 field_2C;
 };
 
-// CLoad's vtable data symbol (retail .data). The constructor stores V->mvVtbl
-// to this label manually (retail sets vptr to lbl_eu_8053A340, not the
-// compiler-generated __vt__CLoad), mirroring the CBattery/CBgTex pattern.
-extern void* lbl_eu_8053A340[];
-
-// Stores vptr at +0x00 before the mMemRegion member constructs, matching
-// retail ctor order (vptr set, then member ctor, then body).
-struct CLoadVtblBase {
-    void* mVtbl; // +0x00
-    CLoadVtblBase() { mVtbl = lbl_eu_8053A340; }
-};
-
 // Loading-screen layout controller: owns the lyt layout + animations used
 // while a file request completes, driven by CEventFile callbacks.
-class CLoad : public CLoadVtblBase {
+// IWorkEvent is the retail base: __vt__5CLoad's slots are the base's 32
+// event handlers, with ~CLoad and OnFileEvent overriding slots 0 and 2.
+class CLoad : public IWorkEvent {
 public:
-    // (no ctor declaration: the ctor __ct__CLoad is provided by CLoad.cpp
-    // as an extern "C" retail-symbol function.)
-    ~CLoad();
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual ~CLoad();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
     /* 0x04 */ UnkClass_8045F564 mMemRegion;
     /* 0x14 */ CFileHandle* mFileHandle;

@@ -57,7 +57,7 @@ extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void teardown(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+// setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
 // no-arg member wrapper drops it), so call through the C name directly.
 // UI sound playback (retail unmangled C symbol; id + param).

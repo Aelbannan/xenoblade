@@ -3,19 +3,19 @@
 /* AHX synthesis window functions (mwin2).
  * Each applies a window multiply-accumulate over 16 taps and writes a
  * clamped s16 sample.  The accumulator seed and clamp limits come from the
- * shared window table lbl_eu_80517550.  Window N slides its last N taps one
+ * shared window table ahxmwin_clamp_table.  Window N slides its last N taps one
  * 0x1000-byte block down so consecutive windows sweep across the input
  * history.
  */
 
-extern float lbl_eu_80517550[];
+extern const f32 ahxmwin_clamp_table[];
 
 /* tap offset in bytes for window 0; later windows shift taps k >= 16-N */
 #define WIN_TAP(N, K, OFF) in[((OFF) - ((N) + (K) >= 16 ? 0x1000 : 0)) / 4]
 
 #define WIN(N) \
 void ahxsbf_mult_float_win##N(float *in, float *coeff, s16 *out) { \
-    float *tbl = lbl_eu_80517550; \
+    const float *tbl = ahxmwin_clamp_table; \
     float sum; \
     float lo = tbl[2]; \
     float hi = tbl[1]; \
@@ -54,3 +54,9 @@ WIN(0) WIN(1) WIN(2) WIN(3)
 WIN(4) WIN(5) WIN(6) WIN(7)
 WIN(8) WIN(9) WIN(10) WIN(11)
 WIN(12) WIN(13) WIN(14) WIN(15)
+
+/* Float-to-s16 clamp bounds: 0, +2^31, -2^31, unused. */
+const f32 ahxmwin_clamp_table[4] = {
+    0.0f, 2147483648.0f, -2147483648.0f, 0.0f,
+};
+

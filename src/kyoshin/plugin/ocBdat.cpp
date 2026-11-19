@@ -45,7 +45,6 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
     return Bdat_DecodeValue_B6A0(hdr, dataPtr, elemType);
 }
 
-#pragma dont_inline on
 // Bdat_DecodeEntries: decode obfuscated BDAT entries. Each flagged entry holds
 // two running-XOR key bytes at +0x16 and two [start,end) byte ranges (+0x18/
 // +0x1C relative to the entry, and +0x06/+0x0A u16 ranges); bytes are XORed
@@ -126,7 +125,6 @@ extern "C" void Bdat_DecodeEntries(void* tblVoid) {
         entry[4] &= static_cast<char>(~2);
     }
 }
-#pragma dont_inline reset
 
 
 extern "C" void* Bdat_GetTable_AA34() {
@@ -158,7 +156,6 @@ void CBdat::getEntry(u32 idx) {
     lbl_eu_805705D0[idx] = 0;
 }
 
-#pragma dont_inline on
 void* getFP(const char* pName) {
     void** tableSlot;
     BdatNameIndexHdr* hdr;
@@ -198,9 +195,7 @@ void* getFP(const char* pName) {
     }
     return 0;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 // Bdat_DecodeValue_B6A0: read one BDAT column element of the given type from data,
 // widening to u32. Type 6 is an offset resolved against the BDAT base.
 extern "C" u32 Bdat_DecodeValue_B6A0(void* bdat, void* data, u32 elemType) {
@@ -234,9 +229,7 @@ extern "C" u32 Bdat_DecodeValue_B6A0(void* bdat, void* data, u32 elemType) {
     }
     return val;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" void* Bdat_FindColumnEntry(void* bdat, const char* col){
     const char* colArg;
     u16 bucketCount;
@@ -286,9 +279,7 @@ extern "C" void* Bdat_FindColumnEntry(void* bdat, const char* col){
     }
     return 0;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" u32 Bdat_QueryCell_AD98(void* bdat, const char* col, s32 row, s32 index){
     const char* colArg;
     s32 rowArg;
@@ -327,9 +318,7 @@ extern "C" u32 Bdat_QueryCell_AD98(void* bdat, const char* col, s32 row, s32 ind
     }
     return func_8003B748(hdr, colEntry, rowArg, indexArg);
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" u32 Bdat_FindColumn_AFC0(void* bdat, const char* col) {
     const char* colArg;
     void* colEntry;
@@ -355,7 +344,6 @@ extern "C" u32 Bdat_FindColumn_AFC0(void* bdat, const char* col) {
     }
     return *reinterpret_cast<u16*>(colHdr + 0x4);
 }
-#pragma dont_inline reset
 
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* p) {
     if (p == 0) {
@@ -364,7 +352,6 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* p) {
     return static_cast<BdatHeader*>(p)->maxRow;
 }
 
-#pragma dont_inline on
 extern "C" u32 Bdat_ReadCell_B434(void* table, void*, void* col, s32 row) {
     void* colArg;
     s32 rowArg;
@@ -419,9 +406,7 @@ bounds_check:
     dataPtr = dataBase + colDataOff;
     return Bdat_DecodeValue_B6A0(hdr, dataPtr, elemType);
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" u32 Bdat_FindColumnAlt_B204(void* bdat, const char* col) {
     const char* colArg;
     void* colEntry;
@@ -444,7 +429,6 @@ extern "C" u32 Bdat_FindColumnAlt_B204(void* bdat, const char* col) {
     colHdr = base + colRel;
     return static_cast<u8>(colHdr[1]);
 }
-#pragma dont_inline reset
 
 extern "C" u32 Bdat_GetRowBase_B41C(void* p) {
     if (p == 0) {
@@ -453,7 +437,6 @@ extern "C" u32 Bdat_GetRowBase_B41C(void* p) {
     return static_cast<BdatHeader*>(p)->rowBase;
 }
 
-#pragma dont_inline on
 extern "C" u32 Bdat_GetFlagValue(void* bdat, const char* col1, s32 row, const char* col2){
     const char* col1Arg;
     s32 rowArg;
@@ -524,7 +507,6 @@ extern "C" u32 Bdat_GetFlagValue(void* bdat, const char* col1, s32 row, const ch
     return (val & mask) >> shift;
     return 0;
 }
-#pragma dont_inline reset
 
 
 extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
@@ -573,7 +555,6 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
 }
 
 
-#pragma dont_inline on
 extern "C" void Bdat_WriteVmArg_B800(VMArg* out, void* data, u32 type){
     VMArg* outArg;
     void* dataArg;
@@ -622,9 +603,7 @@ extern "C" void Bdat_WriteVmArg_B800(VMArg* out, void* data, u32 type){
         outArg->value.uintVal = local;
     }
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int bdat(VMThread* t, void* /*unused*/, u16 unk) {
     VMThread* thread;
     u16 unkArg;
@@ -640,9 +619,7 @@ extern "C" int bdat(VMThread* t, void* /*unused*/, u16 unk) {
     vmRetValSet(thread, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
@@ -664,9 +641,7 @@ extern "C" int getVal(VMThread* t, void* bdat){
     vmRetValSet(thread, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getArrayVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
@@ -690,9 +665,7 @@ extern "C" int getArrayVal(VMThread* t, void* bdat){
     vmRetValSet(thread, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getArrayCount(VMThread* t, void* bdat) {
     VMThread* thread;
     void* bdatTbl;
@@ -707,9 +680,7 @@ extern "C" int getArrayCount(VMThread* t, void* bdat) {
     vmRetValSet(thread, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getVarType(VMThread* t, void* bdat) {
     VMThread* thread;
     void* bdatTbl;
@@ -724,9 +695,7 @@ extern "C" int getVarType(VMThread* t, void* bdat) {
     vmRetValSet(thread, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getIdCount(VMThread* t, void* bdat) {
     VMArg result;
 
@@ -735,9 +704,7 @@ extern "C" int getIdCount(VMThread* t, void* bdat) {
     vmRetValSet(t, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getIdTop(VMThread* t, void* bdat) {
     VMArg result;
 
@@ -746,9 +713,7 @@ extern "C" int getIdTop(VMThread* t, void* bdat) {
     vmRetValSet(t, &result);
     return 1;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" int getFlagVal(VMThread* t, void* bdat) {
     VMThread* thread;
     void* bdatTbl;
@@ -767,7 +732,6 @@ extern "C" int getFlagVal(VMThread* t, void* bdat) {
     vmRetValSet(thread, &result);
     return 1;
 }
-#pragma dont_inline reset
 
 extern "C" void ocBdatRegist() {
     vmOCRegist(&lbl_eu_80524E40);

@@ -449,7 +449,6 @@ extern "C" void func_8009EB2C(int a, int b, u8* c);
 extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
 extern "C" void CfScript_LoadSlot0(u8* name);
-extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
 extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
 extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
@@ -536,18 +535,6 @@ extern "C" void scanTboxByXY();
 // Stack-buffer slot query (CfGameManager helper): fills CfResPcLoadBuffer.
 extern "C" void func_80080F48__Q22cf13CfGameManagerFv(u32 value, cf::CfResPcLoadBuffer* resource, u32 first, u32 second);
 extern "C" unsigned long getEffectFlagState__Q22cf13CfGameManagerFv();
-extern "C" int func_8007E908__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void func_8007FE18__Q22cf13CfGameManagerFv(int);
-extern "C" void func_80085334__Q22cf13CfGameManagerFv(int);
-extern "C" void func_8007D834__Q22cf13CfGameManagerFv(void*);
-extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32, u16);
-extern "C" void func_8007C140__Q22cf13CfGameManagerFv(int);
-extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(int);
-extern "C" void func_8007DA0C__Q22cf13CfGameManagerFv(void*, u16, u16);
-extern "C" void func_80083328__Q22cf13CfGameManagerFv(void*, u32, u16);
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
-extern "C" void func_80085248__Q22cf13CfGameManagerFv(cf::CfGameManager*);
-extern "C" void func_8007D84C__Q22cf13CfGameManagerFv(cf::CfGameManager*);
 
 // C-ABI imports used by CfResPcImpl_open / CfResPcImpl_reload (defined in IResInfo.cpp /
 // CfGameManager.cpp / the model layer). extern "C" keeps the call-site relocs

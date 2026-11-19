@@ -11,6 +11,7 @@
 #include <nw4r/db/db_assert.h>
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include "libs/monolib/src/scn/CScnEffectActNw4r.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"  // canonical simGetLeafActData
 
 // This TU's .data vtable (defined at the bottom of this file); the constructor
 // installs it. Global-scope data names are not mangled by MWCC.
@@ -38,7 +39,7 @@ extern "C" void EffectActNw4rSetLeafDist(CScnEffectActNw4r* self) { simSetLeafDi
 
 extern "C" void EffectActNw4rSetTreeFlag2(CScnEffectActNw4r* self) { simSetFlag2OnTree(self->mpMgr); }
 
-extern "C" u8* EffectActNw4rGetLeafActData(CScnEffectActNw4r* self) { return simGetLeafActData(self->mpMgr); }
+extern "C" u8* EffectActNw4rGetLeafActData(CScnEffectActNw4r* self) { return (u8*)simGetLeafActData(self->mpMgr); }
 
 // Copy the position triplet into the manager's scale/pos fields at 0x304.
 // Kept as integer word copies: retail moves the bits without float ops.
@@ -53,22 +54,22 @@ extern "C" void EffectActNw4rStoreMgrScalePos(CScnEffectActNw4r* self, const voi
 // const self: MWCC hoists the mpMgr load above the LR-save store (retail
 // prologue order lwz r3,4(r3) BEFORE stw r0,20(sp)); non-const emits stw-first.
 extern "C" u8* EffectActNw4rGetAct48(const CScnEffectActNw4r* self) {
-    return simGetLeafActData(self->mpMgr) + 0x48;
+    return (u8*)simGetLeafActData(self->mpMgr) + 0x48;
 }
 
 // Manager's effect-act getter, act slot at +0x78.
 extern "C" u8* EffectActNw4rGetAct78(const CScnEffectActNw4r* self) {
-    return simGetLeafActData(self->mpMgr) + 0x78;
+    return (u8*)simGetLeafActData(self->mpMgr) + 0x78;
 }
 
 // Manager's effect-act getter, act slot at +0xb8.
 extern "C" u8* EffectActNw4rGetActB8(const CScnEffectActNw4r* self) {
-    return simGetLeafActData(self->mpMgr) + 0xb8;
+    return (u8*)simGetLeafActData(self->mpMgr) + 0xb8;
 }
 
 // Manager's effect-act getter, act slot at +0xc4.
 extern "C" u8* EffectActNw4rGetActC4(const CScnEffectActNw4r* self) {
-    return simGetLeafActData(self->mpMgr) + 0xc4;
+    return (u8*)simGetLeafActData(self->mpMgr) + 0xc4;
 }
 
 // Effect-act lookup: the local id table first, then the manager's chain.

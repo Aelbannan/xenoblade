@@ -6,8 +6,7 @@
 // which forces a rlwinm mask on every call and trips the illegal-overload
 // rule if redeclared alongside. Rename the header forms out of the way for
 // this TU and declare the retail (int) shapes instead.
-#define CItemBlock_getKindSlot CItemBlock_getKindSlot_u16hdr
-#define CItemBlock_getSlotU16 CItemBlock_getSlotU16_u16hdr
+#include "kyoshin/cf/CItemBlockApi.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -15,16 +14,11 @@
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/scn/code_804BC9EC.hpp"
-#undef CItemBlock_getKindSlot
-#undef CItemBlock_getSlotU16
-extern "C" void* CItemBlock_getKindSlot(int mappedIndex, int dataId, int slot);
-extern "C" void* CItemBlock_getSlotU16(int charId, int slot);
 
 // Retail passes the character id to CItemBlock_getKindSlot untruncated; the
 // CfGameManager.hpp declaration takes u16, which would force a rlwinm mask
 // at every call. This int-param extern "C" overload resolves instead for
 // integer arguments (approved reloc-name fix, PLAN.md 17.6).
-extern "C" void* CItemBlock_getKindSlot(int mappedIndex, int dataId, int slot);
 
 struct UnkClass_8009ECB0;
 struct UnkClass_805764CC;

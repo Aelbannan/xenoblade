@@ -27,6 +27,7 @@ struct VTarget {
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/scn/CScnNw4r.hpp"
 #include <new>
 
 // --- CTTask<CScn> out-of-line specializations ---
@@ -50,15 +51,12 @@ void CTTask<CScn>::Draw() {
 template<>
 CTTask<CScn>::~CTTask() {}
 
-// CScn::~CScn() (retail __dt__4CScnFv). Repoints the accessor table (+0x10)
-// and secondary IWorkEvent vtable slot (+0x54), destroys the +0x88
+// CScn::~CScn() (retail __dt__4CScnFv). MWCC repoints both vtable pointers
+// (+0x10 primary, +0x54 IWorkEvent) at __vt__4CScn, destroys the +0x88
 // subobject, then runs the ~CProcess base dtor directly (the empty ~CTTask
 // specialization above is elided). The deleting-flag tail (operator delete)
 // is emitted automatically because the destructor is virtual.
 CScn::~CScn() {
-    CScnDtorView& v = *(CScnDtorView*)this;
-    v.unk10 = lbl_eu_8056E8D0;
-    v.unk54 = lbl_eu_8056E8D0 + 0x24;
     if (unk88 != NULL) {
         if (unk88 != NULL) {  // twin guard matches retail's paired beq
             ((ScnSubDtor*)unk88)->dtorSlot(1);
@@ -67,92 +65,51 @@ CScn::~CScn() {
     }
 }
 
-// CScn constructor (retail flat symbol __ct__CScn). Runs the CProcess base
-// ctor, installs the intermediate then final vtable pointers, nulls the two
-// CTTask member-function pointers (MWCC materializes __ptmf_null for a null
-// ptmf store; the post-increment walk folds the first read into lwzu @l),
-// zeroes the 0x58..0x90 block and initializes the timing / render-callback
-// fields. Returns self (retail keeps an or r3,r31,r31 copy live to blr).
-extern "C" void __ct__8CProcessFv(CProcess* self);
-extern const u32 __ptmf_null[3];
-extern "C" CScn* __ct__CScn(CScn* self) {
-    CScnCtorView& v = *(CScnCtorView*)self;
-    __ct__8CProcessFv((CProcess*)self);
-
-    // Intermediate accessor-table pointer, repointed below.
-    v.unk10 = lbl_eu_8056E984;
-
-    u32 d0, m0;
-    u32* move = (u32*)&v.mMoveFunc;
-    const u32* n;
-    f32 f98;
-    n = __ptmf_null;
-    m0 = *n++;
-    f98 = lbl_eu_8066AAB0;
-    move[1] = *n++;
-    move[0] = m0;
-    move[2] = *n++;
-    // Second copy re-reads from the null-ptmf base.
-    u32* draw = (u32*)&v.mDrawFunc;
-    n = __ptmf_null;
-    d0 = *n++;
-    draw[1] = *n++;
-    draw[0] = d0;
-    draw[2] = *n++;
-
-    // Final vtable pair (CTTask + IWorkEvent subobjects).
-    v.unk10 = lbl_eu_8056E8D0;
-    v.unk54 = lbl_eu_8056E8D0 + 0x24;
-
-    self->unk58 = 0;
-    self->unk5C = NULL;
-    self->mItemPool = NULL;
-    self->unk64 = NULL;
-    self->mCamWork = NULL;
-    self->unk6C = NULL;
-    self->mFilterMan = NULL;
-    self->unk74 = NULL;
-    self->unk78 = NULL;
-    self->mLgtCtrl = NULL;
-    self->mFadeMan = NULL;
-    self->mFrame84 = NULL;
-    self->unk88 = NULL;
-    self->mUnk8C = NULL;
-    self->unk90 = 0;
-
-    self->unk98 = f98;
-    self->unk9C = 0x100;
-    self->unkB2 = 0x40;
-    self->unk9E[0] = 0x50;
-    self->unk9E[1] = 0x50;
-    self->unk9E[2] = 0x50;
-    self->unk9E[3] = 0x50;
-    self->unk9E[4] = 0x50;
-    self->unk9E[5] = 0x50;
-    self->unk9E[6] = 0x50;
-    self->unk9E[7] = 0x50;
-    self->unk9E[8] = 0x50;
-    self->unk9E[9] = 0x50;
-    self->unkB4 = NULL;
-    self->unkB8 = 0;
-
-    self->mRenderCBCount = 0;      //0x3BC
-    self->unk3C0[0] = 0;
-    self->unk3E0 = 0;
-    self->unk_3E4 = 0;
-    self->unk_3E5 = 1;
-    self->unk_3E6 = 1;
-    self->unk_3E7 = 0;
-    self->unk_3E8 = 1;
-    self->unk_3E9 = 0;
-    return self;
-}
-
-// Retail thunk: the IWorkEvent subobject at +0x54 delegates back to the
-// complete-object destructor with this-0x54.
-extern "C" void* __dt__4CScnFv(CScn* self, int flags);
-extern "C" void Scn_DtorThunk54(void* pThis, int flags) {
-    __dt__4CScnFv((CScn*)((char*)pThis - 0x54), flags);
+// CScn constructor (retail __ct__4CScnFv). The inlined CTTask<CScn> ctor runs
+// the CProcess base ctor, installs __vt__13CTTask<4CScn> and nulls the two
+// member-function pointers; MWCC then installs the final __vt__4CScn pair
+// (+0x10 / +0x54) before the body zeroes the subsystem slots and seeds the
+// timing / render-callback fields.
+CScn::CScn() {
+    unk58 = 0;
+    unk5C = NULL;
+    mItemPool = NULL;
+    unk64 = NULL;
+    mCamWork = NULL;
+    unk6C = NULL;
+    mFilterMan = NULL;
+    unk74 = NULL;
+    unk78 = NULL;
+    mLgtCtrl = NULL;
+    mFadeMan = NULL;
+    mFrame84 = NULL;
+    unk88 = NULL;
+    mUnk8C = NULL;
+    unk90 = 0;
+    unk98 = 10.0f;
+    unk9C = 0x100;
+    unkB2 = 0x40;
+    unk9E[0] = 0x50;
+    unk9E[1] = 0x50;
+    unk9E[2] = 0x50;
+    unk9E[3] = 0x50;
+    unk9E[4] = 0x50;
+    unk9E[5] = 0x50;
+    unk9E[6] = 0x50;
+    unk9E[7] = 0x50;
+    unk9E[8] = 0x50;
+    unk9E[9] = 0x50;
+    unkB4 = NULL;
+    unkB8 = 0;
+    mRenderCBCount = 0;      //0x3BC
+    unk3C0[0] = 0;
+    unk3E0 = 0;
+    unk_3E4 = 0;
+    unk_3E5 = 1;
+    unk_3E6 = 1;
+    unk_3E7 = 0;
+    unk_3E8 = 1;
+    unk_3E9 = 0;
 }
 
 extern "C" {
@@ -315,7 +272,7 @@ extern "C" u32 Scn_QueryUnk80State(CScn* self) {
 extern "C" bool Scn_IsDefaultScale(CScn* self) {
     bool result = false;
     if (isFadeIdle(self->mFadeMan)) {
-        if (((ScnFloats*)getFadeColorPtr(self->mFadeMan))->unk0C == lbl_eu_8066AAB4)
+        if (((ScnFloats*)getFadeColorPtr(self->mFadeMan))->unk0C == 0.0f)
             result = true;
     }
     return result;
@@ -324,7 +281,7 @@ extern "C" bool Scn_IsDefaultScale(CScn* self) {
 extern "C" bool Scn_IsScaleAtLeastOne(CScn* self) {
     bool result = false;
     if (isFadeIdle(self->mFadeMan)) {
-        if (((ScnFloats*)getFadeColorPtr(self->mFadeMan))->unk0C >= lbl_eu_8066AAB8)
+        if (((ScnFloats*)getFadeColorPtr(self->mFadeMan))->unk0C >= 1.0f)
             result = true;
     }
     return result;
@@ -439,9 +396,9 @@ float Scn_GetFrameDelta(void* self_) {
     }
     float mul;
     if (pal != 0)
-        mul = lbl_eu_8066AABC;
+        mul = 1.2f;
     else
-        mul = lbl_eu_8066AAB8;
+        mul = 1.0f;
     float scale = self->mFrame84->mElapsed;
     return scale * mul;
 }
@@ -454,13 +411,16 @@ extern "C" void Scn_SetPauseFlag(void* p, unsigned char v) {
 }
 // retail: stb r4,0x3e6(r3); blr
 extern "C" void Scn_SetStopFlag(u8* self, u8 v) { ((CScn*)self)->unk_3E6 = v; }
-extern "C" void Scn_CallUnk68_V3(u8* self) {
-    VTarget* obj = (VTarget*)((CScn*)self)->mCamWork;
-    obj->v3();
+// IWorkEvent overrides: forward the event to the camera manager / item pool
+// (both IWorkEvent-derived). Overriding a secondary-base virtual makes MWCC
+// append these real bodies to the end of __vt__4CScn and route the +0x54
+// slots through weak @84@ thunks (see MWCC_CASES "MI: overriding a
+// secondary-base virtual").
+bool CScn::WorkEvent3(UNKTYPE* r4) {
+    return ((CScnCameraMan*)mCamWork)->WorkEvent3(r4);
 }
-extern "C" void Scn_CallUnk60_V4(u8* self) {
-    VTarget* obj = (VTarget*)((CScn*)self)->mItemPool;
-    obj->v4();
+bool CScn::WorkEvent4() {
+    return mItemPool->WorkEvent4();
 }
 extern "C" void Scn_SetCurrentScene(u32 value) {
     lbl_eu_80665908 = (CScn *)value;
@@ -580,35 +540,27 @@ void CScn::Move() {
 // create__8CScnNw4rFv (the public header declares it parameterless even
 // though every caller passes five arguments), so the definition keeps the
 // flat name via C linkage.
-class CScnNw4r {
-public:
-    // Flat-name ctor emitted by the CScnMem TU (retail calls __ct__CScnNw4r).
-};
 
 // Flat declarations so the emitted relocations carry the retail names.
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                               bool top);
 extern "C" void initSubsystems__4CScnFUlUlPvUl(CScn* self, u32 a, u32 b,
                                               void* str, u32 d);
-extern "C" void* __ct__CScnNw4r(void* self);
 
 extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
                                          u32 arg, u32 handle, void* param) {
     // Inline clear(): mString[0] = 0, mLength = 0 (retail stores, no
     // out-of-line FixStr ctor call).
     ml::FixStr<32> str(true);
-    str.format(lbl_eu_80524090, lbl_eu_80524090 + 7, name);
+    str.format("%s(%s)", "CScn", name);
 
     // Default handle sentinel: fall back to the MEM1 region handle.
     if ((u32)(handle + 0x10000) == 0xffff) {
         handle = mtl::MemManager::getHandleMEM1();
     }
 
-    CScnNw4r* scn = static_cast<CScnNw4r*>(mtl::MemManager::allocate(
-        sizeof(CScn), CWorkThreadSystem::getWorkMem()));
-    if (scn != NULL) {
-        scn = (CScnNw4r*)__ct__CScnNw4r(scn);
-    }
+    CScnNw4r* scn = new (mtl::MemManager::allocate(
+        sizeof(CScnNw4r), CWorkThreadSystem::getWorkMem())) CScnNw4r();
 
     Regist__8CProcessFP8CProcessb((CProcess*)scn, parent, false);
     initSubsystems__4CScnFUlUlPvUl((CScn*)scn, handle, arg, &str, (u32)param);

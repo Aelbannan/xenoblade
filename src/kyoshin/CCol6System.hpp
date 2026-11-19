@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -317,7 +318,6 @@ void CItemData_initFromFamily(void*, u16, u32);                                 
 // CItem_initItemImplInstances is declared extern "C" by
 // include/kyoshin/cf/CfGameManager.hpp (pulled in via harness_catalog); a
 // local redeclaration here would mangle and trip MWCC 10197.
-u32 SysWinGetSingleton();                                                  // CHelp_CloseSysMenu.cpp
 CCol6Fade* getFadeMenu();                                           // CMenuFade.cpp
 int isFadeActive(CCol6Fade* fade);                                    // CMenuFade.cpp (byte result, tested unmasked)
 void CUICfManager_queueFadeMenu(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfManager.cpp

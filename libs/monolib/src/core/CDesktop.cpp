@@ -71,23 +71,18 @@ mView(nullptr) {
     CView::setDefaultFrameColor(unk1EC);
 }
 
-// optimize_for_size on: retail saves r30+r31 via stmw, not stw (same pattern
-// as the CArcItem/CDrawGX dtors).
-#pragma optimize_for_size on
+// Retail saves r30+r31 via stmw (-O4,s unit).
 CDesktop::~CDesktop(){
     // Retail writes the sbss singleton under its linker name.
     lbl_eu_806656AC = nullptr;
 }
-#pragma optimize_for_size off
 
 CDesktop* CDesktop::getInstance(){
     return lbl_eu_806656AC;
 }
 
-// retail wkStandbyLogin calls getView out-of-line (bl getView__8CDesktopFv)
-// rather than inlining the singleton read; -ipa file / -inline auto fold it in,
-// -ipa off and -inline noauto both lose more elsewhere.
-__declspec(noinline) CView* CDesktop::getView(){  // noinline-ok: -ipa off / -inline noauto lose 2-4 fns
+// retail wkStandbyLogin calls getView out-of-line (bl getView__8CDesktopFv).
+CView* CDesktop::getView(){
     CDesktop* desktop = lbl_eu_806656AC;
     if(desktop == nullptr){
         return nullptr; 
@@ -160,16 +155,16 @@ bool CDesktop::wkStandbyLogin(){
     // copies the raw bytes of an uninitialized 0x24-byte entry local; the
     // payload is ignored by the tag-3 consumer.
     CView* view = mView;
-    u32 sum = view->mContextMsg.mFront + view->mContextMsg.mSize;
-    u32 slot = sum % view->mContextMsg.mCapacity;
+    u32 sum = view->mContextMsg.mRing.mFront + view->mContextMsg.mRing.mSize;
+    u32 slot = sum % view->mContextMsg.mRing.mCapacity;
     CViewContextRingEntry* entry = reinterpret_cast<CViewContextRingEntry*>(
-        (u8*)view->mContextMsg.mArrayPtr + slot * 0x24);
+        (u8*)view->mContextMsg.mRing.mArrayPtr + slot * 0x24);
     CViewContextRingEntry ctx;
     *entry = ctx;
     entry->tag = 3;
     entry->pad = 0;
-    view->mContextMsg.mSize += 1;
-    view->mContextMsg.field6 = view->mContextMsg.mSize - 1;
+    view->mContextMsg.mRing.mSize += 1;
+    view->mContextMsg.mRing.field6 = view->mContextMsg.mRing.mSize - 1;
     mView->unk460 = 0x13;
 
     // Name the view after the "Desktop" string (both the view-local name and
@@ -238,9 +233,7 @@ bool CDesktop::wkStandbyLogout(){
 // Walk the current root view's attached-view list and return the first view
 // whose work thread is a CProc with a non-null pssGetRoot (this is unused in
 // the retail body, hence the free-function form).
-// optimize_for_size on: retail saves r30+r31 via stmw, not stw.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) CProc* getCurrentProc__8CDesktopFv(){  // noinline-ok: retail OnFileEvent keeps bl to it; see getView
+extern "C" CProc* getCurrentProc__8CDesktopFv(){
     CView* view = CViewRoot::getCurrent();
     if(view == nullptr){
         return nullptr;
@@ -271,7 +264,6 @@ extern "C" __declspec(noinline) CProc* getCurrentProc__8CDesktopFv(){  // noinli
 
     return nullptr;
 }
-#pragma optimize_for_size off
 
 void CDesktop::entryTable(DesktopIcon* pIcon, bool state){
     lbl_eu_806656A8 = reinterpret_cast<u32>(pIcon);
@@ -286,8 +278,6 @@ void CDesktop::setAppException(int enable){
     desktop->wkSetEvent(enable != 0 ? EVT_APPEXCEPTION_ON : EVT_APPEXCEPTION_OFF);
 }
 
-// optimize_for_size on: retail saves r30+r31 via stmw, not stw.
-#pragma optimize_for_size on
 namespace{
     CDesktopBackGround::~CDesktopBackGround(){
         lbl_eu_806656B4 = nullptr;
@@ -296,7 +286,6 @@ namespace{
         lbl_eu_806656B8 = 0;
     }
 }
-#pragma optimize_for_size off
 
 bool CDesktop::OnFileEvent(CEventFile* pFile){
     if(pFile->unk0 == 2){

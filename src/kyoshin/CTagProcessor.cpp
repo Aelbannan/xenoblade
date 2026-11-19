@@ -8,181 +8,282 @@
 #include <wchar.h>  // wcstol (MSL, C-linkage)
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+/* Tag-code handler hierarchy.
+ *
+ * Retail .data carries 23 vtable + base-list pairs (0x8052D618..0x8052DA08)
+ * and .sdata one 8-byte type_info per class (0x80661EE8..0x80661FA8), both in
+ * *reverse* declaration order (first declared = highest address), so the
+ * classes are declared in tag order, CL -> MakeCrystal, inside one anonymous
+ * namespace and the compiler emits the whole block. Slot order is fixed by
+ * ITagCode: [0] dtor, [1] Process, [2] CalcRect, [3] v14. The three tags that
+ * need a custom Process/CalcRect (Col, Ruby, Line) override them; the rest
+ * inherit the ITagCode defaults, and every class overrides v14 (its
+ * tag-body writer, whose trailing slots in the table are those addresses).
+ */
+namespace {
 
-// Deleting destructor for the anonymous-namespace tag code classes.
-// MWCC emits the `if (this && deletingFlag) operator delete(this)` idiom
-// for an empty destructor; retail symbol is the annotation name below.
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCP(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class ITagCode {
+public:
+    typedef nw4r::ut::TagProcessorBase<wchar_t>::Operation Operation;
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeWait(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+    virtual ~ITagCode();
+    virtual Operation Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual Operation CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm) = 0;
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeDel(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeCL : public ITagCode {
+public:
+    CTagCodeCL() {}
+    virtual ~CTagCodeCL();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeRuby(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeCP : public ITagCode {
+public:
+    CTagCodeCP() {}
+    virtual ~CTagCodeCP();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCol(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeWait : public ITagCode {
+public:
+    CTagCodeWait() {}
+    virtual ~CTagCodeWait();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeTrust(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeDel : public ITagCode {
+public:
+    CTagCodeDel() {}
+    virtual ~CTagCodeDel();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeType(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeRuby : public ITagCode {
+public:
+    CTagCodeRuby() {}
+    virtual ~CTagCodeRuby();
+    virtual Operation Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual Operation CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodePos(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeCol : public ITagCode {
+public:
+    CTagCodeCol() {}
+    virtual ~CTagCodeCol();
+    virtual Operation Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual Operation CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeMouth(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeTrust : public ITagCode {
+public:
+    CTagCodeTrust() {}
+    virtual ~CTagCodeTrust();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeLine(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeType : public ITagCode {
+public:
+    CTagCodeType() {}
+    virtual ~CTagCodeType();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-// Deleting destructor for the anonymous-namespace tag code classes.
-// MWCC emits the `if (this && deletingFlag) operator delete(this)` idiom
-// for an empty destructor; retail symbol is the annotation name below.
-// extern "C" keeps the flat symbols.txt label (MWCC would otherwise append a
-// `__FPvi` param suffix, and the substring resolver then confuses this stub
-// with its ...Select2 twin below).
-extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodePos : public ITagCode {
+public:
+    CTagCodePos() {}
+    virtual ~CTagCodePos();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeMouth : public ITagCode {
+public:
+    CTagCodeMouth() {}
+    virtual ~CTagCodeMouth();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeAct(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeLine : public ITagCode {
+public:
+    CTagCodeLine() {}
+    virtual ~CTagCodeLine();
+    virtual Operation Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual Operation CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeFade(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeSelect : public ITagCode {
+public:
+    CTagCodeSelect() {}
+    virtual ~CTagCodeSelect();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeQuest(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeSelect2 : public ITagCode {
+public:
+    CTagCodeSelect2() {}
+    virtual ~CTagCodeSelect2();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-// Deleting destructor for the anonymous-namespace tag code classes.
-// MWCC emits the `if (this && deletingFlag) operator delete(this)` idiom
-// for an empty destructor; retail symbol is the annotation name below.
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeInvisible(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeAct : public ITagCode {
+public:
+    CTagCodeAct() {}
+    virtual ~CTagCodeAct();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeQstStart(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeFade : public ITagCode {
+public:
+    CTagCodeFade() {}
+    virtual ~CTagCodeFade();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodePresent(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeQuest : public ITagCode {
+public:
+    CTagCodeQuest() {}
+    virtual ~CTagCodeQuest();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeTailOff(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeInvisible : public ITagCode {
+public:
+    CTagCodeInvisible() {}
+    virtual ~CTagCodeInvisible();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeExchange(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeQstStart : public ITagCode {
+public:
+    CTagCodeQstStart() {}
+    virtual ~CTagCodeQstStart();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-// Deleting destructor for the anonymous-namespace tag code classes.
-// MWCC emits the `if (this && deletingFlag) operator delete(this)` idiom
-// for an empty destructor; retail symbol is the annotation name below.
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeShop(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodePresent : public ITagCode {
+public:
+    CTagCodePresent() {}
+    virtual ~CTagCodePresent();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
 
-void* __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+class CTagCodeTailOff : public ITagCode {
+public:
+    CTagCodeTailOff() {}
+    virtual ~CTagCodeTailOff();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
+
+class CTagCodeExchange : public ITagCode {
+public:
+    CTagCodeExchange() {}
+    virtual ~CTagCodeExchange();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
+
+class CTagCodeShop : public ITagCode {
+public:
+    CTagCodeShop() {}
+    virtual ~CTagCodeShop();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
+
+class CTagCodeMakeCrystal : public ITagCode {
+public:
+    CTagCodeMakeCrystal() {}
+    virtual ~CTagCodeMakeCrystal();
+    virtual u16* v14(u16* buf, const wchar_t* arg, TagParam* prm);
+};
+
+/* Empty destructors: MWCC emits the retail `if (this && deleting) operator
+ * delete(this)` deleting-destructor body for each (0x40 B, one per class). */
+ITagCode::~ITagCode() {}
+CTagCodeCL::~CTagCodeCL() {}
+CTagCodeCP::~CTagCodeCP() {}
+CTagCodeWait::~CTagCodeWait() {}
+CTagCodeDel::~CTagCodeDel() {}
+CTagCodeRuby::~CTagCodeRuby() {}
+CTagCodeCol::~CTagCodeCol() {}
+CTagCodeTrust::~CTagCodeTrust() {}
+CTagCodeType::~CTagCodeType() {}
+CTagCodePos::~CTagCodePos() {}
+CTagCodeMouth::~CTagCodeMouth() {}
+CTagCodeLine::~CTagCodeLine() {}
+CTagCodeSelect::~CTagCodeSelect() {}
+CTagCodeSelect2::~CTagCodeSelect2() {}
+CTagCodeAct::~CTagCodeAct() {}
+CTagCodeFade::~CTagCodeFade() {}
+CTagCodeQuest::~CTagCodeQuest() {}
+CTagCodeInvisible::~CTagCodeInvisible() {}
+CTagCodeQstStart::~CTagCodeQstStart() {}
+CTagCodePresent::~CTagCodePresent() {}
+CTagCodeTailOff::~CTagCodeTailOff() {}
+CTagCodeExchange::~CTagCodeExchange() {}
+CTagCodeShop::~CTagCodeShop() {}
+CTagCodeMakeCrystal::~CTagCodeMakeCrystal() {}
+
+CTagCodeCL s_CL;
+CTagCodeCP s_CP;
+CTagCodeWait s_Wait;
+CTagCodeDel s_Del;
+CTagCodeRuby s_Ruby;
+CTagCodeCol s_Col;
+CTagCodeTrust s_Trust;
+CTagCodeType s_Type;
+CTagCodePos s_Pos;
+CTagCodeMouth s_Mouth;
+CTagCodeLine s_Line;
+CTagCodeSelect s_Select;
+CTagCodeSelect2 s_Select2;
+CTagCodeAct s_Act;
+CTagCodeFade s_Fade;
+CTagCodeQuest s_Quest;
+CTagCodeInvisible s_Invisible;
+CTagCodeQstStart s_QstStart;
+CTagCodePresent s_Present;
+CTagCodeTailOff s_TailOff;
+CTagCodeExchange s_Exchange;
+CTagCodeShop s_Shop;
+CTagCodeMakeCrystal s_MakeCrystal;
+
+struct TagTableEntry {
+    u16 tag;              // +0x00 tag code
+    const wchar_t* name;  // +0x04 tag name (<NAME=value>); null terminates
+    ITagCode* obj;        // +0x08 handler singleton
+};
+
+TagTableEntry s_tagTable[] = {
+    { 0, L"N", &s_CL },
+    { 3, L"P", &s_CP },
+    { 5, L"WAIT", &s_Wait },
+    { 4, L"DEL", &s_Del },
+    { 1, L"RUBY", &s_Ruby },
+    { 2, L"COL", &s_Col },
+    { 2, L"C", &s_Col },
+    { 11, L"TRUST", &s_Trust },
+    { 0, L"TYPE", &s_Type },
+    { 0, L"POS", &s_Pos },
+    { 9, L"JAW", &s_Mouth },
+    { 13, L"LINE", &s_Line },
+    { 6, L"SEL", &s_Select },
+    { 7, L"SEL2", &s_Select2 },
+    { 8, L"ACT", &s_Act },
+    { 0, L"FADE", &s_Fade },
+    { 0, L"QST", &s_Quest },
+    { 0, L"INV", &s_Invisible },
+    { 0, L"QST_START", &s_QstStart },
+    { 0, L"PRESENT", &s_Present },
+    { 0, L"TAIL_OFF", &s_TailOff },
+    { 0, L"EX", &s_Exchange },
+    { 0, L"SHP", &s_Shop },
+    { 0, L"CRYSTAL", &s_MakeCrystal },
+    { 0, 0, 0 }
+};
+}  // namespace
 
 // Reset a tag-param block to all zero (float field takes the sdata2 constant).
 // via bl and the retail reloc name is the flat TagParamClear.
@@ -230,13 +331,10 @@ extern "C" void TagParamInitCode(TagParam* p, u8 a) {
     p->field_08 = lbl_eu_806671F0;
 }
 
-// Deleting destructor for the tag-param code object at 8012596C.
-void* __dt__8012596C(void* self, int deleting) {
-    if (self && deleting > 0) {
-        ::operator delete(self);
-    }
-    return self;
-}
+// Empty out-of-line destructor: auto-inlined at every local/temporary below,
+// but kept as a real function because ~CTagProcessorBase's exception-cleanup
+// record destroys field_814 through it.
+TagParam::~TagParam() {}
 
 // Tag-processor base constructor (retail __ct__17CTagProcessorBaseFv): the member
 // ctor provides the compiler-generated nw4r base-ctor call -- placement new
@@ -289,11 +387,9 @@ __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}  // noinline-ok:
 nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchProcess(
     nw4r::ut::TagProcessorBase<wchar_t>* self, u16 tag,
     nw4r::ut::PrintContext<wchar_t>* ctx) {
-    u32 o = 0;
-    const u8* base = (const u8*)lbl_eu_8052D478;
-    for (;; o += 12) {
-        const TagEntry* e = (const TagEntry*)(base + o);
-        if (e->field_04 == 0) {
+    for (int i = 0;; i++) {
+        const TagTableEntry* e = &s_tagTable[i];
+        if (e->name == 0) {
             return self->TagProcessorBase<wchar_t>::Process(tag, ctx);
         }
         if (tag == e->tag) {
@@ -302,19 +398,19 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchProcess(
     }
 }
 
+// ITagCode's default slots: the two shared 8-byte `li r3,0; blr` handlers
+// (vtable slots 1/2 for the 20 tag classes that do not override them).
+nw4r::ut::TagProcessorBase<wchar_t>::Operation ITagCode::Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) { return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_DEFAULT; }
 
-
-// Tag-code dispatch for CalcRect: walk the handler table; a null handler
+// Tag-code dispatch for CalcRect:
 // falls back to the base TagProcessor, a matching tag dispatches to the
 // handler object's CalcRect override (vtable slot 4).
 nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchCalcRect(
     nw4r::ut::TagProcessorBase<wchar_t>* self, nw4r::ut::Rect* rect,
     u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
-    u32 o = 0;
-    const u8* base = (const u8*)lbl_eu_8052D478;
-    for (;; o += 12) {
-        const TagEntry* e = (const TagEntry*)(base + o);
-        if (e->field_04 == 0) {
+    for (int i = 0;; i++) {
+        const TagTableEntry* e = &s_tagTable[i];
+        if (e->name == 0) {
             return self->TagProcessorBase<wchar_t>::CalcRect(rect, tag, ctx);
         }
         if (tag == e->tag) {
@@ -323,12 +419,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchCalcRect(
     }
 }
 
-extern "C" int defaultProcess(void* self) { return 0; }
-
-// Flat 8-byte stub (retail li r3,0; blr): default-operation sentinel shared
-// by the tag dispatch tables. Kept as its own symbol (not folded into
-// defaultProcess) so the retail TagProcDefaultOp label has a decomp body.
-extern "C" int TagProcDefaultOp(void) { return 0; }
+nw4r::ut::TagProcessorBase<wchar_t>::Operation ITagCode::CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) { return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_DEFAULT; }
 
 // Message pre-processor: copy the raw message into the buffer, then walk it
 // in place - a CRLF at the head is stripped (the tail is copied down over
@@ -369,7 +460,7 @@ u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f
             WcsToUpperInPlace((u16*)tokens[0]);
             wcscpy(bigbuf, p + count + 2);
             const wchar_t* name = tokens[0];
-            for (const TagNameEntry* e = (const TagNameEntry*)lbl_eu_8052D478;; e++) {
+            for (const TagTableEntry* e = s_tagTable;; e++) {
                 if (e->name == 0)
                     break;
                 if (wcscmp(name, e->name) == 0) {
@@ -627,9 +718,9 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
     TagTalkSrc* player = (TagTalkSrc*)func_800BBC0C(cf::CfGameManager::getPlayer(0));
 
     // Walk the tag dispatch table (25 x 12-byte entries).
-    for (u32 o = 0; ; o += 12) {
-        const TagEntry* e = (const TagEntry*)((const u8*)lbl_eu_8052D478 + o);
-        if (e->field_04 == 0) {
+    for (int i = 0;; i++) {
+        const TagTableEntry* e = &s_tagTable[i];
+        if (e->name == 0) {
             // No handler for this code: push <tag, 0> verbatim and advance
             // both counters, then run the icon-pending tail.
             outbuf[0] = tagcode;
@@ -1312,13 +1403,6 @@ extern "C" const wchar_t* getContextStr(u8* self) { return ((const TagContext*)s
 
 extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
-// Char-space accumulation helper (retail C-ABI symbol in this unit).
-// so the tiny body must not be folded into call sites.
-extern "C" void addToCharSpace(u8* self, float val) {
-    TagContext* ctx = (TagContext*)self;
-    ctx->charSpace = *(float*)&ctx->contextStr + val;
-}
-
 // Fetch the tag chain head and return the first node's list header (4 bytes
 // before the payload). Retail asserts when the chain is empty.
 void* TagCtxGetNodeHeader(void* self) {
@@ -1975,78 +2059,85 @@ extern "C" void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pa
     pv->v74(0x400);
 }
 
-extern "C" void* TagWriterCode7(void* a, void* b, u8 code, u8* dst) {
+u16* CTagCodeMakeCrystal::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u8* dst = (u8*)prm;
     TagParam p;
     TagParamInitCode(&p, 7);
     copyTagParam(dst, (const u8*)&p);
-    return b;
+    return buf;
 }
 
 // Tag-writer variant with a numeric value: uppercase the value string, parse it
 // with wcstol, store tag-param code 6 plus the value, copy the block into the
 // output buffer, and thread the r4 arg through (same family as TagWriterCode7).
-extern "C" void* TagWriterCode6Value(void* a, void* b, u16* str, u8* dst) {
-    WcsToUpperInPlace(str);
+u16* CTagCodeShop::v14(u16* buf, const wchar_t* str, TagParam* prm) {
+    WcsToUpperInPlace((u16*)str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
     TagParamInitCodeU16(&p, 6, (u16)val);
-    copyTagParam(dst, (const u8*)&p);
-    return b;
+    copyTagParam((u8*)prm, (const u8*)&p);
+    return buf;
 }
 
 // Same stmw/lmw save-merge + copy-order fix as TagWriterCode7.
-extern "C" void* TagWriterCode5(void* a, void* b, u8 code, u8* dst) {
+u16* CTagCodeExchange::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u8* dst = (u8*)prm;
     TagParam p;
     TagParamInitCode(&p, 5);
     copyTagParam(dst, (const u8*)&p);
-    return b;
+    return buf;
 }
 
 // Build a fresh tag-param (mode 8) on the stack, copy it onto the target,
 // set its +1 flag, and return the ret pointer (retail keeps a1/a3 phantom).
-extern "C" void* TagWriterCode8Target(u8* a1, TagParam* ret, u8 a3, TagParam* target) {
+u16* CTagCodeTailOff::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    TagParam* ret = (TagParam*)buf;
+    TagParam* target = (TagParam*)prm;
     TagParam tmp;
     TagParamInitCode(&tmp, 8);
     copyTagParam((u8*)target, (const u8*)&tmp);
     target->field_01 |= 1;
-    return ret;
+    return (u16*)ret;
 }
 
 // Same as TagWriterCode6Value but with tag-param code 4.
-extern "C" void* TagWriterCode4Value(void* a, void* b, u16* str, u8* dst) {
-    WcsToUpperInPlace(str);
+u16* CTagCodePresent::v14(u16* buf, const wchar_t* str, TagParam* prm) {
+    WcsToUpperInPlace((u16*)str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
     TagParamInitCodeU16(&p, 4, (u16)val);
-    copyTagParam(dst, (const u8*)&p);
-    return b;
+    copyTagParam((u8*)prm, (const u8*)&p);
+    return buf;
 }
 
-void* callInitTagProc(void* arg1, void* arg2) {
+u16* CTagCodeQstStart::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    void* arg1 = (void*)this;
+    void* arg2 = (void*)buf;
     extern void MenuStateSet6405A(void*);
     MenuStateSet6405A(arg1);
-    return arg2;
+    return (u16*)arg2;
 }
 
 // Same stmw/lmw save-merge + copy-order fix as TagWriterCode7.
-extern "C" void* TagWriterCode3(void* a, void* b, u8 code, u8* dst) {
+u16* CTagCodeInvisible::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u8* dst = (u8*)prm;
     TagParam p;
     TagParamInitCode(&p, 3);
     copyTagParam(dst, (const u8*)&p);
-    return b;
+    return buf;
 }
 
 // Same as TagWriterCode6Value but with tag-param code 2.
-extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
-    WcsToUpperInPlace(str);
+u16* CTagCodeQuest::v14(u16* buf, const wchar_t* str, TagParam* prm) {
+    WcsToUpperInPlace((u16*)str);
     wchar_t* endptr = 0;
     TagParam p;
     long val = wcstol((const wchar_t*)str, &endptr, 10);
     TagParamInitCodeU16(&p, 2, (u16)val);
-    copyTagParam(dst, (const u8*)&p);
-    return b;
+    copyTagParam((u8*)prm, (const u8*)&p);
+    return buf;
 }
 
 // Tag-param writer for a 1-value tag: split the arg string on ':' via
@@ -2059,7 +2150,7 @@ extern "C" void* TagWriterCode2Value(void* a, void* b, u16* str, u8* dst) {
 // constant is used. The block is copied into dst and the r4 arg is returned (family
 // idiom). tokens[16]: retail's frame places the token array at +0x28 and the
 // conversion scratch at +0x68, which a 16-pointer array reproduces.
-void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* dst) {
+u16* CTagCodeFade::v14(u16* ret, const wchar_t* str, TagParam* dst) {
     wchar_t* tokens[16];
     TagParam p;
     int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
@@ -2088,7 +2179,7 @@ void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* 
         initTagParam((u8*)&q, 1, idx, lbl_eu_8066725C);
         copyTagParam((u8*)dst, (const u8*)&q);
     }
-    return ret;
+    return (u16*)ret;
 }
 
 // Color-tag writer: split the arg string on ':', copy the name/value tables from ROM
@@ -2097,7 +2188,9 @@ void* TagWriterParseColonParam(void* unused, void* ret, wchar_t* str, TagParam* 
 // value into the 3-slot scratch (seeded with the sdata2 color defaults), then pack the
 // scratch into a 3-u16 block <8, (b<<8)|r, (a<<8)|0xff> and return the position after
 // the block.
-u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
+u16* CTagCodeAct::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u16* dst = buf;
+    wchar_t* str = (wchar_t*)arg;
     TagColorOut out;
     wchar_t* tokens[16];
     TagColorValues values;
@@ -2128,7 +2221,7 @@ u16* TagWriterColorBlock(void* unused, u16* dst, wchar_t* str) {
 // write the 2-entry header (tag + token count), then a (count+1)/2 block of length
 // pairs (each u16 packs two consecutive token lengths), then copy every token into dst
 // in order. Returns the end of the copied region.
-u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
+u16* CTagCodeSelect2::v14(u16* dst, const wchar_t* str, TagParam* prm) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
@@ -2151,7 +2244,7 @@ u16* TagWriterCode7List(void* unused, u16* dst, wchar_t* str) {
 }
 
 // Tag-code writer (code 6): same shape as TagWriterCode7List but with tag code 6.
-u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str) {
+u16* CTagCodeSelect::v14(u16* dst, const wchar_t* str, TagParam* prm) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
@@ -2173,30 +2266,6 @@ u16* TagWriterCode6List(void* unused, u16* dst, wchar_t* str) {
     return dst;
 }
 
-extern "C" u16* writeTagCode0D(void* dummy, u16* buf) {
-    *buf = 0xD;
-    return buf + 1;
-}
-
-// Tag-writer: measure a message line. Reads the TextWriter from the holder,
-// sizes the writer's font to the fixed sdata2 constant, measures the two-char
-// speed-up string "++" (tag table +0x1a), restores the previous font size,
-// and stores the result back into the char-space context. Returns 2.
-int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
-                  TagWriterHolder* holder) {
-    nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
-    f32 sp = TagWriterGetWidthLimit(tw);
-    TagWriterSetWidthLimit(tw, lbl_eu_80667260);
-    f32 w = tw->CalcStringWidth(&lbl_eu_80661FC8[0xd], 2);
-    TagWriterSetWidthLimit(tw, sp);
-    TagWriterAdvanceCursorX(tw, w);
-    f32 h = TagWriterGetCursorY(holder->field_00);
-    ctx->field_04 = h;
-    ctx->field_08 = ctx->field_00 + w;
-    addToCharSpace((u8*)ctx, tw->GetFontHeight());
-    return 2;
-}
-
 // Tag-writer accessor: TextWriterBase::GetWidthLimit (+0x4C) with the nw4r
 // pointer validation used across the tag-writer family - the writer must live
 // in one of the game's known memory regions (MEM1 0x80..., MEM2 0x90..., I/O
@@ -2207,7 +2276,7 @@ int TagWriterCharSpacePP(void* unused, TagCharContext* ctx, void* unused2,
 // 0xFF000000 mask kept in a short-lived `hi` local (only the 0x80/0xC0 checks
 // use it - retail r11) while the other masks are recomputed from tw per check
 // so they die per-condition.
-float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+inline float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     // nw4r pointer validation: panic unless the writer lives in one of the
     // known memory regions. The cascading if-chain (each check gated on the
     // previous one failing) is the retail shape. Flags are declared in
@@ -2250,7 +2319,7 @@ float TagWriterGetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw) {
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
 // Flags declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+inline void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2284,7 +2353,7 @@ void TagWriterSetWidthLimit(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
 
 // Tag-writer accessor: add to CharWriter::mCursorPos.x (+0x2C) with the same
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+inline void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2320,7 +2389,7 @@ void TagWriterAdvanceCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
 // validation as TagWriterGetWidthLimit (different Panic site/strings). Flags declared
 // in reverse chain order, hi = 0xFF000000 mask reused by the 0x80/0xC0 checks
 // only - the retail flag/mask colors.
-float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+inline float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2354,14 +2423,38 @@ float TagWriterGetCursorY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
 
 // Converted to TagContext::addToCharSpace
 
+u16* CTagCodeLine::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u16* out = buf;
+    *out = 0xD;
+    return out + 1;
+}
+
+// Tag-writer: measure a message line. Reads the TextWriter from the holder,
+// sizes the writer's font to the fixed sdata2 constant, measures the two-char
+// speed-up string "++" (tag table +0x1a), restores the previous font size,
+// and stores the result back into the char-space context. Returns 2.
+nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
+    nw4r::ut::TextWriterBase<wchar_t>* tw = ctx->writer;
+    f32 sp = TagWriterGetWidthLimit(tw);
+    TagWriterSetWidthLimit(tw, lbl_eu_80667260);
+    f32 w = tw->CalcStringWidth(&lbl_eu_80661FC8[0xd], 2);
+    TagWriterSetWidthLimit(tw, sp);
+    TagWriterAdvanceCursorX(tw, w);
+    f32 h = TagWriterGetCursorY(ctx->writer);
+    rect->top = h;
+    rect->right = rect->left + w;
+    rect->SetHeight(tw->GetFontHeight());
+    return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_CHAR_SPACE;
+}
+
 // Tag-writer: copy the active writer into a scratch, configure it (font-size
 // field, width limit, scale, cursor), print the one-char marker at the tag
 // table +0x20, then advance the real writer's cursor by the scratch's new
 // cursor x plus the doubled font-slot value. Two nw4r pointer-validation
 // chains (on the scratch and on the real writer) bracket the measurement.
 // The scratch's dtor is emitted automatically at scope exit. Returns 2.
-int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder) {
-    nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
+nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
+    nw4r::ut::TextWriterBase<wchar_t>* tw = ctx->writer;
     f32 x = TagWriterGetCursorX(tw);
     f32 y = TagWriterGetCursorY(tw);
     f32 sx = TagWriterGetScaleX(tw);
@@ -2420,14 +2513,14 @@ int TagWriterMeasureScratch(void* unused, void* unused2, TagWriterHolder* holder
     if (!validRegs2b)
         nw4r::db::Panic(lbl_eu_8052DE94, 0x11e, lbl_eu_8052DE60, tw);
     tw->cursorX = cx;
-    return 2;
+    return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_CHAR_SPACE;
 }
 
 // Tag-writer accessor: CharWriter::GetCursorX (+0x2C) with the same pointer
 // validation as TagWriterGetWidthLimit (different Panic site/strings). Flags declared
 // in reverse chain order, hi = 0xFF000000 mask reused by the 0x80/0xC0 checks
 // only - the retail flag/mask colors.
-float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+inline float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2463,7 +2556,7 @@ float TagWriterGetCursorX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
 // pointer validation as TagWriterGetWidthLimit (different Panic site/strings). Flags
 // declared in reverse chain order, hi = 0xFF000000 mask reused by the
 // 0x80/0xC0 checks only - the retail flag/mask colors.
-float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+inline float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2497,7 +2590,7 @@ float TagWriterGetScaleX(nw4r::ut::TextWriterBase<wchar_t>* tw) {
 
 // Tag-writer accessor: CharWriter scale-y (+0x28) with the same nw4r
 // pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+inline float TagWriterGetScaleY(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2537,7 +2630,7 @@ extern "C" void TagWriterCopyBlock(TagCopyBlock* dst, const TagCopyBlock* src) {
 // same nw4r pointer validation as TagWriterGetWidthLimit. This one keeps both tw and
 // value live across the Panic call, so MWCC saves r30/r31 (stmw prologue) instead of
 // just r31.
-void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
+inline void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2572,7 +2665,7 @@ void TagWriterSetFontSize(nw4r::ut::TextWriterBase<wchar_t>* tw, u32 value) {
 // Tag-writer accessor: CharWriter scale set (+0x24/+0x28, mScale region)
 // with the same nw4r pointer validation as TagWriterGetWidthLimit (different Panic
 // site/strings).
-void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
+inline void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2608,23 +2701,23 @@ void TagWriterSetScale(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) 
 // Tag-code writer (code 9): uppercase the arg string, compare it against the
 // tag-string table entries at +0x24 / +0x2a, write <9, value> into dst, and return the
 // position after the block. The r3 arg is unused (family idiom).
-u16* TagWriterCode9Switch(void* a, u16* dst, wchar_t* str) {
-    WcsToUpperInPlace((u16*)str);
+u16* CTagCodeMouth::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    WcsToUpperInPlace((u16*)arg);
     s16 v = 0xff;
-    if (wcscmp(str, &lbl_eu_80661FC8[0x12]) == 0)
+    if (wcscmp(arg, &lbl_eu_80661FC8[0x12]) == 0)
         v = 0;
-    else if (wcscmp(str, &lbl_eu_80661FC8[0x15]) == 0)
+    else if (wcscmp(arg, &lbl_eu_80661FC8[0x15]) == 0)
         v = -1;
-    dst[0] = 9;
-    dst[1] = (u16)v;
-    return dst + 2;
+    buf[0] = 9;
+    buf[1] = (u16)v;
+    return buf + 2;
 }
 
 // Tag-code writer (code 8, name selection): uppercase the arg string, map it to a
 // value 1..9 via the tag-string table, init a tag-param block with code 8, copy it
 // into dst, then tag the block with the selected value and the "has value" bit.
 // Returns the r4 arg.
-void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* dst) {
+u16* CTagCodePos::v14(u16* ret, const wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
     if (wcscmp(str, &lbl_eu_80661FC8[0x19]) == 0)
@@ -2650,14 +2743,14 @@ void* TagWriterSelectParam8a(void* unused, void* ret, wchar_t* str, TagParam* ds
     copyTagParam((u8*)dst, (const u8*)&p);
     dst->field_03 = v;
     dst->field_01 |= 0x2;
-    return ret;
+    return (u16*)ret;
 }
 
 // Tag-code writer (code 8): uppercase the arg string, pick a value from the
 // tag-string table by comparison (offsets +0xb0/+0xb8/+0xc4/+0xcc select
 // 0..3), init a tag-param block with code 8, copy it into dst, then tag the
 // block with the selected value and the "has value" bit. Returns the r4 arg.
-void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* dst) {
+u16* CTagCodeType::v14(u16* ret, const wchar_t* str, TagParam* dst) {
     u8 v = 0;
     WcsToUpperInPlace((u16*)str);
     if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
@@ -2673,7 +2766,7 @@ void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* ds
     copyTagParam((u8*)dst, (const u8*)&p);
     dst->field_02 = v;
     dst->field_01 |= 0x4;
-    return ret;
+    return (u16*)ret;
 }
 
 // Tag-code writer (code 0xB): split the arg string on ':', uppercase token 0 and map
@@ -2683,7 +2776,7 @@ void* TagWriterSelectParam8b(void* unused, void* ret, wchar_t* str, TagParam* ds
 // fallback. Tokens 3/4 (when present) are decimal values. Writes <0xb, (tag1<<8)|0xff,
 // val, tag2, tag3, tag4> when the split produced >= 3 tokens and returns the position
 // after the block.
-u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
+u16* CTagCodeTrust::v14(u16* out, const wchar_t* str, TagParam* prm) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x3a, (u16**)tokens);
     u8 tag1 = 0xff;
@@ -2782,7 +2875,7 @@ u16* TagWriterCode2Lookup(void* unused, u16* out, wchar_t* str) {
 // string (digits '1'..'?' accumulate value nibbles, 'A'..'F' are skipped,
 // alpha is forced to 0xFF), then write the <2, hi, lo> block.
 // -O4,s save shape (stmw r28).
-u16* TagParseColor(void* a, u16* out, wchar_t* str) {
+inline u16* CTagCodeCol::v14(u16* out, const wchar_t* str, TagParam* prm) {
     WcsToUpperInPlace((u16*)str);
     u32 v = 0;
     if (wcscmp(str, &lbl_eu_80661FC8[0x58]) == 0)
@@ -2823,23 +2916,12 @@ u16* TagParseColor(void* a, u16* out, wchar_t* str) {
             case '7': v += 7; break;
             case '8': v += 8; break;
             case '9': v += 9; break;
-            case ':': v += 10; break;
-            case ';': v += 11; break;
-            case '<': v += 12; break;
-            case '=': v += 13; break;
-            case '>': v += 14; break;
-            case '?': v += 15; break;
-            // 'A'..'F' are valid hex positions but contribute nothing; kept
-            // as explicit cases so the jump table spans '1'..'F' like retail.
-            // NOTE: this MWCC build still folds them out of the emitted table
-            // (cmpli bound 14 vs retail 21); retained for semantic fidelity.
-            case 'A':
-            case 'B':
-            case 'C':
-            case 'D':
-            case 'E':
-            case 'F':
-                break;
+            case 'A': v += 10; break;
+            case 'B': v += 11; break;
+            case 'C': v += 12; break;
+            case 'D': v += 13; break;
+            case 'E': v += 14; break;
+            case 'F': v += 15; break;
             }
             v <<= 4;
         }
@@ -2852,13 +2934,9 @@ u16* TagParseColor(void* a, u16* out, wchar_t* str) {
     return out + 3;
 }
 
-// Word view of the tag-writer cursor advanced by TagWriterAdvancePtr4:
-// the live pointer sits at +0x04 and steps by 4 bytes per call.
-struct TagWriterPtrView { u8 _pad00[4]; void* ptr; };
-extern "C" u32 TagWriterAdvancePtr4(void* a, void* b, void* c, TagWriterPtrView* p) {
-    u8* base = (u8*)p->ptr;
-    p->ptr = base + 4;
-    return 0;
+inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeCol::CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
+    ctx->str += 2;  // skip the packed RGBA argument
+    return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_DEFAULT;
 }
 
 // Color-tag writer: apply the source color to the CharWriter, preserving the
@@ -2867,7 +2945,11 @@ extern "C" u32 TagWriterAdvancePtr4(void* a, void* b, void* c, TagWriterPtrView*
 // committed via the out-of-line Color::operator= and
 // CharWriter::UpdateVertexColor, then the source pointer advances.
 // -O4,s save shape (stmw r30).
-u32 TagWriterApplyColor(void* a, void* b, TagColorArg* arg) {
+inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeCol::Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
+    // Retail keeps the context in its own callee-saved register (r31) ahead
+    // of the writer; binding it through the writer/color arg view reproduces
+    // that colouring (direct ctx-> accesses swap r30/r31, 85%).
+    TagColorArg* arg = (TagColorArg*)ctx;
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -2919,14 +3001,14 @@ u32 TagWriterApplyColor(void* a, void* b, TagColorArg* arg) {
     w->mVertexColor = merged;
     w->UpdateVertexColor();
     arg->field_04++;
-    return 0;
+    return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_DEFAULT;
 }
 
 // Tag-code writer (code 1): split the arg string on '/' via SplitWStringTrim,
 // record each token's length, write a 2-entry header (count + combined first
 // two lengths), then copy every token into dst in order, advancing by each
 // token's stored length. Returns the end of the copied region.
-u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
+inline u16* CTagCodeRuby::v14(u16* dst, const wchar_t* str, TagParam* prm) {
     wchar_t* tokens[16];
     int count = SplitWStringTrim((u16*)str, 0x2f, (u16**)tokens);
     u8 lens[16];
@@ -2952,10 +3034,9 @@ u16* TagWriterCode1List(void* unused, u16* dst, wchar_t* str) {
 // space unless bit0 of field_10 is set) to the real writer's cursor, write
 // out->field_08, advance the buffer pointer past both strings, destroy the scratch,
 // and return 2.
-int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
-                  TagWriterHolder* holder) {
-    const u8* buf = holder->field_04;
-    nw4r::ut::TextWriterBase<wchar_t>* tw = holder->field_00;
+inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::CalcRect(nw4r::ut::Rect* rect, u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
+    const u8* buf = (const u8*)ctx->str;
+    nw4r::ut::TextWriterBase<wchar_t>* tw = ctx->writer;
     u16 h = *(const u16*)buf;
     u8 lenLo = h;
     u32 lenHi = (h >> 8) & 0xFF;
@@ -2972,7 +3053,7 @@ int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
     f32 wlimit = TagWriterGetWidthLimit(tw);
     TagWriterSetWidthLimit(tw, lbl_eu_80667260);
     // "no leading char space" flag, materialized before the width calls
-    u32 noSpace = (holder->field_10 & 1) ^ 1;
+    u32 noSpace = (ctx->flags & 1) ^ 1;
     f32 w1 = tw->CalcStringWidth(s1, lenLo);
     f32 w2 = local.CalcStringWidth(s2, lenHi);
     if (w1 < w2)
@@ -2985,15 +3066,15 @@ int TagWriterMeasureStrings(void* unused, TagLineOutView* out, void* unused2,
     w1 += cs;
     TagWriterSetWidthLimit(tw, wlimit);
     TagWriterAdvanceCursorX(tw, w1);
-    out->field_08 = out->field_00 + w1;
-    addToCharSpace((u8*)out, tw->GetFontHeight());
-    holder->field_04 = (const u8*)(s1 + lenLo);
-    return 2;
+    rect->right = rect->left + w1;
+    rect->SetHeight(tw->GetFontHeight());
+    ctx->str = (const wchar_t*)(s1 + lenLo);
+    return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_CHAR_SPACE;
 }
 
 // Tag-writer accessor: TextWriterBase::SetCharSpace (+0x50) with the same
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
+inline void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3027,7 +3108,7 @@ void TagWriterSetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw, float v) {
 
 // Tag-writer accessor: TextWriterBase::GetCharSpace (+0x50) with the same
 // nw4r pointer validation as TagWriterGetWidthLimit (different Panic site/strings).
-float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
+inline float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
     bool validRegs2 = true;
     bool validRegs = true;
     bool validIo2 = true;
@@ -3068,8 +3149,7 @@ float TagWriterGetCharSpace(nw4r::ut::TextWriterBase<wchar_t>* tw) {
 // cursor (y lifted by ascent+descent), the excess is walked back off the
 // real writer's cursor twice (once per print), and the buffer pointer
 // advances past both strings. Returns 2.
-int TagWriterJustifyPair(void* unused, void* unused2,
-                                       TagWriterHolder* holder) {
+inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
     // Long-lived locals declared up front in MWCC's callee-saved priority
     // order (first declared -> highest register); assigned in statement order
     // below, matching the retail allocation map (r31..r25).
@@ -3079,11 +3159,11 @@ int TagWriterJustifyPair(void* unused, void* unused2,
     u8 lenHi;
     const u16* s1;
     const u16* s2;
-    msg = holder->field_00;
+    msg = ctx->writer;
     f32 savedWidth = TagWriterGetWidthLimit(msg);
     TagWriterSetWidthLimit(msg, lbl_eu_80667260);
     // "no leading char space" flag: re-apply the current char space when set.
-    if ((holder->field_10 & 1) == 0)
+    if ((ctx->flags & 1) == 0)
         TagWriterAdvanceCursorX(msg, TagWriterGetCharSpace(msg));
 
     // Validation-flag scratch: initialized before the header decode so the
@@ -3095,7 +3175,7 @@ int TagWriterJustifyPair(void* unused, void* unused2,
     bool validMem2 = true;
     bool validMem1 = true;
 
-    const u8* buf = holder->field_04;
+    const u8* buf = (const u8*)ctx->str;
     u32 h = ((const u16*)buf)[0];
     s1 = (const u16*)(buf + 2);
     lenHi = h >> 8;
@@ -3203,14 +3283,14 @@ int TagWriterJustifyPair(void* unused, void* unused2,
     if (excess < lbl_eu_806671F0) {
         TagWriterAdvanceCursorX(msg, -excess * lbl_eu_80667228);
     }
-    holder->field_04 = (const u8*)(s2 + lenLo);
+    ctx->str = (const wchar_t*)(s2 + lenLo);
     TagWriterSetWidthLimit(msg, savedWidth);
-    return 2;
+    return nw4r::ut::TagProcessorBase<wchar_t>::OPERATION_CHAR_SPACE;
 }
 
 // Tag-code writer (code 4): same shape as TagWriterCode9Switch, but the first match
 // selects -1 and the second selects 0 (strings at +0x17e / +0x186).
-u16* TagWriterCode4Switch(void* a, u16* dst, wchar_t* str) {
+inline u16* CTagCodeDel::v14(u16* dst, const wchar_t* str, TagParam* prm) {
     WcsToUpperInPlace((u16*)str);
     s16 v = 0xff;
     if (wcscmp(str, &lbl_eu_80661FC8[0xbf]) == 0)
@@ -3226,7 +3306,9 @@ u16* TagWriterCode4Switch(void* a, u16* dst, wchar_t* str) {
 // via the tag-string table (+0x190 -> -1, +0x198 -> -2, otherwise the
 // decimal parse of the string). Writes <5, value> into dst and returns the
 // position after the block. The r3 arg is unused (family idiom).
-u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str) {
+inline u16* CTagCodeWait::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u16* dst = buf;
+    wchar_t* str = (wchar_t*)arg;
     WcsToUpperInPlace((u16*)str);
     s32 v;
     if (wcscmp(str, &lbl_eu_80661FC8[0xc8]) == 0)
@@ -3242,139 +3324,24 @@ u16* TagWriterCode5Value(void* unused, u16* dst, wchar_t* str) {
     return dst + 2;
 }
 
-extern "C" u16* writeTagCode03(void* unused, u16* buf) {
-    *buf = 3;
-    return buf + 1;
+inline u16* CTagCodeCP::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u16* out = buf;
+    *out = 3;
+    return out + 1;
 }
 
-extern "C" u16* writeTagCode0A(void* unused, u16* buf) {
-    *buf = 0xa;
-    return buf + 1;
+inline u16* CTagCodeCL::v14(u16* buf, const wchar_t* arg, TagParam* prm) {
+    u16* out = buf;
+    *out = 0xa;
+    return out + 1;
 }
 
-extern u32 lbl_eu_8052D9E0[];
+namespace {
+
+/* Tag-code singletons: retail .sbss 0x80663FE0..0x80664038, one vtable
+ * pointer each, in tag order. MWCC emits their constructors as
+ * __ct__Q227@unnamed@CTagProcessor_cpp@<Class>Fv and __sinit_CTagProcessor_cpp
+ * installs them through the r13 sda21 slots. */
 
 
-extern u32 lbl_eu_8052D9B8[];
-
-
-extern u32 lbl_eu_8052D990[];
-
-
-extern u32 lbl_eu_8052D968[];
-
-
-extern u32 lbl_eu_8052D940[];
-
-
-extern u32 lbl_eu_8052D918[];
-
-
-extern u32 lbl_eu_8052D898[];
-
-
-extern u32 lbl_eu_8052D870[];
-
-
-extern u32 lbl_eu_8052D848[];
-
-
-extern u32 lbl_eu_8052D820[];
-
-
-extern u32 lbl_eu_8052D7F8[];
-
-
-extern u32 lbl_eu_8052D7D0[];
-
-
-extern u32 lbl_eu_8052D7A8[];
-
-
-extern u32 lbl_eu_8052D780[];
-
-
-extern u32 lbl_eu_8052D758[];
-
-
-extern u32 lbl_eu_8052D730[];
-
-
-extern u32 lbl_eu_8052D708[];
-
-
-extern u32 lbl_eu_8052D6E0[];
-
-
-extern u32 lbl_eu_8052D6B8[];
-
-
-extern u32 lbl_eu_8052D690[];
-
-
-extern u32 lbl_eu_8052D668[];
-
-
-extern u32 lbl_eu_8052D640[];
-
-
-extern u32 lbl_eu_8052D618[];
-
-
-// Tag-code singleton ctors (retail C-ABI names, declared in the header):
-// each stores its class vtable (retail .data:0x8052D618..0x8052D9E0) into
-// the 4-byte sbss singleton. The classes themselves are the anonymous-
-// namespace CTagCode subclasses whose deleting dtors are the
-// __dt___unnamed_CTagProcessor_cpp_CTagCode* stubs at the top of the file.
-// must not be folded into the sinit's call sites.
-void __ct__CTagCodeCL(void* self) { *(void**)self = (void*)lbl_eu_8052D9E0; }
-void __ct__CTagCodeCP(void* self) { *(void**)self = (void*)lbl_eu_8052D9B8; }
-void __ct__CTagCodeWait(void* self) { *(void**)self = (void*)lbl_eu_8052D990; }
-void __ct__CTagCodeDel(void* self) { *(void**)self = (void*)lbl_eu_8052D968; }
-void __ct__CTagCodeRuby(void* self) { *(void**)self = (void*)lbl_eu_8052D940; }
-void __ct__CTagCodeCol(void* self) { *(void**)self = (void*)lbl_eu_8052D918; }
-void __ct__CTagCodeTrust(void* self) { *(void**)self = (void*)lbl_eu_8052D898; }
-void __ct__CTagCodeType(void* self) { *(void**)self = (void*)lbl_eu_8052D870; }
-void __ct__CTagCodePos(void* self) { *(void**)self = (void*)lbl_eu_8052D848; }
-void __ct__CTagCodeMouth(void* self) { *(void**)self = (void*)lbl_eu_8052D820; }
-void __ct__CTagCodeLine(void* self) { *(void**)self = (void*)lbl_eu_8052D7F8; }
-void __ct__CTagCodeSelect(void* self) { *(void**)self = (void*)lbl_eu_8052D7D0; }
-void __ct__CTagCodeSelect2(void* self) { *(void**)self = (void*)lbl_eu_8052D7A8; }
-void __ct__CTagCodeAct(void* self) { *(void**)self = (void*)lbl_eu_8052D780; }
-void __ct__CTagCodeFade(void* self) { *(void**)self = (void*)lbl_eu_8052D758; }
-void __ct__CTagCodeQuest(void* self) { *(void**)self = (void*)lbl_eu_8052D730; }
-void __ct__CTagCodeInvisible(void* self) { *(void**)self = (void*)lbl_eu_8052D708; }
-void __ct__CTagCodeQstStart(void* self) { *(void**)self = (void*)lbl_eu_8052D6E0; }
-void __ct__CTagCodePresent(void* self) { *(void**)self = (void*)lbl_eu_8052D6B8; }
-void __ct__CTagCodeTailOff(void* self) { *(void**)self = (void*)lbl_eu_8052D690; }
-void __ct__CTagCodeExchange(void* self) { *(void**)self = (void*)lbl_eu_8052D668; }
-void __ct__CTagCodeShop(void* self) { *(void**)self = (void*)lbl_eu_8052D640; }
-void __ct__CTagCodeMakeCrystal(void* self) { *(void**)self = (void*)lbl_eu_8052D618; }
-
-// Static initializer: construct the 23 tag-code singletons in tag order
-// (retail .ctors registration; retail C-ABI ctor names).
-void sinit_8012BA00() {
-    __ct__CTagCodeCL(&lbl_eu_80663FE0);
-    __ct__CTagCodeCP(&lbl_eu_80663FE4);
-    __ct__CTagCodeWait(&lbl_eu_80663FE8);
-    __ct__CTagCodeDel(&lbl_eu_80663FEC);
-    __ct__CTagCodeRuby(&lbl_eu_80663FF0);
-    __ct__CTagCodeCol(&lbl_eu_80663FF4);
-    __ct__CTagCodeTrust(&lbl_eu_80663FF8);
-    __ct__CTagCodeType(&lbl_eu_80663FFC);
-    __ct__CTagCodePos(&lbl_eu_80664000);
-    __ct__CTagCodeMouth(&lbl_eu_80664004);
-    __ct__CTagCodeLine(&lbl_eu_80664008);
-    __ct__CTagCodeSelect(&lbl_eu_8066400C);
-    __ct__CTagCodeSelect2(&lbl_eu_80664010);
-    __ct__CTagCodeAct(&lbl_eu_80664014);
-    __ct__CTagCodeFade(&lbl_eu_80664018);
-    __ct__CTagCodeQuest(&lbl_eu_8066401C);
-    __ct__CTagCodeInvisible(&lbl_eu_80664020);
-    __ct__CTagCodeQstStart(&lbl_eu_80664024);
-    __ct__CTagCodePresent(&lbl_eu_80664028);
-    __ct__CTagCodeTailOff(&lbl_eu_8066402C);
-    __ct__CTagCodeExchange(&lbl_eu_80664030);
-    __ct__CTagCodeShop(&lbl_eu_80664034);
-    __ct__CTagCodeMakeCrystal(&lbl_eu_80664038);
-}
+}  // namespace

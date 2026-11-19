@@ -198,7 +198,7 @@ CMCCrystalItemObj* CMCCrystalData::getItemObject(u8 idx) {
 // Retail 0x80219E70: refresh the crystal box display / name.
 // -O4,s: retail uses the stmw r30/lmw r30 frame; plain -O4,p
 // splits the saves into separate stw's (MWCC_CASES kyoshin-dtor pattern).
-__declspec(noinline) void CMCCrystalBox::refreshCrystalBoxName() {
+void CMCCrystalBox::refreshCrystalBoxName() {
     CMCCrystalData* d = &this->data;
     if (this->mSelTable.mCount == 0) {
         d->collectByTarget(this->field_14EC[(s8)this->field_14F2]);
@@ -214,7 +214,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxName() {
 
 // Retail 0x8021A2B8: set the current crystal's name label and mirrored info.
 // stmw r28 frame + raw-byte idx multiply are the -O4,s shapes (unit flag).
-__declspec(noinline) void CMCCrystalBox::setCrystalNameLabel() {
+void CMCCrystalBox::setCrystalNameLabel() {
     // Declared first so MWCC claims r31 for q (first-declared -> highest
     // saved register), matching retail's {d:r29, idx:r30, q:r31}.
     void* q;
@@ -258,9 +258,7 @@ char* CMCCrystalData::getItemName(int v) {
 }
 
 // Swap the 4-byte payload (s16 + u8) of two crystal-data entries.
-// noinline: retail calls this out-of-line (bl) from the bubble sort; without
-// it MWCC inlines the body and the swapCrystalDataEntry reloc disappears.
-__declspec(noinline) void CMCCrystalData::swapEntry(CMCCrystalDataEntry* a, CMCCrystalDataEntry* b) {
+void CMCCrystalData::swapEntry(CMCCrystalDataEntry* a, CMCCrystalDataEntry* b) {
     short b_lo;
     bool b_hi;
     bool a_hi;
@@ -968,7 +966,7 @@ void CMCCrystalBox::pageCrystalBoxCursorFwd() {
     }
 }
 
-__declspec(noinline) void CMCCrystalBox::confirmCrystalSelect() {
+void CMCCrystalBox::confirmCrystalSelect() {
     if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
@@ -981,7 +979,7 @@ __declspec(noinline) void CMCCrystalBox::confirmCrystalSelect() {
     playUISound(0xa);
 }
 
-__declspec(noinline) void CMCCrystalBox::confirmCrystalUnselect() {
+void CMCCrystalBox::confirmCrystalUnselect() {
     if (reinterpret_cast<CSysWin*>(&this->sysWin)->isOpened() != 0) return;
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
@@ -1184,7 +1182,7 @@ void CMCCrystalSelTable::release() {
 // Retail 0x802179D0: aggregate the 8 item-list slots of the scratch head into
 // (id, quantity) pairs, bubble-sort them by descending quantity, then publish
 // the id list into the head itself (ids at +0x2A, count byte at +0x6A).
-__declspec(noinline) void CMCCrystalSelTable::buildIdList() {
+void CMCCrystalSelTable::buildIdList() {
     CMCCrystalAggPair pairs[32];
     u8 n;
 
@@ -1369,7 +1367,7 @@ unsigned long CMCCrystalSelTable::getItem(unsigned int idx) {
 }
 
 
-__declspec(noinline) void CMCCrystalBox::tickCrystalBoxPageFwd() {
+void CMCCrystalBox::tickCrystalBoxPageFwd() {
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
 
@@ -1385,7 +1383,7 @@ __declspec(noinline) void CMCCrystalBox::tickCrystalBoxPageFwd() {
     playUISound(0x70);
 }
 
-__declspec(noinline) void CMCCrystalBox::tickCrystalBoxPageBack() {
+void CMCCrystalBox::tickCrystalBoxPageBack() {
     if (this->unk2CE != 0) return;
     if (this->unk2D1 != 0) return;
 
@@ -1405,7 +1403,7 @@ __declspec(noinline) void CMCCrystalBox::tickCrystalBoxPageBack() {
 // indices (current ticker + the neighbour), formats "N+1" into two panes via
 // the layout sub-object's slot-0x3C virtual, and sets each pane's visibility
 // from whether the crystal entry is present / selected.
-__declspec(noinline) void CMCCrystalBox::refreshCrystalPagePair(int dir) {
+void CMCCrystalBox::refreshCrystalPagePair(int dir) {
     u8 pair[2];
     char bufSel[0x20];   // fmt +0x86 (retail sp+0x30)
     char bufOther[0x20]; // fmt +0x95 (retail sp+0x10)
@@ -1458,7 +1456,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalPagePair(int dir) {
 // number into two pane-name buffers and toggles each pane's visibility
 // from whether that page is enabled / is the selected one. Ends by
 // refreshing the neighbouring-page pair (refreshCrystalPagePair).
-__declspec(noinline) void CMCCrystalBox::initCrystalPageLabels() {
+void CMCCrystalBox::initCrystalPageLabels() {
     char* base = lbl_eu_8050888C;
     char bufA[0x20];
     char bufB[0x20];
@@ -1593,14 +1591,14 @@ void CMCCrystalBox::deselectCrystalBoxItem() {
 
 // Retail 0x802189D4: when sub-object 6's animation finishes, enter state 2
 // and play back animation 7.
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimToState2() {
+void CMCCrystalBox::onCrystalAnimToState2() {
     if (advanceAnimTransform(this->mAnim0, lbl_eu_80668470) != 0) {
         this->unk64 = 2;
         playCrystalAnim7();
     }
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimToState3() {
+void CMCCrystalBox::onCrystalAnimToState3() {
     if (advanceAnimTransform(this->mAnim1, lbl_eu_80668470) == 0) return;
     this->unk64 = 3;
     playCrystalAnim8();
@@ -1612,21 +1610,21 @@ __declspec(noinline) void CMCCrystalBox::onCrystalAnimToState3() {
 
 // Retail 0x80218A94: when sub-object 7's animation finishes, play back
 // animation 6 and enter state 5.
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimToState5() {
+void CMCCrystalBox::onCrystalAnimToState5() {
     if (AnimRewindFrame(this->mAnim1, lbl_eu_80668470) != 0) {
         playCrystalAnim6();
         this->unk64 = 5;
     }
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimToIdle() {
+void CMCCrystalBox::onCrystalAnimToIdle() {
     if (AnimRewindFrame(this->mAnim0, lbl_eu_80668470) == 0) return;
     this->unk69 = 1;
     this->unk64 = 0;
     this->mCur07.SetVisible(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnim14Idle() {
+void CMCCrystalBox::onCrystalAnim14Idle() {
     if (advanceAnimTransform(this->mAnim8, lbl_eu_80668470) == 0) return;
     this->unk69 = 1;
     this->unk64 = 0;
@@ -1635,14 +1633,14 @@ __declspec(noinline) void CMCCrystalBox::onCrystalAnim14Idle() {
 
 // Retail 0x80218B90: when sub-object 9's animation finishes, enter state 9
 // and play back animation 10.
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimToState9() {
+void CMCCrystalBox::onCrystalAnimToState9() {
     if (advanceAnimTransform(this->mAnim3, lbl_eu_80668470) != 0) {
         this->unk64 = 9;
         playCrystalAnim10();
     }
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnim9ToState3() {
+void CMCCrystalBox::onCrystalAnim9ToState3() {
     if (advanceAnimTransform(this->mAnim4, lbl_eu_80668470) == 0) return;
     this->unk69 = 1;
     refreshCrystalBoxCursors();
@@ -1650,32 +1648,32 @@ __declspec(noinline) void CMCCrystalBox::onCrystalAnim9ToState3() {
 }
 
 // Retail 0x80218C30: when sub-object 11's animation finishes, enter state 3.
-__declspec(noinline) void CMCCrystalBox::onCrystalAnim11State3() {
+void CMCCrystalBox::onCrystalAnim11State3() {
     if (advanceAnimTransform(this->mAnim5, lbl_eu_80668470) != 0) {
         this->unk64 = 3;
     }
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnim12State3() {
+void CMCCrystalBox::onCrystalAnim12State3() {
     if (advanceAnimTransform(this->mAnim6, lbl_eu_80668470) == 0) return;
     this->unk64 = 3;
     this->mAnim6->SetFrame(lbl_eu_8066845C);
 }
 
 // Retail 0x80218CC4: when sub-object 13's animation finishes, enter state 3.
-__declspec(noinline) void CMCCrystalBox::onCrystalAnim13State3() {
+void CMCCrystalBox::onCrystalAnim13State3() {
     if (advanceAnimTransform(this->mAnim7, lbl_eu_80668470) != 0) {
         this->unk64 = 3;
     }
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimToState14() {
+void CMCCrystalBox::onCrystalAnimToState14() {
     if (AnimRewindFrame(this->mAnim4, lbl_eu_80668470) == 0) return;
     this->unk64 = 0xe;
     playCrystalAnim9();
 }
 
-__declspec(noinline) void CMCCrystalBox::onCrystalAnimResetState3() {
+void CMCCrystalBox::onCrystalAnimResetState3() {
     if (AnimRewindFrame(this->mAnim3, lbl_eu_80668470) == 0) return;
     this->unk69 = 1;
     this->data.current = 0;   // +0x13DC
@@ -1718,7 +1716,7 @@ reload:;
 // publish it into the box. When the slot holds an item, its kind picks the
 // message id; otherwise the crystal id is looked up through the BDAT table.
 // stmw r27 frame is the -O4,s shape (unit flag).
-__declspec(noinline) void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
+void CMCCrystalBox::setCrystalSlotTexture(u16 id, unsigned int* item, u8 i) {
     // Retail materialises the null-checked item into a saved register via a
     // conditional move (cmpwi on the param reg + mr/li pair) before the gate.
     unsigned int* it = item != 0 ? item : 0;
@@ -1881,7 +1879,7 @@ void CMCCrystalBox::setCrystalSlotTexAlt(u16 id, unsigned int* item, u8 i) {
 }
 
 // Item-kind check: vtable word bits 16-19 == 9 and byte at +7 has flag 1.
-__declspec(noinline) int isCrystalKindGem(void* item) {
+int isCrystalKindGem(void* item) {
     u32 word = ((const CrystalItemHead*)item)->word00;
     return ((word >> 16) & 0xF) == 9 && (u32)(((const CrystalItemHead*)item)->flag07 & 3) == 1;
 }
@@ -1891,7 +1889,7 @@ __declspec(noinline) int isCrystalKindGem(void* item) {
 // item state picks the "in box" vs "not yet" message sets; a placed item's
 // sub-count drives the capacity label. stmw r26 frame is the -O4,s shape
 // (unit flag).
-__declspec(noinline) void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
+void CMCCrystalBox::setCrystalSlotCapacity(u16 id, unsigned int* item, u8 i) {
     unsigned int* it = item != 0 ? item : 0;
     const char* msg = 0;
     if (it != 0) {
@@ -2070,7 +2068,7 @@ void CMCCrystalBox::setCrystalSlotCapAlt(u16 id, unsigned int* item, u8 i) {
 // selection table is repopulated from the current page, and every slot pane
 // is re-labelled with the message resources from setCrystalSlotTexture / setCrystalSlotCapacity.
 // _savegpr_22 frame is the -O4,s shape (unit flag).
-__declspec(noinline) void CMCCrystalBox::updateCrystalBoxRows() {
+void CMCCrystalBox::updateCrystalBoxRows() {
     CMCCrystalData* d = &this->data;
     // Single masked materialization of the row count (retail keeps one
     // clrlwi'd copy in a callee-saved register).
@@ -2173,7 +2171,7 @@ __declspec(noinline) void CMCCrystalBox::updateCrystalBoxRows() {
 
 // Retail 0x8021A7F4: refresh the sort-menu label from the current crystal id.
 // stmw r28 frame + check-at-top loop are the -O4,s shapes (unit flag).
-__declspec(noinline) void CMCCrystalBox::rebuildCrystalSortMenu() {
+void CMCCrystalBox::rebuildCrystalSortMenu() {
     int arr[3];
     const unsigned long* src = lbl_eu_80508870;
     arr[0] = *src++;
@@ -2200,7 +2198,7 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalSortMenu() {
 
 // Retail 0x8021A8D8: walk the 8-slot selection table at +0x1480 and feed each
 // entry (id = high 16 bits of the first word) to the two placement handlers.
-__declspec(noinline) void CMCCrystalBox::placeCrystalBoxSlots() {
+void CMCCrystalBox::placeCrystalBoxSlots() {
     unsigned int i;
     for (i = 0; i < 8; i++) {
         unsigned int* item = (unsigned int*)this->mSelTable.getItem((unsigned char)i);
@@ -2222,7 +2220,7 @@ __declspec(noinline) void CMCCrystalBox::placeCrystalBoxSlots() {
 // format a pane pair and drive the +0x6C/+0xCC cursor; the window-kind
 // (unk2D1) paths scale a quad by a pane float and drive +0xB4/+0xCC.
 // _savegpr_29 frame is the -O4,s shape (unit flag).
-__declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
+void CMCCrystalBox::refreshCrystalBoxCursors() {
     // Buffers declared in retail stack order (first-declared -> highest slot).
     char bufD0[0x20];   // sort-menu sprintf
     char bufB0[0x20];   // countdown sprintf
@@ -2323,7 +2321,7 @@ __declspec(noinline) void CMCCrystalBox::refreshCrystalBoxCursors() {
 // the currently selected crystal (when unk2CD >= 0), bubble-sorts by quantity
 // then by flag, and pushes the first 8 entries (offset by the scroll row
 // unk1502, highlighting the cursor row unk1501) into the crystal-info pane.
-__declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
+void CMCCrystalBox::rebuildCrystalGridTable() {
     // Declaration order fixes the stack-slot layout (MWCC allocates locals in
     // reverse declaration order): sort2 temps C/B/A at +0x08/+0x10/+0x40,
     // sort1 temps C/B/A at +0x18/+0x20/+0x48, append temps at +0x28/+0x30,
@@ -2459,35 +2457,35 @@ __declspec(noinline) void CMCCrystalBox::rebuildCrystalGridTable() {
 
 // CMCCrystalBox holds a nw4r::lyt::Layout* at +0x38 (== mLayout) with the
 // anim transform to play at +0x3C..+0x5F. These play back a bound animation.
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim6() {
+void CMCCrystalBox::playCrystalAnim6() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim0);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim0, true);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim7() {
+void CMCCrystalBox::playCrystalAnim7() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim1);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim1, true);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim8() {
+void CMCCrystalBox::playCrystalAnim8() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim2);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim2, true);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim9() {
+void CMCCrystalBox::playCrystalAnim9() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim3);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim3, true);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim10() {
+void CMCCrystalBox::playCrystalAnim10() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim4);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim4, true);
@@ -2502,7 +2500,7 @@ void CMCCrystalBox::playCrystalAnim11() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim12() {
+void CMCCrystalBox::playCrystalAnim12() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim6);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim6, true);
@@ -2517,7 +2515,7 @@ void CMCCrystalBox::playCrystalAnim13() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
-__declspec(noinline) void CMCCrystalBox::playCrystalAnim14() {
+void CMCCrystalBox::playCrystalAnim14() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim8);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim8, true);
@@ -2530,7 +2528,7 @@ __declspec(noinline) void CMCCrystalBox::playCrystalAnim14() {
 // the crystal name is resolved through the BDAT table, a rank pane is chosen
 // from the id thresholds, and a scale/position pane is sprintf'd with id/30
 // and id/20. _savegpr_28 frame is the -O4,s shape (unit flag).
-__declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
+void CMCCrystalBox::showCrystalBoxStatus() {
     if ((s8)this->unk2D3 == 0) {
         int v = GetCollectedFlagByte(this->unk2D4);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)this->mLayout, lbl_eu_8050888C + 0x1e6,
@@ -2654,9 +2652,7 @@ __declspec(noinline) void CMCCrystalBox::showCrystalBoxStatus() {
 // (first pair count - 100). Retail's epilogue extends the result to 64 bits
 // (subfc/subfze), so the prototype returns s64; call sites truncate to int.
 // stmw r26 frame is the -O4,s shape (unit flag).
-// Retail keeps this out-of-line (bl from the update callbacks); noinline
-// preserves that.
-__declspec(noinline) s64 CMCCrystalBox::getCrystalSelTopCount() {
+s64 CMCCrystalBox::getCrystalSelTopCount() {
     // Register-coloring notes (retail): z:r31 is 0 through the init pass and
     // becomes the outer loop counter; n:r30; tableBase:r29 (the init-pass
     // index k dies before tableBase is computed and shares its register);

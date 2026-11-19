@@ -25,9 +25,6 @@ extern u32 Vdac_Flag_Changed;
 extern DVDCommandBlock __DVDStopMotorCommandBlock;
 
 // Defined in this TU (retail .sbss / .sdata).
-/* retail defines these here (.sbss); PreCB's object is 8 bytes */
-void* PreCB[2];
-void* PostCB;
 const char* __VIVersion = "<< RVL_SDK - VI \trelease build: Feb 27 2009 10:04:46 (0x4302_145) >>";
 
 #define CLAMP_VI(x, l, h) (((x) > (h)) ? (h) : (((x) < (l)) ? (l) : (x)))
@@ -108,34 +105,43 @@ typedef struct {
 
 #define MARK_CHANGED(index) (changed |= 1LL << (63 - (index)))
 
-volatile u64 changed = 0;
-volatile u64 shdwChanged;
-volatile u32 changeMode;
-volatile u32 shdwChangeMode;
-volatile u32 FBSet;
-volatile u32 NextBufAddr;
-u32 CurrTvMode;
-s32 encoderType;
-volatile u32 flushFlag3in1;
-volatile u32 flushFlag;
-volatile u32 NEW_TIME_TO_DIMMING;
-volatile u32 THD_TIME_TO_DVD_STOP;
-volatile u32 _gIdleCount_dvd;
-volatile s32 g_current_time_to_dim;
-volatile u32 __VIDimming_All_Clear;
-volatile u32 __VIDimmingState;
-volatile u32 __VIDVDStopFlag_Enable;
-volatile u32 __VIDimmingFlag_Enable;
-volatile u32 __VIDimmingFlag_SI_IDLE;
-u32 vsync_timing_err_cnt;
-u32 vsync_timing_test_flag;
-u32 CurrBufAddr;
-VIPositionCallback PositionCallback;
 u16 shdwRegs[59];
 
+volatile u32 retraceCount;
+volatile u32 flushFlag;
+volatile u32 flushFlag3in1;
+volatile u32 __VIDimmingFlag_Enable;
+volatile u32 __VIDVDStopFlag_Enable;
+volatile s32 g_current_time_to_dim;
+volatile u32 __VIDimmingFlag_RF_IDLE;
+volatile u32 __VIDimmingFlag_SI_IDLE;
+OSThreadQueue retraceQueue;
+VIRetraceCallback PreCB;
+VIRetraceCallback PostCB;
+s32 encoderType;
+timing_s* CurrTiming;
+u32 CurrTvMode;
+volatile u32 NextBufAddr;
+u32 CurrBufAddr;
+
 static BOOL IsInitialized = FALSE;
-s16 displayOffsetH;
-s16 displayOffsetV;
+u32 vsync_timing_err_cnt = 0;
+u32 vsync_timing_test_flag = 0;
+volatile u32 __VIDimming_All_Clear = 0;
+volatile u32 THD_TIME_TO_DIMMING = 0;
+volatile u32 NEW_TIME_TO_DIMMING = 0;
+volatile u32 THD_TIME_TO_DVD_STOP = 0;
+volatile u32 _gIdleCount_dimming = 0;
+volatile u32 _gIdleCount_dvd = 0;
+volatile u32 __VIDimmingState = 0;
+VIPositionCallback PositionCallback = NULL;
+s16 displayOffsetH = 0;
+s16 displayOffsetV = 0;
+volatile u32 changeMode = 0;
+volatile u64 changed = 0;
+volatile u32 shdwChangeMode = 0;
+volatile u64 shdwChanged = 0;
+volatile u32 FBSet = 0;
 
 timing_s timing[11] = {
     { 6, 240, 24, 25, 3, 2, 12, 13, 12, 13, 520, 519, 520, 519, 525, 429, 64, 71, 105, 162, 373, 122, 412 },
@@ -203,15 +209,9 @@ static s32 cntlzd(u64 bit) {
 }
 
 
-timing_s* timingExtra;
+timing_s* timingExtra = NULL;
 u16 regs[59];
 SomeVIStruct HorVer;
-timing_s* CurrTiming;
-volatile u32 retraceCount;
-OSThreadQueue retraceQueue;
-volatile u32 THD_TIME_TO_DIMMING = 0;
-volatile u32 _gIdleCount_dimming = 0;
-volatile u32 __VIDimmingFlag_RF_IDLE;
 volatile u32 __VIDimmingFlag_DEV_IDLE[10];
 
 static void flushRegs(BOOL enabled);
@@ -358,8 +358,8 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
     OSClearContext(&exceptionContext);
     OSSetCurrentContext(&exceptionContext);
 
-    if (PreCB[0]) {
-        ((VIRetraceCallback)PreCB[0])(retraceCount);
+    if (PreCB) {
+        PreCB(retraceCount);
     }
 
     if (vsync_timing_test_flag) {
@@ -518,7 +518,7 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
 
     if (PostCB) {
         OSClearContext(&exceptionContext);
-        ((VIRetraceCallback)PostCB)(retraceCount);
+        PostCB(retraceCount);
     }
 
     OSWakeupThread(&retraceQueue);
@@ -628,17 +628,15 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
 }
 
 VIRetraceCallback VISetPreRetraceCallback(VIRetraceCallback callback) {
-    extern void* PreCB[];
-    VIRetraceCallback prev = (VIRetraceCallback)PreCB[0];
+    VIRetraceCallback prev = PreCB;
     BOOL enabled = OSDisableInterrupts();
-    PreCB[0] = callback;
+    PreCB = callback;
     OSRestoreInterrupts(enabled);
     return prev;
 }
 
 VIRetraceCallback VISetPostRetraceCallback(VIRetraceCallback callback) {
-    extern void* PostCB;
-    VIRetraceCallback old = (VIRetraceCallback)PostCB;
+    VIRetraceCallback old = PostCB;
     BOOL level = OSDisableInterrupts();
     PostCB = callback;
     OSRestoreInterrupts(level);
@@ -873,7 +871,7 @@ void VIInit(void) {
     value = (value & ~0x8000) | (0 << 15);
     VI_HW_REGS[VI_DI1_H] = (u16)value;
 
-    PreCB[0] = NULL;
+    PreCB = NULL;
     PostCB = NULL;
     __OSSetInterruptHandler(OS_INTR_PI_VI, (OSInterruptHandler)__VIRetraceHandler);
     __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_VI));

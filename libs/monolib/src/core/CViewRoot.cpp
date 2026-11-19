@@ -533,7 +533,7 @@ void CViewRoot::updateViewRoot() {
     if (root == nullptr) {
         return;
     }
-    if (*(volatile u32*)&root->mPool0.mUsed == 0) {
+    if (root->mPool0.empty()) {
         return;
     }
 
@@ -1114,21 +1114,15 @@ bool CViewRoot::wkStandbyLogout() {
             // Pop one entry off each pool ring (order: pool0, pool2, pool1);
             // the singleton pointer is reloaded before every block and each
             // mUsed access is re-read (retail lwz/cmpwi/beq + lwz/subi/stw).
-            if (*(volatile u32*)&root->mPool0.mUsed != 0) {
-                *(volatile u32*)&root->mPool0.mUsed = *(volatile u32*)&root->mPool0.mUsed - 1;
-            }
+            root->mPool0.pop();
             root = lbl_eu_806655D0;
-            if (*(volatile u32*)&root->mPool2.mUsed != 0) {
-                *(volatile u32*)&root->mPool2.mUsed = *(volatile u32*)&root->mPool2.mUsed - 1;
-            }
+            root->mPool2.pop();
             root = lbl_eu_806655D0;
-            if (*(volatile u32*)&root->mPool1.mUsed != 0) {
-                *(volatile u32*)&root->mPool1.mUsed = *(volatile u32*)&root->mPool1.mUsed - 1;
-            }
+            root->mPool1.pop();
             root = lbl_eu_806655D0;
-            if (*(volatile u32*)&root->mPool0.mUsed == 0 ||
-                *(volatile u32*)&root->mPool1.mUsed == 0 ||
-                *(volatile u32*)&root->mPool2.mUsed == 0) {
+            if (root->mPool0.empty() ||
+                root->mPool1.empty() ||
+                root->mPool2.empty()) {
                 goto wkStandbyLogout_base;
             }
 

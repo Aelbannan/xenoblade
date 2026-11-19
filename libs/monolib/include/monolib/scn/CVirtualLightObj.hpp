@@ -2,15 +2,20 @@
 
 #include <types.h>
 
-// Virtual light base object (size 0x34). The retail vtable is an unnamed
-// data symbol, so the vptr slot at +0x00 is a plain member that each ctor
-// stores explicitly (CVirtualLightObj::CVirtualLightObj in
-// CVirtualLightObj.cpp, then the derived Amb/Dir ctors).
+#include "monolib/math/CCol4.hpp"
+
+// Virtual light base object (size 0x34). Polymorphic: the compiler-emitted
+// vtable (__vt__16CVirtualLightObj, CVirtualLightObj.cpp .data) holds
+// [rtti, 0, dtor, getColor, getSentinel]. The dtor is inline, so its weak
+// out-of-line copy lands in the first TU that needs it (CScnVirtualLight).
+// getColor returns the struct by value (hidden result pointer in r3).
 class CVirtualLightObj {
 public:
     CVirtualLightObj();
+    virtual ~CVirtualLightObj() {}
+    virtual ml::CCol4 getColor();
+    virtual f32 getSentinel();
 
-    u8* mVtable;      // +0x00: vtable pointer (stored manually)
     f32 mField04;     // +0x04
     f32 mField08;     // +0x08
     f32 mField0C;     // +0x0C

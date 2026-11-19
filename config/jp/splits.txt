@@ -805,18 +805,13 @@ kyoshin/CQuestWindow.cpp:
 	.sdata2     start:0x80669A00 end:0x80669A48
 
 kyoshin/CSystemWindow.cpp:
-	extab       start:0x8000BDB4 end:0x8000BE54
-	extabindex  start:0x8002705C end:0x800270B0
-	.text       start:0x801245EC end:0x80124B80
+	extab       start:0x8000BDB4 end:0x8000BF38
+	extabindex  start:0x8002705C end:0x8002711C
+	.text       start:0x801245EC end:0x80125310
 	.rodata     start:0x804FA7D8 end:0x804FA7F8
 	.data       start:0x80530A48 end:0x80530C48
 	.sdata      start:0x806647D0 end:0x806647E0
 	.sbss       start:0x806668D0 end:0x806668D8
-
-kyoshin/CSysWinSelect.cpp:
-	extab       start:0x8000BE54 end:0x8000BF38
-	extabindex  start:0x800270B0 end:0x8002711C
-	.text       start:0x80124B80 end:0x80125310
 
 kyoshin/CTagProcessor.cpp:
 	extab       start:0x8000BF38 end:0x8000C21C
@@ -6774,21 +6769,21 @@ monolib/src/scn/CScnMem.cpp:
 	.sdata2     start:0x8066D198 end:0x8066D1A8
 
 monolib/src/scn/CScnRoot.cpp:
-	extab       start:0x8001EBF0 end:0x8001EC30
-	extabindex  start:0x80036800 end:0x80036830
-	.text       start:0x8048ED24 end:0x8048F338
+	extab       start:0x8001EBF0 end:0x8001EC00
+	extabindex  start:0x80036800 end:0x80036818
+	.text       start:0x8048ED24 end:0x8048EDE8
 	.rodata     start:0x805278E8 end:0x805278F8
 	.data       start:0x80571F78 end:0x80571FB0
 	.sdata      start:0x806662B8 end:0x806662C0
-	.sdata2     start:0x8066D1A8 end:0x8066D1C0
 
 monolib/src/scn/CScnRootNw4r.cpp:
-	extab       start:0x8001EC30 end:0x8001ECBC
-	extabindex  start:0x80036830 end:0x800368B4
-	.text       start:0x8048F338 end:0x804900BC
+	extab       start:0x8001EC00 end:0x8001ECBC
+	extabindex  start:0x80036818 end:0x800368B4
+	.text       start:0x8048EDE8 end:0x804900BC
 	.rodata     start:0x805278F8 end:0x80527938
 	.data       start:0x80571FB0 end:0x80572018
 	.sdata      start:0x806662C0 end:0x806662C8
+	.sdata2     start:0x8066D1A8 end:0x8066D1C0
 
 monolib/src/scn/CScnTexWorkMan.cpp:
 	extab       start:0x8001ECBC end:0x8001ED44

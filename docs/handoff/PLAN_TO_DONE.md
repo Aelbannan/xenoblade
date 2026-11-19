@@ -24,15 +24,15 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 6 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 7 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 14,427 / 19,310 (74.7%); checkpoint 5 was 14,418 (+9; 54 better, 27 worse, all worse are already-✗) |
+| Functions at 100% | 14,473 / 19,310 (74.9%); checkpoint 6 was 14,427 (+46; 107 better, 49 worse; 3 functions lost 100%, see §5 c7 debts) |
 | Units complete (linked) | 618 / 1,199 |
 | Matched code / data bytes | 43.0% / 52.4% |
 | Unmatched functions by area | kyoshin 3,238 · monolib 885 · CriWare 340 · nw4r 227 · RVL_SDK 191 · PowerPC_EABI_Support 2 |
-| Faithful hard counts | label 46,115 · mangled_c 2,678 · section 1,414 · offset_cast 2,675 · view_struct 2,741 · noinline 1,108 · decl_shield 52 · volatile 194 · rule 276 · rtti_off 19 · foreign_data 589 |
+| Faithful hard counts | label 45,864 · mangled_c 2,585 · section 1,414 · offset_cast 2,669 · view_struct 2,736 · noinline 485 · decl_shield 32 · volatile 153 · rule 275 · rtti_off 18 · foreign_data 555 |
 | Faithful soft counts | field_0x 28,228 · unk_name 1,082 · addr_func 1,011 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
@@ -54,8 +54,14 @@ CfGameManager, LODMemMan, code_804CC2B8, code_804E36DC, AXSPB — `-O4,s` droppe
 
 Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 118/253, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109, `CFloorMap` 47/75, `CPassiveSkill` 45/127, `cf/CPartsChange` 45/84, `cf/CfCam` 43/181, `code_80135FDC` 43/124, `cf/CfNandManager` 43/48.
 
-Gate state at checkpoint 6: link OK (missing 43), extab OK (27), text-order OK (11), frozen rules OK (269),
-registry OK, faithful OK (ratcheted, 81 units). Report: `/tmp/xb_ckpt/report_c6.json` (c5: `report_c5.json`).
+Checkpoint 7 (wave c8 + hy4 stopgap): noinline 1,108 → 485 via real unit flags (`-inline noauto`; `-O4,s` always
+paired with `-func_align 4` because `-O4,s` resets func_align to 16), real CScn/CScnRoot/CVirtualLight classes with
+compiler-emitted MI vtables, CSysWinSelect merged into CSystemWindow, CTagProcessor in-TU tag table, RVL scalar
+.sbss flags, all 37 CriWare adx .bss ranges re-cut to the JP ownership in US/EU.
+
+Gate state at checkpoint 7: link OK (missing 43), extab OK (ratcheted), text-order OK (11), frozen rules OK (269;
+CScn_80496B0C pad 0x130 → 0x40 ratcheted), registry OK, faithful OK (ratcheted, 68 units).
+Report: `/tmp/xb_ckpt/report_c7.json` (c6: `report_c6.json`).
 NB `run.py progress` only rebuilds `build/us/report.json` when it is missing — move it aside first.
 
 ## 3. What this session established (do not re-derive)
@@ -175,6 +181,20 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0. **Checkpoint 7 debts (2026-11-19).**
+   - Functions that lost 100% (fix first): `CCollepedia` `clpNextCatPg`/`clpPrevCatPg` 100 → 83.8% (likely the
+     `CItemBlock_getSlotU16`/`getKindSlot` declarations moved to `CItemBlockApi.hpp` with a new signature);
+     `CScnNw4r::create` 100 → 99.8% (scn class rewrite).
+   - Section slips from re-cuts/real classes to re-verify: CScnMem .rodata/.data, CVirtualLightDir/Amb .rodata,
+     CScnRootNw4r .rodata, CSystemWindow .text (merged TU), mix/remote/GXFifo/GXMisc .sbss, ax_rna/adx_inis .bss,
+     CMenuPause .sdata2.
+   - Kept hacks with measured reasons: CSkipTimer (`-ipa off` is the real fix but breaks assignment inlining in
+     BeginLoad/OnFileEvent), CfHikariItemManager (f30/r29 scheduling around the fade helpers).
+   - CScnItemModel hierarchy is a multi-session job (deferred). CVS_THREAD_HP alternating size pragmas are probably
+     real source pragmas (unproven). CTagProcessor extab residuals.
+   - Stale cfCam helper declarations in `include/kyoshin/code_800B06A4.hpp` and
+     `src/kyoshin/cf/CfGameManagerUnityHelpers.hpp`; 7 noinline in `CMenuArtsSetImports.hpp`.
 
 0. **Checkpoint 6 debts (2026-11-19).** The wave was cut short by the OpenCode Go weekly usage limit;
    agents c7-ifacevt, c7-kydrift, c7-kynoinline (follow-up), c7-handvt (follow-up), c7-cview (follow-up) and

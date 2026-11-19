@@ -7,21 +7,6 @@
 // NOTE: this header is included by explicit path ("libs/monolib/src/scn/CScn.hpp"),
 // separate from the public monolib/scn/CScn.hpp.
 
-// Format string for the scene name built by CScnNw4r::create.
-extern char lbl_eu_80524090[];
-
-// Float constants block referenced by scene timing helpers (.sdata2).
-extern f32 lbl_eu_8066AAB4;
-extern f32 lbl_eu_8066AAB8;
-extern f32 lbl_eu_8066AABC;
-
-// CScn vtable labels (defined in the CScn_80496B0C TU data surgery). The
-// constructor/destructor repoint the +0x10 / +0x54 slots at them.
-extern u8 lbl_eu_8056E8D0[];
-extern u8 lbl_eu_8056E984[];
-
-// .sdata2 constant initialized into CScn+0x98 by the constructor.
-extern f32 lbl_eu_8066AAB0;
 
 // The canonical CScn class (and ScnRenderCB / UnkScn68 / UnkScn8C) lives in
 // the public monolib/scn/CScn.hpp; this header only adds CScn-TU helpers.
@@ -95,8 +80,9 @@ public:
 };
 
 // Scene item pool (fields live in CScnItemPool.cpp); CScn only drives its
-// per-frame update hooks.
-class CScnItemPool {
+// per-frame update hooks and forwards WorkEvent4 to its IWorkEvent base
+// (primary, at +0x00).
+class CScnItemPool : public IWorkEvent {
 public:
     void update();
     void updateItemD0();
@@ -104,28 +90,6 @@ public:
 
 class CScnEnvLgtCtrl;
 extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self);
-
-// Typed view of the CScn vtable slots written by __ct__CScn. The retail vtables
-// are the .data blob at 0x8056E8D0 (lbl_eu_*), which MWCC's own __vt__4CScn is
-// not placed at yet; until that vtable ownership is recovered the ctor/dtor
-// store the retail addresses through these padding views.
-struct CScnCtorView {
-    u8 pad00[0x10];          //0x00
-    void* unk10;             //0x10 primary vtable ptr
-    u8 pad14[0x3C - 0x14];   //0x14
-    u32 mMoveFunc[3];        //0x3C
-    u32 mDrawFunc[3];        //0x48
-    void* unk54;             //0x54 secondary (IWorkEvent) vtable ptr
-};
-
-// Typed view of the CScn vtable slots repointed by CScn::~CScn() (see the
-// CScnCtorView note above).
-struct CScnDtorView {
-    u8 pad00[0x10];          //0x00
-    void* unk10;             //0x10 accessor table ptr
-    u8 pad14[0x54 - 0x14];   //0x14
-    void* unk54;             //0x54 secondary (IWorkEvent) vtable ptr
-};
 
 // Direct-call destructor hit by CScn::Term() on the +0x7c subobject
 // (retail flat symbol __dt__804C0E48).

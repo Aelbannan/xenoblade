@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -224,7 +225,7 @@ extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value,
 // Sound constants loaded in CfGimmick_PlaySoundAtPos / CfGimmick_PlaySoundAtPosScaled (retail .sda21 loads)
 extern "C" const float lbl_eu_80668358;
 extern "C" const float lbl_eu_8066835C;
-extern "C" unsigned int SysWinGetSingleton();
+extern "C" void CfGimmick_TriggerSound2CC8(u32 id, u32 value);
 // FIdx scale applied to the rotation point before MTX34RotXYZFIdx.
 extern "C" const f32 lbl_eu_80668354;
 

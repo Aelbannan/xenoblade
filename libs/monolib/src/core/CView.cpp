@@ -465,11 +465,11 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     workId = pThread->mWorkID;
 
     // Enqueue tag 0: attach work ID to mWorkIDList.
-    capSigned = (s32)mContextMsg.mCapacity;
-    sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
+    capSigned = (s32)mContextMsg.mRing.mCapacity;
+    sumSigned = (s32)mContextMsg.mRing.mFront + (s32)mContextMsg.mRing.mSize;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
-    u8* entry = reinterpret_cast<u8*>(mContextMsg.mArrayPtr);
+    u8* entry = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr);
     entry += byteOff;
     *(u32*)entry = 0; // tag 0
     *(u32*)(entry + 0x4) = (u32)msgWork.wid;
@@ -483,26 +483,26 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     entry[0x22] = msgWork.unk22;
     entry[0x23] = 0;
 
-    newIdx = mContextMsg.mSize + 1;
-    mContextMsg.mSize = newIdx;
-    mContextMsg.field6 = newIdx - 1;
+    newIdx = mContextMsg.mRing.mSize + 1;
+    mContextMsg.mRing.mSize = newIdx;
+    mContextMsg.mRing.field6 = newIdx - 1;
 
-    sum = mContextMsg.mFront + mContextMsg.field6;
-    slot = sum % mContextMsg.mCapacity;
-    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
+    sum = mContextMsg.mRing.mFront + mContextMsg.mRing.field6;
+    slot = sum % mContextMsg.mRing.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr) + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = mContextMsg.mFront + mContextMsg.field6;
-    slot = sum % mContextMsg.mCapacity;
-    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
+    sum = mContextMsg.mRing.mFront + mContextMsg.mRing.field6;
+    slot = sum % mContextMsg.mRing.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr) + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = workId;
 
     // Enqueue tag 1: attach the thread pointer to mEventList.
-    capSigned = (s32)mContextMsg.mCapacity;
-    sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
+    capSigned = (s32)mContextMsg.mRing.mCapacity;
+    sumSigned = (s32)mContextMsg.mRing.mFront + (s32)mContextMsg.mRing.mSize;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
-    entry = reinterpret_cast<u8*>(mContextMsg.mArrayPtr);
+    entry = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr);
     entry += byteOff;
     *(u32*)entry = 1; // tag 1
     *(u32*)(entry + 0x4) = (u32)msgThread.wid;
@@ -516,18 +516,18 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     entry[0x22] = msgThread.unk22;
     entry[0x23] = 0;
 
-    newIdx = mContextMsg.mSize + 1;
-    mContextMsg.mSize = newIdx;
-    mContextMsg.field6 = newIdx - 1;
+    newIdx = mContextMsg.mRing.mSize + 1;
+    mContextMsg.mRing.mSize = newIdx;
+    mContextMsg.mRing.field6 = newIdx - 1;
 
-    sum = mContextMsg.mFront + mContextMsg.field6;
-    slot = sum % mContextMsg.mCapacity;
-    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
+    sum = mContextMsg.mRing.mFront + mContextMsg.mRing.field6;
+    slot = sum % mContextMsg.mRing.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr) + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = mContextMsg.mFront + mContextMsg.field6;
-    slot = sum % mContextMsg.mCapacity;
-    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
+    sum = mContextMsg.mRing.mFront + mContextMsg.mRing.field6;
+    slot = sum % mContextMsg.mRing.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr) + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = (u32)pThread;
 
     return true;
@@ -557,13 +557,13 @@ bool CView::enqueueContextMsg(u32 param) {
     u32 sum;
     u32 slot;
 
-    capSigned = (s32)mContextMsg.mCapacity;
-    sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
+    capSigned = (s32)mContextMsg.mRing.mCapacity;
+    sumSigned = (s32)mContextMsg.mRing.mFront + (s32)mContextMsg.mRing.mSize;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
     // Update-form pointer: advancing the pointer itself makes MWCC emit the
     // retail stwux (base+=offset) for the first payload store.
-    u8* entry = reinterpret_cast<u8*>(mContextMsg.mArrayPtr);
+    u8* entry = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr);
     entry += byteOff;
     *(u32*)entry = 1; // tag 1
     *(u32*)(entry + 0x4) = msg.wid;
@@ -577,19 +577,19 @@ bool CView::enqueueContextMsg(u32 param) {
     entry[0x22] = msg.unk22;
     entry[0x23] = 0;
 
-    writeIdx = mContextMsg.mSize + 1;
+    writeIdx = mContextMsg.mRing.mSize + 1;
     prevIdx = writeIdx - 1;
-    mContextMsg.mSize = writeIdx;
-    mContextMsg.field6 = prevIdx;
+    mContextMsg.mRing.mSize = writeIdx;
+    mContextMsg.mRing.field6 = prevIdx;
 
-    sum = mContextMsg.mFront + prevIdx;
-    slot = sum % mContextMsg.mCapacity;
-    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
+    sum = mContextMsg.mRing.mFront + prevIdx;
+    slot = sum % mContextMsg.mRing.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr) + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = mContextMsg.mFront + mContextMsg.field6;
-    slot = sum % mContextMsg.mCapacity;
-    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
+    sum = mContextMsg.mRing.mFront + mContextMsg.mRing.field6;
+    slot = sum % mContextMsg.mRing.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mRing.mArrayPtr) + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = param;
     return true;
 }
@@ -1814,21 +1814,14 @@ setSplitLine_no_view2:
 CView::~CView() {
     // The attached-work lists and the context ring are real members, so their
     // destructors are compiler-generated (in reverse declaration order) after
-    // this body. The empty() guard keeps the retail walk shapes: a bare
-    // traversal with no observable effect is eliminated.
-    if (!mWorkIDList.empty()) {
-        reslist<WORK_ID>::iterator it = mWorkIDList.begin();
-        reslist<WORK_ID>::iterator endIt = mWorkIDList.end();
-        while (it != endIt) {
-            ++it;
-        }
+    // this body. Walk the attached lists before releasing their nodes.
+    for (reslist<WORK_ID>::iterator it = mWorkIDList.begin();
+         it != mWorkIDList.end(); ++it) {
+        mWorkIDList.ScnFilterList_destroyItem(&*it);
     }
-    if (!mEventList.empty()) {
-        reslist<IWorkEvent*>::iterator it = mEventList.begin();
-        reslist<IWorkEvent*>::iterator endIt = mEventList.end();
-        while (it != endIt) {
-            ++it;
-        }
+    for (reslist<IWorkEvent*>::iterator it = mEventList.begin();
+         it != mEventList.end(); ++it) {
+        mEventList.ScnFilterList_destroyItem(&*it);
     }
 }
 
@@ -2150,9 +2143,9 @@ bool CView::wkStandbyLogin() {
         // the base field load sits between the index sum and the payload
         // homes, which the plain enqueue() call cannot reproduce.
         volatile CMsgParamEntry msg;
-        s32 capSigned = (s32)mContextMsg.mCapacity;
-        s32 sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
-        u8* volatile& baseRef = reinterpret_cast<u8* volatile&>(mContextMsg.mArrayPtr);
+        s32 capSigned = (s32)mContextMsg.mRing.mCapacity;
+        s32 sumSigned = (s32)mContextMsg.mRing.mFront + (s32)mContextMsg.mRing.mSize;
+        u8* volatile& baseRef = reinterpret_cast<u8* volatile&>(mContextMsg.mRing.mArrayPtr);
         u8* entry = baseRef + (u32)(sumSigned % capSigned) * 0x24u;
         *(u32*)entry = 6; // tag 6
         *(u32*)(entry + 0x4) = msg.wid;
@@ -2166,10 +2159,10 @@ bool CView::wkStandbyLogin() {
         entry[0x22] = msg.unk22;
         entry[0x23] = 0;
 
-        u32 writeIdx = mContextMsg.mSize + 1;
+        u32 writeIdx = mContextMsg.mRing.mSize + 1;
         u32 prevIdx = writeIdx - 1;
-        mContextMsg.mSize = writeIdx;
-        mContextMsg.field6 = prevIdx;
+        mContextMsg.mRing.mSize = writeIdx;
+        mContextMsg.mRing.field6 = prevIdx;
     }
     return wkStandbyLogin__11CWorkThreadFv(this);
 

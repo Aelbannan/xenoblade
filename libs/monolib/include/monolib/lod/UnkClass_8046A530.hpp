@@ -20,9 +20,10 @@ namespace LOD {
  */
 class UnkClass_8046A530 {
 public:
+    /* 8046E500 */ UnkClass_8046A530();
+    /* 8046E554 */ ~UnkClass_8046A530();
     /* 8046AADC */ void updateLodPositions();
     // (8046CFB4: no member here; checkLodFlagState lives at 80470F84)
-    /* 8046E500 */ UnkClass_8046A530* initLod();
     /* 8046E594 */ void initLodState();
     /* 8046EAA8 */ void isLodActive();
     /* 8046EAAC */ void setVariation();

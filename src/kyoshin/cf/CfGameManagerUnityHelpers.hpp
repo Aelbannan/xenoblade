@@ -1,6 +1,7 @@
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 // Self-contained includes: the file has no other includes and is parsed
 // standalone by the label-centralization gate.
+#include "kyoshin/cf/CItemBlockApi.hpp"
 #include <types.h>
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -1240,9 +1241,6 @@ extern "C" void resetItemGroupState__Q22cf13CfGameManagerFv(u16 dataId) {
 
 extern "C" u32 getBdatIndexMapping__Q22cf13CfGameManagerFv(u32 value);
 extern "C" bool CItemBlock_testKindFlag(u16 dataId, u32 mappedIndex);
-extern "C" cf::CfGameManager* CItemBlock_getKindSlot(u32 mappedIndex, u16 dataId,
-                                              u32 slot);
-extern "C" s8* CItemBlock_getSlotU16(u16 dataId, u32 slot);
 extern "C" u32 getPackedResourceBits__Q22cf13CfGameManagerFv(
     cf::CfGameManager* packed);
 extern "C" void syncItemGroups__Q22cf13CfGameManagerFv() {
@@ -1254,14 +1252,14 @@ extern "C" void syncItemGroups__Q22cf13CfGameManagerFv() {
         for (s32 index = 0; index <= 5; ++index) {
             if (CItemBlock_testKindFlag(
                     dataId, getBdatIndexMapping__Q22cf13CfGameManagerFv(index))) {
-                cf::CfGameManager* packed = CItemBlock_getKindSlot(
-                    getBdatIndexMapping__Q22cf13CfGameManagerFv(index), dataId, 0);
+                cf::CfGameManager* packed = static_cast<cf::CfGameManager*>(CItemBlock_getKindSlot(
+                    getBdatIndexMapping__Q22cf13CfGameManagerFv(index), dataId, 0));
                 bdatGetItemName(static_cast<u16>(
                     getPackedResourceBits__Q22cf13CfGameManagerFv(packed)));
             }
         }
         for (s32 slot = 0; slot < 8; ++slot) {
-            if (*CItemBlock_getSlotU16(dataId, slot) > 0) {
+            if (*reinterpret_cast<s8*>(CItemBlock_getSlotU16(dataId, slot)) > 0) {
                 CItemBlock_getKindSlot(3, dataId, slot);
             }
         }

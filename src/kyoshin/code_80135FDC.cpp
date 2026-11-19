@@ -934,19 +934,17 @@ add_out:
     nw4r::math::VEC3Add(output, output, &accum);
 }
 
-// __declspec(noinline): MWCC -inline auto would inline these small same-TU
-// helpers into AccumPaneWorldPos/AccumPaneWorldPosB, but retail calls them out-of-line
-// (bl relocs present at every call site). noinline blocks the auto-inline
-// without changing the helper bodies (both are byte-matched).
-extern "C" __declspec(noinline) nw4r::math::VEC3* code80135FDC_setVec3(nw4r::math::VEC3* self, float a, float b, float c) {
+// These helpers stay out-of-line in retail (bl relocs at every call site).
+// The TU's -inline noauto flag expresses that policy for all same-TU helpers.
+extern "C" nw4r::math::VEC3* code80135FDC_setVec3(nw4r::math::VEC3* self, float a, float b, float c) {
     self->x = a;
     self->y = b;
     self->z = c;
     return self;
 }
 
-extern "C" __declspec(noinline) void Vec3AddInto(nw4r::math::VEC3* output,
-                              const nw4r::math::VEC3* value) {
+extern "C" void Vec3AddInto(nw4r::math::VEC3* output,
+                             const nw4r::math::VEC3* value) {
     nw4r::math::VEC3Add(output, output, value);
 }
 

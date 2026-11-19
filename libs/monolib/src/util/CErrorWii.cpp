@@ -108,9 +108,7 @@ void CErrorWii::destroy(){
 }
 
 //This function should have the variable arguments parameter
-// optimize_for_size: retail saves/restores r28-r31 with stmw/lmw and keeps the
-// 32-entry GPR copy loop rolled (1 word/iter); -O4,p unrolls it 8x instead.
-#pragma optimize_for_size on
+// -O4,s (unit): stmw/lmw r28-r31 and the rolled 32-entry GPR copy loop.
 void CErrorWii::errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar){
     OSDumpContext(ctx);
 
@@ -135,7 +133,6 @@ void CErrorWii::errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar){
     //Set the function to return to after handling exceptions
     ctx->srr0 = (u32)postExceptionCallback;
 }
-#pragma optimize_for_size reset
 
 void CErrorWii::postExceptionCallback(){
     CWorkSystem::callExitFunc();
@@ -170,9 +167,6 @@ down, etc...), but all such potential code was removed for release, including th
 at the end (or some other way of stopping any more code from running). As a result,
 any calls to OSPanic will effectively do nothing, and the game will continue to run instead of
 properly halting. It shouldn't ever get called though, so it's fine, right? :) */
-// optimize_for_size: retail uses a block stmw/lmw register save here, which only
-// MWCC's size optimizer emits (-O4,p produces separate stw saves instead).
-#pragma optimize_for_size on
 void OSPanic(const char *file, int line, const char *msg, ...){
     u32 depth;
     u32* sp;
@@ -200,10 +194,8 @@ void OSPanic(const char *file, int line, const char *msg, ...){
     PPCHalt();
 #endif
 }
-#pragma optimize_for_size reset
 
 //Same body as OSPanic above - release build strips everything after formatting the message
-#pragma optimize_for_size on
 void nw4r::db::Panic(const char* file, int line, const char* fmt, ...){
     va_list list;
     int length;
@@ -215,5 +207,4 @@ void nw4r::db::Panic(const char* file, int line, const char* fmt, ...){
 
     sprintf(&buffer[length], lbl_eu_80524870, file, line);
 }
-#pragma optimize_for_size reset
 // data: retail sections verified via run.py data diff (no bypass)

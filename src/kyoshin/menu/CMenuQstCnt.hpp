@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -99,7 +100,6 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" int PTNotice_IsActive_3C10();
 extern "C" int MenuTutorialIsCreated();
 extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
-extern "C" int SysWinGetSingleton();
 extern "C" int isQuestLogMenuActive();
 extern "C" u32 lbl_eu_80663E28;
 extern "C" f32 lbl_eu_8066856C;

@@ -34,8 +34,6 @@ extern "C" void setNameText(CTitleAHelp* self, char* arg);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
-#pragma optimize_for_size on
-// Retail dtor shares the ctor's optimize_for_size region (stmw frame).
 
 CTitleAHelp::CTitleAHelp(char* arg1, u8 arg2) {
     mFileHandle = nullptr;
@@ -58,7 +56,6 @@ CTitleAHelp::CTitleAHelp(char* arg1, u8 arg2) {
 
 
 CTitleAHelp::~CTitleAHelp() {}
-#pragma optimize_for_size off
 
 void CTitleAHelp::CTitleAHelp_load() {
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
@@ -139,15 +136,15 @@ void CTitleAHelp::markReplayClose() {
 }
 
 extern char lbl_eu_805054BC[];
-extern "C" void __declspec(noinline) setNameText(CTitleAHelp* self, char* arg) {
+extern "C" void setNameText(CTitleAHelp* self, char* arg) {
     if(self->mLayout == nullptr) return;
     LayoutSetTextBoxFmtValue(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
 }
 
 // Lays out the title-A help screen: swaps button textures by bdat key assign
 // and re-flows help text boxes left-to-right with the shared icon width.
-// Retail symbol is unmangled; noinline so OnFileEvent keeps the bl.
-extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
+// Retail symbol is unmangled.
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg) {
     if (self->mLayout == nullptr) return;
 
     HelpRow* row = &lbl_eu_80533E60[arg];
@@ -287,7 +284,7 @@ extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self) {
     PaneMatSetTevColorsByName(self->mLayout, lbl_eu_805054BC + 0x17, (const GXColorS10*)&lbl_eu_80664478, (const GXColorS10*)&lbl_eu_80664480);
 }
 
-extern "C" void __declspec(noinline) stepOpenAnim(CTitleAHelp* self) {
+extern "C" void stepOpenAnim(CTitleAHelp* self) {
     if(advanceAnimTransform(self->mAnimTrans20, 1.0f)) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans20, 0);
         self->mLayout->SetAnimationEnable(self->mAnimTrans24, 1);
@@ -295,7 +292,7 @@ extern "C" void __declspec(noinline) stepOpenAnim(CTitleAHelp* self) {
     }
 }
 
-extern "C" void __declspec(noinline) stepShownAnim(CTitleAHelp* self) {
+extern "C" void stepShownAnim(CTitleAHelp* self) {
     if(advanceAnimTransform(self->mAnimTrans24, 1.0f)) {
         self->unk2c = 3;
         self->unk36 = 1;
@@ -303,7 +300,7 @@ extern "C" void __declspec(noinline) stepShownAnim(CTitleAHelp* self) {
     }
 }
 
-extern "C" void __declspec(noinline) stepCloseAnim(CTitleAHelp* self) {
+extern "C" void stepCloseAnim(CTitleAHelp* self) {
     if(AnimRewindFrame(self->mAnimTrans24, 1.0f)) {
         if(self->unk37 == 0) {
             self->mLayout->SetAnimationEnable(self->mAnimTrans24, 0);
@@ -315,16 +312,14 @@ extern "C" void __declspec(noinline) stepCloseAnim(CTitleAHelp* self) {
     }
 }
 
-extern "C" void __declspec(noinline) stepHiddenAnim(CTitleAHelp* self) {
+extern "C" void stepHiddenAnim(CTitleAHelp* self) {
     if(AnimRewindFrame(self->mAnimTrans20, 1.0f)) {
         self->unk2c = 0;
         self->unk36 = 1;
     }
 }
 
-// Retail emits an stmw frame here: this function sits in the same
-// optimize_for_size region as the constructor.
-#pragma optimize_for_size on
+// Retail emits an stmw frame here (-O4,s unit).
 bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
     if(mFileHandle == pEventFile->mFileHandle) {
         u32 allocHandle = mtl::MemManager::getHandleMEM2();
@@ -367,7 +362,6 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
-#pragma optimize_for_size off
 
 /******************************************************************************
  *
@@ -391,7 +385,7 @@ void sinit_801C4AE4() {
     setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664480), 0x05, 0x80, 0xa6, 0xff);
 }
 
-void __declspec(noinline) setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+void setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;

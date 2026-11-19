@@ -13,11 +13,11 @@ extern "C" void ModelDispEquip_StepFadeOut(CModelDispEquip*);
 extern "C" void ModelDispEquip_StepIdleBuildOrTick(CModelDispEquip*);
 extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip*);
 extern "C" void ModelDispEquip_StartFadeOut(CModelDispEquip*);
-extern "C" __declspec(noinline) void ModelDispEquip_ClearFileSlot(u8* ptr);
+extern "C" void ModelDispEquip_ClearFileSlot(u8* ptr);
 // (memberized: ModelDispEquip_LoadModelArc -> CModelDispEquip::LoadModelArc; declaration moved into class CModelDispEquip)
 extern "C" void ModelDispEquip_SetActParamParent(void* self, u32 val);
 extern "C" void ModelDispEquip_TeardownHolder(CModelDispEquip*, CActParamHolder*);
-extern "C" __declspec(noinline) void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float c, float d);
+extern "C" void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float c, float d);
 
 // ============================================================
 // us-80201254 | __ct__CModelDispEquip (constructor)
@@ -82,7 +82,7 @@ CModelDispEquip::CModelDispEquip(u32 somePtr, s32 equipSlot) {
 // ============================================================
 // us-802013cc | ModelDispEquip_ClearFileSlot
 // ============================================================
-extern "C" __declspec(noinline) void ModelDispEquip_ClearFileSlot(u8* ptr) {
+extern "C" void ModelDispEquip_ClearFileSlot(u8* ptr) {
     *(u32*)ptr = 0;
     *(u32*)(ptr + 4) = 0;
     *(u8*)(ptr + 8) = 0;
@@ -93,7 +93,7 @@ extern "C" __declspec(noinline) void ModelDispEquip_ClearFileSlot(u8* ptr) {
 // ============================================================
 // Destroys the holder's act-param array via __destroy_arr, then the act-param
 // object, then frees the holder if flag > 0 (retail order: array, obj, delete).
-extern "C" __declspec(noinline) void* __dt__801FF6F0(CActParamHolder* self, int flag) {
+extern "C" void* __dt__801FF6F0(CActParamHolder* self, int flag) {
     if (!self)
         goto done;
     __destroy_arr(self->actParams, (void*)__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
@@ -107,9 +107,7 @@ done:
 // ============================================================
 // us-8020144c | __dt__15CModelDispEquipFv
 // ============================================================
-// NOTE: retail prologue is `stmw r30` (shape a) - MWCC_CASES says only
-// #pragma optimize_for_size merges the saves (forbidden this session);
-// keeping the recipe source shape so the pragma can be added later.
+// NOTE: retail prologue is `stmw r30` (shape a, -O4,s unit).
 extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip* self, int param) {
     if (self != 0) {
         __dt__801FF6F0(&self->actParamHolder, -1);
@@ -270,7 +268,7 @@ void ModelDispEquip_StepFadeOut(CModelDispEquip* self) {
 // ============================================================
 // us-802017a4 | ModelDispEquip_StoreFloat4 (storeFloats)
 // ============================================================
-extern "C" __declspec(noinline) void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float c, float d) {
+extern "C" void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
     dest[1] = b;
     dest[2] = c;
@@ -283,7 +281,7 @@ extern "C" __declspec(noinline) void ModelDispEquip_StoreFloat4(float* dest, flo
 // Fade the equip display in (state 3 step): bump alpha toward the clamp,
 // poke the act-param object with the new alpha, then write the quad color
 // (clamp, clamp, clamp, clamp - alpha) into both animation-model slots.
-extern "C" __declspec(noinline) void ModelDispEquip_StepFadeIn(CModelDispEquip* self) {
+extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip* self) {
     self->alpha += lbl_eu_8066827C;
     if (self->alpha > lbl_eu_80668270) {
         self->alpha = lbl_eu_80668270;
@@ -528,8 +526,8 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
 // ============================================================
 // us-80202078 | ModelDispEquip_SetActParamParent
 // ============================================================
-// Retail always calls this (never inlines it) - keep the noinline.
-extern "C" __declspec(noinline) void ModelDispEquip_SetActParamParent(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
+// Retail always calls this (never inlines it).
+extern "C" void ModelDispEquip_SetActParamParent(void* self, u32 val) { *(u32*)((u8*)self + 4) = val; *(u32*)((u8*)self + 0x34) = val; }
 
 // ============================================================
 // us-80202084 | ModelDispEquip_BuildEquipModel
@@ -1133,18 +1131,14 @@ extern "C" void ModelDispEquip_Noop1440() {}
 // ============================================================
 extern "C" void ModelDispEquip_ClearAnimPtr(CModelDispEquip* self, u32 val) {
     // Holder-base addressing (addi r6,r3,16 + 0xff4(rX) like retail) plus
-    // scoped optimize_for_size to keep the 2-iteration loop rolled as the
-    // mtlr/bdnz countdown (plain -O4,p unrolls it).
+    // -O4,s keeps the 2-iteration loop rolled as the mtlr/bdnz countdown.
     CActParamHolder* holder = &self->actParamHolder;
     CActParamHolderTail* tail = (CActParamHolderTail*)holder;
-#pragma push
-#pragma optimize_for_size on
     for (u8 i = 0; i < 2; i++) {
         if (tail->animPtrs[i] == (void*)val) {
             tail->animPtrs[i] = 0;
         }
     }
-#pragma pop
 }
 
 // ============================================================

@@ -693,7 +693,7 @@ u8 CEquipChange::GetBoxTailByte() {
 
 // Target us-802059d8: when the 0x38 anim finishes, reset the three layout
 // slot animations via the 0x34 object's vtable[0x2C] hook and enter state 2.
-__declspec(noinline) void CEquipChange::OnAnim38ToSt2() {
+void CEquipChange::OnAnim38ToSt2() {
     if (advanceAnimTransform(field_38, lbl_eu_806682A8) == 0)
         return;
     ((nw4r::lyt::Layout*)field_34)->SetAnimationEnable(field_40, 0);
@@ -705,7 +705,7 @@ __declspec(noinline) void CEquipChange::OnAnim38ToSt2() {
 // Target us-80205a70: when the 0x3C anim finishes, refresh the item info
 // window (calcItemBoxPaneVec pack), drive the sub-cursor vtable[0x10] hook with the
 // packed buffer, close the sub-cursor, and reset state via EquipChange_RefreshCursorPos.
-__declspec(noinline) void CEquipChange::OnAnim3CToSt3() {
+void CEquipChange::OnAnim3CToSt3() {
     if (advanceAnimTransform(field_3C, lbl_eu_806682A8) == 0)
         return;
     field_48 = 3;
@@ -719,7 +719,7 @@ __declspec(noinline) void CEquipChange::OnAnim3CToSt3() {
 // Target us-80205af8: when the 0x3C anim finishes, reset the three layout
 // slot animations via the 0x34 object's vtable[0x2C] hook and enter state 5.
 // Sibling of EquipChange_OnAnim38ToSt2 (guard on field_38, state 2).
-__declspec(noinline) void CEquipChange::OnAnim3CToSt5() {
+void CEquipChange::OnAnim3CToSt5() {
     if (AnimRewindFrame(field_3C, lbl_eu_806682A8) == 0)
         return;
     ((nw4r::lyt::Layout*)field_34)->SetAnimationEnable(field_3C, 0);
@@ -729,7 +729,7 @@ __declspec(noinline) void CEquipChange::OnAnim3CToSt5() {
 }
 
 // Target us-80205b90: when the 0x38 anim finishes, clear state 0x48 and flag 0x4D.
-__declspec(noinline) void CEquipChange::OnAnim38ToIdle() {
+void CEquipChange::OnAnim38ToIdle() {
     if (AnimRewindFrame(field_38, lbl_eu_806682A8) != 0) {
         field_4D = 1;
         field_48 = 0;
@@ -740,7 +740,7 @@ __declspec(noinline) void CEquipChange::OnAnim38ToIdle() {
 // (setEIBBoxInfo/80287DB4 with the packed (field_99<<8 | cur38<<4 | cur3a)
 // word) and re-init the box, entering state 7. Retail saves 4 regs via
 // _savegpr_28 (opt-space prologue).
-__declspec(noinline) void CEquipChange::OnAnim40ToSt7() {
+void CEquipChange::OnAnim40ToSt7() {
     if (advanceAnimTransform(field_40, lbl_eu_806682A8) == 0)
         return;
     u8 f99 = field_99;
@@ -756,7 +756,7 @@ __declspec(noinline) void CEquipChange::OnAnim40ToSt7() {
 }
 
 // Target us-80205c7c: when the box sub-page closes, enter state 8.
-__declspec(noinline) void CEquipChange::OnSubPageClose() {
+void CEquipChange::OnSubPageClose() {
     if (mEquipItemBox.getEIBActiveMark() != 0) {
         field_48 = 8;
         field_4D = 1;
@@ -767,7 +767,7 @@ __declspec(noinline) void CEquipChange::OnSubPageClose() {
 // info window with the packed selection word and enter state 0xA.
 // -O4,s keeps the retail stmw r28 frame; the packed word is built low-to-high
 // ((sub&0xF) | (main&0xF)<<4 | f99<<8) so MWCC merges the ORs into rlwimi.
-__declspec(noinline) void CEquipChange::OnApplyToStA() {
+void CEquipChange::OnApplyToStA() {
     if (mEquipItemBox.getEIBActiveMark() == 0)
         return;
     field_48 = 0xA;
@@ -779,7 +779,7 @@ __declspec(noinline) void CEquipChange::OnApplyToStA() {
     mItemBoxInfo.SetItem((u16)(packed | ((u32)f99 << 8)), (void*)m, 1);}
 
 // Target us-80205d44: when the 0x40 anim finishes, enter state 3 and refresh.
-__declspec(noinline) void CEquipChange::OnAnim40ToSt3() {
+void CEquipChange::OnAnim40ToSt3() {
     if (AnimRewindFrame(field_40, lbl_eu_806682A8) != 0) {
         field_48 = 3;
         field_4D = 1;
@@ -789,9 +789,7 @@ __declspec(noinline) void CEquipChange::OnAnim40ToSt3() {
 
 // Target us-80205d98: when both file handles (0x34, 0x30) are set, load the
 // retail bind data and clear the cursor-run flag 0x98.
-// noinline keeps -ipa from folding this into OnFileEvent's two branches
-// (retail emits external bl calls).
-__declspec(noinline) void CEquipChange::MaybeRebuild() {
+void CEquipChange::MaybeRebuild() {
     if (field_34 == 0)
         goto end;
     if (field_30 != 0)
@@ -814,7 +812,7 @@ end:
 // positions either the 0x50 or the 0x68 cursor depending on field_98.
 // Opt-space keeps the palette copy as a retail mtctr/bdnz loop (unrolled
 // under -O4,p); the block-copy form gives the lwzu/stwu update addressing.
-__declspec(noinline) void CEquipChange::RefreshCursorPos() {
+void CEquipChange::RefreshCursorPos() {
     nw4r::math::VEC3 pos;
     // Word view of the 7-pair block: the cursor byte selects one of the 14
     // words. Same 0x38-byte stack slot, so the frame layout is unchanged.
@@ -1347,7 +1345,7 @@ void sinit_802059E8() {
 // otherwise it re-equips the sub-cursor row via the 0x806682A0 category table
 // and the obj u16 id fields. When the cursor cannot be placed (flag 0) the
 // refresh block re-runs. Frame saves 7 regs via stmw r25 (opt-space).
-__declspec(noinline) void CEquipChange::RefreshCategory(u8 cat) {
+void CEquipChange::RefreshCategory(u8 cat) {
     field_99 = cat;
     // Local block mirrors the retail frame: {word,byte} pair at 0x8/0xC,
     // item-box info pack at 0x10, per-category id row at 0x1C.
@@ -1427,7 +1425,7 @@ __declspec(noinline) void CEquipChange::RefreshCategory(u8 cat) {
 // equips it through the item-impl vtable hooks or rebuilds the scratch item
 // lbl_eu_80576568 from bdat (guarded by lbl_eu_8066469C) and returns it.
 // bdat-rebuild fallback shape needs the opt-space stmw r28 frame.
-__declspec(noinline) void* CEquipChange::ResolveEquipItem() {
+void* CEquipChange::ResolveEquipItem() {
     // cat declared first - its home web (shared with mapped) gets priority.
     int cat;
     CBdatCharData* obj = (CBdatCharData*)CtrlObjectParam_GetCharEntry((u8)GetCollectedFlagByte(field_99));
@@ -1525,8 +1523,8 @@ __declspec(noinline) void* CEquipChange::ResolveEquipItem() {
 // anything else -> 3. Free function (retail symbol is unmangled, hence C
 // linkage).
 // Retail emits external `bl` calls to this helper at every call site, so
-// __declspec(noinline) keeps the body standalone under -inline auto / -ipa.
-__declspec(noinline) int CEquipChange::MapCursorToCat() {
+// keeps the body standalone under -inline auto / -ipa.
+int CEquipChange::MapCursorToCat() {
     signed char value = field_98;
     if (value == 0)
         return 2;
@@ -1545,8 +1543,8 @@ __declspec(noinline) int CEquipChange::MapCursorToCat() {
 
 // Target us-80204e98: field_98 (s8) maps via a dense jump table to 1..8 for
 // values 0..6 and 13 (real-body case at 13 keeps the table range at 13 so
-// entries 7..12 route to default 0). Same noinline rationale as EquipChange_MapCursorToCat.
-__declspec(noinline) int CEquipChange::MapCursorToSlot() {
+// entries 7..12 route to default 0).
+int CEquipChange::MapCursorToSlot() {
     switch (field_98) {
     case 0: return 1;
     case 1: return 2;
@@ -1564,9 +1562,8 @@ __declspec(noinline) int CEquipChange::MapCursorToSlot() {
 // dispatch on state 0x48 (jump table 0..10) to the layout-anim waiters, then
 // drive the layout vtable[0x38] hook and update the cursors / item info
 // window / equip item box.
-// The state handlers are matched targets defined above; their extern "C" +
-// noinline definitions keep -ipa file from folding their bodies into the
-// switch and make the call relocs use the unmangled retail names.
+// The state handlers are matched targets defined above; their extern "C"
+// definitions make the call relocs use the unmangled retail names.
 void CEquipChange::AdvanceScreen() {
     if (field_44 == 0)
         return;

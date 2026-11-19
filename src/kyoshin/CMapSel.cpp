@@ -118,10 +118,7 @@ CMapSel::CMapSel()
 
 // Sub-object dtors run in reverse construction order; retail uses an
 // stmw/lmw frame, which the scoped size optimization selects.
-#pragma push
-#pragma optimize_for_size on
 CMapSel::~CMapSel() {}
-#pragma pop
 
 /* startLoad - Start the map-select UI: request the layout archive from
    MEM2 and mark the pending-map flag so loadSelectedMapResource begins the countdown,
@@ -139,7 +136,7 @@ void CMapSel::startLoad() {
    layout, scrollbar, and cursor. Guards on mActive (widget active) and
    mState (not uninitialized); the state dispatch mirrors retail (1: loading,
    2: visible, 3: transitioning out, 4: closing, 5: post-close cleanup). */
-__declspec(noinline) void CMapSel::update() {
+void CMapSel::update() {
     if (mActive != 0 && mState != 0) {
         switch (mState) {
         case 1:
@@ -170,8 +167,6 @@ __declspec(noinline) void CMapSel::update() {
 
 /* Retail uses an stmw/lmw r30 frame; the scoped size-optimization pragma is
    what selects that shape under -O4,p (also fixes the param copy order). */
-#pragma push
-#pragma optimize_for_size on
 void CMapSel::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (mActive != 0 && mState != 0) {
         drawLayout(mLayout, drawInfo, 0, 1);
@@ -179,14 +174,13 @@ void CMapSel::draw(nw4r::lyt::DrawInfo* drawInfo) {
         mCursor.DrawLayout(drawInfo);
     }
 }
-#pragma pop
 
 /* term - Tear down the map-select widget: release both file
    handles, deactivate, then (after vblank sync) delete the layout, free the
    map-data buffer, release the arc accessor / mem region / scrollbar, and
    run the cursor's release virtual. The doubled null-check before the
    layout virtual mirrors retail codegen. */
-__declspec(noinline) void CMapSel::term() {
+void CMapSel::term() {
     closeFileHandle(&mFileHandle);
     closeFileHandle(&mFileHandle2);
     mActive = 0;
@@ -246,7 +240,7 @@ void CMapSel::beginClose() {
 /* moveUp - Move the selection up one step. When the top of a column
    is passed, step to the previous column; past the first column, wrap to the
    last map entry (grid has 10 rows; mCount is the map count). */
-__declspec(noinline) void CMapSel::moveUp() {
+void CMapSel::moveUp() {
     // u8 locals + (s8) sign tests reproduce the retail clrlwi/extsb. shape.
     u8 y = mSelY - 1;
     mSelY = y;
@@ -281,7 +275,7 @@ __declspec(noinline) void CMapSel::moveUp() {
 /* moveDown - Move the selection right one column. Wraps from the bottom
    row of a column to the top of the next column; past the last column, wraps
    to the first entry. mCount is the map count (grid has 10 rows). */
-__declspec(noinline) void CMapSel::moveDown() {
+void CMapSel::moveDown() {
     u8 count = mCount;
     if (count >= 10) {
         s8 y = (s8)((u8)(mSelY + 1));
@@ -314,7 +308,7 @@ __declspec(noinline) void CMapSel::moveDown() {
    moveMapSelPageDown). Wraps from the top row of a column back into the previous
    column near its bottom row; below zero clamps to the first entry.
    mCount is the map count (grid has 10 rows). */
-__declspec(noinline) void CMapSel::movePageUp() {
+void CMapSel::movePageUp() {
     u8 count = mCount;
     if (count >= 10) {
         mSelX -= 10;
@@ -337,7 +331,7 @@ __declspec(noinline) void CMapSel::movePageUp() {
 /* movePageDown - Move the selection down one row (grid has 10 columns;
    mCount is the map count). Wraps past the last row to the next
    column and clamps the row index to 9. */
-__declspec(noinline) void CMapSel::movePageDown() {
+void CMapSel::movePageDown() {
     // Grid has 10 rows; mCount is the map count. Signed (s8)
     // comparisons against the count mirror the retail cmpw/cmpwi forms.
     u8 count = mCount;
@@ -372,7 +366,7 @@ u8 CMapSel::getMapGridCell() {
 /* tickOpen - Finish the map-data load: when animation 1 completes,
    enable both animations, mark the widget visible (state 2), and configure
    the scrollbar for the current selection. mCount is the map count. */
-__declspec(noinline) void CMapSel::tickOpen() {
+void CMapSel::tickOpen() {
     if (advanceAnimTransform(mAnimTransform1, lbl_eu_8066873C) != 0) {
         mLayout->SetAnimationEnable(mAnimTransform1, false);
         mLayout->SetAnimationEnable(mAnimTransform2, true);
@@ -389,7 +383,7 @@ __declspec(noinline) void CMapSel::tickOpen() {
 /* tickOpenIn - State 2 handler: once the map-open-in animation on
    mAnimTransform2 finishes, move to state 3 (transitioning out), flag +0x33,
    reset the cursor and refresh its grid position. */
-__declspec(noinline) void CMapSel::tickOpenIn() {
+void CMapSel::tickOpenIn() {
     if (advanceAnimTransform(mAnimTransform2, lbl_eu_8066873C) != 0) {
         mState = 3;
         mInitFlag = 1;
@@ -400,7 +394,7 @@ __declspec(noinline) void CMapSel::tickOpenIn() {
 
 /* tickClose - Poll animation completion on mAnimTransform2, then enable both
    animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
-__declspec(noinline) void CMapSel::tickClose() {
+void CMapSel::tickClose() {
     if (AnimRewindFrame(mAnimTransform2, 1.0f) != 0) {
         mLayout->SetAnimationEnable(mAnimTransform2, false);
         mLayout->SetAnimationEnable(mAnimTransform1, true);
@@ -409,7 +403,7 @@ __declspec(noinline) void CMapSel::tickClose() {
     }
 }
 
-__declspec(noinline) void CMapSel::tickCloseEnd() {
+void CMapSel::tickCloseEnd() {
     if (AnimRewindFrame(mAnimTransform1, lbl_eu_8066873C) != 0) {
         mInitFlag = 1;
         mState = 0;
@@ -418,7 +412,7 @@ __declspec(noinline) void CMapSel::tickCloseEnd() {
 
 // When the +0x24 layout is present, run the grid rebuild (refreshMapGridText) and
 // raise the +0x32/+0x30 flags.
-__declspec(noinline) void CMapSel::activate() {
+void CMapSel::activate() {
     if (mLayout != nullptr) {
         refreshGridText();
         mVisible = 1;
@@ -431,7 +425,7 @@ __declspec(noinline) void CMapSel::activate() {
    table; when the column matches the current selection X, also set the
    selected-row labels. Out-of-range columns are blanked with the placeholder
    string at +0x52. */
-__declspec(noinline) void CMapSel::refreshGridText() {
+void CMapSel::refreshGridText() {
     char buf[32];
     char* base = lbl_eu_8050B4A8;
     for (u32 i = 0; i < 10; i++) {
@@ -456,9 +450,7 @@ __declspec(noinline) void CMapSel::refreshGridText() {
    current-map text pane's texture directly from the buffer and show it;
    otherwise re-fetch the "timg" resource from the arc and (when present) use
    it for the same pane. */
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CMapSel::refreshImage() {
+void CMapSel::refreshImage() {
     char* base;
     if (mFileHandle2 != 0 || mAllocatedMem == 0 ||
         mImagePending != 0) {
@@ -476,12 +468,11 @@ __declspec(noinline) void CMapSel::refreshImage() {
         mLayout->GetRootPane()->FindPaneByName(base + 0x66, true);
     setPaneVisible(pane, 1);
 }
-#pragma pop
 
 /* loadSelectedMapResource - Count down the map-select transition timer; when it
    expires, tear down the previous map-data load (release the handle and the
    allocated buffer) and start loading the newly selected map's file. */
-__declspec(noinline) void CMapSel::loadSelectedMapResource() {
+void CMapSel::loadSelectedMapResource() {
     CDeviceVI::waitForDrawDone();
     if (mTimer > lbl_eu_80668738) {
         mTimer -= lbl_eu_8066873C;
@@ -505,7 +496,7 @@ __declspec(noinline) void CMapSel::loadSelectedMapResource() {
         this, 0, 0);
 }
 
-__declspec(noinline) void CMapSel::requestImage() {
+void CMapSel::requestImage() {
     mImagePending = 1;
     mTimer = lbl_eu_8066873C;
     setPaneVisible(mLayout->GetRootPane()->FindPaneByName(lbl_eu_8050B4A8 + 0x66, true), 0);
@@ -515,9 +506,7 @@ __declspec(noinline) void CMapSel::requestImage() {
    current row's pane name from the selection Y, look up the two panes that
    bracket the selection, and move the cursor to the computed point.
    Retail uses an stmw/lmw r29 frame; the scoped size pragma selects it. */
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CMapSel::updateCursor() {
+void CMapSel::updateCursor() {
     /* Strings live at buf+4 (retail sp+0x18) */
     char buf[0x2C];
     char* base = lbl_eu_8050B4A8;
@@ -530,15 +519,12 @@ __declspec(noinline) void CMapSel::updateCursor() {
     ScalePaneWorldPos(&pos, pane1, pane2, mLayout->GetRootPane());
     mCursor.setRootPaneTranslate(&pos);
 }
-#pragma pop
 
 /* CMapSel::OnFileEvent - Build the map-select layout when the main file
    finishes loading: create the scratch mem region + host, detach the file
    buffer into the arc accessor, build the layout and both animations, bind
    the font, and copy a freshly-constructed CCur18 cursor into +0x74. If the
    event instead matches the second handle, adopt its buffer as mAllocatedMem. */
-#pragma push
-#pragma optimize_for_size on
 bool CMapSel::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
         mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
@@ -583,4 +569,3 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
     }
     return false;
 }
-#pragma pop

@@ -56,15 +56,15 @@ extern "C" int GetZealObjPtr();
 extern "C" int camPadPress12(void* self);
 extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" int cfCam_maskUnk1D4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
-extern "C" void cfCam_resetHist(void* self, void* src);         // CfCam sibling (retail 0x8006E18C)
-extern "C" __declspec(noinline) u8* cfCam_vec3AtIndex(u8*, int); // CfCam sibling (retail 0x8006BF14), body at bottom of CfCam.cpp; noinline keeps the retail bl at call sites
+extern "C" void cfCam_resetHist(cf::CfCamFollow* self, u8* src);         // CfCam sibling (retail 0x8006E18C)
+extern "C" u8* cfCam_vec3AtIndex(u8*, int); // CfCam sibling (retail 0x8006BF14), body at bottom of CfCam.cpp; noinline keeps the retail bl at call sites
 // In-TU ctor helpers whose bodies MWCC would otherwise inline; noinline keeps
 // the retail `bl func_8006BE*` calls in __ct__cf_CfCamFollow.
-extern "C" __declspec(noinline) void cfCam_nopBef8(void* self);
-extern "C" __declspec(noinline) void cfCam_nopCtorSlot(void* self);
-extern "C" __declspec(noinline) void cfCam_zeroUnk04(cf::CfCamFollow* self);
-extern "C" __declspec(noinline) void cfCam_storeZeroU32(void* self);
-extern "C" __declspec(noinline) void cfCam_storeZeroU16(u16* self);
+extern "C" void cfCam_nopBef8(void* self);
+extern "C" void cfCam_nopCtorSlot(void* self);
+extern "C" void cfCam_zeroUnk04(cf::CfCamFollow* self);
+extern "C" void cfCam_storeZeroU32(void* self);
+extern "C" void cfCam_storeZeroU16(u16* self);
 // .data lookup tables (retail 0x80527208 / 0x8052721C, 20 bytes each). Sized
 // >8B so MWCC uses full lis/@l addressing (SDA threshold).
 extern "C" float lbl_eu_80527208[5];
@@ -77,19 +77,19 @@ extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag); // CfCam siblin
 extern "C" void cfCam_refreshBA8();                              // CfCam sibling (retail 0x8006B948)
 extern "C" void cfCam_nopCtorSlot(void* self);                    // CfCam sibling no-op (retail 0x8006BEC0)
 extern "C" void cfCam_getFollowSrc(ml::CVec3* out, cf::CfCamFollow* self); // CfCam sibling (retail 0x8006CA1C); same signature as the in-TU def so call sites keep the unmangled bl
-extern "C" void cfCam_offsetFromDir(void* a, void* b, void* c, void* d, float f); // (retail 0x80073C7C)
+extern "C" void cfCam_offsetFromDir(ml::CVec3* a, cf::CfCamFollow* b, ml::CVec3* c, const f32* d, float f); // (retail 0x80073C7C)
 extern "C" float* cfCam_makeYRotMtx(float* mtx, float scale);       // CfCam sibling (retail 0x800742FC)
 extern "C" void cfCam_setTransCol(float* mtx, const float* v);    // CfCam sibling (retail 0x800743A4)
 // extern-C-only views of in-TU C++ definitions (differing signature keeps the bl):
 extern "C" void cfCam_multMtxVec(void* dst, const Mtx mtx, const void* src); // in-TU def
 extern "C" void cfCam_invertRigid(void* mtx);                       // in-TU def: (nw4r::math::MTX34*)
-extern "C" __declspec(noinline) void cfCam_loadTuneTbl();
+extern "C" void cfCam_loadTuneTbl();
 extern "C" void Env_MtxMulVec(void*, void*, void*); // retail 0x80059F10
 extern "C" void nopFunc(void*);                     // retail 0x80059C74 (no-op stub)
 // Flat retail C names (same naming class as lbl_* symbols) - CfCam cross-TU
 // callees and siblings:
-extern "C" float cfCam_absFloat(void* self); // CfCam sibling (retail 0x8006C548); C linkage so callers keep the flat bl
-extern "C" float cfCam_yawFromVec(const void* v);      // CfCam sibling (retail 0x8006DE28); yaw from x/z
+extern "C" float cfCam_absFloat(const f32* self); // CfCam sibling (retail 0x8006C548)
+extern "C" float cfCam_yawFromVec(const ml::CVec3* v);      // CfCam sibling (retail 0x8006DE28); yaw from x/z
 // Call-through-overload views of in-TU bodies (differing signatures keep the
 // bl instead of letting MWCC inline the local definition):
 extern "C" float cfCam_pitchFromVec(const void* v);      // spherical azimuth wrapper (retail 0x8006DD78)
@@ -325,14 +325,14 @@ void scaleVec3f(float* destination, const float* source, float scale); // retail
 void addVec3f(float* destination, const float* source);              // retail 0x8004BE10
 f32 sinAnimFIdx(f32 angle);                        // retail 0x8004D300 (SinFIdx wrapper)
 f32 cosAnimFIdx(f32 angle);                        // retail 0x8004D30C (CosFIdx wrapper)
-extern "C" float cfCam_xzLength(const f32* v);        // in-TU def
+extern "C" float cfCam_xzLength(const ml::CVec3* v);        // in-TU def
 void cfCam_dirToAngles(const ml::CVec3* a, const ml::CVec3* b, f32* out, int flag2, int flag3, f32 heading); // in-TU def (defined below its first use); retail callers pass self->unk244 in f1 - body ignores it
 void cfCam_buildOffset(ml::CVec3* out, cf::CfCamFollow* self, const ml::CVec3* dir,
                    const f32* angles, float f); // in-TU def (defined below its first use)
-__declspec(noinline) void cfCam_selectDistance(cf::CfCamFollow* self, float* outA, float* outB); // in-TU def, same signature (mixed linkage keeps the unmangled bl); noinline keeps the retail bl instead of inlining the body
+void cfCam_selectDistance(cf::CfCamFollow* self, float* outA, float* outB); // in-TU def, same signature (mixed linkage keeps the unmangled bl); noinline keeps the retail bl instead of inlining the body
 void cfCam_copyBlock16(void* dst, void* src);            // retail 0x8007215C (16-byte copy)
 void cfCam_applyRelPos(cf::CfCamFollow* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
-__declspec(noinline) void cfCam_nop07C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
+void cfCam_nop07C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 extern "C" int CfRes_getD80Flag();                     // scene flag gate (CUIErrMesWin.hpp)
 // Scn_QueryUnk80State: declared once in libs/monolib/src/scn/CScn_8049603C.hpp
 // (ellipsis form - this TU calls it with no args).
@@ -347,7 +347,7 @@ void ScnCamPointAt(void* obj, f32 f, void* a, void* b);  // retail 0x8049EFF8 (p
 int cfCam_getSignBit04(void* self);                           // CfCam sibling (retail 0x8006D374)
 cf::CfCamFollow* cfCam_getActiveCam();                    // CfCam sibling (retail 0x80072708)
 ml::CVec3* cfCam_getPlus60(cf::CfCamFollow* self);     // CfCam sibling (retail 0x80072710)
-__declspec(noinline) u8* cfCam_getPlus6C(cf::CfCamFollow* self); // CfCam sibling (retail 0x80072718), in-TU body at bottom of CfCam.cpp; noinline keeps the bl at call sites
+u8* cfCam_getPlus6C(cf::CfCamFollow* self); // CfCam sibling (retail 0x80072718), in-TU body at bottom of CfCam.cpp; noinline keeps the bl at call sites
 extern "C" void CmText_VariadicNoop(...);                             // retail 0x800C2838 (variadic callback prologue)
 ml::CVec3* VecMath_NormalizeInPlace(ml::CVec3* v);              // retail 0x800A4510 (normalize)
 int camPadBit4Reg(cf::CfCamFollow* self);            // retail 0x802776BC (cam-control register)
@@ -363,12 +363,12 @@ int ScnRes_RegPassSelect_E2E8(void* vec, u32 mask, int a, int b);
 extern float lbl_eu_8066AF20;                               // owned elsewhere (not this split)
 // The CfCam_ps.inl kernel body is visible in this TU; MWCC would otherwise
 // inline it. noinline keeps the retail `bl cfCam_psAddVec3` at call sites.
-extern "C" __declspec(noinline) void cfCam_psAddVec3(nw4r::math::VEC3* out,
+extern "C" void cfCam_psAddVec3(nw4r::math::VEC3* out,
                                                     const nw4r::math::VEC3* a,
                                                     const nw4r::math::VEC3* b);
 // In-TU definition (CfCam.cpp) whose nw4r VEC3LenSq body MWCC would inline;
 // noinline keeps the retail `bl cfCam_vecLenSq` at call sites.
-extern "C" __declspec(noinline) f32 cfCam_vecLenSq(const nw4r::math::VEC3* vector);
+extern "C" f32 cfCam_vecLenSq(const nw4r::math::VEC3* vector);
 // .bss camera-defaults block (retail 0x80570A20): nine vec3 slots followed by
 // trailing state words zeroed by the sinit.
 struct CamDefaultsBlock {
@@ -456,14 +456,14 @@ u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
 extern "C" void cfCam_quatSlerp(void* out, void* a, void* b, float t); // in-TU def: (Quaternion*, const Quaternion*, const Quaternion*, float)
 extern "C" Quaternion* cfCam_normQuat(void* q);                       // in-TU def
 extern "C" int cfCam_queryVoxArts(cf::CVoiceRec* self, int flags);     // in-TU def (defined below its first use)
-extern "C" __declspec(noinline) void cfCam_quatToMat33(ml::CMat33* out, const ml::CQuat* q); // in-TU def: quat -> 3x3 rotation matrix (mixed linkage keeps the unmangled bl)
+extern "C" void cfCam_quatToMat33(ml::CMat33* out, const ml::CQuat* q); // in-TU def: quat -> 3x3 rotation matrix (mixed linkage keeps the unmangled bl)
 }
 
 // Imports used by cfCam_updateFollowCam / cfCam_recomputeEyeTarget / cfCam_syncFollowSnapshot /
 // cfCam_updateCamHeading (flat retail names).
 extern "C" {
-__declspec(noinline) int cfCam_getBit2_64(void* obj);
-__declspec(noinline) int cfCam_artsGateClr(void* obj); // in-TU def (follow-cam arts gate)
+int cfCam_getBit2_64(void* obj);
+int cfCam_artsGateClr(void* obj); // in-TU def (follow-cam arts gate)
 int testResInfoFlag(unsigned int mask);
 int Selector_GetInstance();
 int cfCam_getInt90E4(int obj);

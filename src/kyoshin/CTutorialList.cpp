@@ -56,7 +56,7 @@ struct CTutorialMsgObj {
 };
 
 // Id table ctor: zero the three summary halfwords.
-__declspec(noinline) CTutorialIdTable::CTutorialIdTable() {
+CTutorialIdTable::CTutorialIdTable() {
     mCount = 0;
     mSelRow = 0;
     mScrollBase = 0;
@@ -68,11 +68,8 @@ CTutorialIdTable::~CTutorialIdTable() {}
 // category matches the filter (all of them when filter==0), sort ascending by
 // name key, then locate the target id to derive the row/scroll split stored
 // after the table.
-// pragma optimize_for_size: retail emits rolled mtctr/bdnz loops here
-// (same codegen class as the constructor below).
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void CTutorialIdTable::Rebuild(u16 target, int filter) {
+// -O4,s (unit) keeps the retail rolled mtctr/bdnz loops.
+void CTutorialIdTable::Rebuild(u16 target, int filter) {
     if (lbl_eu_80664BF0 == 0) return;
     mCount = 0;
     void* table = (void*)lbl_eu_80664BF0;
@@ -125,9 +122,8 @@ __declspec(noinline) void CTutorialIdTable::Rebuild(u16 target, int filter) {
         }
     }
 }
-#pragma pop
 
-__declspec(noinline) u16 CTutorialIdTable::GetEntryIdAt(u16 index) {
+u16 CTutorialIdTable::GetEntryIdAt(u16 index) {
     if (index >= mCount)
         return 0;
     return mIds[index];
@@ -136,9 +132,6 @@ __declspec(noinline) u16 CTutorialIdTable::GetEntryIdAt(u16 index) {
 // Tutorial list constructor (retail __ct__13CTutorialListFUs). Members are
 // constructed in declaration order from the init list; the body then rebuilds
 // the scrollbar, sort menu and id table by assigning from temporaries.
-// pragma optimize_for_size: retail keeps both block copies rolled (mtctr/bdnz).
-#pragma push
-#pragma optimize_for_size on
 CTutorialList::CTutorialList(u16 count)
     : mRegion(), mFileHandle0(0), mFileHandle1(0), mAccessor(0), mLayout(0),
       mAnim24(0), mAnim28(0), mCursor(0), mScrollBar(0), mSortMenu(),
@@ -148,7 +141,6 @@ CTutorialList::CTutorialList(u16 count)
     mSortMenu = CSortMenu();
     mIdTable = CTutorialIdTable();
 }
-#pragma pop
 
 CTutorialList::~CTutorialList() {}
 
@@ -191,8 +183,6 @@ void CTutorialList::TutorialList_UpdatePerFrame() {
 
 // Render the tutorial list when the visible gate byte is set: draw the
 // layout, scrollbar, sort menu and cursor with the given draw info.
-#pragma push
-#pragma optimize_for_size on
 void CTutorialList::TutorialList_DrawVisible(nw4r::lyt::DrawInfo* drawInfo) {
     if (mField174 != 0) {
         drawLayout(mLayout, drawInfo, 0, 1);
@@ -201,7 +191,6 @@ void CTutorialList::TutorialList_DrawVisible(nw4r::lyt::DrawInfo* drawInfo) {
         mCursor.DrawLayout(drawInfo);
     }
 }
-#pragma pop
 
 // Release the list widget: free the CBdat index, close the two file handles,
 // release the bound layout and resource accessor, then run the
@@ -463,7 +452,7 @@ int CTutorialList::TutorialList_IsSortMenuActive() { return mSortMenu.IsOpen(); 
 // Advance the list: gate on the sort-menu active/button flags, move the
 // cursor, refresh the sort menu, run the per-frame helpers and (when
 // requested) play the confirm sound.
-__declspec(noinline) void CTutorialList::TutorialList_AdvanceSelection(int arg) {
+void CTutorialList::TutorialList_AdvanceSelection(int arg) {
     if (mSortMenu.IsOpen() == 0) return;
     if (mSortMenu.IsIdle() == 0) return;
     mCursor.SetVisible(1);
@@ -500,7 +489,7 @@ int CTutorialList::TutorialList_GetMenuStateCode() {
 
 // Animation-finish handlers: the +0x24/+0x28 anim transform reached its end
 // frame -> latch the state byte and run the follow-up.
-__declspec(noinline) void CTutorialList::TutorialList_OnOpenAnimDone() {
+void CTutorialList::TutorialList_OnOpenAnimDone() {
     if (advanceAnimTransform(mAnim24, 1.0f) != 0) {
         mState175 = 2;
         TutorialList_EnableCloseAnims();
@@ -508,7 +497,7 @@ __declspec(noinline) void CTutorialList::TutorialList_OnOpenAnimDone() {
     }
 }
 
-__declspec(noinline) void CTutorialList::TutorialList_OnIdleAnimDone() {
+void CTutorialList::TutorialList_OnIdleAnimDone() {
     if (advanceAnimTransform(mAnim28, 1.0f) != 0) {
         mState175 = 3;
         TutorialList_MoveCursorToRow();
@@ -516,14 +505,14 @@ __declspec(noinline) void CTutorialList::TutorialList_OnIdleAnimDone() {
     }
 }
 
-__declspec(noinline) void CTutorialList::TutorialList_OnCloseAnimRewind() {
+void CTutorialList::TutorialList_OnCloseAnimRewind() {
     if (AnimRewindFrame(mAnim28, 1.0f) != 0) {
         mState175 = 5;
         TutorialList_EnableOpenAnims();
     }
 }
 
-__declspec(noinline) void CTutorialList::TutorialList_OnShutdownAnimRewind() {
+void CTutorialList::TutorialList_OnShutdownAnimRewind() {
     if (AnimRewindFrame(mAnim24, 1.0f) != 0) {
         mState175 = 0;
         mInitialized = 1;
@@ -531,14 +520,14 @@ __declspec(noinline) void CTutorialList::TutorialList_OnShutdownAnimRewind() {
 }
 
 // Disable the +0x28 anim transform and enable the +0x24 one.
-__declspec(noinline) void CTutorialList::TutorialList_EnableOpenAnims() {
+void CTutorialList::TutorialList_EnableOpenAnims() {
     mLayout->SetAnimationEnable(mAnim28, false);
     mLayout->SetAnimationEnable(mAnim24, true);
 }
 
 // Re-enable the two anim transforms on the layout: mAnim24 disabled, mAnim28
 // enabled.
-__declspec(noinline) void CTutorialList::TutorialList_EnableCloseAnims() {
+void CTutorialList::TutorialList_EnableCloseAnims() {
     mLayout->SetAnimationEnable(mAnim24, false);
     mLayout->SetAnimationEnable(mAnim28, true);
 }
@@ -548,7 +537,7 @@ __declspec(noinline) void CTutorialList::TutorialList_EnableCloseAnims() {
 // the icon pane through the layout root-pane vtable call, and either push the
 // title text directly (empty string) or walk the text-lookup path keyed on
 // the id table.
-__declspec(noinline) void CTutorialList::TutorialList_UpdateRowTexts() {
+void CTutorialList::TutorialList_UpdateRowTexts() {
     for (u32 i = 0; i < 10; i++) {
         char buf[0x20];
         // Retail computes the id-table index early (live across the layout
@@ -579,7 +568,7 @@ __declspec(noinline) void CTutorialList::TutorialList_UpdateRowTexts() {
 // resolve the root pane, find the page-name pane and the scrollbar thumb
 // pane, ask ScalePaneWorldPos for the position between them and feed it to the
 // cursor's Move virtual (vtable +0x10).
-__declspec(noinline) void CTutorialList::TutorialList_MoveCursorToRow() {
+void CTutorialList::TutorialList_MoveCursorToRow() {
     // Retail frame: pos at sp+0x08 (16-byte slot), name buffer at sp+0x18.
     char name[0x28];
     f32 pos[4];
@@ -595,8 +584,7 @@ __declspec(noinline) void CTutorialList::TutorialList_MoveCursorToRow() {
 
 // Rebuild the sort menu entries: reset the menu, push the four tutorial-row
 // labels (text ids 0x25-0x28) and select the current page.
-// noinline: retail calls this from ConfirmOpenMenu rather than inlining.
-__declspec(noinline) void CTutorialList::TutorialList_RebuildSortEntries() {
+void CTutorialList::TutorialList_RebuildSortEntries() {
     if (mSortMenu.IsOpen() != 0) return;
     mSortMenu.Clear();
     mSortMenu.Add(BdatTouchStringCell("MNU_main", "name", 0x25));
@@ -606,7 +594,7 @@ __declspec(noinline) void CTutorialList::TutorialList_RebuildSortEntries() {
     mSortMenu.SetSelect(mField17E);
 }
 
-__declspec(noinline) void CTutorialList::TutorialList_UpdateTitleText() {
+void CTutorialList::TutorialList_UpdateTitleText() {
     char* text = BdatTouchStringCell("MNU_main", "name", mField17E + 0x25);
     LayoutSetTextBoxFmtValue(mLayout, "txt_btn", text, 0);
 }
@@ -614,8 +602,7 @@ __declspec(noinline) void CTutorialList::TutorialList_UpdateTitleText() {
 // Open the tutorial list once the layout resource finished loading: flag the
 // visible selection, rebuild the id table, copy the row/selection ids and run
 // the per-frame helper.
-// noinline: retail calls this out-of-line from OnFileEvent.
-__declspec(noinline) void CTutorialList::TutorialList_OpenAfterFilesReady() {
+void CTutorialList::TutorialList_OpenAfterFilesReady() {
     if (mAccessor == 0 || mFileHandle1 != 0) return;
     mField176 = 1;
     mField174 = 1;

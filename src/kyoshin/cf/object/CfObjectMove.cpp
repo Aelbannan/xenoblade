@@ -20,9 +20,9 @@
 #define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_hidden
 #define simGetLeafActData simGetLeafActData_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
-#undef func_8004B9D4
 #undef ScnRes_VertRayForward_E398
 #undef simGetLeafActData
+#undef func_8004B9D4
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
 #include <math.h>

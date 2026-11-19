@@ -108,21 +108,19 @@ static void __GXFifoLink(BOOL en) {
     GX_CP_REG_WRITE_U16(CP_ENABLE, (u16)gxdt->cpCtrlReg);
 }
 
-static GXFifoObjImpl GPFifo;
-static GXFifoObjImpl CPUFifo;
-static u8 CPUFifoReady;
-static u8 GPFifoReady[3];
-static volatile u32 __GXOverflowCount;
+GXFifoObjImpl GPFifo;
+GXFifoObjImpl CPUFifo;
+GXBool CPGPLinked;
+OSThread* __GXCurrentThread;
+volatile BOOL GXOverflowSuspendInProgress;
+GXBreakPtCallback BreakPointCB;
 volatile void* __GXCurrentBP;
-static GXBreakPtCallback BreakPointCB;
-static volatile BOOL GXOverflowSuspendInProgress;
-static OSThread* __GXCurrentThread;
-static u8 CPGPLinked[8];
+volatile u32 __GXOverflowCount;
+GXBool GPFifoReady;
+GXBool CPUFifoReady;
 
-/* Retail pools these in .data (non-const); sizes give the exact split tail
- * (0x18 + 0x16 = 0x2E). */
-static char lbl_8054B8C0[0x18] = "CPUFifo: %08X - %08X\n";
-static char lbl_8054B8D8[0x16] = "GP Fifo: %08X - %08X\n";
+static char lbl_8054B8C0[] = "CPUFifo: %08X - %08X\n";
+static char lbl_8054B8D8[] = "GP Fifo: %08X - %08X\n";
 
 void GXCPInterruptHandler(s32 interrupt, OSContext* context) {
     gxdt->cpStatReg = GX_CP_REG_READ_U16(CP_STATUS);
@@ -189,7 +187,7 @@ GXBool CPGPLinkCheck(void) {
     u32 overlap;
     u32 check = 0;
 
-    if (!CPUFifoReady || !GPFifoReady[0]) {
+    if (!CPUFifoReady || !GPFifoReady) {
         return GX_FALSE;
     }
 
@@ -230,7 +228,7 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
 
     if (fifo == NULL) {
         CPUFifoReady = 0;
-        CPGPLinked[0] = 0;
+        CPGPLinked = 0;
         /* Retail clears bind_gp @0x22 before bind_cpu @0x21. */
         CPUFifo.bind_gp = GX_FALSE;
         CPUFifo.bind_cpu = GX_FALSE;
@@ -239,42 +237,12 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
     }
 
     realFifo = (GXFifoObjImpl*)fifo;
-    {
-        GXFifoObjImpl* dst = &CPUFifo;
-        void* base;
-        void* end;
-        u32 size;
-        void* hiWatermark;
-        void* loWatermark;
-        void* readPtr;
-        void* writePtr;
-        u32 count;
-
-        /* Retail copies the 0x20 bind word first, then all 8 fields. */
-        *(u32*)&dst->wrap = *(u32*)&realFifo->wrap;
-        base = realFifo->base;
-        end = realFifo->end;
-        size = realFifo->size;
-        hiWatermark = realFifo->hiWatermark;
-        loWatermark = realFifo->loWatermark;
-        readPtr = realFifo->readPtr;
-        writePtr = realFifo->writePtr;
-        count = realFifo->count;
-
-        dst->base = base;
-        dst->end = end;
-        dst->size = size;
-        dst->hiWatermark = hiWatermark;
-        dst->loWatermark = loWatermark;
-        dst->readPtr = readPtr;
-        dst->writePtr = writePtr;
-        dst->count = count;
-    }
+    CPUFifo = *realFifo;
     CPUFifoReady = 1;
     CPUFifo.bind_cpu = GX_TRUE;
 
     if (CPGPLinkCheck()) {
-        CPGPLinked[0] = 1;
+        CPGPLinked = 1;
         CPUFifo.bind_gp = GX_TRUE;
 
         reg = 0;
@@ -290,9 +258,9 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
     } else {
         CPUFifo.bind_gp = GX_FALSE;
 
-        if (CPGPLinked[0]) {
+        if (CPGPLinked) {
             __GXFifoLink(GX_FALSE);
-            CPGPLinked[0] = 0;
+            CPGPLinked = 0;
         }
 
         __GXWriteFifoIntEnable(GX_FALSE, GX_FALSE);
@@ -318,8 +286,8 @@ void GXSetGPFifo(GXFifoObj* fifo) {
     __GXWriteFifoIntEnable(GX_FALSE, GX_FALSE);
 
     if (fifo == NULL) {
-        GPFifoReady[0] = 0;
-        CPGPLinked[0] = 0;
+        GPFifoReady = 0;
+        CPGPLinked = 0;
         __GXFifoLink(GX_FALSE);
         /* Retail clears bind_cpu @0x21 before bind_gp @0x22. */
         GPFifo.bind_cpu = GX_FALSE;
@@ -329,28 +297,11 @@ void GXSetGPFifo(GXFifoObj* fifo) {
     }
 
     realFifo = (GXFifoObjImpl*)fifo;
-    *(u32*)&GPFifo.wrap = *(u32*)&realFifo->wrap;
+    GPFifo = *realFifo;
+    GPFifoReady = 1;
+    GPFifo.bind_gp = GX_TRUE;
     {
-        void* writePtr = realFifo->writePtr;
-        void* readPtr = realFifo->readPtr;
-        void* loWatermark = realFifo->loWatermark;
-        void* hiWatermark = realFifo->hiWatermark;
-        u32 size = realFifo->size;
-        void* base = realFifo->base;
-        u32 count = realFifo->count;
-
-        /* Retail hoists all field loads ahead of the stores. */
-        GPFifo.end = realFifo->end;
-        GPFifo.size = size;
-        GPFifo.hiWatermark = hiWatermark;
-        GPFifo.loWatermark = loWatermark;
-        GPFifo.readPtr = readPtr;
-        GPFifo.writePtr = writePtr;
-        GPFifo.count = count;
-        GPFifoReady[0] = 1;
-        GPFifo.bind_gp = GX_TRUE;
-        GPFifo.base = base;
-
+        void* base = GPFifo.base;
         GX_CP_REG_WRITE_U16(CP_FIFO_BASEL, (u16)(u32)base);
         GX_CP_REG_WRITE_U16(CP_FIFO_TOPL, (u16)(u32)GPFifo.end);
         GX_CP_REG_WRITE_U16(CP_FIFO_COUNTL, (u16)GPFifo.count);
@@ -370,12 +321,12 @@ void GXSetGPFifo(GXFifoObj* fifo) {
     PPCSync();
 
     if (CPGPLinkCheck()) {
-        CPGPLinked[0] = 1;
+        CPGPLinked = 1;
         GPFifo.bind_cpu = GX_TRUE;
         __GXWriteFifoIntEnable(GX_TRUE, GX_FALSE);
         __GXFifoLink(GX_TRUE);
     } else {
-        CPGPLinked[0] = 0;
+        CPGPLinked = 0;
         GPFifo.bind_cpu = GX_FALSE;
         __GXWriteFifoIntEnable(GX_FALSE, GX_FALSE);
         __GXFifoLink(GX_FALSE);
@@ -406,7 +357,7 @@ void __GXSaveFifo(void) {
         CPUFifo.wrap = (u8)((reg >> 29) & 1);
     }
 
-    if (GPFifoReady[0]) {
+    if (GPFifoReady) {
         const volatile u16* cp = (const volatile u16*)__cpReg;
 
         temp = (u32)cp[CP_FIFO_RPTRH] << 16;
@@ -418,7 +369,7 @@ void __GXSaveFifo(void) {
         GPFifo.count = temp;
     }
 
-    if (CPGPLinked[0]) {
+    if (CPGPLinked) {
         CPUFifo.readPtr = GPFifo.readPtr;
         CPUFifo.count = GPFifo.count;
         GPFifo.writePtr = CPUFifo.writePtr;
@@ -434,7 +385,7 @@ void __GXSaveFifo(void) {
 }
 
 GXBool __GXIsGPFifoReady(void) {
-    return GPFifoReady[0];
+    return GPFifoReady;
 }
 
 GXBool GXGetCPUFifo(GXFifoObj* fifo) {
@@ -490,14 +441,14 @@ void __GXFifoInit(void) {
     memset(&CPUFifo, 0, sizeof(GXFifoObjImpl));
     memset(&GPFifo, 0, sizeof(GXFifoObjImpl));
     CPUFifoReady = 0;
-    GPFifoReady[0] = 0;
+    GPFifoReady = 0;
 }
 
 void __GXCleanGPFifo(void) {
     BOOL enabled;
     u32 reg;
 
-    if (!GPFifoReady[0]) {
+    if (!GPFifoReady) {
         return;
     }
 
@@ -515,7 +466,7 @@ void __GXCleanGPFifo(void) {
 
     PPCSync();
 
-    if (CPGPLinked[0]) {
+    if (CPGPLinked) {
         CPUFifo.readPtr = GPFifo.readPtr;
         CPUFifo.writePtr = GPFifo.writePtr;
         CPUFifo.count = GPFifo.count;

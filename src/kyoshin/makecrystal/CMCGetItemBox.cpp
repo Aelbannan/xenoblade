@@ -73,9 +73,8 @@ void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
 }
 
 // -O4,s keeps both passes rolled (pointer-walk + mtctr/bdnz sthx) as in retail.
-// noinline: retail keeps this init helper out-of-line (bl from the ctor).
 // C linkage: retail symbol is the plain name (reloc-site gate).
-extern "C" __declspec(noinline) void initMCItemSub(CMCItemBoxSub* x) {
+extern "C" void initMCItemSub(CMCItemBoxSub* x) {
     // Retail walks a pointer over the table (cmplw loop); the inline bound is
     // CSE-hoisted as an r0 temp, matching retail coloring. Known residual:
     // retail emits the hoisted addi before the param copy; every tested shape
@@ -133,7 +132,7 @@ void refillMCItemSubTable(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase
 }
 
 // Advance the counter; wrap to 0 when past the signed byte limit.
-extern "C" __declspec(noinline) void nextMCItemSubPage(CMCItemBoxSub* x) {
+extern "C" void nextMCItemSubPage(CMCItemBoxSub* x) {
     u8 v = (u8)(x->counter + 1);
     x->counter = v;
     if ((s8)v < x->limit) return;
@@ -141,7 +140,7 @@ extern "C" __declspec(noinline) void nextMCItemSubPage(CMCItemBoxSub* x) {
 }
 
 // Count the counter down; wrap to (limit-1) when it goes negative.
-extern "C" __declspec(noinline) void prevMCItemSubPage(CMCItemBoxSub* x) {
+extern "C" void prevMCItemSubPage(CMCItemBoxSub* x) {
     u8 v = (u8)(x->counter - 1);
     x->counter = v;
     if ((s8)v >= 0) return;
@@ -150,7 +149,7 @@ extern "C" __declspec(noinline) void prevMCItemSubPage(CMCItemBoxSub* x) {
 
 // Look up the entry at `index` in the offset table and return the derived
 // index-table word >> 20, or 0 when out of range.
-__declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub* x, u32 index) {
+u32 getMCItemSubItemId(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)x->counter * 30);
@@ -165,9 +164,9 @@ __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub* x, u32 index) {
 }
 
 // auto_inline off: retail keeps the single-call-site bl from refreshMCGetItemBoxSlots
-// (MWCC otherwise folds this small helper in despite noinline).
+// (MWCC otherwise folds this small helper in).
 #pragma auto_inline off
-__declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
+s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)x->counter * 30);
@@ -186,7 +185,7 @@ __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
 // Format the selected entry's item-name into the FixStr<64> at sub+0x108
 // (object offset 0x41C). Returns that FixStr, or null when out of range.
 // -O4,s keeps the retail stmw r28 frame.
-__declspec(noinline) char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
+char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
     // Declared in this order so MWCC colors callee-saved regs like retail
     // (sub-copy -> r31, string-table base -> r30, entry ptr -> r29).
     CMCItemBoxSub* x = sub;
@@ -226,7 +225,7 @@ __declspec(noinline) char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
 // stepped over. The whole formatted buffer is then copied back into the
 // FixStr (its mLength refreshed).
 // -O4,s keeps the retail stmw r18 frame.
-__declspec(noinline) char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
+char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
     CMCItemBoxEntry* base = sub->listBase;
     if (base == 0) return 0;
     // Retail sign-extends the page counter, scales by 30 and folds the u16
@@ -692,7 +691,7 @@ void moveMCGetItemBoxDown(CMCGetItemBox* self) {
 // Increment the sub counter, refresh helper widgets, and play a sound when the
 // item-box limit is anything other than 1.
 // -O4,s keeps the retail stmw r30 frame.
-extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
+extern "C" void nextMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     nextMCItemSubPage(x);
     refreshMCGetItemBoxSlots(self);
@@ -708,7 +707,7 @@ extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
 
 // Decrement the sub counter, refresh helper widgets, and play a sound when the
 // item-box limit is anything other than 1.
-extern "C" __declspec(noinline) void prevMCGetItemBoxPage(CMCGetItemBox* self) {
+extern "C" void prevMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     prevMCItemSubPage(x);
     refreshMCGetItemBoxSlots(self);
@@ -771,8 +770,7 @@ void cacheMCGetItemBoxEntries(CMCGetItemBox* self) {
 }
 
 // Look up the entry at `index` in the offset table and return its pointer.
-// noinline: retail keeps the loop's bl to this symbol.
-extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub* x, u32 index) {
+extern "C" CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u32 idx = (u16)(index + (s8)x->counter * 30);
@@ -865,7 +863,7 @@ u32 getMCGetItemBoxKeyCode(CMCGetItemBox* self) {
 
 // Open the item box: advance the second layout animation and, once it has
 // finished, initialise the state/widgets and refresh the cursor.
-extern "C" __declspec(noinline) void openMCGetItemBoxPhase2(CMCGetItemBox* self) {
+extern "C" void openMCGetItemBoxPhase2(CMCGetItemBox* self) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->field_4D = 3;
         self->mField55 = 1;
@@ -877,7 +875,7 @@ extern "C" __declspec(noinline) void openMCGetItemBoxPhase2(CMCGetItemBox* self)
 
 // Advance the first layout animation; when it has finished, enable the two
 // anim transforms on the layout and move to state 2.
-extern "C" __declspec(noinline) void openMCGetItemBoxPhase1(CMCGetItemBox* self) {
+extern "C" void openMCGetItemBoxPhase1(CMCGetItemBox* self) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, false);
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, true);
@@ -887,7 +885,7 @@ extern "C" __declspec(noinline) void openMCGetItemBoxPhase1(CMCGetItemBox* self)
 
 // Rewind the second layout animation via AnimRewindFrame; when finished, enable
 // the two anim transforms on the layout and move to state 5.
-extern "C" __declspec(noinline) void closeMCGetItemBoxPhase1(CMCGetItemBox* self) {
+extern "C" void closeMCGetItemBoxPhase1(CMCGetItemBox* self) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, false);
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, true);
@@ -897,7 +895,7 @@ extern "C" __declspec(noinline) void closeMCGetItemBoxPhase1(CMCGetItemBox* self
 
 // Rewind the first layout animation; when it has finished, rearm the
 // state bytes and reattach the cursor sub-object.
-extern "C" __declspec(noinline) void closeMCGetItemBoxPhase2(CMCGetItemBox* self) {
+extern "C" void closeMCGetItemBoxPhase2(CMCGetItemBox* self) {
     if (AnimRewindFrame(self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->mField55 = 1;
         self->field_4D = 0;
@@ -928,8 +926,7 @@ void activateMCGetItemBox(CMCGetItemBox* self) {
 // icon database (BdatGetU8Direct) and the 0x144-0x149 icon-name chain for both
 // the gem (type 3) and item (type 9) paths, plus a %d pane-name format at
 // &lbl[0x14e].
-// noinline: retail keeps the bl to this symbol from refreshMCGetItemBoxSlots.
-extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
+extern "C" void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
     if (e != 0) {
@@ -1010,9 +1007,7 @@ extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 i
 
 // Retail 0x80298FB4: item icon-name resolution for the grid cells.
 // -O4,s keeps the retail stmw r27 frame.
-// noinline: retail keeps the bl to this symbol from refreshMCGetItemBoxSlots (its body
-// otherwise folds in, surfacing as a stray CItem_initItemImplInstances call).
-__declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
+void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
     if (e != 0) {
@@ -1092,9 +1087,8 @@ __declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItem
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)((void*)self->layout40), (const char*)buf, (TPLPalette*)((void*)h));
     }
 }
-// noinline + C linkage: called out-of-line from refreshMCGetItemBoxSlots in retail
-// (unmangled reloc).
-__declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind, u32 idx) {
+// C linkage: unmangled retail reloc from refreshMCGetItemBoxSlots.
+void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind, u32 idx) {
     char buf1[0x20];   // sp+0x28
     char buf2[0x20];   // sp+0x08
     sprintf(buf1, &lbl_eu_8050FF8C[0x16e], idx + 1);
@@ -1111,9 +1105,7 @@ __declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int kind
 // Refresh layout text after index/sort change. Extra params are passed through
 // by openMCGetItemBox but ignored here (retail never reads r5/r6).
 // -O4,s keeps the retail stmw r29 frame (self/arg/sub live across calls).
-// noinline: retail keeps this out-of-line; without it MWCC inlines the whole
-// body into openMCGetItemBox (late-definition inlining defeats auto_inline off).
-extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
+extern "C" void initMCGetItemBoxList(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
     CMCItemBoxSub* sub = &self->sub_314;
     // Retail calls refillMCItemSubTable with only r3 set (r4/r5/r6 carry garbage),
     // so invoke it through a 1-arg prototype to avoid li r4/r5/r6 setup.
@@ -1151,7 +1143,7 @@ extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u
 // counter, reformat the page label and slide the page-cursor pane to the slot
 // matching the counter; then restamp all 30 grid cells.
 // -O4,s keeps the retail _savegpr_27 frame.
-extern "C" __declspec(noinline) void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
+extern "C" void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
     CMCItemBoxSub* sub = &self->sub_314;
     // Branchy select: retail defaults r0 to 1 and overwrites with the limit.
     u8 count = sub->limit != 0 ? sub->limit : 1;
@@ -1213,7 +1205,7 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxSlots(CMCGetItemBox* sel
 // Refresh the item-name texts in the layout panes and, when the item box is
 // open, re-sync the selected entry's name/icon widgets.
 // -O4,s keeps the retail stmw r28 frame.
-extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* self) {
+extern "C" void refreshMCGetItemBoxTexts(CMCGetItemBox* self) {
     CMCGetItemBox* self_ = self;
     s8 idx = (s8)(self->field_301 * 10 + self->field_300);
     CMCItemBoxSub* sub = &self_->sub_314;
@@ -1230,9 +1222,7 @@ extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* sel
 // Refresh the cursor widgets / page label.
 // -O4,s keeps the retail stmw r29 frame; the page-label buffer and the two
 // branch-local positions get disjoint stack slots (no overlay across branches).
-// noinline: retail keeps this out-of-line; without it MWCC inlines the whole
-// body into its earlier callers (late-definition inlining defeats auto_inline off).
-extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self) {
+extern "C" void moveMCGetItemBoxCursor(CMCGetItemBox* self) {
     char nameBuf[0x20];
     nw4r::math::VEC3 posIf;
     nw4r::math::VEC3 posElse;

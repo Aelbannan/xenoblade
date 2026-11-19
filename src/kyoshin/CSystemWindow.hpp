@@ -1,7 +1,10 @@
 #pragma once
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "kyoshin/CSysWin.hpp"
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
@@ -12,58 +15,35 @@
 /*
  * System window process (singleton, created by SysWinCreateSingleton).
  *
- * Retail class layout (derived from the Init/Term/dtor ASM):
- *   0x00  CProcess primary base - destroyed via ~CProcess (offset 0) in dtor
- *   0x3C  IUIWindow/Move region - content not recovered; byte padding
- *   0x6C  IWorkEvent vtable slot (bare member; never destroyed in this TU)
- *   0x70  IScnRender vtable slot - the render-callback subobject address passed
- *         to CScn::addRenderCB/removeRenderCB
- *   0x74  CScn* owning scene (loaded at Term's removeRenderCB / Init's addRenderCB)
- *   0x78  CSysWin storage (0x3A bytes). Not a C++ member (retail controls its
- *         ctor/dtor via C-linkage __ct__7CSysWinFUc / __dt__7CSysWinFv), so it is a
- *         bare byte buffer here to avoid duplicate destruction in ~CSystemWindow.
- *   0xB5  byte passed as the arg to __ct__7CSysWinFUc during Init
- *   0x2B6 flag = (lbl_eu_80663E24 >> 30) & 1 (drives cf load-flag management)
- *   sizeof = 0x2B7
+ * Real MI class, same base arrangement as its TU-mate CSysWinSelect:
+ *   0x00  IUIWindow base (destructor chain ends at CProcess)
+ *   0x6C  IWorkEvent base
+ *   0x70  IScnRender base (render callback subobject)
+ *   0x74  CScn* owning scene
+ *   0x78  CSysWin (0x3C)
+ *   0xB4  state machine byte, 0xB5 CSysWin kind used by Init
+ *   0xB6/0x1B6 two title strings, 0x2B6 presentation flag
  *
- * CSystemWindow is deliberately NON-polymorphic (a plain struct, like the repo's
- * CMenuQstCnt idiom): the retail object lays the CProcess base out explicitly at
- * +0x00 and drives the CSysWin + CProcess destruction by hand in ~CSystemWindow,
- * so a C++ CProcess base would make MWCC emit an extra vptr store / duplicate
- * subobject destruction that the retail dtor does not have.
+ * Retail CSystemWindow.cpp also defines CSysWinSelect (one TU: the
+ * @108@/@112@ CSystemWindow adjustor thunks sit after CSysWinSelect's code,
+ * and __vt__13CSystemWindow follows __vt__13CSysWinSelect in .data).
  */
-struct CSystemWindow {
-    u8    mProcess[0x10];    // 0x00 CProcess storage head
-    u32   mVptr;             // 0x10 CProcess vtable pointer
-    u8    _14[0x3C - 0x14];  // 0x14
-    // 0x3C IUIWindow/Move region (0x30 bytes). Two null ptmfs then control words.
-    u32   ptmf0[3];          // 0x3C null pointer-to-member-function
-    u32   ptmf1[3];          // 0x48 null pointer-to-member-function
-    u32   field_54;          // 0x54
-    u32   field_58;          // 0x58
-    u32   field_5C;          // 0x5C
-    u32   field_60;          // 0x60 (init to -1)
-    u8    field_64;          // 0x64 (Move state 3 -> 1)
-    u8    field_65;          // 0x65
-    u8    field_66;          // 0x66
-    u8    field_67;          // 0x67 (Move state 3 -> 0)
-    u32   field_68;          // 0x68
-    u32   mWorkEvent;        // 0x6C IWorkEvent vtable slot
-    u32   mScnRender;        // 0x70 IScnRender vtable slot
+class CSystemWindow : public IUIWindow, public IWorkEvent, public IScnRender {
+public:
+    CSystemWindow(CScn* scene, u32 opt, const char* str1, const char* str2);
+    virtual ~CSystemWindow();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
+
     CScn* mScene;            // 0x74 owning scene
-    u8    mSysWin[0x3A];     // 0x78 CSysWin storage
-    u8    _B2[0xB4 - 0xB2];  // 0xB2
+    CSysWin mSysWin;         // 0x78
     u8    mState;            // 0xB4 (Move state machine)
-    u8    field_B5;          // 0xB5
+    u8    field_B5;          // 0xB5 CSysWin kind
     char  mStr1[0x100];      // 0xB6
     char  mStr2[0x100];      // 0x1B6
     u8    mFlag2B6;          // 0x2B6
-
-    ~CSystemWindow();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
 };
 
 #include "monolib/scn/CScn.hpp"
@@ -80,8 +60,6 @@ extern "C" {
 void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
-void __ct__8CProcessFv(CProcess* self);
-void __dt__8CProcessFv(CProcess* self, int flags);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols).
 // Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
@@ -91,17 +69,10 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 // C++-linkage helpers - MWCC mangles these to the retail symbols
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / playUISound__FUl.
 
-// Singleton factory (typed to __ct__CSystemWindow args).
+// Singleton factory (args forwarded to the CSystemWindow ctor).
 extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u32 opt,
                              const char* str1, const char* str2);
-extern "C" CSystemWindow* SysWinGetSingleton();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)
 extern u32 lbl_eu_80663E28;              // cbRenderBefore flag (.sbss)
-
-extern u32 __ptmf_null[3];               // null pointer-to-member-function constant
-// IUIWindow base vtable (written at +0x10 before the __ptmf_null copy, then
-// overwritten by lbl_eu_8052D378). Plain byte arrays so we can take &arr+off.
-extern char lbl_eu_8052D238[];
-extern char lbl_eu_8052D378[];

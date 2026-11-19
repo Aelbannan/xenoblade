@@ -524,7 +524,7 @@ extern "C" CPartyStateWinBlob58* PartyStateWin_CopyStateBlob58(CPartyStateWinBlo
 extern "C" CPartyStateWinBlob10C0* PartyStateWin_CopyBlob10C0(CPartyStateWinBlob10C0* self,
                                                  CPartyStateWinBlob10C0* src);
 extern "C" void PartyStateWin_CopyEquipChange(CEquipChange* dst, CEquipChange* src);
-extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg2);
+extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self);
 
 // Equip-display pad-chain targets used by PartyStateWin_StateEquipDisplay (retail unmangled;
 // the CModelDispEquip header cannot be included here).

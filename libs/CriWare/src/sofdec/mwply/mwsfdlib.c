@@ -70,7 +70,7 @@ typedef struct MWSFDGlobal {
 /* Movie-player handle (MWSFDPLY) fields read by the error formatter. */
 typedef struct MWSFDHndl {
     u8 _00[0xE0];
-    u32 field_0xE0;      /* 0xE0 */
+    s32 field_0xE0;      /* 0xE0 */
     u8 _E4[0xE8 - 0xE4];
     s32 field_0xE8;      /* 0xE8 */
     s32 field_0xEC;      /* 0xEC */
@@ -268,11 +268,7 @@ typedef struct MWSFDCfg {
  * callback, then hands the config block to fn_803C3320. Errors are recorded
  * in the lib work errCode slot and returned. */
 s32 mwPlySfdInit(void* self) {
-    MWSFDCfg cfg;
-    u32 version = lbl_eu_8051AB38;
-
-    cfg.self = (u32)self;
-    cfg.version = version;
+    MWSFDCfg cfg = {lbl_eu_8051AB38, (u32)self};
 
     if (SFD_IsVersionCompatible(lbl_eu_8051ADD0 + 0xA8, 0x39B0) != 1) {
         MWSFSVM_Error(lbl_eu_8051ADD0 + 0xAE);
@@ -308,13 +304,47 @@ void MWSFLIB_SfdErrFunc(u32 hndl, u32 err) {
     }
     if (err != 0) {
         c = g->errCount;
-        g->errStack[c] = err;
+        u32* errStack = g->errStack;
+        errStack[c] = err;
         if ((int)c < 0xF)
             g->errCount = c + 1;
     }
-    switch (err) {
+    switch ((s32)err) {
+    case -3:
+    case -2:
+        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0xE0, err);
+        break;
+    case 0xFF000431:
+    case 0xFF000F5B:
+        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0xF1, err, fn_803C3300());
+        break;
+    case 0xFF000F17:
+    case 0xFF000F18: {
+        s32 validSize = 0;
+        s32 width = 0;
+        s32 height = 0;
+        if (h != NULL && h->field_0xE0 == 1) {
+            width = h->field_0xE8;
+            height = h->field_0xEC;
+            if (width > 0 && height > 0)
+                validSize = 1;
+        }
+        if (validSize == 0)
+            sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x105, err, width, height);
+        else
+            sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x163, err, width, height);
+        break;
+    }
+    case 0xFF000408:
+    case 0xFF00040C:
+    case 0xFF000F1C:
+        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x1C8, err);
+        break;
     case 0xFF000F15:
         sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x219, err);
+        break;
+    case 0xFF000C04:
+        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x286, err);
         break;
     case 0xFF000F1F:
         sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x309, err);
@@ -322,37 +352,8 @@ void MWSFLIB_SfdErrFunc(u32 hndl, u32 err) {
     case 0xFF000F04:
         sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x34F, err);
         break;
-    case 0xFF000C04:
-        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x286, err);
-        break;
-    case 0xFF000431:
-    case 0xFF000F5B:
-        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0xF1, err,
-                fn_803C3300());
-        break;
-    case 0xFF00040C:
-    case 0xFF000408:
-    case 0xFF000F1C:
-        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x1C8, err);
-        break;
-    case 0xFF000F17:
-        if (h != NULL && h->field_0xE0 == 1 && h->field_0xE8 > 0 &&
-            h->field_0xEC > 0)
-            sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x163, err);
-        else
-            sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x105, err);
-        break;
     default:
-        /* Only -2 has a dedicated message among small negative codes; MWCC
-         * folds this range check into the switch comparison tree. */
-        if ((s32)err >= -3) {
-            if ((s32)err < -1)
-                sprintf(g->errMsg, lbl_eu_8051ADD0 + 0xE0, err);
-            else
-                sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x3AB, err);
-        } else {
-            sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x3AB, err);
-        }
+        sprintf(g->errMsg, lbl_eu_8051ADD0 + 0x3AB, err);
         break;
     }
     MWSFSVM_Error(g->errMsg);

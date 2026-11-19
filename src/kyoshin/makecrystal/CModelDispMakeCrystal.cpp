@@ -48,9 +48,6 @@
 #define func_8004B9D4 func_8004B9D4_hidden
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
-#define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
-#define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_typed_hidden
-#define Tok_FormatStr Tok_FormatStr_fixstr_hidden
 // Scn_FindCamItem: unified on `void*(void*, int)` (CActParamAnim.hpp was s32)
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
@@ -61,9 +58,6 @@
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
-#undef __ct__17UnkClass_8045F564Fv
-#undef __dt__17UnkClass_8045F564Fv
-#undef Tok_FormatStr
 
 // Typified wave7: retail .data color table (8 rows of 3 bytes; struct + use
 // site already exist in the hpp: `lbl_eu_80535D90->c`).
@@ -215,7 +209,7 @@ extern "C" void* CfRes_tryResolveToken(u32, void*);
 short CfObjectMove_getSubB0FieldA(void*);
 void CtrlObjectParam_GetSlotTableBase();
 u32 bdatPcPartsRes(u32, s16, u32, u32);
-int Tok_FormatStr(void*, u32, int, int);
+
 void syncFieldData__Q22cf13CfGameManagerFv(u32, bool);
 int Bdat_GetMaxRow_B1EC(void*);
 void CItem_initSlot(void*, u16, u16, u8);
@@ -855,7 +849,7 @@ void MakeCrystal_StateChargeWait(CModelDispMakeCrystal* self)
 }
 
 // -O4,s frame: retail saves r30/r31 with stmw/lmw.
-void __declspec(noinline) MakeCrystal_StateSlotCheck(CModelDispMakeCrystal* self)
+void MakeCrystal_StateSlotCheck(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     for (u32 i = 0; i < 2; i++) {
@@ -874,7 +868,7 @@ void __declspec(noinline) MakeCrystal_StateSlotCheck(CModelDispMakeCrystal* self
     MakeCrystal_SpawnCrystalItem(self, 0, GetCollectedFlagByte(base[0xbbc]));
 }
 
-void __declspec(noinline) MakeCrystal_StateStartFx(CModelDispMakeCrystal* self)
+void MakeCrystal_StateStartFx(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
@@ -900,7 +894,7 @@ void __declspec(noinline) MakeCrystal_StateStartFx(CModelDispMakeCrystal* self)
     }
 }
 
-void __declspec(noinline) MakeCrystal_TickRise(CModelDispMakeCrystal* self)
+void MakeCrystal_TickRise(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
@@ -956,7 +950,7 @@ void __declspec(noinline) MakeCrystal_TickRise(CModelDispMakeCrystal* self)
     MakeCrystal_SpawnCrystalItem(self, 1, GetCollectedFlagByte(base[0xbbc]));
 }
 
-void __declspec(noinline) MakeCrystal_StateChargeStep(CModelDispMakeCrystal* self)
+void MakeCrystal_StateChargeStep(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
@@ -979,9 +973,8 @@ void __declspec(noinline) MakeCrystal_StateChargeStep(CModelDispMakeCrystal* sel
 // Retail table lbl_eu_8056DD70 word 42 is CScnItemModel::vfuncA8 (cf.
 // CModelDispEquip.hpp); call sites now use the owning class directly.)
 
-// Retail symbol is the unmangled C-linkage "setCrystalPosEntry"; noinline:
-// retail calls it out-of-line (bl) from MakeCrystal_PlaceCrystals/MakeCrystal_RebuildSubStruct.
-extern "C" void __declspec(noinline) setCrystalPosEntry(
+// Retail symbol is the unmangled C-linkage "setCrystalPosEntry".
+extern "C" void setCrystalPosEntry(
     void* entries, unsigned short index, short a, short b);
 
 // Retail 0x8021F058: crystal-result state ticker.
@@ -992,7 +985,7 @@ extern "C" void __declspec(noinline) setCrystalPosEntry(
 // arc entry (lbl_eu_8065FC18), stops the old sound object and starts a new
 // one through the file-state machine, releases both slot substructs
 // (0x25 release), plays 0x7c/0x7d and re-enters the state machine at 3.
-void __declspec(noinline) MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
+void MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
@@ -1054,7 +1047,7 @@ void __declspec(noinline) MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
 }
 
 // -O4,s frame: retail keeps the plain divw for the %10 (no magic-multiply).
-void __declspec(noinline) MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
+void MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
@@ -1105,7 +1098,7 @@ void __declspec(noinline) MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* self)
+void MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
@@ -1222,9 +1215,7 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
     base[0xbdd] = 2;
 }
 
-// noinline: retail calls this out-of-line (bl) from MakeCrystal_PlaceCrystals/MakeCrystal_RebuildSubStruct;
-// -ipa file otherwise folds the small body into those callers.
-extern "C" void __declspec(noinline) setCrystalPosEntry(
+extern "C" void setCrystalPosEntry(
     void* entries, unsigned short index, short a, short b)
 {
     struct Entry {
@@ -1254,7 +1245,7 @@ struct MCCSuccessAnchor {
     CMCEffSuccess effD5C;
 };
 
-void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
+void MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (!crystalListIsActive(base + 0xc18)) return;
@@ -1295,7 +1286,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* se
     }
 }
 
-void __declspec(noinline) MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* self)
+void MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     // Once the success effect finishes, record the "crystal placed" state
@@ -1306,7 +1297,7 @@ void __declspec(noinline) MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* sel
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateFailWait(CModelDispMakeCrystal* self) {
+void MakeCrystal_StateFailWait(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     *(reinterpret_cast<f32*>(base + 0x2dcc)) += lbl_eu_806684A0;
     if (isFinished__11CMCEffStartFv(base + 0xd78)) {
@@ -1320,7 +1311,7 @@ void __declspec(noinline) MakeCrystal_StateFailWait(CModelDispMakeCrystal* self)
 // Retail 0x8021FA00: crystal list active - if the gauge has settled to its
 // base value, mark the divide-out state; otherwise push the next crystal info
 // into the crystal effect and start its in-anim.
-void __declspec(noinline) MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self)
+void MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (crystalListIsActive(base + 0xc18)) {
@@ -1341,7 +1332,7 @@ void __declspec(noinline) MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self
 // finishes, either start the change-in anim (count >= 200) or trace-out.
 // NOTE: retail saves r30/r31 as one [stmw] block; -O4,p emits separate stw
 // (MWCC_CASES S16), so force the size-optimal frame like MakeCrystal_InitSlotArray.
-void __declspec(noinline) MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* self)
+void MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__13CMCEffCrystalFv(base + 0xd90)) {
@@ -1373,7 +1364,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalChk(CModelDispMakeCrystal* sel
 // Retail 0x8021FB64: crystal-list state driver - when the start effect
 // finishes, either run the success/special path (crystal count >= 300) or
 // the trace-out path.
-void __declspec(noinline) MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
+void MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__11CMCEffStartFv(base + 0xdcc) == 0) return;
@@ -1407,7 +1398,7 @@ void __declspec(noinline) MakeCrystal_StateRankUp(CModelDispMakeCrystal* self)
 
 // Retail 0x8021FC78: once the divide-in effect finishes, snap the gauge
 // position, switch state, and begin the crystal effect's out animation.
-void __declspec(noinline) MakeCrystal_StateDivideDone(CModelDispMakeCrystal* self)
+void MakeCrystal_StateDivideDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__11CMCEffStartFv(base + 0xde4)) {
@@ -1420,7 +1411,7 @@ void __declspec(noinline) MakeCrystal_StateDivideDone(CModelDispMakeCrystal* sel
 
 // Retail 0x8021FD64: once the crystal-out effect finishes, either lock in the
 // success state (crystal count >= 100) or start the success-effect out anim.
-void __declspec(noinline) MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* self)
+void MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__13CMCEffCrystalFv(base + 0xd90)) {
@@ -1437,7 +1428,7 @@ void __declspec(noinline) MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* se
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateSuccessChk(CModelDispMakeCrystal* self)
+void MakeCrystal_StateSuccessChk(CModelDispMakeCrystal* self)
 {
     if (isFinished__FPv(&((MCCSuccessAnchor*)self)->effD5C)) {
         u8* base = reinterpret_cast<u8*>(self);
@@ -1455,7 +1446,7 @@ void __declspec(noinline) MakeCrystal_StateSuccessChk(CModelDispMakeCrystal* sel
     }
 }
 
-void __declspec(noinline) MakeCrystal_NopDF84(CModelDispMakeCrystal* self)
+void MakeCrystal_NopDF84(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     // Once the cylinder effect finishes and the gauge is full, start the
@@ -1482,7 +1473,7 @@ void __declspec(noinline) MakeCrystal_NopDF84(CModelDispMakeCrystal* self)
 // Retail frame is stmw r30 (2-reg save); decomp emits separate stw saves -
 // per-function -O4,s pragma was tried and made the body diverge further
 // (MWCC_CASES §16/§13 static cap).
-void __declspec(noinline) MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
+void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -1738,7 +1729,7 @@ struct CMCItemData {
 // Retail 0x80220418: cylinder-count finalize. Once the cylinder effect
 // finishes, rebuild the item step list from the gauge value and the current
 // crystal-slot entries, then hand the next step off to the cylinder UI.
-void __declspec(noinline) MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* self)
+void MakeCrystal_FinalizeCylCount(CModelDispMakeCrystal* self)
 {
     if (isFinished__14CMCEffCylinderFv((u8*)self + 0xdfc) == 0) return;
     reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->decrementLevel();
@@ -1835,7 +1826,7 @@ void CMCCrystalParamTable::sortSlots()
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateCylDone(CModelDispMakeCrystal* self)
+void MakeCrystal_StateCylDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     // Once the cylinder effect finishes, mark the cylinder phase done and
@@ -1849,7 +1840,7 @@ void __declspec(noinline) MakeCrystal_StateCylDone(CModelDispMakeCrystal* self)
 // Retail 0x80220958: crystal charge float tick - accumulate the charge,
 // clamp and flag the charged state, then push the value into the model and
 // slot effects; once charged, advance the crystal list state.
-void __declspec(noinline) MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* self)
+void MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
@@ -1907,7 +1898,7 @@ void MakeCrystal_PickPassFail(CModelDispMakeCrystal* self)
     }
 }
 
-void __declspec(noinline) MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self)
+void MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -1978,7 +1969,7 @@ void __declspec(noinline) MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self
     }
 }
 
-void __declspec(noinline) func_8021EF30(CModelDispMakeCrystal* self)
+void func_8021EF30(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (!isMCGetItemBoxReady(base + 0xecc)) return;
@@ -2002,7 +1993,7 @@ void __declspec(noinline) func_8021EF30(CModelDispMakeCrystal* self)
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateSysWinPrompt(CModelDispMakeCrystal* self) {
+void MakeCrystal_StateSysWinPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     if (!reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) return;
     base[0xbdd] = 0x1b;
@@ -2015,7 +2006,7 @@ void __declspec(noinline) MakeCrystal_StateSysWinPrompt(CModelDispMakeCrystal* s
 
 
 // [stmw] r30 frame (see MakeCrystal_StateCrystalChk note): -O4,s.
-void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self)
+void MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -2076,7 +2067,7 @@ void __declspec(noinline) MakeCrystal_ShowCursorPane(CModelDispMakeCrystal* self
 
 // Retail 0x80221104
 // step: zero runs the confirm-side cleanup, non-zero moves the cursor forward.
-void __declspec(noinline) MakeCrystal_StateConfirmStep(CModelDispMakeCrystal* self)
+void MakeCrystal_StateConfirmStep(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
@@ -2093,7 +2084,7 @@ void __declspec(noinline) MakeCrystal_StateConfirmStep(CModelDispMakeCrystal* se
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateItemMenuWait(CModelDispMakeCrystal* self)
+void MakeCrystal_StateItemMenuWait(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     // While the item menu is not open, move to the pass/fail tuning state
@@ -2104,7 +2095,7 @@ void __declspec(noinline) MakeCrystal_StateItemMenuWait(CModelDispMakeCrystal* s
     }
 }
 
-void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
+void func_8021F2D8(CModelDispMakeCrystal* self)
 {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     int trigger1, trigger2, trigger3, cancel, confirm, menu, dir;
@@ -2182,7 +2173,7 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateConfirmPrompt(CModelDispMakeCrystal* self) {
+void MakeCrystal_StateConfirmPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     if (!reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) return;
     base[0xbdd] = 0x22;
@@ -2194,7 +2185,7 @@ void __declspec(noinline) MakeCrystal_StateConfirmPrompt(CModelDispMakeCrystal* 
 }
 
 
-void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* self)
+void MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -2249,7 +2240,7 @@ void __declspec(noinline) MakeCrystal_CheckItemMenuDone(CModelDispMakeCrystal* s
 
 // Retail 0x80221654
 // the crystal-success menu (confirm path 3 / cursor-forward path 0x20).
-void __declspec(noinline) MakeCrystal_StateSuccessMenu(CModelDispMakeCrystal* self)
+void MakeCrystal_StateSuccessMenu(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     if (reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) {
@@ -2266,7 +2257,7 @@ void __declspec(noinline) MakeCrystal_StateSuccessMenu(CModelDispMakeCrystal* se
     }
 }
 
-void __declspec(noinline) MakeCrystal_StateSuccessWait(CModelDispMakeCrystal* self)
+void MakeCrystal_StateSuccessWait(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     // Same item-menu gate as MakeCrystal_StateItemMenuWait, but for the success state (0x1f).
@@ -2276,7 +2267,7 @@ void __declspec(noinline) MakeCrystal_StateSuccessWait(CModelDispMakeCrystal* se
     }
 }
 
-void __declspec(noinline) MakeCrystal_OpenResultDialog(CModelDispMakeCrystal* self)
+void MakeCrystal_OpenResultDialog(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     base[0xbdd] = 0x26;
@@ -2291,7 +2282,7 @@ void __declspec(noinline) MakeCrystal_OpenResultDialog(CModelDispMakeCrystal* se
     reinterpret_cast<CSysWin*>(base + 0xe78)->openPhase1();
 }
 
-void __declspec(noinline) MakeCrystal_StateResultPrompt(CModelDispMakeCrystal* self) {
+void MakeCrystal_StateResultPrompt(CModelDispMakeCrystal* self) {
     u8* base = reinterpret_cast<u8*>(self);
     if (!reinterpret_cast<CSysWin*>(base + 0xe78)->isActive()) return;
     base[0xbdd] = 0x27;
@@ -2303,7 +2294,7 @@ void __declspec(noinline) MakeCrystal_StateResultPrompt(CModelDispMakeCrystal* s
 }
 
 
-void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* self)
+void MakeCrystal_ReadResultInput(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -2358,7 +2349,7 @@ void __declspec(noinline) MakeCrystal_ReadResultInput(CModelDispMakeCrystal* sel
 
 // Retail 0x8022196C: while the CSysWin dialog is open, mark the confirmation
 // step active; if the cursor step is zero, flag the confirm UI as initialised.
-void __declspec(noinline) MakeCrystal_StateConfirmDone(CModelDispMakeCrystal* self)
+void MakeCrystal_StateConfirmDone(CModelDispMakeCrystal* self)
 {
     CModelDispMakeCrystalFull* full = reinterpret_cast<CModelDispMakeCrystalFull*>(self);
     if (reinterpret_cast<CSysWin*>(reinterpret_cast<u8*>(self) + 0xe78)->isActive()) {
@@ -3111,7 +3102,7 @@ void MakeCrystal_RebuildSubStruct(CModelDispMakeCrystal* self, u8* subp)
             char pathBuf[96];
             u32 outTag = 0;
             pathBuf[0] = 0;
-            if (Tok_FormatStr(pathBuf, *(u32*)(subp + 0x544 + i * 4), 1, 1) != 0) {
+            if (Tok_FormatStr(*reinterpret_cast<ml::FixStr<64>*>(pathBuf), *(u32*)(subp + 0x544 + i * 4), 1, 1) != 0) {
                 u8* slot = subp + 0x568 + (i - 1) * 0xc;
                 if (*reinterpret_cast<u32*>(slot) == 0) {
                     anyLoaded = 0;

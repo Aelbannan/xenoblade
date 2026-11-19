@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/cf/CItemBlockApi.hpp"
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 

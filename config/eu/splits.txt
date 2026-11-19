@@ -502,14 +502,9 @@ kyoshin/CQuestWindow.cpp:
 	.text       start:0x80122C40 end:0x801250C8
 
 kyoshin/CSystemWindow.cpp:
-	extab       start:0x8000BE1C end:0x8000BEBC
-	extabindex  start:0x80027298 end:0x800272EC
-	.text       start:0x801250C8 end:0x8012565C
-
-kyoshin/CSysWinSelect.cpp:
-	extab       start:0x8000BEBC end:0x8000BFA0
-	extabindex  start:0x800272EC end:0x80027358
-	.text       start:0x8012565C end:0x80125DEC
+	extab       start:0x8000BE1C end:0x8000BFA0
+	extabindex  start:0x80027298 end:0x80027358
+	.text       start:0x801250C8 end:0x80125DEC
 
 kyoshin/CTagProcessor.cpp:
 	extab       start:0x8000BFA0 end:0x8000C284
@@ -3347,63 +3342,77 @@ RVL_SDK/src/revolution/wud/debug_msg.c:
 
 CriWare/src/adx/adxf/adx_fini.c:
 	.text       start:0x8037F3A0 end:0x8037F4F8
+	.bss        start:0x805DFDA8 end:0x805E0628
 
 CriWare/src/adx/adxf/adx_fs.c:
 	.text       start:0x8037F4F8 end:0x803822E8
+	.bss        start:0x805E0628 end:0x805E26B0
 
 CriWare/src/adx/adxf/adx_fcch.c:
 	.text       start:0x803822E8 end:0x803822EC
 
 CriWare/src/adx/adxt/adx_fsvr.c:
 	.text       start:0x803822EC end:0x803823E4
+	.bss        start:0x805E26B0 end:0x805E26C8
 
 CriWare/src/adx/adxt/adx_inis.c:
 	.text       start:0x803823E4 end:0x80382690
+	.bss        start:0x805E26C8 end:0x805E3328
 
 CriWare/src/adx/adxt/adx_lsc.c:
 	.text       start:0x80382690 end:0x803826F8
+	.bss        start:0x805E3328 end:0x805E3338
 
 CriWare/src/adx/adxt/adx_mng.c:
 	.text       start:0x803826F8 end:0x80382798
 
 CriWare/src/adx/adxt/adx_sfa.c:
 	.text       start:0x80382798 end:0x803827C0
+	.bss        start:0x805E3338 end:0x805E3340
 
 CriWare/src/adx/adxt/adx_sjd.c:
 	.text       start:0x803827C0 end:0x80383CC8
+	.bss        start:0x805E3340 end:0x805E3E98
 
 CriWare/src/adx/adxt/adx_stmc.c:
 	.text       start:0x80383CC8 end:0x80385390
+	.bss        start:0x805E3E98 end:0x805E4EF0
 
 CriWare/src/adx/adxt/adx_tlk2.c:
 	.text       start:0x80385390 end:0x803855A0
 
 CriWare/src/adx/adxt/adx_tlk.c:
 	.text       start:0x803855A0 end:0x803878BC
+	.bss        start:0x805E4EF0 end:0x805E4F70
 
 CriWare/src/adx/adxt/adx_tsvr.c:
 	.text       start:0x803878BC end:0x803888A8
+	.bss        start:0x805E4F70 end:0x805E4F80
 
 CriWare/src/adx/adxt/adx_xpnd.c:
 	.text       start:0x803888A8 end:0x80388C90
+	.bss        start:0x805E4F80 end:0x805E5348
 
 CriWare/src/adx/adxt/adx_amp.c:
 	.text       start:0x80388C90 end:0x80388EA8
 
 CriWare/src/adx/adxt/adx_bahx.c:
 	.text       start:0x80388EA8 end:0x80388F78
+	.bss        start:0x805E5348 end:0x805E5358
 
 CriWare/src/adx/adxt/adx_baif.c:
 	.text       start:0x80388F78 end:0x80389B08
 
 CriWare/src/adx/adxt/adx_bsc.c:
 	.text       start:0x80389B08 end:0x8038B640
+	.bss        start:0x805E5358 end:0x805E6378
 
 CriWare/src/adx/adxt/adx_bwav.c:
 	.text       start:0x8038B640 end:0x8038C628
 
 CriWare/src/adx/adxt/adx_crs.c:
 	.text       start:0x8038C628 end:0x8038C690
+	.bss        start:0x805E6378 end:0x805E6380
 
 CriWare/src/adx/adxt/adx_dcd5.c:
 	.text       start:0x8038C690 end:0x8038CD48
@@ -3413,6 +3422,7 @@ CriWare/src/adx/adxt/adx_dcd.c:
 
 CriWare/src/adx/adxt/adx_errs.c:
 	.text       start:0x8038D40C end:0x8038D8EC
+	.bss        start:0x805E6380 end:0x805E64A8
 
 CriWare/src/adx/ahx/ahx_ftbl.c:
 	.text       start:0x8038D8EC end:0x8038D918
@@ -3431,9 +3441,11 @@ CriWare/src/adx/ahx/ahx_sbf2.c:
 
 CriWare/src/adx/ahx/ahx_sbf.c:
 	.text       start:0x8038F6CC end:0x8038FA00
+	.bss        start:0x805E64A8 end:0x805E64C0
 
 CriWare/src/adx/ahx/ahx_sjd.c:
 	.text       start:0x8038FA00 end:0x803901C4
+	.bss        start:0x805E64C0 end:0x805E64C8
 
 CriWare/src/adx/ahx/ahx_wtbl.c:
 	.text       start:0x803901C4 end:0x803901F0
@@ -3449,60 +3461,78 @@ CriWare/src/adx/ahx/ahx_bsr.c:
 
 CriWare/src/adx/ahx/ahx_cmn.c:
 	.text       start:0x80390C64 end:0x80390C84
+	.bss        start:0x805E64C8 end:0x805E64D0
 
 CriWare/src/adx/ahx/ahx_dcd.c:
 	.text       start:0x80390C84 end:0x80392748
+	.bss        start:0x805E64D0 end:0x805E66E0
 
 CriWare/src/adx/cricfg/cfg_lib.c:
 	.text       start:0x80392748 end:0x803927FC
+	.bss        start:0x805E66E0 end:0x805E66E8
 
 CriWare/src/adx/cvfs/cri_cvfs.c:
 	.text       start:0x803927FC end:0x80393B8C
+	.bss        start:0x805E66E8 end:0x805E6B70
 
 CriWare/src/adx/gcci/gcci.c:
 	.text       start:0x80393B8C end:0x803949AC
+	.bss        start:0x805E6B70 end:0x805E7B28
 
 CriWare/src/adx/gcci/gcci_sub.c:
 	.text       start:0x803949AC end:0x803949B8
+	.bss        start:0x805E7B28 end:0x805E7C30
 
 CriWare/src/adx/lsc/lsc_err.c:
 	.text       start:0x803949B8 end:0x80394AB0
+	.bss        start:0x805E7C30 end:0x805E7D38
 
 CriWare/src/adx/lsc/lsc_ini.c:
 	.text       start:0x80394AB0 end:0x80394BC4
+	.bss        start:0x805E7D38 end:0x805EC440
 
 CriWare/src/adx/lsc/lsc_svr.c:
 	.text       start:0x80394BC4 end:0x80394F58
 
 CriWare/src/adx/lsc/lsc.c:
 	.text       start:0x80394F58 end:0x80395A0C
+	.bss        start:0x805EC440 end:0x805EC450
 
 CriWare/src/adx/lsc/lsc_crs.c:
 	.text       start:0x80395A0C end:0x80395A1C
 
 CriWare/src/adx/mfci/mfci.c:
 	.text       start:0x80395A1C end:0x8039669C
+	.bss        start:0x805EC450 end:0x805ECE48
 
 CriWare/src/adx/sj/sj_mem.c:
 	.text       start:0x8039669C end:0x803974BC
+	.bss        start:0x805ECE48 end:0x805ED2D0
 
 CriWare/src/adx/sj/sj_rbf.c:
 	.text       start:0x803974BC end:0x80398810
+	.bss        start:0x805ED2D0 end:0x805F1AD8
 
 CriWare/src/adx/sj/sj_uni.c:
 	.text       start:0x80398810 end:0x803997D4
+	.bss        start:0x805F1AD8 end:0x805F26E0
 
 CriWare/src/adx/sj/sj_utl.c:
 	.text       start:0x803997D4 end:0x80399A3C
 
 CriWare/src/adx/sj/sj_crs.c:
 	.text       start:0x80399A3C end:0x80399B08
+	.bss        start:0x805F26E0 end:0x805F26F0
 
 CriWare/src/adx/sj/sj_err.c:
 	.text       start:0x80399B08 end:0x80399B0C
 
 CriWare/src/adx/svm/svm.c:
 	.text       start:0x80399B0C end:0x8039AD88
+	.bss        start:0x805F26F0 end:0x805F2AF0
+
+CriWare/src/adx/adxt/adx_dcd3.c:
+	.bss        start:0x805F2AF0 end:0x805F2AF8
 
 CriWare/src/adx/adxt/adx_bsps.c:
 	.text       start:0x8039AD88 end:0x8039B2E8
@@ -3515,12 +3545,15 @@ CriWare/src/adx/wiirna/rna_crs.c:
 
 CriWare/src/adx/wiirna/rna_err.c:
 	.text       start:0x8039C318 end:0x8039C384
+	.bss        start:0x805F2AF8 end:0x805F2C00
 
 CriWare/src/adx/wiirna/ax_rna.c:
 	.text       start:0x8039C384 end:0x8039DD7C
+	.bss        start:0x805F2C00 end:0x805F3A50
 
 CriWare/src/adx/adxt/srcwii/adx_mwii.c:
 	.text       start:0x8039DD7C end:0x8039E5F4
+	.bss        start:0x805F3A50 end:0x805FDDA0
 
 CriWare/src/adx/adxt/srcwii/adx_suwii.c:
 	.text       start:0x8039E5F4 end:0x8039E6C4
@@ -3530,6 +3563,7 @@ CriWare/src/adx/adxt/srcwii/adx_rnawii.c:
 
 CriWare/src/adx/std/cri_crw_std.c:
 	.text       start:0x8039E76C end:0x8039EB5C
+	.bss        start:0x805FDDA0 end:0x805FDDC0
 
 CriWare/src/sofdec/cft/srcgc/cftyp422_ppc.c:
 	.text       start:0x8039EB5C end:0x8039EF4C
@@ -4842,14 +4876,14 @@ monolib/src/scn/CScnMem.cpp:
 	.text       start:0x80492B1C end:0x80492D98
 
 monolib/src/scn/CScnRoot.cpp:
-	extab       start:0x8001ED44 end:0x8001ED84
-	extabindex  start:0x80036B08 end:0x80036B38
-	.text       start:0x80492D98 end:0x804933AC
+	extab       start:0x8001ED44 end:0x8001ED54
+	extabindex  start:0x80036B08 end:0x80036B20
+	.text       start:0x80492D98 end:0x80492E5C
 
 monolib/src/scn/CScnRootNw4r.cpp:
-	extab       start:0x8001ED84 end:0x8001EE10
-	extabindex  start:0x80036B38 end:0x80036BBC
-	.text       start:0x804933AC end:0x80494130
+	extab       start:0x8001ED54 end:0x8001EE10
+	extabindex  start:0x80036B20 end:0x80036BBC
+	.text       start:0x80492E5C end:0x80494130
 
 monolib/src/scn/CScnTexWorkMan.cpp:
 	extab       start:0x8001EE10 end:0x8001EE98

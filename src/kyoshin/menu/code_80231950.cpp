@@ -62,9 +62,8 @@ struct PtmfNullWordsArts {
 extern char lbl_eu_8050AC70[];
 
 // Sub-object ctors (retail unmangled C symbols). extern "C" keeps the
-// definition symbol and call-site relocs on the retail name; noinline keeps
-// CArtsList ctor/OnFileEvent emitting real bl's (retail never inlines them).
-__declspec(noinline) SArtsSub8022FA58Short::SArtsSub8022FA58Short(u32 a, u32 b) {
+// definition symbol and call-site relocs on the retail name.
+SArtsSub8022FA58Short::SArtsSub8022FA58Short(u32 a, u32 b) {
     field_0x00 = a;
     field_0x04 = b;
     field_0x08 = 0;
@@ -83,11 +82,7 @@ SArtsSub8022FA58Short::~SArtsSub8022FA58Short() {}
 // mSubObj124 rebuild (retail C symbol): re-arms every player slot's arts
 // record, reloads the info-window layout pair, binds its open/close anims,
 // then refreshes all label textboxes and the cursor position.
-// noinline: CArtsList::OnFileEvent keeps a real bl.
-// optimize_for_size merges the 3-register save into stmw r29 (retail shape).
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void artsRebuildUI(SArtsSub8022FA58* selfRaw) {
+extern "C" void artsRebuildUI(SArtsSub8022FA58* selfRaw) {
     SArtsFAD0* self = (SArtsFAD0*)selfRaw;
 
     // Reset per-slot state for every active player slot.
@@ -147,16 +142,12 @@ extern "C" __declspec(noinline) void artsRebuildUI(SArtsSub8022FA58* selfRaw) {
 
     ArtsCharList_refreshDisplay(selfRaw);
 }
-#pragma optimize_for_size off
-#pragma pop
 
 // Switch-case handlers used by ArtsLayoutPair_advance (same TU, defined below).
 void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self);
-extern "C" __declspec(noinline) void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
+extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
 
-// C-linkage + noinline so callers (CMenuArtsSet_teardown) emit a real bl to the
-// retail symbol instead of inlining the body.
-extern "C" __declspec(noinline) void ArtsLayoutPair_release(SArts2FDF4* self) {
+extern "C" void ArtsLayoutPair_release(SArts2FDF4* self) {
     if (self->field_0x8) {
         if (self->field_0x8)
             self->field_0x8->v2(1);
@@ -164,7 +155,7 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_release(SArts2FDF4* self) {
     }
 }
 
-extern "C" __declspec(noinline) void ArtsLayoutPair_advance(SArts2FDF4* self) {
+extern "C" void ArtsLayoutPair_advance(SArts2FDF4* self) {
     switch (self->field_0x18) {
         case 0: ArtsLayoutPair_completeLayoutOut((SArts2FF74*)self); break;
         case 1: ArtsLayoutPair_completeLayoutIn((SArts30070*)self); break;
@@ -179,9 +170,9 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_advance(SArts2FDF4* self) {
 extern u8 lbl_eu_806628A8[8];
 // Switch-case handlers used by ArtsLayoutPair_advance (same TU, defined below).
 void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self);
-extern "C" __declspec(noinline) void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
+extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
 
-__declspec(noinline) void ArtsCharList_selectNext(SArtsSub8022FA58* self) {
+void ArtsCharList_selectNext(SArtsSub8022FA58* self) {
     self->field_0x16 = 0;
     self->field_0x17 = 1;
     u8 next = self->field_0x14 + 1;
@@ -192,9 +183,7 @@ __declspec(noinline) void ArtsCharList_selectNext(SArtsSub8022FA58* self) {
     return ArtsCharList_refreshDisplay(self);
 }
 
-// C-linkage + noinline: artsStepAhead/CMenuArtsSet_selectPrevChar keep a real bl to this
-// retail symbol instead of inlining the body.
-extern "C" __declspec(noinline) void artsGoPrevItem(SArtsSub8022FA58* self) {
+extern "C" void artsGoPrevItem(SArtsSub8022FA58* self) {
     self->field_0x16 = 0;
     self->field_0x17 = 0;
     u8 v = self->field_0x14 - 1;
@@ -209,15 +198,14 @@ extern "C" __declspec(noinline) void artsGoPrevItem(SArtsSub8022FA58* self) {
 // NOTE: the header's SArtsManager vtable is mid-edit -- v128 currently maps
 // to +0x208 (MWCC +2 leading slots); the retail +0x200 slot needs 2 fewer
 // fillers before v126. Manual casts add an extra indirection.
-// C-linkage + noinline so callers emit a real bl (retail shape).
-extern "C" __declspec(noinline) int ArtsCharList_getProgress(SArtsSub8022FA58* self) {
+extern "C" int ArtsCharList_getProgress(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root =
         (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(ArtsCharList_getId(self, self->field_0x14));
     SArtsManager* obj = &root->mObj17C;
     return obj->v128();
 }
 
-extern "C" __declspec(noinline) void artsShiftProg(SArtsSub8022FA58* self, int arg2) {
+extern "C" void artsShiftProg(SArtsSub8022FA58* self, int arg2) {
     SArtsManagerRoot* root =
         (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(ArtsCharList_getId(self, self->field_0x14));
     SArtsManager* obj = &root->mObj17C;
@@ -232,7 +220,7 @@ extern "C" __declspec(noinline) void artsShiftProg(SArtsSub8022FA58* self, int a
 // then load the 0x17-dependent window label through the driver's field_0x10
 // pane interface and show it. (0x0C/0x10 roles are swapped vs the matched
 // ArtsLayoutPair_completeLayoutIn twin.)
-__declspec(noinline) void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self) {
+void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self) {
     float duration = lbl_eu_80668648;
     advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x16 == 0) {
@@ -252,8 +240,7 @@ __declspec(noinline) void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self) {
 // when the AnimTransform at 0x10 finishes, drive both sub-panes via the
 // 0x08 driver, reset the 0x0C float, mark the 0x18/0x16 state, then load
 // both window labels through the driver's field_0x10 pane interface.
-// C-linkage + noinline: ArtsLayoutPair_advance keeps a real bl (retail never inlines).
-extern "C" __declspec(noinline) void ArtsLayoutPair_completeLayoutIn(SArts30070* self) {
+extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self) {
     float duration = lbl_eu_80668648;
     if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
@@ -270,9 +257,7 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_completeLayoutIn(SArts30070*
 
 // Build the arts-selection list: clear the cursor, then append each of the
 // first `count` arts entries that pass the (v>8) / (v==4 && locked) filters.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void ArtsCharList_build(SArtsSub8022FA58* self) {
+void ArtsCharList_build(SArtsSub8022FA58* self) {
     self->field_0x21 = 0;
     u8 count = code80135FDC_getByte_64077();
     for (u8 i = 0; i < count; i++) {
@@ -284,9 +269,8 @@ __declspec(noinline) void ArtsCharList_build(SArtsSub8022FA58* self) {
         self->field_0x21 = idx + 1;
     }
 }
-#pragma pop
 
-extern "C" __declspec(noinline) u8 ArtsCharList_getId(SArtsSub8022FA58* self, u32 idx) {
+extern "C" u8 ArtsCharList_getId(SArtsSub8022FA58* self, u32 idx) {
     if (idx >= self->field_0x21) {
         return 0;
     }
@@ -299,10 +283,7 @@ extern "C" __declspec(noinline) u8 ArtsCharList_getId(SArtsSub8022FA58* self, u3
 // arc accessor (the shared one for the prev/next arms), bind it to the label
 // pane, then finally write the manager's progress value and the formatted
 // name into the layout.
-// optimize_for_size: retail's four-register prologue uses stmw/lmw (-O4,s).
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self) {
+extern "C" void ArtsCharList_refreshDisplay(SArtsSub8022FA58* self) {
     // Current entry: texture comes from the sub-object's own accessor.
     {
         u8 id = ArtsCharList_getId(self, self->field_0x14);
@@ -366,9 +347,8 @@ extern "C" __declspec(noinline) void ArtsCharList_refreshDisplay(SArtsSub8022FA5
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->field_0x00, lbl_eu_8050AC70 + 0x100,
                   buf, 0);
 }
-#pragma pop
 
-__declspec(noinline) SArts3042C::SArts3042C(u32 a, u32 b) {
+SArts3042C::SArts3042C(u32 a, u32 b) {
     field_0x00 = a;
     field_0x04 = b;
     field_0x08 = 0;
@@ -394,8 +374,7 @@ SArts3042C::~SArts3042C() {}
 // layout drivers to the arc accessor, attach the four AnimTransforms, park
 // both panes via v11, reset the state machine via v14, show the two label
 // panes (v13 at +0x3C) then refresh the cursor drivers (ArtsSlotCursor_refresh).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsLayoutPair_loadSlots(SArts304C4* self) {
+extern "C" void ArtsLayoutPair_loadSlots(SArts304C4* self) {
     buildLayout((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
                   lbl_eu_8050AC70 + 0x109);
     bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
@@ -419,12 +398,11 @@ extern "C" __declspec(noinline) void ArtsLayoutPair_loadSlots(SArts304C4* self) 
     setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
     ArtsSlotCursor_refresh((SArtsSub8022FA58*)self);
 }
-#pragma optimize_for_size off
 
 // Release helper for the mSubObj148 pair (called from CMenuArtsSet_teardown).
 // Doubly-nested guard reproduces retail's duplicated dead beq (MWCC CSEs
 // the re-tested condition into one cmpwi + two beq).
-extern "C" __declspec(noinline) void ArtsLayoutPair_releaseSlots(SArts3066C* self) {
+extern "C" void ArtsLayoutPair_releaseSlots(SArts3066C* self) {
     if (self->field_0x08 != 0) {
         if (self->field_0x08 != 0) {
             self->field_0x08->v2(1);
@@ -460,20 +438,14 @@ void ArtsLayoutPair_advancePhases(SArts306F0* self) {
     }
 }
 
-// optimize_for_size: retail's two-register prologue uses stmw/lmw (-O4,s).
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsDrawBox_draw(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
+extern "C" void ArtsDrawBox_draw(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x22 != 0 && self->field_0x28 != 0) {
         drawLayout(self->mLayout08, info, 0, 1);
         drawLayout(self->mLayout14, info, 0, 1);
     }
 }
-#pragma pop
 
-// C-linkage + noinline: CMenuArtsSet_completeLayoutOut calls this and retail keeps a real
-// bl (not an inline).
-extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, bool val) {
+extern "C" void ArtsSubCursor_setVisible(SArtsSub8022FA58* self, bool val) {
     if (self->field_0x27 != 0) {
         setPaneVisible((nw4r::lyt::Pane*)((SArts080C*)(self->field_0x08))->field_0x10, val);
     } else {
@@ -483,8 +455,7 @@ extern "C" __declspec(noinline) void ArtsSubCursor_setVisible(SArtsSub8022FA58* 
 }
 
 // Cursor-store helpers used by CMenuArtsSet_slotCursorUp/CMenuArtsSet_slotCursorDown etc. C-linkage +
-// noinline: retail keeps real bl calls (never inlined).
-extern "C" __declspec(noinline) void ArtsSlotCursor_moveDown(SArtsSub8022FA58* self, int a) {
+extern "C" void ArtsSlotCursor_moveDown(SArtsSub8022FA58* self, int a) {
     self->field_0x20 = (s8)(self->field_0x20 + 1);
     if ((s8)self->field_0x20 >= 9) {
         self->field_0x20 = 0;
@@ -495,7 +466,7 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_moveDown(SArtsSub8022FA58* s
     return ArtsSlotCursor_refresh(self);
 }
 
-extern "C" __declspec(noinline) void ArtsSlotCursor_moveUp(SArtsSub8022FA58* self, int a) {
+extern "C" void ArtsSlotCursor_moveUp(SArtsSub8022FA58* self, int a) {
     self->field_0x20 = (s8)(self->field_0x20 - 1);
     if ((s8)self->field_0x20 < 0) {
         self->field_0x20 = 8;
@@ -512,9 +483,7 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_moveUp(SArtsSub8022FA58* sel
 // arts receiver (SArtsManager::v157 result) for the current record and binds
 // or hides its panes; finally maps the character id through the message
 // tables to a help-text id and binds that text onto both panes.
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
+extern "C" void artsSyncSlots(SArts308B0View* self, u8 v) {
     self->field_0x26 = v;
     // Reload the two 8-word label tables onto the stack (MWCC counted
     // word-copy loops): the AB88 table feeds PaneSetTexPaletteByName resource binds,
@@ -689,12 +658,10 @@ extern "C" __declspec(noinline) void artsSyncSlots(SArts308B0View* self, u8 v) {
         }
     }
 }
-#pragma pop
 
 // Drive both pointees when the 0x23 state is set: reset 0x24, show the
-// first pane, hide the second. C-linkage + noinline: CMenuArtsSet_advanceIdle keeps a
-// real bl (retail symbol) instead of inlining the pane-call pair.
-extern "C" __declspec(noinline) void ArtsBusyPane_showPrimary(SArts30D18* self) {
+// first pane, hide the second.
+extern "C" void ArtsBusyPane_showPrimary(SArts30D18* self) {
     if (self->field_0x23 != 0) {
         self->field_0x24 = 0;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
@@ -724,14 +691,12 @@ void ArtsElem_setDataByte(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off
         artsSyncSlots((SArts308B0View*)(self), (self)->field_0x26);                \
     } while (0)
 
-// optimize_for_size: retail saves callee-saves with stmw (-O4,s).
-#pragma optimize_for_size on
 // Arts-slot update: val == -1 clears the current cursor entries; otherwise
 // the entry is claimed in the selected row (moving it out of any other slot
 // holding a lower value first). Both arms resolve the manager themselves:
 // the 8-byte data window starts at data[8] only when the demo gate is clear
 // AND the character id is 1 (sel = !gate).
-extern "C" __declspec(noinline) void artsClaimSlot(SArtsSub8022FA58* self,
+extern "C" void artsClaimSlot(SArtsSub8022FA58* self,
                                                    s32 val) {
     // All locals declared at function scope: retail keeps every one of them in
     // a callee-saved home across both arms (stmw r25, frame 0x30).
@@ -803,7 +768,6 @@ extern "C" __declspec(noinline) void artsClaimSlot(SArtsSub8022FA58* self,
         ARTS_D74_TAIL(self, root);
     }
 }
-#pragma optimize_for_size off
 
 void ArtsElem_setDataByte(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off) {
     SArtsSubDElem* e = &self[idx];
@@ -819,9 +783,7 @@ void ArtsElem_setDataByte(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off
 // current item entry through the BDAT text table. Other modes read the
 // per-character state byte from the 0x49-byte arts element row (offset 8
 // when the byte-table gate and the mode byte are both valid).
-// optimize_for_size: retail saves both callee-saves with stmw (-O4,s).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) u8 artsReadSelId(SArtsSub8022FA58* self) {
+extern "C" u8 artsReadSelId(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root = (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(self->field_0x26);
     root->mObj17C.v157();
     SArtsSubDElem* elems = &root->mElemsE8[0];
@@ -897,7 +859,6 @@ extern "C" __declspec(noinline) u8 artsReadSelId(SArtsSub8022FA58* self) {
     }
     return result;
 }
-#pragma optimize_for_size off
 
 // Arts-list availability query: ask the arts manager to refresh, then pick
 // the arts element for the current character, clamp the 0x20 cursor
@@ -906,7 +867,7 @@ extern "C" __declspec(noinline) u8 artsReadSelId(SArtsSub8022FA58* self) {
 // through the 0x1C8/0x1FE string table, and - when the learn-arts flag grid
 // reports the entry set - return the high byte of the 16-bit value at the
 // flagged offset.
-extern "C" __declspec(noinline) u8 artsAvailFlag(SArtsSub8022FA58* self) {
+extern "C" u8 artsAvailFlag(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root = (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(self->field_0x26);
     root->mObj17C.v157();
     SArtsSubDElem* elems = &root->mElemsE8[0];
@@ -937,10 +898,7 @@ extern "C" __declspec(noinline) u8 artsAvailFlag(SArtsSub8022FA58* self) {
 // current arts element for all-zero state. The window starts at data[8] when
 // the arts id is valid (byte-table entry 0 and mode byte 1), else at data[0].
 // Returns 1 when all scanned bytes are zero.
-// C-linkage + noinline: retail keeps a real bl from CMenuArtsSet_confirmLockedArt.
-// optimize_for_size: retail's two-register prologue uses stmw (-O4,s).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* self) {
+extern "C" u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root = (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(self->field_0x26);
     root->mObj17C.v157();
     SArtsSubDElem* base = &root->mElemsE8[0];
@@ -957,14 +915,11 @@ extern "C" __declspec(noinline) u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* sel
     }
     return 1;
 }
-#pragma optimize_for_size off
 
 // Toggle the 0x27 busy flag: while busy, clear it and park both panes
 // (first visible, second hidden); otherwise set it, stash the old 0x20
 // cursor into 0x21, and run the layout-out animation.
-// C-linkage + noinline: CMenuArtsSet_advanceIdle keeps real bl relocs to the retail
-// symbols (an inline would fold the body and duplicate the pane calls).
-extern "C" __declspec(noinline) void ArtsBusyPane_toggle(SArts313E0* self) {
+extern "C" void ArtsBusyPane_toggle(SArts313E0* self) {
     if (self->field_0x27 != 0) {
         self->field_0x27 = 0;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
@@ -977,7 +932,7 @@ extern "C" __declspec(noinline) void ArtsBusyPane_toggle(SArts313E0* self) {
     }
 }
 
-extern "C" __declspec(noinline) void ArtsSlotCursor_clampFromEmpty(SArtsSub8022FA58* self) {
+extern "C" void ArtsSlotCursor_clampFromEmpty(SArtsSub8022FA58* self) {
     if (self->field_0x20 != 4) {
         return;
     }
@@ -995,8 +950,7 @@ extern "C" void CMenuArtsSet_setPaneScale(SArtsPaneScaleObj* self, const SArtsVe
 // it, then write the precomputed 9-entry position table (entry 4 uses the
 // smaller lbl_eu_80668654 value) into the pane's layout offsets via
 // CMenuArtsSet_setPaneScale.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsSlotCursor_refresh(SArtsSub8022FA58* self) {
+extern "C" void ArtsSlotCursor_refresh(SArtsSub8022FA58* self) {
     nw4r::math::VEC3 pos;
     SArts316F8Block tmp;
     tmp = lbl_eu_8050ABB4;
@@ -1020,13 +974,11 @@ extern "C" __declspec(noinline) void ArtsSlotCursor_refresh(SArtsSub8022FA58* se
     CMenuArtsSet_setPaneScale((SArtsPaneScaleObj*)((SArts3150CDriver*)self->field_0x08)->field_0x10,
                   &vecs[self->field_0x20]);
 }
-#pragma optimize_for_size off
 
 // Run the layout-out animation; when the busy flag (0x23) is clear, drive
 // both sub-panels via vtable slot 0x2C (v11) then bump the 0x24 state.
 // Layout-in driver twin of ArtsLayout_runLayoutIn's shape (0x08/0x0C/0x10 fields).
-// noinline: retail keeps real bl calls from the state machine.
-__declspec(noinline) void ArtsLayout_runLayoutOut(SArts31480* self) {
+void ArtsLayout_runLayoutOut(SArts31480* self) {
     float duration = lbl_eu_80668648;
     advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x23 == 0) {
@@ -1040,7 +992,7 @@ __declspec(noinline) void ArtsLayout_runLayoutOut(SArts31480* self) {
 // Twin driver: run the AnimTransform at 0x10; when the frame check reports
 // the animation finished, drive both sub-panes (v11 at +0x2C), reset the
 // 0x0C float, show the panes, and bump the 0x23/0x24 state.
-__declspec(noinline) void ArtsLayout_runLayoutIn(SArts3150C* self) {
+void ArtsLayout_runLayoutIn(SArts3150C* self) {
     float duration = lbl_eu_80668648;
     if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
@@ -1055,7 +1007,7 @@ __declspec(noinline) void ArtsLayout_runLayoutIn(SArts3150C* self) {
 
 // Same driver as ArtsLayout_runLayoutOut but for the offset-0x14 sub-object; the
 // 0x24 state is bumped to 3 instead of 1.
-__declspec(noinline) void ArtsLayout_runTwinLayoutOut(SArts315BC* self) {
+void ArtsLayout_runTwinLayoutOut(SArts315BC* self) {
     float duration = lbl_eu_80668648;
     advanceAnimTransform(self->field_0x18, duration);
     if (self->field_0x23 == 0) {
@@ -1070,7 +1022,7 @@ __declspec(noinline) void ArtsLayout_runTwinLayoutOut(SArts315BC* self) {
 // AnimTransform at 0x1C; when finished, drive both panes via the 0x14
 // driver's v11 slot, reset the 0x18 float, show/hide via the 0x08/0x14 pane
 // pointees, and mark state 0x24=0 / busy 0x23=1.
-__declspec(noinline) void ArtsLayout_runTwinLayoutIn(SArts31648* self) {
+void ArtsLayout_runTwinLayoutIn(SArts31648* self) {
     float duration = lbl_eu_80668648;
     if (advanceAnimTransform(self->field_0x1C, duration) != 0) {
         self->field_0x14->v11(self->field_0x1C, 0);
@@ -1084,14 +1036,12 @@ __declspec(noinline) void ArtsLayout_runTwinLayoutIn(SArts31648* self) {
 }
 
 // Writes the 0x44/0x48 floats (pane scale view) of the object passed in.
-// noinline + C linkage: ArtsSlotCursor_refresh keeps a real bl to the retail symbol.
-extern "C" __declspec(noinline) void CMenuArtsSet_setPaneScale(SArtsPaneScaleObj* self, const SArtsVec2* src) {
+extern "C" void CMenuArtsSet_setPaneScale(SArtsPaneScaleObj* self, const SArtsVec2* src) {
     self->mField44 = src->x;
     self->mField48 = src->y;
 }
 
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsBusyPane_refreshCursor(SArts313E0* self) {
+extern "C" void ArtsBusyPane_refreshCursor(SArts313E0* self) {
     nw4r::math::VEC3 pos;
     SArts316F8Block tmp;
     tmp = lbl_eu_8050ABD8;
@@ -1114,9 +1064,8 @@ extern "C" __declspec(noinline) void ArtsBusyPane_refreshCursor(SArts313E0* self
     CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
     CMenuArtsSet_setPaneScale((SArtsPaneScaleObj*)self->field_0x14->field_0x10, &vecs[self->field_0x21]);
 }
-#pragma optimize_for_size off
 
-__declspec(noinline) SArts319AC::SArts319AC(u32 a, u32 b, u32 c) {
+SArts319AC::SArts319AC(u32 a, u32 b, u32 c) {
     field_0x00 = a;
     field_0x04 = b;
     field_0x08 = 0;
@@ -1144,7 +1093,7 @@ SArts319AC::~SArts319AC() {}
 // (+0x202/+0x210): after parking both panes, reset the pane translate of
 // each layout's SArts3CObj to (0,0) via CMenuArtsSet_setPaneScale, then refresh the
 // cursor drivers (ArtsTableCursor_refresh).
-extern "C" __declspec(noinline) void ArtsTableLayout_load(SArts304C4* self) {
+extern "C" void ArtsTableLayout_load(SArts304C4* self) {
     buildLayout((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
                   lbl_eu_8050AC70 + 0x109);
     bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
@@ -1175,8 +1124,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_load(SArts304C4* self) {
 
 // Release both SArts2FObj pointees via their vtable slot 0x08 (v2), then
 // null each field (retail keeps the redundant null-check branch).
-// C-linkage + noinline so CMenuArtsSet_teardown emits a real bl.
-extern "C" __declspec(noinline) void ArtsTableLayout_release(SArts3066C* self) {
+extern "C" void ArtsTableLayout_release(SArts3066C* self) {
     if (self->field_0x08 != 0) {
         if (self->field_0x08 != 0) {
             self->field_0x08->v2(1);
@@ -1192,8 +1140,8 @@ extern "C" __declspec(noinline) void ArtsTableLayout_release(SArts3066C* self) {
 }
 
 // Same-TU phase handlers (defined below); retail keeps real bl calls.
-extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutOut(SArts31480* self);
-extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutOut(SArts315BC* self);
+extern "C" void ArtsTableLayout_runLayoutOut(SArts31480* self);
+extern "C" void ArtsTableLayout_runTwinLayoutOut(SArts315BC* self);
 
 // State-machine advance for the +0x2C twin of ArtsLayoutPair_advancePhases: while enabled
 // (0x22), run the current phase handler selected by 0x24 (layout-in/out pair,
@@ -1216,16 +1164,13 @@ void ArtsTableLayout_advancePhases(SArts306F0* self) {
 }
 
 // Draw both layouts when the box is enabled (0x22) and the arts table is
-// visible (0x12E). optimize_for_size matches retail's stmw/lmw save pair.
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsTableDrawBox_draw(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
+// visible (0x12E).
+extern "C" void ArtsTableDrawBox_draw(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x22 != 0 && self->field_0x12E != 0) {
         drawLayout(self->mLayout08, info, 0, 1);
         drawLayout(self->mLayout14, info, 0, 1);
     }
 }
-#pragma pop
 
 // Cursor-driver refresh helpers (defined below in this TU; C-linkage retail
 // names). Declared here because ArtsTable_scrollUp / ArtsTable_pageDown call them.
@@ -1237,11 +1182,8 @@ extern "C" void artsRenderRow(SArts327B0* self);
 // jump to the previous 5-row page (0x20 = 4, 0x21 = count-5) or, for counts
 // below 5, park the cursor with a saturating 0x20 = count-1. Then refresh the
 // scrollbar and both cursor drivers.
-// optimize_for_size forces the -O4,s addic/subfe setnz lowering for the
-// saturating decrement; unreachable from any source shape at -O4,p.
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsTable_scrollUp(SArts322BC* self) {
+// The unit is -O4,s: the saturating decrement lowers to addic/subfe.
+extern "C" void ArtsTable_scrollUp(SArts322BC* self) {
     // Assignment-in-condition: MWCC keeps the stored value in-register and
     // re-truncates it to u8 for the sign test (clrlwi/extsb idiom).
     if ((s8)(u8)(self->field_0x20 = self->field_0x20 - 1) < 0) {
@@ -1265,9 +1207,8 @@ extern "C" __declspec(noinline) void ArtsTable_scrollUp(SArts322BC* self) {
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
-#pragma pop
 
-extern "C" __declspec(noinline) void ArtsTable_scrollDown(SArts322BC* self) {
+extern "C" void ArtsTable_scrollDown(SArts322BC* self) {
     u8 count = self->field_0x12C;
     if (count >= 5) {
         // Row cursor forward; on overflow park at row 4 and step the page
@@ -1311,7 +1252,7 @@ extern "C" void artsRenderRow(SArts327B0* self);
 // below 5 the cursor is cleared entirely; otherwise step 0x21 back by 5 and
 // wrap a negative offset into the previous page via 0x20. Then refresh the
 // scrollbar and both cursor drivers.
-extern "C" __declspec(noinline) void ArtsTable_pageUp(SArts322BC* self) {
+extern "C" void ArtsTable_pageUp(SArts322BC* self) {
     if (self->field_0x12C >= 5) {
         u8 a = self->field_0x21 - 5;
         self->field_0x21 = a;
@@ -1340,9 +1281,7 @@ extern "C" __declspec(noinline) void ArtsTable_pageUp(SArts322BC* self) {
 // at least 5, step the 0x21 page offset forward by 5 and wrap any overshoot
 // back into the 0x20 row cursor (clamped at 4); otherwise the cursor is
 // simply cleared. Then refresh the scrollbar and both cursor drivers.
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsTable_pageDown(SArts322BC* self) {
+extern "C" void ArtsTable_pageDown(SArts322BC* self) {
     u8 c = self->field_0x12C;
     if (c >= 5) {
         u8 a = self->field_0x21 + 5;
@@ -1365,15 +1304,12 @@ extern "C" __declspec(noinline) void ArtsTable_pageDown(SArts322BC* self) {
     ArtsTableCursor_refresh((SArts327B0*)self);
     artsRenderRow((SArts327B0*)self);
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 // Rebuild the arts table for a character: clear the cursor and row count,
 // fetch the character's arts-availability list (copied per-character block),
 // then for each available art append a 16-byte row to the 0x2C table with
 // its id/name/flag fields, finally refreshing the scrollbar and cursors.
-extern "C" __declspec(noinline) void artsFillTable(SArts322BC* self, u8 arg) {
+extern "C" void artsFillTable(SArts322BC* self, u8 arg) {
     self->field_0x20 = 0;
     self->field_0x21 = 0;
     self->field_0x26 = arg;
@@ -1426,9 +1362,8 @@ extern "C" __declspec(noinline) void artsFillTable(SArts322BC* self, u8 arg) {
     artsRenderRow((SArts327B0*)self);
     ArtsTableCursor_refresh((SArts327B0*)self);
 }
-#pragma pop
 
-extern "C" __declspec(noinline) u8 ArtsTable_getSelectedId(SArts322BC* self) {
+extern "C" u8 ArtsTable_getSelectedId(SArts322BC* self) {
     if (self->field_0x12C != 0) {
         s32 off = (self->field_0x21 + self->field_0x20) << 4;
         return self->mTable[off];
@@ -1436,7 +1371,7 @@ extern "C" __declspec(noinline) u8 ArtsTable_getSelectedId(SArts322BC* self) {
     return 0;
 }
 
-extern "C" __declspec(noinline) u8 ArtsTable_getRowValue(SArts322BC* self, int key) {
+extern "C" u8 ArtsTable_getRowValue(SArts322BC* self, int key) {
     u8 count = self->field_0x12C;
     if (count == 0) return 0;
     if (key == -1) {
@@ -1456,8 +1391,7 @@ extern "C" __declspec(noinline) u8 ArtsTable_getRowValue(SArts322BC* self, int k
 // byte (BdatGetU16ByTableKey string-table lookup, +1) times the arts count byte
 // (BdatGetU8ByTableKey lookup keyed by the buffer formatted from the row's
 // second byte), divided by 100 when positive.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) u16 artsGetRowPct(SArts322BC* self, int key) {
+extern "C" u16 artsGetRowPct(SArts322BC* self, int key) {
     u8 count = self->field_0x12C;
     u16 result = 0;
     if (count != 0) {
@@ -1488,7 +1422,6 @@ extern "C" __declspec(noinline) u16 artsGetRowPct(SArts322BC* self, int key) {
     }
     return result;
 }
-#pragma optimize_for_size off
 
 // Arts-list usage-counter bump: pick a row (current cursor row when
 // key == -1, else the first row whose id byte equals key), then ask the arts
@@ -1497,9 +1430,7 @@ extern "C" __declspec(noinline) u16 artsGetRowPct(SArts322BC* self, int key) {
 // row[2], and refresh the character data plus both list panes.
 // The whole body is written out per arm (manager fetch included): retail
 // duplicates it instead of hoisting a shared prelude/tail.
-// optimize_for_size: retail's four-register prologue uses stmw (-O4,s).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int key) {
+extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key) {
     if (key == -1) {
         // base declared ahead of root: MWCC hands out callee-saved regs to
         // pointer locals top-down, so this ordering yields root=r29/base=r30.
@@ -1546,7 +1477,6 @@ extern "C" __declspec(noinline) void ArtsTable_bumpUsage(SArts322BC* self, int k
         ArtsTableCursor_refresh((SArts327B0*)self);
     }
 }
-#pragma optimize_for_size off
 
 // Arts-table row availability check: for key -1 use the current cursor row
 // ((0x21 + 0x20) << 4), else scan for the row whose id byte equals key.
@@ -1577,7 +1507,7 @@ int ArtsTable_isRowSelectable(SArts322BC* self, int key) {
     return 0;
 }
 
-extern "C" __declspec(noinline) int ArtsTable_isAtTop(SArts3270C* self) {
+extern "C" int ArtsTable_isAtTop(SArts3270C* self) {
     int r = 0;
     if (self->field_0x20 == 0 && self->field_0x21 == 0) {
         r = 1;
@@ -1588,11 +1518,8 @@ extern "C" __declspec(noinline) int ArtsTable_isAtTop(SArts3270C* self) {
 extern "C" void ArtsTableCursor_refresh(SArts327B0* self);
 extern "C" void artsRenderRow(SArts327B0* self);
 
-// optimize_for_size (-O4,s): retail uses the subic/subfe carry idiom for the
-// saturating decrement instead of -O4,p's neg/or/srawi bool tail.
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) int ArtsTable_isAtBottom(SArts322BC* self) {
+// -O4,s: the saturating decrement uses the subic/subfe carry idiom.
+extern "C" int ArtsTable_isAtBottom(SArts322BC* self) {
     u8 count = self->field_0x12C;
     if (count > 5) {
         s32 r = 0;
@@ -1609,9 +1536,8 @@ extern "C" __declspec(noinline) int ArtsTable_isAtBottom(SArts322BC* self) {
     }
     return r;
 }
-#pragma pop
 
-extern "C" __declspec(noinline) void ArtsTable_resetCursor(SArts327B0* self) {
+extern "C" void ArtsTable_resetCursor(SArts327B0* self) {
     self->field_0x20 = 0;
     self->field_0x21 = 0;
     reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb(0);
@@ -1622,14 +1548,14 @@ extern "C" __declspec(noinline) void ArtsTable_resetCursor(SArts327B0* self) {
 // Clamp the arts-table cursor: for counts above 5 the cursor sits at row 4
 // with a 0x21 offset; otherwise 0x21 is cleared and 0x20 is the count
 // saturated at 0. Then refresh the scrollbar and both cursor drivers.
-extern "C" __declspec(noinline) void artsCursorFix(SArts322BC* self) {
+extern "C" void artsCursorFix(SArts322BC* self) {
     u8 count = self->field_0x12C;
     if (count > 5) {
         self->field_0x20 = 4;
         self->field_0x21 = count - 5;
     } else {
         self->field_0x21 = 0;
-        self->field_0x20 = count - (count > 0);
+        self->field_0x20 = count == 0 ? 0 : count - 1;
     }
     reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb((u16)(s8)self->field_0x21);
     ArtsTableCursor_refresh((SArts327B0*)self);
@@ -1638,8 +1564,7 @@ extern "C" __declspec(noinline) void artsCursorFix(SArts322BC* self) {
 
 // Toggle the 0x12D busy flag and drive both pointees: when clearing, the
 // first pane is shown and the second hidden; when setting, the reverse.
-// C-linkage + noinline: CMenuArtsSet_advanceIdle keeps a real bl (retail symbol).
-extern "C" __declspec(noinline) void ArtsTable_toggleBusyPanes(SArts32888* self) {
+extern "C" void ArtsTable_toggleBusyPanes(SArts32888* self) {
     if (self->field_0x12D != 0) {
         self->field_0x12D = 0;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
@@ -1652,7 +1577,7 @@ extern "C" __declspec(noinline) void ArtsTable_toggleBusyPanes(SArts32888* self)
 }
 
 // Twin of ArtsLayout_runLayoutOut (same 0x08/0x0C/0x10 driver layout).
-extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutOut(SArts31480* self) {
+extern "C" void ArtsTableLayout_runLayoutOut(SArts31480* self) {
     float duration = lbl_eu_80668648;
     advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x23 == 0) {
@@ -1666,7 +1591,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutOut(SArts31480* se
 // Twin of ArtsLayout_runLayoutIn (identical object view): run the AnimTransform at
 // 0x10; when finished, drive both panes via the 0x08 driver, reset the 0x0C
 // float, show the 0x14 pane, and mark state 0x24=2 / busy 0x23=1.
-extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutIn(SArts3150C* self) {
+extern "C" void ArtsTableLayout_runLayoutIn(SArts3150C* self) {
     float duration = lbl_eu_80668648;
     if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
@@ -1680,7 +1605,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runLayoutIn(SArts3150C* sel
 }
 
 // Twin of ArtsLayout_runTwinLayoutOut (offset-0x14 driver layout, state bump to 3).
-extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutOut(SArts315BC* self) {
+extern "C" void ArtsTableLayout_runTwinLayoutOut(SArts315BC* self) {
     float duration = lbl_eu_80668648;
     advanceAnimTransform(self->field_0x18, duration);
     if (self->field_0x23 == 0) {
@@ -1692,7 +1617,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutOut(SArts315BC
 }
 
 // Twin of ArtsLayout_runTwinLayoutIn (identical body, separate retail symbol).
-extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutIn(SArts31648* self) {
+extern "C" void ArtsTableLayout_runTwinLayoutIn(SArts31648* self) {
     float duration = lbl_eu_80668648;
     if (advanceAnimTransform(self->field_0x1C, duration) != 0) {
         self->field_0x14->v11(self->field_0x1C, 0);
@@ -1709,8 +1634,7 @@ extern "C" __declspec(noinline) void ArtsTableLayout_runTwinLayoutIn(SArts31648*
 // lbl_eu_8050AC4C, look up the pane for the current 0x20 cursor entry, scale
 // its translate by the 0xA6 label pane's scale, then position both the
 // 0x08/0x14 sub-panes onto it.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ArtsTableCursor_refresh(SArts327B0* self) {
+extern "C" void ArtsTableCursor_refresh(SArts327B0* self) {
     nw4r::math::VEC3 pos;
     SArtsB88Block tmp;
     tmp = lbl_eu_8050AC4C;
@@ -1724,11 +1648,9 @@ extern "C" __declspec(noinline) void ArtsTableCursor_refresh(SArts327B0* self) {
     CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x08->field_0x10, &pos);
     CBaseCur::SetPaneTranslate((nw4r::lyt::Pane*)self->field_0x14->field_0x10, &pos);
 }
-#pragma optimize_for_size off
 
-// Arts-list 5-row refresh (artsRenderRow). Compiled under #pragma
-// optimize_for_size so the /100 stays a literal divw (retail li r31,0x64;
-// divw). For each visible row: bind the name/sub resources onto per-row
+// Arts-list 5-row refresh (artsRenderRow). The /100 stays a literal divw
+// under -O4,s (retail li r31,0x64; divw). For each visible row: bind the name/sub resources onto per-row
 // panes, set the description text, locate which slot holds the row's art
 // and re-show the slot pane, draw the level gauge percentage, then position
 // three panes from the row's flags.
@@ -1737,9 +1659,7 @@ extern "C" __declspec(noinline) void ArtsTableCursor_refresh(SArts327B0* self) {
 // (48B extra spill slots shift every sp-relative operand), self lands in
 // r27 vs retail r25, and _savegpr/_restgpr start at r22 vs r21. Needs
 // regalloc-level iteration with full asm visibility.
-#pragma push
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
+extern "C" void artsRenderRow(SArts327B0* selfRaw) {
     SArts32C78* self = (SArts32C78*)selfRaw;
     float pos[2];
     char buf[0x60];
@@ -1855,7 +1775,6 @@ extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
         copyVEC2(p5->xy, pos);
     }
 }
-#pragma pop
 
 // CArtsList constructor (retail symbol __ct__CArtsList). Stores the retail
 // vtable, builds the sub-objects, then re-copies the CScrollBar/CArtsInfo/
@@ -1863,9 +1782,6 @@ extern "C" __declspec(noinline) void artsRenderRow(SArts327B0* selfRaw) {
 // mem-region copy via __as__17UnkClass_8045F564FRC17UnkClass_8045F564 plus memberwise fields), and
 // finally primes the shared arts-mode byte table. Temp buffers are declared
 // largest-first so MWCC assigns them the retail stack slots (0x88/0x48/0x8).
-// optimize_for_size: retail's 3-reg prologue uses the _savegpr_29 form
-// (-O4,s signature; plain -O4,p emits individual stw).
-#pragma optimize_for_size on
 CArtsList::CArtsList()
     : field_0x14(0), field_0x18(0), field_0x1C(0), field_0x20(0), field_0x24(0),
       field_0x28(0), field_0x2C(0), field_0x30(0), field_0x31(1), mScrollBar(0),
@@ -1977,16 +1893,12 @@ CArtsList::CArtsList()
 
     lbl_eu_806628A8[0] = 1;
 }
-#pragma optimize_for_size off
 
-// Retail dtor: stmw/lmw frame via optimize_for_size; the four member dtors
+// Retail dtor (stmw/lmw frame, -O4,s); the four member dtors
 // (+0xE8 CSysWin, +0x74 CArtsInfo, +0x34 CScrollBar, +0x4 UnkClass_8045F564)
 // are emitted by the auto-generated body now that the member classes declare
 // their destructors.
-#pragma push
-#pragma optimize_for_size on
 CArtsList::~CArtsList() {}
-#pragma pop
 
 void CArtsList_startLoad(CArtsList* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -2022,7 +1934,6 @@ void artsStepState(CArtsList* self) {
 // armed (0x139 clear) - mark the 0x170/0x2A2 flags. The 0x12C layout is
 // drawn when the 0x139 cursor byte is set, followed by the 0x148/0x174
 // box pair, the arts info, and the syswin.
-#pragma optimize_for_size on
 void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x28 == 0) return;
     if (self->field_0x2C == 0) return;
@@ -2046,7 +1957,6 @@ void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo* info) {
     CArtsInfo_Draw(&self->mSubObj74, info);
     reinterpret_cast<CSysWin*>(&self->mSysWinE8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(info));
 }
-#pragma optimize_for_size off
 
 // Teardown: release the file handle, reset the ready flag, drop the three
 // sub-objects, release the field_0x1C pane pair (nested null guards reproduce
@@ -2112,7 +2022,6 @@ void CMenuArtsSet_beginOpen(CArtsList* self) {
     CMenuArtsSet_refreshArtsInfo(self);
 }
 
-#pragma optimize_for_size on
 void CMenuArtsSet_beginClose(CArtsList* self) {
     if (self->field_0x2C != 3) return;
     if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
@@ -2124,7 +2033,6 @@ void CMenuArtsSet_beginClose(CArtsList* self) {
     CArtsInfo_ReqState4(&self->mSubObj74);
     playUISound(6);
 }
-#pragma optimize_for_size off
 
 // Arts-menu cursor-up handler (list-page twin of CMenuArtsSet_slotCursorUp, gated by
 // the 0x2A1 busy flag and the CArtsInfo window instead of the 0x16B armed
@@ -2350,7 +2258,6 @@ void CMenuArtsSet_advanceIdle(CArtsList* self) {
 // stepping the 0x174 list as each state resolves. The final help-id dispatch
 // is duplicated in retail (once for a valid selection key, once for key -1),
 // so it is written out twice here instead of being shared.
-#pragma optimize_for_size on
 void artsDriveMenu(CArtsList* self) {
     // NOTE: no persistent SArts34D14* local - retail keeps r29/r30 free for
     // the per-block cursor/matched locals instead of a cached cast pointer.
@@ -2532,7 +2439,6 @@ void artsDriveMenu(CArtsList* self) {
     }
     playUISound(3);
 }
-#pragma optimize_for_size off
 
 // Arts-menu advance (page-down): when the menu is idle (0x2A6/0x2A1/0x16F
 // clear, CArtsInfo inactive, state 3, 0x124 sub-object armed at 0x16), step
@@ -2580,8 +2486,7 @@ void CMenuArtsSet_selectPrevChar(CArtsList* self) {
 // manager reports the entry unavailable, else toggle the shared
 // availability byte, refresh both list sub-panels with the entry, and play
 // the confirm sound.
-extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CArtsList* self); // defined below (window-arm chain)
-#pragma optimize_for_size on
+extern "C" void CMenuArtsSet_armSysWin(CArtsList* self); // defined below (window-arm chain)
 void CMenuArtsSet_confirmLockedArt(CArtsList* self) {
     if (self->field_0x2A6 != 0) return;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
@@ -2600,7 +2505,6 @@ void CMenuArtsSet_confirmLockedArt(CArtsList* self) {
     CMenuArtsSet_refreshArtsInfo(self);
     playUISound(0xA);
 }
-#pragma optimize_for_size off
 
 // Scroll-up input handler: guarded by the shared busy flags plus the
 // 0x168 mode / 0x16A flag pair, skip when the current entry is the locked
@@ -2634,8 +2538,7 @@ u32 CArtsList::CMenuArtsSet_isSlotWindowEmpty() { return ((u32(*)(void*))ArtsSlo
 // Arm the CSysWin sub-object with a new label pair and mark the 0x2A6 flag.
 // Guarded by the syswin/info busy checks; the string pair is built from the
 // shared arts archive path base (lbl_eu_8050AC70).
-// C-linkage + noinline: retail keeps a real bl from CMenuArtsSet_confirmLockedArt.
-extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CArtsList* self) {
+extern "C" void CMenuArtsSet_armSysWin(CArtsList* self) {
     if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return;
     char* base = lbl_eu_8050AC70;
@@ -2654,7 +2557,6 @@ extern "C" __declspec(noinline) void CMenuArtsSet_armSysWin(CArtsList* self) {
 // via ArtsBusyPane_toggle + artsClaimSlot. When 0x16A is clear or 0x2A1 is set,
 // toggle the 0x2A1 busy state through ArtsTable_toggleBusyPanes on the 0x174 list
 // object and either re-arm (entries differ) or re-show the entry pane.
-#pragma optimize_for_size on
 void CMenuArtsSet_confirmSelect(CArtsList* self) {
     u32 cur;
     int matched;
@@ -2716,7 +2618,6 @@ void CMenuArtsSet_confirmSelect(CArtsList* self) {
     CMenuArtsSet_refreshArtsInfo(self);
     playUISound(2);
 }
-#pragma optimize_for_size off
 
 int CMenuArtsSet_isListBusy(SArts34C84* self) {
     if (self->field_0x16F != 0) {
@@ -2750,7 +2651,6 @@ int CMenuArtsSet_isDemoLockedArt(SArts34D14* self) {
 // the 0x16F/0x2A1 busy pair each short-circuit to a fixed id; otherwise the
 // id depends on whether more than one arts entry is unlocked and on the
 // 0x148 sub-object / 0x168 mode / 0x16A flag state.
-#pragma optimize_for_size on
 extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self) {
     if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return 0;
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return 0;
@@ -2786,7 +2686,6 @@ extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self) {
     if (more) r = 0x46;
     return r;
 }
-#pragma optimize_for_size off
 
 // Confirm/advance handler: when idle and armed, run the layout-in animation
 // driver at field_0x20 via the field_0x1C interface, mark state 2, refresh
@@ -2807,7 +2706,7 @@ void CMenuArtsSet_completeLayoutIn(CArtsList* self) {
     reinterpret_cast<CScrollBar*>((u8*)&self->mScrollBar)->requestScrollIn();
 }
 
-extern "C" __declspec(noinline) void CMenuArtsSet_enterInteract(CArtsList* self) {
+extern "C" void CMenuArtsSet_enterInteract(CArtsList* self) {
     if (advanceAnimTransform(self->field_0x24, lbl_eu_80668648) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
@@ -2819,8 +2718,7 @@ extern "C" __declspec(noinline) void CMenuArtsSet_enterInteract(CArtsList* self)
 // State-4 handler: when the layout-in animation has finished, drive both
 // sub-panes via the field_0x1C interface, advance the state to 5, reset the
 // 0x148 sub-object, and request the scroll bar scroll-out.
-// noinline: artsStepState keeps a real bl to the retail symbol.
-__declspec(noinline) void CMenuArtsSet_completeLayoutOut(CArtsList* self) {
+void CMenuArtsSet_completeLayoutOut(CArtsList* self) {
     float duration = lbl_eu_80668648;
     if (AnimRewindFrame(self->field_0x24, duration) != 0) {
         self->field_0x1C->v11(self->field_0x24, 0);
@@ -2831,14 +2729,14 @@ __declspec(noinline) void CMenuArtsSet_completeLayoutOut(CArtsList* self) {
     }
 }
 
-extern "C" __declspec(noinline) void CMenuArtsSet_finishCloseAnim(SArts3506C* self) {
+extern "C" void CMenuArtsSet_finishCloseAnim(SArts3506C* self) {
     if (AnimRewindFrame(self->mAnim20, lbl_eu_80668648) != 0) {
         self->field_0x31 = 1;
         self->field_0x2C = 0;
     }
 }
 
-extern "C" __declspec(noinline) void CMenuArtsSet_returnFromInfo(CArtsList* self) {
+extern "C" void CMenuArtsSet_returnFromInfo(CArtsList* self) {
     if (CArtsInfo_GetFlag49(&self->mSubObj74) != 0) {
         self->field_0x31 = 1;
         self->field_0x2C = 3;
@@ -2846,7 +2744,7 @@ extern "C" __declspec(noinline) void CMenuArtsSet_returnFromInfo(CArtsList* self
     }
 }
 
-extern "C" __declspec(noinline) void CMenuArtsSet_markLayoutsReady(SArts35108* self) {
+extern "C" void CMenuArtsSet_markLayoutsReady(SArts35108* self) {
     if (self->field_0x1C != 0) {
         self->field_0x30 = 1;
         self->field_0x28 = 1;
@@ -2858,7 +2756,7 @@ extern "C" __declspec(noinline) void CMenuArtsSet_markLayoutsReady(SArts35108* s
 // 0x196/0x2A6 mode flags - read the id/key/percent triple either from the
 // 0x148 sub-object or the 0x174 arts table, and store all four into the
 // CArtsInfo before refreshing its cursor driver.
-extern "C" __declspec(noinline) void CMenuArtsSet_refreshArtsInfo(CArtsList* self) {
+extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self) {
     u8 id = 0;   // arts-table row id / sub-object result
     u8 key = 0;  // key byte fed to ArtsTable_getRowValue/artsGetRowPct
     u16 pct = 0; // percent value from artsGetRowPct
@@ -2902,9 +2800,6 @@ extern "C" __declspec(noinline) void CMenuArtsSet_refreshArtsInfo(CArtsList* sel
 // three sub-objects (0x124 list, 0x148 layout pair, 0x174 arts table) from
 // stack temps (declared largest-first so MWCC assigns the retail slots
 // 0x60/0x38/0xC/0x8), then drops the file handle and frees the region guard.
-// Retail uses the stmw/lmw frame (MWCC optimize_for_size prologue merge).
-#pragma push
-#pragma optimize_for_size on
 bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     if (field_0x14 == pEventFile->mFileHandle) {
     mMemRegion.createRegion((int)getHandleMEM2__Q23mtl10MemManagerFv(), 0x16000,
@@ -2972,5 +2867,4 @@ bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     }
     return 0;
 }
-#pragma pop
 

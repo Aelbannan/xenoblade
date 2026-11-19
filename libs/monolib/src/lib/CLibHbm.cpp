@@ -228,8 +228,8 @@ void CLibHbm::loadHbmArcFile(){
 // for isRunning).
 template <>
 inline int CMsgParam<8>::find(u32 msg) const {
-    for (int i = 0; i < mSize; i++) {
-        if (mArrayPtr[(mFront + i) % mCapacity].command == msg) {
+    for (int i = 0; i < mRing.mSize; i++) {
+        if (mRing.mArrayPtr[(mRing.mFront + i) % mRing.mCapacity].command == msg) {
             return i;
         }
     }

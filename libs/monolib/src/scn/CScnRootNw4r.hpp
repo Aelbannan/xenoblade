@@ -8,10 +8,11 @@
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/scn/ICulling.hpp"
 #include "monolib/core/code_804E36DC.hpp"
+#include "monolib/scn/CScnRoot.hpp"
+#include "monolib/scn/CScn.hpp"
+#include <revolution/MEM.h>
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dt__12CScnRootNw4rFv(void* self, int deleteFlag);
-extern "C" void __dt__8CScnRootFv(void* self, int deleteFlag);
 extern "C" void __dt__8049A0D0(void* self, int flag);
 
 class CScnRootNw4r;  // fwd (imports below reference it)
@@ -34,36 +35,14 @@ struct CScnRootNw4rRes;
  *    reproduces the same byte offsets.
  */
 
-// Buffer object referenced by CScnRootNw4r::field_0x8 (partial layout).
-struct CScnRootNw4rBuffer {
-    u8 pad_0x0[0x448];                // +0x00
-    u8 field_0x448;                   // +0x448 (allocation-mode flag)
-};
-
-// Manager classes owned by the scene object at CScnRootNw4r::field_0x4
+// Manager classes owned by the scene (CScnRoot::mpScn)
 // (defined in their own TUs under libs/monolib/src/scn/).
 class CScnCameraMan;
 class CScnLightMan;
 class CScnFogMan;
 class CScnEnvLgtCtrl;
-struct CScnItemPool;
+class CScnItemPool;
 
-// Manager-slot layout of the owning scene object (retail CScn) - only the
-// slots this TU passes to the per-manager update/draw helpers.
-struct CScnMgrLayout {
-    u8 pad_0x0[0x60];                 // +0x00
-    CScnItemPool* mItemPool;          // +0x60 (arg of CScnItemPool_forEachCallVfunc14)
-    CScnLightMan* mLightMan;          // +0x64 (arg of LightManInvokeLightV3)
-    CScnCameraMan* mCamWork;          // +0x68 (camera work; refreshCurrentCamera())
-    u8 pad_0x6C[0x78 - 0x6C];         // +0x6C
-    CScnFogMan* mFogMan;              // +0x78 (arg of FogManIsFogEnabled)
-    CScnEnvLgtCtrl* mEnvLgtCtrl;      // +0x7C (arg of scnLgtBindCamera / 22F0 / 19B8)
-    u8 pad_0x80[0xB4 - 0x80];         // +0x80
-    ICulling* mCulling;               // +0xB4 (slot +0xC dispatch)
-    u8 pad_0xB8[0x3E8 - 0xB8];        // +0xB8
-    u8 field_0x3E8;                   // +0x3E8 (scene-ready flag)
-    u8 pad_0x3E9[0x3EC - 0x3E9];      // +0x3E9
-};
 
 // Camera blob passed to the CScnRootNw4r camera callbacks; the owning class
 // is not yet identified (fields recovered from the retail accessors).
@@ -111,6 +90,12 @@ struct CScnPairCb {
     virtual void vf1(u32 value) = 0;  // +0xC
 };
 
+// Non-virtual scene-root helpers (retail C-linkage names; also called from
+// CScnItemModelNw4r.cpp).
+extern "C" s32 RootNw4r_AttachCamOne(CScnRootNw4r* self, CScnCamLayout* cam);
+extern "C" s32 RootNw4r_DetachCamChild(CScnRootNw4r* self, CScnCamLayout* cam);
+extern "C" void RootNw4r_DrawDispatch(CScnRootNw4r* self, int flag);
+
 // Unmangled monolib callees (retail C-linkage names).
 extern "C" void Scn_SetCurrentScene(u32 value);
 extern "C" void scnLgtBindCamera(CScnEnvLgtCtrl* ctrl);
@@ -120,7 +105,6 @@ extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 extern "C" void LightManInvokeLightV3(CScnLightMan* man);
 extern "C" void FogManIsFogEnabled(CScnFogMan* man);
 extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);
-extern "C" void RootNw4r_DrawDispatch(CScnRootNw4r* self, int flag);
 extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateViewRoot__9CViewRootFv();
 
@@ -171,46 +155,47 @@ struct CScnDrawList {
     CScnDrawNode* mStartNodePtr;  // 0x04 sentinel node
 };
 
-class CScnRootNw4r {
+// CScnRootNw4r: the nw4r scene root (size 0x4EC). Bases: CScnRoot (+0x00)
+// and nw4r::g3d::IScnObjCallback (+0x0C, the ScnGroup callback target).
+// Its CALC_WORLD override gets the weak @12@ thunk in the secondary table and
+// a real slot appended at the end of __vt__12CScnRootNw4r.
+class CScnRootNw4r : public CScnRoot, nw4r::g3d::IScnObjCallback {
 public:
-    virtual ~CScnRootNw4r();          // vf0 (+0x08)
-    virtual void vf1(u32 value);      // vf1 (+0x0C) RootNw4r_RemoveId
-    virtual void vf2();               // vf2 (+0x10) RootNw4r_ApplyCamera
-    virtual void vf3();               // vf3 (+0x14) RootNw4r_UpdateFrame
-    virtual void vf4();               // vf4 (+0x18) RootNw4r_DrawFrame
-    virtual void vf5();               // vf5 (+0x1C) RootNw4r_AttachQueued
-    virtual void vf6(u32 a, u32 b);   // vf6 (+0x20) RootNw4r_AddPair
-    virtual void vf7(u32 a, u32 b);   // vf7 (+0x24) RootNw4r_RemovePair
-    virtual void vf8();               // vf8 (+0x28) getScnRootGroupHandle
-    virtual u32 vf9();                // vf9 (+0x2C) scnImN4GetWord4AC
-    virtual u32 vf10();               // vf10 (+0x30) RootNw4r_GetAllocHandle
-    virtual u32 vf11();               // vf11 (+0x34) RootNw4r_GetField14
+    struct GroupAlloc {
+        u32 mHandle;                  // +0x0
+        MEMAllocatorFuncs mFuncs;     // +0x4
+    };
 
-    // Fields (offsets verified against retail accessors).
-    CScnMgrLayout* field_0x4;         // +0x04 (owning scene object, retail CScn)
-    CScnRootNw4rBuffer* field_0x8;    // +0x08 (buffer, flag at +0x448)
-    u32 field_0xC;                    // +0x0C (MemManager ALLOC_HANDLE)
+    CScnRootNw4r(CScn* scn, void* param);
+    virtual ~CScnRootNw4r();
+    virtual void RemoveId(u32 id);
+    virtual void ApplyCamera(CScnCamLayout* cam);
+    virtual void UpdateFrame();
+    virtual void DrawFrame();
+    virtual void AttachQueued();
+    virtual void AddPair(u32 cb, u32 id);
+    virtual void RemovePair(u32 cb, s32 id);
+    virtual u32 getGroupHandle();
+    virtual u32 getBaseHandle() { return mGroup[0].mHandle; }
+    virtual u32 getAllocHandle();
+    virtual CScnBloom* getBloom();
+    virtual void ExecCallback_CALC_WORLD(nw4r::g3d::ScnObj::Timing timing,
+                                         nw4r::g3d::ScnObj* obj, u32 param,
+                                         void* info);
 
     nw4r::g3d::ScnRoot* mScnRoot;     // +0x10 (nw4r scene root)
-    CScnBloom* field_0x14;            // +0x14 (bloom post-effect)
-    u8 field_0x18;                    // +0x18 (frame-drawn flag)
-    u8 field_0x19;                    // +0x19 (draw-in-progress flag)
-    u8 field_0x1A;                    // +0x1A (redraw-request latch)
-    u32 field_0x1C;                   // +0x1C (frame counter / pair id)
-
-    u32 mArrA[4];                     // +0x20 (pair table part A)
-    s32 mArrB[4];                     // +0x30 (pair table part B)
+    CScnBloom* mBloom;                // +0x14 (bloom post-effect)
+    u8 mFrameDone;                    // +0x18 (frame-updated flag)
+    u8 mInBloomPass;                  // +0x19 (draw-in-progress flag)
+    u8 mRedrawReq;                    // +0x1A (redraw-request latch)
+    u32 mFrame;                       // +0x1C (frame counter / pair id)
+    u32 mArrA[4];                     // +0x20 (pair table: callbacks)
+    s32 mArrB[4];                     // +0x30 (pair table: ids)
     u32 mPairCount;                   // +0x40
-
-    u32 mIds[256];                    // +0x44 (id table)
+    u32 mIds[256];                    // +0x44 (queued camera layouts)
     u32 mIdCount;                     // +0x444
-
-    u8 pad_0x448[0x4AC - 0x448];      // +0x448
-    u32 field_0x4AC;                  // +0x4AC (alloc handle, init -1)
-    u8 pad_0x4B0[0x4B8 - 0x4B0];      // +0x4B0
-    u32 field_0x4B8;                  // +0x4B8 (alloc handle, init -1)
-    u8 pad_0x4BC[0x4C4 - 0x4BC];      // +0x4BC
-    u32 field_0x4C4;                  // +0x4C4 (alloc handle, init -1)
-    u8 pad_0x4C8[0x4D0 - 0x4C8];      // +0x4C8
-    u32 field_0x4D0;                  // +0x4D0 (alloc handle, init -1)
+    u8 mAllocTail;                    // +0x448 (allocate from the region tail)
+    MEMAllocator mAlloc[6];           // +0x44C
+    GroupAlloc mGroup[4];             // +0x4AC
+    MEMAllocatorFuncs mFuncs[2];      // +0x4DC
 };

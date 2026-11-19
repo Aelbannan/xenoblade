@@ -322,6 +322,11 @@ struct EmbeddedCullParams {
     f32 field_0x2E00;   // +0x2E00
 };
 
+struct MpfCullMark {
+    u32 element;
+    f32 height;
+};
+
 // MPF draw-object vtable mirrors for the two-argument mark-flush virtuals:
 // path C flushes via vtable slot 0 (+0x8), paths A/B via slot 1 (+0xC).
 struct MPFDrawVt8_2 {
@@ -336,8 +341,8 @@ struct MPFDrawVtC_2 {
 extern const f32 lbl_eu_8066A860;
 extern const f32 lbl_eu_8066A864;
 extern const f32 lbl_eu_8066A868;
-extern const f32 lbl_eu_80665880;
-extern const f32 lbl_eu_80665884;
+extern f32 lbl_eu_80665880;
+extern f32 lbl_eu_80665884;
 extern f32 lbl_eu_806638A0[2];  // defined in this TU (.sdata, dissolved monolibdata2)
 extern u32* lbl_eu_80665864;
 extern const char lbl_eu_80526324[];
@@ -362,7 +367,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
     nw4r::math::VEC3 diff;
     nw4r::math::VEC3 scratch;
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < (s32)count; i++) {
         UnkDrawEntry* entry = &obj->field_0x10[view->field_0x0];
         u8 group = entry->field_0x1C;
         if (lbl_eu_80665864[group >> 5] & (1u << (group & 0x1F))) continue;
@@ -372,6 +377,8 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
         f32 radiusSq = entry->field_0xC * entry->field_0xC;
         f32 f1v = entry->field_0x10;
         f32 f27v;
+        int n = entry->field_0x0;
+        int numElems = view->field_0x2;
         if (f29 > f1v) {
             f1v = f29;
             f27v = f28;
@@ -381,9 +388,8 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
         f32 f24 = f1v * f1v;
         f32 f23 = f27v * f27v;
         f32 f26 = lbl_eu_8066A860 / (f1v - f27v);
-        int n = entry->field_0x0;
 
-        for (int j = 0; j < view->field_0x2; j++) {
+        for (int j = 0; j < numElems; j++) {
             nw4r::math::VEC3Sub(&diff, &elems[j],
                                 (const nw4r::math::VEC3*)lbl_eu_80658410);
             f32 dist2 = nw4r::math::VEC3Dot(&diff, &diff);
@@ -405,76 +411,65 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
 
             for (int k = 0; k <= n; k++) {
                 UnkDrawEntry* sub = &entry[k];
-                if (sub->field_0x8 <= dist2) continue;
-                if (dist2 >= f24) {
-                    f32 d = sub->field_0x4 - lbl_eu_8066A868;
-                    if (dist2 <= d * d) {
-                        // Near branch: append without extra data.
-                        u32* slot =
-                            &obj->field_0x4[obj->field_0x4[0] *
-                                            (view->field_0x0 + k) +
-                                            1];
-                        slot[slot[0]] = view->field_0x4 + j;
-                        slot[0] += 1;
-                        if (slot[0] >= obj->field_0x4[0]) {
-                            void* draw =
-                                ((void**)&lbl_eu_806584E8)[sub->field_0x2];
-                            ((MPFDrawVt8_2*)draw)->vf0(
-                                (u8*)obj->field_0x0 + sub->field_0x18, slot);
-                            slot[0] = 1;
-                        }
-                        break;
-                    }
-                    // Far branch: append with a scaled height value.
-                    f32 t2;
-                    if (dist2 < lbl_eu_8066A864) {
+                if (!(sub->field_0x8 > dist2)) continue;
+                if (dist2 < f24) {
+                    if (!(dist2 > f23)) break;
+                    if (!(dist2 >= lbl_eu_8066A864)) {
                         nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                           lbl_eu_80526300);
                     }
-                    t2 = dist2 <= lbl_eu_8066A864
-                             ? lbl_eu_8066A864
-                             : dist2 * nw4r::math::FrSqrt(dist2);
+                    f32 distance = dist2 <= lbl_eu_8066A864
+                                     ? lbl_eu_8066A864
+                                     : dist2 * nw4r::math::FrSqrt(dist2);
                     u32* slot = &obj->field_0x4[obj->field_0x4[0] *
                                                 (obj->field_0x8 + k +
-                                                 view->field_0x0) +
-                                                1];
-                    slot[slot[0]] = view->field_0x4 + j;
-                    *(f32*)&slot[slot[0] + 1] =
-                        (sub->field_0x4 - t2) *
-                        lbl_eu_806638A0[0];
+                                                 view->field_0x0) + 1];
+                    MpfCullMark* mark = (MpfCullMark*)&slot[slot[0]];
+                    mark->element = view->field_0x4 + j;
+                    mark->height = f26 * (distance - f27v);
                     slot[0] += 2;
                     if (slot[0] >= obj->field_0x4[0] - 2) {
-                        void* draw =
-                            ((void**)&lbl_eu_806584E8)[sub->field_0x2];
+                        void* draw = ((void**)&lbl_eu_806584E8)[sub->field_0x2];
                         ((MPFDrawVtC_2*)draw)->vf1(
                             (u8*)obj->field_0x0 + sub->field_0x18, slot);
                         slot[0] = 1;
                     }
-                    break;
-                }
-                if (dist2 <= f23) break;
-                // Middle branch: append with a projected height value.
-                f32 t1;
-                if (dist2 < lbl_eu_8066A864) {
-                    nw4r::db::Warning(lbl_eu_80526324, 0x273,
-                                      lbl_eu_80526300);
-                }
-                t1 = dist2 <= lbl_eu_8066A864
-                         ? lbl_eu_8066A864
-                         : dist2 * nw4r::math::FrSqrt(dist2);
-                u32* slot = &obj->field_0x4[obj->field_0x4[0] *
-                                            (obj->field_0x8 + k +
-                                             view->field_0x0) +
-                                            1];
-                slot[slot[0]] = view->field_0x4 + j;
-                *(f32*)&slot[slot[0] + 1] = f26 * (t1 - f27v);
-                slot[0] += 2;
-                if (slot[0] >= obj->field_0x4[0] - 2) {
-                    void* draw =
-                        ((void**)&lbl_eu_806584E8)[sub->field_0x2];
-                    ((MPFDrawVtC_2*)draw)->vf1(
-                        (u8*)obj->field_0x0 + sub->field_0x18, slot);
-                    slot[0] = 1;
+                } else {
+                    f32 d = sub->field_0x4 - lbl_eu_8066A868;
+                    if (dist2 > d * d) {
+                        if (!(dist2 >= lbl_eu_8066A864)) {
+                            nw4r::db::Warning(lbl_eu_80526324, 0x273,
+                                              lbl_eu_80526300);
+                        }
+                        f32 distance = dist2 <= lbl_eu_8066A864
+                                         ? lbl_eu_8066A864
+                                         : dist2 * nw4r::math::FrSqrt(dist2);
+                        u32* slot = &obj->field_0x4[obj->field_0x4[0] *
+                                                    (obj->field_0x8 + k +
+                                                     view->field_0x0) + 1];
+                        MpfCullMark* mark = (MpfCullMark*)&slot[slot[0]];
+                        mark->element = view->field_0x4 + j;
+                        mark->height = (sub->field_0x4 - distance) *
+                                       lbl_eu_806638A0[0];
+                        slot[0] += 2;
+                        if (slot[0] >= obj->field_0x4[0] - 2) {
+                            void* draw = ((void**)&lbl_eu_806584E8)[sub->field_0x2];
+                            ((MPFDrawVtC_2*)draw)->vf1(
+                                (u8*)obj->field_0x0 + sub->field_0x18, slot);
+                            slot[0] = 1;
+                        }
+                    } else {
+                        u32* slot = &obj->field_0x4[obj->field_0x4[0] *
+                                                    (view->field_0x0 + k) + 1];
+                        slot[slot[0]] = view->field_0x4 + j;
+                        slot[0] += 1;
+                        if (slot[0] >= obj->field_0x4[0]) {
+                            void* draw = ((void**)&lbl_eu_806584E8)[sub->field_0x2];
+                            ((MPFDrawVt8_2*)draw)->vf0(
+                                (u8*)obj->field_0x0 + sub->field_0x18, slot);
+                            slot[0] = 1;
+                        }
+                    }
                 }
                 break;
             }

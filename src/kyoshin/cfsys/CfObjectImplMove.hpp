@@ -994,13 +994,13 @@ extern "C" void setChildV40__(void* a, void* b);
 extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, f32 first,
     f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
-extern "C" void* simGetLeafActData(void);
+extern "C" void* simGetLeafActData(void* object);
 // MoveImplGroundProbeB shape: ground/screen probe writing the adjusted position and
-// taking the source vector plus a float constant.
-// Canonical form (matches CPartsChange.hpp / CtrlMoveBase.hpp / CfCam.cpp).
-// Call sites needing another ABI cast through a local fn-pointer typedef
+// taking the source vector plus a float constant. The canonical BE398 declaration
+// lives in CtrlMoveBase.hpp (included here); its int parameters match the other
+// matched callers. Variant call ABIs cast through local fn-pointer typedefs
 // (CfCam BE398Fn convention).
-extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e); // int (not u32) to match CtrlMoveBase.hpp - u32/int here made the two extern "C" decls distinct signatures (illegal overloading) in every TU seeing both
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 extern "C" void ScnRes_CopyEntryHead(void* a, int b);
 extern "C" void ScnRes_CopyEntryMid(void* a, int b);
 // (remaining helpers are declared by their owning headers)

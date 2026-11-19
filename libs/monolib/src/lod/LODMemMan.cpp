@@ -58,6 +58,10 @@ extern "C" const char lbl_eu_80523D90[8];
 // flag word and trailing pad.
 extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663828[2] = {0x0000FFFF, 0x00000000};
 extern "C" __declspec(section ".sdata") f32 lbl_eu_80663830 = 90.0f;
+// "" (the LODMemMan ctor's name re-seed source).  Retail keeps it as a
+// local .sdata object in TU order; an inline-ctor "" literal is emitted weak
+// at the section tail instead (see MWCC_CASES LODMemMan note).
+// (Declared as a zero word: a zero-initialized char array is moved to .sbss.)
 extern "C" __declspec(section ".sdata") const u32 lbl_eu_80663834 = 0;
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663838[4] = {'r', 'e', 'f', '\0'};
 extern "C" __declspec(section ".sdata") const char lbl_eu_8066383C[4] = {'r', 'e', 'f', '\0'};
@@ -427,19 +431,6 @@ struct LODViewDesc {
     u32 field_0x1C;          // 0x1C u16-group offset in shared buffer
 };
 
-// +0xa44 sub-manager view.  The ctor sets the vtable, the first four words,
-// the leading byte of the name string and the strlen word at +0x74.
-struct LODSubA44 {
-    u8*  field_0x0;            // 0x00 vtable
-    u32  field_0x4;            // 0x04
-    u32  field_0x8;            // 0x08
-    u8   mPad_0C[0x20 - 0xC];  // 0x0C..0x1F
-    u32  field_0x20;           // 0x20
-    u8   mPad_24[0x30 - 0x24]; // 0x24..0x2F
-    u32  field_0x30;           // 0x30
-    char mStr_34[0x74 - 0x34]; // 0x34..0x73 name string
-    u32  field_0x74;           // 0x74 strlen of the name
-};
 
 // 0xc-byte ResFile slot used by acquireResFileSlot: 16 entries at (self+0x8).
 // The u16 at +0x0A is the in-use flag (bit 0); the id at +0x08 is -1 when
@@ -616,35 +607,31 @@ void LOD::UnkClass_8046D144::updateSubObject() {
 // LODMemMan vtable from its own ctor) and runs the embedded
 // UnkClass_8046A530 / resetFrameFields.
 // ---------------------------------------------------------------------------
-LOD::UnkClass_8046D144::UnkClass_8046D144() : field_0x0(0) {
-    LODSubA44* sub = (LODSubA44*)&mMemMan;
-
-    sub->mStr_34[0] = 0;
-    sub->field_0x74 = 0;
-    sub->field_0x4 = 0;
-    sub->field_0x8 = 0;
-    sub->field_0x20 = 0;
-    sub->field_0x30 = 0;
-    sub->field_0x74 = strlen((const char*)&lbl_eu_80663834);
-    strcpy(sub->mStr_34, (const char*)&lbl_eu_80663834);
-
-    mSubObject.initLod();
-    resetFrameFields();
+// Inline LODMemMan ctor (folded into the manager ctor below): empty name
+// buffer, cleared data/flag/file words, then the name re-seeded from "".
+inline LOD::LODMemMan::LODMemMan() : mName(true) {
+    mData = 0;
+    mSecondaryData = 0;
+    mFlags = 0;
+    mFile = 0;
+    mName = (const char*)&lbl_eu_80663834;
 }
 
-// Address-anchored retail symbol __dt__8046A584 (defined in
-// lod/code_8046A530.cpp); C linkage keeps the verbatim retail reloc name.
-extern "C" void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc);
+LOD::UnkClass_8046D144::UnkClass_8046D144() : field_0x0(0) {
+    resetFrameFields();
+}
 
 // Complete destructor (address-anchored retail symbol __dt__8046D144):
 // releases both g3d objects (+0xA8/+0xAC) from their scene groups, tears down
 // the +0xCC and +0xA44 sub-managers, keeps only flag bit 0x800 of +0x6C,
-// runs the embedded sub-object destructor (+0xABC) and frees the instance
+// then the implicit member destruction runs ~UnkClass_8046A530 (+0xABC) and
+// the inline-empty ~LODMemMan (+0xA44), and frees the instance
 // when the deleting flag is positive.
 LOD::UnkClass_8046D144::~UnkClass_8046D144() {
     LODMemManLayout* l = (LODMemManLayout*)this;
+    nw4r::g3d::G3dObj* group;
     if (l->field_0xA8 != 0) {
-        nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
+        group = getScnGroupChild((CScn*)l->mView_1C, 7);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
             ((LODG3dMgrVt*)group)->vf0D(l->field_0xA8);
         }
@@ -652,7 +639,7 @@ LOD::UnkClass_8046D144::~UnkClass_8046D144() {
         l->field_0xA8 = 0;
     }
     if (l->field_0xAC != 0) {
-        nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 8);
+        group = getScnGroupChild((CScn*)l->mView_1C, 8);
         if (((LODMgrObj*)group)->field_0xE4 != 0) {
             ((LODG3dMgrVt*)group)->vf0D(l->field_0xAC);
         }
@@ -666,7 +653,6 @@ LOD::UnkClass_8046D144::~UnkClass_8046D144() {
     mMemMan.resetManagerState();
     // Keep only bit 0x800 (bit 20) of the enable-flag word.
     l->field_0x6C &= 0x800u;
-    __dt__8046A584(&mSubObject, -1);
 }
 
 // Cache manager helper called with (shared buffer base + offset at +0x58).
@@ -1108,8 +1094,8 @@ void LOD::UnkClass_8046D144::updateLodTick() {
     // Load pass.
     self->mMemMan.driveArchiveLoadState();
     if (!(field_0x6C & 4)) {
-        if (((LODSubA44*)&mMemMan)->field_0x20 & 2) {
-            rebuildFromSharedBuffer(((LODSubA44*)&mMemMan)->field_0x4);
+        if (mMemMan.getFlags() & 2) {
+            rebuildFromSharedBuffer((u32)mMemMan.getData());
         } else {
             return;
         }
@@ -3490,8 +3476,7 @@ void LOD::LODMemMan::initElementBuffers(u32 handle, u32 size) {
     mFlags = 1;
     mView_1C = (u8*)size;
     mFile = 0;
-    mNameLen = strlen(name);
-    strcpy(mName, name);
+    mName = name;
 }
 
 // ---------------------------------------------------------------------------
@@ -3530,8 +3515,7 @@ void LOD::LODMemMan::resetManagerState() {
     // into r31 (lis@ha + addi@l adjacent, reused via mr); the Wii backend
     // always splits it (ha-base in r31 + per-use @l folds), one instruction
     // short - the documented adx_fsvr lis/addi coalescing ceiling.
-    mNameLen = strlen(name);
-    strcpy(mName, name);
+    mName = name;
 }
 
 // ---------------------------------------------------------------------------
@@ -3567,8 +3551,7 @@ void LOD::LODMemMan::clearFlagAndResetName() {
     const char* src = (const char*)&lbl_eu_80523D90;
     const char* name = src;
     mFlags &= ~4u;
-    mNameLen = strlen(name);
-    strcpy(mName, name);
+    mName = name;
 }
 
 // ---------------------------------------------------------------------------
@@ -3703,7 +3686,7 @@ void LOD::LODMemMan::driveArchiveLoadState() {
         } else {
             mFlags = flags | 0x10000;
             mFile = CDeviceFile::readCommonArchiveFile(
-                (mtl::ALLOC_HANDLE)mData, mName, (IWorkEvent*)self, 0, 0xC00);
+                (mtl::ALLOC_HANDLE)mData, mName.c_str(), (IWorkEvent*)self, 0, 0xC00);
         }
     }
     flags = mFlags;
@@ -3717,7 +3700,7 @@ void LOD::LODMemMan::driveArchiveLoadState() {
             LODArchiveHdr* hdr = (LODArchiveHdr*)mData;
             if (hdr->mMagic == 0x4C4F4449u && hdr->mVersion >= 0x3ED) {
                 mFile = CDeviceFile::readCommonArchiveFile(
-                    (mtl::ALLOC_HANDLE)hdr->mPayload, mName, (IWorkEvent*)self,
+                    (mtl::ALLOC_HANDLE)hdr->mPayload, mName.c_str(), (IWorkEvent*)self,
                     0xC00, hdr->mSize - 0xC00);
             } else {
                 if (mFile) {
@@ -3744,7 +3727,7 @@ void LOD::LODMemMan::driveArchiveLoadState() {
         } else {
             mFlags = flags | 0x10000;
             mFile = CDeviceFile::readCommonArchiveFile(
-                (u32)mBlock, mName, (IWorkEvent*)self, mBlockOffset, mBlockSize);
+                (u32)mBlock, mName.c_str(), (IWorkEvent*)self, mBlockOffset, mBlockSize);
         }
     }
 }

@@ -1742,6 +1742,8 @@ public:
     u32 field6;                  //0x14 + N*0x24 (last found index)
     u32 field7;                  //0x18 + N*0x24
 
+    u32 size() const { return mSize; }
+
     void storeMsg2W(unsigned long, u32*);
     void storeMsg4B(unsigned long, u8*);
     void storeMsg4WB(unsigned long, u32*);
@@ -1761,7 +1763,7 @@ template <int N>
 static u32 cmsgFindIndex(CMsgParam<N>* self, u32 msg) {
     // Loop bound kept inline so MWCC hoists it into a short-lived temp
     // register (retail holds the count in r0 for mtctr+cmplwi).
-    for (u32 i = 0; i < self->mSize; i++) {
+    for (u32 i = 0; i < self->size(); i++) {
         u32 idx = self->mFront + i;
         u32 slot = idx % self->mCapacity;
         // Compare order matches retail's reversed cmplw r4(msg), r0(command).
@@ -1787,9 +1789,9 @@ append:
     {
         // Retail reloads mFront/mSize/mCapacity/mArrayPtr here instead of
         // reusing the search-loop registers, in exactly that order.
-        u32 front = *(volatile u32*)&this->mFront;
-        u32 curSize = *(volatile u32*)&this->mSize;
-        int index = (int)(front + curSize) % (int)*(volatile u32*)&this->mCapacity;
+        u32 front = this->mFront;
+        u32 curSize = this->mSize;
+        int index = (int)(front + curSize) % (int)this->mCapacity;
         CMsgParamEntry* arr = this->mArrayPtr;
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
@@ -1842,13 +1844,13 @@ append:
         // Retail member-reload order: size, capacity, front (matches its
         // register coloring r6/r7/r8); quotient signed; array pointer
         // reloaded before the division.
-        u32 curSize = *(volatile u32*)&this->mSize;
+        u32 curSize = this->mSize;
         u32 cap = this->mCapacity;
-        u32 front = *(volatile u32*)&this->mFront;
+        u32 front = this->mFront;
         s32 sum = (s32)(front + curSize);
         // Pinned here: retail issues the array-pointer reload between the
         // index sum and the signed division.
-        CMsgParamEntry* arr = (CMsgParamEntry*)*(volatile void**)&this->mArrayPtr;
+        CMsgParamEntry* arr = this->mArrayPtr;
         s32 q = sum / (s32)cap;
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
@@ -1905,11 +1907,11 @@ append:
     {
         // Retail reload order: front, size, capacity, sum, array ptr, signed
         // division.
-        u32 front = *(volatile u32*)&this->mFront;
-        u32 curSize = *(volatile u32*)&this->mSize;
-        s32 cap = *(volatile u32*)&this->mCapacity;
+        u32 front = this->mFront;
+        u32 curSize = this->mSize;
+        s32 cap = this->mCapacity;
         s32 sum = (s32)(front + curSize);
-        CMsgParamEntry* arr = (CMsgParamEntry*)*(volatile void**)&this->mArrayPtr;
+        CMsgParamEntry* arr = this->mArrayPtr;
         volatile CMsgParamEntry entry;
         CMsgParamEntry* e = &arr[sum % cap];
         e->command = (u32)msg;
@@ -1959,9 +1961,9 @@ append:
     {
         // Retail reloads mFront/mSize/mCapacity/mArrayPtr here (in that
         // order); append slot uses signed divw.
-        u32 front = *(volatile u32*)&this->mFront;
-        u32 curSize = *(volatile u32*)&this->mSize;
-        u32 cap = *(volatile u32*)&this->mCapacity;
+        u32 front = this->mFront;
+        u32 curSize = this->mSize;
+        u32 cap = this->mCapacity;
         CMsgParamEntry* e = &this->mArrayPtr[(int)(front + curSize) % (int)cap];
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
@@ -1991,9 +1993,9 @@ stamp:
     {
         // Retail stamps unk23 on the ring slot, then recomputes the same slot
         // with fully reloaded members to write the four payload words.
-        u32 f = *(volatile u32*)&this->mFront;
-        u32 last = *(volatile u32*)&this->field6;
-        u32 cap = *(volatile u32*)&this->mCapacity;
+        u32 f = this->mFront;
+        u32 last = this->field6;
+        u32 cap = this->mCapacity;
         u32 p0 = payload[0];
         u32 idx = f + last;
         u32 q = idx / cap;
@@ -2002,9 +2004,9 @@ stamp:
         u32 p3 = payload[3];
         this->mArrayPtr[idx - q * cap].unk23 = 0xb;
 
-        u32 f2 = *(volatile u32*)&this->mFront;
-        u32 last2 = *(volatile u32*)&this->field6;
-        u32 cap2 = *(volatile u32*)&this->mCapacity;
+        u32 f2 = this->mFront;
+        u32 last2 = this->field6;
+        u32 cap2 = this->mCapacity;
         u32 idx2 = f2 + last2;
         CMsgParamEntry* e = &this->mArrayPtr[idx2 - (idx2 / cap2) * cap2];
         e->wid = p0;
@@ -2023,9 +2025,9 @@ template <> void CMsgParam<32>::storeMsg4W9(unsigned long msg, u32* payload) {
     goto stamp;
 append:
     {
-        u32 front = *(volatile u32*)&this->mFront;
-        u32 curSize = *(volatile u32*)&this->mSize;
-        u32 cap = *(volatile u32*)&this->mCapacity;
+        u32 front = this->mFront;
+        u32 curSize = this->mSize;
+        u32 cap = this->mCapacity;
         CMsgParamEntry* e = &this->mArrayPtr[(int)(front + curSize) % (int)cap];
         volatile CMsgParamEntry entry;
         u32 wid = entry.wid;
@@ -2053,9 +2055,9 @@ append:
     }
 stamp:
     {
-        u32 f = *(volatile u32*)&this->mFront;
-        u32 last = *(volatile u32*)&this->field6;
-        u32 cap = *(volatile u32*)&this->mCapacity;
+        u32 f = this->mFront;
+        u32 last = this->field6;
+        u32 cap = this->mCapacity;
         u32 p0 = payload[0];
         u32 idx = f + last;
         u32 q = idx / cap;
@@ -2064,9 +2066,9 @@ stamp:
         u32 p3 = payload[3];
         this->mArrayPtr[idx - q * cap].unk23 = 0x9;
 
-        u32 f2 = *(volatile u32*)&this->mFront;
-        u32 last2 = *(volatile u32*)&this->field6;
-        u32 cap2 = *(volatile u32*)&this->mCapacity;
+        u32 f2 = this->mFront;
+        u32 last2 = this->field6;
+        u32 cap2 = this->mCapacity;
         u32 idx2 = f2 + last2;
         CMsgParamEntry* e = &this->mArrayPtr[idx2 - (idx2 / cap2) * cap2];
         e->wid = p0;

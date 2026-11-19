@@ -266,7 +266,7 @@ int BmVoice_Play0A(CVoiceHandle* self) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    // File-scope extern "C" decl (above) + __declspec(noinline) on the
+    // File-scope extern "C" decl (above) + on the
     // definition keep this call a bl (matches retail); MWCC rejects
     // block-scope extern "C", so no local re-declaration here.
     int voiceId = BmVoice_FindPoolB((CVoiceHandle*)self);
@@ -274,12 +274,12 @@ int BmVoice_Play0A(CVoiceHandle* self) {
     return 0;
 }
 
-// __declspec(noinline): retail keeps this selector outlined (callers emit
+// : retail keeps this selector outlined (callers emit
 // bl); without it MWCC's -O4 inliner copies the body into BmVoice_Play0A.
 // Same goto-shaped body as BmVoice_FindPoolA (pool B at +0x0C); inlining the
 // walk here instead of via the helper keeps MWCC's register colours equal
 // to retail.
-__declspec(noinline) int BmVoice_FindPoolB(CVoiceHandle* owner) {
+int BmVoice_FindPoolB(CVoiceHandle* owner) {
     VoiceIdListEntry* e = lbl_eu_8053A4B8;
     int cur;
     // Terminator on the freshly loaded word; negated match arm uses
@@ -319,12 +319,12 @@ wdone:
 }
 
 // Same scan as BmVoice_FindPoolA, drawing from pool C.
-// __declspec(noinline): retail keeps this selector outlined; without it
+// : retail keeps this selector outlined; without it
 // MWCC's -O4 inliner copies the body into BmVoice_Play32.
-// __declspec(noinline): retail keeps this selector outlined; without it
+// : retail keeps this selector outlined; without it
 // MWCC's -O4 inliner copies the body into BmVoice_Play32.
 // Same goto-shaped body as BmVoice_FindPoolA (pool C at +0x38).
-__declspec(noinline) int BmVoice_FindPoolC(CVoiceHandle* owner) {
+int BmVoice_FindPoolC(CVoiceHandle* owner) {
     VoiceIdListEntry* e = lbl_eu_8053A4B8;
     int cur;
     // Terminator on the freshly loaded word; negated match arm uses

@@ -303,7 +303,7 @@ void CSortMenu::CalcSelect(int category, u8* outCursor, u8* outTop) {
     }
 }
 
-__declspec(noinline) void CSortMenu::StateOpen() {
+void CSortMenu::StateOpen() {
     if (advanceAnimTransform(mpAnimTrans0, 1.0f) != 0) {
         mState = 2;
         mpLayout->SetAnimationEnable(mpAnimTrans0, false);
@@ -312,14 +312,14 @@ __declspec(noinline) void CSortMenu::StateOpen() {
     }
 }
 
-__declspec(noinline) void CSortMenu::StateOpenInfo() {
+void CSortMenu::StateOpenInfo() {
     if (advanceAnimTransform(mpAnimTrans1, 1.0f) != 0) {
         mState = 3;
         mIdle = 1;
     }
 }
 
-__declspec(noinline) void CSortMenu::StateCloseInfo() {
+void CSortMenu::StateCloseInfo() {
     if (AnimRewindFrame(mpAnimTrans1, 1.0f) != 0) {
         mState = 5;
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
@@ -328,7 +328,7 @@ __declspec(noinline) void CSortMenu::StateCloseInfo() {
     }
 }
 
-__declspec(noinline) void CSortMenu::StateClose() {
+void CSortMenu::StateClose() {
     if (AnimRewindFrame(mpAnimTrans0, 1.0f) != 0) {
         mState = 0;
         mIdle = 1;
@@ -336,10 +336,8 @@ __declspec(noinline) void CSortMenu::StateClose() {
     }
 }
 
-// noinline (here and on the State* handlers): retail calls these via bl from
-// every caller; MWCC -inline auto otherwise inlines them.
 // Slots past the entry count show an empty string.
-__declspec(noinline) void CSortMenu::Refresh() {
+void CSortMenu::Refresh() {
     // u8 counter: retail masks i to 8 bits at every use (clrlwi/clrlslwi).
     for (u8 i = 0; i < 5; i++) {
         int idx = i + (s8)mTop;

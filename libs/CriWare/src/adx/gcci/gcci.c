@@ -78,12 +78,12 @@ static GciStatus gcci_status; // +0x00C
 // Open file pool and the path work area.
 typedef struct {
     GciHndl hndl[GCI_MAX_HNDL]; // +0x000
-    u32 rdMode;                 // +0xFA0
-    u32 unkFA4;                 // +0xFA4
-    char prefix[GCI_NAME_MAX];  // +0xFA8
+    // rdMode/prefix live in the gcci_sub split (+0xFA0).
 } GCCI_WORK;
 
 static GCCI_WORK gcci_work;
+extern u32 gcci_rdMode;
+extern char gcci_sub_work[GCI_NAME_MAX];
 
 // Error message pool of the GCI driver (one C string per failure).
 static const char gcci_errmsg[] =
@@ -167,7 +167,7 @@ static inline void gcci_makePath(char *buf, const char *fname) {
     u32 i;
     u32 len;
 
-    strcpy(buf, gcci_work.prefix);
+    strcpy(buf, gcci_sub_work);
     strcat(buf, fname);
     len = strlen(buf);
     for (i = 0; i < len; i++) {
@@ -183,7 +183,7 @@ void *gcCiGetInterface(void) {
     gcci_errfn = NULL;
     gcci_errarg = NULL;
     memset(&gcci_status, 0, sizeof(GciStatus));
-    memset(gcci_work.prefix, 0, GCI_NAME_MAX);
+    memset(gcci_sub_work, 0, GCI_NAME_MAX);
     return (void *)&gcci_iface;
 }
 
@@ -414,7 +414,7 @@ s32 gcCiReqRd(GciHndl *hndl, s32 size, u8 *buf) {
     }
     nsct = (length + 0x1f) & ~0x1f;
     DCInvalidateRange(buf, nsct);
-    if (gcci_work.rdMode == 0) {
+    if (gcci_rdMode == 0) {
         if (!DVDReadAsyncPrio(&hndl->fi, buf, nsct, offset, gcci_rd_cbfn, 2)) {
             return 0;
         }

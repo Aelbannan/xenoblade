@@ -319,7 +319,7 @@ extern "C" void updateLeafDist(CActParamAnim* self);
 extern "C" void pushParamNode(void* data);
 extern "C" void* Scn_FindCamItem(void* obj, int index);
 extern "C" void simSetLeafDist7B0(void* self, f32 value);
-extern "C" int ScnRes_VertRayForward_E398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
+#include "kyoshin/cf/CtrlMoveBase.hpp" // canonical ScnRes_VertRayForward_E398 decl
 extern "C" void ScnRes_CopyEntryHead(void* out, int a);
 extern "C" void ScnRes_CopyEntryMid(void* out, int a);
 

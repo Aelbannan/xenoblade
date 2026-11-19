@@ -4,23 +4,25 @@
 #include "libs/CriWare/src/adx/adxt/adx_bsc.h"
 #include "libs/CriWare/src/adx/adxt/adx_xpnd.h"
 
-u32 lbl_eu_805E5348;
-u32 lbl_eu_805E534C;
-u32 lbl_eu_805E5350;
-u32 lbl_eu_805E5354;
-u32 lbl_eu_805E5358;
-void (*lbl_eu_805E535C)(void*, void*);
-void (*lbl_eu_805E5360)(void*, s16, void*, void*);
-void (*lbl_eu_805E5364)(void*);
-unsigned char _pad_805E5368[8];
-u32 lbl_eu_805E5370[2];
-u8 lbl_eu_805E5378[0xFF8];
-__declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_80560048[2] = {1,0};
+/* AHX callback pointers at 0x5348..0x5354 now belong to adx_bahx. */
+/* adxb_ahx_in_sj / dec_smpl / term_supply / exec_one are imported there. */
+/* No local storage here; keep these four lines for stable source lines. */
+/* (The callback pool starts at lbl_eu_805E5358.)                        */
+extern u32 lbl_eu_805E5358;
+extern void (*lbl_eu_805E535C)(void*, void*);
+extern void (*lbl_eu_805E5360)(void*, s16, void*, void*);
+extern void (*lbl_eu_805E5364)(void*);
+extern unsigned char _pad_805E5368[8];
+extern u32 adxb_err_mode[2];
+extern u8 lbl_eu_805E5378[0x1000];
+__declspec(section ".data") __attribute__((aligned(8))) u32 adxb_force_flag[2] = {1,0};
+
 
 extern void ADXPD_Init(void);
 extern void* ADXPD_Create(void);
+
 extern void ADXPD_Destroy(void* pd);
-extern void ADXPD_Stop(void* pd);
+
 extern void ADXPD_Reset(void* pd);
 extern void ADXPD_EntryMono(void* pd, void* data, void* dest, void* arg7);
 extern void ADXPD_EntrySte(void* pd, void* data, s32 num, void* dest, void* arg7);
@@ -134,7 +136,7 @@ static s16 SKG_GenerateKey(u8* data, s16 len, s16* key1, s16* key2, s16* key3) {
     return 0;
 }
 
-u32 ADXB_GetDecErrMode(void) { return lbl_eu_805E5370[0]; }
+u32 ADXB_GetDecErrMode(void) { return adxb_err_mode[0]; }
 
 void ADXB_Init(void) {
     u8* p = (u8*)&lbl_eu_805E5358;
@@ -219,7 +221,7 @@ int adxb_get_key(ADXB* adxb, void* data, void* out_key1, void* out_key2, void* o
     s16* k1 = (s16*)out_key1;
     s16* defKeys = (s16*)((u8*)&lbl_eu_805E5358 + 0x10);
 
-    if (lbl_eu_80560048[0] == 0) {
+    if (adxb_force_flag[0] == 0) {
         if (p->version < 4) {
             *k1 = 0;
             *k2 = 0;
@@ -284,7 +286,7 @@ s32 ADXB_DecodeHeaderAdx(ADXB* adxb, void* data, void* out_encoding) {
     s16 l2;
     s16 l3;
 
-    if (((u32)data & 1) != 0 && lbl_eu_805E5370[0] == 0) {
+    if (((u32)data & 1) != 0 && adxb_err_mode[0] == 0) {
         ADXERR_CallErrFunc2_(lbl_eu_80517330, lbl_eu_80517330 + 0x1F);
         return -1;
     }
@@ -776,3 +778,12 @@ void ADXB_ExecHndl(ADXB* adxb) {
         }
     }
 }
+
+/* .bss: definitions after the code, reverse retail order for MWCC emission. */
+u8 lbl_eu_805E5378[0x1000];
+u32 adxb_err_mode[2];
+unsigned char _pad_805E5368[8];
+void (*lbl_eu_805E5364)(void*);
+void (*lbl_eu_805E5360)(void*, s16, void*, void*);
+void (*lbl_eu_805E535C)(void*, void*);
+u32 lbl_eu_805E5358;

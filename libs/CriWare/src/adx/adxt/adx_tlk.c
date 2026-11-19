@@ -138,7 +138,7 @@ __declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char ad
 
 
 
-__attribute__((aligned(4))) unsigned char adx_tlk_bss[0x289C];
+/* .bss objects are defined after the code; see the bottom of this file. */
 
 typedef void (*ADX_VFN1)(void*);
 typedef s32 (*ADX_VFN2)(void*, s32);
@@ -207,8 +207,8 @@ extern void (*lbl_eu_805E4F24)(void*);
 extern u32 lbl_eu_805E4F10;
 extern u32 lbl_eu_805E4F18;
 extern u32 lbl_eu_805E4F1C;
-extern u32 lbl_eu_805E4F28;
-extern u32 lbl_eu_805E4EF0;
+extern u32 lbl_eu_805E4F28[0x12];
+extern u8 lbl_eu_805E4EF0[0x20];
 extern u32 lbl_eu_80560044;
 extern u32 lbl_eu_80560040;
 /* rodata constant pool used by the adxt time/sfreq helpers */
@@ -1225,7 +1225,7 @@ update_time:
     lbl_eu_805E4F10 = 0;
     adxt_GetTime(self, &time, &sfreq);
     self->time =
-        __cvt_fp2unsigned((float)(s32)lbl_eu_805E4F28 *
+        __cvt_fp2unsigned((float)(s32)lbl_eu_805E4F28[0] *
                           ((float)(s32)time / (float)(s32)sfreq));
     lbl_eu_805E4F10 = savedSvr;
     ADXCRS_Unlock();
@@ -1272,7 +1272,7 @@ s32 ADXT_DiscardSmpl(ADXT_OBJ_* self, u32 num) {
         adxt_GetTime(self, &time, &sfreq);
         lbl_eu_805E4F10 = savedLock;
         self->time = __cvt_fp2unsigned(
-            (float)(s32)time / (float)(s32)sfreq * (float)(s32)lbl_eu_805E4F28);
+            (float)(s32)time / (float)(s32)sfreq * (float)(s32)lbl_eu_805E4F28[0]);
         self->tick = lbl_eu_805E26DC;
     }
     ADXCRS_Leave();
@@ -1393,3 +1393,12 @@ s32 ADXT_InsertSilence(void* self, s32 ch, s32 smpl) {
     ADXCRS_Leave();
     return ret;
 }
+
+/* .bss: reverse retail order for MWCC emission. */
+u32 lbl_eu_805E4F28[0x12];
+void (*lbl_eu_805E4F24)(void*);
+void (*lbl_eu_805E4F20)();
+u32 lbl_eu_805E4F1C;
+u32 lbl_eu_805E4F18;
+u32 lbl_eu_805E4F10;
+u8 lbl_eu_805E4EF0[0x20];

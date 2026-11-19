@@ -23,7 +23,7 @@ void FixStr<128>::format(const char* fmt, ...);
 namespace cf {
 
 // Forward declarations for functions in this TU
-extern "C" __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src);
+extern "C" char* CfScript_CopyName(char* dest, const char* src);
 
 // CfScript_InitPath - initializer for path string
 extern "C" void CfScript_InitPath() {
@@ -31,7 +31,7 @@ extern "C" void CfScript_InitPath() {
 }
 
 // CfScript_CopyName - copy string with length tracking; returns dest
-extern "C" __declspec(noinline) char* CfScript_CopyName(char* dest, const char* src) {
+extern "C" char* CfScript_CopyName(char* dest, const char* src) {
     u32 len = strlen(src);
     CfScriptNameBuffer* buf = (CfScriptNameBuffer*)dest;
     buf->mLength = len;
@@ -64,7 +64,7 @@ extern "C" void CfScript_LoadSlot0(const char* name) {
 }
 
 // CfScriptManager::func_80068B20 - forward slot 0 (== this) + name to loader
-__declspec(noinline) void CfScriptManager::loadSlotZero(const char* name) {
+void CfScriptManager::loadSlotZero(const char* name) {
     CfScript_LoadScript(&mScripts[0], name);
 }
 
@@ -77,7 +77,7 @@ extern "C" void CfScript_LoadSlot1(const char* name) {
 }
 
 // CfScriptManager::CfScript_PutSlot1 - load script into slot 1
-__declspec(noinline) void CfScriptManager::CfScript_PutSlot1(const char* name) {
+void CfScriptManager::CfScript_PutSlot1(const char* name) {
     CfScript* script = &mScripts[1];
     CfScript_LoadScript(script, name);
 }
@@ -89,7 +89,7 @@ extern "C" void CfScript_LoadSlot2(const char* name) {
 }
 
 // CfScriptManager::CfScript_PutSlot2 - load script into slot 2
-__declspec(noinline) void CfScriptManager::CfScript_PutSlot2(const char* name) {
+void CfScriptManager::CfScript_PutSlot2(const char* name) {
     CfScript* script = &mScripts[2];
     CfScript_LoadScript(script, name);
 }
@@ -101,7 +101,7 @@ extern "C" void CfScript_FlagSlot0() {
 }
 
 // CfScriptManager::CfScript_SetFlag0 - set flag bit 2 on slot 0
-__declspec(noinline) void CfScriptManager::CfScript_SetFlag0() {
+void CfScriptManager::CfScript_SetFlag0() {
     mScripts[0].mFlags |= 0x4;
 }
 
@@ -112,7 +112,7 @@ extern "C" void CfScript_FlagSlot1() {
 }
 
 // CfScriptManager::CfScript_SetFlag1 - set flag bit 2 on slot 1
-__declspec(noinline) void CfScriptManager::CfScript_SetFlag1() {
+void CfScriptManager::CfScript_SetFlag1() {
     mScripts[1].mFlags |= 0x4;
 }
 
@@ -123,7 +123,7 @@ extern "C" void CfScript_FlagSlot2() {
 }
 
 // CfScriptManager::CfScript_SetFlag2 - set flag bit 2 on slot 2
-__declspec(noinline) void CfScriptManager::CfScript_SetFlag2() {
+void CfScriptManager::CfScript_SetFlag2() {
     mScripts[2].mFlags |= 0x4;
 }
 
@@ -134,7 +134,7 @@ extern "C" void CfScript_SleepReq2() {
 }
 
 // CfScriptManager::CfScript_SleepSlot2 - sleep VM thread for slot 2 if flag set
-__declspec(noinline) void CfScriptManager::CfScript_SleepSlot2() {
+void CfScriptManager::CfScript_SleepSlot2() {
     CfScript& script = mScripts[2];
     if (script.mFlags & 0x20) {
         if (script.mVmContext != nullptr) {
@@ -150,7 +150,7 @@ extern "C" void CfScript_ClearReq0() {
 }
 
 // CfScriptManager::CfScript_ClearSlot0 - reset/cleanup slot 0
-__declspec(noinline) void CfScriptManager::CfScript_ClearSlot0() {
+void CfScriptManager::CfScript_ClearSlot0() {
     CfScript& script = mScripts[0];
 
     if (script.mFileHandle != nullptr) {
@@ -177,7 +177,7 @@ extern "C" void CfScript_ClearReq1() {
 }
 
 // CfScriptManager::CfScript_ClearSlot1 - reset/cleanup slot 1
-__declspec(noinline) void CfScriptManager::CfScript_ClearSlot1() {
+void CfScriptManager::CfScript_ClearSlot1() {
     CfScript& script = mScripts[1];
 
     if (script.mFileHandle != nullptr) {
@@ -204,7 +204,7 @@ extern "C" void CfScript_ClearReq2() {
 }
 
 // CfScriptManager::CfScript_ClearSlot2 - reset/cleanup slot 2
-__declspec(noinline) void CfScriptManager::CfScript_ClearSlot2() {
+void CfScriptManager::CfScript_ClearSlot2() {
     CfScript& script = mScripts[2];
 
     if (script.mFileHandle != nullptr) {
@@ -237,8 +237,7 @@ extern "C" u32 CfScript_TestFlags(CfScriptManager* mgr, int index, int mask) {
 }
 
 // CfScript_MakeName - format or copy string based on condition
-// retail: pure tail calls (b CfScript_CopyName / b format) - CfScript_CopyName is noinline
-// so the if-branch collapses to a tail call; format string is base of lbl_eu_804FB3A4.
+// retail: pure tail calls (b CfScript_CopyName / b format); format string is base of lbl_eu_804FB3A4.
 extern "C" void CfScript_MakeName(char* dest, const char* src1, const char* src2, const char* src3) {
     if (src3 != nullptr) {
         CfScript_CopyName(dest, src3);
@@ -436,7 +435,7 @@ extern "C" void __ct__cf_CfScript(CfScript* self);
 extern "C" void __dt__Q22cf8CfScriptFv(CfScript* self, s16 flags);
 
 // CfScriptManager::getInstance - singleton accessor
-__declspec(noinline) CfScriptManager* CfScriptManager::getInstance() {
+CfScriptManager* CfScriptManager::getInstance() {
     if (!lbl_eu_80663D88) {
         CfScriptManager* mgr = (CfScriptManager*)lbl_eu_80570918;
         // Construct the 3-script array in place at the static manager address
@@ -501,7 +500,7 @@ void CfScriptManager::init() {
 // loaded (waitCount 0/1), dispatch its state handler through the retail ptmf
 // table lbl_eu_80526DD0 ({waitLoad, update}); then run the VM unless the game
 // manager says we are in a menu/frozen state.
-__declspec(noinline) void CfScriptManager::updateScript() {
+void CfScriptManager::updateScript() {
     for (u32 i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
 

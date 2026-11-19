@@ -50,11 +50,7 @@ void CQstLogInfo::QstLogInfo_SetQuestIdSlot(u16 val) { mField3A = val; }
 
 // Destructor: destroys the embedded scratch region, then frees the object
 // when the deleting-dtor flag is set (standard MWCC pattern).
-// optimize_for_size: retail uses the stmw r30/lmw r30 frame; -O4,p splits
-// the saves into separate stw's (MWCC_CASES kyoshin-dtor pattern).
-#pragma optimize_for_size on
 CQstLogInfo::~CQstLogInfo() {}
-#pragma optimize_for_size off
 
 // Constructor: IWorkEvent base, the mMemRegion member ctor, then the
 // zero/default field init.
@@ -76,7 +72,7 @@ CQstLogInfo::CQstLogInfo() : mMemRegion() {
 
 // us-8022b5a8 - QstLogInfo_AdvanceState1To2
 // If the animation at 0x24 finishes, transition to state 2.
-extern "C" __declspec(noinline) void QstLogInfo_AdvanceState1To2(CQstLogInfo* self) {
+extern "C" void QstLogInfo_AdvanceState1To2(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
     nw4r::lyt::AnimTransform* anim = self->field_0x24;
     if (advanceAnimTransform(anim, frame) != 0) {
@@ -87,7 +83,7 @@ extern "C" __declspec(noinline) void QstLogInfo_AdvanceState1To2(CQstLogInfo* se
 
 // us-8022b5f4 - QstLogInfo_AdvanceState2To3
 // If the animation at 0x28 finishes, transition to state 3 and set field 0x39.
-extern "C" __declspec(noinline) void QstLogInfo_AdvanceState2To3(CQstLogInfo* self) {
+extern "C" void QstLogInfo_AdvanceState2To3(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
     nw4r::lyt::AnimTransform* anim = self->field_0x28;
     if (advanceAnimTransform(anim, frame) != 0) {
@@ -98,7 +94,7 @@ extern "C" __declspec(noinline) void QstLogInfo_AdvanceState2To3(CQstLogInfo* se
 
 // us-8022b640 - QstLogInfo_RewindState4To5
 // If the animation at 0x28 is done (via AnimRewindFrame), transition to state 5.
-extern "C" __declspec(noinline) void QstLogInfo_RewindState4To5(CQstLogInfo* self) {
+extern "C" void QstLogInfo_RewindState4To5(CQstLogInfo* self) {
     if (AnimRewindFrame(self->field_0x28, lbl_eu_80668590) != 0) {
         self->field_0x34 = 5;
         QstLogInfo_SwapAnimEnablePair(self);
@@ -107,7 +103,7 @@ extern "C" __declspec(noinline) void QstLogInfo_RewindState4To5(CQstLogInfo* sel
 
 // us-8022b68c - QstLogInfo_RewindState5To0
 // If the animation at 0x24 is done (via AnimRewindFrame), reset to state 0.
-extern "C" __declspec(noinline) void QstLogInfo_RewindState5To0(CQstLogInfo* self) {
+extern "C" void QstLogInfo_RewindState5To0(CQstLogInfo* self) {
     if (AnimRewindFrame(self->field_0x24, lbl_eu_80668590) != 0) {
         self->field_0x34 = 0;
         self->mField39 = 1;
@@ -123,12 +119,12 @@ void QstLogInfo_LoadArcHandle(CQstLogInfo* self) {
 }
 
 // Same SetAnimationEnable shape as CQstLogList::QstLogList_ShowOpenAnim (FULL_MATCH).
-extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnablePair(CQstLogInfo* self) {
+extern "C" void QstLogInfo_SwapAnimEnablePair(CQstLogInfo* self) {
     self->mUnk20->SetAnimationEnable(self->field_0x28, false);
     self->mUnk20->SetAnimationEnable(self->field_0x24, true);
 }
 
-extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* self) {
+extern "C" void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* self) {
     self->mUnk20->SetAnimationEnable(self->field_0x24, false);
     self->mUnk20->SetAnimationEnable(self->field_0x28, true);
 }
@@ -136,7 +132,7 @@ extern "C" __declspec(noinline) void QstLogInfo_SwapAnimEnableDual(CQstLogInfo* 
 // State machine driver: while the quest-log info is active, dispatch on the
 // current state (1/2/4/5) to the per-state animation handlers, then advance
 // the layout animation by one frame.
-extern "C" __declspec(noinline) void QstLogInfo_StepStateMachine(CQstLogInfo* self) {
+extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self) {
     if (self->mUnk30 == 0) return;
     switch (self->field_0x34) {
     case 1: QstLogInfo_AdvanceState1To2(self); break;
@@ -150,7 +146,7 @@ extern "C" __declspec(noinline) void QstLogInfo_StepStateMachine(CQstLogInfo* se
 // Quest-log teardown: release the bdat handle, close the two arc handles,
 // delete the layout + tag processor, release the resource accessor and tear
 // down the scratch region.
-extern "C" __declspec(noinline) void QstLogInfo_TeardownLayout(CQstLogInfo* self) {
+extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self) {
     CBdat::getEntry(2);
     closeFileHandle(&self->mFileHandle);
     closeFileHandle(&self->field_0x18);
@@ -170,7 +166,6 @@ extern "C" __declspec(noinline) void QstLogInfo_TeardownLayout(CQstLogInfo* self
 // Loads the quest-category arc: maps mField3A through the quest-name table
 // (lbl_eu_80536320) and reads the common archive file into field_0x18,
 // clearing the loaded flag mField38.
-#pragma optimize_for_size on
 void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
     self->field_0x18 = CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
@@ -178,12 +173,10 @@ void QstLogInfo_LoadCommonArchive(CQstLogInfo* self) {
         self, 0, 0);
     self->mField38 = 0;
 }
-#pragma optimize_for_size off
 
 // Full quest-log refresh: reset the log to the current quest id, then run the
 // name / description / pane-color / icon chain of sub-updates.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void QstLogInfo_RefreshQuestDisplay(CQstLogInfo* self) {
+extern "C" void QstLogInfo_RefreshQuestDisplay(CQstLogInfo* self) {
     QstLogInfo_ClearAllLogPanes(self);
     u8 v = (u8)CtrlRemote_TouchBitByArg(self->mField3A + 0x220);
     u32 idx = SearchThresholdIdx(self->mField3A);
@@ -193,12 +186,11 @@ extern "C" __declspec(noinline) void QstLogInfo_RefreshQuestDisplay(CQstLogInfo*
     QstLogInfo_UpdateBandObjectives(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
     QstLogInfo_UpdateTypeObjectives(self, (const char*)lbl_eu_80573D18[idx], self->mField3A, v);
 }
-#pragma optimize_for_size off
 
 // Name-pane + icon update for one quest entry: BDAT text lookup into the
 // layout, root-pane icon lookup, then a 'timg' texture resource select by the
 // quest-category column, applied to the icon pane.
-extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateNameIconPane(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
     char* str = BdatGetPtrDirect(table, &lbl_eu_8050A0B4[0x17], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], str, 0);
@@ -231,8 +223,7 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateNameIconPane(CQstLogInfo* 
 // conversion (GetBdatNameByNumId) into the pane, then picks the follow-up text
 // ("cleared"/"uncleared"/level-up variants) by quest state and category and
 // updates the "txt_clear_reason" pane at 0xab.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateClearReasonPane(CQstLogInfo* self,
     const char* table, u32 key) {
     u16 v = BdatGetU16Direct(table, &lbl_eu_8050A0B4[0x78], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84],
@@ -257,25 +248,21 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateClearReasonPane(CQstLogInf
     }
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xab], str, 0);
 }
-#pragma optimize_for_size off
 
 // Sets the quest-log "txt_exp" pane from the BDAT table `table`: looks up
 // the "purpose" column of row `key` and writes the result into the layout
 // (field_0x2C selects the pane color/state).
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self, const char* table, u32 key) {
+extern "C" void QstLogInfo_UpdateExpRewardPane(CQstLogInfo* self, const char* table, u32 key) {
     char* str = BdatGetPtrDirect(table, &lbl_eu_8050A0B4[0xb3], key);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xbb], str, self->field_0x2C);
 }
-#pragma optimize_for_size off
 
 // Quest-log objective/sub-objective update. For each of the four level bands
 // (0x6f / 0x79 / 0x83 / 0xfc) it formats a pane name from the band-specific
 // format, looks the row up in the BDAT quest table, and binds the found text
 // into the layout; the odd/even variant of each format picks the column. The
 // kind != 1 path repeats the fixed rows (loop over i) and binds them by name.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateBandObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
     char bufE8[0x20];
     char bufC8[0x20];
@@ -510,14 +497,12 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateBandObjectives(CQstLogInfo
         }
     }
 }
-#pragma optimize_for_size off
 
 // Quest-log objective/sub-objective update with per-band pane binding (see
 // QstLogInfo_UpdateBandObjectives for the v >= 0xFE band). The two loops are identical except
 // for their pane-name formats and buffers; the switch maps the BDAT quest
 // type (v1) to the table that supplies the objective text.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
+extern "C" void QstLogInfo_UpdateTypeObjectives(CQstLogInfo* self,
     const char* table, u32 key, u8 v) {
     char buf8[0x20];
     char buf28[0x20];
@@ -704,12 +689,10 @@ extern "C" __declspec(noinline) void QstLogInfo_UpdateTypeObjectives(CQstLogInfo
         }
     }
 }
-#pragma optimize_for_size off
 
 // Quest-log reset: clears every quest-name / objective / status pane back to
 // the empty string (pool+0x2a2) and resets the state panes' visibility.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self) {
+extern "C" void QstLogInfo_ClearAllLogPanes(CQstLogInfo* self) {
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x1d], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x84], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0xab], &lbl_eu_8050A0B4[0x2a2], 0);
@@ -752,13 +735,11 @@ extern "C" __declspec(noinline) void QstLogInfo_ClearAllLogPanes(CQstLogInfo* se
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x238], &lbl_eu_8050A0B4[0x2a2], 0);
     LayoutSetTextBoxFmtValue(self->mUnk20, &lbl_eu_8050A0B4[0x243], &lbl_eu_8050A0B4[0x2a2], 0);
 }
-#pragma optimize_for_size off
 
 // File-load completion callback for the two quest-log arc handles. The
 // quest-log arc (mFileHandle) builds the layout; the common archive
 // (field_0x18) primes the quest-category BDAT table (field_0x3C) and refreshes
 // the whole log display.
-#pragma optimize_for_size on
 bool CQstLogInfo::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
         mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x10000,
@@ -826,7 +807,6 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
     }
     return 0;
 }
-#pragma optimize_for_size off
 
 // retail: if (mUnk30) tail drawLayout(mUnk20, drawInfo passthrough, 0, 1)
 void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo) {

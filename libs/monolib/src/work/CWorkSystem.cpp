@@ -58,8 +58,6 @@ u32 lbl_eu_806635C8[2] = { (u32)&lbl_eu_80522790, (u32)&lbl_eu_8056BA90 };
 CWorkSystem::ExitFunc lbl_eu_80665618;
 CWorkSystem* lbl_eu_8066561C;
 
-#pragma push
-#pragma auto_inline off  // noinline-ok: ctor must stay out of line (retail create() bls it); without it extabindex drifts (+0x1E)
 CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(pName, pParent, 32) {
     // novtable: write the retail vptr (0x8056B9F0) first so the stores land in
     // retail order (vptr, then the member inits).
@@ -71,14 +69,10 @@ CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(
     lbl_eu_8066561C = this;
     mType = THREAD_CWORKSYSTEM;
 }
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 CWorkSystem::~CWorkSystem(){
     lbl_eu_8066561C = nullptr;
 }
-#pragma pop
 
 CWorkSystem* CWorkSystem::getInstance(){
     return lbl_eu_8066561C;
@@ -145,9 +139,7 @@ void CWorkSystem::wkUpdate(){
     }
 }
 
-#pragma push
 // Retail uses stmw/lmw r30 (size-optimized codegen) in this function.
-#pragma optimize_for_size on
 bool CWorkSystem::wkStandbyLogin(){
     if(!CDeviceFile::isInitialized()) return false;
 
@@ -183,7 +175,6 @@ bool CWorkSystem::wkStandbyLogin(){
     //Call base
     return CWorkThread::wkStandbyLogin();
 }
-#pragma pop
 
 bool CWorkSystem::wkStandbyLogout(){
     //"Failed to log out"
@@ -209,12 +200,9 @@ bool CWorkSystem::wkStandbyLogout(){
 
 // Retail Fv create: getInstance -> getWorkMem -> placement-new (the name
 // string "CWorkSystem" is pooled at lbl_eu_8052279C+109) -> entryWork.
-// auto_inline off keeps the same-TU ctor a real call (retail reloc
-// __ct__11CWorkSystemFPCcP11CWorkThread; MWCC would otherwise inline it).
 //
 // OPEN ITEM (best: 0 structural / 6 reg-swap / size 120==120):
-// - retail prologue stmw/lmw r29 needs optimize_for_size (pragma below);
-//   plain -O4,p emits individual stw/lwz and use_lmw_stmw has no pragma form.
+// - retail prologue stmw/lmw r29 comes from the -O4,s unit flag.
 // - retail shows a remat artifact (name base materialized in scratch r4 then
 //   copied to r31 AFTER the getInstance call) while parent=getInstance() is
 //   declared first. Every source permutation trades one defect for another:
@@ -234,11 +222,8 @@ bool CWorkSystem::wkStandbyLogout(){
 // raw/inst adds a 4th saved reg (stmw r28, size +16); explicit if() adds a
 // duplicate beq and flips to parent=r31/name=r30/obj=r29. The remaining swap
 // is allocation-internal, unreachable from source shape.
-#pragma push
 // retail prologue/epilogue saves r29-r31 with a single stmw/lmw pair; MWCC
 // only merges consecutive saves into stmw under optimize-for-size.
-#pragma optimize_for_size on
-#pragma auto_inline off  // noinline-ok: create() bls the ctor / entryWork; -ipa off loses it and breaks extab
 CWorkSystem* CWorkSystem::create() {
     CWorkThread* parent = CWorkControl::getInstance();
     const char* pName = &lbl_eu_8052279C[0x6D]; // "CWorkSystem"
@@ -248,15 +233,11 @@ CWorkSystem* CWorkSystem::create() {
     CWorkUtil::entryWork(obj, parent, false);
     return obj;
 }
-#pragma optimize_for_size reset
-#pragma pop
 
 void CWorkSystem::setExitFunc(ExitFunc func){
     lbl_eu_80665618 = func;
 }
 
-#pragma push
-#pragma auto_inline off  // noinline-ok: keeps the callee bodies out of the exit path; without it extabindex drifts (+0x1E)
 void CWorkSystem::callExitFunc(){
     if(lbl_eu_80665618 != nullptr){
         lbl_eu_80665618();
@@ -265,4 +246,3 @@ void CWorkSystem::callExitFunc(){
         CPadManager::destroy();
     }
 }
-#pragma pop

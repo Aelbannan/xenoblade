@@ -18,9 +18,6 @@
 // Scn_IsAnimActiveOrNull: unified on `bool(void*)` (CScn.cpp definition)
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
-#define zero__Q22ml5CVec3 zero__Q22ml5CVec3_ml_hidden
-#define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_u32_hidden
-#define simGetLeafActData simGetLeafActData_void_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -32,9 +29,6 @@
 #undef Scn_SetupAnimDefault
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
-#undef zero__Q22ml5CVec3
-#undef ScnRes_VertRayForward_E398
-#undef simGetLeafActData
 
 namespace cf { class CActParamAnimGame; class CfObjectMove; }
 

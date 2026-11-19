@@ -11,9 +11,7 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 // Shield CSystemWindow.hpp's C++-linkage SysWinGetSingleton decl: this TU
 // uses CfGimmick.hpp's extern "C" flat form (retail symbol is unmangled).
-#define SysWinGetSingleton SysWinGetSingleton_cxx_hidden
 #include "kyoshin/CSystemWindow.hpp"
-#undef SysWinGetSingleton
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/lyt/lyt_layout.h>

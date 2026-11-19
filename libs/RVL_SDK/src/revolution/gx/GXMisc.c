@@ -30,11 +30,11 @@ extern GXBool __GXIsGPFifoReady(void);
 extern void __GXCleanGPFifo(void);
 extern void __GXInitRevisionBits(void);
 
-// Retail .sbss: TokenCB is 8 bytes (only word 0 is used) and DrawDone is
-// 4 bytes (only byte 0 is used, via lbz/stb).
+// Retail .sbss: TokenCB is 8 bytes (only word 0 is used); DrawDone is a
+// byte flag whose 4-byte retail symbol size includes alignment padding.
 static GXDrawSyncCallback TokenCB[2];
 static GXDrawDoneCallback DrawDoneCB;
-static volatile u8 DrawDone[4];
+static volatile u8 DrawDone;
 static OSThreadQueue FinishQueue;
 
 void GXSetMisc(UNKWORD token, UNKWORD val) {
@@ -168,14 +168,14 @@ void GXSetDrawDone(void) {
     GX_BP_LOAD_REG(reg);
 
     GXFlush();
-    DrawDone[0] = FALSE;
+    DrawDone = FALSE;
     OSRestoreInterrupts(en);
     gxdt->lastWriteWasXF = FALSE;
 }
 
 static inline void GXWaitDrawDone(void) {
     BOOL en = OSDisableInterrupts();
-    while (!DrawDone[0]) {
+    while (!DrawDone) {
         OSSleepThread(&FinishQueue);
     }
     OSRestoreInterrupts(en);
@@ -294,7 +294,7 @@ static void GXFinishInterruptHandler(s32 intr, OSContext* context) {
     reg |= 1 << 3;
     GX_PE_REG_WRITE_U16(5, reg);
 
-    DrawDone[0] = TRUE;
+    DrawDone = TRUE;
 
     if (DrawDoneCB) {
         OSClearContext(&exceptionContext);

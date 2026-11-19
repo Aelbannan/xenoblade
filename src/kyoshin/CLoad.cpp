@@ -22,11 +22,10 @@ extern char lbl_eu_80510CC8[];
 
 
 #pragma push
-#pragma optimize_for_size on
 // Retail-evidence shadow: __ct__CLoad bls the member ctor directly with no
 // placement-new null guard, so the TU calls it by its retail mangled name.
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-__attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self);
+void CLoadMarkFileArrived(CLoadFull* self);
 
 extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg) {
     self->mVtbl = lbl_eu_8053A340;
@@ -50,7 +49,6 @@ extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg) {
 
 
 #pragma push
-#pragma optimize_for_size on
 CLoad::~CLoad() {
     // mMemRegion's destructor runs automatically after the body.
 }
@@ -72,7 +70,7 @@ void CLoadBeginFileRequest(CLoad* self) {
 
 // Per-frame state-driven layout update: advances the animation state
 // machine, then ticks the layout once.
-__attribute__((noinline)) void CLoadUpdateLayout(CLoad* self) {
+void CLoadUpdateLayout(CLoad* self) {
     if (self->mIsLoaded != 0 && self->mAnimStep != 0) {
         switch (self->mAnimStep) {
         case 1:
@@ -173,7 +171,7 @@ void CLoadAdvanceFadeHold(CLoad* self) {
 
 
 // Step 3 -> idle: retry animation finished.
-__attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
+void CLoadFinishRetryIdle(CLoad* self) {
     if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668DF0) != 0) {
         self->mAnimStep = 0;
         self->field_2C = 1;
@@ -182,7 +180,7 @@ __attribute__((noinline)) void CLoadFinishRetryIdle(CLoad* self) {
 
 
 
-__attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self) {
+void CLoadMarkFileArrived(CLoadFull* self) {
     if (self->field_1C != 0) {
         self->field_2B = 1;
         self->field_28 = 1;
@@ -195,7 +193,6 @@ __attribute__((noinline)) void CLoadMarkFileArrived(CLoadFull* self) {
 // freshly loaded archive and starts its animations. Retail builds this with
 // the size pipeline ([stmw r29]/lmw frame).
 #pragma push
-#pragma optimize_for_size on
 bool CLoad::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x1400,

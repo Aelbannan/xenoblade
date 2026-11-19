@@ -794,30 +794,24 @@ kyoshin/CQuestWindow.cpp:
 	.sdata        start:0x80661EB8 end:0x80661ED8
 	.sdata2        start:0x80667138 end:0x80667180
 kyoshin/CSystemWindow.cpp:
-	extab       start:0x8000BE1C end:0x8000BEBC
-	extabindex  start:0x80027298 end:0x800272EC
-	.text       start:0x801250C8 end:0x8012565C
+	extab       start:0x8000BE1C end:0x8000BFA0
+	extabindex  start:0x80027298 end:0x80027358
+	.text       start:0x801250C8 end:0x80125DEC
+	.rodata     start:0x804FEF98 end:0x804FEFB8
+	.data       start:0x8052D278 end:0x8052D478
+	.sdata      start:0x80661ED8 end:0x80661EE8
+	.sbss       start:0x80663FD8 end:0x80663FE0
 
-	.sbss        start:0x80663fd8 end:0x80663fdc
-kyoshin/CSysWinSelect.cpp:
-	extab       start:0x8000BEBC end:0x8000BFA0
-	extabindex  start:0x800272EC end:0x80027358
-	.text       start:0x8012565C end:0x80125DEC
-
-	.data        start:0x8052d278 end:0x8052d378
-	.rodata        start:0x804fef98 end:0x804fefa8
-	.sbss        start:0x80663fdc end:0x80663fe0
-	.sdata        start:0x80661ed8 end:0x80661ee0
 kyoshin/CTagProcessor.cpp:
 	extab       start:0x8000BFA0 end:0x8000C284
 	extabindex  start:0x80027358 end:0x80027730
 	.text       start:0x80125DEC end:0x8012C710
 	.ctors      start:0x804FA010 end:0x804FA014
 
-	.data        start:0x8052d378 end:0x8052df70
-	.rodata        start:0x804fefa8 end:0x804ffc98
+	.data        start:0x8052d478 end:0x8052df70
+	.rodata        start:0x804fefb8 end:0x804ffc98
 	.sbss        start:0x80663fe0 end:0x80664040
-	.sdata        start:0x80661ee0 end:0x80662170
+	.sdata        start:0x80661ee8 end:0x80662170
 	.sdata2        start:0x80667180 end:0x80667268
 kyoshin/CTalkWindow.cpp:
 	extab       start:0x8000C284 end:0x8000C354
@@ -4454,12 +4448,12 @@ RVL_SDK/src/revolution/wud/debug_msg.c:
 CriWare/src/adx/adxf/adx_fini.c:
 	.text       start:0x8037F3A0 end:0x8037F4F8
 
-	.bss        start:0x805dfda8 end:0x805dfdb0
+	.bss        start:0x805dfda8 end:0x805e0628
 	.rodata        start:0x80515788 end:0x805157e0
 CriWare/src/adx/adxf/adx_fs.c:
 	.text       start:0x8037F4F8 end:0x803822E8
 
-	.bss        start:0x805dfdb0 end:0x805e26b0
+	.bss        start:0x805e0628 end:0x805e26b0
 	.rodata        start:0x805157e0 end:0x80515fb8
 CriWare/src/adx/adxf/adx_fcch.c:
 	.text       start:0x803822E8 end:0x803822EC
@@ -4471,10 +4465,11 @@ CriWare/src/adx/adxt/adx_fsvr.c:
 CriWare/src/adx/adxt/adx_inis.c:
 	.text       start:0x803823E4 end:0x80382690
 
-	.bss        start:0x805e26c8 end:0x805e26d4
+	.bss        start:0x805e26c8 end:0x805e3328
 	.rodata        start:0x80515fb8 end:0x805160b8
 CriWare/src/adx/adxt/adx_lsc.c:
 	.text       start:0x80382690 end:0x803826F8
+	.bss        start:0x805e3328 end:0x805e3338
 
 CriWare/src/adx/adxt/adx_mng.c:
 	.text       start:0x803826F8 end:0x80382798
@@ -4482,13 +4477,16 @@ CriWare/src/adx/adxt/adx_mng.c:
 	.data        start:0x80560028 end:0x80560030
 CriWare/src/adx/adxt/adx_sfa.c:
 	.text       start:0x80382798 end:0x803827C0
+	.bss        start:0x805e3338 end:0x805e3340
 
 CriWare/src/adx/adxt/adx_sjd.c:
 	.text       start:0x803827C0 end:0x80383CC8
+	.bss        start:0x805e3340 end:0x805e3e98
 
 	.rodata        start:0x805160b8 end:0x80516148
 CriWare/src/adx/adxt/adx_stmc.c:
 	.text       start:0x80383CC8 end:0x80385390
+	.bss        start:0x805e3e98 end:0x805e4ef0
 
 	.data        start:0x80560030 end:0x80560040
 	.rodata        start:0x80516148 end:0x805161a0
@@ -4499,7 +4497,7 @@ CriWare/src/adx/adxt/adx_tlk2.c:
 CriWare/src/adx/adxt/adx_tlk.c:
 	.text       start:0x803855A0 end:0x803878BC
 
-	.bss        start:0x805e26d4 end:0x805e4f70
+	.bss        start:0x805e4ef0 end:0x805e4f70
 	.data        start:0x80560040 end:0x80560048
 	.rodata        start:0x805162d0 end:0x80516a88
 CriWare/src/adx/adxt/adx_tsvr.c:
@@ -4516,6 +4514,7 @@ CriWare/src/adx/adxt/adx_amp.c:
 
 CriWare/src/adx/adxt/adx_bahx.c:
 	.text       start:0x80388EA8 end:0x80388F78
+	.bss        start:0x805e5348 end:0x805e5358
 
 CriWare/src/adx/adxt/adx_baif.c:
 	.text       start:0x80388F78 end:0x80389B08
@@ -4524,7 +4523,7 @@ CriWare/src/adx/adxt/adx_baif.c:
 CriWare/src/adx/adxt/adx_bsc.c:
 	.text       start:0x80389B08 end:0x8038B640
 
-	.bss        start:0x805e5348 end:0x805e6378
+	.bss        start:0x805e5358 end:0x805e6378
 	.data        start:0x80560048 end:0x80560050
 CriWare/src/adx/adxt/adx_bwav.c:
 	.text       start:0x8038B640 end:0x8038C628
@@ -4605,11 +4604,12 @@ CriWare/src/adx/cvfs/cri_cvfs.c:
 CriWare/src/adx/gcci/gcci.c:
 	.text       start:0x80393B8C end:0x803949AC
 
-	.bss        start:0x805e6b70 end:0x805e7c30
+	.bss        start:0x805e6b70 end:0x805e7b28
 	.data        start:0x80565b30 end:0x80565b98
 	.rodata        start:0x805181f0 end:0x80518418
 CriWare/src/adx/gcci/gcci_sub.c:
 	.text       start:0x803949AC end:0x803949B8
+	.bss        start:0x805e7b28 end:0x805e7c30
 
 CriWare/src/adx/lsc/lsc_err.c:
 	.text       start:0x803949B8 end:0x80394AB0
@@ -4670,8 +4670,11 @@ CriWare/src/adx/sj/sj_err.c:
 CriWare/src/adx/svm/svm.c:
 	.text       start:0x80399B0C end:0x8039AD88
 
-	.bss        start:0x805f26f0 end:0x805f2af8
+	.bss        start:0x805f26f0 end:0x805f2af0
 	.rodata        start:0x80518f50 end:0x80519108
+CriWare/src/adx/adxt/adx_dcd3.c:
+	.bss        start:0x805f2af0 end:0x805f2af8
+
 CriWare/src/adx/adxt/adx_bsps.c:
 	.text       start:0x8039AD88 end:0x8039B2E8
 
@@ -6465,16 +6468,21 @@ monolib/src/scn/CScnMaruShadowNw4r.cpp:
 	.sdata        start:0x80663968 end:0x80663978
 monolib/src/scn/CScnMem.cpp:
 	.data	start:0x8056E5B8 end:0x8056E730
-	.rodata	start:0x80523F98 end:0x80523FD0
+	.rodata	start:0x80523F98 end:0x80523FC0
 	.text	start:0x80492B1C end:0x80492D98
+	.sdata       start:0x80663978 end:0x80663998
+	.sdata2      start:0x8066A9D8 end:0x8066A9E8
 monolib/src/scn/CScnRoot.cpp:
 	.data	start:0x8056E730 end:0x8056E768
-	.text	start:0x80492D98 end:0x804933AC
-	.sdata2     start:0x8066a9e8 end:0x8066aa00
+	.rodata	start:0x80523FC0 end:0x80523FD0
+	.sdata	start:0x80663998 end:0x806639A0
+	.text	start:0x80492D98 end:0x80492E5C
 monolib/src/scn/CScnRootNw4r.cpp:
 	.data	start:0x8056E768 end:0x8056E7D0
 	.rodata	start:0x80523FD0 end:0x80524010
-	.text	start:0x804933AC end:0x80494130
+	.sdata	start:0x806639A0 end:0x806639A8
+	.sdata2	start:0x8066a9e8 end:0x8066aa00
+	.text	start:0x80492E5C end:0x80494130
 monolib/src/scn/CScnTexWorkMan.cpp:
 	.data	start:0x8056E7D0 end:0x8056E868
 	.rodata	start:0x80524010 end:0x80524030
@@ -6497,26 +6505,31 @@ monolib/src/scn/code_8049431C.cpp:
 monolib/src/scn/CVirtualLightAmb.cpp:
 	.data	start:0x8056E878 end:0x8056E898
 	.rodata	start:0x80524050 end:0x80524078
+	.sdata	start:0x806639C8 end:0x806639D8
 	.text	start:0x804986EC end:0x80498770
 monolib/src/scn/CVirtualLightDir.cpp:
 	.data	start:0x8056E898 end:0x8056E8B8
-	.rodata	start:0x80524078 end:0x805240A0
+	.rodata	start:0x80524078 end:0x80524090
+	.sdata	start:0x806639D8 end:0x806639E0
 	.text	start:0x80498770 end:0x8049880C
 	.sdata2     start:0x8066aa80 end:0x8066aa88
 monolib/src/scn/CVirtualLightObj.cpp:
 	extab       start:0x8001F088 end:0x8001F2BC
 	extabindex  start:0x80036DFC end:0x80036EBC
 	.text       start:0x8049880C end:0x80499CA0
+	.data       start:0x8056E8B8 end:0x8056E8D0
 	.sdata2     start:0x8066aa88 end:0x8066aab0
 
 monolib/src/scn/CScn.cpp:
 	extab       start:0x8001F2BC end:0x8001F370
 	extabindex  start:0x80036EBC end:0x80036F7C
 	.text       start:0x80499CA0 end:0x8049ABF0
+	.rodata     start:0x80524090 end:0x805240A0
+	.data       start:0x8056E8D0 end:0x8056E9A8
 	.sdata2     start:0x8066aab0 end:0x8066aac0
 
 monolib/src/scn/CScn_80496B0C.cpp:
-	.data	start:0x8056E8B8 end:0x8056E9E8
+	.data	start:0x8056E9A8 end:0x8056E9E8
 	.text	start:0x8049ABF0 end:0x8049CD50
 	.sdata2     start:0x8066aac0 end:0x8066aae0
 	.sdata        start:0x806639E0 end:0x806639E8

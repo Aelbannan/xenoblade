@@ -229,7 +229,7 @@ extern "C" void setAnimGate();
 extern "C" int evalParamRecord(CActParamData* self, void* data, int sel, u32 gate);
 extern "C" void updateParamFloats(CActParamData* self, float arg1, float arg2);
 extern "C" int walkParamContext(CActParamData* self, void* ctx);
-extern "C" int lookupParamByKey(CActParamData* self, void* key, u32 tag);
+extern "C" int lookupParamByKey(CActParamData* self, void* key);
 extern "C" void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA, void* nodeB);
 
 // Slot table addressed relative to lbl_eu_80663D50, indexed directly by a

@@ -449,27 +449,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CScn_80496B0C.o": UnitRules(
-        # CTTask<4CScn> vtable slots that cannot be spelled in source
-        # ('<' in mangled name) stay literal-zero in the hand-written
-        # lbl_eu_8056E984 array; inject relocs to wire them to retail names.
-        inject_relocs=(
-            (".data", 0xD4, "__dt__13CTTask<4CScn>Fv"),
-            (".data", 0xE4, "Move__13CTTask<4CScn>Fv"),
-            (".data", 0xE8, "Draw__13CTTask<4CScn>Fv"),
-        ),
-        # func_80497544 calls the C++-linkage func_80498288 defined in this
-        # TU; retail keeps a plain unmangled linker name for it.
-        # C++-linkage in-TU callees retail keeps as plain unmangled linker
-        # names (func_80497544/func_80498288/func_80498A5C call sites).
-        # CTTask<4CScn> slots are defined as name-carrier stubs at the end
-        # of the file so the linker can resolve them; rename the stubs to
-        # the retail '<'-names and keep them as UNDEF for the injected vtable
-        # relocs.
-        exact_renames=(
-            ("__ct_CTask_CScn_name_carrier_1", "__dt__13CTTask<4CScn>Fv"),
-            ("__ct_CTask_CScn_name_carrier_2", "Move__13CTTask<4CScn>Fv"),
-            ("__ct_CTask_CScn_name_carrier_3", "Draw__13CTTask<4CScn>Fv"),
-        ),
         # pool-coupled: MWCC pools the two int->f64 conversion magic doubles
         # locally (signed 43300000_80000000 for the (s32) frame quantize in
         # func_80497AA8, unsigned 43300000_00000000 for the (s16)/(u32)
@@ -480,9 +459,9 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A388"),
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A3C0"),
         ),
-        # Retail .data tail after the panic strings is 16-byte padded (0x130);
-        # MWCC emits the strings without final padding (0x12B).
-        pad_data_section=((".data", 0x130),),
+        # Retail .data tail after the panic strings is 16-byte padded (0x40);
+        # MWCC emits the strings without final padding (0x3B).
+        pad_data_section=((".data", 0x40),),
     ),
     "CQuat.o": UnitRules(
         # pool-coupled: local .sdata2 pool -> CGXCache pool symbols (lbl_eu_8066Axxx).
@@ -3182,28 +3161,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         # GXPal524ProgAa so taps/GXPals/SFI land at the retail offsets.
     ),
     "WUD.o": UnitRules(
-        # Retail .data pools rebuilt as named byte arrays in WUD.c; all MWCC
-        # 8-align pads killed via retail-size arrays (14 shrinks) + off-grid
-        # splits (2544 52+52, 27BC 100+108, 2C2C 124+124, FC4 100+204).
-        # Raw .data 0x11E8->0x11CC (pads 0x1C->0, auto 0x24 remains); only the
-        # compiler switch table tail is trimmed. Jumptable at retail 0xCD8.
-        # Its ADDR32 case-label relocs are injected below and __wudSecurity-
-        # EventStackCallback's lis/addi are retargeted onto it.
-        inject_relocs=(
-            (".data", 0xCD8, "__wudSecurityEventStackCallback+92"),
-            (".data", 0xCDC, "__wudSecurityEventStackCallback+264"),
-            (".data", 0xCE0, "__wudSecurityEventStackCallback+292"),
-            (".data", 0xCE4, "__wudSecurityEventStackCallback+452"),
-            (".data", 0xCE8, "__wudSecurityEventStackCallback+720"),
-            (".data", 0xCEC, "__wudSecurityEventStackCallback+736"),
-            (".data", 0xCF0, "__wudSecurityEventStackCallback+972"),
-            (".data", 0xCF4, "__wudSecurityEventStackCallback+1312"),
-            (".data", 0xCF8, "__wudSecurityEventStackCallback+1328"),
-        ),
-        # retail names the patch-table ETB pointer "@etb_80010138".
+        # Retail names the patch-table ETB pointer "@etb_80010138".
         exact_renames=(("etb_80010138", "@etb_80010138"),),
-        # jumptable_80562FA0's last byte is initialized to 1 to keep the array
-        # out of .bss; re-zero it (no reloc points at that word).
     ),
     "OSNet.o": UnitRules(
         # MWCC pools the retail "NWC24iPrepareShutdown" string (kept alive by

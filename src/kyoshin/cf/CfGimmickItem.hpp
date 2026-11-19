@@ -70,7 +70,7 @@ void CfGimmick_UpdateProximity(CfGimmickReg* reg, const CfGimmickVec3* point,
                    unsigned short c, float d, int e, int g);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
 void CItem_thunkAllocRecord(unsigned int a, unsigned int b);
-void CfGimmick_TriggerSound2CC8(unsigned int a, int b);
+
 int CfGimmick_CheckTriggerGated(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, u32 partyId);
 void CfGimmick_PlaySoundAtPos(u32 id, const CfGimmickVec3* pos);

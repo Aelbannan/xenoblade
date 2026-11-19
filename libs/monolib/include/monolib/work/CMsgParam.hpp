@@ -28,15 +28,14 @@ struct CMsgParamEntry{
     u8 unk23;
 };
 
-// Layout (from retail): vptr, N * 0x24 entries, then five tail words
-// { mArrayPtr, mFront, mSize, mCapacity, field6 } -> sizeof = 0x18 + N*0x24.
-// CView::mContextMsg (N=10) reads 0x280..0x400 immediately followed by the
-// view's FixStr<64> name at 0x400, and __ct__CMsgParam_32 (CGXCache) inits
-// exactly these five words before the cache's own message-target pointer.
+// The fixed ring is a non-polymorphic member of the message interface.
+// Its destructor clears the counters; CMsgParam itself has an empty virtual
+// destructor. This accounts for retail's guarded cleanup at this + 4.
+// CMsgParamRing is an inferred name.
 template <int N>
-class CMsgParam{
+class CMsgParamRing {
 public:
-    CMsgParam(){
+    CMsgParamRing(){
         mCapacity = N;
         mArrayPtr = mEntries;
         mSize = 0;
@@ -44,7 +43,7 @@ public:
         field6 = 0;
     }
 
-    virtual ~CMsgParam(){
+    ~CMsgParamRing(){
         clear();
     }
 
@@ -53,16 +52,36 @@ public:
         mFront = 0;
     }
 
+    CMsgParamEntry mEntries[N];
+    CMsgParamEntry* mArrayPtr;
+    u32 mFront;
+    u32 mSize;
+    u32 mCapacity;
+    u32 field6;
+};
+
+// vptr + ring: sizeof(CMsgParam<N>) = 0x18 + N * 0x24.
+// CView's 10-entry queue spans 0x280..0x400; its name follows at 0x400.
+template <int N>
+class CMsgParam {
+public:
+    CMsgParam(){}
+    virtual ~CMsgParam(){}
+
+    void clear(){
+        mRing.clear();
+    }
+
     bool empty() const{
-        return mSize == 0;
+        return mRing.mSize == 0;
     }
 
     u32 size() const{
-        return mSize;
+        return mRing.mSize;
     }
 
     const CMsgParamEntry& front() const{
-        return mArrayPtr[mFront % mCapacity];
+        return mRing.mArrayPtr[mRing.mFront % mRing.mCapacity];
     }
 
     void enqueue(u32 msg){
@@ -74,8 +93,8 @@ public:
         u32 value14 = entry.unk14;
         u32 value18 = entry.unk18;
 
-        // Ring buffer index: (mFront + mSize) % mCapacity, entry stride 0x24.
-        CMsgParamEntry& target = mArrayPtr[(int)(mFront + mSize) % (int)mCapacity];
+        // Ring buffer index: (mRing.mFront + mRing.mSize) % mRing.mCapacity, entry stride 0x24.
+        CMsgParamEntry& target = mRing.mArrayPtr[(int)(mRing.mFront + mRing.mSize) % (int)mRing.mCapacity];
 
         u32 value1C = entry.unk1C;
         u16 value20 = entry.unk20;
@@ -93,30 +112,20 @@ public:
         target.unk22 = value22;
         target.unk23 = 0;
 
-        mSize++;
-        field6 = mSize - 1;
+        mRing.mSize++;
+        mRing.field6 = mRing.mSize - 1;
     }
 
     CMsgParamEntry& last(){
-        return mArrayPtr[(mFront + field6) % mCapacity];
+        return mRing.mArrayPtr[(mRing.mFront + mRing.field6) % mRing.mCapacity];
     }
 
     void pop(){
-        mSize--;
-        mFront = (mFront + 1) % mCapacity;
+        mRing.mSize--;
+        mRing.mFront = (mRing.mFront + 1) % mRing.mCapacity;
     }
 
     int find(u32 msg) const;
 
-    // Ring state (public like _reslist_base's): retail inlines the ring ops at
-    // several call sites with site-specific register colouring that the
-    // enqueue()/last() bodies cannot reproduce, so those sites address the
-    // slots directly.
-    //0x0: vtable
-    CMsgParamEntry mEntries[N]; //0x4
-    CMsgParamEntry* mArrayPtr; //N*0x24 + 0x4
-    u32 mFront; //N*0x24 + 0x8
-    u32 mSize; //N*0x24 + 0xC
-    u32 mCapacity; //N*0x24 + 0x10
-    u32 field6; //N*0x24 + 0x14 (index of the newest entry)
+    CMsgParamRing<N> mRing; //0x4
 };

@@ -1269,8 +1269,8 @@ extern "C" int checkParamBlks(void* self) {
 //   lbl_eu_80665F90 subtraction (plain (double)(u32) casts pool a TU-local
 //   cookie and add f27/f28 saves); notify14 RETURNS the replacement time
 //   (kept in f1 across the call) - fixing that dropped one callee-save fpr
-//   and aligned the frame at 96B; evalParamTiming stub must be extern "C" +
-//   noinline or MWCC inlines it away and the bl reloc vanishes.
+//   and aligned the frame at 96B; evalParamTiming stub is extern "C"
+//   (the unit is -inline noauto, so the bl reloc stays).
 // - Residual walls:
 //   (a) Callee-save color rotation, BOTH banks by exactly one position:
 //       gprs retail self=r28,member=r29,cursor=r31,const=r27 vs ours
@@ -1296,7 +1296,7 @@ extern "C" int checkParamBlks(void* self) {
 //      +0x2dc vs retail +0x338 for the same reason (layout shift).
 // - Next experiments: none known at this opt level; revisit with the
 //   family-level allocator insight or finer-grained diff tooling.
-extern "C" __declspec(noinline) void walkParamRecords(CActParamData* self,
+extern "C" void walkParamRecords(CActParamData* self,
                                         ActParamD3CMember* member) {
     // Magic high word for every u16->double conversion below; declared first
     // so its live range ranks ahead of the parameter spills.
@@ -1503,7 +1503,7 @@ extern "C" void walkParamBlkB(void* self) {
 //       ours CSEs the constant into a register across opaque calls.
 //   (c) ~100B size gap, retail larger; shared-tail shapes partially closed
 //       by goto noFire but branch-target offsets still shift downstream.
-__declspec(noinline) int evalParamTiming(CActParamData* self,
+int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate) {
     if (self->mField24 == 0) {
@@ -1647,7 +1647,7 @@ call:
 }
 // Clear the stream's record chain: unlink each linkable record from its table
 // slot and stop after the terminator record.
-extern "C" __declspec(noinline) void
+extern "C" void
 unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream) {
     if (flag == 0) return;
     if (stream->mFlag14 == 0) return;
@@ -1677,7 +1677,7 @@ unlinkParamRecs(CActParamLinkTable* table, int flag, CActParamRecStream* stream)
 // record resolves its name tag against the anim resource, then claims its
 // slot unless a type-2 record follows it. After the type-1 terminator, a
 // first-time registration re-runs the payload swap over the fresh chain.
-extern "C" __declspec(noinline) int
+extern "C" int
 registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node) {
     if (node->mMode10 != 3) {
         return 0;
@@ -1779,9 +1779,8 @@ void pushParamNode(ActParamStack* self, ActParamStackNode* a, ActParamStackNode*
 //   count (r0 assignment correlates with never-dereferenced values); or
 //   locate the +8B pair (all front-section instruction counts verified
 //   equal; bloat sits between the walk loop and the splice call block).
-int lookupParamByKey(CActParamData* self, void* key, u32 /*tag*/) {
-    // NOTE: retail only ever consumes the `key` argument (it doubles as the
-    // stream tag); the third parameter is dead.
+int lookupParamByKey(CActParamData* self, void* key) {
+    // The key is the second argument; retail overwrites r5 before reading it.
     ActParamNode94* head = static_cast<ActParamNode94*>(self->mNode0C);
     u32 count = self->mCount210;
     // Hoisted successor of the head, used to fix up the head slot after the
@@ -3261,7 +3260,7 @@ static inline ActParamT1Rec* nextT1Rec(ActParamT1Rec* rec) {
 }
 
 
-extern "C" __declspec(noinline) u32 getAnimTick(ActParamData388* obj) {
+extern "C" u32 getAnimTick(ActParamData388* obj) {
     const u8* p = reinterpret_cast<const u8*>(obj);
     u32 v4C4 = *(const u32*)(p + 0x4C4);
     if (v4C4 != 0) {

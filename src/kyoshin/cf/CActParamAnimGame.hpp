@@ -5,13 +5,7 @@
 // declarations keep the real names; only CActParamAnim.hpp's legacy
 // void*-first declarations get renamed (this TU never calls any of them).
 #include "kyoshin/action/CActParamData.hpp"
-#define updateParamFloats updateParamFloats_animsig
-#define initActParamData initActParamData_animsig
-#define lookupParamByKey lookupParamByKey_animsig
 #include "kyoshin/action/CActParamAnim.hpp"
-#undef updateParamFloats
-#undef initActParamData
-#undef lookupParamByKey
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)

@@ -6,21 +6,17 @@
 // pointer (the original retail TU used a stale prototype). Hide the typed
 // declaration in this TU so the byte-exact bare 1-arg bl (locked FULL_MATCH
 // us-8004bd94) still compiles.
-#define lookupParamByKey lookupParamByKey_typed_hidden
 // CActParamData.hpp also declares getAnimTick with an ActParamData388*
 // parameter; retail's getAnimTick lives in this TU and takes the anim
 // object (CActParamAnim*). Hide that typed declaration so the extern "C"
 // definition below does not collide with it as an illegal overload.
-#define getAnimTick getAnimTick_typed_hidden
 
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
-#undef lookupParamByKey
-#undef getAnimTick
 
 // Legacy 1-arg prototype kept for the releaseAnimObj call site (see above).
-extern "C" bool lookupParamByKey(void* data);
+
 
 #include "kyoshin/action/CActParamData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -346,7 +342,7 @@ void CActParamAnim::updateSubAnim() {
 
 extern "C" void releaseAnimObj(CActParamAnim* self, void* object) {
     CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
-    if (view->objectState != 0 && lookupParamByKey(reinterpret_cast<CActParamAnimStateView*>(self)->mChildData10)) {
+    if (view->objectState != 0 && lookupParamByKey(reinterpret_cast<CActParamData*>(reinterpret_cast<CActParamAnimStateView*>(self)->mChildData10), object)) {
         if (view->objectState == reinterpret_cast<u32>(object)) {
             view->objectState = reinterpret_cast<u32>(((CActParamAnimDataView*)self)->data10.mKeys1D0[0]);
         }

@@ -130,11 +130,11 @@ typedef struct AXRNA_OBJ {
     u8 _pad0xe1[3];      /* 0x0e1 */
 } AXRNA_OBJ;             /* 0x0e4 */
 
-u32 lbl_eu_805F2C00;
-u32 lbl_eu_805F2C04;
-AXRNA_OBJ lbl_eu_805F2C08[0x10];
-u32 lbl_eu_805F3A48;
-u32 lbl_eu_805F3A4C;
+extern u32 axrna_refcount;
+extern u32 axrna_work_flags;
+extern AXRNA_OBJ axrna_obj_pool[0x10];
+extern u32 axrna_sfreq;
+extern u32 axrna_chunk_pool;
 
 // External functions
 extern void RNAERR_CallErrFunc(const char* msg);
@@ -178,21 +178,21 @@ void criware_80399F4C(AXRNA_OBJ* _this);
 
 void AXRNA_Init(void) {
     (void)lbl_eu_8051914C;
-    if (lbl_eu_805F2C00 == 0) {
-        memset(lbl_eu_805F2C08, 0, 0xE40);
+    if (axrna_refcount == 0) {
+        memset(axrna_obj_pool, 0, 0xE40);
     }
-    lbl_eu_805F2C00++;
+    axrna_refcount++;
 }
 
 void AXRNA_Finish(void) {
     s32 i;
-    if (--lbl_eu_805F2C00 == 0) {
+    if (--axrna_refcount == 0) {
         for (i = 0; i < 0x10; i++) {
-            if ((s32)lbl_eu_805F2C08[i].enable == 1) {
-                AXRNA_Destroy(&lbl_eu_805F2C08[i]);
+            if ((s32)axrna_obj_pool[i].enable == 1) {
+                AXRNA_Destroy(&axrna_obj_pool[i]);
             }
         }
-        memset(lbl_eu_805F2C08, 0, 0xE40);
+        memset(axrna_obj_pool, 0, 0xE40);
     }
 }
 
@@ -200,13 +200,13 @@ void axrna_voice_drop(void* voice) {
     u32* row;
     u32* w;
     s32 i, j;
-    row = (u32*)lbl_eu_805F2C08;
+    row = (u32*)axrna_obj_pool;
     for (i = 0; i < 0x10; i++) {
         w = row;
         for (j = 0; j < 2; j++) {
             if (voice == (void*)w[2]) {
-                MIXReleaseChannel(lbl_eu_805F2C08[i].voice[j]);
-                lbl_eu_805F2C08[i].voice[j] = NULL;
+                MIXReleaseChannel(axrna_obj_pool[i].voice[j]);
+                axrna_obj_pool[i].voice[j] = NULL;
                 return;
             }
             w++;
@@ -246,7 +246,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
     }
 
     {
-        AXRNA_OBJ* q = lbl_eu_805F2C08;
+        AXRNA_OBJ* q = axrna_obj_pool;
         u32 cnt = 0;
         for (n = 0; n < 2; n++) {
             for (j = 0; j < 8; j++) {
@@ -263,7 +263,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
             RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x76));
             return NULL;
         }
-        slot = &lbl_eu_805F2C08[cnt];
+        slot = &axrna_obj_pool[cnt];
     }
     slot->chanNum = (u8)maxnch;
     slot->numChan = (u8)maxnch;
@@ -325,7 +325,7 @@ AXRNA_OBJ* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
 
     {
         u32 tbl;
-        tbl = lbl_eu_805F2C04;
+        tbl = axrna_work_flags;
         if (slot != NULL) {
             slot->field_0x9c = (u16)tbl;
         }
@@ -754,21 +754,21 @@ void criware_80399F4C(AXRNA_OBJ* _this) {
             return;
         }
         SJ_VT(chp->sjIn[0])->getChunk(chp->sjIn[0], 1, srcx2, &chunk2);
-        memcpy(lbl_eu_805F3A4C, chunk2.ptr, chunk2.size);
+        memcpy(axrna_chunk_pool, chunk2.ptr, chunk2.size);
         SJ_VT(chp->sjIn[0])->putChunk(chp->sjIn[0], 0, &chunk2);
         m = (u32)chunk2.size >> 1;
         if (m < src_len) {
             /* ring wrapped: pull the remainder, zero-fill any shortfall */
             SJ_VT(chp->sjIn[0])->getChunk(chp->sjIn[0], 1, (src_len - m) * 2,
                                           &chunk2);
-            memcpy((char*)lbl_eu_805F3A4C + m * 2, chunk2.ptr, chunk2.size);
+            memcpy((char*)axrna_chunk_pool + m * 2, chunk2.ptr, chunk2.size);
             SJ_VT(chp->sjIn[0])->putChunk(chp->sjIn[0], 0, &chunk2);
             m += (u32)chunk2.size >> 1;
             if (m < src_len) {
-                memset((char*)lbl_eu_805F3A4C + m * 2, 0, (src_len - m) * 2);
+                memset((char*)axrna_chunk_pool + m * 2, 0, (src_len - m) * 2);
             }
         }
-        criware_8039B4E0((s16*)lbl_eu_805F3A4C, src_len, (s16*)chunk1.ptr,
+        criware_8039B4E0((s16*)axrna_chunk_pool, src_len, (s16*)chunk1.ptr,
                          dst_len);
         SJ_VT(chp->sjTs[0])->putChunk(chp->sjTs[0], 1, &chunk1);
         _this->tsSkipCnt = 0;
@@ -794,7 +794,7 @@ void criware_80399F4C(AXRNA_OBJ* _this) {
             _this->feedTotal += (u32)m >> 1;
         }
         if (_this->feedTotal > 0xBB80) {
-            lbl_eu_805F3A48++;
+            axrna_sfreq++;
         }
         chp = (AXRNA_OBJ*)((char*)chp + 4);
     }
@@ -848,7 +848,7 @@ void AXRNA_ExecServer(void) {
 
     GCRNA_LockCs();
     for (i = 0; i < 0x10; i++) {
-        rna = &lbl_eu_805F2C08[i];
+        rna = &axrna_obj_pool[i];
         if ((s32)rna->enable != 1)
             continue;
         if (rna == NULL)
@@ -1079,3 +1079,10 @@ void criware_8039A8E0(AXRNA_OBJ* self, u32 flags) {
         i++;
     }
 }
+
+/* .bss: definitions after the code, reverse retail order for MWCC emission. */
+u32 axrna_chunk_pool;
+u32 axrna_sfreq;
+AXRNA_OBJ axrna_obj_pool[0x10];
+u32 axrna_work_flags;
+u32 axrna_refcount;

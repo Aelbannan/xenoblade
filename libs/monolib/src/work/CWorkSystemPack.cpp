@@ -151,9 +151,6 @@ extern "C" {
 void updateLoadState(CArcItem* self);
 
 // _reslist_base<CPackItem*>::~_reslist_base(int deleting)
-// optimize_for_size matches retail's stmw/lmw frame for the 2 saved regs.
-#pragma push
-#pragma optimize_for_size on
  void* __dt___reslist_base_CPackItem(PackItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF48;
@@ -170,12 +167,8 @@ void updateLoadState(CArcItem* self);
     }
     return self;
 }
-#pragma pop
 
 // reslist<CPackItem*>::~reslist(int deleting)
-// optimize_for_size matches retail's stmw/lmw frame.
-#pragma push
-#pragma optimize_for_size on
 void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
     if (self != 0) {
         __dt___reslist_base_CPackItem(self, 0);
@@ -185,12 +178,8 @@ void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
     }
     return self;
 }
-#pragma pop
 
 // _reslist_base<CArcItem*>::~_reslist_base(int deleting)
-// optimize_for_size matches retail's stmw/lmw frame (same as CPackItem twin).
-#pragma push
-#pragma optimize_for_size on
  void* __dt___reslist_base_CArcItem(ArcItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF24;
@@ -207,12 +196,8 @@ void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
     }
     return self;
 }
-#pragma pop
 
 // reslist<CArcItem*>::~reslist(int deleting)
-// optimize_for_size matches retail's stmw/lmw frame.
-#pragma push
-#pragma optimize_for_size on
 void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
     if (self != 0) {
         __dt___reslist_base_CArcItem(self, 0);
@@ -222,7 +207,6 @@ void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
     }
     return self;
 }
-#pragma pop
 
 // DevFile_SubstLangPath is extern "C" in CDeviceFileCri.hpp, but including that
 // header would clash with this TU's C++ definition of findPackFileId.
@@ -232,7 +216,6 @@ int DevFile_SubstLangPath(const char*);
 // construct a CArcItem from the work region, and push it onto the singleton's
 // arc list (first free slot of the node array). The setItem try/catch shape
 // reproduces the retail frame marker (stw r1, 0x1c) from the reslist template.
-#pragma optimize_for_size on
  void registerArcFile(const char* pPath) {
     ml::FixStr<0x100> str = pPath;
     DevFile_SubstLangPath(str.mString);
@@ -270,7 +253,6 @@ int DevFile_SubstLangPath(const char*);
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
 }
-#pragma optimize_for_size off
 
 // Register one static pkh filename: pick the lowest partition index not yet
 // used by any pack item, construct the CPackItem (CRI partition id from the
@@ -279,8 +261,6 @@ int DevFile_SubstLangPath(const char*);
 // (the function's own arg2 forwarded), keeping r29 live across the allocate
 // calls. Declared under the retail mangled name to reproduce that call.
 extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, int idx, int partition);
-
-#pragma optimize_for_size on
  void registerPackFile(const char* pName, int pPartitionId) {
     // No local singleton copy: retail reloads lbl_eu_80665A10 (SDA) at each
     // use site, keeping only pName/pPartitionId/i/newItem in callee-saved regs.
@@ -328,13 +308,11 @@ extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, in
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
 }
-#pragma optimize_for_size off
 
 } // extern "C"
 
 // Inlined alloc+clear used by the ctor: going through the list pointer keeps
 // MWCC reloading mList every iteration (retail shape).
-#pragma optimize_for_size on
 static void InitPackNodeArray(PackItemList* list, u32 bytes, int count) {
     list->mList = (PackItemListNode*)mtl::MemManager::allocate_array(bytes, CWorkThreadSystem::getWorkMem());
     for (int j = 0; j < count; j++) {
@@ -342,9 +320,6 @@ static void InitPackNodeArray(PackItemList* list, u32 bytes, int count) {
     }
     list->mCapacity = count;
 }
-#pragma optimize_for_size off
-
-#pragma optimize_for_size on
 // Base ctor runs in the init list (retail emits the plain __ct__11CWorkThread
 // bl with capacity 0); the class is novtable so the retail vtable is stored
 // manually (CWorkSystemCache pattern).
@@ -410,14 +385,11 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
         }
     }
 }
-#pragma optimize_for_size off
 
 // extern "C" free-function form: clear the work-system singleton, then tear
 // down the two resource lists (mArcList +0x1E4, mPackList +0x1C4 -- retail's
 // addic. null-checks), the base CWorkThread (unchecked), and the flags-based
-// delete; stmw/lmw frame via optimize_for_size.
-#pragma push
-#pragma optimize_for_size on
+// delete.
 extern "C" void __dt__11CWorkThreadFv(void* self, int flags);
 extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
     if (self != 0) {
@@ -435,16 +407,12 @@ extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
     }
     return self;
 }
-#pragma pop
 
 // Walk the pack list, comparing each item's base name against pName. Returns
 // the lookupFile() result (found flag) for the matching item, or 0 if no item
 // matches.
 // Retail symbol is unmangled - this helper has C linkage in the original.
-// Retail's addic/subfe setnz bool tail is the optimize_for_size (-O4,s)
-// codegen signature; the default -O4,p emits neg/or/rlwinm instead.
-#pragma push
-#pragma optimize_for_size on
+// Retail's addic/subfe setnz bool tail is the -O4,s (unit flag) signature.
 extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
                    u32* outEntryId, u32* outIndex, u32* outFileId) {
     const char* pFile = ml::CPathUtil::getFilePtrFromPath(pPath);
@@ -461,7 +429,6 @@ extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPk
     }
     return false;
 }
-#pragma pop
 
 // Resolve a pack file id for pPath: first via the static lookup, then via the
 // item search (returns the file id << 11). Returns -1 if neither matched.
@@ -469,9 +436,6 @@ extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPk
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
 // item's findFileEntry when the list is non-empty (retail unmangled reloc).
 extern "C" bool findFileEntry(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
-
-#pragma push
-#pragma optimize_for_size on
 s32 findPackFileId(const char* pName, const char* pPath) {
     // Declared last-to-first: MWCC assigns stack slots in reverse declaration
     // order, so this yields retail's 0x8/0xc/0x10/0x14/0x18 slot layout.
@@ -489,7 +453,6 @@ s32 findPackFileId(const char* pName, const char* pPath) {
     }
     return -1;
 }
-#pragma pop
 
 // Static lookup: walk the singleton's circular pack-item list (head at
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
@@ -523,7 +486,6 @@ bool CWorkSystemPack::areArcsReady() {
 // try to advance it (updateLoadState) and abort the login. Then ensure the pack
 // work-memory region exists, and make sure every pack item is loaded
 // (advancing with update() if not).
-#pragma optimize_for_size on
 bool CWorkSystemPack::wkStandbyLogin() {
     ArcItemListNode* sentinel = mArcList.mStartNodePtr;
     ArcItemListNode* node = sentinel->mNext;
@@ -551,12 +513,10 @@ bool CWorkSystemPack::wkStandbyLogin() {
 
     return ((CWorkThread*)this)->CWorkThread::wkStandbyLogin();
 }
-#pragma optimize_for_size off
 
 // Logout gate: notify every pack/arc item via its vtable+8 destroy hook (the
 // nested double null-check mirrors the retail source shape), then clear both
 // lists, release their node arrays and the pack work-memory region.
-#pragma optimize_for_size on
 bool CWorkSystemPack::wkStandbyLogout() {
     PackItemListNode* node = mPackList.mStartNodePtr->mNext;
     while (node != mPackList.mStartNodePtr) {
@@ -599,7 +559,6 @@ bool CWorkSystemPack::wkStandbyLogout() {
     mtl::MemManager::erase(lbl_eu_80663BC8[0]);
     return ((CWorkThread*)this)->CWorkThread::wkStandbyLogout();
 }
-#pragma optimize_for_size off
 
 // Store the PKH filenames array pointer for later retrieval by the work system.
 void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
@@ -612,8 +571,6 @@ void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* 
 }
 
 // Search the pack list for an item whose base name matches pName.
-#pragma push
-#pragma optimize_for_size on
 int hasPackFile(const char* pName) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     PackItemListNode* sentinel;
@@ -630,14 +587,9 @@ int hasPackFile(const char* pName) {
     }
     return 0;
 }
-#pragma pop
 
 // Remove the pack item whose base name matches pName from the pack list,
 // destroying the item (vtable+8 call) and unlinking its node.
-// optimize_for_size reproduces retail's stmw/lmw frame and the
-// addic.-1/subfe setnz strcmp tail.
-#pragma push
-#pragma optimize_for_size on
 void removePackFile(const char* pName) {
     // Don't cache the singleton in a local: retail only keeps 3 values live
     // (pName, sentinel, node) and saves r29-r31.
@@ -664,7 +616,6 @@ void removePackFile(const char* pName) {
         node = node->mNext;
     }
 }
-#pragma pop
 
 // Returns false if any pack item other than pExcept is currently mid-load
 // (LOAD_STATE_LOADING_AHX_ADX_FILE == 2).

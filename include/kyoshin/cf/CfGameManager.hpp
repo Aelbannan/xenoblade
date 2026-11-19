@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/cf/CItemBlockApi.hpp"
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 / lbl_eu_80663E24 (defined in this module)
@@ -759,9 +760,7 @@ extern "C" s32 MiniMapHasGlobalData();
 extern "C" void func_8011C2FC();
 extern "C" void CfRes_callFunc_67F10(s32 value);
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
-extern "C" cf::CfGameManager* CItemBlock_getKindSlot(u32 mappedIndex, u16 dataId, u32 slot);
 extern "C" void* CItemBlock_setKindFlag(u32 kind, u32 slot, u32 mode);
-extern "C" s8* CItemBlock_getSlotU16(u16 dataId, u32 slot);
 extern "C" u32 CItem_getKindFromFamily(u32 value);
 class CItemImplInstances;
 extern "C" void* CItem_initItemImplInstances(void* item);

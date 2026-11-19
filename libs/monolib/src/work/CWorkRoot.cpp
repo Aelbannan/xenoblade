@@ -362,8 +362,8 @@ bool CWorkThread::isEvent3() const {
 // inline it under -ipa.
 template <int N>
 int CMsgParam<N>::find(u32 msg) const {
-    for (int i = 0; i < mSize; i++) {
-        if (mArrayPtr[(mFront + i) % mCapacity].command == msg) {
+    for (int i = 0; i < mRing.mSize; i++) {
+        if (mRing.mArrayPtr[(mRing.mFront + i) % mRing.mCapacity].command == msg) {
             return i;
         }
     }

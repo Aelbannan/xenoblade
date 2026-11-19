@@ -127,19 +127,14 @@ void LOD::UnkClass_8046A530::checkLodFlagState() {
 }
 
 // ---------------------------------------------------------------------------
-// Deleting destructor (address-anchored symbol __dt__8046A584): frees the
-// object via operator delete when the pointer and the deletion flag are both
-// non-zero, and returns the object pointer.
+// Destructor (empty body): MWCC emits the deleting-dtor shape (operator
+// delete when the pointer and the deletion flag are both non-zero) and the
+// no-action extab record retail carries.
 // ---------------------------------------------------------------------------
-void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
-    if (obj != nullptr && dealloc > 0) {
-        operator delete(obj);
-    }
-    return obj;
-}
+LOD::UnkClass_8046A530::~UnkClass_8046A530() {}
 
 // ---------------------------------------------------------------------------
-// initLod: init entry point.  The this+0x1d4 / this+0x1200 range check
+// Constructor (retail 8046E500, directly before the dtor).  The this+0x1d4 / this+0x1200 range check
 // is leftover dead code in retail (its boolean result is computed into r0 and
 // compared but never branched on); the only real work is the initLodState
 // call.  initLodState is defined in another TU (it is not a stub here), so
@@ -159,7 +154,7 @@ void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
 // pointer in r4 (which the callee ignores); declare it with the exact name.
 extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* p1);
 
-LOD::UnkClass_8046A530* LOD::UnkClass_8046A530::initLod() {
+LOD::UnkClass_8046A530::UnkClass_8046A530() {
     u8* p1 = reinterpret_cast<u8*>(this) + 0x1d4;
     u8* p2 = reinterpret_cast<u8*>(this) + 0x1200;
     if (p1 < p2) {
@@ -170,7 +165,6 @@ LOD::UnkClass_8046A530* LOD::UnkClass_8046A530::initLod() {
         }
     }
     initLodState__Q23LOD17UnkClass_8046A530Fv(this, p1);
-    return this;
 }
 
 

@@ -42,9 +42,7 @@ class CEventFile;
 // the CDeviceVICb subobject, the final five-vtable reset, the CInfoCf /
 // CREvtMem subobjects, the field block, the global instance pointer, the
 // subobject registrations, and the dimming/frame-target setup.
-// noinline keeps the call a real bl (an empty inline body would make MWCC
-// fold the ctor away and shrink evtCreateTaskRegister below the retail size).
-__declspec(noinline) cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, CView* pView) {
+cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, CView* pView) {
     // CProcess base ctor.
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(pMem));
     // Inlined CTTask<CTaskREvent> base construction: the CProcess ctor (which
@@ -139,7 +137,7 @@ __declspec(noinline) cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem
 // full control over the five-vtable reset (lbl_eu_80530790), the subobject
 // dtor calls and the delete-flag handling - the retail bytes that MWCC's
 // auto dtor machinery (auto __vt__ store) cannot reproduce.
-extern "C" __declspec(noinline) cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::CTaskREvent* self, s32 deleteFlag) {
+extern "C" cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::CTaskREvent* self, s32 deleteFlag) {
     if (self != nullptr) {
         // Reset all five vtables by hand (retail writes lbl_eu_80530790;
         // 0x10 is the CTTask primary slot, 0x54-0x60 the four secondary
@@ -237,12 +235,11 @@ void setAutoSleep(u32 arg) {
 
 // evtFillCharEntry: called with a table index by evtFillCharRange; stub for an
 // as-yet-unmatched helper (C linkage inherited from the header declaration
-// so the retail plain symbol is emitted). noinline so the call stays a real
-// bl (an empty inline body would make MWCC DCE the whole walk loop).
+// so the retail plain symbol is emitted).
 // Fills one event-table index's character data: 7 rows of 5 bytes (byte
 // extracted from CfGameManager::getBdatEntryColumn(row, col) at bits 10-17), 7
 // words, then the id halfword (getControllerValues output) and a flag byte.
-__declspec(noinline) void evtFillCharEntry(u32 index) {
+void evtFillCharEntry(u32 index) {
     // Byte rows are indexed 1..7 (row 0 unused): the retail offsets start at
     // 5*1 / 4*1 and step by 5 / 4 per row.
     for (int row = 1; row < 8; row++) {
@@ -1070,7 +1067,7 @@ void cf::CTaskREvent::Draw() {
 // bitfields (and the task game state), syncs the task's +0x6C bit5 to it,
 // then runs the dimming/auto-sleep countdowns and refreshes the camera
 // object's position when the game manager is idle.
-__declspec(noinline) void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
+void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
     // Each guard re-reads the flag globals: retail emits a fresh lwz per
     // source-level read (volatile casts block CSE).
     u32 e24 = *(volatile u32*)&lbl_eu_80663E24;
@@ -1162,7 +1159,7 @@ __declspec(noinline) void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
 // reset the frame target and bump the task manager (evtUpdateBusyDimming). The
 // manager-idle branch only bumps when bit6 is set. The two bit6-guarded
 // blocks share the flag re-test shape (see evtSetAutoSleepFlag).
-__declspec(noinline) void evtSyncBusyDimming(cf::CTaskREvent* self, int arg) {
+void evtSyncBusyDimming(cf::CTaskREvent* self, int arg) {
     bool flag = cf::CfGameManager::isSceneLoading();
     u32 flags = self->field_0x6C;
     // Retail tests with xor. (flag ^ bit7); branch when different.

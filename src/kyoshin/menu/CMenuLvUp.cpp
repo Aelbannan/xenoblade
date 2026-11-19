@@ -4,8 +4,6 @@
 // Shield the chain's C++-linkage Scn_FindCamItem decl (CfCam.hpp form):
 // this TU's local extern "C" MenuLvUpPose* form (CMenuLvUp.hpp:212) would
 // otherwise clash under MWCC 10197 (CfObjectMove.cpp idiom).
-#define Scn_FindCamItem Scn_FindCamItem_chain_hidden
-#define findObjectById findObjectById_chain_hidden
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/harness_catalog.hpp"
@@ -15,8 +13,6 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
-#undef Scn_FindCamItem
-#undef findObjectById
 
 #include "kyoshin/menu/CMenuLvUp.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -160,7 +156,7 @@ void registerLvUpAction(CMenuLvUp* a, CMenuLvUp* b, int c);
 void teardownLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry);
 void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry);
 void driveLvUpEntryState(CMenuLvUp* self, CMenuLvUpEntry* entry);
-MenuLvUpPose* Scn_FindCamItem(CScn* scene, int index);
+void* Scn_FindCamItem(void* scene, int index);
 void CamMan_ProjectToScreen(nw4r::math::VEC3* out, MenuLvUpPose* pose,
                    const nw4r::math::VEC3* in);
 void CCharVoiceMan_PlayLevelUpVoice(int id);
@@ -171,7 +167,7 @@ bool isSceneLoading__Q22cf13CfGameManagerFv();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
-MenuLvUpActor* findObjectById(int id);
+void* findObjectById(int id);
 
 // C-linkage data imports (retail names; global-scope plain externs keep the
 // unmangled symbol -- MWCC does not mangle global variables).
@@ -567,7 +563,7 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     screen.y = v;
     screen.z = v;
 
-    MenuLvUpActor* actor = findObjectById((int)entry->field_0x10);
+    MenuLvUpActor* actor = (MenuLvUpActor*)findObjectById((int)entry->field_0x10);
     if (actor != 0) {
         const nw4r::math::VEC3* src;
         MenuLvUpObjPos* anchor = actor->vfn12C(0x64);
@@ -588,7 +584,7 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
         world.y = src->y;
         world.z = src->z;
 
-        MenuLvUpPose* pose = Scn_FindCamItem(self->mScene, -1);
+        MenuLvUpPose* pose = (MenuLvUpPose*)Scn_FindCamItem(self->mScene, -1);
         CamMan_ProjectToScreen(&screen, pose, &world);
         screen.x -= lbl_eu_80668A08;
         screen.y -= lbl_eu_80668A0C;
@@ -620,7 +616,7 @@ void placeLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
 // ---------------------------------------------------------------------------
 extern "C" void teardownLvUpEntry(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     if (entry->field_0x10 != 0) {
-        MenuLvUpActor* src = findObjectById((int)entry->field_0x10);
+        MenuLvUpActor* src = (MenuLvUpActor*)findObjectById((int)entry->field_0x10);
         if (src != 0 && (src->field_0x64 & 2)) {
             return;
         }

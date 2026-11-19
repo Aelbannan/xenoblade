@@ -1361,7 +1361,7 @@ void PartyStateWin_ThunkDtor(void* self) {
 // sizes the client rect from the shared window object, allocates the scene,
 // then constructs each embedded sub-object through a stack temp + copy
 // helper + temp-dtor sequence.
-extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg2) {
+extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self) {
     // Locals declared in retail stack-frame order (displacements are encoded
     // in the instructions): mem@0x08, quad@0x10, vec4 tmp@0x18, CSysWin
     // temp@0x28, CTitleAHelp temp@0x68, gauge record@0xa0, CPartyState
@@ -1395,7 +1395,7 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     PartyStateWin_PushRingRecord(reinterpret_cast<CPartyStateWinRing*>(self->mWork14), 0);
 
     PartyStateWin_InitMemCounters(&mem);
-    PartyStateWin_InitGaugeRecord(&gauge, arg2, lbl_eu_806681D8, 0x20, 0x20, 0x10);
+    PartyStateWin_InitGaugeRecord(&gauge, self->mArg2, lbl_eu_806681D8, 0x20, 0x20, 0x10);
     mtl::ALLOC_HANDLE handle = PartyStateWin_PickAllocHandle(&mem, 0x09000000);
 
     // cast: CScnNw4r is a distinct class here, but this page stores the scene

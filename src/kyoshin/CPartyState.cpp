@@ -197,7 +197,7 @@ same:
 
 // Refresh the party-select cursor: format each slot's pane name, look up the
 // pane, accumulate its translate, and move the cursor sub-panes onto it.
-extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
+extern "C" void refreshPartyCursor(CPartyState* self) {
     char buf[0x28];
     sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4C]);
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
@@ -228,9 +228,9 @@ extern "C" __declspec(noinline) void refreshPartyCursor(CPartyState* self) {
 
 // Party-state panel advance (opening): when the +0x20 anim transform reaches
 // the target frame, bind the panel anims and move to state 2.
-// DECOMP_DONT_INLINE: retail calls these helpers through real `bl`s from
+// : retail calls these helpers through real `bl`s from
 // advancePartyPanel; -inline auto would otherwise inline them into the switch.
-extern "C" __declspec(noinline) void stepPartyOpenAnim(CPartyState* self) {
+extern "C" void stepPartyOpenAnim(CPartyState* self) {
     float target = lbl_eu_80668218;
     if (advanceAnimTransform(self->mAnimTrans1, target) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
@@ -241,9 +241,9 @@ extern "C" __declspec(noinline) void stepPartyOpenAnim(CPartyState* self) {
 
 // Party-state advance: when the +0x1C gate is set, refresh the shared cursor
 // sound state, rebuild the state panel, and reset the visibility flags.
-// DECOMP_DONT_INLINE: retail calls these helpers through real `bl`s; -inline
+// : retail calls these helpers through real `bl`s; -inline
 // auto would otherwise inline them into OnFileEvent and blow the split.
-extern "C" __declspec(noinline) void refreshPartyPanel(CPartyState* self) {
+extern "C" void refreshPartyPanel(CPartyState* self) {
     if (self->mLayout != 0) {
         BuildSlotItemLists(0);
         rebuildPartySelect(self);
@@ -255,16 +255,13 @@ extern "C" __declspec(noinline) void refreshPartyPanel(CPartyState* self) {
 
 // Destroys the embedded cursor and scratch-memory sub-objects (reverse
 // declaration order); MWCC emits the delete guard from the incoming flag.
-#pragma push
-#pragma optimize_for_size on
 CPartyState::~CPartyState() {
     __dt__6CCur22Fv(&mCur22, -1);
 }
-#pragma pop
 
 // Intro-animation finish handler: when the +0x24 anim transform reaches the
 // target frame, move to state 3, show the cursor, and run the shared tail.
-extern "C" __declspec(noinline) void finishPartyIntroAnim(CPartyState* self) {
+extern "C" void finishPartyIntroAnim(CPartyState* self) {
     if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668218) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
@@ -275,7 +272,7 @@ extern "C" __declspec(noinline) void finishPartyIntroAnim(CPartyState* self) {
 
 // Party-state panel advance (closing): when the +0x24 anim transform reaches
 // the target frame, bind the panel anims and move to state 5.
-extern "C" __declspec(noinline) void stepPartyCloseAnim(CPartyState* self) {
+extern "C" void stepPartyCloseAnim(CPartyState* self) {
     if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668218) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
@@ -316,7 +313,7 @@ extern "C" void stepPartySelectBack(CPartyState* self) {
 
 // Selection confirm: swap the party member at the highlight slot (0x4D) with
 // the selected member (0x4C), reset the highlight, refresh, and mark ready.
-extern "C" __declspec(noinline) void swapPartyMembers(CPartyState* self) {
+extern "C" void swapPartyMembers(CPartyState* self) {
     int* party = CtrlObjectParam_GetSlotTableBase();
     // (u8) result cast instead of `& 0xFF` -- same mask, different VR birth.
     u8 slotA = (u8)GetCollectedFlagByte((u8)self->field_0x4D);
@@ -331,7 +328,7 @@ extern "C" __declspec(noinline) void swapPartyMembers(CPartyState* self) {
 // Scale a party-slot pane's position by the ratio of the slot's play-time
 // value to the current party member's progress. The ratio is clamped to
 // [0, 1] and applied to the pane X translate.
-extern "C" __declspec(noinline) void scalePartySlotPane(CPartyState* self, u32 memberIdx, const char* paneName) {
+extern "C" void scalePartySlotPane(CPartyState* self, u32 memberIdx, const char* paneName) {
     CPartyCharData* data = (CPartyCharData*)CtrlObjectParam_GetCharEntry(memberIdx);
     u8 slot = (u8)data->slotArea.field_0x3DD0;
     s32 cur = ((u32*)data->slotArea.records)[0x222 + slot];
@@ -366,7 +363,7 @@ extern "C" __declspec(noinline) void scalePartySlotPane(CPartyState* self, u32 m
 // Rebuild the party-select screen: mix the .sdata2 seed bytes into the slot
 // table (0x4F/0x56), then format each member slot's panes (name, level, HP,
 // face texture) and the party-list tail slots.
-extern "C" __declspec(noinline) void rebuildPartySelect(CPartyState* self) {
+extern "C" void rebuildPartySelect(CPartyState* self) {
     // Local order mirrors the retail frame: buf78@0x78, buf58@0x58, buf38@0x38,
     // buf18@0x18, dst[7]@0x10, seed blob@0x08 (word+halfword+byte).
     char buf78[0x20];
@@ -500,7 +497,7 @@ extern "C" __declspec(noinline) void rebuildPartySelect(CPartyState* self) {
 // Refresh the party-state header text: format the frame-timer counters and
 // bind them to the panel's text panes. The timer >> 12 is the minute counter
 // (clamped to 99/999); the low field (raw >> 6 & 0x3f, max 59) is the seconds.
-extern "C" __declspec(noinline) void refreshPartyHeader(CPartyState* self) {
+extern "C" void refreshPartyHeader(CPartyState* self) {
     u32 raw = CfT_FrameTimerGet();
     u32 t = raw >> 12;
     char buf[8];
@@ -523,7 +520,7 @@ extern "C" __declspec(noinline) void refreshPartyHeader(CPartyState* self) {
 // Position a party panel pane by name: compute a ratio (0 when either input
 // is zero), index a 5-float position table by it, and write the pane's X
 // translate (Y/Z kept from the pane's size field). arg4 is unused.
-extern "C" __declspec(noinline) void positionPartyPane(CPartyState* self, float f1, float f2, u32 arg4, u32 name) {
+extern "C" void positionPartyPane(CPartyState* self, float f1, float f2, u32 arg4, u32 name) {
     u32 flag = 0;
     if (f1 != lbl_eu_80668230 && f2 != lbl_eu_80668230) {
         flag = 1;
@@ -678,14 +675,12 @@ extern "C" void advancePartyPanel(CPartyState* self) {
 // Render the party list when the visible flag is set: draw the bound layout
 // with the given draw info (projection off, calc mtx on), then draw the
 // embedded cursor.
-#pragma optimize_for_size on
 extern "C" void drawPartyState(CPartyState* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x28 != 0) {
         drawLayout(self->mLayout, drawInfo, 0, 1);
         self->mCur22.DrawLayout(drawInfo);
     }
 }
-#pragma optimize_for_size off
 
 // One-time member-list setup: skip if the advance/state word is already
 // active; otherwise mark it active, clear the panel flags, and run the shared

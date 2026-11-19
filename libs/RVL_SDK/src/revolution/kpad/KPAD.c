@@ -167,11 +167,7 @@ s32 kp_stick_clamp_cross;
 Vec2 icenter_org;
 
 KPADInternal inside_kpads[4];
-typedef union {
-    f32 m[3][4];
-    f64 align_hint;
-} KpFsRot;
-KpFsRot kp_fs_rot;
+f32 kp_fs_rot[3][4];
 
 f64 kp_wbc_ave_sample[4];
 f64 kp_wbc_weight_ave[4];
@@ -669,7 +665,7 @@ void read_kpad_acc(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
             t.z = clamp_acc((f32)(s32)uwp->u.fs.fsAccY * kp->fs_acc_scale_y, kp_fs_acc_max);
 
             if (kp->unk_55e != 0) {
-                PSMTXMultVec(kp_fs_rot.m, &t, &t);
+                PSMTXMultVec(kp_fs_rot, &t, &t);
             }
 
             vec = sp->ex_status.fs.acc;
@@ -1860,18 +1856,18 @@ void KPADInitEx(KPADUnifiedWpadStatus* uwStatus, u32 length) {
     }
 
     f2 = 0.017453292f * kp_fs_revise_deg;
-    kp_fs_rot.m[0][0] = 1.0f;
-    kp_fs_rot.m[0][1] = 0.0f;
-    kp_fs_rot.m[0][2] = 0.0f;
-    kp_fs_rot.m[0][3] = 0.0f;
-    kp_fs_rot.m[1][0] = 0.0f;
-    kp_fs_rot.m[1][1] = (f32)cos(0.017453292f * kp_fs_revise_deg);
-    kp_fs_rot.m[1][2] = -sin(0.017453292f * kp_fs_revise_deg);
-    kp_fs_rot.m[1][3] = 0.0f;
-    kp_fs_rot.m[2][0] = 0.0f;
-    kp_fs_rot.m[2][1] = (f32)sin(0.017453292f * kp_fs_revise_deg);
-    kp_fs_rot.m[2][2] = (f32)cos(0.017453292f * kp_fs_revise_deg);
-    kp_fs_rot.m[2][3] = 0.0f;
+    kp_fs_rot[0][0] = 1.0f;
+    kp_fs_rot[0][1] = 0.0f;
+    kp_fs_rot[0][2] = 0.0f;
+    kp_fs_rot[0][3] = 0.0f;
+    kp_fs_rot[1][0] = 0.0f;
+    kp_fs_rot[1][1] = (f32)cos(0.017453292f * kp_fs_revise_deg);
+    kp_fs_rot[1][2] = -sin(0.017453292f * kp_fs_revise_deg);
+    kp_fs_rot[1][3] = 0.0f;
+    kp_fs_rot[2][0] = 0.0f;
+    kp_fs_rot[2][1] = (f32)sin(0.017453292f * kp_fs_revise_deg);
+    kp_fs_rot[2][2] = (f32)cos(0.017453292f * kp_fs_revise_deg);
+    kp_fs_rot[2][3] = 0.0f;
     kp_initialized = 1;
     OSRegisterVersion(__KPADVersion);
 }

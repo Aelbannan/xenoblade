@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 
 #include "monolib/work/CProcess.hpp"
@@ -183,7 +184,6 @@ u32 PTNotice_IsActive_3C10();                      // party-change notice gate
 s32 MenuTutorialIsCreated();                      // party-change notice gate
 u32 GetItemMulti_IsActiveFlag();                      // block-condition gate
 u32 hasQuestWindow();                      // quest-menu gate
-unsigned int SysWinGetSingleton();             // system-menu gate
 }
 
 // C++-linkage import (retail symbol is the mangled playUISound__FUl).

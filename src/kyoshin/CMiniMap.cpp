@@ -106,7 +106,7 @@ extern "C" void* __dt__13CMenuMiniMap2Fv(CMenuMiniMap2* _this, int flags) {
 
 // MiniMapUpdateSubobject - per-frame minimap subobject update (called from Move with
 // &mMiniMap). Body defined below, after MiniMapUpdateMapView.
-extern "C" void __declspec(noinline) MiniMapUpdateSubobject(CMiniMap* self);
+extern "C" void MiniMapUpdateSubobject(CMiniMap* self);
 
 #include <nw4r/lyt.h>
 #include "monolib/math/CVec3.hpp"
@@ -540,7 +540,7 @@ struct MiniMapTermView {
 // Clears every registered marker/clock pane, drops the fixed clock labels,
 // resets the marker/gimmick tables, releases the layout + accessor + UnkClass
 // scratch regions, and frees the cached 'timg' resource.
-extern "C" void __declspec(noinline) MiniMapTeardownMarkerPanes(CMiniMap* self) {
+extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
     self->mReady = 0;
     closeFileHandle(&self->mFileHandle);
     if (self->mLayout0C != 0) {
@@ -2065,7 +2065,7 @@ struct MiniMapPlayer {
 // 2/5/7) recompute the player's floor-height band and the row's unlock flags,
 // run the layout fade state machine on field_0x18, then refresh the markers.
 // ============================================================================
-extern "C" void __declspec(noinline) MiniMapUpdateSubobject(CMiniMap* self) {
+extern "C" void MiniMapUpdateSubobject(CMiniMap* self) {
     if (self->mLayout0C == NULL) return;
 
     u8 state = self->field_0x18;
@@ -2560,7 +2560,7 @@ void MiniMapTable::BuildMarkerPanes(void* table, void* layout, f32 scale) {
 // marker pane is attached to the layout root, then pin it to its grid cell.
 // Retail keeps the player as (container-0x3E9C) so the CfObjectMove subobject
 // at +0x3E9C is addressed with a constant displacement.
-extern "C" void __declspec(noinline) MiniMapPlaceMarkers(void* self, u32 row) {
+extern "C" void MiniMapPlaceMarkers(void* self, u32 row) {
     MiniMapTable* table = (MiniMapTable*)self;
     if (table->field_08 == 0) return;
 
@@ -2779,7 +2779,7 @@ void CMMMapImg::MiniMapRequestMapImage() {
     this->mReady = 0;
 }
 
-extern "C" void __declspec(noinline) MiniMapUpdateGimmickRows(CMiniMapGimmickView* self) {
+extern "C" void MiniMapUpdateGimmickRows(CMiniMapGimmickView* self) {
     // The position source is the +0x3E9C member of the player object; retail
     // null-tests the container-of pointer before dereferencing.
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
@@ -2847,7 +2847,7 @@ extern "C" void __declspec(noinline) MiniMapUpdateGimmickRows(CMiniMapGimmickVie
 // whose id and height band match the player's band, and record its position.
 // For rows that produced a record, create/name a 'timg' picture pane (kind
 // selects the resource name; 0 skips creation) and prepend it to the layout.
-extern "C" void __declspec(noinline) MiniMapRebuildGimmickPanes(void* self) {
+extern "C" void MiniMapRebuildGimmickPanes(void* self) {
     char* strings = lbl_eu_804FE1FC;
     CMiniMapGimmickView* view = (CMiniMapGimmickView*)self;
     if (view->field_0x04 == 0) return;

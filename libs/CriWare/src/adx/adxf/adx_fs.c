@@ -1,7 +1,7 @@
 #include <harness_catalog.h>
 
 #define ADX_FS_WORK  adxf_workarea
-#define ADX_FS_FLAG  lbl_eu_805E0624
+#define ADX_FS_FLAG  adxf_pt_stat
 
 extern void ADXCRS_Enter(void);
 extern void ADXCRS_Leave(void);
@@ -139,11 +139,11 @@ extern u32 adxf_pttbl[256];                    /* 0x340 partition table */
 extern struct AdxFsReq adxf_reqslot[16];         /* 0x740 request slots */
 extern u16 adxf_reqseq[16];                     /* 0x840 request sequence state */
 extern s32 adxf_reqidx;                         /* 0x860 signed request index (retail uses a signed %16) */
-extern s32 lbl_eu_805E0614;                         /* 0x864 */
-extern u32 lbl_eu_805E0618;                         /* 0x868 */
+extern s32 adxf_obci_flag;                         /* 0x864 */
+extern u32 adxf_ftbl_idx;                         /* 0x868 */
 extern struct AdxFsPt* adxf_curpt;             /* 0x86C current partition */
-extern u32 lbl_eu_805E0620;                         /* 0x870 */
-extern u32 lbl_eu_805E0624;                         /* 0x874 */
+extern u32 adxf_pt_id;                         /* 0x870 */
+extern u32 adxf_pt_stat;                         /* 0x874 */
 extern u32 lbl_eu_805E0628;                         /* 0x878 */
 extern u32 lbl_eu_805E062C;                         /* 0x87C */
 extern unsigned char adxf_workarea[0x2080];       /* 0x880 work area */
@@ -175,7 +175,7 @@ s32 ADXF_LoadPartitionNw(s32 ptid, const char *fname, void *ptinfo, void *nfile)
 
 /* adxf_LoadPtBothNw - internal implementation */
 int adxf_LoadPtBothNw(s32 p1, int p2, int p3, const char *p4, void *p5, int p6, int p7, void *p8, void *p9, int p10, int p11) {
-    if (lbl_eu_805E0624 != 2) {
+    if (adxf_pt_stat != 2) {
         /* check initialization */
         ADXERR_CallErrFunc1_((const char*)(adxf_mes + 0x61));
         return -1;
@@ -198,7 +198,7 @@ int ADXF_GetPtStat(int a) {
 #define ADX_RD32(p) ((u32)(p)[0] | ((u32)(p)[1] << 8) | ((u32)(p)[2] << 16) | ((u32)(p)[3] << 24))
 
 /* adxf_GetPtStat - report/refresh the status of the current ADX partition.
- * ptid must equal the registered partition count (lbl_eu_805E0620). For an
+ * ptid must equal the registered partition count (adxf_pt_id). For an
  * open partition (status==1) this queues a 32-sector-aligned buffered read of
  * the file table; for a loaded partition (status==3) it (re)builds the
  * in-memory file table from the read buffer - a word table when the mode flag
@@ -223,12 +223,12 @@ int adxf_GetPtStat(int a) {
     u16 *htot = NULL;
     u16 *htbl = NULL;
 
-    if (a != lbl_eu_805E0620) {
+    if (a != adxf_pt_id) {
         ADXERR_CallErrFunc1_((const char*)(adxf_mes + 0x196));
         return -3;
     }
-    if (adxf_curpt == 0 && lbl_eu_805E0620 != -1) {
-        return (int)lbl_eu_805E0624;
+    if (adxf_curpt == 0 && adxf_pt_id != -1) {
+        return (int)adxf_pt_stat;
     }
     pt = adxf_curpt;
     if (pt == 0) {
@@ -238,7 +238,7 @@ int adxf_GetPtStat(int a) {
         status = pt->status;
     }
     if (status == 4) {
-        lbl_eu_805E0624 = 4;
+        adxf_pt_stat = 4;
         return 4;
     }
 
@@ -252,7 +252,7 @@ int adxf_GetPtStat(int a) {
     }
     ADXCRS_Leave();
     if (r == 0) {
-        return (int)lbl_eu_805E0624;
+        return (int)adxf_pt_stat;
     }
 
     if (status == 1) {
@@ -323,14 +323,14 @@ int adxf_GetPtStat(int a) {
                 req->p2 = -1;
                 adxf_reqidx = idx + 1;
             }
-            lbl_eu_805E0624 = 4;
+            adxf_pt_stat = 4;
             return 4;
         }
-        return (int)lbl_eu_805E0624;
+        return (int)adxf_pt_stat;
     }
 
     /* partition not open: refresh the cached status */
-    lbl_eu_805E0624 = status;
+    adxf_pt_stat = status;
     if (status != 3) {
         return status;
     }
@@ -358,7 +358,7 @@ int adxf_GetPtStat(int a) {
             req->seq = (u16)seq;
             req->work = pt;
             req->p1 = -1;
-            lbl_eu_805E0624 = 4;
+            adxf_pt_stat = 4;
             adxf_reqseq[3] = seq;
             req->p2 = -1;
             adxf_reqidx = idx + 1;
@@ -403,9 +403,9 @@ int adxf_GetPtStat(int a) {
                 adxf_reqidx = idx + 1;
             }
             adxf_curpt = 0;
-            lbl_eu_805E0618 = 0;
+            adxf_ftbl_idx = 0;
             lbl_eu_805E062C = 0;
-            return (int)lbl_eu_805E0624;
+            return (int)adxf_pt_stat;
         }
         nfiles = (int)ADX_RD32(buf + 4);
         if (nfiles > 0x10000) {
@@ -420,7 +420,7 @@ int adxf_GetPtStat(int a) {
             req->seq = (u16)seq;
             req->work = pt;
             req->p1 = -1;
-            lbl_eu_805E0624 = 4;
+            adxf_pt_stat = 4;
             adxf_reqseq[3] = seq;
             req->p2 = -1;
             adxf_reqidx = idx + 1;
@@ -465,9 +465,9 @@ int adxf_GetPtStat(int a) {
                 adxf_reqidx = idx + 1;
             }
             adxf_curpt = 0;
-            lbl_eu_805E0618 = 0;
+            adxf_ftbl_idx = 0;
             lbl_eu_805E062C = 0;
-            return (int)lbl_eu_805E0624;
+            return (int)adxf_pt_stat;
         }
         pt->hdr.hw_0C = (u16)nfiles;
         pt->sectCnt = nfiles & 0xFFFF;
@@ -487,13 +487,13 @@ int adxf_GetPtStat(int a) {
     }
 
     cnt = ((lbl_eu_805E062C << 11) + 2) >> 2;
-    idx = lbl_eu_805E0618;
+    idx = adxf_ftbl_idx;
     for (; i < cnt; i += 2) {
         if (pt->hdr.b.b0F == 1) {
             /* word table: one 32-bit length per file */
             wtbl[idx] = ADX_RD32((u8 *)lbl_eu_805E0628 + i * 4);
             idx++;
-            lbl_eu_805E0618 = idx;
+            adxf_ftbl_idx = idx;
         } else {
             /* halfword table: 16-bit sector counts */
             val = (int)ADX_RD32((u8 *)lbl_eu_805E0628 + i * 4);
@@ -513,7 +513,7 @@ int adxf_GetPtStat(int a) {
                 req->seq = (u16)seq;
                 req->work = pt;
                 req->p1 = -1;
-                lbl_eu_805E0624 = 4;
+                adxf_pt_stat = 4;
                 adxf_reqseq[3] = seq;
                 req->p2 = -1;
                 adxf_reqidx = idx + 1;
@@ -558,13 +558,13 @@ int adxf_GetPtStat(int a) {
                     adxf_reqidx = idx + 1;
                 }
                 adxf_curpt = 0;
-                lbl_eu_805E0618 = 0;
+                adxf_ftbl_idx = 0;
                 lbl_eu_805E062C = 0;
-                return (int)lbl_eu_805E0624;
+                return (int)adxf_pt_stat;
             }
             htbl[idx] = (u16)sct;
             idx++;
-            lbl_eu_805E0618 = idx;
+            adxf_ftbl_idx = idx;
         }
         if (idx >= pt->sectCnt) {
             /* table fully copied: close the partition and stop */
@@ -577,7 +577,7 @@ int adxf_GetPtStat(int a) {
             req->seq = (u16)seq;
             req->work = pt;
             req->p1 = -1;
-            lbl_eu_805E0624 = 3;
+            adxf_pt_stat = 3;
             adxf_reqseq[3] = seq;
             req->p2 = -1;
             adxf_reqidx = idx + 1;
@@ -622,7 +622,7 @@ int adxf_GetPtStat(int a) {
                 adxf_reqidx = idx + 1;
             }
             adxf_curpt = 0;
-            lbl_eu_805E0618 = 0;
+            adxf_ftbl_idx = 0;
             lbl_eu_805E062C = 0;
             break;
         }
@@ -650,7 +650,7 @@ int adxf_GetPtStat(int a) {
             req->seq = (u16)seq;
             req->work = pt;
             req->p1 = -1;
-            lbl_eu_805E0624 = 4;
+            adxf_pt_stat = 4;
             adxf_reqseq[3] = seq;
             req->p2 = -1;
             adxf_reqidx = idx + 1;
@@ -695,7 +695,7 @@ int adxf_GetPtStat(int a) {
                 adxf_reqidx = idx + 1;
             }
             adxf_curpt = 0;
-            lbl_eu_805E0618 = 0;
+            adxf_ftbl_idx = 0;
             lbl_eu_805E062C = 0;
         } else {
             if (adxf_curpt == 0) {
@@ -704,11 +704,11 @@ int adxf_GetPtStat(int a) {
             } else {
                 st = adxf_curpt->status;
             }
-            lbl_eu_805E0624 = st;
+            adxf_pt_stat = st;
         }
     }
     }
-    return (int)lbl_eu_805E0624;
+    return (int)adxf_pt_stat;
 }
 
 /* adxf_CreateAdxFs - find a free work slot, allocate its stream handle, and
@@ -1058,7 +1058,7 @@ int adxf_ReadNw32(void *a, int b, void *c) {
     work->field_20 = (u32)c;
     work->field_24 = (u32)size;
     work->sectCnt = (u32)sj;
-    if (lbl_eu_805E0614 == 1) {
+    if (adxf_obci_flag == 1) {
         ADXF_Ocbi(c, size);
     }
     /* retail reloads the cache handle from the work item for the call */
@@ -1154,7 +1154,7 @@ int adxf_Stop(void *adxf) {
     ADXCRS_Lock();
     work->field_1C = ADXSTM_Tell(work->fstm) - work->field_10;
     if (work->sectCnt != 0 && work->b2 == 0) {
-        if (lbl_eu_805E0614 == 1) {
+        if (adxf_obci_flag == 1) {
             ADXF_Ocbi((const void *)work->field_20, work->field_24);
         }
         obj = (void *)work->sectCnt;
@@ -1190,7 +1190,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
     s32 tell;
     if (ADXSTM_GetStat(work->fstm) == 4) {
         if (work->sectCnt != 0 && work->b2 == 0) {
-            if (lbl_eu_805E0614 == 1) {
+            if (adxf_obci_flag == 1) {
                 ADXF_Ocbi((const void *)work->field_20, work->field_24);
             }
             cb = (struct AdxFsCb *)work->sectCnt;
@@ -1205,7 +1205,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
             (s32)ADXSTM_GetFileSct(work->fstm) <= (s32)work->field_14) {
             work->status = 3;
             if (work->sectCnt != 0 && work->b2 == 0) {
-                if (lbl_eu_805E0614 == 1) {
+                if (adxf_obci_flag == 1) {
                     ADXF_Ocbi((const void *)work->field_20, work->field_24);
                 }
                 cb = (struct AdxFsCb *)work->sectCnt;
@@ -1229,7 +1229,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
             }
             work->field_10 += work->field_1C;
                 if (work->sectCnt != 0 && work->b2 == 0) {
-                    if (lbl_eu_805E0614 == 1) {
+                    if (adxf_obci_flag == 1) {
                         ADXF_Ocbi((const void *)work->field_20, work->field_24);
                     }
                     cb = (struct AdxFsCb *)work->sectCnt;
@@ -1244,7 +1244,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
             s32 tell = ADXSTM_Tell(work->fstm);
             work->field_1C = tell - work->field_10;
             if (work->sectCnt != 0 && work->b2 == 0) {
-                if (lbl_eu_805E0614 == 1) {
+                if (adxf_obci_flag == 1) {
                     ADXF_Ocbi((const void *)work->field_20, work->field_24);
                 }
                 cb = (struct AdxFsCb *)work->sectCnt;
@@ -1589,13 +1589,3 @@ char *ADXF_GetFnameFromPt(int idx) {
 unsigned char adxf_workarea[0x2080];       /* 0x880 work area */
 u32 lbl_eu_805E062C;                         /* 0x87C */
 u32 lbl_eu_805E0628;                         /* 0x878 */
-u32 lbl_eu_805E0624;                         /* 0x874 */
-u32 lbl_eu_805E0620;                         /* 0x870 */
-struct AdxFsPt* adxf_curpt;             /* 0x86C current partition */
-u32 lbl_eu_805E0618;                         /* 0x868 */
-s32 lbl_eu_805E0614;                         /* 0x864 */
-s32 adxf_reqidx;                         /* 0x860 signed request index (retail uses a signed %16) */
-u16 adxf_reqseq[16];                     /* 0x840 request sequence state */
-struct AdxFsReq adxf_reqslot[16];         /* 0x740 request slots */
-u32 adxf_pttbl[256];                    /* 0x340 partition table */
-unsigned char adxf_ptwork[0x340];        /* 0x000 partition work areas (16 x AdxFsWork) */

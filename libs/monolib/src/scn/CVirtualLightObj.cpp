@@ -20,12 +20,9 @@ extern "C" void setLightEnvEnable(CLightEnv* self, u8 val) {
 
 // ---------------------------------------------------------------------------
 // CVirtualLightObj constructor: default light state - white color, unit
-// intensity, disabled slot index (-1). The retail vtable is an unnamed data
-// symbol (lbl_eu_8056E8B8), so the pointer is stored manually instead of
-// going through the compiler's vtable machinery.
+// intensity, disabled slot index (-1).
 // ---------------------------------------------------------------------------
 CVirtualLightObj::CVirtualLightObj() {
-    mVtable = (u8*)lbl_eu_8056E8B8;
     mField04 = lbl_eu_8066AA88;
     mField08 = lbl_eu_8066AA88;
     mField0C = lbl_eu_8066AA88;
@@ -42,42 +39,41 @@ CVirtualLightObj::CVirtualLightObj() {
 }
 
 // ---------------------------------------------------------------------------
-// Query whether this virtual light still carries its default (white) state.
-// Returns the "default" sentinel while the color fields are untouched, and
-// the "white" sentinel once any field has been customized.
-// ---------------------------------------------------------------------------
-extern "C" f32 getVirtualLightSentinel(CVirtualLightObj* self) {
-    if (self->mField14 <= lbl_eu_8066AA8C) {
-        return lbl_eu_8066AA8C;
-    }
-    if (lbl_eu_8066AA8C == self->mField1C &&
-        lbl_eu_8066AA8C == self->mField20 &&
-        lbl_eu_8066AA8C == self->mField24) {
-        return lbl_eu_8066AA8C;
-    }
-    if (lbl_eu_8066AA8C == self->mField04 &&
-        lbl_eu_8066AA8C == self->mField08 &&
-        lbl_eu_8066AA8C == self->mField0C) {
-        return lbl_eu_8066AA8C;
-    }
-    return lbl_eu_8066AA88;
-}
-
-// ---------------------------------------------------------------------------
-// Resolve the virtual light's current color into out. Lights whose type byte
+// Resolve the virtual light's current color (returned by value). Lights whose type byte
 // is 0 use the static black color; otherwise the two color triples (ambient
 // at +0x04, diffuse at +0x1C) are scaled by the intensity at +0x14 and the
 // alpha is the product of +0x10 and +0x28.
 // ---------------------------------------------------------------------------
-extern "C" void getVirtualLightColor(ml::CCol4* out, CVirtualLightObj* in) {
-    if (in->mByte18 == 0) {
-        *out = ml::CCol4::black;
-    } else {
-        *out = ml::CCol4(in->mField04 * in->mField1C * in->mField14,
-                         in->mField08 * in->mField20 * in->mField14,
-                         in->mField0C * in->mField24 * in->mField14,
-                         in->mField10 * in->mField28);
+ml::CCol4 CVirtualLightObj::getColor() {
+    if (mByte18 == 0) {
+        return ml::CCol4::black;
     }
+    ml::CCol4 col(mField04 * mField1C, mField08 * mField20,
+                  mField0C * mField24, mField10 * mField28);
+    f32 s = mField14;
+    return ml::CCol4(col.r * s, col.g * s, col.b * s, col.a);
+}
+
+// ---------------------------------------------------------------------------
+// Query whether this virtual light still carries its default (white) state.
+// Returns the "default" sentinel while the color fields are untouched, and
+// the "white" sentinel once any field has been customized.
+// ---------------------------------------------------------------------------
+f32 CVirtualLightObj::getSentinel() {
+    if (mField14 <= lbl_eu_8066AA8C) {
+        return lbl_eu_8066AA8C;
+    }
+    if (lbl_eu_8066AA8C == mField1C &&
+        lbl_eu_8066AA8C == mField20 &&
+        lbl_eu_8066AA8C == mField24) {
+        return lbl_eu_8066AA8C;
+    }
+    if (lbl_eu_8066AA8C == mField04 &&
+        lbl_eu_8066AA8C == mField08 &&
+        lbl_eu_8066AA8C == mField0C) {
+        return lbl_eu_8066AA8C;
+    }
+    return lbl_eu_8066AA88;
 }
 
 // ---------------------------------------------------------------------------

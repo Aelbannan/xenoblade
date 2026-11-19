@@ -8,9 +8,8 @@
 #include <nw4r/g3d/g3d_light.h>
 
 // Retail data symbols (C-linkage names; global scope is not C++-mangled).
-extern char lbl_eu_8056E8B8[];     // CVirtualLightObj vtable
 extern const f32 lbl_eu_8066AA88;  // default light color components
-extern const f32 lbl_eu_8066AA8C;  // "active" sentinel compared in getVirtualLightSentinel
+extern const f32 lbl_eu_8066AA8C;  // "active" sentinel compared in CVirtualLightObj::getSentinel
 extern const f32 lbl_eu_8066AA90;  // color scale for quad verts (drawFlatQuad)
 extern const f32 lbl_eu_8066AA98;  // slot color alpha default (selectLightSlot)
 extern const f32 lbl_eu_8066AA9C;  // color -> u8 scale (blendSlotAmbient)

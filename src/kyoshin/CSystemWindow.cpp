@@ -1,10 +1,17 @@
-// CSystemWindow - system window process (singleton).
+// CSystemWindow - system window processes (CSystemWindow + CSysWinSelect).
 //
-// Matching session for unit kyoshin/CSystemWindow.
+// Retail TU: CSystemWindow's code, then CSysWinSelect's, then the compiler's
+// @108@/@112@ adjustor thunks for both classes in that order; the vtables,
+// RTTI records and type-name strings are emitted in reverse (CSysWinSelect
+// first) in .data/.rodata/.sdata.
 
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CSystemWindow.hpp"
+#include "kyoshin/CSysWinSelect.hpp"
 #include "kyoshin/CSysWinBuff.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/core/CPadManager.hpp"
@@ -18,90 +25,22 @@
 // Tentative definition -> .sbss, zero-initialized like retail.
 CSystemWindow* lbl_eu_80663FD8;
 
-// Retail declares the constructor as a C-ABI global `__ct__CSystemWindow` (the
-// split symbol carries no class-length mangling), so it is kept as a plain
-// global function rather than a member ctor.
-//
-// Runs CProcess's ctor then fills the IUIWindow base region by hand (base ctor
-// is out-of-line in retail, its effects are emitted inline here): the vtable at
-// +0x10 is written twice (temp IUIWindow vtable, then the composite vtable),
-// the two __ptmf_null callback slots are copied, then the scalar fields and the
-// embedded CSysWin instance are constructed and the two text strings copied.
-extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
-                                              u32 opt, const char* str1,
-                                              const char* str2) {
-    __ct__8CProcessFv((CProcess*)self);
-
-    self->mVptr = (u32)lbl_eu_8052D238;
-
-    // Composite vtable base and null-ptmf source. Post-increment derefs of a
-    // local pointer fold the first access into lwzu; reusing one const src
-    // pointer across both callback slots matches retail's reload schedule
-    // (same shape as the matched __ct__CTalkWindow).
-    char* vt = lbl_eu_8052D378;
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 workEvt = (u32)(vt + 0x24);
-    u32 w1 = *src++;
-    self->ptmf0[1] = w1;
-    u32 scnRender = (u32)(vt + 0xac);
-    self->ptmf0[0] = w0;
-    u32 w2 = *src++;
-    self->ptmf0[2] = w2;
-
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    self->ptmf1[1] = w0;
-    self->ptmf1[0] = w1;
-    w2 = *src++;
-    self->ptmf1[2] = w2;
-
-    self->field_54 = 0;
-    self->field_58 = 0;
-    self->field_5C = 0;
-    self->field_60 = -1;
-    self->field_64 = 0;
-    self->field_65 = 0;
-    self->field_66 = 0;
-    self->field_67 = 1;
-    self->field_68 = 0;
-
-    self->mVptr = (u32)vt;
-    self->mWorkEvent = workEvt;
-    self->mScnRender = scnRender;
-    self->mScene = scene;
-
-    __ct__7CSysWinFUc(&self->mSysWin[0], 0);
-
-    // Default window state + optional flags, then copy the two title strings
-    // (empty-string cases zero the first byte to match strcpy(null-copy).
-    self->mState = 0;
-    self->field_B5 = opt;
-    self->mFlag2B6 = 0;
+CSystemWindow::CSystemWindow(CScn* scene, u32 opt, const char* str1, const char* str2)
+    : mScene(scene), mSysWin(0), mState(0), field_B5(opt), mFlag2B6(0) {
     if (str1)
-        strcpy(&self->mStr1[0], str1);
+        strcpy(mStr1, str1);
     else
-        self->mStr1[0] = 0;
+        mStr1[0] = 0;
     if (str2)
-        strcpy(&self->mStr2[0], str2);
+        strcpy(mStr2, str2);
     else
-        self->mStr2[0] = 0;
-
-    return self;
+        mStr2[0] = 0;
 }
 
-CSystemWindow::~CSystemWindow() {
-    // Destroy the embedded CSysWin storage (C-linkage dtor; -1 = delete scalar).
-    __dt__7CSysWinFv(&mSysWin[0], -1);
-    // Destroy the CProcess base at +0. The nested double null-check is an
-    // MWCC artifact of D2-inlined-into-D1 (same shape as ~CSysWinSave).
-    if (this != 0) {
-        if (this != 0) {
-            __dt__8CProcessFv((CProcess*)this, 0);
-        }
-    }
-}
+// Complete-object destructor: the compiler destroys the embedded CSysWin and
+// the CProcess base (through the inlined CTTask<IUIWindow>/IUIWindow dtors),
+// then the conditional operator delete.
+CSystemWindow::~CSystemWindow() {}
 
 void CSystemWindow::Init() {
     u32 w = lbl_eu_80663E24;
@@ -109,8 +48,7 @@ void CSystemWindow::Init() {
     if (mFlag2B6 == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(true);
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    IScnRender* render = this;
     mScene->addRenderCB(render, 0xd, 0);
 
     // Rebuild the embedded CSysWin storage: construct a stack temp, memberwise
@@ -119,7 +57,7 @@ void CSystemWindow::Init() {
     // dispatch the layout-build virtual at vtable+0x88.
     u8 temp[0x3A];
     __ct__7CSysWinFUc(temp, field_B5);
-    CSysWinDataBuff* sw = reinterpret_cast<CSysWinDataBuff*>(&mSysWin[0]);
+    CSysWinDataBuff* sw = reinterpret_cast<CSysWinDataBuff*>(&mSysWin);
     CSysWinDataBuff* tw = reinterpret_cast<CSysWinDataBuff*>(temp);
     sw->f_04 = tw->f_04;
     sw->f_08 = tw->f_08;
@@ -142,17 +80,16 @@ void CSystemWindow::Init() {
     __dt__7CSysWinFv(temp, -1);
 
     // Dispatch the layout-build virtual at vtable+0x88 on the rebuilt CSysWin.
-    reinterpret_cast<CSysWinView*>(&mSysWin[0])->v20();
+    reinterpret_cast<CSysWinView*>(&mSysWin)->v20();
 }
 
 void CSystemWindow::Term() {
     CDeviceVI::waitForDrawDone();
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->termLayout();
+    mSysWin.termLayout();
 
     lbl_eu_80663FD8 = 0;
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(this);
-    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    IScnRender* render = this;
     mScene->removeRenderCB(render);
 
     if (mFlag2B6 == 0)
@@ -170,17 +107,17 @@ void CSystemWindow::Move() {
     switch (mState) {
     case 0: {
         // Window just became ready: load strings and start animation.
-        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isReady()) {
+        if (mSysWin.isReady()) {
             mState = 1;
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->setKindContent(reinterpret_cast<char*>(&mStr1[0]), reinterpret_cast<char*>(&mStr2[0]));
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->applyKind(1);
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->openPhase1();
+            mSysWin.setKindContent(reinterpret_cast<char*>(&mStr1[0]), reinterpret_cast<char*>(&mStr2[0]));
+            mSysWin.applyKind(1);
+            mSysWin.openPhase1();
         }
         break;
     }
     case 1:
         // Wait for the system window to become active.
-        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
+        if (mSysWin.isActive()) {
             mState = 2;
         }
         break;
@@ -194,21 +131,21 @@ void CSystemWindow::Move() {
             confirmBtn = (pad->mPressedButtonFlags >> 4) & 1;
         if (confirmBtn != 0) {
             mState = 3;
-            reinterpret_cast<CSysWin*>(&mSysWin[0])->advancePhase3();
+            mSysWin.advancePhase3();
             playUISound(3);
         }
         break;
     }
     case 3:
         // Closing transition finished - hand control back to the UI.
-        if (reinterpret_cast<CSysWin*>(&mSysWin[0])->isActive()) {
-            field_67 = 0;
-            field_64 = 1;
+        if (mSysWin.isActive()) {
+            mField67 = 0;
+            mField64 = 1;
         }
         break;
     }
 
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->dispatchPhase();
+    mSysWin.dispatchPhase();
 }
 
 
@@ -221,7 +158,7 @@ void CSystemWindow::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    reinterpret_cast<CSysWin*>(&mSysWin[0])->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
+    mSysWin.drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
 }
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a
@@ -232,10 +169,7 @@ extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u
 
     u32 workMem = CWorkThreadSystem::getWorkMem();
     CSystemWindow* obj =
-        (CSystemWindow*)mtl::MemManager::allocate(0x2b8, workMem);
-    if (obj != 0) {
-        obj = __ct__CSystemWindow(obj, scene, opt, str1, str2);
-    }
+        new (mtl::MemManager::allocate(0x2b8, workMem)) CSystemWindow(scene, opt, str1, str2);
     lbl_eu_80663FD8 = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
     return lbl_eu_80663FD8;
@@ -245,3 +179,100 @@ extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u
 CSystemWindow* SysWinGetSingleton() {
     return lbl_eu_80663FD8;
 }
+
+// __vt__13CSysWinSelect, its RTTI base list/record and the "CSysWinSelect"
+// type-name string are compiler-emitted.
+CSysWinSelect* lbl_eu_80663FDC = nullptr;
+
+// CSysWinSelect::~CSysWinSelect (us-80282058-style D1/D0 dtor): the compiler
+// destroys mCur18@0xB4 and the embedded CSysWin@0x78, then the CProcess base
+// (through the inlined CTTask<IUIWindow>/IUIWindow dtors) and the conditional
+// operator delete.
+CSysWinSelect::~CSysWinSelect() {}
+
+// CSysWinSelect::CSysWinSelect (us-8012565c)
+// CProcess ctor, inlined CTTask<IUIWindow>/IUIWindow state + vptrs, the embedded
+// CSysWin / CCur18, the three scalar fields, then the three optional strings.
+CSysWinSelect::CSysWinSelect(void* a2, void* a3, void* a4, void* a5)
+    : mScene((CScn*)a2), mSysWin(0), mCur18(NULL), mState(0), mCursorSel(1), field_24E(0) {
+    if (a3 != 0) {
+        strcpy(mStrA, (char*)a3);
+    } else {
+        mStrA[0] = 0;
+    }
+    if (a4 != 0) {
+        strcpy(mStrB, (char*)a4);
+    } else {
+        mStrB[0] = 0;
+    }
+    if (a5 != 0) {
+        strcpy(mStrC, (char*)a5);
+    } else {
+        mStrC[0] = 0;
+    }
+}
+
+// SysWinSelectCreate (us-80125b4c)
+// Allocate the CSysWinSelect singleton (0x250 bytes) from work memory, run its
+// constructor, store it in the .sbss global, and register it as a CProcess
+// child of `parent`. Returns 0 when the singleton already exists.
+extern "C" CSysWinSelect* SysWinSelectCreate(CProcess* parent, void* a2, void* a3, void* a4,
+                                        void* a5) {
+    if (lbl_eu_80663FDC != 0)
+        return 0;
+
+    CSysWinSelect* obj = new (mtl::MemManager::allocate(0x250, CWorkThreadSystem::getWorkMem()))
+        CSysWinSelect(a2, a3, a4, a5);
+    lbl_eu_80663FDC = obj;
+    reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
+    return lbl_eu_80663FDC;
+}
+
+// SysWinSelectHandleInput (us-80125bd8)
+// The state==2 input handling for the select dialog. Reads the current cf pad
+// data; the confirm button flag is read from a different bit in co-op vs
+// single-player, and the D-pad up/down bits select the cursor row (wrapping).
+// The pad fields are read inside each mode branch - retail emits the loads in
+// both arms, so keep them out of shared locals or MWCC hoists them above the
+// branch and the function grows an extra saved register.
+extern "C" void SysWinSelectHandleInput(CSysWinSelect* self) {
+    CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
+    int confirm, up, down;
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
+        // Co-op: D-pad rows read from the turbo-press flags, confirm from bit 21.
+        up = (pad->field_104 & 0x8004) != 0;
+        down = (pad->field_104 & 0x10008) != 0;
+        confirm = (pad->field_04 >> 21) & 1;
+    } else {
+        // Single-player: confirm is bit 4.
+        up = (pad->field_104 & 0x8004) != 0;
+        down = (pad->field_104 & 0x10008) != 0;
+        confirm = (pad->field_04 >> 4) & 1;
+    }
+
+    if (confirm != 0) {
+        // Confirm: close the window and record the chosen row index.
+        self->mState = 3;
+        self->mSysWin.advancePhase3();
+        self->mField60 = (s8)self->mCursorSel + 1;
+        self->mCur18.SetVisible(0);
+        playUISound(3);
+    } else if (up != 0) {
+        // Up: move the cursor up one row, wrapping below 0 to 1.
+        self->mCursorSel = (u8)(self->mCursorSel - 1);
+        if ((s8)self->mCursorSel < 0) self->mCursorSel = 1;
+        nw4r::math::VEC3 tmp;
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&tmp), &self->mSysWin, self->mCursorSel);
+        self->mCur18.setRootPaneTranslate(&tmp);
+        playUISound(1);
+    } else if (down != 0) {
+        // Down: move the cursor down one row, wrapping over 1 to 0.
+        self->mCursorSel = (u8)(self->mCursorSel + 1);
+        if ((s8)self->mCursorSel > 1) self->mCursorSel = 0;
+        nw4r::math::VEC3 tmp;
+        CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(&tmp), &self->mSysWin, self->mCursorSel);
+        self->mCur18.setRootPaneTranslate(&tmp);
+        playUISound(1);
+    }
+}
+

@@ -1,7 +1,7 @@
 // CriWare ADX: ADXF subsystem init/finalize (libs/CriWare/src/adx/adxf/adx_fini.c)
 //
 // Matches retail ADXF_Init / ADXF_Finish. Absorbed from criware_data:
-//   .rodata lbl_eu_80515788 (0x58) + .bss lbl_eu_805DFDA8 (0x8 head).
+//   .rodata lbl_eu_80515788 (0x58) + .bss adxf_head (0x8 head).
 // The rest of the ADXF work image (from +0x8) lives in contiguous .bss
 // owned by adx_fs.c; we overlay the full struct for field access.
 
@@ -37,17 +37,15 @@ struct ADXF_Work {
     u32 field_0x87C;        // 0x87C
 };
 
-// Retail symbol is only the 8-byte head at 0x805DFDA8.
-struct {
-    s32 refcount;
-    u8* field_0x04;
-} lbl_eu_805DFDA8;
+// Retail symbol is only the 8-byte head at 0x805DFDA8; the rest of the
+// 0x880 block is defined after the code (see the bottom of this file).
+extern u64 adxf_head;
 
 // Forward declarations for ADXF functions defined in adx_fs.c
 void ADXF_CloseAll(void);
 
 void ADXF_Init(void) {
-    struct ADXF_Work* work = (struct ADXF_Work*)&lbl_eu_805DFDA8;
+    struct ADXF_Work* work = (struct ADXF_Work*)&adxf_head;
     work->field_0x04 = (u8*)lbl_eu_80515788;
 
     if (work->refcount == 0) {
@@ -75,7 +73,7 @@ void ADXF_Finish(void) {
     // (docs/MWCC_CASES.md "adx_fini - unattainable lis-hoist schedule"):
     // pointer const-ness, scoping, direct member access and register hints
     // were all ruled out.
-    struct ADXF_Work* work = (struct ADXF_Work*)&lbl_eu_805DFDA8;
+    struct ADXF_Work* work = (struct ADXF_Work*)&adxf_head;
     if (--work->refcount == 0) {
         ADXF_CloseAll();
         work->field_0x87C = 1;
@@ -90,3 +88,17 @@ void ADXF_Finish(void) {
         memset(work->field_0x08, 0, 0x340);
     }
 }
+
+/* .bss: defined after the code so MWCC addresses every object through its
+ * own retail symbol.  Reverse definition order gives the retail layout. */
+u32 adxf_pt_stat;
+u32 adxf_pt_id;
+void* adxf_curpt;
+u32 adxf_ftbl_idx;
+s32 adxf_obci_flag;
+s32 adxf_reqidx;
+u16 adxf_reqseq[16];
+u8 adxf_reqslot[0x100];
+u32 adxf_pttbl[256];
+u8 adxf_ptwork[0x340];
+u64 adxf_head;

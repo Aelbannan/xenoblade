@@ -29,8 +29,7 @@ extern "C" void SplitU32ToS16s(short*, unsigned long);
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
 extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
 
-// Defined later in this TU (retail symbol is unmangled); noinline keeps
-// MWCC from inlining the body into kickoffKizunaWindow.
+// Defined later in this TU (retail symbol is unmangled).
 extern "C" void checkKizunaGate(CMenuKizunaTalk* self);
 
 CMenuKizunaTalk* CMenuKizunaTalk::sInstance;
@@ -85,27 +84,22 @@ extern "C" CMenuKizunaTalk* __ct__CMenuKizunaTalk(CMenuKizunaTalk* obj,
 // destroyed by hand in reverse construction order; the IUIWindow base dtor
 // (__dt__9IUIWindowFv) is emitted automatically after the body.
 // ---------------------------------------------------------------------------
-#pragma optimize_for_size on
 CMenuKizunaTalk::~CMenuKizunaTalk() {
     __dt__7CSysWinFv(&mSysWin[0], -1);
 }
-#pragma optimize_for_size off
 
 // Initialise the talk screen: request the shared archive (the loader gets the
 // IWorkEvent subobject at +0x6C via the base conversion), then set the
 // character's affinity-talk-seen BDAT flag.
-#pragma optimize_for_size on
 void CMenuKizunaTalk::Init() {
     mFile2 = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
         KyoshinHeap_GetField44(), lbl_eu_80505118, static_cast<KizunaWorkEvent*>(this), 0, 0);
     CtrlRemote_SetSharedBit(mCharId + 0x3440, 1);
 }
-#pragma optimize_for_size off
 
 // Tear the talk screen down: release the file handles and the layout archive,
 // remove the render callback, run the embedded widget teardowns and clear the
 // singleton / BDAT globals.
-#pragma optimize_for_size on
 void CMenuKizunaTalk::Term() {
     waitForDrawDone__9CDeviceVIFv();
     CBdat::getEntry(2);
@@ -135,7 +129,6 @@ void CMenuKizunaTalk::Term() {
     mMemRegion.deleteRegion();
     CMenuKizunaTalk::sInstance = 0;
 }
-#pragma optimize_for_size off
 
 void CMenuKizunaTalk::Move() {}
 
@@ -146,7 +139,6 @@ void CMenuKizunaTalk::cbRenderBefore() {}
 // work memory and register it under `parent`. Returns 0 when the singleton
 // already exists.
 // ---------------------------------------------------------------------------
-#pragma optimize_for_size on
 CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* parent, CScn* scene, u32 charId) {
     if (CMenuKizunaTalk::sInstance != 0) {
         return 0;
@@ -161,13 +153,9 @@ CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* parent, CScn* scene, u32 ch
     reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
     return CMenuKizunaTalk::sInstance;
 }
-#pragma optimize_for_size off
 
-// (CMenuKizunaTalk::sInstance != 0) - needs the size-optimized subic/subfe form; the
-// preceding `#pragma optimize_for_size off` would revert to -O4,p codegen
-#pragma optimize_for_size on
+// (CMenuKizunaTalk::sInstance != 0) - the size-optimized subic/subfe form.
 extern "C" bool isKizunaTalkActive() { return CMenuKizunaTalk::sInstance != 0; }
-#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Window-state kickoff (retail kickoffKizunaWindow): refresh the availability gate
@@ -177,7 +165,6 @@ extern "C" bool isKizunaTalkActive() { return CMenuKizunaTalk::sInstance != 0; }
 // requests the talk-list file through the IWorkEvent subobject (+0x6C,
 // null-this-safe).
 // ---------------------------------------------------------------------------
-#pragma optimize_for_size on
 void kickoffKizunaWindow(CMenuKizunaTalk* self) {
     if (lbl_eu_80664424 == 0) {
         return;
@@ -217,7 +204,6 @@ void kickoffKizunaWindow(CMenuKizunaTalk* self) {
     }
     }
 }
-#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Kizuna talk window advance (retail updateKizunaTalkWindow): state machine on
@@ -297,7 +283,6 @@ void advanceKizunaWindow(CMenuKizunaTalk* self) {
 // confirm/advance actions. The D-pad bit position differs between player 0
 // (co-op) and the others.
 // ---------------------------------------------------------------------------
-#pragma optimize_for_size on
 void driveKizunaTalkPad(CMenuKizunaTalk* self) {
     KizunaTalkPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     u32 cancel, confirm, left, right;
@@ -383,13 +368,11 @@ void driveKizunaTalkPad(CMenuKizunaTalk* self) {
         break;
     }
 }
-#pragma optimize_for_size off
 
 // Advance the kizuna talk window state machine (retail pollKizunaTalkReady):
 // window states 0 and 2 wait for the CSysWin panel to become active, state 1
 // waits for the embedded animation transform to finish; each sets the
 // IUIWindow "advance" flag when its wait completes.
-#pragma optimize_for_size on
 extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
     switch (self->mFieldA4) {
     case 0:
@@ -409,7 +392,6 @@ extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
         break;
     }
 }
-#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Kizuna talk gating check (retail checkKizunaGate): reads the character's
@@ -417,8 +399,7 @@ extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
 // writes the resulting mFieldA4 gate state.
 // ---------------------------------------------------------------------------
 // Retail symbol is the unmangled checkKizunaGate.
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void checkKizunaGate(CMenuKizunaTalk* self) {
+extern "C" void checkKizunaGate(CMenuKizunaTalk* self) {
     u16 total = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
     if ((u32)(u16)total <= CtrlRemote_TouchBitByArg((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
@@ -451,7 +432,6 @@ extern "C" __declspec(noinline) void checkKizunaGate(CMenuKizunaTalk* self) {
         self->mFieldA4 = 0;
     }
 }
-#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Talk list file-event handler (retail handleKizunaFileEvent): when the requested

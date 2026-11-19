@@ -6,7 +6,7 @@ extern u8 lbl_eu_805E3EA8[0x1040];
 extern volatile s32 lbl_eu_805E3E9C;
 extern volatile s32 lbl_eu_805E3EA0;
 extern volatile s32 lbl_eu_805E3EA4;
-extern volatile s32 lbl_eu_805E4EE8;
+extern volatile s32 lbl_eu_805E4EE8[2];
 
 /* Retail error-string pool (lbl_eu_80516148): both cvFsOpen failure paths
  * pass the same "E02110501 adxstmf_stat_exec: can't open " message. */
@@ -624,7 +624,7 @@ epilogue:
     if (h->fileSectors == 0) {
         h->subState = 0;
         h->stat = 3;
-        lbl_eu_805E4EE8++;
+        lbl_eu_805E4EE8[0]++;
         return;
     }
 
@@ -924,3 +924,11 @@ void ADXSTM_SetSj(ADXSTMHndl* h, void* sj) {
 int ADXSTM_IsOpenedFile(ADXSTMHndl* h) {
     return (s8)h->opened;
 }
+
+/* .bss: reverse retail order for MWCC emission. */
+volatile s32 lbl_eu_805E4EE8[2];
+u8 lbl_eu_805E3EA8[0x1040];
+volatile s32 lbl_eu_805E3EA4;
+volatile s32 lbl_eu_805E3EA0;
+volatile s32 lbl_eu_805E3E9C;
+volatile s32 lbl_eu_805E3E98;

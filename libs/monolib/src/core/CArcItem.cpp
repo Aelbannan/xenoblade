@@ -9,9 +9,7 @@
 #include <revolution/ARC.h>
 #include <cstring>
 
-// optimize_for_size on: retail prologue saves r30+r31 via stmw, not stw
-// (same pattern as CTaskGameEff / CRsrcData dtor).
-#pragma optimize_for_size on
+// Retail prologue saves r30+r31 via stmw (-O4,s unit).
 CArcItem::CArcItem(const char* pFilename) :
 unk4(),
 unk28(nullptr),
@@ -25,15 +23,10 @@ unk38(nullptr){
     //This line gets included in the DESTROYBASE extab PC action range
     unk4 = string.c_str();
 }
-#pragma optimize_for_size off
 
-// optimize_for_size on: retail __dt__ saves r30+r31 via stmw r30, not stw
-// (same pattern as CTTask/CRsrcData dtors).
 // operator delete(void*) (retail unmangled C symbol).
 // CArcItem vtable, spelled by hand in the dissolved .data blob below.
 extern "C" u32 lbl_eu_8056FFE0[];
-
-#pragma optimize_for_size on
 // Installing destructor, spelled as an extern "C" free function against the
 // dissolved .data blob vtable below (CFontLayer pattern): no member key
 // function is defined in this TU, so MWCC does not auto-emit __vt__8CArcItem.
@@ -56,7 +49,6 @@ extern "C" void* __dt__8CArcItemFv(CArcItem* self, int mode) {
     }
     return self;
 }
-#pragma optimize_for_size off
 
 void CArcItem::updateLoadState(){
     if(unk2C == 0){
@@ -66,8 +58,6 @@ void CArcItem::updateLoadState(){
     }
 }
 
-// optimize_for_size on: retail saves r29-r31 via stmw, not stw.
-#pragma optimize_for_size on
 bool CArcItem::findFileEntry(const char* pPath, void** pOutStartAddr, u32* pOutLength){
     if(unk38 == 0 || unk30 != 0) return false;
     s32 entryNum = ARCConvertPathToEntrynum(&mArcHandle, pPath);
@@ -84,7 +74,6 @@ bool CArcItem::findFileEntry(const char* pPath, void** pOutStartAddr, u32* pOutL
     
     return false;
 }
-#pragma optimize_for_size off
 
 extern "C" bool OnFileEvent__8CArcItemFP10CEventFile(CArcItem* self, CEventFile* pEventFile){
     if(pEventFile->mFileHandle == self->unk28){

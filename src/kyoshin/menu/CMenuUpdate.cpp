@@ -39,7 +39,7 @@ extern "C" int getField64(u8* self);
 
 // CMenuUpdate_8014274C ctor (retail keeps it out of line: the entry ctor has
 // nine call sites in CMenuUpdate's constructor).
-extern "C" __declspec(noinline) CMenuUpdate_8014274C* __ct__8014274C(CMenuUpdate_8014274C* self) {
+extern "C" CMenuUpdate_8014274C* __ct__8014274C(CMenuUpdate_8014274C* self) {
     self->field_0 = 0; self->field_4 = 0; self->field_8 = 0; self->field_C = 0;
     return self;
 }
@@ -174,32 +174,32 @@ void CMenuUpdate::cbRenderBefore() {
 }
 
 // Helper accessors
-extern "C" __declspec(noinline) u32 getField10(u8* self) { return *(u32*)(self + 0x10); }
-extern "C" __declspec(noinline) void setField67(u8* self, u8 val) { self[0x67] = val; }
+extern "C" u32 getField10(u8* self) { return *(u32*)(self + 0x10); }
+extern "C" void setField67(u8* self, u8 val) { self[0x67] = val; }
 extern "C" u32 func_80142954(u8* self) { return *(u32*)(self + 0x10); }
 extern "C" void func_8014295C(u8* self, u8 val) { self[0x67] = val; }
 extern "C" void func_80142C98(u8* self, u8 val) { self[0x64] = val; }
-extern "C" __declspec(noinline) void setField64(u8* self, u8 val) { self[0x64] = val; }
+extern "C" void setField64(u8* self, u8 val) { self[0x64] = val; }
 extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
-extern "C" __declspec(noinline) int getField64(u8* self) { return self[0x64]; }
-extern "C" __declspec(noinline) void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
-extern "C" __declspec(noinline) int getGlobal0E0() { return lbl_eu_806640E0; }
-extern "C" __declspec(noinline) void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; }
+extern "C" int getField64(u8* self) { return self[0x64]; }
+extern "C" void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
+extern "C" int getGlobal0E0() { return lbl_eu_806640E0; }
+extern "C" void MenuUpdate_MarkByte15Ready(void* self) { ((u8*)self)[0x15] = 1; }
 extern "C" void MenuUpdate_SignalGlobalField64() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
-extern "C" __declspec(noinline) void* noop_80142D5C(void* self) { return self; }
-extern "C" __declspec(noinline) void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
-extern "C" __declspec(noinline) void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }
+extern "C" void* noop_80142D5C(void* self) { return self; }
+extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
+extern "C" void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }
 extern "C" void func_80143AC8(void* self, f32 a, f32 b) { setVec2(self, a, b); }
 extern "C" void func_80143AD4(void* self, f32 val) { setFieldFloat10(self, val); }
 // Returns self (see __ct__8014274C note).
-extern "C" __declspec(noinline) CMenuUpdate_8014274C* init_8014274C(CMenuUpdate_8014274C* self, u32 v0, u32 v1, u32 v2, u32 v3) {
+extern "C" CMenuUpdate_8014274C* init_8014274C(CMenuUpdate_8014274C* self, u32 v0, u32 v1, u32 v2, u32 v3) {
     self->field_0 = v0; self->field_4 = v1; self->field_8 = v2; self->field_C = v3;
     return self;
 }
 extern "C" void func_80143F38(CMenuUpdate_8014274C* self, u32 v0, u32 v1, u32 v2, u32 v3) {
     init_8014274C(self, v0, v1, v2, v3);
 }
-extern "C" __declspec(noinline) void MenuUpdate_CopyQuadWord(u32* dest, const u32* src) {
+extern "C" void MenuUpdate_CopyQuadWord(u32* dest, const u32* src) {
     const u32* s = src; u32* d = dest;
     d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
 }
@@ -237,7 +237,7 @@ extern "C" void* MenuUpdate_SpawnProcessForMode(void* self, u32 pScene, int mode
 // MenuUpdate_FormatNotifyText - format a texture name into a FixStr<32> buffer and bind it
 // into the layout. The FixStr default-init is the out-of-line CfGameManager
 // helper (retail shape).
-extern "C" __declspec(noinline) void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg) {
+extern "C" void MenuUpdate_FormatNotifyText(void* self, void* name, void* fmtArg) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (!name) return;
     if (!fmtArg) return;
@@ -697,7 +697,7 @@ extern "C" int MenuUpdate_CheckBootGates(void* self) {
 }
 
 // MenuUpdate_EnterMode1Chime
-extern "C" __declspec(noinline) void MenuUpdate_EnterMode1Chime(void* self) {
+extern "C" void MenuUpdate_EnterMode1Chime(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     playUISound(0x1F);
     obj->mMode = 1;
@@ -796,7 +796,7 @@ extern "C" void MenuUpdate_MaintainActive(void* self) {
 }
 
 // MenuUpdate_QueryUnk80Float
-extern "C" __declspec(noinline) f32 MenuUpdate_QueryUnk80Float() {
+extern "C" f32 MenuUpdate_QueryUnk80Float() {
     Unk_8049603C* mgr = (Unk_8049603C*)Scn_QueryUnk80State();
     f32 val = mgr->field_C;
     return 1.0f - val;

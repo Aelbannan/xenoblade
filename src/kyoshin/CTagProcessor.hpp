@@ -218,6 +218,8 @@ struct TagParam {
     u8 field_06;   // +0x06
     u8 field_07;   // +0x07 (unused/padding)
     f32 field_08;  // +0x08
+
+    ~TagParam();
 };
 
 /* 0x68-byte view of the nw4r TextWriterBase used by TagWriterCopyBlock's copy
@@ -438,43 +440,8 @@ struct TalkPaneView : public CTalkTextBoxVtbl {
     f32 field_F0;         // +0xF0
 };
 
-/* Tag-code dispatch table entry (retail .data:0x8052D478; 25 entries x 12B).
- * TagProcDispatchProcess / TagProcDispatchCalcRect walk this table; field_04 == 0 marks the
- * terminal "no handler" entry that falls back to the base TagProcessor. */
-struct TagEntry {
-    u16 tag;       // +0x00 tag-code value
-    u16 pad;       // +0x02
-    u32 field_04;  // +0x04 nonzero = entry has a handler
-    class CTagCode* obj;  // +0x08 handler object
-};
-
-extern TagEntry lbl_eu_8052D478[];
-
-/* Name-table view of the tag dispatch table used by TagProcPreprocessMessage: same
- * 12-byte entries as TagEntry, but +4 is the handler's name string
- * (wcscmp argument) and +8 is the handler object whose vtable slot +0x14
- * processes the tag body and returns the new buffer position. */
-struct TagNameEntry {
-    u32 field_00;          // +0x00 (tag code, unused here)
-    const wchar_t* name;   // +0x04 handler name string
-    class CTagCode* obj;   // +0x08 handler object
-};
-
-/* Per-tag handler object referenced by the dispatch table (retail vtable
- * size 0x18 = 6 slots, MWCC emits 2 hidden leading slots). Slot 2 = dtor,
- * slot 3 (0x0C) = Process, slot 4 (0x10) = CalcRect. */
-class CTagCode {
-public:
-    virtual ~CTagCode();  // slot 2
-    virtual nw4r::ut::TagProcessorBase<wchar_t>::Operation Process(
-        u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx);  // slot 3
-    virtual nw4r::ut::TagProcessorBase<wchar_t>::Operation CalcRect(
-        nw4r::ut::Rect* rect, u16 tag,
-        nw4r::ut::PrintContext<wchar_t>* ctx);  // slot 4
-    // slot 5 @ +0x14: tag-body processor called by TagProcPreprocessMessage's name
-    // dispatch (consumes the '<name=value>' tag, returns the new position).
-    virtual u16* v14(u16* p, const wchar_t* value, TagParam* param);
-};
+/* The tag dispatch table (retail .data 0x8052D478, 25 x 12B) and its ITagCode
+ * handler hierarchy are file-local to CTagProcessor.cpp (anonymous namespace). */
 
 /* Text-pane view for TagProcStepSEMessage (SE message pump): only the 2-arg
  * SetText at +0x7C is called (next slot after FreeStringBuffer). */

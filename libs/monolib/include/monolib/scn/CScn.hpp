@@ -44,6 +44,7 @@ class CScn : public CTTask<CScn>, public IWorkEvent{
 public:
     // Retail: __dt__4CScnFv (0x80499E30) is out of line; declaring it here
     // keeps MWCC from synthesizing an inline destructor in user TUs.
+    CScn();
     virtual ~CScn();
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
     void removeRenderCB(IScnRender* cb);
@@ -52,6 +53,10 @@ public:
     void Term();
     virtual void Move();
     virtual void Draw();
+    // IWorkEvent overrides (secondary base): MWCC appends their real slots
+    // to the end of __vt__4CScn in this declaration order.
+    virtual bool WorkEvent4();
+    virtual bool WorkEvent3(UNKTYPE* r4);
     // 0x8049A068: tail-calls mUnk8C's vtable+0x2C virtual, yielding the
     // scene's heap handle (an mtl::ALLOC_HANDLE, i.e. u32).
     u32 getAllocHandle();

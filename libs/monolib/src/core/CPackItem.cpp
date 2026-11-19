@@ -15,7 +15,6 @@ extern u32 lbl_eu_80663BC8;
 extern const char lbl_eu_806623C0[];
 
 // optimize_for_size on: retail prologue saves r29-r31 via stmw, not stw
-#pragma optimize_for_size on
 CPackItem::CPackItem(const char* name, int partitionId) :
 mBaseName(),
 mPkbFilename(),
@@ -41,9 +40,6 @@ mWorkPackDataSize(0) {
         mIsAhxAdxFile = true;
     }
 }
-#pragma optimize_for_size off
-
-#pragma optimize_for_size on
 // Compiler supplies the deleting-variant flag param and operator-delete tail;
 // externally-owned pack headers are dropped without freeing.
 CPackItem::~CPackItem(){
@@ -65,11 +61,9 @@ CPackItem::~CPackItem(){
         mAhxAdxBuffer = nullptr;
     }
 }
-#pragma optimize_for_size off
 
 /* Main update tick for pack file loading state machine.
    Transitions through: NOT_LOADED → OPENED_PKH_FILE → (LOADING_AHX_ADX_FILE) → LOADED */
-#pragma optimize_for_size on
 void CPackItem::update(){
     ml::FixStr<32> localStr(false);
     int dotPos;
@@ -148,7 +142,6 @@ void CPackItem::update(){
         }
     }
 }
-#pragma optimize_for_size off
 
 /* Looks up a file by name in the pack's hash table.
    On success, returns true and fills outPkbPath, outEntryId, outIndex, and outFileId. */
@@ -265,7 +258,6 @@ extern "C" bool OnFileEvent__9CPackItemFP10CEventFile(CPackItem* self, CEventFil
 /* Calculates the hash of the given file name string. This is used to
 find where the file is located in the pkb archive using the hash table
 in the pkh file. */
-#pragma optimize_for_size on
 bool CPackItem::calculatePackFileHash(const char* filename){
     // Hoisted uninitialized decls: vreg birth order drives MWCC register
     // coloring here (i, mask-base, table count, byte index, reverse index).
@@ -311,7 +303,6 @@ bool CPackItem::calculatePackFileHash(const char* filename){
 
     return true;
 }
-#pragma optimize_for_size off
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace CPackItemBlob {

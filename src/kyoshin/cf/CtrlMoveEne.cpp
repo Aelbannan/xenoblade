@@ -828,7 +828,7 @@ extern "C" int CtrlMoveEne_ConsumeTargetResolve(cf::CtrlMoveEne* self) {
 // then re-probes before committing.
 // noinline keeps CtrlMoveEne_UpdateFleeWander's call site an opaque bl (retail has one): with
 // a visible body -ipa file would transform the `!= 0` test at the call site.
-__declspec(noinline) int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self,
+int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self,
                                        ml::CVec3* out,
                                        cf::CtrlMoveEne* other, f32 f1,
                                        f32 f2, int arg) {
@@ -950,7 +950,7 @@ __declspec(noinline) int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self,
 
 // noinline keeps the retail bl opaque at every call site in this TU.
 // noinline keeps the retail bl opaque at every call site in this TU.
-extern "C" __declspec(noinline) void CtrlMoveEne_CheckActorState(
+extern "C" void CtrlMoveEne_CheckActorState(
     cf::CtrlMoveEne* self, void* obj, int arg2, u32 arg3) {
 }
 
@@ -962,7 +962,7 @@ extern "C" __declspec(noinline) void CtrlMoveEne_CheckActorState(
 // forwards the +0x1000 bit to CtrlMoveEne_CheckActorState and mirrors the +0x180 flag bits
 // into the +0x3F60 sub-object.
 // noinline keeps CtrlMoveEne_DispatchMoveHook's call site an opaque bl (retail has one).
-__declspec(noinline) void CtrlMoveEne_TickMoveControl(cf::CtrlMoveEne* self) {
+void CtrlMoveEne_TickMoveControl(cf::CtrlMoveEne* self) {
     cf::CFunc8008D444Obj* obj =
         (cf::CFunc8008D444Obj*)self->mpDataPtr->mPosObj;
     if (obj != 0) obj = (cf::CFunc8008D444Obj*)((u8*)obj - 0x3E9C);
@@ -1146,7 +1146,7 @@ void CtrlMoveEne_ResetMoveState(cf::CtrlMoveEne* self, cf::CFunc8008D444Obj* obj
 
 // Zeroes the +0x1928 move-data slots of the battle object (retail emits the
 // 48-store block inline at each of the four call sites in CtrlMoveEne_CheckKeepMoving).
-static void D51CZeroSlots(cf::CFunc8008D51CObj* obj) {
+static inline void D51CZeroSlots(cf::CFunc8008D51CObj* obj) {
     for (int i = 0; i < 8; i++) {
         cf::CFunc8008D51CSlot& s = obj->slots[i];
         s.w14 = 0;
@@ -1165,7 +1165,7 @@ static void D51CZeroSlots(cf::CFunc8008D51CObj* obj) {
 // object when the +0x168 accumulator crosses the threshold; otherwise it runs
 // the close-range / approach logic against the +0x144 target point and the
 // +0x3F60 flag object, then handles the +0x100 / +0x200 timer flags.
-__declspec(noinline) int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
+int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self) {
     cf::CFunc8008D51CView* view = (cf::CFunc8008D51CView*)self;
     cf::CFunc8008D51CObj* obj = (cf::CFunc8008D51CObj*)(
         self->mpDataPtr->mPosObj

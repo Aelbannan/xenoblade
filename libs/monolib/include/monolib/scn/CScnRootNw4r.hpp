@@ -1,6 +1,7 @@
 #pragma once
 
-#include <types.h>
+#include "monolib/scn/CScnRoot.hpp"
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void __dt__12CScnRootNw4rFv(void* self, int deleteFlag);
+// nw4r scene root (CScnRoot + nw4r::g3d::IScnObjCallback); the full class
+// lives with its implementation in libs/monolib/src/scn/CScnRootNw4r.hpp.
+class CScnRootNw4r;

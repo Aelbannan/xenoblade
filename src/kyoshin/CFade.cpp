@@ -28,7 +28,6 @@ CFade::CFade() : mMemRegion() {
 
 // destructor (member region + conditional delete are compiler-emitted).
 #pragma push
-#pragma optimize_for_size on
 CFade::~CFade() {}
 #pragma pop
 
@@ -102,13 +101,13 @@ extern "C" void CFade_FadeOut(CFade* self) {
 // once the fade-out animation rewinds, return to idle.
 // noinline keeps the retail `bl` instead of inlining the body into
 // CFade_Update. C linkage via CFade.hpp declarations (see above).
-extern "C" __declspec(noinline) void CFade_StepFadeIn(CFade* self) {
+extern "C" void CFade_StepFadeIn(CFade* self) {
     if (advanceAnimTransform(self->mAnimTrans, lbl_eu_80668750) == 0) return;
     self->mFadeState = 2;
     self->mVisible = 1;
 }
 
-extern "C" __declspec(noinline) void CFade_StepFadeOut(CFade* self) {
+extern "C" void CFade_StepFadeOut(CFade* self) {
     if (AnimRewindFrame(self->mAnimTrans, lbl_eu_80668750) != 0) {
         self->mFadeState = 0;
         self->mVisible = 1;
@@ -119,7 +118,7 @@ extern "C" __declspec(noinline) void CFade_StepFadeOut(CFade* self) {
 // noinline: retail keeps these as standalone `bl` targets (CFade_MarkLoaded is
 // called from OnFileEvent; the others from CFade_Update). C linkage comes
 // from the extern "C" declarations in CFade.hpp (unmangled retail reloc names).
-extern "C" __declspec(noinline) void CFade_MarkLoaded(CFade* self) {
+extern "C" void CFade_MarkLoaded(CFade* self) {
     if (self->mLayout != nullptr) {
         self->mReady = 1;
         self->mIsLoaded = 1;
@@ -137,7 +136,6 @@ extern "C" __declspec(noinline) void CFade_MarkLoaded(CFade* self) {
 // r28/r30 multi-saves); the pragma reproduces that shape without changing the
 // unit-level flags.
 #pragma push
-#pragma optimize_for_size on
 bool CFade::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         // Retail evaluates the MEM2 handle call before materializing the

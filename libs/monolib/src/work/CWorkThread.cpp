@@ -64,12 +64,7 @@ struct CWorkThreadQueueLayout {
 // on the inline mEntries array at +0x4, counter clears, then operator delete
 // when the deleting-dtor flag is set.
 template <>
-CMsgParam<8>::~CMsgParam(){
-    if (mEntries){
-        mSize = 0;
-        mFront = 0;
-    }
-}
+CMsgParam<8>::~CMsgParam(){}
 // Explicit <8> specialization of enqueue. Structure notes for future matching:
 // - entry must stay volatile (non-volatile uninitialized reads are UB-eliminated
 //   by MWCC and the loads vanish).
@@ -89,8 +84,8 @@ __declspec(noinline) void CMsgParam<8>::enqueue(u32 msg){  // noinline-ok: dropp
     u32 valueC = entry.unkC;
     u32 value10 = entry.unk10;
 
-    // Ring buffer index: (mFront + mSize) % mCapacity, entry stride 0x24.
-    CMsgParamEntry& target = mArrayPtr[(int)(mFront + mSize) % (int)mCapacity];
+    // Ring buffer index: (mRing.mFront + mRing.mSize) % mRing.mCapacity, entry stride 0x24.
+    CMsgParamEntry& target = mRing.mArrayPtr[(int)(mRing.mFront + mRing.mSize) % (int)mRing.mCapacity];
 
     u32 value14 = entry.unk14;
     u32 value18 = entry.unk18;
@@ -110,8 +105,8 @@ __declspec(noinline) void CMsgParam<8>::enqueue(u32 msg){  // noinline-ok: dropp
     target.unk22 = value22;
     target.unk23 = 0;
 
-    mSize++;
-    field6 = mSize - 1;
+    mRing.mSize++;
+    mRing.field6 = mRing.mSize - 1;
 }
 
 // Flat constructor under the retail mangled symbol (CRsrcData/CUICfManager
@@ -216,14 +211,15 @@ CWorkThread::~CWorkThread(){
         reslist<CWorkThread*>::iterator it = mChildren.begin();
         reslist<CWorkThread*>::iterator endIt = mChildren.end();
         for(; it != endIt; ++it){
-            ;
+            mChildren.ScnFilterList_destroyItem(&*it);
         }
     }
 
     // Inlined CWorkThreadSystem::freeWID: clear this thread's allocation bit
     // and registration slot (retail references the sbss labels via sda21).
-    lbl_eu_80665594[mWorkID / 32] &= ~(1 << (mWorkID % 32));
-    ((CWorkThread**)lbl_eu_80665598)[mWorkID] = nullptr;
+    WORK_ID wid = mWorkID;
+    lbl_eu_80665594[wid / 32] &= ~(1 << (wid % 32));
+    lbl_eu_80665598[0][wid] = nullptr;
 
     // Member destructors (~CMsgParam<8> then ~reslist) are emitted here.
 }
@@ -759,7 +755,7 @@ void CWorkThread::wkStandby(){
             // Inlined getWorkThread(WORK_ID): sbss table lookup.
             CWorkThread* pExceptionThread = nullptr;
             if(mExceptionWorkID != INVALID_WORK_ID){
-                pExceptionThread = reinterpret_cast<CWorkThread**>(lbl_eu_80665598)[mExceptionWorkID];
+                pExceptionThread = lbl_eu_80665598[0][mExceptionWorkID];
             }
 
             if(pExceptionThread != nullptr){

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "kyoshin/help/CHelp.hpp"
 
@@ -11,4 +12,3 @@ public:
 } // namespace cf
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" UNKWORD SysWinGetSingleton();

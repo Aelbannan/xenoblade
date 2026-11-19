@@ -1,3 +1,4 @@
+#include "kyoshin/CSystemWindowApi.hpp"
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
@@ -307,7 +308,6 @@ u32 CollepediaCreateSingleton(CUICfUnk144*, u32);
 // lbl_eu_80663E14: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
 // declaration would break TUs that co-include those headers.
 extern "C" {
-u32 SysWinGetSingleton();
 // Local complete type for Scn_QueryUnk80State's result (canonical name per
 // CfGameManager.hpp fwd-decl; layout matches CTaskGame.hpp's view exactly).
 struct CTaskGameCamView {
@@ -1519,7 +1519,7 @@ extern "C" int CUICfManager_tryResetFreeSlot(u8* base) {
         flag = 1;
     } else {
         // Branchless booleanize of the last gate (neg/or/srwi in retail).
-        u32 v = SysWinGetSingleton();
+        u32 v = reinterpret_cast<u32>(SysWinGetSingleton());
         flag = (-v | v) >> 31;
     }
     if (flag != 0) {
@@ -1690,7 +1690,7 @@ int CUICfManager_claimFreeSlotByIds(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u1
         gateBusy = 1;
     } else {
         // Branchless booleanize of the last gate (retail: neg/or/srwi).
-        u32 v = SysWinGetSingleton();
+        u32 v = reinterpret_cast<u32>(SysWinGetSingleton());
         gateBusy = (-v | v) >> 31;
     }
     if (gateBusy != 0) {

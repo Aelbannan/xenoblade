@@ -4,10 +4,10 @@ extern void ADXCRS_Enter(void);
 extern void LSC_ExecServer(void);
 extern void ADXCRS_Leave(void);
 
-extern void *lbl_eu_805E3328;
+extern u8 lbl_eu_805E3328[0x10];
 
 void ADXT_ExecLscSvr(void) {
-    void *base = (void *)&lbl_eu_805E3328;
+    void *base = (void *)lbl_eu_805E3328;
     void (*cb1)(s32);
     s32 arg1;
     void (*cb2)(s32);
@@ -31,3 +31,5 @@ void ADXT_ExecLscSvr(void) {
 
     ADXCRS_Leave();
 }
+
+u8 lbl_eu_805E3328[0x10];

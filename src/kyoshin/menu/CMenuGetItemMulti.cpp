@@ -1663,12 +1663,10 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
     }
 }
 
-// noinline: the retail keeps real bl relocs to these dispatch helpers; empty
-// stub bodies must not be inlined away at call sites.
 // Reset the rank-item slot display: clear all slot ids/positions, hide the
 // rank panes, then blank the per-rank text panes. Called before any
 // rank-item category refresh.
-__declspec(noinline) void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
+void GetItemMulti_ClearRanks(CMenuGetItemMulti* self) {
     // Single 0.0f load is reused for all slot position clears (retail lfs f0
     // once from lbl_eu_80667E00).
     f32 zero = lbl_eu_80667E00;
@@ -1830,7 +1828,7 @@ void GetItemMulti_ShowDetail(CMenuGetItemMulti* self, int arg2, CMenuGetItemMult
 // window size by the active character, then fill the stat text panes and
 // refresh the slot colours. arg3 is the packed entry (unused here beyond
 // forwarding to GetItemMulti_FillRankSlots).
-__declspec(noinline) void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
+void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
                                         CMenuGetItemMultiEntry* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x40c], true);
@@ -1992,7 +1990,7 @@ __declspec(noinline) void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int
 // push the per-slot values into the item-text panes, then refresh the
 // rank-window slots via GetItemMulti_FillRankSlots. arg3 is the packed entry; with no
 // entry the id comes from arg2.
-__declspec(noinline) void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
     nw4r::lyt::Pane* pane;
     pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x40c], true);
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
@@ -2229,7 +2227,7 @@ void GetItemMulti_ShowItemRank(CMenuGetItemMulti* self, int arg2, CMenuGetItemMu
     self->mRankSlotPos[8] = posCopy;
 }
 
-__declspec(noinline) void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
+void GetItemMulti_ShowIdCategoryPanes(CMenuGetItemMulti* self, int arg2) {
     // Show the five panes this category touches.
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x430], true);
@@ -2345,7 +2343,7 @@ void GetItemMulti_FillEntryRankPane(CMenuGetItemMulti* self, CMenuGetItemMultiEn
 // the item's table id select the rank index, the record-set and a flag byte,
 // and the per-character record (+0xE8/+0xE9 flags) switches the rank suffix
 // between string 44 and 43.
-__declspec(noinline) void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int arg2) {
+void GetItemMulti_ShowCat13(CMenuGetItemMulti* self, int arg2) {
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
         &lbl_eu_80504A3C[0x43c], true);
     reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
@@ -2635,7 +2633,7 @@ void GetItemMulti_FillRankSlots(CMenuGetItemMulti* self, int arg2, CMenuGetItemM
 // held bits (auto-repeat selection scan in the slot window, or the pane-list
 // wrap-around) and the A button (open the slot window for the current
 // selection). The classic-controller bit layout is swapped per CfGameManager.
-__declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
+void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     if ((pad->mPad.mHeldButtonFlags & 0x1E000) == 0) {
@@ -2980,7 +2978,7 @@ __declspec(noinline) void GetItemMulti_HandlePad(CMenuGetItemMulti* self) {
 // the cursor. Category/level classification shared with Init's special2 logic:
 //   2-9 -> special iff CItemBlock_countEmpty(cat) != 0
 //   10-13 -> special iff level in [1, 99), or level 0 with CItemBlock_countEmpty(cat)
-__declspec(noinline) void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
+void GetItemMulti_PruneEntries(CMenuGetItemMulti* self) {
     if ((s8)self->mMaxVisibleItems == 4) {
         // All four panes visible: sweep every visible item, drop the ones
         // whose grade requirement is now satisfied.

@@ -1745,7 +1745,7 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // the shared presentation matrix + 0x48).
     void* mtx;
     if ((s8)param->field_1C == 0) {
-        mtx = (u8*)simGetLeafActData() + 0x48;
+        mtx = (u8*)simGetLeafActData((void*)self->mSubObj->field_0x98) + 0x48;
     } else {
         mtx = ((CfDriverSlot120*)self->mSubObj)->vfn120(&param->field_1C);
     }
@@ -1995,7 +1995,7 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if ((s8)param->field_1C != 0) {
         mtx = ((CfDriverSlot120*)drv)->vfn120(&param->field_1C);
     } else {
-        mtx = (u8*)simGetLeafActData() + 0x48;
+        mtx = (u8*)simGetLeafActData((void*)drv->field_0x98) + 0x48;
     }
     if (mtx == nullptr)
         return;

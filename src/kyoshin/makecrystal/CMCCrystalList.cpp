@@ -34,7 +34,6 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // CModelDispMakeCrystal). Stores the retail vtable label, default-constructs
 // both mem-region members, zeroes every pointer/flag field, then clears the
 // 8 slot states with a rolled u8-counter loop (-O4,s shape).
-#pragma optimize_for_size on
 CMCCrystalList::CMCCrystalList()
 {
     mFileHandle1 = nullptr;
@@ -55,20 +54,16 @@ CMCCrystalList::CMCCrystalList()
         mSlotStates[i] = 0;
     }
 }
-#pragma optimize_for_size off
 
 // UnkClass_8045F564 member dtor and operator delete (retail names).
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 
 // Real destructor: the two embedded region members are typed members, so MWCC
 // destroys them (+0x14 then +0x04) and runs the retail delete-flag epilogue.
-#pragma optimize_for_size on
 CMCCrystalList::~CMCCrystalList() {}
-#pragma optimize_for_size off
 
 // Retail 0x80222848: start async loads of the crystal-list layout archive
 // (root name) and its secondary archive (+0x1a), then clear mDataFlag.
-#pragma optimize_for_size on
 void crystalListLoadFiles(CMCCrystalList* self)
 {
     self->mFileHandle1 = CDeviceFile::readFile(
@@ -77,19 +72,17 @@ void crystalListLoadFiles(CMCCrystalList* self)
         mtl::MemManager::getHandleMEM2(), &lbl_eu_805092C0[0x1a], self, 0, 0);
     self->mDataFlag = 0;
 }
-#pragma optimize_for_size off
 
 // Per-state animation handlers for the crystalListDispatch dispatcher (defined below).
-// extern "C" so call relocs resolve to the unmangled retail names; noinline
-// keeps MWCC's -inline auto from folding the handlers into the dispatcher.
-extern "C" void __declspec(noinline) crystalListWaitAnim1To2(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListPollSlots(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListRewindAnim2To5(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListRewindAnim1To0(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListWaitAnim3To3(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListRewindAnim3To3(CMCCrystalList* self);
-extern "C" void __declspec(noinline) crystalListWaitAnim4To3(CMCCrystalList* self);
+// extern "C" so call relocs resolve to the unmangled retail names.
+extern "C" void crystalListWaitAnim1To2(CMCCrystalList* self);
+extern "C" void crystalListWaitAnim2To3(CMCCrystalList* self);
+extern "C" void crystalListPollSlots(CMCCrystalList* self);
+extern "C" void crystalListRewindAnim2To5(CMCCrystalList* self);
+extern "C" void crystalListRewindAnim1To0(CMCCrystalList* self);
+extern "C" void crystalListWaitAnim3To3(CMCCrystalList* self);
+extern "C" void crystalListRewindAnim3To3(CMCCrystalList* self);
+extern "C" void crystalListWaitAnim4To3(CMCCrystalList* self);
 
 // Retail 0x802246F8: state-machine dispatcher. When mState != 0, dispatch on
 // mStateIdx (0..7) to the per-state animation handlers, then re-animate the
@@ -209,7 +202,6 @@ void crystalListState3To4(CMCCrystalList* self)
 // Retail 0x80222B14: stamp one crystal slot's name/count text panes, then
 // look up its material/texture description in the BDAT sheet and bind it.
 // kind selects which of seven texture-name strings gets resolved.
-#pragma optimize_for_size on
 void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     char buf[0x20];
     // BDAT name lookup happens BEFORE the slot number is computed.
@@ -266,13 +258,11 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
         PaneSetTexPaletteByName(self->mLayout, (const char*)buf, (TPLPalette*)tex);
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80222D9C: restamp every crystal slot's text panes from the BDAT
 // sheet and re-resolve each slot's icon texture. When arg == 0 and the list is
 // in an active state, also refresh visibility and clear the slot's active
 // flag (note: index runs 1..8, so slot 0 is never cleared - retail quirk).
-#pragma optimize_for_size on
 extern "C" void crystalListClearSlots(CMCCrystalList* self, u32 arg) {
     if (arg == 0 && self->mStateIdx >= 3) {
         crystalListDisableAnims(self);
@@ -306,12 +296,10 @@ extern "C" void crystalListClearSlots(CMCCrystalList* self, u32 arg) {
     }
     self->mLayout->Animate(0);
 }
-#pragma optimize_for_size off
 
 // Retail 0x80222F64: format the pane name for slot idx+1, look up two panes
 // through the layout root (a fixed label pane and the formatted slot pane),
 // then bind them via ScalePaneWorldPos.
-#pragma optimize_for_size on
 void crystalListAlignSlot(CMCCrystalList* self, int idx)
 {
     char buf[0x28];
@@ -321,7 +309,6 @@ void crystalListAlignSlot(CMCCrystalList* self, int idx)
     void* paneB = rootPane->FindPaneByName(buf, true);
     ScalePaneWorldPos((nw4r::math::VEC3*)self, (nw4r::lyt::Pane*)paneB, (nw4r::lyt::Pane*)paneA, rootPane);
 }
-#pragma optimize_for_size off
 
 // Retail 0x80223004: resolve the three text/icon panes for slot idx+1, then
 // apply a state update selected by `kind` (0/1/2) with threshold `val`:
@@ -332,7 +319,6 @@ void crystalListAlignSlot(CMCCrystalList* self, int idx)
 // kind 2: always clear slot; optional texture + AnimJumpToLast rebind.
 // Finally toggles pane visibility: first two panes follow `result`, the third
 // gets its inverse.
-#pragma optimize_for_size on
 void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
     u32 slot = idx + 1;
     nw4r::lyt::Pane* paneA;
@@ -409,7 +395,6 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
     setPaneVisible(paneB, result);
     setPaneVisible(paneC, !result);
 }
-#pragma optimize_for_size off
 
 // Retail 0x802232E4: reset anim trans 4's frame to 0, then re-animate the
 // layout (virtual Animate at vtable+0x38, r4 = 0 option).
@@ -433,7 +418,7 @@ void crystalListResetAnim3(CMCCrystalList* self)
 
 // Retail 0x802233AC: wait for anim trans 1 (via advanceAnimTransform) to finish,
 // then enter state 2 and run crystalListEnableAnim2.
-extern "C" void __declspec(noinline) crystalListWaitAnim1To2(CMCCrystalList* self)
+extern "C" void crystalListWaitAnim1To2(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668544)) {
         self->mStateIdx = 2;
@@ -442,7 +427,7 @@ extern "C" void __declspec(noinline) crystalListWaitAnim1To2(CMCCrystalList* sel
 }
 
 // Retail 0x802233F8: wait for anim trans 2 to finish, then activate state 3.
-extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* self)
+extern "C" void crystalListWaitAnim2To3(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -453,8 +438,7 @@ extern "C" void __declspec(noinline) crystalListWaitAnim2To3(CMCCrystalList* sel
 // Retail 0x80223444: for each crystal slot in state 1, run crystalListStepSlot.
 // u8 loop counter: MWCC masks it once into r4 (clrlwi), which serves both as
 // the array-index add operand and the second call argument.
-#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
-extern "C" void __declspec(noinline) crystalListPollSlots(CMCCrystalList* self)
+extern "C" void crystalListPollSlots(CMCCrystalList* self)
 {
     for (u8 i = 0; i < 8; i++) {
         if ((s8)self->mSlotStates[i] == 1) {
@@ -462,15 +446,12 @@ extern "C" void __declspec(noinline) crystalListPollSlots(CMCCrystalList* self)
         }
     }
 }
-#pragma optimize_for_size off
 
 // crystalListStepSlot (recovered): format the slot icon pane name (fmt @ 0x13E),
 // resolve the pane through the layout root FindPaneByName virtual, and when
 // the StepAnimLinkFrame check passes, clear the slot's state byte.
-// optimize_for_size merges the r30/r31 saves into the retail stmw r30
-// prologue (MWCC_CASES: two-param leaf prologue pattern).
-#pragma optimize_for_size on
-extern "C" void __declspec(noinline) crystalListStepSlot(CMCCrystalList* self, u32 idx) {
+// The -O4,s unit merges the r30/r31 saves into the retail stmw r30 prologue.
+extern "C" void crystalListStepSlot(CMCCrystalList* self, u32 idx) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805092C0[0x13e], idx + 1);
     nw4r::lyt::Pane* pane =
@@ -479,11 +460,10 @@ extern "C" void __declspec(noinline) crystalListStepSlot(CMCCrystalList* self, u
         self->mSlotStates[idx] = 0;
     }
 }
-#pragma optimize_for_size off
 
 // Retail 0x80223498: wait for anim trans 2 (via AnimRewindFrame) to finish,
 // then enter state 5 and run crystalListEnableAnim1.
-extern "C" void __declspec(noinline) crystalListRewindAnim2To5(CMCCrystalList* self)
+extern "C" void crystalListRewindAnim2To5(CMCCrystalList* self)
 {
     if (AnimRewindFrame(self->mAnimTrans2, lbl_eu_80668544) != 0) {
         self->mStateIdx = 5;
@@ -493,7 +473,7 @@ extern "C" void __declspec(noinline) crystalListRewindAnim2To5(CMCCrystalList* s
 
 // Retail 0x802234E4: wait for anim trans 1 (via AnimRewindFrame) to finish,
 // then reset to state 0 and activate.
-extern "C" void __declspec(noinline) crystalListRewindAnim1To0(CMCCrystalList* self)
+extern "C" void crystalListRewindAnim1To0(CMCCrystalList* self)
 {
     if (AnimRewindFrame(self->mAnimTrans1, lbl_eu_80668544) != 0) {
         self->mStateIdx = 0;
@@ -502,7 +482,7 @@ extern "C" void __declspec(noinline) crystalListRewindAnim1To0(CMCCrystalList* s
 }
 
 // Retail 0x80223530: wait for anim trans 3 to finish, then activate state 3.
-extern "C" void __declspec(noinline) crystalListWaitAnim3To3(CMCCrystalList* self)
+extern "C" void crystalListWaitAnim3To3(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans3, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -512,7 +492,7 @@ extern "C" void __declspec(noinline) crystalListWaitAnim3To3(CMCCrystalList* sel
 
 // Retail 0x8022357C: wait for anim trans 3 (via AnimRewindFrame) to finish,
 // then activate state 3.
-extern "C" void __declspec(noinline) crystalListRewindAnim3To3(CMCCrystalList* self)
+extern "C" void crystalListRewindAnim3To3(CMCCrystalList* self)
 {
     if (AnimRewindFrame(self->mAnimTrans3, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -522,7 +502,7 @@ extern "C" void __declspec(noinline) crystalListRewindAnim3To3(CMCCrystalList* s
 
 // Retail 0x802235C8: wait for anim trans 4 (via advanceAnimTransform) to finish,
 // then activate state 3.
-extern "C" void __declspec(noinline) crystalListWaitAnim4To3(CMCCrystalList* self)
+extern "C" void crystalListWaitAnim4To3(CMCCrystalList* self)
 {
     if (advanceAnimTransform(self->mAnimTrans4, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
@@ -533,7 +513,7 @@ extern "C" void __declspec(noinline) crystalListWaitAnim4To3(CMCCrystalList* sel
 // Retail 0x802254D8: layout animation setup. Disable anim resource 5 across
 // the whole pane tree (recursive via the root pane), then toggle the
 // per-layout anim transforms: disable 4/3/2, enable 1.
-extern "C" void __declspec(noinline) crystalListEnableAnim1(CMCCrystalList* self)
+extern "C" void crystalListEnableAnim1(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, false);
@@ -543,7 +523,7 @@ extern "C" void __declspec(noinline) crystalListEnableAnim1(CMCCrystalList* self
 }
 
 // Retail 0x80225554: same setup, disable 4/3/1, enable 2.
-extern "C" void __declspec(noinline) crystalListEnableAnim2(CMCCrystalList* self)
+extern "C" void crystalListEnableAnim2(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, false);
@@ -553,7 +533,7 @@ extern "C" void __declspec(noinline) crystalListEnableAnim2(CMCCrystalList* self
 }
 
 // Retail 0x80225650: same setup, disable 4/1/2, enable 3.
-extern "C" void __declspec(noinline) crystalListEnableAnim3(CMCCrystalList* self)
+extern "C" void crystalListEnableAnim3(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, false);
@@ -563,7 +543,7 @@ extern "C" void __declspec(noinline) crystalListEnableAnim3(CMCCrystalList* self
 }
 
 // Retail 0x8022570C: same setup, disable 1/2/3, enable 4.
-extern "C" void __declspec(noinline) crystalListEnableAnim4(CMCCrystalList* self)
+extern "C" void crystalListEnableAnim4(CMCCrystalList* self)
 {
     self->mLayout->GetRootPane()->SetAnimationEnable(*self->mAnimRes5, false, true);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
@@ -574,7 +554,7 @@ extern "C" void __declspec(noinline) crystalListEnableAnim4(CMCCrystalList* self
 
 // Retail 0x802257C8: disable all four layout anim transforms, then enable the
 // root-pane animation resource (only once mStateIdx has reached state 3).
-extern "C" void __declspec(noinline) crystalListDisableAnims(CMCCrystalList* self) {
+extern "C" void crystalListDisableAnims(CMCCrystalList* self) {
     if (self->mStateIdx >= 3) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans2, false);
@@ -591,7 +571,6 @@ extern "C" void __declspec(noinline) crystalListDisableAnims(CMCCrystalList* sel
 // build (layout + 4 anim transforms + anim resource 5), font pane bind,
 // per-slot text stamping, and final activation flags.
 // -O4,s: retail uses the stmw r28 multi-save prologue.
-#pragma optimize_for_size on
 bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 {
     // One function-scope fileData so both archive branches share the r29 color
@@ -681,4 +660,3 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 
     return false;
 }
-#pragma optimize_for_size off

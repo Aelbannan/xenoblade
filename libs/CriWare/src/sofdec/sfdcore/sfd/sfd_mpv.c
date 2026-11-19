@@ -257,34 +257,29 @@ s32 SFMPV_ExecServer(SfdHandle* self) {
     s32 idx;
     s32 ch;
     s32 v1;
+    s32 out;
     s32 v2;
     s32 v3;
+    u32 writeCnt;
+    u32 readCnt;
     void* sj;
-    s32 out;
 
     if (lbl_eu_80606E34 != NULL) {
         lbl_eu_805688C8[3] = (u32)self;
         (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_805688C8[1]);
     }
 
+    do {
     if (SFSET_GetCond(self, 5) == 0) {
-        return 0;
+        ret = 0;
+        break;
     }
     if (SFBUF_GetTermFlg(self, self->trn[2].termIdx) == 1) {
-        return 0;
+        ret = 0;
+        break;
     }
     if (SFSET_GetCond(self, 0x1c) != 0 && SFHDS_GetColType(self) != -1) {
-        if (self == NULL) {
-            if (MPV_SetCond(0, 5, 0) != 0) {
-                SFLIB_SetErr(self, 0xff000f12);
-            }
-        } else if (SFLIB_CheckHn(self) != 0) {
-            SFLIB_SetErr(0, 0xff000181);
-        } else {
-            if (MPV_SetCond(*(void**)self->trn[2].hdr, 5, 0) != 0) {
-                SFLIB_SetErr(self, 0xff000f12);
-            }
-        }
+        SFD_SetMpvCond(self, 5, 0);
     }
     if (self->errorState == 2) {
         sfmpv_ProcessAuxShc(self);
@@ -300,15 +295,13 @@ s32 SFMPV_ExecServer(SfdHandle* self) {
         if (out == 0) break;
     }
     {
-        u32 fcnt[2];
-        /* idx doubles as ch2 here, then the prep-frame limit, then numfrm */
-        idx = self->trn[2].bufIdx;
+        SFBUF_RingGetSj(self, self->trn[2].bufIdx, &sj);
+        SFBUF_GetFlowCnt(sj, &readCnt, &writeCnt);
+        self->field_0x09b0 = SFBUF_UpdateFlowCnt(self->field_0x09b0, readCnt);
         ch = self->trn[2].termIdx;
-        SFBUF_RingGetSj(self, idx, &sj);
-        SFBUF_GetFlowCnt(sj, &fcnt[0], &fcnt[1]);
-        self->field_0x09b0 = SFBUF_UpdateFlowCnt(self->field_0x09b0, fcnt[0]);
-        if (SFBUF_GetPrepFlg(self, ch) != 1 && SFBUF_GetPrepFlg(self, idx) != 1) {
-            s32 r = 0;
+        idx = self->trn[2].bufIdx;
+        if (SFBUF_GetPrepFlg(self, ch) != 1 && SFBUF_GetPrepFlg(self, idx) == 1) {
+            s32 r;
             if (SFMPVF_IsTermDec(self) != 0) {
                 r = 1;
             } else {
@@ -320,12 +313,14 @@ s32 SFMPV_ExecServer(SfdHandle* self) {
                 if (n + 2 < idx) {
                     idx = n + 2;
                 }
-                out = SFMPVF_GetNumFrm(self);
+                s32 numFrm = SFMPVF_GetNumFrm(self);
                 if (self->field_0x0068 == 2) {
-                    out += self->field_0x0978;
+                    numFrm += self->field_0x0978;
                 }
-                if (out >= idx && sfmpv_IsVbvEnough(self) != 0) {
+                if (numFrm >= idx && sfmpv_IsVbvEnough(self) != 0) {
                     r = 1;
+                } else {
+                    r = 0;
                 }
             }
             if (r != 0) {
@@ -336,25 +331,29 @@ s32 SFMPV_ExecServer(SfdHandle* self) {
             }
         }
     }
-    ch = SFMPVF_GetNumFrm(self);
-    if (ch != -1) {
-        s32 r = 0;
+    idx = SFMPVF_GetNumFrm(self);
+    if (idx != -1) {
+        s32 ended;
         if (SFMPVF_IsTermDec(self) != 0) {
-            if (ch == 0) {
-                r = 1;
-            } else if (self->field_0x0068 == 1 && ch == 1) {
-                if (self->field_0x0978 > self->field_0x097c) {
-                    r = 1;
-                }
+            if (idx == 0) {
+                ended = 1;
+            } else if (self->field_0x0068 == 1 && idx == 1 &&
+                       self->field_0x0978 > self->field_0x097c) {
+                ended = 1;
+            } else {
+                ended = 0;
             }
+        } else {
+            ended = 0;
         }
-        if (r != 0) {
-            SFBUF_SetTermFlg(self, self->trn[2].termIdx, 1);
-            if (self->field_0x0960 == 0) {
-                SFSET_SetCond(self, 5, 0);
-            }
-        }
+        if (ended == 0)
+            break;
     }
+    SFBUF_SetTermFlg(self, self->trn[2].termIdx, 1);
+    if (self->field_0x0960 == 0) {
+        SFSET_SetCond(self, 5, 0);
+    }
+    } while (0);
     if (lbl_eu_80606E34 != NULL) {
         lbl_eu_805688C8[0x74 / 4] = (u32)&self->field_0x09b0;
         lbl_eu_805688C8[0x80 / 4] = (u32)&self->field_0x09b8;

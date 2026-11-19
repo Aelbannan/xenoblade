@@ -65,45 +65,8 @@ public:
 
 #include "kyoshin/CTaskGame.hpp"
 
-// CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
-// invoked by Init. Leading pure virtuals occupy inherited slots so the target
-// lands at virtual index 32 (-> vtable +0x88 after the RTTI prefix).
-class CSysWinView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v0A() = 0;
-    virtual void v0B() = 0;
-    virtual void v0C() = 0;
-    virtual void v0D() = 0;
-    virtual void v0E() = 0;
-    virtual void v0F() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v1A() = 0;
-    virtual void v1B() = 0;
-    virtual void v1C() = 0;
-    virtual void v1D() = 0;
-    virtual void v1E() = 0;
-    virtual void v1F() = 0;
-    virtual void v20() = 0;  // index 32 -> +0x88 - Init
-};
+// CSysWinView (vtable view used by Init) comes from CSysWinBuff.hpp in the
+// shared CSystemWindow.cpp TU.
 
 // Ctor/dtor and C-ABI helper imports. These retail symbols are C-linkage
 // (unmangled), so they are declared `extern "C"`: C++ linkage would make MWCC
@@ -111,10 +74,6 @@ public:
 extern "C" {
 void SysWinSelectHandleInput(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
 void* getCfPadData__Q22cf13CfGameManagerFv();
-// Sibling CSystemWindow subobject dtor / render callback, addressed by the
-// vtable-compatible thunks at the end of the TU (retail mangled members).
-void __dt__13CSystemWindowFv(u8* win);
-void cbRenderBefore__13CSystemWindowFv(u8* win);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void __ct__8CProcessFv(CProcess* self);
 void __dt__7CSysWinFv(void* syswin, int flags);

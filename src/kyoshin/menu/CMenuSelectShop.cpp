@@ -28,10 +28,8 @@
 // Factory: allocate the CMenuSelectShop singleton from work memory, run its
 // ctor, store it in the .sbss global and register it as a CProcess child of
 // `parent`. Returns 0 when the singleton already exists.
-// optimize_for_size merges the r29-r31 callee-save set into retail stmw r29.
 // ---------------------------------------------------------------------------
 #pragma push
-#pragma optimize_for_size on
 #pragma auto_inline off
 extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
                                           void* a3) {
@@ -49,17 +47,12 @@ extern "C" CMenuSelectShop* ShopSel_CreateSingleton(CProcess* parent, void* a2,
 
 // ---------------------------------------------------------------------------
 // CMenuSelectShop ctor (us-8018b39c)
-// Merges the two pre-conversion workarounds that retail's byte shape needs:
-// optimize_for_size merges the r28-r31 callee-save set into retail's
-// `stmw r28,16(sp)` (otherwise MWCC emits four individual stw), and
-// __declspec(noinline) keeps -ipa from inlining the ctor into
-// ShopSel_CreateSingleton (retail keeps it out of line at 0x8018b39c and the
-// factory is a 0x7C `bl __ct__...`).
+// The -O4,s unit gives retail's `stmw r28,16(sp)` and keeps the ctor out of
+// line (retail 0x8018b39c; the factory is a 0x7C `bl __ct__...`).
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
-__declspec(noinline) CMenuSelectShop::CMenuSelectShop(void* scene, void* a3)
+CMenuSelectShop::CMenuSelectShop(void* scene, void* a3)
     : mScene((CScn*)scene), mMemRegion(), mSelShop(), mCursor(0) {
     mState = 0;
     mSelIndex = 0;
@@ -72,11 +65,8 @@ __declspec(noinline) CMenuSelectShop::CMenuSelectShop(void* scene, void* a3)
 // Complete-object dtor with delete flag. Subobjects are destroyed in reverse
 // construction order: CCur18@0xB0, CSelShopWin@0x88, UnkClass_8045F564@0x78,
 // then the IUIWindow base. The nested flag dispatch selects operator delete.
-// optimize_for_size merges the r30/r31 callee-save pair into the retail
-// stmw r30,8(sp) block (MWCC_CASES stmw/lmw dtor pattern).
 // ---------------------------------------------------------------------------
 #pragma push
-#pragma optimize_for_size on
 CMenuSelectShop::~CMenuSelectShop() {}
 #pragma pop
 
@@ -227,8 +217,7 @@ extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
-#pragma optimize_for_size on
-extern "C" __declspec(noinline) void ShopSel_State2Input(CMenuSelectShop* self) {
+extern "C" void ShopSel_State2Input(CMenuSelectShop* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 dirButton, cancelButton, okButton, closeButton;

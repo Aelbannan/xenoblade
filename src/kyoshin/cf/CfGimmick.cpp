@@ -3,7 +3,6 @@
 
 #include <cstdio>
 #include <cstring>
-#define CtrlRemote_SetSharedBit CfGimmick_SetSharedBit_hidden // chain has 2-arg decls; TU uses 1-arg view
 
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/CTaskGameImports.hpp"   // CTaskGameCamView
@@ -12,7 +11,6 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#undef CtrlRemote_SetSharedBit
 
 // Typed view of the CfGimmick collider block passed to
 // CfGimmick_BuildColliderMtx by CfGimmick_UpdateColliderMatrix: basis floats
@@ -460,9 +458,9 @@ extern "C" int CfGimmick_CheckStateFlag2CC8(u8* obj) {
     return (v == 1) ? 1 : 0;
 }
 
-extern "C" void CtrlRemote_SetSharedBit(u32 destination); // 1-arg view; r4 uninit per retail
+
 // `id` is the gimmick's resource-id base; the sound trigger lives at +0x2CC8.
-extern "C" void CfGimmick_TriggerSound2CC8(u32 id) { CtrlRemote_SetSharedBit(id + 0x2CC8); }
+extern "C" void CfGimmick_TriggerSound2CC8(u32 id, u32 value) { CtrlRemote_SetSharedBit(id + 0x2CC8, value); }
 
 // Party/rotation-gated checker dispatch: when mask has the party bits (0x21)
 // the loaded-party flag and matching party id must hold; when mask has the
@@ -909,7 +907,7 @@ extern "C" int CfGimmick_PostGimmickName(int index) {
 
 // Returns 1 if SysWinGetSingleton() is non-zero, else 0 (retail: neg/or/srwi 31 idiom).
 extern "C" unsigned int CfGimmick_IsMessageSystemBusy() {
-    unsigned int x = SysWinGetSingleton();
+    unsigned int x = reinterpret_cast<unsigned int>(SysWinGetSingleton());
     /* (-x | x) >> 31: nonzero => 1, zero => 0 */
     return ((unsigned int)-(int)x | x) >> 31;
 }

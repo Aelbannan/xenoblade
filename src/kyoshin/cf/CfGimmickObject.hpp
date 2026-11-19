@@ -271,7 +271,7 @@ u32 CfT_FrameCountA();
 int CfGimmick_QueryTrigger(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
-extern "C" void CfGimmick_TriggerSound2CC8(unsigned int a, int b);
+
 unsigned int CItem_findRecByFamily(unsigned short id);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);

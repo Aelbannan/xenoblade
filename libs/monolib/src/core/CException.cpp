@@ -511,15 +511,15 @@ bool CException::wkStandbyLogin() {
         view->unk444 = *(ml::CVec4*)&local.color;
 
         // Enqueue an EVT_4 message into the view's context ring.
-        u32 sum = view->mContextMsg.mFront + view->mContextMsg.mSize;
-        u32 idx = sum % view->mContextMsg.mCapacity;
+        u32 sum = view->mContextMsg.mRing.mFront + view->mContextMsg.mRing.mSize;
+        u32 idx = sum % view->mContextMsg.mRing.mCapacity;
         CMsgParamEntry* slot = reinterpret_cast<CMsgParamEntry*>(
-            (u8*)view->mContextMsg.mArrayPtr + idx * 0x24);
+            (u8*)view->mContextMsg.mRing.mArrayPtr + idx * 0x24);
         *slot = local.entry;
         slot->command = CWorkThread::EVT_4;
         slot->unk23 = 0;
-        view->mContextMsg.mSize += 1;
-        view->mContextMsg.field6 = view->mContextMsg.mSize - 1;
+        view->mContextMsg.mRing.mSize += 1;
+        view->mContextMsg.mRing.field6 = view->mContextMsg.mRing.mSize - 1;
 
         GXRenderModeObj* mode = getRenderModeObj__9CDeviceVIFv();
         s16 height = mode->efbHeight;

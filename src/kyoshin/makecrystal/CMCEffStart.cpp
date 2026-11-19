@@ -222,13 +222,13 @@ u8 CMCEffStart::isFinished() {
     return unk5;
 }
 
-void __declspec(noinline) CMCEffStart::startInAnim() {
+void CMCEffStart::startInAnim() {
     unk4 = 1;
     mAnimTrans->SetFrame(lbl_eu_80668550);
     unk5 = 0;
 }
 
-void __declspec(noinline) CMCEffStart::updateInAnim() {
+void CMCEffStart::updateInAnim() {
     if(advanceAnimTransform(mAnimTrans, lbl_eu_80668554)) {
         unk4 = 0;
         unk5 = 1;
@@ -471,28 +471,28 @@ void CMCEffSuccess::startOut() {
     }
 }
 
-void __declspec(noinline) CMCEffSuccess::updateIn() {
+void CMCEffSuccess::updateIn() {
     if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554) != 0) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffSuccess::updateOut() {
+void CMCEffSuccess::updateOut() {
     if(advanceAnimTransform(mAnimTrans14, lbl_eu_80668554) != 0) {
         unk4 = 0;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffSuccess::bindInAnim() {
+void CMCEffSuccess::bindInAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans10);
     mLayout->SetAnimationEnable(mAnimTrans10, true);
     mLayout->Animate(0);
 }
 
-void __declspec(noinline) CMCEffSuccess::bindOutAnim() {
+void CMCEffSuccess::bindOutAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans14);
     mLayout->SetAnimationEnable(mAnimTrans14, true);
@@ -713,21 +713,21 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     }
 }
 
-void __declspec(noinline) CMCEffCrystal::updateIn() {
+void CMCEffCrystal::updateIn() {
     advanceAnimTransform(mAnimTrans1c, lbl_eu_80668554);
     if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554) != 0) {
         unk4 = 2;
     }
 }
 
-void __declspec(noinline) CMCEffCrystal::checkInDone() {
+void CMCEffCrystal::checkInDone() {
     if(advanceAnimTransform(mAnimTrans1c, lbl_eu_80668554) != 0) {
         unk4 = 3;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffCrystal::updateOut() {
+void CMCEffCrystal::updateOut() {
     u32 unk1 = advanceAnimTransform(mAnimTrans14, lbl_eu_80668554);
     u32 unk2 = advanceAnimTransform(mAnimTrans28, lbl_eu_80668554);
     if(unk1 != 0 && unk2 != 0) {
@@ -736,7 +736,7 @@ void __declspec(noinline) CMCEffCrystal::updateOut() {
     }
 }
 
-void __declspec(noinline) CMCEffCrystal::updateChange() {
+void CMCEffCrystal::updateChange() {
     if(advanceAnimTransform(mAnimTrans20, lbl_eu_80668554)) {
         unk4 = 3;
         unk5 = 1;
@@ -750,56 +750,56 @@ void __declspec(noinline) CMCEffCrystal::updateChange() {
     }
 }
 
-void __declspec(noinline) CMCEffCrystal::updateSpecial() {
+void CMCEffCrystal::updateSpecial() {
     if(advanceAnimTransform(mAnimTrans24, lbl_eu_80668554)) {
         unk4 = 3;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffCrystal::bindInAnimTrace() {
+void CMCEffCrystal::bindInAnimTrace() {
     mLayoutC->UnbindAllAnimation();
     mLayoutC->BindAnimation(mAnimTrans10);
     mLayoutC->SetAnimationEnable(mAnimTrans10, true);
     mLayoutC->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCrystal::bindOutAnimTrace() {
+void CMCEffCrystal::bindOutAnimTrace() {
     mLayoutC->UnbindAllAnimation();
     mLayoutC->BindAnimation(mAnimTrans14);
     mLayoutC->SetAnimationEnable(mAnimTrans14, true);
     mLayoutC->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCrystal::bindInAnimCrystal() {
+void CMCEffCrystal::bindInAnimCrystal() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans1c);
     mLayout18->SetAnimationEnable(mAnimTrans1c, true);
     mLayout18->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCrystal::bindChangeAnim() {
+void CMCEffCrystal::bindChangeAnim() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans20);
     mLayout18->SetAnimationEnable(mAnimTrans20, true);
     mLayout18->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCrystal::bindSpecialAnim() {
+void CMCEffCrystal::bindSpecialAnim() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans24);
     mLayout18->SetAnimationEnable(mAnimTrans24, true);
     mLayout18->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCrystal::bindOutAnim() {
+void CMCEffCrystal::bindOutAnim() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans28);
     mLayout18->SetAnimationEnable(mAnimTrans28, true);
     mLayout18->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCrystal::bindLoopAnim() {
+void CMCEffCrystal::bindLoopAnim() {
     mLayout2c->UnbindAllAnimation();
     mLayout2c->BindAnimation(mAnimTrans30);
     mLayout2c->SetAnimationEnable(mAnimTrans30, true);
@@ -947,42 +947,42 @@ void CMCEffCylinder::setNumber(u8 arg) {
     setLayoutTextBoxNumber(mLayout, &lbl_eu_805095EC[0x406], arg);
 }
 
-void __declspec(noinline) CMCEffCylinder::updateIn() {
+void CMCEffCylinder::updateIn() {
     if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554)) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffCylinder::updateOut() {
+void CMCEffCylinder::updateOut() {
     if(advanceAnimTransform(mAnimTrans18, lbl_eu_80668554)) {
         unk4 = 0;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffCylinder::updateChange() {
+void CMCEffCylinder::updateChange() {
     if(advanceAnimTransform(mAnimTrans14, lbl_eu_80668554)) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
-void __declspec(noinline) CMCEffCylinder::bindInAnim() {
+void CMCEffCylinder::bindInAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans10);
     mLayout->SetAnimationEnable(mAnimTrans10, true);
     mLayout->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCylinder::bindChangeAnim() {
+void CMCEffCylinder::bindChangeAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans14);
     mLayout->SetAnimationEnable(mAnimTrans14, true);
     mLayout->Animate(0);
 }
 
-void __declspec(noinline) CMCEffCylinder::bindOutAnim() {
+void CMCEffCylinder::bindOutAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans18);
     mLayout->SetAnimationEnable(mAnimTrans18, true);

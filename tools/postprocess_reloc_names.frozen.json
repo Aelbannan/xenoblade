@@ -2970,41 +2970,10 @@
   "CScn_80496B0C.o": {
    "class": "content",
    "fields": {
-    "exact_renames": [
-     [
-      "__ct_CTask_CScn_name_carrier_1",
-      "__dt__13CTTask<4CScn>Fv"
-     ],
-     [
-      "__ct_CTask_CScn_name_carrier_2",
-      "Move__13CTTask<4CScn>Fv"
-     ],
-     [
-      "__ct_CTask_CScn_name_carrier_3",
-      "Draw__13CTTask<4CScn>Fv"
-     ]
-    ],
-    "inject_relocs": [
-     [
-      ".data",
-      212,
-      "__dt__13CTTask<4CScn>Fv"
-     ],
-     [
-      ".data",
-      228,
-      "Move__13CTTask<4CScn>Fv"
-     ],
-     [
-      ".data",
-      232,
-      "Draw__13CTTask<4CScn>Fv"
-     ]
-    ],
     "pad_data_section": [
      [
       ".data",
-      304
+      64
      ]
     ],
     "pool_patterns": [
@@ -4883,53 +4852,6 @@
      [
       "etb_80010138",
       "@etb_80010138"
-     ]
-    ],
-    "inject_relocs": [
-     [
-      ".data",
-      3288,
-      "__wudSecurityEventStackCallback+92"
-     ],
-     [
-      ".data",
-      3292,
-      "__wudSecurityEventStackCallback+264"
-     ],
-     [
-      ".data",
-      3296,
-      "__wudSecurityEventStackCallback+292"
-     ],
-     [
-      ".data",
-      3300,
-      "__wudSecurityEventStackCallback+452"
-     ],
-     [
-      ".data",
-      3304,
-      "__wudSecurityEventStackCallback+720"
-     ],
-     [
-      ".data",
-      3308,
-      "__wudSecurityEventStackCallback+736"
-     ],
-     [
-      ".data",
-      3312,
-      "__wudSecurityEventStackCallback+972"
-     ],
-     [
-      ".data",
-      3316,
-      "__wudSecurityEventStackCallback+1312"
-     ],
-     [
-      ".data",
-      3320,
-      "__wudSecurityEventStackCallback+1328"
      ]
     ]
    },

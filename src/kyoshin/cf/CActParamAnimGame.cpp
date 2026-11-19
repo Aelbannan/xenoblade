@@ -48,8 +48,7 @@ cf::CActParamAnimGame::~CActParamAnimGame() {}
 // Retail C-ABI sibling (unmangled name; defined in kyoshin/action/CActParamAnim.cpp)
 extern "C" void startAnimDual(void*);
 
-// Forward decls for the state-gate probes defined below (kept noinline so
-// the call sites in func_8005D76C/D99C/DA44 keep retail's bl + cmpwi shape).
+// Forward decls for the state-gate probes defined below.
 // Retail symbols are unmangled C-ABI globals; extern "C" keeps the call-site
 // relocs on the retail names (same precedent as trackGroundAt below).
 extern "C" bool probeStandGnd(cf::CActParamAnimGame* self);
@@ -79,10 +78,8 @@ void cf::CActParamAnimGame::resetAnimGame() {
     v->state538 = 0;
 }
 
-// Stubs for retail C-linkage functions that func_8005D2C4 tail-calls; kept
-// noinline (repo pattern, see CQstLogList.cpp) so -ipa does not fold the
-// call sites away, and extern "C" so the call-site reloc keeps the retail
-// unmangled name (same precedent as runBattleMove in this file).
+// Stubs for retail C-linkage functions that func_8005D2C4 tail-calls;
+// extern "C" so the call-site reloc keeps the retail unmangled name (same precedent as runBattleMove in this file).
 // trackGroundAt is defined below (after the collision-query typedefs).
 extern "C" void trackGroundAt(cf::CActParamAnimGame* self);
 
@@ -107,7 +104,7 @@ bool setAnimSubPos(void*, const ml::CVec3*);
 // or lands via setActiveBit/clrAnimHeight.
 // Retail symbol is an unmangled C-ABI global; extern "C" keeps the call-site
 // reloc on the retail name (approved fix, PLAN.md §17.6).
-extern "C" void __declspec(noinline) applyFallMove(cf::CActParamAnimGame* selfV) {
+extern "C" void applyFallMove(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     shiftAnimPos(self);
     self->f394 = lbl_eu_806660B0;
@@ -286,7 +283,7 @@ struct CActParamAnimGameBeObj {
 // by func_8005D2C4. Goes through the absolute-offset view: the embedded base
 // compiles 0x36C larger than retail, so direct member access shifts every
 // displacement.
-extern "C" void __declspec(noinline) trackGroundAt(cf::CActParamAnimGame* selfV) {
+extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     self->f47C = lbl_eu_8066604C;
     self->flags0C &= ~0x800;
@@ -1515,7 +1512,7 @@ struct CActParamAnimGameHitRec {
 // lifts pos by (0,1,0), requires the facing dir to point along the movement
 // cone (dot >= lbl_8066605C), probes ahead, refines the yaw against the hit
 // normal, and records the ground point at +0x514.
-bool __declspec(noinline) probeGroundAt(cf::CActParamAnimGame* selfV) {
+bool probeGroundAt(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     ml::CVec3 vecUp;
     vecUp.x = lbl_eu_80666040;
@@ -1612,7 +1609,7 @@ bool __declspec(noinline) probeGroundAt(cf::CActParamAnimGame* selfV) {
 // facing dir, validates the landing point stays within radius of the actor,
 // then refines the facing vector against the hit normal and records the new
 // ground point at +0x514. Returns false when any probe misses.
-bool __declspec(noinline) refineHitNorm(cf::CActParamAnimGame* selfV) {
+bool refineHitNorm(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     ml::CVec3 up(lbl_eu_80666040, lbl_eu_80666044, lbl_eu_80666040);
     ml::CVec3 start = self->pos3A8 + up;
@@ -1765,7 +1762,7 @@ extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
 // refined ground point to +0x514/+0x518/+0x51C. Three sweeps share the same
 // ray shape (lifted anchor +/- facing dir): wall probes without the region
 // filter first, then the filtered probe whose contact pair must agree.
-bool __declspec(noinline) probeWallPair(cf::CActParamAnimGame* selfV) {
+bool probeWallPair(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGameView* self = (cf::CActParamAnimGameView*)selfV;
     // Copy the facing dir once; normalization below happens in place.
     ml::CVec3 dir = self->face3CC;

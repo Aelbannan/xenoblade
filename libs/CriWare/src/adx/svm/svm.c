@@ -78,8 +78,7 @@ static u32 svm_flags[8];            // 0x3A8 per-server "executing" flags
 static u32 svm_count[8];            // 0x3C8 per-server execution counters
 static u32 svm_lock_work[2];        // 0x3E8
 static u32 svm_unlock_work[2];      // 0x3F0
-static void* svm_testandset;        // 0x3F8 hardware test-and-set hook
-u64 lbl_eu_805F2AF0;                // 0x400
+static u64 svm_testandset;          // 0x3F8 hardware test-and-set hook + pad
 
 typedef u32 (*SvmSvrFunc)(void*);
 
@@ -351,7 +350,7 @@ void SVM_Finish(void) {
 s32 SVM_TestAndSet(u32* flag) {
     u32 old;
     s32 result;
-    if (svm_testandset != 0) {
+    if ((void*)svm_testandset != 0) {
         result = ((s32 (*)(u32*))svm_testandset)(flag);
     } else {
         SVM_Lock();

@@ -5,6 +5,8 @@
 
 class CScnNw4r : public CScn{
 public:
+    CScnNw4r();
+    virtual ~CScnNw4r();
     void Scn_ReleaseUnk80(int arg1, CTaskGame_setVec4_tmp* arg2);
     void func_8007DAE0(int arg1, f32* arg2);
 

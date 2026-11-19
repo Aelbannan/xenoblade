@@ -6,8 +6,6 @@
 
 // String/data labels this TU references (declared here so they resolve as
 // properly-typed imports; no local extern "C" needed at global scope).
-// lbl_eu_80523F98: MemManager region name passed to MemManager::create.
-extern const char lbl_eu_80523F98[];
 // Panic file path / format string for getScnGroupChild's bounds check.
 extern char lbl_eu_8056E720[];
 extern char lbl_eu_8056E6F8[];
@@ -30,54 +28,29 @@ struct ScnGroupChildLayout {
     u32 mNumScnObj;                           // +0xE4 child count (Size())
 };
 
+// CScnNw4r (canonical class in monolib/scn/CScnNw4r.hpp) derives the real
+// CScn (CTTask<CScn> + IWorkEvent at +0x54). This TU defines its ctor/dtor,
+// so MWCC emits __vt__8CScnNw4r here together with the weak +0x54 thunks
+// (@84@WorkEvent4__4CScnFv, @84@WorkEvent3__4CScnFPv, @84@__dt__8CScnNw4rFv)
+// that retail keeps from this object.
+#include "monolib/scn/CScnNw4r.hpp"
+
+// A memory block allocated through the monolib MemManager. Holds an allocator
 // A memory block allocated through the monolib MemManager. Holds an allocator
 // handle (mAllocId) that the destructor erases via MemManager::erase.
-// Polymorphic vtable: lbl_eu_8056E5B8 (auto vptr store at +0x00).
-class __declspec(novtable) CScnMem {
+// Retail __vt__7CScnMem is 0x10: [rtti, 0, dtor, 0] -- the trailing zero
+// word is MWCC's encoding of a pure-virtual slot, so CScnMem is abstract.
+class CScnMem {
 public:
     CScnMem();
     virtual ~CScnMem();
+    virtual void vf0C() = 0;   // +0x0C pure (zero slot in retail vtable)
 
-    // +0x00: vptr (lbl_eu_8056E5B8)
     u32 field_0x4;   // +0x04 - init 0
     u32 mAllocId;    // +0x08 - MemManager alloc handle (init -1)
     u32 field_0xc;   // +0x0c - init 0
 };
 
-// KEEP (header-consolidation pilot 2026-10-23): TU-local layout view of CScn,
-// not the canonical monolib/scn/CScn.hpp. ~CScnNw4r below must compile against
-// a single-vptr CScn whose +0x8C slot is typed CScnRootNw4rLayout*; the real
-// class (CTTask + IWorkEvent bases) changes the emitted dtor/vptr stores.
-// Scene object. Base of CScnNw4r. The +0x8c root pointer (mUnk8C) is used by
-// the accessor functions below; +0x10 and +0x54 are written by the Nw4r ctor.
-class CScn {
-public:
-    CScn();
-    virtual ~CScn();
-    void WorkEvent4();
-    void WorkEvent3();
-
-    // +0x00: vptr (CScn vtable)
-    char field_0x4[0x10 - 0x4];  // +0x04
-    u32* field_0x10;            // +0x10 - CTTask vtable ptr (lbl_eu_8056E5C8)
-    char field_0x14[0x54 - 0x14];
-    u32* field_0x54;            // +0x54 - IWorkEvent vtable ptr (lbl_eu_8056E5C8 + 9 words)
-    char field_0x58[0x8c - 0x58];
-    CScnRootNw4rLayout* mUnk8C; // +0x8c - CScnRootNw4r pointer
-};
-
-// Nw4r wrapper object. Base CScn ctor runs first; this ctor points the
-// IWorkEvent slot (+0x54) and an accessor table slot (+0x10) at the CScnNw4r
-// function table.
-class __declspec(novtable) CScnNw4r : public CScn {
-public:
-    // Ctor is free function __ct__CScnNw4r (CScnMem.cpp).
-    virtual ~CScnNw4r();
-};
-
-// CScn's IWorkEvent sub-object lives at +0x54; the IWorkEvent-slot thunks in
-// the CScnNw4r table adjust `this` back to the CScn base by this amount.
-static const int SCN_WORKEVENT_OFFSET = 0x54;
 
 // Free functions in this TU (retail kept plain unmangled names).
 extern "C" void allocScnMem(CScnMem* self, u32 a, u32 b, u32 c);

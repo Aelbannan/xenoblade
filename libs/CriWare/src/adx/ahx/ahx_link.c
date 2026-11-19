@@ -57,10 +57,10 @@ struct AHX_ {
 
 // AHX link callbacks registered by ADXT_AttachAhx.
 extern void (*lbl_eu_805E4F20)(ADXT_*);          /* detach */
-extern void (*lbl_eu_805E5354)(AHX_*);           /* exec one */
-extern void (*lbl_eu_805E5350)(AHXSJD*);         /* term supply */
-extern void (*lbl_eu_805E534C)(AHXSJD*, s32);    /* set dec sample */
-extern void (*lbl_eu_805E5348)(AHXSJD*, AHXIO*); /* set input sj */
+extern void (*adxb_ahx_exec_one)(AHX_*);           /* exec one */
+extern void (*adxb_ahx_term_supply)(AHXSJD*);         /* term supply */
+extern void (*adxb_ahx_dec_smpl)(AHXSJD*, s32);    /* set dec sample */
+extern void (*adxb_ahx_in_sj)(AHXSJD*, AHXIO*); /* set input sj */
 extern void (*lbl_eu_805E535C)(AHXSJD*);         /* set ext prm */
 
 extern char lbl_eu_805174A0[];
@@ -123,10 +123,10 @@ void ADXT_AttachAhx(ADXT_* adxt, s32 bufSize, s32 extraSize) {
     ADXM_Lock();
     ahx->sjd = sjd;
     lbl_eu_805E4F20 = AHXLINK_DetachAhx;
-    lbl_eu_805E5354 = AHXLINK_ExecOneAhx;
-    lbl_eu_805E5350 = AHXLINK_TermSupply;
-    lbl_eu_805E534C = AHXLINK_SetDecSmpl;
-    lbl_eu_805E5348 = AHXSJD_SetInSj;
+    adxb_ahx_exec_one = AHXLINK_ExecOneAhx;
+    adxb_ahx_term_supply = AHXLINK_TermSupply;
+    adxb_ahx_dec_smpl = AHXLINK_SetDecSmpl;
+    adxb_ahx_in_sj = AHXSJD_SetInSj;
     lbl_eu_805E535C = AHXSJD_SetExtPrm;
     AHXSJD_EntryFltFunc(sjd, info->fltFunc, info->fltCtx);
     ADXM_Unlock();

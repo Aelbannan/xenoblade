@@ -77,11 +77,11 @@ void CItemBoxLine::RefreshTabSelect() {
 int CItemBoxLine::IsReadyFlag() { return unk59; }
 
 // ============================================================================
-// ItemBoxLine_CopyTabEntry: copy a 12-byte tab entry. extern "C" + noinline: the retail
+// ItemBoxLine_CopyTabEntry: copy a 12-byte tab entry. extern "C": the retail
 // name is unmangled and ItemBoxLine_InitTabFormat's calls are external relocs (see the
 // ItemBoxLine_InitTabEntry stub note).
 // ============================================================================
-extern "C" __declspec(noinline) void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src) {
+extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src) {
     dest->f0 = src->f0;
     dest->f4 = src->f4;
     dest->f8 = src->f8;
@@ -252,9 +252,8 @@ u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index) {
 }
 
 // ItemBoxLine_GetTabEntryReady: u8 at +0x9 (default 1)
-// noinline: retail calls this accessor out-of-line from ItemBoxLine_OpenLine/
-// ItemBoxLine_RefreshPageList; -ipa file would otherwise fold it into those callers.
-__declspec(noinline) u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index) {
+// Retail calls this accessor out-of-line from ItemBoxLine_OpenLine/ItemBoxLine_RefreshPageList.
+u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index) {
     if (index < self->count) {
         return self->entries[index].f9;
     }
@@ -319,7 +318,7 @@ ml::FixStr<32>* ItemBoxLine_FormatTabEntryName(CIBLTabFormat* self, unsigned int
 // 0xE0-0xEF advance by 2); any other selector resolves the display name
 // through the kind-owner tables directly.
 // ============================================================================
-extern "C" __declspec(noinline) char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
+extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
     if (index >= self->count) return NULL;
     u16 f0 = self->entries[index].f0;
     if (f0 == 0) return NULL;
@@ -1522,7 +1521,7 @@ void CItemBoxLine::CommitOverlayState() {
 // layout, compact empty slots (bubble-shift), recount, re-register, then
 // refresh the line and its slot panes.
 // ============================================================================
-__declspec(noinline) void CItemBoxLine::CompactTabList() {
+void CItemBoxLine::CompactTabList() {
     if (field40 == 0) return;
     if (field3C == 0) return;
     if (gMnuItemMesA == 0) return;
@@ -1701,10 +1700,8 @@ void CItemBoxLine::RebuildTabList() {
 // through resource object A (falling back to B), bind it to the pane named
 // "%d"-style by index+1, and - unless the slot's occupancy byte is set -
 // push the default nameplate colour through the pane's colour-source virtual.
-// noinline: retail ItemBoxLine_RebuildTabList calls ItemBoxLine_BindSlotTexture as an EXTERNAL reloc; the
-// body would otherwise be inlined away, dropping the call from the .o.
 // ============================================================================
-__declspec(noinline) void CItemBoxLine::BindSlotTexture(u8 kind, u32 index) {
+void CItemBoxLine::BindSlotTexture(u8 kind, u32 index) {
     const u32 tag = 0x74696d67;
     char buf[0x20];
     u32 tex;
@@ -2653,10 +2650,8 @@ void sinit_801F32EC() {
     setGXColorS10(&lbl_eu_80664640, 0xff, 0xff, 0xff, 0);
 }
 
-// noinline: retail ItemBoxLine_InitTabFormat calls these as EXTERNAL relocs (they live in
-// a different retail object of this merged unit); without it MWCC -inline auto
-// inlines the same-TU definitions and the call-site relocs disappear.
-extern "C" __declspec(noinline) CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready) {
+// Retail ItemBoxLine_InitTabFormat calls these as external relocs.
+extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready) {
     self->f0 = item;
     self->f4 = value;
     self->f8 = lock;

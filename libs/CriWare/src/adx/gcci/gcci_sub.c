@@ -3,5 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_805E7B28;
-void gcCiSetRdMode(void* a, void* b, void* c, u32 val) { lbl_eu_805E7B28 = val; }
+extern u32 gcci_rdMode;
+void gcCiSetRdMode(void* a, void* b, void* c, u32 val) { gcci_rdMode = val; }
+
+/* .bss: the 0x100-byte tail is unreferenced in this TU but is retail-owned. */
+u8 gcci_sub_work[0x100];
+u32 gcci_rdMode;

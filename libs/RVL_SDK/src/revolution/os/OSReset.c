@@ -7,9 +7,9 @@
 
 #include <string.h>
 
-static OSShutdownFunctionQueue ShutdownFunctionQueue;
-static u32 bootThisDol;
+OSShutdownFunctionQueue ShutdownFunctionQueue;
 volatile BOOL __OSIsReturnToIdle;
+u32 bootThisDol;
 
 /*
  * Retail .data pool as separate small arrays (NOT one big array per pool:

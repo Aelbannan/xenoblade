@@ -5,10 +5,8 @@
 // PartyStateWin_OpenWindow's shared header declares it with (self, u32, u32), but the
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
 // 3-arg declaration during include and re-declare the 1-arg form below.
-#define PartyStateWin_OpenWindow PartyStateWin_OpenWindow_3arg_unused
 #include "kyoshin/CPartyStateWinImports.hpp"
 #include "kyoshin/menu/CMenuPTState.hpp"
-#undef PartyStateWin_OpenWindow
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -400,7 +398,7 @@ struct CMenuPTWinCopyView {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 
-extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self);
+
 extern "C" int UIBattleGetFlagE8();
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void BgTex_Release_3D9C(u8* obj);
@@ -863,10 +861,8 @@ extern "C" void CopyPTSubBlob(u8* dstBytes, const u8* srcBytes) {
 // mtctr/bdnz lwzu+stwu copy loops (loop counts: 16, 18, 16, 0x400, 0x80).
 // Same size story as CopyPTSubBlob above: retail keeps the runs rolled, so
 // this function also compiles with optimize_for_size (saves ~0x400 .text).
-// __declspec(noinline): retail Init keeps a real bl to this symbol; without
-// it MWCC inlines the shrunken body into Init's single call site (+0x5C8).
 #pragma optimize_for_size on
-__declspec(noinline) void CopyPTStateBlob(SCopy_80192268* dst, const SCopy_80192268* src) {
+void CopyPTStateBlob(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_04 = src->f_04; dst->f_08 = src->f_08;
     dst->f_0c = src->f_0c; dst->f_10 = src->f_10;
     dst->f_14 = src->f_14; dst->f_18 = src->f_18;

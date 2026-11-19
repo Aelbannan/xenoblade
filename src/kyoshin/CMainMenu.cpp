@@ -2,6 +2,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CMainMenu
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "monolib/lib/CLibLayout.hpp"
 #include <string.h>
@@ -57,7 +58,6 @@ extern "C" u32 KizunaList_IsPresent();   // kizuna-talk-list active (CMenuKizuna
 extern "C" u32 hasOptionMenu();   // option menu active (CMenuOption.cpp)
 extern "C" u32 CMenuTutorialList_IsActive();   // tutorial-list active (CMenuTutorialList.cpp)
 extern "C" u32 isQuestLogMenuActive();   // quest-log active (CMenuQuestLog.cpp)
-extern "C" u32 SysWinGetSingleton();   // close-system-menu gate (CHelp_CloseSysMenu.cpp)
 extern "C" u32 isSaveMenuActive();   // save-menu active (CMenuSave.cpp)
 extern "C" u32 SkipTimer_IsActiveFlag();   // update menu active (CMenuUpdate.cpp)
 extern "C" u32 hasQuestWindow();   // close-quest-menu gate (CHelp_CloseQuestMenu.cpp)

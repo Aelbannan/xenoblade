@@ -64,27 +64,19 @@ RttiBaseList2 lbl_eu_8056B868 = {
 
 // sbss singleton lbl_eu_806655D8 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
 CWorkControl* lbl_eu_806655D8[2];
-
-#pragma dont_inline on  // noinline-ok: keeps the ctor out of create()'s inline set; without it extabindex drifts (+0x4F)
 CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
     *(IWorkEventVtbl**)this = &lbl_eu_8056B7C8;
     lbl_eu_806655D8[0] = this;
     mType = THREAD_CWORKCONTROL;
 }
-#pragma dont_inline off  // noinline-ok: closes the block above
-
-#pragma optimize_for_size on
 CWorkControl::~CWorkControl(){
     lbl_eu_806655D8[0] = nullptr;
 }
-#pragma optimize_for_size off
 
 CWorkControl* CWorkControl::getInstance(){
     return lbl_eu_806655D8[0];
 }
-
-#pragma optimize_for_size on
-DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){  // noinline-ok: retail wkStandbyLogin keeps a real `bl`; -ipa off (create note) and -inline noauto (loses 3 fns) both worse
+bool CWorkControl::setFlowSetup(){
     const char* name;
     CWorkThread* pControl;
 
@@ -97,13 +89,10 @@ DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){  // noinline-ok: retail wk
     CWorkFlowSetup::create(name, pControl);
     return true;
 }
-#pragma optimize_for_size off
 
 void CWorkControl::pause(bool paused){
     getInstance()->wkSetEventChild(paused ? EVT_PAUSE : EVT_UNPAUSE);
 }
-
-#pragma optimize_for_size on
 bool CWorkControl::hasFlow(){
     if(CWorkFlowWiiMenu::getInstance() != nullptr){
         return true;
@@ -125,7 +114,6 @@ bool CWorkControl::hasFlow(){
     // (retail emits the subic/subfe bool-idiom on this one call).
     return CWorkFlowSetup::getInstance() != nullptr;
 }
-#pragma optimize_for_size off
 
 bool CWorkControl::wkStandbyLogin(){
     setFlowSetup();
@@ -156,8 +144,7 @@ bool CWorkControl::wkStandbyLogout(){
 // no-op: it expands to plain inline).
 // FLAG PROBES (2026-08-24, both negative, no source change): mw_version=
 // GC/3.0a5.2 leaves create unchanged and blows the unit split by 88B;
-// -O4,s (before -func_align 4) is a no-op here - the #pragma optimize_for_size
-// blocks already cover every function, create unchanged. Remaining idea:
+// -O4,s is now the unit flag (replaces the old per-function size pragmas), create unchanged. Remaining idea:
 // register-renaming witness certification (cycle) for EQUIVALENT_MATCH.
 // RE-RUN (2026-10-18): mangling verified clean (retail C++-mangled); -ipa off
 // probed - create unchanged, setFlowSetup regressed 20-structural + split FAIL,
@@ -167,11 +154,8 @@ bool CWorkControl::wkStandbyLogout(){
 // declare-then-assign (result decl first) no-op; &pool[0x6C] array-index form
 // no-op; name inlined into ctor arg restructures (16B frame, 2 saved regs,
 // name computed post-null-check, 22 structural) - confirms two-local shape;
-// removing #pragma optimize_for_size regresses (spills, 0x84 OVER) so the
-// pragma is required. cycle witness-gate: abi-boundary (rho r30->r31) -
+// the size codegen (now the -O4,s unit flag) is required. cycle witness-gate: abi-boundary (rho r30->r31) -
 // witness-CLOSED, only FULL_MATCH can accept.
-
-#pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){
     const char* name = lbl_eu_80522688 + 0x6C;
     CWorkControl* pWorkControl =
@@ -179,4 +163,3 @@ CWorkControl* CWorkControl::create(CWorkThread* pParent){
     CWorkUtil::entryWork(pWorkControl, pParent, false);
     return pWorkControl;
 }
-#pragma optimize_for_size off

@@ -1,6 +1,7 @@
 #pragma once
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
+#include "monolib/util/FixStr.hpp"
 
 struct CEventFile;
 struct CFileHandle;
@@ -19,7 +20,7 @@ namespace LOD {
  */
 class LODMemMan : public IWorkEvent {
 public:
-    LODMemMan() {}
+    LODMemMan();
     virtual ~LODMemMan() {}
     virtual bool OnFileEvent(CEventFile* evt);
 
@@ -32,6 +33,8 @@ public:
     void cancelFileAndRelease();
     void clearFlagAndResetName();
     void setArchiveReadyFlag();
+    u32 getFlags() const { return mFlags; }
+    u8* getData() const { return mData; }
     void allocSecondaryBuffers(u32 count20, u32 count18, u32 count48,
                                u32 count4, u8** outBase, u8** out18,
                                u8** out48, u8** out4);
@@ -50,8 +53,7 @@ private:
     /* 0x28 */ u32 mBlockOffset;     // size-table offset of mBlock
     /* 0x2C */ u32 mBlockSize;       // size-table size of mBlock
     /* 0x30 */ CFileHandle* mFile;   // archive file handle
-    /* 0x34 */ char mName[0x40];     // archive name string
-    /* 0x74 */ s32 mNameLen;         // strlen(mName)
+    /* 0x34 */ ml::FixStr<64> mName; // archive name string
 };
 
 } // namespace LOD

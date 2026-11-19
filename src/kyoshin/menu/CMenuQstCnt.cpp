@@ -126,7 +126,6 @@ QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src) {
 // deleting path calls operator delete.
 // ---------------------------------------------------------------------------
 #pragma push
-#pragma optimize_for_size on
 CMenuQstCnt::~CMenuQstCnt() {}
 #pragma pop
 
@@ -134,12 +133,8 @@ CMenuQstCnt::~CMenuQstCnt() {}
 // value used to fill the text fields below.
 
 void CMenuQstCnt::Init() {
-    // Retail Init is -O4,s shaped (_savegpr_29 prologue, elf-vector frame);
-    // the -O4,p unit emits individual stw otherwise. optimize_for_size
-    // reproduces the retail prologue/epilogue (MWCC_CASES sec WUD).
+    // Retail Init is -O4,s shaped (_savegpr_29 prologue, elf-vector frame).
 #pragma push
-#pragma optimize_for_size on
-#pragma dont_inline on
     // Set up the scoped MEM2 region guard, then build the layout/animations.
     mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x4000,
                             "CMenuQstCnt", 0);
@@ -358,13 +353,8 @@ void QstCnt_TickToOpened_6C5C(QstMenuData* self) {
 // Finish the quest-log animation. Pull the head quest into the selection,
 // compact the entry list (keeping only non-zero quest ids), and refresh the
 // displayed quest info.
-// Retail's prologue is -O4,s shaped (_savegpr_29 at 3 saved regs, elf-vector
-// frame); the -O4,p unit emits individual stw. optimize_for_size reproduces
-// the retail -O4,s codegen for this function (MWCC_CASES sec WUD), and
-// dont_inline stops it being folded into Move.
+// Retail's prologue is -O4,s shaped (_savegpr_29 at 3 saved regs, elf-vector frame).
 #pragma push
-#pragma optimize_for_size on
-#pragma dont_inline on
 void QstCnt_FinishAnim(CMenuQstCnt* self) {
     if (AnimRewindFrame(self->mAnim88, lbl_eu_8066856C) == 0) return;
     if (self->mEntries[0].f0 == 0) {

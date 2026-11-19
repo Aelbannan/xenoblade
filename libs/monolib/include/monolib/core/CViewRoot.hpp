@@ -11,6 +11,9 @@ class CDesktop;
 class CViewFrame;
 
 struct CViewRootPool {
+    bool empty() const { return mUsed == 0; }
+    void pop() { if (!empty()) --mUsed; }
+
     _reslist_node<CWorkThread*> mSentinel;
     u8 pad0[0x100 - sizeof(_reslist_node<CWorkThread*>)];
     _reslist_node<CWorkThread*>* mStartNodePtr;

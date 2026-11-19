@@ -58,9 +58,8 @@ int CQstLogList::IsSortEnabled() { return mSortEnabled; }
 
 // Copies a 0x22-byte quest-log entry: 2 head bytes + 4x8-byte word loop.
 // Struct assignment reproduces retail exactly (MWCC emits the counted loop
-// with lwzu/stwu update addressing); optimize_for_size suppresses the
-// -O4,p unroll (MWCC_CASES line 226).
-extern "C" __declspec(noinline) CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
+// with lwzu/stwu update addressing).
+extern "C" CQstLogListEntry* QstLogList_CopyEntry(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
     *pDst = *pSrc;
     return pDst;
 }
@@ -218,8 +217,7 @@ void CQstLogList::ToggleSort() {
 
 // Sort-menu confirm/select: rebuilds the quest list (QstLogList_RefreshHeader) and
 // re-sorts (QstLogList_MoveCursor) when the sort menu reports an active button.
-// noinline: retail keeps this an out-of-line call from QstLogList_ApplySortSelection.
-__declspec(noinline) void CQstLogList::ConfirmSort(int flag) {
+void CQstLogList::ConfirmSort(int flag) {
     if (mSortMenu.IsIdle() != 0) {
         mCur18.SetVisible(1);
         mSortMenu.Close();
@@ -235,7 +233,7 @@ __declspec(noinline) void CQstLogList::ConfirmSort(int flag) {
 // retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
 u32 CQstLogList::GetSelectedQuestLo() { return lbl_eu_80664730 & 0xFFFF; }
 
-__declspec(noinline) void CQstLogList::StepOpenAnim() {
+void CQstLogList::StepOpenAnim() {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = mpAnim0;
     if (advanceAnimTransform(anim, frame) != 0) {
@@ -244,7 +242,7 @@ __declspec(noinline) void CQstLogList::StepOpenAnim() {
     }
 }
 
-__declspec(noinline) void CQstLogList::StepSortAnim() {
+void CQstLogList::StepSortAnim() {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = mpAnim1;
     if (advanceAnimTransform(anim, frame) != 0) {
@@ -255,26 +253,26 @@ __declspec(noinline) void CQstLogList::StepSortAnim() {
     }
 }
 
-__declspec(noinline) void CQstLogList::RewindSortAnim() {
+void CQstLogList::RewindSortAnim() {
     if (AnimRewindFrame(mpAnim1, lbl_eu_80668584) != 0) {
         field_0x174 = 5;
         ShowOpenAnim();
     }
 }
 
-__declspec(noinline) void CQstLogList::RewindOpenAnim() {
+void CQstLogList::RewindOpenAnim() {
     if (AnimRewindFrame(mpAnim0, lbl_eu_80668584) != 0) {
         field_0x174 = 0;
         mSortEnabled = 1;
     }
 }
 
-__declspec(noinline) void CQstLogList::ShowOpenAnim() {
+void CQstLogList::ShowOpenAnim() {
     mpLayout->SetAnimationEnable(mpAnim1, false);
     mpLayout->SetAnimationEnable(mpAnim0, true);
 }
 
-__declspec(noinline) void CQstLogList::ShowSortAnim() {
+void CQstLogList::ShowSortAnim() {
     mpLayout->SetAnimationEnable(mpAnim0, false);
     mpLayout->SetAnimationEnable(mpAnim1, true);
 }
@@ -283,7 +281,7 @@ __declspec(noinline) void CQstLogList::ShowSortAnim() {
 // icon pane. mode selects the icon resource key (0xFE/0xFF = unused-row
 // state, 1 = the active row's texture); a6 picks the color pool; a7 picks
 // the icon pane's resource key.
-__declspec(noinline) void CQstLogList::DrawRow(const char* name, int questId, int index,
+void CQstLogList::DrawRow(const char* name, int questId, int index,
                                                     int mode, u8 a6, u8 a7) {
     char buf[0x20];
     const char* str = BdatGetPtrDirect(name, &lbl_eu_80509AB4[0x42], questId);
@@ -352,7 +350,7 @@ iconDone:
 
 // Resets the ten quest-row panes: formats each pane name, clears its text
 // and hides empty panes.
-__declspec(noinline) void CQstLogList::ClearRows() {
+void CQstLogList::ClearRows() {
     char buf[0x20];
     // No explicit pool-base local: MWCC CSEs the lbl_eu_80509AB4 base into
     // r31 itself (lis hoisted above the LR store, addi sunk to first use),
@@ -381,7 +379,7 @@ __declspec(noinline) void CQstLogList::ClearRows() {
 
 // Scroll-bar/page refresh helper (retail name unmangled - extern "C" keeps
 // the bl relocs from the scroll/page handlers bound to the retail symbol).
-__declspec(noinline) void CQstLogList::RefreshRows() {
+void CQstLogList::RefreshRows() {
     // Quest text table entry selected by the two signed index bytes.
     // Declaration order matters here: MWCC pre-colors the callee-saved
     // homes for row/e1/questId/e0 in this order, matching retail.
@@ -428,7 +426,7 @@ __declspec(noinline) void CQstLogList::RefreshRows() {
 // the icon against the proportion pane and move the cursor to it.
 // Locals are declared buf/pos/tmp so the stack slots land at the retail
 // offsets (buf 0x20, pos 0x14, tmp 0x08) keeping r29/r30/r31 live (stmw).
-__declspec(noinline) void CQstLogList::MoveCursor() {
+void CQstLogList::MoveCursor() {
     char buf[0x20];
     nw4r::math::VEC3 pos;
     if (mSortDescending != 0) {
@@ -448,8 +446,7 @@ __declspec(noinline) void CQstLogList::MoveCursor() {
 
 // Re-populate the embedded sort menu's array from the shared quest text table
 // (one entry per logged quest) and select the current page.
-// noinline: retail keeps this an out-of-line call from QstLogList_ToggleSort.
-__declspec(noinline) void CQstLogList::FillSortMenu() {
+void CQstLogList::FillSortMenu() {
     if (mSortMenu.IsReady() == 0) {
         return;
     }
@@ -462,7 +459,7 @@ __declspec(noinline) void CQstLogList::FillSortMenu() {
 
 // Rebuild the quest list display from the sort-menu/quest state: formats the
 // quest text pane name and loads the entry text (LayoutSetTextBoxText).
-__declspec(noinline) void CQstLogList::RefreshHeader() {
+void CQstLogList::RefreshHeader() {
     LayoutSetTextBoxText(mpLayout, &lbl_eu_80509AB4[0x107],
                   &lbl_eu_80576670[(field_0x17B + field_0x17C) * 0x22] + 2, 0);
 }

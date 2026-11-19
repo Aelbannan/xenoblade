@@ -33,14 +33,7 @@ CMCCrystalInfo::CMCCrystalInfo()
     : mFileHandle1(0), mFileHandle2(0), mArcResAccessor(0), mField30(0), mLayout(0),
       mAnimTransform1(0), mAnimTransform2(0), mAnimTransform3(0), mAnimTransform4(0),
       mEnabled(0), mState(0), mIsActive(0), mField51(1) {}
-
-#pragma push
-#pragma optimize_for_size on
 CMCCrystalInfo::~CMCCrystalInfo() {}
-#pragma pop
-
-#pragma push
-#pragma optimize_for_size on
 void MCCrystal_LoadLayouts(CMCCrystalInfo* self)
 {
     // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a).
@@ -49,7 +42,6 @@ void MCCrystal_LoadLayouts(CMCCrystalInfo* self)
     handle = (u32)mtl::MemManager::getHandleMEM2();
     self->mFileHandle2 = (u32)CDeviceFile::readFile(handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
 }
-#pragma pop
 
 void MCCrystal_StepState(CMCCrystalInfo* self)
 {
@@ -158,9 +150,6 @@ void MCCrystal_PlayAnim3B(CMCCrystalInfo* self)
         return MCCrystal_BindAnim3(self);
     }
 }
-
-#pragma push
-#pragma optimize_for_size on
 void MCCrystal_ShowItem(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
 {
     CMCCItemData* p;
@@ -191,7 +180,6 @@ void MCCrystal_ShowItem(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
         MCCrystal_ClearTexts(self);
     }
 }
-#pragma pop
 
 void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
 {
@@ -271,9 +259,8 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
     }
 }
 
-// Clears every crystal-slot display buffer. noinline: retail calls these as
-// separate functions (bl), so inlining would balloon the caller sizes.
-extern "C" __declspec(noinline) void MCCrystal_ClearSlots(CMCCrystalInfo* self)
+// Clears every crystal-slot display buffer.
+extern "C" void MCCrystal_ClearSlots(CMCCrystalInfo* self)
 {
     char buf[0x20];
     for (u8 i = 1; i <= 8; i++) {
@@ -292,9 +279,6 @@ extern "C" __declspec(noinline) void MCCrystal_ClearSlots(CMCCrystalInfo* self)
         }
     }
 }
-
-#pragma push
-#pragma optimize_for_size on
 void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 paneIdx)
 {
     char buf[0x20];
@@ -307,9 +291,8 @@ void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 paneId
             ->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
     ScalePaneWorldPos((nw4r::math::VEC3*)self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
 }
-#pragma pop
 
-__declspec(noinline) void MCCrystal_StepIntro(CMCCrystalInfo* self)
+void MCCrystal_StepIntro(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 2;
@@ -317,7 +300,7 @@ __declspec(noinline) void MCCrystal_StepIntro(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void MCCrystal_StepMain(CMCCrystalInfo* self)
+void MCCrystal_StepMain(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 3;
@@ -325,7 +308,7 @@ __declspec(noinline) void MCCrystal_StepMain(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void MCCrystal_RewindMain(CMCCrystalInfo* self)
+void MCCrystal_RewindMain(CMCCrystalInfo* self)
 {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 5;
@@ -333,7 +316,7 @@ __declspec(noinline) void MCCrystal_RewindMain(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void MCCrystal_RewindIntro(CMCCrystalInfo* self)
+void MCCrystal_RewindIntro(CMCCrystalInfo* self)
 {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 0;
@@ -341,7 +324,7 @@ __declspec(noinline) void MCCrystal_RewindIntro(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void MCCrystal_StepAnim4(CMCCrystalInfo* self)
+void MCCrystal_StepAnim4(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform4, 1.0f)) {
         self->mField51 = 1;
@@ -349,7 +332,7 @@ __declspec(noinline) void MCCrystal_StepAnim4(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void MCCrystal_StepAnim3(CMCCrystalInfo* self)
+void MCCrystal_StepAnim3(CMCCrystalInfo* self)
 {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
         self->mField51 = 1;
@@ -357,7 +340,7 @@ __declspec(noinline) void MCCrystal_StepAnim3(CMCCrystalInfo* self)
     }
 }
 
-__declspec(noinline) void MCCrystal_RewindAnim3(CMCCrystalInfo* self)
+void MCCrystal_RewindAnim3(CMCCrystalInfo* self)
 {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
         self->mField51 = 1;
@@ -365,11 +348,8 @@ __declspec(noinline) void MCCrystal_RewindAnim3(CMCCrystalInfo* self)
     }
 }
 
-// Build the crystal-slot display buffers. noinline: retail calls these as
-// separate functions (bl), so inlining would balloon the caller sizes.
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, CMCCItemHandle* item)
+// Build the crystal-slot display buffers.
+void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, CMCCItemHandle* item)
 {
     CrystalItemBuf buf;
     CMCCItemHandle* item2;
@@ -397,8 +377,7 @@ __declspec(noinline) void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystal
             buf.field21++;
         }
     }
-    // Word-pair block copy of the buffer; optimize_for_size keeps it as the
-    // retail counted lwzu/stwu loop.
+    // Word-pair block copy of the buffer (counted lwzu/stwu loop under -O4,s).
     u32* dst = (u32*)((char*)out - 4);
     u32* src = (u32*)((char*)&buf - 4);
     for (int j = 4; j != 0; j--) {
@@ -408,15 +387,14 @@ __declspec(noinline) void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystal
 }
 
 // Fill the crystal slot texts from the item's crystal entries.
-__declspec(noinline) void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
+void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
 {
     char buf[0x20];
     MCCrystal_ClearTexts(self);
     CrystalItemBuf bufB;
     MCCrystal_BuildItemBuf(&bufB, self, arg2, item);
     // Word-pair block copy of the filled buffer into a fixed frame slot;
-    // under optimize_for_size (scope extended from MCCrystal_BuildItemBuf above) MWCC
-    // keeps this as the retail counted lwzu/stwu loop.
+    // -O4,s keeps this as the retail counted lwzu/stwu loop.
     CrystalItemBuf slots;
     u32* dst = (u32*)((char*)&slots - 4);
     u32* src = (u32*)((char*)&bufB - 4);
@@ -439,9 +417,7 @@ __declspec(noinline) void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CM
 }
 
 // Clears every crystal-slot text entry (used before refilling the display).
-#pragma push
-#pragma optimize_for_size on
-__declspec(noinline) void MCCrystal_ClearTexts(CMCCrystalInfo* self)
+void MCCrystal_ClearTexts(CMCCrystalInfo* self)
 {
     char buf[0x20];
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
@@ -455,11 +431,10 @@ __declspec(noinline) void MCCrystal_ClearTexts(CMCCrystalInfo* self)
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
     }
 }
-#pragma pop
 
 // Sets the ready/active flags once both the layout and its resource accessor
-// are present. noinline: retail calls this as a separate function (bl).
-extern "C" __declspec(noinline) void func_8021B500(void* this_) {
+// are present.
+extern "C" void func_8021B500(void* this_) {
     unsigned int* p34 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x34);
     unsigned int* p30 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x30);
     if (*p34 != 0) {
@@ -472,7 +447,7 @@ extern "C" __declspec(noinline) void func_8021B500(void* this_) {
 
 // Bind the crystal-info intro animation to the layout and start it playing.
 // (Called on state 0->1 and 4->5 transitions.)
-__declspec(noinline) void MCCrystal_BindIntro(CMCCrystalInfo* self)
+void MCCrystal_BindIntro(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform1);
@@ -482,7 +457,7 @@ __declspec(noinline) void MCCrystal_BindIntro(CMCCrystalInfo* self)
 
 // Bind the crystal-info outro animation to the layout and start it playing.
 // (Called on state 3->4 transitions.)
-__declspec(noinline) void MCCrystal_BindMain(CMCCrystalInfo* self)
+void MCCrystal_BindMain(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform2);
@@ -492,7 +467,7 @@ __declspec(noinline) void MCCrystal_BindMain(CMCCrystalInfo* self)
 
 // Bind the crystal-info intro animation variant for the 3rd anim transform
 // (mAnimTransform3) and start it playing. Called on state 3->7/3->8.
-__declspec(noinline) void MCCrystal_BindAnim3(CMCCrystalInfo* self)
+void MCCrystal_BindAnim3(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform3);
@@ -502,7 +477,7 @@ __declspec(noinline) void MCCrystal_BindAnim3(CMCCrystalInfo* self)
 
 // Bind the crystal-info intro animation variant for the 4th anim transform
 // (mAnimTransform4) and start it playing. Called on state 3->6.
-__declspec(noinline) void MCCrystal_BindAnim4(CMCCrystalInfo* self)
+void MCCrystal_BindAnim4(CMCCrystalInfo* self)
 {
     ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
     ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform4);

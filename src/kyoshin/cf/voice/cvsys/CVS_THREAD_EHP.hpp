@@ -31,6 +31,7 @@ public:
     s32 field_0x3c;              // 0x3C: slot count / wrap bound
     s32 field_0x40;              // 0x40: stop/target index
     u8 field_0x44;               // 0x44: direction flag
+    static CVS_THREAD_EHP* create(CVoiceHandle* handle, CVoiceHandle* owner2, s32 hp);
 };
 
 // Manager-flag view over the voice-handle allocation: the flag word lives at

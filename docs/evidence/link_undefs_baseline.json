@@ -2,7 +2,7 @@
  "counts": {
   "elf_internal": 0,
   "multiply_defined": 0,
-  "sda_reloc": 8
+  "sda_reloc": 0
  },
  "missing": [
   "CCharVoiceMan_DispatchById__Fii",
@@ -16,7 +16,6 @@
   "__vt__11IRandomizer",
   "__vt__12CTaskGamePic",
   "__vt__6CLibVM",
-  "__vt__Q22cf10CChainTime",
   "__vt__Q22cf29Flusher<Q22cf13CfObjectActor>",
   "__vt__Q44nw4r3snd6detail4Task",
   "_bss_init_info",

@@ -357,12 +357,8 @@ void TextBox::SetFont(const ut::Font* pFont) {
 TextBox::~TextBox() {
     SetFont(NULL);
 
-    Material* pMaterial = mpMaterial;
-    if (pMaterial != NULL && !pMaterial->IsUserAllocated()) {
-        if (mpMaterial != NULL) { // retail keeps the redundant re-check
-            mpMaterial->~Material();
-        }
-        Layout::FreeMemory(pMaterial);
+    if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
+        Layout::DeleteObj(mpMaterial);
         mpMaterial = NULL;
     }
 

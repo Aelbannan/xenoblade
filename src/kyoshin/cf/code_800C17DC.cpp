@@ -86,17 +86,10 @@ int CmText_ReadWord(CmTextProc* self, char* out, int maxLen) {
             break;
         }
         if (type == 1) {
-            const char* cur = self->cursor;
-            o[0] = cur[0];
-            o++;
-            self->cursor = cur + 1;
+            *o++ = *self->cursor++;
         } else if (type == 2) {
-            const char* cur = self->cursor;
-            o[0] = cur[0];
-            self->cursor = cur + 1;
-            o[1] = (cur + 1)[0];
-            self->cursor = cur + 2;
-            o += 2;
+            *o++ = *self->cursor++;
+            *o++ = *self->cursor++;
         } else if (type == 3) {
             if ((u16)ch == 0) break;
             self->cursor += lenz;
@@ -116,8 +109,7 @@ int CmText_ReadWord(CmTextProc* self, char* out, int maxLen) {
 int func_800C1900(char* str, char** out, int maxLen) {
     int count = 0;
     char* s = str;
-    char** o = out;
-    int inWord = 0, offset = 0;
+    int inWord = 0;
     while ((u8)s[0] != 0) {
         int type, lenz;
         int ch = CmText_DecodeSjisChar(s, &type, &lenz);
@@ -130,18 +122,16 @@ int func_800C1900(char* str, char** out, int maxLen) {
                 inWord = 0;
             } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
                 if (!inWord) {
-                    out[offset] = s;
+                    out[count] = s;
                     inWord = 1;
                     count++;
-                    offset++;
                 }
             }
         } else if (type == 2) {
             if (!inWord) {
-                out[offset] = s;
+                out[count] = s;
                 inWord = 1;
                 count++;
-                offset++;
             }
         } else {
             break;
@@ -157,48 +147,59 @@ int func_800C1900(char* str, char** out, int maxLen) {
 /// `key` (0-5). `name` is hashed via Tok_ParseFile; `value` (optional) is an
 /// atoi-able id.  `key==0` writes the single-entry base set.
 ///
-/// Known residual vs retail (us-800c2578, HIGH_MATCH): retail reloads
-/// `self->buf` inside every key arm (per-branch `lwz`) and folds the key==0
-/// hash store into `stwux r31,r3,r5`; our hoisted `tbl` local keeps the size
-/// gate green but leaves that arm as `stwx`+`add`. The correct per-branch
-/// shape costs +4 TU bytes and fails split-size, so the hoisted form stays.
+/// Known residual vs retail (us-800c2578): shape and size now match (per-arm
+/// `self->buf` reload, `stwux` key==0 arm); only register coloring differs
+/// (retail keeps `id` in r0 and the counter in r3/r4).
 void CmText_RegisterEntry(CmTextProc* self, int key, const char* name, const char* value) {
     u32 hash = Tok_ParseFile(name);
     if (hash == 0) return;
     u16 seq = self->buf->cntAll;
-    CmTextTable* tbl = self->buf;
     u16 id = 0;
-    if (value != 0) id = (u16)atoi(value);
+    if (value != 0) {
+        id = atoi(value);
+    }
     if (key == 0) {
-        u16 i = tbl->cnt0++;
-        tbl->set0[i].hash = hash;
-        tbl->set0[i].field4 = id;
-        tbl->set0[i].field6 = seq;
+        CmTextTable* tbl = self->buf;
+        TextEntry* e = &tbl->set0[tbl->cnt0];
+        tbl->cnt0++;
+        e->hash = hash;
+        e->field4 = id;
+        e->field6 = seq;
     } else if (key == 1) {
-        u16 i = tbl->cnt1++;
-        tbl->set1[i].hash = hash;
-        tbl->set1[i].field4 = id;
-        tbl->set1[i].field6 = seq;
+        CmTextTable* tbl = self->buf;
+        TextEntry* e = &tbl->set1[tbl->cnt1];
+        tbl->cnt1++;
+        e->hash = hash;
+        e->field4 = id;
+        e->field6 = seq;
     } else if (key == 2) {
-        u16 i = tbl->cnt2++;
-        tbl->set2[i].hash = hash;
-        tbl->set2[i].field4 = id;
-        tbl->set2[i].field6 = seq;
+        CmTextTable* tbl = self->buf;
+        TextEntry* e = &tbl->set2[tbl->cnt2];
+        tbl->cnt2++;
+        e->hash = hash;
+        e->field4 = id;
+        e->field6 = seq;
     } else if (key == 3) {
-        u16 i = tbl->cnt3++;
-        tbl->set3[i].hash = hash;
-        tbl->set3[i].field4 = id;
-        tbl->set3[i].field6 = seq;
+        CmTextTable* tbl = self->buf;
+        TextEntry* e = &tbl->set3[tbl->cnt3];
+        tbl->cnt3++;
+        e->hash = hash;
+        e->field4 = id;
+        e->field6 = seq;
     } else if (key == 4) {
-        u16 i = tbl->cnt4++;
-        tbl->set4[i].hash = hash;
-        tbl->set4[i].field4 = id;
-        tbl->set4[i].field6 = seq;
+        CmTextTable* tbl = self->buf;
+        TextEntry* e = &tbl->set4[tbl->cnt4];
+        tbl->cnt4++;
+        e->hash = hash;
+        e->field4 = id;
+        e->field6 = seq;
     } else if (key == 5) {
-        u16 i = tbl->cnt5++;
-        tbl->set5[i].hash = hash;
-        tbl->set5[i].field4 = id;
-        tbl->set5[i].field6 = seq;
+        CmTextTable* tbl = self->buf;
+        TextEntry* e = &tbl->set5[tbl->cnt5];
+        tbl->cnt5++;
+        e->hash = hash;
+        e->field4 = id;
+        e->field6 = seq;
     }
 }
 

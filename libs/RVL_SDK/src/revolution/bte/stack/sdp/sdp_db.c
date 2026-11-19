@@ -366,16 +366,16 @@ BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_
 
 BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
 {
-    UINT16 xx;
+    UINT16 xx, yy;
     tSDP_RECORD *p_rec = &sdp_cb.server_db.record[0];
+    UINT8 *pad_ptr;
+    UINT32 len;
 
     for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++)
     {
         if (p_rec->record_handle == handle)
         {
-            tSDP_ATTRIBUTE *p_attr;
-
-            p_attr = &p_rec->attribute[0];
+            tSDP_ATTRIBUTE *p_attr = &p_rec->attribute[0];
 
             if (sdp_cb.trace_level >= 3)
             {
@@ -386,18 +386,16 @@ BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
             {
                 if (p_attr->attr_id == attr_id)
                 {
-                    UINT32 len = p_attr->len;
-                    UINT8 *p_value = p_attr->value_ptr;
+                    pad_ptr = p_attr->value_ptr;
+                    len = p_attr->len;
 
-                    if (len != 0)
+                    if (len)
                     {
-                        UINT16 i;
-
-                        for (i = 0; i < p_rec->num_attributes; i++)
+                        for (yy = 0; yy < p_rec->num_attributes; yy++)
                         {
-                            if (p_rec->attribute[i].value_ptr > p_value)
+                            if (p_rec->attribute[yy].value_ptr > pad_ptr)
                             {
-                                p_rec->attribute[i].value_ptr -= len;
+                                p_rec->attribute[yy].value_ptr -= len;
                             }
                         }
                     }
@@ -409,17 +407,15 @@ BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
                         *p_attr = *(p_attr + 1);
                     }
 
-                    if (len != 0)
+                    if (len)
                     {
-                        UINT16 i;
-                        UINT16 cnt = (UINT16)(p_rec->attr_data_end -
-                                               (UINT32)((p_value + len) - p_rec->attr_data));
+                        xx = (UINT16)(p_rec->attr_data_end -
+                                      (UINT32)((pad_ptr + len) - p_rec->attr_data));
 
-                        for (i = 0; i < cnt; i++, p_value++)
+                        for (yy = 0; yy < xx; yy++, pad_ptr++)
                         {
-                            p_value[0] = *(len + p_value);
+                            *pad_ptr = *(pad_ptr + len);
                         }
-
                         p_rec->attr_data_end -= len;
                     }
 

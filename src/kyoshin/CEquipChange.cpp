@@ -11,7 +11,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CEquipChange.hpp"
-#include "kyoshin/CEquipItemBoxImports.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 // Out-of-line CCur copy (weak CBaseCur-family operator=, deduped into CMenuShopSell).
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -470,7 +470,7 @@ int CEquipChange::RunMainFlow() {
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
-        CtrlObjectParam_SetEquipSlot2(obj, -1);
+        reinterpret_cast<cf::CtrlObjectParamData*>(obj)->setArgType2((void*)-1);
         break;
     }
     case 7: {
@@ -486,7 +486,7 @@ int CEquipChange::RunMainFlow() {
             if (isOne && CtrlRemote_TouchBitByArg(0x3508) == 0)
                 return 0;
         }
-        CtrlObjectParam_SetEquipSlot3(obj, -1);
+        reinterpret_cast<cf::CtrlObjectParamData*>(obj)->setArgType3((void*)-1);
         break;
     }
     case 8: {
@@ -1230,7 +1230,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         Class_8045F858 host(&mRegion04);
         CFileHandle* handle = (CFileHandle*)field_24;
         data = handle->getData();
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         field_2C = CLibLayout::createArcResourceAccessor();
         field_2C->Attach(data, &base[0x1FA]);
         buildLayout((nw4r::lyt::Layout**)&field_34, field_2C, &base[0x1FE]);
@@ -1238,7 +1238,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         bindLayoutAnimTransform((nw4r::lyt::Layout*)field_34, &field_3C, field_2C, &base[0x221]);
         bindLayoutAnimTransform((nw4r::lyt::Layout*)field_34, &field_40, field_2C, &base[0x239]);
         nw4r::lyt::Pane* root = ((nw4r::lyt::Layout*)field_34)->GetRootPane();
-        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        void* fontObj = CDeviceFont::getFontInfo(
             1, (nw4r::lyt::Layout*)field_34);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
@@ -1309,7 +1309,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         Class_8045F858 host(&mRegion14);
         CFileHandle* handle = (CFileHandle*)field_28;
         scratch = handle->getData();
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         field_30 = (u32)acc;
         acc->Attach(scratch, &base[0x1FA]);

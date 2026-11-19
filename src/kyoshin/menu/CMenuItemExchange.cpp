@@ -12,6 +12,7 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include <monolib/util/FixStr.hpp>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -204,7 +205,7 @@ u8 ItemEx_GetFlagByte() { return lbl_eu_8066442C; }
  * advance to phase 1 (field_5118), then kick op 0x6d. */
 void CMenuItemExchange::Phase0Load() {
     if (BgTex_IsLoaded_3E34(&mBgTex) != 0 &&
-        isInitialized(&mTitleAHelp) != 0 &&
+        mTitleAHelp.isInitialized() != 0 &&
         mItemBoxLine.GetSelectReady() != 0) {
         func_801C412C(&mTitleAHelp);
         mItemBoxLine.OpenLine();

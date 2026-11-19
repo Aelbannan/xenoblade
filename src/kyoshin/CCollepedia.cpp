@@ -25,9 +25,9 @@ extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 int sprintf(char*, const char*, ...);
 
 // Forward declarations for stubs defined at end of file
-extern "C" void clpPrevPageIx(u8*);
-extern "C" u8 clpGetPageCat(u8*);
-extern "C" u32 func_80254144(u8*);
+extern "C" void clpPrevPageIx(CLPCatalog*);
+extern "C" u8 clpGetPageCat(CLPCatalog*);
+extern "C" u32 func_80254144(CLPCatalog*);
 extern "C" void clpRefreshPage(CCollepedia*);
 extern "C" void clpSetPageVis();
 extern "C" void clpSetSelTxt(CCollepedia*);
@@ -38,9 +38,9 @@ extern "C" void clpPrevCatPg(CCollepedia*);
 extern "C" void clpPgOpenDone(CCollepedia*);
 extern "C" void clpPgCloseEnd(CCollepedia*);
 extern "C" void clpRebindAnim(CCollepedia*);
-extern "C" u16 func_80254204(u8*, u32, u32);
-extern "C" u8 clpGetCellCnt(u8*, u32, u32);
-extern "C" void clpUpdateProg(u8*);
+extern "C" u16 func_80254204(CLPCatalog*, u32, u32);
+extern "C" u8 clpGetCellCnt(CLPCatalog*, u32, u32);
+extern "C" void clpUpdateProg(CLPCatalog*);
 extern "C" void clpEnterBrows(CCollepedia*);
 extern "C" void clpWaitOutro(CCollepedia*);
 extern "C" void clpEnterIdle(CCollepedia*);
@@ -277,18 +277,16 @@ extern "C" void clpOpenDetail(CCollepedia* this_) {
     playUISound(0xD);
 }
 
-// Return byte at +0xD from a sub-array entry (indexed by arg)
-extern "C" u32 clpGetRowDone(u8* obj, u32 index) {
+// Return whether the row's cells have all been collected.
+extern "C" u32 clpGetRowDone(CLPCatalog* obj, u32 index) {
     if (index >= 6) return 0;
-    s8 idx = (s8)obj[1];
-    return obj[idx * 0x140 + index * 0x34 + 0xD];
+    return obj->mPageTable.mPages[(s8)obj->mCurrentPage].mRows[index].mDone;
 }
 
-// Return byte at +0xC from a sub-array entry (indexed by arg)
-extern "C" u8 clpGetRowSubc(u8* obj, u32 index) {
+// Return the BDAT sub-category recorded for a row.
+extern "C" u8 clpGetRowSubc(CLPCatalog* obj, u32 index) {
     if (index >= 6) return 0;
-    s8 idx = (s8)obj[1];
-    return obj[idx * 0x140 + index * 0x34 + 0xC];
+    return obj->mPageTable.mPages[(s8)obj->mCurrentPage].mRows[index].mSubCategory;
 }
 
 // If field_c is 2, set it to 3, clear field_d, and schedule event 0xE
@@ -349,11 +347,11 @@ extern "C" void clpPgCloseEnd(CCollepedia* this_) {
     }
 }
 
-// Init the sub-array header (count=0, index=-1) and zero the entry storage
-extern "C" s8* clpInitEStore(s8* this_) {
-    this_[0] = 0;
-    this_[1] = -1;
-    memset(this_ + 4, 0, 0x2800);
+// Init the catalog header (count=0, index=-1) and zero the page table.
+extern "C" CLPCatalog* clpInitEStore(CLPCatalog* this_) {
+    this_->mCount = 0;
+    this_->mCurrentPage = -1;
+    memset(&this_->mPageTable, 0, sizeof(this_->mPageTable));
     return this_;
 }
 
@@ -374,8 +372,8 @@ extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
 //  4. select the default category page and append a sentinel page (0x1a),
 //  5. distribute every collected item into the pages' 6x5 grids, starting a
 //     new row whenever the item sub-category changes.
-extern "C" void clpBuildPages(u8* self_) {
-    extern void clpFillEntry(u8* self, int a, int b, int c, int itemId);
+extern "C" void clpBuildPages(CLPCatalog* self_) {
+    extern void clpFillEntry(CLPCatalog* self, int a, int b, int c, int itemId);
 
     u16 n = 0;
     u16 numIds = (u16)Bdat_GetMaxRow_B1EC((void*)lbl_eu_806640EC);
@@ -405,26 +403,26 @@ extern "C" void clpBuildPages(u8* self_) {
             if ((u8)BdatGetU8Direct((const void*)tblA, &lbl_eu_8050C6E8[0x16b], j) == cat &&
                 BdatGetU8Direct((const void*)tblA, &lbl_eu_8050C6E8[0x171], j) == 0 &&
                 CtrlRemote_TouchBitByArg(j + 0x20c8) != 0) {
-                u8 cnt = self_[0];
-                self_[cnt * 0x140 + 4] = cat;
-                self_[0] = cnt + 1;
+                u8 cnt = self_->mCount;
+                self_->mPageTable.mPages[cnt].mCategory = cat;
+                self_->mCount = cnt + 1;
                 break;
             }
         }
     }
 
     // Bubble-sort pages by their BDAT sort key (adjacent-page swap).
-    u8 pageCount = self_[0];
+    u8 pageCount = self_->mCount;
     for (u8 i = 0; i < pageCount; i++) {
         u8 swapped = 0;
         for (u8 j = 0; j < pageCount - 1 - i; j++) {
-            u8* pg = self_ + j * 0x140;
-            u8 keyCur = pg[4];
-            u8 keyNext = pg[0x144];
+            CLPPage& pg = self_->mPageTable.mPages[j];
+            u8 keyCur = pg.mCategory;
+            u8 keyNext = self_->mPageTable.mPages[j + 1].mCategory;
             if ((u8)BdatGetU8Direct((const void*)tblB, &s[0x17a], keyCur) >
                 (u8)BdatGetU8Direct((const void*)tblB, &s[0x17a], keyNext)) {
-                pg[4] = keyNext;
-                pg[0x144] = keyCur;
+                pg.mCategory = keyNext;
+                self_->mPageTable.mPages[j + 1].mCategory = keyCur;
                 swapped = 1;
             }
         }
@@ -433,30 +431,30 @@ extern "C" void clpBuildPages(u8* self_) {
 
     // Select the page matching the default category.
     u32 defCat = lbl_eu_80664184;
-    for (u8 k = 0; k < self_[0]; k++) {
-        if ((u32)self_[k * 0x140 + 4] == defCat) {
-            self_[1] = k;
+    for (u8 k = 0; k < self_->mCount; k++) {
+        if ((u32)self_->mPageTable.mPages[k].mCategory == defCat) {
+            self_->mCurrentPage = k;
             break;
         }
     }
 
     // Append the sentinel page (category 0x1a); if no default page was found,
     // select the last real page instead.
-    u8 cnt = self_[0];
+    u8 cnt = self_->mCount;
     u8 newCnt = cnt + 1;
-    self_[cnt * 0x140 + 4] = 0x1a;
-    u8 sel = self_[1];
-    self_[0] = newCnt;
+    self_->mPageTable.mPages[cnt].mCategory = 0x1a;
+    u8 sel = self_->mCurrentPage;
+    self_->mCount = newCnt;
     if ((s8)sel == -1) {
-        self_[1] = newCnt - 1;
+        self_->mCurrentPage = newCnt - 1;
     }
 
     // Distribute every collected item across the pages' grids. A row break is
     // inserted when the item's sub-category (+0x180 column) differs from the
     // previous row's; same-sub-category items stack in the current row.
-    for (u8 g = 0; g < self_[0]; g++) {
-        u8* grp = self_ + g * 0x140;
-        u8 cat = grp[4];
+    for (u8 g = 0; g < self_->mCount; g++) {
+        CLPPage& grp = self_->mPageTable.mPages[g];
+        u8 cat = grp.mCategory;
         u8 row = 0;
         u8 col = 0;
         for (u16 c = 0; c < n; c++) {
@@ -467,12 +465,12 @@ extern "C" void clpBuildPages(u8* self_) {
             }
             u8 sub = (u8)BdatGetU8Direct((const void*)lbl_eu_80664104, &lbl_eu_8050C6E8[0x180], kind);
             if (row == 0) {
-                grp[0 * 0x34 + 0xC] = sub;
+                grp.mRows[0].mSubCategory = sub;
                 clpFillEntry(self_, g, row, 0, itemId);
                 row = 1;
                 col = 1;
-            } else if (sub != grp[row * 0x34 - 0x28]) {
-                grp[row * 0x34 + 0xC] = sub;
+            } else if (sub != grp.mRows[row - 1].mSubCategory) {
+                grp.mRows[row].mSubCategory = sub;
                 clpFillEntry(self_, g, row, 0, itemId);
                 row++;
                 col = 1;
@@ -480,18 +478,16 @@ extern "C" void clpBuildPages(u8* self_) {
                 clpFillEntry(self_, g, row - 1, col++, itemId);
             }
         }
-        grp[5] = row;
+        grp.mRowCount = row;
     }
 
     clpUpdateProg(self_);
 }
 
-extern "C" bool clpIsClaimabl(u8* this_, u32 arg1, u32 arg2) {
+extern "C" bool clpIsClaimabl(CLPCatalog* this_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return false;
     if (arg2 >= 5) return false;
-    s8 idx = (s8)this_[1];
-    u8 val = *(this_ + idx * 0x140 + arg1 * 0x34 + arg2 * 0xA + 0x16);
-    return val == 2;
+    return this_->mPageTable.mPages[(s8)this_->mCurrentPage].mRows[arg1].mCells[arg2].mState == 2;
 }
 
 // us-80256178
@@ -502,7 +498,8 @@ extern "C" bool clpIsClaimabl(u8* this_, u32 arg1, u32 arg2) {
 // Residual (16 mm / 3 structural): MWCC associates the pointer sum as
 // (self+row)+idx while retail folds self+idx first; scheduler-invariant
 // across every source shape tried (flat/subscript/cast/chained-&/locals).
-extern "C" void clpSelectItem(u8* self, u32 row, u32 col) {
+extern "C" void clpSelectItem(CLPCatalog* self_, u32 row, u32 col) {
+    u8* self = (u8*)self_;
     if (row >= 6) return;
     if (col >= 5) return;
 
@@ -510,7 +507,7 @@ extern "C" void clpSelectItem(u8* self, u32 row, u32 col) {
 
     (self + (s8)self[1] * 0x140 + row * 0x34)[0x16 - 4 + col * 0xA] = 3;
 
-    u8 count = clpGetCellCnt(self, row, col);
+    u8 count = clpGetCellCnt(self_, row, col);
     s32 remaining = count - 1;
 
     u16 itemId = *(u16*)&(self + (s8)self[1] * 0x140 + row * 0x34)[col * 0xA + 0xE];
@@ -525,28 +522,26 @@ extern "C" void clpSelectItem(u8* self, u32 row, u32 col) {
         CItemData_initFromFamily((void*)res, itemId, remaining);
     }
 
-    clpUpdateProg(self);
+    clpUpdateProg(self_);
 }
 
-// Increment sub-array counter, wrap to 0 at max
-extern "C" void clpNextPageIx(u8* obj) {
-    obj[1]++;
-    if ((s8)obj[1] >= (s32)obj[0]) {
-        obj[1] = 0;
+// Increment selected page, wrap to 0 at the catalog count.
+extern "C" void clpNextPageIx(CLPCatalog* obj) {
+    obj->mCurrentPage++;
+    if ((s8)obj->mCurrentPage >= (s32)obj->mCount) {
+        obj->mCurrentPage = 0;
     }
 }
 
-extern "C" void clpPrevPageIx(unsigned char* obj) {
-    obj[1] = obj[1] - 1;
-    if ((signed char)obj[1] < 0) {
-        obj[1] = obj[0] - 1;
+extern "C" void clpPrevPageIx(CLPCatalog* obj) {
+    obj->mCurrentPage = obj->mCurrentPage - 1;
+    if ((signed char)obj->mCurrentPage < 0) {
+        obj->mCurrentPage = obj->mCount - 1;
     }
 }
 
-extern "C" char* clpGetPageNam(u8* self) {
-    s8 idx = (s8)self[1];
-    u8* base = self + idx * 0x140;
-    u8 val = base[4];
+extern "C" char* clpGetPageNam(CLPCatalog* self) {
+    u8 val = self->mPageTable.mPages[(s8)self->mCurrentPage].mCategory;
     if (val == 0x1a) {
         return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], 0x14);
     } else {
@@ -554,72 +549,57 @@ extern "C" char* clpGetPageNam(u8* self) {
     }
 }
 
-extern "C" u8 clpGetPageCat(u8* thisPtr) {
-    s8 idx = (s8)thisPtr[1];
-    u8* base = thisPtr + idx * 320;
-    return base[4];
+extern "C" u8 clpGetPageCat(CLPCatalog* thisPtr) {
+    return thisPtr->mPageTable.mPages[(s8)thisPtr->mCurrentPage].mCategory;
 }
 
-// Return a formatted string for the entry at `index` if its byte at +0xC is set
-extern "C" char* clpGetRowName(u8* self, u32 index) {
+// Return a formatted string for the row's sub-category if it is set.
+extern "C" char* clpGetRowName(CLPCatalog* self, u32 index) {
     if (index >= 6) return 0;
-    s8 idx = (s8)self[1];
-    u8 val = self[idx * 0x140 + index * 0x34 + 0xC];
+    u8 val = self->mPageTable.mPages[(s8)self->mCurrentPage].mRows[index].mSubCategory;
     if (val != 0) {
         return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], val);
     }
     return 0;
 }
 
-extern "C" u32 func_80254144(u8* ptr) {
-    int idx = (signed char)ptr[1];
-    return ptr[5 + idx * 0x140];
+extern "C" u32 func_80254144(CLPCatalog* ptr) {
+    return ptr->mPageTable.mPages[(s8)ptr->mCurrentPage].mRowCount;
 }
 
-// Return byte at +0x16 from a sub-sub-array entry (indexed by arg2, arg3)
-// Computes arg2*0x34 first to match retail register order
-extern "C" u8 clpGetCelStat(u8* self, u32 arg2, u32 arg3) {
+// Return the cell's unlock-state byte.
+extern "C" u8 clpGetCelStat(CLPCatalog* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
-    s8 idx = (s8)self[1];
-    u32 rowOff = arg2 * 0x34;
-    u8* ptr = self + idx * 0x140;
-    ptr = ptr + rowOff;
-    return ptr[arg3 * 0xA + 0x16];
+    return self->mPageTable.mPages[(s8)self->mCurrentPage].mRows[arg2].mCells[arg3].mState;
 }
 
-extern "C" u16 func_80254204(u8* p1, u32 arg2, u32 arg3) {
+extern "C" u16 func_80254204(CLPCatalog* p1, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
-    s8 idx = (s8)p1[1];
-    u8* ptr = p1 + idx * 0x140 + arg2 * 0x34 + arg3 * 0xa;
-    return reinterpret_cast<CCollepediaEntry*>(ptr)[1].field_08;
+    return p1->mPageTable.mPages[(s8)p1->mCurrentPage].mRows[arg2].mCells[arg3].mSortKey;
 }
 
-extern "C" u16 clpGetCelIcon(u8* this_, u32 arg2, u32 arg3) {
+extern "C" u16 clpGetCelIcon(CLPCatalog* this_, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
-    s8 idx = (s8)this_[1];
-    u8* ptr = this_ + idx * 0x140;
-    ptr += arg2 * 0x34;
-    ptr += arg3 * 0x0A;
-    u16 val = *(u16*)(ptr + 0x0E);
+    u16 val = this_->mPageTable.mPages[(s8)this_->mCurrentPage].mRows[arg2].mCells[arg3].mItemId;
     if (val == 0) return 0;
     return BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x185], val);
 }
 
-// Load a float from offset 8 of the current sub-array entry
-extern "C" float clpGetPagePrg(u8* this_) {
-    s8 idx = (s8)this_[1];
-    return *(float*)(this_ + idx * 0x140 + 8);
+// Load the collected-progress float of the current page.
+extern "C" float clpGetPagePrg(CLPCatalog* this_) {
+    return this_->mPageTable.mPages[(s8)this_->mCurrentPage].mProgress;
 }
 
 // us-8025650c
 // Look up an entry in the sub-array, check +0x10 u16 and +0x16 byte.
 // If byte != 1, resolve string via BdatGetPtrDirect.
-extern "C" char* clpGetEntryStr(u8* self, u32 arg1, u32 arg2) {
+extern "C" char* clpGetEntryStr(CLPCatalog* self_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return nullptr;
     if (arg2 >= 5) return nullptr;
+    u8* self = (u8*)self_;
     // Fold the whole entry address into one expression to match retail dataflow
     // (base+idx*0x140 must accumulate in r0; statement/index forms regress).
     u8* entry = self + (s8)self[1] * 0x140 + arg1 * 0x34 + arg2 * 0xA;
@@ -633,11 +613,12 @@ extern "C" char* clpGetEntryStr(u8* self, u32 arg1, u32 arg2) {
 // us-8025658c
 // Look up an entry in the sub-array, check if item is unlocked (via CtrlObjectParam_GetStateBitFlag), format its name
 // Returns nullptr if the entry is invalid or locked
-extern "C" char* clpGetItemName(u8* self, u32 arg2, u32 arg3) {
+extern "C" char* clpGetItemName(CLPCatalog* self_, u32 arg2, u32 arg3) {
     if (lbl_eu_806647D8 == NULL) return NULL;
     if (arg2 >= 6) return NULL;
     if (arg3 >= 5) return NULL;
 
+    u8* self = (u8*)self_;
     s8 idx = (s8)self[1];
     u8* entry = (self + idx * 0x140 + arg2 * 0x34) + arg3 * 0xA;
 
@@ -654,30 +635,28 @@ extern "C" char* clpGetItemName(u8* self, u32 arg2, u32 arg3) {
 // Read u16 at offset 0xE within the indexed sub-array entry
 // If non-zero, resolve via CItem_sumFamilyByte6 and return as u8
 // The sub-array is indexed by: (s8)self[1] * 0x140 + arg2 * 0x34 + arg3 * 0xA + 0xE
-extern "C" u8 clpGetCellCnt(u8* self, u32 arg2, u32 arg3) {
+extern "C" u8 clpGetCellCnt(CLPCatalog* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
-    s8 idx = (s8)self[1];
-    self += idx * 0x140;
-    self += arg2 * 0x34;
-    u16 val = *(u16*)(self + arg3 * 0xA + 0xE);
+    u16 val = self->mPageTable.mPages[(s8)self->mCurrentPage].mRows[arg2].mCells[arg3].mItemId;
     if (val != 0) {
         return (u8)CItem_sumFamilyByte6(val);
     }
     return 0;
 }
 
-// Load a byte from offset 6 of the current sub-array entry
-extern "C" bool clpIsPageDone(u8* this_) {
-    s8 idx = (s8)this_[1];
-    u8* base = this_ + idx * 0x140;
+// Whether the current page has been fully collected.
+extern "C" bool clpIsPageDone(CLPCatalog* this_) {
+    s8 idx = (s8)this_->mCurrentPage;
+    u8* base = (u8*)this_ + idx * 0x140;
     return *(bool*)&base[6];
 }
 
 // us-802566d8
 // Fill one grid entry (stride 0xA at self + a*0x140 + b*0x34 + c*0xA):
 // item id, category lookups, and an unlock-state byte.
-extern "C" void clpFillEntry(u8* self, int a, int b, int c, u16 itemId) {
+extern "C" void clpFillEntry(CLPCatalog* self_, int a, int b, int c, u16 itemId) {
+    u8* self = (u8*)self_;
     // Retail rebuilds the entry address from three live stride offsets before
     // every store (see open-item note below).
     *(u16*)(self + a * 0x140 + b * 0x34 + c * 0xA + 0xE) = itemId;
@@ -720,7 +699,8 @@ extern "C" void clpFillEntry(u8* self, int a, int b, int c, u16 itemId) {
 // columns all have unlock-state 3 (collected); a page is complete when all
 // its rows are complete. The per-page progress float at +8 is either 1.0
 // (complete page) or collected-count / seen-count.
-extern "C" void clpUpdateProg(u8* self) {
+extern "C" void clpUpdateProg(CLPCatalog* self_) {
+    u8* self = (u8*)self_;
     u8* group;
     u8* row;
     u8 i;
@@ -828,7 +808,7 @@ CCollepedia::CCollepedia() {
     field_D8 = 0;
     field_D9 = 0;
     field_DA = 0;
-    clpInitEStore((s8*)&field_E8);
+    clpInitEStore(&mCatalog);
     clpInitPgInfo(reinterpret_cast<CLPPageInfo*>(&field_28EC), 0);
 
     // Stack temporary window, re-initialized then copied over the embedded
@@ -862,12 +842,12 @@ void clpStartLoads(CCollepedia* this_) {
     CLPInitTemp tmp;
     tmp._00 = 0;
     tmp._01 = -1;
-    memset(tmp.data.v, 0, 0x2800);
-    this_->field_E8 = tmp._00;
-    this_->_E9[0] = tmp._01;
-    this_->field_EC = tmp.data;
+    memset(&tmp.data, 0, sizeof(tmp.data));
+    this_->mCatalog.mCount = tmp._00;
+    this_->mCatalog.mCurrentPage = tmp._01;
+    this_->mCatalog.mPageTable = tmp.data;
 
-    clpBuildPages(&this_->field_E8);
+    clpBuildPages(&this_->mCatalog);
 }
 
 // us-80256c5c
@@ -1069,7 +1049,7 @@ void clpCursorLeft(CCollepedia* this_) {
         u8 val = this_->field_D9 - 1;
         this_->field_D9 = val;
         if ((s8)val < 0) {
-            this_->field_D9 = (u8)(func_80254144(&this_->field_E8) - 1);
+            this_->field_D9 = (u8)(func_80254144(&this_->mCatalog) - 1);
         }
         clpRefreshCur(this_);
         clpSetSelTxt(this_);
@@ -1095,7 +1075,7 @@ void clpCursorRght(CCollepedia* this_) {
         if (this_->field_49 != 3) return;
 
         this_->field_D9 = this_->field_D9 + 1;
-        if ((s8)this_->field_D9 >= (s32)(func_80254144(&this_->field_E8) & 0xFF)) {
+        if ((s8)this_->field_D9 >= (s32)(func_80254144(&this_->mCatalog) & 0xFF)) {
             this_->field_D9 = 0;
         }
         clpRefreshCur(this_);
@@ -1162,12 +1142,12 @@ extern "C" void clpNextCatPg(CCollepedia* this_) {
     if (this_->field_28FA != 0) return;
     if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
-    clpNextPageIx(&this_->field_E8);
-    u32 count = func_80254144(&this_->field_E8) & 0xFF;
+    clpNextPageIx(&this_->mCatalog);
+    u32 count = func_80254144(&this_->mCatalog) & 0xFF;
 
     // Force field_D9 sign-extend before comparing with masked count
     if ((s8)this_->field_D9 >= (s32)count) {
-        this_->field_D9 = (u8)(func_80254144(&this_->field_E8) - 1);
+        this_->field_D9 = (u8)(func_80254144(&this_->mCatalog) - 1);
         clpRefreshCur(this_);
     }
 
@@ -1183,10 +1163,10 @@ extern "C" void clpPrevCatPg(CCollepedia* this_) {
     if (this_->field_28FA != 0) return;
     if (reinterpret_cast<CSysWin*>(&this_->field_9C)->isOpened()) return;
 
-    clpPrevPageIx(&this_->field_E8);
-    int count = (int)func_80254144(&this_->field_E8) & 0xFF;
+    clpPrevPageIx(&this_->mCatalog);
+    int count = (int)func_80254144(&this_->mCatalog) & 0xFF;
     if ((s8)this_->field_D9 >= count) {
-        this_->field_D9 = (u8)(func_80254144(&this_->field_E8) - 1);
+        this_->field_D9 = (u8)(func_80254144(&this_->mCatalog) - 1);
         clpRefreshCur(this_);
     }
 
@@ -1266,11 +1246,11 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
         if ((s8)this_->field_DA == 0) {
             // Grid page: grant the selected item, refresh both display pages,
             // then play a category-keyed fanfare.
-            clpSelectItem(&this_->field_E8, this_->field_D9, this_->field_D8);
+            clpSelectItem(&this_->mCatalog, this_->field_D9, this_->field_D8);
             clpRefreshPage(this_);
             clpSetSelTxt(this_);
 
-            u32 cat = clpGetRowSubc(&this_->field_E8, this_->field_D9);
+            u32 cat = clpGetRowSubc(&this_->mCatalog, this_->field_D9);
             // Switch range-check covers 0..8; case 8 is empty (fanfare only)
             switch (cat) {
             case 0: playUISound(0x4B); break;
@@ -1297,18 +1277,18 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     }
 
     // List page: open the detail view for the selected entry.
-    if (clpIsClaimabl(&this_->field_E8, this_->field_D9, this_->field_D8) == 0) return;
+    if (clpIsClaimabl(&this_->mCatalog, this_->field_D9, this_->field_D8) == 0) return;
 
-    char* desc = clpGetEntryStr(&this_->field_E8, this_->field_D9, this_->field_D8);
+    char* desc = clpGetEntryStr(&this_->mCatalog, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_28F0, &lbl_eu_8050C6E8[0x12b], desc, 0);
 
     clpSetPageNum(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]),
-        clpGetCellCnt(&this_->field_E8, this_->field_D9, this_->field_D8));
+        clpGetCellCnt(&this_->mCatalog, this_->field_D9, this_->field_D8));
 
-    char* name1 = MakeTplNameSysFile((u16)clpGetCelIcon(&this_->field_E8, this_->field_D9, this_->field_D8));
+    char* name1 = MakeTplNameSysFile((u16)clpGetCelIcon(&this_->mCatalog, this_->field_D9, this_->field_D8));
     void* tex1 = this_->field_30->GetResource(0x74696D67, name1, NULL);
 
-    char* name2 = MakeTplNameSysFile((u16)func_80254204(&this_->field_E8, this_->field_D9, this_->field_D8));
+    char* name2 = MakeTplNameSysFile((u16)func_80254204(&this_->mCatalog, this_->field_D9, this_->field_D8));
     void* tex2 = this_->field_34->GetResource(0x74696D67, name2, NULL);
 
     clpSetPageTex(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]), (char*)tex1, (char*)tex2);
@@ -1321,8 +1301,8 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     playUISound(3);
 }
 
-void clpCanClaim(CCollepediaFull* self) {
-    clpIsClaimabl(&self->field_E8_start, self->field_D9, self->field_D8);
+void clpCanClaim(CCollepedia* self) {
+    clpIsClaimabl(&self->mCatalog, self->field_D9, self->field_D8);
 }
 
 extern "C" u8 clpIsOverlay(CCollepedia* self) {
@@ -1401,7 +1381,7 @@ void clpEnterDetail(CCollepedia* this_) {
 
     clpRefreshCur(this_);
 
-    if (clpGetRowDone(&this_->field_E8, this_->field_D9) == 0) return;
+    if (clpGetRowDone(&this_->mCatalog, this_->field_D9) == 0) return;
 
     this_->field_49 = 9;
 
@@ -1424,7 +1404,7 @@ extern "C" void collepediaCreateItemMulti(CCollepedia* this_) {
 
     // Force lhzx into r3 (retail) by keeping the table entry as the sole
     // live result of the index expression before the +1 / fmt setup.
-    u32 idx = clpGetPageCat(&this_->field_E8);
+    u32 idx = clpGetPageCat(&this_->mCatalog);
     s32 d9 = (s8)this_->field_D9;
     u16 entry = lbl_eu_8050C6A0[idx & 0xFF];
     u32 count = (u32)entry + 1;
@@ -1442,7 +1422,7 @@ void clpOpenComplete(CCollepedia* this_) {
 
     this_->field_49 = 3;
 
-    if (clpIsPageDone(&this_->field_E8) == 0) return;
+    if (clpIsPageDone(&this_->mCatalog) == 0) return;
 
     this_->field_49 = 0xD;
 
@@ -1468,7 +1448,7 @@ void clpPlayTblSe(CCollepedia* this_) {
 
     // Table lookup folded into the call so the index comes straight from clpGetPageCat
     u32 result = BdatGetU16Direct(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
-        lbl_eu_8050C6A0[clpGetPageCat(&this_->field_E8) & 0xFF]);
+        lbl_eu_8050C6A0[clpGetPageCat(&this_->mCatalog) & 0xFF]);
     UIWin_CreateItemMulti((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
@@ -1539,7 +1519,7 @@ void clpSetSlotIcn(CCollepedia* this_, const char* name, u32 mode, int id) {
 // Iterate sub-array entries, set pane visibility for each, copy position for current entry, update display
 void clpSetPageVis(CCollepedia* this_) {
     char buf[0x20];
-    register u8 count = this_->field_E8;
+    register u8 count = this_->mCatalog.mCount;
     for (u8 i = 1; i <= 0x16; i++) {
         sprintf(buf, &lbl_eu_8050C6E8[0x2F7], i);
 
@@ -1576,7 +1556,7 @@ static double clpConvS32ToF64(s32 x) {
 // Retail frame is 0x70 with _savegpr_25: only r25-r31 stay live across calls.
 extern "C" void clpRefreshPage(CCollepedia* this_) {
     char buf[0x18];
-    u8 idx = (u8)(this_->_E9[0] + 1); // retail reads the index byte unsigned
+    u8 idx = (u8)(this_->mCatalog.mCurrentPage + 1); // retail reads the index byte unsigned
     setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
 
     // Move the cursor pane right by one slot width from the saved position.
@@ -1588,23 +1568,23 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
     copyVEC3((float*)((u8*)cursorPane + 0x2C), &pos);
 
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x29b],
-        clpGetPageNam(&this_->field_E8), 0);
+        clpGetPageNam(&this_->mCatalog), 0);
 
     // "collected / total" label: scale the completion ratio to slot count.
     // Call first, constant load second - matches retail schedule.
-    float ratio = clpGetPagePrg(&this_->field_E8);
+    float ratio = clpGetPagePrg(&this_->mCatalog);
     u8 slot = (u8)(lbl_eu_80668814 * ratio); // fctiwz truncation
     char* label = BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0xB);
     sprintf(buf, &lbl_eu_8050C6E8[0x2a3], slot, label);
     LayoutSetTextBoxText(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
 
-    u32 count = func_80254144(&this_->field_E8);
+    u32 count = func_80254144(&this_->mCatalog);
     // Exactly six rows exist per page; visibility still follows the count.
     for (u8 i = 0; i < 6; i++) {
         // Retail computes i+1 once per iteration into a callee-saved reg.
         u8 num = (u8)(i + 1);
         sprintf(buf, &lbl_eu_8050C6E8[0x2b0], num);
-        LayoutSetTextBoxFmtValue(this_->field_38, buf, clpGetRowName(&this_->field_E8, i), 0);
+        LayoutSetTextBoxFmtValue(this_->field_38, buf, clpGetRowName(&this_->mCatalog, i), 0);
 
         sprintf(buf, &lbl_eu_8050C6E8[0x2bb], num);
         nw4r::lyt::Pane* namePane =
@@ -1614,7 +1594,7 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
         sprintf(buf, &lbl_eu_8050C6E8[0x2c8], num);
         nw4r::lyt::Pane* numPane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
-        setPaneVisible(numPane, clpGetRowDone(&this_->field_E8, i));
+        setPaneVisible(numPane, clpGetRowDone(&this_->mCatalog, i));
     }
 
     // Fill the 6x5 grid: texture slots and item icons per visible entry.
@@ -1622,25 +1602,25 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
         u32 base = row * 5;
         for (u8 col = 0; col < 5; col++) {
             u32 mode = col + base;
-            clpSetSlotTex(this_, (const char*)clpGetCelStat(&this_->field_E8, row, col),
+            clpSetSlotTex(this_, (const char*)clpGetCelStat(&this_->mCatalog, row, col),
                 (u8)mode);
-            u16 id = func_80254204(&this_->field_E8, row, col);
-            clpSetSlotIcn(this_, (const char*)clpGetCelStat(&this_->field_E8, row, col),
+            u16 id = func_80254204(&this_->mCatalog, row, col);
+            clpSetSlotIcn(this_, (const char*)clpGetCelStat(&this_->mCatalog, row, col),
                 (u8)mode, id);
         }
     }
 
     // Final pane visibility follows the page's completion flag.
-    bool done = clpIsPageDone(&this_->field_E8);
+    bool done = clpIsPageDone(&this_->mCatalog);
     nw4r::lyt::Pane* markPane = this_->field_38->GetRootPane()->FindPaneByName(
         &lbl_eu_8050C6E8[0x2d6], true);
     setPaneVisible(markPane, done);
 }
 // Set two pane names on the layout using the current sub-array entry
 extern "C" void clpSetSelTxt(CCollepedia* this_) {
-    char* str1 = clpGetEntryStr(&this_->field_E8, this_->field_D9, this_->field_D8);
+    char* str1 = clpGetEntryStr(&this_->mCatalog, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2e2], str1, 0);
-    char* str2 = clpGetItemName(&this_->field_E8, this_->field_D9, this_->field_D8);
+    char* str2 = clpGetItemName(&this_->mCatalog, this_->field_D9, this_->field_D8);
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2eb], str2, this_->field_4C);
 }
 // us-80258550 Refresh the collepedia display: detail view routes through the shared

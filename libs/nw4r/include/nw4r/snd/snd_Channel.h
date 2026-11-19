@@ -15,7 +15,7 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
-struct WaveData;
+struct WaveInfo;
 
 class Channel {
     friend class ChannelManager;
@@ -40,7 +40,7 @@ public:
 
     void InitParam(ChannelCallback pCallback, u32 callbackArg);
     void Update(bool periodic);
-    void Start(const WaveData& rData, int length, u32 offset);
+    void Start(const WaveInfo& rInfo, int length, u32 offset);
     void Release();
     void NoteOff();
     void Stop();

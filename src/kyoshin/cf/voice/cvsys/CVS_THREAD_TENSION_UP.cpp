@@ -58,38 +58,12 @@ struct CVS_THREAD_TENSION_UP_ptmf {
     VoiceCb cb;                 // 0x00-0x0B
 };
 
-// us-802ab968 (TensUp_TryRunSlotAction)
-// Completion callback: if no active voice is playing, invoke the
-// playback-start virtual (CVS_THREAD::PlayThreadVoice, vtable slot 2).
-void TensUp_TryRunSlotAction(CVS_THREAD_TENSION_UP* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
-    }
-}
-
-// us-802ab9b0 (TensUp_RemoveVoice)
-// Remove a voice by matching its embedded CCharVoice pointer against the
-// single slot (field_0x20). A CVoiceHandle stores the CCharVoice at offset
-// 0x3E9C, so a non-null handle is biased by 0x3E9C before comparing.
-void TensUp_RemoveVoice(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
-    DetachThreadVoice(self, voicePtr);
-
-    CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x20 = NULL;
-    }
-}
-
 // us-802ab51c (__ct__802A8DE8)
 // Factory constructor for CVS_THREAD_TENSION_UP.
 // Takes a factory/manager pointer and a thread index (must be >= 3).
 // Allocates a buffer and the thread object, constructs the base,
 // sets vtable/fields, copies init data, returns the object (or NULL).
-CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
+CVS_THREAD_TENSION_UP* CVS_THREAD_TENSION_UP::create(CVoiceFactory* factory, int index) {
     if ((factory->flags & 0x2) == 0) {
         return NULL;
     }
@@ -120,15 +94,10 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
         }
     }
 
-    // Copy the slot-state init data triple into the object's first 3 u32s.
-    u32 v1;
-    u32* v0;
-    const u32* base = (const u32*)(u32)lbl_eu_80539D20;
-    v1 = base[1];
-    v0 = (u32*)base[0];
-    ((CVS_THREAD_TENSION_UP_raw*)self)->state0 = v0;
-    ((CVS_THREAD_TENSION_UP_raw*)self)->state1 = v1;
-    ((CVS_THREAD_TENSION_UP_raw*)self)->state2 = base[2];
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_TENSION_UP::update);
 
     return self;
 }
@@ -138,18 +107,11 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
 // plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
 // Control flow: a live voice (or a successful play) returns directly;
 // otherwise the playback-start virtual runs as a common tail.
-void TensUp_Update(CVS_THREAD_TENSION_UP* self) {
-    // Init-state triple view over the CVS_THREAD base words at 0x00-0x08.
-    // First word is loaded before the slot read and kept in a temp so the
-    // load/store schedule matches retail (lwzu, then word1/word0/word2 stores).
-    CVS_THREAD_TENSION_UP_INIT* state = (CVS_THREAD_TENSION_UP_INIT*)self;
-    u32 state0;
-    u32* src = lbl_eu_80539D2C;
-    state0 = *src++;
+void CVS_THREAD_TENSION_UP::update() {
+    CVS_THREAD_TENSION_UP* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_TENSION_UP::selectAndPlay);
     CVoiceHandle* handle = self->field_0x20;
-    state->word1 = *src++;
-    state->word0 = state0;
-    state->word2 = *src;
 
     if (handle != NULL) {
         // Voice still active: nothing to do.
@@ -212,23 +174,17 @@ tail:
 // us-802ab784 (TensUp_SelectAndPlay)
 // Voice-select and play function. Reloads slot-state, finds a free handle,
 // selects voice ID based on owner state and flag.
-void TensUp_SelectAndPlay(CVS_THREAD_TENSION_UP* self) {
+void CVS_THREAD_TENSION_UP::selectAndPlay() {
+    CVS_THREAD_TENSION_UP* self = this;
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
     int voiceId;
 
-    // Reload the slot-state triple. First word is loaded via a pointer walk
-    // (retail lwzu) before the slot read, matching the retail load/store order.
-    CVS_THREAD_TENSION_UP_INIT* state = (CVS_THREAD_TENSION_UP_INIT*)self;
-    u32 state0;
-    const u32* src = lbl_eu_80539D38;
-    state0 = *src++;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_TENSION_UP::tryRunSlotAction);
     CVoiceHandle* handle = self->field_0x20;
-    state->word1 = *src++;
-    state->word0 = state0;
-    state->word2 = *src;
 
     handle = HpVoice_PickIdleVoice(handle);
     if (handle == NULL) {
@@ -285,6 +241,32 @@ void TensUp_SelectAndPlay(CVS_THREAD_TENSION_UP* self) {
 
 fallback:
     self->PlayThreadVoice();
+}
+
+// us-802ab968 (TensUp_TryRunSlotAction)
+// Completion callback: if no active voice is playing, invoke the
+// playback-start virtual (CVS_THREAD::PlayThreadVoice, vtable slot 2).
+void CVS_THREAD_TENSION_UP::tryRunSlotAction() {
+    if (IsThreadVoiceActive(this) == 0) {
+        PlayThreadVoice();
+    }
+}
+
+// us-802ab9b0 (TensUp_RemoveVoice)
+// Remove a voice by matching its embedded CCharVoice pointer against the
+// single slot (field_0x20). A CVoiceHandle stores the CCharVoice at offset
+// 0x3E9C, so a non-null handle is biased by 0x3E9C before comparing.
+void TensUp_RemoveVoice(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
+    DetachThreadVoice(self, voicePtr);
+
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
 }
 
 // Virtual method override: returns the buffer size for this thread type.

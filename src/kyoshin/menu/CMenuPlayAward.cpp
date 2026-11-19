@@ -21,6 +21,7 @@
 #include "monolib/work/CProcess.hpp"          // CProcess::Regist
 #include "monolib/work/CWorkThreadSystem.hpp" // CWorkThreadSystem::getWorkMem
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 // CScn (with removeRenderCB) comes from the minimal declaration in
@@ -170,7 +171,7 @@ extern "C" unsigned long PlayAward_IsActive(void) { return CMenuPlayAward::sInst
 // ready, display the help bar, play its sound, and flag the menu (0x1160 = 1).
 void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0
-        && isInitialized(&self->mTitleAHelp) != 0
+        && self->mTitleAHelp.isInitialized() != 0
         && PlayAward_IsListReady(&self->mPlayAwardList) != 0) {
         func_801C412C(&self->mTitleAHelp);
         PlayAward_RequestOpen(&self->mPlayAwardList);
@@ -200,7 +201,7 @@ void PlayAward_Phase2_HandleInput(CMenuPlayAward* self) {
     // whole extraction block is re-run per branch (retail reloads both flag
     // words inside each branch). Same shape as CMenuOption's input handler.
     bool up, down, pageUp, pageDown;
-    bool left, right, pageLeft;
+    bool pageLeft, left, right;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;   // +0x104
         u32 pressed = pad->mPadPressedFlags;       // +0x04

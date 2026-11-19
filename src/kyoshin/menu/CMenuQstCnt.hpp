@@ -37,6 +37,10 @@ public:
 
 // 8-byte quest entry record (used at 0x94 and 0x194 inside CMenuQstCnt).
 struct QstEntry {
+    QstEntry(int a = 0, int b = 0, u8 c = 0, u8 d = 0, u8 e = 0);
+    QstEntry(const QstEntry& other);
+    QstEntry& operator=(const QstEntry& other);
+
     u16 f0;   // 0x00 quest id
     u16 f2;   // 0x02
     u8  f4;   // 0x04
@@ -79,7 +83,7 @@ public:
     CScn* mScene;                        // 0x74 owning scene
     UnkClass_8045F564 mMemRegion;        // 0x78 embedded MEM2 region
     nw4r::lyt::AnimTransform* mAnim88;   // 0x88 open animation
-    u32 mState8C;                        // 0x8C
+    int mState8C;                        // 0x8C
     f32 mValue90;                        // 0x90
     QstEntry mEntries[32];               // 0x94
     QstEntry mSelEntry;                  // 0x194

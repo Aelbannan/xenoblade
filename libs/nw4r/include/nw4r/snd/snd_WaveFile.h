@@ -3,6 +3,7 @@
 #include <nw4r/types_nw4r.h>
 
 #include <nw4r/snd/snd_AxVoice.h>
+#include <nw4r/snd/snd_FxBase.h>
 #include <nw4r/snd/snd_Types.h>
 
 #include <nw4r/ut.h>
@@ -40,16 +41,15 @@ struct WaveChannelInfo {
     u32 reserved;          // at 0x18
 };
 
-}; // namespace WaveFile
-
+// On-disk RWAV wave-info header.
 struct WaveInfo {
     u8 format;                  // at 0x0
     u8 loopFlag;                // at 0x1
     u8 numChannels;             // at 0x2
     u8 sampleRate24;            // at 0x3
     u16 sampleRate;             // at 0x4
-    u8 dataType;                // at 0x6 (used by GetWaveDataAddress)
-    u8 PADDING_0x7;            // at 0x7
+    u8 dataType;                // at 0x6
+    u8 PADDING_0x7;             // at 0x7
     u32 loopStart;              // at 0x8
     u32 loopEnd;                // at 0xC
     u32 channelInfoTableOffset; // at 0x10
@@ -57,45 +57,44 @@ struct WaveInfo {
     u32 reserved;               // at 0x18
 };
 
+}; // namespace WaveFile
+
+/******************************************************************************
+ *
+ * WaveInfo (runtime wave description)
+ *
+ ******************************************************************************/
+struct ChannelParam {
+    void* dataAddr;      // at 0x0
+    AdpcmInfo adpcmInfo; // at 0x4
+};
+
+struct WaveInfo {
+    SampleFormat sampleFormat;              // at 0x0
+    bool loopFlag;                          // at 0x4
+    int numChannels;                        // at 0x8
+    int sampleRate;                         // at 0xC
+    u32 loopStart;                          // at 0x10
+    u32 loopEnd;                            // at 0x14
+    ChannelParam channelParam[CHANNEL_MAX]; // at 0x18
+};
+
 /******************************************************************************
  *
  * WaveFileReader
  *
  ******************************************************************************/
-struct ChannelParam {
-    void* dataAddr;       // at 0x0
-    u32 volumeFrontLeft;  // at 0x4
-    u32 volumeFrontRight; // at 0x8
-    u32 volumeRearLeft;   // at 0xC
-    u32 volumeRearRight;  // at 0x10
-    AdpcmInfo adpcmInfo;  // at 0x14
-};
-
-struct WaveData {
-    u8 sampleFormat;                        // at 0x0
-    u8 loopFlag;                            // at 0x1
-    u8 numChannels;                         // at 0x2
-    u32 sampleRate;                         // at 0x4
-    u32 loopStart;                          // at 0x8
-    u32 loopEnd;                            // at 0xC
-    ChannelParam channelParam[CHANNEL_MAX]; // at 0x10
-};
-
 class WaveFileReader {
 public:
-    explicit WaveFileReader(const WaveInfo* pWaveInfo);
     explicit WaveFileReader(const WaveFile::FileHeader* pFileHeader);
+    explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
 
-    bool ReadWaveParam(WaveData* pWaveData, const void* pWaveAddr) const;
-    bool ReadWaveInfo(WaveInfo* pWaveInfo,
-                      const void* pWaveAddr) const;
-    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
-                              const void* addr) const;
-
-    static AxVoice::Format GetAxVoiceFormatFromWaveFileFormat(u32 format);
+    bool ReadWaveInfo(WaveInfo* pWaveInfo, const void* pWaveAddr) const;
+    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* pInfo,
+                             const void* pWaveAddr) const;
 
 private:
-    const WaveInfo* mWaveInfo; // at 0x0
+    const WaveFile::WaveInfo* mWaveInfo; // at 0x0
 };
 
 class WaveArchiveReader {

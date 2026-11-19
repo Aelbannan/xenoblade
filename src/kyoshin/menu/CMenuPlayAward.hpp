@@ -282,18 +282,17 @@ extern "C" void PlayAward_RequestClose(CPlayAwardList* self);
 // Return types are int (not u8) so callers compare with cmpwi directly.
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
-extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-
-// Per-frame widget updates (retail-unmangled; called by CMenuPlayAward::Move).
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void updateHelp(CTitleAHelp* self);
 
-// Title/help bar close + mode-set helpers (PlayAward_Phase2_HandleInput).
 extern "C" void beginClose(CTitleAHelp* self);
+// Per-frame widget updates (retail-unmangled; called by CMenuPlayAward::Move).
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+
+// Title/help bar close + mode-set helpers (PlayAward_Phase2_HandleInput).
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // CfGameManager controller-type query + save/skip busy queries (retail

@@ -62,7 +62,6 @@ public:
 
     // Returns the skip-timer active flag at +0x30.
     u8 getActive() const { return mActive; }
-    u8 isSkipActive() { return mActive; }
 
     // --- member fields ---
     /* 0x04 */ UnkClass_8045F564 mMemRegion;      // scratch region for layout build
@@ -88,3 +87,40 @@ public:
     void LockSkipButton();
 };
 // Total size: 0x98 bytes (verified via CMenuSkipTimer mTimerData[0x98])
+
+// Free functions owned by this TU. Retail emits these with bare C names, so
+// each has one C-linkage declaration here rather than a per-caller copy.
+extern "C" void CSkipTimer2RebuildLayout(CSkipTimer2* self);
+extern "C" void CSkipTimer2DriveState(CSkipTimer2* self);
+extern "C" void CSkipTimer2Reset(CSkipTimer2* self);
+extern "C" void CSkipTimer2Start(CSkipTimer2* self, u8 arg);
+extern "C" void CSkipTimer2HoldRelease(CSkipTimer2* self, u8 arg);
+extern "C" void CSkipTimerStampSlotText(CSkipTimer2* self, int arg1, int arg2);
+extern "C" void CSkipTimer2OnFwdDone(CSkipTimer2* self);
+extern "C" void CSkipTimer2OnRewindDone(CSkipTimer2* self);
+extern "C" void func_8029F6EC(CSkipTimer2* self);
+extern "C" void CSkipTimer2OnAdvanceEnd(CSkipTimer2* self);
+extern "C" void CSkipTimer2MarkActive(CSkipTimer2* self);
+extern "C" void CSkipTimer2RebindAnim(CSkipTimer2* self);
+extern "C" void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg);
+
+extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
+extern "C" void CSkipTimerTick(CSkipTimer* self);
+extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void CSkipTimerTeardown(CSkipTimer* self);
+extern "C" int CSkipTimerIsReady(CSkipTimer* self);
+extern "C" int CSkipTimerGetSkipButton(CSkipTimer* self);
+extern "C" int isSkipActive(CSkipTimer* self);
+extern "C" void CSkipTimerNextKey(CSkipTimer* self);
+extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
+extern "C" void CSkipTimerFlagButton(CSkipTimer* self);
+extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
+extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self);
+extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
+extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
+extern "C" void CSkipTimerActivateTimer(CSkipTimer* self);
+extern "C" void CSkipTimer_UpdateSlotFrame(CSkipTimer* self);
+extern "C" int CSkipTimerMapKeyToAction(CSkipTimer* self);
+extern "C" void CSkipTimerBindAnim20(CSkipTimer* self);
+extern "C" void CSkipTimerBindAnim24(CSkipTimer* self);
+extern "C" void sinit_802A07D8();

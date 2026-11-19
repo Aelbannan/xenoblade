@@ -508,7 +508,7 @@ void CfSoundMan_ClearFxEffect(u32 index, u32 frame) {
 
 // Initializes a sound-slot record: clears the playing sound, marks the id
 // invalid, and applies the default volume/gain constants.
-void CfSoundMan_InitSlotState(CfSoundSlot* slot) {
+extern "C" void CfSoundMan_InitSlotState(CfSoundSlot* slot) {
     slot->mSound = 0;
     slot->mId = 0xFFFF;
     slot->mSoundId = 0;
@@ -991,8 +991,10 @@ extern "C" u32 CfSoundMan_StartSlotSound(CfSoundRecord* rec, s32 id, float volum
         slot = findFreeSlot();
     }
     if (idValid && slot != 0) {
-        if (rec->mArchivePlayer.StartSound((nw4r::snd::SoundHandle*)slot,
-                                           (u32)id)) {
+        nw4r::snd::SoundStartable::StartResult startResult =
+            rec->mArchivePlayer.detail_StartSound((nw4r::snd::SoundHandle*)slot,
+                                                  (u32)id, NULL);
+        if (startResult == nw4r::snd::SoundStartable::START_SUCCESS) {
             if (slotParam != 0) {
                 slotId = slotParam->mId;
             } else {
@@ -1244,12 +1246,12 @@ extern "C" void CfSoundMan_SetSoundVolume(CfSoundRecord* rec, u32 soundId, u32 f
 // stops every playing sound whose id matches the block's target word (or
 // when the target is the "all" sentinel -1) via a temp handle.
 void CfSoundMan_StopRecordSounds(CfSoundRecord* rec, s32 mode, u32 fadeFrames) {
+    CfSoundListNode* it;
+    CfSoundListNode* end;
     int id = CfSoundMan_LookupSoundByParam(rec, mode);
     if (!(rec->mFlag & 1)) {
         return;
     }
-    CfSoundListNode* it;
-    CfSoundListNode* end;
     CfSoundPauseParam* g = &lbl_eu_80576528;
     g->field_0x00 = id;
     g->field_0x04 = (u16)fadeFrames;
@@ -1282,11 +1284,12 @@ void CfSoundMan_StopRecordSounds(CfSoundRecord* rec, s32 mode, u32 fadeFrames) {
             }
             s32 target = g->field_0x00;
             if (sid == (u32)target || target == -1) {
+                u16 fade = g->field_0x04;
                 if (handle.IsAttachedSound()) {
-                    handle.detail_GetAttachedSound()->Stop(g->field_0x04);
+                    handle.detail_GetAttachedSound()->Stop(fade);
                 }
             }
-            // (handle's destructor detaches - retail's single DetachSound call
+
             // comes from the scope-exit dtor, not an explicit call)
         }
     }
@@ -1386,7 +1389,8 @@ extern "C" void CfSoundMan_PauseRecordSounds(CfSoundRecord* rec, s32 targetId, u
             }
             handle.detail_AttachSoundAsTempHandle(sound);
             CfSoundMan_PauseMatchingSlot(reinterpret_cast<CfSoundSlot*>(&handle));
-            handle.DetachSound();
+            // The temporary handle's scope-exit destructor detaches it (retail
+            // has one DetachSound call here, not an explicit call plus the dtor).
         }
     }
 }
@@ -1493,6 +1497,7 @@ extern "C" void* __dt__801C189C(CfSoundHandle* _this, int flags) {
     return _this;
 }
 
+extern "C" {
 void* __dt__801C18F4(CfSoundSlot* _this, int flags) {
     if (_this != NULL) {
         __destroy_arr((void*)_this, (void*)__dt__801C189C, 0x30, 0x40);
@@ -1501,6 +1506,7 @@ void* __dt__801C18F4(CfSoundSlot* _this, int flags) {
         }
     }
     return _this;
+}
 }
 // Static initializer for the 64-entry sound-slot table: construct the elements
 // (CfSoundMan_InitSlotState, 0x30-byte stride), then register the whole-array destructor

@@ -20,7 +20,7 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Tab entry accessors (retail symbols are plain func_XXXX names).
-u8 ItemBoxGetTab(const u8* table, unsigned int index);
+u8 ItemBoxGetTab(const CItemBoxPage* page, unsigned int index);
 u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index);
 extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src);
 extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready);
@@ -128,8 +128,8 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                 } else {
                     u32 t = 0;
                     switch (self->field92) {
-                    case 2: t = lbl_eu_806640F4; break;
-                    case 4: case 5: case 6: case 7: case 8: t = lbl_eu_806640F8; break;
+                    case 2: t = (u32)lbl_eu_806640F4; break;
+                    case 4: case 5: case 6: case 7: case 8: t = (u32)lbl_eu_806640F8; break;
                     }
                     if (self->field92 == 2) {
                         str.format(&lbl_eu_805071B0[0x16], arg4);
@@ -193,8 +193,8 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                 } else if (self->field92 <= 8) {
                     u32 t = 0;
                     switch (self->field92) {
-                    case 2: t = lbl_eu_806640F4; break;
-                    case 4: case 5: case 6: case 7: case 8: t = lbl_eu_806640F8; break;
+                    case 2: t = (u32)lbl_eu_806640F4; break;
+                    case 4: case 5: case 6: case 7: case 8: t = (u32)lbl_eu_806640F8; break;
                     }
                     if (self->field92 == 2) {
                         str.format(&lbl_eu_805071B0[0x16], arg4);
@@ -279,9 +279,9 @@ CIBLTabCur::~CIBLTabCur() {}
 // ============================================================================
 // ItemBoxGetTab: byte at this+0xA8, index bounded to a 12-entry table
 // ============================================================================
-u8 ItemBoxGetTab(const u8* table, unsigned int index) {
+u8 ItemBoxGetTab(const CItemBoxPage* page, unsigned int index) {
     if (index < 12u) {
-        return table[0xA8 + index];
+        return page->mBytesA8[index];
     }
     return 0;
 }
@@ -433,9 +433,9 @@ search:
     {
         u32 obj;
         if ((u32)sel == 2) {
-            obj = lbl_eu_806640F4;
+            obj = (u32)lbl_eu_806640F4;
         } else {
-            obj = lbl_eu_806640F8;
+            obj = (u32)lbl_eu_806640F8;
         }
         u8 n = BdatGetU8Direct((const void*)obj, &lbl_eu_805071B0[0x106], (u16)v);
         if (n == 0) goto ret0;
@@ -1357,7 +1357,7 @@ void CItemBoxLine::ShowDetailWin() {
         u8 idx = (u8)(field3A2 + (s8)field3A1 * 4);
         u16 v = ArrayGet12(page->mItemIds, idx);
         if (v != 0) {
-            u8 bt = ItemBoxGetTab((const u8*)page, idx);
+            u8 bt = ItemBoxGetTab(page, idx);
             u32 obj;
             if (bt == 3) {
                 obj = (u32)page->GetItemName(idx);
@@ -1795,7 +1795,7 @@ void CItemBoxLine::RefreshPageList() {
             if (v != 0) {
                 page->mItemIds[(u8)i] = v;
                 page->mBytesA8[(u8)i] = ItemBoxGetTab(
-                    reinterpret_cast<const u8*>(mPage.mItemIds), (u8)i);
+                    &mPage, (u8)i);
                 u8 b594 = 0;
                 if ((u8)i < 12) {
                     b594 = mPage.mBytesB4[(u8)i];
@@ -1959,7 +1959,7 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x529], true), 1);
 
     // Per-kind slot lookups from the kind-owner table (lbl_eu_806640F4).
-    u32 table = lbl_eu_806640F4;
+    u32 table = (u32)lbl_eu_806640F4;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
     u16 a = BdatGetU16Direct((const void*)table, &lbl_eu_805071B0[0x58f], kind);
@@ -2060,7 +2060,7 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     setPaneVisible(field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x529], true), 1);
 
     // Kind-based counter text into the three slots.
-    u32 table = lbl_eu_806640F8;
+    u32 table = (u32)lbl_eu_806640F8;
     BdatGetItemType(itemData);
     u16 kind = BdatGetItemId(itemData);
     u8 a = BdatGetU8Direct((const void*)table, &lbl_eu_805071B0[0x59e], kind);
@@ -2073,7 +2073,7 @@ void CItemBoxLine::ShowSlotCounters(u32 itemData) {
     // Slot-name format ladder (kind selector). The range check and the three
     // equality tests each branch to their case body; the bodies sit after the
     // tests in retail order (0x32, 0x31, 0x30, 0x2e) with the default last.
-    u32 selTable = lbl_eu_806640F8;
+    u32 selTable = (u32)lbl_eu_806640F8;
     u8 sel = BdatGetU8Direct((const void*)selTable, &lbl_eu_805071B0[0x26],
                            BdatGetItemId(itemData));
     char* name;
@@ -2381,7 +2381,7 @@ void CItemBoxLine::BuildPageData(u32 itemData) {
 // it in r3 and works from r4).
 // ============================================================================
 int CItemBoxLine::ProbeAvailability(u32 key) {
-    u32 table = lbl_eu_80664110;
+    u32 table = (u32)lbl_eu_80664110;
     BdatGetItemType(key);
     // No named pool local: retail CSEs the lbl_eu_805071B0 base into a
     // temp register that is later reused for the BdatGetU8ByTableKey result.

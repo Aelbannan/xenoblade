@@ -182,10 +182,10 @@ void GXInitFifoBase(GXFifoObj* fifo, void* base, u32 size) {
 }
 
 GXBool CPGPLinkCheck(void) {
+    u32 check = 0;
+    u32 overlap;
     s32 range1;
     s32 range2;
-    u32 overlap;
-    u32 check = 0;
 
     if (!CPUFifoReady || !GPFifoReady) {
         return GX_FALSE;

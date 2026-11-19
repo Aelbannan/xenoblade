@@ -48,7 +48,7 @@ struct IndexTable {
 };
 
 typedef Util::DataRef<void, InstParam, RangeTable, IndexTable> DataRegion;
-typedef Util::DataRef<WaveInfo> WaveRegion;
+typedef Util::DataRef<WaveFile::WaveInfo> WaveRegion;
 
 struct Header {
     ut::BinaryFileHeader fileHeader; // at 0x0
@@ -76,15 +76,23 @@ struct WaveBlock {
  *
  ******************************************************************************/
 struct InstInfo {
-    s32 waveIndex;  // at 0x0
-    u8 attack;      // at 0x4
-    u8 decay;       // at 0x5
-    u8 sustain;     // at 0x6
-    u8 release;     // at 0x7
-    u8 originalKey; // at 0x8
-    u8 pan;         // at 0x9
-    u8 volume;      // at 0xA
-    f32 tune;       // at 0xC
+    struct WaveDataLocation {
+        s32 location;  // at 0x0
+        s32 waveIndex; // at 0x4
+    };
+
+    WaveDataLocation waveDataLocation; // at 0x0
+    u8 attack;                         // at 0x8
+    u8 hold;                           // at 0x9
+    u8 decay;                          // at 0xA
+    u8 sustain;                        // at 0xB
+    u8 release;                        // at 0xC
+    s32 noteOffType;                   // at 0x10
+    u8 alternateAssign;                // at 0x14
+    u8 originalKey;                    // at 0x15
+    u8 pan;                            // at 0x16
+    u8 volume;                         // at 0x17
+    f32 tune;                          // at 0x18
 };
 
 class BankFileReader {
@@ -95,18 +103,23 @@ public:
 public:
     explicit BankFileReader(const void* pBankBin);
 
-    bool IsValidFileHeader(const void* pBankBin);
+    bool IsValidFileHeader(const ut::BinaryFileHeader* pFileHeader);
 
-    bool ReadInstInfo(InstInfo* pInfo, int prgNo, int key, int velocity) const;
-    bool ReadWaveParam(WaveData* pData, int waveIndex,
-                       const void* pWaveAddr) const;
+    bool ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
+                      int velocity) const;
+
+    const BankFile::InstParam* GetInstParam(int prgNo, int key,
+                                            int velocity) const;
+    bool ReadWaveInfo(WaveInfo* pWaveInfo,
+                      const InstInfo::WaveDataLocation& rLocation,
+                      const void* pWaveData,
+                      const WaveInfo** ppWaveInfo) const;
 
 private:
     const BankFile::DataRegion*
     GetReferenceToSubRegion(const BankFile::DataRegion* pRef,
                             int splitKey) const;
 
-private:
     const BankFile::Header* mHeader;       // at 0x0
     const BankFile::DataBlock* mDataBlock; // at 0x4
     const BankFile::WaveBlock* mWaveBlock; // at 0x8

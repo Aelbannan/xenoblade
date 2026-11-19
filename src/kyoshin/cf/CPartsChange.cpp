@@ -321,8 +321,6 @@ extern "C" void CPartsChange_SyncSlotState(u8* self, u32 idx, int flag) {
     }
 }
 
-void CPartsChange_ReseedElemTimer(){}
-
 // 0xB4: _reslist_base<cf::CfPartyInfo*>::~_reslist_base() -- reinstall the
 // base vtable, unlink every node (next=0), relink the sentinel to itself, then
 // free the owned pool buffer unless the ownership flag at +0x1C is set.
@@ -679,9 +677,6 @@ extern "C" void CPartsChange_InitActorEntry(u8* self) {
 
 u16 CfActorAccessors::GetField9E() { return mField9E; }
 
-void CPartsChange_FindActorByObj(){}
-void CPartsChange_LoadBdatTables(){}
-
 // 0x180: sum the per-item offsets the B48 gimmick list reports and average
 // them (falling back to the second argument's vector when nothing matched).
 // Each item contributes through two virtual slots: 0xE0 (a float) and 0xAC (a
@@ -777,7 +772,7 @@ extern "C" void CPartsChange_ReseedElemTimer(CfPartsElem4C* self) {
                                        (s32)lbl_eu_80664184);
     u8 row = *(u8*)&val;
     if (row == 0) row = 1;
-    f32 v = (f32)row * (f32)lbl_eu_80667ABC * lbl_eu_80667AB8;
+    f32 v = lbl_eu_80667AB8 * (lbl_eu_80667ABC * (f32)row);
     self->field_10 = v;
     self->field_14 = lbl_eu_80667AC0;
     memset((u8*)self + 0x42, 0, 9);

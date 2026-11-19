@@ -12,6 +12,7 @@
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuPassiveSkillImports.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -312,7 +313,7 @@ CMenuPassiveSkill* CMenuPassiveSkill::create(CProcess* parent, CScn* scene) {
 // title/help widget.
 // ---------------------------------------------------------------------------
 extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self) {
-    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && self->mTitleAHelp.isInitialized() != 0 &&
         CPassiveSkill_getVisibleIfReady(self->mPassiveSkill) != 0) {
         func_801C412C(&self->mTitleAHelp);
         CPassiveSkill_open(self->mPassiveSkill);

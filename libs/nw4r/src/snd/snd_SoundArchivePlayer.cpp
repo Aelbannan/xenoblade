@@ -85,10 +85,6 @@ PrepareWaveSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail9WaveSo
 extern const double lbl_eu_8066A050;
 extern const float lbl_eu_8066A048;
 
-// Import from snd_SoundArchive.cpp (retail symbol; not declared in snd_SoundArchive.h)
-extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(
-    const nw4r::snd::SoundArchive* self);
-
 // Import from snd_SoundSystem.cpp (retail symbol; SoundSystem.h does not
 // declare the query and is outside this session's writable scope).
 extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv();
@@ -343,7 +339,7 @@ u32 SoundArchivePlayer::GetRequiredMemSize(const SoundArchive* pArchive) {
         // clang-format on
     }
 
-    size += (detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(pArchive) *
+    size += (pArchive->detail_GetFileCount() *
                  sizeof(SoundArchive::FilePos) +
              7) &
             ~3u;
@@ -405,7 +401,7 @@ bool SapSetupFileAddressTable(SoundArchivePlayer* pPlayer,
                               void* pEnd) {
     // clang-format off
     u32 requireSize =
-        detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(pArchive) *
+        pArchive->detail_GetFileCount() *
             sizeof(SoundArchivePlayer::Group) +
         (sizeof(SoundArchivePlayer::GroupTable) -
          sizeof(SoundArchivePlayer::Group));
@@ -425,8 +421,7 @@ bool SapSetupFileAddressTable(SoundArchivePlayer* pPlayer,
 
     reinterpret_cast<SoundArchivePlayer::GroupTable*&>(
         pPlayer->mFileManager)
-        ->count = detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(
-        pArchive);
+        ->count = pArchive->detail_GetFileCount();
 
     for (int i = 0;
          i < reinterpret_cast<SoundArchivePlayer::GroupTable*&>(
@@ -579,7 +574,7 @@ struct SapFields {
     /*0x20*/ char mSeqCallback[8]; // SeqNoteOnCallback (vtable + player ref)
     char field_0x28[0x08];
     detail::SeqTrackAllocator* mSeqTrackAllocator;   // at 0x30
-    void (*mSeqUserprocCallback)(u16, void*, void*); // at 0x34
+    SeqUserprocCallback mSeqUserprocCallback;       // at 0x34
     void* mSeqUserprocData;                          // at 0x38
     u32 mSoundPlayerCount;                           // at 0x3C
     SoundPlayer* mSoundPlayers;                      // at 0x40
@@ -1402,7 +1397,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
         rPlayer.detail_AllocPlayerHeap(pSound);
 
         SoundArchive::SeqSoundInfo seqInfo;
-        if (!mSoundArchive->detail_ReadSeqSoundInfo(id, &seqInfo)) {
+        if (!mSoundArchive->ReadSeqSoundInfo(id, &seqInfo)) {
             pSound->Shutdown();
             OSUnlockMutex(reinterpret_cast<OSMutex*>(reinterpret_cast<char*>(
                 &detail::SoundThread::GetInstance()) +
@@ -1562,16 +1557,10 @@ struct SeqSoundLayout {
 // not declare these shapes).
 extern "C" bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     const detail::SeqFileReader* pReader, const char* pLabel, u32* pOffset);
-extern "C" u32 ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(
-    const void* pBuffer, u32 offset, u32* pSize);
 extern "C" detail::SeqPlayer::SetupResult
 Setup__Q44nw4r3snd6detail8SeqSoundFPQ44nw4r3snd6detail17SeqTrackAllocatorUlPQ44nw4r3snd6detail14NoteOnCallback(
     detail::SeqSound* pSound, detail::SeqTrackAllocator* pAllocator,
     u32 allocTrackFlags, detail::NoteOnCallback* pCallback);
-extern "C" void
-SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
-    detail::SeqSound* pSound, void (*pCallback)(u16, void*, void*),
-    void* pUserData);
 
 extern "C" SoundStartable::StartResult PrepareSeqImpl__Q34nw4r3snd18SoundArchivePlayerFPQ44nw4r3snd6detail8SeqSoundPCQ44nw4r3snd12SoundArchive9SoundInfoPCQ44nw4r3snd12SoundArchive12SeqSoundInfoQ54nw4r3snd14SoundStartable9StartInfo15StartOffsetTypeiPCvPCc(
     SoundArchivePlayer* thisPtr, detail::SeqSound* pSound,
@@ -1617,7 +1606,7 @@ extern "C" SoundStartable::StartResult PrepareSeqImpl__Q34nw4r3snd18SoundArchive
 
         // Derive the track allocation mask from the resolved position.
         seqDataOffset =
-            ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(
+            detail::MmlParser::ParseAllocTrack(
                 reader.GetBaseAddress(), seqDataOffset, &allocTrack);
     } else {
         pFileAddress = thisPtr->detail_GetFileAddress(rInfo.fileId);
@@ -1708,8 +1697,8 @@ extern "C" SoundStartable::StartResult PrepareSeqImpl__Q34nw4r3snd18SoundArchive
     pSound->SetPanCurve(rInfo.panCurve);
     pSound->SetChannelPriority(rSeqInfo.channelPriority);
     pSound->SetReleasePriorityFix(rSeqInfo.releasePriorityFixFlag);
-    SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
-        pSound, rFields.mSeqUserprocCallback, rFields.mSeqUserprocData);
+    pSound->SetSeqUserprocCallback(
+        rFields.mSeqUserprocCallback, rFields.mSeqUserprocData);
 
     detail::SeqPlayer::OffsetType seqOffsetType;
 
@@ -2076,7 +2065,7 @@ SoundArchivePlayer::SeqNoteOnCallback::NoteOn(detail::SeqPlayer* pSeqPlayer,
 
 bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
     detail::WaveSoundInfo* pSoundInfo, detail::WaveSoundNoteInfo* pNoteInfo,
-    detail::WaveInfo* pWaveData, const void* pWsdData, int index, int noteIndex,
+    detail::WaveInfo* pWaveInfo, const void* pWsdData, int index, int noteIndex,
     u32 callbackArg) const {
 
     u32 fileId = callbackArg;
@@ -2102,11 +2091,8 @@ bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
         return false;
     }
 
-    // This build reads the wave entry through ReadWaveInfo rather than
-    // ReadWaveParam; the wave data buffer rides along as its output pointer.
-    bool result = reader.ReadWaveInfo(
-        pNoteInfo->waveIndex, reinterpret_cast<detail::WaveInfo*>(pWaveData),
-        pWaveAddr);
+    bool result =
+        reader.ReadWaveInfo(pNoteInfo->waveIndex, pWaveInfo, pWaveAddr);
     return result;
 }
 

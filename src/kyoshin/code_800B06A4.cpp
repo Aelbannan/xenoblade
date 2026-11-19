@@ -15,6 +15,7 @@ extern "C" u32 getEneBdatColumn__Q22cf11CfObjectEneFPCc(void* self, const char* 
 #include <math.h>
 #include <new>
 #include "monolib/util/MemManager.hpp"
+extern u32 lbl_eu_80663EE0;
 void* findObjectById(int id);
 
 void UnkClass_800B0AD8::clearCounters() {
@@ -71,12 +72,11 @@ extern "C" void storeScaleSquare(float a) {
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     double d = (double)a;
     float sq = (float)d;
-    float c = lbl_eu_80661CD0;
     lbl_eu_80661CCC = a;
     sq = sq * sq;
     lbl_eu_80663EC8 = a;
-    *(float*)&lbl_eu_80663ECC = sq;
-    *(float*)&lbl_eu_80663ED0 = c;
+    lbl_eu_80663ED0 = lbl_eu_80661CD0;
+    lbl_eu_80663ECC = sq;
     lbl_eu_80663ED4 = sq;
 }
 
@@ -251,7 +251,7 @@ void gvar_clearF24(){lbl_eu_80663F24 = 0;}
 void FactoryEvent4__Q22cf13IFactoryEventFv(){}
 void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
-// us-800b2398 - copyWordAt4: copy the second u32 of src into dst.
+
 extern "C" void copyWordAt4(void* a, void* b) {
     ((WordBufView*)a)->w0 = ((WordBufView*)b)->w1;
 }
@@ -499,6 +499,16 @@ extern "C" void maybeNullThenFlag(void* self) {
 }
 // gflagTestBit6: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
 extern "C" u32 gflagTestBit6(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
+extern "C" s32 gflagHasMask(u32 mask) {
+    return (lbl_eu_80663EE0 & mask) != 0;
+}
+extern "C" void gflagSetOrClear(int mask, void* ptr) {
+    u32 flags = lbl_eu_80663EE0 & ~mask;
+    if (ptr != 0) {
+        flags = lbl_eu_80663EE0 | mask;
+    }
+    lbl_eu_80663EE0 = flags;
+}
 void init_1C0C(){}
 void init_1C24(){}
 extern "C" s32 gflagGateMask8() {
@@ -507,7 +517,13 @@ extern "C" s32 gflagGateMask8() {
     }
     return gflagHasMask(8);
 }
-// us-800b2544: fetch the singleton, then bind the 0xCA4/0xCA8 sub-objects
+extern "C" void gflagClearMask(int mask) {
+    lbl_eu_80663EE0 = lbl_eu_80663EE0 & ~mask;
+}
+extern "C" void gflagNandMask(int mask) {
+    lbl_eu_80663EE0 = lbl_eu_80663EE0 & ~mask;
+}
+
 // to `self` via setItemEnable, each null-guarded.
 void bindPadSubobjects(UnkClass_805764CC* self) {
     UnkClass_805764CC* obj = getInstance();
@@ -719,7 +735,7 @@ int obj_testBit_64_v5(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
 int obj_testBit_64_v6(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
 u32 shift_u32_hi8(u32 val){return (val >> 16) & 0xFF;}
 // Sorted circular-buffer insertion ordered by the element's sort key at
-// offset 0x74. Fast-path appends when the new key sorts after the last
+
 // element; otherwise binary-searches the insertion point and shifts the
 // shorter side (front shift advances the head, back shift does not).
 // Field reads stay spelled out through `self` so retail's per-iteration
@@ -832,7 +848,6 @@ void copy_int_ptr_alt2(int* dst, int* src){*dst = *src;}
 void UnkClass_805764CC::fwdTo_99EC(int param){extern void fwd_99EC_body(void*, void*); fwd_99EC_body(this, &param);}
 void init_3A88(){}
 u32 shift_u32_byte3(u32 val){return val >> 24;}
-u32 shift_u32_hi8_alt1(u32 val){return (val >> 16) & 0xFF;}
 void init_3D4C(){}
 void init_3D64(){}
 void init_4120(){}
@@ -1105,13 +1120,6 @@ void init_6800(){}
 void init_68A8(){}
 void init_6AF4(){}
 extern "C" UnkClass_805764CC* getGameMgr() { return getInstance(); }
-void* sub_getReslist_B28(){return &UnkClass_805764CC::getInstance()->field_0xB28;}
-void* sub_getReslist_B48(){return &UnkClass_805764CC::getInstance()->field_0xB48;}
-void* sub_getReslist_B68(){return &UnkClass_805764CC::getInstance()->field_0xB68;}
-void* sub_getReslist_B88(){return &UnkClass_805764CC::getInstance()->field_0xB88;}
-void* sub_getReslist_BE8(){return &UnkClass_805764CC::getInstance()->field_0xBE8;}
-void* sub_getReslist_BC8(){return &UnkClass_805764CC::getInstance()->field_0xBC8;}
-void* sub_getReslist_C08(){return &UnkClass_805764CC::getInstance()->field_0xC08;}
 extern "C" void* getListB28__Fv() { return (void*)((char*)getInstance() + 0xB28); }
 extern "C" void* getReslistC08() { return (char*)getInstance() + 0xC08; }
 extern "C" void* getReslistC48() { return (char*)getInstance() + 0xC48; }
@@ -1173,12 +1181,12 @@ void sub_mainReset(){reslistFirstItem(getInstance());}
 void init_7058(){}
 void init_708C(){}
 void init_70FC(){}
-u32 gvar_get40F4(void){extern u32 lbl_eu_806640F4; return lbl_eu_806640F4;}
-void init_71CC(){}
+u32 gvar_get40F4(void){extern void* lbl_eu_806640F4; return (u32)lbl_eu_806640F4;}
+
 void* UnkClass_805764CC::getPtr_720(){return (void*)((u8*)this + 0x720);}
 void init_7214(){}
 void init_72DC(){}
-void init_7320(){}
+
 void list_removeNode(void* out_prev, void* unused, void* list_ptr){
     (void)unused; void* entry = *(void**)list_ptr; void* prev = *(void**)entry;
     void* next = *(void**)((char*)entry + 4); *(void**)next = prev;
@@ -1196,7 +1204,7 @@ extern "C" u16 getGlobalU16_3E42(){extern u16 lbl_eu_80663E42; return lbl_eu_806
 extern "C" u16 getGlobalU16_3E44(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E44;}
 void init_75EC(){}
 
-// us-800b7f9c - Count nodes in a circular linked list.
+// us-800b7f9c - Count nodes
 // Retail assigns head=r5/cur=r4. Winning shape: declare cur BEFORE head
 // (uninitialized) so head's vreg is born after cur's, giving head the
 // higher register r5 (retail lwz r5,4(r3); lwz r4,0(r5); cmpl r4,r5).
@@ -1208,14 +1216,6 @@ extern "C" int reslistCount(void* self) {
     while (cur != head) { cur = *(void**)cur; count++; }
     return count;
 }
-void sub_resetReslist_B28(void* self){reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB28);}
-void sub_resetReslist_B48(void* self){reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB48);}
-void sub_resetReslist_B68(void* self){reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB68);}
-void* sub_resetReslist_B88(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xB88);}
-void* sub_resetReslist_BE8(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xBE8);}
-void* sub_resetReslist_BC8(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xBC8);}
-void* sub_resetReslist_C08(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xC08);}
-void* sub_resetReslist_BA8(void* self){return reslistFirstItem(&UnkClass_805764CC::getInstance()->field_0xBA8);}
 // from findObjB28ById/findObjB48ById; without this the -ipa pass folds them in.
 extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
@@ -1633,17 +1633,11 @@ extern "C" void* findObjB48ById(s32 id) {
 }
 void init_8D5C(){}
 void init_8FC4(){}
-void sub_dispatchInit_1(){getInstance(); ((void(*)())init_dispatchTarget_1)();}
-void sub_dispatchInit_2(){getInstance(); ((void(*)())init_dispatchTarget_2)();}
 // us-800b9c18 - pass the singleton, self and arg to the pair helper.
 extern "C" void gmDispatchPair(void* self, void* arg) {
     UnkClass_805764CC* obj = getInstance();
     tickObjectLists(obj, self, arg);
 }
-void sub_dispatchInit_3(){getInstance(); ((void(*)())init_dispatchTarget_3)();}
-void sub_dispatchInit_4(){getInstance(); ((void(*)())init_dispatchTarget_4)();}
-void sub_dispatchInit_5(){getInstance(); ((void(*)())init_dispatchTarget_5)();}
-void sub_dispatchInit_6(){getInstance(); ((void(*)())init_dispatchTarget_6)();}
 void init_93D0(){}
 void init_9404(){}
 void init_9438(){}
@@ -2120,18 +2114,14 @@ extern "C" void sinit_800B9A40() {
     extern float lbl_eu_80661CC8, lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     extern u32 lbl_eu_80663EE0;
-    float e = lbl_eu_80661CD0;
-    float c = lbl_eu_80661CC8;
-    float c2 = c * c;
-    float d = lbl_eu_80661CCC;
-    lbl_eu_80663EC8 = c;
-    lbl_eu_80663ECC = c2;
-    lbl_eu_80663ED0 = e;
-    lbl_eu_80663ED4 = d * d;
+    lbl_eu_80663EC8 = lbl_eu_80661CC8;
+    lbl_eu_80663ECC = lbl_eu_80661CC8 * lbl_eu_80661CC8;
+    lbl_eu_80663ED0 = lbl_eu_80661CD0;
+    lbl_eu_80663ED4 = lbl_eu_80661CCC * lbl_eu_80661CCC;
     lbl_eu_80663EE0 = 0;
 }
 
-// us-800b1da0 - deref field at +0x0 and add 8
+// us-800b1da0
 extern "C" void** factoryIterItem(void* self) {
     return (void**)(*(u32*)self + 8);
 }
@@ -5371,9 +5361,243 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     }
     if (b62 == 0) {
         clearFieldFlagsA__Q22cf13CfGameManagerFv(gm);
-        if (b65 != 0) {
-            lbl_eu_80663E24 |= 8;
-        }
+    if (b65 != 0) {
+        lbl_eu_80663E24 |= 8;
+    }
     }
     return b64;
 }
+
+// Typed layouts for the flag/word accessors below. Each field sits at the
+// retail offset; these are real data shapes, not pointer arithmetic.
+struct ObjFlagsEx {
+    u8 _00[0x64];
+    u32 flags64;
+    u32 flags68;
+    u32 flags6C;
+    u8 _70[0x74 - 0x70];
+    u32 field74;
+    u8 _78[0x94 - 0x78];
+    s32 type94;
+    u8 _98[0x9C - 0x98];
+    u32 field9C;
+    u8 _A0[0x214 - 0xA0];
+    u32 flags214;
+};
+struct SortBuffer { u8 entries[0x700]; u32 count; };
+struct ManagerD08 { u8 _00[0xD08]; u32 fieldD08; };
+struct Vec724Block { u8 _00[0x724]; u32 x, y, z; };
+
+// Iterator helpers shared by the factory and TboxInfo reslists.
+extern "C" void factoryIterBegin(void* dst, void* list) {
+    u32* head = *(u32**)((u8*)list + 4);
+    *(u32*)dst = *head;
+}
+extern "C" void factoryIterNext(void* it) {
+    *(u32*)it = **(u32**)it;
+}
+extern "C" void factoryIterSentinel(void* dst, void* list) {
+    *(u32*)dst = *(u32*)((u8*)list + 4);
+}
+extern "C" void* copyIterWord(void* dst, void* src) {
+    *(u32*)dst = *(u32*)src;
+    return dst;
+}
+extern "C" void copyIterWord2(void* dst, void* src) {
+    *(u32*)dst = *(u32*)src;
+}
+extern "C" void* followIterNext(void* node) {
+    *(u32*)node = **(u32**)node;
+    return node;
+}
+extern "C" void* copyIterFrom(void* dst, void* src) {
+    *(u32*)dst = *(u32*)src;
+    return dst;
+}
+extern "C" void tboxIterBegin(void* dst, void* list) {
+    u32* head = *(u32**)((u8*)list + 4);
+    *(u32*)dst = *head;
+}
+extern "C" void* tboxIterItem(void* it) {
+    return (void*)(*(u32*)it + 8);
+}
+extern "C" void tboxIterStep(void* dst, void* it, int) {
+    *(u32*)dst = *(u32*)it;
+    *(u32*)it = **(u32**)it;
+}
+
+// Bit/word accessors over the shared manager and object layouts.
+extern "C" int testObj64bit9(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 9) & 1; }
+extern "C" int testFlag64b3(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 3) & 1; }
+extern "C" int testObj64bit5(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 5) & 1; }
+extern "C" int testObj64bit6(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 6) & 1; }
+extern "C" int testObj64bit14(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 14) & 1; }
+extern "C" int testObj64bit16(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 16) & 1; }
+extern "C" int testObj64bit26(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 26) & 1; }
+extern "C" int testObj68bit6(void* obj) { return (((ObjFlagsEx*)obj)->flags68 >> 6) & 1; }
+extern "C" void* testCamBit15(void* obj) {
+    return (void*)((((ObjFlagsEx*)obj)->flags214 >> 15) & 1);
+}
+extern "C" void setFieldD08Hi(void* self) {
+    ((ManagerD08*)self)->fieldD08 = 0x10000;
+}
+extern "C" void orObj6Cmask(void* obj, u32 mask) {
+    ((ObjFlagsEx*)obj)->flags6C |= mask;
+}
+extern "C" void orObj68bit6(void* obj) {
+    ((ObjFlagsEx*)obj)->flags68 |= 0x40;
+}
+extern "C" void orObj68bits5_6(void* obj) {
+    ((ObjFlagsEx*)obj)->flags68 |= 0x60;
+}
+extern "C" unsigned long workBufSize(void* ctx) {
+    return ((UnkClass_800B0AD8*)ctx)->unkB04;
+}
+extern "C" void clearFixStrBuf(void* dst) {
+    ((ml::FixStr<64>*)dst)->clear();
+}
+extern "C" void** sortBufEnd(void* buf) {
+    SortBuffer* sort = (SortBuffer*)buf;
+    return (void**)(sort->entries + sort->count * 8);
+}
+extern "C" u32* sortBufAt(void* it, u32 index) {
+    return (u32*)((u8*)it + index * 4);
+}
+extern "C" int cmpFloatAt4(const void* a, const void* b) {
+    return ((const float*)a)[1] < ((const float*)b)[1];
+}
+extern "C" int reslistIsBusy(void* self) {
+    u32 head = *(u32*)((u8*)self + 4);
+    u32 next = *(u32*)head;
+    return (head - next) == 0;
+}
+
+#include "monolib/math/MathConstants.hpp"
+extern "C" void* scaleAboveZero() {
+    extern float lbl_eu_80663ED8;
+    return (void*)(lbl_eu_80663ED8 > ml::epsilon);
+}
+
+// Singleton reslist addressors and first-item helpers.
+extern "C" void* getReslistB48() { return &getInstance()->field_0xB48; }
+extern "C" void* getReslistB68() { return &getInstance()->field_0xB68; }
+extern "C" void* getReslistB88() { return &getInstance()->field_0xB88; }
+extern "C" void* getReslistBE8() { return &getInstance()->field_0xBE8; }
+extern "C" void* getReslistBC8() { return &getInstance()->field_0xBC8; }
+extern "C" void* resetMgrReslist() { return reslistFirstItem(getInstance()); }
+extern "C" void* firstReslistB28() { return reslistFirstItem(&getInstance()->field_0xB28); }
+extern "C" void* firstReslistB48() { return reslistFirstItem(&getInstance()->field_0xB48); }
+extern "C" void* firstReslistB68() { return reslistFirstItem(&getInstance()->field_0xB68); }
+extern "C" void* firstReslistB88() { return reslistFirstItem(&getInstance()->field_0xB88); }
+extern "C" void* firstReslistBE8() { return reslistFirstItem(&getInstance()->field_0xBE8); }
+extern "C" void* firstReslistBC8() { return reslistFirstItem(&getInstance()->field_0xBC8); }
+extern "C" void* firstReslistC08() { return reslistFirstItem(&getInstance()->field_0xC08); }
+extern "C" void* firstReslistBA8() { return reslistFirstItem(&getInstance()->field_0xBA8); }
+extern "C" void* insertReslistB88(void* obj) {
+    UnkClass_805764CC* mgr = getInstance();
+    return reslistFindObj(&mgr->field_0xB88, obj);
+}
+
+// List mutation helpers.
+extern "C" void unlinkListNode(void* out, void*, void* slot) {
+    u32 node = *(u32*)slot;
+    u32 prev;
+    u32 next;
+    next = *(u32*)node;
+    prev = *(u32*)(node + 4);
+    *(u32*)prev = next;
+    *(u32*)(next + 4) = prev;
+    *(u32*)*(u32**)slot = 0;
+    *(u32*)out = next;
+}
+extern "C" void unlinkMatchingNode(void* list, void* obj) {
+    unlinkNodesByKey(list, &obj);
+}
+extern "C" int testObj68mask(void* obj, u32 mask) {
+    return (((ObjFlagsEx*)obj)->flags68 & mask) != 0;
+}
+extern "C" void emitSpeedEvent(const F8C0ListSource* self, void* rec) {
+    SortBuffer* work = (SortBuffer*)self;
+    u32 count = work->count;
+    u32 word = *(u32*)rec;
+    float value = *(float*)((u8*)rec + 4);
+    work->count = count + 1;
+    u32* dst = (u32*)work->entries + count * 2;
+    *dst = word;
+    *(float*)(dst + 1) = value;
+}
+extern "C" void copyObjVec724(void* self, void* src) {
+    Vec724Block* vec = (Vec724Block*)self;
+    vec->x = ((u32*)src)[0];
+    vec->y = ((u32*)src)[1];
+    vec->z = ((u32*)src)[2];
+}
+extern "C" u32 getGlobalU32_40F4() {
+    extern void* lbl_eu_806640F4;
+    return (u32)lbl_eu_806640F4;
+}
+
+// Fill the C28 reslist
+extern "C" void fillReslistC28(UnkClass_805764CC* self, void* arg) {
+    CfReslistNode* cur = (CfReslistNode*)self->field_0xC28.field_0x04;
+    CfReslistNode* p;
+    cur = cur->mNext;
+    goto check;
+loop:
+    p = cur;
+    cur = cur->mNext;
+    p->mNext = 0;
+check:
+    if (cur != (CfReslistNode*)self->field_0xC28.field_0x04) goto loop;
+
+    CfReslistNode* s = (CfReslistNode*)self->field_0xC28.field_0x04;
+    s->mNext = s;
+    s = (CfReslistNode*)self->field_0xC28.field_0x04;
+    s->mPrev = s;
+
+    cur = ((CfReslistNode*)self->field_0xBC8.field_0x04)->mNext;
+    goto check2;
+loop2:
+    void* data = cur->mItem;
+    ObjFlagsEx* payload = (ObjFlagsEx*)data;
+    u32 type = (u32)payload->type94;
+    u16 id = (u16)payload->field9C;
+    if (type == 5 && id == (u16)(u32)arg) {
+        poolInsertThunk(&self->field_0xC28, data);
+    }
+    cur = cur->mNext;
+check2:
+    if (cur != (CfReslistNode*)self->field_0xBC8.field_0x04) goto loop2;
+}
+
+// Destructor for the standalone reslist-like object at 0x800B183C.
+extern "C" void __dt__800B183C(void* self) {
+    u32 obj = (u32)self;
+    u32 sentinel = *(u32*)(obj + 4);
+    u32 node = *(u32*)sentinel;
+    u32 zero = 0;
+    u32* p;
+    goto check;
+loop:
+    p = (u32*)node;
+    node = *p;
+    *p = zero;
+check:
+    sentinel = *(u32*)(obj + 4);
+    if (node != sentinel) goto loop;
+    *(u32*)sentinel = sentinel;
+    u32 head = *(u32*)(obj + 4);
+    *(u32*)(head + 4) = head;
+    TboxInfoReslistLayout* tbox = (TboxInfoReslistLayout*)self;
+    if (tbox->field_0x34 == 0) {
+        u32 pool = tbox->field_0x2c;
+        if (pool != 0) {
+            if (pool != 0) {
+                operator delete[]((void*)(pool - 0x10));
+            }
+            tbox->field_0x2c = 0;
+        }
+    }
+    tbox->field_0x30 = 0;
+}
+

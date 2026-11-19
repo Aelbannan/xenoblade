@@ -187,15 +187,6 @@ static void scheduleDestroy(CSchedule* item) {
     ((CSchedDispatch*)item)->destroy(1);
 }
 
-// Packed view of CSchedule::field_0x00 (s16 flags word). The schedule-step
-// removal path tests two 1-bit fields: destroy request at LSB position 9
-// (0x200) and clear-on-match at position 14 (0x4000); MWCC extracts each
-// with a record-form rlwinm (SH = 32 - pos - 1).
-struct SchedFlagBits {
-    u16 clearOnMatch : 1;   // extracted at bit 14
-    u16 midPad : 4;
-    u16 destroy : 1;        // extracted at bit 9
-};
 
 // Global schedule-list mode flag (bit 12 selects the alternate list) packed
 // with the mem-manager allocation handle at +2 / +4. Defined in another TU;
@@ -277,8 +268,7 @@ void SchedList_StepAll(SLList* self, f32 dt) {
             rnode = sentinel->mNext;
             while (rnode != sentinel && rnode != 0) {
                 item = (CSchedule*)rnode->mItem;
-                if ((((SchedFlagBits*)&item->field_0x00)->destroy) &&
-                    !(((SchedFlagBits*)&item->field_0x00)->clearOnMatch)) {
+                if (item->field_0x00.b10 && !item->field_0x00.b15) {
                     if (item != 0) {
                         if (item != 0) {
                             scheduleDestroy(item);

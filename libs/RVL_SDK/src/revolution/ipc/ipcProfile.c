@@ -2,11 +2,11 @@
 
 #define IPC_REQUEST_MAX 32
 
-static s32 IpcNumUnIssuedReqs;
-static s32 IpcNumPendingReqs;
+s32 IpcNumUnIssuedReqs;
+s32 IpcNumPendingReqs;
 
-static IPCRequestEx* IpcReqPtrArray[IPC_REQUEST_MAX];
-static s32 IpcFdArray[IPC_REQUEST_MAX];
+IPCRequestEx* IpcReqPtrArray[IPC_REQUEST_MAX];
+s32 IpcFdArray[IPC_REQUEST_MAX];
 
 static void AddReqInfo(IPCRequestEx* req, s32 fd);
 static void DelReqInfo(IPCRequestEx* req, s32 fd);

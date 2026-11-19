@@ -210,7 +210,7 @@ extern "C" int selectEhpVoicePair(int a, int b) {
 // 0x48-byte object, base-constructs it, installs the EHP vtable manually,
 // zeroes the rotating slots, randomizes the rotation direction, and installs
 // the default slot-state triple. Returns NULL on any gate failure.
-CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* handle, CVoiceHandle* owner2, s32 hp) {
+CVS_THREAD_EHP* CVS_THREAD_EHP::create(CVoiceHandle* handle, CVoiceHandle* owner2, s32 hp) {
     CVS_THREAD_EHP* self;
     int ok;
     float cur;

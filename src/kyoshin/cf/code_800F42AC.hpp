@@ -49,11 +49,6 @@ extern "C" void* UIWin_QueryPageFlag(u32 a);
 // (f32/f64 small-data literals; values live in data, only the offset is
 // encoded in the instruction.)
 // ---------------------------------------------------------------------------
-extern const f32 lbl_eu_80666E90; // 1.0f
-extern const f64 lbl_eu_80666E98; // rounding add - positive
-extern const f64 lbl_eu_80666EA0; // rounding add - negative
-extern const f64 lbl_eu_80666EA8; // int->float conversion magic (0x4330000080000000)
-extern const f32 lbl_eu_80666EB0; // constant A
 
 /// Sub-object accessed through the 0x0C pointer. Field at 0x7C is a float
 /// (used for ratio/percent computations).

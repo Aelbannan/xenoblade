@@ -596,11 +596,8 @@ struct CPSkillCharData {
 
 // Equipment lookup helpers for CPassiveSkillLine_syncEquipState (retail symbols unmangled;
 // same flat declarations as CItemBoxInfo.hpp / CEquipChange.hpp).
-extern "C" void* CItem_kindPtr(u32 index, s16 value);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
-extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
-extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 

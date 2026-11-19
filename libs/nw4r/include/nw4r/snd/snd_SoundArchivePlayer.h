@@ -162,7 +162,7 @@ private:
 
         virtual bool GetWaveSoundData(detail::WaveSoundInfo* pSoundInfo,
                                       detail::WaveSoundNoteInfo* pNoteInfo,
-                                      detail::WaveInfo* pWaveData,
+                                      detail::WaveInfo* pWaveInfo,
                                       const void* pWsdData, int index,
                                       int noteIndex,
                                       u32 callbackArg) const; // at 0xC

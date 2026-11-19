@@ -909,7 +909,7 @@ extern "C" void* followIterNext(void* node);
 extern "C" u16 getItemId__Q22cf13CfGameManagerFv(void* object);
 
 // Imports used by walkListByItemId / func_800B7214 (retail symbol names).
-extern "C" void getGlobalU32_40F4();
+extern "C" u32 getGlobalU32_40F4();
 extern "C" void* getListB28__Fv();
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 

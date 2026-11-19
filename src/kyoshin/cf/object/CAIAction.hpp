@@ -246,7 +246,7 @@ extern "C" u16 getArtsSlotByFlatIdx(const void* artsSet, int idx);
 extern "C" u16 getArtsSlotAtCnt(void* artsSet, u32 idx);
 extern "C" void* getAtkParam(void* artsSet, int idx);
 // BDAT select table + global bdat root (data imports).
-extern u32 lbl_eu_806640F8;
+extern void* lbl_eu_806640F8;
 extern u8 lbl_eu_80501968[];
 
 // Sub-object referenced by CAIActionQuery::unk18.

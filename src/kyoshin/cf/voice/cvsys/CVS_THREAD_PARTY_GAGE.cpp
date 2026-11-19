@@ -4,47 +4,11 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802aac94 (PartyGage_NotifyDone_8560)
-// Completion callback: if the thread is not currently busy, fire the
-// playback-start virtual (blank1 slot, vtable offset 0x08).
-void PartyGage_NotifyDone_8560(CVS_THREAD_PARTY_GAGE* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
-    }
-}
-
-// us-802aacdc (PartyGage_RemoveVoice_85A8)
-// Remove a released voice from the two slots (partyMember, gaugeData) by
-// matching the handle's embedded CCharVoice pointer against the freed voice.
-void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
-    DetachThreadVoice(self, voicePtr);
-
-    // Slots 0x20/0x24: bias handle to its embedded voice, compare with voicePtr.
-    CVoiceHandle* handle = self->partyMember;
-    CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->partyMember = NULL;
-    }
-
-    handle = self->gaugeData;
-    biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->gaugeData = NULL;
-    }
-}
-
-
 // us-802aa8a8 (constructor factory)
 // Factory/constructor.  Picks a gauge threshold level from the two owner
 // counts, allocates the two voice-handle buffers and the object itself, runs
 // the base constructor, sets vtable/owner fields, and copies init data.
-extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
+CVS_THREAD_PARTY_GAGE* CVS_THREAD_PARTY_GAGE::create(int owner1, int owner2) {
     if (owner1 <= owner2) return NULL;
     if (HpVoice_CountActiveVoices(NULL) < 2) return NULL;
 
@@ -85,9 +49,10 @@ extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int ow
         }
     }
 
-    // Copy init data from the global table as the base's ptmf member
-    // (VoiceCb is 12 bytes; DOWN precedent).
-    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539C48)->unk0;
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_PARTY_GAGE::advanceA);
     return self;
 }
 
@@ -96,14 +61,11 @@ extern "C" CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int ow
 // Advance/play function.  Copies init data into the base fields, then if the
 // party-member handle is present and idle, plays a threshold-dependent voice;
 // otherwise fires the playback-start virtual (blank1).
-void PartyGage_AdvanceA_82D4(CVS_THREAD_PARTY_GAGE* self) {
-    u32 v0;
-    const u32* p = lbl_eu_80539C54;
-    v0 = *p++;
+void CVS_THREAD_PARTY_GAGE::advanceA() {
+    CVS_THREAD_PARTY_GAGE* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_PARTY_GAGE::advanceB);
     CVoiceHandle* member = self->partyMember;
-    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state1 = *p++;
-    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state0 = (u32*)v0;
-    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state2 = *p;
 
     if (member != NULL && ((CVoiceVTV*)member)->idle() == 0) {
         // Choose the voice ID based on the gauge-change threshold level.
@@ -137,18 +99,12 @@ void PartyGage_AdvanceA_82D4(CVS_THREAD_PARTY_GAGE* self) {
 // selects a threshold-dependent voice ID, applies correction clauses for
 // specific IDs, plays through TryRequestVoice, and otherwise fires the
 // playback-start virtual (blank1 slot, vtable offset 0x08).
-void PartyGage_AdvanceB_83CC(CVS_THREAD_PARTY_GAGE* self) {
+void CVS_THREAD_PARTY_GAGE::advanceB() {
+    CVS_THREAD_PARTY_GAGE* self = this;
     if (IsThreadVoiceActive(self) != 0) return;
 
-    // Copy init data -- index 0 first (lwzu pointer-increment) so the retail
-    // lis @ha + lwzu @l base-load form is produced.  v0 declared before p so
-    // MWCC colours the lwzu destination into r3 and the base pointer into r4.
-    u32 v0;
-    const u32* p = lbl_eu_80539C60;
-    v0 = *p++;
-    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state1 = *p++;
-    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state0 = (u32*)v0;
-    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state2 = *p;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_PARTY_GAGE::notifyDone);
 
     // Declarations hoisted above the gotos (MWCC forbids jumping past an
     // initialized declaration).
@@ -211,6 +167,42 @@ int PartyGage_GetBufSize_8620() {
 }
 
 
+// us-802aac94 (PartyGage_NotifyDone_8560)
+// Completion callback: if the thread is not currently busy, fire the
+// playback-start virtual (blank1 slot, vtable offset 0x08).
+void CVS_THREAD_PARTY_GAGE::notifyDone() {
+    if (IsThreadVoiceActive(this) == 0) {
+        PlayThreadVoice();
+    }
+}
+
+// us-802aacdc (PartyGage_RemoveVoice_85A8)
+// Remove a released voice from the two slots (partyMember, gaugeData) by
+// matching the handle's embedded CCharVoice pointer against the freed voice.
+void PartyGage_RemoveVoice_85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
+    DetachThreadVoice(self, voicePtr);
+
+    // Slots 0x20/0x24: bias handle to its embedded voice, compare with voicePtr.
+    CVoiceHandle* handle = self->partyMember;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->partyMember = NULL;
+    }
+
+    handle = self->gaugeData;
+    biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->gaugeData = NULL;
+    }
+}
+
+
 // us-802aad5c (PartyGage_InitVoiceId_8628)
 // Voice-ID init helper.  If the handle has its manager flag set, is not
 // actively playing, and a handle buffer can be allocated, play a random
@@ -246,24 +238,6 @@ extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 __RTTI__Q22cf21CVS_THREAD_PARTY_GAGE[2];
 
 extern const char lbl_eu_805107C8[0x20] = "cf::CVS_THREAD_PARTY_GAGE";
-
-u32 lbl_eu_80539C48[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)PartyGage_AdvanceA_82D4,
-};
-
-u32 lbl_eu_80539C54[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)PartyGage_AdvanceB_83CC,
-};
-
-u32 lbl_eu_80539C60[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)PartyGage_NotifyDone_8560,
-};
 
 u32 lbl_eu_80539C6C[7] = {
     (u32)__RTTI__Q22cf21CVS_THREAD_PARTY_GAGE,

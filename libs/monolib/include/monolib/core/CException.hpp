@@ -13,7 +13,7 @@ public:
     virtual bool gameExceptionCB(u32 r4) = 0;
 };
 
-class CException : public CProc {
+class __declspec(novtable) CException : public CProc {
 public:
     CException(const char* pName, CWorkThread* pParent);
     virtual ~CException();

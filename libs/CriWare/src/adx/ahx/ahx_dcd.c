@@ -375,9 +375,9 @@ s32 AHXDCD_DecodeBhdr(void* self, s32* out) {
     out[9] = AHXBSR_GetBitStm(self, 1);
     out[10] = AHXBSR_GetBitStm(self, 1);
     out[11] = AHXBSR_GetBitStm(self, 2);
-    if (out[7] == 3 && out[8] == 0)
-        return 0;
-    return -1;
+    if (out[7] != 3 || out[8] != 0)
+        return -1;
+    return 0;
 }
 s32 AHXDCD_DecodeBitalloc2(void* self, void* inf, s32* out) {
     AHXDcdInf* info = (AHXDcdInf*)inf;

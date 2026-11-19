@@ -1242,7 +1242,7 @@ bool cf::CActParamAnimGame::fireStateGate(u32 type, u32 state) {
     if (field530 & 0x1C0) return false;
     if (isSpeedAbove(this) != 0 || isSpeedInRange(this) != 0) {
         if (state == 0) {
-            if (field52C == 1 && (field530 & 0x200) == 0) {
+            if (field52C == 1 && isFiringAllowed()) {
                 field530 |= 0x40;
                 ((void (*)(void*, u32))startAnimDual)(this, type);
                 return true;

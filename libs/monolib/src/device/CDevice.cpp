@@ -74,14 +74,8 @@ extern "C" void wkStandbyLogin__7CDeviceFv();
 extern "C" void wkStandbyLogout__7CDeviceFv();
 extern "C" void __dt__7CDeviceFv();
 extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80522AA8[40] = "@unnamed@CDevice_cpp@::CDeviceException";
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u32 lbl_eu_80522AD0[30] = {
-    0x43446576, 0x69636556, 0x49004344, 0x65766963, 0x65475800,
-    0x43446576, 0x69636546, 0x6F6E7400, 0x43446576, 0x69636552,
-    0x656D6F74, 0x65504144, 0x00434465, 0x76696365, 0x436C6F63,
-    0x6B004344, 0x65766963, 0x65534300, 0x43446576, 0x69636546,
-    0x696C6500, 0x434C6962, 0x43726900, 0x43446576, 0x69636545,
-    0x78636570, 0x74696F6E, 0x00434465, 0x76696365, 0x00000000
-};
+// The device-name strings in retail 0x80522AD0 are the compiler's literal
+// pool of the create() calls below; no hand-built duplicate array here.
 extern "C" u32 lbl_eu_8056C000[40] __attribute__((aligned(8))) = {
     (u32)&lbl_eu_80663680, 0x00000000, 0,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
@@ -235,30 +229,29 @@ namespace {
         static const int MAX_CHILD = 0x20;
     };
 }
+// Retail .sbss run, in address order: 0x80665650 (the CDevice singleton),
+// 0x80665654 (the exception singleton) and the 8-byte slot at 0x80665658.
+CDevice* CDevice::spInstance;
 // Defined at file scope with C linkage (was anon-namespace -> MWCC mangled the
 // symbol as lbl_eu_80665654__21@unnamed@CDevice_cpp@, drifting the reloc name).
 extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
+extern "C" { u64 lbl_eu_80665658; }
 
-CDevice* CDevice::spInstance;
-// Retail sbss labels for the two TU singletons (MWCC_CASES §1a).
 extern "C" {
 extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
 }
-// Retail .sdata labels for the region-name pointer pair (the class-static
-// member symbols drift the reloc names; retail owns these four words as one
-// .sdata run at 0x80663670).
-extern "C" const char* lbl_eu_80663670 = "DeviceSystem1";  // CDevice::devSys1String
-extern "C" const char* lbl_eu_80663674 = "DeviceSystem2";  // CDevice::devSys2String
-//Unused strings for region names?
+
+// (retail CDevice.o owns only 0x80663680/0x80663688), so keep them imported.
+extern "C" const char* lbl_eu_80663670;  // CDevice::devSys1String
+extern "C" const char* lbl_eu_80663674;  // CDevice::devSys2String
+
 FixStr<64> CDevice::spNotRunningDeviceName;
 FixStr<64> CDevice::spColdStartNotRunningDeviceName;
 //Handles for the DeviceSystem1/DeviceSystem2 regions, which live in MEM1/MEM2 respectively.
-// Retail stores these as zero-initialized .sbss slots (lbl_eu_80665658, 8B total);
-// createRegions() assigns them before use, so leave them default-initialized.
+// The retail slots at 0x80663678/0x8066367C precede this TU's .sdata slice;
+// createRegions() assigns them through the imported names.
 extern "C" mtl::ALLOC_HANDLE lbl_eu_80663678;  // CDevice::sDeviceRegion1Handle
 extern "C" mtl::ALLOC_HANDLE lbl_eu_8066367C;  // CDevice::sDeviceRegion2Handle
-mtl::ALLOC_HANDLE lbl_eu_80663678;
-mtl::ALLOC_HANDLE lbl_eu_8066367C;
 
 CDevice::~CDevice(){
     spInstance = nullptr;

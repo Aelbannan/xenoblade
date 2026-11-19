@@ -510,7 +510,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
         u32 handle = mtl::MemManager::getHandleMEM2();
         mMemRegion.createRegion(handle, 0x3000, "CSysWin", 1);
         Class_8045F858 regionGuard(&mMemRegion);
-        u8* archive = reinterpret_cast<u8*>(mFileHandle->getData());
+        void* archive = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         CTagProcessor* tag = (CTagProcessor*)mtl::MemManager::allocate(
             0x858, CLibLayout::getAllocHandle());

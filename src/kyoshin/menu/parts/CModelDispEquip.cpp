@@ -1325,39 +1325,6 @@ void CModelDispEquip::resetBase() {
     ((unsigned char*)this)[8] = 0;
 }
 
-void CModelDispEquip::ModelDispEquip_ReplaySlotAnims() {}
-void CModelDispEquip::vfunc18() {}
-void CModelDispEquip::ModelDispEquip_HandleSlotCmd() {}
-void CModelDispEquip::vfunc40() {}
-
-void CModelDispEquip::thunk4_1298() {
-    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->ModelDispEquip_ReplaySlotAnims();
-}
-
-void CModelDispEquip::thunk4_1440() {
-    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->vfunc40();
-}
-
-void CModelDispEquip::thunk4_131C() {
-    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->ModelDispEquip_HandleSlotCmd();
-}
-
-void CModelDispEquip::thunk4_1318() {
-    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->vfunc18();
-}
-
-void CModelDispEquip::thunk4_F9C() {
-    ModelDispEquip_RefreshEquipRef(reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4));
-}
-
-void CModelDispEquip::thunk4_dtor() {
-    ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 4);
-}
-
-void CModelDispEquip::thunk8_1444() {
-    ModelDispEquip_ClearAnimPtr(reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 8), 0);
-}
-
 void CModelDispEquip::thunk8_dtor() {
     ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 8);
 }

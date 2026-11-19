@@ -270,6 +270,7 @@ public:
 
         return pInfo->stringId;
     }
+    u32 GetSoundCount() const;
     u32 GetPlayerCount() const;
     u32 GetGroupCount() const;
 
@@ -278,6 +279,7 @@ public:
     }
     u32 GetSoundUserParam(u32 id) const;
 
+    u32 GetFileCount() const;
     bool ReadFileInfo(u32 id, SoundArchive::FileInfo* pInfo) const;
     bool ReadFilePos(u32 fileId, u32 id, SoundArchive::FilePos* pPos) const;
 

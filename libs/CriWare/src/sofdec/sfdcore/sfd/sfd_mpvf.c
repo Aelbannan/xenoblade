@@ -142,7 +142,6 @@ void SFD_CalcYccPlane(s32 base, s32 w, s32 h, void* out) {
 s32 sfmpvf_SetPicUsrBuf(SfdHandle* self, u32 w, u32 h, u32 stride) {
     SfdPicUsrBuf* usr = &self->picUsr;
     s32 i;
-    s32 hm1;
 
     if (w == 0 || h == 0 || stride == 0) {
         for (i = 0; i < 37; i++) {
@@ -155,13 +154,12 @@ s32 sfmpvf_SetPicUsrBuf(SfdHandle* self, u32 w, u32 h, u32 stride) {
     }
     {
         u32 cur = w + stride;
-        hm1 = (s32)h - 1;
         usr->width = w;
         usr->height = h;
         usr->stride = stride;
         usr->curWidth = w;
         usr->field_0x10 = 0;
-        for (i = 0; i < (hm1 >= 16 ? 16 : hm1); i++) {
+        for (i = 0; i < ((s32)(h - 1) >= 16 ? 16 : (s32)(h - 1)); i++) {
             usr->band[i].top = cur;
             usr->band[i].bottom = 0;
             cur += stride;

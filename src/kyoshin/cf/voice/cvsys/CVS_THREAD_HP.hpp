@@ -75,6 +75,7 @@ struct CVoiceHandleState {
     u16 field_0x3F28;  // 0x3F28: sub-state index (8 -> base 3)
 };
 
+
 // Init-state triple for this thread variant.
 extern u32 lbl_eu_80539C04[3];
 
@@ -84,7 +85,6 @@ extern u32 lbl_eu_80539C10[3];
 // Init-state triple copied by the factory __ct__802A7254.
 extern u32 lbl_eu_80539BF8[3];
 
-// CVS_THREAD_HP vtable (stored at offset 0x1C by the factory).
 extern u32 lbl_eu_80539C1C[7];
 
 // HP-ratio thresholds used by the factory to pick the HP-change voice ID.
@@ -113,4 +113,5 @@ public:
     int field_0x24;            // 0x24: voice ID for HP-change playback
 
     int blank1() override;
+    static CVS_THREAD_HP* create(CVoiceHandle* handle, int arg);
 };

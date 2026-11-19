@@ -14,10 +14,10 @@ extern "C" void UIWin_FlagBufClear();
 // double-arithmetic + fctiwz idiom: (f32)(s32)((double)v + 0.5-ish).
 static inline f32 roundf_to_f32(f32 v) {
     double round;
-    if (v > lbl_eu_80666E90)
-        round = lbl_eu_80666E98;
+    if (v > 0.0f)
+        round = 0.5;
     else
-        round = lbl_eu_80666EA0;
+        round = -0.5;
     return (f32)((s32)((double)v + round));
 }
 
@@ -26,7 +26,7 @@ static inline f32 roundf_to_f32(f32 v) {
 /// a game-manager flag driven constant, then the sub-object's own value.
 float ScMain_GetRoundedMetric(ScMain* self) {
     if (self->sub == NULL)
-        return lbl_eu_80666E90;
+        return 0.0f;
 
     cf::Sc48778* node = (cf::Sc48778*)MapFx_ResolveOwner((void*)findObjectById__Fi((int)self->field_00));
     if (isBattleStatusActive(node->data_08, 0x10) != 0) {
@@ -35,10 +35,10 @@ float ScMain_GetRoundedMetric(ScMain* self) {
         f32 a = obj->field_20;
         f32 b = self->sub->field_7C;
         f32 sum = a + b;
-        if (sum > lbl_eu_80666E90)
-            round = lbl_eu_80666E98;
+        if (sum > 0.0f)
+            round = 0.5;
         else
-            round = lbl_eu_80666EA0;
+            round = -0.5;
         return (f32)((s32)((double)sum + round));
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -52,12 +52,12 @@ float ScMain_GetRoundedMetric(ScMain* self) {
 /// manager -> constant A; no sub-object -> 1.0f; else sub->field_7C / field_830.
 float ScMain_GetRatio(ScMain* self) {
     if (self->flags_824 & 0x100000)
-        return lbl_eu_80666E90;
+        return 0.0f;
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000))
-        return lbl_eu_80666EB0;
+        return 1.0f;
     if (self->sub == 0)
-        return lbl_eu_80666E90;
+        return 0.0f;
     return self->sub->field_7C / self->field_830;
 }
 
@@ -76,23 +76,23 @@ void ScMain_Reset(ScMain* self) {
     self->field_00 = 0;
     self->field_08 = 0;
     self->sub = 0;
-    self->field_830 = lbl_eu_80666E90;
+    self->field_830 = 0.0f;
     memset(&self->zero_828, 0, 8);
     self->field_10 = 0;
     self->field_14 = 0;
     self->field_58 = 0;
     self->field_5C = -1;
     self->field_60 = 0;
-    self->f_64 = lbl_eu_80666E90;
-    self->f_68 = lbl_eu_80666E90;
-    self->f_6C = lbl_eu_80666E90;
-    self->f_70 = lbl_eu_80666E90;
-    self->f_74 = lbl_eu_80666E90;
+    self->f_64 = 0.0f;
+    self->f_68 = 0.0f;
+    self->f_6C = 0.0f;
+    self->f_70 = 0.0f;
+    self->f_74 = 0.0f;
     self->field_8C = 0;
     self->s_90 = 0;
     self->field_C8 = 0;
-    self->f_78 = lbl_eu_80666E90;
-    self->f_7C = lbl_eu_80666E90;
+    self->f_78 = 0.0f;
+    self->f_7C = 0.0f;
     self->s_80 = 0;
     self->s_82 = 0;
     memset(&self->data_18, 0, 0x40);
@@ -108,16 +108,16 @@ void ScMain_Reset(ScMain* self) {
         self->subs[i].field_48 = 0;
         self->subs[i].field_4C = -1;
         self->subs[i].field_50 = 0;
-        self->subs[i].f_54 = lbl_eu_80666E90;
-        self->subs[i].f_58 = lbl_eu_80666E90;
-        self->subs[i].f_5C = lbl_eu_80666E90;
-        self->subs[i].f_60 = lbl_eu_80666E90;
-        self->subs[i].f_64 = lbl_eu_80666E90;
+        self->subs[i].f_54 = 0.0f;
+        self->subs[i].f_58 = 0.0f;
+        self->subs[i].f_5C = 0.0f;
+        self->subs[i].f_60 = 0.0f;
+        self->subs[i].f_64 = 0.0f;
         self->subs[i].field_7C = 0;
         self->subs[i].s_80 = 0;
         self->subs[i].field_B8 = 0;
-        self->subs[i].f_68 = lbl_eu_80666E90;
-        self->subs[i].f_6C = lbl_eu_80666E90;
+        self->subs[i].f_68 = 0.0f;
+        self->subs[i].f_6C = 0.0f;
         self->subs[i].s_70 = 0;
         self->subs[i].s_72 = 0;
         memset(cur->data_08, 0, 0x40);
@@ -136,15 +136,15 @@ int ScMain_GetSummedInt(ScMain* self) {
     if (self->flags_824 & 0x20000)
         return 99999;
     f32 sum = self->f_6C + self->f_70;
-    if (sum < lbl_eu_80666E90)
+    if (sum < 0.0f)
         return 0;
     if (self->flags_84 & 0x80)
         return 0;
     double r;
-    if (sum > lbl_eu_80666E90)
-        r = lbl_eu_80666E98;
+    if (sum > 0.0f)
+        r = 0.5;
     else
-        r = lbl_eu_80666EA0;
+        r = -0.5;
     return (int)((double)sum + r);
 }
 

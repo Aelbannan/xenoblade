@@ -21,6 +21,7 @@
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
@@ -32,15 +33,15 @@ extern u32 lbl_eu_80663E28; // render-gate mode bitfield (bit 21 = busy)
 extern "C" {
 
     // CTitleAHelp widget callees (retail-unmangled func_ names).
-    void updateHelp(CTitleAHelp* self);
     void teardown(CTitleAHelp* self);
-    int isInitialized(CTitleAHelp* self);
-    void func_801C412C(CTitleAHelp* self);
+    void updateHelp(CTitleAHelp* self);
+
     void setNameText(CTitleAHelp* self, char* str);
-    void func_801C41E8(CTitleAHelp* self, u8 mode);
-    void applyPaneTevColorsAlt(CTitleAHelp* self);
-    void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
     void beginClose(CTitleAHelp* self);
+    void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+    void func_801C41E8(CTitleAHelp* self, u8 mode);
+    void func_801C412C(CTitleAHelp* self);
+    void applyPaneTevColorsAlt(CTitleAHelp* self);
 
     // CF / ui helpers (retail-unmangled names).
     void CUICfManager_setTimeout30();
@@ -224,7 +225,7 @@ extern "C" unsigned long MenuTutorialIsCreated(void) { return CMenuTutorial::sIn
  * tutorial widget phase and schedules the tutorial menu's next stage.
  */
 void MenuTutorialHandlePhase0(CMenuTutorial* self) {
-    if (isInitialized(&self->mTitleAHelp) != 0 &&
+    if (self->mTitleAHelp.isInitialized() != 0 &&
         self->mTutorial.Tutorial_GetField46Mark() != 0) {
         applyPaneTevColorsAlt(&self->mTitleAHelp);
         setNameText(&self->mTitleAHelp,

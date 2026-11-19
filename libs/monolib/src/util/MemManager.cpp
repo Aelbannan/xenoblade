@@ -9,9 +9,9 @@
 // (getHandleMEM2/setHandleMEM2 already use lbl_eu_8066350C); the member
 // definitions were renamed to these globals so the .o emits the retail
 // symbol names/bytes exactly.
-extern "C" const char lbl_eu_8066A1A8[5];   // "Mem1" (.sdata2, FloatUtils-owned)
-extern "C" const char lbl_eu_8066A1B0[5];   // "Mem2" (.sdata2, FloatUtils-owned)
-extern "C" const double lbl_eu_8066A1C8;    // 2^52 u32->double magic (.sdata2, FloatUtils-owned)
+extern "C" const char lbl_eu_8066A1A8[5] = "Mem1"; // region names owned by this TU
+extern "C" const char lbl_eu_8066A1B0[5] = "Mem2";
+extern "C" const double lbl_eu_8066A1C8; // 2^52 u32->double magic (compiler-pooled at its first use)
 
 extern "C" {
 // .rodata 0x80522410: the two OSReport strings ("ProgArea (%x / %x)\n" and

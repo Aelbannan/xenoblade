@@ -28,8 +28,8 @@ extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv();
 // The CfBdat static members are kept for the file-data assignment functions.
 extern void* lbl_eu_806640A0;   // spLandmarkListFileData
 extern void* lbl_eu_806640A8;   // spFldMapListFileData
-extern BdatFileData* lbl_eu_806640F4;   // spItmWpnListFileData
-extern BdatFileData* lbl_eu_806640F8;   // spItmEquipListFileData
+extern void* lbl_eu_806640F4;   // spItmWpnListFileData
+extern void* lbl_eu_806640F8;   // spItmEquipListFileData
 extern void* lbl_eu_80664114;   // spItmHeadListFileData
 extern void* lbl_eu_80664118;   // spItmBodyListFileData
 extern void* lbl_eu_8066411C;   // spItmArmListFileData
@@ -37,15 +37,15 @@ extern void* lbl_eu_80664120;   // spItmWaistListFileData
 extern void* lbl_eu_80664124;   // spItmLeggListFileData
 extern void* lbl_eu_80664190;   // sinit instance pointer
 // Additional sbss bdat file-data globals used by bdatGetItemName.
-extern BdatFileData* lbl_eu_806640D8;
-extern BdatFileData* lbl_eu_806640EC;
-extern BdatFileData* lbl_eu_806640F0;
-extern BdatFileData* lbl_eu_806640FC;
-extern BdatFileData* lbl_eu_80664104;
-extern BdatFileData* lbl_eu_80664108;
-extern BdatFileData* lbl_eu_8066410C;
-extern BdatFileData* lbl_eu_80664110;
-// Cached field-map row state written by bdatSetResRow (retail sbss labels).
+extern void* lbl_eu_806640D8;
+extern void* lbl_eu_806640EC;
+extern void* lbl_eu_806640F0;
+extern void* lbl_eu_806640FC;
+extern void* lbl_eu_80664104;
+extern void* lbl_eu_80664108;
+extern void* lbl_eu_8066410C;
+extern void* lbl_eu_80664110;
+
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 extern u32 lbl_eu_80664188;     // cached fld-map row (mirror of 80664184)
 extern float lbl_eu_8066418C;   // fld-map cache float

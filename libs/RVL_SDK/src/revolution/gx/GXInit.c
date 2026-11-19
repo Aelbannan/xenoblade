@@ -112,10 +112,10 @@ static GXFifoObj FifoObj;
 static GXData gxData;
 GXData* const __GXData = &gxData;
 
-volatile void* __piReg;
-volatile void* __cpReg;
-volatile u16* __peReg;
-volatile u16* __memReg;
+volatile void* __piReg = NULL;
+volatile void* __cpReg = NULL;
+volatile u16* __peReg = NULL;
+volatile u16* __memReg = NULL;
 
 static inline u32 GX_MEM_COUNTER_READ_U32(u32 name) {
     u32 ctrH0, ctrH1, ctrL;

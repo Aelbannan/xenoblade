@@ -17779,3 +17779,790 @@ never the shared `lbl_eu_80663E28`/`80664090`/`80664104` globals
 - Fix:       reverted all class/header/reslist-header/symbol changes; the `CfObjEnumListVtView` cast and its counted smell stay. Tried variants: virtual dtor only (−0xC store), real `_reslist_base<cf::CfObject*>` base with an inline-empty conditional dtor (same store), and a placement-new ctor variant for CLoad (null-guard mismatch). No exemption marker added.
 - Result:    negative_result; CTaskGame 103/103 ✓ restored, CfObjectEnumList 29/29 ✓ unchanged, all swept includers unchanged; faithful hard counts unchanged for the Cf units.
 - Confidence: negative_result (hexdiff --all before/after each variant, 2 lost ✓ measured).
+
+## Wave i (i2) COption — own `.sdata2` literal, `u32` helper decl, and flag A/B (Wii/1.1, -inline noauto)
+- Symptom:   `COption.cpp` declared `extern const f32 lbl_eu_80668C10` plus an `inline optionAnimFrame()` wrapper, gave `advanceAnimTransform` an `int` return contrary to its definition, carried `__declspec(noinline)` on the CCur19 ctor, and used `-ipa off` with a comment claiming only setupSubAnim20/24 needed it.
+- Cause:     `splits.txt` puts this TU's `.sdata2` at 0x80668C10..0x80668C30 and the retail object's first entry there is `0x3f800000` (1.0f): the animation-frame value is the TU's **own literal**, not a foreign constant. The noinline and both flag variants were covering three separate MWCC fold sites (CCur19 ctor into COption ctor, setupSubAnim20 into advanceState4To5, setupSubAnim24 into advanceState1To2); no stub, invented twin, or wrong definition order was present.
+- Fix:       use `1.0f` at the four call sites, delete the extern/wrapper, change the local helper return to the owning definition's `u32`, delete the ctor's `__declspec(noinline)`, and set the unit flag to `-inline noauto`. Flag A/B (whole unit, `hexdiff --all`, with the final source): no flags 19/48 (three folds), `-ipa off` 22/48, `-inline noauto` 22/48, both 22/48; every ✓ row and % column identical in the three 22/48 variants. Kept the narrower `-inline noauto` (explicit `inline` still folds); `-ipa off` is not needed and only suppresses all IPA. The pooled SDA21 reloc now spells `@6205` instead of `lbl_eu_80668C10` — accepted reloc-name drift, bytes/address identical.
+- Result:    COption 22/48→22/48 ✓ with no % loss; faithful hard 7→4 (label 6→4, noinline 1→0). link/extab/text-order/faithful/registry gates OK. Extab/data-diff mismatches are pre-existing (most of the unit is still retail asm).
+- Confidence: repo_proven (retail `.sdata2` dump via `vt.py`, splits ownership, four full-unit A/B hexdiff tables)
+- Applies to/a.k.a.: `lbl_eu_*` floats whose address is the first word of the unit's own `.sdata2` split; ctor/setup helper folds where `-inline noauto` and `-ipa off` tie.
+
+## Wave i (i2) negatives — COption `-ipa off` and no-flag probes
+- Symptom:   baseline comment attributed `-ipa off` solely to setupSubAnim20/24 folding.
+- Cause:     `-ipa file`/auto-inline also folds the CCur19 ctor; once `-inline noauto` suppresses auto-inline, the extra `-ipa off` changes nothing observable in this unit.
+- Fix:       measured no-flag (19/48, ctor + both advanceState folds gone), `-ipa off` alone (22/48), `-inline noauto` alone (22/48), both (22/48), then kept `-inline noauto`. No stub/twin/definition-order defect existed to remove; no exemption markers added.
+- Result:    negative_result for `-ipa off` as a *needed* flag and for dropping all flags; all 22 baseline ✓ preserved in the final state.
+- Confidence: negative_result
+
+## Wave i (i5) CtrlAct.hpp — real cf::CtrlAct virtuals from retail lbl_eu_8052B080
+- Symptom:   `cf::CtrlAct` declared placeholder `vf00..vf19` (plus `vf30/vf31/vf33`) and two call sites in CtrlAct.cpp used `vf30()/vf31()`; the class was a banned placeholder-shape header.
+- Cause:     the retail vtable at `0x8052B080` (36 words, in CBattleManager.cpp's `.data` split) is `[RTTI, 0, __dt__Q22cf7CtrlActFv, 0, ...]`: with -RTTI, declared virtual N sits at word `(N+2)*4`. Words +0x18..+0x54 are the 16 `CtrlEnemy_ret0_800888XX` stubs (already members `cf::CtrlEnemy::ret0_800888XX()`, `int()`), +0x80 is `cf::CtrlEnemy::ret1_800888F4()` (`int()`) and +0x84 is `CtrlEnemy_emptyStub_800888F0` (`void()`); +0x0C and +0x8C are literal zeros with no symbol.
+- Fix:       declared all 34 virtuals one per line in retail order: `virtual ~CtrlAct()` for the dtor slot, the derived-class member names/signatures for the ret stubs, the existing symbol names for the named handlers, and kept `vf01/vf33` counted for the two zero slots; rewrote the two callers to `ret1_800888F4()` / `CtrlEnemy_emptyStub_800888F0()`. No line-count padding or alias symbols.
+- Result:    CtrlAct 13/33 ✓ before→after, byte-for-byte identical hexdiff table including every % column; faithful hard 445→445 (label 414, offset_cast 7, view_struct 22, rule 1, foreign_data 1); link-gate missing 43 OK, extab/text-order/registry gates OK. CtrlAct.cpp is the only includer of the header in src/libs/include (grepped transitively).
+- Confidence: repo_proven (DOL vtable dump resolved through config/us/symbols.txt, before/after hexdiff --all)
+- Applies to/a.k.a.: `lbl_eu_80527BB0` (base CtrlAct/CtrlBase table) has the same leading `[RTTI, 0, dtor, 0]` shape; `lbl_eu_80527738` (CtrlEnemy) confirms index 0 is the dtor.
+
+## Wave i (i16) CException — compiler-emitted deleting destructor from the real virtual dtor (Wii/1.1, `-O4,s`)
+- Symptom:   `__dt__10CExceptionFv` (0x68) was a hand-written `extern "C" void*` free function that called the base dtor with flag 0 and `operator delete` itself, while the class already declared `virtual ~CException()`. The hand-built `lbl_eu_8056CCE0` vtable referenced that free function.
+- Cause:     retail's dtor has no vptr re-store: `CProc` is `__declspec(novtable)` and `CException`'s ctor hand-installs the retail table, so the faithful class is also novtable. With that declaration MWCC emits exactly the retail D0 body (`cmpi r3,0` → clear `lbl_eu_806656C0` → base dtor(0) → delete-if-flags → return this) from an ordinary member dtor definition.
+- Fix:       declared `class __declspec(novtable) CException`; replaced the extern-"C" dtor body with `CException::~CException() { if (lbl_eu_806656C0 == this) lbl_eu_806656C0 = 0; }`; kept one mangled `extern "C" void __dt__10CExceptionFv(CException*, int);` declaration in the existing data-block extern group so the hand-built vtable can name the compiler-emitted symbol.
+- Result:    CException 11/18 ✓ unchanged, dtor 100% 0x68/0x68, `.text` 0xE60 unchanged, `.data`/`.rodata`/`.sdata` still byte-identical, faithful hard 154→154; link/extab/text-order/registry gates OK. No exemption markers added.
+- Confidence: repo_proven (full before/after hexdiff, object symbol dump, data diff)
+
+## Wave i (i16) CActParamAnimGame field530 — inlined predicate boundary, not a volatile object
+- Symptom:   `field530` and view `flags530` were `volatile` with the comment "retail reloads it across the flag-check branch in fireStateGate". Deleting both qualifiers made `fireStateGate` 100%→26.2%: MWCC CSEs `lhz r0,0x530(r3)` (0x200 test) + `lhz r0,0x530(r3)` (0x40 store) into one load, while retail emits both.
+- Cause:     the duplicate load is a source-level call/inlining boundary, not an alias or hardware-visible field. Measured negatives: a distinct `CActParamAnimGame* v = this` and a cast to the existing `CActParamAnimGameView*` both still CSE. An inline member predicate that performs only the 0x200 test restores the second load without any cast/pragma/volatile.
+- Fix:       removed `volatile` from both declarations; added `bool isFiringAllowed() const { return (field530 & 0x200) == 0; }` and used it in the state-0 branch of `fireStateGate`.
+- Result:    CActParamAnimGame 17/33 ✓ held (all baseline ✓ intact), `fireStateGate` 100%, `runBattleMove` 2.5%→5.1%, extab diffs 17→16, faithful hard 367→367 (two other volatile sites remain in this TU); split PASS. No exemption markers added.
+- Confidence: hypothesis (inline boundary inferred from the two retail loads; the predicate itself has no retail symbol)
+
+## Wave i (i3) CSkipTimer — real free-function declarations, retail text order, and natural assignment (Wii/1.1, `-O4,s -func_align 4`)
+- Symptom:   `CSkipTimer.hpp` had an invented inline member `isSkipActive()` while the retail TU defines a free `isSkipActive(CSkipTimer*)`; many free functions were defined/typed as C++ (`CSkipTimerTick__FP10CSkipTimer`, `CSkipTimerFlagButton__FPUc`, `u8*` `CSkipTimer2MarkActive`), `CSkipTimerStampSlotText` took `CSkipTimer*` and was called by punning the embedded `CSkipTimer2`, and `BeginLoad`/`OnFileEvent` used hand-expanded member copies. Definitions were in a different order from retail `.text`.
+- Cause:     one symbol had two views (member twin vs real C function), caller declarations used C linkage while definitions used C++ (emitted mangled twins), and the old `-ipa off` comment conflated two separate MWCC effects: it keeps StampSlotText out-of-line when its definition follows the caller, but suppresses the implicit `CSysWin`/`CSkipTimer2` assignment folding. With retail text order StampSlotText precedes its caller and folds under every flag tried, so `-ipa off` has no upside and emits the large weak `__as__7CSysWinFRC7CSysWin` for the natural assignment.
+- Fix:       removed the invented member; declared every TU-owned free function once with the retail bare C name in `CSkipTimer.hpp` (correct typed params/int returns) and trimmed `CSkipTimerImports.hpp` to external data/callees only; defined `func_8029F6EC`, `CSkipTimer2OnAdvanceEnd` and `isSkipActive` under their real names; restored `mSysWin = CSysWin(0);` / `mSkipTimer2 = CSkipTimer2(mLayout);`; put all 44 definitions in retail `.text` order. Flag A/B on the final source (`hexdiff --all`): default 43/44, `-inline noauto` 43/44 with an identical per-function table, `-ipa off` 41/44 (BeginLoad 28.6%, OnFileEvent 56%, two extra extab size diffs). Kept default `-O4,s -func_align 4`; the configure comment now states the measured reason.
+- Result:    40/44 -> 43/44 ✓ (all previously ✓ retained); retail-only/decomp-only symbol sets now empty apart from the two expected weak linked-view copies; faithful hard 41 -> 41 unchanged (`addr_func` soft 1 -> 3). `CSkipTimer_UpdateSlotFrame` stays 33.9% (0xF8 vs 0xD4; the inlined stamp helper), leaving one extabindex size byte different — the unit's pre-existing extab mismatch is reduced and not newly introduced. link-gate missing=43 OK, extab-gate OK, text-order-gate OK, faithful OK, registry_check OK.
+- Confidence: repo_proven (four full-unit hexdiff A/B tables plus symbol-set comparison before/after)
+- Applies to/a.k.a.: `CSkipTimerStampSlotText` typed as `CSkipTimer2*`, `CSkipTimer2MarkActive(CSkipTimer2*)`, `CSkipTimerFlagButton(CSkipTimer*)`, `-ipa off` with assignment-from-temporary, retail-order definitions causing helper auto-inline.
+
+## Wave i (i3) negatives — CSkipTimer `-ipa off` and definition-order/flag combinations
+- Symptom:   prior records credited `-ipa off` with keeping `CSkipTimerStampSlotText` as a `bl` from `CSkipTimer_UpdateSlotFrame`.
+- Cause:     in the old source the stamp helper was defined *after* its caller; the direct `bl` was a definition-order effect, not a property of `-ipa off`. After moving definitions into retail order, MWCC folds the helper under `-ipa off`, default and `-inline noauto` alike. `-ipa off` then only blocks the implicit member-wise assignments needed by the natural `mSysWin`/`mSkipTimer2` construction.
+- Fix:       measured all three flag variants both before and after the source audit; reverted `-ipa off`. Did not use `noinline`/pragma/volatile or move the helper after its caller just to buy a match.
+- Result:    negative_result for `-ipa off` as a faithful-unit flag; 40/44 (natural assignment, old order) and 43/44 (final source) hold under default flags.
+- Confidence: negative_result
+
+## Wave i follow-up (i2) COption — three `#pragma optimize_for_size` blocks replaced by unit `-O4,s` (Wii/1.1)
+- Symptom:   `COption.cpp` wrapped the CCur19 dtor, COption ctor and COption dtor in `#pragma push / optimize_for_size on / pop`; removing them under the previous `-inline noauto` flag dropped CCur19 dtor and both COption ctor/dtor from 100% (22/48 → 19/48).
+- Cause:     the retail TU is compiled at `-O4,s`. The per-function pragmas were reproducing a unit-wide opt level, not a property of those three bodies. At `-O4,s` MWCC emits the same stmw/lmw frames and field-store schedule without the pragmas, and it also suppresses the same-TU folds that needed `-inline noauto`, so that flag becomes redundant.
+- Fix:       deleted all three pragma triples, kept normal source indentation, and set `extra_cflags=["-O4,s"]`. Whole-unit A/B: no pragmas + `-inline noauto` 19/48; `-func_align 4` alone 17/48; `-O4,s` alone 22/48; `-O4,s -func_align 4`, `-O4,s -inline noauto` and all three also 22/48 with byte-identical objects (same SHA-256). The pragma-free `-O4,s` object is byte-identical to the original pragmas + `-inline noauto` object.
+- Result:    COption 22/48→22/48 ✓, no % column or size changed; faithful hard 4→4 (no new smell). link/extab/text-order/registry gates OK; faithful gate failed only on three other agents' in-flight units (CEquipItemBox, CfNandManager, code_800B06A4). Extab/data mismatches remain pre-existing for this mostly-unwritten unit.
+- Confidence: repo_proven (six whole-unit hexdiff tables + object SHA-256 comparison)
+- Applies to/a.k.a.: `#pragma optimize_for_size on` triples around ctor/dtor bodies in kyoshin menu TUs; test unit `-O4,s` before keeping a per-function size pragma.
+
+## Wave i follow-up (i2) negatives — COption pragma alternatives
+- Symptom:   pragma removal under `-inline noauto`, and `-func_align 4` as a substitute.
+- Cause:     neither `-inline noauto` nor alignment controls the small-frame codegen; only `-O4,s` does.
+- Fix:       measured and rejected: pragma-free `-inline noauto` 19/48, `-func_align 4` alone 17/48. No pragmas or exemption markers retained.
+- Result:    negative_result; minimal `-O4,s` kept.
+- Confidence: negative_result
+
+## Wave i (i6) CActorParam.hpp — typed virtual returns replace forced-name definitions (Wii/1.1)
+- Symptom:   16 CActorParam virtuals (17/32/44/45/79/80/93/97/99/104/128/139/151/162/169/172) were declared `void` in the shared header while their only bodies in CfObjectEne.cpp were `extern "C" <real-type> <mangled>Fv(cf::CActorParam* self, ...)` definitions, including `(u32)self->unk15E0` and `void*` returns that hid float/u16*/struct pointers.
+- Cause:     the retail stubs only use r3: `lfs f1` (17/32/44/45/169), `addi r3` (79/80/93/97/99/104/151), `lwz r3` (128/139/162/172). The header drift forced the definitions into C linkage with an invented `self` parameter; MWCC's member mangling omits the return type, so a real member definition emits the same retail symbol.
+- Fix:       declared the real returns in the base header in place: `float` (17/32/44/45/169), `float*` (79/80/104), `CActorParam_UnkStruct3*` (93/99), `CActorParam_UnkStruct4*` (97), `CActorParamStatusTable*` (128), `u32` (139/162/172), `u16*` (151); replaced all 16 forced-name bodies with `cf::CActorParam::<name>()` member definitions using `this->` and removing the `(u32)` cast. Also replaced `*(float*)((u8*)this + 0x6ec) = val;` with the already-declared `this->mField6EC = val;` in `CfObjectMove::CfObject_setMoveScale`. No new symbols/aliases/exemption markers, no line-count padding; no call sites named these virtuals (grep over src/libs/include), so no caller casts existed to remove.
+- Result:    CActorParam 41/60 ✓ unchanged; CfObjectEne 130/137 ✓ unchanged (byte-identical hexdiff tables incl. every % column); faithful hard for CfObjectEne 122→105 (`mangled_c` 48→32, `offset_cast` 4→3), CActorParam 356→356. hexdiff --all swept 53 direct/transitive includer units before/after: no ✓ lost, no % change on any ✓ function, no extab status change. `CMenuSymbolMark` could not be swept (another agent's in-flight compile error in `CArrow3D::Init`, unrelated). link-gate missing=43 OK, extab/text-order/registry gates OK; global faithful gate FAILed only in other agents' in-flight units (CEquipItemBox, CfNandManager, code_800B06A4).
+- Confidence: repo_proven (retail asm for all 16 stubs, full before/after hexdiff tables for 53 units)
+- Applies to/a.k.a.: shared-class virtual headers whose bodies are spelled with `extern "C" <mangled>Fv(self, ...)`; CfObjectMove +0x6EC is `mField6EC` in CfObjectMove.hpp.
+
+
+## Wave i (i10) CArtsInfo — real `CArtsInfo_Refresh` replaces an invented `initialize` twin; split budget exact (Wii/1.1 `-O4,s -func_align 4`)
+- Symptom:   `hexdiff --all` reported 47/93 ✓ with `CArtsInfo_Refresh  (not written yet)`, split FAIL by 0x60 (decomp `.text` 0x687C vs retail 0x681C), and an unmatched `initialize__9CArtsInfoFv` with no retail symbol and no callers.
+- Cause:     the retail function's three-guard body already existed in the TU under the invented member name `CArtsInfo::initialize()`. Retail owns the unmangled C function at 0x8023D55C, between `CArtsInfo_DotToCommaDE` and `OnFileEvent__9CArtsInfoFP10CEventFile`.
+- Fix:       removed `void initialize();` from `CArtsInfo.hpp`, replaced the member stub with `extern "C" void CArtsInfo_Refresh(CArtsInfo* self)` at that exact source position, and used typed field accesses (`mpLayout1`, `field_0x4C`, `field_0x50`, `field_0x48`, `field_0x40`) instead of invented offset views. No flags, pragmas, aliases, exemption markers, or line-count padding.
+- Result:    split PASS at exactly 0x681C/0x681C; 47/93 ✓ unchanged, no ✓ function lost or % column dropped. Seven direct/transitive includer units swept before/after the header edit with byte-identical tables. Faithful hard for `main/kyoshin/CArtsInfo` unchanged at 690 (label 661, mangled_c 11, offset_cast 11, view_struct 4, rule 1, foreign_data 2). The new function itself is 57.1% (5 structural, 1 reg_swap): retail's final guard emits `bne +8; blr; <stores>; blr` while MWCC peepholes every natural `if`/`else`/`goto`/trailing-`return` variant to `beqlr; <stores>; blr`. Extab was already MISMATCH before the change; only the decomp-only record address shifted with the corrected text layout. link/extab/text-order/registry gates OK; global faithful FAILs only in other agents' in-flight units.
+- Confidence: repo_proven (before/after whole-unit tables + all includer sweeps)
+- Applies to/a.k.a.: scaffold TU stubs whose body exists under an invented member name; check `symbols.txt` text order before adding a second definition.
+
+## Wave i (i10) negatives — CArtsInfo prologue claim order, i2f magic, and DotToCommaDE byte type
+- Symptom:   25 near-miss `CArtsInfo_FmtRowXX` functions have 0 structural and 0 reloc drift with exactly two swapped prologue copies (retail `mr r31,r4` before `mr r28,r3`; MWCC always `mr r28,r3` before `mr r31,r4`), e.g. `CArtsInfo_FmtRow20` at 95.5%. `CArtsInfo_CalcDmg52` is 100% by instructions but has two TU-local `@10984` magic-pool relocs where retail names `lbl_eu_80668698`. `CArtsInfo_DotToCommaDE` is 80.4% (8 structural, 2 reg_swap) in its Shift-JIS byte-range checks.
+- Cause:     the three outgoing param saves are ABI-fixed and scheduler-ordered, not source-declaration-ordered; the i2f double magic is MWCC's implicit literal pool, so naming the constant only duplicates the pool; a signed `s8` byte loses MWCC's unsigned range-check rewrite.
+- Fix:       measured and reverted: (a) adding `u32 a2 = arg2;` before `buf1`/`buf2` in FmtRow20 left 2 reg_swaps and identical bytes; prior `*_` shadow-local variants in FmtRow03/FmtRow09 also left 2; (b) an explicit union + `cv.d - lbl_eu_80668698` in CalcDmg52 grew the frame 0x30→0x40, produced 11 reloc drifts and extra reg_swaps; (c) `s8 c = (s8)*str` in DotToCommaDE dropped 80.4%→78.4% and added a third reg_swap; (d) explicit `else`, `goto done`, and trailing `return` variants in CArtsInfo_Refresh all kept the `beqlr` peephole. None of these changes were retained.
+- Result:    negative_result; no match or smell improvement from these source levers. The two-copy order and the implicit magic relocs remain recorded residuals.
+- Confidence: negative_result
+- Applies to/a.k.a.: `CArtsInfo_FmtRow02/08/0D/0E/0F/11/13/14/15/16/18/19/1A/1B/1C/1D/1E/1F/20/22/23/24/25/26/2C`, `CArtsInfo_CalcDmg52/53`, `CArtsInfo_DotToCommaDE`, `CArtsInfo_Refresh`.
+
+
+## Wave i (i7) CCollepedia — typed page catalog from retail strides (Wii/1.1 `-O4,s -func_align 4`)
+- Symptom:   `CCollepedia+0xE8` was a raw `u8` byte plus an opaque `CLPDataBlock v[0x2800]`; ~20 free `extern "C"` catalog helpers re-derived every field from `idx*0x140`, `row*0x34`, `col*0xA`. `func_80254144`/`func_80254204` were 83.3% near-misses.
+- Cause:     retail strides 32 pages of 0x140 (0x2800 bytes) after the 4-byte catalog header. Each page is `{cat +4, rowCount +5, done +6, float progress +8, rows at +0xC}`; each row is `{subcat +0, done +1, 5 cells at +2}`; each cell is `{itemId, kind, sortKey, nameId, state, pad}` of 0xA. `mRows[5]` is one-past the declared array and lands in the trailing padding, matching the retail `index >= 6` guard.
+- Fix:       added `CLPCell`/`CLPRow`/`CLPPage`/`CLPPageTable`/`CLPCatalog` in `CCollepedia.hpp`, made `CCollepedia::mCatalog` the real 0x2804-byte member, replaced `CLPDataBlock`/`CCollepediaEntry`/`CCollepediaFull`, and rewrote the page/cell helpers over typed members. Kept C linkage and the retail `clp*` symbol names (the names in `symbols.txt` are free C symbols), and kept the original raw expression trees only in the helpers whose bytes depend on them.
+- Result:    CCollepedia 64/80→66/80 ✓ (func_80254144 and func_80254204 now FULL/100%); no ✓ lost and no % column dropped on any ✓ function. Faithful hard unchanged: label 172, mangled_c 12, offset_cast 11, view_struct 6, rule 1 (202 total). `CMenuCollepedia` 11/16 and `CMenuLvUp` 13/16 includer tables byte-identical. link/extab/text-order/registry gates OK; the global faithful gate failed only in other agents' in-flight units.
+- Confidence: repo_proven (retail asm for all field offsets, before/after whole-unit tables, includer sweeps)
+- Applies to/a.k.a.: byte-strided catalogs with overlapping one-past-the-end access; struct member indexing fixes `add r3,r3,r0` accumulator order in `func_80254144`/`func_80254204`.
+
+## Wave i (i7) negatives — CCollepedia typed-member access in six helpers
+- Symptom:   replacing raw stride expressions with `catalog->mPageTable.mPages[p].mRows[r].mCells[c].*` changed codegen in `clpGetEntryStr` 93.8%→87.5%, `clpGetItemName` 95.7%→91.5%, `clpSelectItem` 73.8%→15.4% (size 0x104→0xD4), `clpFillEntry` 6.8%→4.1% (0x124→0xD8), `clpUpdateProg` 100%→2.2% (0x160→0x170), and `clpIsPageDone` 100%→62.5% (0x18→0x20).
+- Cause:     MWCC introduces extra `addi` base increments for nested array-member addresses, changes the RA/RB order of the three accumulating `add`s, and normalizes `bool` returns from `u8 != 0`. Retail keeps one live base and a raw byte load.
+- Fix:       measured and reverted those six bodies to their original expression shape (only the parameter is now `CLPCatalog*`). `clpIsPageDone` reads the `bool` through the existing byte pointer instead of comparing. No exemption markers or flags added; the typed catalog/cell structs remain for the functions where they are byte-neutral.
+- Result:    negative_result; 66/80 ✓ retained, two near-misses promoted. The raw-expression helpers remain counted as offset casts in the faithful report.
+- Confidence: negative_result
+- Applies to/a.k.a.: `clpGetEntryStr`, `clpGetItemName`, `clpSelectItem`, `clpFillEntry`, `clpUpdateProg`, `clpIsPageDone`.
+
+
+## CfSoundMan — retail temp-handle dtor count and canonical C linkage (US, Wii/1.1 -O4,p -inline noauto)
+- Symptom:   CfSoundMan_PauseRecordSounds 38.8% with one extra `bl` (0x10c vs retail 0x104); sinit_801C183C 100% bytes but `✗` on reloc names; many address-named dtors are C++-mangled in the object.
+- Cause:     (1) the source called `handle.DetachSound()` explicitly and then the scope-exit `SoundHandle` destructor detached again; retail has exactly ONE DetachSound call (from the temporary's destructor). (2) `CfSoundMan_InitSlotState` / `__dt__801C18F4` were defined with C++ linkage although symbols.txt gives them unmangled retail names, so `__construct_array` / `__register_global_object` relocs drifted. Wrapping the dtor definition in `extern "C" { ... }` keeps the counter's `mangled_c` smell from rising while giving it the retail spelling.
+- Fix:       delete the explicit DetachSound call (keep the comment explaining the scope-exit dtor); hoist the fade field into a named `u16 fade` local inside the id-match branch (removes the 2 structural store/branch-order diffs in the sibling StopRecordSounds); give the two unmangled-symbol definitions C linkage.
+- Result:    PauseRecordSounds 38.8% -> 58.5% (0 structural, exact size), StopRecordSounds 64.9% -> 67.5% (0 structural), sinit 100% -> 100% `✓`; unit 49/63 -> 50/63 with no matched `%` regression; faithful hard count unchanged at 157.
+- Confidence: repo_proven (hexdiff --all before/after)
+
+## CfSoundMan_StartSlotSound — call detail_StartSound and test the raw StartResult (US, Wii/1.1 -O4,p -inline noauto)
+- Symptom:   22.3% (54 structural, 26 reg_swap, size +4); the retail call reloc was already `detail_StartSound...`, but the decomp's inline `StartSound()` wrapper added a `cntlzw/rlwinm` bool conversion that read the wrong register (`op31_26 r3,r0`) and emitted 4 extra bytes.
+- Cause:     retail source calls `SoundStartable::detail_StartSound(handle, id, NULL)` and tests the returned enum against `START_SUCCESS` (`cmpi r3,0; bne fail`); the fork's `StartSound()` convenience wrapper wraps it in `== START_SUCCESS` and MWCC loses the return register when inlining the private member here.
+- Fix:       declare `detail_StartSound` public in `libs/nw4r/include/nw4r/snd/snd_SoundStartable.h` (access only: no codegen change for other includers) and call it directly from the owning TU, storing the result in a named `StartResult` local. This matches the retail reloc and call shape without a new pre-mangled extern or shim class.
+- Result:    22.3% -> 58.8% (54 -> 7 structural, size exact 0x198); no other unit function moved in `hexdiff --all`; sampled includers nw4r/src/snd/snd_SoundArchivePlayer (25/32) and kyoshin/plugin/pluginSnd (16/19) still build.
+- Confidence: repo_proven (retail reloc + hexdiff)
+
+## CfSoundMan — negative results (US, Wii/1.1 -O4,p -inline noauto)
+- Symptom:   several scan-loop functions retain a duplicated/dead `beq` and pure reg-swap families.
+- Cause/result: unit-wide `mw_version="GC/3.0a5.2"` probe: 49/63 -> 45/63 (four accepted functions lost), extab shrank further; reverted. Replacing ApplySlotGain's `searching` rotation with a plain `for` loop: 46.4% -> 14.3% and size 0x70 -> 0x4c; reverted. StartSlotSound: switching the u16 counter update to a pointer local: 58.8% -> 31.1%; swapping `slot`/`slotId` declarations: 23.3%; reverted both. StartTableSound: swapping `sid`/`p` declarations: 65.6% -> 3.3%; reverted. LoadRecordBuffer: sharing a named zero local across the zero stores: 87.1% unchanged (8 reg_swap remain); reverted.
+- Fix:       none; these are catalogued residuals, not accepted hacks.
+- Result:    final unit state 50/63, split overage 0x84 (was 0x90), faithful hard 157 (unchanged).
+- Confidence: negative_result
+
+## Wave i (i8) CMCCrystalBox `sMakeCrystalStrings` — negative: use-site literals cannot reproduce a shared pool base without reordering the TU (Wii/1.1, `-O4,s -func_align 4`)
+- Symptom:   `CMCCrystalBox.cpp` has 169 `sMakeCrystalStrings + 0x..` / `base + 0x..` uses into a 0x55C-byte retail `.rodata` pool at `0x8050888C`. Retail code materialises one pool base (`lis r4, sMakeCrystalStrings@ha; addi r4,r4,sMakeCrystalStrings@l`) and references every string as `addi rX,r4,off` (e.g. `refreshCrystalBoxName` @0x4BD0 → `addi r4,r4,0x12E`).
+- Cause:     the retail pool is emitted in *retail function emission order*, but this reconstructed TU's source order differs from retail `.text` order: `refreshCrystalBoxName` (source L201) is emitted at retail `0x4B90` but decomp `0x430`, `getItemName` (source L245) is retail `0x430` but decomp `0x598`, `initCrystalPageLabels` supplies `pic_tbbcon%02d`/`pic_tbbcof%02d` (pool +0x86/+0x95) from source L1600 although `refreshCrystalPagePair` owns the uses. Replacing all 169 offsets with literals produced a 0x561-byte decomp pool starting `txt_pg01`, `txt_name`, `%s`, … versus retail `%s`, `category` (orphan), three archives, `nul_sort`, …; single-literal functions lost the `addi rX,base,off` step entirely (decomp emitted `lis/addi @stringBase0` with no offset), so 86→72 ✓ and 0x10-byte split overflow.
+- Fix:       measured and rejected: (a) direct literals at all use sites: 72/100 ✓, `.rodata` 0x561 vs retail 0x578, wrong pool order; (b) targeted reorder of only the five out-of-order string functions: 79/100 ✓ and extab collapsed 0x8A0→0x388; (c) full retail-`.text` function reorder: 79/100 ✓, same extab collapse; (d) literals in only the five unmatched functions (`handleCrystalBoxConfirm`, `updateCrystalBoxRows`, `rebuildCrystalSortMenu`, `showCrystalBoxStatus`, `OnFileEvent`): 86/100 ✓ retained but four ✗ functions dropped (`OnFileEvent` 97.1→84.3, `handleCrystalBoxConfirm` 53.8→40.9, `rebuildCrystalSortMenu` 86.0→77.2, `updateCrystalBoxRows` 56.6→53.2), `.rodata` 0x45E, faithful hard unchanged (the blob is not a counted smell); (e) defining the pool as a real `extern "C" char sMakeCrystalStrings[0x55C] = "<all bytes with \\000 separators>"`: 85/100 ✓ (one previously ✓ function lost), array landed in `.data` (0x62C), so rejected. No change retained; source restored byte-for-byte to the pre-wave version.
+- Result:    negative_result / residual. CMCCrystalBox 86→86 ✓, faithful hard 64/7/2/4/1/1/0/1/0/0/0 unchanged; data diff remains FAIL (retail `.rodata` 0x578 vs decomp 0x10; `.sdata2` 0x40 vs 0x18; `.sbss` 8 vs 0) and extab mismatch is pre-existing. link-gate missing=49 (new `lbl_eu_80668354`… from other in-flight agents), extab/text-order/registry gates OK.
+- Confidence: negative_result (five whole-unit hexdiff --all tables, data diff, faithful report, object section dumps saved under /tmp/xb/i8/)
+- Applies to/a.k.a.: **`CPresentStringPool`, `UIBattleArcPathStrings`, `sMenuEnemyNamePool`, `sBdatColumnNames`** — recipe: (1) dump the retail pool bytes from `build/us/obj/<unit>.o` with `tools/coop/lib/objread.py::section_bytes` at the symbol offset in `config/us/symbols.txt`, split on NUL and record every used offset plus orphans (CMCCrystalBox had `category` and `nul_sort` with no source use); (2) baseline `hexdiff.py <unit> --all` and `run.py data diff <unit>`; (3) only convert when the compiled pool order already matches retail — check by replacing uses, recompiling and comparing decomp `.rodata` bytes. A wrong order is not fixable by `static const char*` pool reservations: local statics put extra strings *before* RTTI names and add `.sdata2` pointer words; file-scope statics do not pool; `(void)"lit"` does not pool. Neither reordering source functions (extab collapses) nor a single escaped string-array definition (lands in `.data`, costs a ✓) is acceptable. If ordering differs, keep the blob offset references, log the residual, and revisit only when the owning functions are moved into retail order by a separate extab-safe change.
+
+## Wave i (i8) negatives — CMCCrystalBox string-pool conversion alternatives
+- Symptom:   replacing the shared string-pool blob with literals or a real array definition, to get rid of `blob + 0x..` references.
+- Cause:     MWCC `-str reuse,pool,readonly` pools literals in first-reference order of *emitted functions*, while the retail base+offset instruction shape depends on a single pool base surviving CSE; orphan literals and a different function order defeat both.
+- Fix:       measured and rejected all-site literals (72/100), targeted/full retail function reorder (79/100, extab 0x8A0→0x388), partial conversion of unmatched functions (86/100 but four ✗ functions regress), and a file-scope escaped array definition (85/100, `.data` instead of `.rodata`). No hack retained.
+- Result:    negative_result; 86/100 ✓ and faithful hard unchanged after restoring the source.
+- Confidence: negative_result
+
+## Wave i (i5) CtrlAct.hpp follow-up — pure slots + real virtuals in the remaining view classes
+- Symptom:   `cf::CtrlAct` still had two zero-word slots (`vf01` @0x0C, `vf33` @0x8C), and CtrlAct.hpp's four other virtual "view" classes still packed placeholder `vfNN`s several per line (CfObjectMove / CfObjectPc / CfObjectEne tables).
+- Cause:     MWCC stores a pure virtual as a literal 0 word. In the retail tables `lbl_eu_80527738` (CtrlEnemy), `lbl_eu_80527DB0` (CtrlPc) and `lbl_eu_80527F88` (CtrlRemote), those words are filled with real overrides: +0x0C `CtrlPc_UpdatePadState` / `CtrlEnemy_UnkFunc_8008772C` / `CtrlRemote_FrameUpdate` and +0x8C `dispatchCtrlPcActions` / `CtrlEnemy_UnkFunc_800877A8` / `func_80098EF8` (all `void(self)`). The sub-object views are the real `cf::CfObjectMove` (`__vt__Q22cf12CfObjectMove`, 0x80529690), `CfObjectPc` (`__vt__Q22cf10CfObjectPc`, 0x80529DA0) and `CfObjectEne` (`__vt__Q22cf11CfObjectEne`, 0x80528A18) tables; their slots resolve to named CObjectState/CObjectParam/CfObject/CActorParam/CBattleState functions.
+- Fix:       declared the two base slots pure with the named CtrlPc overrides (`virtual void CtrlPc_UpdatePadState() = 0;` and `virtual void dispatchCtrlPcActions() = 0;`); regenerated all five view classes with one real virtual per line in retail vtable order (77/34/174/174/58 lines), typed slots renamed to the slot symbol (`CfObject_getMoveRateScale`, `CfObject_getMoveSpeedRate`, `CActorParam_getArtsSlotIds`, `CActorParam_getMoveRecord`, `CActorParam_isBattleLocked`, `CfObjectModel_bindModelTo`) with the original call-site signatures, and updated the 11 callers in CtrlAct.cpp. Added global `using cf::...` forward declarations for the CActorParam/CBattleState slot parameter types instead of editing i6's CActorParam.hpp. Two slots in each of the player/source tables (+0x0C RTTI pointer, +0x10 offset-to-top) have no function symbol and remain counted as `vf01/vf02`.
+- Result:    CtrlAct 13/33 ✓ before→after with every % identical; faithful hard 445→445; all six swept include units (CtrlAct, CtrlEnemy, CtrlMoveEne, CfCam, CActorParam, CfObjectImplMove) have byte-identical hexdiff --all function tables before→after (the five non-CtrlAct units do not actually include CtrlAct.hpp); link-gate OK (missing 43), extab/text-order/registry OK. `run.py data diff` on CtrlEnemy/CtrlPc/CtrlRemote remains pre-existing MISMATCH — their hand-installed tables live in auto-data objects, not these TUs.
+- Confidence: repo_proven (DOL vtable dumps + symbols.txt + before/after hexdiff and data diff)
+- Applies to/a.k.a.: `lbl_eu_80527BB0` (base CtrlAct table) also has literal zeros at +0x0C; CtrlNpc's variant uses `CtrlNpcCharInitState` and `CtrlNpcAlwaysTrue` at those slots.
+
+## Wave i (i5) negatives — view-class regeneration pitfalls
+- Symptom:   first generated bodies used private class members (missing `public:`), copied declarations from CfObjectActor.hpp that duplicated names already taken from CObjectParam.hpp, and named RTTI/offset-to-top words as if they were functions.
+- Cause:     a merged offset→declaration map can assign the same function name to two different slots; secondary vtables start with `[RTTI, offset-to-top]` rather than functions.
+- Fix:       added `public:`, de-duplicated names with the retail symbol's owner class (`CObjectParam_getParamPtr_CfObjectActor`), and kept `vf01/vf02` for the two non-function words. No line-count padding, alias symbols, or new exemption markers.
+- Result:    negative_result; final build compiles and the CtrlAct function table is unchanged.
+- Confidence: negative_result
+
+## Wave i (i15) CfMapMineManager::mineUpdateMsgRing — address-taken message aggregate and signed ring cursors (Wii/1.1, 6.8% → 97.3%)
+- Symptom:   `mineUpdateMsgRing` had 56 structural diffs, an 0x80-byte frame instead of retail's 0x60, and kept the read cursor in saved `r30` across `CUICfManager_queueGetItemMenuById`. The old source also stored a NEGATED ring remainder into both the old-slot address and `mReadIdx`, producing an extra `neg` in each path.
+- Cause:     retail addresses the old slot with the plain positive remainder, re-reads `mReadIdx` after the call, and preserves the expiring message in a real `MineMsg` aggregate: passing `old.mText` to `strcpy` forces MWCC to keep `old.mLen`/`old.mTime` in memory homes at sp+0x48/sp+0x4c. The separate `char buf` plus `(void)len; (void)t;` let MWCC delete those stores. The loop count/cursor are signed (`cmpi`/`divw`), not unsigned.
+- Fix:       use `MineMsg old` with `old.mLen = strlen(...)`, `strcpy(old.mText, ...)`, `old.mTime = ...`; make `cnt`/`i`/`rd`/`cap`/`count`/`next`/`rem` signed; remove both negations; compute `cap`, `count`, `rd`, `next`, `rem` in that order after the queue call so the quotient and cursor colors match (`rem` as a real local closes the last GPR swaps). Named zero local (`f32 zero = lbl_eu_806682B0`) fixes the FPR colors. Declaration order of `sub`/`area`/`dt` in `mineUpdatePoint` was also corrected (64.9% → 66.0%).
+- Result:    mineUpdateMsgRing 6.8% → 97.3% (2 structural, 0 reg_swap, exact 0x124), mineUpdatePoint 64.9% → 66.0%; unit remains 7/20 ✓ with no ✓ or % regression and extab drift reduced by one record. Unit faithful hard 162 → 160 (label 135 → 133). link/extab/text-order/registry gates OK.
+- Confidence: repo_proven
+- Applies to/a.k.a.: `lbl_eu_806646A0`-style message rings; aggregate-with-array address-taken by `strcpy` keeps adjacent scalar fields live; signed `cmpi` vs unsigned `cmpli` in countdown loops.
+
+## Wave i (i15) negatives — CMenuBattleCommu near-misses and ring literal order
+- Symptom:   `CMenuBattleCommu::Init` stayed 98.5% (4 structural `bc`/`or` order), `showBattleCommu` stayed 95.7%, and `mineUpdateMsgRing` retained two swapped `lfd f0`/`lfs f3` loads at +0x24/+0x2c.
+- Cause:     separating the second `GetResource` result into `res2` or a C++ condition-declaration does not change MWCC's copy-before-branch scheduling; moving `actor2` ahead of `player` (95.2%) or introducing a named `battle`/`state` local (94.3%, 0 structural but 26 reg_swap) worsened `showBattleCommu`. Naming the double threshold as a local fixed the load order but moved the zero/slot FPR colors (91.8%, 6 reg_swap), worse than the inline literal (97.3%).
+- Fix:       all negative shapes reverted; no new hacks or exemption markers.
+- Result:    negative_result; CMenuBattleCommu 11/14 ✓ unchanged, CfMapMineManager final table verified.
+- Confidence: negative_result
+- Applies to/a.k.a.: do not retry these exact Init/show/resource permutations or a named double threshold without a new hypothesis.
+
+## i1 cleanup — CEquipItemBox canonical item-impl accessor + side-header dissolution (Wii/1.1, -O4,s, -ipa file)
+- Symptom:   53 item-impl call sites in `kyoshin/CEquipItemBox` referenced `CItem_initItemImplInstances__FPv` from a bogus C++ overload in `CEquipItemBoxImports.hpp`; retail relocations use the plain C name `CItem_initItemImplInstances` declared by `kyoshin/cf/CItem.hpp`. The same side header hid 15 TU-local views / extern declarations from the unit's faithful counter.
+- Cause:     `void* CItem_initItemImplInstances(void*)` in the imports header changed only the emitted C++ symbol name (bytes were identical), and a second TU-local `CItemImplView` carried non-canonical `vf40`/`vf54` return widths. Including all of `cf/CItem.hpp` here is not viable: its `CItem_kindPtr(u32, s16)` conflicts with this TU's matched `void* CItem_kindPtr(u8, s16)` (MWCC 10197).
+- Fix:       deleted the bogus overload and the `CEquipItemBoxItemImplView`; every call now passes `(CItemData*)` and uses the returned `CItemImpl*` directly. The canonical declaration (`extern "C" CItemImpl*(CItemData*)`) lives once in `CEquipItemBox.hpp`, which is this unit's real header. Removed `CEquipItemBoxImports.hpp`: its 286 still-used declarations/types moved into `CEquipItemBox.hpp` (unused ones deleted), and the three includer TUs now rely on that header plus their real owner headers (`CUICfManager_Res.hpp` for `getPackedFont`, `CItemBoxGrid_Color.hpp` for `CopyVec4s`). Verify all call-site vtbl arguments too: retail passes the original item pointer in r4, so `refreshEIBCellText` uses `impl->vf08((CItemData*)item)` rather than the impl pointer.
+- Result:    CEquipItemBox 93/121 ✓ unchanged row-for-row; `CEquipChange` 36/36 and `CPartyState` 29/29 unchanged; relocs now `CItem_initItemImplInstances` with no `__FPv` spelling. Faithful hard 481→519: label 392→440 (+48 honest move of data-label declarations out of the side header), `mangled_c` 0→3, `view_struct` 21→8 (15 view usages deleted, 2 declaration-only views now counted); offset_cast/rule/foreign_data unchanged. `rebuildEIBKind3Page` (already unmatched) fell 20.8%→18.1% because MWCC CSEs three repeated canonical accessor calls; no ✓ function lost a match or % point.
+- Negative results: adding `__declspec(noinline)` to the canonical declaration does not restore the three CSE'd calls; declaring `int slot = (s16)impl->vf40(...)` is required to keep `findEIBEquipSlot` at 100% (plain `s16 slot` gives 7 reg-swaps); `u16` key variables keep `sortEIBByNm58/Nm00` at 100% (the view's `u32` return type hid the narrowing). `CEquipItemBoxImports.hpp` text comments still appear in `CPcKizunagram.hpp`; code references are gone.
+- Confidence: repo_proven (before/after `hexdiff --all` for all three TUs plus per-unit faithful counts and gates)
+- Applies to/a.k.a.: item-impl accessor call sites in UI TUs; side headers that hide reloc-shaping declarations from the smell counter.
+
+## Wave i (i11) CUICfManager — address-labelled deleting dtors + split-budget-funded unroll cleanup
+- Symptom:   `__dt__8012FF74` and `__dt__801320F0` were 0x40-byte retail functions with no decomp definition; the TU sat at 65/89 ✓ with split `.text` 0x6024/0x6068 (0x44 spare). `CUICfManager_claimFreeSlotByIndex` was 5.8% with a 0x214 body whose gate scan had been CSE-folded into one shared `li r0,1`.
+- Cause:     both missing symbols are compiler-generated deleting destructors of local array-owning types: `if (self != 0 && flags > 0) operator delete(self); return self;`. Writing them as flat C functions is the documented pattern for address-labelled compiler-generated dtors. The two added 0x40 bodies need 0x80 bytes, more than the unit's 0x44 split headroom, so a same-TU size reduction was required.
+- Fix:       defined both dtors with `::operator delete(self)` (no new `__dl__FPv` declaration, so faithful `mangled_c` stays at 6); removed the redundant `extern "C"` keyword on the existing `OnFileEvent__12CUICfManagerFv` definition, whose canonical header declaration already supplies C linkage. Rewrote `claimFreeSlotByIndex`'s gate chain as four separate `if/else if` branches, spelled the all-free scan with an unrolled `u8 idx` and `goto scan_end`, and used a counted `u8 j` loop for the claim body: 0x214 → 0x1E0 (-0x34). No new volatiles, pads, aliases, or exemption markers.
+- Result:    CUICfManager 65→67 ✓ (both dtors 100%, 16/16 instructions); `claimFreeSlotByIndex` 5.8%→13.2% (structural 169→151); split PASS 0x6060/0x6068 (0x8 spare); faithful hard unchanged (label 89, mangled_c 6, offset_cast 13, view_struct 35, volatile 3, rule 1, foreign_data 1). link-gate OK (missing 43), extab/text-order/registry OK. Extab was already MISMATCH before and after and did not newly mismatch.
+- Confidence: repo_proven (retail objdump of both 0x40 dtors, before/after hexdiff --all and faithful counts)
+- Applies to/a.k.a.: address-labelled `__dt__8012XXXX` / `__dt__8013XXXX` deleting dtors; split-budget-funded cleanup of the same TU when adding compiler-generated bodies.
+
+## Wave i (i11) negatives — CUICfManager near-misses left at baseline
+- Symptom:   `eventDispatch` (96.7%), `isWorldMapBusy` (94.7%), `dispatchFreeSlot` (95.1%), `createQueuedMenus` (32.5%), `openSaveMenu` (93.0%) and `dtorThunk58` (100% bytes, reloc-only ✗) stayed unmatched.
+- Cause:     documented walls: 8-word r0/r3 + r30/r27 Chaitin tie (`eventDispatch`), FPR f0/f1 tail swap (`isWorldMapBusy`/`dispatchFreeSlot`), MWCC CSE of two identical `(u8)lbl_eu_80664184` reads into one `rlwinm` (`createQueuedMenus`), factory-argument scheduling (`openSaveMenu`), and a decomp-side branch reloc where retail resolves a branch inline (`dtorThunk58`).
+- Fix:       measured and reverted: named `one`/`zero` locals for the save-factory args (no change); a shared `u32 one` for the three `UIWin_CreateItemMulti` 1-args (no change); moving `dtorThunk58`'s body after the CUICfManager destructor and after the new flat dtors (no reloc change); `u8` scan loops and explicit `idx++` chains in `claimFreeSlotByIndex` (13-15% but split OVER by 0x48-0x5C until the claim body was shortened).
+- Result:    negative_result; no ✓ function lost ✓ or %; all reverted shapes documented above, final state is the size-neutral variant.
+- Confidence: negative_result
+- Applies to/a.k.a.: the CUICfManager reg-swap/CSE walls already recorded in MWCC_CASES; do not retry these spellings without a new hypothesis.
+
+## Append-to-array: `arr[count++] = v` vs split temp (regalloc)
+`u32 idx = n; arr[idx] = v; n = idx + 1;` allocates the loaded count to a fresh register and the
+increment into r0. Retail's shape `arr[n++] = v;` keeps the count in its load register and adds
+in place (`addi r5,r5,1`). Fixed CException::AddToGlobalArray and MdlDyn_AppendWord. Likewise a
+hoisted `int last = count - 1;` temp before a shift loop swapped r4/r5; writing `shift < count - 1`
+inline and `n--` matched CException::RemoveFromGlobalArray.
+
+## i1 follow-up — pre-mangled imports → real C++ members (CEquipItemBox / CEquipChange)
+- Symptom:   three pre-mangled `extern "C"` declarations moved into `CEquipItemBox.hpp` (`setMemInitFlag__Q23mtl10MemManagerFb`, `Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc`, `getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout`) counted as `mangled_c 3`.
+- Cause:     the owning headers already declare the real members/statics: `mtl::MemManager::setMemInitFlag(bool)`, `nw4r::lyt::ArcResourceAccessor::Attach(void*, const char*)`, `CDeviceFont::getFontInfo(u32, Layout*)`. The pre-mangled names are simply their MWCC manglings, so no signature repair was needed.
+- Fix:       deleted the three `extern "C"` aliases; call sites in `CEquipItemBox.cpp` now use `mtl::MemManager::setMemInitFlag(false)`, `field_30->Attach(buf, base + 0x71f)` / `field_34->Attach(buf2, ...)`, and `CDeviceFont::getFontInfo(1, field_38)`. `CEquipChange.cpp` uses the same static forms; its arc-accessor calls already used real member `Attach`. Real headers (`monolib/util/MemManager.hpp`, `nw4r/lyt/lyt_arcResourceAccessor.h`, `monolib/device/CDeviceFont.hpp`) were already included at the call sites.
+- Result:    CEquipItemBox 93/121 ✓ and CEquipChange 36/36 ✓ unchanged row-for-row; CPartyState 29/29 unchanged. Relocations at `OnFileEvent` keep the three retail-mangled names (emitted by the real member calls). Faithful `mangled_c` 3→0; total hard 519→516 (label move from the side-header collapse remains: 481→516 overall).
+- Confidence: repo_proven (before/after `hexdiff --all` for all three TUs + relocation readback)
+- Applies to/a.k.a.: pre-mangled extern aliases whose symbol is just the C++ member mangling; replacing with the real member/static call needs no header signature change.
+
+## CPassiveSkillLine_syncEquipState — 4 reg_swap → FULL code match (Wii/1.1, -O4,s, -ipa file)
+- Symptom:   hexdiff 97.3% with 0 structural, 4 `reg_swap`: retail `lbz r0,287(r29)` / `cmpli r0,133`, decomp used `r4` for the same field_11F load and both compares.
+- Cause:     a compound `if (field_11F == 0x85 && result == 3) ... else if (field_11F == 0x84 && result == 2)` gave the field load a different scratch-color birth order than retail's nested test.
+- Fix:       express the first arm as nested tests (`if (field_11F == 0x85) { if (result == 3) ... } else if (...)`) in normal C++; no register or pragma tricks.
+- Result:    100.0% static code, 0 structural/0 reg_swap, same 0x250 size; the unit table changed only on this function (108/127 matched count unchanged because the two call relocs still name invented aliases).
+- Confidence: repo_proven
+- Applies to/a.k.a.: MWCC scratch-register (`r0` vs `r4`) mismatch on a compound `&&` condition with an `else if` arm.
+
+## Wave i14 negative results — CPassiveSkill register/expression shapes (Wii/1.1, -O4,s)
+- Symptom:   `CPassiveSkillLine_refreshGridPositions` (91.0%, 9 pure reg_swap) and `CPassiveSkillLine_setCellMessage` (93.9%, 7 structural + 1 reg_swap) resisted simple source-shape changes; `CPassiveSkillInfo_copy` needed its existing volatile macro to avoid -IPA load batching.
+- Cause:     the grid-position swap is a saved-register liveness/degree case (cellRow vs row+1): moving declarations or naming the row temp either kept the swap or changed col+1 to a separate `addi` (3 structural instructions). The setCellMessage arithmetic is re-associated after scheduling (char term born before row term) regardless of named int locals. Removing Info_copy's volatile aliases lets -IPA batch all loads into r12..r4 (32.4%).
+- Fix:       none found within the no-hack rules; all variants were reverted and the baseline `%` column was re-verified with `hexdiff --all`.
+- Result:    negative_result; only the syncEquipState nested-if improvement was kept.
+- Confidence: negative_result
+- Applies to/a.k.a.: don't retry simple declaration swaps / rowName locals for these two functions; don't remove CPassiveSkillInfo_copy's volatile macro without a new liveness lever.
+
+## Wave i (i17) CTaskGame_updateStream — volatile field order has no source-shape replacement (Wii/1.1, `-O4,s -inline noauto`)
+- Symptom:   `UnkClass_8004041C::unk4`/`unk14` still carry `volatile`; deleting both qualifiers drops `CTaskGame_updateStream` 100% → 97.8% (2 structural) at `+0xfc`: retail emits `lwz r3,0x1A0(r31)` then `lfs f1,0x190(r31)`, decomp swaps them.
+- Cause:     MWCC's `-O4,s` scheduler hoists the independent `lfs` to one end of the integer-load window. The retail order is a statement/scheduling boundary, not a second load or an alias: retail has exactly one load of each field. No inline/predicate boundary available at this call site reproduces it.
+- Fix:       none applied; kept the two `volatile` member declarations (no exemption marker). Measured negatives, each with fields nonvolatile and reverted after one `hexdiff`: named locals (97.8%, lfs hoisted before `lwz r3`); direct call arguments with the float last (95.6%, lfs sinks after `lwz r5/r6/lbz r7`, plus one reg_swap); two one-line inline accessors `getUnk14()`/`getUnk4()` (97.8%); an inline member `tryOpenVision()` that reads `unk4` inside the inline body (69.6%, extra load/branch and size 0x170); a guarded inline helper `unk18 ? unk4 : 0` (extra `lwz`+`cmpi`+branch, reverted before measuring); split declaration/assignment of `a`/`f` at function scope (97.8%); `const float unk4` (constructor cannot leave a const member uninitialised). Unlike the CActParamAnimGame i16 case, the two loads here have no intervening call whose inlining boundary could restore the order.
+- Result:    CTaskGame 103/113 ✓ before and after, every row and % column identical; faithful hard 356→356 (label 344, mangled_c 4, view_struct 1, noinline 4, rule 1, foreign_data 2 — the faithful scanner does not count `volatile` field declarations).
+- Confidence: negative_result (seven full-function `hexdiff --symbol` probes plus full-unit A/B tables)
+- Applies to/a.k.a.: `CTaskGame_updateStream` us-800436a4; do not remove these two qualifiers without a source-level ordering mechanism that keeps the exact `lwz; lfs; lwz; lwz; lbz` window.
+
+## Wave i (i17) CTaskGameCf::create — plain C++ new inlines the real ctor (Wii/1.1, `-O4,p -func_align 4`)
+- Symptom:   `create__Q22cf11CTaskGameCfFv` (0x6c) still calls `__ct__Q22cf11CTaskGameCfFP8CProcessi` through a pre-mangled `extern "C"` declaration (one counted `mangled_c` smell).
+- Cause:     retail really has the new-expression guard (`cmpi r3,0; beq skip-ctor`) after `MemManager::allocate`, so the h50 note that "placement new's null guard is absent" was misread: the guard is present. The blocker is MWCC auto-inline: with the real ctor defined earlier in the same TU, any `new`/placement-new expression folds its 0xc8 body into `create` (0x6c → 0xf8, 12.5% match). The ctor must stay a standalone `bl`.
+- Fix:       none applied; kept the single canonical C-linkage ABI-name declaration in the .cpp (no header pseudo-ctor). Measured negatives, all reverted: (1) class-specific `CTaskGameCf::operator new(size_t)` calling `getWorkMem` + `MemManager::allocate(size, handle)` and `new CTaskGameCf(pParent, arg2)` — allocation/guard/ctor-args matched but ctor inlined, create 0x100 (12.5%); (2) `new (allocate(...)) CTaskGameCf(...)` — same inline result, create 0xf8; (3) adding `-inline noauto` to the unit — ctor dropped 100% → 28.3% because `FixStr<32>::FixStr()` (inside `#pragma dont_inline on` in the shared header) stopped folding and 19 structural + 19 reg_swap appeared; explicitly initialising `unk_64()` removed only the extra call, leaving 28.8%/0xd0; (4) whole-unit `-O4,s` with placement new — ctor 96%, create 19.4%, new extab size mismatch. No `noinline` marker or codegen pragma was added.
+- Result:    CTaskGameCf 15/25 ✓ before and after, every row and % column identical; faithful hard 43→43 (label 31, mangled_c 8, offset_cast 2, rule 1, foreign_data 1); extab MATCH.
+- Confidence: negative_result (four full-unit `hexdiff --all` A/B tables + per-function reloc dumps)
+- Applies to/a.k.a.: same-TU factories whose ctor retail keeps as a `bl`; a class-specific operator new fixes only the allocation call shape, not the ctor inlining decision.
+
+## Wave i (i12) CfNandManager — stubs were the systemic cause; typed event-ring member recovers 15 matches (Wii/1.1, -O4,p -ipa file)
+- Symptom:   5/48 functions matched; 24 bodies were `{}` stubs (0x4 bytes) against retail bodies up to 0x1070. Extab showed 40+ retail-only records. Unit flags were ordinary (`-O4,p -ipa file -inline auto`), not the cause.
+- Cause:     every low match was an unimplemented body, not a flag/layout problem. The queue helpers inline a single 0x10-byte event push: slot `(head+tail)%size` under `CfNandManager+0x160..0x16C`, then `tail++`. Retail's `lis r5,0x1` / `lis r4,3; addi -0x8000` immediates are 0x10000 / 0x28000 (not 1 / 0x28000 as first read).
+- Fix:       added one real member `CfNandManager::queueEvent(u32 word,u32 tag,u32 f8,u16 fc,u8 fe,u8 ff)` in the unit header and made `gpCfNandManager` the real typed pointer; implemented the queue callers (ChkFc, SaveCk, Chk5CC, Chk690, Chk860, LoadCk, ChkBA0, Reset, CCC, RegHeapCb), `Init/Term/Move`, `CTTask<CfNandManager>::Move/Draw`, and `NandAllocBufs` with real fields/calls. Each caller reproduces retail's null-check shape: explicit caller check + inlined helper check (CCC/BA0/Reset/ResetMode), two helper checks (ChkFc/Chk5CC), or helper check only (LoadCk/RegHeapCb). Body of `NandQueueSaveCk` is gated by `lbl_eu_80663E24 & 0xafa40000` (`andis.`, not `andi.`). `NandTeardown`/`NandAllocBufs` register the IScnRender base at +0x58 via a real base conversion / typed arithmetic. Included the unit's own header after reconciling duplicate data declarations (five stale global decls and three unused label decls removed).
+- Result:    20/48 ✓ (was 5/48); no ✓ or % regression; unit faithful hard 89 -> 86 (label 66->63, offset_cast 1 unchanged, mangled_c/section/foreign_data unchanged); extab drift down (0x20->0x68 vs retail 0x154). Includer `CTaskGameCf` table unchanged row-for-row (other agents improved that TU separately). link/extab/text-order/registry gates OK; whole-tree `faithful` still FAILs only on other agents' in-flight units (CEquipItemBox, code_800B06A4, CREvtMem).
+- Confidence: repo_proven (before/after `hexdiff --all` for this unit + includer, per-unit `faithful --verbose`, gates)
+- Applies to/a.k.a.: `CfNandManager`, inlined ring-push helpers, MWCC `lis`-encoded event tags, null-check count as a source-shape signal.
+
+## Wave i (i12) negatives — CfNandManager residual register colors
+- Symptom:   `NandResetMode` 27.7% (50 structural, 23 reg_swap, +4 bytes), `NandTitleFile` 11.1%, `cbRenderBefore` 93.0% (4 reg_swap only), `NandQueueChk5CC` 55.1% (22 reg_swap only).
+- Cause:     retail's second/third push reloads the manager into a different GPR than MWCC picks for our declaration/expression order. For `NandResetMode` a loop emits `mtctr/bdnz` (retail unrolls); explicit slot constants, a `u8 slot` counter and dropping the `u32` cast all kept the wrong register birth order. `NandTitleFile` retail materializes the event fields on the stack before the push; both a scalar helper and a by-value `CfNandEvent` overload produced the wrong frame size (0xD8/0x108 vs 0xFC). Local declaration reordering in `cbRenderBefore` moved four other reg-swaps into the first two GX blocks (86.0%).
+- Fix:       all negative shapes reverted. No new hacks, exemption markers, pragma flags or duplicate symbols; these stay as residuals.
+- Result:    negative_result; final unit table still 20/48 ✓ with all earlier matches intact.
+- Confidence: negative_result
+- Applies to/a.k.a.: do not retry those exact variable-order permutations without a new hypothesis; a witness-certified EQUIVALENT_MATCH is the next angle for the pure-reg-swap residuals.
+
+## CArtsInfo_FmtRowXX — prologue param copies emitted r4-before-r3 → narrow (u8) param type (Wii/1.1 -O4,s, 25 FULL_MATCH)
+- Symptom:   pure 2-insn reg_swap: retail `or r29,r4,r4; or r27,r3,r3` vs decomp `or r27,r3,r3; or r29,r4,r4` (same colors, copy order swapped)
+- Cause:     the parameter was declared `u32`/`int`; the original type is `u8` (the dispatcher CArtsInfo_UpdateArtsRow takes `u8 arg2`). A sub-word parameter's entry copy is emitted ahead of the word params. `u8`, `s16`, `u16` all flip the order; `int`/`u32`, shadow locals, `const`, member-function form do not.
+- Fix:       declare the param with its real narrow type (`void CArtsInfo_FmtRow15(CArtsInfo* self, u8 arg2, int arg3)`); delete shadow-copy locals
+- Result:    CArtsInfo 47 -> 72/93 fully matched
+- Applies to: any "params copied out of ABI order" wall — check the caller's argument type first
+
+## Wave i (i4) — CMenuSymbolMark: invented render-item vtable labels → real CArrow3D / CTTask<CArrow3D> MI hierarchy (Wii/1.1 -O4,p -ipa file)
+- Symptom:   retail `.data` labels `sSymbolMarkItemVtableB` (0x8052CD50) and `sSymbolMarkItemVtable` (0x8052CDB4) were anonymous `extern u8[]` blobs installed by hand in `CMenuSymbolMark::Init`; the decomp object had no CArrow3D vtable/RTTI at all (`.data` started at `__vt__15CMenuSymbolMark`).
+- Cause:     the two tables' RTTI records at 0x80661E78 / 0x80661E80 name `CArrow3D` and `CTTask<CArrow3D>`; base list (0x8052CD88) is `[IScnRender -0x54, CDoubleListNode 0, CChildListNode 0, CProcess 0, CTTask<CArrow3D> 0]`.  The primary vtable slots are dtor, Reset, Init, Term, empty `Move__8CArrow3DFv`, inherited `Draw__17CTTask<8CArrow3D>Fv`, Tail, then the IScnRender secondary (RTTI, -0x54, dtor thunk, render thunk, `cbRenderBefore`).  The 0x7c-byte render item allocated in `Init` is really a `CArrow3D`; its two vptr stores were hand-emulated through a view struct.
+- Fix:       declared `class CArrow3D : public CTTask<CArrow3D>, public IScnRender` with one real virtual per retail slot (`Init`, `Term`, `Move`, `cbRenderBefore`, and the C-ABI deleting dtor declared *after* them so MWCC picks a defined virtual as the vtable key function), removed the hand thunks, and replaced the manual `__ct__8CProcessFv` + vtable/ptmf stores with `new (item) CArrow3D` (the inline CTTask ctor also makes MWCC emit the base `__vt__17CTTask<8CArrow3D>` in retail slot order).  `rename_syms.py` mapped the seven retail labels in us/eu (two thunk names also in jp) to `__vt__8CArrow3D`, `__vt__17CTTask<8CArrow3D>`, `__RTTI__17CTTask<8CArrow3D>`, both `__RTTIBaseList__...` names and the compiler thunks `@84@cbRenderBefore__8CArrow3DFv` / `@84@__dt__8CArrow3DFv`; `configure.py configure` rerun.
+- Result:    17/32 ✓ before and after, every prior ✓ row and % column preserved (the two renamed thunks are ✓ under their compiler names); compiler `.data` now reproduces both vtables and both RTTI base arrays at the retail offsets (0x0/0x38/0x64/0x88), `run.py data diff` still FAIL→FAIL but `.data` gap shrank 0x120→0x1C8 vs retail 0x230; faithful hard 79→78 (mangled_c 7→6); CUICfManager includer kept all 67 ✓ rows; its unmatched `CUICfManager_claimFreeSlotByIndex` moved 13.2%→5.8% after the CArrow3D declaration shrink (header line/layout shift reported, no ✓ or matched % lost); link/extab/text-order/registry OK at verification time.  Residual: the IScnRender secondary header in the compiler's CArrow3D vtable uses derived RTTI (retail uses `__RTTI__10IScnRender`), and `.rodata`/`.sdata`/`.sdata2` data diffs remain pre-existing.
+- Confidence: repo_proven (retail RTTI/vtable relocation dump, compiler data-layout dump, full before/after `hexdiff --all`, `data diff`, includer sweep)
+- Applies to/a.k.a.: flat-labelled MI vtables whose RTTI names a real class; keep a C-ABI deleting dtor body but declare it after a defined virtual so MWCC still emits the vtable (dtor-first leaves the key function undefined and emits no vtable, cf. CException).
+
+## Wave i (i4) negatives — CArrow3D member destructor / novtable / IScnRender dtor macro
+- Symptom:   converting the flat deleting dtor to a real `CArrow3D::~CArrow3D()` emits both vtables, but the dtor grows 0x5c→0x88 (23.5%, 19 structural) from vptr stores plus an extra CTTask base-dtor call; `__declspec(novtable)` removes the stores but suppresses both vtables entirely; declaring the dtor first in the class (with the flat C-ABI body) leaves the key function undefined and emits no vtable.  `ISCN_RENDER_OUT_OF_LINE_DTOR` does not change the secondary RTTI slot and drops the already-matching `__dt__15CMenuSymbolMarkFv` (100%→34.4%).
+- Cause:     retail's deleting dtor is a hand-shaped flat body with no vptr store and no CTTask base call; MWCC's member dtor cannot express that shape while also serving as the vtable key function in this hierarchy.
+- Fix:       all four variants reverted; kept the flat C-ABI dtor with reordered virtual declarations (vtable slots unchanged), no exemption markers added.
+- Result:    negative_result; final unit still 17/32 ✓ with no prior ✓ or % lost.
+- Confidence: negative_result (four full-unit `hexdiff --all` A/B tables plus per-function asm/data dumps)
+- Applies to/a.k.a.: do not retry member-dtor or novtable variants for CArrow3D without a source-level deleting-dtor shape MWCC can emit.
+
+## d3 pool-ownership wave — MemManager region-name strings and CDevice .sbss/.rodata/.sdata2 (-RTTI off, Wii/1.1)
+- Symptom:   MemManager `data diff` FAIL (`.sdata2 0x28 != 0x18`, 5 functions byte-identical but ✗ on SDA2 relocs); CDevice FAIL on `.rodata 0xA0 != 0x15D`, `.sdata 0x10 != 0x20`, `.sbss 0x10 != 0x10` order, `.sdata2 0x8 != 0x0`, and 5 functions 100%-but-✗.
+- Cause:     both retail slices own data the decomp TU declared as imports/duplicates: MemManager's `Mem1`/`Mem2` `.sdata2` strings (no other TU defines them) and CDevice's 8-byte `CDevice` `.sdata2` string; CDevice also emitted a duplicate hand-built device-name array + compiler RTTI name strings and placed its singleton 4 bytes late; the 2^52 conversion magic is compiler-pooled at first use and must NOT be pre-defined (that duplicates the pool slot).
+- Fix:       define the real owned strings as `extern "C" const char lbl_eu_...[N] = "..."` at the top of the owning TU; keep the magic as a plain extern (the compiler emits it at the right offset). In CDevice: delete the hand-built `lbl_eu_80522AD0` u32 array (retail's table is the literal pool of the eight `create("CDevice*", ...)` calls), import out-of-slice `lbl_eu_80663670/74/80663678/8066367C`, reorder `.sbss` definitions (`CDevice::spInstance` first, then `lbl_eu_80665654`, then the 8-byte `lbl_eu_80665658`), define `lbl_eu_8066A3A8 = "CDevice"`, and set the TU flag `extra_cflags=["-RTTI off"]` in configure.py (retail has no RTTI/type-name records in this slice).
+- Result:    MemManager 23→28 ✓, `data diff` now MATCH on every section; CDevice 10→15 ✓, `.rodata`/`.sdata`/`.sdata2`/`.bss`/`.sbss` MATCH (`.data` still 0x210 vs 0x170: one compiler vtable for the anonymous CDeviceException). Faithful hard MemManager 44→44, CDevice 111→109; no ✓ or % regression; split/extab unchanged; link-gate OK (missing=43), extab-gate, text-order-gate, registry_check OK.
+- Confidence: repo_proven (before/after `hexdiff --all`, `run.py data diff`, ELF symbol/reloc dumps)
+- Applies to/a.k.a.: any pool-reloc drift caused by a missing TU-owned short string or a duplicated string table; `-RTTI off` for hand-built vtable/RTTI blobs.
+
+## d3 negative result — CDeviceException `__declspec(novtable)`
+- Symptom:   with `-RTTI off`, adding `__declspec(novtable)` to the anonymous `CDeviceException` removes the surplus 0xA0 compiler vtable from `.data` but its dtor and `wkStandbyLogout` become link-dead (15→13 ✓, extab records vanish). The hand-built retail blobs reference the CDevice mangled names, so the anonymous functions have no live reference.
+- Cause:     dead-strip rule §17.8 treats unreferenced anonymous functions as link-dead; making them live needs real retail data relocs (the blob slots at `.data+0x8`/`+0x98`), not a novtable flag.
+- Fix:       reverted; kept the 15/17 state and the 0xA0 `.data` residual.
+- Result:    negative_result; no new matches or regressions.
+- Confidence: negative_result
+- Applies to/a.k.a.: do not retry novtable on CDeviceException without first making the manual vtable blobs point at the real anonymous functions.
+
+## d3 residual notes (untouched units)
+- CMat34 (0/5), CPcKizunagram (28/46), CMainMenu (22/31), CDeviceClock (5/12): all pool-drift functions are 100% instruction matches, but the missing data is either asserted strings owned by nw4r data TUs (CMat34: `805262C8/F0`, `80526300/24`, `8052AD88/B0`), large owned tables/RTTI/string pools emitted by other slices (CPcKizunagram, CMainMenu), or compiler vtables for templated reslist classes (CDeviceClock). Literal→extern swaps were not attempted (banned); no source edits made to these four units.
+
+## Strength-reduced `out[count]` vs explicit offset counter (o5, code_800C17DC func_800C1900)
+A separate register stepping by 4 next to a `count` register (`stwx rS, rOut, rOff; addi rOff, rOff, 4`)
+is MWCC's induction-variable strength reduction of `out[count] = s; count++;` — do not model it with a
+second `offset` local (that colours/initialises in the wrong order). Similarly `*o++ = *self->cursor++;`
+(member post-increment) reproduces the `lwz; lbz; addi; stb; stw` cursor-advance shape.
+
+## Named data objects instead of a `dataBase + off` local (o5, kyoshin/main)
+Retail `addi r3, r30, 0` / `addi r3, r30, 0x50` off one base register comes from referencing the
+separate TU-local .data objects by name (`&sGameMainIcon`, `sLanguageFolderPaths`, `sStaticArcFiles`);
+MWCC anchors them on one register itself. A hand-made `char* dataBase` local yields `mr r3, r30` instead.
+
+### Branchless signed compare idiom `xori/andi./srawi/subf/rlwinm 1,31,31` (o6, 2026-11-19)
+`x = a ^ K; (x >> 1) - (x & K)`, then bit 31, is how MWCC emits `a < K` as a value with no branch. Write the comparison
+(`1 + (count < 10 ? 1 : 0)`), not the expanded bit formula, which leaves register swaps (ocMsg OcMsgRingProbeOverflow).
+
+### Pad-flag bool ladders: declaration order sets the register order (o6, 2026-11-19)
+In the `isClassicController` two-arm flag extraction (CMenuOption/CMenuPlayAward), the flag tested last in the
+if/else ladder gets the lowest volatile register when it is declared first (`bool pageLeft, left, right;`).
+
+### bool-typed flags: `flag = a == b` without the `& 0xFF` mask (o8, 2026-11-19)
+`cntlzw; rlwinm r0,r0,27,5,31; stb` (no 24..31 mask) means the destination is `bool`, not `u8`. nw4r
+`MmlParserParam::cmpFlag` and `SeqUserprocCallbackParam::cmpFlag` are `bool`; with `u8` the store gets a byte mask and
+SeqPlayer::CallSeqUserprocCallback gains a `neg/or/rlwinm` normalize when copying between the two.
+
+### nw4r header-inline helpers instead of TU-local factoring (o8, 2026-11-19)
+`ExternalSoundPlayer::GetLowestPrioritySound` is an inline member in the header (retail has no out-of-line copy); defining it
+there fixed the r8/r9 swaps in AppendSound/detail_CanPlaySound that a TU-local helper with an out-param could not.
+`MmlParser::ParseAllocTrack` is a static member using `ut::AddOffsetToPtr(pBase, offset)` (emits `add rX, offset, base`).
+
+## Wave i (i17) CTaskGameCf negative — `task->Regist(...)` is not byte-equivalent here
+- Symptom:   tried replacing the pre-mangled `Regist__8CProcessFP8CProcessb(task, pParent, false)` call in `create` with the real `CProcess::Regist` member call and deleting the header declaration (faithful `mangled_c` 8→6).
+- Cause:     MWCC lowers the C-linkage call and the member call to different prologue/return shapes in this `-func_align 4` TU: `create` shrank 0x6c→0x5c (22.2%, 15 structural + 6 reg_swap) and extab became NEW-mismatch. Unlike CTaskGame::create, this factory's retail call shape needs the flat symbol.
+- Fix:       reverted both the call and the header declaration; 15/25 ✓, hard 43, extab MATCH restored.
+- Confidence: negative_result
+
+## nw4r g3d_resfile — ResNameData27 objects must be named at their retail addresses (d2, Wii/1.0a)
+- Symptom:   8 functions were instruction-identical but failed the byte gate on `.data` relocs; e.g. `GetResAnmClr` pointed at decomp `lbl_eu_80569020` (+0xC0) where retail points at `lbl_eu_80569000` (+0xA0). `run.py data diff` reported MATCH because all 352 bytes were already correct.
+- Cause:     the source declared 11 separate 0x20-byte `ResNameData27` objects named by *their own* addresses, while retail merges two adjacent pairs into 0x40-byte symbols (`lbl_eu_80568FC0` = AnmChr+AnmVis, `lbl_eu_80569080` = AnmScn+External). Every decomp name after AnmChr was therefore one object too high in the section, although the bytes were identical.
+- Fix:       keep separate objects (array initializers make MWCC emit a two-`addi` address chain when an inlined `ResName` takes element 1, growing `CheckRevision` by 8 bytes and dropping it to 42.5%). Instead name each object at the *retail address of its content*: AnmVis becomes `lbl_eu_80568FE0`, AnmClr `lbl_eu_80569000`, TexPat `lbl_eu_80569020`, TexSrt `lbl_eu_80569040`, AnmShp `lbl_eu_80569060`; AnmScn/External keep `lbl_eu_805690A0`/`lbl_eu_805690C0` (retail has no separate symbols there). Update every use site, including the dead AnmVis functions and `Bind`.
+- Result:    data MATCH (before and after), functions 17/25 → **25/25**, split/extab OK, faithful hard 43→43 (metric-irrelevant label renames).
+- Confidence: repo_proven
+- Applies to/a.k.a.: adjacent fixed-size `.data` string/name objects whose symbol boundaries differ; fix the name-to-content mapping in source, not with postprocess rules.
+
+## RVL_SDK KPAD — external-linkage consts do not remove anonymous literal pool entries (d2, negative)
+- Symptom:   pool-reloc census lists 10 instruction-identical functions; retail `.sdata2` is 0x70, decomp 0x78 with three duplicated local constants.
+- Cause/probe: changing the 20 file-scope `static const` literals to `const` and rewriting every in-function numeric literal to the named constant made the named objects emit in declaration order, **but MWCC still emitted the anonymous first-use literal entries** (`.sdata2` 0x70 → 0xCC). Removing `read_kpad_dpd`'s three local copies and the literal rewrite lost `KPADiConnectCallback` (✓→✗) through source-line/inlining movement.
+- Result:    reverted to baseline 12/29 and `.sdata2` 0x78; no source change retained.
+- Confidence: negative_result
+- Applies to/a.k.a.: do not repeat the linkage+literal-rewrite probe on this KPAD pool; a source-shaped fix must change literal **first-use order** before the first function, not add named objects.
+
+## RVL_SDK OSNet — moving the bare `(void)"NWC24iPrepareShutdown"` pool anchor (d2, negative)
+- Symptom:   `.data` string pool has `/dev/net/kd/request` at +0xA8 where retail has `NWC24iPrepareShutdown` at +0xA8 and the path at +0xC0.
+- Cause/probe: moving the existing `(void)"NWC24iPrepareShutdown";` from `NWC24iRequestShutdown` into `NWC24iPrepareShutdown` reordered the strings but changed that function's inlining: `NWC24iPrepareShutdown` 100% → 10.9% (0xb8 → 0x48) and `.data` shrank to 0x131.
+- Result:    reverted; 2/8 and the original string order restored.
+- Confidence: negative_result
+- Applies to/a.k.a.: the existing bare-string pool anchors in OSNet are load-bearing; do not move them without changing the real first-use source shape.
+
+## Wave i (i11) correction — CUICfManager hand-written dtors and claim rewrite withdrawn
+- Symptom:   the earlier i11 record added flat `__dt__8012FF74` / `__dt__801320F0` bodies and shrank `claimFreeSlotByIndex` to fund them; orchestrator review identified the shrink as split-budget gaming and the dtors as hand-written compiler artifacts.
+- Cause:     symbol/relocation evidence does not identify a real owning class. `config/us/symbols.txt` only gives address-derived names at 0x80130A48 / 0x80132BC4 (both inside the CUICfManager split; the first immediately after CUIBattleManager's `UIBattleDelete`, the second immediately after `__ct__CUICfManager`). A sweep of every retail object's relocations finds `__dt__8012FF74` only in CUICfManager.o's own `extab`/`extabindex`, and `__dt__801320F0` only in the `extab` cleanup lists of CUIWindowManager.o, CTaskREvent.o, CHelp_LandMark.o and CSaveLoad.o — never in a `.data`/vtable relocation. A raw main.dol scan finds 0x80130A48 only at extab address 0x8000C4E8 and no occurrence of 0x801320F0 at all. `targets show` labels them `destructor(7, 4)` / `destructor(0)` with no class name.
+- Fix:       restored the original `CUICfManager_claimFreeSlotByIndex` source verbatim (0x214 body, retail 0x2F4), removed both hand-written dtor definitions, and left all other source unchanged. No rename performed because no real class could be established.
+- Result:    negative_result; CUICfManager back to the exact baseline table: 65/89 ✓, `claimFreeSlotByIndex` 5.8% / 0x214, split PASS 0x6024/0x6068, faithful hard unchanged, no ✓ or % regression. With the claim body restored, two 0x40 dtors would push `.text` to 0x6094 (OVER by 0x2C), so they could not be retained even if the class were known.
+- Confidence: repo_proven (retail object relocation sweep, DOL address scan, before/after hexdiff --all)
+- Applies to/a.k.a.: address-labelled `__dt__8012XXXX` symbols whose only references are extab cleanup entries; do not invent classes or reshape matched-adjacent bodies to make room for them.
+
+## RVL_SDK .sbss/.bss object order: uninitialized globals are emitted after statics (o3)
+- Symptom:   GXInit `__GXShutdown`/`GXInit` 100% bytes but ✗ on reloc addresses: retail `.sbss` has `__piReg,__cpReg,__peReg,__memReg` at 0..0xC before the function-local statics; decomp had locals first and the regs reversed.
+- Fix:       define the globals with explicit initializers in source order (`volatile void* __piReg = NULL;` ...), as the SDK does. Explicitly initialized objects are emitted at their definition; tentative ones are deferred to TU end in reverse order.
+- Same family: hbm/seq — `__HBMSEQSequenceList` must be defined before `static u32 __init` (bss follows definition order for these); ipcProfile arrays are global (not static) in retail.
+- Note:      header-only edits do not trigger a rebuild in hexdiff (no .d deps) — `touch` the includer .cpp before measuring.
+- Confidence: repo_proven
+
+## Saturating sign select `(a ^ b) >= 0 ? 0x7FFFFFFF : 0x80000000` (o2, UTY_MulDiv)
+Retail `xor; lis r0,0x8000; rlwinm 1,31,31; subi; add` in the return reg comes from the ternary written
+with `>= 0` and the positive constant first. `< 0 ? 0x80000000 : 0x7FFFFFFF` or arithmetic forms reorder regs.
+
+## Signed `<`/`>=` idiom `srawi; rlwinm 1,31,31; subfc; adde` (o2, SFPTS_IsPtsQueFull)
+`return a >= b;` (int compare) emits this sequence; a hand-written `((s64)a - (s64)b) >> 32` emits
+`srawi`x2 + `subfe` instead.
+
+## CSaveLoad — `processAward` Fv-mangled real parameter + CfAward auto-sinit ceiling (wave i, US Wii/1.1 -O4,s `-func_align 4`)
+- Symptom:   `processAward__Q22cf7CfAwardFv` reads its argument from r4, and the TU's `extern "C"` pre-mangled declarations inflated `mangled_c` to 5. The CfAward dtor address was passed to `__register_global_object` from a hand-written `sinit_802930E0` (0x54 vs retail 0x60, missing `stw r31,12(sp)/li r31,0/lwz r31,12(sp)`).
+- Cause:     the real function is a member taking one `int`; retail's `Fv` spelling is stale decomp naming, not ABI evidence. The sinit is a real static initializer for a global `CfAward` object, but MWCC will not inline a ctor containing a call into the generated sinit at this unit's flags.
+- Fix:       declare `void processAward(int)` on `cf::CfAward`, define it as `void cf::CfAward::processAward(int val)`, and rename `processAward__Q22cf7CfAwardFv`→`...Fi` in us/eu/jp symbols + `targets.json` via `rename_syms.py`. Rename the global object symbol `lbl_eu_806649F8`→`award` (real typed global, declared in the TU) — label smell 139→134, mangled_c 5→4.
+- Result:    processAward 100% (0x18/0x18), unit unchanged at 75/80 matches; extab delta byte-identical to the pre-edit baseline.
+- Confidence: repo_proven
+- Negative:  defining a global `cf::CfAward award` with an in-class or `inline` ctor makes MWCC emit `__sinit_\CSaveLoad_cpp` (0x3C) that calls a weak out-of-line `__ct__Q22cf7CfAwardFv` instead of retail's inlined stores + `CtrlRemote_ResetSlotArrayObj` call (0x60); it also adds a decomp-only extab record at the ctor. Reverted. Taking the dtor address directly (`(void*)&cf::CfAward::~CfAward`) is rejected by MWCC 1.1 (10573), so a hand-written sinit still needs the `extern "C"` dtor declaration until a faithful auto-sinit shape is found.
+- Applies to/a.k.a.: any unit whose retail Fv-symbol actually consumes r4/r5 as declared parameters; verify hidden params before keeping `extern "C"` Fv definitions.
+
+## CfGimmick / ocUnit — named `const` pool slots duplicate MWCC's first-use literals (d1, Wii/1.1 -O4,p)
+- Symptom:   15 + 11 instruction-identical functions failed only on `.sdata2` reloc addresses. CfGimmick `.sdata2` was 0x88 vs retail 0x60 (the whole numeric pool emitted twice: named globals at 0x30..0x5F, anonymous `@N` literals at 0x60..0x87); ocUnit was 0xC vs 0x13C (scale/magic emitted in the wrong order and every string/tabel missing).
+- Cause:     file-scope `const float` definitions are compile-time constants to MWCC: every in-function use folds into an anonymous first-use literal, so the named object remains as dead duplicate data. Naming the pool slots cannot unify the relocs; the retail object has ONE pool, built from plain source literals in first-use order.
+- Fix:       deleted the named numeric globals and wrote the actual values at their use sites (`0.0f`, `40.743664f`, `1.0f`, `30.0f`, `30000.0f`, `0.01f`, `1.5f` in CfGimmick; `4096.0f`, `1000.0f` in ocUnit). Retail scale is 4096.0f (0x45800000), not the 2048.0f claimed by the old header comment. Left one genuine foreign slot (`lbl_eu_80665D44` = 0.0f) as an extern: emitting it locally moved it into the wrong pool slot and cost two matches.
+- Result:    CfGimmick 30→45 ✓, `.sdata2` 92 bytes identical + 0x4 retail tail pad; ocUnit 88→99 ✓, `.sdata2` prefix 0x135 identical, `.rodata` prefix 0x1C5 identical. No ✓ or % regression; faithful hard 252→162 and 149→125.
+- Confidence: repo_proven
+- Applies to/a.k.a.: pool-reloc census rows with equal 8-byte values but shifted addresses; do not fix with named constants, externs, or reloc renames — restore plain literals and retail first-use order.
+
+## ocUnit — reconstructing the OCData area from real typed tables (d1)
+- Symptom:   retail `.data` 0x648 is five OCData records plus their OCProperty/OCSelector arrays; decomp emitted only 0x9C of vtables, and `ocUnitRegist` reached the records through a `PluginArea` view struct over `lbl_eu_80524E50`.
+- Cause:     the tables were never declared as data owned by this TU. Their string names also own the retail `.sdata2`/`.rodata` strings, so omitting them shifted every later string.
+- Fix:       declared `OcUnitPluginArea` with typed `OCProperty`/`OCSelector`/`OCData` members in retail order and one aggregate initializer using real string literals and real function pointers; defined the 6-entry `lbl_eu_804FA4C0` table in this TU. `.data` now matches through 0x648; the remaining 0x9C is decomp-only vtables owned by other TUs in retail.
+- Result:    `.data` 0x648/0x6E4, `.rodata` first 0x1C5 bytes identical, `.sdata2` 4 bytes short (the "GM" string reached through `.sdata`), 99/109 ✓ unchanged.
+- Confidence: repo_proven
+- Negative:  replacing the view struct in `ocUnitRegist` with `&area->d0` calls (with the aggregate before or after the function, and with an early local pointer) always moved the `lis/addi` address load after the two `ArtsSelect_*` calls: 4 structural diffs, 100%→82.6%. Reverted that body; kept the pre-existing view struct as a counted smell.
+- Applies to/a.k.a.: any `vmOCRegist` area whose records are non-uniformly spaced; the typed aggregate is safe, but do not change the registration body without solving the address-load schedule.
+
+## CfGimmick — `.sdata` weak RTTI copies remain (d1, negative)
+- Symptom:   `.sdata` retail 0xC vs decomp 0x10 after a clean `.sdata2` match.
+- Cause:     the TU emits weak RTTI copies for `CfGimmick` and `IObjectInfo`; retail keeps those copies in other splits (the data diff linked-view already excludes them from the comparison but the section size gate still sees them).
+- Fix:       none; suppressing RTTI would require changing shared class declarations and every includer. Left as a pre-existing residual.
+- Confidence: repo_proven
+
+## Regalloc-only recipes (r2, 2026-11-19)
+- `add rD, rBase, rOff` operand order flipped vs retail on `global + i*stride + off`: index the real struct
+  member instead (`&work->entries[idx]`, `work->slots_58[idx]`) — CtrlObjectParam_GetCharEntry/GetItemSlotEntry;
+  same for `ItemBoxGetTab` taking `const CItemBoxPage*` and returning `page->mBytesA8[index]`.
+- `cntlzw; rlwinm 27,5,31` (no 24..31 mask) storing to a byte: the field is `bool` and the source is `f = !f`
+  (CFloorMap field_208/field_333C).
+- Decrement-and-test on s8/s16/u8 fields: write `x--; if (x < 0)` / `if ((s8)--x < 0)`-style on the field,
+  not a `u8 v = x - 1; x = v; if ((s8)v < 0)` temp (artsGoPrevItem, scrollTalkListUp).
+- Handle-buffer take: use `CFileHandle::getData()` inline instead of hand-written `data = h->mData; h->mData = 0;`
+  (CMMTex::OnFileEvent; register order flips).
+- Store order of zeroing: follow retail store order (MiniMapResetGimmickTables `field_0x00` before `field_0x04`).
+
+## o1 (2026-11-19) — CriWare quick recipes
+- **Retail original bugs can explain "missing" instructions:** ADX_DecodeHeader matched only after removing `hdr_size -= 4` and the per-entry `p += 0x14` — retail genuinely never advances p in the channel loop. When retail is shorter, check for ops that just aren't there before fighting the scheduler.
+- **`x = 4; if (c == 0) x = -1;`** gives `li 4 / bne / li -1`; both the ternary and `if (c) x = 4; else x = -1;` emit `li -1` first (MPVCMC_SetCcnt).
+- **Merged-return tail `or r3,rB / or r31,r3`:** `if (b != 0) c = b; ret = c;` instead of an `else if (b) ret = b; else ret = c;` chain (mwPlyGetOutVol, -4 bytes).
+- Same lever matched RootNw4r_AttachCamOne (`mIds[mIdCount++] = cam`), but the identical edit in the
+  sibling loop AttachQueued regressed it. Apply it per function and check each one.
+- SchedNode_AllocPool: copying the sibling SchedFx_AllocPool shape (`s32 count` parameter, `i = 0; s32 off = 0;
+  while (i < count) {...; off += N; i++;}`) plus a named `s32 sz = count * 0x34` temp shared by memset and the
+  return value lets the size reuse the dead cursor register. That matched.
+
+### Element ctors instead of hand-written array fill loops (o8, 2026-11-19)
+The rolled `div-by-24` fill loop with a peeled head in nw4r `BasicPlayer`/`Voice` ctors is the compiler-generated array ctor for
+`VoiceOutParam mVoiceOutParam[N]` once `VoiceOutParam` has an inline ctor (`volume(1.0f), pitch(1.0f), pan(0.0f), ...`).
+`PlayerParamSet() { Init(); }` plus `BasicPlayer() : mId(INVALID_ID) { mParam.Init(); }` gives the retail fill/Init/mId/Init order.
+
+## `cmpwi r3,0` after a call = callee returns int, not u8/bool (o5, CMenuArtsSet Move/artsMenuInput)
+If retail tests a call result with `cmpwi r3,0` and decomp emits `clrlwi r0,r3,24` (rlwinm ..,24,31), the
+callee's real return type is int-sized. Fix the callee declaration (and definition); a u8-field return body
+still compiles to the same `lbz r3`. Check the callee's other callers: code_80231950 artsCursorFix also improved.
+
+## Extern pool labels -> literals restores TU constant ownership (o5, code_800F42AC)
+When `.sdata2` is short in data diff (retail 0x28, decomp 0x8) and the TU reads `lbl_eu_8066xxxx` float/double
+externs, the TU owns those constants. Read the retail values from the split object
+(objread.section_bytes(..., '.sdata2')) and write them as literals in first-use order. MWCC then emits the
+same pool and the sda21 relocs resolve inline.
+
+## BTE inline helpers recover branch layout (o2, btm_sec/btm_acl)
+`btm_sec_execute_procedure`: the trusted-mask check is the BTE `btm_sec_are_all_trusted(UINT32 p_mask[])`
+loop (`for i<2: if (p_mask[i] != 0xFFFFFFFF) return FALSE; return TRUE;`) as a static function inlined;
+hand-unrolled nested ifs invert the branch layout. `BTM_GetHCIConnHandle` = `p = btm_bda_to_acl(bda); if (p) return p->hci_handle; return 0xFFFF;`.
+`BTM_AclRegisterForChanges` = `if (!cb) X = NULL; else if (X) return BUSY; else X = cb; return SUCCESS;` (shared return).
+
+## Post-increment store `*(base + p->len++) = byte` (o2, hcisu_h2_receive_msg)
+Loads the stored byte before `len`; a split `mlen = len; ...[len] = byte; len = mlen + 1` swaps the two regs.
+Also: `p_buf->offset += n; p_buf->len -= n; p = (UINT8*)(p_buf+1) + p_buf->offset;` (both updates before the pointer).
+
+## Inline local declaration order (o2, VER1_ParseVerNum in sfh_ver1)
+Inline-function locals' declaration order drives their caller-side registers; `acc, flg, ch, ptr` matched.
+
+## kyoshin/code_800B06A4 — 143 -> 196 FULL_MATCH via real definitions + source-shape fixes (GC/3.0a5.2, -inline noauto)
+- Symptom: 110 unmatched functions, mostly missing retail definitions plus near-100 reg/order swaps.
+- Cause: catalog TU left many tiny accessor/iterator/flag helpers as `extern` imports; near-misses were declaration/statement-order driven.
+- Fix: added real definitions for 53 retail functions (flag helpers, iterator helpers, field tests, reslist addressors, first-item helpers, unlink/pool helpers); rewrote `sinit_800B9A40` as direct global assignments (its literal first-use order drives FPR colors); removed the `c` local from `storeScaleSquare` and used the raw global at its store; used member addresses (`&getInstance()->field_0xB48`) in the new reslist addressors; swapped operands in `gflagHasMask` / `gflagSetOrClear` to match retail `and`/`andc` operand order; used `(word - next) == 0` in `reslistIsBusy`; used direct `**it` in `tboxIterStep`.
+- Result: 143/253 -> 196/253 functions fully matched; no previously-✓ function lost ✓ or dropped in %.
+- Confidence: repo_proven (hexdiff --all verified).
+- Applies to/a.k.a.: `sinit_800B9A40`, `storeScaleSquare`, `gflagHasMask`, `gflagSetOrClear`, `gflagClearMask`, `gflagNandMask`, `tboxIterStep`, `reslistIsBusy`, `scaleAboveZero`, `firstReslist*`, `getReslist*`.
+
+## kyoshin/code_800B06A4 — residuals: scheduling/register swaps not closed (GC/3.0a5.2, -inline noauto)
+- Symptom: `storeScaleSquare` 77.8% (two store-order swaps), `rebuildReslistC28` 82.5% (7 pure reg swaps), `clearAllReslists` 93.9%, `tickSpeedPass` 97.1%, `fileObjectIntoPools` 98.9%, `buildSingleton` 98.5%, `tboxIterStep` fixed only after removing the `node` local.
+- Cause: MWCC scheduler favors a different independent-store/compare order than retail; declaration-order permutations (p/cur, sentinel locals, `zero` locals) were tried and measured neutral or worse. `buildSingleton` also has one retail-vs-decomp ctor relocation name (`__ct__Q22cf19CfHikariItemManagerFv` vs `__ct__cf_CfHikariItemManager`) requiring a symbol rename outside this task.
+- Fix: kept original-shaped source where possible; reverted every experiment that lowered a % or added a smell.
+- Result: residuals listed above remain unmatched.
+- Confidence: negative_result.
+- Applies to/a.k.a.: `allocTboxEntry`, `setTrackedTarget`, `__dt__800B0AF4`, `_reslist_base` destructors.
+
+## kyoshin/code_800B06A4 — split-size / faithful accounting caveat (GC/3.0a5.2)
+- Symptom: after supplying 53 missing retail definitions, linked-view `.text` is 0x9730 vs 0x941C split budget, and faithful hard rose 527 -> 566 (offset_cast in new untyped bit/word accessors plus new `lbl_eu_*` references).
+- Cause: the catalog TU still has many non-retail dead helper stubs; the unit's 9 remaining unwritten retail functions keep MWCC's link-dead exclusion rule from discarding them, and the new accessors must use offset casts until the owning classes are recovered.
+- Fix: used real `UnkClass_805764CC` members for all new reslist addressors and a single file-scope flag-word declaration; further reduction requires recovering real types for the +0x64/+0x68 flag objects and implementing the remaining 9 retail functions (requires cross-unit `updatePlayerContainers`/`buildSingleton` C-ABI names).
+- Result: 196 matches but split gate FAIL and faithful hard above baseline; report as residual, do not promote unit.
+- Confidence: negative_result.
+
+## Branch-layout "regalloc" lookalikes (r4, 2026-11-19)
+Several regalloc-only labels were really control-flow shape: when a function's only diffs are swapped
+`li r3,0`/`li r3,-1` or swapped `addi rX, base, A`/`B` across a `bc`, MWCC is laying out the source's
+true-branch first. Flip the condition to match (`a != X ? start : end`, `if (bad) return -1; return 0;`).
+Also: a 16-byte block copy whose loads pair as `lwz r0,4; lwz r4,0` is a struct assignment; index the
+destination as an array element (`((T*)(base + 0x13C8))[i] = *src`) to get the retail `add` operand order.
+
+## Wave i (i19) — dummy C++ twins behind unit flags (2026-11-19)
+- Symptom: `void Foo(){}` near the top of a TU, while the real retail function
+  `extern "C" void Foo(args)` exists much later in the same TU. The dummy emits a
+  mangled 0x4 body that hexdiff can pair to the retail symbol at 0%, and the
+  surrounding `-ipa off` / `-inline noauto` flag often only hid the extra body.
+- Cause: incomplete first-pass reconstruction left one shim per retail helper
+  (also member no-ops used only to give thunks a `this` call shape).
+- Fix: delete the dummy definition and its header declaration; keep exactly one
+  real definition under the retail name at the retail text position; make
+  thunks call the real free functions directly. Verified in
+  `CScnItemModel` (4 twins), `CKizunagram` (2), `CPartsChange` (3, one retail
+  function `CPartsChange_LoadBdatTables` still has no body), `CModelDispEquip`
+  (4 member no-ops + 7 unused member thunks).
+- Result: all ✓ counts and faithful hard counts unchanged; `.text` shrank
+  (CScnItemModel 0x3C48->0x3C38, CPartsChange 0x29A0->0x2994,
+  CModelDispEquip 0x2684->0x2648). All affected includers re-hexdiffed.
+- Confidence: repo_proven (hexdiff --all forced rebuild).
+- Applies to/a.k.a.: `simSetFlag*`, `kizCursorDir4`, `tickCurByFlag`,
+  `CPartsChange_*`, `CModelDispEquip::thunk4_*`.
+
+## Wave i (i19) — unit flag A/B method and results (2026-11-19)
+- Symptom: per-unit flags from earlier waves claimed neutral/better matches
+  without forced-rebuild A/B against the current retail reloc layout.
+- Cause: `-ipa off` changes MWCC's IPA/pool pass and can compensate for a wrong
+  declaration or an extra dummy body; after a source fix it is often redundant.
+  Conversely a flag can look neutral when the object was not rebuilt after a
+  configure edit. A mid-wave retail reloc refresh also changed some baselines.
+- Fix: for every candidate, edit only that `Object(...)`, `touch` its source so
+  ninja definitely rebuilds it, run `hexdiff.py <unit> --all`, and compare every
+  function's ✓/%/struc/regsw plus split and extab. Repeat for default, `-ipa off`
+  and `-inline noauto`; restore the winner. Never bare `-O4,s`.
+- Result:
+  - `adx_hdr`: `-inline off` 2/3 (26% DecodeHeader, split +8), default 2/3 (0%,
+    split +0xCC), `-inline noauto` 3/3 (100%, split exact). Switched to noauto.
+  - Removed redundant `-ipa off`: `bta_dm_pm` 5/8, `btu_init` 2/2, `sdp_api`
+    9/9, `sdp_server` 0/4, `CScnFilterMan` 73/75 — identical to default.
+  - Kept `-ipa off` with measured losses for default:
+    `CModelDispEquip` 49->48,
+    `rfc_ts_frames` 15->13, `sdp_discovery` 8->4, `sdp_main` 10->0,
+    `gap_utils` 6->2, `hidh_conn` 16->4, `CPlane` (65.3%->55.1% on the best
+    unmatched fn), `CRsrc` 9->6, `CGXCache` 30->20, `CScnItemLight` 7->6,
+    `CScnItemModel` 64->62, `code_804BD8E8` 28->26, `CMdlLook` 5->4;
+    `CViewRoot` does not even compile without it (10322 RTTI overload);
+    `CMdlDynamics` ✓ 54 both but default .text 0x6338 vs 0x4CC8 split.
+    `UnkClass_8047CD0C`: 16/16 with, 10/16 without after the reloc refresh.
+  - `CKizunagram` after twin removal: default 70/83 == `-ipa off` ==
+    `-inline noauto`; no flag added. `CPartsChange`: `-inline noauto` 50/84,
+    default 45/84 — kept.
+- Confidence: repo_proven (forced-rebuild hexdiff --all).
+- Applies to/a.k.a.: configure.py flag A/B, stale-object false neutrals,
+  `hexdiff.py`, retail reloc refresh.
+
+## CPassiveSkill / CtrlObjectParam aliases → real `cf::CtrlObjectParamData` members (i20, 2026-11-19)
+- Symptom: `CPassiveSkillLine_syncEquipState` emitted `CtrlObjectParam_SetEquipSlot2/3` relocs; retail calls
+  `setArgType2/3__Q22cf19CtrlObjectParamDataFPv` (100% code, ✗ on reloc names only). Including
+  `kyoshin/cf/CtrlObjectParam.hpp` failed on three stale spellings (`CItem_kindPtr` return type,
+  `lbl_eu_806640F4/F8`, `KizunagramRebuildSlotList`).
+- Cause: four private headers invented `CtrlObjectParam_SetEquipSlot2/3` aliases for real members, while
+  shared headers carried duplicate declarations with non-authoritative types.
+- Fix: include the owning headers (`cf/CItem.hpp` for `CItem_kindPtr`, `cf/CfBdat.hpp` for the bdat
+  globals, `CPcKizunagram.hpp` for `KizunagramRebuildSlotList`); unify the bdat globals to the real
+  `void*` definition in `cf/CfBdat.cpp` (callers that need a word now cast explicitly); delete the
+  alias declarations/calls in CPassiveSkill, CEquipChange, CItemBoxGrid, CEquipItemBox and switch them
+  to `reinterpret_cast<cf::CtrlObjectParamData*>(obj)->setArgType2/3((void*)-1)`. No symbols.txt alias
+  existed for slot 2/3 (all 3 regions already carried only the mangled member names).
+- Result: CPassiveSkill 108→109 ✓; `CPassiveSkillLine_syncEquipState` ✗100%→✓100% at 0x250, extab
+  unchanged (0x3F0/0x36C); other touched units byte-for-byte function tables unchanged; faithful
+  hard counts unchanged or lower.
+- Confidence: repo_proven (retail reloc names + defining TUs).
+- Applies to/a.k.a.: decl_shield removal in CItemBoxGrid, bdat global spelling drift in code_80135FDC.hpp.
+
+## CfNandManager stubbed bodies → real event handlers (i21, 2026-11-19)
+- Symptom: `NandFileEvent` was a 4-byte stub because `__dt__8023E63C` and
+  `NandFlushEvts` were empty `{}` bodies; `NandVerifyBlk` was also empty and
+  `-ipa file` folded its call away. Extab sat at 0x68/0x9C against retail
+  0x154/0x168.
+- Cause: retail functions were present only as harness stubs; their real
+  bodies, field accesses and callees were already described by the unit header.
+- Fix: rebuilt `__dt__8023E63C` (pending-event result/callback pump),
+  `NandFlushEvts` (ring pop + per-type NAND dispatch), `NandVerifyBlk`,
+  `create__Q22cf13CfNandManagerFv`, `NandCopyParty` from the retail code with
+  the real `CNand`, `FixStr<32>`, `CNandData` and `MemManager` APIs. Added a
+  public `CNandData::instance()` accessor in the owning header instead of a
+  pre-mangled extern for `sInstance__9CNandData`; rebuilt both includers.
+  NandVerifyBlk needed the magic 0x444D4D59 ('DMMY') and duplicated CRC checks
+  in each version branch (a shared tail costs 0x1C bytes).
+- Result: unit 20→22 ✓; `NandVerifyBlk` and `NandFileEvent` went 0%/0% → 100%;
+  extab 0x68/0x9C → 0x98/0xE4 (toward retail 0x154/0x168); CTaskGameCf
+  15/25 unchanged; no ✓ lost in either unit. Remaining large handlers are
+  honest near-misses (NandVerifyBlk-style code shape still being tuned).
+- Confidence: repo_proven (hexdiff --all before/after, includer rebuilds).
+- Applies to/a.k.a.: CfNandManager, CTaskGameCf, CNandData.hpp accessor,
+  `-ipa file` folding empty same-TU stubs.
+
+## kyoshin/code_800B06A4 — follow-up: offset casts -> typed fields, split budget restored (GC/3.0a5.2)
+- Symptom: first pass left offset_cast 91 (baseline 68) and split FAIL 0x9730 > 0x941C.
+- Cause: the new bit/word/flag helpers used raw `(u8*)obj + 0x..` arithmetic; the 53 new retail definitions displaced non-retail catalog helpers whose dead-strip exclusion is disabled while 9 retail symbols remain unwritten.
+- Fix: declared real typed layouts for the flag object (`ObjFlagsEx`), work buffer (`SortBuffer`), manager D08 word (`ManagerD08`) and vec-at-0x724 block (`Vec724Block`), then replaced every added offset cast with a named field access. Restored the private header to its original line count (only the `getGlobalU32_40F4` return type changed) after an in-header field experiment caused 58 reg-swap regressions via `-ipa file` line sensitivity. Deleted 22 non-retail catalog helpers (`sub_getReslist_*`, `sub_resetReslist_*`, `sub_dispatchInit_1..6`, `shift_u32_hi8_alt1`), all with no callers and no `hexdiff --list` entry; left the retail `registerFactoryEvent__FPvPQ22cf13IFactoryEvent` in place.
+- Result: 196/253 FULL_MATCH unchanged; offset_cast 91 -> 68 (= pre-wave); split PASS 0x9418 / 0x941C; hard categories label 376 (+16), mangled_c 49, section 0, offset_cast 68, view_struct 47, noinline 0, decl_shield 0, volatile 1, rule 1, rtti_off 0, foreign_data 1.
+- Confidence: repo_proven.
+- Applies to/a.k.a.: typed-field recovery, dead-strip gate, catalog-helper cleanup.
+
+## nw4r snd — `detail::WaveInfo` swap: runtime vs on-disk wave info (o8, 2026-11-19)
+
+Retail mangled names show two different types: the runtime `detail::WaveInfo` (0x80: SampleFormat,
+bool loopFlag, int numChannels/sampleRate, loopStart/End, `ChannelParam channelParam[2]` = {dataAddr,
+AdpcmInfo}) is what `Voice::Setup`, `Channel::Start`, `BankFileReader/WsdFileReader::ReadWaveInfo`,
+`WsdCallback::GetWaveSoundData` take. The on-disk header is the nested `WaveFile::WaveInfo` (it is
+what `WaveFileReader(const WaveFile::WaveInfo*)` and `BankFile` `DataRef`s point to). Getting the
+names right removes the `extern "C"` retail-name entry points and `#define private public` from
+snd_Channel/WsdPlayer/StrmPlayer, the local re-declarations in BankFile/WsdFile, and fixes the
+dead-strip linked-view exclusion (snd_Voice split overflow 0x1F0 -> 0x2C). No ✓ lost across all snd
+units; WaveFile +1, Bank::NoteOn 13.5% -> 57.9%.
+
+## Hidden vtables in `lbl_eu_*` data blobs → symbol-map ownership (i24, 2026-11-19)
+- Symptom: byte-identical ctors/dtors show 100% with `✗`; `--relocs` shows retail
+  `lbl_eu_80536EA8` / `lbl_eu_8052F5D8` / `lbl_eu_80539890` / `lbl_eu_8052BD74` /
+  `lbl_eu_805701C0` where decomp has `__vt__5CFade` / `__vt__Q22cf9_sArtsSet` /
+  `__vt__Q22cf12CChainEffect` / `__vt__Q22cf10CChainTime` / `__vt__9CMdlAnmUV`.
+  hexdiff labels the mismatched reloc sites "decomp-side only / unproven".
+- Cause: the retail symbol map hides compiler-emitted vtables under generic data labels.
+  The blob is not necessarily merged: `lbl_eu_80536EA8` is exactly `0x88` = 32 vtable
+  slots * 4 + 8 (RTTI + offset-to-top), with all 32 slot relocs matching decomp's
+  `__vt__5CFade` one-for-one. `lbl_eu_8052F5D8` (0x10 = 2 slots),
+  `lbl_eu_80539890` (0x10 = 2 slots), `lbl_eu_8052BD74` (0xC = 1 slot) and
+  `lbl_eu_805701C0` (0x10 = 1 slot) are likewise whole vtables.
+- Fix: compare the retail blob with the decomp object's `.data` symbol of the same
+  size/reloc sequence using `tools/coop/faithful/vt.py` (retail) and pyelftools
+  (decomp), then rename via `tools/coop/faithful/rename_syms.py old=new` (us/eu;
+  JP has no corresponding map entries here), `run.py configure`, and re-run
+  `hexdiff --all`. No source or UNIT_RULES change. Wider sweep over
+  `blockers.json` rows with `reloc-other` / `data-layout` found 20 more
+  whole-object vtables and 4 that could NOT be renamed (below).
+- Result: CFade 13→14, CChainEffect 8→9, CChainTime 3→4, CMdlAnmUV 2→3,
+  CTaskGame 103→104, CfPadTask 23→24, CQstLogInfo 23→24, CfPadTask 23→24,
+  CChainActorList 29→31, CDeviceClock 5→8, CLibVM 6→7, CPackItem 4→5,
+  snd_MmlSeqTrack 2→3, CTaskCulling 23→24, CWorkRoot 16→17; no unit lost a ✓.
+- Negative result 1 (frozen UNIT_RULES): `CArtsSet.o`, `snd_BasicSound.o` and
+  `CProc.o` have existing frozen `exact_renames` that rewrite compiler-emitted
+  `__vt__Q22cf9_sArtsSet` → `lbl_eu_8052F5D8`,
+  `__vt__Q44nw4r3snd6detail10BasicSound` → `lbl_eu_8056A710` and
+  `__vt__17_reslist_base<Ul>` → `lbl_eu_8056B298`. Renaming those symbols.txt
+  entries makes mwld report `new missing: lbl_eu_...`; all three renames were
+  reverted (link-gate went from 55 missing/new failures back to OK, 42 missing).
+  Since UNIT_RULES are shrink-only, these are residuals, not renameable here.
+- Negative result 2 (dual spelling in source): `CBattleManager`'s base-vtable
+  addresses `8052BD68` / `8052BD44` are referenced as `lbl_eu_*` by four already
+  matching reslist dtors. Renaming them removed those four ✓; reverted.
+- Negative result 3 (pool labels, not vtables): CfCollSphereImpl /
+  CfCollCircleImpl (`lbl_eu_80666920`, `80666914/10/18`), CCamUtil, CEBuildSinCos,
+  blitEffectViewRect, CScnMem, CLib wkStandby*, g3d_anmclr, inflate and
+  CScnFilterMan have float/string/jumptable or ctor-name drift, not hidden
+  vtables; no rename applied.
+- Confidence: repo_proven (retail symbol map + retail/decomp ELF relocs + hexdiff).
+- Applies to/a.k.a.: `rename_syms.py`, `data_layout`, `reloc-other`,
+  `hexdiff --relocs`, `run.py data diff`, frozen `UNIT_RULES` interactions.
+
+## CTitleAHelp::isInitialized — bare `isInitialized` caller → member call (19 units, `-O4,s` menus / `-O4,s` CPartyStateWin)
+- Symptom: after `CTitleAHelp::isInitialized()` became a real member and the three
+  `symbols.txt` regions were renamed to `isInitialized__11CTitleAHelpFv`, 19 callers
+  still declared and called `int isInitialized(CTitleAHelp*)`, leaving that name
+  missing at link time.
+- Cause: a header signature was changed without updating the caller declarations;
+  every caller had its own free-function prototype, so the mismatch was invisible
+  until link. CPartyStateWin additionally reached the sub-object through its
+  `_pad18` byte array.
+- Fix: delete each free prototype (including the copies in `CPartyStateWinImports.hpp`,
+  `CMakeCrystalWin.hpp`, `CMenuShopBuy.hpp`, `CMenuQuestLog.hpp`, `CMenuPlayAward.hpp`,
+  `CMenuItemExchange.hpp`, `CMenuPassiveSkillImports.hpp`), include
+  `kyoshin/CTitleAHelp.hpp` in the calling TU, and write `mTitleAHelp.isInitialized()`
+  / `self->mTitleAHelp.isInitialized()` / `reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isInitialized()`.
+  CPartyStateWin kept the cast: giving it a real `CTitleAHelp` member would make MWCC
+  implicitly call the declared default ctor/dtor in the hand-written ctor/dtor.
+- Result: 19 units gained or held every ✓ (e.g. CMenuQuestLog 21→22, CMenuOption
+  13→14, CPartyStateWin 37→38); no ✓ or % column dropped; extab unchanged.
+- Negative result (measured, reverted): converting other `CTitleAHelp` methods that
+  are written as C++ members in `CTitleAHelp.cpp` (`func_801C412C`, `teardown`,
+  `updateHelp`, `drawHelp`, `beginClose`, …) to member calls in their retail callers
+  emits relocs like `teardown__11CTitleAHelpFv`, while the retail reloc is the bare
+  `teardown` (symbols.txt has no mangled spelling for those addresses). Example:
+  `CMenuSkipTimer::Term` went ✓→✗ at 100% instruction match with one decomp-only
+  reloc at +0x3c. All of those conversions were reverted; the `extern "C"` free
+  declarations were kept/restored, and previously missing local prototypes
+  (`func_801C412C` in 8 menu TUs, `teardown` in CMenuGCItem/CMenuSave, `updateHelp`
+  in CMenuItem) were added so the rebuild still binds the bare names.
+- Confidence: repo_proven (hexdiff --relocs + retail symbols.txt in all 3 regions).
+- Applies to/a.k.a.: `isInitialized__11CTitleAHelpFv`, `func_801C412C`, member-vs-free
+  signature fixes, `extern "C"` caller cleanup, link-gate undefined symbols.
+
+## CfNandManager follow-up: mangled_c clean-up (i21, 2026-11-19)
+- Symptom: four new `extern "C"` declarations with C++-mangled retail names
+  (`getInstance__Q22cf14CBattleManagerFv`, `getPlayer__Q22cf13CfGameManagerFi`,
+  `getWorkMem__17CWorkThreadSystemFv`, `Regist__8CProcessFP8CProcessb`) pushed
+  the unit's hard mangled_c score 9→13.
+- Cause: the newly written bodies called retail imports without including their
+  owning class headers.
+- Fix: include `CBattleManager.hpp`, `CWorkThreadSystem.hpp`, `CProcess.hpp`
+  and call `cb::CBattleManager::getInstance()`, `CWorkThreadSystem::getWorkMem()`
+  and `CProcess::Regist()`. `CfGameManager.hpp` could not be included without
+  triggering 10505 on unrelated `extern "C"` spellings, so this TU carries one
+  canonical C++ member declaration for `cf::CfGameManager::getPlayer`. Party
+  vtable dispatch now uses the real `CfObjectMove::CfObject_getPosVector()` /
+  `CfObject_getScaledAngle()` virtuals instead of function-pointer casts.
+- Result: mangled_c 13→9 (at baseline), NandCopyParty 21.5%→45.3%, no ✓ lost,
+  unit still 22/48, CTaskGameCf 15/25, extab 0x98→0xA8 (retail 0x154).
+- Confidence: repo_proven (hexdiff --all + faithful report).
+- Applies to/a.k.a.: CfNandManager, CProcess, CWorkThreadSystem, CBattleManager,
+  CfObjectMove virtual slot 0xAC/0xD8.
+
+## reslist inline register-swap family — shared-header survey: no net gain (negative result, wave i25)
+
+- Symptom:   `reslist::size()` callers (CDeviceFileCri abortRead 79.6%/10 reg_swap,
+              CHelpManager updateBattleHelpState 73.1%/7), iterator callers
+              (CUIWindowManager UIWin_ShowTalkWindow 81.8%/6) and CDeviceClock's
+              hand-built reslist vtables were attributed to shared
+              `libs/monolib/include/monolib/util/reslist.hpp`.
+- Cause:     the current tree no longer reaches the shared header for most listed
+              victims. `CHelpManager.hpp` declares its own `CHelpBmResList::size()`
+              view; `CChainActorList.cpp` spells its walks as explicit node loops;
+              `FindVoiceNodeById` is a same-TU helper on `CSoundNode`; CDeviceClock
+              uses `extern template class reslist<...>` plus hand-written vtable
+              arrays whose data size is independent of the iterator/size body.
+- Fix:       tried 12 source shapes for shared `size()` (cursor-first/count-last
+              declarations, uninitialized declarations, comma-init `for`, reversed
+              compare, `int` counter, swapped loop-statement order), `begin()/end()`
+              through the embedded sentinel, non-const-only and const+non-const
+              overload pairs, and four `_reslist_iterator::operator*()` spellings.
+              Every targeted hexdiff verdict was unchanged; the embedded-sentinel
+              form introduced 21 structural diffs in UIWin_ShowTalkWindow, and
+              non-const-only `begin()/end()` broke const callers
+              (`CWorkThread::wkGetChild() const`, CDeviceClock.o error 10248).
+              Restored the shared header byte-for-byte (sha1 908821755fa12e11...).
+- Result:    no unit gained or lost a ✓ from this task. Build green again after
+              restoring the const overloads; CDeviceClock 5/12, CWorkRoot 16/21,
+              CWorkThread 12/20 on the post-restore `hexdiff --all`.
+- Confidence: repo_proven (all 271 textual includers snapshotted before/after;
+              targeted variants rebuilt with forced .cpp mtimes).
+- Applies to/a.k.a.: do not retry shared `reslist::size()` local order without
+              first proving the caller actually instantiates that header body;
+              fix the TU-local view/walk in its owning unit instead. Additive
+              non-const `begin()/end()` overloads are safe but inert.
+- Correction: the final before/after sweep covered 287 distinct units (271 textual
+  transitive includers plus 16 direct `grep -rln reslist` units missed by the
+  textual include scanner), not 271. One unit (`code_800A75FC`) was blocked by a
+  pre-existing symbols.txt `Unknown symbol scope 'glo'` split error;
+  `effect/Unknown1.cpp` is not a configured objdiff unit.
+
+## CVS_THREAD family — hand-written PTMF triples → real member-function-pointer state (Wii/1.1 + GC/3.0a5.2, 2026-11 wave i22)
+- Symptom:   cvsys ctors copied 12-byte `{0, -1, fn}` data triples through `u32[3]` arrays / raw views; ctors sat at 89–95% with pure register swaps, and the callback symbols were hand-written pre-mangled `extern "C"` names.
+- Cause:     the base state member was typed as a PTMF of a phantom host (`VoiceCb`) and the family's state machines were free functions, so MWCC never emitted the pointer-to-member constants itself.
+- Fix:       (1) `CVS_THREAD` now declares `void (CVS_THREAD::*mState)()` (union view with `VoiceCb` for the voice-node comparators); (2) each state handler became a real member of its CVS_THREAD_* class and every state install is `mState = &Class::method` (or an assignment from a typed PTMF constant, for triples that are data-only or shared across TUs); (3) the hand-written `u32[3]` triples were deleted — MWCC emits the PTMF constants at the same .data offsets; (4) retail symbol names were updated with `rename_syms.py` to the compiler-emitted mangled member names; (5) the pre-mangled factory entry points became compiler-emitted `static ... create()` members (same factory body) with symbols renamed in all three regions and the shared `CCharVoiceMan` declarations/calls updated.
+- Result:    FAINT 6→7/7, CHAIN 7/7, SUDDEN 5/5, PARTY_GAGE 7/7, REVIVE 8/8, DOWN 6/6, HAGE 5→6/6, TENSION_UP 5→6/6, VISION_TELL 5→6/6, VISION_BREAK 4→5/6, BATTLE_END 6/6, BATTLE_BEGIN 7/9, BATTLE_END_SP 3/5, BATTLE_MAIN 13/18, EHP 9/10, HP 17/20, BUF 3/6 — no ✓ lost; data MATCH wherever it was MATCH before; extab MATCH newly recovered in BATTLE_END/CHAIN/DOWN/PARTY_GAGE/SUDDEN.
+- Confidence: repo_proven (hexdiff/data/extab/text-order/link gates, before/after tables in /tmp/xb/i22)
+- Applies to/a.k.a.: any MWCC TU faking pointer-to-member state with `u32[3]` blobs; direct `&Class::method` emits the 12-byte constant in first-use order, so source function order must match the retail data order or a named typed PTMF constant must be used.
+
+## CVS_THREAD_HP negative result — pointer-to-member conversion regresses a matched handler (Wii/1.1 GC/3.0a5.2, -O4,s)
+- Symptom:   converting `HpVoice_PlayChange` into `CVS_THREAD_HP::playChange()` with a real PTMF install dropped it 100% → 95.9% (two reg-swaps); the unit's split FAIL and pre-existing NEW extab mismatch were not caused by the change.
+- Cause:     under `-O4,s` the extra member-pointer load changes register colours around the voice-id selection; a named typed constant did not restore them.
+- Fix:       reverted the HP PTMF conversion (the factory was still memberized); HP stays 17/20 with the original raw triple copies.
+- Result:    negative_result; no ✓ lost after revert.
+- Confidence: repo_proven
+
+## CCharVoiceMan — pre-mangled CVS_THREAD factory externs → real static create() calls (Wii/1.1, 2026-11 wave i26)
+- Symptom:   `CCharVoiceMan.hpp` carried 17 `extern "C" create__<class>...` declarations after the cvsys factories were memberized; faithful `mangled_c` rose 7→20 and the unit score 200→213.
+- Cause:     the i22 memberization renamed the retail factory symbols but the caller TU kept the old C-linkage spellings, so every call still referenced a pre-mangled C name.
+- Fix:       replaced each extern with a forward declaration of the real class and its `static create(...)` member in the owning header, and rewrote the call sites to `CVS_THREAD_X::create(...)` with explicit pointer/int casts. Wrapper functions whose callers already pass arguments (`PushChainVoiceNode`, `EnqueueCtrlActVoiceA/B/C`, `EnqueuePartyGageVoice`) were given those real parameters so the factory call needs no extra argument setup; `__ct__CVS_THREAD_ORDER` kept its real C-ABI spelling but its parameter is now `CVoiceHandle*`.
+- Result:    `mangled_c` 20→3, score 213→196; CCharVoiceMan 54/60 ✓ unchanged, all 19 CVS_THREAD_* units and their %-columns unchanged.
+- Confidence: repo_proven (`hexdiff --all` before/after for every touched unit, `run.py faithful`)
+- Applies to/a.k.a.: caller TUs of memberized factories; pass the wrapper's existing live-in arguments straight through instead of inventing new constants, otherwise `-ipa file` adds argumentSetup instructions to ✓ functions.
+
+## CfNandManager — score 113→89 without losing ✓ (Wii/1.1, 2026-11 wave i26)
+- Symptom:   score 113 (label 90, mangled_c 9, section 9, offset_cast 1, foreign_data 4) vs baseline 89.
+- Cause:     duplicate local `_Local` save structs, C-linkage free definitions of real `CfNandManager` members, invented/static-free `CfGameManager` imports, duplicated label declarations and raw `+0x17C` pointer arithmetic.
+- Fix:       (1) deleted unused header imports and converted three remaining `CfGameManager` C imports into static member calls; (2) real member definitions for `cbRenderBefore()` and the correctly named `handleFileEvent()` (previously a `func_8023E4D4...` pseudo-member); (3) offset cast replaced with the real `subSlot` field; (4) TU-owned rodata strings and sbss padding words renamed descriptively; (5) duplicate label externs removed; (6) `CfNandEntryHead_Local`/`CfNandSaveNameEntry_Local` deleted in favour of the header types. Deleting *all* `_Local` structs at once regressed `NandApplySave` 12.5%→2.8% (296-line shift under `-ipa file`), so only the two named duplicates were removed.
+- Result:    `mangled_c` 9→1, `label` 90→75, `offset_cast` 1→0, score 113→89; 22/48 ✓ unchanged; link-gate 42, extab/text-order/registry gates OK.
+- Confidence: repo_proven (`hexdiff --all` before/after, `run.py faithful`, all four gates)
+- Applies to/a.k.a.: when a counter must come down but several functions are ✓, prefer real member declarations and canonical headers; do not mass-delete view structs in a line-sensitive `-ipa file` TU without measuring each function.
+
+## CBattleManager dtors — manual `lbl_eu_*` vptr stores → compiler-emitted `__vt__` stores (Wii/1.1, i27)
+- Symptom:   `__dt__Q22cf6CChainFv`, `__dt__Q22cf10CChainTimeFv`, `__dt__Q22cf17UnkClass_800D8DBCFv` and `__dt__Q22cf14CBattleManagerFv` were 100% with 0 instruction diffs but ✗. `hexdiff --relocs` showed retail `__vt__Q22cf10CChainTime` / `__vt__Q22cf14CBattleManager` against decomp `lbl_eu_8052BD74` / `lbl_eu_8052BCE0` at the HI/LO vptr-store sites, reported as "R_PPC_0 decomp-side only, unproven".
+- Cause:     the i24 symbol-map change renamed those two hidden data labels to real mangled vtables in `config/{us,eu}/symbols.txt`, but `CBattleManager.cpp` still hand-wrote `*(void**)this = (void*)lbl_eu_...`. The decomp relocation name no longer resolves in `LinkerLayout`, so `compare_functions` could not prove the two stores target the same address. The comparator was correct: the retail and decomp reloc offsets/types/immediates already matched; only the stale decomp-side symbol name was unprovable.
+- Fix:       deleted both manual vptr stores and let MWCC emit them from the real virtual destructor declarations (`~CChainTime()` and `~CBattleManager()`); removed the now-unused `extern "C" u8 lbl_eu_8052BCE0[]` / `lbl_eu_8052BD74[]` declarations from `CBattleManagerImports.hpp`. No symbols.txt, header-signature or UNIT_RULES change.
+- Result:    all four dtors ✗100% → ✓100% (FULL_MATCH reloc proofs); CBattleManager 51/78 → 55/78 ✓. CChainTime 4/4, CChainEffect 9/9, CChainActorList 31/40, CFade 14/14 unchanged, with no % or extab regressions. CBattleManager faithful hard label 656→654, offset_cast 194→193; link-gate missing=42, extab/text-order/registry/UNIT_RULES gates OK.
+- Confidence: repo_proven (before/after `hexdiff --all` + `--relocs`, faithful, all gates)
+- Applies to/a.k.a.: hidden vtable label → `__vt__` renames; remove the manual vptr-store workaround after the map exposes the real vtable name. Do not add duplicate symbol aliases or postprocess reloc names.
+

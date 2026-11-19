@@ -12,6 +12,7 @@
 #include "monolib/core/CPadManager.hpp"   // CPad flag words (getCurrentPad)
 #include "kyoshin/cf/CfGameManager.hpp"   // cf::CfGameManager::getCurrentPad
 #include "kyoshin/cf/CfPadData.hpp"        // cf::CfPadData layout
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CFade.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -48,11 +49,11 @@ extern "C" void CFade_FadeOut(CFade* self);
 extern "C" int kizChartReady(UnkKizunaMenuSub98* self);
 extern "C" u8 kizChartStatus(UnkKizunaMenuSub98* self);
 extern "C" void kizStartChart(UnkKizunaMenuSub98* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
+
 extern "C" void reopenFromClose(CTitleAHelp* self);
 extern "C" void setNameText(CTitleAHelp* self, char* name);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
+extern "C" void func_801C412C(CTitleAHelp* self);
 
 extern "C" void __dt__5CFadeFv(CFade* _this, int flags);
 extern "C" void __dt__5CLoadFv(CLoad* _this, int flags);
@@ -72,10 +73,10 @@ extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void CUICfManager_createQueuedMenus();
 
 // CTitleAHelp / CFade helpers used by Term / cbRenderBefore (retail strips
-// the mangling for these member helpers).
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void markReplayClose(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void teardown(CTitleAHelp* self);
+// the mangling for these member helpers).
 extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 // (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 
@@ -94,11 +95,11 @@ extern "C" void kizToggleHelp(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorHoldA(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorHoldB(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir1(UnkKizunaMenuSub98* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void kizCursorDir2(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir3(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir4(UnkKizunaMenuSub98* self);
 extern "C" void tickKizMove(UnkKizunaMenuSub98* self);
-extern "C" void beginClose(CTitleAHelp* self);
 // CPcKizunagram helpers. Return types are int (not u8) so callers compare
 // with cmpwi directly (no byte mask), matching retail.
 extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
@@ -122,12 +123,12 @@ extern "C" void KizunagramDriveChart(CMenuKizunagram* self);
 extern "C" void KizunagramSetPhaseFlag54(CMenuKizunagram* self);
 extern "C" void KizunagramAdvanceToPcWin(CMenuKizunagram* self);
 extern "C" void KizunagramAdvanceToState9(CMenuKizunagram* self);
+extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void KizunagramHandleCharInput(CMenuKizunagram* self);
 extern "C" void KizunagramAdvanceToState7(CMenuKizunagram* self);
 extern "C" void KizunagramReopenCharWindow(CMenuKizunagram* self);
 
 // Move() per-frame sub-object refresh helpers (retail-unmangled).
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void tickKizMain(UnkKizunaMenuSub98* self);
 extern "C" void KizunagramUpdateMainState(UnkKizunaMenuPcSub* self);
 extern "C" void CLoadUpdateLayout(CLoad* self);
@@ -363,7 +364,7 @@ void func_80257360(CMenuKizunagram* self) {
 // confirm sound and advance to state 3.
 // ---------------------------------------------------------------------------
 void KizunagramConfirmChartAdvance(CMenuKizunagram* self) {
-    if (isInitialized(&self->mTitleAHelp) != 0 && kizChartReady(&self->mSub98) != 0) {
+    if (self->mTitleAHelp.isInitialized() != 0 && kizChartReady(&self->mSub98) != 0) {
         func_801C41E8(&self->mTitleAHelp, kizChartStatus(&self->mSub98));
         func_801C412C(&self->mTitleAHelp);
         kizStartChart(&self->mSub98);

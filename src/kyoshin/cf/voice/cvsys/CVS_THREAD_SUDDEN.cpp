@@ -3,11 +3,57 @@
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.hpp"
 
+// us-802ab338 (__ct__802A8C04)
+// Factory for CVS_THREAD_SUDDEN. Allocates the handle buffer (1, 0 - the
+// handle is discarded), then the 0x24-byte thread object, constructs the
+// base, sets vtable/owner fields and copies init data from lbl_eu_80539CE8.
+CVS_THREAD_SUDDEN* CVS_THREAD_SUDDEN::create() {
+    // Allocate the (effectively discarded) handle buffer, then the 0x24-byte
+    // thread object. Allocation failures return NULL directly (bypassing the
+    // construction try/catch cleanup, matching retail's return-NULL jumps).
+    CVoiceHandle* handleBuf = CCharVoiceMan_DispatchById(1, 0);
+    if (handleBuf == NULL) {
+        return NULL;
+    }
+    CVS_THREAD_SUDDEN* self = (CVS_THREAD_SUDDEN*)CCharVoiceMan_AllocVoiceArena(0x24);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    // Base constructor (self in r3), then vtable and the null voice slot,
+    // inside a construction try/catch so MWCC emits the frame-pointer EH
+    // prologue/epilogue retail shows (the allocation failures above bypass
+    // this region and jump straight to the epilogue, matching retail). The
+    // redundant `self != NULL` re-check reproduces retail's `beq` guard on
+    // the EH region (CR0 from the earlier cmpwi is reused).
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD(self);
+
+            // Set the retail subclass vtable at offset 0x1C (right after the
+            // 7 base words) via the raw layout view, then clear the voice slot.
+            ((CVS_THREAD_SUDDEN_raw*)self)->vtable = (u32)lbl_eu_80539CF4;
+            self->voiceHandle = NULL;
+        } catch (...) {
+            // Rethrow via the runtime __throw(0,0,0) so MWCC elides the
+            // __end__catch epilogue (retail's catch-all ends at `bl __throw`).
+            __throw(0, 0, 0);
+        }
+    }
+
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_SUDDEN::clearIdleSlot);
+
+    return self;
+}
+
 // us-802ab400 (SuddenVxClearIdleSlot)
 // If no active voice, clear the handle slot.
-void SuddenVxClearIdleSlot(CVS_THREAD_SUDDEN* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->voiceHandle = NULL;
+void CVS_THREAD_SUDDEN::clearIdleSlot() {
+    if (IsThreadVoiceActive(this) == 0) {
+        voiceHandle = NULL;
     }
 }
 
@@ -52,52 +98,6 @@ void SuddenVxPlayVoice(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceI
     TryRequestVoice(self, vp, voiceId);
 }
 
-// us-802ab338 (__ct__802A8C04)
-// Factory for CVS_THREAD_SUDDEN. Allocates the handle buffer (1, 0 - the
-// handle is discarded), then the 0x24-byte thread object, constructs the
-// base, sets vtable/owner fields and copies init data from lbl_eu_80539CE8.
-extern "C" CVS_THREAD_SUDDEN* __ct__802A8C04() {
-    // Allocate the (effectively discarded) handle buffer, then the 0x24-byte
-    // thread object. Allocation failures return NULL directly (bypassing the
-    // construction try/catch cleanup, matching retail's return-NULL jumps).
-    CVoiceHandle* handleBuf = CCharVoiceMan_DispatchById(1, 0);
-    if (handleBuf == NULL) {
-        return NULL;
-    }
-    CVS_THREAD_SUDDEN* self = (CVS_THREAD_SUDDEN*)CCharVoiceMan_AllocVoiceArena(0x24);
-    if (self == NULL) {
-        return NULL;
-    }
-
-    // Base constructor (self in r3), then vtable and the null voice slot,
-    // inside a construction try/catch so MWCC emits the frame-pointer EH
-    // prologue/epilogue retail shows (the allocation failures above bypass
-    // this region and jump straight to the epilogue, matching retail). The
-    // redundant `self != NULL` re-check reproduces retail's `beq` guard on
-    // the EH region (CR0 from the earlier cmpwi is reused).
-    if (self != NULL) {
-        try {
-            __ct__cf_CVS_THREAD(self);
-
-            // Set the retail subclass vtable at offset 0x1C (right after the
-            // 7 base words) via the raw layout view, then clear the voice slot.
-            ((CVS_THREAD_SUDDEN_raw*)self)->vtable = (u32)lbl_eu_80539CF4;
-            self->voiceHandle = NULL;
-        } catch (...) {
-            // Rethrow via the runtime __throw(0,0,0) so MWCC elides the
-            // __end__catch epilogue (retail's catch-all ends at `bl __throw`).
-            __throw(0, 0, 0);
-        }
-    }
-
-    // Copy the slot-state init triple into the base state words (outside
-    // try) as the base's ptmf member (VoiceCb is 12 bytes; DOWN precedent:
-    // member-typed access colors the pair r0/r4 with the single r5 base).
-    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539CE8)->unk0;
-
-    return self;
-}
-
 // Virtual override of blank1() (retail func_802A8DE0): returns 1 for SUDDEN
 // thread (minimal buffer flag).
 int CVS_THREAD_SUDDEN::SuddenVx_GetBufferSizeValue() { return 1; }
@@ -124,12 +124,6 @@ extern u32 __RTTI__Q22cf17CVS_THREAD_SUDDEN[2];
 // Sized to the retail section extent (0x18): the NUL-terminated name plus
 // zero padding. The auditor keys on offset, and the gate on section bytes.
 extern const char lbl_eu_80510800[0x18] = "cf::CVS_THREAD_SUDDEN";
-
-u32 lbl_eu_80539CE8[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)SuddenVxClearIdleSlot,
-};
 
 u32 lbl_eu_80539CF4[7] = {
     (u32)__RTTI__Q22cf17CVS_THREAD_SUDDEN,

@@ -287,7 +287,7 @@ extern "C" void CCharVoiceMan_Tick(){
         u8 oldGauge = m->mGaugeState;
         m->mGaugeState = (u8)CCharVoiceMan_CheckBattleGauge(m);
         if (oldGauge == 0 && m->mGaugeState != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
-            cf::CSoundNode* node = __ct__802AF5CC(1);
+            cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_BATTLE_MAIN::create(1);
             if (node != 0) {
                 cf::CSoundNode* tail = m->mNodeTail;
                 if (tail != 0)
@@ -335,7 +335,7 @@ extern "C" void CCharVoiceMan_Tick(){
 interactStore:
         m->mInteractState = (u8)iresult;
         if (oldInteract == 0 && m->mInteractState != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
-            cf::CSoundNode* node = __ct__802AF5CC(0);
+            cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_BATTLE_MAIN::create(0);
             if (node != 0) {
                 cf::CSoundNode* tail = m->mNodeTail;
                 if (tail != 0)
@@ -398,7 +398,7 @@ noAutoTalkClear:;
                 m->mVoiceTimer = lbl_eu_80668C68;
                 bool appended = false;
                 if (ml::math::mtRand(0x64) < 5) {
-                    cf::CSoundNode* node = __ct__802AB5F0();
+                    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_BATTLE_END_SP::create();
                     if (node != 0) {
                         cf::CSoundNode* tail = m->mNodeTail;
                         if (tail != 0)
@@ -412,7 +412,7 @@ noAutoTalkClear:;
                     }
                 }
                 if (!appended) {
-                    cf::CSoundNode* node = __ct__802A4870((int)ge);
+                    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_BATTLE_END::create((int)ge);
                     if (node != 0) {
                         cf::CSoundNode* tail = m->mNodeTail;
                         if (tail != 0)
@@ -572,8 +572,8 @@ extern "C" void CCharVoiceMan_PushFreshSoundNode() {
     lbl_eu_80664A58->mPendingActorId = 0;
 }
 // Append a freshly-created sound node to the manager's voice-event list.
-extern "C" void CCharVoiceMan_PushChainVoiceNode() {
-    cf::CSoundNode* node = __ct__802A96C0();
+extern "C" void CCharVoiceMan_PushChainVoiceNode(void* a, void* b) {
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_VISION_TELL::create((CVoiceHandle*)a, (CVoiceHandle*)b);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -595,7 +595,7 @@ extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* 
             b = (void*)MapFx_ResolveOwner((void*)findObjectById((BOOL)pending));
     }
     if (b != 0) {
-        cf::CSoundNode* node = __ct__802A92D8(b, a);
+        cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_VISION_BREAK::create((CVoiceHandle*)b, (int)a);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
             cf::CSoundNode* tail = m->mNodeTail;
@@ -635,7 +635,7 @@ extern "C" void CCharVoiceMan_EnqueueBattleBeginVoice(cf::CVoiceActorState* self
         actor = (void*)((u8*)actor - 0x3E9C);
     if (actor == 0)
         return;
-    cf::CSoundNode* node = __ct__802AFA80(self, actor);
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_BATTLE_BEGIN::create((CVoiceHandle*)self, (CVoiceHandle*)actor);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -824,7 +824,7 @@ extern "C" void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if (self->field_3F00 & 0x2) {
-        cf::CSoundNode* node = __ct__802A7254(self, c);
+        cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_HP::create((CVoiceHandle*)self, (int)c);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
             cf::CSoundNode* tail = m->mNodeTail;
@@ -837,7 +837,7 @@ extern "C" void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int
             m->mNodeTail = node;
         }
     } else {
-        cf::CSoundNode* node = __ct__802A5ED4();
+        cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_EHP::create((CVoiceHandle*)self, (CVoiceHandle*)unused, (s32)c);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
             cf::CSoundNode* tail = m->mNodeTail;
@@ -866,7 +866,7 @@ extern "C" void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int
 extern "C" void CCharVoiceMan_EnqueueHurtVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__802A4E48();
+    cf::CSoundNode* node = CVS_THREAD_BUF::create();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -882,7 +882,7 @@ extern "C" void CCharVoiceMan_EnqueueHurtVoice() {
 extern "C" void CCharVoiceMan_EnqueueBattleEventVoice() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__802A4E48();
+    cf::CSoundNode* node = CVS_THREAD_BUF::create();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -899,7 +899,7 @@ extern "C" void CCharVoiceMan_EnqueueGaugeClampVoice(int a, int b, int c) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
     if (b != c && c < b) {
-        cf::CSoundNode* node = __ct__802A8DE8();
+        cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_TENSION_UP::create((CVoiceFactory*)a, b);
         cf::CCharVoiceMan* m = lbl_eu_80664A58;
         if (node != 0) {
             cf::CSoundNode* tail = m->mNodeTail;
@@ -914,10 +914,10 @@ extern "C" void CCharVoiceMan_EnqueueGaugeClampVoice(int a, int b, int c) {
     }
 }
 // Append a freshly constructed sound node to the voice-event list.
-extern "C" void CCharVoiceMan_EnqueuePartyGageVoice() {
+extern "C" void CCharVoiceMan_EnqueuePartyGageVoice(int a, int b) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__CVS_THREAD_PARTY_GAGE();
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_PARTY_GAGE::create(a, b);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -930,10 +930,10 @@ extern "C" void CCharVoiceMan_EnqueuePartyGageVoice() {
         m->mNodeTail = node;
     }
 }
-extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA() {
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA(void* a, void* b) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__802A6AA8();
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_FAINT::create((CVoiceHandle*)a, (CVoiceHandle*)b);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -946,10 +946,10 @@ extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA() {
         m->mNodeTail = node;
     }
 }
-extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB() {
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB(void* a, void* b) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__802A5B88();
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_DOWN::create((CVoiceHandle*)a, (CVoiceHandle*)b);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -965,7 +965,7 @@ extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB() {
 extern "C" void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__802A86CC();
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_REVIVE::create((CVoiceHandle*)a, (CVoiceHandle*)b);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -978,10 +978,10 @@ extern "C" void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b) {
         m->mNodeTail = node;
     }
 }
-extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC() {
+extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC(void* a, void* b) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__802A6E84();
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_HAGE::create((CVoiceHandle*)a, (CVoiceHandle*)b);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -997,7 +997,7 @@ extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC() {
 extern "C" void CCharVoiceMan_EnqueueOrderVoice0() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(0);
+    cf::CSoundNode* node = __ct__CVS_THREAD_ORDER((CVoiceHandle*)0);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -1013,7 +1013,7 @@ extern "C" void CCharVoiceMan_EnqueueOrderVoice0() {
 extern "C" void CCharVoiceMan_EnqueueOrderVoice1() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(1);
+    cf::CSoundNode* node = __ct__CVS_THREAD_ORDER((CVoiceHandle*)1);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -1029,7 +1029,7 @@ extern "C" void CCharVoiceMan_EnqueueOrderVoice1() {
 extern "C" void CCharVoiceMan_EnqueueOrderVoice2() {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CSoundNode* node = __ct__CVS_THREAD_ORDER(2);
+    cf::CSoundNode* node = __ct__CVS_THREAD_ORDER((CVoiceHandle*)2);
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -1265,7 +1265,7 @@ extern "C" void CCharVoiceMan_EnqueueRebindVoice() {
     }
 }
 extern "C" int CCharVoiceMan_AllocChainVoiceId() {
-    cf::CSoundNode* node = __ct__802A5830();
+    cf::CSoundNode* node = (cf::CSoundNode*)cf::CVS_THREAD_CHAIN::create();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     bool appended;
     if (node == 0) {
@@ -1286,7 +1286,7 @@ extern "C" int CCharVoiceMan_AllocChainVoiceId() {
     return -1;
 }
 extern "C" int CCharVoiceMan_AllocCommuVoiceId() {
-    cf::CSoundNode* node = __ct__802A8C04();
+    cf::CSoundNode* node = (cf::CSoundNode*)CVS_THREAD_SUDDEN::create();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     bool appended;
     if (node == 0) {

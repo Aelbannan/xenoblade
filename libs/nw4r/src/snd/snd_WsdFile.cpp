@@ -1,11 +1,4 @@
-// The retail ctor takes a nested const WaveFile::WaveInfo*, which the shared
-// snd_WaveFile.h header does not declare. Rename the header class out of the
-// way during the include and re-declare WaveFileReader below with the retail
-// overload, so every symbol mangles naturally from real member functions
-// (no C-linkage stand-ins), the same approach as snd_BankFile.cpp.
-#define WaveFileReader WaveFileReader_RetailHeader
 #include <nw4r/snd.h>
-#undef WaveFileReader
 
 // Retail .sdata2 pool constant 1.0f, referenced by name so the SDA21
 // float relocation matches the stripped retail object (PLAN.md §17.6).
@@ -17,26 +10,6 @@ namespace {
 namespace nw4r {
 namespace snd {
 namespace detail {
-
-// Re-declared WaveFileReader with the retail nested WaveFile::WaveInfo ctor
-// overload (the shared header only declares the detail::WaveInfo and
-// WaveFile::FileHeader overloads). The reader only stores the pointer.
-namespace WaveFile {
-struct WaveInfo; // on-disk wave-info header; only the pointer passes through
-} // namespace WaveFile
-
-class WaveFileReader {
-public:
-    explicit WaveFileReader(const WaveInfo* pWaveInfo);
-    explicit WaveFileReader(const WaveFile::FileHeader* pFileHeader);
-    explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
-
-    bool ReadWaveInfo(WaveInfo* pWaveInfo, const void*
-                      pWaveAddr) const;
-
-private:
-    const WaveInfo* mWaveInfo; // at 0x0
-};
 
 // Retail has no standalone IsValidFileHeader symbol: MWCC inlines it into
 // the constructor, so the body is defined inline here to avoid emitting an

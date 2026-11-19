@@ -140,9 +140,7 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
             /* fall through to the header state */
         case HCISU_H2_STATE_HEADER:
             p_msg = cb->msg[hcisu_event];
-            mlen = p_msg->len;
-            ((UINT8 *)p_msg + BT_HDR_SIZE)[p_msg->len] = byte;
-            p_msg->len = mlen + 1;
+            *((UINT8 *)(p_msg + 1) + p_msg->len++) = byte;
             if (--cb->len[hcisu_event] == 0) {
                 payload_len = byte;
                 if (cb->msgtype[hcisu_event] == 2) {
@@ -195,9 +193,7 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
             break;
         case HCISU_H2_STATE_DATA:
             p_msg = cb->msg[hcisu_event];
-            mlen = p_msg->len;
-            ((UINT8 *)p_msg + BT_HDR_SIZE)[p_msg->len] = byte;
-            p_msg->len = mlen + 1;
+            *((UINT8 *)(p_msg + 1) + p_msg->len++) = byte;
             cb->len[hcisu_event] -= 1;
             mlen = UUSB_Read((UINT8)(hcisu_event + 1),
                              (UINT8 *)cb->msg[hcisu_event] + BT_HDR_SIZE +
@@ -242,33 +238,34 @@ void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf)
     UINT8 *p;
     UINT16 event;
 
-    p_data = ((UINT8 *)p_buf + p_buf->offset) + BT_HDR_SIZE;
     event = p_buf->event;
+    p_data = (UINT8 *)(p_buf + 1) + p_buf->offset;
 
-    if (p_buf->event == 0x2100) {
+    if (event == 0x2100) {
         type = 2;
-    } else if (p_buf->event == 0x2200) {
+    } else if (event == 0x2200) {
         type = 3;
-    } else if (p_buf->event == 0x2000) {
+    } else if (event == 0x2000) {
         type = 0;
     }
 
-    if (p_buf->event == 0x2100) {
+    if (event == 0x2100) {
         if (p_buf->len > btu_cb.hcit_acl_pkt_size) {
             /* connection handle rewrite: preserve the PB/BC flags boundary
              * while forcing the handle into the ACL range */
             raw = (UINT16)(p_data[0] + ((p_data[1] << 8) & 0xff00));
             p_data += 2;
+            raw = (raw & 0xCFFF) | 0x1000;
 
             while (p_buf->len > btu_cb.hcit_acl_pkt_size) {
                 UUSB_Write(type, p_data, btu_cb.hcit_acl_pkt_size, p_buf);
 
-                p_buf->offset = p_buf->offset + btu_cb.hcit_acl_data_size;
+                p_buf->offset += btu_cb.hcit_acl_data_size;
+                p_buf->len -= btu_cb.hcit_acl_data_size;
                 p = (UINT8 *)(p_buf + 1) + p_buf->offset;
-                p_buf->len = p_buf->len - btu_cb.hcit_acl_data_size;
 
-                p[0] = (UINT8)((raw & 0xCFFF) | 0x1000);
-                p[1] = (UINT8)(((raw & 0xCFFF) | 0x1000) >> 8);
+                p[0] = (UINT8)raw;
+                p[1] = (UINT8)(raw >> 8);
                 p_data = p + 2;
 
                 if (p_buf->len > btu_cb.hcit_acl_pkt_size) {

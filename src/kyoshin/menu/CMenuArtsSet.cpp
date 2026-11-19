@@ -24,9 +24,9 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Unit-private imports (shared with code_80231950.cpp): see CMenuArtsSetImports.hpp.
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
 
 // Pad state import: cf::CfGameManager::getCfPadData() comes from the
 // harness_catalog include chain; CfPadData.hpp supplies the struct layout.
@@ -169,11 +169,12 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             }
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00200000) != 0) {
+        u32 pressed = pad->mPad.mPressedButtonFlags;
+        if ((pressed & 0x00200000) != 0) {
             artsDriveMenu(&self->mList);
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00400000) != 0) {
+        if ((pressed & 0x00400000) != 0) {
             if (CMenuArtsSet_isBusy((SArts33888*)&self->mList) != 0) {
                 CMenuArtsSet_advanceIdle(&self->mList);
             } else if (self->mList.CMenuArtsSet_isSlotWindowEmpty() != 0) {
@@ -185,35 +186,35 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             }
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00008004) != 0) {
+        if ((pressed & 0x00008004) != 0) {
             CMenuArtsSet_cursorUp(&self->mList);
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00010010) != 0) {
+        if ((pressed & 0x00010008) != 0) {
             CMenuArtsSet_cursorDown(&self->mList);
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00002001) != 0) {
+        if ((pressed & 0x00002001) != 0) {
             CMenuArtsSet_slotCursorUp(&self->mList);
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00004002) != 0) {
+        if ((pressed & 0x00004002) != 0) {
             CMenuArtsSet_slotCursorDown(&self->mList);
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x01000000) != 0) {
+        if ((pressed & 0x01000000) != 0) {
             if (self->mList.CMenuArtsSet_isArtsInfoActive() == 0) {
                 CMenuArtsSet_confirmSelect(&self->mList);
             }
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x10000000) != 0) {
+        if ((pressed & 0x10000000) != 0) {
             if (self->mList.CMenuArtsSet_isArtsInfoActive() == 0) {
                 CMenuArtsSet_resetSubList(&self->mList);
             }
             goto tail;
         }
-        if ((pad->mPad.mPressedButtonFlags & 0x00800000) != 0 &&
+        if ((pressed & 0x00800000) != 0 &&
             self->mList.CMenuArtsSet_isArtsInfoActive() == 0) {
             // Confirm: re-arm the window or close the menu with the exit sound.
             if (self->mList.CMenuArtsSet_isSlotWindowEmpty() != 0) {
@@ -281,7 +282,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             CMenuArtsSet_cursorUp(&self->mList);
             goto tail;
         }
-        if ((turbo & 0x00010010) != 0) {
+        if ((turbo & 0x00010008) != 0) {
             CMenuArtsSet_cursorDown(&self->mList);
             goto tail;
         }

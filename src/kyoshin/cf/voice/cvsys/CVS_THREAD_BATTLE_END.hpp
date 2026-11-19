@@ -15,7 +15,20 @@ public:
     u8  field_0x38;               // 0x38: counter direction flag
     u8  field_0x39;               // 0x39: active-voice flag
     u8  field_0x3a;               // 0x3a: random-direction flag
+
+    // Voice-event state handlers installed into the inherited state member.
+    void initSlots();
+    void playVoice();
+    void advanceSlot();
+    static CVS_THREAD_BATTLE_END* create(int owner);
 };
+
+// Typed pointer-to-member state constants (retail 12-byte init triples).
+typedef void (CVS_THREAD::*BattleEndState)();
+extern "C" const BattleEndState lbl_eu_80539958;
+extern "C" const BattleEndState lbl_eu_80539964;
+extern "C" const BattleEndState lbl_eu_80539970;
+extern "C" const BattleEndState lbl_eu_8053997C;
 
 // Word view over the CVS_THREAD head (0x00-0x17).  The installed voice-event
 // handler ptmf occupies 0x00-0x0B; retail treats those bytes as three raw
@@ -80,10 +93,6 @@ extern "C" {
 }
 
 // Globals: init-data triples and this subclass's vtable.
-extern u32 lbl_eu_80539958[3];
-extern u32 lbl_eu_80539964[3];
-extern u32 lbl_eu_80539970[3];
-extern u32 lbl_eu_8053997C[3];
 extern u32 lbl_eu_80539988[];
 extern u32 lbl_eu_805399A8[];
 extern u32 lbl_eu_805399B8[];

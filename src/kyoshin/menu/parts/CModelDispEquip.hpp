@@ -239,19 +239,6 @@ public:
     void setState14_3();
     static void storeFloats(float* dest, float a, float b, float c, float d);
 
-    void ModelDispEquip_ReplaySlotAnims();
-    void ModelDispEquip_HandleSlotCmd();
-
-    void vfunc18();
-    void vfunc40();
-
-    void thunk4_1298();
-    void thunk4_1440();
-    void thunk4_131C();
-    void thunk4_1318();
-    void thunk4_F9C();
-    void thunk4_dtor();
-    void thunk8_1444();
     void thunk8_dtor();
 
     // ---- Layout ----

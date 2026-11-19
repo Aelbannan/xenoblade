@@ -278,7 +278,7 @@ extern const u32 lbl_eu_80527B38[];
 
 // Per-action state-handler dispatch tables used by CtrlNpcUpdateAction. Entries
 // are {0, -1, handler} triples (MWCC __ptmf_scall layout), stored as raw words
-// and invoked as (void(*)(CtrlNpc*))tbl[i*3+2] — see the definitions in
+// and invoked as (void(*)(CtrlNpc*))tbl[i*3+2] -- see the definitions in
 // CtrlNpc.cpp.
 extern const void* lbl_eu_80527AE0[];   // actions 1..2 handlers
 extern const void* lbl_eu_80527AA0[];   // action 4 handlers

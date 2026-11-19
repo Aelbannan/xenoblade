@@ -26,6 +26,12 @@ public:
     s16            field_0x36;           // 0x36: active-slot index / counter
     s16            field_0x38;           // 0x38: slot count / limit
     u8             field_0x3a;           // 0x3a: direction flag
+
+    // Voice-event state handlers installed into the inherited state member.
+    void initSlots();
+    void reinitSlots();
+    void advanceSlot();
+    static CVS_THREAD_BATTLE_BEGIN* create(CVoiceHandle* handle, CVoiceHandle* A);
 };
 
 // C-linkage imports used by this TU's thread helpers.  Kept here (not in the
@@ -61,20 +67,15 @@ struct CVSHandleFieldView {
     u16 field_0x3F28;          // 0x3F28: half-word sub-state
 };
 
-// 12-byte state triple (unk0/unk4/unk8) copied as a whole struct so MWCC
-// emits the retail load-descending/store-ascending word-move pattern.
-struct CVSThreadStateTriple {
-    u32 a;   // 0x00
-    u32 b;   // 0x04
-    u32 c;   // 0x08
-};
+// Typed pointer-to-member state constants (retail 12-byte init triples).
+typedef void (CVS_THREAD::*BattleBeginState)();
+extern "C" const BattleBeginState lbl_eu_8053AC88;
+extern "C" const BattleBeginState lbl_eu_8053AC94;
+extern "C" const BattleBeginState lbl_eu_8053ACA0;
+extern "C" const BattleBeginState lbl_eu_8053ACAC;
 
-// Globals: init-data triples for this subclass, plus its vtable and the
-// post-construction state triple.
-extern u32 lbl_eu_8053AC94[3];
-extern u32 lbl_eu_8053ACAC[3];
-extern u32 lbl_eu_8053AC88[3];
-// Retail size 0x20 (8 words: 7 vtable slots plus a trailing zero word).
+// This subclass's vtable. Retail size 0x20 (8 words: 7 vtable slots plus
+// a trailing zero word).
 extern u32 lbl_eu_8053ACB8[8];
 
 // Overlay over the virtual-dispatch slot (0x1C) so the manual factory

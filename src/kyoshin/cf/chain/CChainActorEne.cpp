@@ -151,33 +151,39 @@ extern "C" int ChainEne_MatchOwner_14E4(cf::CChainActorEne* self, void* arg2) {
 // chain types (0x96b/0x96c) it first scans the gimmick object list for the
 // 0x96b timeline and uses that id; otherwise it falls back to the actor's own
 // timeline object.
+// Special enemy-chain types (0x96b/0x96c) share the 0x96b timeline.
+static inline bool isChainEneSpecial(EneChainObj* obj) {
+    if (obj != 0) {
+        return obj->type == 0x96b || obj->type == 0x96c;
+    }
+    return false;
+}
+
+// Scan the gimmick-object circular list for the 0x96b timeline owner.
+static inline EneChainObj* findChainEneTimeline() {
+    GlistList* list = (GlistList*)getReslistB48();
+    for (GlistNode* node = list->field_04->next; node != list->field_04; node = node->next) {
+        EneChainObj* o = (EneChainObj*)getEffOwner__(node->obj);
+        if (o != 0 && (int)o->type == 0x96b) {
+            return o;
+        }
+    }
+    return 0;
+}
+
+static inline BattleActor* findChainEneActor(EneChainObj* obj) {
+    if (obj != 0) {
+        return (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), obj->id);
+    }
+    return 0;
+}
+
 extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
     u32 a0 = self->unk0;
     if (a0 != 0) a0 += 0x3e9c;
-    EneChainObj* o0 = (EneChainObj*)getEffOwner__((void*)a0);
-    int special;
-    if (o0 == 0) {
-        special = 0;
-    } else {
-        int t = o0->type;
-        special = 1;
-        if (t != 0x96b && t != 0x96c) special = 0;
-    }
-    if (special != 0) {
-        GlistList* list = (GlistList*)getReslistB48();
-        EneChainObj* found = (EneChainObj*)list;
-        GlistNode* node = list->field_04->next;
-        while (node != list->field_04) {
-            EneChainObj* o = (EneChainObj*)getEffOwner__(node->obj);
-            if (o != 0 && o->type == 0x96b) goto foundB8;
-            node = node->next;
-        }
-        found = 0;
-    foundB8:;
-        if (found != 0) {
-            BattleActor* act = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), found->id);
-            if (act != 0) return (act->flagA0 >> 1) & 1;
-        }
+    if (isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a0))) {
+        BattleActor* act = findChainEneActor(findChainEneTimeline());
+        if (act != 0) return (act->flagA0 >> 1) & 1;
     }
     u32 a2 = self->unk0;
     if (a2 != 0) a2 += 0x3e9c;
@@ -195,41 +201,10 @@ extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
 extern "C" void ChainEne_ClearReworkFlag_16FC(cf::CChainActorEne* self) {
     u32 a1 = self->unk0;
     if (a1 != 0) a1 += 0x3e9c;
-    EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)a1);
-
-    // Special enemy-chain types (0x96b/0x96c) share the 0x96b timeline.
-    int special;
-    if (obj == 0) {
-        special = 0;
-    } else {
-        int t = obj->type;
-        special = 1;
-        if (t != 0x96b && t != 0x96c) special = 0;
-    }
-    if (special != 0) {
-        // Scan the gimmick-object circular list for a 0x96b timeline and
-        // clear the "rework" bit (bit 1 of the 0xa0 flag) on its battle
-        // actor. found aliases the list header during the scan and is only
-        // nulled when the scan exhausts without a match (retail reuses one
-        // register for both, so the null-store sits on the fall-through path).
-        GlistList* list = (GlistList*)getReslistB48();
-        EneChainObj* found = (EneChainObj*)list;
-        GlistNode* node = list->field_04->next;
-        while (node != list->field_04) {
-            EneChainObj* o = (EneChainObj*)getEffOwner__(node->obj);
-            if (o != 0 && o->type == 0x96b) goto matched;
-            node = node->next;
-        }
-        found = 0;
-    matched:;
-        BattleActor* act = 0;
-        if (found != 0) {
-            act = (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), found->id);
-        }
+    if (isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a1))) {
+        BattleActor* act = findChainEneActor(findChainEneTimeline());
         if (act != 0) act->flagA0 &= ~2;
     }
-
-    // Always also clear the bit on the actor found through our own timeline.
     u32 a2 = self->unk0;
     if (a2 != 0) a2 += 0x3e9c;
     EneChainObj* obj2 = (EneChainObj*)getEffOwner__((void*)a2);

@@ -101,9 +101,10 @@ public:
     }
 #endif
 
-private:
+public:
     StartResult detail_StartSound(SoundHandle* pHandle, u32 id,
                                   const StartInfo* pStartInfo);
+private:
 
     StartResult detail_HoldSound(SoundHandle* pHandle, u32 id,
                                  const StartInfo* pStartInfo) {

@@ -442,6 +442,17 @@ bool SoundArchiveFileReader::ReadSoundArchivePlayerInfo(
     return true;
 }
 
+u32 SoundArchiveFileReader::GetSoundCount() const {
+    const SoundArchiveFile::SoundCommonTable* pTable =
+        Util::GetDataRefAddress0(mInfo->soundTableRef, mInfo);
+
+    if (pTable == NULL) {
+        return 0;
+    }
+
+    return pTable->count;
+}
+
 u32 SoundArchiveFileReader::GetPlayerCount() const {
     const SoundArchiveFile::PlayerTable* pTable =
         Util::GetDataRefAddress0(mInfo->playerTableRef, mInfo);
@@ -472,6 +483,17 @@ u32 SoundArchiveFileReader::GetSoundUserParam(u32 id) const {
     }
 
     return pInfo->userParam[0];
+}
+
+u32 SoundArchiveFileReader::GetFileCount() const {
+    const SoundArchiveFile::FileTable* pTable =
+        Util::GetDataRefAddress0(mInfo->fileTableRef, mInfo);
+
+    if (pTable == NULL) {
+        return 0;
+    }
+
+    return pTable->count;
 }
 
 bool SoundArchiveFileReader::ReadFileInfo(u32 id,
@@ -668,58 +690,3 @@ bool SoundArchiveFileReader::impl_GetSoundInfoOffset(
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// ---------------------------------------------------------------------------
-// GetSoundCount / GetFileCount
-//
-// The retail SDK exports these as mangled member symbols, but the
-// SoundArchiveFileReader class declaration (snd_SoundArchiveFile.h) does not
-// declare them in this build. The extern "C" declarations in snd_SoundArchive.h
-// pin the C-ABI symbol names, so these are defined here as C-linkage free
-// functions reading the reader's private state through the layout mirror
-// below.
-//
-// The `const void* self` parameter (vs the header's plain `void*`) is
-// deliberate: MWCC's scheduler only hoists the first member load above the
-// LR-save `stw` in the prologue when the self pointer is const-qualified
-// (docs/evidence/decomp/attempts.jsonl EffectActNw4rGetAct48 family: "const self
-// param hoists mpMgr load above LR-save stw"). MWCC accepts the const
-// definition against the header's extern "C" void* declaration and still
-// emits the bare C symbol, so the bytes come out retail-identical.
-// ---------------------------------------------------------------------------
-
-namespace {
-// Mirrors SoundArchiveFileReader's leading members (see snd_SoundArchiveFile.h).
-struct SoundArchiveFileReaderLayout {
-    nw4r::snd::detail::SoundArchiveFile::Header header;    // at 0x0
-    const nw4r::snd::detail::SoundArchiveFile::Info* info; // at 0x28
-};
-} // namespace
-
-u32 GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(const void* self) {
-    const nw4r::snd::detail::SoundArchiveFile::Info* pInfo =
-        reinterpret_cast<const SoundArchiveFileReaderLayout*>(self)->info;
-
-    const nw4r::snd::detail::SoundArchiveFile::SoundCommonTable* pTable =
-        nw4r::snd::detail::Util::GetDataRefAddress0(pInfo->soundTableRef, pInfo);
-
-    if (pTable == NULL) {
-        return 0;
-    }
-
-    return pTable->count;
-}
-
-u32 GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(const void* self) {
-    const nw4r::snd::detail::SoundArchiveFile::Info* pInfo =
-        reinterpret_cast<const SoundArchiveFileReaderLayout*>(self)->info;
-
-    const nw4r::snd::detail::SoundArchiveFile::FileTable* pFileTable =
-        nw4r::snd::detail::Util::GetDataRefAddress0(pInfo->fileTableRef, pInfo);
-
-    if (pFileTable == NULL) {
-        return 0;
-    }
-
-    return pFileTable->count;
-}

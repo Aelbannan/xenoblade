@@ -22,6 +22,7 @@ public:
     int           field_0x3c;      // 0x3C: current slot index
 
     int blank1() override;
+    static void create();
 };
 
 // Scheduler queue descriptor filled by BufVxFillSchedDesc during construction.

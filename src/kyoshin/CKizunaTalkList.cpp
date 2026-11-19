@@ -348,13 +348,11 @@ void CKizunaTalkList::hideTalkList() {
 void CKizunaTalkList::scrollTalkListUp() {
     // Scroll up one position through the talk entries.
     u8 count = this->mEntryArray.mCount;
-    u8 dec = this->mUnknown88 - 1;
-    this->mUnknown88 = (s8)dec;
-    if ((s8)dec < 0) {
+    this->mUnknown88--;
+    if (this->mUnknown88 < 0) {
         this->mUnknown88 = 0;
-        s16 pos = this->mUnknown8A - 1;
-        this->mUnknown8A = pos;
-        if (pos < 0) {
+        this->mUnknown8A--;
+        if (this->mUnknown8A < 0) {
             if (count >= 7) {
                 this->mUnknown88 = 6;
                 this->mUnknown8A = (s16)(count - 7);

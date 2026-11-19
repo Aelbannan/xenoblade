@@ -24,11 +24,8 @@ extern "C" {
     __declspec(noreturn) void __throw(char* throwtype, u32 location, u32 dtor);
 }
 
-// Init-state triples and this subclass's vtable.
+// This subclass's vtable.
 // Global-scope data symbols: MWCC does not mangle them.
-extern u32 lbl_eu_80539C98[3];
-extern u32 lbl_eu_80539CB0[3];
-extern u32 lbl_eu_80539CA4[3];
 extern u32 lbl_eu_80539CBC[7];
 
 // Phantom vtable view over CVoiceHandle so virtual dispatch is emitted as a
@@ -107,6 +104,12 @@ public:
     CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
 
     int blank1() override;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void playSlot1();
+    void playSlot2();
+    void onComplete();
+    static CVS_THREAD_REVIVE* create(CVoiceHandle* owner1, CVoiceHandle* owner2);
 };
 
 // Raw layout exposing the implicit vtable pointer at 0x1C so the factory can

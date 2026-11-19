@@ -1786,8 +1786,6 @@ extern "C" void kizCursorDir3(UnkKizunaSelfC874* self) {
     refreshKizEntryPanes(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
 }
 
-void kizCursorDir4(){}
-
 // Dispatch on display-state byte at +0x3A; each case is a tail call.
 // Same display reset as kizCursorDir1 but with the color constants swapped
 // (retail loads f2 first then fmr f3, so the source order is x/y/z with the
@@ -1948,8 +1946,6 @@ extern "C" void slideKizDown(UnkKizunaSelfCE78* self) {
         refreshKizEntryPanes(reinterpret_cast<UnkKizunaSelf9820*>(&self->sub68));
     }
 }
-
-void tickCurByFlag(){}
 
 // us-8025f08c (0x8025CF40): when both +0x30/+0x34 pointers are present, build a fresh
 // CKizunaLine, copy it into the +0x68 line state (field-by-field, including the

@@ -16,6 +16,13 @@ class CVS_THREAD_DOWN : public CVS_THREAD {
 public:
     CVoiceHandle* field_0x20;  // 0x20: voice handle pointer (slot 1)
     CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
+
+    // Voice-event state handlers installed into the inherited state member.
+    void advanceSlot1();
+    void advanceSlot2();
+    void onComplete();
+
+    static CVS_THREAD_DOWN* create(CVoiceHandle* owner1, CVoiceHandle* owner2);
 };
 
 // vtable-access helper: exposes the CVoiceHandle vtable method at slot 175
@@ -45,16 +52,7 @@ struct CVS_THREAD_DOWN_Vtbl {
 #undef CVT_PAD32
 #undef CVT_PAD64
 
-// Named view over the CVS_THREAD init-state triple (bytes 0x00-0x08), which
-// the factory copies wholesale from lbl_eu_80539A68. Same layout as the first
-// three CVS_THREAD words; only used to avoid anonymous-field access here.
-struct CVS_THREAD_DOWN_INIT {
-    u32 word0;  // 0x00
-    u32 word1;  // 0x04
-    u32 word2;  // 0x08
-};
 
-// Raw layout of the CVS_THREAD_DOWN object exposing the implicit vtable
 // pointer at 0x1C (owned by the CVS_THREAD base) so the factory can
 // override it with the DOWN vtable, plus the two voice slots.
 struct CVS_THREAD_DOWN_raw {
@@ -86,9 +84,5 @@ extern "C" void __ct__cf_CVS_THREAD(void* self);
 // (retail catch-all handlers end at the rethrow).
 extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, void* dtor);
 
-// Init-state triples (copied into the base state words 0x00-0x08) and this
-// subclass's vtable. Global-scope data symbols: MWCC does not mangle them.
-extern u32 lbl_eu_80539A68[3];
-extern u32 lbl_eu_80539A74[3];
-extern u32 lbl_eu_80539A80[3];
+// This subclass's vtable. Global-scope data symbols: MWCC does not mangle them.
 extern u32 lbl_eu_80539A8C[7];

@@ -81,6 +81,7 @@ public:
     }
     void SetChannelPriority(int priority);
     void SetReleasePriorityFix(bool flag);
+    void SetSeqUserprocCallback(SeqUserprocCallback callback, void* arg);
 
     void SetTrackVolume(u32 trackFlags, f32 volume) {
         mSeqPlayer.SetTrackVolume(trackFlags, volume);

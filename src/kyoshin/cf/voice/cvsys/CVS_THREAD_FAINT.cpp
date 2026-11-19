@@ -13,7 +13,7 @@
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
 // base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539B58.
-extern "C" CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+CVS_THREAD_FAINT* CVS_THREAD_FAINT::create(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
     if (!(owner1->field_0x3F00 & 2)) return NULL;
     if (!(owner2->field_0x3F00 & 2)) return NULL;
@@ -43,19 +43,10 @@ extern "C" CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* 
         }
     }
 
-    // Copy the init-state triple into the first 3 u32s (outside try). Load
-    // base[0] before base[1]: retail colors the first-loaded value r4 and the
-    // second r0, storing r4 to +0 and r0 to +4.
-    // Integer cast keeps the label materialized once via lis+addi into a
-    // single pointer register (retail r5); without it MWCC splits the @h/@l.
-    const u32* base = (const u32*)(u32)lbl_eu_80539B58;
-    u32 v1 = base[1];
-    u32* p0 = (u32*)base[0];
-    // Store word 1 through the raw layout view (offset 0 == base::unk0) to
-    // avoid the placeholder field name; same `stw` as retail.
-    ((CVS_THREAD_FAINT_raw*)self)->state0 = p0;
-    ((CVS_THREAD_FAINT_raw*)self)->state1 = v1;
-    ((CVS_THREAD_FAINT_raw*)self)->state2 = base[2];
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_FAINT::advanceSlot1);
 
     return self;
 }
@@ -65,15 +56,10 @@ extern "C" CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* 
 // Copies init data from lbl_eu_80539B64 to fields 0x00-0x08, checks if
 // the voice is still active (vtable method at offset 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0x709).
-extern "C" void advanceFaintSlot1(CVS_THREAD_FAINT* self) {
-    // Restore the base state triple via the lwzu/spread load-with-update
-    // pattern (v0 declared first so the lwzu destination colours low).
-    u32 v0;
-    const u32* src = lbl_eu_80539B64;
-    v0 = *src++;
-    ((CVS_THREAD_FAINT_raw*)self)->state1 = *src++;
-    ((CVS_THREAD_FAINT_raw*)self)->state0 = (u32*)v0;
-    ((CVS_THREAD_FAINT_raw*)self)->state2 = *src;
+void CVS_THREAD_FAINT::advanceSlot1() {
+    CVS_THREAD_FAINT* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_FAINT::advanceSlot2);
 
     CVoiceHandle* handle20 = self->slot1;
     if (handle20 != NULL) {
@@ -98,17 +84,14 @@ extern "C" void advanceFaintSlot1(CVS_THREAD_FAINT* self) {
 // Copies init data from lbl_eu_80539B70 to fields 0x00-0x08, checks if
 // the voice is still active, and if inactive, plays a voice ID chosen by
 // mtRand(2): 0x712 when rand==0, otherwise 0x70B.
-extern "C" void advanceFaintSlot2(CVS_THREAD_FAINT* self) {
+void CVS_THREAD_FAINT::advanceSlot2() {
+    CVS_THREAD_FAINT* self = this;
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
-    u32 v0;
-    const u32* src = lbl_eu_80539B70;
-    v0 = *src++;
-    ((CVS_THREAD_FAINT_raw*)self)->state1 = *src++;
-    ((CVS_THREAD_FAINT_raw*)self)->state0 = (u32*)v0;
-    ((CVS_THREAD_FAINT_raw*)self)->state2 = *src;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_FAINT::onPlaybackComplete);
 
     CVoiceHandle* handle24 = self->slot2;
     if (handle24 != NULL) {
@@ -133,7 +116,8 @@ extern "C" void advanceFaintSlot2(CVS_THREAD_FAINT* self) {
 
 // us-802a9460 (triggerFaintPlayback)
 // Completion callback: if no active voice, call the playback-start virtual.
-extern "C" void triggerFaintPlayback(CVS_THREAD_FAINT* self) {
+void CVS_THREAD_FAINT::onPlaybackComplete() {
+    CVS_THREAD_FAINT* self = this;
     if (IsThreadVoiceActive(self) == 0) {
         self->PlayThreadVoice();
     }
@@ -215,24 +199,6 @@ extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 __RTTI__Q22cf16CVS_THREAD_FAINT[2];
 
 extern const char lbl_eu_80510780[0x18] = "cf::CVS_THREAD_FAINT";
-
-u32 lbl_eu_80539B58[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)advanceFaintSlot1,
-};
-
-u32 lbl_eu_80539B64[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)advanceFaintSlot2,
-};
-
-u32 lbl_eu_80539B70[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)triggerFaintPlayback,
-};
 
 u32 lbl_eu_80539B7C[7] = {
     (u32)__RTTI__Q22cf16CVS_THREAD_FAINT,

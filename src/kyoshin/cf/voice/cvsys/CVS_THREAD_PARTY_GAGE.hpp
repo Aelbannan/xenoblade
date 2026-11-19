@@ -21,6 +21,12 @@ public:
 
     // Gauge change threshold level (0=low, 1=mid, 2=high) (offset 0x28).
     u32 thresholdLevel;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void notifyDone();
+    void advanceA();
+    void advanceB();
+    static CVS_THREAD_PARTY_GAGE* create(int owner1, int owner2);
 };
 
 // Raw layout exposing the implicit vtable pointer at 0x1C so the factory can
@@ -63,10 +69,7 @@ extern "C" {
                                       void* dtor);
 }
 
-// Init state triples and this subclass's vtable.
-extern u32 lbl_eu_80539C48[3];
-extern u32 lbl_eu_80539C54[3];
-extern u32 lbl_eu_80539C60[3];
+// This subclass's vtable.
 extern u32 lbl_eu_80539C6C[7];
 extern u32 lbl_eu_80662D18[2];
 

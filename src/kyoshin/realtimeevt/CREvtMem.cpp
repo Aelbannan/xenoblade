@@ -62,48 +62,18 @@ u32 initEvtMemArena(u32 size, u32 offset) {
     u32 chunk = size;
     if (chunk == 0) chunk = 0x100000;
 
-    // ---- First allocation -> ptr1 ----
-    // Cache the singleton in a local; its last use is the currentPos update,
-    // so the ptr1 store below reloads the global.
-    cf::CREvtMem* m1 = lbl_eu_80664260;
-    if (offset + chunk + 0x1000 < m1->arenaSize) {
-        u8* res;
-        u32 pos = m1->currentPos;
-        if (pos + chunk > m1->arenaEnd) {
-            res = nullptr;
-        } else {
-            u32 low = pos & 0xFF;
-            u32 pad = 0;
-            if (low != 0) pad = 0x100 - low;
-            res = (u8*)(pos + pad);
-            m1->currentPos += chunk + pad;
-        }
-        lbl_eu_80664260->ptr1 = res;
+    if (offset + chunk + 0x1000 < lbl_eu_80664260->arenaSize) {
+        lbl_eu_80664260->ptr1 = lbl_eu_80664260->allocArena(chunk);
     } else {
         // Too big for the arena - allocate from MEM2 instead.
-        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-        lbl_eu_80664260->ptr1 = (u8*)mtl::MemManager::allocate_head(handle, chunk, 0x20);
+        lbl_eu_80664260->ptr1 = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), chunk, 0x20);
         lbl_eu_80664260->flags |= 0x2;
     }
 
-    // ---- Second allocation -> ptr2 ----
-    cf::CREvtMem* m2 = lbl_eu_80664260;
-    if (offset + (chunk * 2) + 0x1000 < m2->arenaSize) {
-        u8* res;
-        u32 pos = m2->currentPos;
-        if (pos + chunk > m2->arenaEnd) {
-            res = nullptr;
-        } else {
-            u32 low = pos & 0xFF;
-            u32 pad = 0;
-            if (low != 0) pad = 0x100 - low;
-            res = (u8*)(pos + pad);
-            m2->currentPos += chunk + pad;
-        }
-        lbl_eu_80664260->ptr2 = res;
+    if (offset + (chunk * 2) + 0x1000 < lbl_eu_80664260->arenaSize) {
+        lbl_eu_80664260->ptr2 = lbl_eu_80664260->allocArena(chunk);
     } else {
-        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-        lbl_eu_80664260->ptr2 = (u8*)mtl::MemManager::allocate_head(handle, chunk, 0x20);
+        lbl_eu_80664260->ptr2 = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), chunk, 0x20);
         lbl_eu_80664260->flags |= 0x4;
     }
 

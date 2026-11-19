@@ -32,8 +32,8 @@ extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
 extern "C" void CSkipTimerTick(CSkipTimer* self);
 extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
 extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
 // Retail-unmangled CW helpers used by Init()'s temporary-object re-init pattern.
 extern "C" void __ct__6CBgTexFUc(void*, int);
 extern "C" void __dt__6CBgTexFv(void*, int);
@@ -50,12 +50,12 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self);
 extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
 extern "C" void CSkipTimerNextKey(CSkipTimer* self);
 extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
-extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
-extern "C" int isSkipActive(CSkipTimer* self);
 extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" int isSkipActive(CSkipTimer* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
 // Scene-active gate for HUD draws (retail-unmangled; code_80135FDC.cpp).

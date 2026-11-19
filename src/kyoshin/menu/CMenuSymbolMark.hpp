@@ -90,21 +90,16 @@ struct ArrowResourceHeader {
     u32 dlCount;     // 0x14: number of display-list entries
 };
 
-class CArrow3D : public CTTask<CArrow3D> {
+class CArrow3D : public CTTask<CArrow3D>, public IScnRender {
 public:
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();
     virtual ~CArrow3D();
-    void cbRenderBefore();
-    void Term();
-    void Init();
-    // NOTE: no Move() override - retail leaves the vtable's Move slot on
-    // CTTask<CArrow3D>::Move (see split1 .data vtable) and emits the empty
-    // Move__8CArrow3DFv as a separate symbol (stubbed below). Declaring an
-    // override here would shadow the CTTask<CArrow3D>::Move specialization
-    // and MWCC would drop the retail Move__17CTTask<8CArrow3D>Fv symbol.
 
     // 0x00-0x54: CTTask<CArrow3D>
-    // 0x54: IScnRender vtable ptr (manual) - kept void*
-    void* mScnRenderSubobj; // 0x54
+    // 0x54: IScnRender secondary base
     u8* mDataHandle; // 0x58
     u8* mDataPtr; // 0x5C
     f32 mPosX; // 0x60

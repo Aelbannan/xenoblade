@@ -145,20 +145,12 @@ extern "C" CException* __ct__CException(CException* self, const char* pName, CWo
     return self;
 }
 
-// Destructor - extern "C" free-function form (CFontLayer/CScnBlend pattern):
-// the retail vtable references the deleting dtor symbol __dt__10CExceptionFv,
-// and a plain C++ member dtor would auto-emit __vt__/__RTTI__ bloat here.
-extern "C" void* __dt__10CExceptionFv(CException* self, int flag) {
-    if (self != 0) {
-        if (lbl_eu_806656C0 == self) {
-            lbl_eu_806656C0 = 0;
-        }
-        __dt__5CProcFv(self, 0);
-        if (flag > 0) {
-            operator delete(self);
-        }
+// The deleting destructor is emitted by the compiler from the real virtual
+// dtor; the retail vtable references its mangled name __dt__10CExceptionFv.
+CException::~CException() {
+    if (lbl_eu_806656C0 == this) {
+        lbl_eu_806656C0 = 0;
     }
-    return self;
 }
 
 // Type check function
@@ -594,9 +586,7 @@ void CException::logExceptionMessage(const wchar_t* message) {
 
 // Add to global array
 void CException::AddToGlobalArray(IException* pException) {
-    u32 idx = lbl_eu_806656C4;
-    lbl_eu_80657B50[idx] = this;
-    lbl_eu_806656C4 = idx + 1;
+    lbl_eu_80657B50[lbl_eu_806656C4++] = this;
 }
 
 // Remove from global array
@@ -604,12 +594,11 @@ void CException::RemoveFromGlobalArray(IException* pException) {
     int count = lbl_eu_806656C4;
     for (int index = 0; index < count; ++index) {
         if (lbl_eu_80657B50[index] == (CException*)pException) {
-            int last = count - 1;
             // Shift the tail entries down one slot.
-            for (int shift = index; shift < last; ++shift) {
+            for (int shift = index; shift < count - 1; ++shift) {
                 lbl_eu_80657B50[shift] = lbl_eu_80657B50[shift + 1];
             }
-            lbl_eu_806656C4 = lbl_eu_806656C4 - 1;
+            lbl_eu_806656C4--;
             return;
         }
     }
@@ -671,6 +660,7 @@ extern "C" void wkRenderAfter__11CWorkThreadFv();
 extern "C" void wkStandbyLogin__10CExceptionFv();
 extern "C" void wkStandbyLogout__10CExceptionFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+extern "C" void __dt__10CExceptionFv(CException*, int);
 
 // forward decls (defined in the data block below)
 extern "C" const char lbl_eu_80522F70[];

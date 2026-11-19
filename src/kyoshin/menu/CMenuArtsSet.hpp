@@ -886,7 +886,7 @@ public:
     virtual ~CArtsList();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 CMenuArtsSet_getReadyFlag();
+    int CMenuArtsSet_getReadyFlag();
     u32 CMenuArtsSet_isArtsInfoActive();
     void CMenuArtsSet_setArmedFlag(u8 val);
     u32 CMenuArtsSet_isSlotWindowEmpty();

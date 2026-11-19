@@ -16,7 +16,7 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
-struct WaveData;
+struct WaveInfo;
 
 class WsdPlayer : public BasicPlayer,
                   public DisposeCallback,

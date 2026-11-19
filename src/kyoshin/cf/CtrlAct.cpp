@@ -487,7 +487,7 @@ void aimVoiceOwner(cf::CtrlAct* self) {
 void parseActEntry(cf::CtrlAct* self) {
     // NOTE: no cached mPlayer local - retail reloads 0x5c(r30) at every use.
     // Typed virtuals keep retail's register flow (no temp-register copies).
-    if (((CtrlActPlayerReal*)self->mPlayer)->vf173() != 0) {
+    if (((CtrlActPlayerReal*)self->mPlayer)->CActorParam_isBattleLocked() != 0) {
         return;
     }
     if (self->mPlayer->mField3374 & 0x2000) {
@@ -499,12 +499,12 @@ void parseActEntry(cf::CtrlAct* self) {
         u32 cmd805 = *self->mPlayer->mField4->vf30();
         if (testActorStatus(self->mPlayer, &cmd805, 0x805) == 0) {
             f32 h = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
-                        ->getHeight();
+                        ->CfObject_getMoveSpeedRate();
             if (h != lbl_eu_80666CF8) {
                 if (Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666CF8) {
                     f32 scale = Scn_GetFrameDelta(lbl_eu_80663E14);
                     f32 h2 = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
-                                 ->getHeight();
+                                 ->CfObject_getMoveSpeedRate();
                     aiActionUpdateEntriesDelta(&self->mPlayer->mField3380,
                                   h2 * scale / lbl_eu_80666D44);
                 }
@@ -591,7 +591,7 @@ void parseActEntry(cf::CtrlAct* self) {
             return;
         }
         // Rebuild the +0x2A4 action-state block from the entry.
-        CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->vf167();
+        CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
         sub->mField0 = 0;
         sub->mField4 = 0;
         sub->mField48 = 0;
@@ -810,7 +810,7 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     // self->mPlayer is re-read at every use site (no cached local) so the
     // compiler reloads it per block like the retail code; the casts only
     // select real virtual dispatch (see CtrlActPlayerReal in CtrlAct.hpp).
-    CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->vf167();
+    CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
     sub->mField4 = arg->mField0;
     int kind = 0;
     CtrlActPlayerReal* p;
@@ -851,7 +851,7 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     if (src == NULL) {
         return 0;
     }
-    if (src->vf173() != 0) {
+    if (src->CActorParam_isBattleLocked() != 0) {
         return 0;
     }
     u32 local8 = *src->mField4->vf30();
@@ -864,10 +864,10 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     }
     if (atkIndex >= 0) {
         self->mField4 |= 2;
-        void* base = ((CtrlActPlayerReal*)self->mPlayer)->vf160();
+        void* base = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getArtsSlotIds();
         CtrlActAtkParam* atk =
             (CtrlActAtkParam*)getAtkParam(base, atkIndex);
-        CtrlActSub2A4* state = ((CtrlActPlayerReal*)self->mPlayer)->vf167();
+        CtrlActSub2A4* state = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
         state->mField0 = 0;
         // Local pin: forces the single lbl_eu_80666CF8 load (fused with the
         // -1 in r0 as the sda21 base) to sit here like retail.
@@ -1109,10 +1109,10 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     sub->mField7C = snapshot.mField7C;
     sub->mField80 = snapshot.mField80;
     sub->mFieldB8 = snapshot.mFieldB8;
-    if (self->vf30() == 0) {
+    if (self->ret1_800888F4() == 0) {
         return 0;
     }
-    self->vf31();
+    self->CtrlEnemy_emptyStub_800888F0();
     self->mField4 |= 2;
     return 1;
 }
@@ -1129,7 +1129,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
         self->mField14 = lbl_eu_80666CF8;
         return 1;
     }
-    if (((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)->getHeight()
+    if (((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)->CfObject_getMoveSpeedRate()
         == lbl_eu_80666CF8) {
         self->mField14 = lbl_eu_80666CF8;
         return 1;
@@ -1221,7 +1221,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
     f32 mag2 = d.x * d.x + d.z * d.z + d.y * d.y;
     f32 f138;
     if (self->mField28 != 0) {
-        f138 = self->mField28->getFloats()[0];
+        f138 = self->mField28->CfObject_getMoveRateScale()[0];
     } else {
         f138 = lbl_eu_80666CF8;
     }
@@ -1409,7 +1409,7 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
         }
         f32 f138;
         if (self->mField28 != 0) {
-            f138 = self->mField28->getFloats()[0];
+            f138 = self->mField28->CfObject_getMoveRateScale()[0];
         } else {
             f138 = lbl_eu_80666CF8;
         }
@@ -1530,7 +1530,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
         }
         f32 h;
         if (self->mField28 != 0) {
-            h = self->mField28->getFloats()[0];
+            h = self->mField28->CfObject_getMoveRateScale()[0];
         } else {
             h = lbl_eu_80666CF8;
         }

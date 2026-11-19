@@ -56,8 +56,8 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly (no byte mask).
 
 // CCollepedia callees (retail-unmangled func_ names).

@@ -1816,6 +1816,20 @@ void btm_sec_pin_code_request(UINT8 *p_bda)
 }
 
 /* ------------------------------------------------------------------ */
+/*  btm_sec_are_all_trusted -- TRUE if every service bit is trusted     */
+/* ------------------------------------------------------------------ */
+static BOOLEAN btm_sec_are_all_trusted(UINT32 p_mask[])
+{
+    UINT32 trusted_inx;
+    for (trusted_inx = 0; trusted_inx < 2; trusted_inx++)
+    {
+        if (p_mask[trusted_inx] != 0xFFFFFFFF)
+            return (FALSE);
+    }
+    return (TRUE);
+}
+
+/* ------------------------------------------------------------------ */
 /*  btm_sec_execute_procedure -- execute the security procedure for    */
 /*  the specified device record.                                       */
 /* ------------------------------------------------------------------ */
@@ -1923,17 +1937,7 @@ UINT8 btm_sec_execute_procedure(BtmSecDevRec *p_dev_rec)
             || (!p_dev_rec->is_originator && (p_dev_rec->security_required & BTM_SEC_IN_AUTHORIZE)))))
     {
         /* Check if the device is trusted */
-        if (p_dev_rec->trusted_mask[0] == 0xFFFFFFFF)
-        {
-            if (p_dev_rec->trusted_mask[1] == 0xFFFFFFFF)
-                result = 1;
-            else
-                result = 0;
-        }
-        else
-            result = 0;
-
-        if (result == 0)
+        if (!btm_sec_are_all_trusted(p_dev_rec->trusted_mask))
         {
             /* If the service is not trusted, ask the application */
             if (p_dev_rec->p_cur_service->service_id < BTM_SEC_MAX_SERVICES)

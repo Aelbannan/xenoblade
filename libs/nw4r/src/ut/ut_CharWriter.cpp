@@ -149,14 +149,12 @@ f32 CharWriter::Print(u16 ch) {
     mFont->GetGlyph(&glyph, ch);
 
     if (mIsWidthFixed) {
-        f32 margin =
-            (mFixedWidth - ConvF32S(glyph.widths.charWidth) * mScale.x) *
-            0.5f;
+        f32 margin = (mFixedWidth - glyph.widths.charWidth * mScale.x) / 2;
         width = mFixedWidth;
-        left = margin + ConvF32S(glyph.widths.left) * mScale.x;
+        left = margin + glyph.widths.left * mScale.x;
     } else {
-        width = ConvF32S(glyph.widths.charWidth) * mScale.x;
-        left = ConvF32S(glyph.widths.left) * mScale.x;
+        width = glyph.widths.charWidth * mScale.x;
+        left = glyph.widths.left * mScale.x;
     }
 
     PrintGlyph(mCursorPos.x + left, mCursorPos.y, mCursorPos.z, glyph);

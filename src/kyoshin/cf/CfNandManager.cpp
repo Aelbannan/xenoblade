@@ -1,8 +1,15 @@
 #include <types.h>
 #include <cstring>
-#include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CfNandManager.hpp"
+
 #include "monolib/util/MemManager.hpp"
 #include "monolib/nand/CNand.hpp"
+#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/util/FixStr.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/CNandData.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/scn/CScn.hpp"
 
@@ -72,12 +79,6 @@ extern char __RTTI__10IWorkEvent[];
 // this TU's own .sdata pair tables (defined below; vtable slots point at them)
 extern const void* __RTTI__Q22cf13CfNandManager[2];
 extern const void* lbl_eu_806628D0[2];
-// fwd decls so the .sdata initializers below see the tables (defs inherit
-// external linkage, matching retail's global .obj bindings)
-extern const void* lbl_eu_80536BBC[49];
-extern const void* lbl_eu_80536C80[13];
-extern const void* lbl_eu_80536CB4[9];
-extern const void* lbl_eu_80536CD8[7];
 
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char jumptable_eu_80536B2C[0x90] = {0};
 __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536BBC[49] = {
@@ -149,31 +150,29 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536CD8[7]
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char s_nandTail[4] = {0}; // retail +0x1C8 null word
 #pragma section data_type ".data" ".bss"
 // typed .rodata strings (each sized to its retail gap).
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050B440[0x14] = "cf::CfNandManager";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050B454[0x1C] = "CTTask<cf::CfNandManager>";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050B470[0x18] = "%s%02d\0banner.bin\0name";
+__declspec(section ".rodata") __attribute__((used)) const char kNandTypeName[0x14] = "cf::CfNandManager";
+__declspec(section ".rodata") __attribute__((used)) const char kNandTaskTypeName[0x1C] = "CTTask<cf::CfNandManager>";
+__declspec(section ".rodata") __attribute__((used)) const char kNandSaveNameFormat[0x18] = "%s%02d\0banner.bin\0name";
 // typed .sdata pointer pairs (replaces old sdata blob which MWCC migrated
 // to nobits as all-zero bytes): relocs to the string/pool labels keep the
 // section live.
-__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf13CfNandManager[2] = { lbl_eu_8050B440, lbl_eu_80536C80 };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_806628D0[2] = { lbl_eu_8050B454, lbl_eu_80536CD8 };
+__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf13CfNandManager[2] = { kNandTypeName, lbl_eu_80536C80 };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_806628D0[2] = { kNandTaskTypeName, lbl_eu_80536CD8 };
 // typed .bss/.sbss zero-fill (nobits compare sizes only; small sbss objects
 // stay in .sbss automatically, no section attr needed).
 char gCfNandPartySnapshot[0x38];
-unsigned int gpCfNandManager;
+cf::CfNandManager* gpCfNandManager;
 unsigned char gCfNandFileEventPending;
 unsigned char lbl_eu_8066476D;
 unsigned short lbl_eu_8066476E;
 unsigned short gCfNandCaptureState;
 unsigned short lbl_eu_80664772;
 unsigned short lbl_eu_80664774;
-unsigned short lbl_eu_80664776_gap;
+unsigned short gNandSbssGap64776;
 unsigned int lbl_eu_80664778;
 void* gpCfNandCaptureBuf;
 void* gpCfNandCaptureBufTail;
-unsigned int lbl_eu_80664780_b;
-unsigned int lbl_eu_80664788_a;
-unsigned int lbl_eu_80664788_b;
+unsigned int gNandSbssPad64780;
 
 #pragma section code_type ".text" ".text"
 
@@ -190,21 +189,7 @@ class CfNandMgrBases : public CfNandTaskPad, public IScnRender {};
 // be included here: it redeclares this TU's .sbss/.bss labels with different
 // types). Offsets match src/kyoshin/cf/CfNandManager.hpp.
 
-struct __attribute__((packed)) CfNandEntryHead {
-    u16 f000;
-    u32 f002;
-    u32 f006;
-    u32 f00A;
-    u32 f00E;
-    u32 f012;
-    u32 f016;
-    u16 gap01A;
-    u32 f01C;
-    u32 f020;
-    u32 f024;
-};
-
-struct CfNandWorkEntryDst {
+struct CfNandWorkEntryDst_Local {
     CfNandEntryHead head;
     u32 arr028[48];
     u32 arr0E8[36];
@@ -267,7 +252,7 @@ struct CfNandWorkEntryDst {
     u8 gapEnd[3];
 };
 
-struct CfNandWorkEntrySrc {
+struct CfNandWorkEntrySrc_Local {
     CfNandEntryHead head;
     u32 arr028[48];
     u32 arr0E8[36];
@@ -374,105 +359,93 @@ struct CfNandBattleParams {
     u32 p74;
 };
 
-struct CfNandSaveTagBlock {
+struct CfNandSaveTagBlock_Local {
     u32 tag;
     u32 length;
     u32 unk08;
     u32 crc;
 };
 
-struct CfNandProgressArea {
+struct CfNandProgressArea_Local {
     u32 field00;
     f32 f04;
     u16 f08;
     u16 f0A;
 };
 
-struct CfNandPartyEntry {
+struct CfNandPartyEntry_Local {
     u32 field_00;
     u32 field_04;
     u32 field_08;
     f32 field_0C;
 };
 
-struct CfNandPartySnapshot {
-    CfNandPartyEntry mEntry[3];
+struct CfNandPartySnapshot_Local {
+    CfNandPartyEntry_Local mEntry[3];
     u32 field_30;
 };
 
-struct CfNandCamBlock {
+struct CfNandCamBlock_Local {
     u8 _pad0[0xC];
     f32 f0C;
 };
 
-struct CfNandWthrBlock {
+struct CfNandWthrBlock_Local {
     u8 _pad0[0xE];
     u16 f0E;
 };
 
-struct CfNandSndArea {
+struct CfNandSndArea_Local {
     f32 f00;
     f32 f04;
     f32 f08;
     u32 f0C;
 };
 
-struct __attribute__((packed)) CfNandSaveNameEntry {
-    u32 f04;
-    u32 f08;
-    u32 f0C;
-    u32 f10;
-    f32 f14;
-    u32 f18;
-    u16 f1C;
-    u8 f1E;
-    u8 f1F;
-};
-
-struct CfNandSaveNameTable {
+struct CfNandSaveNameTable_Local {
     s32 count;
     CfNandSaveNameEntry entries[20];
 };
 
-struct CfNandSaveImage {
+struct CfNandSaveImage_Local {
     u32 magic;
     u32 totalSize;
     u32 unk08;
     u32 version;
-    CfNandSaveTagBlock slotTag;
+    CfNandSaveTagBlock_Local slotTag;
     u8 slot[0xB8];
     u8 slotPad[0x9BE8];
     u8 pad9CC0[0x360];
-    CfNandSaveTagBlock flagTag;
+    CfNandSaveTagBlock_Local flagTag;
     u8 flagData[0x1220];
-    CfNandSaveTagBlock gameTag;
+    CfNandSaveTagBlock_Local gameTag;
     u8 workHead[0x41F0];
-    CfNandWorkEntryDst workEntry[14];
+    CfNandWorkEntryDst_Local workEntry[14];
     u8 pad11E88[0x18];
-    CfNandSaveTagBlock timeTag;
-    CfNandProgressArea progress;
+    CfNandSaveTagBlock_Local timeTag;
+    CfNandProgressArea_Local progress;
     u8 pad11EBC[0x14];
-    CfNandSaveTagBlock partyTag;
-    CfNandPartySnapshot snapshot;
+    CfNandSaveTagBlock_Local partyTag;
+    CfNandPartySnapshot_Local snapshot;
     u8 pad11F14[0xC];
-    CfNandSaveTagBlock camTag;
-    CfNandCamBlock camBlock;
+    CfNandSaveTagBlock_Local camTag;
+    CfNandCamBlock_Local camBlock;
     u8 pad11F40[0x10];
-    CfNandSaveTagBlock itemTag;
+    CfNandSaveTagBlock_Local itemTag;
     u8 itemBlob[0x12120];
-    CfNandSaveTagBlock wthrTag;
-    CfNandWthrBlock wthrBlock;
+    CfNandSaveTagBlock_Local wthrTag;
+    CfNandWthrBlock_Local wthrBlock;
     u8 pad240A0[0x10];
-    CfNandSaveTagBlock sndTag;
-    CfNandSndArea sndArea;
+    CfNandSaveTagBlock_Local sndTag;
+    CfNandSndArea_Local sndArea;
     u8 pad240D0[0x10];
-    CfNandSaveTagBlock mineTag;
+    CfNandSaveTagBlock_Local mineTag;
     u8 mineRegion[0x384];
     u8 pad24474[0x1C];
-    CfNandSaveTagBlock tboxTag;
-    CfNandSaveNameTable names;
+    CfNandSaveTagBlock_Local tboxTag;
+    CfNandSaveNameTable_Local names;
     u8 pad246D4[0x1CC];
-    CfNandSaveTagBlock optdTag;
+    CfNandSaveTagBlock_Local optdTag;
     u8 optdBlob[0x40];
 };
 
@@ -483,71 +456,58 @@ struct CfNandSaveImageV1 {
     u32 totalSize;
     u32 unk08;
     u32 version;
-    CfNandSaveTagBlock slotTag;
+    CfNandSaveTagBlock_Local slotTag;
     u8 slot[0xB8];
     u8 slotPad[0x9BE8];
     u8 pad9CC0[0x360];
-    CfNandSaveTagBlock flagTag;
+    CfNandSaveTagBlock_Local flagTag;
     u8 flagData[0x1220];
-    CfNandSaveTagBlock gameTag;
+    CfNandSaveTagBlock_Local gameTag;
     u8 workHead[0x41F0];
-    CfNandWorkEntryDst workEntry[14];
+    CfNandWorkEntryDst_Local workEntry[14];
     u8 pad11E88[0x18];
-    CfNandSaveTagBlock timeTag;
-    CfNandProgressArea progress;
+    CfNandSaveTagBlock_Local timeTag;
+    CfNandProgressArea_Local progress;
     u8 pad11EBC[0x14];
-    CfNandSaveTagBlock partyTag;
-    CfNandPartySnapshot snapshot;
+    CfNandSaveTagBlock_Local partyTag;
+    CfNandPartySnapshot_Local snapshot;
     u8 pad11F14[0xC];
-    CfNandSaveTagBlock camTag;
-    CfNandCamBlock camBlock;
+    CfNandSaveTagBlock_Local camTag;
+    CfNandCamBlock_Local camBlock;
     u8 pad11F40[0x10];
-    CfNandSaveTagBlock itemTag;
+    CfNandSaveTagBlock_Local itemTag;
     u8 itemBlob[0x157D0];
-    CfNandSaveTagBlock wthrTag;
-    CfNandWthrBlock wthrBlock;
+    CfNandSaveTagBlock_Local wthrTag;
+    CfNandWthrBlock_Local wthrBlock;
     u8 pad27760[0x10];
-    CfNandSaveTagBlock sndTag;
-    CfNandSndArea sndArea;
+    CfNandSaveTagBlock_Local sndTag;
+    CfNandSndArea_Local sndArea;
     u8 pad277A0[0x10];
-    CfNandSaveTagBlock mineTag;
+    CfNandSaveTagBlock_Local mineTag;
     u8 mineRegion[0x384];
     u8 pad27B44[0x1C];
-    CfNandSaveTagBlock tboxTag;
-    CfNandSaveNameTable names;
+    CfNandSaveTagBlock_Local tboxTag;
+    CfNandSaveNameTable_Local names;
     u8 pad27F34[0x1CC];
-    CfNandSaveTagBlock optdTag;
+    CfNandSaveTagBlock_Local optdTag;
     u8 optdBlob[0x40];
 };
 
-struct CfNandNameNode {
-    CfNandNameNode* mNext;
-    CfNandNameNode* mPrev;
-    u32 f08;
-    float f0C;
-    float f10;
-    float f14;
-    float f18;
-    u32 f1C;
-    u16 f20;
-    u8 f22;
-    u8 f23;
-};
-
-struct CfNandNameRoot {
-    u8 _pad0[4];
-    CfNandNameNode* mNext;
-    u8 _08[0x24];
-    CfNandNameNode* slots;
-    s32 slotCount;
-};
-
-struct CfNandWorkBuf {
+struct CfNandWorkBuf_Local {
     u8 head[0x41F0];
-    CfNandWorkEntryDst entry[14];
+    CfNandWorkEntryDst_Local entry[14];
 };
 
 extern "C" int NandCheckSave(void* block);
+// The pending-event handler consumes one dispatched NAND request: it applies
+// the per-type result, resolves the callback arguments and finally invokes
+// the queued completion callback. The flush pump prepends the request to the
+// ring before calling it.
+extern "C" void NandVerifyBlk(void* self, u16 type, u8* ok, s32* result);
+extern "C" void NandResolveOp(void* self, u16 type, u8* ok, s32* result);
+extern "C" void NandDownsample(void* self);
+extern "C" void NandImageMake(void* buf, bool flag);
+extern "C" void __ct__cf_CfNandManager(void* self, void* arg);
 extern "C" void __dt__8023E63C(void* self);
 extern "C" void NandFlushEvts(void* self);
 extern "C" int CfRes_getD80Flag();
@@ -556,30 +516,31 @@ extern "C" u8* CtrlRemote_GetSharedBufPtr();
 extern "C" u8* CtrlRemote_GetFileEventIds();
 extern "C" void CtrlObjectParam_RefreshCharEntry(void* data, u32 value);
 extern "C" void KizunagramUnpackChart(void* src, void* dst);
-extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
+namespace cf { struct CfGameManager {
+    static void queueEventId(u32);
+    static void fadeOutGameEffects();
+    static void setEventCounterA(u32);
+    static struct CfObjectMove* getPlayer(int);
+}; }
 extern "C" void CfT_FrameTimerSet(u32* self);
 extern "C" void CfT_PlayClockReset(f32 v);
 extern "C" void cfCam_storeFollowD(void* v, f32 f);
 extern "C" void loadReloadInfo(void* p);
-extern "C" void fadeOutGameEffects__Q22cf13CfGameManagerFv();
 extern "C" void mineLoadFromSave(u8* rec);
 extern "C" void rebuildTboxPool();
 extern "C" CfNandNameRoot* getReslistC48();
 extern "C" void updateConfig__FPUc(u8* src, int mode);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
-extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void setMasterVolume__Fff(f32 a, f32 b);
 extern "C" void MenuSnd_SetSeVolPush_95F4(f32 v);
 extern "C" void MenuSnd_SetMasterAndPush_9510(f32 v);
-extern u16 lbl_eu_80661AF4;
-extern u16 lbl_eu_80661AF6;
-extern char* lbl_eu_806641B8;
-extern f32 lbl_eu_806686E0;
+
+extern char* lbl_eu_806628C0;
 extern u8 lbl_eu_80663E5D;
 
 #pragma inline_max_size(0x4000)
 #pragma inline_max_total_size(0x8000)
-inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* dst) {
+inline static void expandWorkEntry(CfNandWorkEntrySrc_Local* src, CfNandWorkEntryDst_Local* dst) {
     src->head.f000 = dst->head.f000;
     src->head.f002 = dst->head.f002;
     src->head.f006 = dst->head.f006;
@@ -594,7 +555,7 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* 
     *(Arr48*)&src->head.f024 = *(Arr48*)&dst->head.f024;
     *(Arr36*)&src->arr028[47] = *(Arr36*)&dst->arr028[47];
     u16 t178 = dst->f178;
-    cf::CActorParam* actor = reinterpret_cast<cf::CActorParam*>((u8*)src + 0x17C);
+    cf::CActorParam* actor = reinterpret_cast<cf::CActorParam*>(src->subSlot);
     src->f178 = t178;
     src->f17CC = dst->f17C;
     src->f17D0 = dst->f180;
@@ -691,10 +652,11 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* 
     KizunagramUnpackChart(dst->kizuna, src->kizunaSrc);
 }
 
-inline static void restoreNameTable(CfNandSaveNameTable* names) {
+inline static void restoreNameTable(CfNandSaveNameTable_Local* names) {
     CfNandSaveNameEntry cur;
     rebuildTboxPool();
     CfNandNameRoot* root = getReslistC48();
+
     u8* rec = (u8*)names;
     u8* recF = (u8*)names + 4;
     for (s32 i = 0; i < names->count; i++) {
@@ -734,13 +696,13 @@ inline static void restoreNameTable(CfNandSaveNameTable* names) {
 }
 
 // Apply a NAND save image back into live game state (load/teardown path).
-extern "C" int NandApplySave(CfNandSaveImage* img) {
+extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
     (void)__alloca(0);
-    CfNandSaveImage* image = img;
+    CfNandSaveImage_Local* image = img;
     int ok = 1;
     u8* live;
-    CfNandWorkEntrySrc* src;
-    CfNandWorkEntryDst* dst;
+    CfNandWorkEntrySrc_Local* src;
+    CfNandWorkEntryDst_Local* dst;
     u32 ver = image->version - 0x70001;
     if (ver <= 1) {
         int valid = NandCheckSave(image);
@@ -752,7 +714,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
         lbl_eu_80664774 = image->slot[0x66];
         live = CtrlRemote_GetFileEventIds();
         memcpy(live, image->workHead, 0x41F0);
-        src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
+        src = (CfNandWorkEntrySrc_Local*)(live + 0x7FC4);
         dst = &image->workEntry[1];
         for (u32 i = 1; i < 14; i++) {
             expandWorkEntry(src, dst);
@@ -768,7 +730,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
         int n = 0;
         u16 evCur = ev[0];
         while (n < evCur && n < 16) {
-            queueEventId__Q22cf13CfGameManagerFv(evCur);
+            cf::CfGameManager::queueEventId(evCur);
             ev++;
             n++;
             evCur = ev[0];
@@ -777,12 +739,12 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
         CfT_PlayClockReset(image->progress.f04);
         lbl_eu_80661AF4 = image->progress.f08;
         lbl_eu_80661AF6 = image->progress.f0A;
-        CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)gCfNandPartySnapshot;
+        CfNandPartySnapshot_Local* snapDst = (CfNandPartySnapshot_Local*)gCfNandPartySnapshot;
         *snapDst = image->snapshot;
         memcpy(lbl_eu_806641B8, image->itemBlob, 0x12120);
         cfCam_storeFollowD(&image->camBlock, image->camBlock.f0C);
         loadReloadInfo(&image->wthrBlock);
-        fadeOutGameEffects__Q22cf13CfGameManagerFv();
+        cf::CfGameManager::fadeOutGameEffects();
         mineLoadFromSave(image->mineRegion);
         restoreNameTable(&image->names);
         if (valid != 0) {
@@ -793,7 +755,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
             cnt = image->wthrBlock.f0E;
         }
         if ((cnt & 0xFFFF) != 0) {
-            setEventCounterA__Q22cf13CfGameManagerFv(cnt);
+            cf::CfGameManager::setEventCounterA(cnt);
         }
         return ok;
     }
@@ -857,7 +819,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
     memcpy(CtrlRemote_GetSharedBufPtr(), v1->flagData, flagLen);
     live = CtrlRemote_GetFileEventIds();
     memcpy(live, v1->workHead, 0x41F0);
-    src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
+    src = (CfNandWorkEntrySrc_Local*)(live + 0x7FC4);
     dst = &v1->workEntry[1];
     for (u32 i = 1; i < 14; i++) {
         expandWorkEntry(src, dst);
@@ -868,7 +830,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
     CfT_PlayClockReset(v1->progress.f04);
     lbl_eu_80661AF4 = v1->progress.f08;
     lbl_eu_80661AF6 = v1->progress.f0A;
-    CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)gCfNandPartySnapshot;
+    CfNandPartySnapshot_Local* snapDst = (CfNandPartySnapshot_Local*)gCfNandPartySnapshot;
     *snapDst = v1->snapshot;
 
     u8* item = (u8*)lbl_eu_806641B8;
@@ -916,7 +878,7 @@ extern "C" int NandApplySave(CfNandSaveImage* img) {
 // around the apply so CSysWinScenarioLog can poll the teardown.
 extern "C" int __dt__8023E448() {
     u8* none = 0;
-    u8* img = *(u8**)(gpCfNandManager + 0x5C);
+    u8* img = gpCfNandManager->field_0x5C;
     if (img == none) {
         img = none;
     }
@@ -925,17 +887,17 @@ extern "C" int __dt__8023E448() {
     }
     u16 clear = 0;
     lbl_eu_80664772 = 1;
-    int result = NandApplySave((CfNandSaveImage*)img);
+    int result = NandApplySave((CfNandSaveImage_Local*)img);
     lbl_eu_80664772 = clear;
-    u8* still = *(u8**)(gpCfNandManager + 0x5C);
+    u8* still = gpCfNandManager->field_0x5C;
     if (still != 0) {
         operator delete(still);
-        *(u8**)(gpCfNandManager + 0x5C) = (u8*)(u32)clear;
+        gpCfNandManager->field_0x5C = (u8*)(u32)clear;
     }
     return result;
 }
 
-// Local GX/VI surface so this data-first TU does not include CDeviceVI.hpp
+
 // (IWorkEvent / 10322). Offsets match GXRenderModeObj (fbWidth@+4, efbHeight@+6).
 struct NandGXRenderMode {
     u32 viTVmode;
@@ -950,11 +912,10 @@ public:
 
 // While the counter is armed (1), copy the EFB into the shared texture
 // buffer and flush it, then disarm. Body recovered from CfNandManager.ctx.c.
-extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
+void cf::CfNandManager::cbRenderBefore() {
     if (gCfNandCaptureState == 1) {
         u16 h1;
         u16 h2;
-        u32 size1;
         h1 = CDeviceVI::getRenderModeObj()->efbHeight;
         GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, h1);
         h2 = CDeviceVI::getRenderModeObj()->efbHeight;
@@ -962,7 +923,7 @@ extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
         GXCopyTex(gpCfNandCaptureBufTail, 0);
         GXPixModeSync();
         GXInvalidateTexAll();
-        size1 = GXGetTexBufferSize(0xa4, 0x74, 4, 0, 0);
+        u32 size1 = GXGetTexBufferSize(0xa4, 0x74, 4, 0, 0);
         h1 = CDeviceVI::getRenderModeObj()->efbHeight;
         u32 size2 = GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h1, 6, 0, 0);
         DCFlushRange(gpCfNandCaptureBuf, size1 + size2);
@@ -973,8 +934,8 @@ extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Address of the shared party-snapshot block (read by CfGameManager and the
 // status/save windows).
-extern "C" CfNandPartySnapshot* NandPartySnap() {
-    return (CfNandPartySnapshot*)gCfNandPartySnapshot;
+extern "C" CfNandPartySnapshot_Local* NandPartySnap() {
+    return (CfNandPartySnapshot_Local*)gCfNandPartySnapshot;
 }
 
 // Nonzero while the NAND request queue still has work: the global CNand's
@@ -987,8 +948,33 @@ extern "C" int NandQueueBusy() {
     return busy;
 }
 
-// LLM-HARNESS-BEGIN: us-8023e320
-extern "C" void NandCopyParty() {}
+// Build the 3-entry party snapshot saved into each slot. Missing players use
+// the static fallback record; the trailing word is the CRC16 of the snapshot.
+extern "C" CfNandPartySnapshot_Local* NandCopyParty(CfNandPartySnapshot_Local* snapshot) {
+    snapshot->field_30 = 0;
+    if (cf::CBattleManager::getInstance() != 0) {
+        snapshot->field_30 = *(u32*)((u8*)cf::CBattleManager::getInstance() + 0x194);
+    }
+    CfNandPartyEntry_Local* entry = snapshot->mEntry;
+    for (u32 i = 0; i < 3; i++) {
+        void* player = cf::CfGameManager::getPlayer(i);
+        if (player != 0) {
+            ml::CVec3* pos = ((cf::CfObjectMove*)player)->CfObject_getPosVector();
+            entry->field_00 = *(u32*)&pos->x;
+            entry->field_04 = *(u32*)&pos->y;
+            entry->field_08 = *(u32*)&pos->z;
+            entry->field_0C = ((cf::CfObjectMove*)player)->CfObject_getScaledAngle();
+        } else {
+            entry->field_00 = lbl_eu_8057164C[0];
+            entry->field_04 = lbl_eu_8057164C[1];
+            entry->field_08 = lbl_eu_8057164C[2];
+            entry->field_0C = lbl_eu_80663E54;
+        }
+        entry++;
+    }
+    snapshot->field_30 = OSCalcCRC16((const u8*)snapshot, 0x34);
+    return snapshot;
+}
 // LLM-HARNESS-END: us-8023e320
 
 // LLM-HARNESS-BEGIN: us-8023e414
@@ -1003,25 +989,405 @@ extern "C" void NandTileDescr() {}
 extern "C" void NandSaveBuild() {}
 // LLM-HARNESS-END: us-8023e8f4
 
-// LLM-HARNESS-BEGIN: us-8023ea80
-extern "C" void NandImageMake() {}
+// Assemble the on-media save image in the manager's staging buffer. The
+// version-0x70002 layout and the per-region CRC tags are owned by this TU.
+extern "C" void NandImageMake(void* buf, bool flag) {
+    CfNandSaveImage* image = (CfNandSaveImage*)buf;
+    if (image == 0) {
+        return;
+    }
+    std::memset(image, 0, sizeof(*image));
+    image->magic = 0x55535244;
+    image->totalSize = sizeof(*image);
+    image->unk08 = 0x10;
+    image->version = 0x70002;
+    image->slotTag.tag = 0x444D4D59;
+    image->slotTag.length = sizeof(CfNandSaveBuf);
+    image->slotTag.unk08 = 0x10;
+    NandCopyParty((CfNandPartySnapshot_Local*)&image->snapshot);
+    image->partyTag.tag = 0x50415254;
+    image->partyTag.length = sizeof(CfNandPartySnapshot);
+    image->partyTag.unk08 = 0x10;
+    image->partyTag.crc = OSCalcCRC16((const u8*)&image->snapshot, sizeof(CfNandPartySnapshot));
+    image->progress.field00 = CfT_FrameTimerGet();
+    image->progress.f04 = lbl_eu_80663D94;
+    image->timeTag.tag = 0x54494D45;
+    image->timeTag.length = sizeof(CfNandProgressArea);
+    image->timeTag.crc = OSCalcCRC16((const u8*)&image->progress, sizeof(CfNandProgressArea));
+    image->sndArea.f00 = getMasterVolume();
+    image->sndArea.f04 = MenuSnd_GetSeVol_96A0();
+    image->sndArea.f08 = MenuSnd_GetMasterVol_95EC();
+    image->sndTag.crc = OSCalcCRC16((const u8*)&image->sndArea, sizeof(CfNandSndArea));
+    if (flag) {
+        initReloadInfoStruct((CfNandWthrBlock*)&image->wthrBlock);
+    }
+    mineSnapshotActivePoints(image->mineRegion);
+}
 // LLM-HARNESS-END: us-8023ea80
 
 // LLM-HARNESS-BEGIN: us-80240618
-extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv() {}
+void cf::CfNandManager::handleFileEvent() {}
 // LLM-HARNESS-END: us-80240618
 
-// LLM-HARNESS-BEGIN: us-80240688
-extern "C" void NandVerifyBlk() {}
+// Validate the save block in the pending payload. The dummy magic marks an
+// empty (but valid) slot; the two real versions use different CRC16 routines
+// over the same 0x9C80-byte payload.
+extern "C" void NandVerifyBlk(void* self, u16 type, u8* ok, s32* result) {
+    if (*ok != 0) {
+        u8* block = (u8*)((cf::CfNandManager*)self)->mPending.mPayload;
+        u32 magic = *(u32*)block;
+        if (magic == 0x444D4D59) {
+            *ok = 0;
+            *result = 0;
+        } else {
+            u32 version = *(u32*)(block + 0xC);
+            if (version == 0x70002) {
+                u16 crc = OSCalcCRC16(block + 0x20, 0x9C80);
+                if (crc != *(u32*)(block + 0x1C)) {
+                    *ok = 0;
+                    *result = 3;
+                }
+            } else if (version == 0x70001) {
+                u16 crc = mtl::MemManager::calculateCrc(block + 0x20, 0x9C80);
+                if (crc != *(u32*)(block + 0x1C)) {
+                    *ok = 0;
+                    *result = 3;
+                }
+            } else {
+                *ok = 0;
+                *result = 0;
+            }
+        }
+    }
+}
 // LLM-HARNESS-END: us-80240688
 
-// LLM-HARNESS-BEGIN: us-80240780
-extern "C" void __dt__8023E63C(void* self) {}
-// LLM-HARNESS-END: us-80240780
+// Consume the pending request stored at manager+0x170. `ok` and `result`
+// are the two out-parameters handed to NandResolveOp and the completion
+// callback. The request type selects which bits of the manager state are
+// updated before the callback runs.
+extern "C" void __dt__8023E63C(void* self) {
+    cf::CfNandManager* mgr = (cf::CfNandManager*)self;
+    u16 type = mgr->mPending.mType;
+    u8 ok;
+    s32 result;
+    if (type != 0) {
+        u8 success = 0;
+        if (nand.mSuccess) {
+            cf::CfNandManager* inst = gpCfNandManager;
+            u32 flags = 0;
+            if (inst != 0) {
+                flags = inst->field_180;
+            } else {
+                flags = 0;
+            }
+            if (flags == 0) {
+                success = 1;
+            }
+        }
+        ok = success;
+        result = 0;
+        if (mgr->mPending.mType == 3) {
+            NandVerifyBlk(self, type, &ok, &result);
+        } else if (mgr->mPending.mType == 18) {
+            if (ok != 0) {
+                if (*(u32*)mgr->mPending.mPayload != 0x444D4D59) {
+                    mgr->field_184 = mgr->field_184 + 1;
+                }
+            } else {
+                result = 5;
+            }
+        } else if (type == 2) {
+            if (ok != 0) {
+                mgr->mPending.mCb = 0;
+            } else {
+                mgr->mEventQueue.mTail = 0;
+                mgr->mEventQueue.mHead = 0;
+            }
+        } else if (type == 17) {
+            lbl_eu_8066476E = 0;
+            if (ok != 0) {
+                u8 sub = mgr->mPending.mSubtype;
+                u32 count = lbl_eu_80664778;
+                u8* list = (u8*)mgr->mPending.mPayload;
+                ml::FixStr<32> name;
+                if (sub != 0) {
+                    name.format(kNandSaveNameFormat, lbl_eu_806628C0, sub);
+                } else {
+                    name = &kNandSaveNameFormat[7];
+                }
+                u32 i = 0;
+                u8 found = 0;
+                while (i < count) {
+                    if (std::strcmp(name.c_str(), (const char*)list) == 0) {
+                        found = 1;
+                        break;
+                    }
+                    list += std::strlen((const char*)list) + 1;
+                    i++;
+                }
+                ok = found;
+                if (ok != 0) {
+                    lbl_eu_8066476E = lbl_eu_8066476E | (u16)(1 << mgr->mPending.mSubtype);
+                }
+            } else {
+                result = 5;
+            }
+        }
 
-// LLM-HARNESS-BEGIN: us-80240cbc
-extern "C" void NandFlushEvts(void* self) {}
-// LLM-HARNESS-END: us-80240cbc
+        if (type == 11) {
+            if (ok != 0) {
+                if (mgr->mPending.mSubtype == 3) {
+                    mgr->mPending.mCb = 0;
+                } else {
+                    mgr->mEventQueue.mTail = 0;
+                    mgr->mEventQueue.mHead = 0;
+                }
+            }
+        }
+        if (type == 17 && ok != 0) {
+            s32 head = mgr->mEventQueue.mHead;
+            s32 size = mgr->mEventQueue.mSize;
+            s32 quotient = (head + 1) / size;
+            mgr->field_180 = 0;
+            mgr->mEventQueue.mTail = head - 1;
+            mgr->mEventQueue.mHead = (head + 1) - quotient * size;
+        }
+        if (type == 18) {
+            if (mgr->mPending.mSubtype == 3) {
+                ok = mgr->field_184 != 0;
+            } else {
+                mgr->mPending.mCb = 0;
+                mgr->field_180 = 0;
+            }
+        }
+        if (type == 10 && ok != 0) {
+            mgr->mEventQueue.mTail = mgr->mEventQueue.mHead - 3;
+            mgr->mEventQueue.mHead = (mgr->mEventQueue.mHead + 1) % mgr->mEventQueue.mSize;
+            mgr->mEventQueue.mHead = (mgr->mEventQueue.mHead + 1) % mgr->mEventQueue.mSize;
+            mgr->mEventQueue.mHead = (mgr->mEventQueue.mHead + 1) % mgr->mEventQueue.mSize;
+        }
+
+        if (mgr->mPending.mCb != 0) {
+            if (ok != 0) {
+                if (type == 1 || type == 2) {
+                    if (NandCheckSave((void*)mgr->mPending.mPayload) == 0) {
+                        ok = 0;
+                        result = 3;
+                    }
+                } else if (type == 8) {
+                    if (NandCheckSave((void*)mgr->mPending.mPayload) == 0) {
+                        result = 3;
+                        ok = 0;
+                        mgr->mEventQueue.mTail = 0;
+                        mgr->mEventQueue.mHead = 0;
+                    } else {
+                        lbl_eu_8066476E = lbl_eu_8066476E |
+                                          (u16)(1 << mgr->mPending.mSubtype);
+                        if (mgr->mPending.mSubtype != 3) {
+                            mgr->mPending.mCb = 0;
+                        }
+                    }
+                } else {
+                    NandResolveOp(self, type, &ok, &result);
+                }
+            } else {
+                NandResolveOp(self, type, &ok, &result);
+            }
+            if (type == 8 && mgr->mPending.mSubtype != 3) {
+                mgr->mPending.mCb = 0;
+            }
+        }
+        if (mgr->mPending.mCb != 0) {
+            ((void (*)(u16, u8, u8, s32))mgr->mPending.mCb)(
+                mgr->mPending.mType, (u8)mgr->mPending.mSubtype, ok, result);
+        }
+
+        if (type == 8 || type == 9 || type == 4 || type == 5 ||
+            type == 11 || type == 12 || type == 38) {
+            u8* image = gpCfNandManager->field_0x5C;
+            if (image != 0) {
+                operator delete(image);
+                gpCfNandManager->field_0x5C = 0;
+            }
+        }
+    }
+dispatchDone:
+    mgr->mPending.mType = 0;
+    mgr->mPending.mPayload = 0;
+    mgr->mPending.mFlag = 0;
+}
+
+// Pump the manager's ring: each iteration pops one request into mPending,
+// builds the NAND file name and issues the operation selected by the request
+// type. The completion callback and the state reset are shared by all types.
+extern "C" void NandFlushEvts(void* self) {
+    cf::CfNandManager* mgr = (cf::CfNandManager*)self;
+    ml::FixStr<32> fileName;
+    u8 ok = 0;
+    s32 result = 0;
+    bool armed = true;
+    const u32 mask = 0x3FFF;
+    while ((u32)mgr->mEventQueue.mTail >> 5 == 0) {
+        s32 head = mgr->mEventQueue.mHead;
+        s32 size = mgr->mEventQueue.mSize;
+        s32 quotient = (head + 1) / size;
+        s32 tail = mgr->mEventQueue.mTail;
+        mgr->mEventQueue.mTail = tail - 1;
+        CfNandEvent* slot = &mgr->mEventQueue.mRingBase[head];
+        mgr->mEventQueue.mHead = (head + 1) - quotient * size;
+        CfNandEvent ev;
+        ev.mWord = slot->mWord;
+        ev.mTag = slot->mTag;
+        ev.mField8 = slot->mField8;
+        ev.mFieldC = slot->mFieldC;
+        ev.mFieldE = slot->mFieldE;
+        ev.mFieldF = slot->mFieldF;
+        mgr->mPending.mFlag = ev.mFieldF;
+        mgr->mPending.mType = ev.mFieldC;
+        mgr->mPending.mCb = ev.mWord;
+        mgr->mPending.mTag = ev.mTag;
+        mgr->mPending.mPayload = ev.mField8;
+        mgr->mPending.mSubtype = ev.mFieldE;
+        if (ev.mFieldE == 0) {
+            fileName = &kNandSaveNameFormat[7];
+        } else {
+            fileName.format(kNandSaveNameFormat, lbl_eu_806628C0, ev.mFieldE);
+        }
+        u16 type = ev.mFieldC;
+        if (type == 1 || type == 8 || type == 2) {
+            if (gpCfNandManager->field_0x5C == 0) {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+                gpCfNandManager->field_0x5C = (u8*)mtl::MemManager::allocate_ex(0x40000, handle, 0x40);
+            }
+            u8* buf = gpCfNandManager->field_0x5C;
+            mgr->mPending.mPayload = (u32)buf;
+            nand.load(fileName.c_str(), buf, ev.mTag);
+        } else if (type == 9 || type == 10) {
+            if (gpCfNandManager->field_0x5C == 0) {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+                gpCfNandManager->field_0x5C = (u8*)mtl::MemManager::allocate_ex(0x40000, handle, 0x40);
+            }
+            u8* buf = gpCfNandManager->field_0x5C;
+            mgr->mPending.mPayload = (u32)buf;
+            nand.loadBanner(buf, ev.mTag);
+        } else if (type == 17) {
+            lbl_eu_80664778 = 0;
+            mgr->mPending.mPayload = (u32)lbl_eu_80576AC0;
+            nand.readdir((char*)lbl_eu_80576AC0, 0x200, (u32*)&lbl_eu_80664778);
+        } else if (type == 3 || type == 18) {
+            nand.load(fileName.c_str(), (void*)mgr->mPending.mPayload, ev.mTag);
+        } else if (type == 32) {
+            if (ev.mTag != 0) {
+                ev.mTag = 0xFFFFFFFF;
+                mgr->mEventQueue.mHead = mgr->mEventQueue.mHead - 1;
+                if (mgr->mEventQueue.mHead < 0) {
+                    mgr->mEventQueue.mHead %= mgr->mEventQueue.mSize;
+                }
+                CfNandEvent* dst = &mgr->mEventQueue.mRingBase[mgr->mEventQueue.mHead];
+                dst->mWord = ev.mWord;
+                dst->mTag = ev.mTag;
+                dst->mField8 = ev.mField8;
+                dst->mFieldC = ev.mFieldC;
+                dst->mFieldE = ev.mFieldE;
+                dst->mFieldF = ev.mFieldF;
+                mgr->mEventQueue.mTail = mgr->mEventQueue.mTail + 1;
+                mgr->mPending.mType = 0;
+                mgr->mPending.mPayload = 0;
+                mgr->mPending.mFlag = 0;
+                continue;
+            }
+        } else if (type == 33) {
+            u32 blocks = (ev.mTag + mask) & ~mask;
+            (void)blocks;
+            if (armed) {
+                mgr->field_180 = 0;
+                nand.check(0, 1, &mgr->field_180);
+            }
+        } else if (type == 16) {
+            u32 aligned = (ev.mTag + 0x3FFF) & ~mask;
+            u32 needed = ((aligned >> 12) & 0x3FFF) - ((aligned >> 14) & 0xFFFF) +
+                         ((0x3FFFF0C8 & ~mask) >> 14 & 0xFFFF);
+            mgr->field_180 = 0;
+            nand.check(needed, nand.mShare != 0 ? 5 : 4, &mgr->field_180);
+        } else if (type == 34) {
+            if (gpCfNandManager->field_0x5C == 0) {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+                gpCfNandManager->field_0x5C = (u8*)mtl::MemManager::allocate_ex(0x40000, handle, 0x40);
+            }
+            u8* buf = gpCfNandManager->field_0x5C;
+            if (gCfNandCaptureState == 2) {
+                NandDownsample(self);
+            }
+            NandImageMake(buf, ev.mFieldF != 0);
+        } else if (type == 35) {
+            if (gpCfNandManager->field_0x5C == 0) {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+                gpCfNandManager->field_0x5C = (u8*)mtl::MemManager::allocate_ex(0x40000, handle, 0x40);
+            }
+            u8* buf = gpCfNandManager->field_0x5C;
+            if (buf == 0) {
+                continue;
+            }
+            std::memset(buf, 0, 0x48F0);
+            *(u32*)buf = 0x55535244;
+            *(u32*)(buf + 4) = 0x48F2;
+            *(u32*)(buf + 8) = 16;
+            *(u32*)(buf + 0xC) = 0x70002;
+            *(u32*)(buf + 0x10) = 0x55535244;
+            u32 crc = OSCalcCRC16(buf + 0x20, 0x9C80) & 0xFFFF;
+            for (u32 i = 0; i < 25; i++) {
+                buf[0x83 + i] = 0xFF;
+            }
+            *(u32*)(buf + 0x18) = 16;
+            *(u32*)(buf + 0x14) = 0xA000;
+            *(u32*)(buf + 0x1C) = crc;
+            *(u32*)(buf + 0x10) = 0x55535244;
+        } else if (type == 14 || type == 5 || type == 11 || type == 12 ||
+                   type == 38 || type == 13) {
+            if (gpCfNandManager != 0) {
+                u32 status = gpCfNandManager->field_180;
+                if ((status & 0x80000000) != 0) {
+                    if (type == 13) {
+                        nand.saveBanner(&CNandData::instance().mNandBanner);
+                    } else {
+                        u8* buf = gpCfNandManager->field_0x5C;
+                        mgr->mPending.mPayload = (u32)buf;
+                        if (type == 11) {
+                            nand.save(fileName.c_str(), buf, ev.mTag, 0, 0x34);
+                        } else if (type == 12 && (lbl_eu_80663E28 & 0x200000) == 0) {
+                            nand.save(fileName.c_str(), buf, ev.mTag, 0, 0x34);
+                        } else {
+                            nand.save(fileName.c_str(), buf, ev.mTag,
+                                      &CNandData::instance().mNandBanner, 0x34);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (type == 7 || type == 6) {
+            nand.remove(fileName.c_str());
+        }
+        if (type != 14) {
+            goto resolve;
+        }
+    resolve:
+        ok = 0;
+        result = 0;
+        NandResolveOp(self, type, &ok, &result);
+        if (mgr->mPending.mCb != 0) {
+            ((void (*)(u16, u8, u8, s32))mgr->mPending.mCb)(
+                mgr->mPending.mType, (u8)mgr->mPending.mSubtype, ok, result);
+        }
+        mgr->mPending.mType = 0;
+        mgr->mPending.mPayload = 0;
+        mgr->mPending.mFlag = 0;
+        mgr->mEventQueue.mTail = 0;
+        mgr->mEventQueue.mHead = 0;
+        mgr->field_180 = 0;
+    }
+}
 
 // File-event pump: while the queue is idle, retire the pending event and
 // flush the ring.
@@ -1036,57 +1402,160 @@ extern "C" void NandFileEvent(void* self) {
     }
 }
 
-// LLM-HARNESS-BEGIN: us-802414a4
-extern "C" void NandQueueChkFc() {}
-// LLM-HARNESS-END: us-802414a4
+// Queue the file-check request and its completion callback.
+extern "C" int NandQueueChkFc(u32 value, void (*cb)(u32, u32, u32, u32)) {
+    gpCfNandManager->queueEvent(0, 2, 0, 0x20, 0, 0);
+    gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 6, (u8)value, 0);
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-80241570
-extern "C" void NandQueueSaveCk() {}
-// LLM-HARNESS-END: us-80241570
+// Queue the save-state checks unless presentation state suppresses them.
+extern "C" int NandQueueSaveCk(int slot, void* cb, u8 flag) {
+    if ((lbl_eu_80663E24 & 0xafa40000) != 0) return 0;
+    gpCfNandManager->queueEvent(0, 2, 0, 0x20, 0, 0);
+    gpCfNandManager->queueEvent(0, 0x28000, 0, 0x22, (u8)slot, flag);
+    gpCfNandManager->queueEvent(0, 0x28000, 0, 0x11, (u8)slot, 0);
+    gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 0x21, (u8)slot, 0);
+    gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 4, (u8)slot, 0);
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-8024177c
-extern "C" void NandQueueChk5CC() {}
-// LLM-HARNESS-END: us-8024177c
+// Queue the 0x5CC check followed by the generic completion marker.
+extern "C" int NandQueueChk5CC(void (*cb)(u32, u32, u32, u32)) {
+    gpCfNandManager->queueEvent((u32)cb, 0x10000, 0, 0x21, 0, 0);
+    gpCfNandManager->queueEvent(0, 0, 0, 0xD, 0, 0);
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-80241840
-extern "C" void NandQueueChk690() {}
-// LLM-HARNESS-END: us-80241840
+// Queue the three-round 0x690 check with its completion callback.
+extern "C" int NandQueueChk690(void (*cb)(u32, u32, u32, u32)) {
+    if (gpCfNandManager == 0) return 0;
+    for (u8 slot = 1; slot <= 3; slot++) {
+        gpCfNandManager->queueEvent(0, 2, 0, 0x20, 0, 0);
+        gpCfNandManager->queueEvent(0, 0x28000, 0, 0x23, slot, 0);
+        gpCfNandManager->queueEvent(0, 0x28000, 0, 0x21, slot, 0);
+        gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 0xB, slot, 0);
+    }
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-80241a10
-extern "C" void NandQueueChk860() {}
-// LLM-HARNESS-END: us-80241a10
+// Queue the five NAND checks for the 0x860 path.
+extern "C" int NandQueueChk860(u32 value, void (*cb)(u32, u32, u32, u32)) {
+    if (gpCfNandManager == 0) return 0;
+    gpCfNandManager->queueEvent(0, 2, 0, 0x20, 0, 0);
+    gpCfNandManager->queueEvent(0, 0x28000, 0, 0x23, (u8)value, 0);
+    gpCfNandManager->queueEvent(0, 0x28000, 0, 0x11, (u8)value, 0);
+    gpCfNandManager->queueEvent(0, 0x28000, 0, 0x21, (u8)value, 0);
+    gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 0xC, (u8)value, 0);
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-80241c14
-extern "C" void NandRegHeapCb() {}
-// LLM-HARNESS-END: us-80241c14
+// Register a heap-buffer request with the manager: clear the buffer first.
+extern "C" int NandRegHeapCb(void* buf, int slot, void (*cb)(int, int, u8)) {
+    memset(buf, 0, 0xA000);
+    return gpCfNandManager->queueEvent((u32)cb, 0xA000, (u32)buf, 3, (u8)slot, 0);
+}
 
-// LLM-HARNESS-BEGIN: us-80241cd8
-extern "C" void NandQueueLoadCk() {}
-// LLM-HARNESS-END: us-80241cd8
+// Queue a load check for one save slot.
+extern "C" int NandQueueLoadCk(int slot, void* cb) {
+    return gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 1, (u8)slot, 0);
+}
 
-// LLM-HARNESS-BEGIN: us-80241d50
-extern "C" void NandQueueChkBA0() {}
-// LLM-HARNESS-END: us-80241d50
+// Queue the BA0 check with the completion callback.
+extern "C" int NandQueueChkBA0(void (*cb)(u32, u32, u32, u32)) {
+    if (gpCfNandManager == 0) return 0;
+    gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 0x10, 0, 0);
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-80241dc8
-extern "C" void NandQueueReset() {}
-// LLM-HARNESS-END: us-80241dc8
+// Request the three-part NAND reset and clear the event-status word.
+extern "C" int NandQueueReset(void (*cb)(u32, u32, u32, u32)) {
+    if (gpCfNandManager == 0) return 0;
+    lbl_eu_8066476E = 0;
+    int result = 0;
+    for (u8 slot = 1; slot <= 3; slot++) {
+        result = gpCfNandManager->queueEvent((u32)cb, 0x28000, 0, 8, slot, 0);
+    }
+    return result;
+}
 
-// LLM-HARNESS-BEGIN: us-80241e7c
-extern "C" void NandQueueChkCCC() {}
-// LLM-HARNESS-END: us-80241e7c
+// Ask the NAND manager to check the CCC state and call back when done.
+extern "C" int NandQueueChkCCC(void (*cb)(u32, u32, u32, u32)) {
+    if (gpCfNandManager == 0) return 0;
+    return gpCfNandManager->queueEvent((u32)cb, 0x10000, 0, 9, 0, 0);
+}
 
-// LLM-HARNESS-BEGIN: us-80241efc
-extern "C" void NandResetMode() {}
-// LLM-HARNESS-END: us-80241efc
+// Reset the NAND manager mode and queue the three follow-up events.
+extern "C" int NandResetMode(int mode) {
+    if (gpCfNandManager == 0) return 0;
+    gpCfNandManager->queueEvent((u32)mode, 0x10000, 0, 0xA, 0, 0);
+    gpCfNandManager->queueEvent(0, 0, 0, 7, 1, 0);
+    gpCfNandManager->queueEvent(0, 0, 0, 7, 2, 0);
+    gpCfNandManager->queueEvent(0, 0, 0, 7, 3, 0);
+    return 1;
+}
 
-// LLM-HARNESS-BEGIN: us-8024208c
-extern "C" void NandTitleFile() {}
-// LLM-HARNESS-END: us-8024208c
+// Queue the three title-file requests for the per-player tables.
+extern "C" int NandTitleFile(void (*cb)(void*, unsigned int, unsigned char)) {
+    if (gpCfNandManager == 0) return 0;
+    gpCfNandManager->field_184 = 0;
+    gpCfNandManager->field_186 = 0;
+    int result = 0;
+    for (u8 slot = 1; slot <= 3; slot++) {
+        result = gpCfNandManager->queueEvent(
+            (u32)cb, 0x80, (u32)(lbl_eu_80576AC0 + (slot - 1) * 0x80),
+            0x12, slot, 0);
 
-// LLM-HARNESS-BEGIN: us-80242188
-extern "C" void create__Q22cf13CfNandManagerFv() {}
+    }
+    return result;
+}
+
+// Allocate and register the singleton manager. Both incoming object pointers
+// are forwarded: one to the constructor, the other as the process parent.
+extern "C" cf::CfNandManager* create__Q22cf13CfNandManagerFv(void* parent, void* arg) {
+    if (gpCfNandManager != 0) {
+        return 0;
+    }
+    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
+    cf::CfNandManager* mgr = (cf::CfNandManager*)mtl::MemManager::allocate(0x194, workMem);
+    if (mgr == 0) {
+        return mgr;
+    }
+    __ct__cf_CfNandManager(mgr, arg);
+    ((CProcess*)mgr)->Regist((CProcess*)parent, false);
+    return mgr;
+}
 // LLM-HARNESS-END: us-80242188
+
+void cf::CfNandManager::Init() {
+    nand.reset();
+}
+
+void cf::CfNandManager::Term() {
+    if (field_0x5C != 0) {
+        operator delete(field_0x5C);
+        field_0x5C = 0;
+    }
+    gpCfNandManager = 0;
+}
+
+void cf::CfNandManager::Move() {
+    if ((lbl_eu_80663E28 & 0x200000) != 0) return;
+    nand.update();
+    if (mMoveHook != nullptr) (this->*mMoveHook)();
+}
+
+template<>
+void CTTask<cf::CfNandManager>::Move() {
+    cf::CfNandManager* self = static_cast<cf::CfNandManager*>(this);
+    if (mMoveFunc != nullptr) (self->*mMoveFunc)();
+}
+
+template<>
+void CTTask<cf::CfNandManager>::Draw() {
+    cf::CfNandManager* self = static_cast<cf::CfNandManager*>(this);
+    if (mDrawFunc != nullptr) (self->*mDrawFunc)();
+}
 
 // Manager head view: the capture-buffer pointer at +0x5C.
 struct CfNandMgrHead {
@@ -1097,17 +1566,46 @@ struct CfNandMgrHead {
 // True while the save-image capture buffer (+0x5C) is present.
 extern "C" u32 NandImageLive() {
     return gpCfNandManager != 0
-               ? (u32)(((CfNandMgrHead*)gpCfNandManager)->field_0x5C != 0)
+               ? (u32)(gpCfNandManager->field_0x5C != 0)
                : 0;
 }
 
-// LLM-HARNESS-BEGIN: us-8024223c
-extern "C" void NandDownsample() {}
+// Downsample the captured EFB tile into the saved texture block. The four
+// scale/offset doubles are owned by this TU's data section.
+extern "C" void NandDownsample(void* self) {
+    if (gpCfNandCaptureBuf == 0) {
+        return;
+    }
+    double scale = (lbl_eu_806686F8 + 1.0) / (lbl_eu_80668700 + 1.0);
+    double xOffset = lbl_eu_806686E8 + scale;
+    double yOffset = lbl_eu_806686F0 + scale;
+    u8* out = (u8*)gpCfNandCaptureBuf;
+    for (u32 y = 0; y < 0x74; y++) {
+        u8* row = out + (u32)(y * yOffset) * 0xA4;
+        for (u32 x = 0; x < 0xA4; x++) {
+            row[(u32)(x * xOffset)] = 0;
+        }
+    }
+}
 // LLM-HARNESS-END: us-8024223c
 
-// LLM-HARNESS-BEGIN: us-80242518
-extern "C" void NandAllocBufs() {}
-// LLM-HARNESS-END: us-80242518
+// Allocate the capture staging buffers and register the render callback.
+extern "C" void NandAllocBufs() {
+    if (gpCfNandCaptureBuf == 0) {
+        u32 size1 = GXGetTexBufferSize(0xA4, 0x74, (GXTexFmt)4, (GXBool)0, (GXBool)0);
+        u16 height = CDeviceVI::getRenderModeObj()->efbHeight;
+        u16 width = CDeviceVI::getRenderModeObj()->fbWidth;
+        u32 size2 = GXGetTexBufferSize(width, height, (GXTexFmt)6, (GXBool)0, (GXBool)0);
+        u32 handle = mtl::MemManager::getHandleMEM2();
+        gpCfNandCaptureBuf = mtl::MemManager::allocate_tail(handle, size1 + size2, 0x20);
+        gpCfNandCaptureBufTail = (u8*)gpCfNandCaptureBuf + size1;
+    }
+    gCfNandCaptureState = 1;
+    CScn* scn = (CScn*)CfRes_getD80Flag();
+    u32 render = (u32)gpCfNandManager;
+    if (render != 0) render += 0x58;
+    scn->addRenderCB((IScnRender*)render, 4, 0);
+}
 
 // Release the capture state: unregister the render callback from the D80
 // scene, free the shared texture buffer, drop the capture counter.

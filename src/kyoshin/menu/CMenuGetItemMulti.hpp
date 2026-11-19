@@ -212,8 +212,8 @@ extern f64 lbl_eu_80667E08;
 
 // Item-window font/table pointers (.sbss) used by the category-4/8 item
 // handlers (GetItemMulti_ShowEquipped / GetItemMulti_ShowEntryDetailPanes) and GetItemMulti_FillRankSlots.
-extern u32 lbl_eu_806640F4;
-extern u32 lbl_eu_806640F8;
+extern void* lbl_eu_806640F4;
+extern void* lbl_eu_806640F8;
 
 // Item-table pointer + fallback name-table font pointer used by
 // GetItemMulti_ShowIdCategoryPanes's description/rank text lookups (.sbss).

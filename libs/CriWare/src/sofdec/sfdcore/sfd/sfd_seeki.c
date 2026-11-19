@@ -96,11 +96,9 @@ int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
     if (hn->field_0x0964 < hn->seeki.targetEnd) {
         /* seek target not reached yet: keep dropping frames */
         if (lbl_eu_80606E34 != NULL) {
-            SfseekiCtx* ctx = (SfseekiCtx*)lbl_eu_80606E34;
-            SfseekiCbArg* cb = &lbl_eu_80568CF0;
-            cb->hn = hn;
-            cb->str = &lbl_eu_8051CEC0[0];      /* "before seeki" */
-            ctx->vtbl->trace(ctx, &cb->base);
+            lbl_eu_80568CF0.hn = hn;
+            lbl_eu_80568CF0.str = &lbl_eu_8051CEC0[0];      /* "before seeki" */
+            ((SfseekiCtx*)lbl_eu_80606E34)->vtbl->trace((SfseekiCtx*)lbl_eu_80606E34, &lbl_eu_80568CF0.base);
         }
         return 1;
     }
@@ -108,11 +106,9 @@ int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
     if (hn->field_0x0960 >= hn->seeki.targetTime) {
         /* seek target passed: keep dropping frames */
         if (lbl_eu_80606E34 != NULL) {
-            SfseekiCtx* ctx = (SfseekiCtx*)lbl_eu_80606E34;
-            SfseekiCbArg* cb = &lbl_eu_80568CF0;
-            cb->hn = hn;
-            cb->str = &lbl_eu_8051CEC0[0x0D];   /* "after seeki" */
-            ctx->vtbl->trace(ctx, &cb->base);
+            lbl_eu_80568CF0.hn = hn;
+            lbl_eu_80568CF0.str = &lbl_eu_8051CEC0[0x0D];   /* "after seeki" */
+            ((SfseekiCtx*)lbl_eu_80606E34)->vtbl->trace((SfseekiCtx*)lbl_eu_80606E34, &lbl_eu_80568CF0.base);
         }
         return 1;
     }

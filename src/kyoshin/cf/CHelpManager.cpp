@@ -154,20 +154,19 @@ int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // under its retail symbol name so this TU still emits the vtable target.
 void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
 
-extern "C" void CHelp_refreshPartyMenu(cf::CHelp* self);
-void cf::CHelp_EtherMakeTIPS::dispatchEtherTips(void) { ::CHelp_refreshPartyMenu(this); }
+void cf::CHelp_EtherMakeTIPS::dispatchEtherTips(void) { refreshPartyMenu(); }
 
 int CHelp_UnkVirtualFunc4__Q22cf5CHelpFv(void* self) { return 0; }
 
-void cf::CHelp_TalkTIPS::dispatchTalkTips(void) { ::CHelp_refreshPartyMenu(this); }
+void cf::CHelp_TalkTIPS::dispatchTalkTips(void) { refreshPartyMenu(); }
 
-void cf::CHelp_KizunaTIPS::dispatchKizunaTips(void) { ::CHelp_refreshPartyMenu(this); }
+void cf::CHelp_KizunaTIPS::dispatchKizunaTips(void) { refreshPartyMenu(); }
 
-void cf::CHelp_EndEventTIPS::dispatchEndEventTips(void) { ::CHelp_refreshPartyMenu(this); }
+void cf::CHelp_EndEventTIPS::dispatchEndEventTips(void) { refreshPartyMenu(); }
 
 int isHelpAlwaysEnabled__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
 
-void cf::CHelp_AlwaysTIPS::dispatchAlwaysTips(void) { ::CHelp_refreshPartyMenu(this); }
+void cf::CHelp_AlwaysTIPS::dispatchAlwaysTips(void) { refreshPartyMenu(); }
 
 void clearHelpToAttackFlags__Q22cf14CHelp_ToAttackFv(void* self) {
     ((unsigned char*)self)[0xc] = 0;

@@ -28,6 +28,11 @@ public:
     char* cmdString;         // 0x30: current command string
 
     int blank1() override;   // vtable[2], returns 0x46 (body is the unmangled retail symbol CVSBattleEndSPGetBufSize)
+
+    // Voice-event state handlers installed into the inherited state member.
+    void resetState();
+    void resetAndSweep();
+    static CVS_THREAD_BATTLE_END_SP* create();
 };
 
 // Phantom vtable view over CVoiceHandle so the is-active check is emitted as a
@@ -125,9 +130,11 @@ CVoiceManager* getListB28();
 // Unknown-size array declarations prevent MWCC sda21 folding, forcing the
 // lis/addi (ADDR16_HA/LO) accesses retail uses for these symbols; the scalar
 // lbl_eu_80668DB0 stays small-data (retail references it via @sda21).
-extern u32 lbl_eu_8053A194[];   // final init-state triple
-extern u32 lbl_eu_8053A1A0[3];  // reset init-state triple (CVSBattleEndSPResetAndSweep)
-extern u32 lbl_eu_8053A1AC[3];  // init-state triple (CVSBattleEndSPResetState)
+// Typed pointer-to-member state constants (retail 12-byte init triples).
+typedef void (CVS_THREAD::*BattleEndSpState)();
+extern "C" const BattleEndSpState lbl_eu_8053A194;
+extern "C" const BattleEndSpState lbl_eu_8053A1A0;
+extern "C" const BattleEndSpState lbl_eu_8053A1AC;
 extern u32 lbl_eu_8053A100[];   // command-list table for the constructor
 // Retail vtable is 0x1C (7 words: typeinfo + 6 slots, all pointer words).
 extern u32 lbl_eu_8053A1B8[7];   // CVS_THREAD_BATTLE_END_SP vtable

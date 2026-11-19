@@ -5,28 +5,21 @@
 // Flat retail imports for this TU. The two animation helpers have different
 // linkage in the retail binary: advanceAnimTransform keeps its C++ mangling
 // while AnimRewindFrame is a flat symbol.
-int advanceAnimTransform(nw4r::lyt::AnimTransform*, f32);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, f32);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, f32);
 extern void playUISound(u32);
 
-extern const f32 lbl_eu_80668C10;          // shared animation frame target
 extern u8 lbl_eu_8053948C[0x30];           // option-cell maximum table
 extern Class_80296898 lbl_eu_80577308;     // game configuration singleton
 
 // Semantic names for the flat retail objects.
-inline f32 optionAnimFrame() { return lbl_eu_80668C10; }
 inline u8 optionCellMax(s32 index) { return lbl_eu_8053948C[index]; }
 inline Class_80296898& optionConfig() { return lbl_eu_80577308; }
 
-__declspec(noinline) CCur19::CCur19(nw4r::lyt::ArcResourceAccessor* accessor) : CBaseCur(accessor) {}
+CCur19::CCur19(nw4r::lyt::ArcResourceAccessor* accessor) : CBaseCur(accessor) {}
 
-#pragma push
-#pragma optimize_for_size on
 CCur19::~CCur19() {}
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 COption::COption(u8 kind)
     : mFileHandle(nullptr), mArcAccessor(nullptr), mLayout(nullptr),
       mAnimTransA(nullptr), mAnimTransB(nullptr), field_0x28(0), field_0x29(0),
@@ -34,12 +27,8 @@ COption::COption(u8 kind)
       field_0x2F(0), mConfirmGate(0), field_0x31(0), mSecondConfirm(0),
       field_0x33(0), mKind(kind), mScrollBar(0), mSysWin(0), field_0xFC(0),
       field_0x100(0) {}
-#pragma pop
 
-#pragma push
-#pragma optimize_for_size on
 COption::~COption() {}
-#pragma pop
 
 int COption::getLiveFlag() { return mLiveFlag; }
 int COption::getConfirmGate() { return mConfirmGate; }
@@ -75,14 +64,14 @@ u8 COption::readCurrentConfigCell() {
 u8 COption::getCellMax() { return optionCellMax(mRowTop + mRow); }
 
 void COption::advanceState1To2() {
-    if (advanceAnimTransform(mAnimTransA, optionAnimFrame())) {
+    if (advanceAnimTransform(mAnimTransA, 1.0f)) {
         field_0x29 = 2;
         setupSubAnim24();
     }
 }
 
 void COption::advanceState2To3() {
-    if (advanceAnimTransform(mAnimTransB, optionAnimFrame())) {
+    if (advanceAnimTransform(mAnimTransB, 1.0f)) {
         field_0x29 = 3;
         mLiveFlag = 1;
         mCur78.SetVisible(1);
@@ -92,14 +81,14 @@ void COption::advanceState2To3() {
 }
 
 void COption::advanceState4To5() {
-    if (AnimRewindFrame(mAnimTransB, optionAnimFrame())) {
+    if (AnimRewindFrame(mAnimTransB, 1.0f)) {
         field_0x29 = 5;
         setupSubAnim20();
     }
 }
 
 void COption::advanceState5To0() {
-    if (AnimRewindFrame(mAnimTransA, optionAnimFrame())) {
+    if (AnimRewindFrame(mAnimTransA, 1.0f)) {
         field_0x29 = 0;
         mLiveFlag = 1;
     }

@@ -54,8 +54,8 @@ u8 __HBMSEQMidiEventLength[128] = {
 
 /* .bss state owned by this unit in the retail DOL (retail .bss is 0x20
    bytes: sequence list head + init flag + 0x18 gap padding). */
-static u32 __init;
 HBMSEQSEQUENCE *__HBMSEQSequenceList;
+static u32 __init;
 
 /* Dead 0x18 allocation the retail homebutton lib keeps in .bss (unreferenced
    gap_eu_805CAD28); defined so section sizes match. */
@@ -183,9 +183,6 @@ extern "C" void HBMSEQRunAudioFrame(void)
     u32 remaining;
     u8 b;
     u8 rs;
-    u8 b1;
-    u8 b2;
-    u8 b3;
     u32 v;
     char data[3];
     f32 f;
@@ -253,15 +250,12 @@ extern "C" void HBMSEQRunAudioFrame(void)
                                     v = (v << 7) + (b & 0x7F);
                                 }
                                 track->cur++;
-                                b1 = *track->cur;
+                                tempo32 = (u32)*track->cur;
                                 track->cur++;
-                                b2 = *track->cur;
+                                tempo32 = (tempo32 << 8) + (u32)*track->cur;
                                 track->cur++;
-                                tempo32 = (u32)b1 << 8;
-                                tempo32 = (tempo32 + b2) << 8;
-                                b3 = *track->cur;
+                                tempo32 = (tempo32 << 8) + (u32)*track->cur;
                                 track->cur++;
-                                tempo32 += b3;
                                 f = (f32)tempo32;
                                 seqp = track->seq;
                                 track->tempo = 1000000.0f / f;

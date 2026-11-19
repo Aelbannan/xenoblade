@@ -386,7 +386,6 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 GridSubMenu_GetOptionCount(void*);  // not yet decompiled (CItemBoxGridSubMenu TU stub)
 extern "C" int isPresentSettled(void*);
-extern "C" void* CItem_kindPtr(u32, s16);
 // CfGameManager.hpp (included transitively) now declares the unified
 // pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" void CItemData_initFromFamily(void*, u32);
@@ -419,8 +418,6 @@ extern "C" void func_80043E88(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
-extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
-extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
 extern "C" int Counter_TestBit(void*, u32);
 extern "C" u32 IdTable_SumValues(void*, u32);

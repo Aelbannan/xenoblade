@@ -6,66 +6,6 @@
 #include "monolib/math/Random.hpp"
 #include <cstring>
 
-// us-802a74fc (EndVoice_RemoveVoice)
-// Remove a released voice from the slot array by matching the embedded
-// CCharVoice pointer against the one being freed.
-void EndVoice_RemoveVoice(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
-    DetachThreadVoice(self, voicePtr);
-    CVoiceHandle* handle;
-    CCharVoice* vp;
-    CVS_THREAD_BATTLE_END* p = self;
-    int i;
-    for (i = 0; i < self->field_0x34; i++) {
-        handle = p->field_0x20[0];
-        vp = (CCharVoice*)handle;
-        if (handle != NULL) {
-            vp = &handle->voice;
-        }
-        if (vp == voicePtr) {
-            p->field_0x20[0] = NULL;
-        }
-        // Walk one word per iteration (reproduces retail's cursor register).
-        p = (CVS_THREAD_BATTLE_END*)((u8*)p + 4);
-    }
-}
-
-// us-802a7438 (EndVoice_AdvanceSlot)
-// Advance the active-slot counter (up or down depending on field_0x38).
-// When the counter reaches field_0x2c, fire the end virtual; otherwise the
-// init triple is re-copied into the base fields.
-void EndVoice_AdvanceSlot(CVS_THREAD_BATTLE_END* self) {
-    if (IsThreadVoiceActive(self) != 0) return;
-
-    if (self->field_0x38 == 0) {
-        // forward direction: bump the counter, wrap to 0 at the limit
-        int old = self->field_0x30;
-        int cnt = self->field_0x34;
-        int newv = old + 1;
-        self->field_0x30 = newv;
-        if (cnt <= newv) self->field_0x30 = 0;
-    } else {
-        // reverse direction: decrement, wrap to limit-1 on underflow
-        if (--self->field_0x30 < 0) self->field_0x30 = self->field_0x34 - 1;
-    }
-
-    if (self->field_0x30 != self->field_0x2c) {
-        // Pointer increment reproduces the lwzu/spread load-with-update.
-        // v0 declared first so MWCC colours the lwzu destination into r3
-        // and the base pointer into r4, matching retail.
-        u32 v0;
-        CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
-        const u32* p = lbl_eu_8053997C;
-        v0 = *p++;
-        head->word4 = *p++;
-        head->word0 = v0;
-        head->word8 = *p;
-    } else {
-        // Advance/process virtual (vtable offset 8 = PlayThreadVoice), not the
-        // size-getter blank1 (offset 0x10).
-        self->PlayThreadVoice();
-    }
-}
-
 // Vtable shape for the CVoiceHandle polymorphic voice objects; method at
 // Cast-only virtual iface: real member call so MWCC emits lwz r12,0(r3)
 // dispatch (a VoiceVtbl* FP temp colors the vptr load as r4). With -RTTI,
@@ -249,19 +189,57 @@ public:
     virtual int isPlaying() = 0;
 };;
 
+// us-802a6fa4 (__ct__802A4870)
+// Placement factory for CVS_THREAD_BATTLE_END (retail keeps this as a free
+// function, not an actual class __ct__).  Allocates a handle buffer (discarded) and the object,
+// runs the base constructor, sets the subclass vtable, then initialises the
+// slot array and state flags (including a random scan direction).
+// The redundant `self != NULL` guard reproduces retail's re-test of the
+// allocation result guarding the EH region; the catch rethrows via
+// __throw(0,0,0) so MWCC elides the __end__catch epilogue.  The init-state
+// triple is copied outside the try.
+CVS_THREAD_BATTLE_END* CVS_THREAD_BATTLE_END::create(int owner) {
+    // handleBuf is validated then discarded (retail leaks it here).
+    if (CCharVoiceMan_DispatchById(0x46, 1) == NULL) {
+        return NULL;
+    }
+
+    CVS_THREAD_BATTLE_END* self = (CVS_THREAD_BATTLE_END*)CCharVoiceMan_AllocVoiceArena(0x3c);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD(self);
+
+            // Override the vtable at 0x1C with the derived one, then seed
+            // the slot array and direction flag.
+            ((CVS_THREAD_BATTLE_END_raw*)self)->vtable = lbl_eu_805399B8;
+            self->field_0x3a = (u8)owner;
+            memset(self->field_0x20, 0, 0xc);
+
+            self->field_0x2c = 0;
+            self->field_0x30 = 0;
+            self->field_0x34 = 0;
+            self->field_0x39 = 0;
+            self->field_0x38 = (u8)(ml::math::mtRand(2) != 0);
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
+
+    // Install the initial voice-event handler from its typed PTMF constant.
+    self->mState = lbl_eu_80539958;
+    return self;
+}
+
 // us-802a70b0 (func_802A497C)
 // (Re)initialise the thread: seed the slot array, pick a random starting
 // slot, and set the active flag based on whether any listed voice is live.
-void func_802A497C(CVS_THREAD_BATTLE_END* self) {
-    // Restore the base state triple via the lwzu/spread load-with-update
-    // pattern (v0 declared first so the lwzu destination colours low).
-    u32 v0;
-    CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
-    const u32* p = lbl_eu_80539964;
-    v0 = *p++;
-    head->word4 = *p++;
-    head->word0 = v0;
-    head->word8 = *p;
+void CVS_THREAD_BATTLE_END::initSlots() {
+    CVS_THREAD_BATTLE_END* self = this;
+    mState = lbl_eu_80539964;
 
     int cnt = HpVoice_CollectIdle(self->field_0x20, 3, 0);
     self->field_0x34 = cnt;
@@ -302,66 +280,13 @@ store:
     self->field_0x39 = live;
 }
 
-// us-802a6fa4 (__ct__802A4870)
-// Placement factory for CVS_THREAD_BATTLE_END (retail keeps this as a free
-// function, not an actual class __ct__).  Allocates a handle buffer (discarded) and the object,
-// runs the base constructor, sets the subclass vtable, then initialises the
-// slot array and state flags (including a random scan direction).
-// The redundant `self != NULL` guard reproduces retail's re-test of the
-// allocation result guarding the EH region; the catch rethrows via
-// __throw(0,0,0) so MWCC elides the __end__catch epilogue.  The init-state
-// triple is copied outside the try.
-extern "C" CVS_THREAD_BATTLE_END* __ct__802A4870(int owner) {
-    // handleBuf is validated then discarded (retail leaks it here).
-    if (CCharVoiceMan_DispatchById(0x46, 1) == NULL) {
-        return NULL;
-    }
-
-    CVS_THREAD_BATTLE_END* self = (CVS_THREAD_BATTLE_END*)CCharVoiceMan_AllocVoiceArena(0x3c);
-    if (self == NULL) {
-        return NULL;
-    }
-
-    if (self != NULL) {
-        try {
-            __ct__cf_CVS_THREAD(self);
-
-            // Override the vtable at 0x1C with the derived one, then seed
-            // the slot array and direction flag.
-            ((CVS_THREAD_BATTLE_END_raw*)self)->vtable = lbl_eu_805399B8;
-            self->field_0x3a = (u8)owner;
-            memset(self->field_0x20, 0, 0xc);
-
-            self->field_0x2c = 0;
-            self->field_0x30 = 0;
-            self->field_0x34 = 0;
-            self->field_0x39 = 0;
-            self->field_0x38 = (u8)(ml::math::mtRand(2) != 0);
-        } catch (...) {
-            __throw(0, 0, 0);
-        }
-    }
-
-    // Copy the init-state triple (outside try) as the base's ptmf member
-    // (VoiceCb is 12 bytes; DOWN precedent).
-    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539958)->unk0;
-    return self;
-}
-
 // us-802a71ac (func_802A4A78)
 // Play/advance the battle-end voice.  When the counter is not at the limit,
 // pick a random ending line; otherwise gate on the thread sub-state (via
 // HpVoice_MapSubState mode) and play the appropriate variant ID.
-void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
-    // Re-seed the state triple via the lwzu/spread load-with-update pattern
-    // (v0 declared first so MWCC colours the lwzu destination low).
-    u32 v0;
-    CVS_THREAD_HEAD_VIEW* head = (CVS_THREAD_HEAD_VIEW*)self;
-    const u32* p = lbl_eu_80539970;
-    v0 = *p++;
-    head->word4 = *p++;
-    head->word0 = v0;
-    head->word8 = *p;
+void CVS_THREAD_BATTLE_END::playVoice() {
+    CVS_THREAD_BATTLE_END* self = this;
+    mState = lbl_eu_80539970;
 
     int idx = self->field_0x30;
     CVoiceHandle* handle = self->field_0x20[idx];
@@ -419,6 +344,61 @@ void func_802A4A78(CVS_THREAD_BATTLE_END* self) {
     }
 }
 
+// us-802a7438 (EndVoice_AdvanceSlot)
+// Advance the active-slot counter (up or down depending on field_0x38).
+// When the counter reaches field_0x2c, fire the end virtual; otherwise the
+// init triple is re-copied into the base fields.
+void CVS_THREAD_BATTLE_END::advanceSlot() {
+    CVS_THREAD_BATTLE_END* self = this;
+    if (IsThreadVoiceActive(self) != 0) return;
+
+    if (self->field_0x38 == 0) {
+        // forward direction: bump the counter, wrap to 0 at the limit
+        int old = self->field_0x30;
+        int cnt = self->field_0x34;
+        int newv = old + 1;
+        self->field_0x30 = newv;
+        if (cnt <= newv) self->field_0x30 = 0;
+    } else {
+        // reverse direction: decrement, wrap to limit-1 on underflow
+        if (--self->field_0x30 < 0) self->field_0x30 = self->field_0x34 - 1;
+    }
+
+    if (self->field_0x30 != self->field_0x2c) {
+        // Pointer increment reproduces the lwzu/spread load-with-update.
+        // v0 declared first so MWCC colours the lwzu destination into r3
+        // and the base pointer into r4, matching retail.
+        mState = lbl_eu_8053997C;
+    } else {
+        // Advance/process virtual (vtable offset 8 = PlayThreadVoice), not the
+        // size-getter blank1 (offset 0x10).
+        self->PlayThreadVoice();
+    }
+}
+
+// us-802a74fc (EndVoice_RemoveVoice)
+// Remove a released voice from the slot array by matching the embedded
+// CCharVoice pointer against the one being freed.
+void EndVoice_RemoveVoice(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
+    DetachThreadVoice(self, voicePtr);
+    CVoiceHandle* handle;
+    CCharVoice* vp;
+    CVS_THREAD_BATTLE_END* p = self;
+    int i;
+    for (i = 0; i < self->field_0x34; i++) {
+        handle = p->field_0x20[0];
+        vp = (CCharVoice*)handle;
+        if (handle != NULL) {
+            vp = &handle->voice;
+        }
+        if (vp == voicePtr) {
+            p->field_0x20[0] = NULL;
+        }
+        // Walk one word per iteration (reproduces retail's cursor register).
+        p = (CVS_THREAD_BATTLE_END*)((u8*)p + 4);
+    }
+}
+
 // Virtual method: returns allocation size (0x46 bytes) for CVS_THREAD_BATTLE_END
 // Caller passes this pointer in r3 which is unused by this override
 int EndVoice_AllocSize() {
@@ -455,29 +435,10 @@ extern u32 __RTTI__Q22cf14CVS_THREAD_BUF[2];
 extern const char lbl_eu_80510700[0x20] = "cf::CVS_THREAD_BATTLE_END";
 extern const char lbl_eu_80510720[0x18] = "cf::CVS_THREAD_BUF";
 
-u32 lbl_eu_80539958[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)func_802A497C,
-};
-
-u32 lbl_eu_80539964[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)func_802A4A78,
-};
-
-u32 lbl_eu_80539970[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)EndVoice_AdvanceSlot,
-};
-
-u32 lbl_eu_8053997C[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)func_802A4A78,
-};
+BattleEndState const lbl_eu_80539958 = &CVS_THREAD_BATTLE_END::initSlots;
+BattleEndState const lbl_eu_80539964 = &CVS_THREAD_BATTLE_END::playVoice;
+BattleEndState const lbl_eu_80539970 = &CVS_THREAD_BATTLE_END::advanceSlot;
+BattleEndState const lbl_eu_8053997C = &CVS_THREAD_BATTLE_END::playVoice;
 
 u32 lbl_eu_80539988[8] = {
     0xB55,

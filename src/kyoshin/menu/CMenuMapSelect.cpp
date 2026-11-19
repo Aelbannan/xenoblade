@@ -7,6 +7,7 @@
 #include <monolib/util/MemManager.hpp>
 #include <monolib/core/CPadManager.hpp>
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CFloorMapImports.hpp"
 #include <monolib/scn/CScn.hpp>
@@ -168,22 +169,22 @@ void UIWin_ControlWindowLists(u32, u32);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CMainMenu_IsOpen();
 int BgTex_IsLoaded_3E34(CBgTex* self);
-void BgTex_Tick_3D54(CBgTex* self);
 void updateHelp(CTitleAHelp* self);
-int isInitialized(CTitleAHelp* self);
-void func_801C412C(CTitleAHelp* self);
 void func_801C4654(CTitleAHelp* self, u32 arg);
-void setInfoText(CTitleAHelp* self, char* text);
 void func_801C46DC(CTitleAHelp* self, u32 arg);
+void BgTex_Tick_3D54(CBgTex* self);
+
+void setInfoText(CTitleAHelp* self, char* text);
 void CFade_Update(CFade* self);
 void CFade_FadeOut(CFade* self);
 int FloorMap_GetField42Gated(CFloorMap* self);
 void FloorMap_LoadStageLayout(CFloorMap* self);
+void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+void func_801C412C(CTitleAHelp* self);
 int FloorMap_GetField40Flag(CFloorMap* self);
 void FloorMap_UpdateFrame(CFloorMap* self);
 void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 }
 
@@ -231,12 +232,12 @@ void FloorMap_ScrollRight(CFloorMap* self);
 void FloorMap_ScrollLeft(CFloorMap* self);
 void FloorMap_MoveToCursorRow(CFloorMap* self);
 
+extern "C" void beginClose(CTitleAHelp* self);
 // CTitleAHelp help-bar id setter (retail-unmangled).
 void func_801C41E8(CTitleAHelp* self, u8 arg);
 }
 
 // CTitleAHelp help-bar text reset (retail-unmangled name).
-extern "C" void beginClose(CTitleAHelp* self);
 
 // C++-linkage helper (retail emits the mangled form playUISound__FUl).
 
@@ -421,7 +422,7 @@ void CMenuMapSelect::Move() {
     switch (mState) {
     case 0:
         if (BgTex_IsLoaded_3E34(&mBgTex) == 0) break;
-        if (isInitialized(&mTitleAHelp) == 0) break;
+        if (mTitleAHelp.isInitialized() == 0) break;
         if (mMapSel.getVisibleFlag() == 0) break;
         func_801C412C(&mTitleAHelp);
         mMapSel.init();

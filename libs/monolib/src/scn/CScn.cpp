@@ -89,16 +89,9 @@ CScn::CScn() {
     unk98 = 10.0f;
     unk9C = 0x100;
     unkB2 = 0x40;
-    unk9E[0] = 0x50;
-    unk9E[1] = 0x50;
-    unk9E[2] = 0x50;
-    unk9E[3] = 0x50;
-    unk9E[4] = 0x50;
-    unk9E[5] = 0x50;
-    unk9E[6] = 0x50;
-    unk9E[7] = 0x50;
-    unk9E[8] = 0x50;
-    unk9E[9] = 0x50;
+    for (int i = 0; i < 10; i++) {
+        unk9E[i] = 0x50;
+    }
     unkB4 = NULL;
     unkB8 = 0;
     mRenderCBCount = 0;      //0x3BC

@@ -391,7 +391,7 @@ void cf::CActorParam::CActorParam_setActorType(u32 val) { this->unk15EC = val; }
 
 
 
-void cf::CfObjectMove::CfObject_setMoveScale(float val) { *(float*)((u8*)this + 0x6ec) = val; }
+void cf::CfObjectMove::CfObject_setMoveScale(float val) { this->mField6EC = val; }
 
 
 
@@ -792,7 +792,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc173() {}
 
 
 
-extern "C" u32 CActorParam_UnkVirtualFunc172__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk3370; }
+u32 cf::CActorParam::CActorParam_UnkVirtualFunc172() { return this->unk3370; }
 
 
 
@@ -807,7 +807,7 @@ float cf::CActorParam::CActorParam_UnkVirtualFunc170() {
 
 
 
-extern "C" float CActorParam_UnkVirtualFunc169__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk1630; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc169() { return this->unk1630; }
 
 
 
@@ -819,7 +819,7 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc163() { return &this->unk1648; 
 
 
 
-extern "C" u32 CActorParam_UnkVirtualFunc162__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk336C; }
+u32 cf::CActorParam::CActorParam_UnkVirtualFunc162() { return this->unk336C; }
 
 
 
@@ -827,7 +827,7 @@ extern "C" void CActorParam_UnkVirtualFunc161__Q22cf11CActorParamFv(cf::CActorPa
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc151__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk3358; }
+u16* cf::CActorParam::CActorParam_UnkVirtualFunc151() { return &this->unk3358; }
 
 
 
@@ -870,7 +870,7 @@ extern "C" void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(cf::CActorP
 
 
 
-extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk2A80; }
+u32 cf::CActorParam::CActorParam_UnkVirtualFunc139() { return this->unk2A80; }
 
 
 
@@ -893,7 +893,7 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc130(int index) { return (u8*)th
 
 
 
-extern "C" u32 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv(cf::CActorParam* self) { return (u32)self->unk15E0; }
+cf::CActorParamStatusTable* cf::CActorParam::CActorParam_UnkVirtualFunc128() { return this->unk15E0; }
 
 
 
@@ -1117,7 +1117,7 @@ extern "C" void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(cf::CActorPa
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk15FC; }
+float* cf::CActorParam::CActorParam_UnkVirtualFunc104() { return &this->unk15FC; }
 
 
 
@@ -1140,11 +1140,11 @@ void* cf::CActorParam::CActorParam_getBaseStats() { return &this->unk185C; }
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk17E4; }
+cf::CActorParam_UnkStruct3* cf::CActorParam::CActorParam_UnkVirtualFunc99() { return &this->unk17E4; }
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk1792; }
+cf::CActorParam_UnkStruct4* cf::CActorParam::CActorParam_UnkVirtualFunc97() { return &this->unk1792; }
 
 
 
@@ -1156,7 +1156,7 @@ void* cf::CActorParam::CActorParam_getStatusSyncBlock() { return &this->unk16C8;
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk1650; }
+cf::CActorParam_UnkStruct3* cf::CActorParam::CActorParam_UnkVirtualFunc93() { return &this->unk1650; }
 
 
 
@@ -1184,11 +1184,11 @@ u32 cf::CActorParam::CActorParam_getTotalCurrency() { return this->unk1600 + thi
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk17E4.field_50; }
+float* cf::CActorParam::CActorParam_UnkVirtualFunc80() { return &this->unk17E4.field_50; }
 
 
 
-extern "C" void* CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv(cf::CActorParam* self) { return &self->unk17E4.field_48; }
+float* cf::CActorParam::CActorParam_UnkVirtualFunc79() { return &this->unk17E4.field_48; }
 
 
 
@@ -1264,11 +1264,11 @@ void cf::CActorParam::CActorParam_setTensionPoints(float val) { this->unk17E4.fi
 
 
 
-extern "C" float CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk17E4.field_08 / self->unk17E4.field_14; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc45() { return this->unk17E4.field_08 / this->unk17E4.field_14; }
 
 
 
-extern "C" float CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk17E4.field_14; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc44() { return this->unk17E4.field_14; }
 
 
 
@@ -1342,7 +1342,7 @@ extern "C" void CActorParam_addHp__Q22cf11CActorParamFv(cf::CActorParam* self, f
 
 
 
-extern "C" float CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk1650.field_10; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc32() { return this->unk1650.field_10; }
 
 
 
@@ -1385,7 +1385,7 @@ extern "C" void CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv(cf::CActorPar
 
 
 
-extern "C" float CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv(cf::CActorParam* self) { return self->unk15F8; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc17() { return this->unk15F8; }
 
 
 

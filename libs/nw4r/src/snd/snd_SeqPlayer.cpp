@@ -554,11 +554,11 @@ void SeqPlayer::CallSeqUserprocCallback(u16 usertype, SeqTrack* pTrack) {
     param.variablePtr = &mLocalVariable[0];
     param.variablePtr2 = mGlobalVariable;
     param.variablePtr3 = pTrack->GetVariablePtr(0);
-    param.value = pTrack->GetParserTrackParam().mmlParserParam.cmpFlag;
+    param.cmpFlag = pTrack->GetParserTrackParam().mmlParserParam.cmpFlag;
 
     mSeqUserprocCallback(usertype, &param, mSeqUserprocCallbackArg);
 
-    pTrack->GetParserTrackParam().mmlParserParam.cmpFlag = param.value;
+    pTrack->GetParserTrackParam().mmlParserParam.cmpFlag = param.cmpFlag;
 }
 
 void SeqPlayer::ChannelCallback(Channel* /* pChannel */) {}

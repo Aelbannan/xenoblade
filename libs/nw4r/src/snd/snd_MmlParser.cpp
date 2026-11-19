@@ -541,11 +541,11 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
             while (rTrackParam.mmlParserParam.callStackDepth != 0) {
                 rTrackParam.mmlParserParam.callStackDepth--;
 
-                SeqTrack::CallStack& rStack =
-                    rTrackParam.mmlParserParam.callStack[rTrackParam.mmlParserParam.callStackDepth];
-
-                if (!rStack.loopFlag) {
-                    pStack = &rStack;
+                if (!rTrackParam.mmlParserParam
+                         .callStack[rTrackParam.mmlParserParam.callStackDepth]
+                         .loopFlag) {
+                    pStack = &rTrackParam.mmlParserParam.callStack
+                                  [rTrackParam.mmlParserParam.callStackDepth];
                     break;
                 }
             }
@@ -835,25 +835,30 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
 } // namespace snd
 } // namespace nw4r
 
-// extern "C" is required here because the retail calling convention does
-// not pass 'this' - the function uses r3 for the offset parameter directly.
-extern "C" u32
-ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(const void* pBuffer,
-                                                        u32 offset,
-                                                        u32* pSize) {
-    const u8* pCmd = static_cast<const u8*>(pBuffer) + offset;
+namespace nw4r {
+namespace snd {
+namespace detail {
 
-    if (*pCmd != 0xFE) {
-        *pSize = 1;
+u32 MmlParser::ParseAllocTrack(const void* pBase, u32 offset,
+                               u32* pAllocTrack) {
+    const u8* pPtr =
+        static_cast<const u8*>(ut::AddOffsetToPtr(pBase, offset));
+
+    if (*pPtr != MML_ALLOCTRACK) {
+        *pAllocTrack = (1 << 0);
         return offset;
     }
 
-    u32 size = pCmd[1];
-    size <<= 8;
-    size |= pCmd[2];
-    *pSize = size;
+    u32 tracks = pPtr[1];
+    tracks <<= 8;
+    tracks |= pPtr[2];
+    *pAllocTrack = tracks;
     return offset + 3;
 }
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r
 
 // Absorb: pad .sbss 0x1->0x8
 unsigned int snd_MmlParser_sbss_pad;

@@ -230,12 +230,6 @@ extern "C" void simRemoveFromPool(CScnItemModel* self) {
     CScnItemPool_forEachClearNodeRefs(self->field_04->pool, self);
 }
 
-void simSetFlag200000(){}
-
-void simSetFlag7A8_100(){}
-
-void simSetFlag8000000(){}
-
 // retail: cnt=*(self+0x820); *(u32*)(self+cnt*4+0x7F0)=r4; *(self+0x820)=cnt+1
 // Single-expression postfix form fixes the Chaitin colors (MWCC_CASES
 // array-push-with-counter, pushWordToBuf).
@@ -243,8 +237,6 @@ extern "C" void simPushWordToBuf(void* self, u32 val) {
     CScnItemModel* m = (CScnItemModel*)self;
     m->field_0x7F0[m->count820++] = val;
 }
-
-void simSetFlag2000000(){}
 
 // simGetLeafActData: walk the field_0x7C4 chain to its last node and return the
 // base of its act-data region (node + 0x1F8). Hand-unrolled 5 levels with a

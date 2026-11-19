@@ -35,56 +35,31 @@ extern "C" void __ct__CSchedule(CSchedule* self) {
     }
 }
 
-// us-804e7ab0: CSchedule::Sched_RebuildHandles()
-int CSchedule::RebuildHandles() {
-    this->mEntryCount = 0;
-    ScheduleEntry* entry = this->mEntries;
-    s16 count = 0;
-    while (entry->type != 0xFFFF) {
-        // No more room -> bail out success (converges on the post-loop return 1).
-        if (count >= 0x20) break;
-        if (entry->flags == 0 || entry->flags >= 0xFFFF) {
-            return 0;
+// Release resolved handles (inlined into ~CSchedule).
+inline void CSchedule::ReleaseHandles() {
+    if (mEntryCount > 0) {
+        for (int i = 0; i < 0x20; i++) {
+            if (mHandles[i] >= 0) {
+                SchedItem_ReleaseHandle(mHandles[i]);
+                mHandles[i] = -1;
+            }
         }
-        s16 handle = SchedItem_ClaimFree(this->mEntries, entry, this);
-        if (handle < 0) {
-            return 0;
-        }
-        // Write through explicit pointer arithmetic with s16 sign-extension and the
-        // array offset last, so MWCC keeps the base+displacement sth (@REF:17).
-        *(s16*)((u8*)this + (u32)(s16)count * 2 + 0x98) = handle;
-        count++;
-        entry++;
-        this->mEntryCount++;
+        mEntryCount = 0;
     }
-    return 1;
 }
 
 // us-804e77dc: CSchedule::~CSchedule()
 CSchedule::~CSchedule() {
     mTablePtr = (u8*)lbl_eu_80570068;
     if (mEntries != nullptr) {
-        s16 freeSlot;
         // Notify each registered child
-        CScheduleChild* child;
-        u32 i;
-        for (i = 0; i < 4; i++) {
-            child = mChildren[i];
+        for (u32 i = 0; i < 4; i++) {
+            CScheduleChild* child = mChildren[i];
             if (child != nullptr) {
                 child->OnScheduleDelete(this);
             }
         }
-        // Release resolved handles
-        if (mEntryCount > 0) {
-            freeSlot = -1;
-            for (i = 0; (int)i < 0x20; i++) {
-                if (mHandles[i] >= 0) {
-                    SchedItem_ReleaseHandle(mHandles[i]);
-                    mHandles[i] = freeSlot;
-                }
-            }
-            mEntryCount = 0;
-        }
+        ReleaseHandles();
         mEntries = nullptr;
         field_0x08 = nullptr;
         field_0x0c = nullptr;
@@ -100,7 +75,6 @@ CSchedule::~CSchedule() {
 int CSchedule::Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, unsigned int flags_a, unsigned int flags_b, u8* field_0x10_ptr) {
     float zero;
     float one;
-    u32 flags;
     u32 zero32;
 
     if (entries == nullptr) return 0;
@@ -112,17 +86,16 @@ int CSchedule::Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_p
 
     this->mEntries = entries;
     this->field_0x08 = field_0x08_ptr;
-
-    this->field_0x14 = zero32;
-    this->field_0x18 = zero32;
-
-    // Build flags: 0xC000 base with bits 21/22 from flags_a/flags_b
-    // (ori 0xC000 + rlwimi per retail)
-    flags = 0xC000 | ((flags_a << 10) & 0x00200000) | ((flags_b << 9) & 0x00400000);
-
+    CScheduleFlags flags = {0};
+    flags.b15 = 1;
+    flags.b14 = 1;
+    flags.b10 = flags_a;
+    flags.b9 = flags_b;
+    this->field_0x00 = flags;
     this->field_0x0c = field_0x0c_ptr;
     this->field_0x10 = field_0x10_ptr;
-    this->field_0x00 = static_cast<s16>(flags);
+    this->field_0x14 = zero32;
+    this->field_0x18 = zero32;
 
     this->field_0x50 = one;
     this->field_0x54 = zero;
@@ -159,4 +132,29 @@ int CSchedule::Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_p
     this->field_0xd9 = 0;
 
     return this->RebuildHandles();
+}
+
+// us-804e7ab0: CSchedule::Sched_RebuildHandles()
+int CSchedule::RebuildHandles() {
+    this->mEntryCount = 0;
+    ScheduleEntry* entry = this->mEntries;
+    s16 count = 0;
+    while (entry->type != 0xFFFF) {
+        // No more room -> bail out success (converges on the post-loop return 1).
+        if (count >= 0x20) break;
+        if (entry->flags == 0 || entry->flags >= 0xFFFF) {
+            return 0;
+        }
+        s16 handle = SchedItem_ClaimFree(this->mEntries, entry, this);
+        if (handle < 0) {
+            return 0;
+        }
+        // Write through explicit pointer arithmetic with s16 sign-extension and the
+        // array offset last, so MWCC keeps the base+displacement sth (@REF:17).
+        *(s16*)((u8*)this + (u32)(s16)count * 2 + 0x98) = handle;
+        count++;
+        entry++;
+        this->mEntryCount++;
+    }
+    return 1;
 }

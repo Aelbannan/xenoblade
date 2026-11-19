@@ -477,6 +477,8 @@ UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end)
 void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)
 {
     UINT8 *p_param_len;
+    UINT8 *p_frame;
+    BT_HDR *p_msg;
     UINT8 *p;
     UINT8 *p_end;
     UINT16 param_len;
@@ -507,8 +509,7 @@ void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len
     }
 
     if (cont_request_needed || !p_reply) {
-        BT_HDR *p_msg = (BT_HDR *)GKI_getpoolbuf(SDP_POOL_ID);
-        UINT8 *p_frame;
+        p_msg = (BT_HDR *)GKI_getpoolbuf(SDP_POOL_ID);
 
         if (p_msg == NULL) {
             sdp_disconnect(p_ccb, SDP_NO_RESOURCES);

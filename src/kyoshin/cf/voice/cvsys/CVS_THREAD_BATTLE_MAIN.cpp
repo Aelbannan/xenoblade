@@ -87,6 +87,9 @@ extern "C" int BmVoice_FindRatio(CVoiceHandle* owner, int arg);
 // Import without a declaring header (compile-only scaffolding).
 extern "C" CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* handle);
 
+// Typed pointer-to-member state constants (retail 12-byte init triples).
+typedef void (CVS_THREAD::*BattleMainState)();
+
 // Word-wise overlay over the base thread's 12-byte handler ptmf (offsets
 // 0x00-0x0B): each variant's init tables write three words that together
 // form the member-function pointer.
@@ -96,10 +99,7 @@ struct BmStateTriple {
     u32 unk8;  // +0x08
 };
 
-// Init-state triples and this subclass's vtable.
-extern u32 lbl_eu_8053AA58[3];
-extern u32 lbl_eu_8053AA64[3];
-extern u32 lbl_eu_8053AA70[3];
+// This subclass's vtable.
 extern u32 lbl_eu_8053AA7C[7];
 
 // Float thresholds and the double bias constant used by BmVoice_FindRatio.
@@ -130,7 +130,17 @@ struct BmThreadRaw {
 class CVS_THREAD_BATTLE_MAIN : public CVS_THREAD {
 public:
     u8 field_0x20;           // 0x20: flag selecting the voice-id range
+
+    // Voice-event state handlers installed into the inherited state member.
+    void refreshBase();
+    void refreshRemap();
+    void dispatchUpdate();
+    static void* create(int arg);
 };
+
+extern "C" BattleMainState const lbl_eu_8053AA58 = &CVS_THREAD_BATTLE_MAIN::refreshBase;
+extern "C" BattleMainState const lbl_eu_8053AA64 = &CVS_THREAD_BATTLE_MAIN::refreshRemap;
+extern "C" BattleMainState const lbl_eu_8053AA70 = &CVS_THREAD_BATTLE_MAIN::dispatchUpdate;
 
 // Phantom view over the owner object's vtable exposing the slot at byte
 // offset 0x2A4 (declared slot 166), which returns the work object whose
@@ -641,7 +651,7 @@ int BmVoice_Play32(CVoiceHandle* self) {
 // scratch handle (0x10E) plus the 0x24-byte thread, constructs it with the
 // battle-main vtable and the caller's id, then seeds the init-state triple.
 // Retail returns the stack-frame record address.
-void* __ct__802AF5CC(int arg) {
+void* CVS_THREAD_BATTLE_MAIN::create(int arg) {
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
     if (voice != NULL) {
@@ -682,7 +692,7 @@ void* __ct__802AF5CC(int arg) {
     // Seed the init-state triple; load word 1 before word 0 so the register
     // colours match retail (r0 = word 1, r4 = word 0).  Returns self (the
     // constructed thread), which keeps r3 live to the epilogue.
-    self->unk0 = *(const VoiceCb*)lbl_eu_8053AA58;
+    self->mState = lbl_eu_8053AA58;
 
     return self;
 }
@@ -691,16 +701,9 @@ void* __ct__802AF5CC(int arg) {
 // Periodic battle voice refresh: restore the init-state triple, and while
 // the player's voice handle reports idle, play a random line (range picked
 // by the thread's flag byte) through the embedded voice.
-void BmVoice_RefreshBase(CVS_THREAD_BATTLE_MAIN* self) {
-    // Restore the base state triple via the lwzu/spread load-with-update
-    // pattern (v0 declared first so the lwzu destination colours low).
-    BmStateTriple* st = (BmStateTriple*)&self->unk0;
-    u32 v0;
-    const u32* src = lbl_eu_8053AA64;
-    v0 = *src++;
-    st->unk4 = *src++;
-    st->unk0 = v0;
-    st->unk8 = *src;
+void CVS_THREAD_BATTLE_MAIN::refreshBase() {
+    CVS_THREAD_BATTLE_MAIN* self = this;
+    mState = lbl_eu_8053AA64;
 
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
@@ -729,17 +732,12 @@ void BmVoice_RefreshBase(CVS_THREAD_BATTLE_MAIN* self) {
 // ── us-802b22b4 (BmVoice_RefreshRemap) ─────────────────────────────────────────────
 // Same refresh shape as BmVoice_RefreshBase but gated on the thread-blocked check
 // and an extra handle remap through HpVoice_PickIdleVoice before the idle probe.
-void BmVoice_RefreshRemap(CVS_THREAD_BATTLE_MAIN* self) {
+void CVS_THREAD_BATTLE_MAIN::refreshRemap() {
+    CVS_THREAD_BATTLE_MAIN* self = this;
     if (IsThreadVoiceActive((CVS_THREAD*)self) != 0)
         return;
 
-    BmStateTriple* st = (BmStateTriple*)&self->unk0;
-    u32 v0;
-    const u32* src = lbl_eu_8053AA70;
-    v0 = *src++;
-    st->unk4 = *src++;
-    st->unk0 = v0;
-    st->unk8 = *src;
+    mState = lbl_eu_8053AA70;
 
     CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
     CVoiceHandle* handle = (CVoiceHandle*)voice;
@@ -769,10 +767,10 @@ void BmVoice_RefreshRemap(CVS_THREAD_BATTLE_MAIN* self) {
 
 // When the CVS thread is not blocked, dispatch the vtable+8 slot (the
 // battle-main update virtual) through the +0x1C vtable pointer.
-extern "C" void BmVoice_DispatchUpdate(void* self) {
-    if (IsThreadVoiceActive((CVS_THREAD*)self) != 0)
+void CVS_THREAD_BATTLE_MAIN::dispatchUpdate() {
+    if (IsThreadVoiceActive((CVS_THREAD*)this) != 0)
         return;
-    ((CVS_THREAD*)self)->PlayThreadVoice();
+    ((CVS_THREAD*)this)->PlayThreadVoice();
 }
 
 int BmVoice_Cap270() { return 270; }

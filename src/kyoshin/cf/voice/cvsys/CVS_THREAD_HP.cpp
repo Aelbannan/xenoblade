@@ -14,6 +14,7 @@
 // magic with the retail symbol instead of a TU-local @N label.
 double lbl_eu_80668CA8 = 4503601774854144.0;
 
+
 // us-802a9988 (__ct__802A7254)
 // Factory for CVS_THREAD_HP. Takes a source voice handle and an integer
 // value (negative -> refuse). Gates on the handle's manager flag (bit 1) and
@@ -26,7 +27,7 @@ double lbl_eu_80668CA8 = 4503601774854144.0;
 // Retail saves r28-r31 / f30-f31 individually; unit-level -O4,s merges them
 // into savegpr helpers, so size-opt must be off here.
 #pragma optimize_for_size off
-CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
+CVS_THREAD_HP* CVS_THREAD_HP::create(CVoiceHandle* handle, int arg) {
     if (arg >= 0) {
         return NULL;
     }
@@ -82,9 +83,6 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
         throw;
     }
 
-    // Copy init data from the global table using a single base pointer.
-    // Blob word view over the CVS_THREAD head (0x00-0x0B): the canonical
-    // member there is a ptmf, but retail restores it as three raw words.
     CVS_THREAD_HP* result = self;
     const u32* fin = lbl_eu_80539BF8;
     u32 w1 = fin[1];
@@ -94,6 +92,7 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
     dst[1] = w1;
     dst[2] = fin[2];
     return result;
+    return self;
 }
 #pragma optimize_for_size on
 
@@ -102,9 +101,6 @@ CVS_THREAD_HP* __ct__802A7254(CVoiceHandle* handle, int arg) {
 // then if the voice handle slot is present and idle, play the HP-change
 // voice ID; on failure fire the playback-start virtual (PlayThreadVoice).
 void HpVoice_AdvancePlay(CVS_THREAD_HP* self) {
-    // Restore the base state triple (lwzu/spread load-with-update form).
-    // v0 is declared first so MWCC colours the lwzu destination low and the
-    // base pointer high, matching retail register order.
     u32 v0;
     const u32* p = lbl_eu_80539C04;
     v0 = *p++;
@@ -138,9 +134,6 @@ void HpVoice_PlayChange(CVS_THREAD_HP* self) {
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
-    // Restore the base state triple (lwzu/spread load-with-update form).
-    // v0 is declared first so MWCC colours the lwzu destination low and the
-    // base pointer high, matching retail register order.
     u32 v0;
     const u32* p = lbl_eu_80539C10;
     v0 = *p++;

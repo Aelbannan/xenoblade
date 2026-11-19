@@ -61,37 +61,10 @@ s32 OcMsgRingReset(void*, OcMsgRingHdr* list) {
 // ---------------------------------------------------------------------------
 // Typeof-style probes on the counter at target+0x10
 // ---------------------------------------------------------------------------
-
-// Open item (EQUIVALENT_MATCH via register-renaming witness, 2 residual reg
-// swaps): computes type = 1 + bit31((x>>1) - (x&0xA)) with x = count ^ 0xA.
-// Retail allocates count->r0 and x->r5 (subf r0,r0,r5); MWCC's subf encoding
-// is source-driven (a-b -> subf dst,b,a) and its register allocation is
-// coupled to the subtraction operand order, so every correct-semantic forward
-// shape tried (~50 across Wii 1.1 + GC 3.0a5.2/3.0a3.4) recolors x back to
-// r0 (4 pure reg swaps). Refuted shapes include: named temps m/h, compound
-// xor-assign, independent CSE trees, reversed source `(x & 0x0a) - (x >> 1)`
-// (reproduces retail's instruction stream but negates the subtraction - a
-// 1-instruction semantic trap), live-count variants keeping count alive past
-// the xor (moves x to r5 but adds an extra xori: +4 bytes over budget),
-// mask = ~count & 0xA (+4 over), and the comparison form (branchy, +12 bytes).
-// Refuted 2026-08 (register-mapping dead-reuse angle, docs/register_mapping.md):
-// binding the difference to a FRESH web born after t - both a named `int u =
-// t - (x & 0x0a)` and an anonymous `(u32)(t - (x & 0xa)) >> 31` in the store -
-// recolors the whole prefix (xori/andi/srawi all swap x into r0) => 4 reg
-// swaps vs the banked draft's 2. The subf destination does land in r0 in both,
-// but only at the cost of the prefix; consistent with the doc's birth-order
-// rule: any non-compound difference form makes x the later-born web.
-// This body is the banked best draft.
+// type = 2 while the ring holds fewer than 10 messages, else 1.
 int OcMsgRingProbeOverflow(VMThread* pThread, OcMsgRingHdr* target) {
     VMArg args;
-    int count = (int)target->count;
-    int x = count ^ 0x0a;
-    // Shift-initializing temp + compound subtract is the best-known shape:
-    // it reproduces retail's xori/andi/srawi stream; only the subf destination
-    // and final shift source remain swapped (r5 vs retail r0).
-    int t = x >> 1;
-    t -= x & 0x0a;
-    *(u8*)&args.type = 1 + ((u32)t >> 31);
+    *(u8*)&args.type = 1 + ((int)target->count < 10 ? 1 : 0);
     vmRetValSet(pThread, &args);
     return 1;
 }

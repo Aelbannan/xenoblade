@@ -5,7 +5,7 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-void __ct__802A4E48(){}
+void CVS_THREAD_BUF::create() {}
 
 void BufVxFillSchedDesc(){}
 

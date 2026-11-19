@@ -37,10 +37,7 @@ extern void playUISound(u32);
 // C-linkage (retail symbols are unmangled) declarations for the free
 // functions defined in this TU. Definitions keep the same linkage.
 extern "C" {
-void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned char d, unsigned char e);
-QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src);
-QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src);
-CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
+CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, unsigned char c, unsigned char d, unsigned char e);
 int QstCnt_HasInstance_6B94();
 void invalidateQstFlag();
 void QstCnt_SignalReady_6BBC(QstMenuData* self);
@@ -57,19 +54,6 @@ CMenuQstCnt* lbl_eu_80664720;
 // (lbl_eu_80664720 != 0) - retail lwz sda21; subic; subfe
 extern "C" int QstCnt_HasInstance_6B94() { return lbl_eu_80664720 != 0; }
 
-// Retail keeps setQstEntry/copyQstEntry/copyQstEntry2 as out-of-line calls
-// from every callsite; without the auto_inline guard, MWCC -inline auto
-// inlines them and the 32-iteration loops blow up (MWCC_CASES sec hbm/seq).
-#pragma push
-#pragma auto_inline off
-void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
-    entry->f0 = a;
-    entry->f2 = b;
-    entry->f4 = c;
-    entry->f5 = d;
-    entry->f6 = e;
-}
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuQstCnt (retail 0x802280F8): CProcess base ctor, then the inlined
@@ -80,44 +64,28 @@ void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned ch
 CMenuQstCnt::CMenuQstCnt(CScn* scene, short a, short b, u8 c, u8 d, u8 e)
     : mScene(scene), mMemRegion(), mAnim88(0), mState8C(0), mValue90(0.0f),
       mField19C(0) {
-    u8 i;
-    for (i = 0; i < 32; i++) {
-        setQstEntry(&mEntries[i], 0, 0, 0, 0, 0);
+    for (u8 i = 0; i < 32; i++) {
+        mEntries[i] = QstEntry(0, 0, 0, 0, 0);
     }
-    setQstEntry(&mSelEntry, 0, 0, 0, 0, 0);
-
-    for (i = 0; i < 32; i++) {
-        QstEntry tmp;
-        setQstEntry(&tmp, 0, 0, 0, 0, 0);
-        copyQstEntry(&mEntries[i], &tmp);
-    }
-    {
-        QstEntry tmp;
-        setQstEntry(&tmp, a, b, c, d, e);
-        copyQstEntry(&mSelEntry, &tmp);
-    }
+    mSelEntry = QstEntry(a, b, c, d, e);
 }
 
-#pragma push
-#pragma auto_inline off
-QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src) {
-    dst->f0 = src->f0;
-    dst->f2 = src->f2;
-    dst->f4 = src->f4;
-    dst->f5 = src->f5;
-    dst->f6 = src->f6;
-    return dst;
+QstEntry::QstEntry(int a, int b, u8 c, u8 d, u8 e) {
+    f0 = a;
+    f2 = b;
+    f4 = c;
+    f5 = d;
+    f6 = e;
 }
 
-QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src) {
-    dst->f0 = src->f0;
-    dst->f2 = src->f2;
-    dst->f4 = src->f4;
-    dst->f5 = src->f5;
-    dst->f6 = src->f6;
-    return dst;
+QstEntry& QstEntry::operator=(const QstEntry& other) {
+    f0 = other.f0;
+    f2 = other.f2;
+    f4 = other.f4;
+    f5 = other.f5;
+    f6 = other.f6;
+    return *this;
 }
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuQstCnt::~CMenuQstCnt (retail 0x80228254): the IWorkEvent/IScnRender
@@ -269,49 +237,48 @@ void CMenuQstCnt::cbRenderBefore() {
 // Quest-log menu factory/update. When the singleton already exists and is
 // active, only sync the new selection into it (returning 0); otherwise
 // allocate + construct + register a fresh menu (returning the object).
-CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
+CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, unsigned char c, unsigned char d, unsigned char e) {
     CMenuQstCnt* g = lbl_eu_80664720;
     if (g != 0 && g->mField64 == 0) {
         int changed = 0;
-        if (g->mSelEntry.f0 != (u16)a || g->mSelEntry.f2 != (u16)b) {
+        if (g->mSelEntry.f0 == a) {
+            if (g->mSelEntry.f2 != b) {
+                changed = 1;
+            }
+            if (!changed) {
+                switch (g->mState8C) {
+                case 0:
+                    g->mSelEntry.f4 = c;
+                    if (lbl_eu_80664720->mField19C) lbl_eu_80664720->RefreshDisplay();
+                    break;
+                case 1:
+                    g->mSelEntry.f4 = c;
+                    lbl_eu_80664720->RefreshDisplay();
+                    break;
+                case 2:
+                    g->mSelEntry.f4 = c;
+                    lbl_eu_80664720->mValue90 = lbl_eu_80668568;
+                    lbl_eu_80664720->RefreshDisplay();
+                    break;
+                default:
+                    changed = 1;
+                    break;
+                }
+            }
+        } else {
             changed = 1;
         }
-        if (!changed) {
-            switch (g->mState8C) {
-            case 0:
-                g->mSelEntry.f4 = c;
-                if (lbl_eu_80664720->mField19C) lbl_eu_80664720->RefreshDisplay();
-                break;
-            case 1:
-                g->mSelEntry.f4 = c;
-                lbl_eu_80664720->RefreshDisplay();
-                break;
-            case 2:
-                g->mSelEntry.f4 = c;
-                lbl_eu_80664720->mValue90 = lbl_eu_80668568;
-                lbl_eu_80664720->RefreshDisplay();
-                break;
-            default:
-                changed = 1;
-                break;
-            }
-        }
         if (changed) {
-            u8 i;
-            for (i = 0; i < 0x20; i++) {
-                if (g->mEntries[i].f0 == 0) {
-                    QstEntry tmp;
-                    setQstEntry(&tmp, a, b, c, d, e);
-                    copyQstEntry(&g->mEntries[i], &tmp);
+            for (u8 i = 0; i < 0x20; i++) {
+                if (lbl_eu_80664720->mEntries[i].f0 == 0) {
+                    lbl_eu_80664720->mEntries[i] = QstEntry(a, b, c, d, e);
                     break;
                 }
             }
         }
         return 0;
     }
-    CMenuQstCnt* obj =
-        new (mtl::MemManager::allocate(0x1A0, CWorkThreadSystem::getWorkMem()))
-            CMenuQstCnt(scene, a, b, c, d, e);
+    CMenuQstCnt* obj = new (CWorkThreadSystem::getWorkMem()) CMenuQstCnt(scene, a, b, c, d, e);
     lbl_eu_80664720 = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
     return lbl_eu_80664720;
@@ -354,7 +321,6 @@ void QstCnt_TickToOpened_6C5C(QstMenuData* self) {
 // compact the entry list (keeping only non-zero quest ids), and refresh the
 // displayed quest info.
 // Retail's prologue is -O4,s shaped (_savegpr_29 at 3 saved regs, elf-vector frame).
-#pragma push
 void QstCnt_FinishAnim(CMenuQstCnt* self) {
     if (AnimRewindFrame(self->mAnim88, lbl_eu_8066856C) == 0) return;
     if (self->mEntries[0].f0 == 0) {
@@ -363,39 +329,32 @@ void QstCnt_FinishAnim(CMenuQstCnt* self) {
     }
     self->mValue90 = lbl_eu_80668568;
     self->mState8C = 0;
-    QstEntry cur;
-    copyQstEntry(&self->mSelEntry, copyQstEntry2(&cur, &self->mEntries[0]));
-    QstEntry tmp0;
-    setQstEntry(&tmp0, 0, 0, 0, 0, 0);
-    copyQstEntry(&self->mEntries[0], &tmp0);
+    self->mSelEntry = QstEntry(self->mEntries[0]);
+    self->mEntries[0] = QstEntry(0, 0, 0, 0, 0);
     self->RefreshDisplay();
 
     QstEntry scratch[32];
     u8 i, j;
     for (i = 0; i < 32; i++) {
-        setQstEntry(&scratch[i], 0, 0, 0, 0, 0);
+        scratch[i] = QstEntry(0, 0, 0, 0, 0);
     }
-    for (i = 0; i < 32; i++) {
-        QstEntry t;
-        setQstEntry(&t, 0, 0, 0, 0, 0);
-        copyQstEntry(&scratch[i], &t);
-    }
-    j = 0;
-    for (i = 0; i < 32; i++) {
+    for (i = 0, j = 0; i < 32; i++) {
         if (self->mEntries[i].f0 != 0) {
-            QstEntry t;
-            copyQstEntry2(&t, &self->mEntries[i]);
-            copyQstEntry(&scratch[j], &t);
-            j++;
+            scratch[j++] = QstEntry(self->mEntries[i]);
         }
     }
     for (j = 0; j < 32; j++) {
-        QstEntry t;
-        copyQstEntry2(&t, &scratch[j]);
-        copyQstEntry(&self->mEntries[j], &t);
+        self->mEntries[j] = QstEntry(scratch[j]);
     }
 }
-#pragma pop
+
+QstEntry::QstEntry(const QstEntry& other) {
+    f0 = other.f0;
+    f2 = other.f2;
+    f4 = other.f4;
+    f5 = other.f5;
+    f6 = other.f6;
+}
 
 void CMenuQstCnt::RefreshDisplay() {
     if (this->mSelEntry.f0 == 0) return;

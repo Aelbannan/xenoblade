@@ -297,10 +297,7 @@ extern "C" s32 RootNw4r_AttachCamOne(CScnRootNw4r* self, CScnCamLayout* cam) {
     u8 ready = self->mpScn->unk_3E8;
     if (ready == 0) {
         // Not ready yet: push back onto the queue and retry next frame.
-        u32 count = self->mIdCount;
-        u32 next = count + 1;
-        self->mIds[count] = (u32)cam;
-        self->mIdCount = next;
+        self->mIds[self->mIdCount++] = (u32)cam;
         return 1;
     }
 

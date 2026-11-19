@@ -47,10 +47,9 @@ s32 MPV_SetErrFunc(SFD_MPV* mpv, MPVErrCallback cb, u8* arg) {
     } else if (MPVLIB_CheckHn(m)) {
         /* invalid handle: record the fatal code and dispatch it through the
          * previously registered global callback */
-        MPVErrCallback gcb = (MPVErrCallback)lbl_eu_80602A78[0];
         lbl_eu_80602A78[2] = 0xFF030203;
-        if (gcb != NULL) {
-            gcb(lbl_eu_80602A78[1]);
+        if ((MPVErrCallback)lbl_eu_80602A78[0] != NULL) {
+            ((MPVErrCallback)lbl_eu_80602A78[0])(lbl_eu_80602A78[1]);
         }
         return 0xFF030203;
     } else {

@@ -11,6 +11,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "kyoshin/CNumSelect.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CSortMenu.hpp"
@@ -24,10 +25,8 @@
 // CItemBoxGrid.hpp declares these two accessors with a stale void*/u32 view
 // that CItem.hpp (the owner) declares as CItemExt*/s32; the owning header is
 // not canonicalised yet, so CItem.hpp's copies are renamed for this include.
-#define CItem_kindPtr CItem_kindPtr_grid_stale
 #define CItem_slotCnt CItem_slotCnt_grid_stale
 #include "kyoshin/cf/CItem.hpp"
-#undef CItem_kindPtr
 #undef CItem_slotCnt
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/device/CDeviceFont.hpp"
@@ -5224,13 +5223,13 @@ void CItemBoxGrid::UnequipPartyItem(int kind, int id) {
             case 6: {
                 int v = ((CItemBoxCharEntry*)obj)->slotIds[2];
                 if (v == -1 || v != id) continue;
-                CtrlObjectParam_SetEquipSlot2(obj, -1);
+                reinterpret_cast<cf::CtrlObjectParamData*>(obj)->setArgType2((void*)-1);
                 break;
             }
             case 7: {
                 int v = ((CItemBoxCharEntry*)obj)->slotIds[3];
                 if (v == -1 || v != id) continue;
-                CtrlObjectParam_SetEquipSlot3(obj, -1);
+                reinterpret_cast<cf::CtrlObjectParamData*>(obj)->setArgType3((void*)-1);
                 break;
             }
             case 8: {

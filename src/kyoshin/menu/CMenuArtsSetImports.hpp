@@ -135,7 +135,7 @@ struct SArtsEntryWord {
 // Mode-4/id-8 imports (code_80135FDC.cpp / CItem.cpp; C symbols).
 extern "C" SArtsEntryWord* CItem_kindPtr(u32 kind);
 // Current BDAT text-table handle consumed by BdatGetU8Direct (.sdata word).
-extern u32 lbl_eu_806640F8;
+extern void* lbl_eu_806640F8;
 
 // Same-TU cursor/state helpers (retail unmangled names; definitions below).
 extern "C" u8 artsReadSelId(SArtsSub8022FA58* self);
@@ -306,7 +306,7 @@ extern "C" int sprintf(char*, const char*, ...);
 extern "C" int MenuTutorialIsCreated();
 // Same-TU dispatch helpers (definitions below; C linkage binds the calls to
 // the retail unmangled symbols).
-extern "C" u8 CMenuArtsSet_isBusy(SArts33888* self);
+extern "C" int CMenuArtsSet_isBusy(SArts33888* self);
 extern "C" void CMenuArtsSet_armSysWin(CArtsList* self);
 extern "C" void CMenuArtsSet_selectPrevChar(CArtsList* self);
 extern "C" void artsStepAhead(CArtsList* self);
@@ -318,7 +318,7 @@ extern "C" void CMenuArtsSet_cursorDown(CArtsList* self);
 extern "C" void CMenuArtsSet_slotCursorUp(CArtsList* self);
 extern "C" void CMenuArtsSet_slotCursorDown(CArtsList* self);
 extern "C" void CMenuArtsSet_confirmSelect(CArtsList* self);
-extern "C" u8 CMenuArtsSet_isWindowBusy(CArtsList* self);
+extern "C" int CMenuArtsSet_isWindowBusy(CArtsList* self);
 // Scene/fade helpers (imports).
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
@@ -344,7 +344,7 @@ extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern u32 lbl_eu_80663E28; // mode bitfield (bit 21 = realtime event busy)
 extern "C" void artsMenuInput(CMenuArtsSet* self);
-u8 CArtsList_isReady(CArtsList* self);
+int CArtsList_isReady(CArtsList* self);
 void CArtsList_startLoad(CArtsList* self);
 void artsStepState(CArtsList* self);
 void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo* info);

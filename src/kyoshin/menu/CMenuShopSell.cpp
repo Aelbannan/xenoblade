@@ -13,6 +13,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -59,20 +60,20 @@ extern "C" int MenuTutorialIsCreated();
 extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
+extern "C" void func_801C412C(CTitleAHelp* self);
 
 // Retail-unmangled callee names (US strips the member manglings for these
 // func_ helpers; GetField61 keeps its bare name too). int returns keep the
 // caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
+
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // SetWideLocAdjust keeps its mangled nw4r form, so it is declared outside
 // extern "C" for MWCC to re-mangle it.
@@ -199,7 +200,7 @@ extern "C" bool MenuShopSellIsCreated() { return CMenuShopSell::sInstance != 0; 
  * ready, run the open sequence (title bar + item grid) and play the open
  * sound, then advance the phase byte at 0x4AC4. */
 void CMenuShopSell::HandlePhase0() {
-    if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
+    if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && mTitleAHelp.isInitialized() != 0 &&
         mItemBoxGrid.IsItemBoxReady() != 0) {
         func_801C412C(&mTitleAHelp);
         mItemBoxGrid.InitItemDisplay();

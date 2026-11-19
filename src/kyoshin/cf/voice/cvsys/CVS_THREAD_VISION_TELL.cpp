@@ -6,40 +6,6 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802ac1fc (VisionTell_NotifyComplete)
-// Completion callback: if no active voice, call the playback-start virtual.
-void VisionTell_NotifyComplete(CVS_THREAD_VISION_TELL* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
-    }
-}
-
-// us-802ac244 (VisionTell_RemoveVoice)
-// Remove a voice from the slots by matching its embedded CCharVoice pointer.
-void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
-    DetachThreadVoice(self, voicePtr);
-
-    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
-    CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x20 = NULL;
-    }
-
-    // Slot 0x24: same pattern
-    handle = self->field_0x24;
-    biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x24 = NULL;
-    }
-}
-
 // us-802abdf8 (__ct__802A96C0)
 // Factory/constructor for CVS_THREAD_VISION_TELL. Takes two voice handles,
 // allocates a throwaway 0x32-byte buffer and the object itself (0x28 bytes),
@@ -48,7 +14,7 @@ void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) 
 // The redundant `self != NULL` guard reproduces retail's `beq` re-check of
 // CR0 guarding the EH region; the catch rethrows via __throw(0,0,0) so MWCC
 // elides the __end__catch epilogue.
-CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
+CVS_THREAD_VISION_TELL* CVS_THREAD_VISION_TELL::create(CVoiceHandle* h1, CVoiceHandle* h2) {
     // Allocate handle buffer (discarded).
     if (CCharVoiceMan_DispatchById(0x32, 1) == NULL) {
         return NULL;
@@ -73,39 +39,21 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
         }
     }
 
-    // Copy the init-state triple (outside try). Load base[1] before base[0]:
-    // retail colors the first-loaded value r0 and the second r4, storing r4
-    // to +0 and r0 to +4. The pointer-typed local keeps that coloring.
-    // Integer cast keeps the label materialized once via lis+addi (retail r5).
-    // Copy init data from the global table. Single pointer initialized
-    // directly from the symbol keeps the lis/addi base materialized once
-    // (retail r5); word 1 is read first per retail load order.
-    u32 v1;
-    u32* p0;
-    v1 = (p0 = lbl_eu_80539DB0)[1];
-    ((CVS_THREAD_VISION_TELL_raw*)self)->unk0 = (u32*)p0[0];
-    ((CVS_THREAD_VISION_TELL_raw*)self)->unk4 = v1;
-    ((CVS_THREAD_VISION_TELL_raw*)self)->unk8 = p0[2];
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_VISION_TELL::playSlot1);
 
     return self;
 }
 
 // us-802abed8 (VisionTell_PlaySlot1)
 // Advance/play function for voice slot 1 (field_0x20).
-void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
-    // Copy init data -- read index 0 first (lwzu pointer-increment) so MWCC
-    // emits the lis @ha + lwzu @l base-load form, then the handle, then the
-    // remaining elements. Match the HAGE pattern. v0 is declared before p so
-    // the lwzu result claims the lower scratch register (retail: r4) and the
-    // base pointer takes r5.
-    u32 v0;
-    const u32* p = lbl_eu_80539DBC;
-    v0 = *p++;
+void CVS_THREAD_VISION_TELL::playSlot1() {
+    CVS_THREAD_VISION_TELL* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_VISION_TELL::playSlot2);
     CVoiceHandle* handle20 = self->field_0x20;
-    CVS_THREAD_VISION_TELL_raw* st = (CVS_THREAD_VISION_TELL_raw*)self;
-    st->unk4 = *p++;
-    st->unk0 = (u32*)v0;
-    st->unk8 = *p;
 
     // Both slots must be populated
     if (handle20 == NULL) return;
@@ -163,23 +111,15 @@ void VisionTell_PlaySlot1(CVS_THREAD_VISION_TELL* self) {
 // us-802ac05c (VisionTell_PlaySlot2)
 // Advance/play function for voice slot 2 (field_0x24). Retail re-reads
 // self->field_0x24/field_0x20 from memory at each use (no long-lived caches).
-void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
+void CVS_THREAD_VISION_TELL::playSlot2() {
+    CVS_THREAD_VISION_TELL* self = this;
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
-    // Copy init data -- index 0 first (lwzu pointer-increment) to force the
-    // retail lis @ha + lwzu @l base-load form. v0 is declared before p so the
-    // lwzu result claims the lower scratch register (retail: r4) and the base
-    // pointer takes r5.
-    u32 v0;
-    const u32* p = lbl_eu_80539DC8;
-    v0 = *p++;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_VISION_TELL::notifyComplete);
     CVoiceHandle* handle24 = self->field_0x24;
-    CVS_THREAD_VISION_TELL_raw* st = (CVS_THREAD_VISION_TELL_raw*)self;
-    st->unk4 = *p++;
-    st->unk0 = (u32*)v0;
-    st->unk8 = *p;
 
     // Initial active-state gate on the slot-2 handle (read once here).
     if (handle24 == NULL) return;
@@ -224,6 +164,40 @@ void VisionTell_PlaySlot2(CVS_THREAD_VISION_TELL* self) {
         if (TryRequestVoice(self, voicePtr, lbl_eu_80662D60[ml::math::mtRand(3)]) == 0) {
             self->PlayThreadVoice();
         }
+    }
+}
+
+// us-802ac1fc (VisionTell_NotifyComplete)
+// Completion callback: if no active voice, call the playback-start virtual.
+void CVS_THREAD_VISION_TELL::notifyComplete() {
+    if (IsThreadVoiceActive(this) == 0) {
+        PlayThreadVoice();
+    }
+}
+
+// us-802ac244 (VisionTell_RemoveVoice)
+// Remove a voice from the slots by matching its embedded CCharVoice pointer.
+void VisionTell_RemoveVoice(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
+    DetachThreadVoice(self, voicePtr);
+
+    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
+
+    // Slot 0x24: same pattern
+    handle = self->field_0x24;
+    biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
     }
 }
 

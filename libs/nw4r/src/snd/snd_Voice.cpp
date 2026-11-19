@@ -17,30 +17,6 @@ static inline u16 mixVolume(f32 volume) {
 }
 
 Voice::Voice() {
-
-    // Default every voice-out param to { volume=1, pitch=1, pan=0, surround=0,
-    // fxSend=0, lpf=0 }. Retail peels element 0 inline, then loops the rest
-    // with a runtime-counted loop (MWCC emits the div-by-24 count machinery
-    // only for the pointer-loop form, not for a constant index loop).
-    mVoiceOutParam[0].volume = 1.0f;
-    mVoiceOutParam[0].pitch = 1.0f;
-    mVoiceOutParam[0].pan = 0.0f;
-    mVoiceOutParam[0].surroundPan = 0.0f;
-    mVoiceOutParam[0].fxSend = 0.0f;
-    mVoiceOutParam[0].lpfFreq = 0.0f;
-
-    VoiceOutParam* pParam = &mVoiceOutParam[1];
-    VoiceOutParam* pEnd = &mVoiceOutParam[VOICES_MAX];
-    while (pParam < pEnd) {
-        pParam->volume = 1.0f;
-        pParam->pitch = 1.0f;
-        pParam->pan = 0.0f;
-        pParam->surroundPan = 0.0f;
-        pParam->fxSend = 0.0f;
-        pParam->lpfFreq = 0.0f;
-        pParam++;
-    }
-
     mCallback = NULL;
     mIsActive = false;
     mIsStarting = false;
@@ -392,22 +368,32 @@ void Voice::Free() {
     mIsActive = false;
 }
 
-void Voice::Setup(const WaveData& rData, u32 offset) {
-    AxVoice::Format format = WaveFormatToAxFormat(rData.sampleFormat);
-    int sampleRate = rData.sampleRate;
+void Voice::Setup(const WaveInfo& rInfo, u32 offset) {
+    AxVoice::Format format;
+    switch (rInfo.sampleFormat) {
+    case SAMPLE_FORMAT_PCM_S16:
+        format = AxVoice::FORMAT_PCM16;
+        break;
+    case SAMPLE_FORMAT_PCM_S8:
+        format = AxVoice::FORMAT_PCM8;
+        break;
+    default:
+        format = AxVoice::FORMAT_ADPCM;
+        break;
+    }
+    int sampleRate = rInfo.sampleRate;
 
     for (int i = 0; i < mChannelCount; i++) {
         if (mAxVoice[i][0] == NULL) {
             continue;
         }
 
-        void* pAddr = rData.channelParam[i].dataAddr;
-        const ChannelParam& rParam = rData.channelParam[i];
-        const AdpcmInfo& rInfo = rData.channelParam[i].adpcmInfo;
+        void* pAddr = rInfo.channelParam[i].dataAddr;
+        const AdpcmInfo& rAdpcmInfo = rInfo.channelParam[i].adpcmInfo;
 
         AdpcmParam param;
         if (format == AxVoice::FORMAT_ADPCM) {
-            param = rInfo.param;
+            param = rAdpcmInfo.param;
             AxVoice::CalcOffsetAdpcmParam(&param.pred_scale, &param.yn1,
                                           &param.yn2, offset, pAddr, param);
         }
@@ -418,13 +404,13 @@ void Voice::Setup(const WaveData& rData, u32 offset) {
                 continue;
             }
 
-            pAxVoice->Setup(rData.channelParam[i].dataAddr, format, sampleRate);
-            pAxVoice->SetAddr(rData.loopFlag, pAddr, offset, rData.loopStart,
-                              rData.loopEnd);
+            pAxVoice->Setup(pAddr, format, sampleRate);
+            pAxVoice->SetAddr(rInfo.loopFlag, pAddr, offset, rInfo.loopStart,
+                              rInfo.loopEnd);
 
             if (format == AxVoice::FORMAT_ADPCM) {
                 pAxVoice->SetAdpcm(&param);
-                pAxVoice->SetAdpcmLoop(&rInfo.loopParam);
+                pAxVoice->SetAdpcmLoop(&rAdpcmInfo.loopParam);
             }
 
             pAxVoice->SetSrcType(AxVoice::SRC_4TAP_AUTO, mPitch);

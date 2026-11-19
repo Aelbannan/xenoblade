@@ -8,7 +8,9 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CItemImpl.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
-#include "kyoshin/CEquipItemBoxImports.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
+#undef CItem_initItemImplInstances
+#include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include <nw4r/lyt/lyt_layout.h>
@@ -30,9 +32,6 @@
 // (retail getEIBProgress defers narrowing, no clrlwi after the call); the
 // canonical u16 form lives in kyoshin/code_80135FDC_Bdat.hpp.
 
-// C-linkage imports live in kyoshin/CEquipItemBox.hpp. CItem_kindPtr stays
-// local: CEquipChange.hpp / CItemBoxInfo.hpp declare it with other signatures.
-extern "C" void* CItem_kindPtr(u8, s16);
 // CItemImpl comes from the canonical owner header kyoshin/cf/CItemImpl.hpp.
 // C-linkage import: CEquipChange.hpp declares renderItemBoxByKind with a u16 arg4,
 // but retail passes the full 32-bit word (r6 -> mr -> setupItemBoxDetail), so the
@@ -171,11 +170,11 @@ s8 CEquipItemGrid::chkEIBEquip(u16 param) {
             case 6:
             case 7:
             case 8: {
-                u8 count = (u8)((CItemImpl*)CItem_initItemImplInstances(obj))->vf30((CItemData*)obj);
+                u8 count = (u8)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
                 if (count != 0) {
                     for (u8 i = 0; i < count; i++) {
-                        if ((s16)((CItemImpl*)CItem_initItemImplInstances(obj))->vf40((CItemData*)obj, i) == -1) {
-                            CItemInstance* entry = (CItemInstance*)((CItemImpl*)CItem_initItemImplInstances(obj))->vf2C((CItemData*)obj, i);
+                        if ((s16)CItem_initItemImplInstances((CItemData*)obj)->vf40((CItemData*)obj, i) == -1) {
+                            CItemInstance* entry = (CItemInstance*)CItem_initItemImplInstances((CItemData*)obj)->vf2C((CItemData*)obj, i);
                             if (entry != 0 && (entry->flags & 1) != 0) {
                                 return -3;
                             }
@@ -271,11 +270,11 @@ char* CEquipItemGrid::fmtEIBItemName(u32 param) {
         if (obj != 0) {
             if (obj->word != 0) {
                 sprintf(&field_2006[0], &lbl_eu_8050EFDC[0x2a],
-                        ((CItemImpl*)CItem_initItemImplInstances(obj))->vf20((CItemData*)obj));
+                        CItem_initItemImplInstances((CItemData*)obj)->vf20((CItemData*)obj));
                 if (cat == 3) {
                     // Retail re-fetches the impl accessor before the slot probe
                     // and keeps v unmasked until the count expression.
-                    u32 v = ((CItemImpl*)CItem_initItemImplInstances(obj))->vf08((CItemData*)obj);
+                    u32 v = CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
                     char* str = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36], 0x1e - ((u8)v - 1));
                     sprintf(&field_2006[0], &lbl_eu_8050EFDC[0x3b], &field_2006[0], str);
                 }
@@ -456,19 +455,19 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
     u8 cat = (word >> 12) & 0xF;
     u32 result = 0;
     if (cat == 3) {
-        u32 key = ((CItemImpl*)CItem_initItemImplInstances(item))->vf54((CItemData*)item);
-        u32 id = ((CItemImpl*)CItem_initItemImplInstances(item))->vf08((CItemData*)item);
+        u32 key = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
+        u32 id = CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         u16 count =
             (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x40], key);
         CEquipItemBoxF32Record rec = lbl_eu_8050EF68;
         // int->double via the 0x4330 magic, then scale by rec[id] and truncate.
         result = __cvt_fp2unsigned((double)(u32)count * (double)rec.f[id & 0x3F]);
     } else if (cat == 9) {
-        u32 id = ((CItemImpl*)CItem_initItemImplInstances(item))->vf08((CItemData*)item);
+        u32 id = CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         CEquipItemBoxF32Record rec = lbl_eu_8050EF68;
         for (u8 i = 0; i < 4; i++) {
             CItemInstance* entry =
-                (CItemInstance*)((CItemImpl*)CItem_initItemImplInstances(item))->vf2C((CItemData*)item, i);
+                (CItemInstance*)CItem_initItemImplInstances((CItemData*)item)->vf2C((CItemData*)item, i);
             if (entry != 0) {
                 u16 count = (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8,
                                                &lbl_eu_8050EFDC[0x40], i);
@@ -481,7 +480,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
     } else {
         u32 v = LookupItemTypeTable(kind);
         u32 count = BdatGetU16Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x40], kind);
-        u8 n = (u8)((CItemImpl*)CItem_initItemImplInstances(item))->vf30((CItemData*)item);
+        u8 n = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
         float inc = lbl_eu_80668B28;
         for (u8 i = 0; i < n; i++) {
             inc += lbl_eu_80668B08;
@@ -506,12 +505,12 @@ void CEquipItemGrid::sortEIBGridByCat(u32 cat) {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(this->cat, a->unk0);
             if (cat == 3) {
                 // Descending vf54 name-key sort (u16 compare).
-                CItemInstance* implA =
-                    (CItemInstance*)CItem_initItemImplInstances(objA);
-                CItemInstance* implB =
-                    (CItemInstance*)CItem_initItemImplInstances(objB);
-                u16 keyA = (u16)((CItemImpl*)implB)->vf54((CItemData*)objB);
-                u16 keyB = (u16)((CItemImpl*)implA)->vf54((CItemData*)objA);
+                CItemImpl* implA =
+                    CItem_initItemImplInstances((CItemData*)objA);
+                CItemImpl* implB =
+                    CItem_initItemImplInstances((CItemData*)objB);
+                u16 keyA = (u16)implB->vf54((CItemData*)objB);
+                u16 keyB = (u16)implA->vf54((CItemData*)objA);
                 if (keyA < keyB) {
                     CEquipItemData tA;
                     CEquipItemData tB;
@@ -528,11 +527,11 @@ void CEquipItemGrid::sortEIBGridByCat(u32 cat) {
                 // front, ties fall back to the byte-7 clamp compare.
                 int kA = IsSkillItem(objA);
                 int kB = IsSkillItem(objB);
-                if (((CItemImpl*)CItem_initItemImplInstances(objA))->vf80((CItemData*)objA)
+                if (CItem_initItemImplInstances((CItemData*)objA)->vf80((CItemData*)objA)
                     != 0) {
                     kA = 0;
                 }
-                if (((CItemImpl*)CItem_initItemImplInstances(objB))->vf80((CItemData*)objB)
+                if (CItem_initItemImplInstances((CItemData*)objB)->vf80((CItemData*)objB)
                     != 0) {
                     kB = 0;
                 }
@@ -633,8 +632,8 @@ void CEquipItemGrid::sortEIBByVf08() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u16 keyB = (u16)((CItemImpl*)CItem_initItemImplInstances(objB))->vf08((CItemData*)objB);
-            if ((u16)((CItemImpl*)CItem_initItemImplInstances(objA))->vf08((CItemData*)objA) < keyB) {
+            u16 keyB = (u16)CItem_initItemImplInstances((CItemData*)objB)->vf08((CItemData*)objB);
+            if ((u16)CItem_initItemImplInstances((CItemData*)objA)->vf08((CItemData*)objA) < keyB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
                 CEquipItemData tA;
@@ -660,8 +659,8 @@ void CEquipItemGrid::sortEIBByNm58(int param) {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf54(objA);
-            u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf54(objB);
+            u16 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
+            u16 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
             u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyA);
             u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
@@ -691,8 +690,8 @@ void CEquipItemGrid::sortEIBByNm00(int param) {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 keyA = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objA))->vf54(objA);
-            u32 keyB = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(objB))->vf54(objB);
+            u16 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
+            u16 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
             u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyA);
             u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
@@ -749,8 +748,8 @@ void CEquipItemGrid::sortEIBByVf30() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 keyB = ((CItemImpl*)CItem_initItemImplInstances(objB))->vf30((CItemData*)objB);
-            u32 keyA = ((CItemImpl*)CItem_initItemImplInstances(objA))->vf30((CItemData*)objA);
+            u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf30((CItemData*)objB);
+            u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf30((CItemData*)objA);
             if ((u16)keyA < (u16)keyB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1052,8 +1051,8 @@ void CEquipItemGrid::sortEIBByVf90() {
             CEquipItemData* b = &data[j + 1];
             objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 keyA = ((CItemImpl*)CItem_initItemImplInstances(objA))->vf90((CItemData*)objA);
-            u32 keyB = ((CItemImpl*)CItem_initItemImplInstances(objB))->vf90((CItemData*)objB);
+            u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf90((CItemData*)objA);
+            u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf90((CItemData*)objB);
             if ((u8)keyA < (u8)keyB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1096,10 +1095,10 @@ double CEquipItemGrid::getEIBProgress(CItemInstance* item) {
 // set, else 0. The instance accessor is re-fetched per iteration (retail
 // shape); vtable slots [12]/[11] are the count and get-item methods.
 u32 CEquipItemGrid::hasEIBSlotFlag(CItemInstance* item) {
-    u16 count = ((CItemImpl*)CItem_initItemImplInstances(item))->vf30((CItemData*)item);
+    u16 count = CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
     for (u8 i = 0; i < count; i++) {
         CItemInstance* entry =
-                (CItemInstance*)((CItemImpl*)CItem_initItemImplInstances(item))->vf2C((CItemData*)item, i);
+                (CItemInstance*)CItem_initItemImplInstances((CItemData*)item)->vf2C((CItemData*)item, i);
         if (entry != 0 && (entry->flags & 1) != 0) {
             return 1;
         }
@@ -2064,10 +2063,10 @@ u32 CEquipItemBox::findEIBEquipSlot() {
         CItemInstance* obj = (CItemInstance*)CItem_kindPtr(table.slots[e].cat, item);
         if (obj == 0) continue;
         if (obj->word == 0) continue;
-        u8 count = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf30(obj);
+        u8 count = (u8)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
         for (u8 i = 0; i < count; i++) {
-            CEquipItemBoxItemImplView* impl = (CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj);
-            s16 slot = impl->vf40(obj, i);
+            int slot = (s16)CItem_initItemImplInstances((CItemData*)obj)
+                           ->vf40((CItemData*)obj, i);
             if (slot == -1) continue;
             if (slot == target) return (u8)(i + table.slots[e].extra);
         }
@@ -2216,7 +2215,7 @@ void CEquipItemBox::bindEIBCellTexture(u16 kind, void* itemPtr,
     // Retail reuses one register for the icon name and the bound resource.
     void* res = 0;
     if (itemPtr != 0 && ((((CItemInstance*)itemPtr)->word >> 12) & 0xF) == 3) {
-        u32 id = (u32)((CItemImpl*)CItem_initItemImplInstances((CItemInstance*)itemPtr))
+        u32 id = (u32)CItem_initItemImplInstances((CItemData*)itemPtr)
                      ->vf08((CItemData*)itemPtr);
         switch ((u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x1a7], (u16)id)) {
         case 4: res = MakeTplNameSysFile(0x144); break;
@@ -2280,8 +2279,8 @@ void CEquipItemBox::refreshEIBCellText(s8 v,
     sprintf(bufName, &lbl_eu_8050EFDC[0x219], i + 1);
     u32 kind = (p != 0) ? ((p->word >> 16) & 0xF) : 0;
     if (kind == 3 || kind == 9) {
-        CItemInstance* obj = (CItemInstance*)CItem_initItemImplInstances(item);
-        u32 n = ((CItemImpl*)obj)->vf08((CItemData*)obj);
+        CItemImpl* impl = CItem_initItemImplInstances((CItemData*)item);
+        u32 n = impl->vf08((CItemData*)item);
         char* str = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36],
                                   0x1e - ((u8)n - 1));
         sprintf(bufText, &lbl_eu_8050EFDC[0x2a], str);
@@ -2312,7 +2311,7 @@ void CEquipItemBox::bindEIBCellIcon(u16 kind, void* item, u8 i) {
         if (((((CItemInstance*)obj)->word >> 16) & 0xF) == 3) {
             char* name = 0;
             u16 id =
-                (u16)((CItemImpl*)CItem_initItemImplInstances(obj))->vf08((CItemData*)obj);
+                (u16)CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
             switch (id) {
             case 1: name = MakeTplNameSysFile(0x197); break;
             case 2: name = MakeTplNameSysFile(0x196); break;
@@ -2344,7 +2343,7 @@ void CEquipItemBox::bindEIBCellIcon(u16 kind, void* item, u8 i) {
             {
                 char* name = 0;
                 u16 id =
-                    (u16)((CItemImpl*)CItem_initItemImplInstances(obj))->vf08((CItemData*)obj);
+                    (u16)CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
                 switch (id) {
                 case 1: name = MakeTplNameSysFile(0x191); break;
                 case 2: name = MakeTplNameSysFile(0x190); break;
@@ -3167,19 +3166,19 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
                   1);
     BdatGetItemType(kind);
     CItemInstance* obj = (CItemInstance*)item;
-    u32 key = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj);
+    u32 key = CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj);
     // Count text: "xN" scaled by the vf08 slot count.
-    u32 id = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf08(obj);
+    u32 id = CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
     char* str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x1e - ((u8)id - 1));
     LayoutSetTextBoxFmtValue(field_38, base + 0x5f2, str, 0);
     // Name text from the bdat lookup keyed by the vf54 name key.
     u32 name = BdatGetU8Direct(
         (const void*)lbl_eu_806640D8, base + 0x36,
-        (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj));
+        (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
     LayoutSetTextBoxFmtValue(field_38, base + 0x5e7, (char*)name, 0);
     // Detail text: when the vf90 value is present, prefix a per-name-byte
     // unit string for name bytes 3/4; otherwise bind the empty placeholder.
-    if (((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj) == 0) {
+    if (CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj) == 0) {
         LayoutSetTextBoxFmtValue(field_38, base + 0x5fe, base + 0x228, 0);
     } else {
         char buf[0x20];
@@ -3187,10 +3186,10 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
         if (v != 0 && (u32)(v - 3) <= 1) {
             char* str2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
             sprintf(buf, base + 0x626,
-                    ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj), str2);
+                    CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj), str2);
         } else {
             sprintf(buf, base + 0x63c,
-                    ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj));
+                    CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj));
         }
         LayoutSetTextBoxText(field_38, base + 0x5fe, buf, 0);
     }
@@ -3211,8 +3210,8 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
                   field_38->GetRootPane());
     mPage.mItemIds[8] = (u16)key;
     mPage.mBytesA8[8] = 3;
-    mPage.mBytesB4[8] = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf08(obj);
-    (&mPage)->SetValue(8, (short)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj));
+    mPage.mBytesB4[8] = (u8)CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
+    (&mPage)->SetValue(8, (short)CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj));
     copyVEC3(&mPage.mPos[5], pos);
 }
 
@@ -3226,7 +3225,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
     char* base = lbl_eu_8050EFDC;
     if (b == 0) return;
     if (((CItemInstance*)b)->word == 0) return;
-    CItemImpl* impl = (CItemImpl*)CItem_initItemImplInstances((CItemInstance*)b);
+    CItemImpl* impl = CItem_initItemImplInstances((CItemData*)b);
     u16 count = (u16)impl->vf30((CItemData*)b);
     int idx = 0;
     do {
@@ -3247,15 +3246,15 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
             LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
         } else {
             setPaneVisible(pane, 1);
-            s16 slot = ((CItemImpl*)CItem_initItemImplInstances((CItemInstance*)b))
+            s16 slot = CItem_initItemImplInstances((CItemData*)b)
                            ->vf40((CItemData*)b, (u8)idx);
             if (slot != -1) {
                 CItemInstance* item = (CItemInstance*)CItem_kindPtr(3, slot);
                 u32 g = (u32)lbl_eu_806640D8;
-                u16 kind = (u16)((CItemImpl*)CItem_initItemImplInstances(item))->vf54((CItemData*)item);
+                u16 kind = (u16)CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
                 storeKind = kind;
                 char* name = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36,
-                                            0x1e - ((u16)((CItemImpl*)CItem_initItemImplInstances(item))->vf08((CItemData*)item) - 1));
+                                            0x1e - ((u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item) - 1));
                 switch ((u8)BdatGetU8Direct((const void*)g, base + 0x1a7, kind)) {
                 case 0:
                     icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
@@ -3279,7 +3278,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                     icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6de, 0);
                     break;
                 }
-                u32 key90 = ((CItemImpl*)CItem_initItemImplInstances(item))->vf90((CItemData*)item);
+                u32 key90 = CItem_initItemImplInstances((CItemData*)item)->vf90((CItemData*)item);
                 if (key90 == 0) {
                     sprintf(buf, base + 0x6f4, i1);
                     LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
@@ -3296,11 +3295,11 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                 }
                 char* str2 = BdatGetPtrDirect((const void*)g, base + 0x36, kind);
                 sprintf(buf40, base + 0x3b, str2, name);
-                storeByte = (u8)((CItemImpl*)CItem_initItemImplInstances(item))->vf08((CItemData*)item);
-                storeKey = (s16)((CItemImpl*)CItem_initItemImplInstances(item))->vf90((CItemData*)item);
+                storeByte = (u8)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
+                storeKey = (s16)CItem_initItemImplInstances((CItemData*)item)->vf90((CItemData*)item);
                 PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
             } else {
-                CItemInstance* entry = (CItemInstance*)((CItemImpl*)CItem_initItemImplInstances((CItemInstance*)b))
+                CItemInstance* entry = (CItemInstance*)CItem_initItemImplInstances((CItemData*)b)
                                            ->vf2C((CItemData*)b, (u8)idx);
                 if (entry != 0 && (entry->flags & 1)) {
                     u16 kind2 = (u16)((entry->word >> 16) & 0xFFF);
@@ -3439,8 +3438,8 @@ int CEquipItemBox::useEIBSelectedItem() {
                     case 2: CtrlObjectParam_SetEquipSlot5(owner, -1); break;
                     case 4: CtrlObjectParam_SetEquipSlot0(owner, -1); break;
                     case 5: CtrlObjectParam_SetEquipSlot1(owner, -1); break;
-                    case 6: CtrlObjectParam_SetEquipSlot2(owner, -1); break;
-                    case 7: CtrlObjectParam_SetEquipSlot3(owner, -1); break;
+                    case 6: reinterpret_cast<cf::CtrlObjectParamData*>(owner)->setArgType2((void*)-1); break;
+                    case 7: reinterpret_cast<cf::CtrlObjectParamData*>(owner)->setArgType3((void*)-1); break;
                     case 8: CtrlObjectParam_SetEquipSlot4(owner, -1); break;
                     }
                     CtrlObjectParam_SyncParamFromActor(owner);
@@ -3459,11 +3458,11 @@ int CEquipItemBox::useEIBSelectedItem() {
         for (u16 j = 0; j < n; j++) {
             CItemInstance* obj = (CItemInstance*)CItem_kindPtr(cats.b[c2], (s16)j);
             if (obj == 0 || obj->word == 0) continue;
-            u32 cnt = ((CItemImpl*)CItem_initItemImplInstances(obj))->vf30((CItemData*)obj);
+            u32 cnt = CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
             for (u8 k = 0; k < (u8)cnt; k++) {
-                if ((s16)((CItemImpl*)CItem_initItemImplInstances(obj))->vf40((CItemData*)obj, k)
+                if ((s16)CItem_initItemImplInstances((CItemData*)obj)->vf40((CItemData*)obj, k)
                     == itemId) {
-                    ((CItemImpl*)CItem_initItemImplInstances(obj))
+                    CItem_initItemImplInstances((CItemData*)obj)
                         ->vf44((CItemData*)obj, k, -1);
                     cleared = true;
                 }
@@ -3518,13 +3517,13 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         CFileHandle* fh = (CFileHandle*)field_24;
         void* buf = fh->mData;
         fh->mData = 0;
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         field_30 = CLibLayout::createArcResourceAccessor();
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_30, buf, base + 0x71f);
+        field_30->Attach(buf, base + 0x71f);
         buildLayout(&field_38, field_30, base + 0x723);
         bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
         nw4r::lyt::Pane* root = field_38->GetRootPane();
-        void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
+        void* font = CDeviceFont::getFontInfo(1, field_38);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)font)->getFont()));
         char* msg = (char*)getPackedFont();
         setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
@@ -3663,9 +3662,9 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         CFileHandle* fh2 = (CFileHandle*)field_28;
         void* buf2 = fh2->mData;
         fh2->mData = 0;
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         field_34 = CLibLayout::createArcResourceAccessor();
-        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_34, buf2, base + 0x71f);
+        field_34->Attach(buf2, base + 0x71f);
         closeEIBSortMenu();
         field_28 = 0;
         mRegion14.validateHeap();
@@ -3750,7 +3749,7 @@ void CEquipItemGrid::rebuildEIBGridPage(u8 v, u8 b, u8 hi) {
                 for (u16 m = 0; m < cnt2; m++) {
                     CItemInstance* obj2 = (CItemInstance*)CItem_kindPtr(cat, (s16)m);
                     if (obj2 == 0 || obj2->word == 0) continue;
-                    CItemImpl* impl2 = (CItemImpl*)CItem_initItemImplInstances(obj2);
+                    CItemImpl* impl2 = CItem_initItemImplInstances((CItemData*)obj2);
                     u16 num = (u16)impl2->vf30((CItemData*)obj2);
                     for (u16 p = 0; p < num; p++) {
                         s16 slot = impl2->vf40((CItemData*)obj2, (u8)p);
@@ -3787,7 +3786,7 @@ void CEquipItemGrid::rebuildEIBGridPage(u8 v, u8 b, u8 hi) {
             cell->unk6 = 1;
             // Name check: name-byte 1/2 clears the cell when the window kind
             // disagrees with the vf54 name.
-            u8 name1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (char*)base, (u16)((CItemImpl*)CItem_initItemImplInstances(obj))->vf54((CItemData*)obj));
+            u8 name1 = BdatGetU8Direct((const void*)lbl_eu_806640D8, (char*)base, (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
             if ((u8)name1 == 1) {
                 if (hi != 2) cell->unk6 = 0;
             } else if ((u8)name1 == 2) {

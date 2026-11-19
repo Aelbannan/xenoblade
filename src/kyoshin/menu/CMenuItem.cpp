@@ -14,6 +14,7 @@
 #include "kyoshin/CTaskGame.hpp"
 #include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -29,6 +30,7 @@ extern "C" {
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void BgTex_Release_3D9C(CBgTex* self);
 void teardown(CTitleAHelp* self);
+void updateHelp(CTitleAHelp* self);
 void CfRes_getInstPtrBC();
 int KyoshinHeap_GetActive54();
 u32 KyoshinHeap_GetSize500000();
@@ -65,14 +67,13 @@ struct CfMenuPadData {
 };
 
 // Input-handler callees (retail unmangled names).
-extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void beginClose(CTitleAHelp* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801C412C(CTitleAHelp* self);
+
+extern "C" void BgTex_Tick_3D54(CBgTex* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
@@ -177,7 +178,7 @@ void CMenuItem::Move() {
     case 0:
         // Once the bg texture, title bar and item grid are all ready,
         // start the panel intro animations and play the open cue.
-        if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
+        if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && mTitleAHelp.isInitialized() != 0 &&
             mItemBoxGrid.IsItemBoxReady() != 0) {
             func_801C412C(&mTitleAHelp);
             mItemBoxGrid.InitItemDisplay();

@@ -302,8 +302,8 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-for
 // table globals are retyped.
 
 // .sbss item-kind owner tables (u32 values; SDA-accessed).
-extern u32 lbl_eu_806640F4;
-extern u32 lbl_eu_806640F8;
+extern void* lbl_eu_806640F4;
+extern void* lbl_eu_806640F8;
 
 // ItemBoxLine_ProbeAvailability: item-kind table base (character-data owner table).
 extern u32 lbl_eu_80664110;

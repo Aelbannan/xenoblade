@@ -13,6 +13,19 @@ extern "C" u32 lbl_eu_80570068[];
 extern "C" float lbl_eu_8066B2E0;
 extern "C" float lbl_eu_8066B2E4;
 
+// CSchedule::field_0x00 state bits (MWCC allocates bitfields MSB-first).
+struct CScheduleFlags {
+    u16 b15 : 1; // 0x8000: running (cleared when the schedule retires)
+    u16 b14 : 1; // 0x4000
+    u16 b13 : 1; // 0x2000: has translation
+    u16 b12 : 1; // 0x1000: has rotation
+    u16 b11 : 1; // 0x0800: has scale
+    u16 b10 : 1; // 0x0400: destroy request (Init flags_a)
+    u16 b9 : 1;  // 0x0200: Init flags_b
+    u16 b8 : 1;  // 0x0100: paused
+    u16 : 8;
+};
+
 // Schedule entry: {u16 type, u16 flags}
 struct ScheduleEntry {
     u16 type;
@@ -35,11 +48,12 @@ struct CSchedule {
     ~CSchedule();
     int Init(ScheduleEntry* entries, u8* field_0x08_ptr, u8* field_0x0c_ptr, unsigned int flags_a, unsigned int flags_b, u8* field_0x10_ptr);
     int RebuildHandles();
+    void ReleaseHandles();
     void Update(f32 dt);
     void StepEntries(f32 delta);
     void FeedTargetDist();
 
-    u16 field_0x00;          // 0x00: packed flags built from init params
+    CScheduleFlags field_0x00; // 0x00: packed flags built from init params
     ScheduleEntry* mEntries; // 0x04: pointer to ScheduleEntry array
     u8* field_0x08;          // 0x08
     u8* field_0x0c;          // 0x0c

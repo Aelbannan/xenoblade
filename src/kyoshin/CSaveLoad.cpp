@@ -75,7 +75,7 @@ extern const float lbl_eu_80668B74;
 
 // Forward declarations for functions called before their definitions
 // extern "C" to match retail unmangled reloc names
-extern cf::CfAward lbl_eu_806649F8;
+extern cf::CfAward award;
 extern u8 lbl_eu_80576CF8[];
 extern void __register_global_object(void*, void*, void*);
 extern void CtrlRemote_ResetSlotArrayObj(void*);
@@ -2004,9 +2004,8 @@ extern "C" void awardAffinity() {
     }
 }
 
-// Despite Fv mangling, receives (self, val) with val in r4 -
-// the value is checked against the [0x28, 0x3e) window.
-extern "C" void processAward__Q22cf7CfAwardFv(cf::CfAward*, int val) {
+// The value is checked against the [0x28, 0x3e) window.
+void cf::CfAward::processAward(int val) {
     if (val < 0x28) return;
     if (val >= 0x3e) return;
     awardAffinity();
@@ -2157,13 +2156,13 @@ u32 chkAwardFlags99() {
 
 
 
-// sinit: static initializer for the global CfAward instance at lbl_eu_806649F8.
+// sinit: static initializer for the global CfAward instance at award.
 // Sets the manually-managed vtable pointers, runs the constructor body, and
 // registers the atexit destructor.
 extern "C" void sinit_802930E0() {
-    lbl_eu_806649F8.mSecondBase = (void*)&lbl_eu_80538858;
-    lbl_eu_806649F8.mVtbl = (char*)&lbl_eu_80538858 + 8;
-    CtrlRemote_ResetSlotArrayObj(&lbl_eu_806649F8);
-    __register_global_object(&lbl_eu_806649F8, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
+    award.mSecondBase = (void*)&lbl_eu_80538858;
+    award.mVtbl = (char*)&lbl_eu_80538858 + 8;
+    CtrlRemote_ResetSlotArrayObj(&award);
+    __register_global_object(&award, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
 }
 #pragma pop

@@ -21,6 +21,12 @@ public:
     CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
 
     int blank1() override;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void playSlot1();
+    void playSlot2();
+    void notifyComplete();
+    static CVS_THREAD_VISION_TELL* create(CVoiceHandle* h1, CVoiceHandle* h2);
 };
 
 // Phantom vtable view over CVoiceHandle so virtual dispatch is emitted as a
@@ -71,9 +77,6 @@ struct CVS_THREAD_VISION_TELL_raw {
 extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, void* dtor);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern u32 lbl_eu_80539DB0[3];  // Init data tables for slot states (3 u32s each)
-extern u32 lbl_eu_80539DBC[3];
-extern u32 lbl_eu_80539DC8[3];
 
 // Random voice ID tables (short arrays in .sdata).
 extern "C" short lbl_eu_80662D58[4];

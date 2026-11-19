@@ -1307,9 +1307,9 @@ extern void* lbl_eu_806640A8;
 extern "C" u32 getGlobalPtr640A8__Q22cf13CfGameManagerFv() { return (u32)lbl_eu_806640A8; }
 extern u32 lbl_eu_806640A4;
 extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv() { return lbl_eu_806640A4; }
-extern u32 lbl_eu_806640F4;
-extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv() { return lbl_eu_806640F4; }
-extern u32 lbl_eu_80663D90;
+extern void* lbl_eu_806640F4;
+extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv() { return (u32)lbl_eu_806640F4; }
+
 extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv() { return lbl_eu_80663D90; }
 extern u8 lbl_eu_80663E34;
 extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv() { return lbl_eu_80663E34; }

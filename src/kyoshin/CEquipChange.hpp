@@ -213,7 +213,6 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 // Canonical return type from the owner header (cf/CItem.hpp). Kept attribute-
 // free here: CItemExt is only ever used through this pointer.
 struct CItemExt;
-extern "C" CItemExt* CItem_kindPtr(u32 index, s16 value);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
 
@@ -226,8 +225,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
-extern "C" void CtrlObjectParam_SetEquipSlot2(void*, int);
-extern "C" void CtrlObjectParam_SetEquipSlot3(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 

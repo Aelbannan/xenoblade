@@ -47,12 +47,9 @@ extern "C" void __ct__8CProcessFv(void* self);
 extern "C" void SymMark_Place(
     CMenuSymbolMark* self, SymbolMarkEntry* entry,
     nw4r::math::VEC3* worldIn, EntryInputPos* posSrc, u32 flag);
-extern const PtmfTriple __ptmf_null;
-// Panic/format string blobs and render-item interface vtables.
+// Panic/format string blobs.
 extern u8 lbl_eu_8052637C[];
 extern u8 lbl_eu_80526354[];
-extern u8 sSymbolMarkItemVtable[];
-extern u8 sSymbolMarkItemVtableB[];
 
 
 // Zero-body stubs for matching
@@ -213,30 +210,9 @@ mUnkClass.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x5400,
     SymbolMarkRenderItem* item = (SymbolMarkRenderItem*)mtl::MemManager::allocate(
         0x7c, (u32)CWorkThreadSystem::getWorkMem());
     if (item != 0) {
-        // Construct the CProcess base over the raw allocation, then patch the
-        // interface vtables and clear the move/draw ptmf triples. Statement
-        // order mirrors the retail load/store interleave.
-        __ct__8CProcessFv(item);
-        item->vt10 = (void*)&sSymbolMarkItemVtable[0];
-        u32* ptmf = (u32*)&__ptmf_null;
-        u32 ptmf1 = ptmf[1];
-        u32 ptmf0 = ptmf[0];
-        u32 ptmf2;
-        item->ptmfMove[0] = ptmf0;
-        item->ptmfMove[1] = ptmf1;
-        ptmf2 = ptmf[2];
-        item->ptmfMove[2] = ptmf2;
-        ptmf1 = ptmf[1];
-        ptmf0 = ptmf[0];
-        item->ptmfDraw[0] = ptmf0;
-        item->ptmfDraw[1] = ptmf1;
-        ptmf2 = ptmf[2];
-        item->ptmfDraw[2] = ptmf2;
-        // Retail stores the CD50 vtable over BOTH interface slots (+0x24 for
-        // the second interface); the earlier vt10 store survives as a dead
-        // store in the retail bytes.
-        item->vt10 = (void*)&sSymbolMarkItemVtableB[0];
-        item->vt54 = (void*)&sSymbolMarkItemVtableB[0x24];
+        // The render item is a CArrow3D: its CTTask base initializes the
+        // move/draw ptmfs and the compiler installs both interface vtables.
+        new (item) CArrow3D;
         item->state70 = 0;
         item->field78 = 0;
     }
@@ -2095,10 +2071,8 @@ restore:
     }
 }
 
-// ---------- CArrow3D::Move (retail empty override
-// the class deliberately declares no Move() so the vtable keeps the
-// CTTask<CArrow3D>::Move dispatch - see CMenuSymbolMark.hpp) ----------
-extern "C" void Move__8CArrow3DFv() {
+// ---------- CArrow3D::Move (empty override) ----------
+void CArrow3D::Move() {
 }
 
 // ---------- CArrow3D::Term ----------
@@ -2119,7 +2093,7 @@ void CArrow3D::Term() {
     // (CCol6System::Term pattern).
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
+        render = reinterpret_cast<IScnRender*>((char*)this + 0x54);
     }
     reinterpret_cast<CScn*>(lbl_eu_80663E14)->removeRenderCB(render);
 }
@@ -2134,7 +2108,7 @@ void CArrow3D::Init() {
     // (this+0x54) into its own addi; the call itself is unconditional.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
+        render = reinterpret_cast<IScnRender*>((char*)this + 0x54);
     }
     reinterpret_cast<CScn*>(lbl_eu_80663E14)->addRenderCB(render, 9, 0);
     u8* handle = 0;
@@ -2185,12 +2159,4 @@ extern "C" void SymMark_ThunkRender5C(void* self) {
 
 extern "C" void SymMark_ThunkDtor5C(void* self) {
     ((void (*)(CMenuSymbolMark*))__dt__15CMenuSymbolMarkFv)((CMenuSymbolMark*)((char*)self - 0x5C));
-}
-
-extern "C" void SymMark_ArrowRender54(void* self) {
-    ((CArrow3D*)((char*)self - 0x54))->cbRenderBefore();
-}
-
-extern "C" void SymMark_ArrowDtor54(void* self) {
-    ((void (*)(CArrow3D*))__dt__8CArrow3DFv)((CArrow3D*)((char*)self - 0x54));
 }

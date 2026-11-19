@@ -17,14 +17,14 @@ Channel* Bank::NoteOn(const NoteOnInfo& rInfo) const {
         return NULL;
     }
 
-    WaveData waveData;
-    if (!mBankReader.ReadWaveParam(&waveData, instInfo.waveIndex,
-                                   mWaveDataAddress)) {
+    WaveInfo waveInfo;
+    if (!mBankReader.ReadWaveInfo(&waveInfo, instInfo.waveDataLocation,
+                                  mWaveDataAddress, NULL)) {
         return NULL;
     }
 
     Channel* pChannel = Channel::AllocChannel(
-        ut::Min<int>(waveData.numChannels, CHANNEL_MAX), rInfo.voiceOutCount,
+        ut::Min<int>(waveInfo.numChannels, CHANNEL_MAX), rInfo.voiceOutCount,
         rInfo.priority, rInfo.channelCallback, rInfo.channelCallbackData);
 
     if (pChannel == NULL) {
@@ -50,7 +50,7 @@ Channel* Bank::NoteOn(const NoteOnInfo& rInfo) const {
     pChannel->SetInitPan(initPan);
 
     pChannel->SetInitSurroundPan(0.0f);
-    pChannel->Start(waveData, rInfo.length, 0);
+    pChannel->Start(waveInfo, rInfo.length, 0);
 
     return pChannel;
 }

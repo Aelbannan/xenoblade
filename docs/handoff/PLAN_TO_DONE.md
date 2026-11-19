@@ -24,16 +24,16 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 8 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 9 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 14,502 / 19,310 (75.1%); checkpoint 7 was 14,473 (+29; 151 better, 65 worse; 10 objdiff-only drops, see §5 c8 debts) |
-| Units complete (linked) | 617 / 1,198 |
-| Matched code / data bytes | 43.2% / 53.0% |
+| Functions at 100% | 14,724 / 19,310 (76.2%); checkpoint 8 was 14,502 (+222; 261 reached 100%, 278 better; non-✓ drops logged in §5 c9) |
+| Units complete (linked) | 626 / 1,198 (c8: 617) |
+| Matched code / data bytes | 44.1% / 53.1% |
 | Unmatched functions by area | kyoshin 3,177 · monolib 875 · CriWare 337 · nw4r 226 · RVL_SDK 191 · PowerPC_EABI_Support 2 |
-| Faithful hard counts | label 44,589 · mangled_c 2,222 · section 1,126 · offset_cast 1,865 · view_struct 1,222 · noinline 136 · decl_shield 22 · volatile 150 · rule 274 · rtti_off 15 · foreign_data 531 |
-| Faithful soft counts | field_0x 27,882 · unk_name 1,129 · addr_func 992 |
+| Faithful hard counts | label 44,425 · mangled_c 2,146 · section 1,124 · offset_cast 1,857 · view_struct 1,209 · noinline 133 · decl_shield 17 · volatile 150 · rule 274 · rtti_off 16 · foreign_data 527 |
+| Faithful soft counts | field_0x 27,911 · unk_name 1,117 · addr_func 989 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
 Wave c6/c7 was a faithfulness wave: offset_cast 4,230 → 2,675 (CActorParam 894 → 11, CBattleManager 587 → 232,
@@ -82,6 +82,17 @@ Gate state at checkpoint 8: link OK (missing 43), extab OK (26), text-order OK (
 frozen rules OK, registry OK, faithful OK (ratcheted, 109 units; COption raised 1 → 7 by hand because removing
 its `*Imports.hpp` side header exposed 6 labels the header hid — honest rise, not a regression).
 Report: `/tmp/xb_ckpt/report_c8.json`.
+
+Checkpoint 9 (hy4 wave i + Opus near-complete/regalloc batches): +222 functions, 9 units linked (snd_SoundArchive,
+snd_ExternalSoundPlayer, muldiv, hcicmds, adx_hdr, sfh_ver1, CfObjectNpc, port_rfc, sdp_api); link missing 43 -> 42.
+nw4r snd `detail::WaveInfo` swap (real runtime/on-disk split, view structs and `#define private public` removed);
+20 hidden vtables recovered as `__vt__` names (CFade, CChain*, CTTask<...>, reslist bases, CLibVM, CPackItem...) —
+hand-written vptr stores using old `lbl_eu_*` names must then be deleted (CBattleManager dtors); cvsys PTMF state
+handlers became real members and factories real `static create()`; CTitleAHelp::isInitialized member in 19 menus.
+Orchestrator rejections: split-budget shrink + hand-written `__dt__XXXX` (CUICfManager), pre-mangled caller externs
+(CCharVoiceMan), `_Local` duplicate structs (CfNandManager), dropping `-ipa off` on bta_dm_pm (reverses .text order),
+flipping g3d_resfile (multiply-defined lbl) and code_800F42AC (C++-mangled names where retail exports C names).
+Orchestrator lint `/tmp/xb/orch/hacklint.py` now also flags padded overlay structs (`u8 _XX[0x..]`).
 
 ## 3. What this session established (do not re-derive)
 
@@ -200,6 +211,54 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0. **Checkpoint 9 debts (2026-11-19).**
+   - CSkipTimer (wave h, h12): BeginLoad/OnFileEvent use a hand-expanded member-wise copy from a block-scoped temporary instead of the probable original `mSysWin = CSysWin(0);` / `mSkipTimer2 = CSkipTimer2(mLayout);` (implicit operator= is not inlined under the unit's real -ipa off). Accepted because it replaced 26 noinline + 19 pragmas; revisit.
+   - CTaskGame (h49): volatile re-reads moved to `volatile` field declarations on UnkClass_8004041C (counter no longer
+       sees them). Plausible if the stream state is written from a callback thread; unverified. Removing volatility
+       costs CTaskGame_updateStream 100->97.8%.
+   - CfCamEvent_1 ctor (us-80075c34) 37.6%: retail inline word copies of ml::CVec3::zero; h46's u32[3] pun reverted
+       by orchestrator. h54 researching a faithful trivially-copyable CVec3.
+   - Next-wave leads (h42): CActorParam.hpp virtual return types (UnkVirtualFunc17/32/44/45/79/80/93/97/99/104/128/139/151/162/169/172 declared void, bodies return values); CBattleState.hpp readStatusSlot/getEventSlot/fetchStatusSlot real types; CfObjectMove real member at +0x6EC and MI subobject offsets.
+   - Next-wave leads (h57): CSaveLoad 5 mangled_c (CfAward dtor address for __register_global_object; processAward Fv with hidden int).
+   - CTaskGameCf::create (h50) calls ctor by mangled ABI name to avoid placement-new null guard — counted; find the real allocation shape.
+   - String-pool blobs renamed (sMakeCrystalStrings 0x8050888C, CPresentStringPool, UIBattleArcPathStrings, sMenuEnemyNamePool, sBdatColumnNames, adx*/ahx* message tables): references are still `blob + offset`; label count dropped (CMCCrystalBox 251->64) but the original shape is per-use string literals emitted by the compiler. Real fix: replace blob+offset with literals when the TU's pool order/size can be reproduced. Faithful counter should probably count `<named blob> + 0x..` as offset_cast — tooling follow-up.
+   - CMenuSymbolMark (h55): hand-built vtables renamed to invented `sSymbolMarkItemVtable`/`sSymbolMarkItemVtableB` (0x8052CDB4/0x8052CD50) — violates the vtable-rename rule added mid-wave; next wave: real classes with compiler-emitted `__vt__` (h63 recipe), else restore honest lbl names.
+   - Field-level `volatile` added to dodge the per-use volatile counter: CTaskGame.hpp (UnkClass_8004041C unk4/unk14, h49), CActParamAnimGame.hpp field530 ("retail reloads it"), ahx_sjd `const volatile u32 ahxsjd_init_flags[]` (h38). Faithful counter should count volatile field/object declarations too; then re-justify each.
+   - CtrlAct.hpp: cf::CtrlAct still declares placeholder virtuals vf00..vf19 (pre-existing at c7, now one per line). Real slot names needed from the retail vtable lbl_eu_8052B080.
+   - COption: new `optionAnimFrame()` inline wrapper around extern lbl_eu_80668C10 (h16) — check whether retail really reads a foreign sdata2 constant or a literal.
+   - CVec3 (h54, cancelled): removing the user-declared copy ctor makes MWCC emit retail's inline word copies; sweep was inconclusive (taken during churn). Header reverted to HEAD; CfCamEvent_1 now uses real ml::CVec3 fields (ctor 80.6%, honest). Redo the CVec3 blast-radius sweep on a quiet tree next wave.
+   - RESOLVED: CCollepedia `-ipa off` was compensating for dummy stubs (func_80254144 `{return 0;}` folded by -ipa file). Real bodies restored from invented-name twins (CCollepedia_getFieldOffset/getField12/getFieldAtIdx; deleted non-retail CCollepedia_decrementWrap); flag dropped, 64/80. DEBT: type the +0xE8 page catalog (0x140-byte pages, 6x0x34 rows, 5x0xA cells) instead of u8* offset math.
+   - CEquipItemBox (9 fns objdiff 100->99.8, hexdiff ✓ unchanged): CEquipItemBoxImports.hpp declares a bogus C++ overload `void* CItem_initItemImplInstances(void*)` so calls mangle to __FPv instead of retail's C symbol. Fix = delete that decl + side header, route all ~53 calls through canonical `extern "C" CItemImpl* CItem_initItemImplInstances(CItemData*)` (CItem.hpp), and remove the leftover CEquipItemBoxItemImplView view (lines ~663/694/2067). Some sites cast the result to CItemInstance* (510/512/2283) — check what retail really calls there.
+   - ahx_dcd AHXDCD_DecodeHeader: objdiff 100->99.91 but hexdiff ✓ — reloc-name only; look at it with the CriWare naming pass.
+   - COption / CSkipTimer `-ipa off`: re-verify like CCollepedia (that one was compensating for dummy stubs).
+   - (wave i, i16) CException: deleting dtor now compiler-emitted from real virtual ~CException, but class marked `__declspec(novtable)` and lbl_eu_8056CCE0 is still a hand vtable referencing the dtor via an `extern "C" __dt__10CExceptionFv` decl. Real fix: compiler-emitted __vt__10CException (find why retail dtor has no vptr restore — maybe the vtable belongs to a different class layout).
+   - (wave i, i16) CActParamAnimGame field530 volatile removed via inline predicate isFiringAllowed() (100%). Remaining: flags0C/clearFlag80000 volatile sites.
+   - (wave i, i13) CfSoundMan: nw4r SoundStartable::detail_StartSound made public so CfSoundMan_StartSlotSound can call it and compare StartResult (retail shape). Verify against the real NW4R header whether detail_StartSound is public; if not, find the public API form that compiles the same. `__dt__801C18F4` is a hand-written array dtor in an extern "C" block — real shape is a global CfSoundSlot[64] of a class with ctor/dtor so MWCC emits __sinit/__construct_array/the array dtor.
+   - (wave i, i5) CtrlAct: pure virtual slots at +0x0C/+0x8C named after the CtrlPc overrides (CtrlPc_UpdatePadState, dispatchCtrlPcActions); confirm the base's real names once CtrlPc is a real class.
+   - TagProcCompareIds: two conflicting decls (CTagProcessor.hpp u32(const u32*,const u32*) vs CKizunagram.hpp extern "C" int(const wchar_t**,const wchar_t**)). Retail loads *b first, subf b-a. Unify on one real signature (callers look like iterator cur/end compare) — r2 Opus could not match.
+   - o5: kyoshin/main 9/9 fully byte-identical (already Matching). code_800C17DC 11/12, CChainCombo split/extab fixed.
+   - g3d_resfile (25/25 code, d2): NOT linkable. In retail the ResNameData27 names are probably function-local statics, merged by dtk into lbl_eu_80568FC0/80569080 (each 0x40). The decomp defines them as globals: AnmScn at 805690A0 and External at 805690C0 (that address is a g3d_restev symbol, so linking gives multiply-defined), and External is held alive by a dummy `KeepResFileExternal` function. The real fix is function-local `static const ResNameData` inside each Get*/Has* function, plus removing the Keep function.
+   - CSysWin: 21/21 code, but .rodata short — CSysWin2 strings (menu/jp/SysWin2.arc etc.) have no owner in source; CSysWinBuff Init/Move stubs. TU ownership decision needed.
+   - CArcItem (o6): faithful 40->1 but data now MISMATCH (RTTI base list for IWorkEvent; retail {name,0}). Kept faithful version; unit NonMatching.
+   - CMenu* data diff: local @NNN RTTI companions of weak IUICf/CTTask<IUICf> not excluded by linked-view -> tooling gap affecting all CMenu*.
+   - sfd_buf (r4): SFBUF_Set/GetUoch param now SfbufUoch* but sfd_uo caller extern still u32* — unify declaration in a header.
+   - snd_SoundArchivePlayer still declares ParseAllocTrack / SeqSound::SetSeqUserprocCallback via hand-mangled extern "C" (now real members).
+   - ipcProfile: 4/4 but .bss IpcFdArray order differs (already Matching).
+   - d3: CDevice -RTTI off flag (retail slice has no RTTI records) — verify via faithful rtti_off category at checkpoint.
+   - OSReset/CCol6Invite (o4): need real string literals / real MI classes — structural rewrite candidates.
+   - SchedNode_AllocPool: code_804C8718.cpp:312 declares it as C++ u32(u32,u32); real is extern "C" void*(u32,s32) — unify.
+   - snd_SoundArchive 24/24 but split FAIL: decomp .text 0x8F8 vs budget 0x358 — split cut likely wrong (retail inlines OpenExtStreamImpl). Investigate splits.txt for snd_SoundArchive.
+   - CHECK at c9: CMenuMapSelectSC MapSelectSCHandleInput was same-size (0x670, 38 mm) at census, o6 reports 90.8% OVER(24). Suspects: r2 CFloorMap.hpp field_208/333C u8->bool, or i23 CTitleAHelp conversion. Bisect when build healthy.
+   - CChainActorEne (o5): added static inline helpers (special-type check, list scan, actor lookup) — verify they correspond to real retail inlines / existing class members.
+   - code_800B06A4 (i9): ObjFlagsEx/SortBuffer/ManagerD08/Vec724Block at src tail are padded view structs (u8 _XX[0x..] gaps) evading view_struct detector -> replace with real object classes; detector gap: flag pad-array overlay structs. Also factoryIter* extern "C" raw-offset helpers. 9 non-retail catalog helpers unwritten (testObj6Cmask etc.) block weak_dedup dead-strip.
+   - snd (o8): Bank::NoteOn Channel fields +0xC8/+0xDC/+0x3A/+0xE8/+0xEC need naming; AxVoice::Format -> SampleFormat (removes extern "C" GetSampleByDspAddress); AllocChannel InstancePool inline; TPrioList 0xF0 still open.
+   - code_800F42AC: must export C names ScMain_*/CfCode_* and own lbl_eu_80666EA8 before Matching.
+   - PRE-EXISTING artifacts (hacklint): CException.cpp hand-written primary vtable + __RTTI__ blob + extern __dt__10CExceptionFv -> needs real virtual class layout; code_800B06A4 extern "C" __dt__800B183C raw reslist dtor -> real reslist<T> dtor; CEquipItemBox.hpp mVtable member; CSaveLoad award.mVtbl assignment; CtrlAct.hpp vf01/vf02 pad virtuals.
+   - i24 residuals: frozen UNIT_RULES exact_renames map __vt__ back to lbl_eu_* for CArtsSet 8052F5D8, snd_BasicSound 8056A710, CProc/CViewRoot 8056B298 -> update rules + rename together; CBattleManager base vtables 8052BD68/8052BD44 need reslist dtors to reference __vt__ names; CFade .data 0x104 vs 0x108.
+   - CTitleAHelp: teardown/updateHelp/drawHelp/beginClose/... are C++ members in CTitleAHelp.cpp but retail exports bare C names -> callers keep extern "C" decls; real fix: decide true linkage (likely C-linkage free functions or retail names in symbols.txt), make one consistent. CPartyStateWin _pad18 cast for embedded CTitleAHelp.
+   - CfNandManager (i21): __dt__8023E63C -> declare real virtual dtor + rename_syms the address symbol to the real mangled dtor (all regions); create__Q22cf13CfNandManagerFv retail mangling has NO params -> write static create() with no params (caller "args" likely leftover regs); stubs NandPackEntry/NandTileDescr/NandSaveBuild still empty.
+   - c9 non-✓ % drops from cleanup (win back): CSkipTimer_UpdateSlotFrame 94.9->77.1, mpvcmc_InitMcOiTa 87.4->75.1, BasicSound::Update 85.2->80.8 (snd header changes), rebuildEIBKind3Page 86.3->84.6; objdiff-only: ItemBoxGetTab 0% in report but ✓ in hexdiff.
 
 0a. **Checkpoint 8 debts (2026-11-19).**
    - CSkipTimer (wave h, h12): BeginLoad/OnFileEvent use a hand-expanded member-wise copy from a block-scoped temporary instead of the probable original `mSysWin = CSysWin(0);` / `mSkipTimer2 = CSkipTimer2(mLayout);` (implicit operator= is not inlined under the unit's real -ipa off). Accepted because it replaced 26 noinline + 19 pragmas; revisit.

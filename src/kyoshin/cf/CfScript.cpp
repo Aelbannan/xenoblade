@@ -267,30 +267,9 @@ extern "C" bool CfScript_LoadScript(CfScript* script, const char* name) {
     // operator=(const char*): strlen + strcpy.
     (*(ml::FixStr<128>*)pathStorage) = name;
 
-    // Backward search for the extension separator; hand-inlined rfind whose
-    // result register merges with sepLen after its last use.
+    // Backward search for the extension separator (inlined FixStr::rfind).
     int length = (*(ml::FixStr<128>*)pathStorage).mLength;
-    int index;
-    if (length == 0) {
-        index = -1;
-    } else {
-        int sepLen = strlen(lbl_eu_80661AD0);
-        char* p = &(*(ml::FixStr<128>*)pathStorage).mString[-1] + length;
-        // No end local (an end local CSE-shares the single base addi;
-        // retail has two). Plain while with the bottom compare; the
-        // early exit jumps over the trailing index = -1
-        // (goto-gate, PLAN 17.6).
-        while (p != &(*(ml::FixStr<128>*)pathStorage).mString[-1]) {
-            if (strncmp(p, lbl_eu_80661AD0, sepLen) != 0) {
-                p--;
-                continue;
-            }
-            index = (int)(p - (*(ml::FixStr<128>*)pathStorage).mString);
-            goto strip_done;
-        }
-        index = -1;
-    strip_done:;
-    }
+    int index = (*(ml::FixStr<128>*)pathStorage).rfind(lbl_eu_80661AD0, -1);
 
     // Strip the extension so only the bare filename remains.
     if ((u32)(index + 1) > 1u) {

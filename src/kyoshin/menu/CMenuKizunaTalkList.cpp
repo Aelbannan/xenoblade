@@ -15,6 +15,7 @@
 
 #include <revolution/GX.h>
 #include "kyoshin/CKizunaTalkListImports.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -61,22 +62,21 @@ extern u32 lbl_eu_80663E28;
 extern "C" void beginClose(CTitleAHelp* self);
 
 // (memberized: needsTalkRebuild -> CKizunaTalkList::needsTalkRebuild; declaration moved into class CKizunaTalkList)
-extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void teardown(CTitleAHelp* self);
+extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // (memberized: teardownTalkList -> CKizunaTalkList::teardownTalkList; declaration moved into class CKizunaTalkList)
-extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-// (memberized: hasVisibleTalks -> CKizunaTalkList::hasVisibleTalks; declaration moved into class CKizunaTalkList)
 extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
+
 // (memberized: showTalkList -> CKizunaTalkList::showTalkList; declaration moved into class CKizunaTalkList)
 
 // Draw/update entry points (retail keeps the bare names at these call sites).
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
 // (memberized: drawTalkList -> CKizunaTalkList::drawTalkList; declaration moved into class CKizunaTalkList)
 // (memberized: updateTalkList -> CKizunaTalkList::updateTalkList; declaration moved into class CKizunaTalkList)
 
@@ -233,7 +233,7 @@ extern "C" unsigned long KizunaList_IsPresent(void) { return CMenuKizunaTalkList
 // and play the open sound.
 void KizunaList_Phase0Show(CMenuKizunaTalkList* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
-        isInitialized(&self->mTitleAHelp) != 0 &&
+        self->mTitleAHelp.isInitialized() != 0 &&
         (&self->mKizunaTalkList)->hasVisibleTalks() != 0) {
         func_801C412C(&self->mTitleAHelp);
         (&self->mKizunaTalkList)->showTalkList();

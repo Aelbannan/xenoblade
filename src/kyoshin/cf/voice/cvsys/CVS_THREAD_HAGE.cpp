@@ -1,81 +1,10 @@
 // CVS_THREAD_HAGE: Voice thread variant for "Hage" (bald/bare) audio.
-// FULL_MATCH: blank1__15CVS_THREAD_HAGEFv -- buffer-size getter (virtual method override).
+// Functions in retail .text order: constructor, slot-1 play, slot-2 play,
+// completion callback, voice removal, buffer-size override.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
-
-// us-802a98c0 (HageVxOnComplete)
-// Completion callback: if no active voice, call the playback-start virtual.
-void HageVxOnComplete(CVS_THREAD_HAGE* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
-    }
-}
-
-// us-802a9908 (HageRemoveVoice)
-// Remove a voice from the slots by matching its embedded CCharVoice pointer.
-void HageRemoveVoice(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
-    DetachThreadVoice(self, voicePtr);
-
-    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
-    CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x20 = NULL;
-    }
-
-    // Slot 0x24: same pattern
-    handle = self->field_0x24;
-    biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x24 = NULL;
-    }
-}
-
-// us-802a97fc (HageAdvanceSlot2)
-// Advance/play function for voice slot 2 (field_0x24).
-// Copies init data from lbl_eu_80539BC0 to fields 0x00-0x08, checks if
-// the voice is still active (CActorParam slot 138 at 0x2BC), and if
-// inactive, plays a random voice ID (mtRand(2) + 0xC27).
-void HageAdvanceSlot2(CVS_THREAD_HAGE* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        // v0 declared before p so the lwzu result claims the lower scratch
-        // register (retail: r4) and the base pointer takes r5.
-        u32 v0;
-        const u32* p = lbl_eu_80539BC0;
-        v0 = *p++;
-        CVoiceHandle* handle = self->field_0x24;
-        ((CVS_THREAD_HAGE_raw*)self)->state1 = *p++;
-        ((CVS_THREAD_HAGE_raw*)self)->state0 = (u32*)v0;
-        ((CVS_THREAD_HAGE_raw*)self)->state2 = *p;
-
-        if (handle != NULL) {
-            // Voice idle check: real CActorParam slot 138 (vtable 0x2BC).
-            if (((cf::CActorParam*)handle)->CActorParam_isBattleLocked() == 0) {
-                // Voice is not active -- try to play a random voice
-                // Use conditional bias pattern to match retail (no else branch)
-                CVoiceHandle* tmpHandle = self->field_0x24;
-                CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
-                if (tmpHandle != NULL) {
-                    voicePtr = &tmpHandle->voice;
-                }
-                int voiceId = ml::math::mtRand(2);
-                voiceId += 0xC27;
-                if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
-                    // Playback failed -- call completion callback
-                    self->PlayThreadVoice();
-                }
-            }
-        }
-    }
-}
 
 // us-802a95b8 (__ct__802A6E84)
 // Factory/constructor for CVS_THREAD_HAGE. Takes two owner objects (with a
@@ -83,7 +12,7 @@ void HageAdvanceSlot2(CVS_THREAD_HAGE* self) {
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
 // base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539BA8.
-CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+CVS_THREAD_HAGE* CVS_THREAD_HAGE::create(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
     if (!(owner1->field_0x3F00 & 2)) return NULL;
     if (!(owner2->field_0x3F00 & 2)) return NULL;
@@ -111,18 +40,10 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
         }
     }
 
-    // Copy the init-state triple into the first 3 u32s (outside try). The
-    // integer cast keeps the label materialized once via lis+addi. Values
-    // declared before the base pointer so they claim the lower scratch
-    // registers (retail: value in r4, base in r5).
-    u32* p0;
-    u32 v1;
-    const u32* base = (const u32*)(u32)lbl_eu_80539BA8;
-    v1 = base[1];
-    p0 = (u32*)base[0];
-    ((CVS_THREAD_HAGE_raw*)self)->state0 = p0;
-    ((CVS_THREAD_HAGE_raw*)self)->state1 = v1;
-    ((CVS_THREAD_HAGE_raw*)self)->state2 = base[2];
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_HAGE::advanceSlot1);
 
     return self;
 }
@@ -133,19 +54,11 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 // (0xC24, 0xC25, 0xC26) or a dynamic ID based on the slot 2 iterator
 // (iter + 0xC1C) if the iterator check and slot conflict check both pass.
 // Retries until a voice ID is selected, then plays via TryRequestVoice.
-void HageAdvanceSlot1(CVS_THREAD_HAGE* self) {
-    // Copy init data; slot-1 handle is read mid-copy (between word 0 and
-    // word 1 loads) as in retail, so keep the reads interleaved.
-    // v0 declared before p so the lwzu result claims the lower scratch
-    // register (retail: r4) and the label base takes r5.
-    u32 v0;
-    const u32* p = lbl_eu_80539BB4;
-    CVoiceHandle* handle;
-    v0 = *p++;
-    handle = self->field_0x20;
-    ((CVS_THREAD_HAGE_raw*)self)->state1 = *p++;
-    ((CVS_THREAD_HAGE_raw*)self)->state0 = (u32*)v0;
-    ((CVS_THREAD_HAGE_raw*)self)->state2 = *p;
+void CVS_THREAD_HAGE::advanceSlot1() {
+    CVS_THREAD_HAGE* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_HAGE::advanceSlot2);
+    CVoiceHandle* handle = self->field_0x20;
 
     // Both slots must be populated (slot 2 is re-read from memory here)
     if (handle == NULL) return;
@@ -193,6 +106,73 @@ void HageAdvanceSlot1(CVS_THREAD_HAGE* self) {
     if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
         // Playback failed -- call completion callback
         self->PlayThreadVoice();
+    }
+}
+
+// us-802a97fc (HageAdvanceSlot2)
+// Advance/play function for voice slot 2 (field_0x24).
+// Copies init data from lbl_eu_80539BC0 to fields 0x00-0x08, checks if
+// the voice is still active (CActorParam slot 138 at 0x2BC), and if
+// inactive, plays a random voice ID (mtRand(2) + 0xC27).
+void CVS_THREAD_HAGE::advanceSlot2() {
+    CVS_THREAD_HAGE* self = this;
+    if (IsThreadVoiceActive(self) == 0) {
+        mState = static_cast<void (CVS_THREAD::*)()>(
+            &CVS_THREAD_HAGE::onComplete);
+        CVoiceHandle* handle = self->field_0x24;
+
+        if (handle != NULL) {
+            // Voice idle check: real CActorParam slot 138 (vtable 0x2BC).
+            if (((cf::CActorParam*)handle)->CActorParam_isBattleLocked() == 0) {
+                // Voice is not active -- try to play a random voice
+                // Use conditional bias pattern to match retail (no else branch)
+                CVoiceHandle* tmpHandle = self->field_0x24;
+                CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
+                if (tmpHandle != NULL) {
+                    voicePtr = &tmpHandle->voice;
+                }
+                int voiceId = ml::math::mtRand(2);
+                voiceId += 0xC27;
+                if (TryRequestVoice(self, voicePtr, voiceId) == 0) {
+                    // Playback failed -- call completion callback
+                    self->PlayThreadVoice();
+                }
+            }
+        }
+    }
+}
+
+// us-802a98c0 (HageVxOnComplete)
+// Completion callback: if no active voice, call the playback-start virtual.
+void CVS_THREAD_HAGE::onComplete() {
+    if (IsThreadVoiceActive(this) == 0) {
+        PlayThreadVoice();
+    }
+}
+
+// us-802a9908 (HageRemoveVoice)
+// Remove a voice from the slots by matching its embedded CCharVoice pointer.
+void HageRemoveVoice(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
+    DetachThreadVoice(self, voicePtr);
+
+    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
+
+    // Slot 0x24: same pattern
+    handle = self->field_0x24;
+    biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
     }
 }
 

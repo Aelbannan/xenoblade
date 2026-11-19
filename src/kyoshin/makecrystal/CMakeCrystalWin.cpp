@@ -8,6 +8,7 @@
 #include "kyoshin/makecrystal/CMakeCrystalWin.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -133,7 +134,7 @@ u32 mkCrystalGetWord10(void* self) { return (u32)((CMakeCrystalWin*)self)->mScen
 // Retail 0x80212BE8: when the banner, crystal box and loading overlay are all
 // ready, dismiss them, mark the window state as 1 and play the crystal sound.
 void mkCrystalDismissToState1(CMakeCrystalWin* self) {
-    if (isInitialized(&self->mTitleAHelp) != 0) {
+    if (self->mTitleAHelp.isInitialized() != 0) {
         if (self->mCrystalBox.isCrystalBoxReady() != 0) {
             if (CLoadIsLoadReady(&self->mLoad) != 0) {
                 func_801C412C(&self->mTitleAHelp);

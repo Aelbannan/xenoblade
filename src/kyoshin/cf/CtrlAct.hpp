@@ -11,7 +11,29 @@
 
 namespace cf {
 class CtrlAct;
+// Forward declarations for the real slot signatures of the CfObject/CfObjectPc
+// vtables below (the owning headers are not included here).
+class CBattleState;
+struct CBattleStateEntry;
+struct CBattleStateSrcEntry;
+class CActorParamStatusTable;
+struct CActorParam_UnkStruct1;
+struct CActorParam_UnkStruct3;
+struct CActorParam_UnkStruct4;
+struct CActorParam10Arg;
+struct CActorParam11Arg;
+struct CActorParam12Arg;
 } // namespace cf
+using cf::CBattleState;
+using cf::CBattleStateEntry;
+using cf::CBattleStateSrcEntry;
+using cf::CActorParamStatusTable;
+using cf::CActorParam_UnkStruct1;
+using cf::CActorParam_UnkStruct3;
+using cf::CActorParam_UnkStruct4;
+using cf::CActorParam10Arg;
+using cf::CActorParam11Arg;
+using cf::CActorParam12Arg;
 
 // u32 -> double conversion magic: the retail code builds the 0x43300000-
 // prefixed bit pattern in memory and subtracts the shared sdata2 magic
@@ -42,51 +64,123 @@ struct CtrlActFlags {
 // retail's true C++ dispatch shape (lwzu/lwz/mtctr/bctrl) is reproduced.
 class CtrlActViewSub28 {
 public:
-    virtual void vf00();  virtual void vf01();  virtual void vf02();
-    virtual void vf03();  virtual void vf04();  virtual void vf05();
-    virtual void vf06();  virtual void vf07();  virtual void vf08();
-    virtual void vf09();  virtual void vf10();  virtual void vf11();
-    virtual void vf12();  virtual void vf13();  virtual void vf14();
-    virtual void vf15();  virtual void vf16();  virtual void vf17();
-    virtual void vf18();  virtual void vf19();  virtual void vf20();
-    virtual void vf21();  virtual void vf22();  virtual void vf23();
-    virtual void vf24();  virtual void vf25();  virtual void vf26();
-    virtual void vf27();  virtual void vf28();  virtual void vf29();
-    virtual void vf30();  virtual void vf31();  virtual void vf32();
-    virtual void vf33();  virtual void vf34();  virtual void vf35();
-    virtual void vf36();  virtual void vf37();  virtual void vf38();
-    virtual void vf39();  virtual void vf40();  virtual void vf41();
-    virtual void vf42();  virtual void vf43();  virtual void vf44();
-    virtual void vf45();  virtual void vf46();  virtual void vf47();
-    virtual void vf48();  virtual void vf49();  virtual void vf50();
-    virtual void vf51();  virtual void vf52();  virtual void vf53();
-    virtual void vf54();  virtual void vf55();  virtual void vf56();
-    virtual void vf57();  virtual void vf58();  virtual void vf59();
-    virtual void vf60();  virtual void vf61();  virtual void vf62();
-    virtual void vf63();  virtual void vf64();  virtual void vf65();
-    virtual void vf66();  virtual void vf67();  virtual void vf68();
-    virtual void vf69();  virtual void vf70();  virtual void vf71();
-    virtual void vf72();  virtual void vf73();  virtual void vf74();
-    virtual void vf75();
-    virtual float* getFloats();            // 0x138
+    virtual void setStateBitMask(u32 bits);  // +0x008 setStateBitMask__Q22cf12CObjectStateFUl
+    virtual int checkStateFlags(int mask);  // +0x00C checkStateFlags__Q22cf12CObjectStateFi
+    virtual void setStateBitFlag(u32 mask);  // +0x010 setStateBitFlag__Q22cf12CObjectStateFUl
+    virtual void clearStateWord4();  // +0x014 clearStateWord4__Q22cf12CObjectStateFv
+    virtual void applyStateFlags(int arg);  // +0x018 applyStateFlags__Q22cf12CObjectStateFi
+    virtual void clearStateWord8();  // +0x01C clearStateWord8__Q22cf12CObjectStateFv
+    virtual void clearStateFlags8(int arg);  // +0x020 clearStateFlags8__Q22cf12CObjectStateFi
+    virtual int checkStateFlags8(int arg);  // +0x024 checkStateFlags8__Q22cf12CObjectStateFi
+    virtual int checkStateFlagsC(int mask);  // +0x028 checkStateFlagsC__Q22cf12CObjectStateFi
+    virtual int setStateBitMask0(int mask, int flag);  // +0x02C setStateBitMask0__Q22cf12CObjectStateFii
+    virtual void* getStateData();  // +0x030 getStateData__Q22cf12CObjectStateFv
+    virtual void* setStateBitMask2();  // +0x034 setStateBitMask2__Q22cf12CObjectStateFv
+    virtual void setStateBitMask3();  // +0x038 setStateBitMask3__Q22cf12CObjectStateFv
+    virtual void CObjectParam_setObjectName(const char* name);  // +0x03C CObjectParam_setObjectName__Q22cf12CObjectParamFPCc
+    virtual void* CObjectParam_getParamPtr();  // +0x040 CObjectParam_getParamPtr__Q22cf12CfObjectMoveFv
+    virtual int CObjectParam_hasObjectName();  // +0x044 CObjectParam_hasObjectName__Q22cf12CObjectParamFv
+    virtual void CObjectParam_UnkVirtualFunc4();  // +0x048 CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv
+    virtual BOOL CObjectParam_getSelfObjectId();  // +0x04C CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv
+    virtual void CObjectParam_signalActionEnd(int flag);  // +0x050 CObjectParam_signalActionEnd__Q22cf12CObjectParamFi
+    virtual ~CtrlActViewSub28();  // +0x054 __dt__Q22cf12CfObjectMoveFv
+    virtual int CfObject_UnkVirtualFunc2() = 0;  // +0x058 CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv
+    virtual void CfObject_UnkVirtualFunc3();  // +0x05C CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv
+    virtual void CfObject_UnkVirtualFunc4() = 0;  // +0x060 CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv
+    virtual void CfObject_updateMoveRate();  // +0x064 CfObject_updateMoveRate__Q22cf12CfObjectMoveFv
+    virtual void CfObject_releaseMoveTargets();  // +0x068 CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv
+    virtual void CfObject_UnkVirtualFunc7() = 0;  // +0x06C CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv
+    virtual void CfObject_notifyEventDone() = 0;  // +0x070 CfObject_notifyEventDone__Q22cf13CfObjectModelFv
+    virtual bool CfObject_isMoveActiveNow();  // +0x074 CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv
+    virtual void CfObject_forwardSubObject();  // +0x078 CfObject_forwardSubObject__Q22cf12CfObjectMoveFv
+    virtual int CfObject_notifyMemberRemoved();  // +0x07C CfObject_notifyMemberRemoved__Q22cf8CfObjectFv
+    virtual void CfObject_refreshSubB0();  // +0x080 CfObject_refreshSubB0__Q22cf12CfObjectMoveFv
+    virtual int CfObject_queryTargetState();  // +0x084 CfObject_queryTargetState__Q22cf12CfObjectMoveFv
+    virtual void* CfObject_pushRefreshValue(float value);  // +0x088 CfObject_pushRefreshValue__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getMoveSpeedRate();  // +0x08C CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv
+    virtual void* CfObject_pushRefreshExtra(float value);  // +0x090 CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFf
+    virtual float CfObject_readRefreshValue();  // +0x094 CfObject_readRefreshValue__Q22cf12CfObjectMoveFv
+    virtual int CfObject_checkTargetState();  // +0x098 CfObject_checkTargetState__Q22cf12CfObjectMoveFv
+    virtual void CfObject_setMoveTargetVec(const ml::CVec3* vec);  // +0x09C CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFPCQ22ml5CVec3
+    virtual void CfObject_setPosXZ(float a, float b);  // +0x0A0 CfObject_setPosXZ__Q22cf13CfObjectModelFff
+    virtual void CfObject_setPosXYZ();  // +0x0A4 CfObject_setPosXYZ__Q22cf8CfObjectFv
+    virtual void CfObject_syncMoveTarget(const ml::CVec3* vec);  // +0x0A8 CfObject_syncMoveTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3
+    virtual ml::CVec3* CfObject_getPosVector();  // +0x0AC CfObject_getPosVector__Q22cf12CfObjectMoveFv
+    virtual void* CfObject_getPosTriple();  // +0x0B0 CfObject_getPosTriple__Q22cf13CfObjectModelFv
+    virtual void CfObject_snapMoveTarget(ml::CVec3* pos, float scale);  // +0x0B4 CfObject_snapMoveTarget__Q22cf12CfObjectMoveFPQ22ml5CVec3f
+    virtual void CfObject_applyMoveOffset(const ml::CVec3* vec, float amount);  // +0x0B8 CfObject_applyMoveOffset__Q22cf12CfObjectMoveFPCQ22ml5CVec3f
+    virtual void CfObject_setRotVec(void* src);  // +0x0BC CfObject_setRotVec__Q22cf12CfObjectMoveFPv
+    virtual void* CfObject_getField48();  // +0x0C0 CfObject_getField48__Q22cf13CfObjectModelFv
+    virtual void CfObject_setMoveHeadAngle(float value);  // +0x0C4 CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf
+    virtual void CfObject_setMoveYaw(float value);  // +0x0C8 CfObject_setMoveYaw__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getMoveHeadAngle();  // +0x0CC CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv
+    virtual void CfObject_syncMoveHead(float deg);  // +0x0D0 CfObject_syncMoveHead__Q22cf12CfObjectMoveFf
+    virtual void CfObject_applyMoveYaw(float amount);  // +0x0D4 CfObject_applyMoveYaw__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getScaledAngle();  // +0x0D8 CfObject_getScaledAngle__Q22cf13CfObjectModelFv
+    virtual void CfObject_setObjScale(float value);  // +0x0DC CfObject_setObjScale__Q22cf13CfObjectModelFf
+    virtual float CfObject_getObjScale();  // +0x0E0 CfObject_getObjScale__Q22cf13CfObjectModelFv
+    virtual int CfObject_resetAnimSlots(u32 arg);  // +0x0E4 CfObject_resetAnimSlots__Q22cf12CfObjectMoveFUl
+    virtual int CfObject_clearAnimEntry(u32 arg);  // +0x0E8 CfObject_clearAnimEntry__Q22cf12CfObjectMoveFUl
+    virtual int CfObject_armAnimSlot0(u32 id, u32 tag);  // +0x0EC CfObject_armAnimSlot0__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_armAnimSlot0N(u32 id, u32 nameIdx);  // +0x0F0 CfObject_armAnimSlot0N__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_UnkVirtualFunc41();  // +0x0F4 CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv
+    virtual int CfObject_armAnimSlot1(u32 id, u32 tag);  // +0x0F8 CfObject_armAnimSlot1__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_armAnimSlot1N(u32 id, u32 nameIdx);  // +0x0FC CfObject_armAnimSlot1N__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_UnkVirtualFunc44();  // +0x100 CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv
+    virtual void CfObject_rearmAnimSlot(u32 value, u32 index);  // +0x104 CfObject_rearmAnimSlot__Q22cf12CfObjectMoveFUlUl
+    virtual void CfObject_setMoveTargetPtr(void* arg);  // +0x108 CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv
+    virtual void CfObject_createMoveTarget(int kind);  // +0x10C CfObject_createMoveTarget__Q22cf12CfObjectMoveFi
+    virtual void* CfObject_getCurrentTarget();  // +0x110 CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv
+    virtual void CfObject_forwardNpcAction(int action);  // +0x114 CfObject_forwardNpcAction__Q22cf12CfObjectMoveFi
+    virtual int CfObject_getNpcActionState();  // +0x118 CfObject_getNpcActionState__Q22cf12CfObjectMoveFv
+    virtual int CfObject_getNpcTargetAction();  // +0x11C CfObject_getNpcTargetAction__Q22cf12CfObjectMoveFv
+    virtual void* CfObject_findNodeMatrix(const char* name) const;  // +0x120 CfObject_findNodeMatrix__Q22cf13CfObjectModelCFPCc
+    virtual void* CfObject_getIndexedNodeMatrix(u32 idx) const;  // +0x124 CfObject_getIndexedNodeMatrix__Q22cf13CfObjectModelCFUl
+    virtual u32 CfObject_getSubPosWord();  // +0x128 CfObject_getSubPosWord__Q22cf13CfObjectModelFv
+    virtual void* CfObject_getPosSample(int arg) const;  // +0x12C CfObject_getPosSample__Q22cf13CfObjectModelCFi
+    virtual float CfObject_getHeightDiff() const;  // +0x130 CfObject_getHeightDiff__Q22cf13CfObjectModelCFv
+    virtual void CfObject_setMoveValue(float value);  // +0x134 CfObject_setMoveValue__Q22cf12CfObjectMoveFf
+    virtual float* CfObject_getMoveRateScale();  // +0x138 CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv
 };
 
 // Typed view of the +0x3E9C voice-owner interface for the height probe:
 // slot 0x8C returns the actor height float (handleActKind gate).
 class CtrlActVoiceHeightIntf {
 public:
-    virtual void vf00();  virtual void vf01();  virtual void vf02();
-    virtual void vf03();  virtual void vf04();  virtual void vf05();
-    virtual void vf06();  virtual void vf07();  virtual void vf08();
-    virtual void vf09();  virtual void vf10();  virtual void vf11();
-    virtual void vf12();  virtual void vf13();  virtual void vf14();
-    virtual void vf15();  virtual void vf16();  virtual void vf17();
-    virtual void vf18();  virtual void vf19();  virtual void vf20();
-    virtual void vf21();  virtual void vf22();  virtual void vf23();
-    virtual void vf24();  virtual void vf25();  virtual void vf26();
-    virtual void vf27();  virtual void vf28();  virtual void vf29();
-    virtual void vf30();  virtual void vf31();  virtual void vf32();
-    virtual f32 getHeight();               // 0x8C
+    virtual void setStateBitMask(u32 bits);  // +0x008 setStateBitMask__Q22cf12CObjectStateFUl
+    virtual int checkStateFlags(int mask);  // +0x00C checkStateFlags__Q22cf12CObjectStateFi
+    virtual void setStateBitFlag(u32 mask);  // +0x010 setStateBitFlag__Q22cf12CObjectStateFUl
+    virtual void clearStateWord4();  // +0x014 clearStateWord4__Q22cf12CObjectStateFv
+    virtual void applyStateFlags(int arg);  // +0x018 applyStateFlags__Q22cf12CObjectStateFi
+    virtual void clearStateWord8();  // +0x01C clearStateWord8__Q22cf12CObjectStateFv
+    virtual void clearStateFlags8(int arg);  // +0x020 clearStateFlags8__Q22cf12CObjectStateFi
+    virtual int checkStateFlags8(int arg);  // +0x024 checkStateFlags8__Q22cf12CObjectStateFi
+    virtual int checkStateFlagsC(int mask);  // +0x028 checkStateFlagsC__Q22cf12CObjectStateFi
+    virtual int setStateBitMask0(int mask, int flag);  // +0x02C setStateBitMask0__Q22cf12CObjectStateFii
+    virtual void* getStateData();  // +0x030 getStateData__Q22cf12CObjectStateFv
+    virtual void* setStateBitMask2();  // +0x034 setStateBitMask2__Q22cf12CObjectStateFv
+    virtual void setStateBitMask3();  // +0x038 setStateBitMask3__Q22cf12CObjectStateFv
+    virtual void CObjectParam_setObjectName(const char* name);  // +0x03C CObjectParam_setObjectName__Q22cf12CObjectParamFPCc
+    virtual void* CObjectParam_getParamPtr();  // +0x040 CObjectParam_getParamPtr__Q22cf12CfObjectMoveFv
+    virtual int CObjectParam_hasObjectName();  // +0x044 CObjectParam_hasObjectName__Q22cf12CObjectParamFv
+    virtual void CObjectParam_UnkVirtualFunc4();  // +0x048 CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv
+    virtual BOOL CObjectParam_getSelfObjectId();  // +0x04C CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv
+    virtual void CObjectParam_signalActionEnd(int flag);  // +0x050 CObjectParam_signalActionEnd__Q22cf12CObjectParamFi
+    virtual ~CtrlActVoiceHeightIntf();  // +0x054 __dt__Q22cf12CfObjectMoveFv
+    virtual int CfObject_UnkVirtualFunc2() = 0;  // +0x058 CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv
+    virtual void CfObject_UnkVirtualFunc3();  // +0x05C CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv
+    virtual void CfObject_UnkVirtualFunc4() = 0;  // +0x060 CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv
+    virtual void CfObject_updateMoveRate();  // +0x064 CfObject_updateMoveRate__Q22cf12CfObjectMoveFv
+    virtual void CfObject_releaseMoveTargets();  // +0x068 CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv
+    virtual void CfObject_UnkVirtualFunc7() = 0;  // +0x06C CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv
+    virtual void CfObject_notifyEventDone() = 0;  // +0x070 CfObject_notifyEventDone__Q22cf13CfObjectModelFv
+    virtual bool CfObject_isMoveActiveNow();  // +0x074 CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv
+    virtual void CfObject_forwardSubObject();  // +0x078 CfObject_forwardSubObject__Q22cf12CfObjectMoveFv
+    virtual int CfObject_notifyMemberRemoved();  // +0x07C CfObject_notifyMemberRemoved__Q22cf8CfObjectFv
+    virtual void CfObject_refreshSubB0();  // +0x080 CfObject_refreshSubB0__Q22cf12CfObjectMoveFv
+    virtual int CfObject_queryTargetState();  // +0x084 CfObject_queryTargetState__Q22cf12CfObjectMoveFv
+    virtual void* CfObject_pushRefreshValue(float value);  // +0x088 CfObject_pushRefreshValue__Q22cf12CfObjectMoveFf
+    virtual f32 CfObject_getMoveSpeedRate();  // +0x08C CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv
 };
 
 // player->vf167() (vtable slot 0x2A4) result view: the action/attack state
@@ -140,181 +234,180 @@ struct CtrlActSub2A4 {
 // CtrlPlayerObj convention in CtrlPc.hpp.
 class CtrlActPlayerReal {
 public:
-    virtual void vf00();
-    virtual void vf01();
-    virtual void vf02();
-    virtual void vf03();
-    virtual void vf04();
-    virtual void vf05();
-    virtual void vf06();
-    virtual void vf07();
-    virtual void vf08();
-    virtual void vf09();
-    virtual void vf10();
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void vf15();
-    virtual void vf16();
-    virtual void vf17();
-    virtual void vf18();
-    virtual void vf19();
-    virtual void vf20();
-    virtual void vf21();
-    virtual void vf22();
-    virtual void vf23();
-    virtual void vf24();
-    virtual void vf25();
-    virtual void vf26();
-    virtual void vf27();
-    virtual void vf28();
-    virtual void vf29();
-    virtual void vf30();
-    virtual void vf31();
-    virtual void vf32();
-    virtual void vf33();
-    virtual void vf34();
-    virtual void vf35();
-    virtual void vf36();
-    virtual void vf37();
-    virtual void vf38();
-    virtual void vf39();
-    virtual void vf40();
-    virtual void vf41();
-    virtual void vf42();
-    virtual void vf43();
-    virtual void vf44();
-    virtual void vf45();
-    virtual void vf46();
-    virtual void vf47();
-    virtual void vf48();
-    virtual void vf49();
-    virtual void vf50();
-    virtual void vf51();
-    virtual void vf52();
-    virtual void vf53();
-    virtual void vf54();
-    virtual void vf55();
-    virtual void vf56();
-    virtual void vf57();
-    virtual void vf58();
-    virtual void vf59();
-    virtual void vf60();
-    virtual void vf61();
-    virtual void vf62();
-    virtual void vf63();
-    virtual void vf64();
-    virtual void vf65();
-    virtual void vf66();
-    virtual void vf67();
-    virtual void vf68();
-    virtual void vf69();
-    virtual void vf70();
-    virtual void vf71();
-    virtual void vf72();
-    virtual void vf73();
-    virtual void vf74();
-    virtual void vf75();
-    virtual void vf76();
-    virtual void vf77();
-    virtual void vf78();
-    virtual void vf79();
-    virtual void vf80();
-    virtual void vf81();
-    virtual void vf82();
-    virtual void vf83();
-    virtual void vf84();
-    virtual void vf85();
-    virtual void vf86();
-    virtual void vf87();
-    virtual void vf88();
-    virtual void vf89();
-    virtual void vf90();
-    virtual void vf91();
-    virtual void vf92();
-    virtual void vf93();
-    virtual void vf94();
-    virtual void vf95();
-    virtual void vf96();
-    virtual void vf97();
-    virtual void vf98();
-    virtual void vf99();
-    virtual void vf100();
-    virtual void vf101();
-    virtual void vf102();
-    virtual void vf103();
-    virtual void vf104();
-    virtual void vf105();
-    virtual void vf106();
-    virtual void vf107();
-    virtual void vf108();
-    virtual void vf109();
-    virtual void vf110();
-    virtual void vf111();
-    virtual void vf112();
-    virtual void vf113();
-    virtual void vf114();
-    virtual void vf115();
-    virtual void vf116();
-    virtual void vf117();
-    virtual void vf118();
-    virtual void vf119();
-    virtual void vf120();
-    virtual void vf121();
-    virtual void vf122();
-    virtual void vf123();
-    virtual void vf124();
-    virtual void vf125();
-    virtual void vf126();
-    virtual void vf127();
-    virtual void vf128();
-    virtual void vf129();
-    virtual void vf130();
-    virtual void vf131();
-    virtual void vf132();
-    virtual void vf133();
-    virtual void vf134();
-    virtual void vf135();
-    virtual void vf136();
-    virtual void vf137();
-    virtual void vf138();
-    virtual void vf139();
-    virtual void vf140();
-    virtual void vf141();
-    virtual void vf142();
-    virtual void vf143();
-    virtual void vf144();
-    virtual void vf145();
-    virtual void vf146();
-    virtual void vf147();
-    virtual void vf148();
-    virtual void vf149();
-    virtual void vf150();
-    virtual void vf151();
-    virtual void vf152();
-    virtual void vf153();
-    virtual void vf154();
-    virtual void vf155();
-    virtual void vf156();
-    virtual void vf157();
-    virtual void vf158();
-    virtual void vf159();
-    virtual void* vf160();              // 0x288 (arts-set base for getAtkParam)
-    virtual void vf161();
-    virtual void vf162();
-    virtual void vf163();
-    virtual void vf164();
-    virtual void vf165();
-    virtual void vf166();
-    virtual CtrlActSub2A4* vf167();     // 0x2A4 (action-state block)
-    virtual void vf168();
-    virtual void vf169();
-    virtual void vf170();
-    virtual void vf171();
-    virtual void vf172();
-    virtual int vf173();                // 0x2BC (action usable gate)
-
+    virtual void* CActorState_setObjStateBit3();  // +0x008 CActorState_setObjStateBit3__Q22cf11CActorStateFv
+    virtual void vf01();  // +0x00C <no function symbol>
+    virtual void vf02();  // +0x010 <no function symbol>
+    virtual void CBattleState_getOwner(int val);  // +0x014 @8@CBattleState_getOwner__Q22cf13CfObjectActorFv
+    virtual void CBattleState_callOwnerObject(CBattleStateEntry* entry);  // +0x018 @8@CBattleState_callOwnerObject__Q22cf13CfObjectActorFv
+    virtual void CObjectParam_getParamPtr(CBattleStateEntry* entry);  // +0x01C @8@CObjectParam_getParamPtr__Q22cf13CfObjectActorFv
+    virtual void CBattleState_setBattleParam(u32 id);  // +0x020 CBattleState_setBattleParam__Q22cf12CBattleStateFi
+    virtual void CBattleState_enterStatusEntry(CBattleStateEntry* entry);  // +0x024 CBattleState_enterStatusEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_addStagingEntry(int index);  // +0x028 CBattleState_addStagingEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_clearStatusId(CBattleStateEntry* arg);  // +0x02C CBattleState_clearStatusId__Q22cf12CBattleStateFUl
+    virtual void CBattleState_applyEventEntry(u32 mask);  // +0x030 CBattleState_applyEventEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_reapplyStatusEntry(u32 id);  // +0x034 CBattleState_reapplyStatusEntry__Q22cf12CBattleStateFi
+    virtual void* CBattleState_removeKeyedEntries(int index);  // +0x038 CBattleState_removeKeyedEntries__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_clearEntriesByMask();  // +0x03C CBattleState_clearEntriesByMask__Q22cf12CBattleStateFUl
+    virtual void CBattleState_clearStagingEntry();  // +0x040 CBattleState_clearStagingEntry__Q22cf12CBattleStateFUl
+    virtual void CBattleState_getStatusSlot();  // +0x044 CBattleState_getStatusSlot__Q22cf12CBattleStateFi
+    virtual void CBattleState_fetchStatusSlot(CBattleStateEntry* entry);  // +0x048 CBattleState_fetchStatusSlot__Q22cf12CBattleStateFv
+    virtual void CBattleState_getEventSlot(CBattleStateEntry* entry = 0);  // +0x04C CBattleState_getEventSlot__Q22cf12CBattleStateFv
+    virtual void CBattleState_readStatusSlot();  // +0x050 CBattleState_readStatusSlot__Q22cf12CBattleStateFv
+    virtual void* CBattleState_notifyEntryUpdated(int index);  // +0x054 @8@CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry
+    virtual cf::CBattleStateEntry* CBattleState_getLinkedActorId(int index);  // +0x058 @8@CBattleState_getLinkedActorId__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry
+    virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc19(int index);  // +0x05C CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv
+    virtual cf::CBattleStateEntry* CBattleState_getEntryByIndex(int index);  // +0x060 CBattleState_getEntryByIndex__Q22cf12CBattleStateFi
+    virtual void CBattleState_fetchStatusEntry(const CBattleState* src);  // +0x064 CBattleState_fetchStatusEntry__Q22cf12CBattleStateFi
+    virtual void* CBattleState_getEventEntry();  // +0x068 CBattleState_getEventEntry__Q22cf12CBattleStateFi
+    virtual void CBattleState_getStatusEntry(const CBattleStateSrcEntry* src);  // +0x06C CBattleState_getStatusEntry__Q22cf12CBattleStateFi
+    virtual void* CBattleState_copyStatusEntries();  // +0x070 CBattleState_copyStatusEntries__Q22cf12CBattleStateFPCQ22cf12CBattleState
+    virtual void* CBattleState_getEntryArray(unsigned long index);  // +0x074 CBattleState_getEntryArray__Q22cf12CBattleStateFv
+    virtual void CBattleState_applyArtsTable();  // +0x078 CBattleState_applyArtsTable__Q22cf12CBattleStateFPCQ22cf20CBattleStateSrcEntry
+    virtual void CBattleState_getStatusBlock(u32 flags);  // +0x07C CBattleState_getStatusBlock__Q22cf12CBattleStateFv
+    virtual int CBattleState_getStagingRecord(u32 id);  // +0x080 CBattleState_getStagingRecord__Q22cf12CBattleStateFUl
+    virtual void CBattleState_clearStagingEntries(u32 flags);  // +0x084 CBattleState_clearStagingEntries__Q22cf12CBattleStateFv
+    virtual int CBattleState_addStatusBits4(u32 id);  // +0x088 CBattleState_addStatusBits4__Q22cf12CBattleStateFUl
+    virtual float CBattleState_getEventMask();  // +0x08C CBattleState_getEventMask__Q22cf12CBattleStateFUl
+    virtual void* CBattleState_addStatusBits6(float value);  // +0x090 CBattleState_addStatusBits6__Q22cf12CBattleStateFUl
+    virtual float CBattleState_getStatusMask();  // +0x094 CBattleState_getStatusMask__Q22cf12CBattleStateFUl
+    virtual void* CObjectParam_getParamPtr_CfObjectActor();  // +0x098 CObjectParam_getParamPtr__Q22cf13CfObjectActorFv
+    virtual void* CBattleState_getOwner_CfObjectActor();  // +0x09C CBattleState_getOwner__Q22cf13CfObjectActorFv
+    virtual void* CBattleState_callOwnerObject_CfObjectActor();  // +0x0A0 CBattleState_callOwnerObject__Q22cf13CfObjectActorFv
+    virtual void CActorParam_resetArtsStatus(void* arts);  // +0x0A4 CActorParam_resetArtsStatus__Q22cf10CfObjectPcFPv
+    virtual void CActorParam_commitArtsStatus(int flag);  // +0x0A8 CActorParam_commitArtsStatus__Q22cf11CActorParamFi
+    virtual void CActorParam_UnkVirtualFunc6(int val);  // +0x0AC CActorParam_UnkVirtualFunc6__Q22cf13CfObjectActorFi
+    virtual void CActorParam_setupActorState();  // +0x0B0 CActorParam_setupActorState__Q22cf11CActorParamFv
+    virtual void CActorParam_resetArtsMatrix();  // +0x0B4 CActorParam_resetArtsMatrix__Q22cf11CActorParamFv
+    virtual void CActorParam_refreshBattleStatus();  // +0x0B8 CActorParam_refreshBattleStatus__Q22cf11CActorParamFv
+    virtual void CActorParam_applyTargetEvent(CActorParam10Arg* arg);  // +0x0BC CActorParam_applyTargetEvent__Q22cf11CActorParamFPQ22cf16CActorParam10Arg
+    virtual void CActorParam_applyStatusHeal(CActorParam11Arg* arg);  // +0x0C0 CActorParam_applyStatusHeal__Q22cf11CActorParamFPQ22cf16CActorParam11Arg
+    virtual void CActorParam_applyEventStatus(CActorParam12Arg* arg);  // +0x0C4 CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg
+    virtual void CActorParam_resetGaugesAndRefresh();  // +0x0C8 CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv
+    virtual void CActorParam_setStatByte(u8 val);  // +0x0CC CActorParam_setStatByte__Q22cf11CActorParamFUc
+    virtual void CActorParam_UnkVirtualFunc15();  // +0x0D0 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv
+    virtual void CActorParam_setStatScale(float val);  // +0x0D4 CActorParam_setStatScale__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc17();  // +0x0D8 CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv
+    virtual void CActorParam_setActorType(u32 val);  // +0x0DC CActorParam_setActorType__Q22cf11CActorParamFUl
+    virtual u32 CActorParam_getActorType();  // +0x0E0 CActorParam_getActorType__Q22cf11CActorParamFv
+    virtual void CActorParam_setEnemyType(u32 val);  // +0x0E4 CActorParam_setEnemyType__Q22cf11CActorParamFUl
+    virtual void CActorParam_setScale(float val);  // +0x0E8 CActorParam_setScale__Q22cf13CfObjectActorFf
+    virtual void CActorParam_UnkVirtualFunc22();  // +0x0EC CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv
+    virtual float CActorParam_getScale();  // +0x0F0 CActorParam_getScale__Q22cf13CfObjectActorFv
+    virtual void CActorParam_UnkVirtualFunc24();  // +0x0F4 CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc25();  // +0x0F8 CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getArtsLevel();  // +0x0FC CActorParam_getArtsLevel__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc27();  // +0x100 CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc28();  // +0x104 CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getActorLevel();  // +0x108 CActorParam_getActorLevel__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc30();  // +0x10C CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc31();  // +0x110 CActorParam_UnkVirtualFunc31__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc32();  // +0x114 CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv
+    virtual void CActorParam_setHp(float val);  // +0x118 CActorParam_setHp__Q22cf13CfObjectActorFf
+    virtual void CActorParam_addHp(float value);  // +0x11C CActorParam_addHp__Q22cf13CfObjectActorFf
+    virtual void CActorParam_applyDamage(float value, int a, int b, int c);  // +0x120 CActorParam_applyDamage__Q22cf13CfObjectActorFfiii
+    virtual void CActorParam_UnkVirtualFunc36();  // +0x124 CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv
+    virtual float CActorParam_getHp();  // +0x128 CActorParam_getHp__Q22cf11CActorParamFv
+    virtual float CActorParam_getDamageScale();  // +0x12C CActorParam_getDamageScale__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc39();  // +0x130 CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv
+    virtual void CActorParam_applyStoredHp();  // +0x134 CActorParam_applyStoredHp__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc41(float val);  // +0x138 CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFf
+    virtual void CActorParam_UnkVirtualFunc42(float val);  // +0x13C CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc43();  // +0x140 CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc44();  // +0x144 CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc45();  // +0x148 CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv
+    virtual void CActorParam_applyStoredHitCharge();  // +0x14C CActorParam_applyStoredHitCharge__Q22cf11CActorParamFv
+    virtual void CActorParam_setTensionPoints(float val);  // +0x150 CActorParam_setTensionPoints__Q22cf11CActorParamFf
+    virtual void CActorParam_addArtsGauge(float delta);  // +0x154 CActorParam_addArtsGauge__Q22cf11CActorParamFf
+    virtual float CActorParam_getArtsGauge();  // +0x158 CActorParam_getArtsGauge__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc50();  // +0x15C CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc51();  // +0x160 CActorParam_UnkVirtualFunc51__Q22cf11CActorParamFv
+    virtual void CActorParam_applyStoredArtsGauge();  // +0x164 CActorParam_applyStoredArtsGauge__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc53(int val);  // +0x168 CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFi
+    virtual void CActorParam_addGauge(int delta);  // +0x16C CActorParam_addGauge__Q22cf13CfObjectActorFi
+    virtual void CActorParam_setGaugeFlagA(u16 val);  // +0x170 CActorParam_setGaugeFlagA__Q22cf11CActorParamFUs
+    virtual int CActorParam_getGauge();  // +0x174 CActorParam_getGauge__Q22cf11CActorParamFv
+    virtual int CActorParam_getGaugeMax();  // +0x178 CActorParam_getGaugeMax__Q22cf11CActorParamFv
+    virtual void CActorParam_clearGauge();  // +0x17C CActorParam_clearGauge__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc59(int val);  // +0x180 CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFi
+    virtual void CActorParam_addSecondGauge(int delta);  // +0x184 CActorParam_addSecondGauge__Q22cf13CfObjectActorFi
+    virtual void CActorParam_setGaugeFlagB(u16 val);  // +0x188 CActorParam_setGaugeFlagB__Q22cf11CActorParamFUs
+    virtual int CActorParam_getSecondGauge();  // +0x18C CActorParam_getSecondGauge__Q22cf11CActorParamFv
+    virtual int CActorParam_getSecondGaugeMax();  // +0x190 CActorParam_getSecondGaugeMax__Q22cf11CActorParamFv
+    virtual void CActorParam_clearSecondGauge();  // +0x194 CActorParam_clearSecondGauge__Q22cf11CActorParamFv
+    virtual void CActorParam_setGaugeRateA(float val);  // +0x198 CActorParam_setGaugeRateA__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc66();  // +0x19C CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv
+    virtual void CActorParam_resetGaugeBattleEntry();  // +0x1A0 CActorParam_resetGaugeBattleEntry__Q22cf11CActorParamFv
+    virtual void CActorParam_setGaugeRateB(float val);  // +0x1A4 CActorParam_setGaugeRateB__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc69();  // +0x1A8 CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv
+    virtual void CActorParam_resetSecondGaugeBattleEntry();  // +0x1AC CActorParam_resetSecondGaugeBattleEntry__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc71();  // +0x1B0 CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc72();  // +0x1B4 CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc73();  // +0x1B8 CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv
+    virtual void CActorParam_setMoveRate(float val);  // +0x1BC CActorParam_setMoveRate__Q22cf11CActorParamFf
+    virtual void CActorParam_UnkVirtualFunc75(int flag);  // +0x1C0 CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFi
+    virtual void* CActorParam_getMoveRate();  // +0x1C4 CActorParam_getMoveRate__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc77();  // +0x1C8 CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc78();  // +0x1CC CActorParam_UnkVirtualFunc78__Q22cf11CActorParamFv
+    virtual float* CActorParam_UnkVirtualFunc79();  // +0x1D0 CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv
+    virtual float* CActorParam_UnkVirtualFunc80();  // +0x1D4 CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv
+    virtual void CActorParam_setSpentCurrency(u32 val);  // +0x1D8 CActorParam_setSpentCurrency__Q22cf11CActorParamFUl
+    virtual void CActorParam_addSpentCurrency(u32 val);  // +0x1DC CActorParam_addSpentCurrency__Q22cf11CActorParamFUl
+    virtual void CActorParam_addAccumCurrency(u32 addend);  // +0x1E0 CActorParam_addAccumCurrency__Q22cf11CActorParamFUl
+    virtual u32 CActorParam_getTotalCurrency();  // +0x1E4 CActorParam_getTotalCurrency__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getSpentCurrency();  // +0x1E8 CActorParam_getSpentCurrency__Q22cf11CActorParamFv
+    virtual int CActorParam_getCurrencyBalance();  // +0x1EC CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv
+    virtual u32 CActorParam_getLevelExp();  // +0x1F0 CActorParam_getLevelExp__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);  // +0x1F4 CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFUlUlUl
+    virtual void CActorParam_setSecondCurrency(u32 val);  // +0x1F8 CActorParam_setSecondCurrency__Q22cf11CActorParamFUl
+    virtual void CActorParam_addSecondCurrency(u32 val);  // +0x1FC CActorParam_addSecondCurrency__Q22cf11CActorParamFUl
+    virtual u32 CActorParam_getSecondCurrency();  // +0x200 CActorParam_getSecondCurrency__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc92(const void* src);  // +0x204 CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFPCv
+    virtual CActorParam_UnkStruct3* CActorParam_UnkVirtualFunc93();  // +0x208 CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsDataBlock();  // +0x20C CActorParam_getArtsDataBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getStatusSyncBlock();  // +0x210 CActorParam_getStatusSyncBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSyncBlock();  // +0x214 CActorParam_getArtsSyncBlock__Q22cf11CActorParamFv
+    virtual CActorParam_UnkStruct4* CActorParam_UnkVirtualFunc97();  // +0x218 CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc98(const void* src);  // +0x21C CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFPCv
+    virtual CActorParam_UnkStruct3* CActorParam_UnkVirtualFunc99();  // +0x220 CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv
+    virtual void* CActorParam_getBattleParams();  // +0x224 CActorParam_getBattleParams__Q22cf11CActorParamFv
+    virtual void* CActorParam_getBaseStats();  // +0x228 CActorParam_getBaseStats__Q22cf11CActorParamFv
+    virtual void* CActorParam_getBonusStats();  // +0x22C CActorParam_getBonusStats__Q22cf11CActorParamFv
+    virtual void CActorParam_refreshBattleAction();  // +0x230 CActorParam_refreshBattleAction__Q22cf11CActorParamFv
+    virtual float* CActorParam_UnkVirtualFunc104();  // +0x234 CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc105();  // +0x238 CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc106();  // +0x23C CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc107();  // +0x240 CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc108();  // +0x244 CActorParam_UnkVirtualFunc108__Q22cf11CActorParamFv
+    virtual u32 CActorParam_UnkVirtualFunc109();  // +0x248 CActorParam_UnkVirtualFunc109__Q22cf11CActorParamFv
+    virtual u32 CActorParam_UnkVirtualFunc110();  // +0x24C CActorParam_UnkVirtualFunc110__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc111();  // +0x250 CActorParam_UnkVirtualFunc111__Q22cf11CActorParamFv
+    virtual void CActorParam_setParam161C(u32 val);  // +0x254 CActorParam_setParam161C__Q22cf11CActorParamFUl
+    virtual u32* CActorParam_UnkVirtualFunc113();  // +0x258 CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv
+    virtual void CActorParam_setFlag1628(u8 val);  // +0x25C CActorParam_setFlag1628__Q22cf11CActorParamFUc
+    virtual bool CActorParam_UnkVirtualFunc115();  // +0x260 CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv
+    virtual void CActorParam_setGaugeFloat(float val);  // +0x264 CActorParam_setGaugeFloat__Q22cf11CActorParamFf
+    virtual float* CActorParam_UnkVirtualFunc117();  // +0x268 CActorParam_UnkVirtualFunc117__Q22cf11CActorParamFv
+    virtual void CActorParam_setGauge1624(float val);  // +0x26C CActorParam_setGauge1624__Q22cf11CActorParamFf
+    virtual float* CActorParam_UnkVirtualFunc119();  // +0x270 CActorParam_UnkVirtualFunc119__Q22cf11CActorParamFv
+    virtual void CActorParam_copyArtsSetBlock();  // +0x274 CActorParam_copyArtsSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSetBlock();  // +0x278 CActorParam_getArtsSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSet();  // +0x27C CActorParam_getArtsSet__Q22cf11CActorParamFv
+    virtual void CActorParam_copyAtkSetBlock();  // +0x280 CActorParam_copyAtkSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getAtkSetBlock();  // +0x284 CActorParam_getAtkSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSlotIds();  // +0x288 CActorParam_getArtsSlotIds__Q22cf11CActorParamFv
+    virtual void* CActorParam_getCopyParam();  // +0x28C CActorParam_getCopyParam__Q22cf11CActorParamFv
+    virtual CActorParamStatusTable* CActorParam_getStatusTable();  // +0x290 CActorParam_getStatusTable__Q22cf11CActorParamFv
+    virtual CActorParamStatusTable* CActorParam_UnkVirtualFunc128();  // +0x294 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv
+    virtual CActorParam_UnkStruct1* CActorParam_getBattleStats();  // +0x298 CActorParam_getBattleStats__Q22cf11CActorParamFv
+    virtual void* CActorParam_UnkVirtualFunc130(int arg);  // +0x29C CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFi
+    virtual void* CActorParam_UnkVirtualFunc131();  // +0x2A0 CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv
+    virtual CtrlActSub2A4* CActorParam_getMoveRecord();  // +0x2A4 CActorParam_getMoveRecord__Q22cf11CActorParamFv
+    virtual int CActorParam_getStatsSlot();  // +0x2A8 CActorParam_getStatsSlot__Q22cf11CActorParamFv
+    virtual void CActorParam_resetStatsSlot();  // +0x2AC CActorParam_resetStatsSlot__Q22cf11CActorParamFv
+    virtual void CActorParam_reinitBattleStats();  // +0x2B0 CActorParam_reinitBattleStats__Q22cf11CActorParamFv
+    virtual void CActorParam_initBattleStats();  // +0x2B4 CActorParam_initBattleStats__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc137();  // +0x2B8 CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv
+    virtual int CActorParam_isBattleLocked();  // +0x2BC CActorParam_isBattleLocked__Q22cf11CActorParamFv
     CtrlPlayerSub4* mField4;     // 0x04 (sub-object, vf30 -> u32* word holder)
     u8 _8[0x3E9C - 0x8];
     CVoiceOwnerIntfPc mSub3E9C;  // 0x3E9C embedded voice-owner interface
@@ -324,181 +417,180 @@ public:
 // dispatched through here in ctrlActDispatchEntry.
 class CtrlActSrcReal {
 public:
-    virtual void vf00();
-    virtual void vf01();
-    virtual void vf02();
-    virtual void vf03();
-    virtual void vf04();
-    virtual void vf05();
-    virtual void vf06();
-    virtual void vf07();
-    virtual void vf08();
-    virtual void vf09();
-    virtual void vf10();
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void vf15();
-    virtual void vf16();
-    virtual void vf17();
-    virtual void vf18();
-    virtual void vf19();
-    virtual void vf20();
-    virtual void vf21();
-    virtual void vf22();
-    virtual void vf23();
-    virtual void vf24();
-    virtual void vf25();
-    virtual void vf26();
-    virtual void vf27();
-    virtual void vf28();
-    virtual void vf29();
-    virtual void vf30();
-    virtual void vf31();
-    virtual void vf32();
-    virtual void vf33();
-    virtual void vf34();
-    virtual void vf35();
-    virtual void vf36();
-    virtual void vf37();
-    virtual void vf38();
-    virtual void vf39();
-    virtual void vf40();
-    virtual void vf41();
-    virtual void vf42();
-    virtual void vf43();
-    virtual void vf44();
-    virtual void vf45();
-    virtual void vf46();
-    virtual void vf47();
-    virtual void vf48();
-    virtual void vf49();
-    virtual void vf50();
-    virtual void vf51();
-    virtual void vf52();
-    virtual void vf53();
-    virtual void vf54();
-    virtual void vf55();
-    virtual void vf56();
-    virtual void vf57();
-    virtual void vf58();
-    virtual void vf59();
-    virtual void vf60();
-    virtual void vf61();
-    virtual void vf62();
-    virtual void vf63();
-    virtual void vf64();
-    virtual void vf65();
-    virtual void vf66();
-    virtual void vf67();
-    virtual void vf68();
-    virtual void vf69();
-    virtual void vf70();
-    virtual void vf71();
-    virtual void vf72();
-    virtual void vf73();
-    virtual void vf74();
-    virtual void vf75();
-    virtual void vf76();
-    virtual void vf77();
-    virtual void vf78();
-    virtual void vf79();
-    virtual void vf80();
-    virtual void vf81();
-    virtual void vf82();
-    virtual void vf83();
-    virtual void vf84();
-    virtual void vf85();
-    virtual void vf86();
-    virtual void vf87();
-    virtual void vf88();
-    virtual void vf89();
-    virtual void vf90();
-    virtual void vf91();
-    virtual void vf92();
-    virtual void vf93();
-    virtual void vf94();
-    virtual void vf95();
-    virtual void vf96();
-    virtual void vf97();
-    virtual void vf98();
-    virtual void vf99();
-    virtual void vf100();
-    virtual void vf101();
-    virtual void vf102();
-    virtual void vf103();
-    virtual void vf104();
-    virtual void vf105();
-    virtual void vf106();
-    virtual void vf107();
-    virtual void vf108();
-    virtual void vf109();
-    virtual void vf110();
-    virtual void vf111();
-    virtual void vf112();
-    virtual void vf113();
-    virtual void vf114();
-    virtual void vf115();
-    virtual void vf116();
-    virtual void vf117();
-    virtual void vf118();
-    virtual void vf119();
-    virtual void vf120();
-    virtual void vf121();
-    virtual void vf122();
-    virtual void vf123();
-    virtual void vf124();
-    virtual void vf125();
-    virtual void vf126();
-    virtual void vf127();
-    virtual void vf128();
-    virtual void vf129();
-    virtual void vf130();
-    virtual void vf131();
-    virtual void vf132();
-    virtual void vf133();
-    virtual void vf134();
-    virtual void vf135();
-    virtual void vf136();
-    virtual void vf137();
-    virtual void vf138();
-    virtual void vf139();
-    virtual void vf140();
-    virtual void vf141();
-    virtual void vf142();
-    virtual void vf143();
-    virtual void vf144();
-    virtual void vf145();
-    virtual void vf146();
-    virtual void vf147();
-    virtual void vf148();
-    virtual void vf149();
-    virtual void vf150();
-    virtual void vf151();
-    virtual void vf152();
-    virtual void vf153();
-    virtual void vf154();
-    virtual void vf155();
-    virtual void vf156();
-    virtual void vf157();
-    virtual void vf158();
-    virtual void vf159();
-    virtual void vf160();
-    virtual void vf161();
-    virtual void vf162();
-    virtual void vf163();
-    virtual void vf164();
-    virtual void vf165();
-    virtual void vf166();
-    virtual void vf167();
-    virtual void vf168();
-    virtual void vf169();
-    virtual void vf170();
-    virtual void vf171();
-    virtual void vf172();
-    virtual int vf173();                // 0x2BC (action usable gate)
-
+    virtual void* CActorState_setObjStateBit3();  // +0x008 CActorState_setObjStateBit3__Q22cf11CActorStateFv
+    virtual void vf01();  // +0x00C <no function symbol>
+    virtual void vf02();  // +0x010 <no function symbol>
+    virtual void CBattleState_getOwner(int val);  // +0x014 @8@CBattleState_getOwner__Q22cf13CfObjectActorFv
+    virtual void CBattleState_callOwnerObject(CBattleStateEntry* entry);  // +0x018 @8@CBattleState_callOwnerObject__Q22cf13CfObjectActorFv
+    virtual void CObjectParam_getParamPtr(CBattleStateEntry* entry);  // +0x01C @8@CObjectParam_getParamPtr__Q22cf13CfObjectActorFv
+    virtual void CBattleState_setBattleParam(u32 id);  // +0x020 CBattleState_setBattleParam__Q22cf12CBattleStateFi
+    virtual void CBattleState_enterStatusEntry(CBattleStateEntry* entry);  // +0x024 CBattleState_enterStatusEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_addStagingEntry(int index);  // +0x028 CBattleState_addStagingEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_clearStatusId(CBattleStateEntry* arg);  // +0x02C CBattleState_clearStatusId__Q22cf12CBattleStateFUl
+    virtual void CBattleState_applyEventEntry(u32 mask);  // +0x030 CBattleState_applyEventEntry__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_reapplyStatusEntry(u32 id);  // +0x034 CBattleState_reapplyStatusEntry__Q22cf12CBattleStateFi
+    virtual void* CBattleState_removeKeyedEntries(int index);  // +0x038 CBattleState_removeKeyedEntries__Q22cf12CBattleStateFPQ22cf17CBattleStateEntry
+    virtual void CBattleState_clearEntriesByMask();  // +0x03C CBattleState_clearEntriesByMask__Q22cf12CBattleStateFUl
+    virtual void CBattleState_clearStagingEntry();  // +0x040 CBattleState_clearStagingEntry__Q22cf12CBattleStateFUl
+    virtual void CBattleState_getStatusSlot();  // +0x044 CBattleState_getStatusSlot__Q22cf12CBattleStateFi
+    virtual void CBattleState_fetchStatusSlot(CBattleStateEntry* entry);  // +0x048 CBattleState_fetchStatusSlot__Q22cf12CBattleStateFv
+    virtual void CBattleState_getEventSlot(CBattleStateEntry* entry = 0);  // +0x04C CBattleState_getEventSlot__Q22cf12CBattleStateFv
+    virtual void CBattleState_readStatusSlot();  // +0x050 CBattleState_readStatusSlot__Q22cf12CBattleStateFv
+    virtual void* CBattleState_notifyEntryUpdated(int index);  // +0x054 @8@CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry
+    virtual cf::CBattleStateEntry* CBattleState_getLinkedActorId(int index);  // +0x058 @8@CBattleState_getLinkedActorId__Q22cf13CfObjectActorFPQ22cf17CBattleStateEntry
+    virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc19(int index);  // +0x05C CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv
+    virtual cf::CBattleStateEntry* CBattleState_getEntryByIndex(int index);  // +0x060 CBattleState_getEntryByIndex__Q22cf12CBattleStateFi
+    virtual void CBattleState_fetchStatusEntry(const CBattleState* src);  // +0x064 CBattleState_fetchStatusEntry__Q22cf12CBattleStateFi
+    virtual void* CBattleState_getEventEntry();  // +0x068 CBattleState_getEventEntry__Q22cf12CBattleStateFi
+    virtual void CBattleState_getStatusEntry(const CBattleStateSrcEntry* src);  // +0x06C CBattleState_getStatusEntry__Q22cf12CBattleStateFi
+    virtual void* CBattleState_copyStatusEntries();  // +0x070 CBattleState_copyStatusEntries__Q22cf12CBattleStateFPCQ22cf12CBattleState
+    virtual void* CBattleState_getEntryArray(unsigned long index);  // +0x074 CBattleState_getEntryArray__Q22cf12CBattleStateFv
+    virtual void CBattleState_applyArtsTable();  // +0x078 CBattleState_applyArtsTable__Q22cf12CBattleStateFPCQ22cf20CBattleStateSrcEntry
+    virtual void CBattleState_getStatusBlock(u32 flags);  // +0x07C CBattleState_getStatusBlock__Q22cf12CBattleStateFv
+    virtual int CBattleState_getStagingRecord(u32 id);  // +0x080 CBattleState_getStagingRecord__Q22cf12CBattleStateFUl
+    virtual void CBattleState_clearStagingEntries(u32 flags);  // +0x084 CBattleState_clearStagingEntries__Q22cf12CBattleStateFv
+    virtual int CBattleState_addStatusBits4(u32 id);  // +0x088 CBattleState_addStatusBits4__Q22cf12CBattleStateFUl
+    virtual float CBattleState_getEventMask();  // +0x08C CBattleState_getEventMask__Q22cf12CBattleStateFUl
+    virtual void* CBattleState_addStatusBits6(float value);  // +0x090 CBattleState_addStatusBits6__Q22cf12CBattleStateFUl
+    virtual float CBattleState_getStatusMask();  // +0x094 CBattleState_getStatusMask__Q22cf12CBattleStateFUl
+    virtual void* CObjectParam_getParamPtr_CfObjectActor();  // +0x098 CObjectParam_getParamPtr__Q22cf13CfObjectActorFv
+    virtual void* CBattleState_getOwner_CfObjectActor();  // +0x09C CBattleState_getOwner__Q22cf13CfObjectActorFv
+    virtual void* CBattleState_callOwnerObject_CfObjectActor();  // +0x0A0 CBattleState_callOwnerObject__Q22cf13CfObjectActorFv
+    virtual void CActorParam_resetArtsStatus(void* arts);  // +0x0A4 CActorParam_resetArtsStatus__Q22cf11CActorParamFPv
+    virtual void CActorParam_commitArtsStatus(int flag);  // +0x0A8 CActorParam_commitArtsStatus__Q22cf11CActorParamFi
+    virtual void CActorParam_UnkVirtualFunc6(int val);  // +0x0AC CActorParam_UnkVirtualFunc6__Q22cf13CfObjectActorFi
+    virtual void CActorParam_setupActorState();  // +0x0B0 CActorParam_setupActorState__Q22cf11CActorParamFv
+    virtual void CActorParam_resetArtsMatrix();  // +0x0B4 CActorParam_resetArtsMatrix__Q22cf11CActorParamFv
+    virtual void CActorParam_refreshBattleStatus();  // +0x0B8 CActorParam_refreshBattleStatus__Q22cf11CActorParamFv
+    virtual void CActorParam_applyTargetEvent(CActorParam10Arg* arg);  // +0x0BC CActorParam_applyTargetEvent__Q22cf11CActorParamFPQ22cf16CActorParam10Arg
+    virtual void CActorParam_applyStatusHeal(CActorParam11Arg* arg);  // +0x0C0 CActorParam_applyStatusHeal__Q22cf11CActorParamFPQ22cf16CActorParam11Arg
+    virtual void CActorParam_applyEventStatus(CActorParam12Arg* arg);  // +0x0C4 CActorParam_applyEventStatus__Q22cf11CActorParamFPQ22cf16CActorParam12Arg
+    virtual void CActorParam_resetGaugesAndRefresh();  // +0x0C8 CActorParam_resetGaugesAndRefresh__Q22cf11CActorParamFv
+    virtual void CActorParam_setStatByte(u8 val);  // +0x0CC CActorParam_setStatByte__Q22cf11CActorParamFUc
+    virtual void CActorParam_UnkVirtualFunc15();  // +0x0D0 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv
+    virtual void CActorParam_setStatScale(float val);  // +0x0D4 CActorParam_setStatScale__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc17();  // +0x0D8 CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv
+    virtual void CActorParam_setActorType(u32 val);  // +0x0DC CActorParam_setActorType__Q22cf11CActorParamFUl
+    virtual u32 CActorParam_getActorType();  // +0x0E0 CActorParam_getActorType__Q22cf11CActorParamFv
+    virtual void CActorParam_setEnemyType(u32 val);  // +0x0E4 CActorParam_setEnemyType__Q22cf11CActorParamFUl
+    virtual void CActorParam_setScale(float val);  // +0x0E8 CActorParam_setScale__Q22cf13CfObjectActorFf
+    virtual void CActorParam_UnkVirtualFunc22();  // +0x0EC CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv
+    virtual float CActorParam_getScale();  // +0x0F0 CActorParam_getScale__Q22cf13CfObjectActorFv
+    virtual void CActorParam_UnkVirtualFunc24();  // +0x0F4 CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc25();  // +0x0F8 CActorParam_UnkVirtualFunc25__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getArtsLevel();  // +0x0FC CActorParam_getArtsLevel__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc27();  // +0x100 CActorParam_UnkVirtualFunc27__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc28();  // +0x104 CActorParam_UnkVirtualFunc28__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getActorLevel();  // +0x108 CActorParam_getActorLevel__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc30();  // +0x10C CActorParam_UnkVirtualFunc30__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc31();  // +0x110 CActorParam_UnkVirtualFunc31__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc32();  // +0x114 CActorParam_UnkVirtualFunc32__Q22cf11CActorParamFv
+    virtual void CActorParam_setHp(float val);  // +0x118 CActorParam_setHp__Q22cf13CfObjectActorFf
+    virtual void CActorParam_addHp(float value);  // +0x11C CActorParam_addHp__Q22cf13CfObjectActorFf
+    virtual void CActorParam_applyDamage(float value, int a, int b, int c);  // +0x120 CActorParam_applyDamage__Q22cf13CfObjectActorFfiii
+    virtual void CActorParam_UnkVirtualFunc36();  // +0x124 CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv
+    virtual float CActorParam_getHp();  // +0x128 CActorParam_getHp__Q22cf11CActorParamFv
+    virtual float CActorParam_getDamageScale();  // +0x12C CActorParam_getDamageScale__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc39();  // +0x130 CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv
+    virtual void CActorParam_applyStoredHp();  // +0x134 CActorParam_applyStoredHp__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc41(float val);  // +0x138 CActorParam_UnkVirtualFunc41__Q22cf11CActorParamFf
+    virtual void CActorParam_UnkVirtualFunc42(float val);  // +0x13C CActorParam_UnkVirtualFunc42__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc43();  // +0x140 CActorParam_UnkVirtualFunc43__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc44();  // +0x144 CActorParam_UnkVirtualFunc44__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc45();  // +0x148 CActorParam_UnkVirtualFunc45__Q22cf11CActorParamFv
+    virtual void CActorParam_applyStoredHitCharge();  // +0x14C CActorParam_applyStoredHitCharge__Q22cf11CActorParamFv
+    virtual void CActorParam_setTensionPoints(float val);  // +0x150 CActorParam_setTensionPoints__Q22cf11CActorParamFf
+    virtual void CActorParam_addArtsGauge(float delta);  // +0x154 CActorParam_addArtsGauge__Q22cf11CActorParamFf
+    virtual float CActorParam_getArtsGauge();  // +0x158 CActorParam_getArtsGauge__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc50();  // +0x15C CActorParam_UnkVirtualFunc50__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc51();  // +0x160 CActorParam_UnkVirtualFunc51__Q22cf11CActorParamFv
+    virtual void CActorParam_applyStoredArtsGauge();  // +0x164 CActorParam_applyStoredArtsGauge__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc53(int val);  // +0x168 CActorParam_UnkVirtualFunc53__Q22cf11CActorParamFi
+    virtual void CActorParam_addGauge(int delta);  // +0x16C CActorParam_addGauge__Q22cf13CfObjectActorFi
+    virtual void CActorParam_setGaugeFlagA(u16 val);  // +0x170 CActorParam_setGaugeFlagA__Q22cf11CActorParamFUs
+    virtual int CActorParam_getGauge();  // +0x174 CActorParam_getGauge__Q22cf11CActorParamFv
+    virtual int CActorParam_getGaugeMax();  // +0x178 CActorParam_getGaugeMax__Q22cf11CActorParamFv
+    virtual void CActorParam_clearGauge();  // +0x17C CActorParam_clearGauge__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc59(int val);  // +0x180 CActorParam_UnkVirtualFunc59__Q22cf11CActorParamFi
+    virtual void CActorParam_addSecondGauge(int delta);  // +0x184 CActorParam_addSecondGauge__Q22cf13CfObjectActorFi
+    virtual void CActorParam_setGaugeFlagB(u16 val);  // +0x188 CActorParam_setGaugeFlagB__Q22cf11CActorParamFUs
+    virtual int CActorParam_getSecondGauge();  // +0x18C CActorParam_getSecondGauge__Q22cf11CActorParamFv
+    virtual int CActorParam_getSecondGaugeMax();  // +0x190 CActorParam_getSecondGaugeMax__Q22cf11CActorParamFv
+    virtual void CActorParam_clearSecondGauge();  // +0x194 CActorParam_clearSecondGauge__Q22cf11CActorParamFv
+    virtual void CActorParam_setGaugeRateA(float val);  // +0x198 CActorParam_setGaugeRateA__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc66();  // +0x19C CActorParam_UnkVirtualFunc66__Q22cf11CActorParamFv
+    virtual void CActorParam_resetGaugeBattleEntry();  // +0x1A0 CActorParam_resetGaugeBattleEntry__Q22cf11CActorParamFv
+    virtual void CActorParam_setGaugeRateB(float val);  // +0x1A4 CActorParam_setGaugeRateB__Q22cf11CActorParamFf
+    virtual float CActorParam_UnkVirtualFunc69();  // +0x1A8 CActorParam_UnkVirtualFunc69__Q22cf11CActorParamFv
+    virtual void CActorParam_resetSecondGaugeBattleEntry();  // +0x1AC CActorParam_resetSecondGaugeBattleEntry__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc71();  // +0x1B0 CActorParam_UnkVirtualFunc71__Q22cf11CActorParamFv
+    virtual float CActorParam_UnkVirtualFunc72();  // +0x1B4 CActorParam_UnkVirtualFunc72__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc73();  // +0x1B8 CActorParam_UnkVirtualFunc73__Q22cf11CActorParamFv
+    virtual void CActorParam_setMoveRate(float val);  // +0x1BC CActorParam_setMoveRate__Q22cf11CActorParamFf
+    virtual void CActorParam_UnkVirtualFunc75(int flag);  // +0x1C0 CActorParam_UnkVirtualFunc75__Q22cf11CActorParamFi
+    virtual void* CActorParam_getMoveRate();  // +0x1C4 CActorParam_getMoveRate__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc77();  // +0x1C8 CActorParam_UnkVirtualFunc77__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc78();  // +0x1CC CActorParam_UnkVirtualFunc78__Q22cf11CActorParamFv
+    virtual float* CActorParam_UnkVirtualFunc79();  // +0x1D0 CActorParam_UnkVirtualFunc79__Q22cf11CActorParamFv
+    virtual float* CActorParam_UnkVirtualFunc80();  // +0x1D4 CActorParam_UnkVirtualFunc80__Q22cf11CActorParamFv
+    virtual void CActorParam_setSpentCurrency(u32 val);  // +0x1D8 CActorParam_setSpentCurrency__Q22cf11CActorParamFUl
+    virtual void CActorParam_addSpentCurrency(u32 val);  // +0x1DC CActorParam_addSpentCurrency__Q22cf11CActorParamFUl
+    virtual void CActorParam_addAccumCurrency(u32 addend);  // +0x1E0 CActorParam_addAccumCurrency__Q22cf11CActorParamFUl
+    virtual u32 CActorParam_getTotalCurrency();  // +0x1E4 CActorParam_getTotalCurrency__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getSpentCurrency();  // +0x1E8 CActorParam_getSpentCurrency__Q22cf11CActorParamFv
+    virtual int CActorParam_getCurrencyBalance();  // +0x1EC CActorParam_getCurrencyBalance__Q22cf11CActorParamFv
+    virtual u32 CActorParam_getLevelExp();  // +0x1F0 CActorParam_getLevelExp__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);  // +0x1F4 CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFUlUlUl
+    virtual void CActorParam_setSecondCurrency(u32 val);  // +0x1F8 CActorParam_setSecondCurrency__Q22cf11CActorParamFUl
+    virtual void CActorParam_addSecondCurrency(u32 val);  // +0x1FC CActorParam_addSecondCurrency__Q22cf11CActorParamFUl
+    virtual u32 CActorParam_getSecondCurrency();  // +0x200 CActorParam_getSecondCurrency__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc92(const void* src);  // +0x204 CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFPCv
+    virtual CActorParam_UnkStruct3* CActorParam_UnkVirtualFunc93();  // +0x208 CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsDataBlock();  // +0x20C CActorParam_getArtsDataBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getStatusSyncBlock();  // +0x210 CActorParam_getStatusSyncBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSyncBlock();  // +0x214 CActorParam_getArtsSyncBlock__Q22cf11CActorParamFv
+    virtual CActorParam_UnkStruct4* CActorParam_UnkVirtualFunc97();  // +0x218 CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc98(const void* src);  // +0x21C CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFPCv
+    virtual CActorParam_UnkStruct3* CActorParam_UnkVirtualFunc99();  // +0x220 CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv
+    virtual void* CActorParam_getBattleParams();  // +0x224 CActorParam_getBattleParams__Q22cf11CActorParamFv
+    virtual void* CActorParam_getBaseStats();  // +0x228 CActorParam_getBaseStats__Q22cf11CActorParamFv
+    virtual void* CActorParam_getBonusStats();  // +0x22C CActorParam_getBonusStats__Q22cf11CActorParamFv
+    virtual void CActorParam_refreshBattleAction();  // +0x230 CActorParam_refreshBattleAction__Q22cf11CActorParamFv
+    virtual float* CActorParam_UnkVirtualFunc104();  // +0x234 CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc105();  // +0x238 CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc106();  // +0x23C CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc107();  // +0x240 CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc108();  // +0x244 CActorParam_UnkVirtualFunc108__Q22cf11CActorParamFv
+    virtual u32 CActorParam_UnkVirtualFunc109();  // +0x248 CActorParam_UnkVirtualFunc109__Q22cf11CActorParamFv
+    virtual u32 CActorParam_UnkVirtualFunc110();  // +0x24C CActorParam_UnkVirtualFunc110__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc111();  // +0x250 CActorParam_UnkVirtualFunc111__Q22cf11CActorParamFv
+    virtual void CActorParam_setParam161C(u32 val);  // +0x254 CActorParam_setParam161C__Q22cf11CActorParamFUl
+    virtual u32* CActorParam_UnkVirtualFunc113();  // +0x258 CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv
+    virtual void CActorParam_setFlag1628(u8 val);  // +0x25C CActorParam_setFlag1628__Q22cf11CActorParamFUc
+    virtual bool CActorParam_UnkVirtualFunc115();  // +0x260 CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv
+    virtual void CActorParam_setGaugeFloat(float val);  // +0x264 CActorParam_setGaugeFloat__Q22cf11CActorParamFf
+    virtual float* CActorParam_UnkVirtualFunc117();  // +0x268 CActorParam_UnkVirtualFunc117__Q22cf11CActorParamFv
+    virtual void CActorParam_setGauge1624(float val);  // +0x26C CActorParam_setGauge1624__Q22cf11CActorParamFf
+    virtual float* CActorParam_UnkVirtualFunc119();  // +0x270 CActorParam_UnkVirtualFunc119__Q22cf11CActorParamFv
+    virtual void CActorParam_copyArtsSetBlock();  // +0x274 CActorParam_copyArtsSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSetBlock();  // +0x278 CActorParam_getArtsSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSet();  // +0x27C CActorParam_getArtsSet__Q22cf11CActorParamFv
+    virtual void CActorParam_copyAtkSetBlock();  // +0x280 CActorParam_copyAtkSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getAtkSetBlock();  // +0x284 CActorParam_getAtkSetBlock__Q22cf11CActorParamFv
+    virtual void* CActorParam_getArtsSlotIds();  // +0x288 CActorParam_getArtsSlotIds__Q22cf11CActorParamFv
+    virtual void* CActorParam_getCopyParam();  // +0x28C CActorParam_getCopyParam__Q22cf11CActorParamFv
+    virtual CActorParamStatusTable* CActorParam_getStatusTable();  // +0x290 CActorParam_getStatusTable__Q22cf11CActorParamFv
+    virtual CActorParamStatusTable* CActorParam_UnkVirtualFunc128();  // +0x294 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv
+    virtual CActorParam_UnkStruct1* CActorParam_getBattleStats();  // +0x298 CActorParam_getBattleStats__Q22cf11CActorParamFv
+    virtual void* CActorParam_UnkVirtualFunc130(int arg);  // +0x29C CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFi
+    virtual void* CActorParam_UnkVirtualFunc131();  // +0x2A0 CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv
+    virtual void* CActorParam_getMoveRecord();  // +0x2A4 CActorParam_getMoveRecord__Q22cf11CActorParamFv
+    virtual int CActorParam_getStatsSlot();  // +0x2A8 CActorParam_getStatsSlot__Q22cf11CActorParamFv
+    virtual void CActorParam_resetStatsSlot();  // +0x2AC CActorParam_resetStatsSlot__Q22cf11CActorParamFv
+    virtual void CActorParam_reinitBattleStats();  // +0x2B0 CActorParam_reinitBattleStats__Q22cf11CActorParamFv
+    virtual void CActorParam_initBattleStats();  // +0x2B4 CActorParam_initBattleStats__Q22cf11CActorParamFv
+    virtual void CActorParam_UnkVirtualFunc137();  // +0x2B8 CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv
+    virtual int CActorParam_isBattleLocked();  // +0x2BC CActorParam_isBattleLocked__Q22cf11CActorParamFv
     CtrlPlayerSub4* mField4;     // 0x04 (sub-object, vf30 -> u32* word holder)
 };
 
@@ -642,29 +734,29 @@ struct CtrlActAtkArg {
 namespace cf {
 class __declspec(novtable) CtrlAct {
 public:
-    virtual void vf00();
-    virtual void vf01();
-    virtual int CtrlNpcAlwaysFalse();  // 0x10 (def in CtrlNpc.cpp)
+    // Retail vtable lbl_eu_8052B080 (36 words, see CBattleManager.cpp):
+    // declared virtual N occupies word (N+2)/4. Names and signatures are
+    // those of the functions in the retail slots.
+    virtual ~CtrlAct();  // 0x08 __dt__Q22cf7CtrlActFv
+    virtual void CtrlPc_UpdatePadState() = 0;  // 0x0C pure; retail slot is 0, overridden in CtrlPc/CtrlEnemy/CtrlRemote vtables
+    virtual int CtrlNpcAlwaysFalse();  // 0x10
     virtual unsigned long ctrlActIsFlagBit15Clear();  // 0x14
-    virtual void vf04();
-    virtual void vf05();
-    virtual void vf06();
-    virtual void vf07();
-    virtual void vf08();
-    virtual void vf09();
-    virtual void vf10();
-    virtual void vf11();
-    virtual void vf12();
-    virtual void vf13();
-    virtual void vf14();
-    virtual void vf15();
-    virtual void vf16();
-    virtual void vf17();
-    virtual void vf18();
-    virtual void vf19();
-    // Retail vtable lbl_eu_8052B080 (36 words, see CBattleManager.cpp): the
-    // word at (N+2)*4 holds the named free function, so these virtuals carry
-    // the retail names with call-site-exact arity (name-only change).
+    virtual int ret0_800888E8();  // 0x18 cf::CtrlEnemy::ret0_800888E8
+    virtual int ret0_800888E0();  // 0x1C cf::CtrlEnemy::ret0_800888E0
+    virtual int ret0_800888D8();  // 0x20 cf::CtrlEnemy::ret0_800888D8
+    virtual int ret0_800888D0();  // 0x24 cf::CtrlEnemy::ret0_800888D0
+    virtual int ret0_800888C8();  // 0x28 cf::CtrlEnemy::ret0_800888C8
+    virtual int ret0_800888C0();  // 0x2C cf::CtrlEnemy::ret0_800888C0
+    virtual int ret0_800888B8();  // 0x30 cf::CtrlEnemy::ret0_800888B8
+    virtual int ret0_800888B0();  // 0x34 cf::CtrlEnemy::ret0_800888B0
+    virtual int ret0_800888A8();  // 0x38 cf::CtrlEnemy::ret0_800888A8
+    virtual int ret0_800888A0();  // 0x3C cf::CtrlEnemy::ret0_800888A0
+    virtual int ret0_80088898();  // 0x40 cf::CtrlEnemy::ret0_80088898
+    virtual int ret0_80088890();  // 0x44 cf::CtrlEnemy::ret0_80088890
+    virtual int ret0_80088888();  // 0x48 cf::CtrlEnemy::ret0_80088888
+    virtual int ret0_80088880();  // 0x4C cf::CtrlEnemy::ret0_80088880
+    virtual int ret0_80088878();  // 0x50 cf::CtrlEnemy::ret0_80088878
+    virtual int ret0_80088870();  // 0x54 cf::CtrlEnemy::ret0_80088870
     virtual void parseActEntry();  // 0x58
     virtual void aimVoiceOwner();  // 0x5C
     virtual void updateActMain();  // 0x60
@@ -675,11 +767,11 @@ public:
     virtual int ctrlActCheckBlockedProbe(ml::CVec3* out);                                   // 0x74
     virtual int ctrlActDispatchEntry(void* entry);  // 0x78 (arts entry)
     virtual int runArtsAttack(void* entry);  // 0x7C (arts entry)
-    virtual int vf30();
-    virtual int vf31();  // 0x80/0x84 shared ret stubs
+    virtual int ret1_800888F4();  // 0x80 cf::CtrlEnemy::ret1_800888F4
+    virtual void CtrlEnemy_emptyStub_800888F0();  // 0x84
     virtual int handleActKind();  // 0x88
-    virtual void vf33();  // 0x8C pure (retail word is 0)
-    // NOTE: the retail table ends at +0x8C; there are no vf34+ slots.
+    virtual void dispatchCtrlPcActions() = 0;  // 0x8C pure; retail slot is 0, overridden in CtrlPc/CtrlEnemy/CtrlRemote vtables
+    // NOTE: the retail table ends at +0x8C; there are no further slots.
 
     u32 mField4;               // 0x04 (flag word, bit 1 set by ctrlActDispatchEntry)
     f32 mField8;               // 0x08
@@ -719,26 +811,64 @@ public:
 // stops at 0xC4). Index 105 -> vtable 0x1AC.
 class CtrlActVoiceOwnerIntf : public CVoiceOwnerIntfPc {
 public:
-    virtual void vf48();  virtual void vf49();  virtual void vf50();
-    virtual void vf51();  virtual void vf52();  virtual void vf53();
-    virtual void vf54();  virtual void vf55();  virtual void vf56();
-    virtual void vf57();  virtual void vf58();  virtual void vf59();
-    virtual void vf60();  virtual void vf61();  virtual void vf62();
-    virtual void vf63();  virtual void vf64();  virtual void vf65();
-    virtual void vf66();  virtual void vf67();  virtual void vf68();
-    virtual void vf69();  virtual void vf70();  virtual void vf71();
-    virtual void vf72();  virtual void vf73();  virtual void vf74();
-    virtual void vf75();  virtual void vf76();  virtual void vf77();
-    virtual void vf78();  virtual void vf79();  virtual void vf80();
-    virtual void vf81();  virtual void vf82();  virtual void vf83();
-    virtual void vf84();  virtual void vf85();  virtual void vf86();
-    virtual void vf87();  virtual void vf88();  virtual void vf89();
-    virtual void vf90();  virtual void vf91();  virtual void vf92();
-    virtual void vf93();  virtual void vf94();  virtual void vf95();
-    virtual void vf96();  virtual void vf97();  virtual void vf98();
-    virtual void vf99();  virtual void vf100(); virtual void vf101();
-    virtual void vf102(); virtual void vf103(); virtual void vf104();
-    virtual void m1AC(u32 a, const char* b);  // 0x1AC
+    virtual void CfObject_setMoveYaw(float value);  // +0x0C8 CfObject_setMoveYaw__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getMoveHeadAngle();  // +0x0CC CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv
+    virtual void CfObject_syncMoveHead(float deg);  // +0x0D0 CfObject_syncMoveHead__Q22cf12CfObjectMoveFf
+    virtual void CfObject_applyMoveYaw(float amount);  // +0x0D4 CfObject_applyMoveYaw__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getScaledAngle();  // +0x0D8 CfObject_getScaledAngle__Q22cf13CfObjectModelFv
+    virtual void CfObject_setObjScale(float value);  // +0x0DC CfObject_setObjScale__Q22cf13CfObjectModelFf
+    virtual float CfObject_getObjScale();  // +0x0E0 CfObject_getObjScale__Q22cf13CfObjectModelFv
+    virtual int CfObject_resetAnimSlots(u32 arg);  // +0x0E4 CfObject_resetAnimSlots__Q22cf12CfObjectMoveFUl
+    virtual int CfObject_clearAnimEntry(u32 arg);  // +0x0E8 CfObject_clearAnimEntry__Q22cf12CfObjectMoveFUl
+    virtual int CfObject_armAnimSlot0(u32 id, u32 tag);  // +0x0EC CfObject_armAnimSlot0__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_armAnimSlot0N(u32 id, u32 nameIdx);  // +0x0F0 CfObject_armAnimSlot0N__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_UnkVirtualFunc41();  // +0x0F4 CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv
+    virtual int CfObject_armAnimSlot1(u32 id, u32 tag);  // +0x0F8 CfObject_armAnimSlot1__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_armAnimSlot1N(u32 id, u32 nameIdx);  // +0x0FC CfObject_armAnimSlot1N__Q22cf12CfObjectMoveFUlUl
+    virtual int CfObject_UnkVirtualFunc44();  // +0x100 CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv
+    virtual void CfObject_rearmAnimSlot(u32 value, u32 index);  // +0x104 CfObject_rearmAnimSlot__Q22cf12CfObjectMoveFUlUl
+    virtual void CfObject_setMoveTargetPtr(void* arg);  // +0x108 CfObject_setMoveTargetPtr__Q22cf12CfObjectMoveFPv
+    virtual void CfObject_createMoveTarget(int kind);  // +0x10C CfObject_createMoveTarget__Q22cf12CfObjectMoveFi
+    virtual void* CfObject_getCurrentTarget();  // +0x110 CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv
+    virtual void CfObject_forwardNpcAction(int action);  // +0x114 CfObject_forwardNpcAction__Q22cf12CfObjectMoveFi
+    virtual int CfObject_getNpcActionState();  // +0x118 CfObject_getNpcActionState__Q22cf12CfObjectMoveFv
+    virtual int CfObject_getNpcTargetAction();  // +0x11C CfObject_getNpcTargetAction__Q22cf12CfObjectMoveFv
+    virtual void* CfObject_findNodeMatrix(const char* name) const;  // +0x120 CfObject_findNodeMatrix__Q22cf13CfObjectModelCFPCc
+    virtual void* CfObject_getIndexedNodeMatrix(u32 idx) const;  // +0x124 CfObject_getIndexedNodeMatrix__Q22cf13CfObjectModelCFUl
+    virtual u32 CfObject_getSubPosWord();  // +0x128 CfObject_getSubPosWord__Q22cf13CfObjectModelFv
+    virtual void* CfObject_getPosSample(int arg) const;  // +0x12C CfObject_getPosSample__Q22cf13CfObjectModelCFi
+    virtual float CfObject_getHeightDiff() const;  // +0x130 CfObject_getHeightDiff__Q22cf13CfObjectModelCFv
+    virtual void CfObject_setMoveValue(float value);  // +0x134 CfObject_setMoveValue__Q22cf12CfObjectMoveFf
+    virtual u32* CfObject_getMoveRateScale();  // +0x138 CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv
+    virtual void CfObject_setMoveScale(float value);  // +0x13C CfObject_setMoveScale__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getMoveFactor();  // +0x140 CfObject_getMoveFactor__Q22cf12CfObjectMoveFv
+    virtual void CfObject_setAnimSlotEntry(u32 a, u32 b);  // +0x144 CfObject_setAnimSlotEntry__Q22cf12CfObjectMoveFUlUl
+    virtual u32 CfObject_getSlotBits(u32 arg);  // +0x148 CfObject_getSlotBits__Q22cf12CfObjectMoveFUl
+    virtual u32 CfObject_readKindFlagWord();  // +0x14C CfObject_readKindFlagWord__Q22cf13CfObjectModelFv
+    virtual void CfObject_setMoveBusyState(int flag);  // +0x150 CfObject_setMoveBusyState__Q22cf12CfObjectMoveFi
+    virtual void CfObject_setMoveReadyFlag(int flag);  // +0x154 CfObject_setMoveReadyFlag__Q22cf12CfObjectMoveFi
+    virtual void setPointEnabled(int flag) = 0;  // +0x158 setPointEnabled__Q22cf12CfObjectMoveFi
+    virtual void CfObject_setVisibleFlag(int flag);  // +0x15C CfObject_setVisibleFlag__Q22cf13CfObjectModelFi
+    virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr);  // +0x160 CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3
+    virtual u32 CfObject_isVisibleFlag();  // +0x164 CfObject_isVisibleFlag__Q22cf13CfObjectModelFv
+    virtual void CfObject_syncModelRate(float value);  // +0x168 CfObject_syncModelRate__Q22cf12CfObjectMoveFf
+    virtual float CfObject_getProgressLow();  // +0x16C CfObject_getProgressLow__Q22cf13CfObjectModelFv
+    virtual void CfObject_setProgressHigh(float value);  // +0x170 CfObject_setProgressHigh__Q22cf13CfObjectModelFf
+    virtual float CfObject_getProgressHigh();  // +0x174 CfObject_getProgressHigh__Q22cf13CfObjectModelFv
+    virtual void CfObjectModel_releaseModelSub();  // +0x178 CfObjectModel_releaseModelSub__Q22cf12CfObjectMoveFv
+    virtual void CfObjectModel_releaseModelList();  // +0x17C CfObjectModel_releaseModelList__Q22cf12CfObjectMoveFv
+    virtual void CfObjectModel_getModelName();  // +0x180 CfObjectModel_getModelName__Q22cf13CfObjectModelFv
+    virtual void CfObjectModel_getAnimState();  // +0x184 CfObjectModel_getAnimState__Q22cf12CfObjectMoveFv
+    virtual void CfObjectModel_getAnimFlags();  // +0x188 CfObjectModel_getAnimFlags__Q22cf12CfObjectMoveFv
+    virtual void CfObjectModel_checkTargetNode();  // +0x18C CfObjectModel_checkTargetNode__Q22cf12CfObjectMoveFPv
+    virtual void CfObjectModel_snapSubTarget();  // +0x190 CfObjectModel_snapSubTarget__Q22cf13CfObjectModelFPQ22ml5CVec3f
+    virtual void CfObjectModel_getSubFlag04();  // +0x194 CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv
+    virtual void CfObjectModel_getModelFloatA8();  // +0x198 CfObjectModel_getModelFloatA8__Q22cf13CfObjectModelFv
+    virtual void CfObjectModel_setModelFloatA8();  // +0x19C CfObjectModel_setModelFloatA8__Q22cf13CfObjectModelFf
+    virtual void CfObjectModel_getModelRate();  // +0x1A0 CfObjectModel_getModelRate__Q22cf13CfObjectModelFv
+    virtual void CfObjectModel_setModelRate();  // +0x1A4 CfObjectModel_setModelRate__Q22cf13CfObjectModelFf
+    virtual void CfObjectModel_aimAtPosition();  // +0x1A8 CfObjectModel_aimAtPosition__Q22cf13CfObjectModelFPCQ22ml5CVec3
+    virtual void CfObjectModel_bindModelTo(void* a, const char* b);  // +0x1AC CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc
 };
 
 // Voice-owner vtable slots used by the action handlers with non-base

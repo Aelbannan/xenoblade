@@ -11,6 +11,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -23,11 +24,11 @@ extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
+
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
 
 // DrawInfo helper - retail emits the mangled nw4r form
 // (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is a normal C++ global.
@@ -94,7 +95,7 @@ void CMenuGCItem::Move() {
     case 0:
         // Once the bg texture, title bar and item grid are all ready, start
         // the panel intro animations and play the open cue (sound 0x6d).
-        if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && isInitialized(&mTitleAHelp) != 0 &&
+        if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && mTitleAHelp.isInitialized() != 0 &&
             mItemBoxGrid.IsItemBoxReady() != 0) {
             func_801C412C(&mTitleAHelp);
             mItemBoxGrid.InitItemDisplay();

@@ -124,7 +124,7 @@ extern "C" {
 extern char lbl_eu_80504A3C[];
 extern f32 lbl_eu_80667E00;
 extern u32 lbl_eu_806640EC;
-extern u32 lbl_eu_80664108;
+extern void* lbl_eu_80664108;
 extern u32 lbl_eu_80664410;
 
 // Ctor-only imports (see __ct__CMenuGetItemMulti below).
@@ -553,7 +553,7 @@ void CMenuGetItemMulti::Init() {
                 case 9: textureName = &lbl_eu_80504A3C[0x311]; break;
                 case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
                 case 11: {
-                    u32 fontCheck = lbl_eu_80664108;
+                    u32 fontCheck = (u32)lbl_eu_80664108;
                     // Retail: clrlwi into r3, set default texture, then
                     // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
                     u32 fontHit = (u8)BdatGetU8Direct(
@@ -810,7 +810,7 @@ void CMenuGetItemMulti::Init() {
             case 9: textureName = &lbl_eu_80504A3C[0x311]; break;
             case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
             case 11: {
-                u32 fontCheck = lbl_eu_80664108;
+                u32 fontCheck = (u32)lbl_eu_80664108;
                 char* fontKey = &lbl_eu_80504A3C[0x33b];
                 u32 fontHit = (u8)BdatGetU8Direct(
                     (const void*)fontCheck, fontKey, (u16)tableId);
@@ -1409,7 +1409,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             case 9: textureName = &lbl_eu_80504A3C[0x311]; break;
             case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
             case 11: {
-                u32 fontCheck = lbl_eu_80664108;
+                u32 fontCheck = (u32)lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
                 if (BdatGetU8Direct((const void*)fontCheck, &lbl_eu_80504A3C[0x33b],
                                  BdatGetItemId((u16)(entry->packed >> 20)))) {
@@ -1544,7 +1544,7 @@ void GetItemMulti_RefreshList(CMenuGetItemMulti* self) {
             case 9: textureName = &lbl_eu_80504A3C[0x311]; break;
             case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
             case 11: {
-                u32 fontCheck = lbl_eu_80664108;
+                u32 fontCheck = (u32)lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
                 if (BdatGetU8Direct((const void*)fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
                     textureName = &lbl_eu_80504A3C[0x340];
@@ -1865,7 +1865,7 @@ void GetItemMulti_ShowEquipped(CMenuGetItemMulti* self, int arg2,
     // Item-window font pointer + id -> table id (retail keeps both in saved
     // regs across all the lookups; results stay full-width u32 with masks
     // only at the use sites).
-    u32 font = lbl_eu_806640F4;
+    u32 font = (u32)lbl_eu_806640F4;
     BdatGetItemType(arg2);
     u16 tableId = BdatGetItemId(arg2);
 
@@ -2002,7 +2002,7 @@ void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuG
     // in r24 across the pane calls); the rank block below re-reads the global.
     // Results stay full-width (retail saves each with a plain mr; the byte
     // mask happens only when passed as the u8 arg of setLayoutTextBoxNumber).
-    u32 itemFont = lbl_eu_806640F8;
+    u32 itemFont = (u32)lbl_eu_806640F8;
     BdatGetItemType(arg2);
     u16 tableId = BdatGetItemId(arg2);
     u8 v1 = BdatGetU8Direct((const void*)itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
@@ -2016,7 +2016,7 @@ void GetItemMulti_ShowEntryDetailPanes(CMenuGetItemMulti* self, int arg2, CMenuG
     // raw lookup result in a saved reg AND takes a byte view once: the
     // comparison chain runs on the byte view (unsigned range test), while the
     // suffix switch below re-masks the raw value.
-    u32 rankFont = lbl_eu_806640F8;
+    u32 rankFont = (u32)lbl_eu_806640F8;
     u8 rankVal = BdatGetU8Direct((const void*)rankFont, &lbl_eu_80504A3C[0x543],
                                 BdatGetItemId(arg2));
     // Signed local: MWCC rewrites the 4..13 range test as an unsigned

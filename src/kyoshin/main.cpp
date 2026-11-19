@@ -46,7 +46,7 @@ const char* languageFolderPaths[8] = {
 //   .sdata2:  scStaticArcStr (8B pointer pair), adx/eff/map/obj/snd.pkh,
 //             6 "/xx/" lang strings, 6 "\\xx\\" lang strings, 9 arc tags.
 //   .data:    sGameMainIcon, sLanguageFolderPaths[8], languageFolderPaths[8],
-//             sStaticArcFiles[10] (contiguous; main() uses r30 + 0x10/0x30/0x50).
+//             sStaticArcFiles[10] (contiguous; MWCC addresses them off one base reg).
 
 // ---- .rodata strings ----
 const char lbl_eu_804FA258[0xA] = "GAME_MAIN";
@@ -203,9 +203,6 @@ void main(){
 #else
 int main(){
 #endif
-    // Keep .data base in a named local so MWCC relocates via sGameMainIcon
-    // (not ...data.0) and can emit stmw r30/r31 like retail.
-    char* dataBase = reinterpret_cast<char*>(&sGameMainIcon);
     nand.setShare(false);
     CBdat::clearEntries();
     loadErrMesTable();
@@ -214,8 +211,8 @@ int main(){
     func_eu_804520B0(getErrMesLangTable1());
     func_eu_804520B0(getErrMesLangTable2());
 #if !defined(VERSION_JP)
-    func_eu_804520B0(dataBase + 0x10);
-    func_eu_804520B0(dataBase + 0x30);
+    func_eu_804520B0(sLanguageFolderPaths);
+    func_eu_804520B0(languageFolderPaths);
 #endif
     CDeviceFileCri::setCriFilePathA(getErrMesText01());
     CDeviceFileCri::setCriFilePathB(getErrMesText02());
@@ -227,8 +224,8 @@ int main(){
     mtl::MemManager::MemRegion::setRegionMaxSize(0x686000, 0);
     CDeviceVI::setUseStaticHandle(true);
     CDeviceGX::setValues(GX_PF_RGB8_Z24, 0x180000);
-    entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(reinterpret_cast<void*>(dataBase), 1);
-    CLibStaticData::saveStaticFileArray(reinterpret_cast<StaticArcFileData*>(dataBase + 0x50));
+    entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(&sGameMainIcon, 1);
+    CLibStaticData::saveStaticFileArray(sStaticArcFiles);
     CLibVM::setCallbacks(&vmInitPluginRegistCallback, &vmInitCallback);
     CWorkSystemPack::SaveStaticArcFilenameStringPtr(scStaticArcStr);
     CWorkSystemPack::SavePkhFilenamesArrayPtr(sPkhFilenames);

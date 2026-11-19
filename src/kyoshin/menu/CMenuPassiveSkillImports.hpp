@@ -213,13 +213,12 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* rende
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // int (not u8): callers compare r3 directly with cmpi, no rlwinm mask.
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" int isInitialized(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 
 // UI::CPassiveSkill helpers (first arg is the +0xB8 sub-object).
 extern "C" void CPassiveSkill_teardown(u8* self);

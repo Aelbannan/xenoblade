@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "kyoshin/cf/CfBdat.hpp"       // owning declarations for the shared bdat globals
+#include "kyoshin/CPcKizunagram.hpp"  // owning declaration for KizunagramRebuildSlotList
 #include "monolib/math/MathConstants.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"        // cf::CfGameManager static accessors
@@ -76,6 +78,9 @@ extern "C" void* findObjB28ById(s32);
 extern "C" int isBattleStatusActive(void* obj, int id);   // battle-state status probe
 extern "C" void* findBattleStatusEntry(void* obj, u32 id); // battle-state status value
 #include "monolib/util/MemManager.hpp"       // mtl::MemManager (work-buffer alloc)
+
+// Definition in cf/CItem.cpp; canonical declaration in kyoshin/cf/CItem.hpp.
+extern "C" CItemExt* CItem_kindPtr(u32 index, s16 value);
 
 #include <new>
 #include <cstring>
@@ -906,9 +911,7 @@ extern "C" int CtrlObjectParam_GetStateBitFlag(unsigned int idx) {
 // Matches the declaration in kyoshin/code_800B06A4.hpp (u32 vs u16 would be
 // an illegal overload there).
 extern "C" void* CtrlObjectParam_GetCharEntry(unsigned long idx) {
-    int i = (int)idx;
-    extern u32 lbl_eu_80663E88;
-    return reinterpret_cast<void*>(lbl_eu_80663E88 + i * 15828 + 16880);
+    return &reinterpret_cast<cf::CtrlObjectParamWork*>(lbl_eu_80663E88)->entries[idx];
 }
 
 extern "C" void* CtrlObjectParam_GetSlotTableBase() {
@@ -917,8 +920,7 @@ extern "C" void* CtrlObjectParam_GetSlotTableBase() {
 }
 
 extern "C" void* CtrlObjectParam_GetItemSlotEntry(int idx) {
-    extern u32 lbl_eu_80663E88;
-    return reinterpret_cast<void*>(lbl_eu_80663E88 + (idx * 8) + 88);
+    return reinterpret_cast<cf::CtrlObjectParamWork*>(lbl_eu_80663E88)->slots_58[idx];
 }
 
 extern "C" void CtrlObjectParam_SetWorkTailValue(unsigned long val) {
@@ -2366,7 +2368,7 @@ extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* selfV
     } while (g < 11);
     if (*(const u16*)(reinterpret_cast<const u8*>(view) +
                       view->field_3DD0 * 0xC4 + 0x3538) != 0 || learned != 0) {
-        KizunagramRebuildSlotList(reinterpret_cast<u8*>(view) + 0x3534);
+        KizunagramRebuildSlotList(reinterpret_cast<CPcKizunagramBig*>(reinterpret_cast<u8*>(view) + 0x3534));
     }
     if (view->field_00 == 3) {
         u8* p = reinterpret_cast<u8*>(lbl_eu_80663E88) + 0x265C4;

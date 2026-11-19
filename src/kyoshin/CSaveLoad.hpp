@@ -192,6 +192,7 @@ struct CfAward {
     // The destructor is a regular member function (not virtual).
     // MWCC generates the delete flag handling automatically.
     ~CfAward();
+    void processAward(int val);
     // getAwardState is implemented as an extern "C" function (unmangled retail symbol)
 };
 

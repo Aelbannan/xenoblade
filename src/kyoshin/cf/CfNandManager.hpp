@@ -69,13 +69,6 @@ struct CfNandPendingEvent {
     u8  mFlag;    // 0x17F (aliases field_17F)
 };
 
-// Directory-entry count written by the NAND readdir request (NandMgrEnqueueReaddir)
-// and consumed by the name-table scan in __dt__8023E63C.
-extern s32 lbl_eu_80664778;
-// Format argument handed to ml::FixStr<32>::format by the name builders.
-extern u32 lbl_eu_806628C0;
-// Default write-back table used by the NAND flush request in NandFlushEvts.
-extern u8 lbl_eu_80577358[];
 
 // Save block pointed to by CfNandManager+0x178 and validated by NandVerifyBlk:
 // magic 'DMMY' placeholder word, version tag at +0xC (0x70001/0x70002), stored
@@ -176,12 +169,29 @@ namespace cf{
         /* 0x186 */ u16 field_186;
         /* 0x188 */ void (CfNandManager::*mMoveHook)(); // 12-byte ptmf hook (dispatched by Move)
 
-        virtual ~CfNandManager();
+        // Push one 0x10-byte request onto the manager's event ring.
+        // Returns false when the manager has not been created yet.
+        int queueEvent(u32 word, u32 tag, u32 field8, u16 fieldC, u8 fieldE, u8 fieldF) {
+            if (this == 0) return 0;
+            CfNandEvent* slot = &mEventQueue.mRingBase[
+                (mEventQueue.mHead + mEventQueue.mTail) % mEventQueue.mSize];
+            slot->mWord = word;
+            slot->mTag = tag;
+            slot->mField8 = field8;
+            slot->mFieldC = fieldC;
+            slot->mFieldE = fieldE;
+            slot->mFieldF = fieldF;
+            mEventQueue.mTail++;
+            return 1;
+        }
+
+
         void Term();
         void Move();
         void cbRenderBefore();
         void Init();
         void OnFileEvent();
+        void handleFileEvent();
         void destroyViaWorkEvent();
         void handleRenderCallback();
         void destroyViaRender();
@@ -190,15 +200,16 @@ namespace cf{
 
 // cf::CfNandManager singleton (set by the ctor; .sbss).
 extern cf::CfNandManager* gpCfNandManager;
-// NAND queue idle flag checked by NandQueueBusy (.sbss byte).
+
 extern u8 gCfNandFileEventPending;
 // u16 event-status word (.sbss) cleared by NandQueueReset, set by the ctor
 // and by NandFileEvent's file-event handling.
 extern u16 lbl_eu_8066476E;
 // NAND resource teardown globals (.sbss) cleared by NandTeardown.
-extern u8* gpCfNandCaptureBuf;   // heap buffer freed via MemManager::deallocate
-// Second half of the buffer pair allocated by NandAllocBufs (buf + size1).
-extern u8* gpCfNandCaptureBufTail;
+extern void* gpCfNandCaptureBuf;  // heap buffer freed via MemManager::deallocate
+
+extern void* gpCfNandCaptureBufTail;
+
 extern u16 gCfNandCaptureState;   // u16 counter cleared on teardown
 
 // D80 scene flag (.sbss; holds a CScn*). Retail-unmangled C helper defined in
@@ -214,12 +225,11 @@ extern u16 lbl_eu_80664772;
 extern u8  lbl_eu_8066476D;
 extern u16 lbl_eu_80664774;
 // CfNandManager vtable (.data, 0xC4 bytes; the dtor stores it explicitly).
-extern u8 lbl_eu_80536BBC[];
-// CTTask<CfNandManager> base vtable (stored at +0x10 before the derived
+extern const void* lbl_eu_80536BBC[49];
+
 // vtable overwrite in the ctor).
-extern u8 lbl_eu_80536CB4[];
-// Static default move-hook ptmf (.data) copied into +0x188 by the ctor.
-extern u32 lbl_eu_80536B20[3];
+extern const void* lbl_eu_80536CB4[9];
+
 // Null pointer-to-member-function constant (defined in CUICfManager.cpp).
 extern u32 __ptmf_null[3];
 
@@ -260,10 +270,9 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);   // message-count look
 extern "C" u32 CtrlRemote_GetFixedSize1214();                 // save-region size lookup
 extern "C" u32 CfT_FrameTimerGet();                 // game-progress bitfield
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);      // character-data lookup
-extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
-extern char lbl_eu_8050B470[];                  // bdat column-name blob
+
 extern void* lbl_eu_80664090;                   // bdat table object
-extern f32 lbl_eu_806686E0;                     // fallback float constant
+extern f32 lbl_eu_806686E0;
 // Scale-offset doubles used by the capture downsampler (NandDownsample).
 extern double lbl_eu_806686E8;                  // offset added past threshold
 extern double lbl_eu_806686F0;                 // offset added below threshold
@@ -547,8 +556,6 @@ extern "C" f32 MenuSnd_GetSeVol_96A0();
 extern "C" f32 MenuSnd_GetMasterVol_95EC();
 extern "C" struct CfNandNameRoot* getReslistC48(); // save-name directory container
 // Retail symbol is CfGameManager's static member but returns its result in r3.
-extern "C" u32 getEventCounterA__Q22cf13CfGameManagerFv();
-extern "C" u8* getInstance__14Class_80296898Fv();
 extern char* lbl_eu_806641B8;                       // item blob (see CItem.hpp)
 extern u16 lbl_eu_80661AF4;
 extern u16 lbl_eu_80661AF6;
@@ -593,8 +600,8 @@ struct CfNandCamBlock {
 // Node of the circular save-name directory chain rooted by getReslistC48.
 struct CfNandNameNode {
     CfNandNameNode* mNext; // 0x00
-    u8 _pad04[4];
-    u32 f08;
+    CfNandNameNode* mPrev; // 0x04
+
     u32 f0C;
     u32 f10;
     u32 f14;
@@ -609,6 +616,18 @@ struct CfNandNameNode {
 struct CfNandNameRoot {
     u8 _pad0[4];
     CfNandNameNode* mNext;
+    // reslist-like registry embedded before the slot table
+    u32 mStartNodeNext;      // 0x08
+    u32 mStartNodePrev;      // 0x0C
+    u32 mStartItem00;        // 0x10
+    u32 mStartItem04;        // 0x14
+    u32 mStartItem08;        // 0x18
+    u32 mList;               // 0x1C
+    s32 mCapacity;           // 0x20
+    u32 mFlags;              // 0x24
+    u32 mReserved;           // 0x28
+    CfNandNameNode* slots;  // 0x2C
+    s32 slotCount;          // 0x30
 };
 
 // One compacted 0x1C-byte directory entry in the save image.

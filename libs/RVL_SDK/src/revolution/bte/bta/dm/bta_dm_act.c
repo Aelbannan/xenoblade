@@ -776,7 +776,7 @@ void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
    The .sdata2 attribute pair used by find_services is defined below and its
    bytes already match retail; note the retail code *loads* both values from
    .sdata2 (two SDA relocs) while MWCC folds our file-scope consts into
-   immediates — an open residual of bta_dm_find_services. */
+   immediates -- an open residual of bta_dm_find_services. */
 
 /* --- Verbatim-recovered functions (session transcript) --- */
 

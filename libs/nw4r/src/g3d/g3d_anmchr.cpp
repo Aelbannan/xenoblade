@@ -1119,9 +1119,7 @@ namespace g3d {
 // Retail inlines the full base chain into this function; calling the base
 // member reproduces the staggered register allocation of the inline expansion.
 bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
-    u32 type = other.GetTypeID();
-    u32 self = TypeObj(TYPE_NAME).GetTypeID();
-    if (type == self) {
+    if (other == GetTypeObjStatic()) {
         return true;
     }
     return AnmObjChrNode::IsDerivedFrom(other);

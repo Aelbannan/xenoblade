@@ -12,7 +12,7 @@
 // buffer (0xE6 bytes, discarded) and the object itself (0x28 bytes), calls
 // the base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539C98.
-extern "C" CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+CVS_THREAD_REVIVE* CVS_THREAD_REVIVE::create(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
     if (!(owner1->field_0x3F00 & 2)) return NULL;
     if (!(owner2->field_0x3F00 & 2)) return NULL;
@@ -43,10 +43,10 @@ extern "C" CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle*
         }
     }
 
-    // Copy the init-state triple as the base's ptmf member (VoiceCb is
-    // 12 bytes; DOWN precedent: member-typed access colors the pair
-    // r0/r4 with the single r5 base, matching retail).
-    ((CVS_THREAD*)self)->unk0 = ((CVS_THREAD*)lbl_eu_80539C98)->unk0;
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_REVIVE::playSlot1);
 
     return self;
 }
@@ -56,16 +56,11 @@ extern "C" CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle*
 // voice slots are populated and slot 1 is inactive, plays a state-based voice
 // (slot-2 iterator + 0x204) or a fallback voice (0x21E) depending on iterator
 // validity, slot conflict, and a random gate.
-void ReviveVxPlaySlot1(CVS_THREAD_REVIVE* self) {
-    // Copy init data using pointer increment to force lwzu pattern
-    u32 v0;
-    const u32* p = lbl_eu_80539CA4;
-    v0 = *p++;
+void CVS_THREAD_REVIVE::playSlot1() {
+    CVS_THREAD_REVIVE* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_REVIVE::playSlot2);
     CVoiceHandle* handle20 = self->field_0x20;
-    CVS_THREAD_REVIVE_raw* raw = (CVS_THREAD_REVIVE_raw*)self;
-    raw->state1 = *p++;
-    raw->state0 = (u32*)v0;
-    raw->state2 = *p;
 
     // Both voice slots must be populated
     if (handle20 == NULL) return;
@@ -107,21 +102,15 @@ void ReviveVxPlaySlot1(CVS_THREAD_REVIVE* self) {
 // lbl_eu_80539CB0, checks the slot-2 voice state (vtable method at 0x308);
 // if >= 3 plays 0x711, otherwise a random voice (0x714 when mtRand==0, else
 // 0x710).
-void ReviveVxPlaySlot2(CVS_THREAD_REVIVE* self) {
+void CVS_THREAD_REVIVE::playSlot2() {
+    CVS_THREAD_REVIVE* self = this;
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
 
-    // Copy init data using DOWN-proven statement order so MWCC keeps the
-    // source pointer and first word in the same registers as retail.
-    u32 v0;
-    u32* src = lbl_eu_80539CB0;
-    v0 = *src++;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_REVIVE::onComplete);
     CVoiceHandle* handle24 = self->field_0x24;
-    CVS_THREAD_REVIVE_raw* raw = (CVS_THREAD_REVIVE_raw*)self;
-    raw->state1 = *src++;
-    raw->state0 = (u32*)v0;
-    raw->state2 = *src;
 
     if (handle24 != NULL) {
         // State check at vtable 0x308 via virtual dispatch (r12 chain).
@@ -152,9 +141,9 @@ void ReviveVxPlaySlot2(CVS_THREAD_REVIVE* self) {
 
 // us-802ab134 (ReviveVxOnComplete)
 // Completion callback: if no active voice, call the playback-start virtual.
-void ReviveVxOnComplete(CVS_THREAD_REVIVE* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
+void CVS_THREAD_REVIVE::onComplete() {
+    if (IsThreadVoiceActive(this) == 0) {
+        PlayThreadVoice();
     }
 }
 
@@ -217,24 +206,6 @@ extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 __RTTI__Q22cf17CVS_THREAD_REVIVE[2];
 
 extern const char lbl_eu_805107E8[0x18] = "cf::CVS_THREAD_REVIVE";
-
-u32 lbl_eu_80539C98[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)ReviveVxPlaySlot1,
-};
-
-u32 lbl_eu_80539CA4[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)ReviveVxPlaySlot2,
-};
-
-u32 lbl_eu_80539CB0[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)ReviveVxOnComplete,
-};
 
 u32 lbl_eu_80539CBC[7] = {
     (u32)__RTTI__Q22cf17CVS_THREAD_REVIVE,

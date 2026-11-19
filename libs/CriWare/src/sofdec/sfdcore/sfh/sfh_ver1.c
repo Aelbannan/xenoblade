@@ -133,9 +133,9 @@ int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
    its terminator (the second call's trailing pointer bump is dead and removed). */
 static inline void VER1_ParseVerNum(char **pp, u32 *out) {
     u32 zz_acc = 0;
-    char *zz_ptr = *pp;
-    int zz_ch;
     u32 zz_flg;
+    int zz_ch;
+    char *zz_ptr = *pp;
     for (;;) {
         zz_ch = *zz_ptr;
         if (zz_ch == '.' || zz_ch == ' ' || zz_ch == 0) {

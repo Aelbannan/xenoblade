@@ -393,11 +393,9 @@ int evtLookupEntryWord(const char* key, int slot) {
         }
     }
     if (idx < 0) return 0;
-    CEventCharBlob* blob = evtCharBlob();
-    // Sequential row-then-col (94.4%, 3 reg_swap): first add dest matches
-    // retail; remaining swaps are rlwinm dest/order of idx*32 vs slot*4.
-    int addr = reinterpret_cast<int>(blob) + (idx << 5);
-    return *reinterpret_cast<int*>(addr + (slot << 2) + 0x3D8C);
+    // Residual: retail adds slot*4 last (add r3,r4,r0); the member
+    // subscript adds the row first.
+    return evtCharBlob()->mWordRows[idx][slot];
 }
 
 u32 isEventPending() {

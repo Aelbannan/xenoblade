@@ -11,7 +11,7 @@
 // "cf::CChainCombo" type-name string belong to CChainCombo.o (retail .data
 // 0x80538994 / .sdata 0x80662B08 / .rodata 0x8050FD50): the class is
 // polymorphic with an inline dtor, so MWCC emits that weak vtable block next to
-// the out-of-line constructor in CChainCombo.cpp. Nothing to spell here — this
+// the out-of-line constructor in CChainCombo.cpp. Nothing to spell here -- this
 // unit's own .data run starts at 0x805389A0 with __vt__11CSysWinSave.
 //
 //

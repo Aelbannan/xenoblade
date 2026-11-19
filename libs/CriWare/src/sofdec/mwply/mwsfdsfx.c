@@ -250,12 +250,14 @@ s32 MWSFTAG_CreateAinfSj(MWSFDPLY* self) {
     if (ok != 1)
         return 0;
     {
-        s32 r = (s32)SJRBF_Create(self->ainfBuf, self->ainfBufSize, 0);
-        if (r != 0)
+        s32 sj = (s32)SJRBF_Create(self->ainfBuf, self->ainfBufSize, 0);
+        if (sj == 0) {
             MWSFSVM_Error(lbl_eu_80519EC8 + 0x362);
-        criware_803A09B4(self);
+            criware_803A09B4(self);
+            return 0;
+        }
+        return sj;
     }
-    return 0;
 }
 
 void MWSFTAG_DestroyAinfSj(MWSFDPLY* self) {

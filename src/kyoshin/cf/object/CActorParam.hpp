@@ -526,7 +526,7 @@ namespace cf {
         virtual void CActorParam_setStatByte(u8 val);  //0xCC
         virtual void CActorParam_UnkVirtualFunc15();  //0xD0
         virtual void CActorParam_setStatScale(float val);  //0xD4
-        virtual void CActorParam_UnkVirtualFunc17();  //0xD8
+        virtual float CActorParam_UnkVirtualFunc17();  //0xD8
         virtual void CActorParam_setActorType(u32 val);  //0xDC (was UnkVirtualFunc18)
         virtual u32 CActorParam_getActorType();  //0xE0
         virtual void CActorParam_setEnemyType(u32 val);  //0xE4 (was UnkVirtualFunc20)
@@ -541,7 +541,7 @@ namespace cf {
         virtual u32 CActorParam_getActorLevel();  //0x108
         virtual void CActorParam_UnkVirtualFunc30();  //0x10C
         virtual void CActorParam_UnkVirtualFunc31();  //0x110
-        virtual void CActorParam_UnkVirtualFunc32();  //0x114
+        virtual float CActorParam_UnkVirtualFunc32();  //0x114
         virtual void CActorParam_setHp(float val);  //0x118
         virtual void CActorParam_addHp(float value);  //0x11C
         virtual void CActorParam_applyDamage(float value, int a, int b, int c);  //0x120
@@ -553,8 +553,8 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc41(float val);  //0x138
         virtual void CActorParam_UnkVirtualFunc42(float val);  //0x13C
         virtual float CActorParam_UnkVirtualFunc43();  //0x140
-        virtual void CActorParam_UnkVirtualFunc44();  //0x144
-        virtual void CActorParam_UnkVirtualFunc45();  //0x148
+        virtual float CActorParam_UnkVirtualFunc44();  //0x144
+        virtual float CActorParam_UnkVirtualFunc45();  //0x148
         virtual void CActorParam_applyStoredHitCharge();  //0x14C
         virtual void CActorParam_setTensionPoints(float val);  //0x150
         virtual void CActorParam_addArtsGauge(float delta);  //0x154
@@ -592,8 +592,8 @@ namespace cf {
         virtual void* CActorParam_getMoveRate();  //0x1C4
         virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
         virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
-        virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
-        virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
+        virtual float* CActorParam_UnkVirtualFunc79();  //0x1D0
+        virtual float* CActorParam_UnkVirtualFunc80();  //0x1D4
         virtual void CActorParam_setSpentCurrency(u32 val);  //0x1D8
         virtual void CActorParam_addSpentCurrency(u32 val);  //0x1DC
         virtual void CActorParam_addAccumCurrency(u32 addend);  //0x1E0
@@ -606,18 +606,18 @@ virtual u32 CActorParam_getTotalCurrency();  //0x1E4
         virtual void CActorParam_addSecondCurrency(u32 val);  //0x1FC
         virtual u32 CActorParam_getSecondCurrency();  //0x200 (was UnkVirtualFunc91)
         virtual void CActorParam_UnkVirtualFunc92(const void* src);  //0x204
-        virtual void CActorParam_UnkVirtualFunc93();  //0x208
+        virtual CActorParam_UnkStruct3* CActorParam_UnkVirtualFunc93();  //0x208
         virtual void* CActorParam_getArtsDataBlock();  //0x20C
         virtual void* CActorParam_getStatusSyncBlock();  //0x210 (retail impl returns the +0x16C8 block)
         virtual void* CActorParam_getArtsSyncBlock();  //0x214 (was UnkVirtualFunc96; retail impl returns the +0x1740 block)
-        virtual void CActorParam_UnkVirtualFunc97();  //0x218
+        virtual CActorParam_UnkStruct4* CActorParam_UnkVirtualFunc97();  //0x218
         virtual void CActorParam_UnkVirtualFunc98(const void* src);  //0x21C
-        virtual void CActorParam_UnkVirtualFunc99();  //0x220
+        virtual CActorParam_UnkStruct3* CActorParam_UnkVirtualFunc99();  //0x220
         virtual void* CActorParam_getBattleParams(); //0x224
 virtual void* CActorParam_getBaseStats(); //0x228 (retail impl returns the +0x185c block)
 virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x18d4 block)
         virtual void CActorParam_refreshBattleAction(); //0x230 (was UnkVirtualFunc103)
-        virtual void CActorParam_UnkVirtualFunc104(); //0x234
+        virtual float* CActorParam_UnkVirtualFunc104(); //0x234
         virtual void CActorParam_UnkVirtualFunc105(); //0x238
         virtual void CActorParam_UnkVirtualFunc106(); //0x23C
         virtual void CActorParam_UnkVirtualFunc107(); //0x240
@@ -641,7 +641,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void* CActorParam_getArtsSlotIds(); //0x288
         virtual void* CActorParam_getCopyParam(); //0x28C
         virtual CActorParamStatusTable* CActorParam_getStatusTable(); //0x290
-        virtual void CActorParam_UnkVirtualFunc128(); //0x294
+        virtual CActorParamStatusTable* CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_getBattleStats(); //0x298
         virtual void* CActorParam_UnkVirtualFunc130(int arg); //0x29C
         virtual void* CActorParam_UnkVirtualFunc131(); //0x2A0
@@ -652,7 +652,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void CActorParam_initBattleStats(); //0x2B4
         virtual void CActorParam_UnkVirtualFunc137(); //0x2B8
         virtual bool CActorParam_isBattleLocked(); //0x2BC
-        virtual void CActorParam_UnkVirtualFunc139(); //0x2C0
+        virtual u32 CActorParam_UnkVirtualFunc139(); //0x2C0
         virtual void CActorParam_addHate(void* arg, float x, float y, float z); //0x2C4
         virtual void CActorParam_resetGaugeEntry(void* arg); //0x2C8
         virtual void CActorParam_resetAllGaugeEntries(); //0x2CC
@@ -664,7 +664,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void CActorParam_resetGaugeEntries(); //0x2E4 (was UnkVirtualFunc148)
         virtual void* CActorParam_findMaxGaugeEntry(); //0x2E8
         virtual void* CActorParam_findMinGaugeEntry(); //0x2EC
-        virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
+        virtual u16* CActorParam_UnkVirtualFunc151(); //0x2F0
         virtual void* CActorParam_getTensionStatus(); //0x2F4
         virtual void CActorParam_accumulateTension(int arg); //0x2F8
         virtual void CActorParam_raiseTensionValue(int arg); //0x2FC
@@ -675,17 +675,17 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void CActorParam_UnkVirtualFunc159(); //0x310
         virtual void CActorParam_initStatusCounter(); //0x314
         virtual void CActorParam_UnkVirtualFunc161(); //0x318
-        virtual void CActorParam_UnkVirtualFunc162(); //0x31C
+        virtual u32 CActorParam_UnkVirtualFunc162(); //0x31C
         virtual void* CActorParam_UnkVirtualFunc163(); //0x320
         virtual void* CActorParam_getActorModeFlags(); //0x324
         virtual void* CActorParam_getBattleHitFlags(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
         virtual void CActorParam_UnkVirtualFunc167() {} //0x330
         virtual void CActorParam_setHitRange(float val); //0x334 (was UnkVirtualFunc168)
-        virtual void CActorParam_UnkVirtualFunc169(); //0x338
+        virtual float CActorParam_UnkVirtualFunc169(); //0x338
         virtual float CActorParam_UnkVirtualFunc170(); //0x33C
         virtual float CActorParam_UnkVirtualFunc171(); //0x340
-        virtual void CActorParam_UnkVirtualFunc172(); //0x344
+        virtual u32 CActorParam_UnkVirtualFunc172(); //0x344
         virtual void CActorParam_UnkVirtualFunc173(); //0x348
         // Retail symbol is Fv; real ABI passes arts/char-data in r4 (CActorParam174Arg*).
         virtual void CActorParam_applyArtsStats(void* arts); //0x34C

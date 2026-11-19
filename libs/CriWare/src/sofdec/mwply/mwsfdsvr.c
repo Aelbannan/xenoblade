@@ -326,7 +326,8 @@ s32 MWSFSVR_MainThrdProc(void* self) {
         MWSFLibWork* wk = MWSFLIB_GetLibWorkPtr();
         if (MWSFLIB_GetLibWorkPtr()->prohibitFlag != 1) {
             MwPlySvrHndl* h = (MwPlySvrHndl*)wk->svrHndls;
-            for (i = 0; i < 8; i++) {
+            s32 j;
+            for (j = 0; j < 8; j++) {
                 if (h != NULL) {
                     mwPlyExecInfiniteLoopHandle(h);
                 }

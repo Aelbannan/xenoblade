@@ -17,6 +17,9 @@ struct PlayerParamSet {
     static const int VOICE_OUT_NUM = 4;
     static const int VOICE_OUT_PARAM_NUM = 6;
 
+    PlayerParamSet() {
+        Init();
+    }
     void Init();
 
     f32 mVolume;      // at 0x0

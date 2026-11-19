@@ -14,6 +14,7 @@
 #include "monolib/core/CPadManager.hpp"
 #include "kyoshin/CSkipTimerImports.hpp"
 #include "kyoshin/menu/CMenuSkipTimerImports.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -136,7 +137,6 @@ CMenuSkipTimer* CMenuSkipTimer::create(CProcess* self, CProcess* parent) {
 // the `!= 0` tests compile to cmpwi rather than an rlwinm byte-mask.
 extern "C" {
 int BgTex_IsLoaded_3E34(CBgTex* self);
-int isInitialized(CTitleAHelp* self);
 void func_801C412C(CTitleAHelp* self);
 void CSkipTimerFlagButton(CSkipTimer* self);
 }
@@ -145,7 +145,7 @@ void CSkipTimerFlagButton(CSkipTimer* self);
 // engage the skip timer (start anim, flag phase) and play the open sound.
 extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
-        isInitialized(&self->mTitleAHelp) != 0 &&
+        self->mTitleAHelp.isInitialized() != 0 &&
         CSkipTimerIsReady(&self->mTimerData) != 0) {
         func_801C412C(&self->mTitleAHelp);
         CSkipTimerFlagButton(&self->mTimerData);

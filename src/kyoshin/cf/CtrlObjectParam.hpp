@@ -34,10 +34,8 @@ extern u32 lbl_eu_804FBC50[8];   // arts-learn offset table B (.rodata, CtrlObje
 extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_80664158;   // arts-table bdat handle (.sbss, sda21, CtrlObjectParam_ReapplyArtsSet)
-extern void* lbl_eu_806640F4;  // item/weapon bdat file pointer (.sbss, sda21)
 extern void* lbl_eu_806640D8;  // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_WriteArtsSlotIn)
 extern void* lbl_eu_806640DC;   // arts bdat file pointer (.sbss, sda21, CtrlObjectParam_AdjustPartyArtsLevel)
-extern void* lbl_eu_806640F8;  // armor bdat file pointer (.sbss, sda21, CtrlObjectParam_RefreshEquipSlotBlock)
 extern void* lbl_eu_80664090;  // arts stat bdat file pointer (.sbss, sda21, CtrlObjectParam_RampArtsStatStep)
 extern char lbl_eu_804FBCB0[]; // bdat column-name string table (.rodata)
 extern const f32 lbl_eu_806667A0;    // arts-set float constant (.sdata2, CtrlObjectParam_SyncParamFromActorEx)
@@ -78,7 +76,6 @@ extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg);        
 
 extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);  // code_800AA008.cpp (token formatter)
 
-extern "C" CItemExt* CItem_kindPtr(u32 index, s16 value);                       // CItem.cpp (canonical decl)
 
 extern "C" void* getArtsParamRC2(void* base, int row, int slot);               // CAttackSet.cpp (arts-slot record)
 extern "C" void setArtsSlotRC(void* base, int artsId, int row, int slot);     // CAttackSet.cpp (arts-slot write)
@@ -105,7 +102,6 @@ extern "C" void Counter884_AddClamped(u8* obj, int value);                      
 extern "C" void IdTable_DeepCopy(void* dst, void* artsSet);                  // arts-set copy hook
 extern "C" void KizunagramStoreTotalEntry(void* artsSet, u32 row, u32 slot, u32 idx);   // slot fill
 extern "C" void KizunagramStoreChartEntry(void* artsSet, u32 row, u32 slot);            // slot clear
-extern "C" void KizunagramRebuildSlotList(void* artsSet);                               // arts-set rebuild
 extern "C" void SysWinLog_SweepSlotPressure();                                            // post-scan tick
 
 extern "C" void initItemNotch(void* self);                                  // CfMapItemManager.cpp (row-sync helper)

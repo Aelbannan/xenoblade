@@ -5,11 +5,11 @@ nw4r::g3d::ResNameData27 lbl_eu_80568F60 ALIGN(8) __attribute__((used)) = {14, "
 nw4r::g3d::ResNameData27 lbl_eu_80568F80 ALIGN(8) __attribute__((used)) = {14, "Palettes(NW4R)"};
 nw4r::g3d::ResNameData27 lbl_eu_80568FA0 ALIGN(8) __attribute__((used)) = {14, "Textures(NW4R)"};
 nw4r::g3d::ResNameData27 lbl_eu_80568FC0 ALIGN(8) __attribute__((used)) = {12, "AnmChr(NW4R)"};
-nw4r::g3d::ResNameData27 lbl_eu_80569000 ALIGN(8) __attribute__((used)) = {12, "AnmVis(NW4R)"};
-nw4r::g3d::ResNameData27 lbl_eu_80569020 ALIGN(8) __attribute__((used)) = {12, "AnmClr(NW4R)"};
-nw4r::g3d::ResNameData27 lbl_eu_80569040 ALIGN(8) __attribute__((used)) = {15, "AnmTexPat(NW4R)"};
-nw4r::g3d::ResNameData27 lbl_eu_80569060 ALIGN(8) __attribute__((used)) = {15, "AnmTexSrt(NW4R)"};
-nw4r::g3d::ResNameData27 lbl_eu_80569080 ALIGN(8) __attribute__((used)) = {12, "AnmShp(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80568FE0 ALIGN(8) __attribute__((used)) = {12, "AnmVis(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569000 ALIGN(8) __attribute__((used)) = {12, "AnmClr(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569020 ALIGN(8) __attribute__((used)) = {15, "AnmTexPat(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569040 ALIGN(8) __attribute__((used)) = {15, "AnmTexSrt(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569060 ALIGN(8) __attribute__((used)) = {12, "AnmShp(NW4R)"};
 nw4r::g3d::ResNameData27 lbl_eu_805690A0 ALIGN(8) __attribute__((used)) = {12, "AnmScn(NW4R)"};
 nw4r::g3d::ResNameData27 lbl_eu_805690C0 ALIGN(8) __attribute__((used)) = {8, "External"};
 
@@ -197,7 +197,7 @@ u32 ResFile::GetResAnmChrNumEntries() const {
 // standalone copies are dropped by the postprocess drop_text_symbols rule.
 ResAnmVis ResFile::GetResAnmVis(int idx) const {
     void* pResAnmVisDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569000)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80568FE0)];
 
     if (pResAnmVisDicData != NULL) {
         return ResAnmVis(ResDic(pResAnmVisDicData)[idx]);
@@ -212,7 +212,7 @@ ResAnmVis ResFile::GetResAnmVis(u32 idx) const {
 
 u32 ResFile::GetResAnmVisNumEntries() const {
     void* pResAnmVisDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569000)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80568FE0)];
 
     if (pResAnmVisDicData != NULL) {
         return ResDic(pResAnmVisDicData).GetNumData();
@@ -228,7 +228,7 @@ u32 ResFile::GetResAnmVisNumEntries() const {
  ******************************************************************************/
 ResAnmClr ResFile::GetResAnmClr(int idx) const {
     void* pResAnmClrDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569020)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569000)];
 
     if (pResAnmClrDicData != NULL) {
         return ResAnmClr(ResDic(pResAnmClrDicData)[idx]);
@@ -243,7 +243,7 @@ ResAnmClr ResFile::GetResAnmClr(u32 idx) const {
 
 u32 ResFile::GetResAnmClrNumEntries() const {
     void* pResAnmClrDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569020)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569000)];
 
     if (pResAnmClrDicData != NULL) {
         return ResDic(pResAnmClrDicData).GetNumData();
@@ -259,7 +259,7 @@ u32 ResFile::GetResAnmClrNumEntries() const {
  ******************************************************************************/
 ResAnmTexPat ResFile::GetResAnmTexPat(int idx) const {
     void* pResAnmTexPatDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569040)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569020)];
 
     if (pResAnmTexPatDicData != NULL) {
         return ResAnmTexPat(ResDic(pResAnmTexPatDicData)[idx]);
@@ -274,7 +274,7 @@ ResAnmTexPat ResFile::GetResAnmTexPat(u32 idx) const {
 
 u32 ResFile::GetResAnmTexPatNumEntries() const {
     void* pResAnmTexPatDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569040)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569020)];
 
     if (pResAnmTexPatDicData != NULL) {
         return ResDic(pResAnmTexPatDicData).GetNumData();
@@ -290,7 +290,7 @@ u32 ResFile::GetResAnmTexPatNumEntries() const {
  ******************************************************************************/
 ResAnmTexSrt ResFile::GetResAnmTexSrt(int idx) const {
     void* pResAnmTexSrtDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569060)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569040)];
 
     if (pResAnmTexSrtDicData != NULL) {
         return ResAnmTexSrt(ResDic(pResAnmTexSrtDicData)[idx]);
@@ -305,7 +305,7 @@ ResAnmTexSrt ResFile::GetResAnmTexSrt(u32 idx) const {
 
 u32 ResFile::GetResAnmTexSrtNumEntries() const {
     void* pResAnmTexSrtDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569060)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569040)];
 
     if (pResAnmTexSrtDicData != NULL) {
         return ResDic(pResAnmTexSrtDicData).GetNumData();
@@ -324,7 +324,7 @@ u32 ResFile::GetResAnmTexSrtNumEntries() const {
 // standalone copies are dropped by the postprocess drop_text_symbols rule.
 ResAnmShp ResFile::GetResAnmShp(int idx) const {
     void* pResAnmShpDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569080)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569060)];
 
     if (pResAnmShpDicData != NULL) {
         return ResAnmShp(ResDic(pResAnmShpDicData)[idx]);
@@ -339,7 +339,7 @@ ResAnmShp ResFile::GetResAnmShp(u32 idx) const {
 
 u32 ResFile::GetResAnmShpNumEntries() const {
     void* pResAnmShpDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569080)];
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569060)];
 
     if (pResAnmShpDicData != NULL) {
         return ResDic(pResAnmShpDicData).GetNumData();
@@ -397,22 +397,22 @@ bool ResFile::HasResAnmChr() const {
 
 bool ResFile::HasResAnmClr() const {
     return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569020)] != NULL;
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569000)] != NULL;
 }
 
 bool ResFile::HasResAnmTexPat() const {
     return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569040)] != NULL;
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569020)] != NULL;
 }
 
 bool ResFile::HasResAnmTexSrt() const {
     return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569060)] != NULL;
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569040)] != NULL;
 }
 
 bool ResFile::HasResAnmShp() const {
     return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&lbl_eu_80569080)] != NULL;
+        &ref().dict.topLevel))[ResName(&lbl_eu_80569060)] != NULL;
 }
 
 bool ResFile::HasResAnmScn() const {

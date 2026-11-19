@@ -671,10 +671,10 @@ extern "C" void minePlayCollectSfx(CfMapMineManager* self, u32 kind, void* pos) 
 // mineUpdatePoint - per-point update: timers, respawn, LOD registration.
 // ---------------------------------------------------------------------------
 extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
-    // Declaration order mirrors retail register assignment:
-    // r27=area, r30=self, r28=sub, r31=pt, f31=dt.
-    u32 area = lbl_eu_80663E42;
+    // Read the current area/sub ids before taking the frame delta, as in
+    // the original update routine.
     u32 sub = lbl_eu_80663E44;
+    u32 area = lbl_eu_80663E42;
     f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
     if (pt->mTimer14 > lbl_eu_806682B0) {
@@ -727,46 +727,43 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
 // ---------------------------------------------------------------------------
 extern "C" void mineUpdateMsgRing(CfMapMineManager* self) {
     f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
+    f32 zero = lbl_eu_806682B0;
 
     int changed = 0;
-    u32 cnt = self->mMsgs.mCount;
-    for (u32 i = 0; i < cnt; i++) {
+    s32 cnt = self->mMsgs.mCount;
+    for (s32 i = 0; i < cnt; i++) {
         // Slots are addressed through the stored base pointer.
         MineMsg* slot =
             &self->mMsgs.mBase[(self->mMsgs.mReadIdx + i) % self->mMsgs.mCapacity];
-        if (slot->mTime >= lbl_eu_806682B0) {
+        if (slot->mTime >= zero) {
             f32 t = slot->mTime - dt;
             slot->mTime = t;
             if (t < lbl_eu_806682D8) {
-                slot->mTime = lbl_eu_806682B0;
+                slot->mTime = zero;
                 changed = 1;
             }
         }
     }
 
     if (changed != 0) {
-        // Pop the oldest entry: the cursor walks backwards through the
-        // ring, so both the slot address and the updated cursor use a
-        // NEGATED remainder (retail computes base - rem*0x48 and stores
-        // -(next % cap) into mReadIdx).
-        u32 rd = self->mMsgs.mReadIdx;
+        // Pop the oldest entry: the read cursor selects the slot to hand
+        // back, then advances by one modulo the ring capacity.
         MineMsg* oldSlot =
-            &self->mMsgs.mBase[-(rd % self->mMsgs.mCapacity)];
+            &self->mMsgs.mBase[self->mMsgs.mReadIdx % self->mMsgs.mCapacity];
         CUICfManager_queueGetItemMenuById(oldSlot);
+        // The expiring slot is addressed from a fresh read of the cursor.
+        s32 cap = self->mMsgs.mCapacity;
+        s32 count = self->mMsgs.mCount;
+        s32 rd = self->mMsgs.mReadIdx;
         s32 next = rd + 1;
-        self->mMsgs.mCount = self->mMsgs.mCount - 1;
-        self->mMsgs.mReadIdx =
-            -(next % (s32)self->mMsgs.mCapacity);
-        // Second, un-modulo'd address of the expiring slot (retail computes
-        // this separately after updating the ring cursors).
+        s32 rem = next % cap;
+        self->mMsgs.mCount = count - 1;
+        self->mMsgs.mReadIdx = rem;
         MineMsg* msg = &self->mMsgs.mBase[rd];
-        char buf[0x40];
-        u32 len = strlen(msg->mText);
-        strcpy(buf, msg->mText);
-        f32 t = msg->mTime;
-        (void)len;
-        (void)t;
-        (void)buf;
+        MineMsg old;
+        old.mLen = strlen(msg->mText);
+        strcpy(old.mText, msg->mText);
+        old.mTime = msg->mTime;
     }
 }
 

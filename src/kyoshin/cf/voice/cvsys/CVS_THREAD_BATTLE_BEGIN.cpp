@@ -12,7 +12,7 @@
 // handle's embedded character matches player 0 (and the data source is
 // ready), computes a phase count from the handle/data sizes (0, 1 or 2),
 // then allocates and initialises a new CVS_THREAD_BATTLE_BEGIN object.
-extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
+CVS_THREAD_BATTLE_BEGIN* CVS_THREAD_BATTLE_BEGIN::create(CVoiceHandle* handle, CVoiceHandle* A) {
     CVoiceHandle* h = handle;
     // Bias the handle to its embedded character voice (or keep NULL).
     CCharVoice* biased = (CCharVoice*)h;
@@ -65,10 +65,8 @@ extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceH
     }
     }
 
-    // Final base-state triple:
-    // MWCC emits the retail load-descending/store-ascending word-move
-    // pattern (DOWN precedent).
-    ((CVS_THREAD*)obj)->unk0 = ((CVS_THREAD*)lbl_eu_8053AC88)->unk0;
+    // Install the initial voice-event handler from its typed PTMF constant.
+    obj->mState = lbl_eu_8053AC88;
     return obj;
 }
 
@@ -76,15 +74,9 @@ extern "C" CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceH
 // Init: restore the base state triple, seed the slot array from the manager
 // (capacity 3), then dispatch to the process virtual when the slot count is
 // non-positive.
-void BtlBeg_InitSlots_FC54(CVS_THREAD_BATTLE_BEGIN* self) {
-    // Restore the base state triple via the lwzu/spread load-with-update
-    // pattern (v0 declared first so the lwzu destination colours low).
-    u32 v0;
-    const u32* p = lbl_eu_8053AC94;
-    v0 = *p++;
-    ((CVSThreadStateTriple*)self)->b = *p++;
-    ((CVSThreadStateTriple*)self)->a = v0;
-    ((CVSThreadStateTriple*)self)->c = *p;
+void CVS_THREAD_BATTLE_BEGIN::initSlots() {
+    CVS_THREAD_BATTLE_BEGIN* self = this;
+    mState = lbl_eu_8053AC94;
 
     int cnt = HpVoice_CollectIdle(&self->field_0x28[0], 3, 0);
     s16 scnt = (s16)cnt;
@@ -93,20 +85,18 @@ void BtlBeg_InitSlots_FC54(CVS_THREAD_BATTLE_BEGIN* self) {
     self->PlayThreadVoice();
 }
 
-void BtlBeg_ReinitSlots_FCC8(){}
+void CVS_THREAD_BATTLE_BEGIN::reinitSlots(){
+    mState = lbl_eu_8053ACA0;
+}
 
 // us-802b2b5c (BtlBeg_AdvanceSlot_00EC)
 // Advance the active-slot counter (up or down, per the direction flag).  When
 // the counter wraps back to 0 the process virtual is dispatched again.
-void BtlBeg_AdvanceSlot_00EC(CVS_THREAD_BATTLE_BEGIN* self) {
+void CVS_THREAD_BATTLE_BEGIN::advanceSlot() {
+    CVS_THREAD_BATTLE_BEGIN* self = this;
     if (IsThreadVoiceActive(self) != 0) return;
 
-    u32 v0;
-    const u32* p = lbl_eu_8053ACAC;
-    v0 = *p++;
-    ((CVSThreadStateTriple*)self)->b = *p++;
-    ((CVSThreadStateTriple*)self)->a = v0;
-    ((CVSThreadStateTriple*)self)->c = *p;
+    mState = lbl_eu_8053ACAC;
 
     if (self->field_0x3a == 0) {
         // forward direction: bump the counter, wrap to 0 at the limit
@@ -264,7 +254,6 @@ extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
 extern u32 __RTTI__Q22cf10CVS_THREAD[2];
-extern u32 lbl_eu_8053ACA0[3];
 extern u32 lbl_eu_8053ACD8[8];
 extern u32 lbl_eu_8053ACF8[4];
 extern u32 __RTTI__Q22cf23CVS_THREAD_BATTLE_BEGIN[2];
@@ -275,29 +264,13 @@ extern const char lbl_eu_805134A8[] = "cf::CVS_THREAD_BATTLE_BEGIN";
 extern const char lbl_eu_805134C4[0x14] = "cf::EVS_THREAD_LIB";
 extern const char lbl_eu_805134D8[0x18] = "cf::CVS_THREAD_LIB";
 
-u32 lbl_eu_8053AC88[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)BtlBeg_InitSlots_FC54,
-};
+typedef void (CVS_THREAD::*BattleBeginState)();
 
-u32 lbl_eu_8053AC94[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)BtlBeg_ReinitSlots_FCC8,
-};
-
-u32 lbl_eu_8053ACA0[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)BtlBeg_AdvanceSlot_00EC,
-};
-
-u32 lbl_eu_8053ACAC[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)BtlBeg_ReinitSlots_FCC8,
-};
+// Compiler-emitted pointer-to-member constants (the retail init-state triples).
+extern "C" const BattleBeginState lbl_eu_8053AC88 = &CVS_THREAD_BATTLE_BEGIN::initSlots;
+extern "C" const BattleBeginState lbl_eu_8053AC94 = &CVS_THREAD_BATTLE_BEGIN::reinitSlots;
+extern "C" const BattleBeginState lbl_eu_8053ACA0 = &CVS_THREAD_BATTLE_BEGIN::advanceSlot;
+extern "C" const BattleBeginState lbl_eu_8053ACAC = &CVS_THREAD_BATTLE_BEGIN::reinitSlots;
 
 u32 lbl_eu_8053ACB8[8] = {
     (u32)__RTTI__Q22cf23CVS_THREAD_BATTLE_BEGIN,

@@ -70,7 +70,14 @@ extern VoiceCb lbl_eu_80539904;
 
 class CVS_THREAD{
 public:
-    VoiceCb unk0;   // 0x00-0x0B: installed voice-event handler ptmf
+    // 0x00-0x0B: installed voice-event handler ptmf. The member-pointer form
+    // is the real state member; the CVoiceCbHost-typed view is kept for the
+    // voice-node helpers that compare it through __ptmf_cmpr.
+    union {
+        VoiceCb unk0;
+        void (CVS_THREAD::*mState)();
+    };
+
     u32 unkC;
     u32 unk10;
     s32 unk14;

@@ -105,13 +105,15 @@ extern u8 lbl_eu_8066407E;
 extern u8 lbl_eu_8066407F;
 extern u8 lbl_eu_80664080[8];
 extern u32 lbl_eu_80664098;
-extern u32 lbl_eu_806640F0;
-extern u32 lbl_eu_806640F4;
-extern u32 lbl_eu_806640F8;
-extern u32 lbl_eu_806640FC;
-extern u32 lbl_eu_80664108;
-extern u32 lbl_eu_8066410C;
-extern u32 lbl_eu_80664110;
+// Defined as pointer globals in cf/CfBdat.cpp; keep the shared void* spelling
+// so callers that also include the owning bdat/item headers do not redeclare them.
+extern void* lbl_eu_806640F0;
+extern void* lbl_eu_806640F4;
+extern void* lbl_eu_806640F8;
+extern void* lbl_eu_806640FC;
+extern void* lbl_eu_80664108;
+extern void* lbl_eu_8066410C;
+extern void* lbl_eu_80664110;
 extern u32 lbl_eu_80664184;
 extern f32 lbl_eu_806672D8;
 extern f32 lbl_eu_806672DC;

@@ -244,8 +244,6 @@ extern u32 lbl_eu_804FCA08[];       // attack sound-id table (retail .rodata)
 // store emits the retail symbol rather than an auto-mangled __vt__ name).
 extern "C" u8 lbl_eu_8052BD68[];  // _reslist_base<CfObjectActor*> vtable
 extern "C" u8 lbl_eu_8052BD44[];  // _reslist_base<IBattleEvent*> vtable
-extern "C" u8 lbl_eu_8052BCE0[];  // CBattleManager vtable (restored by the dtor)
-extern "C" u8 lbl_eu_8052BD74[];  // CChainTime vtable (restored by ~CChainTime)
 
 // Same-TU / shared battle helpers with retail-unmangled names (declared in
 // CBattleManager.hpp so call sites in this unit emit the retail reloc names

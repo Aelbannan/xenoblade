@@ -953,47 +953,47 @@ extern "C" char* CArtsInfo_GetSkillStr(CArtsInfo* self, u32 arg2) {
 // (arg3 + 2) into a buffer bound to the row pane on both layouts (layout 2 only when
 // field_0x56 < 0xA), then dispatches on the row id (BdatGetU8Direct lookup at 0x225,
 // masked to u8) through a 44-case jump table to the per-arts text-update handlers.
-extern "C" void CArtsInfo_FmtRow00(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow01(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow02(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow03(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow04(CArtsInfo*, u32, int, u8);
-extern "C" void CArtsInfo_FmtRow05(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow06(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow07(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow08(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow09(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow0A(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow0B(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow0C(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow0D(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow0E(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow0F(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow10(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow11(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow12(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow13(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow14(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow15(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow16(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow17(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow18(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow19(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow1A(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow1B(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow1C(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow1D(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow1E(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow1F(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow20(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow21(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow22(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow23(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow24(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow25(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow26(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow27(CArtsInfo*, u32, int);
-extern "C" void CArtsInfo_FmtRow2C(CArtsInfo*, u32, int);
+extern "C" void CArtsInfo_FmtRow00(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow01(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow02(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow03(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow04(CArtsInfo*, u8, int, u8);
+extern "C" void CArtsInfo_FmtRow05(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow06(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow07(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow08(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow09(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow0A(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow0B(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow0C(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow0D(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow0E(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow0F(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow10(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow11(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow12(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow13(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow14(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow15(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow16(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow17(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow18(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow19(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow1A(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow1B(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow1C(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow1D(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow1E(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow1F(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow20(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow21(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow22(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow23(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow24(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow25(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow26(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow27(CArtsInfo*, u8, int);
+extern "C" void CArtsInfo_FmtRow2C(CArtsInfo*, u8, int);
 
 extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8 arg2, u8 arg3) {
     char buf[32]; // sprintf at +0x8
@@ -1061,7 +1061,7 @@ extern "C" void CArtsInfo_UpdateArtsRow(CArtsInfo* self, u8 arg2, u8 arg3) {
 // field_0x56 < 0xA). The base is a u8-keyed lookup scaled by
 // lbl_eu_806686A4 when non-zero; the skill values are s32->float converted
 // with MWCC's xoris magic.
-void CArtsInfo_FmtRow00(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow00(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1094,7 +1094,7 @@ void CArtsInfo_FmtRow00(CArtsInfo* self, u32 arg2, int arg3) {
 // layout 1, then on level-up (< 0xA) formats the next-level value
 // (level instead of level-1) into buf3 for layout 2 and runs the
 // colour-pair helper when the raw lookup v differs from the next value.
-void CArtsInfo_FmtRow01(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow01(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x48
     char buf2[32]; // sprintf at +0x28
     char buf3[32]; // sprintf at +0x8
@@ -1144,7 +1144,7 @@ void CArtsInfo_FmtRow01(CArtsInfo* self, u32 arg2, int arg3) {
 // Residual 2-instr reg swap: entry param-copy emission order (retail births
 // r4->r29 before r3->r27). Documented MWCC claim-order invariant - not
 // source-controllable (see CArtsInfo_FmtRow09 / CArtsInfo_FmtRow20 notes).
-void CArtsInfo_FmtRow02(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow02(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1167,10 +1167,7 @@ void CArtsInfo_FmtRow02(CArtsInfo* self, u32 arg2, int arg3) {
 // onto both layouts; on level-up the level grid is recomputed for layout 2
 // and the colour-pair helper runs when the two values differ.
 // Entry param-save-order wall (see CArtsInfo_FmtRow09).
-void CArtsInfo_FmtRow03(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow03(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1220,7 +1217,7 @@ void CArtsInfo_FmtRow03(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // (stat + min(damage1, damage2) grids scaled by 0.5) but the grid lookups
 // CArtsInfo_GetGridA/8023719C are keyed on the 4th parameter instead of 0 and
 // the stat comes from CArtsInfo_GetStatId1C.
-void CArtsInfo_FmtRow04(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
+void CArtsInfo_FmtRow04(CArtsInfo* self, u8 arg2, int arg3, u8 arg4) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     int level;
@@ -1262,7 +1259,7 @@ void CArtsInfo_FmtRow04(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
 // NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
 // (retail-identical schedule: lis 0x4330 hoisted into the prologue, one
 // stack-slot pair per conversion site).
-void CArtsInfo_FmtRow05(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow05(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     int level;
@@ -1306,7 +1303,7 @@ void CArtsInfo_FmtRow05(CArtsInfo* self, u32 arg2, int arg3) {
 // NOTE: the (float)(int) casts intentionally use MWCC's plain-cast form
 // (same retail schedule as CArtsInfo_FmtRow05: lis 0x4330 hoisted into the
 // prologue, one stack-slot pair per conversion site).
-void CArtsInfo_FmtRow06(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow06(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     CArtsInfo_GetSkill20C(self, arg2);
@@ -1368,7 +1365,7 @@ void CArtsInfo_FmtRow06(CArtsInfo* self, u32 arg2, int arg3) {
 // (same retail schedule as CArtsInfo_FmtRow06: lis 0x4330 hoisted into the
 // prologue, one stack-slot pair per conversion site).
 // u32 const on arg2: entry param-copy lever (retail copies r4 before r3).
-void CArtsInfo_FmtRow07(CArtsInfo* self, u32 const arg2, int arg3) {
+void CArtsInfo_FmtRow07(CArtsInfo* self, u8 const arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     CArtsInfo_GetSkill20C(self, arg2);
@@ -1472,7 +1469,7 @@ void CArtsInfo_FmtRow07(CArtsInfo* self, u32 const arg2, int arg3) {
 // pattern: first-entry + second-entry * (level - 1)), formatted, then on
 // level-up the offset for the next level is formatted on layout 2 and the
 // colour-pair helper runs when the two offsets differ.
-void CArtsInfo_FmtRow08(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow08(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1513,13 +1510,7 @@ void CArtsInfo_FmtRow08(CArtsInfo* self, u32 arg2, int arg3) {
 // conversions to evaluate eagerly before the calls, +0x10 frame),
 // u32-const arg2 lever (full regalloc shift), shadow declaration order
 // (no effect on ABI param-copy sequence).
-void CArtsInfo_FmtRow09(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    // Entry param-copy-order wall: retail copies arg2 (r4) before self (r3);
-    // shadow declaration order does not change MWCC's ABI param-copy
-    // sequence (verified - both orders give r3-first).
-    CArtsInfo* self = self_;
-    u32 arg2 = arg2_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow09(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     // level assigned late (after sprintf1) so the addi lands after the first
@@ -1557,7 +1548,7 @@ void CArtsInfo_FmtRow09(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // helper runs when the two formatted values differ.
 // u32 const on arg2: entry param-copy lever - retail copies r4 (arg2)
 // before r3 (self).
-void CArtsInfo_FmtRow0A(CArtsInfo* self, u32 const arg2, int arg3) {
+void CArtsInfo_FmtRow0A(CArtsInfo* self, u8 const arg2, int arg3) {
     // Declaration order = reverse frame-slot order (MWCC allocates
     // last-declared lowest): cvB@+0x58, cvA@+0x48, buf1@+0x28, buf2@+0x08.
     char buf2[32]; // sprintf at +0x8
@@ -1603,10 +1594,7 @@ void CArtsInfo_FmtRow0A(CArtsInfo* self, u32 const arg2, int arg3) {
 // the pool_patterns note at the lbl_eu_80668698 definition.
 // Entry param-save-order wall (same as CArtsInfo_FmtRow09): retail copies arg2
 // (r4) before self (r3); MWCC invariantly emits the param-1 (r3) copy first.
-void CArtsInfo_FmtRow0B(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    CArtsInfo* self = self_;
-    u32 arg2 = arg2_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow0B(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     // level assigned late (after sprintf1) so the addi lands after the first
@@ -1650,7 +1638,7 @@ void CArtsInfo_FmtRow0B(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // CArtsInfo_GetGridA/8023719C lookups keyed on the current arts level. On level-up
 // (< 0xA) the offsets for level+1 are formatted on layout 2 and the
 // colour-pair helper always runs.
-void CArtsInfo_FmtRow0C(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow0C(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     // Declaration order drives saved-reg allocation (first -> highest):
@@ -1685,7 +1673,7 @@ void CArtsInfo_FmtRow0C(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow0D - arts info text update. Byte-identical body to
 // CArtsInfo_FmtRow08 (same lookups, same grid-offset formatting, same level-up
 // branch), kept as a separate retail symbol.
-void CArtsInfo_FmtRow0D(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow0D(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1709,7 +1697,7 @@ void CArtsInfo_FmtRow0D(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow0E - arts info text update. Byte-identical body to
 // CArtsInfo_FmtRow08 (same lookups, same grid-offset formatting, same level-up
 // branch), kept as a separate retail symbol.
-void CArtsInfo_FmtRow0E(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow0E(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1733,7 +1721,7 @@ void CArtsInfo_FmtRow0E(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow0F - arts info text update. Same shape as CArtsInfo_FmtRow08 but the
 // grid offset is scaled by 10 (mulli 0xa) before formatting: the value is the
 // arts AP cost rather than a raw grid index.
-void CArtsInfo_FmtRow0F(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow0F(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1762,15 +1750,7 @@ void CArtsInfo_FmtRow0F(CArtsInfo* self, u32 arg2, int arg3) {
 // Entry param-save-order wall (see CArtsInfo_FmtRow09).
 // fb declared (uninitialized) before fa: MWCC colours equal-lifetime FPRs
 // in reverse declaration order, and retail keeps fb in f31 / fa in f30.
-void CArtsInfo_FmtRow10(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    // Entry param-save-order wall (see CArtsInfo_FmtRow09): retail emits the two
-    // entry copies in the opposite order. Levers tried: shadow declaration
-    // order (both ways), const qualifier, no-shadow direct-arg form - all
-    // leave the emission order unchanged (MWCC invariantly copies param 1
-    // first).
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow10(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1820,10 +1800,7 @@ void CArtsInfo_FmtRow10(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // (lbl_eu_806686A8 unsigned / lbl_eu_80668698 signed); the plain-cast forms
 // reproduce retail's exact schedule but MWCC pools the magics as TU-local
 // labels - needs a CArtsInfo.o pool_patterns postprocess rule.
-void CArtsInfo_FmtRow21(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow21(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1853,7 +1830,7 @@ void CArtsInfo_FmtRow21(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // byte-keyed table value (BdatGetU8ByTableKey) into buf1, the level string into
 // buf2, then pushes both onto the layouts (layout 2 only when field_0x56
 // < 0xA). Same shape as CArtsInfo_FmtRow18 but the 3rd sprintf arg is a lookup.
-void CArtsInfo_FmtRow11(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow11(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1876,7 +1853,7 @@ void CArtsInfo_FmtRow11(CArtsInfo* self, u32 arg2, int arg3) {
 // labels (lbl_eu_806686A8 unsigned / lbl_eu_80668698 signed); MWCC pools the
 // plain-cast equivalents as TU-local @N labels - needs a CArtsInfo.o
 // pool_patterns postprocess rule (values 43300000_00000000 / 43300000_80000000).
-void CArtsInfo_FmtRow12(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow12(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1899,7 +1876,7 @@ void CArtsInfo_FmtRow12(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow13 - arts info text update. Same shape as CArtsInfo_FmtRow11 but
 // uses the s16-keyed lookup BdatGetS16ByTableKey (result sign-extended at the
 // sprintf call site).
-void CArtsInfo_FmtRow13(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow13(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1916,7 +1893,7 @@ void CArtsInfo_FmtRow13(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow14 - arts info text update. Same shape as CArtsInfo_FmtRow13
 // (s16-keyed lookup BdatGetS16ByTableKey, result sign-extended at the sprintf call
 // site via the s16 vararg promotion).
-void CArtsInfo_FmtRow14(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow14(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1933,12 +1910,11 @@ void CArtsInfo_FmtRow14(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow15 - arts info text update. Formats the arts skill name and the
 // doubled stat id (CArtsInfo_GetStatId20) into buf1, the level string into buf2,
 // then pushes both onto the layouts (layout 2 only when field_0x56 < 0xA).
-void CArtsInfo_FmtRow15(CArtsInfo* self, u32 arg2, int arg3) {
-    u32 a2 = arg2;
+void CArtsInfo_FmtRow15(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    char* s1 = CArtsInfo_GetSkill20C(self, a2);
-    char* s2 = CArtsInfo_GetSkillStr(self, a2);
+    char* s1 = CArtsInfo_GetSkill20C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     int id = CArtsInfo_GetStatId20(self);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, id << 1, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1951,7 +1927,7 @@ void CArtsInfo_FmtRow15(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow16 - arts info text update. Same shape as CArtsInfo_FmtRow11
 // (u8-keyed lookup BdatGetU8ByTableKey at 0x289, zero-extended at the sprintf
 // call site via the u8 vararg promotion).
-void CArtsInfo_FmtRow16(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow16(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1968,7 +1944,7 @@ void CArtsInfo_FmtRow16(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow17 - arts info text update. Same shape as CArtsInfo_FmtRow27 but the
 // converted double is scaled by lbl_eu_806686A4 when the s16 lookup is
 // non-zero (retail: extsh. branch + lfs/fmuls).
-void CArtsInfo_FmtRow17(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow17(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -1996,7 +1972,7 @@ void CArtsInfo_FmtRow17(CArtsInfo* self, u32 arg2, int arg3) {
 // the residual 2-instruction reg swap is the entry param-save order
 // (retail copies r4->r31 before r3->r28; see CArtsInfo_FmtRow09). Witness-blocked
 // (abi-boundary); plain -O4,p without the pragma breaks the stmw merge.
-void CArtsInfo_FmtRow18(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow18(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2019,11 +1995,7 @@ void CArtsInfo_FmtRow18(CArtsInfo* self, u32 arg2, int arg3) {
 // Residual 2-instruction reg swap is the retail entry param-save order:
 // retail copies r4 before r3; MWCC invariantly emits the param-1 (r3) copy
 // first (same ABI-boundary artifact as CMenuShopSell MenuShopSellCopyData).
-void CArtsInfo_FmtRow19(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    // Shadow params in retail's save order (arg2 copy before self copy).
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow19(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2039,7 +2011,7 @@ void CArtsInfo_FmtRow19(CArtsInfo* self_, u32 arg2_, int arg3_) {
 }
 
 // CArtsInfo_FmtRow1A - same shape as CArtsInfo_FmtRow18 with level constant 0x19.
-void CArtsInfo_FmtRow1A(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow1A(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2055,7 +2027,7 @@ void CArtsInfo_FmtRow1A(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow1B - arts info text update with fixed level 25 (same shape as
 // CArtsInfo_FmtRow1A). Formats the arts skill name/level strings and pushes them
 // onto both layouts (layout 2 only when field_0x56 < 0xA).
-void CArtsInfo_FmtRow1B(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow1B(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2069,7 +2041,7 @@ void CArtsInfo_FmtRow1B(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // CArtsInfo_FmtRow1C - same shape as CArtsInfo_FmtRow1B with level constant 50.
-void CArtsInfo_FmtRow1C(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow1C(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2083,7 +2055,7 @@ void CArtsInfo_FmtRow1C(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // CArtsInfo_FmtRow1D - same shape as CArtsInfo_FmtRow1B with level constant 100.
-void CArtsInfo_FmtRow1D(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow1D(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2098,7 +2070,7 @@ void CArtsInfo_FmtRow1D(CArtsInfo* self, u32 arg2, int arg3) {
 
 // CArtsInfo_FmtRow1E - arts info text update. Same shape as CArtsInfo_FmtRow19 with
 // a different format offset (0x2bb) and double constant (lbl_eu_806686C8).
-void CArtsInfo_FmtRow1E(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow1E(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2116,10 +2088,7 @@ void CArtsInfo_FmtRow1E(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow1F - same shape as CArtsInfo_FmtRow1B with level constant 50.
 // Entry param-save-order wall (see CArtsInfo_FmtRow09): retail saves arg2 (r31)
 // before self (r28); MWCC invariantly emits the param-1 copy first.
-void CArtsInfo_FmtRow1F(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow1F(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2137,7 +2106,7 @@ void CArtsInfo_FmtRow1F(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // is required for the retail stmw r28 frame) always copies r3 first. This is
 // the documented param-save claim-order invariant (MWCC_CASES "VM-op/
 // saved-param claim order", OPEN) - not source-controllable.
-void CArtsInfo_FmtRow20(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow20(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2152,12 +2121,11 @@ void CArtsInfo_FmtRow20(CArtsInfo* self, u32 arg2, int arg3) {
 
 // CArtsInfo_FmtRow22 - arts info text update. Same shape as CArtsInfo_FmtRow11 with
 // the u8-keyed lookup BdatGetU8ByTableKey at 0x2ab.
-void CArtsInfo_FmtRow22(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow22(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = CArtsInfo_GetSkill20C(self, a2);
-    char* s2 = CArtsInfo_GetSkillStr(self, a2);
+    char* s1 = CArtsInfo_GetSkill20C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     u8 r = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -2173,7 +2141,7 @@ void CArtsInfo_FmtRow22(CArtsInfo* self, u32 arg2, int arg3) {
 // artifact (unit-wide, ~40 dispatch handlers): retail copies arg2 (r4->r25) BEFORE
 // self (r3->r31) at entry; our build invariantly emits the param-1 copy first. Same
 // 2-op reg_swap present in CArtsInfo_FmtRow08/39AA0/916C/9EFC/A55C.
-void CArtsInfo_FmtRow23(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow23(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2200,7 +2168,7 @@ void CArtsInfo_FmtRow23(CArtsInfo* self, u32 arg2, int arg3) {
 // arts level (field_0x56) is formatted. On level-up (< 0xA) the level+1
 // string replaces buf1 on layout 2 and the colour-pair helper runs when the
 // two level values differ.
-void CArtsInfo_FmtRow24(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow24(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2224,11 +2192,7 @@ void CArtsInfo_FmtRow24(CArtsInfo* self, u32 arg2, int arg3) {
 // CArtsInfo_FmtRow25 - arts info text update. Same shape as CArtsInfo_FmtRow19 but the
 // vararg double constant is loaded from a float (lfs) pool slot
 // (lbl_eu_806686A0).
-void CArtsInfo_FmtRow25(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    // Shadow params in retail's save order (arg2 before self before arg3).
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void CArtsInfo_FmtRow25(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2248,13 +2212,9 @@ void CArtsInfo_FmtRow25(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // formatted string comes from BdatTouchStringCell(0x32, 0x3d, 0x52) instead. Same
 // grid-offset (v1 + v2*(level-1)) and level-up branch as CArtsInfo_FmtRow08, with
 // the format at 0x282 and the level constant 5.
-void CArtsInfo_FmtRow26(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    // Shadow params in retail's save order (arg2 before self before arg3).
-    u32 arg2 = arg2_;
-    CArtsInfo_GetSkill20C(self_, arg2);
-    CArtsInfo* self = self_;
+void CArtsInfo_FmtRow26(CArtsInfo* self, u8 arg2, int arg3) {
+    CArtsInfo_GetSkill20C(self, arg2);
     CArtsInfo_GetSkillStr(self, arg2);
-    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     u8 v1 = BdatGetU8ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
@@ -2279,7 +2239,7 @@ void CArtsInfo_FmtRow26(CArtsInfo* self_, u32 arg2_, int arg3_) {
 // vararg double is the s16-keyed lookup result (BdatGetS16ByTableKey at 0x2b3)
 // converted via MWCC's s32->f32 magic (retail: extsh + 0x4330/xoris/lfd/fsubs
 // trick, no frsp).
-void CArtsInfo_FmtRow27(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow27(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = CArtsInfo_GetSkill20C(self, arg2);
@@ -2299,12 +2259,11 @@ void CArtsInfo_FmtRow27(CArtsInfo* self, u32 arg2, int arg3) {
 
 // CArtsInfo_FmtRow2C - arts info text update. Same shape as CArtsInfo_FmtRow13 but the
 // s16-keyed lookup BdatGetS16ByTableKey uses table offset 0x2c4.
-void CArtsInfo_FmtRow2C(CArtsInfo* self, u32 arg2, int arg3) {
+void CArtsInfo_FmtRow2C(CArtsInfo* self, u8 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = CArtsInfo_GetSkill20C(self, a2);
-    char* s2 = CArtsInfo_GetSkillStr(self, a2);
+    char* s1 = CArtsInfo_GetSkill20C(self, arg2);
+    char* s2 = CArtsInfo_GetSkillStr(self, arg2);
     s16 r = BdatGetS16ByTableKey(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2c4, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -2364,13 +2323,21 @@ int CArtsInfo::isField44GE6() {
     return field >= 6 ? 1 : 0;
 }
 
-void CArtsInfo::initialize() {
-    if (mpLayout1 == nullptr) return;
-    if (field_0x4C == 0) return;
-    if (field_0x50 != 0) {
-        field_0x48 = 1;
-        field_0x40 = 1;
+// CArtsInfo_Refresh - request a refresh once both BDAT tables and the primary
+// layout have been loaded. The two request flags are the low bytes at +0x40
+// and +0x48; retail stores the same literal 1 to both.
+extern "C" void CArtsInfo_Refresh(CArtsInfo* self) {
+    if (self->mpLayout1 == nullptr) {
+        return;
     }
+    if (self->field_0x4C == 0) {
+        return;
+    }
+    if (self->field_0x50 == 0) {
+        return;
+    }
+    self->field_0x48 = 1;
+    self->field_0x40 = 1;
 }
 
 // Retail OnFileEvent: layout-archive loader + state-2 message handler.

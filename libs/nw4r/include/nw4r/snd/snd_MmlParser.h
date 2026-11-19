@@ -37,6 +37,9 @@ public:
     volatile s16* GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
                                  int idx) const;
 
+    static u32 ParseAllocTrack(const void* pBase, u32 offset,
+                               u32* pAllocTrack);
+
     static void EnablePrintVar(bool enable) {
         mPrintVarEnabledFlag = enable;
     }

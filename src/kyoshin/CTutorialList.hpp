@@ -91,7 +91,7 @@ public:
     u8 mField176;                         // 0x176: visible-selection byte
     u8 mInitialized;                      // 0x177: non-zero after construction
     s8 mField178;                         // 0x178: sign-extended page byte
-    u16 mField17A;                        // 0x17A: selection id (halfword)
+    s16 mField17A;                        // 0x17A: selection id (halfword)
     u16 mField17C;                        // 0x17C: count/limit (halfword)
     s8 mField17E;                         // 0x17E: sign-extended counter base
     CTutorialIdTable mIdTable;            // 0x180: id table (0x106 bytes, padded to 0x288 total)

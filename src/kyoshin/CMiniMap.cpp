@@ -50,11 +50,7 @@ CMMTex::~CMMTex() {}
 
 bool CMMTex::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
-        // Grab the loaded buffer, then clear the handle state in retail order:
-        // save mData, null the handle's mData, stash + flag + clear handle.
-        u8* data = mFileHandle->mData;
-        mFileHandle->mData = 0;
-        mData = data;
+        mData = (u8*)mFileHandle->getData();
         mReady = 1;
         mFileHandle = 0;
         return true;
@@ -285,8 +281,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         Class_8045F858 guard((UnkClass_8045F564*)m824);
         // Take the loaded buffer, then clear the handle's data pointer before
         // building the accessor (retail order).
-        u8* data = mFileHandle->mData;
-        mFileHandle->mData = 0;
+        void* data = mFileHandle->getData();
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, &lbl_eu_804FE1FC[0xE9]);
 
@@ -3092,9 +3087,9 @@ extern "C" void MiniMapRebuildGimmickPanes(void* self) {
 // name; the CMiniMapGimmickView subobject sits at minimap+0x17C).
 void MiniMapResetGimmickTables(CMiniMapGimmickView* self) {
     f32 zero = lbl_eu_80667090;
-    self->field_0x04 = 0;
-    u32 off = 0;
     self->field_0x00 = 0;
+    u32 off = 0;
+    self->field_0x04 = 0;
     self->field_0x08 = zero;
     self->field_0x0C = 0;
     self->field_0x10 = 0;

@@ -71,7 +71,7 @@ CfObjectNpc::~CfObjectNpc() {
 
 // 0x800BFE74
 int CfObjectNpc::CfObject_UnkVirtualFunc2() {
-    this->CfObjectModel::CfObjectModel_releaseModelList();
+    this->CfObjectModel::CfObject_UnkVirtualFunc2();
     mFlags68 |= 0x100000;
     CfObjectMove_setModelDisplayFlag(this, 1);
     CfObjectMove_setRegionAttached(this, 1);
@@ -167,28 +167,16 @@ void CfObjectNpc::CObjectParam_UnkVirtualFunc4() {
     u32 col11 = getBdatStringColumnValue(
         fp, "move_speed", unk8C_3);
     static_cast<cf::CfObject*>(this)->CfObject_setMoveScale(
-        (f32)(u32)(u8)col11 /
+        (f32)*(u8*)&col11 /
         *(f32*)static_cast<cf::CfObject*>(this)->CfObject_getMoveRateScale());
 
     // Fade column (+0x1C): halfword payload divided by the fade-scale factor.
     u32 col1c = getBdatStringColumnValue(
         fp, "scale", unk8C_3);
     static_cast<cf::CfObject*>(this)->CfObject_setObjScale(
-        (f32)(u32)(u16)col1c / *(const float*)&lbl_eu_80666AFC);
+        (f32)*(u16*)&col1c / *(const float*)&lbl_eu_80666AFC);
 
-    // Retail leaves a stale word in r4 here (leftover column-key pointer);
-    // the slot ignores it when mField6DC/mField6E0 are NULL. Pass 0: any
-    // explicit arg costs one li vs retail, so this stays a known +1-insn
-    // residual on this non-matching function (see hexdiff loadNpcParams).
-    {
-        // Manual slot-0x220 dispatch: retail passes the stale column-key word
-        // in r4 (the slot ignores it when mField6DC/mField6E0 are NULL), so an
-        // explicit C argument would cost one `li` this exact-size unit cannot
-        // afford.
-        typedef void (*LoadResFn)(cf::CfObjectMove*);
-        void** vtbl = *(void***)this;
-        ((LoadResFn)vtbl[0x220 / 4])(this);
-    }
+    loadIconType();
 }
 
 // 0x800C0314

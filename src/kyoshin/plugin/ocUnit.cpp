@@ -22,7 +22,6 @@ extern "C" {
     extern u32 lbl_eu_80663E28;
     extern u16 lbl_eu_80663E42;
     extern u16 lbl_eu_80663E44;
-    extern float lbl_eu_80665C40;
     void CfObjectMove_syncRegionToPos(void* obj);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
     extern char lbl_eu_804FA74C[];
@@ -194,7 +193,7 @@ extern "C" int getPosX(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
-    retVal.value.intVal = (int)(lbl_eu_80665C30 * obj->CfObject_getPosVector()->x);
+    retVal.value.intVal = (int)(4096.0f * obj->CfObject_getPosVector()->x);
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -206,7 +205,7 @@ extern "C" int getPosY(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
-    retVal.value.intVal = (int)(lbl_eu_80665C30 * obj->CfObject_getPosVector()->y);
+    retVal.value.intVal = (int)(4096.0f * obj->CfObject_getPosVector()->y);
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -216,7 +215,7 @@ extern "C" int getPosZ(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     VMArg retVal;
     retVal.type = 4;
-    retVal.value.intVal = (int)(lbl_eu_80665C30 * obj->CfObject_getPosVector()->z);
+    retVal.value.intVal = (int)(4096.0f * obj->CfObject_getPosVector()->z);
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -294,7 +293,7 @@ int getUnitHp(VMThread* pThread, int handle) {
 float cf::CActorParam::CActorParam_getHp() { return unk17E4.field_04; }
 
 // us-8003c9fc: read the OC property as a signed value scaled by
-// 1/lbl_eu_80665C30, overwrite the object position vector's X with it and
+// 1/4096.0f, overwrite the object position vector's X with it and
 // pass the vector to vtable slot 0xA8.
 extern "C" int setPosX(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
@@ -307,7 +306,7 @@ extern "C" int setPosX(VMThread* pThread, int handle) {
     vec.z = p->z;
     // Signed OC property -> float via the 0x43300000 double-conversion trick
     // (fsubs, no frsp); magic subtrahend is the retail lbl_eu_80665C38.
-    vec.x = (s32)prop->value.uintVal / lbl_eu_80665C30;
+    vec.x = (s32)prop->value.uintVal / 4096.0f;
     obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
@@ -340,7 +339,7 @@ extern "C" int setPosY(VMThread* pThread, int handle) {
     vec.y = p->y;
     vec.z = p->z;
     // Same conversion as setPosX, written to the vector's Y.
-    vec.y = (s32)prop->value.uintVal / lbl_eu_80665C30;
+    vec.y = (s32)prop->value.uintVal / 4096.0f;
     obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
@@ -358,7 +357,7 @@ extern "C" int setPosZ(VMThread* pThread, int handle) {
     vec.z = p->z;
     // Signed OC property -> float via the 0x43300000 double-conversion trick
     // (fsubs, no frsp); magic subtrahend is the retail lbl_eu_80665C38.
-    vec.z = (s32)prop->value.uintVal / lbl_eu_80665C30;
+    vec.z = (s32)prop->value.uintVal / 4096.0f;
     obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
@@ -408,7 +407,7 @@ extern "C" int applyPos(VMThread* pThread, int handle) {
     vec.y = p->y;
     vec.z = p->z;
     obj->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&vec),
-                                   lbl_eu_80665C40);
+                                   1000.0f);
     if (!(lbl_eu_80663E24 & 0xAFA40000) && (obj->unk64 & 8)) {
         CfObjectMove_syncRegionToPos(obj);
     }
@@ -595,7 +594,7 @@ int walkR(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     // Fixed-point walk range -> float via MWCC's s32 double-trick, then
     // dispatched to the 0x1EC NPC move-range slot.
-    float f = (float)(s32)fixed / lbl_eu_80665C30;
+    float f = (float)(s32)fixed / 4096.0f;
     ((cf::CfObjectMove*)obj)->CfObjectMove_setNpcMoveRange(f);
     return 0;
 }
@@ -622,9 +621,9 @@ extern "C" int setTargetRot(VMThread* pThread, int handle) {
     // Fixed-point angles -> floats via MWCC's direct 2^52 signed conversion,
     // scaled back into the object's units, then handed to vtable slot 0x1F4.
     ml::CVec3 vec;
-    vec.x = (float)(s32)rotX / lbl_eu_80665C30;
-    vec.y = (float)(s32)rotY / lbl_eu_80665C30;
-    vec.z = (float)(s32)rotZ / lbl_eu_80665C30;
+    vec.x = (float)(s32)rotX / 4096.0f;
+    vec.y = (float)(s32)rotY / 4096.0f;
+    vec.z = (float)(s32)rotZ / 4096.0f;
     obj->CfObjectMove_advanceNpcTarget(&vec);
     return 0;
 }
@@ -661,10 +660,10 @@ extern "C" int setNpcPath(VMThread* pThread, int handle) {
     out = pts;
     for (int i = 0; i < count; i += 3) {
         // Fixed-point array elements -> floats via the signed 2^52 conversion
-        // divided by lbl_eu_80665C30 (2048.0).
-        out->x = (s32)((VMArg*)vmArrayGet(pThread, arr, i))->value.intVal / lbl_eu_80665C30;
-        out->y = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 1))->value.intVal / lbl_eu_80665C30;
-        out->z = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 2))->value.intVal / lbl_eu_80665C30;
+        // divided by 4096.0f (2048.0).
+        out->x = (s32)((VMArg*)vmArrayGet(pThread, arr, i))->value.intVal / 4096.0f;
+        out->y = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 1))->value.intVal / 4096.0f;
+        out->z = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 2))->value.intVal / 4096.0f;
         out++;
     }
     ((cf::CfObjectMove*)obj)->CfObjectMove_refreshNpcState(modeA, modeB, count / 3 + 1, (ml::CVec3*)&start, (float)angle);
@@ -734,9 +733,9 @@ int moveTo(VMThread* pThread, int handle) {
     }
     obj = (cf::CfObject*)ArtsSelect_Lookup(ArtsSelect_GetContainer(), handle);
     spf = CDeviceVI::getSecPerFrame();
-    vec.x = (float)(s32)posX / lbl_eu_80665C30;
-    vec.y = (float)(s32)posY / lbl_eu_80665C30;
-    vec.z = (float)(s32)posZ / lbl_eu_80665C30;
+    vec.x = (float)(s32)posX / 4096.0f;
+    vec.y = (float)(s32)posY / 4096.0f;
+    vec.z = (float)(s32)posZ / 4096.0f;
     step = (float)(s32)frames * spf;
     ((cf::CfObjectMove*)obj)->CfObjectMove_updateNpcTarget(&vec, step, (int)((u32)(-flag | flag) >> 31), angle);
     return 0;
@@ -1039,7 +1038,7 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
     ((void (*)(void*, int, int, int, int))&CfObjectMove_setAnimModeArgs)(obj, actionId, 0, -1, 1);
     if (fixedParam != 1) {
-        float f = (float)(s32)fixedParam / 2048.0f;
+        float f = (float)(s32)fixedParam / 4096.0f;
         obj->CfObject_pushRefreshValue(f);
     }
     return 0;
@@ -1052,7 +1051,7 @@ extern "C" int setRefreshVal(VMThread* pThread, int handle) {
     int fixedVal = vmArgFixedGet(2, arg1);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    float f = (float)(s32)fixedVal / 2048.0f;
+    float f = (float)(s32)fixedVal / 4096.0f;
     obj->CfObject_pushRefreshValue(f);
     return 0;
 }
@@ -1544,9 +1543,9 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     // Fixed-point degrees -> radians via MWCC's direct 2^52 conversion.
     Vec3f vec;
-    vec.x = ((float)(s32)rotX / lbl_eu_80665C30) * ml::deg2rad;
-    vec.y = ((float)(s32)rotY / lbl_eu_80665C30) * ml::deg2rad;
-    vec.z = ((float)(s32)rotZ / lbl_eu_80665C30) * ml::deg2rad;
+    vec.x = ((float)(s32)rotX / 4096.0f) * ml::deg2rad;
+    vec.y = ((float)(s32)rotY / 4096.0f) * ml::deg2rad;
+    vec.z = ((float)(s32)rotZ / 4096.0f) * ml::deg2rad;
     obj->CfObject_setRotVec((const ml::CVec3*)&vec);
     return 0;
 }
@@ -1885,8 +1884,8 @@ extern "C" int moveByOffset(VMThread* pThread, int handle) {
     int distY = vmArgFixedGet(3, ptr2);
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
-    float fDistX = (float)(s32)distX / 2048.0f;
-    float fDistY = (float)(s32)distY / 2048.0f;
+    float fDistX = (float)(s32)distX / 4096.0f;
+    float fDistY = (float)(s32)distY / 4096.0f;
     if (obj) {
         void* pos = (void*)(uintptr_t)obj->CfObject_getPosVector();
         float x = *(float*)((u8*)pos + 0);
@@ -1916,10 +1915,10 @@ extern "C" int moveToPos(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
 
-    float fx = (float)(s32)x / lbl_eu_80665C30;
-    float fy = (float)(s32)y / lbl_eu_80665C30;
-    float fz = (float)(s32)z / lbl_eu_80665C30;
-    float fAngle = (float)(s32)angle / lbl_eu_80665C30;
+    float fx = (float)(s32)x / 4096.0f;
+    float fy = (float)(s32)y / 4096.0f;
+    float fz = (float)(s32)z / 4096.0f;
+    float fAngle = (float)(s32)angle / 4096.0f;
 
     if (obj != NULL) {
         ml::CVec3* moveObj = obj->CfObject_getPosVector();
@@ -2005,6 +2004,175 @@ extern "C" int chkEventRange(VMThread* pThread, int handle) {
     vmRetValSet(pThread, &retVal);
     return 1;
 }
+
+// The five OCData records owned by this TU (defined in ocUnit.cpp).
+struct OcUnitPluginArea {
+    OCProperty p0[9];
+    OCSelector s0[48];
+    OCData d0;
+    OCProperty p1[4];
+    OCSelector s1[10];
+    OCData d1;
+    OCProperty p2[5];
+    OCSelector s2[12];
+    OCData d2;
+    OCProperty p3[5];
+    OCSelector s3[10];
+    OCData d3;
+    OCProperty p4[5];
+    OCSelector s4[10];
+    OCData d4;
+};
+
+extern "C" const u32 lbl_eu_804FA4C0[6] = { 0, 2, 3, 1, 4, 5 };
+
+// Retail OC-unit tables/records, emitted as one aggregate in retail order.
+extern "C" OcUnitPluginArea ocUnitPluginArea = {
+    {
+        { "x", (OCGetSetFunc)getPosX, (OCGetSetFunc)setPosX, 0 },
+        { "y", (OCGetSetFunc)getPosY, (OCGetSetFunc)setPosY, 0 },
+        { "z", (OCGetSetFunc)getPosZ, (OCGetSetFunc)setPosZ, 0 },
+        { "dir", (OCGetSetFunc)getObjAngle, (OCGetSetFunc)setObjYaw, 0 },
+        { "name", (OCGetSetFunc)getObjParam, (OCGetSetFunc)setObjName, 0 },
+        { "bdid", (OCGetSetFunc)getObjId, (OCGetSetFunc)0, 0 },
+        { "ID", (OCGetSetFunc)getTalkObj, (OCGetSetFunc)0, 0 },
+        { "HP", (OCGetSetFunc)getUnitHp, (OCGetSetFunc)0, 0 },
+        { 0, (OCGetSetFunc)0, (OCGetSetFunc)0, 0 },
+    },
+    {
+        { "isValid", (OCSelectorFunc)isValid, 0 },
+        { "setGround", (OCSelectorFunc)applyPos, 0 },
+        { "dispOn", (OCSelectorFunc)dispOn, 0 },
+        { "dispOff", (OCSelectorFunc)dispOff, 0 },
+        { "forceDispOff", (OCSelectorFunc)hideUnit, 0 },
+        { "dispWeapon", (OCSelectorFunc)setActorStatusSelect, 0 },
+        { "moveMode", (OCSelectorFunc)execNpcAction, 0 },
+        { "getMoveMode", (OCSelectorFunc)getNpcAction, 0 },
+        { "isSetDir", (OCSelectorFunc)canTalk, 0 },
+        { "setModeChange", (OCSelectorFunc)setGameFlag, 0 },
+        { "walkR", (OCSelectorFunc)walkR, 0 },
+        { "walkIdleTime", (OCSelectorFunc)setMoveWait, 0 },
+        { "initWalk", (OCSelectorFunc)setTargetRot, 0 },
+        { "movePoint", (OCSelectorFunc)setNpcPath, 0 },
+        { "isMoveEnd", (OCSelectorFunc)isMoving, 0 },
+        { "waitMoveEnd", (OCSelectorFunc)waitMove, 0 },
+        { "moveTo", (OCSelectorFunc)moveTo, 0 },
+        { "loopMotion", (OCSelectorFunc)func_8003D570, 0 },
+        { "corpMotion", (OCSelectorFunc)restartNpc, 0 },
+        { "isTalk", (OCSelectorFunc)isTalk, 0 },
+        { "winTalk", (OCSelectorFunc)winTalk, 0 },
+        { "holdTalk", (OCSelectorFunc)setState10, 0 },
+        { "winAutoTalk", (OCSelectorFunc)talkMsg, 0 },
+        { "onEvent", (OCSelectorFunc)onEvent, 0 },
+        { "onEventAutoTalk", (OCSelectorFunc)hasTalkFlag, 0 },
+        { "winTalkSelect", (OCSelectorFunc)getSearchHandle, 0 },
+        { "winTalkToSimpleEve", (OCSelectorFunc)sendNotify, 0 },
+        { "setAct", (OCSelectorFunc)setAct, 0 },
+        { "setActSpd", (OCSelectorFunc)setRefreshVal, 0 },
+        { "lookAt", (OCSelectorFunc)lookAt, 0 },
+        { "turn", (OCSelectorFunc)turn, 0 },
+        { "setPcNpcWeapon", (OCSelectorFunc)flagUnit80000, 0 },
+        { "setPcNpcWeapon2", (OCSelectorFunc)flagUnit100000, 0 },
+        { "getTargetOC", (OCSelectorFunc)getPartyHandle, 0 },
+        { "getTargetID", (OCSelectorFunc)getTargetUnitId, 0 },
+        { "isPC", (OCSelectorFunc)isPC, 0 },
+        { "isNPC", (OCSelectorFunc)isNPC, 0 },
+        { "isENE", (OCSelectorFunc)isENE, 0 },
+        { "isPT", (OCSelectorFunc)isPT, 0 },
+        { "invin", (OCSelectorFunc)invin, 0 },
+        { "setBtlState", (OCSelectorFunc)sendBattleEvent, 0 },
+        { "clearBtlState", (OCSelectorFunc)delBuff, 0 },
+        { "setColi", (OCSelectorFunc)setColi, 0 },
+        { "setEye", (OCSelectorFunc)setEye, 0 },
+        { "setGravity", (OCSelectorFunc)setGrav, 0 },
+        { "setDyRstOff", (OCSelectorFunc)setUnitVisible, 0 },
+        { "dispShadow", (OCSelectorFunc)setUnitState, 0 },
+        { 0, (OCSelectorFunc)0, 0 },
+    },
+    { "unit", (OCCtorFunc)getUnitObject, ocUnitPluginArea.p0, ocUnitPluginArea.s0 },
+    {
+        { "x", (OCGetSetFunc)getPosX, (OCGetSetFunc)setPosX, 0 },
+        { "y", (OCGetSetFunc)getPosY, (OCGetSetFunc)setPosY, 0 },
+        { "z", (OCGetSetFunc)getPosZ, (OCGetSetFunc)setPosZ, 0 },
+        { 0, (OCGetSetFunc)0, (OCGetSetFunc)0, 0 },
+    },
+    {
+        { "isValid", (OCSelectorFunc)isValid, 0 },
+        { "setGround", (OCSelectorFunc)applyPos, 0 },
+        { "dispOn", (OCSelectorFunc)dispOn, 0 },
+        { "dispOff", (OCSelectorFunc)dispOff, 0 },
+        { "moveMode", (OCSelectorFunc)execNpcAction, 0 },
+        { "isSetDir", (OCSelectorFunc)canTalk, 0 },
+        { "setAct", (OCSelectorFunc)setAct, 0 },
+        { "setRot", (OCSelectorFunc)setRot, 0 },
+        { "gravity", (OCSelectorFunc)gravity, 0 },
+        { 0, (OCSelectorFunc)0, 0 },
+    },
+    { "obj", (OCCtorFunc)spawnParty, ocUnitPluginArea.p1, ocUnitPluginArea.s1 },
+    {
+        { "x", (OCGetSetFunc)getPosX, (OCGetSetFunc)setPosX, 0 },
+        { "y", (OCGetSetFunc)getPosY, (OCGetSetFunc)setPosY, 0 },
+        { "z", (OCGetSetFunc)getPosZ, (OCGetSetFunc)setPosZ, 0 },
+        { "bdid", (OCGetSetFunc)getObjId, (OCGetSetFunc)0, 0 },
+        { 0, (OCGetSetFunc)0, (OCGetSetFunc)0, 0 },
+    },
+    {
+        { "isValid", (OCSelectorFunc)isValid, 0 },
+        { "setGround", (OCSelectorFunc)applyPos, 0 },
+        { "dispOn", (OCSelectorFunc)pointOnA, 0 },
+        { "dispOff", (OCSelectorFunc)pointOffA, 0 },
+        { "moveMode", (OCSelectorFunc)execNpcAction, 0 },
+        { "isSetDir", (OCSelectorFunc)canTalk, 0 },
+        { "isTalk", (OCSelectorFunc)isTalk, 0 },
+        { "winTalk", (OCSelectorFunc)winTalk, 0 },
+        { "onEvent", (OCSelectorFunc)onEvent, 0 },
+        { "winTalkSelect", (OCSelectorFunc)getSearchHandle, 0 },
+        { "winTalkToSimpleEve", (OCSelectorFunc)sendNotify, 0 },
+        { 0, (OCSelectorFunc)0, 0 },
+    },
+    { "point", (OCCtorFunc)findParty, ocUnitPluginArea.p2, ocUnitPluginArea.s2 },
+    {
+        { "x", (OCGetSetFunc)getPosX, (OCGetSetFunc)setPosX, 0 },
+        { "y", (OCGetSetFunc)getPosY, (OCGetSetFunc)setPosY, 0 },
+        { "z", (OCGetSetFunc)getPosZ, (OCGetSetFunc)setPosZ, 0 },
+        { "bdid", (OCGetSetFunc)getObjId, (OCGetSetFunc)0, 0 },
+        { 0, (OCGetSetFunc)0, (OCGetSetFunc)0, 0 },
+    },
+    {
+        { "isValid", (OCSelectorFunc)isValid, 0 },
+        { "setGround", (OCSelectorFunc)applyPos, 0 },
+        { "isSetDir", (OCSelectorFunc)canTalk, 0 },
+        { "dispOn", (OCSelectorFunc)pointOnB, 0 },
+        { "dispOff", (OCSelectorFunc)pointOffB, 0 },
+        { "signal", (OCSelectorFunc)setChildVal, 0 },
+        { "setCas", (OCSelectorFunc)followUnit, 0 },
+        { "setTgt", (OCSelectorFunc)setUnitTarget, 0 },
+        { "setWeaponCas", (OCSelectorFunc)bindFollow, 0 },
+        { 0, (OCSelectorFunc)0, 0 },
+    },
+    { "effect", (OCCtorFunc)findBattleActor, ocUnitPluginArea.p3, ocUnitPluginArea.s3 },
+    {
+        { "x", (OCGetSetFunc)getPosX, (OCGetSetFunc)setPosX, 0 },
+        { "y", (OCGetSetFunc)getPosY, (OCGetSetFunc)setPosY, 0 },
+        { "z", (OCGetSetFunc)getPosZ, (OCGetSetFunc)setPosZ, 0 },
+        { "bdid", (OCGetSetFunc)getObjId, (OCGetSetFunc)0, 0 },
+        { 0, (OCGetSetFunc)0, (OCGetSetFunc)0, 0 },
+    },
+    {
+        { "isValid", (OCSelectorFunc)isValid, 0 },
+        { "setGround", (OCSelectorFunc)applyPos, 0 },
+        { "isSetDir", (OCSelectorFunc)canTalk, 0 },
+        { "dispOn", (OCSelectorFunc)pointOnC, 0 },
+        { "dispOff", (OCSelectorFunc)pointOffC, 0 },
+        { "setSize", (OCSelectorFunc)moveByOffset, 0 },
+        { "setBox", (OCSelectorFunc)moveToPos, 0 },
+        { "inside", (OCSelectorFunc)chkRange, 0 },
+        { "insideNormal", (OCSelectorFunc)chkEventRange, 0 },
+        { 0, (OCSelectorFunc)0, 0 },
+    },
+    { "attr", (OCCtorFunc)startBattle, ocUnitPluginArea.p4, ocUnitPluginArea.s4 },
+};
+
 
 // us-80040664: ocUnitRegist
 // Registers all OC unit plugin functions

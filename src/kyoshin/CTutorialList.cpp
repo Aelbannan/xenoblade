@@ -608,7 +608,7 @@ void CTutorialList::TutorialList_OpenAfterFilesReady() {
     mField174 = 1;
     mIdTable.Rebuild(mField17C, 0);
     mField178 = (s8)mIdTable.mSelRow;
-    mField17A = (u16)(s32)mIdTable.mScrollBase;
+    mField17A = mIdTable.mScrollBase;
     TutorialList_UpdateRowTexts();
 }
 

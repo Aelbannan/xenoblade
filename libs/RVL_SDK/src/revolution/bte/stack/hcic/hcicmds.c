@@ -44,27 +44,25 @@ int btsnd_hcic_inq_cancel(void)
 
 int btsnd_hcic_per_inq_mode(short max_delay, unsigned short min_delay, const unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
-    unsigned char *p = GKI_getpoolbuf(2);
-    unsigned char b0, b1, b2;
+    BT_HDR *p = (BT_HDR *)GKI_getpoolbuf(2);
+    unsigned char *pp;
     if (p == NULL)
         return 0;
-    *(unsigned short *)(p + 2) = 0xC;
-    *(unsigned short *)(p + 4) = 0;
-    b2 = bd_addr[2];
-    p[8] = 3;
-    b1 = bd_addr[1];
-    p[9] = 4;
-    b0 = bd_addr[0];
-    p[10] = 9;
-    p[11] = (unsigned char)max_delay;
-    p[12] = (unsigned char)(max_delay >> 8);
-    p[13] = (unsigned char)min_delay;
-    p[14] = (unsigned char)(min_delay >> 8);
-    p[15] = b2;
-    p[16] = b1;
-    p[17] = b0;
-    p[18] = inquiry_mode;
-    p[19] = inquiry_length;
+    pp = (unsigned char *)(p + 1);
+    p->len = 0xC;
+    p->offset = 0;
+    *pp++ = 3;
+    *pp++ = 4;
+    *pp++ = 9;
+    *pp++ = (unsigned char)max_delay;
+    *pp++ = (unsigned char)(max_delay >> 8);
+    *pp++ = (unsigned char)min_delay;
+    *pp++ = (unsigned char)(min_delay >> 8);
+    *pp++ = bd_addr[2];
+    *pp++ = bd_addr[1];
+    *pp++ = bd_addr[0];
+    *pp++ = inquiry_mode;
+    *pp++ = inquiry_length;
     btu_hcif_send_cmd(p);
     return 1;
 }
@@ -776,19 +774,20 @@ int btsnd_hcic_delete_stored_key(unsigned char *bd_addr, unsigned char delete_al
     return 1;
 }
 
-void btsnd_hcic_change_name(unsigned char *p, unsigned char *name)
+void btsnd_hcic_change_name(void *buf, unsigned char *name)
 {
-    unsigned short len = (unsigned short)(strlen(name) + 1);
-    unsigned char *dst = p + 11;
+    BT_HDR *p = (BT_HDR *)buf;
+    unsigned char *pp = (unsigned char *)(p + 1);
+    unsigned short len = (unsigned short)(strlen((char *)name) + 1);
     int i;
 
-    *(unsigned short *)(p + 2) = 0xfb;
-    *(unsigned short *)(p + 4) = 0;
-    p[8] = 0x13;
-    p[9] = 0xc;
-    p[10] = 0xf8;
+    p->len = 0xfb;
+    p->offset = 0;
+    *pp++ = 0x13;
+    *pp++ = 0xc;
+    *pp++ = 0xf8;
     for (i = 0; i < len; i++)
-        *dst++ = name[i];
+        *pp++ = name[i];
     btu_hcif_send_cmd(p);
 }
 

@@ -14,6 +14,7 @@
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <types.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CTutorialImports.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
@@ -44,19 +45,19 @@ extern "C" void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self);
 // widget helpers) -- C linkage so calls bind the literal retail symbol.
 // Return types are int (not u8) so callers compare with cmpwi directly.
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
+
 extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self);
 extern "C" void applyPaneTevColors(CTitleAHelp* self);
 extern "C" void setNameText(CTitleAHelp* self, char* name);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
+extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
 // no-arg member wrapper drops it), so call through the C name directly.
@@ -231,7 +232,7 @@ extern "C" unsigned long CMenuTutorialList_IsActive(void) { return CMenuTutorial
 // sound, then advance the phase byte.
 void CMenuTutorialList_PhaseOpenList(CMenuTutorialList* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
-        if (isInitialized(&self->mTitleAHelp) != 0) {
+        if (self->mTitleAHelp.isInitialized() != 0) {
             if (self->mTutorialList.TutorialList_IsListVisible() != 0) {
                 func_801C412C(&self->mTitleAHelp);
                 self->mTutorialList.TutorialList_OpenListInit();

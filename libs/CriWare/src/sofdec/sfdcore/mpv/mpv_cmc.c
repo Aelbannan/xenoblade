@@ -16,52 +16,37 @@ void MPVCMC_InitObj(void* self) {
 
 void mpvcmc_InitMcOiTa(void* self) {
     u8* base = (u8*)self;
-    u32 val = *(u32*)(base + 0xb24);
-    struct McOiTaPair { void* p; int v; }* e = (struct McOiTaPair*)(base + 0xad8);
-    u8* ptr = base + 0x380;
-    int flags = 4;
-    if (val == 0) {
+    struct McOiTaPair { void* p; int v; }* e;
+    int flags;
+    int i;
+    e = (struct McOiTaPair*)(base + 0xad8);
+    flags = 4;
+    if (*(u32*)(base + 0xb24) == 0) {
         flags = -1;
     }
     *(int*)(base + 0xad4) = flags;
-    e[0].p = ptr;
-    e[1].p = ptr;
-    e[2].p = ptr;
-    e[3].p = ptr;
-    e[4].p = ptr;
-    e[5].p = ptr;
-    e[0].v = 8;
-    e[1].v = 8;
-    e[2].v = 8;
-    e[3].v = 8;
-    e[4].v = 8;
-    e[5].v = 8;
+    for (i = 0; i < 6; i++) {
+        e[i].p = base + 0x380;
+        e[i].v = 8;
+    }
 }
 
 void MPVCMC_InitMcOiRt(void* self) {
-    u32 val = *(u32*)((u8*)self + 0xb24);
-    s32* base = (s32*)((u8*)self + 0xaa4);
-    s32 r4 = 4;
-    if (val == 0) {
-        r4 = -1;
+    u8* base = (u8*)self;
+    s32* e = (s32*)(base + 0xaa4);
+    s32 i;
+    *(s32*)(base + 0xaa0) = (*(u32*)(base + 0xb24) != 0) ? 4 : -1;
+    for (i = 0; i < 2; i++) {
+        e[i * 2 + 1] = *(s16*)(base + 0xc0c);
     }
-    s32 r0 = *(s16*)((u8*)self + 0xc0e);
-    s32 r6 = *(s16*)((u8*)self + 0xc0c);
-    base[-1] = r4;
-    base[1] = r6;
-    base[3] = r6;
-    base[5] = r0;
-    base[7] = r0;
-    base[9] = r0;
-    base[11] = r0;
+    for (i = 2; i < 6; i++) {
+        e[i * 2 + 1] = *(s16*)(base + 0xc0e);
+    }
 }
 
 void MPVCMC_SetCcnt(void* self) {
-    u32 val = *(u32*)((u8*)self + 0xb24);
-    int r4;
-    if (val != 0) {
-        r4 = 4;
-    } else {
+    s32 r4 = 4;
+    if (*(u32*)((u8*)self + 0xb24) == 0) {
         r4 = -1;
     }
     *(u32*)((u8*)self + 0xad4) = r4;

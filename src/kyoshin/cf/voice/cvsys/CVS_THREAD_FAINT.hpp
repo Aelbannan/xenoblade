@@ -15,12 +15,15 @@ public:
     CVoiceHandle* slot2;  // 0x24: owner-2 voice handle
 
     int blank1() override;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void advanceSlot1();
+    void advanceSlot2();
+    void onPlaybackComplete();
+    static CVS_THREAD_FAINT* create(CVoiceHandle* owner1, CVoiceHandle* owner2);
 };
 
-// Init-state triples and this subclass's vtable (imported data symbols).
-extern u32 lbl_eu_80539B58[3];
-extern u32 lbl_eu_80539B64[3];
-extern u32 lbl_eu_80539B70[3];
+// This subclass's vtable (imported data symbol).
 extern u32 lbl_eu_80539B7C[7];
 
 struct CVS_THREAD_FAINT_VTable;

@@ -4529,7 +4529,7 @@ void CItemBoxInfo::SetItem(u16 arg2, void* arg3, u16 arg4) {
         break;
     }
     char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
-    // Default ctor clears inline (mString[0]=0 / mLength=0) — MWCC outlines the
+    // Default ctor clears inline (mString[0]=0 / mLength=0) -- MWCC outlines the
     // FixStr(bool) ctor once it has 2+ call sites in a TU, the default one it
     // always inlines.
     ml::FixStr<32> text;

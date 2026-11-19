@@ -12,6 +12,7 @@
 #include "monolib/util/MemManager.hpp"
 
 #include <revolution/GX.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -38,10 +39,10 @@ extern u32 lbl_eu_80663E28;
 // cmpwi directly (no byte mask), matching retail.
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
+
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void NandTeardown();
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
@@ -53,10 +54,10 @@ extern "C" void handleSaveMenuInput(CMenuSave* self);
 extern "C" void flagSaveMenuReady(CMenuSave* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
@@ -209,7 +210,7 @@ extern "C" unsigned long isSaveMenuActive(void) { return CMenuSave::sInstance !=
  * save-slot data, update the title bar, and play the open sound. */
 extern "C" void openSaveMenu(CMenuSave* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
-        isInitialized(&self->mTitleAHelp) != 0 &&
+        self->mTitleAHelp.isInitialized() != 0 &&
         self->mSaveLoad.isReady() != 0) {
         u8 slot = self->mSaveLoad.getHelpKind();
         func_801C41E8(&self->mTitleAHelp, slot);

@@ -537,7 +537,7 @@ int PartyStateWin_QueryMenuClose(CPartyStateWin* self) {
 // Party-menu open: once the title help and party state settle, update all
 // sub-objects, arm the window (state 0x1) and play the open sound.
 extern "C" void PartyStateWin_StateOpen(CPartyStateWin* self) {
-    if (isInitialized(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) &&
+    if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isInitialized() &&
         isPartySettled(reinterpret_cast<CPartyState*>(&self->_pad3038))) {
         func_801C412C(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
         setupPartySelect(reinterpret_cast<CPartyState*>(&self->_pad3038));

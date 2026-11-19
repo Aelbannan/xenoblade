@@ -98,7 +98,7 @@ void CTitleAHelp::teardown() {
     unk4.deleteRegion();
 }
 
-u8 CTitleAHelp::isInitialized() { return unk35; }
+int CTitleAHelp::isInitialized() { return unk35; }
 
 u8 CTitleAHelp::isActive() {
 	return unk28;

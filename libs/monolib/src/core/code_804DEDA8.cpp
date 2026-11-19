@@ -1117,7 +1117,7 @@ extern "C" void EffFxInitStructLinks(CEffectNode* node);
 // table: round the byte size up twice (32-byte granularity), record the pool
 // base/count, run the node initializer over each element, then zero the
 // follow-on table (returning its end pointer).
-extern "C" void* SchedNode_AllocPool(u32 size, u32 count) {
+extern "C" void* SchedNode_AllocPool(u32 size, s32 count) {
     s32 i;
     u32 a = (size + 0x1f) & ~0x1f;
     u32 base = (a + 0x1f) & ~0x1f;
@@ -1125,16 +1125,17 @@ extern "C" void* SchedNode_AllocPool(u32 size, u32 count) {
     lbl_eu_80661738.mBase = (CEffectNode*)base;
     lbl_eu_80661738.mField08 = 0;
     lbl_eu_80661738.mLastHandle = 0;
-    // Retail keeps both a per-element byte cursor and the loop index.
-    u32 off = 0;
-    for (i = 0; i < (s32)count; i++) {
+    i = 0;
+    s32 off = 0;
+    while (i < count) {
         EffFxInitStructLinks((CEffectNode*)((u8*)lbl_eu_80661738.mBase + off));
         off += 0x338;
+        i++;
     }
-    u32 tail = (base + count * 0x338 + 0x1f) & ~0x1f;
-    lbl_eu_80665A44 = (void*)tail;
-    memset(lbl_eu_80665A44, 0, count * 0x34);
-    return (void*)((u8*)lbl_eu_80665A44 + count * 0x34);
+    lbl_eu_80665A44 = (void*)((base + count * 0x338 + 0x1f) & ~0x1f);
+    s32 sz = count * 0x34;
+    memset(lbl_eu_80665A44, 0, sz);
+    return (void*)((u8*)lbl_eu_80665A44 + sz);
 }
 
 // Effect-node activator (monolib/src/effect/code_804CC2B8.cpp,

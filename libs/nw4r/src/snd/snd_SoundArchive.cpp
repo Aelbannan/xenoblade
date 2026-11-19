@@ -27,6 +27,10 @@ void SoundArchive::Shutdown() {
     mExtFileRoot[1] = '\0';
 }
 
+u32 SoundArchive::GetSoundCount() const {
+    return mFileReader->GetSoundCount();
+}
+
 u32 SoundArchive::GetPlayerCount() const {
     return mFileReader->GetPlayerCount();
 }
@@ -63,7 +67,7 @@ bool SoundArchive::ReadSoundInfo(u32 id, SoundInfo* pInfo) const {
     return mFileReader->ReadSoundInfo(id, pInfo);
 }
 
-bool SoundArchive::detail_ReadSeqSoundInfo(u32 id, SeqSoundInfo* pInfo) const {
+bool SoundArchive::ReadSeqSoundInfo(u32 id, SeqSoundInfo* pInfo) const {
     return mFileReader->ReadSeqSoundInfo(id, pInfo);
 }
 
@@ -90,7 +94,7 @@ bool SoundArchive::detail_ReadSound3DParam(u32 id, Sound3DParam* pParam) const {
     return mFileReader->ReadSound3DParam(id, pParam);
 }
 
-bool SoundArchive::detail_ReadBankInfo(u32 id, BankInfo* pInfo) const {
+bool SoundArchive::ReadBankInfo(u32 id, BankInfo* pInfo) const {
     return mFileReader->ReadBankInfo(id, pInfo);
 }
 
@@ -103,6 +107,10 @@ bool SoundArchive::detail_ReadGroupItemInfo(u32 groupId, u32 itemId,
     return mFileReader->ReadGroupItemInfo(groupId, itemId, pInfo);
 }
 
+u32 SoundArchive::detail_GetFileCount() const {
+    return mFileReader->GetFileCount();
+}
+
 bool SoundArchive::detail_ReadFileInfo(u32 id, FileInfo* pInfo) const {
     return mFileReader->ReadFileInfo(id, pInfo);
 }
@@ -110,6 +118,31 @@ bool SoundArchive::detail_ReadFileInfo(u32 id, FileInfo* pInfo) const {
 bool SoundArchive::detail_ReadFilePos(u32 fileId, u32 posId,
                                       FilePos* pPos) const {
     return mFileReader->ReadFilePos(fileId, posId, pPos);
+}
+
+ut::FileStream* SoundArchive::OpenExtStreamImpl(void* pBuffer, int bufferSize,
+                                                const char* pExtPath,
+                                                u32 offset, u32 size) const {
+    char pathBuffer[FILE_PATH_MAX];
+    const char* pFullPath;
+
+    if (pExtPath[0] == '/') {
+        pFullPath = pExtPath;
+    } else {
+        u32 fileLen = std::strlen(pExtPath);
+        u32 dirLen = std::strlen(mExtFileRoot);
+
+        if (fileLen + dirLen >= FILE_PATH_MAX) {
+            return NULL;
+        }
+
+        std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
+        std::strncat(pathBuffer, pExtPath, fileLen + 1);
+
+        pFullPath = pathBuffer;
+    }
+
+    return OpenExtStream(pBuffer, bufferSize, pFullPath, offset, size);
 }
 
 ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
@@ -120,30 +153,9 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
         return NULL;
     }
 
-    // External file paths are resolved against mExtFileRoot unless absolute
-    const char* pExtPath = fileInfo.extFilePath;
-    if (pExtPath != NULL) {
-        u32 fileSize = fileInfo.fileSize;
-        char pathBuffer[FILE_PATH_MAX];
-        const char* pFullPath;
-
-        if (pExtPath[0] == '/') {
-            pFullPath = pExtPath;
-        } else {
-            u32 fileLen = std::strlen(pExtPath);
-            u32 dirLen = std::strlen(mExtFileRoot);
-
-            if (fileLen + dirLen >= FILE_PATH_MAX) {
-                return NULL;
-            }
-
-            std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
-            std::strncat(pathBuffer, pExtPath, fileLen + 1);
-
-            pFullPath = pathBuffer;
-        }
-
-        return OpenExtStream(pBuffer, bufferSize, pFullPath, 0, fileSize);
+    if (fileInfo.extFilePath != NULL) {
+        return OpenExtStreamImpl(pBuffer, bufferSize, fileInfo.extFilePath, 0,
+                                 fileInfo.fileSize);
     }
 
     FilePos filePos;
@@ -162,31 +174,12 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
         return NULL;
     }
 
+    u32 offset = groupInfo.offset + groupItemInfo.offset;
     u32 size = groupItemInfo.size;
 
-    pExtPath = groupInfo.extFilePath;
-    u32 offset = groupInfo.offset + groupItemInfo.offset;
-    if (pExtPath != NULL) {
-        char pathBuffer[FILE_PATH_MAX];
-        const char* pFullPath;
-
-        if (pExtPath[0] == '/') {
-            pFullPath = pExtPath;
-        } else {
-            u32 fileLen = std::strlen(pExtPath);
-            u32 dirLen = std::strlen(mExtFileRoot);
-
-            if (fileLen + dirLen >= FILE_PATH_MAX) {
-                return NULL;
-            }
-
-            std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
-            std::strncat(pathBuffer, pExtPath, fileLen + 1);
-
-            pFullPath = pathBuffer;
-        }
-
-        return OpenExtStream(pBuffer, bufferSize, pFullPath, offset, size);
+    if (groupInfo.extFilePath != NULL) {
+        return OpenExtStreamImpl(pBuffer, bufferSize, groupInfo.extFilePath,
+                                 offset, size);
     }
 
     return OpenStream(pBuffer, bufferSize, offset, size);
@@ -225,31 +218,6 @@ SoundArchive::detail_OpenGroupWaveDataStream(u32 id, void* pBuffer,
                       groupInfo.waveDataSize);
 }
 
-ut::FileStream* SoundArchive::OpenExtStreamImpl(void* pBuffer, int bufferSize,
-                                                const char* pExtPath,
-                                                u32 offset, u32 size) const {
-    char pathBuffer[FILE_PATH_MAX];
-    const char* pFullPath;
-
-    if (pExtPath[0] == '/') {
-        pFullPath = pExtPath;
-    } else {
-        u32 fileLen = std::strlen(pExtPath);
-        u32 dirLen = std::strlen(mExtFileRoot);
-
-        if (fileLen + dirLen >= FILE_PATH_MAX) {
-            return NULL;
-        }
-
-        std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
-        std::strncat(pathBuffer, pExtPath, fileLen + 1);
-
-        pFullPath = pathBuffer;
-    }
-
-    return OpenExtStream(pBuffer, bufferSize, pFullPath, offset, size);
-}
-
 void SoundArchive::SetExternalFileRoot(const char* pExtFileRoot) {
     u32 len = std::strlen(pExtFileRoot);
     u32 nullPos = len;
@@ -268,5 +236,3 @@ void SoundArchive::SetExternalFileRoot(const char* pExtFileRoot) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" u32 GetSoundCount__Q34nw4r3snd12SoundArchiveCFv(nw4r::snd::SoundArchive* self) { return ((u32(*)(void*))GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }
-extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(nw4r::snd::SoundArchive* self) { return ((u32(*)(void*))GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }

@@ -93,36 +93,35 @@ extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
+extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
+extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
+extern "C" void reopenFromClose(CTitleAHelp* self);      // stop help-bar animation
 // Load/anim hooks used by the phase gates (retail unmangled names).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);            // bg layout load-done query
-extern "C" void reopenFromClose(CTitleAHelp* self);      // stop help-bar animation
-extern "C" int isInitialized(CTitleAHelp* self);       // help-bar ready query
-extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
 class CProcess;
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names).
 namespace nw4r { namespace lyt { class DrawInfo; } }
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 
 // Input-handler callees (retail unmangled names). isClassicController keeps the
 // u32 return declared by CItemBoxGrid.hpp (included above) - do not redeclare.
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
+extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int MenuTutorialIsCreated();
 
 // Move()/phase-handler callees (retail unmangled names).
 extern "C" void BgTex_Tick_3D54(CBgTex* self);          // bg per-frame update
-extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
 
 // Shared data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505324[];   // split1 .rodata string pool (Init title name)

@@ -40,7 +40,7 @@ public:
     struct MmlParserParam {
         // cmpFlag is a raw byte: the userproc callback rewrites it in place
         // through SeqUserprocCallbackParam (retail stores it unnormalized).
-        u8 cmpFlag;                           // at 0x0
+        bool cmpFlag;                         // at 0x0
         bool noteWaitFlag;                    // at 0x1
         bool tieFlag;                         // at 0x2
         // Set by MML_SET_MONOPHONIC: NoteOn then reuses the newest channel

@@ -38,9 +38,9 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Unit-private imports (shared with code_80231950.cpp): see CMenuArtsSetImports.hpp.
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void teardown(CTitleAHelp* self);
 
 // Pad state import: cf::CfGameManager::getCfPadData() comes from the
 // harness_catalog include chain; CfPadData.hpp supplies the struct layout.
@@ -186,9 +186,8 @@ void ArtsCharList_selectNext(SArtsSub8022FA58* self) {
 extern "C" void artsGoPrevItem(SArtsSub8022FA58* self) {
     self->field_0x16 = 0;
     self->field_0x17 = 0;
-    u8 v = self->field_0x14 - 1;
-    self->field_0x14 = v;
-    if ((s8)v < 0) {
+    self->field_0x14--;
+    if ((s8)self->field_0x14 < 0) {
         self->field_0x14 = (u8)(self->field_0x21 - 1);
     }
     return ArtsCharList_refreshDisplay(self);
@@ -820,7 +819,7 @@ extern "C" u8 artsReadSelId(SArtsSub8022FA58* self) {
             }
             // Item word top 12 bits -> category; BDAT row keyed by category.
             // tbl is loaded ahead of the category lookup (retail schedule).
-            u32 tbl = lbl_eu_806640F8;
+            u32 tbl = (u32)lbl_eu_806640F8;
             u16 cat = (u16)BdatGetItemId(entry->field_0x00 >> 20);
             u8 row = BdatGetU8Direct((const void*)tbl, lbl_eu_8050AC70 + 0x1df, cat);
             switch (row) {
@@ -1554,8 +1553,8 @@ extern "C" void artsCursorFix(SArts322BC* self) {
         self->field_0x20 = 4;
         self->field_0x21 = count - 5;
     } else {
-        self->field_0x21 = 0;
         self->field_0x20 = count == 0 ? 0 : count - 1;
+        self->field_0x21 = 0;
     }
     reinterpret_cast<CScrollBar*>(self->field_0x28)->PlaceThumb((u16)(s8)self->field_0x21);
     ArtsTableCursor_refresh((SArts327B0*)self);
@@ -1983,7 +1982,7 @@ void CMenuArtsSet_teardown(CArtsList* self) {
     reinterpret_cast<CSysWin*>(&self->mSysWinE8)->termLayout();
 }
 
-u8 CArtsList_isReady(CArtsList* self) {
+int CArtsList_isReady(CArtsList* self) {
     if (self->mScrollBar.isVisible() == 0) return 0;
     if (CArtsInfo_GetFlag48(&self->mSubObj74) == 0) return 0;
     if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isReady() != 0) {
@@ -1992,11 +1991,11 @@ u8 CArtsList_isReady(CArtsList* self) {
     return 0;
 }
 
-u8 CArtsList::CMenuArtsSet_getReadyFlag() { return field_0x31; }
+int CArtsList::CMenuArtsSet_getReadyFlag() { return field_0x31; }
 
 // True while the arts menu is busy: either the 0x2A1/0x16F flags are set,
 // the CArtsInfo or CSysWin sub-object is active, or the raw 0x2A6 flag.
-u8 CMenuArtsSet_isBusy(SArts33888* self) {
+int CMenuArtsSet_isBusy(SArts33888* self) {
     if (self->field_0x2A1 != 0) return 1;
     if (self->field_0x16F != 0) return 1;
     if (CArtsInfo_IsStateGE6(&self->field_0x74) != 0) return 1;
@@ -2004,7 +2003,7 @@ u8 CMenuArtsSet_isBusy(SArts33888* self) {
     return self->field_0x2A6;
 }
 
-u8 CMenuArtsSet_isWindowBusy(CArtsList* self) {
+int CMenuArtsSet_isWindowBusy(CArtsList* self) {
     if (CArtsInfo_IsStateGE6(&self->mSubObj74) != 0) return 1;
     if (reinterpret_cast<CSysWin*>(&self->mSysWinE8)->isOpened() != 0) return 1;
     return self->field_0x2A6;

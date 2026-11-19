@@ -148,32 +148,32 @@ extern int sscanf(const char* str, const char* fmt, ...);
 extern s32 SFX_SetCcirFx(void);
 void sfxzmv_MakeOrgZ32TblByDirect(void* self, u32 f1, u32 f0, u32* dst);
 void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst);
-void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src);
-void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* dst, u32* src);
+void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u32* src, u16* dst);
+void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* src, u32* dst);
 
 void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
-    u8* dst;
+    s32 f1, f0;
     s32 o1, o0;
-    s32 f0, f1;
+    u8* org;
     SFXZ_GetZfrmRange(self, a, &o1, &o0);
-    dst = (u8*)buf + 0x400;
+    org = (u8*)buf + 0x400;
     f0 = o0;
     f1 = o1;
     memset(buf, 0, 0x400);
     if (SFX_SetCcirFx() == 1) {
-        sfxzmv_MakeOrgZ32TblByCCIR(self, f1, f0, (u32*)dst);
+        sfxzmv_MakeOrgZ32TblByCCIR(self, f1, f0, (u32*)org);
     } else {
-        sfxzmv_MakeOrgZ32TblByDirect(self, f1, f0, (u32*)dst);
+        sfxzmv_MakeOrgZ32TblByDirect(self, f1, f0, (u32*)org);
     }
     if (*(void**)((u8*)self + 0x44) == NULL) {
         if (*(s32*)((u8*)self + 4) == 16) {
-            sfxzmv_MakeZ16TblFromOrgZ32(self, (u16*)buf, (u32*)dst);
+            sfxzmv_MakeZ16TblFromOrgZ32(self, (u32*)org, (u16*)buf);
         } else {
-            sfxzmv_MakeZ32TblFromOrgZ32(self, (u32*)buf, (u32*)dst);
+            sfxzmv_MakeZ32TblFromOrgZ32(self, (u32*)org, (u32*)buf);
         }
     } else {
         ((void (*)(void*, void*, f32, f32))*(void**)((u8*)self + 0x44))(
-            dst, buf, *(f32*)((u8*)self + 0x3C), *(f32*)((u8*)self + 0x40));
+            org, buf, *(f32*)((u8*)self + 0x3C), *(f32*)((u8*)self + 0x40));
     }
 }
 // Fill dst[0..255] with a quantizer ramp: 9 zeros, 8 entries of f1,
@@ -236,7 +236,7 @@ void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst) {
         dst[i] = d[tbl[i]];
     }
 }
-void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* dst, u32* src) {
+void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* src, u32* dst) {
     if (*(u32*)((u8*)lbl_eu_8061A260 + 4) == 1) {
         u32 i, j;
         for (i = 0; i < 16; i++) {
@@ -298,7 +298,7 @@ typedef struct SFXZDblTbl {
 
 // zmin/zmax are loaded before the mode test in retail (hoisted lfs), so the
 // field reads sit above the branch here too.
-void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src) {
+void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u32* src, u16* dst) {
     f32 zmin = *(f32*)((u8*)self + 0x3C);
     f32 zmax = *(f32*)((u8*)self + 0x40);
     if (*(u32*)((u8*)lbl_eu_8061A260 + 4) == 1) {

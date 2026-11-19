@@ -498,39 +498,21 @@ int fn_803C1CAC(void *self) {
  * @param sub_idx Sub-index (UOCH slot)
  * @param src     Source UOCH data (4 x u32)
  */
+typedef struct SfbufUoch {
+    u32 w[4];
+} SfbufUoch;
+
 void SFBUF_SetUoch(void *self, int idx, int sub_idx, u32 *src) {
-    u32 s0 = src[0];
-    u32 s1 = src[1];
-    u8 *dst = (u8 *)self + idx * SFBUF_BUF_STRIDE + (sub_idx << 4) + 0x13C8;
-    *(u32 *)(dst + 0) = s0;
-    *(u32 *)(dst + 4) = s1;
-    s0 = src[2];
-    s1 = src[3];
-    *(u32 *)(dst + 8) = s0;
-    *(u32 *)(dst + 12) = s1;
+    ((SfbufUoch *)((u8 *)self + idx * SFBUF_BUF_STRIDE + 0x13C8))[sub_idx] = *(SfbufUoch *)src;
 }
 
 /*
  * SFBUF_GetUoch - Get UOCH (user operation channel) data
  *
  * Reads a 4-field UOCH structure from the buffer's UOCH slot.
- *
- * @param self    Buffer handle
- * @param idx     Buffer index
- * @param sub_idx Sub-index (UOCH slot)
- * @param dst     Destination buffer (4 x u32)
  */
 void SFBUF_GetUoch(void *self, int idx, int sub_idx, u32 *dst) {
-    u32 *src = (u32 *)((u8 *)self + idx * SFBUF_BUF_STRIDE +
-                        (sub_idx << 4) + 0x13C8);
-    u32 s0 = src[0];
-    u32 s1 = src[1];
-    dst[1] = s1;
-    dst[0] = s0;
-    s0 = src[2];
-    s1 = src[3];
-    dst[3] = s1;
-    dst[2] = s0;
+    *(SfbufUoch *)dst = ((SfbufUoch *)((u8 *)self + idx * SFBUF_BUF_STRIDE + 0x13C8))[sub_idx];
 }
 
 /*

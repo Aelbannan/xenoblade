@@ -16,7 +16,7 @@ public:
     void updateHelp();
     void drawHelp(nw4r::lyt::DrawInfo*);
     void teardown();
-    u8 isInitialized();
+    int isInitialized();
     u8 isActive();
     int isIdle();  // retail callers test r3 with cmpwi (no u8 mask)
     void func_801C412C();

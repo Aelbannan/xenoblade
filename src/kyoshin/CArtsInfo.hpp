@@ -41,7 +41,6 @@ public:
     void setField58(u16 val);
     u32 getField5A();
     int isField44GE6();
-    void initialize();
 
     // vtable pointer at 0x00 (implicit)
     /* 0x04 */ UnkClass_8045F564 mMemRegion;

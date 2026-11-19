@@ -4292,11 +4292,11 @@ extern "C" unsigned char FloorMap_GetBdatMaxRow(void) {
 }
 
 void FloorMap_Log2Field208(void* self) {
-    u8* p = (u8*)self;
-    if (p[0x58]) return;
-    if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened()) return;
-    p[0x208] = (u32)__cntlzw(p[0x208]) >> 5;
+    CFloorMap* fm = static_cast<CFloorMap*>(self);
+    if (fm->cursor_active_58) return;
+    if (reinterpret_cast<CSysWin*>(fm->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(fm->mSysWinF4)->isOpened()) return;
+    fm->field_208 = !fm->field_208;
 }
 
 extern "C" u8 FloorMap_GetField208Gated(void* self) {
@@ -4321,10 +4321,10 @@ extern "C" u32 FloorMap_CheckRowVisited(CFloorMapFull* p) {
 }
 
 void FloorMap_Log2Field333C(void* self) {
-    u8* p = (u8*)self;
-    if (reinterpret_cast<CSysWin*>(p + 0xB8)->isOpened()) return;
-    if (reinterpret_cast<CSysWin*>(p + 0xF4)->isOpened()) return;
-    p[0x333C] = (u32)__cntlzw(p[0x333C]) >> 5;
+    CFloorMap* fm = static_cast<CFloorMap*>(self);
+    if (reinterpret_cast<CSysWin*>(fm->mSysWinB8)->isOpened()) return;
+    if (reinterpret_cast<CSysWin*>(fm->mSysWinF4)->isOpened()) return;
+    fm->field_333C = !fm->field_333C;
 }
 
 extern "C" u32 FloorMap_IsSysWinBusy(void* self) {

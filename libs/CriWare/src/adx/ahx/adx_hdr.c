@@ -35,10 +35,10 @@ void adxhdr_get_ply_prm(u8 *src, u8 *dst) {
 int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
     /* hdr_size doubles as the remaining-bytes tracker once the fixed
        header is consumed; MWCC keeps it in a single register that way */
-    s32 hdr_size;
-    s32 i, count;
     u8 *p;
+    s32 hdr_size;
     u8 *dst;
+    s32 i, count;
 
     if (out_data_size != NULL) {
         *out_data_size = 0;
@@ -62,7 +62,7 @@ int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
 
     p = data + 0x14;
     hdr_size -= 0x16;
-    if (out_hdr[0x3C] == 4) {
+    if ((s8)out_hdr[0x3C] == 4) {
         p += 0x0C;
         hdr_size -= 0x0C;
     }
@@ -72,20 +72,20 @@ int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
     /* number of channel entries */
     *(s16 *)(out_hdr + 0x0E) = (s16)((p[2] << 8) | p[3]);
     p += 4;
-    hdr_size -= 4;
 
     if (hdr_size < *(s16 *)(out_hdr + 0x0E) * 0x14) return 0;
 
+    /* Retail neither consumes the 4 count bytes from hdr_size nor advances p
+       per channel entry: every entry is read from the same 20 bytes. */
     dst = out_hdr;
     for (i = 0; i < *(s16 *)(out_hdr + 0x0E); i++) {
         *(u16 *)(dst + 0x10) = (u16)((p[0] << 8) | p[1]);
         *(u16 *)(dst + 0x12) = (u16)((p[2] << 8) | p[3]);
-        *(u32 *)(dst + 0x14) = ((u32)p[5] << 16) | ((u32)p[4] << 24) | ((u32)p[6] << 8) | p[7];
-        *(u32 *)(dst + 0x18) = ((u32)p[9] << 16) | ((u32)p[8] << 24) | ((u32)p[10] << 8) | p[11];
-        *(u32 *)(dst + 0x1C) = ((u32)p[13] << 16) | ((u32)p[12] << 24) | ((u32)p[14] << 8) | p[15];
-        *(u32 *)(dst + 0x20) = ((u32)p[17] << 16) | ((u32)p[16] << 24) | ((u32)p[18] << 8) | p[19];
+        *(u32 *)(dst + 0x14) = ((u32)p[4] << 24) | ((u32)p[5] << 16) | ((u32)p[6] << 8) | p[7];
+        *(u32 *)(dst + 0x18) = ((u32)p[8] << 24) | ((u32)p[9] << 16) | ((u32)p[10] << 8) | p[11];
+        *(u32 *)(dst + 0x1C) = ((u32)p[12] << 24) | ((u32)p[13] << 16) | ((u32)p[14] << 8) | p[15];
+        *(u32 *)(dst + 0x20) = ((u32)p[16] << 24) | ((u32)p[17] << 16) | ((u32)p[18] << 8) | p[19];
         dst += 0x14;
-        p += 0x14;
     }
 
     hdr_size -= *(s16 *)(out_hdr + 0x0E) * 0x14;

@@ -10,6 +10,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -31,35 +32,35 @@ extern "C" void handleOptionInput(CMenuOption* self);
 // Move()/cbRenderBefore() callees.
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern u32 lbl_eu_80663E28;
 
 // Ready/idle-check and animation helpers for the embedded sub-widgets
 // (retail unmangles these member helpers; int returns so callers compare
 // with cmpwi directly, no byte mask - matching retail).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
+
 
 // Ctor/Init re-init helpers (retail-unmangled callee names - US strips
 // mangling for these __ct__/func_ helpers).
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 
+extern "C" void beginClose(CTitleAHelp* self);
 // Option-menu input-handler callees (retail-unmangled func_ names).
 extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void beginClose(CTitleAHelp* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
+extern "C" void teardown(CTitleAHelp* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
 
 // D2-form subobject/base destructor helpers (explicit delete flags), used by
 // the free-function form of ~CMenuOption. All are declared extern "C" so the
@@ -178,7 +179,7 @@ CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg)
  * and option panel are all ready, then start the panel intro animations and
  * play the confirm sound effect (writes the state byte at 0x1BC). */
 void advanceOptionPhase1(CMenuOption* self) {
-    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && isInitialized(&self->mTitleAHelp) != 0 &&
+    if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && self->mTitleAHelp.isInitialized() != 0 &&
         self->mOption.isWindowReady() != 0) {
         func_801C412C(&self->mTitleAHelp);
         self->mOption.beginScrollSetup();
@@ -214,10 +215,10 @@ void handleOptionInput(CMenuOption* self) {
     bool down;
     bool pageUp;
     bool pageDown;
+    int pageRight;
     int left;
     int right;
     int pageLeft;
-    int pageRight;
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
@@ -260,7 +261,8 @@ void handleOptionInput(CMenuOption* self) {
         self->mOption.handleRightAccept(1);
     }
 
-    func_801C41E8(&self->mTitleAHelp, (u8)self->mOption.getNavCode());
+    int navCode = self->mOption.getNavCode();
+    func_801C41E8(&self->mTitleAHelp, (u8)navCode);
 
     if (self->mOption.getConfirmGate() != 0) {
         if (self->mOption.getSecondConfirm() != 0) {

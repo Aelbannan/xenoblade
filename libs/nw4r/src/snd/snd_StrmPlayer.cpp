@@ -185,25 +185,6 @@ inline f32 S32ToF32(s32 value) {
     return (f32)(conv.d - lbl_eu_8066A068);
 }
 
-// Retail stream WaveInfo (Voice::Setup's parameter): u32 numChannels /
-// sampleRate (the stale header's WaveData layout differs).
-struct WaveChannelParamRetail {
-    void* dataAddr;            // at 0x0
-    AdpcmParamSetRetail adpcm; // at 0x4 (0x2E)
-    u16 _pad0x32;              // at 0x32
-};                             // sizeof 0x34
-
-struct WaveInfoRetailLayout {
-    u32 sampleFormat;                    // at 0x0
-    u8 loopFlag;                         // at 0x4
-    u8 _pad0x5[3];                       // at 0x5
-    u32 numChannels;                     // at 0x8
-    u32 sampleRate;                      // at 0xC
-    u32 loopStart;                       // at 0x10
-    u32 loopEnd;                         // at 0x14
-    WaveChannelParamRetail channelParam[2]; // at 0x18 (2 * 0x34)
-};                                       // sizeof 0x80
-
 struct StrmPlayerRetailLayout {
     // BasicPlayer param block (retail PlayerParamSet at +0x4).
     u8 _pad0x0[0x4];                       // 0x000..0x004
@@ -310,8 +291,6 @@ extern "C" bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(
 extern "C" bool CalcStartOffset__Q44nw4r3snd6detail10StrmPlayerFPlPUlPl(
     StrmPlayer* pStrmPlayer, s32* pBlockIndex, u32* pBlockOffset,
     s32* pLoopCount);
-extern "C" void Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
-    Voice* pVoice, const WaveInfoRetailLayout& rWaveInfo, u32 offset);
 extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(Voice* pVoice,
                                                              int type,
                                                              f32 value);
@@ -590,8 +569,9 @@ bool StrmPlayer::Start() {
                 continue;
             }
 
-            WaveInfoRetailLayout waveInfo;
-            waveInfo.sampleFormat = self->mStrmInfo.format;
+            WaveInfo waveInfo;
+            waveInfo.sampleFormat =
+                static_cast<SampleFormat>(self->mStrmInfo.format);
             waveInfo.loopFlag = loopFlag;
             waveInfo.numChannels = pTrack->fileInfo.channelCount;
             waveInfo.sampleRate = self->mStrmInfo.sampleRate;
@@ -611,22 +591,20 @@ bool StrmPlayer::Start() {
                 }
 
                 if (pChannel != NULL) {
-                    WaveChannelParamRetail& rParam =
-                        waveInfo.channelParam[ch];
+                    ChannelParam& rParam = waveInfo.channelParam[ch];
                     rParam.dataAddr = pChannel->bufferAddress;
-                    rParam.adpcm.param = pChannel->adpcm.param;
-                    rParam.adpcm.loopParam = pChannel->adpcm.loopParam;
+                    rParam.adpcmInfo.param = pChannel->adpcm.param;
+                    rParam.adpcmInfo.loopParam = pChannel->adpcm.loopParam;
                     // Only the first byte of the buffer holds the ADPCM
                     // pred/scale; store it in the pred_scale slot.
-                    rParam.adpcm.param.pred_scale =
+                    rParam.adpcmInfo.param.pred_scale =
                         *reinterpret_cast<u8*>(pChannel->bufferAddress);
                 }
             }
 
             level = OSDisableInterrupts();
             if (pTrack->voice != NULL) {
-                Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
-                    pTrack->voice, waveInfo, blockOffset);
+                pTrack->voice->Setup(waveInfo, blockOffset);
                 pTrack->voice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
                 pTrack->voice->Start();
             }

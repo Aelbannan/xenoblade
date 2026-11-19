@@ -1,16 +1,4 @@
-// NOTE: retail exports Channel::Start(const WaveInfo&, int, u32), but
-// snd_Channel.h (outside writable scope) only declares the WaveData overload.
-// Per MWCC_PATTERNS.md "Explicit retail-name entry points", the retail-named
-// entry point is emitted as an extern "C" definition below, which needs member
-// access. Access specifiers have no codegen/mangling effect.
-#define private public
 #include <nw4r/snd.h>
-#undef private
-
-// Retail Voice::Setup takes const WaveInfo&; locked header declares WaveData.
-extern "C" void Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
-    nw4r::snd::detail::Voice* self, const nw4r::snd::detail::WaveInfo& rInfo,
-    u32 offset);
 
 // Retail InitParam pools its 0.0f/1.0f literals under these sdata2 labels.
 
@@ -295,30 +283,7 @@ void Channel::Update(bool periodic) {
     }
 }
 
-// Retail entry point takes `const WaveInfo&` (mangled ...8WaveInfoiUl), but
-// snd_Channel.h (outside writable scope) declares Start with WaveData.
-// Per MWCC_PATTERNS.md "Explicit retail-name entry points", emit the exact
-// retail symbol via an extern "C" definition with member ABI (this=r3).
-extern "C" void Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoiUl(
-    Channel* self, const WaveInfo& rInfo, int length, u32 offset) {
-    self->mLength = length;
-
-    self->mLfo.Reset();
-    // Pass the retail-pooled constant explicitly so the SDA21 reloc matches
-    // (default arg resolves to the TU-local VOLUME_INIT symbol).
-    self->mEnvelope.Reset();
-    self->mSweepCounter = 0;
-
-    // Retail Voice::Setup also takes WaveInfo; the locked snd_Voice.h still
-    // declares WaveData, so call the retail-mangled entry point directly.
-    Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
-        self->mVoice, rInfo, offset);
-    self->mVoice->Start();
-
-    self->mActiveFlag = true;
-}
-
-void Channel::Start(const WaveData& rInfo, int length, u32 offset) {
+void Channel::Start(const WaveInfo& rInfo, int length, u32 offset) {
     mLength = length;
 
     mLfo.Reset();
@@ -470,45 +435,7 @@ void Channel::VoiceCallbackFunc(Voice* pDropVoice,
 
 Channel* Channel::AllocChannel(int channels, int voices, int priority,
                                ChannelCallback pCallback, u32 callbackArg) {
-    ChannelManager& mgr = ChannelManager::GetInstance();
-
-    // NOTE: mirrors retail control flow, including the unconditional list
-    // insert (even when the pool alloc failed) and the redundant NULL
-    // re-checks - both are present in the retail binary.
-    Channel* pChannel =
-        static_cast<Channel*>(((PoolImpl*)&mgr)->AllocImpl());
-
-    if (pChannel != NULL) {
-        // Manual in-place construction of the fresh channel.
-        // Nested re-test mirrors the retail binary's dead branch.
-        if (pChannel != NULL) {
-            new (&pChannel->mEnvelope) EnvGenerator();
-            pChannel->mLfo.GetParam().Init();
-
-            pChannel->mLfo.mDelayCounter = 0;
-            // Retail pools the 0.0f through the sdata2 label (SDA21 reloc).
-            pChannel->mLfo.mCounter = 0.0f;
-            pChannel->mPauseFlag = false;
-            pChannel->mActiveFlag = false;
-            pChannel->mAllocFlag = false;
-
-            pChannel->mSilenceVolume.InitValue(0);
-
-            pChannel->mVoice = NULL;
-
-            // Clear the intrusive link node before it is handed to the list.
-            pChannel->node.mPrev = NULL;
-            pChannel->node.mNext = NULL;
-        }
-    } else {
-        pChannel = NULL;
-    }
-
-    // Insert into ChannelManager's list (reached from both branches)
-    ((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList)
-        .Insert(((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList).GetEndIter(),
-                &pChannel->node);
-
+    Channel* pChannel = ChannelManager::GetInstance().Alloc();
     if (pChannel == NULL) {
         return NULL;
     }
@@ -519,15 +446,7 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
         channels, voices, priority, VoiceCallbackFunc, pChannel);
 
     if (pVoice == NULL) {
-        // Second GetInstance reference: retail inlines the lazy-init guard
-        // again on this path.
-        ChannelManager::GetInstance();
-
-        ((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList)
-            .Erase(&pChannel->node);
-        if (pChannel != NULL) {
-            ((PoolImpl*)&mgr)->FreeImpl(pChannel);
-        }
+        ChannelManager::GetInstance().Free(pChannel);
         return NULL;
     }
 

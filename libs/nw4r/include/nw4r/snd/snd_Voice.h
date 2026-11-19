@@ -19,7 +19,7 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
-class WaveData;
+struct WaveInfo;
 
 class Voice : public DisposeCallback {
     friend class VoiceManager;
@@ -83,7 +83,7 @@ public:
                  VoiceCallback pCallback, void* pCallbackArg);
     void Free();
 
-    void Setup(const WaveData& rData, u32 offset);
+    void Setup(const WaveInfo& rInfo, u32 offset);
 
     void Start();
     void Stop();

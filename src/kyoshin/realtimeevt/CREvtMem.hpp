@@ -12,6 +12,19 @@ public:
     CREvtMem();
     virtual ~CREvtMem();
 
+    // Carve a 256-byte aligned block from the realtime-event arena.
+    u8* allocArena(u32 size) {
+        u32 pos = currentPos;
+        if (pos + size > arenaEnd) {
+            return nullptr;
+        }
+        u32 low = pos & 0xFF;
+        u32 pad = 0;
+        if (low != 0) pad = 0x100 - low;
+        currentPos += size + pad;
+        return (u8*)(pos + pad);
+    }
+
     /* 0x04 */ u32 flags;
     /* 0x08 */ u32 field_08;  // start1
     /* 0x0C */ u32 field_0C;  // size1

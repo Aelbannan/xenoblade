@@ -51,6 +51,7 @@ public:
     bool clearFlag80000();
     bool startMoveGate(u32 type, u32 state);
     bool fireStateGate(u32 type, u32 state);
+    bool isFiringAllowed() const { return (field530 & 0x200) == 0; }
     bool tryGroundStep(u32 type, u32 state);
     bool dashStartGate(u32 type);
     bool scanActorList(u32 type);
@@ -82,7 +83,7 @@ public:
     f32 field524;                         // +0x524
     f32 field528;                         // +0x528
     int field52C;                         // +0x52C
-    volatile u16 field530;                // +0x530 (volatile: retail reloads it across the flag-check branch in fireStateGate)
+    u16 field530;                         // +0x530
     u16 field532;                         // +0x532
     u16 field534;                         // +0x534
     u16 field536;                         // +0x536
@@ -147,7 +148,7 @@ struct CActParamAnimGameView {
     f32 f51C;                        // 0x51C saved ground point z
     ml::CVec3 probe520;              // 0x520 probe step vec
     s32 state52C;                    // 0x52C move state
-    volatile u16 flags530;           // 0x530
+    u16 flags530;                    // 0x530
     u16 state532;                    // 0x532
     u16 state534;                    // 0x534
     u16 state536;                    // 0x536

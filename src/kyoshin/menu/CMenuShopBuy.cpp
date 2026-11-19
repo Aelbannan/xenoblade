@@ -12,6 +12,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
@@ -155,7 +156,7 @@ extern "C" bool ShopBuy_HasInstance() { return lbl_eu_806642F8 != 0; }
 // open sound, then advance the phase byte at 0x6F8.
 extern "C" void ShopBuy_OpenPhase(CMenuShopBuy* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
-        if (isInitialized(&self->mTitleAHelp) != 0) {
+        if (self->mTitleAHelp.isInitialized() != 0) {
             if (self->mItemBoxLine.GetSelectReady() != 0) {
                 func_801C412C(&self->mTitleAHelp);
                 self->mItemBoxLine.OpenLine();

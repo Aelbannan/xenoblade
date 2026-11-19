@@ -587,10 +587,10 @@ namespace cf{
     }
 
     CBattleManager::~CBattleManager(){
-        // Manual vptr store under the retail symbol: MWCC's auto store would
-        // emit __vt__Q22cf14CBattleManager. Then deregister from the holder
-        // (retail calls getInstance__Fv / unlinkFactoryById with C linkage).
-        *(void**)this = (void*)lbl_eu_8052BCE0;
+        // Deregister from the holder. MWCC emits the vptr store from the
+        // virtual destructor declaration (retail symbol
+        // __vt__Q22cf14CBattleManager); retail calls getInstance__Fv /
+        // unlinkFactoryById with C linkage.
         unlinkFactoryById(getInstance__Fv(), this);
     }
 
@@ -3947,9 +3947,8 @@ namespace cf {
     }
 
     CChainTime::~CChainTime() {
-        // Manual vptr store under the retail symbol (auto store would emit
-        // __vt__Q22cf10CChainTime). The vtable pointer sits at +0x14.
-        *(void**)((u8*)this + 0x14) = (void*)lbl_eu_8052BD74;
+        // MWCC emits the +0x14 vptr store for the virtual destructor
+        // (__vt__Q22cf10CChainTime); the body only resets the timer.
         resetChainTime();
     }
 

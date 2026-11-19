@@ -753,20 +753,11 @@ UINT16 btm_get_acl_disc_reason_code(void)
 
 UINT16 BTM_GetHCIConnHandle(BD_ADDR remote_bda)
 {
-    UINT8 xx = 0;
-    tACL_CONN *p_acl;
+    tACL_CONN *p;
 
-    for (p_acl = &btm_cb.acl_db[0]; xx < 4; xx++) {
-        if (p_acl->in_use && memcmp(p_acl->remote_addr, remote_bda, 6) == 0)
-            goto found;
-        p_acl++;
-    }
-    p_acl = NULL;
-
-found:
-    if (p_acl != NULL) {
-        return p_acl->hci_handle;
-    }
+    p = btm_bda_to_acl_local(remote_bda);
+    if (p != NULL)
+        return p->hci_handle;
 
     return 0xFFFF;
 }
@@ -930,14 +921,13 @@ UINT16 btm_get_max_packet_size(BD_ADDR addr)
 
 int BTM_AclRegisterForChanges(void* p_change_callback)
 {
-    if (p_change_callback == 0) {
+    if (!p_change_callback)
         btm_cb.p_acl_changed_cb = NULL;
-        return 0;
-    }
-    if (btm_cb.p_acl_changed_cb != 0) {
+    else if (btm_cb.p_acl_changed_cb)
         return 2;
-    }
-    btm_cb.p_acl_changed_cb = p_change_callback;
+    else
+        btm_cb.p_acl_changed_cb = p_change_callback;
+
     return 0;
 }
 

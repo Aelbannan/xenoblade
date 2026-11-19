@@ -45,6 +45,14 @@ struct SoundParam {
 // Per-output-voice parameters of a player (BasicPlayer) that are handed down
 // to the Voice of each allocated Channel.
 struct VoiceOutParam {
+    VoiceOutParam()
+        : volume(1.0f),
+          pitch(1.0f),
+          pan(0.0f),
+          surroundPan(0.0f),
+          fxSend(0.0f),
+          lpfFreq(0.0f) {}
+
     f32 volume;      // at 0x0
     f32 pitch;       // at 0x4
     f32 pan;         // at 0x8
@@ -79,7 +87,7 @@ struct SeqUserprocCallbackParam {
     volatile s16* variablePtr;  // at 0x0 (player local variables)
     volatile s16* variablePtr2; // at 0x4 (player global variables)
     volatile s16* variablePtr3; // at 0x8 (track variables)
-    u8 value;          // at 0xC (track byte the callback may rewrite)
+    bool cmpFlag;               // at 0xC
 };
 
 typedef void (*SeqUserprocCallback)(u16 usertype,

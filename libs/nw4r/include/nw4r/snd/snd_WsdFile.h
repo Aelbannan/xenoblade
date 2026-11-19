@@ -9,7 +9,7 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
-struct WaveData;
+struct WaveInfo;
 
 /******************************************************************************
  *
@@ -135,8 +135,6 @@ public:
                                int note) const;
     bool ReadWaveInfo(int id, WaveInfo* pWaveInfo,
                       const void* pWaveAddr) const;
-    bool ReadWaveParam(int id, WaveData* pWaveData,
-                       const void* pWaveAddr) const;
 
 private:
     const WsdFile::Header* mHeader;       // at 0x0

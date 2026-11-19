@@ -1133,9 +1133,8 @@ extern "C" u32 MdlDyn_InitIdBuffer(u8* self, u32 a, u32 b) {
 }
 
 extern "C" void MdlDyn_AppendWord(u8* self, const void* src) {
-    u32 idx = *(u32*)((u8*)self + 4);
-    *(u32*)(*(u8**)self + idx * 4) = *(u32*)src;
-    *(u32*)((u8*)self + 4) = idx + 1;
+    CMdlDynBuffer* buf = (CMdlDynBuffer*)self;
+    ((u32*)buf->field_0x0)[buf->field_0x4++] = *(const u32*)src;
 }
 
 extern "C" u32 MdlDyn_InitLinkBuffer(u8* self, u32 a, u32 b) {

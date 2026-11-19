@@ -77,9 +77,9 @@ struct CQuestLogPadData {
     u32 mTurboPressButtonFlags; // +0x104
 };
 extern "C" void QstLogInfo_Start(CQstLogInfo* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void reopenFromClose(CTitleAHelp* self);
 extern "C" void markReplayClose(CTitleAHelp* self);
+extern "C" void reopenFromClose(CTitleAHelp* self);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 
 // Init() imports (retail unmangled names).
@@ -88,10 +88,10 @@ extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
 // Embedded widgets are torn down through their owning helpers above.
+extern "C" void teardown(CTitleAHelp* self);
 
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self);
 
 // Term tail helpers.
@@ -109,16 +109,15 @@ extern u32 lbl_eu_80663E28;
 extern "C" void QstLogInfo_SetQuestIdSlot(void*, unsigned short);
 extern "C" void QstLogInfo_LoadCommonArchive(void*);
 
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // Widget/base helpers with retail-unmangled names (US retail strips these
 // member manglings) - C linkage so calls bind the literal retail symbols.
 // Queries return int so callers compare with cmpwi directly.
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
 

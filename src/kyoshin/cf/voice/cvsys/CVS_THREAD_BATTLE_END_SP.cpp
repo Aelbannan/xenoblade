@@ -7,137 +7,6 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.hpp"
 #include "monolib/math/Random.hpp"
 
-// us-802ae1a8 (CVSBattleEndSPResetState)
-// If no voice is active, reset the base state triple in the object header
-// (offsets 0x00..0x08) from the init table lbl_eu_8053A1AC.
-void CVSBattleEndSPResetState(CVS_THREAD_BATTLE_END_SP* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        // Pointer increment reproduces the lwzu/spread load-with-update.
-        // v0 is declared first so MWCC colours it (the lwzu destination) into
-        // the lower register r3, and p into r4 -- matching retail ordering.
-        CVS_THREAD_STATE3* st = (CVS_THREAD_STATE3*)self;
-        u32 v0;
-        const u32* p = lbl_eu_8053A1AC;
-        v0 = *p++;
-        st->word4 = *p++;
-        st->word0 = v0;
-        st->word8 = *p;
-    }
-}
-
-// us-802ae1f8 (CVSBattleEndSPRemoveVoice)
-// Remove a voice from the slot array by matching its embedded CCharVoice.
-// Each non-null handle is biased by +0x3E9C before comparing, so a slot is
-// cleared when its embedded voice matches voicePtr.
-//
-// NOTE: the explicit word-wise walk of self (p += 4) reproduces retail's
-// cursor register (r5); the remaining 7-insn diff is a pure counter/handle
-// register-color swap (decomp i=r4/handle=r6 vs retail i=r6/handle=r4) that
-// resisted every declaration-order permutation tried.
-void CVSBattleEndSPRemoveVoice(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
-    DetachThreadVoice(self, voicePtr);
-
-    CVoiceHandle* handle;
-    CCharVoice* vp;
-    CVS_THREAD_BATTLE_END_SP* p = self;
-    int i;
-    for (i = 0; self->count > i; i++) {
-        handle = p->slots[0];
-        // Bias the handle to its embedded CCharVoice (BATTLE_END idiom).
-        vp = (CCharVoice*)handle;
-        if (handle != NULL) {
-            vp = &handle->voice;
-        }
-        if (vp == voicePtr) {
-            p->slots[0] = NULL;
-        }
-        // Walk the slot array one word per iteration (match-pinned cursor).
-        p = (CVS_THREAD_BATTLE_END_SP*)((u8*)p + 4);
-    }
-}
-
-// us-802ae038 (CVSBattleEndSPResetAndSweep)
-// Advance the special battle-end sequence. Each command string is a 2-byte
-// pair: [0] = the voice-state to trigger on, [1] = an extra parameter whose
-// absolute value (plus 0xCE4) is the voice ID to play. If the matching slot's
-// voice is inactive it is played; otherwise (or when the state matches no
-// active handle) the sequence ends via the blank1() virtual. Steps the
-// command string by 2 bytes while a full pair remains.
-void CVSBattleEndSPResetAndSweep(CVS_THREAD_BATTLE_END_SP* self) {
-    // Restore the base state triple. Declaring v0 before p colours v0 into
-    // the lower register (the lwzu destination), matching retail.
-    CVS_THREAD_STATE3* st = (CVS_THREAD_STATE3*)self;
-    u32 v0;
-    const u32* p = lbl_eu_8053A1A0;
-    v0 = *p++;
-    st->word4 = *p++;
-    st->word0 = v0;
-    st->word8 = *p;
-
-    int cmd0;
-    int i;
-    CVoiceHandle* found;
-    CVS_THREAD_BATTLE_END_SP* cur;
-
-    for (;;) {
-        cmd0 = *self->cmdString;
-        if (cmd0 <= 0) {
-            found = NULL;
-        } else {
-            // Walk the slot array word-by-word; on a match the slot itself
-            // becomes the result.
-            found = NULL;
-            cur = self;
-            for (i = 0; i < self->count; i++) {
-                CVoiceHandle* h = cur->slots[0];
-                if (h != NULL && HpVoice_MapSubState(h) == cmd0) {
-                    found = self->slots[i];
-                    goto matched;
-                }
-                cur = (CVS_THREAD_BATTLE_END_SP*)((u8*)cur + 4);
-            }
-            found = NULL;
-        }
-matched:
-        if (found == NULL) {
-            self->PlayThreadVoice();
-            return;
-        }
-
-        if (((CVS_THREAD_BATTLE_END_SP_Vtbl*)found)->isVoiceActive() == 0) {
-            // Voice inactive -- bias the handle to its embedded CCharVoice
-            // and play the command's voice ID (|param| + 0xCE4).
-            int voiceId = labs(self->cmdString[1]);
-            CCharVoice* vp = (CCharVoice*)found;
-            if (found != NULL) {
-                vp = &found->voice;
-            }
-            if (TryRequestVoice(self, vp,
-                              voiceId + CVS_THREAD_BATTLE_END_SP::VOICE_ID_BIAS) == 0) {
-                self->PlayThreadVoice();
-                return;
-            }
-        }
-
-        // Advance to the next 2-byte command; stop when the string ends or
-        // a new (positive) trigger byte is reached.
-        self->cmdString += 2;
-        if (self->cmdString[0] == 0) {
-            return;
-        }
-        if (self->cmdString[1] > 0) {
-            return;
-        }
-    }
-}
-
-// Virtual override body (vtable[2]): returns the logical allocation size for
-// this thread type. Retail exports this as the unmangled symbol CVSBattleEndSPGetBufSize,
-// so the definition keeps the retail name.
-int CVSBattleEndSPGetBufSize() {
-    return CVS_THREAD_BATTLE_END_SP::BUFFER_SIZE;
-}
-
 // us-802add28 (__ct__802AB5F0)
 // Constructor / factory for the special battle-end voice thread. Scans the
 // global voice-manager circular node list for handles whose voice is
@@ -147,7 +16,7 @@ int CVSBattleEndSPGetBufSize() {
 // (discarded) and a 0x34-byte object, initialises it, and returns it.
 // The construction tail sits in a try block whose catch rethrows via the
 // runtime __throw(0,0,0); retail guards it with a redundant null re-check.
-extern "C" CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
+CVS_THREAD_BATTLE_END_SP* CVS_THREAD_BATTLE_END_SP::create() {
     // Collect inactive voice handles from the voice-manager list. The loop
     // condition reloads the sentinel each iteration, as retail does.
     CVoiceManager* mgr = (CVoiceManager*)getListB28();
@@ -263,10 +132,124 @@ extern "C" CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
         }
     }
 
-    // Final base-state triple (installs the handler ptmf at offset 0).
-    // Typed 12-byte ptmf struct copy reproduces retail's grouped schedule.
-    *(VoiceCb*)self = *(VoiceCb*)lbl_eu_8053A194;
+    // Install the initial voice-event handler from its typed PTMF constant.
+    self->mState = lbl_eu_8053A194;
     return self;
+}
+
+// us-802ae038 (CVSBattleEndSPResetAndSweep)
+// Advance the special battle-end sequence. Each command string is a 2-byte
+// pair: [0] = the voice-state to trigger on, [1] = an extra parameter whose
+// absolute value (plus 0xCE4) is the voice ID to play. If the matching slot's
+// voice is inactive it is played; otherwise (or when the state matches no
+// active handle) the sequence ends via the blank1() virtual. Steps the
+// command string by 2 bytes while a full pair remains.
+void CVS_THREAD_BATTLE_END_SP::resetAndSweep() {
+    CVS_THREAD_BATTLE_END_SP* self = this;
+    mState = lbl_eu_8053A1A0;
+
+    int cmd0;
+    int i;
+    CVoiceHandle* found;
+    CVS_THREAD_BATTLE_END_SP* cur;
+
+    for (;;) {
+        cmd0 = *self->cmdString;
+        if (cmd0 <= 0) {
+            found = NULL;
+        } else {
+            // Walk the slot array word-by-word; on a match the slot itself
+            // becomes the result.
+            found = NULL;
+            cur = self;
+            for (i = 0; i < self->count; i++) {
+                CVoiceHandle* h = cur->slots[0];
+                if (h != NULL && HpVoice_MapSubState(h) == cmd0) {
+                    found = self->slots[i];
+                    goto matched;
+                }
+                cur = (CVS_THREAD_BATTLE_END_SP*)((u8*)cur + 4);
+            }
+            found = NULL;
+        }
+matched:
+        if (found == NULL) {
+            self->PlayThreadVoice();
+            return;
+        }
+
+        if (((CVS_THREAD_BATTLE_END_SP_Vtbl*)found)->isVoiceActive() == 0) {
+            // Voice inactive -- bias the handle to its embedded CCharVoice
+            // and play the command's voice ID (|param| + 0xCE4).
+            int voiceId = labs(self->cmdString[1]);
+            CCharVoice* vp = (CCharVoice*)found;
+            if (found != NULL) {
+                vp = &found->voice;
+            }
+            if (TryRequestVoice(self, vp,
+                              voiceId + CVS_THREAD_BATTLE_END_SP::VOICE_ID_BIAS) == 0) {
+                self->PlayThreadVoice();
+                return;
+            }
+        }
+
+        // Advance to the next 2-byte command; stop when the string ends or
+        // a new (positive) trigger byte is reached.
+        self->cmdString += 2;
+        if (self->cmdString[0] == 0) {
+            return;
+        }
+        if (self->cmdString[1] > 0) {
+            return;
+        }
+    }
+}
+
+// us-802ae1a8 (CVSBattleEndSPResetState)
+// If no voice is active, reset the base state triple in the object header
+// (offsets 0x00..0x08) from the init table lbl_eu_8053A1AC.
+void CVS_THREAD_BATTLE_END_SP::resetState() {
+    if (IsThreadVoiceActive(this) == 0) {
+        mState = lbl_eu_8053A1AC;
+    }
+}
+
+// us-802ae1f8 (CVSBattleEndSPRemoveVoice)
+// Remove a voice from the slot array by matching its embedded CCharVoice.
+// Each non-null handle is biased by +0x3E9C before comparing, so a slot is
+// cleared when its embedded voice matches voicePtr.
+//
+// NOTE: the explicit word-wise walk of self (p += 4) reproduces retail's
+// cursor register (r5); the remaining 7-insn diff is a pure counter/handle
+// register-color swap (decomp i=r4/handle=r6 vs retail i=r6/handle=r4) that
+// resisted every declaration-order permutation tried.
+void CVSBattleEndSPRemoveVoice(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
+    DetachThreadVoice(self, voicePtr);
+
+    CVoiceHandle* handle;
+    CCharVoice* vp;
+    CVS_THREAD_BATTLE_END_SP* p = self;
+    int i;
+    for (i = 0; self->count > i; i++) {
+        handle = p->slots[0];
+        // Bias the handle to its embedded CCharVoice (BATTLE_END idiom).
+        vp = (CCharVoice*)handle;
+        if (handle != NULL) {
+            vp = &handle->voice;
+        }
+        if (vp == voicePtr) {
+            p->slots[0] = NULL;
+        }
+        // Walk the slot array one word per iteration (match-pinned cursor).
+        p = (CVS_THREAD_BATTLE_END_SP*)((u8*)p + 4);
+    }
+}
+
+// Virtual override body (vtable[2]): returns the logical allocation size for
+// this thread type. Retail exports this as the unmangled symbol CVSBattleEndSPGetBufSize,
+// so the definition keeps the retail name.
+int CVSBattleEndSPGetBufSize() {
+    return CVS_THREAD_BATTLE_END_SP::BUFFER_SIZE;
 }
 
 // Retail section reconstruction (measured in
@@ -419,23 +402,9 @@ u32 lbl_eu_8053A100[37] = {
     0,
 };
 
-u32 lbl_eu_8053A194[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)CVSBattleEndSPResetAndSweep,
-};
-
-u32 lbl_eu_8053A1A0[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)CVSBattleEndSPResetState,
-};
-
-u32 lbl_eu_8053A1AC[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)CVSBattleEndSPResetAndSweep,
-};
+BattleEndSpState const lbl_eu_8053A194 = &CVS_THREAD_BATTLE_END_SP::resetAndSweep;
+BattleEndSpState const lbl_eu_8053A1A0 = &CVS_THREAD_BATTLE_END_SP::resetState;
+BattleEndSpState const lbl_eu_8053A1AC = &CVS_THREAD_BATTLE_END_SP::resetAndSweep;
 
 u32 lbl_eu_8053A1B8[7] = {
     (u32)__RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP,

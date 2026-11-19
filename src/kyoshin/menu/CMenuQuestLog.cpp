@@ -14,6 +14,7 @@
 
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 
 // Retail constructor: out-of-line, so the factory (createQuestLogMenu) emits a
@@ -199,7 +200,7 @@ extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0[0] != 0; }
 // and play sound 0x6d.
 extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex)) {
-        if (isInitialized(&self->mTitleAHelp)) {
+        if (self->mTitleAHelp.isInitialized()) {
             if (self->mQstLogList.ScrollFlag()) {
                 if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
                     func_801C412C(&self->mTitleAHelp);

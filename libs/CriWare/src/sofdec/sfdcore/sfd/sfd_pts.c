@@ -178,7 +178,5 @@ s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
 
 int SFPTS_IsPtsQueFull(SfdHandle* self, int idx) {
     if (self->buf[idx].pts.entries == 0) return 0;
-    s32 a = self->buf[idx].pts.count;
-    s32 b = self->buf[idx].pts.maxIdx;
-    return ((s64)a - (s64)b) >> 32;
+    return self->buf[idx].pts.count >= self->buf[idx].pts.maxIdx;
 }

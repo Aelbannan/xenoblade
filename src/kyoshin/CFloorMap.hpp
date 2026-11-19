@@ -186,7 +186,7 @@ public:
     s8 field_205;                            // 0x205
     s8 field_206;                            // 0x206
     u8 field_207;                            // 0x207
-    u8 field_208;                            // 0x208
+    bool field_208;                          // 0x208
     u8 _209[0x32CC - 0x209];                 // 0x209-0x32CB
     u8 field_32CC;                           // 0x32CC
     u8 _32CD[0x32D4 - 0x32CD];               // 0x32CD-0x32D3
@@ -221,7 +221,7 @@ public:
     u32 field_3330;                          // 0x3330
     u32 layout_3334;                         // 0x3334
     u32 field_3338;                          // 0x3338 - ArcResourceAccessor for layout_3334
-    u8 field_333C;                           // 0x333C
+    bool field_333C;                         // 0x333C
     u8* field_3340;                          // 0x3340
     f32 field_3344;                          // 0x3344
     void SetMapTable(u8 id);

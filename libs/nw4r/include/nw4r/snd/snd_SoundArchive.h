@@ -6,11 +6,6 @@
 
 #include <nw4r/ut.h>
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void*);
-extern "C" u32 GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void*);
-extern "C" bool ReadFilePos__Q44nw4r3snd6detail22SoundArchiveFileReaderCFUlUlPQ44nw4r3snd12SoundArchive7FilePos(void*, u32, u32, void*);
-
 namespace nw4r {
 namespace snd {
 
@@ -132,6 +127,7 @@ public:
     void Setup(detail::SoundArchiveFileReader* pReader);
     void Shutdown();
 
+    u32 GetSoundCount() const;
     u32 GetPlayerCount() const;
     u32 GetGroupCount() const;
 
@@ -144,7 +140,7 @@ public:
     SoundType GetSoundType(u32 id) const;
 
     bool ReadSoundInfo(u32 id, SoundInfo* pInfo) const;
-    bool detail_ReadSeqSoundInfo(u32 id, SeqSoundInfo* pInfo) const;
+    bool ReadSeqSoundInfo(u32 id, SeqSoundInfo* pInfo) const;
     bool detail_ReadStrmSoundInfo(u32 id, StrmSoundInfo* pInfo) const;
     bool detail_ReadWaveSoundInfo(u32 id, WaveSoundInfo* pInfo) const;
 
@@ -152,11 +148,12 @@ public:
     bool ReadSoundArchivePlayerInfo(SoundArchivePlayerInfo* pInfo) const;
 
     bool detail_ReadSound3DParam(u32 id, Sound3DParam* pParam) const;
-    bool detail_ReadBankInfo(u32 id, BankInfo* pInfo) const;
+    bool ReadBankInfo(u32 id, BankInfo* pInfo) const;
     bool detail_ReadGroupInfo(u32 id, GroupInfo* pInfo) const;
     bool detail_ReadGroupItemInfo(u32 groupId, u32 itemId,
                                   GroupItemInfo* pInfo) const;
 
+    u32 detail_GetFileCount() const;
     bool detail_ReadFileInfo(u32 id, FileInfo* pInfo) const;
     bool detail_ReadFilePos(u32 fileId, u32 posId, FilePos* pPos) const;
 

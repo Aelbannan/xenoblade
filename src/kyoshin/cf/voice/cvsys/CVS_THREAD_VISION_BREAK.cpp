@@ -24,7 +24,7 @@
 // constructor and derived-vtable/slot stores inside an EH region (retail
 // guards them with a try block whose catch rethrows via __throw(0,0,0)),
 // then copies the init-state triple outside the try. Returns NULL on failure.
-extern "C" CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
+CVS_THREAD_VISION_BREAK* CVS_THREAD_VISION_BREAK::create(CVoiceHandle* handle, int param) {
     // Parameter must be positive.
     if (param <= 0) {
         return NULL;
@@ -68,15 +68,10 @@ extern "C" CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int par
         }
     }
 
-    // Copy the init-state triple (lbl_eu_80539D70). Word 1 is read first per
-    // retail load order; the single pointer keeps the label materialized
-    // once via lis+addi (retail r5).
-    u32 v1;
-    u32* p0;
-    v1 = (p0 = lbl_eu_80539D70)[1];
-    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state0 = (u32*)p0[0];
-    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state1 = v1;
-    ((CVS_THREAD_VISION_BREAK_raw*)obj)->state2 = p0[2];
+    // Install the initial voice-event handler as a real member-function
+    // pointer; MWCC emits the {0, -1, handler} constant itself.
+    obj->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_VISION_BREAK::dispatchPlayback);
 
     return obj;
 }
@@ -86,22 +81,14 @@ extern "C" CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int par
 // handle is inactive, iterates the global object list to process active
 // voice handles, then selects a voice ID from one of two tables (based on
 // field_0x24 threshold) and plays it. Falls back to vtable[2] if play fails.
-void VisBreak_DispatchPlayback(CVS_THREAD_VISION_BREAK* self) {
+void CVS_THREAD_VISION_BREAK::dispatchPlayback() {
+    CVS_THREAD_VISION_BREAK* self = this;
     // Declared first so MWCC colours the object-list walk into r31/r30,
     // leaving r29 for `self` (retail's allocation).
     reslist<cf::CfObject*>* list;
-    // Reset the state triple from lbl_eu_80539D7C. Pointer increment
-    // reproduces the lwzu/spread load-with-update fold (same shape as the
-    // CVS_THREAD_BATTLE_END triple copy); v0 declared first so MWCC colours
-    // the lwzu destination low.
-    u32 v0;
-    const u32* reset = lbl_eu_80539D7C;
-    v0 = *reset++;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_VISION_BREAK::tryRunSlotAction);
     CVoiceHandle* handle = self->field_0x20;
-    CVS_THREAD_VISION_BREAK_raw* raw = (CVS_THREAD_VISION_BREAK_raw*)self;
-    raw->state1 = *reset++;
-    raw->state0 = (u32*)v0;
-    raw->state2 = *reset;
 
     if (handle == NULL) {
         return;
@@ -163,9 +150,9 @@ void VisBreak_DispatchPlayback(CVS_THREAD_VISION_BREAK* self) {
 // us-802abc94 (VisBreak_TryRunSlotAction)
 // Completion callback: if no active voice is playing, invoke the playback
 // virtual (CVS_THREAD::PlayThreadVoice, vtable slot 1).
-void VisBreak_TryRunSlotAction(CVS_THREAD_VISION_BREAK* self) {
-    if (IsThreadVoiceActive(self) == 0) {
-        self->PlayThreadVoice();
+void CVS_THREAD_VISION_BREAK::tryRunSlotAction() {
+    if (IsThreadVoiceActive(this) == 0) {
+        PlayThreadVoice();
     }
 }
 
@@ -250,18 +237,6 @@ extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 __RTTI__Q22cf23CVS_THREAD_VISION_BREAK[2];
 
 extern const char lbl_eu_80510838[0x20] = "cf::CVS_THREAD_VISION_BREAK";
-
-u32 lbl_eu_80539D70[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)VisBreak_DispatchPlayback,
-};
-
-u32 lbl_eu_80539D7C[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)VisBreak_TryRunSlotAction,
-};
 
 u32 lbl_eu_80539D88[7] = {
     (u32)__RTTI__Q22cf23CVS_THREAD_VISION_BREAK,

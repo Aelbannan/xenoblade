@@ -15,11 +15,13 @@
 // The value view lives in its own namespace (extern "C" keeps the retail
 // symbol) so it cannot collide with CSysWin.hpp's pointer-form decl - same
 // pattern as CMenuArtsSet.cpp's artsFAD0View.
+#include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" void TagCopyVec2f(float* dst, float* src);
 class UnkClass_8045F564;
@@ -27,7 +29,7 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 #include "kyoshin/code_80135FDC_State.hpp"
 // Authority: CPcKizunaChart/Big owned by CPcKizunagram.hpp (defines TU).
 // Shields for extern "C" drift (retail evidence: this TU uses u8 BdatGetU8Direct,
-// bool isPaneVisible(Pane*), Pane* PaneSetTexPalette, VEC3 ScalePaneWorldPos,
+
 // void* Class_8045F858 ct/dt vs header spellings).
 #include "kyoshin/CPcKizunagram.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -3256,8 +3258,10 @@ void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
         u16 cat = BdatGetItemId(item->word >> 20);
         u8 flag = 0;
         u8 result = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_8050DC20[0x9cc], cat);
-        if (self->field_11F == 0x85 && result == 3) {
-            flag = 1;
+        if (self->field_11F == 0x85) {
+            if (result == 3) {
+                flag = 1;
+            }
         } else if (self->field_11F == 0x84 && result == 2) {
             flag = 1;
         }
@@ -3270,10 +3274,10 @@ void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
                 CtrlObjectParam_SetEquipSlot1(data, -1);
                 break;
             case 6:
-                CtrlObjectParam_SetEquipSlot2(data, -1);
+                reinterpret_cast<cf::CtrlObjectParamData*>(data)->setArgType2((void*)-1);
                 break;
             case 7:
-                CtrlObjectParam_SetEquipSlot3(data, -1);
+                reinterpret_cast<cf::CtrlObjectParamData*>(data)->setArgType3((void*)-1);
                 break;
             case 8:
                 CtrlObjectParam_SetEquipSlot4(data, -1);

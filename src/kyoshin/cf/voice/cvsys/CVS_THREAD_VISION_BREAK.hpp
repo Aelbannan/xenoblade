@@ -20,6 +20,11 @@ public:
 
     CVoiceHandle* field_0x20;   // 0x20: voice handle pointer
     s32 field_0x24;             // 0x24: phase counter / state selector
+
+    // Voice-event state handlers installed into the inherited state member.
+    void dispatchPlayback();
+    void tryRunSlotAction();
+    static CVS_THREAD_VISION_BREAK* create(CVoiceHandle* handle, int param);
 };
 
 
@@ -78,8 +83,6 @@ reslist<cf::CfObject*>* getListB28();
 
 // Init-data triples (3 u32s each: {field_0, field_4, callback}). Plain
 // globals: MWCC does not mangle global data names.
-extern u32 lbl_eu_80539D70[3]; // Initial state triple
-extern u32 lbl_eu_80539D7C[3]; // Reset state triple (for VisBreak_DispatchPlayback)
 extern u32 lbl_eu_80539D88[];  // CVS_THREAD_VISION_BREAK vtable
 
 // Voice-ID tables indexed by mtRand(3)*2 (halfword entries).

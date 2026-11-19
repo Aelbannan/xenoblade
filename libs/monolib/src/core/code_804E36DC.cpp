@@ -13,16 +13,6 @@
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/core/code_804E36DC.hpp"
 
-struct CScheduleFlags {
-    u16 b15 : 1;
-    u16 : 1;
-    u16 b13 : 1;
-    u16 b12 : 1;
-    u16 b11 : 1;
-    u16 : 2;
-    u16 b8 : 1;
-    u16 : 8;
-};
 
 // ---------------------------------------------------------------------------
 // CScheduleItem methods
@@ -189,7 +179,7 @@ void CScheduleItem::FeedDistance(f32 delta, CSchedule* sched) {
 
 // us-804e7b78: main update: transform flags, fixed-timestep stepping.
 void CSchedule::Update(f32 dt) {
-    CScheduleFlags* flags = (CScheduleFlags*)&this->field_0x00;
+    CScheduleFlags* flags = &this->field_0x00;
     if (flags->b8) {
         return;
     }
@@ -272,7 +262,7 @@ void CSchedule::StepEntries(f32 delta) {
         }
     }
     if (this->field_0xd9 <= 0) {
-        ((CScheduleFlags*)&this->field_0x00)->b15 = 0;
+        this->field_0x00.b15 = 0;
         if (this->mEntryCount != 0) {
             h2 = (s16*)this;
             i = 0;
@@ -328,7 +318,7 @@ void CSchedule::FeedTargetDist() {
 
 // us-804e8168: clear the retired flag and notify listeners.
 extern "C" void schedClearFlag15Update(CSchedule* self) {
-    ((CScheduleFlags*)&self->field_0x00)->b15 = 0;
+    self->field_0x00.b15 = 0;
     SchedList_DropBoth(self);
 }
 

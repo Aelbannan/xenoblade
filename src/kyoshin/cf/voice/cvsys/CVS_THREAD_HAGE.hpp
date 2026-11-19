@@ -32,9 +32,6 @@ extern "C" {
 // slot through cf::CActorParam instead of a phantom view.
 
 // Init data tables for slot states (3 u32s each).
-extern "C" u32 lbl_eu_80539BA8[3];
-extern "C" u32 lbl_eu_80539BB4[3];
-extern "C" u32 lbl_eu_80539BC0[3];
 
 // Retail virtual table for CVS_THREAD_HAGE (0x1C = 28 bytes = 7 entries).
 extern "C" u32 lbl_eu_80539BCC[7];
@@ -79,6 +76,12 @@ public:
     CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
 
     int blank1() override;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void advanceSlot1();
+    void advanceSlot2();
+    void onComplete();
+    static CVS_THREAD_HAGE* create(CVoiceHandle* owner1, CVoiceHandle* owner2);
 };
 
 // CVoiceHandle is defined once in the shared base header CVS_THREAD.hpp.

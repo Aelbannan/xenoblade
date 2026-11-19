@@ -1789,20 +1789,20 @@ extern "C" u32 LookupItemTypeTable(u32 row) {
         v = *(u16*)&result;
     }
     switch (v) {
-    case 0: v = lbl_eu_806640F0; break;
-    case 1: v = lbl_eu_806640F4; break;
+    case 0: v = (u32)lbl_eu_806640F0; break;
+    case 1: v = (u32)lbl_eu_806640F4; break;
     case 2: v = lbl_eu_806640D8; break;
     case 3:
     case 4:
     case 5:
     case 6:
-    case 7: v = lbl_eu_806640F8; break;
-    case 8: v = lbl_eu_806640FC; break;
+    case 7: v = (u32)lbl_eu_806640F8; break;
+    case 8: v = (u32)lbl_eu_806640FC; break;
     case 9: v = lbl_eu_80664104; break;
-    case 10: v = lbl_eu_80664108; break;
-    case 11: v = lbl_eu_8066410C; break;
+    case 10: v = (u32)lbl_eu_80664108; break;
+    case 11: v = (u32)lbl_eu_8066410C; break;
     case 12:
-    case 13: v = lbl_eu_80664110; break;
+    case 13: v = (u32)lbl_eu_80664110; break;
     default: break;
     }
     return v;

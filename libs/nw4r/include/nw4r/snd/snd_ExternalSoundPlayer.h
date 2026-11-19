@@ -26,7 +26,23 @@ public:
     f32 detail_GetVolume() const {
         return mVolume;
     }
-    BasicSound* GetLowestPrioritySound();
+    BasicSound* GetLowestPrioritySound() {
+        int priority = BasicSound::PRIORITY_MAX + 1;
+        BasicSound* pLowest = NULL;
+
+        for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
+             it != mSoundList.GetEndIter(); ++it) {
+
+            int currPriority = it->CalcCurrentPlayerPriority();
+
+            if (priority > currPriority) {
+                pLowest = &*it;
+                priority = currPriority;
+            }
+        }
+
+        return pLowest;
+    }
 
     void InsertSoundList(BasicSound* pSound);
 

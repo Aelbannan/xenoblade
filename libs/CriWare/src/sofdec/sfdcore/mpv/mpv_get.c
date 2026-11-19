@@ -80,12 +80,7 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     if ((h->bitRate - 0x30000) == 0xFFFF) {
         *out_max = (u32)-1;
     } else {
-        // max = frameRate*bitRate scaled via magic-multiply division,
-        // rounded toward zero
-        s32 prod = h->frameRate * h->bitRate;
-        s32 hi = __mulhw((s32)0x91A2B3C5, prod);
-        s32 x = ((s32)hi + (s32)prod) >> 10;
-        *out_max = (s32)x + ((u32)x >> 31);
+        *out_max = (s32)(h->frameRate * h->bitRate) / 1800;
     }
     return 0;
 }

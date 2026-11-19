@@ -19,33 +19,58 @@ namespace lyt {
 }
 }
 
-// 0x2800-byte entry storage block, copied member-wise in clpStartLoads
-struct CLPDataBlock {
-    u8 v[0x2800];
-};
+// One cell of a page row (stride 0xA). The item id and kind are the
+// BDAT keys; the last byte is the unlock state (0 empty, 1 locked,
+// 2 claimable, 3 collected).
+struct CLPCell {
+    /* 0x00 */ u16 mItemId;
+    /* 0x02 */ u16 mKind;
+    /* 0x04 */ u16 mSortKey;
+    /* 0x06 */ u16 mNameId;
+    /* 0x08 */ u8 mState;
+    /* 0x09 */ u8 _09;
+}; // sizeof == 0xA
+
+// A row holds five cells; the first two bytes select the row's sub-category
+// and record whether all of its cells have been collected.
+struct CLPRow {
+    /* 0x00 */ u8 mSubCategory;
+    /* 0x01 */ u8 mDone;
+    /* 0x02 */ CLPCell mCells[5];
+}; // sizeof == 0x34
+
+// One category page. Retail strides these at 0x140. The trailing bytes are
+// padding; the sixth-row bounds check in the retail helpers addresses the
+// start of this padding rather than a separately allocated row.
+struct CLPPage {
+    /* 0x00 */ u8 mCategory;
+    /* 0x01 */ u8 mRowCount;
+    /* 0x02 */ u8 mDone;
+    /* 0x03 */ u8 _03;
+    /* 0x04 */ f32 mProgress;
+    /* 0x08 */ CLPRow mRows[5];
+    /* 0x10C */ u8 _10C[0x34];
+}; // sizeof == 0x140
+
+// The 0x2800-byte page table, copied member-wise in clpStartLoads.
+struct CLPPageTable {
+    CLPPage mPages[32];
+}; // sizeof == 0x2800
+
+// Catalog at CCollepedia+0xE8: count, selected page, then the page table.
+struct CLPCatalog {
+    /* 0x00 */ u8 mCount;
+    /* 0x01 */ s8 mCurrentPage;
+    /* 0x02 */ u8 _02[2];
+    /* 0x04 */ CLPPageTable mPageTable;
+}; // sizeof == 0x2804
 
 // Stack temporary used to initialize the entry storage (matches retail frame layout)
 struct CLPInitTemp {
     u8 _00;
     s8 _01;
     u8 pad[2];
-    CLPDataBlock data;
-};
-
-// Full `this` struct for harness decomp of CCollepedia.cpp
-// Entry within the sub-block array (stride 0xA)
-struct CCollepediaEntry {
-    u8 _00[0x08];
-    u16 field_08; // u16 at offset +0x08 within entry
-};
-
-// Sub-range of the CCollepedia class from +0x00 to +0xE8
-struct CCollepediaFull {
-    u8 _00[0xD8];
-    u8 field_D8;
-    u8 field_D9;
-    u8 _DA[0xE8 - 0xDA];
-    u8 field_E8_start; // sub-array starts at +0xE8
+    CLPPageTable data;
 };
 
 // Container with a layout pointer at +0x04 (used by clpCalcCurPos)
@@ -152,9 +177,7 @@ struct CCollepedia {
     /* 0xDA */ u8 field_DA;
     /* 0xDB */ u8 _DB; // padding
     /* 0xDC */ float field_DC[3]; // VEC3 copied from pane position (0xDC-0xE7)
-    /* 0xE8 */ u8 field_E8; // sub-array starts here
-    /* 0xE9 */ u8 _E9[0xEC - 0xE9];
-    /* 0xEC */ CLPDataBlock field_EC; // entry storage (ends at 0x28EC)
+    /* 0xE8 */ CLPCatalog mCatalog; // page catalog (ends at 0x28EC)
     /* 0x28EC */ u8 field_28EC[0x28F0 - 0x28EC];
     /* 0x28F0 */ nw4r::lyt::Layout* field_28F0; // Layout* at 0x28F0 (used by clpDrawWindow)
     /* 0x28F4 */ u8 _28F4[0x28F9 - 0x28F4];

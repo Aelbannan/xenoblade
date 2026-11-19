@@ -14,13 +14,12 @@
 // Mirrors the CMenuOption/CMenuGCItem pattern for the same helpers. Return
 // types are int (not u8) so callers compare with cmpwi directly (no byte
 // mask), matching retail.
-extern "C" int isInitialized(CTitleAHelp* self);
-extern "C" void func_801C4654(CTitleAHelp* self, u32 arg);
+
 extern "C" void setInfoText(CTitleAHelp* self, char* name);
 extern "C" void func_801C46DC(CTitleAHelp* self, u32 arg);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void updateHelp(CTitleAHelp* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" int CFade_IsReady(CFade* self);
 extern "C" int CFade_IsVisible(CFade* self);
 // (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
@@ -76,11 +75,11 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self);
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 // CFloorMap helpers (retail unmangles these member helpers).
 // (memberized: FloorMap_SetMapTable -> CFloorMap::SetMapTable; declaration moved into class CFloorMap)
+extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void teardown(CTitleAHelp* self);
 extern "C" void FloorMap_LoadMapFiles(CFloorMap* self);
 extern "C" void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp / CFade draw + reset helpers.
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CFade_Draw(CFade* self, nw4r::lyt::DrawInfo* drawInfo);
 // (memberized: CFade_Unload -> CFade::Unload; declaration moved into class CFade)
 // UI/sound + scene-active helpers.
@@ -111,6 +110,7 @@ extern const f32 lbl_eu_806687C8;  // 10.0f - world-map timer cap
 #include <new>
 #include <cstring>
 #include <revolution/gx/GXPixel.h>
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CFloorMapImports.hpp"
 
@@ -408,7 +408,7 @@ extern "C" bool MapSelectSCIsCreated() { return CMenuMapSelectSC::sInstance != 0
 // World-map phase 0: wait for the title/help bar and fade to be ready, then
 // start the fade-in animation and advance to phase 1.
 extern "C" void MapSelectSCBeginFadeIn(CMenuMapSelectSC* self) {
-    if (isInitialized(&self->mTitleAHelp) && CFade_IsReady(&self->mFade)) {
+    if (self->mTitleAHelp.isInitialized() && CFade_IsReady(&self->mFade)) {
         (&self->mFade)->In();
         self->mState = 1;
     }
@@ -431,11 +431,11 @@ extern "C" void MapSelectSCPrepFloorMap(CMenuMapSelectSC* self) {
 // bar text for the current map, start its animation and advance to phase 3.
 extern "C" void MapSelectSCShowMapText(CMenuMapSelectSC* self) {
     if (FloorMap_GetField42Gated(&self->mFloorMap) != 0) {
-        func_801C4654(&self->mTitleAHelp, 0);
+        self->mTitleAHelp.func_801C4654(0);
         char* name = BdatTouchStringCell(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 3);
         setInfoText(&self->mTitleAHelp, name);
         if (CtrlRemote_TouchBitByArg(0x3212) != 0) {
-            func_801C46DC(&self->mTitleAHelp, 1);
+            self->mTitleAHelp.func_801C46DC(1);
         }
         func_801C41E8(&self->mTitleAHelp, 0);
         func_801C412C(&self->mTitleAHelp);

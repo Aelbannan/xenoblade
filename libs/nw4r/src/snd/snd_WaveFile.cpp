@@ -26,42 +26,24 @@ extern "C" u32
     GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
         const void* pBase, u32 addr, u32 fmt);
 
-// Runtime wave-info layout that ReadWaveInfo fills. This is distinct from the
-// on-disk detail::WaveInfo header that dwells in the file.
-struct RuntimeChannelParam { // 0x34
-    void* dataAddr;          // at 0x0
-    AdpcmInfo adpcmInfo;     // at 0x4 (0x30 bytes)
-};
-
-struct RuntimeWaveInfo { // 0x18 + CHANNEL_MAX * 0x34
-    u32 format;                               // at 0x0
-    u8 loopFlag;                              // at 0x4
-    u8 PADDING_0x5[3];                        // at 0x5
-    u32 numChannels;                          // at 0x8
-    u32 sampleRate;                           // at 0xC
-    u32 loopStart;                            // at 0x10
-    u32 loopEnd;                              // at 0x14
-    RuntimeChannelParam channel[CHANNEL_MAX]; // at 0x18
-};
-
-WaveFileReader::WaveFileReader(const WaveInfo* pWaveInfo)
-    : mWaveInfo(pWaveInfo) {}
-
 WaveFileReader::WaveFileReader(const WaveFile::FileHeader* pFileHeader)
     : mWaveInfo(NULL) {
     // retail: add. ptr+offset; beqlr (null check folded into the pointer sum)
     const u8* p = (const u8*)((u32)pFileHeader->infoBlockOffset + (u32)pFileHeader);
     if (p != NULL) {
-        mWaveInfo = (const WaveInfo*)(p + 8);
+        mWaveInfo = (const WaveFile::WaveInfo*)(p + 8);
     }
 }
+
+WaveFileReader::WaveFileReader(const WaveFile::WaveInfo* pWaveInfo)
+    : mWaveInfo(pWaveInfo) {}
 
 bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
                                    const void* pWaveAddr) const {
     // Convert the on-disk sample format into a runtime sample format.
     u32 format;
 
-    const WaveInfo* pHeader = mWaveInfo;
+    const WaveFile::WaveInfo* pHeader = mWaveInfo;
 
     switch (pHeader->format) {
     case WaveFile::FORMAT_PCM16:
@@ -76,9 +58,9 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
         break;
     }
 
-    RuntimeWaveInfo* pInfo = reinterpret_cast<RuntimeWaveInfo*>(pWaveInfo);
+    WaveInfo* pInfo = pWaveInfo;
 
-    pInfo->format = format;
+    pInfo->sampleFormat = static_cast<SampleFormat>(format);
     pInfo->numChannels = pHeader->numChannels;
     pInfo->sampleRate =
         (pHeader->sampleRate24 << 16) + pHeader->sampleRate;
@@ -93,7 +75,7 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
         1;
 
     // pInfo's last use; the loop works through pChan below.
-    RuntimeChannelParam* pChan = pInfo->channel;
+    ChannelParam* pChan = pInfo->channelParam;
 
     // Fill one channel (2 max) from the channel info table until all channels
     // in the header are accounted for.
@@ -170,52 +152,6 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
     return true;
 }
 
-bool WaveFileReader::ReadWaveParam(WaveData* pWaveData,
-                                   const void* pWaveAddr) const {
-    AxVoice::Format format =
-        GetAxVoiceFormatFromWaveFileFormat(mWaveInfo->format);
-
-    pWaveData->sampleFormat = mWaveInfo->format;
-    pWaveData->numChannels = mWaveInfo->numChannels;
-    pWaveData->sampleRate =
-        (mWaveInfo->sampleRate24 << 16) + mWaveInfo->sampleRate;
-
-    pWaveData->loopFlag = mWaveInfo->loopFlag;
-    pWaveData->loopStart =
-        AxVoice::GetSampleByDspAddress(NULL, mWaveInfo->loopStart, format);
-    pWaveData->loopEnd =
-        AxVoice::GetSampleByDspAddress(NULL, mWaveInfo->loopEnd, format) + 1;
-
-    const u32* pInfoOffsetTable = static_cast<const u32*>(
-        ut::AddOffsetToPtr(mWaveInfo, mWaveInfo->channelInfoTableOffset));
-
-    for (int i = 0; i < mWaveInfo->numChannels; i++) {
-        ChannelParam& rParam = pWaveData->channelParam[i];
-
-        const WaveFile::WaveChannelInfo* pChannelInfo =
-            reinterpret_cast<const WaveFile::WaveChannelInfo*>(
-                ut::AddOffsetToPtr(mWaveInfo, pInfoOffsetTable[i]));
-
-        rParam.volumeFrontLeft = pChannelInfo->volumeFrontLeft;
-        rParam.volumeFrontRight = pChannelInfo->volumeFrontRight;
-        rParam.volumeRearLeft = pChannelInfo->volumeRearLeft;
-        rParam.volumeRearRight = pChannelInfo->volumeRearRight;
-
-        if (pChannelInfo->adpcmOffset != 0) {
-            const AdpcmInfo* pAdpcmInfo = static_cast<const AdpcmInfo*>(
-                ut::AddOffsetToPtr(mWaveInfo, pChannelInfo->adpcmOffset));
-
-            rParam.adpcmInfo = *pAdpcmInfo;
-        }
-
-        rParam.dataAddr = const_cast<void*>(
-            ut::AddOffsetToPtr(pWaveAddr, mWaveInfo->dataOffset +
-                                              pChannelInfo->channelDataOffset));
-    }
-
-    return true;
-}
-
 void* WaveFileReader::GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
                                            const void* addr) const {
     const void* dataAddr = addr;
@@ -224,7 +160,7 @@ void* WaveFileReader::GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
         dataAddr = mWaveInfo;
     }
 
-    const WaveInfo* wi = mWaveInfo;
+    const WaveFile::WaveInfo* wi = mWaveInfo;
     const u8* result;
 
     switch (wi->dataType) {
@@ -244,18 +180,6 @@ void* WaveFileReader::GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
 
     return reinterpret_cast<u8*>(
         info->channelDataOffset + reinterpret_cast<u32>(result));
-}
-
-AxVoice::Format WaveFileReader::GetAxVoiceFormatFromWaveFileFormat(u32 format) {
-    if (format == WaveFile::FORMAT_PCM16) {
-        return AxVoice::FORMAT_PCM16;
-    }
-
-    if (format == WaveFile::FORMAT_PCM8) {
-        return AxVoice::FORMAT_PCM8;
-    }
-
-    return AxVoice::FORMAT_ADPCM;
 }
 
 WaveArchiveReader::WaveArchiveReader(const void* pData) {

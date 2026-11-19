@@ -296,9 +296,9 @@ void CharWriter::LoadTexture(const Glyph& rGlyph, GXTexMapID slot) {
 void CharWriter::UpdateVertexColor() {
     // clang-format off
     mVertexColor.lu = mTextColor.start;
-    mVertexColor.ru = mTextColor.gradationMode == GRADMODE_H    ? mTextColor.end   : mTextColor.start;
-    mVertexColor.ld = mTextColor.gradationMode == GRADMODE_V    ? mTextColor.end   : mTextColor.start;
-    mVertexColor.rd = mTextColor.gradationMode != GRADMODE_NONE ? mTextColor.end   : mTextColor.start;
+    mVertexColor.ru = mTextColor.gradationMode != GRADMODE_H    ? mTextColor.start : mTextColor.end;
+    mVertexColor.ld = mTextColor.gradationMode != GRADMODE_V    ? mTextColor.start : mTextColor.end;
+    mVertexColor.rd = mTextColor.gradationMode == GRADMODE_NONE ? mTextColor.start : mTextColor.end;
     // clang-format on
 
     mVertexColor.lu.a = (mVertexColor.lu.a * mAlpha) / 255,

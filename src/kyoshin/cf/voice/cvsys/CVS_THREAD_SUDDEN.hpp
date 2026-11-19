@@ -15,6 +15,8 @@ class CVS_THREAD_SUDDEN : public CVS_THREAD {
 public:
     CVoiceHandle* voiceHandle;  // 0x20: voice handle pointer slot
     int SuddenVx_GetBufferSizeValue() override;
+    void clearIdleSlot();
+    static CVS_THREAD_SUDDEN* create();
 };
 
 // C-linkage imports used by this TU's thread helpers / factory. Kept here
@@ -52,6 +54,5 @@ struct CVS_THREAD_SUDDEN_raw {
     CVoiceHandle* voiceHandle;  // 0x20
 };
 
-// Globals: slot-state init table and this subclass's vtable (0x1C bytes).
-extern u32 lbl_eu_80539CE8[3];
+// This subclass's vtable (imported data symbol).
 extern u32 lbl_eu_80539CF4[7];

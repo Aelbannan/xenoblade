@@ -2432,7 +2432,7 @@ extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, float f) 
     return 0;
 }
 extern "C" int CTaskGame_playTimeGate();
-// CRI volume/seek helper: while a CTaskGame instance exists and the play-time
+
 // gate (CTaskGame_playTimeGate) is open, forward (unkD8 handle, volume) to the CRI
 // streaming-play setter. The global instance is re-read after the call.
 // __declspec(noinline): retail CTaskGame_openStream calls it out of line

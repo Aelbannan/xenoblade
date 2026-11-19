@@ -1,4 +1,4 @@
-// CriWare cvFs — device independent file system front end (Wii).
+// CriWare cvFs -- device independent file system front end (Wii).
 //
 // cvFs keeps a table of registered devices; every device supplies an I/F
 // table (CVFS_IF) of function pointers that cvFs dispatches the API calls to.

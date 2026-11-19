@@ -35,8 +35,12 @@ public:
     ~CNandData() {
     }
 
-    // Allows the module init routine to reach the private statics.
+    // Allows the module init routine and NAND save paths to reach the
+    // single banner instance without spelling the static data member's
+    // mangled name at each call site.
     friend void NandData_SetupBanner_11C0();
+
+    static CNandData& instance() { return sInstance; }
 
 private:
     static CNandData sInstance;

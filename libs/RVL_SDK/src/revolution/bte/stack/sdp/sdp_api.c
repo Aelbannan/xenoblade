@@ -217,7 +217,7 @@ tSDP_DISC_REC *SDP_FindServiceInDb(tSDP_DISCOVERY_DB *p_db, UINT16 attr_id,
 tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid,
                                      tSDP_DISC_REC *p_start_rec) {
     tSDP_DISC_REC *p_rec;
-    tSDP_DISC_ATTR *p_attr;
+    tSDP_DISC_ATTR *p_attr, *p_sattr;
 
     /* Look through the records in the database */
     if (p_start_rec == NULL) {
@@ -237,12 +237,12 @@ tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid
                 SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
                     DATA_ELE_SEQ_DESC_TYPE) {
                 /* Loop through the attribute values */
-                for (p_attr = p_attr->attr_value.v.p_sub_attr; p_attr;
-                     p_attr = p_attr->p_next_attr) {
+                for (p_sattr = p_attr->attr_value.v.p_sub_attr; p_sattr;
+                     p_sattr = p_sattr->p_next_attr) {
                     /* Check if the attribute value is a UUID */
-                    if (SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
+                    if (SDP_DISC_ATTR_TYPE(p_sattr->attr_len_type) ==
                             UUID_DESC_TYPE &&
-                        sdpu_compare_uuid_with_attr(p_uuid, p_attr)) {
+                        sdpu_compare_uuid_with_attr(p_uuid, p_sattr)) {
                         return (p_rec);
                     }
                 }
@@ -266,6 +266,7 @@ UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) {
     UINT32 handle;
     UINT16 spec_id = 0x1200;
     UINT8 p_val[2];
+    UINT8 *p_temp;
     tSDP_DI_RECORD *p_info = device_info;
 
     *p_handle = 0;
@@ -290,9 +291,10 @@ UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) {
     }
 
     if (result == SDP_SUCCESS) {
-        p_val[0] = 0;
-        p_val[1] = 9;
-        if (!SDP_AddAttribute(handle, ATTR_ID_SPECIFICATION_ID, UINT_DESC_TYPE, 2, &p_val[0])) {
+        p_temp = p_val;
+        *p_temp++ = 0;
+        *p_temp++ = 9;
+        if (!SDP_AddAttribute(handle, ATTR_ID_SPECIFICATION_ID, UINT_DESC_TYPE, 2, p_val)) {
             result = SDP_DI_REG_FAILED;
         }
     }
@@ -328,24 +330,27 @@ UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) {
     }
 
     if (result == SDP_SUCCESS) {
-        p_val[0] = (UINT8)(p_info->vendor >> 8);
-        p_val[1] = (UINT8)p_info->vendor;
+        p_temp = p_val;
+        *p_temp++ = (UINT8)(p_info->vendor >> 8);
+        *p_temp++ = (UINT8)p_info->vendor;
         if (!SDP_AddAttribute(handle, ATTR_ID_VENDOR_ID, UINT_DESC_TYPE, 2, p_val)) {
             result = SDP_DI_REG_FAILED;
         }
     }
 
     if (result == SDP_SUCCESS) {
-        p_val[0] = (UINT8)(p_info->product >> 8);
-        p_val[1] = (UINT8)p_info->product;
+        p_temp = p_val;
+        *p_temp++ = (UINT8)(p_info->product >> 8);
+        *p_temp++ = (UINT8)p_info->product;
         if (!SDP_AddAttribute(handle, ATTR_ID_PRODUCT_ID, UINT_DESC_TYPE, 2, p_val)) {
             result = SDP_DI_REG_FAILED;
         }
     }
 
     if (result == SDP_SUCCESS) {
-        p_val[0] = (UINT8)(p_info->version >> 8);
-        p_val[1] = (UINT8)p_info->version;
+        p_temp = p_val;
+        *p_temp++ = (UINT8)(p_info->version >> 8);
+        *p_temp++ = (UINT8)p_info->version;
         if (!SDP_AddAttribute(handle, ATTR_ID_PRODUCT_VERSION, UINT_DESC_TYPE, 2, p_val)) {
             result = SDP_DI_REG_FAILED;
         }
@@ -359,8 +364,9 @@ UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) {
     }
 
     if (result == SDP_SUCCESS) {
-        p_val[0] = (UINT8)(p_info->vendor_id_source >> 8);
-        p_val[1] = (UINT8)p_info->vendor_id_source;
+        p_temp = p_val;
+        *p_temp++ = (UINT8)(p_info->vendor_id_source >> 8);
+        *p_temp++ = (UINT8)p_info->vendor_id_source;
         if (!SDP_AddAttribute(handle, ATTR_ID_VENDOR_ID_SOURCE, UINT_DESC_TYPE, 2, p_val)) {
             result = SDP_DI_REG_FAILED;
         }

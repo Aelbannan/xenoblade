@@ -249,7 +249,7 @@ void MWSST_Reset(MWSFDPLY* self, s32 idx) {
 void MWSST_Destroy(SstHn* sst) {
     SstCoreTblEntry* coreTbl = &lbl_eu_80602A00[sst->type];
     s32 active = 0;
-    if (lbl_eu_80602A00[sst->type].core == NULL) {
+    if (coreTbl->core == NULL) {
         active = 0;
     } else if (sst->state != 1) {
         active = 0;
@@ -261,13 +261,7 @@ void MWSST_Destroy(SstHn* sst) {
         SstHnObj* hn = sst->hn;
         if (h != NULL) {
             MWSFSVM_GotoIdleBorder();
-            if (MWSST_IsActive(sst) == 1) {
-                void* h2 = sst->handle;
-                SstObj* obj = sst->obj;
-                if (h2 != NULL && obj != NULL && obj->stop != NULL) {
-                    obj->stop(h2);
-                }
-            }
+            MWSST_Stop(sst);
             sst->state = 0;
             SstCore* core = coreTbl->core;
             if (h != NULL && core != NULL && core->release != NULL) {

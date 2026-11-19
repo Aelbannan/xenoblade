@@ -31,6 +31,9 @@ class WaveSound;
 } // namespace detail
 
 class SoundPlayer {
+    // BasicSound::UpdateParam reads the player's biquad/send fields directly.
+    friend class detail::BasicSound;
+
 public:
     SoundPlayer();
     ~SoundPlayer();

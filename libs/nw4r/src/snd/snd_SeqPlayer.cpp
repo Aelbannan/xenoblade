@@ -3,13 +3,11 @@
 
 namespace {
 
-// The shared snd_SeqTrack.h member layout does not match retail yet (retail
-// keeps the parser base address at SeqTrack+0x1C), so the parser-slice access
-// below stays behind this view until SeqTrack itself is recovered.
-struct SeqTrackParserView {
-    char field_0x0[0x1C];
-    const u8* baseAddr; // at 0x1C
-};
+// Retail inlines the parser-parameter slice access; keep the base-address test
+// readable through the real member.
+inline const u8* GetParserBaseAddr(nw4r::snd::detail::SeqTrack* pTrack) {
+    return pTrack->GetParserTrackParam().baseAddr;
+}
 
 } // namespace
 
@@ -309,14 +307,13 @@ void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
         // First scan has no calls on the non-matching path, so MWCC walks it
         // entirely in volatile registers: the induction pointer is based at
         // the player with the 0x120 track-array base folded into the load.
-        SeqTrack** pTracks = reinterpret_cast<SeqTrack**>(this);
         for (int i = 0; i < TRACK_NUM; i++) {
             SeqTrack* pTrack = GetPlayerTrack(i);
             if (pTrack == NULL) {
                 continue;
             }
 
-            const u8* pBase = reinterpret_cast<SeqTrackParserView*>(pTrack)->baseAddr;
+            const u8* pBase = GetParserBaseAddr(pTrack);
             if (pStart <= pBase && pBase <= pEnd) {
                 // SeqPlayer::Stop() inlined by retail.
                 // Hoisted NULL for the track-slot store; retail pins it in
@@ -548,30 +545,20 @@ void SeqPlayer::SetSeqUserprocCallback(SeqUserprocCallback callback,
     mSeqUserprocCallbackArg = arg;
 }
 
-// The track byte the userproc may rewrite sits at SeqTrack+0x24 in retail; the
-// shared SeqTrack layout is not recovered yet, so read it through a view.
-struct SeqTrackUserprocView {
-    char field_0x0[0x24];
-    u8 value; // at 0x24
-};
-
 void SeqPlayer::CallSeqUserprocCallback(u16 usertype, SeqTrack* pTrack) {
     if (mSeqUserprocCallback == NULL) {
         return;
     }
 
-    SeqTrackUserprocView* pTrackView =
-        reinterpret_cast<SeqTrackUserprocView*>(pTrack);
-
     SeqUserprocCallbackParam param;
     param.variablePtr = &mLocalVariable[0];
     param.variablePtr2 = mGlobalVariable;
     param.variablePtr3 = pTrack->GetVariablePtr(0);
-    param.value = pTrackView->value;
+    param.value = pTrack->GetParserTrackParam().mmlParserParam.cmpFlag;
 
     mSeqUserprocCallback(usertype, &param, mSeqUserprocCallbackArg);
 
-    pTrackView->value = param.value;
+    pTrack->GetParserTrackParam().mmlParserParam.cmpFlag = param.value;
 }
 
 void SeqPlayer::ChannelCallback(Channel* /* pChannel */) {}

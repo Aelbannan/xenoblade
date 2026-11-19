@@ -6,12 +6,7 @@
 #include "kyoshin/CCol6CheckBat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
-// CCol6Invite.hpp declares Col6FormatBufferString with C++ linkage, which mangles
-// the retail-unmangled symbol at call sites (reloc-name drift). Shadow that
-// declaration so this unit's extern "C" decl (below) is the only visible one.
-#define Col6FormatBufferString Col6FormatBufferString_cpponly
 #include "kyoshin/CCol6Invite.hpp"
-#undef Col6FormatBufferString
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CBaseCur.hpp"
 

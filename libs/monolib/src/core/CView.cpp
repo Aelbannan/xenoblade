@@ -122,20 +122,6 @@ struct CViewMsgPayload {
     u8 field_0x1e;
 };
 
-// Retail <10> deleting-dtor shape: no vtable store; the entry clears are
-// guarded by a null-test of the entry-array address (r3+4, not foldable).
-// NOTE: our build (-RTTI on) additionally emits a vptr store here (+0xC) that
-// retail lacks -- sibling reslist dtors carry the store in BOTH builds (their
-// classes have bases); standalone CMsgParam<10> gets it elided in retail's
-// compiler run. Experiments: extern "C" free-function forms stay frameless
-// (bclr early-return, no r31/prologue) and cannot reproduce the compiler-
-// generated dtor's register convention. See attempts.jsonl us-8043f120.
-template <>
-CMsgParam<10>::~CMsgParam(){
-    if (mEntries != NULL) {
-        clear();
-    }
-}
 
 extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
 extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
@@ -189,16 +175,9 @@ extern "C" void wkUpdate__5CViewFv();
 // template weak vtables keep their retail label wiring through the CView.o
 // UNIT_RULES entry on the link path.
 //
-// The two reslist<> instantiations and CMsgParam<10> only reach their weak
-// out-of-line destructors / vtables through a construction: CView's ctor sets
-// the member vptrs from the retail labels directly, so this TU still needs one
-// odr-use of each template to emit the objects retail keeps in this slice.
-extern "C" void FORCEKEEP_CView_templates() {
-    reslist<IWorkEvent*> keepResList;
-    CMsgParam<10> keepMsg(0);
-    (void)keepResList;
-    (void)keepMsg;
-}
+// CView's reslist<WORK_ID> / reslist<IWorkEvent*> / CMsgParam<10> members are
+// constructed and destroyed by the inlined template code, which odr-uses the
+// weak out-of-line destructors and vtables retail keeps in this slice.
 
 const char lbl_eu_80522630[0x20] =
     "\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5\x82\xdc\x82\xb5\x82\xbd";
@@ -381,13 +360,9 @@ CView* CView::getCurrentView() {
     return lbl_eu_806655C8.ptr;
 }
 
-// Enqueue tag 6 onto the context ring (CMsgParam<10>). High-level enqueue
-// restores signed ring index + stwux; retail -0x40 spill interleave is closed
-// Chaitin near-miss - keep iterating in high-level C. behaviour:view-set-current-ring.
+// Enqueue tag 6 onto this view's own context ring.
 void CView::setCurrent() {
-    CMsgParam<10>& messages =
-        *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
-    messages.enqueue(6);
+    mContextMsg.enqueue(6);
 }
 
 void CView::setRect(const ml::CRect16& rect) {
@@ -468,12 +443,13 @@ setRect_tail:
     }
 }
 
+// Dual context-ring enqueue (tag 0 = attach the thread's WORK_ID, tag 1 =
+// attach the thread pointer). Each message is built field-wise in a
+// scalar-replaced local (payload seeded from an uninitialized template), then
+// stored to the ring slot -- reproducing retail's register-resident payload
+// fan and signed-first-modulo. The ring writes are spelled out because the
+// inline enqueue()/last() bodies pick a different colouring at this site.
 bool CView::attachRenderWork(CWorkThread* pThread) {
-    // Dual context-ring enqueue (tag 0 = attach the thread's WORK_ID,
-    // tag 1 = attach the thread pointer). Each message is built field-wise
-    // in a scalar-replaced local (payload seeded from an uninitialized
-    // template), then stored to the ring slot -- reproducing retail's
-    // register-resident payload fan and signed-first-modulo.
     volatile CMsgParamEntry msgWork;   // tag-0 payload source
     volatile CMsgParamEntry msgThread; // tag-1 payload source
     s32 sumSigned;
@@ -488,12 +464,12 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
 
     workId = pThread->mWorkID;
 
-    // Enqueue tag 0: attach work ID to unk238.
-    capSigned = (s32)mContextRingCapacity;
-    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    // Enqueue tag 0: attach work ID to mWorkIDList.
+    capSigned = (s32)mContextMsg.mCapacity;
+    sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
-    u8* entry = mContextRingBase;
+    u8* entry = reinterpret_cast<u8*>(mContextMsg.mArrayPtr);
     entry += byteOff;
     *(u32*)entry = 0; // tag 0
     *(u32*)(entry + 0x4) = (u32)msgWork.wid;
@@ -507,26 +483,26 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     entry[0x22] = msgWork.unk22;
     entry[0x23] = 0;
 
-    newIdx = mContextRingWriteIndex + 1;
-    mContextRingWriteIndex = newIdx;
-    unk3FC = newIdx - 1;
+    newIdx = mContextMsg.mSize + 1;
+    mContextMsg.mSize = newIdx;
+    mContextMsg.field6 = newIdx - 1;
 
-    sum = unk3F0 + unk3FC;
-    slot = sum % mContextRingCapacity;
-    slotPtr = mContextRingBase + slot * 0x24;
+    sum = mContextMsg.mFront + mContextMsg.field6;
+    slot = sum % mContextMsg.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = unk3F0 + unk3FC;
-    slot = sum % mContextRingCapacity;
-    slotPtr = mContextRingBase + slot * 0x24;
+    sum = mContextMsg.mFront + mContextMsg.field6;
+    slot = sum % mContextMsg.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = workId;
 
-    // Enqueue tag 1: attach the thread pointer to unk258.
-    capSigned = (s32)mContextRingCapacity;
-    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    // Enqueue tag 1: attach the thread pointer to mEventList.
+    capSigned = (s32)mContextMsg.mCapacity;
+    sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
-    entry = mContextRingBase;
+    entry = reinterpret_cast<u8*>(mContextMsg.mArrayPtr);
     entry += byteOff;
     *(u32*)entry = 1; // tag 1
     *(u32*)(entry + 0x4) = (u32)msgThread.wid;
@@ -540,18 +516,18 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     entry[0x22] = msgThread.unk22;
     entry[0x23] = 0;
 
-    newIdx = mContextRingWriteIndex + 1;
-    mContextRingWriteIndex = newIdx;
-    unk3FC = newIdx - 1;
+    newIdx = mContextMsg.mSize + 1;
+    mContextMsg.mSize = newIdx;
+    mContextMsg.field6 = newIdx - 1;
 
-    sum = unk3F0 + unk3FC;
-    slot = sum % mContextRingCapacity;
-    slotPtr = mContextRingBase + slot * 0x24;
+    sum = mContextMsg.mFront + mContextMsg.field6;
+    slot = sum % mContextMsg.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = unk3F0 + unk3FC;
-    slot = sum % mContextRingCapacity;
-    slotPtr = mContextRingBase + slot * 0x24;
+    sum = mContextMsg.mFront + mContextMsg.field6;
+    slot = sum % mContextMsg.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = (u32)pThread;
 
     return true;
@@ -568,26 +544,26 @@ void CView::CView_UnkVirtualFunc2(CWorkThread* pThread) {
 // computed signed (retail divw); the two later modulos are unsigned (divwu).
 bool CView::enqueueContextMsg(u32 param) {
     // Uninitialized stack entry: retail only reads its payload fields
-    // (wid..unk22) once each from the frame home.
+    // (wid..unk22) once each from the frame home, and inlines the whole ring
+    // write with its own register colouring.
     volatile CMsgParamEntry msg;
     s32 sumSigned;
     s32 capSigned;
     s32 slotIndex;
     u32 byteOff;
     u8* slotPtr;
-    u8* ringBase;
     u32 prevIdx;
     u32 writeIdx;
     u32 sum;
     u32 slot;
 
-    capSigned = (s32)this->mContextRingCapacity;
-    sumSigned = (s32)this->unk3F0 + (s32)this->mContextRingWriteIndex;
+    capSigned = (s32)mContextMsg.mCapacity;
+    sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
     slotIndex = sumSigned % capSigned;
     byteOff = (u32)slotIndex * 0x24u;
     // Update-form pointer: advancing the pointer itself makes MWCC emit the
     // retail stwux (base+=offset) for the first payload store.
-    u8* entry = this->mContextRingBase;
+    u8* entry = reinterpret_cast<u8*>(mContextMsg.mArrayPtr);
     entry += byteOff;
     *(u32*)entry = 1; // tag 1
     *(u32*)(entry + 0x4) = msg.wid;
@@ -601,19 +577,19 @@ bool CView::enqueueContextMsg(u32 param) {
     entry[0x22] = msg.unk22;
     entry[0x23] = 0;
 
-    writeIdx = this->mContextRingWriteIndex + 1;
+    writeIdx = mContextMsg.mSize + 1;
     prevIdx = writeIdx - 1;
-    this->mContextRingWriteIndex = writeIdx;
-    this->unk3FC = prevIdx;
+    mContextMsg.mSize = writeIdx;
+    mContextMsg.field6 = prevIdx;
 
-    sum = this->unk3F0 + prevIdx;
-    slot = sum % this->mContextRingCapacity;
-    slotPtr = this->mContextRingBase + slot * 0x24;
+    sum = mContextMsg.mFront + prevIdx;
+    slot = sum % mContextMsg.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
     slotPtr[0x23] = 3;
 
-    sum = this->unk3F0 + this->unk3FC;
-    slot = sum % this->mContextRingCapacity;
-    slotPtr = this->mContextRingBase + slot * 0x24;
+    sum = mContextMsg.mFront + mContextMsg.field6;
+    slot = sum % mContextMsg.mCapacity;
+    slotPtr = reinterpret_cast<u8*>(mContextMsg.mArrayPtr) + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = param;
     return true;
 }
@@ -634,7 +610,7 @@ void CView::sortChildViews() {
     }
 
     // Count the work IDs attached to the current view; bail if empty.
-    endNode = (_reslist_node<WORK_ID>*)current->unk238.mStartNodePtr;
+    endNode = (_reslist_node<WORK_ID>*)current->mWorkIDList.mStartNodePtr;
     curNode = endNode->mNext;
     count = 0;
     while (curNode != endNode) {
@@ -676,7 +652,7 @@ void CView::sortChildViews() {
             itemCur = CView::convertToView(cur->mItem);
             itemNext = CView::convertToView(next->mItem);
             {
-                s1 = (_reslist_node<WORK_ID>*)itemCur->unk238.mStartNodePtr;
+                s1 = (_reslist_node<WORK_ID>*)itemCur->mWorkIDList.mStartNodePtr;
                 n1 = s1->mNext;
                 c1 = 0;
                 while (n1 != s1) {
@@ -684,7 +660,7 @@ void CView::sortChildViews() {
                     n1 = n1->mNext;
                 }
                 if (c1 != 0) {
-                    s2 = (_reslist_node<WORK_ID>*)itemNext->unk238.mStartNodePtr;
+                    s2 = (_reslist_node<WORK_ID>*)itemNext->mWorkIDList.mStartNodePtr;
                     n2 = s2->mNext;
                     c2 = 0;
                     while (n2 != s2) {
@@ -722,7 +698,7 @@ void CView::sortChildViews() {
             itemCur = CView::convertToView(cur->mItem);
             itemNext = CView::convertToView(next->mItem);
             {
-                s1 = (_reslist_node<WORK_ID>*)itemCur->unk238.mStartNodePtr;
+                s1 = (_reslist_node<WORK_ID>*)itemCur->mWorkIDList.mStartNodePtr;
                 n1 = s1->mNext;
                 c1 = 0;
                 while (n1 != s1) {
@@ -730,7 +706,7 @@ void CView::sortChildViews() {
                     n1 = n1->mNext;
                 }
                 if (c1 != 0) {
-                    s2 = (_reslist_node<WORK_ID>*)itemNext->unk238.mStartNodePtr;
+                    s2 = (_reslist_node<WORK_ID>*)itemNext->mWorkIDList.mStartNodePtr;
                     n2 = s2->mNext;
                     c2 = 0;
                     while (n2 != s2) {
@@ -828,7 +804,7 @@ void CView::updateMsg() {
     u32 flag;
     u32 readIdx;
     u32 cap;
-    CMsgParamEntry* entry;
+    const CMsgParamEntry* entry;
     u32 tag;
     _reslist_node<WORK_ID>* listSentinel;
     _reslist_node<WORK_ID>* listNode;
@@ -857,11 +833,7 @@ void CView::updateMsg() {
     goto updateMsg_check;
 
 updateMsg_loop:
-    readIdx = unk3F0;
-    cap = mContextRingCapacity;
-    u32 ringIdx = readIdx % cap;
-    CMsgParamEntry* contextRing = (CMsgParamEntry*)mContextRingBase;
-    entry = &contextRing[ringIdx];
+    entry = &mContextMsg.front();
     tag = entry->command;
 
     // No explicit range guard: tags > 7 match no case and fall through to
@@ -869,10 +841,10 @@ updateMsg_loop:
     // single cmpli/bc guard on its own (an explicit if duplicates it).
     switch (tag) {
         case 0: {
-            // Attach WORK_ID to unk238; fan-out dual ring msgs to child views.
+            // Attach WORK_ID to mWorkIDList; fan-out dual ring msgs to child views.
             u32 msgItem = entry->wid;
             {
-                _reslist_node<WORK_ID>* sentinel238 = reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
+                _reslist_node<WORK_ID>* sentinel238 = mWorkIDList.mStartNodePtr;
                 _reslist_node<WORK_ID>* node238 = sentinel238->mNext;
                 while (node238 != sentinel238) {
                     if (node238->mItem == msgItem) {
@@ -881,7 +853,7 @@ updateMsg_loop:
                     node238 = node238->mNext;
                 }
                 if (node238 == sentinel238) {
-                reinterpret_cast<reslist<u32>*>(&unk238)->push_back(msgItem);
+                reinterpret_cast<reslist<u32>*>(&mWorkIDList)->push_back(msgItem);
             }
 
             parentSnap = mParent;
@@ -917,78 +889,12 @@ updateMsg_loop:
                     tag1 = 1;
                     workId = workThread->mWorkID;
 
-                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
-                    capSigned = (s32)childView->mContextRingCapacity;
-                    slotIndex = sumSigned / capSigned;
-                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
-                    childSlot = childView->mContextRingBase;
-                    childSlot += byteOff;
-                    *(u32*)childSlot = tag0;
-                    slotMsg = (CViewMsgTemplate*)childSlot;
-                    slotMsg->payload.wid = msgWork.payload.wid;
-                    slotMsg->payload.field_0x8 = msgWork.payload.field_0x8;
-                    slotMsg->payload.field_0xc = msgWork.payload.field_0xc;
-                    slotMsg->payload.field_0x10 = msgWork.payload.field_0x10;
-                    slotMsg->payload.field_0x14 = msgWork.payload.field_0x14;
-                    slotMsg->payload.field_0x18 = msgWork.payload.field_0x18;
-                    slotMsg->payload.field_0x1c = msgWork.payload.field_0x1c;
-                    slotMsg->payload.field_0x20 = msgWork.payload.field_0x20;
-                    slotMsg->payload.field_0x22 = msgWork.payload.field_0x22;
-                    slotMsg->flag = (u8)tag0;
-
-                    writeIdx = childView->mContextRingWriteIndex + 1;
-                    prevIdx = writeIdx - 1;
-                    childView->mContextRingWriteIndex = writeIdx;
-                    childView->unk3FC = prevIdx;
-
-                    sumU = childView->unk3F0 + prevIdx;
-                    slotU = sumU / childView->mContextRingCapacity;
-                    childSlot = childView->mContextRingBase +
-                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    childSlot[0x23] = (u8)flag;
-
-                    sumU = childView->unk3F0 + childView->unk3FC;
-                    slotU = sumU / childView->mContextRingCapacity;
-                    childSlot = childView->mContextRingBase +
-                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    *(u32*)(childSlot + 0x4) = workId;
-
-                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
-                    capSigned = (s32)childView->mContextRingCapacity;
-                    slotIndex = sumSigned / capSigned;
-                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
-                    childSlot = childView->mContextRingBase;
-                    childSlot += byteOff;
-                    *(u32*)childSlot = tag1;
-                    slotMsg = (CViewMsgTemplate*)childSlot;
-                    slotMsg->payload.wid = msgEvent.payload.wid;
-                    slotMsg->payload.field_0x8 = msgEvent.payload.field_0x8;
-                    slotMsg->payload.field_0xc = msgEvent.payload.field_0xc;
-                    slotMsg->payload.field_0x10 = msgEvent.payload.field_0x10;
-                    slotMsg->payload.field_0x14 = msgEvent.payload.field_0x14;
-                    slotMsg->payload.field_0x18 = msgEvent.payload.field_0x18;
-                    slotMsg->payload.field_0x1c = msgEvent.payload.field_0x1c;
-                    slotMsg->payload.field_0x20 = msgEvent.payload.field_0x20;
-                    slotMsg->payload.field_0x22 = msgEvent.payload.field_0x22;
-                    slotMsg->flag = (u8)tag0;
-                    ((CViewMsgTemplate*)childSlot)->flag = (u8)tag0;
-
-                    writeIdx = childView->mContextRingWriteIndex + 1;
-                    childView->mContextRingWriteIndex = writeIdx;
-                    prevIdx = writeIdx - 1;
-                    childView->unk3FC = prevIdx;
-
-                    sumU = childView->unk3F0 + prevIdx;
-                    slotU = sumU / childView->mContextRingCapacity;
-                    childSlot = childView->mContextRingBase +
-                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    childSlot[0x23] = (u8)flag;
-
-                    sumU = childView->unk3F0 + childView->unk3FC;
-                    slotU = sumU / childView->mContextRingCapacity;
-                    childSlot = childView->mContextRingBase +
-                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    *(u32*)(childSlot + 0x4) = (u32)workThread;
+                    childView->mContextMsg.enqueue(0);
+                    childView->mContextMsg.last().unk23 = 3;
+                    childView->mContextMsg.last().wid = workThread->mWorkID;
+                    childView->mContextMsg.enqueue(1);
+                    childView->mContextMsg.last().unk23 = 3;
+                    childView->mContextMsg.last().wid = (u32)workThread;
                 }
                 childNode = (void**)childNode[0];
             }
@@ -996,10 +902,10 @@ updateMsg_loop:
         }
         }
         case 1: {
-            // Attach IWorkEvent* to unk258; fan-out tag-1 msgs to child views.
+            // Attach the event to mEventList; fan-out tag-1 msgs to child views.
             u32 msgItem = entry->wid;
             {
-                _reslist_node<void*>* sentinel258 = reinterpret_cast<_reslist_node<void*>*>(unk258.mStartNodePtr);
+                _reslist_node<void*>* sentinel258 = reinterpret_cast<_reslist_node<void*>*>(mEventList.mStartNodePtr);
                 _reslist_node<void*>* node258 = sentinel258->mNext;
                 while (node258 != sentinel258) {
                     if ((u32)(uintptr_t)node258->mItem == msgItem) {
@@ -1008,7 +914,7 @@ updateMsg_loop:
                     node258 = node258->mNext;
                 }
                 if (node258 == sentinel258) {
-                    reinterpret_cast<reslist<void*>*>(&unk258)->push_back(
+                    reinterpret_cast<reslist<void*>*>(&mEventList)->push_back(
                         *reinterpret_cast<void**>(&msgItem));
                 }
             }
@@ -1044,53 +950,20 @@ updateMsg_loop:
                     flag = 3;
                     tag0 = 0;
 
-                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
-                    capSigned = (s32)childView->mContextRingCapacity;
-                    slotIndex = sumSigned / capSigned;
-                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
-                    childSlot = childView->mContextRingBase;
-                    childSlot += byteOff;
-                    *(u32*)childSlot = tag1;
-                    slotMsg = (CViewMsgTemplate*)childSlot;
-                    slotMsg->payload.wid = msgDetach.payload.wid;
-                    slotMsg->payload.field_0x8 = msgDetach.payload.field_0x8;
-                    slotMsg->payload.field_0xc = msgDetach.payload.field_0xc;
-                    slotMsg->payload.field_0x10 = msgDetach.payload.field_0x10;
-                    slotMsg->payload.field_0x14 = msgDetach.payload.field_0x14;
-                    slotMsg->payload.field_0x18 = msgDetach.payload.field_0x18;
-                    slotMsg->payload.field_0x1c = msgDetach.payload.field_0x1c;
-                    slotMsg->payload.field_0x20 = msgDetach.payload.field_0x20;
-                    slotMsg->payload.field_0x22 = msgDetach.payload.field_0x22;
-                    slotMsg->flag = (u8)tag0;
-                    ((CViewMsgTemplate*)childSlot)->flag = (u8)tag0;
-
-                    writeIdx = childView->mContextRingWriteIndex + 1;
-                    prevIdx = writeIdx - 1;
-                    childView->mContextRingWriteIndex = writeIdx;
-                    childView->unk3FC = prevIdx;
-
-                    sumU = childView->unk3F0 + prevIdx;
-                    slotU = sumU / childView->mContextRingCapacity;
-                    childSlot = childView->mContextRingBase +
-                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    childSlot[0x23] = (u8)flag;
-
-                    sumU = childView->unk3F0 + childView->unk3FC;
-                    slotU = sumU / childView->mContextRingCapacity;
-                    childSlot = childView->mContextRingBase +
-                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    *(u32*)(childSlot + 0x4) = msgItem;
+                    childView->mContextMsg.enqueue(1);
+                    childView->mContextMsg.last().unk23 = 3;
+                    childView->mContextMsg.last().wid = msgItem;
                 }
                 childNode = (void**)childNode[0];
             }
             break;
         }
         case 2: {
-            // Remove WORK_ID from unk238.
+            // Remove WORK_ID from mWorkIDList.
             u32 msgItem = entry->wid;
             {
                 _reslist_node<WORK_ID>* sentinel238 =
-                    reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
+                    mWorkIDList.mStartNodePtr;
                 _reslist_node<WORK_ID>* node238 = sentinel238->mNext;
                 while (node238 != sentinel238) {
                     _reslist_node<WORK_ID>* next238 = node238->mNext;
@@ -1126,14 +999,10 @@ updateMsg_loop:
         }
 
     updateMsg_advance:
-        mContextRingWriteIndex -= 1;
-        // Signed division: retail emits divw for the ring advance modulo.
-        nextRead = (s32)unk3F0 + 1;
-        capS = (s32)mContextRingCapacity;
-        unk3F0 = (u32)(nextRead - (nextRead / capS) * capS);
+        mContextMsg.pop();
 
     updateMsg_check:
-        if (mContextRingWriteIndex != 0) {
+        if (!mContextMsg.empty()) {
             goto updateMsg_loop;
         }
 }
@@ -1180,7 +1049,7 @@ void CView::wkUpdate() {
         }
     }
 
-    if (mChildren.empty() && unk238.empty()) {
+    if (mChildren.empty() && mWorkIDList.empty()) {
         hasView2 = 0;
         hasView1 = 0;
         if (unk45C == nullptr) {
@@ -1233,7 +1102,7 @@ bool CView::wkStandbyLogout() {
     this->CWorkThread::wkCheckTimeout(
         30000,
         this->mChildren.empty() &&
-            ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&this->unk238)) == 0 &&
+            ResListWorkSize(&this->mWorkIDList) == 0 &&
             !(this->unk45C != nullptr &&
               this->unk45C->getView1() != nullptr &&
               this->unk45C->getView2() != nullptr),
@@ -1247,7 +1116,7 @@ bool CView::wkStandbyLogout() {
     }
 
     if (this->mChildren.empty() && this->unk45C == nullptr &&
-        ResListWorkSize(reinterpret_cast<const reslist<WORK_ID>*>(&this->unk238)) == 0) {
+        ResListWorkSize(&this->mWorkIDList) == 0) {
         CViewRoot::invalidCurrent(this);
         return wkStandbyLogout__11CWorkThreadFv(this);
     }
@@ -1316,7 +1185,7 @@ void CView::renderView() {
         goto renderView_after_cross;
     }
 
-    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
+    listStart = mWorkIDList.mStartNodePtr;
     listLen = 0;
     listNode = listStart->mNext;
     goto renderView_count_this_check;
@@ -1331,7 +1200,7 @@ renderView_count_this_check:
         goto renderView_after_cross;
     }
 
-    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(fullScreenView->unk238.mStartNodePtr);
+    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(fullScreenView->mWorkIDList.mStartNodePtr);
     listLen = 0;
     listNode = listStart->mNext;
     goto renderView_count_fs_check;
@@ -1349,7 +1218,7 @@ renderView_count_fs_check:
     crossRootFlag = (u32)pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
         getWorkThread__9CWorkUtilFUl(listStart->mNext->mItem)));
 
-    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
+    listStart = mWorkIDList.mStartNodePtr;
     thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
         getWorkThread__9CWorkUtilFUl(listStart->mNext->mItem)));
 
@@ -1752,7 +1621,7 @@ renderView_wk_split_check:
         wkRender();
     }
 
-    attachNode = (void**)unk238.mStartNodePtr;
+    attachNode = (void**)mWorkIDList.mStartNodePtr;
     attachNode = (void**)*attachNode;
     goto renderView_attach_wk_check;
 
@@ -1779,7 +1648,7 @@ renderView_attach_wk_next:
     attachNode = (void**)*attachNode;
 
 renderView_attach_wk_check:
-    if (attachNode != (void**)unk238.mStartNodePtr) {
+    if (attachNode != (void**)mWorkIDList.mStartNodePtr) {
         goto renderView_attach_wk_body;
     }
 
@@ -1803,7 +1672,7 @@ renderView_child_check:
         goto renderView_child_body;
     }
 
-    attachNode = (void**)unk238.mStartNodePtr;
+    attachNode = (void**)mWorkIDList.mStartNodePtr;
     attachNode = (void**)*attachNode;
     goto renderView_attach_after_check;
 
@@ -1825,7 +1694,7 @@ renderView_attach_after_next:
     attachNode = (void**)*attachNode;
 
 renderView_attach_after_check:
-    if (attachNode != (void**)unk238.mStartNodePtr) {
+    if (attachNode != (void**)mWorkIDList.mStartNodePtr) {
         goto renderView_attach_after_body;
     }
 
@@ -1942,148 +1811,37 @@ setSplitLine_no_view2:
     ((CSplitFrame*)unk45C)->setSplitLine(line);
 }
 
-// Offset view of the CView context-ring control block at +0x280 (used by
-// ~CView's guarded index reset).
-struct CViewRingCtl {
-    u8 pad[0x170];   // 0x00..0x16F (mContextMsgVtable + ring buffer)
-    u32 readIndex;   // 0x170 -> CView::unk3F0
-    u32 writeIndex;  // 0x174 -> CView::mContextRingWriteIndex
-};
-
-// us-8043f178 (~85%, size-equal 432B, 63 mismatch): retag both vptrs by hand
-// (novtable; the leading null-this test is compiler-generated - do NOT add an
-// explicit `if (this != nullptr)`, it duplicates the branch), drain both
-// attached-work lists with empty() + iterator walks (the empty() guard is
-// REQUIRED - without it MWCC DCEs the bare traversal), reset the context-ring
-// indices behind two address-null guards via a local CViewRingCtl (chains the
-// second addic off the first pointer like retail), then run the inlined
-// _reslist_base dtors (vptr retag + unlink + free) for unk258 then unk238;
-// base dtors (CFontLayer @+0x1C4, CWorkThread) run implicitly afterwards.
-// OPEN ITEM: retail's two walk loops are UNROTATED [init][b check][body]
-// [check;bne]; every guarded source form here emits the rotated
-// [check;beq-exit] layout (+stray b), shifting the __dla__/base-dtor call
-// sites (all reloc drift below is that layout shift). Tried: plain-pointer
-// walks (DCE'd or swapped regs), goto bottom-check (re-folded), do-while+goto
-// guard (worse), manual sentinel-empty guard (regs swapped). The unrotated
-// layout looks like a fixed rotation-heuristic wall under unit -O4.
 CView::~CView() {
-    {
-        // Empty iterator walks over unk238 / unk258.
-        // Empty iterator walks over unk238 / unk258.
-        {
-            reslist<WORK_ID>* workList = reinterpret_cast<reslist<WORK_ID>*>(&unk238);
-            if (!workList->empty()) {
-                reslist<WORK_ID>::iterator endIt = workList->end();
-                reslist<WORK_ID>::iterator it = workList->begin();
-                while (it != endIt) {
-                    ++it;
-                }
-            }
+    // The attached-work lists and the context ring are real members, so their
+    // destructors are compiler-generated (in reverse declaration order) after
+    // this body. The empty() guard keeps the retail walk shapes: a bare
+    // traversal with no observable effect is eliminated.
+    if (!mWorkIDList.empty()) {
+        reslist<WORK_ID>::iterator it = mWorkIDList.begin();
+        reslist<WORK_ID>::iterator endIt = mWorkIDList.end();
+        while (it != endIt) {
+            ++it;
         }
-        {
-            reslist<IWorkEvent*>* eventList =
-                reinterpret_cast<reslist<IWorkEvent*>*>(&unk258);
-            if (!eventList->empty()) {
-                reslist<IWorkEvent*>::iterator endIt = eventList->end();
-                reslist<IWorkEvent*>::iterator it = eventList->begin();
-                while (it != endIt) {
-                    ++it;
-                }
-            }
-        }
-
-        CViewRingCtl* ring = reinterpret_cast<CViewRingCtl*>(&mContextMsgVtable);
-        if (ring != nullptr && &ring->pad[4] != nullptr) {
-            ring->writeIndex = 0;
-            ring->readIndex = 0;
-        }
-
-        // Inlined _reslist_base<IWorkEvent*> dtor for unk258 (the doubled
-        // address-null test mirrors the retail guard pair).
-        CViewResList* pEventList = &unk258;
-        if (pEventList != nullptr && pEventList != nullptr) {
-            _reslist_node<void*>* sentinel =
-                static_cast<_reslist_node<void*>*>(pEventList->mStartNodePtr);
-            *reinterpret_cast<void**>(pEventList) = lbl_eu_8056B6F0;
-            _reslist_node<void*>* node = sentinel->mNext;
-            while (node != sentinel) {
-                _reslist_node<void*>* cur = node;
-                node = node->mNext;
-                cur->mNext = nullptr;
-            }
-            sentinel->mNext = sentinel;
-            sentinel->mPrev = sentinel;
-            if (pEventList->unk1C == false && pEventList->mList != nullptr) {
-                delete[] static_cast<_reslist_node<IWorkEvent*>*>(pEventList->mList);
-                pEventList->mList = nullptr;
-            }
-        }
-
-        // Inlined _reslist_base<u32> dtor for unk238.
-        CViewResList* pWorkList = &unk238;
-        if (pWorkList != nullptr && pWorkList != nullptr) {
-            _reslist_node<WORK_ID>* sentinel =
-                static_cast<_reslist_node<WORK_ID>*>(pWorkList->mStartNodePtr);
-            *reinterpret_cast<void**>(pWorkList) = lbl_eu_8056B298;
-            _reslist_node<WORK_ID>* node = sentinel->mNext;
-            while (node != sentinel) {
-                _reslist_node<WORK_ID>* cur = node;
-                node = node->mNext;
-                cur->mNext = nullptr;
-            }
-            sentinel->mNext = sentinel;
-            sentinel->mPrev = sentinel;
-            if (pWorkList->unk1C == false && pWorkList->mList != nullptr) {
-                delete[] static_cast<_reslist_node<WORK_ID>*>(pWorkList->mList);
-                pWorkList->mList = nullptr;
-            }
+    }
+    if (!mEventList.empty()) {
+        reslist<IWorkEvent*>::iterator it = mEventList.begin();
+        reslist<IWorkEvent*>::iterator endIt = mEventList.end();
+        while (it != endIt) {
+            ++it;
         }
     }
 }
 
 CView::CView(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 2) {
-    // The CWorkThread and CFontLayer bases are constructed by the compiler
-    // (in declaration order) and both vptrs are installed from the emitted
-    // __vt__5CView / __vt__5CView+0xA0 tables.
-    // The typed reserve calls below recover retail's shared 0x10 capacity
-    // lifetime; guarded postprocessing closes the final register permutation.
-    u32 zero;
-    void* sentinel1;
-    void* sentinel0;
-
-    zero = 0;
+    // The base classes and the reslist/CMsgParam members are constructed by
+    // the compiler from their own inline ctors; only the view-specific state
+    // is set here.
     mRectData.initViewRect();
     __ct__CViewFrame(&mFrame);
 
-    *(void**)&unk238 = lbl_eu_8056B298;
-    sentinel0 = &unk238.mSentinelNext;
-    unk238.mList = (void*)zero;
-    unk238.mCapacity = (int)zero;
-    unk238.unk1C = (u8)zero;
-    unk238.mStartNodePtr = sentinel0;
-    unk238.mSentinelNext = sentinel0;
-    unk238.mSentinelPrev = sentinel0;
-    *(void**)&unk238 = lbl_eu_8056B280;
-
-    *(void**)&unk258 = lbl_eu_8056B6F0;
-    sentinel1 = &unk258.mSentinelNext;
-    unk258.mList = (void*)zero;
-    unk258.mCapacity = (int)zero;
-    unk258.unk1C = (u8)zero;
-    unk258.mStartNodePtr = sentinel1;
-    unk258.mSentinelNext = sentinel1;
-    unk258.mSentinelPrev = sentinel1;
-    *(void**)&unk258 = lbl_eu_8056B6D8;
-
-    unk278 = zero;
-    unk27C = zero;
-    mContextMsgVtable = (u32)lbl_eu_8056B6CC;
-    mContextRingCapacity = 10;
-    mContextRingBase = mContextRing;
-    mContextRingWriteIndex = zero;
-    unk3F0 = zero;
-    unk3FC = zero;
+    unk278 = 0;
+    unk27C = 0;
     mName.clear();
 
     mGXCacheId = getWhiteColor__8CGXCacheFv();
@@ -2093,22 +1851,21 @@ CView::CView(const char* pName, CWorkThread* pParent)
     mType = THREAD_CVIEW;
     setViewFrameMode__10CViewFrameFUl(&mFrame, (u32)this);
 
-    reinterpret_cast<reslist<u32>*>(&unk238)->reserve(mAllocHandle, 0x10);
-    reinterpret_cast<reslist<void*>*>(&unk258)->reserve(mAllocHandle, 0x10);
+    mWorkIDList.reserve(mAllocHandle, 0x10);
+    mEventList.reserve(mAllocHandle, 0x10);
 
     unk444.x = lbl_eu_8066A2D4;  // 0.6f -- FloatUtils-owned
     unk444.y = lbl_eu_8066A2D4;
     unk444.z = lbl_eu_8066A2D4;
     unk444.w = lbl_eu_8066A2D0;  // 1.0f
-    unk464 = (s16)zero;
-    unk466 = (s16)zero;
-    unk468 = (s16)zero;
-    unk46A = (s16)zero;
+    unk464 = 0;
+    unk466 = 0;
+    unk468 = 0;
+    unk46A = 0;
 
     mFrame.mFrameColor = sFrameColor;
     mFrame.mColor28 = lbl_8065A0C8;
 }
-
 // us-8044bfc0: walks the work-event list at +0x60 (head node stored at
 // +0x60, nodes are {next; +8 = item}; circular - terminates when the walk
 // returns to the head); for each node calls vtable+0xC4 on the item when its
@@ -2152,7 +1909,7 @@ void CView::CView_UnkVirtualFunc7() {
 }
 // us-80440380: same skeleton as UnkVirtualFunc4, but it strips the event's
 // WORK_ID (CWorkThread::mWorkID @0x4C) from the view's work-ID reslist
-// (unk238), then re-dispatches the event to each split-frame pane through
+// (mWorkIDList), then re-dispatches the event to each split-frame pane through
 // virtual slot 0xB4 and finally to this view via slot 0xB8.
 // Every textual getView1/getView2 occurrence is a fresh call in retail (opaque
 // callee), hence the repeated short-circuit guard/ternary pairs.
@@ -2162,7 +1919,7 @@ bool CView::detachRenderWork(CWorkThread* pThread) {
     // retail's register allocation).
     const WORK_ID removedId = pThread->mWorkID;
     _reslist_node<WORK_ID>* head =
-        reinterpret_cast<reslist<WORK_ID>*>(&this->unk238)->mStartNodePtr;
+        reinterpret_cast<reslist<WORK_ID>*>(&this->mWorkIDList)->mStartNodePtr;
     _reslist_node<WORK_ID>* next = head->mNext;
     _reslist_node<WORK_ID>* curr = next;
     while (curr != head) {
@@ -2218,14 +1975,14 @@ bool CView::detachRenderWork(CWorkThread* pThread) {
 }
 
 // us-804406b8: remove the given event from this view's attached-event reslist
-// (unk258), then -- if any split frame has both panes -- re-dispatch the event
+// (mEventList), then -- if any split frame has both panes -- re-dispatch the event
 // to pane 1's and pane 2's view through virtual slot 0xB8. Each textual
 // occurrence of getView1/getView2 is a fresh call in retail (opaque callee, no
 // caching), hence the repeated short-circuit conditions.
 bool CView::CView_UnkVirtualFunc4(IWorkEvent* event) {
     // Unlink every node whose item matches, marking removed nodes mNext=NULL
     // (inlined reslist<IWorkEvent*>::remove).
-    reinterpret_cast<reslist<IWorkEvent*>*>(&this->unk258)->remove(event);
+    reinterpret_cast<reslist<IWorkEvent*>*>(&this->mEventList)->remove(event);
 
     // Pane 1: retail computes the three-way guard into saved-reg flags,
     // selects pane 1 through a ternary, tests it, then recomputes the guard
@@ -2389,15 +2146,13 @@ bool CView::wkStandbyLogin() {
         goto login_fail;
     }
     if ((this->unk278 & 8) == 0) {
-        // Tag-6 context-ring enqueue (inlined CMsgParam<10>::enqueue shape;
-        // signed index, update-form stwux tag store). Payload fields are
-        // uninitialized frame homes -- only read once each.
+        // Inlined CMsgParam<10> ring write with the retail load ordering:
+        // the base field load sits between the index sum and the payload
+        // homes, which the plain enqueue() call cannot reproduce.
         volatile CMsgParamEntry msg;
-        s32 capSigned = (s32)this->mContextRingCapacity;
-        s32 sumSigned = (s32)this->unk3F0 + (s32)this->mContextRingWriteIndex;
-        // Volatile-qualified view pins the base-field load above the payload
-        // home reads (retail issues it right after the index-sum).
-        u8* volatile& baseRef = this->mContextRingBase;
+        s32 capSigned = (s32)mContextMsg.mCapacity;
+        s32 sumSigned = (s32)mContextMsg.mFront + (s32)mContextMsg.mSize;
+        u8* volatile& baseRef = reinterpret_cast<u8* volatile&>(mContextMsg.mArrayPtr);
         u8* entry = baseRef + (u32)(sumSigned % capSigned) * 0x24u;
         *(u32*)entry = 6; // tag 6
         *(u32*)(entry + 0x4) = msg.wid;
@@ -2411,10 +2166,10 @@ bool CView::wkStandbyLogin() {
         entry[0x22] = msg.unk22;
         entry[0x23] = 0;
 
-        u32 writeIdx = this->mContextRingWriteIndex + 1;
+        u32 writeIdx = mContextMsg.mSize + 1;
         u32 prevIdx = writeIdx - 1;
-        this->mContextRingWriteIndex = writeIdx;
-        this->unk3FC = prevIdx;
+        mContextMsg.mSize = writeIdx;
+        mContextMsg.field6 = prevIdx;
     }
     return wkStandbyLogin__11CWorkThreadFv(this);
 

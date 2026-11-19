@@ -22,19 +22,19 @@ extern "C" void capdatatouch_CfObjectPc(void) {
     // in retail order (plain reads fold away). lbl_eu_80666B08 is only
     // referenced cross-TU (CfResPcImpl) and would otherwise trail the pool.
     volatile float sinkf;
-    sinkf = *(volatile float*)&lbl_eu_80666B08;
-    sinkf = *(volatile float*)&lbl_eu_80666B0C;
-    sinkf = *(volatile float*)&lbl_eu_80666B10;
-    sinkf = *(volatile float*)&lbl_eu_80666B14;
-    sinkf = *(volatile float*)&lbl_eu_80666B18;
-    sinkf = *(volatile float*)&lbl_eu_80666B1C;
-    sinkf = *(volatile float*)&lbl_eu_80666B20;
-    sinkf = *(volatile float*)&lbl_eu_80666B24;
-    sinkf = *(volatile float*)&lbl_eu_80666B28;
+    sinkf = lbl_eu_80666B08;
+    sinkf = lbl_eu_80666B0C;
+    sinkf = lbl_eu_80666B10;
+    sinkf = lbl_eu_80666B14;
+    sinkf = lbl_eu_80666B18;
+    sinkf = lbl_eu_80666B1C;
+    sinkf = lbl_eu_80666B20;
+    sinkf = lbl_eu_80666B24;
+    sinkf = lbl_eu_80666B28;
     volatile double sinkd;
-    sinkd = *(volatile double*)&lbl_eu_80666B30;
-    sinkf = *(volatile float*)&lbl_eu_80666B38;
-    sinkd = *(volatile double*)&lbl_eu_80666B40;
+    sinkd = lbl_eu_80666B30;
+    sinkf = lbl_eu_80666B38;
+    sinkd = lbl_eu_80666B40;
     (void)sinkf;
     (void)sinkd;
 }

@@ -5,33 +5,14 @@
 // declaration (via CTaskGameEff -> CfGameManager) that conflicts with the
 // real one in kyoshin/cf/CItem.hpp (see below).
 // Real item-impl owner first (before CItemBoxInfo.hpp's shim macro exists,
-// which would otherwise rewrite this header's own declaration). The lbl
-// names that clash with the stale-but-load-bearing CEquip-chain u32
-// declarations (used as u32 by sibling TUs - see CEquipItemBox.cpp) are
-// renamed away for this inclusion; what this TU needs (CItemData/CItemImpl
-// classes, the real accessor, and the CItemExt* item lookup) is unaffected.
-#define lbl_eu_806640D8 lbl_eu_806640D8_citem_dup
-#define lbl_eu_806640EC lbl_eu_806640EC_citem_dup
-#define lbl_eu_806640F4 lbl_eu_806640F4_citem_dup
-#define lbl_eu_806640F8 lbl_eu_806640F8_citem_dup
-#define CItem_slotCnt CItem_slotCnt_citem_dup
+// which would otherwise rewrite this header's own declaration). Its decls are
+// canonical for the item tables, CItem_kindPtr and CItem_slotCnt.
 #include "kyoshin/cf/CItem.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
-#undef lbl_eu_806640D8
-#undef lbl_eu_806640EC
-#undef lbl_eu_806640F4
-#undef lbl_eu_806640F8
-#undef CItem_slotCnt
-// CEquipChange.hpp redeclares CItem_kindPtr with a stale void* return;
-// rename it away for this inclusion so CItem.hpp's real declaration wins
-// (same #define-rename pattern this header already uses for CItemBoxInfo.hpp
-// imports; other TUs keep their view).
-#define CItem_kindPtr CItem_kindPtr_ceq_stale
 #include "kyoshin/CEquipChange.hpp"
 #include "kyoshin/CEquipItemBoxImports.hpp"
 // Out-of-line CCur copy (weak CBaseCur-family operator=, deduped into CMenuShopSell).
-#undef CItem_kindPtr
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 // Real item-impl accessor (CItem.hpp) for this TU only: undo the

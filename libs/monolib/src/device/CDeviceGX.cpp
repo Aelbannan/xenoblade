@@ -69,11 +69,8 @@ extern u8 gap_10_806656B1_sbss[3];
 
 // Static member macros
 #define spInstance lbl_eu_806656A0
-#define cacheInstance cacheInstance__9CDeviceGX
 #define pixelFormat lbl_eu_8066569C
-#define gxHeapSize gxHeapSize__9CDeviceGX
 #define sCostTime lbl_eu_80665698
-#define someString someString__9CDeviceGX
 
 extern "C" {
 extern CDeviceGX* lbl_eu_806656A0;

@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+
+#include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
 __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80519870[0x320] = {
     0x45,0x31,0x31,0x32,0x32,0x36,0x32,0x39,0x20,0x6D,0x77,0x50,
     0x6C,0x79,0x53,0x65,0x74,0x46,0x72,0x6D,0x53,0x79,0x6E,0x63,
@@ -80,14 +82,6 @@ void mwPlyGetCurFrm() {}
  * The player's frame table at +0xE0 holds 0x38-byte entries describing each
  * multiplexed frame; a frame index from the SFD stream header selects one. */
 
-typedef struct MwlSfdFrame {
-    s32 field_0x00;          /* 0x00 */
-    u8 _04[0x0c];            /* 0x04..0x10 */
-    s32 field_0x10;          /* 0x10 */
-    s32 field_0x14;          /* 0x14 */
-    u8 _18[0x20];            /* 0x18..0x38 */
-} MwlSfdFrame;               /* 0x38 */
-
 typedef struct MwlSfdSelf {
     u8 _00[0x58];            /* 0x00..0x58 */
     void* field_0x58;        /* 0x58: SFD stream handle */
@@ -127,35 +121,6 @@ typedef struct MwlSfdInfo {
     u8 _38[0x10];
     MwlSfdInfSub sub;        /* 0x48..0x80 */
 } MwlSfdInfo;
-
-typedef struct MwlSfdFrmInf {
-    s32 field_0x00;
-    s32 field_0x04;
-    s32 field_0x08;
-    s32 field_0x0c;
-    s32 field_0x10;
-    s32 field_0x14;
-    s32 field_0x18;
-    s32 field_0x1c;
-    s32 field_0x20;
-    s32 field_0x24;
-    s32 field_0x28;
-    s32 field_0x2c;
-    s32 field_0x30;
-    s32 field_0x34;
-    s32 field_0x38;
-    s32 field_0x3c;
-    s32 field_0x40;
-    s32 field_0x44;
-    s32 field_0x48;
-    s32 field_0x4c;
-    s32 field_0x50;
-    s32 field_0x54;
-    u8 _58[0x10];
-    u8 field_0x68[0x38];     /* 0x68..0xa0 */
-    s32 field_0xa0;
-    s32 field_0xa4;
-} MwlSfdFrmInf;
 
 extern s32 SFD_GetFps(void* self, s32* out);
 extern int UTY_MulDiv(int a, int b, int c);
@@ -266,9 +231,9 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     res2 = UTY_MulDiv(f30, fps2, frmCnt * mul);
 
     useFrm = 0;
-    if (self->frames[frmIdx % 8].field_0x00 == 1) {
-        picW = self->frames[frmIdx % 8].field_0x10;
-        picH = self->frames[frmIdx % 8].field_0x14;
+    if (self->frames[frmIdx % 8].state == 1) {
+        picW = self->frames[frmIdx % 8].picW;
+        picH = self->frames[frmIdx % 8].picH;
         if (picW == 0 || picH == 0) {
             picW = picW0;
             picH = picH0;

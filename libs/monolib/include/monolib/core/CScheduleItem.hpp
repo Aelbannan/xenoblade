@@ -22,12 +22,12 @@ struct CScheduleItem {
     u8 _pad52[6];     // 0x52
     void LoadSlots(ScheduleEntry* entries, CSchedule* sched);
     void StepSlots(f32 delta);
-    DECOMP_DONT_INLINE int TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched);
-    DECOMP_DONT_INLINE void FeedDistance(f32 delta, CSchedule* sched);
+    int TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched);
+    void FeedDistance(f32 delta, CSchedule* sched);
     void ClearSlots();
     void ReleaseSlots();
     int InitFromData(u8* base, const CScheduleEntryData* data, CSchedule* owner);
-    DECOMP_DONT_INLINE void ReleaseObjects();
+    void ReleaseObjects();
 };                  // size 0x58
 
 // Entry blob header: {lifetime, offset} pairs resolved by schedInitItemFromData.
@@ -49,7 +49,7 @@ struct CItemEntry {
 struct CEffectObj {
     u8 _pad00[0x1C];
     u16 mFlags1C;   // 0x1C: bit 0x2000 = parent-linked, bit 0x8000 = update flag
-    u8 _pad1E[2];   // 0x1E
+    s16 mPoolSlot;  // 0x1E pool index of the claimed effect slot (negative = free)
     s16 mField20;   // 0x20: parent slot handle
     u8 _pad22[0xC]; // 0x22
     s16 mField2E;   // 0x2E

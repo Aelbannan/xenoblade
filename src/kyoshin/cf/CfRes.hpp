@@ -10,6 +10,7 @@ struct CfResBuffer {
     u32 field_404;    // remaining word count
 
     int pushBackwards(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits);
+    int popRecord(u32* headerOut, u32* dataOut);
 };
 
 // Ring-record appender; the scratch header word is an intentionally
@@ -37,7 +38,7 @@ extern "C" int CfRes_getE24Bit18();
 extern "C" int CfRes_getE14();
 extern "C" int CfRes_getE30();
 extern "C" int CfRes_isPackedMarker(u32 packed);
-extern "C" int CfRes_tryResolveByBits(int a, int b, int c);
+extern "C" int CfRes_tryResolveByBits(s32 destination, u32 source, u32 size);
 extern "C" int CfRes_tryResolveToken(int a, int b);
 extern "C" int CfRes_getPackedFileSize(u8* res);
 extern "C" char* CfRes_getInstPtrBC();
@@ -345,8 +346,8 @@ struct CfResPcEntry28View {
 extern "C" CfResPcEntry28View* CfRes_getPcGridEntry(int id, int a);
 
 // Same-TU bit-field helpers (defined in CfRes.cpp). C linkage so call relocs
-// carry the retail unmangled names; noinline keeps them out-of-line calls
-// (retail calls them).
+// carry the retail unmangled names; the unit's -inline noauto keeps them
+// out-of-line calls (retail calls them).
 extern "C" u32 CfRes_extractBits27_5(void* self);
 extern "C" u32 CfRes_getAddrLow10(void* self);
 
@@ -405,7 +406,7 @@ extern "C" ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>* str);
 // entries; SysCacheFetchIndexedEntry looks up the index-th entry and writes out its item
 // fields (0x3C value, +0x4 buffer pointer, 0x40 value).
 extern "C" u32 SysCacheCountListNodes(void);
-extern "C" bool SysCacheFetchIndexedEntry(int index, u32* outField3C, char** outField4Addr, u32* outField40);
+extern "C" bool SysCacheFetchIndexedEntry(int index, u32* outField3C, u8** outField4Addr, u32* outField40);
 
 // Same-TU string compare helper (defined in CfRes.cpp; C linkage so call
 // relocs carry the retail unmangled name).

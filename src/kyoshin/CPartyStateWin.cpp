@@ -1398,7 +1398,9 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self, u32 arg1, u32 arg
     PartyStateWin_InitGaugeRecord(&gauge, arg2, lbl_eu_806681D8, 0x20, 0x20, 0x10);
     mtl::ALLOC_HANDLE handle = PartyStateWin_PickAllocHandle(&mem, 0x09000000);
 
-    CScn* scn = create__8CScnNw4rFv(CTaskManager::GetRootProcScn(),
+    // cast: CScnNw4r is a distinct class here, but this page stores the scene
+    // as a plain CScn* (same retail word).
+    CScn* scn = (CScn*)create__8CScnNw4rFv(CTaskManager::GetRootProcScn(),
                                     &lbl_eu_80507C94[0xf], 0x09000000,
                                     handle, &gauge);
     self->mScene = scn;

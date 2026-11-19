@@ -198,7 +198,7 @@ protected:
 
 protected:
     static Pane* BuildPaneObj(s32 kind, const void* pBinary,
-                              const ResBlockSet& rBlockSet) DECOMP_DONT_INLINE;
+                              const ResBlockSet& rBlockSet);
 
 protected:
     AnimTransformList mAnimTransList; // at 0x4

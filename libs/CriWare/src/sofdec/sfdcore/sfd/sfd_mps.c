@@ -446,8 +446,11 @@ void sfmps_pesfn(SfdHandle* self, u8 stream_kind, s32 arg3, s32 arg4) {
     inf.kind = stream_kind;
     inf.args[1] = arg4;
     inf.args[0] = arg3;
-    s32 st0 = *(volatile s32*)&self->consumed;
-    s32 st1 = *((volatile s32*)&self->consumed + 1);
+    // consumed is the SFD server-thread byte snapshot (genuinely shared); the
+    // raw half reads keep the qualifier at the use because declaring the field
+    // volatile in sfd_types.h is a library-wide header change.
+    s32 st0 = *(volatile s32*)&self->consumed;  // volatile-ok: server-thread snapshot
+    s32 st1 = *((volatile s32*)&self->consumed + 1);  // volatile-ok: server-thread snapshot
     inf.stm_info[1] = st1;
     inf.stm_info[0] = st0;
     cb(self->usrPesFnArg, &inf, st1, arg4);

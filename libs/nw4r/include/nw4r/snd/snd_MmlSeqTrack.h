@@ -11,14 +11,9 @@ namespace detail {
 
 class MmlSeqTrack : public SeqTrack {
 public:
-    struct MmlParserParam {
-        bool cmpFlag;                                         // at 0x0
-        bool noteWaitFlag;                                    // at 0x1
-        bool tieFlag;                                         // at 0x2
-        u8 loopCount[MmlParser::CALL_STACK_MAX_DEPTH];        // at 0x3
-        u8 callStackDepth;                                    // at 0x6
-        const u8* callStack[MmlParser::CALL_STACK_MAX_DEPTH]; // at 0x8
-    };
+    // The MML interpreter state lives in the track's parser parameters, so the
+    // accessor simply hands out that sub-object.
+    typedef SeqTrack::MmlParserParam MmlParserParam;
 
 public:
     MmlSeqTrack();
@@ -30,12 +25,11 @@ public:
     }
 
     MmlParserParam& GetMmlParserParam() {
-        return mMmlParserParam;
+        return GetParserTrackParam().mmlParserParam;
     }
 
 private:
-    const MmlParser* mParser;       // at 0xC8
-    MmlParserParam mMmlParserParam; // at 0xCC
+    const MmlParser* mParser; // at 0xC8
 };
 
 } // namespace detail

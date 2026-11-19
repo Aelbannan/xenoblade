@@ -1019,7 +1019,7 @@ extern "C" void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Ta
     CamEvtForwardShakeFlag(&shake, 0);
 }
 
-extern "C" void CfObjectMove_setRegionAttached(void*, unsigned int);
+extern "C" void CfObjectMove_setRegionAttached(void*, int);
 
 extern "C" void MoveImplMatchIdSetRegion(CfObjectImplMoveData* self, unsigned int a, unsigned int b) {
     CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)self->mSubObj;

@@ -177,15 +177,15 @@ extern "C" void dummy() {
     // first use). Plain arithmetic folds at compile time and drops the
     // labels, so every read goes through a volatile pointer.
     volatile float sinkf;
-    sinkf = *(volatile float*)&lbl_eu_80668968;
-    sinkf = *(volatile float*)&lbl_eu_8066896C;
-    volatile int sinki = *(volatile int*)&lbl_eu_80668970;
-    sinkf = *(volatile float*)&lbl_eu_80668974;
-    sinkf = *(volatile float*)&lbl_eu_80668978;
-    sinkf = *(volatile float*)&lbl_eu_8066897C;
-    volatile double sinkd = *(volatile double*)&lbl_eu_80668980;
-    sinkf = *(volatile float*)&lbl_eu_80668988;
-    sinkf = *(volatile float*)&lbl_eu_8066898C;
+    sinkf = lbl_eu_80668968;
+    sinkf = lbl_eu_8066896C;
+    volatile int sinki = lbl_eu_80668970;
+    sinkf = lbl_eu_80668974;
+    sinkf = lbl_eu_80668978;
+    sinkf = lbl_eu_8066897C;
+    volatile double sinkd = lbl_eu_80668980;
+    sinkf = lbl_eu_80668988;
+    sinkf = lbl_eu_8066898C;
     (void)sinkf;
     (void)sinki;
     (void)sinkd;

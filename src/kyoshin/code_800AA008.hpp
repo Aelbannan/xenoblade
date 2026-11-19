@@ -13,5 +13,7 @@ void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 void Tok_FormatRes();
 u32 Tok_GetPrefix(const char* str);
-u32 Tok_ParseFile(const char* path);
+// Retail symbol is unmangled (Tok_ParseFile), so C linkage: every caller's
+// reloc must use the plain name.
+extern "C" u32 Tok_ParseFile(const char* path);
 void sinit_800AABBC();

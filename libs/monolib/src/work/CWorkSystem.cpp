@@ -60,7 +60,7 @@ CWorkSystem* lbl_eu_8066561C;
 
 #pragma push
 #pragma auto_inline off  // noinline-ok: ctor must stay out of line (retail create() bls it); without it extabindex drifts (+0x1E)
-DECOMP_DONT_INLINE CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(pName, pParent, 32) {
+CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(pName, pParent, 32) {
     // novtable: write the retail vptr (0x8056B9F0) first so the stores land in
     // retail order (vptr, then the member inits).
     *(void**)this = (void*)&lbl_eu_8056B9F0;

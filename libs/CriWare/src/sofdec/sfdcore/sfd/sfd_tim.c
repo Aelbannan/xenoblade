@@ -1075,8 +1075,12 @@ void SFTIM_Pause(void* self, s32 mode) {
             s32 delta = UTY_MulDiv(((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c, num, den);
             s32 t;
             SFLIB_LockCs(&cs1);
-            *(volatile s32 *)&((SfdHandle*)p)->tim.vsyncTime += delta;
-            *(volatile s32 *)&((SfdHandle*)p)->tim.field_0x2d4 += delta;
+            t = ((SfdHandle*)p)->tim.vsyncTime;
+            t += delta;
+            ((SfdHandle*)p)->tim.vsyncTime = t;
+            t = ((SfdHandle*)p)->tim.field_0x2d4;
+            t += delta;
+            ((SfdHandle*)p)->tim.field_0x2d4 = t;
             SFLIB_UnlockCs(&cs1);
         }
 
@@ -1179,7 +1183,7 @@ void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
                 return;
             }
             {
-                s32 audioTime = *(volatile s32 *)&((SfdHandle*)p)->tim.field_0x2d4;
+                s32 audioTime = ((SfdHandle*)p)->tim.field_0x2d4;
                 if (UTY_CmpTime(cmpA, cmpB, audioTime, ((SfdSys *)wk)->tim.field_0x0c) != 0) {
                     *out = 1;
                 } else {

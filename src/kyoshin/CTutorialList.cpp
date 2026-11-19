@@ -10,15 +10,11 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
-#define lbl_eu_80526324 lbl_eu_80526324_unused_u8_decl
-#define lbl_eu_80526300 lbl_eu_80526300_unused_u8_decl
 #include "kyoshin/CTutorialList.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_80526324
-#undef lbl_eu_80526300
 
 #include <stdio.h>
 #include "kyoshin/plugin/ocBdat.hpp"

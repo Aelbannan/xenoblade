@@ -2,14 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/CfRes.hpp"  // real CfResBuffer (popRecord ring pump)
 
-// Concurrent-edit shield: CfCam.hpp now carries tentative definitions of
-// ml::tau while several headers declare it extern "C"; rename the
-// identifier out of the way per include group (this TU never uses it).
-
-#define create__8CScnNw4rFv create__8CScnNw4rFv_party_shadow
 #include "kyoshin/cf/code_8018F8D8.hpp"
-#undef create__8CScnNw4rFv
 
 #include "kyoshin/CTaskGameImports.hpp"
 // NOTE: CfObjectActor.hpp is deliberately NOT included here:
@@ -576,7 +571,7 @@ int CfCmd_Fwd28IfClear(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 // the cmd word's top byte; bits 20-23 hold the popped data-word count and
 // bit 19 suppresses dispatch for that record. A handler returning nonzero
 // publishes the command byte and ends the pump.
-int CfCmd_PumpRingBuf(MenuCmdRingView* buf, u32* outFlag) {
+int CfCmd_PumpRingBuf(CfResBuffer* buf, u32* outFlag) {
     *outFlag = 0;
     if (!(lbl_eu_80663E28 & 0x10000) && cf::CfGameManager::isSceneLoading()) {
         return buf->field_404 == 0;
@@ -586,7 +581,7 @@ int CfCmd_PumpRingBuf(MenuCmdRingView* buf, u32* outFlag) {
     u32 data[0x20];
     while (buf->field_404 != 0) {
         int result;
-        CfResBuf_popRecord(buf, &rec[0], data);
+        buf->popRecord(&rec[0], data);
         u32 cmd = rec[0];
         if (!((cmd >> 19) & 1)) {
             result = 1;

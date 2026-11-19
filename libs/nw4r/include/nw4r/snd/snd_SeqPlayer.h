@@ -101,6 +101,9 @@ public:
 
     void SetSeqUserprocCallback(SeqUserprocCallback callback, void* arg);
 
+    // MML_EX_USERPROC reaches this from MmlParser::CommandProc.
+    void CallSeqUserprocCallback(u16 usertype, SeqTrack* pTrack);
+
     static void InitSeqPlayer();
 
     SeqTrack* GetPlayerTrack(int idx);
@@ -165,8 +168,6 @@ private:
 
     void UpdateTick(int msec);
     void SkipTick();
-
-    void CallSeqUserprocCallback(u16 usertype, SeqTrack* pTrack);
 
 private:
     bool mActiveFlag;             // at 0xEC

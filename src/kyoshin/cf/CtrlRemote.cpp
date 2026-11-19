@@ -11,9 +11,7 @@
 // CtrlPc.hpp scaffolds __ct__CtrlRemote as `void`; this TU declares the real
 // returning signature (CtrlRemote.hpp). Hide the scaffold decl so the two do
 // not conflict (the hidden name is never referenced in this TU).
-#define __ct__CtrlRemote __ct__CtrlRemote_scaffold
 #include "kyoshin/cf/CtrlPc.hpp"
-#undef __ct__CtrlRemote
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadTask.hpp"
 #include "monolib/core/CPadManager.hpp"

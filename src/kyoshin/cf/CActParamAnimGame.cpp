@@ -1078,10 +1078,10 @@ void cf::CActParamAnimGame::dispatchState() {
     v->flags530 &= 0xFFFE;
 
     // Child-data timers: keep the current value only when it is non-negative.
-    f32 timerA = getParamFloat0C((CActParamData*)v->_10);
+    f32 timerA = ((CActParamData*)v->_10)->getParamFloat0C();
     if (timerA >= lbl_eu_80666040) v->f500 = timerA;
     if (v->f504 >= lbl_eu_80666040) v->f500 = v->f504;
-    f32 timerB = getParamFloat08((CActParamData*)v->_10);
+    f32 timerB = ((CActParamData*)v->_10)->getParamFloat08();
     if (timerB >= lbl_eu_80666040) v->f508 = timerB;
     if (v->f50C >= lbl_eu_80666040) v->f508 = v->f50C;
 

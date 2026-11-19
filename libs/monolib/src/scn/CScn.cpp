@@ -21,6 +21,7 @@ struct VTarget {
 #include "monolib/work.hpp"
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
+#include "monolib/scn/CScnItemCamera.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -55,14 +56,14 @@ CTTask<CScn>::~CTTask() {}
 // specialization above is elided). The deleting-flag tail (operator delete)
 // is emitted automatically because the destructor is virtual.
 CScn::~CScn() {
-    CScnDtorView* v = (CScnDtorView*)this;
-    v->unk10 = lbl_eu_8056E8D0;
-    v->unk54 = lbl_eu_8056E8D0 + 0x24;
-    if (v->unk88 != NULL) {
-        if (v->unk88 != NULL) {  // twin guard matches retail's paired beq
-            ((ScnSubDtor*)v->unk88)->dtorSlot(1);
+    CScnDtorView& v = *(CScnDtorView*)this;
+    v.unk10 = lbl_eu_8056E8D0;
+    v.unk54 = lbl_eu_8056E8D0 + 0x24;
+    if (unk88 != NULL) {
+        if (unk88 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnSubDtor*)unk88)->dtorSlot(1);
         }
-        v->unk88 = NULL;
+        unk88 = NULL;
     }
 }
 
@@ -75,14 +76,14 @@ CScn::~CScn() {
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern const u32 __ptmf_null[3];
 extern "C" CScn* __ct__CScn(CScn* self) {
-    CScnCtorView* v = (CScnCtorView*)self;
+    CScnCtorView& v = *(CScnCtorView*)self;
     __ct__8CProcessFv((CProcess*)self);
 
     // Intermediate accessor-table pointer, repointed below.
-    v->unk10 = lbl_eu_8056E984;
+    v.unk10 = lbl_eu_8056E984;
 
     u32 d0, m0;
-    u32* move = (u32*)&v->mMoveFunc;
+    u32* move = (u32*)&v.mMoveFunc;
     const u32* n;
     f32 f98;
     n = __ptmf_null;
@@ -92,7 +93,7 @@ extern "C" CScn* __ct__CScn(CScn* self) {
     move[0] = m0;
     move[2] = *n++;
     // Second copy re-reads from the null-ptmf base.
-    u32* draw = (u32*)&v->mDrawFunc;
+    u32* draw = (u32*)&v.mDrawFunc;
     n = __ptmf_null;
     d0 = *n++;
     draw[1] = *n++;
@@ -100,44 +101,44 @@ extern "C" CScn* __ct__CScn(CScn* self) {
     draw[2] = *n++;
 
     // Final vtable pair (CTTask + IWorkEvent subobjects).
-    v->unk10 = lbl_eu_8056E8D0;
-    v->unk54 = lbl_eu_8056E8D0 + 0x24;
+    v.unk10 = lbl_eu_8056E8D0;
+    v.unk54 = lbl_eu_8056E8D0 + 0x24;
 
-    v->unk58[0] = 0;
-    v->unk58[1] = 0;
-    v->unk58[2] = 0;
-    v->unk58[3] = 0;
-    v->unk58[4] = 0;
-    v->unk58[5] = 0;
-    v->unk58[6] = 0;
-    v->unk58[7] = 0;
-    v->unk58[8] = 0;
-    v->unk58[9] = 0;
-    v->unk58[10] = 0;
-    v->unk58[11] = 0;
-    v->unk58[12] = 0;
-    v->unk58[13] = 0;
-    v->unk58[14] = 0;
+    self->unk58 = 0;
+    self->unk5C = NULL;
+    self->mItemPool = NULL;
+    self->unk64 = NULL;
+    self->mCamWork = NULL;
+    self->unk6C = NULL;
+    self->mFilterMan = NULL;
+    self->unk74 = NULL;
+    self->unk78 = NULL;
+    self->mLgtCtrl = NULL;
+    self->mFadeMan = NULL;
+    self->mFrame84 = NULL;
+    self->unk88 = NULL;
+    self->mUnk8C = NULL;
+    self->unk90 = 0;
 
-    v->unk98 = f98;
-    v->unk9C = 0x100;
-    v->unkB2 = 0x40;
-    v->unk9E[0] = 0x50;
-    v->unk9E[1] = 0x50;
-    v->unk9E[2] = 0x50;
-    v->unk9E[3] = 0x50;
-    v->unk9E[4] = 0x50;
-    v->unk9E[5] = 0x50;
-    v->unk9E[6] = 0x50;
-    v->unk9E[7] = 0x50;
-    v->unk9E[8] = 0x50;
-    v->unk9E[9] = 0x50;
-    v->unkB4 = 0;
-    v->unkB8 = 0;
+    self->unk98 = f98;
+    self->unk9C = 0x100;
+    self->unkB2 = 0x40;
+    self->unk9E[0] = 0x50;
+    self->unk9E[1] = 0x50;
+    self->unk9E[2] = 0x50;
+    self->unk9E[3] = 0x50;
+    self->unk9E[4] = 0x50;
+    self->unk9E[5] = 0x50;
+    self->unk9E[6] = 0x50;
+    self->unk9E[7] = 0x50;
+    self->unk9E[8] = 0x50;
+    self->unk9E[9] = 0x50;
+    self->unkB4 = NULL;
+    self->unkB8 = 0;
 
     self->mRenderCBCount = 0;      //0x3BC
-    ((u8*)self)[0x3C0] = 0;
-    *(u32*)((char*)self + 0x3E0) = 0;
+    self->unk3C0[0] = 0;
+    self->unk3E0 = 0;
     self->unk_3E4 = 0;
     self->unk_3E5 = 1;
     self->unk_3E6 = 1;
@@ -256,7 +257,7 @@ struct ScnItemOwnerView {
     u8 _00[4];                 // 0x00..0x04
     ScnOwnerPoolView* owner04; // 0x04
 };
-extern "C" bool Scn_IsAnimActiveOrNull(u8* self) {
+extern "C" bool Scn_IsAnimActiveOrNull(void* self) {
     extern bool CScnItemPool_unlinkAndReleaseItem(void*, void*);
     if (self == 0) {
         return 1;
@@ -302,37 +303,34 @@ extern "C" void Scn_CallUnk8C_V8(u8* self) {
     VTarget* obj = (VTarget*)((CScn*)self)->mUnk8C;
     obj->v8();
 }
-extern "C" void Scn_ReleaseUnk80(void* p) {
-    startFade((int)((CScnMoveView*)p)->fadeMan);
+extern "C" void Scn_ReleaseUnk80(CScn* self) {
+    startFade(self->mFadeMan);
 }
-extern "C" void* Scn_GetUnk80Handle(void* _this) {
-    return isFadeIdle(((CScnMoveView*)_this)->fadeMan);
+extern "C" void* Scn_GetUnk80Handle(CScn* self) {
+    return isFadeIdle(self->mFadeMan);
 }
-extern "C" u32 Scn_QueryUnk80State(u8* self) {
-    extern u32 getFadeColorPtr(u32);
-    return getFadeColorPtr((u32)((CScnMoveView*)self)->fadeMan);
+extern "C" u32 Scn_QueryUnk80State(CScn* self) {
+    return (u32)getFadeColorPtr(self->mFadeMan);
 }
-extern "C" bool Scn_IsDefaultScale(u8* self) {
-    extern void* getFadeColorPtr(void*);
+extern "C" bool Scn_IsDefaultScale(CScn* self) {
     bool result = false;
-    if (isFadeIdle(((CScnMoveView*)self)->fadeMan)) {
-        if (((ScnFloats*)getFadeColorPtr(((CScnMoveView*)self)->fadeMan))->unk0C == lbl_eu_8066AAB4)
+    if (isFadeIdle(self->mFadeMan)) {
+        if (((ScnFloats*)getFadeColorPtr(self->mFadeMan))->unk0C == lbl_eu_8066AAB4)
             result = true;
     }
     return result;
 }
 // Same shape as Scn_IsDefaultScale but an ordered >= compare against 1.0f.
-extern "C" bool Scn_IsScaleAtLeastOne(u8* self) {
-    extern void* getFadeColorPtr(void*);
+extern "C" bool Scn_IsScaleAtLeastOne(CScn* self) {
     bool result = false;
-    if (isFadeIdle(((CScnMoveView*)self)->fadeMan)) {
-        if (((ScnFloats*)getFadeColorPtr(((CScnMoveView*)self)->fadeMan))->unk0C >= lbl_eu_8066AAB8)
+    if (isFadeIdle(self->mFadeMan)) {
+        if (((ScnFloats*)getFadeColorPtr(self->mFadeMan))->unk0C >= lbl_eu_8066AAB8)
             result = true;
     }
     return result;
 }
-extern "C" void* Scn_GetUnk80Resource(u8* self) {
-    return isFadeSettled(((CScnMoveView*)self)->fadeMan);
+extern "C" void* Scn_GetUnk80Resource(CScn* self) {
+    return isFadeSettled(self->mFadeMan);
 }
 extern "C" void Scn_GetCamWorkInt(CScn* self, CView* view, u32 idx) {
     ((CScnCameraMan*)self->mCamWork)->swapViewParam(view, idx);
@@ -344,99 +342,93 @@ extern "C" void Scn_GetCamWorkInt(CScn* self, CView* view, u32 idx) {
 // slot uses a fresh declaration pair so slots 1..7 keep the same colors.
 extern "C" void Scn_CopyCamProjMatrix(CScn* self, ScnCamParams* dest, s32 id) {
     // Camera-item lookup by camera id (CScnCameraMan::findItem).
-    ScnCamItemView* item =
-        (ScnCamItemView*)((CScnCameraMan*)self->mCamWork)->findItem(id);
+    CScnItemCamera* item =
+        (CScnItemCamera*)((CScnCameraMan*)self->mCamWork)->findItem(id);
+    u32* proj = (u32*)item->mProjMtx2;
     // Decl order colors the temps (hi -> r0, lo -> r4 like retail); the
     // read/store order below pins the emission order (lo word first).
     u32 w1;
-    u32 w0 = item->proj[0];
-    w1 = item->proj[1];
+    u32 w0 = proj[0];
+    w1 = proj[1];
     dest->w[1] = w1;
     dest->w[0] = w0;
     {
         u32 h1;
-        u32 l1 = item->proj[2];
-        h1 = item->proj[3];
+        u32 l1 = proj[2];
+        h1 = proj[3];
         dest->w[3] = h1;
         dest->w[2] = l1;
     }
     {
         u32 h2;
-        u32 l2 = item->proj[4];
-        h2 = item->proj[5];
+        u32 l2 = proj[4];
+        h2 = proj[5];
         dest->w[5] = h2;
         dest->w[4] = l2;
     }
     {
         u32 h3;
-        u32 l3 = item->proj[6];
-        h3 = item->proj[7];
+        u32 l3 = proj[6];
+        h3 = proj[7];
         dest->w[7] = h3;
         dest->w[6] = l3;
     }
     {
         u32 h4;
-        u32 l4 = item->proj[8];
-        h4 = item->proj[9];
+        u32 l4 = proj[8];
+        h4 = proj[9];
         dest->w[9] = h4;
         dest->w[8] = l4;
     }
     {
         u32 h5;
-        u32 l5 = item->proj[10];
-        h5 = item->proj[11];
+        u32 l5 = proj[10];
+        h5 = proj[11];
         dest->w[11] = h5;
         dest->w[10] = l5;
     }
     {
         u32 h6;
-        u32 l6 = item->proj[12];
-        h6 = item->proj[13];
+        u32 l6 = proj[12];
+        h6 = proj[13];
         dest->w[13] = h6;
         dest->w[12] = l6;
     }
     {
         u32 h7;
-        u32 l7 = item->proj[14];
-        h7 = item->proj[15];
+        u32 l7 = proj[14];
+        h7 = proj[15];
         dest->w[15] = h7;
         dest->w[14] = l7;
     }
 }
-// Payload view of the camera item handed out by CScnCameraMan::getItem:
-// Scn_GetCamItem9C/CC return the +0x9C/+0xCC words as untyped payloads.
-struct ScnCamItemPayloadView {
-    u8 _00[0x9C];         // 0x00..0x9C
-    void* item9C;         // 0x9C Scn_GetCamItem9C result
-    u8 _A0[0xCC - 0xA0];  // 0xA0..0xCC
-    void* itemCC;         // 0xCC Scn_GetCamItemCC result
-};
 // Get the camera item handle, lazily creating id -1 when missing; returns
-// the item payload +0x9C (the sibling +0xCC variant mirrors it).
-extern "C" void* Scn_GetCamItem9C(void* self, s32 id) {
-    void* r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(id);
+// the item's local matrix (+0x9C, sibling Scn_GetCamItemCC returns the
+// inverse at +0xCC).
+extern "C" void* Scn_GetCamItem9C(CScn* self, s32 id) {
+    CScnItemCamera* r = (CScnItemCamera*)((CScnCameraMan*)self->mCamWork)->getItem(id);
     if (!r)
-        r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(-1);
-    return (void*)&((ScnCamItemPayloadView*)r)->item9C;
+        r = (CScnItemCamera*)((CScnCameraMan*)self->mCamWork)->getItem(-1);
+    return (void*)&r->mTransform.mLocalMat;
 }
 
-// Sibling with the +0xCC payload offset.
-extern "C" void* Scn_GetCamItemCC(void* self, s32 id) {
-    void* r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(id);
+// Sibling returning the inverse local matrix (+0xCC).
+extern "C" void* Scn_GetCamItemCC(CScn* self, s32 id) {
+    CScnItemCamera* r = (CScnItemCamera*)((CScnCameraMan*)self->mCamWork)->getItem(id);
     if (!r)
-        r = ((CScnCameraMan*)((CScn*)self)->mCamWork)->getItem(-1);
-    return (void*)&((ScnCamItemPayloadView*)r)->itemCC;
+        r = (CScnItemCamera*)((CScnCameraMan*)self->mCamWork)->getItem(-1);
+    return (void*)&r->mTransform.mLocalMatInv;
 }
-extern "C" void* Scn_FindCamItem(void* _this, s32 id) {
-    return ((CScnCameraMan*)((CScn*)_this)->mCamWork)->findItem(id);
+extern "C" void* Scn_FindCamItem(CScn* self, s32 id) {
+    return ((CScnCameraMan*)self->mCamWork)->findItem(id);
 }
-extern "C" void* Scn_HasCamItem(void* _this, CScnCameraParam* view) {
-    return ((CScnCameraMan*)((CScn*)_this)->mCamWork)->findViewItem(view);
+extern "C" void* Scn_HasCamItem(CScn* self, CScnCameraParam* view) {
+    return ((CScnCameraMan*)self->mCamWork)->findViewItem(view);
 }
-extern "C" void* Scn_GetCamList(void* _this, CScnCameraParam* view) {
-    return ((CScnCameraMan*)((CScn*)_this)->mCamWork)->getViewItem(view);
+extern "C" void* Scn_GetCamList(CScn* self, CScnCameraParam* view) {
+    return ((CScnCameraMan*)self->mCamWork)->getViewItem(view);
 }
-extern "C" void Scn_SetCamIndex(u8* self, int arg) { ((CScnCameraMan*)((CScn*)self)->mCamWork)->getViewThread((short)arg); }
+extern "C" void Scn_SetCamIndex(CScn* self, int arg) { ((CScnCameraMan*)self->mCamWork)->getViewThread((short)arg); }
 // Scene time scale: PAL consoles without the speed fix run at 1.2x.
 float Scn_GetFrameDelta(void* self_) {
     CScn* self = (CScn*)self_;
@@ -467,7 +459,7 @@ extern "C" void Scn_CallUnk68_V3(u8* self) {
     obj->v3();
 }
 extern "C" void Scn_CallUnk60_V4(u8* self) {
-    VTarget* obj = (VTarget*)((CScnMoveView*)self)->itemPool;
+    VTarget* obj = (VTarget*)((CScn*)self)->mItemPool;
     obj->v4();
 }
 extern "C" void Scn_SetCurrentScene(u32 value) {
@@ -496,95 +488,93 @@ extern "C" void Scn_CallUnk8C_V11(u8* self) {
 // CScn::Term() (retail Term__4CScnFv). Releases every subsystem handle in
 // retail order: each non-null field gets its first virtual slot called with
 // flag=1 behind a twin guard (paired beq), then the field is nulled. The
-// +0x7C subobject is destroyed via a direct destructor call instead.
+// +0x7C light control is destroyed via a direct destructor call instead.
 void CScn::Term() {
-    CScnTermView* v = (CScnTermView*)this;
-    if (v->unk80 != NULL) {
-        if (v->unk80 != NULL) {  // twin guard matches retail's paired beq
-            ((ScnTermRelease*)v->unk80)->release(1);
+    if (mFadeMan != NULL) {
+        if (mFadeMan != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)mFadeMan)->release(1);
         }
-        v->unk80 = NULL;
+        mFadeMan = NULL;
     }
-    if (v->unk70 != NULL) {
-        if (v->unk70 != NULL) {
-            ((ScnTermRelease*)v->unk70)->release(1);
+    if (mFilterMan != NULL) {
+        if (mFilterMan != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)mFilterMan)->release(1);
         }
-        v->unk70 = NULL;
+        mFilterMan = NULL;
     }
-    if (v->unk6C != NULL) {
-        if (v->unk6C != NULL) {
-            ((ScnTermRelease*)v->unk6C)->release(1);
+    if (unk6C != NULL) {
+        if (unk6C != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)unk6C)->release(1);
         }
-        v->unk6C = NULL;
+        unk6C = NULL;
     }
-    if (v->unk74 != NULL) {
-        if (v->unk74 != NULL) {
-            ((ScnTermRelease*)v->unk74)->release(1);
+    if (unk74 != NULL) {
+        if (unk74 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)unk74)->release(1);
         }
-        v->unk74 = NULL;
+        unk74 = NULL;
     }
-    if (v->unk64 != NULL) {
-        if (v->unk64 != NULL) {
-            ((ScnTermRelease*)v->unk64)->release(1);
+    if (unk64 != NULL) {
+        if (unk64 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)unk64)->release(1);
         }
-        v->unk64 = NULL;
+        unk64 = NULL;
     }
-    if (v->unk78 != NULL) {
-        if (v->unk78 != NULL) {
-            ((ScnTermRelease*)v->unk78)->release(1);
+    if (unk78 != NULL) {
+        if (unk78 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)unk78)->release(1);
         }
-        v->unk78 = NULL;
+        unk78 = NULL;
     }
     // Direct destructor call, not a virtual dispatch.
-    if (v->unk7C != NULL) {
-        __dt__804C0E48(v->unk7C, 1);
-        v->unk7C = NULL;
+    if (mLgtCtrl != NULL) {
+        __dt__804C0E48(mLgtCtrl, 1);
+        mLgtCtrl = NULL;
     }
-    if (v->unk68 != NULL) {
-        if (v->unk68 != NULL) {
-            ((ScnTermRelease*)v->unk68)->release(1);
+    if (mCamWork != NULL) {
+        if (mCamWork != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)mCamWork)->release(1);
         }
-        v->unk68 = NULL;
+        mCamWork = NULL;
     }
-    if (v->unk5C != NULL) {
-        if (v->unk5C != NULL) {
-            ((ScnTermRelease*)v->unk5C)->release(1);
+    if (unk5C != NULL) {
+        if (unk5C != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)unk5C)->release(1);
         }
-        v->unk5C = NULL;
+        unk5C = NULL;
     }
-    if (v->unk60 != NULL) {
-        if (v->unk60 != NULL) {
-            ((ScnTermRelease*)v->unk60)->release(1);
+    if (mItemPool != NULL) {
+        if (mItemPool != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)mItemPool)->release(1);
         }
-        v->unk60 = NULL;
+        mItemPool = NULL;
     }
-    if (v->unk84 != NULL) {
-        if (v->unk84 != NULL) {
-            ((ScnTermRelease*)v->unk84)->release(1);
+    if (mFrame84 != NULL) {
+        if (mFrame84 != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)mFrame84)->release(1);
         }
-        v->unk84 = NULL;
+        mFrame84 = NULL;
     }
-    if (v->unk8C != NULL) {
-        if (v->unk8C != NULL) {
-            ((ScnTermRelease*)v->unk8C)->release(1);
+    if (mUnk8C != NULL) {
+        if (mUnk8C != NULL) {  // twin guard matches retail's paired beq
+            ((ScnTermRelease*)mUnk8C)->release(1);
         }
-        v->unk8C = NULL;
+        mUnk8C = NULL;
     }
 }
-// CScn::Move(). The literal retail symbol name is preserved via C linkage
-// (the public CScn class header is outside this session's writable scope).
-// Runs every scene subsystem's per-frame update, gated by the pause/stop flags.
-extern "C" void Move__4CScnFv(CScnMoveView* self) {
-    if (self->unk3E4 == 0 && self->unk3E7 == 0) {
-        self->frame->update();
-        scnLgtStepLightItems(self->lgtCtrl);
-        self->itemPool->update();
-        self->filterMan->update();
-        self->fadeMan->update();
-        self->unk8C->vf14();
-        self->itemPool->updateItemD0();
+// CScn::Move() (retail Move__4CScnFv). Runs every scene subsystem's per-frame
+// update, gated by the pause/stop flags.
+void CScn::Move() {
+    if (unk_3E4 == 0 && unk_3E7 == 0) {
+        mFrame84->update();
+        scnLgtStepLightItems(mLgtCtrl);
+        mItemPool->update();
+        mFilterMan->update();
+        mFadeMan->update();
+        mUnk8C->vf14();
+        mItemPool->updateItemD0();
     }
-    self->unk3E8 = 0;
+    unk_3E8 = 0;
 }
 // Scene factory. Retail exports it under the flat, unmangled symbol
 // create__8CScnNw4rFv (the public header declares it parameterless even

@@ -44,28 +44,26 @@
 // CModelDispEquip.hpp): hide the header copies so the class definitions
 // (CActParamAnim, CScnItemModel, CfObject, CResLookup, CSysWin) come through
 // intact while this TU keeps its own prototypes.
-#define writeVec3f writeVec3f_void_hidden
+// writeVec3f: unified to `void*` (decl matches the CActParamAnim.cpp definition)
 #define func_8004B9D4 func_8004B9D4_hidden
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
 #define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
 #define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_typed_hidden
 #define Tok_FormatStr Tok_FormatStr_fixstr_hidden
-#define Scn_FindCamItem Scn_FindCamItem_s32_hidden
+// Scn_FindCamItem: unified on `void*(void*, int)` (CActParamAnim.hpp was s32)
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
-#undef writeVec3f
 #undef func_8004B9D4
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
 #undef __ct__17UnkClass_8045F564Fv
 #undef __dt__17UnkClass_8045F564Fv
 #undef Tok_FormatStr
-#undef Scn_FindCamItem
 
 // Typified wave7: retail .data color table (8 rows of 3 bytes; struct + use
 // site already exist in the hpp: `lbl_eu_80535D90->c`).
@@ -156,7 +154,7 @@ int crystalListIsActive(void*);
 void tickAnimFrame(void*);
 void MakeCrystal_DispatchState(void*);
 void releaseAnimObj(void*, void*);
-void Scn_IsAnimActiveOrNull(void*);
+bool Scn_IsAnimActiveOrNull(void*);
 void* Scn_SetupAnim(void*, int, int, ...);
 void simSetLeafFlag4000(void*, int);
 void simMarkTree100000(void*, int);

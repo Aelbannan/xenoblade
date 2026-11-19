@@ -302,8 +302,9 @@ extern "C" void copyVEC3(void*, const void*);
 // Declared with C++ linkage (same as CCol6System.hpp) so the two headers
 // don't create an illegal overload when a TU includes both.
 void* CItem_initItemImplInstances(void*);
-extern u32 lbl_eu_806640D8;
-extern u32 lbl_eu_806640F8;
+// Item/bdat table handles: canonical type from the owner header (cf/CItem.hpp).
+extern void* lbl_eu_806640D8;
+extern void* lbl_eu_806640F8;
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching eibHandleSubPage's reloc site).
 extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
@@ -378,7 +379,7 @@ extern s16 lbl_eu_806649D8[4];
 
 // Shared item/bdat table id passed as BdatGetU8Direct's group arg by the
 // equip-slot checks (same .sbss block as lbl_eu_806640F4).
-extern u32 lbl_eu_806640EC;
+extern void* lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 // Name-table pointer globals (handleEIBConfirm).
@@ -418,7 +419,7 @@ extern s16 lbl_eu_806649D0[4];
 extern s16 lbl_eu_806649D8[4];
 
 // Small-data global read by getEIBNameKey (item-impl table id, .sbss).
-extern u32 lbl_eu_806640F4;
+extern void* lbl_eu_806640F4;
 
 // .sdata2 float constants used by the grid page-count math (rebuildEIBGridPage).
 extern const float lbl_eu_80668B00;
@@ -443,7 +444,7 @@ extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
 // Item-count / category-base readers (cf/CItem TU, retail plain names).
 extern "C" u32 CItemBlock_countKindSlots(u8);
-extern "C" u32 CItem_slotCnt(u8);
+extern "C" s32 CItem_slotCnt(u32);   // canonical form from cf/CItem.hpp/CItem.cpp
 
 // Char-data status lookup (code_8025FB10 TU): tests a flag at obj+0x3534.
 extern "C" int Counter_TestBit(void*, u32);

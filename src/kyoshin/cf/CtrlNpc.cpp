@@ -14,29 +14,7 @@
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/math/math_triangular.h>
 
-#define lbl_eu_80527A48 lbl_eu_80527A48_hack
-#define lbl_eu_80527A60 lbl_eu_80527A60_hack
-#define lbl_eu_80527A80 lbl_eu_80527A80_hack
-#define lbl_eu_80527AA0 lbl_eu_80527AA0_hack
-#define lbl_eu_80527AB8 lbl_eu_80527AB8_hack
-#define lbl_eu_80527AE0 lbl_eu_80527AE0_hack
-#define lbl_eu_80527B10 lbl_eu_80527B10_hack
 #include "kyoshin/cf/CtrlNpc.hpp"
-#undef lbl_eu_80527A48
-#undef lbl_eu_80527A60
-#undef lbl_eu_80527A80
-#undef lbl_eu_80527AA0
-#undef lbl_eu_80527AB8
-#undef lbl_eu_80527AE0
-#undef lbl_eu_80527B10
-// real data symbols (hidden from header via hack above, redeclare for use)
-extern const char* lbl_eu_80527A48[];
-extern const char* lbl_eu_80527A60[];
-extern const char* lbl_eu_80527A80[];
-extern const void* lbl_eu_80527AA0[];
-extern const void* lbl_eu_80527AB8[];
-extern const void* lbl_eu_80527AE0[];
-extern const void* lbl_eu_80527B10[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/plugin/ocBdat.hpp"
 // CfT_PlayRateGet is declared in CfGameManager.hpp as extern "C" float.

@@ -41,8 +41,11 @@ void AxfxImpl::HookAlloc(AXFXAllocHook* pAllocHook, AXFXFreeHook* pFreeHook) {
 void AxfxImpl::RestoreAlloc(AXFXAllocHook allocHook, AXFXFreeHook freeHook) {
     AXFXSetHooks(allocHook, freeHook);
     // Retail has a dead load of mAllocatedSize here (lwz lbl_eu_806654CC,
-    // result unused) - forced via volatile read to reproduce byte-identity.
-    (void)*(volatile u32*)&lbl_eu_806654CC;
+    // result unused): the running total is shared with the AX callback thread,
+    // so the slot is genuinely volatile. Declaring lbl_eu_806654CC volatile in
+    // snd_AxfxImpl.h was measured to flip the epilogue save/restore order of
+    // HookAlloc and Alloc (both FULL today), hence the qualifier at the use.
+    (void)*(volatile u32*)&lbl_eu_806654CC;  // volatile-ok: AX-thread-shared counter; volatile decl breaks HookAlloc/Alloc
     lbl_eu_806654C8 = NULL;
 }
 

@@ -343,7 +343,7 @@ void cf::CChainState::Tmr_SetActive(int val) {
     }
     if (this->field_8 != 0) {
         if (val != 0) {
-            ChainMusic_SaveSlots(&this->mChainTemp, this->field_8);
+            ChainMusic_SaveSlots((cf::CChainMusic*)&this->mChainTemp, this->field_8);
             this->field_10 = this->field_8;
             this->field_14 = 0;
             this->field_8->v042();
@@ -391,7 +391,7 @@ void cf::CChainState::Tmr_SetActive(int val) {
                 CfModel_GetSpeedRate(&this->field_10->mSub, lbl_eu_80656C40);
             this->field_10 = 0;
             this->field_14 = 0;
-            ChainMusic_RestoreSlots(&this->mChainTemp, this->field_8);
+            ChainMusic_RestoreSlots((cf::CChainMusic*)&this->mChainTemp, this->field_8);
         }
     }
     if (val != 0) {

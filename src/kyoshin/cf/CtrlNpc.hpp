@@ -276,13 +276,14 @@ extern u32 lbl_eu_80663E28;
 extern const u32 lbl_eu_80527BB0[];
 extern const u32 lbl_eu_80527B38[];
 
-// Member-function-pointer dispatch tables used by CtrlNpcUpdateAction's per-action
-// state handlers ((self->*tbl[field_BE])() -> __ptmf_scall in retail).
-typedef void (cf::CtrlNpc::*CtrlNpcActionMfp)();
-extern const CtrlNpcActionMfp lbl_eu_80527AE0[4];   // actions 1..2 handlers
-extern const CtrlNpcActionMfp lbl_eu_80527AA0[2];   // action 4 handlers
-extern const CtrlNpcActionMfp lbl_eu_80527AB8[3];   // action 5 handlers
-extern const CtrlNpcActionMfp lbl_eu_80527B10[3];   // action 3 handlers
+// Per-action state-handler dispatch tables used by CtrlNpcUpdateAction. Entries
+// are {0, -1, handler} triples (MWCC __ptmf_scall layout), stored as raw words
+// and invoked as (void(*)(CtrlNpc*))tbl[i*3+2] — see the definitions in
+// CtrlNpc.cpp.
+extern const void* lbl_eu_80527AE0[];   // actions 1..2 handlers
+extern const void* lbl_eu_80527AA0[];   // action 4 handlers
+extern const void* lbl_eu_80527AB8[];   // action 5 handlers
+extern const void* lbl_eu_80527B10[];   // action 3 handlers
 
 // CfGameManager singleton + presentation-flag probe (isGlobalCamFlagSet__Fi).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();

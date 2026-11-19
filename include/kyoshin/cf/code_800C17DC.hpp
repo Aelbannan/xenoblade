@@ -1,13 +1,7 @@
 #pragma once
 
 #include <types.h>
-// code_800AA008.hpp declares Tok_ParseFile with C++ linkage; retail keeps
-// the bare C name (CfBdat.hpp form). Hide it for this include and declare
-// the retail spelling here (single includer: code_800C17DC.cpp).
-#define Tok_ParseFile code_800C17DC_Tok_ParseFile_hidden
-#include "kyoshin/code_800AA008.hpp"
-#undef Tok_ParseFile
-extern "C" u32 Tok_ParseFile(const char* path);
+#include "kyoshin/code_800AA008.hpp"   // Tok_ParseFile: extern "C" there
 
 // Callback table record at lbl_eu_805739F8 (size 0x28).
 // Owns an array of callbacks invoked by func_800C1EB8; field20 is the index

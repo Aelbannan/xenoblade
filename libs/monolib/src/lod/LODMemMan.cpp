@@ -28,8 +28,15 @@
 #include <revolution/GX.h>                  // GXInitLightColor / GXLoadLightObjImm
 #include <nw4r/db/db_assert.h>              // nw4r::db::Panic
 #include "monolib/scn/code_804BC9EC.hpp"
+#include "monolib/scn/CScn.hpp"           // CScn::mItemPool (scene pool walk)
 
 class CScn;  // scene wrapper (forward decl; CScnMem.hpp is not included here)
+
+// The g3d sub-manager's record types.
+using LOD::LODChildEntry;
+using LOD::LODChildLight;
+using LOD::LODG3dMgr;
+using LOD::LODG3dSlot;
 
 // ---------------------------------------------------------------------------
 // Dissolved retail data (this TU owns these objects).  Bytes/relocs dumped
@@ -105,8 +112,6 @@ extern void* lbl_eu_806624D8;   // RTTI locator (target class)
 extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);
 
 // TU-internal callees defined later in this file.
-extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
-    LOD::UnkClass_8046D144* self, u8* resBuf, CScn* scene);
 // allocSecondaryBuffers / adjustBufferOffsets are LOD::LODMemMan members (header).
 
 // refreshPaletteBinding assert strings (.data) + .sdata varargs.
@@ -152,35 +157,7 @@ struct LODTexGroup {
     u32 mOffsets[1];  // 0x10 per-entry name-string offsets from the group base
 };
 
-// Scene view for refreshPaletteBinding: the scene-item pool list hangs at +0x60.
-struct LODScenePoolView {
-    u8    mPad00[0x60];
-    void* mPoolList;   // 0x60
-};
-
-// Light-scale bookkeeping at LODMemMan+0x96C (reloadChildGxLights).
-struct LODLightMgr {
-    u8  mPad_00[0x96C];
-    f32 field_0x96C;   // 0x96C base light scale
-    f32 field_0x970;   // 0x970 stored light scale
-    s32 field_0x974;   // 0x974 last-bound child id
-};
-
-// Address-taken sub-object starts inside LODMemMan reached through an
-// untyped base: +0xCC (g3d sub-manager), +0xF0 (sub-manager word),
-// +0xA44 (resettable sub-manager), +0xABC (embedded UnkClass block).
-// Only the starts are significant; spans are explicit pads.
-struct LODMemManSubView {
-    u8 pad_0x00[0xCC];
-    u8 sub_CC[1];                  // +0xCC sub-manager block start
-    u8 pad_0xCD[0xF0 - 0xCD];
-    LOD::UnkClass_8046D144* ptr_F0;        // +0xF0 sub-manager word
-    u8 pad_0xF4[0xA44 - 0xF4];
-    u8 sub_A44[1];                 // +0xA44 sub-manager block start
-    u8 pad_0xA45[0xABC - 0xA45];
-    u8 sub_ABC[1];                 // +0xABC embedded-sub-object block start
-};
-
+// Light scale/clamp constants (.sdata2 pool).
 extern f32 lbl_eu_8066A720;      // light scale clamp constant
 // Light colour base: the low byte becomes the alpha; the RGB bytes are
 // overwritten per slot.
@@ -205,16 +182,7 @@ extern f32 lbl_eu_8066A70C;
 extern f32 lbl_eu_8066A710;
 extern f32 lbl_eu_8066A714;
 
-// GX-typed view of the child-188 region (reloadChildGxLights).
-struct LODLight188 {
-    GXLightObj mSlotData[8];      // 0x00..0x1FF
-    f32        mSlotFloats[8][4]; // 0x200..0x27F
-    s32        field_0x280;       // 0x280 slot count
-    u32        field_0x284;       // 0x284 used-slot mask
-    u32        field_0x288;       // 0x288 done-slot mask
-};
 
-// ---------------------------------------------------------------------------
 // Recovered LODMemMan field layout.  The shared header only exposes opaque
 // padding up to 0x7c plus the 0xabc embedded sub-object, so the fields used
 // by the targets below are described here and the object is viewed through
@@ -363,27 +331,7 @@ struct LODElem48Full {
     u8  mPad_48[4];             // 0x48..0x4b trailing pad (0x48 stride)
 };
 
-// Manager world-position view at LODMemMan+0x20 (floats consumed by the
-// updateElementsByDesc culling math).
-struct LODMgrPosView {
-    u8  mPad_00[0x20];
-    f32 mPos[3];               // 0x20..0x28 manager position
-    f32 qPos[3];               // 0x2C..0x34 plane origin
-    f32 field_0x38;            // 0x38 plane distance scale
-    u8  mPad_3C[0x74 - 0x3C];
-    f32 field_0x74;            // 0x74 inner-radius factor
-    f32 field_0x78;            // 0x78 outer-radius factor
-};
 
-// 0xc-byte g3d object slot (destroyAllG3dObjects destroys the pointer at +0x0;
-// teardownSubEntries uses the flag word at +0xA).
-struct LODG3dSlot {
-    nw4r::g3d::G3dObj* field_0x0;  // 0x00 g3d object
-    u8  mPad_04[0xA - 0x4];        // 0x04..0x09
-    u16 mFlags;                    // 0x0A (bit 0: busy, bit 2: done)
-};
-
-// Vtable mirror for the g3d manager object (LODMemMan+0x0).  MWCC vtables
 // carry an 8-byte RTTI header, so declared slot 0 sits at vtable+0x8 and the
 // slot destroyAllG3dObjects dispatches through (vtable+0x3C) is the 14th virtual.
 struct LODG3dMgrVt {
@@ -447,7 +395,8 @@ struct LODPoolBlock {
     LODPoolBlock* mNext;     // 0x08
     u32 field_0xC;           // 0x0C
     u32 mId;                 // 0x10
-    u8  mPad_14[0x20 - 0x14];// 0x14..0x1F
+    u32 field_0x14;          // 0x14 block size (acquireResFileSlot checks alignment)
+    u8  mPad_18[0x20 - 0x18];// 0x18..0x1F
 };
 
 // Buffer at field_0x4: 0x74-byte header followed by a per-id u32 table
@@ -469,49 +418,13 @@ struct LODBoxElem {
     u32 field_0x1C;          // 0x1C u16-group offset in shared buffer
 };
 
-// 3-float box view at LODMemMan+0x20 (updateBoxElement compares element boxes
-// against this degenerate box).
-struct LODBoxCenterView {
-    u8  mPad_00[0x20];       // 0x00..0x1f
-    f32 mBox_20[3];          // 0x20..0x2b
-};
 
-// 0xC-byte child entry (array at base+0xC, teardownSubEntries second loop).
-struct LODChildEntry {
-    u8* field_0x0;           // 0x00 child object
-    u16 field_0x4;           // 0x04
-    u16 field_0x6;           // 0x06 flag bits (bit 0: active)
-    u8  mPad_08[0xC - 0x8];  // 0x08..0x0B
-};
-
-// View of the child-entry array at base+0xC.
-struct LODChildEntryView {
-    u8 mPad_00[0xC];         // 0x00..0x0B
-    LODChildEntry mEntries[16];  // 0x0C..0xCB
-};
-
-// setLodScaleAndRefresh: the shared buffer at +0x5C carries an element count at +0x34.
-struct LODSharedBufView {
-    u8  mPad_00[0x34];       // 0x00..0x33
-    u32 mCount_34;           // 0x34 element count
-};
-
-// View descriptor passed to the per-frame update functions; +0x18/+0x1C are
 // offsets into the shared buffer at field_0x5C (a u16 count followed by u16
 // data).
 struct LODViewDesc {
     u8  mPad_00[0x18];       // 0x00..0x17
     u32 field_0x18;          // 0x18 u16-group offset in shared buffer
     u32 field_0x1C;          // 0x1C u16-group offset in shared buffer
-};
-
-// Ctor-only view of the g3d-slot region: each 0xc-byte slot is three words.
-// The +0xC8 region holds 17 slots (0xc8..0x193, the 17th slot is the +0x188
-// word group); the teardownSubEntries slot array sits at +0x194 (16 slots).
-struct LODCtorSlot {
-    u32 field_0x0;   // 0x00
-    u32 field_0x4;   // 0x04
-    u32 field_0x8;   // 0x08
 };
 
 // +0xa44 sub-manager view.  The ctor sets the vtable, the first four words,
@@ -526,17 +439,6 @@ struct LODSubA44 {
     u32  field_0x30;           // 0x30
     char mStr_34[0x74 - 0x34]; // 0x34..0x73 name string
     u32  field_0x74;           // 0x74 strlen of the name
-};
-
-// Ctor-view overlay of the region at +0xC8..+0x254 and the +0xa44 sub-manager.
-// Casting `this` to this view lets MWCC fold every offset into the this-base
-// (retail emits `stw rX, 0xcc(r3)` etc. directly against r3).
-struct LODCtorView {
-    u8          mPad_00[0xC8];       // 0x00..0xC7
-    LODCtorSlot mSlotsA[17];          // 0xC8..0x193
-    LODCtorSlot mSlotsB[16];          // 0x194..0x253
-    u8          mPad_254[0xA44 - 0x254];
-    LODSubA44   mSub;                 // 0xA44..0xABB
 };
 
 // 0xc-byte ResFile slot used by acquireResFileSlot: 16 entries at (self+0x8).
@@ -621,13 +523,6 @@ struct LODMemManLayout {
     /* 0x1CDC */ f32 field_0x1CDC;            // shared LOD distance scale
 };
 
-// Sub-manager pointer at +0xF0, which sits inside the 0xc8 slot range, is
-// accessed through its own overlay.
-struct LODSubMgrView {
-    u8 mPad_00[0xF0];
-    LOD::UnkClass_8046D144* field_0xF0;               // 0xf0 sub-manager
-};
-
 // ---------------------------------------------------------------------------
 // Retail-named imports for the LOD targets.  The Fv-mangled callees that
 // receive extra args in retail are declared with the exact mangled names.
@@ -683,26 +578,10 @@ extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(
 
 // TU-internal sub-manager callbacks (definitions later in this file).
 // driveArchiveLoadState: now a real LOD::LODMemMan member (declaration in the header).
-extern "C" void notifyG3dManager__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CScn* scene);
-extern "C" void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self);
-extern "C" void resetChildMasks__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self);
-extern "C" void resetLightColor__Q23LOD17UnkClass_8046D144Fv(LOD::UnkClass_8046D144* self);
+// TU-internal sub-manager callback (definition later in this file).
+// driveArchiveLoadState: now a real LOD::LODMemMan member (declaration in the header).
 extern "C" void markPoolBlockReady__Q23LOD9LODMemManFv(LODPoolBlock* list, u32 target);
 extern "C" void initElementList__Q23LOD9LODMemManFv(LODElemList* head, u32 arg);
-
-// Reset-tail view: the per-frame scratch words at +0x3C..+0x50 and the
-// +0x84 scale slot cleared by resetAndReload.
-struct LODResetView {
-    u8  mPad_00[0x3C];
-    u32 field_0x3C;
-    u32 field_0x40;
-    u32 field_0x44;
-    u32 field_0x48;
-    u32 field_0x4C;
-    u32 field_0x50;
-    u8  mPad_54[0x84 - 0x54];
-    f32 field_0x84;
-};
 
 // Shared-buffer view for updateLodTick: the cache-manager offset lives at
 // +0x58 of the shared buffer.
@@ -711,29 +590,6 @@ struct LODCacheBuf58 {
     u32 field_0x58;
 };
 
-// initSceneGroup constant-init slot views: the +0xC region holds 16 12-byte
-// records {0, (s16)-1, 0, pad}; the +0xC8 region holds 16 12-byte records
-// {0, -1, 0, 0}.
-struct LODSlotC {
-    u32 field_00;
-    s32 field_04;
-    s16 field_08;
-    s16 field_0A;
-};
-struct LODSlot8 {
-    u32 field_00;
-    s16 field_04;
-    s16 field_06;
-    u8  mPad_08[4];
-};
-struct LODInitViewC8 {
-    u8       mPad_00[0xC8];
-    LODSlotC mSlots[16];
-};
-struct LODInitView0C {
-    u8       mPad_00[0xC];
-    LODSlot8 mSlots[16];
-};
 // ResFile handle overlay at LODMemMan+0x04.
 struct LODResView {
     u8                 mPad_00[4];
@@ -755,49 +611,26 @@ void LOD::UnkClass_8046D144::updateSubObject() {
 // --- Remaining harness stubs (empty bodies) ---
 
 // ---------------------------------------------------------------------------
-// LODMemMan ctor.  Zeroes the g3d-slot region (+0xC8, 17 slots) and the
-// teardownSubEntries slot array (+0x194, 16 slots): slot[0] of the +0xC8 region
-// keeps its first word, slots[1..16] get words 0/4 cleared (the word-0 walk
-// is a pointer loop that MWCC keeps as a real loop; the word-4 and +0x194
-// walks unroll), then the +0xa44 sub-manager's first fields / name string are
-// seeded (MWCC stores its vtable from the inlined LODMemMan ctor) and the
-// embedded UnkClass_8046A530 / resetFrameFields are run.
+// LOD manager ctor.  The embedded g3d sub-manager and the LODMemMan seed
+// themselves; the body seeds the sub-manager's name string (MWCC stores the
+// LODMemMan vtable from its own ctor) and runs the embedded
+// UnkClass_8046A530 / resetFrameFields.
 // ---------------------------------------------------------------------------
-LOD::UnkClass_8046D144::UnkClass_8046D144() {
-    LODCtorView* cv = (LODCtorView*)this;
-    LODMemManLayout* l = (LODMemManLayout*)this;
-    LODCtorSlot* s = &cv->mSlotsA[1];
-    LODCtorSlot* end = &cv->mSlotsA[17];
-    l->field_0x0 = 0;
+LOD::UnkClass_8046D144::UnkClass_8046D144() : field_0x0(0) {
+    LODSubA44* sub = (LODSubA44*)&mMemMan;
 
-    // Clear the g3d-slot region: slot[0] of the +0xC8 array keeps its first
-    // word; slots[1..16] get words 0/4 cleared (the word-0 walk is a pointer
-    // do-while that MWCC keeps rolled; the word-4 walk and the +0x194 array
-    // unroll).
-    cv->mSlotsA[0].field_0x8 = 0;
-    do {
-        s->field_0x0 = 0;
-    } while (++s < end);
-    cv->mSlotsA[0].field_0x4 = 0;
-    for (int i = 1; i < 17; i++) cv->mSlotsA[i].field_0x4 = 0;
-    for (int i = 0; i < 16; i++) cv->mSlotsB[i].field_0x0 = 0;
-
-    // +0xa44 sub-manager: first fields and the name string (the vtable is
-    // stored by the compiler from the LODMemMan ctor).
-    cv->mSub.mStr_34[0] = 0;
-    cv->mSub.field_0x74 = 0;
-    cv->mSub.field_0x4 = 0;
-    cv->mSub.field_0x8 = 0;
-    cv->mSub.field_0x20 = 0;
-    cv->mSub.field_0x30 = 0;
-    cv->mSub.field_0x74 = strlen((const char*)&lbl_eu_80663834);
-    strcpy(cv->mSub.mStr_34, (const char*)&lbl_eu_80663834);
+    sub->mStr_34[0] = 0;
+    sub->field_0x74 = 0;
+    sub->field_0x4 = 0;
+    sub->field_0x8 = 0;
+    sub->field_0x20 = 0;
+    sub->field_0x30 = 0;
+    sub->field_0x74 = strlen((const char*)&lbl_eu_80663834);
+    strcpy(sub->mStr_34, (const char*)&lbl_eu_80663834);
 
     mSubObject.initLod();
     resetFrameFields();
 }
-
-LOD::LODMemMan::~LODMemMan() {}
 
 // Address-anchored retail symbol __dt__8046A584 (defined in
 // lod/code_8046A530.cpp); C linkage keeps the verbatim retail reloc name.
@@ -809,7 +642,6 @@ extern "C" void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc);
 // runs the embedded sub-object destructor (+0xABC) and frees the instance
 // when the deleting flag is positive.
 LOD::UnkClass_8046D144::~UnkClass_8046D144() {
-    LODMemManSubView* sub = (LODMemManSubView*)this;
     LODMemManLayout* l = (LODMemManLayout*)this;
     if (l->field_0xA8 != 0) {
         nw4r::g3d::G3dObj* group = getScnGroupChild((CScn*)l->mView_1C, 7);
@@ -829,12 +661,12 @@ LOD::UnkClass_8046D144::~UnkClass_8046D144() {
     }
     l->mView_1C = 0;
     l->field_0x5C = 0;
-    notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC, 0);
-    destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC);
-    ((LOD::LODMemMan*)sub->sub_A44)->resetManagerState();
+    mG3dMgr.notifyG3dManager(0);
+    mG3dMgr.destroyAllG3dObjects();
+    mMemMan.resetManagerState();
     // Keep only bit 0x800 (bit 20) of the enable-flag word.
     l->field_0x6C &= 0x800u;
-    __dt__8046A584((LOD::UnkClass_8046A530*)sub->sub_ABC, -1);
+    __dt__8046A584(&mSubObject, -1);
 }
 
 // Cache manager helper called with (shared buffer base + offset at +0x58).
@@ -918,13 +750,12 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     field_0xB0 = 0;
     field_0x10 = 0;
     field_0x14 = 0;
-    LODResetView* rv = (LODResetView*)this;
-    rv->field_0x44 = 0;
-    rv->field_0x40 = 0;
-    rv->field_0x3C = 0;
-    rv->field_0x50 = 0;
-    rv->field_0x4C = 0;
-    rv->field_0x48 = 0;
+    field_0x44 = 0;
+    field_0x40 = 0;
+    field_0x3C = 0;
+    field_0x50 = 0;
+    field_0x4C = 0;
+    field_0x48 = 0;
     field_0x5C = buf;
 
     // Sub-tables are buffer-relative.
@@ -933,13 +764,9 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     field_0x98 = (LODRec1C*)(buf + bh->field_0x64);
 
     if (bh->field_0xC != 0) {
-        initSceneGroup__Q23LOD9LODMemManFv(
-            (LOD::UnkClass_8046D144*)((u8*)this + 0xCC), buf + bh->field_0xC,
-            (CScn*)mView_1C);
+        mG3dMgr.initSceneGroup(buf + bh->field_0xC, (CScn*)mView_1C);
     } else {
-        initSceneGroup__Q23LOD9LODMemManFv(
-            (LOD::UnkClass_8046D144*)((u8*)this + 0xCC), (u8*)0,
-            (CScn*)mView_1C);
+        mG3dMgr.initSceneGroup((u8*)0, (CScn*)mView_1C);
     }
 
     // Descriptor element-count sum (accumulated in r6, fed to allocSecondaryBuffers).
@@ -983,11 +810,11 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     // Allocate the secondary buffers: count20 elements, count18 0x18-byte
     // records, no 0x48/4-byte blocks yet.  (sum, accArg) ride in as the
     // middle u32 arguments.
-    ((LOD::LODMemMan*)((u8*)this + 0xA44))->allocSecondaryBuffers(
+    this->mMemMan.allocSecondaryBuffers(
         bh->field_0x34, bh->field_0x1C,
         total, accArg, (u8**)&field_0x4, (u8**)&field_0x8,
         (u8**)&field_0xC, (u8**)&field_0xB0);
-    ((LOD::LODMemMan*)((u8*)this + 0xA44))->adjustBufferOffsets(
+    this->mMemMan.adjustBufferOffsets(
         bh->field_0x34, bh->field_0x1C, bh->field_0x14);
 
     // Per-element init pass.  The float constants are scoped to this pass:
@@ -1098,7 +925,7 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     ((LODG3dMgrVt*)grp2)->vf0B(((LODMgrObj*)grp2)->field_0xE4, field_0xAC);
 
     initLodState__Q23LOD17UnkClass_8046A530Fv(
-        (LOD::UnkClass_8046A530*)((u8*)this + 0xABC));
+        (LOD::UnkClass_8046A530*)&this->mSubObject);
 
     // Tail: reset the distance/scale state and enable flags 1|2.  Retail
     // reloads both constants here (the loop-scoped copies have died).
@@ -1137,32 +964,31 @@ bool LOD::UnkClass_8046D144::resetAndReload(u32 arg, u8* view) {
             field_0xAC->Destroy();
             field_0xAC = 0;
         }
-        notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)this + 0xCC), (CScn*)mView_1C);
-        ((LOD::LODMemMan*)((u8*)this + 0xA44))->cancelFileAndRelease();
+        this->mG3dMgr.notifyG3dManager((CScn*)mView_1C);
+        this->mMemMan.cancelFileAndRelease();
         mView_1C = 0;
         field_0x5C = 0;
         // Clear flag bits 1,2,7,12,13 (retail mask 0xCF79), then set 0x8000.
         field_0x6C = (field_0x6C & ~0x3086u) | 0x8000u;
     }
     u32 flags = field_0x6C | 1;
-    LODResetView* rv = (LODResetView*)this;
     field_0x5C = 0;
     field_0xA8 = 0;
     field_0xAC = 0;
     field_0xB0 = 0;
-    rv->field_0x84 = lbl_eu_8066A6D8;
-    rv->field_0x44 = 0;
-    rv->field_0x40 = 0;
-    rv->field_0x3C = 0;
-    rv->field_0x50 = 0;
-    rv->field_0x4C = 0;
-    rv->field_0x48 = 0;
+    field_0x84 = lbl_eu_8066A6D8;
+    field_0x44 = 0;
+    field_0x40 = 0;
+    field_0x3C = 0;
+    field_0x50 = 0;
+    field_0x4C = 0;
+    field_0x48 = 0;
     mView_1C = view;
     field_0x6C = flags;
     // Retail passes the embedded archive sub-object (this+0xA44), not the base
     // instance (asm: `addi r3, r29, 2628` before the call), matching the
     // cancelFileAndRelease call above.
-    ((LOD::LODMemMan*)((u8*)this + 0xA44))->setArchiveReadyFlag();
+    this->mMemMan.setArchiveReadyFlag();
     rebuildFromSharedBuffer(arg);
     return true;
 }
@@ -1206,13 +1032,11 @@ void LOD::UnkClass_8046D144::resetFrameFields() {
 // call instead of hoisting into a saved register).
 // ---------------------------------------------------------------------------
 void LOD::UnkClass_8046D144::clearManagers() {
-    LOD::UnkClass_8046D144* self = this;
-    LODMemManSubView* sub = (LODMemManSubView*)self;
     mView_1C = 0;
     field_0x5C = 0;
-    notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC, 0);
-    destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)sub->sub_CC);
-    ((LOD::LODMemMan*)sub->sub_A44)->resetManagerState();
+    mG3dMgr.notifyG3dManager(0);
+    mG3dMgr.destroyAllG3dObjects();
+    mMemMan.resetManagerState();
     field_0x6C &= 0x800;
 }
 
@@ -1242,10 +1066,10 @@ void LOD::UnkClass_8046D144::teardownG3dObjects(int param) {
         l->field_0xAC->Destroy();
         l->field_0xAC = 0;
     }
-    notifyG3dManager__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((u8*)self + 0xCC), (CScn*)l->mView_1C);
-    ((LOD::LODMemMan*)((u8*)self + 0xA44))->cancelFileAndRelease();
+    self->mG3dMgr.notifyG3dManager((CScn*)l->mView_1C);
+    self->mMemMan.cancelFileAndRelease();
     if (param) {
-        ((LOD::LODMemMan*)((u8*)l + 0xA44))->clearFlagAndResetName();
+        this->mMemMan.clearFlagAndResetName();
     }
     l->mView_1C = 0;
     l->field_0x5C = 0;
@@ -1274,7 +1098,7 @@ void LOD::UnkClass_8046D144::updateLodTick() {
         // re-mark the reload-request bit (0x10000) if the reset bit survives.
         if (f2 & 0x10000) {
             field_0x6C = f2 & ~0x10000u;
-            destroyAllG3dObjects__Q23LOD9LODMemManFv((LOD::UnkClass_8046D144*)((LODMemManSubView*)self)->sub_CC);
+            self->mG3dMgr.destroyAllG3dObjects();
         }
         u32 g = field_0x6C;
         if (!(g & 0x8000)) return;
@@ -1282,10 +1106,10 @@ void LOD::UnkClass_8046D144::updateLodTick() {
         return;
     }
     // Load pass.
-    ((LOD::LODMemMan*)((LODMemManSubView*)self)->sub_A44)->driveArchiveLoadState();
+    self->mMemMan.driveArchiveLoadState();
     if (!(field_0x6C & 4)) {
-        if (((LODCtorView*)self)->mSub.field_0x20 & 2) {
-            rebuildFromSharedBuffer(((LODCtorView*)this)->mSub.field_0x4);
+        if (((LODSubA44*)&mMemMan)->field_0x20 & 2) {
+            rebuildFromSharedBuffer(((LODSubA44*)&mMemMan)->field_0x4);
         } else {
             return;
         }
@@ -1322,7 +1146,7 @@ void LOD::UnkClass_8046D144::updateLodTick() {
         }
         if ((field_0x6C & 0x10) == 0) {
             isLodActive__Q23LOD17UnkClass_8046A530Fv(
-                (LOD::UnkClass_8046A530*)((LODMemManSubView*)self)->sub_ABC, field_0x70, field_0x80);
+                (LOD::UnkClass_8046A530*)&self->mSubObject, field_0x70, field_0x80);
         }
     }
 }
@@ -1347,16 +1171,6 @@ extern const char lbl_eu_80526300[];  // Warning message
 struct DD9Chans {
     u8 mPad00[0xC0];
     f32 c[3];                // 0xC0, 0xC4, 0xC8
-};
-
-// Element view used by updateLodLayersForView's chain walk: next link at +0x14,
-// type-descriptor index at +0x18, own index at +0x1A; 0x20-byte stride.
-struct DD9ElemView {
-    u8  mPad00[0x14];
-    u16 mNext14;             // 0x14 next element index
-    u8  mPad16[0x18 - 0x16];
-    s16 mType18;             // 0x18 index into the 0x18-stride descriptor table
-    s16 mIdx1A;              // 0x1a own element index
 };
 
 // ---------------------------------------------------------------------------
@@ -1394,10 +1208,9 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     field_0x70 = 0;
     u8* buf = field_0x5C;
     const f32* vf = (const f32*)p;
-    LODMgrPosView* pv = (LODMgrPosView*)this;
-    pv->mPos[0] = vf[3];
-    pv->mPos[1] = vf[7];
-    pv->mPos[2] = vf[11];
+    field_0x20 = vf[3];
+    field_0x24 = vf[7];
+    field_0x28 = vf[11];
     Mtx m;
     // Load every view word before storing: mirrors the retail scheduler and
     // raises register pressure onto the callee-saved set.
@@ -1422,18 +1235,18 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     ((f32*)m)[3] = lbl_eu_8066A6C0;
     ((f32*)m)[7] = lbl_eu_8066A6C0;
     ((f32*)m)[11] = lbl_eu_8066A6C0;
-    pv->qPos[0] = lbl_eu_8066A6C0;
-    pv->qPos[1] = lbl_eu_8066A6C0;
-    pv->qPos[2] = lbl_eu_8066A6F0;
-    PSMTXMultVec(m, (Vec*)pv->qPos, (Vec*)pv->qPos);
+    field_0x2C = lbl_eu_8066A6C0;
+    field_0x30 = lbl_eu_8066A6C0;
+    field_0x34 = lbl_eu_8066A6F0;
+    PSMTXMultVec(m, (Vec*)&field_0x2C, (Vec*)&field_0x2C);
 
-    f32 lenSq = pv->qPos[0] * pv->qPos[0] + pv->qPos[1] * pv->qPos[1]
-              + pv->qPos[2] * pv->qPos[2];
-    pv->field_0x38 = lbl_eu_8066A6D8 / lenSq;
+    f32 lenSq = field_0x2C * field_0x2C + field_0x30 * field_0x30
+              + field_0x34 * field_0x34;
+    field_0x38 = lbl_eu_8066A6D8 / lenSq;
 
     f32 ang = ((scale * ml::deg2rad) * lbl_eu_8066A6F4) * lbl_eu_8066A6F8;
     f32 s = nw4r::math::SinFIdx(ang);
-    pv->field_0x74 = lbl_eu_8066A6FC * s;
+    field_0x74 = lbl_eu_8066A6FC * s;
     if (s - scale > 0.0f) {
         f32 tv = tan((((s - scale) * ml::deg2rad) * lbl_eu_8066A6F8)
                      * lbl_eu_8066A704);
@@ -1444,12 +1257,12 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
         }
         f32 q2 = t * t + lbl_eu_8066A6D8;
         if (q2 > 0.0f) {
-            pv->field_0x78 = nw4r::math::FrSqrt(q2) * q2;
+            field_0x78 = nw4r::math::FrSqrt(q2) * q2;
         } else {
-            pv->field_0x78 = lbl_eu_8066A6C0;
+            field_0x78 = lbl_eu_8066A6C0;
         }
     } else {
-        pv->field_0x78 = lbl_eu_8066A708;
+        field_0x78 = lbl_eu_8066A708;
     }
 
     LOLDBufHdr* bh = (LOLDBufHdr*)buf;
@@ -1457,19 +1270,17 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     field_0x64 = (u32*)Coli_GetBitTable_5A68(buf);
     memset(field_0x64, 0, (((mCount_18 >> 5) + 1) << 2));
     memset(field_0x8, 0, bh->field_0x1C * 0x18);
-    LODResetView* rv = (LODResetView*)this;
-    rv->field_0x44 = 0;
-    rv->field_0x40 = 0;
-    rv->field_0x3C = 0;
-    rv->field_0x50 = 0;
-    rv->field_0x4C = 0;
-    rv->field_0x48 = 0;
+    field_0x44 = 0;
+    field_0x40 = 0;
+    field_0x3C = 0;
+    field_0x50 = 0;
+    field_0x4C = 0;
+    field_0x48 = 0;
     if ((field_0x6C & 0x10) == 0) {
         this->updateViewLayers((LODViewDesc*)field_0x60);
     }
     this->rebuildElementChains(bh->field_0x1C);
-    ((LOD::UnkClass_8046D144*)((u8*)this + 0xCC))->teardownSubEntries(
-        (LOD::UnkClass_8046D144*)((u8*)this + 0xA44));
+    this->mG3dMgr.teardownSubEntries(&this->mMemMan);
     if ((field_0x68 & 0x10) == 0) {
         // Publish the buffer/time bookkeeping globals.
         lbl_eu_806657B8 = ((field_0xB8 * 60) + field_0xBA) * 60
@@ -1480,18 +1291,18 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
 
     // Walk the pending-element chain starting from the node cached at +0x44
     // until an active model is found (then raise the scene gate byte).
-    if (rv->field_0x44 != 0) {
-        int idx = ((DD9ElemView*)rv->field_0x44)->mIdx1A;
+    if (field_0x44 != 0) {
+        int idx = ((LODElem20*)(int)field_0x44)->field_0x1A;
         while (true) {
-            DD9ElemView* e = (DD9ElemView*)((u8*)field_0x4 + idx * 0x20);
-            LODTypeDesc18* td = &field_0x94[e->mType18];
+            LODElem20* e = &field_0x4[idx];
+            LODTypeDesc18* td = &field_0x94[e->field_0x18];
             if (dispatchLodPick__Q23LOD17UnkClass_8046368CFv(td) != 0) {
                 LODScnGate* scn =
                     (LODScnGate*)getScnRootPtr((CScn*)mView_1C);
                 scn->field_0x19 = 1;
                 break;
             }
-            idx = e->mNext14;
+            idx = e->field_0x16;
             if (idx == (int)lbl_eu_80663828[0]) break;
         }
     }
@@ -1559,9 +1370,9 @@ void LOD::UnkClass_8046D144::setLodScaleAndRefresh(float f1) {
     if (field_0x5C == 0) return;
     LODElem48* p48 = field_0x90;
     LODElem20* p20 = field_0x4;
-    LODSharedBufView* buf = (LODSharedBufView*)field_0x5C;
+    LOLDBufHdr* buf = (LOLDBufHdr*)field_0x5C;
     u32 i = 0;
-    while (i < buf->mCount_34) {
+    while (i < buf->field_0x34) {
         if (!(p48->field_0x44 & 8)) goto next;
         if ((field_0x98[p48->field_0x47].field_0x0 & 3) == 0) goto next;
         p20->field_0x1D = ScnData_FwdB80CC(getScnHandle(), p48->field_0x40);
@@ -2126,13 +1937,12 @@ void LOD::UnkClass_8046D144::updateViewLayers(LODViewDesc* view) {
 // updateViewLayers.
 // ---------------------------------------------------------------------------
 void LOD::UnkClass_8046D144::updateBoxElement(LODBoxElem* box) {
-    LODBoxCenterView* bv = (LODBoxCenterView*)this;
-    if (box->mMinX < bv->mBox_20[0]) return;
-    if (box->mMinY < bv->mBox_20[1]) return;
-    if (box->mMinZ < bv->mBox_20[2]) return;
-    if (box->mMaxX > bv->mBox_20[0]) return;
-    if (box->mMaxY > bv->mBox_20[1]) return;
-    if (box->mMaxZ > bv->mBox_20[2]) return;
+    if (box->mMinX < field_0x20) return;
+    if (box->mMinY < field_0x24) return;
+    if (box->mMinZ < field_0x28) return;
+    if (box->mMaxX > field_0x20) return;
+    if (box->mMaxY > field_0x24) return;
+    if (box->mMaxZ > field_0x28) return;
     if (box->field_0x18 != 0) {
         u8* p = field_0x5C;
         p += box->field_0x18;
@@ -2191,7 +2001,7 @@ void LOD::UnkClass_8046D144::refreshGroupFromList(u16 value, u8* data) {
         nw4r::math::VEC3Sub(
             (nw4r::math::VEC3*)&delta,
             (const nw4r::math::VEC3*)&ed->field_0x0,
-            (const nw4r::math::VEC3*)((LODMgrPosView*)this)->mPos);
+            (const nw4r::math::VEC3*)&field_0x20);
         f32 distSq = nw4r::math::VEC3Dot(
             (const nw4r::math::VEC3*)&delta,
             (const nw4r::math::VEC3*)&delta);
@@ -2203,7 +2013,7 @@ void LOD::UnkClass_8046D144::refreshGroupFromList(u16 value, u8* data) {
         if (td->field_0x6 == 1) {
             field_0x64[idx >> 5] |= (1u << (idx & 31));
             bindResMdl__Q23LOD9LODMemManFv(
-                (LOD::UnkClass_8046D144*)((u8*)this + 0xCC), (CScn*)mView_1C,
+                (LOD::UnkClass_8046D144*)&this->mG3dMgr, (CScn*)mView_1C,
                 td->field_0x0, idx, (const f32*)ed);
             continue;
         }
@@ -2211,8 +2021,8 @@ void LOD::UnkClass_8046D144::refreshGroupFromList(u16 value, u8* data) {
         s32 slot;
         if (td->mFlags & 0x8000) {
             if (acquireResFileSlot__Q23LOD9LODMemManFv(
-                    (LOD::UnkClass_8046D144*)((u8*)this + 0xCC),
-                    (LOD::UnkClass_8046D144*)((u8*)this + 0xA44), td->field_0x0,
+                    (LOD::UnkClass_8046D144*)&this->mG3dMgr,
+                    (LOD::UnkClass_8046D144*)&this->mMemMan, td->field_0x0,
                     &slot) == 0) {
                 continue;
             }
@@ -2226,20 +2036,20 @@ void LOD::UnkClass_8046D144::refreshGroupFromList(u16 value, u8* data) {
         f32 rad2 = rad * rad;
         if (rad2 < distSq) {
             f32 proj = nw4r::math::VEC3Dot(
-                (const nw4r::math::VEC3*)((LODMgrPosView*)this)->qPos,
+                (const nw4r::math::VEC3*)&field_0x2C,
                 (const nw4r::math::VEC3*)&delta);
-            f32 g = proj * ((LODMgrPosView*)this)->field_0x38;
+            f32 g = proj * field_0x38;
             if (proj <= cZero && rad2 < g * g) {
                 continue;
             }
             nw4r::math::VEC3Scale(
                 (nw4r::math::VEC3*)&work,
-                (const nw4r::math::VEC3*)((LODMgrPosView*)this)->qPos, g);
+                (const nw4r::math::VEC3*)&field_0x2C, g);
             nw4r::math::VEC3Sub(
                 (nw4r::math::VEC3*)&work,
                 (const nw4r::math::VEC3*)&delta,
                 (const nw4r::math::VEC3*)&work);
-            f32 limv = g * ((LODMgrPosView*)this)->field_0x74 + rad * ((LODMgrPosView*)this)->field_0x78;
+            f32 limv = g * field_0x74 + rad * field_0x78;
             f32 workSq = nw4r::math::VEC3Dot(
                 (const nw4r::math::VEC3*)&work,
                 (const nw4r::math::VEC3*)&work);
@@ -2249,7 +2059,7 @@ void LOD::UnkClass_8046D144::refreshGroupFromList(u16 value, u8* data) {
         }
         if (field_0x68 & 0x10) {
             if (ed->field_0x44 & 1) {
-                if (ScnRes_Notify2Word_E458((u32)((u8*)this + 0x20), (u32)ed)) {
+                if (ScnRes_Notify2Word_E458((u32)&field_0x20, (u32)ed)) {
                     continue;
                 }
             }
@@ -2280,7 +2090,6 @@ void LOD::UnkClass_8046D144::updateElementsByDesc() {
     if (field_0xA4 == 0) {
         return;
     }
-    LODMgrPosView* mp = (LODMgrPosView*)this;
     const f32 cZero = lbl_eu_8066A6C0;
     const f32 cAng = ml::deg2rad;
     const f32 cFIdx = lbl_eu_8066A6F8;
@@ -2303,9 +2112,9 @@ void LOD::UnkClass_8046D144::updateElementsByDesc() {
 
             // Delta between the output position and the manager position.
             LODVec3f delta;
-            delta.x = out->mPos[0] - mp->mPos[0];
-            delta.y = out->mPos[1] - mp->mPos[1];
-            delta.z = out->mPos[2] - mp->mPos[2];
+            delta.x = out->mPos[0] - field_0x20;
+            delta.y = out->mPos[1] - field_0x24;
+            delta.z = out->mPos[2] - field_0x28;
             f32 distSq = delta.x * delta.x + delta.y * delta.y +
                          delta.z * delta.z;
 
@@ -2322,14 +2131,14 @@ void LOD::UnkClass_8046D144::updateElementsByDesc() {
                 if (tbl->field_0x6 == 1) {
                     // Direct model reference.
                     bindResMdl__Q23LOD9LODMemManFv(
-                        (LOD::UnkClass_8046D144*)((u8*)this + 0xCC), (CScn*)mView_1C,
+                        (LOD::UnkClass_8046D144*)&this->mG3dMgr, (CScn*)mView_1C,
                         tbl->field_0x0, idx, (const f32*)ed);
                     goto next_elem;
                 } else if (tbl->mFlags & 0x8000) {
                     // ResFile slot path; on failure keep scanning types.
                     if (acquireResFileSlot__Q23LOD9LODMemManFv(
-                            (LOD::UnkClass_8046D144*)((u8*)this + 0xCC),
-                            (LOD::UnkClass_8046D144*)((u8*)this + 0xA44), tbl->field_0x0,
+                            (LOD::UnkClass_8046D144*)&this->mG3dMgr,
+                            (LOD::UnkClass_8046D144*)&this->mMemMan, tbl->field_0x0,
                             &slot) == 0) {
                         continue;
                     }
@@ -2344,16 +2153,16 @@ void LOD::UnkClass_8046D144::updateElementsByDesc() {
                 f32 rad = ed->mMtx[11];
                 f32 rad2 = rad * rad;
                 if (rad2 < distSq) {
-                    f32 proj = mp->qPos[0] * delta.x + mp->qPos[1] * delta.y +
-                               mp->qPos[2] * delta.z;
-                    f32 g = proj * mp->field_0x38;
+                    f32 proj = field_0x2C * delta.x + field_0x30 * delta.y +
+                               field_0x34 * delta.z;
+                    f32 g = proj * field_0x38;
                     if (proj <= cZero && rad2 < g * g) {
                         continue;
                     }
-                    work.x = delta.x - mp->qPos[0] * g;
-                    work.y = delta.y - mp->qPos[1] * g;
-                    work.z = delta.z - mp->qPos[2] * g;
-                    f32 limv = g * mp->field_0x74 + rad * mp->field_0x78;
+                    work.x = delta.x - field_0x2C * g;
+                    work.y = delta.y - field_0x30 * g;
+                    work.z = delta.z - field_0x34 * g;
+                    f32 limv = g * field_0x74 + rad * field_0x78;
                     if (LODVecLenSq(&work) > limv * limv) {
                         continue;
                     }
@@ -2463,7 +2272,7 @@ void LOD::UnkClass_8046D144::refreshPaletteBinding() {
     // The item-pool sub-list lives behind the scene's +0x60 pointer.
     LODSceneNode* anchor =
         ((LODSceneList*)CScnItemPool_lookupSubPool(
-             ((LODScenePoolView*)mView_1C)->mPoolList, 1))->mAnchor;
+             ((CScn*)mView_1C)->mItemPool, 1))->mAnchor;
     for (LODSceneNode* n = anchor->mNext; n != anchor; n = n->mNext) {
         if ((u8*)n->mObj != field_0xB4) continue;
         notFound = false;
@@ -2993,8 +2802,8 @@ void LOD::UnkClass_8046D144::bindLodChildren(const f32* matrixBlock) {
     Mtx mtx;
     *(nw4r::math::MTX34*)mtx = *(const nw4r::math::MTX34*)matrixBlock;
     PSMTXInverse(mtx, mtx);
-    resetChildMasks__Q23LOD17UnkClass_8046D144Fv((LOD::UnkClass_8046D144*)((u8*)this + 0xCC));
-    resetLightColor__Q23LOD17UnkClass_8046D144Fv((LOD::UnkClass_8046D144*)((u8*)this + 0xCC));
+    mG3dMgr.resetChildMasks();
+    mG3dMgr.resetLightColor();
 
     // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
     int* flagA = lbl_eu_80658368;
@@ -3014,13 +2823,17 @@ void LOD::UnkClass_8046D144::bindLodChildren(const f32* matrixBlock) {
         while (i < count) {
             if (d->field_0x30 & 0x10000) {
                 registerChildSlot__Q23LOD9LODMemManFv(
-                    (LOD::UnkClass_8046D144*)((u8*)this + 0xCC), d, (u8*)mtx, g);
+                    (LOD::UnkClass_8046D144*)&this->mG3dMgr, d, (u8*)mtx, g);
                 seen++;
             }
             i++;
             d++;
         }
-        *flagB = seen != 0 ? 2 : 0;
+        if (seen != 0) {
+            *flagB = 2;
+        } else {
+            *flagB = 0;
+        }
         grp += 4;
         flagB++;
         flagA++;
@@ -3036,7 +2849,7 @@ void LOD::UnkClass_8046D144::bindLodChildren(const f32* matrixBlock) {
 void LOD::UnkClass_8046D144::dispatchViewUpdate(LOD::UnkClass_8046D144* self, int task) {
     CView* view = CView::getCurrentView();
     LODViewFrame* frame = Scn_HasCamItem(Scn_GetCurrentScene(), view);
-    LOD::UnkClass_8046D144* sub = ((LODSubMgrView*)self)->field_0xF0;
+    LOD::UnkClass_8046D144* sub = (LOD::UnkClass_8046D144*)self->mG3dMgr.mChildren[2].mBlock;
     if (task != 0) {
         if (((LODScnGate*)getScnRootPtr(Scn_GetCurrentScene()))->field_0x19 == 0) {
             sub->updateLodLayersForView(frame->field_0x9C, frame->field_0x1E0);
@@ -3061,7 +2874,7 @@ extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(nw4r::g3d::ScnProc* proc, i
         CView* view = CView::getCurrentView();
         CScn* scn3 = Scn_GetCurrentScene();
         LODViewFrame* vf = Scn_HasCamItem(scn3, view);
-        LOD::UnkClass_8046D144* sub = ((LODMemManSubView*)proc)->ptr_F0;
+        LOD::UnkClass_8046D144* sub = (LOD::UnkClass_8046D144*)((LODScnProcUD*)proc)->mUserData;
         updateSubViewFrame__Q23LOD17UnkClass_8046D144FPUci(sub, vf->field_0x9C, param);
     }
 }
@@ -3069,18 +2882,14 @@ extern "C" void handleViewUpdate__Q23LOD9LODMemManFv(nw4r::g3d::ScnProc* proc, i
 // ---------------------------------------------------------------------------
 // initSceneGroup: create the scene group (16 children max) for this manager,
 // attach it to the scene's index-7 group, optionally bind the aligned ResFile
-// passed in, and clear the per-slot bookkeeping arrays at +0xC (23 records)
-// and +0xC8 (17 records).
+// passed in, and clear the g3d object slots and child-manager slots.
 // ---------------------------------------------------------------------------
-extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
-    LOD::UnkClass_8046D144* self, u8* resBuf, CScn* scene) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
-    LODResView* rv = (LODResView*)self;
+void LOD::LODG3dMgr::initSceneGroup(u8* resBuf, CScn* scene) {
     // getScnRoot45C fetches the scene's allocator; its result feeds Construct.
     MEMAllocator* alloc = getScnRoot45C(scene);
     u32 size;
     nw4r::g3d::ScnGroup* grp = nw4r::g3d::ScnGroup::Construct(alloc, &size, 0x10);
-    l->field_0x0 = grp;
+    mGroup = grp;
     nw4r::g3d::G3dObj* group = getScnGroupChild(scene, 7);
     ((LODG3dMgrVt*)group)->vf0B(((LODMgrObj*)group)->field_0xE4, grp);
     if (resBuf != 0) {
@@ -3088,25 +2897,22 @@ extern "C" void initSceneGroup__Q23LOD9LODMemManFv(
         if ((u32)resBuf & 0x1F) {
             nw4r::db::Panic(lbl_eu_8052637C, 60, lbl_eu_80526354);
         }
-        rv->mResFile = nw4r::g3d::ResFile(resBuf);
-        rv->mResFile.Init();
-        rv->mResFile.Bind(rv->mResFile);
+        mResFile = nw4r::g3d::ResFile(resBuf);
+        mResFile.Init();
+        mResFile.Bind(mResFile);
     }
-    // Clear the per-slot bookkeeping records (retail unrolls these walks
-    // into straight-line stores): 16 12-byte records at +0xC8, then 16 at
-    // +0xC.
-    LODInitViewC8* ivA = (LODInitViewC8*)self;
-    LODInitView0C* ivB = (LODInitView0C*)self;
+    // Clear the per-slot bookkeeping records (retail unrolls both walks into
+    // straight-line stores).
     for (int i = 0; i < 16; i++) {
-        ivA->mSlots[i].field_00 = 0;
-        ivA->mSlots[i].field_04 = -1;
-        ivA->mSlots[i].field_08 = 0;
-        ivA->mSlots[i].field_0A = 0;
+        mSlots[i].mObject = 0;
+        mSlots[i].mId = -1;
+        mSlots[i].field_0x08 = 0;
+        mSlots[i].mFlags = 0;
     }
     for (int i = 0; i < 16; i++) {
-        ivB->mSlots[i].field_00 = 0;
-        ivB->mSlots[i].field_04 = -1;
-        ivB->mSlots[i].field_06 = 0;
+        mChildren[i].mBlock = 0;
+        mChildren[i].mId = -1;
+        mChildren[i].mFlags = 0;
     }
 }
 
@@ -3121,7 +2927,7 @@ extern "C" int bindModelToSlot__Q23LOD9LODMemManFv(
 // 16 bits of packed moved into the low half, OR'd with the index), its
 // mdlIdx is passed through unchanged, and its mtxSrc is the 5th arg.
 // ---------------------------------------------------------------------------
-__declspec(noinline) int bindResMdl__Q23LOD9LODMemManFv(
+int bindResMdl__Q23LOD9LODMemManFv(
     LOD::UnkClass_8046D144* self, CScn* archive, u32 mdlIdx, u32 packed,
     const f32* mtxSrc)
 {
@@ -3162,7 +2968,7 @@ extern "C" s32 acquireResFileSlot__Q23LOD9LODMemManFv(
                 arr.mSlots[j].field_0x10 = (s16)id;
                 arr.mSlots[j].field_0xC = (u32)block;
                 arr.mSlots[j].field_0x12 |= 1;
-                u32 end = (u32)block + *(u32*)((u8*)block + 0x14);
+                u32 end = (u32)block + ((LODPoolBlock*)block)->field_0x14;
                 if (end & 0x1F) {
                     nw4r::db::Panic(lbl_eu_8052637C, 0x3c, lbl_eu_80526354);
                 }
@@ -3239,50 +3045,31 @@ int bindModelToSlot__Q23LOD9LODMemManFv(
 // ---------------------------------------------------------------------------
 // TU-internal member callee, called through its exact retail symbol so MWCC
 // does not inline its tail-call to mergeElementList (retail keeps a real bl).
-extern "C" void delegateMergeToSub__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u32 target);
+extern "C" void delegateMergeToSub__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 target);
 extern "C" void mergeElementList__Q23LOD9LODMemManFv(LODElem20* list, u32 target);
 
-// Walking views: base pointer starts at `self` and advances one slot (0xC)
-// per iteration while each access reads through the fixed offset window
-// (matches MWCC's folded-displacement pointer walk).
-// Walking views unified under one anchor so both loops share a single base
-// register (MWCC otherwise emits an extra copy for the second view).
-union LODF108CMem {
-    struct {
-        u8         mPad[0xC8];
-        LODG3dSlot mG3d[16];      // 0xC8..
-    } a;
-    struct {
-        u8            mPad[0xC];
-        LODChildEntry mEnt[16];     // 0xC..
-    } b;
-};
-
-void LOD::UnkClass_8046D144::teardownSubEntries(LOD::UnkClass_8046D144* sub) {
-    LOD::UnkClass_8046D144* self = this;
-    LODF108CMem* m = (LODF108CMem*)self;
+void LOD::LODG3dMgr::teardownSubEntries(LOD::LODMemMan* sub) {
     // Scoped zero constants: keeping them as explicit locals pins the zero
     // register materialization to the points retail chooses (hoisted before
     // the g3d walk, re-materialized at the child-walk head).
     u32 zero = 0;
     int i = 0;
     do {
-        if (m->a.mG3d[i].field_0x0 != 0) {
-            u16 flags = m->a.mG3d[i].mFlags;
+        if (mSlots[i].mObject != 0) {
+            u16 flags = mSlots[i].mFlags;
             if (flags & 4) {
-                m->a.mG3d[i].field_0x0->Destroy();
-                m->a.mG3d[i].field_0x0 = (nw4r::g3d::G3dObj*)zero;
-                m->a.mG3d[i].mFlags = zero;
+                mSlots[i].mObject->Destroy();
+                mSlots[i].mObject = (nw4r::g3d::G3dObj*)zero;
+                mSlots[i].mFlags = zero;
             } else {
                 if (!(flags & 1)) {
-                    m->a.mG3d[i].mFlags = flags | 4;
-                    ((LODG3dMgrVt*)((LODMemManLayout*)m)->field_0x0)
-                        ->vf0D(m->a.mG3d[i].field_0x0);
+                    mSlots[i].mFlags = flags | 4;
+                    ((LODG3dMgrVt*)mGroup)->vf0D(mSlots[i].mObject);
                 } else {
-                    m->a.mG3d[i].mFlags = flags & 0xFFFD;
+                    mSlots[i].mFlags = flags & 0xFFFD;
                 }
                 // Both paths clear bit 0 via a reload of the stored halfword.
-                m->a.mG3d[i].mFlags &= ~1;
+                mSlots[i].mFlags &= ~1;
             }
         }
         i++;
@@ -3290,126 +3077,93 @@ void LOD::UnkClass_8046D144::teardownSubEntries(LOD::UnkClass_8046D144* sub) {
 
     u32 zero2 = 0;
     i = 0;
-    LODChildEntryView* ev = (LODChildEntryView*)m;
     do {
-        if (ev->mEntries[i].field_0x0 != 0) {
-            if (!(ev->mEntries[i].field_0x6 & 1)) {
-                delegateMergeToSub__Q23LOD9LODMemManFv(sub, (u32)ev->mEntries[i].field_0x0);
-                ev->mEntries[i].field_0x0 = (u8*)zero2;
-                ev->mEntries[i].field_0x4 = 0xFFFF;
+        if (mChildren[i].mBlock != 0) {
+            if (!(mChildren[i].mFlags & 1)) {
+                delegateMergeToSub__Q23LOD9LODMemManFv(sub, (u32)mChildren[i].mBlock);
+                mChildren[i].mBlock = (u8*)zero2;
+                mChildren[i].mId = -1;
             }
-            ev->mEntries[i].field_0x6 = zero2;
+            mChildren[i].mFlags = zero2;
         }
         i++;
     } while (i < 16);
 }
 
-// ---------------------------------------------------------------------------
-// destroyAllG3dObjects: destroy all 16 g3d object slots (notifying the manager via
-// the vtable+0x3C callback first) and then the manager object itself.
-// ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// destroyAllG3dObjects: notify the g3d manager and destroy every live object slot,
-// then the manager object itself.  Auto-inline is off so callers emit a real
-// `bl destroyAllG3dObjects__...` (retail keeps the call).
-// ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
-void destroyAllG3dObjects__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self) {
-    int i = 0;
-    LODMemManLayout* l = (LODMemManLayout*)self;
-    while (i < 16) {
-        if (l->field_0xC8[i].field_0x0) {
-            ((LODG3dMgrVt*)l->field_0x0)->vf0D(l->field_0xC8[i].field_0x0);
-            l->field_0xC8[i].field_0x0->Destroy();
-            l->field_0xC8[i].field_0x0 = 0;
-        }
-        i++;
-    }
-    if (l->field_0x0) {
-        l->field_0x0->Destroy();
-        l->field_0x0 = 0;
-    }
-}
-#pragma scheduling on
-#pragma pop
-
-// ---------------------------------------------------------------------------
-// notifyG3dManager: notify the g3d manager (vtable+0x3C) about every live object
-// slot, then - when a scene is supplied - remove the manager object from the
-// scene's root group (index 7).  Auto-inline is off so callers emit a real
-// `bl notifyG3dManager__...` (retail keeps the call, and the loop body would
-// otherwise be inlined into teardownG3dObjects / the destructor).
-// ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
-// Walk view: base pointer starts at `this`; each step advances 0xC (one g3d
-// slot) and reads the slot through the fixed +0xC8 window (matches MWCC).
+// Walk view of the slot array: base pointer starts at the object base and each
+// step advances 0xC (one slot) while the access reads through the fixed +0xC8
+// window (the shape MWCC's folded-displacement pointer walk needs).
 struct LODSlotStep {
     u8         mPad[0xC8];
     LODG3dSlot mSlot;
 };
 
-void notifyG3dManager__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, CScn* scene) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
-    if (l->field_0x0 != 0) {
-        LODSlotStep* p = (LODSlotStep*)self;
+// ---------------------------------------------------------------------------
+// destroyAllG3dObjects: notify the g3d manager about every live object slot,
+// destroy the slots and then the manager's own group object.
+// ---------------------------------------------------------------------------
+void LOD::LODG3dMgr::destroyAllG3dObjects() {
+    int i = 0;
+    while (i < 16) {
+        if (mSlots[i].mObject) {
+            ((LODG3dMgrVt*)mGroup)->vf0D(mSlots[i].mObject);
+            mSlots[i].mObject->Destroy();
+            mSlots[i].mObject = 0;
+        }
+        i++;
+    }
+    if (mGroup) {
+        mGroup->Destroy();
+        mGroup = 0;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// notifyG3dManager: notify the g3d manager (vtable+0x3C) about every live
+// object slot, then - when a scene is supplied - remove the manager's group
+// from the scene's index-7 group.
+// ---------------------------------------------------------------------------
+void LOD::LODG3dMgr::notifyG3dManager(CScn* scene) {
+    if (mGroup != 0) {
+        // Walk the slots through a fixed +0xC8 window on a stepping base (the
+        // shape MWCC folds the displacement into).
+        LODSlotStep* p = (LODSlotStep*)this;
         int i = 0;
         do {
-            if (p->mSlot.field_0x0 != 0) {
-                ((LODG3dMgrVt*)l->field_0x0)->vf0D(p->mSlot.field_0x0);
+            if (p->mSlot.mObject != 0) {
+                ((LODG3dMgrVt*)mGroup)->vf0D(p->mSlot.mObject);
             }
             i++;
             p = (LODSlotStep*)((u8*)p + sizeof(LODG3dSlot));
         } while (i < 16);
     }
     if (scene != 0) {
-        if (l->field_0x0 != 0) {
+        if (mGroup != 0) {
             ((nw4r::g3d::ScnGroup*)getScnGroupChild(scene, 7))
-                ->Remove((nw4r::g3d::ScnObj*)l->field_0x0);
+                ->Remove((nw4r::g3d::ScnObj*)mGroup);
         }
     }
 }
-#pragma scheduling on
-#pragma pop
-
-// Mask/light view for resetChildMasks / resetLightColor: three mask-word
-// triples at +0x408/+0x694/+0x920 and the GX light object at +0x92C.
-// Only the starts are significant; spans are explicit pads.
-struct LODChildMaskView {
-    u8 pad_0x000[0x408];
-    u32 mask_408[3];                 // +0x408
-    u8 pad_0x414[0x694 - 0x414];
-    u32 mask_694[3];                 // +0x694
-    u8 pad_0x6A0[0x920 - 0x6A0];
-    u32 mask_920[3];                 // +0x920
-    GXLightObj light_92C;            // +0x92C light colour
-};
 
 // ---------------------------------------------------------------------------
-// resetChildMasks: zero the used-mask words of the three child records
-// (offsets 0x408, 0x694, 0x920 - three words each).
+// resetChildMasks: clear the slot bookkeeping of the three child light
+// records (slot count plus the bound/initialised masks).
 // ---------------------------------------------------------------------------
-void LOD::UnkClass_8046D144::resetChildMasks() {
-    LODChildMaskView* v = (LODChildMaskView*)this;
-    v->mask_408[0] = 0;
-    v->mask_408[1] = 0;
-    v->mask_408[2] = 0;
-    v->mask_694[0] = 0;
-    v->mask_694[1] = 0;
-    v->mask_694[2] = 0;
-    v->mask_920[0] = 0;
-    v->mask_920[1] = 0;
-    v->mask_920[2] = 0;
+void LOD::LODG3dMgr::resetChildMasks() {
+    for (int i = 0; i < 3; i++) {
+        mChildLights[i].mSlotCount = 0;
+        mChildLights[i].mUsedMask = 0;
+        mChildLights[i].mDoneMask = 0;
+    }
 }
 
 // ---------------------------------------------------------------------------
-// resetLightColor: initialise the light colour at +0x92C to zero (retail keeps
-// a stack zero word passed by address).
+// resetLightColor: initialise the shared light colour to zero (retail keeps a
+// stack zero word passed by address).
 // ---------------------------------------------------------------------------
-void LOD::UnkClass_8046D144::resetLightColor() {
+void LOD::LODG3dMgr::resetLightColor() {
     GXColor zero = {0, 0, 0, 0};
-    GXInitLightColor(&((LODChildMaskView*)this)->light_92C, zero);
+    GXInitLightColor(&mLight, zero);
 }
 
 // ---------------------------------------------------------------------------
@@ -3458,7 +3212,7 @@ void registerChildSlot__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODChil
     f32 s;
     LODChildRec* child = (LODChildRec*)((u8*)self + index * 0x28c);
     if (child->field_0x408 >= 8) return;
-    LODChild188* p = (LODChild188*)((u8*)child + 0x188);
+    LODChild188* p = (LODChild188*)child->mSlotData;
     if (desc->field_0x34 == 3) goto kind34;
     if (desc->field_0x34 != 4) goto otherKind;
 kind34:
@@ -3483,15 +3237,13 @@ floatsDone:
 }
 
 // ---------------------------------------------------------------------------
-// setLightScale: store the halfword param into the +0x96C float via the
+// setLightScale: store the halfword param into the base light scale via the
 // GQR5 s16 fast cast (retail psq_l f0, 0(r4), 1, qr5 after an sth spill).
 #pragma push
-#pragma auto_inline off
 #include <revolution/os/OSFastCast.h>
 #pragma pop
-void LOD::UnkClass_8046D144::setLightScale(s16 value) {
-    LOD::UnkClass_8046D144* self = this;
-    ((LODLightMgr*)self)->field_0x96C = __OSs16tof32(&value);
+void LOD::LODG3dMgr::setLightScale(s16 value) {
+    mLightScale = __OSs16tof32(&value);
 }
 
 // ---------------------------------------------------------------------------
@@ -3499,11 +3251,11 @@ void LOD::UnkClass_8046D144::setLightScale(s16 value) {
 // the +0x974 index to -1 (retail store order: 0x970, 0x96C, 0x974).
 // ---------------------------------------------------------------------------
 extern const f32 lbl_eu_8066A718;   // 1.0f pool slot (retail reads it once)
-void LOD::UnkClass_8046D144::initLightScales() {
+void LOD::LODG3dMgr::initLightScales() {
     f32 one = lbl_eu_8066A718;
-    ((LODLightMgr*)this)->field_0x970 = one;
-    ((LODLightMgr*)this)->field_0x96C = one;
-    ((LODLightMgr*)this)->field_0x974 = -1;
+    mStoredLightScale = one;
+    mLightScale = one;
+    mLastChildIdx = -1;
 }
 
 // ---------------------------------------------------------------------------
@@ -3514,36 +3266,34 @@ void LOD::UnkClass_8046D144::initLightScales() {
 // last-bound child id and the stored scale, so an unchanged repeat load is a
 // no-op.
 // ---------------------------------------------------------------------------
-void LOD::UnkClass_8046D144::reloadChildGxLights(int childIdx) {
-    LOD::UnkClass_8046D144* self = this;
+void LOD::LODG3dMgr::reloadChildGxLights(int childIdx) {
     if (childIdx == -1) return;
-    LODChildRec* child = (LODChildRec*)((u8*)self + childIdx * 0x28c);
-    LODLight188* p = (LODLight188*)((u8*)child + 0x188);
-    LODLightMgr* m = (LODLightMgr*)self;
-    if (child->field_0x408 == 0) return;
-    if (childIdx == m->field_0x974) {
-        if (m->field_0x970 == m->field_0x96C) return;
+    LODChildLight* p = &mChildLights[childIdx];
+    if (p->mSlotCount == 0) return;
+    if (childIdx == mLastChildIdx) {
+        if (mStoredLightScale == mLightScale) return;
     } else {
         int i;
-        for (i = 0; i < p->field_0x280; i++) {
-            if (!(p->field_0x284 & (1 << i))) {
-                GXLoadLightObjImm(&p->mSlotData[i], (GXLightID)(1 << i));
+        for (i = 0; i < p->mSlotCount; i++) {
+            if (!(p->mUsedMask & (1 << i))) {
+                GXLoadLightObjImm(&p->mLightObjs[i], (GXLightID)(1 << i));
             }
         }
     }
-    // Retail order: load +0x96C, store +0x974, load limit, store +0x970,
-    // i = 0, load base colour, then the hoisted shift-one.
-    f32 f96c = m->field_0x96C;
-    m->field_0x974 = childIdx;
+    // Retail order: load the base scale, store the child id, load the clamp
+    // limit, store the scale, i = 0, load the base colour, then the hoisted
+    // shift-one.
+    f32 scale = mLightScale;
+    mLastChildIdx = childIdx;
     f32 limit = lbl_eu_8066A720;
-    m->field_0x970 = f96c;
+    mStoredLightScale = scale;
     int i = 0;
     GXColor baseColor = lbl_eu_8066A71C;
-    for (; i < p->field_0x280; i++) {
-        if (p->field_0x284 & (1 << i)) {
-            f32 c0 = m->field_0x96C * (limit * p->mSlotFloats[i][0]);
-            f32 c1 = m->field_0x96C * (limit * p->mSlotFloats[i][1]);
-            f32 c2 = m->field_0x96C * (limit * p->mSlotFloats[i][2]);
+    for (; i < p->mSlotCount; i++) {
+        if (p->mUsedMask & (1 << i)) {
+            f32 c0 = mLightScale * (limit * p->mDirScales[i][0]);
+            f32 c1 = mLightScale * (limit * p->mDirScales[i][1]);
+            f32 c2 = mLightScale * (limit * p->mDirScales[i][2]);
             if (c0 > limit) c0 = limit;
             if (c1 > limit) c1 = limit;
             if (c2 > limit) c2 = limit;
@@ -3551,8 +3301,8 @@ void LOD::UnkClass_8046D144::reloadChildGxLights(int childIdx) {
             color.r = (u8)c0;
             color.g = (u8)c1;
             color.b = (u8)c2;
-            GXInitLightColor(&p->mSlotData[i], color);
-            GXLoadLightObjImm(&p->mSlotData[i], (GXLightID)(1 << i));
+            GXInitLightColor(&p->mLightObjs[i], color);
+            GXLoadLightObjImm(&p->mLightObjs[i], (GXLightID)(1 << i));
         }
     }
 }
@@ -3564,8 +3314,6 @@ void LOD::UnkClass_8046D144::reloadChildGxLights(int childIdx) {
 // block when at least 10240 bytes remain, and a pointer past the header is
 // returned.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" u8* allocatePoolBlock__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 size, int id) {
     LODPoolBlock* cur = self;
     s32 end = (s32)size + 32;
@@ -3592,8 +3340,6 @@ extern "C" u8* allocatePoolBlock__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 siz
     }
     return 0;
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // mergeElementList: walk the element list (head at +0x8) and merge the element
@@ -3602,8 +3348,6 @@ extern "C" u8* allocatePoolBlock__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 siz
 // element's flag bit 0 set) the previous element absorbs the target's +0x4
 // value and skips it via +0x8.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" void mergeElementList__Q23LOD9LODMemManFv(LODElem20* list, u32 target) {
     u32* cur = (u32*)list;
     u32* prev = 0;
@@ -3631,15 +3375,11 @@ extern "C" void mergeElementList__Q23LOD9LODMemManFv(LODElem20* list, u32 target
         cur = (u32*)cur[2];
     }
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // findPoolBlockById: walk the 0x20-strided block list and return the first block
 // whose flag bit 0 is set and whose id matches, or null.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" LODPoolBlock* findPoolBlockById__Q23LOD9LODMemManFv(LODPoolBlock* self, int id) {
     LODPoolBlock* cur = self;
     while (cur) {
@@ -3650,11 +3390,7 @@ extern "C" LODPoolBlock* findPoolBlockById__Q23LOD9LODMemManFv(LODPoolBlock* sel
     }
     return 0;
 }
-#pragma scheduling on
-#pragma pop
 
-#pragma push
-#pragma auto_inline off
 // ---------------------------------------------------------------------------
 // markPoolBlockReady: walk the 0x20-strided block list; the block whose data area
 // (+0x20) matches `target` and whose flag bit 0 is set gets bit 1 set.
@@ -3669,22 +3405,16 @@ extern "C" void markPoolBlockReady__Q23LOD9LODMemManFv(LODPoolBlock* list, u32 t
         cur = cur->mNext;
     }
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // initElementList: initialise the element-list head/tail links and buffer slot.
 // Auto-inline off so callers emit a real tail call (retail `b`).
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 extern "C" void initElementList__Q23LOD9LODMemManFv(LODElemList* head, u32 arg) {
     head->mHead = 0;
     head->mTail = 0;
     head->mField_4 = arg;
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // allocPersistentBuffer: release the shared persistent buffer (lbl_eu_80665830) if
@@ -3809,8 +3539,6 @@ void LOD::LODMemMan::resetManagerState() {
 // (mask 0xFFFCFF8D), then release the +0x8 buffer (retail keeps a redundant
 // inner null-check doubling the beq).
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 void LOD::LODMemMan::cancelFileAndRelease() {
     if (mFile) {
         CDeviceFile::cancel(mFile);
@@ -3824,8 +3552,6 @@ void LOD::LODMemMan::cancelFileAndRelease() {
         }
     }
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // clearFlagAndResetName: clear flag bit 2 of the +0x20 word, then re-seed the reset-
@@ -3852,8 +3578,6 @@ void LOD::LODMemMan::clearFlagAndResetName() {
 // buffer is released first; the output pointers receive the base and the
 // sub-region offsets.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off  // noinline-ok: retail emits a real `bl` from rebuildFromSharedBuffer; a member body is auto-inlined (the extern "C" shape it replaced was not)
 void LOD::LODMemMan::allocSecondaryBuffers(u32 count20, u32 count18, u32 count48,
                                            u32 count4, u8** outBase, u8** out18,
                                            u8** out48, u8** out4) {
@@ -3886,8 +3610,6 @@ void LOD::LODMemMan::allocSecondaryBuffers(u32 count20, u32 count18, u32 count48
     if (count4 != 0) *out4 = mSecondaryData + ofs;
     *out18 = mSecondaryData + offset18;
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // adjustBufferOffsets: when the +0x4 buffer is present, adjust the +0xC and +0x18
@@ -3899,8 +3621,6 @@ void LOD::LODMemMan::allocSecondaryBuffers(u32 count20, u32 count18, u32 count48
 // an unused caller-leftover) and tail-call initElementList with the new base
 // and the remaining size.
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off  // noinline-ok: same as allocSecondaryBuffers - retail keeps the `bl` (tail call into initElementList)
 void LOD::LODMemMan::adjustBufferOffsets(int unk, int unused, int delta) {
     if (mData != 0) {
         int rem = (int)mView_1C - delta;
@@ -3909,8 +3629,6 @@ void LOD::LODMemMan::adjustBufferOffsets(int unk, int unused, int delta) {
         initElementList__Q23LOD9LODMemManFv((LODElemList*)(mData + delta), (u32)rem);
     }
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // getOrCreatePoolData: find the pool block tagged with `id`.  A ready block
@@ -3943,20 +3661,16 @@ u8* LOD::LODMemMan::getOrCreatePoolData(int id) {
     return 0;
 }
 
-// retail: lwz r3,0xC(r3); b mergeElementList -- delegates to the child
-// element-list header stored at +0xC of the g3d sub-manager.
-void delegateMergeToSub__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, u32 target) {
+// retail: lwz r3,0xC(r3); b mergeElementList -- delegates to the element-list
+// header stored at +0xC of the LODMemMan.
+void delegateMergeToSub__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 target) {
     mergeElementList__Q23LOD9LODMemManFv(
         (LODElem20*)((LODMemManLayout*)self)->field_0xC, target);
 }
 
-// retail keeps this out-of-line (`bl` from resetAndReload) - auto_inline would
-// fold the `|= 0x40000000` into the caller and lose the call.
-#pragma auto_inline off
 void LOD::LODMemMan::setArchiveReadyFlag() {
     mFlags |= 0x40000000;
 }
-#pragma auto_inline on
 
 // CDeviceFile archive header read through LODMemMan.field_0x4 (driveArchiveLoadState).
 struct LODArchiveHdr {

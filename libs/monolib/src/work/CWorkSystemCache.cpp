@@ -19,7 +19,7 @@ extern "C" u32 lbl_eu_8056FD24[];
 extern "C" {
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
-__attribute__((never_inline)) void SysCacheClearListLinks(CacheList* list) {
+ void SysCacheClearListLinks(CacheList* list) {
     CacheListNode* walk = list->mStartNodePtr->mNext;
     while (walk != list->mStartNodePtr) {
         CacheListNode* node = walk;
@@ -74,7 +74,7 @@ CacheListIter SysCacheUnlinkFront(CacheList* list, CacheListIter it) {
 }
 
 // Login-wait helper.
-__attribute__((never_inline)) bool SysCacheItemWaitReady(CCacheItem* ths) {
+ bool SysCacheItemWaitReady(CCacheItem* ths) {
     if (ths->field_0x3c == 0 && ths->field_0x4c == 0) {
         return true;
     }
@@ -88,7 +88,7 @@ void SysCacheStoreIdentityMat(ml::CMat34* out) {
 
 // _reslist_base<CCacheItem>::~_reslist_base(int deleting)
 #pragma optimize_for_size on
-__attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* ths, int deleting) {
+ void* __dt___reslist_base_CCacheItem(CacheList* ths, int deleting) {
     if (ths != 0) {
         ths->m_vtable = (u32)lbl_eu_8056FD3C;
         SysCacheClearListLinks(ths);

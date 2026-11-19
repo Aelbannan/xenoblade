@@ -14,20 +14,6 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// Retail float-pool constants (SDA) used by Voice field initialisation.
-extern "C" const float lbl_eu_8066A098; // 1.0f
-extern "C" const float lbl_eu_8066A09C; // 0.0f
-extern "C" const float lbl_eu_8066A0A8; // 0.5f
-extern "C" const float lbl_eu_8066A0B8; // 2.0f
-extern "C" const float lbl_eu_8066A0C0; // -1.0f
-extern "C" const float lbl_eu_8066A0C4; // -3.0f
-extern "C" const float lbl_eu_8066A0C8; // 32768.0f
-
-// AxVoice::SetBiquad is not (yet) declared in snd_AxVoice.h; reference the
-// retail symbol directly (member ABI: this=r3, u8 type=r4, f32 freq=f1).
-extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
-    nw4r::snd::detail::AxVoice* self, u8 type, f32 freq);
-
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -66,8 +52,8 @@ public:
     Voice();
     virtual ~Voice(); // at 0x8
 
-    virtual void InvalidateData(const void* /* pStart */,
-                                const void* /* pEnd */) {} // at 0xC
+    virtual void InvalidateData(const void* pStart,
+                                const void* pEnd); // at 0xC
 
     virtual void InvalidateWaveData(const void* pStart,
                                     const void* pEnd); // at 0x10
@@ -115,6 +101,7 @@ public:
     void SetSurroundPan(f32 pan);
 
     void SetLpfFreq(f32 freq);
+    void SetBiquadFilter(int type, f32 frequency);
     void SetRemoteFilter(int filter);
     void SetVoiceOutParam(int voice, const VoiceOutParam& rParam);
     void SetOutputLine(int flag);

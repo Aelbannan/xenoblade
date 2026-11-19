@@ -256,14 +256,15 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 
 // Scratch region guard (RAII Class_8045F858): explicit buffer + C-ABI ctor/dtor
 // calls so the retail stack slot and the -1 dealloc flag match exactly.
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self,
-                                                            UnkClass_8045F564* base);
-extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
+// Opaque-parameter form: the repo-wide canonical declaration (CItemBoxGrid.hpp /
+// CEquipItemBoxImports.hpp / CMenuUpdate.hpp); callers pass the raw storage.
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
+extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 
 // BDAT / random / pane-text helpers with unmangled retail names.
-// u32-return view: retail masks the column byte at the call sites (clrlwi 24),
-// so this TU saw an int/unsigned return, not u8.
-extern "C" int isPaneVisible(void);
+// Pane-visibility query: canonical form, shared with CCur.cpp / CPassiveSkill.hpp /
+// CKizunagram.hpp / CMenuArtsSetImports.hpp / CEquipItemBoxImports.hpp.
+extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" int sprintf(char*, const char*, ...);
 extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)

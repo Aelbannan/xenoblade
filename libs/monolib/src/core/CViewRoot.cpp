@@ -585,7 +585,7 @@ void CViewRoot::setCurrent(CView* view) {
     // Count the view's child-list entries (inlined reslist::size walk over
     // the unk238 POD twin of reslist<WORK_ID>). Retail spills the sentinel
     // and the first node twice each; volatile copies force those stores.
-    sentinel = (_reslist_node<WORK_ID>*)view->unk238.mStartNodePtr;
+    sentinel = (_reslist_node<WORK_ID>*)view->mWorkIDList.mStartNodePtr;
     endCopy = sentinel;
     curNode = sentinel->mNext;
     endNode = sentinel;

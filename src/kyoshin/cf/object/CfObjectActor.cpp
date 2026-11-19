@@ -13,17 +13,17 @@ extern "C" void capdatatouch_CfObjectActor(void) {
     // in retail order (plain reads fold away). lbl_eu_80667748 (s16->float
     // magic) and the 67770/67774/67778 tail have no code uses.
     volatile float sinkf;
-    sinkf = *(volatile float*)&lbl_eu_80667738;
-    sinkf = *(volatile float*)&lbl_eu_8066773C;
-    sinkf = *(volatile float*)&lbl_eu_80667740;
+    sinkf = lbl_eu_80667738;
+    sinkf = lbl_eu_8066773C;
+    sinkf = lbl_eu_80667740;
     volatile double sinkd;
-    sinkd = *(volatile double*)&lbl_eu_80667748;
-    sinkd = *(volatile double*)&lbl_eu_80667750;
-    sinkd = *(volatile double*)&lbl_eu_80667758;
-    sinkf = *(volatile float*)&lbl_eu_80667760;
-    sinkf = *(volatile float*)&lbl_eu_80667764;
-    sinkf = *(volatile float*)&lbl_eu_80667768;
-    sinkf = *(volatile float*)&lbl_eu_8066776C;
+    sinkd = lbl_eu_80667748;
+    sinkd = lbl_eu_80667750;
+    sinkd = lbl_eu_80667758;
+    sinkf = lbl_eu_80667760;
+    sinkf = lbl_eu_80667764;
+    sinkf = lbl_eu_80667768;
+    sinkf = lbl_eu_8066776C;
     (void)sinkf;
     (void)sinkd;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include <revolution/GX.h>                  // GXLightObj members
+#include <nw4r/g3d/res/g3d_resfile.h>        // nw4r::g3d::ResFile member
 #include "monolib/lod/LODMemMan.hpp"
 #include "monolib/lod/UnkClass_8046A530.hpp"
 
@@ -20,11 +22,83 @@ struct LODChildDesc;  // TU-local child descriptor (LODMemMan.cpp)
 namespace nw4r {
 namespace g3d {
 class G3dObj;
+class ScnGroup;
 }
 }
 
 class CTaskLOD;
 namespace LOD {
+
+class UnkClass_8046D144;
+
+/** One g3d object slot of the sub-manager (0xC bytes). */
+struct LODG3dSlot {
+    /* 0x00 */ nw4r::g3d::G3dObj* mObject; // g3d scene object
+    /* 0x04 */ s32 mId;                    // -1 while the slot is free
+    /* 0x08 */ u16 field_0x08;             // (only ever cleared)
+    /* 0x0A */ u16 mFlags;                 // bit 0: busy, bit 2: torn down
+};
+
+/** One child-manager slot of the sub-manager (0xC bytes). */
+struct LODChildEntry {
+    /* 0x00 */ nw4r::g3d::ResFileData* mResData; // child resource file data
+    /* 0x04 */ u8* mBlock;                  // pool block holding the child manager
+    /* 0x08 */ s16 mId;                     // element id (-1 while the slot is free)
+    /* 0x0A */ u16 mFlags;                  // bit 0: bound
+};
+
+/** Per-child GX light block of the sub-manager (0x28C bytes). */
+struct LODChildLight {
+    /* 0x000 */ GXLightObj mLightObjs[8];  // light objects loaded per slot
+    /* 0x200 */ f32        mDirScales[8][4]; // per-slot direction/scale words
+    /* 0x280 */ s32        mSlotCount;     // slots in use
+    /* 0x284 */ u32        mUsedMask;      // per-slot bound mask
+    /* 0x288 */ u32        mDoneMask;      // per-slot initialised mask
+};
+
+/**
+ * g3d sub-manager of a LOD manager, embedded at UnkClass_8046D144 +0x0CC
+ * (0x978 bytes, no vtable of its own).
+ *
+ * It owns the scene group that holds the manager's g3d objects, the sixteen
+ * child-manager slots, the three per-child GX light blocks and the shared
+ * light object/scale the LOD light pass reloads every frame.
+ */
+class LODG3dMgr {
+public:
+    // The member-init / body split below is what retail's store order requires:
+    // the ctor emits mResFile first, then the child-state walk, then mGroup.
+    LODG3dMgr() : mResFile(0) {
+        LODChildEntry* e = mChildren;
+        do {
+            e->mResData = 0;
+        } while (++e < mChildren + 16);
+        mGroup = 0;
+        for (int i = 0; i < 16; i++) mChildren[i].mBlock = 0;
+        for (int i = 0; i < 16; i++) mSlots[i].mObject = 0;
+    }
+
+    // Tear down the g3d slots and unlink the child elements from `sub`.
+    void teardownSubEntries(LODMemMan* sub);
+    void destroyAllG3dObjects();
+    void notifyG3dManager(CScn* scene);
+    void initSceneGroup(u8* resBuf, CScn* scene);
+    void resetChildMasks();
+    void resetLightColor();
+    void setLightScale(s16 value);
+    void initLightScales();
+    void reloadChildGxLights(int childIdx);
+
+    /* 0x000 */ nw4r::g3d::ScnGroup* mGroup;   // scene group holding the objects
+    /* 0x004 */ nw4r::g3d::ResFile mResFile;   // bound g3d resource file
+    /* 0x008 */ LODChildEntry mChildren[16];   // 0x008..0x0C8
+    /* 0x0C8 */ LODG3dSlot mSlots[16];         // 0x0C8..0x188
+    /* 0x188 */ LODChildLight mChildLights[3]; // 0x188..0x92C
+    /* 0x92C */ GXLightObj mLight;             // shared light object
+    /* 0x96C */ f32 mLightScale;               // base light scale
+    /* 0x970 */ f32 mStoredLightScale;         // scale of the last reload
+    /* 0x974 */ s32 mLastChildIdx;             // child bound to the light
+};
 
 /**
  * LOD manager.  0x1CE0 bytes; embedded in CTaskLOD at +0x5C and independently
@@ -34,10 +108,7 @@ namespace LOD {
  * dtor destroys:
  *   0x0A44  LOD::LODMemMan            (0x78, IWorkEvent; retail RTTI)
  *   0x0ABC  LOD::UnkClass_8046A530    (0x1220 sub-object)
- *   0x00CC  g3d sub-manager           (0x978; class not yet recovered, kept
- *                                      as an opaque block: its helpers in
- *                                      LODMemMan.cpp work on it through
- *                                      LODMemManLayout with this = +0xCC)
+ *   0x00CC  LOD::LODG3dMgr            (0x978 g3d sub-manager)
  *
  * The class has no vtable/RTTI of its own (retail emits no second RTTI record).
  */
@@ -97,15 +168,6 @@ public:
     void handleViewUpdate(int param);
     static void dispatchViewUpdate(UnkClass_8046D144* self, int task);
 
-    // g3d sub-manager helpers: these receive the +0xCC sub-object as `this`
-    // (their addresses are still anchored here until that class is recovered).
-    void teardownSubEntries(UnkClass_8046D144* sub);
-    void resetChildMasks();
-    void resetLightColor();
-    void setLightScale(s16 value);
-    void initLightScales();
-    void reloadChildGxLights(int childIdx);
-
 public:
     /* 0x000 */ nw4r::g3d::G3dObj* field_0x0;    // g3d manager object
     /* 0x004 */ LODElem20* field_0x4;             // 0x20-strided element list
@@ -115,13 +177,13 @@ public:
     /* 0x014 */ LODElem20* field_0x14;            // index-list tail
     /* 0x018 */ s32 mCount_18;                    // element count
     /* 0x01C */ u8* mView_1C;                     // view pointer
-    /* 0x020 */ u32 field_0x20;                   // manager position x (float bits)
-    /* 0x024 */ u32 field_0x24;                   // manager position y (float bits)
-    /* 0x028 */ u32 field_0x28;                   // manager position z (float bits)
-    /* 0x02C */ u32 field_0x2C;                   // plane origin x (float bits)
-    /* 0x030 */ u32 field_0x30;                   // plane origin y (float bits)
-    /* 0x034 */ u32 field_0x34;                   // plane origin z (float bits)
-    /* 0x038 */ u32 field_0x38;                   // plane distance scale
+    /* 0x020 */ f32 field_0x20;                   // manager position x
+    /* 0x024 */ f32 field_0x24;                   // manager position y
+    /* 0x028 */ f32 field_0x28;                   // manager position z
+    /* 0x02C */ f32 field_0x2C;                   // plane origin x
+    /* 0x030 */ f32 field_0x30;                   // plane origin y
+    /* 0x034 */ f32 field_0x34;                   // plane origin z
+    /* 0x038 */ f32 field_0x38;                   // plane distance scale
     /* 0x03C */ u32 field_0x3C;                   // per-frame scratch (float bits)
     /* 0x040 */ u32 field_0x40;                   // per-frame scratch
     /* 0x044 */ u32 field_0x44;                   // per-frame scratch
@@ -136,8 +198,8 @@ public:
     /* 0x068 */ u32 field_0x68;                   // flag word (bit 4)
     /* 0x06C */ u32 field_0x6C;                   // flag bits (bit 0: enabled)
     /* 0x070 */ u32 field_0x70;                   // element-flag accumulator
-    /* 0x074 */ s32 field_0x74;                   // inner-radius factor
-    /* 0x078 */ u8 mPad_78[4];
+    /* 0x074 */ f32 field_0x74;                   // inner-radius factor
+    /* 0x078 */ f32 field_0x78;                   // outer-radius factor
     /* 0x07C */ f32 mFloat_7C;                   // base scale
     /* 0x080 */ f32 field_0x80;                   // scaled frame value
     /* 0x084 */ f32 field_0x84;                   // second scale value (0.0f init)
@@ -160,7 +222,7 @@ public:
     /* 0x0C0 */ f32 field_0xC0;                   // LOD distance constant
     /* 0x0C4 */ f32 field_0xC4;                   // LOD distance constant
     /* 0x0C8 */ f32 field_0xC8;                   // distance/scale slot
-    /* 0x0CC */ u8 mG3d[0xA44 - 0x0CC];           // g3d sub-manager (0x978)
+    /* 0x0CC */ LODG3dMgr mG3dMgr;               // g3d sub-manager (0x978)
     /* 0x0A44 */ LOD::LODMemMan mMemMan;          // embedded archive/element manager
     /* 0x0ABC */ LOD::UnkClass_8046A530 mSubObject; // embedded scene sub-object
     /* 0x1CDC */ f32 field_0x1CDC;                // shared LOD distance scale

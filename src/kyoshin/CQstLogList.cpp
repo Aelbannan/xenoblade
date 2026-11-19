@@ -16,10 +16,7 @@ extern "C" {
 // CfObjectImplMove.hpp (via harness_catalog.hpp) declares lbl_eu_80526324 as
 // const char[]; code_80135FDC.hpp's u8[] decl of the same name clashes and
 // this TU never uses it - rename it away for this one include.
-#define lbl_eu_80526324 lbl_eu_80526324_unused_u8_decl
-#define lbl_eu_80526300 lbl_eu_80526300_unused_u8_decl
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_80526324
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device.hpp"
 #include "monolib/util/MemManager.hpp"

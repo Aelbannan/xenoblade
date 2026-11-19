@@ -397,7 +397,8 @@ public:
     /* 0x7C8 */ void* field_0x7C8;                   // secondary attached model (scnImN4SyncShadow)
     /* 0x7CC */ nw4r::math::VEC3 vec7CC;             // translate VEC3 - scnImN4PoseHook
     /* 0x7D8 */ nw4r::math::VEC3 vec7D8;             // second translate VEC3 (scnImN4PoseHook)
-    /* 0x7E4 */ u8 _pad_0x7E4[0xC];                  // to 0x7F0
+    /* 0x7E4 */ u8 _pad_0x7E4[0x8];                  // to 0x7EC
+    /* 0x7EC */ void* field_0x7EC;                   // maru-shadow sub-object ptr (scnImN4SetMaruPtr)
     /* 0x7F0 */ u32 field_0x7F0[0xC];                // per-frame hook table (12 entries; iterated by scnImN4UpdateBounds)
     /* 0x820 */ int field_0x820;                     // hook-table count (signed: retail cmpw)
     /* 0x824 */ CScnItemModel824 member824;          // 0x824..0x834 buffer holder (dtor __dt__804871B0)
@@ -488,7 +489,7 @@ extern "C" void simSetFlag1MTree(CScnItemModelNw4r* self, u32 param);
 // Cross-TU imports used by scnImN4UnlinkChain / scnImN4SetNodeVis / scnImN4NotifyMat:
 // model release (defined in CScn.cpp), chain-wide 2-arg notify (defined in
 // CScnItemModel.cpp), material sub-object notify (defined in CMdlMaterial.cpp).
-extern "C" bool Scn_IsAnimActiveOrNull(CScnItemModel* self);
+extern "C" bool Scn_IsAnimActiveOrNull(void* self);
 extern "C" void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b);
 extern "C" void notifyGroupChain(CScnItemModelNw4rSub16C8* sub, u32 param,
                               CScnItemModelNw4r* obj);

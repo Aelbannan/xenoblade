@@ -245,7 +245,7 @@ extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
 // CfModel_SyncVisFlag/CfObjectMove_initAnimTarget are owned by kyoshin/cf/object/CfObjectMove.hpp
 // (single extern "C" decl; overloading C-ABI functions is illegal).
-extern "C" void CfObjectMove_setRegionAttached(cf::CfResReloadParent* parent, int flag);
+extern "C" void CfObjectMove_setRegionAttached(void* parent, int flag);
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
 // CfObjectMove_setAnimModeArgs is owned by kyoshin/cf/object/CfObjectMove.hpp.
 

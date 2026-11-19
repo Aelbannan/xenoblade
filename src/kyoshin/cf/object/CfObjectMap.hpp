@@ -93,7 +93,7 @@ extern "C" {
     void reloadOccFrustums__Q22cf12CTaskCullingFv();
 
     // ---- scene / resource helpers ----
-    void Scn_IsAnimActiveOrNull(void* ptr);
+    bool Scn_IsAnimActiveOrNull(void* ptr);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
     void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
     void scnLgtRemoveLgtItem(void* mgr, void* resource);

@@ -13,6 +13,7 @@
 #include "monolib/math/Random.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/effect/CERand.hpp"
+#include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include <new>
 #include "monolib/effect/CETrail.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -256,7 +257,7 @@ struct EffectVirtObj : EffectSubBase {
 
 // Retail linker name __dt__804CC2E4 (unmangled C symbol); defined as a free
 // function so the object emits the exact retail name.
-extern "C" void __attribute__((never_inline)) __dt__804CC2E4(EffectStruct* self) {
+extern "C" void __dt__804CC2E4(EffectStruct* self) {
     void* saved = self->field_0x32c;
     if (saved != 0) {
         // Two-arg call form keeps the checked pointer live in r4 across the
@@ -355,7 +356,7 @@ extern "C" s32 EffFxSegmentRegionTest(void* self, Vec* a, Vec* b, Vec* c);
 extern "C" void drawScreenMarker(void* matId, Vec* a, void* color, Vec* b, s32 flagA,
                                s32 flagB, TexMtxSrc* src, f32 f2, f32 f3);
 
-extern "C" void EffFxAccumNodeWeight(EffectStruct* self) DECOMP_DONT_INLINE;
+extern "C" void EffFxAccumNodeWeight(EffectStruct* self);
 
 // Larger scene/effect layout used by targets 3, 8, 9, 10. Only fields touched
 // by the reconstructed functions are declared.
@@ -594,7 +595,7 @@ struct EffectScene {
 };
 
 // Retail: lwz r3,0(r3); blr  - returns the node/scene type from field_0x00.
-extern "C" s32 __attribute__((never_inline)) EffFxGetSceneClass(const SceneSubObj* self) { return self->field_0x00; }
+extern "C" s32 EffFxGetSceneClass(const SceneSubObj* self) { return self->field_0x00; }
 
 // Sample/tone table node for func_804CD9EC (r8): s16 values, a u8 flag and a f32 scale.
 struct ToneNode {
@@ -628,7 +629,7 @@ struct MatFlagBits {
 };
 
 // Target 5: accumulate a scaled tone/dir vector into field_0xb8.
-extern "C" void __attribute__((never_inline)) func_804CD9EC(EffectScene* self) {
+extern "C" void func_804CD9EC(EffectScene* self) {
     SceneSubObj* sub = self->field_0x0c;
     ToneNode* t = (ToneNode*)sub->field_0x100;
     if (t) {
@@ -667,7 +668,7 @@ extern "C" void __attribute__((never_inline)) func_804CD9EC(EffectScene* self) {
 }
 
 // Target 9: pull a sub-object's aligned direction, scale it and fold into b8.
-extern "C" void __attribute__((never_inline)) EffFxAccumSubObjDir(EffectScene* self, Vec* p1) {
+extern "C" void EffFxAccumSubObjDir(EffectScene* self, Vec* p1) {
     EffectNode* node;
     Vec diff;
     ml::CVec3 staged;
@@ -784,18 +785,18 @@ extern "C" void CERotYConcat(Mtx* out, f32 a);
 // Forward decls for the target-3 frame pipeline. The retail functions are
 // unmangled linker names, so they need C linkage (the map names them func_*).
 extern "C" {
-void __attribute__((never_inline)) EffFxTransformStoredDir(EffectScene* self, Vec* out);
-void __attribute__((never_inline)) EffFxUpdateSceneAim(EffectScene* self);
-void __attribute__((never_inline)) func_804CD9EC(EffectScene* self);
-void __attribute__((never_inline)) EffFxAccumSubObjDir(EffectScene* self, Vec* p1);
-void __attribute__((never_inline)) EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const Vec* p3);
-void __attribute__((never_inline)) EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const Vec* p3);
+void EffFxTransformStoredDir(EffectScene* self, Vec* out);
+void EffFxUpdateSceneAim(EffectScene* self);
+void func_804CD9EC(EffectScene* self);
+void EffFxAccumSubObjDir(EffectScene* self, Vec* p1);
+void EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const Vec* p3);
+void EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const Vec* p3);
 
-void __attribute__((never_inline)) EffFxNormalizeDirDelta(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b);
-void __attribute__((never_inline)) EffFxCondClearFlag15(EffectScene* self);
-void __attribute__((never_inline)) func_804CE264(EffectScene* self, Vec* p1, Vec* p3);
-void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p);
-void __attribute__((never_inline)) EffFxArmNodeFlag40(EffectScene* self);
+void EffFxNormalizeDirDelta(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b);
+void EffFxCondClearFlag15(EffectScene* self);
+void func_804CE264(EffectScene* self, Vec* p1, Vec* p3);
+void EffFxDriveAttachedLight(EffectScene* self, Vec* p);
+void EffFxArmNodeFlag40(EffectScene* self);
 // (memberized: EffFxApplySceneMatrix -> EffectScene::EffFxApplySceneMatrix; declaration moved into class EffectScene)
 }
 
@@ -832,7 +833,7 @@ void EffectScene::EffFxSceneTickDispatch() {
 // two scene matrices, optionally aim along the transformed delta (blend factor
 // field_0x224), rebuild an aim matrix via the DD388/DD5B0 helpers and write the
 // result back, finally re-expressing field_0xac in the inverse local matrix.
-extern "C" void __attribute__((never_inline)) EffFxUpdateSceneAim(EffectScene* self) {
+extern "C" void EffFxUpdateSceneAim(EffectScene* self) {
     SceneSubObj* sub = self->field_0x0c;
     // Switch keeps MWCC's per-case compare chain (a range-folded || is wrong here).
     s32 special;
@@ -1072,7 +1073,7 @@ extern "C" void __attribute__((never_inline)) EffFxUpdateSceneAim(EffectScene* s
     self->field_0xac.z = invOut.z;
 }
 
-extern "C" void __attribute__((never_inline)) EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const Vec* p3) {
+extern "C" void EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const Vec* p3) {
     SceneSubObj* sub = self->field_0x0c;
     u32 cls = sub->field_0x00;
     if ((u32)(cls - 9) <= 2) return;
@@ -1099,7 +1100,7 @@ extern "C" void __attribute__((never_inline)) EffFxTestSegmentRegionB(EffectScen
 // Segment-vs-point containment: when a == b the segment degenerates to the
 // point a and the test is a radius check (squared distance vs threshold).
 // Otherwise pick the dominant axis of |b - a| and range-test c along it.
-extern "C" s32 __attribute__((never_inline)) EffFxSegmentRegionTest(void* self, Vec* a, Vec* b, Vec* c) {
+extern "C" s32 EffFxSegmentRegionTest(void* self, Vec* a, Vec* b, Vec* c) {
     s32 same = 0;
     if (a->x == b->x && a->y == b->y && a->z == b->z) {
         same = 1;
@@ -1137,7 +1138,7 @@ extern "C" s32 __attribute__((never_inline)) EffFxSegmentRegionTest(void* self, 
     return 0;
 }
 
-extern "C" void __attribute__((never_inline)) EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const Vec* p3) {
+extern "C" void EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const Vec* p3) {
     if (((SceneFlagBits*)&self->field_0x06)->b8) return;
     Vec res;
     Vec out;
@@ -1160,19 +1161,19 @@ extern "C" void __attribute__((never_inline)) EffFxTestSegmentRegionA(EffectScen
 
 // Forward decls used by func_804CE264 and EffFxSceneTickDispatch.
 extern "C" {
-u32 __attribute__((never_inline)) EffFxGetSubWord04(const SceneSubObj* self);
-u32 __attribute__((never_inline)) EffFxGetSubWord5C(const SceneSubObj* self);
-void __attribute__((never_inline)) EffFxSetupAxisRotation(EffectScene* self, Mtx* a, u32 type, Vec* p3);
-void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
+u32 EffFxGetSubWord04(const SceneSubObj* self);
+u32 EffFxGetSubWord5C(const SceneSubObj* self);
+void EffFxSetupAxisRotation(EffectScene* self, Mtx* a, u32 type, Vec* p3);
+void EffFxSetupMatrixPair(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
                    Mtx* spA, Vec* spB);
-void __attribute__((never_inline)) EffFxUpdateLightColor(EffectScene* self, f32* a, Vec* p1);
+void EffFxUpdateLightColor(EffectScene* self, f32* a, Vec* p1);
 // (memberized: EffFxApplySceneMatrix -> EffectScene::EffFxApplySceneMatrix; declaration moved into class EffectScene)
-void __attribute__((never_inline)) EffFxComputeInheritDir(EffectScene* self, Vec* out, u32 type);
+void EffFxComputeInheritDir(EffectScene* self, Vec* out, u32 type);
 }
 
 // TK func_804CE264: builds a stack matrix + vector, feeds child position/type
 // helpers, sets a flag bit from field_0x1d8, then posts updates.
-extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, Vec* p1, Vec* p3) {
+extern "C" void func_804CE264(EffectScene* self, Vec* p1, Vec* p3) {
     u32 type = EffFxGetSubWord04(self->field_0x0c);
     Mtx stackA;
     Vec stackB;
@@ -1190,7 +1191,7 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
 }
 
 // Target 2: identity-fill then per-type axis/rotation setup from the sub-object.
-extern "C" void __attribute__((never_inline)) EffFxSetupAxisRotation(EffectScene* self, Mtx* a, u32 type, Vec* p3) {
+extern "C" void EffFxSetupAxisRotation(EffectScene* self, Mtx* a, u32 type, Vec* p3) {
     Mtx& out = *a;
     // Direct global→out copy; retail emits the chunked lwz/stw pair pattern.
     *(ml::CMat34*)&out = ml::CMat34::identity;
@@ -1248,7 +1249,7 @@ extern "C" void __attribute__((never_inline)) EffFxSetupAxisRotation(EffectScene
         break;
     }
 }
-extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
+extern "C" void EffFxSetupMatrixPair(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
                    Mtx* spA, Vec* spB) {
     // Orientation/position update for a node: builds the angle matrix from the
     // light-check vector, per-type basis matrix, concatenates the parent
@@ -1423,7 +1424,7 @@ extern "C" void __attribute__((never_inline)) EffFxSetupMatrixPair(EffectScene* 
     (*b)[1][3] = (*a)[1][3];
     (*b)[2][3] = (*a)[2][3];
 }
-extern "C" void __attribute__((never_inline)) EffFxUpdateLightColor(EffectScene* self, f32* out, Vec* p1) {
+extern "C" void EffFxUpdateLightColor(EffectScene* self, f32* out, Vec* p1) {
     // Light-color update: gate on the object's 0x4000 flag, otherwise zero the
     // 4-float output. Base color comes from obj+0x40; an optional per-frame
     // factor (ScnRes_VertRayForward_E398/538 chain) scales it, SchedAnim_NoOp blends the
@@ -1507,8 +1508,8 @@ extern "C" void __attribute__((never_inline)) EffFxUpdateLightColor(EffectScene*
     // defined by the tone-range u16s; skipped when sub bit 0x0800 is set,
     // the table is missing or the class is 4.
     if (!((sub->field_0x1c & 0x0800)) && sub->field_0xdc != 0 && sub->field_0x00 != 4) {
-        void* rsrc = Scn_FindCamItem(obj->field_0x10, -1);
-        ml::CVec3 diff = *(const ml::CVec3*)p1 - *(const ml::CVec3*)((u8*)rsrc + 0x10c);
+        CScnCameraItem* rsrc = (CScnCameraItem*)Scn_FindCamItem(obj->field_0x10, -1);
+        ml::CVec3 diff = *(const ml::CVec3*)p1 - rsrc->mPos;
         f32 mag = PSVECMag(diff);
         ToneRange* tr = sub->field_0xdc;
         // Slot usage per conversion mirrors retail's alternating scratch words.
@@ -1650,23 +1651,23 @@ void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, V
 
 // The retail calls these as real functions; -inline auto would otherwise fold
 // the stub bodies into the callers (the retail never inlines them).
-extern "C" u32 __attribute__((never_inline)) EffFxGetSubWord04(const SceneSubObj* self) {
+extern "C" u32 EffFxGetSubWord04(const SceneSubObj* self) {
     return *(u32*)((u8*)self + 0x4);
 }
 
-extern "C" u32 __attribute__((never_inline)) EffFxGetSubWord5C(const SceneSubObj* self) { return *(u32*)((u8*)self + 0x5c); }
+extern "C" u32 EffFxGetSubWord5C(const SceneSubObj* self) { return *(u32*)((u8*)self + 0x5c); }
 
 // Target 2: us-804d24fc - drive the attached light (field_0x330) when the
 // sub-object has a tone table (field_0x110). The 0x29c/0x2a0/0x2a4 values are
 // type-punned floats; 0x2a4 is truncated to an int mode.
-extern "C" void __attribute__((never_inline)) EffFxDriveAttachedLight(EffectScene* self, Vec* p) {
+extern "C" void EffFxDriveAttachedLight(EffectScene* self, Vec* p) {
     if (self->field_0x330 != 0 && self->field_0x0c->field_0x110 != 0) {
         ((CETrailLight*)self->field_0x330)->Drive(p, (s32)*(f32*)&self->field_0x2a4, (CETrailLightParam*)&self->field_0x1cc, *(f32*)&self->field_0x29c, *(f32*)&self->field_0x2a0);
     }
 }
 
 // us-804d22d4
-extern "C" void __attribute__((never_inline)) EffFxNormalizeDirDelta(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b) {
+extern "C" void EffFxNormalizeDirDelta(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b) {
     // Direction b - a. If every component already lies inside [c1, c2] the
     // stored direction is left untouched; otherwise it is renormalized (or
     // zeroed when it has no length) and written to field_0x190.
@@ -1683,7 +1684,7 @@ extern "C" void __attribute__((never_inline)) EffFxNormalizeDirDelta(EffectScene
     }
 }
 
-extern "C" void __attribute__((never_inline)) EffFxTransformStoredDir(EffectScene* self, Vec* out) {
+extern "C" void EffFxTransformStoredDir(EffectScene* self, Vec* out) {
     // Volatile pins the word load order (x then y) and keeps z's load after
     // the first two stores, matching retail's pipelined copy.
     u32 vx = *(u32*)&self->field_0xac.x;
@@ -1727,7 +1728,7 @@ struct SubObjFlags {
     u16 : 10;
 };
 
-extern "C" void __attribute__((never_inline)) EffFxComputeInheritDir(EffectScene* self, Vec* out, u32 type) {
+extern "C" void EffFxComputeInheritDir(EffectScene* self, Vec* out, u32 type) {
     // Retail copies the punned float words y-before-x.
     u32 xw = self->field_0x29c;
     ((IVec3*)out)->y = self->field_0x2a0;
@@ -1789,7 +1790,7 @@ extern "C" void __attribute__((never_inline)) EffFxComputeInheritDir(EffectScene
 // color from a shared GXColor constant, then reset two more globals to -1.
 // The color is read inside the call expression so its load schedules with the
 // argument setup (before the -1 cache stores).
-extern "C" void __attribute__((never_inline)) EffFxResetPlacerColors() {
+extern "C" void EffFxResetPlacerColors() {
     const GXColor& color = *(const GXColor*)&lbl_eu_8066B124;
     lbl_eu_806659A8 = -1;
     lbl_eu_806659AC = -1;
@@ -1804,7 +1805,7 @@ extern "C" void __attribute__((never_inline)) EffFxResetPlacerColors() {
 // scale it to the framebuffer width; finally load texture matrices selected
 // by the 0x258/0x25a texgen indices and emit a 4-vertex quad with byte-scaled
 // UVs.
-extern "C" void __attribute__((never_inline)) EffFxRenderSceneQuad(EffectScene* self, void* res) {
+extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
     // Retail hoists TWO 0x4330 magic-double slots in the prologue and
     // alternates them for every u8/u16 -> float conversion.
     FConv convA;
@@ -1897,8 +1898,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderSceneQuad(EffectScene* 
             Mtx tmp;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, tmp);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, tmp);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&tmp;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&tmp;
         }
@@ -2031,7 +2032,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderSceneQuad(EffectScene* 
 // triangle strip that interpolates the previous vertex state with each node's
 // transformed position/direction and byte-scaled color.
 void EffFxBuildScaleMatrix(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7);
-extern "C" void __attribute__((never_inline)) EffFxRenderChainStrip(EffectScene* self, s32 index) {
+extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
     // Shared 0x4330 magic slot for the fbWidth conversions; retail rebuilds
     // both words at each use site.
     FConv cnv;
@@ -2099,8 +2100,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderChainStrip(EffectScene*
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
         }
@@ -2452,7 +2453,7 @@ void EffFxInitSceneFromSrc(EffectScene* out, const EffSrc3* src) {
 // then optionally refresh the attached trail (field_0x328) from the scene
 // matrix when the 0x200 flag is set, copy the node matrix/color and apply the
 // material/framebuffer transforms, load texture matrices and sync GX state.
-extern "C" void __attribute__((never_inline)) EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
+extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
     EffectScene* self = (EffectScene*)nodeRaw;
     void* res = arg;
     // Shared 0x4330 magic slots for the byte -> float conversions.
@@ -2551,8 +2552,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType8Trail(EffectNode* 
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
         }
@@ -2646,7 +2647,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType8Trail(EffectNode* 
     RenderNode* node2 = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     Trail_DrawStrip((CETrail*)self->field_0x328, texgens, &node2->b0);
 }
-extern "C" void __attribute__((never_inline)) EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
+extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     union {
         f64 d;
@@ -2704,8 +2705,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderTypeCWalk(EffectNode* n
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
         }
@@ -2784,7 +2785,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderTypeCWalk(EffectNode* n
 // us-804d6804/7790/6cd4/720c): visibility gate, render-node matrix/color
 // snapshot, and the per-class tone/framebuffer scaling.
 
-extern "C" void __attribute__((never_inline)) EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
+extern "C" void EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     union {
         f64 d;
@@ -2846,8 +2847,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType6Walk(EffectNode* n
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
         }
@@ -2897,7 +2898,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType6Walk(EffectNode* n
                   alpha, alphaMax, material, &src);
 }
 
-extern "C" void __attribute__((never_inline)) EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
+extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     // Two 0x4330 magic-double int->float conversion slots initialized up front
     // (retail prologue scratch words); they are shared between the widescreen
@@ -2974,8 +2975,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType4Walk(EffectNode* n
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             // Second dead-looking stack copy that retail keeps.
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
@@ -3042,7 +3043,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType4Walk(EffectNode* n
     }
 }
 
-extern "C" void __attribute__((never_inline)) EffFxRenderType7Walk(EffectNode* nodeRaw, void* res) {
+extern "C" void EffFxRenderType7Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     union {
         f64 d;
@@ -3103,8 +3104,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType7Walk(EffectNode* n
             Mtx stackMtx;
             Mtx mtxA0;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
         }
@@ -3153,7 +3154,7 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType7Walk(EffectNode* n
     }
 }
 
-extern "C" void __attribute__((never_inline)) EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
+extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     // Two 0x4330 integer-to-float conversion slots, initialized up front like
     // retail's prologue stores (slots 0xe0/0xe8).
@@ -3217,8 +3218,8 @@ extern "C" void __attribute__((never_inline)) EffFxRenderType5Walk(EffectNode* n
             Mtx out1;
             Mtx out2;
             MatFlags* mat = (MatFlags*)self->field_0x08;
-            void* m = Scn_FindCamItem(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, out1);
+            CScnCameraItem* m = (CScnCameraItem*)Scn_FindCamItem(mat->field_0x10, -1);
+            PSMTXConcat(m->mMtx, node->mtx, out1);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&out1;
             // Retail keeps a second (dead-looking) copy of the result on the
             // stack; volatile defeats MWCC's dead-store elimination.
@@ -3397,7 +3398,7 @@ extern "C" void EffFxUnlinkChainNode(EffectNode* self);
 // Target 7: per-node per-frame update. Scales the frame delta into the
 // node's accumulated weight, refreshes the tone-table state, then drives the
 // five light/material processor blocks and the attached virtual applier.
-extern "C" void __attribute__((never_inline)) EffFxUpdateNodeToneLight(void* nodeptr, f32 f) {
+extern "C" void EffFxUpdateNodeToneLight(void* nodeptr, f32 f) {
     EffectScene* node = (EffectScene*)nodeptr;
     node->field_0x18 = f * *(f32*)&node->field_0x14;
 
@@ -3628,7 +3629,7 @@ void EffectNode::EffFxProcessNodeChain() {
 // Target 6: scan node slots for one matching the pattern in r28; return 0 if a
 // candidate lacks the "linked" bit, else 1. Flag map: 0x2000 gate, 0x8000 slot
 // busy, 0x0800 already-linked.
-extern "C" s32 __attribute__((never_inline)) EffFxFindLinkSlot(ListOwner* self, const Vend* target) {
+extern "C" s32 EffFxFindLinkSlot(ListOwner* self, const Vend* target) {
     if (!((self->field_0x14->field_0x1c >> 13) & 1)) return 1;
     s32 result = 1;
     s16 i = 0;
@@ -4151,8 +4152,9 @@ void RenderObj::EffFxPushPolyPass() {
     }
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x1e, GX_FALSE, 0x7d);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
-    void* m = Scn_FindCamItem((void*)this->field_0x10->field_0x10, -1);
-    GXLoadPosMtxImm((const float(*)[4])((u8*)m + 0xcc), 0);
+    CScnCameraItem* m =
+        (CScnCameraItem*)Scn_FindCamItem((void*)this->field_0x10->field_0x10, -1);
+    GXLoadPosMtxImm(m->mMtx, 0);
     q = this->field_0x14->field_0x114;
     u16 b2 = q ? *(u16*)((u8*)q - 0x1a) : 0;
     switch (b2) {
@@ -4358,7 +4360,7 @@ void EffectNode::EffFxAppendChainNode(s32 index) {
     this->field_0x0a += 1;
 }
 
-extern "C" void __attribute__((never_inline)) EffFxUnlinkChainNode(EffectNode* self) {
+extern "C" void EffFxUnlinkChainNode(EffectNode* self) {
     if (self->field_0x02 == self->field_0x08) {
         self->field_0x08 = self->field_0x00;
     }
@@ -4472,7 +4474,7 @@ void EffectStruct::EffFxStoreNodeParams(u32 a, u32 b) {
 // Target 2: us-804d22b4 - if field_0x1c <= 0.0f, clear bit 15 (0x8000) of field_0x06
 // A bitfield clear reproduces the exact wrap mask (same pattern as
 // CScheduleFlags::b15 in code_804E36DC.cpp).
-extern "C" void __attribute__((never_inline)) EffFxCondClearFlag15(EffectScene* self) {
+extern "C" void EffFxCondClearFlag15(EffectScene* self) {
     if (lbl_eu_8066B0DC < self->field_0x1c) return;
     ((EffectSceneFlags*)&self->field_0x06)->b15 = 0;
 }
@@ -4499,7 +4501,7 @@ void EffFxInitStructLinks(EffectStruct* self) {
 }
 
 // Target 5: us-804d255c - if field_0x328 != 0 and field_0x18 > 0.0f, set bit 6 (0x40) of field_0x06
-extern "C" void __attribute__((never_inline)) EffFxArmNodeFlag40(EffectScene* self) {
+extern "C" void EffFxArmNodeFlag40(EffectScene* self) {
     if (self->field_0x328 == 0) return;
     if (self->field_0x18 <= lbl_eu_8066B0DC) return;
     self->field_0x06 |= 0x40;

@@ -706,7 +706,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
             if (hasParamSubObjB((CActParamData*)view->mChildData10) != 0) {
                 // Reset the child data blocks before the fresh anim start.
                 walkParamBlkB((CActParamData*)view->mChildData10);
-                resetParamSubB((CActParamData*)view->mChildData10);
+                ((CActParamData*)view->mChildData10)->resetParamSubB();
             }
         }
         s32 frameS = static_cast<s32>(blendFrames);
@@ -1578,10 +1578,11 @@ extern "C" void storeObjVec3(void* dstObj, const f32* srcVec) {
     dst->z = *(const u32*)&srcVec[2];
 }
 
-extern "C" void writeVec3f(void* out, f32 a, f32 b, f32 c) {
+extern "C" void* writeVec3f(void* out, f32 a, f32 b, f32 c) {
     reinterpret_cast<f32*>(out)[0] = a;
     reinterpret_cast<f32*>(out)[1] = b;
     reinterpret_cast<f32*>(out)[2] = c;
+    return out;
 }
 
 extern "C" void clearFlagMask(u32* flags, u32 mask) {

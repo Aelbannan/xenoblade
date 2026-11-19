@@ -126,7 +126,7 @@ extern const char* const* lbl_eu_80665A18[2];
 extern "C" {
 
 // _reslist_base<CPackItem*>::clearList() - unlink every node (retail func_804DDADC).
-__attribute__((never_inline)) void func_804DDADC(PackItemList* list) {
+ void func_804DDADC(PackItemList* list) {
     PackItemListNode* walk = list->mStartNodePtr->mNext;
     while (walk != list->mStartNodePtr) {
         PackItemListNode* node = walk;
@@ -137,7 +137,7 @@ __attribute__((never_inline)) void func_804DDADC(PackItemList* list) {
 }
 
 // _reslist_base<CArcItem*>::clearList() (retail clearArcItemList).
-__attribute__((never_inline)) void clearArcItemList(ArcItemList* list) {
+ void clearArcItemList(ArcItemList* list) {
     ArcItemListNode* walk = list->mStartNodePtr->mNext;
     while (walk != list->mStartNodePtr) {
         ArcItemListNode* node = walk;
@@ -154,7 +154,7 @@ void updateLoadState(CArcItem* self);
 // optimize_for_size matches retail's stmw/lmw frame for the 2 saved regs.
 #pragma push
 #pragma optimize_for_size on
-__attribute__((never_inline)) void* __dt___reslist_base_CPackItem(PackItemList* self, int deleting) {
+ void* __dt___reslist_base_CPackItem(PackItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF48;
         func_804DDADC(self);
@@ -191,7 +191,7 @@ void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
 // optimize_for_size matches retail's stmw/lmw frame (same as CPackItem twin).
 #pragma push
 #pragma optimize_for_size on
-__attribute__((never_inline)) void* __dt___reslist_base_CArcItem(ArcItemList* self, int deleting) {
+ void* __dt___reslist_base_CArcItem(ArcItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF24;
         clearArcItemList(self);
@@ -233,7 +233,7 @@ int DevFile_SubstLangPath(const char*);
 // arc list (first free slot of the node array). The setItem try/catch shape
 // reproduces the retail frame marker (stw r1, 0x1c) from the reslist template.
 #pragma optimize_for_size on
-__attribute__((never_inline)) void registerArcFile(const char* pPath) {
+ void registerArcFile(const char* pPath) {
     ml::FixStr<0x100> str = pPath;
     DevFile_SubstLangPath(str.mString);
 
@@ -281,7 +281,7 @@ __attribute__((never_inline)) void registerArcFile(const char* pPath) {
 extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, int idx, int partition);
 
 #pragma optimize_for_size on
-__attribute__((never_inline)) void registerPackFile(const char* pName, int pPartitionId) {
+ void registerPackFile(const char* pName, int pPartitionId) {
     // No local singleton copy: retail reloads lbl_eu_80665A10 (SDA) at each
     // use site, keeping only pName/pPartitionId/i/newItem in callee-saved regs.
     int i = 0;

@@ -120,14 +120,14 @@ void CLoadTeardownLayout(CLoad* self) {
 }
 
 
-u8 CLoadIsLoadReady(CLoad* self) { return self->field_2B; }
+int CLoadIsLoadReady(CLoad* self) { return self->field_2B; }
 
 
-u8 CLoadIsLoaded(CLoad* self) { return self->mIsLoaded; }
+int CLoadIsLoaded(CLoad* self) { return self->mIsLoaded; }
 
 
 
-u8 CLoadIsAnimSettled(CLoad* self) { return self->field_2C; }
+int CLoadIsAnimSettled(CLoad* self) { return self->field_2C; }
 
 
 

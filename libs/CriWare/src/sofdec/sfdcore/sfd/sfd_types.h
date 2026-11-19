@@ -522,7 +522,7 @@ typedef struct SfdTim {
     s32 maxDelta;          /* 0x2a0 */
     s32 minDelta;          /* 0x2a4 */
     s32 field_0x2a8;       /* 0x2a8 */
-    s32 vsyncTime;         /* 0x2ac time derived from the vsync counter */
+    volatile s32 vsyncTime; /* 0x2ac time derived from the vsync counter */
     s32 speedNum;          /* 0x2b0 SFTIM_SetSpeed */
     s32 speedDen;          /* 0x2b4 */
     s32 field_0x2b8;       /* 0x2b8 */
@@ -532,7 +532,7 @@ typedef struct SfdTim {
     s32 field_0x2c8;       /* 0x2c8 */
     s32 field_0x2cc;       /* 0x2cc */
     s32 field_0x2d0;       /* 0x2d0 */
-    s32 field_0x2d4;       /* 0x2d4 */
+    volatile s32 field_0x2d4; /* 0x2d4 audio time, updated by the server */
     s32 field_0x2d8;       /* 0x2d8 */
     void* usrTimeFn;       /* 0x2dc SFD_SetUsrTimeFn callback */
     void* usrTimeFnArg;    /* 0x2e0 */

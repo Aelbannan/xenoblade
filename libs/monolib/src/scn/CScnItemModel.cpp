@@ -1499,7 +1499,7 @@ extern "C" void simSetValue7E8(u8* self, u32 val) { ((CScnItemModel*)self)->valu
 extern "C" void simNopVfuncSlot(CScnItemModel* self, u32 param) { (void)self; (void)param; }
 
 extern "C" void simSetFlags7A8_12(u8* self, u32 a, u32 b) {
-    volatile u32* f = (volatile u32*)&((CScnItemModel*)self)->flags7A8;
+    u32* f = &((CScnItemModel*)self)->flags7A8;
     if (a != 0) {
         *f |= 0x1;
     } else {

@@ -4,6 +4,7 @@
 
 #include <nw4r/snd/snd_Channel.h>
 #include <nw4r/snd/snd_Lfo.h>
+#include <nw4r/snd/snd_MoveValue.h>
 
 #include <revolution/WPAD.h>
 
@@ -24,49 +25,87 @@ public:
     static const int VARIABLE_NUM = 16;
     static const int PRGNO_MAX = 0xFFFF;
 
+    static const int CALL_STACK_MAX_DEPTH = 3;
+
+    // Saved MML call state. The loop count / return address pair is what
+    // MML_CALL, MML_LOOP_START and MML_RET save and restore.
+    struct CallStack {
+        u8 loopFlag;           // at 0x0
+        u8 loopCount;          // at 0x1
+        const u8* currentAddr; // at 0x4
+    };
+
+    // MML interpreter state. It is reached through the track's parser
+    // parameters because MmlParser drives those fields directly.
+    struct MmlParserParam {
+        // cmpFlag is a raw byte: the userproc callback rewrites it in place
+        // through SeqUserprocCallbackParam (retail stores it unnormalized).
+        u8 cmpFlag;                           // at 0x0
+        bool noteWaitFlag;                    // at 0x1
+        bool tieFlag;                         // at 0x2
+        // Set by MML_SET_MONOPHONIC: NoteOn then reuses the newest channel
+        // instead of allocating a new one (retail gates the block on it).
+        bool monophonicFlag;                  // at 0x3
+        CallStack callStack[CALL_STACK_MAX_DEPTH]; // at 0x4
+        u8 callStackDepth;                    // at 0x1C
+    };
+
     struct ParserTrackParam {
         const u8* baseAddr;    // at 0x0
         const u8* currentAddr; // at 0x4
-        s32 wait;              // at 0x8
 
-        bool muteFlag;       // at 0xC
-        bool silenceFlag;    // at 0xD
-        bool noteFinishWait; // at 0xE
-        bool portaFlag;      // at 0xF
-        bool damperFlag;     // at 0x10
+        MmlParserParam mmlParserParam; // at 0x8
 
-        int bankNo; // at 0x14
-        int prgNo;  // at 0x18
+        s32 wait; // at 0x28
 
-        LfoParam lfoParam; // at 0x1C
+        bool muteFlag;       // at 0x2C
+        bool silenceFlag;    // at 0x2D
+        bool noteFinishWait; // at 0x2E
+        bool portaFlag;      // at 0x2F
+        bool damperFlag;     // at 0x30
 
-        u8 lfoTarget;   // at 0x2C
-        f32 sweepPitch; // at 0x30
+        int bankNo; // at 0x34
+        int prgNo;  // at 0x38
 
-        u8 volume;  // at 0x34
-        u8 volume2; // at 0x35
+        LfoParam lfoParam; // at 0x3C
 
-        s8 pitchBend; // at 0x36
-        u8 bendRange; // at 0x37
+        u8 lfoTarget;   // at 0x4C
+        f32 sweepPitch; // at 0x50
 
-        s8 pan;         // at 0x38
-        s8 initPan;     // at 0x39
-        s8 surroundPan; // at 0x3A
+        MoveValue<u8, s16> volume;      // at 0x54
+        MoveValue<s8, s16> pan;         // at 0x5A
+        MoveValue<s8, s16> surroundPan; // at 0x60
 
-        s8 transpose; // at 0x3B
-        u8 priority;  // at 0x3C
+        u8 volume2;       // at 0x66
+        u8 velocityScale; // at 0x67
 
-        u8 portaKey;  // at 0x3D
-        u8 portaTime; // at 0x3E
+        s8 pitchBend; // at 0x68
+        u8 bendRange; // at 0x69
 
-        u8 attack;  // at 0x3F
-        u8 decay;   // at 0x40
-        u8 sustain; // at 0x41
-        u8 release; // at 0x42
+        s8 initPan;   // at 0x6A
+        s8 transpose; // at 0x6B
 
-        u8 mainSend;            // at 0x43
-        u8 fxSend[AUX_BUS_NUM]; // at 0x44
-        u8 lpfFreq;             // at 0x47
+        u8 priority;  // at 0x6C
+        u8 portaKey;  // at 0x6D
+        u8 portaTime; // at 0x6E
+
+        u8 attack;  // at 0x6F
+        u8 decay;   // at 0x70
+        u8 sustain; // at 0x71
+        u8 release; // at 0x72
+
+        s16 hold; // at 0x74
+
+        u8 mainSend;            // at 0x76
+        u8 fxSend[AUX_BUS_NUM]; // at 0x77
+
+        u8 biquadType; // at 0x7A
+
+        f32 lpfFreq; // at 0x7C
+
+        // MML_SET_BIQUAD_FREQ writes this through the parser-param reference,
+        // so it lives inside ParserTrackParam (SeqTrack+0x9C).
+        f32 biquadFreq; // at 0x80
     };
 
 public:
@@ -131,6 +170,10 @@ private:
     static const int DEFAULT_PORTA_KEY = 60;
     static const int DEFAULT_VARIABLE_VALUE = -1;
 
+    static const int DEFAULT_VOLUME = 127;
+    static const int DEFAULT_MAINSEND = 127;
+    static const int DEFAULT_ENV = 0xFF;
+
 private:
     static void ChannelCallbackFunc(Channel* pDropChannel,
                                     Channel::ChannelCallbackStatus status,
@@ -140,29 +183,20 @@ private:
     u8 mPlayerTrackNo; // at 0x4
     bool mOpenFlag;    // at 0x5
 
-    f32 mExtVolume;                             // at 0x8
-    f32 mExtPitch;                              // at 0xC
-    f32 mExtPan;                                // at 0x10
-    f32 mExtSurroundPan;                        // at 0x14
-    f32 mPanRange;                              // at 0x18
-    f32 mExtLpfFreq;                            // at 0x1C
-    f32 mExtMainSend;                           // at 0x20
-    f32 mExtFxSend[AUX_BUS_NUM];                // at 0x24
-    f32 mExtRemoteSend[WPAD_MAX_CONTROLLERS];   // at 0x30
-    f32 mExtRemoteFxSend[WPAD_MAX_CONTROLLERS]; // at 0x40
+    f32 mExtVolume;      // at 0x8
+    f32 mExtPitch;       // at 0xC
+    f32 mExtPan;         // at 0x10
+    f32 mExtSurroundPan; // at 0x14
+    f32 mPanRange;       // at 0x18
 
-    ParserTrackParam mParserTrackParam;        // at 0x50
-    volatile s16 mTrackVariable[VARIABLE_NUM]; // at 0x98
-    SeqPlayer* mPlayer;                        // at 0xB8
-    Channel* mChannelList;                     // at 0xBC
-    u8 _padC0[0xC8 - 0xC0];                   // at 0xC0
+    ParserTrackParam mParserTrackParam;        // at 0x1C
+    volatile s16 mTrackVariable[VARIABLE_NUM]; // at 0xA0
+    SeqPlayer* mPlayer;                        // at 0xC0
+    Channel* mChannelList;                     // at 0xC4
 };
 
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 ConvertLabelStringToSoundId__Q34nw4r3snd12SoundArchiveCFPCc(void*, const char*);
 
 #endif

@@ -78,7 +78,7 @@ void enableLOD__8CTaskLODFv();
 void restorePrimaryLOD__8CTaskLODFv();
 void disableLOD__8CTaskLODFv();
 void acquireLODResource__8CTaskLODFv(void* task, u32 value);
-void Scn_IsAnimActiveOrNull(void* pEmote);
+bool Scn_IsAnimActiveOrNull(void* pEmote);
 void* Scn_SetupAnim(void* a, void* b, int c, int d);
 void simSetFlag2OnTree(void* pEmote, int flag);
 void simSetLeafDist7B0(void* pEmote, float scale);

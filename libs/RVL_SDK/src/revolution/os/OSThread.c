@@ -158,7 +158,7 @@ static void SetRun(OSThread* thread) {
     RunQueueHint = TRUE;
 }
 
-void UnsetRun(OSThread* thread) DECOMP_DONT_INLINE {
+void UnsetRun(OSThread* thread) DECOMP_DONT_INLINE {  // noinline-ok: retail SetEffectivePriority/OSCancelThread/OSSuspendThread keep a real `bl`; -ipa off (loses 6) and -inline noauto (loses 12) both worse
     OSThreadQueue* queue;
     OSThread* next;
     OSThread* prev;

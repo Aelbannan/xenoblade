@@ -1755,7 +1755,7 @@ void CChainActor_ClearTargetRef(cf::CChainActor* self) {
 void CChainActor_ToggleCancelVoice(cf::CChainActor* self, u32 param) {
     if (param != (self->unk6C & 1)) {
         if (param != 0) {
-            ChainMusic_SaveSlots(&self->mChainTemp, (void*)self->unk0);
+            ChainMusic_SaveSlots((cf::CChainMusic*)&self->mChainTemp, (cf::CChainBattleObj*)self->unk0);
             ((cf::CChainBattleObj*)self->unk0)->mSub8.s03(0x2e);
             if (isBattleStatusActive(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x11) != 0) {
                 ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x11);
@@ -1763,7 +1763,7 @@ void CChainActor_ToggleCancelVoice(cf::CChainActor* self, u32 param) {
             aiRebootAction(&((cf::CChainBattleObj*)self->unk0)->mField3380);
             ((cf::CChainBattleObj*)self->unk0)->v042();
         } else {
-            ChainMusic_RestoreSlots(&self->mChainTemp, (void*)self->unk0);
+            ChainMusic_RestoreSlots((cf::CChainMusic*)&self->mChainTemp, (cf::CChainBattleObj*)self->unk0);
             aiRingCompact(&((cf::CChainBattleObj*)self->unk0)->mField3380);
             aiActionClearBits0006(&((cf::CChainBattleObj*)self->unk0)->mField3380);
             ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x2e);

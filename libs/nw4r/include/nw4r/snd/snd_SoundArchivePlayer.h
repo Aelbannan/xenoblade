@@ -66,9 +66,8 @@ public:
                           SoundActor* pActor, bool hold,
                           const StartInfo* pStartInfo);
 
-    virtual u32 detail_ConvertLabelStringToSoundId(const char* pLabel) {
-        return mSoundArchive->ConvertLabelStringToSoundId(pLabel);
-    } // at 0x2C
+    virtual u32
+    detail_ConvertLabelStringToSoundId(const char* pLabel); // at 0x2C
 
     bool IsAvailable() const;
 

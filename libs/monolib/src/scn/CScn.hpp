@@ -53,9 +53,10 @@ extern "C" void* simFwdAnimSetup102(void*, void*, void*, void*, int);
 extern "C" int simFwdAnimReset(int, int, int);
 extern "C" void __ct__8049E710();
 extern "C" void __ct__804820F8();
-extern "C" void startFade(int);
-extern "C" void* isFadeIdle(void*);
-extern "C" void* isFadeSettled(void*);
+extern "C" void startFade(CScnFadeMan*);
+extern "C" void* isFadeIdle(CScnFadeMan*);
+extern "C" void* isFadeSettled(CScnFadeMan*);
+extern "C" void* getFadeColorPtr(CScnFadeMan*);
 // The former flat imports CamMan_SwapViewParam_AED4, CamMan_FindItemA_B158,
 // CamMan_FindViewItemA and CamMan_FindViewItemB are real CScnCameraMan members
 // (libs/monolib/src/scn/CScnCameraMan.hpp); the scene-API wrappers in CScn.cpp
@@ -104,8 +105,10 @@ public:
 class CScnEnvLgtCtrl;
 extern "C" u32 scnLgtStepLightItems(CScnEnvLgtCtrl* self);
 
-// Typed view of the CScn member fields written by __ct__CScn. Mirrors the
-// public-header layout without modifying it.
+// Typed view of the CScn vtable slots written by __ct__CScn. The retail vtables
+// are the .data blob at 0x8056E8D0 (lbl_eu_*), which MWCC's own __vt__4CScn is
+// not placed at yet; until that vtable ownership is recovered the ctor/dtor
+// store the retail addresses through these padding views.
 struct CScnCtorView {
     u8 pad00[0x10];          //0x00
     void* unk10;             //0x10 primary vtable ptr
@@ -113,70 +116,17 @@ struct CScnCtorView {
     u32 mMoveFunc[3];        //0x3C
     u32 mDrawFunc[3];        //0x48
     void* unk54;             //0x54 secondary (IWorkEvent) vtable ptr
-    u32 unk58[15];           //0x58..0x90 zeroed block
-    u8 pad94[4];             //0x94 (left uninitialized)
-    f32 unk98;               //0x98
-    u16 unk9C;               //0x9C
-    u16 unk9E[10];           //0x9E..0xB0
-    u16 unkB2;               //0xB2
-    u32 unkB4;               //0xB4
-    u8 unkB8;                //0xB8
 };
 
-// Typed view of the CScn member fields touched by CScn::~CScn(). Mirrors the
-// public-header layout without modifying it.
+// Typed view of the CScn vtable slots repointed by CScn::~CScn() (see the
+// CScnCtorView note above).
 struct CScnDtorView {
     u8 pad00[0x10];          //0x00
     void* unk10;             //0x10 accessor table ptr
     u8 pad14[0x54 - 0x14];   //0x14
     void* unk54;             //0x54 secondary (IWorkEvent) vtable ptr
-    u8 pad58[0x88 - 0x58];   //0x58
-    UnkScn8C* unk88;         //0x88 scene-root subobject
 };
 
 // Direct-call destructor hit by CScn::Term() on the +0x7c subobject
 // (retail flat symbol __dt__804C0E48).
 extern "C" void __dt__804C0E48(void* self, int flag);
-
-// Typed view of the CScn member fields touched by CScn::Term(). Mirrors the
-// public-header layout without modifying it.
-struct CScnTermView {
-    u8 pad00[0x5C];           //0x00
-    void* unk5C;              //0x5C
-    void* unk60;              //0x60
-    void* unk64;              //0x64
-    void* unk68;              //0x68
-    void* unk6C;              //0x6C
-    void* unk70;              //0x70
-    void* unk74;              //0x74
-    void* unk78;              //0x78
-    void* unk7C;              //0x7C
-    void* unk80;              //0x80
-    void* unk84;              //0x84
-    void* unk88;              //0x88
-    UnkScn8C* unk8C;          //0x8C
-};
-
-// Typed view of the CScn member fields touched by CScn::Move(). Mirrors the
-// public-header layout without modifying it.
-struct CScnMoveView {
-    u8 pad00[0x60];           //0x00
-    CScnItemPool* itemPool;   //0x60
-    void* unk64;              //0x64
-    UnkScn68* camWork;        //0x68
-    void* unk6C;              //0x6C
-    CScnFilterMan* filterMan; //0x70
-    void* unk74;              //0x74
-    void* unk78;              //0x78
-    CScnEnvLgtCtrl* lgtCtrl;  //0x7C
-    CScnFadeMan* fadeMan;     //0x80
-    CScnFrame* frame;         //0x84
-    void* unk88;              //0x88
-    UnkScn8C* unk8C;          //0x8C
-    u8 pad90[0x3E4 - 0x90];   //0x90
-    u8 unk3E4;                //0x3E4
-    u8 unk3E5;                //0x3E5
-    u8 unk3E6;                //0x3E6
-    u8 unk3E7;                //0x3E7
-    u8 unk3E8;                //0x3E8
-};

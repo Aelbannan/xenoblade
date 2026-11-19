@@ -23,7 +23,7 @@ class SmellCounts(unittest.TestCase):
         )
         hard, _ = faithful.count_smells(src)
         self.assertEqual(hard, {"label": 1, "mangled_c": 1, "section": 1, "offset_cast": 1, "view_struct": 1,
-                               "noinline": 0})
+                               "noinline": 0, "decl_shield": 0, "volatile": 0})
 
     def test_view_struct_ignores_real_retail_classes(self):
         src = "CView* v = getView();\nActParamCallView* a = (ActParamCallView*)p;\n"
@@ -38,10 +38,34 @@ class SmellCounts(unittest.TestCase):
             "#pragma auto_inline off\n"
             "__declspec(noinline) void b(); // noinline-ok: split, decl order and -inline flags tried\n"
             "__declspec(noinline) void c(); // noinline-ok:\n"
+            "__attribute__((never_inline)) void d();\n"
+            "DECOMP_DONT_INLINE void e();\n"
+            "DECOMP_DONT_INLINE void f(); // noinline-ok: TU boundary and -ipa off tried\n"
         )
         hard, soft = faithful.count_smells(src)
-        self.assertEqual(hard["noinline"], 4)
+        self.assertEqual(hard["noinline"], 6)
         self.assertNotIn("noinline", soft)
+
+    def test_volatile_reread_is_hard_unless_justified(self):
+        src = (
+            "s16 a = *(volatile s16*)&self->unk335A;\n"
+            "*(volatile u32*)&WGPIPE = 1;\n"
+            "*(volatile u8*)0xCC008000 = 0x61;\n"
+            "u32 b = *(volatile u32*)&mFront; // volatile-ok: written by the DVD callback\n"
+        )
+        hard, _ = faithful.count_smells(src)
+        self.assertEqual(hard["volatile"], 1)
+
+    def test_decl_shield(self):
+        src = (
+            "#define Scn_FindCamItem Scn_FindCamItem_hidden\n"
+            "#define CItem_slotCnt CItem_slotCnt_citem_dup\n"
+            "#define gxHeapSize gxHeapSize__9CDeviceGX\n"
+            "#define DEBUGPrint WUD_DEBUGPrint\n"
+            "#define MAX_SLOTS 8\n"
+        )
+        hard, _ = faithful.count_smells(src)
+        self.assertEqual(hard["decl_shield"], 3)
 
     def test_plain_extern_c_is_not_mangled(self):
         hard, _ = faithful.count_smells('extern "C" void OSReport(const char* fmt, ...);\n')

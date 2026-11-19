@@ -5,7 +5,7 @@
 #include <string.h>
 
 static void nandSplitPerm(u8 perm, u32* ownerPerm, u32* groupPerm,
-                          u32* otherPerm) DECOMP_DONT_INLINE;
+                          u32* otherPerm);
 static void nandGetStatusCallback(s32 result, void* arg);
 void nandGetFileStatusAsyncCallback(s32 result, void* arg);
 static BOOL nandInspectPermission(u8 perm);
@@ -382,7 +382,7 @@ s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
 }
 
 void nandComposePerm(u8* out, u32 ownerPerm, u32 groupPerm,
-                     u32 otherPerm) DECOMP_DONT_INLINE {
+                     u32 otherPerm) DECOMP_DONT_INLINE {  // noinline-ok: retail nandGetStatus/nandGetStatusCallback keep a real `bl`; -ipa off (loses 7 fns) and -inline noauto (loses 11) both worse
     u32 perm = 0;
 
     if (ownerPerm & NAND_ACCESS_READ) {

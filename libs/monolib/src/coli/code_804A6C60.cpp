@@ -272,6 +272,7 @@ struct CColiObject {
             union {
                 f32 field_0x3c_f;      // 0x3c (lfs view)
                 u32 field_0x3c_u;      // 0x3c (stw view)
+                CColiObject* field_0x3c_p; // 0x3c (partner object pointer)
             };
             union {
                 u32 field_0x40;        // 0x40 (lwz/stw view)
@@ -5510,15 +5511,13 @@ contact:
     {
         Vec tmp;
         PSMTXMultVec(m1, (const Vec*)&res, &tmp);
-        // Both partner-slot reads are volatile (the paired-single stores
-        // of the subtract may alias the slot in MWCC's model): one reload
-        // feeds the subtract destination, the other the virtual notify.
+        // The partner slot is read as a word for the subtract destination and
+        // as a pointer for the notify: the stores through the first view may
+        // alias the slot, so retail issues a fresh load for the second use.
         nw4r::math::VEC3Sub(
-            (VEC3*) & ((CColiObj3C*)(uintptr_t) * (volatile u32*)
-                           &self->field_0x3c_u)->field_0x24,
+            (VEC3*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x24,
             (const VEC3*)&tmp, (const VEC3*)&self->field_0x44);
-        CColiObj3C* p3 =
-            (CColiObj3C*)(uintptr_t) * (volatile u32*)&self->field_0x3c_u;
+        CColiObj3C* p3 = (CColiObj3C*)self->field_0x3c_p;
         p3->vtbl->field_0x08(p3, self->field_0x314);
         return 1;
     }

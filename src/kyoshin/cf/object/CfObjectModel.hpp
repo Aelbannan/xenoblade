@@ -242,7 +242,7 @@ struct CfObjectModelVec3 {
 // Imports (retail uses unmangled names; extern "C" so the linkage matches
 // the CfObjectMap.hpp declarations of the same helpers).
 // Releases a sub-object (used by CfObjectModel_UnkVirtualFunc1).
-extern "C" void Scn_IsAnimActiveOrNull(void* ptr);
+extern "C" bool Scn_IsAnimActiveOrNull(void* ptr);
 // Fills the two output vectors for the model sub-object (used by
 // CfObject_UnkVirtualFunc56).
 extern "C" void TexMan_GetDefaultXf_0A44(cf::CfObjectModelSub98* obj, CfObjectModelVec3* outA, CfObjectModelVec3* outB);

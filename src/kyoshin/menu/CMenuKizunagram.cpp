@@ -17,34 +17,8 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
-// Shield CLoad.hpp's C++-linkage helper declarations: this TU needs the
-// CLoad class, but declares the func_802AExxxx helpers itself below as
-// extern "C" so call relocs carry the retail UNMANGLED symbol names
-// (identical plain decls emit mangled __FP5CLoad refs). MWCC 10505.
-#define CLoadBeginFileRequest CLoadBeginFileRequest_CLoadHdr
-#define CLoadUpdateLayout CLoadUpdateLayout_CLoadHdr
-#define CLoadDrawIfVisible CLoadDrawIfVisible_CLoadHdr
-#define CLoadTeardownLayout CLoadTeardownLayout_CLoadHdr
-#define CLoadIsLoadReady CLoadIsLoadReady_CLoadHdr
-#define CLoadIsLoaded CLoadIsLoaded_CLoadHdr
-#define CLoadIsAnimSettled CLoadIsAnimSettled_CLoadHdr
-#define CLoadStartFadeInStep CLoadStartFadeInStep_CLoadHdr
-#define CLoadStartRetryStep CLoadStartRetryStep_CLoadHdr
-#define CLoadAdvanceFadeHold CLoadAdvanceFadeHold_CLoadHdr
-#define CLoadFinishRetryIdle CLoadFinishRetryIdle_CLoadHdr
 #include "kyoshin/CLoad.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
-#undef CLoadBeginFileRequest
-#undef CLoadUpdateLayout
-#undef CLoadDrawIfVisible
-#undef CLoadTeardownLayout
-#undef CLoadIsLoadReady
-#undef CLoadIsLoaded
-#undef CLoadIsAnimSettled
-#undef CLoadStartFadeInStep
-#undef CLoadStartRetryStep
-#undef CLoadAdvanceFadeHold
-#undef CLoadFinishRetryIdle
 
 // CScn / CTaskGame forward declarations (their full headers pull broken
 // monolib umbrella headers; keep the pointers opaque, same scheme as
@@ -69,10 +43,6 @@ extern "C" int CFade_IsReady(CFade* self);
 // helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
 // are int where retail compares r3 with cmpwi directly (no byte mask);
 // kizChartStatus is u8 because retail masks its result with clrlwi.
-// Retail-unmangled views of the CLoad helpers (see include shield above).
-extern "C" int CLoadIsLoadReady(CLoad* self);
-extern "C" void CLoadStartFadeInStep(CLoad* self);
-extern "C" void CLoadStartRetryStep(CLoad* self);
 extern "C" int CFade_IsVisible(CFade* self);
 extern "C" void CFade_FadeOut(CFade* self);
 extern "C" int kizChartReady(UnkKizunaMenuSub98* self);

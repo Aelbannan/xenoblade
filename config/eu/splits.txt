@@ -35,7 +35,8 @@ kyoshin/main.cpp:
 
 split1.s:
 	.rodata     start:0x804FA410 end:0x805139D8
-	.data       start:0x80524B98 end:0x8053B928
+	.data       start:0x80524B98 end:0x8052A3B0
+	.data       start:0x8052A528 end:0x8053B928
 	.bss        start:0x805704C8 end:0x80577790
 	.sdata      start:0x806618B0 end:0x80662F30
 	.sbss       start:0x80663D10 end:0x80664C40

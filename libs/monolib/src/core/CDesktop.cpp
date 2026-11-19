@@ -160,16 +160,16 @@ bool CDesktop::wkStandbyLogin(){
     // copies the raw bytes of an uninitialized 0x24-byte entry local; the
     // payload is ignored by the tag-3 consumer.
     CView* view = mView;
-    u32 sum = view->unk3F0 + view->mContextRingWriteIndex;
-    u32 slot = sum % view->mContextRingCapacity;
+    u32 sum = view->mContextMsg.mFront + view->mContextMsg.mSize;
+    u32 slot = sum % view->mContextMsg.mCapacity;
     CViewContextRingEntry* entry = reinterpret_cast<CViewContextRingEntry*>(
-        view->mContextRingBase + slot * 0x24);
+        (u8*)view->mContextMsg.mArrayPtr + slot * 0x24);
     CViewContextRingEntry ctx;
     *entry = ctx;
     entry->tag = 3;
     entry->pad = 0;
-    view->mContextRingWriteIndex += 1;
-    view->unk3FC = view->mContextRingWriteIndex - 1;
+    view->mContextMsg.mSize += 1;
+    view->mContextMsg.field6 = view->mContextMsg.mSize - 1;
     mView->unk460 = 0x13;
 
     // Name the view after the "Desktop" string (both the view-local name and
@@ -251,7 +251,7 @@ extern "C" __declspec(noinline) CProc* getCurrentProc__8CDesktopFv(){  // noinli
         return nullptr;
     }
 
-    reslist<WORK_ID>& list = *reinterpret_cast<reslist<WORK_ID>*>(&rootView->unk238);
+    reslist<WORK_ID>& list = rootView->mWorkIDList;
     for(reslist<WORK_ID>::iterator it = list.begin(); it != list.end(); ++it){
         CWorkThread* thread = CWorkUtil::getWorkThread(*it);
         CProc* proc = static_cast<CProc*>(thread);

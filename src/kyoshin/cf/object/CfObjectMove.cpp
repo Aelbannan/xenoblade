@@ -3,9 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
-#define CfObjectMove_setRegionAttached CfObjectMove_setRegionAttached_hidden
+// CfObjectMove_setRegionAttached: unified on `void*, int` (the definition below);
 #include "kyoshin/cf/CfResObjImpl.hpp"
-#undef CfObjectMove_setRegionAttached
+// no shield needed (CfResObjImpl.hpp decl spelling aligned).
 // Owning-class virtuals for the +0xC4 target (CActParamAnim family: this TU's
 // mTargetC4 is the +0xD0 CActParamAnimGame). Five of this header's canonical
 // decls clash with TU-visible forms (same clash family as
@@ -16,12 +16,11 @@
 // by inline code in that header (decls only), so hide them for the include;
 // all TU call sites resolve after the #undefs and are unaffected.
 #define func_8004B9D4 func_8004B9D4_hidden
-#define Scn_FindCamItem Scn_FindCamItem_hidden
+// Scn_FindCamItem: unified on `void*(void*, int)`
 #define ScnRes_VertRayForward_E398 ScnRes_VertRayForward_E398_hidden
 #define simGetLeafActData simGetLeafActData_hidden
 #include "kyoshin/action/CActParamAnim.hpp"
 #undef func_8004B9D4
-#undef Scn_FindCamItem
 #undef ScnRes_VertRayForward_E398
 #undef simGetLeafActData
 #include "monolib/math.hpp"

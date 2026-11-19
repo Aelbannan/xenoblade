@@ -17,10 +17,12 @@
 #include <revolution/OS/OSError.h>
 
 // Retail defines these in OSPlayTime.o (.sbss/.bss); keep global bindings.
-void *volatile __OSExpireAIFade;
-u32 __OSExpireSetExpiredFlag;
-u64 __OSExpireCallback; /* retail st_size 8: stored as 8-byte, cast when called */
+/* Retail .sbss runs __OSExpireAIFade..__OSExpireTime ascending; this compiler
+ * emits file-scope objects in reverse declaration order. */
 u64 __OSExpireTime;
+u64 __OSExpireCallback; /* retail st_size 8: stored as 8-byte, cast when called */
+u32 __OSExpireSetExpiredFlag;
+void *volatile __OSExpireAIFade;
 OSAlarm __OSExpireAlarm;
 u8 pad_805D5530[0x10]; /* retail .bss tail after __OSExpireAlarm (0x40 total) */
 

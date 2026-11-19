@@ -43,7 +43,7 @@ static BOOL check_over(CScnFilter* self);
 
 extern "C" void FilterUpdateIntensity(CScnFilter* self, CScnFilterHost* host) {
     // proceed only while the filter is active and not yet saturated
-    if (*(volatile u32*)&self->mUnk0C == 0) {
+    if (self->mUnk0C == 0) {
         return;
     }
     if (check_over(self)) {
@@ -63,8 +63,11 @@ static BOOL check_over(CScnFilter* self) {
     // 0x43300000 2^52 stack-trick (stw/stw/lfd/lfd/fsubs) inline.
     // Explicit if/else assignment => MWCC li-diamond, no accumulator preinit
     // (MWCC_CASES us-80374610 bool-diamond rule).
+    // retail reads the volatile limit once per call and reuses it for both
+    // the zero guard and the int-to-float compare.
+    u32 limit = self->mUnk0C;
     BOOL over;
-    if (self->mUnk0C != 0 && self->mIntensity > (float)self->mUnk0C) {
+    if (limit != 0 && self->mIntensity > (float)limit) {
         over = TRUE;
     } else {
         over = FALSE;

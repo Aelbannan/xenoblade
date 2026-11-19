@@ -21,34 +21,15 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 #undef CItem_initItemImplInstances
-// This TU declares six table handles + two helpers with stale types that
-// clash with cf/CItem.hpp's decls; rename CItem.hpp's copies so the TU decls
-// keep the retail names (same #define-rename pattern as CEquipChange.cpp).
-#define lbl_eu_806640D8 lbl_eu_806640D8_citem_dup
-#define lbl_eu_806640EC lbl_eu_806640EC_citem_dup
-#define lbl_eu_806640F4 lbl_eu_806640F4_citem_dup
-#define lbl_eu_806640F8 lbl_eu_806640F8_citem_dup
-#define lbl_eu_80664104 lbl_eu_80664104_citem_dup
-#define lbl_eu_80664110 lbl_eu_80664110_citem_dup
+// CItemBoxGrid.hpp declares these two accessors with a stale void*/u32 view
+// that CItem.hpp (the owner) declares as CItemExt*/s32; the owning header is
+// not canonicalised yet, so CItem.hpp's copies are renamed for this include.
 #define CItem_kindPtr CItem_kindPtr_grid_stale
 #define CItem_slotCnt CItem_slotCnt_grid_stale
 #include "kyoshin/cf/CItem.hpp"
-#undef lbl_eu_806640D8
-#undef lbl_eu_806640EC
-#undef lbl_eu_806640F4
-#undef lbl_eu_806640F8
-#undef lbl_eu_80664104
-#undef lbl_eu_80664110
 #undef CItem_kindPtr
 #undef CItem_slotCnt
-// Real CSysWin owner for the +0x88 loadSystemArc dispatch: rename the five
-// decls whose signatures clash with this TU's stale void*/int forms so the
-// TU decls keep the retail names (identical decls need no guard).
-#define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
-#define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
 #include "kyoshin/CSysWin.hpp"
-#undef __dt__17UnkClass_8045F564Fv
-#undef __ct__17UnkClass_8045F564Fv
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <stdio.h>
@@ -101,12 +82,6 @@ extern const double lbl_eu_80667F60;
 extern const double lbl_eu_80667F68;
 
 extern u32 lbl_eu_80664098;
-extern u32 lbl_eu_806640D8;
-extern u32 lbl_eu_806640EC;
-
-extern u32 lbl_eu_806640F8;
-extern u32 lbl_eu_80664104;
-extern u32 lbl_eu_80664110;
 extern u32 lbl_eu_80664488;
 extern u32 lbl_eu_80664490;
 extern u32 lbl_eu_80664498;
@@ -136,7 +111,6 @@ extern const char lbl_eu_8050566C[];
 extern u32 lbl_eu_80664514;
 // 4-byte .sbss pointer (symbols.txt size:0x4). A large u8[] decl forces
 // lis/addi; void* keeps it SDA-eligible (EMB_SDA21 lwz like retail).
-extern void* lbl_eu_806640F4;
 // Forward declarations for later-defined functions
 void CopyTabSlotVec(u32*, void*, u32);
 
@@ -359,7 +333,7 @@ CArtsBookItem::~CArtsBookItem() {
 }
 
 void CArtsBookItem::Rebuild() {
-    u32 bdat = lbl_eu_80664110;
+    u32 bdat= (u32)lbl_eu_80664110;
     s32 count = (s32)Bdat_GetMaxRow_B1EC((void*)bdat);
     u8 i;
     for (i = 1; i <= count; i++) {
@@ -1078,7 +1052,7 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
         char* msg = BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], (const char*)&lbl_eu_8050566C[0x158], 0x9c);
         sprintf((char*)(p + 0x2825), (const char*)&lbl_eu_8050566C[0x14c], msg);
     } else if (p[0x2802] == 3) {
-        u32 tbl = lbl_eu_806640D8;
+        u32 tbl= (u32)lbl_eu_806640D8;
         CItemImpl* inst1 = CItem_initItemImplInstances((CItemData*)item);
         u16 slotStatus = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
         CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
@@ -2500,10 +2474,10 @@ void CItemBoxGridFull::SortGridByMsgKeyDesc() {
             void* obj1 = CItem_kindPtr(this->field_2802, *(s16*)((u8*)this + (u16)j * 10));
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            tbl = lbl_eu_80664110;
+            tbl= (u32)lbl_eu_80664110;
             u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 tbl2 = lbl_eu_80664110;
+            u32 tbl2= (u32)lbl_eu_80664110;
             u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x115], (u16)BdatGetItemId(w2 >> 20));
             if (c1 <= c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
@@ -2531,10 +2505,10 @@ void CItemBoxGridFull::GroupByKindName(u32 target) {
             void* obj1 = CItem_kindPtr(this->field_2802, e1->id);
             void* obj2 = CItem_kindPtr(this->field_2802, e2->id);
             u32 w1 = ((CItemBoxGridItemView*)obj1)->word00;
-            u32 tbl = lbl_eu_80664110;
+            u32 tbl= (u32)lbl_eu_80664110;
             u8 c1 = BdatGetU8Direct((const void*)tbl, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w1 >> 20));
             u32 w2 = ((CItemBoxGridItemView*)obj2)->word00;
-            u32 tbl2 = lbl_eu_80664110;
+            u32 tbl2= (u32)lbl_eu_80664110;
             u8 c2 = BdatGetU8Direct((const void*)tbl2, (const char*)&lbl_eu_8050566C[0x109], (u16)BdatGetItemId(w2 >> 20));
             u32 m1 = c1 == target;
             u32 m2 = c2 == target;
@@ -3752,7 +3726,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 u32 teachType = getPresentRankA(p + 0x468);
                 u32 teachState = getPresentRankB(p + 0x468);
                 if ((u8)teachState == 1) {
-                    u32 table = lbl_eu_80664104;
+                    u32 table= (u32)lbl_eu_80664104;
                     if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 7) {
                         incrementEventCounter(0x87);
@@ -3762,7 +3736,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 } else if ((u8)teachState == 4) {
                     if ((*(u32*)item >> 20) == 0x775) incrementEventCounter(0x8a);
                 } else if ((u8)teachState == 5) {
-                    u32 table = lbl_eu_80664104;
+                    u32 table= (u32)lbl_eu_80664104;
                     if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 2) {
                         incrementEventCounter(0x8b);
@@ -3771,7 +3745,7 @@ void CItemBoxGrid::func_801CCAF0() {
                 if ((u8)teachType == 3 || (u8)teachType == 8) {
                     if ((u8)teachState == 1) incrementEventCounter(0x89);
                 } else if ((u8)teachType == 6) {
-                    u32 table = lbl_eu_80664104;
+                    u32 table= (u32)lbl_eu_80664104;
                     if ((BdatGetU8Direct((const void*)table, (const char*)&lbl_eu_8050566C[0x212],
                                        BdatGetItemId(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 5) {
                         incrementEventCounter(0x8d);
@@ -4321,7 +4295,7 @@ __declspec(noinline) void CItemBoxGrid::DispatchSubmenuConfirm() {
         BdatGetItemType(kind & 0xFFFF);
         u32 kindShort = BdatGetItemId(kind & 0xFFFF);
 
-        u32 tbl = lbl_eu_80664110;
+        u32 tbl= (u32)lbl_eu_80664110;
         u32 catVal = BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x109], kindShort & 0xFFFF);
         u32 nameIdx = BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x115], kindShort & 0xFFFF);
         u32 paramVal = BdatGetU8Direct((const void*)tbl, &lbl_eu_8050566C[0x11d], kindShort & 0xFFFF);
@@ -5406,7 +5380,7 @@ u32 CItemBoxGrid::GetCatLabelMsg() {
 // charData + count*0x49 + (table byte << 1). Returns 1 when the flag test
 // fails (item not yet learned); 0 when it is already learned.
 u32 CItemBoxGrid::IsItemTeachable(u32 kind) {
-    u32 bdat = lbl_eu_80664110;
+    u32 bdat= (u32)lbl_eu_80664110;
     BdatGetItemType(kind);
     u16 shortKind = BdatGetItemId(kind);
     u8 flag = BdatGetU8Direct((const void*)bdat, (const char*)&lbl_eu_8050566C[0x109], (u16)shortKind);

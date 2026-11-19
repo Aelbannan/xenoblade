@@ -21,8 +21,12 @@ void resetBattleGauge__Q22cf13CfGameManagerFv();
 void syncBattleState__Q22cf13CfGameManagerFv(void* object);
 void processFieldEffects__Q22cf13CfGameManagerFv();
 void CMenuArtsSelect_ResetSlotAnims();
-extern "C" void ChainMusic_SaveSlots(void* self, void* owner);
-extern "C" void ChainMusic_RestoreSlots(void* self, void* owner);
+// Canonical (definition-matched) declaration from CChainActorList.cpp. The slot
+// table is the leading 0x61 bytes of cf::CChainTemp, so the CChainTimer/CChain
+// call sites cast their CChainTemp* to cf::CChainMusic*.
+namespace cf { class CChainMusic; }
+extern "C" void ChainMusic_SaveSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner);
+extern "C" void ChainMusic_RestoreSlots(cf::CChainMusic* self, cf::CChainBattleObj* owner);
 int isArtsUsable(int val, int flag);
 // (IdTable_SumValues: single winning decl lives on chain/CChainActorList.hpp.)
 int* CtrlObjectParam_GetSlotTableBase();

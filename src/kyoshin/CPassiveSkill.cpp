@@ -29,13 +29,7 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // Shields for extern "C" drift (retail evidence: this TU uses u8 BdatGetU8Direct,
 // bool isPaneVisible(Pane*), Pane* PaneSetTexPalette, VEC3 ScalePaneWorldPos,
 // void* Class_8045F858 ct/dt vs header spellings).
-#define isPaneVisible isPaneVisible_kiz_hidden
-#define __ct__14Class_8045F858FP17UnkClass_8045F564 __ct__14Class_8045F858_kiz_hidden
-#define __dt__14Class_8045F858Fv __dt__14Class_8045F858_kiz_hidden
 #include "kyoshin/CPcKizunagram.hpp"
-#undef isPaneVisible
-#undef __ct__14Class_8045F858FP17UnkClass_8045F564
-#undef __dt__14Class_8045F858Fv
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
@@ -3941,8 +3935,6 @@ extern "C" void func_8026DB64() {}
 // Callee declarations (retail plain/mangled names; also declared in
 // CEquipItemBox.hpp / CCollepedia.hpp for their TUs).
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);

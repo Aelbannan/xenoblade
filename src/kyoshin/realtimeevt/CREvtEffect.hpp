@@ -147,7 +147,7 @@ extern "C" void simSetFlag2000Chain(void* model, int val);
 extern "C" void simBindChrAnim(void* model, void* animData, int, int, int, int, int);
 
 // Memory
-extern "C" void Scn_IsAnimActiveOrNull(void* ptr);
+extern "C" bool Scn_IsAnimActiveOrNull(void* ptr);
 extern "C" void* Scn_InitGlobalA(void* global, void* bdat, int val);
 
 // Random

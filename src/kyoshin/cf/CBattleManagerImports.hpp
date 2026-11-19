@@ -95,21 +95,6 @@ struct E1B5C_TargetObj {
 
 // Battle-actor / action / player view used by evalBattleTarget: status flags
 // (+0x3374), vtable holder (+0x3ED4), flags (+0x3F00), ptr (+0x3F10),
-// u16 type (+0x3F28), gate word (+0x3F60).
-struct E1B5C_ObjView {
-    u8 pad_00[0x3374];
-    u32 field_3374;     // +0x3374
-    u8 pad_3378[0x3ED4 - 0x3378];
-    void* field_3ED4;   // +0x3ED4
-    u8 pad_3ED8[0x3F00 - 0x3ED8];
-    u32 field_3F00;     // +0x3F00
-    u8 pad_3F04[0x3F10 - 0x3F04];
-    void* field_3F10;   // +0x3F10
-    u8 pad_3F14[0x3F28 - 0x3F14];
-    u16 field_3F28;     // +0x3F28
-    u8 pad_3F2A[0x3F60 - 0x3F2A];
-    u32 field_3F60;     // +0x3F60
-};
 
 // Flags-word view onto a move-data block (+0x78 only).
 struct E1B5C_MoveFlags {
@@ -118,13 +103,6 @@ struct E1B5C_MoveFlags {
 };
 
 // Object layout for the removed-target access in FactoryEvent2 / unregisterBattleActor
-// +0x3ED4 = ptr to vtable-holder, +0x3F00 = flags
-struct BattleRemoveObjAccessor {
-    u8 pad_00[0x3ED4];
-    void* field_3ed4;    // +0x3ED4 ptr (has vtable[0x7C] call)
-    u8 pad_3ed8[0x28];   // 0x3ED8-0x3EFF
-    u32 field_3f00;      // +0x3F00 flags
-};
 
 // Enemy/status object view for setupBattleMove's arg3: status region base at
 // +0x8 (isBattleStatusActive operates on &+0x8), flags at +0x3374, embedded move
@@ -156,13 +134,6 @@ struct DB4FC_ArtsObj {
 // probe used by CBattleMan_FindActorByKind lives at compiled vtable slot 0x4C (declared
 // index 17 under -RTTI). Never instantiated here, so no vtable is emitted.
 // Actor object scanned by CBattleMan_FindActorByKind: type id at +0x15F0 and the embedded
-// move sub-object at +0x3E9C.
-struct BattleScanActorView {
-    u8 pad_00[0x15F0];
-    u32 field_15F0;                    // +0x15F0 type id
-    u8 pad_15F4[0x3E9C - 0x15F4];
-    u8 field_3E9C; // embedded move sub-object (real vt on cf::CfObjectMove)
-};
 
 // Sentinel-pointer view (offset-typed alias of CBattleManager used to keep
 // CBattleMan_FindActorByKind pass 2's sentinel load independent of pass 1's).
@@ -172,13 +143,6 @@ struct BMSentinelView {
 };
 
 // MapFx_ResolveOwner result view for CBattleMan_FindActorByKind: flags at +0x3F00 (bit 2 =
-// targetable) and type id at +0x15F0.
-struct BattleScanStateView {
-    u8 pad_00[0x15F0];
-    u32 field_15F0;                    // +0x15F0 type id
-    u8 pad_15F4[0x3F00 - 0x15F4];
-    u32 field_3F00;                    // +0x3F00 flags
-};
 
 // Absolute-offset view of an actor's embedded move sub-object (the C++ base
 // layout in CfObjectActor.hpp is 8 bytes off retail, so raw views pin the
@@ -251,15 +215,6 @@ typedef char DB0FC_ck84[(offsetof(DB0FC_MoveTable, table)    == 0x84) ? 1 : -1];
 
 // Object layout for registerBattleActor's actor param: flags at +0x3374,
 // vtable-holder at +0x3ED4 (dispatched as a real virtual on the owning
-// holder class), flags at +0x3F00.
-struct BattleRegObjAccessor {
-    u8 pad_00[0x3374];
-    u32 field_3374;             // +0x3374
-    u8 pad_3378[0x3ED4 - 0x3378];
-    void* field_3ED4;           // +0x3ED4
-    u8 pad_3ED8[0x3F00 - 0x3ED8];
-    u32 field_3F00;             // +0x3F00
-};
 
 
 // ---------------------------------------------------------------------------

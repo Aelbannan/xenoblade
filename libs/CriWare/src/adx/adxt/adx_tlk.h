@@ -29,7 +29,9 @@ typedef struct ADXT_OBJ_ {
     s16 f40;        /* 0x40 */
     s16 pan[2];     /* 0x42 */
     s16 f46;        /* 0x46 */
-    u8 _pad1[0x54 - 0x48];
+    s32 maxDec;     /* 0x48 decode-ahead cap in samples */
+    u32 f4C;        /* 0x4C reset when a new SJ is attached */
+    u8 _pad1[0x54 - 0x50];
     u32 f54;        /* 0x54 */
     u32 f58;        /* 0x58 */
     u32 f5C;        /* 0x5C */
@@ -46,7 +48,8 @@ typedef struct ADXT_OBJ_ {
     void* f74_amp;  /* 0x74 */
     u8 _pad4[0x88 - 0x78];
     u32 timeOfst;   /* 0x88 */
-    u8 _pad5[0x94 - 0x8C];
+    u32 f8C;        /* 0x8C */
+    u32 f90;        /* 0x90 */
     void* lsc;      /* 0x94 */
     u8 f98;         /* 0x98 */
     u8 _pad6[0x9C - 0x99];
@@ -57,6 +60,8 @@ typedef struct ADXT_OBJ_ {
     u8 volSw;       /* 0xA9 */
     u8 _pad7[0xAC - 0xAA];
     u8* sjTail;     /* 0xAC */
-} ADXT_OBJ_;
+    u8 _pad8[0xC0 - 0xB0];
+    u32 lpStartOfs; /* 0xC0 loop start offset the position is aligned to */
+} ADXT_OBJ_;        /* 0xC4 */
 
 #endif

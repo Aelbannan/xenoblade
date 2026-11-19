@@ -614,13 +614,14 @@ void btm_read_remote_version_complete(UINT8 *p)
     int xx;
 
     if (p[0] == 0) {
-        handle = (UINT16)((p[2] << 8) + p[1]);
+        p++;
+        STREAM_TO_UINT16(handle, p);
 
         for (xx = 0; xx < 4; xx++) {
             if (p_acl_cb->in_use && p_acl_cb->hci_handle == handle) {
-                p_acl_cb->lmp_version = p[3];
-                p_acl_cb->manufacturer = (UINT16)(p[4] + (p[5] << 8));
-                p_acl_cb->lmp_subversion = (UINT16)(p[6] + (p[7] << 8));
+                p_acl_cb->lmp_version = *p++;
+                STREAM_TO_UINT16(p_acl_cb->manufacturer, p);
+                STREAM_TO_UINT16(p_acl_cb->lmp_subversion, p);
                 return;
             }
             p_acl_cb++;

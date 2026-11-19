@@ -262,10 +262,10 @@ public:
     static void setRightStickDeadzone(float value);
     static void kpadConnectCallback(s32 chan, s32 result);
     static void wpadExtensionCallback(s32 r3, s32 r4);
-    static DECOMP_DONT_INLINE void updatePadExtensions();
+    static DECOMP_DONT_INLINE void updatePadExtensions();  // noinline-ok: retail update() keeps a real `bl`; -inline noauto / -ipa off lose kpadConnectCallback+wpadExtensionCallback+updatePadExtensions, per-function optimize_for_size does not stop the fold
     static void updateFlagValues(CPad* r3, u32 r4);
     static void updatePadInputs();
-    static DECOMP_DONT_INLINE void updateMainControllers();
+    static DECOMP_DONT_INLINE void updateMainControllers();  // noinline-ok: retail update() keeps a real `bl`; -inline noauto / -ipa off lose kpadConnectCallback+wpadExtensionCallback+updatePadExtensions, per-function optimize_for_size does not stop the fold
     static void update();
     static CPad* getPadData(s32 type, s32 channel);
     static CPad* getDummyPad();

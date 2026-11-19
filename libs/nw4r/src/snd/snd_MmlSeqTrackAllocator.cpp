@@ -8,7 +8,7 @@ SeqTrack* MmlSeqTrackAllocator::AllocTrack(SeqPlayer* pPlayer) {
     MmlSeqTrack* pTrack = mTrackPool.Alloc();
 
     if (pTrack != NULL) {
-        *(SeqPlayer**)((u8*)pTrack + 0xC0) = pPlayer;
+        pTrack->SetSeqPlayer(pPlayer);
         pTrack->SetMmlParser(mParser);
     }
 
@@ -16,12 +16,12 @@ SeqTrack* MmlSeqTrackAllocator::AllocTrack(SeqPlayer* pPlayer) {
 }
 
 void MmlSeqTrackAllocator::FreeTrack(SeqTrack* pTrack) {
-    *(SeqPlayer**)((u8*)pTrack + 0xC0) = NULL;
+    pTrack->SetSeqPlayer(NULL);
     mTrackPool.Free(static_cast<MmlSeqTrack*>(pTrack));
 }
 
 u32 MmlSeqTrackAllocator::Create(void* pBuffer, u32 size) {
-    return CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(&mTrackPool, pBuffer, size, 0xCC);
+    return mTrackPool.Create(pBuffer, size);
 }
 
 void MmlSeqTrackAllocator::Destroy(void* pBuffer, u32 size) {

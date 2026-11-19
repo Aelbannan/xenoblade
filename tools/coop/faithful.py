@@ -27,12 +27,22 @@ comments stripped.  Naming debt that does not change the program's shape
 (``field_0x..``, ``Unk...``, ``func_XXXXXXXX``) is reported as ``soft`` and
 does not gate.
 
-  noinline      ``__declspec(noinline)`` / ``#pragma dont_inline`` /
+  noinline      ``__declspec(noinline)`` / ``__attribute__((never_inline))`` /
+                ``DECOMP_DONT_INLINE`` / ``#pragma dont_inline`` /
                 ``#pragma auto_inline off`` forcing a call the original source
                 did not need to force.  Check the real causes first: wrong TU
                 boundary, definition order, unit-wide inline flags.  A use that
                 survives those checks is exempt when its line carries
                 ``// noinline-ok: <what was tried>``.
+  decl_shield   ``#define name name_xxx`` / ``#define name name_hidden`` renames
+                that hide a conflicting declaration (or alias a static member to
+                its mangled name).  Fix the declaration drift instead: one
+                canonical declaration, shared by every TU.
+  volatile      ``(volatile T*)&obj`` re-reads of a non-volatile object to defeat
+                CSE / force a load (hardware FIFO writes such as ``&WGPIPE`` are
+                not counted).  If the retail object really is volatile, declare it
+                volatile at its definition; a use that must stay is exempt with
+                ``// volatile-ok: <why the object is volatile>``.
 
 The gate compares against ``docs/evidence/faithful_baseline.json``: a unit's
 score may not rise and a faithful unit may not stop being faithful.
@@ -58,7 +68,10 @@ HARD = {
     "section": re.compile(r"__declspec\s*\(\s*section"),
     "offset_cast": re.compile(r"\(\s*(?:const\s+)?(?:u8|s8|char|unsigned char)\s*\*\s*\)\s*\(?\s*\w+\s*\)?\s*[+-]\s*0x[0-9A-Fa-f]+"),
     "view_struct": re.compile(r"\b\w*(?:View|At[0-9A-F]{2,}|Off)\s*\*"),
-    "noinline": re.compile(r"\bnoinline\b|#\s*pragma\s+(?:dont_inline\b|auto_inline\s+off\b)"),
+    "noinline": re.compile(r"\bnoinline\b|\bnever_inline\b|\bDECOMP_DONT_INLINE\b|#\s*pragma\s+(?:dont_inline\b|auto_inline\s+off\b)"),
+    "decl_shield": re.compile(r"^[ \t]*#[ \t]*define[ \t]+(\w+)[ \t]+(?:\1_\w+|\w+_hidden)\b", re.M),
+    "volatile": re.compile(
+        r"\(\s*(?:const\s+)?volatile\s+[\w:]+(?:\s+\w+)?\s*\*\s*\)\s*&\s*(?!WGPIPE\b|GXWGFifo\b|__)"),
 }
 SOFT = {
     "field_0x": re.compile(r"\bfield_0x[0-9A-Fa-f]+\b"),
@@ -75,13 +88,20 @@ def strip_comments(text: str) -> str:
 
 
 NOINLINE_OK = re.compile(r"//\s*noinline-ok:\s*\S")
+VOLATILE_OK = re.compile(r"//\s*volatile-ok:\s*\S")
 
 
 def exempt_justified_noinline(text: str) -> str:
-    """Drop the noinline smell from lines annotated ``// noinline-ok: <reason>``."""
-    return "\n".join(
-        HARD["noinline"].sub(" ", line) if NOINLINE_OK.search(line) else line
-        for line in text.split("\n"))
+    """Drop the noinline / volatile smell from lines annotated
+    ``// noinline-ok: <reason>`` / ``// volatile-ok: <reason>``."""
+    out = []
+    for line in text.split("\n"):
+        if NOINLINE_OK.search(line):
+            line = HARD["noinline"].sub(" ", line)
+        if VOLATILE_OK.search(line):
+            line = HARD["volatile"].sub(" ", line)
+        out.append(line)
+    return "\n".join(out)
 
 
 _REAL_CLASS_SYM = re.compile(r"^__(?:ct|dt|vt)__(\d+)([A-Za-z_]\w*)", re.M)

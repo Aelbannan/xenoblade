@@ -54,8 +54,16 @@ private:
         MML_RNDPARAM = 0xA0, // 0xA0
         MML_INDPARAM,        // 0xA1
         MML_EXECIF,          // 0xA2
+        MML_S16PARAM2,       // 0xA3 second argument is a signed literal
+        MML_RNDPARAM2,       // 0xA4 second argument is random
+        MML_INDPARAM2,       // 0xA5 second argument is a variable
 
         MML_SET_TIMEBASE = 0xB0, // 0xB0
+        MML_SET_HOLD,            // 0xB1
+        MML_SET_MONOPHONIC,      // 0xB2
+        MML_SET_VELOCITY_SCALE,  // 0xB3
+        MML_SET_BIQUAD_TYPE,     // 0xB4
+        MML_SET_BIQUAD_FREQ,     // 0xB5
 
         MML_SET_PAN = 0xC0,    // 0xC0
         MML_SET_TRACK_VOLUME,  // 0xC1
@@ -96,10 +104,11 @@ private:
         MML_CMD_E2h,             // 0xE2
         MML_SET_SWEEPPITCH,      // 0xE3
 
-        MML_LOOP_END = 0xFC, // 0xFC
-        MML_RET,             // 0xFD
-        MML_ALLOCTRACK,      // 0xFE
-        MML_EOF,             // 0xFF
+        MML_RESET_ENV = 0xFB, // 0xFB
+        MML_LOOP_END,         // 0xFC
+        MML_RET,              // 0xFD
+        MML_ALLOCTRACK,       // 0xFE
+        MML_EOF,              // 0xFF
 
         MML_CMD_MASK = 0x80,
         MML_CMD_SET_MASK = 0xF0,

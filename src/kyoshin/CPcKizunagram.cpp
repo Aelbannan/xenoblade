@@ -361,7 +361,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
         char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
-        if (isPaneVisible() == 0) continue;
+        if (isPaneVisible(pane) == 0) continue;
 
         // Select a resource name for the mood/face texture by affinity value.
         const char* s1;
@@ -522,7 +522,7 @@ extern "C" void KizunagramUpdateMoodIcons(CPcKizunagram* self, u32 value) {
         char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
-        if (isPaneVisible() == 0) continue;
+        if (isPaneVisible(pane) == 0) continue;
 
         // Select a fixed resource-name for the mood texture by affinity value.
         // Default-zero init lets MWCC hoist the li r5,0 above the branch chain

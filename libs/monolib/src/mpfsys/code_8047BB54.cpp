@@ -391,10 +391,10 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                 f32 dot = nw4r::math::VEC3Dot(
                     &diff, (const nw4r::math::VEC3*)lbl_eu_8065841C);
                 if (dot < lbl_eu_8066A864) continue;
-                f32 t = dot * *(volatile const f32*)&lbl_eu_80665880;
+                f32 t = dot * lbl_eu_80665880;
                 nw4r::math::VEC3Scale(
                     &scratch, (const nw4r::math::VEC3*)lbl_eu_8065841C, t);
-                f32 delta = t * *(volatile const f32*)&lbl_eu_80665884;
+                f32 delta = t * lbl_eu_80665884;
                 f32 radSq = (entry->field_0xC + delta) *
                             (entry->field_0xC + delta);
                 nw4r::math::VEC3Sub(&scratch, &diff, &scratch);
@@ -441,7 +441,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                     slot[slot[0]] = view->field_0x4 + j;
                     *(f32*)&slot[slot[0] + 1] =
                         (sub->field_0x4 - t2) *
-                        *(volatile const f32*)&lbl_eu_806638A0;
+                        lbl_eu_806638A0[0];
                     slot[0] += 2;
                     if (slot[0] >= obj->field_0x4[0] - 2) {
                         void* draw =

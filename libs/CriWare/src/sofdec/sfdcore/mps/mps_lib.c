@@ -57,16 +57,15 @@ int MPS_Init(int max_streams, void *work_buf) {
     UTY_MemsetDword((u32 *)work_buf, 0,
                     (u32)((max_streams - 1) * MPS_ENTRY_SIZE + 0x140) / 4);
 
-    /* Initialize work buffer header. The base reads are volatile-qualified so
-     * MWCC emits a fresh load for each group (retail's three loads of
-     * lbl_eu_80606DDC[0]); CSE otherwise fuses them into one. */
+    /* Initialize work buffer header. Each group re-reads lbl_eu_80606DDC[0]
+     * because the stores through the work buffer may alias the global. */
     ((u32 *)lbl_eu_80606DDC[0])[0] = 0;          /* error callback */
     ((u32 *)lbl_eu_80606DDC[0])[1] = 0;          /* error callback arg */
     ((u32 *)lbl_eu_80606DDC[0])[2] = 0;          /* global error code */
-    *(volatile u32 *)((u32 *)*(volatile u32 *)&lbl_eu_80606DDC[0] + 3) = max_streams;
+    ((u32 *)lbl_eu_80606DDC[0])[3] = max_streams;
 
     /* Mark all entries as free (state = 1); MWCC unrolls this 8x */
-    streams = (MPS_STREAM *)((u32)*(volatile u32 *)&lbl_eu_80606DDC[0] + 0x10);
+    streams = (MPS_STREAM *)((u32 *)lbl_eu_80606DDC[0] + 4);
     for (i = 0; i < max_streams; i++) {
         streams[i].field_0x00 = 1;
     }

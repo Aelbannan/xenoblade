@@ -5,114 +5,48 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// Node-anchored mirror used by the VoiceList scan in Acquire(). Retail reads
-// the voice's priority / voice-count fields at fixed NEGATIVE offsets off the
-// list node pointer (retail embeds the LinkListNode at 0x11C, so e.g. node-0x74
-// is mPriority). The snd_Voice.h class places `node` at a different offset, so
-// these reads are routed through this node-relative mirror instead.
-struct VoiceNodeLayout {
-    int mChannelCount; // 0x0  (node - 0x90)
-    int mVoiceOutCount; // 0x4  (node - 0x8c)
-    u8 _pad[0x14];     // 0x8..0x1b
-    int mPriority;     // 0x1c (node - 0x74)
-};
-
-// Retail-accurate mirror of the Voice object field layout. The class defined
-// in snd_Voice.h has different (non-retail) member offsets, so the setter/loop
-// helpers below access the fields through this mirror at their exact retail
-// offsets (mSyncFlag=0xA2, mBiquadType=0xA5, mBiquadFreq=0xB8, ...).
-struct VoiceLayout {
-    u8 _pad0[0xC];                                 // 0x0
-    AxVoice* mAxVoice[CHANNEL_MAX][4];            // 0xC  (VOICES_MAX=4)
-    VoiceOutParam mVoiceOutParam[4];               // 0x2C  (VOICES_MAX=4)
-    int mChannelCount;                             // 0x8C
-    int mVoiceOutCount;                            // 0x90
-    void* mCallback;                               // 0x94
-    void* mCallbackArg;                            // 0x98
-    bool mIsActive;                                // 0x9C
-    bool mIsStarting;                              // 0x9D
-    bool mIsStarted;                               // 0x9E
-    bool mIsPause;                                 // 0x9F
-    bool mIsPausing;                               // 0xA0
-    u8 field_0xA1;                                 // 0xA1
-    u16 mSyncFlag;                                 // 0xA2
-    u8 mRemoteFilter;                              // 0xA4
-    u8 mBiquadType;                                // 0xA5
-    int mPriority;                                 // 0xA8
-    float mPan;                                    // 0xAC
-    float mSurroundPan;                            // 0xB0
-    float mLpfFreq;                                // 0xB4
-    float mBiquadFreq;                             // 0xB8
-    int mOutputLineFlag;                           // 0xBC
-    float mMainOutVolume;                          // 0xC0
-    float mMainSend;                               // 0xC4
-    float mFxSend[AUX_BUS_NUM];                    // 0xC8
-    float mRemoteOutVolume[WPAD_MAX_CONTROLLERS];  // 0xD4
-    float mRemoteSend[WPAD_MAX_CONTROLLERS];       // 0xE4
-    float mRemoteFxSend[WPAD_MAX_CONTROLLERS];     // 0xF4
-    float mPitch;                                  // 0x104
-    float mVolume;                                 // 0x108
-    float mVeInitVolume;                           // 0x10C
-    float mVeTargetVolume;                         // 0x110
-    int field_0x114;                               // 0x114 (PanMode)
-    int field_0x118;                               // 0x118 (PanCurve)
-};
-
-static inline VoiceLayout& VoiceRef(Voice* self) {
-    return *reinterpret_cast<VoiceLayout*>(self);
-}
-
-// Recover a VoiceNodeLayout* from a VoiceList const-iterator. The iterator
-// stores the LinkListNode*; retracing the model's `node` offset and then
-// stepping back to the retail node-0x90 anchor yields the node-relative view.
-static inline const VoiceNodeLayout& VoiceNodeRef(Voice* pItVoice) {
-    const u8* pNode = reinterpret_cast<const u8*>(pItVoice) + offsetof(Voice, node);
-    return *reinterpret_cast<const VoiceNodeLayout*>(pNode - 0x90);
-}
-
 // Local mirror of the shared CalcMixVolume that adds the explicit `volume <= 0`
 // early-return retail emits before every output conversion. The shared header
 // variant (snd_AxVoice.h) omits that clamp and therefore cannot reproduce the
 // retail up-front zero check; kept local to this TU for that reason.
 static inline u16 mixVolume(f32 volume) {
-    if (volume <= lbl_eu_8066A09C) {
+    if (volume <= 0.0f) {
         return 0;
     }
-    return ut::Min<u32>(USHRT_MAX, lbl_eu_8066A0C8 * volume);
+    return ut::Min<u32>(USHRT_MAX, 32768.0f * volume);
 }
 
 Voice::Voice() {
-    VoiceLayout& v = VoiceRef(this);
 
     // Default every voice-out param to { volume=1, pitch=1, pan=0, surround=0,
     // fxSend=0, lpf=0 }. Retail peels element 0 inline, then loops the rest
     // with a runtime-counted loop (MWCC emits the div-by-24 count machinery
     // only for the pointer-loop form, not for a constant index loop).
-    v.mVoiceOutParam[0].volume = lbl_eu_8066A098;
-    v.mVoiceOutParam[0].pitch = lbl_eu_8066A098;
-    v.mVoiceOutParam[0].pan = lbl_eu_8066A09C;
-    v.mVoiceOutParam[0].surroundPan = lbl_eu_8066A09C;
-    v.mVoiceOutParam[0].fxSend = lbl_eu_8066A09C;
-    v.mVoiceOutParam[0].lpfFreq = lbl_eu_8066A09C;
+    mVoiceOutParam[0].volume = 1.0f;
+    mVoiceOutParam[0].pitch = 1.0f;
+    mVoiceOutParam[0].pan = 0.0f;
+    mVoiceOutParam[0].surroundPan = 0.0f;
+    mVoiceOutParam[0].fxSend = 0.0f;
+    mVoiceOutParam[0].lpfFreq = 0.0f;
 
-    VoiceOutParam* pParam = &v.mVoiceOutParam[1];
-    VoiceOutParam* pEnd = &v.mVoiceOutParam[VOICES_MAX];
+    VoiceOutParam* pParam = &mVoiceOutParam[1];
+    VoiceOutParam* pEnd = &mVoiceOutParam[VOICES_MAX];
     while (pParam < pEnd) {
-        pParam->volume = lbl_eu_8066A098;
-        pParam->pitch = lbl_eu_8066A098;
-        pParam->pan = lbl_eu_8066A09C;
-        pParam->surroundPan = lbl_eu_8066A09C;
-        pParam->fxSend = lbl_eu_8066A09C;
-        pParam->lpfFreq = lbl_eu_8066A09C;
+        pParam->volume = 1.0f;
+        pParam->pitch = 1.0f;
+        pParam->pan = 0.0f;
+        pParam->surroundPan = 0.0f;
+        pParam->fxSend = 0.0f;
+        pParam->lpfFreq = 0.0f;
         pParam++;
     }
 
-    v.mCallback = NULL;
-    v.mIsActive = false;
-    v.mIsStarting = false;
-    v.mIsStarted = false;
-    v.mIsPause = false;
-    v.mSyncFlag = 0;
+    mCallback = NULL;
+    mIsActive = false;
+    mIsStarting = false;
+    mIsStarted = false;
+    mIsPause = false;
+    mSyncFlag = 0;
 
     // The list node is zeroed at the END of the body in retail (the implicit
     // LinkListNode member ctor zeroes it early; the late stores keep the retail
@@ -121,7 +55,7 @@ Voice::Voice() {
 
     for (int i = 0; i < CHANNEL_MAX; i++) {
         for (int j = 0; j < VOICES_MAX; j++) {
-            v.mAxVoice[i][j] = NULL;
+            mAxVoice[i][j] = NULL;
         }
     }
 }
@@ -140,58 +74,56 @@ Voice::~Voice() {
 
 void Voice::InitParam(int channels, int voices, VoiceCallback pCallback,
                       void* pCallbackArg) {
-    VoiceLayout& v = VoiceRef(this);
 
-    v.mChannelCount = channels;
-    v.mVoiceOutCount = voices;
-    v.mCallback = pCallback;
-    v.mCallbackArg = pCallbackArg;
+    mChannelCount = channels;
+    mVoiceOutCount = voices;
+    mCallback = pCallback;
+    mCallbackArg = pCallbackArg;
 
-    v.mSyncFlag = 0;
-    v.mIsPause = false;
-    v.mIsPausing = false;
-    v.mIsStarted = false;
-    v.field_0xA1 = 0;
+    mSyncFlag = 0;
+    mIsPause = false;
+    mIsPausing = false;
+    mIsStarted = false;
+    field_0xA1 = 0;
 
-    v.mVolume = lbl_eu_8066A098;
-    v.mVeInitVolume = lbl_eu_8066A09C;
-    v.mVeTargetVolume = lbl_eu_8066A098;
-    v.mLpfFreq = lbl_eu_8066A098;
-    v.mBiquadType = 0;
-    v.mBiquadFreq = lbl_eu_8066A09C;
-    v.mPan = lbl_eu_8066A09C;
-    v.mSurroundPan = lbl_eu_8066A09C;
-    v.mOutputLineFlag = OUTPUT_LINE_MAIN;
-    v.mMainOutVolume = lbl_eu_8066A098;
-    v.mMainSend = lbl_eu_8066A098;
+    mVolume = 1.0f;
+    mVeInitVolume = 0.0f;
+    mVeTargetVolume = 1.0f;
+    mLpfFreq = 1.0f;
+    mBiquadType = 0;
+    mBiquadFreq = 0.0f;
+    mPan = 0.0f;
+    mSurroundPan = 0.0f;
+    mOutputLineFlag = OUTPUT_LINE_MAIN;
+    mMainOutVolume = 1.0f;
+    mMainSend = 1.0f;
 
     for (int i = 0; i < AUX_BUS_NUM; i++) {
-        v.mFxSend[i] = lbl_eu_8066A09C;
+        mFxSend[i] = 0.0f;
     }
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        v.mRemoteOutVolume[i] = lbl_eu_8066A098;
-        v.mRemoteSend[i] = lbl_eu_8066A098;
-        v.mRemoteFxSend[i] = lbl_eu_8066A09C;
+        mRemoteOutVolume[i] = 1.0f;
+        mRemoteSend[i] = 1.0f;
+        mRemoteFxSend[i] = 0.0f;
     }
 
-    v.mPitch = lbl_eu_8066A098;
-    v.mRemoteFilter = 0;
-    v.field_0x114 = 0;
-    v.field_0x118 = 0;
+    mPitch = 1.0f;
+    mRemoteFilter = 0;
+    mPanMode = PAN_MODE_DUAL;
+    mPanCurve = PAN_CURVE_SQRT;
 }
 
 void Voice::StopFinished() {
-    VoiceLayout& v = VoiceRef(this);
 
-    if (v.mIsActive && v.mIsStarted && IsPlayFinished()) {
-        if (v.mCallback != NULL) {
-            ((VoiceCallback)v.mCallback)(this, CALLBACK_STATUS_FINISH_WAVE,
-                                        v.mCallbackArg);
+    if (mIsActive && mIsStarted && IsPlayFinished()) {
+        if (mCallback != NULL) {
+            (mCallback)(this, CALLBACK_STATUS_FINISH_WAVE,
+                                        mCallbackArg);
         }
 
-        v.mIsStarted = false;
-        v.mIsStarting = false;
+        mIsStarted = false;
+        mIsStarting = false;
     }
 }
 
@@ -249,8 +181,7 @@ void Voice::Calc() {
         for (int i = 0; i < mVoiceOutCount; i++) {
             for (int j = 0; j < mChannelCount; j++) {
                 if (mAxVoice[j][i] != NULL) {
-                    SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
-                        mAxVoice[j][i], mBiquadType, mBiquadFreq);
+                    mAxVoice[j][i]->SetBiquad(mBiquadType, mBiquadFreq);
                 }
             }
         }
@@ -271,11 +202,10 @@ void Voice::Calc() {
 }
 
 void Voice::Update() {
-    VoiceLayout& v = VoiceRef(this);
 
     u32 ints = OSDisableInterrupts();
 
-    if (!v.mIsActive) {
+    if (!mIsActive) {
         OSRestoreInterrupts(ints);
         return;
     }
@@ -283,44 +213,44 @@ void Voice::Update() {
     // state: 0 = no action, 1 = run all, 2 = stop all (retail r31 dispatch).
     int state = 0;
 
-    if ((v.mSyncFlag & SYNC_AX_SRC_INITIAL) != 0 && v.mIsStarting &&
-        !v.mIsStarted) {
+    if ((mSyncFlag & SYNC_AX_SRC_INITIAL) != 0 && mIsStarting &&
+        !mIsStarted) {
         // CalcAxSrc(true): pitch x voiceOutParam.pitch gate, SetSrc every voice.
-        for (int i = 0; i < v.mVoiceOutCount; i++) {
-            f32 pitch = v.mPitch;
-            if (v.field_0xA1 == 0) {
-                pitch *= v.mVoiceOutParam[i].pitch;
+        for (int i = 0; i < mVoiceOutCount; i++) {
+            f32 pitch = mPitch;
+            if (field_0xA1 == 0) {
+                pitch *= mVoiceOutParam[i].pitch;
             }
-            for (int j = 0; j < v.mChannelCount; j++) {
-                if (v.mAxVoice[j][i] != NULL) {
-                    v.mAxVoice[j][i]->SetSrc(pitch, true);
+            for (int j = 0; j < mChannelCount; j++) {
+                if (mAxVoice[j][i] != NULL) {
+                    mAxVoice[j][i]->SetSrc(pitch, true);
                 }
             }
         }
 
         state = 1;
-        v.mIsStarted = true;
-        v.mSyncFlag &= ~SYNC_AX_SRC_INITIAL;
-        v.mSyncFlag &= ~SYNC_AX_SRC;
+        mIsStarted = true;
+        mSyncFlag &= ~SYNC_AX_SRC_INITIAL;
+        mSyncFlag &= ~SYNC_AX_SRC;
     }
 
-    if (v.mIsStarted) {
-        if ((v.mSyncFlag & SYNC_AX_VOICE) != 0 && v.mIsStarting) {
-            if (v.mIsPause) {
-                v.mIsPausing = true;
+    if (mIsStarted) {
+        if ((mSyncFlag & SYNC_AX_VOICE) != 0 && mIsStarting) {
+            if (mIsPause) {
+                mIsPausing = true;
                 state = 2;
             } else {
-                v.mIsPausing = false;
+                mIsPausing = false;
                 state = 1;
             }
-            v.mSyncFlag &= ~SYNC_AX_VOICE;
+            mSyncFlag &= ~SYNC_AX_VOICE;
         }
 
         // SyncAxVoice(): sync every live voice.
-        for (int i = 0; i < v.mChannelCount; i++) {
-            for (int j = 0; j < v.mVoiceOutCount; j++) {
-                if (v.mAxVoice[i][j] != NULL) {
-                    v.mAxVoice[i][j]->Sync();
+        for (int i = 0; i < mChannelCount; i++) {
+            for (int j = 0; j < mVoiceOutCount; j++) {
+                if (mAxVoice[i][j] != NULL) {
+                    mAxVoice[i][j]->Sync();
                 }
             }
         }
@@ -328,20 +258,20 @@ void Voice::Update() {
 
     switch (state) {
     case 1: // RUN / start the voices.
-        for (int i = 0; i < v.mChannelCount; i++) {
-            for (int j = 0; j < v.mVoiceOutCount; j++) {
-                if (v.mAxVoice[i][j] != NULL) {
-                    v.mAxVoice[i][j]->Run();
+        for (int i = 0; i < mChannelCount; i++) {
+            for (int j = 0; j < mVoiceOutCount; j++) {
+                if (mAxVoice[i][j] != NULL) {
+                    mAxVoice[i][j]->Run();
                 }
             }
         }
         break;
 
     case 2: // STOP (pause request or disk error).
-        for (int i = 0; i < v.mChannelCount; i++) {
-            for (int j = 0; j < v.mVoiceOutCount; j++) {
-                if (v.mAxVoice[i][j] != NULL) {
-                    v.mAxVoice[i][j]->Stop();
+        for (int i = 0; i < mChannelCount; i++) {
+            for (int j = 0; j < mVoiceOutCount; j++) {
+                if (mAxVoice[i][j] != NULL) {
+                    mAxVoice[i][j]->Stop();
                 }
             }
         }
@@ -356,7 +286,6 @@ bool Voice::Acquire(int channels, int voices, int priority,
     channels = ut::Clamp(channels, CHANNEL_MIN, CHANNEL_MAX);
     voices = ut::Clamp(voices, VOICES_MIN, VOICES_MAX);
 
-    VoiceLayout& v = VoiceRef(this);
 
     ut::AutoInterruptLock lock;
 
@@ -383,15 +312,13 @@ bool Voice::Acquire(int channels, int voices, int priority,
             for (VoiceList::ConstIterator it = rVoiceList.GetBeginIter();
                  it != rVoiceList.GetEndIter(); ++it) {
 
-                // Read priority / voice-count via the node-anchored retail
-                // mirror (the class header node offset differs from retail).
-                const VoiceNodeLayout& vn = VoiceNodeRef(const_cast<Voice*>(&*it));
+                const Voice& rVoice = *it;
 
-                if (priority < vn.mPriority) {
+                if (priority < rVoice.mPriority) {
                     break;
                 }
 
-                rest -= vn.mChannelCount * vn.mVoiceOutCount;
+                rest -= rVoice.mChannelCount * rVoice.mVoiceOutCount;
                 if (rest <= 0) {
                     break;
                 }
@@ -431,39 +358,38 @@ bool Voice::Acquire(int channels, int voices, int priority,
     for (int i = 0; i < channels; i++) {
         for (int j = 0; j < voices; j++) {
             voiceTable[idx]->SetPriority(axPrio);
-            v.mAxVoice[i][j] = voiceTable[idx];
+            mAxVoice[i][j] = voiceTable[idx];
             idx++;
         }
     }
 
     InitParam(channels, voices, pCallback, pCallbackArg);
-    v.mIsActive = true;
+    mIsActive = true;
     return true;
 }
 
 void Voice::Free() {
     ut::AutoInterruptLock lock;
 
-    VoiceLayout& v = VoiceRef(this);
 
-    if (!v.mIsActive) {
+    if (!mIsActive) {
         return;
     }
 
-    for (int i = 0; i < v.mChannelCount; i++) {
-        for (int j = 0; j < v.mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = v.mAxVoice[i][j];
+    for (int i = 0; i < mChannelCount; i++) {
+        for (int j = 0; j < mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 AxVoiceManager::GetInstance().FreeAxVoice(pAxVoice);
-                v.mAxVoice[i][j] = NULL;
+                mAxVoice[i][j] = NULL;
             }
         }
     }
 
-    v.mChannelCount = 0;
+    mChannelCount = 0;
     VoiceManager::GetInstance().FreeVoice(this);
-    v.mIsActive = false;
+    mIsActive = false;
 }
 
 void Voice::Setup(const WaveData& rData, u32 offset) {
@@ -531,16 +457,15 @@ void Voice::Start() {
 }
 
 void Voice::Stop() {
-    VoiceLayout& v = VoiceRef(this);
 
-    if (v.mIsStarted) {
+    if (mIsStarted) {
         StopAllAxVoice();
-        v.mIsStarted = false;
+        mIsStarted = false;
     }
 
-    v.mIsPausing = false;
-    v.mIsPause = false;
-    v.mIsStarting = false;
+    mIsPausing = false;
+    mIsPause = false;
+    mIsStarting = false;
 }
 
 void Voice::Pause(bool flag) {
@@ -563,10 +488,9 @@ AxVoice::Format Voice::GetFormat() const {
 void Voice::SetVolume(f32 volume) {
     volume = ut::Clamp(volume, 0.0f, 1.0f);
 
-    VoiceLayout& v = VoiceRef(this);
-    if (volume != v.mVolume) {
-        v.mVolume = volume;
-        v.mSyncFlag |= SYNC_AX_VE;
+    if (volume != mVolume) {
+        mVolume = volume;
+        mSyncFlag |= SYNC_AX_VE;
     }
 }
 
@@ -574,26 +498,25 @@ void Voice::SetVeVolume(f32 target, f32 init) {
     target = ut::Clamp(target, 0.0f, 1.0f);
     init = ut::Clamp(init, 0.0f, 1.0f);
 
-    VoiceLayout& v = VoiceRef(this);
 
     // @bug Unreachable code
     if (init < 0.0f) {
-        if (target == v.mVeTargetVolume) {
+        if (target == mVeTargetVolume) {
             return;
         }
 
-        v.mVeTargetVolume = target;
-        v.mSyncFlag |= SYNC_AX_VE;
+        mVeTargetVolume = target;
+        mSyncFlag |= SYNC_AX_VE;
         return;
     }
 
-    if (init == v.mVeInitVolume && target == v.mVeTargetVolume) {
+    if (init == mVeInitVolume && target == mVeTargetVolume) {
         return;
     }
 
-    v.mVeInitVolume = init;
-    v.mVeTargetVolume = target;
-    v.mSyncFlag |= SYNC_AX_VE;
+    mVeInitVolume = init;
+    mVeTargetVolume = target;
+    mSyncFlag |= SYNC_AX_VE;
 }
 
 void Voice::SetPitch(f32 pitch) {
@@ -642,9 +565,27 @@ void Voice::SetSurroundPan(f32 pan) {
 }
 
 void Voice::SetLpfFreq(f32 freq) {
-    if (freq != VoiceRef(this).mLpfFreq) {
-        VoiceRef(this).mLpfFreq = freq;
-        VoiceRef(this).mSyncFlag |= SYNC_AX_LPF;
+    if (freq != (*this).mLpfFreq) {
+        (*this).mLpfFreq = freq;
+        (*this).mSyncFlag |= SYNC_AX_LPF;
+    }
+}
+
+void Voice::SetBiquadFilter(int type, f32 frequency) {
+    frequency = ut::Clamp(frequency, 0.0f, 1.0f);
+
+    bool changed = false;
+
+    if (type != mBiquadType) {
+        mBiquadType = type;
+        changed = true;
+    }
+    if (frequency != mBiquadFreq) {
+        mBiquadFreq = frequency;
+        changed = true;
+    }
+    if (changed) {
+        mSyncFlag |= SYNC_AX_BIQUAD;
     }
 }
 
@@ -737,18 +678,17 @@ void Voice::SetRemoteFxSend(int remote, f32 send) {
 }
 
 void Voice::SetPriority(int priority) {
-    VoiceLayout& v = VoiceRef(this);
 
-    v.mPriority = priority;
+    mPriority = priority;
     VoiceManager::GetInstance().ChangeVoicePriority(this);
 
-    if (v.mPriority != 1) {
+    if (mPriority != 1) {
         return;
     }
 
-    for (int i = 0; i < v.mChannelCount; i++) {
-        for (int j = 0; j < v.mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = v.mAxVoice[i][j];
+    for (int i = 0; i < mChannelCount; i++) {
+        for (int j = 0; j < mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetPriority(AX_PRIORITY_MAX / 2);
@@ -758,13 +698,13 @@ void Voice::SetPriority(int priority) {
 }
 
 void Voice::UpdateVoicesPriority() {
-    if (VoiceRef(this).mPriority == 1) {
+    if ((*this).mPriority == 1) {
         return;
     }
 
-    for (int i = 0; i < VoiceRef(this).mChannelCount; i++) {
-        for (int j = 0; j < VoiceRef(this).mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = VoiceRef(this).mAxVoice[i][j];
+    for (int i = 0; i < (*this).mChannelCount; i++) {
+        for (int j = 0; j < (*this).mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = (*this).mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetPriority((AX_PRIORITY_MAX / 2) + 1);
@@ -774,10 +714,9 @@ void Voice::UpdateVoicesPriority() {
 }
 
 void Voice::SetAdpcmLoop(int channel, const AdpcmLoopParam* pParam) {
-    VoiceLayout& v = VoiceRef(this);
 
-    for (int i = 0; i < v.mVoiceOutCount; i++) {
-        AxVoice* pAxVoice = v.mAxVoice[channel][i];
+    for (int i = 0; i < mVoiceOutCount; i++) {
+        AxVoice* pAxVoice = mAxVoice[channel][i];
 
         if (pAxVoice != NULL) {
             pAxVoice->SetAdpcmLoop(pParam);
@@ -814,9 +753,9 @@ void Voice::SetLoopEnd(int channel, const void* pBase, u32 samples) {
 }
 
 void Voice::SetLoopFlag(bool loop) {
-    for (int i = 0; i < VoiceRef(this).mChannelCount; i++) {
-        for (int j = 0; j < VoiceRef(this).mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = VoiceRef(this).mAxVoice[i][j];
+    for (int i = 0; i < (*this).mChannelCount; i++) {
+        for (int j = 0; j < (*this).mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = (*this).mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetLoopFlag(loop);
@@ -826,10 +765,9 @@ void Voice::SetLoopFlag(bool loop) {
 }
 
 void Voice::StopAtPoint(int channel, const void* pBase, u32 samples) {
-    VoiceLayout& v = VoiceRef(this);
 
-    for (int i = 0; i < v.mVoiceOutCount; i++) {
-        AxVoice* pAxVoice = v.mAxVoice[channel][i];
+    for (int i = 0; i < mVoiceOutCount; i++) {
+        AxVoice* pAxVoice = mAxVoice[channel][i];
 
         if (pAxVoice != NULL) {
             pAxVoice->StopAtPoint(pBase, samples);
@@ -838,9 +776,9 @@ void Voice::StopAtPoint(int channel, const void* pBase, u32 samples) {
 }
 
 void Voice::SetVoiceType(AxVoice::VoiceType type) {
-    for (int i = 0; i < VoiceRef(this).mChannelCount; i++) {
-        for (int j = 0; j < VoiceRef(this).mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = VoiceRef(this).mAxVoice[i][j];
+    for (int i = 0; i < (*this).mChannelCount; i++) {
+        for (int j = 0; j < (*this).mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = (*this).mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetVoiceType(type);
@@ -850,7 +788,7 @@ void Voice::SetVoiceType(AxVoice::VoiceType type) {
 }
 
 void Voice::CalcAxVe() {
-    f32 baseVolume = lbl_eu_8066A098;
+    f32 baseVolume = 1.0f;
     baseVolume *= mVolume;
     baseVolume *= AxManager::GetInstance().GetOutputVolume();
 
@@ -870,16 +808,15 @@ void Voice::CalcAxVe() {
 }
 
 bool Voice::CalcAxMix() {
-    VoiceLayout& v = VoiceRef(this);
 
     AxVoice::MixParam param;
     AxVoice::RemoteMixParam rmtParam;
 
     bool nextUpdate = false;
 
-    for (int i = 0; i < v.mChannelCount; i++) {
-        for (int j = 0; j < v.mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = v.mAxVoice[i][j];
+    for (int i = 0; i < mChannelCount; i++) {
+        for (int j = 0; j < mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = mAxVoice[i][j];
             if (pAxVoice == NULL) {
                 continue;
             }
@@ -887,8 +824,8 @@ bool Voice::CalcAxMix() {
             CalcMixParam(i, j, &param, &rmtParam);
             nextUpdate |= pAxVoice->SetMix(param);
 
-            if (v.mOutputLineFlag == 0 ||
-                v.mOutputLineFlag == OUTPUT_LINE_MAIN) {
+            if (mOutputLineFlag == 0 ||
+                mOutputLineFlag == OUTPUT_LINE_MAIN) {
                 pAxVoice->EnableRemote(false);
             } else {
                 pAxVoice->EnableRemote(true);
@@ -901,11 +838,10 @@ bool Voice::CalcAxMix() {
 }
 
 void Voice::ResetDelta() {
-    VoiceLayout& v = VoiceRef(this);
 
-    for (int i = 0; i < v.mVoiceOutCount; i++) {
-        for (int j = 0; j < v.mChannelCount; j++) {
-            AxVoice* pAxVoice = v.mAxVoice[j][i];
+    for (int i = 0; i < mVoiceOutCount; i++) {
+        for (int j = 0; j < mChannelCount; j++) {
+            AxVoice* pAxVoice = mAxVoice[j][i];
 
             if (pAxVoice != NULL) {
                 pAxVoice->ResetDelta();
@@ -1002,23 +938,22 @@ void Voice::TransformDpl2Pan(f32* pPan, f32* pSurroundPan, f32 pan,
 
 void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
                          AxVoice::RemoteMixParam* pRmtMix) {
-    VoiceLayout& v = VoiceRef(this);
 
-    f32 mainVolume = lbl_eu_8066A09C;
-    f32 mainSend = lbl_eu_8066A09C;
+    f32 mainVolume = 0.0f;
+    f32 mainSend = 0.0f;
 
-    f32 fxSendA = lbl_eu_8066A09C;
-    f32 fxSendB = lbl_eu_8066A09C;
-    f32 fxSendC = lbl_eu_8066A09C;
+    f32 fxSendA = 0.0f;
+    f32 fxSendB = 0.0f;
+    f32 fxSendC = 0.0f;
 
-    if (v.mOutputLineFlag & OUTPUT_LINE_MAIN) {
-        mainVolume = v.mMainOutVolume;
-        mainSend = v.mMainSend;
+    if (mOutputLineFlag & OUTPUT_LINE_MAIN) {
+        mainVolume = mMainOutVolume;
+        mainSend = mMainSend;
 
-        fxSendA = ut::Clamp(v.mFxSend[AUX_A] + v.mVoiceOutParam[voice].fxSend,
-                            lbl_eu_8066A09C, lbl_eu_8066A098);
-        fxSendB = v.mFxSend[AUX_B];
-        fxSendC = v.mFxSend[AUX_C];
+        fxSendA = ut::Clamp(mFxSend[AUX_A] + mVoiceOutParam[voice].fxSend,
+                            0.0f, 1.0f);
+        fxSendB = mFxSend[AUX_B];
+        fxSendC = mFxSend[AUX_C];
     }
 
     f32 main = mainVolume * mainSend;
@@ -1029,14 +964,14 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
     f32 remote[WPAD_MAX_CONTROLLERS];
     f32 remoteFx[WPAD_MAX_CONTROLLERS];
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        f32 remoteVolume = lbl_eu_8066A09C;
-        f32 remoteSend = lbl_eu_8066A09C;
-        f32 remoteFxSend = lbl_eu_8066A09C;
+        f32 remoteVolume = 0.0f;
+        f32 remoteSend = 0.0f;
+        f32 remoteFxSend = 0.0f;
 
-        if (v.mOutputLineFlag & (OUTPUT_LINE_REMOTE_N << i)) {
-            remoteVolume = v.mRemoteOutVolume[i];
-            remoteSend = v.mRemoteSend[i];
-            remoteFxSend = v.mRemoteFxSend[i];
+        if (mOutputLineFlag & (OUTPUT_LINE_REMOTE_N << i)) {
+            remoteVolume = mRemoteOutVolume[i];
+            remoteSend = mRemoteSend[i];
+            remoteFxSend = mRemoteFxSend[i];
         }
 
         remote[i] = remoteVolume * remoteSend;
@@ -1048,7 +983,7 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
 
     Util::PanInfo panInfo;
 
-    switch (v.field_0x118) {
+    switch (mPanCurve) {
     case PAN_CURVE_SQRT: {
         panInfo.curve = Util::PAN_CURVE_SQRT;
         break;
@@ -1102,30 +1037,30 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
     }
     }
 
-    if (v.mChannelCount > 1 && v.field_0x114 == PAN_MODE_BALANCE) {
-        f32 pan = v.mPan + v.mVoiceOutParam[voice].pan;
-        f32 surroundPan = v.mSurroundPan + v.mVoiceOutParam[voice].surroundPan;
+    if (mChannelCount > 1 && mPanMode == PAN_MODE_BALANCE) {
+        f32 pan = mPan + mVoiceOutParam[voice].pan;
+        f32 surroundPan = mSurroundPan + mVoiceOutParam[voice].surroundPan;
 
         if (channel == 0) {
             left = Util::CalcPanRatio(pan, panInfo);
-            right = lbl_eu_8066A09C;
+            right = 0.0f;
         } else if (channel == 1) {
-            left = lbl_eu_8066A09C;
+            left = 0.0f;
             right = Util::CalcPanRatio(-pan, panInfo);
         }
 
         front = Util::CalcSurroundPanRatio(surroundPan, panInfo);
-        rear = Util::CalcSurroundPanRatio(lbl_eu_8066A0B8 - surroundPan, panInfo);
+        rear = Util::CalcSurroundPanRatio(2.0f - surroundPan, panInfo);
     } else {
-        f32 voicePan = lbl_eu_8066A09C;
+        f32 voicePan = 0.0f;
         f32 pan, surroundPan;
 
-        if (v.mChannelCount == 2) {
+        if (mChannelCount == 2) {
             if (channel == 0) {
-                voicePan = lbl_eu_8066A0C0;
+                voicePan = (-1.0f);
             }
             if (channel == 1) {
-                voicePan = lbl_eu_8066A098;
+                voicePan = 1.0f;
             }
         }
 
@@ -1133,8 +1068,8 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
         case OUTPUT_MODE_DPL2: {
             TransformDpl2Pan(
                 &pan, &surroundPan,
-                v.mPan + voicePan + v.mVoiceOutParam[voice].pan,
-                v.mSurroundPan + v.mVoiceOutParam[voice].surroundPan);
+                mPan + voicePan + mVoiceOutParam[voice].pan,
+                mSurroundPan + mVoiceOutParam[voice].surroundPan);
             break;
         }
 
@@ -1142,8 +1077,8 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
         case OUTPUT_MODE_SURROUND:
         case OUTPUT_MODE_MONO:
         default: {
-            pan = v.mPan + voicePan + v.mVoiceOutParam[voice].pan;
-            surroundPan = v.mSurroundPan + v.mVoiceOutParam[voice].surroundPan;
+            pan = mPan + voicePan + mVoiceOutParam[voice].pan;
+            surroundPan = mSurroundPan + mVoiceOutParam[voice].surroundPan;
             break;
         }
         }
@@ -1151,11 +1086,11 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
         left = Util::CalcPanRatio(pan, panInfo);
         right = Util::CalcPanRatio(-pan, panInfo);
         front = Util::CalcSurroundPanRatio(surroundPan, panInfo);
-        rear = Util::CalcSurroundPanRatio(lbl_eu_8066A0B8 - surroundPan, panInfo);
+        rear = Util::CalcSurroundPanRatio(2.0f - surroundPan, panInfo);
     }
 
-    surround = Util::CalcVolumeRatio(lbl_eu_8066A0C4);
-    lrMixed = lbl_eu_8066A0A8 * (left + right);
+    surround = Util::CalcVolumeRatio((-3.0f));
+    lrMixed = 0.5f * (left + right);
 
     f32 m_l, m_r, m_s;
     f32 a_l, a_r, a_s;
@@ -1175,38 +1110,38 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
     case OUTPUT_MODE_STEREO: {
         m_l = main * left;
         m_r = main * right;
-        m_s = lbl_eu_8066A09C;
+        m_s = 0.0f;
 
         a_l = fx_a * left;
         a_r = fx_a * right;
-        a_s = lbl_eu_8066A09C;
+        a_s = 0.0f;
 
         b_l = fx_b * left;
         b_r = fx_b * right;
-        b_s = lbl_eu_8066A09C;
+        b_s = 0.0f;
 
         c_l = fx_c * left;
         c_r = fx_c * right;
-        c_s = lbl_eu_8066A09C;
+        c_s = 0.0f;
         break;
     }
 
     case OUTPUT_MODE_MONO: {
         m_l = main * lrMixed;
         m_r = main * lrMixed;
-        m_s = lbl_eu_8066A09C;
+        m_s = 0.0f;
 
         a_l = fx_a * lrMixed;
         a_r = fx_a * lrMixed;
-        a_s = lbl_eu_8066A09C;
+        a_s = 0.0f;
 
         b_l = fx_b * lrMixed;
         b_r = fx_b * lrMixed;
-        b_s = lbl_eu_8066A09C;
+        b_s = 0.0f;
 
         c_l = fx_c * lrMixed;
         c_r = fx_c * lrMixed;
-        c_s = lbl_eu_8066A09C;
+        c_s = 0.0f;
         break;
     }
 
@@ -1298,12 +1233,11 @@ void Voice::CalcMixParam(int channel, int voice, AxVoice::MixParam* pMix,
 }
 
 void Voice::StopAllAxVoice() {
-    VoiceLayout& v = VoiceRef(this);
 
-    for (int i = 0; i < v.mChannelCount; i++) {
-        for (int j = 0; j < v.mVoiceOutCount; j++) {
-            if (v.mAxVoice[i][j] != NULL) {
-                v.mAxVoice[i][j]->Stop();
+    for (int i = 0; i < mChannelCount; i++) {
+        for (int j = 0; j < mVoiceOutCount; j++) {
+            if (mAxVoice[i][j] != NULL) {
+                mAxVoice[i][j]->Stop();
             }
         }
     }
@@ -1325,40 +1259,13 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
         Stop();
 
         if (mCallback != NULL) {
-            ((VoiceCallback)mCallback)(this, CALLBACK_STATUS_CANCEL,
+            (mCallback)(this, CALLBACK_STATUS_CANCEL,
                                         mCallbackArg);
         }
     }
 }
 
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
-
-// SetBiquadFilter(int, float): clamp the frequency into [0, 1], then if either
-// the type or the frequency actually changed, mark the biquad sync flag so a
-// later Calc() re-arms the AX biquad filter.
-void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(nw4r::snd::detail::Voice* self,
-                                                  int type, f32 frequency) {
-    frequency = nw4r::ut::Clamp(frequency, lbl_eu_8066A09C, lbl_eu_8066A098);
-
-    nw4r::snd::detail::VoiceLayout& v = nw4r::snd::detail::VoiceRef(self);
-    bool changed = false;
-
-    if (type != v.mBiquadType) {
-        v.mBiquadType = type;
-        changed = true;
-    }
-    if (frequency != v.mBiquadFreq) {
-        v.mBiquadFreq = frequency;
-        changed = true;
-    }
-    if (changed) {
-        v.mSyncFlag |= nw4r::snd::detail::Voice::SYNC_AX_BIQUAD;
-    }
-}
-void nw4r::snd::detail::Voice::SetVoiceOutParam(
-    int voice, const nw4r::snd::VoiceOutParam& rParam) {
+void Voice::SetVoiceOutParam(int voice, const VoiceOutParam& rParam) {
     VoiceOutParam& rDst = mVoiceOutParam[voice];
 
     rDst.volume = rParam.volume;
@@ -1370,4 +1277,9 @@ void nw4r::snd::detail::Voice::SetVoiceOutParam(
 
     mSyncFlag |= SYNC_AX_SRC | SYNC_AX_VE | SYNC_AX_MIX | SYNC_AX_LPF;
 }
-extern "C" void InvalidateData__Q44nw4r3snd6detail5VoiceFPCvPCv() {}
+
+void Voice::InvalidateData(const void* /* pStart */, const void* /* pEnd */) {}
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

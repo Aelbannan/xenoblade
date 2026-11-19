@@ -7,6 +7,13 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+namespace {
+
+// MML_RESET_ENV writes the "no override" marker into every envelope field.
+const u8 ENV_VALUE_NONE = 0xFF;
+
+} // namespace
+
 bool MmlParser::mPrintVarEnabledFlag = false;
 
 ParseResult MmlParser::Parse(MmlSeqTrack* pTrack, bool doNoteOn) const {
@@ -19,6 +26,7 @@ ParseResult MmlParser::Parse(MmlSeqTrack* pTrack, bool doNoteOn) const {
         pPlayer->GetParserPlayerParam();
 
     SeqArgType argType;
+    int argType2 = 0;
     bool useArgType = false;
     bool doExecCommand = true;
 
@@ -29,13 +37,22 @@ ParseResult MmlParser::Parse(MmlSeqTrack* pTrack, bool doNoteOn) const {
         doExecCommand = rMmlParam.cmpFlag != false;
     }
 
+    if (cmd == MML_S16PARAM2) {
+        cmd = ReadByte(&rTrackParam.currentAddr);
+        argType2 = SEQ_ARG_S16;
+    } else if (cmd == MML_RNDPARAM2) {
+        cmd = ReadByte(&rTrackParam.currentAddr);
+        argType2 = SEQ_ARG_RANDOM;
+    } else if (cmd == MML_INDPARAM2) {
+        cmd = ReadByte(&rTrackParam.currentAddr);
+        argType2 = SEQ_ARG_VARIABLE;
+    }
+
     if (cmd == MML_RNDPARAM) {
         cmd = ReadByte(&rTrackParam.currentAddr);
         argType = SEQ_ARG_RANDOM;
         useArgType = true;
-    }
-
-    if (cmd == MML_INDPARAM) {
+    } else if (cmd == MML_INDPARAM) {
         cmd = ReadByte(&rTrackParam.currentAddr);
         argType = SEQ_ARG_VARIABLE;
         useArgType = true;
@@ -133,11 +150,22 @@ ParseResult MmlParser::Parse(MmlSeqTrack* pTrack, bool doNoteOn) const {
             break;
         }
 
+        case 0xA0: {
+            // Only the MML_EXECIF/MML_*PARAM prefixes land in this group and
+            // they are consumed above, so nothing executes.
+            break;
+        }
+
         case 0xB0:
         case 0xC0:
         case 0xD0: {
             u8 arg = ReadArg(&rTrackParam.currentAddr, pPlayer, pTrack,
                              useArgType ? argType : SEQ_ARG_U8);
+
+            if (argType2 != 0) {
+                arg2 = ReadArg(&rTrackParam.currentAddr, pPlayer, pTrack,
+                               static_cast<SeqArgType>(argType2));
+            }
 
             if (!doExecCommand) {
                 break;
@@ -187,6 +215,10 @@ ParseResult MmlParser::Parse(MmlSeqTrack* pTrack, bool doNoteOn) const {
             }
 
             case MML_EOF: {
+                if (!doExecCommand) {
+                    break;
+                }
+
                 return PARSE_RESULT_FINISH;
             }
 
@@ -195,7 +227,7 @@ ParseResult MmlParser::Parse(MmlSeqTrack* pTrack, bool doNoteOn) const {
 
                 switch (cmdex & MML_CMD_SET_MASK) {
                 case MML_EX_USERPROC: {
-                    arg1 = static_cast<s16>(
+                    arg1 = static_cast<u16>(
                         ReadArg(&rTrackParam.currentAddr, pPlayer, pTrack,
                                 useArgType ? argType : SEQ_ARG_S16));
 
@@ -243,7 +275,6 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
     SeqPlayer* pPlayer = pTrack->GetSeqPlayer();
 
     SeqTrack::ParserTrackParam& rTrackParam = pTrack->GetParserTrackParam();
-    MmlSeqTrack::MmlParserParam& rMmlParam = pTrack->GetMmlParserParam();
 
     SeqPlayer::ParserPlayerParam& rPlayerParam =
         pPlayer->GetParserPlayerParam();
@@ -251,7 +282,7 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
     if (command <= MML_CMD_MAX) {
         switch (command) {
         case MML_SET_TEMPO: {
-            rPlayerParam.tempo = arg1;
+            rPlayerParam.tempo = ut::Clamp<s32>(arg1, 0, 1023);
             break;
         }
         case MML_SET_TIMEBASE: {
@@ -272,11 +303,15 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
         }
 
         case MML_SET_TRACK_VOLUME: {
-            rTrackParam.volume = arg1;
+            rTrackParam.volume.SetTarget(arg1, arg2);
             break;
         }
         case MML_SET_TRACK_VOLUME2: {
             rTrackParam.volume2 = arg1;
+            break;
+        }
+        case MML_SET_VELOCITY_SCALE: {
+            rTrackParam.velocityScale = arg1;
             break;
         }
         case MML_SET_PLAYER_VOLUME: {
@@ -298,7 +333,7 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
             break;
         }
         case MML_SET_PAN: {
-            rTrackParam.pan = arg1 - 64;
+            rTrackParam.pan.SetTarget(arg1 - 64, arg2);
             break;
         }
         case MML_SET_INITPAN: {
@@ -306,7 +341,7 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
             break;
         }
         case MML_SET_SURROUNDPAN: {
-            rTrackParam.surroundPan = arg1;
+            rTrackParam.surroundPan.SetTarget(arg1, arg2);
             break;
         }
         case MML_SET_PRIORITY: {
@@ -315,7 +350,7 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
         }
 
         case MML_SET_NOTEWAIT: {
-            rMmlParam.noteWaitFlag = arg1;
+            rTrackParam.mmlParserParam.noteWaitFlag = arg1;
             break;
         }
 
@@ -367,6 +402,18 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
             rTrackParam.release = arg1;
             break;
         }
+        case MML_SET_HOLD: {
+            rTrackParam.hold = static_cast<u8>(arg1);
+            break;
+        }
+        case MML_RESET_ENV: {
+            rTrackParam.attack = ENV_VALUE_NONE;
+            rTrackParam.decay = ENV_VALUE_NONE;
+            rTrackParam.sustain = ENV_VALUE_NONE;
+            rTrackParam.release = ENV_VALUE_NONE;
+            rTrackParam.hold = ENV_VALUE_NONE;
+            break;
+        }
 
         case MML_SET_DAMPER: {
             rTrackParam.damperFlag = static_cast<u8>(arg1) >= 64;
@@ -374,9 +421,21 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
         }
 
         case MML_SET_TIE: {
-            rMmlParam.tieFlag = arg1;
+            rTrackParam.mmlParserParam.tieFlag = arg1;
             pTrack->ReleaseAllChannel(-1);
             pTrack->FreeAllChannel();
+            break;
+        }
+
+        case MML_SET_MONOPHONIC: {
+            bool flag = arg1 != 0;
+
+            rTrackParam.mmlParserParam.monophonicFlag = flag;
+
+            if (flag) {
+                pTrack->ReleaseAllChannel(-1);
+                pTrack->FreeAllChannel();
+            }
             break;
         }
 
@@ -390,7 +449,15 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
             break;
         }
         case MML_SET_LPFFREQ: {
-            rTrackParam.lpfFreq = arg1;
+            rTrackParam.lpfFreq = (arg1 - 64) / 64.0f;
+            break;
+        }
+        case MML_SET_BIQUAD_TYPE: {
+            rTrackParam.biquadType = arg1;
+            break;
+        }
+        case MML_SET_BIQUAD_FREQ: {
+            rTrackParam.biquadFreq = arg1 / 127.0f;
             break;
         }
 
@@ -453,57 +520,77 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
         }
 
         case MML_CALL: {
-            if (rMmlParam.callStackDepth >= CALL_STACK_MAX_DEPTH) {
+            if (rTrackParam.mmlParserParam.callStackDepth >= CALL_STACK_MAX_DEPTH) {
                 break;
             }
 
-            rMmlParam.callStack[rMmlParam.callStackDepth] =
-                rTrackParam.currentAddr;
+            SeqTrack::CallStack& rStack =
+                rTrackParam.mmlParserParam.callStack[rTrackParam.mmlParserParam.callStackDepth];
 
-            rMmlParam.callStackDepth++;
+            rStack.currentAddr = rTrackParam.currentAddr;
+            rStack.loopFlag = false;
+
+            rTrackParam.mmlParserParam.callStackDepth++;
             rTrackParam.currentAddr = rTrackParam.baseAddr + arg1;
             break;
         }
 
         case MML_RET: {
-            if (rMmlParam.callStackDepth == 0) {
-                break;
+            SeqTrack::CallStack* pStack = NULL;
+
+            while (rTrackParam.mmlParserParam.callStackDepth != 0) {
+                rTrackParam.mmlParserParam.callStackDepth--;
+
+                SeqTrack::CallStack& rStack =
+                    rTrackParam.mmlParserParam.callStack[rTrackParam.mmlParserParam.callStackDepth];
+
+                if (!rStack.loopFlag) {
+                    pStack = &rStack;
+                    break;
+                }
             }
 
-            rMmlParam.callStackDepth--;
-
-            rTrackParam.currentAddr =
-                rMmlParam.callStack[rMmlParam.callStackDepth];
+            if (pStack != NULL) {
+                rTrackParam.currentAddr = pStack->currentAddr;
+            }
             break;
         }
 
         case MML_LOOP_START: {
-            if (rMmlParam.callStackDepth >= CALL_STACK_MAX_DEPTH) {
+            if (rTrackParam.mmlParserParam.callStackDepth >= CALL_STACK_MAX_DEPTH) {
                 break;
             }
 
-            rMmlParam.callStack[rMmlParam.callStackDepth] =
-                rTrackParam.currentAddr;
+            SeqTrack::CallStack& rStack =
+                rTrackParam.mmlParserParam.callStack[rTrackParam.mmlParserParam.callStackDepth];
 
-            rMmlParam.loopCount[rMmlParam.callStackDepth] = arg1;
-            rMmlParam.callStackDepth++;
+            rStack.currentAddr = rTrackParam.currentAddr;
+            rStack.loopCount = arg1;
+            rStack.loopFlag = true;
+
+            rTrackParam.mmlParserParam.callStackDepth++;
             break;
         }
 
         case MML_LOOP_END: {
-            if (rMmlParam.callStackDepth == 0) {
+            if (rTrackParam.mmlParserParam.callStackDepth == 0) {
                 break;
             }
 
-            u8 count = rMmlParam.loopCount[rMmlParam.callStackDepth - 1];
+            SeqTrack::CallStack& rStack =
+                rTrackParam.mmlParserParam.callStack[rTrackParam.mmlParserParam.callStackDepth - 1];
+
+            if (rStack.loopFlag == 0) {
+                break;
+            }
+
+            u8 count = rStack.loopCount;
 
             if (count != 0 && --count == 0) {
-                rMmlParam.callStackDepth--;
+                rTrackParam.mmlParserParam.callStackDepth--;
             } else {
-                rMmlParam.loopCount[rMmlParam.callStackDepth - 1] = count;
-
-                rTrackParam.currentAddr =
-                    rMmlParam.callStack[rMmlParam.callStackDepth - 1];
+                rStack.loopCount = count;
+                rTrackParam.currentAddr = rStack.currentAddr;
             }
             break;
         }
@@ -607,36 +694,37 @@ void MmlParser::CommandProc(MmlSeqTrack* pTrack, u32 command, s32 arg1,
         }
 
         case MML_EX_EQ: {
-            rMmlParam.cmpFlag = *pVar == arg2;
+            rTrackParam.mmlParserParam.cmpFlag = *pVar == arg2;
             break;
         }
 
         case MML_EX_GE: {
-            rMmlParam.cmpFlag = *pVar >= arg2;
+            rTrackParam.mmlParserParam.cmpFlag = *pVar >= arg2;
             break;
         }
 
         case MML_EX_GT: {
-            rMmlParam.cmpFlag = *pVar > arg2;
+            rTrackParam.mmlParserParam.cmpFlag = *pVar > arg2;
             break;
         }
 
         case MML_EX_LE: {
-            rMmlParam.cmpFlag = *pVar <= arg2;
+            rTrackParam.mmlParserParam.cmpFlag = *pVar <= arg2;
             break;
         }
 
         case MML_EX_LT: {
-            rMmlParam.cmpFlag = *pVar < arg2;
+            rTrackParam.mmlParserParam.cmpFlag = *pVar < arg2;
             break;
         }
 
         case MML_EX_NE: {
-            rMmlParam.cmpFlag = *pVar != arg2;
+            rTrackParam.mmlParserParam.cmpFlag = *pVar != arg2;
             break;
         }
 
         case MML_EX_USERPROC: {
+            pPlayer->CallSeqUserprocCallback(static_cast<u16>(arg1), pTrack);
             break;
         }
         }

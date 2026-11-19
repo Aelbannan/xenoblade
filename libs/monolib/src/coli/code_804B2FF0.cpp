@@ -348,7 +348,7 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
         f32 v76 = lbl_eu_8066AEC4;
         vs->flag = 0;
         init = 1;
-        f32 v92 = *(const volatile f32*)&lbl_eu_8066AEC8;
+        f32 v92 = lbl_eu_8066AEC8;
         const volatile CColiSrcVec* av = (const volatile CColiSrcVec*)a;
         u32 lo = av->x;
         u32 hi = av->y;
@@ -356,7 +356,7 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
         vs->src.x = lo;
         u32 zv = av->z;
         vs->src.z = zv;
-        f32 zero = *(const volatile f32*)&lbl_eu_8066AEC0;
+        f32 zero = lbl_eu_8066AEC0;
         vs->bbMax[2] = v76;
         vs->f5c = v92;
         vs->bbMin[0] = zero;
@@ -1371,9 +1371,7 @@ void ColiXformEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr,
     const f32 px = outv.x;
     self->pos[0] = px;
     nw4r::math::VEC3 n;
-    // Volatile read pins the single-use AEB4 load to its source position:
-    // MWCC otherwise sinks it below the double-use AEB0 load.
-    n.x = *(const volatile f32*)&lbl_eu_8066AEB4;
+    n.x = lbl_eu_8066AEB4;
     self->pos[1] = py;
     n.y = lbl_eu_8066AEB0;
     self->pos[2] = pz;

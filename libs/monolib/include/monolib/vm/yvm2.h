@@ -46,7 +46,7 @@ u32* vmWkGet(VMThread* pThread, u32 r4);
 
 void vmPluginExceptionThrow(VMThread* pThread);
 void vmOCExceptionThrow(VMThread* pThread);
-DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
+DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);  // noinline-ok: retail vmc_* handlers keep a real `bl`; removing it inlines it into 20+ opcode handlers
 void vmExceptionThrow(VMThread* pThread, u32 exception);
 
 const char* vmIdPoolGet(SBHeader* data, u32 no);

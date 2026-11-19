@@ -197,7 +197,7 @@ extern "C" void CfModel_InstallSub(cf::CfResObjParent* parent, u8* handle);
 extern "C" u8* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self);
-extern "C" void CfObjectMove_setRegionAttached(cf::CfResObjParent* parent, int flag);
+extern "C" void CfObjectMove_setRegionAttached(void* parent, int flag);
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);

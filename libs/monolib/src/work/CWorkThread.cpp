@@ -56,7 +56,7 @@ struct CWorkThreadQueueLayout {
     u32 mSize;                    //0x1AC
     u32 mCapacity;                //0x1B0
     u32 field6;                   //0x1B4
-    u32 field7;                   //0x1B8
+    u32 unk1B8;                   //0x1B8 (CWorkThread's own field, past the queue)
 };
 
 // Explicit specialization so the weak __dt__12CMsgParam<8>Fv instantiation is
@@ -82,7 +82,7 @@ CMsgParam<8>::~CMsgParam(){
 // noinline so wkSetEvent/wkSetEventChild emit bl calls to it like retail
 // (with the plain body visible, MWCC -ipa inlines it at every call site).
 template <>
-__declspec(noinline) void CMsgParam<8>::enqueue(u32 msg){
+__declspec(noinline) void CMsgParam<8>::enqueue(u32 msg){  // noinline-ok: dropping it makes -ipa inline this explicit specialization into wkSetEvent/wkSetEventChild/wkCheckTimeout (0x1c4->0x33c etc.)
     volatile CMsgParamEntry entry;
     u32 value4 = entry.wid;
     u32 value8 = entry.unk8;
@@ -144,7 +144,7 @@ extern "C" void* __ct__11CWorkThreadFPCcP11CWorkThreadi(
 
     self->mFlags = 0;
 
-    // Inlined CMsgParam<8>(0, &unk1BC) ctor.
+    // Inlined CMsgParam<8>() ctor + the thread's own unk1B8/unk1BC clear.
     CWorkThreadQueueLayout* q = reinterpret_cast<CWorkThreadQueueLayout*>(self);
     q->queueVtbl = lbl_eu_8056B1B0;
     q->mCapacity = 8;
@@ -153,7 +153,7 @@ extern "C" void* __ct__11CWorkThreadFPCcP11CWorkThreadi(
     q->mFront = 0;
     q->field6 = 0;
     self->unk1BC = 0;
-    q->field7 = 0;
+    q->unk1B8 = 0;
 
     self->mExceptionWorkID = INVALID_WORK_ID;
 
@@ -821,7 +821,7 @@ bool CWorkThread::handleExceptionRetry(unsigned long) {}
 
 void CWorkThread::wkUpdate(){}
 
-#pragma dont_inline on
+#pragma dont_inline on  // noinline-ok: without it MWCC folds _reslist/strcmp helpers into getWorkThread (0x9c->0x178)
 #pragma optimize_for_size on
 CWorkThread* CWorkThread::getWorkThread(const char* name){
     // Retail tolerates a null `this` (checks r3 before any member access).
@@ -849,7 +849,7 @@ CWorkThread* CWorkThread::getWorkThread(const char* name){
     return NULL;
 }
 #pragma optimize_for_size off
-#pragma dont_inline off
+#pragma dont_inline off  // noinline-ok: closes the block above
 
 // Data owned by this TU (blob monolibdata1 dissolve). The CWorkThread vtable
 // (lbl_eu_8056B110) is defined explicitly here because the class is novtable:

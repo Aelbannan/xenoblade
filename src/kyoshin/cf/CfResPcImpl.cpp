@@ -298,7 +298,7 @@ void CfResPcImpl_teardownLookupEntry(cf::CfResPcImpl* self) {
 // sets parent flag bits 0x20/0x40/0x80/0x100/0x200 for arg3 == 1..5, then
 // resets the handler index field_08 to 1. Returns whether the query
 // succeeded (retail neg/or/srwi normalize reused for branch+return).
-extern "C" __declspec(noinline) int CfResPcImpl_requestResourceByBits(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
+extern "C" int CfResPcImpl_requestResourceByBits(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     if (arg2 == 0) {
         return 0;
     }
@@ -631,7 +631,7 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
         int v = (self)->CfResPcImpl_getSlotTableEntry(i);
         u32 slotRes;
         if (self->field_00->field_64 & 0x8) {
-            slotRes = (u32)func_8009E120(charData, (u16)(i - 1));
+            slotRes = func_8009E120(charData, (u16)(i - 1));
         } else if (self->field_40 != 0) {
             slotRes = (u32)v;
         } else {
@@ -1265,7 +1265,7 @@ int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
 // is reset via CfRes_tryDelegateLoad1(handle, 4). arg2 (r4) is an unused
 // register-slot parameter (retail never reads it; CfResPcImpl_dispatchSlotCleanup passes its
 // own cond through the tail call). Returns 0.
-extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlotTable2(void* self, u32 arg2, u32 arg3) {
+extern "C" int CfResPcImpl_cleanupMgrSlotTable2(void* self, u32 arg2, u32 arg3) {
     cf::CfResPcMgrInner2* inner = ((cf::CfResPcMgrHost*)self)->field_408->field_04;
     if (!(inner->field_82C & 0x4) && (lbl_eu_80663E24 & 0x20) && arg3 == inner->field_830) {
         cf::CfResPcSlotTable2* tab = &inner->field_834;
@@ -1297,11 +1297,11 @@ extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlotTable2(void* self,
 // (KyoshinHeap_AllocFld34(0x200000) when KyoshinHeap_GetField34() reports empty) and resets
 // the slot via CfRes_tryRefreshSlot16C(handle, 4); then runs CfResPcImpl_refreshMapAreaEvents, the
 // manager's notifyObjectMapChange and runMgrTeardownSeq, and returns 0. extern "C" +
-// noinline keep CfResPcImpl_dispatchSlotCleanup's call-site reloc at the retail C name; the
+// the unit's -inline noauto keep CfResPcImpl_dispatchSlotCleanup's call-site reloc at the retail C name; the
 // void* boundary matches CfResPcImpl_dispatchSlotCleanup's existing call (MWCC rejects an
 // implicit void*->T* conversion, and a cast there would touch a matched
 // function).
-extern "C" __declspec(noinline) int CfResPcImpl_cleanupMgrSlots(void* self) {
+extern "C" int CfResPcImpl_cleanupMgrSlots(void* self) {
     cf::CfResPcMgrInner* inner = ((cf::CfResPcMgrHost*)self)->field_408->field_00;
     if (!(inner->field_82C & 0x4)) {
         cf::CfResPcSlotTable* tab = &inner->field_834;
@@ -1368,7 +1368,7 @@ int CfResPcImpl_loadPlayerOrEvent2(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, 
 // resets the three handler slots, checks a set of area/event conditions
 // against the static table and finally copies the file pair and syncs the
 // area ids.
-__declspec(noinline) void CfResPcImpl_refreshMapAreaEvents(void* self) {
+void CfResPcImpl_refreshMapAreaEvents(void* self) {
     CamEvtSearchStateVal(0);
     loadLayoutScales();
     if (lbl_eu_80663E24 & 0x80000) {

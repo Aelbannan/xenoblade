@@ -11,7 +11,7 @@ public:
     static CWorkControl* create(CWorkThread* pParent);
     static CWorkControl* create(const char* pName, CWorkThread* pParent);
 
-    DECOMP_DONT_INLINE static bool setFlowSetup();
+    static DECOMP_DONT_INLINE bool setFlowSetup();  // noinline-ok: see the setFlowSetup definition in CWorkControl.cpp
     static void pause(bool paused);
     static bool hasFlow();
 

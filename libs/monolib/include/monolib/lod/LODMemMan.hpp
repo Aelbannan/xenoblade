@@ -20,7 +20,7 @@ namespace LOD {
 class LODMemMan : public IWorkEvent {
 public:
     LODMemMan() {}
-    virtual ~LODMemMan();
+    virtual ~LODMemMan() {}
     virtual bool OnFileEvent(CEventFile* evt);
 
     void initElementBuffers(u32 handle, u32 size);

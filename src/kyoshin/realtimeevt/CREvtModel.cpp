@@ -20,7 +20,7 @@
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 extern "C" {
-extern u32 Scn_IsAnimActiveOrNull(void* ptr);
+extern bool Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
 extern void EvtSeqResolveAnmChr(void* data, const char* name, int* outValue);
 extern void EvtSeqFindResFloat(void* data, const char* name, void* outValue);

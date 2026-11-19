@@ -32,23 +32,6 @@ struct CView_UnkStruct1 {
     s16 unk12;
 };
 
-// POD reslist header (size 0x20) so CView::__ct__ can init after ViewFrame.
-struct CViewResList {
-    void* vtable;
-    void* mStartNodePtr;
-    void* mSentinelNext;
-    void* mSentinelPrev;
-    void* mSentinelItem;
-    void* mList;
-    int mCapacity;
-    u8 unk1C;
-    u8 pad[3];
-
-    bool empty() const {
-        return *(void**)mStartNodePtr == mStartNodePtr;
-    }
-};
-
 //size: 0x470
 class CView : public CWorkThread, public CFontLayer {
 public:
@@ -133,17 +116,11 @@ public:
     //0x1C4: vtable 2
     CViewRectDataCore mRectData; //0x1C8
     CViewFrame mFrame; //0x1DC
-    CViewResList unk238; //0x238 reslist<WORK_ID>
-    CViewResList unk258; //0x258 reslist<IWorkEvent*>
+    reslist<WORK_ID> mWorkIDList; //0x238 (work ids attached to this view)
+    reslist<IWorkEvent*> mEventList; //0x258 (events attached to this view)
     u32 unk278; //0x278
     u32 unk27C; //0x27C
-    u32 mContextMsgVtable; //0x280
-    u8 mContextRing[0x3EC - 0x284]; //0x284
-    u8* mContextRingBase; //0x3EC
-    u32 unk3F0; //0x3F0
-    u32 mContextRingWriteIndex; //0x3F4
-    u32 mContextRingCapacity; //0x3F8
-    u32 unk3FC; //0x3FC
+    CMsgParam<10> mContextMsg; //0x280
     ml::FixStr<64> mName; //0x400
     ml::CVec4 unk444; //0x444
     u32 mGXCacheId; //0x454

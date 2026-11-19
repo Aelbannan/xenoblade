@@ -197,16 +197,23 @@ Fix semantics/types first, then expression order with normal C++ (named locals/h
 - templates in headers: use explicit instantiation; check `Ui` vs `Ul` (`unsigned int` on PPC32).
   See `MWCC_CASES` §Template pitfalls. Wrapping the template in `#pragma auto_inline off` now counts
   as a hard smell; out-of-class template members without `inline` aren't auto-inlined anyway.
-- unwanted inlining of a same-TU helper: `noinline` / `dont_inline` / `auto_inline off` are **hard
-  faithfulness smells**. Find why retail didn't inline, checking unit flags first:
-  - wrong opt level: many retail kyoshin TUs are `-O4,s`, which doesn't auto-inline (per-function
-    `#pragma optimize_for_size` toggles are the tell);
+- unwanted inlining of a same-TU helper: `noinline` / `never_inline` / `DECOMP_DONT_INLINE` /
+  `dont_inline` / `auto_inline off` are **hard faithfulness smells**. Find why retail didn't inline,
+  checking unit flags first:
+  - `-inline noauto` — the most common real cause (CfRes, CfGameManager, LODMemMan, code_804CC2B8…);
+    helpers retail *does* fold then need an explicit `inline` keyword;
+  - wrong opt level: some retail kyoshin TUs are `-O4,s` (per-function `#pragma optimize_for_size`
+    toggles are the tell) — but `-O4,s` on a speed TU costs badly (CfRes 211 → 141), so measure;
   - `-ipa file` folding helpers regardless of order (`-ipa off`);
-  - `-inline noauto`;
   - definition order;
   - wrong TU boundary.
-  Keep one only with `// noinline-ok: <what was tried>` on the same line. Wave c5 removed ~1,000 uses
-  this way with net ±0 ✓ (MWCC_CASES "kyoshin noinline smell removal batch").
+  Keep one only with `// noinline-ok: <what was tried>` on the same line.
+- forcing a reload with `*(volatile T*)&obj` is a **hard smell** (`volatile`). Real causes: the object
+  is genuinely shared (declare the member/global `volatile` at its definition), or the decomp dropped an
+  alias (restore the union / second view), or the cast is inert (delete it). Keep one only with
+  `// volatile-ok: <why the object is volatile>`. Hardware FIFO writes are not counted.
+- `#define name name_hidden` / `name_xxx` macros that hide a conflicting declaration are a **hard smell**
+  (`decl_shield`): give the symbol one canonical declaration taken from its definition instead.
 
 ## Declaration drift & the `extern "C"` rename shields
 

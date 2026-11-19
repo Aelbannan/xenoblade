@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+
+#include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
+
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80519EC8[0x4F8] = {
     0x45,0x32,0x30,0x31,0x31,0x38,0x34,0x20,0x4D,0x77,0x73,0x66,
     0x64,0x42,0x75,0x66,0x46,0x6D,0x74,0x20,0x76,0x61,0x6C,0x75,
@@ -132,32 +135,29 @@ void MWSFSFX_Destroy(void) { SFX_Destroy(); }
 
 void MWSFD_CnvFrmInfToSfx() {}
 
-int MWSFD_IsColAdjFrame(void *a, void *b) {
-    int idx = *(s32 *)((u8 *)b + 0x38);
-    u8 *entry = (u8 *)a + (idx % 8) * 0x38;
+int MWSFD_IsColAdjFrame(MWSFDPLY* self, MwlSfdFrmInf* frm) {
+    MwlSfdFrame* entry = &self->frmFx[frm->field_0x38 % 8];
     int v;
-    if (*(s32 *)(entry + 0xE0) != 1)
+    if (entry->state != 1)
         v = 0;
     else
-        v = *(u32 *)(entry + 0xF8);
+        v = entry->colAdj;
     int r = v == 1;
-    if (*(u32 *)((u8 *)b + 0xA0))
-        r = SUD_AnalyTypeCcs(*(u32 *)((u8 *)b + 0xA0), *(u32 *)((u8 *)b + 0xA4)) == 1;
+    if (frm->field_0xa0)
+        r = SUD_AnalyTypeCcs(frm->field_0xa0, frm->field_0xa4) == 1;
     return r;
 }
 
-int MWSFD_IsColAdjFile(void* self, int idx) {
-    int index = idx % 8;
-    u32* entry = (u32*)((u8*)self + index * 0x38);
-    if ((s32)entry[0xE0 / 4] != 1) return 0;
-    return entry[0xFC / 4];
+int MWSFD_IsColAdjFile(MWSFDPLY* self, int idx) {
+    MwlSfdFrame* entry = &self->frmFx[idx % 8];
+    if (entry->state != 1) return 0;
+    return entry->colAdjFile;
 }
 
-int MWSFD_GetFxType(void* self, int idx) {
-    int index = idx % 8;
-    u32* entry = (u32*)((u8*)self + index * 0x38);
-    if ((s32)entry[0xE0 / 4] != 1) return 0x11;
-    return entry[0x104 / 4];
+int MWSFD_GetFxType(MWSFDPLY* self, int idx) {
+    MwlSfdFrame* entry = &self->frmFx[idx % 8];
+    if (entry->state != 1) return 0x11;
+    return entry->fxType;
 }
 
 extern void mwPlyCalcYccPlane(s32 a, s32 b, s32 c, s32* out);
@@ -200,8 +200,8 @@ void mwsfsfx_SetYcc420plnInfToSfx(void* a, void* src, void* sfx) {
 }
 
 void SFX_SetCompoMode(void* a);
-void MWSFSFX_SetCompoMode(void* self) {
-    SFX_SetCompoMode(*(void**)((u8*)self + 0xC8));
+void MWSFSFX_SetCompoMode(MWSFDPLY* self) {
+    SFX_SetCompoMode(self->sfx);
 }
 
 extern int MWSFD_IsEnableHndl(void*);
@@ -210,38 +210,38 @@ extern int SUD_AnalyTypeCcs(const char *, s32);
 extern void SFX_SetOutBufSize(void *, u32, u32);
 extern void SFX_SetUnitWidth(void *, u32);
 
-u32 mwPlyFxGetCompoMode(void* self) {
+u32 mwPlyFxGetCompoMode(MWSFDPLY* self) {
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_80519EC8 + 0x201);
         return 0;
     }
-    return *(u32*)((u8*)self + 0x68);
+    return self->field_0x68;
 }
 
-void mwPlyFxSetOutBufPitchHeight(void *self, u32 width, u32 height) {
+void mwPlyFxSetOutBufPitchHeight(MWSFDPLY *self, u32 width, u32 height) {
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_80519EC8 + 0x232);
         return;
     }
-    void *sfx = *(void **)((u8 *)self + 0xC8);
+    void *sfx = self->sfx;
     SFX_SetOutBufSize(sfx, width, height);
     SFX_SetUnitWidth(sfx, 0);
 }
 
-int MWSFTAG_IsUseAinfSj(void* self) {
-    int v = *(s32*)((u8*)self + 0x20);
+int MWSFTAG_IsUseAinfSj(MWSFDPLY* self) {
+    int v = (s32)self->prm.field_0x1c;
     if (v == 0 || v == 0x101) {
         return 1;
     }
     return 0;
 }
 
-extern void* SJRBF_Create(void* a, void* b, s32 c);
+extern void* SJRBF_Create(void* pool_mem, u32 buf_size, u32 xtr_size);
 extern void criware_803A09B4(void* self);
 
-s32 MWSFTAG_CreateAinfSj(void* self) {
+s32 MWSFTAG_CreateAinfSj(MWSFDPLY* self) {
     s32 ok;
-    s32 f = *(s32*)((u8*)self + 0x28);
+    s32 f = self->prm.mode;
     if (f == 0 || f == 0x101) {
         ok = 1;
     } else {
@@ -250,7 +250,7 @@ s32 MWSFTAG_CreateAinfSj(void* self) {
     if (ok != 1)
         return 0;
     {
-        s32 r = (s32)SJRBF_Create(*(void**)((u8*)self + 0x4c4), *(void**)((u8*)self + 0x4c8), 0);
+        s32 r = (s32)SJRBF_Create(self->ainfBuf, self->ainfBufSize, 0);
         if (r != 0)
             MWSFSVM_Error(lbl_eu_80519EC8 + 0x362);
         criware_803A09B4(self);
@@ -258,8 +258,8 @@ s32 MWSFTAG_CreateAinfSj(void* self) {
     return 0;
 }
 
-void MWSFTAG_DestroyAinfSj(void* self) {
-    void* p = *(void**)((u8*)self + 0x4c0);
+void MWSFTAG_DestroyAinfSj(MWSFDPLY* self) {
+    void* p = self->ainfSj;
     if (p == NULL) return;
     void** vtable = *(void***)p;
     ((void (*)(void*))vtable[3])(p);
@@ -267,59 +267,59 @@ void MWSFTAG_DestroyAinfSj(void* self) {
 
 extern s32 SFD_SetUsrSj(void* sst, s32 a, s32 b, s32 c);
 
-s32 MWSFTAG_SetAinfSj(void* self) {
+s32 MWSFTAG_SetAinfSj(MWSFDPLY* self) {
     s32 ok;
-    if (*(s32*)((u8*)self + 8) == 2 ||
-        *(s32*)((u8*)self + 8) == 6 ||
-        *(s32*)((u8*)self + 8) == 8 ||
-        *(s32*)((u8*)self + 8) == 0xa) {
+    if ((s32)self->prm.field_0x04 == 2 ||
+        (s32)self->prm.field_0x04 == 6 ||
+        (s32)self->prm.field_0x04 == 8 ||
+        (s32)self->prm.field_0x04 == 0xa) {
         ok = 1;
     } else {
         ok = 0;
     }
     if (ok == 1)
         return 0;
-    if (*(s32*)((u8*)self + 0x4c0) == 0)
+    if (self->ainfSj == NULL)
         return 0;
     {
-        s32 r = SFD_SetUsrSj(*(void**)((u8*)self + 0x58), 2, *(s32*)((u8*)self + 0x4c0), 0);
+        s32 r = SFD_SetUsrSj(self->sfd, 2, (s32)self->ainfSj, 0);
         return (-r | r) >> 31;
     }
 }
 
-void MWSFTAG_InitTagInf(void* self) {
-    *(u32*)((u8*)self + 0x4d8) = 0;
-    *(u32*)((u8*)self + 0x4dc) = 0;
-    *(u32*)((u8*)self + 0x4e0) = 0;
-    *(u32*)((u8*)self + 0x4d4) = -1;
+void MWSFTAG_InitTagInf(MWSFDPLY* self) {
+    self->tagValid = 0;
+    self->tagData = 0;
+    self->tagSize = 0;
+    self->tagState = -1;
 }
 
-void MWSFTAG_ResetAinfSj(void* self) {
-    void* p = *(void**)((u8*)self + 0x4c0);
+void MWSFTAG_ResetAinfSj(MWSFDPLY* self) {
+    void* p = self->ainfSj;
     if (p == NULL) return;
     void** vtable = *(void***)p;
     ((void (*)(void*))vtable[5])(p);
 }
 
-extern void mwsftag_GetAinfFromSj(void* self);
+extern void mwsftag_GetAinfFromSj(MWSFDPLY* self);
 extern void SFX_SetTagInf(void* tag, u32 a, u32 b);
 extern s32 SJ_SearchTag(u32* a, char* b, char* c, u32* out);
 
-void MWSFTAG_UpdateTagInf(void* self) {
-    if (*(u32*)((u8*)self + 0x4c0) == 0)
+void MWSFTAG_UpdateTagInf(MWSFDPLY* self) {
+    if (self->ainfSj == NULL)
         return;
     mwsftag_GetAinfFromSj(self);
     {
-        void* tag = *(void**)((u8*)self + 0xc8);
+        void* tag = self->sfx;
         u32 out[2];
         u32 buf[2];
-        u32 a = *(u32*)((u8*)self + 0x4dc);
+        u32 a = self->tagData;
         if (a == 0) {
             SFX_SetTagInf(tag, 0, 0);
             return;
         }
         buf[0] = a;
-        buf[1] = *(u32*)((u8*)self + 0x4e0);
+        buf[1] = self->tagSize;
         if (SJ_SearchTag(buf, lbl_eu_80519EC8 + 0x38d, lbl_eu_80519EC8 + 0x395, out) == 0) {
             SFX_SetTagInf(tag, 0, 0);
         } else {
@@ -328,43 +328,43 @@ void MWSFTAG_UpdateTagInf(void* self) {
     }
 }
 
-void mwsftag_GetAinfFromSj(void* self) {
-    void* sj = *(void**)((u8*)self + 0x4c0);
+void mwsftag_GetAinfFromSj(MWSFDPLY* self) {
+    void* sj = self->ainfSj;
     u32 buf[2];
     u32 out[2];
     s32 ret;
-    buf[0] = *(u32*)((u8*)self + 0x4c4);
+    buf[0] = (u32)self->ainfBuf;
     ret = ((s32 (*)(void*))*(void**)((u8*)*(void**)((u8*)sj) + 0x24))(sj);
     if (ret == 0) {
-        *(u32*)((u8*)self + 0x4dc) = 0;
-        *(u32*)((u8*)self + 0x4e0) = 0;
-        *(u32*)((u8*)self + 0x4d8) = 1;
+        self->tagData = 0;
+        self->tagSize = 0;
+        self->tagValid = 1;
         return;
     }
     buf[1] = (u32)ret;
     if (SJ_SearchTag(buf, lbl_eu_80519EC8 + 0x39d, lbl_eu_80519EC8 + 0x3a5, out) == 0) {
-        *(u32*)((u8*)self + 0x4dc) = 0;
-        *(u32*)((u8*)self + 0x4e0) = 0;
-        *(u32*)((u8*)self + 0x4d8) = 1;
+        self->tagData = 0;
+        self->tagSize = 0;
+        self->tagValid = 1;
         return;
     }
-    if (*(void**)((u8*)self + 0x4cc) != NULL) {
+    if (self->tagBuf != NULL) {
         s32 t;
-        memcpy(*(void**)((u8*)self + 0x4cc), (void*)out[0], out[1]);
-        *(u32*)((u8*)self + 0x4dc) = *(u32*)((u8*)self + 0x4cc);
-        *(u32*)((u8*)self + 0x4e0) = 0x7fffffff;
-        *(u32*)((u8*)self + 0x4d8) = 1;
+        memcpy(self->tagBuf, (void*)out[0], out[1]);
+        self->tagData = (u32)self->tagBuf;
+        self->tagSize = 0x7fffffff;
+        self->tagValid = 1;
         ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x18))(sj, 1, &t);
         ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x20))(sj, 0, &t);
         ((void (*)(void*))*(void**)((u8*)*(void**)((u8*)sj) + 0x14))(sj);
     } else {
-        *(u32*)((u8*)self + 0x4dc) = out[0];
-        *(u32*)((u8*)self + 0x4e0) = out[1];
-        *(u32*)((u8*)self + 0x4d8) = 1;
-        if (!(*(s32*)((u8*)self + 8) == 2 || *(s32*)((u8*)self + 8) == 6 ||
-              *(s32*)((u8*)self + 8) == 8 || *(s32*)((u8*)self + 8) == 0xa)) {
-            if (*(u32*)((u8*)self + 0x4c0) != 0) {
-                SFD_SetUsrSj(*(void**)((u8*)self + 0x58), 2, 0, 0);
+        self->tagData = out[0];
+        self->tagSize = out[1];
+        self->tagValid = 1;
+        if (!((s32)self->prm.field_0x04 == 2 || (s32)self->prm.field_0x04 == 6 ||
+              (s32)self->prm.field_0x04 == 8 || (s32)self->prm.field_0x04 == 0xa)) {
+            if (self->ainfSj != NULL) {
+                SFD_SetUsrSj(self->sfd, 2, 0, 0);
             }
         }
     }

@@ -51,7 +51,7 @@ public:
     }
 
 private:
-    bool LoadFileHeader() DECOMP_DONT_INLINE;
+    bool LoadFileHeader();
 
 private:
     detail::SoundArchiveFileReader mFileReader; // at 0x108

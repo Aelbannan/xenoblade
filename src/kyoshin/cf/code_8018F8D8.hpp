@@ -153,14 +153,9 @@ typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32, u32*, u32);
 extern MenuCmdHandler lbl_eu_80532838[];
 
 // CfRes ring-buffer pump used by CfCmd_FadeColor-era dispatchers (defined in
-// CfRes.cpp); this TU uses a minimal layout view of the ring object.
-struct MenuCmdRingView {
-    u8 ring[0x400];
-    u32 field_400;
-    u32 field_404;
-};
-extern "C" int CfResBuf_popRecord(MenuCmdRingView* buffer, u32* headerOut,
-                             u32* dataOut);
+// CfRes.cpp); the ring object is the real CfResBuffer (CfRes.hpp) and the
+// record pop is its popRecord() member.
+struct CfResBuffer;
 
 // Party-slot character-data lookups used by CfCmd_PartyRebuild.
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);  // matches CAIAction.hpp declaration

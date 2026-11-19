@@ -185,7 +185,7 @@ protected:
 
 protected:
     static Pane* BuildPaneObj(s32 kind, const void* pBinary,
-                              const ResBlockSet& rBlockSet) DECOMP_DONT_INLINE;
+                              const ResBlockSet& rBlockSet) DECOMP_DONT_INLINE;  // noinline-ok: retail Build() keeps a real `bl`; -inline noauto and -ipa off each lose 3 fns
 
 protected:
     AnimTransformList mAnimTransList; // at 0x4

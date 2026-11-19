@@ -14,20 +14,12 @@
 // (CChain.hpp pulls CChainActorList then CChainTimer; UnkClass_800D8DBC.hpp
 // re-includes CChainTimer inside the CBattleManager span).
 #include "kyoshin/cf/chain/CChainActorList.hpp"
-#define IdTable_SumValues IdTable_SumValues_chainTimer
 #include "kyoshin/cf/chain/CChain.hpp"
-#define getBdatStringColumnValue getBdatStringColumnValue_caiaction2
-#define getArtsSlotRC getArtsSlotRC_caiaction
-#define getArtsParamRC2 getArtsParamRC2_caiaction
 // Pre-include CAIAction.hpp under the renames so its u16 CtrlObjectParam_GetCharEntry form
 // wins; CVision's u32 copy is renamed away inside the CBattleManager span.
 #include "kyoshin/cf/object/CAIAction.hpp"
 #define CtrlObjectParam_GetCharEntry func_8009EC9C_cvision
 #include "kyoshin/cf/CBattleManager.hpp"
-#undef getBdatStringColumnValue
-#undef getArtsSlotRC
-#undef getArtsParamRC2
-#undef IdTable_SumValues
 // CtrlObjectParam_GetCharEntry stays defined until after the code_80135FDC.hpp include below.
 #include "kyoshin/cf/CfGameManager.hpp"
 // (findBattleStatusEntry: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
@@ -40,9 +32,7 @@
 // code_80135FDC.hpp's u16 copy out of the way (this TU never calls it).
 // CtrlObjectParam_GetCharEntry stays renamed across this span too (CAIAction's u16 form
 // wins; code_80135FDC.hpp carries another u32 copy).
-#define getReloadParam0 getReloadParam0_u16
 #include "kyoshin/code_80135FDC.hpp"
-#undef getReloadParam0
 #undef CtrlObjectParam_GetCharEntry
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"

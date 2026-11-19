@@ -16,6 +16,7 @@
 #include <nw4r/g3d/g3d_anmtexsrt.h>
 #include <nw4r/g3d/g3d_fog.h>
 #include <nw4r/g3d/g3d_scnmdl.h>
+#include <nw4r/g3d/g3d_scnmdlsmpl.h>
 #include <nw4r/g3d/g3d_scnobj.h>
 #include <nw4r/g3d/g3d_scnroot.h>
 #include <nw4r/g3d/res/g3d_resfile.h>
@@ -48,7 +49,8 @@ struct DblCvtSlots {
     u32 lo;
 };
 static inline f32 cvtToF_A8F0(volatile DblCvtSlots& s) {
-    return (f32)(*(volatile const f64*)&s - lbl_eu_8066A8F0);
+    f64 d = *(const f64*)&s;
+    return (f32)(d - lbl_eu_8066A8F0);
 }
 
 
@@ -934,7 +936,7 @@ extern "C" void  scnImN4ResetAnims(CScnItemModelNw4r* self) {
 // repeat while a pass changed anything).
 extern "C" void scnImN4AddFrameId(CScnItemModelNw4r* self, u32 value) {
     u32* p = *(u32* volatile*)&self->field_0x17CC;
-    u32* const end = p + *(volatile u32*)&self->field_0x17D0;
+    u32* const end = p + self->field_0x17D0;
     while (p != end && *p != value) {
         p++;
     }
@@ -1074,8 +1076,7 @@ extern "C" void scnImN4SyncShadow(CScnItemModelNw4r* self, nw4r::math::MTX34* mt
             nw4r::g3d::ResMdl srcMdl(link->field_0x146C);
             // Source model's per-node world-matrix array (ScnMdlSimple +0xEC).
             nw4r::math::MTX34* srcArray =
-                ((CScnItemModelNw4rScnMdlView*)link->field_0x147C)
-                    ->mpWorldMtxArray;
+                ((nw4r::g3d::ScnMdlSimple*)link->field_0x147C)->GetWldMtxArray();
             for (u32 i = 0; i < count; i++) {
                 nw4r::g3d::ResNode node =
                     nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(i);
@@ -1547,11 +1548,13 @@ extern "C" bool  scnImN4LinkList2(CScnItemModelNw4r* self, CScnItemModelNw4r* ot
         (nw4r::g3d::ScnMdlExpand*)self->field_0x1480, scnObj, priority);
     if (pushed) {
         if (mtx != 0) {
-            ((CScnItemModelNw4rActView*)other)->act.mMtx1 = *mtx;
-            ((CScnItemModelNw4rActView*)other)->act.mFlags |=
-                ml::CAttrTransform::FLAG_0;
+            CScnItemModelActData* act =
+                (CScnItemModelActData*)((CScnItemModel*)other)->field_0x1F8;
+            act->transform.mMtx1 = *mtx;
+            act->transform.mFlags |= ml::CAttrTransform::FLAG_0;
         } else {
-            ((CScnItemModelNw4rActView*)other)->act.clear();
+            ((CScnItemModelActData*)((CScnItemModel*)other)->field_0x1F8)
+                ->transform.clear();
         }
         for (u32 i = 0; i < 4; i++) {
             if (self->slots834[i] == 0) {
@@ -1973,9 +1976,9 @@ struct CScnItemModelNw4rMaruPtrView {
 extern "C" void  scnImN4SetMaruPtr(u8* self, u32 mode) {
     CScnItemModelNw4r* m = (CScnItemModelNw4r*)self;
     if ((s32)mode == 1) {
-        ((CScnItemModelNw4rMaruPtrView*)m)->maruPtr = m->field_0x1650;
+        m->field_0x7EC = m->field_0x1650;
     } else {
-        ((CScnItemModelNw4rMaruPtrView*)m)->maruPtr = 0;
+        m->field_0x7EC = NULL;
     }
 }
 
@@ -2359,7 +2362,7 @@ extern "C" nw4r::math::MTX34*  scnImN4MtxByName(CScnItemModelNw4r* self, const c
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
     }
     nw4r::math::MTX34* base =
-        ((CScnItemModelNw4rScnMdlView*)self->field_0x147C)->mpWorldMtxArray;
+        ((nw4r::g3d::ScnMdlSimple*)self->field_0x147C)->GetWldMtxArray();
     return base + node.GetMtxID();
 }
 
@@ -2378,7 +2381,7 @@ extern "C" nw4r::math::MTX34*  scnImN4MtxByIdx(CScnItemModelNw4r* self, u32 inde
         nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
     }
     nw4r::math::MTX34* base =
-        ((CScnItemModelNw4rScnMdlView*)self->field_0x147C)->mpWorldMtxArray;
+        ((nw4r::g3d::ScnMdlSimple*)self->field_0x147C)->GetWldMtxArray();
     return base + node.GetMtxID();
 }
 
@@ -3024,8 +3027,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
                 nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
             }
             nw4r::math::MTX34* worldMtx =
-                ((CScnItemModelNw4rScnMdlView*)self->field_0x147C)
-                    ->mpWorldMtxArray +
+                ((nw4r::g3d::ScnMdlSimple*)self->field_0x147C)->GetWldMtxArray() +
                 node.GetMtxID();
             self->field_0x14AC = (CScnItemModelNw4r14AC*)worldMtx;
             nw4r::g3d::ResNode nodeCopy = node;

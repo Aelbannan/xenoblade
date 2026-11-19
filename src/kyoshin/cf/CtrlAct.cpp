@@ -8,15 +8,7 @@
 // whose C++-linkage typed __ct__16CfEnumListHolderFv / ScnRes_VertRayForward_E398 decls clash with the
 // canonical extern "C" forms in CtrlMoveBase.hpp / CtrlPc.hpp. Hide them for
 // this TU (our call sites use the canonical extern "C" ABI).
-#define aiActionClearBlockADC aiActionClearBlockADC_altdecl
-#define func_80043E88 func_80043E88_altdecl
-#define findFirstCleanObjectId findFirstCleanObjectId_altdecl
-#define startEnumObjects startEnumObjects_altdecl
 #include "kyoshin/harness_catalog.hpp"
-#undef aiActionClearBlockADC
-#undef func_80043E88
-#undef findFirstCleanObjectId
-#undef startEnumObjects
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"

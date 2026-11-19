@@ -210,13 +210,16 @@ extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* charObj, u32 flag);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void* rows, u32 count);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
-extern "C" void* CItem_kindPtr(u32 index, s16 value);
+// Canonical return type from the owner header (cf/CItem.hpp). Kept attribute-
+// free here: CItemExt is only ever used through this pointer.
+struct CItemExt;
+extern "C" CItemExt* CItem_kindPtr(u32 index, s16 value);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
 
-// bdat item-name table (sdata pointer) and message-count lookup used by
-// CEquipChange::RunMainFlow's category equip checks.
-extern u32 lbl_eu_806640EC;
+// bdat item-name table (sdata pointer; canonical type from cf/CItem.hpp) and
+// message-count lookup used by CEquipChange::RunMainFlow's category equip checks.
+extern void* lbl_eu_806640EC;
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // Per-category equipped-item row setters (CEquipChange::RunMainFlow case tails).

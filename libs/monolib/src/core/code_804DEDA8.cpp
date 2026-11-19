@@ -199,11 +199,12 @@ extern "C" void randVec__6CERandFPQ22ml5CVec3(ml::CVec3* v);
 
 extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 
-// Zero one 0x18-byte schedule-resource entry. never_inline so callers (e.g.
-// SchedRes_AllocEntries) keep the retail direct `bl` instead of an inlined loop body.
+// Zero one 0x18-byte schedule-resource entry. Callers (e.g. SchedRes_AllocEntries)
+// keep the retail direct `bl` instead of an inlined loop body.
 // extern "C" keeps the call-site reloc name matching retail (SchedRes_ZeroEntry).
-// Definition sits below SchedRes_AllocEntries so MWCC's same-TU IPA cannot inline it
-// into the allocation loop at -O4,p.
+// No inline attribute is needed: the definition sits below SchedRes_AllocEntries and
+// inside a `#pragma auto_inline off` region, so MWCC cannot inline it into the
+// allocation loop at -O4,p (verified: hexdiff --all byte-identical without it).
 // Forward decl (full definition below, before SchedRes_AllocEntries).
 struct CResEntry;
 extern "C" void SchedRes_ZeroEntry(CResEntry* pEntry);
@@ -234,9 +235,8 @@ struct CResLookup {
 };
 
 // Indexed key accessor: index must be < 0x100 and within the entry count.
-// never_inline so SchedRes_FindEntryValue keeps the retail direct `bl`; extern "C"
-// keeps the call-site reloc name matching retail.
-extern "C" DECOMP_DONT_INLINE void* SchedRes_LookupKeyIndexed(CResLookup* self, u32 index) {
+// extern "C" keeps the call-site reloc name matching retail.
+extern "C" DECOMP_DONT_INLINE void* SchedRes_LookupKeyIndexed(CResLookup* self, u32 index) {  // noinline-ok: retail bl 0x804E3AE4 targets this in-TU copy; -ipa off, -inline noauto (loses 3 *_ReleaseHandle), -O4,s (loses AdvanceVec28/B), `static` all tried
     if (index >= 0x100) {
         return NULL;
     }
@@ -432,7 +432,7 @@ extern "C" void SchedRes_ZeroEntry(CResEntry* pEntry) {
 // entry's node/index arrays from the resource descriptor's count bytes,
 // walks the chunked resource chain at entry+0x20 building free lists,
 // then conditionally tears down. Returns 0 only on full teardown.
-extern "C" DECOMP_DONT_INLINE int __dt__804DEDCC(CResEntry* entry, void* res,
+extern "C" int __dt__804DEDCC(CResEntry* entry, void* res,
                                                   u32 flagBit);
 
 // Find the schedule-resource entry whose key matches `key`; if no live
@@ -568,8 +568,7 @@ extern "C" int __dt__804DEDCC(CResEntry* entry, void* res, u32 flagBit) {
             operator delete[](e->pc);
             e->pc = NULL;
         }
-        u32 memActive =
-            (*(volatile CSchedMemGlob*)&lbl_eu_8065FC18).mFlags;
+        u32 memActive = lbl_eu_8065FC18.mFlags;
         memActive = (memActive >> 10) & 1;
         if (memActive != 0) {
             if (e->w4 != 0) {
@@ -1038,11 +1037,11 @@ extern "C" s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, 
         s32 idx = last;
         do {
             node = (CEffectObj*)((u8*)lbl_eu_80661728.mBase + idx * 0x22c);
-            if (*(s16*)((u8*)node + 0x1e) >= 0) {
+            if (node->mPoolSlot >= 0) {
                 idx = (idx + 1) % lbl_eu_80661728.mCount;
             } else {
                 EffSys_InitRoot(node);
-                *(s16*)((u8*)node + 0x1e) = (s16)idx;
+                node->mPoolSlot = (s16)idx;
                 lbl_eu_80661728.mActiveCount++;
                 lbl_eu_80661728.mLastHandle =
                     (idx + 1) % lbl_eu_80661728.mCount;
@@ -1055,10 +1054,10 @@ extern "C" s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, 
     }
     if (reinterpret_cast<EffObject*>(node)->Obj_Construct(
             base, reinterpret_cast<const EffInitBlob*>(data), arg3, arg4, arg5) != 0) {
-        return *(s16*)((u8*)node + 0x1e);
+        return node->mPoolSlot;
     }
     // Constructor failed: rewind the handle cursor and release the object.
-    s16 h = *(s16*)((u8*)node + 0x1e);
+    s16 h = node->mPoolSlot;
     if (h >= 0 && h < lbl_eu_80661728.mCount) {
         lbl_eu_80661728.mLastHandle = h;
         EffRoot_InitDefaults((CEffectObj*)((u8*)lbl_eu_80661728.mBase + h * 0x22c));

@@ -500,9 +500,11 @@ void registerEffScene(CScn* scn);
 extern "C" u8* getField5C(CScn* scn);
 extern "C" void scnVlInitLights2(u8* unk5c);
 class CProcess;
-extern "C" CScn* create__8CScnNw4rFv(CProcess* parent, char* name,
-                                     u32 arg1, u32 handle,
-                                     PartyGaugeRecord* gauge);
+class CScnNw4r;
+// Canonical form (definition in monolib/scn/CScn.cpp); the gauge slot is the
+// opaque 5th argument.
+extern "C" CScnNw4r* create__8CScnNw4rFv(CProcess* parent, char* name,
+                                         u32 arg1, u32 handle, void* param);
 
 // Task-game field readers (retail unmangled; defined in this TU).
 extern "C" u32 PartyStateWin_GetGameProc(u8* self);

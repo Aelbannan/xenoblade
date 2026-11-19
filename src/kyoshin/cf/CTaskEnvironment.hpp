@@ -152,7 +152,7 @@ extern "C" void scnLgtSetSinkBit1(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 extern "C" void scnLgtSetParamIdle(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 extern "C" void scnLgtBindLightArg(CTaskEnvLgtCtrlAccess* ctrl, void* arg);
 extern "C" void* copyVec3Words(void* dst, const void* src);
-extern "C" void* writeVec3f(ml::CVec3* out, float x, float y, float z);
+extern "C" void* writeVec3f(void* out, float x, float y, float z);
 extern "C" float cosAnimFIdx(float angle);
 extern "C" void TimeLightApplyScaledColor(CTimeLightGrp* grp);
 extern "C" void FogManSetNearFar(u8* self, float a, float b);

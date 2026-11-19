@@ -135,7 +135,7 @@ void CScheduleItem::StepSlots(f32 delta) {
 }
 
 // us-804e8390: per-frame item step used by CSchedule::StepEntries.
-DECOMP_DONT_INLINE int CScheduleItem::TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched) {
+int CScheduleItem::TickLifetime(f32 time, f32 delta, ScheduleEntry* entries, CSchedule* sched) {
     if (!((this->mFlags >> 7) & 1)) {
         this->LoadSlots(entries, sched);
         this->mFlags |= 0x80;
@@ -150,7 +150,7 @@ DECOMP_DONT_INLINE int CScheduleItem::TickLifetime(f32 time, f32 delta, Schedule
 }
 
 // us-804e8650: emit/update all slot objects (two passes).
-DECOMP_DONT_INLINE void CScheduleItem::ReleaseObjects() {
+void CScheduleItem::ReleaseObjects() {
     if (this->mCount == 0) {
         return;
     }
@@ -169,7 +169,7 @@ DECOMP_DONT_INLINE void CScheduleItem::ReleaseObjects() {
 }
 
 // us-804e86e8: feed distance feedback into renderable slot objects.
-DECOMP_DONT_INLINE void CScheduleItem::FeedDistance(f32 delta, CSchedule* sched) {
+void CScheduleItem::FeedDistance(f32 delta, CSchedule* sched) {
     if (this->mCount == 0) {
         return;
     }

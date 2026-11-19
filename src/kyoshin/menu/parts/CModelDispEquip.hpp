@@ -10,11 +10,12 @@
 // the canonical headers declare these symbols with a different arity, which
 // would collide with the byte-exact decls further down. The class
 // definitions (CActParamAnim, CScnItemModel) come through intact.
-#define writeVec3f writeVec3f_void_hidden
+// writeVec3f: unified to `void*` (the call sites consume r3; decl now matches
+// the definition in CActParamAnim.cpp) - no shield needed.
 #define func_8004B9D4 func_8004B9D4_hidden
 #define Scn_SetupAnimDefault Scn_SetupAnimDefault_1arg_hidden
-#define Scn_FindCamItem Scn_FindCamItem_s32_hidden
-#define Scn_IsAnimActiveOrNull Scn_IsAnimActiveOrNull_void_hidden
+// Scn_FindCamItem: unified on `void*(void*, int)` (CActParamAnim.hpp was s32)
+// Scn_IsAnimActiveOrNull: unified on `bool(void*)` (CScn.cpp definition)
 #define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
 #define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
 #define zero__Q22ml5CVec3 zero__Q22ml5CVec3_ml_hidden
@@ -27,11 +28,8 @@
 #include "kyoshin/cf/IResInfo.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
-#undef writeVec3f
 #undef func_8004B9D4
 #undef Scn_SetupAnimDefault
-#undef Scn_FindCamItem
-#undef Scn_IsAnimActiveOrNull
 #undef lbl_eu_805262F0
 #undef lbl_eu_805262C8
 #undef zero__Q22ml5CVec3
@@ -393,7 +391,7 @@ extern "C" CModelDispObj* initMcaFile(u32 global, u32 id, const char* name);
 extern "C" CScnItemModel* Scn_SetupAnim(u32 global, u32 id, int a, int b);
 extern "C" CScnItemModel* Scn_SetupAnimDefault(u32 global, CModelDispNameParam* param);
 extern "C" CModelDispObj* Scn_InitGlobalA(u32 global, u8* mDataAdj, const char* name);
-extern "C" void Scn_IsAnimActiveOrNull(CModelDispObj* obj);
+extern "C" bool Scn_IsAnimActiveOrNull(void* obj);
 extern "C" int CfObjectMove_getSubB0FieldA(cf::CfObjectMove* move); // int return: callers store
 // into an s16 local, forcing the extsh into the home register at assignment.
 extern "C" CModelDispParamSlot* CfRes_getPcGridEntry(s16 id, int a);

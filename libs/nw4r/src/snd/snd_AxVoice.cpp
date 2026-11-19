@@ -1569,10 +1569,7 @@ extern "C" bool IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6deta
     return rPrev.vAuxCS != rParam.vAuxCS;
 }
 
-// SetBiquad is not declared in snd_AxVoice.h (header is read-only this
-// session), so the definition keeps the retail member symbol and receives
-// `this` explicitly; the voice's parameter-block pointer lives at offset
-// 0x0 of AxVoice.
+// The voice's parameter-block pointer lives at offset 0x0 of AxVoice.
 namespace {
 AxBiquadData* GetAxPbOf(const nw4r::snd::detail::AxVoice* pVoice) {
     return reinterpret_cast<AxBiquadData*>(
@@ -1583,11 +1580,10 @@ AxHeaderView* GetAxHeader(nw4r::snd::detail::AxVoice* pVoice) {
     return reinterpret_cast<AxHeaderView*>(pVoice);
 }
 } // namespace
-extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
-    nw4r::snd::detail::AxVoice* pThis, unsigned char biquad, f32 value) {
+void nw4r::snd::detail::AxVoice::SetBiquad(u8 biquad, f32 value) {
     nw4r::ut::AutoInterruptLock lock;
 
-    if (GetAxPbOf(pThis) == NULL) {
+    if (GetAxPbOf(this) == NULL) {
         return;
     }
 
@@ -1616,11 +1612,11 @@ extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
         clear.yn2 = 0;
 
         u32 lock = OSDisableInterrupts();
-        if (GetAxPbOf(pThis) == NULL) {
+        if (GetAxPbOf(this) == NULL) {
             OSRestoreInterrupts(lock);
         } else {
-            std::memcpy(GetAxPbOf(pThis)->biquad, &clear, sizeof(BiquadBlock));
-            GetAxHeader(pThis)->sync |= AX_PBSYNC_BIQUAD;
+            std::memcpy(GetAxPbOf(this)->biquad, &clear, sizeof(BiquadBlock));
+            GetAxHeader(this)->sync |= AX_PBSYNC_BIQUAD;
             OSRestoreInterrupts(lock);
         }
     } else {
@@ -1631,8 +1627,8 @@ extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
             ->GetBiquadCoefs(biquad, &coefs, value);
 
         bool biquadOn =
-            GetAxPbOf(pThis) != NULL &&
-            GetAxPbOf(pThis)->biquad[0] == AX_PB_BIQUAD_ON;
+            GetAxPbOf(this) != NULL &&
+            GetAxPbOf(this)->biquad[0] == AX_PB_BIQUAD_ON;
 
         if (biquadOn) {
             // Filter already running: update only the coefficients.
@@ -1650,15 +1646,15 @@ extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
             b0 = coefs.b0;
 
             lock = OSDisableInterrupts();
-            if (GetAxPbOf(pThis) == NULL) {
+            if (GetAxPbOf(this) == NULL) {
                 OSRestoreInterrupts(lock);
             } else {
-                GetAxPbOf(pThis)->biquad[5] = b0;
-                GetAxPbOf(pThis)->biquad[6] = b1;
-                GetAxPbOf(pThis)->biquad[7] = b2;
-                GetAxPbOf(pThis)->biquad[8] = a1;
-                GetAxPbOf(pThis)->biquad[9] = a2;
-                GetAxHeader(pThis)->sync |= AX_PBSYNC_BIQUAD_COEFS;
+                GetAxPbOf(this)->biquad[5] = b0;
+                GetAxPbOf(this)->biquad[6] = b1;
+                GetAxPbOf(this)->biquad[7] = b2;
+                GetAxPbOf(this)->biquad[8] = a1;
+                GetAxPbOf(this)->biquad[9] = a2;
+                GetAxHeader(this)->sync |= AX_PBSYNC_BIQUAD_COEFS;
                 OSRestoreInterrupts(lock);
             }
         } else {
@@ -1677,12 +1673,12 @@ extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
             iir.a2 = coefs.a2;
 
             lock = OSDisableInterrupts();
-            if (GetAxPbOf(pThis) == NULL) {
+            if (GetAxPbOf(this) == NULL) {
                 OSRestoreInterrupts(lock);
             } else {
-                std::memcpy(GetAxPbOf(pThis)->biquad, &iir,
+                std::memcpy(GetAxPbOf(this)->biquad, &iir,
                             sizeof(BiquadBlock));
-                GetAxHeader(pThis)->sync |= AX_PBSYNC_BIQUAD;
+                GetAxHeader(this)->sync |= AX_PBSYNC_BIQUAD;
                 OSRestoreInterrupts(lock);
             }
         }

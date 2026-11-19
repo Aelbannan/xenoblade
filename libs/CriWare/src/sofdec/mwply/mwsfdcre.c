@@ -30,116 +30,7 @@ typedef struct TraceRec {
     u32 field_0x74;     /* 0x74 */
 } TraceRec;
 
-/* Handle objects with a vtable exposing destroy at +0x0c (SJRBF/SJUNI). */
-typedef struct HnObjVtable {
-    u8 pad_0x00[0x0C];
-    void (*destroy)(void* self);
-} HnObjVtable;
-typedef struct HnObj {
-    HnObjVtable* vtable;
-} HnObj;
-
-/* Caller parameter block for player creation. Passed as-is to
- * mwPlyCreateSofdec and embedded (copied wholesale) in the player handle at
- * offset 4. */
-typedef struct PlyCprm {
-    u32 field_0x00;         /* 0x00 */
-    u32 field_0x04;         /* 0x04 */
-    s32 width;              /* 0x08 */
-    s32 height;             /* 0x0c */
-    s32 frameCount;         /* 0x10 */
-    u32 field_0x14;         /* 0x14 */
-    s32 field_0x18;         /* 0x18 */
-    u32 field_0x1c;         /* 0x1c */
-    u32 field_0x20;         /* 0x20 */
-    s32 mode;               /* 0x24 */
-    s32 poolCount;          /* 0x28 */
-    s32 poolSize;           /* 0x2c */
-    void** pool;            /* 0x30 */
-    u8 pad_0x34[0x18];      /* 0x34..0x4b */
-} PlyCprm;
-
-/* MWSFDPLY movie-player handle (one slot per 0x690 bytes). Partial layout
- * covering the fields touched by the creator helpers in this TU. */
-typedef struct MWSFDPLY {
-    s32 enable;             /* 0x000 */
-    PlyCprm prm;            /* 0x004..0x04f: copied-in parameter image */
-    u8 pad_0x50[0x04];      /* 0x050..0x053 */
-    u32 field_0x54;         /* 0x054 */
-    void* sfd;              /* 0x058 */
-    void* stm;              /* 0x05c */
-    u32 field_0x60;         /* 0x060 */
-    void* lsc;              /* 0x064 */
-    u32 field_0x68;         /* 0x068 */
-    u32 field_0x6c;         /* 0x06c */
-    u32 field_0x70;         /* 0x070 */
-    u32 field_0x74;         /* 0x074 */
-    u32 field_0x78;         /* 0x078 */
-    u8 pad_0x7c[0x08];      /* 0x07c..0x083 */
-    u32 field_0x84;         /* 0x084 */
-    u32 field_0x88;         /* 0x088 */
-    u32 field_0x8c;         /* 0x08c */
-    u8 field_0x90[0x04];    /* 0x090..0x093 */
-    u32 field_0x94;         /* 0x094 */
-    u8 pad_0x98[0x0c];      /* 0x098..0x0a3 */
-    u32 field_0xa4;         /* 0x0a4 */
-    u8 pad_0xa8[0x20];      /* 0x0a8..0x0c7 */
-    void* sfx;              /* 0x0c8 */
-    void* compoWork;        /* 0x0cc */
-    u32 compoWorkSize;      /* 0x0d0 */
-    u8 pad_0xd4[0x3d0];     /* 0x0d4..0x04a3 */
-    u32 field_0x4a4;        /* 0x4a4 */
-    u32 field_0x4a8;        /* 0x4a8 */
-    u32 field_0x4ac;        /* 0x4ac */
-    u8 pad_0x4b0[0x0c];     /* 0x4b0..0x4bb */
-    void* picUsrTgt;        /* 0x4bc */
-    void* field_0x4c0;      /* 0x4c0 */
-    void* field_0x4c4;      /* 0x4c4 */
-    u32 field_0x4c8;        /* 0x4c8 */
-    u8 pad_0x4cc[0x1c];     /* 0x4cc..0x4e7 */
-    void* field_0x4e8;      /* 0x4e8 */
-    u32 field_0x4ec;        /* 0x4ec */
-    u8 pad_0x4f0[0x10];     /* 0x4f0..0x4ff */
-    u32 sj;                 /* 0x500 */
-    HnObj* rbf;             /* 0x504 */
-    u32 field_0x508;        /* 0x508 */
-    u32 field_0x50c;        /* 0x50c */
-    u32 field_0x510;        /* 0x510 */
-    u32 field_0x514;        /* 0x514 */
-    u32 field_0x518;        /* 0x518 */
-    u32 field_0x51c;        /* 0x51c */
-    u32 field_0x520;        /* 0x520 */
-    HnObj* uni;             /* 0x524 */
-    u32 field_0x528;        /* 0x528 */
-    u32 field_0x52c;        /* 0x52c */
-    u8 pad_0x530[0x10];     /* 0x530..0x53f */
-    u32 field_0x540;        /* 0x540 */
-    u32 field_0x544;        /* 0x544 */
-    u32 field_0x548;        /* 0x548 */
-    u32 field_0x54c;        /* 0x54c */
-    u8 pad_0x550[0x08];     /* 0x550..0x557 */
-    u32 field_0x558;        /* 0x558 */
-    u32 zeros[31];          /* 0x55c..0x5d4 */
-    u8 field_0x5d8[0x5C];   /* 0x5d8..0x633 (SstHn sub-objects) */
-    u32* field_0x634;       /* 0x634 */
-    u32 field_0x638;        /* 0x638 */
-    u32 field_0x63c;        /* 0x63c */
-    u32 field_0x640;        /* 0x640 */
-    u32 field_0x644;        /* 0x644 */
-    u8 pad_0x648[0x04];     /* 0x648..0x64b */
-    u32 field_0x64c;        /* 0x64c */
-    u8 pad_0x650[0x10];     /* 0x650..0x65f */
-    u32 field_0x660;        /* 0x660 */
-    u32 field_0x664;        /* 0x664 */
-    u32 field_0x668;        /* 0x668 */
-    u32 field_0x66c;        /* 0x66c */
-    u32 field_0x670;        /* 0x670 */
-    u32 field_0x674;        /* 0x674 */
-    u32 field_0x678;        /* 0x678 */
-    u32 field_0x67c;        /* 0x67c */
-    u32 field_0x680;        /* 0x680 */
-    u8 pad_0x684[0x0c];     /* 0x684..0x68f */
-} MWSFDPLY;
+#include "libs/CriWare/src/sofdec/mwply/mwsfd_types.h"
 
 /* SFD creation parameter block shared by the frame-buffer allocators. */
 typedef struct MWSFCRE_Para {
@@ -491,7 +382,7 @@ s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
 #pragma push
 #pragma auto_inline off  // noinline-ok: retail keeps these helpers out of line; -inline noauto loses MWSFCRE_ResetSfdHn
 void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self) {
-    void* tgt = self->picUsrTgt;
+    MwsfPicUsrBuf* tgt = (MwsfPicUsrBuf*)self->picUsrTgt;
     if (tgt == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x25F);
     } else {
@@ -499,9 +390,9 @@ void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self) {
         s32 count;
         s32 size;
         s32 h = self->prm.field_0x14;
-        count = *(s32*)((u8*)tgt + 0x08);
-        size = *(s32*)((u8*)tgt + 0x04);
-        buf = *(void**)((u8*)tgt + 0x00);
+        count = tgt->count;
+        size = tgt->size;
+        buf = tgt->buf;
         if (size < (h + 3) * count) {
             MWSFSVM_Error(lbl_eu_8051A3CC + 0x294);
         } else if (MWSFD_GetUsePicUsr() == 1) {
@@ -556,6 +447,9 @@ void* criware_8039FF34(MWSFDPLY* self) {
 
 s32 mwsfcre_MallocCompoWork(MWSFDPLY* self) {
     void* tag = (u8*)self + 8;
+    /* NB: the tag object is the handle's parameter image at +8; reading the
+     * word through it keeps retail's argument colour (self->prm.field_0x14
+     * costs 1 reg swap). */
     s32 size = MWSFSFX_CalcHnWorkSiz(self->prm.height, *(u32*)((u8*)tag + 0x0C));
     void* work = criware_803A3AE4(self, size);
     if (work == NULL) {
@@ -572,11 +466,11 @@ s32 mwsfcre_MallocCompoWork(MWSFDPLY* self) {
             criware_803A3A48(self);
             return -1;
         }
-        self->field_0x4c4 = ainf;
-        self->field_0x4c8 = 0x20000;
+        self->ainfBuf = ainf;
+        self->ainfBufSize = 0x20000;
     } else {
-        self->field_0x4c4 = NULL;
-        self->field_0x4c8 = 0;
+        self->ainfBuf = NULL;
+        self->ainfBufSize = 0;
     }
     return 0;
 }
@@ -983,10 +877,10 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
 
     ply->field_0x4e8 = buf100b;
     ply->field_0x4ec = 0x100;
-    ply->field_0x4a4 = (u32)buf800;
-    ply->field_0x4a8 = 0x800;
-    ply->field_0x4ac = 0x40;
-    ply->picUsrTgt = &ply->field_0x4a4;
+    ply->picUsr.buf = buf800;
+    ply->picUsr.size = 0x800;
+    ply->picUsr.count = 0x40;
+    ply->picUsrTgt = &ply->picUsr;
     ply->field_0x638 = 0;
     ply->field_0x678 = 0;
     ply->field_0x67c = 0;
@@ -1263,7 +1157,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     ply->sfx = sfx;
     MWSFSFX_SetCompoMode(ply, ply->prm.poolCount);
 
-    ply->field_0x4c0 = MWSFTAG_CreateAinfSj(ply);
+    ply->ainfSj = MWSFTAG_CreateAinfSj(ply);
     if (MWSFTAG_SetAinfSj(ply)) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x54a);
         fn_803A537C(ply);
@@ -1298,17 +1192,17 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
 }
 #pragma pop
 
-uint32_t criware_803A0BA8(void* r3_this, uint32_t r4) {
-    uint32_t a = *(uint32_t*)((char*)r3_this + 0x54c);
-    uint32_t limit = *(uint32_t*)((char*)r3_this + 0x544);
+uint32_t criware_803A0BA8(MWSFDPLY* self, uint32_t r4) {
+    uint32_t a = self->field_0x54c;
+    uint32_t limit = self->field_0x544;
     uint32_t sum = a + r4;
     uint32_t ret;
     if (sum > limit) {
         ret = 0;
     } else {
-        uint32_t b = *(uint32_t*)((char*)r3_this + 0x548);
-        *(uint32_t*)((char*)r3_this + 0x54c) = sum;
-        *(uint32_t*)((char*)r3_this + 0x548) = b + r4;
+        uint32_t b = self->field_0x548;
+        self->field_0x54c = sum;
+        self->field_0x548 = b + r4;
         ret = b;
     }
     return ret;

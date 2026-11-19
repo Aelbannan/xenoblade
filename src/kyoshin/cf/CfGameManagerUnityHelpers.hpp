@@ -11,12 +11,10 @@ class UnkClass_80082D90;
 }
 
 namespace ml {
-#pragma dont_inline on
 template <>
 FixStr<64>::FixStr() {
     clear();
 }
-#pragma dont_inline reset
 }
 
 extern "C" void updateReloadP1(const ml::CVec3* pos);
@@ -383,7 +381,7 @@ struct ContainerRootInterface {
 };
 
 struct PlayerVirtualInterface {
-    void setPlayerMode(u32 value) { (void)value; }
+    virtual void setPlayerMode(u32 value);
 };
 
 struct PlayerObjectContainer : public ItemContainerPrefix,
@@ -480,14 +478,11 @@ extern "C" void loadLayoutScales();
 extern "C" void CfRes_callFunc_67FE0();
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(
     void* object);
-extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value) {
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758,
-                                 __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
-    }
+// The 3-player walk is inline-declared so each retail expansion site keeps its
+// own copy: updatePlayerContainers__Q22cf13CfGameManagerFv compiles it out of
+// line, and loadFieldPartyState__Q22cf13CfGameManagerFv has it expanded in place
+// (retail carries both copies).
+static inline void updatePlayerContainersWalk(u32 value) {
     for (s32 i = 0; i < 3; ++i) {
         cf::CfObjectMove* player = lbl_eu_80571758.unk94[i];
         if (player != nullptr && (player->unk64 & 2) != 0) {
@@ -498,6 +493,17 @@ extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value) {
             object->setPlayerMode(value);
         }
     }
+}
+
+extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758,
+                                 __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    updatePlayerContainersWalk(value);
 }
 
 extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv() {
@@ -731,26 +737,22 @@ extern "C" void setPauseMode__Q22cf13CfGameManagerFv(bool enabled) {
     }
 }
 
-#pragma dont_inline on
 extern "C" void linkItemNode__Q22cf13CfGameManagerFv(
     UnkF8C0Node* destination, UnkF8C0Node* source, u32 unused) {
     destination->field_0x0 = source->field_0x0;
     ItemListNode* node = reinterpret_cast<ItemListNode*>(source->field_0x0);
     source->field_0x0 = reinterpret_cast<u32>(node->next);
 }
-#pragma dont_inline reset
 
 extern "C" u32 packThreeFieldIds__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third) {
     return 0x38000000 | (first << 20) | (second << 10) | third;
 }
 
-#pragma dont_inline on
 extern "C" u32 packTwoFieldIds__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     u32 result = first << 20;
     result |= 0x58000000;
     return (second << 10) | result;
 }
-#pragma dont_inline reset
 
 extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
                                                         float value, u8 enabled);
@@ -771,11 +773,9 @@ extern "C" void CfObject_syncMoveHead__Q22cf8CfObjectFf(cf::CfObject* object,
     object->mField4C = value * ml::deg2rad;
 }
 
-#pragma dont_inline on
 extern "C" void clearObjectMask__Q22cf13CfGameManagerFv(cf::CfObject* data, u32 mask) {
     data->mFlags68 &= ~(mask & ~0x40000000);
 }
-#pragma dont_inline reset
 
 extern const float lbl_eu_80666538;
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
@@ -893,28 +893,24 @@ extern "C" void queueSceneEventC__Q22cf13CfGameManagerFv(
 }
 
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
-extern "C" const void* func_8009E120(UnkClass_8009EC9C* object, u16 value);
+extern "C" u32 func_8009E120(UnkClass_8009EC9C* object, u16 value);
 extern "C" void getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value) {
     func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(index)), value);
 }
 
-#pragma dont_inline on
 extern "C" void pushEventQueue__Q22cf13CfGameManagerFv(cf::CfGameManager* manager,
                                                         const u16* value) {
     s32 index = (manager->field_0x44 + manager->field_0x48) % manager->field_0x4C;
     manager->field_0x40[index] = *value;
     manager->field_0x48++;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" BdatTextEntry* writeBdatTextEntry__Q22cf13CfGameManagerFv(BdatTextEntry* entry,
                                                                   const char* text) {
     entry->textLength = strlen(text);
     strcpy(entry->text, text);
     return entry;
 }
-#pragma dont_inline reset
 
 extern "C" BdatTextEntry* copyBdatTextEntryFull__Q22cf13CfGameManagerFv(
     BdatTextEntry* destination, const BdatTextEntry* source) {
@@ -964,10 +960,9 @@ extern "C" ResourceLookup81694* CfTFile_FindEntryByKey(Unk817A8Object* object,
 extern "C" u32 CfRes_getHeapHandle();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self);
-// dont_inline: retail keeps the ctor calls inside this helper as out-of-line
-// bl (see MWCC_CASES CScnFilterMan note); without this MWCC inlines the
-// CCharVoice-style ctor bodies.
-#pragma dont_inline on
+// -inline noauto: this unit flag is what keeps the ctor calls inside this
+// helper out-of-line (see MWCC_CASES CScnFilterMan note); with auto-inlining
+// MWCC folds the CCharVoice-style ctor bodies in.
 extern "C" Unk80EE4Data* createPlayerEffectInstance__Q22cf13CfGameManagerFv(
     u32 firstKey, u32 secondKey) {
     cf::CfGameManager::getInstance();
@@ -1005,10 +1000,8 @@ extern "C" Unk80EE4Data* createPlayerEffectInstance__Q22cf13CfGameManagerFv(
 done:
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
-#pragma dont_inline on
 extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(
     u32 value, u32 unused) {
     cf::CfGameManager::getInstance();
@@ -1026,7 +1019,6 @@ extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(
     }
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" Unk8187CData* createNpcActor__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager::getInstance();
@@ -1040,11 +1032,9 @@ extern "C" Unk8187CData* createNpcActor__Q22cf13CfGameManagerFv(u32 value) {
     return result;
 }
 
-#pragma dont_inline on
 extern "C" void setObjectFieldA8__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 value) {
     data->field_0xA8 = value;
 }
-#pragma dont_inline reset
 
 extern "C" Unk8187CData* createEffectForPlayer__Q22cf13CfGameManagerFv(u32 first,
                                                                  u32 value,
@@ -1173,12 +1163,10 @@ extern "C" void createItemFromBdatId__Q22cf13CfGameManagerFv(u32 value) {
 
 extern "C" UnkClass_800821F8* CamEvtReleaseThenFire(CfCamEventManager* manager, u32 mode,
                                              u32 value);
-#pragma dont_inline on
 extern "C" void assignCameraTarget__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     manager->unkB0 = CamEvtReleaseThenFire(manager->unkB4, 0, value);
 }
-#pragma dont_inline reset
 
 extern "C" float lbl_eu_8066654C;
 extern "C" u16 lbl_eu_80663E40;
@@ -1206,24 +1194,19 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
 // Unified pointer-arg form (owner ABI: CItem.cpp dispatches on the item);
 // retail callers here leave the live record in r3, so passing it adds no code.
 extern "C" void* CItem_initItemImplInstances(void* item);
-#pragma dont_inline on
 extern "C" u16 getItemCountForGroup__Q22cf13CfGameManagerFv(u32 value) {
     return ((CItemImplInstances*)CItem_initItemImplInstances((void*)value))->getItemCount(value);
 }
 extern "C" UnkF0ACData* getItemSlotData__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     return ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->getItemSlot(first, second);
 }
-#pragma dont_inline reset
-#pragma dont_inline on
 extern "C" void resetItemSlotA__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->resetItemSlot(first, second);
 }
-#pragma dont_inline reset
 extern "C" void bdatGetItemName(u16 value);
 extern "C" CfGameManagerData1C* loadBdatGroupData__Q22cf13CfGameManagerFv(
     UnkClass_8009EC9C* data, u32 index);
 extern "C" bool isItemEnabled__Q22cf13CfGameManagerFv(const UnkF0ACData* data);
-#pragma dont_inline on
 extern "C" void resetItemGroupState__Q22cf13CfGameManagerFv(u16 dataId) {
     UnkClass_8009EC9C* data = (UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(dataId);
     u32 total = 0;
@@ -1254,7 +1237,6 @@ extern "C" void resetItemGroupState__Q22cf13CfGameManagerFv(u16 dataId) {
         }
     }
 }
-#pragma dont_inline reset
 
 extern "C" u32 getBdatIndexMapping__Q22cf13CfGameManagerFv(u32 value);
 extern "C" bool CItemBlock_testKindFlag(u16 dataId, u32 mappedIndex);
@@ -1294,7 +1276,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 #include "kyoshin/cf/ResourceIndexTable.hpp"
 extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
-#pragma dont_inline on
 extern "C" s32 getTableIndexForPair__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     ResourceIndexTable table = lbl_eu_804FB7B0;
     if (1 > first || 8 < first) {
@@ -1305,7 +1286,6 @@ extern "C" s32 getTableIndexForPair__Q22cf13CfGameManagerFv(s32 first, s32 secon
     }
     return *(s8*)((char*)table.values + (first - 1) * 8 + (second - 1));
 }
-#pragma dont_inline reset
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 first, s32 second);
 extern "C" void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
 extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(
@@ -1327,7 +1307,6 @@ extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(
     UIWin_CreateMenuUpdate(5, 0, index, increment);
 }
 
-#pragma dont_inline on
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     s32 index = getTableIndexForPair__Q22cf13CfGameManagerFv(first, second);
     if (index == -1) {
@@ -1338,7 +1317,6 @@ extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 first, s32 second
     }
     return CtrlRemote_TouchBitByArg(index + 40);
 }
-#pragma dont_inline reset
 
 extern "C" bool isResourceFlagSet__Q22cf13CfGameManagerFv(u32 bit) {
     return (CtrlRemote_TouchBitByArg(0x108) & (1U << bit)) != 0;
@@ -1391,14 +1369,11 @@ extern "C" Unk87588TypedData* __dt__8008753C(Unk87588TypedData* object, s32 dele
     return result;
 }
 
-#pragma dont_inline on
 extern "C" s32 getEventQueueCount__Q22cf13CfGameManagerFv(const cf::CfGameManager* queue) {
     return queue->field_0x48;
 }
-#pragma dont_inline reset
 extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
 extern "C" bool isAllEventsDone__Q22cf13CfGameManagerFv();
-#pragma dont_inline on
 extern "C" void setEventFlag__Q22cf13CfGameManagerFv(u32 value, bool enable) {
     if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() > 3 ||
         isVisionPackLoaded__Q22cf13CfGameManagerFv()) {
@@ -1407,7 +1382,6 @@ extern "C" void setEventFlag__Q22cf13CfGameManagerFv(u32 value, bool enable) {
         }
     }
 }
-#pragma dont_inline reset
 
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(
     cf::CfGameManager* manager, u32 value) {
@@ -1454,7 +1428,7 @@ extern "C" void flushEventQueue__Q22cf13CfGameManagerFv() {
 extern "C" void cfCam_zeroVec3(void* self);
 extern "C" f32 cosAnimFIdx(f32 angle);
 extern "C" f32 sinAnimFIdx(f32 angle);
-extern "C" void* writeVec3f(ml::CVec3* out, f32 x, f32 y, f32 z);
+extern "C" void* writeVec3f(void* out, f32 x, f32 y, f32 z);
 extern "C" void* copyVec3Words(ml::CVec3* out, const ml::CVec3* src);
 extern "C" void addVec3f(void* a, const void* b);
 
@@ -1504,14 +1478,12 @@ extern "C" void func_8008064C__Q22cf13CfGameManagerFv(
         cfCam_zeroVec3(out);
     }
 }
-#pragma dont_inline on
 extern "C" void attachObjectText__Q22cf13CfGameManagerFv(Unk80EE4Data* data,
                                                         const char* text, u32 value) {
     data->textLength_0x88 = strlen(text);
     strcpy(data->text_0x78, text);
     data->value_0x8C = value;
 }
-#pragma dont_inline reset
 
 extern "C" Unk80EE4Data* gmSpawnMask8000();
 extern "C" Unk80EE4Data* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* text,
@@ -1527,21 +1499,18 @@ extern "C" Unk80EE4Data* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* 
 extern "C" UnkClass_800AA714* Tok_ParseFile(u32 value);
 extern "C" Unk80EE4Data* spawnFromRecord(UnkClass_800AA714* first,
                                           UnkClass_800AA714* second, u32 value);
-#pragma dont_inline on
 extern "C" Unk80EE4Data* isObjectFlagSet__Q22cf13CfGameManagerFv(
     u32 first, u32 second, u32 value) {
     UnkClass_800AA714* firstObject = Tok_ParseFile(first);
     UnkClass_800AA714* secondObject = Tok_ParseFile(second);
     return spawnFromRecord(firstObject, secondObject, value);
 }
-#pragma dont_inline reset
 
 class BdatFilePointer;
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" u32 Bdat_GetRowBase_B41C(void* file);
-#pragma dont_inline on
 extern "C" Unk80EE4Data* loadMapObjectByName__Q22cf13CfGameManagerFv(
     const char* name, u32 index) {
     Bdat_GetTable_AA34();
@@ -1555,7 +1524,6 @@ extern "C" Unk80EE4Data* loadMapObjectByName__Q22cf13CfGameManagerFv(
     attachObjectText__Q22cf13CfGameManagerFv(data, name, index);
     return data;
 }
-#pragma dont_inline reset
 
 extern "C" u8 lbl_eu_8052AC98[];
 extern "C" u8 lbl_eu_8052ADC0[];
@@ -1585,12 +1553,10 @@ extern "C" void copyItemSourceNode__Q22cf13CfGameManagerFv(
 extern "C" ItemListSubobject** getObjectNodePtr__Q22cf13CfGameManagerFv(
     UnkF8C0Node* iterator);
 extern "C" u16 getItemId__Q22cf13CfGameManagerFv(ItemListSubobject* object);
-#pragma dont_inline on
 extern "C" void checkFlagEquality__Q22cf13CfGameManagerFv(
     UnkF8C0Node* destination, const ItemListManager* source) {
     destination->field_0x0 = reinterpret_cast<u32>(source->sentinel);
 }
-#pragma dont_inline reset
 extern "C" u16 lbl_eu_80663E40;
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" s32* getField04Ptr__Q22cf13CfGameManagerFv(
@@ -1691,7 +1657,6 @@ extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
     __ct__8009ED08(destination, itemId);
 }
 
-#pragma dont_inline on
 extern "C" cf::UnkClass_80082D90* getPlayerContainerForCam__Q22cf13CfGameManagerFv() {
     cf::CfGameManager* gameManager = cf::CfGameManager::getInstance();
     ItemListManager* itemManager = getListB28__Fv();
@@ -1714,13 +1679,11 @@ extern "C" cf::UnkClass_80082D90* getPlayerContainerForCam__Q22cf13CfGameManager
     return reinterpret_cast<cf::UnkClass_80082D90*>(
         *getPlayerSlotPtr__Q22cf13CfGameManagerFv(gameManager->unk94, 0));
 }
-#pragma dont_inline reset
 
 extern "C" u8 lbl_eu_8052A558[];
 extern "C" u8 lbl_eu_8052A7E8[];
 extern "C" u8 lbl_eu_8052FE68[];
 extern "C" void __ct__CCharEffect(void* effect);
-#pragma dont_inline on
 extern "C" Unk80338Object* __ct__80080254(Unk80338Object* self) {
     Unk80338Object* result = self;
     u32 zero = 0;
@@ -1750,9 +1713,7 @@ extern "C" Unk80338Object* __ct__80080254(Unk80338Object* self) {
     result->vtable_0x10 = &lbl_eu_8052A558[0xC4];
     return result;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     Unk80338Object* result = self;
     u32 zero = 0;
@@ -1779,7 +1740,6 @@ extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     result->field_0x37C = zero;
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" u8 lbl_eu_8052A8E8[];
 extern "C" u8 lbl_eu_8052FE38[];
@@ -1796,7 +1756,6 @@ static inline Unk815A4Object* initUnk815A4Base(Unk815A4Object* self) {
     __ct__CCharVoice(&self->voice_0x28);
     return self;
 }
-#pragma dont_inline on
 extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
     Unk815A4Object* result = self;
     Unk815A4Object* base = result;
@@ -1818,7 +1777,6 @@ extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
     __ct__cf_CPartsChange(reinterpret_cast<void*>(&result->parts_0x368));
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" u8 lbl_eu_8052AA28[];
 extern "C" u8 lbl_eu_8052FE08[];
@@ -1835,7 +1793,6 @@ static inline Unk814BCObject* initializeUnk814Base(Unk814BCObject* base) {
     __ct__CCharVoice(&base->voice_0x28);
     return base;
 }
-#pragma dont_inline on
 extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
     Unk814BCObject* result = self;
     Unk814BCObject* base = result;
@@ -1856,7 +1813,6 @@ extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
     effect->vtable_0x0 = lbl_eu_8052FE08;
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" u32 CfRes_getHeapHandle();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
@@ -1933,7 +1889,6 @@ done:
     return;
 }
 
-#pragma dont_inline on
 extern "C" void maybeCreateCameraMember__Q22cf13CfGameManagerFv(bool special,
                                                         u32 value) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
@@ -1948,7 +1903,6 @@ extern "C" void maybeCreateCameraMember__Q22cf13CfGameManagerFv(bool special,
         CamEvtReleaseMappedSlot(manager->unkB4, 8);
     }
 }
-#pragma dont_inline reset
 
 extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(u32 third, u32 fourth,
                                                        u32 seventh) {
@@ -1977,14 +1931,12 @@ extern "C" void updateBattleEffectState__Q22cf13CfGameManagerFv(u32 first, u32 t
 
 extern "C" void loadMapBdatFileDataPointers__Q22cf6CfBdatFii(u32 first, u32 second);
 extern "C" cf::CfGameManager* CfRes_stub_63ACC(ml::FixStr<64>* text);
-#pragma dont_inline on
 extern "C" void isFieldDataReady__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     ml::FixStr<64> text;
     text.format(&lbl_eu_804FB824[0x98], first, second);
     cf::CfGameManager* manager = CfRes_stub_63ACC(&text);
     manager->syncFieldAndBattle();
 }
-#pragma dont_inline reset
 extern "C" void BattleWork_FillStateWork(UnkClass_8007E864* object);
 extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     if (!lbl_eu_80663E70) {
@@ -2001,7 +1953,6 @@ extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 secon
     }
 }
 
-#pragma dont_inline on
 extern "C" u32 getBdatIndexMapping__Q22cf13CfGameManagerFv(u32 value) {
     u32 result = 0;
     switch (value) {
@@ -2014,12 +1965,11 @@ extern "C" u32 getBdatIndexMapping__Q22cf13CfGameManagerFv(u32 value) {
     }
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" s32 CfRes_acquireSlot(s32 value, u32 second, u32 third);
-extern "C" int CfRes_tryResolveByBits(int a, int b, int c);
-extern "C" const void* resolveWpnTok__Q22cf6CfBdatFUl(u32 textId);
+extern "C" int CfRes_tryResolveByBits(s32 destination, u32 source, u32 size);
+extern "C" u32 resolveWpnTok__Q22cf6CfBdatFUl(u32 textId);
 extern "C" void cfResNopValueSink(u32 value);
 extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* current,
                                                         u32 size) {
@@ -2029,23 +1979,23 @@ extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* curren
         s32 destination = CfRes_acquireSlot(value, 0, 0);
         if (destination >= 0 && destination != *current) {
             func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 0);
-            CfRes_tryResolveByBits((int)destination,
-                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 0),
-                          (int)size);
-            CfRes_tryResolveByBits((int)destination,
-                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 1),
-                          (int)size);
-            CfRes_tryResolveByBits((int)destination,
-                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 2),
-                          (int)size);
-            CfRes_tryResolveByBits((int)destination,
-                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 3),
-                          (int)size);
-            CfRes_tryResolveByBits((int)destination,
-                          (int)func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 4),
-                          (int)size);
-            CfRes_tryResolveByBits((int)destination,
-                          (int)resolveWpnTok__Q22cf6CfBdatFUl(data->textId_0x18), (int)size);
+            CfRes_tryResolveByBits(destination,
+                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 0),
+                          size);
+            CfRes_tryResolveByBits(destination,
+                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 1),
+                          size);
+            CfRes_tryResolveByBits(destination,
+                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 2),
+                          size);
+            CfRes_tryResolveByBits(destination,
+                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 3),
+                          size);
+            CfRes_tryResolveByBits(destination,
+                          func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(value)), 4),
+                          size);
+            CfRes_tryResolveByBits(destination,
+                          resolveWpnTok__Q22cf6CfBdatFUl(data->textId_0x18), size);
             *current = destination;
             changed = true;
         } else if (destination >= 0 && destination == *current) {
@@ -2207,7 +2157,14 @@ extern "C" void loadFieldPartyState__Q22cf13CfGameManagerFv(u32 first, u32 secon
     }
     lbl_eu_80571758.field_0x88 = static_cast<u16>(first);
     lbl_eu_80571758.field_0x8A = static_cast<u16>(second);
-    updatePlayerContainers__Q22cf13CfGameManagerFv(0);
+    // Retail expands the helper here (static-init guard + the 3-player walk).
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    updatePlayerContainersWalk(0);
     ArtsSelect_NotifyAll(nullptr);
 }
 
@@ -2289,7 +2246,6 @@ extern "C" void processEventList__Q22cf13CfGameManagerFv() {
     }
 }
 
-#pragma dont_inline on
 extern "C" u32 queueCameraRequest__Q22cf13CfGameManagerFv(
     u32 first, u32 second, u32 third, u32 fourth, u32 fifth) {
     if (!lbl_eu_80663E70) {
@@ -2307,11 +2263,9 @@ extern "C" u32 queueCameraRequest__Q22cf13CfGameManagerFv(
     }
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" bool CfRes_markKey(UnkClass_80085334* object, u32 mode);
 extern "C" bool CfRes_findKey(UnkClass_80085334* object, u32 mode);
-#pragma dont_inline on
 extern "C" bool checkAvailableValue__Q22cf13CfGameManagerFv(u32 mode) {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -2323,7 +2277,6 @@ extern "C" bool checkAvailableValue__Q22cf13CfGameManagerFv(u32 mode) {
                ? CfRes_markKey(lbl_eu_80571758.unkAC, mode)
                : false;
 }
-#pragma dont_inline reset
 
 extern "C" bool processBattleQueue__Q22cf13CfGameManagerFv(u32 mode) {
     if (!lbl_eu_80663E70) {
@@ -2514,7 +2467,6 @@ extern "C" u32 isEffectListEmpty__Q22cf13CfGameManagerFv(s32 playerIndex, u32 va
 }
 
 extern "C" u32 cfCam_loadUnkC4(cf::CfObjectMove* player);
-#pragma dont_inline on
 extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
                                                         bool requireFlag) {
     bool result = false;
@@ -2530,7 +2482,6 @@ extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
     }
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" void syncBattleState__Q22cf13CfGameManagerFv(cf::CfObjectMove* object) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
@@ -2581,7 +2532,6 @@ class UnkClass_800B07E8;
 extern "C" void CfScript_ClearReq1();
 extern "C" void* getInstance__Fv();
 extern "C" void walkReslistByMask(UnkClass_800B07E8* object, u32 mask);
-#pragma dont_inline on
 extern "C" void clearFieldFlagsA__Q22cf13CfGameManagerFv() {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -2599,7 +2549,6 @@ extern "C" void clearFieldFlagsA__Q22cf13CfGameManagerFv() {
         lbl_eu_80663E24 = flags & ~0x40;
     }
 }
-#pragma dont_inline reset
 
 extern "C" bool BpsStateSingletonToInt();
 extern "C" bool UIBattleHasPendingLoads();
@@ -2719,23 +2668,17 @@ extern "C" u32 lbl_eu_80663E04;
 extern u32 lbl_eu_80664188;
 extern u32 lbl_eu_80664184;
 extern u8 lbl_eu_80664298;
-#pragma dont_inline on
 extern "C" u32 getGlobalWord64188__Q22cf13CfGameManagerFv() {
     return lbl_eu_80664188;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" u32 getGlobalWord64184__Q22cf13CfGameManagerFv() {
     return lbl_eu_80664184;
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
 extern "C" void setGlobalByte64298__Q22cf13CfGameManagerFv(u32 value) {
     lbl_eu_80664298 = value;
 }
-#pragma dont_inline reset
 
 
 

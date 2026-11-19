@@ -186,6 +186,7 @@ public:
     reslist<CWorkThread*> mChildren; //0x5C
     u32 mFlags;                      //0x7C
     CMsgParam<8> mMsgQueue;          //0x80
+    u32 unk1B8;
     u32 unk1BC;
     WORK_ID mExceptionWorkID; //0x1C0
 

@@ -1672,7 +1672,7 @@ extern "C" void scnLgtDispatchFadeEntries(CScnEnvLgtCtrl* self, float f) {
 // Work-blob builder (matched, defined below); extern "C" keeps the flat
 // retail name on the call-site reloc and -inline noauto keeps the call
 // out-of-line (the retail bl must survive).
-extern "C" void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
+extern "C" void scnLgtInitWorkBlob(CScnEnvLgtCtrlWorkBlob* blob, u32 a, u32 b,
                                                     float f, u32 c);
 extern "C" void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entry);
 
@@ -3037,84 +3037,13 @@ extern "C" int scnLgtGetFlag28(unsigned int* arg0) {
     return (arg0[1] >> 28) & 1;
 }
 
-// Flag word at +0x04 viewed by scnLgtSetFlag30/scnLgtSetFlag31.
-struct ScnLgtFlag04View {
-    u8 _00[0x04];
-    u32 flags04;  // +0x04
-};
-
-extern "C" void scnLgtSetFlag30(void* ptr, int flag) {
+extern "C" void scnLgtSetFlag30(CScnEnvLgtCtrl* self, int flag) {
     if (flag != 0) {
-        ((ScnLgtFlag04View*)ptr)->flags04 |= 0x40000000u;
+        self->field_0x04 |= 0x40000000u;
     } else {
-        ((ScnLgtFlag04View*)ptr)->flags04 &= ~0x40000000u;
+        self->field_0x04 &= ~0x40000000u;
     }
 }
-
-// Retail param-transfer blob viewed by the scnLgtPtmf* family below: float
-// params at +0x0C..0x24 with the +0x20 flag word overlapping the +0x20
-// float slot (self carries flags, target carries the float).
-struct ScnLgtPtmfView {
-    u8 _00[0x0C];
-    f32 f0C;   // +0x0C
-    f32 f10;   // +0x10
-    f32 f14;   // +0x14
-    f32 f18;   // +0x18
-    f32 f1C;   // +0x1C
-    union {
-        u32 flags;  // +0x20 flag word (self)
-        f32 f20;    // +0x20 float slot (target)
-    };
-    f32 f24;   // +0x24
-};
-
-// s16 slots of the same blob viewed by scnLgtPtmfStoreS04/S10.
-struct ScnLgtPtmfSView {
-    u8 _00[0x04];
-    s16 s04;      // +0x04
-    s16 s06;      // +0x06 (S06)
-    s16 s08;      // +0x08 (S08)
-    s16 s0A;      // +0x0A (S0A)
-    s16 s0C;      // +0x0C (S0C)
-    s16 s0E;      // +0x0E (S0E)
-    s16 s10;      // +0x10
-};
-
-// float param slots of the ptmf target blob (F0/F4/F8 at +0x00..0x08,
-// F28/F2C/F30 at +0x28..0x30, FB8..FD0 at +0xB8..0xD0).
-struct ScnLgtPtmfFView {
-    f32 f00;            // +0x00 (F0)
-    f32 f04;            // +0x04 (F4)
-    f32 f08;            // +0x08 (F8)
-    u8 _0C[0x1C];       // +0x0C..0x28
-    f32 f28;            // +0x28 (F28)
-    f32 f2C;            // +0x2C (F2C)
-    f32 f30;            // +0x30 (F30)
-    u8 _34[0x84];       // +0x34..0xB8
-    f32 fB8;            // +0xB8 (FB8)
-    f32 fBC;            // +0xBC (FBC)
-    f32 fC0;            // +0xC0 (FC0)
-    f32 fC4;            // +0xC4 (FC4)
-    f32 fC8;            // +0xC8 (FC8)
-    f32 fCC;            // +0xCC (FCC)
-    f32 fD0;            // +0xD0 (FD0)
-};
-
-// int slots of the same blob (I34/I38).
-struct ScnLgtPtmfIView {
-    u8 _00[0x34];
-    int i34;  // +0x34 (I34)
-    int i38;  // +0x38 (I38)
-};
-
-// float slots of the Ptmf2 target blob (C8..D4).
-struct ScnLgtPtmf2View {
-    u8 _00[0xC8];
-    f32 fC8;  // +0xC8
-    f32 fCC;  // +0xCC
-    f32 fD0;  // +0xD0
-    f32 fD4;  // +0xD4
-};
 
 // +0x4C limit holder
 // shared CScnEnvLgtCtrlLgtLimit: limit float at +0x08).
@@ -3131,17 +3060,17 @@ struct ScnLgtBloomBlendView {
     u8 blend48[0x0C];  // +0x48 CScnEnvLgtBlend sub-object
 };
 
-extern "C" void scnLgtSetFlag31(void* ptr, int flag) {
+extern "C" void scnLgtSetFlag31(CScnEnvLgtCtrl* self, int flag) {
     if (flag != 0) {
-        ((ScnLgtFlag04View*)ptr)->flags04 |= 0x80000000u;
+        self->field_0x04 |= 0x80000000u;
     } else {
-        ((ScnLgtFlag04View*)ptr)->flags04 &= ~0x80000000u;
+        self->field_0x04 &= ~0x80000000u;
     }
 }
 
 // retail: flags(0x4): return 1 iff bit 0x80000000 set and bit 0x40000000 clear
-extern "C" u32 scnLgtIsStepping(void* self) {
-    u32 flags = ((ScnLgtFlag04View*)self)->flags04;
+extern "C" u32 scnLgtIsStepping(CScnEnvLgtCtrl* self) {
+    u32 flags = self->field_0x04;
     u32 ret = 0;
     if ((flags & 0x80000000) && !(flags & 0x40000000))
         ret = 1;
@@ -3518,127 +3447,127 @@ extern "C" void scnLgtCopyPrevRows(CScnEnvLgtCtrl* self) {
     }
 }
 
-extern "C" void scnLgtPtmfSetF18(void* self, void* target, float v) {
-    ((ScnLgtPtmfView*)target)->f18 = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x8;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF18(CScnEnvLgtCtrlWorkDst40* dst, float v) {
+    dst->mF18 = v;
+    field_0x20 |= 0x8;
 }
 
-extern "C" void scnLgtPtmfSetF1C(void* self, void* target, float v) {
-    ((ScnLgtPtmfView*)target)->f1C = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x8;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF1C(CScnEnvLgtCtrlWorkDst40* dst, float v) {
+    dst->mF1C = v;
+    field_0x20 |= 0x8;
 }
 
-extern "C" void scnLgtPtmfSetF20(void* self, void* target, float v) {
-    ((ScnLgtPtmfView*)target)->f20 = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x8;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF20(CScnEnvLgtCtrlWorkDst40* dst, float v) {
+    dst->mF20 = v;
+    field_0x20 |= 0x8;
 }
 
-extern "C" void scnLgtPtmfSetF24(void* self, void* target, float v) {
-    ((ScnLgtPtmfView*)target)->f24 = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x8;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF24(CScnEnvLgtCtrlWorkDst40* dst, float v) {
+    dst->field_0x24 = v;
+    field_0x20 |= 0x8;
 }
 
-extern "C" u32 scnLgtPtmfStoreF0(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->f00 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF0(CScnEnvLgtCtrlWorkDst40* dst, float v) { dst->mF00 = v; }
 
-extern "C" u32 scnLgtPtmfStoreF4(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->f04 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF4(CScnEnvLgtCtrlWorkDst40* dst, float v) { dst->mF04 = v; }
 
-extern "C" u32 scnLgtPtmfStoreF8(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->f08 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF8(CScnEnvLgtCtrlWorkDst40* dst, float v) { dst->mF08 = v; }
 
-extern "C" void scnLgtPtmfSetSelf0C(void* self, float v) {
-    ((ScnLgtPtmfView*)self)->f0C = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x1;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetSelf0C(float v) {
+    mF0C = v;
+    field_0x20 |= 0x1;
 }
 
-extern "C" void scnLgtPtmfSetSelf10(void* self, float v) {
-    ((ScnLgtPtmfView*)self)->f10 = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x2;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetSelf10(float v) {
+    mF10 = v;
+    field_0x20 |= 0x2;
 }
 
-extern "C" void scnLgtPtmfSetSelf14(void* self, float v) {
-    ((ScnLgtPtmfView*)self)->f14 = v;
-    ((ScnLgtPtmfView*)self)->flags |= 0x4;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetSelf14(float v) {
+    mF14 = v;
+    field_0x20 |= 0x4;
 }
 
-extern "C" u32 scnLgtPtmfStoreF28(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->f28 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF28(CScnEnvLgtCtrlWorkDst40* dst, float v) { dst->field_0x28 = v; }
 
-extern "C" u32 scnLgtPtmfStoreF2C(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->f2C = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF2C(CScnEnvLgtCtrlWorkDst40* dst, float v) { dst->field_0x2C = v; }
 
-extern "C" u32 scnLgtPtmfStoreF30(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->f30 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF30(CScnEnvLgtCtrlWorkDst40* dst, float v) { dst->field_0x30 = v; }
 
-extern "C" void scnLgtPtmfStoreI34(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfIView*)ptr)->i34 = val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreI34(CScnEnvLgtCtrlWorkDst40* dst, float v) {
+    int val = (int)v;
+    dst->mI34 = val;
 }
 
-extern "C" void scnLgtPtmfStoreI38(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfIView*)ptr)->i38 = val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreI38(CScnEnvLgtCtrlWorkDst40* dst, float v) {
+    int val = (int)v;
+    dst->mI38 = val;
 }
 
-extern "C" void scnLgtPtmfStoreS04(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfSView*)ptr)->s04 = (short)val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS04(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int val = (int)v;
+    entry->field_0x04w = (short)val;
 }
 
-extern "C" u32 scnLgtPtmfStoreFB8(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fB8 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFB8(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xB8 = v; }
 
-extern "C" u32 scnLgtPtmfStoreFBC(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fBC = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFBC(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xBC = v; }
 
-extern "C" u32 scnLgtPtmfStoreFC0(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fC0 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFC0(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xC0 = v; }
 
-extern "C" u32 scnLgtPtmfStoreFC4(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fC4 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFC4(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xC4 = v; }
 
-extern "C" u32 scnLgtPtmfStoreFC8(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fC8 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFC8(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xC8 = v; }
 
-extern "C" u32 scnLgtPtmfStoreFCC(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fCC = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFCC(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xCC = v; }
 
-extern "C" u32 scnLgtPtmfStoreFD0(u32 unused, void* obj, float val) { ((ScnLgtPtmfFView*)obj)->fD0 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFD0(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xD0 = v; }
 
-extern "C" void scnLgtPtmfStoreS06(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfSView*)ptr)->s06 = (short)val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS06(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int val = (int)v;
+    entry->field_0x06w = (short)val;
 }
 
-extern "C" void scnLgtPtmfStoreS08(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfSView*)ptr)->s08 = (short)val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS08(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int val = (int)v;
+    entry->field_0x08w = (short)val;
 }
 
-extern "C" void scnLgtPtmfStoreS0A(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfSView*)ptr)->s0A = (short)val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS0A(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int val = (int)v;
+    entry->field_0x0Aw = (short)val;
 }
 
-extern "C" void scnLgtPtmfStoreS0C(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfSView*)ptr)->s0C = (short)val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS0C(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int val = (int)v;
+    entry->field_0x0Cw = (short)val;
 }
 
-extern "C" void scnLgtPtmfStoreS0E(int, void* ptr, float value) {
-    int i = (int)value;
-    ((ScnLgtPtmfSView*)ptr)->s0E = (short)i;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS0E(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int i = (int)v;
+    entry->field_0x0Ew = (short)i;
 }
 
-extern "C" void scnLgtPtmfStoreS10(int dummy, float f, void* ptr) {
-    int val = (int)f;
-    ((ScnLgtPtmfSView*)ptr)->s10 = (short)val;
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS10(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) {
+    int val = (int)v;
+    entry->field_0x10w = (short)val;
 }
 
-extern "C" u32 scnLgtPtmf2StoreC8(u32 unused, void* obj, float val) { ((ScnLgtPtmf2View*)obj)->fC8 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreC8(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xC8 = v; }
 
-extern "C" u32 scnLgtPtmf2StoreCC(u32 unused, void* obj, float val) { ((ScnLgtPtmf2View*)obj)->fCC = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreCC(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xCC = v; }
 
-extern "C" u32 scnLgtPtmf2StoreD0(u32 unused, void* obj, float val) { ((ScnLgtPtmf2View*)obj)->fD0 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreD0(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xD0 = v; }
 
-extern "C" u32 scnLgtPtmf2StoreD4(u32 unused, void* obj, float val) { ((ScnLgtPtmf2View*)obj)->fD4 = val; return unused; }
+void CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreD4(CScnEnvLgtCtrlLgtTypeEntry* entry, float v) { entry->field_0xD4 = v; }
 
-extern "C" void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
+extern "C" void scnLgtInitWorkBlob(CScnEnvLgtCtrlWorkBlob* blob, u32 a, u32 b,
                                                     float f, u32 c) {
-    *(u32*)((u8*)self + 0x0) = a;
-    *(u32*)((u8*)self + 0x4) = b;
-    *(u32*)((u8*)self + 0x8) = b + 0x18;
-    *(float*)((u8*)self + 0x1c) = f;
-    *(u32*)((u8*)self + 0x18) = c;
+    blob->field_0x00 = a;
+    blob->field_0x04 = b;
+    blob->field_0x08 = b + 0x18;
+    blob->field_0x1C = f;
+    blob->field_0x18 = c;
 }
 
 // scnLgtSampleGradHermite (us-804cb8ec): sample self->field_0x1C against a 16-byte
@@ -3648,12 +3577,12 @@ extern "C" void scnLgtInitWorkBlob(void* self, u32 a, u32 b,
 // cubic-Hermite-interpolates between the flanking entries (prev.b/prev.a
 // weighted by h10/h00, cur.a/cur.c by h01/h11) using the shared .sdata2
 // coefficients; a sentinel float when no entry applies.
-extern "C" float scnLgtSampleGradHermite(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrlGrad* grad) {
-    f32* arr = (f32*)((u8*)self->mVtable + grad->field_0x10);
-    if (self->field_0x1C <= grad->field_0x00) {
+float CScnEnvLgtCtrlWorkBlob::scnLgtSampleGradHermite(const CScnEnvLgtCtrlGrad* grad) {
+    f32* arr = (f32*)((u8*)field_0x00 + grad->field_0x10);
+    if (field_0x1C <= grad->field_0x00) {
         return arr[1];
     }
-    if (self->field_0x1C >= grad->field_0x04) {
+    if (field_0x1C >= grad->field_0x04) {
         return ((CScnEnvLgtCtrlGrad16Entry*)arr)[grad->field_0x0A - 1].a;
     }
     // byte-offset form: keeps the array-base register distinct from the
@@ -3662,11 +3591,11 @@ extern "C" float scnLgtSampleGradHermite(CScnEnvLgtCtrl* self, const CScnEnvLgtC
     for (int i = 1, n = grad->field_0x0A; i < n; i++) {
         // sample compared against the current entry's time (retail loads the
         // sample into f2 first)
-        if (self->field_0x1C < p[0].time) {
+        if (field_0x1C < p[0].time) {
             // denominator first: retail evaluates cur.time - prev.time
             // (f1) before the numerator, leaving the sample in f2
             f32 denom = p[0].time - p[-1].time;
-            f32 t = (self->field_0x1C - p[-1].time) / denom;
+            f32 t = (field_0x1C - p[-1].time) / denom;
             f32 t2 = t * t;
             f32 t3 = t2 * t;
             f32 k = kHermiteThree * t2;
@@ -3685,22 +3614,22 @@ extern "C" float scnLgtSampleGradHermite(CScnEnvLgtCtrl* self, const CScnEnvLgtC
 // table: color of the first entry below the min bound, of the last entry
 // above the max bound, otherwise of the highest entry whose time is <= the
 // sample; a sentinel float when no entry applies.
-extern "C" float scnLgtSampleGradColor(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrlGrad* grad) {
+float CScnEnvLgtCtrlWorkBlob::scnLgtSampleGradColor(const CScnEnvLgtCtrlGrad* grad) {
     // Entry array base is the object's vtable pointer plus the gradient's
-    // byte offset (retail reads self+0x00, not a data member).
+    // byte offset (retail reads this+0x00, not a data member).
     const CScnEnvLgtCtrlGradEntry* arr =
-        (const CScnEnvLgtCtrlGradEntry*)((u8*)self->mVtable + grad->field_0x10);
-    if (self->field_0x1C <= grad->field_0x00) {
+        (const CScnEnvLgtCtrlGradEntry*)((u8*)field_0x00 + grad->field_0x10);
+    if (field_0x1C <= grad->field_0x00) {
         return arr[0].color;
     }
-    if (self->field_0x1C >= grad->field_0x04) {
+    if (field_0x1C >= grad->field_0x04) {
         // Byte-scaled index ((count-1)*8) so MWCC emits slwi 3 like retail.
         return arr[grad->field_0x0A - 1].color;
     }
     const CScnEnvLgtCtrlGradEntry* p = &arr[1];
     int n = grad->field_0x0A;
     for (int i = 1; i < n; i++, p++) {
-        if (self->field_0x1C < p->time) {
+        if (field_0x1C < p->time) {
             return p[-1].color;
         }
     }
@@ -3834,7 +3763,7 @@ extern "C" void scnLgtSolveRowDirection(
     blob->field_0x20 = 0;
     for (int i = 0; i < count; i++, cur++) {
         (blob->*lbl_eu_8065FBD0[cur->field_0x0C])((void*)cur);
-        (blob->*((CScnEnvLgtCtrlWorkBlobFn*)lbl_eu_8065FA40)[cur->field_0x08])(dst);
+        (blob->*lbl_eu_8065FA40.mSlots[cur->field_0x08])(dst);
     }
 
     if (blob->field_0x20 & 7) {
@@ -4026,186 +3955,6 @@ extern "C" void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entr
     }
 }
 
-// sinit_804C8174 (us-804cc2d0): static-initializer blob copy. The retail
-// body copies the .data template lbl_eu_8056FA68 into the .bss object
-// lbl_eu_8065FA40 (dest has a 4-byte gap at +0xB4 that is not copied).
-// The retail emits seven unrolled lwz/stw copy waves; explicit block-local
-// u32 temps reproduce MWCC's load-all/store-all codegen (GXFrameBuf idiom).
-extern "C" void sinit_804C8174() {
-    const u8* src = (const u8*)&lbl_eu_8056FA68;
-    u8* dst = (u8*)&lbl_eu_8065FA40;
-    // loads: wave a [0x00..0x58) first (22 words, takes the registers)
-    u32 a00 = *(u32*)(src + 0x00), a04 = *(u32*)(src + 0x04),
-        a08 = *(u32*)(src + 0x08), a0C = *(u32*)(src + 0x0C),
-        a10 = *(u32*)(src + 0x10), a14 = *(u32*)(src + 0x14),
-        a18 = *(u32*)(src + 0x18), a1C = *(u32*)(src + 0x1C),
-        a20 = *(u32*)(src + 0x20), a24 = *(u32*)(src + 0x24),
-        a28 = *(u32*)(src + 0x28), a2C = *(u32*)(src + 0x2C),
-        a30 = *(u32*)(src + 0x30), a34 = *(u32*)(src + 0x34),
-        a38 = *(u32*)(src + 0x38), a3C = *(u32*)(src + 0x3C),
-        a40 = *(u32*)(src + 0x40), a44 = *(u32*)(src + 0x44),
-        a48 = *(u32*)(src + 0x48), a4C = *(u32*)(src + 0x4C),
-        a50 = *(u32*)(src + 0x50), a54 = *(u32*)(src + 0x54),
-        // then wave b [0x58..0x84) (11 words, spilled while a is live)
-        b58 = *(u32*)(src + 0x58), b5C = *(u32*)(src + 0x5C),
-        b60 = *(u32*)(src + 0x60), b64 = *(u32*)(src + 0x64),
-        b68 = *(u32*)(src + 0x68), b6C = *(u32*)(src + 0x6C),
-        b70 = *(u32*)(src + 0x70), b74 = *(u32*)(src + 0x74),
-        b78 = *(u32*)(src + 0x78), b7C = *(u32*)(src + 0x7C),
-        b80 = *(u32*)(src + 0x80);
-    // stores: wave b first, then wave a
-    *(u32*)(dst + 0x58) = b58;
-    *(u32*)(dst + 0x5C) = b5C;
-    *(u32*)(dst + 0x60) = b60;
-    *(u32*)(dst + 0x64) = b64;
-    *(u32*)(dst + 0x68) = b68;
-    *(u32*)(dst + 0x6C) = b6C;
-    *(u32*)(dst + 0x70) = b70;
-    *(u32*)(dst + 0x74) = b74;
-    *(u32*)(dst + 0x78) = b78;
-    *(u32*)(dst + 0x7C) = b7C;
-    *(u32*)(dst + 0x80) = b80;
-    *(u32*)(dst + 0x00) = a00;
-    *(u32*)(dst + 0x04) = a04;
-    *(u32*)(dst + 0x08) = a08;
-    *(u32*)(dst + 0x0C) = a0C;
-    *(u32*)(dst + 0x10) = a10;
-    *(u32*)(dst + 0x14) = a14;
-    *(u32*)(dst + 0x18) = a18;
-    *(u32*)(dst + 0x1C) = a1C;
-    *(u32*)(dst + 0x20) = a20;
-    *(u32*)(dst + 0x24) = a24;
-    *(u32*)(dst + 0x28) = a28;
-    *(u32*)(dst + 0x2C) = a2C;
-    *(u32*)(dst + 0x30) = a30;
-    *(u32*)(dst + 0x34) = a34;
-    *(u32*)(dst + 0x38) = a38;
-    *(u32*)(dst + 0x3C) = a3C;
-    *(u32*)(dst + 0x40) = a40;
-    *(u32*)(dst + 0x44) = a44;
-    *(u32*)(dst + 0x48) = a48;
-    *(u32*)(dst + 0x4C) = a4C;
-    *(u32*)(dst + 0x50) = a50;
-    *(u32*)(dst + 0x54) = a54;
-    // loads: wave c [0x84..0xB4) + wave d [0xB8..0xDC)
-    u32 c84 = *(u32*)(src + 0x84), c88 = *(u32*)(src + 0x88),
-        c8C = *(u32*)(src + 0x8C), c90 = *(u32*)(src + 0x90),
-        c94 = *(u32*)(src + 0x94), c98 = *(u32*)(src + 0x98),
-        c9C = *(u32*)(src + 0x9C), cA0 = *(u32*)(src + 0xA0),
-        cA4 = *(u32*)(src + 0xA4), cA8 = *(u32*)(src + 0xA8),
-        cAC = *(u32*)(src + 0xAC), cB0 = *(u32*)(src + 0xB0),
-        dB8 = *(u32*)(src + 0xB4), dBC = *(u32*)(src + 0xB8),
-        dC0 = *(u32*)(src + 0xBC), dC4 = *(u32*)(src + 0xC0),
-        dC8 = *(u32*)(src + 0xC4), dCC = *(u32*)(src + 0xC8),
-        dD0 = *(u32*)(src + 0xCC), dD4 = *(u32*)(src + 0xD0),
-        dD8 = *(u32*)(src + 0xD4),
-        // then wave e [0xDC..0x118) (15 words, spilled while c+d live)
-        eDC = *(u32*)(src + 0xD8), eE0 = *(u32*)(src + 0xDC),
-        eE4 = *(u32*)(src + 0xE0), eE8 = *(u32*)(src + 0xE4),
-        eEC = *(u32*)(src + 0xE8), eF0 = *(u32*)(src + 0xEC),
-        eF4 = *(u32*)(src + 0xF0), eF8 = *(u32*)(src + 0xF4),
-        eFC = *(u32*)(src + 0xF8), e100 = *(u32*)(src + 0xFC),
-        e104 = *(u32*)(src + 0x100), e108 = *(u32*)(src + 0x104),
-        e10C = *(u32*)(src + 0x108), e110 = *(u32*)(src + 0x10C),
-        e114 = *(u32*)(src + 0x110);
-    // stores: wave e first, then c, then d
-    *(u32*)(dst + 0xDC) = eDC;
-    *(u32*)(dst + 0xE0) = eE0;
-    *(u32*)(dst + 0xE4) = eE4;
-    *(u32*)(dst + 0xE8) = eE8;
-    *(u32*)(dst + 0xEC) = eEC;
-    *(u32*)(dst + 0xF0) = eF0;
-    *(u32*)(dst + 0xF4) = eF4;
-    *(u32*)(dst + 0xF8) = eF8;
-    *(u32*)(dst + 0xFC) = eFC;
-    *(u32*)(dst + 0x100) = e100;
-    *(u32*)(dst + 0x104) = e104;
-    *(u32*)(dst + 0x108) = e108;
-    *(u32*)(dst + 0x10C) = e10C;
-    *(u32*)(dst + 0x110) = e110;
-    *(u32*)(dst + 0x114) = e114;
-    *(u32*)(dst + 0x84) = c84;
-    *(u32*)(dst + 0x88) = c88;
-    *(u32*)(dst + 0x8C) = c8C;
-    *(u32*)(dst + 0x90) = c90;
-    *(u32*)(dst + 0x94) = c94;
-    *(u32*)(dst + 0x98) = c98;
-    *(u32*)(dst + 0x9C) = c9C;
-    *(u32*)(dst + 0xA0) = cA0;
-    *(u32*)(dst + 0xA4) = cA4;
-    *(u32*)(dst + 0xA8) = cA8;
-    *(u32*)(dst + 0xAC) = cAC;
-    *(u32*)(dst + 0xB0) = cB0;
-    *(u32*)(dst + 0xB8) = dB8;
-    *(u32*)(dst + 0xBC) = dBC;
-    *(u32*)(dst + 0xC0) = dC0;
-    *(u32*)(dst + 0xC4) = dC4;
-    *(u32*)(dst + 0xC8) = dC8;
-    *(u32*)(dst + 0xCC) = dCC;
-    *(u32*)(dst + 0xD0) = dD0;
-    *(u32*)(dst + 0xD4) = dD4;
-    *(u32*)(dst + 0xD8) = dD8;
-    // loads: wave f [0x114..0x16C) then wave g
-    u32 f118 = *(u32*)(src + 0x114), f11C = *(u32*)(src + 0x118),
-        f120 = *(u32*)(src + 0x11C), f124 = *(u32*)(src + 0x120),
-        f128 = *(u32*)(src + 0x124), f12C = *(u32*)(src + 0x128),
-        f130 = *(u32*)(src + 0x12C), f134 = *(u32*)(src + 0x130),
-        f138 = *(u32*)(src + 0x134), f13C = *(u32*)(src + 0x138),
-        f140 = *(u32*)(src + 0x140), f144 = *(u32*)(src + 0x144),
-        f148 = *(u32*)(src + 0x148), f14C = *(u32*)(src + 0x14C),
-        f150 = *(u32*)(src + 0x150), f154 = *(u32*)(src + 0x154),
-        f158 = *(u32*)(src + 0x158), f15C = *(u32*)(src + 0x15C),
-        f160 = *(u32*)(src + 0x160), f164 = *(u32*)(src + 0x164),
-        f168 = *(u32*)(src + 0x168),
-        // then wave g [0x16C..0x1A8) (15 words, spilled while f is live)
-        g16C = *(u32*)(src + 0x16C), g170 = *(u32*)(src + 0x170),
-        g174 = *(u32*)(src + 0x174), g178 = *(u32*)(src + 0x178),
-        g17C = *(u32*)(src + 0x17C), g180 = *(u32*)(src + 0x180),
-        g184 = *(u32*)(src + 0x184), g188 = *(u32*)(src + 0x188),
-        g18C = *(u32*)(src + 0x18C), g190 = *(u32*)(src + 0x190),
-        g194 = *(u32*)(src + 0x194), g198 = *(u32*)(src + 0x198),
-        g19C = *(u32*)(src + 0x19C), g1A0 = *(u32*)(src + 0x1A0),
-        g1A4 = *(u32*)(src + 0x1A4);
-    // stores: wave g first, then wave f
-    *(u32*)(dst + 0x16C) = g16C;
-    *(u32*)(dst + 0x170) = g170;
-    *(u32*)(dst + 0x174) = g174;
-    *(u32*)(dst + 0x178) = g178;
-    *(u32*)(dst + 0x17C) = g17C;
-    *(u32*)(dst + 0x180) = g180;
-    *(u32*)(dst + 0x184) = g184;
-    *(u32*)(dst + 0x188) = g188;
-    *(u32*)(dst + 0x18C) = g18C;
-    *(u32*)(dst + 0x190) = g190;
-    *(u32*)(dst + 0x194) = g194;
-    *(u32*)(dst + 0x198) = g198;
-    *(u32*)(dst + 0x19C) = g19C;
-    *(u32*)(dst + 0x1A0) = g1A0;
-    *(u32*)(dst + 0x1A4) = g1A4;
-    *(u32*)(dst + 0x118) = f118;
-    *(u32*)(dst + 0x11C) = f11C;
-    *(u32*)(dst + 0x120) = f120;
-    *(u32*)(dst + 0x124) = f124;
-    *(u32*)(dst + 0x128) = f128;
-    *(u32*)(dst + 0x12C) = f12C;
-    *(u32*)(dst + 0x130) = f130;
-    *(u32*)(dst + 0x134) = f134;
-    *(u32*)(dst + 0x138) = f138;
-    *(u32*)(dst + 0x13C) = f13C;
-    *(u32*)(dst + 0x140) = f140;
-    *(u32*)(dst + 0x144) = f144;
-    *(u32*)(dst + 0x148) = f148;
-    *(u32*)(dst + 0x14C) = f14C;
-    *(u32*)(dst + 0x150) = f150;
-    *(u32*)(dst + 0x154) = f154;
-    *(u32*)(dst + 0x158) = f158;
-    *(u32*)(dst + 0x15C) = f15C;
-    *(u32*)(dst + 0x160) = f160;
-    *(u32*)(dst + 0x164) = f164;
-    *(u32*)(dst + 0x168) = f168;
-}
-
-
 // scnLgtSetBlendBloom (us-804c51f0): init/destroy the blend+bloom filter pair.
 // With r4 != 0 and +0x00 bit 3 clear: allocate CScnBlend (0x6C) and
 // CScnBloom (0x84), construct them, resolve the +0x30 control, register the
@@ -4378,12 +4127,12 @@ char sLgtAssertMsg[] = "NW4R:Failed assertion IsValid()";
 char sLgtAssertFile[] = "g3d_fog.h";
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056F9B8-0x8056FC10 (0x258): vtable + tail callback table.
-// In-TU functions (extern "C" above) carry the retail reloc names.
+// [.data] 0x8056F9B8-0x8056FC10: vtable, RTTI base list and the handler-table
+// template constants. In-TU functions (extern "C" above) carry the retail reloc
+// names.
 extern "C" u32 __RTTI__14CScnEnvLgtCtrl;  // .sdata RTTI locator
 extern "C" u32 __RTTI__10IScnEnvCtl;  // .sdata locator (defined below)
 extern "C" u32 lbl_eu_8056F96C;  // .data tail object (foreign)
-extern "C" u32 lbl_eu_8056FA58;  // .data tail object (foreign)
 extern "C" void __dt__14CScnEnvLgtCtrlFv();  // member dtor (this TU)
 // us-804c8f60: fog refresh (see body below; referenced by the vtable).
 extern "C" void scnLgtRefreshFogList(CScnEnvLgtCtrl* self,
@@ -4485,28 +4234,72 @@ extern "C" u32 lbl_eu_80524480;
 extern "C" u32 lbl_eu_805244A0;
 extern "C" u32 lbl_eu_805244B0;
 
-extern "C" u32 lbl_eu_8056F9B8[150] = {
+// Retail .data holds two objects here: the 0xA0-byte CScnEnvLgtCtrl vtable and
+// the 0x10-byte __RTTIBaseList__14CScnEnvLgtCtrl.
+extern "C" u32 lbl_eu_8056F9B8[40] = {
     (u32)&__RTTI__14CScnEnvLgtCtrl, 0x00000000, (u32)&__dt__14CScnEnvLgtCtrlFv, (u32)&scnLgtFrameStep, (u32)&scnLgtBlendCurveSlots, (u32)&scnLgtSetDelta, (u32)&scnLgtGetDelta, (u32)&scnLgtGetTime,
     (u32)&scnLgtSetTime, (u32)&scnLgtGetLimit, (u32)&scnLgtSetBound, (u32)&scnLgtRebuildSlots, (u32)&scnLgtApplyAmbColor, (u32)&scnLgtRefreshFogList, (u32)&scnLgtReadLightDataWords, (u32)&scnLgtReadLightDataRaw,
     (u32)&scnLgtCopyAmbBase, (u32)&scnLgtRefreshSlot, (u32)&scnLgtPushFogView0, (u32)&scnLgtPushFogView1, (u32)&scnLgtPushFogSlot0, (u32)&scnLgtBindType1Entry, (u32)&scnLgtBindType2Entry, (u32)&scnLgtBindType3Entry,
     (u32)&scnLgtSetFlashSlot, (u32)&scnLgtIsStepping, (u32)&scnLgtSetFlag31, (u32)&scnLgtSetFlag30, (u32)&scnLgtSetLightBit, (u32)&scnLgtStartFlash, (u32)&scnLgtGetFogCount, (u32)&scnLgtGetFlag28,
     (u32)&scnLgtGetFlag29, (u32)&scnLgtSetSlotBits, (u32)&scnLgtWriteSlotVecs, (u32)&scnLgtWriteSlotScale, (u32)&scnLgtClearSlotEn, (u32)&scnLgtSetSlotCurve, (u32)&scnLgtClrSlotCurve, (u32)&scnLgtToggleItemBit,
-    (u32)&__RTTI__10IScnEnvCtl, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF18, 0x00000000,
-    0xFFFFFFFF, (u32)&scnLgtPtmfSetF1C, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF20, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetF24,
-    0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF0, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF4, 0x00000000, 0xFFFFFFFF,
-    (u32)&scnLgtPtmfStoreF8, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetSelf0C, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfSetSelf10, 0x00000000,
-    0xFFFFFFFF, (u32)&scnLgtPtmfSetSelf14, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF28, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF2C,
-    0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreF30, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreI34, 0x00000000, 0xFFFFFFFF,
-    (u32)&scnLgtPtmfStoreI38, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreS04, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreFB8, 0x00000000,
-    0xFFFFFFFF, (u32)&scnLgtPtmfStoreFBC, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreFC0, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreFC4,
-    0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreFC8, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreFCC, 0x00000000, 0xFFFFFFFF,
-    (u32)&scnLgtPtmfStoreFD0, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreS06, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreS08, 0x00000000,
-    0xFFFFFFFF, (u32)&scnLgtPtmfStoreS0A, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreS0C, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreS0E,
-    0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmfStoreS10, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmf2StoreC8, 0x00000000, 0xFFFFFFFF,
-    (u32)&scnLgtPtmf2StoreCC, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmf2StoreD0, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtPtmf2StoreD4, 0x00000000,
-    0xFFFFFFFF, (u32)&scnLgtSampleGradHermite, 0x00000000, 0xFFFFFFFF, (u32)&scnLgtSampleGradColor, 0x00000000,
 };
 
+extern "C" u32 lbl_eu_8056FA58[4] = {
+    (u32)&__RTTI__10IScnEnvCtl, 0x00000000, 0x00000000, 0x00000000,
+};
+// The three handler tables: every entry converts a concrete handler signature
+// to the tables' single-argument member-pointer type (the retail call sites
+// pass one argument), so MWCC keeps the tables in .bss and materializes the
+// 12-byte constants in .data, filling the tables from the TU's static
+// initializer (__sinit_\CScnEnvLgtCtrl_cpp).
+// The first table keeps its retail .bss symbol span (0xB8 = 15 slots + the
+// 4-byte alignment tail MWCC leaves before the next table); the tail is not
+// part of the initialiser and stays zero.
+CScnEnvLgtCtrlWorkDispatchTable lbl_eu_8065FA40 = {
+    {
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF18,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF1C,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF20,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF24,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF0,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF4,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF8,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetSelf0C,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetSelf10,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetSelf14,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF28,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF2C,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreF30,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreI34,
+        (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreI38},
+    0,
+};
+
+CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[18] = {
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS04,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFB8,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFBC,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFC0,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFC4,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFC8,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFCC,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFD0,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS06,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS08,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS0A,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS0C,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS0E,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS10,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreC8,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreCC,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreD0,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreD4,
+};
+
+CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[2] = {
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtSampleGradHermite,
+    (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtSampleGradColor,
+};
 // [.rodata] 0x80524468-0x805244E0 (0x78): RTTI name strings + raw words.
 extern "C" const u32 lbl_eu_80524468[30] = {
     0x7265736C, 0x6973743C, 0x4953636E, 0x456E7643, 0x746C202A, 0x3E000000, 0x5F726573, 0x6C697374,
@@ -4526,13 +4319,8 @@ extern "C" u32 lbl_sd_08[2] = { (u32)&lbl_eu_805244A0, (u32)&lbl_eu_8056FA58 };
 extern "C" u32 lbl_sd_10[2] = { (u32)&lbl_eu_805244B0, 0x00000000 };
 extern "C" u32 lbl_sd_12[2] = { 0x01000000, 0x00000000 };
 
-// [.bss] 0x8065FA40-0x8065FBE8 (0x1A8 = 424B) zero-fill, typed to match the
-// .hpp externs used by the sinit / blob-dispatch code.
-u8 lbl_eu_8065FA40[0xB8];
-CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[0xD8 / 12];
-CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[0x18 / 12];
-// (retired DECOMP_FORCEACTIVE keep-alives: both dispatch tables are
-// live-referenced by the blob-dispatch code above.)
+// [.bss] 0x8065FA40-0x8065FBE8 (0x1A8 = 424B): the three handler tables above
+// (15 + 18 + 2 entries) are the only storage this TU keeps there.
 
 // ===== .sdata2 constant pool owned by this TU =====
 // The retail split assigns .sdata2 0x8066AFD0..0x8066B088 to this unit, so the

@@ -257,6 +257,7 @@ public:
     void SetSrc(f32 ratio, bool initial);
     void SetVe(f32 volume, f32 initVolume);
     void SetLpf(u16 freq);
+    void SetBiquad(u8 biquad, f32 value);
     void SetRemoteFilter(u8 filter);
 
     static u32 GetDspAddressBySample(const void* pBase, u32 samples,

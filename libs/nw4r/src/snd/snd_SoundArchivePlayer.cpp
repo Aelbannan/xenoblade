@@ -53,7 +53,6 @@ struct WsdPlayer_X : WsdPlayer {
 
 // Rename the base while parsing the player header so the WsdCallback member
 // picks up the padded TU-local layout above.
-#define WsdPlayer WsdPlayer_X
 // Rewrite CreatePlayerHeap to its retail signature while parsing the player
 // header (the shared header still carries the upstream two-parameter shape).
 #define CreatePlayerHeap(unused1, unused2) \
@@ -70,7 +69,6 @@ struct WsdPlayer_X : WsdPlayer {
 #undef private
 #undef CreatePlayerHeap
 #undef mSoundPlayers
-#undef WsdPlayer
 
 // Retail-named entry points (see definitions further below for why they are
 // free functions with C linkage).

@@ -40,7 +40,7 @@ namespace nw4r
             return result;
         }
 
-        static void ShowStack_(u32 sp) DECOMP_DONT_INLINE
+        static void ShowStack_(u32 sp)
         {
             Assertion_Printf_("-------------------------------- TRACE\n");
             Assertion_Printf_("Address:   BackChain   LR save\n");

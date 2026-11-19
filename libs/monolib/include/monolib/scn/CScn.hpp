@@ -13,6 +13,9 @@
 class IScnRender;
 class ICulling;
 class CScnItemPool;
+class CScnFilterMan;
+class CScnFadeMan;
+class CScnEnvLgtCtrl;
 struct CScnFrame;
 
 struct ScnRenderCB {
@@ -47,6 +50,7 @@ public:
     void initSubsystems(u32 a, u32 b, void* str, u32 d);
     virtual void Init();
     void Term();
+    virtual void Move();
     virtual void Draw();
     // 0x8049A068: tail-calls mUnk8C's vtable+0x2C virtual, yielding the
     // scene's heap handle (an mtl::ALLOC_HANDLE, i.e. u32).
@@ -55,20 +59,32 @@ public:
     //0x000: vtable 1 (CTTask)
     //0x000-054: CTTask
     //0x054: vtable 2 (IWorkEvent)
-    u8 unk58[0x60 - 0x058]; //0x058
+    u32 unk58; //0x058
+    void* unk5C; //0x05C subsystem released by Term
     CScnItemPool* mItemPool; //0x060 (CScnIdMan reads sub-pool 5)
-    u8 unk64[0x68 - 0x064]; //0x064
+    void* unk64; //0x064 subsystem released by Term
     UnkScn68* mCamWork; //0x068
-    u8 unk6C[0x84 - 0x06C]; //0x06C
+    void* unk6C; //0x06C subsystem released by Term
+    CScnFilterMan* mFilterMan; //0x070
+    void* unk74; //0x074 subsystem released by Term
+    void* unk78; //0x078 subsystem released by Term
+    CScnEnvLgtCtrl* mLgtCtrl; //0x07C light control (destroyed directly by Term)
+    CScnFadeMan* mFadeMan; //0x080
     CScnFrame* mFrame84; //0x084 scene frame (mElapsed/mStep read by Scn_GetFrameDelta/SetTimeScale)
-    u8 unk88[0x8C - 0x088]; //0x088
+    void* unk88; //0x088 scene-root subobject destroyed by ~CScn
     UnkScn8C* mUnk8C; //0x08C
-    u8 unk90[0x0B4 - 0x090]; //0x090
+    u32 unk90; //0x090
+    u32 unk94; //0x094 (ctor leaves it uninitialized)
+    f32 unk98; //0x098 scene time scale
+    u16 unk9C; //0x09C
+    u16 unk9E[10]; //0x09E
+    u16 unkB2; //0x0B2
     ICulling* unkB4; //0x0B4
-    u32 unkB8; //0x0B8
+    u8 unkB8; //0x0B8 (ctor stores a byte)
     ScnRenderCB mRenderCBs[64]; //0x0BC
     u32 mRenderCBCount; //0x3BC
-    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
+    char unk3C0[0x20]; //0x3C0
+    u32 unk3E0; //0x3E0
     u8 unk_3E4; //0x3E4
     u8 unk_3E5; //0x3E5
     u8 unk_3E6; //0x3E6

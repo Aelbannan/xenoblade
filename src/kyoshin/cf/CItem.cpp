@@ -331,7 +331,7 @@ const char* CItemRec_lookup88(u32 unused, CItemRec* rec) {
     const char* col = lbl_eu_80662288;
     u16 a, b;
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
-    u32 v2 = *(volatile u32*)&rec->field_00;
+    u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
     const char* result = lbl_eu_80501C58 + 0x63;
     if (s) result = s;
@@ -351,7 +351,7 @@ const char* CItemRec_lookup8C(u32 unused, CItemRec* rec) {
     const char* col = lbl_eu_8066228C;
     u16 a, b;
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
-    u32 v2 = *(volatile u32*)&rec->field_00;
+    u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
     // Eager default-string address + conditional select (retail: lis/cmpi/
     // addi/addi/beq/mr - not a branchy ternary).
@@ -366,7 +366,7 @@ const char* CItemRec_twin88b(u32 unused, CItemRec* rec) {
     const char* col = lbl_eu_80662288;
     u16 a, b;
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
-    u32 v2 = *(volatile u32*)&rec->field_00;
+    u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
     const char* result = lbl_eu_80501C58 + 0x63;
     if (s) result = s;
@@ -384,7 +384,7 @@ const char* CItemRec_getNameIfKind2(u32 unused, CItemRec* rec) {
         u16 kind, row;
         void* h = CItem_resolveFamilyBdat(v >> 20, &row, &kind);
         // Volatile re-read after the call (retail reloads the packed word).
-        u32 v2 = *(volatile u32*)&rec->field_00;
+        u32 v2 = rec->field_00;
         const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
         result = lbl_eu_80501C58 + 0x63;
         if (s) result = s;
@@ -470,7 +470,7 @@ const char* CItemRec_twin88c(u32 unused, CItemRec* rec) {
     const char* col = lbl_eu_80662288;
     u16 a, b;
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
-    u32 v2 = *(volatile u32*)&rec->field_00;
+    u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
     const char* result = lbl_eu_80501C58 + 0x63;
     if (s) result = s;
@@ -483,7 +483,7 @@ const char* CItemRec_twin8Cb(u32 unused, CItemRec* rec) {
     const char* col = lbl_eu_8066228C;
     u16 a, b;
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
-    u32 v2 = *(volatile u32*)&rec->field_00;
+    u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
     const char* result = lbl_eu_80501C58 + 0x63;
     if (s) result = s;
@@ -812,7 +812,7 @@ void CItem_rerank4(u32 unused, CItemData* self) {
         u32 rank = (u32)CItem_rankVal(0);
         // Volatile re-read after the call: retail reloads the halfword here;
         // a plain load would fold to the stored register value (callee is pure).
-        u32 h = *(volatile u16*)&slots[i];
+        u32 h = slots[i];
         h = __rlwimi(h, rank, 1, 28, 30);
         slots[i] = (u16)h;
     }
@@ -2760,7 +2760,7 @@ s32 CItem_rollTwoColPick(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32
             // scratch record, so retail reloads field_00 here instead of
             // folding the stored register value.
             u32 size2 = (u32)CItem_catSize(
-                (u16)((*(volatile u32*)&local.field_00 >> 16) & 0xF));
+                (u16)((local.field_00 >> 16) & 0xF));
             memcpy(dst, &local, size2);
             return 1;
         }
@@ -3218,12 +3218,12 @@ extern "C" void CItem_rollWeighted4B(CItemFour* self, u32 item, u32 count) {
             added += CItem_rollTwoColAlt(self, item, count, handle, 2);
         }
         if ((s32)count > 1 && added > 1) {
-            s32 last = (s32)self->mCount - 1;
+            s32 last = (s32)*(volatile u32*)&self->mCount - 1;
             if (last >= 1 &&
                 (self->mItems[last].field_00 >> 20) ==
                     (self->mItems[last - 1].field_00 >> 20)) {
                 added--;
-                self->mCount = self->mCount - 1;
+                self->mCount = *(volatile u32*)&self->mCount - 1;
             }
         }
     }
@@ -3513,7 +3513,7 @@ void CItem_clearUsedSubs(u32 unused, CItemExt* obj) {
     for (s32 i = 0; i < obj->mCount; i++) {
         // Volatile re-read: retail reloads the count (lbz) for the bounds
         // check instead of reusing the loop-condition load.
-        s16 v = (i < *(volatile u8*)&obj->mCount) ? obj->mEntries[i] : 0;
+        s16 v = (i < obj->mCount) ? obj->mEntries[i] : 0;
         if (v != -1 && i < obj->mCount) {
             obj->mEntries[i] = -1;
             memset(obj->field_08 + i * 8, 0, 8);
@@ -3535,7 +3535,7 @@ void CItemExt_setEquipEntry(u32 unused, CItemExt* self, s32 index, s16 value) {
         if (value != -1) {
             CItemExt* rec = 0;
             s16 v = 0;
-            if (index < *(volatile u8*)&self->mCount) {
+            if (index < self->mCount) {
                 v = self->mEntries[index];
             }
             if (v != -1) {

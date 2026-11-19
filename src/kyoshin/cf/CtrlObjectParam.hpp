@@ -57,7 +57,7 @@ extern u32 lbl_eu_806667A8;    // arts column-name prefix word 0 (.sdata2, CtrlO
 extern const u32 lbl_eu_806667AC;    // arts column-name prefix word 1 (.sdata2, CtrlObjectParam_InitArtsSlotSet)
 extern char lbl_eu_804FBF58[]; // arts-list sprintf format string (.rodata, CtrlObjectParam_ScanArtsListRows)
 extern char lbl_eu_805280E8[];  // vtable-like pointer stored at entry+0x34FC (work-buffer ctor); array type forces lis/addi @ha/@l (retail relocs are ADDR16_HA/LO)
-extern u32 lbl_eu_805280D8[4];  // arts stat column-name pointer table (.data, CtrlObjectParam_RampArtsStatStep)
+extern const void* lbl_eu_805280D8[4];  // arts stat column-name pointer table (.data, CtrlObjectParam_RampArtsStatStep)
 
 // C-ABI imports for the func_* stubs in CtrlObjectParam.cpp (defining TUs:
 // CfBdat.cpp / CActorParam.cpp / CItemBoxInfo.cpp). extern "C" keeps the

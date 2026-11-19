@@ -19,31 +19,7 @@ extern "C" {
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
-// code_80135FDC.hpp declares several nw4r::db warning strings as u8[] while
-// CfObjectImplMove.hpp (via harness_catalog.hpp) already declared some of them
-// const char[]. This TU never uses those strings, so alias them away for the
-// duration of the include.
-#define lbl_eu_80526324 lbl_eu_80526324_decl_shield
-#define lbl_eu_80526300 lbl_eu_80526300_decl_shield
-#define lbl_eu_805262F0 lbl_eu_805262F0_decl_shield
-#define lbl_eu_805262C8 lbl_eu_805262C8_decl_shield
-#define lbl_eu_8052CB40 lbl_eu_8052CB40_decl_shield
-#define lbl_eu_8052CB1C lbl_eu_8052CB1C_decl_shield
-#define lbl_eu_8052E4E4 lbl_eu_8052E4E4_decl_shield
-#define lbl_eu_8052E4C0 lbl_eu_8052E4C0_decl_shield
-#define lbl_eu_8052E558 lbl_eu_8052E558_decl_shield
-#define lbl_eu_8052E530 lbl_eu_8052E530_decl_shield
 #include "kyoshin/code_80135FDC.hpp"
-#undef lbl_eu_80526324_decl_shield
-#undef lbl_eu_80526300_decl_shield
-#undef lbl_eu_805262F0_decl_shield
-#undef lbl_eu_805262C8_decl_shield
-#undef lbl_eu_8052CB40_decl_shield
-#undef lbl_eu_8052CB1C_decl_shield
-#undef lbl_eu_8052E4E4_decl_shield
-#undef lbl_eu_8052E4C0_decl_shield
-#undef lbl_eu_8052E558_decl_shield
-#undef lbl_eu_8052E530_decl_shield
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include <string.h>

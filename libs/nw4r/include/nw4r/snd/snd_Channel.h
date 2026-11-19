@@ -167,6 +167,13 @@ public:
         mOriginalKey = key;
     }
 
+    // Xenoblade per-channel exclusivity tag: SeqTrack::AddChannel releases
+    // every live channel that shares the new channel's non-zero tag. Nothing
+    // in this build ever writes a non-zero value, so the loop stays dormant.
+    s32 GetTag() const {
+        return mTag;
+    }
+
     s32 GetLength() const {
         return mLength;
     }
@@ -253,7 +260,7 @@ private:
 
     PanMode mPanMode;   // at 0xD4
     PanCurve mPanCurve; // at 0xD8
-    u32 field_0xDC;    // at 0xDC
+    s32 mTag;           // at 0xDC
 
     ChannelCallback mCallback; // at 0xE0
     u32 mCallbackData;         // at 0xE4

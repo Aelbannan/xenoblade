@@ -11,19 +11,6 @@ extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0(NULL);
 
 namespace {
 
-// SoundPlayer fields at 0x30/0x3C/0x40/0x54/0x58 that UpdateParam reads are
-// private in snd_SoundPlayer.h; mirror the layout to read them directly.
-struct SoundPlayerParamView {
-    u8 _pad0x00[0x30];        // 0x00..0x2F
-    f32 unk30;                // 0x30
-    u8 _pad0x34[0x08];        // 0x34..0x3B
-    int outputLineFlagEnable; // 0x3C
-    f32 unk40;                // 0x40
-    u8 _pad0x44[0x10];        // 0x44..0x53
-    f32 unk54;                // 0x54
-    f32 fxSend[AUX_BUS_NUM];  // 0x58..0x63
-};
-
 } // namespace
 
 BasicSound::BasicSound(int priority, int arg)
@@ -110,17 +97,15 @@ void BasicSound::UpdateParam() {
 
     f32 lpfFreq = mUnk0xBC;
     lpfFreq += mAmbientParam.lpf;
-    lpfFreq += reinterpret_cast<const SoundPlayerParamView*>(mSoundPlayer)->unk30;
+    lpfFreq += mSoundPlayer->mUnk0x30;
 
     // Biquad filter id/value: the sound's own, else the player's, else the
     // ambient info's (retail reads the player fields directly).
     u32 filter = mOutputLineFlagEnable;
     f32 filterValue = mUnk0xC0;
     if (filter == 0) {
-        const SoundPlayerParamView* pPlayer =
-            reinterpret_cast<const SoundPlayerParamView*>(mSoundPlayer);
-        filter = pPlayer->outputLineFlagEnable;
-        filterValue = pPlayer->unk40;
+        filter = mSoundPlayer->mOutputLineFlagEnable;
+        filterValue = mSoundPlayer->mUnk0x40;
         if (filter == 0) {
             filter = mAmbientParam.priority;
             filterValue = mAmbientParam.unk18;
@@ -142,8 +127,6 @@ void BasicSound::UpdateParam() {
     }
 
     // Main send + aux sends: sound's own (mUnk0xCC) + player sends + ambient.
-    const SoundPlayerParamView* pPlayer =
-        reinterpret_cast<const SoundPlayerParamView*>(mSoundPlayer);
     f32 mainSend = lbl_eu_80669EEC;
     f32 fxSend[AUX_BUS_NUM] = { lbl_eu_80669EEC, lbl_eu_80669EEC,
                                 lbl_eu_80669EEC };
@@ -151,10 +134,10 @@ void BasicSound::UpdateParam() {
     fxSend[0] += mUnk0xCC[1];
     fxSend[1] += mUnk0xCC[2];
     fxSend[2] += mUnk0xCC[3];
-    mainSend += pPlayer->unk54;
-    fxSend[0] += pPlayer->fxSend[0];
-    fxSend[1] += pPlayer->fxSend[1];
-    fxSend[2] += pPlayer->fxSend[2];
+    mainSend += mSoundPlayer->mUnk0x54;
+    fxSend[0] += mSoundPlayer->mFxSend[0];
+    fxSend[1] += mSoundPlayer->mFxSend[1];
+    fxSend[2] += mSoundPlayer->mFxSend[2];
     fxSend[0] += mAmbientParam.fxSend;
 
     // Retail fetches the player only once all values are computed.

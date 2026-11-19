@@ -471,6 +471,8 @@ struct CScnEnvLgtCtrlLgtCtl;
 struct CScnEnvLgtCtrlLgtParamCtl;
 struct CScnEnvLgtCtrlLgtLimit;
 struct CScnEnvLgtCtrlCtorCtl;
+struct CScnEnvLgtCtrlGrad;
+struct CScnEnvLgtCtrlWorkDst40;
 
 // +0x90..0xA8 region of CScnEnvLgtCtrl written by the ctor (two 3-word
 // copies of lbl_eu_80656C58 plus the light-count cap at +0xA8).
@@ -680,7 +682,9 @@ public:
 };
 
 // Retail vtable data blob installed at CScnEnvLgtCtrl+0x00 by the dtor.
-extern "C" u32 lbl_eu_8056F9B8[0x258 / 4];  // vtable (defined in CScnEnvLgtCtrl.cpp)
+extern "C" u32 lbl_eu_8056F9B8[0xA0 / 4];
+// The class's __RTTIBaseList (0x10: the IScnEnvCtl base entry plus its terminator).
+extern "C" u32 lbl_eu_8056FA58[0x10 / 4];
 
 // Base vtable for the IScnEnvCtl reslist instances (installed by the two
 // reslist destructors in this TU).
@@ -755,13 +759,62 @@ struct CScnEnvLgtCtrlWorkBlob {
     u32 field_0x00;   // +0x00
     u32 field_0x04;   // +0x04
     u32 field_0x08;   // +0x08 (field_0x04 + 0x18)
-    u32 field_0x0C;   // +0x0C
-    u32 field_0x10;   // +0x10
-    u32 field_0x14;   // +0x14
+    union {
+        u32 field_0x0C;   // +0x0C
+        f32 mF0C;         // float staging slot (scnLgtPtmfSetSelf0C)
+    };
+    union {
+        u32 field_0x10;   // +0x10
+        f32 mF10;
+    };
+    union {
+        u32 field_0x14;   // +0x14
+        f32 mF14;
+    };
     u32 field_0x18;   // +0x18
     f32 field_0x1C;   // +0x1C
     u32 field_0x20;   // +0x20 handler status accumulator (bits 0-2 gate the
                       // direction rebuild in scnLgtSolveRowDirection)
+
+    // Handler family installed in the three ptmf tables (lbl_eu_8065FA40 /
+    // lbl_eu_8065FAF8 / lbl_eu_8065FBD0). Each entry is dispatched with the
+    // blob as `this` and a single pointer argument, so the handlers take the
+    // concrete row/entry type plus the float the retail call site leaves set.
+    void scnLgtPtmfSetF18(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfSetF1C(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfSetF20(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfSetF24(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreF0(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreF4(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreF8(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfSetSelf0C(float v);
+    void scnLgtPtmfSetSelf10(float v);
+    void scnLgtPtmfSetSelf14(float v);
+    void scnLgtPtmfStoreF28(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreF2C(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreF30(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreI34(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreI38(CScnEnvLgtCtrlWorkDst40* dst, float v);
+    void scnLgtPtmfStoreS04(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFB8(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFBC(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFC0(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFC4(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFC8(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFCC(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreFD0(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreS06(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreS08(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreS0A(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreS0C(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreS0E(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmfStoreS10(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmf2StoreC8(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmf2StoreCC(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmf2StoreD0(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    void scnLgtPtmf2StoreD4(CScnEnvLgtCtrlLgtTypeEntry* entry, float v);
+    float scnLgtSampleGradHermite(const CScnEnvLgtCtrlGrad* grad);
+    float scnLgtSampleGradColor(const CScnEnvLgtCtrlGrad* grad);
 };
 
 // 0x40-byte destination rows written by scnLgtPushControlRows (indexed by each
@@ -778,21 +831,48 @@ struct CScnEnvLgtCtrlWorkBlobF {
 };
 
 struct CScnEnvLgtCtrlWorkDst40 {
-    u32 field_0x00;      // +0x00
-    u32 field_0x04;
-    u32 field_0x08;
+    // The handler family dispatched by scnLgtSolveRowDirection writes these
+    // slots as floats while the row builders copy them as words, so each slot
+    // is a word/float union of its own.
+    union {
+        u32 field_0x00;  // +0x00
+        f32 mF00;
+    };
+    union {
+        u32 field_0x04;
+        f32 mF04;
+    };
+    union {
+        u32 field_0x08;
+        f32 mF08;
+    };
     u32 field_0x0C;      // +0x0C float bits (direction x)
     u32 field_0x10;
     u32 field_0x14;
-    u32 field_0x18;      // position/scale words copied from the item front
-    u32 field_0x1C;
-    u32 field_0x20;
+    union {
+        u32 field_0x18;  // position/scale words copied from the item front
+        f32 mF18;
+    };
+    union {
+        u32 field_0x1C;
+        f32 mF1C;
+    };
+    union {
+        u32 field_0x20;
+        f32 mF20;
+    };
     f32 field_0x24;      // fade weight
-    f32 field_0x28;      // +0x28
-    f32 field_0x2C;
-    f32 field_0x30;      // +0x30
-    u32 field_0x34;
-    u32 field_0x38;
+    f32 field_0x28;      // +0x28 (scnLgtPtmfStoreF28)
+    f32 field_0x2C;      // (scnLgtPtmfStoreF2C)
+    f32 field_0x30;      // +0x30 (scnLgtPtmfStoreF30)
+    union {
+        u32 field_0x34;
+        s32 mI34;
+    };
+    union {
+        u32 field_0x38;
+        s32 mI38;
+    };
     u32 field_0x3C;      // status flag bits
 };
 
@@ -969,12 +1049,21 @@ extern const float kLgtLumaR; // fog color blend weight (scnLgtRefreshFogList)
 extern const float kLgtLumaG; // fog color blend weight (scnLgtRefreshFogList)
 extern const float kLgtLumaB; // fog color blend weight (scnLgtRefreshFogList)
 
-// Member-function pointer tables dispatched by scnLgtDispatchEntryEvents's item loop
-// (12-byte ptmf stride; each entry is called with the work blob as `this`
-// and one void* argument).
+// Member-function pointer tables dispatched by the item loops in
+// scnLgtSolveRowDirection / scnLgtDispatchEntryEvents (12-byte ptmf stride; each
+// entry is called with the work blob as `this` and one void* argument). The
+// entries convert the concrete handler signatures, so MWCC keeps each table in
+// .bss and copies the 12-byte constants from .data in __sinit.
 typedef void (CScnEnvLgtCtrlWorkBlob::*CScnEnvLgtCtrlWorkBlobFn)(void*);
-extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[];
+
+// 0x40+0x20+0x18-byte dispatch tables installed by the TU's static initializer.
+struct CScnEnvLgtCtrlWorkDispatchTable {
+    CScnEnvLgtCtrlWorkBlobFn mSlots[15];   // +0x00 (retail .bss 0xB8 spans the 4-byte tail)
+    u32 mTail;                             // +0xB4 (never initialised)
+};
+extern CScnEnvLgtCtrlWorkDispatchTable lbl_eu_8065FA40;
 extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[];
+extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[];
 
 // Light-param control blob at CScnEnvLgtCtrl+0x30 (scnLgtToggleItemBit): element
 // count at +0x0C and the byte offset of the entry array within field_0x2C at
@@ -1048,7 +1137,10 @@ struct CScnEnvLgtCtrlLgtTypeEntry {
                     f32 field_0xBC;   // +0xBC
                     f32 field_0xC0;   // +0xC0
                     f32 field_0xC4;   // +0xC4
-                    u8 _C8[0x10];     // +0xC8 .. +0xD8
+                    f32 field_0xC8;   // +0xC8 (scnLgtPtmf2StoreC8)
+                    f32 field_0xCC;   // +0xCC (scnLgtPtmf2StoreCC)
+                    f32 field_0xD0;   // +0xD0 (scnLgtPtmf2StoreD0)
+                    f32 field_0xD4;   // +0xD4 (scnLgtPtmf2StoreD4)
                 };
             };
         };
@@ -1492,68 +1584,6 @@ struct CScnEnvLgtCtrlLgtView {
     f32 field_0x6C;
 };
 
-// --- sinit_804C8174 static-initializer blob copy ---
-// The TU's static initializer copies a 0x1A8-byte template blob from .data
-// (lbl_eu_8056FA68) into a .bss object (lbl_eu_8065FA40). The destination
-// layout differs from the source by a 4-byte gap at +0xB4 (not copied).
-// The retail copy waves are: [0x58..0x84) [0x00..0x58) [0xDC..0x118)
-// [0x84..0xB4) [0xB8..0xDC) [0x16C..0x1A8) [0x118..0x16C) - all under the
-// 0x80-byte unroll threshold, so the members below mirror those chunks.
-
-// Scalar fields (not arrays) so MWCC emits member-wise load/store waves
-// instead of recognizing the copy as memcpy.
-struct CScnEnvLgtCtrlSinitA {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, wa;
-    u32 wb, wc, wd, we, wf, w10, w11, w12, w13, w14, w15;
-};
-struct CScnEnvLgtCtrlSinitB {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, wa;
-};
-struct CScnEnvLgtCtrlSinitC {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, wa, wb;
-};
-struct CScnEnvLgtCtrlSinitD {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08;
-};
-struct CScnEnvLgtCtrlSinitE {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, wa;
-    u32 wb, wc, wd, we;
-};
-struct CScnEnvLgtCtrlSinitF {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, wa;
-    u32 wb, wc, wd, we, wf, w10, w11, w12, w13, w14;
-};
-struct CScnEnvLgtCtrlSinitG {
-    u32 w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, wa;
-    u32 wb, wc, wd, we;
-};
-
-// Source template (.data at 0x8056FA68): members packed back-to-back.
-struct CScnEnvLgtCtrlSinitSrc {
-    CScnEnvLgtCtrlSinitA a;  // +0x00
-    CScnEnvLgtCtrlSinitB b;  // +0x58
-    CScnEnvLgtCtrlSinitC c;  // +0x84
-    CScnEnvLgtCtrlSinitD d;  // +0xB4
-    CScnEnvLgtCtrlSinitE e;  // +0xD8
-    CScnEnvLgtCtrlSinitF f;  // +0x114
-    CScnEnvLgtCtrlSinitG g;  // +0x168
-};
-
-// Destination (.bss at 0x8065FA40): 4-byte gap at +0xB4 (set elsewhere),
-// so d..g sit 4 bytes later than in the source.
-struct CScnEnvLgtCtrlSinitDst {
-    CScnEnvLgtCtrlSinitA a;  // +0x00
-    CScnEnvLgtCtrlSinitB b;  // +0x58
-    CScnEnvLgtCtrlSinitC c;  // +0x84
-    u32 field_0xB4;          // +0xB4 (not copied by the sinit)
-    CScnEnvLgtCtrlSinitD d;  // +0xB8
-    CScnEnvLgtCtrlSinitE e;  // +0xDC
-    CScnEnvLgtCtrlSinitF f;  // +0x118
-    CScnEnvLgtCtrlSinitG g;  // +0x16C
-};
-
-extern CScnEnvLgtCtrlSinitSrc lbl_eu_8056FA68;
-extern u8 lbl_eu_8065FA40[0xB8];  // .bss (defined in .cpp, dissolved monolibdata2)
 
 // --- __ct__CScnEnvLgtCtrl ctor helper types ---
 // 3-word .bss blob copied by the ctor into +0x90..0x98 and +0x9C..0xA4.

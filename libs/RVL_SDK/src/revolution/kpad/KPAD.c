@@ -148,21 +148,23 @@ u8 kp_wbc_wait_count = 0x32;
 f32 kp_wbc_ave_count = 400.0f;
 f32 kp_fs_revise_deg = 24.0f;
 
-Vec2 icenter_org;
-s32 kp_stick_clamp_cross;
-s32 kp_ex_trigger_min;
-s32 kp_ex_analog_min;
-u8 kp_initialized;
-Vec2 Vec2_0;
-f64 kp_wbc_tgc_weight;
-u16 kp_wbc_ave_sample_count;
-u8 kp_wbc_zero_point_done;
-u8 kp_wbc_tgc_weight_issued;
-u8 kp_wbc_setup;
-u8 kp_wbc_enabled;
-u8 kp_wbc_issued;
-f32 kp_dist_vv1;
+/* Retail .sbss runs icenter_org..kp_err_dist_min ascending; this compiler emits
+ * file-scope objects in reverse declaration order. */
 f32 kp_err_dist_min;
+f32 kp_dist_vv1;
+u8 kp_wbc_issued;
+u8 kp_wbc_enabled;
+u8 kp_wbc_setup;
+u8 kp_wbc_tgc_weight_issued;
+u8 kp_wbc_zero_point_done;
+u16 kp_wbc_ave_sample_count;
+f64 kp_wbc_tgc_weight;
+Vec2 Vec2_0;
+u8 kp_initialized;
+s32 kp_ex_analog_min;
+s32 kp_ex_trigger_min;
+s32 kp_stick_clamp_cross;
+Vec2 icenter_org;
 
 KPADInternal inside_kpads[4];
 typedef union {

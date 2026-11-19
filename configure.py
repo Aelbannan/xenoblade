@@ -467,7 +467,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/plugin/pluginCam.cpp"),
             Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp"),
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-func_align 4"]),
+            Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-inline noauto", "-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),
             Object(Matching, "kyoshin/cf/CfScript.cpp"),
             Object(Matching, "kyoshin/cf/CfTaskMain.cpp"),
@@ -478,7 +478,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2"),  # was -sdata 0 (SDA wall: lis+lwz vs retail SDA21; removal 10/39->17/39 FULL; GC/3.0a5.2 kept for two-cmpi range form; -O4,s probe REVERTED: 17->14, broke ReleaseAllSlots/MappedSlot/ThenFire)
-            Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfGameManager.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveEne.cpp"),
@@ -587,7 +587,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuShopSell.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/CMenuShopBuy.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/code_8018C5FC.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfResPcImpl.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfResPcImpl.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "kyoshin/cf/code_8018F8D8.cpp"),
             Object(Matching, "kyoshin/menu/CMenuPTState.cpp"),
             Object(Matching, "kyoshin/cf/code_80194310.cpp"),
@@ -1016,7 +1016,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/ax/AXAux.c"),
             Object(Matching, "RVL_SDK/src/revolution/ax/AXCL.c"),
             Object(Matching, "RVL_SDK/src/revolution/ax/AXOut.c"),
-            Object(Matching, "RVL_SDK/src/revolution/ax/AXSPB.c"),
+            Object(Matching, "RVL_SDK/src/revolution/ax/AXSPB.c", extra_cflags=["-inline noauto"]),  # retail TU never auto-inlined: -inline noauto replaces the DECOMP_DONT_INLINE on __AXDepopFadeMain/Rmt (hexdiff --all byte-identical)
             Object(Matching, "RVL_SDK/src/revolution/ax/AXVPB.c"),
             Object(Matching, "RVL_SDK/src/revolution/ax/AXProf.c"),
             Object(Matching, "RVL_SDK/src/revolution/ax/AXComp.c"),
@@ -1969,7 +1969,7 @@ config.libs = [
             Object(Matching, "monolib/src/lod/UnkClass_80466348.cpp"),
             Object(NonMatching, "monolib/src/lod/code_80468434.cpp"),
             Object(NonMatching, "monolib/src/lod/code_8046A530.cpp"),
-            Object(NonMatching, "monolib/src/lod/LODMemMan.cpp"),
+            Object(NonMatching, "monolib/src/lod/LODMemMan.cpp", extra_cflags=["-inline noauto"]),
             Object(NonMatching, "monolib/src/mpfsys/UnkClass_80471EC8.cpp"),
             Object(NonMatching, "monolib/src/mpfsys/MPFDrawDisplayList.cpp"),
             Object(Matching, "monolib/src/mpfsys/MPFDrawMdlNoColor.cpp"),
@@ -2026,11 +2026,14 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/code_804BD8E8.cpp", extra_cflags=["-ipa off"]),
             Object(NonMatching, "monolib/src/scn/code_804BF59C.cpp"),
             Object(NonMatching, "monolib/src/scn/CLight.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp", extra_cflags=["-inline noauto"]),
+            Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp", extra_cflags=["-inline noauto"], link_transform={
+                # Retail __sinit_\CScnEnvLgtCtrl_cpp is global; MWCC emits it local.
+                "globalize": [r"__sinit_\CScnEnvLgtCtrl_cpp"],
+            }),
             Object(NonMatching, "monolib/src/effect/Unknown1.cpp"),
             Object(Matching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail EffCtl_StoreFlagAndParams pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
             Object(NonMatching, "monolib/src/effect/code_804C8718.cpp", extra_cflags=["-inline noauto"]),
-            Object(NonMatching, "monolib/src/effect/code_804CC2B8.cpp"),
+            Object(NonMatching, "monolib/src/effect/code_804CC2B8.cpp", extra_cflags=["-inline noauto"]),  # retail TU never auto-inlined: -inline noauto replaces 50 never_inline/DECOMP_DONT_INLINE attributes (hexdiff --all byte-identical)
             Object(NonMatching, "monolib/src/effect/CETrail.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804D854C.cpp"),
             Object(Matching, "monolib/src/work/CWorkSystemCache.cpp"),
@@ -2050,7 +2053,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CArcItem.cpp"),
             Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp"),  # Wii/1.1 (default): 7 functions (AllocPool x2, FindEntryValue, PickRandom, AdvanceVec28/B, BlendFrameU16) are byte-identical only under Wii/1.1; the GC/3.0a5.2 pin only served the three *_ReleaseHandle duplicate-blt guards (open: find their Wii/1.1 source shape). NOTE: -ipa off tested for SchedRes_ReleaseEntries path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
             Object(NonMatching, "monolib/src/core/CSchedule.cpp"),
-            Object(NonMatching, "monolib/src/core/code_804E36DC.cpp"),
+            Object(NonMatching, "monolib/src/core/code_804E36DC.cpp", extra_cflags=["-inline noauto"]),  # retail TU never auto-inlined: -inline noauto replaces the 3 DECOMP_DONT_INLINE on the CScheduleItem members (hexdiff --all byte-identical)
             Object(NonMatching, "monolib/src/core/ScheduleList.cpp"),
             Object(NonMatching, "monolib/src/scn/CMdlMaterial.cpp"),
             Object(Matching, "monolib/src/scn/CMdlMouth.cpp"),

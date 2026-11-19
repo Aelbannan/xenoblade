@@ -876,9 +876,9 @@ void CEquipItemGrid::sortEIBByNameKey() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 gA = lbl_eu_806640F4;
+            u32 gA = (u32)lbl_eu_806640F4;
             u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x61, (u16)BdatGetItemId(objA->word >> 20));
-            u32 gB = lbl_eu_806640F4;
+            u32 gB = (u32)lbl_eu_806640F4;
             u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x61, (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
@@ -907,9 +907,9 @@ void CEquipItemGrid::sortEIBByNameKey69() {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u32 gA = lbl_eu_806640F4;
+            u32 gA = (u32)lbl_eu_806640F4;
             u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x69, (u16)BdatGetItemId(objA->word >> 20));
-            u32 gB = lbl_eu_806640F4;
+            u32 gB = (u32)lbl_eu_806640F4;
             u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x69, (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
@@ -1079,7 +1079,7 @@ void CEquipItemGrid::sortEIBByVf90() {
 // lbl_eu_80668B18/B10 are compiler-generated, not source references).
 double CEquipItemGrid::getEIBProgress(CItemInstance* item) {
     u32 word = item->word;
-    u32 g = lbl_eu_806640F4;
+    u32 g = (u32)lbl_eu_806640F4;
     u16 kind = BdatGetItemId(word >> 20);
     u16 result = BdatGetU16Direct((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
     u8 v2 = BdatGetU8Direct((const void*)g, &lbl_eu_8050EFDC[0x92], kind);
@@ -1111,7 +1111,7 @@ u32 CEquipItemGrid::hasEIBSlotFlag(CItemInstance* item) {
 // result. A miss falls back to 0xB when the kind is at most 0x4C, else 0.
 u8 CEquipItemGrid::getEIBNameKey(CItemInstance* item) {
     u32 word = item->word;
-    u32 v = lbl_eu_806640F4;
+    u32 v = (u32)lbl_eu_806640F4;
     u16 kind = BdatGetItemId(word >> 20);
     for (u8 i = 1; i <= 10; i++) {
         char buf[0x28];
@@ -2995,7 +2995,7 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
     setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
     setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
-    g = lbl_eu_806640F4;
+    g = (u32)lbl_eu_806640F4;
     BdatGetItemType(a);
     kind2 = BdatGetItemId(a);
     rateA = BdatGetU16Direct((const void*)g, base + 0x60a, kind2);
@@ -3091,7 +3091,7 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
     setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
     // Loaded into a register only here (retail keeps it live across the
     // bdat-name lookups below).
-    u32 g = lbl_eu_806640F8;
+    u32 g = (u32)lbl_eu_806640F8;
     BdatGetItemType(kind);
     kind2 = (u16)BdatGetItemId(kind);
     nameA = BdatGetU8Direct((const void*)g, base + 0x72, kind2);
@@ -3253,7 +3253,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                            ->vf40((CItemInstance*)b, (u8)idx);
             if (slot != -1) {
                 CItemInstance* item = (CItemInstance*)CItem_kindPtr(3, slot);
-                u32 g = lbl_eu_806640D8;
+                u32 g = (u32)lbl_eu_806640D8;
                 u16 kind = (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf54(item);
                 storeKind = kind;
                 char* name = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36,
@@ -3306,7 +3306,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                                            ->vf2C((CItemInstance*)b, (u8)idx);
                 if (entry != 0 && (entry->flags & 1)) {
                     u16 kind2 = (u16)((entry->word >> 16) & 0xFFF);
-                    u32 g2 = lbl_eu_806640D8;
+                    u32 g2 = (u32)lbl_eu_806640D8;
                     u32 bits3 = (entry->word >> 22) & 7;
                     storeKind = kind2;
                     char* name2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x1e - (bits3 - 1));
@@ -3802,12 +3802,12 @@ general:
         if (b != 0) {
             u32 g2 = 0;
             switch (v) {
-            case 2: g2 = lbl_eu_806640F4; break;
+            case 2: g2 = (u32)lbl_eu_806640F4; break;
             case 4:
             case 5:
             case 6:
             case 7:
-            case 8: g2 = lbl_eu_806640F8; break;
+            case 8: g2 = (u32)lbl_eu_806640F8; break;
             }
             char buf[0x28];
             if (v == 2) {

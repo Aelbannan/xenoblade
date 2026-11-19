@@ -16,7 +16,7 @@ extern "C" {
     void attachLODObject__8CTaskLODFv(s16 taskID, int flag);
     int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(const char*, u8**, u32*);
     CScnItemModel* Scn_SetupAnim(u32 global, u8* handle, int flag, int flag2);
-    void Scn_IsAnimActiveOrNull(void* ptr);
+    bool Scn_IsAnimActiveOrNull(void* ptr);
     void* Scn_InitGlobalA(void* mgr, void* param, int flag);
     void ScnCamDepthUp();
     void ScnCamLoadMtx(CREvtCamObj* camObj, const f32 mtx[3][4]);

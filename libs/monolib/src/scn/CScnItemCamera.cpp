@@ -319,11 +319,11 @@ void sinit_8049FC60() {
     ((SCamDefaultRow*)&lbl_eu_80658658)->y = lbl_eu_8066AC00;
     ((SCamDefaultRow*)&lbl_eu_80658658)->z = lbl_eu_8066AC38;
     lbl_eu_80658658.v[3] = lbl_eu_8066ABF0;
-    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[1].y = lbl_eu_8066ABF0;
-    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[1].z = lbl_eu_8066ABF0;
+    lbl_eu_80658658.rows[1].y = lbl_eu_8066ABF0;
+    lbl_eu_80658658.rows[1].z = lbl_eu_8066ABF0;
     lbl_eu_80658658.v[6] = lbl_eu_8066ABF0;
-    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[2].y = lbl_eu_8066ABF0;
-    ((volatile SCamDefaultTable*)&lbl_eu_80658658)->rows[2].z = lbl_eu_8066AC1C;
+    lbl_eu_80658658.rows[2].y = lbl_eu_8066ABF0;
+    lbl_eu_80658658.rows[2].z = lbl_eu_8066AC1C;
 }
 
 // ============================================================

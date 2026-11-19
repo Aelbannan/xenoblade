@@ -148,7 +148,7 @@ extern void ADXCRS_Leave(void);
 extern void ADXCRS_Lock(void);
 extern void ADXCRS_Unlock(void);
 extern void ADXERR_CallErrFunc1_(const char*);
-extern char lbl_eu_805162F8[];
+extern char adxt_mes[];
 extern u8 lbl_eu_805E26E8[];
 
 extern void ADXSTM_ReleaseFileNw(void*);
@@ -290,13 +290,13 @@ typedef struct SJ_CHUNK_ {
     s32 size;
 } SJ_CHUNK_;
 
-void adxt_SetLpFlg(void* self, u32 flg);
-void adxt_start_sj(void* self, void* sj);
-void adxt_start_stm(void* self, void* fname, void* sctOfst, void* sctLen, s32 numChan);
+void adxt_SetLpFlg(ADXT_OBJ_* self, u32 flg);
+void adxt_start_sj(ADXT_OBJ_* self, void* sj);
+void adxt_start_stm(ADXT_OBJ_* self, void* fname, void* sctOfst, void* sctLen, s32 numChan);
 void adxt_StopWithoutLsc(void* self);
 void adxt_Destroy(void* self);
 void adxt_GetTime(void* self, u32* time, u32* sfreq);
-void adxt_SetOutPan(void* self, s32 ch, s32 pan);
+void adxt_SetOutPan(ADXT_OBJ_* self, s32 ch, s32 pan);
 void adxt_ExecServer(void);
 
 // Build a playback handle in the first free slot of the 16-entry handle table.
@@ -312,7 +312,7 @@ void* adxt_Create(s32 numChan, void* work, s32 workEnd) {
     s32 end = workEnd - pad;
 
     if (numChan < 0 || work == NULL || workEnd < 0) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8);
+        ADXERR_CallErrFunc1_(adxt_mes);
         return NULL;
     }
     p = lbl_eu_805E26E8;
@@ -323,7 +323,7 @@ void* adxt_Create(s32 numChan, void* work, s32 workEnd) {
         p += 0xC4;
     }
     if (idx == 16) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x27);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x27);
         return NULL;
     }
     h = (ADXT_OBJ_*)p;
@@ -332,7 +332,7 @@ void* adxt_Create(s32 numChan, void* work, s32 workEnd) {
     h->workBase = aligned + numChan * 0x60C0;
     h->workSize = (u32)(((end - numChan * 0x60C0) - 0x124) / 0x800) << 11;
     if ((s32)h->workSize < 0) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x50);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x50);
         return NULL;
     }
     h->f28 = 0x24;
@@ -430,7 +430,7 @@ void adxt_Destroy(void* self) {
     s32 mode;
 
     if (h == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x7F);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x7F);
         return;
     }
     {
@@ -447,7 +447,7 @@ void adxt_Destroy(void* self) {
     act = h->active;
     if (act == 1) {
         if (h == NULL) {
-            ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0xA7);
+            ADXERR_CallErrFunc1_(adxt_mes + 0xA7);
         } else {
             obj = h->stm;
             if (obj != NULL) {
@@ -544,7 +544,7 @@ void ADXT_DestroyAll() {
     ADXCRS_Leave();
 }
 
-void adxt_start_sj(void* self, void* sj) {
+void adxt_start_sj(ADXT_OBJ_* self, void* sj) {
     u8* p;
     s32 i;
     p = (u8*)self;
@@ -555,33 +555,33 @@ void adxt_start_sj(void* self, void* sj) {
         p += 4;
     }
     ADXSJD_SetInSj(*(void**)((u8*)self + 4), sj);
-    *(void**)((u8*)self + 0x14) = sj;
-    ADXSJD_Start(*(void**)((u8*)self + 4));
+    self->inSj = sj;
+    ADXSJD_Start(self->sjd);
     ((u8*)self)[1] = 1;
-    *(u32*)((u8*)self + 0x4C) = 0;
+    self->f4C = 0;
     ((u8*)self)[0x71] = 0;
-    *(u32*)((u8*)self + 0x8C) = 0x7FFFFFFF;
-    *(u32*)((u8*)self + 0x90) = (u32)-1;
-    *(u32*)((u8*)self + 0x9C) = 0;
-    *(u32*)((u8*)self + 0xA4) = 0;
-    *(u32*)((u8*)self + 0xA0) = lbl_eu_805E26DC;
-    *(u32*)((u8*)self + 0xC0) = 0;
+    self->f8C = 0x7FFFFFFF;
+    self->f90 = (u32)-1;
+    self->time = 0;
+    self->fA4 = 0;
+    self->tick = lbl_eu_805E26DC;
+    self->lpStartOfs = 0;
     if ((s8)((u8*)self)[2] == 4) {
         ADXCRS_Enter();
         adxt_SetLpFlg(self, 0);
         ADXCRS_Leave();
     }
-    if (*(void**)((u8*)self + 0x74) != NULL) {
-        ADXAMP_Start(*(void**)((u8*)self + 0x74));
+    if (self->f74_amp != NULL) {
+        ADXAMP_Start(self->f74_amp);
     }
 }
 
-void adxt_start_stm(void* self, void* fname, void* sctOfst, void* sctLen, s32 numChan) {
+void adxt_start_stm(ADXT_OBJ_* self, void* fname, void* sctOfst, void* sctLen, s32 numChan) {
     u32 signExt;
     u32 shiftVal;
-    ADXSTM_SetBufSize(*(void**)((u8*)self + 8),
-                      (u32)*(s16*)((u8*)self + 0x3E) << 11,
-                      (u32)*(s16*)((u8*)self + 0x3C) << 11);
+    ADXSTM_SetBufSize(self->stm,
+                      (u32)self->sectorSize << 11,
+                      (u32)self->numSector << 11);
     ADXSTM_SetEos(*(void**)((u8*)self + 8), (void*)lbl_eu_80560040);
     ADXSTM_EntryEosFunc(*(void**)((u8*)self + 8), NULL, NULL);
     ADXSTM_Seek(*(void**)((u8*)self + 8), 0);
@@ -592,7 +592,7 @@ void adxt_start_stm(void* self, void* fname, void* sctOfst, void* sctLen, s32 nu
     ADXSTM_BindFileNw(*(void**)((u8*)self + 8), fname, sctOfst, sctLen,
                       shiftVal, numChan << 11);
     ADXSTM_Start(*(void**)((u8*)self + 8));
-    adxt_start_sj(self, *(void**)((u8*)self + 0x10));
+    adxt_start_sj(self, self->mainSj);
 }
 
 void adxt_Destroy(void* self);
@@ -600,10 +600,10 @@ void adxt_StopWithoutLsc(void* self);
 void ADXT_StartSj(void* self, void* sj) {
     ADXCRS_Enter();
     if (self == NULL || sj == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0xCC);
+        ADXERR_CallErrFunc1_(adxt_mes + 0xCC);
     } else {
         if (self == NULL) {
-            ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0xA7);
+            ADXERR_CallErrFunc1_(adxt_mes + 0xA7);
         } else {
             if (((void**)self)[2] != NULL) {
                 ADXSTM_ReleaseFileNw(((void**)self)[2]);
@@ -655,7 +655,7 @@ void adxt_StopWithoutLsc(void* self) {
 void ADXT_Stop(void* self) {
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0xA7);
+        ADXERR_CallErrFunc1_(adxt_mes + 0xA7);
     } else {
         if (((void**)self)[2] != NULL) {
             ADXSTM_ReleaseFileNw(((void**)self)[2]);
@@ -678,7 +678,7 @@ s32 ADXT_GetStat(void* self) {
     s32 stat;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0xF4);
+        ADXERR_CallErrFunc1_(adxt_mes + 0xF4);
         stat = -1;
     } else {
         stat = *(s8*)((u8*)self + 1);
@@ -698,7 +698,7 @@ void adxt_GetTimeSfreq2(void* self_, u32* time, u32* sfreq) {
         *sfreq = ADXSJD_GetSfreq(self->sjd);
         decNumSmpl = ADXSJD_GetDecNumSmpl(self->sjd);
         if (self == NULL) {
-            ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x11C);
+            ADXERR_CallErrFunc1_(adxt_mes + 0x11C);
             obufNumSmpl = (u32)-1;
         } else if (self->chans[0] != NULL) {
             void* ob = self->chans[0];
@@ -737,7 +737,7 @@ void adxt_GetTime(void* self_, u32* time, u32* sfreq) {
     ADXT_SVR_* svr = (ADXT_SVR_*)&lbl_eu_805E4EF0;
 
     if (self == NULL || time == NULL || sfreq == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x14B);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x14B);
         return;
     }
     if (svr->active == 0) {
@@ -810,7 +810,7 @@ s32 ADXT_GetNumSmpl(void* self) {
     s32 ret;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x173);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x173);
         ret = -1;
     } else if ((s8)((u8*)self)[1] >= 2) {
         ret = (s32)ADXSJD_GetTotalNumSmpl(((void**)self)[1]);
@@ -825,7 +825,7 @@ s32 ADXT_GetSfreq(void* self) {
     s32 ret;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x19E);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x19E);
         ret = -1;
     } else if ((s8)((u8*)self)[1] >= 2) {
         ret = (s32)ADXSJD_GetSfreq(((void**)self)[1]);
@@ -840,7 +840,7 @@ s32 ADXT_GetNumChan(void* self) {
     s32 ret;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x1C7);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x1C7);
         ret = -1;
     } else if ((s8)((u8*)self)[1] >= 2) {
         ret = (s32)ADXSJD_GetNumChan(((void**)self)[1]);
@@ -851,15 +851,15 @@ s32 ADXT_GetNumChan(void* self) {
     return ret;
 }
 
-void adxt_SetOutPan(void* self, s32 ch, s32 pan) {
+void adxt_SetOutPan(ADXT_OBJ_* self, s32 ch, s32 pan) {
     s32 defpan;
     s32 outpan;
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x246);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x246);
         return;
     }
     if (ch != 0 && ch != 1) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x277);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x277);
         return;
     }
     if (pan != -128) {
@@ -891,11 +891,11 @@ void adxt_SetOutPan(void* self, s32 ch, s32 pan) {
     } else {
         outpan = 0;
     }
-    *(s16*)((u8*)self + 0x42 + ch * 2) = (s16)pan;
+    self->pan[ch] = (s16)pan;
     if (ch < (s32)(s8)((u8*)self)[3]) {
-        ADXRNA_SetOutPan(*(void**)((u8*)self + 0xC), ch, outpan);
+        ADXRNA_SetOutPan(self->rna, ch, outpan);
     } else {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x2A1);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x2A1);
     }
 }
 
@@ -905,14 +905,14 @@ void ADXT_SetOutPan(void* self, s32 ch, s32 pan) {
     ADXCRS_Leave();
 }
 
-s32 ADXT_GetOutPan(void* self, s32 ch) {
+s32 ADXT_GetOutPan(ADXT_OBJ_* self, s32 ch) {
     s32 ret;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x2CA);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x2CA);
         ret = 0;
     } else {
-        ret = *(s16*)((u8*)self + 0x42 + ch * 2);
+        ret = self->pan[ch];
     }
     ADXCRS_Leave();
     return ret;
@@ -920,31 +920,31 @@ s32 ADXT_GetOutPan(void* self, s32 ch) {
 
 extern s16 ADXSJD_GetDefOutVol(void*);
 
-void ADXT_SetOutVol(void* self, s32 vol) {
+void ADXT_SetOutVol(ADXT_OBJ_* self, s32 vol) {
     s32 defvol;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x350);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x350);
     } else {
-        *(s16*)((u8*)self + 0x40) = (s16)vol;
+        self->f40 = (s16)vol;
         if ((s8)((u8*)self)[0xA9] == 1) {
-            defvol = ADXSJD_GetDefOutVol(((void**)self)[1]);
+            defvol = ADXSJD_GetDefOutVol(self->sjd);
         } else {
             defvol = 0;
         }
-        ADXRNA_SetOutVol(((void**)self)[3], *(s16*)((u8*)self + 0x40) + defvol);
+        ADXRNA_SetOutVol(self->rna, self->f40 + defvol);
     }
     ADXCRS_Leave();
 }
 
-s32 ADXT_GetOutVol(void* self) {
+s32 ADXT_GetOutVol(ADXT_OBJ_* self) {
     s32 vol;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x37A);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x37A);
         vol = 0;
     } else {
-        vol = *(s16*)((u8*)self + 0x40);
+        vol = self->f40;
     }
     ADXCRS_Leave();
     return vol;
@@ -969,7 +969,7 @@ void ADXT_SetSvrFreq(void* self, s32 freq) {
     s32 val;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x3A4);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x3A4);
     } else {
         adxt = (ADXT_*)self;
         adxt->sfreq = freq;
@@ -1004,7 +1004,7 @@ void ADXT_SetSvrFreq(void* self, s32 freq) {
 s32 ADXT_GetNumSctIbuf(void* self) {
     s32 ret;
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x45A);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x45A);
         ret = -1;
     } else if (((void**)self)[5] != NULL) {
         ADX_VFN2 fn = ((ADX_VFN2*)*(void**)((void**)self)[5])[9];
@@ -1018,7 +1018,7 @@ s32 ADXT_GetNumSctIbuf(void* self) {
 s32 ADXT_GetNumSmplObuf(void* self, s32 ch) {
     void* n;
     if (self == NULL || ch < 0) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x11C);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x11C);
         return -1;
     }
     n = ((void**)self)[6 + ch];
@@ -1030,9 +1030,9 @@ s32 ADXT_GetNumSmplObuf(void* self, s32 ch) {
     return 0;
 }
 
-void ADXT_SetAutoRcvr(void* self, u32 val) {
+void ADXT_SetAutoRcvr(ADXT_OBJ_* self, u32 val) {
     ADXCRS_Enter();
-    *(u8*)((u8*)self + 0x6D) = (u8)val;
+    self->f6D = (u8)val;
     ADXCRS_Leave();
 }
 
@@ -1090,64 +1090,64 @@ void adxt_ExecServer(void) {
     }
 }
 
-s32 ADXT_GetErrCode(void* self) {
+s32 ADXT_GetErrCode(ADXT_OBJ_* self) {
     s32 err;
     ADXCRS_Enter();
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x513);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x513);
         err = -1;
     } else {
-        err = *(s16*)((u8*)self + 0x60);
+        err = self->f60;
     }
     ADXCRS_Leave();
     return err;
 }
 
-void adxt_SetLpFlg(void* self, u32 flg) {
+void adxt_SetLpFlg(ADXT_OBJ_* self, u32 flg) {
     s32 numData;
     s32 lpStart, lpEnd, lpSize;
     s32 decDtLen;
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x594);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x594);
         return;
     }
-    if (*(void**)((u8*)self + 0x14) == NULL) {
+    if (self->inSj == NULL) {
         numData = 0;
     } else {
-        void** vtbl = *(void***)*(void**)((u8*)self + 0x14);
-        numData = ((s32 (*)(void*, s32))vtbl[9])(*(void**)((u8*)self + 0x14), 1);
+        void** vtbl = *(void***)self->inSj;
+        numData = ((s32 (*)(void*, s32))vtbl[9])(self->inSj, 1);
     }
     if ((s8)((u8*)self)[2] != 4 && (s8)((u8*)self)[0x6C] == 1 && flg == 0) {
-        decDtLen = (s32)ADXSJD_GetDecDtLen(*(void**)((u8*)self + 4));
+        decDtLen = (s32)ADXSJD_GetDecDtLen(self->sjd);
         numData += decDtLen;
-        lpStart = (s32)ADXSJD_GetLpStartOfst(*(void**)((u8*)self + 4));
+        lpStart = (s32)ADXSJD_GetLpStartOfst(self->sjd);
         {
             s32 rounded = (lpStart + 0x7FF) / 0x800;
             lpStart = rounded << 11;
         }
-        lpEnd = (s32)ADXSJD_GetLpEndOfst(*(void**)((u8*)self + 4));
+        lpEnd = (s32)ADXSJD_GetLpEndOfst(self->sjd);
         {
             s32 rounded = (lpEnd + 0x7FF) / 0x800;
             lpEnd = rounded << 11;
         }
         lpSize = lpEnd - lpStart;
         if (lpSize <= 0) {
-            *(u32*)((u8*)self + 0xC0) = 0;
+            self->lpStartOfs = 0;
         } else {
-            *(u32*)((u8*)self + 0xC0) = (u32)(lpStart + ((numData - lpStart) / lpSize) * lpSize);
+            self->lpStartOfs = (u32)(lpStart + ((numData - lpStart) / lpSize) * lpSize);
         }
     }
     ((u8*)self)[0x6C] = (u8)flg;
 }
 
-void adxt_Pause(void* self, int pause) {
+void adxt_Pause(ADXT_OBJ_* self, int pause) {
     s32 stat;
     s32 sctRemain;
     s32 numData;
     u32 savedSvr;
     u32 time, sfreq;
     if (self == NULL) {
-        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x64A);
+        ADXERR_CallErrFunc1_(adxt_mes + 0x64A);
         return;
     }
     stat = (s32)(s8)((u8*)self)[1];
@@ -1161,39 +1161,39 @@ void adxt_Pause(void* self, int pause) {
         return;
     }
     if (pause == 1) {
-        ADXRNA_SetPlaySw(*(void**)((u8*)self + 0xC), 0);
+        ADXRNA_SetPlaySw(self->rna, 0);
     } else if (((u8*)self)[0x73] == 1) {
-        void* stm = *(void**)((u8*)self + 8);
-        void* rna = *(void**)((u8*)self + 0xC);
-        void* sjd = *(void**)((u8*)self + 4);
+        void* stm = self->stm;
+        void* rna = self->rna;
+        void* sjd = self->sjd;
         sctRemain = ADXSTM_GetFileSct(stm) - ADXSTM_Tell(stm);
-        if (sctRemain > (s32)*(s16*)((u8*)self + 0x3E)) {
-            sctRemain = (s32)*(s16*)((u8*)self + 0x3E);
+        if (sctRemain > (s32)self->sectorSize) {
+            sctRemain = (s32)self->sectorSize;
         }
         /* inline of ADXT_GetNumSctIbuf: sectors left in the input buffer */
         if (self == NULL) {
-            ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x45A);
+            ADXERR_CallErrFunc1_(adxt_mes + 0x45A);
             numData = -1;
-        } else if (*(void**)((u8*)self + 0x14) != NULL) {
-            void** vtbl = *(void***)*(void**)((u8*)self + 0x14);
-            numData = ((s32 (*)(void*, s32))vtbl[9])(*(void**)((u8*)self + 0x14), 1) / 2048;
+        } else if (self->inSj != NULL) {
+            void** vtbl = *(void***)self->inSj;
+            numData = ((s32 (*)(void*, s32))vtbl[9])(self->inSj, 1) / 2048;
         } else {
             numData = 0;
         }
         if (numData > sctRemain) {
             /* inline of ADXT_GetNumSmplObuf for ch 0 */
             if (self == NULL) {
-                ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x11C);
+                ADXERR_CallErrFunc1_(adxt_mes + 0x11C);
                 numData = -1;
-            } else if (*(void**)((u8*)self + 0x18) != NULL) {
-                void* ob = *(void**)((u8*)self + 0x18);
+            } else if (self->chans[0] != NULL) {
+                void* ob = self->chans[0];
                 numData = ((ADX_VFN2*)*(void**)ob)[9](ob, 1) / 2;
             } else {
                 numData = 0;
             }
             if (numData > 0) {
                 /* decode-ahead cap: min(maxDecSmpl, 0x2000) */
-                s32 maxDec = *(s32*)((u8*)self + 0x48);
+                s32 maxDec = self->maxDec;
                 s32 limit = 0x2000;
                 u32 blkSmpl;
                 s32 numRoom;
@@ -1213,18 +1213,18 @@ void adxt_Pause(void* self, int pause) {
         if ((s8)((u8*)self)[0x72] == 0) {
             ADXRNA_SetPlaySw(rna, 1);
             ((u8*)self)[0x73] = 0;
-            *(u32*)((u8*)self + 0xA0) = lbl_eu_805E26DC;
+            self->tick = lbl_eu_805E26DC;
         }
     } else {
-        ADXRNA_SetPlaySw(*(void**)((u8*)self + 0xC), 1);
-        *(u32*)((u8*)self + 0xA0) = lbl_eu_805E26DC;
+        ADXRNA_SetPlaySw(self->rna, 1);
+        self->tick = lbl_eu_805E26DC;
     }
 update_time:
     /* refresh the sample-position estimate against the server clock */
     savedSvr = lbl_eu_805E4F10;
     lbl_eu_805E4F10 = 0;
     adxt_GetTime(self, &time, &sfreq);
-    *(u32*)((u8*)self + 0x9C) =
+    self->time =
         __cvt_fp2unsigned((float)(s32)lbl_eu_805E4F28 *
                           ((float)(s32)time / (float)(s32)sfreq));
     lbl_eu_805E4F10 = savedSvr;
@@ -1255,7 +1255,7 @@ void ADXT_TermSupply(void* self) {
 
 void adxt_GetTime(void* self, u32* time, u32* sfreq);
 
-s32 ADXT_DiscardSmpl(void* self, u32 num) {
+s32 ADXT_DiscardSmpl(ADXT_OBJ_* self, u32 num) {
     u32 savedLock;
     u32 result;
     u32 sfreq, time;
@@ -1263,7 +1263,7 @@ s32 ADXT_DiscardSmpl(void* self, u32 num) {
     if ((s8)((u8*)self)[0x72] == 0) {
         result = 0;
     } else {
-        result = ADXRNA_DiscardData(*(void**)((u8*)self + 0xC), num);
+        result = ADXRNA_DiscardData(self->rna, num);
         ADXCRS_Enter();
         adxt_ExecServer();
         ADXCRS_Leave();
@@ -1271,25 +1271,25 @@ s32 ADXT_DiscardSmpl(void* self, u32 num) {
         lbl_eu_805E4F10 = 0;
         adxt_GetTime(self, &time, &sfreq);
         lbl_eu_805E4F10 = savedLock;
-        *(u32*)((u8*)self + 0x9C) = __cvt_fp2unsigned(
+        self->time = __cvt_fp2unsigned(
             (float)(s32)time / (float)(s32)sfreq * (float)(s32)lbl_eu_805E4F28);
-        *(u32*)((u8*)self + 0xA0) = lbl_eu_805E26DC;
+        self->tick = lbl_eu_805E26DC;
     }
     ADXCRS_Leave();
     return result;
 }
 
-void ADXT_SetTimeOfst(void* self, u32 val) {
+void ADXT_SetTimeOfst(ADXT_OBJ_* self, u32 val) {
     ADXCRS_Enter();
-    *(u32*)((u8*)self + 0x88) = val;
+    self->timeOfst = val;
     ADXCRS_Leave();
 }
 
-void ADXT_SetLnkSw(void* self, u32 val) {
+void ADXT_SetLnkSw(ADXT_OBJ_* self, u32 val) {
     ADXCRS_Enter();
-    *(u8*)((u8*)self + 0x98) = (u8)val;
-    if (*(void**)((u8*)self + 4) != NULL) {
-        ADXSJD_SetLnkSw(*(void**)((u8*)self + 4), val);
+    self->f98 = (u8)val;
+    if (self->sjd != NULL) {
+        ADXSJD_SetLnkSw(self->sjd, val);
     }
     ADXCRS_Leave();
 }

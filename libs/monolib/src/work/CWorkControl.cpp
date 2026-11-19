@@ -84,7 +84,7 @@ CWorkControl* CWorkControl::getInstance(){
 }
 
 #pragma optimize_for_size on
-DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){
+DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){  // noinline-ok: retail wkStandbyLogin keeps a real `bl`; -ipa off (create note) and -inline noauto (loses 3 fns) both worse
     const char* name;
     CWorkThread* pControl;
 

@@ -19,8 +19,7 @@ public:
     virtual ~NandFileStream(); // at 0xC
 
     bool Open(const char* pPath, u32 mode);
-    bool Open(const NANDFileInfo* pInfo, u32 mode, bool enableClose)
-        DECOMP_DONT_INLINE;
+    bool Open(const NANDFileInfo* pInfo, u32 mode, bool enableClose);
 
     virtual void Close(); // at 0x10
 

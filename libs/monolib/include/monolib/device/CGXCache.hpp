@@ -45,6 +45,10 @@ public:
     //0x0: vtable
     //0x0-0x4: IStateCache
     CMsgParam<32> unk4;
+    // Message target the ring dispatches found commands to (retail stores the
+    // cache itself here from its constructor; CGXCache.cpp's dispatcher calls
+    // the object at this address through vtable slot 3).
+    void* mMesgTarget; //0x49C
     u8 unk4A0[0x50C - 0x4A0];
     u32 unk50C;
     u8 unk510[0xC];

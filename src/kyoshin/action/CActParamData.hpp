@@ -129,6 +129,9 @@ public:
     s16 mShort35C;                  // 0x35C: reset to -1 by resetParamSubB
 
     u8* getResetBlock2E0() { return (u8*)&mField2E0; }
+    float getParamFloat08();      // mPtr18 entry +0x08 float getter
+    float getParamFloat0C();      // mPtr18 entry +0x0C float getter
+    void resetParamSubB();        // wipe/restore the SubObjB block
 };
 
 // Destination blocks for the flag-gated setters.
@@ -524,9 +527,9 @@ extern "C" int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
 extern "C" __declspec(noinline) int registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int copyParamNameRec(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);
-extern "C" float getParamFloat08(CActParamData* self);  // mPtr18 entry float getter
-extern "C" float getParamFloat0C(CActParamData* self);
-extern "C" void resetParamSubB(CActParamData* self);
+// getParamFloat08 / getParamFloat0C / resetParamSubB are CActParamData members
+// (declared in the class above); the flat C-linkage views were retired when the
+// retail placeholder symbols were renamed to the member manglings.
 void resetParamShorts(CActParamData* self);
 void walkParamType9(ActParamWalkHost* host);
 

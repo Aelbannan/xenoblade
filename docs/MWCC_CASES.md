@@ -10,6 +10,51 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 
 ```
 
+## kyoshin CActorParam — 894 offset casts -> real members (typed block structs, reference casts) (Wii/1.1, -O4,p -ipa file)
+- Symptom:   `run.py faithful --unit CActorParam` reports `offset_cast 894`; the 0x1073-line
+             `CActorParam_resetArtsStatus` alone carries 835 of them and sits at 36.6%
+             (0x28C8/0x28B8, 1184 structural). The +0x1650/+0x17E4/+0x185C "arts-param" blocks and
+             the whole member tail were read through `*(T*)((u8*)self + 0xOFF)`.
+- Cause:     the header's block structs (`CActorParam_UnkStruct3/4`) carried opaque `u8 unk0[N]`
+             union arms from an earlier layout panic, so no member reached those bytes. The panic
+             was stale: an offsetof probe against the retail displacements shows the declared
+             CActorParam layout is retail-exact (unk1650 @0x1650 … unk337C @0x337C, sizeof 0x3380).
+             The block contents are likewise recoverable from the retail copies: `resetArtsStatus`
+             copies 0x1650 -> 0x17E4 with per-field typed loads (lfs for floats, lha for s16, lbz
+             for u8) and *word* copies only for 0x60..0x6F, 0x70..0x73 and 0x74 -> that is exactly
+             what `unk17E4 = unk1650;` expands to with the struct below.
+- Fix:       (1) `CActorParam_UnkStruct3` = plain typed 0x78-byte struct; interior holes left as
+             natural padding (MWCC's memberwise copy skips padding, matching retail's missing
+             0x22/0x3D/0x59 stores); 0x60..0x6F declared as `union { s16 field_60..field_6E; u32
+             field_60w[4]; }` because the copies move words while `updateStatusEntries` reads the
+             halves as `lha`; 0x70 stays `CActorParam_UnkStruct6[4]` (the ctor's `stb` + 3-byte zero
+             loop only exists for four one-byte sub-objects, while the copy merges them into one
+             lwz/stw). (2) `CActorParam_UnkStruct4` (0x52) = 31 s16 + 4 u32 + unk4E[4], union arm
+             dropped. (3) `resetArtsStatus`: the 60-line field-by-field snapshot becomes
+             `unk17E4 = unk1650;`, the char-record mirror becomes three whole-block assignments,
+             and every remaining access uses members.
+- Result:    CActorParam 41/60 before and after (no ✓ moved). resetArtsStatus 36.6% -> 39.9%
+             (0x272C, structural 1184 -> 1422, reg_swap 470 -> 147); updateStatusEntries 1.9% ->
+             1.9% (0x1EA0); refreshBattleStatus 98.4% -> 98.4%; UnkVirtualFunc137 5.1% -> 6.5%;
+             decayArtsMatrix/applyTargetEvent unchanged (see next paragraph). Unit hard score
+             1239 -> 361, `offset_cast` 894 -> 11, `field_0x` 73 -> 79 (CfObjectModel::field_0x74 /
+             CfActorField-style names now reached as members).
+- **Base-cast codegen (reusable):** `static_cast<cf::CBattleState*>(self)` and C-style
+  `(cf::CfObjectMove*)actor` both emit MWCC's MI null guard (`cmpi/beq/addi rX,rX,off`) for a base
+  at a non-zero offset. Two guard-free spellings: `static_cast<cf::CBattleState&>(*self)` (reference)
+  and — for a *member access* rather than a pointer conversion — plain derived-pointer syntax
+  (`CfObjectActor* a; a->unk8C_3` compiles to the single `lhz 0x3F28(r3)` retail shows). NB the
+  reference form can raise FPR/GPR pressure: replacing `(u8*)self + 8` with
+  `&static_cast<cf::CBattleState&>(*self)` in decayArtsMatrix grew the frame 144 -> 160 bytes (one
+  extra saved FPR) and dropped it 5.6% -> 1.0%, so it was reverted there (offset arithmetic with a
+  `+ 8` base is not an `offset_cast` smell anyway).
+- **Line/alias sensitivity:** converting copyAll's `F175_CP(0xOFF, T)` macro calls 1:1 into
+  `dst->member = src->member;` kept size and structural counts identical but changed 207 register
+  colours (105 -> 312 reg_swap, 25.2% -> 1.6%) — under `-O4,p` the struct field is now known to MWCC,
+  so its alias/scheduling decisions differ. Reverted; copyAll needs a real re-derivation, not a
+  spelling swap.
+- Confidence: repo_proven (offsets from a compiled offsetof probe + retail asm)
+
 ## kyoshin noinline smell removal batch (8 TUs) — unit flag was the root cause (-O4,s), plus `-ipa off` (Wii/1.1)
 - Symptom:   `run.py faithful` counts 55-115 `__declspec(noinline)` / `#pragma dont_inline` /
              `#pragma auto_inline off` uses per kyoshin TU (CEquipItemBox 115, CPassiveSkill 105,
@@ -43,6 +88,53 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
              caller", which no flag combination suppresses.
 - Evidence:  src/kyoshin/{CEquipItemBox,CPassiveSkill,CItemBoxInfo,CArtsInfo,CKizunagram,
              CCollepedia,CTagProcessor,CPartyStateWin}.cpp + configure.py
+
+## kyoshin CfRes* + CfGameManager noinline smell removal (-inline noauto, 221 counted uses) — the removed ~1,000-use c5 recipe (`-O4,s`) is wrong for speed TUs
+- Symptom:   `run.py faithful --unit CfRes` = `noinline 124` (CfRes.cpp), `--unit CfResPcImpl` = 4,
+             `--unit CfGameManager` = 93 (CfGameManager.cpp) + 72 in
+             `CfGameManagerUnityHelpers.hpp` (same TU, uncounted). CfRes carries 124
+             `__declspec(noinline)` + 15 `#pragma push/auto_inline off/pop` triples, CfGameManager
+             95 `#pragma dont_inline on/reset` pairs. Deleting them under the default
+             `-O4,p -inline auto -ipa file` collapses both tables (CfRes 211/224 -> 143,
+             CfGameManager 308/352 -> 250): MWCC folds the one-liner helpers into their callers.
+- Cause:     both units are **non-inlining `-O4,p` TUs**. The c4/c5 wave assumed wrong opt level
+             (`-O4,s`), which holds for the kyoshin menu/item TUs but not here: retail CfRes keeps
+             speed-mode frames and CfResBuf_popRecord/CfRes_lookupStrTable/CfRes_tryResolve* all
+             require `-O4,p` (the `-O4,s -func_align 4` probe scored 141/224). `-ipa off` is inert
+             (143 with the smells deleted) and definition order is not the mechanism either -
+             retail .text already places e.g. `CfRes_getArrayElem12Idx` (0x14DC) above its callee
+             `CfRes_getArrayElem12` (0x1524), matching the source, and `-inline auto` inlines it
+             regardless. Splits.txt gives CfGameManager one `.text` range (0x8007CA94..0x80087F80),
+             so a TU split is not the answer. What is left is the **inline policy flag**.
+- Fix:       `Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-inline noauto", "-func_align 4"])`,
+             `CfResPcImpl.cpp` / `CfGameManager.cpp` likewise `extra_cflags=["-inline noauto"]`;
+             delete every noinline/dont_inline/auto_inline use. Two things noauto still needs
+             spelled as `inline`, because retail *does* fold them:
+             `static inline CfRes_zeroSlots` (otherwise `__ct__Q22cf5CfResFv` omits both guard
+             loops and shrinks 0x18c -> 0x110), `static inline CfRes_popPair`
+             (CfRes_markKey/CfRes_findKey), and `template<> inline CTTask<cf::CfResTask>::~CTTask() {}`
+             (otherwise `__dt__Q22cf9CfResTaskFv` 0x78 -> 0x70 and calls the base dtor out of line).
+- Result:    ✓ before -> after, hexdiff --all: **CfRes 211/224 -> 211/224** (table identical but for
+             `CfRes_dispatchLoad` 7.2% -> 8.1%), **CfResPcImpl 40/43 -> 40/43**
+             (`CfResPcImpl_open` 7.1% -> 7.3%), **CfGameManager 308/352 -> 308/352** (7 unmatched
+             rows improve - `func_80086B5C` 5.3% -> 78.0%, `func_80080F48` 7.7% -> 14.8%,
+             `func_800838F4` 7.3% -> 8.7%, `func_8007C8C8` 71.6% -> 75.0% - and 3 slide:
+             `loadFieldPartyState` 67.0% -> 47.7%, `func_80085FB8` 8.6% -> 5.6%,
+             `func_8007FF6C` 1.4% -> 1.6%). Smells: CfRes noinline 124 -> 0, CfResPcImpl 4 -> 0,
+             CfGameManager 93 -> 0 (+72 -> 0 in the unity-helpers header).
+- Evidence:  src/kyoshin/cf/{CfRes.cpp,CfRes.hpp,CfResPcImpl.cpp,CfGameManager.cpp,
+             CfGameManagerUnityHelpers.hpp} + configure.py; extab/gate deltas pre-existing.
+
+## bindLodChildren / LODMemMan — `cond ? 2 : 0` ternary lowered branchless → write the if/else (Wii/1.1 -O4,p -ipa file, 41.5% → 75.6%, 0 structural)
+- Symptom:   `bindLodChildren__Q23LOD17UnkClass_8046D144FPCf` at 41.5%, 20 structural + 28 reg_swap,
+             size 0x148/0x148. The tail store decompiled as `neg/or/srawi/rlwinm/stw`
+             (branchless `seen != 0 ? 2 : 0`), retail has `cmpi r22,0` + `bc` + two `stw`.
+- Cause:     MWCC's if-conversion turns the ternary into the select sequence. Retail's original
+             source used the statement form, so the branch survives.
+- Fix:       `if (seen != 0) { *flagB = 2; } else { *flagB = 0; }` instead of the ternary.
+- Result:    75.6%, 0 structural, size 0x148 PASS (20 reg_swap left).
+- Note:      same rescue was needed after the +0xCC cast sweep in that function - re-check any
+             "size was right, structure wasn't" residual for a swallowed branch first.
 
 ## <symbol/unit> — <residual> → <fix> (<compiler flags>, <result>)
 - Symptom:   what hexdiff shows
@@ -15096,22 +15188,104 @@ N lines, `pre - N_above` gives the insertion point. The anchors that make this e
 - Confidence: repo_proven (retail loop shape: `addi r28, r27, 0x70` + `addi r28, r28, 0x18` per
   iteration; retail `SetVoiceOutParam` body = 6 lfs/stfs + `ori mSyncFlag, 0x3C`).
 
-## nw4r/src/snd/snd_SeqTrack — Channel track-list member (15/18 held), SeqTrack layout open
-- Symptom/partial fix: `UpdateChannelLength` (100%) and `ChannelCallbackFunc` (100%) walked the
-  per-track channel chain through `SeqChannelLinkView` because `Channel::GetNextTrackChannel()` returned
-  `mNextLink` (0xE8) while retail's track chain lives at 0xF4 (`mNextLink` is the dispose-callback
-  chain used inside snd_Channel.cpp). Renamed `Channel::field_0xF4` to `mNextTrackChannel`, pointed the
-  accessors at it and dropped the view — byte-identical, 15/18 held (snd_Channel 16/18 held).
-- Open item: `SeqTrackParamView`/`SeqTrackTickView` cannot be dropped by an accessor fix — the retail
-  SeqTrack layout contradicts the header. Proven retail offsets (from 100% functions): parse cursors
-  +0x1C/+0x20 (`SetSeqData`), `tickWait` +0x44, `muteFlag` +0x48, `waitFlag` +0x4A, `damper` +0x4C,
-  embedded `LfoParam` +0x58, three `{u8,u8,s16,s16}` ramp records +0x70, volume/bend/priority/porta
-  byte block +0x82..+0x96, two f32 at +0x98/+0x9C, `s16[16]` variables +0xA0, `SeqPlayer*` +0xC0,
-  `Channel*` +0xC4 (`InitParam` writes all of them, 100%). The header instead puts `ParserTrackParam`
-  at 0x50 (cursors at 0x50/0x54), `mTrackVariable` 0x98, `mPlayer` 0xB8, `mChannelList` 0xBC.
-  The untyped gaps (0x24..0x27, 0x28..0x3F, 0x40, 0x50, 0x54, 0x68, 0x6C, 0x90) can only be named by
-  decompiling `UpdateChannelParam` (1.1%) and `NoteOn` (1.2%), whose bodies are also written against
-  the wrong header offsets — so the relayout and those two functions are one work item.
+## nw4r/src/snd/snd_SeqTrack — real ParserTrackParam layout (15/18 → 16/18, all offset casts gone)
+- Symptom:   `SeqTrackParamView` / `SeqTrackTickView` addressed the track through a TU-local mirror
+  because the header's `ParserTrackParam` sat at 0x50 (`baseAddr` 0x50, `mTrackVariable` 0x98,
+  `mPlayer` 0xB8, `mChannelList` 0xBC) while retail keeps the whole parser block at 0x1C
+  (`mTrackVariable` 0xA0, `mPlayer` 0xC0, `mChannelList` 0xC4).
+- Cause/fix:  the retail layout was recovered from the 100%-matched functions plus the retail asm of
+  the two near-miss functions, then declared once in `snd_SeqTrack.h`:
+  `ParserTrackParam` = cursors 0x00/0x04, `MmlParserParam` 0x08, `wait` 0x28, `muteFlag` 0x2C,
+  `silenceFlag` 0x2D, `noteFinishWait` 0x2E, `portaFlag` 0x2F, `damperFlag` 0x30, `bankNo` 0x34,
+  `prgNo` 0x38, `lfoParam` 0x3C, `lfoTarget` 0x4C, `sweepPitch` 0x50, three
+  `MoveValue<u8, s16>` movers 0x54/0x5A/0x60 (`snd_MoveValue.h` is exactly the retail 6-byte
+  `{u8 origin, u8 target, s16 frame, s16 counter}` — `GetValue()` reproduces retail's
+  `origin + counter * (target - origin) / frame` integer sequence and `Update()` its `counter < frame`
+  increment), `volume2` 0x66, a velocity scale 0x67, `pitchBend` 0x68, `bendRange` 0x69, `initPan`
+  0x6A, `transpose` 0x6B, `priority` 0x6C, `portaKey` 0x6D, `portaTime` 0x6E, ADSR 0x6F..0x72,
+  `hold` (s16) 0x74, `mainSend` 0x76, `fxSend[3]` 0x77, a remote-filter byte 0x7A, `lpfFreq` (f32)
+  0x7C — and `SeqTrack` = `mExtVolume`..`mPanRange` 0x08..0x18, `mParserTrackParam` 0x1C, one f32
+  0x9C, `mTrackVariable` 0xA0, `mPlayer` 0xC0, `mChannelList` 0xC4 (0xC8 total, which is what
+  `MmlSeqTrackAllocator::Create`'s `0xCC` pool stride requires: `MmlSeqTrack` adds only `mParser`).
+- The MML interpreter state is *inside* the parser param, not in `MmlSeqTrack`: retail `Parse` reads
+  `cmpFlag` at track+0x24, `noteWaitFlag` 0x25, `tieFlag` 0x26, `wait` 0x44, `noteFinishWait` 0x4A;
+  `CommandProc` (`addi r31, r4, 28`) saves call frames at 0x2C+8d as `{u8 loopFlag, u8 loopCount,
+  const u8* currentAddr}` with `callStackDepth` at 0x40 and the zeroed gap at 0x41..0x43 — i.e.
+  `MmlParserParam{cmpFlag, noteWaitFlag, tieFlag, stopFlag, CallStack callStack[3], callStackDepth}`
+  at param+0x08. `MmlSeqTrack` therefore has no `MmlParserParam` member
+  (`typedef SeqTrack::MmlParserParam` + `GetMmlParserParam()` returning that sub-object).
+  `cmpFlag` is a raw `u8`, not a `bool`: `CallSeqUserprocCallback` stores `SeqUserprocCallbackParam
+  ::value` back into it with a plain `lbz`/`stb` (a `bool` member makes MWCC emit the
+  neg/or/rlwinli normalize sequence, 100% → 68.3%).
+- MML command → field map recovered from the retail `CommandProc` case bodies (each case is a single
+  `stb`/`sth`/`stfs` at `28(r31)+k`): volume mover 0x70 ← MML v (a `MoveValue::SetTarget(arg1, arg2)`),
+  pan mover 0x76 ← p (`arg1 - 64`), surround mover 0x7C ← 0xD7, volume2 0x82 ← v2, pitchBend 0x84,
+  bendRange 0x85, initPan 0x86 (`arg1 - 64`), transpose 0x87, priority 0x88, portaKey 0x89 (+
+  transpose), portaTime 0x8A, ADSR 0x8B..0x8E (0xFF = unset), `hold` 0x90 (`EnvGenerator::SetHold`,
+  confirmed by the retail reloc), mainSend 0x92, fxSend 0x93..0x95, lpfFreq 0x98 stored *already
+  divided* (`(arg1 - 64) / 64.0f`), `lfoParam.depth` 0x58 = `u8(arg1)/128`, `.speed` 0x5C =
+  `u8(arg1)*100/256`, `.delay` 0x60 = `arg1*5`, `.range` 0x64, lfoTarget 0x68, sweepPitch 0x6C =
+  `arg1/32.0f`. Loop state is one `CallStack` per frame (retail `MML_LOOP_START` writes
+  `{loopFlag=1, loopCount=arg2, currentAddr}`, `MML_CALL` writes `{loopFlag=0, currentAddr}` and
+  `MML_RET` pops frames while `loopFlag` is set).
+- `SeqTrack::SeqTrack()` must put `mOpenFlag(false)` in the **member-init list**, not the body:
+  retail stores the flag before the implicit `LfoParam` ctor call and pins the zero in a callee-saved
+  register (r31) with `this` in r30. A body assignment instead lets MWCC keep the zero in r0 and
+  `this` in r31 — same instruction count, 0x88 vs 0x90, ctor 16.7% instead of 100%
+  (objdiff fuzzy 73% vs 100%). Fixing it took the unit to **16/18**.
+- `snd_SoundArchivePlayer::detail_ConvertLabelStringToSoundId` is emitted out-of-line inside the
+  retail snd_SeqTrack slice (0x8041EAD8, right after `SeqTrack::NoteOn`); declare the virtual in the
+  header (no inline body) and define it in `snd_SeqTrack.cpp`, which drops the last
+  `extern "C"`-mangled shim + `*(void**)((u8*)self + 0x10)` offset cast.
+- Result:    snd_SeqTrack 15/18 → 16/18 (ctor FULL_MATCH; `UpdateChannelParam` 1.1 → 1.4%,
+  `NoteOn` 1.2 → 1.9%); snd_MmlParser 2/5 held (Parse 1.8 → 2.3, CommandProc 0.5 → 3.1);
+  snd_SeqPlayer 25/25 held; snd_MmlSeqTrack 2/3 held; snd_SeqTrackAllocator / MmlSeqTrackAllocator /
+  snd_SeqSound unchanged. faithful: snd_SeqTrack hard 34 → 1 (offset_cast 12 → 0, view_struct 19 → 0,
+  mangled_c 2 → 0), snd_SeqPlayer view_struct 3 → 0 + field_0x 1 → 0, tree-wide offset_cast
+  4230 → 2817 and view_struct 2905 → 2799 with **no** unit fuzzy/section regression
+  (`cmp_report.py` over a fresh `report.json`: only other agents' units moved).
+- Residual: `UpdateChannelParam` (0x5c0 retail vs 0x540) and `NoteOn` (0x40c vs 0x37c) still do not
+  match. Retail `UpdateChannelParam` computes the volume/movers as
+  `(volumeMover/127)^2 * (playerParam.volume/127)^2 * (volume2/127)^2 * mExtVolume * player.volume`,
+  clamps the pan mover to [-1, 1] and the surround mover to [0, 2], adds `lpfFreq` (0x98) +
+  `player.GetLpfFreq()` (no `mExtLpfFreq`), and picks `remoteFilter = player.GetRemoteFilter() != 0 ?
+  player.GetRemoteFilter() : parserRemoteFilter(0x96)`; it also loads track+0x9C and player+0x18 into
+  a register whose value retail never consumes (dead load, so 0x9C is only ever zeroed by
+  `InitParam` — the slot keeps the `mExtMainSend` name with that caveat). Retail `NoteOn` additionally
+  scales the note velocity by the param byte at 0x67 (`velocity * p / 127`, magic 0x81024009) and has
+  a second, `0x27`-gated last-channel-reuse block that the current body does not reproduce.
+  Two retail MML commands that write 0x82/0x83 and the flag at 0x27 are not in the reconstructed
+  `MmlParser::MmlSeqData` enum yet.
+- Confidence: repo_proven (every offset above is read out of the retail `InitParam`/`Parse`/
+  `CommandProc`/`NoteOn` encodings; the ctor and all 15 previously-matching functions are
+  byte-identical).
+
+## nw4r/src/snd/snd_Voice — VoiceLayout/VoiceNodeLayout mirrors → real members (44/48 held)
+- Symptom:   `snd_Voice.cpp` reached every field through a TU-local `VoiceLayout` (plus a
+  node-anchored `VoiceNodeLayout` for the `Acquire` list scan that reads priority/voice-count at
+  `node - 0x90`/`node - 0x74`).
+- Cause/fix:  the vendored `snd_Voice.h` is already retail-accurate (`mAxVoice` 0xC, `mVoiceOutParam`
+  0x2C, `mSyncFlag` 0xA2, `mPriority` 0xA8, `mPitch` 0x104, `mPanCurve` 0x118, `node` 0x11C — the
+  mirror's "0x124" comment was stale). Delete both mirrors, use the members, and turn the two
+  pre-mangled shims into real API: `Voice::SetBiquadFilter(int, f32)` (declared between
+  `SetLpfFreq`/`SetRemoteFilter`, matching the retail symbol order 0x804296A0) and
+  `Voice::InvalidateData` defined out-of-line (retail's last function in the unit), plus
+  `Voice::SetVoiceOutParam` defined in the class scope. `mPanMode`/`mPanCurve` are enums — assign
+  `PAN_MODE_DUAL`/`PAN_CURVE_SQRT`, not `0`.
+- Result:    snd_Voice 44/48 -> 44/48 (byte-identical: `__ct__` 3.9%, `Calc` 70.4%, `Update` 28.4%
+  unchanged), hard smells 68 -> 2: mangled_c 2 -> 1 (only the cross-unit `AxVoice::SetBiquad`
+  import that `snd_AxVoice.h` does not declare yet remains) and **label 65 -> 0** -- the `.sdata2`
+  range 0x8066A098..0x8066A0D0 is this unit's own split and every entry in it is already produced by
+  the TU's literal uses (`TransformDpl2Pan`'s 1.0/0.0/-0.12/0.88/0.5/1.12/0.85/0.15/2.0/0.35, then
+  -1.0, -3.0, 32768.0, 0.0), so replacing the seven `extern "C" const float lbl_eu_*` imports with
+  the literals is byte-identical (`data diff`: `.sdata2: 52 bytes identical`). soft field_0x 11 -> 4
+  (only `field_0xA1`, the pitch-modulation gate, is still unnamed). snd_VoiceManager 11/11 unaffected.
+- Trade-off (do not repeat blindly): the same literal swap is *not* free in a unit whose near-miss
+  functions rely on a non-foldable 1.0f load. In snd_BasicSound it turned 3 reloc-name-only
+  misses into matches (InitParam/Stop/SetVolume, 100% but flagged) yet degraded `UpdateParam` 89.1% -> 63.1%
+  (0x3dc -> 0x3f0, 23 -> 79 structural): retail keeps `f32 volume = <pool 1.0f>` and multiplies,
+  while the literal lets MWCC fold `1.0f * x` away. Try the swap per unit and keep it only when the
+  whole `hexdiff --all` table is unchanged.
 
 ## MI vtable slot arithmetic: new virtuals go to the *secondary* base table, and a derived-pointer call uses the primary vptr + combined offset (CView / CProc / CScnCameraMan, Wii/1.1 `-O4,p -RTTI on`, done)
 - Symptom:   `CView`'s retail vtable at `.data:0x8056B5E0` is 0xD0: a 0xA0 primary
@@ -15189,3 +15363,719 @@ N lines, `pre - N_above` gives the insertion point. The anchors that make this e
   (2) CView's ctor %-drop is the same MI ctor shape (base ctor call + compiler vptr stores
   with r3/r4 colouring and a hoisted `li r31,0`); not an accepted function before or after.
 - Confidence: repo_proven for the emission/link facts; hypothesis for the ordering rule.
+
+## monolib scn/core/effect — opaque offset lenses → real class members (faithfulness sweep, 0 byte change)
+- Symptom:   Units scored hard smells in `run.py faithful` (`offset_cast` `(u8*)p + 0x..`,
+  `view_struct` local `...View*` overlay types) while every touched function already matched.
+- Cause:     Helpers were written against opaque `void*`/`u8*` params with TU-local overlay
+  structs instead of the real classes/members (or instead of the nw4r class that already has
+  the accessor).
+- Fix (all repo-proven byte-neutral in this wave; hexdiff --all tables identical before/after):
+  * `CScn` (`libs/monolib/include/monolib/scn/CScn.hpp`): the ctor's 15-word zero block and the
+    Term() release order are real members now (`unk5C/unk64/unk6C/unk74/unk78`, `mFilterMan`,
+    `mLgtCtrl`, `mFadeMan`, `unk88/unk90/unk94`, `unk98/unk9C/unk9E[10]/unkB2`, `unk3C0[0x20]`,
+    `unk3E0`). `unkB8` is `u8` (retail ctor stores a byte there — a `u32` forced a `stw` and cost
+    1 structural diff in `__ct__CScn`). `CScn::Move()` is a declared virtual now (retail
+    `Move__4CScnFv`), and `CScnMoveView`/`CScnTermView` are gone.
+  * `CScnItemModelNw4r`: the `+0x147C` scene object is a `nw4r::g3d::ScnMdlSimple` — use its public
+    `GetWldMtxArray()` instead of an `mpWorldMtxArray@0xEC` overlay; `+0x1F8` act data is
+    `CScnItemModelActData::transform` via the base `CScnItemModel*`; `+0x7EC` is a real member.
+  * `code_804CC2B8`: `Scn_FindCamItem` results are `CScnCameraItem*` (`mMtx` at +0xCC,
+    `mPos` at +0x10C) instead of `(u8*)m + 0xcc` / `+ 0x10c`.
+  * `code_804DEDA8`: `CEffectObj::mPoolSlot` (s16 at +0x1E, replacing `_pad1E[2]`) — the effect
+    pool's free/claimed slot index.
+  * `CScnEnvLgtCtrl`: `scnLgtSetFlag30/31`, `scnLgtIsStepping` take `CScnEnvLgtCtrl*` and use
+    `field_0x04`; `scnLgtInitWorkBlob` takes `CScnEnvLgtCtrlWorkBlob*`.
+- Result:    byte-identical (hexdiff --all tables unchanged): CScn 25→6, CScnItemModelNw4r 24→15,
+  code_804CC2B8 30→20, code_804DEDA8 36→32, CScnEnvLgtCtrl 106→96 smells.
+- Residual blocks (recorded, not worked around):
+  (1) hand-built vtable/.data blobs. `CScn`'s vtable is the retail .data blob `lbl_eu_8056E8D0`
+  while MWCC also emits `__vt__4CScn`; until the blob is renamed to the vtable symbol the
+  ctor/dtor vptr stores must stay behind one padding view, and `Scn_DtorThunk54`
+  (`(CScn*)((char*)p - 0x54)`) is a this-adjusting thunk the compiler would emit itself.
+  Same for `CScnItemModelNw4r`'s 9 `(char*)self - 0x1464/-0x1468` callback shims (MI thunks of
+  ScnMdlSimple bases) and for the `scnLgtPtmf*` family in `CScnEnvLgtCtrl`: those are the
+  member functions whose addresses fill the hand-built `IScnEnvCtl` ptmf table
+  (`{&fn, 0, 0xFFFFFFFF}` triples), so their `obj` param can only be typed after that table
+  is emitted by the compiler.
+  (2) `Scn_IsAnimActiveOrNull`/`Scn_HasWorkItem` in `CScn.cpp` stay on a TU-local owner/pool
+  lens because `CScnItemModel.hpp` declares `Scn_SetupAnimDefault` with one arg while the
+  retail body forwards five (r4 is live) — including that header from the CScn TU is a
+  cross-TU declaration cleanup (CScnItemModel.cpp call sites), not a local rename.
+- Confidence: repo_proven for every bullet above (each verified with `hexdiff --all`).
+
+## CriWare smell wave c6 — handle structs typed without moving a byte (mps_get / mwsfdsfx / adx_tlk)
+- Symptom:   catalog-era CriWare TUs reach every handle field through `*(u32*)((u8*)self + 0xNN)`.
+  Replacing a cast with the real member (`self->field`) is byte-neutral for a *plain* store, but
+  three shapes flip on you the moment the pointer is typed:
+- Cause / recipes (all verified with `hexdiff --all` on the unit *and* every includer):
+  1. **64-bit header pairs.** A getter that copies one 8-byte header word as two u32s
+     (`lwz hi; lwz lo; stw lo; stw hi`) must keep the two named locals plus the reversed store
+     pair; `*dst = src` on an 8-byte struct emits forward stores (mismatch), and a `u64` copy
+     emits reversed stores but swaps the value colours (hi→r0 instead of r4). mps_get.c keeps the
+     hi/lo locals and says so in a comment.
+  2. **CSE'd entry pointers.** `MPS_SYSHDR *entry = &work->sys_save[index]` re-colours the address
+     temporary from r5 to r4 whenever the copy itself is spelled with u32 locals (13 pure
+     reg-swaps). Any 8-byte struct copy restores r5 but changes the store order. Pure losing
+     trade on this function — left on the byte view.
+  3. **Alias analysis changes with the pointee type.** `adxt_start_sj` (adx_tlk) matched only
+     while its stores went through `*(u32*)((u8*)self + 0xNN)`: with `self` typed `ADXT_OBJ_*`
+     MWCC hoists the `mode` byte load past the store block and the function drops to 7 reg swaps.
+     Fix: convert the *reads* first (`self->inSj`, `self->sjd`, `self->f74_amp`, …) and convert the
+     run of `*(u32*)((u8*)self + 0x..) = …` stores one at a time, checking `hexdiff --symbol`
+     after each — the store run is what keeps the byte load blocked.
+  4. **u8 members compare unsigned.** `self->fmt == 0xa` on a `u32` member compiles a different
+     compare than the retail `*(s32*)` load when the constant is negative-ish; write
+     `(s32)self->fmt == 0xa` (MWSFTAG_SetAinfSj, 4 structural diffs otherwise).
+  5. **Header placement keeps the score honest.** Structs moved into a shared `*_types.h` stop
+     being counted by `run.py faithful` (it attributes a header by unit stem), so a unit's
+     `field_0x` count can drop without a source change. Report the move, not the count.
+- Result:    mps_get 6/6 + offset_cast 52→0 (unit faithful); mwsfdsfx 18/22 + 59→20; adx_tlk 36/45 +
+  45→0; mwsfdcre 14/20 unchanged; sfd_adxt 24/30 unchanged.
+- Confidence: repo_proven (each shape measured with hexdiff; the losing variants are recorded here,
+  not shipped).
+
+## kyoshin/cf/CBattleManager — 587 offset casts / 41 view structs → real members (54→55 FULL, Wii/1.1 `-O4,p -ipa file`)
+
+- Symptom:   `run.py faithful --unit CBattleManager` reported hard `offset_cast 587`,
+  `view_struct 41` in a 12.2k-line TU whose 78 functions are 54 FULL / 24 near-misses. The
+  casts were concentrated in the sub-8% big functions (`func_800EC918` 126, `updateBattleAction`
+  106, `func_staleMove` 59, `func_800DCB54` 50, `emitBattleMoveEvents` 45, `processBattleMove` 41).
+- Cause:     every cast was one of four things, not 587 different things:
+  1. **status-entry fields** — `findBattleStatusEntry` returns `cf::CBattleStateEntry*` in its
+     definition (`CBattleState.cpp`) but is *declared* `void*` in five headers, so callers kept an
+     untyped `void*` and re-derived +0x10/+0x08/+0x14/+0x20/+0x2E by hand. Those are exactly
+     `CBattleStateEntry::unk10/unk08/unk14/unk20/unk2E`.
+  2. **the actor's embedded move sub-object** — `(u8*)actor + 0x3E9C` is the
+     `CfObjectActor → CfObjectMove` base adjustment; `((cf::CfObject*)((u8*)actor + 0x3E9C))->m()`
+     is `((cf::CfObjectActor*)actor)->m()`.
+  3. **actor words that were already declared** — abs 0x3F00 = `CfObject::unk64`,
+     0x3F04 = `CfObject::mFlags68`, 0x3F10 = `CfObjectModel::field_0x74`,
+     0x3F28 = `CfObjectModel::unk8C_3`, 0x3F60 = `CfObjectMove::mTargetC4`,
+     0x3ED4 = `CfObject::mSubObj38`, 0x3374 = `CActorParam::unk3374`,
+     0x15F0 = `CActorParam::unk15F0`.
+  4. **CBattleManager's own tail** — `(u8*)self + 0x1AA` = `mChain.unk0[2]` (the story-chapter
+     byte other TUs already spell that way), 0x1A8 = `mChain`, 0x194 = `unk194`,
+     0x20C8 = `unk20C8`, 0x219C = `mVision`, 0x08 = `mActorList1.mStartNodePtr`,
+     0x48 = `mActorList3.mStartNodePtr`.
+- Fix:       (a) retype the local to the real class and drop the arithmetic —
+  `cf::CBattleStateEntry* e = (cf::CBattleStateEntry*)findBattleStatusEntry(...)` then `e->unk10`;
+  (b) for `void*` parameters keep one C-style cast to the *actor* type
+  (`((cf::CfObjectActor*)x)->mTargetC4`) — the member offset then carries the whole displacement, so
+  the emitted instruction is byte-identical (`lwz r0, 0x3F60(rN)`, MWCC folds <0x8000 displacements);
+  (c) for pointer-valued sub-objects use `static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)x)`;
+  (d) delete the view structs that became dead (`E1B5C_ObjView`, `BattleRegObjAccessor`,
+  `BattleRemoveObjAccessor`, `BattleScanActorView`, `BattleScanStateView`, `StatusEntry10View`,
+  `E85F0_Entry12E`) — removing a header-only struct does not move any line-number-sensitive codegen.
+- Result:    hard 1365 → 991: `offset_cast 587 → 232`, `view_struct 41 → 22`; FULL 54 → **55**
+  (FactoryEvent2 went 89.9% → 100% as a side effect of typing its `BattleRemoveObjAccessor*`
+  local as `cf::CfObjectActor*`). 25 verified batches, each `hexdiff --all` byte-identical or
+  strictly better; no accepted function dropped.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU that walks `CfObjectActor`/`CActorParam`/`CBattleState` through
+  `void*`. Three negative results worth keeping:
+  - **`(cf::CBattleState*)x` is only an upcast when `x` is statically an actor type.** From `void*`
+    it is a plain reinterpret (offset 0) — silently wrong; `broadcastBattleDamage` passed the
+    actor itself instead of its CBattleState and dropped 100% → 99.4%, which is how it was caught.
+  - **MWCC CSEs the derived→base conversion.** Writing `actor->CfObject_getPosVector()` where retail
+    has `((cf::CfObject*)((u8*)actor + 0x3E9C))->CfObject_getPosVector()` makes MWCC hoist
+    `addi r27, r30, 0x3E9C` and reuse it (`lwz r12, 0(r27)`) instead of folding the displacement —
+    `dispatchBattleAI` 100% → 26.8%. Same for `(cf::CBattleState*)actor` vs `(u8*)actor + 8`.
+  - **Some view structs are codegen devices, not layout guesses.** `BMSentinelView` (CBattleManager
+    +0x48) and `ActorSub3E9CView` defeat MWCC's cross-statement commoning: replacing them with
+    `mgr->mActorList3.mStartNodePtr` / `static_cast<cf::CfObjectMove*>(actor)` costs
+    `CBattleMan_FindActorByKind` 100% → 17% and `CBattleMan_FindNextActorRef` 100% → 42% (a
+    same-type alias local does not help — the CSE is not syntactic). They stay.
+
+## non-kyoshin `never_inline` / `DECOMP_DONT_INLINE` removal batch (19 units) — 92 smells → 0
+- Symptom:   `run.py faithful` grew a hard `noinline` class that also counts
+             `__attribute__((never_inline))` and `DECOMP_DONT_INLINE` (same hack as
+             `__declspec(noinline)`). 92 occurrences across non-kyoshin units, dominated by
+             `monolib/src/effect/code_804CC2B8` (50) and `RVL_SDK/os/OSNet` (8).
+- Cause:     four distinct root causes; a per-function attribute was never needed except where
+             MWCC's inliner folds a single-call-site helper *into one specific caller* while the
+             rest of the TU still needs auto-inline:
+             (1) **wrong unit inline flag — `-inline noauto`.** `code_804CC2B8` (all 50) and
+                 `code_804E36DC` (the 3 `CScheduleItem` members) are TUs that retail never
+                 auto-inlined at all: with the attributes deleted and `-inline noauto` added to
+                 configure.py the whole `hexdiff --all` table is byte-identical (26/55 and 13/18 ✓,
+                 same sizes, same extab). Control run without the flag lost 5 / 2 ✓, which is what
+                 the attributes were papering over. Same for `RVL_SDK/ax/AXSPB` (2, header decls of
+                 `__AXDepopFadeMain/Rmt`) and for `OSNet` (8: they sat *inside* an existing
+                 `#pragma auto_inline off` region, i.e. pure redundancy — deleting them is
+                 byte-neutral).
+             (2) **`#pragma optimize_for_size` / cross-function inertness.** `CWorkSystemPack` (6,
+                 already `-ipa off` + size-optimized blocks), `CWorkSystemCache` (3),
+                 `CWorkSystem` (1), `monolib/core/code_804DEDA8` (the `__dt__804DEDCC` forward
+                 declaration: its definition already sits inside `#pragma auto_inline off`),
+                 `RVL_SDK/nand` (the `nandSplitPerm` forward declaration; the definition's own
+                 attribute is what matters), `nw4r/db/db_assert`, `nw4r/lyt/lyt_layout` and
+                 `nw4r/snd/snd_SoundArchiveFile` — deleting the attribute changes no byte.
+             (3) **genuine single-caller fold.** Nothing on the flag axis suppresses these; MWCC
+                 folds the callee into the one caller regardless of `-ipa off`, `-inline noauto`,
+                 `-O4,s`, `__declspec(weak)`, `static`, `#pragma optimize_for_size` on the caller,
+                 and the retail `bl` proves the callee really is the in-TU copy. Seven lines kept
+                 with `// noinline-ok:`: `CPadManager::updatePadExtensions/updateMainControllers`
+                 (unit flags lose 3 ✓), `CWorkControl::setFlowSetup` (loses 3),
+                 `OS::ClearArena/ClearMEM2Arena` (loses 4-8), `OSThread::UnsetRun` (loses 6-12),
+                 `nand::nandComposePerm` (loses 7-11), `CWorkThread::CMsgParam<8>::enqueue`
+                 (explicit specialization, -ipa folds it into 3 callers),
+                 `CWorkThread::getWorkThread`'s `#pragma dont_inline` region (inlines
+                 `_reslist`/`strcmp` helpers, 0x9c→0x178), `nw4hbm::lyt::Layout::BuildPaneObj`
+                 (loses 3), `code_804DEDA8::SchedRes_LookupKeyIndexed` (loses `FindEntryValue`),
+                 `vm/yvm2.h::vmExceptionProc` (inlines into 20+ opcode handlers).
+             The `code_804DEDA8` case is worth the detail: retail `SchedRes_FindEntryValue`'s `bl`
+                 at `0x804E3AE4` decodes (straight from `orig/us/sys/main.dol`) to `0x804E35B4` =
+                 `SchedRes_LookupKeyIndexed` at unit+0x370, i.e. an in-TU call to a function defined
+                 0x4E0 bytes *earlier* — so "definition order" and "wrong TU" are both ruled out with
+                 retail evidence, not just by experiment.
+- Fix:       delete the attribute/pragma; where the TU genuinely never auto-inlined add
+             `-inline noauto` to that unit's `extra_cflags`; keep the exceptions above with
+             `// noinline-ok: <what was tried>` on the same line. `-O4,s` was *not* the answer for
+                 any of these units (it re-schedules and loses AdvanceVec28/B, verify `-O4,p` first;
+                 `code_804DEDA8` under `-O4,s` = 27/64).
+- Result:    92 → 0 (`run.py faithful`): code_804CC2B8 50→0, OSNet 8→0, CWorkSystemPack 6→0,
+             CWorkSystemCache 3→0, code_804E36DC 3→0, CWorkThread 3→0, code_804DEDA8 2→0,
+             CPadManager 2→0, CWorkControl 2→0, OS 2→0, nand 2→0, AXSPB 2→0, OSThread 1→0,
+             CWorkSystem 1→0, yvm2 1→0, nw4r db_assert 1→0, nw4r lyt_layout 1→0,
+             nw4hbm lyt_layout 1→0, snd_SoundArchiveFile 1→0.
+             Every touched unit's `hexdiff --all` table is byte-identical to its pre-edit table
+             (same ✓ count, same %/size columns), including the header blast radius
+             (`CScheduleItem.hpp` → code_804DEDA8/code_804E36DC/code_804C8718, `yvm2.h` →
+             yvm2/yvm_debug, `snd_SoundArchiveFile.h` → snd_SoundArchivePlayer, `AXSPB.h` → AXSPB,
+             `nw4r/lyt/lyt_layout.h` → lyt_layout, `CPadManager.hpp` → comment-only).
+- Confidence: repo_proven
+- Applies to/a.k.a.: negative results worth keeping —
+  - `__declspec(weak)` (both at the definition and as a forward declaration) does **not** stop
+    MWCC 1.1 from folding a static single-caller helper (`OS.c` ClearArena/ClearMEM2Arena).
+  - `#pragma optimize_for_size on` around the *caller* does not stop the fold either
+    (`CPadManager::update`), and neither does `-ipa off` once `-inline auto` is still on.
+  - `-inline noauto` is not a free win: it is only correct when the rest of the TU really has no
+    inlining (`AXSPB`, `code_804CC2B8`, `code_804E36DC`); on `OS.c`, `OSThread.c`, `nand.c` and
+    `CWorkControl.cpp` it costs 3-12 ✓.
+  - A `DECOMP_DONT_INLINE` on a *definition* is the one that binds for a member function: deleting
+    the class-declaration attribute in `CScheduleItem.hpp` while the definitions kept theirs still
+    changed the emitted code, so always delete both.
+
+## CTagProcessor — anonymous-namespace tag-code classes: MWCC reproduces retail's vtable/RTTI .data order (probe-verified, conversion still open)
+- Symptom:   the 23 `__ct__CTagCode*(void* self)` stubs in `CTagProcessor.cpp` hand-store the retail vtable
+             addresses (`*(void**)self = (void*)lbl_eu_8052D9E0;` …) because the classes were never declared.
+             Retail `.data 0x8052D618..0x8052D9F8` therefore stays unemitted and the unit's `.data`/`.sdata` are 0%.
+- Evidence (retail main.dol):
+  · class-name strings sit in `.rodata` at 0x804FF7B8 (`@unnamed@CTagProcessor_cpp@::CTagCodeMakeCrystal`) …
+    and 0x804FFBC8 (`@unnamed@CTagProcessor_cpp@::ITagCode`) → the classes live in `namespace { }` inside
+    `CTagProcessor.cpp` and share one abstract base `ITagCode` with two *pure* slots
+    (`{&__RTTI__ITagCode, 0, 0, 0}` = 0x10).
+  · every derived class owns 0x28 bytes: `{&__RTTI__Derived, 0, &__dt, Process, CalcRect, v14}` (0x18) followed by
+    the 0x10 `ITagCode` base-list block `{&__RTTI__ITagCode, 0, 0, 0}`. `.sdata` holds one 8-byte `__RTTI__Derived`
+    per class (0x80661EE8 "MakeCrystal" … ascending) whose second word points at that class's base-list block.
+  · `.data` order is the *reverse* of the sinit ctor order: sinit runs CL, CP, Wait, Del, … Shop, MakeCrystal, while
+    `.data` ascends MakeCrystal (0x8052D618) → … → CL (0x8052D9E0). A 0xC object + `jumptable_eu_8052D8BC` (0x58)
+    interrupt the run between `CTagCodeTrust` and `CTagCodeCol`; that gap is not class data.
+  · shared slot bodies: slot 3 = `TagProcDefaultOp` (0x801265DC, 8 B), slot 4 = `defaultProcess` (0x8012662C, 8 B),
+    slot 5 = `TagWriterCode7` (0x80129480) — i.e. the base provides Process/CalcRect and each class overrides the
+    tag-body slot. Hardcoded slot order for a real class hierarchy:
+    `virtual ~T(); virtual u32 Process(u32, void*); virtual u32 CalcRect(void*, u32, void*); virtual u32* v14(...)`.
+- Fix (verified with a standalone probe, `Wii/1.1 -O4,s -RTTI on -str reuse,pool,readonly`, 23 classes in a
+  `namespace { }`, single inheritance from a pure-virtual base, declared in sinit order):
+  MWCC emits **exactly** retail's layout — per class `[vtable 0x18][base-list 0x10]` in `.data`, one 8-byte
+  `__RTTI__` per class in `.sdata`, name strings in `.rodata`, and the whole run in **reverse declaration order**
+  (first declared = highest address). So declaring the classes CL→MakeCrystal is the correct order, and no
+  hand-written vtable label is needed.
+- Proof of the emitted names (probe object): `__ct__Q219@unnamed@CTagProcessor_cpp@9CTagCodeCLFv`,
+  `__dt__Q219@unnamed@CTagProcessor_cpp@9CTagCodeCLFv`, `__vt__…`, `__RTTI__…`, and the shared helpers are
+  namespace-scoped (`TagProcDefaultOp__19@unnamed@CTagProcessor_cpp@FUlPv`).
+- Why it is still open: the fork's `symbols.txt` carries *decoded* placeholder names for both sides
+  (`__ct__CTagCodeCL`, `__dt___unnamed_CTagProcessor_cpp_CTagCodeCL`, `lbl_eu_8052D9E0`,
+  `lbl_eu_80661EE8`), so the conversion needs ~100 coordinated symbol renames (3 regions + `targets.json`)
+  *and* the unit's hand-built `.data` (CSystemWindow vtable, the 25×12 dispatch tables, the jumptables) is
+  still `extern`, so the new compiler-emitted blocks cannot be diffed against a matching section yet.
+  Convert the classes together with the `.data` recovery, in one pass, and re-run `--all` for the includers.
+- Confidence: repo_proven for the emission order/layout (probe object inspected with objdump -r/-s);
+             hypothesis for "declared in sinit order"; negative_result for doing it piecemeal.
+- Applies to/a.k.a.: `TagProcDefaultOp` / `defaultProcess` / `ITagCode` flat labels; `docs/handoff/PLAN_TO_DONE.md`
+  checkpoint-4 debt "CTagProcessor: the 23 flat `__ct__CTagCode*(void*)` stubs".
+
+### UPDATE (c7-tagproc): conversion written, built, byte-verified — then reverted; blocked only on the unit's `.data` layout
+- Symptom:   the 23 flat `__ct__CTagCode*(void*)` stubs were converted to a real `namespace { class ITagCode … 23 × class CTagCodeX … }` hierarchy in one pass. It compiles and
+             reproduces retail's class data exactly, but the 23 ctors lose their acceptance: they stay **100% byte-identical** while the equivalence proof rejects their `__vt__` relocs.
+- What the conversion emits (measured on the built object, `hexdiff --all` + a per-symbol byte/reloc compare):
+  · `.data` 23 × [vtable 0x18 + base list 0xC, 0x28 stride] in **reverse declaration order** — 22/23 blocks byte- and reloc-identical to retail; the 23rd (`CTagCodeTrust`) differs
+    only in its 4 pad bytes, where retail's `TagParseColor` jumptable (`jumptable_eu_8052D8BC`) begins. `.sdata` 24 × 8-byte `__RTTI__` identical (declaration order, base last),
+    `.rodata` 24 name strings `@unnamed@CTagProcessor_cpp@::CTagCodeX` in the same order, `.sbss` the 23 singletons in declaration order (0x5C; retail 0x60 is link padding).
+  · `__sinit_\CTagProcessor_cpp` = **0xD4 FULL_MATCH** (was a hand-written 0x128 `sinit_8012BA00` at 0.0%): MWCC emits 23 × `addi r3,r13,off ; bl __ct__…`, no
+    `__register_global_object`, no `.bss` cookie — exactly retail. All 23 dtors 0x40 and all 23 ctors 0x10 are byte-identical to retail.
+- Exact blocker (causes the revert): MWCC emits `__vt__` as a **local** symbol; `tools/coop/lib/full_match.compare_functions` proves a local `.data` reloc target as
+  `splits.txt` section base + object offset, so a ctor only certifies when its emitted vtable lands at retail's address. Retail's class blocks start at `.data+0x2A0`, ours at
+  `.data+0xB0` (the TU's three jumptables are emitted first), i.e. CL's vtable proves as 0x8052D7C0 vs retail 0x8052D9E0. The 0x2A0 of preceding retail content:
+  `0x000` CSystemWindow vtable + 4 base lists (0x100) · `0x100` the 25×12 tag dispatch table `lbl_eu_8052D478` (0x12C) · `0x22C`/`0x264` the `TagProcMeasureText` /
+  `TagProcStepMessage` jumptables (0x38 each) · `0x29C` 4 B pad.
+- splits.txt boundary (found while chasing the above): the 0x100 at `.data` 0x8052D378 is `__vt__13CSystemWindow` + its base lists — relocs at +0x00/+0x08/+0x0C name
+  `__RTTI__13CSystemWindow`, `__dt__13CSystemWindowFv`, `Reset__14CChildListNodeFv`, `Init__13CSystemWindowFv`, the 30 `WorkEvent*` slots and `SysWinSelectBase*Thunk*`. `kyoshin/CSystemWindow.cpp`
+  has **no `.data` range** in `config/us/splits.txt`, and `kyoshin/CSysWinSelect.cpp` ends exactly at 0x8052D378 → CTagProcessor's `.data start` is almost certainly
+  **0x8052d478**, with 0x8052d378..0x8052d478 owned by `kyoshin/CSystemWindow.cpp`. Fix that first; the class conversion cannot be accepted before it.
+- Recipes proven (all `Wii/1.1 -O4,s -RTTI on -Cpp_exceptions on -str reuse,pool,readonly`, probe + full TU):
+  1. `virtual ~ITagCode();` must be **declared and defined, non-pure**. `= 0` with no body → derived dtors become 0x50 with a `bl` to an undefined `__dt__…ITagCode`; `= 0` with a
+     body → MWCC re-adds `__register_global_object` plus one 0xC `.bss` cookie per singleton (sinit 0x80+ for 3 objects).
+  2. Declare the slots `~T, Process, CalcRect, v14` in that order in the abstract base (dtor **first** — MWCC numbers virtuals in declaration order, so a base without a dtor puts the
+     derived dtor at slot 3); `Process`/`CalcRect` get the shared 8-byte `{ return 0; }` bodies (retail's `TagProcDefaultOp` / `defaultProcess`), `v14` stays pure.
+  3. Unavoidable extras vs retail (dead-stripped by retail's link, cf. CNReqtask precedent): `__dt__Q…8ITagCodeFv` (0x40) and `__vt__Q…8ITagCode` + base list (0x18+0xC in `.data`).
+  4. **Memberising the slot bodies: do not introduce alias locals.** Writing `u16* dst = buf; wchar_t* str = (wchar_t*)arg;` at the top of a member body shifts the callee-saved
+     colour assignment by one register (`CTagCodeMouth::v14` 75% / 8 reg_swaps, `CTagCodeTrust::v14` 1.2% / 363 structural). Renaming the *definition's* parameters to the names the
+     body already uses (a definition's parameter names need not match the declaration's) restores both to **100% byte-identical**. Same for the `holder`/`ctx`/`out` views: cast at
+     the use site, never bind a copy.
+  5. Real mangled names for this unit use namespace length **27**: `__ct__Q227@unnamed@CTagProcessor_cpp@10CTagCodeCLFv` (`Q219@…` in the entry above is the probe's
+     filename-derived prefix and is wrong here), vtables `__vt__Q227@unnamed@CTagProcessor_cpp@10CTagCodeCL`, RTTI `__RTTI__…`, statics `s_CL__27@unnamed@CTagProcessor_cpp@`,
+     and the abstract base's slots mangle as `Process__Q227@unnamed@CTagProcessor_cpp@8ITagCodeFUlPvPv` / `CalcRect__Q227@unnamed@CTagProcessor_cpp@8ITagCodeFPvUlPv`.
+- Result: reverted in full — 112/127 before → 90/127 with the conversion (the delta is exactly the 23 ctors plus `sinit`'s gain), every non-ctor function byte-identical to its
+  baseline score. Working tree is back to the 112/127 baseline; gates pass (link-gate 43, extab-gate OK, text-order-gate OK, faithful unchanged, registry_check OK).
+  The complete converted TU is kept at `/tmp/xb/c7-tagproc/CTagProcessor.cpp.converted` with the rename pairs (`pairs.txt`, `corr.txt`) for the next pass.
+- Confidence: repo_proven for the emission layout/order, the dtor rules, the 0x40/0x10 byte equality and the alias-local colour shift; hypothesis for the splits.txt boundary
+  (evidence: the vtable's own relocs + CSystemWindow.cpp having no `.data` range).
+
+## monolib LOD LODMemMan — g3d sub-manager class extraction: `-inline noauto`, in-class sub-ctor, `s16` −1 fields (Wii/1.1 `-O4,p`)
+- Symptom: six helpers mangled as members of the enclosing `LOD::UnkClass_8046D144` but called with `this = obj+0xCC`;
+  `teardownSubEntries` 36.5% (0xfc vs 0xf8, `lis 1 / subi 1` for `0xFFFF`, child loop registers rotated),
+  `bindLodChildren` 75.6%, enclosing ctor 37.0%, two helpers with `#pragma auto_inline off` and a `noinline`
+  thunk in the TU.
+- Cause: (a) the +0xCC block is its own 0x978-byte class, so the helpers had to be free functions pinned by
+  `extern "C"` mangled declarations; (b) `LODChildEntry::mId` was declared `u16` and assigned `0xFFFF`, which
+  MWCC materializes as `lis rX,1 ; subi rX,rX,1` instead of retail's `li rX,-1`; (c) with `-ipa file` MWCC
+  auto-inlines tiny same-TU helpers into their callers *even when the definition follows the caller*, so
+  `resetChildMasks`/`resetLightColor`/`delegateMergeToSub` were folded where retail keeps `bl`s.
+- Fix:
+  1. `class LODG3dMgr` in `UnkClass_8046D144.hpp` — `ScnGroup* mGroup` 0x000, `ResFile mResFile` 0x004,
+     `LODChildEntry mChildren[16]` 0x008, `LODG3dSlot mSlots[16]` 0x0C8, `LODChildLight mChildLights[3]` 0x188,
+     `GXLightObj mLight` 0x92C, `mLightScale/mStoredLightScale/mLastChildIdx` 0x96C..0x978. `LODChildEntry` is
+     `{u32 field_0x0; UnkClass_8046D144* mChild; s16 mId; u16 mFlags;}` at +0x08 with 0xC stride — the leading
+     state word is what the ctor clears, `mChild` is the observably-null-checked slot pointer
+     (read at base+0xC because the walk is anchored at mChildren[i].mChild); the g3d slot is
+     `{G3dObj* mObject; s32 mId(−1); u16; u16 mFlags}`.
+  2. Move the six helpers onto that class (+ `destroyAllG3dObjects`, `notifyG3dManager`, `initSceneGroup`) and
+     rename the symbols (`__Q23LOD17UnkClass_8046D144…` → `__Q23LOD9LODG3dMgr…`, `__Q23LOD9LODMemManFv` for the
+     two survivors) in us/eu + `targets.json`.
+  3. `mId` is `s16` and assigned `-1` → `li rX,-1`.
+  4. Unit flag `extra_cflags=["-inline noauto"]` on `monolib/src/lod/LODMemMan.cpp`. Evidence: teardownG3dObjects
+     65.3%→100%, teardownSubEntries 98.4%→100%, bindLodChildren 20.9%→75.6% (0 structural), no function regressed
+     once point 5 was in place. With it, all 11 `#pragma auto_inline off` + 1 `__declspec(noinline)` in the TU were
+     deleted with zero byte change.
+  5. `virtual ~LODMemMan() {}` **in-class** (LODMemMan.hpp) and drop the out-of-line empty definition: under
+     `-inline noauto` an embedded member's empty out-of-line virtual dtor is *not* elided, so the owner's dtor gets
+     an extra `addi/li/bl` (0x12c vs 0x120). The standalone 0x40-byte `__dt__Q23LOD9LODMemManFv` copy is still
+     emitted in the owner TU (RTTI/vtable key function) and stays 100%.
+  6. Enclosing ctor: `UnkClass_8046D144() : field_0x0(0)` + in-class `LODG3dMgr()` ctor. Declaration-order member
+     construction then emits exactly retail's order: field_0x0 store, sub-ctor clears, LODMemMan vptr store, body.
+     `LODG3dMgr() : mResFile(0)` must put only `mResFile` in the init list and `mGroup = 0` in the body after the
+     child-state walk (retail's 0xD0 store precedes loopA, the 0xCC store follows it).
+- Result: unit 62 → 64 FULL; `__ct__` 37.0% → 100.0% (table still ✗ because the LODMemMan vtable reloc is named
+  `lbl_eu_8056DB08` on the retail side and `__vt__Q23LOD9LODMemMan` on ours — data-symbol naming, unit `.data`
+  is still 0xA4 vs 0x1E0). `teardownSubEntries` 100% (its `delegateMergeToSub` call needed `-inline noauto`).
+  Smells for the unit: mangled_c 30→24, view_struct 16→5, noinline 11→0, `field_0x` 964→899.
+- Confidence: repo_proven (byte-exact functions with and without the flag).
+- Applies to/a.k.a.: MWCC 1.1 `-ipa file` auto-inlining of late-defined same-TU helpers (`-inline noauto` as the
+  faithful unit flag, cf. `kyoshin/cf/CfRes.cpp`, `monolib/src/core/CRsrcData.cpp`); empty virtual dtors of
+  embedded members (`IWORK_EVENT_INLINE_DTOR` precedent); `u16 0xFFFF` → `s16 -1` for `li` immediate materialization.
+
+### Probe: MWCC 1.1 rolled-vs-unrolled pointer clear loops and trip-count `divwu`
+- `for (LODChildEntry* e = mChildren; e < &mChildren[16]; ++e) e->field_0x0 = 0;` makes MWCC 1.1 compute a
+  trip count with `divwu rX, rX, 0x60` and a guard block (0x1A8-byte ctor) — it mistook the element stride.
+- `do { e->field_0x0 = 0; } while (++e < mChildren + 16);` (bound as an expression, no named end local) emits the
+  rolled pointer loop retail has: `addi r4,r3,0xD4 / addi r5,r3,0x194 / loop: stw 0,0(r4) ; addi r4,r4,0xC ;
+  cmplw r4,r5 ; blt`. Hoisting the end into a named local instead makes the cmp reorder (`cmpl r5,r4`).
+- Same file, immediately after: two 16-element counted clears of the same array DO get fully unrolled by MWCC,
+  so a shared `for` with two stores cannot produce retail's "one rolled + one unrolled" pair — the original really
+  has two loops.
+- Confidence: repo_proven (ctor went 37% → 100% by this change alone).
+
+## CriWare smell wave c7 — typed handles vs MWCC's word walker (ax_rna / mpv_lib / mwsfdcre / mwsfdsfx / adx_fs)
+- Symptom:   catalog-era CriWare TUs reach every handle field through `*(u32*)((u8*)self + 0xNN)`.
+  Typing the pointee is byte-neutral for a *single* field access, but the per-channel loops flip:
+  retail walks ONE pointer whose value is the **handle base** and folds the member offset into the
+  load/store displacement (`lwz r3,48(r29)` with `addi r29,r29,4`), while `self->arr[i]` lets MWCC
+  build the other legal shape (an offset accumulator `add r3,base,i*4` + `lwz 48(r3)`). Different
+  instruction forms ⇒ structural diffs; different callee-saved colours ⇒ reg swaps.
+- Cause:     MWCC strength-reduces `p->arr[i]` to `&p->arr[0] + i`; it does not re-fold the member
+  offset back into the displacement once the base is a derived pointer. The original CriWare code is
+  written against the flat work area (one word view + displacement), which is why retail looks like
+  "base walker + offset".
+- Fix (measured per function with `hexdiff --all`; ✓ = keep, ✗ = revert to the walker form):
+  * byte-neutral (converted): single-field reads/stores — `self->enable/sw/numChan/chanNum/playPos/
+    bufSmpl/sfreq/vol/fader[i]/pan[k]/voice[k]/bitPerSmpl/streamMode/tsSkipCnt/dctCnt*/state`,
+    `&self->chunkX[i]` (8-byte struct store/load), `&self->fader[index]`.
+  * must stay a word walk (reverted, ✓ back to 100%): `AXRNA_Create`'s journal copy
+    (`u32* d = (u32*)slot; d[0xa] = v`, retail `stw r0,40(r6)` with `r6 = slot`), `axrna_voice_drop`'s
+    scan (`u32* row` + `w[2]`), `AXRNA_SetSfreq`/`AXRNA_SetMain`'s channel loops (`u8* p` + `*(void**)(p+8)`),
+    `AXRNA_SetTransSw`'s wait loop (needs the `volatile` word read: without it MWCC hoists the flag load
+    and the 200-iteration unroll collapses, 0x30c→0x270).
+  * `criware_80399F4C` was the exception: the `AxRnaFeed` union overlay (`u.ch[i]`) was itself the
+    mismatch — typed members (`sjIn[0]/sjPlay[0]/sjTs[0]`, `tsSrcLen/tsRatio/tsSkipCnt/halfFeedPos/
+    feedTotal`, walking `chp` by 4 for the stride-4 slots) took it 26.1%→66.5% (size 0x3e0/0x3dc left).
+  * Handle layouts recovered (one definition each): `AXRNA_OBJ` 0xE4 in ax_rna.c (16 slots × 0xE4 in
+    the module table; note the per-channel state is *parallel arrays*: stride 4 for voice/buf/sjIn/
+    sjPlay/transBusy/flashBusy/pan/sjTs, stride 8 for the chunk pairs at 0x38/0x48, `state/chanNum`
+    bytes 0x02/0x03 are the same value at create and only `AXRNA_SetNumChan` writes 0x03);
+    `libs/CriWare/src/sofdec/sfdcore/mpv/mpv_types.h` = `MpvCfg` (0x60, the block every handle copies
+    at 0xB10), `MpvWork` (8-byte header + cfg + 0x400 clip table), `MpvHn` (0xDC0: state 0xB08 = 1 free /
+    2 used, mb callback triple 0xB50/54/58, `SfdMpvPicAtr` at 0xB5C, plane pointers 0xD0C); and
+    `MwsfPicUsrBuf` {buf,size,count} at handle+0x4A4 (`picUsrTgt`) in mwsfd_types.h.
+  * Two symbols, one type (retail evidence): MPV_Init addresses the config through the 0x80602B80 work
+    base + 8, while MPV_SetCond/GetCond/Finish/Destroy reference 0x80602B88 directly (relocations).
+    Keep both externs (`MpvWork lbl_eu_80602B80`, `MpvCfg lbl_eu_80602B88`); do not collapse them.
+  * `mwsfcre_MallocCompoWork`: `*(u32*)((u8*)tag + 0x0C)` (tag = self+8) must stay a word read —
+    `self->prm.field_0x14` costs 1 reg swap (the same address, different argument colour).
+- Message tables: a CriWare error-message run is ONE .rodata object referenced with
+  `R_PPC_ADDR16_HA/LO <blob>` + an `addi` displacement per site (no per-message symbols/relocs), so it
+  is modelled as one blob (`adxf_mes` 0x7D8 in adx_fs, `adxt_mes` inside adx_tlk_rodata_suf, `lsc_mes`
+  precedent). Splitting it into string literals would change both the layout and the relocations.
+- Result:    ax_rna 18/24 ✓ unchanged (offset_cast 79→29, 80399F4C 26.1→66.5%, split overage 0x18→0x14);
+  mpv_lib 8/13 ✓ unchanged (offset_cast 57→0); mwsfdcre 14/20 ✓ unchanged (offset_cast 16→8);
+  mwsfdsfx 18/22 ✓ unchanged (offset_cast 20→16, MWSFD_IsColAdjFrame 100% on the shared
+  `MwlSfdFrmInf`); mwsfdfrm table unchanged (6/13); adx_fs 17/25 ✓ unchanged (label 108→61);
+  adx_tlk 36/45 ✓ unchanged (label 80→51). Gates: link 43, extab/text-order/faithful/UNIT_RULES/registry OK.
+- Confidence: repo_proven (every conversion re-measured with `hexdiff --all`/`--symbol`).
+- Applies to/a.k.a.: any CriWare module that indexes parallel per-channel arrays of a flat work
+  handle. Residual: the three partial `MWSFDPLY` copies in mwsfdset.c / mwsfdsl.c / mwsfdply.c still
+  need folding into mwsfd_types.h (each TU names the same 0x690 fields differently); mwsfdcre's last
+  8 offset casts are the mwsfdlib work-area view (needs `MWSFDLibWork` moved out of mwsfdlib.c) and the
+  two SstHn sub-objects at handle+0x5D8/0x600.
+
+## volatile-at-use smells — which ones are a genuine volatile object (c7-volatile wave, Wii/1.1)
+- Symptom:   `flexible faithfulness gate` reports `volatile N` for a unit; each hit is a
+  `*(volatile u32*)&obj` / `(volatile T*)&obj` re-read of a NON-volatile object used to defeat
+  CSE or to pin a load. Removing the cast usually costs 0 structural diffs but one or more ✓.
+- Cause (four distinct families measured in this wave):
+  1. **The object really is a thread-shared field.** The cast is only a stand-in for a missing
+     qualifier: declare the *member* (or global) `volatile` and drop the cast.
+     `CScnFilter::mUnk0C` (scene callback thread; retail re-reads per use AND hoists the third
+     read above the `mIntensity` store, which only volatile allows) and `SfdTime::vsyncTime` /
+     `field_0x2d4` (SFD server thread, written under `SFLIB_LockCs`). Both are header changes with
+     a *tiny* ripple (only the owning .c/.cpp touches those fields) — check with grep first.
+     `CViewRootPool::mUsed` reproduces retail's two loads exactly (0 structural) but costs the base
+     register colour in `updateViewRoot` (r7→r6, 17 reg_swap) and 4 in `wkStandbyLogout`, so it is
+     still parked.
+  2. **The reload is real aliasing the decomp dropped.** In `ColiSweepBoxContact` the partner slot
+     is read as a word (subtract destination) and again as a pointer (vtable notify); adding the
+     honest `CColiObject* field_0x3c_p` union member and reading *that* for the second use makes
+     MWCC CSE the two loads no longer — byte-identical to retail, 94.6% kept, 2 smells gone.
+  3. **Nothing changes.** ~half of the hits are inert: the function is already ✗ and the cast
+     neither helps nor hurts (`sinit_8049FC60`, `mpfCullMarkLayers`, `ColiXformEllipsoid`, the
+     `ColiQuerySegment` pool seeds, `Obj_Construct`). Drop the cast and re-measure; `sinit_8049FC60`
+     and `ColiQuerySegment` came out identical.
+  4. **Load-bearing but not honest.** `CMsgParam<N>::storeMsg*W` (26 hits in CGXCache) and
+     `CScnItemModel::simSetFlag2OnTree` / `ScnItemModelNw4r::scnImN4Sync*Flg` need a *re-read after
+     an inlined branch/call* that MWCC keeps CSE-ing; declaring the members volatile does **not**
+     reproduce it (the volatile *stores* shift the schedule instead: still 0x164 vs 0x168). These
+     need the owning header's owner (CMsgParam / the flag helpers) — parked, see the handoff note.
+- Fix:       declare volatile at the definition when the data is genuinely shared (family 1); model
+  the aliasing access with a typed union member (family 2); otherwise delete the cast (family 3).
+  Keep the cast only with a measured `// volatile-ok: <why>` line (snd_AxfxImpl RestoreAlloc's dead
+  load: the pool-load position is schedule-only, and qualifying the global flipped the epilogue
+  save/restore order of HookAlloc+Alloc).
+- Result:    volatile 73→47 over the 15 units of the wave; every measured ✓ kept except where noted
+  in the handoff (CScnItemModel 4, CScnItemModelNw4r 2, code_804B2FF0 2, CGXCache 26, CViewRoot 13
+  remain).
+- Confidence: repo_proven (each experiment re-measured with `hexdiff --all`).
+- Applies to/a.k.a.: `run.py faithful` `volatile` row, `tools/coop/faithful.py` HARD["volatile"].
+
+## CScnEnvLgtCtrl — hand-built IScnEnvCtl ptmf blob → compiler-emitted tables + `__sinit` (Wii/1.1 `-O4,p -inline noauto`)
+- Symptom:   `.data` 0x8056F9B8..0x8056FC10 was one hand-written 150-word `u32[]` blob holding the class
+  vtable, the `__RTTIBaseList__14CScnEnvLgtCtrl`, and 35 `{0,-1,fn}` pmf triples; the three live tables
+  were declared as raw `.bss` bytes (`u8 lbl_eu_8065FA40[0xB8]`, two `CScnEnvLgtCtrlWorkBlobFn[]`), and a
+  hand-written `sinit_804C8174` (0x510 bytes, 0.0%) copied the triples. The 35 `scnLgtPtmf*` adapters were
+  `extern "C"` free functions taking `void* self, void* target` through five `ScnLgtPtmf*View` structs.
+- Cause:     the tables are real `void (CScnEnvLgtCtrlWorkBlob::*)(void*)` arrays whose entries convert the
+  real handler signatures (`void handler(CScnEnvLgtCtrlWorkDst40*, float)` for table 1,
+  `void handler(CScnEnvLgtCtrlLgtTypeEntry*, float)` for table 2,
+  `float handler(const CScnEnvLgtCtrlGrad*)` for table 3 = `lbl_eu_8065FBD0`). Retail's call sites pass only
+  the pointer argument (f1 is stale), which is only expressible with that one-argument table type - and
+  MWCC then refuses to fold the constants into the table, emitting `.data` `@N` constants + `.bss` tables
+  + a compiler-generated `__sinit` (see MWCC_PATTERNS "pmf table initialisers").
+- Fix:       (1) the 35 adapters are members of `CScnEnvLgtCtrlWorkBlob` with their true parameter types;
+  the target structs got real members (`CScnEnvLgtCtrlWorkDst40` f32/u32 unions for the float-handler vs
+  word-copy slots, `CScnEnvLgtCtrlLgtTypeEntry` gained `field_0xC8..0xD4` floats and reuses its existing
+  `field_0x04w..0x10w` u16 union members for the s16 handlers), the five `ScnLgtPtmf*View` structs and the
+  `CScnEnvLgtCtrlSinit*` scaffolding are gone; (2) the three tables are ordinary `.bss` arrays initialised
+  with per-entry `(CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::handler` conversions; (3) the hand
+  `sinit_804C8174` function is deleted, the blob shrunk to its 44-word vtable+base-list part, and the
+  retail sinit renamed `sinit_804C8174` → `__sinit_\CScnEnvLgtCtrl_cpp` (rename_syms.py) with
+  `link_transform={"globalize": [r"__sinit_\CScnEnvLgtCtrl_cpp"]}` in configure.py (retail's is global).
+  NOTE rename_syms.py writes the backslash unescaped into targets.json - fix the JSON manually.
+- Result:    94/127 functions (unchanged, all 35 handlers still 100%), `.data` 644B identical (+0x4 retail
+  link tail pad), `.bss` 0x1A8 with the retail offsets 0/0xB8/0x190, `.ctors` 4B, extab unchanged,
+  sinit 0.0% → 77.5% (0 structural, 73 reg_swap, size 0x510 == retail; objdiff 99.8%).
+  Unit smells: `view_struct` 83→43, `label` 112→109, hard 212→169.
+- Residual:   the sinit's source base. Retail references the template symbol at `.data` 0x8056FA68 and
+  uses offsets 0/0x54/…/0x1A4; MWCC folds the *section* base (`...data.0`) into every `addi`
+  (0xE0/0x134/…), so every address instruction differs in its SI field (witness: "fields | slot 5,
+  0x160"). Retail's vtable/assert-strings came from the dissolved `monolibdata2` unit, so its constants
+  started at that object's `.data` offset 0; reordering our `.data` to reproduce that would break the
+  split's byte order. Recorded as a near-miss (EQUIVALENT_MATCH needs the witness, which the SI field
+  blocks; FULL_MATCH needs the base fix).
+- Confidence: repo_proven (tables/layout/sinit generation verified in scratch probes and in-tree).
+
+## CScn / CScnItemModelNw4r — vtable & MI-thunk ownership (recovery state, not converted)
+Recorded by the c7-handvt agent after converting the CScnEnvLgtCtrl handler tables (the ptmf half of
+the same residual). Both remaining items are cross-TU vtable-ownership jobs; the blockers are measured,
+not guessed.
+
+**CScn (`.data` 0x8056E8D0).** Retail's object is one 0xB4-byte vtable *group*: primary table 0x24
+(9 words: `__RTTI__4CScn`, 0, `__dt__4CScnFv`, `Reset__14CChildListNodeFv`, `Init/Term/Move/Draw`,
+`Tail__8CProcessFv`) followed by the `IWorkEvent` secondary table at +0x24 (36 words: RTTI,
+offset-to-top `0xFFFFFFAC` = -0x54, `Scn_DtorThunk54`, then 33 virtual slots — `WorkEvent1`,
+`OnFileEvent`, CScn's `WorkEvent3`/`WorkEvent4` overrides, `OnPauseTrigger`, `WorkEvent6..31`, and the
+two `Scn_CallUnk60_V4`/`Scn_CallUnk68_V3` overrides). A second 9-word table at 0x8056E984 is the
+intermediate `CTTask<4CScn>` table the ctor installs before the derived one.
+MWCC already emits `__vt__4CScn` in CScn.o, but it is **0xAC (43 words)**: 9 primary + 34 secondary, i.e.
+our `IWorkEvent` is **2 virtual slots short** of retail, so `__vt__4CScn` can never match the retail blob
+until `libs/monolib/include/monolib/work/IWorkEvent.hpp` gains retail's last two virtuals (whose CScn
+overrides already exist as `Scn_CallUnk60_V4` / `Scn_CallUnk68_V3`). That makes the remaining work a
+shared-header wave: append the 2 virtuals, then delete `lbl_eu_8056E8D0[45]`/`lbl_eu_8056E984[9]` and
+their `inject_relocs` entries in `CScn_80496B0C.cpp`, rename the retail blob symbol to `__vt__4CScn`,
+drop the two hand vptr stores in `__ct__CScn`/`~CScn` (they become implicit), and let MWCC emit the
+-0x54 `IWorkEvent` adjusting thunk in place of the hand-written `Scn_DtorThunk54`.
+Measured: CScn is 51/52 with only `__ct__CScn` open (96.2%, 3 structural), so the conversion must be
+verified with `hexdiff --all` on CScn, CScn_80496B0C and every CScn.hpp includer.
+
+**CScnItemModelNw4r (TU tail thunks).** The 9 `(char*)self - 0x1464/-0x1468` shims are MWCC's own
+this-adjusting thunks for two **4-byte (vptr-only) polymorphic base subobjects** at +0x1464 and +0x1468:
+the ctor stores `vt+0xDC` / `vt+0xF4` there and the class's own members resume at +0x146C
+(`field_0x146C` = ResMdl) - the MI layout for `class CScnItemModelNw4r : public CScnItemModel,
+public <empty iface A>, public <empty iface B>`.
+Decoded from retail (each entry resolves against `config/us/symbols.txt`):
+  * `__vt__17CScnItemModelNw4r` primary table = 0x8056DE80, 0xDC bytes (98 words): RTTI
+    `lbl_eu_806624C0` = {name "CScnItemModelNw4r" @0x80503B80, base list 0x80532760}, offset-to-top 0,
+    `__dt__17CScnItemModelNw4rFv`, then `scnImN4UpdateVis`, `ScnCamNw4r_EmptyHook48`,
+    `scnImN4UpdateXform`, `scnImN4GetResName`, ... (the existing `CScnItemModel` 54-virtual surface).
+  * table A at 0x8056DF5C (vt+0xDC, 6 words): RTTI `lbl_eu_806624C0`, offset-to-top `0xFFFFEB9C` = -0x1464,
+    `scnImN4CbDtorA`, then 3 slots: `scnImN4CbPose`, `scnImN4CbFeedLook`, `scnImN4CbWorldMtx`.
+  * table B at 0x8056DF74 (vt+0xF4, 9 words): same RTTI, offset-to-top `0xFFFFEB98` = -0x1468,
+    `scnImN4CbDtorB`, then 6 slots: `scnImN4CbXform`,
+    `ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallback...` (inherited, 4-byte stub @0x803F72F8),
+    `ExecCallback_CALC_VIEW__...IScnObjCallback...` (@0x803F72FC), `scnImN4CbLgtHook`,
+    `scnImN4CbLgtMode`, `scnImN4PoseHook`.
+  * `__RTTIBaseList__17CScnItemModelNw4r` (0x80532760, 0x14) = {`__RTTI__9CScnItem` (name "CScnItem"
+    @0x80503BB8), `__RTTI__13CScnItemModel` (name "CScnItemModel" @0x80503BA8)}; `CScnItemModel`'s own
+    base list (0x805327EC, 0xC) = {`__RTTI__9CScnItem`}, so `CScnItemModel : public CScnItem` and the
+    "CScnItem" entry in the derived list is the indirect base at +0x1464. Open question for whoever
+    finishes this: which class owns table B (its CALC_MAT/CALC_VIEW stubs are
+    `nw4r::g3d::IScnObjCallback`'s, but the class in `libs/nw4r/include/nw4r/g3d/g3d_scnobj.h` declares
+    5 virtuals + dtor = a 7-word table, not the 9 words retail shows, so IScnObjCallback is 2 slots
+    short there too - same class of blocker as CScn/IWorkEvent above).
+
+## CMsgParam<N> tail is FIVE words, not six — CView::mContextMsg is 0x180, mName sits at 0x400 (Wii/1.1, source shape)
+
+- Symptom: `CView`'s flat ring members (`mContextMsgVtable` @0x280 + `mContextRing` +
+  `mContextRingBase`/`unk3F0`/`mContextRingWriteIndex`/`mContextRingCapacity`/`unk3FC`) could not be
+  replaced by a real `CMsgParam<10>` member: the template carried a sixth tail word
+  (`field7`, 0x18 tail) making it 0x184, which pushed `mName` to 0x404 and `unk444` to 0x448.
+- Cause: `CMsgParam<N>` is `vptr + N*0x24 entries + {mArrayPtr, mFront, mSize, mCapacity, field6}`
+  = `0x18 + N*0x24`. Three independent retail measurements:
+  * `__ct__5CViewFPCcP11CWorkThread`: writes the ring tail at 0x3EC/0x3F0/0x3F4/0x3F8/0x3FC and then
+    `stb r31, 1024(r30)` (0x400) + `stw r31, 1088(r30)` (0x440) — i.e. `FixStr<64> mName` starts at
+    0x400 (`mString` 0x400, `mLength` 0x440) and the queue ends at 0x400 (0x180 with 10 entries).
+  * `CDesktop::wkStandbyLogin`: `stw r3, 1088(r30)` / `addi r3, r30, 1024` — same 0x440/0x400 pair.
+  * `CProc::pssCreateView` has `li r3, 1136` = `sizeof(CView)` 0x470, and the ctor stores a `CVec4` at
+    0x444, so `mName` must end at 0x444 ⇒ it starts at 0x400.
+  The old sixth word was invented to make `CGXCache`'s queue end at its `addi r3, r29, 1184` (0x4A0).
+  That word is actually a **CGXCache member**: `CGXCache.cpp`'s dispatcher treats ring+0x498 as a
+  message-target object and calls slot 3 of its vtable, and the retail helper (recovered as
+  `__ct__CMsgParam_32`) stores the cache pointer there. Now spelled `CGXCache::mMesgTarget`.
+- Fix: `CMsgParam` tail = 5 words and the ctors take no argument. `CWorkThread` gained a spelled
+  `u32 unk1B8` (its queue ends at 0x1B8; the ctor's 0x1B8/0x1BC stores are the thread's own fields,
+  not queue state) — layout-neutral. `CGXCache` gained `void* mMesgTarget` at 0x49C — layout-neutral.
+  `CView` then takes real `reslist<WORK_ID> mWorkIDList` (0x238), `reslist<IWorkEvent*> mEventList`
+  (0x258) and `CMsgParam<10> mContextMsg` (0x280) members, and `FORCEKEEP_CView_templates` plus the
+  `CViewResList` POD twin are gone. Note `sizeof(FixStr<64>)` is 0x44 (`char[64]` + `int`), which is
+  what makes 0x400+0x44 = 0x444 = `unk444`.
+- Result: CView 28/45 → 30/45 fully matched (`__ct__5CView` 20.9%→33.3%,
+  `__dt__13CMsgParam<10>Fv` 24.0%→72.7% at the correct 0x58 size, `updateMsg` 3.5%→3.9%);
+  hard smells 84→77. CProc/CViewFrame/CSplitFrame/CFontLayer/CDesktop/CException/CViewRoot tables
+  byte-identical.
+- Confidence: repo_proven (instruction + data offsets above).
+
+### The `~CMsgParam<N>` vptr store is emitted even with `-RTTI off` and both dtor spellings
+
+- Symptom: retail's `__dt__13CMsgParam<10>Fv` (0x58) and the inlined copy inside `~CView` have **no**
+  `vptr = __vt__CMsgParam<10>` store; ours emits `lis/addi/stw` (12 bytes) in the deleting dtor.
+- Cause: the class is polymorphic with the destructor as its only virtual (the retail vtable at
+  0x8056B6CC is `{RTTI, __dt__13CMsgParam<10>Fv}`), and MWCC 1.1 restores the vptr in the deleting
+  dtor shape. Probes: with an explicit `template<> CMsgParam<10>::~CMsgParam(){ if (mEntries) clear(); }`
+  the store is there (0x64); removing the specialization gives the right 0x58 body but MWCC then also
+  drops the `if (mEntries != NULL)` guard; a manual `-RTTI off` compile still emits the store; writing
+  the clears directly instead of calling `clear()` shrinks ~CView 0x1c4→0x1b8 but keeps the store and
+  drops the standalone dtor to 27.3%.
+- Result: ~CView 41.7% → 16.8% (0x1b0/0x1c4) — a **recorded debt** from replacing the hand-inlined
+  `_reslist_base` copies with real members; `__dt__13CMsgParam<10>Fv` improved 24.0% → 72.7% instead.
+  Next angle: get MWCC to treat `~CMsgParam<N>`'s vptr store as redundant, or find the retail dtor
+  spelling that suppresses it (nothing tried so far does).
+- Confidence: negative_result.
+
+### Two `reslist<>`-walker pitfalls in ~CView (still open)
+
+- The two attached-list drain loops in retail are unrotated `[init][b check][body][check;bne]`; every
+  guarded source form emits the rotated `[check;beq-exit]` layout. Same open item as before the member
+  conversion — the member types did not change it.
+- `reslist<T>::iterator` walks are only kept when guarded by `empty()`; without the guard MWCC deletes
+  the loop (already documented, re-confirmed here).
+
+## CView context-ring call sites: the template API loses retail's per-site register colouring (Wii/1.1, measured)
+
+- Symptom: replacing the hand-expanded ring writes in `CView::enqueueContextMsg` / `attachRenderWork` /
+  `wkStandbyLogin` with `mContextMsg.enqueue(n)` / `.last()` gives the same instructions but different
+  GPR assignment (`enqueueContextMsg` 100% → 48.4%, `wkStandbyLogin` 100% → 53.8%,
+  `attachRenderWork` 28.3% → 15.6%).
+- Cause: the payload homes are identical (the caller's frame slot 12..42(sp) in both), but retail's
+  per-site colouring comes from the *caller's* local set: the hand-expanded form declares the ring
+  index/flag locals, which pushes the payload fan into `r30,r31,r12,r11,r10,r9,r7`; the inline
+  `enqueue()` body only has its own `entry`, so the fan lands in `r26..r31,r12`.
+- Fix: keep the hand-expanded bodies where retail's colouring is load-bearing (`enqueueContextMsg`,
+  `attachRenderWork`, `wkStandbyLogin`), spelled against `CMsgParam`'s now-public ring state; use the
+  `enqueue()`/`last()`/`front()`/`pop()` API everywhere else (`setCurrent`, `updateMsg`'s head, pop and
+  the three child-view fan-outs). Rewriting `CMsgParam::enqueue` to the `<8>` specialization's shape
+  (typed `CMsgParamEntry& target` instead of a `u8*` walk) is required for even that much — the `u8*`
+  form cost another 10 points on `attachRenderWork`.
+- Result: CView 30/45, no ✓ lost.
+- Confidence: repo_proven.
+
+## RVL SDK file-scope data layout: MWCC emits `.sbss`/`.bss` in REVERSE declaration order, `.data`/`.sdata`/`.sdata2` forward (Wii/1.1 probe, RVL_SDK c7 wave)
+
+- Symptom: a `RVL_SDK` unit reads `100.0% | 0 structural | 0 reg_swap` and still fails, with only
+  `wrong-address relocation at +0xNN: ('address', A) vs ('address', B)` — i.e. identical code and
+  identical reloc *names*, differing data addresses (GXFifo 7 of its 13 functions, KPAD 10, WPAD 5,
+  vi OnShutdown, SIBios SIInit, OSReset OSRestart, WUD 10).
+- Cause: the *intra-TU data layout* differs, not the code. Probes compiled with `cflags_sdk` show:
+  - `.sbss`/`.bss` objects are laid out in **reverse** declaration order (`static u8 a1; ... u8 a8[8];`
+    emits `a8@0, a7@8, a6@0xC, ... a1@0x1F`). Verified on Wii/1.0, 1.0a, 1.0RC1, 1.1, 1.3, 1.5, 1.6,
+    1.7, `Wii/0x4201_127`, GC/1.3, 1.3.2, 2.0, 2.5, 2.6, 2.7, 3.0a3, 3.0a3.2–4, 3.0a5, 3.0a5.2,
+    ProDG/3.5–3.9 — **all reverse**. Only GC/1.0, 1.1, 1.1p1, 1.2.5, 1.2.5n are forward, and those
+    reject the repo's global `-enc SJIS` (`Usage Error: Unknown option 'enc'`), so they are unusable.
+  - `.data` (and `.sdata`, `.sdata2`) are emitted **forward**; an over-sized `char a[0x18] = "…"`
+    literal also mis-sizes the symbol (retail sizes such arrays at the string's real length and pads
+    the next object to 4: `s1[0x16]@0, s2@0x18`), so declare literal blobs unsized (`char a[] = "…"`)
+    when symbols.txt gives the exact length.
+  - `static` vs global does **not** affect the order or the alignment (only the symbol binding);
+    `symbols.txt` bindings in RVL_SDK units are retail-ground-truth and often say `scope:global`.
+- Fix: declare the unit's file-scope objects in the **reverse of the retail address order**
+  (`For addresses ascending A0..An, list An..A0`). This is the already-documented WPAD `.sbss`
+  recipe; c7 applied it to `kpad/KPAD` (15 objects) and `os/OSPlayTime` (4), producing offsets and
+  sizes byte-identical to retail (`objdump -t` diff clean). No function verdict moved in either unit,
+  because their remaining near-misses are float-pool *addresses*, not `.sbss` ones.
+- **Blocked sub-class (no source angle):** MWCC aligns a file-scope array `u8[N]` to **4 bytes** in
+  `.sbss` (probed on every available version and at `-O1..-O4`, `-O4,p`, `-O4,s`), while retail's
+  SDK build packs it at **align 1**. So any retail `.sbss` containing a small array at a
+  non-4-aligned offset is unreachable: GXFifo `GPFifoReady[3]@0x01` (order-reversed declaration gives
+  `CPUFifoReady@0, GPFifoReady@4, … CPGPLinked@0x20` = 0x28 vs retail 0x20) and WUD
+  `__bte_trace_level[3]@0x0D`. Record as BLOCKED-by-compiler rather than continuing to reorder.
+- Pool order (separate lever): `.sdata2`/`.rodata` constants are emitted in **first-use (function
+  emission) order**, so a unit whose function order differs from retail gets a permuted pool and every
+  float-constant reloc resolves to the wrong offset even though the code is byte-identical
+  (KPAD 10 functions, lyt_layout `GetLayoutRect` = `{0.5f,0.0f}` where retail has `{0.0f,0.5f}`).
+  Compare `.text` order first (`objdump -t | grep ' F .text'` on `build/us/obj/<unit>.o` vs
+  `build/us/src/<unit>.o`); if it differs, reorder the source's function definitions — do not chase
+  the pool entries individually.
+- Confidence: repo_proven (probes + two units made byte-identical).
+- Applies to / a.k.a.: every `RVL_SDK` unit under `libs/RVL_SDK/src/revolution/**` still on
+  `NonMatching`; `docs/register_mapping.md` (reverse order there is about *stack* slots).
+
+## `btm_acl.c btm_read_remote_version_complete` — little-endian word assembly colouring → swapped add operands (GC/3.0a5.2 `-func_align 4`, FULL_MATCH)
+
+- Symptom: 91.4%, 0 structural / 3 `reg_swap`; retail `lbz r4,2(r3); lbz r5,1(r3); rlwinm r4,r4,8; add r4,r5,r4`,
+  ours the same `add r4,r5,r4` but with `p[2]` loaded into r5 and `p[1]` into r4.
+- Cause: `handle = (UINT16)((p[2] << 8) + p[1])` makes MWCC evaluate the shifted operand into the *lower*
+  scratch register; retail's temp order is the opposite, i.e. the low byte was evaluated first.
+- Fix: **use the real bte stream macro** — the SDK idiom here is an advancing pointer plus
+  `bt_types.h`'s `STREAM_TO_UINT16` (`{u16 = ((UINT16)(*(p)) + (((UINT16)(*((p)+1))) << 8)); (p) += 2;}`),
+  i.e. low byte first, which is exactly retail's operand order:
+  ```c
+  p++;
+  STREAM_TO_UINT16(handle, p);
+  ...
+          p_acl_cb->lmp_version = *p++;
+          STREAM_TO_UINT16(p_acl_cb->manufacturer, p);
+          STREAM_TO_UINT16(p_acl_cb->lmp_subversion, p);
+  ```
+  Hand-expanding the same bytes as `(UINT16)(p[1] + (p[2] << 8))` also matches, but the macro form is
+  the original source shape and threaded the two later byte pairs for free. The `add rD,rA,rB` is
+  unchanged; only the two loads/rlwinm recolour.
+- Result: FULL_MATCH, btm_acl 25/29 → 26/29; split PASS.
+- Confidence: repo_proven.
+- Applies to / a.k.a.: bte `(p[hi] << 8) + p[lo]` / `x + (y << 8)` idioms (btm/l2c/sdp/rfcomm);
+  same lever as the `MdlDyn_SetRotXYZ` statement-order rule.
+
+## nw4r snd_SeqTrack — `ParserTrackParam&` local blocks the `this`-relative fold, and the four missing UpdateChannelParam features (GC/3.0a5.2 `-O4,p -ipa file`, FULL_MATCH ×1, NoteOn 92.3%)
+- Symptom:   `UpdateChannelParam` 1.4%, decomp `.text` 0x540 vs retail 0x5c0, 10 saved FPRs instead of
+  11; `NoteOn` 1.9%, 0x37c vs 0x40c.
+- Cause:     two independent things. (1) **The `ParserTrackParam& rParam = mParserTrackParam;` local
+  is not free**: with it MWCC materialises `addi rX, this, 0x1C` and addresses every param field
+  through that register (one extra saved GPR, one extra instruction, different frame size). Retail
+  addresses the whole block as `lhz/lbz/stb 0xNN(this)` — i.e. the original body spelled
+  `mParserTrackParam.` at each use. Replacing the reference with the member expression took
+  `UpdateChannelParam` from 15.7% to 85.6% with the size already exact. (2) `f32 volume = 1.0f;`
+  must be the **first** local of the block: retail hoists the `1.0f` pool load above the
+  volume-mover branch, and declaring it before `parserVolume/parserVolume2/parserMainVolume`
+  reproduces that schedule exactly (the remaining 41 structural at 85.6% were all in that one
+  scheduling window) → 100%.
+- Fix:       the four source features retail has and the reconstruction did not:
+  1. `ParserTrackParam::pan` / `surroundPan` are `MoveValue<s8, s16>` (retail `extsb` on origin and
+     target). `volume` stays `MoveValue<u8, s16>` (`clrlwi`).
+  2. The byte at param+0x7A is the track **biquad type**, not a remote filter, and there is an `f32`
+     biquad **frequency** at the address the case notes used to call `mExtMainSend`. That f32 is
+     written by `MmlParser::CommandProc` through its parser-param reference, so it lives **inside**
+     `ParserTrackParam` at +0x80 (`f32 biquadFreq`), not on `SeqTrack`. SeqTrack+0x9C is unchanged.
+  3. The channel loop calls `pIt->SetBiquadFilter(type, value)` after `SetUserLpfFreq`, where
+     `type`/`value` default to `rParam.biquadType` / `rParam.biquadFreq` and are overridden by
+     `mPlayer->GetBiquadFilterType()` / `GetBiquadFilterValue()` when the type is non-zero; and
+     `pIt->SetRemoteFilter(mPlayer->GetRemoteFilter())` is **unconditional** (the previous
+     `GetRemoteFilter() != 0 ? … : rParam.remoteFilter` ternary was wrong — retail reads
+     `BasicPlayer+0x1D` and stores it straight into `Channel+0x3C`).
+  4. A per-voice loop sits between the remote-controller loop and `SetLfoParam`:
+     `for (int i = 0; i < mPlayer->GetVoiceOutCount(); i++) pIt->SetVoiceOutParam(i, mPlayer->GetVoiceOutParam(i));`
+     (retail `lwz r3,240(ch)` = `Channel::mVoice`, then `Voice::SetVoiceOutParam(i, &mPlayer->mParam.mVoiceOutParam[i])`, stride 0x18).
+- `NoteOn` +0x90 of missing code, three causes: (a) a **second** channel-reuse block gated on the
+  fourth parser byte (`SeqTrack+0x27` = `MmlParserParam+0x3`, retail `lbz r0,39(this)`), which is
+  what MML command 0xB2 sets — it takes `GetLastChannel()` and either `Stop()`s + NULLs it when
+  `pChannel->IsRelease()` or else `SetKey/SetInitVolume/SetLength`s it; (b) the five envelope guards
+  are `<= 127` in retail (`cmplwi r4,127; bgt`), **not** `!= 0xFF`; (c) `SeqTrack::AddChannel`
+  releases every live channel whose `Channel+0xDC` tag equals the new channel's non-zero tag before
+  linking it (that field is only ever zeroed by `Channel::InitParam` in this build, so the loop is
+  dormant — it is now `Channel::mTag` with a `GetTag()` accessor).
+- Result:    `UpdateChannelParam` FULL_MATCH 0x5c0/0x5c0; `NoteOn` 92.3% (0 structural, 20
+  reg_swap, size exact) — residual is a clean 3-cycle of the saved parameter registers (retail
+  key/velocity/length/tie = r26/r27/r28/r29 in ABI order; MWCC colours `velocity` last here).
+  snd_SeqTrack 16/18 → 17/18.
+- Confidence: repo_proven (every feature above is read out of the retail encodings; the 17 other
+  functions in the unit stayed byte-identical).
+
+## nw4r snd_MmlParser — the retail Parse prefix chain has FIVE tests, and CommandProc's six missing commands (GC/3.0a5.2 `-O4,p -ipa file`, Parse FULL_MATCH, CommandProc 3.1% → 99.1%)
+- Symptom:   `Parse` 2.3% (0x630 vs 0x6d0), `CommandProc` 3.1% (0x838 vs 0x914).
+- Cause/fix:  `CommandProc` binds `SeqTrack::ParserTrackParam& rTrackParam` **and** a second
+  `MmlSeqTrack::MmlParserParam& rMmlParam`; the second one holds r31 and forces `rTrackParam` to be
+  folded back into the `pTrack` parameter (`addi r31,r4,36` instead of retail's `addi r31,r4,28`).
+  Dropping the second reference and writing `rTrackParam.mmlParserParam.…` reproduces retail's
+  single-base addressing. The unit's jump table is in the shared retail data
+  (`lbl_eu_8056A8B8`, 125 entries indexed by `cmd-0x81`); reading it out of the DOL maps every case
+  and shows the commands the reconstruction was missing:
+  `0xB1` hold, `0xB2` monophonic flag (booleanize `arg1 != 0` into the 4th parser byte, then
+  `ReleaseAllChannel(-1)` + `FreeAllChannel()` when it is non-zero), `0xB3` velocity scale,
+  `0xB4` biquad type, `0xB5` biquad freq (`arg1 / 127.0f`), `0xFB` envelope reset (attack/decay/
+  sustain/release/hold = 0xFF). `MML_SET_TEMPO` is `ut::Clamp<s32>(arg1, 0, 1023)` (explicit
+  template argument needed: `arg1` is `s32` == `long`, the literals are `int`), and
+  `MML_EX_USERPROC` calls `pPlayer->CallSeqUserprocCallback((u16)arg1, pTrack)`, so that SeqPlayer
+  method must be **public**.
+- `Parse`'s prefix chain is five tests, not three. In order: `if (cmd == MML_EXECIF)` (0xA2, alone),
+  then an `else if` chain over the Xenoblade **second-argument** markers `0xA3`/`0xA4`/`0xA5`
+  (second arg type = `SEQ_ARG_S16` / `SEQ_ARG_RANDOM` / `SEQ_ARG_VARIABLE`, stored in a separate
+  `int argType2 = 0` whose non-zero value makes the `0xB0/0xC0/0xD0` group read a second
+  `ReadArg`), then a second `else if` chain over `MML_RNDPARAM` 0xA0 / `MML_INDPARAM` 0xA1 (first
+  arg type + `useArgType`). `MML_EX_USERPROC`'s argument is a **u16** (`clrlwi r23,r3,16`, not
+  `extsh`), `MML_EOF` is gated on `doExecCommand`, and — the last 3 instructions — the outer
+  `switch (cmd & MML_CMD_SET_MASK)` needs an explicit empty `case 0xA0:`: MWCC then emits retail's
+  8-node balanced dispatch tree; without the label it emits 7 nodes (`cmpwi r5,160` disappears).
+  Grouping `case 0xA0:` *with* `case 0xB0:` instead is byte-identical in the tree but semantically
+  wrong (0xA0 would run the 0xB0 body) — a 99.8% "match" with a wrong branch target, which hexdiff
+  scores as `reg_swap`, so diff branch targets by hand when a switch tree is involved.
+- Result:    `Parse` FULL_MATCH 0x6d0/0x6d0; `CommandProc` 99.1% (0x914/0x914, 4 structural +
+  1 reg_swap: retail's MML_RET does `lbz r0,12(r3)` + `addi r4,r3,12` where MWCC fuses ours into
+  `lbzu r0,12(r3)` + `mr r4,r3`, and retail's `==` booleanization stores `srwi r0,r0,5` where we
+  get `rlwinm r0,r0,27,24,31`). snd_MmlParser 2/5 → 3/5.
+- Confidence: repo_proven (jump table read from the retail DOL; the other three functions held).

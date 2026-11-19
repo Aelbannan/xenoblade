@@ -1,11 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlObjectParam
 // Replace stubs with high-level C/C++ during decomp.
 
-#define lbl_eu_805280D8 lbl_eu_805280D8_hack
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "monolib/math/MathConstants.hpp"
-#undef lbl_eu_805280D8
-extern const void* lbl_eu_805280D8[];
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"        // cf::CfGameManager static accessors
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -458,7 +455,7 @@ extern "C" void CtrlObjectParam_WriteEquipSlotValue(void* selfV, unsigned long i
 }
 
 void cf::CActorParam::CActorParam_setHp(float val) {
-    reinterpret_cast<float&>(unk17E4.unk0[4]) = val;
+    unk17E4.field_04 = val;
 }
 
 void CtrlObjectParam_ActivateActorOwner(cf::CtrlObjectParamActorOwner* self) {
@@ -1141,7 +1138,7 @@ void cf::CActorParam::CActorParam_setGaugeRateB(float val) {
 }
 
 void cf::CActorParam::CActorParam_setMoveRate(float val) {
-    unk17E4.unk4C = val;
+    unk17E4.field_4C = val;
 }
 
 void cf::CActorParam::CActorParam_setStatByte(u8 val) {

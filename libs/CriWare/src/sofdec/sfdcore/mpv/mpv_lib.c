@@ -3,34 +3,19 @@
 
 #include <harness_catalog.h>
 
+#include "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_types.h"
+
 // Large section arrays for data diff - generated
 __declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_mpv_[0xA8] = {0x0A, 0x43, 0x52, 0x49, 0x20, 0x4D, 0x50, 0x56, 0x2F, 0x57, 0x49, 0x49, 0x20, 0x56, 0x65, 0x72, 0x2E, 0x32, 0x2E, 0x30, 0x36, 0x37, 0x20, 0x42, 0x75, 0x69, 0x6C, 0x64, 0x3A, 0x4F, 0x63, 0x74, 0x20, 0x32, 0x38, 0x20, 0x32, 0x30, 0x30, 0x39, 0x20, 0x31, 0x31, 0x3A, 0x33, 0x37, 0x3A, 0x35, 0x39, 0x0A, 0x00, 0x41, 0x70, 0x70, 0x65, 0x6E, 0x64, 0x3A, 0x20, 0x4D, 0x57, 0x34, 0x33, 0x30, 0x32, 0x20, 0x57, 0x49, 0x49, 0x33, 0x30, 0x4A, 0x75, 0x6C, 0x32, 0x30, 0x30, 0x38, 0x50, 0x61, 0x74, 0x63, 0x68, 0x30, 0x34, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5A, 0x5A, 0x5A, 0x5A, 0x32, 0x2E, 0x30, 0x36, 0x37, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // .rodata 0xA8 at 0x8051C200
 
 s32 mpvlib_ChkFatal(void);
 void mpvlib_InitClip0255(void);
 
-/* Global Sofdec work area at 0x80602B80.  The B88 config block that the rest
- * of this TU addresses via lbl_eu_80602B88 is the field_0x08 member. */
-struct MPVConfig {
-    u8  field_0x00[0x48];   /* 0x00..0x47 (B80+0x08..0x4f) */
-    u32 field_0x48;         /* 0x48: cache-flush flag (bit 0x10000000) */
-    u32 field_0x4c;         /* 0x4c: handle block base */
-    u32 field_0x50;         /* 0x50: vlc block base */
-    u32 field_0x54;         /* 0x54: handle count */
-    u32 field_0x58;         /* 0x58: aligned byte size */
-    u8  field_0x5c[4];      /* 0x5c..0x5f */
-    u8  field_0x60[0x100];  /* 0x60..0x15f: default init table */
-};
-
-struct MPVWork {
-    u32 field_0x00;         /* 0x00 */
-    u32 field_0x04;         /* 0x04: version string pointer */
-    struct MPVConfig config; /* 0x08: B88 config block */
-    u8  field_0x168[0x300]; /* 0x168..0x467 */
-    u32 field_0x468;        /* 0x468: clip table pointer */
-};
-
-extern struct MPVWork lbl_eu_80602B80;
+/* Global Sofdec work area at 0x80602B80 (8-byte header + 0x60-byte config +
+ * 0x400-byte clip table).  The config block is also referenced through its own
+ * symbol, exactly as retail does. */
+extern MpvWork lbl_eu_80602B80;
+extern MpvCfg lbl_eu_80602B88;
 extern u8 lbl_eu_8051C200[];
 extern u8 lbl_eu_8051C258[];
 
@@ -52,14 +37,14 @@ extern void MPVSL_Destroy(void* self);
 extern s32 MPVERR_SetCode(s32 val, u32 err_code);
 
 s32 MPV_Init(s32 a, s32 b) {
-    struct MPVWork* work = &lbl_eu_80602B80;
+    MpvWork* work = &lbl_eu_80602B80;
     s32 err;
     u32 aligned;
     u8* blk;
     u8* vlc;
     s32 i;
 
-    work->field_0x04 = (u32)lbl_eu_8051C200;
+    work->verPtr = (u32)lbl_eu_8051C200;
     err = mpvlib_ChkFatal();
     if (err != 0) {
         /* fatal: the version-mismatch code (0xff03ff05) returns the fatal
@@ -74,7 +59,7 @@ s32 MPV_Init(s32 a, s32 b) {
     UTY_MemsetDword((u32*)aligned, 0, (u32)((a << 13) + 0x2000) >> 2);
     blk = (u8*)aligned + a * 0xdc0;
     vlc = blk + 0x420;
-    if (work->config.field_0x48 & 0x10000000) {
+    if (work->cfg.flushSw & 0x10000000) {
         /* Retail cache-invalidates + dcbz_l's 0xdf blocks (dcbi/dcbz_l
          * pair); neither instruction is emittable in GC/3.0a5.2
          * high-level C (KB dcbi gap), so two __dcbz keep the
@@ -85,11 +70,11 @@ s32 MPV_Init(s32 a, s32 b) {
             __dcbz(vlc, i * 0x20);
         }
     }
-    MEM_Copy(&work->config, lbl_eu_8051C258, 0x40);
-    work->config.field_0x4c = (u32)blk;
-    work->config.field_0x50 = (u32)vlc;
-    work->config.field_0x54 = (u32)a;
-    work->config.field_0x58 = aligned;
+    MEM_Copy(&work->cfg, lbl_eu_8051C258, 0x40);
+    work->cfg.hnBase = (u32)blk;
+    work->cfg.vlcBase = (u32)vlc;
+    work->cfg.hnNum = (u32)a;
+    work->cfg.memBase = aligned;
     MPVERR_Init();
     MPVHDEC_Init();
     MPVFRM_Init();
@@ -102,16 +87,16 @@ s32 MPV_Init(s32 a, s32 b) {
     {
         u8* clip;
         if ((clip = vlc + 0x17e0) != NULL) {
-            UTY_MemcpyDword((u32*)clip, (u32*)work->config.field_0x60, 0x100);
-            work->field_0x468 = (u32)(vlc + 0x1960);
+            UTY_MemcpyDword((u32*)clip, (u32*)work->clipTbl, 0x100);
+            work->clipBuf = (u32)(vlc + 0x1960);
         }
     }
     {
-        s32 n = work->config.field_0x54;
-        u8* base = (u8*)work->config.field_0x58;
+        s32 n = work->cfg.hnNum;
+        MpvHn* hn = (MpvHn*)work->cfg.memBase;
         while (n-- > 0) {
-            *(s32*)(base + 0xb08) = 1;
-            base += 0xdc0;
+            hn->state = MPV_HN_STATE_FREE;
+            hn++;
         }
     }
     MPVM2V_Init();
@@ -165,55 +150,54 @@ void mpvlib_InitClip0255(void) {
     lbl_eu_80602FE8 = (u32)(lbl_eu_80602BE8 + 0x180);
 }
 
-void mpvlib_InitPicAtr(void* self) {
+void mpvlib_InitPicAtr(SfdMpvPicAtr* self) {
     memset(self, 0, 4);
-    *(u32*)((u8*)self + 0x00) = 0;
-    *(u32*)((u8*)self + 0x04) = 0;
-    *(u32*)((u8*)self + 0x08) = 0;
-    *(u32*)((u8*)self + 0x0c) = 0;
-    *(u32*)((u8*)self + 0x10) = 0;
-    *(u32*)((u8*)self + 0x14) = 0;
-    *(u32*)((u8*)self + 0x18) = 0;
-    *(u32*)((u8*)self + 0x1c) = 0;
-    *(u32*)((u8*)self + 0x20) = 0;
-    *(u32*)((u8*)self + 0x24) = 0;
-    *(u32*)((u8*)self + 0x28) = 0;
-    *(u32*)((u8*)self + 0x2c) = 0;
-    *(u32*)((u8*)self + 0x30) = 0;
-    *(u32*)((u8*)self + 0x34) = 0;
-    *(u32*)((u8*)self + 0x38) = 3;
-    *(u32*)((u8*)self + 0x3c) = 1;
-    *(u32*)((u8*)self + 0x40) = 1;
-    *(u32*)((u8*)self + 0x44) = 1;
-    *(u32*)((u8*)self + 0x48) = 0;
-    *(u32*)((u8*)self + 0x4c) = 0;
-    *(s16*)((u8*)self + 0x50) = -1;
-    *(s16*)((u8*)self + 0x52) = -1;
-    *(u8*)((u8*)self + 0x54) = 0;
-    *(s8*)((u8*)self + 0x55) = -1;
-    *(s8*)((u8*)self + 0x56) = -1;
-    *(s8*)((u8*)self + 0x57) = -1;
-    *(u8*)((u8*)self + 0x58) = 0;
-    *(u8*)((u8*)self + 0x59) = 1;
-    *(u8*)((u8*)self + 0x5a) = 0;
-    *(u8*)((u8*)self + 0x5b) = 0;
-    *(u8*)((u8*)self + 0x5c) = 0;
-    *(u8*)((u8*)self + 0x5d) = 0xFF;
-    *(s8*)((u8*)self + 0x5e) = -1;
-    *(s8*)((u8*)self + 0x5f) = -1;
-    *(s8*)((u8*)self + 0x60) = -1;
-    *(u8*)((u8*)self + 0x61) = 0;
-    *(u8*)((u8*)self + 0x62) = 0xFF;
-    *(u8*)((u8*)self + 0x63) = 0xFF;
-    *(u8*)((u8*)self + 0x64) = 0xFF;
-    *(u32*)((u8*)self + 0x68) = 0;
+    self->width = 0;
+    self->height = 0;
+    self->field_0x08 = 0;
+    self->field_0x0c = 0;
+    self->rateIndex = 0;
+    self->time = 0;
+    self->type = 0;
+    self->field_0x1c = 0;
+    self->field_0x20 = 0;
+    self->field_0x24 = 0;
+    self->field_0x28 = 0;
+    self->field_0x2c = 0;
+    self->field_0x30 = 0;
+    self->field_0x34 = 0;
+    self->field_0x38 = 3;
+    self->field_0x3c = 1;
+    self->field_0x40 = 1;
+    self->field_0x44 = 1;
+    self->field_0x48 = 0;
+    self->field_0x4c = 0;
+    self->field_0x50 = -1;
+    self->field_0x52 = -1;
+    self->field_0x54 = 0;
+    self->field_0x55 = -1;
+    self->field_0x56 = -1;
+    self->field_0x57 = -1;
+    self->field_0x58 = 0;
+    self->field_0x59 = 1;
+    self->field_0x5a = 0;
+    self->field_0x5b = 0;
+    self->field_0x5c = 0;
+    self->field_0x5d = 0xFF;
+    self->field_0x5e = -1;
+    self->field_0x5f = -1;
+    self->field_0x60 = -1;
+    self->field_0x61 = 0;
+    self->field_0x62 = 0xFF;
+    self->field_0x63 = 0xFF;
+    self->field_0x64 = 0xFF;
+    self->field_0x68 = 0;
 }
 
 void MPVUMC_Finish(void);
 void MPVSL_Finish(void);
 void MPVM2V_Finish(void);
 
-extern u32 lbl_eu_80602B88[];
 
 void MPV_Finish(void) {
     MPVUMC_Finish();
@@ -223,8 +207,8 @@ void MPV_Finish(void) {
     // 223-iteration dcbi cache-flush countdown (mtctr/bdnz). __dcbi has no
     // MWCC intrinsic (KB: dcbi gap); __dcbz keeps the countdown-loop shape.
     {
-        u32 flag = lbl_eu_80602B88[0x48 / 4];
-        u8* base = (u8*)lbl_eu_80602B88[0x50 / 4];
+        u32 flag = lbl_eu_80602B88.flushSw;
+        u8* base = (u8*)lbl_eu_80602B88.vlcBase;
         u32 off;
         if (flag & 0x10000000) {
             for (off = 0; off < 0x1BE0; off += 0x20) {
@@ -238,12 +222,12 @@ void* mpvlib_InitHn(void* self);
 
 void* MPV_Create(void* pool) {
     /* Scan the handle array for a free slot (state == 1). */
-    s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
-    u8* h = *(u8**)((u8*)lbl_eu_80602B88 + 0x58);
+    s32 n = lbl_eu_80602B88.hnNum;
+    MpvHn* h = (MpvHn*)lbl_eu_80602B88.memBase;
 
     for (; n > 0; n--) {
-        if (*(s32*)(h + 0xb08) != 1) {
-            h += 0xdc0;
+        if (h->state != MPV_HN_STATE_FREE) {
+            h++;
         } else {
             break;
         }
@@ -258,7 +242,7 @@ void* MPV_Create(void* pool) {
          * KB ref MWCC_CASES "dcbi intrinsic gap"), so __dcbz - the closest
          * real intrinsic - keeps the countdown-loop shape; only the cache-op
          * opcode differs (documented ceiling; see MPV_Finish/MPV_Destroy). */
-        if (*(u32*)((u8*)lbl_eu_80602B88 + 0x48) & 0x10000000) {
+        if (lbl_eu_80602B88.flushSw & 0x10000000) {
             u32 off;
             s32 i;
             for (i = 0x6e, off = 0; i != 0; i--) {
@@ -289,9 +273,10 @@ void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c);
 void MPV_SetPicUsrBuf(void* self, void* a, void* b);
 
 void* mpvlib_InitHn(void* self) {
+    MpvHn* hn = (MpvHn*)self;
     u8* b = (u8*)self;
     u8* sub380 = b + 0x380;
-    u32 base = lbl_eu_80602B88[0x50 / 4];
+    u32 base = lbl_eu_80602B88.vlcBase;
     /* VLC block bases derived from the config's vlc-block pointer */
     u32 blk11e0 = base + 0x11E0;
     u32 blk1200 = base + 0x1200;
@@ -326,13 +311,13 @@ void* mpvlib_InitHn(void* self) {
     *(u32*)(b + 0xD1C) = (u32)self;
     *(u32*)(b + 0xD20) = (u32)self + 0x80;
     *(u32*)(b + 0xB0C) = 0;
-    MEM_Copy(b + 0xB10, (u8*)lbl_eu_80602B88, 64);
+    MEM_Copy(hn->cfgImg, (u8*)&lbl_eu_80602B88, 64);
     *(u32*)(b + 0xB54) = 0;
     *(u32*)(b + 0xB58) = 0;
     *(u32*)(b + 0xB50) = 0x7FFFFFFF;
     MPVERR_InitErrInf(b + 0xBDC);
     MPVCMC_InitObj(self);
-    mpvlib_InitPicAtr(b + 0xB5C);
+    mpvlib_InitPicAtr(&hn->picAtr);
     *(u32*)(b + 0xD24) = 0;
     *(u32*)(b + 0xD28) = 0;
     *(u32*)(b + 0xCFC) = 0;
@@ -351,15 +336,14 @@ void* mpvlib_InitHn(void* self) {
     return self;
 }
 
-void MPV_GetDctCnt(void* self, u32* out1, u32* out2) {
-    *out1 = *(u32*)((u8*)self + 0xa10);
-    *out2 = *(u32*)((u8*)self + 0xa14);
+void MPV_GetDctCnt(MpvHn* self, u32* out1, u32* out2) {
+    *out1 = self->dctCntFwd;
+    *out2 = self->dctCntBwd;
 }
 
 extern void MPVM2V_Destroy(void* self);
 extern void MPVSL_Destroy(void* self);
 extern u32 lbl_eu_80602FEC;
-extern u32 lbl_eu_80602B88[];
 
 s32 MPV_Destroy(void* self) {
     s32 err;
@@ -367,7 +351,7 @@ s32 MPV_Destroy(void* self) {
        (state == 2) publish the handle to the globals before tearing down. */
     if (self == NULL) {
         err = -1;
-    } else if (*(s32*)((u8*)self + 0xb08) != 2) {
+    } else if (((MpvHn*)self)->state != MPV_HN_STATE_USED) {
         err = -1;
     } else {
         lbl_eu_80602FEC = (u32)self;
@@ -382,13 +366,13 @@ s32 MPV_Destroy(void* self) {
     // GC/3.0a5.2 has no inline __dcbi intrinsic (it compiles to an external
     // call); __dcbz keeps the countdown-loop shape; only the opcode differs
     // (documented ceiling, MWCC_CASES MPV_Finish/MPV_Destroy).
-    if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
+    if (lbl_eu_80602B88.flushSw & 0x10000000) {
         s32 i;
         for (i = 0; i < 0x6e; i++) {
             __dcbz(self, i * 0x20);
         }
     }
-    *(s32*)((u8*)self + 0xb08) = 1;
+    ((MpvHn*)self)->state = MPV_HN_STATE_FREE;
     return 0;
 }
 
@@ -400,23 +384,23 @@ s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
     u8* tbl;
     if (mpv == NULL) {
         /* p walks the handle array; t mirrors it at the cond dword offset */
-        s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
-        u8* p = (u8*)*(u32*)((u8*)lbl_eu_80602B88 + 0x58);
+        s32 n = lbl_eu_80602B88.hnNum;
+        u8* p = (u8*)lbl_eu_80602B88.memBase;
         u32 off = cond * 4;
         u32 t = off + (u32)p;
         while (n-- > 0) {
-            if (*(s32*)(p + 0xb08) == 2) {
+            if (*(s32*)(p + 0xb08) == MPV_HN_STATE_USED) {
                 *(u32*)(t + 0xb10) = val;
             }
             t += 0xdc0;
             p += 0xdc0;
         }
-        tbl = (u8*)lbl_eu_80602B88;
+        tbl = (u8*)&lbl_eu_80602B88;
     } else {
         s32 err;
         if (mpv == NULL) {
             err = -1;
-        } else if (*(s32*)((u8*)mpv + 0xb08) != 2) {
+        } else if (((MpvHn*)mpv)->state != MPV_HN_STATE_USED) {
             err = -1;
         } else {
             lbl_eu_80602FEC = (u32)mpv;
@@ -425,7 +409,7 @@ s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
         if (err != 0) {
             return MPVERR_SetCode(0, 0xff030202);
         }
-        tbl = (u8*)mpv + 0xb10;
+        tbl = (u8*)((MpvHn*)mpv)->cfgImg;
     }
     *(u32*)(tbl + 4 * cond) = val;
     MPVM2V_SetCond(mpv);
@@ -435,12 +419,12 @@ s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
 s32 MPV_GetCond(void* mpv, s32 cond, s32* out) {
     u32* tbl;
     if (mpv == NULL) {
-        tbl = (u32*)lbl_eu_80602B88;
+        tbl = (u32*)&lbl_eu_80602B88;
     } else {
         s32 err;
         if (mpv == NULL) {
             err = -1;
-        } else if (*(s32*)((u8*)mpv + 0xb08) != 2) {
+        } else if (((MpvHn*)mpv)->state != MPV_HN_STATE_USED) {
             err = -1;
         } else {
             lbl_eu_80602FEC = (u32)mpv;
@@ -449,25 +433,25 @@ s32 MPV_GetCond(void* mpv, s32 cond, s32* out) {
         if (err != 0) {
             return MPVERR_SetCode(0, 0xff030210);
         }
-        tbl = (u32*)((u8*)mpv + 0xb10);
+        tbl = ((MpvHn*)mpv)->cfgImg;
     }
     *out = tbl[cond];
     return 0;
 }
 
 void MPVM2V_SetMbCb(void* self, void* a, void* b, void* c);
-void MPV_SetMbCb(void* self, void* a, void* b, void* c) {
-    *(void**)((u8*)self + 0xb50) = a;
-    *(void**)((u8*)self + 0xb58) = c;
-    *(void**)((u8*)self + 0xb54) = b;
+void MPV_SetMbCb(MpvHn* self, void* a, void* b, void* c) {
+    self->mbVal = (u32)a;
+    self->mbCtx = c;
+    self->mbCb = (void (*)(void*))b;
     MPVM2V_SetMbCb(self, a, b, c);
 }
 
 extern u32 lbl_eu_80602FEC;
 
-int MPVLIB_CheckHn(void* handle) {
+int MPVLIB_CheckHn(MpvHn* handle) {
     if (handle == NULL) return -1;
-    if (*(int*)((u8*)handle + 0xb08) != 2) return -1;
+    if (handle->state != MPV_HN_STATE_USED) return -1;
     lbl_eu_80602FEC = (u32)handle;
     return 0;
 }

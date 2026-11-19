@@ -15,14 +15,6 @@ namespace cf { class CfObjectActor; }
 #include <new>
 #include <cstring>
 #include "kyoshin/cf/chain/CChainActorListImports.hpp"
-// Shield: CChainTimerImports.hpp declares ChainMusic_SaveSlots/RestoreSlots as
-// (void*, void*) for its callers; this TU defines them with full types
-// (retail bodies access typed members). The hidden names keep both decls.
-#define ChainMusic_SaveSlots ChainMusic_SaveSlots_void_hidden
-#define ChainMusic_RestoreSlots ChainMusic_RestoreSlots_void_hidden
-#include "kyoshin/cf/chain/CChainTimerImports.hpp"
-#undef ChainMusic_SaveSlots
-#undef ChainMusic_RestoreSlots
 #include "kyoshin/cf/chain/CChainComboImports.hpp"
 #include "kyoshin/cf/CVisionImports.hpp"
 

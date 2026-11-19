@@ -59,7 +59,7 @@ void __OSInitNet(void) {
 #pragma push
 #pragma auto_inline off  // noinline-ok: the NWC24 shutdown chain must stay out of line; -ipa off drops 4 fns from 100% to <10%
 
-NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
+NWC24Err NWC24iPrepareShutdown() {
     s32 result;
 
     result = 0;
@@ -78,9 +78,9 @@ NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     return result;
 }
 
-s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE;
+s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2);
 
-NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE {
+NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) {
     s32 result;
     s32 rtc;
 
@@ -110,7 +110,7 @@ check_result:
     return NWC24iSetRtcCounter_(rtc, val != FALSE);
 }
 
-s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
+s32 NWC24SuspendScheduler() {
     s32 result;
     s32 fd;
     static s32 susResult[8] ALIGN(32);
@@ -219,7 +219,7 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
 }
 
 //unused
-s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
+s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) {
     s32 result;
     s32 fd;
 
@@ -328,6 +328,6 @@ static s32 CheckCallingStatus(const char* funcName){
     else return 0;
 }
 
-NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
-s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
-NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
+NWC24Err NWC24iPrepareShutdown(void);
+s32 NWC24SuspendScheduler(void);
+NWC24Err NWC24iSynchronizeRtcCounter(BOOL val);

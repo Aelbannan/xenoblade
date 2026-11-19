@@ -57,9 +57,11 @@ extern "C" void CLoadBeginFileRequest(CLoad* self);
 extern "C" void CLoadUpdateLayout(CLoad* self);
 extern "C" void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CLoadTeardownLayout(CLoad* self);
-extern "C" u8 CLoadIsLoadReady(CLoad* self);
-extern "C" u8 CLoadIsLoaded(CLoad* self);
-extern "C" u8 CLoadIsAnimSettled(CLoad* self);
+// int (not u8): retail callers test the return with a full-word cmpi, so the
+// canonical return type is int across every TU.
+extern "C" int CLoadIsLoadReady(CLoad* self);
+extern "C" int CLoadIsLoaded(CLoad* self);
+extern "C" int CLoadIsAnimSettled(CLoad* self);
 extern "C" void CLoadStartFadeInStep(CLoad* self);
 extern "C" void CLoadStartRetryStep(CLoad* self);
 void CLoadAdvanceFadeHold(CLoad* self);

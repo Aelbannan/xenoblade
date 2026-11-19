@@ -86,7 +86,7 @@ extern const char lbl_eu_80661EA8[];
 extern u32 lbl_eu_80658348[];   // tex-mtx work table (0x38 / 0x68 blocks)
 extern u32 lbl_eu_80665780;     // bound ResFile pointer
 
-// reloadChildGxLights is a real LOD::UnkClass_8046D144 member (UnkClass_8046D144.hpp).
+// reloadChildGxLights is a real LOD::LODG3dMgr member (UnkClass_8046D144.hpp).
 extern "C" f32 getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index);
 extern "C" void fetchSampleXY__Q23LOD17CLODCacheManagerSFv(s32* outA,
                                                            s32* outB);
@@ -273,7 +273,7 @@ void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value) {
     LodCallFn texCoordFn = tblB0[lbl_eu_80665804 + rec->field_0x09];
     texCoordFn();
     int lightIdx = ((int*)(tbl + 0x128))[rec->field_0x0A];
-    ((LOD::UnkClass_8046D144*)lbl_eu_80665810)->reloadChildGxLights(lightIdx);
+    ((LOD::LODG3dMgr*)lbl_eu_80665810)->reloadChildGxLights(lightIdx);
 
     if ((lbl_eu_806657E8 & 0xC) != 0) {
         if (lbl_eu_806657D8 == (u32)(value + 0xbb8)) {

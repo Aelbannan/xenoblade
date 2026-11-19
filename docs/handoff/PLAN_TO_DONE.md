@@ -24,32 +24,38 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 5 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-19, checkpoint 6 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 14,418 / 19,310 (74.7%); checkpoint 4 was 14,290 (+128; 224 better, 64 worse) |
+| Functions at 100% | 14,427 / 19,310 (74.7%); checkpoint 5 was 14,418 (+9; 54 better, 27 worse, all worse are already-✗) |
 | Units complete (linked) | 618 / 1,199 |
-| Matched code / data bytes | 42.9% / 52.5% |
-| Unmatched functions by area | kyoshin 3,239 · monolib 888 · CriWare 340 · nw4r 231 · RVL_SDK 192 · PowerPC_EABI_Support 2 |
-| Faithful hard counts | label 46,332 · mangled_c 2,693 · section 1,414 · offset_cast 4,230 · view_struct 2,905 · noinline 1,321 · rule 276 · rtti_off 19 · foreign_data 589 |
-| Faithful soft counts | field_0x 28,272 · unk_name 1,119 · addr_func 1,013 |
+| Matched code / data bytes | 43.0% / 52.4% |
+| Unmatched functions by area | kyoshin 3,238 · monolib 885 · CriWare 340 · nw4r 227 · RVL_SDK 191 · PowerPC_EABI_Support 2 |
+| Faithful hard counts | label 46,115 · mangled_c 2,678 · section 1,414 · offset_cast 2,675 · view_struct 2,741 · noinline 1,108 · decl_shield 52 · volatile 194 · rule 276 · rtti_off 19 · foreign_data 589 |
+| Faithful soft counts | field_0x 28,228 · unk_name 1,082 · addr_func 1,011 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
-Since checkpoint 4: noinline went from 2,358 to 1,321 and offset_cast from 5,147 to 4,230. Nearly all the noinline removals
-came from unit flags (`-O4,s`, `-ipa off`, `-inline noauto`) rather than code changes. About 60 survivors carry
-`// noinline-ok:`.
+Wave c6/c7 was a faithfulness wave: offset_cast 4,230 → 2,675 (CActorParam 894 → 11, CBattleManager 587 → 232,
+LODMemMan/mpv_lib/mps_get/adx_tlk → 0), view_struct 2,905 → 2,741, noinline 1,321 → 1,108 despite counting more
+spellings. Match count barely moved because the work was source-shape, not new matches.
 
-**noinline is now a hard smell** (since checkpoint 4): `__declspec(noinline)`, `#pragma dont_inline`
-and `#pragma auto_inline off` all count, unless the line carries `// noinline-ok: <what was tried>`.
-The baseline was migrated by adding each unit's current count (+2,358 over 171 units, not `--init`).
-The count is higher than the old soft 1,870 because the pragmas now count too. Removing them means
-checking in order: wrong TU boundary → definition order → unit-wide flags (MWCC_PATTERNS).
+**Three new hard smells (checkpoint 6), each migrated by adding the unit's current count, never `--init`:**
+- `noinline` now also counts `__attribute__((never_inline))` and `DECOMP_DONT_INLINE` (+111 at migration).
+- `volatile`: `(volatile T*)&obj` re-reads of non-volatile objects (+259). Hardware FIFO writes (`&WGPIPE`,
+  absolute addresses) are not counted. Exemption: `// volatile-ok: <why the object is volatile>`; prefer
+  declaring the member/global volatile at its definition.
+- `decl_shield`: `#define name name_xxx` / `name_hidden` renames hiding declaration drift (+135). Fix: one
+  canonical declaration from the definition.
+
+**Unit flag lesson:** `-inline noauto` (not `-O4,s`) was the real retail flag for CfRes, CfResPcImpl,
+CfGameManager, LODMemMan, code_804CC2B8, code_804E36DC, AXSPB — `-O4,s` dropped CfRes 211 → 141. Under
+`-inline noauto` helpers retail does fold need the explicit `inline` keyword.
 
 Largest unmatched kyoshin units (unmatched / total functions): `code_800B06A4` 118/253, `CArtsInfo` 66/93, `cf/CfGameManager` 62/352, `action/CActParamAnim` 61/144, `CUICfManager` 56/89, `cf/CtrlObjectParam` 47/109, `CFloorMap` 47/75, `CPassiveSkill` 45/127, `cf/CPartsChange` 45/84, `cf/CfCam` 43/181, `code_80135FDC` 43/124, `cf/CfNandManager` 43/48.
 
-Gate state at checkpoint 5: link OK (missing 43), extab OK (27), text-order OK (11), frozen rules OK (269),
-registry OK, faithful OK (ratcheted, 106 units). Report: `/tmp/xb_ckpt/report_c5.json` (c4: `report_c4.json`).
+Gate state at checkpoint 6: link OK (missing 43), extab OK (27), text-order OK (11), frozen rules OK (269),
+registry OK, faithful OK (ratcheted, 81 units). Report: `/tmp/xb_ckpt/report_c6.json` (c5: `report_c5.json`).
 NB `run.py progress` only rebuilds `build/us/report.json` when it is missing — move it aside first.
 
 ## 3. What this session established (do not re-derive)
@@ -169,6 +175,38 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0. **Checkpoint 6 debts (2026-11-19).** The wave was cut short by the OpenCode Go weekly usage limit;
+   agents c7-ifacevt, c7-kydrift, c7-kynoinline (follow-up), c7-handvt (follow-up), c7-cview (follow-up) and
+   c7-volatile (follow-up) died mid-task. The tree builds, all gates pass, and one half-edit (sfd_tim
+   `SFTIM_InitHn` `tmp` reload) was restored by the orchestrator. Unfinished items:
+   - **Regressions on ✗ functions (report fuzzy, c5 → c6):** `SFTIM_InitHn` 96.7 → 82.0 (volatile
+     `SfdTime::vsyncTime`; un-volatiling it drops sfd_tim to 30/46, so the volatile member stays until InitHn's
+     reload is re-derived), LODMemMan §extab 67.3 → 10.9 (c7-lodsub's in-class `~LODMemMan` / LODG3dMgr ctor or
+     c7-cview's header edits — not yet bisected), `~CView`/`__dt__CMsgParam<10>` 86.4 → 73.4 (MWCC writes
+     `__vt__CMsgParam<10>` in the inlined dtor; retail doesn't), `followUpBattleMove` 94.1 → 83.8 (cause unknown),
+     `resetArtsStatus` 86.4 → 84.2, `mpfCullMarkLayers` 71.2 → 68.4 (size 0x548 → 0x580, from c7-volatile).
+   - **IWorkEvent / IScnObjCallback are each 2 virtual slots short** of retail (`__vt__4CScn` 0xAC vs 0xB4).
+     That blocks removing CScn's hand blobs (`lbl_eu_8056E8D0`, `lbl_eu_8056E984`, `inject_relocs` in
+     CScn_80496B0C.cpp, `Scn_DtorThunk54`) and CScnItemModelNw4r's 9 `-0x1464/-0x1468` MI shims.
+   - **CTagProcessor conversion is proven but blocked by splits:** `kyoshin/CSystemWindow.cpp` has no `.data` range,
+     so its 0x100 vtable sits in CTagProcessor's range; CTagProcessor `.data` should start at 0x8052d478. Fix the
+     split, then rerun `/tmp/xb/c7-tagproc/CTagProcessor.cpp.converted` + `pairs.txt` (prefix
+     `Q227@unnamed@CTagProcessor_cpp@`; see MWCC_CASES).
+   - decl_shield residuals (52): CModelDispEquip.hpp, CModelDispMakeCrystal, CfObjectMove (`writeVec3f`,
+     `Scn_SetupAnimDefault` 1-arg vs 5-arg, `Scn_IsAnimActiveOrNull`, …) — c7-kydrift died before finishing.
+   - volatile residuals (194): kyoshin (CActorParam 32, CfResReloadImpl 16, CItem 14, CfObjectPc 12,
+     CfObjectActor 10), CGXCache 26 (inside `CMsgParam<32>::storeMsg*`), CViewRoot 13 (`CViewRootPool::mUsed`
+     volatile reproduces retail loads but re-colours a register), and 8 load-bearing in FULL functions
+     (Coli_WalkQuery, simSetFlag2OnTree, simSyncBuf824Flags, scnImN4Sync*). ax_rna SetTransSw wait-word and
+     mwsfdcre tag word are load-bearing too.
+   - CBattleManager keeps `BMSentinelView` / `ActorSub3E9CView` as codegen devices (real member spelling CSEs the
+     base conversion: FindActorByKind 100 → 17 %). ~150 casts on an unnamed move/arts stat block.
+   - RVL_SDK: 28 of 160 unmatched are instruction-identical, data-address only (`.sbss` reverse declaration
+     order); GXFifo 7 / WUD 10 are blocked by MWCC 4-aligning `u8[N]` (retail packs at align 1).
+   - CItemBlock_* (13) need the CItemBlock class + static instance recovered before memberizing.
+   - targets.json display names are stale for the 9 LODG3dMgr rows (identity is correct).
+   - Two `// volatile-ok:` (snd_AxfxImpl RestoreAlloc, sfd_mps sfmps_pesfn) and ~70 `// noinline-ok:` remain.
 
 0. **Checkpoint 5 debts (2026-11-19).**
    - Report losses vs c4, all accepted with causes:

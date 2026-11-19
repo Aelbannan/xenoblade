@@ -215,13 +215,13 @@ bool wkStandbyLogin__14CLibHbmControlFv(CLibHbmControl* self) {
     CView* subView = self->pssCreateView(self->mName.c_str(), view, 0);
 
     // Context ring push: compute entry position
-    s32 sum = subView->unk3F0 + subView->mContextRingWriteIndex;
-    s32 product = (sum / (s32)subView->mContextRingCapacity) * (s32)subView->mContextRingCapacity;
+    s32 sum = subView->mContextMsg.mFront + subView->mContextMsg.mSize;
+    s32 product = (sum / (s32)subView->mContextMsg.mCapacity) * (s32)subView->mContextMsg.mCapacity;
     s32 remainder = sum - product;
     s32 offset = remainder * (s32)sizeof(CViewContextRingEntry);
 
     // Write context ring entry with saved register state
-    CViewContextRingEntry* entry = (CViewContextRingEntry*)((u8*)subView->mContextRingBase + offset);
+    CViewContextRingEntry* entry = (CViewContextRingEntry*)((u8*)subView->mContextMsg.mArrayPtr + offset);
     entry->tag = 4;
     ((u32*)entry->payload)[0] = saved_r25;
     ((u32*)entry->payload)[1] = saved_r26;
@@ -234,8 +234,8 @@ bool wkStandbyLogin__14CLibHbmControlFv(CLibHbmControl* self) {
     entry->unk56Hi = 0;
     entry->pad = 0;
 
-    subView->mContextRingWriteIndex++;
-    subView->unk3FC = subView->mContextRingWriteIndex - 1;
+    subView->mContextMsg.mSize++;
+    subView->mContextMsg.field6 = subView->mContextMsg.mSize - 1;
     subView->unk278 |= 8;
     subView->unk460 = 2;
 

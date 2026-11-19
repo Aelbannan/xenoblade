@@ -1886,16 +1886,16 @@ splice:
 }
 // Float getter: read the float at +0x08 of the optional mPtr18 entry,
 // falling back to the default sdata2 constant when no entry is set.
-extern "C" float getParamFloat08(CActParamData* self) {
-    CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(self->mPtr18);
+float CActParamData::getParamFloat08() {
+    CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(mPtr18);
     if (entry == NULL) {
         return lbl_eu_80665F7C;
     }
     return entry->mFloat08;
 }
 // Same shape as getParamFloat08 but reads the +0x0C float.
-extern "C" float getParamFloat0C(CActParamData* self) {
-    CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(self->mPtr18);
+float CActParamData::getParamFloat0C() {
+    CActParamDataEntry* entry = static_cast<CActParamDataEntry*>(mPtr18);
     if (entry == NULL) {
         return lbl_eu_80665F7C;
     }
@@ -1904,42 +1904,42 @@ extern "C" float getParamFloat0C(CActParamData* self) {
 
 // Reset the SubObjB block: snapshot the tag word, wipe all fields to their
 // defaults (three sdata2 float constants), then restore the saved tag.
-extern "C" void resetParamSubB(CActParamData* self) {
-    u32 tag = self->mField2EC;
-    if (self->mField2E8 == 2) tag = self->mField2E8;
-    self->mField2E0 = 0;
-    self->mField2E4 = 0;
-    self->mField2E8 = 0;
-    self->mField2EC = 0;
-    self->mPtr2F4 = 0;
-    self->mField2F8 = 0;
-    self->mField2FC = 0;
-    self->mField300 = 0;
-    self->mFloat304 = lbl_eu_80665F78;
-    self->mFloat308 = lbl_eu_80665F7C;
-    self->mFloat30C = lbl_eu_80665F7C;
-    self->mByte310 = 0;
-    self->mByte311 = 0;
-    self->mFloat320 = lbl_eu_80665F80;
-    self->mFloat324 = lbl_eu_80665F80;
-    self->mField328 = 0;
-    self->mField314 = 0;
-    self->mField318 = 0;
-    self->mField31C = 0;
-    self->mField32C = 0;
-    self->mFloat330 = lbl_eu_80665F80;
-    self->mFloat334 = lbl_eu_80665F80;
-    self->mField338 = 0;
-    self->mField33C = 0;
-    self->mField340 = 0;
-    self->mByte344 = 0;
-    self->mFloat348 = lbl_eu_80665F80;
-    self->mField34C = 0;
-    self->mFloat350 = lbl_eu_80665F7C;
-    self->mField354 = 0;
-    self->mPtr358 = 0;
-    self->mShort35C = -1;
-    self->mField2F0 = tag;
+void CActParamData::resetParamSubB() {
+    u32 tag = mField2EC;
+    if (mField2E8 == 2) tag = mField2E8;
+    mField2E0 = 0;
+    mField2E4 = 0;
+    mField2E8 = 0;
+    mField2EC = 0;
+    mPtr2F4 = 0;
+    mField2F8 = 0;
+    mField2FC = 0;
+    mField300 = 0;
+    mFloat304 = lbl_eu_80665F78;
+    mFloat308 = lbl_eu_80665F7C;
+    mFloat30C = lbl_eu_80665F7C;
+    mByte310 = 0;
+    mByte311 = 0;
+    mFloat320 = lbl_eu_80665F80;
+    mFloat324 = lbl_eu_80665F80;
+    mField328 = 0;
+    mField314 = 0;
+    mField318 = 0;
+    mField31C = 0;
+    mField32C = 0;
+    mFloat330 = lbl_eu_80665F80;
+    mFloat334 = lbl_eu_80665F80;
+    mField338 = 0;
+    mField33C = 0;
+    mField340 = 0;
+    mByte344 = 0;
+    mFloat348 = lbl_eu_80665F80;
+    mField34C = 0;
+    mFloat350 = lbl_eu_80665F7C;
+    mField354 = 0;
+    mPtr358 = 0;
+    mShort35C = -1;
+    mField2F0 = tag;
 }
 
 // Reset both sub-objects' saved flag/float shadow slots to defaults.

@@ -153,7 +153,7 @@ void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
     mLfoTarget = LFO_TARGET_PITCH;
     mPanMode = PAN_MODE_DUAL;
     mPanCurve = PAN_CURVE_SQRT;
-    field_0xDC = 0;
+    mTag = 0;
 }
 
 void Channel::Update(bool periodic) {

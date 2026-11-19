@@ -369,6 +369,20 @@ wrapper symbol, breaking an otherwise-100% function.
   above the 0x804EF680..0x804EFA14 helper family), which also turned split FAIL(+0x48) into
   PASS(0x64 spare). CGXCache likewise needed `-ipa off` for the ring setters (30/30 vs 20/30).
   See `MWCC_CASES.md` "monolib noinline-smell removal batch".
+- **kyoshin adds the `-O4,p` speed-TU case (2026-11-19, repo_proven on CfRes/CfResPcImpl/
+  CfGameManager):** `-inline noauto` is also the right unit flag where the *opposite* c4/c5
+  recipe applies — a TU retail compiled as `-O4,p` (stmw/lmw-free frames; cf. §16) that still
+  never inlines. Probes on CfRes (211/224 ✓, 124 smells): `-O4,s -func_align 4` → 141,
+  `-ipa off` + all smells deleted → 143, plain deletion under `-inline auto` → 143;
+  `-inline noauto` + deletion → **211** (table identical, one already-✗ row 7.2%→8.1%).
+  So `-O4,s` is not just "unnecessary" for such a unit, it is *wrong*: the speed/size frame
+  choice is orthogonal to the inline policy, and only the latter needs changing. The same
+  swap is the honest replacement for `#pragma dont_inline on/reset` blocks: CfGameManager
+  (95 pragma pairs + 72 in `CfGameManagerUnityHelpers.hpp`, the #define `_hidden` shields
+  already present were left alone) went 308/352 → 308/352 with 7 rows improving and 3 sliding.
+  Consequence of noauto still holds: exactly the bodies retail *does* fold need `inline` —
+  CfRes needed `static inline` on two file-static helpers and `template<> inline` on an
+  empty template dtor specialization.
 - Result:    func_80084F50 96.7% -> 100% FULL_MATCH (drift was self-inflicted by an unprotected definition)
 - Confidence: repo_proven (Wii/1.1 -O4,p)
 - Applies to/a.k.a.: any single-call wrapper/thunk added to a matched TU; also explains "caller regressed after I added a helper" reports
@@ -6130,6 +6144,25 @@ Wrap ONLY the leaf in `#pragma peephole off` ... `#pragma peephole on`, keep pla
 - Applies to/a.k.a.: "label pool" constants, `lbl_eu_8066*` float pools,
   `data diff` `.sdata2 size 0x0`, `foreign_data` smells.
 
+## A `.sdata2` float-pool import can be replaced by the literal only when the TU's pool is already literal-driven (nw4r snd, Wii/1.1)
+- Symptom:   a unit's float constants are all `extern "C" const f32 lbl_eu_8066A0xx;` imports even
+  though the `.sdata2` split range belongs to that unit ("label" hard smell, up to 65 hits).
+- Cause:     the imports exist because the *pool owner* did not emit the data. If the TU already
+  produces the identical pool from its own literal uses (inlined helpers + literal expressions), the
+  imports are redundant: the pool that MWCC emits from the literals is byte-identical to retail,
+  because `.sdata2` is emitted in first-use order and the retail values match.
+- Fix:       check `data diff <unit>` .sdata2 size/order first, then replace the imports with the
+  literals (`1.0f`, `0.0f`, `0.5f`, `2.0f`, `-1.0f`, `-3.0f`, `32768.0f`) and delete the externs.
+  Verified neutral on `nw4r/src/snd/snd_Voice` (44/48 before and after, every function byte-identical,
+  `.sdata2` 52 bytes identical, label 65 → 0).
+- Negative result (check before keeping the swap): it is **not** byte-neutral when a near-miss body
+  depends on a non-foldable `1.0f` load. In `nw4r/src/snd/snd_BasicSound` the same swap turned three
+  reloc-name-only misses into matches but degraded `BasicSound::UpdateParam` 89.1% → 63.1%
+  (0x3dc → 0x3f0): retail keeps `f32 volume = <pool 1.0f>; volume *= x;` and MWCC must load the 1.0,
+  while a literal lets it fold `1.0f * x` away. Reverted.
+- Confidence: repo_proven (both directions measured with `hexdiff --all` + `data diff`)
+- Applies to/a.k.a.: `lbl_eu_*` float pools, "label" smells, `.sdata2` ownership, literal folding.
+
 ## NW4R assert strings in `.data` — the owning TU declares plain `char[]`, not `const char*`
 - Symptom:   a unit's `.data` split begins with two string blobs
   (`"NW4R:Failed assertion IsValid()"`, `"g3d_fog.h"`) that the decomp never
@@ -6317,3 +6350,37 @@ decisions. The width lever above was found this way after nine if/goto/helper sh
 - Applies to/a.k.a.: `-ipa file` visibility, "caller grew by the callee's size", 0xD8→0x17C style size
   deltas, MWCC_CASES inlining Rule A/B, the `const void*` trick (MWCC converts any `T*`→`const void*` but
   never `T*`→`void*`, which is why the views use `const void*`).
+
+## Pointer-to-member-function table initialisers: cast entries move the table to .bss and generate `__sinit` copies (Wii/1.1 `-O4,p`, repo_proven)
+- Symptom:   retail `.data` holds N consecutive 12-byte `{0, -1, fn}` records while the *live* table the
+  code indexes sits in `.bss` and a compiler-generated `__sinit_\<tu>_cpp` copies one record per entry
+  from `.data` to `.bss` (a 0x1A8-byte `.data` template, 3 `.bss` arrays 0xB4/0xD8/0x18 with the 4-byte
+  hole MWCC itself inserts after the first, `.ctors` entry pointing at the sinit). A hand-built `u32[]`
+  blob plus a hand-written `lbl_*` copy function is the wrong shape and can never match.
+- Cause:     MWCC folds a pmf initialiser into the array's own `.data` object **only when every element has
+  the array's declared pointer-to-member type** (`{0,-1,fn}` triples inline, no sinit, no `.bss`). An
+  element that needs a conversion - `(TableFn)&Class::handler` where the handler's real signature differs
+  in arity/return type - is *not* folded: MWCC emits a separate anonymous 12-byte `@N` pmf constant in
+  `.data`, keeps the table itself in `.bss`, and fills it from the compiler-generated `__sinit`, one
+  12-byte copy (3 lwz + 3 stw) per entry. That is exactly the retail shape whenever the call sites pass
+  fewer arguments than the handler bodies consume (retail's `f1` is stale at the call: the table type is
+  `void (C::*)(void*)` while the handlers are `void (C::*)(Row*, float)`).
+- Fix:       spell the handlers as real members with their true signatures, then initialise each table with
+  explicit per-entry conversions:
+  `typedef void (Blob::*BlobFn)(void*); BlobFn table[15] = { (BlobFn)&Blob::handler0, ... };`
+  MWCC then emits the `.data` constants, the `.bss` tables (with the retail hole) and the `__sinit` copy
+  itself; delete the hand `u32[]` blob and the hand copy function, and rename the retail sinit symbol to
+  `__sinit_\<tu>_cpp` (+ `link_transform={"globalize": [...]}` when retail's is global).
+- Result:    CScnEnvLgtCtrl: 35 handlers re-typed as `CScnEnvLgtCtrlWorkBlob` members (all still 100%),
+  5 offset-view structs retired (unit `view_struct` 83 -> 43), `.data`/`.bss`/`.ctors` all match retail,
+  sinit 0.0% -> 77.5% (0 structural, size 0x510 == retail).
+- Confidence: repo_proven (scratch probes: fold-vs-cast matrix, 15/18/2-entry reproduction of the retail
+  `.bss` hole and `.ctors` entry; measured in-tree).
+- Applies to/a.k.a.: every hand-built pmf/callback table with `{0,-1,fn}` triples (`lbl_eu_8056F1D8`,
+  `__ptmf_null` copies, CodeUnit "integer table of member addresses" scaffolds). Caveat measured in the
+  same TU: passing the *template members* instead of `&Class::handler`
+  (`(BlobFn)template.m0`) also compiles and generates a sinit, but MWCC then emits a *per-member converted
+  copy* schedule (0.6% vs the fold-free cast form's 77.5%) - prefer direct `&Class::handler` casts.
+  Remaining residual there: with the constants behind a named object that is not first in `.data`,
+  MWCC folds the section base into every `addi` (retail's source base is the template symbol), which
+  the register witness cannot rename.

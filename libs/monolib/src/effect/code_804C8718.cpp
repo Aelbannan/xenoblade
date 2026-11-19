@@ -861,9 +861,7 @@ extern "C" void EffSys_Init4F9C(void) { __ct__804E4F9C(); }
 // the renderArg header. Returns 1 on success, 0 when the data is empty.
 s32 EffObject::Obj_Construct(const u8* base, const EffInitBlob* data, void* arg6, s32 arg7, u8 arg8) {
     if (data->field_0x04 == 0) return 0;
-    // volatile read: retail re-loads field_0x06 here instead of reusing the
-    // guard's register value; the volatile blocks the CSE merge.
-    if (*(const volatile u16*)&data->field_0x06 == 0) return 0;
+    if (data->field_0x06 == 0) return 0;
     u32 p04 = data->field_0x04 ? (u32)(base + data->field_0x04) : 0;
     u32 p06 = data->field_0x06 ? (u32)(base + data->field_0x06) : 0;
 

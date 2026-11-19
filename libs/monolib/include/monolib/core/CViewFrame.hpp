@@ -25,9 +25,10 @@ public:
     void CView_UnkVirtualFunc9();
     void drawFrameBorder(CDrawGX* draw, ml::CRect16* rect);
 
-    void* mVtable; // 0x0
+    CViewFrame();
+    virtual ~CViewFrame() {}  // implicit vptr at 0x0
     CView* mOwner; // 0x4
-    ml::CCol4 mFrameColor; // 0x8
+    ml::CCol4 mFrameColor;
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
     u32 unk38; // 0x38 - render flags / mode bits (1=border expand, 2=split)

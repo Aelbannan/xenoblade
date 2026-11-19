@@ -11,7 +11,7 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14
+#include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene
 #include "kyoshin/cf/object/CAIAction.hpp"   // getObjectAt / isBattleStatusActive
 
 // Battle-actor view polled by refreshPtStateAccum (unit-private).
@@ -151,7 +151,7 @@ extern "C" void updatePtStateTimer(cf::UnkClass_80192BF4* self) {
             // reset the block.
             // The product is materialized separately -- writing it as one
             // expression makes MWCC contract to fnmsubs, which retail lacks.
-            f32 decay = 0.033333335f * Scn_GetFrameDelta(lbl_eu_80663E14);
+            f32 decay = 0.033333335f * Scn_GetFrameDelta(gmScene);
             self->field_0x04 -= decay;
             if (self->field_0x04 <= 0.0f) {
                 self->field_0x00 = 0;

@@ -56,8 +56,6 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly (no byte mask).
 
 // CCollepedia callees (retail-unmangled func_ names).
@@ -75,7 +73,6 @@ extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void*
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void clpStartLoads(CCollepedia* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // Colle_HandleInput callees (retail-unmangled func_ names).
 extern "C" int clpCanClaim(CCollepedia* self);

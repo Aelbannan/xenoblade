@@ -72,13 +72,13 @@ const f32 lbl_eu_8066A890 = 1.0f; // box half-size / clearance radius
 // nw4r db Warning rodata strings
 extern const char lbl_eu_80526300[];
 extern const char lbl_eu_80526324[];
-extern const Fe48Table lbl_eu_80658540; // walk-table locator block (+0x8 pointer)
-extern u32 lbl_eu_8056DC68[3];    // default reference block (defined below)
+extern const Fe48Table sWalkTableLocator; // walk-table locator block (+0x8 pointer)
+extern u32 sDefaultProbeCallbackRef[3];    // default reference block (defined below)
 // Walk-box waypoint table (3 x 12-byte blocks, initialized on first use by
 // fetchWalkTarget) and its init-once flag. Defined in UnkClass_8047CD0C.cpp.
-extern u8 lbl_eu_80658608[0x30];
-extern s8 lbl_eu_806658D0[8]; // init-once flag (read as signed char)
-extern ScnPtmf lbl_eu_8056DC74;   // default 12-byte reference block
+extern u8 sWalkWaypointTable[0x30];
+extern s8 sWalkWaypointInitFlags[8]; // init-once flag (read as signed char)
+extern ScnPtmf sDefaultWalkBoxCallbackRef;   // default 12-byte reference block
 
 // Retail s16/s32->f32 conversion magic (lbl_eu_8066A8A0 = 0x4330000080000000),
 // owned by this TU so the builtin conversions resolve to the retail name.
@@ -520,7 +520,7 @@ extern "C" s32 buildCandidateList__17UnkClass_8047E110Fv(
         return count;
     }
     // BFS path: expand from b, collecting the first flagged node's matches
-    const Fe48Table& tbl = lbl_eu_80658540;
+    const Fe48Table& tbl = sWalkTableLocator;
     u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     memset(bitmap, 0, (((const u16*)m.field_0x8)[a * 3 + 1] >> 5) * 4);
     u16* work = (u16*)tbl.field_0x8;
@@ -674,7 +674,7 @@ extern "C" s32 expandWalkPath__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         thr[0] = thr[1] + 2;
     }
     if ((u32)(cur[0] + cur[1] + 1)
-        >= ((const Fe48TableExt*)&lbl_eu_80658540)->field_0x14)
+        >= ((const Fe48TableExt*)&sWalkTableLocator)->field_0x14)
         return 0;
     out[cur[0]] = (u16)seed;
     u16 best;
@@ -848,14 +848,14 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
         const ScnWalkNode* nodes = m.nodes;
         u16 flags = node.reserved8;
         s32 sel = (flags >> 12) & 0xF;
-        if (!(s8)lbl_eu_806658D0[0]) {
+        if (!(s8)sWalkWaypointInitFlags[0]) {
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
             const f32 vDepth = (-1.0f);
             const f32 vFlat = lbl_eu_8066A8AC;
-            ((f32*)lbl_eu_80658608)[0] = vFlat;
-            f32* wp = (f32*)lbl_eu_80658608;
+            ((f32*)sWalkWaypointTable)[0] = vFlat;
+            f32* wp = (f32*)sWalkWaypointTable;
             const f32 vHalf = lbl_eu_8066A890;
             wp[1] = vFlat;
             wp[2] = vDepth;
@@ -868,11 +868,11 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
             wp[9] = vHalf;
             wp[10] = vFlat;
             wp[11] = vFlat;
-            lbl_eu_806658D0[0] = 1;
+            sWalkWaypointInitFlags[0] = 1;
         }
 
         // high nibble of the flag halfword selects the waypoint block
-        const ScnVecWords* blocks = (const ScnVecWords*)lbl_eu_80658608;
+        const ScnVecWords* blocks = (const ScnVecWords*)sWalkWaypointTable;
         *out = blocks[sel];
         return 1;
     }
@@ -966,7 +966,7 @@ extern "C" s32 floodFillWalkTable__17UnkClass_8047E110Fv(
 extern "C" s32 queryWalkTable__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u16* outResult, u16* outValue, s32 p1, s32 p2, s32 p3, s32 p4) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    u32 wpTable = lbl_eu_80658540.field_0x8;
+    u32 wpTable = sWalkTableLocator.field_0x8;
     m.field_0x94 = wpTable;
     const WalkSpawnDesc* desc = (const WalkSpawnDesc*)m.field_0x0;
     m.field_0x98 = wpTable + desc->field_0x10 * 2;
@@ -1124,7 +1124,7 @@ extern "C" s32 findPathBfs__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         return 1;
     }
     ScnWpKey& wp = ((ScnWpKey*)m.field_0x8)[key];
-    const Fe48Table& tbl = lbl_eu_80658540;
+    const Fe48Table& tbl = sWalkTableLocator;
     u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
     memset(bitmap, 0, ((wp.range >> 5) + 1) * 4);
     u16* buf = (u16*)tbl.field_0x8; // distance map, indexed by id-base
@@ -1189,7 +1189,7 @@ extern "C" s32 findPathBidirectional__17UnkClass_8047E110Fv(UnkClass_8047E110* s
     const ScnWalkNode* nodes = m.nodes;
     u32 total = ((const WalkSpawnDesc*)m.field_0x0)->field_0x0;
     u32 cap = (total >= 500) ? total >> 1 : total;
-    u16* work = (u16*)lbl_eu_80658540.field_0x8;
+    u16* work = (u16*)sWalkTableLocator.field_0x8;
     u16* qA = work + cap; // forward queue half
     u16* qB = qA + cap;   // backward queue half / dist map
     u32* bitmap = (u32*)::Coli_GetBitTable_5A68();
@@ -1624,7 +1624,7 @@ extern "C" void rebuildWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     }
     // interleaved load/store order matters for byte-identity: word A is
     // fetched (lwzu), word B feeds its store before A's, then word C loads.
-    u32* ref = (u32*)&lbl_eu_8056DC68;
+    u32* ref = (u32*)&sDefaultProbeCallbackRef;
     u32 wordA = *ref++;
     mgr.callback.field_0x4 = *ref++;
     mgr.callback.field_0x0 = wordA;
@@ -1644,7 +1644,7 @@ extern "C" void setWalkBoxCenter__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     m.field_0x5C = lbl_eu_8066A890 + v->z;
     // interleaved load/store order matters for byte-identity: word A is
     // fetched (lwzu), word B feeds its store before A's, then word C loads.
-    u32* ref = (u32*)&lbl_eu_8056DC74;
+    u32* ref = (u32*)&sDefaultWalkBoxCallbackRef;
     u32 wordA = *ref++;
     m.field_0x9C.field_0x4 = *ref++;
     m.field_0x9C.field_0x0 = wordA;
@@ -1682,7 +1682,7 @@ extern "C" void setWalkBoxBounds__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u32 w1;
     u32 w0;
     u32 w2;
-    u32* ref = lbl_eu_8056DC80;
+    u32* ref = sDefaultPositionCallbackBlock;
     w0 = *ref++;
     w1 = *ref++;
     m.field_0x9C.field_0x4 = w1;
@@ -1712,7 +1712,7 @@ extern "C" s32 searchWalkGraph__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     u32* bits;
     s32 count;
     s32 pass;
-    u16* front = (u16*)lbl_eu_80658540.field_0x8;
+    u16* front = (u16*)sWalkTableLocator.field_0x8;
     bits = (u32*)::Coli_GetBitTable_5A68();
     // size re-read through the manager so the load isn't reused
     memset(bits, 0,
@@ -1874,15 +1874,15 @@ extern "C" u32 __RTTI__18CScnItemCameraNw4r;   // .sdata RTTI locator (foreign u
 extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 __RTTI__14CScnItemCamera;   // .sdata RTTI locator (foreign unit)
 
-extern "C" u32 lbl_eu_8056DC68[3] = {
+extern "C" u32 sDefaultProbeCallbackRef[3] = {
     0x00000000, 0xFFFFFFFF, (u32)&probeWalkerContact__17UnkClass_8047E110Fv,
 };
 // The default 12-byte reference block (also the retail symbol referenced by
 // func_8048163C). Defined as the ScnPtmf struct so the field copy compiles.
-// NOTE: declared AFTER lbl_eu_8056DC68 so MWCC emits the .data symbols in
+// NOTE: declared AFTER sDefaultProbeCallbackRef so MWCC emits the .data symbols in
 // retail offset order (definition order = section order for .data).
-ScnPtmf lbl_eu_8056DC74 = { 0x00000000, 0xFFFFFFFF, (u32)&isNodeInWalkBox__17UnkClass_8047E110Fv };
-extern "C" u32 lbl_eu_8056DC80[4] = {
+ScnPtmf sDefaultWalkBoxCallbackRef = { 0x00000000, 0xFFFFFFFF, (u32)&isNodeInWalkBox__17UnkClass_8047E110Fv };
+extern "C" u32 sDefaultPositionCallbackBlock[4] = {
     0x00000000, 0xFFFFFFFF, (u32)&isNodeAtPosition__17UnkClass_8047E110Fv,
     0x00000000,
 };

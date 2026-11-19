@@ -6,6 +6,7 @@
 // no-ops in this build; only SetUsrSj / ExecServer / Create carry logic.
 
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.h"
 
 /* View of the SofDec movie handle fields touched by the UO unit.
  * The UO entry table is a small array of 16-byte records embedded in the
@@ -31,7 +32,6 @@ typedef struct SfdHandle {
 extern s32 SFLIB_SetErr(s32 val, u32 err_code);
 extern s32 SFLIB_CheckHn(SfdHandle* h);
 /* sfd_buf.c */
-extern void SFBUF_SetUoch(SfdHandle* self, s32 state, s32 idx, u32* entry);
 extern s32 SFBUF_GetTermFlg(SfdHandle* self, s32 idx);
 extern s32 SFBUF_GetPrepFlg(SfdHandle* self, s32 idx);
 /* sfd_trn.c */

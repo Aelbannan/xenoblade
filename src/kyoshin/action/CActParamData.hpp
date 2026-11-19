@@ -232,9 +232,9 @@ extern "C" int walkParamContext(CActParamData* self, void* ctx);
 extern "C" int lookupParamByKey(CActParamData* self, void* key);
 extern "C" void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA, void* nodeB);
 
-// Slot table addressed relative to lbl_eu_80663D50, indexed directly by a
+// Slot table addressed relative to spActParamGlobalTable, indexed directly by a
 // record's base offset (byte-granular indexing, hence the pointer-view decl).
-extern ActParamGlobalTable* lbl_eu_80663D50;
+extern ActParamGlobalTable* spActParamGlobalTable;
 
 void* getNonNullPtr(void* param);
 extern "C" int hasParamSubObjB(CActParamData* self);

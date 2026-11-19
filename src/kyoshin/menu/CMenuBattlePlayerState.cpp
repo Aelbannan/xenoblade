@@ -55,8 +55,8 @@ extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
     return self;
 }
 extern "C" {
-extern CMenuBattlePlayerState* lbl_eu_80663F48;
-extern u32 lbl_eu_80663E28;
+extern CMenuBattlePlayerState* spBpsState;
+extern u32 gmPauseFlags;
 char lbl_eu_8052C1C0[];
 char lbl_eu_8052C330[];
 char lbl_eu_8052C42C[];
@@ -98,9 +98,9 @@ extern nw4r::lyt::ArcResourceAccessor* UIBattleGetWordEC();
 extern void playUISound(u32);
 
 extern "C" {
-extern s16 lbl_eu_80663F30[4];
-extern s16 lbl_eu_80663F38[4];
-extern s16 lbl_eu_80663F40[4];
+extern s16 sBpsPaneColorWhite[4];
+extern s16 sBpsPaneColorGold[4];
+extern s16 sBpsPaneColorGray[4];
 }
 
 // Direct-store view
@@ -169,12 +169,12 @@ void CMenuBattlePlayerState::Init() {
         char* tbl = lbl_eu_804FD720;
         // Loop invariants kept live across the whole pass (retail pins them
         // to nonvolatile f28-f31 / r24-r26).
-        const f32 zeroF = lbl_eu_80666F94;
+        const f32 zeroF = 0.0f;
         const double intDbias = lbl_eu_80666FA8;
         const f32 yStep = lbl_eu_80666F9C;
-        s16* colA = lbl_eu_80663F30;
-        s16* colB = lbl_eu_80663F38;
-        s16* colC = lbl_eu_80663F40;
+        s16* colA = sBpsPaneColorWhite;
+        s16* colB = sBpsPaneColorGold;
+        s16* colC = sBpsPaneColorGray;
 
         for (u8 i = 0; i < 3; i++) {
             CMenuBattlePlayerStateSlot& slot = mSlots[i];
@@ -467,9 +467,9 @@ void CMenuBattlePlayerState::Init() {
         {
             // Fresh NV set for this pass (retail reloads FA8/F94/F90/FB8 here).
             const double intDbias2 = lbl_eu_80666FA8;
-            const f32 zeroF2 = lbl_eu_80666F94;
+            const f32 zeroF2 = 0.0f;
             const double uIntBias = lbl_eu_80666FB8;
-            const f32 oneF = lbl_eu_80666F90;
+            const f32 oneF = 1.0f;
 
             for (u8 i = 0; i < 3; i++) {
                 cf::CfObjectActor* actor =
@@ -546,7 +546,7 @@ void CMenuBattlePlayerState::Term() {
 
     unk7D0.deleteRegion();
     unk64.deleteRegion();
-    lbl_eu_80663F48 = NULL;
+    spBpsState = NULL;
 }
 
 void CMenuBattlePlayerState::Move() {
@@ -554,7 +554,7 @@ void CMenuBattlePlayerState::Move() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if ((gmPauseFlags & (1u << 21)) != 0) {
         goto done;
     }
     if (!IsMenuState621F0()) {
@@ -563,7 +563,7 @@ void CMenuBattlePlayerState::Move() {
     if (unk7C9 != 0) {
         goto done;
     }
-    if (lbl_eu_80663E24 & 0xAFE40000u) {
+    if (gmGameFlags & 0xAFE40000u) {
         goto done;
     }
     if (cf::CfGameManager::isSceneLoading()) {
@@ -614,7 +614,7 @@ void CMenuBattlePlayerState::Move() {
             maxHp = static_cast<u32>(actor->CActorParam_getDamageScale());
 
             // Retail: lfs f26, zero pool -- not fmr from a zero NV.
-            hpRatio = lbl_eu_80666F94;
+            hpRatio = 0.0f;
             if (hp == 0) {
                 goto skip_ratio;
             }
@@ -622,7 +622,7 @@ void CMenuBattlePlayerState::Move() {
                 goto skip_ratio;
             }
             hpRatio =
-                lbl_eu_80666FC0 * (static_cast<f32>(hp) / static_cast<f32>(maxHp));
+                100.0f * (static_cast<f32>(hp) / static_cast<f32>(maxHp));
         skip_ratio:
 
             slot->unk204 = static_cast<u8>(
@@ -665,8 +665,8 @@ void CMenuBattlePlayerState::Move() {
                     if (slot->unk228 != tB2) {
                         slot->unk25C |= 0x4;
                     }
-                    slot->unk224 = lbl_eu_80666F94;
-                    slot->unk228 = lbl_eu_80666F90;
+                    slot->unk224 = 0.0f;
+                    slot->unk228 = 1.0f;
                     goto tension_done;
                 }
 
@@ -691,7 +691,7 @@ void CMenuBattlePlayerState::Move() {
             }
         tension_done:
 
-            if (slot->unk22C < lbl_eu_80666F94) {
+            if (slot->unk22C < 0.0f) {
                 slot->unk22C = slot->unk224;
             }
 
@@ -747,8 +747,8 @@ void CMenuBattlePlayerState::Move() {
                 this->BpsStateActivateSlot(slot, i);
                 break;
             case 1: {
-                u32 a = advanceAnimTransform(slot->unk04, lbl_eu_80666F90);
-                u32 b = advanceAnimTransform(slot->unk1C, lbl_eu_80666F90);
+                u32 a = advanceAnimTransform(slot->unk04, 1.0f);
+                u32 b = advanceAnimTransform(slot->unk1C, 1.0f);
                 slot->unk25C = (slot->unk25C & ~0x300u) | 0xC0u;
                 if (a != 0 && b != 0) {
                     slot->unk244 = 2;
@@ -760,9 +760,9 @@ void CMenuBattlePlayerState::Move() {
                 break;
             case 3: {
                 u32 a = AnimRewindFrame(slot->unk04,
-                                      lbl_eu_80666F90);
+                                      1.0f);
                 u32 b = AnimRewindFrame(slot->unk1C,
-                                      lbl_eu_80666F90);
+                                      1.0f);
                 // Retail: ori 0xc0; rlwinm clear PPC bits 21-23 (= 0x700)
                 slot->unk25C = (slot->unk25C | 0xC0u) & ~0x700u;
                 if (a != 0 && b != 0) {
@@ -797,28 +797,28 @@ void CMenuBattlePlayerState::Move() {
 
         switch (static_cast<s32>(unk7F8)) {
         case 1:
-            if (advanceAnimTransform(unk7E8, lbl_eu_80666F90) != 0) {
+            if (advanceAnimTransform(unk7E8, 1.0f) != 0) {
                 unk7F4 = 1;
                 unk7F8 = 2;
                 unk7E4->SetAnimationEnable(unk7E8, false);
                 unk7E4->SetAnimationEnable(unk7EC, false);
                 unk7E4->SetAnimationEnable(unk7F0, true);
-                unk7F0->SetFrame(lbl_eu_80666F94);
+                unk7F0->SetFrame(0.0f);
             }
             break;
         case 2:
-            advanceAnimTransform(unk7F0, lbl_eu_80666F90);
+            advanceAnimTransform(unk7F0, 1.0f);
             break;
         case 3:
-            if (AnimRewindFrame(unk7E8, lbl_eu_80666F90) !=
+            if (AnimRewindFrame(unk7E8, 1.0f) !=
                 0) {
                 unk7F4 = 1;
                 unk7F8 = 0;
             }
             break;
         case 4:
-            if (advanceAnimTransform(unk7EC, lbl_eu_80666F90) != 0) {
-                unk7EC->SetFrame(lbl_eu_80666F94);
+            if (advanceAnimTransform(unk7EC, 1.0f) != 0) {
+                unk7EC->SetFrame(0.0f);
                 unk7E4->Animate(0);
                 unk7E4->SetAnimationEnable(unk7EC, false);
                 unk7E4->SetAnimationEnable(unk7F0, false);
@@ -841,7 +841,7 @@ void CMenuBattlePlayerState::Move() {
             pos.x = lbl_eu_80666FA0;
             pos.y =
                 lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5);
-            pos.z = lbl_eu_80666F94;
+            pos.z = 0.0f;
             MenuBpsPaneXlate* px =
                 reinterpret_cast<MenuBpsPaneXlate*>(pane);
             px->field_0x2c = pos.x;
@@ -852,16 +852,16 @@ void CMenuBattlePlayerState::Move() {
         unk7E4->Animate(0);
 
         if (static_cast<int>(fullHpCount) == static_cast<int>(aliveCount)) {
-            f32 t = unk7C4 + lbl_eu_80666F90;
+            f32 t = unk7C4 + 1.0f;
             unk7C4 = t;
-            if (t >= lbl_eu_80666FC4) {
+            if (t >= 360.0f) {
                 if (unk7C8 == 0) {
                     playUISound(0x9a);
                 }
                 unk7C8 = 1;
             }
         } else {
-            unk7C4 = lbl_eu_80666F94;
+            unk7C4 = 0.0f;
             unk7C8 = 0;
         }
     }
@@ -874,7 +874,7 @@ void CMenuBattlePlayerState::cbRenderBefore() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if ((gmPauseFlags & (1u << 21)) != 0) {
         goto done;
     }
     if (!IsMenuState621F0()) {
@@ -883,7 +883,7 @@ void CMenuBattlePlayerState::cbRenderBefore() {
     if (unk7C9 != 0) {
         goto done;
     }
-    if (lbl_eu_80663E24 & 0xAFE40000u) {
+    if (gmGameFlags & 0xAFE40000u) {
         goto done;
     }
 
@@ -1009,11 +1009,11 @@ void BpsStateClearSlot(CMenuBattlePlayerStateSlot* slot){
         }
     }
 }
-extern "C" int BpsStateSingletonToInt() { return (int)lbl_eu_80663F48; }
+extern "C" int BpsStateSingletonToInt() { return (int)spBpsState; }
 extern "C" void BpsStateFlag7C9Set(CMenuBattlePlayerState* p) {
     p->unk7C9 = 1;
 }
-extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
+extern "C" void sinit_8010E9F8() { sBpsPaneColorWhite[3] = 0xff; sBpsPaneColorWhite[2] = 0xff; sBpsPaneColorWhite[1] = 0xff; sBpsPaneColorWhite[0] = 0xff; sBpsPaneColorGold[3] = 0xff; sBpsPaneColorGold[2] = 0x5c; sBpsPaneColorGold[1] = 0x92; sBpsPaneColorGold[0] = 0xb9; sBpsPaneColorGray[3] = 0xff; sBpsPaneColorGray[2] = 0x50; sBpsPaneColorGray[1] = 0x50; sBpsPaneColorGray[0] = 0x50; }
 // This-adjusting deleting-dtor thunk (secondary base at +0x58):
 // retail emits `subi r3, r3, 0x58; b __dt__22CMenuBattlePlayerStateFv`.
 // Forwarding deleteFlag untouched keeps the tail call (no bl).
@@ -1056,7 +1056,7 @@ extern "C" void* __ct__CMenuBattlePlayerState(void* self, CScn* scn);
 // allocation failed, matching retail). Returns NULL when already created.
 // ---------------------------------------------------------------------------
 CMenuBattlePlayerState* BpsStateCreateSingleton(CProcess* parent, CScn* scn) {
-    if (lbl_eu_80663F48 != NULL) {
+    if (spBpsState != NULL) {
         return NULL;
     }
     CMenuBattlePlayerState* obj = static_cast<CMenuBattlePlayerState*>(
@@ -1067,9 +1067,9 @@ CMenuBattlePlayerState* BpsStateCreateSingleton(CProcess* parent, CScn* scn) {
         obj = static_cast<CMenuBattlePlayerState*>(
             __ct__CMenuBattlePlayerState(obj, scn));
     }
-    lbl_eu_80663F48 = obj;
+    spBpsState = obj;
     obj->Regist(parent, false);
-    return lbl_eu_80663F48;
+    return spBpsState;
 }
 #pragma optimize_for_size on
 
@@ -1155,7 +1155,7 @@ extern "C" void BpsStateSelectSlotAnim(CMenuBattlePlayerState* self,
 // forwards to the per-slot updater at (state + i*0x270 + 0xE8).
 // ---------------------------------------------------------------------------
 void BpsStateQueueDamage(int id, u32 a, u32 b, u32 c) {
-    CMenuBattlePlayerState* state = lbl_eu_80663F48;
+    CMenuBattlePlayerState* state = spBpsState;
     if (state == NULL) {
         return;
     }
@@ -1234,25 +1234,25 @@ extern "C" void BpsStateUpdateHpGauge(CMenuBattlePlayerState* self,
     f32 ratio;
     // Named-lbl zero/one so the SDA21 relocs keep the retail labels
     // (literals would fold into the TU-local float pool @N).
-    if (hpF != lbl_eu_80666F94 && resF != lbl_eu_80666F94) {
+    if (hpF != 0.0f && resF != 0.0f) {
         ok = 1;
     }
     if (ok) {
         ratio = hpF / resF;
     } else {
-        ratio = lbl_eu_80666F94;
+        ratio = 0.0f;
     }
 
-    if (ratio > lbl_eu_80666F90) {
-        ratio = lbl_eu_80666F90;
+    if (ratio > 1.0f) {
+        ratio = 1.0f;
     }
     if (slot->unk204 > 8) {
-        ratio = lbl_eu_80666F94;
+        ratio = 0.0f;
     }
 
     nw4r::lyt::Pane* pane = slot->mField54;
     if (pane != NULL) {
-        pane->SetSize(nw4r::lyt::Size(lbl_eu_80666FC8 * ratio,
+        pane->SetSize(nw4r::lyt::Size(82.0f * ratio,
                                       pane->GetSize().height));
     }
 }
@@ -1313,11 +1313,11 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
     MenuBpsPaneFlagsView* starPane;
 
     // Tension timer: raises flag bit 0x800 when it exceeds FDC.
-    slot->unk264 = slot->unk264 + lbl_eu_80666F90;
+    slot->unk264 = slot->unk264 + 1.0f;
     slot->unk25C = slot->unk25C & ~0x800u;
-    if (slot->unk264 > lbl_eu_80666FDC) {
+    if (slot->unk264 > 60.0f) {
         slot->unk25C = slot->unk25C | 0x800u;
-        slot->unk264 = lbl_eu_80666F94;
+        slot->unk264 = 0.0f;
 
         // Pass 1: scan the actor's live arts-icon slots from last match + 1,
         // binding the first hit's icon and lighting the level star pane.
@@ -1437,7 +1437,7 @@ void CMenuBattlePlayerState::BpsStateUpdateSlotArts(cf::CfObjectActor* actor, CM
 // ---------------------------------------------------------------------------
 // Target us-8010df8c: per-slot activation pass. Refreshes the level text and
 // name label, redraws HP digits / color set when flagged, updates the HP gauge
-// width (quantized through lbl_eu_804FD6E0), advances mode/prev snapshots,
+// width (quantized through sBpsHpGaugeWidths), advances mode/prev snapshots,
 // toggles the party/tension star panes by HP state, resets the tension anims
 // and re-arms the per-slot state machine. `index` nonzero suppresses the
 // playUISound(0x99) jingle on first activation.
@@ -1466,11 +1466,11 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F38, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGold, 1);
         } else if (slot->unk210 == 0) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F40, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGray, 1);
         } else {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F30, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorWhite, 1);
         }
     }
 
@@ -1482,24 +1482,24 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
         nw4r::lyt::Pane* pane =
             reinterpret_cast<nw4r::lyt::Pane*>(slot->unk58);
         if (pane != NULL) {
-            f32 scaled = lbl_eu_80666FD0 * ratio;
-            f32 widthF = lbl_eu_80666FCC * scaled;
+            f32 scaled = 10.0f * ratio;
+            f32 widthF = 0.5f * scaled;
             // Retail copies the width table onto the stack before indexing.
             f32 widths[5];
-            widths[0] = lbl_eu_804FD6E0[0];
-            widths[1] = lbl_eu_804FD6E0[1];
-            widths[2] = lbl_eu_804FD6E0[2];
-            widths[3] = lbl_eu_804FD6E0[3];
-            widths[4] = lbl_eu_804FD6E0[4];
+            widths[0] = sBpsHpGaugeWidths[0];
+            widths[1] = sBpsHpGaugeWidths[1];
+            widths[2] = sBpsHpGaugeWidths[2];
+            widths[3] = sBpsHpGaugeWidths[3];
+            widths[4] = sBpsHpGaugeWidths[4];
             // Signed int convert: MWCC emits inline fctiwz + signed-int->float
             // bias (lbl_eu_80666FB8 == 0x4330000080000000), not __cvt_fp2unsigned.
             s32 w = widthF;
             slot->unk24C = w;
             f32 prevMax = pane->GetSize().height;
             // u32 -> f32 goes through a biased double in MWCC.
-            f32 frac = ratio - lbl_eu_80666FD8 * w;
-            f32 q = frac / lbl_eu_80666FD8;
-            f32 val = lbl_eu_80666FD4 * q + widths[w];
+            f32 frac = ratio - 0.2f * w;
+            f32 q = frac / 0.2f;
+            f32 val = 14.0f * q + widths[w];
             pane->SetSRTElement(8, val);
             pane->SetSRTElement(9, prevMax);
         }
@@ -1510,7 +1510,7 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
     BpsStateSelectSlotAnim(this, slot, slot->unk230);
 
     // Star-pane visibility follows the smoothed HP ratio.
-    if (slot->unk220 == lbl_eu_80666F94) {
+    if (slot->unk220 == 0.0f) {
         slot->unk5C->SetVisible(true);
         slot->unk60->SetVisible(true);
         slot->unk64->SetVisible(false);
@@ -1527,18 +1527,18 @@ void CMenuBattlePlayerState::BpsStateActivateSlot(CMenuBattlePlayerStateSlot* sl
     slot->unk28->UnbindAllAnimation();
     slot->unk254 = 0xB;
     reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk24)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
     slot->unk20->GetRootPane()->SetVisible(true);
     slot->unk25C &= ~0x40000000u;
     reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk0C)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
     reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk10)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
     slot->unk08->SetAnimationEnable(slot->unk10, false);
     slot->unk08->SetAnimationEnable(slot->unk14, false);
     slot->unk08->SetAnimationEnable(slot->unk0C, true);
     reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk0C)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
     slot->unk08->Animate(0);
     slot->unk248 = 4;
     slot->unk24C = 0;
@@ -1583,11 +1583,11 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)slot->unk50, slot->unk214);
         // Color-set swap keyed on full-HP / dead / other.
         if (slot->unk210 == slot->unk214) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F38, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGold, 1);
         } else if (slot->unk210 == 0) {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F40, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorGray, 1);
         } else {
-            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)lbl_eu_80663F30, 1);
+            PaneMatSetS16Quad(slot->unk4C, (const GXColorS10*)sBpsPaneColorWhite, 1);
         }
     }
 
@@ -1599,26 +1599,26 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
         nw4r::lyt::Pane* pane =
             reinterpret_cast<nw4r::lyt::Pane*>(slot->unk58);
         if (pane != NULL) {
-            f32 scaled = lbl_eu_80666FD0 * ratio;
-            f32 widthF = lbl_eu_80666FCC * scaled;
+            f32 scaled = 10.0f * ratio;
+            f32 widthF = 0.5f * scaled;
             // Retail copies the width table onto the stack before indexing.
             f32 widths[5];
-            widths[0] = lbl_eu_804FD6E0[0];
-            widths[1] = lbl_eu_804FD6E0[1];
-            widths[2] = lbl_eu_804FD6E0[2];
-            widths[3] = lbl_eu_804FD6E0[3];
-            widths[4] = lbl_eu_804FD6E0[4];
+            widths[0] = sBpsHpGaugeWidths[0];
+            widths[1] = sBpsHpGaugeWidths[1];
+            widths[2] = sBpsHpGaugeWidths[2];
+            widths[3] = sBpsHpGaugeWidths[3];
+            widths[4] = sBpsHpGaugeWidths[4];
             s32 w = widthF;
             slot->unk24C = w;
             f32 prevMax = pane->GetSize().height;
-            f32 q = (ratio - lbl_eu_80666FD8 * w) / lbl_eu_80666FD8;
-            f32 val = lbl_eu_80666FD4 * q + widths[w];
+            f32 q = (ratio - 0.2f * w) / 0.2f;
+            f32 val = 14.0f * q + widths[w];
             pane->SetSRTElement(8, val);
             pane->SetSRTElement(9, prevMax);
         }
     }
 
-    if (slot->unk220 <= lbl_eu_80666F94) {
+    if (slot->unk220 <= 0.0f) {
         // HP empty: light the party/tension stars, hide the arts/heal stars.
         slot->unk5C->SetVisible(true);
         slot->unk60->SetVisible(true);
@@ -1646,7 +1646,7 @@ void CMenuBattlePlayerState::BpsStateRefreshSlot(CMenuBattlePlayerStateSlot* slo
             slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk14)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             slot->unk08->Animate(0);
             slot->unk08->SetAnimationEnable(slot->unk14,
                                                                    false);
@@ -1655,7 +1655,7 @@ lbl_eu_80666F94);
             slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk10)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             slot->unk08->Animate(0);
             slot->unk08->SetAnimationEnable(slot->unk10,
                                                                    false);
@@ -1664,7 +1664,7 @@ lbl_eu_80666F94);
             slot->unk08->SetAnimationEnable(slot->unk0C,
                                                                    true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk0C)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             slot->unk08->Animate(0);
             slot->unk250 = 6;
         }
@@ -1742,15 +1742,15 @@ lbl_eu_80666F94);
             }
             slot->unk234 = slot->unk230;
             slot->unk23C = slot->unk238;
-            slot->unk260 = (lbl_eu_80663E24 >> 26) & 1;
+            slot->unk260 = (gmGameFlags >> 26) & 1;
         }
     }}
 
     if (slot->unk25C & 0x40000000) {
         slot->unk25C = slot->unk25C | 0x400;
-        if (advanceAnimTransform(slot->unk24, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk24, 1.0f) != 0) {
             reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk24)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             slot->unk25C = slot->unk25C & ~0x40000000u;
         }
     }
@@ -1759,8 +1759,8 @@ lbl_eu_80666F94);
     u32 changed1 = 0;
     switch (static_cast<s32>(slot->unk250)) {
     case 6:
-        if (slot->unk220 <= lbl_eu_80666FE0) {
-            if (slot->unk220 > lbl_eu_80666F94) {
+        if (slot->unk220 <= 50.0f) {
+            if (slot->unk220 > 0.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
                 slot->unk08->SetAnimationEnable(
@@ -1774,8 +1774,8 @@ lbl_eu_80666F94);
         break;
     case 7:
         changed1 = 1;
-        if (advanceAnimTransform(slot->unk0C, lbl_eu_80666F90) != 0) {
-            if (slot->unk220 <= lbl_eu_80666FE4) {
+        if (advanceAnimTransform(slot->unk0C, 1.0f) != 0) {
+            if (slot->unk220 <= 15.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
                 slot->unk08->SetAnimationEnable(
@@ -1783,7 +1783,7 @@ lbl_eu_80666F94);
                 slot->unk08->SetAnimationEnable(
                     slot->unk14, true);
                 slot->unk250 = 0xa;
-            } else if (slot->unk220 <= lbl_eu_80666FE0) {
+            } else if (slot->unk220 <= 50.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
                 slot->unk08->SetAnimationEnable(
@@ -1804,8 +1804,8 @@ lbl_eu_80666F94);
         break;
     case 8:
         changed1 = 1;
-        if (advanceAnimTransform(slot->unk10, lbl_eu_80666F90) != 0) {
-            if (slot->unk220 <= lbl_eu_80666FE4) {
+        if (advanceAnimTransform(slot->unk10, 1.0f) != 0) {
+            if (slot->unk220 <= 15.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
                 slot->unk08->SetAnimationEnable(
@@ -1813,7 +1813,7 @@ lbl_eu_80666F94);
                 slot->unk08->SetAnimationEnable(
                     slot->unk14, true);
                 slot->unk250 = 0xa;
-            } else if (slot->unk220 > lbl_eu_80666FE0) {
+            } else if (slot->unk220 > 50.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
                 slot->unk08->SetAnimationEnable(
@@ -1826,14 +1826,14 @@ lbl_eu_80666F94);
         break;
     case 9:
         changed1 = 1;
-        if (AnimRewindFrame(slot->unk0C, lbl_eu_80666F90) != 0) {
+        if (AnimRewindFrame(slot->unk0C, 1.0f) != 0) {
             slot->unk250 = 6;
         }
         break;
     case 0xa:
         changed1 = 1;
-        if (advanceAnimTransform(slot->unk14, lbl_eu_80666F90) != 0) {
-            if (slot->unk220 > lbl_eu_80666FE0) {
+        if (advanceAnimTransform(slot->unk14, 1.0f) != 0) {
+            if (slot->unk220 > 50.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
                 slot->unk08->SetAnimationEnable(
@@ -1841,7 +1841,7 @@ lbl_eu_80666F94);
                 slot->unk08->SetAnimationEnable(
                     slot->unk0C, true);
                 slot->unk250 = 9;
-            } else if (slot->unk220 > lbl_eu_80666FE4) {
+            } else if (slot->unk220 > 15.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk14, false);
                 slot->unk08->SetAnimationEnable(
@@ -1849,7 +1849,7 @@ lbl_eu_80666F94);
                 slot->unk08->SetAnimationEnable(
                     slot->unk10, true);
                 slot->unk250 = 8;
-            } else if (slot->unk220 <= lbl_eu_80666F94) {
+            } else if (slot->unk220 <= 0.0f) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
                 slot->unk08->SetAnimationEnable(
@@ -1873,7 +1873,7 @@ lbl_eu_80666F94);
     u32 changed2 = 0;
     switch (static_cast<s32>(slot->unk254)) {
     case 0xB:
-        if (slot->unk220 > lbl_eu_80666F94) {
+        if (slot->unk220 > 0.0f) {
             if (slot->unk230 == 4) {
                 nw4r::lyt::Layout* lay = slot->unk28;
                 changed2 = 1;
@@ -1883,7 +1883,7 @@ lbl_eu_80666F94);
                 lay->BindAnimation(anm);
                 lay->SetAnimationEnable(anm, true);
                 reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
                 lay->Animate(0);
                 slot->unk254 = 0xC;
             } else if (slot->unk230 == 0) {
@@ -1895,7 +1895,7 @@ lbl_eu_80666F94);
                 lay->BindAnimation(anm);
                 lay->SetAnimationEnable(anm, true);
                 reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
                 lay->Animate(0);
                 slot->unk254 = 0xF;
             }
@@ -1903,7 +1903,7 @@ lbl_eu_80666F94);
         break;
     case 0xC:
         changed2 = 1;
-        if (advanceAnimTransform(slot->unk2C, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk2C, 1.0f) != 0) {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk30;
             lay->Animate(0);
@@ -1911,19 +1911,19 @@ lbl_eu_80666F94);
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             lay->Animate(0);
             slot->unk254 = 0xD;
         }
         break;
     case 0xD:
         changed2 = 1;
-        advanceAnimTransform(slot->unk30, lbl_eu_80666F90);
+        advanceAnimTransform(slot->unk30, 1.0f);
         // Retail evaluates the gate as a skip-chain: any failed condition
         // falls straight through to the bind sequence; only all-pass plus
         // hp > 0 jumps past it.
         if (slot->unk230 == 4 && slot->unk240 == 0 && this->unk7C8 == 0) {
-            if (slot->unk220 > lbl_eu_80666F94) {
+            if (slot->unk220 > 0.0f) {
                 break;
             }
         }
@@ -1935,21 +1935,21 @@ lbl_eu_80666F94);
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             lay->Animate(0);
             slot->unk254 = 0xE;
         }
         break;
     case 0xE:
         changed2 = 1;
-        if (advanceAnimTransform(slot->unk34, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk34, 1.0f) != 0) {
             slot->unk28->UnbindAllAnimation();
             slot->unk254 = 0xB;
         }
         break;
     case 0xF:
         changed2 = 1;
-        if (advanceAnimTransform(slot->unk38, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk38, 1.0f) != 0) {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk3C;
             lay->Animate(0);
@@ -1957,17 +1957,17 @@ lbl_eu_80666F94);
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             lay->Animate(0);
             slot->unk254 = 0x10;
         }
         break;
     case 0x10:
         changed2 = 1;
-        advanceAnimTransform(slot->unk3C, lbl_eu_80666F90);
+        advanceAnimTransform(slot->unk3C, 1.0f);
         // Same skip-chain gate as case 0xD, keyed on mode 0.
         if (slot->unk230 == 0 && slot->unk240 == 0 && this->unk7C8 == 0) {
-            if (slot->unk220 > lbl_eu_80666F94) {
+            if (slot->unk220 > 0.0f) {
                 break;
             }
         }
@@ -1979,14 +1979,14 @@ lbl_eu_80666F94);
             lay->BindAnimation(anm);
             lay->SetAnimationEnable(anm, true);
             reinterpret_cast<nw4r::lyt::AnimTransform*>(anm)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             lay->Animate(0);
             slot->unk254 = 0x11;
         }
         break;
     case 0x11:
         changed2 = 1;
-        if (advanceAnimTransform(slot->unk40, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk40, 1.0f) != 0) {
             slot->unk28->UnbindAllAnimation();
             slot->unk254 = 0xB;
         }
@@ -2000,10 +2000,10 @@ lbl_eu_80666F94);
 
     if (slot->unk78 != NULL) {
         if (slot->unk80 == 1) {
-            if (advanceAnimTransform(slot->unk7C, lbl_eu_80666F90) != 0) {
+            if (advanceAnimTransform(slot->unk7C, 1.0f) != 0) {
                 slot->unk80 = 2;
                 reinterpret_cast<nw4r::lyt::AnimTransform*>(slot->unk7C)->SetFrame(
-lbl_eu_80666F94);
+0.0f);
             }
         } else if (slot->unk80 == 2) {
             BtlDmg_QueueDraw(

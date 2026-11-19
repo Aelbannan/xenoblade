@@ -19,7 +19,7 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 
 // Retail data label: cbRenderBefore gate flag (bit 21 skips the draw).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // Zeal menu string table (layout/anim names, texture names, callbacks).
 extern char lbl_eu_80503454[];
 
@@ -95,7 +95,7 @@ void CMenuZeal::Move() {}
 void CMenuZeal::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() != 0) goto exit;
-    if (lbl_eu_80663E28 & (1u << 21)) goto exit;
+    if (gmPauseFlags & (1u << 21)) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
     // `bne` -- it emits retail's `beq body; b exit`.

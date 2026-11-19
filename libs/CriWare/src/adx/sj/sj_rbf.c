@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 
-__declspec(section ".rodata") char lbl_eu_80518BB8[0x10] = {
+__declspec(section ".rodata") char SJRBF_Uuid[0x10] = {
     0x3B, 0x9A, 0x9E, 0x81, 0x0D, 0xBB, 0x11, 0xD2, 0xA6, 0xBF, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 };
 
@@ -31,8 +31,8 @@ __declspec(section ".data") __attribute__((aligned(8))) void *lbl_eu_80565C30[12
     SJRBF_EntryErrFunc
 };
 
-u32 lbl_eu_805ED2D0[2];
-u8 lbl_eu_805ED2D8[0x4800];
+u32 SJRBF_InitCount[2];
+u8 SJRBF_HandlePool[0x4800];
 
 extern void SJCRS_Init(void);
 extern void SJCRS_Finish(void);
@@ -83,18 +83,18 @@ void SJRBF_Error(void) {
 void SJRBF_Init(void) {
     SJCRS_Init();
     SJCRS_Lock();
-    if (lbl_eu_805ED2D0[0] == 0) {
-        memset(lbl_eu_805ED2D8, 0, 0x4800);
+    if (SJRBF_InitCount[0] == 0) {
+        memset(SJRBF_HandlePool, 0, 0x4800);
     }
-    lbl_eu_805ED2D0[0]++;
+    SJRBF_InitCount[0]++;
     SJCRS_Unlock();
 }
 
 /* --- SJRBF_Finish --- */
 void SJRBF_Finish(void) {
     SJCRS_Lock();
-    if (--lbl_eu_805ED2D0[0] == 0) {
-        memset(lbl_eu_805ED2D8, 0, 0x4800);
+    if (--SJRBF_InitCount[0] == 0) {
+        memset(SJRBF_HandlePool, 0, 0x4800);
     }
     SJCRS_Unlock();
     SJCRS_Finish();
@@ -115,18 +115,18 @@ void *sjrbf_Create(void *pool_mem, u32 buf_size, u32 xtr_size) {
     void *r;
 
     for (i = 0; i < 0x100; i++) {
-        if (((SJRBF *)lbl_eu_805ED2D8)[i].valid == 0) break;
+        if (((SJRBF *)SJRBF_HandlePool)[i].valid == 0) break;
     }
     if (i == 0x100) {
         r = NULL;
     } else {
-        SJRBF *self = &((SJRBF *)lbl_eu_805ED2D8)[i];
+        SJRBF *self = &((SJRBF *)SJRBF_HandlePool)[i];
         self->valid = 1;
         self->vtable = lbl_eu_80565C30;
         self->pool_mem = (u8 *)pool_mem;
         self->buf_size = buf_size;
         self->xtr_size = xtr_size;
-        self->uuid = lbl_eu_80518BB8;
+        self->uuid = SJRBF_Uuid;
         self->err_func = (void (*)(void *, int))SJRBF_Error;
         self->err_arg = self;
         self->put_func = NULL;

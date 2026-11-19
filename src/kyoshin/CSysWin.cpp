@@ -27,11 +27,6 @@ extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 // Copies two floats (VEC2); leaves its destination pointer in r3.
 extern "C" void TagCopyVec2f(float* dst, float* src);
 
-// Member ctor/dtor of the memory-region helper: the retail ctor/dtor calls
-// are out of line (the class has no inline definition in this tree).
-extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-
 // CTagProcessor lives in its own TU (kyoshin/CTagProcessor.cpp); its ctor is
 // referenced by its literal retail symbol.
 class CTagProcessor;
@@ -456,46 +451,35 @@ void CSysWin::setupAfterLoad() {
     LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes03", "", 0);
     LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes04_00", "", 0);
     LayoutSetTextBoxFmtValue(mLayout, "txt_sysmes04_01", "", 0);
-    // TextBox::mpTagProcessor at +0xF8 (MonolithSoft nw4r extension).
-    struct TextBoxLayout {
-        u8 _[0xF8];
-        void* mpTagProcessor;
-    };
     {
-        TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
+        nw4r::lyt::TextBox* t = static_cast<nw4r::lyt::TextBox*>(
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes01", true));
-        void* tag = mTagProcessor;
-        t->mpTagProcessor = tag;
+        t->SetTagProcessor(reinterpret_cast<nw4r::ut::WideTagProcessor*>(mTagProcessor));
     }
     {
-        TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
+        nw4r::lyt::TextBox* t = static_cast<nw4r::lyt::TextBox*>(
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes02_00", true));
-        void* tag = mTagProcessor;
-        t->mpTagProcessor = tag;
+        t->SetTagProcessor(reinterpret_cast<nw4r::ut::WideTagProcessor*>(mTagProcessor));
     }
     {
-        TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
+        nw4r::lyt::TextBox* t = static_cast<nw4r::lyt::TextBox*>(
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes02_01", true));
-        void* tag = mTagProcessor;
-        t->mpTagProcessor = tag;
+        t->SetTagProcessor(reinterpret_cast<nw4r::ut::WideTagProcessor*>(mTagProcessor));
     }
     {
-        TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
+        nw4r::lyt::TextBox* t = static_cast<nw4r::lyt::TextBox*>(
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes03", true));
-        void* tag = mTagProcessor;
-        t->mpTagProcessor = tag;
+        t->SetTagProcessor(reinterpret_cast<nw4r::ut::WideTagProcessor*>(mTagProcessor));
     }
     {
-        TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
+        nw4r::lyt::TextBox* t = static_cast<nw4r::lyt::TextBox*>(
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes04_00", true));
-        void* tag = mTagProcessor;
-        t->mpTagProcessor = tag;
+        t->SetTagProcessor(reinterpret_cast<nw4r::ut::WideTagProcessor*>(mTagProcessor));
     }
     {
-        TextBoxLayout* t = reinterpret_cast<TextBoxLayout*>(
+        nw4r::lyt::TextBox* t = static_cast<nw4r::lyt::TextBox*>(
             mLayout->GetRootPane()->FindPaneByName("txt_sysmes04_01", true));
-        void* tag = mTagProcessor;
-        t->mpTagProcessor = tag;
+        t->SetTagProcessor(reinterpret_cast<nw4r::ut::WideTagProcessor*>(mTagProcessor));
     }
     switchKindPane(field_37);
 }
@@ -521,7 +505,11 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
         mArcAccessor = CLibLayout::createArcResourceAccessor();
         mArcAccessor->Attach(archive, "arc");
         buildLayout(&mLayout, mArcAccessor, "mf70_cf60_syswin01.brlyt");
-        bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcAccessor, "mf70_cf60_syswin01_in.brlan");
+        bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcAccessor, "mf70_cf60_syswin01_in.brlan\0"
+    "menu/jp/SysWin2.arc\0"
+    "CSysWin2\0"
+    "mf70_cf60_syswin00.brlyt\0"
+    "mf70_cf60_syswin00_in.brlan");
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         CSysWinFontView* font = (CSysWinFontView*)CDeviceFont::getFontInfo(1, mLayout);
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)font->v07());

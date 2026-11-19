@@ -35,6 +35,7 @@ extern void* lbl_eu_80664118;   // spItmBodyListFileData
 extern void* lbl_eu_8066411C;   // spItmArmListFileData
 extern void* lbl_eu_80664120;   // spItmWaistListFileData
 extern void* lbl_eu_80664124;   // spItmLeggListFileData
+extern u8* gLockBdatTable;      // lock-gimmick BDAT table (.sbss)
 extern void* lbl_eu_80664190;   // sinit instance pointer
 // Additional sbss bdat file-data globals used by bdatGetItemName.
 extern void* lbl_eu_806640D8;
@@ -47,7 +48,7 @@ extern void* lbl_eu_8066410C;
 extern void* lbl_eu_80664110;
 
 extern u32 lbl_eu_80664184;     // cached fld-map row index
-extern u32 lbl_eu_80664188;     // cached fld-map row (mirror of 80664184)
+extern u32 gCachedFldMapRow;     // cached fld-map row (mirror of 80664184)
 extern float lbl_eu_8066418C;   // fld-map cache float
 // .data block whose address is stored into lbl_eu_80664194 by the sinit.
 extern u8 lbl_eu_8052E718[0x88];

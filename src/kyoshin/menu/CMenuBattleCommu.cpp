@@ -24,8 +24,10 @@
 extern "C" void __dt__16CMenuBattleCommuFv(void*, int);
 extern "C" void cbRenderBefore__16CMenuBattleCommuFv(void*);
 
+CMenuBattleCommu* spMenuBattleCommuInstance = 0;
+
 // ---------------------------------------------------------------------------
-// Constructor (unmangled retail symbol). Runs CProcess's ctor then fills the
+// Constructor
 // CProcess-style region by hand (temp vtable, run-time ptmf hooks, dispatch
 // sub-vtables, state fields) and constructs the embedded MEM2 layout region.
 // r3 = this, r4 = owning scene (stored at +0x60).
@@ -107,46 +109,46 @@ CMenuBattleCommu::~CMenuBattleCommu() {
 void CMenuBattleCommu::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->createRegion(
-        handle, 0x14000, lbl_eu_805047FC, 0);
+        handle, 0x14000, "MenuBattleCommu", 0);
     // Scoped region guard - destructor releases the region when Init finishes.
     Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion));
 
     nw4r::lyt::ArcResourceAccessor* accessor = CUICfManager_getArcResourceAccessor();
     buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&mField74), accessor,
-                  lbl_eu_805047FC + 0x10);
+                  "mf71_battle95_communi.brlyt");
 
     accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField78,
-                  accessor, lbl_eu_805047FC + 0x2c);
+                  accessor, "mf71_battle95_communi_in.brlan");
     accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField7C,
-                  accessor, lbl_eu_805047FC + 0x4b);
+                  accessor, "mf71_battle95_communi_ripple_in.brlan");
     accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField80,
-                  accessor, lbl_eu_805047FC + 0x71);
+                  accessor, "mf71_battle95_communi_ripple_roop.brlan");
     accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField84,
-                  accessor, lbl_eu_805047FC + 0x99);
+                  accessor, "mf71_battle95_communi_ripple_out.brlan");
     accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField88,
-                  accessor, lbl_eu_805047FC + 0xc0);
+                  accessor, "mf71_battle95_communi_out.brlan");
     accessor = CUICfManager_getArcResourceAccessor();
     bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField8C,
-                  accessor, lbl_eu_805047FC + 0xe0);
+                  accessor, "mf71_battle95_communi_bright_out.brlan");
 
     CBattleCommuFontObj* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 fontHandle = font->getFontHandle();
 
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x107, fontHandle);
+                  "txt_mess_l", fontHandle);
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x112, fontHandle);
+                  "txt_mess_r", fontHandle);
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x11d, fontHandle);
+                  "txt_mess_o", fontHandle);
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x128, fontHandle);
+                  "txt_mess_u", fontHandle);
     setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x133, fontHandle);
+                  "txt_mess", fontHandle);
 
     mField74->SetAnimationEnable(mField7C, false);
     mField74->SetAnimationEnable(mField80, false);
@@ -158,42 +160,42 @@ void CMenuBattleCommu::Init() {
     mField74->Animate();
 
     LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x107, lbl_eu_805047FC + 0x13c, 0);
+                  "txt_mess_l", "", 0);
     LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x112, lbl_eu_805047FC + 0x13c, 0);
+                  "txt_mess_r", "", 0);
     LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x11d, lbl_eu_805047FC + 0x13c, 0);
+                  "txt_mess_o", "", 0);
     LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x128, lbl_eu_805047FC + 0x13c, 0);
+                  "txt_mess_u", "", 0);
     LayoutSetTextBoxFmtValue(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
-                  lbl_eu_805047FC + 0x133, lbl_eu_805047FC + 0x13c, 0);
+                  "txt_mess", "", 0);
 
     // Language/party-dependent tag text: the 4CC key 0x74696D67 ("timg")
     // selects the tag resource; when found it is bound to the pane names at
     // 0x158 / 0x182+0x18f.
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         char* res = static_cast<char*>(
-            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, "mf71_btl90_chn_btn_c00.tpl", 0));
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x158, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, "pic_button_r", (TPLPalette*)res);
         }
         res = static_cast<char*>(
-            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x165, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, "mf71_btl90_chn_btngl_c00.tpl", 0));
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x182, (TPLPalette*)res);
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x18f, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, "pic_line_r00", (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, "pic_line_r01", (TPLPalette*)res);
         }
     } else {
         char* res = static_cast<char*>(
-            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x19c, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, "mf71_btl90_chn_btn_r00.tpl", 0));
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x158, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, "pic_button_r", (TPLPalette*)res);
         }
         res = static_cast<char*>(
-            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, lbl_eu_805047FC + 0x1b7, 0));
+            CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, "mf71_btl90_chn_btngl_r00.tpl", 0));
         if (res != 0) {
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x182, (TPLPalette*)res);
-            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, lbl_eu_805047FC + 0x18f, (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, "pic_line_r00", (TPLPalette*)res);
+            PaneSetTexPaletteByName((nw4r::lyt::Layout*)mField74, "pic_line_r01", (TPLPalette*)res);
         }
     }
 
@@ -228,7 +230,7 @@ void CMenuBattleCommu::Term() {
     }
 
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
-    lbl_eu_80664390 = 0;
+    spMenuBattleCommuInstance = 0;
 }
 
 void CMenuBattleCommu::Move() {}
@@ -242,14 +244,14 @@ void CMenuBattleCommu::cbRenderBefore() {
     // OR-combined guard: MWCC emits the second disjunct as the unreduced
     // `beq cont; b exit` pair (retail shape, MWCC_CASES RFCOMM OR-guard).
     if (CTaskGame::isFlag01Set() != 0 ||
-        (lbl_eu_80663E28 & 0x200000) != 0) {
+        (gmPauseFlags & 0x200000) != 0) {
         return;
     }
 draw:
     if (IsMenuState621F0() == 0) {
         return;
     }
-    if (lbl_eu_80663E24 & 0xafa40000) {
+    if (gmGameFlags & 0xafa40000) {
         return;
     }
     if (mField90 == 0) {
@@ -287,7 +289,7 @@ draw:
 // (r3 stays NULL).
 // ---------------------------------------------------------------------------
 CMenuBattleCommu* battleCommuCreateRegister(CProcess* parent, CScn* scene) {
-    if (lbl_eu_80664390 != 0) {
+    if (spMenuBattleCommuInstance != 0) {
         return 0;
     }
 
@@ -298,9 +300,9 @@ CMenuBattleCommu* battleCommuCreateRegister(CProcess* parent, CScn* scene) {
         // never spills it to a callee-saved register).
         obj = __ct__CMenuBattleCommu(obj, scene);
     }
-    lbl_eu_80664390 = obj;
+    spMenuBattleCommuInstance = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
-    return lbl_eu_80664390;
+    return spMenuBattleCommuInstance;
 }
 
 // ---------------------------------------------------------------------------
@@ -310,7 +312,7 @@ CMenuBattleCommu* battleCommuCreateRegister(CProcess* parent, CScn* scene) {
 // the "open" cue.
 // ---------------------------------------------------------------------------
 void battleCommuDisableAnims() {
-    CMenuBattleCommu* self = lbl_eu_80664390;
+    CMenuBattleCommu* self = spMenuBattleCommuInstance;
     if (self == 0) {
         return;
     }
@@ -327,7 +329,7 @@ void battleCommuDisableAnims() {
     self->mField8C->SetFrame(lbl_eu_80667DE0);
     // The virtual calls above may alias the global, so re-read the singleton
     // for the final store (retail reloads it).
-    lbl_eu_80664390->mField90 = 6;
+    spMenuBattleCommuInstance->mField90 = 6;
     playUISound(0x3f);
 }
 
@@ -335,7 +337,7 @@ void battleCommuDisableAnims() {
 // word is set.
 bool battleCommuIsActive() {
     bool ret = false;
-    if (lbl_eu_80664390 != 0 && lbl_eu_80664390->mField90 != 0) {
+    if (spMenuBattleCommuInstance != 0 && spMenuBattleCommuInstance->mField90 != 0) {
         ret = true;
     }
     return ret;
@@ -370,55 +372,55 @@ void showBattleCommu(CMenuBattleCommu* self) {
     switch (reinterpret_cast<CBattleCommuBattleObj*>(player)->mState36C) {
     case 1: {
         char buf[0x40];
-        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                    count + 0x1b);
-        sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+        sprintf(buf, "%s", name);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x107, buf, 0);
+                      "txt_mess_l", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x112, buf, 0);
+                      "txt_mess_r", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x11d, buf, 0);
+                      "txt_mess_o", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x128, buf, 0);
+                      "txt_mess_u", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x133, buf, 0);
+                      "txt_mess", buf, 0);
         handled = 1;
         break;
     }
     case 2: {
         char buf[0x40];
-        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                    count + 0x1c);
-        sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+        sprintf(buf, "%s", name);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x107, buf, 0);
+                      "txt_mess_l", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x112, buf, 0);
+                      "txt_mess_r", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x11d, buf, 0);
+                      "txt_mess_o", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x128, buf, 0);
+                      "txt_mess_u", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x133, buf, 0);
+                      "txt_mess", buf, 0);
         handled = 1;
         break;
     }
     case 3: {
         char buf[0x40];
-        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                    count + 0x1d);
-        sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+        sprintf(buf, "%s", name);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x107, buf, 0);
+                      "txt_mess_l", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x112, buf, 0);
+                      "txt_mess_r", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x11d, buf, 0);
+                      "txt_mess_o", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x128, buf, 0);
+                      "txt_mess_u", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x133, buf, 0);
+                      "txt_mess", buf, 0);
         handled = 1;
         break;
     }
@@ -428,7 +430,7 @@ void showBattleCommu(CMenuBattleCommu* self) {
         if (count == 1) {
             char buf[0x40];
             u8 value = (u8)sub->mId3F28;
-            char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+            char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                        0x1f);
             if (value != 0) {
                 u8 lang = CDeviceSC::getLanguage();
@@ -437,32 +439,32 @@ void showBattleCommu(CMenuBattleCommu* self) {
                     jp = 1;
                 }
                 if (jp != 0) {
-                    sprintf(buf, lbl_eu_805047FC + 0x1ea,
-                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                    sprintf(buf, "%s %s",
+                            BdatGetPtrDirect(lbl_eu_80664090, "name",
                                           value),
                             name);
                 } else {
-                    sprintf(buf, lbl_eu_805047FC + 0x1ea, name,
-                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                    sprintf(buf, "%s %s", name,
+                            BdatGetPtrDirect(lbl_eu_80664090, "name",
                                           value));
                 }
             } else {
-                sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+                sprintf(buf, "%s", name);
             }
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x107, buf, 0);
+                          "txt_mess_l", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x112, buf, 0);
+                          "txt_mess_r", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x11d, buf, 0);
+                          "txt_mess_o", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x128, buf, 0);
+                          "txt_mess_u", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x133, buf, 0);
+                          "txt_mess", buf, 0);
         } else {
             char buf[0x40];
             u8 value = (u8)sub->mId3F28;
-            char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+            char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                        0x20);
             if (value != 0) {
                 u8 lang = CDeviceSC::getLanguage();
@@ -471,65 +473,65 @@ void showBattleCommu(CMenuBattleCommu* self) {
                     jp = 1;
                 }
                 if (jp != 0) {
-                    sprintf(buf, lbl_eu_805047FC + 0x1ea,
-                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                    sprintf(buf, "%s %s",
+                            BdatGetPtrDirect(lbl_eu_80664090, "name",
                                           value),
                             name);
                 } else {
-                    sprintf(buf, lbl_eu_805047FC + 0x1ea, name,
-                            BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_805047FC + 0x1f0,
+                    sprintf(buf, "%s %s", name,
+                            BdatGetPtrDirect(lbl_eu_80664090, "name",
                                           value));
                 }
             } else {
-                sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+                sprintf(buf, "%s", name);
             }
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x107, buf, 0);
+                          "txt_mess_l", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x112, buf, 0);
+                          "txt_mess_r", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x11d, buf, 0);
+                          "txt_mess_o", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x128, buf, 0);
+                          "txt_mess_u", buf, 0);
             LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                          lbl_eu_805047FC + 0x133, buf, 0);
+                          "txt_mess", buf, 0);
         }
         handled = 1;
         break;
     }
     case 7: {
         char buf[0x40];
-        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                    count + 0x25);
-        sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+        sprintf(buf, "%s", name);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x107, buf, 0);
+                      "txt_mess_l", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x112, buf, 0);
+                      "txt_mess_r", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x11d, buf, 0);
+                      "txt_mess_o", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x128, buf, 0);
+                      "txt_mess_u", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x133, buf, 0);
+                      "txt_mess", buf, 0);
         handled = 1;
         break;
     }
     case 8: {
         char buf[0x40];
-        char* name = BdatTouchStringCell(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
+        char* name = BdatTouchStringCell("MNU_kyeassign", "help",
                                    count + 0x26);
-        sprintf(buf, lbl_eu_805047FC + 0x1e7, name);
+        sprintf(buf, "%s", name);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x107, buf, 0);
+                      "txt_mess_l", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x112, buf, 0);
+                      "txt_mess_r", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x11d, buf, 0);
+                      "txt_mess_o", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x128, buf, 0);
+                      "txt_mess_u", buf, 0);
         LayoutSetTextBoxText(reinterpret_cast<nw4r::lyt::Layout*>(self->mField74),
-                      lbl_eu_805047FC + 0x133, buf, 0);
+                      "txt_mess", buf, 0);
         handled = 1;
         break;
     }

@@ -330,7 +330,7 @@ extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* l
     (void*)0x00000000,
 };
 
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_8056A710[14] = {
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* __vt__Q44nw4r3snd6detail10BasicSound[14] = {
     (void*)0x00000000,
     (void*)0x00000000,
     (void*)&GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv,

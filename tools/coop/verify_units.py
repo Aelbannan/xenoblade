@@ -30,7 +30,8 @@ Rules (read-only w.r.t. source and targets.json — this tool never writes):
     (mirrors `ptr_sites.ACCEPTED_STATUSES`); anything else is not a promise.
   * Targets whose `source` contains `.ctx.` are skipped (preprocessed context
     dumps, not source — mirrors `detect_pointer_arithmetic.find_source_files`).
-  * `FULL_MATCH` requires the hexdiff row to have `match == true`.
+  * `FULL_MATCH` requires the hexdiff row's objdiff-aware `full_match`
+    (`match` is kept as a fallback for older/stubbed payloads).
   * `EQUIVALENT_MATCH` requires the current percent to be no lower than the
     recorded `instruction_match` minus the tolerance. The current percent is
     computed from the JSON row exactly the way the human `hexdiff --all`
@@ -92,6 +93,11 @@ def extract_json_blob(text: str) -> dict:
         if isinstance(doc, dict) and "unit" in doc and "functions" in doc:
             return doc
     raise ValueError("no hexdiff JSON blob (line starting with '{\"unit\":') found in output")
+
+
+def is_full_match_row(row: dict) -> bool:
+    """FULL_MATCH acceptance needs both the byte proof and objdiff 100%."""
+    return bool(row.get("full_match", row.get("match", False)))
 
 
 def percent_from_row(row: dict) -> float | None:
@@ -193,7 +199,7 @@ def check_target(target: dict, row_by_symbol: dict[str, dict],
     current = percent_from_row(row)
     out = {**base, "current": current}
     if status == "FULL_MATCH":
-        if row.get("match", False):
+        if is_full_match_row(row):
             return {**out, "verdict": "ok", "detail": "100% match"}
         return {**out, "verdict": "drift-full",
                 "detail": f"recorded FULL_MATCH but current is {current:.1f}% "
@@ -238,7 +244,7 @@ def evaluate_unit(unit: str, hexdiff_doc: dict, accepted: list[dict],
         if not r.get("present", False):
             unregistered.append({"symbol": sym, "kind": "absent-unregistered",
                                  "detail": "in retail object, no decomp counterpart, no accepted target"})
-        elif not r.get("match", False):
+        elif not is_full_match_row(r):
             current = percent_from_row(r)
             unregistered.append({"symbol": sym, "kind": "mismatch-unregistered",
                                  "current": current,
@@ -260,7 +266,7 @@ def evaluate_unit(unit: str, hexdiff_doc: dict, accepted: list[dict],
 def run_hexdiff_all(unit: str, no_build: bool = False,
                     build_timeout: int = 600) -> dict:
     """Run `hexdiff.py <unit> --all --json` and return the parsed JSON blob."""
-    cmd = [sys.executable, str(HEXDIFF), unit, "--all", "--json"]
+    cmd = [sys.executable, str(HEXDIFF), unit, "--all", "--json", "--no-baseline"]
     if no_build:
         cmd.append("--no-build")
     if build_timeout != 600:

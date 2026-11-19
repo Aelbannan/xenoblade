@@ -224,7 +224,7 @@ void CMenuBattleDamage::Term() {
         }
     }
     mMemRegion.deleteRegion();
-    lbl_eu_80663F28 = NULL;
+    spBattleDamageMenu = NULL;
 }
 
 // Per-frame damage-popup update: for each active entry, project the actor's
@@ -234,19 +234,19 @@ void CMenuBattleDamage::Move() {
     // `beq body; b done` (guard 2) - reproduced by the ||-chain early return
     // (same shape as the matched CMenuLvUp::Move).
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
     if (_pad776[0] == 0) return;
 
     // Constant pool values cached in callee-saved FPRs (retail f29..f31,
     // f26..f28 load order).
-    const f32 xoff = lbl_eu_80666F70;
-    const f32 one = lbl_eu_80666F6C;
+    const f32 xoff = 320.0f;
+    const f32 one = 1.0f;
     const f32 zero = lbl_eu_80666F68;
-    const f32 dirmod = lbl_eu_80666F7C;
-    const f32 yscale = lbl_eu_80666F78;
-    const f32 yoff = lbl_eu_80666F74;
+    const f32 dirmod = 25.0f;
+    const f32 yscale = -1.0f;
+    const f32 yoff = 224.0f;
 
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageEntry& e = mEntries[i];
@@ -320,7 +320,7 @@ void CMenuBattleDamage::Move() {
             // Lifetime expired: show the pane, and free the slot once the
             // anim finishes. Retail re-derives the root pane here.
             layout->GetRootPane()->SetVisible(true);
-            if (advanceAnimTransform(anim, lbl_eu_80666F6C) != 0) {
+            if (advanceAnimTransform(anim, 1.0f) != 0) {
                 e.mActive = 0;
                 _pad776[0] -= 1;
             }
@@ -339,7 +339,7 @@ void CMenuBattleDamage::cbRenderBefore() {
     // branch-over-branch `beq body; b done` - reproduced by the &&-chain
     // gate (first condition folds, second becomes the gate).
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & 0x200000) == 0) {
+        (gmPauseFlags & 0x200000) == 0) {
         goto body;
     }
     goto done;
@@ -408,14 +408,14 @@ void createBattleDamage() {}
 void addBattleDamage() {}
 
 void setDamageType(unsigned char val) {
-    extern CMenuBattleDamage* lbl_eu_80663F28;
-    CMenuBattleDamage* p = lbl_eu_80663F28;
+    extern CMenuBattleDamage* spBattleDamageMenu;
+    CMenuBattleDamage* p = spBattleDamageMenu;
     if (p != 0) p->mDamageType = val;
 }
 
 void setDamageDir(unsigned char val) {
-    extern CMenuBattleDamage* lbl_eu_80663F28;
-    CMenuBattleDamage* p = lbl_eu_80663F28;
+    extern CMenuBattleDamage* spBattleDamageMenu;
+    CMenuBattleDamage* p = spBattleDamageMenu;
     if (p != 0) p->mDamageDir = val;
 }
 
@@ -465,18 +465,18 @@ void cursorAnimate() {}
 
 void cursorFinalize() {}
 
-extern CMenuBattleDamage* lbl_eu_80663F28;
+extern CMenuBattleDamage* spBattleDamageMenu;
 
-extern "C" void BtlDmg_SetByte777(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->_pad776[1] = val; }
-extern "C" void BtlDmg_SetByte778(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->_pad776[2] = val; }
-extern "C" void BtlDmg_SetField779(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->field_0x779 = val; }
+extern "C" void BtlDmg_SetByte777(u8 val) { CMenuBattleDamage* g = spBattleDamageMenu; if (g) g->_pad776[1] = val; }
+extern "C" void BtlDmg_SetByte778(u8 val) { CMenuBattleDamage* g = spBattleDamageMenu; if (g) g->_pad776[2] = val; }
+extern "C" void BtlDmg_SetField779(u8 val) { CMenuBattleDamage* g = spBattleDamageMenu; if (g) g->field_0x779 = val; }
 
 // Battle-damage singleton factory. Returns null when one already exists;
 // otherwise allocates the 0x77c-byte object from the work-thread region,
 // constructs it with the owning scene, registers it under `parent` and
 // returns the singleton.
 CMenuBattleDamage* BtlDmg_Create(CProcess* parent, CScn* scene) {
-    if (lbl_eu_80663F28 != 0) {
+    if (spBattleDamageMenu != 0) {
         return 0;
     }
     CMenuBattleDamage* obj = (CMenuBattleDamage*)mtl::MemManager::allocate(
@@ -486,22 +486,22 @@ CMenuBattleDamage* BtlDmg_Create(CProcess* parent, CScn* scene) {
         // back into obj keeps it live in r3 across the call (no spill).
         obj = __ct__CMenuBattleDamage(obj, scene);
     }
-    lbl_eu_80663F28 = obj;
+    spBattleDamageMenu = obj;
     Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(obj), parent,
                                   false);
-    return lbl_eu_80663F28;
+    return spBattleDamageMenu;
 }
 
 extern "C" void BtlDmg_NotifyDamage(int actorId, int value) {
-    CMenuBattleDamage* g = lbl_eu_80663F28;
+    CMenuBattleDamage* g = spBattleDamageMenu;
     if (g) {
         g->BtlDmg_SpawnPopup(actorId, value, 0);
     }
 }
-extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->mDamageType = val; }
-extern "C" void BtlDmg_SetDamageDir(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) g->mDamageDir = val; }
+extern "C" void BtlDmg_SetDamageType(u8 val) { CMenuBattleDamage* g = spBattleDamageMenu; if (g) g->mDamageType = val; }
+extern "C" void BtlDmg_SetDamageDir(u8 val) { CMenuBattleDamage* g = spBattleDamageMenu; if (g) g->mDamageDir = val; }
 extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
-    if (lbl_eu_80663F28 == NULL) {
+    if (spBattleDamageMenu == NULL) {
         return;
     }
     if (!GetSysStateFlag24()) {
@@ -523,7 +523,7 @@ extern "C" void BtlDmg_FilterNotifyDamage(int actorId, int value, u32 flags) {
             return;
         }
     }
-    lbl_eu_80663F28->BtlDmg_SpawnPopup(actorId, value, flags);
+    spBattleDamageMenu->BtlDmg_SpawnPopup(actorId, value, flags);
 }
 
 // Cursor state machine: state 2 -> 3 (damage-up animation), enabling the
@@ -582,8 +582,8 @@ void BtlDmg_CursorSetFlag(CPcSelectCursor01* self, u8 value) {
         lbl_eu_804FD720 + 0x95, true);
     // Inline VEC3 args so MWCC matches retail lfs/fnmsubs/stfs order.
     pane->SetTranslate(nw4r::math::VEC3(
-        lbl_eu_80666FA0,
-        lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(self->field_0x29),
+        -178.0f,
+        110.0f - 86.0f * static_cast<f32>(self->field_0x29),
         lbl_eu_80666F94));
 }
 
@@ -716,15 +716,15 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
         world.y = src->y;
         world.z = src->z;
         if (obj == 0) {
-            world.y += lbl_eu_80666F6C;
+            world.y += 1.0f;
         }
 
         CMenuBattleDamagePose* pose = Scn_FindCamItem(this->mScn, -1);
         CamMan_ProjectToScreen(&screen, pose, &world);
 
-        screen.y = (screen.y - lbl_eu_80666F74) * lbl_eu_80666F78;
+        screen.y = (screen.y - 224.0f) * -1.0f;
         screen.z = lbl_eu_80666F68;
-        screen.x = screen.x - lbl_eu_80666F70;
+        screen.x = screen.x - 320.0f;
 
         // Direction: actors with the "action source" bit cycle the popup
         // direction through the live-actor count modulo 3.
@@ -733,9 +733,9 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
             e.field_30 = aliveCount % 3;
         }
         if (e.field_30 == 1) {
-            screen.x -= lbl_eu_80666F7C;
+            screen.x -= 25.0f;
         } else if (e.field_30 == 2) {
-            screen.x += lbl_eu_80666F7C;
+            screen.x += 25.0f;
         }
     }
 
@@ -753,98 +753,98 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
             sprintf(buf8, lbl_eu_804FD524 + 0xc9);
             break;
         case 1:
-            sprintf(buf8, lbl_eu_804FD524 + 0xca);
+            sprintf(buf8, "*");
             break;
         case 2:
-            sprintf(buf8, lbl_eu_804FD524 + 0xcc);
+            sprintf(buf8, "**");
             break;
         }
 
         ml::FixStr<32> buf; // 0x34
         switch (this->mDamageType) {
         case 0:
-            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            buf.format("%s%d", buf8, e.field_20);
             break;
         case 1:
-            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            buf.format("%s%d", buf8, e.field_20);
             break;
         case 2:
-            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            buf.format("%s%d", buf8, e.field_20);
             break;
         case 3:
-            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            buf.format("%s%d", buf8, e.field_20);
             break;
         case 4:
-            buf.format(lbl_eu_804FD524 + 0xd4,
-                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
+            buf.format("%s",
+                       BdatTouchStringCell("MNU_battle",
                                      lbl_eu_804FD524 + 0xc4, 0xb));
             break;
         case 5:
-            buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
-                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
+            buf.format("%s%d %s", buf8, e.field_20,
+                       BdatTouchStringCell("MNU_battle",
                                      lbl_eu_804FD524 + 0xc4, 0xc));
             break;
         case 6:
-            buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
-                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
+            buf.format("%s%d %s", buf8, e.field_20,
+                       BdatTouchStringCell("MNU_battle",
                                      lbl_eu_804FD524 + 0xc4, 0xe));
             break;
         case 7:
-            buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
-                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
+            buf.format("%s%d %s", buf8, e.field_20,
+                       BdatTouchStringCell("MNU_battle",
                                      lbl_eu_804FD524 + 0xc4, 0xd));
             break;
         case 8:
-            buf.format(lbl_eu_804FD524 + 0xd4,
-                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
+            buf.format("%s",
+                       BdatTouchStringCell("MNU_battle",
                                      lbl_eu_804FD524 + 0xc4, 0xe));
             break;
         case 9:
-            buf.format(lbl_eu_804FD524 + 0xd4,
-                       BdatTouchStringCell(lbl_eu_804FD524 + 0xd7,
+            buf.format("%s",
+                       BdatTouchStringCell("MNU_battle",
                                      lbl_eu_804FD524 + 0xc4, 0xd));
             break;
         case 0xa:
-            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            buf.format("%s%d", buf8, e.field_20);
             break;
         }
 
         // Hide every damage-type pane, then reveal the one selected below.
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0xea,
+        e.mLayout0->GetRootPane()->FindPaneByName("txt_damage",
                                                   true)
             ->SetVisible(false);
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0xf5,
+        e.mLayout0->GetRootPane()->FindPaneByName("txt_hit",
                                                   true)
             ->SetVisible(false);
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0xfd,
+        e.mLayout0->GetRootPane()->FindPaneByName("txt_recovery",
                                                   true)
             ->SetVisible(false);
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x10a,
+        e.mLayout0->GetRootPane()->FindPaneByName("txt_add",
                                                   true)
             ->SetVisible(false);
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x112,
+        e.mLayout0->GetRootPane()->FindPaneByName("txt_dot",
                                                   true)
             ->SetVisible(false);
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x11a,
+        e.mLayout0->GetRootPane()->FindPaneByName("txt_spike",
                                                   true)
             ->SetVisible(false);
-        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x124,
+        e.mLayout0->GetRootPane()->FindPaneByName("pic_efct",
                                                   true)
             ->SetVisible(false);
 
-        const char* animName = lbl_eu_804FD524 + 0xf5;
+        const char* animName = "txt_hit";
         if (this->mDamageType == 3) {
-            animName = lbl_eu_804FD524 + 0xfd;
+            animName = "txt_recovery";
         } else if (this->mDamageType == 1) {
-            animName = lbl_eu_804FD524 + 0x112;
+            animName = "txt_dot";
         } else if (this->mDamageType == 2) {
-            animName = lbl_eu_804FD524 + 0x11a;
+            animName = "txt_spike";
         } else if (this->mDamageType == 0xa) {
-            animName = lbl_eu_804FD524 + 0x10a;
+            animName = "txt_add";
         } else {
-            animName = lbl_eu_804FD524 + 0xf5;
+            animName = "txt_hit";
             if (dirFlag != 0) {
-                animName = lbl_eu_804FD524 + 0xea;
+                animName = "txt_damage";
             }
         }
         e.mLayout0->GetRootPane()
@@ -854,7 +854,7 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
 
         if (this->_pad776[1] != 0) {
             e.mLayout0->GetRootPane()
-                ->FindPaneByName(lbl_eu_804FD524 + 0x124, true)
+                ->FindPaneByName("pic_efct", true)
                 ->SetVisible(true);
         }
 
@@ -892,8 +892,8 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
             f32 mf = p.field_04->GetFrame();
             u16 fs = p.field_04->GetFrameSize();
             e.field_34 = p.field_34 +
-                         ((static_cast<f64>(fs) - lbl_eu_80666F6C) *
-                              lbl_eu_80666F80 -
+                         ((static_cast<f64>(fs) - 1.0f) *
+                              0.5f -
                           mf);
             if (e.field_34 < lbl_eu_80666F68) {
                 e.field_34 = lbl_eu_80666F68;
@@ -929,43 +929,43 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
             }
         }
 
-        e.mLayout1->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x12d,
+        e.mLayout1->GetRootPane()->FindPaneByName("nul_g",
                                                   true)
             ->SetVisible(false);
-        e.mLayout1->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x133,
+        e.mLayout1->GetRootPane()->FindPaneByName("nul_b",
                                                   true)
             ->SetVisible(false);
         if (flags & 0x22) {
             e.mLayout1->GetRootPane()
-                ->FindPaneByName(lbl_eu_804FD524 + 0x133, true)
+                ->FindPaneByName("nul_b", true)
                 ->SetVisible(true);
-            LayoutSetTextBoxFmtValue(e.mLayout1, lbl_eu_804FD524 + 0x139, text, 0);
+            LayoutSetTextBoxFmtValue(e.mLayout1, "txt_status_b00", text, 0);
         } else {
             e.mLayout1->GetRootPane()
-                ->FindPaneByName(lbl_eu_804FD524 + 0x12d, true)
+                ->FindPaneByName("nul_g", true)
                 ->SetVisible(true);
-            LayoutSetTextBoxFmtValue(e.mLayout1, lbl_eu_804FD524 + 0x148, text, 0);
+            LayoutSetTextBoxFmtValue(e.mLayout1, "txt_status_g00", text, 0);
         }
 
         // Bind a "timg" resource to the small layout (name depends on the
         // flag bits), then set the fixed label string if one was found.
         u8* res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
-            0x74696D67, lbl_eu_804FD524 + 0x157, 0));
+            0x74696D67, "mf71_btl16_bufmk02.tpl", 0));
         if (flags & 0x8) {
             res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
-                0x74696D67, lbl_eu_804FD524 + 0x16e, 0));
+                0x74696D67, "mf71_btl16_bufmk01.tpl", 0));
         } else if (flags & 0x10) {
             res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
-                0x74696D67, lbl_eu_804FD524 + 0x185, 0));
+                0x74696D67, "mf71_btl16_bufmk00.tpl", 0));
         } else if (flags & 0x20) {
             res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
-                0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
+                0x74696D67, "mf00_com00_dmy.tpl", 0));
         } else if (flags & 0x40) {
             res = static_cast<u8*>(CUICfManager_getArcResourceAccessor()->GetResource(
-                0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
+                0x74696D67, "mf00_com00_dmy.tpl", 0));
         }
         if (res != 0) {
-            PaneSetTexPaletteByName(e.mLayout1, lbl_eu_804FD524 + 0x1af, (TPLPalette*)res);
+            PaneSetTexPaletteByName(e.mLayout1, "pic_ic", (TPLPalette*)res);
         }
 
         e.field_32 = 0;
@@ -987,8 +987,8 @@ void CMenuBattleDamage::BtlDmg_SpawnPopup(int actorId, int value, u32 flags) {
             f32 mf = p.mAnim3->GetFrame();
             u16 fs = p.mAnim3->GetFrameSize();
             e.field_34 = p.field_34 +
-                         ((static_cast<f64>(fs) - lbl_eu_80666F6C) *
-                              lbl_eu_80666F80 -
+                         ((static_cast<f64>(fs) - 1.0f) *
+                              0.5f -
                           mf);
             if (e.field_34 < lbl_eu_80666F68) {
                 e.field_34 = lbl_eu_80666F68;

@@ -5,7 +5,7 @@
 #include <monolib/math/CMat33.hpp>
 #include <monolib/math/CQuat.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"  // owner of the 0x74/0xAC/0xCC/0x120/0x128/0x12C slots (unk164 / 73DDC / 74090 / 74230)
 
@@ -28,15 +28,15 @@ extern "C" int cfCam_testUnk04M(int controllerId, int unk); // CfCam sibling pad
 extern "C" void* copyVec3Words(void*, void*);
 extern "C" int cfCam_bit1At0x64(void* arg);           // CfCam sibling (FULL_MATCH us-8006cc08)
 extern "C" void cfCam_reloadDefaults(int arg1, int arg2); // CfCam sibling (us-8006c178)
-extern "C" float lbl_eu_80527230[];
-extern "C" float lbl_eu_80663DE4;     // .sbss float (retail 0x80663DE4)
-extern "C" float lbl_eu_80663DE8;     // .sbss float (retail 0x80663DE8)
-extern "C" float lbl_eu_80570A38[3];  // .bss vec3 (retail 0x80570A38)
+extern "C" float cfCamTuneRatesC[];
+extern "C" float cfCamFollowDistance;     // .sbss float (retail 0x80663DE4)
+extern "C" float cfCamFollowDistanceMirror;     // .sbss float (retail 0x80663DE8)
+extern "C" float cfCamFollowRelativePos[3];  // .bss vec3 (retail 0x80570A38)
 // .bss float (retail 0x80570A44). Sized >8B so MWCC uses full lis/@l addressing
 // (SDA threshold) - only [0] is ever referenced.
-extern "C" float lbl_eu_80570A44[3];
-extern "C" float lbl_eu_80570A50[3];  // .bss vec3 (retail 0x80570A50)
-extern "C" float lbl_eu_80570A5C[6];  // .bss 6 floats (retail 0x80570A5C, size 0x18)
+extern "C" float cfCamFollowRelativePosMirror[3];
+extern "C" float cfCamProbeVec[3];  // .bss vec3 (retail 0x80570A50)
+extern "C" float cfCamProbeWeights[6];  // .bss 6 floats (retail 0x80570A5C, size 0x18)
 extern "C" void ScnRes_CopyEntryHead(void*, int);
 extern "C" void* ScnRes_CopyEntryMid(void*, int);
 extern "C" float scaleByGlobal(float val);
@@ -66,11 +66,11 @@ extern "C" void cfCam_storeZeroU32(void* self);
 extern "C" void cfCam_storeZeroU16(u16* self);
 // .data lookup tables (retail 0x80527208 / 0x8052721C, 20 bytes each). Sized
 // >8B so MWCC uses full lis/@l addressing (SDA threshold).
-extern "C" float lbl_eu_80527208[5];
-extern "C" float lbl_eu_8052721C[5];
+extern "C" float cfCamTuneRatesA[5];
+extern "C" float cfCamTuneRatesB[5];
 // .sdata floats (retail 0x80661B3C, 0x80661B40, 0x80661B44, 0x80661B48,
 // 0x80661B74). Scalar stores - only the .data tables below are indexed.
-extern "C" u8 lbl_eu_80663DE0;        // .sdata byte gate (retail 0x80663DE0)
+extern "C" u8 cfCamInitGate;        // .sdata byte gate (retail 0x80663DE0)
 extern "C" void Env_BuildRotY(void*, float);        // retail 0x80059C78
 extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag); // CfCam sibling flag set (retail 0x8006BBF4)
 extern "C" void cfCam_refreshBA8();                              // CfCam sibling (retail 0x8006B948)
@@ -175,7 +175,7 @@ public:
     virtual void cfCam_setFollowTg(void* target) = 0;   // 0x5C (leaf: stash +0x164)
     virtual void* cfCam_loadUnk164() = 0;              // 0x60 (leaf: +0x164 handle)
     virtual void camPluginNoopV64();                   // 0x64 (pluginCam no-op)
-    virtual void camPluginNoopV68();                   // 0x68 (pluginCam no-op; CfCamFollow overrides)
+    virtual void propagateFollowParam(int cond);        // 0x68 (follow-param propagation; overridden by CfCamFollow)
     virtual void camPluginNoopV6C();                   // 0x6C (pluginCam no-op)
 
     // Overlay on the implicit vptr at +0 so the ctors can store the retail
@@ -376,10 +376,10 @@ struct CamDefaultsBlock {
 // Owned by another TU (CfScript.o defines the 0xC bss instance); this TU
 // only references it, so declare extern (a tentative here would wrongly
 // emit 0x200 into this TU's .bss).
-extern CamDefaultsBlock lbl_eu_80570A20;
-extern const void* lbl_eu_80527244[7];               // .data joint-name table (retail 0x80527244)
-float lbl_eu_80570A74[3];                            // .bss vec3 (retail 0x80570A74)
-float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x80570A80)
+extern CamDefaultsBlock sCameraDefaults;
+extern const void* cfCamJointNamePtrTable[7];               // .data joint-name table (retail 0x80527244)
+float cfCamDebugVecA[3];                            // .bss vec3 (retail 0x80570A74)
+float cfCamDebugVecB[3];                            // .bss vec3 (retail 0x80570A80)
 extern const char lbl_eu_804FB4F0[];                       // .rodata message string (retail 0x804FB4F0)
 void cfCam_zero1D4Word(cf::CfCamFollow* self);           // CfCam sibling: zero the 0x1D4 flag word (retail 0x8006D870)
 int cfCam_testWordMask(void* obj, u32 mask);              // CfCam sibling pad-action dispatcher (retail 0x80075568)
@@ -400,8 +400,8 @@ struct CamDefTable {
 };
 // Owned by another TU (CfCamEvent.o defines the .data instance); extern
 // here so this TU's .bss does not gain a bogus 0x88 tentative.
-extern CamDefTable lbl_eu_80527160;
-extern const char* lbl_eu_805271FC[];                // .data bdat-table-name entries (retail 0x805271FC)
+extern CamDefTable sCamDefaultTable;
+extern const char* sCamBdatTableNameTable[];                // .data bdat-table-name entries (retail 0x805271FC)
 void* cfCam_loadPlus4(void* obj);                      // CfCam sibling (retail 0x8006D400)
 float cfCam_getFloat1E0F(void* pose);                     // CfCam sibling (retail 0x8006D408)
 void* Scn_FindCamItem(void* scene, int index);         // scene pose/xform block lookup
@@ -447,8 +447,8 @@ int cfCam_getBit13_4EC(void* x);
 int testAnimMoveBit(void* x);               // vec helper probe
 void noopAnimQuat(void* v);              // vec helper
 void* MapFx_ResolveOwner(void* source);        // object state getter
-float lbl_eu_80570A2C[3];                 // .bss vec3 (retail 0x80570A2C)
-u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
+float cfCamTuneScaledVec[3];                 // .bss vec3 (retail 0x80570A2C)
+u8 cfCamStateBackupBuffer[];                     // .bss fallback camera-state buffer
 // In-TU definitions (CfCam.cpp) whose differing signatures keep the bl at
 // call sites (see the extern-C-only-views pattern above).
 extern "C" void cfCam_quatSlerp(void* out, void* a, void* b, float t); // in-TU def: (Quaternion*, const Quaternion*, const Quaternion*, float)
@@ -487,73 +487,23 @@ extern const float lbl_eu_806662A0;
 extern const float lbl_eu_806662B0;
 extern const float lbl_eu_806662B4;
 extern const float lbl_eu_806662B8;
-extern const float lbl_eu_806662BC;
-extern const float lbl_eu_806662C0;
-extern const float lbl_eu_806662C4;
-extern const float lbl_eu_806662C8;
 extern const float lbl_eu_806662CC;
 extern const float lbl_eu_806662D0;
-extern const float lbl_eu_806662D4;
-extern const float lbl_eu_806662D8;
 extern const float lbl_eu_806662DC;
-extern const float lbl_eu_806662E0;
 extern const float lbl_eu_806662E4;
 extern const float lbl_eu_806662F0;
-extern const float lbl_eu_806662F4;
 extern const float lbl_eu_806662F8;
-extern const float lbl_eu_806662FC;
 extern const float lbl_eu_80666300;
-extern const float lbl_eu_80666304;
 extern const float lbl_eu_80666308;
-extern const float lbl_eu_8066630C;
-extern const float lbl_eu_80666310;
-extern const float lbl_eu_80666314;
 extern const float lbl_eu_80666318;
 extern const float lbl_eu_8066631C;
 extern const float lbl_eu_80666320;
 extern const float lbl_eu_80666324;
-extern const float lbl_eu_80666328;
 extern const float lbl_eu_8066632C;
-extern const float lbl_eu_80666330;
-extern const float lbl_eu_80666334;
-extern const float lbl_eu_80666338;
-extern const float lbl_eu_8066633C;
-extern const float lbl_eu_80666340;
-extern const float lbl_eu_80666344;
-extern const float lbl_eu_80666348;
-extern const float lbl_eu_8066634C;
-extern const float lbl_eu_80666350;
-extern const float lbl_eu_80666354;
-extern const float lbl_eu_80666358;
 extern const float lbl_eu_8066635C;
-extern const float lbl_eu_80666360;
-extern const float lbl_eu_80666364;
 extern const float lbl_eu_80666368;
 extern const float lbl_eu_8066636C;
 extern const float lbl_eu_80666370;
-extern const float lbl_eu_80666388;
 extern const float lbl_eu_8066638C;
 extern const float lbl_eu_80666390;
-extern const float lbl_eu_80666394;
-extern const float lbl_eu_80666398;
-extern const float lbl_eu_8066639C;
-extern const float lbl_eu_806663A0;
-extern const float lbl_eu_806663A4;
-extern const float lbl_eu_806663A8;
-extern const float lbl_eu_806663AC;
-extern const float lbl_eu_806663B0;
-extern const float lbl_eu_806663B4;
-extern const float lbl_eu_806663B8;
-extern const float lbl_eu_806663BC;
-extern const float lbl_eu_806663C0;
-extern const float lbl_eu_806663C4;
-extern const float lbl_eu_806663C8;
-extern const float lbl_eu_806663CC;
-extern const float lbl_eu_806663D0;
-extern const float lbl_eu_806663D4;
-extern const float lbl_eu_8066640C;
-extern const float lbl_eu_80666410;
-extern const float lbl_eu_80666414;
-extern const double lbl_eu_806662A8;
-extern const double lbl_eu_806662E8;
 extern const float lbl_eu_80666374;

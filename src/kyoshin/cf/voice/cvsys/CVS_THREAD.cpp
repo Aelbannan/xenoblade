@@ -1,6 +1,6 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"          // lbl_eu_80663E14
+#include "kyoshin/cf/CfGameManagerData.hpp"          // gmScene
 #include "libs/monolib/src/scn/CScn_8049603C.hpp"     // Scn_QueryUnk80State (single owner decl)
 #include "monolib/math/Random.hpp"
 

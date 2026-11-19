@@ -7,7 +7,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/math/CVec3.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/IResInfo.hpp"  // real CResLookup owner (getResourceBase/isInUse/cmpField4Eq)
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"  // real CScnEnvLgtCtrlListItem owner (v25/v31/v32/v33/v35)
 
@@ -52,7 +52,7 @@ void cf::CfObjectMap::cleanupMap() {
         this->field_0xE0 = 0;
         CDeviceVI::waitForDrawDone();
         resetMpfInstance__17UnkClass_8047BB54Fv(&this->field_0xF0);
-        *reinterpret_cast<u32*>(this->_pad6C) &= ~0x8000;
+        this->field_0x6C &= ~0x8000;
     }
     if (this->field_0x2F40 != 0) {
         resetActiveLOD__8CTaskLODFv(0);
@@ -60,7 +60,7 @@ void cf::CfObjectMap::cleanupMap() {
     }
     CScnEnvLgtCtrlListItem* resource = this->field_0x2F3C;
     if (resource != 0) {
-        scnLgtRemoveLgtItem(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, resource);
+        scnLgtRemoveLgtItem(reinterpret_cast<UnkSceneView*>(gmScene)->field_0x7C, resource);
         this->field_0x2F3C = nullptr;
     }
     clearOccFrustums__Q22cf12CTaskCullingFv();
@@ -101,13 +101,13 @@ extern "C" void* checkMpfFlags__17UnkClass_8047BB54Fv(void*, void*);
 extern "C" void CfObjectMap_refreshRegion(void* self) {
     if (*(u32*)((u8*)self + 0x6C) & 0x8000) {
         extern void* Scn_HasCamItem(void*, void*);
-        void* r = Scn_HasCamItem((void*)lbl_eu_80663E14, (void*)lbl_eu_80663E10);
+        void* r = Scn_HasCamItem((void*)gmScene, (void*)gmCurrentView);
         checkMpfFlags__17UnkClass_8047BB54Fv((u8*)self + 0xF0, (u8*)r + 0x9C);
     }
 }
 
-void clearStatus__Q22cf11CfObjectMapFv(void* self) {
-    ((cf::CfObjectMap*)self)->field_0x8E = 0;
+void cf::CfObjectMap::clearStatus() {
+    field_0x8E = 0;
 }
 
 extern "C" void noopMapStub() {}
@@ -248,19 +248,19 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
         Tok_FormatStr(reinterpret_cast<ml::FixStr<64>&>(buf), resB->field_0x4, 1, 0);
         *reinterpret_cast<void**>(self->field_0x90) = CfRes_getLazyField10(resB->field_0x2C, resB);
         self->field_0xDC = CfRes_getLazyField20(resC->field_0x2C, resC);
-        void* sub = scnImN4BuildByIdx(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
+        void* sub = scnImN4BuildByIdx(gmScene, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
         CfModel_InstallSub(self, sub);
         clearPoolData__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
         if (self->field_0xDC != 0) {
-            self->field_0xEC = Scn_InitGlobalB(lbl_eu_80663E14, self->field_0xDC, buf);
+            self->field_0xEC = Scn_InitGlobalB(gmScene, self->field_0xDC, buf);
             initNodePool__17UnkClass_8047CD0CFv(&self->field_0x2F2C,
                                                  getHandleMEM1__Q23mtl10MemManagerFv(), 0xB0000, 0x32);
             initFromConfig__17UnkClass_8047CD0CFv(&self->field_0x2F2C, self->field_0xDC);
         }
         if (self->field_0xE0 != 0) {
             if (initMpfSystem__17UnkClass_8047BB54Fv(&self->field_0xF0, self->field_0xE0,
-                                                     lbl_eu_80663E14, lbl_eu_80663E10) != 0) {
-                *reinterpret_cast<u32*>(self->_pad6C) |= 0x8000;
+                                                     gmScene, gmCurrentView) != 0) {
+                self->field_0x6C |= 0x8000;
             }
         }
         if (self->field_0xE4 != 0) {
@@ -270,7 +270,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
         }
         if (self->field_0xE8 != 0) {
             CScnEnvLgtCtrlListItem* fx = static_cast<CScnEnvLgtCtrlListItem*>(
-                scnLgtCreateEnvController(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C,
+                scnLgtCreateEnvController(reinterpret_cast<UnkSceneView*>(gmScene)->field_0x7C,
                               self->field_0xE8, 7));
             self->field_0x2F3C = fx;
             if (fx != 0) {
@@ -309,8 +309,8 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
     }
     self->field_0x2F44 = 10;
     reloadOccFrustums__Q22cf12CTaskCullingFv();
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666A50) {
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80666A3C);
+    if (Scn_GetFrameDelta(gmScene) > lbl_eu_80666A50) {
+        Scn_SetTimeScale(gmScene, lbl_eu_80666A3C);
     }
     CfSoundMan_ClearFxEffect(0, 0);
     CfSoundMan_ClearFxEffect(1, 0);
@@ -319,9 +319,9 @@ done:
 }
 
 extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
-    float scale = Scn_GetFrameDelta(lbl_eu_80663E14);
+    float scale = Scn_GetFrameDelta(gmScene);
     float value = self->field_0x2F48 * scale;
-    if (lbl_eu_80663E24 & 0x04000000) {
+    if (gmGameFlags & 0x04000000) {
         value = lbl_eu_80666A38;
     }
     if (&self->field_0xF0 != 0) {
@@ -341,8 +341,8 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     }
     // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
     updateLODRange__8CTaskLODFv(v, value);
-    scnLgtPushLgtValue(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, v, value);
-    if (lbl_eu_80663E28 & 0x01000000) {
+    scnLgtPushLgtValue(reinterpret_cast<UnkSceneView*>(gmScene)->field_0x7C, v, value);
+    if (gmPauseFlags & 0x01000000) {
         v = 2;
     } else {
         v = getReloadParam1() & 0xFFFF;
@@ -353,7 +353,7 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     }
     CScnEnvLgtCtrlListItem* fx = self->field_0x2F3C;
     if (fx != 0) {
-        if (lbl_eu_80663E24 & 0x02000000) {
+        if (gmGameFlags & 0x02000000) {
             if (self->field_0x2F41 == 0) {
                 float vec[4] = {lbl_eu_80666A58, lbl_eu_80666A5C, lbl_eu_80666A60, lbl_eu_80666A64};
                 fx->v33(0, 0, vec);

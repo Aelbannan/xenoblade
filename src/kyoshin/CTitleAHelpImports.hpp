@@ -21,9 +21,7 @@ public:
     virtual u32 vf7() = 0;  // +0x24
 };
 
-bool isPaneVisible(nw4r::lyt::Pane*);
 
-// One row of the title-A help table: 7 u16 cells indexed by button id.
 struct HelpRow {
     u16 cell[7];
 };

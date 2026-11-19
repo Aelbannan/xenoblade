@@ -24,16 +24,16 @@ Where the two goals conflict in the short term, faithfulness wins (user: "I'm fi
 the match count if it's done properly"), but every drop needs a stated structural reason and is a
 debt to repay, not an accepted end state.
 
-## 2. Where we are (2026-11-19, checkpoint 9 on `agents/matching-pass-2026-10-23`)
+## 2. Where we are (2026-11-20, checkpoint 10 on `agents/matching-pass-2026-10-23`)
 
 | Measure | Value |
 |---|---|
-| Functions at 100% | 14,724 / 19,310 (76.2%); checkpoint 8 was 14,502 (+222; 261 reached 100%, 278 better; non-✓ drops logged in §5 c9) |
-| Units complete (linked) | 626 / 1,198 (c8: 617) |
-| Matched code / data bytes | 44.1% / 53.1% |
-| Unmatched functions by area | kyoshin 3,177 · monolib 875 · CriWare 337 · nw4r 226 · RVL_SDK 191 · PowerPC_EABI_Support 2 |
-| Faithful hard counts | label 44,425 · mangled_c 2,146 · section 1,124 · offset_cast 1,857 · view_struct 1,209 · noinline 133 · decl_shield 17 · volatile 150 · rule 274 · rtti_off 16 · foreign_data 527 |
-| Faithful soft counts | field_0x 27,911 · unk_name 1,117 · addr_func 989 |
+| Functions at 100% | 15,110 / 19,310 (78.2%); checkpoint 9 was 14,720 (+410 reached 100%, 20 apparent losses: 15 renames, 2 proven-phantom CfGimmick checkers, 3 pool-reloc win-backs logged in §5 c10) |
+| Units complete (linked) | 630 / 1,198 (c9: 626) |
+| Matched code / data bytes | 45.2% / 53.2% |
+| Unmatched functions by area | kyoshin 2,677 · monolib 835 · CriWare 316 · nw4r 197 · RVL_SDK 174 · PowerPC_EABI_Support 1 |
+| Faithful hard counts | label 24,195 · mangled_c 2,053 · section 882 · offset_cast 1,841 · view_struct 1,191 · noinline 133 · decl_shield 17 · volatile 117 · rule 272 · rtti_off 15 · foreign_data 410 |
+| Faithful soft counts | field_0x 27,917 · unk_name 1,135 · addr_func 1,015 |
 | UNIT_RULES baseline | 269 (shrink-only) |
 
 Wave c6/c7 was a faithfulness wave: offset_cast 4,230 → 2,675 (CActorParam 894 → 11, CBattleManager 587 → 232,
@@ -212,6 +212,16 @@ status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
 
+0. **Checkpoint 10 debts (2026-11-20).** Live queue: `/tmp/xb/orch/debt_queue.md` (orchestrator scratch); the durable items:
+   - code_800B06A4 `setMonoFlag` (us-800ba1e4) hand-calls `__dynamic_cast(obj, 0, &__RTTI__..., &__RTTI__..., 0)`; rewrite as `dynamic_cast<cf::CfObjectModel*>`, move the per-TU `startEnumObjects`/`getObjectIdAt` externs to their owner header (or revert the function).
+   - CDesktop ctor still stores `__vt__8CDesktop` by hand although the vtable is now compiler-emitted; `lbl_eu_80663760` type descriptor is a `__declspec(section ".sdata")` blob.
+   - Win-backs from faithful cleanups (do not reintroduce offset reads): CfTFile `CfT_PlayTimeGet` 100->99.44 (decomp-only int->double magic reloc, split overrun 0x6C); CMCCrystalInfo `MCCrystal_ClearSlots/ClearTexts` 100->99.8 (string literals replaced `lbl+offset`); CCollepedia `clpSelectItem` 92.4->75.4 / `clpFillEntry` 76.3->61.7 (partial CLPPage/CLPCell typing); adx_tlk `adxt_ExecServer` 94.1->79.0 (ADXT_ServerWork typed).
+   - sfx_lib: split into `sfxlib_header` (0x80619C00, 0x10) + `sfxlib_state` (0x80619C10) gives the four accessors ✓ but `SFX_Init` 81.66->76.09 with split overrun 0x1C; single-object + state-pointer probe gives 0/4. Retail accessors use an interior label +8 while SFX_Init uses the outer base +addi 16 — needs the real struct/TU shape (Opus tier).
+   - 668 N1 renames reverted because callers declare the C name (`extern "C"`); migrate callers to the owner header, then retry `rename_syms.py` (list in `/tmp/xb/N1/risky.json`). 1,076 byte-identical-but-unpaired functions (mostly this linkage class) are the cheapest remaining wins.
+   - 23 `...Fv` placeholder names whose callers pass r4/f1 payloads: re-mangle to the real signature and write the real member.
+   - Opus tier (await approval): 8-byte singleton sbss slots; vtable-before-data ordering (CPartsChange, CWorkSystemPack); leading .sdata2 prefix (CfTFile, CArtsInfo); IWorkEvent RTTI string (CMCCrystalInfo, CArcItem); TU string-pool order (CItemBox*, CArtsInfo, CSaveLoad); CfGameManager.hpp/code_800B06A4.hpp fake reslist (193 includers); ahx_sjd and CTaskREvent volatile; math_triangular hand-written BasicSound vtable blob.
+   - Process lesson: hy4 match agents on >=90% residuals yield ~3.5%; packet-format briefs (hexdiff diff + KB/semantic search hits + exemplars) yield ~36% on recipe/linkage blockers. Pure register colouring stays with Opus.
+
 0. **Checkpoint 9 debts (2026-11-19).**
    - CSkipTimer (wave h, h12): BeginLoad/OnFileEvent use a hand-expanded member-wise copy from a block-scoped temporary instead of the probable original `mSysWin = CSysWin(0);` / `mSkipTimer2 = CSkipTimer2(mLayout);` (implicit operator= is not inlined under the unit's real -ipa off). Accepted because it replaced 26 noinline + 19 pragmas; revisit.
    - CTaskGame (h49): volatile re-reads moved to `volatile` field declarations on UnkClass_8004041C (counter no longer
@@ -238,7 +248,7 @@ status.
    - (wave i, i5) CtrlAct: pure virtual slots at +0x0C/+0x8C named after the CtrlPc overrides (CtrlPc_UpdatePadState, dispatchCtrlPcActions); confirm the base's real names once CtrlPc is a real class.
    - TagProcCompareIds: two conflicting decls (CTagProcessor.hpp u32(const u32*,const u32*) vs CKizunagram.hpp extern "C" int(const wchar_t**,const wchar_t**)). Retail loads *b first, subf b-a. Unify on one real signature (callers look like iterator cur/end compare) — r2 Opus could not match.
    - o5: kyoshin/main 9/9 fully byte-identical (already Matching). code_800C17DC 11/12, CChainCombo split/extab fixed.
-   - g3d_resfile (25/25 code, d2): NOT linkable. In retail the ResNameData27 names are probably function-local statics, merged by dtk into lbl_eu_80568FC0/80569080 (each 0x40). The decomp defines them as globals: AnmScn at 805690A0 and External at 805690C0 (that address is a g3d_restev symbol, so linking gives multiply-defined), and External is held alive by a dummy `KeepResFileExternal` function. The real fix is function-local `static const ResNameData` inside each Get*/Has* function, plus removing the Keep function.
+The real fix is function-local `static const ResNameData` inside each Get*/Has* function, plus removing the Keep function. RESOLVED j7: function-local statics duplicate per use and perturb `-ipa file`; the byte-order-preserving fix is descriptive file-scope data objects in resfile plus a local `static u8` table in restev. Both data diffs MATCH and resfile is now Matching.
    - CSysWin: 21/21 code, but .rodata short — CSysWin2 strings (menu/jp/SysWin2.arc etc.) have no owner in source; CSysWinBuff Init/Move stubs. TU ownership decision needed.
    - CArcItem (o6): faithful 40->1 but data now MISMATCH (RTTI base list for IWorkEvent; retail {name,0}). Kept faithful version; unit NonMatching.
    - CMenu* data diff: local @NNN RTTI companions of weak IUICf/CTTask<IUICf> not excluded by linked-view -> tooling gap affecting all CMenu*.
@@ -252,13 +262,13 @@ status.
    - CHECK at c9: CMenuMapSelectSC MapSelectSCHandleInput was same-size (0x670, 38 mm) at census, o6 reports 90.8% OVER(24). Suspects: r2 CFloorMap.hpp field_208/333C u8->bool, or i23 CTitleAHelp conversion. Bisect when build healthy.
    - CChainActorEne (o5): added static inline helpers (special-type check, list scan, actor lookup) — verify they correspond to real retail inlines / existing class members.
    - code_800B06A4 (i9): ObjFlagsEx/SortBuffer/ManagerD08/Vec724Block at src tail are padded view structs (u8 _XX[0x..] gaps) evading view_struct detector -> replace with real object classes; detector gap: flag pad-array overlay structs. Also factoryIter* extern "C" raw-offset helpers. 9 non-retail catalog helpers unwritten (testObj6Cmask etc.) block weak_dedup dead-strip.
-   - snd (o8): Bank::NoteOn Channel fields +0xC8/+0xDC/+0x3A/+0xE8/+0xEC need naming; AxVoice::Format -> SampleFormat (removes extern "C" GetSampleByDspAddress); AllocChannel InstancePool inline; TPrioList 0xF0 still open.
+   - snd (o8/j4): DONE — Bank::NoteOn 100% (real Channel mAlternateAssign/mReleaseIgnore/mpDisposeCallback/mpWaveInfo + inline setters); AxVoice::Format -> SampleFormat and extern "C" GetSampleByDspAddress removed; AllocChannel 100% via real zero-initialising MoveValue() ctor. Still open: TPrioList retail 0xF0 vs header 0xEC (no non-overlapping node exists).
    - code_800F42AC: must export C names ScMain_*/CfCode_* and own lbl_eu_80666EA8 before Matching.
    - PRE-EXISTING artifacts (hacklint): CException.cpp hand-written primary vtable + __RTTI__ blob + extern __dt__10CExceptionFv -> needs real virtual class layout; code_800B06A4 extern "C" __dt__800B183C raw reslist dtor -> real reslist<T> dtor; CEquipItemBox.hpp mVtable member; CSaveLoad award.mVtbl assignment; CtrlAct.hpp vf01/vf02 pad virtuals.
-   - i24 residuals: frozen UNIT_RULES exact_renames map __vt__ back to lbl_eu_* for CArtsSet 8052F5D8, snd_BasicSound 8056A710, CProc/CViewRoot 8056B298 -> update rules + rename together; CBattleManager base vtables 8052BD68/8052BD44 need reslist dtors to reference __vt__ names; CFade .data 0x104 vs 0x108.
+   - i24 residuals: frozen UNIT_RULES exact_renames map __vt__ back to lbl_eu_* for CArtsSet 8052F5D8, CProc/CViewRoot 8056B298 -> update rules + rename together (snd_BasicSound 8056A710 DONE: symbols + data-owning blob renamed, exact_renames field retired); CBattleManager base vtables 8052BD68/8052BD44 need reslist dtors to reference __vt__ names; CFade .data 0x104 vs 0x108.
    - CTitleAHelp: teardown/updateHelp/drawHelp/beginClose/... are C++ members in CTitleAHelp.cpp but retail exports bare C names -> callers keep extern "C" decls; real fix: decide true linkage (likely C-linkage free functions or retail names in symbols.txt), make one consistent. CPartyStateWin _pad18 cast for embedded CTitleAHelp.
    - CfNandManager (i21): __dt__8023E63C -> declare real virtual dtor + rename_syms the address symbol to the real mangled dtor (all regions); create__Q22cf13CfNandManagerFv retail mangling has NO params -> write static create() with no params (caller "args" likely leftover regs); stubs NandPackEntry/NandTileDescr/NandSaveBuild still empty.
-   - c9 non-✓ % drops from cleanup (win back): CSkipTimer_UpdateSlotFrame 94.9->77.1, mpvcmc_InitMcOiTa 87.4->75.1, BasicSound::Update 85.2->80.8 (snd header changes), rebuildEIBKind3Page 86.3->84.6; objdiff-only: ItemBoxGetTab 0% in report but ✓ in hexdiff.
+   - c9 non-✓ % drops from cleanup (win back): CSkipTimer_UpdateSlotFrame 94.9->77.1, mpvcmc_InitMcOiTa 87.4->75.1, BasicSound::Update 85.2->80.8 (snd header changes — STILL OPEN: missing SoundActor+0x48/4C/50 refresh; see MWCC_CASES j4), rebuildEIBKind3Page 86.3->84.6; objdiff-only: ItemBoxGetTab 0% in report but ✓ in hexdiff.
 
 0a. **Checkpoint 8 debts (2026-11-19).**
    - CSkipTimer (wave h, h12): BeginLoad/OnFileEvent use a hand-expanded member-wise copy from a block-scoped temporary instead of the probable original `mSysWin = CSysWin(0);` / `mSkipTimer2 = CSkipTimer2(mLayout);` (implicit operator= is not inlined under the unit's real -ipa off). Accepted because it replaced 26 noinline + 19 pragmas; revisit.
@@ -371,8 +381,9 @@ status.
      symbol-rename + `rename_syms.py` job for the class-recovery phase.
    - The handoff's `xargs -n 50 nm -u --format=posix` census recipe is broken (the `file:` prefix drops names);
      run `nm` once per object.
-   - nw4r snd: BasicSound has 4 functions at 100% instructions that still fail on the frozen
-     `lbl_eu_8056A710` vtable reloc rule (ceiling 31/35). AxManager `Init` touches an unexplained 0x200 static.
+   - nw4r snd: the four BasicSound vtable reloc-name misses are fixed (real `__vt__` symbol, rule retired);
+     BasicSound 31/35 ✓. AxManager ctor 100% and 20/26 ✓ after zero-initialising MoveValue();
+     `AxManager::Init` still touches an unexplained 0x200 static.
    - CMenuQstCnt still overflows its split by 0x3C and has an extab size mismatch. Both predate checkpoint 4
      (Refresh/Sort/GetOrCreate/FinishAnim size diffs).
    - Report WORSE entries are section re-cut side effects (CMenuBattleChain/CMenuBattleEnd/CTalkWindow

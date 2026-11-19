@@ -47,7 +47,7 @@ void CMenuSkipTimer::Term() {
     static_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     CSkipTimerTeardown(&mTimerData);
 
     sInstance = 0;
@@ -61,7 +61,7 @@ void CMenuSkipTimer::Term() {
  * 3. Drive the 5-state FSM (mFlag3) and refresh the bg/help bar/layout each
  *    frame. */
 void CMenuSkipTimer::Move() {
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000)) {
         return;
     }
 
@@ -94,13 +94,13 @@ void CMenuSkipTimer::Move() {
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     CSkipTimerTick(&mTimerData);
 }
 
 void CMenuSkipTimer::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -109,7 +109,7 @@ void CMenuSkipTimer::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     CSkipTimerDraw(&mTimerData, &drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 
@@ -137,7 +137,6 @@ CMenuSkipTimer* CMenuSkipTimer::create(CProcess* self, CProcess* parent) {
 // the `!= 0` tests compile to cmpwi rather than an rlwinm byte-mask.
 extern "C" {
 int BgTex_IsLoaded_3E34(CBgTex* self);
-void func_801C412C(CTitleAHelp* self);
 void CSkipTimerFlagButton(CSkipTimer* self);
 }
 
@@ -147,7 +146,7 @@ extern "C" void SkipTimer_Phase0Init(CMenuSkipTimer* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
         self->mTitleAHelp.isInitialized() != 0 &&
         CSkipTimerIsReady(&self->mTimerData) != 0) {
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C412C();
         CSkipTimerFlagButton(&self->mTimerData);
         self->mFlag3 = 1;
         playUISound(0x6d);
@@ -159,7 +158,7 @@ extern "C" unsigned long SkipTimer_IsActiveFlag(void) { return CMenuSkipTimer::s
 // When the title/help bar is idle and the timer widget is mid-anim, mark the
 // widget as having reached phase 2 (mFlag3 at 0x150).
 extern "C" void SkipTimer_Phase1Mark2(CMenuSkipTimer* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
         self->mFlag3 = 2;
     }
@@ -202,7 +201,7 @@ extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self) {
     }
 
     if (isSkipActive(&self->mTimerData) != 0) {
-        beginClose(&self->mTitleAHelp);
+        self->mTitleAHelp.beginClose();
         CSkipTimerLeaveSkip(&self->mTimerData);
         self->mFlag3 = 3;
     }
@@ -210,7 +209,7 @@ extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self) {
 
 // Same idle+advance check, but advances to phase 1 (writes mField54 at 0x54).
 extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         CSkipTimerGetSkipButton(&self->mTimerData) != 0) {
         self->mField54 = 1;
     }

@@ -9,7 +9,7 @@ namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // [.bss] work areas defined at the bottom of this TU.
 extern u8 lbl_eu_8065F428[];
-extern u8 lbl_eu_8065F8A8[];
+extern u8 ScnResAnchorArray[];
 
 namespace ml {
     // Minimal view of ml::CVec3 so we can reference the shared 'zero' vector
@@ -52,7 +52,7 @@ void noopAnimVec3(void* obj);
 void scanVertQuery(void* state, void* a1, void* a2, void* a3, void* a4,
                    void* a5);
 }
-extern u8 lbl_eu_8066597F;
+extern u8 ScnResValidateCrossingEnabled;
 
 // Defined below; plain C symbol so cross-TU relocs match retail.
 extern "C" s32 ScnRes_ProjectTracked(ml::CVec3* out);
@@ -93,11 +93,11 @@ extern s32 lbl_eu_80665978;
 extern u32 lbl_eu_80665988;
 extern u32 lbl_eu_8066598C;   // per-entry enable bitmask
 extern u32 lbl_eu_80665970;  // pointer to the current reference position
-extern f32 lbl_eu_80665980;
-extern u8 lbl_eu_8066597C;
-extern u8 lbl_eu_8066597D;
-extern u8 lbl_eu_8066597E;
-extern u32 lbl_eu_80665984;
+extern f32 ScnResHeightThreshold;
+extern u8 ScnResGroundCrossFlag;
+extern u8 ScnResCrossNotifyFlag;
+extern u8 ScnResFlatCrossFlag;
+extern u32 ScnResMoveThreshold;
 
 // Defined later in this TU.
 s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale);
@@ -156,7 +156,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
     };
     struct WorkL {
         EntL entries[32];   // lbl_eu_8065F428
-        f32 anchor[3];      // lbl_eu_8065F8A8
+        f32 anchor[3];      // ScnResAnchorArray
     };
     WorkL* w = (WorkL*)lbl_eu_8065F428;
     // Retail calls this helper with the entry index; the TU-local definition
@@ -167,11 +167,11 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
     w->anchor[0] = anchor->x;
     w->anchor[1] = anchor->y;
     w->anchor[2] = anchor->z;
-    lbl_eu_80665980 = t4;
-    lbl_eu_80665984 = t1;
-    lbl_eu_8066597C = 0;
-    lbl_eu_8066597D = 0;
-    lbl_eu_8066597E = 0;
+    ScnResHeightThreshold = t4;
+    ScnResMoveThreshold = t1;
+    ScnResGroundCrossFlag = 0;
+    ScnResCrossNotifyFlag = 0;
+    ScnResFlatCrossFlag = 0;
 
     // Working copy of the current position, offset by the second threshold.
     ml::CVec3 cur;
@@ -232,7 +232,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
                 base.z += scale * dz2 / t1;
             } else {
                 w->entries[j].field_0x10 -= scale * dyy;
-                lbl_eu_8066597D = 1;
+                ScnResCrossNotifyFlag = 1;
             }
             ++count;
         }
@@ -264,7 +264,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
             w->entries[i].field_0x0C += push * dx;
             w->entries[i].field_0x10 += push * dyy;
             w->entries[i].field_0x14 += push * dz2;
-            lbl_eu_8066597D = 1;
+            ScnResCrossNotifyFlag = 1;
             if (crossed == 0) {
                 crossed = recordCrossing(i);
             }
@@ -279,7 +279,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
             f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
             w->entries[i].field_0x10 += scale * dyy;
-            lbl_eu_8066597D = 1;
+            ScnResCrossNotifyFlag = 1;
         }
     }
 
@@ -295,8 +295,8 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
     }
 
     s32 result = crossed;
-    if (found != 0 && bestY - base.y <= lbl_eu_8066AF2C * t2) {
-        f32 lowest = bestY - lbl_eu_8066AF2C * t2;
+    if (found != 0 && bestY - base.y <= 0.5f * t2) {
+        f32 lowest = bestY - 0.5f * t2;
         f32 hi = 0.0f;
         s32 seen = 0;
         for (s32 i = 0; i < (s32)lbl_eu_80665988; ++i) {
@@ -392,9 +392,9 @@ struct Rec12 {
 // the walk below can use a single base register like retail does.
 struct ScnWork {
     ScnEntryF entries[32];  // 0x000 (lbl_eu_8065F428)
-    f32 anchor[3];          // 0x480 (lbl_eu_8065F8A8)
+    f32 anchor[3];          // 0x480 (ScnResAnchorArray)
     u8 pad[0x498 - 0x48C];  // 0x48C
-    Rec12 recs[32];         // 0x498 (lbl_eu_8065F8C0)
+    Rec12 recs[32];         // 0x498 (ScnResHistoryRecords)
 };
 
 void ScnRes_Notify2Word_E458(u32 a1, u32 a2) {
@@ -474,11 +474,11 @@ int ScnRes_HasHighFlagEntry_E5AC() {
     return ScnRes_ScanFlaggedEntry_EE54(0x8000);
 }
 
-extern u8 lbl_eu_8066597C;
-extern u8 lbl_eu_8066597D;
-u8 ScnRes_GetCrossFlagA_E5B8() { return lbl_eu_8066597C; }
+extern u8 ScnResGroundCrossFlag;
+extern u8 ScnResCrossNotifyFlag;
+u8 ScnRes_GetCrossFlagA_E5B8() { return ScnResGroundCrossFlag; }
 
-u8 ScnRes_GetCrossFlagB_E5C0() { return lbl_eu_8066597D; }
+u8 ScnRes_GetCrossFlagB_E5C0() { return ScnResCrossNotifyFlag; }
 
 // Scan the resource entries for one whose info selects an enabled mask bit.
 s32 ScnRes_AnyEntryValued_E5C8() {
@@ -552,9 +552,9 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
     // Vertex 0 lives in an s16 buffer; convert via double scaling.
     const s16* sv = (const s16*)((char*)st->shortVerts + info->vtxIdx * 6);
     ml::CVec3 pos;
-    pos.x = (f32)((f64)sv[0] * lbl_eu_8066AF38);
-    pos.y = (f32)((f64)sv[1] * lbl_eu_8066AF38);
-    pos.z = (f32)((f64)sv[2] * lbl_eu_8066AF38);
+    pos.x = (f32)((f64)sv[0] * 6.1035156e-05f);
+    pos.y = (f32)((f64)sv[1] * 6.1035156e-05f);
+    pos.z = (f32)((f64)sv[2] * 6.1035156e-05f);
 
     // Optional world matrix applied to the converted point.
     ml::CVec3 xf;
@@ -567,10 +567,10 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
     // Pick the two projection axes from where q sits between the slab
     // constants (dominant-axis style selection).
     s32 ca, cb;
-    if (q->y >= lbl_eu_8066AF3C) {
+    if (q->y >= 0.3f) {
         ca = 0;
         cb = 2;
-    } else if (q->y <= lbl_eu_8066AF40) {
+    } else if (q->y <= -0.3f) {
         ca = 2;
         cb = 1;
     } else {
@@ -601,7 +601,7 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
 
     ml::CVec3 r;
     // Edge AB region: barycentric solve along the first axis pair.
-    if (dotA <= lbl_eu_8066AF44 && dotA >= lbl_eu_8066AF48) {
+    if (dotA <= lbl_eu_8066AF44 && dotA >= -0.001f) {
         f32 ex0 = (ax[cb] - qx[cb]) < 0.0f ? -(ax[cb] - qx[cb]) : (ax[cb] - qx[cb]);
         f32 ex1 = (cx[cb] - qx[cb]) < 0.0f ? -(cx[cb] - qx[cb]) : (cx[cb] - qx[cb]);
         f32 sum = ex0 + ex1;
@@ -623,7 +623,7 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
     }
 
     // Edge AC region.
-    if (dotB <= lbl_eu_8066AF44 && dotB >= lbl_eu_8066AF48) {
+    if (dotB <= lbl_eu_8066AF44 && dotB >= -0.001f) {
         f32 ex0 = (bx[cb] - qx[cb]) < 0.0f ? -(bx[cb] - qx[cb]) : (bx[cb] - qx[cb]);
         f32 ex1 = (dx[cb] - qx[cb]) < 0.0f ? -(dx[cb] - qx[cb]) : (dx[cb] - qx[cb]);
         f32 sum = ex0 + ex1;
@@ -670,7 +670,7 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
     f32 t0 = (qx[2] - ax[2]) < 0.0f ? -(qx[2] - ax[2]) : (qx[2] - ax[2]);
     f32 t1 = (qx[1] - ax[1]) < 0.0f ? -(qx[1] - ax[1]) : (qx[1] - ax[1]);
     f32 dist = t0 + t1;
-    if (dist <= lbl_eu_8066AF50) {
+    if (dist <= 0.001f) {
         if (qx[1] <= qx[2]) {
             r.x = ax[0];
             r.y = ax[1];
@@ -743,11 +743,11 @@ extern "C" int ScnRes_IsEntryFlagged_EEAC(u32 flags, u32 index) {
 
 // Dissolved monolibdata2 sdata slot: word 0 is the ScnRes_RecordCrossing pointer
 // called by ScnRes_DispatchCrossCb_EEEC (retail loads the data word, not the address).
-extern "C" u32 lbl_eu_80663AD8[2];
+extern "C" u32 ScnResCrossCallback[2];
 extern "C" u32 lbl_eu_80663AE0[2];
 
 void ScnRes_DispatchCrossCb_EEEC() {
-    ((void (*)())*(u32*)&lbl_eu_80663AD8)();
+    ((void (*)())*(u32*)&ScnResCrossCallback)();
 }
 
 // Validate the height-crossing direction for resource entry [idx]: build the
@@ -790,28 +790,28 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
         crossing = 0;
     }
 
-    if (ref->y >= lbl_eu_8066AF60) {
-        if (ref->y >= lbl_eu_80665980) {
+    if (ref->y >= -0.05f) {
+        if (ref->y >= ScnResHeightThreshold) {
             if (crossing != 0) {
                 f32 flat = diff.z * diff.z + diff.x * diff.x;
-                if (flat <= lbl_eu_8066AF64) {
-                    lbl_eu_8066597E = 1;
+                if (flat <= 0.040000003f) {
+                    ScnResFlatCrossFlag = 1;
                 } else {
                     lbl_eu_80665978++;
                 }
             } else {
                 lbl_eu_80665978++;
-                if (ref->y >= lbl_eu_8066AF68) {
+                if (ref->y >= 0.98f) {
                     return 0;
                 }
             }
         } else {
-            if (ref->y < lbl_eu_8066AF6C) {
+            if (ref->y < 0.5f) {
                 lbl_eu_80665978++;
             }
         }
 
-        if (lbl_eu_8066597E != 0) {
+        if (ScnResFlatCrossFlag != 0) {
             if (lbl_eu_80665974 >= 1) {
                 return 1;
             }
@@ -834,7 +834,7 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
         if (lbl_eu_80665978 != 0) {
             for (s32 i = 0; i < lbl_eu_80665978; ++i) {
                 if (slot->x * w->recs[i].x + slot->z * w->recs[i].z <
-                    lbl_eu_8066AF74) {
+                    -0.4f) {
                     return 1;
                 }
             }
@@ -842,11 +842,11 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
         lbl_eu_80665974++;
     }
 
-    if (lbl_eu_8066597C == 0) {
+    if (ScnResGroundCrossFlag == 0) {
         bool check;
-        if (ref->y < lbl_eu_80665980) {
+        if (ref->y < ScnResHeightThreshold) {
             check = true;
-        } else if (crossing != 0 && ref->y <= lbl_eu_8066AF78) {
+        } else if (crossing != 0 && ref->y <= 0.9f) {
             check = true;
         } else {
             check = false;
@@ -854,7 +854,7 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
         if (check) {
             f32 t = w->anchor[2] * ref->z + w->anchor[0] * ref->x;
             if (t < lbl_eu_8066AF44) {
-                lbl_eu_8066597C = 1;
+                ScnResGroundCrossFlag = 1;
             }
         }
     }
@@ -866,16 +866,16 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
 // when the projected position dips below the active threshold.
 s32 ScnRes_RecordCrossing(s32 index) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
-    const f32 thrMin = lbl_eu_8066AF60;
+    const f32 thrMin = -0.05f;
     ScnEntryF* e = (ScnEntryF*)(lbl_eu_8065F428 + index * 0x24);
     f32 y = e->field_0x10;
     if (y >= thrMin) {
-        if (y >= lbl_eu_8066AF6C) {
+        if (y >= 0.5f) {
             lbl_eu_80665978++;
         }
         // Upper-threshold flag is captured before the walk; the loop picks
         // the comparison limit based on the crossing counter.
-        bool geUpper = y >= lbl_eu_8066AF70;
+        bool geUpper = y >= 0.1f;
         s32 n = lbl_eu_80665974;
         Rec12* slot = &w->recs[n];
         // The projection math rounds the coordinates to single precision
@@ -885,8 +885,8 @@ s32 ScnRes_RecordCrossing(s32 index) {
         slot->x = e->field_0x0C;
         slot->z = e->field_0x14;
         s32 cnt = lbl_eu_80665978;
-        const f32 limHi = lbl_eu_8066AF7C;
-        const f32 limLo = lbl_eu_8066AF74;
+        const f32 limHi = -0.79f;
+        const f32 limLo = -0.4f;
         const Rec12* it = w->recs;
         for (s32 i = n; i > 0; --i) {
             f32 v = (f32)xd * it->x + (f32)zd * it->z;
@@ -901,10 +901,10 @@ s32 ScnRes_RecordCrossing(s32 index) {
         }
         lbl_eu_80665974++;
     }
-    if (lbl_eu_8066597C == 0 && e->field_0x10 < lbl_eu_80665980) {
+    if (ScnResGroundCrossFlag == 0 && e->field_0x10 < ScnResHeightThreshold) {
         f32 t = w->anchor[2] * e->field_0x14 + w->anchor[0] * e->field_0x0C;
         if (t < lbl_eu_8066AF44) {
-            lbl_eu_8066597C = 1;
+            ScnResGroundCrossFlag = 1;
         }
     }
     return 0;
@@ -915,11 +915,11 @@ s32 ScnRes_RecordCrossing(s32 index) {
 // ScnRes_RecordCrossing otherwise) and its enabled flag.
 extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {
     if (flag != 0) {
-        lbl_eu_80663AD8[0] = (u32)&ScnRes_ValidateCrossing;
-        lbl_eu_8066597F = 1;
+        ScnResCrossCallback[0] = (u32)&ScnRes_ValidateCrossing;
+        ScnResValidateCrossingEnabled = 1;
     } else {
-        lbl_eu_80663AD8[0] = (u32)&ScnRes_RecordCrossing;
-        lbl_eu_8066597F = 0;
+        ScnResCrossCallback[0] = (u32)&ScnRes_RecordCrossing;
+        ScnResValidateCrossingEnabled = 0;
     }
 }
 #pragma pop
@@ -940,10 +940,10 @@ s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale) {
             if (result == 0) {
                 if (flag != 0) {
                     // Too short to quantise: halve it in place.
-                    outLen[0] = lbl_eu_8066AF6C;
+                    outLen[0] = 0.5f;
                     nw4r::math::VEC3Scale((nw4r::math::VEC3*)v,
                                           (const nw4r::math::VEC3*)v,
-                                          lbl_eu_8066AF6C);
+                                          0.5f);
                     result = 2;
                 } else {
                     result = 1;
@@ -965,11 +965,11 @@ s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Construct the 32 resource-entry records and the 32 history slots.
-extern u8 lbl_eu_8065F8C0[384];
+extern u8 ScnResHistoryRecords[384];
 void sinit_804BF540() {
     __construct_array(lbl_eu_8065F428, (ConstructorDestructor)ScnEnvLgt_noopF59C,
                       NULL, 0x24, 32);
-    __construct_array(lbl_eu_8065F8C0, (ConstructorDestructor)noopAnimVec3,
+    __construct_array(ScnResHistoryRecords, (ConstructorDestructor)noopAnimVec3,
                       NULL, 12, 32);
 }
 
@@ -978,24 +978,24 @@ void sinit_804BF540() {
 extern "C" u32 lbl_eu_8066AFC4;   // .sdata2 string
 
 // [.sdata] 0x80663AD8-0x80663AE8 (16B)
-extern "C" u32 lbl_eu_80663AD8[2] = { (u32)&ScnRes_RecordCrossing, 0x00000000 };
+extern "C" u32 ScnResCrossCallback[2] = { (u32)&ScnRes_RecordCrossing, 0x00000000 };
 extern "C" u32 lbl_eu_80663AE0[2] = { (u32)&lbl_eu_8066AFC4, 0x00000000 };
 
 // [.bss] 0x8065F418-0x8065FA40 (0x628 = 1576B) zero-fill
 u8 lbl_eu_8065F418[16];
 u8 lbl_eu_8065F428[1152];
-u8 lbl_eu_8065F8A8[24];
-u8 lbl_eu_8065F8C0[384];
+u8 ScnResAnchorArray[24];
+u8 ScnResHistoryRecords[384];
 
 // [.sbss] 0x8066597C-0x806659A0 (36B) zero-fill. Each global <=8B stays in
 // .sbss; all 4-aligned. (Retail .sbss sh_addralign is 4; MWCC emits 8 here --
 // needs UNIT_RULES set_data_align=(('.sbss',4)) to fix in postprocess.)
-u8 lbl_eu_8066597C;
-u8 lbl_eu_8066597D;
-u8 lbl_eu_8066597E;
-u8 lbl_eu_8066597F;
-f32 lbl_eu_80665980;
-u32 lbl_eu_80665984;
+u8 ScnResGroundCrossFlag;
+u8 ScnResCrossNotifyFlag;
+u8 ScnResFlatCrossFlag;
+u8 ScnResValidateCrossingEnabled;
+f32 ScnResHeightThreshold;
+u32 ScnResMoveThreshold;
 u32 lbl_eu_80665988;
 u32 lbl_eu_8066598C;
 u32 lbl_eu_80665990;

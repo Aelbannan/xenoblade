@@ -58,5 +58,3 @@ void DisposeCallbackManager::DisposeWave(void* pData, u32 size, void* pArg) {
 } // namespace snd
 } // namespace nw4r
 
-// Absorb: pad .sbss 0x1->0x8
-unsigned int snd_DisposeCallbackManager_sbss_pad;

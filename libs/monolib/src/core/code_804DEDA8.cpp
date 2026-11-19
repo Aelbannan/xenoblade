@@ -169,35 +169,19 @@ struct CSchedMemGlob {
 };
 extern CSchedMemGlob lbl_eu_8065FC18;
 
-// .sdata2 float/double pool shared with the schedule anim helpers.
-// The u8->float conversion magic (2^52) used by SchedTexLoadCached is emitted
-// by MWCC's own `(f32)u8` cast, so it is NOT declared here: doing so removed
-// the pool entry and shifted 0.0f to offset 0, which broke the reloc-target
-// resolution of SchedAnim_LerpVec24 / SchedAnim_AdvanceCursor (both FULL).
-// 1.0f stays an extern so the 0.0f/f32 pool ordering retail has at
-// 0x8066B290 (0.0f) / 0x8066B2A8 (1.0f) is preserved.
-extern f64 lbl_eu_8066B2A0;
-extern f32 lbl_eu_8066B2A8;
+// The float constants used by the schedule anim helpers are written as
+// literals at their use sites; MWCC emits the retail .sdata2 pool entries.
 
-// s32 -> f32 through the shared signed magic double lbl_eu_8066B2A0 (retail
-// xoris + 0x43300000 stack-double shape). Writing it explicitly keeps MWCC
-// from pooling its own 2^52 constant for a bare `(f32)(s32)` cast.
-// Statement order matters: the value word first, then 0x43300000.
-static inline f32 s32ToF32_B2A0(s32 v) {
-    union {
-        f64 d;
-        u32 w[2];
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B2A0);
+// Signed integer to float conversion for the random-unit helpers.
+static inline f32 s32ToF32(s32 v) {
+    return (f32)v;
 }
 
 // Import: random unit-ish vector generator (monolib/src/effect/CERand.cpp,
 // retail symbol randVec__6CERandFPQ22ml5CVec3).
 extern "C" void randVec__6CERandFPQ22ml5CVec3(ml::CVec3* v);
 
-extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
+extern void* spEffectNodeWork; // .sbss pointer slot (4 bytes)
 
 // Zero one 0x18-byte schedule-resource entry. Callers (e.g. SchedRes_AllocEntries)
 // keep the retail direct `bl` instead of an inlined loop body.
@@ -262,11 +246,11 @@ struct CResEntry {
     u32 mField14;               // 0x14
 };
 
-extern u8 lbl_eu_806616B8[0x60]; // .bss buffer cleared by SchedRes_ClearBuf60
+extern u8 sTexLoadCache[0x60]; // .bss buffer cleared by SchedRes_ClearBuf60
 
 // Zero a 0x60-byte global buffer (tail call to memset).
 extern "C" void SchedRes_ClearBuf60() {
-    memset(lbl_eu_806616B8, 0, 0x60);
+    memset(sTexLoadCache, 0, 0x60);
 }
 
 // Texture-loader manager: resource object pointer at +0x10 (see code_804DEDA8.hpp).
@@ -300,7 +284,7 @@ struct TexInfoView {
     u8 mMaxLod;   // 0x22
 };
 
-// 12-byte last-loaded-texture cache entry (array at lbl_eu_806616B8).
+// 12-byte last-loaded-texture cache entry (array at sTexLoadCache).
 struct TexCacheEntryView {
     void* mMgr; // 0x00
     s32 mKey;   // 0x04
@@ -312,7 +296,7 @@ struct TexCacheEntryView {
 // (the cache is indexed by tex map slot).
 extern "C" void SchedTexLoadCached(TexLoaderView* mgr, s32 index, GXTexMapID texMap,
                    GXTexWrapMode wrapMode) {
-    TexCacheEntryView* cache = (TexCacheEntryView*)lbl_eu_806616B8;
+    TexCacheEntryView* cache = (TexCacheEntryView*)sTexLoadCache;
     if (!(cache[texMap].mMgr == mgr && index == cache[texMap].mKey &&
           wrapMode == cache[texMap].mWrap)) {
         TexResObjView* resObj = (TexResObjView*)mgr->mResObj;
@@ -388,9 +372,9 @@ extern "C" void* SchedRes_FindValueByKey(CResLookup* self, void* key) {
 
 // Schedule-resource tables (.sbss): element base, element count and a live
 // counter. Entries are 0x18 bytes (CResEntry).
-CResEntry* lbl_eu_80665A20;
-s32 lbl_eu_80665A24;
-s32 lbl_eu_80665A28[2];  // retail object is 8 bytes; only word 0 is written
+CResEntry* spSchedResTable;
+s32 sSchedResCount;
+s32 sSchedResLiveCount[2];  // retail object is 8 bytes; only word 0 is written
 
 // Allocate/initialize the schedule-resource table: round the byte size up
 // to 32, record base/count, then zero-initialize each 0x18-byte entry.
@@ -400,12 +384,12 @@ extern "C" void* SchedRes_AllocEntries(u32 size, u32 count) {
     u32 aligned = ((size + 0x1f) & ~0x1f);
     u32 total = count * 0x18;
     void* end = (u8*)aligned + total;
-    lbl_eu_80665A24 = count;
-    lbl_eu_80665A20 = (CResEntry*)aligned;
-    lbl_eu_80665A28[0] = 0;
+    sSchedResCount = count;
+    spSchedResTable = (CResEntry*)aligned;
+    sSchedResLiveCount[0] = 0;
     off = 0;
     for (i = 0; i < (s32)count; i++) {
-        SchedRes_ZeroEntry((CResEntry*)((u8*)lbl_eu_80665A20 + off));
+        SchedRes_ZeroEntry((CResEntry*)((u8*)spSchedResTable + off));
         off += 0x18;
     }
     return end;
@@ -439,8 +423,8 @@ extern "C" int __dt__804DEDCC(CResEntry* entry, void* res,
 // entry matches and the pool still has capacity, claim the first free
 // (key == 0) entry instead. Returns 1 when an entry was claimed/found.
 extern "C" s32 SchedRes_FindOrClaim(u32 key) {
-    CResEntry* p = lbl_eu_80665A20;
-    s32 n = lbl_eu_80665A24;
+    CResEntry* p = spSchedResTable;
+    s32 n = sSchedResCount;
     u8 found = 0;
     if (n > 0) {
         CResEntry* q = p;
@@ -456,7 +440,7 @@ extern "C" s32 SchedRes_FindOrClaim(u32 key) {
     if (found != 0) {
         return 1;
     }
-    if (n <= lbl_eu_80665A28[0]) {
+    if (n <= sSchedResLiveCount[0]) {
         return 0;
     }
     // bool-normalize the MEM1-active flag via the neg/or/srwi idiom
@@ -468,7 +452,7 @@ extern "C" s32 SchedRes_FindOrClaim(u32 key) {
         do {
             if (q->mKey == 0) {
                 if (__dt__804DEDCC(q, (void*)key, (u32)flagBit) != 0) {
-                    lbl_eu_80665A28[0]++;
+                    sSchedResLiveCount[0]++;
                     return 1;
                 }
                 return 0;
@@ -599,16 +583,16 @@ extern "C" s32 SchedRes_ReleaseEntries(u32 key) {
     s32 flagBit = (lbl_eu_8065FC18.mFlags >> 12) & 1;
     flagBit = (u32)(-flagBit | flagBit) >> 31;
     if (key != 0) {
-        CResEntry* p = lbl_eu_80665A20;
-        for (s32 j = 0; j < lbl_eu_80665A24; j++, p++) {
+        CResEntry* p = spSchedResTable;
+        for (s32 j = 0; j < sSchedResCount; j++, p++) {
             if (p->mKey != 0 && key == p->mKey &&
                 (u32)(-((p->mField01 >> 7) & 1) |
                       ((p->mField01 >> 7) & 1)) >>
                         31 ==
                     flagBit) {
                 __dt__804DF068((CSchedResMgr*)p);
-                if (lbl_eu_80665A28[0] > 0) {
-                    lbl_eu_80665A28[0]--;
+                if (sSchedResLiveCount[0] > 0) {
+                    sSchedResLiveCount[0]--;
                 }
                 return 1;
             }
@@ -616,8 +600,8 @@ extern "C" s32 SchedRes_ReleaseEntries(u32 key) {
         return 0;
     }
     {
-        CResEntry* base = lbl_eu_80665A20;
-        for (s32 i = 0; i < lbl_eu_80665A24; i++) {
+        CResEntry* base = spSchedResTable;
+        for (s32 i = 0; i < sSchedResCount; i++) {
             CResEntry* e = &base[i];
             if (e->mKey != 0 &&
                 (u32)(-((e->mField01 >> 7) & 1) |
@@ -625,8 +609,8 @@ extern "C" s32 SchedRes_ReleaseEntries(u32 key) {
                         31 ==
                     flagBit) {
                 __dt__804DF068((CSchedResMgr*)e);
-                if (lbl_eu_80665A28[0] > 0) {
-                    lbl_eu_80665A28[0]--;
+                if (sSchedResLiveCount[0] > 0) {
+                    sSchedResLiveCount[0]--;
                 }
             }
         }
@@ -669,8 +653,8 @@ extern "C" void __dt__804DF068(CSchedResMgr* obj) {
 // Returns 1 on a match, 0 otherwise.
 extern "C" s32 SchedRes_FindEntryValue(CResEntry** outEntry, u32* outValue, u32 key, u32 index) {
     s32 i = 0;
-    while (i < lbl_eu_80665A24) {
-        CResEntry* entry = &lbl_eu_80665A20[i];
+    while (i < sSchedResCount) {
+        CResEntry* entry = &spSchedResTable[i];
         if (entry->mKey != 0 && key == entry->mKey) {
             u32 v = (u32)SchedRes_LookupKeyIndexed((CResLookup*)entry, index);
             *outValue = v;
@@ -714,52 +698,52 @@ struct CSchedFxObjView {
 };
 
 void* lbl_eu_80665A30;
-CSchedElem14* lbl_eu_80665A34;
-CSchedNodeC* lbl_eu_80665A38;
-u32 lbl_eu_80665A3C;
-u32 lbl_eu_80665A40;
+CSchedElem14* spSchedElemArray;
+CSchedNodeC* spSchedNodeArray;
+u32 sSchedElemCount;
+u32 sSchedNodeCount;
 
 // (Re)allocate the schedule-resource element arrays: 0x14-byte and 0xC-byte
 // tables sized to `count`, each allocated from the MemManager handle when it
 // fits the region's max alloc size (else NULL). Records the count in
-// lbl_eu_80665A3C and clears the live counter first.
+// sSchedElemCount and clears the live counter first.
 extern "C" void SchedRes_AllocElemTables(u32 count) {
     lbl_eu_80665A30 = 0;
     u32 s1 = count * 0x14;
     if (s1 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
-        lbl_eu_80665A34 =
+        spSchedElemArray =
             (CSchedElem14*)mtl::MemManager::allocate_array(s1, lbl_eu_8065FC18.mHandle);
     } else {
-        lbl_eu_80665A34 = NULL;
+        spSchedElemArray = NULL;
     }
     u32 s2 = count * 0xc;
     if (s2 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
-        lbl_eu_80665A38 =
+        spSchedNodeArray =
             (CSchedNodeC*)mtl::MemManager::allocate_array(s2, lbl_eu_8065FC18.mHandle);
     } else {
-        lbl_eu_80665A38 = NULL;
+        spSchedNodeArray = NULL;
     }
-    lbl_eu_80665A3C = count;
+    sSchedElemCount = count;
 }
 
 
 // Release the schedule-resource arrays (element dtor).
 void __dt__804DF744() {
-    CSchedElem14* p1 = lbl_eu_80665A34;
+    CSchedElem14* p1 = spSchedElemArray;
     lbl_eu_80665A30 = 0;
     if (p1) {
         operator delete[](p1);
-        lbl_eu_80665A34 = NULL;
+        spSchedElemArray = NULL;
     }
-    CSchedNodeC* p2 = lbl_eu_80665A38;
+    CSchedNodeC* p2 = spSchedNodeArray;
     if (p2) {
         operator delete[](p2);
-        lbl_eu_80665A38 = NULL;
+        spSchedNodeArray = NULL;
     }
-    lbl_eu_80665A3C = 0;
+    sSchedElemCount = 0;
 }
 
-// Effect object pool at lbl_eu_80661728, looked up by handle via SchedFx_FetchByHandle.
+// Effect object pool at sEffectPool, looked up by handle via SchedFx_FetchByHandle.
 // CEffectObj in CScheduleItem.hpp is a partial view of the 0x22C-byte elements.
 struct CEffectObject {
     u8 mData[0x22C];
@@ -770,9 +754,9 @@ struct CEffectPool {
     s32 mActiveCount;      // 0x08: currently active objects
     s32 mLastHandle;       // 0x0C: most recently released handle
 };
-extern CEffectPool lbl_eu_80661728;
+extern CEffectPool sEffectPool;
 
-// Effect-node pool at lbl_eu_80661738 (node stride 0x338), looked up via
+// Effect-node pool at sEffectNodePool (node stride 0x338), looked up via
 // SchedNode_FetchByIndex(index). Cross-TU callers treat nodes as EffectNode*.
 struct CEffectNode {
     s16 mMark;        // 0x00: allocation mark; < 0 marks the slot free
@@ -784,7 +768,7 @@ struct CEffectNodePool {
     s32 mField08;          // 0x08
     s32 mLastHandle;       // 0x0C: most recently released handle
 };
-extern CEffectNodePool lbl_eu_80661738;
+extern CEffectNodePool sEffectNodePool;
 
 // Effect-manager release (monolib/src/effect/code_804C8718.cpp).
 extern "C" void EffRoot_InitDefaults(CEffectObj* obj);
@@ -802,9 +786,9 @@ struct EffObject {
 // reset the pool counters.
 extern "C" void SchedRes_ReinitTables() {
     lbl_eu_80665A30 = 0;
-    memset(lbl_eu_80665A34, 0, (u32)lbl_eu_80665A3C * 0x14);
-    memset(lbl_eu_80665A38, 0, (u32)lbl_eu_80665A3C * 0xC);
-    lbl_eu_80665A40 = 0;
+    memset(spSchedElemArray, 0, (u32)sSchedElemCount * 0x14);
+    memset(spSchedNodeArray, 0, (u32)sSchedElemCount * 0xC);
+    sSchedNodeCount = 0;
 }
 
 extern "C" void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
@@ -818,11 +802,11 @@ extern "C" void SchedRes_ClearLiveCount() { lbl_eu_80665A30 = 0; }
 // `obj` carries a priority byte at +0x58: entries with kind 0x40 are ordered
 // by the float priority, all others by the signed kind byte.
 extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, f32 prio) {
-    s32 count = lbl_eu_80665A3C;
+    s32 count = sSchedElemCount;
     s32 i;
     bool claimed = false;
     for (i = 0; i < count; i++) {
-        u32 v = lbl_eu_80665A34[i].mVal;
+        u32 v = spSchedElemArray[i].mVal;
         if (v == key) {
             break;
         }
@@ -834,9 +818,9 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
     if (i >= count) {
         return;
     }
-    CSchedElem14* elem = &lbl_eu_80665A34[i];
-    s32 n = lbl_eu_80665A40;
-    CSchedNodeC* node = &lbl_eu_80665A38[n];
+    CSchedElem14* elem = &spSchedElemArray[i];
+    s32 n = sSchedNodeCount;
+    CSchedNodeC* node = &spSchedNodeArray[n];
     if (!claimed) {
         // Existing entry: insert the new node into the entry's own list,
         // ordered by owner pointer.
@@ -896,7 +880,7 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
             lbl_eu_80665A30 = node;
         }
     }
-    lbl_eu_80665A40 = n + 1;
+    sSchedNodeCount = n + 1;
 }
 
 // Import from monolib/src/core/code_804E36DC.cpp (retail symbol schedClearItemSlots):
@@ -908,14 +892,14 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
 extern "C" void* SchedItem_AllocPool(u32 size, s32 count) {
     s32 i;
     u32 aligned = (size + 0x1f) & ~0x1f;
-    lbl_eu_80661718.base = (CScheduleItem*)aligned;
-    lbl_eu_80661718.count = count;
-    lbl_eu_80661718.freeCount = 0;
-    lbl_eu_80661718.lastHandle = 0;
+    sScheduleItemPool.base = (CScheduleItem*)aligned;
+    sScheduleItemPool.count = count;
+    sScheduleItemPool.freeCount = 0;
+    sScheduleItemPool.lastHandle = 0;
     i = 0;
     s32 off = 0;
     while (i < count) {
-        ((CScheduleItem*)((u8*)lbl_eu_80661718.base + off))->ClearSlots();
+        ((CScheduleItem*)((u8*)sScheduleItemPool.base + off))->ClearSlots();
         off += 0x58;
         i++;
     }
@@ -933,19 +917,19 @@ extern "C" void* SchedItem_AllocPool(u32 size, s32 count) {
 // full / fully scanned / entry resolution fails.
 extern "C" s32 SchedItem_ClaimFree(u32 a, u32 b, u32 c) {
     CScheduleItem* node = NULL;
-    if (lbl_eu_80661718.freeCount < lbl_eu_80661718.count) {
-        s32 last = lbl_eu_80661718.lastHandle;
+    if (sScheduleItemPool.freeCount < sScheduleItemPool.count) {
+        s32 last = sScheduleItemPool.lastHandle;
         s32 idx = last;
         do {
-            node = &lbl_eu_80661718.base[idx];
+            node = &sScheduleItemPool.base[idx];
             if (node->mPoolIndex >= 0) {
-                idx = (idx + 1) % lbl_eu_80661718.count;
+                idx = (idx + 1) % sScheduleItemPool.count;
             } else {
                 node->ClearSlots();
                 node->mPoolIndex = (s16)idx;
-                lbl_eu_80661718.freeCount++;
-                lbl_eu_80661718.lastHandle =
-                    (idx + 1) % lbl_eu_80661718.count;
+                sScheduleItemPool.freeCount++;
+                sScheduleItemPool.lastHandle =
+                    (idx + 1) % sScheduleItemPool.count;
                 break;
             }
         } while (idx != last);
@@ -969,11 +953,11 @@ static void SchedItem_ReleaseIndex(s32 index) {
     if (index < 0) {
         return;
     }
-    if (lbl_eu_80661718.count > index) {
-        lbl_eu_80661718.lastHandle = index;
-        (&lbl_eu_80661718.base[index])->ReleaseSlots();
-        if (lbl_eu_80661718.freeCount > 0) {
-            lbl_eu_80661718.freeCount--;
+    if (sScheduleItemPool.count > index) {
+        sScheduleItemPool.lastHandle = index;
+        (&sScheduleItemPool.base[index])->ReleaseSlots();
+        if (sScheduleItemPool.freeCount > 0) {
+            sScheduleItemPool.freeCount--;
         }
     }
 }
@@ -991,9 +975,9 @@ extern "C" CScheduleItem* SchedItem_FetchByHandle(s16 handle) {
     if (handle < 0) {
         return NULL;
     }
-    bool inRange = handle >= 0 && handle < lbl_eu_80661718.count;
+    bool inRange = handle >= 0 && handle < sScheduleItemPool.count;
     if (inRange) {
-        return &lbl_eu_80661718.base[handle];
+        return &sScheduleItemPool.base[handle];
     }
     return NULL;
 }
@@ -1008,14 +992,14 @@ extern "C" void EffSys_InitRoot(CEffectObj* obj);
 extern "C" void* SchedFx_AllocPool(u32 size, s32 count) {
     s32 i;
     u32 aligned = (size + 0x1f) & ~0x1f;
-    lbl_eu_80661728.mBase = (CEffectObject*)aligned;
-    lbl_eu_80661728.mCount = count;
-    lbl_eu_80661728.mActiveCount = 0;
-    lbl_eu_80661728.mLastHandle = 0;
+    sEffectPool.mBase = (CEffectObject*)aligned;
+    sEffectPool.mCount = count;
+    sEffectPool.mActiveCount = 0;
+    sEffectPool.mLastHandle = 0;
     i = 0;
     s32 off = 0;
     while (i < count) {
-        EffSys_InitRoot((CEffectObj*)((u8*)lbl_eu_80661728.mBase + off));
+        EffSys_InitRoot((CEffectObj*)((u8*)sEffectPool.mBase + off));
         off += 0x22c;
         i++;
     }
@@ -1032,19 +1016,19 @@ extern "C" void* SchedFx_AllocPool(u32 size, s32 count) {
 extern "C" s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, s32 arg4,
                   u8 arg5) {
     CEffectObj* node = NULL;
-    if (lbl_eu_80661728.mActiveCount < lbl_eu_80661728.mCount) {
-        s32 last = lbl_eu_80661728.mLastHandle;
+    if (sEffectPool.mActiveCount < sEffectPool.mCount) {
+        s32 last = sEffectPool.mLastHandle;
         s32 idx = last;
         do {
-            node = (CEffectObj*)((u8*)lbl_eu_80661728.mBase + idx * 0x22c);
+            node = (CEffectObj*)((u8*)sEffectPool.mBase + idx * 0x22c);
             if (node->mPoolSlot >= 0) {
-                idx = (idx + 1) % lbl_eu_80661728.mCount;
+                idx = (idx + 1) % sEffectPool.mCount;
             } else {
                 EffSys_InitRoot(node);
                 node->mPoolSlot = (s16)idx;
-                lbl_eu_80661728.mActiveCount++;
-                lbl_eu_80661728.mLastHandle =
-                    (idx + 1) % lbl_eu_80661728.mCount;
+                sEffectPool.mActiveCount++;
+                sEffectPool.mLastHandle =
+                    (idx + 1) % sEffectPool.mCount;
                 break;
             }
         } while (idx != last);
@@ -1058,11 +1042,11 @@ extern "C" s32 SchedFx_ClaimConstruct(const u8* base, const u8* data, u8* arg3, 
     }
     // Constructor failed: rewind the handle cursor and release the object.
     s16 h = node->mPoolSlot;
-    if (h >= 0 && h < lbl_eu_80661728.mCount) {
-        lbl_eu_80661728.mLastHandle = h;
-        EffRoot_InitDefaults((CEffectObj*)((u8*)lbl_eu_80661728.mBase + h * 0x22c));
-        if (lbl_eu_80661728.mActiveCount > 0) {
-            lbl_eu_80661728.mActiveCount--;
+    if (h >= 0 && h < sEffectPool.mCount) {
+        sEffectPool.mLastHandle = h;
+        EffRoot_InitDefaults((CEffectObj*)((u8*)sEffectPool.mBase + h * 0x22c));
+        if (sEffectPool.mActiveCount > 0) {
+            sEffectPool.mActiveCount--;
         }
     }
     return -1;
@@ -1074,11 +1058,11 @@ static void SchedFx_ReleaseIndex(s32 index) {
     if (index < 0) {
         return;
     }
-    if (lbl_eu_80661728.mCount > index) {
-        lbl_eu_80661728.mLastHandle = index;
-        EffRoot_InitDefaults((CEffectObj*)&lbl_eu_80661728.mBase[index]);
-        if (lbl_eu_80661728.mActiveCount > 0) {
-            lbl_eu_80661728.mActiveCount--;
+    if (sEffectPool.mCount > index) {
+        sEffectPool.mLastHandle = index;
+        EffRoot_InitDefaults((CEffectObj*)&sEffectPool.mBase[index]);
+        if (sEffectPool.mActiveCount > 0) {
+            sEffectPool.mActiveCount--;
         }
     }
 }
@@ -1092,18 +1076,18 @@ extern "C" void SchedFx_ReleaseHandle(s16 handle) {
     SchedFx_ReleaseIndex(handle);
 }
 
-extern "C" u32 SchedFx_CountActive() { return lbl_eu_80661728.mActiveCount; }
+extern "C" u32 SchedFx_CountActive() { return sEffectPool.mActiveCount; }
 
-extern "C" u32 SchedFx_CountTotal() { return lbl_eu_80661728.mCount; }
+extern "C" u32 SchedFx_CountTotal() { return sEffectPool.mCount; }
 
 // Look up an effect object by handle; NULL for out-of-range handles.
 extern "C" CEffectObj* SchedFx_FetchByHandle(s16 handle) {
     if (handle < 0) {
         return NULL;
     }
-    bool inRange = handle >= 0 && handle < lbl_eu_80661728.mCount;
+    bool inRange = handle >= 0 && handle < sEffectPool.mCount;
     if (inRange) {
-        return (CEffectObj*)&lbl_eu_80661728.mBase[handle];
+        return (CEffectObj*)&sEffectPool.mBase[handle];
     }
     return NULL;
 }
@@ -1121,21 +1105,21 @@ extern "C" void* SchedNode_AllocPool(u32 size, s32 count) {
     s32 i;
     u32 a = (size + 0x1f) & ~0x1f;
     u32 base = (a + 0x1f) & ~0x1f;
-    lbl_eu_80661738.mCount = count;
-    lbl_eu_80661738.mBase = (CEffectNode*)base;
-    lbl_eu_80661738.mField08 = 0;
-    lbl_eu_80661738.mLastHandle = 0;
+    sEffectNodePool.mCount = count;
+    sEffectNodePool.mBase = (CEffectNode*)base;
+    sEffectNodePool.mField08 = 0;
+    sEffectNodePool.mLastHandle = 0;
     i = 0;
     s32 off = 0;
     while (i < count) {
-        EffFxInitStructLinks((CEffectNode*)((u8*)lbl_eu_80661738.mBase + off));
+        EffFxInitStructLinks((CEffectNode*)((u8*)sEffectNodePool.mBase + off));
         off += 0x338;
         i++;
     }
-    lbl_eu_80665A44 = (void*)((base + count * 0x338 + 0x1f) & ~0x1f);
+    spEffectNodeWork = (void*)((base + count * 0x338 + 0x1f) & ~0x1f);
     s32 sz = count * 0x34;
-    memset(lbl_eu_80665A44, 0, sz);
-    return (void*)((u8*)lbl_eu_80665A44 + sz);
+    memset(spEffectNodeWork, 0, sz);
+    return (void*)((u8*)spEffectNodeWork + sz);
 }
 
 // Effect-node activator (monolib/src/effect/code_804CC2B8.cpp,
@@ -1148,19 +1132,19 @@ extern "C" void EffFxInitSceneFromSrc(CEffectNode* node, CScheduleItem* item);
 // cursor. Returns its mark, or -1 when the pool is full / fully scanned.
 extern "C" s32 SchedNode_ClaimActivate(CScheduleItem* item) {
     CEffectNode* node = NULL;
-    if (lbl_eu_80661738.mField08 < lbl_eu_80661738.mCount) {
-        s32 last = lbl_eu_80661738.mLastHandle;
+    if (sEffectNodePool.mField08 < sEffectNodePool.mCount) {
+        s32 last = sEffectNodePool.mLastHandle;
         s32 idx = last;
         do {
-            node = &lbl_eu_80661738.mBase[idx];
+            node = &sEffectNodePool.mBase[idx];
             if (node->mMark >= 0) {
-                idx = (idx + 1) % lbl_eu_80661738.mCount;
+                idx = (idx + 1) % sEffectNodePool.mCount;
             } else {
                 EffFxInitStructLinks(node);
                 node->mMark = (s16)idx;
-                lbl_eu_80661738.mField08++;
-                lbl_eu_80661738.mLastHandle =
-                    (idx + 1) % lbl_eu_80661738.mCount;
+                sEffectNodePool.mField08++;
+                sEffectNodePool.mLastHandle =
+                    (idx + 1) % sEffectNodePool.mCount;
                 break;
             }
         } while (idx != last);
@@ -1182,11 +1166,11 @@ static void SchedNode_ReleaseIndex(s32 index) {
     if (index < 0) {
         return;
     }
-    if (lbl_eu_80661738.mCount > index) {
-        lbl_eu_80661738.mLastHandle = index;
-        __dt__804CC2E4((CEffectNode*)&lbl_eu_80661738.mBase[index]);
-        if (lbl_eu_80661738.mField08 > 0) {
-            lbl_eu_80661738.mField08--;
+    if (sEffectNodePool.mCount > index) {
+        sEffectNodePool.mLastHandle = index;
+        __dt__804CC2E4((CEffectNode*)&sEffectNodePool.mBase[index]);
+        if (sEffectNodePool.mField08 > 0) {
+            sEffectNodePool.mField08--;
         }
     }
 }
@@ -1199,16 +1183,16 @@ extern "C" void SchedNode_ReleaseHandle(s16 handle) {
     SchedNode_ReleaseIndex(handle);
 }
 
-extern "C" u32 SchedNode_CountTotal() { return lbl_eu_80661738.mCount; }
+extern "C" u32 SchedNode_CountTotal() { return sEffectNodePool.mCount; }
 
 // Look up an effect node by index; NULL for out-of-range indices.
 extern "C" CEffectNode* SchedNode_FetchByIndex(s32 index) {
     if (index < 0) {
         return NULL;
     }
-    bool inRange = index >= 0 && index < lbl_eu_80661738.mCount;
+    bool inRange = index >= 0 && index < sEffectNodePool.mCount;
     if (inRange) {
-        return &lbl_eu_80661738.mBase[index];
+        return &sEffectNodePool.mBase[index];
     }
     return NULL;
 }
@@ -1221,7 +1205,7 @@ extern "C" void* SchedNode_FetchSlotPtr(s32 arg) {
     }
     // Indexed 0x34-stride table: retail already multiplies (mulli), so the
     // typed indexed access matches.
-    return ((u8(*)[0x34])lbl_eu_80665A44)[arg];
+    return ((u8(*)[0x34])spEffectNodeWork)[arg];
 }
 
 // Pick a random entry from a run of equal u16 values in a schedule entry
@@ -1371,7 +1355,7 @@ extern "C" void CEVec3LerpPS(void* out, const void* a, const void* b, f32 t);
 // Frame-span rate helper: reads the u16 frame values at entries[index*span],
 // converts them to float (via the 0x43300000 magic-double bit pattern so the
 // 2^52 adjustors reference the retail pool labels, docs/MWCC_CASES.md §7i),
-// and clamps the result into [1.0, lbl_eu_8066B2A8]. A 0x4000 entry
+// and clamps the result to 1.0. A 0x4000 entry
 // (terminator) yields rate 1.0.
 extern "C" f32 SchedAnim_FrameRate(CSchedAnimItem* item, CEntryElem* entries, s32 index) {
     f32 result = 0.0f;
@@ -1390,17 +1374,17 @@ extern "C" f32 SchedAnim_FrameRate(CSchedAnimItem* item, CEntryElem* entries, s3
     f32 f = item->mField00 - flo;
     f32 d = fdiff;
     if (d == result) {
-        d = lbl_eu_8066B2A8;
+        d = 1.0f;
     }
-    f32 rate = lbl_eu_8066B2A8 / d;
+    f32 rate = 1.0f / d;
     if (f == result) {
         return result;
     }
     f32 r = f * rate;
     if (r < 0.0f) {
         r = 0.0f;
-    } else if (r > lbl_eu_8066B2A8) {
-        r = lbl_eu_8066B2A8;
+    } else if (r > 1.0f) {
+        r = 1.0f;
     }
     return r;
 }
@@ -1513,8 +1497,8 @@ extern "C" void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
     item->mField06 = 1;
     item->mSlot0E = 1;
     item->mSlot0C = 1;
-    item->mField10 = lbl_eu_8066B2A8;
-    item->mField14 = lbl_eu_8066B2A8;
+    item->mField10 = 1.0f;
+    item->mField14 = 1.0f;
     if (base == NULL) {
         return;
     }
@@ -1529,7 +1513,7 @@ extern "C" void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
     } else {
         scale = 0.0f;
     }
-    f32 t = lbl_eu_8066B2A8 - d * scale;
+    f32 t = 1.0f - d * scale;
     item->mField14 = t;
     s32 v = (s32)((f64)(u32)elem->mA * t);
     if ((v & 0xFFFF) != 0) {
@@ -1543,7 +1527,7 @@ extern "C" void SchedAnim_RerollSlots(CSchedAnimItem* item, u8* base) {
     } else {
         scale = 0.0f;
     }
-    t = lbl_eu_8066B2A8 - d * scale;
+    t = 1.0f - d * scale;
     item->mField10 = t;
     v = (s32)((f64)(u32)elem->mB * t);
     if ((v & 0xFFFF) != 0) {
@@ -1579,7 +1563,7 @@ extern "C" void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
     } else {
         scale = 0.0f;
     }
-    f32 t = lbl_eu_8066B2A8 - rnd * scale;
+    f32 t = 1.0f - rnd * scale;
     item->mField14 = t;
     u16 aw = ret->mA;
     f32 fha = aw;
@@ -1593,7 +1577,7 @@ extern "C" void SchedAnim_BlendFrameU16(CSchedAnimItem* item, u8* base) {
     } else {
         scale = 0.0f;
     }
-    t = lbl_eu_8066B2A8 - rnd * scale;
+    t = 1.0f - rnd * scale;
     item->mField10 = t;
     u16 bw = ret->mB;
     f32 fhb = bw;
@@ -1835,7 +1819,7 @@ void SchedAnim_EvalSpline(CScheduleItem* unused, AnimVec3* outPos, f32* outVal,
         // Hard step at t >= 1: snap to point 1 below the threshold, point 2
         // above it.
         SplinePt* src;
-        if (t >= lbl_eu_8066B2A8) {
+        if (t >= 1.0f) {
             src = (SplinePt*)args[2];
         } else {
             src = (SplinePt*)args[1];
@@ -1859,7 +1843,7 @@ extern "C" void SchedAnim_InitRand08(CSchedAnimItem* item, u8* base) {
     item->mField06 = 1;
     if (base == NULL) {
         item->mField10 = one;
-        item->mField0C = lbl_eu_8066B2A8;
+        item->mField0C = 1.0f;
         return;
     }
     u8* ret = SchedEntry_PickRandom(base, 8, 0, &item->mField05, &item->mField07);
@@ -1870,7 +1854,7 @@ extern "C" void SchedAnim_InitRand08(CSchedAnimItem* item, u8* base) {
     } else {
         scale = *(f32*)(base - 4);
     }
-    item->mField0C = lbl_eu_8066B2A8 - rnd * scale;
+    item->mField0C = 1.0f - rnd * scale;
     item->mField10 = ((CEntryFloatElem*)ret)->mF32 * rnd;
     u8 idx = item->mField05 + item->mField07;
     u16 w = *(u16*)(base + idx * 8);
@@ -2047,7 +2031,7 @@ extern "C" void SchedAnim_SplitHue(CScheduleItem* unused, HueSplitOut* out,
     f32 h = out->mHue / 6.0f;
     out->mHue = h;
     if (h < 0.0f) {
-        out->mHue = lbl_eu_8066B2A8 + h;
+        out->mHue = 1.0f + h;
     }
 }
 
@@ -2113,42 +2097,42 @@ extern "C" void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
     item->mField07 = 1;
     item->mField06 = 1;
     if (base == NULL) {
-        item->mField14 = lbl_eu_8066B2A8;
-        item->mField10 = lbl_eu_8066B2A8;
-        item->mField0C = lbl_eu_8066B2A8;
-        item->mField20 = lbl_eu_8066B2A8;
-        item->mField1C = lbl_eu_8066B2A8;
-        item->mField18 = lbl_eu_8066B2A8;
-        item->mField2C = lbl_eu_8066B2A8;
-        item->mField28 = lbl_eu_8066B2A8;
-        item->mField24 = lbl_eu_8066B2A8;
+        item->mField14 = 1.0f;
+        item->mField10 = 1.0f;
+        item->mField0C = 1.0f;
+        item->mField20 = 1.0f;
+        item->mField1C = 1.0f;
+        item->mField18 = 1.0f;
+        item->mField2C = 1.0f;
+        item->mField28 = 1.0f;
+        item->mField24 = 1.0f;
         return;
     }
     u8* ret = SchedEntry_PickRandom(base, 0x10, 0, &item->mField05, &item->mField07);
     if (base != NULL) {
         item->mField0C = *(f32*)(base - 0x18);
     } else {
-        item->mField0C = lbl_eu_8066B2A8;
+        item->mField0C = 1.0f;
     }
     if (base != NULL) {
         item->mField10 = *(f32*)(base - 0x14);
     } else {
-        item->mField10 = lbl_eu_8066B2A8;
+        item->mField10 = 1.0f;
     }
     if (base != NULL) {
         item->mField14 = *(f32*)(base - 0x10);
     } else {
-        item->mField14 = lbl_eu_8066B2A8;
+        item->mField14 = 1.0f;
     }
     f32* src24 = (f32*)((u8*)ret + 4);
     item->mField24 = src24[0];
     item->mField28 = src24[1];
     item->mField2C = src24[2];
     // channel A
-    f32 rnd = s32ToF32_B2A0((s32)ml::math::mtRand()) / 2147483600.0f -
+    f32 rnd = s32ToF32((s32)ml::math::mtRand()) / 2147483600.0f -
               0.5f;
     f32 dScale = base != NULL ? *(f32*)(base - 0xc) : 0.0f;
-    item->mField18 = lbl_eu_8066B2A8 - dScale * rnd;
+    item->mField18 = 1.0f - dScale * rnd;
     if (dScale > 0.0f) {
         item->field_0x04 |= 0x10;
     }
@@ -2157,9 +2141,9 @@ extern "C" void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
     if (dScale2 < 0.0f) {
         item->mField1C = item->mField18;
     } else {
-        f32 rnd2 = s32ToF32_B2A0((s32)ml::math::mtRand()) / 2147483600.0f -
+        f32 rnd2 = s32ToF32((s32)ml::math::mtRand()) / 2147483600.0f -
                    0.5f;
-        item->mField1C = lbl_eu_8066B2A8 - dScale2 * rnd2;
+        item->mField1C = 1.0f - dScale2 * rnd2;
         if (dScale2 > 0.0f) {
             item->field_0x04 |= 0x10;
         }
@@ -2169,9 +2153,9 @@ extern "C" void SchedAnim_InitRand3Ch(CSchedAnimItem* item, u8* base) {
     if (dScale3 < 0.0f) {
         item->mField20 = item->mField18;
     } else {
-        f32 rnd3 = s32ToF32_B2A0((s32)ml::math::mtRand()) / 2147483600.0f -
+        f32 rnd3 = s32ToF32((s32)ml::math::mtRand()) / 2147483600.0f -
                    0.5f;
-        item->mField20 = lbl_eu_8066B2A8 - dScale3 * rnd3;
+        item->mField20 = 1.0f - dScale3 * rnd3;
         if (dScale3 > 0.0f) {
             item->field_0x04 |= 0x10;
         }
@@ -2292,7 +2276,7 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         } else {
             sc = 0.0f;
         }
-        item->mField1C = lbl_eu_8066B2A8 - rnd * sc;
+        item->mField1C = 1.0f - rnd * sc;
         rnd = (f32)ml::math::mtRand() / 2147483600.0f -
               0.5f;
         if (base != NULL) {
@@ -2300,7 +2284,7 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         } else {
             sc = 0.0f;
         }
-        item->mField20 = lbl_eu_8066B2A8 - rnd * sc;
+        item->mField20 = 1.0f - rnd * sc;
         rnd = (f32)ml::math::mtRand() / 2147483600.0f -
               0.5f;
         if (base != NULL) {
@@ -2308,7 +2292,7 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         } else {
             sc = 0.0f;
         }
-        item->mField24 = lbl_eu_8066B2A8 - rnd * sc;
+        item->mField24 = 1.0f - rnd * sc;
         item->field_0x04 |= 0x10;
         item->mField10 *= item->mField1C;
         item->mField14 *= item->mField20;
@@ -2337,9 +2321,9 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         item->mField18 = 0.0f;
         item->mField14 = 0.0f;
         item->mField10 = 0.0f;
-        item->mField24 = lbl_eu_8066B2A8;
-        item->mField20 = lbl_eu_8066B2A8;
-        item->mField1C = lbl_eu_8066B2A8;
+        item->mField24 = 1.0f;
+        item->mField20 = 1.0f;
+        item->mField1C = 1.0f;
     }
 }
 
@@ -2438,7 +2422,7 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
         eq = false;
     }
     if (eq) {
-        f32 c = lbl_eu_8066B2A8;
+        f32 c = 1.0f;
         item->mField24 = c;
         item->mField18 = c;
         item->mField14 = c;
@@ -2452,26 +2436,26 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
         f32 s0C = (base != NULL) ? *(volatile f32*)(base - 0xC)
                                  : (-1.0f);
         if (s10 < 0.0f && s0C < 0.0f) {
-            item->mField14 = lbl_eu_8066B2A8;
-            item->mField10 = lbl_eu_8066B2A8;
-            item->mField0C = lbl_eu_8066B2A8;
+            item->mField14 = 1.0f;
+            item->mField10 = 1.0f;
+            item->mField0C = 1.0f;
             f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                       0.5f;
             f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
                                     : 0.0f;
-            item->mField24 = lbl_eu_8066B2A8 - rnd * sc;
+            item->mField24 = 1.0f - rnd * sc;
         } else {
             f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                       0.5f;
             f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
                                     : 0.0f;
-            item->mField0C = lbl_eu_8066B2A8 - rnd * sc;
+            item->mField0C = 1.0f - rnd * sc;
             rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                   0.5f;
             sc = (base != NULL) ? *(volatile f32*)(base - 0x10)
                                 : (-1.0f);
-            item->mField10 = lbl_eu_8066B2A8 - rnd * sc;
-            f32 c = lbl_eu_8066B2A8;
+            item->mField10 = 1.0f - rnd * sc;
+            f32 c = 1.0f;
             item->mField24 = c;
             rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                   0.5f;
@@ -2483,7 +2467,7 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
                   0.5f;
         f32 sc = (base != NULL) ? *(volatile f32*)(base - 8) : 0.0f;
         u8 flag = item->field_0x04 | 0x10;
-        item->mField18 = lbl_eu_8066B2A8 - rnd * sc;
+        item->mField18 = 1.0f - rnd * sc;
         item->field_0x04 = flag;
     }
     // Color bytes arrive as u16 halves; the truncating stores emit lhz/stb.
@@ -2502,16 +2486,16 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
         item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
     }
     } else {
-        item->mField18 = lbl_eu_8066B2A8;
-        item->mField14 = lbl_eu_8066B2A8;
-        item->mField10 = lbl_eu_8066B2A8;
-        item->mField0C = lbl_eu_8066B2A8;
+        item->mField18 = 1.0f;
+        item->mField14 = 1.0f;
+        item->mField10 = 1.0f;
+        item->mField0C = 1.0f;
         item->mByte1F = 0xFF;
         item->mByte1E = 0xFF;
         item->mByte1D = 0xFF;
         item->mByte1C = 0xFF;
-        item->mField24 = lbl_eu_8066B2A8;
-        item->mField20 = lbl_eu_8066B2A8;
+        item->mField24 = 1.0f;
+        item->mField20 = 1.0f;
     }
 }
 
@@ -2610,7 +2594,7 @@ extern "C" void SchedAnim_RefreshScaleVec(CSchedAnimItem* item, CEntryElem* entr
 extern "C" void SchedAnim_HsvToRgb(CScheduleItem* self, AnimVec3* out, const AnimVec3* hsv,
                    f32 mul) {
     f32 h = hsv->x;
-    if (h < lbl_eu_8066B2A8) {
+    if (h < 1.0f) {
         h = 0.9999f;
     }
     f32 hf = 6.0f * h;
@@ -2623,17 +2607,17 @@ extern "C" void SchedAnim_HsvToRgb(CScheduleItem* self, AnimVec3* out, const Ani
     } else {
         f32 v = hsv->z;
         f32 frac = hf - (f32)sector;
-        f32 p = v * (lbl_eu_8066B2A8 - s);
-        f32 q = v * (lbl_eu_8066B2A8 - s * frac);
-        f32 t = v * (lbl_eu_8066B2A8 - s * (lbl_eu_8066B2A8 - frac));
-        if (p > lbl_eu_8066B2A8) {
-            p = lbl_eu_8066B2A8;
+        f32 p = v * (1.0f - s);
+        f32 q = v * (1.0f - s * frac);
+        f32 t = v * (1.0f - s * (1.0f - frac));
+        if (p > 1.0f) {
+            p = 1.0f;
         }
-        if (q > lbl_eu_8066B2A8) {
-            q = lbl_eu_8066B2A8;
+        if (q > 1.0f) {
+            q = 1.0f;
         }
-        if (t > lbl_eu_8066B2A8) {
-            t = lbl_eu_8066B2A8;
+        if (t > 1.0f) {
+            t = 1.0f;
         }
         if (sector == 0) {
             out->x = hsv->z;
@@ -2670,10 +2654,10 @@ extern "C" void SchedAnim_HsvToRgb(CScheduleItem* self, AnimVec3* out, const Ani
 // [.bss] 0x80660038-0x80661748 (0x1710 = 5904B) zero-fill
 u8 lbl_eu_80660038[2880];
 u8 lbl_eu_80660B78[2880];
-u8 lbl_eu_806616B8[96];
-CScheduleItemPool lbl_eu_80661718;
-CEffectPool lbl_eu_80661728;
-CEffectNodePool lbl_eu_80661738;
+u8 sTexLoadCache[96];
+CScheduleItemPool sScheduleItemPool;
+CEffectPool sEffectPool;
+CEffectNodePool sEffectNodePool;
 // [.sbss] 0x80665A20-0x80665A50 (48B) zero-fill (80665A20..80665A40 already defined above)
-void* lbl_eu_80665A44;
-u8 lbl_eu_80665A48[8];
+void* spEffectNodeWork;
+u8 sSchedScratch[8];

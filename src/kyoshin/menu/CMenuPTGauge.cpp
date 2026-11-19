@@ -33,20 +33,19 @@
 
 #include "decomp.h"
 #include <revolution/GX.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Batch 2026-07-14e: menu-ptgauge-move and menu-ptgauge-cbrender own their methods exclusively.
 // Batch 2026-07-14l: menu-ptgauge-init owns Init exclusively.
 // CLEANUP: renamed all unk fields to descriptive names.
 
 extern "C" {
-extern u32 lbl_eu_80663E28; // Secondary mode bitfield (bit 21/IBM bit 10 = realtime event busy)
+extern u32 gmPauseFlags; // Secondary mode bitfield (bit 21/IBM bit 10 = realtime event busy)
 extern char lbl_eu_805039C8[]; // String table base; offsets used for layout/animation/pane names
 extern const f32 lbl_eu_806679E0; // 0.0f
-extern const f32 lbl_eu_806679E4; // 300.0f
-extern const f32 lbl_eu_806679E8; // 128.0f
 extern const f32 lbl_eu_806679EC; // 1.0f
-// Ctor imports: base/subobject ctors and the shared vtable/PTMF labels
+
+// Ctor imports
 // (retail unmangled names; storage lives elsewhere).
 void __ct__8CProcessFv(CProcess*);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
@@ -59,8 +58,6 @@ extern u32 __ptmf_null[3];     // runtime ptmf.o null member-fn descriptor
 
 extern void playUISound(u32);
 
-typedef void (CMenuPTGauge::*CMenuPTGaugePtmf)(s32); // PTMF: (s32 partyVal) -> void
-extern CMenuPTGaugePtmf lbl_eu_805323F8[]; // Dispatch table for mActionIdx (3 entries: default, special, chain)
 
 /**
  * Initialises the PT Gauge layout, loads five animations, binds the default
@@ -131,9 +128,9 @@ void CMenuPTGauge::Init() {
  *
  * Gate sequence (shared with cbRenderBefore):
  *   1. CTaskGame pause (isFlag01Set) -> skip
- *   2. lbl_eu_80663E28 bit 21 (IBM bit 10; realtime event busy) -> skip
+ *   2. gmPauseFlags bit 21 (IBM bit 10; realtime event busy) -> skip
  *   3. IsMenuState621F0 (battle inactive) -> skip
- *   4. lbl_eu_80663E24 & 0xAFA40000 (UI suppress mask) -> skip
+ *   4. gmGameFlags & 0xAFA40000 (UI suppress mask) -> skip
  *
  * FSM phases (mPhase):
  *   0: Count battle actors; if none, idle. Otherwise init gauge panel width,
@@ -152,13 +149,13 @@ void CMenuPTGauge::Move() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) { // IBM bit 10 = realtime event busy
+    if ((gmPauseFlags & (1u << 21)) != 0) { // IBM bit 10 = realtime event busy
         goto done;
     }
     if (!IsMenuState621F0()) {
         goto done;
     }
-    if (lbl_eu_80663E24 & 0xAFA40000u) { // UI suppress composite mask (event/talk/vision)
+    if (gmGameFlags & 0xAFA40000u) { // UI suppress composite mask (event/talk/vision)
         goto done;
     }
 
@@ -192,7 +189,7 @@ void CMenuPTGauge::Move() {
                     nw4r::lyt::Size size;
                     // 128.0f * (0.0f / 300.0f) = 0.0f => collapse gauge to zero width
                     size.width =
-                        lbl_eu_806679E8 * (lbl_eu_806679E0 / lbl_eu_806679E4);
+                        128.0f * (lbl_eu_806679E0 / 300.0f);
                     size.height = pane->GetSize().height;
                     pane->SetSize(size);
                 }
@@ -211,7 +208,7 @@ void CMenuPTGauge::Move() {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         s32 partyVal = *reinterpret_cast<s32*>(&bm->unk194);
 
-        (this->*lbl_eu_805323F8[mActionIdx])(partyVal);
+        (this->*sPTGaugeActionDispatch[mActionIdx])(partyVal);
 
         if (partyVal <= 0) {
             bm = cf::CBattleManager::getInstance();
@@ -312,7 +309,7 @@ void CMenuPTGauge::cbRenderBefore() {
     // OR-combined guard: MWCC emits the second disjunct as the unreduced
     // `beq cont; b done` pair (retail shape, MWCC_CASES RFCOMM OR-guard).
     if (CTaskGame::isFlag01Set() != 0 ||
-        (lbl_eu_80663E28 & 0x200000) != 0) { // IBM bit 10 = realtime event busy
+        (gmPauseFlags & 0x200000) != 0) { // IBM bit 10 = realtime event busy
         return;
     }
     if (!IsMenuState621F0()) {
@@ -321,7 +318,7 @@ void CMenuPTGauge::cbRenderBefore() {
     if (mPhase == 0) { // gauge not initialised yet
         goto done;
     }
-    if (lbl_eu_80663E24 & 0xAFA40000u) { // UI suppress composite mask (event/talk/vision)
+    if (gmGameFlags & 0xAFA40000u) { // UI suppress composite mask (event/talk/vision)
         goto done;
     }
 
@@ -336,7 +333,7 @@ done:
 }
 
 extern "C" int getPTGaugeWord() {
-    return (int)lbl_eu_806642D8;
+    return (int)spPTGaugeInstance;
 }
 // Complete-object destructor (retail __dt__12CMenuPTGaugeFv). Written as the
 // real member dtor so MWCC supplies the this-null guard, the embedded-member
@@ -396,7 +393,7 @@ void CMenuPTGauge::Term() {
     }
 
     mLayoutMem.deleteRegion();
-    lbl_eu_806642D8 = NULL;
+    spPTGaugeInstance = NULL;
 }
 
 
@@ -484,7 +481,7 @@ typedef CMenuPTGauge* (*PTGaugeCtorFn)(CMenuPTGauge*, CProcess*);
 // object size), registers it as a child of `parent`, and caches it in the
 // global pointer. Returns NULL when the gauge already exists.
 CMenuPTGauge* PTGaugeCreate(CProcess* parent, CProcess* ctorArg) {
-    if (lbl_eu_806642D8 != NULL) {
+    if (spPTGaugeInstance != NULL) {
         return NULL;
     }
     mtl::ALLOC_HANDLE mem = CWorkThreadSystem::getWorkMem();
@@ -495,16 +492,16 @@ CMenuPTGauge* PTGaugeCreate(CProcess* parent, CProcess* ctorArg) {
     if (gauge != NULL) {
         gauge = ((PTGaugeCtorFn)__ct__CMenuPTGauge)(gauge, ctorArg);
     }
-    lbl_eu_806642D8 = gauge;
+    spPTGaugeInstance = gauge;
     // PTGaugeTaskMid deliberately does not inherit CProcess; retail still
     // dispatches CProcess::Regist with the gauge as this.
     reinterpret_cast<CProcess*>(gauge)->Regist(parent, false);
-    return lbl_eu_806642D8;
+    return spPTGaugeInstance;
 }
 void PTGaugeTickSP() {
     // When the gauge is active (phase 2) on the default action and the party
     // value hits 300, switch to the special action with a 300-frame counter.
-    CMenuPTGauge* self = lbl_eu_806642D8;
+    CMenuPTGauge* self = spPTGaugeInstance;
     if (self->mPhase == 2) {
         if (self->mActionIdx < 1) {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
@@ -515,19 +512,15 @@ void PTGaugeTickSP() {
         }
     }
 }
-// Named .sdata2 conversion-magic blob (bits 0x4330000080000000 = 2^52 +
-// 2^31); shared global defined elsewhere - declaration only, so int->float
-// cast pools bind to the named label instead of a private literal.
-extern const double lbl_eu_806679F0;
-extern float lbl_eu_806679F8;
-extern const float lbl_eu_806679FC;
+// The int->float conversions in this TU are plain casts; MWCC emits the
+// 0x4330000080000000 correction double as a compiler literal.
 extern const float lbl_eu_80667A00;
-// Per-frame gauge counter tick: decrement unk9C by lbl_eu_806679F8 through
+
 // the .sdata2 double path, clamp at zero (resetting action/base state), then
 // when the value changed resize the gauge pane proportionally.
 void PTGaugeTickDn(CMenuPTGauge* self) {
     // Decrement step, read early like retail's schedule.
-    const f32 step = lbl_eu_806679F8;
+    const f32 step = 30.0f;
     s32 v = (s32)((f32)self->unk9C - step);
     self->unk9C = v;
     if (v < 0) {
@@ -545,7 +538,7 @@ void PTGaugeTickDn(CMenuPTGauge* self) {
             nw4r::lyt::Size size;
             size.height = pane->GetSize().height;
             // 128.0f scaled by cur / 300.0f.
-            size.width = lbl_eu_806679E8 * ((f32)cur / lbl_eu_806679E4);
+            size.width = 128.0f * ((f32)cur / 300.0f);
             pane->SetSize(size);
         }
     }
@@ -618,7 +611,7 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
     // Advance the close animation one frame (result unused).
     advanceAnimTransform(self->mAnimClose, lbl_eu_806679EC);
 
-    if ((float)partyVal >= lbl_eu_806679E4) {
+    if ((float)partyVal >= 300.0f) {
         self->mGaugeBase = 3;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();
@@ -639,11 +632,11 @@ void PTGaugeClsAnm(CMenuPTGauge* self, s32 partyVal) {
         }
     }
 }
-// Close-action dispatch entry: once the party value reaches lbl_eu_806679FC,
+// Close-action dispatch entry: once the party value reaches 100.0f,
 // reset the gauge base state to 1 and re-bind the open animation from frame 0
 // with SE 0x65.
 void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
-    if ((float)partyVal >= lbl_eu_806679FC) {
+    if ((float)partyVal >= 100.0f) {
         self->mGaugeBase = 1;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();
@@ -655,14 +648,14 @@ void PTGaugeClsAct(CMenuPTGauge* self, s32 partyVal) {
     }
 }
 // Entry-action dispatch entry: re-seed the open animation to frame 1, then
-// switch between close state (value >= lbl_eu_80667A00) or reset-to-entry
+// switch between close state (value >= 200.0f) or reset-to-entry
 // (value < 100) with SE 0x65.
 void PTGaugeEntAct(CMenuPTGauge* self, s32 partyVal) {
     // Retail seeds this frame through the out-of-line helper, not the inline
     // SetFrame accessor.
     advanceAnimTransform(self->mAnimOpen, lbl_eu_806679EC);
-    // The 0x43300000-magic blob (lbl_eu_806679F0) in retail is MWCC's own
-    // s32->double cast correction constant, not a source subtraction.
+    // MWCC emits the 0x4330000080000000 s32->double correction constant for
+    // the plain (float) cast; it is not a source subtraction.
     if ((float)partyVal >= lbl_eu_80667A00) {
         self->mGaugeBase = 2;
         self->mLayout->Animate(0);
@@ -679,8 +672,6 @@ void PTGaugeEntAct(CMenuPTGauge* self, s32 partyVal) {
         }
     }
 }
-// PTMF type shared by both dispatch tables (lbl_eu_805323F8/lbl_eu_80532420).
-extern CMenuPTGaugePtmf lbl_eu_80532420[]; // Dispatch table indexed by mGaugeBase
 
 // Gauge refresh + action dispatch: when the displayed value changed, resize
 // the gauge pane proportionally to the party value, then always dispatch the
@@ -693,14 +684,13 @@ void PTGaugeDispat(CMenuPTGauge* self, s32 partyVal) {
         if (pane != NULL) {
             nw4r::lyt::Size size;
             // 128.0f scaled by partyVal / 300.0f. The int->float cast expands
-            // to MWCC's 0x43300000/xoris magic; its pooled constant must
-            // resolve to retail's lbl_eu_806679F0 blob (see MWCC_PATTERNS 7i).
-            size.width = lbl_eu_806679E8 * ((float)partyVal / lbl_eu_806679E4);
+            // to MWCC's 0x43300000/xoris magic (see MWCC_PATTERNS 7i).
+            size.width = 128.0f * ((float)partyVal / 300.0f);
             size.height = pane->GetSize().height;
             pane->SetSize(size);
         }
     }
-    (self->*lbl_eu_80532420[self->mGaugeBase])(partyVal);
+    (self->*sPTGaugeValueDispatch[self->mGaugeBase])(partyVal);
 }
 // PTMF dispatch entry: advance the idle animation, then when the party value
 // drops below 300 switch the gauge base state to 2 and re-bind the close
@@ -719,3 +709,6 @@ void PTGaugeIdlAct(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->Animate(0);
     }
 }
+
+// Live instance of the single PT Gauge widget (retail .sbss slot).
+CMenuPTGauge* spPTGaugeInstance;

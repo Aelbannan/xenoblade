@@ -16,7 +16,7 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
-extern u32 lbl_eu_80663E28; // .sbss global busy-flag word (bit 21)
+extern u32 gmPauseFlags; // .sbss global busy-flag word (bit 21)
 extern u32 lbl_eu_80664790;
 extern void CFade_StartLoad(CFade* fade);
 
@@ -163,24 +163,17 @@ extern char lbl_eu_8050B498[];
 void waitForDrawDone__9CDeviceVIFv();
 void Scn_SetPauseFlag(CScn* scn, int flag);
 void BgTex_Release_3D9C(CBgTex* self);
-void teardown(CTitleAHelp* self);
 void FloorMap_Teardown(CFloorMap* self);
 void UIWin_ControlWindowLists(u32, u32);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 int CMainMenu_IsOpen();
 int BgTex_IsLoaded_3E34(CBgTex* self);
-void updateHelp(CTitleAHelp* self);
-void func_801C4654(CTitleAHelp* self, u32 arg);
-void func_801C46DC(CTitleAHelp* self, u32 arg);
 void BgTex_Tick_3D54(CBgTex* self);
 
-void setInfoText(CTitleAHelp* self, char* text);
 void CFade_Update(CFade* self);
 void CFade_FadeOut(CFade* self);
 int FloorMap_GetField42Gated(CFloorMap* self);
 void FloorMap_LoadStageLayout(CFloorMap* self);
-void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-void func_801C412C(CTitleAHelp* self);
 int FloorMap_GetField40Flag(CFloorMap* self);
 void FloorMap_UpdateFrame(CFloorMap* self);
 void FloorMap_Draw(CFloorMap* self, nw4r::lyt::DrawInfo* drawInfo);
@@ -232,9 +225,7 @@ void FloorMap_ScrollRight(CFloorMap* self);
 void FloorMap_ScrollLeft(CFloorMap* self);
 void FloorMap_MoveToCursorRow(CFloorMap* self);
 
-extern "C" void beginClose(CTitleAHelp* self);
 // CTitleAHelp help-bar id setter (retail-unmangled).
-void func_801C41E8(CTitleAHelp* self, u8 arg);
 }
 
 // CTitleAHelp help-bar text reset (retail-unmangled name).
@@ -399,7 +390,7 @@ void CMenuMapSelect::Term() {
     static_cast<CScn*>(mParent)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mMapSel.term();
     (&mFade)->Unload();
     FloorMap_Teardown(&mFloorMap);
@@ -415,7 +406,7 @@ void CMenuMapSelect::Term() {
 // fade-out back to the world map, 9 waits for that fade, 10 exits the scene,
 // 11 marks completion in mField54.
 void CMenuMapSelect::Move() {
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000)) {
         return;
     }
 
@@ -424,7 +415,7 @@ void CMenuMapSelect::Move() {
         if (BgTex_IsLoaded_3E34(&mBgTex) == 0) break;
         if (mTitleAHelp.isInitialized() == 0) break;
         if (mMapSel.getVisibleFlag() == 0) break;
-        func_801C412C(&mTitleAHelp);
+        mTitleAHelp.func_801C412C();
         mMapSel.init();
         mState = 1;
         playUISound(0x6d);
@@ -433,7 +424,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 1:
-        if (mTitleAHelp.isIdle() == 0) break;
+        if (mTitleAHelp.func_801C4124() == 0) break;
         if (mMapSel.getInitFlag() == 0) break;
         mState = 2;
         break;
@@ -443,7 +434,7 @@ void CMenuMapSelect::Move() {
         break;
 
     case 3:
-        if (mTitleAHelp.isIdle() == 0) break;
+        if (mTitleAHelp.func_801C4124() == 0) break;
         if (mMapSel.getInitFlag() == 0) break;
         mField54 = 1;
         break;
@@ -454,12 +445,12 @@ void CMenuMapSelect::Move() {
 
     case 5:
         if (FloorMap_GetField42Gated(&mFloorMap) == 0) break;
-        func_801C4654(&mTitleAHelp, 0);
-        setInfoText(&mTitleAHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
+        mTitleAHelp.func_801C4654(0);
+        mTitleAHelp.setInfoText(BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
         if (CtrlRemote_TouchBitByArg((u32)0x3212) != 0) {
-            func_801C46DC(&mTitleAHelp, 1);
+            mTitleAHelp.func_801C46DC(1);
         }
-        func_801C41E8(&mTitleAHelp, 0);
+        mTitleAHelp.func_801C41E8(0);
         FloorMap_LoadStageLayout(&mFloorMap);
         playUISound(0x6d);
         CFade_FadeOut(&mFade);
@@ -478,10 +469,10 @@ void CMenuMapSelect::Move() {
     case 8:
         if (CFade_IsVisible(&mFade) == 0) break;
         FloorMap_Teardown(&mFloorMap);
-        func_801C4654(&mTitleAHelp, 1);
-        setInfoText(&mTitleAHelp, BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
-        func_801C46DC(&mTitleAHelp, 0);
-        func_801C41E8(&mTitleAHelp, 0x4a);
+        mTitleAHelp.func_801C4654(1);
+        mTitleAHelp.setInfoText(BdatTouchStringCell(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 3));
+        mTitleAHelp.func_801C46DC(0);
+        mTitleAHelp.func_801C41E8(0x4a);
         CFade_FadeOut(&mFade);
         mState = 9;
         break;
@@ -510,7 +501,7 @@ void CMenuMapSelect::Move() {
         BgTex_Tick_3D54(&mBgTex);
         mMapSel.update();
     }
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     CFade_Update(&mFade);
     FloorMap_UpdateFrame(&mFloorMap);
 }
@@ -519,7 +510,7 @@ void CMenuMapSelect::Move() {
 // the game task is busy or the global bit-21 busy flag is set, then draws bg,
 // map selector, floor map, title help and fade through a stack DrawInfo.
 void CMenuMapSelect::cbRenderBefore() {
-    if (CTaskGame::getInstance()->isFlag01Set() != 0 || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::getInstance()->isFlag01Set() != 0 || (gmPauseFlags & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
     if (mState >= 0xb) return;
 
@@ -533,7 +524,7 @@ void CMenuMapSelect::cbRenderBefore() {
         mMapSel.draw(&drawInfo);
     }
     FloorMap_Draw(&mFloorMap, &drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
     CFade_Draw(&mFade, &drawInfo);
 }
 
@@ -617,7 +608,7 @@ void CMenuMapSelect::handleWorldMapInput() {
         playUISound(3);
     } else if (triggerBit2 != 0) {
         // Show help overlay.
-        beginClose(&this->mTitleAHelp);
+        this->mTitleAHelp.beginClose();
         mMapSel.beginClose();
         this->mState = 3;
     } else if (cancel != 0) {
@@ -674,15 +665,15 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         // Classic controller layout.
         if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
             if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
-                func_801C41E8(&self->mTitleAHelp, 0x4b);
+                self->mTitleAHelp.func_801C41E8(0x4b);
             } else {
-                func_801C41E8(&self->mTitleAHelp, 0x4c);
+                self->mTitleAHelp.func_801C41E8(0x4c);
             }
         } else {
             if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
-                func_801C41E8(&self->mTitleAHelp, 0x4d);
+                self->mTitleAHelp.func_801C41E8(0x4d);
             } else {
-                func_801C41E8(&self->mTitleAHelp, 0x4e);
+                self->mTitleAHelp.func_801C41E8(0x4e);
             }
         }
 
@@ -752,15 +743,15 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         // Wiimote/Nunchuk layout.
         if (FloorMap_CheckRowVisited(&self->mFloorMap) != 0) {
             if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
-                func_801C41E8(&self->mTitleAHelp, 0x4b);
+                self->mTitleAHelp.func_801C41E8(0x4b);
             } else {
-                func_801C41E8(&self->mTitleAHelp, 0x4c);
+                self->mTitleAHelp.func_801C41E8(0x4c);
             }
         } else {
             if (FloorMap_GetBdatMaxRow(&self->mFloorMap) > 1 && FloorMap_GetField208Plain(&self->mFloorMap) != 0) {
-                func_801C41E8(&self->mTitleAHelp, 0x4d);
+                self->mTitleAHelp.func_801C41E8(0x4d);
             } else {
-                func_801C41E8(&self->mTitleAHelp, 0x4e);
+                self->mTitleAHelp.func_801C41E8(0x4e);
             }
         }
 
@@ -795,7 +786,7 @@ void handleFloorMapInput(CMenuMapSelect* self) {
             }
         } else if ((pad->mHeldButtonFlags & 0x1000) != 0 && zooming != 0 &&
                    FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
-            func_801C41E8(&self->mTitleAHelp, 0x4f);
+            self->mTitleAHelp.func_801C41E8(0x4f);
             if (self->mTimer > 1.0f) {
                 playUISound(2);
             }

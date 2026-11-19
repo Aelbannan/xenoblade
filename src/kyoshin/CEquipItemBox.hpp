@@ -12,6 +12,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"  // getPackedFont
 #include "kyoshin/CItemBoxGrid_Color.hpp"  // CopyVec4s, GXColorS10 helpers
+#include "kyoshin/CQuestWindow_Pane.hpp"  // setPaneVisible / isPaneVisible
 
 
 namespace nw4r {
@@ -110,12 +111,6 @@ struct CItemInstance {
     u8 unk6;    // 0x6
     u8 unk7;    // 0x7
 };
-
-// Item-impl accessor: canonical signature from kyoshin/cf/CItem.hpp.
-// Returns the per-category implementation object for an item record.
-struct CItemData;
-class CItemImpl;
-extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 
 /* CEquipItemGrid - 8-byte item list used by the equip-box helpers. Header
    fields (count / category / cursor row) sit right after the element array.
@@ -304,28 +299,13 @@ public:
 // caller sees the same declarations and the faithful counter sees them too.
 // ---------------------------------------------------------------------------
 
-/* Texture object returned by ArcResourceAccessor::GetResource for 'timg':
-   mChain (+0x08) -> dims (+0x00) carries the 2D dimension header. */
-struct CEquipItemBoxTexDimsView {
-    u16 field_0;    // 0x0
-    u16 field_2;    // 0x2
-};
-struct CEquipItemBoxTexChainView {
-    CEquipItemBoxTexDimsView* mDims;  // 0x0
-};
-struct CEquipItemBoxTexObjView {
-    void* mVtable;                 // 0x0
-    void* _pad_04;                 // 0x4
-    CEquipItemBoxTexChainView* mChain;  // 0x8
-};
-
 // OnFileEvent helper imports (retail C-ABI names). The MemManager flag,
-// ArcResourceAccessor::Attach and CDeviceFont::getFontInfo are called through
+// ArcResourceAccessor::Attach
 // their real class headers (monolib/util/MemManager.hpp, nw4r/lyt, and
 // monolib/device/CDeviceFont.hpp) rather than pre-mangled extern "C" aliases.
 extern "C" void* Bdat_GetTable_AA34();
 
-extern void* lbl_eu_806649E0;
+extern void* equipItemBoxEquipListFilePtr;
 
 /* CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34 =
    declared index 32 after the MWCC offset-to-top + RTTI prefix), dispatched by
@@ -368,15 +348,6 @@ public:
     virtual void v32() = 0; // vtable +0x88 (layout build)
 };
 
-/* u32->float conversion scratch (CPartsChange.cpp convention): builds the
-   0x43300000-prefixed bit pattern by hand so the magic subtraction below
-   references the retail .sdata2 constants (lbl_eu_80668B18/80668B10)
-   instead of MWCC's un-nameable pool entry. */
-union CEquipItemBoxF64Conv {
-    u32 w[2];
-    double d;
-};
-
 /* 6-byte equipment-slot definition used by findEIBEquipSlot's slot scan:
    category byte, item-id short and a per-category base offset byte. */
 struct CEquipItemBoxSlotDef {
@@ -387,7 +358,7 @@ struct CEquipItemBoxSlotDef {
     u8 _pad5;   // 0x5
 };
 
-/* 36-byte table of 6 slot definitions (data at lbl_eu_8050EF90). Copied to a
+/* 36-byte table of 6 slot definitions (data at equipItemBoxSlotDefsTable). Copied to a
    stack local by findEIBEquipSlot before the item ids are patched in. */
 struct CEquipItemBoxSlotTable {
     CEquipItemBoxSlotDef slots[6];
@@ -398,7 +369,7 @@ struct CEquipItemBoxSlotTable {
    patched into the slot table by findEIBEquipSlot. */
 
 // 36-byte equipment-slot table (data import, same .data block as the string pool).
-extern CEquipItemBoxSlotTable lbl_eu_8050EF90;
+extern CEquipItemBoxSlotTable equipItemBoxSlotDefsTable;
 
 /* 24-byte equipment-category table (6 u32 entries; the low byte of each word
    is a category id). Copied to a stack local by rebuildEIBGridPage. */
@@ -412,14 +383,12 @@ extern CEquipItemBoxCatWordTable lbl_eu_8050EF50;
 struct CEquipItemBoxMoveTable {
     u32 w[3];
 };
-extern CEquipItemBoxMoveTable lbl_eu_8050EFB4;
 
 /* 12-byte category-byte table (.sdata) copied to the stack by
    useEIBSelectedItem's slot-clearing tail. */
 struct CEquipItemBoxCatTable12 {
     u8 b[0xC];
 };
-extern CEquipItemBoxCatTable12 lbl_eu_80668B50;
 
 /* CfObjectMove search-result entry: the word at +0x4 must be non-zero
    before the move object is resolved. */
@@ -458,9 +427,7 @@ extern "C" void copyVEC3(void*, const void*);
 // Item/bdat table handles: canonical type from the owner header (cf/CItem.hpp).
 extern void* lbl_eu_806640D8;
 extern void* lbl_eu_806640F8;
-// Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
-// the plain name, matching eibHandleSubPage's reloc site).
-extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
+// isPaneVisible is declared once in CQuestWindow_Pane.hpp.
 
 // Item-box object type for the unk_20c pointer (forward decl; full layout in
 // CItemBoxInfo.hpp, which is included by TUs that also include this header).
@@ -485,31 +452,31 @@ extern "C" int KyoshinHeap_GetField44(void);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
 // .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
-extern s16 lbl_eu_80664920[4];
-extern s16 lbl_eu_80664928[4];
-extern s16 lbl_eu_80664930[4];
-extern s16 lbl_eu_80664938[4];
-extern s16 lbl_eu_80664940[4];
-extern s16 lbl_eu_80664948[4];
-extern s16 lbl_eu_80664950[4];
-extern s16 lbl_eu_80664958[4];
-extern s16 lbl_eu_80664960[4];
-extern s16 lbl_eu_80664968[4];
-extern s16 lbl_eu_80664970[4];
-extern s16 lbl_eu_80664978[4];
-extern s16 lbl_eu_80664980[4];
-extern s16 lbl_eu_80664988[4];
-extern s16 lbl_eu_80664990[4];
-extern s16 lbl_eu_80664998[4];
-extern s16 lbl_eu_806649A0[4];
-extern s16 lbl_eu_806649A8[4];
-extern s16 lbl_eu_806649B0[4];
-extern s16 lbl_eu_806649B8[4];
-extern s16 lbl_eu_806649C0[4];
-extern s16 lbl_eu_806649C8[4];
-extern s16 lbl_eu_806649D0[4];
-extern s16 lbl_eu_806649D8[4];
+GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+extern s16 equipItemBox_sortMenuColorSrcTop[4];
+extern s16 equipItemBox_sortMenuColorSrcBottom[4];
+extern s16 equipItemBox_sortMenuTabNeutralTop[4];
+extern s16 equipItemBox_sortMenuTabNeutralBottom[4];
+extern s16 equipItemBox_sortMenuTabSelectedTop[4];
+extern s16 equipItemBox_sortMenuTabSelectedBottom[4];
+extern s16 equipItemBox_sortMenuTabColor2Top[4];
+extern s16 equipItemBox_sortMenuTabColor2Bottom[4];
+extern s16 equipItemBox_sortMenuTabColor3Top[4];
+extern s16 equipItemBox_sortMenuTabColor3Bottom[4];
+extern s16 equipItemBox_cellLabelNeutralTop[4];
+extern s16 equipItemBox_cellLabelNeutralBottom[4];
+extern s16 equipItemBox_cellLabelMutedTop[4];
+extern s16 equipItemBox_cellLabelMutedBottom[4];
+extern s16 equipItemBox_kind48LabelNeutralTop[4];
+extern s16 equipItemBox_kind48LabelNeutralBottom[4];
+extern s16 equipItemBox_kind48LabelMutedTop[4];
+extern s16 equipItemBox_kind48LabelMutedBottom[4];
+extern s16 equipItemBox_sortOptionLabelNeutralTop[4];
+extern s16 equipItemBox_sortOptionLabelNeutralBottom[4];
+extern s16 equipItemBox_sortOptionLabelSelectedTop[4];
+extern s16 equipItemBox_sortOptionLabelSelectedBottom[4];
+extern s16 equipItemBox_sortOptionLabelAltTop[4];
+extern s16 equipItemBox_sortOptionLabelAltBottom[4];
 
 // Same-TU grid helpers used by the equip-slot checks (defined in this .cpp;
 // retail plain names). Return u32 (lbz zero-extends; avoids call-site masks).
@@ -520,7 +487,6 @@ extern void* lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
-extern const float lbl_eu_80668B24;
 // Item-kind -> display-count probe (calcEIBCountKey's default band).
 extern "C" u32 __cvt_fp2unsigned(double);
 
@@ -545,15 +511,17 @@ extern "C" void CopyTabSlotVec(nw4r::math::VEC3*, const u16*, u32);
 extern void* lbl_eu_806640F4;
 
 // .sdata2 float constants used by the grid page-count math (rebuildEIBGridPage).
-extern const float lbl_eu_80668B00;
-extern const float lbl_eu_80668B08;
 
 // CfMove enum-list holder helpers (retail plain names; sibling decls in
 // CItemBoxGrid.hpp / CfObjectImplMove.hpp).
+// Real declaration of getCfObjectPc (defined in cf/object/CfObjectObj.cpp).
+// Forward declarations avoid pulling CfObjectMove.hpp's abstract-class
+// declarations into this unit's headers.
+namespace cf { class CfObjectMove; class CfObjectPc; }
+cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void CfObjectPc_setupFrame(void* obj, u32 arg);
-extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
 
 // Equipment-slot clear helpers (retail plain names; declared here instead of
 // pulling in the big cf/CtrlObjectParam headers).
@@ -571,17 +539,10 @@ extern "C" s32 CItem_slotCnt(u32);   // canonical form from cf/CItem.hpp/CItem.c
 extern "C" int Counter_TestBit(void*, u32);
 
 // .sdata2 float/double constants used by the equip-box helpers (sda21
-// relocs). 80668B10/80668B18 are the int->float conversion magics (0x4330
-// trick); 80668B2C is the drop-rate scale; 80668B30/34/38 are pane offsets.
-extern const float lbl_eu_80668B2C;
-extern const float lbl_eu_80668B48;
-extern const float lbl_eu_80668B4C;
+// relocs). 80668B2C is the drop-rate scale; 80668B30/34/38 are pane offsets.
 extern const float lbl_eu_80668B30;
 extern const float lbl_eu_80668B34;
 extern const float lbl_eu_80668B38;
 extern const float lbl_eu_80668B44;
-extern const double lbl_eu_80668B10;
-extern const double lbl_eu_80668B18;
-extern const float lbl_eu_80668B20;
 
 extern "C" void CItemBlock_setFlag120EC(u32 id, u32 arg);

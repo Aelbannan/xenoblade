@@ -48,7 +48,7 @@ struct CEventMgrB0 {
     u8 field_0x39;          // +0x39 byte flag
 };
 
-// Manager object behind lbl_eu_80664240 (recovered layout; only the fields
+// Manager object behind gEventMgr (recovered layout; only the fields
 // this TU reads are declared).
 struct CEventMgr {
     u8 field_0x00[0x6C];
@@ -231,24 +231,24 @@ struct REvtMgrView {
 };
 
 // Data symbols (retail linker names - global scope, no extern "C" needed)
-extern const char* lbl_eu_80662380; // base event-name string (evtGetBaseNameAddr returns it as u32)
-extern u32 lbl_eu_80662384;
+extern const char* gpEventBaseName; // base event-name string (evtGetBaseNameAddr returns it as u32)
+extern u32 gStreamVolumeLevel;
 extern f32 lbl_eu_8066762C;
 extern f32 lbl_eu_80667628; // ctor float initializer (field_0x1E4/0x1E8)
 extern f64 lbl_eu_80667630; // u32->float conversion constant (2^52+2^31)
 extern f32 lbl_eu_80667644; // evtUpdateBusyDimming camera-position write value (x)
 extern f32 lbl_eu_80667648; // evtUpdateBusyDimming camera-position write value (y)
-extern u16 lbl_eu_80663E42; // evtOnFileEvent expected event-id halfword
-extern u16 lbl_eu_80663E44; // evtOnFileEvent expected event-id halfword
+extern u16 gmGlobalFlag42; // evtOnFileEvent expected event-id halfword
+extern u16 gmGlobalFlag44; // evtOnFileEvent expected event-id halfword
 // Event-name table blob (retail .data:0x80530300): byte table at +0x130
 // indexes the pointer table at +0x98; the +0x158 pointer table is indexed
 // directly by the event id.
 extern u8 lbl_eu_80530300[];
-extern CEventMgr* lbl_eu_80664240;
-extern u32 lbl_eu_80664244; // auto-sleep/dimming state word written by the ctor + siblings
+extern CEventMgr* gEventMgr;
+extern u32 gAutoSleepState; // auto-sleep/dimming state word written by the ctor + siblings
 // Frame-target word: getTargetFramerate() * 300 (ctor + evtSyncBusyDimming/80166150).
-extern u32 lbl_eu_80664248;
-extern u32 lbl_eu_80663E28; // event flag word (bit7 tested by isEventPending)
+extern u32 gEventFrameCounter[2];
+extern u32 gmPauseFlags; // event flag word (bit7 tested by isEventPending)
 extern s16 lbl_eu_80502F90[]; // event-id table walked by evtFillCharRange (32 entries)
 extern const char lbl_eu_80503008[];  // Init: base string copied into each entry
 // Init: 0xAE suffix strings appended to each entry (walked by pointer).
@@ -256,7 +256,7 @@ extern const char* lbl_eu_80530458[];
 // Event-name suffix table walked by evtLookupEntryWord (32 const char* entries).
 extern const char* lbl_eu_80530710[];
 // 0x26-byte array shuffled by evtBeginShuffledSeq (retail .data:0x80530430).
-extern u8 lbl_eu_80530430[];
+extern u8 gEventShuffleOrder[];
 // CTaskREvent vtable (retail .data:0x80530790; five sub-vtables: primary at
 // +0x00, then +0x24 / +0x3C / +0x4C / +0x5C for the 0x54/0x58/0x5C/0x60
 // secondary subobjects).

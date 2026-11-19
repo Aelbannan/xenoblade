@@ -12,11 +12,11 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 struct FogState;
-extern "C" GXRenderModeObj lbl_eu_8061F9D4;
-extern "C" char lbl_eu_8061A750[];
-extern "C" char lbl_eu_8061FAB8[];
-extern "C" char lbl_eu_80665458[8];
-extern "C" FogState lbl_eu_8061AF60;
+extern "C" GXRenderModeObj sRenderModeObj;
+extern "C" char sViewMtxPtrs[];
+extern "C" char sViewNrmMtx[];
+extern "C" char sViewNrmMtxDirty[8];
+extern "C" FogState sFogState;
 
 namespace nw4r {
 namespace g3d {

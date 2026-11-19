@@ -55,25 +55,20 @@ struct KizunaPadData {
 extern char lbl_eu_8050E970[];
 
 // Global render-gate mode bitfield (.sbss; bit 21), read by Move/cbRenderBefore.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Retail beginClose symbol (unmangled global): free-call form so the reloc
 // is bare (same pattern as CMenuShopBuy.hpp).
-extern "C" void beginClose(CTitleAHelp* self);
 
 // (memberized: needsTalkRebuild -> CKizunaTalkList::needsTalkRebuild; declaration moved into class CKizunaTalkList)
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // (memberized: teardownTalkList -> CKizunaTalkList::teardownTalkList; declaration moved into class CKizunaTalkList)
-extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 
 // (memberized: showTalkList -> CKizunaTalkList::showTalkList; declaration moved into class CKizunaTalkList)
 
 // Draw/update entry points (retail keeps the bare names at these call sites).
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
@@ -139,7 +134,7 @@ void CMenuKizunaTalkList::Term() {
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     (&mKizunaTalkList)->teardownTalkList();
 
     sInstance = nullptr;
@@ -151,7 +146,7 @@ void CMenuKizunaTalkList::Term() {
 // 4-state FSM and refresh the bg / help bar / list each frame.
 void CMenuKizunaTalkList::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
 
     CPad* pad = cf::CfGameManager::getCurrentPad();
@@ -187,7 +182,7 @@ void CMenuKizunaTalkList::Move() {
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     (&mKizunaTalkList)->updateTalkList();
 }
 
@@ -196,7 +191,7 @@ void CMenuKizunaTalkList::Move() {
 // title/help bar in that order.
 void CMenuKizunaTalkList::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -205,7 +200,7 @@ void CMenuKizunaTalkList::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     (&mKizunaTalkList)->drawTalkList(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 CMenuKizunaTalkList* CMenuKizunaTalkList::sInstance;
@@ -235,7 +230,7 @@ void KizunaList_Phase0Show(CMenuKizunaTalkList* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 &&
         self->mTitleAHelp.isInitialized() != 0 &&
         (&self->mKizunaTalkList)->hasVisibleTalks() != 0) {
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C412C();
         (&self->mKizunaTalkList)->showTalkList();
         self->mState = 1;
         playUISound(0x6d);
@@ -245,7 +240,7 @@ void KizunaList_Phase0Show(CMenuKizunaTalkList* self) {
 // Advance the talk-list phase (retail KizunaList_Phase1Ready): once the title/help bar
 // is idle and the list has entries waiting, mark the main state byte as 2.
 void KizunaList_Phase1Ready(CMenuKizunaTalkList* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         (&self->mKizunaTalkList)->needsTalkRebuild() != 0) {
         self->mState = 2;
     }
@@ -285,7 +280,7 @@ void KizunaList_Phase2Input(CMenuKizunaTalkList* self) {
     }
 
     if (trig) {
-        beginClose(&self->mTitleAHelp);
+        self->mTitleAHelp.beginClose();
         (&self->mKizunaTalkList)->hideTalkList();
         self->mState = 3;
     } else if (up) {
@@ -302,7 +297,7 @@ void KizunaList_Phase2Input(CMenuKizunaTalkList* self) {
 // Same idle check as KizunaList_Phase1Ready, but marks the 0x54 phase flag instead of
 // the main state byte.
 void KizunaList_Phase3Flag(CMenuKizunaTalkList* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         (&self->mKizunaTalkList)->needsTalkRebuild() != 0) {
         self->mField54 = 1;
     }

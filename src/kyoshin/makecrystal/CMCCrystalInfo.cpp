@@ -28,6 +28,16 @@ extern "C" void MCCrystal_RewindAnim3(CMCCrystalInfo*);
 // Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
 
+
+s16 sPane1Color0[4] = {0};
+s16 sPane1Color1[4] = {0};
+s16 sPane1Alpha0[4] = {0};
+s16 sPane1Alpha1[4] = {0};
+s16 sPane2Color0[4] = {0};
+s16 sPane2Color1[4] = {0};
+s16 sPane2Alpha0[4] = {0};
+s16 sPane2Alpha1[4] = {0};
+
 void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo*, u32, CMCCItemHandle*);
 
 CMCCrystalInfo::CMCCrystalInfo()
@@ -39,9 +49,9 @@ void MCCrystal_LoadLayouts(CMCCrystalInfo* self)
 {
     // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a).
     u32 handle = (u32)mtl::MemManager::getHandleMEM2();
-    self->mFileHandle1 = (u32)CDeviceFile::readFile(handle, &lbl_eu_80508DF8[0], self, 0, 0);
+    self->mFileHandle1 = (u32)CDeviceFile::readFile(handle, "menu/jp/McCrystalInfo.arc", self, 0, 0);
     handle = (u32)mtl::MemManager::getHandleMEM2();
-    self->mFileHandle2 = (u32)CDeviceFile::readFile(handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
+    self->mFileHandle2 = (u32)CDeviceFile::readFile(handle, "menu/jp/tpl/CrystalIcon.arc", self, 0, 0);
 }
 
 void MCCrystal_StepState(CMCCrystalInfo* self)
@@ -190,72 +200,72 @@ void MCCrystal_FillSlot(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u3
     char* msgName;
 
     // Crystal name for slot idx, then colour it (colour pair depends on arg7).
-    msgName = BdatGetPtrDirect((char*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], msgId);
+    msgName = BdatGetPtrDirect((char*)lbl_eu_806640D8, "name", msgId);
     idx = idxBase + 1;
-    sprintf(buf, &lbl_eu_80508DF8[0x3b], idx);
+    sprintf(buf, "txt_listname%02d", idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
-        (GXColorS10*)(arg7 ? &lbl_eu_806646E8 : &lbl_eu_806646D8),
-        (GXColorS10*)(arg7 ? &lbl_eu_806646F0 : &lbl_eu_806646E0));
+        (GXColorS10*)(arg7 ? &sPane1Alpha0 : &sPane1Color0),
+        (GXColorS10*)(arg7 ? &sPane1Alpha1 : &sPane1Color1));
 
     // Slot number text + element image index, coloured with the second pair.
-    sprintf(buf, &lbl_eu_80508DF8[0x4c], idx);
+    sprintf(buf, "txt_listvalue%02d", idx);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
-        (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
-        (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
+        (GXColorS10*)(arg7 ? &sPane2Alpha0 : &sPane2Color0),
+        (GXColorS10*)(arg7 ? &sPane2Alpha1 : &sPane2Color1));
 
     // Description string + colour.
-    sprintf(buf, &lbl_eu_80508DF8[0x5e], idx);
+    sprintf(buf, "txt_listpara%02d", idx);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf,
-        BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21), 0);
+        BdatTouchStringCell("MNU_item", "name", 0x21), 0);
     PaneMatSetTevColorsByName((nw4r::lyt::Layout*)self->mLayout, buf,
-        (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
-        (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
+        (GXColorS10*)(arg7 ? &sPane2Alpha0 : &sPane2Color0),
+        (GXColorS10*)(arg7 ? &sPane2Alpha1 : &sPane2Color1));
 
     // Pick the crystal picture to show for this slot based on the item code.
     void* res = 0;
-    u8 code = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], msgId);
+    u8 code = BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", msgId);
     switch (code) {
     case 0:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0x81], 0);
+                          "mf00_reg30_crys00.tpl", 0);
         break;
     case 4:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0x97], 0);
+                          "mf00_reg30_crys01.tpl", 0);
         break;
     case 5:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0xad], 0);
+                          "mf00_reg30_crys02.tpl", 0);
         break;
     case 6:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0xc3], 0);
+                          "mf00_reg30_crys03.tpl", 0);
         break;
     case 7:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0xd9], 0);
+                          "mf00_reg30_crys04.tpl", 0);
         break;
     case 8:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0xef], 0);
+                          "mf00_reg30_crys05.tpl", 0);
         break;
     case 9:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
             ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                          &lbl_eu_80508DF8[0x105], 0);
+                          "mf00_reg30_crys06.tpl", 0);
         break;
     }
 
     if (res != 0) {
-        sprintf(buf, &lbl_eu_80508DF8[0x11b], idx);
+        sprintf(buf, "pic_ethcol%02d", idx);
         PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, (const char*)buf, (TPLPalette*)res);
     }
 }
@@ -265,17 +275,17 @@ extern "C" void MCCrystal_ClearSlots(CMCCrystalInfo* self)
 {
     char buf[0x20];
     for (u8 i = 1; i <= 8; i++) {
-        sprintf(buf, &lbl_eu_80508DF8[0x3b], i);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
-        sprintf(buf, &lbl_eu_80508DF8[0x4c], i);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
-        sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        sprintf(buf, "txt_listname%02d", i);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, "", 0);
+        sprintf(buf, "txt_listvalue%02d", i);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, "", 0);
+        sprintf(buf, "txt_listpara%02d", i);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, "", 0);
         void* res = ((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor)
                         ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                                      &lbl_eu_80508DF8[0x12b], NULL);
+                                      "mf00_com00_dmy.tpl", NULL);
         if (res != 0) {
-            sprintf(buf, &lbl_eu_80508DF8[0x11b], i);
+            sprintf(buf, "pic_ethcol%02d", i);
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->mLayout, (const char*)buf, (TPLPalette*)res);
         }
     }
@@ -283,13 +293,13 @@ extern "C" void MCCrystal_ClearSlots(CMCCrystalInfo* self)
 void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 paneIdx)
 {
     char buf[0x20];
-    sprintf(buf, &lbl_eu_80508DF8[0x13e], paneIdx + 1);
+    sprintf(buf, "nul_list%02d", paneIdx + 1);
     nw4r::lyt::Pane* r1 =
         (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))->FindPaneByName(buf, true);
     // Retail reloads other->mLayout and its root pane for every lookup.
     nw4r::lyt::Pane* r2 =
         (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))
-            ->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
+            ->FindPaneByName("nul_proportion", true);
     ScalePaneWorldPos((nw4r::math::VEC3*)self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
 }
 
@@ -364,7 +374,7 @@ void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data,
     CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
     u8 count = inst->GetCount(item2);
     buf.count = count;
-    buf.str = (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
+    buf.str = (char*)BdatTouchStringCell("MNU_item", "name",
                                    0x1e - (count - 1));
     buf.field21 = 0;
     for (u32 i = 0; i < 4; i++) {
@@ -372,7 +382,7 @@ void MCCrystal_BuildItemBuf(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data,
         u16 n = inst2->GetName(item2, (u8)i);
         if (n > 0) {
             buf.names[buf.field21] = BdatGetPtrDirect((char*)lbl_eu_806640D8,
-                                                   &lbl_eu_80508DF8[0x36], n);
+                                                   "name", n);
             CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances((CItemData*)item2);
             buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
             buf.field21++;
@@ -403,16 +413,16 @@ void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
         *++dst = *++src;
     }
     *++dst = *++src;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, "txt_value30",
                   slots.str, 0);
     u8 count = slots.field21;
     for (u8 i = 0; i < count; i++) {
-        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
+        sprintf(buf, "txt_para%02d", (i * 2) + 0x1f);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, slots.names[i], 0);
-        sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
+        sprintf(buf, "txt_value%02d", i + 0x1f);
         setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->mLayout, buf, slots.flags[i]);
-        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
-        char* s = BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
+        sprintf(buf, "txt_para%02d", (i * 2) + 0x20);
+        char* s = BdatTouchStringCell("MNU_item", "name", 0x21);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, s, 0);
     }
 }
@@ -421,15 +431,15 @@ void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
 void MCCrystal_ClearTexts(CMCCrystalInfo* self)
 {
     char buf[0x20];
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
-                  &lbl_eu_80508DF8[0x12a], 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, "txt_value30",
+                  "", 0);
     for (u8 i = 0; i < 4; i++) {
-        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
-        sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
-        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        sprintf(buf, "txt_para%02d", (i * 2) + 0x1f);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, "", 0);
+        sprintf(buf, "txt_value%02d", i + 0x1f);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, "", 0);
+        sprintf(buf, "txt_para%02d", (i * 2) + 0x20);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)self->mLayout, buf, "", 0);
     }
 }
 
@@ -492,7 +502,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // === crystal info file 1 loaded ===
         mMemRegion1.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x18000,
-            &lbl_eu_80508DF8[0x181], 0);
+            "CMCCrystalInfo", 0);
         Class_8045F858 regionGuard1(&mMemRegion1);
 
         CFileHandle* h1 = (CFileHandle*)mFileHandle1;
@@ -502,14 +512,14 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 
         mArcResAccessor = CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)mArcResAccessor)
-            ->Attach(fileData, &lbl_eu_80508DF8[0x190]);
+            ->Attach(fileData, "arc");
 
-        buildLayout((nw4r::lyt::Layout**)&mLayout, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x194]);
+        buildLayout((nw4r::lyt::Layout**)&mLayout, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, "mf10_cry00_inf00.brlyt");
 
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform1, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ab]);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform2, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1c5]);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform3, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1e4]);
-        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform4, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ff]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform1, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, "mf10_cry00_inf00_in.brlan");
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform2, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, "mf10_cry00_inf00_info_in.brlan");
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform3, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, "mf10_cry00_inf00_box.brlan");
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)mLayout, (nw4r::lyt::AnimTransform**)&mAnimTransform4, (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, "mf10_cry00_inf00_out.brlan");
 
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane =
@@ -522,20 +532,20 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // If a character set is loaded, stamp every text pane with it.
         u32 sh = (u32)CUICfManager_getPackedFont9C();
         if (sh != 0) {
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x15a], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x21a], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x226], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x232], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x23e], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x24a], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x255], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x260], sh);
-            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x26b], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_value30", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_value31", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_value32", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_value33", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_value34", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_para32", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_para34", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_para36", sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, "txt_para38", sh);
             char buf[0x20];
             for (u8 i = 1; i <= 8; i++) {
-                sprintf(buf, &lbl_eu_80508DF8[0x4c], i);
+                sprintf(buf, "txt_listvalue%02d", i);
                 setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, buf, sh);
-                sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
+                sprintf(buf, "txt_listpara%02d", i);
                 setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, buf, sh);
             }
         }
@@ -543,34 +553,34 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         MCCrystal_BindIntro(this);
         ((nw4r::lyt::Layout*)mLayout)->Animate(0);
 
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x276],
-            (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x18), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x292],
-            (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2c), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x2a1],
-            (char*)BdatTouchStringCell(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, "txt_para30",
+            (char*)BdatTouchStringCell("MNU_item", "name", 0x18), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, "txt_listname00",
+            (char*)BdatTouchStringCell("MNU_crystal", "info", 0x2c), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mLayout, "txt_listvalue00",
+            (char*)BdatTouchStringCell("MNU_crystal", "info", 0x2d), 0);
 
         MCCrystal_ClearSlots(this);
 
         // Pull the two colour pairs off their panes and refresh the alpha
         // channel of the shared slot colours.
         nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80508DF8[0x2b1], true);
+            ->FindPaneByName("txt_listname01", true);
         GXColorS10 fs1a = PaneMatGetS16Quad(pane1, 0);
-        CopyVec4s((GXColorS10*)lbl_eu_806646D8, (const GXColorS10*)((short*)&fs1a));
+        CopyVec4s((GXColorS10*)sPane1Color0, (const GXColorS10*)((short*)&fs1a));
         GXColorS10 fs1b = PaneMatGetS16Quad(pane1, 1);
-        CopyVec4s((GXColorS10*)lbl_eu_806646E0, (const GXColorS10*)((short*)&fs1b));
-        lbl_eu_806646E8[3] = lbl_eu_806646D8[3];
-        lbl_eu_806646F0[3] = lbl_eu_806646E0[3];
+        CopyVec4s((GXColorS10*)sPane1Color1, (const GXColorS10*)((short*)&fs1b));
+        sPane1Alpha0[3] = sPane1Color0[3];
+        sPane1Alpha1[3] = sPane1Color1[3];
 
         nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80508DF8[0x2c0], true);
+            ->FindPaneByName("txt_listvalue01", true);
         GXColorS10 fs2a = PaneMatGetS16Quad(pane2, 0);
-        CopyVec4s((GXColorS10*)lbl_eu_806646F8, (const GXColorS10*)((short*)&fs2a));
+        CopyVec4s((GXColorS10*)sPane2Color0, (const GXColorS10*)((short*)&fs2a));
         GXColorS10 fs2b = PaneMatGetS16Quad(pane2, 1);
-        CopyVec4s((GXColorS10*)lbl_eu_80664700, (const GXColorS10*)((short*)&fs2b));
-        lbl_eu_80664708[3] = lbl_eu_806646F8[3];
-        lbl_eu_80664710[3] = lbl_eu_80664700[3];
+        CopyVec4s((GXColorS10*)sPane2Color1, (const GXColorS10*)((short*)&fs2b));
+        sPane2Alpha0[3] = sPane2Color0[3];
+        sPane2Alpha1[3] = sPane2Color1[3];
 
         func_8021B500(this);
         mFileHandle1 = 0;
@@ -579,7 +589,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
     } else if (mFileHandle2 == (u32)pEventFile->mFileHandle) {
         // === crystal info file 2 loaded ===
         mMemRegion2.createRegion(
-            mtl::MemManager::getHandleMEM2(), 0x100, &lbl_eu_80508DF8[0x2d0], 0);
+            mtl::MemManager::getHandleMEM2(), 0x100, "CItemBoxInfoTex", 0);
         Class_8045F858 regionGuard2(&mMemRegion2);
 
         CFileHandle* h2 = (CFileHandle*)mFileHandle2;
@@ -589,7 +599,7 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 
         mField30 = (u32)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)mField30)
-            ->Attach(fileData, &lbl_eu_80508DF8[0x190]);
+            ->Attach(fileData, "arc");
 
         func_8021B500(this);
         mFileHandle2 = 0;
@@ -603,12 +613,12 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8021BBC4()
 {
-    SplitU32ToS16s(lbl_eu_806646D8, 0);
-    SplitU32ToS16s(lbl_eu_806646E0, 0);
-    setGXColorS10(lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
-    setGXColorS10(lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
-    SplitU32ToS16s(lbl_eu_806646F8, 0);
-    SplitU32ToS16s(lbl_eu_80664700, 0);
-    setGXColorS10(lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
+    SplitU32ToS16s(sPane1Color0, 0);
+    SplitU32ToS16s(sPane1Color1, 0);
+    setGXColorS10(sPane1Alpha0, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(sPane1Alpha1, 0xd2, 0x28, 0x14, 0);
+    SplitU32ToS16s(sPane2Color0, 0);
+    SplitU32ToS16s(sPane2Color1, 0);
+    setGXColorS10(sPane2Alpha0, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(sPane2Alpha1, 0xd2, 0x28, 0x14, 0);
 }

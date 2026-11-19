@@ -8,7 +8,7 @@
 #include "kyoshin/cf/CVisionImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 
 // Event/presentation flag bitfields (.sbss)
-extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)
+extern u32 gmPauseFlags; // secondary mode bitfield (fade/skip status bits)
 
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 addr); // global data/flag memory reader
 
@@ -152,7 +152,7 @@ int realtimeEventStart(VMThread* pThread) {
         skipIfBusy = vmArgBoolGet(2, vmArgPtrGet(pThread, 1));
     }
     int proceeding = 1; // unchanged unless we fall back to wait mode
-    if (skipIfBusy != 0 && (lbl_eu_80663E24 & 0xafa40000) != 0) {
+    if (skipIfBusy != 0 && (gmGameFlags & 0xafa40000) != 0) {
         vmWaitModeSet(pThread);
         proceeding = 0;
     }
@@ -168,7 +168,7 @@ int realtimeEventStart(VMThread* pThread) {
 extern "C" void handleAreaChange__Q22cf13CfGameManagerFv(const char* name);
 int realtimeEventPlay(VMThread* pThread) {
     const char* name = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
-    if (lbl_eu_80663E28 & 0x1) {
+    if (gmPauseFlags & 0x1) {
         vmWaitModeSet(pThread);
     } else {
         handleAreaChange__Q22cf13CfGameManagerFv(name);
@@ -276,8 +276,8 @@ int fadeIn(VMThread* pThread) {
     func_8008566C__Q22cf13CfGameManagerFv(0, color, 1);
     color[3] = eve_sdata2_one;
     func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
-    if ((lbl_eu_80663E24 & 0x80) == 0) {
-        lbl_eu_80663E28 |= 0x2;
+    if ((gmGameFlags & 0x80) == 0) {
+        gmPauseFlags |= 0x2;
     }
     return 0;
 }
@@ -309,8 +309,8 @@ int fadeOut(VMThread* pThread) {
         color[3] = eve_sdata2_zero;
     }
     func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
-    if ((lbl_eu_80663E24 & 0x80) == 0 || fadeActive) {
-        lbl_eu_80663E28 |= 0x2;
+    if ((gmGameFlags & 0x80) == 0 || fadeActive) {
+        gmPauseFlags |= 0x2;
     }
     return 0;
 }
@@ -334,13 +334,13 @@ int checkEvent(VMThread* pThread) {
 }
 
 int clearEventSkip() {
-    lbl_eu_80663E28 &= ~0x100000;
+    gmPauseFlags &= ~0x100000;
     return 0;
 }
 
 // Pushes a VM boolean (TRUE/FALSE) reflecting the requested event flag bit.
 static int eventFlagBool(VMThread* pThread, int shift) {
-    u8 ret = (u8)((((lbl_eu_80663E24 >> shift) & 1) ^ 1) + 1);
+    u8 ret = (u8)((((gmGameFlags >> shift) & 1) ^ 1) + 1);
     vmRetValSet(pThread, (VMArg*)&ret);
     return 1;
 }

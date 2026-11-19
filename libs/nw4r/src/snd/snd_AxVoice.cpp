@@ -53,7 +53,7 @@ AxVoice::AxVoice()
 
 AxVoice::~AxVoice() {}
 
-void AxVoice::Setup(const void* pWave, Format fmt, int rate) {
+void AxVoice::Setup(const void* pWave, SampleFormat fmt, int rate) {
     // Retail inlines the interrupt guard here as plain
     // OSDisableInterrupts/OSRestoreInterrupts calls.
     u32 enabled = OSDisableInterrupts();
@@ -82,8 +82,6 @@ bool AxVoice::IsPlayFinished() const {
 
     u32 addr = samples;
 
-    // NOTE: the header's legacy Format placeholders are unused here; retail
-    // switches on the raw SampleFormat codes (1 = PCM16, 2 = PCM8, 3 = ADPCM).
     switch (mFormat) {
     case SAMPLE_FORMAT_DSP_ADPCM: {
         addr += 0x200;
@@ -209,7 +207,8 @@ void AxVoice::VoiceCallback(void* pArg) {
     AxVoiceManager::GetInstance().ReserveForFreeAxVoice(p);
 }
 
-u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples, Format fmt) {
+u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples,
+                                   SampleFormat fmt) {
     // Fresh-temp form: keeps the cached pointer live across repeated inlined
     // expansions of this helper (retail copies then conditionally overwrites).
     const void* pPhys = pBase;
@@ -244,7 +243,8 @@ u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples, Format fmt) {
     return addr;
 }
 
-u32 AxVoice::GetSampleByDspAddress(const void* pBase, u32 addr, Format fmt) {
+u32 AxVoice::GetSampleByDspAddress(const void* pBase, u32 addr,
+                                   SampleFormat fmt) {
     if (pBase != NULL) {
         pBase = OSCachedToPhysical(pBase);
     }
@@ -276,7 +276,7 @@ u32 AxVoice::GetSampleByDspAddress(const void* pBase, u32 addr, Format fmt) {
     return samples;
 }
 
-u32 AxVoice::GetSampleByByte(u32 addr, Format fmt) {
+u32 AxVoice::GetSampleByByte(u32 addr, SampleFormat fmt) {
     u32 samples = 0;
     u32 frac;
 
@@ -499,8 +499,6 @@ void AxVoice::SetAdpcmLoop(const AdpcmLoopParam* pParam) {
         return;
     }
 
-    // Retail compares the raw field against 3 (SAMPLE_FORMAT_DSP_ADPCM);
-    // the header's legacy Format enum values are placeholders.
     if (mFormat == SAMPLE_FORMAT_DSP_ADPCM) {
         loop.loop_pred_scale = pParam->loop_pred_scale;
         loop.loop_yn1 = pParam->loop_yn1;
@@ -831,13 +829,11 @@ void AxVoice::CalcOffsetAdpcmParam(u16* pPredScale, u16* pYN1, u16* pYN2,
     adpcm.yn1 = rParam.yn1;
     adpcm.yn2 = rParam.yn2;
 
-    // Pass the raw AX sample-format code (3 = DSP ADPCM); the header's Format
-    // placeholders don't match the retail encoding.
     const void* pBuffer = pData;
     u32 addr = GetDspAddressBySample(pBuffer, 0,
-                                     static_cast<Format>(SAMPLE_FORMAT_DSP_ADPCM));
+                                     SAMPLE_FORMAT_DSP_ADPCM);
     u32 end = GetDspAddressBySample(pData, offset,
-                                    static_cast<Format>(SAMPLE_FORMAT_DSP_ADPCM));
+                                    SAMPLE_FORMAT_DSP_ADPCM);
 
     while (addr < end) {
         if (addr % AX_ADPCM_NIBBLES_PER_FRAME == 0) {
@@ -1417,10 +1413,6 @@ void AxVoiceParamBlock::UpdateDelta() {
 } // namespace snd
 } // namespace nw4r
 
-// Retail types this helper's format argument as the raw nw4r::snd::SampleFormat
-// encoding (0 = PCM_S32/none, 1 = PCM_S16, 2 = PCM_S8, 3 = DSP_ADPCM), not the
-// legacy AxVoice::Format placeholder enum used by the read-only header, so the
-// definition carries the retail symbol directly.
 namespace {
 
 // View of the per-voice AX structures written by SetBiquad: AxVoice keeps a
@@ -1470,42 +1462,7 @@ public:
 
 } // namespace
 
-extern "C" u32
-    GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
-        const void* pBase, u32 addr, nw4r::snd::SampleFormat fmt) {
-    if (pBase != NULL) {
-        pBase = OSCachedToPhysical(pBase);
-    }
 
-    u32 samples = 0;
-
-    switch (fmt) {
-    case nw4r::snd::SAMPLE_FORMAT_DSP_ADPCM: {
-        // Nibble address -> sample index within the DSP ADPCM stream.
-        samples = addr - reinterpret_cast<u32>(pBase) * sizeof(u16);
-        // clang-format off
-        samples = (samples % AX_ADPCM_NIBBLES_PER_FRAME) +
-                  (samples / AX_ADPCM_NIBBLES_PER_FRAME * AX_ADPCM_SAMPLES_PER_FRAME) -
-                  sizeof(u16);
-        // clang-format on
-        break;
-    }
-
-    case nw4r::snd::SAMPLE_FORMAT_PCM_S8: {
-        samples = addr - reinterpret_cast<u32>(pBase);
-        break;
-    }
-
-    case nw4r::snd::SAMPLE_FORMAT_PCM_S16: {
-        samples = addr - reinterpret_cast<u32>(pBase) / sizeof(u16);
-        break;
-    }
-    }
-
-    return samples;
-}
-
-// IsNeedNextUpdate compares AxVoice's private mMixPrev (offset 0x1E) against
 // rParam field-by-field. The header is read-only this session, so the retail
 // entry point keeps its verbatim symbol and reads mMixPrev through a
 // layout-matched view instead of member access.

@@ -85,5 +85,5 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSysWinSelect* lbl_eu_80663FDC;  // singleton instance pointer (.sbss)
-extern u32 lbl_eu_80663E28;             // cbRenderBefore flag (.sbss)
+extern u32 gmPauseFlags;             // cbRenderBefore flag (.sbss)
 

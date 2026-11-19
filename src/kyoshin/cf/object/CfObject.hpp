@@ -245,7 +245,7 @@ namespace cf {
         float mFloat60;            // 0x60-0x63
         u32 unk64;                  // 0x64-0x67
         u32 mFlags68;               // 0x68-0x6B
-        u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
+        u32 field_0x6C;             // 0x6C-0x6F
     };
 
     class CfObjectModel;

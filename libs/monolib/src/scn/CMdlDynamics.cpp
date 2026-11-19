@@ -64,17 +64,6 @@ extern const char lbl_eu_80526300[]; // warning message
 extern const char lbl_eu_8052ADB0[]; // asin-domain warning file
 extern const char lbl_eu_8052AD88[]; // asin-domain warning message
 
-// --- .sdata2 constants ---
-extern const float lbl_eu_8066B3E8;  // -1.0f (asin domain low bound)
-extern const float lbl_eu_8066B3EC;  // radians-per-FIdx scale
-extern const float lbl_eu_8066B3F4;  // impulse scale (targets 4/5)
-extern const float lbl_eu_8066B3E4;  // contact-point scale (pos sum, kinds 1/2/3)
-extern const float lbl_eu_8066B3F8;  // velocity relax scale (entry physics)
-extern const float lbl_eu_8066B3FC;  // position relax scale (entry physics)
-extern const float lbl_eu_8066B3D8;  // min length-squared epsilon
-extern const float lbl_eu_8066B3DC;  // normalized-direction scale
-extern const float lbl_eu_8066B3E0;  // velocity decay scale
-
 // --- Cross-TU math/scene helpers invoked by MdlDyn_Update ---
 extern "C" void noopAnimVec3(nw4r::math::VEC3* p);
 extern "C" void noopAnimQuat(void* p);
@@ -114,7 +103,7 @@ extern "C" float scaleByGlobal(float val);
 extern "C" void zeroFirstWord(void* self);   // zero the u32 at self
 extern "C" void ScnFilterMan_setFlags(u32* self, u32 flags); // OR flag bits
 // "DCbal"/"DCpla"/"DCcyl" tag-pointer table (defined in CMdlLook.cpp)
-extern "C" u32 lbl_eu_805701F0[3];
+extern "C" u32 sMdlAnchorTagNames[3];
 extern const char lbl_eu_80524840[]; // "Dwet\0Ddmp\0Dsta\0Dbld\0Dlrx..." tags
 
 extern const char lbl_eu_80570230[]; // panic file name (shape payload checks)
@@ -855,7 +844,7 @@ void MdlDyn_BuildElem(MdlDynObj* model, CMdlDynList* list, u32 index) {
     u32 ids[36];
     u32 matchCount = 0;
     for (u32 j = 0; j < 3; j++) {
-        const char* tagName = (const char*)lbl_eu_805701F0[j];
+        const char* tagName = (const char*)sMdlAnchorTagNames[j];
         found = MdlDyn_FindDictEntry(&dictA, tagName);
         MdlDyn_StoreEntryPtr((u8*)&entry, &found);
         if (!MdlDyn_HasDictEntry(&entry)) {
@@ -1461,7 +1450,7 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     f32 one = lbl_eu_8066B3D4;
     u32 frame = 0;
     f32 zero = lbl_eu_8066B3D0;
-    f32 eps = lbl_eu_8066B3D8;
+    f32 eps = 0.36f;
     while (frame < (u32)MdlDyn_GetFrameCount((u8*)self->field_0x4)) {
         CMdlDynList** lstIt = (CMdlDynList**)MdlDyn_GetListBase((u8*)&self->buf08);
         while (lstIt != (CMdlDynList**)MdlDyn_GetListEnd((u8*)&self->buf08)) {
@@ -1548,11 +1537,11 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                     f32 lsq = cfCam_vecLenSq(&v118);
                     if (lsq < eps) {
                         cfCam_psScaleVec(&v118, one / sqrtf(lsq));
-                        cfCam_psScaleVec(&v118, lbl_eu_8066B3DC);
+                        cfCam_psScaleVec(&v118, 0.6f);
                     }
                     addVec3f(&e->field_0x68, &v118);
                     addVec3f(&e->field_0x80, &v118);
-                    cfCam_psScaleVec(&e->field_0x74, lbl_eu_8066B3E0);
+                    cfCam_psScaleVec(&e->field_0x74, 0.4f);
                 }
 
                 // Pose solve: inverse anchor -> local space, quat blending.
@@ -1740,13 +1729,13 @@ extern "C" s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
     // aimMdlLook pitch clamp.
     if (s >= lbl_eu_8066B3D4) {
         if (s > lbl_eu_8066B3D4) {
-            s = lbl_eu_8066B3E8;
+            s = -1.0f;
         }
     } else {
         s = lbl_eu_8066B3D4;
     }
-    if (s < lbl_eu_8066B3E8) {
-        s = lbl_eu_8066B3E8;
+    if (s < -1.0f) {
+        s = -1.0f;
     } else if (s > lbl_eu_8066B3D4) {
         s = lbl_eu_8066B3D4;
     }
@@ -1754,7 +1743,7 @@ extern "C" s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
     if (s <= lbl_eu_8066B3D4) {
         inDomain = 1;
     }
-    if (s >= lbl_eu_8066B3E8) {
+    if (s >= -1.0f) {
         inDomain = 1;
     }
     if (!inDomain) {
@@ -1772,34 +1761,31 @@ extern "C" s32 MdlDyn_QuatToEuler(const Quaternion* q, nw4r::math::VEC3* out) {
     if (pitch >= ml::halfpi) {
         // High singularity: yaw is well-defined, roll collapses.
         f32 ang = nw4r::math::Atan2FIdx(xy - cd, 1.0f - (aa + cc));
-        out->x = lbl_eu_8066B3EC * ang;
+        out->x = 0.024543693f * ang;
         out->z = lbl_eu_8066B3D0;
         ret = 0;
     } else if (pitch <= -ml::halfpi) {
         // Low singularity: same angle, negated roll.
         f32 ang = nw4r::math::Atan2FIdx(xy - cd, 1.0f - (aa + cc));
         out->z = lbl_eu_8066B3D0;
-        out->x = -(lbl_eu_8066B3EC * ang);
+        out->x = -(0.024543693f * ang);
         ret = 0;
     } else {
         f32 bb = q->y * y2; // 2y^2
         f32 bc = q->y * z2; // 2yz
         f32 ad = q->w * x2; // 2wx
         f32 angY = nw4r::math::Atan2FIdx(bc + ad, 1.0f - (aa + bb));
-        out->x = lbl_eu_8066B3EC * angY;
+        out->x = 0.024543693f * angY;
         f32 angZ = nw4r::math::Atan2FIdx(xy + cd, 1.0f - (bb + cc));
-        out->z = lbl_eu_8066B3EC * angZ;
+        out->z = 0.024543693f * angZ;
         ret = 1;
     }
     return ret;
 }
 
 // Converts a radian rotation vector to rotation indices and builds the XYZ
-// rotation matrix (retail tail-call; 128/pi scale pooled at lbl_eu_8066B3F0,
-// owned by the CGXCache .sdata2 pool). Referenced through the named extern so
-// this TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
+// rotation matrix (retail tail-call; 128/pi scale is a compiler literal).
 extern "C" nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32* v) {
-    extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
     // k is born first (f0) but loaded after z: declare it first, assign it
     // after z's load, so the SDA21 scale-factor load lands on slot 1 like
     // retail. x/y/z declared ascending (f1/f2/f3) with the assignments run
@@ -1807,7 +1793,7 @@ extern "C" nw4r::math::MTX34* MdlDyn_SetRotXYZ(nw4r::math::MTX34* mtx, const f32
     f32 k;
     f32 x, y, z;
     z = v[2];
-    k = lbl_eu_8066B3F0;
+    k = 40.743664f;
     y = v[1];
     x = v[0];
     return nw4r::math::MTX34RotXYZFIdx(mtx, k * x, k * y, k * z);
@@ -1934,7 +1920,7 @@ extern "C" s32 MdlDyn_PushSphere(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::ma
         *(ml::CVec3*)pos = *(ml::CVec3*)pos + diff * radius;
 
         *(ml::CVec3*)out =
-            (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
+            (*(ml::CVec3*)pos - orig) * 0.7f;
         return 1;
     }
 fail:
@@ -2038,7 +2024,7 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
 
             s32 ret = 1;
             *(ml::CVec3*)pos = ml::CVec3(*(ml::CVec3*)&ret4);
-            *(ml::CVec3*)out = (*(ml::CVec3*)pos - orig) * lbl_eu_8066B3F4;
+            *(ml::CVec3*)out = (*(ml::CVec3*)pos - orig) * 0.7f;
             return ret;
         }
     }
@@ -2115,7 +2101,7 @@ extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math:
 
                 *(ml::CVec3*)&tgt->pos68 = p2;
                 ml::CVec3 diff = *(ml::CVec3*)&tgt->pos68 - p2;
-                delta = diff * lbl_eu_8066B3F4;
+                delta = diff * 0.7f;
             }
             if (hit) {
                 nw4r::math::VEC3Add(&tgt->vel74, &tgt->vel74, (nw4r::math::VEC3*)&delta);
@@ -2191,11 +2177,11 @@ void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
     CMdlDynElem* pAcc = &elem;
     ml::CVec3* zeroVec = &ml::CVec3::zero;
     CMdlDynList** it = (CMdlDynList**)this->buf08.field_0x0;
-    const f32 blendK = lbl_eu_8066B3E4;   // contact-point scale
+    const f32 blendK = 0.5f;   // contact-point scale
     const f32 clipY = lbl_eu_8066B3D0;    // view-space y threshold
-    const f32 penScale = lbl_eu_8066B3F4; // penetration scale
-    const f32 relaxScale = lbl_eu_8066B3F8;
-    const f32 relaxPos = lbl_eu_8066B3FC;
+    const f32 penScale = 0.7f; // penetration scale
+    const f32 relaxScale = 0.9f;
+    const f32 relaxPos = 0.1f;
 
     while (it != (CMdlDynList**)this->buf08.field_0x0 +
                       this->buf08.field_0x4) {

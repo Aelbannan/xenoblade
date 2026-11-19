@@ -5,7 +5,7 @@
 //   UnkClass_8047E064 -- setup/init wrapper
 //
 // All methods call the global scene manager at lbl_eu_80658560
-// (UnkClass_8047E110) and the node-pool manager at lbl_eu_80658540
+// (UnkClass_8047E110) and the node-pool manager at sWalkTableLocator
 // (UnkClass_8047CD0C).
 //
 // Retail main.dol is stripped; symbols.txt annotates every method as Fv
@@ -75,7 +75,7 @@ struct UnkClass_8047E064 {
 extern "C" {
 
 extern u8 lbl_eu_80658560[]; // UnkClass_8047E110 scene manager (bss 0xA8)
-extern u8 lbl_eu_80658540[]; // UnkClass_8047CD0C node pool (bss)
+extern u8 sWalkTableLocator[]; // UnkClass_8047CD0C node pool (bss)
 
 extern const f64 lbl_eu_8066A888; // 2^52 (int->float magic)
 
@@ -133,7 +133,7 @@ void UnkClass_8047E064::initScnDefaults() {
 
 // attachScnNode -- attach to node pool (0x54)
 extern "C" void attachScnNode__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u16 val) {
-    self->mField0 = (u32)getNodeBlock__17UnkClass_8047CD0CFv(lbl_eu_80658540);
+    self->mField0 = (u32)getNodeBlock__17UnkClass_8047CD0CFv(sWalkTableLocator);
     self->mFlags |= 2;
     self->mField1E = val;
 }

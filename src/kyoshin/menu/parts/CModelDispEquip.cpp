@@ -127,8 +127,8 @@ extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquip* self) {
     struct V3 {
         u32 w[3];
     };
-    *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
-    *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
+    *(V3*)self->scale1 = *(const V3*)equipScaleBaseA;
+    *(V3*)self->scale2 = *(const V3*)equipScaleBaseB;
     ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
@@ -398,7 +398,7 @@ extern "C" void ModelDispEquip_BuildPartyModel(CModelDispEquip* self) {
     CModelDispMca mca;
     f32 tmpB[3];
     f32 tmpA[3];
-    u32* srcp = lbl_eu_80507FD0;
+    u32* srcp = equipFilterTripleAlt;
     src[0] = *srcp++;
     src[1] = *srcp++;
     src[2] = *srcp++;
@@ -727,7 +727,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     pushAnimNode(&holder->actParam, holder->field_0x04, f7);
     holder->actParam.field_0x0C &= ~0x800000;
     setAnimSubPos(&holder->actParam,
-                  (const f32*)writeVec3f(tmpB, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274));
+                  (const f32*)writeVec3f(tmpB, 0.2f, lbl_eu_80668274, lbl_eu_80668274));
     holder->actParam.field_0x0C |= 0x160;
     // Copy-then-adjust shape (retail cmpwi/mr/beq/addi): default is self
     // itself, not null.
@@ -735,7 +735,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     if (self != 0)
         parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
     ModelDispEquip_SetActParamParent(&holder->actParam, parentArg);
-    writeVec3f(tmpA, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
+    writeVec3f(tmpA, 0.2f, lbl_eu_80668274, lbl_eu_80668274);
     // Word-copy gives retail's lwz/stw color schedule (float assigns would
     // emit lfs/stfs). f8 is interleaved mid-copy like retail.
     struct V3 {
@@ -829,7 +829,7 @@ void ModelDispEquip_TickAnim(CModelDispEquip* self) {
         getInstance__Q22ml6MTRandFv();
         u32 r = rand31__Q22ml6MTRandFv();
         s32 sign = (s32)(((r & 1) ^ (r >> 31)) - (r >> 31));
-        s32 anim = lbl_eu_80662738[sign];
+        s32 anim = equipSignAnimTable[sign];
         if ((anim == 0x12 && holder->actParam.field_0x374 == 0) ||
             (anim == 0x7 && holder->actParam.field_0x374 == 0xb)) {
             func_8004B9D4(&holder->actParam, (int)anim, 0, -1, 0);
@@ -923,7 +923,7 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
     if (holder->field_0x00 != parent->field_0x3A0) return;
     // 12-byte filter triple: retail copies it as one struct value (lis/lwzu/
     // lwz/lwz into r6/r5/r4/r0) before storing to the stack slot.
-    CModelDispFilterTbl tbl = *(const CModelDispFilterTbl*)lbl_eu_80507FDC;
+    CModelDispFilterTbl tbl = *(const CModelDispFilterTbl*)equipFilterTriple;
     CfEnumListHolder lh;
     startEnumObjects(((CModelDispEnumList*)lh.get()), tbl.slot[self->equipSlot], 0);
     // Fresh enum-list walks: the count check and the slot lookup each re-call
@@ -1275,8 +1275,8 @@ void ModelDispEquip_ResetColorStep(CModelDispEquip* self) {
     struct V3 {
         u32 w[3];
     };
-    *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
-    *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
+    *(V3*)self->scale1 = *(const V3*)equipScaleBaseA;
+    *(V3*)self->scale2 = *(const V3*)equipScaleBaseB;
     ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
@@ -1303,8 +1303,8 @@ void ModelDispEquip_ResetColorWhite(CModelDispEquip* self) {
     struct V3 {
         u32 w[3];
     };
-    *(V3*)self->scale1 = *(const V3*)lbl_eu_80576550;
-    *(V3*)self->scale2 = *(const V3*)lbl_eu_8057655C;
+    *(V3*)self->scale1 = *(const V3*)equipScaleBaseA;
+    *(V3*)self->scale2 = *(const V3*)equipScaleBaseB;
     ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
 }
 
@@ -1312,8 +1312,8 @@ void ModelDispEquip_ResetColorWhite(CModelDispEquip* self) {
 // us-802036f0 | sinit_802019F8
 // ============================================================
 extern "C" void sinit_802019F8() {
-    writeVec3f(lbl_eu_80576550, lbl_eu_80668274, lbl_eu_8066829C, lbl_eu_80668278);
-    writeVec3f(lbl_eu_8057655C, lbl_eu_80668274, lbl_eu_80668270, lbl_eu_80668274);
+    writeVec3f(equipScaleBaseA, lbl_eu_80668274, lbl_eu_8066829C, lbl_eu_80668278);
+    writeVec3f(equipScaleBaseB, lbl_eu_80668274, lbl_eu_80668270, lbl_eu_80668274);
 }
 
 // ============================================================

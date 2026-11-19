@@ -89,5 +89,5 @@ void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 extern CMenuBattleEnd* lbl_eu_80664898;

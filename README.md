@@ -69,11 +69,11 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19300 |
 | Buildable | 19300 |
-| Accepted | 15402 (`FULL_MATCH` 15393 · `EQUIVALENT_MATCH` 9) |
-| Accepted bytes | 2184508 / 4929516 (44.3%) of catalogued function bytes |
-| — `FULL_MATCH` bytes | 2183572 (44.3%) |
+| Accepted | 15403 (`FULL_MATCH` 15394 · `EQUIVALENT_MATCH` 9) |
+| Accepted bytes | 2184660 / 4929516 (44.3%) of catalogued function bytes |
+| — `FULL_MATCH` bytes | 2183724 (44.3%) |
 | — `EQUIVALENT_MATCH` bytes | 936 (0.0%) |
-| Active (in progress) | 3432 |
+| Active (in progress) | 3431 |
 | Code-only units (`MatchingCodeOnly`: code linked, data owned elsewhere; not counted as data) | 4 (`CTaskGamePic`, `bta_hh_utils`, `snd_Task`, `CLib`) |
 
 <!-- END GENERATED COOP STATUS -->

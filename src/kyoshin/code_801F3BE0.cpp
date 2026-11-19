@@ -88,7 +88,7 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickLock(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickElv(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickWarp(CGimmickEntry* self, int row);
 // Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
-extern u8* lbl_eu_8066412C;
+#include "kyoshin/cf/CfBdat.hpp"  // owning header for gLockBdatTable
 extern u8* lbl_eu_80664130;
 extern u8* lbl_eu_80664134;
 // Bdat table pointers for the object / jump / item / enemy tables (sda21
@@ -253,7 +253,7 @@ bool GimSpawnObjects(CGimmickGlobal* self) {
 // GimSpawnLocks: spawn the lock gimmicks from the lock bdat table. Returns
 // false if the 0x80-slot container fills up mid-spawn.
 bool GimSpawnLocks(CGimmickGlobal* self) {
-    u8* bdat = lbl_eu_8066412C;
+    u8* bdat = gLockBdatTable;
     if (bdat == NULL)
         return true;
     self->mFlags |= 0x200;

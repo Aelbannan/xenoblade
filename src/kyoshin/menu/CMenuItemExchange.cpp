@@ -105,7 +105,7 @@ void CMenuItemExchange::Term() {
     IScnRender* render = this;
     mScene->removeRenderCB(render);
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mItemBoxLine.UnloadFiles();
     mItemBoxGrid.UnloadItemBox();
     lbl_eu_80664428 = 0;
@@ -125,7 +125,7 @@ void CMenuItemExchange::Term() {
 void CMenuItemExchange::Move() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() == 0) {
-        if ((lbl_eu_80663E28 & 0x200000) == 0) {
+        if ((gmPauseFlags & 0x200000) == 0) {
             goto body;
         }
     }
@@ -147,7 +147,7 @@ body:
     BgTex_Tick_3D54(&mBgTex);
     mItemBoxLine.UpdateStates();
     mItemBoxGrid.UpdateItemBox();
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
 }
 
 /*
@@ -159,7 +159,7 @@ body:
 void CMenuItemExchange::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & 0x200000) == 0) {
+        (gmPauseFlags & 0x200000) == 0) {
         goto body;
     }
     goto end;
@@ -173,7 +173,7 @@ body:
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         mItemBoxLine.DrawLayout(&drawInfo);
         mItemBoxGrid.DrawItemBoxGrid(&drawInfo);
-        drawHelp(&mTitleAHelp, &drawInfo);
+        mTitleAHelp.drawHelp(&drawInfo);
     }
 }
 
@@ -207,7 +207,7 @@ void CMenuItemExchange::Phase0Load() {
     if (BgTex_IsLoaded_3E34(&mBgTex) != 0 &&
         mTitleAHelp.isInitialized() != 0 &&
         mItemBoxLine.GetSelectReady() != 0) {
-        func_801C412C(&mTitleAHelp);
+        mTitleAHelp.func_801C412C();
         mItemBoxLine.OpenLine();
         mItemBoxGrid.LoadItemBoxFiles();
         field_5118 = 1;
@@ -218,7 +218,7 @@ void CMenuItemExchange::Phase0Load() {
 /* Exchange-menu phase gate: once the title/help bar is idle and the item-box
  * line is ready, advance the menu to phase 2 (field_5118). */
 void CMenuItemExchange::GateFrom1() {
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxLine.IsReadyFlag() != 0) {
         field_5118 = 2;
     }
@@ -229,7 +229,7 @@ __declspec(noinline) void CMenuItemExchange::Phase2Idle() {}
 /* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
  * advances the menu to phase 1 (field_5118). */
 void CMenuItemExchange::GateFrom3() {
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxLine.IsReadyFlag() != 0 &&
         mItemBoxGrid.GetField61() != 0) {
         mField64 = 1;
@@ -240,15 +240,15 @@ void CMenuItemExchange::GateFrom3() {
  * leaves the initial value, apply the grid selection to help bar + line and
  * advance to phase 5, kicking menu-op 0x6d. */
 void CMenuItemExchange::Phase4Fade() {
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxLine.IsReadyFlag() != 0 &&
         mItemBoxGrid.IsItemBoxReady() != 0) {
         mFloat5120 = mFloat5120 + lbl_eu_80667E7C;
         if (!(mFloat5120 <= lbl_eu_80667E7C)) {
             mFloat5120 = lbl_eu_80667E78;
-            func_801C41E8(&mTitleAHelp, mItemBoxGrid.GetPromptState());
+            mTitleAHelp.func_801C41E8(mItemBoxGrid.GetPromptState());
             mItemBoxGrid.SetInfoMsgId(mItemBoxLine.TouchTabEntryItem());
-            reopenFromClose(&mTitleAHelp);
+            mTitleAHelp.reopenFromClose();
             mItemBoxGrid.InitItemDisplay();
             field_5118 = 5;
             playUISound(0x6d);
@@ -259,7 +259,7 @@ void CMenuItemExchange::Phase4Fade() {
 /* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
  * advances the menu to phase 6 (field_5118). */
 void CMenuItemExchange::GateFrom5() {
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxGrid.GetField61() != 0) {
         field_5118 = 6;
     }
@@ -294,7 +294,7 @@ void CMenuItemExchange::Phase6Input() {
             mItemBoxGrid.HandleCancelBtn(0);
         } else if (mItemBoxGrid.GetExchFlag52C() == 0 &&
                    mItemBoxGrid.IsSubWinActive() == 0) {
-            markReplayClose(&mTitleAHelp);
+            mTitleAHelp.markReplayClose();
             mItemBoxGrid.AdvanceBoxState();
             field_5118 = 7;
         }
@@ -313,15 +313,15 @@ void CMenuItemExchange::Phase6Input() {
     }
 
     // Help bar follows the grid's current mode.
-    func_801C41E8(&mTitleAHelp, mItemBoxGrid.GetPromptState());
+    mTitleAHelp.func_801C41E8(mItemBoxGrid.GetPromptState());
     if (mItemBoxGrid.GetExchFlag52C() != 0) {
         lbl_eu_8066442C = mItemBoxGrid.GetField52D();
-        beginClose(&mTitleAHelp);
+        mTitleAHelp.beginClose();
         mItemBoxGrid.AdvanceBoxState();
         field_5118 = 3;
     }
     if (mItemBoxGrid.GetIdleFlag542() != 0) {
-        markReplayClose(&mTitleAHelp);
+        mTitleAHelp.markReplayClose();
         mItemBoxGrid.AdvanceBoxState();
         field_5118 = 7;
     }
@@ -331,10 +331,10 @@ void CMenuItemExchange::Phase6Input() {
  * ready, reset the help bar to mode 0, stop its animation, finish the line
  * load and advance the menu to phase 8 (field_5118). */
 void CMenuItemExchange::Phase7Entry() {
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxGrid.GetField61() != 0) {
-        func_801C41E8(&mTitleAHelp, 0);
-        reopenFromClose(&mTitleAHelp);
+        mTitleAHelp.func_801C41E8(0);
+        mTitleAHelp.reopenFromClose();
         mItemBoxLine.OpenLine();
         field_5118 = 8;
     }
@@ -343,7 +343,7 @@ void CMenuItemExchange::Phase7Entry() {
 /* Exchange-menu phase gate: twin of GateFrom1 (idle help bar + ready
  * item-box line) advancing the menu to phase 2. */
 void CMenuItemExchange::GateFrom8() {
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxLine.IsReadyFlag() != 0) {
         field_5118 = 2;
     }

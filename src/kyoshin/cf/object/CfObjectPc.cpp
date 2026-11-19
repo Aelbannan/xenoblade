@@ -12,32 +12,8 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 // (CtrlObjectParam_GetCharEntry is declared by kyoshin/cf/object/CAIAction.hpp - u16 form;
 // including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
-// Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
-// retail declaration order (emission follows first use; code uses alone
-// would permute the two conversion doubles).
-extern "C" void capdatatouch_CfObjectPc(void) {
-    // MWCC drops unreferenced const scalars, so volatile-read each label
-    // in retail order (plain reads fold away). lbl_eu_80666B08 is only
-    // referenced cross-TU (CfResPcImpl) and would otherwise trail the pool.
-    volatile float sinkf;
-    sinkf = lbl_eu_80666B08;
-    sinkf = lbl_eu_80666B0C;
-    sinkf = lbl_eu_80666B10;
-    sinkf = lbl_eu_80666B14;
-    sinkf = lbl_eu_80666B18;
-    sinkf = lbl_eu_80666B1C;
-    sinkf = lbl_eu_80666B20;
-    sinkf = lbl_eu_80666B24;
-    sinkf = lbl_eu_80666B28;
-    volatile double sinkd;
-    sinkd = lbl_eu_80666B30;
-    sinkf = lbl_eu_80666B38;
-    sinkd = lbl_eu_80666B40;
-    (void)sinkf;
-    (void)sinkd;
-}
 
 namespace cf {
 // CfObjectPoint: leaf over CfObject so slot 0x70 is CfObject_notifyEventDone
@@ -377,7 +353,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc4() {
 
     // Gauge scale: slot 0x8C value times the global scale factor.
     float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)this + 0x3E9C)->CfObject_getMoveSpeedRate();
-    float scaled = Scn_GetFrameDelta(lbl_eu_80663E14) * gauge;
+    float scaled = Scn_GetFrameDelta(gmScene) * gauge;
     CActorParam_updateTick(this, scaled, 1);
 
     cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)this + 4);
@@ -558,7 +534,7 @@ int cf::CfObjectPc::CActorParam_UnkVirtualFunc178() {
 // matched row was applied.
 // C linkage: retail's symbol is the unmangled CfObjectPc_refreshGauge.
 extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
-    if ((lbl_eu_80663E24 & 0xAFA40000u) != 0) {
+    if ((gmGameFlags & 0xAFA40000u) != 0) {
         return 0;
     }
     if (((CfObjectPcSubFields*)self)->mPtr3F60 != NULL) {
@@ -591,9 +567,9 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
         u32 fourB0 =
             ((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4B0;
         // key lookup mirrors CfObjectEne.cpp: area word indexes a table at
-        // lbl_eu_80663E44 with a x100 byte stride; result adds the offset back.
-        u32 modeOff = (u32)lbl_eu_80663E42 * 100;
-        int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
+        // gmGlobalFlag44 with a x100 byte stride; result adds the offset back.
+        u32 modeOff = (u32)gmGlobalFlag42 * 100;
+        int channel = (int)*(u16*)((u8*)&gmGlobalFlag44 + modeOff) + (int)modeOff;
         Bdat_GetTable_AA34();
         void* mgr = lbl_eu_806640D4;
         int i = Bdat_GetRowBase_B41C(mgr);
@@ -606,7 +582,7 @@ extern "C" int CfObjectPc_refreshGauge(cf::CfObjectPc* self, int flag) {
             if ((int)(u16)vB != channel) continue;
             u32 vC = getBdatStringColumnValue(mgr, names + 0x49, i);
             float sv = self->CfObject_getMoveSpeedRate();
-            float newGauge = Scn_GetFrameDelta(lbl_eu_80663E14) * sv +
+            float newGauge = Scn_GetFrameDelta(gmScene) * sv +
                 ((CfObjectPcSubFields*)self)->field_0x45C0;
             ((CfObjectPcSubFields*)self)->field_0x45C0 = newGauge;
             double thr = (double)(int)((vC & 0xFF) * 30);
@@ -685,8 +661,8 @@ __declspec(section ".rodata") __attribute__((used, aligned(4)))
 const char lbl_eu_804FC5EC[0x5C] = "tp_atk\0tp_arts\0tp_atkdmg\0tp_artsdmg\0wpn_type\0JUhead\0level_exp\0mat_no\0map\0interval\0dmg";
 
 // .sdata2 pool (retail 0x40) as typed consts in retail declaration order.
-// lbl_eu_80666B08 is code-orphaned; the touch function below keeps it live.
-// The two doubles are the int/uint-double conversion magic (HI + 2^52).
+// lbl_eu_80666B08 has no code use in this TU; it is still part of the retail
+// pool. The two doubles are the int/uint-double conversion magic (HI + 2^52).
 __declspec(section ".sdata2") __attribute__((used))
 const float lbl_eu_80666B08 = 32.2f;
 __declspec(section ".sdata2") __attribute__((used))

@@ -16,10 +16,7 @@ extern char lbl_eu_80505DE8[];
 // (retail .text relocs), so no local pool is emitted and our .sdata2 is
 // exactly the split's 0x4C.
 
-// Pane visibility helper (retail bare symbol; canonical extern "C" decl).
-extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
 
-// --- .sdata2 (retail content 0x4C) ---
 // First word: the 0.0f the anim transforms are reset to (SetFrame(0.0f) loads
 // it via sda21). It is followed immediately by the compiler-emitted RTTI class
 // name strings with no padding, so the section stays at the split's 0x4C.

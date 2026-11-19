@@ -73,8 +73,8 @@ extern "C" void* memset(void*, int, unsigned long);
 extern s8 lbl_eu_806642C8;
 
 // Game-state flag words (CUICfManager .sbss) read by ArtsSelect_SyncRows.
-extern u32 lbl_eu_80663E24;
-extern u32 lbl_eu_80663E28;
+extern u32 gmGameFlags;
+extern u32 gmPauseFlags;
 
 // Column-name pool for the map-object spawn table (.rodata, other split).
 extern u8 lbl_eu_805038C8[];

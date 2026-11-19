@@ -63,7 +63,7 @@ void selectLodTexCoord(s32 value) {
 
     u32 offset = ((u32)value << 1) & 0x7C;
     s32 lowBit = value & 1;
-    LodTexCoordSetup handler = *(LodTexCoordSetup*)((u8*)lbl_eu_8056D728 + offset);
+    LodTexCoordSetup handler = *(LodTexCoordSetup*)((u8*)sLodTexCoordSetupTable + offset);
     s32 highByte = value >> 8;
     lbl_eu_806657D0 = value;
     handler(lowBit + 2, highByte);
@@ -83,7 +83,7 @@ extern const char lbl_eu_8052CF20[];
 extern const char lbl_eu_80661E98[];
 extern const char lbl_eu_80661EA8[];
 
-extern u32 lbl_eu_80658348[];   // tex-mtx work table (0x38 / 0x68 blocks)
+extern u32 sAmbientScaleLut[];   // tex-mtx work table (0x38 / 0x68 blocks)
 extern u32 lbl_eu_80665780;     // bound ResFile pointer
 
 // reloadChildGxLights is a real LOD::LODG3dMgr member (UnkClass_8046D144.hpp).
@@ -184,7 +184,7 @@ extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
                                                            LodDrawObj* obj) {
     LodRes11xx* res =
         (LodRes11xx*)((LodSceneResPtr*)item->field_0x64)->field_0x08;
-    u32* mtx = lbl_eu_80658348;
+    u32* mtx = sAmbientScaleLut;
 
     mtx[0] = res->field_0x11A8;
     mtx[1] = res->field_0x11AC;
@@ -198,15 +198,15 @@ extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     lbl_eu_806657D0 = -1;
     lbl_eu_806657D4 = -1;
     lbl_eu_806657D8 = -1;
-    lbl_eu_806657DC = -1;
-    lbl_eu_806657E0 = 0;
+    sLastColorChanMode = -1;
+    sLastAlphaChanMode = 0;
     lbl_eu_806657F8 = -1;
-    lbl_eu_80665818 = 0;
+    sCachedCurrentMtx = 0;
     lbl_eu_80665800 = (-1.0f);
     lbl_eu_80665804 = 0;
     lbl_eu_8066580C = 0;
     lbl_eu_806657E8 = 0;
-    lbl_eu_80665814 = 0xFF;
+    sAmbientAlpha = 0xFF;
 
     Vec v;
     v.x = 10000.0f;
@@ -214,16 +214,16 @@ extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     v.z = 0.0f;
     PSMTXMultVec(*lbl_eu_80657FD8, &v, &v);
 
-    lbl_eu_806657EC = obj->field_0x410;
-    lbl_eu_806657F0 = obj->field_0x69C;
-    lbl_eu_806657F4 = obj->field_0x928;
-    f32 (*mtxBlock)[3][4] = (f32 (*)[3][4])(void*)((u8*)lbl_eu_80658348 + 0x38);
+    sLodLightMask0 = obj->field_0x410;
+    sLodLightMask1 = obj->field_0x69C;
+    sLodLightMask2 = obj->field_0x928;
+    f32 (*mtxBlock)[3][4] = (f32 (*)[3][4])(void*)((u8*)sAmbientScaleLut + 0x38);
     GXLoadTexMtxImm(*mtxBlock, 0x40, GX_MTX_3x4);
 
     nw4r::g3d::Camera cam =
         ((nw4r::g3d::ScnRoot*)getScnRootSlot10(item))->GetCurrentCamera();
     cam.GetProjectionTexMtx(
-        (nw4r::math::MTX34*)(void*)((u8*)lbl_eu_80658348 + 0x68));
+        (nw4r::math::MTX34*)(void*)((u8*)sAmbientScaleLut + 0x68));
 
     scnLgtEnterMode20((CScnEnvLgtCtrl*)item->field_0x7C);
     lbl_eu_806657FC = 1;
@@ -233,8 +233,8 @@ extern "C" void setupLodTexFog__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
 
 void LOD::UnkClass_804645CC::refreshLodView() {
     if ((lbl_eu_806657E8 & 1) == 0) {
-        if (lbl_eu_80665818 != 0) {
-            lbl_eu_80665818 = 0;
+        if (sCachedCurrentMtx != 0) {
+            sCachedCurrentMtx = 0;
             GXSetCurrentMtx(0);
         }
         GXSetCullMode(GX_CULL_NONE);
@@ -246,7 +246,7 @@ void LOD::UnkClass_804645CC::refreshLodView() {
 
 // Store 0xFF into the pending-value slot and clear flag bit 1 of the state word.
 void LOD::UnkClass_804645CC::resetLodFlags() {
-    lbl_eu_80665814 = 0xFF;
+    sAmbientAlpha = 0xFF;
     lbl_eu_806657E8 &= ~2u;
 }
 
@@ -254,15 +254,15 @@ void LOD::UnkClass_804645CC::resetLodFlags() {
 // us-8046931c  applyLodRecState  (per-record render-state apply)
 // ---------------------------------------------------------------------------
 void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value) {
-    u8* tbl = (u8*)lbl_eu_8056D728;
+    u8* tbl = (u8*)sLodTexCoordSetupTable;
     LodStateRec* rec = (LodStateRec*)(lbl_eu_8066581C + value * 0x2c);
 
     if ((rec->field_0x0C & 0x40) != 0) {
         f32 cur = getLodCacheObject__Q23LOD17UnkClass_8046368CFv(rec->field_0x1E);
         f32 delta = 1.0f - cur;
         if (1.0f != delta) {
-            s32 fade = lbl_eu_80665814;
-            lbl_eu_80665814 = (s32)((f32)fade * delta);
+            s32 fade = sAmbientAlpha;
+            sAmbientAlpha = (s32)((f32)fade * delta);
             lbl_eu_806657E8 |= 2;
         }
     }
@@ -302,8 +302,8 @@ void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value) {
             goto checkTail;
         }
 
-        if (lbl_eu_806657E0 != 3) {
-            lbl_eu_806657E0 = 3;
+        if (sLastAlphaChanMode != 3) {
+            sLastAlphaChanMode = 3;
             GXSetChanCtrl(GX_ALPHA0, GX_DISABLE, GX_SRC_REG, GX_SRC_VTX,
                           GX_LIGHT0, GX_DF_NONE, GX_AF_NONE);
         }
@@ -322,7 +322,7 @@ void applyLodRecState__Q23LOD17UnkClass_804645CCFv(s32 value) {
 checkTail:
     // Only refresh the material colour / fog when the distance changed.
     if ((rec->field_0x0C & 0x20) != 0 &&
-        lbl_eu_80665800 != lbl_eu_80665754) {
+        lbl_eu_80665800 != sLodThresholdDist) {
         goto applyState;
     }
     return;
@@ -350,7 +350,7 @@ applyState:
 
     lbl_eu_806657E8 &= ~1u;
     lbl_eu_806657D4 = (u32)value;
-    lbl_eu_80665800 = lbl_eu_80665754;
+    lbl_eu_80665800 = sLodThresholdDist;
 }
 
 // ---------------------------------------------------------------------------
@@ -467,17 +467,17 @@ void LOD::UnkClass_804645CC::setupLodTev() {}
 // passing their real ABI values in the argument registers.  Keep the linker
 // names explicit and model those values as ordinary C++ parameters.
 void setLodFadeAlpha(s32 value) {
-    lbl_eu_80665814 = value;
+    sAmbientAlpha = value;
     lbl_eu_806657E8 |= 2;
 }
 
 // Scale the pending colour value: convert s32 to f32, scale, and round back to s32.
 // (retail free function scaleLodFadeAlpha__Ff)
 void scaleLodFadeAlpha(f32 scale) {
-    s32 value = lbl_eu_80665814;
+    s32 value = sAmbientAlpha;
     f32 fv = (f32)value;
     lbl_eu_806657E8 |= 2;
-    lbl_eu_80665814 = (s32)(fv * scale);
+    sAmbientAlpha = (s32)(fv * scale);
 }
 
 // 0xFF clears the colourfulness flag; otherwise record the colour and its alpha
@@ -491,10 +491,10 @@ void setLodColorFactor(s32 value) {
 
     lbl_eu_806657E8 |= 4;
     lbl_eu_80665804 = 6;
-    lbl_eu_80665808 = lbl_eu_8066A630 * (f32)value;
+    sAmbientAlphaScale = 0.003921569f * (f32)value;
 }
 
 extern "C" void setLodDepthScale__Q23LOD17UnkClass_804645CCFv(s16 value) {
     s16 local = value;
-    OSs16tof32(&local, &lbl_eu_806657E4);
+    OSs16tof32(&local, &sAmbientIntensityScale);
 }

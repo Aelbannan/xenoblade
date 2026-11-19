@@ -4,7 +4,7 @@
 // CVision.hpp, which keeps the class and the types it holds by value).
 
 #include "kyoshin/cf/CVision.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // ---------------------------------------------------------------------------
 // C-linkage imports: retail symbol names relocated from CVision.cpp.
@@ -20,7 +20,7 @@ extern "C" void routeVisionSlotFx(cf::CVision* self, void* r25, int r26, int r27
 
 // Class-spec table (8-byte stride, only low word used) for createVisionEffect.
 struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
-extern "C" CVisionClassTableEntry lbl_eu_80503F60[4];
+extern "C" CVisionClassTableEntry visionEffectClassTable[4];
 
 // sdata2 float constants used by setEffectScale / vision state checks.
 extern "C" f32 lbl_eu_80667CD4;
@@ -54,8 +54,7 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void aiActionClearBits0006(void* obj); // void return: CAIAction.cpp definition
 extern "C" void aiRebootAction(void* obj);
 extern "C" int findObjectById__Fi(int id);
-struct ScMain; float ScMain_GetRoundedMetric(ScMain* self); // kyoshin/cf/code_800F42AC.hpp
-extern "C" void ScMain_Reset(void* obj);
+// ScMain_* / Sc4798_* exports are declared once in kyoshin/cf/code_800F42AC.hpp.
 extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // Character-data lookup + row predicate pair used by CVision.cpp's
 // movie-gate checks (defined in CtrlObjectParam.cpp). Declared here because
@@ -69,7 +68,7 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 extern "C" u8* getGlobalSda(void);
 extern "C" void cfCam_copySavedState(int id);
-extern u8 lbl_eu_80663DA0;
+extern u8 visionSharedStateFlags;
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
@@ -85,9 +84,6 @@ extern "C" const void* __RTTI__Q22cf8CfObject;
 extern "C" void aiRingPrepend(void* a, void* b);
 extern "C" int aiFetchAction(void* a, void* b);
 extern "C" bool isVisionSlotAnimating(u32 flags);
-extern "C" int ScMain_DecodeFlagPriority(void);
-extern "C" void* ScMain_GetSummedInt(void* self);
-extern "C" int ScMain_IsDistinctFrom(void* a, void* b);
 extern "C" void* CBattleMan_FetchVisionObj(void* self);
 extern "C" void CtrlObjectParam_RunPartyArtsFlow(void* a, int b, void* c, int d, int e, int f, int g);
 extern "C" int Counter_TestBit(void* data, u32 mode);
@@ -106,15 +102,11 @@ extern "C" void restartVisionSlots(u32 a);
 extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(u32 a, u32 b, void* c);
 extern "C" void SysWinLog_AdvanceTiers(u32 a);
 
-// Per-slot FX helper used by manageVisionSlotFx's loop (testActorStatus is
-// declared by the chain headers; CfCode_GetSubObject is declared inline below).
-extern "C" f32 ScMain_GetRatio(void* a);
-
-// 5-word data table copied into a local and handed to CVisionBattleObj::vf1E8.
-extern "C" u32 lbl_eu_80503F80[5];
+// 5-word data table
+extern "C" u32 visionEffectScaleWords[5];
 
 // Flag word OR-ed with 0x8 in routeVisionSlotFx.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Scene handle whose frame-time drives the vision element decay.
 namespace cf { class CScn; }
@@ -125,28 +117,28 @@ extern "C" const void* __RTTI__Q22cf11CfObjectEff;
 // Callback ptmf tables (12-byte triplets).
 // Callback triplet copied wholesale by gateVisionByFusionParam / forwardVisionShowRequests /
 // runVisionResetWindows (retail emits a 12-byte struct copy: lis @ha / lwzu @l).
-extern "C" cf::CVisionPtmf lbl_eu_805331D0;
-extern "C" u32 lbl_eu_805331F4[3];
-extern "C" u32 lbl_eu_8053320C[3];
-extern "C" u32 lbl_eu_80533218[3];
-extern "C" u32 lbl_eu_805331E8[3];
+extern "C" cf::CVisionPtmf visionCallbackRunResetWindows;
+extern "C" u32 visionCallbackPollSlotsAlt2[3];
+extern "C" u32 visionCallbackPollSlotsAlt3[3];
+extern "C" u32 visionCallbackDriveSubFxAlt[3];
+extern "C" u32 visionCallbackPollSlotsAlt[3];
 extern "C" u32 lbl_eu_805331E0[3];
 extern "C" u32 lbl_eu_805331CC[3];
 // ptmf-triplet table: entries used at byte offsets 0x114/0x120/0x12c.
-extern "C" u32 lbl_eu_80533128[3];
+extern "C" u32 visionCallbackPollSlots[3];
 // 80533170/80533140/8053314C are 12-byte callback triplets installed in
 // checkSecondFusionVision / manageVisionPlayerCallbacks.
-extern "C" cf::CVisionPtmf lbl_eu_80533170;
-extern "C" cf::CVisionPtmf lbl_eu_80533140;
-extern "C" cf::CVisionPtmf lbl_eu_8053314C;
+extern "C" cf::CVisionPtmf visionCallbackFunc801A5260;
+extern "C" cf::CVisionPtmf visionCallbackOpenForPairs;
+extern "C" cf::CVisionPtmf visionCallbackRunIdleWindows;
 
-extern "C" cf::CVisionPtmf lbl_eu_805331DC;
-extern "C" cf::CVisionPtmf lbl_eu_805331C4;
-extern "C" u32 lbl_eu_80533164[3];
-extern "C" u32 lbl_eu_80533230[40];
-extern "C" u32 lbl_eu_80533134[3];
-extern "C" u32 lbl_eu_80533158[3];
-extern "C" u32 lbl_eu_80533224[3];
+extern "C" cf::CVisionPtmf visionCallbackEvalTrigger;
+extern "C" cf::CVisionPtmf visionCallbackForwardShowRequests;
+extern "C" u32 visionCallbackCheckSecondFusion[3];
+extern "C" u32 visionCallbackTypeInfoTable[40];
+extern "C" u32 visionCallbackResumeFromFader[3];
+extern "C" u32 visionCallbackResumeFromFaderAlt[3];
+extern "C" u32 visionCallbackManagePlayerCallbacks[3];
 extern "C" f32 lbl_eu_80667CD8;
 extern "C" void* __RTTI__Q22cf13CfObjectActor;
 extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
@@ -161,8 +153,8 @@ extern "C" void CfSoundMan_ClearFxEffect(u32 a, u32 b);
 extern "C" long __ptmf_test(void* ptmf);
 extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" u32 __ptmf_null[3];
-extern "C" u32 lbl_eu_8053317C[3];
-extern "C" u32 lbl_eu_80533200[3];
+extern "C" u32 visionCallbackRunTierWindows[3];
+extern "C" u32 visionCallbackDriveSubFx[3];
 extern "C" int getAnimGate(void);
 extern "C" s32 CfRes_getE24Bit22(void);
 extern "C" u32 GetItemMulti_IsActiveFlag(void);

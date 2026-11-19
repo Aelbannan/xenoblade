@@ -14,7 +14,6 @@ extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self);
 extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self);
 extern "C" void dispatchPassiveSkillInput(CMenuPassiveSkill* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void CPassiveSkill_update(u8* self);
 extern "C" void setPassiveSkillReady(CMenuPassiveSkill* self);
 extern "C" void advancePassiveSkillState(CMenuPassiveSkill* self);
@@ -213,12 +212,7 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* rende
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // int (not u8): callers compare r3 directly with cmpi, no rlwinm mask.
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 
 // UI::CPassiveSkill helpers (first arg is the +0xB8 sub-object).
 extern "C" void CPassiveSkill_teardown(u8* self);
@@ -245,4 +239,4 @@ extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
 
 // Shared mode bitfield (bit 21 / IBM bit 10 gates cbRenderBefore draws).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;

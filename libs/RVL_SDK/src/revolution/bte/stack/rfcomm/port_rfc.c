@@ -209,15 +209,18 @@ extern void RFCOMM_DataReq(tRFC_MCB* p_mcb, u8 dlci, BT_HDR* p_buf);
 void port_rfc_closed(tPORT* p_port, u8 result);
 u32  port_rfc_send_tx_data(tPORT* p_port);
 
-/* ------------------------------------------------------------------ */
-/*  String-pool orphans: the retail .data contains the format strings  */
-/*  "port_open_continue" / "port_open_continue no mx channel" even    */
-/*  though their function was eliminated from the retail .text.        */
-/*  Plain char arrays (not pointer tables) so no .sdata2/.sdata entry  */
-/*  is emitted: only the string bytes land in .data, in retail order.  */
-/* ------------------------------------------------------------------ */
-char port_rfc_pool_orphan_0[] = "port_open_continue";
-char port_rfc_pool_orphan_1[] = "port_open_continue no mx channel";
+/* Continuation of PORT_Open after the multiplexer start handshake. */
+void port_open_continue(tPORT* p_port)
+{
+    RFCOMM_TRACE_EVENT0("port_open_continue");
+
+    if (p_port->p_mcb == NULL) {
+        RFCOMM_TRACE_WARNING0("port_open_continue no mx channel");
+        return;
+    }
+
+    RFCOMM_PortNegReq(p_port->p_mcb, p_port->dlci2, &p_port->port_ctrl);
+}
 
 /* ========================================================================
  * PORT_StartCnf

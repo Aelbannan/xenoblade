@@ -195,6 +195,6 @@ extern const f32 lbl_eu_80666278;
 extern const f32 lbl_eu_8066627C;
 extern const f32 lbl_eu_80666280;
 extern const f32 lbl_eu_80666284;
-extern f32 lbl_eu_80661B58;
+extern f32 sCamGroundProbeOffsetY;
 extern const char lbl_eu_805262F0[];
 extern const char lbl_eu_805262C8[];

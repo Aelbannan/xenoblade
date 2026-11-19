@@ -164,6 +164,8 @@ def parse_attempts(path: Path, *, source_path: Optional[str] = None) -> Iterator
             row = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(row, dict):
+            continue
         target_id = str(row.get("target_id", ""))
         function = str(row.get("function", ""))
         hypothesis = str(row.get("hypothesis", ""))

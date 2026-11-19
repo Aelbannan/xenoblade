@@ -20,12 +20,6 @@ struct WaveInfoBlock {
 };
 } // namespace WaveFile
 
-// Retail types GetSampleByDspAddress's format argument as nw4r::snd::Sample,
-// Format (see the retail mangled name); alias that exact import here.
-extern "C" u32
-    GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
-        const void* pBase, u32 addr, u32 fmt);
-
 WaveFileReader::WaveFileReader(const WaveFile::FileHeader* pFileHeader)
     : mWaveInfo(NULL) {
     // retail: add. ptr+offset; beqlr (null check folded into the pointer sum)
@@ -67,11 +61,11 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
     pInfo->loopFlag = (pHeader->loopFlag != 0);
 
     pInfo->loopStart =
-        GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
-            NULL, pHeader->loopStart, format);
+        AxVoice::GetSampleByDspAddress(NULL, pHeader->loopStart,
+                                       static_cast<SampleFormat>(format));
     pInfo->loopEnd =
-        GetSampleByDspAddress__Q44nw4r3snd6detail7AxVoiceFPCvUlQ34nw4r3snd12SampleFormat(
-            NULL, pHeader->loopEnd, format) +
+        AxVoice::GetSampleByDspAddress(NULL, pHeader->loopEnd,
+                                       static_cast<SampleFormat>(format)) +
         1;
 
     // pInfo's last use; the loop works through pChan below.

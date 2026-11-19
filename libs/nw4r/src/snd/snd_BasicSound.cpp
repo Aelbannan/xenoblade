@@ -7,7 +7,7 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0(NULL);
+NW4R_UT_RTTI_DEF_BASE(BasicSound);
 
 namespace {
 
@@ -664,15 +664,13 @@ namespace snd {
 namespace detail {
 
 const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const {
-    return &lbl_eu_806654D0;
+    return &typeInfo;
 }
 
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
 
-// Pads the unit's .sbss to the retail 8 bytes (RTTI object + 4).
-unsigned int snd_BasicSound_sbss_pad;
 
 namespace nw4r {
 namespace snd {

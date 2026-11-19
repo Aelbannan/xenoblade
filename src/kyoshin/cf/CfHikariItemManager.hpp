@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 struct CfHikariItemRecord;
 
@@ -110,7 +110,7 @@ extern float lbl_eu_80668F6C;
 // table[0..1] thresholds, table[2..3] weights).  NON-const: a const load
 // gets hoisted before the hikariGradColor call into a callee-saved FPR;
 // retail loads the table at its use sites after the call.
-extern float lbl_eu_805135A8[4];
+extern float sHikariGradQuadColorStops[4];
 // .bss colour-gradient rows for hikariEmitGradQuad, indexed by the record's
 // (s16)field_1C_h[1] * 8 floats.
 extern f32 lbl_eu_80577750[0x40 / 4];
@@ -133,7 +133,7 @@ extern cf::CfHikariItemManager* lbl_eu_80664C10;
 
 // Current view / game-state flags (retail globals defined in CfGameManager).
 class CView;
-extern CView* lbl_eu_80663E10;
+extern CView* gmCurrentView;
 
 // Scene/camera helpers (retail C-linkage symbols).
 extern "C" void* Scn_HasCamItem(void* scene, void* view);
@@ -157,7 +157,7 @@ extern unsigned long lbl_eu_80664C24;
 
 // .bss global state block.  func_802B371C copies the record's
 // first three words into +0x00/+0x04/+0x08.  Declared as an array (like
-// CfGimmick's lbl_eu_805765B0) so MWCC materializes a base register and
+// CfGimmick's gGimmickPartySlotState) so MWCC materializes a base register and
 // merges the first store into stwu.  hikariUpdateRecord reads 4-float color
 // gradient rows at +0x10/+0x50/+0x90 indexed by field_40; sinit_802B46E0
 // fills four 16-float rows at +0x10/+0x50/+0x90/+0xd0.
@@ -165,8 +165,8 @@ extern u32 lbl_eu_80577680[0xD0 / 4];
 
 // sdata2/.data gradient keyframe tables for hikariGradColor (2*count floats:
 // count thresholds then count blend weights) - hikariUpdateRecord passes these.
-extern const float lbl_eu_80513588[];
-extern const float lbl_eu_80513598[];
+extern const float sHikariRecordColorStops[];
+extern const float sHikariSparkleColorStops[];
 
 // s32->f32 bit-pattern conversion helper (replicates MWCC's xoris/0x4330
 // sequence while naming the shared sdata2 magic double).

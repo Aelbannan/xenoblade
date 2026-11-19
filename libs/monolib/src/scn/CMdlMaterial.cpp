@@ -67,8 +67,9 @@ extern const char lbl_eu_80663C4C[];
 extern const char lbl_eu_80663C50[];
 extern const char lbl_eu_80663C54[];
 
-// lbl_eu_80663C34 (.sdata) holds the char* of the node user-data key.
-extern const char* lbl_eu_80663C34;
+// Node user-data keys owned by this TU (.sdata pointers to short literals).
+const char* sMatCullModeKey = "Hide";
+const char* sMatGroupIdKey = "PID";
 
 // g3d_resmat_ac.h assertion strings (inlined accessor asserts).
 extern const char lbl_eu_80570100[];
@@ -347,7 +348,7 @@ extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
                           reinterpret_cast<const u8*>(item) + item->nameOffset)
                     : NULL;
 
-                if (strcmp(name, lbl_eu_80663C30) == 0) {
+                if (strcmp(name, sMatCullModeKey) == 0) {
                     if (item == NULL) {
                         nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
                                         lbl_eu_80530D68, lbl_eu_80663C50);
@@ -377,8 +378,8 @@ extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
 }
 
 // scanNodeUserData - scan a scene-node's user-data block. An item named via the
-// lbl_eu_80663C34 pointer whose name is 8 chars ending in a digit sets the
-// group id (digit value); items named via lbl_eu_80663C30 append their S32
+// sMatGroupIdKey pointer whose name is 8 chars ending in a digit sets the
+// group id (digit value); items named via sMatCullModeKey append their S32
 // values as bytes to the flag table.
 void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
     CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
@@ -409,7 +410,7 @@ void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
                   reinterpret_cast<const u8*>(item) + item->nameOffset)
             : NULL;
 
-        if (strcmp(name, lbl_eu_80663C34) == 0) {
+        if (strcmp(name, sMatGroupIdKey) == 0) {
             // Group id: last char of the owner's vtable+0x18 string, when the
             // string is 8 chars and ends in a digit. Retail re-issues the
             // virtual call for each use.
@@ -434,7 +435,7 @@ void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
                 ? reinterpret_cast<const char*>(
                       reinterpret_cast<const u8*>(item) + item->nameOffset)
                 : NULL;
-            if (strcmp(name2, lbl_eu_80663C30) != 0) {
+            if (strcmp(name2, sMatCullModeKey) != 0) {
                 continue;
             }
 

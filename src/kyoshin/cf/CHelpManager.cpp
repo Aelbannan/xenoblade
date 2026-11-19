@@ -3,12 +3,13 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CHelpManager.hpp"
+#include "kyoshin/CTitle.hpp"
 // NOTE: do NOT include cf/CBattleManager.hpp here - its CfObjectActor ->
 // CAIAction chain declares getInstance__Q22cf14CBattleManagerFv as void*,
 // conflicting with the CBattleManagerView* declaration this TU already gets
 // via kyoshin/harness_catalog.hpp (cf/CfGameManager.hpp).
 #include "monolib/util/MemManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Free-function form (not the member ctor): the retail ignores the incoming
 // `this` and carves the real instance from MEM2 - the member form makes MWCC
@@ -55,11 +56,11 @@ void resetHelpManager(cf::CHelpManager* self) {
     bindHelpListItems(&self->mListA, NULL, 0);
     bindHelpListItems(&self->mListB, NULL, 0);
     self->mField10 = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-    bindHelpListItems(&self->mListB, lbl_eu_80538E30, 1);
+    bindHelpListItems(&self->mListB, sDefaultHelpItemList, 1);
     // Pick the item array whose key matches the current scenario sequence.
-    for (int i = 0; lbl_eu_80538E90[i].mKey != 0; i++) {
-        if (self->mField10 == lbl_eu_80538E90[i].mKey) {
-            bindHelpListItems(&self->mListA, lbl_eu_80538E90[i].mItems, 0);
+    for (int i = 0; sScenarioHelpTable[i].mKey != 0; i++) {
+        if (self->mField10 == sScenarioHelpTable[i].mKey) {
+            bindHelpListItems(&self->mListA, sScenarioHelpTable[i].mItems, 0);
             return;
         }
     }
@@ -67,14 +68,14 @@ void resetHelpManager(cf::CHelpManager* self) {
 }
 
 void updateHelpManager(cf::CHelpManager* self) {
-    if (lbl_eu_80663E28 & 0x1000000) return;
+    if (gmPauseFlags & 0x1000000) return;
     // Re-sync the list when the scenario sequence moved on.
     if (self->mField10 != (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv()) {
         self->mField10 = (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-        bindHelpListItems(&self->mListB, lbl_eu_80538E30, 1);
-        for (int i = 0; lbl_eu_80538E90[i].mKey != 0; i++) {
-            if (self->mField10 == lbl_eu_80538E90[i].mKey) {
-                bindHelpListItems(&self->mListA, lbl_eu_80538E90[i].mItems, 0);
+        bindHelpListItems(&self->mListB, sDefaultHelpItemList, 1);
+        for (int i = 0; sScenarioHelpTable[i].mKey != 0; i++) {
+            if (self->mField10 == sScenarioHelpTable[i].mKey) {
+                bindHelpListItems(&self->mListA, sScenarioHelpTable[i].mItems, 0);
                 goto done;
             }
         }
@@ -92,7 +93,7 @@ done:
     } else if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) {
         cond = 0;
     } else {
-        cond = (int)(((*(volatile u32*)&lbl_eu_80663E24 >> 22) & 1) ^ 1);
+        cond = (int)(((*(volatile u32*)&gmGameFlags >> 22) & 1) ^ 1);
     }
     if (cond != 0) {
         self->mField17 = 0;
@@ -109,7 +110,7 @@ void fireArtsLearnedHint() {
 
 void dispatchScenarioHelp(cf::CHelpManager* self) {
     // Base hoisted into a callee-saved register (retail holds it in r31).
-    cf::CHelpManagerTbl* tbl = &lbl_eu_80576D08;
+    cf::CHelpManagerTbl* tbl = &sHelpDispatchObjects;
     if (self->mField10 == 3) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
         bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mHelp1.mOwner) != 0;
@@ -145,18 +146,17 @@ int isHelpPopupReady(cf::CHelpManager* self) {
         return 0;
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0)
         return 0;
-    return (int)((((*(volatile u32*)&lbl_eu_80663E24) >> 22) & 1) ^ 1);
+    return (int)((((*(volatile u32*)&gmGameFlags) >> 22) & 1) ^ 1);
 }
 
-int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+UNKWORD cf::CHelp::CHelp_UnkVirtualFunc5() { return 0; }
 
-// Base slot-0x08 impl (CHelp::resetHelp): no-op. Kept as a free function
-// under its retail symbol name so this TU still emits the vtable target.
-void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
+// Base slot-0x08 impl: no-op, the vtable target for direct CHelp leaves.
+void cf::CHelp::CHelp_UnkVirtualFunc1() {}
 
 void cf::CHelp_EtherMakeTIPS::dispatchEtherTips(void) { refreshPartyMenu(); }
 
-int CHelp_UnkVirtualFunc4__Q22cf5CHelpFv(void* self) { return 0; }
+UNKWORD cf::CHelp::CHelp_UnkVirtualFunc4() { return 0; }
 
 void cf::CHelp_TalkTIPS::dispatchTalkTips(void) { refreshPartyMenu(); }
 
@@ -164,13 +164,13 @@ void cf::CHelp_KizunaTIPS::dispatchKizunaTips(void) { refreshPartyMenu(); }
 
 void cf::CHelp_EndEventTIPS::dispatchEndEventTips(void) { refreshPartyMenu(); }
 
-int isHelpAlwaysEnabled__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
+int cf::CHelp_Always::isHelpAlwaysEnabled() { return 1; }
 
 void cf::CHelp_AlwaysTIPS::dispatchAlwaysTips(void) { refreshPartyMenu(); }
 
-void clearHelpToAttackFlags__Q22cf14CHelp_ToAttackFv(void* self) {
-    ((unsigned char*)self)[0xc] = 0;
-    ((unsigned char*)self)[0xd] = 0;
+void cf::CHelp_ToAttack::clearHelpToAttackFlags() {
+    field_0xC = 0;
+    field_0xD = 0;
 }
 
 extern "C" void clearHelpListHolder(cf::CHelpListHolder* self) {
@@ -182,10 +182,10 @@ extern "C" void bindHelpListItems(cf::CHelpListHolder* self, void** items, u8 fl
     self->mItems = items;
     self->mFlag = flag;
     if (items != NULL) {
-        // Run each registered object's vtable slot 0x08 (resetHelp).
+        // Run each registered object's vtable slot 0x08 (CHelp_UnkVirtualFunc1).
         for (int i = 0; self->mItems[i] != NULL; i++) {
             cf::CHelp* item = (cf::CHelp*)self->mItems[i];
-            item->resetHelp();
+            item->CHelp_UnkVirtualFunc1();
         }
     }
 }
@@ -217,13 +217,13 @@ extern "C" void clearHelpList(cf::CHelpListHolder* self) {
 }
 
 // --- Static help-table construction (retail sinit_80295DB0) ---
-// Builds every CHelp-derived entry of the static table lbl_eu_80576D08
+// Builds every CHelp-derived entry of the static table sHelpDispatchObjects
 // (.bss): base CHelp ctor call, then interface-table override at +0x8 and
 // the extra payload writes. MWCC keeps the table base and the reused vtable
 // addresses / small constants in callee-saved registers across the ctor
 // calls (retail: base in r22, constants in r23-r31).
 void sinit_80295DB0() {
-    cf::CHelpTableFull* t = (cf::CHelpTableFull*)&lbl_eu_80576D08;
+    cf::CHelpTableFull* t = (cf::CHelpTableFull*)&sHelpDispatchObjects;
 
     // obj0 @ 0x00: base ctor, vtable override, extra word at +0xC.
     __ct__Q22cf5CHelpFUlUl(&t->mObj00, (void*)0x3341, 0x2);
@@ -233,17 +233,17 @@ void sinit_80295DB0() {
     // obj1 @ 0x10: ctor then dispatch through vtable slot 2.
     __ct__Q22cf5CHelpFUlUl(&t->mObj10, (void*)0x3342, 0x3);
     t->mObj10.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    t->mObj10.resetHelp();
+    t->mObj10.CHelp_UnkVirtualFunc1();
 
     // obj2 @ 0x20: extra float at +0xC.
     __ct__Q22cf5CHelpFUlUl(&t->mObj20, (void*)0x3343, 0x4);
     t->mObj20.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B770;
-    t->mObj20.mFieldC = lbl_eu_80668BC8;
+t->mObj20.mFieldC = 1.0f;
 
     // obj3 @ 0x30: dispatch type (same vtable as obj1).
     __ct__Q22cf5CHelpFUlUl(&t->mObj30, (void*)0x3344, 0x5);
     t->mObj30.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    t->mObj30.resetHelp();
+    t->mObj30.CHelp_UnkVirtualFunc1();
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj40, (void*)0x3345, 0x6);
     t->mObj40.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
@@ -253,7 +253,7 @@ void sinit_80295DB0() {
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj60, (void*)0x3347, 0x8);
     t->mObj60.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B770;
-    t->mObj60.mFieldC = lbl_eu_80668BC8;
+t->mObj60.mFieldC = 1.0f;
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj70, (void*)0x3348, 0x9);
     t->mObj70.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4F0;
@@ -264,7 +264,7 @@ void sinit_80295DB0() {
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj90, (void*)0x334A, 0xB);
     t->mObj90.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    t->mObj90.resetHelp();
+    t->mObj90.CHelp_UnkVirtualFunc1();
 
     __ct__Q22cf5CHelpFUlUl(&t->mObjA0, (void*)0x334B, 0xC);
     t->mObjA0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
@@ -555,5 +555,5 @@ void sinit_80295DB0() {
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj5B0, (void*)0x336B, 0x2C);
     t->mObj5B0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B6C0;
-    t->mObj5B0.mFieldC = lbl_eu_80668BCC;
+t->mObj5B0.mFieldC = 300.0f;
 }

@@ -7,12 +7,12 @@
 #include <math.h>
 
 extern "C" {
-s8 lbl_eu_80663DB0;
-char* lbl_eu_80663DB4;
-s8 lbl_eu_80663DB8;
-char* lbl_eu_80663DBC;
-s8 lbl_eu_80663DC0;
-char* lbl_eu_80663DC4;
+s8 sCamType8DispatchInit;
+char* sCamType8Dispatch;
+s8 sCamType9DispatchInit;
+char* sCamType9Dispatch;
+s8 sCamType10DispatchInit;
+char* sCamType10Dispatch;
 
 #pragma push
 #pragma section data_type ".data" ".data"
@@ -26,35 +26,35 @@ extern "C" const volatile unsigned char lbl_eu_805270F0[];
 extern "C" const volatile unsigned char lbl_eu_80527120[];
 extern "C" const volatile unsigned char lbl_eu_80527148[];
 extern "C" const volatile unsigned char lbl_eu_80527154[];
-extern "C" const volatile unsigned char lbl_eu_805271FC[];
+extern "C" const volatile unsigned char sCamBdatTableNameTable[];
 extern "C" const volatile unsigned char lbl_eu_80527048[];
 #pragma pop
 }
 
 extern "C" cf::CfCamDispatch* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self) {
-    if (!lbl_eu_80663DB0) {
-        lbl_eu_80663DB4 = (char*)lbl_eu_80527130;
-        lbl_eu_80663DB0 = 1;
+    if (!sCamType8DispatchInit) {
+        sCamType8Dispatch = (char*)lbl_eu_80527130;
+        sCamType8DispatchInit = 1;
     }
-    if (!lbl_eu_80663DB8) {
-        lbl_eu_80663DBC = (char*)lbl_eu_80527108;
-        lbl_eu_80663DB8 = 1;
+    if (!sCamType9DispatchInit) {
+        sCamType9Dispatch = (char*)lbl_eu_80527108;
+        sCamType9DispatchInit = 1;
     }
-    if (!lbl_eu_80663DC0) {
-        lbl_eu_80663DC4 = (char*)lbl_eu_805270D8;
-        lbl_eu_80663DC0 = 1;
+    if (!sCamType10DispatchInit) {
+        sCamType10Dispatch = (char*)lbl_eu_805270D8;
+        sCamType10DispatchInit = 1;
     }
 
     s32 type = self->unk8;
-    cf::CfCamDispatch* result = (cf::CfCamDispatch*)&lbl_eu_80663DBC;
+    cf::CfCamDispatch* result = (cf::CfCamDispatch*)&sCamType9Dispatch;
     if (type == 8) {
-        return (cf::CfCamDispatch*)&lbl_eu_80663DBC;
+        return (cf::CfCamDispatch*)&sCamType9Dispatch;
     }
     if (type == 9) {
-        return (cf::CfCamDispatch*)&lbl_eu_80663DB4;
+        return (cf::CfCamDispatch*)&sCamType8Dispatch;
     }
     if (type == 10) {
-        return (cf::CfCamDispatch*)&lbl_eu_80663DC4;
+        return (cf::CfCamDispatch*)&sCamType10Dispatch;
     }
     return result;
 }
@@ -244,7 +244,7 @@ void CfCamEvt_Update(CfCamEvent* self) {
     if ((u32)self->unk8 >= 0x10 && (u32)self->unk8 <= 0x2B) {
         follow = 1;
     }
-    evtFlags = lbl_eu_80663E24;
+    evtFlags = gmGameFlags;
     if ((evtFlags & 0x00400000) != 0 || (evtFlags & 0x00040000) != 0) {
         flagByte = 0;
         follow = 0;
@@ -258,19 +258,19 @@ void CfCamEvt_Update(CfCamEvent* self) {
             // Follow path: keep the aim point on-screen by clamping it
             // against the ground-probe results, then forward to the
             // follow hook.
-            if (ScnRes_VertRayForward_E398(&pos, 0, 0x04000000, 0, lbl_eu_8066626C,
+            if (ScnRes_VertRayForward_E398(&pos, 0, 0x04000000, 0, 2.0f,
                               lbl_eu_80666268) != 0) {
                 ScnRes_CopyEntryHead(&probe1, 0);
-                if (pos.y < probe1.y + lbl_eu_80661B58) {
-                    pos.y = probe1.y + lbl_eu_80661B58;
+                if (pos.y < probe1.y + sCamGroundProbeOffsetY) {
+                    pos.y = probe1.y + sCamGroundProbeOffsetY;
                 }
             }
             ml::CVec3 probe2_unused;
-            if (ScnRes_VertRayForward_E398(&aim, 0, 0x04000000, 0, lbl_eu_80666270,
+            if (ScnRes_VertRayForward_E398(&aim, 0, 0x04000000, 0, 3.0f,
                               lbl_eu_80666268) != 0) {
                 ScnRes_CopyEntryHead(&probe2, 0);
-                if (aim.y < lbl_eu_80666274 + probe2.y) {
-                    aim.y = lbl_eu_80666274 + probe2.y;
+                if (aim.y < 0.1f + probe2.y) {
+                    aim.y = 0.1f + probe2.y;
                 }
             }
             cfCam_nop07C0(self, &aim, &pos);
@@ -279,7 +279,7 @@ void CfCamEvt_Update(CfCamEvent* self) {
             // camera position.
             if (cfCam_correctCamGround(self, &self->mLookat, &aim, &self->unk34, 0) != 0) {
                 diff = aim - self->unk34;
-                probe1 = diff * lbl_eu_80666278;
+                probe1 = diff * 0.5f;
                 aim = self->unk34 + probe1;
                 self->field_0x1DC = lbl_eu_80666268;
             }
@@ -299,17 +299,17 @@ void CfCamEvt_Update(CfCamEvent* self) {
         self->unk64 = pos;
     }
     f32 ang = ml::CVec3::dot(srcBlock.dir, self->unk160->block.dir);
-    if (ang < lbl_eu_8066627C) {
-        ang = lbl_eu_8066627C;
+    if (ang < -1.0f) {
+        ang = -1.0f;
     } else if (ang > lbl_eu_80666280) {
         ang = lbl_eu_80666280;
     }
-    if (!(ang <= lbl_eu_80666280 && ang >= lbl_eu_8066627C)) {
+    if (!(ang <= lbl_eu_80666280 && ang >= -1.0f)) {
         Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
                                      (const char*)lbl_eu_805262C8);
     }
     // acos result is narrowed to f32 before the scaling multiply.
-    if ((f32)acos(ang) * ml::rad2deg < lbl_eu_80666284) {
+    if ((f32)acos(ang) * ml::rad2deg < 5.0f) {
         self->field_0x290 = 1;
     }
     if (self->field_0x290 > 0 && --self->field_0x290 == 0) {
@@ -412,7 +412,7 @@ __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) co
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_80527130[0x18] = {0};
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char lbl_eu_80527148[0x0C] = {0};
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char lbl_eu_80527154[0x0C] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned int lbl_eu_80527160[39] = {
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned int sCamDefaultTable[39] = {
     0x3F800000,
     0,
     0,
@@ -453,18 +453,12 @@ __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) co
     0x3F000000,
     0x3F000000
 };
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char lbl_eu_805271FC[0x0C] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char sCamBdatTableNameTable[0x0C] = {0};
 #pragma pop
 
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666268 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066626C = 2.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666270 = 3.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666274 = 0.1f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666278 = 0.5f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066627C = -1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666280 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666284 = 5.0f;
-__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666288[] = "High";
+
+
 __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666290[] = "Normal";
 __declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666298[] = "Low";
 

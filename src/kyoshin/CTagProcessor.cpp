@@ -499,11 +499,11 @@ u16* TagProcPreprocessMessage(CTagProcessorBase* self, const void* src, f32 a, f
 void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
     u32 vals[16];
     nw4r::lyt::Font* font = ((nw4r::lyt::TextBox*)msg)->GetFont();
-    f32 lineH = lbl_eu_806671F4;
-    f32 width = lbl_eu_806671F0;
+    f32 lineH = 1.0f;
+    f32 width = 0.0f;
     f32 lineStep = lineH;
     f32 max = width;
-    f32 speed = lbl_eu_806671F8;
+    f32 speed = 2.0f;
     f32 step = lineH;
     u32 i = 0;
     for (;;) {
@@ -518,7 +518,7 @@ void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
             if (width > max)
                 max = width;
             lineH += step;
-            width = lbl_eu_806671F0;
+            width = 0.0f;
             i++;
             continue;
         }
@@ -584,7 +584,7 @@ void TagProcMeasureText(f32* out, CTagMsgView* msg, wchar_t* buf) {
                     lineH += lineStep;
                     if (width > max)
                         max = width;
-                    width = lbl_eu_806671F0;
+                    width = 0.0f;
                 }
                 i += n;
             }
@@ -749,8 +749,8 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                     // sdata2 constant): seed hi once, store (v ^ 0x8000)
                     // into lo, then subtract the magic double.
                     f32 speed = msg->field_824;
-                    if (speed < lbl_eu_80667208) {
-                        msg->field_824 += lbl_eu_806671F4;
+                    if (speed < 3.0f) {
+                        msg->field_824 += 1.0f;
                     } else {
                         CPad* pad = cf::CfGameManager::getCurrentPad();
                         int pressed;
@@ -759,7 +759,7 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                         else
                             pressed = (pad->mPressedButtonFlags & 0x00000030) != 0;
                         if (pressed != 0) {
-                            msg->field_824 = lbl_eu_806671F0;
+                            msg->field_824 = 0.0f;
                             msg->field_810 += 2;
                             msg->field_820 += 2;
                         }
@@ -774,13 +774,13 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                 conv.w.lo = (((u32)v) << 16) ^ 0x80000000;
                 f32 speed = msg->field_824;
                 if (speed < (f32)(conv.d - lbl_eu_80667200)) {
-                    if (speed < lbl_eu_806671F4 && member != 0)
+                    if (speed < 1.0f && member != 0)
                         member->v58(0, 0);
-                    msg->field_824 += lbl_eu_806671F4;
+                    msg->field_824 += 1.0f;
                 } else {
                     if (member != 0)
                         member->v58(1, 0);
-                    msg->field_824 = lbl_eu_806671F0;
+                    msg->field_824 = 0.0f;
                     msg->field_810 += 2;
                     msg->field_820 += 2;
                 }
@@ -1195,7 +1195,7 @@ int TagProcStepMessage(nw4r::lyt::AnimTransform* tag,
                             msg->field_810 += (u16)msg->m838[i];
                         s32 f834 = msg->field_834;
                         msg->field_820 = 0;
-                        msg->field_824 = lbl_eu_806671F0;
+                        msg->field_824 = 0.0f;
                         msg->field_830 = 0;
                         msg->field_828 = f834 + 1;
                         msg->field_834 = -1;
@@ -1413,8 +1413,8 @@ void* TagCtxGetNodeHeader(void* self) {
 }
 
 // Compare the first u32 of two blocks (used as a tag-identity test).
-u32 TagProcCompareIds(const u32* a, const u32* b) {
-    return *a != *b;
+int TagProcCompareIds(const void* a, const void* b) {
+    return *(const u32*)a != *(const u32*)b;
 }
 
 extern "C" void* TagCtxAdvanceHead(void* self, int a) {
@@ -1535,17 +1535,17 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
     }
 
     a->v7C((const u16*)buf, 0);
-    a->field_F0 = lbl_eu_806671F8;
+    a->field_F0 = 2.0f;
 
     f32 meas[2];  // +0x30 measured {x, y} from the layout step
     TagProcMeasureText(meas, (CTagMsgView*)a, buf);
-    meas[1] = lbl_eu_8066720C * meas[1];
+    meas[1] = 16.0f * meas[1];
     f32 pos2[2];  // +0x28 clamped cursor position
     pos2[0] = meas[0];
-    pos2[1] = meas[1] + lbl_eu_80667210;
+    pos2[1] = meas[1] + 112.0f;
     f32 dim[2];   // +0x20 {width, height}; later reused as corner xy
-    dim[0] = lbl_eu_806671F0;
-    dim[1] = lbl_eu_806671F0;
+    dim[0] = 0.0f;
+    dim[1] = 0.0f;
     if (c != NULL) {
         memset(str, 0, sizeof(str));
         wcscpy(str, c->field_D8);
@@ -1553,20 +1553,20 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
         TagMeasureTextWidth(size, msg, (nw4r::lyt::TextBox*)c, str);
         dim[0] = size[0];
         dim[1] = size[1];
-        f32 maxX = lbl_eu_80667214 + size[0];
+        f32 maxX = 44.0f + size[0];
         if (pos2[0] < maxX)
             pos2[0] = maxX;
     }
-    pos2[0] = lbl_eu_806671F8 * msg->field_808 + pos2[0];
-    if (pos2[0] <= lbl_eu_80667218) {
-        pos2[0] = lbl_eu_80667218;
-    } else if (pos2[0] < lbl_eu_80667220) {
-        pos2[0] = lbl_eu_8066721C;
+    pos2[0] = 2.0f * msg->field_808 + pos2[0];
+    if (pos2[0] <= 160.0f) {
+        pos2[0] = 160.0f;
+    } else if (pos2[0] < 432.0f) {
+        pos2[0] = 440.0f;
     }
     copyVEC2(b->field_4C, pos2);
 
     TagVec3 t = b->vec_2C;
-    t.v[1] -= lbl_eu_80667224;
+    t.v[1] -= 6.0f;
     copyVEC3(&a->vec_2C.v[0], &t.v[0]);
     copyVEC2(a->field_4C, meas);
     a->v78();
@@ -1590,11 +1590,11 @@ void TagProcRenderPage(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
         copyVEC3(&s.v[0], b->vec_2C.v);
         copyVEC2(pos2, b->field_4C);
         // blend the b/c corners toward the measured box
-        const f32 kBlend = lbl_eu_80667228;
+        const f32 kBlend = 0.5f;
         f32 nx = dim[0] * kBlend + (s.v[0] - pos2[0] * kBlend);
         f32 ny = (s.v[1] + pos2[1] * kBlend) - dim[1] * kBlend;
-        s.v[0] = nx + lbl_eu_8066722C;
-        s.v[1] = ny - lbl_eu_80667214;
+        s.v[0] = nx + 46.0f;
+        s.v[1] = ny - 44.0f;
         copyVEC3(c->vec_2C.v, &s.v[0]);
     }
 }
@@ -1826,13 +1826,13 @@ int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
             // NOTE: keep field_824 reads adjacent to their compares (no
             // float local live across the calls below) so MWCC never
             // spills an FPR around the bl.
-            if (msg->field_824 >= lbl_eu_80667208) {
-                if (msg->field_824 < lbl_eu_80667250) {
+            if (msg->field_824 >= 3.0f) {
+                if (msg->field_824 < 10.0f) {
                     if (MenuStateCheck64064or30() == 0 &&
                         MenuSnd_QuerySlotLive_89A04(0) != 0 && msg->field_804 != 0 &&
                         member != 0)
                         member->v58(0, 0);
-                    msg->field_824 = lbl_eu_80667234;
+                    msg->field_824 = 20.0f;
                 }
                 // Button-driven auto-advance: poll the active pad style.
                 CPad* pad = cf::CfGameManager::getCurrentPad();
@@ -1843,20 +1843,20 @@ int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
                 else
                     bits = pad->mPressedButtonFlags & 0x00000030;
                 if (bits != 0) {
-                    msg->field_824 = lbl_eu_806671F0;
+                    msg->field_824 = 0.0f;
                     msg->field_810 += 2;
                     msg->field_820 += 2;
-                    MenuSnd_SilenceByName_8986C(0, lbl_eu_806671F0);
+                    MenuSnd_SilenceByName_8986C(0, 0.0f);
                 }
             } else {
-                msg->field_824 += lbl_eu_806671F4;
+                msg->field_824 += 1.0f;
             }
             return 2;
         }
         if (v == -2) {
             // Unconditional skip once the voice slot is free.
             if (MenuSnd_QuerySlotLive_89A04(0) != 0) {
-                msg->field_824 = lbl_eu_806671F0;
+                msg->field_824 = 0.0f;
                 msg->field_810 += 2;
                 msg->field_820 += 2;
             }
@@ -1869,14 +1869,14 @@ int TagProcStepSEMessage(nw4r::lyt::AnimTransform* tag,
         conv.w.hi = 0x43300000;
         conv.w.lo = (u32)v ^ 0x80000000;
         if ((f64)msg->field_824 < conv.d - lbl_eu_80667200) {
-            if (msg->field_824 < lbl_eu_806671F4 && msg->field_804 != 0 &&
+            if (msg->field_824 < 1.0f && msg->field_804 != 0 &&
                 member != 0)
                 member->v58(0, 0);
-            msg->field_824 += lbl_eu_806671F4;
+            msg->field_824 += 1.0f;
         } else {
             if (msg->field_804 != 0 && member != 0)
                 member->v58(1, 0);
-            msg->field_824 = lbl_eu_806671F0;
+            msg->field_824 = 0.0f;
             msg->field_810 += 2;
             msg->field_820 += 2;
         }
@@ -2034,24 +2034,24 @@ extern "C" void TagProcBuildOpenText(CTagProcessorBase* msg, nw4r::lyt::Pane* pa
     TalkPaneView* pv = (TalkPaneView*)pane;
     pv->v7C((const u16*)buf2, 0);
     if (newline)
-        pv->field_F0 = lbl_eu_80667254;
+        pv->field_F0 = 15.0f;
     else
-        pv->field_F0 = lbl_eu_806671F8;
+        pv->field_F0 = 2.0f;
     TagProcMeasureText(out, (CTagMsgView*)pane, buf2);
     if (newline)
-        out[1] = lbl_eu_8066720C * out[1] + lbl_eu_80667254;
+        out[1] = 16.0f * out[1] + 15.0f;
     else
-        out[1] = lbl_eu_8066720C * out[1];
+        out[1] = 16.0f * out[1];
     AccumPaneWorldPos((nw4r::math::VEC3*)out2, pane);
     TagCopyVec2f(v3, pv->field_4C);
     // Retail computes BOTH differences first, then both products; out2
     // entries forward the stored v3 values.
     f32 dy = v3[1] - out[1];
     f32 dx = v3[0] - out[0];
-    v3[1] = dy * lbl_eu_80667228;
-    v3[0] = dx * lbl_eu_80667228;
+    v3[1] = dy * 0.5f;
+    v3[0] = dx * 0.5f;
     out2[0] = v3[0];
-    out2[1] = lbl_eu_80667258 - v3[1];
+    out2[1] = -193.0f - v3[1];
     copyVEC3(pv->vec_2C.v, out2);
     pv->v78();
     pv->v74(0x400);
@@ -2174,7 +2174,7 @@ u16* CTagCodeFade::v14(u16* ret, const wchar_t* str, TagParam* dst) {
         copyTagParam((u8*)dst, (const u8*)&p);
     } else {
         TagParam q;
-        initTagParam((u8*)&q, 1, idx, lbl_eu_8066725C);
+        initTagParam((u8*)&q, 1, idx, -1.0f);
         copyTagParam((u8*)dst, (const u8*)&q);
     }
     return (u16*)ret;
@@ -2460,8 +2460,8 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeLine::Process(u16 tag, nw
     nw4r::ut::TextWriterBase<wchar_t> local;
     TagWriterCopyBlock((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
     TagWriterSetFontSize(&local, 0x300);
-    TagWriterSetWidthLimit(&local, lbl_eu_80667260);
-    TagWriterSetScale(&local, lbl_eu_806671F8 * sx, sy);
+    TagWriterSetWidthLimit(&local, 3.4028235e+38f);
+    TagWriterSetScale(&local, 2.0f * sx, sy);
     TagWriterSetCursorPos(&local, x, y);
     local.Print(&lbl_eu_80661FC8[0x10], 1);
     bool validRegs2 = true;
@@ -3043,7 +3043,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::CalcRect(nw4
     nw4r::ut::TextWriterBase<wchar_t> local;
     TagWriterCopyBlock((TagCopyBlock*)&local, (const TagCopyBlock*)tw);
     TagWriterSetFontSize(&local, 0);
-    TagWriterSetCharSpace(&local, lbl_eu_806671F0);
+    TagWriterSetCharSpace(&local, 0.0f);
     f32 yscale = lbl_eu_80667264 * TagWriterGetScaleY(&local);
     f32 xscale = TagWriterGetScaleX(&local);
     TagWriterSetScale(&local, lbl_eu_80667264 * xscale, yscale);
@@ -3060,7 +3060,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::CalcRect(nw4
     if (noSpace != 0)
         cs = TagWriterGetCharSpace(tw);
     else
-        cs = lbl_eu_806671F0;
+        cs = 0.0f;
     w1 += cs;
     TagWriterSetWidthLimit(tw, wlimit);
     TagWriterAdvanceCursorX(tw, w1);
@@ -3159,7 +3159,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
     const u16* s2;
     msg = ctx->writer;
     f32 savedWidth = TagWriterGetWidthLimit(msg);
-    TagWriterSetWidthLimit(msg, lbl_eu_80667260);
+    TagWriterSetWidthLimit(msg, 3.4028235e+38f);
     // "no leading char space" flag: re-apply the current char space when set.
     if ((ctx->flags & 1) == 0)
         TagWriterAdvanceCursorX(msg, TagWriterGetCharSpace(msg));
@@ -3214,7 +3214,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
     nw4r::ut::TextWriterBase<wchar_t> local;
     TagWriterCopyBlock((TagCopyBlock*)&local, (TagCopyBlock*)msg);
     TagWriterSetFontSize(&local, 0x300);
-    TagWriterSetCharSpace(&local, lbl_eu_806671F0);
+    TagWriterSetCharSpace(&local, 0.0f);
 
     validRegs2 = true;
     validRegs = true;
@@ -3245,15 +3245,15 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
         nw4r::db::Panic(lbl_eu_8052DAC0, 0x5d, lbl_eu_8052DA8C, &local);
     }
 
-    local.field_5Cf = lbl_eu_806671F0;
-    f32 yscale = lbl_eu_80667264 * TagWriterGetScaleY(&local);
+    local.field_5Cf = 0.0f;
+    f32 yscale = 0.6f * TagWriterGetScaleY(&local);
     f32 xscale = TagWriterGetScaleX(&local);
-    TagWriterSetScale(&local, lbl_eu_80667264 * xscale, yscale);
+    TagWriterSetScale(&local, 0.6f * xscale, yscale);
 
     f32 wMsg = msg->CalcStringWidth((const wchar_t*)s1, lenHi);
     f32 wLocal = local.CalcStringWidth((const wchar_t*)s1, lenHi);
     f32 excess = wMsg - wLocal;
-    if (excess > lbl_eu_806671F0) {
+    if (excess > 0.0f) {
         // Distribute the excess width across lenHi chars: fold one char
         // space worth into the saved cursor x and give the scratch writer
         // the per-char share. int->float via the retail magic-constant idiom.
@@ -3264,7 +3264,7 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
         conv.w.hi = 0x43300000;
         f32 lenF = (f32)(conv.d - lbl_eu_80667200);
         f32 share = excess / lenF;
-        cursorX += share * lbl_eu_80667228;
+        cursorX += share * 0.5f;
         TagWriterSetCharSpace(&local, share);
     }
 
@@ -3272,14 +3272,14 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
     f32 height = msg->GetFontAscent() + descent;
     TagWriterSetCursorPos(&local, cursorX, cursorY - height);
     local.Print((const wchar_t*)s1, lenHi);
-    if (excess < lbl_eu_806671F0) {
-        TagWriterAdvanceCursorX(msg, -excess * lbl_eu_80667228);
+    if (excess < 0.0f) {
+        TagWriterAdvanceCursorX(msg, -excess * 0.5f);
     }
     TagWriterSetFontSize(msg, 0x300);
     msg->Print((const wchar_t*)s2, lenLo);
     TagWriterSetFontSize(msg, savedFontSize);
-    if (excess < lbl_eu_806671F0) {
-        TagWriterAdvanceCursorX(msg, -excess * lbl_eu_80667228);
+    if (excess < 0.0f) {
+        TagWriterAdvanceCursorX(msg, -excess * 0.5f);
     }
     ctx->str = (const wchar_t*)(s2 + lenLo);
     TagWriterSetWidthLimit(msg, savedWidth);

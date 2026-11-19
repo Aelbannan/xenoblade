@@ -9,122 +9,9 @@ extern "C" bool func_eu_8044A600();  // SCGetLanguage() == 0 (JP console); decla
 using namespace ml;
 
 
-// --- Dissolved retail data (CDevice TU) ---
-// Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDevice.s
-// .rodata 0x80522AA8 (0x28+0x78), .data 0x8056C000 (0xA0+0x18+0xA0+0x18), .sdata 0x80663680 (0x10)
-// .bss 0x806574F8 (0x44+0x44), .sbss 0x80665650 (0x10)
-// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable (CDevice is novtable via header).
-// Local slot decls instead of including monolib/data_vtables.hpp:
-// its file-scope `extern "C" void* __RTTI__10IWorkEvent/__RTTI__11CWorkThread`
-// collide with MWCC's implicit RTTI names in this TU under -ipa file
-// (error 10322 illegal name overloading; see MWCC_CASES CDeviceGX / LODMemMan).
-extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
-extern "C" int WorkEvent3__10IWorkEventFPv(void*);
-extern "C" int WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb(int);
-extern "C" int WorkEvent6__10IWorkEventFv();
-extern "C" int WorkEvent7__10IWorkEventFv();
-extern "C" int WorkEvent8__10IWorkEventFv();
-extern "C" int WorkEvent9__10IWorkEventFv();
-extern "C" int WorkEvent10__10IWorkEventFv();
-extern "C" int WorkEvent11__10IWorkEventFv();
-extern "C" int WorkEvent12__10IWorkEventFv();
-extern "C" int WorkEvent13__10IWorkEventFv();
-extern "C" int WorkEvent14__10IWorkEventFv();
-extern "C" int WorkEvent15__10IWorkEventFv();
-extern "C" int WorkEvent16__10IWorkEventFv();
-extern "C" int WorkEvent17__10IWorkEventFv();
-extern "C" int WorkEvent18__10IWorkEventFv();
-extern "C" int WorkEvent19__10IWorkEventFv();
-extern "C" int WorkEvent20__10IWorkEventFv();
-extern "C" int WorkEvent21__10IWorkEventFv();
-extern "C" int WorkEvent22__10IWorkEventFv();
-extern "C" int WorkEvent23__10IWorkEventFv();
-extern "C" int WorkEvent24__10IWorkEventFv();
-extern "C" int WorkEvent25__10IWorkEventFv();
-extern "C" int WorkEvent26__10IWorkEventFv();
-extern "C" int WorkEvent27__10IWorkEventFv();
-extern "C" int WorkEvent28__10IWorkEventFv();
-extern "C" int WorkEvent29__10IWorkEventFv();
-extern "C" int WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-// CWorkThread work-method vtable slots.
-extern "C" void wkUpdate__11CWorkThreadFv();
-extern "C" void wkRender__11CWorkThreadFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-
-extern "C" {
-    extern const char lbl_eu_80522AA8[];
-    extern const char lbl_eu_8066A3A8[];
-    extern u32 lbl_eu_80663680[];
-    extern u32 lbl_eu_80663688[];
-    extern u32 lbl_eu_8056C158[];
-}
-// Namespace-scoped extern "C" decls (CLibVM.cpp CLibVMBlob pattern): a file-scope
-// declaration of __RTTI__10IWorkEvent collides with MWCC's implicit RTTI name in
-// this TU under -ipa file -> error 10322 illegal name overloading.
-namespace CDeviceBlob {
-extern "C" void* __RTTI__10IWorkEvent;
-extern "C" void* __RTTI__11CWorkThread;
-}
-extern "C" void wkStandbyLogin__11CWorkThreadFv();
-extern "C" void wkStandbyLogin__7CDeviceFv();
-extern "C" void wkStandbyLogout__7CDeviceFv();
-extern "C" void __dt__7CDeviceFv();
-extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80522AA8[40] = "@unnamed@CDevice_cpp@::CDeviceException";
-// The device-name strings in retail 0x80522AD0 are the compiler's literal
-// pool of the create() calls below; no hand-built duplicate array here.
-extern "C" u32 lbl_eu_8056C000[40] __attribute__((aligned(8))) = {
-    (u32)&lbl_eu_80663680, 0x00000000, 0,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
-    0, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
-};
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C0A0[6] = { (u32)&CDeviceBlob::__RTTI__10IWorkEvent, 0x00000000, (u32)&CDeviceBlob::__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_8056C0B8[40] __attribute__((aligned(8))) = {
-    (u32)&lbl_eu_80663688, 0x00000000, (u32)&__dt__7CDeviceFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__7CDeviceFv,
-    (u32)&wkStandbyLogout__7CDeviceFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
-};
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C158[6] = { (u32)&CDeviceBlob::__RTTI__10IWorkEvent, 0x00000000, (u32)&CDeviceBlob::__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_80663680[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_80522AA8, (u32)&lbl_eu_8056C0A0 };
-extern "C" u32 lbl_eu_80663688[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_8066A3A8, (u32)&lbl_eu_8056C158 };
-
+// The name buffers are retail-owned data; everything else in this TU
+// (vtables, RTTI records, base lists and type-name strings) is emitted by
+// MWCC from the real CDevice / CDeviceException class hierarchy.
 extern FixStr<64> lbl_eu_806574F8;
 extern FixStr<64> lbl_eu_8065753C;
 
@@ -164,10 +51,6 @@ namespace {
     class CDeviceException : public CWorkThread {
     public:
         CDeviceException(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
-            // Non-virtual class: store the retail rodata vtable manually so the
-            // reloc names lbl_eu_8056C000 (CDeviceFont pattern). Retail inlines
-            // this whole ctor into wkStandbyLogin.
-            *(u32**)this = (u32*)lbl_eu_8056C000;
             lbl_eu_80665654 = this;
         }
         ~CDeviceException(){ lbl_eu_80665654 = nullptr; }
@@ -207,28 +90,6 @@ struct CDeviceMsgQueueData {
     u32 unk1C4;                  // 0x1C4 (CDeviceBase::mFlags)
 };
 
-// TU-local stand-in for CDevice itself: identical layout (0x1c8), but with a
-// ctor whose store order matches the shape retail inlines into create()
-// (vtable, then singleton, then thread type).
-extern "C" CDevice* lbl_eu_80665650;
-namespace {
-    //size: 0x1c8
-    class __declspec(novtable) CDeviceThread : public CWorkThread {
-    public:
-        CDeviceThread(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
-            *(u32**)this = (u32*)lbl_eu_8056C0B8;
-            lbl_eu_80665650 = reinterpret_cast<CDevice*>(this);
-            mType = THREAD_CDEVICE;
-        }
-
-        //0x0: vtable
-        //0x0-1c4: CWorkThread
-        u32 unk1C4;
-
-    private:
-        static const int MAX_CHILD = 0x20;
-    };
-}
 // Retail .sbss run, in address order: 0x80665650 (the CDevice singleton),
 // 0x80665654 (the exception singleton) and the 8-byte slot at 0x80665658.
 CDevice* CDevice::spInstance;
@@ -241,9 +102,9 @@ extern "C" {
 extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
 }
 
-// (retail CDevice.o owns only 0x80663680/0x80663688), so keep them imported.
+// The region-name pointers are owned by another TU; keep them imported.
 extern "C" const char* lbl_eu_80663670;  // CDevice::devSys1String
-extern "C" const char* lbl_eu_80663674;  // CDevice::devSys2String
+extern "C" const char* lbl_eu_80663674;
 
 FixStr<64> CDevice::spNotRunningDeviceName;
 FixStr<64> CDevice::spColdStartNotRunningDeviceName;
@@ -556,20 +417,10 @@ bool CDevice::wkStandbyLogout(){
     return false;
 }
 
-// Mirror of the DECL_WORKTHREAD_CREATE body for CDeviceThread; retail inlines
-// this into CDevice::create(), and keeping it a real function preserves the
-// parameter-driven register allocation of the inlined frame.
-static inline CDeviceThread* createDeviceThread(const char* pName, CWorkThread* pParent){
-    WORK_ID id = CWorkThreadSystem::getWorkMem();
-    CDeviceThread* thread = new (id) CDeviceThread(pName, pParent);
-    CWorkUtil::entryWork(thread, pParent, false);
-    return thread;
-}
-
 CDevice* CDevice::create(){
     // "CDevice" joins the TU string pool (@stringBase0 -> retail
     // lbl_eu_80522AD0) at +0x6d.
-    return reinterpret_cast<CDevice*>(createDeviceThread("CDevice", CWorkControl::getInstance()));
+    return CDevice::create("CDevice", CWorkControl::getInstance());
 }
 
 void CDevice::createRegions(){

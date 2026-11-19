@@ -67,10 +67,10 @@ void InfoCfRefreshSettings(cf::CInfoCf* self) {
     }
 }
 
-// FULL_MATCH - Returns the global UI state flag value (lbl_eu_80663E24).
+// FULL_MATCH - Returns the global UI state flag value (gmGameFlags).
 // noinline: retail calls this out-of-line from InfoCfRefreshSettings.
 __declspec(noinline) u32 InfoCfGetUiFlags() {
-    return lbl_eu_80663E24;
+    return gmGameFlags;
 }
 
 // Destructor (retail D1 form; symbol keeps the CW member mangling in US).

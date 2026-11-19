@@ -165,9 +165,7 @@ static int lookupVolume(int volDb) {
     int lo;
     int hi;
     while ((hi = table[0]) >= 0) {
-        if (volDb >= hi) {
-            return table[1];
-        }
+        if (volDb >= hi) return table[1];
         lo = table[2];
         if (volDb > lo) {
             return table[3] + (int)((float)(table[1] - table[3]) * (float)(volDb - lo) / (float)(hi - lo));

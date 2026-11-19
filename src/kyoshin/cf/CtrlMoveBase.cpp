@@ -27,13 +27,13 @@ static inline ml::CVec3* getPos(CCtrlMoveBase* self) {
 }
 
 // Normalize a vector; a zero-length vector is replaced by ml::CVec3::zero.
-// `zero` is the caller's pre-loaded copy of lbl_eu_806665A0 used for the
+// `zero` is the caller's pre-loaded copy of 0.0f used for the
 // component checks; the length test re-reads the global.
 static inline void normalizeOrZeroZ(ml::CVec3* v, f32 zero) {
     if (v->x == zero && v->y == zero && v->z == zero) {
         return;
     }
-    if (v->x * v->x + v->y * v->y + v->z * v->z == lbl_eu_806665A0) {
+    if (v->x * v->x + v->y * v->y + v->z * v->z == 0.0f) {
         *v = ml::CVec3::zero;
     } else {
         PSVECNormalize(*v, *v);
@@ -41,7 +41,7 @@ static inline void normalizeOrZeroZ(ml::CVec3* v, f32 zero) {
 }
 
 static inline void normalizeOrZero(ml::CVec3* v) {
-    normalizeOrZeroZ(v, lbl_eu_806665A0);
+    normalizeOrZeroZ(v, 0.0f);
 }
 
 // Move the horizontal velocity toward a target direction with the +0x3C
@@ -65,9 +65,9 @@ CCtrlMoveBase::CCtrlMoveBase(void* dataPtr) {
     // and param2 after it.
     f32 param2;
     f32 param1;
-    param1 = lbl_eu_80666598;
+    param1 = 4.0f;
     mpSomePtr = 0;
-    param2 = lbl_eu_8066659C;
+    param2 = 0.1f;
     mpDataPtr = (cf::CCtrlMoveData*)dataPtr;
     mFlagsU16_1 = 0;
     mPosition = ml::CVec3::zero;
@@ -102,7 +102,7 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
                     // Manager not ready: steer straight toward src.
                     *out = *src - *getPos(self);
                     if (out->x != 0.0f || out->y != 0.0f || out->z != 0.0f) {
-                        if (lbl_eu_806665A0 == out->x * out->x + out->y * out->y
+                        if (0.0f == out->x * out->x + out->y * out->y
                                 + out->z * out->z) {
                             *out = ml::CVec3::zero;
                         } else {
@@ -133,7 +133,7 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
 
         int r = runWalkerTick__17UnkClass_8047D2ACFv(
             self->mpSomePtr, out, getPos(self),
-            lbl_eu_806665A0, self->mFloatParam1, src);
+            0.0f, self->mFloatParam1, src);
         if (r == 0) {
             result = 1;
             if (flagA != 0) {
@@ -147,20 +147,20 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
                     dir.y = self->mVelocity.y;
                     dir.z = self->mVelocity.z;
                     if (dir.x != 0.0f || dir.y != 0.0f || dir.z != 0.0f) {
-                        if (lbl_eu_806665A0 == dir.x * dir.x + dir.y * dir.y + dir.z * dir.z) {
+                        if (0.0f == dir.x * dir.x + dir.y * dir.y + dir.z * dir.z) {
                             dir = ml::CVec3::zero;
                         } else {
                             PSVECNormalize(dir, dir);
                         }
                     }
                     f32 gz = dir.z + getPos(self)->z;
-                    f32 gy = lbl_eu_806665A4 + getPos(self)->y;
+                    f32 gy = 1.0f + getPos(self)->y;
                     f32 gx = dir.x + getPos(self)->x;
                     ml::CVec3 goal;
                     goal.y = gy;
                     goal.z = gz;
                     goal.x = gx;
-                    if (ScnRes_VertRayForward_E398(&goal, 0x4a05, 0, 0, lbl_eu_806665A8, lbl_eu_806665A0) == 0) {
+                    if (ScnRes_VertRayForward_E398(&goal, 0x4a05, 0, 0, -2.0f, 0.0f) == 0) {
                         self->mFlagsU16_1 |= 0x2;
                         self->mVelocity = *out;
                         return 1;
@@ -184,7 +184,7 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
             } else {
                 *out = self->mVelocity;
                 if (out->x != 0.0f || out->y != 0.0f || out->z != 0.0f) {
-                    if (lbl_eu_806665A0 == out->x * out->x + out->y * out->y + out->z * out->z) {
+                    if (0.0f == out->x * out->x + out->y * out->y + out->z * out->z) {
                         *out = ml::CVec3::zero;
                     } else {
                         PSVECNormalize(*out, *out);
@@ -200,7 +200,7 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
             // Fallback: steer straight toward the source point.
             *out = *src - *getPos(self);
             if (out->x != 0.0f || out->y != 0.0f || out->z != 0.0f) {
-                if (lbl_eu_806665A0 == out->x * out->x + out->y * out->y + out->z * out->z) {
+                if (0.0f == out->x * out->x + out->y * out->y + out->z * out->z) {
                     *out = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(*out, *out);
@@ -213,7 +213,7 @@ int moveBaseUpdate(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
                 self->mVelocity.z = self->mFloatParam2 * (out->z - self->mVelocity.z) + self->mVelocity.z;
                 *out = self->mVelocity;
                 if (out->x != 0.0f || out->y != 0.0f || out->z != 0.0f) {
-                    if (lbl_eu_806665A0 == out->x * out->x + out->y * out->y + out->z * out->z) {
+                    if (0.0f == out->x * out->x + out->y * out->y + out->z * out->z) {
                         *out = ml::CVec3::zero;
                     } else {
                         PSVECNormalize(*out, *out);
@@ -270,8 +270,8 @@ haveOk:
     {
         ml::CVec3* pos = getPos(self);
         if (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
-                                                 lbl_eu_806665A0,
-                                                 lbl_eu_806665A0, 1) == 0)
+                                                 0.0f,
+                                                 0.0f, 1) == 0)
             goto fail;
     }
     *outFlag = 1;
@@ -279,13 +279,13 @@ haveOk:
         ml::CVec3* pos = getPos(self);
         *out = *src - *pos;
     }
-    out->y = lbl_eu_806665A0;
-    if (out->x == lbl_eu_806665A0 && out->z == lbl_eu_806665A0)
+    out->y = 0.0f;
+    if (out->x == 0.0f && out->z == 0.0f)
         goto degen;
     // Normalize-or-snap WITHOUT the all-components-zero pre-guard (retail
     // only tests the squared length here).
     if (out->x * out->x + out->y * out->y + out->z * out->z
-            == *(volatile f32*)&lbl_eu_806665A0) {
+            == 0.0f) {
         *out = ml::CVec3::zero;
     } else {
         PSVECNormalize(*out, *out);
@@ -296,15 +296,15 @@ haveOk:
     }
     // Lerp the horizontal velocity toward the normalized direction; when the
     // lerped horizontal velocity is exactly zero, leave *out as-is.
-    self->mVelocity.y = lbl_eu_806665A0;
+    self->mVelocity.y = 0.0f;
     self->mVelocity.x = self->mFloatParam2 * (out->x - self->mVelocity.x) + self->mVelocity.x;
     self->mVelocity.z = self->mFloatParam2 * (out->z - self->mVelocity.z) + self->mVelocity.z;
-    if (self->mVelocity.x == lbl_eu_806665A0
-            && self->mVelocity.z == lbl_eu_806665A0)
+    if (self->mVelocity.x == 0.0f
+            && self->mVelocity.z == 0.0f)
         goto ret1;
     if (self->mVelocity.x * self->mVelocity.x + self->mVelocity.y * self->mVelocity.y
             + self->mVelocity.z * self->mVelocity.z
-            == *(volatile f32*)&lbl_eu_806665A0) {
+            == 0.0f) {
         self->mVelocity = ml::CVec3::zero;
     } else {
         PSVECNormalize(self->mVelocity, self->mVelocity);
@@ -313,9 +313,9 @@ haveOk:
     goto ret1;
 degen:
     // Degenerate horizontal direction: face +Z.
-    out->x = lbl_eu_806665A0;
-    out->y = lbl_eu_806665A0;
-    out->z = lbl_eu_806665A4;
+    out->x = 0.0f;
+    out->y = 0.0f;
+    out->z = 1.0f;
     self->mVelocity = *out;
 ret1:
     return 1;
@@ -421,12 +421,12 @@ void setMoveFacing(CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed) {
 // horizontal velocity toward it and re-export/re-normalize.
 // Uses the same idiom that leaves moveBaseLerp reg-swap-only: 0.0f literals
 // for the component guards (MWCC lowers them to the sda21 A0 load) and a
-// volatile read of lbl_eu_806665A0 for the length test.
+// volatile read of 0.0f for the length test.
 void moveBaseChase(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
     ml::CVec3* pos = getPos(self);
     *dst = *src - *pos;
     if (dst->x != 0.0f || dst->y != 0.0f || dst->z != 0.0f) {
-        if (*(volatile f32*)&lbl_eu_806665A0 == dst->x * dst->x + dst->y * dst->y + dst->z * dst->z) {
+        if (0.0f == dst->x * dst->x + dst->y * dst->y + dst->z * dst->z) {
             *dst = ml::CVec3::zero;
         } else {
             PSVECNormalize(*dst, *dst);
@@ -436,7 +436,7 @@ void moveBaseChase(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
     self->mVelocity.z += self->mFloatParam2 * (dst->z - self->mVelocity.z);
     *dst = self->mVelocity;
     if (dst->x != 0.0f || dst->y != 0.0f || dst->z != 0.0f) {
-        if (*(volatile f32*)&lbl_eu_806665A0 == dst->x * dst->x + dst->y * dst->y + dst->z * dst->z) {
+        if (0.0f == dst->x * dst->x + dst->y * dst->y + dst->z * dst->z) {
             *dst = ml::CVec3::zero;
         } else {
             PSVECNormalize(*dst, *dst);
@@ -446,7 +446,7 @@ void moveBaseChase(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
 
 // Lerp the horizontal velocity toward dir, copy the velocity back into dir
 // (struct copy -> retail's integer bit-move stores), then normalize.
-// Zero-constant checks reference lbl_eu_806665A0 directly (retail reloads it
+// Zero-constant checks reference 0.0f directly (retail reloads it
 // through sda21 at each site rather than caching it in a register).
 // Tail shape: zero-length guard + normalize-or-snap.
 void moveBaseLerp(CCtrlMoveBase* self, ml::CVec3* dir) {
@@ -459,7 +459,7 @@ void moveBaseLerp(CCtrlMoveBase* self, ml::CVec3* dir) {
         return;
     }
     if (dir->x * dir->x + dir->y * dir->y + dir->z * dir->z
-            == *(volatile f32*)&lbl_eu_806665A0) {
+            == 0.0f) {
         *dir = ml::CVec3::zero;
     } else {
         PSVECNormalize(*dir, *dir);
@@ -536,8 +536,8 @@ haveOk:
         ml::CVec3* pos = getPos(self);
         if (findWalkRoute__17UnkClass_8047D2ACFv(self->mpSomePtr,
                                                  &self->field_0x24, pos, val,
-                                                 lbl_eu_806665A0,
-                                                 lbl_eu_806665A0,
+                                                 0.0f,
+                                                 0.0f,
                                                  (int)arg) == 0)
             goto ret0;
         *out = self->field_0x24;
@@ -572,34 +572,34 @@ int moveBaseSway(CCtrlMoveBase* self, ml::CVec3* out) {
 
     // Two-step product-then-add per branch blocks MWCC's fp-contract
     // fusion, keeping retail's separate fmuls + fadds/fsubs.
-    f32 angle = lbl_eu_806665AC * nw4r::math::Atan2FIdx(self->mVelocity.x, self->mVelocity.z);
+    f32 angle = 0.024543693f * nw4r::math::Atan2FIdx(self->mVelocity.x, self->mVelocity.z);
     f32 wobble;
     if ((self->mFlagsU16_1 & 0x8) != 0) {
-        f32 off = lbl_eu_806665B0 * ml::deg2rad;
+        f32 off = 40.0f * ml::deg2rad;
         wobble = angle + off;
     } else {
-        f32 off = lbl_eu_806665B0 * ml::deg2rad;
+        f32 off = 40.0f * ml::deg2rad;
         wobble = angle - off;
     }
     ml::CVec3 tmp;
-    tmp.x = nw4r::math::SinFIdx(lbl_eu_806665B4 * wobble);
-    tmp.z = nw4r::math::CosFIdx(lbl_eu_806665B4 * wobble);
+    tmp.x = nw4r::math::SinFIdx(40.743664f * wobble);
+    tmp.z = nw4r::math::CosFIdx(40.743664f * wobble);
 
-    self->mVelocity.x = lbl_eu_8066659C * (tmp.x - self->mVelocity.x) + self->mVelocity.x;
-    self->mVelocity.y = lbl_eu_806665A0;
-    self->mVelocity.z = lbl_eu_8066659C * (tmp.z - self->mVelocity.z) + self->mVelocity.z;
+    self->mVelocity.x = 0.1f * (tmp.x - self->mVelocity.x) + self->mVelocity.x;
+    self->mVelocity.y = 0.0f;
+    self->mVelocity.z = 0.1f * (tmp.z - self->mVelocity.z) + self->mVelocity.z;
     // Whole-struct copy: retail moves the three words with lwz/stw pairs.
     tmp = self->mVelocity;
-    if (!(tmp.x == lbl_eu_806665A0 && tmp.y == lbl_eu_806665A0 && tmp.z == lbl_eu_806665A0)) {
-        if (tmp.x * tmp.x + tmp.y * tmp.y + tmp.z * tmp.z == lbl_eu_806665A0) {
+    if (!(tmp.x == 0.0f && tmp.y == 0.0f && tmp.z == 0.0f)) {
+        if (tmp.x * tmp.x + tmp.y * tmp.y + tmp.z * tmp.z == 0.0f) {
             tmp = ml::CVec3::zero;
         } else {
             PSVECNormalize(tmp, tmp);
         }
     } else {
-        tmp.x = lbl_eu_806665A0;
-        tmp.y = lbl_eu_806665A0;
-        tmp.z = lbl_eu_806665A4;
+        tmp.x = 0.0f;
+        tmp.y = 0.0f;
+        tmp.z = 1.0f;
     }
 
     ml::CVec3* pos = getPos(self);
@@ -639,8 +639,8 @@ haveOk:
     if (ok != 0) {
         ml::CVec3* pos2 = getPos(self);
         ok2 = (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, pos2,
-                                                    &goal, lbl_eu_806665A0,
-                                                    lbl_eu_806665A0, 1) != 0);
+                                                    &goal, 0.0f,
+                                                    0.0f, 1) != 0);
     } else {
         ok2 = 0;
     }
@@ -649,12 +649,12 @@ haveOk:
         return 1;
     }
 
-    up.x = lbl_eu_806665A0;
-    up.y = lbl_eu_806665A4;
-    up.z = lbl_eu_806665A0;
+    up.x = 0.0f;
+    up.y = 1.0f;
+    up.z = 0.0f;
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&goal, (nw4r::math::VEC3*)&goal,
                         (nw4r::math::VEC3*)&up);
-    if (ScnRes_VertRayForward_E398(&goal, 0x4a05, 0, 0, lbl_eu_806665B8, lbl_eu_806665BC) != 0) {
+    if (ScnRes_VertRayForward_E398(&goal, 0x4a05, 0, 0, -4.0f, 0.7071f) != 0) {
         *out = tmp;
         return 1;
     }
@@ -702,8 +702,8 @@ haveOk:
     {
         ml::CVec3* pos = getPos(self);
         if (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
-                                                  lbl_eu_806665A0,
-                                                  lbl_eu_806665A0, flag) != 0)
+                                                  0.0f,
+                                                  0.0f, flag) != 0)
             return 1;
     }
 ret0:
@@ -744,7 +744,7 @@ haveOk:
     if (ok != 0) {
         ml::CVec3* pos = getPos(self);
         return dispatchScnCommand__17UnkClass_8047D2ACFv(self->mpSomePtr, pos,
-                                                     lbl_eu_806665A0, lbl_eu_806665A0);
+                                                     0.0f, 0.0f);
     }
     return 0;
 }
@@ -781,7 +781,7 @@ okTrue:
 haveOk:
     if (ok != 0) {
         return solveWalkPair__17UnkClass_8047D2ACFv(self->mpSomePtr, out,
-                                                     lbl_eu_806665A0, lbl_eu_806665A0);
+                                                     0.0f, 0.0f);
     }
     return 0;
 }
@@ -792,10 +792,10 @@ extern "C" void emptyMoveBaseHookTail() {}
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8008A0C8() {
     extern void __ct__9CColiProcFv(void*);   // pre-mangled retail ctor symbol (MWCC keeps __ names unmangled)
-    extern char lbl_eu_80571810[];
+    extern char sEneColiProbeBuffer[];
     extern const void lbl_eu_80527814;
 
-    __ct__9CColiProcFv(lbl_eu_80571810);
-    *(void**)lbl_eu_80571810 = (void*)&lbl_eu_80527814;
+    __ct__9CColiProcFv(sEneColiProbeBuffer);
+    *(void**)sEneColiProbeBuffer = (void*)&lbl_eu_80527814;
 }
 

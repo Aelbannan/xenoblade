@@ -47,6 +47,10 @@ extern "C" {
 // Plain-C++ imports for the targets below. MWCC emits the Itanium-mangled
 // reloc names at the call sites; the acceptance gate compares reloc sites
 // (offset+type) only, not names.
+void* sCrystalItemTable = 0;
+void* sCrystalMesTable = 0;
+void* sItemMesTable = 0;
+
 extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
 // retail reloc is unmangled
 // (the CSysWin slot-0x88 virtual goes through CSysWin::loadSystemArc --
@@ -125,7 +129,7 @@ void refillMCItemSubTable(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase
         }
     }
     // Page count = ceil(filled count / 30); each page holds up to 30 items.
-    f32 v = (f32)x->count / lbl_eu_80668BD0;
+    f32 v = (f32)x->count / 30.0f;
     s32 t = (s32)v;              // floor since v >= 0 (fctiwz truncates)
     f32 frac = v - (f32)t;
     if (lbl_eu_80668BD4 != frac) t++;
@@ -224,7 +228,7 @@ char* getMCItemSubName(CMCItemBoxSub* sub, u16 index) {
 // manager (IsSkillItem != 0) use the item-name database; otherwise the
 // text is built from the message-string placeholders: '%1' splices the
 // item icon name (switch on BdatGetU8Direct's kind), '%2' splices a kind-apped
-// table string from lbl_eu_8050FF60, and the two-byte shift-JIS ranges are
+// table string from sMCItemMsgFmtTbl, and the two-byte shift-JIS ranges are
 // stepped over. The whole formatted buffer is then copied back into the
 // FixStr (its mLength refreshed).
 // -O4,s keeps the retail stmw r18 frame.
@@ -307,7 +311,7 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
                     }
                 } else if (*p2 == '2') {
                     p2++;
-                    tbl = lbl_eu_8050FF60;
+                    tbl = sMCItemMsgFmtTbl;
                     u8 s3 = BdatGetU8Direct((const void*)db, (const char*)tvals[kind], (u16)icon);
                     if (langB) sprintf(fmtBuf, &lbl_eu_8050FF8C[0x7d], s3);
                     else       sprintf(fmtBuf, &lbl_eu_8050FF8C[0x96], s3);
@@ -336,8 +340,8 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
     } else {
         // Non-gem slot: pick the text table by slot kind, then format.
         u8 v = (u8)(pad102 + 0xFC);
-        void* tbl2 = (void*)lbl_eu_80664A1C;
-        if (v <= 5 || pad102 == 2) tbl2 = (void*)lbl_eu_80664A18;
+        void* tbl2 = (void*)sCrystalMesTable;
+        if (v <= 5 || pad102 == 2) tbl2 = (void*)sCrystalItemTable;
         u32 n = BdatGetU16Direct((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x16], id);
         char* s = BdatGetPtrDirect(tbl2, &lbl_eu_8050FF8C[0x16], (u16)n);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
@@ -389,9 +393,9 @@ CMCGetItemBox::CMCGetItemBox()
     sysWin_B8 = CSysWin(0);
 
     // Fresh item index table -> embedded sub-object.
-    lbl_eu_80664A18 = 0;
-    lbl_eu_80664A1C = 0;
-    lbl_eu_80664A20 = 0;
+    sCrystalItemTable = 0;
+    sCrystalMesTable = 0;
+    sItemMesTable = 0;
     {
         CMCItemBoxSub subTmp;
         initMCItemSub(&subTmp);
@@ -836,7 +840,7 @@ void advanceMCGetItemBox(CMCGetItemBox* self) {
             union { double d; u32 w[2]; } cvt;
             cvt.w[1] = v;
             cvt.w[0] = 0x43300000u;
-            s32 rowN = (s32)(lbl_eu_80668BEC * (f32)(cvt.d - lbl_eu_80668BD8));
+            s32 rowN = (s32)(0.25f * (f32)(cvt.d - lbl_eu_80668BD8));
             self->mField303 = 1;
             self->field_304 = (u8)rowN;
             self->field_305 = (u8)(v - (s8)rowN * 4);
@@ -906,8 +910,8 @@ extern "C" void closeMCGetItemBoxPhase2(CMCGetItemBox* self) {
 // accessor and its three state words are all present. One OR-chain; MWCC
 // emits four beqlr shortcuts plus an inverted final test around the stores.
 void activateMCGetItemBox(CMCGetItemBox* self) {
-    if (self->layout40 == 0 || self->arcAcc2 == 0 || lbl_eu_80664A18 == 0 ||
-        lbl_eu_80664A1C == 0 || lbl_eu_80664A20 == 0) {
+    if (self->layout40 == 0 || self->arcAcc2 == 0 || sCrystalItemTable == 0 ||
+        sCrystalMesTable == 0 || sItemMesTable == 0) {
         return;
     }
     self->field_54 = 1;
@@ -1184,7 +1188,7 @@ extern "C" void refreshMCGetItemBoxSlots(CMCGetItemBox* self) {
         double counterD = cvt.d;
         pos.z = (float&)self->field_310;
         // Retail parks the scale in f2 right after the z-store.
-        float scale = lbl_eu_80668BF4;
+        float scale = 16.0f;
         cvt.w[0] = pagesLow;
         pos.x += scale * (float)(counterD - lbl_eu_80668BE0) +
                  scale * (float)(cvt.d - lbl_eu_80668BD8);
@@ -1331,9 +1335,9 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         nw4r::math::VEC3 v1;
         nw4r::math::VEC3 s2;
         nw4r::math::VEC3 v2;
-        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s1), lbl_eu_80668BF8, lbl_eu_80668BFC, lbl_eu_80668BD4);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s1), -58.0f, -51.0f, lbl_eu_80668BD4);
         v1 = s1;
-        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668C00, lbl_eu_80668BFC, lbl_eu_80668BD4);
+        code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668C00, -51.0f, lbl_eu_80668BD4);
         v2 = s2;
         this->subObj_70.SetTwoPanes(&v2, &v1);
 
@@ -1376,9 +1380,9 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
             CBdat::setBdatEntry(2, fileData);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_80664A18 = getFP(&lbl_eu_8050FF8C[0x29f]);
+        sCrystalItemTable = getFP(&lbl_eu_8050FF8C[0x29f]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664A1C = getFP(&lbl_eu_8050FF8C[0x2ae]);
+        sCrystalMesTable = getFP(&lbl_eu_8050FF8C[0x2ae]);
         activateMCGetItemBox(this);
         this->fileHandle3 = 0;
         return true;
@@ -1393,7 +1397,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
             CBdat::setBdatEntry(5, this->memManagerPtr);
         }
         Bdat_GetTable_AA34();
-        lbl_eu_80664A20 = getFP(&lbl_eu_8050FF8C[0x119]);
+        sItemMesTable = getFP(&lbl_eu_8050FF8C[0x119]);
         activateMCGetItemBox(this);
         this->fileHandle4 = 0;
         return true;

@@ -297,7 +297,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
 // toward the current target, and spawns/updates an arrow effect token at
 // +0x36C. Returns 1 while engaged, 0 when the guard chain fails.
 int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666CE4) return 0;
+    if (Scn_GetFrameDelta(gmScene) == lbl_eu_80666CE4) return 0;
 
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
     if (battleObj->bhBC() != 0) goto fail;
@@ -350,7 +350,7 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
     if (self->field_36C == 0 && flag != 0 && self14->field_C4 != 0) {
         void* effect = EffRoot_AddSchedReq(lbl_eu_8065FC18,
                                      CfRes_findEntryById(CfRes_getInstPtr224(), 0x70100000),
-                                     lbl_eu_80663E14, 0xa5, 0, 0);
+                                     gmScene, 0xa5, 0, 0);
         self->field_36C = (u32)effect;
         if (effect != 0) {
             void* parent = (u8*)self;

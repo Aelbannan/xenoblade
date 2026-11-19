@@ -17,8 +17,8 @@ cf::CfGimmickSaveOff::CfGimmickSaveOff(s32 row) {
 
     // Read three bdat string cells (the cells are string pointers); lower
     // 16 bits go into the u16 bounds, the low byte into the type.
-    // Byte offsets into the pointer table (lbl_eu_805357E8 is void*[]).
-    u8* colTab = (u8*)lbl_eu_805357E8;
+    // Byte offsets into the pointer table (gGimmickBdatColumns is void*[]).
+    u8* colTab = (u8*)gGimmickBdatColumns;
     u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), row);
     field_6C = *(u16*)&vMin;
     u32 vMax = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x38), row);
@@ -124,7 +124,7 @@ void cf::CfGimmickSaveOff::CfGimmick_Update() {
     // State dispatch via jumptable_eu_80535830 (5 case handlers); a zero
     // handler result returns early (retail checks the dispatched call's r3).
     int dispatchResult =
-        jumptable_eu_80535830[field_60]((cf::CfGimmick*)field_1C, &lbl_eu_805765A0, &field_04);
+        jumptable_eu_80535830[field_60]((cf::CfGimmick*)field_1C, &gGimmickAnchorPoint, &field_04);
     if (dispatchResult == 0) {
         return;
     }

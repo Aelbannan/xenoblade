@@ -65,10 +65,6 @@ void MakeCrystal_InitFiles(CModelDispMakeCrystal* self);
 void MakeCrystalCopyDispArea(u8* dst, const u8* src);
 int MenuTutorialIsCreated();
 void MakeCrystalCopyBox(CMCCrystalBox* self, const CMCCrystalBox* src);
-void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-void teardown(CTitleAHelp* self);
-void beginClose(CTitleAHelp* self);
-void func_801C412C(CTitleAHelp* self);
 void unregisterEffectScene(CScn* scene);
 void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 void __ct__21CModelDispMakeCrystalFP4CScn(CModelDispMakeCrystal* self, CScn* scene);
@@ -84,7 +80,6 @@ void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 
 // C-linkage imports. The retail DOL symbols are unmangled (per the retail
 // relocs), so C++-linkage declarations would re-mangle the reloc names.
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
 extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);
 
@@ -92,4 +87,4 @@ extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80535B70[];   // CMakeCrystalWin vtable data (IScnRender sub-vtable at +0x88)
-extern u32 lbl_eu_80663E28;      // render-gate mode bitfield (.sbss; bit 21 = busy)
+extern u32 gmPauseFlags;      // render-gate mode bitfield (.sbss; bit 21 = busy)

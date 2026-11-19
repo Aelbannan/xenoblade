@@ -4,8 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CKizunagram.hpp"
+#include "kyoshin/CTitle.hpp"  // setGXColorS10 (canonical C++ declaration)
 #include "kyoshin/code_80135FDC.hpp"  // layout/anim/font helpers (extern "C" pre-mangled names)
-#include "monolib/device/CDeviceFile.hpp"
+
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -227,32 +228,32 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     void* lytv = self->layout;
     u8 lang = (u8)lbl_eu_80664184;
     if (lang == 0x19) {
-        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664838, &lbl_eu_80664840);
+        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRegion19First, &kizLineTevColorRegion19Second);
         PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, (int)0xF9FFF2FF, 0x94AA8CFF);
     } else if (lang == 0x1A) {
-        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664848, &lbl_eu_80664850);
+        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRegion1AFirst, &kizLineTevColorRegion1ASecond);
         PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0x8CA0EBFF);
     } else {
         switch (MapValueToRank6(lang)) {
         case 0:
         case 1:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_806647E8, &lbl_eu_806647F0);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank01First, &kizLineTevColorRank01Second);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xEEB88AFF);
             break;
         case 2:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_806647F8, &lbl_eu_80664800);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank2First, &kizLineTevColorRank2Second);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE0C072FF);
             break;
         case 3:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664808, &lbl_eu_80664810);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank3First, &kizLineTevColorRank3Second);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE1F8A8FF);
             break;
         case 4:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664818, &lbl_eu_80664820);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank4First, &kizLineTevColorRank4Second);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xB4DEFFFF);
             break;
         case 5:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &lbl_eu_80664828, &lbl_eu_80664830);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank5First, &kizLineTevColorRank5Second);
             PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xBCBAE6FF);
             break;
         }
@@ -360,7 +361,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
         f32 scalePair[2];
         TagCopyVec2f(scalePair, resScale->scale);
         f32 scaled[3];
-        kizScaleVec3(scaled, &posBase.x, lbl_eu_80668830);
+        kizScaleVec3(scaled, &posBase.x, -1.0f);
         copyVEC3(&self->result18.x, scaled);
         self->field24 = 1;
         UnkKizunaVec3 out = self->result18;
@@ -368,8 +369,8 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
         placeKizMarker((UnkKizunaSelf59394*)self, &out);
     }
 
-    lbl_eu_80664858 = 0;
-    lbl_eu_8066485A = 0;
+    sKizRowCursor = 0;
+    sKizRevealCursor = 0;
     refreshKizEntryPanes(reinterpret_cast<UnkKizunaSelf9820*>(self));
 
     // Pick the progress message tag from the game-progress byte at 0x20.
@@ -708,7 +709,7 @@ extern "C" int tickKizMarker(UnkKizunaSelf5949C* self) {
     const wchar_t* condEnd;
     while (condEnd = (const wchar_t*)getContextStrPtr(ctx), condCur = cur,
            TagProcCompareIds(&condCur, &condEnd)) {
-        UnkKizunaVec3 work = linePos;   // refreshed every pass
+        UnkKizunaVec3 work = linePos;
         const UnkKizunaCtxItem* item =
             reinterpret_cast<const UnkKizunaCtxItem*>(TagCtxGetNodeHeader(&cur));
         // retail materializes the item position copy (@0x6c) before the
@@ -927,11 +928,11 @@ extern "C" void placeKizMarker(UnkKizunaSelf59394* self,
     // pure float register coloring only (0 structural, no reloc drift).
     pos.x = pos.x + arg->x;
     f32 minX, minY, maxX, maxY;
-    minX = lbl_eu_8066884C * size[0];
-    minY = lbl_eu_8066884C * size[1];
+    minX = 0.5f * size[0];
+    minY = 0.5f * size[1];
     pos.y += arg->y;
-    maxX = lbl_eu_80668830 * minX;
-    maxY = lbl_eu_80668830 * minY;
+    maxX = -1.0f * minX;
+    maxY = -1.0f * minY;
     if (pos.x > minX) pos.x = minX;
     if (pos.x < maxX) pos.x = maxX;
     if (pos.y > minY) pos.y = minY;
@@ -961,7 +962,7 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
     u64 sub = 0x155;
     u64 chk = CtrlRemote_TouchBitByArg(0x20) - sub;
     const char* str = lbl_eu_8050CB20;
-    f32 scale = lbl_eu_8066884C;
+    f32 scale = 0.5f;
     f32 posZ = lbl_eu_80668828;
     u32 i = 0;
     const u32 feConst = 0xfe;
@@ -969,7 +970,7 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
     const u32 tintColor = 0x777777ff;
 
     for (; i < 0x10; i++) {
-        u16 cnt = lbl_eu_80664858;
+        u16 cnt = sKizRowCursor;
         if (cnt >= limit) {
             return true;
         }
@@ -1032,7 +1033,7 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
             }
         }
     next:
-        lbl_eu_80664858 = lbl_eu_80664858 + 1;
+        sKizRowCursor = sKizRowCursor + 1;
     }
     return false;
 }
@@ -2099,20 +2100,20 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // sinit_8025D304: init the 14-color kizuna line palette via setGXColorS10.
 void sinit_8025D304() {
-    setGXColorS10(&lbl_eu_806647E8, 0x21, 0x1c, 0x15, 0x0);
-    setGXColorS10(&lbl_eu_806647F0, 0xb5, 0xb1, 0xab, 0xff);
-    setGXColorS10(&lbl_eu_806647F8, 0x21, 0x1e, 0x15, 0x0);
-    setGXColorS10(&lbl_eu_80664800, 0xb5, 0xb1, 0xab, 0xff);
-    setGXColorS10(&lbl_eu_80664808, 0x17, 0x21, 0x15, 0x0);
-    setGXColorS10(&lbl_eu_80664810, 0xb3, 0xaf, 0x97, 0xff);
-    setGXColorS10(&lbl_eu_80664818, 0x1c, 0x24, 0x2d, 0x0);
-    setGXColorS10(&lbl_eu_80664820, 0xb5, 0xb1, 0xab, 0xff);
-    setGXColorS10(&lbl_eu_80664828, 0x1c, 0x20, 0x31, 0x0);
-    setGXColorS10(&lbl_eu_80664830, 0xb5, 0xb1, 0xab, 0xff);
-    setGXColorS10(&lbl_eu_80664838, 0x1c, 0x2c, 0x1a, 0x0);
-    setGXColorS10(&lbl_eu_80664840, 0xe5, 0xea, 0xde, 0xff);
-    setGXColorS10(&lbl_eu_80664848, 0x21, 0x1e, 0x15, 0x0);
-    setGXColorS10(&lbl_eu_80664850, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&kizLineTevColorRank01First, 0x21, 0x1c, 0x15, 0x0);
+    setGXColorS10(&kizLineTevColorRank01Second, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&kizLineTevColorRank2First, 0x21, 0x1e, 0x15, 0x0);
+    setGXColorS10(&kizLineTevColorRank2Second, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&kizLineTevColorRank3First, 0x17, 0x21, 0x15, 0x0);
+    setGXColorS10(&kizLineTevColorRank3Second, 0xb3, 0xaf, 0x97, 0xff);
+    setGXColorS10(&kizLineTevColorRank4First, 0x1c, 0x24, 0x2d, 0x0);
+    setGXColorS10(&kizLineTevColorRank4Second, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&kizLineTevColorRank5First, 0x1c, 0x20, 0x31, 0x0);
+    setGXColorS10(&kizLineTevColorRank5Second, 0xb5, 0xb1, 0xab, 0xff);
+    setGXColorS10(&kizLineTevColorRegion19First, 0x1c, 0x2c, 0x1a, 0x0);
+    setGXColorS10(&kizLineTevColorRegion19Second, 0xe5, 0xea, 0xde, 0xff);
+    setGXColorS10(&kizLineTevColorRegion1AFirst, 0x21, 0x1e, 0x15, 0x0);
+    setGXColorS10(&kizLineTevColorRegion1ASecond, 0xb5, 0xb1, 0xab, 0xff);
 }
 
 // Position the kizuna line panes: scale the +0x14 Vec2 by (const - the +0x10
@@ -2164,7 +2165,7 @@ void layoutKizLinePanes(UnkKizunaSelf57B6C* self) {
 }
 
 // us-8025a11c: reveal up to 16 newly-unlocked kizuna entries starting at the
-// shared row cursor lbl_eu_8066485A. For each row, resolve its named pane and
+// shared row cursor sKizRevealCursor. For each row, resolve its named pane and
 // toggle its visibility per unlock state; unlocked rows get their texture tag
 // rewritten from per-state string tables, then the texture is bound to the
 // pane. Returns true once the cursor passes the table row count.
@@ -2179,7 +2180,7 @@ extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
     u32 count = Bdat_GetMaxRow_B1EC(fp) & 0xffff;
 
     for (u32 i = 0; i < 0x10; i++) {
-        u16 cnt = lbl_eu_8066485A;
+        u16 cnt = sKizRevealCursor;
         if ((u32)(u16)cnt >= count) {
             return true;
         }
@@ -2193,7 +2194,7 @@ extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
         }
         if (state == 0) {
             // still locked: just advance the cursor
-            lbl_eu_8066485A = lbl_eu_8066485A + 1;
+            sKizRevealCursor = sKizRevealCursor + 1;
             continue;
         }
 
@@ -2323,7 +2324,7 @@ extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
                 PaneSetTexPalette(pane, (TPLPalette*)((u32)tex));
             }
         }
-        lbl_eu_8066485A = lbl_eu_8066485A + 1;
+        sKizRevealCursor = sKizRevealCursor + 1;
     }
     return false;
 }

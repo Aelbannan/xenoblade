@@ -67,21 +67,11 @@ extern u8 gap_10_806656B1_sbss[3];
 // code/data, and the anchor stub's name embeds a line number, which made
 // UNIT_RULES drop matching fragile.)
 
-// Static member macros
-#define spInstance lbl_eu_806656A0
-#define pixelFormat lbl_eu_8066569C
-#define sCostTime lbl_eu_80665698
+// Static members are declared once in CDeviceGX.hpp and defined here.
 
-extern "C" {
-extern CDeviceGX* lbl_eu_806656A0;
-extern const f64 lbl_eu_8066A440;  // int→double magic (unsigned)
-extern const f64 lbl_eu_8066A448;  // int→double magic (signed)
-extern f32 lbl_eu_80665698;
-}
-
-extern "C" f32 lbl_eu_80665698 = 0;
-extern "C" GXPixelFmt lbl_eu_8066569C = (GXPixelFmt)0;
-extern "C" CDeviceGX* lbl_eu_806656A0 = nullptr;
+float CDeviceGX::sCostTime = 0.0f;
+GXPixelFmt CDeviceGX::pixelFormat = (GXPixelFmt)0;
+CDeviceGX* CDeviceGX::spInstance = nullptr;
 // cacheInstance/gxHeapSize/someString are provided by the retail data object
 // (monolibdata2) until this unit's .sdata/.sbss is data-matched.
 
@@ -96,7 +86,7 @@ unk26C(0),
 unk270(0),
 unk274(1),
 mFilter(VFILTER_NONE){
-    lbl_eu_806656A0 = this;
+    spInstance = this;
     cacheInstance = &unk27C;
     mGxHeap = new (CDevice::getDevSys1Handle(), 32) u8[gxHeapSize__9CDeviceGX];
     mGxHeapEndAddr = mGxHeap + gxHeapSize__9CDeviceGX;
@@ -109,12 +99,11 @@ mFilter(VFILTER_NONE){
 CDeviceGX::~CDeviceGX(){
     DELETE_ARRAY(mGxHeap);
 
-    lbl_eu_806656A0 = nullptr;
+    spInstance = nullptr;
 }
 
 CDeviceGX* CDeviceGX::getInstance(){
-    // Retail SDA reloc is lbl_eu_806656A0@sda21, not spInstance__9CDeviceGX.
-    return lbl_eu_806656A0;
+    return spInstance;
 }
 
 struct DeviceGxMsgQueueData {
@@ -134,7 +123,7 @@ struct DeviceGxMsgQueueData {
 // flag read must qualify CWorkThread:: explicitly. Likewise the state read
 // targets CWorkThread::mState (0x48).
 bool CDeviceGX::isInitialized(){
-    const CDeviceGX* inst = lbl_eu_806656A0;
+    const CDeviceGX* inst = spInstance;
 
     bool exception;
     if (inst->CWorkThread::mFlags & THREAD_FLAG_EXCEPTION) {
@@ -168,45 +157,45 @@ merged:
 }
 
 void CDeviceGX::setDevicesInitializedFlag(bool state){
-    lbl_eu_806656A0->mDevicesInitialized = state;
+    spInstance->mDevicesInitialized = state;
 }
 
 bool CDeviceGX::devicesInitialized(){
-    return lbl_eu_806656A0->mDevicesInitialized == true;
+    return spInstance->mDevicesInitialized == true;
 }
 
 void CDeviceGX::updateVerticalFilter(EVerticalFilter filter){
     //Default to filter 0
-    lbl_eu_806656A0->mFilter = filter;
+    spInstance->mFilter = filter;
     
     //The game only ever calls this function with VFILTER_0, so these other filters go unused.
-    if(lbl_eu_806656A0->mFilter == VFILTER_1){
-        lbl_eu_806656A0->mVFilter[0] = 0;
-        lbl_eu_806656A0->mVFilter[1] = 3;
-        lbl_eu_806656A0->mVFilter[2] = 19;
-        lbl_eu_806656A0->mVFilter[3] = 20;
-        lbl_eu_806656A0->mVFilter[4] = 19;
-        lbl_eu_806656A0->mVFilter[5] = 3;
-        lbl_eu_806656A0->mVFilter[6] = 0;
-        lbl_eu_806656A0->mVFilter[7] = 0;
-    }else if(lbl_eu_806656A0->mFilter == VFILTER_2){
-        lbl_eu_806656A0->mVFilter[0] = 4;
-        lbl_eu_806656A0->mVFilter[1] = 4;
-        lbl_eu_806656A0->mVFilter[2] = 15;
-        lbl_eu_806656A0->mVFilter[3] = 18;
-        lbl_eu_806656A0->mVFilter[4] = 15;
-        lbl_eu_806656A0->mVFilter[5] = 4;
-        lbl_eu_806656A0->mVFilter[6] = 4;
-        lbl_eu_806656A0->mVFilter[7] = 0;
-    }else if(lbl_eu_806656A0->mFilter == VFILTER_3){
-        lbl_eu_806656A0->mVFilter[0] = 8;
-        lbl_eu_806656A0->mVFilter[1] = 8;
-        lbl_eu_806656A0->mVFilter[2] = 10;
-        lbl_eu_806656A0->mVFilter[3] = 12;
-        lbl_eu_806656A0->mVFilter[4] = 10;
-        lbl_eu_806656A0->mVFilter[5] = 8;
-        lbl_eu_806656A0->mVFilter[6] = 8;
-        lbl_eu_806656A0->mVFilter[7] = 0;
+    if(spInstance->mFilter == VFILTER_1){
+        spInstance->mVFilter[0] = 0;
+        spInstance->mVFilter[1] = 3;
+        spInstance->mVFilter[2] = 19;
+        spInstance->mVFilter[3] = 20;
+        spInstance->mVFilter[4] = 19;
+        spInstance->mVFilter[5] = 3;
+        spInstance->mVFilter[6] = 0;
+        spInstance->mVFilter[7] = 0;
+    }else if(spInstance->mFilter == VFILTER_2){
+        spInstance->mVFilter[0] = 4;
+        spInstance->mVFilter[1] = 4;
+        spInstance->mVFilter[2] = 15;
+        spInstance->mVFilter[3] = 18;
+        spInstance->mVFilter[4] = 15;
+        spInstance->mVFilter[5] = 4;
+        spInstance->mVFilter[6] = 4;
+        spInstance->mVFilter[7] = 0;
+    }else if(spInstance->mFilter == VFILTER_3){
+        spInstance->mVFilter[0] = 8;
+        spInstance->mVFilter[1] = 8;
+        spInstance->mVFilter[2] = 10;
+        spInstance->mVFilter[3] = 12;
+        spInstance->mVFilter[4] = 10;
+        spInstance->mVFilter[5] = 8;
+        spInstance->mVFilter[6] = 8;
+        spInstance->mVFilter[7] = 0;
     }
 }
 
@@ -233,14 +222,14 @@ void CDeviceGX::viAfterDrawDone(){
 }
 
 void CDeviceGX::viBeginFrame(){
-    if(lbl_eu_806656A0->mDevicesInitialized == 1){
+    if(spInstance->mDevicesInitialized == 1){
         return;
     }
     cacheInstance->resetGXStateA();
 }
 
 void CDeviceGX::drawFrame(){
-    if(lbl_eu_806656A0->mDevicesInitialized == 1){
+    if(spInstance->mDevicesInitialized == 1){
         GXFlush();
 
         GXFifoObj fifoTemp;
@@ -249,14 +238,14 @@ void CDeviceGX::drawFrame(){
 
         GXGetCPUFifo(&fifoTemp);
         GXGetFifoPtrs(&fifoTemp, (void**)&readPtr, (void**)&writePtr);
-        lbl_eu_806656A0->unk26C = (u32)writePtr;
-        lbl_eu_806656A0->unk270 = (u32)readPtr;
+        spInstance->unk26C = (u32)writePtr;
+        spInstance->unk270 = (u32)readPtr;
         GXEnableBreakPt(writePtr);
 
         GXSetDrawSync(token1);
         cacheInstance->resetGXStateA();
 
-        if(lbl_eu_806656A0->unk274 == 0){
+        if(spInstance->unk274 == 0){
             CDrawGX something;
             something.setCol(*cacheInstance->getClearColor());
             s16 efbHeight = CDeviceVI::getRenderModeObj()->efbHeight;
@@ -272,25 +261,25 @@ void CDeviceGX::drawFrame(){
 
 //Copies the EFB to the destination external framebuffer.
 void CDeviceGX::copyEfbToXfb(void* pDestFrameBuffer){
-    CDeviceGX* gx = lbl_eu_806656A0;
+    CDeviceGX* gx = spInstance;
     GXBool vf = gx->mFilter != VFILTER_NONE;
     GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
     GXBool aa = CDeviceVI::getRenderModeObj()->aa;
     u8* vfilter = gx->mVFilter;
     GXSetCopyFilter(aa, rmode->sample_pattern, vf, vfilter);
-    GXCopyDisp(pDestFrameBuffer, lbl_eu_806656A0->unk274);
+    GXCopyDisp(pDestFrameBuffer, spInstance->unk274);
 }
 
 void CDeviceGX::calculateCost(){
     CStopwatchUtil::updateCostTime(someString);
     f32 visPerFrame = (f32)CDeviceVI::getVisPerFrame();
     f32 costTime = CStopwatchUtil::getCostTime(someString);
-    lbl_eu_80665698 = costTime / visPerFrame;
+    sCostTime = costTime / visPerFrame;
 }
 
 
 void CDeviceGX::copyEfb(void* pDestFrameBuffer){
-    if(lbl_eu_806656A0->mDevicesInitialized == true){
+    if(spInstance->mDevicesInitialized == true){
         GXSetDrawSync(token2);
         copyEfbToXfb(pDestFrameBuffer);
         while(GXReadDrawSync() != token2){}
@@ -314,7 +303,7 @@ bool CDeviceGX::wkStandbyLogin(){
     if(CDeviceVI::isRunningNoFlag2()){
         GXInit(mGxHeap, gxHeapSize);
 
-        if(lbl_eu_806656A0->mDevicesInitialized == true){
+        if(spInstance->mDevicesInitialized == true){
             GXSetDrawDone();
             GXInitFifoBase(&mFifo, mGxHeap, gxHeapSize);
             GXSetCPUFifo(&mFifo);
@@ -330,13 +319,13 @@ bool CDeviceGX::wkStandbyLogin(){
         if(renderMode->aa != 0){
             GXSetPixelFmt(GX_PF_RGBA565_Z16, GX_ZC_LINEAR);
         }else{
-            GXSetPixelFmt(lbl_eu_8066569C, GX_ZC_LINEAR);
+            GXSetPixelFmt(pixelFormat, GX_ZC_LINEAR);
         }
 
         cacheInstance->resetGXStateA();
         GXSetDither(GX_DISABLE);
 
-        if(lbl_eu_806656A0->mDevicesInitialized == true){
+        if(spInstance->mDevicesInitialized == true){
             GXSetDrawSyncCallback(drawSyncCallback);
         }
 
@@ -347,7 +336,7 @@ bool CDeviceGX::wkStandbyLogin(){
 }
 
 bool CDeviceGX::wkStandbyLogout(){
-    if(lbl_eu_806656A0->mDevicesInitialized == true){
+    if(spInstance->mDevicesInitialized == true){
         GXSetDrawSyncCallback(nullptr);
     }
 

@@ -749,9 +749,10 @@ void *adxf_CreateAdxFs(void) {
 /* ADXF_OpenNw - external open wrapper */
 int ADXF_OpenNw(void *adxf, u32 nfile) {
     struct AdxFsWork *work;
-    s32 seq;
+    u16 seq;
     s32 idx;
     struct AdxFsReq *req;
+    s32 idx2;
 
     ADXCRS_Enter();
     if (adxf == NULL) {
@@ -782,16 +783,15 @@ int ADXF_OpenNw(void *adxf, u32 nfile) {
             }
         }
 
-        idx = adxf_reqidx % 16;
-        req = &adxf_reqslot[idx];
+        idx2 = adxf_reqidx % 16;
+        req = &adxf_reqslot[idx2];
         req->flag = 1;
         req->status = 1;
-        seq = adxf_reqseq[1];
-        req->seq = (u16)seq;
+        req->seq = adxf_reqseq[1];
         req->work = adxf;
         req->p1 = (s32)nfile;
         req->p2 = -1;
-        adxf_reqidx = idx + 1;
+        adxf_reqidx = idx2 + 1;
     }
     ADXCRS_Leave();
     return (int)work;
@@ -859,14 +859,13 @@ void ADXF_Close(void *adxf) {
         }
         memset(work, 0, 0x34);
 
-        struct AdxFsReq *req2 = &adxf_reqslot[adxf_reqidx % 16];
-        req2->flag = 3;
-        req2->status = 1;
-        seq = adxf_reqseq[3];
-        req2->seq = (u16)seq;
-        req2->work = adxf;
-        req2->p1 = -1;
-        req2->p2 = -1;
+        req = &adxf_reqslot[adxf_reqidx % 16];
+        req->flag = 3;
+        req->status = 1;
+        req->seq = adxf_reqseq[3];
+        req->work = adxf;
+        req->p1 = -1;
+        req->p2 = -1;
         adxf_reqidx = (adxf_reqidx % 16) + 1;
     }
     ADXCRS_Leave();
@@ -1122,6 +1121,7 @@ int adxf_Stop(void *adxf) {
     s32 idx;
     u16 seq;
     struct AdxFsReq *req;
+    struct AdxFsReq *req2;
     void *obj;
     struct AdxFsWork *work = (struct AdxFsWork *)adxf;
 
@@ -1167,14 +1167,13 @@ int adxf_Stop(void *adxf) {
     ADXCRS_Unlock();
 
     idx = adxf_reqidx % 16;
-    req = &adxf_reqslot[idx];
-    req->flag = 5;
-    req->status = 1;
-    seq = adxf_reqseq[5];
-    req->seq = (u16)seq;
-    req->work = adxf;
-    req->p1 = -1;
-    req->p2 = -1;
+    req2 = &adxf_reqslot[idx];
+    req2->flag = 5;
+    req2->status = 1;
+    req2->seq = adxf_reqseq[5];
+    req2->work = adxf;
+    req2->p1 = -1;
+    req2->p2 = -1;
     adxf_reqidx = idx + 1;
 
     return (int)work->field_10;

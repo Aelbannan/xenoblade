@@ -88,8 +88,8 @@ extern void* cacheInstance__9CDeviceGX;
 int getAdjustFlag__8CGXCacheFv(void*);
 s16* getSubRectPtr__8CGXCacheFv(void*);
 
-extern void* lbl_eu_80664860;
-extern nw4r::ut::TagProcessorBase<wchar_t>* lbl_eu_8066486C;
+extern void* textStateFontLayer;
+extern nw4r::ut::TagProcessorBase<wchar_t>* textStateTagProcessor;
 const nw4r::ut::Font* setupDraw__10CFontLayerFv(void*, int);
 
 extern char lbl_eu_805377CC[];
@@ -117,7 +117,6 @@ extern char lbl_eu_805376B8[];
 
 // Shared sdata2 constant: the int->double conversion magic (2^52 + 2^51)
 // that retail's idiom subtracts.
-extern f32 lbl_eu_806688C0;
 
 // Planted copy of the shared int->double conversion magic (2^52 + 2^51);
 // defining it lets MWCC's constant pool reuse the retail symbol for the
@@ -329,7 +328,7 @@ struct CUnkObj8025FB10 {
     u32 mBitmap[5];                 // +0x870
 };
 
-extern u8* lbl_eu_80664870;
+extern u8* textStateTextBuffer;
 
 // Inline helper: MWCC's inliner lowers the in-loop `return rec` to an
 // unconditional `b` after the `bne` (branch-over-branch `bne next; b found`),
@@ -1478,34 +1477,34 @@ extern "C" void* __ct__CTagProcessor(void*);
 // by its literal retail symbol (unmangled __ct__CTagProcessor) so the call
 // reloc name matches retail; its return value (this) flows back into tagMem
 // so MWCC keeps it in r3 across the call like retail.
-int lbl_eu_80664864;
-int lbl_eu_80664868;
-int lbl_eu_80662980;
-int lbl_eu_80664874;
+int textStateEnabled;
+int textStateMessageCursor;
+int textStateMessageIndex;
+int textStateMessageText;
 
 void TextState_Init(u8* arg) {
-    lbl_eu_80664864 = 0;
-    lbl_eu_80664868 = 0;
-    lbl_eu_80662980 = -1;
-    lbl_eu_80664874 = 0;
-    lbl_eu_80664860 = arg;
+    textStateEnabled = 0;
+    textStateMessageCursor = 0;
+    textStateMessageIndex = -1;
+    textStateMessageText = 0;
+    textStateFontLayer = arg;
 
     u32 handle = CLibLayout::getAllocHandle();
     u8* tagMem = (u8*)mtl::MemManager::allocate(0x858, handle);
     if (tagMem != NULL) {
         tagMem = (u8*)__ct__CTagProcessor(tagMem);
     }
-    lbl_eu_8066486C = (nw4r::ut::TagProcessorBase<wchar_t>*)tagMem;
+    textStateTagProcessor = (nw4r::ut::TagProcessorBase<wchar_t>*)tagMem;
 
     u32 handle2 = CLibLayout::getAllocHandle();
-    lbl_eu_80664870 = (u8*)mtl::MemManager::allocate_head(handle2, 0x400, 0x20);
+    textStateTextBuffer = (u8*)mtl::MemManager::allocate_head(handle2, 0x400, 0x20);
 }
 
 void TextState_Reset(int arg) {
-    lbl_eu_80664864 = arg;
-    lbl_eu_80664868 = arg;
-    lbl_eu_80662980 = -1;
-    lbl_eu_80664874 = 0;
+    textStateEnabled = arg;
+    textStateMessageCursor = arg;
+    textStateMessageIndex = -1;
+    textStateMessageText = 0;
 }
 
 // us-80263bf0 - scan the packed message table for the entry covering
@@ -1515,7 +1514,7 @@ namespace {
 
 // UTF-16 string staging helper from code_80135FDC.cpp (C linkage there).
 
-// Field view of the game tag-processor object stored at lbl_eu_8066486C;
+// Field view of the game tag-processor object stored at textStateTagProcessor;
 // slot +0x14 renders a UTF-16 string buffer at a float position.
 class TagProcMsgView {
 public:
@@ -1529,21 +1528,21 @@ public:
 } // namespace
 
 void IdTable_SeekIndex(int idx) {
-    if (lbl_eu_80664864 == 0) {
+    if (textStateEnabled == 0) {
         return;
     }
-    int prev = lbl_eu_80662980;
+    int prev = textStateMessageIndex;
     if (idx < prev) {
         // Restart the cursor when moving backwards.
-        lbl_eu_80664868 = lbl_eu_80664864;
-        lbl_eu_80662980 = -1;
-        lbl_eu_80664874 = 0;
+        textStateMessageCursor = textStateEnabled;
+        textStateMessageIndex = -1;
+        textStateMessageText = 0;
     }
     if (prev == idx) {
         return;
     }
 
-    u8* p = (u8*)lbl_eu_80664868;
+    u8* p = (u8*)textStateMessageCursor;
     u8* found = NULL;
     while (true) {
         u8 idHi = p[0];
@@ -1557,22 +1556,22 @@ void IdTable_SeekIndex(int idx) {
         found = p + 2;
         p = found;
         while (*p++) {}
-        lbl_eu_80664868 = (int)p;
+        textStateMessageCursor = (int)p;
     }
 
-    lbl_eu_80662980 = idx;
+    textStateMessageIndex = idx;
 
     if (found == NULL) {
         return;
     }
     if (*found == 0) {
-        lbl_eu_80664874 = 0;
+        textStateMessageText = 0;
         return;
     }
-    Utf8ToWcsCopyFix((const char*)found, (u16*)lbl_eu_80664870, 0x200);
-    lbl_eu_80664874 = ((TagProcMsgView*)lbl_eu_8066486C)
-                          ->drawMessage((u16*)lbl_eu_80664870,
-                                        lbl_eu_806688C0, lbl_eu_806688C0, 0);
+    Utf8ToWcsCopyFix((const char*)found, (u16*)textStateTextBuffer, 0x200);
+    textStateMessageText = ((TagProcMsgView*)textStateTagProcessor)
+                          ->drawMessage((u16*)textStateTextBuffer,
+                                        38.0f, 38.0f, 0);
 }
 
 // us-80263d14 - draw the shared message centered horizontally,
@@ -1583,17 +1582,17 @@ void TextState_DrawStaged() {
     if (Class_80296898::getInstance()->mConfigData[0x22] == 0) {
         return;
     }
-    if (lbl_eu_80664864 == 0) {
+    if (textStateEnabled == 0) {
         return;
     }
-    if (lbl_eu_80664874 == 0) {
+    if (textStateMessageText == 0) {
         return;
     }
     // Half frame width (arithmetic shift), PAL-safe bottom margin.
     s32 halfWidth = CDeviceVI::getRenderModeObj()->fbWidth >> 1;
     s32 bottomOffset = CDeviceVI::isTvFormatPal() ? 0x44 : 0x38;
     s32 efbHeight = CDeviceVI::getRenderModeObj()->efbHeight;
-    TextState_DrawTextOrtho((const wchar_t*)lbl_eu_80664874,
+    TextState_DrawTextOrtho((const wchar_t*)textStateMessageText,
                   halfWidth,
                   efbHeight - bottomOffset);
 }
@@ -1601,24 +1600,24 @@ void TextState_DrawStaged() {
 // us-80263dcc - static shutdown for the shared text state: free the
 // tag processor and text buffer, then clear all globals.
 void __dt__80261B1C() {
-    lbl_eu_80664864 = 0;
-    lbl_eu_80664868 = 0;
-    lbl_eu_80662980 = -1;
-    lbl_eu_80664874 = 0;
-    lbl_eu_80664860 = NULL;
+    textStateEnabled = 0;
+    textStateMessageCursor = 0;
+    textStateMessageIndex = -1;
+    textStateMessageText = 0;
+    textStateFontLayer = NULL;
 
     // Explicit guard plus delete's own null check reproduces retail's
     // doubled branch on this block.
-    if (lbl_eu_8066486C != NULL) {
-        delete lbl_eu_8066486C;
-        lbl_eu_8066486C = NULL;
+    if (textStateTagProcessor != NULL) {
+        delete textStateTagProcessor;
+        textStateTagProcessor = NULL;
     }
 
     // delete[] of a POD array emits no null check of its own, so the guard
     // must be explicit.
-    if (lbl_eu_80664870 != NULL) {
-        delete[] lbl_eu_80664870;
-        lbl_eu_80664870 = NULL;
+    if (textStateTextBuffer != NULL) {
+        delete[] textStateTextBuffer;
+        textStateTextBuffer = NULL;
     }
 }
 
@@ -1690,13 +1689,13 @@ extern "C" void TextState_DrawTextOrtho(const wchar_t* text, f32 x, f32 y) {
     writer.SetupGX();
     u32 writerRegion = (u32)&writer & 0xFF000000;
 
-    setTagProcessorChecked(&writer, lbl_eu_8066486C, writerRegion);
+    setTagProcessorChecked(&writer, textStateTagProcessor, writerRegion);
     setDrawFlagChecked(&writer, writerRegion, 0x110);
     setScaleChecked(&writer, writerRegion, 1.0f, 1.2658228f);
     setCharSpaceChecked(&writer, writerRegion, 0.0f);
 
     const nw4r::ut::Font* font = setupDraw__10CFontLayerFv(
-        static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
+        static_cast<u8*>(textStateFontLayer) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
     {
         // Color(valid,…) shares li r6,0; assign valid=(OR) so the false web

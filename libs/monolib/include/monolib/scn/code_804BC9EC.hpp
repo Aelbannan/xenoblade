@@ -26,6 +26,22 @@ struct ScnResData {
 
 extern ScnResData lbl_eu_8065F32C;
 
+// Collision query box: max corner and half-extents, followed by the tail word
+// of the retail 0x1C bss block.  Defined in code_804BC9EC.cpp.
+struct ColiQueryVec {
+    f32 x;
+    f32 y;
+    f32 z;
+};
+
+struct ColiQueryBounds {
+    ColiQueryVec max;   // 0x00
+    ColiQueryVec ext;   // 0x0C
+    u32 field_0x18;     // 0x18
+};
+
+extern ColiQueryBounds sColiQueryBounds;
+
 // The real class of lbl_eu_8065F32C is CColiMoverState (full 0xC4 layout in
 // coli/code_804B59C8.cpp). This scn-side view declares only the member the
 // scn TUs call; ScnResData above stays the field view used here.
@@ -34,11 +50,11 @@ struct CColiMoverState {
 };
 
 extern "C" {
+u32 Coli_CheckFlag(u32* self);
 ScnResData* Coli_GetOutMatrix_80A4(ScnResData* self, int index);
 void Coli_ClearOutFlag_8078(ScnResData* self, int index);
 void getMoverEntry(ScnResData* self);
 // (memberized: initColiMover -> CColiMoverState::initColiMover; declaration moved into class CColiMoverState)
-void Coli_CheckFlag(ScnResData*);
 void clrSeenBitTbl(int, int);
 void setSeenBitTbl(ScnResData*);
 }

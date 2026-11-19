@@ -170,10 +170,10 @@ void mwlSfdExecDecSvrPlaying(void* self) {
 }
 #pragma pop
 
-extern void* lbl_eu_805FF3A0;
-extern u8 lbl_eu_80566D44[];
-extern u8 lbl_eu_80566EEC[];
-extern u8 lbl_eu_80566E18[];
+extern void* gpMwPlyTraceCb;
+extern u8 sTraceMainThrd[];
+extern u8 sTraceDecodeServer[];
+extern u8 sTraceIdleThrd[];
 extern s32 lbl_eu_805FF39C;
 extern void mwPlyExecInfiniteLoopHandle(void* h);
 extern void mwPlyExecRequestServer(void* self);
@@ -246,13 +246,13 @@ s32 MWSFSVR_VsyncThrdProc(void) {
     s32 local;
     void* h;
 
-    h = lbl_eu_805FF3A0;
+    h = gpMwPlyTraceCb;
     if (h != NULL) {
         /* Handle object: method table slot 9 dispatches a player callback. */
         ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80566C70 + 0x04);
     }
     local = 0;
-    h = lbl_eu_805FF3A0;
+    h = gpMwPlyTraceCb;
     if (h != NULL) {
         ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80567094 + 4);
     }
@@ -270,12 +270,12 @@ s32 MWSFSVR_VsyncThrdProc(void) {
             }
         }
     }
-    h = lbl_eu_805FF3A0;
+    h = gpMwPlyTraceCb;
     if (h != NULL) {
         ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80567094 + 0x6C);
     }
     local = 0;
-    h = lbl_eu_805FF3A0;
+    h = gpMwPlyTraceCb;
     if (h != NULL) {
         *(void**)(lbl_eu_80566C70 + 0x74) = &local;
         ((VtableFn)(*(void***)h)[9])(h, lbl_eu_80566C70 + 0x6c);
@@ -293,9 +293,9 @@ s32 MWSFSVR_MainThrdProc(void* self) {
     s32 local_8;
     s32 i;
 
-    if (lbl_eu_805FF3A0 != NULL) {
-        ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-            lbl_eu_805FF3A0, lbl_eu_80566D44 + 0x04);
+    if (gpMwPlyTraceCb != NULL) {
+        ((void (*)(void*, void*))(*(void***)gpMwPlyTraceCb)[9])(
+            gpMwPlyTraceCb, sTraceMainThrd + 0x04);
     }
     local_c = 0;
     if (lbl_eu_805FF39C == 1) {
@@ -337,56 +337,56 @@ s32 MWSFSVR_MainThrdProc(void* self) {
     }
     mwPlyExecRequestServer(self);
     if (MWSFLIB_GetLibWorkPtr()->state10 == 1) {
-        if (lbl_eu_805FF3A0 != NULL) {
-            ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-                lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            ((void (*)(void*, void*))(*(void***)gpMwPlyTraceCb)[9])(
+                gpMwPlyTraceCb, sTraceDecodeServer + 0x04);
         }
         local_8 = mwsfsvr_DecodeServer(self);
-        if (lbl_eu_805FF3A0 != NULL) {
-            *(void**)(lbl_eu_80566EEC + 0x74) = &local_8;
-            ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-                lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            *(void**)(sTraceDecodeServer + 0x74) = &local_8;
+            ((void (*)(void*, void*))(*(void***)gpMwPlyTraceCb)[9])(
+                gpMwPlyTraceCb, sTraceDecodeServer + 0x6c);
         }
         local_c = local_8;
     }
-    if (lbl_eu_805FF3A0 != NULL) {
-        *(void**)(lbl_eu_80566D44 + 0x74) = &local_c;
-        ((void (*)(void*, void*))(*(void***)lbl_eu_805FF3A0)[9])(
-            lbl_eu_805FF3A0, lbl_eu_80566D44 + 0x6c);
+    if (gpMwPlyTraceCb != NULL) {
+        *(void**)(sTraceMainThrd + 0x74) = &local_c;
+        ((void (*)(void*, void*))(*(void***)gpMwPlyTraceCb)[9])(
+            gpMwPlyTraceCb, sTraceMainThrd + 0x6c);
     }
     return local_c;
 }
 
-extern u8 lbl_eu_80566E18[];
+extern u8 sTraceIdleThrd[];
 
 static s32 criware_803A2908(void* self) {
     s32 local;
-    if (lbl_eu_805FF3A0 != NULL) {
-        ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-            lbl_eu_805FF3A0, lbl_eu_80566E18 + 0x04);
+    if (gpMwPlyTraceCb != NULL) {
+        ((void (*)(void*, void*))*(void**)((char*)*(void**)gpMwPlyTraceCb + 0x24))(
+            gpMwPlyTraceCb, sTraceIdleThrd + 0x04);
     }
     local = 0;
     {
         MWSFLibWork* lw = MWSFLIB_GetLibWorkPtr();
         if (lw->state10 != 1) {
-            if (lbl_eu_805FF3A0 != NULL) {
-                ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                    lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x04);
+            if (gpMwPlyTraceCb != NULL) {
+                ((void (*)(void*, void*))*(void**)((char*)*(void**)gpMwPlyTraceCb + 0x24))(
+                    gpMwPlyTraceCb, sTraceDecodeServer + 0x04);
             }
             {
                 s32 r = mwsfsvr_DecodeServer(self);
-                if (lbl_eu_805FF3A0 != NULL) {
-                    *(void**)(lbl_eu_80566EEC + 0x74) = &r;
-                    ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                        lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x6c);
+                if (gpMwPlyTraceCb != NULL) {
+                    *(void**)(sTraceDecodeServer + 0x74) = &r;
+                    ((void (*)(void*, void*))*(void**)((char*)*(void**)gpMwPlyTraceCb + 0x24))(
+                        gpMwPlyTraceCb, sTraceDecodeServer + 0x6c);
                 }
                 local = r;
             }
         }
-        if (lbl_eu_805FF3A0 != NULL) {
-            *(void**)(lbl_eu_80566E18 + 0x74) = &local;
-            ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                lbl_eu_805FF3A0, lbl_eu_80566E18 + 0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            *(void**)(sTraceIdleThrd + 0x74) = &local;
+            ((void (*)(void*, void*))*(void**)((char*)*(void**)gpMwPlyTraceCb + 0x24))(
+                gpMwPlyTraceCb, sTraceIdleThrd + 0x6c);
         }
     }
     return local;
@@ -448,7 +448,7 @@ s32 mwsfsvr_DecodeServer(void* self) {
     return found;
 }
 
-extern u8 lbl_eu_80566FC0[];
+extern u8 sTraceExecSvrHndl[];
 extern s32 mwsfd_ExecSvrHndl(MwPlySvrHndl* self);
 
 s32 mwply_ExecSvrHndl(void* self) {
@@ -462,17 +462,17 @@ s32 mwply_ExecSvrHndl(void* self) {
     if (ply->busyFlag == 1) return 0;
     if (((MWSFLibWork*)MWSFLIB_GetLibWorkPtr())->pauseFlag == 1) return 0;
     if (ply->stopFlag == 1) return 0;
-    if (lbl_eu_805FF3A0 != NULL) {
-        *(void**)(lbl_eu_80566FC0 + 0xC) = self;
-        ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-            lbl_eu_805FF3A0, lbl_eu_80566FC0 + 0x04);
+    if (gpMwPlyTraceCb != NULL) {
+        *(void**)(sTraceExecSvrHndl + 0xC) = self;
+        ((void (*)(void*, void*))*(void**)((char*)*(void**)gpMwPlyTraceCb + 0x24))(
+            gpMwPlyTraceCb, sTraceExecSvrHndl + 0x04);
     }
     {
         s32 local = mwsfd_ExecSvrHndl(self);
-        if (lbl_eu_805FF3A0 != NULL) {
-            *(void**)(lbl_eu_80566FC0 + 0x74) = &local;
-            ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                lbl_eu_805FF3A0, lbl_eu_80566FC0 + 0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            *(void**)(sTraceExecSvrHndl + 0x74) = &local;
+            ((void (*)(void*, void*))*(void**)((char*)*(void**)gpMwPlyTraceCb + 0x24))(
+                gpMwPlyTraceCb, sTraceExecSvrHndl + 0x6c);
         }
         return local;
     }

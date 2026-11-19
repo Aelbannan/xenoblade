@@ -88,9 +88,9 @@ void PartyGaugeTickDecay(UnkClass_8018C5FC* _this) {
     u32 cntlz = (u32)__cntlzw(cf8cVal);
     if ((cntlz >> 5) != 0) return;
     if (cf::CfGameManager::isSceneLoading()) return;
-    if (lbl_eu_80663E24 & 0xafa40000) return;
+    if (gmGameFlags & 0xafa40000) return;
 
-    f32 scale = Scn_GetFrameDelta(&lbl_eu_80663E14);
+    f32 scale = Scn_GetFrameDelta(&gmScene);
     if ((_this->tickAccum += CDeviceVI::getSecPerFrame() * scale) >= lbl_eu_80667A34) {
         _this->tickAccum = lbl_eu_80667A30;
 

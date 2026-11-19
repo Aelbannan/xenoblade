@@ -12,8 +12,8 @@ extern "C" void ColiSetMoveVec2(void* obj, int param, float a, float b);
 extern "C" u32 CfRes_getAllocHandle();
 extern "C" int UIWin_HasPendingUpdate(int v);
 
-// Retail data labels referenced by this unit. lbl_eu_80663E24 and
-// lbl_eu_80663E14 come from CfObjectMove.hpp.
+// Retail data labels referenced by this unit. gmGameFlags and
+// gmScene come from CfObjectMove.hpp.
 extern const float lbl_eu_80666AE0;
 extern const float lbl_eu_80666AE4;
 extern const float lbl_eu_80666AE8;

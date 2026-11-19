@@ -57,25 +57,25 @@ extern "C" void col6Win2PerPl(CCol6System* self);
 extern "C" void col6JoinCheck(CCol6System* self);
 extern "C" void col6HintInput(CCol6Hint* self);
 
-// Singleton instance (retail: lbl_eu_80664230).
+// Singleton instance (retail: sCol6CheckBatInstance).
 CCol6CheckBat* gCol6CheckBat;
 
-int lbl_eu_80664230;
-int lbl_eu_80664234;
-int lbl_eu_80664238;
-int lbl_eu_8066235C;
+int sCol6CheckBatInstance;
+int sCol6SystemInstance;
+int sCol6InviteInstance;
+int sCol6QueuedWindowId;
 
 // Composite vtable data for the check-bat / hint factories (retail sizes 0xC4
 // / 0xAC; only the symbol names/relocs matter for the function matches).
 char lbl_eu_8053011C[0xC4];
 char lbl_eu_8053021C[0xAC];
-char* lbl_eu_80662358; // .sdata arc-path pointer
+char* sCol6ArcPath; // .sdata arc-path pointer
 
 void Col6_ClearGlobals_D0B8() {
-    lbl_eu_80664230 = 0;
-    lbl_eu_80664234 = 0;
-    lbl_eu_80664238 = 0;
-    lbl_eu_8066235C = -1;
+    sCol6CheckBatInstance = 0;
+    sCol6SystemInstance = 0;
+    sCol6InviteInstance = 0;
+    sCol6QueuedWindowId = -1;
 }
 
 // CCol6CheckBat::~CCol6CheckBat()
@@ -104,27 +104,27 @@ void CCol6CheckBat::Init() {}
 
 // CCol6CheckBat::Term() - clears singleton pointer.
 void CCol6CheckBat::Term() {
-    *(CCol6CheckBat**)&lbl_eu_80664230 = nullptr;
+    *(CCol6CheckBat**)&sCol6CheckBatInstance = nullptr;
 }
 
 // CCol6CheckBat::Move() - once the game is running, shows the two check-bat
 // messages (indices 0x7f/0x80 of the shared string pool) and opens the queued
-// window (lbl_eu_8066235C + 0x100) when a window id is queued; either way the
+// window (sCol6QueuedWindowId + 0x100) when a window id is queued; either way the
 // bat ends up flagged done at +0x64.
 void CCol6CheckBat::Move() {
     if (IsMenuState621F0() == 0) {
         return;
     }
 
-    if (lbl_eu_8066235C >= 0) {
+    if (sCol6QueuedWindowId >= 0) {
         CUICfManager_setMessageWindowVisible(1);
         char* msg = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[9], 0x7f);
         UIWin_CreateSysWin0(msg, 0, 0);
         msg = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[9], 0x80);
         UIWin_CreateSysWin0(msg, 0, 0);
 
-        UIWin_CreateQuestWin(lbl_eu_8066235C + 0x100, 0, 0);
-        lbl_eu_8066235C = -1;
+        UIWin_CreateQuestWin(sCol6QueuedWindowId + 0x100, 0, 0);
+        sCol6QueuedWindowId = -1;
         CUICfManager_setMessageWindowVisible(0);
 
         // Retail keeps a copy of this store in BOTH arms (the b-over-else
@@ -167,7 +167,7 @@ struct CCol6CheckBatCtorShim {
 // NULL) and the (possibly NULL) object is returned.
 CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
     // Return NULL if the singleton already exists.
-    if (lbl_eu_80664230 != 0) {
+    if (sCol6CheckBatInstance != 0) {
         return 0;
     }
 
@@ -208,9 +208,9 @@ CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
         obj->flag70 = 0;
     }
 
-    lbl_eu_80664230 = (int)(uintptr_t)obj;
+    sCol6CheckBatInstance = (int)(uintptr_t)obj;
     ((CProcess*)obj)->Regist(parent, false);
-    return (CCol6CheckBat*)(uintptr_t)lbl_eu_80664230;
+    return (CCol6CheckBat*)(uintptr_t)sCol6CheckBatInstance;
 }
 
 int Col6_ScanItemSlots_D310() {
@@ -260,7 +260,7 @@ void Col6_ReserveBoxSlot_D3A0() {
     for (s32 i = 0; i < 5; i++) {
         u8 need = t2.bytes[i];
         if (total >= need && CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
-            lbl_eu_8066235C = i;
+            sCol6QueuedWindowId = i;
             CtrlRemote_SetSharedBit(i + 0x804, 1);
             // Retail sign-extends the t1 byte before adding to the running
             // total, then re-sign-extends the halfword argument.
@@ -398,7 +398,7 @@ void CCol6Hint::Init() {
     }
     IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(selfBytes);
     mField88 = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_80662358, evt, 0, 0);
+        mtl::MemManager::getHandleMEM2(), sCol6ArcPath, evt, 0, 0);
 
     mScrollBar = CScrollBar(3);
 
@@ -429,7 +429,7 @@ void CCol6Hint::Term() {
 
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
-    lbl_eu_80664234 = 0;
+    sCol6SystemInstance = 0;
 }
 
 // CCol6Hint::Move() - hint-bubble state machine (states 0-5) driving the
@@ -588,7 +588,7 @@ void CCol6Hint::cbRenderBefore() {
     // beq body/b end); the running/loaded checks are early returns; the
     // visibility check positively wraps the draw block.
     if (CTaskGame::getInstance()->isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & 0x200000) == 0) {
+        (gmPauseFlags & 0x200000) == 0) {
         goto body;
     }
     goto end;
@@ -624,7 +624,7 @@ class IUIWindow;
 // to the singleton global and Regist run even when allocation failed (obj
 // stays NULL); returns the (possibly NULL) singleton.
 extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene) {
-    if (lbl_eu_80664234 != 0) {
+    if (sCol6SystemInstance != 0) {
         return 0;
     }
 
@@ -635,9 +635,9 @@ extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene) {
         // across the call instead of spilling it to a callee-saved register.
         obj = __ct__CCol6Hint(obj, reinterpret_cast<CProcess*>(pScene));
     }
-    lbl_eu_80664234 = (int)(uintptr_t)obj;
-    reinterpret_cast<CProcess*>((uintptr_t)lbl_eu_80664234)->Regist(pParent, false);
-    return reinterpret_cast<IUIWindow*>((uintptr_t)lbl_eu_80664234);
+    sCol6SystemInstance = (int)(uintptr_t)obj;
+    reinterpret_cast<CProcess*>((uintptr_t)sCol6SystemInstance)->Regist(pParent, false);
+    return reinterpret_cast<IUIWindow*>((uintptr_t)sCol6SystemInstance);
 }
 
 // col6HintBuild - builds the CCol6Hint layout: attaches the arc, loads the two
@@ -648,9 +648,9 @@ extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene) {
 extern "C" void col6HintBuild(CCol6Hint* self) {
     // Build the layout into the +0x54 slot and load the two anim transforms
     // (the +0x54 anim host IS the layout object).
-    buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&self->mAnimHost), reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), &lbl_eu_80502050[0x46]);
-    bindLayoutAnimTransform(self->mAnimHost, &self->mField90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), &lbl_eu_80502050[0x56]);
-    bindLayoutAnimTransform(self->mAnimHost, &self->mField94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), &lbl_eu_80502050[0x69]);
+    buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&self->mAnimHost), reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00.brlyt");
+    bindLayoutAnimTransform(self->mAnimHost, &self->mField90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00_in.brlan");
+    bindLayoutAnimTransform(self->mAnimHost, &self->mField94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00_info_in.brlan");
 
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane = self->mAnimHost->GetRootPane();
@@ -669,19 +669,19 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
     self->mCur18.initLayout();
 
     // Label the two count panes.
-    char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c);
+    char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1c);
     LayoutSetTextBoxFmtValue(self->mAnimHost,
-                  &lbl_eu_80502050[0x81], s1, 0);
-    char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0xb);
+                  (char*)"txt_title", s1, 0);
+    char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0xb);
     LayoutSetTextBoxFmtValue(self->mAnimHost,
-                  &lbl_eu_80502050[0x8b], s2, 0);
+                  (char*)"txt_help", s2, 0);
 
     // Label the item pane and clear its visibility flag.
-    nw4r::lyt::Pane* pane = self->mAnimHost->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x94], true);
+    nw4r::lyt::Pane* pane = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_inf01", true);
     pane->SetVisible(false);
 
     Bdat_GetTable_AA34();
-    void* fp = getFP(&lbl_eu_80502050[0x26]);
+    void* fp = getFP((char*)"CL6_hintlist");
     Bdat_GetMaxRow_B1EC(fp);
 
     // Two 7-byte threshold tables (u32 + u16 + u8, read as byte arrays).
@@ -706,7 +706,7 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
         u32 rid = (u8)i + 0x7fc;
         u8 val2 = ((u8*)&tbl2)[(u8)i];
         while (val1 >= val2) {
-            s32 c = BdatGetU8Direct(fp, &lbl_eu_80502050[0x9e], val1);
+            s32 c = BdatGetU8Direct(fp, (char*)"flag", val1);
             if ((c & 0xff) <= (s32)CtrlRemote_TouchBitByArg(rid)) {
                 self->mUnk9C[self->mField11C] = val1;
                 self->mField11C++;
@@ -730,15 +730,15 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
     // the fallback string when the previous row is populated, else no text.
     for (s32 i = 0; i < 6; i++) {
         char buf[0x20];
-        sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+        sprintf(buf, (char*)"txt_%02d", i + 1);
         char* str = 0;
         u32 idx = i + (s8)self->mField121;
         s32 entry = (s32)self->mUnk9C[idx];
         if (entry != 0) {
-            str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
-                                &lbl_eu_80502050[0xa3], entry);
+            str = BdatTouchStringCell((char*)"CL6_hintlist",
+                                (char*)"title", entry);
         } else if (self->mUnk9C[idx - 1] != 0) {
-            str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5);
+            str = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 5);
         }
         LayoutSetTextBoxFmtValue(self->mAnimHost,
                       buf, str, 0);
@@ -806,29 +806,29 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         // Label the six slots and reposition the cursor.
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, (char*)"txt_%02d", i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
             // Nested form: retail tests entry==0 on the fall-through path.
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = BdatTouchStringCell(lbl_eu_80502050,
-                                        &lbl_eu_80502050[0x9], 5);
+                    str = BdatTouchStringCell((char*)"MNU_col6",
+                                        (char*)"name", 5);
                 }
             } else {
-                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
+                str = BdatTouchStringCell((char*)"CL6_hintlist",
+                                    (char*)"title", entry);
             }
             LayoutSetTextBoxFmtValue(self->mAnimHost,
                           buf, str, 0);
         }
         char buf2[0x20];
-        sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
+        sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
         // Root pane re-derived for every use - keeping it in a named local
         // across the virtual calls costs an extra callee-saved register.
         nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
                       self->mAnimHost->GetRootPane());
@@ -856,26 +856,26 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         }
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, (char*)"txt_%02d", i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = BdatTouchStringCell(lbl_eu_80502050,
-                                        &lbl_eu_80502050[0x9], 5);
+                    str = BdatTouchStringCell((char*)"MNU_col6",
+                                        (char*)"name", 5);
                 }
             } else {
-                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
+                str = BdatTouchStringCell((char*)"CL6_hintlist",
+                                    (char*)"title", entry);
             }
             LayoutSetTextBoxFmtValue(self->mAnimHost,
                           buf, str, 0);
         }
         char buf2[0x20];
-        sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
+        sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
         nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
                       self->mAnimHost->GetRootPane());
@@ -899,26 +899,26 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         }
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, (char*)"txt_%02d", i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = BdatTouchStringCell(lbl_eu_80502050,
-                                        &lbl_eu_80502050[0x9], 5);
+                    str = BdatTouchStringCell((char*)"MNU_col6",
+                                        (char*)"name", 5);
                 }
             } else {
-                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
+                str = BdatTouchStringCell((char*)"CL6_hintlist",
+                                    (char*)"title", entry);
             }
             LayoutSetTextBoxFmtValue(self->mAnimHost,
                           buf, str, 0);
         }
         char buf2[0x20];
-        sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
+        sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
         nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
                       self->mAnimHost->GetRootPane());
@@ -946,26 +946,26 @@ extern "C" void col6HintInput(CCol6Hint* self) {
         }
         for (s32 i = 0; i < 6; i++) {
             char buf[0x20];
-            sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+            sprintf(buf, (char*)"txt_%02d", i + 1);
             char* str = 0;
             s32 idx = i + (s8)self->mField121;
             s32 entry = (s32)self->mUnk9C[idx];
             if (entry == 0) {
                 if (self->mUnk9C[idx - 1] != 0) {
-                    str = BdatTouchStringCell(lbl_eu_80502050,
-                                        &lbl_eu_80502050[0x9], 5);
+                    str = BdatTouchStringCell((char*)"MNU_col6",
+                                        (char*)"name", 5);
                 }
             } else {
-                str = BdatTouchStringCell(&lbl_eu_80502050[0x26],
-                                    &lbl_eu_80502050[0xa3], entry);
+                str = BdatTouchStringCell((char*)"CL6_hintlist",
+                                    (char*)"title", entry);
             }
             LayoutSetTextBoxFmtValue(self->mAnimHost,
                           buf, str, 0);
         }
         char buf2[0x20];
-        sprintf(buf2, &lbl_eu_80502050[0xe], (s8)self->mField120 + 1);
+        sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
         nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
                       self->mAnimHost->GetRootPane());
@@ -1004,7 +1004,7 @@ struct CCol6SystemCtorShim {
 // whose sub-tables back the +0x6C/+0x70 interface pointers), the __ptmf_null
 // callback slots are copied, and the embedded subobjects (UnkClass_8045F564
 // region, two CCur18 cursors, two CSysWin windows) are placement-built before
-// the camera/vector block is initialized from the lbl_eu_80667564 float.
+// the camera/vector block is initialized from the 0.0f float.
 // CCol6System ctor - extern "C" free-function form (retail bare symbol,
 // same reason as __ct__CCol6Hint).
 extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
@@ -1072,7 +1072,7 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
     // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
     // stored directly.
-    f32 f = lbl_eu_80667564;
+    f32 f = 0.0f;
     // Camera/vector block: every CVec3 is built from a stack temp
     // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
     // lfs/stfs-to-stack + lwz/stw), while the trailing float/byte pairs are
@@ -1132,7 +1132,7 @@ void CCol6System::Init() {
         evt = reinterpret_cast<IWorkEvent*>(&mField6C);
     }
     mFileHandle = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_80662358, evt, 0, 0);
+        mtl::MemManager::getHandleMEM2(), sCol6ArcPath, evt, 0, 0);
 
     // Rebuild window 1 (direction 2): copy every non-vtable field so MWCC
     // emits the retail lwz/stw + lbz/stb sequence (skips +0x29..0x2B padding).
@@ -1219,7 +1219,7 @@ void CCol6System::Term() {
     releaseArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->deleteRegion();
-    lbl_eu_80664238 = 0;
+    sCol6InviteInstance = 0;
 }
 
 // Cursor/window position sync, shared by the anim-complete states of Move().
@@ -1484,12 +1484,12 @@ body:
         mFieldA4 = 0x20;
         {
             u8 cnt = (u8)CtrlRemote_TouchBitByArg(0x802);
-            char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      cnt + 0x67);
-            char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      cnt + 0x6c);
             ml::FixStr<128> buf;
-            buf.format(&lbl_eu_80502050[0xb5], s1, s2);
+            buf.format((char*)"%s<n>%s", s1, s2);
             reinterpret_cast<CSysWin*>(&mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
             reinterpret_cast<CSysWin*>(&mSysWin2)->openPhase1();
             cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
@@ -1544,10 +1544,10 @@ body:
             }
         } else {
             mFieldA4 = 0x24;
-            char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      0x7c);
-            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
-                                   &lbl_eu_80502050[0xc9],
+            u16 id = BdatGetU16ByTableKey((char*)"CL6_rwdlist",
+                                   (char*)"itemID",
                                    (s8)mPadA5[0] + 1);
             UIWin_CreateItemMulti(id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
@@ -1571,10 +1571,10 @@ body:
             }
         } else {
             mFieldA4 = 0x26;
-            char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      0x7c);
-            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0xbd],
-                                   &lbl_eu_80502050[0xc9], 5);
+            u16 id = BdatGetU16ByTableKey((char*)"CL6_rwdlist",
+                                   (char*)"itemID", 5);
             UIWin_CreateItemMulti(id, 0, 0, 0, 0, 1, 0, 1, 0);
         }
         break;
@@ -1629,7 +1629,7 @@ body:
                 for (u32 i = 0; i < 5; i++) {
                     if (val >= data2.bytes[i] &&
                         CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
-                        lbl_eu_8066235C = (s32)i;
+                        sCol6QueuedWindowId = (s32)i;
                         CtrlRemote_SetSharedBit(i + 0x804, 1);
                         val = (s16)(val + (s8)data3.bytes[i]);
                         CtrlRemote_SetSharedBit(0x7fc, val);
@@ -1656,7 +1656,7 @@ body:
             }
         } else {
             mFieldA4 = 0x28;
-            char* s = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      0x80);
             reinterpret_cast<CSysWin*>(&mSysWin2)->setKindContent(reinterpret_cast<char*>(s), 0);
             reinterpret_cast<CSysWin*>(&mSysWin2)->openPhase1();
@@ -1768,9 +1768,9 @@ draw:
 
 // col6SysCreate - item-box system-window factory (same shape as
 // col6HintAlloc, but constructs a 0x240-byte CCol6System and uses its own
-// singleton global lbl_eu_80664238).
+// singleton global sCol6InviteInstance).
 extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
-    if (lbl_eu_80664238 != 0) {
+    if (sCol6InviteInstance != 0) {
         return 0;
     }
 
@@ -1779,9 +1779,9 @@ extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
     if (obj != 0) {
         obj = __ct__CCol6System(obj, reinterpret_cast<CProcess*>(pScene));
     }
-    lbl_eu_80664238 = (int)(uintptr_t)obj;
-    reinterpret_cast<CProcess*>((uintptr_t)lbl_eu_80664238)->Regist(pParent, false);
-    return reinterpret_cast<IUIWindow*>((uintptr_t)lbl_eu_80664238);
+    sCol6InviteInstance = (int)(uintptr_t)obj;
+    reinterpret_cast<CProcess*>((uintptr_t)sCol6InviteInstance)->Regist(pParent, false);
+    return reinterpret_cast<IUIWindow*>((uintptr_t)sCol6InviteInstance);
 }
 
 // col6SysLayout - builds the second CCol6System layout: attaches the arc
@@ -1792,11 +1792,11 @@ extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
 extern "C" void col6SysLayout(CCol6System* self) {
     self->mPadA5[0] = 0;
 
-    buildLayout(&self->mpLayout, self->mArcAccessor, &lbl_eu_80502050[0x46]);
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim90, self->mArcAccessor, &lbl_eu_80502050[0x56]);
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim94, self->mArcAccessor, &lbl_eu_80502050[0x69]);
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim98, self->mArcAccessor, &lbl_eu_80502050[0xdc]);
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim9C, self->mArcAccessor, &lbl_eu_80502050[0xf1]);
+    buildLayout(&self->mpLayout, self->mArcAccessor, (char*)"mf35_rv00.brlyt");
+    bindLayoutAnimTransform(self->mpLayout, &self->mAnim90, self->mArcAccessor, (char*)"mf35_rv00_in.brlan");
+    bindLayoutAnimTransform(self->mpLayout, &self->mAnim94, self->mArcAccessor, (char*)"mf35_rv00_info_in.brlan");
+    bindLayoutAnimTransform(self->mpLayout, &self->mAnim98, self->mArcAccessor, (char*)"mf35_rv00_next.brlan");
+    bindLayoutAnimTransform(self->mpLayout, &self->mAnim9C, self->mArcAccessor, (char*)"mf35_rv00_out.brlan");
 
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane =
@@ -1808,27 +1808,27 @@ extern "C" void col6SysLayout(CCol6System* self) {
     // If the font value is present, label all 21 count panes with it.
     u32 fontVal = (u32)CUICfManager_getPackedFont9C();
     if (fontVal != 0) {
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x105], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x10f], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x11d], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x12b], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x135], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x13f], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x149], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x153], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x161], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x16f], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x17d], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x18b], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x199], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1a4], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1af], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1c0], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1d1], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1e2], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1f3], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x204], fontVal);
-        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x212], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_now02", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_now_val01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_now_val02", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num02", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num03", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num04", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val02", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val03", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val04", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val05", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold00", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val01_01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val02_01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val03_01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val04_01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val05_01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold00_01", fontVal);
+        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold01_01", fontVal);
     }
 
     // Start the four anims (setAnim at +0x2C) and tick once (+0x38).
@@ -1847,53 +1847,53 @@ extern "C" void col6SysLayout(CCol6System* self) {
     self->mCur2.initLayout();
 
     // Label the two count panes.
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x81],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1c),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_title",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1c),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x8b],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_help",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1),
                   0);
 
     // Three slot labels: formatted pane name, then the per-slot name char.
     for (s32 i = 0; i < 3; i++) {
         char buf[0x20];
-        sprintf(buf, &lbl_eu_80502050[0xe], i + 1);
+        sprintf(buf, (char*)"txt_%02d", i + 1);
         LayoutSetTextBoxFmtValue(self->mpLayout, buf,
-                      BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+                      BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                     i + 2),
                       0);
     }
 
     // Blank rows and static summary labels.
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x220],
-                  &lbl_eu_80502050[0x227], 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x228],
-                  &lbl_eu_80502050[0x227], 0);
-    char* s1e = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x1e);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x22f], s1e, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x237],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 5), 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x241],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x43),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_04",
+                  (char*)"", 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_05",
+                  (char*)"", 0);
+    char* s1e = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1e);
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_mes", s1e, 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_sel05",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 5), 0);
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_material",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x43),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x24e],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x47),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_material_01",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x47),
                   0);
 
-    char* s46 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x46);
+    char* s46 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x46);
 
     // Four player-count rows: count pane + two sub-labels per row.
     for (s32 i = 0; i < 4; i++) {
         u8 idx = (u8)(i + 1);
         u32 c = CtrlRemote_TouchBitByArg(i + 0x7fe);
         char buf[0x20];
-        sprintf(buf, &lbl_eu_80502050[0x25e], idx);
+        sprintf(buf, (char*)"txt_num%02d", idx);
         setLayoutTextBoxNumber(self->mpLayout, buf, c);
-        sprintf(buf, &lbl_eu_80502050[0x26a], idx);
+        sprintf(buf, (char*)"txt_lv%02d", idx);
         LayoutSetTextBoxFmtValue(self->mpLayout, buf, s46, 0);
-        sprintf(buf, &lbl_eu_80502050[0x275], idx);
+        sprintf(buf, (char*)"txt_sel%02d", idx);
         LayoutSetTextBoxFmtValue(self->mpLayout, buf,
-                      BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+                      BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                     i + 0x3d),
                       0);
     }
@@ -1901,33 +1901,33 @@ extern "C" void col6SysLayout(CCol6System* self) {
     col6FillSlots(self, (s8)self->mPadA5[0]);
 
     // Remaining summary rows.
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x281],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x15),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x15),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x289],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x16),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now01",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x16),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x105],
-                  BdatTouchStringCell(&lbl_eu_80502050[0x293],
-                                &lbl_eu_80502050[0x9], 0x16),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now02",
+                  BdatTouchStringCell((char*)"help",
+                                (char*)"name", 0x16),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x298],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x17),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now03",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x17),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2a2],
-                  BdatTouchStringCell(&lbl_eu_80502050[0x293],
-                                &lbl_eu_80502050[0x9], 0x17),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now04",
+                  BdatTouchStringCell((char*)"help",
+                                (char*)"name", 0x17),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2ac],
-                  BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x18),
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now05",
+                  BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x18),
                   0);
 
     // Player counts on the two slots.
     setLayoutTextBoxNumber(self->mpLayout,
-                                            &lbl_eu_80502050[0x10f],
+                                            (char*)"txt_now_val01",
                                             CtrlRemote_TouchBitByArg(0x7fc));
     setLayoutTextBoxNumber(self->mpLayout,
-                                            &lbl_eu_80502050[0x11d],
+                                            (char*)"txt_now_val02",
                                             CtrlRemote_TouchBitByArg(0x7fd));
 
     // Reserved-slot count string: 0x19 if any reserved slot is populated.
@@ -1939,8 +1939,8 @@ extern "C" void col6SysLayout(CCol6System* self) {
             break;
         }
     }
-    char* s2b6 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
+    char* s2b6 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", cnt);
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now06", s2b6, 0);
 }
 
 // col6FillSlots - refresh the item-box layout for a player slot: write the
@@ -1951,51 +1951,51 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
     // Four player-count labels (0x7fe + 0..3).
     for (s32 i = 0; i < 4; i++) {
         char buf[0x20];
-        sprintf(buf, &lbl_eu_80502050[0x25e], i + 1);
+        sprintf(buf, (char*)"txt_num%02d", i + 1);
         setLayoutTextBoxNumber(self->mpLayout, buf,
                                                 CtrlRemote_TouchBitByArg(i + 0x7fe));
     }
 
     if (playerIdx < 4) {
         s32 f = (s32)CtrlRemote_TouchBitByArg((u32)(playerIdx + 0x7fe));
-        char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x293],
+        char* str = BdatTouchStringCell((char*)"MNU_col6", (char*)"help",
                                   f + playerIdx * 6 + 0x1f);
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2c0], str, 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_comment", str, 0);
 
         if (f < 5) {
             u32 n = (u32)(f + playerIdx * 5 + 1);
-            u16 id = BdatGetU16ByTableKey(&lbl_eu_80502050[0x2cc],
-                                   &lbl_eu_80502050[0x2dd], n);
+            u16 id = BdatGetU16ByTableKey((char*)"CL6_materiallist",
+                                   (char*)"money", n);
             setLayoutTextBoxNumber(
-                self->mpLayout, &lbl_eu_80502050[0x1a4], id * 100);
-            char* s3 = BdatTouchStringCell(&lbl_eu_80502050[0x2e3],
-                                     &lbl_eu_80502050[0x9], 3);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199], s3, 0);
+                self->mpLayout, (char*)"txt_gold01", id * 100);
+            char* s3 = BdatTouchStringCell((char*)"MNU_item",
+                                     (char*)"name", 3);
+            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00", s3, 0);
             setLayoutTextBoxNumber(
-                self->mpLayout, &lbl_eu_80502050[0x212], CItemBlock_getPtr20E8());
-            char* s4 = BdatTouchStringCell(&lbl_eu_80502050[0x2e3],
-                                     &lbl_eu_80502050[0x9], 3);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x204], s4, 0);
+                self->mpLayout, (char*)"txt_gold01_01", CItemBlock_getPtr20E8());
+            char* s4 = BdatTouchStringCell((char*)"MNU_item",
+                                     (char*)"name", 3);
+            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00_01", s4, 0);
 
             // Per-slot rows: 4 format strings + a lookup for the count value.
             for (s32 i = 0; i < 5; i++) {
                 u8 idx = (u8)(i + 1);
                 char buf148[0x20];
-                sprintf(buf148, &lbl_eu_80502050[0x2ec], idx);
+                sprintf(buf148, (char*)"txt_material%02d", idx);
                 char buf128[0x20];
-                sprintf(buf128, &lbl_eu_80502050[0x2fd], idx);
+                sprintf(buf128, (char*)"txt_mat_val%02d", idx);
                 char buf108[0x20];
-                sprintf(buf108, &lbl_eu_80502050[0x30d], idx);
+                sprintf(buf108, (char*)"txt_mat_val%02d_01", idx);
                 char bufE8[0x20];
-                sprintf(bufE8, &lbl_eu_80502050[0x320], idx);
-                u16 id2 = BdatGetU16ByTableKey(&lbl_eu_80502050[0x2cc], bufE8, n);
+                sprintf(bufE8, (char*)"material%d", idx);
+                u16 id2 = BdatGetU16ByTableKey((char*)"CL6_materiallist", bufE8, n);
                 if (id2 != 0) {
                     BdatGetItemType(id2);
                     BdatGetItemId(id2);
                     char* name = BuildItemNameStr(id2);
                     char bufC8[0x20];
-                    sprintf(bufC8, &lbl_eu_80502050[0x32b], idx);
-                    u8 v = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x2cc], bufC8,
+                    sprintf(bufC8, (char*)"number%d", idx);
+                    u8 v = (u8)BdatGetU8ByTableKey((char*)"CL6_materiallist", bufC8,
                                              n);
                     LayoutSetTextBoxFmtValue(self->mpLayout, buf148, name, 0);
                     setLayoutTextBoxNumber(self->mpLayout,
@@ -2005,60 +2005,60 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
                                                             buf108, cnt);
                 } else {
                     LayoutSetTextBoxFmtValue(self->mpLayout, buf148,
-                                  &lbl_eu_80502050[0x227], 0);
+                                  (char*)"", 0);
                     LayoutSetTextBoxFmtValue(self->mpLayout, buf128,
-                                  &lbl_eu_80502050[0x227], 0);
+                                  (char*)"", 0);
                     LayoutSetTextBoxFmtValue(self->mpLayout, buf108,
-                                  &lbl_eu_80502050[0x227], 0);
+                                  (char*)"", 0);
                 }
             }
         } else {
-            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199],
-                          &lbl_eu_80502050[0x227], 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x1a4],
-                          &lbl_eu_80502050[0x227], 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x204],
-                          &lbl_eu_80502050[0x227], 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x212],
-                          &lbl_eu_80502050[0x227], 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00",
+                          (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01",
+                          (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00_01",
+                          (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01_01",
+                          (char*)"", 0);
             for (s32 i = 0; i < 5; i++) {
                 u8 idx = (u8)(i + 1);
                 char bufA8[0x20];
-                sprintf(bufA8, &lbl_eu_80502050[0x2ec], idx);
+                sprintf(bufA8, (char*)"txt_material%02d", idx);
                 char buf88[0x20];
-                sprintf(buf88, &lbl_eu_80502050[0x2fd], idx);
+                sprintf(buf88, (char*)"txt_mat_val%02d", idx);
                 char buf68[0x20];
-                sprintf(buf68, &lbl_eu_80502050[0x30d], idx);
+                sprintf(buf68, (char*)"txt_mat_val%02d_01", idx);
                 LayoutSetTextBoxFmtValue(self->mpLayout, bufA8,
-                              &lbl_eu_80502050[0x227], 0);
+                              (char*)"", 0);
                 LayoutSetTextBoxFmtValue(self->mpLayout, buf88,
-                              &lbl_eu_80502050[0x227], 0);
+                              (char*)"", 0);
                 LayoutSetTextBoxFmtValue(self->mpLayout, buf68,
-                              &lbl_eu_80502050[0x227], 0);
+                              (char*)"", 0);
             }
         }
     } else {
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2c0],
-                      &lbl_eu_80502050[0x227], 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x199],
-                      &lbl_eu_80502050[0x227], 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x1a4],
-                      &lbl_eu_80502050[0x227], 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x204],
-                      &lbl_eu_80502050[0x227], 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x212],
-                      &lbl_eu_80502050[0x227], 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_comment",
+                      (char*)"", 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00",
+                      (char*)"", 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01",
+                      (char*)"", 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00_01",
+                      (char*)"", 0);
+        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01_01",
+                      (char*)"", 0);
         for (s32 i = 0; i < 5; i++) {
             u8 idx = (u8)(i + 1);
             char buf48[0x20];
-            sprintf(buf48, &lbl_eu_80502050[0x2ec], idx);
+            sprintf(buf48, (char*)"txt_material%02d", idx);
             char buf28[0x20];
-            sprintf(buf28, &lbl_eu_80502050[0x2fd], idx);
+            sprintf(buf28, (char*)"txt_mat_val%02d", idx);
             char buf8[0x20];
-            sprintf(buf8, &lbl_eu_80502050[0x30d], idx);
-            LayoutSetTextBoxFmtValue(self->mpLayout, buf48, &lbl_eu_80502050[0x227], 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, buf28, &lbl_eu_80502050[0x227], 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, buf8, &lbl_eu_80502050[0x227], 0);
+            sprintf(buf8, (char*)"txt_mat_val%02d_01", idx);
+            LayoutSetTextBoxFmtValue(self->mpLayout, buf48, (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, buf28, (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mpLayout, buf8, (char*)"", 0);
         }
     }
 }
@@ -2198,13 +2198,13 @@ void col6PadHandle(CCol6System* self) {
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
-                sprintf(buf, &lbl_eu_80502050[0xa9],
+                sprintf(buf, (char*)"nul_sel%02d",
                         (s8)self->mPadA5[0] + 1);
             } else {
-                sprintf(buf, &lbl_eu_80502050[0xe], (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
@@ -2224,13 +2224,13 @@ void col6PadHandle(CCol6System* self) {
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
-                sprintf(buf, &lbl_eu_80502050[0xa9],
+                sprintf(buf, (char*)"nul_sel%02d",
                         (s8)self->mPadA5[0] + 1);
             } else {
-                sprintf(buf, &lbl_eu_80502050[0xe], (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
@@ -2273,13 +2273,13 @@ void col6SwitchBox(CCol6System* self) {
         } else if (CtrlRemote_TouchBitByArg(pid + 0x7fe) < 5) {
             if (Col6_ValidateBox_1024(self) != 0) {
                 // Fill window 1 with the player's box name and open it.
-                char* str1 = BdatTouchStringCell(lbl_eu_80502050,
-                                           &lbl_eu_80502050[0x9],
+                char* str1 = BdatTouchStringCell((char*)"MNU_col6",
+                                           (char*)"name",
                                            pid + 0x48);
-                char* str2 = BdatTouchStringCell(lbl_eu_80502050,
-                                           &lbl_eu_80502050[0x9], 7);
-                char* str3 = BdatTouchStringCell(lbl_eu_80502050,
-                                           &lbl_eu_80502050[0x9], 8);
+                char* str2 = BdatTouchStringCell((char*)"MNU_col6",
+                                           (char*)"name", 7);
+                char* str3 = BdatTouchStringCell((char*)"MNU_col6",
+                                           (char*)"name", 8);
                 reinterpret_cast<CSysWin*>(&self->mSysWin1)->setKindContent(reinterpret_cast<char*>(str1), 0);
                 reinterpret_cast<CSysWin*>(&self->mSysWin1)->setTwoTextValues(reinterpret_cast<char*>(str2), reinterpret_cast<char*>(str3));
                 reinterpret_cast<CSysWin*>(&self->mSysWin1)->applyKind(0);
@@ -2292,7 +2292,7 @@ void col6SwitchBox(CCol6System* self) {
             }
         } else {
             // Box full: show the window-2 message.
-            char* str = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* str = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                       0xc);
             reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(str), 0);
             reinterpret_cast<CSysWin*>(&self->mSysWin2)->applyKind(1);
@@ -2321,13 +2321,13 @@ void col6SwitchBox(CCol6System* self) {
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
-                sprintf(buf, &lbl_eu_80502050[0xa9],
+                sprintf(buf, (char*)"nul_sel%02d",
                         (s8)self->mPadA5[0] + 1);
             } else {
-                sprintf(buf, &lbl_eu_80502050[0xe], (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
@@ -2348,13 +2348,13 @@ void col6SwitchBox(CCol6System* self) {
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
-                sprintf(buf, &lbl_eu_80502050[0xa9],
+                sprintf(buf, (char*)"nul_sel%02d",
                         (s8)self->mPadA5[0] + 1);
             } else {
-                sprintf(buf, &lbl_eu_80502050[0xe], (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
@@ -2395,13 +2395,13 @@ void col6WinScroll(CCol6System* self) {
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
-                sprintf(buf, &lbl_eu_80502050[0xa9],
+                sprintf(buf, (char*)"nul_sel%02d",
                         (s8)self->mPadA5[0] + 1);
             } else {
-                sprintf(buf, &lbl_eu_80502050[0xe], (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
@@ -2421,13 +2421,13 @@ void col6WinScroll(CCol6System* self) {
         } else {
             char buf[0x20];
             if (self->mFieldA4 >= 6) {
-                sprintf(buf, &lbl_eu_80502050[0xa9],
+                sprintf(buf, (char*)"nul_sel%02d",
                         (s8)self->mPadA5[0] + 1);
             } else {
-                sprintf(buf, &lbl_eu_80502050[0xe], (s8)self->mPadA5[0] + 1);
+                sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
             nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
@@ -2464,9 +2464,9 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     u32 f = CtrlRemote_TouchBitByArg((u32)((s8)self->mPadA5[0] + 0x7fe));
     CtrlRemote_SetSharedBit((u32)((s8)self->mPadA5[0] + 0x7fe), f + 1);
     u32 n = f + (s8)self->mPadA5[0] * 5 + 1;
-    u8 a = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x33f], n);
+    u8 a = (u8)BdatGetU8ByTableKey((char*)"CL6_uplist", (char*)"rev_LV", n);
     CtrlRemote_SetSharedBit(0x7fc, CtrlRemote_TouchBitByArg(0x7fc) + a);
-    u8 b = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x346], n);
+    u8 b = (u8)BdatGetU8ByTableKey((char*)"CL6_uplist", (char*)"rev_people", n);
     CtrlRemote_SetSharedBit(0x7fd, CtrlRemote_TouchBitByArg(0x7fd) + b);
 
     // Seed the TaskLOD/audio slots for this player's three id ranges.
@@ -2646,73 +2646,73 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
     }
 
     // Remaining audio/quest seeds from the per-player table.
-    u8 c1 = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x351], n);
-    u8 c2 = (u8)BdatGetU8ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x35e], n);
+    u8 c1 = (u8)BdatGetU8ByTableKey((char*)"CL6_uplist", (char*)"rev_effflag1", n);
+    u8 c2 = (u8)BdatGetU8ByTableKey((char*)"CL6_uplist", (char*)"rev_selflag", n);
     if (c1 != 0) CtrlRemote_SetSharedBit(c1 + 0x278a, 1);
     if (c2 != 0) CtrlRemote_SetSharedBit(c2 + 0x798, 1);
-    u16 d = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x36a], n);
+    u16 d = BdatGetU16ByTableKey((char*)"CL6_uplist", (char*)"rev_qstflag", n);
     if (d != 0) CtrlRemote_SetSharedBit(d + 0x220, 0xc8);
-    u16 e = BdatGetU16ByTableKey(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x376], n);
-    self->mFieldA2 = cf::CfSoundMan::playActorSound(1, e, 0, 0, lbl_eu_80667558);
+    u16 e = BdatGetU16ByTableKey((char*)"CL6_uplist", (char*)"rev_sound", n);
+    self->mFieldA2 = cf::CfSoundMan::playActorSound(1, e, 0, 0, 1.0f);
 
     // Camera/vector block: every value is the s16 lookup result cast to float
     // (MWCC emits the 2^52 int->double conversion for (f32)(s16)); two slots
     // are byte-sized lookups via BdatGetU8ByTableKey.
     self->mCamPos.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x380], n);
+        (char*)"CL6_uplist", (char*)"rev_cam1x", n);
     self->mCamPos.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x38a], n);
+        (char*)"CL6_uplist", (char*)"rev_cam1y", n);
     self->mCamPos.z = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x394], n);
+        (char*)"CL6_uplist", (char*)"rev_cam1z", n);
     self->mCamLookAt.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x39e], n);
+        (char*)"CL6_uplist", (char*)"rev_cam1rx", n);
     self->mCamLookAt.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3a9], n);
+        (char*)"CL6_uplist", (char*)"rev_cam1ry", n);
     self->mVec168.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3b4], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2x", n);
     self->mVec168.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3be], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2y", n);
     self->mVec168.z = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3c8], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2z", n);
     self->mVec174.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3d2], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2rx", n);
     self->mVec174.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3dd], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2ry", n);
     self->mField180 = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3e8], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2flm", n);
     self->mField184 = (u8)BdatGetU8ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x3f4], n);
+        (char*)"CL6_uplist", (char*)"rev_cam2key", n);
     self->mVec188.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x400], n);
+        (char*)"CL6_uplist", (char*)"rev_cam3x", n);
     self->mVec188.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x40a], n);
+        (char*)"CL6_uplist", (char*)"rev_cam3y", n);
     self->mVec188.z = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x414], n);
+        (char*)"CL6_uplist", (char*)"rev_cam3z", n);
     self->mVec194.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x41e], n);
+        (char*)"CL6_uplist", (char*)"rev_cam3rx", n);
     self->mVec194.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x429], n);
+        (char*)"CL6_uplist", (char*)"rev_cam3ry", n);
     self->mVec1A0.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x434], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4x", n);
     self->mVec1A0.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x43e], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4y", n);
     self->mVec1A0.z = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x448], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4z", n);
     self->mVec1AC.x = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x452], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4rx", n);
     self->mVec1AC.y = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x45d], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4ry", n);
     self->mField1B8 = (f32)(s16)BdatGetS16ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x468], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4flm", n);
     self->mField1BC = (u8)BdatGetU8ByTableKey(
-        &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x474], n);
+        (char*)"CL6_uplist", (char*)"rev_cam4key", n);
 
     // Player counts on the two slots.
     setLayoutTextBoxNumber(self->mpLayout,
-                                            &lbl_eu_80502050[0x10f],
+                                            (char*)"txt_now_val01",
                                             CtrlRemote_TouchBitByArg(0x7fc));
     setLayoutTextBoxNumber(self->mpLayout,
-                                            &lbl_eu_80502050[0x11d],
+                                            (char*)"txt_now_val02",
                                             CtrlRemote_TouchBitByArg(0x7fd));
 
     // Reserved-slot count string: 0x19 if any reserved slot is populated.
@@ -2724,8 +2724,8 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
             break;
         }
     }
-    char* s2b6 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], cnt);
-    LayoutSetTextBoxFmtValue(self->mpLayout, &lbl_eu_80502050[0x2b6], s2b6, 0);
+    char* s2b6 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", cnt);
+    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now06", s2b6, 0);
 
     col6FillSlots(self, (s8)self->mPadA5[0]);
     self->mFlagA1 = 1;
@@ -2845,60 +2845,60 @@ extern "C" void col6Win2Count(CCol6System* self) {
             CtrlRemote_SetSharedBit(0x802, total);
             // String-pool base held in a register for the whole block (retail
             // materializes it once; the per-pane offsets stay plain addis).
-            char* base = lbl_eu_80502050;
+            char* base = (char*)"MNU_col6";
             u32 n = (u32)total + 0x14;
 
             // Camera/vector block: every value is the s16 lookup result cast to
             // float (MWCC emits the 2^52 int->double conversion for (f32)(s16));
             // two slots are byte-sized lookups via BdatGetU8ByTableKey.
             self->mCamPos.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x380], n);
+                (char*)"CL6_uplist", (char*)"rev_cam1x", n);
             self->mCamPos.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x38a], n);
+                (char*)"CL6_uplist", (char*)"rev_cam1y", n);
             self->mCamPos.z = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x394], n);
+                (char*)"CL6_uplist", (char*)"rev_cam1z", n);
             self->mCamLookAt.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x39e], n);
+                (char*)"CL6_uplist", (char*)"rev_cam1rx", n);
             self->mCamLookAt.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3a9], n);
+                (char*)"CL6_uplist", (char*)"rev_cam1ry", n);
             self->mVec168.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3b4], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2x", n);
             self->mVec168.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3be], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2y", n);
             self->mVec168.z = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3c8], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2z", n);
             self->mVec174.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3d2], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2rx", n);
             self->mVec174.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3dd], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2ry", n);
             self->mField180 = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x3e8], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2flm", n);
             self->mField184 = (u8)BdatGetU8ByTableKey(
-                &base[0x334], &base[0x3f4], n);
+                (char*)"CL6_uplist", (char*)"rev_cam2key", n);
             self->mVec188.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x400], n);
+                (char*)"CL6_uplist", (char*)"rev_cam3x", n);
             self->mVec188.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x40a], n);
+                (char*)"CL6_uplist", (char*)"rev_cam3y", n);
             self->mVec188.z = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x414], n);
+                (char*)"CL6_uplist", (char*)"rev_cam3z", n);
             self->mVec194.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x41e], n);
+                (char*)"CL6_uplist", (char*)"rev_cam3rx", n);
             self->mVec194.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x429], n);
+                (char*)"CL6_uplist", (char*)"rev_cam3ry", n);
             self->mVec1A0.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x434], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4x", n);
             self->mVec1A0.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x43e], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4y", n);
             self->mVec1A0.z = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x448], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4z", n);
             self->mVec1AC.x = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x452], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4rx", n);
             self->mVec1AC.y = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x45d], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4ry", n);
             self->mField1B8 = (f32)(s16)BdatGetS16ByTableKey(
-                &base[0x334], &base[0x468], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4flm", n);
             self->mField1BC = (u8)BdatGetU8ByTableKey(
-                &base[0x334], &base[0x474], n);
+                (char*)"CL6_uplist", (char*)"rev_cam4key", n);
         }
 
         // Banner if this player's count clears the 5-player threshold.
@@ -2911,12 +2911,12 @@ extern "C" void col6Win2Count(CCol6System* self) {
         } else if (big != 0) {
             // "player N joined" banner in window 2.
             self->mFieldA4 = 0x23;
-            char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      (s8)self->mPadA5[0] + 0x72);
-            char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+            char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                      0x77);
             ml::FixStr<128> buf;
-            buf.format(&lbl_eu_80502050[0xb5], s1, s2);
+            buf.format((char*)"%s<n>%s", s1, s2);
             reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
             reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
             cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
@@ -2968,7 +2968,7 @@ extern "C" void col6Win2Count(CCol6System* self) {
                 for (u32 i = 0; i < 5; i++) {
                     if (val >= data2.bytes[i] &&
                         CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
-                        lbl_eu_8066235C = (s32)i;
+                        sCol6QueuedWindowId = (s32)i;
                         CtrlRemote_SetSharedBit(i + 0x804, 1);
                         val = (s16)(val + (s8)data3.bytes[i]);
                         CtrlRemote_SetSharedBit(0x7fc, val);
@@ -3098,11 +3098,11 @@ void col6Win2PerPl(CCol6System* self) {
     if (ge != 0) {
         // Banner: "player N joined" (char 0x72+N is the player name).
         self->mFieldA4 = 0x23;
-        char* s1 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9],
+        char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                  (s8)self->mPadA5[0] + 0x72);
-        char* s2 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
+        char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x77);
         ml::FixStr<128> buf;
-        buf.format(&lbl_eu_80502050[0xb5], s1, s2);
+        buf.format((char*)"%s<n>%s", s1, s2);
         reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
         reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
         cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
@@ -3157,7 +3157,7 @@ void col6Win2PerPl(CCol6System* self) {
         s16 val = (s16)CtrlRemote_TouchBitByArg(0x7fc);
         for (u32 i = 0; i < 5; i++) {
             if (val >= data2.bytes[i] && CtrlRemote_TouchBitByArg(i + 0x804) == 0) {
-                lbl_eu_8066235C = (s32)i;
+                sCol6QueuedWindowId = (s32)i;
                 CtrlRemote_SetSharedBit(i + 0x804, 1);
                 val = (s16)(val + (s8)data3.bytes[i]);
                 CtrlRemote_SetSharedBit(0x7fc, val);
@@ -3185,10 +3185,10 @@ void col6JoinCheck(CCol6System* self) {
     if ((s32)CtrlRemote_TouchBitByArg(0x802) >= 5) {
         // Banner: "player N joined" (chars 0x76/0x77 are the slot names).
         self->mFieldA4 = 0x25;
-        char* s76 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x76);
-        char* s77 = BdatTouchStringCell(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x77);
+        char* s76 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x76);
+        char* s77 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x77);
         ml::FixStr<128> buf;
-        buf.format(&lbl_eu_80502050[0xb5], s76, s77);
+        buf.format((char*)"%s<n>%s", s76, s77);
         reinterpret_cast<CSysWin*>(&self->mSysWin2)->setKindContent(reinterpret_cast<char*>(buf.mString), 0);
         reinterpret_cast<CSysWin*>(&self->mSysWin2)->openPhase1();
         cf::CfSoundMan::playActorSound(1, 0x134, 0, 0, lbl_eu_80667558);
@@ -3251,7 +3251,7 @@ slotFound:
         s16 val = (s16)CtrlRemote_TouchBitByArg(0x7fc);
         for (u32 j = 0; j < 5; j++) {
             if (val >= data2.bytes[j] && CtrlRemote_TouchBitByArg(j + 0x804) == 0) {
-                lbl_eu_8066235C = (s32)j;
+                sCol6QueuedWindowId = (s32)j;
                 CtrlRemote_SetSharedBit(j + 0x804, 1);
                 val = (s16)(val + (s8)data3.bytes[j]);
                 CtrlRemote_SetSharedBit(0x7fc, val);
@@ -3359,7 +3359,7 @@ scanned:
         u8* p = t2.bytes;
         for (j = 0; j < 5; j++) {
             if (total >= *p && CtrlRemote_TouchBitByArg(j + 0x804) == 0) {
-                lbl_eu_8066235C = j;
+                sCol6QueuedWindowId = j;
                 CtrlRemote_SetSharedBit(j + 0x804, 1);
                 total += (s8)t3.bytes[j];
                 CtrlRemote_SetSharedBit(0x7fc, total);

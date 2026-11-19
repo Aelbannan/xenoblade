@@ -44,15 +44,6 @@ struct MdlLookWork {
 extern const float lbl_eu_8066B370; // 0.0f
 extern const float lbl_eu_8066B37C; // 0.1f
 extern const float lbl_eu_8066B380; // 1.0f
-extern const float lbl_eu_8066B384; // radians -> FIdx scale
-extern const float lbl_eu_8066B394; // angle feedback scale
-extern const float lbl_eu_8066B39C; // frame-delta accumulation scale
-extern const float lbl_eu_8066B3A0; // x-blend scale
-extern const float lbl_eu_8066B3A4; // yz-blend scale
-extern const float lbl_eu_8066B3A8; // dot upper threshold
-extern const float lbl_eu_8066B3AC; // dot lower threshold
-extern const float lbl_eu_8066B3B0; // -1.0f
-extern const float lbl_eu_8066B3B4; // FIdx -> radians scale
 
 // Warning message strings (retail .rodata)
 extern const char lbl_eu_805262F0[];
@@ -164,15 +155,15 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
             // World-space path: collapse the facing vector toward its z.
             if (!(__fabs(look->field_0x40.x) > eps && __fabs(look->field_0x40.y) > eps
                   && __fabs(look->field_0x40.z) > eps)) {
-                f32 k1 = lbl_eu_8066B3A0 * s24;
-                f32 k2 = lbl_eu_8066B3A4 * s24;
+                f32 k1 = 0.9f * s24;
+                f32 k2 = 0.8f * s24;
                 look->field_0x40.x *= k1;
                 look->field_0x40.y *= k1;
                 look->field_0x40.z *= k1;
                 look->field_0x64[0] -= look->field_0x64[0] * k2;
                 look->field_0x64[1] -= look->field_0x64[1] * k2;
-                if (look->field_0x58.z < lbl_eu_8066B37C) {
-                    look->field_0x58.z -= lbl_eu_8066B37C;
+                if (look->field_0x58.z < 0.1f) {
+                    look->field_0x58.z -= 0.1f;
                 }
             }
         } else {
@@ -218,23 +209,23 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                         }
                         f32 dotAD = look->field_0x28.x * diff.x + look->field_0x28.y * diff.y
                                   + look->field_0x28.z * diff.z;
-                        if (dotAD >= lbl_eu_8066B3A8 || dotAD < lbl_eu_8066B3AC) {
+                        if (dotAD >= 0.99999f || dotAD < -0.999f) {
                             // Nearly parallel/antiparallel: pull the angle home directly.
                             look->field_0x64[k] -= look->field_0x64[k] * diff.x;
                         } else {
-                            f32 cs = nw4r::math::CosFIdx(lbl_eu_8066B384 * angles[k]);
+                            f32 cs = nw4r::math::CosFIdx(40.743664f * angles[k]);
                             PSVECCrossProduct(look->field_0x28, diff, crossV);
                             f32 ang;
                             if (cs >= dotAD) {
                                 ang = angles[k];
                             } else {
-                                if (dotAD < lbl_eu_8066B3B0) {
-                                    dotAD = lbl_eu_8066B3B0;
+                                if (dotAD < -1.0f) {
+                                    dotAD = -1.0f;
                                 }
                                 if (dotAD > lbl_eu_8066B380) {
                                     dotAD = lbl_eu_8066B380;
                                 }
-                                if (dotAD > lbl_eu_8066B380 && dotAD < lbl_eu_8066B3B0) {
+                                if (dotAD > lbl_eu_8066B380 && dotAD < -1.0f) {
                                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef,
                                                                  lbl_eu_805262C8);
                                 }
@@ -249,8 +240,8 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                                 (ang - look->field_0x64[k]) * (diff.x * s24);
                         }
                         // Build the per-axis delta quaternion and accumulate it.
-                        f32 fidx = lbl_eu_8066B394 * look->field_0x64[k];
-                        f32 svIdx = lbl_eu_8066B384 * fidx;
+                        f32 fidx = 0.5f * look->field_0x64[k];
+                        f32 svIdx = 40.743664f * fidx;
                         f32 sn = nw4r::math::SinFIdx(svIdx);
                         dq.x = axis.x * sn;
                         dq.y = axis.y * sn;
@@ -271,18 +262,18 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                 f32 xx = quat.x + quat.x;
                 f32 t = quat.w * yy - quat.x * zz;
                 if (t >= lbl_eu_8066B380) {
-                    if (t > lbl_eu_8066B3B0) {
-                        t = lbl_eu_8066B3B0;
+                    if (t > -1.0f) {
+                        t = -1.0f;
                     }
                 } else {
                     t = lbl_eu_8066B380;
                 }
-                if (t < lbl_eu_8066B3B0) {
-                    t = lbl_eu_8066B3B0;
+                if (t < -1.0f) {
+                    t = -1.0f;
                 } else if (t > lbl_eu_8066B380) {
                     t = lbl_eu_8066B380;
                 }
-                if (t > lbl_eu_8066B380 && t < lbl_eu_8066B3B0) {
+                if (t > lbl_eu_8066B380 && t < -1.0f) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_8052ADB0, 0xe4, lbl_eu_8052AD88);
                 }
 
@@ -293,20 +284,20 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                 f32 czz = quat.z * zz;
                 f32 cwz = quat.w * zz;
                 if (pitchAng >= ml::halfpi) {
-                    yawAng = lbl_eu_8066B3B4
+                    yawAng = 0.024543693f
                              * nw4r::math::Atan2FIdx(cxy - cwz,
                                                      lbl_eu_8066B380 - (cxx + czz));
                     rollAng = lbl_eu_8066B370;
                 } else if (pitchAng <= -ml::halfpi) {
-                    rollAng = -(lbl_eu_8066B3B4
+                    rollAng = -(0.024543693f
                                 * nw4r::math::Atan2FIdx(cxy - cwz,
                                                         lbl_eu_8066B380 - (cxx + czz)));
                     yawAng = lbl_eu_8066B370;
                 } else {
                     f32 numY = quat.y * zz + quat.w * xx;
                     nw4r::math::Atan2FIdx(numY, lbl_eu_8066B380 - (cxx + cyy));
-                    yawAng = lbl_eu_8066B3B4 * numY;
-                    rollAng = lbl_eu_8066B3B4
+                    yawAng = 0.024543693f * numY;
+                    rollAng = 0.024543693f
                               * nw4r::math::Atan2FIdx(cxy + cwz,
                                                       lbl_eu_8066B380 - (cyy + czz));
                 }
@@ -314,19 +305,19 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                 look->field_0x40.x = rollAng;
                 look->field_0x40.y = pitchAng;
                 look->field_0x40.z = yawAng;
-                f32 nv = lbl_eu_8066B39C * s24 + look->field_0x58.z;
+                f32 nv = 0.01f * s24 + look->field_0x58.z;
                 look->field_0x58.z = nv;
-                if (nv > lbl_eu_8066B3A0) {
-                    look->field_0x58.z = lbl_eu_8066B3A0;
+                if (nv > 0.9f) {
+                    look->field_0x58.z = 0.9f;
                 }
             }
         }
     }
 
     // Compose rotation * base and hand it back to the caller.
-    nw4r::math::MTX34RotXYZFIdx(&rotMtx, lbl_eu_8066B384 * look->field_0x40.x,
-                                lbl_eu_8066B384 * look->field_0x40.y,
-                                lbl_eu_8066B384 * look->field_0x40.z);
+    nw4r::math::MTX34RotXYZFIdx(&rotMtx, 40.743664f * look->field_0x40.x,
+                                40.743664f * look->field_0x40.y,
+                                40.743664f * look->field_0x40.z);
     PSMTXConcat(workMtx.m, rotMtx.m, tmpMtx.m);
     workMtx = tmpMtx;
     if (&workMtx != NULL) {
@@ -339,9 +330,6 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // forward refs (in-block definitions + foreign data labels)
 extern "C" const char lbl_eu_80524810[0x9];
-extern "C" u32 lbl_eu_8066B3C8;
-extern "C" u32 lbl_eu_8066B3C0;
-extern "C" u32 lbl_eu_8066B3B8;
 extern "C" u32 __RTTI__8CMdlLook[0x2];
 // foreign function pointers (namespace-scoped extern "C" so the
 // declarations cannot collide with in-scope class members; the
@@ -352,11 +340,14 @@ extern "C" void __dt__8CMdlLookFv();
 
 // [.data] 0x805701E0-0x805701FC (28 bytes)
 extern "C" u32 lbl_eu_805701E0[0x4] = { (u32)&__RTTI__8CMdlLook, 0x00000000, (u32)&D2Blob::__dt__8CMdlLookFv, 0x00000000 };
-extern "C" u32 lbl_eu_805701F0[0x3] = { (u32)&lbl_eu_8066B3B8, (u32)&lbl_eu_8066B3C0, (u32)&lbl_eu_8066B3C8 };
+static const char sAnchorTagBalance[6] = "DCbal";
+static const char sAnchorTagPlay[6] = "DCpla";
+static const char sAnchorTagCycle[6] = "DCcyl";
+extern "C" u32 sMdlAnchorTagNames[0x3] = { (u32)&sAnchorTagBalance, (u32)&sAnchorTagPlay, (u32)&sAnchorTagCycle };
 
 // [.rodata] 0x80524810-0x80524830 (32 bytes)
-extern "C" __declspec(align(4)) const char lbl_eu_80524810[0x9] = { 0x43, 0x4D, 0x64, 0x6C, 0x4C, 0x6F, 0x6F, 0x6B, 0x00 };
-extern "C" __declspec(align(4)) const char lbl_eu_8052481C[0x14] = { 0x4A, 0x55, 0x73, 0x70, 0x41, 0x00, 0x4A, 0x55, 0x68, 0x65, 0x61, 0x64, 0x00, 0x6D, 0x6F, 0x76, 0x65, 0x00, 0x00, 0x00 };
+extern "C" __declspec(align(4)) const char lbl_eu_80524810[0x9] = "CMdlLook";
+extern "C" __declspec(align(4)) const char lbl_eu_8052481C[0x14] = "JUspA\0JUhead\0move";
 
 // [.sdata] 0x80663CA0-0x80663CB0 (16 bytes)
 extern "C" u32 __RTTI__8CMdlLook[0x2] = { (u32)&lbl_eu_80524810, 0x00000000 };

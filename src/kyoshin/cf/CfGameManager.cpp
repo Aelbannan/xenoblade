@@ -3,6 +3,7 @@
 // 2-arg copy away while including the header, then declare the 1-arg form.
 #define __ct__Q22cf17UnkClass_8018EF3CFv ct_UnkClass_8018EF3C_2arg
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 
@@ -38,7 +39,7 @@
 #undef Tok_FormatStr
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/code_801862C0.hpp"
-// CtrlPc player-sub type for func_80085FB8's +0x38 sub-object probe (real
+
 // slot-0x40 virtual CtrlPlayerSub3ED4::vf14, int(int), same 0x400-probe
 // idiom as CtrlPc.cpp's mask-3 resets). Include-only: owned elsewhere.
 // (Func renames: this TU's cfCam_setClear04 takes s32 flag and Selector_GetInstance
@@ -197,7 +198,7 @@ extern "C" u32 CfObjectMove_lookupBdatCol11(u32 id, u32 flag);
 extern "C" void CamEvtClearSlotBytes(void* manager);
 extern "C" void CamEvtSearchStateVal(s32 value);
 extern "C" void func_801AAD08();
-extern u8 lbl_eu_8066443A;
+extern u8 gSoundSystemInitFlag;
 extern "C" void cfCam_setClear04(void* manager, u32 mask, s32 flag);
 extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" void loadLayoutScales();
@@ -215,13 +216,13 @@ extern "C" Unk407C8Color* CTaskGame_setVec4(Unk407C8Color* self, float f1, float
                                         float f3, float f4);
 
 // data globals referenced by the target bodies (defined in other TUs)
-extern u16 lbl_eu_80663E46;
-extern u8 lbl_eu_80663E35;
-extern u16 lbl_eu_806642E0;
-extern u8 lbl_eu_80663DFC;
-extern float lbl_eu_80663E54;
-extern u16 lbl_eu_80663E36;
-extern u16 lbl_eu_80663E38;
+extern u16 gmGlobalFlag46;
+extern u8 gmEventFlag35;
+extern u16 gEventWindowFlags;
+extern u8 gmLastDirection;
+extern float gmNandFloat54;
+extern u16 gmCounter36;
+extern u16 gmCounter38;
 extern void* lbl_eu_806640A0;
 extern const double lbl_eu_80666528;
 
@@ -241,7 +242,7 @@ cf::CfGameManager::~CfGameManager() {
         CamEvtReleaseAllSlots(unkB4);
     }
     unkB0 = nullptr;
-    lbl_eu_80663E14 = nullptr;
+    gmScene = nullptr;
 }
 
 namespace {
@@ -304,29 +305,29 @@ struct Unk82FCCData {
 } // namespace
 
 extern "C" {
-u32 lbl_eu_80661BC8;
-cf::CfPadData lbl_eu_80571500;
-s8 lbl_eu_80663E70;
-cf::CfGameManager lbl_eu_80571758;
-u8 lbl_eu_80571748[0x10];
-CPad* lbl_eu_80663E0C;
-CPad lbl_eu_80570D40[8];
-CScn* lbl_eu_80663E14;
-CView* lbl_eu_80663E10;
-u32 lbl_eu_80663E60;
-u32 lbl_eu_80663E64;
-u32 lbl_eu_80663E24;
-u32 lbl_eu_80663E28;
-u32 lbl_eu_80663DF8;
-s16 lbl_eu_80663E3C;
-u8 lbl_eu_80663E5C;
-float lbl_eu_80663E58;
-float lbl_eu_80663E68;
-s16 lbl_eu_80661BCC;
+u32 gmActivePadChannel;
+cf::CfPadData gmPadData;
+s8 gmInitFlag;
+cf::CfGameManager gmInstance;
+u8 gmStaticRegistration[0x10];
+CPad* gmCurrentPad;
+CPad gmPadTable[8];
+CScn* gmScene;
+CView* gmCurrentView;
+u32 gmSubManager60;
+u32 gmSubManager64;
+u32 gmGameFlags;
+u32 gmPauseFlags;
+u32 gmEnabledPadFlags;
+s16 gmTimerCounter;
+u8 gmGameStateFlag5C;
+float gmTimeScale;
+float gmFloat68;
+s16 gmTransitionIndex;
 float lbl_eu_80666498;
 float lbl_eu_8066649C;
-BdatTextEntry lbl_eu_80571658[2];
-BdatTextEntry lbl_eu_805716F8;
+BdatTextEntry gmBdatTextEntries[2];
+BdatTextEntry gmBdatNameEntry;
 
 // symbols.txt: Fv, but callers leave the index in r4 (see getPlayer).
 cf::CfObjectMove** getPlayerSlotPtr__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
@@ -379,7 +380,7 @@ unsigned int packResourceId(unsigned int first, unsigned int second) {
 }
 
 extern "C" void clearGameFlagMask__Q22cf13CfGameManagerFv(u32 mask) {
-    lbl_eu_80663E24 &= ~mask;
+    gmGameFlags &= ~mask;
 }
 
 extern "C" u32 getBdatEntryIndex__Q22cf13CfGameManagerFv(const UnkEEE0Data* data, u16 index) {
@@ -403,7 +404,7 @@ extern "C" void setPackedSlotId__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 
 }
 
 bool isGameFlagMaskSet(u32 mask) {
-    return (lbl_eu_80663E24 & mask) != 0;
+    return (gmGameFlags & mask) != 0;
 }
 
 extern "C" bool isItemEnabled__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {
@@ -420,9 +421,9 @@ extern "C" bool compareFlagValues__Q22cf13CfGameManagerFv(const u32* first, cons
 
 extern "C" void togglePauseFlag__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
     if (enable) {
-        lbl_eu_80663E28 |= mask;
+        gmPauseFlags |= mask;
     } else {
-        lbl_eu_80663E28 &= ~mask;
+        gmPauseFlags &= ~mask;
     }
 }
 
@@ -501,10 +502,10 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable) {
     cf::CfGameManager::getInstance();
     if (enable) {
         enableGameFlag__Q22cf13CfGameManagerFv(0x40000000);
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80666498);
+        Scn_SetTimeScale(gmScene, lbl_eu_80666498);
     } else {
         clearGameFlagMask__Q22cf13CfGameManagerFv(0x40000000);
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066649C);
+        Scn_SetTimeScale(gmScene, lbl_eu_8066649C);
     }
     CfSoundMan_PauseAllRecords(enable, 10);
 }
@@ -515,8 +516,8 @@ extern "C" void queueSceneEventA__Q22cf13CfGameManagerFv(
 }
 
 extern "C" void flushEventQueue__Q22cf13CfGameManagerFv() {
-    while (getEventQueueCount__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0) != 0) {
-        u16 value = popEventQueue__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0);
+    while (getEventQueueCount__Q22cf13CfGameManagerFv(&gmEventQueue) != 0) {
+        u16 value = popEventQueue__Q22cf13CfGameManagerFv(&gmEventQueue);
         setEventFlag__Q22cf13CfGameManagerFv(value, true);
     }
 }
@@ -525,31 +526,31 @@ namespace cf {
 
 void CfGameManager::resetGameFlags() {
     if (this == nullptr) {
-        lbl_eu_80663E24 |= 8;
+        gmGameFlags |= 8;
     }
 
-    lbl_eu_80663E28 &= ~8;
-    lbl_eu_80663E3C = 0;
-    lbl_eu_80663E68 = lbl_eu_80666498;
-    lbl_eu_80663E5C = 0;
-    lbl_eu_80663E58 = lbl_eu_80666498;
-    lbl_eu_80661BCC = -1;
+    gmPauseFlags &= ~8;
+    gmTimerCounter = 0;
+    gmFloat68 = lbl_eu_80666498;
+    gmGameStateFlag5C = 0;
+    gmTimeScale = lbl_eu_80666498;
+    gmTransitionIndex = -1;
     MenuSnd_StopSlot1_9424(lbl_eu_8066649C);
 }
 
 void CfGameManager::clearBdatTextEntries() {
-    lbl_eu_80571658[0].text[0] = 0;
-    lbl_eu_80571658[0].textLength = 0;
-    lbl_eu_80571658[0].secondaryText[0] = 0;
-    lbl_eu_80571658[0].secondaryTextLength = 0;
-    lbl_eu_80571658[1].text[0] = 0;
-    lbl_eu_80571658[1].textLength = 0;
-    lbl_eu_80571658[1].secondaryText[0] = 0;
-    lbl_eu_80571658[1].secondaryTextLength = 0;
-    lbl_eu_805716F8.text[0] = 0;
-    lbl_eu_805716F8.textLength = 0;
-    lbl_eu_805716F8.secondaryText[0] = 0;
-    lbl_eu_805716F8.secondaryTextLength = 0;
+    gmBdatTextEntries[0].text[0] = 0;
+    gmBdatTextEntries[0].textLength = 0;
+    gmBdatTextEntries[0].secondaryText[0] = 0;
+    gmBdatTextEntries[0].secondaryTextLength = 0;
+    gmBdatTextEntries[1].text[0] = 0;
+    gmBdatTextEntries[1].textLength = 0;
+    gmBdatTextEntries[1].secondaryText[0] = 0;
+    gmBdatTextEntries[1].secondaryTextLength = 0;
+    gmBdatNameEntry.text[0] = 0;
+    gmBdatNameEntry.textLength = 0;
+    gmBdatNameEntry.secondaryText[0] = 0;
+    gmBdatNameEntry.secondaryTextLength = 0;
 }
 
 CfGameManager::CfGameManager() {
@@ -564,48 +565,48 @@ CfGameManager::CfGameManager() {
     unkAC = 0;
     unkB0 = 0;
     unkB4 = 0;
-    lbl_eu_80663E14 = 0;
-    lbl_eu_80663E60 = 0;
-    lbl_eu_80663E64 = 0;
-    lbl_eu_80663E24 = 0;
-    lbl_eu_80663E28 = 0;
+    gmScene = 0;
+    gmSubManager60 = 0;
+    gmSubManager64 = 0;
+    gmGameFlags = 0;
+    gmPauseFlags = 0;
     unk0 = 0;
     field_0x4 = 0;
     mObjectFlags = 0;
 }
 
 CfGameManager* CfGameManager::getInstance() {
-    if (!lbl_eu_80663E70) {
+    if (!gmInitFlag) {
         // Call mangled ctor directly: placement new inserts a null check retail lacks.
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv, lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv, gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    return &lbl_eu_80571758;
+    return &gmInstance;
 }
 
 u32 CfGameManager::getCurrentPadChannel() {
-    return lbl_eu_80661BC8;
+    return gmActivePadChannel;
 }
 
 CfPadData* CfGameManager::getCfPadData() {
-    return &lbl_eu_80571500;
+    return &gmPadData;
 }
 
 CPad* CfGameManager::getCurrentPad() {
-    u32 channel = lbl_eu_80661BC8;
+    u32 channel = gmActivePadChannel;
     if (channel == 0xFFFFFFFF) {
-        CPad* pad = lbl_eu_80663E0C;
+        CPad* pad = gmCurrentPad;
         if (pad != 0) {
             return pad;
         }
-        return lbl_eu_80570D40;
+        return gmPadTable;
     }
-    CPad* pad = lbl_eu_80663E0C;
+    CPad* pad = gmCurrentPad;
     if (pad != 0) {
         return pad;
     }
-    return &lbl_eu_80570D40[channel & 7];
+    return &gmPadTable[channel & 7];
 }
 
 CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
@@ -637,11 +638,11 @@ extern "C" cf::CfObjectMove** getPlayerSlotPtr__Q22cf13CfGameManagerFv(cf::CfObj
 }
 
 extern "C" void enableGameFlag__Q22cf13CfGameManagerFv(u32 flags) {
-    lbl_eu_80663E24 |= flags;
+    gmGameFlags |= flags;
 }
 
 extern "C" void disableGameFlag__Q22cf13CfGameManagerFv(u32 flags) {
-    lbl_eu_80663E24 &= ~flags;
+    gmGameFlags &= ~flags;
 }
 
 extern "C" void clearTempTextBuffer__Q22cf13CfGameManagerFv(Unk87588Data* data) {
@@ -650,13 +651,13 @@ extern "C" void clearTempTextBuffer__Q22cf13CfGameManagerFv(Unk87588Data* data) 
 }
 
 bool cf::CfGameManager::isManagerInitialized() {
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    return (lbl_eu_80663E24 & 0x10000) != 0;
+    return (gmGameFlags & 0x10000) != 0;
 }
 // cf::CfGameManager::teardownGameManager - full teardown of the CfGameManager
 // singleton: mirrors the destructor's subsystem detach/delete sequence, then
@@ -665,20 +666,20 @@ bool cf::CfGameManager::isManagerInitialized() {
 // shape (the if + delete-expansion null guards produce the paired beq; see
 // CfGameManager.hpp CfDtor08).
 void cf::CfGameManager::teardownGameManager() {
-    lbl_eu_80663E28 |= 0x200000;
+    gmPauseFlags |= 0x200000;
     UIBattleRemoveAll(0);
     CUICfManager_setFlagState(0);
     CCharVoiceMan_DestroySingleton();
     getBattleStateB__Q22cf14CBattleManagerFv();
     destroyHelpManager();
     __dt__80157150();
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    cf::CfGameManager* manager = &lbl_eu_80571758;
+    cf::CfGameManager* manager = &gmInstance;
     gmFileObject(manager->unk90);
     manager->unk90 = nullptr;
     if (manager->unkA8 != nullptr) {
@@ -711,16 +712,16 @@ void cf::CfGameManager::teardownGameManager() {
         manager->unkB4 = nullptr;
     }
     gmTeardown();
-    if (lbl_eu_80663E60 != 0) {
-        __dt__801886EC(reinterpret_cast<void*>(lbl_eu_80663E60), 1);
-        lbl_eu_80663E60 = 0;
+    if (gmSubManager60 != 0) {
+        __dt__801886EC(reinterpret_cast<void*>(gmSubManager60), 1);
+        gmSubManager60 = 0;
     }
-    if (lbl_eu_80663E64 != 0) {
-        __dt__801BF874(reinterpret_cast<void*>(lbl_eu_80663E64), 1);
-        lbl_eu_80663E64 = 0;
+    if (gmSubManager64 != 0) {
+        __dt__801BF874(reinterpret_cast<void*>(gmSubManager64), 1);
+        gmSubManager64 = 0;
     }
-    lbl_eu_80663E14 = nullptr;
-    lbl_eu_80663E24 &= ~0x30000;
+    gmScene = nullptr;
+    gmGameFlags &= ~0x30000;
     CfScript_ResetMgr();
     Selector_GetInstance();
     __dt__800FDEF8();
@@ -744,22 +745,22 @@ void cf::CfGameManager::teardownGameManager() {
         __dt__Q22cf17UnkClass_8018EF3CFv(manager->unkAC, 1);
         manager->unkAC = nullptr;
     }
-    lbl_eu_80663E04 = 0;
+    gmCommandBufferState = 0;
     CfRes_callFunc_67E78(stopSoundMan__Fv());
     CfRes_callFunc_67FE0();
     KyoshinHeap_Shutdown();
-    if (lbl_eu_80663E1C != nullptr) {
-        Remove__8CProcessFv(lbl_eu_80663E1C);
-        lbl_eu_80663E1C = nullptr;
+    if (gmTaskMain != nullptr) {
+        Remove__8CProcessFv(gmTaskMain);
+        gmTaskMain = nullptr;
     }
-    if (lbl_eu_80663E18 != nullptr) {
-        Remove__8CProcessFv(lbl_eu_80663E18);
-        lbl_eu_80663E18 = nullptr;
+    if (gmResManager != nullptr) {
+        Remove__8CProcessFv(gmResManager);
+        gmResManager = nullptr;
     }
     CBdat::getEntry(1);
-    if (lbl_eu_80663E20 != nullptr) {
-        Remove__8CProcessFv(lbl_eu_80663E20);
-        lbl_eu_80663E20 = nullptr;
+    if (gmPadTask != nullptr) {
+        Remove__8CProcessFv(gmPadTask);
+        gmPadTask = nullptr;
     }
 }
 
@@ -795,7 +796,7 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
     CfT_PlayClockSnapshot(&outA, &outB);
     CfT_PlayClockAccumulate(arg1, arg2, 0);
     if (flag != 0) {
-        lbl_eu_80663E28 |= 0x04000100;
+        gmPauseFlags |= 0x04000100;
         // Wrap arg1-3 into the 0..0x17 slot ring.
         int slot = arg1 - 3;
         if (slot < 0) {
@@ -843,38 +844,38 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
         container->setStateBitFlag(4);
         container->clearStateFlags8(0x1000);
     }
-    lbl_eu_80663E28 &= ~0x00800000;
+    gmPauseFlags &= ~0x00800000;
     // 8 pump frames when arg1 divides evenly by 3, else 16.
     int count = (arg1 % 3 == 0) ? 8 : 16;
     for (int i = 0; i < count; ++i) {
         CfScript_UpdateMgr();
         gmDispatchPair(cf::CfGameManager::getPlayer(0), 1);
     }
-    lbl_eu_80663E28 &= ~0x04000000;
+    gmPauseFlags &= ~0x04000000;
     setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 void cf::CfGameManager::enablePadFlags(u32 inputFlags, bool enable) {
-    u32 enabledFlags = lbl_eu_80663DF8 & ~inputFlags;
+    u32 enabledFlags = gmEnabledPadFlags & ~inputFlags;
     if (enable) {
-        enabledFlags = lbl_eu_80663DF8 | inputFlags;
+        enabledFlags = gmEnabledPadFlags | inputFlags;
     }
-    lbl_eu_80663DF8 = enabledFlags;
+    gmEnabledPadFlags = enabledFlags;
 
-    if (lbl_eu_80663E0C == nullptr) {
+    if (gmCurrentPad == nullptr) {
         return;
     }
     if (enable) {
         return;
     }
 
-    lbl_eu_80663E0C->mPressedButtonFlags &= enabledFlags;
-    lbl_eu_80663E0C->mTurboPressButtonFlags &= enabledFlags;
-    lbl_eu_80663E0C->mReleasedButtonFlags &= enabledFlags;
-    lbl_eu_80663E0C->mHeldButtonFlags &= enabledFlags;
-    lbl_eu_80663E0C->mLongHoldButtonFlags &= enabledFlags;
-    lbl_eu_80663E0C->mShortPressButtonFlags &= enabledFlags;
-    lbl_eu_80571500.mPressedButtonFlags &= enabledFlags;
-    lbl_eu_80571500.mTurboPressButtonFlags &= enabledFlags;
+    gmCurrentPad->mPressedButtonFlags &= enabledFlags;
+    gmCurrentPad->mTurboPressButtonFlags &= enabledFlags;
+    gmCurrentPad->mReleasedButtonFlags &= enabledFlags;
+    gmCurrentPad->mHeldButtonFlags &= enabledFlags;
+    gmCurrentPad->mLongHoldButtonFlags &= enabledFlags;
+    gmCurrentPad->mShortPressButtonFlags &= enabledFlags;
+    gmPadData.mPressedButtonFlags &= enabledFlags;
+    gmPadData.mTurboPressButtonFlags &= enabledFlags;
 }
 u32 cf::CfGameManager::getEnabledInputFlags() {
     if (isSceneLoading()) {
@@ -883,26 +884,26 @@ u32 cf::CfGameManager::getEnabledInputFlags() {
             return 0xFFFFFFFF;
         }
     }
-    return lbl_eu_80663DF8;
+    return gmEnabledPadFlags;
 }
 bool cf::CfGameManager::isClassicController(s16 selector) {
     return CfPadTask::getDetectedPadType() == PAD_TYPE_CLASSIC;
 }
 CPad* cf::CfGameManager::getPad(int channel) {
-    return &lbl_eu_80570D40[channel & 7];
+    return &gmPadTable[channel & 7];
 }
 extern "C" void setPad__Q22cf13CfGameManagerFv(u32 channel, CPad* pad, u32 arg3) {
-    lbl_eu_80570D40[channel & 7] = *pad;
-    if (lbl_eu_80661BC8 == 0xFFFFFFFF && channel <= 3 && arg3 != 0) {
-        lbl_eu_80661BC8 = channel;
+    gmPadTable[channel & 7] = *pad;
+    if (gmActivePadChannel == 0xFFFFFFFF && channel <= 3 && arg3 != 0) {
+        gmActivePadChannel = channel;
     }
 }
 void cf::CfGameManager::setCurrentPadPtr(const CPad* pad, u32 channel) {
-    if (pad != nullptr && lbl_eu_80661BC8 != 0xFFFFFFFF && lbl_eu_80661BC8 != channel) {
+    if (pad != nullptr && gmActivePadChannel != 0xFFFFFFFF && gmActivePadChannel != channel) {
         return;
     }
 
-    lbl_eu_80663E0C = const_cast<CPad*>(pad);
+    gmCurrentPad = const_cast<CPad*>(pad);
 }
 extern "C" void clearTextBufferExtra(Unk87588Data* data) {
     data->field_0x0 = 0;
@@ -911,30 +912,30 @@ extern "C" void clearTextBufferExtra(Unk87588Data* data) {
     data->field_0x44 = 0;
     data->field_0x48 = lbl_eu_80666548;
 }
-extern u16 lbl_eu_80664772;
+extern u16 gNandTeardownFlag;
 bool cf::CfGameManager::isSceneReadyForInput() {
-    if (lbl_eu_80663E14 == nullptr) {
+    if (gmScene == nullptr) {
         return true;
     }
-    return Scn_IsDefaultScale(lbl_eu_80663E14);
+    return Scn_IsDefaultScale(gmScene);
 }
 
 bool cf::CfGameManager::isSceneActive() {
-    if (lbl_eu_80663E14 == nullptr) {
+    if (gmScene == nullptr) {
         return false;
     }
-    return Scn_IsScaleAtLeastOne(lbl_eu_80663E14);
+    return Scn_IsScaleAtLeastOne(gmScene);
 }
 
 bool cf::CfGameManager::isFieldTransitionReady() {
-    if ((lbl_eu_80663E24 & 0x8000) != 0 && !CfScript_TestMask(0x20)) {
+    if ((gmGameFlags & 0x8000) != 0 && !CfScript_TestMask(0x20)) {
         return false;
     }
     return probeReadyLists();
 }
 
 bool cf::CfGameManager::isFieldBlockedByFlag() {
-    if ((lbl_eu_80663E24 & 0x48000) != 0) {
+    if ((gmGameFlags & 0x48000) != 0) {
         if (CfScript_TestMask(0x20)) {
             return true;
         }
@@ -943,7 +944,7 @@ bool cf::CfGameManager::isFieldBlockedByFlag() {
 }
 
 bool cf::CfGameManager::isAnyFieldFlagSet() {
-    return (lbl_eu_80663E24 & 0x48000) != 0;
+    return (gmGameFlags & 0x48000) != 0;
 }
 
 bool cf::CfGameManager::isSceneLoading() {
@@ -952,15 +953,15 @@ bool cf::CfGameManager::isSceneLoading() {
     }
 
     getInstance();
-    return Scn_GetFrameDelta(lbl_eu_80663E14) <= ml::epsilon;
+    return Scn_GetFrameDelta(gmScene) <= ml::epsilon;
 }
 
 bool cf::CfGameManager::isAllEventsDone() {
-    return lbl_eu_80664772 != 0;
+    return gNandTeardownFlag != 0;
 }
 
 bool cf::CfGameManager::isTimerActive() {
-    return lbl_eu_80663E3C > 0;
+    return gmTimerCounter > 0;
 }
 
 u16 cf::CfGameManager::getField18Value() {
@@ -1061,7 +1062,7 @@ void cf::CfGameManager::tickGameManager() {
 // 0x8000000.
 int CfCmd_PumpRingBuf(void* buf, u32* outFlag);
 void NpcMove_ClearRowBmp();
-void gmNotifyCA0();
+extern "C" void gmNotifyCA0(void* object);
 void KyoshinHeap_Init();
 void gmCallInit1120();
 void CmText_InitCallbackTable();
@@ -1072,68 +1073,68 @@ void CollObjSetupRotBoxState4Timed(void* self, void* pos, const void* ext, float
 extern "C" void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b);
 
 void* cf::CfGameManager::func_8007C8C8() {
-    void* ret = (void*)CfCmd_PumpRingBuf(this->unkAC, &lbl_eu_80663E04);
-    if (lbl_eu_80663E60 != 0) {
-        MenuSnd_RampMasterVol_889D0(lbl_eu_80663E60);
+    void* ret = (void*)CfCmd_PumpRingBuf(this->unkAC, &gmCommandBufferState);
+    if (gmSubManager60 != 0) {
+        MenuSnd_RampMasterVol_889D0(gmSubManager60);
     }
     // updateBattleManager takes cf::CBattleManager* (decl on CBattleManagerApi.hpp);
     // explicit cast - the singleton getter returns void* and MWCC rejects
     // the implicit void* conversion.
     updateBattleManager((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv());
-    if (lbl_eu_80663E24 & 0x80) {
+    if (gmGameFlags & 0x80) {
         updateHelpManager(lbl_eu_80664A10);
     }
     CCharVoiceMan_Tick();
-    if (lbl_eu_80663E14 != nullptr &&
-        Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666498) {
-        ++lbl_eu_80663D90;
+    if (gmScene != nullptr &&
+        Scn_GetFrameDelta(gmScene) > lbl_eu_80666498) {
+        ++gCfTEventFrameCounter;
     }
-    if (!(lbl_eu_80663E28 & 0x1000000)) {
+    if (!(gmPauseFlags & 0x1000000)) {
         CfT_AdvanceFrameTimer();
     }
     if (getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
-        ++lbl_eu_80663E6C;
-        if (!(lbl_eu_80663E6C & 1)) {
-            if (lbl_eu_80663E24 & 0x1000) {
+        ++gmFrameCounter;
+        if (!(gmFrameCounter & 1)) {
+            if (gmGameFlags & 0x1000) {
                 ArtsSelect_SyncRows(this->field_0xA4);
             }
-        } else if ((lbl_eu_80663E6C & 1) == 1 && (lbl_eu_80663E24 & 0x1000)) {
+        } else if ((gmFrameCounter & 1) == 1 && (gmGameFlags & 0x1000)) {
             this->unkA0->forwardReload();
         }
-        if ((lbl_eu_80663E24 & 0x1000) && !(lbl_eu_80663E28 & 0x1000000)) {
+        if ((gmGameFlags & 0x1000) && !(gmPauseFlags & 0x1000000)) {
             this->unkA0->updateSceneFx();
         }
         this->updateCameraState();
     }
-    if ((lbl_eu_80663E24 & 0xAFA40000) == 0 ||
-        (lbl_eu_80663E28 & 0x1000000) == 0) {
+    if ((gmGameFlags & 0xAFA40000) == 0 ||
+        (gmPauseFlags & 0x1000000) == 0) {
         Selector_GetInstance();
         Selector_FrameUpdate();
         if (getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
-            if (lbl_eu_80663E24 & 0x1000) {
+            if (gmGameFlags & 0x1000) {
                 refreshNpcRowFlags();
             }
             // Retail loads E24 once and tests bit 26 (rlwinm 6,6) OR'd
             // with bit 21 (rlwimi 21,21).
-            u32 e24bits = lbl_eu_80663E24;
+            u32 e24bits = gmGameFlags;
             if ((((e24bits & 0x04000000) | (e24bits & 0x400)) != 0) &&
-                (lbl_eu_80663E28 & 0x1000000) == 0) {
+                (gmPauseFlags & 0x1000000) == 0) {
                 goto done;
             }
-            if (!lbl_eu_80663E70) {
-                __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-                __register_global_object(&lbl_eu_80571758,
+            if (!gmInitFlag) {
+                __ct__Q22cf13CfGameManagerFv(&gmInstance);
+                __register_global_object(&gmInstance,
                                          __dt__Q22cf13CfGameManagerFv,
-                                         lbl_eu_80571748);
-                lbl_eu_80663E70 = 1;
+                                         gmStaticRegistration);
+                gmInitFlag = 1;
             }
-            cf::CfGameManager* gmn = &lbl_eu_80571758;
+            cf::CfGameManager* gmn = &gmInstance;
             if (gmn != nullptr) {
-                if (!lbl_eu_80663E70) {
+                if (!gmInitFlag) {
                     __ct__Q22cf13CfGameManagerFv(gmn);
                     __register_global_object(gmn, __dt__Q22cf13CfGameManagerFv,
-                                             lbl_eu_80571748);
-                    lbl_eu_80663E70 = 1;
+                                             gmStaticRegistration);
+                    gmInitFlag = 1;
                 }
                 if (isGameFlagMaskSet(0x1000)) {
                     cf::CfObjectMove* player = getPlayer(0);
@@ -1145,19 +1146,19 @@ void* cf::CfGameManager::func_8007C8C8() {
             CfT_PlayClockUpdate();
             if (isSceneLoading() == 0 &&
                 cf::CfPadTask::isInputDisabled() == 0) {
-                int sceneReady = lbl_eu_80663E14 == nullptr
+                int sceneReady = gmScene == nullptr
                                      ? 1
-                                     : Scn_IsDefaultScale(lbl_eu_80663E14);
+                                     : Scn_IsDefaultScale(gmScene);
                 if (sceneReady != 0 &&
-                    (lbl_eu_80663E24 & 0x400000) == 0 &&
-                    (lbl_eu_80663E24 & 0xAFA40000) == 0 &&
-                    ((lbl_eu_80663E24 & 0x04000000) |
-                     (lbl_eu_80663E24 & 0x400)) == 0 &&
-                    (lbl_eu_80663E24 & (0x40000 | 0x8000)) == 0 &&
-                    (lbl_eu_80663E28 & 0x200) == 0 &&
+                    (gmGameFlags & 0x400000) == 0 &&
+                    (gmGameFlags & 0xAFA40000) == 0 &&
+                    ((gmGameFlags & 0x04000000) |
+                     (gmGameFlags & 0x400)) == 0 &&
+                    (gmGameFlags & (0x40000 | 0x8000)) == 0 &&
+                    (gmPauseFlags & 0x200) == 0 &&
                     BpsStateSingletonToInt() &&
-                    (lbl_eu_80663E28 & 0x8000000) == 0 &&
-                    (lbl_eu_80663E24 & 0x80) != 0) {
+                    (gmPauseFlags & 0x8000000) == 0 &&
+                    (gmGameFlags & 0x80) != 0) {
                     flushEventQueue__Q22cf13CfGameManagerFv();
                 }
             }
@@ -1172,13 +1173,13 @@ done:
     return ret;
 }
 void cf::CfGameManager::refreshCameraIfCurrentView() {
-    if (CView::getCurrentView() == lbl_eu_80663E10) {
+    if (CView::getCurrentView() == gmCurrentView) {
         gmCallNopA();
     }
 }
 
 void cf::CfGameManager::resetCameraIfCurrentView() {
-    if (CView::getCurrentView() == lbl_eu_80663E10) {
+    if (CView::getCurrentView() == gmCurrentView) {
         gmCallNopB();
     }
 }
@@ -1227,7 +1228,7 @@ bool cf::CfObjectMap::isObjectMapReady() {
 }
 
 void cf::CfGameManager::notifyObjectMapChange() {
-    if (lbl_eu_80663E24 & 0x1000) {
+    if (gmGameFlags & 0x1000) {
         ArtsSelect_SyncRows(field_0xA4);
     }
 }
@@ -1244,19 +1245,19 @@ extern "C" void CfObject_applyMoveYaw__Q22cf8CfObjectFf(
 }
 
 void cf::CfGameManager::enableFlag10() {
-    lbl_eu_80663E24 |= 0x10;
+    gmGameFlags |= 0x10;
 }
 
 void cf::CfGameManager::enableFlag20() {
-    lbl_eu_80663E24 |= 0x20;
+    gmGameFlags |= 0x20;
 }
 
 void cf::CfGameManager::enableFlag40() {
-    lbl_eu_80663E24 |= 0x40;
+    gmGameFlags |= 0x40;
 }
 
 void cf::CfGameManager::disableFlag20() {
-    lbl_eu_80663E24 &= ~0x20;
+    gmGameFlags &= ~0x20;
 }
 
 bool cf::CfGameManager::isVisionPackLoaded() {
@@ -1291,13 +1292,13 @@ extern "C" cf::CfObject* CfObject_getIndexedNodeMatrix__Q22cf8CfObjectCFUl(
     cf::CfObject*) {
     return nullptr;
 }
-extern u32 lbl_eu_80661BC0;
+extern u32 gObjectMoveRateScale;
 u32* cf::CfObject::CfObject_getMoveRateScale() {
-    return &lbl_eu_80661BC0;
+    return &gObjectMoveRateScale;
 }
 // lwz getters - return global vars
-extern u32 lbl_eu_80664188;
-u32 cf::CfGameManager::getGlobalWord64188() { return lbl_eu_80664188; }
+extern u32 gCachedFldMapRow;
+u32 cf::CfGameManager::getGlobalWord64188() { return gCachedFldMapRow; }
 extern u32 lbl_eu_80664184;
 u32 cf::CfGameManager::getGlobalWord64184() { return lbl_eu_80664184; }
 extern "C" u32 getGlobalWord64184Dup__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
@@ -1310,13 +1311,13 @@ extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv() { return lbl_eu_8066
 extern void* lbl_eu_806640F4;
 extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv() { return (u32)lbl_eu_806640F4; }
 
-extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv() { return lbl_eu_80663D90; }
-extern u8 lbl_eu_80663E34;
-extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv() { return lbl_eu_80663E34; }
-extern u8 lbl_eu_80663E5D;
-u8 cf::CfGameManager::getVoiceFlag5D() { return lbl_eu_80663E5D; }
-extern u8 lbl_eu_8066476D;
-u8 cf::CfGameManager::getVoiceFlag6D() { return lbl_eu_8066476D; }
+extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv() { return gCfTEventFrameCounter; }
+extern u8 gmGlobalFlag34;
+extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv() { return gmGlobalFlag34; }
+extern u8 gmVoiceFlag5D;
+u8 cf::CfGameManager::getVoiceFlag5D() { return gmVoiceFlag5D; }
+extern u8 gNandTeardownByte;
+u8 cf::CfGameManager::getVoiceFlag6D() { return gNandTeardownByte; }
 void* cf::CfGameManager::getResetDataPtr() { return lbl_eu_8065FC18; }
 
 // cf::CfGameManager::func_8007D84C - battle-exit / scene reset. Tears down
@@ -1330,32 +1331,32 @@ extern "C" void CfRes_getInstPtr170();
 extern "C" void EffSys_Init4F9C(void* object);
 extern "C" float lbl_eu_80667700;
 void cf::CfGameManager::func_8007D84C() {
-    extern u16 lbl_eu_80663E3A;
+    extern u16 gmEventCounterA;
     func_801AAD08();
-    lbl_eu_8066443A = 0;
+    gSoundSystemInitFlag = 0;
     ArtsSelect_Clear(ArtsSelect_GetContainer());
     CfSoundMan_StopAllModes(1);
     CfSoundMan_ClearFxEffect(0, 0);
     CfSoundMan_ClearFxEffect(1, 0);
     UIBattleRemoveAll(0);
     CUICfManager_setFlagState(0);
-    if ((lbl_eu_80663EE0 & 0x40) != 0) {
-        lbl_eu_80663EE0 &= ~0x40;
+    if ((gEventSequenceFlags & 0x40) != 0) {
+        gEventSequenceFlags &= ~0x40;
     }
     memset(unk94, 0, sizeof(unk94));
     unk90 = nullptr;
     float zeroF = lbl_eu_80666498;
-    lbl_eu_80663E50 = 0;
+    gmGlobalFlag50 = 0;
     field_0x86 = 0;
-    lbl_eu_80663E3A = 0;
-    lbl_eu_80663E3C = 0;
-    lbl_eu_80663E3E = 0;
+    gmEventCounterA = 0;
+    gmTimerCounter = 0;
+    gmTransitionCounter = 0;
     *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x80) = 0;
-    lbl_eu_80663E34 = 0;
-    lbl_eu_80663E35 = 0;
-    lbl_eu_80663E68 = zeroF;
-    lbl_eu_80663E00 = 0;
-    lbl_eu_80663E08 = zeroF;
+    gmGlobalFlag34 = 0;
+    gmEventFlag35 = 0;
+    gmFloat68 = zeroF;
+    gmCommandCounter = 0;
+    gmBaseTimeScale = zeroF;
     if (unkA8 != nullptr) {
         BattleWork_InitCtrlWork(unkA8);
     }
@@ -1392,8 +1393,8 @@ void cf::CfGameManager::func_8007D84C() {
     CfScript_ClearReq0();
     CfScript_ClearReq1();
     CfScript_ClearReq2();
-    lbl_eu_80663E24 = lbl_eu_80663E24 & 0x505B0208;
-    lbl_eu_80663E28 = lbl_eu_80663E28 & 0xFBFFF430;
+    gmGameFlags = gmGameFlags & 0x505B0208;
+    gmPauseFlags = gmPauseFlags & 0xFBFFF430;
     NpcMove_ClearRowBmp();
     cf::CfMapEffectManager::setGlobalFloat(lbl_eu_80667700);
 }
@@ -1409,13 +1410,13 @@ void cf::CfGameManager::clearPlayerEffect() { gmFileObject(this); }
 // Retail calls this out-of-line from func_80086778 - keep it a real function.
 void* cf::CfGameManager::createBdatCollisionObj() { return gmSpawnMask8000(); }
 
-extern "C" void* mapKindToSpawn(void* object);
+void* mapKindToSpawn(void* object, u32 arg);
 extern "C" Unk80EE4Data* createEffectForResource__Q22cf13CfGameManagerFv(
     void* object, u32 value) {
-    return static_cast<Unk80EE4Data*>(mapKindToSpawn(object));
+    return static_cast<Unk80EE4Data*>(mapKindToSpawn(object, value));
 }
 
-void cf::CfGameManager::resetFieldState() { gmNotifyCA0(); }
+void cf::CfGameManager::resetFieldState() { gmNotifyCA0(this); }
 
 extern "C" void Counter_TestBit(void* object);
 void cf::CfGameManager::cleanupPlayerEffectList() { Counter_TestBit(this); }
@@ -1466,11 +1467,11 @@ u16 cf::CfGameManager::getItemId() {
     return object->itemId_0x8C;
 }
 
-extern u16 lbl_eu_80663E3A;
-extern "C" u16 getEventCounterA__Q22cf13CfGameManagerFv() { return lbl_eu_80663E3A; }
+extern u16 gmEventCounterA;
+extern "C" u16 getEventCounterA__Q22cf13CfGameManagerFv() { return gmEventCounterA; }
 
 extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u16 value) {
-    lbl_eu_80663E3A = value;
+    gmEventCounterA = value;
 }
 
 struct Unk812Data {
@@ -1532,12 +1533,12 @@ extern "C" s32 getStateTimer532__Q22cf13CfGameManagerFv(const u8* data) {
     return *reinterpret_cast<const s16*>(data + 0x532);
 }
 
-extern u8 lbl_eu_80664298;
-void cf::CfGameManager::setGlobalByte64298(u32 value) { lbl_eu_80664298 = value; }
+extern u8 gFixedMapItemFlag;
+void cf::CfGameManager::setGlobalByte64298(u32 value) { gFixedMapItemFlag = value; }
 
 extern "C" void* getDataArray219C__Q22cf13CfGameManagerFv(u8* data) { return data + 0x219C; }
 
-void cf::CfGameManager::resetCameraManager() { Scn_GetUnk80Handle(lbl_eu_80663E14); }
+void cf::CfGameManager::resetCameraManager() { Scn_GetUnk80Handle(gmScene); }
 
 // Slot +0x130 base: retail Fv returns the shared float const. Forced-name
 // keeps the Unk linker spelling for hand-built vtables; virtual is
@@ -1551,7 +1552,7 @@ u32 cf::CfGameManager::getObjectFlags() {
 }
 
 bool cf::CfGameManager::isGameFlagEnabled() {
-    return (lbl_eu_80663E24 & 0x80) != 0;
+    return (gmGameFlags & 0x80) != 0;
 }
 
 u32 cf::CfGameManager::getPackedResourceBits() {
@@ -1593,16 +1594,16 @@ extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(u8* data) {
 }
 
 bool cf::CfGameManager::isFlag20Set() {
-    return (lbl_eu_80663E24 & 0x20) != 0;
+    return (gmGameFlags & 0x20) != 0;
 }
 
 bool cf::CfGameManager::isFlag10Set() {
-    return (lbl_eu_80663E24 & 0x10) != 0;
+    return (gmGameFlags & 0x10) != 0;
 }
 
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 bool cf::CfGameManager::isFlag010000Set() {
-    return (lbl_eu_80663E28 & 0x100000) != 0;
+    return (gmPauseFlags & 0x100000) != 0;
 }
 
 cf::CfObjectSub54* cf::CfGameManager::getObjectSub54Ptr() {
@@ -1647,18 +1648,18 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self,
 // expansions of getInstance() (retail inlines all occurrences).
 cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
                                            u16 arg) {
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    lbl_eu_80663E14 = reinterpret_cast<CScn*>(scene);
-    cf::CfGameManager* mgr = &lbl_eu_80571758;
-    lbl_eu_80663E10 = view;
+    gmScene = reinterpret_cast<CScn*>(scene);
+    cf::CfGameManager* mgr = &gmInstance;
+    gmCurrentView = view;
     __ct__8009D604();
     __dt__801570F0();
-    lbl_eu_80663E04 = 0;
+    gmCommandBufferState = 0;
     if (mgr->unkAC == nullptr) {
         void* memory = allocate__Q23mtl10MemManagerFUlUl(0x40C, CfRes_getAllocHandle());
         void* object = memory;
@@ -1670,24 +1671,24 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
     } else {
         CfResPcFileHost_clear(mgr->unkAC);
     }
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    if (!(lbl_eu_80663E24 & 0x10000)) {
+    if (!(gmGameFlags & 0x10000)) {
         // First-boot path: tear down the battle manager, build the help manager
         // and the layered CProcess graph, then run the full subsystem reset.
         getBattleStateA__Q22cf14CBattleManagerFv();
     __ct__Q22cf12CHelpManagerFv(nullptr);
     CCharVoiceMan_CreateSingleton();
     CProcess* rtRoot = GetRootProcRealTime__12CTaskManagerFv();
-    lbl_eu_80663E20 = create__Q22cf9CfPadTaskFP8CProcess(rtRoot, scene);
+    gmPadTask = create__Q22cf9CfPadTaskFP8CProcess(rtRoot, scene);
     CProcess* gameRoot = GetRootProcGame__12CTaskManagerFv();
-    lbl_eu_80663E18 = __ct__Q22cf5CfResFv(gameRoot, scene);
+    gmResManager = __ct__Q22cf5CfResFv(gameRoot, scene);
     gameRoot = GetRootProcGame__12CTaskManagerFv();
-    lbl_eu_80663E1C = cf::CfTaskMain::create(gameRoot, reinterpret_cast<CScn*>(scene));
+    gmTaskMain = cf::CfTaskMain::create(gameRoot, reinterpret_cast<CScn*>(scene));
     KyoshinHeap_Init();
     NpcMove_ClearRowBmp();
     gmCallInit1120();
@@ -1695,12 +1696,12 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
     func_8007C6C0__Q22cf13CfGameManagerFv(mgr, scene);
     CmText_InitCallbackTable();
     CmText_RegisterCallback(&cf::CfGameManager::tickGameManager, 0);
-    lbl_eu_80663E40 = arg;
+    gmInitArg = arg;
     // Bare Fv-name call: retail leaves r3 untouched here.
     func_8007DCB8__Q22cf13CfGameManagerFv();
-    CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), lbl_eu_80663E40);
+    CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), gmInitArg);
     s32 fallback = -1;
-    syncBdatDataCache__Q22cf13CfGameManagerFv(lbl_eu_80663E40, &fallback, 4);
+    syncBdatDataCache__Q22cf13CfGameManagerFv(gmInitArg, &fallback, 4);
     CfRes_tryRefreshSlot220(0x70100000, 4);
         CfRes_tryRefreshByBits(0x90100000, 5);
         CfScript_InitPath(1);
@@ -1713,12 +1714,12 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 first,
                                                       const UnkFloat4* vec,
                                                       u32 mode) {
-    if ((lbl_eu_80663E28 & 0x1000000) != 0) {
+    if ((gmPauseFlags & 0x1000000) != 0) {
         return;
     }
-    if (mode != 0 && Scn_GetUnk80Handle(lbl_eu_80663E14) != false && first != 0) {
+    if (mode != 0 && Scn_GetUnk80Handle(gmScene) != false && first != 0) {
         CTaskGameCamView* res =
-            (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14); // cast: CfObjectMove.hpp's void* form is also in scope
+            (CTaskGameCamView*)Scn_QueryUnk80State(gmScene); // cast: CfObjectMove.hpp's void* form is also in scope
         if (res->field_C <= ml::epsilon) {
             float temp[4];
             temp[0] = vec->field_0x0;
@@ -1726,29 +1727,29 @@ extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 first,
             temp[2] = vec->field_0x8;
             temp[3] = vec->field_0xC;
             temp[3] = lbl_eu_80666498;
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0, temp);
+            Scn_ReleaseUnk80(gmScene, 0, temp);
         }
     }
     if (first == 0 || mode != 0) {
-        Scn_ReleaseUnk80(lbl_eu_80663E14, first,
+        Scn_ReleaseUnk80(gmScene, first,
                       const_cast<float*>(&vec->field_0x0));
         return;
     }
     // Scale path: truncate the scaled RGBA floats to bytes and push them to
     // the tint block on unkAC.
-    float scale = lbl_eu_80666568;
+    float scale = 255.0f;
     u8 rgba[4];
     rgba[0] = (u8)(s32)(scale * vec->field_0x0);
     rgba[1] = (u8)(s32)(scale * vec->field_0x4);
     rgba[2] = (u8)(s32)(scale * vec->field_0x8);
     rgba[3] = (u8)(s32)(scale * vec->field_0xC);
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    cf::CfGameManager* mgr = &lbl_eu_80571758;
+    cf::CfGameManager* mgr = &gmInstance;
     if (mgr->unkAC != nullptr) {
         CfRes_pushRec(reinterpret_cast<u32>(mgr->unkAC), 0x10, first,
                       *reinterpret_cast<const u32*>(rgba), 0, 0);
@@ -1761,41 +1762,41 @@ extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 first,
 // effect manager and the remaining subsystems. Declared extern "C" because
 // the retail signature carries a hidden r4 scene argument under an Fv name.
 extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, void* scene) {
-    lbl_eu_80663E14 = static_cast<CScn*>(scene);
+    gmScene = static_cast<CScn*>(scene);
     self->resetManagerState();
 
     // rlwinm-mask flag clears (retail: two separate rlwinms with the E24
     // oris interleaved; mixed =/&= forms keep the two ANDs distinct)
-    lbl_eu_80663E28 = lbl_eu_80663E28 & ~0x200000;
-    lbl_eu_80663E24 |= 0x10000;
-    lbl_eu_80663E28 &= ~0x8000;
+    gmPauseFlags = gmPauseFlags & ~0x200000;
+    gmGameFlags |= 0x10000;
+    gmPauseFlags &= ~0x8000;
     float zero = lbl_eu_80666498;
-    lbl_eu_80663E08 = zero;
-    lbl_eu_80663E0C = nullptr;
+    gmBaseTimeScale = zero;
+    gmCurrentPad = nullptr;
     self->unk6C = 0;
     self->unk7C = 0;
-    lbl_eu_80571628.text[0] = 0;
-    lbl_eu_80571628.textLength = 0;
-    lbl_eu_80570CF0.field_0x48 = 0;
-    lbl_eu_80570CF0.field_0x44 = 0;
-    lbl_eu_80663E40 = 0;
-    lbl_eu_80663E30 = 0;
-    lbl_eu_80663E50 = 0;
-    lbl_eu_80663E3A = 0;
-    lbl_eu_80663E3C = 0;
-    lbl_eu_80663E3E = 0;
-    lbl_eu_80663E46 = 0;
-    lbl_eu_80663E48[0] = 0;
-    lbl_eu_80663E48[1] = 0;
-    lbl_eu_80663E4C[0] = 0;
-    lbl_eu_80663E4C[1] = 0;
+    gmBdatNameText.text[0] = 0;
+    gmBdatNameText.textLength = 0;
+    gmEventQueue.field_0x48 = 0;
+    gmEventQueue.field_0x44 = 0;
+    gmInitArg = 0;
+    gmQueuedEventCount = 0;
+    gmGlobalFlag50 = 0;
+    gmEventCounterA = 0;
+    gmTimerCounter = 0;
+    gmTransitionCounter = 0;
+    gmGlobalFlag46 = 0;
+    gmFlagPairs48[0] = 0;
+    gmFlagPairs48[1] = 0;
+    gmFlagPairs4C[0] = 0;
+    gmFlagPairs4C[1] = 0;
     *reinterpret_cast<u32*>(self->unk80) = 0;
-    lbl_eu_80663E00 = 0;
-    lbl_eu_80663E34 = 0;
-    lbl_eu_80663E35 = 0;
-    lbl_eu_80661BCC = -1;
-    lbl_eu_80663E5C = 0;
-    lbl_eu_80663E58 = zero;
+    gmCommandCounter = 0;
+    gmGlobalFlag34 = 0;
+    gmEventFlag35 = 0;
+    gmTransitionIndex = -1;
+    gmGameStateFlag5C = 0;
+    gmTimeScale = zero;
     loadBdatFileTable__Q22cf6CfBdatFv();
 
     for (s32 i = 0; i < 3; ++i) {
@@ -1834,7 +1835,7 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
     if (memory != nullptr) {
         object = __ct__801BF76C(memory);
     }
-    lbl_eu_80663E64 = reinterpret_cast<u32>(object);
+    gmSubManager64 = reinterpret_cast<u32>(object);
 
     heap = CfRes_getAllocHandle();
     memory = allocate__Q23mtl10MemManagerFUlUl(0x39C, heap);
@@ -1842,7 +1843,7 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
     if (memory != nullptr) {
         MenuSnd_ClearSlot_88584(memory);
     }
-    lbl_eu_80663E60 = reinterpret_cast<u32>(object);
+    gmSubManager60 = reinterpret_cast<u32>(object);
 
     heap = CfRes_getAllocHandle();
     memory = allocate__Q23mtl10MemManagerFUlUl(0x1C20, heap);
@@ -1852,8 +1853,8 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
     }
     self->unkA8 = static_cast<UnkClass_8007E864*>(object);
 
-    if (lbl_eu_80665958 != nullptr) {
-        reinterpret_cast<Unk65958Object*>(lbl_eu_80665958)->field_0x7C =
+    if (sEneColiProbe != nullptr) {
+        reinterpret_cast<Unk65958Object*>(sEneColiProbe)->field_0x7C =
             CfRes_getAllocHandle();
     }
     CfT_IsTvPal();
@@ -1862,11 +1863,11 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
     cfCam_seedFollowD();
 }
 // cf::CfGameManager::func_8007CF64 - per-frame camera/target-state tick:
-// updates the active text-display entry (lbl_eu_805716F8 or lbl_eu_80571658)
+// updates the active text-display entry (gmBdatNameEntry or gmBdatTextEntries)
 // when the player side indicator changes, then clears the 0x8 flag.
 extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
-    if ((lbl_eu_80663E24 & 0x4) != 0 || cf::CfGameManager::isSceneLoading() ||
-        (lbl_eu_80663E24 & 0x80) == 0) {
+    if ((gmGameFlags & 0x4) != 0 || cf::CfGameManager::isSceneLoading() ||
+        (gmGameFlags & 0x80) == 0) {
         return;
     }
 
@@ -1874,36 +1875,36 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
     if (player == nullptr || player->CfObject_isMoveActiveNow() == 0) {
         return;
     }
-    if ((lbl_eu_806642E0 & 1) != 0) {
-        lbl_eu_80663E68 = lbl_eu_80666498;
+    if ((gEventWindowFlags & 1) != 0) {
+        gmFloat68 = lbl_eu_80666498;
         return;
     }
-    if ((lbl_eu_80663E28 & 0x800000) != 0) {
+    if ((gmPauseFlags & 0x800000) != 0) {
         return;
     }
 
     // side indicator: (E24 bit 3) forced on when the counted players change
     // to/from 4; the direction byte is sign-compressed through the
     // 2 | ~(X-1) arithmetic (retail bit-twiddle, kept verbatim).
-    s32 flag3 = (lbl_eu_80663E24 >> 3) & 1;
+    s32 flag3 = (gmGameFlags >> 3) & 1;
     u32 count = CfT_DispatchFrameCounts();
     s32 t = count - 1;
     u32 z = (2 | ~t) - ((u32)(2 - t) >> 1);
     s32 direction = z >> 31;
     s32 updated = 0;
 
-    if ((u32)direction != (u32)lbl_eu_80663DFC || flag3 != 0) {
-        float value = lbl_eu_80663E68 - CfT_PlayRateGet();
-        lbl_eu_80663E68 = value;
+    if ((u32)direction != (u32)gmLastDirection || flag3 != 0) {
+        float value = gmFloat68 - CfT_PlayRateGet();
+        gmFloat68 = value;
         if (value <= lbl_eu_80666498) {
-            lbl_eu_80663E68 = lbl_eu_80666498;
-            lbl_eu_80663DFC = static_cast<u8>(direction);
+            gmFloat68 = lbl_eu_80666498;
+            gmLastDirection = static_cast<u8>(direction);
             float fade = getReloadDelay();
-            if ((lbl_eu_80663E24 & 0x40) != 0) {
-                BdatTextEntry* entry = &lbl_eu_805716F8;
+            if ((gmGameFlags & 0x40) != 0) {
+                BdatTextEntry* entry = &gmBdatNameEntry;
                 if (entry->textLength != 0) {
                     updated = 1;
-                    if (lbl_eu_80663E3E > 0) {
+                    if (gmTransitionCounter > 0) {
                         if (direction != 0) {
                             MenuSnd_StopSlot0Store_9390(entry);
                         } else {
@@ -1922,13 +1923,13 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
                                      area->enabled_0x4C, area->value_0x48,
                                      fade);
                     }
-                    lbl_eu_80663E68 = 60.0f;
+                    gmFloat68 = 60.0f;
                 }
             } else {
-                BdatTextEntry* entry = &lbl_eu_80571658[0];
+                BdatTextEntry* entry = &gmBdatTextEntries[0];
                 if (entry->textLength != 0) {
                     updated = 1;
-                    if (lbl_eu_80663E3E > 0) {
+                    if (gmTransitionCounter > 0) {
                         if (direction != 0) {
                             MenuSnd_StopSlot0Store_9390(entry);
                         } else {
@@ -1947,22 +1948,22 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
                                      area->enabled_0x4C, area->value_0x48,
                                      fade);
                     }
-                    lbl_eu_80663E68 = 60.0f;
+                    gmFloat68 = 60.0f;
                 }
             }
             if (updated != 0) {
-                lbl_eu_80663E24 &= ~8;
+                gmGameFlags &= ~8;
             }
         }
     }
 }
 void cf::CfGameManager::func_8007D1A0() {}
 void cf::CfGameManager::func_8007DCB8() {
-    if (!lbl_eu_80663E78) {
-        lbl_eu_80663E74 = lbl_eu_80664090;
-        lbl_eu_80663E78 = 1;
+    if (!gmBdatTableReady) {
+        gmBdatTablePtr = lbl_eu_80664090;
+        gmBdatTableReady = 1;
     }
-    void* table = lbl_eu_80663E74;
+    void* table = gmBdatTablePtr;
     char* base = lbl_eu_804FB824;
     for (s32 dataId = 1; dataId <= 13; ++dataId) {
         UnkClass_8009EC9C* data = static_cast<UnkClass_8009EC9C*>(CtrlObjectParam_GetCharEntry(static_cast<u16>(dataId)));
@@ -1985,7 +1986,7 @@ void cf::CfGameManager::func_8007DCB8() {
             s16 result;
             s16 extra;
             s32 active = 0;
-            if (value != 0 && lbl_eu_80663E40 != 0 && dataId <= 7) {
+            if (value != 0 && gmInitArg != 0 && dataId <= 7) {
                 CItem_findOrCreateRec(value, &result, 1, &extra);
                 CtrlObjectParam_WriteU16RowEntry(data, col, value);
                 CtrlObjectParam_WriteEquipSlotValue(data, col, reinterpret_cast<void*>(static_cast<s32>(result)));
@@ -2040,19 +2041,19 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
         cf::CfGameManager::getInstance()->getActiveCameraObject()->CfObject_syncEnableState();
     }
 
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
     for (int i = 0; i < 3; ++i) {
-        if (lbl_eu_80571758.unk94[i] != 0) {
+        if (gmInstance.unk94[i] != 0) {
             // clearPlayerEffect is an Fv-hidden-arg helper whose `this` is the
             // player object (calls gmFileObject(this)) - dispatch via cast.
-            reinterpret_cast<cf::CfGameManager*>(lbl_eu_80571758.unk94[i])
+            reinterpret_cast<cf::CfGameManager*>(gmInstance.unk94[i])
                 ->clearPlayerEffect();
-            lbl_eu_80571758.unk94[i] = 0;
+            gmInstance.unk94[i] = 0;
         }
     }
 
@@ -2121,7 +2122,7 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
         float countF = S16ToF32(static_cast<s16>(count));
         float avg = total / countF;
         double k =
-            (avg > lbl_eu_80666498) ? lbl_eu_80666518 : lbl_eu_80666520;
+            (avg > lbl_eu_80666498) ? 0.5 : -0.5;
         leader = static_cast<int>(static_cast<double>(
             total / S16ToF32(static_cast<s16>(count))) + k);
     }
@@ -2196,22 +2197,22 @@ void cf::CfGameManager::func_80084654() {}
 // bdat event table, then either kicks the event-video UI or re-populates the
 // file-event table through CtrlObjectParam_GetSlotTableBase / CtrlRemote_GetFileEventIds.
 void cf::CfGameManager::resetBattlePresentation() {
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    if ((lbl_eu_80663E24 & 0x10000) == 0) {
+    if ((gmGameFlags & 0x10000) == 0) {
         return;
     }
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    cf::CfGameManager* manager = &lbl_eu_80571758;
+    cf::CfGameManager* manager = &gmInstance;
     // Only the last getInstance result is kept in a saved register (live
     // across the memset); the first two are consumed in scratch.
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
@@ -2222,10 +2223,10 @@ void cf::CfGameManager::resetBattlePresentation() {
     }
     MenuStateInitFlags();
     manager->func_8007D84C();
-    lbl_eu_80663E24 &= ~0x400000;
-    lbl_eu_80663E28 &= ~0x100000;
-    lbl_eu_80570CF0.field_0x48 = 0;
-    lbl_eu_80570CF0.field_0x44 = 0;
+    gmGameFlags &= ~0x400000;
+    gmPauseFlags &= ~0x100000;
+    gmEventQueue.field_0x48 = 0;
+    gmEventQueue.field_0x44 = 0;
     lbl_eu_80663ED8 = lbl_eu_80666498;
     lbl_eu_80663EDC = lbl_eu_80666498;
     mineResetAll();
@@ -2233,15 +2234,15 @@ void cf::CfGameManager::resetBattlePresentation() {
     resetHelpManager(lbl_eu_80664A10);
     CCharVoiceMan_ClearFieldFlag();
     if (NandQueueBusy() != 0) {
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
-        if (lbl_eu_80571758.unkAC != nullptr) {
-            CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 0x1E, 0, 0, 0, 0);
+        if (gmInstance.unkAC != nullptr) {
+            CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 0x1E, 0, 0, 0, 0);
         }
     } else {
         for (s32 i = 1; i <= 13; ++i) {
@@ -2264,34 +2265,34 @@ void cf::CfGameManager::resetBattlePresentation() {
             }
         }
         UnkC1B4Data* video = reinterpret_cast<UnkC1B4Data*>(NandPartySnap());
-        lbl_eu_80663E40 = (u16)CtrlObjectParam_GetSlotTableBase()[1];
-        CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), lbl_eu_80663E40);
+        gmInitArg = (u16)CtrlObjectParam_GetSlotTableBase()[1];
+        CtrlObjectParam_MoveValueToHead(CtrlObjectParam_GetSlotTableBase(), gmInitArg);
         CfFileEventIdsView* ids = CtrlRemote_GetFileEventIds();
         queueSceneEventA__Q22cf13CfGameManagerFv(
             ids->field_0x2, ids->field_0x0, reinterpret_cast<u32>(video),
             reinterpret_cast<u32>(ids->field_0x4), video->value_0xC);
         u16 eventDone = lbl_eu_80664774;
-        lbl_eu_80663E28 =
-            (eventDone != 0) ? (lbl_eu_80663E28 | 0x8000)
-                             : (lbl_eu_80663E28 & ~0x8000);
+        gmPauseFlags =
+            (eventDone != 0) ? (gmPauseFlags | 0x8000)
+                             : (gmPauseFlags & ~0x8000);
         lbl_eu_80664774 = 0;
     }
-    lbl_eu_80663E24 |= 0x100000;
-    lbl_eu_80663E28 |= 0x20;
+    gmGameFlags |= 0x100000;
+    gmPauseFlags |= 0x20;
 }
 // cf::CfGameManager::func_800853C8 - title/menu-reset hook: on the
 // 0x40000 flag it resets volume/fade state and the bdat text area, then
 // walks the item-list refreshing every object; the 0x40000-clear path
 // just re-runs the list walk after an explicit event-tear-down.
 extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
-    UnkArea70CE0* area = reinterpret_cast<UnkArea70CE0*>(lbl_eu_80570CE0);
-    if ((lbl_eu_80663E24 & 0x40000) != 0) {
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+    UnkArea70CE0* area = reinterpret_cast<UnkArea70CE0*>(gmResetWorkArea);
+    if ((gmGameFlags & 0x40000) != 0) {
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
         MenuSnd_SilenceByName_8986C(0, lbl_eu_80666498);
         MenuSnd_StopSlot0Clear_9318(1, lbl_eu_80666498);
@@ -2299,43 +2300,43 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         CfSoundMan_StopMaskedSlots(0x20, 0xf);
         UIWin_SweepQueue(0);
         CfScript_SleepReq2();
-        if (lbl_eu_80571758.field_0x88 != -1) {
+        if (gmInstance.field_0x88 != -1) {
             UnkFloat4 value;
             value.field_0x0 = lbl_eu_80666498;
             value.field_0x4 = lbl_eu_80666498;
             value.field_0x8 = lbl_eu_80666498;
             value.field_0xC = lbl_eu_8066649C;
             func_8008566C__Q22cf13CfGameManagerFv(0xf, &value, 1);
-            lbl_eu_80663E24 |= 0x100;
+            gmGameFlags |= 0x100;
         }
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
-        if (lbl_eu_80571758.unkAC != nullptr) {
-            CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 6, 2, 0, 0, 0);
+        if (gmInstance.unkAC != nullptr) {
+            CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 6, 2, 0, 0, 0);
         }
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
-        if (lbl_eu_80571758.unkAC != nullptr) {
-            CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 0x12, 0, 0, 0, 0);
+        if (gmInstance.unkAC != nullptr) {
+            CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 0x12, 0, 0, 0, 0);
         }
-        Scn_SetPalFixFlag(lbl_eu_80663E14, 0);
-    } else if ((lbl_eu_80663E24 & 0x2000000) != 0 ||
-               (lbl_eu_80663E24 & 0x400) != 0) {
+        Scn_SetPalFixFlag(gmScene, 0);
+    } else if ((gmGameFlags & 0x2000000) != 0 ||
+               (gmGameFlags & 0x400) != 0) {
         evtUpdateSequenceKick();
     }
 
-    lbl_eu_80663E28 |= 0x100000;
-    lbl_eu_806642E0 &= ~0x8000;
+    gmPauseFlags |= 0x100000;
+    gEventWindowFlags &= ~0x8000;
     area->entryA.field_0x0[0] = 0;
     area->entryA.field_0x20 = 0;
     area->entryA.field_0x24[0] = 0;
@@ -2360,7 +2361,7 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         }
         node = node->next;
     }
-    lbl_eu_80663E28 &= ~8;
+    gmPauseFlags &= ~8;
 }
 // cf::CfGameManager::func_80085978 - mode-dependent global reset. With the
 // argument set it runs the "enter" path: pad/camera/event teardown, per-slot
@@ -2373,28 +2374,28 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
 extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
     // Retail reads E24 here for the gate bit only (not kept live across the
     // guard); the update below re-reads it.
-    bool gateFunc10 = (lbl_eu_80663E24 & 0x400000) != 0;
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    bool gateFunc10 = (gmGameFlags & 0x400000) != 0;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
     // Second E24 read feeds the update; masked form computed unconditionally,
     // overridden on the set path.
-    u32 e24Now = lbl_eu_80663E24;
+    u32 e24Now = gmGameFlags;
     u32 e24Next = e24Now & ~0x00400000;
     if (param != 0) {
         e24Next = e24Now | 0x00400000;
     }
-    lbl_eu_80663E24 = e24Next;
+    gmGameFlags = e24Next;
     if (param != 0) {
         // Enter path.
         if (gateFunc10) {
             CfRes_callFunc_67F10(0);
         }
-        setInputDisableTime__Q22cf9CfPadTaskFf(lbl_eu_80666548);
-        CPad* pad = lbl_eu_80663E0C;
+        setInputDisableTime__Q22cf9CfPadTaskFf(2.0f);
+        CPad* pad = gmCurrentPad;
         float zero = lbl_eu_80666498;
         if (pad != nullptr) {
             *(u8*)(reinterpret_cast<u8*>(pad) + 0x58) = 0;
@@ -2406,43 +2407,43 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
         }
         UIBattleMarkFlags82();
         if (MiniMapHasGlobalData() == 0) {
-            if (!lbl_eu_80663E70) {
-                __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-                __register_global_object(&lbl_eu_80571758,
+            if (!gmInitFlag) {
+                __ct__Q22cf13CfGameManagerFv(&gmInstance);
+                __register_global_object(&gmInstance,
                                          __dt__Q22cf13CfGameManagerFv,
-                                         lbl_eu_80571748);
-                lbl_eu_80663E70 = 1;
+                                         gmStaticRegistration);
+                gmInitFlag = 1;
             }
-            if (lbl_eu_80571758.unkAC != nullptr) {
-                CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 6, 4,
+            if (gmInstance.unkAC != nullptr) {
+                CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 6, 4,
                               0, 0, 0);
             }
-            if (!lbl_eu_80663E70) {
-                __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-                __register_global_object(&lbl_eu_80571758,
+            if (!gmInitFlag) {
+                __ct__Q22cf13CfGameManagerFv(&gmInstance);
+                __register_global_object(&gmInstance,
                                          __dt__Q22cf13CfGameManagerFv,
-                                         lbl_eu_80571748);
-                lbl_eu_80663E70 = 1;
+                                         gmStaticRegistration);
+                gmInitFlag = 1;
             }
-            if (lbl_eu_80571758.unkAC != nullptr) {
-                CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 0x20,
+            if (gmInstance.unkAC != nullptr) {
+                CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 0x20,
                               0, 0, 0, 0);
             }
         }
         bindPadSubobjects(1);
-        if ((lbl_eu_80663E28 & 0x08000000) != 0) {
-            if (!lbl_eu_80663E70) {
-                __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-                __register_global_object(&lbl_eu_80571758,
+        if ((gmPauseFlags & 0x08000000) != 0) {
+            if (!gmInitFlag) {
+                __ct__Q22cf13CfGameManagerFv(&gmInstance);
+                __register_global_object(&gmInstance,
                                          __dt__Q22cf13CfGameManagerFv,
-                                         lbl_eu_80571748);
-                lbl_eu_80663E70 = 1;
+                                         gmStaticRegistration);
+                gmInitFlag = 1;
             }
-            if (lbl_eu_80571758.unkAC != nullptr) {
-                CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 0x1f,
+            if (gmInstance.unkAC != nullptr) {
+                CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 0x1f,
                               0, 0, 0, 0);
             }
-            lbl_eu_80663E28 &= ~0x08000000;
+            gmPauseFlags &= ~0x08000000;
         }
     } else {
         // Reset path.
@@ -2450,40 +2451,40 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
             MiniMapResetLayoutAnims();
         }
         UIBattleRemoveAll(0);
-        lbl_eu_80663E08 = lbl_eu_80666498;
+        gmBaseTimeScale = lbl_eu_80666498;
         if (gateFunc10) {
             CfRes_callFunc_67F10(0);
         }
         bindPadSubobjects(0);
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
-        if (lbl_eu_80571758.unkAC != nullptr) {
+        if (gmInstance.unkAC != nullptr) {
             CfRes_markKey(reinterpret_cast<UnkClass_80085334*>(
-                              lbl_eu_80571758.unkAC),
+                              gmInstance.unkAC),
                           0x20);
         }
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
-        if (lbl_eu_80571758.unkAC != nullptr) {
+        if (gmInstance.unkAC != nullptr) {
             CfRes_markKey(reinterpret_cast<UnkClass_80085334*>(
-                              lbl_eu_80571758.unkAC),
+                              gmInstance.unkAC),
                           0x15);
         }
-        if ((lbl_eu_80663E24 & 0x200) != 0) {
-            lbl_eu_80663E24 &= ~0x200;
+        if ((gmGameFlags & 0x200) != 0) {
+            gmGameFlags &= ~0x200;
         }
-        if ((lbl_eu_80663E28 & 0x800) != 0) {
-            lbl_eu_80663E28 &= ~0x800;
+        if ((gmPauseFlags & 0x800) != 0) {
+            gmPauseFlags &= ~0x800;
         }
         for (s32 i = 1; i <= 13; ++i) {
             CtrlObjectParam_ActivateCharRow(CtrlObjectParam_GetCharEntry(static_cast<u16>(i)));
@@ -2509,23 +2510,23 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
 
     // Shared tail: on E24 bit 0x80000 notify the manager, with different
     // call shapes depending on the mode argument.
-    if ((lbl_eu_80663E24 & 0x80000) != 0) {
-        if (!lbl_eu_80663E70) {
-            __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-            __register_global_object(&lbl_eu_80571758,
+    if ((gmGameFlags & 0x80000) != 0) {
+        if (!gmInitFlag) {
+            __ct__Q22cf13CfGameManagerFv(&gmInstance);
+            __register_global_object(&gmInstance,
                                      __dt__Q22cf13CfGameManagerFv,
-                                     lbl_eu_80571748);
-            lbl_eu_80663E70 = 1;
+                                     gmStaticRegistration);
+            gmInitFlag = 1;
         }
         if (param != 0) {
-            if (lbl_eu_80571758.unkAC != nullptr) {
+            if (gmInstance.unkAC != nullptr) {
                 CfRes_markKey(reinterpret_cast<UnkClass_80085334*>(
-                                  lbl_eu_80571758.unkAC),
+                                  gmInstance.unkAC),
                               0x1c);
             }
         } else {
-            if (lbl_eu_80571758.unkAC != nullptr) {
-                CfRes_pushRec(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 0x1c,
+            if (gmInstance.unkAC != nullptr) {
+                CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 0x1c,
                               0x28, 0, 0, 0);
             }
         }
@@ -2536,18 +2537,18 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
 // managers, refreshes the party slot objects' 0x3E9C containers, then walks
 // the item list refreshing each object before clearing the presentation bits.
 void cf::CfGameManager::func_80085FB8() {
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    cf::CfGameManager* mgr = &lbl_eu_80571758;
+    cf::CfGameManager* mgr = &gmInstance;
 
     // 0xFFA00000 - 0x231: keep-everything-except mask applied to all pads.
-    u32 mask = lbl_eu_80663DF8 & 0xFF9FFDCF;
-    lbl_eu_80663DF8 = mask;
-    CPad* pad = lbl_eu_80663E0C;
+    u32 mask = gmEnabledPadFlags & 0xFF9FFDCF;
+    gmEnabledPadFlags = mask;
+    CPad* pad = gmCurrentPad;
     if (pad != nullptr) {
         pad->mPressedButtonFlags &= mask;
         pad->mTurboPressButtonFlags &= mask;
@@ -2555,23 +2556,23 @@ void cf::CfGameManager::func_80085FB8() {
         pad->mHeldButtonFlags &= mask;
         pad->mLongHoldButtonFlags &= mask;
         pad->mShortPressButtonFlags &= mask;
-        lbl_eu_80571500.mPressedButtonFlags &= mask;
-        lbl_eu_80571500.mTurboPressButtonFlags &= mask;
+        gmPadData.mPressedButtonFlags &= mask;
+        gmPadData.mTurboPressButtonFlags &= mask;
     }
     CfRes_callFunc_67FE0();
     CamEvtClearSlotBytes(mgr->unkB4);
     CamEvtSearchStateVal(0);
     func_801AAD08();
-    lbl_eu_8066443A = 0;
+    gSoundSystemInitFlag = 0;
     getInstance__Fv();
     walkReslistByMask(nullptr, 0x10000);
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (!gmInitFlag) {
+        __ct__Q22cf13CfGameManagerFv(&gmInstance);
+        __register_global_object(&gmInstance, __dt__Q22cf13CfGameManagerFv,
+                                 gmStaticRegistration);
+        gmInitFlag = 1;
     }
-    lbl_eu_80663E24 &= 0xFFFB7FFF;
+    gmGameFlags &= 0xFFFB7FFF;
 
     // Retail dispatches vtable slot 0x158 (CfObjectMove::setPointEnabled,
     // u32 arg) on each party slot object whose +0x64 word has bit 1 set.
@@ -2589,7 +2590,7 @@ void cf::CfGameManager::func_80085FB8() {
     if (!lookupWorkAtAddr()) {
         player = nullptr;
     }
-    if ((lbl_eu_80663E28 & 0x20000000) == 0) {
+    if ((gmPauseFlags & 0x20000000) == 0) {
         assignCameraTarget__Q22cf13CfGameManagerFv(reinterpret_cast<u32>(player));
     }
     CfObject* cam = this->getActiveCameraObject();
@@ -2615,7 +2616,7 @@ void cf::CfGameManager::func_80085FB8() {
     }
     loadLayoutScales();
     ArtsSelect_NotifyAll(reinterpret_cast<void*>(1));
-    if ((lbl_eu_80663E28 & 0x20000000) == 0) {
+    if ((gmPauseFlags & 0x20000000) == 0) {
         ItemListManager* list = getListB28__Fv();
         ItemListNode* node = list->sentinel->next;
         while (node != list->sentinel) {
@@ -2628,10 +2629,10 @@ void cf::CfGameManager::func_80085FB8() {
             node = node->next;
         }
         // rlwinm mb=29,me=27 wrap mask: everything except bit 28.
-        lbl_eu_80663E28 &= ~0x10000000;
+        gmPauseFlags &= ~0x10000000;
     }
     // rlwinm mb=3,me=1 wrap mask: everything except bit 2.
-    lbl_eu_80663E28 &= ~0x20000000;
+    gmPauseFlags &= ~0x20000000;
 }
 // cf::CfGameManager::func_80086778 - one-time bdat table scan (guarded by the
 // E35 flag). Loads the current bdat table (lbl_eu_806640A0), walks a row range,
@@ -2639,16 +2640,16 @@ void cf::CfGameManager::func_80085FB8() {
 // lbl_eu_80664184 spawns collision objects via createBdatCollisionObj and positions them
 // with the func_800AC1xx collision helpers.
 void cf::CfGameManager::func_80086778() {
-    if (lbl_eu_80663E35 != 0) {
+    if (gmEventFlag35 != 0) {
         return;
     }
     Bdat_GetTable_AA34();
     void* bdat = lbl_eu_806640A0;
     int rowStart = (int)Bdat_GetRowBase_B41C(bdat);
     int rowCount = (int)Bdat_GetMaxRow_B1EC(bdat);
-    lbl_eu_80663E35 = 1;
-    lbl_eu_80663E36 = 0;
-    lbl_eu_80663E38 = 0;
+    gmEventFlag35 = 1;
+    gmCounter36 = 0;
+    gmCounter38 = 0;
     const char* base = lbl_eu_804FB824;
     u16 targetCode = (u16)lbl_eu_80664184;
     // 0x43300000-prefixed conversion blocks and the magic doubles are hoisted
@@ -2672,9 +2673,9 @@ void cf::CfGameManager::func_80086778() {
         u8 code = (u8)rawB3;
         u8 v = (u8)rawFD;
         if (v == 0) {
-            ++lbl_eu_80663E36;
+            ++gmCounter36;
         } else if (v == 1) {
-            ++lbl_eu_80663E38;
+            ++gmCounter38;
         }
         if (code != targetCode) {
             continue;
@@ -2886,7 +2887,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
     }
 
     disableFlag20__Q22cf13CfGameManagerFv();
-    lbl_eu_80663E30 = 0;
+    gmQueuedEventCount = 0;
     CfRes_callFunc_67E78(0);
     CfRes_callFunc_67FE0();
     enableGameFlag__Q22cf13CfGameManagerFv(4);
@@ -2898,8 +2899,8 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
     // Fade-factor bookkeeping: zero the halfword mirrors, compare the incoming
     // factor against the shared threshold and stash it in the manager.
     float threshold = 360.0f;
-    lbl_eu_80663E48[0] = 0;
-    lbl_eu_80663E4C[0] = 0;
+    gmFlagPairs48[0] = 0;
+    gmFlagPairs4C[0] = 0;
     struct Mgr24View {
         u8 pad[8];
         float value24;
@@ -2923,7 +2924,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
                   reinterpret_cast<const char*>(first),
                   reinterpret_cast<const char*>(second),
                   reinterpret_cast<const char*>(fourth));
-    copyBdatTextEntryFull__Q22cf13CfGameManagerFv(&lbl_eu_80571658[0],
-                                           &lbl_eu_80571658[1]);
+    copyBdatTextEntryFull__Q22cf13CfGameManagerFv(&gmBdatTextEntries[0],
+                                           &gmBdatTextEntries[1]);
     cfCam_syncFollowD();
 }

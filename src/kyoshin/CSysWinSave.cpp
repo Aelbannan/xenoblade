@@ -155,7 +155,7 @@ void CSysWinSave::Init() {
 // ---------------------------------------------------------------------------
 void CSysWinSave::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -250,7 +250,7 @@ void CSysWinSave::cbRenderBefore() {
     // chain keeps the body off the fallthrough so MWCC emits retail's
     // branch-over-branch: `bne end` for the first disjunct, `beq body; b end`
     // for the second (same scheme as CSysWinSelect::cbRenderBefore).
-    if (CTaskGame::isFlag01Set() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+    if (CTaskGame::isFlag01Set() == 0 && (gmPauseFlags & 0x200000) == 0) {
         goto body;
     }
     goto end;

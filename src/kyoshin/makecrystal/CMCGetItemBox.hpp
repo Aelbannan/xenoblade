@@ -162,22 +162,19 @@ extern "C" char lbl_eu_8050FF8C[];
 extern "C" void* lbl_eu_806640EC;  // declared u32 in CCollepedia.hpp, void* in CItemBoxLine.hpp -> kept void*
 extern "C" void* lbl_eu_806640D8;  // declared void* in CMCEffStart.hpp/CItemBoxLine.hpp -> kept void*
 extern "C" void* lbl_eu_80664100;  // unused address anchor - kept void*
-extern "C" void* lbl_eu_80664A18;  // unused address anchor - kept void*
-extern "C" void* lbl_eu_80664A1C;  // unused address anchor - kept void*
-extern "C" void* lbl_eu_80664A20;  // unused address anchor - kept void*
+extern "C" void* sCrystalItemTable;  // unused address anchor - kept void*
+extern "C" void* sCrystalMesTable;  // unused address anchor - kept void*
+extern "C" void* sItemMesTable;  // unused address anchor - kept void*
 extern "C" const float lbl_eu_80668BF0;
-extern const float lbl_eu_80668BD0;  // 30.0f item-box page divisor
 // lbl_eu_80668BD4 is the 0.0f used for the fractional-part comparison.
 extern const float lbl_eu_80668BD4;
 // lbl_eu_80668BD8 (double) is the 2^52 constant of MWCC's u32->f64 trick;
 // lbl_eu_80668BEC is the 0.25f row divisor used when converting a flat
 // cursor index to row/column (field_304 / field_305).
-extern const float lbl_eu_80668BEC;
 // lbl_eu_80668BD8 (double) is MWCC's unsigned 2^52 conversion magic.
 extern const double lbl_eu_80668BD8;
 // lbl_eu_80668BE0 (double) is MWCC's signed int->f64 2^52 conversion magic.
 extern const double lbl_eu_80668BE0;
-extern const float lbl_eu_80668BF4;
 extern "C" void moveMCGetItemBoxCursor(CMCGetItemBox*);
 extern "C" void initMCGetItemBoxList(CMCGetItemBox*, u16, void*, u8);
 extern "C" void setMCSlotIconTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
@@ -195,7 +192,5 @@ extern "C" void* __ct__CTagProcessor(void*);
 /* 28-byte message-format helper table read by getMCItemSubText's '%2' handler
    (indexed by the item's kind byte). */
 struct CMCItemMsgTbl { u32 v[7]; };
-extern "C" CMCItemMsgTbl lbl_eu_8050FF60;
-extern const float lbl_eu_80668BF8;
-extern const float lbl_eu_80668BFC;
+extern "C" CMCItemMsgTbl sMCItemMsgFmtTbl;
 extern const float lbl_eu_80668C00;

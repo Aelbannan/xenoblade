@@ -17,27 +17,7 @@
 // .rodata RTTI class-name (0x12) + 2-byte pad gap to lbl_eu_80503E14.
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
 char lbl_eu_80503E00[0x14] = "CSimpleEveTalkWin";
-// .rodata layout-name pool: null-separated archive/layout names. The 0x108
-// slot is an empty string (double NUL after txt_name_u); the tail pads with
-// zeros to 0x114. Offsets match every &lbl_eu_80503E14[...] site in code.
-__declspec(section ".rodata") __attribute__((used, aligned(4)))
-char lbl_eu_80503E14[0x114] =
-    "CSimpleEveTalkWin\0"
-    "mf70_cf01_esywin00.brlyt\0"
-    "mf70_cf01_esywin00_in.brlan\0"
-    "mf70_cf01_esywin00_cursor_in.brlan\0"
-    "mf70_cf01_esywin00_cursor_def.brlan\0"
-    "mf00_com00_btn30_anim00.tpl\0"
-    "mf00_com00_btn00_anim00.tpl\0"
-    "pic_cursor00\0"
-    "txt_name\0"
-    "txt_name_r\0"
-    "txt_name_l\0"
-    "txt_name_o\0"
-    "txt_name_u\0"
-    "\0"
-    "txt_mes\0";
-// .data composite vtable 0xC0: reloc slots are zero in-file (linker fills
+
 // them); the two this-adjust deltas are immediates. Spelled as a blob
 // because the RTTI/typeinfo refs are unspellable retail labels
 // (CSysWinSelect/CSysWinBuff/CSysWinSave absorb precedent).
@@ -80,23 +60,14 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8)))
 const Sdata2_EveTalkWin sdata2_EveTalkWin = {
     38.0f, -1.0f, 0.0f, 193.0f, 1.0f, 0.0f, 5.0f, 30.0f, 50.0f, 0.0f, 1.0f, 0.2f
 };
-#define lbl_eu_80667CA0 sdata2_EveTalkWin.a0
-#define lbl_eu_80667CA4 sdata2_EveTalkWin.a4
 #define lbl_eu_80667CA8 sdata2_EveTalkWin.a8
-#define lbl_eu_80667CAC sdata2_EveTalkWin.ac
 #define lbl_eu_80667CB0 sdata2_EveTalkWin.b0
-#define lbl_eu_80667CB8 sdata2_EveTalkWin.b8
-#define lbl_eu_80667CBC sdata2_EveTalkWin.bc
-#define lbl_eu_80667CC0 sdata2_EveTalkWin.c0
-#define lbl_eu_80667CC4 sdata2_EveTalkWin.c4
-#define lbl_eu_80667CC8 sdata2_EveTalkWin.c8
-#define lbl_eu_80667CCC sdata2_EveTalkWin.cc
 // .sbss singletons (MWCC auto-routes zero-init small data here; explicit
 // section names are rejected by this TU's MWCC, code_80135FDC recipe).
 // The trailing 3 bytes are retail section padding (hidden gap object).
 // Three scalars (an array would 4-align to offset 8 and bloat to 0xB).
-CSimpleEveTalkWin* lbl_eu_80664320 = 0;
-u8 lbl_eu_80664324 = 0;
+CSimpleEveTalkWin* spEveTalkWinInstance = 0;
+u8 sEveTalkWinTerminated = 0;
 u8 eve_sbss_pad0;
 u8 eve_sbss_pad1;
 u8 eve_sbss_pad2;
@@ -189,7 +160,7 @@ CSimpleEveTalkWin::~CSimpleEveTalkWin() {
 void CSimpleEveTalkWin::Init() {
     mtl::ALLOC_HANDLE mem = mtl::MemManager::getHandleMEM2();
     ((UnkClass_8045F564*)mMemRegion)
-        ->createRegion((int)mem, 0x4000, lbl_eu_80503E14, 0);
+        ->createRegion((int)mem, 0x4000, "CSimpleEveTalkWin", 0);
     // Retail only ever touches the first word of the guard, so a 4-byte slot
     // keeps the SetTranslate VEC3 temp at r1+0xc like retail.
     u8 regionGuard[4];
@@ -207,7 +178,7 @@ void CSimpleEveTalkWin::Init() {
     field_88 = (nw4r::lyt::AnimTransform*)tagProc;
 
     reinterpret_cast<CSimpleTagProc*>(tagProc)
-        ->Proc(mMsgBuf, lbl_eu_80667CA0, lbl_eu_80667CA0, field_68);
+        ->Proc(mMsgBuf, 38.0f, 38.0f, field_68);
 
     CSimpleTagProc* tagFields =
         reinterpret_cast<CSimpleTagProc*>(field_88);
@@ -217,20 +188,20 @@ void CSimpleEveTalkWin::Init() {
         // float before the 0x81A byte.
         f32 voiceVol = tagFields->field_0x81C;
         u8 voiceId = tagFields->field_0x81A;
-        CUICfManager_queueFadeMenu(voiceId, 0, voiceVol, lbl_eu_80667CA4,
-                      lbl_eu_80667CA4);
+        CUICfManager_queueFadeMenu(voiceId, 0, voiceVol, -1.0f,
+                      -1.0f);
         field_64 = 1;
         __dt__14Class_8045F858Fv(regionGuard, -1);
         return;
     }
 
-    buildLayout(&mpLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80503E14[0x12]);
+    buildLayout(&mpLayout, CUICfManager_getArcResourceAccessor(), "mf70_cf01_esywin00.brlyt");
     bindLayoutAnimTransform(mpLayout, &field_8C, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80503E14[0x2b]);
+                  "mf70_cf01_esywin00_in.brlan");
     bindLayoutAnimTransform(mpLayout, &field_90, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80503E14[0x47]);
+                  "mf70_cf01_esywin00_cursor_in.brlan");
     bindLayoutAnimTransform(mpLayout, &field_94, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80503E14[0x6a]);
+                  "mf70_cf01_esywin00_cursor_def.brlan");
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
@@ -243,12 +214,12 @@ void CSimpleEveTalkWin::Init() {
     // Co-op mode uses the 2P button texture.
     const char* texName;
     if (cf::CfGameManager::isClassicController(-1) != 0)
-        texName = &lbl_eu_80503E14[0x8e];
+        texName = "mf00_com00_btn30_anim00.tpl";
     else
-        texName = &lbl_eu_80503E14[0xaa];
+        texName = "mf00_com00_btn00_anim00.tpl";
     void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
-        PaneSetTexPaletteByName(mpLayout, (const char*)&lbl_eu_80503E14[0xc6], (TPLPalette*)tex);
+        PaneSetTexPaletteByName(mpLayout, (const char*)"pic_cursor00", (TPLPalette*)tex);
     }
 
     if (field_68 != 0) {
@@ -256,30 +227,30 @@ void CSimpleEveTalkWin::Init() {
         char* msgText = reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(findObjectById(field_68))
                 ->CObjectParam_getParamPtr());
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name", msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_r", msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_l", msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_o", msgText, 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_u", msgText, 0);
     } else {
         // No talk source: leave the name fields empty.
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xd3],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xdc],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xe7],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xf2],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0xfd],
-                      &lbl_eu_80503E14[0x108], 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_r",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_l",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_o",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(mpLayout, "txt_name_u",
+                      "", 0);
     }
 
     // Attach the tag processor to the message text box and show it.
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_80503E14[0x109], &lbl_eu_80503E14[0x108],
+    LayoutSetTextBoxFmtValue(mpLayout, "txt_mes", "",
                   0);
     nw4r::lyt::Pane* textPane =
-        mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80503E14[0x109], 1);
+        mpLayout->GetRootPane()->FindPaneByName("txt_mes", 1);
     textPane->SetVisible(true);
     reinterpret_cast<nw4r::lyt::TextBox*>(textPane)->SetTagProcessor(
         reinterpret_cast<nw4r::ut::WideTagProcessor*>(field_88));
@@ -289,7 +260,7 @@ void CSimpleEveTalkWin::Init() {
     // position.
     if (field_68 == 0) {
         mpLayout->GetRootPane()->SetTranslate(nw4r::math::VEC3(
-            lbl_eu_80667CA8, lbl_eu_80667CAC, lbl_eu_80667CA8));
+            lbl_eu_80667CA8, 193.0f, lbl_eu_80667CA8));
     }
 
     // No ctor-flag: start with the cursor animation disabled and the intro
@@ -313,7 +284,7 @@ void CSimpleEveTalkWin::Init() {
 
 void CSimpleEveTalkWin::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     if (isInitialized__10CMenuPauseFv()) return;
@@ -348,9 +319,9 @@ void CSimpleEveTalkWin::Move() {
             }
             mScene->removeRenderCB(render);
             field_64 = 1;
-            lbl_eu_80664320 = 0;
+            spEveTalkWinInstance = 0;
             field_AD = 0;
-            lbl_eu_80664324 = 1;
+            sEveTalkWinTerminated = 1;
         }
         break;
     }
@@ -358,16 +329,16 @@ void CSimpleEveTalkWin::Move() {
 }
 
 void CSimpleEveTalkWin::Term() {
-    if (lbl_eu_80664324 == 0) {
+    if (sEveTalkWinTerminated == 0) {
         CDeviceVI::waitForDrawDone();
         IScnRender* render = reinterpret_cast<IScnRender*>(this);
         if (this != 0) {
             render = reinterpret_cast<IScnRender*>(&mScnRender);
         }
         mScene->removeRenderCB(render);
-        lbl_eu_80664320 = 0;
+        spEveTalkWinInstance = 0;
     } else {
-        lbl_eu_80664324 = 0;
+        sEveTalkWinTerminated = 0;
     }
 
     if (mpLayout != 0) {
@@ -384,7 +355,7 @@ void CSimpleEveTalkWin::Term() {
 
 void CSimpleEveTalkWin::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0)
         return;
@@ -403,8 +374,8 @@ CSimpleEveTalkWin* eveTalkWinCreateRegister(CProcess* parent, CScn* scene, u32 t
     memset(buf, 0, 0x800);
     Utf8ToWcsCopyFix((const char*)msgSrc, (u16*)buf, 0x400);
 
-    if (lbl_eu_80664320 != 0) {
-        eveTalkWinSetReuseText(lbl_eu_80664320, text, buf);
+    if (spEveTalkWinInstance != 0) {
+        eveTalkWinSetReuseText(spEveTalkWinInstance, text, buf);
         return 0;
     }
 
@@ -414,9 +385,9 @@ CSimpleEveTalkWin* eveTalkWinCreateRegister(CProcess* parent, CScn* scene, u32 t
     if (obj != 0) {
         obj = __ct__CSimpleEveTalkWin(obj, scene, text, buf, flag);
     }
-    lbl_eu_80664320 = obj;
+    spEveTalkWinInstance = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
-    return lbl_eu_80664320;
+    return spEveTalkWinInstance;
 }
 
 // --- this-adjusting thunks (retail vtable dispatch: "this" lands at the
@@ -444,7 +415,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     // --- rebuild: identical to Init() below this line ---
     mtl::ALLOC_HANDLE mem = mtl::MemManager::getHandleMEM2();
     ((UnkClass_8045F564*)owner->mMemRegion)
-        ->createRegion((int)mem, 0x4000, lbl_eu_80503E14, 0);
+        ->createRegion((int)mem, 0x4000, "CSimpleEveTalkWin", 0);
     // Retail only ever touches the first word of the guard, so a 4-byte slot
     // keeps the SetTranslate VEC3 temp at r1+0xc like retail.
     u8 regionGuard[4];
@@ -459,7 +430,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     owner->field_88 = (nw4r::lyt::AnimTransform*)tagProc;
 
     reinterpret_cast<CSimpleTagProc*>(tagProc)
-        ->Proc(owner->mMsgBuf, lbl_eu_80667CA0, lbl_eu_80667CA0,
+        ->Proc(owner->mMsgBuf, 38.0f, 38.0f,
                owner->field_68);
 
     CSimpleTagProc* tagFields =
@@ -467,8 +438,8 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     if (tagFields->field_0x814 == 1) {
         f32 voiceVol = tagFields->field_0x81C;
         u8 voiceId = tagFields->field_0x81A;
-        CUICfManager_queueFadeMenu(voiceId, 0, voiceVol, lbl_eu_80667CA4,
-                      lbl_eu_80667CA4);
+        CUICfManager_queueFadeMenu(voiceId, 0, voiceVol, -1.0f,
+                      -1.0f);
         owner->field_64 = 1;
         __dt__14Class_8045F858Fv(regionGuard, -1);
         return;
@@ -478,13 +449,13 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     owner->field_90 = 0;
     owner->field_94 = 0;
 
-    buildLayout(&owner->mpLayout, CUICfManager_getArcResourceAccessor(), &lbl_eu_80503E14[0x12]);
+    buildLayout(&owner->mpLayout, CUICfManager_getArcResourceAccessor(), "mf70_cf01_esywin00.brlyt");
     bindLayoutAnimTransform(owner->mpLayout, &owner->field_8C, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80503E14[0x2b]);
+                  "mf70_cf01_esywin00_in.brlan");
     bindLayoutAnimTransform(owner->mpLayout, &owner->field_90, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80503E14[0x47]);
+                  "mf70_cf01_esywin00_cursor_in.brlan");
     bindLayoutAnimTransform(owner->mpLayout, &owner->field_94, CUICfManager_getArcResourceAccessor(),
-                  &lbl_eu_80503E14[0x6a]);
+                  "mf70_cf01_esywin00_cursor_def.brlan");
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = owner->mpLayout->GetRootPane();
@@ -504,12 +475,12 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     // Co-op mode uses the 2P button texture.
     const char* texName;
     if (cf::CfGameManager::isClassicController(-1) != 0)
-        texName = &lbl_eu_80503E14[0x8e];
+        texName = "mf00_com00_btn30_anim00.tpl";
     else
-        texName = &lbl_eu_80503E14[0xaa];
+        texName = "mf00_com00_btn00_anim00.tpl";
     void* tex = CUICfManager_getArcResourceAccessor()->GetResource(0x74696D67, texName, 0);
     if (tex != 0) {
-        PaneSetTexPaletteByName(owner->mpLayout, (const char*)&lbl_eu_80503E14[0xc6], (TPLPalette*)tex);
+        PaneSetTexPaletteByName(owner->mpLayout, (const char*)"pic_cursor00", (TPLPalette*)tex);
     }
 
     if (owner->field_68 != 0) {
@@ -518,34 +489,34 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
         char* msgText = reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(findObjectById(owner->field_68))
                 ->CObjectParam_getParamPtr());
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name", msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_r", msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_l", msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_o", msgText, 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_u", msgText, 0);
         void* src = findObjectById(owner->field_68);
         if (src != 0) {
             reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);
         }
     } else {
         // No talk source: leave the name fields empty.
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xd3],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xdc],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xe7],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xf2],
-                      &lbl_eu_80503E14[0x108], 0);
-        LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0xfd],
-                      &lbl_eu_80503E14[0x108], 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_r",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_l",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_o",
+                      "", 0);
+        LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_name_u",
+                      "", 0);
     }
 
     // Attach the tag processor to the message text box and show it.
-    LayoutSetTextBoxFmtValue(owner->mpLayout, &lbl_eu_80503E14[0x109],
-                  &lbl_eu_80503E14[0x108], 0);
+    LayoutSetTextBoxFmtValue(owner->mpLayout, "txt_mes",
+                  "", 0);
     nw4r::lyt::Pane* textPane = owner->mpLayout->GetRootPane()
-                                    ->FindPaneByName(&lbl_eu_80503E14[0x109],
+                                    ->FindPaneByName("txt_mes",
                                                      1);
     textPane->SetVisible(true);
     reinterpret_cast<nw4r::lyt::TextBox*>(textPane)->SetTagProcessor(
@@ -556,7 +527,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
     // position.
     if (owner->field_68 == 0) {
         owner->mpLayout->GetRootPane()->SetTranslate(nw4r::math::VEC3(
-            lbl_eu_80667CA8, lbl_eu_80667CAC, lbl_eu_80667CA8));
+            lbl_eu_80667CA8, 193.0f, lbl_eu_80667CA8));
     }
 
     ((UnkClass_8045F564*)owner->mMemRegion)->validateHeap();
@@ -568,7 +539,7 @@ extern "C" __declspec(noinline) void eveTalkWinSetReuseText(CSimpleEveTalkWin* o
 // (4 = select accepted, 2 = page animation, 0/1/3 = page/close logic).
 extern "C" void eveTalkWinAdvancePage(CSimpleEveTalkWin* self) {
     nw4r::lyt::Pane* pane =
-        self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80503E14[0x109],
+        self->mpLayout->GetRootPane()->FindPaneByName("txt_mes",
                                                       1);
     CPad* pad = cf::CfGameManager::getCurrentPad();
 

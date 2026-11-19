@@ -168,7 +168,6 @@ void maskMoveChildFlags(cf::CCtrlMovePC* self);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 }
 
-extern void* lbl_eu_80665958;
 
 // Additional sdata2 float constants used by the state functions (values from
 // retail .sdata2; keep as named labels so the relocs pair with retail).
@@ -210,7 +209,7 @@ extern const f32 lbl_eu_80667C50;   // max follow distance
 // non-const form); do not redeclare here.
 
 // Wall-steer helper shared with CtrlMoveEne (retail name).
-extern u8 lbl_eu_80571810[0x38];
+extern u8 sEneColiProbeBuffer[0x38];
 
 // ptmf constants for state transitions (12-byte ptr-to-member triples).
 extern int (cf::CCtrlMovePC::*const lbl_eu_80532CA4)();

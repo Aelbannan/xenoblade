@@ -24,7 +24,7 @@ class CFileHandle;
 // that extend at receipt convert explicitly.
 extern "C" {
 
-// --- menu state flags (lbl_eu_80664058..80664080) ---
+// --- menu state flags (gMenuStateMain..80664080) ---
 void MenuStateInitFlags();
 void MenuStateSet64058();
 void MenuStateClear6405A();
@@ -46,7 +46,7 @@ u32 code80135FDC_getWord_64060();
 void code80135FDC_setByte_64064();
 u8 code80135FDC_getByte_6407F();
 u8 code80135FDC_setByte_6407F(u8 value);
-// Menu nesting counter (lbl_eu_80664080): post-increment / clamped
+// Menu nesting counter (gMenuDepth): post-increment / clamped
 // post-decrement; both return the previous value.
 u8 code80135FDC_getByte_64080();
 u8 code80135FDC_postIncByte_64080();
@@ -65,7 +65,7 @@ int GetSysStateFlag31();
 // Tests remote bit (id + 0x2CC8).
 int CheckState2CC8Active(u32 id);
 
-// --- party slot lists (lbl_eu_80664070 u8[7] / lbl_eu_80664078 u16[3]) ---
+// --- party slot lists (gCollectedFlags u8[7] / gSlotItemIds u16[3]) ---
 // Rebuilds both lists from the slot table; a non-zero `skipFlagged` skips
 // characters whose +0x176C byte is 1.
 void BuildSlotItemLists(int skipFlagged);

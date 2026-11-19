@@ -136,7 +136,7 @@ void CREvtModelObj::setEventData(void* pData, void* pModelData) {
         if (sWeaponData != nullptr && mModel != nullptr && pData != nullptr && mSchedule == nullptr &&
             mCount80 != 0) {
             mSchedule = static_cast<CSchedule*>(
-            EffRoot_AddSchedReq(&lbl_eu_8065FC18, sWeaponData, lbl_eu_80663E14, mCount80 - 1, 1, 0));
+            EffRoot_AddSchedReq(&lbl_eu_8065FC18, sWeaponData, gmScene, mCount80 - 1, 1, 0));
             if (mSchedule != nullptr) {
                 schedAttachChildSlot(mSchedule, static_cast<CScheduleChild*>(this));
                 mSchedule->field_0x14 = mModel->vfuncA8();
@@ -285,20 +285,20 @@ int CREvtModelObj::vfunc_10() {
 // Lets the scene allocator take large requests, falling back to MEM2/MEM1.
 static inline void setFileHeaps(CFileHandle* handle, u32 flags, u32 scnLimit) {
     if (flags & 2) {
-        if (mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle()) > scnLimit) {
-            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, lbl_eu_80663E14->getAllocHandle());
+        if (mtl::MemManager::getMaxAllocSize(gmScene->getAllocHandle()) > scnLimit) {
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, gmScene->getAllocHandle());
         }
         setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM2());
     } else if (flags & 0x20) {
         if (mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1()) > 0x40000) {
             setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM1());
         }
-        setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, lbl_eu_80663E14->getAllocHandle());
+        setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, gmScene->getAllocHandle());
         setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM2());
     } else {
         setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM2());
-        if (mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle()) > 0x40000) {
-            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, lbl_eu_80663E14->getAllocHandle());
+        if (mtl::MemManager::getMaxAllocSize(gmScene->getAllocHandle()) > 0x40000) {
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, gmScene->getAllocHandle());
         }
     }
     setHandleParam__11CDeviceFileFP11CFileHandleUl(handle, mtl::MemManager::getHandleMEM1());
@@ -512,7 +512,7 @@ void CREvtModelObj::stepSetup() {
                 mExtractData = data;
             }
 
-            CScn* scn = lbl_eu_80663E14;
+            CScn* scn = gmScene;
             u8* modelData = mExtractData;
             int priority = 7;
             if (evtData()->mFlags & 4) {
@@ -594,7 +594,7 @@ void CREvtModelObj::stepSetup() {
                 mExtractData = data;
             }
 
-            mModel = Scn_SetupAnim(lbl_eu_80663E14, mExtractData, -1, 1);
+            mModel = Scn_SetupAnim(gmScene, mExtractData, -1, 1);
             if (mModel != nullptr) {
                 simSetLeafDist7B0(mModel, 0.0f);
                 mModel->flags7A4 |= 0x20000000;
@@ -688,7 +688,7 @@ void CREvtModelObj::scanPlayers() {
         }
 
         mSchedule = static_cast<CSchedule*>(
-            EffRoot_AddSchedReq(&lbl_eu_8065FC18, sWeaponData, lbl_eu_80663E14, mCount80 - 1, 1, 0));
+            EffRoot_AddSchedReq(&lbl_eu_8065FC18, sWeaponData, gmScene, mCount80 - 1, 1, 0));
         if (mSchedule == nullptr) return;
 
         schedAttachChildSlot(mSchedule, static_cast<CScheduleChild*>(this));

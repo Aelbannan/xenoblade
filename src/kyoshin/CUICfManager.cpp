@@ -306,7 +306,7 @@ u32 CollepediaCreateSingleton(CUICfUnk144*, u32);
 // (SysWinGetSingleton: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; MenuTutorialCreate:
 // CMenuTutorial.hpp C++ member; Scn_QueryUnk80State: CTaskGame.hpp/code_80135FDC.hpp
 // CScn* arg;
-// lbl_eu_80663E14: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
+// gmScene: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
 // declaration would break TUs that co-include those headers.
 extern "C" {
 // Local complete type for Scn_QueryUnk80State's result (canonical name per
@@ -320,7 +320,7 @@ struct CTaskGameCamView {
 // Matches the global UnkScnResult declared in CfGameManager.hpp (included
 // at the top of this file).
 void* __ct__8011C1B8(void* ctx, u32 scene);
-// lbl_eu_80663E14 comes from CfGameManagerData.hpp (CScn*) - no local redecl.
+// gmScene comes from CfGameManagerData.hpp (CScn*) - no local redecl.
 }
 
 // Busy/state probe called by CUICfManager_queueWorldMapMenu with the singleton as its arg
@@ -367,8 +367,8 @@ int CUICfManager_isWorldMapBusy(CUICfManager* singleton) {
     // Best-known shape: 4-insn residual is an F0/F1 rename in this tail
     // (retail colors field_C->f1, const->f0). Every const-first ordering
     // spills f31 (stfd/psq_st prologue) - MWCC coloring cap, not steerable.
-    f32 v = ((float*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
-    f32 c = lbl_eu_806672C8;
+    f32 v = ((float*)Scn_QueryUnk80State((CScn*)gmScene))[3];
+    f32 c = 1.0f;
     return (c - v) < c;
 }
 // Additional menu factories (CMenuGCItem / CMenuGetItem / CMenuSave TUs).
@@ -649,8 +649,8 @@ end:
 extern "C" u32 CUICfManager_queueMoveBaseMenu();
 extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager*);
 extern "C" {
-u32 lbl_eu_80663E24;
-u32 lbl_eu_80663E28;
+u32 gmGameFlags;
+u32 gmPauseFlags;
 f32 lbl_eu_806672CC;
 
 
@@ -764,7 +764,7 @@ void CUICfManager::Move() {
         if (inst == NULL) {
             goto after_flags;
         }
-        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        if ((gmPauseFlags & 0x01000000u) != 0) {
             goto after_flags;
         }
         if (inst->mArcResourceAccessor == NULL) {
@@ -810,7 +810,7 @@ void CUICfManager::Move() {
         if (inst == NULL) {
             goto after_flags;
         }
-        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        if ((gmPauseFlags & 0x01000000u) != 0) {
             goto after_flags;
         }
         if (inst->mArcResourceAccessor == NULL) {
@@ -856,7 +856,7 @@ void CUICfManager::Move() {
         if (inst == NULL) {
             goto after_flags;
         }
-        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        if ((gmPauseFlags & 0x01000000u) != 0) {
             goto after_flags;
         }
         if (inst->mArcResourceAccessor == NULL) {
@@ -902,7 +902,7 @@ void CUICfManager::Move() {
         if (inst == NULL) {
             goto after_flags;
         }
-        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        if ((gmPauseFlags & 0x01000000u) != 0) {
             goto after_flags;
         }
         if (inst->mArcResourceAccessor == NULL) {
@@ -948,7 +948,7 @@ void CUICfManager::Move() {
         if (inst == NULL) {
             goto after_flags;
         }
-        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        if ((gmPauseFlags & 0x01000000u) != 0) {
             goto after_flags;
         }
         if (inst->mArcResourceAccessor == NULL) {
@@ -988,8 +988,8 @@ void CUICfManager::Move() {
 after_flags:
     // Retail: dual SDA load + rlwinm/rlwimi on bits 6|21, then bit 13 alone.
     {
-        u32 g0 = lbl_eu_80663E24;
-        u32 g1 = *(volatile u32*)&lbl_eu_80663E24;
+        u32 g0 = gmGameFlags;
+        u32 g1 = *(volatile u32*)&gmGameFlags;
         u32 bits = __rlwinm(g0, 0, 6, 6);
         bits = __rlwimi(bits, g0, 0, 21, 21);
         if (bits != 0) {
@@ -1014,7 +1014,7 @@ after_flags:
             partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
         }
         list = holder.get();
-        __ct__800FB044(list, lbl_eu_806672CC, partyHandle, 0);
+        __ct__800FB044(list, 100.0f, partyHandle, 0);
 
         pose = Scn_FindCamItem((void*)unk11C, -1);
         posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
@@ -1357,10 +1357,10 @@ extern "C" void CUICfManager_setMessageWindowVisible(u8 value) {
         return;
     m->setFieldC8C(value);
 }
-void Draw__Q212CUICfManager5CTestFv(){}
-void Move__Q212CUICfManager5CTestFv(){}
-void Term__Q212CUICfManager5CTestFv(){}
-void Init__Q212CUICfManager5CTestFv(){}
+void CUICfManager::CTest::Draw() {}
+void CUICfManager::CTest::Move() {}
+void CUICfManager::CTest::Term() {}
+void CUICfManager::CTest::Init() {}
 
 // ---------------------------------------------------------------------------
 // CUICfManager_dispatchFreeSlot (us-80130a88)
@@ -1384,27 +1384,27 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
     // OR-combined guard: first disjunct emits the direct `bne end`, second
     // the retail branch-over `beq cont; b end` (MWCC_CASES TutorialList_OpenAfterFilesReady).
     if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
-        (lbl_eu_80663E28 & 0x00200000u) != 0) {
+        (gmPauseFlags & 0x00200000u) != 0) {
         return;
     }
     {
         // Dual SDA load (r0 and r3) so the rlwinm/andis pair read separate
         // loads; a plain single read would CSE (Move's volatile re-read).
-        u32 g24_0 = lbl_eu_80663E24;
-        u32 g24_1 = *(volatile u32*)&lbl_eu_80663E24;
+        u32 g24_0 = gmGameFlags;
+        u32 g24_1 = *(volatile u32*)&gmGameFlags;
         if ((g24_0 & 0x01000000u) == 0) {
             if ((g24_1 & 0xafe40000u) != 0) {
                 return;
             }
         }
         {
-            f32 v = ((float*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
-            f32 c = lbl_eu_806672C8;
+            f32 v = ((float*)Scn_QueryUnk80State((CScn*)gmScene))[3];
+            f32 c = 1.0f;
             if ((c - v) < c) {
                 return;
             }
         }
-        if ((lbl_eu_80663E24 & 0x00000200u) != 0) {
+        if ((gmGameFlags & 0x00000200u) != 0) {
             return;
         }
         if (cf::CfGameManager::isSceneLoading() != 0) {
@@ -2345,7 +2345,7 @@ extern "C" u32 CUICfManager_queueMoveBaseMenu() {
     {
         int st = CUICfManager_checkMenuOpenGate((u8*)CUICfManager::spInstance);
         if (st != 0) {
-            if ((lbl_eu_80663E24 & 0x40000000u) == 0) {
+            if ((gmGameFlags & 0x40000000u) == 0) {
                 if (CtrlRemote_TouchBitByArg(0x20) > 4 && st == 2) {
                     playUISound(5);
                 }
@@ -2409,7 +2409,7 @@ extern "C" u32 CUICfManager_createQueuedMenus(CUICfManager* self) {
     if (inst == NULL) {
         return 0;
     }
-    if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+    if ((gmPauseFlags & 0x01000000u) != 0) {
         return 0;
     }
     if (inst->mArcResourceAccessor == NULL) {
@@ -2770,7 +2770,7 @@ extern "C" u32 CUICfManager_queueEventMenu() {
     if (inst == NULL) {
         return 0;
     }
-    if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+    if ((gmPauseFlags & 0x01000000u) != 0) {
         return 0;
     }
     if (inst->mArcResourceAccessor == NULL) {
@@ -3451,7 +3451,7 @@ slot_found:
     return savedRet;
 }
 // us-801350fc: create the pause menu via __ct__CMenuPause and queue it
-// (gated on the lbl_eu_80663E28 busy bit).
+// (gated on the gmPauseFlags busy bit).
 u32 CUICfManager_queuePauseMenu() {
     CUICfManager* inst;
     volatile u32 savedRet;
@@ -3464,7 +3464,7 @@ u32 CUICfManager_queuePauseMenu() {
     if (inst == NULL) {
         return 0;
     }
-    if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+    if ((gmPauseFlags & 0x01000000u) != 0) {
         return 0;
     }
     {
@@ -4177,8 +4177,8 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
     }
 
     {
-        u32 g24a = lbl_eu_80663E24;
-        u32 g24b = *(volatile u32*)&lbl_eu_80663E24;
+        u32 g24a = gmGameFlags;
+        u32 g24b = *(volatile u32*)&gmGameFlags;
         if ((g24a & 0xafe40000u) != 0) {
             return 1;
         }
@@ -4198,7 +4198,7 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
         if (px != NULL) {
             u8** vt = *reinterpret_cast<u8***>(px);
             f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(px);
-            if (v == lbl_eu_806672D0) {
+            if (v == 0.0f) {
                 return 2;
             }
             if (px->field_3F60 != NULL) {
@@ -4218,7 +4218,7 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
             }
         }
     }
-    if ((lbl_eu_80663E24 & 0x00000200u) != 0) {
+    if ((gmGameFlags & 0x00000200u) != 0) {
         return 1;
     }
     if (CtrlRemote_TouchBitByArg(0x334b) == 0) {
@@ -4336,7 +4336,7 @@ extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* ev
             0x666e7461,                                                        \
             reinterpret_cast<const char*>(lbl_eu_805000A8) + (nameOff), NULL));\
         u32 fb = nw4r::ut::PackedFont::GetRequireBufferSize(                   \
-            fd, lbl_8066DCF8, lbl_eu_806672C8);                                \
+            fd, lbl_8066DCF8, 1.0f);                                            \
         u8* fbuf = static_cast<u8*>(mtl::MemManager::allocate_head(            \
             CDevice::getDevSys2Handle(), fb, 0x20));                           \
         ctorTarget.Construct(fbuf, fb, fd, lbl_8066DCF8);                      \

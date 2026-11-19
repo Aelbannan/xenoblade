@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/CTitleAHelp.hpp"
 #include "monolib/core/CViewFrame.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Verbatim-mangled import: the real retail CfGameManager::isClassicController
 // takes the selector argument (call sites pass -1). The inline s16 overload
@@ -12,8 +12,8 @@
 
 // Forward decls only. The full sub-object headers (CTitleAHelp.hpp,
 // CModelDisp.hpp, CPartyState.hpp, CEquipChange.hpp) cannot be included here:
-// e.g. CPartyState.hpp's `extern CScn* lbl_eu_80663E14;` clashes with
-// CMenuPTState.cpp's own `extern void* lbl_eu_80663E14;`, and
+// e.g. CPartyState.hpp's `extern CScn* gmScene;` clashes with
+// CMenuPTState.cpp's own `extern void* gmScene;`, and
 // CModelDispEquip.hpp's `struct CEventFile` clashes with
 // monolib/work/CEventFile.hpp in TUs that include CBgTex.hpp / CScn.hpp.
 // The sub-objects are embedded at fixed offsets, so sized pads + casts suffice.

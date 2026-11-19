@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // ---------------------------------------------------------------------------
 // C-ABI sound-system imports (retail symbols are unmangled; no proper C++
@@ -11,15 +11,6 @@
 // TUs, e.g. pluginHelp.cpp).
 // ---------------------------------------------------------------------------
 extern "C" {
-    extern float lbl_eu_80667D90;   // SE volume scale (float)
-    extern float lbl_eu_80667D94;   // BGM fade time (float)
-    extern double lbl_eu_80667D98;  // signed int->float magic double (2^52 + 2^31)
-// Retail-owned pool slot for MWCC's int->float conversion magic (2^52+2^31 =
-// 4503601774854144.0, exact below 2^53). Defined so the builtin conversions
-// merge into the named retail slot instead of a TU-local @N pool entry.
-__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80667D98 =
-    4503601774854144.0;
-    extern float lbl_eu_80667DA0;   // voice volume (float)
     extern char lbl_eu_80504148[];  // voice file-name format string
 
     extern s32 MenuSnd_QuerySlotLive_89A04(s32 index);                        // sound-slot busy check
@@ -53,7 +44,7 @@ extern "C" {
     extern void BattleWork_CopyPairToWork(SndVec3* pos, SndVec3* target);              // set map camera position
 }
 
-extern u8 lbl_eu_8066443A;   // camera-position registered flag (.sbss)
+extern u8 gSoundSystemInitFlag;   // camera-position registered flag (.sbss)
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).  The
@@ -61,12 +52,12 @@ extern u8 lbl_eu_8066443A;   // camera-position registered flag (.sbss)
 template <> void ml::FixStr<128>::format(const char* fmt, ...);
 
 // Script command: play a BGM track.  Arg 1 is the file name, arg 2 a fixed-
-// point volume (scaled by lbl_eu_80667D90), arg 3 an optional loop/clear
+// point volume (scaled by 4096.0f), arg 3 an optional loop/clear
 // flag that defaults to false when omitted.
 // Retail defines every command with a plain (unmangled) symbol, so the whole
 // command family has C linkage. Plain decomp names also let the reloc-map
-// miner pair retail/decomp functions and canonicalize the TU-local int->float
-// magic pool (@N) to lbl_eu_80667D98 for the witness reloc gate.
+// miner pair retail/decomp functions; MWCC emits the int->float magic from
+// the ordinary casts in this TU's literal pool.
 extern "C" {
 int playBgm(VMThread* pThread) {
     const char* name = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
@@ -77,8 +68,8 @@ int playBgm(VMThread* pThread) {
     } else {
         enable = vmArgBoolGet(4, vmArgPtrGet(pThread, 3));
     }
-    float value = (float)fixed / lbl_eu_80667D90;
-    MenuSnd_RestartBGM_88D34(name, enable != 0, value, lbl_eu_80667D94);
+    float value = (float)fixed / 4096.0f;
+    MenuSnd_RestartBGM_88D34(name, enable != 0, value, 1.0f);
     return 0;
 }
 
@@ -87,17 +78,17 @@ int playBgm(VMThread* pThread) {
 int stopBgm(VMThread* pThread) {
     float vol;
     if (vmArgOmitChk(pThread, 1) != 0) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
     } else {
         float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
         vol = converted;
     }
-    MenuSnd_StopSlot0Clear_9318(1, (float)(int)vol / lbl_eu_80667D90);
+    MenuSnd_StopSlot0Clear_9318(1, (float)(int)vol / 4096.0f);
     return 0;
 }
 
 // Script command: set the field BGM.  Args 1-2 are int state selectors
-// (default 0), arg 3 a fixed-point volume (default lbl_eu_80667DA0),
+// (default 0), arg 3 a fixed-point volume (default 0.0f),
 // arg 4 an enable flag (default 0).
 int setFieldBgm(VMThread* pThread) {
     int first;
@@ -120,7 +111,7 @@ int setFieldBgm(VMThread* pThread) {
         second = vmArgIntGet(idx, arg);
     }
     if (vmArgOmitChk(pThread, idx)) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
@@ -135,7 +126,7 @@ int setFieldBgm(VMThread* pThread) {
         enable = vmArgBoolGet(idx, arg);
     }
     queueBdatTextA__Q22cf13CfGameManagerFv(first, second, enable != 0,
-                                          (float)volInt / lbl_eu_80667D90);
+                                          (float)volInt / 4096.0f);
     return 0;
 }
 
@@ -162,7 +153,7 @@ int setTownBgm(VMThread* pThread) {
         second = vmArgIntGet(idx, arg);
     }
     if (vmArgOmitChk(pThread, idx)) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
         idx++;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
@@ -177,7 +168,7 @@ int setTownBgm(VMThread* pThread) {
         enable = vmArgBoolGet(idx, arg);
     }
     func_8007C374__Q22cf13CfGameManagerFv(first, second,
-                                          (float)volInt / lbl_eu_80667D90,
+                                          (float)volInt / 4096.0f,
                                           enable != 0);
     return 0;
 }
@@ -187,12 +178,12 @@ int setTownBgm(VMThread* pThread) {
 int stopFieldBgm(VMThread* pThread) {
     float vol;
     if (vmArgOmitChk(pThread, 1) != 0) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
     } else {
         float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
         vol = converted;
     }
-    float fade = (float)(int)vol / lbl_eu_80667D90;
+    float fade = (float)(int)vol / 4096.0f;
     queueBdatTextA__Q22cf13CfGameManagerFv(0, 0, 1, fade);
     MenuSnd_StopSlot0Clear_9318(1, fade);
     return 0;
@@ -203,12 +194,12 @@ int stopFieldBgm(VMThread* pThread) {
 int stopTownBgm(VMThread* pThread) {
     float vol;
     if (vmArgOmitChk(pThread, 1) != 0) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
     } else {
         float converted = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
         vol = converted;
     }
-    float fade = (float)(int)vol / lbl_eu_80667D90;
+    float fade = (float)(int)vol / 4096.0f;
     func_8007C374__Q22cf13CfGameManagerFv(0, 0, fade, 1);
     MenuSnd_StopSlot0Clear_9318(1, fade);
     return 0;
@@ -222,20 +213,20 @@ int forceFieldBgm(VMThread* pThread) {
 }
 
 // Script command: set the master SE volume.  Arg 1 is a fixed-point volume
-// (scaled by lbl_eu_80667D90), arg 2 an optional fixed-point fade time that
-// defaults to lbl_eu_80667DA0 when omitted.
+// (scaled by 4096.0f), arg 2 an optional fixed-point fade time that
+// defaults to 0.0f when omitted.
 int setVolBgm(VMThread* pThread) {
     float fade;
     int vol = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
     if (vmArgOmitChk(pThread, 2) != 0) {
-        fade = lbl_eu_80667DA0;
+        fade = 0.0f;
     } else {
         float converted = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
         fade = converted;
     }
     int fadeInt = fade;
-    MenuSnd_SetBalancePush_96A8(0, (float)vol / lbl_eu_80667D90,
-                  (float)fadeInt / lbl_eu_80667D90);
+    MenuSnd_SetBalancePush_96A8(0, (float)vol / 4096.0f,
+                  (float)fadeInt / 4096.0f);
     return 0;
 }
 
@@ -253,7 +244,7 @@ int playVoice(VMThread* pThread) {
     } else {
         buf.clear();
     }
-    MenuSnd_TryPlayGated_97A0(buf.mString, lbl_eu_80667DA0, 1);
+    MenuSnd_TryPlayGated_97A0(buf.mString, 0.0f, 1);
     return 0;
 }
 
@@ -277,9 +268,9 @@ int stopVoice(VMThread* pThread) {
         } else {
             buf.clear();
         }
-        MenuSnd_SilenceByName_8986C(buf.mString, lbl_eu_80667DA0);
+        MenuSnd_SilenceByName_8986C(buf.mString, 0.0f);
     } else {
-        MenuSnd_SilenceByName_8986C(nullptr, lbl_eu_80667DA0);
+        MenuSnd_SilenceByName_8986C(nullptr, 0.0f);
     }
     return 0;
 }
@@ -293,16 +284,16 @@ int waitVoice(VMThread* pThread) {
 }
 
 // Script command: play a common SE.  Arg 1 is the sound id, arg 2 an
-// optional fixed-point fade time (default lbl_eu_80667D94), arg 3 an
-// optional fixed-point volume (default lbl_eu_80667DA0).  Skipped while the
-// presentation/event bit 0x100 in lbl_eu_80663E24 is set.
+// optional fixed-point fade time (default 1.0f), arg 3 an
+// optional fixed-point volume (default 0.0f).  Skipped while the
+// presentation/event bit 0x100 in gmGameFlags is set.
 int playSeCommon(VMThread* pThread) {
     int argPos = 2;
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     float fade;
     if (vmArgOmitChk(pThread, argPos) != 0) {
         argPos++;
-        fade = lbl_eu_80667D94;
+        fade = 1.0f;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, argPos++);
         fade = (float)vmArgFixedGet(argPos, arg);
@@ -310,15 +301,15 @@ int playSeCommon(VMThread* pThread) {
     int fadeInt = (int)fade;
     float vol;
     if (vmArgOmitChk(pThread, argPos) != 0) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, argPos++);
         vol = (float)vmArgFixedGet(argPos, arg);
     }
     int volInt = (int)vol;
-    if ((lbl_eu_80663E24 & 0x100) == 0) {
-        float fadeF = (float)fadeInt / lbl_eu_80667D90;
-        int volScaled = (int)((float)volInt / lbl_eu_80667D90);
+    if ((gmGameFlags & 0x100) == 0) {
+        float fadeF = (float)fadeInt / 4096.0f;
+        int volScaled = (int)((float)volInt / 4096.0f);
         u16 handle = cf::CfSoundMan::playActorSound(0, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = CfSoundMan_TouchSlotById(handle);
         if (entry != nullptr) {
@@ -329,9 +320,9 @@ int playSeCommon(VMThread* pThread) {
 }
 
 // Script command: play a map SE.  Arg 1 is the sound id, arg 2 an optional
-// fixed-point fade time (default lbl_eu_80667D94), arg 3 an optional
-// fixed-point volume (default lbl_eu_80667DA0).  Skipped while the
-// presentation/event bit 0x100 in lbl_eu_80663E24 is set.  Same layout as
+// fixed-point fade time (default 1.0f), arg 3 an optional
+// fixed-point volume (default 0.0f).  Skipped while the
+// presentation/event bit 0x100 in gmGameFlags is set.  Same layout as
 // playSeCommon but routed to the map-SE channel (first call arg 1).
 int playSeMap(VMThread* pThread) {
     int argPos = 2;
@@ -339,7 +330,7 @@ int playSeMap(VMThread* pThread) {
     float fade;
     if (vmArgOmitChk(pThread, argPos) != 0) {
         argPos++;
-        fade = lbl_eu_80667D94;
+        fade = 1.0f;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, argPos++);
         fade = (float)vmArgFixedGet(argPos, arg);
@@ -347,18 +338,18 @@ int playSeMap(VMThread* pThread) {
     int fadeInt = (int)fade;
     float vol;
     if (vmArgOmitChk(pThread, argPos) != 0) {
-        vol = lbl_eu_80667DA0;
+        vol = 0.0f;
     } else {
         VMArg* arg = vmArgPtrGet(pThread, argPos++);
         vol = (float)vmArgFixedGet(argPos, arg);
     }
     int volInt = (int)vol;
-    if ((lbl_eu_80663E24 & 0x100) == 0) {
+    if ((gmGameFlags & 0x100) == 0) {
         // fadeF must be computed before volScaled: MWCC allocates the
         // int->float conversion slots in this order (fade -> 0x8/0xc,
         // vol -> 0x10/0x14), matching the retail schedule.
-        float fadeF = (float)fadeInt / lbl_eu_80667D90;
-        int volScaled = (int)((float)volInt / lbl_eu_80667D90);
+        float fadeF = (float)fadeInt / 4096.0f;
+        int volScaled = (int)((float)volInt / 4096.0f);
         u16 handle = cf::CfSoundMan::playActorSound(1, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = CfSoundMan_TouchSlotById(handle);
         if (entry != nullptr) {
@@ -369,7 +360,7 @@ int playSeMap(VMThread* pThread) {
 }
 
 // Script command: set a map SE slot's volume.  Arg 1 is the slot id, arg 2
-// an optional fixed-point fade time (default lbl_eu_80667D94), arg 3 the
+// an optional fixed-point fade time (default 1.0f), arg 3 the
 // new volume (default 0 when omitted).
 int volSeMap(VMThread* pThread) {
     int idx;
@@ -378,7 +369,7 @@ int volSeMap(VMThread* pThread) {
     float fade;
     id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     if (vmArgOmitChk(pThread, 2) != 0) {
-        fade = lbl_eu_80667D94;
+        fade = 1.0f;
         idx = 3;
     } else {
         idx = 3;
@@ -392,20 +383,20 @@ int volSeMap(VMThread* pThread) {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         vol = vmArgIntGet(idx, arg);
     }
-    float fadeF = (float)fadeInt / lbl_eu_80667D90;
+    float fadeF = (float)fadeInt / 4096.0f;
     BattleWork_ApplyVolumeStore(id, vol, fadeF);
     return 0;
 }
 
 // Script command: stop a common SE slot.
-// is scaled by lbl_eu_80667D90.  The int->float conversion is written
-// manually (MWCC_CASES 7i) so the magic double reloc targets the retail
-// lbl_eu_80667D98 instead of a TU-local @N pool constant.
+// is scaled by 4096.0f.  The int->float conversion comes from the plain
+// (float)(s32) cast, with the conversion magic emitted in this TU's own
+// literal pool.
 int stopSeCommon(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int vol = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
     float f = (float)(s32)vol;
-    CfSoundMan_StopSlotByMode(0, id, (int)(f / lbl_eu_80667D90));
+    CfSoundMan_StopSlotByMode(0, id, (int)(f / 4096.0f));
     return 0;
 }
 
@@ -414,12 +405,12 @@ int stopSeMap(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int vol = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
     float f = (float)(s32)vol;
-    CfSoundMan_StopSlotByMode(1, id, (int)(f / lbl_eu_80667D90));
+    CfSoundMan_StopSlotByMode(1, id, (int)(f / 4096.0f));
     return 0;
 }
 
 // Script command: register the map camera position.  Args 1-3 are the
-// fixed-point position components (scaled by lbl_eu_80667D90); args 4-6 are
+// fixed-point position components (scaled by 4096.0f); args 4-6 are
 // optional fixed-point values that are only validated (read and discarded).
 // Both output vectors are built from args 1-3 and the registered flag is set.
 int seCamPos(VMThread* pThread) {
@@ -444,25 +435,25 @@ int seCamPos(VMThread* pThread) {
         vmArgFixedGet(argPos, arg);
     }
     SndVec3 pos = {
-        (float)x / lbl_eu_80667D90,
-        (float)y / lbl_eu_80667D90,
-        (float)z / lbl_eu_80667D90,
+        (float)x / 4096.0f,
+        (float)y / 4096.0f,
+        (float)z / 4096.0f,
     };
     SndVec3 target = {
-        (float)x / lbl_eu_80667D90,
-        (float)y / lbl_eu_80667D90,
-        (float)z / lbl_eu_80667D90,
+        (float)x / 4096.0f,
+        (float)y / 4096.0f,
+        (float)z / 4096.0f,
     };
     BattleWork_CopyPairToWork(&pos, &target);
-    lbl_eu_8066443A = 1;
+    gSoundSystemInitFlag = 1;
     return 0;
 }
 
 int clearCamPos() {
-    extern unsigned char lbl_eu_8066443A;
+    extern unsigned char gSoundSystemInitFlag;
     extern void func_801AAD08();
     func_801AAD08();
-    lbl_eu_8066443A = 0;
+    gSoundSystemInitFlag = 0;
     return 0;
 }
 

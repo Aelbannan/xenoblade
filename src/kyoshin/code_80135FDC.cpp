@@ -93,18 +93,18 @@ __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667300 = 0.6f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667304 = 0.5f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667308 = -1.0f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_8066730C = 60.0f;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667310 = lbl_eu_80500248;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667314 = lbl_eu_80500254;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667318 = lbl_eu_80500260;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066731C = lbl_eu_8050026C;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667320 = lbl_eu_80500248;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667324 = lbl_eu_80500254;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667328 = lbl_eu_80500260;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066732C = lbl_eu_8050026C;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667330 = lbl_eu_80500248;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667334 = lbl_eu_80500254;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667338 = lbl_eu_80500260;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066733C = lbl_eu_8050026C;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667310 = sFacePaneN01;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667314 = sFacePaneM01;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667318 = sFacePaneN02;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066731C = sFacePaneM02;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667320 = sFacePaneN01;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667324 = sFacePaneM01;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667328 = sFacePaneN02;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066732C = sFacePaneM02;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667330 = sFacePaneN01;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667334 = sFacePaneM01;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667338 = sFacePaneN02;
+__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066733C = sFacePaneM02;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667340 = 0.1f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667344 = 1.5f;
 __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667348 = 64.0f;
@@ -134,12 +134,12 @@ __attribute__((used))
 unsigned char jumptable_eu_8052E488[0x38] = { 1 };
 
 // NW4R assert strings (writable .data in retail; u8[] matches header decls).
-__attribute__((used)) u8 lbl_eu_8052E4C0[0x24] = "NW4R:Pointer must not be NULL (p)";
-__attribute__((used)) u8 lbl_eu_8052E4E4[0xC] = "LinkList.h";
-__attribute__((used)) u8 lbl_eu_8052E4F0[0x34] = "NW4R:Failed assertion texMapIdx < mGXMemNum.texMap";
-__attribute__((used)) u8 lbl_eu_8052E524[0xC] = "material.h";
-__attribute__((used)) u8 lbl_eu_8052E530[0x28] = "NW4R:Failed assertion idx < TevColorMax";
-__attribute__((used)) u8 lbl_eu_8052E558[0x10] = "material.h";
+__attribute__((used)) u8 sNw4rNullPointerAssertMsg[0x24] = "NW4R:Pointer must not be NULL (p)";
+__attribute__((used)) u8 sNw4rLinkListFile[0xC] = "LinkList.h";
+__attribute__((used)) u8 sNw4rTexMapAssertMsg[0x34] = "NW4R:Failed assertion texMapIdx < mGXMemNum.texMap";
+__attribute__((used)) u8 sNw4rMaterialFile[0xC] = "material.h";
+__attribute__((used)) u8 sNw4rTevColorAssertMsg[0x28] = "NW4R:Failed assertion idx < TevColorMax";
+__attribute__((used)) u8 sNw4rTevColorAssertFile[0x10] = "material.h";
 __attribute__((used)) u8 lbl_eu_8052E568[0x28] = "NW4R:Failed assertion idx < TevColorMax";
 __attribute__((used)) u8 lbl_eu_8052E590[0x10] = "material.h";
 /* ===== END typified .data ===== */
@@ -197,37 +197,37 @@ struct AnimLinkItemView {
 
 // ---------- init ----------
 extern "C" void MenuStateInitFlags() {
-    lbl_eu_80664058 = 0;
-    lbl_eu_80664059 = 0;
-    lbl_eu_8066405A = 0;
-    lbl_eu_8066405B = 0;
-    lbl_eu_8066405C = 0;
-    lbl_eu_806621F0 = 1;
-    lbl_eu_80664068 = 0;
-    lbl_eu_8066406C = 0;
-    lbl_eu_8066407F = 0;
+    gMenuStateMain = 0;
+    gMenuNotifyFlag = 0;
+    gMenuStateSecondary = 0;
+    gMenuStateReady = 0;
+    gMenuParamA = 0;
+    gSysMenuActive = 1;
+    gSysFileListBdat = 0;
+    gSysIconListBdat = 0;
+    gMenuSubStateFlag = 0;
 }
 
 extern "C" void MenuStateSet64058() {
-    lbl_eu_80664058 = 1;
+    gMenuStateMain = 1;
 }
 
 extern "C" void MenuStateClear6405A() {
-    lbl_eu_8066405A = 0;
-    lbl_eu_8066405B = 0;
-    lbl_eu_8066405C = 0;
-    lbl_eu_80664060 = 0;
+    gMenuStateSecondary = 0;
+    gMenuStateReady = 0;
+    gMenuParamA = 0;
+    gMenuParamB = 0;
 }
 
 extern "C" void MenuStateSet6405A() {
-    lbl_eu_8066405B = 0;
-    lbl_eu_8066405C = 0;
-    lbl_eu_80664060 = 0;
-    lbl_eu_8066405A = 1;
+    gMenuStateReady = 0;
+    gMenuParamA = 0;
+    gMenuParamB = 0;
+    gMenuStateSecondary = 1;
 }
 
 extern "C" u8 GetCollectedFlagByte(u32 idx) {
-    return lbl_eu_80664070[idx];
+    return gCollectedFlags[idx];
 }
 
 // ---------- BDAT helpers ----------
@@ -320,7 +320,7 @@ extern "C" u32 Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen) {
         dst, &destLen, reinterpret_cast<const u8*>(src), &srcLen);
     if (result != 0) {
         wcscpy(reinterpret_cast<wchar_t*>(dst),
-               reinterpret_cast<const wchar_t*>(lbl_eu_806621F4));
+               reinterpret_cast<const wchar_t*>(gSjisTablePtr));
         return 1;
     }
     dst[destLen] = 0;
@@ -515,7 +515,7 @@ extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* node, const nw4r::ut::Font*
         }
         u32 type = (u32)child - 4;
         if (type == 0) {
-            nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
+            nw4r::db::Panic((const char*)sNw4rLinkListFile, 0x193, (const char*)sNw4rNullPointerAssertMsg);
         }
         sprintf(buf, lbl_eu_80500664, type + 0xBC);
         SplitStringTrim(buf, '_', tokens);
@@ -569,7 +569,7 @@ extern "C" void LayoutSetTextBoxText(
 
     if (result != 0) {
         wcscpy(reinterpret_cast<wchar_t*>(buf),
-               reinterpret_cast<const wchar_t*>(&lbl_eu_806621F4));
+               reinterpret_cast<const wchar_t*>(&gSjisTablePtr));
     } else {
         // Pointer + counter scan (same loop shape as Utf8ToWcsCopyFix): retail
         // keeps len in a saved reg, walks buf with a pointer, and stores
@@ -628,7 +628,7 @@ extern "C" void SetLayoutSelfText(
 
     if (result != 0) {
         wcscpy(reinterpret_cast<wchar_t*>(buf),
-               reinterpret_cast<const wchar_t*>(lbl_eu_806621F4));
+               reinterpret_cast<const wchar_t*>(gSjisTablePtr));
     } else {
         // same loop shape as Utf8ToWcsCopyFix (pointer + counter)
         buf[destLen] = 0;
@@ -706,7 +706,7 @@ void drawLayout(
     nw4r::ut::Rect rect = layout->GetLayoutRect();
 
     if (useProjection) {
-        void* camera = reinterpret_cast<void*>(lbl_eu_80663E14);
+        void* camera = reinterpret_cast<void*>(gmScene);
         void* view = getCurrentView__5CViewFv();
         CViewFrame37038* viewFrame =
             reinterpret_cast<CViewFrame37038*>(Scn_HasCamItem(camera, view));
@@ -1137,7 +1137,7 @@ extern "C" void PaneSetTexPaletteByName(nw4r::lyt::Layout* a, const char* b, TPL
 
     nw4r::lyt::TexMap texMap(palette, 0);
     if (mat->GetTextureNum() == 0) {
-        nw4r::db::Panic((const char*)lbl_eu_8052E524, 0x88, (const char*)lbl_eu_8052E4F0);
+        nw4r::db::Panic((const char*)sNw4rMaterialFile, 0x88, (const char*)sNw4rTexMapAssertMsg);
     }
     mat->GetTexMapAry()[0] = texMap;
 }
@@ -1149,7 +1149,7 @@ extern "C" void PaneSetTexPalette(nw4r::lyt::Pane* a, TPLPalette* palette) {
 
             nw4r::lyt::TexMap texMap(palette, 0);
             if (mat->GetTextureNum() == 0) {
-                nw4r::db::Panic((const char*)lbl_eu_8052E524, 0x88, (const char*)lbl_eu_8052E4F0);
+                nw4r::db::Panic((const char*)sNw4rMaterialFile, 0x88, (const char*)sNw4rTexMapAssertMsg);
             }
             mat->GetTexMapAry()[0] = texMap;
         }
@@ -1173,7 +1173,7 @@ struct Table_80500188 {
 extern "C" u16 GetU16PairEntry(u32 idx) {
     struct Table_80500188 t;
     u32 n = idx - 1;
-    t = lbl_eu_80500188;
+    t = sThresholdPairTable;
     return ((u16*)&t)[n];
 }
 
@@ -1185,7 +1185,7 @@ extern "C" u32 SearchThresholdIdx(u32 val) {
     // Two-per-iteration 1-indexed walking copy from -1 (retail -4 bias
     // with lwz+4/lwzu+8 and stw+4/stwu+8 under CTR-14).
     u32* d = words - 1;
-    u32* s = lbl_eu_805001C0 - 1;
+    u32* s = sThresholdLookup - 1;
     u32* dd = &d[1];
     for (int i = 0; i < 14; i++) {
         const u32 a = s[1];
@@ -1619,12 +1619,12 @@ extern "C" u32 MapSexFlagGroup(u32 row) {
 }
 
 extern "C" char* MakeTplNameSysFile(u32 row) {
-    if (lbl_eu_80664068 == 0) {
+    if (gSysFileListBdat == 0) {
         Bdat_GetTable_AA34((const char*)row);
-        lbl_eu_80664068 = (u32)getFP(&lbl_eu_80500664[0x192]);
+        gSysFileListBdat = (u32)getFP(&lbl_eu_80500664[0x192]);
     }
     const char* col = &lbl_eu_80500664[0x19F];
-    void* fp = (void*)lbl_eu_80664068;
+    void* fp = (void*)gSysFileListBdat;
     void* result;
     if (fp == NULL) {
         result = NULL;
@@ -1634,26 +1634,26 @@ extern "C" char* MakeTplNameSysFile(u32 row) {
         Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         result = (void*)(getBdatStringColumnValue)(fp, col, row);
     }
-    sprintf(&lbl_eu_80573B30[0], &lbl_eu_80500664[0x1A8], result);
-    return &lbl_eu_80573B30[0];
+    sprintf(&gTplNameBuffer[0], &lbl_eu_80500664[0x1A8], result);
+    return &gTplNameBuffer[0];
 }
 
 extern "C" char* MakeIconTplName(u32 row) {
     // Register mapping in retail: row -> r29, file pointer -> r30, column
     // pointer -> r31; the column pointer is hoisted above the fp check.
-    if (lbl_eu_8066406C == 0) {
+    if (gSysIconListBdat == 0) {
         Bdat_GetTable_AA34((const char*)row);
-        lbl_eu_8066406C = (u32)getFP(&lbl_eu_80500664[0x1AF]);
+        gSysIconListBdat = (u32)getFP(&lbl_eu_80500664[0x1AF]);
     }
     char* result = NULL;
     const char* col = &lbl_eu_80500664[0x1C7];
-    void* fp = (void*)lbl_eu_8066406C;
+    void* fp = (void*)gSysIconListBdat;
     if (fp != NULL) {
         Bdat_GetTable_AA34((const char*)row);
         result = (char*)(getBdatStringColumnValue)(fp, col, row);
     }
-    sprintf(&lbl_eu_80573BB0[0], &lbl_eu_80500664[0x1A8], result);
-    return &lbl_eu_80573BB0[0];
+    sprintf(&gIconNameBuffer[0], &lbl_eu_80500664[0x1A8], result);
+    return &gIconNameBuffer[0];
 }
 
 extern "C" void cancel__11CDeviceFileFP11CFileHandle(void*);
@@ -1698,8 +1698,8 @@ struct ListData {
 // the per-item flag when arg is set) are appended to the u8 list, then the 3
 // trailing words are appended to the u16 list.
 extern "C" void BuildSlotItemLists(int arg) {
-    lbl_eu_80664077 = 0;
-    lbl_eu_8066407E = 0;
+    gCollectedFlagCount = 0;
+    gSlotItemCount = 0;
     ListData* list = (ListData*)(CtrlObjectParam_GetSlotTableBase() + 4);
     for (u8 i = 0; i < 7; i++) {
         u32 v;
@@ -1712,23 +1712,23 @@ extern "C" void BuildSlotItemLists(int arg) {
             if (arg != 0) {
                 CDataObj* obj = (CDataObj*)CtrlObjectParam_GetCharEntry(v & 0xFFFF);
                 if (obj->field_0x176C != 1) {
-                    u8 n = lbl_eu_80664077;
-                    ((u8*)&lbl_eu_80664070)[n] = (u8)v;
-                    lbl_eu_80664077 = n + 1;
+                    u8 n = gCollectedFlagCount;
+                    ((u8*)&gCollectedFlags)[n] = (u8)v;
+                    gCollectedFlagCount = n + 1;
                 }
             } else {
-                u8 n = lbl_eu_80664077;
-                ((u8*)&lbl_eu_80664070)[n] = (u8)v;
-                lbl_eu_80664077 = n + 1;
+                u8 n = gCollectedFlagCount;
+                ((u8*)&gCollectedFlags)[n] = (u8)v;
+                gCollectedFlagCount = n + 1;
             }
         }
     }
-    u16* list16 = (u16*)&lbl_eu_80664078;
-    int c = lbl_eu_8066407E;
+    u16* list16 = (u16*)&gSlotItemIds;
+    int c = gSlotItemCount;
     if ((s32)list->listC[0] > 0) {
         list16[c] = (u16)list->listC[0];
         c = c + 1;
-        lbl_eu_8066407E = c;
+        gSlotItemCount = c;
     }
     if ((s32)list->listC[1] > 0) {
         // explicit mask temps reproduce retail's clrlslwi/clrlwi re-masking
@@ -1736,28 +1736,28 @@ extern "C" void BuildSlotItemLists(int arg) {
         int cm = c & 0xFF;
         list16[(u8)c] = (u16)list->listC[1];
         c = cm + 1;
-        lbl_eu_8066407E = c;
+        gSlotItemCount = c;
     }
     if ((s32)list->listC[2] > 0) {
         int cm2 = c & 0xFF;
         list16[(u8)c] = (u16)list->listC[2];
         c = cm2 + 1;
-        lbl_eu_8066407E = c;
+        gSlotItemCount = c;
     }
 }
 
 
 
-extern u8 lbl_eu_80664077;
-extern "C" u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
+extern u8 gCollectedFlagCount;
+extern "C" u8 code80135FDC_getByte_64077() { return gCollectedFlagCount; }
 
 extern "C" u8 GetCollectedFlagWord8(u32 idx) {
-    extern u16 lbl_eu_80664078[3];
-    return (u8)(lbl_eu_80664078[(u8)idx]);
+    extern u16 gSlotItemIds[3];
+    return (u8)(gSlotItemIds[(u8)idx]);
 }
 
-extern u8 lbl_eu_8066407E;
-extern "C" u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
+extern u8 gSlotItemCount;
+extern "C" u8 code80135FDC_getByte_6407E() { return gSlotItemCount; }
 
 extern "C" u16 BdatGetItemType(u32 row) {
     const char* col = &lbl_eu_80500664[0x1D2];
@@ -1836,7 +1836,7 @@ extern "C" char* BuildItemNameStr(u32 row) {
         Bdat_GetTable_AA34(&lbl_eu_80500664[0]);
         d0 = getBdatStringColumnValue((void*)a, col17C, (const char*)(u32)b);
     }
-    sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0], d0);
+    sprintf(&gItemNameBuffer[0], &lbl_eu_80500664[0], d0);
     if (c == 3) {
         u8 d;
         void* rv;
@@ -1851,9 +1851,9 @@ extern "C" char* BuildItemNameStr(u32 row) {
         void* fp = getFP(&lbl_eu_80500664[0x1EB]);
         void* r2 = getBdatStringColumnValue(fp, col17C,
                                            (const char*)(0x1E - (d - 1)));
-        sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0x1F4], &lbl_eu_80573C30[0], r2);
+        sprintf(&gItemNameBuffer[0], &lbl_eu_80500664[0x1F4], &gItemNameBuffer[0], r2);
     }
-    return &lbl_eu_80573C30[0];
+    return &gItemNameBuffer[0];
 }
 
 extern "C" GXColorS10 PaneMatGetS16QuadByName(nw4r::lyt::Layout* layout, const char* name, u32 idx) {
@@ -1871,7 +1871,7 @@ extern "C" GXColorS10 PaneMatGetS16QuadByName(nw4r::lyt::Layout* layout, const c
         return r;
     }
     if (idx >= 3) {
-        nw4r::db::Panic((const char*)lbl_eu_8052E558, 0x8C, (const char*)lbl_eu_8052E530);
+        nw4r::db::Panic((const char*)sNw4rTevColorAssertFile, 0x8C, (const char*)sNw4rTevColorAssertMsg);
     }
     u8* p = data + ((u8)idx << 3) + 0x10;
     GXColorS10 src = *(GXColorS10*)p;
@@ -1885,7 +1885,7 @@ extern "C" GXColorS10 PaneMatGetS16Quad(nw4r::lyt::Pane* owner, u32 idx) {
     u8* data = (u8*)owner->GetMaterial();
     if (data != NULL) {
         if (idx >= 3) {
-            nw4r::db::Panic((const char*)lbl_eu_8052E558, 0x8C, (const char*)lbl_eu_8052E530);
+            nw4r::db::Panic((const char*)sNw4rTevColorAssertFile, 0x8C, (const char*)sNw4rTevColorAssertMsg);
         }
         u8* p = data + idx * 8 + 0x10;
         r.r = *(s16*)(p + 0);
@@ -2060,9 +2060,9 @@ extern "C" void InitCol6LodTables(const char* arg) {
     // copy the 21-byte table as 5 words + 1 byte (a whole-struct assignment
     // would round the copy up to 24 bytes / 6 words)
     for (int i = 0; i < 5; i++) {
-        tab.w[i] = ((const u32*)&lbl_eu_80500230)[i];
+        tab.w[i] = ((const u32*)&sLodCharMap)[i];
     }
-    tab.b = ((const u8*)&lbl_eu_80500230)[20];
+    tab.b = ((const u8*)&sLodCharMap)[20];
     u8* chars = (u8*)&tab;
     u8 j = 0;
     for (;;) {
@@ -2493,7 +2493,7 @@ extern "C" void FetchRelatePair(u8* out1, u8* out2, int idx) {
 struct XBMapTableAC3C { u32 w[31]; };
 
 extern "C" int GetMapItemBitFlag(u8 max, u8 count, u32 off) {
-    XBMapTableAC3C table = *(const XBMapTableAC3C*)&lbl_eu_80500480[0];
+    XBMapTableAC3C table = *(const XBMapTableAC3C*)&sMinimapPtrTablePlain[0];
     // Retail's copy loop leaves the tail word (the table name) in r3, which
     // is then passed straight to the validator.
     Bdat_GetTable_AA34((const char*)table.w[30]);
@@ -2512,10 +2512,10 @@ extern "C" int GetMapItemBitFlag(u8 max, u8 count, u32 off) {
 extern "C" void RevealMinimapArea() {
     // retail materializes the table base once (r22) and derives every
     // sub-table (+0x418/+0x378/+0x2F0) and column name from it
-    u8* tbl = lbl_eu_80500108;
+    u8* tbl = sSjisWordTable;
     if (CtrlRemote_TouchBitByArg(0x20) <= 4) return;
-    if ((lbl_eu_80663E24 & 0x100) == 0) return;
-    void* cam = (void*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14);
+    if ((gmGameFlags & 0x100) == 0) return;
+    void* cam = (void*)Scn_QueryUnk80State((CScn*)gmScene);
     f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
     if (f < lbl_eu_806672E8) return;
 
@@ -2631,7 +2631,7 @@ extern "C" void SetMapAllBits(u32 v) {
         u32 w[34];
     };
     Table805A8Copy table;
-    table = *(Table805A8Copy*)&lbl_eu_805005A8;
+    table = *(Table805A8Copy*)&sMinimapPtrTable34;
     // retail reuses the copy loop's last loaded word (w[32]) as the argument
     Bdat_GetTable_AA34((const char*)table.w[32]);
     u32 sum = 0;
@@ -2673,7 +2673,7 @@ extern "C" f32 GetFloatTableEntry(u32 idx) {
     // Retail computes idx - 1 up front, then struct-copies the whole
     // 13-entry table to the stack, then scales the index.
     u32 i = idx - 1;
-    FloatTable13 table = lbl_eu_80500630;
+    FloatTable13 table = sRankFloatTable;
     return table.w[i];
 }
 
@@ -2745,11 +2745,11 @@ void incrementEventCounter(u32 value) {
     }
 }
 
-extern u8 lbl_eu_8066407F;
-extern "C" u8 code80135FDC_setByte_6407F(u8 val) { lbl_eu_8066407F = val; return val; }
+extern u8 gMenuSubStateFlag;
+extern "C" u8 code80135FDC_setByte_6407F(u8 val) { gMenuSubStateFlag = val; return val; }
 
-extern u8 lbl_eu_8066407F;
-extern "C" u8 code80135FDC_getByte_6407F() { return lbl_eu_8066407F; }
+extern u8 gMenuSubStateFlag;
+extern "C" u8 code80135FDC_getByte_6407F() { return gMenuSubStateFlag; }
 
 extern "C" void TryRevealMapArea(u8 v) {
     if (v == 0) {
@@ -2781,22 +2781,22 @@ extern "C" void TryRevealMapArea(u8 v) {
 }
 
 extern "C" unsigned char code80135FDC_postIncByte_64080() {
-    extern unsigned char lbl_eu_80664080[8];
-    unsigned char v = lbl_eu_80664080[0];
-    lbl_eu_80664080[0] = v + 1;
+    extern unsigned char gMenuDepth[8];
+    unsigned char v = gMenuDepth[0];
+    gMenuDepth[0] = v + 1;
     return v;
 }
 
 extern "C" u8 DecMenuCounter64080() {
-    u8 val = lbl_eu_80664080[0];
+    u8 val = gMenuDepth[0];
     u8 dec = val - 1;
-    lbl_eu_80664080[0] = dec;
-    if ((s8)dec < 0) lbl_eu_80664080[0] = 0;
+    gMenuDepth[0] = dec;
+    if ((s8)dec < 0) gMenuDepth[0] = 0;
     return val;
 }
 
-extern u8 lbl_eu_80664080[8];
-extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080[0]; }
+extern u8 gMenuDepth[8];
+extern "C" u8 code80135FDC_getByte_64080() { return gMenuDepth[0]; }
 
 // Find the anim item matching arg: returns the first non-NULL result from the
 // direct item list / vt58 slot, recursing into child lists. The retail returns
@@ -2821,7 +2821,7 @@ extern "C" nw4r::lyt::AnimationLink* FindAnimLink(nw4r::lyt::Pane* self, const n
         }
         nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)((u8*)current - 4);
         if (child == NULL) {
-            nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
+            nw4r::db::Panic((const char*)sNw4rLinkListFile, 0x193, (const char*)sNw4rNullPointerAssertMsg);
         }
         nw4r::lyt::AnimationLink* r2 = FindAnimLink(child, arg);
         if (r2 != 0) return r2;
@@ -2851,7 +2851,7 @@ extern "C" void SetAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimRes
         }
         nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)((char*)current - 4);
         if (child == NULL) {
-            nw4r::db::Panic((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
+            nw4r::db::Panic((const char*)sNw4rLinkListFile, 0x193, (const char*)sNw4rNullPointerAssertMsg);
         }
         SetAnimLinkFrame(child, arg, val);
         current = *(void**)current;
@@ -2892,55 +2892,55 @@ extern "C" void AnimJumpToLast(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResou
 }
 
 
-extern u8 lbl_eu_80664058;
-extern "C" void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
+extern u8 gMenuStateMain;
+extern "C" void code80135FDC_clearByte_64058() { gMenuStateMain = 0; }
 
-extern u8 lbl_eu_80664058;
-extern "C" int code80135FDC_getByte_64058() { return lbl_eu_80664058; }
+extern u8 gMenuStateMain;
+extern "C" int code80135FDC_getByte_64058() { return gMenuStateMain; }
 
-// retail: li r0,1; stb lbl_eu_80664059; li r3,0; li r4,0; b UIWin_ControlWindowLists
+// retail: li r0,1; stb gMenuNotifyFlag; li r3,0; li r4,0; b UIWin_ControlWindowLists
 extern "C" void MenuStateSet64059Notify() {
     extern void UIWin_ControlWindowLists(u32, u32);
-    lbl_eu_80664059 = 1;
+    gMenuNotifyFlag = 1;
     UIWin_ControlWindowLists(0, 0);
 }
 
-extern u8 lbl_eu_80664059;
-extern "C" void code80135FDC_clearByte_64059() { lbl_eu_80664059 = 0; }
+extern u8 gMenuNotifyFlag;
+extern "C" void code80135FDC_clearByte_64059() { gMenuNotifyFlag = 0; }
 
-extern u8 lbl_eu_80664059;
-extern "C" int code80135FDC_getByte_64059() { return lbl_eu_80664059; }
+extern u8 gMenuNotifyFlag;
+extern "C" int code80135FDC_getByte_64059() { return gMenuNotifyFlag; }
 
 
-extern u8 lbl_eu_8066405B;
-extern "C" void code80135FDC_setByte_6405B() { lbl_eu_8066405B = 1; }
+extern u8 gMenuStateReady;
+extern "C" void code80135FDC_setByte_6405B() { gMenuStateReady = 1; }
 
-extern u8 lbl_eu_8066405A;
-extern "C" u8 code80135FDC_getByte_6405A() { return lbl_eu_8066405A; }
+extern u8 gMenuStateSecondary;
+extern "C" u8 code80135FDC_getByte_6405A() { return gMenuStateSecondary; }
 
-extern u8 lbl_eu_8066405B;
-extern "C" u8 code80135FDC_getByte_6405B() { return lbl_eu_8066405B; }
+extern u8 gMenuStateReady;
+extern "C" u8 code80135FDC_getByte_6405B() { return gMenuStateReady; }
 
 extern "C" void code80135FDC_setPair_6405C_64060(u32 a, u32 b) {
-    extern u32 lbl_eu_8066405C;
-    extern u32 lbl_eu_80664060;
-    lbl_eu_8066405C = a;
-    lbl_eu_80664060 = b;
+    extern u32 gMenuParamA;
+    extern u32 gMenuParamB;
+    gMenuParamA = a;
+    gMenuParamB = b;
 }
 
 extern "C" u32 code80135FDC_getWord_6405C(void) {
-    extern u32 lbl_eu_8066405C;
-    return lbl_eu_8066405C;
+    extern u32 gMenuParamA;
+    return gMenuParamA;
 }
 
 extern "C" u32 code80135FDC_getWord_64060(void) {
-    extern u32 lbl_eu_80664060;
-    return lbl_eu_80664060;
+    extern u32 gMenuParamB;
+    return gMenuParamB;
 }
 
 
-extern u8 lbl_eu_806621F0;
-extern "C" int IsMenuState621F0() { return lbl_eu_806621F0; }
+extern u8 gSysMenuActive;
+extern "C" int IsMenuState621F0() { return gSysMenuActive; }
 
 extern "C" int GetSysStateFlag11(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];
@@ -2964,14 +2964,14 @@ extern "C" int GetSysStateFlag20() {
     return (b != 0) ? 1 : 0;
 }
 
-extern u8 lbl_eu_80664064;
-extern "C" void code80135FDC_setByte_64064() { lbl_eu_80664064 = 1; }
+extern u8 gMenuBlockedFlag;
+extern "C" void code80135FDC_setByte_64064() { gMenuBlockedFlag = 1; }
 
-extern u8 lbl_eu_80664064;
-extern "C" void MenuStateClear64064() { lbl_eu_80664064 = 0; }
+extern u8 gMenuBlockedFlag;
+extern "C" void MenuStateClear64064() { gMenuBlockedFlag = 0; }
 
 extern "C" int MenuStateCheck64064or30() {
-    if (lbl_eu_80664064 != 0) return 1;
+    if (gMenuBlockedFlag != 0) return 1;
     return ((u8*)getInstance__14Class_80296898Fv())[0x30] != 0;
 }
 
@@ -3009,7 +3009,7 @@ extern "C" int CheckState2CC8Active(u32 id) {
 
 // 0x80500108: encoding tag (u16 "SJIS") + word table + -1 terminator.
 __declspec(section ".rodata") __attribute__((used))
-u8 lbl_eu_80500108[0x80] = {
+u8 sSjisWordTable[0x80] = {
     0x00, 0x53, 0x00, 0x4A, 0x00, 0x49, 0x00, 0x53, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x56, 0x00, 0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x3A,
     0x00, 0x00, 0x00, 0x57, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00, 0x00, 0x28,
@@ -3022,88 +3022,64 @@ u8 lbl_eu_80500108[0x80] = {
 
 // 0x80500188: u16-pair table read via ((u16*)&t)[idx-1] (GetU16PairEntry).
 __declspec(section ".rodata") __attribute__((used))
-struct Table_80500188 lbl_eu_80500188 = {{
+struct Table_80500188 sThresholdPairTable = {{
     0x00000001, 0x00560074, 0x00AE0105, 0x01140137, 0x015F01D1, 0x01D201F0, 0x02180263, 0x02720281, 0x02A902D1, 0x02EF032B, 0x032B0352, 0x0353037B, 0x039903C1, 0x03CA0000
 }};
 
 // 0x805001C0: u32 lookup with -1 sentinels (SearchThresholdIdx).
 __declspec(section ".rodata") __attribute__((used))
-u32 lbl_eu_805001C0[28] = {
+u32 sThresholdLookup[28] = {
     0xFFFFFFFF, 0x00000001, 0x00000056, 0x00000074, 0x000000AE, 0x00000105, 0x00000114, 0x00000137, 0x0000015F, 0x000001D1, 0x000001D2, 0x000001F0, 0x00000218, 0x00000263, 0x00000272, 0x00000281, 0x000002A9, 0x000002D1, 0x000002EF, 0xFFFFFFFF, 0x0000032B, 0x00000352, 0x00000353, 0x0000037B, 0x00000399, 0x000003C1, 0xFFFFFFFF, 0xFFFFFFFF
 };
 
 // 0x80500230: LOD-char table (InitCol6LodTables copies 5 words + 1 byte).
 __declspec(section ".rodata") __attribute__((used))
-u8 lbl_eu_80500230[0x18] = {
+u8 sLodCharMap[0x18] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x51, 0x52, 0x53, 0x54, 0xFF, 0x00, 0x00, 0x00
 };
 
 // Face pane names; each [0x0C] spans its 3-byte retail pad gap.
-__attribute__((used)) extern const char lbl_eu_80500248[0x0C] = "face_n01";
-__attribute__((used)) extern const char lbl_eu_80500254[0x0C] = "face_m01";
-__attribute__((used)) extern const char lbl_eu_80500260[0x0C] = "face_n02";
-__attribute__((used)) extern const char lbl_eu_8050026C[0x0C] = "face_m02";
+__attribute__((used)) extern const char sFacePaneN01[0x0C] = "face_n01";
+__attribute__((used)) extern const char sFacePaneM01[0x0C] = "face_m01";
+__attribute__((used)) extern const char sFacePaneN02[0x0C] = "face_n02";
+__attribute__((used)) extern const char sFacePaneM02[0x0C] = "face_m02";
 
 // Minimap list names (contiguous 0x10 each).
-__attribute__((used)) extern const char lbl_eu_80500278[0x10] = "minimaplist0101";
-__attribute__((used)) extern const char lbl_eu_80500288[0x10] = "minimaplist0201";
-__attribute__((used)) extern const char lbl_eu_80500298[0x10] = "minimaplist0301";
-__attribute__((used)) extern const char lbl_eu_805002A8[0x10] = "minimaplist0401";
-__attribute__((used)) extern const char lbl_eu_805002B8[0x10] = "minimaplist0402";
-__attribute__((used)) extern const char lbl_eu_805002C8[0x10] = "minimaplist0501";
-__attribute__((used)) extern const char lbl_eu_805002D8[0x10] = "minimaplist0601";
-__attribute__((used)) extern const char lbl_eu_805002E8[0x10] = "minimaplist0701";
-__attribute__((used)) extern const char lbl_eu_805002F8[0x10] = "minimaplist0901";
-__attribute__((used)) extern const char lbl_eu_80500308[0x10] = "minimaplist1001";
-__attribute__((used)) extern const char lbl_eu_80500318[0x10] = "minimaplist1101";
-__attribute__((used)) extern const char lbl_eu_80500328[0x10] = "minimaplist1201";
-__attribute__((used)) extern const char lbl_eu_80500338[0x10] = "minimaplist1202";
-__attribute__((used)) extern const char lbl_eu_80500348[0x10] = "minimaplist1301";
-__attribute__((used)) extern const char lbl_eu_80500358[0x10] = "minimaplist1401";
-__attribute__((used)) extern const char lbl_eu_80500368[0x10] = "minimaplist1501";
-__attribute__((used)) extern const char lbl_eu_80500378[0x10] = "minimaplist1601";
-__attribute__((used)) extern const char lbl_eu_80500388[0x10] = "minimaplist1701";
-__attribute__((used)) extern const char lbl_eu_80500398[0x10] = "minimaplist1901";
-__attribute__((used)) extern const char lbl_eu_805003A8[0x10] = "minimaplist2001";
-__attribute__((used)) extern const char lbl_eu_805003B8[0x10] = "minimaplist2101";
-__attribute__((used)) extern const char lbl_eu_805003C8[0x10] = "minimaplist2201";
-__attribute__((used)) extern const char lbl_eu_805003D8[0x10] = "minimaplist2301";
 
 // Minimap pointer tables: name + pointer slots (NULLs, strings, self).
 struct MinimapPtrTable { char name[16]; const void* entries[34]; };
 
 // 0x805003E8: self-pointer at entries[27].
 __attribute__((used))
-extern const MinimapPtrTable lbl_eu_805003E8 = {
+extern const MinimapPtrTable sMinimapPtrTable2401 = {
     "minimaplist2401",
-    { NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, NULL, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, NULL, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, "minimaplist0101", "minimaplist0201", "minimaplist0301", "minimaplist0401", "minimaplist0402", "minimaplist0501", "minimaplist0601", "minimaplist0701", NULL, "minimaplist0901", "minimaplist1001", "minimaplist1101", "minimaplist1201", "minimaplist1202", "minimaplist1301", "minimaplist1401", "minimaplist1501", "minimaplist1601", "minimaplist1601", "minimaplist1701", NULL, "minimaplist1901", "minimaplist2001", "minimaplist2101", "minimaplist2201", "minimaplist2301", &sMinimapPtrTable2401, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 // 0x80500480: no name prefix (32 slots).
 __declspec(section ".rodata") __attribute__((used))
-extern const void* lbl_eu_80500480[32] = {
-    NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, NULL, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, NULL, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL
+extern const void* sMinimapPtrTablePlain[32] = {
+    NULL, "minimaplist0101", "minimaplist0201", "minimaplist0301", "minimaplist0401", "minimaplist0402", "minimaplist0501", "minimaplist0601", "minimaplist0701", NULL, "minimaplist0901", "minimaplist1001", "minimaplist1101", "minimaplist1201", "minimaplist1202", "minimaplist1301", "minimaplist1401", "minimaplist1501", "minimaplist1601", "minimaplist1601", "minimaplist1701", NULL, "minimaplist1901", "minimaplist2001", "minimaplist2101", "minimaplist2201", "minimaplist2301", &sMinimapPtrTable2401, NULL, NULL, NULL, NULL
 };
 
 // 0x80500500: out-of-order minimap name (retail layout).
-__attribute__((used)) extern const char lbl_eu_80500500[0x10] = "minimaplist0801";
 
 // 0x80500510: table-08 entry + self at entries[21].
 __attribute__((used))
-extern const MinimapPtrTable lbl_eu_80500510 = {
+extern const MinimapPtrTable sMinimapPtrTable1801 = {
     "minimaplist1801",
-    { NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, lbl_eu_80500500, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, &lbl_eu_80500510, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, "minimaplist0101", "minimaplist0201", "minimaplist0301", "minimaplist0401", "minimaplist0402", "minimaplist0501", "minimaplist0601", "minimaplist0701", "minimaplist0801", "minimaplist0901", "minimaplist1001", "minimaplist1101", "minimaplist1201", "minimaplist1202", "minimaplist1301", "minimaplist1401", "minimaplist1501", "minimaplist1601", "minimaplist1601", "minimaplist1701", &sMinimapPtrTable1801, "minimaplist1901", "minimaplist2001", "minimaplist2101", "minimaplist2201", "minimaplist2301", &sMinimapPtrTable2401, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 // 0x805005A8: no name prefix (34 slots).
 __declspec(section ".rodata") __attribute__((used))
-extern const void* lbl_eu_805005A8[34] = {
-    NULL, lbl_eu_80500278, lbl_eu_80500288, lbl_eu_80500298, lbl_eu_805002A8, lbl_eu_805002B8, lbl_eu_805002C8, lbl_eu_805002D8, lbl_eu_805002E8, NULL, lbl_eu_805002F8, lbl_eu_80500308, lbl_eu_80500318, lbl_eu_80500328, lbl_eu_80500338, lbl_eu_80500348, lbl_eu_80500358, lbl_eu_80500368, lbl_eu_80500378, lbl_eu_80500378, lbl_eu_80500388, NULL, lbl_eu_80500398, lbl_eu_805003A8, lbl_eu_805003B8, lbl_eu_805003C8, lbl_eu_805003D8, &lbl_eu_805003E8, NULL, NULL, NULL, NULL, NULL, NULL
+extern const void* sMinimapPtrTable34[34] = {
+    NULL, "minimaplist0101", "minimaplist0201", "minimaplist0301", "minimaplist0401", "minimaplist0402", "minimaplist0501", "minimaplist0601", "minimaplist0701", NULL, "minimaplist0901", "minimaplist1001", "minimaplist1101", "minimaplist1201", "minimaplist1202", "minimaplist1301", "minimaplist1401", "minimaplist1501", "minimaplist1601", "minimaplist1601", "minimaplist1701", NULL, "minimaplist1901", "minimaplist2001", "minimaplist2101", "minimaplist2201", "minimaplist2301", &sMinimapPtrTable2401, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 // 0x80500630: 13-entry float table (GetFloatTableEntry copies it to the stack).
 __declspec(section ".rodata") __attribute__((used))
-FloatTable13 lbl_eu_80500630 = {{1.5f, 2.0f, 1.7f, 1.7f, 3.7f, 1.5f, 1.9f, 1.7f, 1.7f, 1.6f, 1.5f, 1.7f, 1.7f}};
+FloatTable13 sRankFloatTable = {{1.5f, 2.0f, 1.7f, 1.7f, 3.7f, 1.5f, 1.9f, 1.7f, 1.7f, 1.6f, 1.5f, 1.7f, 1.7f}};
 
 // 0x80500664: BDAT column-name pool (68 NUL-separated strings, tail-padded).
 __attribute__((used))
@@ -3184,26 +3160,26 @@ extern const char lbl_eu_80500664[0x27C] =
 // (.bss vs .sbss); explicit section names are avoided because this TU's
 // MWCC rejects __declspec(section ".sbss") (33044). Member aligned(8)
 // on each section's first symbol keeps the section alignment at 8.
-__attribute__((aligned(8))) __attribute__((used)) char lbl_eu_80573B30[0x80];
-__attribute__((used)) char lbl_eu_80573BB0[0x80];
-__attribute__((used)) char lbl_eu_80573C30[0x20];
+__attribute__((aligned(8))) __attribute__((used)) char gTplNameBuffer[0x80];
+__attribute__((used)) char gIconNameBuffer[0x80];
+__attribute__((used)) char gItemNameBuffer[0x20];
 
-__attribute__((used)) u8 lbl_eu_806621F0 = 1;
-__attribute__((used)) u32 lbl_eu_806621F4 = (u32)&lbl_eu_80500108;
+__attribute__((used)) u8 gSysMenuActive = 1;
+__attribute__((used)) u32 gSjisTablePtr = (u32)&sSjisWordTable;
 
-__attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80664058;
-__attribute__((used)) u8 lbl_eu_80664059;
-__attribute__((used)) u8 lbl_eu_8066405A;
-__attribute__((used)) u8 lbl_eu_8066405B;
-__attribute__((used)) u32 lbl_eu_8066405C;
-__attribute__((used)) u32 lbl_eu_80664060;
-__attribute__((used)) u8 lbl_eu_80664064;
-__attribute__((used)) u32 lbl_eu_80664068;
-__attribute__((used)) u32 lbl_eu_8066406C;
-__attribute__((used)) u8 lbl_eu_80664070[7];
-__attribute__((used)) u8 lbl_eu_80664077;
-__attribute__((used)) u16 lbl_eu_80664078[3];
-__attribute__((used)) u8 lbl_eu_8066407E;
-__attribute__((used)) u8 lbl_eu_8066407F;
-__attribute__((used)) u8 lbl_eu_80664080[8];
+__attribute__((aligned(8))) __attribute__((used)) u8 gMenuStateMain;
+__attribute__((used)) u8 gMenuNotifyFlag;
+__attribute__((used)) u8 gMenuStateSecondary;
+__attribute__((used)) u8 gMenuStateReady;
+__attribute__((used)) u32 gMenuParamA;
+__attribute__((used)) u32 gMenuParamB;
+__attribute__((used)) u8 gMenuBlockedFlag;
+__attribute__((used)) u32 gSysFileListBdat;
+__attribute__((used)) u32 gSysIconListBdat;
+__attribute__((used)) u8 gCollectedFlags[7];
+__attribute__((used)) u8 gCollectedFlagCount;
+__attribute__((used)) u16 gSlotItemIds[3];
+__attribute__((used)) u8 gSlotItemCount;
+__attribute__((used)) u8 gMenuSubStateFlag;
+__attribute__((used)) u8 gMenuDepth[8];
 /* ===== END typified bss/sdata/sbss ===== */

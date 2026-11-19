@@ -26,7 +26,7 @@ extern char lbl_eu_80510B44[];         // title/help label string pool
 extern const float lbl_eu_80668DCC;     // idle timer increment (.sdata2)
 extern const float lbl_eu_80668DD0;     // idle timer cap (.sdata2)
 // Game-state flags word (bit 21 = menu blocked; shared with CMenuTutorial).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 CMenuTutorialList* CMenuTutorialList::sInstance;
 
@@ -45,19 +45,9 @@ extern "C" void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self);
 // widget helpers) -- C linkage so calls bind the literal retail symbol.
 // Return types are int (not u8) so callers compare with cmpwi directly.
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-
-extern "C" void applyPaneTevColorsAlt(CTitleAHelp* self);
-extern "C" void applyPaneTevColors(CTitleAHelp* self);
-extern "C" void setNameText(CTitleAHelp* self, char* name);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
 // no-arg member wrapper drops it), so call through the C name directly.
@@ -106,7 +96,7 @@ void CMenuTutorialList::Term() {
     mScene->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mTutorialList.TutorialList_ReleaseResources();
     mTutorial.Tutorial_TeardownTutorial();
 
@@ -125,7 +115,7 @@ void CMenuTutorialList::Move() {
     }
     // Branch-over-branch guard (same shape as cbRenderBefore): exit label
     // before body label emits retail's `beq body; b exit`.
-    if (!(lbl_eu_80663E28 & (1u << 21))) {
+    if (!(gmPauseFlags & (1u << 21))) {
         goto body;
     }
     goto exit;
@@ -179,7 +169,7 @@ body:
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     mTutorialList.TutorialList_UpdatePerFrame();
     mTutorial.Tutorial_Move();
 }
@@ -192,7 +182,7 @@ void CMenuTutorialList::cbRenderBefore() {
     // Branch-over-branch guard: the exit label before the body label keeps
     // MWCC from folding the bit test to a single `bne` -- it emits retail's
     // `beq body; b exit` (see CMenuPause::Move; docs/MWCC_CASES.md).
-    if (!(lbl_eu_80663E28 & (1u << 21))) {
+    if (!(gmPauseFlags & (1u << 21))) {
         goto body;
     }
     goto exit;
@@ -208,7 +198,7 @@ body:
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mTutorialList.TutorialList_DrawVisible(&drawInfo);
     mTutorial.Tutorial_DrawLayoutGated(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 /* Factory: lazily allocate + construct the single tutorial-list menu instance
@@ -234,7 +224,7 @@ void CMenuTutorialList_PhaseOpenList(CMenuTutorialList* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
         if (self->mTitleAHelp.isInitialized() != 0) {
             if (self->mTutorialList.TutorialList_IsListVisible() != 0) {
-                func_801C412C(&self->mTitleAHelp);
+                self->mTitleAHelp.func_801C412C();
                 self->mTutorialList.TutorialList_OpenListInit();
                 self->mFlag = 1;
                 playUISound(0x6d);
@@ -246,7 +236,7 @@ void CMenuTutorialList_PhaseOpenList(CMenuTutorialList* self) {
 // Phase 1 -> 2 (advance): once the title bar is idle and the list data is
 // ready, move to the next phase.
 void CMenuTutorialList_PhaseAdvance(CMenuTutorialList* self) {
-    if (self->mTitleAHelp.isIdle() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0) {
         if (self->mTutorialList.TutorialList_IsInitialized() != 0) {
             self->mFlag = 2;
         }
@@ -300,7 +290,7 @@ void CMenuTutorialList_PhaseConfirm(CMenuTutorialList* self) {
         if (self->mTutorialList.TutorialList_IsSortMenuActive() != 0) {
             self->mTutorialList.TutorialList_AdvanceSelection(0);
         } else {
-            beginClose(&self->mTitleAHelp);
+            self->mTitleAHelp.beginClose();
             self->mTutorialList.TutorialList_BeginClose();
             self->mFlag = 3;
         }
@@ -318,13 +308,13 @@ void CMenuTutorialList_PhaseConfirm(CMenuTutorialList* self) {
 
     // Refresh the help bar for the current menu state.
     int state = self->mTutorialList.TutorialList_GetMenuStateCode();
-    func_801C41E8(&self->mTitleAHelp, state);
+    self->mTitleAHelp.func_801C41E8(state);
 }
 
 // Close: same idle+ready guard as CMenuTutorialList_PhaseAdvance, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 void CMenuTutorialList_PhaseClose(CMenuTutorialList* self) {
-    if (self->mTitleAHelp.isIdle() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0) {
         if (self->mTutorialList.TutorialList_IsInitialized() != 0) {
             self->mField54 = 1;
         }
@@ -337,9 +327,8 @@ void CMenuTutorialList_PhaseClose(CMenuTutorialList* self) {
 void CMenuTutorialList_PhaseOpenSeq(CMenuTutorialList* self) {
     if (self->mTutorial.Tutorial_GetField46Mark() != 0) {
         self->mFlag = 5;
-        applyPaneTevColorsAlt(&self->mTitleAHelp);
-        setNameText(&self->mTitleAHelp,
-            BdatTouchStringCell(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
+        self->mTitleAHelp.applyPaneTevColorsAlt();
+        self->mTitleAHelp.setNameText(BdatTouchStringCell(lbl_eu_80510B44 + 0xe, lbl_eu_80510B44 + 0x17,
                 self->mTutorialList.TutorialList_GetSelectedEntryId()));
         self->mTutorial.Tutorial_StartIfIdle();
     }
@@ -356,16 +345,16 @@ void CMenuTutorialList_PhaseTurnPage(CMenuTutorialList* self) {
         default:
             break;
         case 0:
-            func_801C41E8(&self->mTitleAHelp, 0x6f);
+            self->mTitleAHelp.func_801C41E8(0x6f);
             break;
         case 1:
-            func_801C41E8(&self->mTitleAHelp, 0x70);
+            self->mTitleAHelp.func_801C41E8(0x70);
             break;
         case 2:
-            func_801C41E8(&self->mTitleAHelp, 0x71);
+            self->mTitleAHelp.func_801C41E8(0x71);
             break;
         case 3:
-            func_801C41E8(&self->mTitleAHelp, 0x72);
+            self->mTitleAHelp.func_801C41E8(0x72);
             break;
         }
         CtrlRemote_SetSharedBit(0x33bf + self->mTutorialList.TutorialList_GetSelectedEntryId(), 1);
@@ -402,16 +391,16 @@ void CMenuTutorialList_PhaseHandleInput(CMenuTutorialList* self) {
         default:
             break;
         case 0:
-            func_801C41E8(&self->mTitleAHelp, 0x6f);
+            self->mTitleAHelp.func_801C41E8(0x6f);
             break;
         case 1:
-            func_801C41E8(&self->mTitleAHelp, 0x70);
+            self->mTitleAHelp.func_801C41E8(0x70);
             break;
         case 2:
-            func_801C41E8(&self->mTitleAHelp, 0x71);
+            self->mTitleAHelp.func_801C41E8(0x71);
             break;
         case 3:
-            func_801C41E8(&self->mTitleAHelp, 0x72);
+            self->mTitleAHelp.func_801C41E8(0x72);
             break;
         }
     }
@@ -423,10 +412,9 @@ void CMenuTutorialList_PhaseHandleInput(CMenuTutorialList* self) {
 void CMenuTutorialList_PhaseIntroDone(CMenuTutorialList* self) {
     if (self->mTutorial.Tutorial_GetField47Mark() != 0) {
         self->mFlag = 2;
-        applyPaneTevColors(&self->mTitleAHelp);
-        setNameText(&self->mTitleAHelp,
-            BdatTouchStringCell(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23));
+        self->mTitleAHelp.applyPaneTevColors();
+        self->mTitleAHelp.setNameText(BdatTouchStringCell(lbl_eu_80510B44, lbl_eu_80510B44 + 0x9, 0x23));
         self->mTutorial.Tutorial_TeardownTutorial();
-        func_801C41E8(&self->mTitleAHelp, 0x73);
+        self->mTitleAHelp.func_801C41E8(0x73);
     }
 }

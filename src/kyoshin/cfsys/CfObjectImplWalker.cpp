@@ -11,7 +11,7 @@
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
 #include <monolib/device/CDeviceVI.hpp>
 #include <string.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 
@@ -53,20 +53,20 @@ void Walker_SyncBattleFrame(cf::CfObjectImplWalker* self) {
     if (self->field_04->vf74() != 0) {
         if (self->field_18 != 0) {
             self->vfDC();
-            if (lbl_eu_80663E24 & 0x800000) {
+            if (gmGameFlags & 0x800000) {
                 getInstance__Q22cf13CfGameManagerFv();
                 if (isGlobalCamFlagSet(0x1000000) == 0) {
                     self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
                     dispatchItemLoad(self->field_18, 3);
-                    lbl_eu_80663E24 &= ~0x800000;
+                    gmGameFlags &= ~0x800000;
                 }
             }
-            if (lbl_eu_80663E24 & 0x08000000) {
+            if (gmGameFlags & 0x08000000) {
                 getInstance__Q22cf13CfGameManagerFv();
                 if (isGlobalCamFlagSet(0x1000000) == 0) {
                     self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
                     dispatchItemLoad(self->field_18, 3);
-                    lbl_eu_80663E24 &= ~0x08000000;
+                    gmGameFlags &= ~0x08000000;
                     UIWin_BuildFlagBufRec(2, 0, 0);
                 }
             }
@@ -81,7 +81,7 @@ void Walker_SyncBattleFrame(cf::CfObjectImplWalker* self) {
                 if (cast->vf4C() != 0) self->vf9C();
                 if (cast->vf50() != 0) self->vf100();
                 if (cast->vf54() != 0) self->vf104();
-                if (lbl_eu_80663E24 & 0x200000) Walker_FinishLeave(self);
+                if (gmGameFlags & 0x200000) Walker_FinishLeave(self);
             }
             MoveImplRepositionEffect(self);
         }
@@ -96,7 +96,7 @@ void Walker_SyncBattleFrame(cf::CfObjectImplWalker* self) {
 // (retail labels L2DE0..L313C mirrored with gotos to keep the branch shape).
 void Walker_OnBattleChange(cf::CfObjectImplWalker* self) {
     ObjPc_BattleChangeDriver_5B00();
-    if (lbl_eu_80663E28 & 0x00080000) return;
+    if (gmPauseFlags & 0x00080000) return;
 
     f32 dist;
 
@@ -140,10 +140,10 @@ L2DE0:
     if (isGlobalCamFlagSet(0x4000000) != 0) goto L2EA0;
 
     // Accumulate elapsed time against one target-frame window.
-    self->field_3A0 = self->field_3A0 + Scn_GetFrameDelta(lbl_eu_80663E14);
+    self->field_3A0 = self->field_3A0 + Scn_GetFrameDelta(gmScene);
     {
         f64 frames = CDeviceVI::getTargetFramerate() * 0x3c;
-        if ((f64)self->field_3A0 < frames - lbl_eu_80666B98) goto L2EA0;
+        if ((f64)self->field_3A0 < frames) goto L2EA0;
     }
     func_80084654__Q22cf13CfGameManagerFv(0);
     self->field_3A0 = lbl_eu_80666B84;
@@ -205,7 +205,7 @@ L3030:
     if (isGlobalCamFlagSet(0x4000000) != 0) goto L30F0;
     startEnumObjects(holder.get(), 0x20, 0x1000);
     // Distance decayed past the threshold?
-    if (!(dist > lbl_eu_80666B90)) goto L30F0;
+    if (!(dist > 5.0f)) goto L30F0;
     {
         CfWalkBMView* bm =
             (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
@@ -253,8 +253,8 @@ L313C:
 // forwards the pending battle-exit to the move sub-object / walker hooks.
 void Walker_DispatchTalkSrc(cf::CfObjectImplWalker* self) {
     u32 v1, v2, v3, v4, v5;
-    if (lbl_eu_80663E24 & 0x5000000) return;
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666B84) return;
+    if (gmGameFlags & 0x5000000) return;
+    if (Scn_GetFrameDelta(gmScene) == lbl_eu_80666B84) return;
     u32 gid = Selector_GetInstance()->field_90E4;
     u32 gid0 = gid;
     cf::CfWalkTalkSrc* actor =
@@ -352,7 +352,7 @@ L35D8:
     goto end;
 L3600:
     if (self->field_18->mSub.m4C() == 0) goto end;
-    if (lbl_eu_80663E24 & 0x1000000) goto end;
+    if (gmGameFlags & 0x1000000) goto end;
     {
         u32 m = self->field_18->mSub.m4C();
         if (Selector_IssueRequest(Selector_GetInstance(), 0x80000003, 0, m) != 0) {
@@ -376,7 +376,7 @@ void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self) {
     void* cast = __dynamic_cast(battleObj->mSub.m110(), 0,
                                 (const void*)&lbl_eu_80661C08,
                                 (const void*)&lbl_eu_80661C10, 0);
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666B84 && cast != 0) {
+    if (Scn_GetFrameDelta(gmScene) != lbl_eu_80666B84 && cast != 0) {
         cf::CfWalkBattleSub* sub = (cf::CfWalkBattleSub*)cast;
         if (sub->vf44() != 0) {
             setTargetFlag04(Selector_GetInstance());
@@ -559,7 +559,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
         count++;
     }
     if (count != 0) return;
-    if (lbl_eu_80663E24 & 0x1000000) {
+    if (gmGameFlags & 0x1000000) {
         Walker_ToggleTargetSel(self);
         return;
     }
@@ -593,7 +593,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
         if (mgr->vf174() < lbl_eu_80666B8C) return;
         if (!(mgr->field_68 & 0x100000)) return;
         if (mgr->field_68 & 0x6000) return;
-        if (Scn_IsDefaultScale((CScn*)lbl_eu_80663E14) == 0) return;
+        if (Scn_IsDefaultScale((CScn*)gmScene) == 0) return;
         if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
         mgr->t110();
         if (CtrlNpcIsActive() != 0) return;
@@ -608,11 +608,11 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
             // Ground-probe the talk position; retail passes a fresh copy of
             // the sum vector to the probe (by-value temp).
             int blocked = 1;
-            ml::CVec3 local(lbl_eu_80666B84, lbl_eu_80666BB0, lbl_eu_80666B84);
+            ml::CVec3 local(lbl_eu_80666B84, 0.8f, lbl_eu_80666B84);
             ml::CVec3 pos = *(ml::CVec3*)msub->mAC();
             ml::CVec3 sum = pos + local;
             ml::CVec3 arg = sum;
-            if (ScnRes_VertRayForward_E398(&arg, 0x4a05, 0, 0, lbl_eu_80666BB4,
+            if (ScnRes_VertRayForward_E398(&arg, 0x4a05, 0, 0, -6.0f,
                               lbl_eu_80666B84) != 0) {
                 if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666B84) {
                     blocked = 0;
@@ -631,13 +631,13 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
             if (!(sub->field_270 & 0x400000)) {
                 if (mgr->field_64 & 1) {
                     ((cf::CfObject*)mgr)->requestVoice(
-                        0x1195, -1, lbl_eu_80666B8C, lbl_eu_80666BB8);
+                        0x1195, -1, lbl_eu_80666B8C, 30.0f);
                 } else {
                     // Retail converts the sdata2 constant through
                     // __cvt_fp2unsigned for the fourth argument.
                     CfObjectMove_relaySubB0Slot54(mgr, 0x65, 0,
-                                  (u32)__cvt_fp2unsigned(lbl_eu_80666B80),
-                                  lbl_eu_80666B8C, lbl_eu_80666BB8);
+                                  (u32)__cvt_fp2unsigned(80.0f),
+                                  lbl_eu_80666B8C, 30.0f);
                 }
             }
         }
@@ -647,7 +647,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
                 &((cf::CfWalkSubC4_3B4*)((cf::CfWalkMoveSubDeep*)
                     &self->field_18->mSub)->field_C4)->field_3B4);
         }
-        lbl_eu_80663E24 |= 0x1000000;
+        gmGameFlags |= 0x1000000;
         if (((cf::CfWalkActorObj*)actor)->field_C4 != 0) {
             self->field_18->mSub.m1AC((u32)actor, lbl_eu_804FC694);
         }
@@ -661,7 +661,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
                         holder.get(), i)));
                 if (src != mgr) {
                     if (src->t160() != 0) {
-                        CfObjectMove_setMoveSpeed(src, lbl_eu_80666BA4);
+                        CfObjectMove_setMoveSpeed(src, 20.0f);
                     }
                 }
             }
@@ -685,7 +685,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
         if (getInstance__11CSysWinBuffFv() != 0) return;
         MenuUpdate_SignalGlobalField64();
         ((cf::CfWalkTalkSrc*)cast)->t00(1);
-        lbl_eu_80663E24 |= 0x1000000;
+        gmGameFlags |= 0x1000000;
         {
             CfEnumListHolder holder;
             startEnumObjects(holder.get(), 0x300, 0);
@@ -694,7 +694,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
                     (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById(
                         (int)(uintptr_t)getObjectIdAt(holder.get(), i)));
                 if (talk->t160() != 0) {
-                    CfObjectMove_setMoveSpeed(talk, lbl_eu_80666BA4);
+                    CfObjectMove_setMoveSpeed(talk, 20.0f);
                 }
             }
         }
@@ -716,11 +716,11 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
         CfEnumListHolder holder;
         startEnumObjects(holder.get(), 0x200, 0);
         void* mAC = self->field_18->mSub.mAC();
-        __ct__800FB044(holder.get(), lbl_eu_80666BA0, mAC, 1);
-        __ct__800FA9B4(holder.get(), lbl_eu_80663E14, 1);
+        __ct__800FB044(holder.get(), 15.0f, mAC, 1);
+        __ct__800FA9B4(holder.get(), gmScene, 1);
         cf::CfWalkRect4 rect;
         insetRectToView__5CViewFRQ22ml5CRectP5CView(
-            &rect, Scn_SetCamIndex(lbl_eu_80663E14, -1));
+            &rect, Scn_SetCamIndex(gmScene, -1));
         // No user float locals here: retail hoists the int->float bias double
         // (lbl_eu_80666BA8) and the two comparison constants (B84, B8C) straight
         // into f29/f30/f31 in first-use order.
@@ -730,7 +730,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
                 holder.get(), i);
             cf::CfWalkTalkSrc* src =
                 (cf::CfWalkTalkSrc*)func_800BBC0C(item->field_04);
-            if (lbl_eu_80663E24 & 0x800000) goto L3ADC;
+            if (gmGameFlags & 0x800000) goto L3ADC;
             if (item->field_18 & 0x70) goto L3ADC;
             s32 q = ((s32)(s16)rect.field_4) / 4;
             if (item->field_08 < (f32)q) goto L3ADC;
@@ -742,7 +742,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
             if (src->field_C4 == 0) goto L3ADC;
             if (src->t164() == 0) goto L3ADC;
             if (src->field_98 == 0) goto L3ADC;
-            if (Scn_IsDefaultScale((CScn*)lbl_eu_80663E14) == 0) goto L3ADC;
+            if (Scn_IsDefaultScale((CScn*)gmScene) == 0) goto L3ADC;
             // Target found: run the target-query checks to decide the hook.
             cf::CfWalkBattleObj* bo = self->field_18;
             u32 v1 = bo->field_04->b30()->field_0;
@@ -766,7 +766,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
         // Battle-entry: with the event flag set and no active battle object,
         // bind the player actor into the move sub-object and clear the flag
         // (retail dereferences field_3F60 without a null test).
-        if (lbl_eu_80663E24 & 0x800000) {
+        if (gmGameFlags & 0x800000) {
             void* bf = (void*)(uintptr_t)self->field_18->field_3F60;
             if ((((cf::CfWalkBattleState3F60*)bf)->field_0C & 0x40000000) ||
                 (((cf::CfWalkBattleState3F60*)bf)->field_4EC & 0x40000000)) {
@@ -775,7 +775,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
             UIWin_ControlWindowLists(1, 0);
             self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
             dispatchItemLoad(self->field_18, 3);
-            lbl_eu_80663E24 &= ~0x800000;
+            gmGameFlags &= ~0x800000;
             void* actor = findObjectById((int)Selector_GetInstance()->field_90E4);
             if (actor == 0) goto L4070;
             ((cf::CfWalkTalkSrc*)actor)->t08(1);
@@ -825,13 +825,13 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
                     findObjectById((int)(uintptr_t)getObjectIdAt(
                         holder.get(), i)));
                 if (src->field_68 & 0x100000) {
-                    CfObjectMove_setMoveSpeedGated(src, lbl_eu_80666BA4);
+                    CfObjectMove_setMoveSpeedGated(src, 20.0f);
                 }
             }
             void* actor = findObjectById((int)self->field_18->mSub.m4C());
             if (actor != 0) {
                 if (self->vf40(0x10000) != 0 ||
-                    (lbl_eu_80663E24 & 0x08000000)) {
+                    (gmGameFlags & 0x08000000)) {
                     self->vf34(0x10000);
                 } else {
                         void* art = UIWin_BuildFlagBufBySlot(
@@ -871,7 +871,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
                         CtrlRemote_SetSharedBit((u32)(uintptr_t)v + 0xa20, 1);
                         awardQuestFlags();
                     }
-                    if (!(lbl_eu_80663E24 & 0x08000000)) {
+                    if (!(gmGameFlags & 0x08000000)) {
                         u16 v5 = self->field_18->mSub.field_8C;
                         if (v5 == 8) v5 = 3;
                         UIWin_BuildFlagBufRec(3, ((cf::CfWalkTalkSrc*)actor)->field_8C,
@@ -888,7 +888,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
             }
             self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
             dispatchItemLoad(self->field_18, 3);
-            lbl_eu_80663E24 &= ~0x800000;
+            gmGameFlags &= ~0x800000;
     L4064:;
         }
 L4070:
@@ -999,8 +999,8 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
                         u32 rem = (u32)rand();
                         f32 rate = (f32)(s32)hit;
                         if ((f32)(s32)(rem % 100) <
-                            rate * lbl_eu_80666BC0 * lbl_eu_80666BBC +
-                                lbl_eu_80666BA4) {
+                            rate * lbl_eu_80666BC0 * 0.6f +
+                                20.0f) {
                             self->field_390 = 1;
                         }
                         char* col5 = (char*)getBdatStringColumnValue(
@@ -1078,7 +1078,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
         count++;
     }
     if (count != 0) return;
-    if (lbl_eu_80663E24 & 0x9048000) return;
+    if (gmGameFlags & 0x9048000) return;
     cf::CfWalkTalkSrc* actor =
         (cf::CfWalkTalkSrc*)findObjectById((int)Selector_GetInstance()->field_90E4);
     if (actor == 0) return;
@@ -1109,7 +1109,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
         mgr->t00(1);
         mgr->t48(self->field_18->mSub.field_74);
         self->vf30(0x80000000, 1);
-        lbl_eu_80663E24 |= 0x90000000;
+        gmGameFlags |= 0x90000000;
         self->field_18->mSub.m1AC((u32)(uintptr_t)actor, lbl_eu_804FC694);
 
         // Sweep the party list; clamp the sight-line of every talk source
@@ -1122,7 +1122,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
                     holder.get(), i)));
             if (src == mgr) continue;
             if (src->t160() == 0) continue;
-            CfObjectMove_setMoveSpeed(src, lbl_eu_80666BA4);
+            CfObjectMove_setMoveSpeed(src, 20.0f);
         }
         dispatchItemLoad(self->field_18, 1);
         self->field_18->vf230();
@@ -1187,7 +1187,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
             // No candidate: detach the move sub-object and reset to state 5.
             self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
             dispatchItemLoad(self->field_18, 3);
-            lbl_eu_80663E24 &= ~0x1000000;
+            gmGameFlags &= ~0x1000000;
             self->field_388 = 5;
         }
     }
@@ -1209,8 +1209,8 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
             UIWin_CreateTalkWin(mgr->field_74, col, 1);
             // Retail converts the sdata2 constant through __cvt_fp2unsigned.
             CfObjectMove_relaySubB0Slot54(mgr, 0x65, 0,
-                          (u32)__cvt_fp2unsigned(lbl_eu_80666B80),
-                          lbl_eu_80666B8C, lbl_eu_80666BB8);
+                          (u32)__cvt_fp2unsigned(80.0f),
+                          lbl_eu_80666B8C, 30.0f);
             self->field_388++;
         }
         break;
@@ -1229,8 +1229,8 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
                               self->field_38C),
                           1);
             CfObjectMove_relaySubB0Slot54(mgr, 0x66, 0,
-                          (u32)__cvt_fp2unsigned(lbl_eu_80666B80),
-                          lbl_eu_80666B8C, lbl_eu_80666BB8);
+                          (u32)__cvt_fp2unsigned(80.0f),
+                          lbl_eu_80666B8C, 30.0f);
             self->field_388++;
         } else {
             UIWin_CreateTalkWin(self->field_394,
@@ -1422,7 +1422,7 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
     for (cur = head->next; cur != head; cur = cur->next, count++) {
     }
     if (count != 0) return;
-    if (lbl_eu_80663E24 & 0xD2C8004) return;
+    if (gmGameFlags & 0xD2C8004) return;
     if (UIWin_HasPendingUpdate(1) != 0) return;
     cf::CfWalkPlayerRec* rec = (cf::CfWalkPlayerRec*)MapFx_ResolveOwner(
         getPlayer__Q22cf13CfGameManagerFi(0));
@@ -1432,7 +1432,7 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
             return;
         }
         if (rec->vf2BC() != 0) return;
-        if (lbl_eu_80663E24 & 0x400000) return;
+        if (gmGameFlags & 0x400000) return;
     }
     actor =
         (cf::CfWalkActorObj*)findObjectById((int)Selector_GetInstance()->field_90E4);
@@ -1446,7 +1446,7 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
     CfObjectMove_setAnimModeArgs((u8*)actor, 0x21, 0, -1, 1);
     CfObjectTbox_ForwardToImpl(actor, 1);
     UIWin_ControlWindowLists(1, 0);
-    lbl_eu_80663E24 |= 0x200000;
+    gmGameFlags |= 0x200000;
     ((CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80 = actor->field_74;
     self->field_39C = 1;
 }
@@ -1456,10 +1456,10 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
 // flags, detach) or commits it (play the exit voice, bump area sequence
 // counters, clear the battle binding).
 void Walker_FinishLeave(cf::CfObjectImplWalker* self) {
-    if (lbl_eu_80663E24 & 0x0D048000) return;
+    if (gmGameFlags & 0x0D048000) return;
     if (UIWin_HasPendingUpdate(1) != 0) return;
     if (self->field_39C == 0) return;
-    if ((lbl_eu_80663E24 & 0x200000) == 0) return;
+    if ((gmGameFlags & 0x200000) == 0) return;
     cf::CfWalkActorObj* obj = (cf::CfWalkActorObj*)findObjectById(
         (int)(uintptr_t)((CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80);
     if (obj == nullptr) return;
@@ -1474,9 +1474,9 @@ void Walker_FinishLeave(cf::CfObjectImplWalker* self) {
         ok = 0;
     } else if (obj == nullptr) {
         ok = 0;
-    } else if (lbl_eu_80663E24 & 0x400000) {
+    } else if (gmGameFlags & 0x400000) {
         ok = 0;
-    } else if (lbl_eu_80663E24 & 0x4) {
+    } else if (gmGameFlags & 0x4) {
         ok = 0;
     } else if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) {
         ok = 0;
@@ -1486,7 +1486,7 @@ void Walker_FinishLeave(cf::CfObjectImplWalker* self) {
         self->field_39C = 0;
         if (obj != nullptr && obj->field_98 != nullptr)
             simSetLeafAnimTag(obj->field_98, 0);
-        lbl_eu_80663E24 &= ~0x200000;
+        gmGameFlags &= ~0x200000;
         ((CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80 = nullptr;
     } else {
         cf::CfWalkSubC4* sub = obj->field_C4;
@@ -1500,7 +1500,7 @@ void Walker_FinishLeave(cf::CfObjectImplWalker* self) {
                 // lis/addi pair instead of an SDA21 reference.
                 char* str = &lbl_eu_80573E18;
                 UIWin_CreateB4790Win(str, 0);
-                lbl_eu_80663E24 &= ~0x200000;
+                gmGameFlags &= ~0x200000;
                 self->field_39C = 0;
                 // Bump the area step counters for the leaving area.
                 if (obj->field_734 == 2) {

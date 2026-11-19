@@ -222,10 +222,11 @@ public:
 #undef ENUM_VIEW_DUMMY
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void Sc4798_GetSignedItemValue(void* self);
+// Sc4798_GetSignedItemValue is declared with its typed signature in
+// kyoshin/cf/code_800F42AC.hpp.
 extern "C" int ColiQuerySegment(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, int c, int d, int e);   // coli probe query
-// cone probe on aux+0x60C (self, spot, range, cone half-angle, angle offset)
+// cone probe
 extern "C" int ColiCheckMoveScaled(void* self, void* spot, float a, float b, float c);
 // ColiQuerySegment (object enum probe) is declared above; do not redeclare here.
 extern "C" int ColiCheckMoveGate(void* self, void* spot, float threshold); // distance probe on aux+0x60C block
@@ -237,8 +238,8 @@ extern "C" void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags);
 extern "C" void __ct__800FC4FC(cf::CfObjEnumList* list, u32 flags, float threshold);
 extern "C" void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options);
 
-// sdata: global coli probe object (accessed via sda21)
-extern void* lbl_eu_80665958;
+// sEneColiProbe is declared once in the monolib coli owner header.
+#include "monolib/coli/code_804B2FF0.hpp"
 
 // Data import used by the list-rebuild ctor __ct__800FD250
 // descriptor table; only its address is taken, at +0 and +8).
@@ -285,7 +286,7 @@ extern float gCfEnumListProbeOffsets[12];
 
 // .sbss flag byte guarding the probe-offset table init (signed: retail
 // lbz + extsb. tests the raw byte).
-extern s8 lbl_eu_80663F08;
+extern s8 gCfEnumProbeOffsetsInitFlag;
 
 // s32->f32 conversion magic double (2^52 + 2^31) referenced by MWCC's
 // xoris/lfd/fsubs int->float idiom in __ct__800FA9B4.

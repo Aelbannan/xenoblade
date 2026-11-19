@@ -4,7 +4,7 @@
 #include "monolib/math.hpp"
 #include "monolib/core/CDrawGX.hpp"
 #include <nw4r/math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Render an AABB debug box: builds a Y-axis rotation matrix from the shape's
 // angle plus its world position, then draws the min/max cube through CDrawGX.
@@ -50,7 +50,7 @@ extern "C" void CollAABB_DrawDebugShape(void* /*ctx*/, cf::CfObjectColl* coll) {
     }
 
     CDrawGX gx;
-    TexMan_ApplyCamPersp_034C(lbl_eu_80663E14, &gx, 0);
+    TexMan_ApplyCamPersp_034C(gmScene, &gx, 0);
 
     ml::CCol4 col(lbl_eu_80666910, lbl_eu_80666914, lbl_eu_80666914, lbl_eu_80666918);
     gx.setCol(col);

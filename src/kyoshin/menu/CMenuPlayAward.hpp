@@ -212,7 +212,7 @@ extern char lbl_eu_8050E7A0[];
 extern const float lbl_eu_806689AC;
 
 // Render-gate mode bitfield (.sbss; bit 21 = task busy, gates cbRenderBefore).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Shared string pool (split .rodata): award-list arc file paths at +0x5A / +0x74.
 extern char lbl_eu_8050E7C0[];
@@ -281,19 +281,13 @@ extern "C" void PlayAward_RequestClose(CPlayAwardList* self);
 // strips the mangling for these widget helpers, cf. CMenuTutorialList.hpp).
 // Return types are int (not u8) so callers compare with cmpwi directly.
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
 
-extern "C" void beginClose(CTitleAHelp* self);
 // Per-frame widget updates (retail-unmangled; called by CMenuPlayAward::Move).
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 
 // Title/help bar close + mode-set helpers (PlayAward_Phase2_HandleInput).
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // CfGameManager controller-type query + save/skip busy queries (retail
 // pre-mangled / unmangled C symbols; same scheme as CMenuTutorialList.hpp).

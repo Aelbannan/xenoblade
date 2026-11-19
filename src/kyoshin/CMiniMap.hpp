@@ -6,7 +6,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "monolib/work/CProcess.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -33,22 +33,11 @@ class Pane;
 #include "monolib/scn/CScn.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" float lbl_eu_806670A0;
-extern "C" float lbl_eu_80661E48;
-extern "C" float lbl_eu_806670CC;
-extern "C" float lbl_eu_80663FB4;
-extern const f32 lbl_eu_80667090;
-extern f32 lbl_eu_80667094;   // marker grid scale multiplier
+extern "C" float sClockFrameStep;
+extern "C" float sClockFrameBase;
 // Conversion-magic doubles for Move() are DEFINED in CMiniMap.cpp as extern
 // const .sdata2 symbols so MWCC's constant pool reuses the retail names for
 // the (f32) casts instead of emitting TU-local @N labels.
-extern const f64 lbl_eu_80667098;
-extern const f64 lbl_eu_806670A8;
-extern f32 lbl_eu_806670A4;   // clock anim frame target (advanceAnimTransform/80137510 arg)
-extern f32 lbl_eu_806670B0;   // ctor grid-scale multiplier
-extern f32 lbl_eu_806670B4;   // MiniMapUpdateMapView SRT rotation constant
-extern f32 lbl_eu_806670BC;   // MiniMapUpdateMapView scale factor
-extern f32 lbl_eu_806670C0;   // MiniMapUpdateMapView battle-target node scale
 // Panic file/format strings used by MiniMapUpdateMapView (u8 pools).
 extern u8 lbl_eu_8052CBC0[];
 extern u8 lbl_eu_8052CB8C[];
@@ -63,15 +52,15 @@ extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
 extern char lbl_eu_8052C858[];  // CMenuMiniMap2 composite vtable block (+0x24/+0xAC slots)
 extern char lbl_eu_8052CA88[];  // CMMClock vtable
 // Presentation/mode flag words (.sbss) tested by cbRenderBefore.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // Minimap process singleton instance pointer (.sbss).
-extern u32 lbl_eu_80663FB0;
+extern u32 spMiniMap2;
 // CMiniMap vtable + the +0x2C subobject vtable (ctor stores).
 extern char lbl_eu_8052C958[];
 extern char lbl_eu_8052C9F0[];
 // Current BDAT table pointer / per-row name-pointer table used by the ctor.
 extern char* lbl_eu_806640A8;
-extern char* lbl_eu_8052C7E8[];
+extern char* sMiniMapLayoutNames[];
 
 #include "kyoshin/CTaskGame.hpp"
 

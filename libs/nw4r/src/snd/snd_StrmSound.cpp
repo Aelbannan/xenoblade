@@ -7,7 +7,7 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665520(&lbl_eu_806654D0);
+NW4R_UT_RTTI_DEF_DERIVED(StrmSound, BasicSound);
 
 namespace {
 
@@ -211,7 +211,7 @@ void StrmSound::OnUpdatePlayerPriority() {
 }
 
 const nw4r::ut::detail::RuntimeTypeInfo* StrmSound::GetRuntimeTypeInfo() const {
-    return &lbl_eu_80665520;
+    return &typeInfo;
 }
 
 } // namespace detail

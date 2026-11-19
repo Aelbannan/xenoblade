@@ -17,10 +17,10 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src);
 
 // Blend endpoint aliases; expanded by the preprocessor so MWCC reloads the
 // sdata2 constants at each use like retail (no cross-call register lifetime).
-#define FAC lbl_eu_80665FAC
-#define FC0 lbl_eu_80665FC0
-#define FC4 lbl_eu_80665FC4
-#define FC8 lbl_eu_80665FC8
+#define FAC 1.0f
+#define FC0 0.5f
+#define FC4 -3.0f
+#define FC8 5.0f
 #include "kyoshin/cf/CTaskEnvironment.hpp"
 #include "monolib/math/CVec4.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -112,7 +112,7 @@ extern "C" u32 lbl_eu_806619D0[2] = { (u32)&lbl_eu_804FB0AC, (u32)&lbl_eu_805263
 // Retail keeps an 8-byte object here (pointer + one trailing boot-zero word
 // no code in this TU names); the tail word below reproduces the size
 // (CBattleManager lbl_eu_80663F00 precedent).
-CTaskEnvGlobal* lbl_eu_80663D58 = 0;
+CTaskEnvGlobal* spTaskEnvironmentManager = 0;
 unsigned int lbl_eu_80663D5C_tail[1];
 
 // Retail-symbol import: sdata2 s32->f32 conversion magic
@@ -168,11 +168,11 @@ __declspec(noinline) CTaskEnvironment* __ct__CTaskEnvironment(
     self->field_0x68 = 0x10;
     self->field_0x6C = zero;
     self->field_0x70 = lbl_eu_80665FA0;
-    self->field_0x74 = lbl_eu_80665FA4;
-    self->field_0x78 = lbl_eu_80665FA8;
+    self->field_0x74 = 23.4f;
+    self->field_0x78 = 30.0f;
     self->field_0x7C = lbl_eu_80665FA0;
     self->field_0x80 = lbl_eu_80665FA0;
-    self->field_0x84 = lbl_eu_80665FAC;
+    self->field_0x84 = 1.0f;
     self->field_0x88 = lbl_eu_80665FA0;
     self->field_0x8C = lbl_eu_80665FA0;
     self->field_0xA8 = (u8)zero;
@@ -196,7 +196,7 @@ __declspec(noinline) CTaskEnvironment* __ct__CTaskEnvironment(
     self->field_0xEA = 0;
 
     // Register as the global environment manager and snapshot the world clock.
-    lbl_eu_80663D58 = reinterpret_cast<CTaskEnvGlobal*>(self);
+    spTaskEnvironmentManager = reinterpret_cast<CTaskEnvGlobal*>(self);
     // World pointer cached for the integer fields, then re-dereferenced for
     // each float copy (retail reloads 0x78 twice).
     pWorld = scene->field_0x78;
@@ -237,7 +237,7 @@ extern "C" float Env_GetFloat58(void* self) { return *(float*)((char*)self + 0x5
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void* __dt__16CTaskEnvironmentFv(CTaskEnvironment* self, int flags) {
     if (self != 0) {
-        lbl_eu_80663D58 = 0;
+        spTaskEnvironmentManager = 0;
         if (self != 0) {
             __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
         }
@@ -248,7 +248,7 @@ extern "C" void* __dt__16CTaskEnvironmentFv(CTaskEnvironment* self, int flags) {
     return self;
 }
 
-extern "C" void* getGlobalSda() { return lbl_eu_80663D58; }
+extern "C" void* getGlobalSda() { return spTaskEnvironmentManager; }
 
 extern "C" u32 getField68(u8* self) { return *(u32*)((u8*)self + 0x68); }
 
@@ -272,8 +272,8 @@ extern "C" u32 getSubField7C(u8* self) { return *(u32*)((u8*)self + 0x7C); }
 // Operand order matters: seconds chain as the RIGHT + operand gives retail's
 // evaluation order AND its fadds operand placement (c lands in f1).
 extern "C" float Env_DayFraction(CTaskEnvTime* time) {
-    return (float)time->minute / lbl_eu_80665FB0 +
-           time->second / lbl_eu_80665FB0 / lbl_eu_80665FB0;
+    return (float)time->minute / 60.0f +
+           time->second / 60.0f / 60.0f;
 }
 
 extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
@@ -417,7 +417,7 @@ void CTaskEnvironment::Move() {
         u32 secArg = getControllerWordA3BC__Q22cf13CfGameManagerFv();
         Env_SetClock(time, hourArg, minuteArg, secArg & 0xFFFF);
     } else if (field_0x58 == 0) {
-        float delta = lbl_eu_80665FCC * Scn_GetFrameDelta(mScene);
+        float delta = 2.0f * Scn_GetFrameDelta(mScene);
         Env_AdvanceClock(time, delta);
     }
 
@@ -432,9 +432,9 @@ void CTaskEnvironment::Move() {
     // by the .data rate constant. Integer fields are converted to float via
     // the 0x43300000 bit-pattern trick so the pool reloc names the retail
     // sdata2 magic lbl_eu_80665FB8.
-    float c1 = lbl_eu_80665FB4;
-    float c2 = lbl_eu_80665FA8;
-    float c3 = lbl_eu_80665FD0;
+    float c1 = 24.0f;
+    float c2 = 30.0f;
+    float c3 = 12.0f;
     F64Conv conv;
     conv.w[0] = 0x43300000;
     conv.w[1] = (u32)(int)this->field_0x68 ^ 0x80000000;
@@ -453,13 +453,13 @@ void CTaskEnvironment::Move() {
     conv.w[1] = (u32)(int)this->field_0x68 ^ 0x80000000;
     float fhour = (float)(conv.d - lbl_eu_80665FB8);
     float dayFactor =
-        lbl_eu_80665FD4 *
-        (fhour / lbl_eu_80665FB4 + fmin / lbl_eu_80665FB0 / lbl_eu_80665FB4 +
-         (field_0x70 / lbl_eu_80665FB0) / lbl_eu_80665FB0 /
-             lbl_eu_80665FB4);
+        360.0f *
+        (fhour / 24.0f + fmin / 60.0f / 24.0f +
+         (field_0x70 / 60.0f) / 60.0f /
+             24.0f);
     field_0x88 = dayFactor;
     field_0x8C =
-        lbl_eu_80665FD8 + field_0x78 + field_0x74 * cosAnimFIdx(sunAngle);
+        90.0f + field_0x78 + field_0x74 * cosAnimFIdx(sunAngle);
 
     CTaskEnvRotMtx mtx;
     Env_BuildRotY(&mtx, scaleByGlobal(field_0x88));
@@ -470,7 +470,7 @@ void CTaskEnvironment::Move() {
     float dirOut[3];   // sp+0x23C
     ml::CVec3* v = reinterpret_cast<ml::CVec3*>(
         writeVec3f((ml::CVec3*)dirSrc, lbl_eu_80665FA0, lbl_eu_80665FA0,
-                      lbl_eu_80665FDC));
+                      -1.0f));
     Env_MtxMulVec(reinterpret_cast<ml::CVec3*>(dirOut), &mtx, v);
     copyVec3Words(reinterpret_cast<void*>(&field_0x7C),
                   reinterpret_cast<void*>(dirOut));
@@ -519,7 +519,7 @@ void CTaskEnvironment::Move() {
             // Hour 17 before the threshold: dusk blend begins.
             // Reuse the sun-angle slot so MWCC pins k to f31 like retail.
             float& k = sunAngle;
-            k = lbl_eu_80665FCC * Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this));
+            k = 2.0f * Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this));
             float v200[4], v210[4], v220[4];
             Env_ScaleVec4((ml::CVec4*)v200,
                           reinterpret_cast<const ml::CVec4*>(tbl + 0x00), k);
@@ -540,9 +540,9 @@ void CTaskEnvironment::Move() {
             Env_AddVec4((ml::CVec4*)v1f0, (const ml::CVec4*)v1e0,
                           (const ml::CVec4*)v1d0);
             copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v1f0));
-            field_0xA0 = lbl_eu_80665FE0 * k +
+            field_0xA0 = 0.1f * k +
                          (FAC - k) * Env_GetFloat54((void*)getSubField78(mScene));
-            field_0xA4 = lbl_eu_80665FE4 * k +
+            field_0xA4 = 20000.0f * k +
                          (FAC - k) * Env_GetFloat58((void*)getSubField78(mScene));
             float va[4], vb[4], vc[4];
             Env_ScaleVec4((ml::CVec4*)va, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
@@ -568,8 +568,8 @@ void CTaskEnvironment::Move() {
             Env_CopyLightPreset(mUnkE4, tbl + 0x50);
             copyWord4(&this->field_0x90,
                       reinterpret_cast<const u32*>(tbl + 0x60));
-            field_0xA0 = lbl_eu_80665FE0;
-            field_0xA4 = lbl_eu_80665FE4;
+            field_0xA0 = 0.1f;
+            field_0xA4 = 20000.0f;
             copyWord4Offset(reinterpret_cast<u32*>(mLgtB8),
                             reinterpret_cast<const u32*>(tbl + 0x00));
             Env_CopyLightGate(mLgtB8, tbl + 0x20);
@@ -583,7 +583,7 @@ void CTaskEnvironment::Move() {
         {
         // Reuse the sun-angle slot so MWCC pins k to f31 like retail.
         float& k = sunAngle;
-        k = lbl_eu_80665FCC * (Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this)) - FC0);
+        k = 2.0f * (Env_DayFraction(reinterpret_cast<CTaskEnvTime*>(this)) - FC0);
         float v170[4], v180[4], v190[4];
         Env_ScaleVec4((ml::CVec4*)v170, reinterpret_cast<const ml::CVec4*>(tbl + 0x50), k);
         Env_ScaleVec4((ml::CVec4*)v180, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
@@ -605,8 +605,8 @@ void CTaskEnvironment::Move() {
         Env_AddVec4((ml::CVec4*)v130, (const ml::CVec4*)v120,
                       (const ml::CVec4*)v110);
         copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v130));
-        field_0xA0 = lbl_eu_80665FE0 * k + lbl_eu_80665FE0 * (FAC - k);
-        field_0xA4 = lbl_eu_80665FE8 * k + lbl_eu_80665FE4 * (FAC - k);
+        field_0xA0 = 0.1f * k + 0.1f * (FAC - k);
+        field_0xA4 = 10000.0f * k + 20000.0f * (FAC - k);
         float ve0[4], vf0[4], v100[4];
         Env_ScaleVec4((ml::CVec4*)ve0, reinterpret_cast<const ml::CVec4*>(tbl + 0x40), k);
         Env_ScaleVec4((ml::CVec4*)vf0, reinterpret_cast<const ml::CVec4*>(tbl + 0x00),
@@ -627,8 +627,8 @@ void CTaskEnvironment::Move() {
             Env_CopyLightPreset(mUnkE4, tbl + 0x40);
             copyWord4(&this->field_0x90,
                       reinterpret_cast<const u32*>(tbl + 0x80));
-            field_0xA0 = lbl_eu_80665FE0;
-            field_0xA4 = lbl_eu_80665FE8;
+            field_0xA0 = 0.1f;
+            field_0xA4 = 10000.0f;
             copyWord4Offset(reinterpret_cast<u32*>(mLgtB8),
                             reinterpret_cast<const u32*>(tbl + 0x40));
             Env_CopyLightGate(mLgtB8, tbl + 0x20);
@@ -664,9 +664,9 @@ void CTaskEnvironment::Move() {
             Env_AddVec4((ml::CVec4*)v70, (const ml::CVec4*)v60,
                           (const ml::CVec4*)v50);
             copyWord4(&this->field_0x90, reinterpret_cast<const u32*>(v70));
-            field_0xA0 = lbl_eu_80665FE0 * (FAC - k) +
+            field_0xA0 = 0.1f * (FAC - k) +
                          k * Env_GetFloat54((void*)getSubField78(mScene));
-            field_0xA4 = lbl_eu_80665FE8 * (FAC - k) +
+            field_0xA4 = 10000.0f * (FAC - k) +
                          k * Env_GetFloat58((void*)getSubField78(mScene));
             float v20b[4], v30b[4], v40b[4];
             Env_ScaleVec4((ml::CVec4*)v20b,
@@ -719,7 +719,7 @@ extern "C" CTaskEnvRotMtx* Env_BuildRotY(CTaskEnvRotMtx* mtx, float angle) {
     mtx->m01 = lbl_eu_80665FA0;
     mtx->m02 = s;
     mtx->m10 = lbl_eu_80665FA0;
-    mtx->m11 = lbl_eu_80665FAC;
+    mtx->m11 = 1.0f;
     mtx->m12 = lbl_eu_80665FA0;
     mtx->m20 = -s;
     mtx->m21 = lbl_eu_80665FA0;
@@ -734,9 +734,9 @@ extern "C" float scaleByGlobal(float val) { return val * ml::deg2rad; }
 // address keeps its member stores alive, and MWCC sinks them to just before
 // the '*mtx = out' write (which may alias 'rot').
 static void BuildRotX(CTaskEnvRotMtx* m, float angle) {
-    float s = nw4r::math::SinFIdx(lbl_eu_80665FEC * angle);
-    float c = nw4r::math::CosFIdx(lbl_eu_80665FEC * angle);
-    m->m00 = lbl_eu_80665FAC;
+    float s = nw4r::math::SinFIdx(40.743664f * angle);
+    float c = nw4r::math::CosFIdx(40.743664f * angle);
+    m->m00 = 1.0f;
     m->m01 = lbl_eu_80665FA0;
     m->m02 = lbl_eu_80665FA0;
     m->m10 = lbl_eu_80665FA0;
@@ -764,11 +764,11 @@ static void MulRotX(CTaskEnvRotMtx* out, const CTaskEnvRotMtx* a,
 // matrix as a local (identity row plus cos/-sin and sin/cos of the
 // fidx-scaled angle), multiply into a temporary, then store back.
 extern "C" void Env_ApplyRotX(CTaskEnvRotMtx* mtx, float angle) {
-    float s = nw4r::math::SinFIdx(lbl_eu_80665FEC * angle);
-    float c = nw4r::math::CosFIdx(lbl_eu_80665FEC * angle);
+    float s = nw4r::math::SinFIdx(40.743664f * angle);
+    float c = nw4r::math::CosFIdx(40.743664f * angle);
     float ns = -s;
     CTaskEnvRotMtx rot;
-    rot.m00 = lbl_eu_80665FAC;
+    rot.m00 = 1.0f;
     rot.m01 = lbl_eu_80665FA0;
     rot.m02 = lbl_eu_80665FA0;
     rot.m10 = lbl_eu_80665FA0;
@@ -855,7 +855,7 @@ extern "C" void Env_SetClock(CTaskEnvTime* time, int hour, int minute, int secon
         time->minute = 0;
     }
     time->second = (float)(u32)second;
-    if (time->second >= lbl_eu_80665FB0) {
+    if (time->second >= 60.0f) {
         time->second = lbl_eu_80665FA0;
     }
 }
@@ -924,7 +924,7 @@ extern "C" void Env_AdvanceClock(CTaskEnvTime* time, float delta) {
 // global->field_68 * 60): 0 for records inside [0x10E, 0x41A), otherwise
 // 1 (within 60 of the 0x41A boundary) or 2.
 u32 Env_RegionCode() {
-    u32 x = (u32)(lbl_eu_80663D58->field_0x6C + lbl_eu_80663D58->field_0x68 * 60);
+    u32 x = (u32)(spTaskEnvironmentManager->field_0x6C + spTaskEnvironmentManager->field_0x68 * 60);
     if ((u32)(x - 270) <= 779) {
         return 0;
     }
@@ -969,45 +969,45 @@ template<> void CTTask<CTaskEnvironment>::Draw() {
 // same smaller body - schedule/form is compiler-version-bound.
 void sinit_80059D60() {
     float* t = lbl_eu_80570830;
-    t[0x00] = lbl_eu_80665FF8;
-    t[0x01] = lbl_eu_80665FFC;
-    t[0x02] = lbl_eu_80666000;
-    t[0x03] = lbl_eu_80665FAC;
-    t[0x04] = lbl_eu_80665FF8;
-    t[0x05] = lbl_eu_80665FFC;
-    t[0x06] = lbl_eu_80666000;
-    t[0x07] = lbl_eu_80665FAC;
-    t[0x08] = lbl_eu_80665FAC;
-    t[0x09] = lbl_eu_80665FAC;
-    t[0x0A] = lbl_eu_80665FAC;
-    t[0x0B] = lbl_eu_80665FAC;
-    t[0x0C] = lbl_eu_80666004;
-    t[0x0D] = lbl_eu_80666008;
-    t[0x0E] = lbl_eu_8066600C;
-    t[0x0F] = lbl_eu_80665FAC;
-    t[0x10] = lbl_eu_80666010;
-    t[0x11] = lbl_eu_80666014;
-    t[0x12] = lbl_eu_80666018;
-    t[0x13] = lbl_eu_80665FAC;
+    t[0x00] = 0.99607843f;
+    t[0x01] = 0.7607843f;
+    t[0x02] = 0.57254905f;
+    t[0x03] = 1.0f;
+    t[0x04] = 0.99607843f;
+    t[0x05] = 0.7607843f;
+    t[0x06] = 0.57254905f;
+    t[0x07] = 1.0f;
+    t[0x08] = 1.0f;
+    t[0x09] = 1.0f;
+    t[0x0A] = 1.0f;
+    t[0x0B] = 1.0f;
+    t[0x0C] = 0.8f;
+    t[0x0D] = 0.68235296f;
+    t[0x0E] = 0.5882353f;
+    t[0x0F] = 1.0f;
+    t[0x10] = 0.34509805f;
+    t[0x11] = 0.40784314f;
+    t[0x12] = 0.59607846f;
+    t[0x13] = 1.0f;
     t[0x14] = lbl_eu_80665FA0;
     t[0x15] = lbl_eu_80665FA0;
     t[0x16] = lbl_eu_80665FA0;
-    t[0x17] = lbl_eu_80665FAC;
-    t[0x18] = lbl_eu_8066601C;
-    t[0x19] = lbl_eu_80666020;
-    t[0x1A] = lbl_eu_80666020;
-    t[0x1B] = lbl_eu_80665FAC;
-    t[0x1C] = lbl_eu_8066601C;
-    t[0x1D] = lbl_eu_80666020;
-    t[0x1E] = lbl_eu_80666020;
-    t[0x1F] = lbl_eu_80665FAC;
-    t[0x20] = lbl_eu_80666024;
-    t[0x21] = lbl_eu_80666028;
-    t[0x22] = lbl_eu_8066602C;
-    t[0x23] = lbl_eu_80665FAC;
+    t[0x17] = 1.0f;
+    t[0x18] = 0.6f;
+    t[0x19] = 0.35686275f;
+    t[0x1A] = 0.35686275f;
+    t[0x1B] = 1.0f;
+    t[0x1C] = 0.6f;
+    t[0x1D] = 0.35686275f;
+    t[0x1E] = 0.35686275f;
+    t[0x1F] = 1.0f;
+    t[0x20] = 0.09803922f;
+    t[0x21] = 0.101960786f;
+    t[0x22] = 0.14901961f;
+    t[0x23] = 1.0f;
     t[0x24] = lbl_eu_80666030;
     t[0x25] = lbl_eu_80666030;
     t[0x26] = lbl_eu_80666030;
-    t[0x27] = lbl_eu_80665FAC;
+    t[0x27] = 1.0f;
 }
 

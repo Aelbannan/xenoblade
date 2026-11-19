@@ -52,17 +52,11 @@ extern "C" void pageDownPartySelect(CPartyState*);
 extern "C" void pageUpPartySelect(CPartyState*);
 extern "C" void confirmPartySelect(CPartyState*);
 extern "C" void startPartyPanelClose(CPartyState*);
-extern "C" void beginClose(CTitleAHelp*);
-extern "C" void markReplayClose(CTitleAHelp*);
 extern "C" void ModelDispStartFadeIn(CModelDisp*);
 
 // C-linkage imports for the embedded CTitleAHelp sub-object (retail unmangled
-extern "C" void func_801C412C(CTitleAHelp*);
-extern "C" void drawHelp(CTitleAHelp*, nw4r::lyt::DrawInfo*);
-extern "C" void reopenFromClose(CTitleAHelp*);
 // names; CTitleAHelp.cpp defines the same symbols). isInitialized is a real
 // member (see CTitleAHelp.hpp).
-extern "C" void setNameText(CTitleAHelp*, char* name);
 
 // String-pool lookup helper (retail unmangled; also declared in
 // CMenuKizunagram.hpp) and the string pool it indexes.
@@ -116,7 +110,6 @@ extern "C" void UIBattleReleaseAll();
 
 // CTitleAHelp byte-setter (retail unmangled; CTitleAHelp.hpp cannot be
 // included here).
-extern "C" void func_801C41E8(CTitleAHelp*, u8);
 
 // Party-size byte / config-word lookups (retail unmangled; also declared in
 // CPartyState.hpp / CMapSel.hpp, which cannot be included here).
@@ -144,7 +137,7 @@ extern const f32 lbl_eu_806681DC;
 extern const f32 lbl_eu_806681E0;
 
 // Global mode bitfield (bit 0x400 gates the party-window render).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // CTaskGame / render-gate helpers (retail pre-mangled names; same scheme as
 // CMenuKizunagram.hpp - the full CTaskGame.hpp pulls broken monolib umbrella
@@ -205,7 +198,6 @@ struct CPartyStateWinRectSrc {
 // it is referenced under C linkage with that literal name (repo-wide pattern
 // used by CMenuOption/CMenuShopBuy/...); int return avoids the u8-normalizing
 // rlwinm at the call sites (retail cmpwi's the result directly).
-extern "C" void teardown(CTitleAHelp*);
 
 
 // Sub-object teardown helpers used by PartyStateWin_TeardownWindow (retail unmangled; the
@@ -218,7 +210,6 @@ extern "C" void termPartyState(CPartyState*);
 // CTaskGameEff.cpp). PartyStateWin_TeardownWindow calls it unconditionally with the owning
 // scene before removing the render callback.
 extern "C" void unregisterEffectScene(CScn*);
-extern "C" void updateHelp(CTitleAHelp*);
 
 // Equip-change / sys-win settle checks used by PartyStateWin_StateRefresh's gate (retail
 // unmangled; int returns so the retail cmpwi compares r3 directly).
@@ -239,7 +230,7 @@ extern "C" void ModelDispEquip_StartFadeIn(CModelDispEquipView*);
 
 // Shared window object pointer value (.sdata, retail unmangled; PartyStateWin_GetSharedWinObj
 // returns it, PartyStateWin_FrameStep reads its stored s16 pair at +0x1C8).
-extern u32 lbl_eu_80663E10;
+extern u32 gmCurrentView;
 
 // CModelDispEquip select-slot setter used by PartyStateWin_StateRefresh (retail unmangled;
 // the value is masked to u8 at the call site, but the parameter is int: the
@@ -529,11 +520,10 @@ extern "C" void PartyStateWin_OpenWindow(CPartyStateWin* self);
 // the CModelDispEquip header cannot be included here).
 extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ScaleDepthUp(CModelDispEquipView*);
-extern "C" int isActive(CTitleAHelp*);
 extern "C" void ModelDispEquip_FadeAlphaDown(CModelDispEquipView*);
 extern "C" void ModelDispEquip_FadeAlphaUp(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquipView*);
 extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquipView*);
 
 // CTitleAHelp idle check distinct from (retail
-// unmangled; int return so the caller cntlzw/srwi-normalizes it)->isIdle().
+// unmangled; int return so the caller cntlzw/srwi-normalizes it)->func_801C4124().

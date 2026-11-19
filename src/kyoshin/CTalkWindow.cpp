@@ -362,7 +362,7 @@ void CTalkWindow::Term() {
 // ---------------------------------------------------------------------------
 void CTalkWindow::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
     if (cf::CfGameManager::isSceneLoading() != 0) return;
     updateTalkWindow(this);
@@ -433,7 +433,7 @@ void CTalkWindow::Draw() {}
 // ---------------------------------------------------------------------------
 void CTalkWindow::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0)
         return;

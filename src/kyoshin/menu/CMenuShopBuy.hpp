@@ -97,17 +97,13 @@ public:
 // BgTex_IsLoaded_3E34/ItemBoxLine_IsReadyFlag/ItemBoxLine_GetSelectReady are
 // declared int (not u8) so callers compare with cmpwi directly (no byte mask).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 
 // ShopBuy_HandleInput pad/flag callees (retail unmangled names). ItemBoxLine_IsBusy is
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int MenuTutorialIsCreated();
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
@@ -118,8 +114,6 @@ extern const f32 lbl_eu_80667A28;
 // Subobject ctors/dtors (retail keeps the unmangled names).
 
 // Subobject draw/update hooks called by Move / cbRenderBefore (retail names
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
 // are unmangled for these helpers too).
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
@@ -150,6 +144,6 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 // CMenuUpdate). isFlag01Set takes the task-game instance in r3.
 
 // Shared data imports (MWCC does not mangle global-scope data names).
-extern u32 lbl_eu_80663E28;       // render-gate mode bitfield (.sbss; bit 21 = busy)
+extern u32 gmPauseFlags;       // render-gate mode bitfield (.sbss; bit 21 = busy)
 extern u32 lbl_eu_806642F8;       // shop-buy singleton flag (cleared by Term)
 extern const f32 lbl_eu_80667A20; // .sdata2 float pool constant (ctor mFloat6FC init)

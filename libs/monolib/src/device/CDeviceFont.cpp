@@ -118,10 +118,10 @@ extern "C" u32 lbl_eu_8056C71C[];
 extern "C" u32 lbl_eu_8056C734[];
 
 // === .sbss size=0x10 align=8 (zero-fill) ===
-CDeviceFont* lbl_eu_80665678 = 0;
-u32 lbl_eu_8066567C = 0;
-u32 lbl_eu_80665680 = 0;
-u32 lbl_eu_80665684 = 0;
+CDeviceFont* spDeviceFont = 0;
+u32 sDeviceFontInitCount = 0;
+u32 spDeviceFontSharedText = 0;
+u32 sDeviceFontFrameCount = 0;
 
 // ---- CDeviceFont constructor (0x80454FB0) ----
 CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
@@ -141,7 +141,7 @@ CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
     mInfoList.m_vtable = lbl_eu_8056C71C;
     mFontId = 0;
     field_0x1EC = 0;
-    lbl_eu_80665678 = this;
+    spDeviceFont = this;
     // reserve(handle, 8): allocate the 8-node array and clear each mNext.
     mInfoList.mList = (CDeviceFontInfoListNode*)mtl::MemManager::allocate_array(
         0x60, mAllocHandle);
@@ -149,7 +149,7 @@ CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
         mInfoList.mList[i].mNext = 0;
     }
     mInfoList.mCapacity = 8;
-    lbl_eu_8066567C = 0;
+    sDeviceFontInitCount = 0;
 }
 
 // === .data definitions (moved below the ctor: see incomplete-decl note) ===
@@ -254,7 +254,7 @@ CDeviceFont::~CDeviceFont() {
     // and frees the node array unless externally owned. The CWorkThread base
     // dtor call and the deleting-flag delete are emitted implicitly.
     CDeviceFontInfoReslist* list = &mInfoList;
-    lbl_eu_80665678 = 0;
+    spDeviceFont = 0;
     if (list != 0) {
         if (list != 0) {
             list->m_vtable = lbl_eu_8056C734;
@@ -277,13 +277,13 @@ CDeviceFont::~CDeviceFont() {
 }
 
 CDeviceFont* CDeviceFont::getInstance() {
-    return lbl_eu_80665678;
+    return spDeviceFont;
 }
 
 // Getter for the device's current font id (used as the default lookup key by
 // the layer-search wrappers below).
 u32 CDeviceFont::getFontId() {
-    CDeviceFont* font = lbl_eu_80665678;
+    CDeviceFont* font = spDeviceFont;
     if (font == 0) {
         return 0;
     }
@@ -312,13 +312,13 @@ void dispatchLayerBB4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     _reslist_node<CDeviceFontLayer*>* node;
     _reslist_node<CDeviceFontLayer*>* startNode;
 
-    if (lbl_eu_80665678 == 0) return;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
     // Volatile re-read: retail reloads the singleton before the children
     // walk; the volatile deref stops MWCC from CSE-ing it into the
     // null-check load above.
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
@@ -354,12 +354,12 @@ void dispatchLayer3FF0__11CDeviceFontFv(u32 fontId, u32 a1) {
     _reslist_node<CDeviceFontLayer*>* node;
     _reslist_node<CDeviceFontLayer*>* startNode;
 
-    if (lbl_eu_80665678 == 0) return;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
     // Volatile re-read (see dispatchLayerBB4); separate variables keep the
     // null-check load out of the walk pointer's register.
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
@@ -395,11 +395,11 @@ void dispatchLayer41F8__11CDeviceFontFv(u32 fontId) {
     _reslist_node<CDeviceFontLayer*>* node;
     _reslist_node<CDeviceFontLayer*>* startNode;
 
-    if (lbl_eu_80665678 == 0) return;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
     // Volatile re-read (see dispatchLayerBB4).
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
@@ -434,11 +434,11 @@ void dispatchLayer438C__11CDeviceFontFv(u32 fontId, u32 a1) {
     _reslist_node<CDeviceFontLayer*>* node;
     _reslist_node<CDeviceFontLayer*>* startNode;
 
-    if (lbl_eu_80665678 == 0) return;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
     // Volatile re-read (see dispatchLayerBB4).
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     startNode = font->mChildren.mStartNodePtr;
     node = startNode->mNext;
@@ -490,14 +490,14 @@ extern "C" CFontLayer* __ct__CFontLayer(CFontLayer* self);
 
 // Same lookup as dispatchLayerBB4, dispatching to the layer's queueLineMode.
 void dispatchLayer4508__11CDeviceFontFv(u32 fontId, u32 a1) {
-    if (lbl_eu_80665678 == 0) return;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
     // Re-read the singleton through a volatile view: retail reloads the
     // pointer before the children walk (other work threads may replace the
     // device), and the volatile deref stops MWCC from CSE-ing it into the
     // null-check load above.
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     // Declare loop locals first: MWCC assigns registers in declaration
     // order, and retail keeps the child/layer value in the lowest register
@@ -534,10 +534,10 @@ found:
 // Same lookup as dispatchLayerBB4, dispatching to the layer's replayQueue
 // with the passed-through flag.
 void dispatchLayer4B70__11CDeviceFontFv(u32 fontId, u32 flag) {
-    if (lbl_eu_80665678 == 0) return;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     // Declare loop locals first: MWCC assigns registers in declaration
     // order, and retail keeps the child/layer value in the lowest register
@@ -575,7 +575,7 @@ found:
 // singleton reload: mark the bound layer's 0x2F0 flag and report success.
 // (Called from CFontLayer's destructor with the object pointer as the key.)
 u32 notifyLayerDestroy__11CDeviceFontFv(u32 key) {
-    CDeviceFont* font = lbl_eu_80665678;
+    CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
     // Declare loop locals first (see dispatchLayer4508): retail keeps the
@@ -612,10 +612,10 @@ found:
 
 // Same lookup as dispatchLayerBB4, tail-calling the layer's getScaledTextHeight.
 u32 getLayerStatus__11CDeviceFontFv(u32 fontId) {
-    if (lbl_eu_80665678 == 0) return 0;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return 0;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     // Declare loop locals first (see dispatchLayer4508).
     CDeviceFontLayer* layer;
@@ -650,10 +650,10 @@ found:
 // Same lookup as dispatchLayerBB4, tail-calling the layer's getFontSlotData with
 // the passed-through index and returning its result.
 u32 getLayerData__11CDeviceFontFv(u32 fontId, u32 index) {
-    if (lbl_eu_80665678 == 0) return 0;
-    if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
+    if (spDeviceFont == 0) return 0;
+    if (fontId == 0) fontId = spDeviceFont->mFontId;
 
-    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+    CDeviceFont* font = *(CDeviceFont* volatile*)&spDeviceFont;
 
     // Declare loop locals first (see dispatchLayer4508).
     CDeviceFontLayer* layer;
@@ -692,7 +692,7 @@ found:
 // it into the device's children list and record the owning device back on
 // the layer. Returns 1 on success, 0 when the device is not created yet.
 u32 CDeviceFont::func_804525F0() {
-    CDeviceFont* font = lbl_eu_80665678;
+    CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
     const char* name = lbl_eu_80522DDC;
@@ -714,19 +714,19 @@ u32 CDeviceFont::func_804525F0() {
 // and layout parameters are unused in the body, as in retail.)
 IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
                                             nw4r::lyt::Layout* layout) {
-    CDeviceFont* font = lbl_eu_80665678;
+    CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
     CDeviceFontInfoListNode* node = font->mInfoList.mStartNodePtr->mNext;
-    while (node != lbl_eu_80665678->mInfoList.mStartNodePtr) {
+    while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0 &&
             node->mItem->getFlags() == (s32)this) {
             return node->mItem;
         }
         node = node->mNext;
     }
-    node = lbl_eu_80665678->mInfoList.mStartNodePtr->mNext;
-    while (node != lbl_eu_80665678->mInfoList.mStartNodePtr) {
+    node = spDeviceFont->mInfoList.mStartNodePtr->mNext;
+    while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0) {
             return node->mItem;
         }
@@ -741,11 +741,11 @@ IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
 // re-read from the node at every use (retail reloads node->mItem per vtable
 // call).
 IDeviceFontInfo* CDeviceFont::findFontByDevice() {
-    CDeviceFont* font = lbl_eu_80665678;
+    CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
     CDeviceFontInfoListNode* node = font->mInfoList.mStartNodePtr->mNext;
-    while (node != lbl_eu_80665678->mInfoList.mStartNodePtr) {
+    while (node != spDeviceFont->mInfoList.mStartNodePtr) {
         if (node->mItem->isStateNonZero() == 0 &&
             node->mItem->getFlags() == (s32)this) {
             return node->mItem;
@@ -759,11 +759,11 @@ IDeviceFontInfo* CDeviceFont::findFontByDevice() {
 // free slot; setItem is guarded by the retail null check + try/catch frame
 // marker), and flag the list dirty (field_0x1EC = 2).
 u32 CDeviceFont::createFontInfo() {
-    if (lbl_eu_80665678 == 0) return 0;
+    if (spDeviceFont == 0) return 0;
 
     CDeviceFontInfoExt* info = CDeviceFontInfoExt::create();
 
-    CDeviceFont* font = lbl_eu_80665678;
+    CDeviceFont* font = spDeviceFont;
     // Locals in retail allocation order: slot index, sentinel pointer,
     // capacity (signed: retail emits a signed cmpw).
     // Locals in retail order: slot index, sentinel pointer, capacity
@@ -790,7 +790,7 @@ u32 CDeviceFont::createFontInfo() {
     sentinel->mPrev->mNext = temp;
     sentinel->mPrev = temp;
     // retail re-reads the singleton here (fresh sda21 reloc)
-    lbl_eu_80665678->field_0x1EC = 2;
+    spDeviceFont->field_0x1EC = 2;
     return 1;
 }
 
@@ -870,8 +870,8 @@ void CDeviceFont::wkUpdate() {
         // and mark the state 3.
         if (CWorkRoot::getException() == 0) {
             CDeviceFontInfoListNode* infoNode =
-                lbl_eu_80665678->mInfoList.mStartNodePtr->mNext;
-            while (infoNode != lbl_eu_80665678->mInfoList.mStartNodePtr) {
+                spDeviceFont->mInfoList.mStartNodePtr->mNext;
+            while (infoNode != spDeviceFont->mInfoList.mStartNodePtr) {
                 if (infoNode->mItem->getFlags() == 0) {
                     infoNode->mItem->initState();
                     break;
@@ -967,50 +967,50 @@ void CDeviceFont::wkRender() {
     // negative (retail: addic./ble after the increment).
     if (getInstance__8CDesktopFv() != 0) {
         if (CWorkRoot::getException() == (CException*)this) {
-            if ((s32)++lbl_eu_8066567C < 1) {
+            if ((s32)++sDeviceFontInitCount < 1) {
                 CWorkRoot::setException(0);
             }
         }
     }
 
-    if (lbl_eu_80665678 == 0) {
+    if (spDeviceFont == 0) {
         return;
     }
 
     CDeviceVI::setFlag0(false);
 
     // Frame counter cycling at 2000 frames.
-    lbl_eu_80665684++;
-    if ((s32)lbl_eu_80665684 >= 2000) {
-        lbl_eu_80665684 = 0;
+    sDeviceFontFrameCount++;
+    if ((s32)sDeviceFontFrameCount >= 2000) {
+        sDeviceFontFrameCount = 0;
     }
 
     // Fade-in alpha ramp over the first 1000 counted frames. Shared-bias
     // s32->double (no TU-local pool); the xoris+uint-magic is exact for the
     // signed range, matching retail's shared A3B8 use.
-    f32 fade = lbl_eu_8066A3D0 *
+    f32 fade = 0.6f *
                    static_cast<f32>(S32ToF64_Shared(static_cast<s32>(
-                       lbl_eu_80665684 - 1000)) /
-                                   lbl_eu_8066A3D4) +
-               lbl_eu_8066A3CC;
-    if (fade < lbl_eu_8066A3D8) {
-        fade = lbl_eu_8066A3CC - fade;
+                       sDeviceFontFrameCount - 1000)) /
+                                   1000.0f) +
+               0.4f;
+    if (fade < 0.0f) {
+        fade = 0.4f - fade;
     }
-    if (fade >= lbl_eu_8066A3DC) {
-        if (fade > lbl_eu_8066A3CC) {
-            fade = lbl_eu_8066A3CC;
+    if (fade >= 0.3f) {
+        if (fade > 0.4f) {
+            fade = 0.4f;
         }
     } else {
-        fade = lbl_eu_8066A3DC;
+        fade = 0.3f;
     }
 
     // Convert the shared UTF-8 source into the UTF-16 render buffer.
     u32 destLen = 0x200;
     memset(lbl_eu_80657750, 0, 0x400);
-    // lbl_eu_80665680 is the shared UTF-8 source text pointer (retail passes
+    // spDeviceFontSharedText is the shared UTF-8 source text pointer (retail passes
     // it as the converter's src argument, not a gate flag).
     if (ENCConvertStringUtf8ToUtf16((u16*)lbl_eu_80657750, &destLen,
-                                    (const u8*)lbl_eu_80665680,
+                                    (const u8*)spDeviceFontSharedText,
                                     (u32*)NULL) != ENC_OK) {
         return;
     }
@@ -1024,13 +1024,13 @@ void CDeviceFont::wkRender() {
     writer.SetDrawFlag(0x110);
 
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DD84, 171, lbl_eu_8052DD50);
-    writer.SetScale(lbl_eu_8066A3C8, lbl_eu_8066A3E0);
+    writer.SetScale(1.0f, 1.2658228f);
 
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DC28, 98, lbl_eu_8052DBF4);
-    writer.SetCharSpace(lbl_eu_8066A3E4);
+    writer.SetCharSpace(2.0f);
 
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DD84, 171, lbl_eu_8052DD50);
-    writer.SetCharSpace(lbl_eu_8066A3C8);
+    writer.SetCharSpace(1.0f);
 
     // Fetch the bound font twice like retail (null check + use).
     nw4r::lyt::Layout* layout;  // unused second argument, uninitialized in retail
@@ -1050,11 +1050,11 @@ void CDeviceFont::wkRender() {
 
     rmo = CDeviceVI::getRenderModeObj();
     scaledW =
-        lbl_eu_8066A3F0 * static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) -
+        0.5f * static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) -
                                            lbl_eu_8066A3C0);
     rmo = CDeviceVI::getRenderModeObj();
     scaledH =
-        lbl_eu_8066A3F0 * static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
+        0.5f * static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
                                            lbl_eu_8066A3C0);
 
     writer.SetupGX();
@@ -1071,10 +1071,10 @@ void CDeviceFont::wkRender() {
     width =
         static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) - lbl_eu_8066A3C0);
     rmo = CDeviceVI::getRenderModeObj();
-    C_MTXOrtho(mtx, lbl_eu_8066A3D8,
+    C_MTXOrtho(mtx, 0.0f,
                static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
                                 lbl_eu_8066A3C0),
-               lbl_eu_8066A3D8, width, lbl_eu_8066A3D8, lbl_eu_8066A3F4);
+               0.0f, width, 0.0f, -16777216.0f);
     GXSetProjection(mtx, GX_ORTHOGRAPHIC);
 
     // Shadow pass: four black copies around the final position.
@@ -1086,8 +1086,8 @@ void CDeviceFont::wkRender() {
 
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
                                lbl_eu_8053786C);
-    writer.SetCursor(scaledW - lbl_eu_8066A3C8, scaledH - lbl_eu_8066A3C8,
-                     lbl_eu_8066A3F8);
+    writer.SetCursor(scaledW - 1.0f, scaledH - 1.0f,
+                     -1.0f);
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
                                lbl_eu_80537700);
     VALIDATE_NW4R_POINTER(text, lbl_eu_805376EC, 257, lbl_eu_805376B8);
@@ -1095,8 +1095,8 @@ void CDeviceFont::wkRender() {
 
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
                                lbl_eu_8053786C);
-    writer.SetCursor(scaledW + lbl_eu_8066A3C8, scaledH - lbl_eu_8066A3C8,
-                     lbl_eu_8066A3F8);
+    writer.SetCursor(scaledW + 1.0f, scaledH - 1.0f,
+                     -1.0f);
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
                                lbl_eu_80537700);
     VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
@@ -1105,8 +1105,8 @@ void CDeviceFont::wkRender() {
 
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
                                lbl_eu_8053786C);
-    writer.SetCursor(scaledW - lbl_eu_8066A3C8, scaledH + lbl_eu_8066A3C8,
-                     lbl_eu_8066A3F8);
+    writer.SetCursor(scaledW - 1.0f, scaledH + 1.0f,
+                     -1.0f);
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
                                lbl_eu_80537700);
     VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
@@ -1115,8 +1115,8 @@ void CDeviceFont::wkRender() {
 
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
                                lbl_eu_8053786C);
-    writer.SetCursor(scaledW + lbl_eu_8066A3C8, scaledH + lbl_eu_8066A3C8,
-                     lbl_eu_8066A3F8);
+    writer.SetCursor(scaledW + 1.0f, scaledH + 1.0f,
+                     -1.0f);
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
                                lbl_eu_80537700);
     VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
@@ -1124,13 +1124,13 @@ void CDeviceFont::wkRender() {
     writer.Print(text, static_cast<int>(wcslen(text)));
 
     // Center pass: gray level and alpha both follow the fade ramp.
-    u8 gray = static_cast<u8>(lbl_eu_8066A3FC * fade);
+    u8 gray = static_cast<u8>(255.0f * fade);
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8);
     writer.SetTextColor(nw4r::ut::Color(gray, gray, gray, 255));
 
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
                                lbl_eu_8053786C);
-    writer.SetCursor(scaledW, scaledH, lbl_eu_8066A3D8);
+    writer.SetCursor(scaledW, scaledH, 0.0f);
     VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
                                lbl_eu_80537700);
     VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
@@ -1145,9 +1145,9 @@ bool CDeviceFont::wkStandbyLogin() {
 
         // Register a fresh ROM font-info provider in the first free list
         // slot (reslist::push_back with the retail setItem try/catch frame).
-        if (lbl_eu_80665678 != 0) {
+        if (spDeviceFont != 0) {
             IDeviceFontInfo* info = CDeviceFontInfoRom::create();
-            CDeviceFont* font = lbl_eu_80665678;
+            CDeviceFont* font = spDeviceFont;
 
             int i = 0;
             int capacity = font->mInfoList.mCapacity;
@@ -1228,6 +1228,6 @@ logout_fail:
 }
 
 extern "C" void CDeviceFont_SetSharedText(u32 val) {
-    extern u32 lbl_eu_80665680; // sdata2: font device config/state value
-    lbl_eu_80665680 = val;
+    extern u32 spDeviceFontSharedText; // sdata2: font device config/state value
+    spDeviceFontSharedText = val;
 }

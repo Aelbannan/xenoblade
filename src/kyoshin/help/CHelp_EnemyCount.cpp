@@ -26,7 +26,7 @@ bool CHelp_EnemyCount::checkEnemyCountDone() {
 
         unk10 = CfGameManager::getEnabledInputFlags();
         CfGameManager::enablePadFlags(-1, false);
-        lbl_eu_80663E24 |= 0x2000;
+        gmGameFlags |= 0x2000;
         unkC = 60;
         return false;
     }
@@ -36,7 +36,7 @@ bool CHelp_EnemyCount::checkEnemyCountDone() {
         return false;
     }
     CfGameManager::enablePadFlags(unk10, true);
-    lbl_eu_80663E24 &= ~0x2000;
+    gmGameFlags &= ~0x2000;
     return true;
 }
 }

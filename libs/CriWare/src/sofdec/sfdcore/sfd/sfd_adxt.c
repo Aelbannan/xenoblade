@@ -114,8 +114,8 @@ void criware_803BD518(void* a, void* b, void* c, u32 d, u32 e) {
 }
 
 /* per-stream server bookkeeping block shared with the EU hook object */
-extern u32 lbl_eu_8056899C[];
-extern void* lbl_eu_80606E34;
+extern u32 sTraceSfadxtExecServer[];
+extern void* gpSfdCoreTraceCb;
 
 extern s32 SFSET_GetCond(void* self, u32 idx);
 extern s32 SFBUF_GetTermFlg(void* self, s32 idx);
@@ -148,11 +148,11 @@ s32 SFADXT_ExecServer(SfdHandle* handle) {
     s32 rd_b;
 
     /* notify the external server hook (if registered) that a tick started */
-    if (lbl_eu_80606E34 != NULL) {
+    if (gpSfdCoreTraceCb != NULL) {
         void** vt;
-        lbl_eu_8056899C[3] = (u32)handle;
-        vt = *(void***)lbl_eu_80606E34;
-        ((void (*)(void*, void*))vt[9])(lbl_eu_80606E34, &lbl_eu_8056899C[1]);
+        sTraceSfadxtExecServer[3] = (u32)handle;
+        vt = *(void***)gpSfdCoreTraceCb;
+        ((void (*)(void*, void*))vt[9])(gpSfdCoreTraceCb, &sTraceSfadxtExecServer[1]);
     }
 
     if (SFSET_GetCond(handle, 6) == 0) {
@@ -219,13 +219,13 @@ s32 SFADXT_ExecServer(SfdHandle* handle) {
     }
 
     /* report the flow-counter pairs to the external server hook */
-    if (lbl_eu_80606E34 != NULL) {
+    if (gpSfdCoreTraceCb != NULL) {
         void** vt;
-        lbl_eu_8056899C[0x74 / 4] = (u32)(&handle->flowVidAHi);
-        lbl_eu_8056899C[0x80 / 4] = (u32)(&handle->flowVidBHi);
-        lbl_eu_8056899C[0x8c / 4] = (u32)(&handle->flowSkip);
-        vt = *(void***)lbl_eu_80606E34;
-        ((void (*)(void*, void*))vt[9])(lbl_eu_80606E34, &lbl_eu_8056899C[0x6c / 4]);
+        sTraceSfadxtExecServer[0x74 / 4] = (u32)(&handle->flowVidAHi);
+        sTraceSfadxtExecServer[0x80 / 4] = (u32)(&handle->flowVidBHi);
+        sTraceSfadxtExecServer[0x8c / 4] = (u32)(&handle->flowSkip);
+        vt = *(void***)gpSfdCoreTraceCb;
+        ((void (*)(void*, void*))vt[9])(gpSfdCoreTraceCb, &sTraceSfadxtExecServer[0x6c / 4]);
     }
     }
     return ret;
@@ -514,7 +514,7 @@ void sfadxt_SetAdxtHd(SfdHandle* handle) {
 
 extern void UTY_InitTmr(s32 newId);
 extern s32 SFPLY_GetResetFlg(void);
-extern u32 lbl_eu_80606E38[];
+extern u32 sSfdGlob[];
 extern void ADXT_Pause(void *self, s32 flg);
 extern void SFTST_Pause(void *self, u32 val);
 extern void SFTIM_SetTimeFn(void *self, void *fn, u32 idx);
@@ -616,7 +616,7 @@ s32 SFADXT_Create(SfdHandle* handle) {
         adxt = ADXT_Create((void *)inf[5], (void *)inf[8], (s32)inf[7]);
     } else {
         /* soft-reset path: reuse the parked decoder handle */
-        adxt = (void *)lbl_eu_80606E38[0x7d];
+        adxt = (void *)sSfdGlob[0x7d];
     }
     if (adxt != NULL) {
         goto setup;
@@ -738,7 +738,7 @@ int SFADXT_Destroy(SfdHandle* handle) {
         /* reset path: only stop the decoder and park it for reuse after the
          * reload; the work area is re-read through the handle here */
         ADXT_Stop(((SfdAdxtInf *)handle->trn[3].hdr)->adxt);
-        lbl_eu_80606E38[0x7d] = (u32)adxt;
+        sSfdGlob[0x7d] = (u32)adxt;
         ret = 0;
     }
     ((void (*)(void *))(*(void ***)chunk)[3])(chunk);

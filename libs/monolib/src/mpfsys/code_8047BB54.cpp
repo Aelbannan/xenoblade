@@ -30,7 +30,7 @@
 class CScn;
 
 // Opaque scene-data object held by the global singleton slot
-// (lbl_eu_806658B8) and by field_0x14 of the class below. The singleton slot
+// (UnkClass_8047BB54::spInstance) and by field_0x14 of the class below. The singleton slot
 // is (re)allocated as a 0xFA000-byte, 32-aligned block by __dt__8047BFA8;
 // only pointer identity is used in this TU.
 struct UnkSceneDataObj {
@@ -38,8 +38,8 @@ struct UnkSceneDataObj {
     ~UnkSceneDataObj() {}
 };
 
-// Global singleton slot (retail .sbss 0x806658B8).
-extern UnkSceneDataObj* lbl_eu_806658B8;
+// Global singleton slot (retail .sbss 0x806658B8), now the class's real
+// static spInstance; no retail occupant was found for the second word.
 
 // Overlay for the ScnObj returned by getScnGroupChild: the destructor probes
 // the flag at +0xE4 before removing the object from its parent group.
@@ -192,7 +192,7 @@ extern "C" void* Scn_HasCamItem(void* camera, CView* view);
 
 // .sdata2 float for the layer-scale setup (func_8047230C).
 // Embedded subobject pointer cache (this+0x24) written by initMpfDrawBuffer.
-extern void* lbl_eu_80665838;
+extern void* sMpfsysDrawState;
 // Draw-description VEC3 buffers handed to mpfRunDescQuery (retail .bss).
 extern f32 lbl_eu_80658410[3];
 extern f32 lbl_eu_8065841C[3];
@@ -246,10 +246,10 @@ extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(u8* self) {
 // --- Target 2: us-8047ffcc ---------------------------------------------------
 // Global singleton cleanup: free the slot object and clear the pointer.
 void __dt__8047BFFC() {
-    if (lbl_eu_806658B8) {
-        delete lbl_eu_806658B8;
+    if (UnkClass_8047BB54::spInstance) {
+        delete UnkClass_8047BB54::spInstance;
     }
-    lbl_eu_806658B8 = NULL;
+    UnkClass_8047BB54::spInstance = NULL;
 }
 
 // --- Target 3: us-8047ff78 ---------------------------------------------------
@@ -258,13 +258,13 @@ void __dt__8047BFFC() {
 // mirrors retail's delete-expansion shape (MWCC emits the freeing call under
 // two guards so the slot store stays inside the conditional).
 void __dt__8047BFA8() {
-    if (lbl_eu_806658B8) {
-        if (lbl_eu_806658B8) {
-            operator delete(lbl_eu_806658B8);
-            lbl_eu_806658B8 = NULL;
+    if (UnkClass_8047BB54::spInstance) {
+        if (UnkClass_8047BB54::spInstance) {
+            operator delete(UnkClass_8047BB54::spInstance);
+            UnkClass_8047BB54::spInstance = NULL;
         }
     }
-    lbl_eu_806658B8 = (UnkSceneDataObj*)mtl::MemManager::allocate_array_ex(
+    UnkClass_8047BB54::spInstance = (UnkSceneDataObj*)mtl::MemManager::allocate_array_ex(
         0xFA000, mtl::MemManager::getHandleMEM1(), 0x20);
 }
 
@@ -280,7 +280,7 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
         self->mResFile.Terminate();
     }
     self->field_0x10 = 0;
-    if (lbl_eu_806658B8 == NULL && self->field_0x14 != NULL) {
+    if (UnkClass_8047BB54::spInstance == NULL && self->field_0x14 != NULL) {
         delete self->field_0x14;
         self->field_0x14 = NULL;
     }
@@ -296,8 +296,8 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
     }
 }
 
-extern u8 lbl_eu_80658500[];
-void* UnkClass_8047BB54::getMpfStatus(void) { return lbl_eu_80658500; }
+extern UnkDrawObj lbl_eu_80658500;
+void* UnkClass_8047BB54::getMpfStatus(void) { return &lbl_eu_80658500; }
 
 // ---------------------------------------------------------------------------
 // mpfCullMarkLayers helpers (retail keeps the Fv mangling but the function
@@ -361,7 +361,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
     UnkDrawObj* obj = (UnkDrawObj*)self;
     UnkLayerView* view = (UnkLayerView*)ptr;
     const EmbeddedCullParams* subobj =
-        (const EmbeddedCullParams*)lbl_eu_80665838;
+        (const EmbeddedCullParams*)sMpfsysDrawState;
     f32 f29 = subobj->field_0x2DFC;
     f32 f28 = subobj->field_0x2E00;
     nw4r::math::VEC3 diff;
@@ -518,8 +518,8 @@ extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
 // header. A failed allocation falls back to the full destructor.
 extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB) {
     UnkClass_8047BB54Layout* layout = (UnkClass_8047BB54Layout*)self;
-    if (lbl_eu_806658B8) {
-        layout->field_0x14 = lbl_eu_806658B8;
+    if (UnkClass_8047BB54::spInstance) {
+        layout->field_0x14 = UnkClass_8047BB54::spInstance;
     } else {
         if (layout->field_0x14) {
             if (layout->field_0x14) {
@@ -562,7 +562,7 @@ extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
         return;
     view = getCurrentView__5CViewFv();
     vf = Scn_HasCamItem(Scn_GetCurrentScene(view), view);
-    lbl_eu_80665838 = (u8*)self + 0x24;
+    sMpfsysDrawState = (u8*)self + 0x24;
     if (opa) {
         void* frame = submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)self->gap_0x24, self->field_0xC,
@@ -673,14 +673,14 @@ void sinit_8047CA2C() {
 // [.bss] 0x806584E8-0x80658518 (0x30 = 48B): singleton draw-object table
 // (6 pointers) + scratch draw context (0x18).
 MPFDrawSingletonTable lbl_eu_806584E8;
-u8 lbl_eu_80658500[0x18];  // (FORCEACTIVE retired: returned by getMpfStatus)
+UnkDrawObj lbl_eu_80658500;
 
 // [.sdata] 0x806638A0-0x806638A8 (8B): 1/3.0f + zero pad (retail raw words).
 extern "C" f32 lbl_eu_806638A0[2] = { 0.33333334f, 0.0f };
 
 // [.sbss] 0x806658B8-0x806658C0 (8B): singleton slot (4B used) + pad.
-UnkSceneDataObj* lbl_eu_806658B8;
-u32 lbl_eu_806658B8pad;  // (FORCEACTIVE retired: .sbss tail needs no anchor)
+UnkSceneDataObj* UnkClass_8047BB54::spInstance;
+u32 lbl_eu_806658B8pad;  // second word of the 8-byte retail slot; no identified owner
 
 // --- Target 1: us-8047fc24 ---------------------------------------------------
 // Gate on two flag bits; when both are set, forward into the embedded

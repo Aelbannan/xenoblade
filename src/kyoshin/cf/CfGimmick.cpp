@@ -10,7 +10,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Typed view of the CfGimmick collider block passed to
 // CfGimmick_BuildColliderMtx by CfGimmick_UpdateColliderMatrix: basis floats
@@ -27,41 +27,20 @@ struct CfGimmickColliderView {
 // typed retail data (replaces old byte blobs): declared up top so MWCC emits
 // them before its own code-literal pool (else the int->double magics land at
 // the sdata2 head and shift the pool). Order within each section matches retail.
-__attribute__((used)) const char lbl_eu_80508598[0x0C] = "A_area_x";
-__attribute__((used)) const char lbl_eu_805085A4[0x0C] = "A_area_py";
-__attribute__((used)) const char lbl_eu_805085B0[0x0C] = "A_area_my";
-__attribute__((used)) const char lbl_eu_805085BC[0x0C] = "A_area_z";
-__attribute__((used)) const char lbl_eu_805085C8[0x0C] = "A_area_rx";
-__attribute__((used)) const char lbl_eu_805085D4[0x0C] = "A_area_ry";
-__attribute__((used)) const char lbl_eu_805085E0[0x0C] = "A_area_rz";
-__attribute__((used)) const char lbl_eu_805085EC[0x0C] = "A_rectype";
-__attribute__((used)) const char lbl_eu_805085F8[0x0C] = "S_FLG_MIN";
-__attribute__((used)) const char lbl_eu_80508604[0x0C] = "S_FLG_MAX";
-__attribute__((used)) const char lbl_eu_80508610[0x0C] = "quest_FLG";
-__attribute__((used)) const char lbl_eu_8050861C[0x0C] = "quest_STFLG";
-__attribute__((used)) const char lbl_eu_80508628[0x0C] = "MESS ERR";
-__attribute__((used)) const char lbl_eu_80508634[0x34] = "cl_area_x\0cl_area_py\0cl_area_my\0cl_area_z\0%s";
 extern "C" {
-__attribute__((used)) float lbl_eu_80662784 = 1.0f;
-__attribute__((used)) const void* lbl_eu_80662788[2] = { lbl_eu_80508628, nullptr };
+__attribute__((used)) float gGimmickMoveRateScale = 1.0f;
 }
-__attribute__((used)) const char lbl_eu_80668320[0x08] = "A_posX";
-__attribute__((used)) const char lbl_eu_80668328[0x08] = "A_posY";
-__attribute__((used)) const char lbl_eu_80668330[0x08] = "A_posZ";
-__attribute__((used)) const char lbl_eu_80668338[0x08] = "gimID";
-__attribute__((used)) const char lbl_eu_80668340[0x08] = "MSGID";
-__attribute__((used)) const char lbl_eu_80668348[0x08] = "name1";
 // Retail emits its numeric .sdata2 pool from plain source literals, in
 // first-use order; no named duplicates are defined here.
 // typed .bss/.sbss zero-fill (replaces old nobits blobs): sizes must total
 // retail .bss 0xB8 / .sbss 0xC; nobits compare sizes only.
 extern "C" {
-CfGimmickVec3 lbl_eu_805765A0;
-int lbl_eu_805765B0[10];
-char lbl_eu_805765D8[128];
-f32 lbl_eu_806646B0;
-u32 lbl_eu_806646B4;
-u32 lbl_eu_806646B8;
+CfGimmickVec3 gGimmickAnchorPoint;
+int gGimmickPartySlotState[10];
+char gGimmickMessageBuffer[128];
+f32 gGimmickFixedRotationAngle;
+u32 gGimmickPartyId;
+u32 gGimmickSelectedRow;
 }
 
 // (No TU-local vtable pad: the field_78 actor dispatch goes through the
@@ -87,6 +66,26 @@ public:
 };
 } // namespace cf
 
+// Bdat column names: MWCC pools these string literals in first-use order,
+// which is also the retail .rodata/.sdata2 order (short names in .sdata2).
+extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+extern "C" int CfGimmick_CheckerCylinderXZ(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+extern "C" int CfGimmick_CheckerCylinderLocal(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+extern "C" int CfGimmick_CheckerBoxExtent(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+extern "C" int CfGimmick_CheckerBoxLocal(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
+extern "C" {
+__attribute__((used, aligned(8)))
+const void* gGimmickBdatColumns[18] = {
+    "A_posX", "A_posY", "A_posZ",
+    "A_area_x", "A_area_py", "A_area_my",
+    "A_area_z", "A_area_rx", "A_area_ry",
+    "A_area_rz", "A_rectype",
+    "gimID", "MSGID",
+    "S_FLG_MIN", "S_FLG_MAX", "quest_FLG",
+    "quest_STFLG", "name1",
+};
+__attribute__((used)) const void* gGimmickFallbackName[2] = { "MESS ERR", nullptr };
+}
 // Builds/inverts the gimmick collider placement matrix (see definition below).
 extern "C" void CfGimmick_BuildColliderMtx(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* point);
 
@@ -241,15 +240,15 @@ struct CfObjectCheck0View {
 // player's target-map position (or clear it when no player is loaded), and
 // set the party/kicking flag bits.  Called on party joins/leaves.
 extern "C" void CfGimmick_UpdatePartyAnchorState(u32 partyId, s32 flagA, s32 flagB) {
-    lbl_eu_806646BC = 0;
+    gGimmickPartyFlags = 0;
 
     // Ground-height gate: while the stage base height is above zero, record
     // the downward drop value and flag it (bit 0x8).  The scene-camera height
     // query is re-run inside the block (retail calls Scn_QueryUnk80State twice).
-    f32 rem = 1.0f - ((CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14))->field_C;
+    f32 rem = 1.0f - ((CTaskGameCamView*)Scn_QueryUnk80State(gmScene))->field_C;
     if (rem < 1.0f) {
-        lbl_eu_806646BC |= 0x8;
-        lbl_eu_80662780 = 1.0f - ((CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14))->field_C;
+        gGimmickPartyFlags |= 0x8;
+        lbl_eu_80662780 = 1.0f - ((CTaskGameCamView*)Scn_QueryUnk80State(gmScene))->field_C;
     }
 
     if (cf::CfGameManager::getPlayer(0) != 0) {
@@ -259,42 +258,42 @@ extern "C" void CfGimmick_UpdatePartyAnchorState(u32 partyId, s32 flagA, s32 fla
         CfGimmickVec3u* target = (CfGimmickVec3u*)player->CfObject_getPosVector();
         u32 tx = target->x;
         u32 ty = target->y;
-        CfGimmickVec3u& dst = (CfGimmickVec3u&)lbl_eu_805765A0;
+        CfGimmickVec3u& dst = (CfGimmickVec3u&)gGimmickAnchorPoint;
         dst.y = ty;
         dst.x = tx;
         dst.z = target->z;
-        lbl_eu_806646B0 = player->CfObject_getMoveHeadAngle();
-        lbl_eu_806646B4 = partyId;
-        if (flagA) lbl_eu_806646BC |= 0x20;
-        if (flagB) lbl_eu_806646BC |= 0x40;
+        gGimmickFixedRotationAngle = player->CfObject_getMoveHeadAngle();
+        gGimmickPartyId = partyId;
+        if (flagA) gGimmickPartyFlags |= 0x20;
+        if (flagB) gGimmickPartyFlags |= 0x40;
         if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && ((CfObjectCheck0View*)player)->checkSubReady0() &&
-            (lbl_eu_80663E24 & 0x80) != 0) {
-            lbl_eu_806646BC |= 0x2;
+            (gmGameFlags & 0x80) != 0) {
+            gGimmickPartyFlags |= 0x2;
         }
     } else {
-        lbl_eu_805765A0.x = 30000.0f;
-        lbl_eu_805765A0.y = 30000.0f;
-        lbl_eu_805765A0.z = 30000.0f;
-        lbl_eu_806646B0 = 0.0f;
-        lbl_eu_806646B4 = 0;
+        gGimmickAnchorPoint.x = 30000.0f;
+        gGimmickAnchorPoint.y = 30000.0f;
+        gGimmickAnchorPoint.z = 30000.0f;
+        gGimmickFixedRotationAngle = 0.0f;
+        gGimmickPartyId = 0;
     }
 
     // Presentation-event gate (bit 0x22040000) and the CF-mode gate; both
     // guard extra gimmick-party flags.
-    if (lbl_eu_80663E24 & 0x22040000u)
-        lbl_eu_806646BC |= 0x4;
+    if (gmGameFlags & 0x22040000u)
+        gGimmickPartyFlags |= 0x4;
     if (!cf::CfGameManager::isTimerActive())
-        lbl_eu_806646BC |= 0x1;
+        gGimmickPartyFlags |= 0x1;
 }
 
 extern "C" void CfGimmick_InitPartyGlobals() {
-    lbl_eu_80662784 = 1.0f;
-    lbl_eu_806646C0 = 0;
-    for (int i = 0; i < 10; i++) lbl_eu_805765B0[i] = -1;
+    gGimmickMoveRateScale = 1.0f;
+    gGimmickInitFlags = 0;
+    for (int i = 0; i < 10; i++) gGimmickPartySlotState[i] = -1;
 }
 
-// retail: stw r3, lbl_eu_806646B8; blr - store arg to global
-extern "C" void CfGimmick_SetGlobalB8Value(u32 value) { lbl_eu_806646B8 = value; }
+// retail: stw r3, gGimmickSelectedRow; blr - store arg to global
+extern "C" void CfGimmick_SetGlobalB8Value(u32 value) { gGimmickSelectedRow = value; }
 
 extern "C" void CfGimmick_ClearManagerBinding(cf::CfGimmick* self) {
     if (self->field_78) {
@@ -309,7 +308,7 @@ extern "C" void CfGimmick_LoadBdatAreaPos(CfGimmick* self, float* out, void* unu
     // each integer cell to a scaled float written into the output vector.
     // The table keeps its declared void*[] type (no reinterpret); each entry
     // is converted to the column-name string type at the use site.
-    const void** col = lbl_eu_805357E8;
+    const void** col = gGimmickBdatColumns;
     out[0] = 0.01f * (f32)(s32)getBdatStringColumnValue(
         *holder, &((const char*)col[0])[2], self->field_64);
     out[1] = 0.01f * (f32)(s32)getBdatStringColumnValue(
@@ -319,7 +318,7 @@ extern "C" void CfGimmick_LoadBdatAreaPos(CfGimmick* self, float* out, void* unu
 }
 
 extern "C" void CfGimmick_LoadBdatAreaExtents(CfGimmick* self, CfGimmick* out, void* unused, void** holder) {
-    const void** col = lbl_eu_805357E8;
+    const void** col = gGimmickBdatColumns;
     u32 rawA = getBdatStringColumnValue(
         *holder, &((const char*)col[3])[2], self->field_64);
     out->field_30 = 0.01f * (f32)*(const u16*)&rawA;
@@ -339,20 +338,20 @@ extern "C" void CfGimmick_LoadBdatClAreaExtents(CfGimmick* self, CfGimmick* out,
     // (stw + lhz, not rlwinm); writing the truncation as a deref of the
     // call result's storage reproduces the memory-load idiom.  The f32 cast
     // then uses MWCC's 2^52 double-trick (lfd + fsubs).
-    u32 rawA = getBdatStringColumnValue(*holder, lbl_eu_80508634 + 0x00, self->field_64);
+    u32 rawA = getBdatStringColumnValue(*holder, "cl_area_x", self->field_64);
     out->field_30 = 0.01f * (f32)*(const u16*)&rawA;
-    u32 rawB = getBdatStringColumnValue(*holder, lbl_eu_80508634 + 0x0A, self->field_64);
+    u32 rawB = getBdatStringColumnValue(*holder, "cl_area_py", self->field_64);
     out->field_34 = 0.01f * (f32)*(const u16*)&rawB;
-    u32 rawC = getBdatStringColumnValue(*holder, lbl_eu_80508634 + 0x15, self->field_64);
+    u32 rawC = getBdatStringColumnValue(*holder, "cl_area_my", self->field_64);
     out->field_38 = 0.01f * (f32)*(const u16*)&rawC;
-    u32 rawD = getBdatStringColumnValue(*holder, lbl_eu_80508634 + 0x20, self->field_64);
+    u32 rawD = getBdatStringColumnValue(*holder, "cl_area_z", self->field_64);
     out->field_3C = 0.01f * (f32)*(const u16*)&rawD;
 }
 
 extern "C" void CfGimmick_LoadBdatAreaRotation(CfGimmick* self, f32* out, void* bdat, void** table) {
     // Address-taking forces the call result to spill; the s16 deref reload
     // emits retail's stw + lha memory truncation idiom.
-    const void** col = lbl_eu_805357E8;
+    const void** col = gGimmickBdatColumns;
     s32 rawA = getBdatStringColumnValue(
         *table, &((const char*)col[7])[2], self->field_64);
     out[0] = (f32)*(const s16*)&rawA * ml::deg2rad;
@@ -368,7 +367,7 @@ extern "C" void CfGimmick_LoadBdatAreaPosIndexed(CfGimmick* self, f32* out, void
     // Column-name slots through the declared void*[] table type (a named u8*
     // local spilled the table base into r30 vs retail's r5, so the entries
     // are converted at the use site).
-    const void** col = lbl_eu_805357E8;
+    const void** col = gGimmickBdatColumns;
     int c = v + 0x41;
     char* patch2 = (char*)col[2];
     patch2[0] = (u8)c;
@@ -385,7 +384,7 @@ extern "C" void CfGimmick_LoadBdatAreaPosIndexed(CfGimmick* self, f32* out, void
 }
 
 extern "C" void CfGimmick_LoadBdatAreaExtentsIndexed(CfGimmick* self, CfGimmick* out, void* unused, void** holder, int v) {
-    char** col = (char**)lbl_eu_805357E8;
+    char** col = (char**)gGimmickBdatColumns;
     u8 c = (u8)(v + 0x41);
     col[6][0] = (u8)c;
     col[5][0] = (u8)c;
@@ -402,7 +401,7 @@ extern "C" void CfGimmick_LoadBdatAreaExtentsIndexed(CfGimmick* self, CfGimmick*
 }
 
 extern "C" void CfGimmick_LoadBdatAreaRotationIndexed(CfGimmick* self, f32* out, void* unused, void** holder, int v) {
-    char** col = (char**)lbl_eu_805357E8;
+    char** col = (char**)gGimmickBdatColumns;
     u8 c = (u8)(v + 0x41);
     col[9][0] = c;
     col[8][0] = c;
@@ -446,9 +445,9 @@ extern "C" int CfGimmick_CheckTriggerGated(u32 mask, CfGimmick* gimmick, const C
     // A) but shares ONE return-0 block for the b4==0 / id-mismatch fails;
     // the pass path jumps to the rotation check (beq .L_8020B5A8).
     if (mask & 0x21) {
-        if ((lbl_eu_806646BC & 1) == 0)
+        if ((gGimmickPartyFlags & 1) == 0)
             return 0;
-        if (lbl_eu_806646B4 != 0 && partyId == lbl_eu_806646B4)
+        if (gGimmickPartyId != 0 && partyId == gGimmickPartyId)
             goto rotation;
         return 0;
     }
@@ -471,21 +470,21 @@ rotation:
             ca = nw4r::math::CosFIdx(40.743664f * a);
         }
         {
-            f32 b = lbl_eu_806646B0;
+            f32 b = gGimmickFixedRotationAngle;
             sb = nw4r::math::SinFIdx(40.743664f * b);
         }
         {
-            f32 b = lbl_eu_806646B0;
+            f32 b = gGimmickFixedRotationAngle;
             cb = nw4r::math::CosFIdx(40.743664f * b);
         }
         if (sa * sb + ca * cb <= 0.0f)
             return 0;
-        if (sa * (lbl_eu_805765A0.x - point->x) +
-                ca * (lbl_eu_805765A0.z - point->z) >= 0.0f)
+        if (sa * (gGimmickAnchorPoint.x - point->x) +
+                ca * (gGimmickAnchorPoint.z - point->z) >= 0.0f)
             return 0;
     }
 
-    if (jumptable_eu_80535830[gimmick->field_44](gimmick, &lbl_eu_805765A0, point))
+    if (jumptable_eu_80535830[gimmick->field_44](gimmick, &gGimmickAnchorPoint, point))
         return 1;
     return 0;
 }
@@ -502,10 +501,10 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
     int partyValid = 0;
     if (mask & 0x21) {
         // Party-scoped queries require the loaded-party flag and a matching ID.
-        if ((lbl_eu_806646BC & 1) == 0)
+        if ((gGimmickPartyFlags & 1) == 0)
             return 0;
-        if (lbl_eu_806646B4 != 0) {
-            if (partyId == lbl_eu_806646B4) {
+        if (gGimmickPartyId != 0) {
+            if (partyId == gGimmickPartyId) {
                 partyValid = 1;
             } else {
                 return 0;
@@ -533,22 +532,22 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
             ca = nw4r::math::CosFIdx(40.743664f * a);
         }
         {
-            f32 b = lbl_eu_806646B0;
+            f32 b = gGimmickFixedRotationAngle;
             sb = nw4r::math::SinFIdx(40.743664f * b);
         }
         {
-            f32 b = lbl_eu_806646B0;
+            f32 b = gGimmickFixedRotationAngle;
             cb = nw4r::math::CosFIdx(40.743664f * b);
         }
         if (ca * cb + sa * sb <= 0.0f)
             return 0;
-        if (ca * (lbl_eu_805765A0.z - point->z) +
-                sa * (lbl_eu_805765A0.x - point->x) >= 0.0f)
+        if (ca * (gGimmickAnchorPoint.z - point->z) +
+                sa * (gGimmickAnchorPoint.x - point->x) >= 0.0f)
             return 0;
     }
 
     if (partyValid) {
-        if (jumptable_eu_80535830[gimmick->field_44](gimmick, &lbl_eu_805765A0, point))
+        if (jumptable_eu_80535830[gimmick->field_44](gimmick, &gGimmickAnchorPoint, point))
             return 1;
         return 0;
     }
@@ -589,7 +588,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
                 // register recycling.
                 f32 zero = 0.0f;
                 for (partyValid = 0; partyValid < 3; ++partyValid) {
-                    if (lbl_eu_806646BC & (0x10 << partyValid))
+                    if (gGimmickPartyFlags & (0x10 << partyValid))
                         continue;
                     CfPlayerBase* base =
                         (CfPlayerBase*)cf::CfGameManager::getPlayer(partyValid);
@@ -616,7 +615,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
     }
 
     // No fight-list flag: enemy list first, then the player scan.
-    if (lbl_eu_806646BC & 4) {
+    if (gGimmickPartyFlags & 4) {
         CfGimmickList* list = getReslistB68();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
@@ -651,7 +650,7 @@ extern "C" int CfGimmick_QueryTrigger(u32 mask, CfGimmick* gimmick, const CfGimm
     // All players, skipping present ones.
     f32 zero = 0.0f;
     for (partyValid = 0; partyValid < 3; ++partyValid) {
-        if (lbl_eu_806646BC & (0x10 << partyValid))
+        if (gGimmickPartyFlags & (0x10 << partyValid))
             continue;
         CfPlayerBase* base = (CfPlayerBase*)cf::CfGameManager::getPlayer(partyValid);
         if (base != 0)
@@ -835,7 +834,7 @@ extern "C" unsigned int CfGimmick_IsMessageSystemBusy();
 // shared message buffer and post the message.  The write-format path is
 // gated on UIWin_GetInstance() (message system loaded) and SysWinGetSingleton() being
 // zero (via the inlined CfGimmick_IsMessageSystemBusy boolean).  When the row is out of range
-// (or the bdat file isn't loaded), the fallback name lbl_eu_80662788 is used.
+// (or the bdat file isn't loaded), the fallback name gGimmickFallbackName is used.
 extern "C" int CfGimmick_PostGimmickName(int index) {
     // One reused `name` local: retail colors the bdat/column-string web and
     // the cap/default-name web into r31/r30 respectively.
@@ -844,23 +843,23 @@ extern "C" int CfGimmick_PostGimmickName(int index) {
     s32 cnt;
     const char* name;
     if (index != 0) {
-        if (lbl_eu_80664148 != 0) {
-            bdat = (u8*)lbl_eu_80664148;
+        if (gGimmickBdatFile != 0) {
+            bdat = (u8*)gGimmickBdatFile;
             Bdat_GetTable_AA34();
             // Named cap/cnt like the matched CfGimmick_LookupBdatGimmickName: B41C's result
             // stays callee-saved across the B1EC call.
             cap = Bdat_GetRowBase_B41C(bdat);
             cnt = Bdat_GetMaxRow_B1EC(bdat);
             if (cap + cnt > index) {
-                u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
+                u8* col = *(u8**)(gGimmickBdatColumns + 0x44);
                 col[4] = 0x33;
                 name = (const char*)getBdatStringColumnValue(
-                    bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
+                    bdat, *(char**)(gGimmickBdatColumns + 0x44), index);
                 // Retail inlines the CfGimmick_IsMessageSystemBusy boolean (neg/or/srwi) here.
                 if (UIWin_GetInstance() != 0) {
                     if (CfGimmick_IsMessageSystemBusy() == 0) {
-                        sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, name);
-                        UIWin_CreateSysWin0(lbl_eu_805765D8, 0, 0);
+                        sprintf(gGimmickMessageBuffer, "%s", name);
+                        UIWin_CreateSysWin0(gGimmickMessageBuffer, 0, 0);
                         return 1;
                     }
                 }
@@ -868,10 +867,10 @@ extern "C" int CfGimmick_PostGimmickName(int index) {
             }
         }
     }
-    name = (const char*)lbl_eu_80662788;
+    name = (const char*)gGimmickFallbackName;
     if (UIWin_GetInstance() != 0 && CfGimmick_IsMessageSystemBusy() == 0) {
-        sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, name);
-        UIWin_CreateSysWin0(lbl_eu_805765D8, 0, 0);
+        sprintf(gGimmickMessageBuffer, "%s", name);
+        UIWin_CreateSysWin0(gGimmickMessageBuffer, 0, 0);
         return 1;
     }
     return 0;
@@ -886,7 +885,7 @@ extern "C" unsigned int CfGimmick_IsMessageSystemBusy() {
 
 extern "C" void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
     if (index != 0) {
-        u8* bdat = (u8*)lbl_eu_80664148;
+        u8* bdat = (u8*)gGimmickBdatFile;
         if (bdat != 0) {
             Bdat_GetTable_AA34();
             // Sequence the two row-capacity calls so the first (B41C) result is
@@ -897,14 +896,14 @@ extern "C" void* CfGimmick_LookupBdatGimmickName(int index, int mod) {
             // bound > index keeps the retail cmp r0(bound), r28(index) / ble form.
             if ((int)(cap + cnt) > index) {
                 // Patch the column-name prefix, then read the requested row.
-                u8* col = (u8*)lbl_eu_805357E8[0x11];
+                u8* col = (u8*)gGimmickBdatColumns[0x11];
                 col[4] = (u8)(mod + 0x31);
                 return (void*)getBdatStringColumnValue(
-                    bdat, (const char*)lbl_eu_805357E8[0x11], index);
+                    bdat, (const char*)gGimmickBdatColumns[0x11], index);
             }
         }
     }
-    return (void*)lbl_eu_80662788[0];
+    return (void*)gGimmickFallbackName[0];
 }
 
 extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
@@ -915,7 +914,7 @@ extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec
     // Distance from the fixed reference point to the requested position.
     // The nw4r paired-single kernels reproduce retail's psq_l/ps_sub block.
     nw4r::math::VEC3 diff;
-    VEC3Sub(&diff, (const nw4r::math::VEC3*)&lbl_eu_805765A0,
+    VEC3Sub(&diff, (const nw4r::math::VEC3*)&gGimmickAnchorPoint,
             (const nw4r::math::VEC3*)point);
     f32 radiusSq = radius * radius;
 
@@ -941,7 +940,7 @@ extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec
         u8* bdat;
         if (index == 0)
             goto defaultName;
-        bdat = (u8*)lbl_eu_80664148;
+        bdat = (u8*)gGimmickBdatFile;
         if (bdat == 0)
             goto defaultName;
         Bdat_GetTable_AA34();
@@ -952,14 +951,14 @@ extern "C" void CfGimmick_UpdateProximity(CfGimmickReg* self, const CfGimmickVec
             if ((s32)(cap + cnt) <= index)
                 goto defaultName;
             // Patch the requested column's prefix, then read its value.
-            u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
+            u8* col = *(u8**)(gGimmickBdatColumns + 0x44);
             col[4] = (u8)(mod + 0x31);
             name = (const char*)getBdatStringColumnValue(
-                bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
+                bdat, *(char**)(gGimmickBdatColumns + 0x44), index);
             goto resolvedName;
         }
 defaultName:
-        name = (const char*)lbl_eu_80662788;
+        name = (const char*)gGimmickFallbackName;
 resolvedName:;
 
     CfGimmickObject* obj = spawnMaskedObject(getInstance(), 0x4000, 0, 0);
@@ -1001,8 +1000,8 @@ resolvedName:;
 // epilogue for both guard failures (beq to a common block).
 extern "C" int CfGimmick_CheckPartyIdLoaded(CfGimmick* self, u32 arg) {
     (void)self;
-    u32 a = lbl_eu_806646B4;
-    if (a != 0 && (lbl_eu_806646BC & 1u) != 0) {
+    u32 a = gGimmickPartyId;
+    if (a != 0 && (gGimmickPartyFlags & 1u) != 0) {
         return arg == a;
     }
     return 0;
@@ -1028,19 +1027,17 @@ int CfGimmick_CheckerCylinderXZ(CfGimmick* self, const CfGimmickVec3* point, con
 // space it must lie inside the horizontal radius (field_30) and vertical
 // band [field_38, field_34].
 int CfGimmick_CheckerCylinderLocal(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
-    // SDK VEC3Sub + VEC3LenSq kernels reproduce the retail paired-single
-    // distance block.
-    nw4r::math::VEC3 diff;
-    VEC3Sub(&diff, (const nw4r::math::VEC3*)point, (const nw4r::math::VEC3*)center);
-    if (VEC3LenSq(&diff) > self->field_40)
-        return 0;
-
-    Vec tmp;
-    PSMTXMultVec((const f32 (*)[4])self, (const Vec*)point, (Vec*)&tmp);
-    // Right addend first keeps retail's z-load-first schedule.
-    if (tmp.x * tmp.x + tmp.z * tmp.z <= self->field_30 * self->field_30) {
-        if (self->field_34 >= tmp.y && self->field_38 <= tmp.y)
-            return 1;
+    // The SDK operator- inline kernel reproduces the retail paired-single
+    // subtraction and length-square sequence.
+    nw4r::math::VEC3 diff = *(const nw4r::math::VEC3*)center - *(const nw4r::math::VEC3*)point;
+    if (VEC3LenSq(&diff) <= self->field_40) {
+        Vec tmp;
+        PSMTXMultVec((const f32 (*)[4])self, (const Vec*)point, (Vec*)&tmp);
+        // Right addend first keeps retail's z-load-first schedule.
+        if (tmp.x * tmp.x + tmp.z * tmp.z <= self->field_30 * self->field_30) {
+            if (self->field_34 >= tmp.y && self->field_38 <= tmp.y)
+                return 1;
+        }
     }
     return 0;
 }
@@ -1064,8 +1061,7 @@ int CfGimmick_CheckerBoxExtent(CfGimmick* self, const CfGimmickVec3* point, cons
 // inlined paired-single kernels reproduce retail's psq_l/ps_sub/ps_mul/
 // ps_madd/ps_sum0 sequence.
 int CfGimmick_CheckerBoxLocal(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
-    nw4r::math::VEC3 diff;
-    VEC3Sub(&diff, (const nw4r::math::VEC3*)center, (const nw4r::math::VEC3*)point);
+    nw4r::math::VEC3 diff = *(const nw4r::math::VEC3*)center - *(const nw4r::math::VEC3*)point;
     // Success path nested inside the radius test keeps one shared fail-exit
     // like retail (.L_8020C9BC).
     if (VEC3LenSq(&diff) <= self->field_40) {
@@ -1110,23 +1106,7 @@ extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick* self, const CfGimmick
     return 1;
 }
 
-// --- typified .data (replaces the old generated byte blob) ---
-// lbl_eu_805357E8: bdat column-name pointer table (18 string labels, all
-// owned by this TU's .rodata/.sdata2 above). Slots emit zero bytes +
-// ADDR32 relocs in the .o, matching retail.
-// jumptable_eu_80535830: placement-checker dispatch (5 checkers defined in
-// this TU). Layout from build/us/asm/kyoshin/cf/CfGimmick.s.
 extern "C" {
-__attribute__((used, aligned(8)))
-const void* lbl_eu_805357E8[18] = {
-    lbl_eu_80668320, lbl_eu_80668328, lbl_eu_80668330,
-    lbl_eu_80508598, lbl_eu_805085A4, lbl_eu_805085B0,
-    lbl_eu_805085BC, lbl_eu_805085C8, lbl_eu_805085D4,
-    lbl_eu_805085E0, lbl_eu_805085EC,
-    lbl_eu_80668338, lbl_eu_80668340,
-    lbl_eu_805085F8, lbl_eu_80508604, lbl_eu_80508610,
-    lbl_eu_8050861C, lbl_eu_80668348,
-};
 __attribute__((used))
 CfGimmickChecker jumptable_eu_80535830[5] = {
     (CfGimmickChecker)CfGimmick_CheckerKind0Always,

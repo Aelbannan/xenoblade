@@ -415,18 +415,15 @@ int EndVoice_AllocSize() {
 // voice-ID pairs read via @sda21, two typeinfo objects). Global-scope data
 // symbols: MWCC does not mangle them.
 //
-// lbl_eu_805399E0 is declared (as extern) in CVS_THREAD_BUF.hpp but its
-// bytes live in this unit's range, so it is defined here. BufVxAdvanceSlot
-// is defined in CVS_THREAD_BUF.cpp; the proto below mirrors that
-// definition (incomplete struct keeps the BUF header out of this TU).
+// lbl_eu_805399E0's bytes live in this unit's range, so it is defined here
+// as a typed PTMF triple naming the real CVS_THREAD_BUF state handler.
 // lbl_eu_80539A20 / __RTTI__Q22cf10CVS_THREAD live in the BUF / CCharVoiceMan ranges
 // and are referenced, not defined, here.
-struct CVS_THREAD_BUF;
-extern "C" void BufVxAdvanceSlot(CVS_THREAD_BUF* self);
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.hpp"
 extern "C" void PlayThreadVoice();
 extern "C" bool CCharVoiceMan_AlwaysTrue();
 extern "C" int CCharVoiceMan_NullVoiceDispatch(void* self);
-extern u32 lbl_eu_805399E0[3];
+
 extern u32 lbl_eu_80539A20[4];
 extern u32 __RTTI__Q22cf10CVS_THREAD[2];
 extern u32 __RTTI__Q22cf21CVS_THREAD_BATTLE_END[2];
@@ -474,11 +471,7 @@ u32 lbl_eu_805399D4[3] = {
     0,
 };
 
-u32 lbl_eu_805399E0[3] = {
-    0,
-    0xFFFFFFFF,
-    (u32)BufVxAdvanceSlot,
-};
+extern BattleEndState lbl_eu_805399E0 = &CVS_THREAD_BUF::advanceSlot;
 
 __declspec(section ".sdata") extern u32 lbl_eu_80662CC8[2] = {
     0xB57,

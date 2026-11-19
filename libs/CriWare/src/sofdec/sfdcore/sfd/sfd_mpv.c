@@ -4,9 +4,9 @@
 
 // Absorbed from criware_data (retail bytes) - generated
 __attribute__((aligned(8))) unsigned char __bss_fill_0[0xCD8]; // filler gap at 0x0 for .bss
-u32 lbl_eu_80607AF8; // bss off 0xCD8 (scalar, spec 0x12020)
+u32 sMpvWorkArea; // bss off 0xCD8 (scalar, spec 0x12020)
 unsigned char __bss_fill_1[0x1201C]; // filler gap at 0xCDC for .bss
-u32 lbl_eu_80619B18; // bss off 0x12CF8 (scalar, spec 0x8)
+u32 sMpvInitCounter; // bss off 0x12CF8 (scalar, spec 0x8)
 unsigned char __bss_fill_2[0x94]; // trailing filler for .bss
 
 // ---------------------------------------------------------------------------
@@ -139,20 +139,20 @@ void sfmpv_ErrFn(s32 val, u32 err);
 s32 fn_803C34F8(s32 val, u32 err_code);
 
 // Global data
-extern void* lbl_eu_80606E34;
+extern void* gpSfdCoreTraceCb;
 extern u32 lbl_eu_8051C4E0;
 extern u32 lbl_eu_8051C940[];
 extern u32 lbl_eu_8051C97C[];
 extern u32 lbl_eu_8051CBF8[];
 extern u8 lbl_eu_8051C9E0[];
-extern u32 lbl_eu_805688C8[];
-extern u32 lbl_eu_80568A70[];
-extern u32 lbl_eu_80568B44[];
-extern u32 lbl_eu_80568C18[];
-extern u32 lbl_eu_80568CF0[];
-extern u32 lbl_eu_80568D5C[];
-extern u32 lbl_eu_80568DC8[];
-extern u32 lbl_eu_80568E34[];
+extern u32 sTraceSfmpvExecServer[];
+extern u32 sTraceDecodePicAtr[];
+extern u32 sTraceDecodeFrm[];
+extern u32 sTraceDecodePicAtrRet[];
+extern u32 sTraceSfdIsSkip[];
+extern u32 sTraceSfdWaitSupply[];
+extern u32 sTraceSfdWaitRelFrm[];
+extern u32 sTraceSfmpvConcatSub[];
 
 // ---------------------------------------------------------------------------
 // SFD_SetMpvCond
@@ -232,12 +232,12 @@ s32 SFMPV_Init(void) {
     if (MPV_SetErrFunc(0, sfmpv_ErrFn, 0) != 0) {
         return SFLIB_SetErr(0, 0xff000f0b);
     }
-    r = MPV_Init(8, &lbl_eu_80607AF8);
+    r = MPV_Init(8, &sMpvWorkArea);
     if (r != 0) {
         return fn_803C34F8(0, ((u32)r + 0xfd0000 == 0xff05) ? 0xff000f13 : 0xff000f01);
     }
     SFMPVF_InitPool();
-    lbl_eu_80619B18 = 0;
+    sMpvInitCounter = 0;
     return 0;
 }
 
@@ -264,9 +264,9 @@ s32 SFMPV_ExecServer(SfdHandle* self) {
     u32 readCnt;
     void* sj;
 
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_805688C8[3] = (u32)self;
-        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_805688C8[1]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceSfmpvExecServer[3] = (u32)self;
+        (*(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24))(gpSfdCoreTraceCb, &sTraceSfmpvExecServer[1]);
     }
 
     do {
@@ -354,11 +354,11 @@ s32 SFMPV_ExecServer(SfdHandle* self) {
         SFSET_SetCond(self, 5, 0);
     }
     } while (0);
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_805688C8[0x74 / 4] = (u32)&self->field_0x09b0;
-        lbl_eu_805688C8[0x80 / 4] = (u32)&self->field_0x09b8;
-        lbl_eu_805688C8[0x8c / 4] = (u32)&self->field_0x09c0;
-        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_805688C8[0x6c / 4]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceSfmpvExecServer[0x74 / 4] = (u32)&self->field_0x09b0;
+        sTraceSfmpvExecServer[0x80 / 4] = (u32)&self->field_0x09b8;
+        sTraceSfmpvExecServer[0x8c / 4] = (u32)&self->field_0x09c0;
+        (*(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24))(gpSfdCoreTraceCb, &sTraceSfmpvExecServer[0x6c / 4]);
     }
     return ret;
 }
@@ -796,10 +796,10 @@ s32 sfmpv_DecodeOneUnit(SfdHandle* self, s32 ch, s32 pat, s32 dlm, s32* out) {
     }
     if (dlm == 0 && ch <= 4) {
         self->field_0x0988 = 1;
-        if (lbl_eu_80606E34 != NULL) {
-            lbl_eu_80568D5C[3] = (u32)self;
-            fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-            fn(lbl_eu_80606E34, &lbl_eu_80568D5C[1]);
+        if (gpSfdCoreTraceCb != NULL) {
+            sTraceSfdWaitSupply[3] = (u32)self;
+            fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+            fn(gpSfdCoreTraceCb, &sTraceSfdWaitSupply[1]);
         }
         goto done;
     }
@@ -900,15 +900,15 @@ s32 sfmpv_ConcatSub(SfdHandle* self) {
     if (dlm > 0) {
         SFCON_UpdateConcatTime(self, dlm);
         *(s32*)(shc + 0x10) += 1;
-        if (lbl_eu_80606E34 != NULL) {
+        if (gpSfdCoreTraceCb != NULL) {
             void (*fn)(void*, void*);
-            lbl_eu_80568E34[3] = (u32)self;
-            lbl_eu_80568E34[0x18 / 4] = (u32)(shc + 0x10);
-            lbl_eu_80568E34[0x24 / 4] = (u32)&dlm;
-            lbl_eu_80568E34[0x30 / 4] = (u32)&self->tim.concat.time;
-            lbl_eu_80568E34[0x3c / 4] = (u32)&self->tim.field_0x160;
-            fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-            fn(lbl_eu_80606E34, &lbl_eu_80568E34[1]);
+            sTraceSfmpvConcatSub[3] = (u32)self;
+            sTraceSfmpvConcatSub[0x18 / 4] = (u32)(shc + 0x10);
+            sTraceSfmpvConcatSub[0x24 / 4] = (u32)&dlm;
+            sTraceSfmpvConcatSub[0x30 / 4] = (u32)&self->tim.concat.time;
+            sTraceSfmpvConcatSub[0x3c / 4] = (u32)&self->tim.field_0x160;
+            fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+            fn(gpSfdCoreTraceCb, &sTraceSfmpvConcatSub[1]);
         }
     }
     SFTIM_InitTtu(&self->tim.hdInfo, 0x7fffffff);
@@ -942,10 +942,10 @@ s32 sfmpv_DecodePicAtr(SfdHandle* self, u32* pic, void* sj, s32 pat, s32* out) {
     self->picUsr.field_0x10 = 0;
     MPV_SetPicUsrBuf(mpv, (void*)self->picUsr.curWidth, (void*)self->picUsr.stride);
     fc = SJRBF_GetFlowCnt(sj, 0, 1);
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_80568A70[3] = (u32)mpv;
-        lbl_eu_80568A70[0x18 / 4] = (u32)&fc;
-        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568A70[1]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceDecodePicAtr[3] = (u32)mpv;
+        sTraceDecodePicAtr[0x18 / 4] = (u32)&fc;
+        (*(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24))(gpSfdCoreTraceCb, &sTraceDecodePicAtr[1]);
     }
     *out = MPV_DecodePicAtrSj(mpv, sj);
     t1 = SJRBF_GetFlowCnt(sj, 0, 1) - fc;
@@ -969,11 +969,11 @@ s32 sfmpv_DecodePicAtr(SfdHandle* self, u32* pic, void* sj, s32 pat, s32* out) {
             ret = SFLIB_SetErr(self, 0xff000f04);
         }
     }
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_80568A70[0x74 / 4] = (u32)&t1;
-        lbl_eu_80568A70[0x80 / 4] = (u32)out;
-        lbl_eu_80568A70[0x8c / 4] = (u32)&ret;
-        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568A70[0x6c / 4]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceDecodePicAtr[0x74 / 4] = (u32)&t1;
+        sTraceDecodePicAtr[0x80 / 4] = (u32)out;
+        sTraceDecodePicAtr[0x8c / 4] = (u32)&ret;
+        (*(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24))(gpSfdCoreTraceCb, &sTraceDecodePicAtr[0x6c / 4]);
     }
     SFBUF_AddRtotSj(self, self->trn[2].bufIdx, t1);
     self->field_0x09b8 += t1;
@@ -1151,12 +1151,12 @@ s32 sfmpv_DecodePicAtr(SfdHandle* self, u32* pic, void* sj, s32 pat, s32* out) {
         }
     }
     ret = sfmpv_FirstPicAtr(self, mpv, frm, pic);
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_80568C18[3] = (u32)&frm->type;
-        lbl_eu_80568C18[0x18 / 4] = (u32)&frm->field_0x30;
-        lbl_eu_80568C18[0x24 / 4] = (u32)&frm->field_0x68;
-        lbl_eu_80568C18[0x30 / 4] = (u32)&self->tim.tcC.ttime;
-        (*(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24))(lbl_eu_80606E34, &lbl_eu_80568C18[1]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceDecodePicAtrRet[3] = (u32)&frm->type;
+        sTraceDecodePicAtrRet[0x18 / 4] = (u32)&frm->field_0x30;
+        sTraceDecodePicAtrRet[0x24 / 4] = (u32)&frm->field_0x68;
+        sTraceDecodePicAtrRet[0x30 / 4] = (u32)&self->tim.tcC.ttime;
+        (*(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24))(gpSfdCoreTraceCb, &sTraceDecodePicAtrRet[1]);
     }
     return ret;
 }
@@ -1768,11 +1768,11 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         }
         if (r != 0) {
             void (*fn)(void*, void*);
-            if (lbl_eu_80606E34 != NULL) {
-                lbl_eu_80568CF0[3] = (u32)self;
-                lbl_eu_80568CF0[0x18 / 4] = (u32)lbl_eu_8051C9E0;
-                fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
+            if (gpSfdCoreTraceCb != NULL) {
+                sTraceSfdIsSkip[3] = (u32)self;
+                sTraceSfdIsSkip[0x18 / 4] = (u32)lbl_eu_8051C9E0;
+                fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
             }
             wk = (void*)1;
             goto out;
@@ -1797,11 +1797,11 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         }
         if (cond) {
             void (*fn)(void*, void*);
-            if (lbl_eu_80606E34 != NULL) {
-                lbl_eu_80568CF0[3] = (u32)self;
-                lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x11];
-                fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
+            if (gpSfdCoreTraceCb != NULL) {
+                sTraceSfdIsSkip[3] = (u32)self;
+                sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x11];
+                fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
             }
             wk = (void*)1;
             goto out;
@@ -1809,11 +1809,11 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
     }
     if (sfmpv_IsEmptyBpic(self, (s32)wk, bpic) != 0) {
         void (*fn)(void*, void*);
-        if (lbl_eu_80606E34 != NULL) {
-            lbl_eu_80568CF0[3] = (u32)self;
-            lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x17];
-            fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-            fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
+        if (gpSfdCoreTraceCb != NULL) {
+            sTraceSfdIsSkip[3] = (u32)self;
+            sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x17];
+            fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+            fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
         }
         wk = (void*)1;
         goto out;
@@ -1832,22 +1832,22 @@ s32 sfmpv_IsSkip(SfdHandle* self, void* bpic) {
         }
         if (flg != 0) {
             void (*fn)(void*, void*);
-            if (lbl_eu_80606E34 != NULL) {
-                lbl_eu_80568CF0[3] = (u32)self;
-                lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x1f];
-                fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
+            if (gpSfdCoreTraceCb != NULL) {
+                sTraceSfdIsSkip[3] = (u32)self;
+                sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x1f];
+                fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
             }
             wk = (void*)1;
             goto out;
         }
         if (sfmpv_IsLate(self, (s32)wk) != 0) {
             void (*fn)(void*, void*);
-            if (lbl_eu_80606E34 != NULL) {
-                lbl_eu_80568CF0[3] = (u32)self;
-                lbl_eu_80568CF0[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x26];
-                fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-                fn(lbl_eu_80606E34, &lbl_eu_80568CF0[1]);
+            if (gpSfdCoreTraceCb != NULL) {
+                sTraceSfdIsSkip[3] = (u32)self;
+                sTraceSfdIsSkip[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x26];
+                fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+                fn(gpSfdCoreTraceCb, &sTraceSfdIsSkip[1]);
             }
             wk = (void*)1;
             goto out;
@@ -2063,24 +2063,24 @@ s32 sfmpv_DecodeFrm(SfdHandle* self, void* sj) {
     fn_803C99C8(self);
     t1 = SFTMR_GetTmr(self);
     a = SJRBF_GetFlowCnt(sj, 0, 1);
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_80568B44[3] = (u32)mpv;
-        lbl_eu_80568B44[0x18 / 4] = (u32)&frm->type;
-        lbl_eu_80568B44[0x24 / 4] = (u32)&frm->field_0x30;
-        lbl_eu_80568B44[0x30 / 4] = (u32)&frm->field_0x68;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568B44[1]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceDecodeFrm[3] = (u32)mpv;
+        sTraceDecodeFrm[0x18 / 4] = (u32)&frm->type;
+        sTraceDecodeFrm[0x24 / 4] = (u32)&frm->field_0x30;
+        sTraceDecodeFrm[0x30 / 4] = (u32)&frm->field_0x68;
+        fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+        fn(gpSfdCoreTraceCb, &sTraceDecodeFrm[1]);
     }
     r = MPV_DecodeFrmSj(mpv, sj, &fcnt);
     b = SJRBF_GetFlowCnt(sj, 0, 1);
     n = b - a;
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_80568B44[0x74 / 4] = (u32)&n;
-        lbl_eu_80568B44[0x80 / 4] = (u32)&fcnt.decoded;
-        lbl_eu_80568B44[0x8c / 4] = (u32)&fcnt.field_0x3c;
-        lbl_eu_80568B44[0x98 / 4] = (u32)&fcnt.field_0x40;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568B44[0x6c / 4]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceDecodeFrm[0x74 / 4] = (u32)&n;
+        sTraceDecodeFrm[0x80 / 4] = (u32)&fcnt.decoded;
+        sTraceDecodeFrm[0x8c / 4] = (u32)&fcnt.field_0x3c;
+        sTraceDecodeFrm[0x98 / 4] = (u32)&fcnt.field_0x40;
+        fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+        fn(gpSfdCoreTraceCb, &sTraceDecodeFrm[0x6c / 4]);
     }
     t2 = SFTMR_GetTmr(self);
     SFTMR_AddTsum((u8*)&self->field_0x26a0 + frm->type * 0x20, t2 - t1);
@@ -2183,10 +2183,10 @@ s32 sfmpv_SetFrmPara(SfdHandle* self, SfdMpvPicAtr* frm, SfdMpvFrmPara* para, Sf
         if (*out == NULL) {
             self->field_0x098c = 1;
             /* notify error callback through its vtable slot 0x24 */
-            if (lbl_eu_80606E34 != NULL) {
-                lbl_eu_80568DC8[3] = (u32)self;
-                ((void (*)(void*, void*))(*(void**)((u8*)*(void**)lbl_eu_80606E34 + 0x24)))
-                    (lbl_eu_80606E34, &lbl_eu_80568DC8[1]);
+            if (gpSfdCoreTraceCb != NULL) {
+                sTraceSfdWaitRelFrm[3] = (u32)self;
+                ((void (*)(void*, void*))(*(void**)((u8*)*(void**)gpSfdCoreTraceCb + 0x24)))
+                    (gpSfdCoreTraceCb, &sTraceSfdWaitRelFrm[1]);
             }
             return -1;
         }

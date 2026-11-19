@@ -17,7 +17,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Data imports (MWCC does not mangle global-scope data names).
-extern u32 lbl_eu_80663E28; // render-gate mode bitfield (.sbss; bit 21 = busy)
+extern u32 gmPauseFlags; // render-gate mode bitfield (.sbss; bit 21 = busy)
 
 // C-linkage callees (retail unmangled names for the func_ helpers).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
@@ -25,10 +25,6 @@ extern "C" void BgTex_Release_3D9C(CBgTex* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void teardown(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void func_801C412C(CTitleAHelp* self);
 
 // DrawInfo helper - retail emits the mangled nw4r form
 // (SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo), so it is a normal C++ global.
@@ -78,7 +74,7 @@ void CMenuGCItem::Term() {
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mItemBoxGrid.UnloadItemBox();
 
     sInstance = nullptr;
@@ -88,7 +84,7 @@ void CMenuGCItem::Term() {
  * drive the 4-state FSM and refresh the bg / help bar / item grid each frame. */
 void CMenuGCItem::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
 
     switch (mState) {
@@ -97,7 +93,7 @@ void CMenuGCItem::Move() {
         // the panel intro animations and play the open cue (sound 0x6d).
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && mTitleAHelp.isInitialized() != 0 &&
             mItemBoxGrid.IsItemBoxReady() != 0) {
-            func_801C412C(&mTitleAHelp);
+            mTitleAHelp.func_801C412C();
             mItemBoxGrid.InitItemDisplay();
             mState = 1;
             playUISound(0x6d);
@@ -105,7 +101,7 @@ void CMenuGCItem::Move() {
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid is ready.
-        if (mTitleAHelp.isIdle() != 0 && mItemBoxGrid.GetField61() != 0) {
+        if (mTitleAHelp.func_801C4124() != 0 && mItemBoxGrid.GetField61() != 0) {
             mState = 2;
         }
         break;
@@ -114,14 +110,14 @@ void CMenuGCItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (mTitleAHelp.isIdle() != 0 && mItemBoxGrid.GetField61() != 0) {
+        if (mTitleAHelp.func_801C4124() != 0 && mItemBoxGrid.GetField61() != 0) {
             mField54 = 1;
         }
         break;
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     mItemBoxGrid.UpdateItemBox();
 }
 
@@ -130,7 +126,7 @@ void CMenuGCItem::Move() {
  * grid in that order. */
 void CMenuGCItem::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -138,7 +134,7 @@ void CMenuGCItem::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
     mItemBoxGrid.DrawItemBoxGrid(&drawInfo);
 }
 

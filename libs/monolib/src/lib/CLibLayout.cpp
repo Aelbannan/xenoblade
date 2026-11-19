@@ -9,10 +9,10 @@
 #include <revolution/mem/mem_allocator.h>
 #include <nw4r/lyt/lyt_init.h>
 
-// Global CLibLayout singleton (retail sbss symbol). Plain global decl so MWCC
-// emits lbl_eu_80665710 verbatim (C++ does not mangle global namespace vars).
-// Dissolved monolibdata2: retail sbss is 0x10 bytes (lbl_eu_80665710 8, lbl_eu_80665718 4, lbl_eu_8066571C 4)
-CLibLayout* lbl_eu_80665710;
+// The retail singleton is CLibLayout's static spInstance (the symbol map
+// names it spInstance__10CLibLayout); the following word of the 8-byte slot
+// has no identified retail occupant and stays as a visible pad residual.
+CLibLayout* CLibLayout::spInstance;
 u32 lbl_eu_80665710_pad; // second word of 8-byte retail slot
 
 // Own-class vtable slots referenced by the manual vtable below. The C++
@@ -84,7 +84,7 @@ CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pN
     mRangeStart = 0;
     mRangeEnd = 0;
     instanceCount = 0;
-    lbl_eu_80665710 = this;
+    CLibLayout::spInstance = this;
     mType = THREAD_CLIBLAYOUT;
 }
 
@@ -100,7 +100,7 @@ extern "C" CLibLayout* __dt__8045F000(CLibLayout* self, int flags) {
 }
 
 CLibLayout::~CLibLayout() {
-    lbl_eu_80665710 = NULL;
+    CLibLayout::spInstance = NULL;
     if (mHashData) {
         hashCount = 0;
         hashAccum = 0;
@@ -109,12 +109,12 @@ CLibLayout::~CLibLayout() {
 
 // Returns the handle of the nw4r layout allocation region.
 mtl::ALLOC_HANDLE CLibLayout::getAllocHandle(void) {
-    return lbl_eu_80665710->mAllocHandle;
+    return CLibLayout::spInstance->mAllocHandle;
 }
 
 // Returns the global CLibLayout singleton instance.
 CLibLayout* CLibLayout::getInstance() {
-    return lbl_eu_80665710;
+    return CLibLayout::spInstance;
 }
 
 // Mirror of the tail layout of CWorkThread's mMsgQueue member (mMsgQueue
@@ -132,7 +132,7 @@ struct CMsgQueueData {
 bool CLibLayout::isInitialized() {
     // Layout counts as "not initialized" while an exception is pending, or
     // while an EVT_EXCEPTION message is still queued waiting to be processed.
-    CLibLayout* inst = lbl_eu_80665710;
+    CLibLayout* inst = CLibLayout::spInstance;
     bool busy;
     if (inst->checkFlag(THREAD_FLAG_EXCEPTION)) {
         busy = true;
@@ -163,18 +163,18 @@ bool CLibLayout::isInitialized() {
 nw4r::lyt::Layout* CLibLayout::createLayout() {
     // Allocate the 0x20-byte Layout buffer, then placement-construct it.
     return new (static_cast<nw4r::lyt::Layout*>(
-        mtl::MemManager::allocate(0x20, lbl_eu_80665710->mAllocHandle)))
+        mtl::MemManager::allocate(0x20, CLibLayout::spInstance->mAllocHandle)))
         nw4r::lyt::Layout();
 }
 
 nw4r::lyt::ArcResourceAccessor* CLibLayout::createArcResourceAccessor() {
-    return new (lbl_eu_80665710->mAllocHandle) nw4r::lyt::ArcResourceAccessor();
+    return new (CLibLayout::spInstance->mAllocHandle) nw4r::lyt::ArcResourceAccessor();
 }
 
 nw4r::lyt::Picture* CLibLayout::createPicture(void) {
     // Allocate the Picture buffer from the singleton's nw4r layout allocator.
     nw4r::lyt::Picture* picture = static_cast<nw4r::lyt::Picture*>(MEMAllocFromAllocator(
-        &lbl_eu_80665710->mAllocator, 0xF0));
+        &CLibLayout::spInstance->mAllocator, 0xF0));
 
     if (picture != NULL) {
         // Raw storage view of a TexMap: retail never runs a TexMap ctor here,
@@ -205,7 +205,7 @@ nw4r::lyt::TextBox* CLibLayout::createTextbox() {
     // string buffer). The ctor is invoked directly because placement-new would
     // add a NULL guard the retail function does not have.
     nw4r::lyt::TextBox* textbox = static_cast<nw4r::lyt::TextBox*>(MEMAllocFromAllocator(
-        &lbl_eu_80665710->mAllocator, 0x104));
+        &CLibLayout::spInstance->mAllocator, 0x104));
 
     if (textbox != NULL) {
         try {
@@ -221,7 +221,7 @@ nw4r::lyt::TextBox* CLibLayout::createTextbox() {
 }
 
 void CLibLayout::deleteTextboxOrPicture() {
-    MEMFreeToAllocator(&lbl_eu_80665710->mAllocator, this);
+    MEMFreeToAllocator(&CLibLayout::spInstance->mAllocator, this);
 }
 
 // No-op override; CLibLayout performs no per-frame work.
@@ -279,7 +279,7 @@ void* layoutAllocCallback__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     // preloaded mAllocHandle, the hash index, and the element's fallback
     // handle -- so all three share a single local.
     u8* buf;
-    CLibLayout* inst = lbl_eu_80665710;
+    CLibLayout* inst = CLibLayout::spInstance;
     u32 val = inst->mAllocHandle;
     if (static_cast<const volatile CLibLayout*>(inst)->hashCount != 0) {
         s32 idx = inst->hashCount;
@@ -308,17 +308,17 @@ void layoutFreeCallback__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // Free callback for the nw4r layout allocator: blocks inside the layout
     // region (or inside a tracked instance's buffer range) go back to the
     // MemManager; anything else is ignored.
-    // Retail emits exactly two lbl_eu_80665710 loads (range check + loop head)
+    // Retail emits exactly two CLibLayout::spInstance loads (range check + loop head)
     // and walks a fused base-increment induction (singleton-copy += 4).
-    if (lbl_eu_80665710->mRangeStart <= (u32)block &&
-        lbl_eu_80665710->mRangeEnd > (u32)block) {
+    if (CLibLayout::spInstance->mRangeStart <= (u32)block &&
+        CLibLayout::spInstance->mRangeEnd > (u32)block) {
         if (block != NULL) {
             mtl::MemManager::deallocate(block);
         }
         return;
     }
 
-    // NOTE: keep both lbl_eu_80665710 reads INLINE (no anchor local, no
+    // NOTE: keep both CLibLayout::spInstance reads INLINE (no anchor local, no
     // volatile view, no pointer cursor). Verified negatives (this + prior
     // sessions): naming either global read CSEs the second load away
     // (.text 0x7c); an anchor local spanning the early-return call forces a
@@ -329,9 +329,9 @@ void layoutFreeCallback__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // revert). FULL_MATCH fix: NO element local -- spell instanceArray[i]
     // inline at both uses; CSE merges them into one anonymous temp younger
     // than the walker, yielding retail colors walker->r5 / element->r3.
-    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
-        if (lbl_eu_80665710->instanceArray[i]->unk8 <= (u32)block &&
-            lbl_eu_80665710->instanceArray[i]->unkC > (u32)block) {
+    for (u32 i = 0; i < CLibLayout::spInstance->instanceCount; i++) {
+        if (CLibLayout::spInstance->instanceArray[i]->unk8 <= (u32)block &&
+            CLibLayout::spInstance->instanceArray[i]->unkC > (u32)block) {
             if (block != NULL) {
                 mtl::MemManager::deallocate(block);
             }

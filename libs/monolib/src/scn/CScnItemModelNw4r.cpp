@@ -303,7 +303,7 @@ extern "C" void scnImN4UpdateVis(CScnItemModelNw4r* self) {
         f32 fade = self->field_04->field_0x84->value8;
         f32 f = simGetLeafDist7B0((CScnItemModel*)self);
         if (self->field_0x7A8 & 4) {
-            f = lbl_eu_8066A8FC;
+            f = 1.0f;
         }
         if (self->field_0x1484 != 0) {
             ((CScnItemModelNw4rAnimV24*)self->field_0x1484)->v07(fade);
@@ -311,22 +311,22 @@ extern "C" void scnImN4UpdateVis(CScnItemModelNw4r* self) {
         // Fade-latch state machine: when the fade walks (non-zero) while the
         // base value f is held at zero, remember it; otherwise fold a
         // remembered latch back in once and clear it.
-        if (lbl_eu_8066A8E0 != fade && lbl_eu_8066A8E0 == f) {
+        if (0.0f != fade && 0.0f == f) {
             self->field_0x16BC = fade;
         } else {
-            if (lbl_eu_8066A8E0 != self->field_0x16BC) {
-                if (lbl_eu_8066A8E0 != f) {
+            if (0.0f != self->field_0x16BC) {
+                if (0.0f != f) {
                     fade = self->field_0x16BC;
                 }
-                self->field_0x16BC = lbl_eu_8066A8E0;
+                self->field_0x16BC = 0.0f;
             }
         }
         f = fade * f;
-        if (f < lbl_eu_8066A900) {
-            f = lbl_eu_8066A8E0;
+        if (f < 0.001f) {
+            f = 0.0f;
         }
-        if (lbl_eu_8066A8E0 != f && !(self->field_0x7A8 & 0x200)) {
-            f = lbl_eu_8066A8FC;
+        if (0.0f != f && !(self->field_0x7A8 & 0x200)) {
+            f = 1.0f;
         }
         if (self->field_0x1488 != 0) {
             ((CScnItemModelNw4rAnimV28*)self->field_0x1488)->v08(f);
@@ -474,11 +474,11 @@ extern "C" void  scnImN4UpdateXform(CScnItemModelNw4r* self) {
             // Halve the summed bbox extents, scale by the per-axis scale
             // triple, then track the max scale for the radius.
             f32 X = self->field_0x304 *
-                    (lbl_eu_8066A904 * (self->field_0x2EC[3] + self->field_0x2EC[0]));
+                    (0.5f * (self->field_0x2EC[3] + self->field_0x2EC[0]));
             f32 Y = self->field_0x308 *
-                    (lbl_eu_8066A904 * (self->field_0x2EC[4] + self->field_0x2EC[1]));
+                    (0.5f * (self->field_0x2EC[4] + self->field_0x2EC[1]));
             f32 Z = self->field_0x30C *
-                    (lbl_eu_8066A904 * (self->field_0x2EC[5] + self->field_0x2EC[2]));
+                    (0.5f * (self->field_0x2EC[5] + self->field_0x2EC[2]));
             self->field_0x2DC[0] = X;
             self->field_0x2DC[1] = Y;
             self->field_0x2DC[2] = Z;
@@ -872,16 +872,16 @@ extern "C" void  scnImN4OnMatAct(CScnItemModelNw4r* self) {
 // scnImN4SyncMatCol: when the material sub-object reports activity
 // (applyAmbientByLight with a zero color vector), reset the anim helpers and
 // update the +0x78C..0x798 color quadruple from the 12-float table at
-// lbl_eu_8056DE50 (4 groups of 3), selecting the row by the +0x7A8 mode
+// sMatColorTable (4 groups of 3), selecting the row by the +0x7A8 mode
 // bits 0x10/0x20/0x40 (falling back to `arg2`). The vtable-0x9C chain
 // notify (simNotifyVfunc9C) is always issued at the end.
 extern "C" void  scnImN4SyncMatCol(CScnItemModelNw4r* self, u32 arg2, u32 arg3) {
-    const float* tbl = lbl_eu_8056DE50;
+    const float* tbl = sMatColorTable;
     u32 mode = arg2;
     ml::CVec3 vec;
-    vec.x = lbl_eu_8066A8FC;
-    vec.y = lbl_eu_8066A8FC;
-    vec.z = lbl_eu_8066A8FC;
+    vec.x = 1.0f;
+    vec.y = 1.0f;
+    vec.z = 1.0f;
     if (applyAmbientByLight(&self->field_0x16C8, &vec, 0) != 0) {
         if (arg3 == 0) {
             simSetFlag1Tree((CScnItemModel*)self, 1);
@@ -1193,8 +1193,8 @@ extern "C" void  scnImN4UpdateBounds(CScnItemModelNw4r* self, int param) {
     }
     if (self->field_0x7A4 & 0x40000000) {
         nw4r::math::VEC3 v;                 // single stack slot reused by all 12 columns
-        const f32 zero = lbl_eu_8066A8E0;
-        const f32 one = lbl_eu_8066A8FC;
+        const f32 zero = 0.0f;
+        const f32 one = 1.0f;
         for (int i = 0; i < 4; i++) {
             nw4r::math::MTX34* mtx = (nw4r::math::MTX34*)self->field_844[i];
             if (mtx == 0) continue;
@@ -1247,13 +1247,13 @@ extern "C" void  scnImN4UpdateBounds(CScnItemModelNw4r* self, int param) {
     } else {
         self->field_0x2DC[0] =
             self->field_0x304 *
-            (lbl_eu_8066A904 * (self->field_0x2EC[3] + self->field_0x2EC[0]));
+            (0.5f * (self->field_0x2EC[3] + self->field_0x2EC[0]));
         self->field_0x2DC[1] =
             self->field_0x308 *
-            (lbl_eu_8066A904 * (self->field_0x2EC[4] + self->field_0x2EC[1]));
+            (0.5f * (self->field_0x2EC[4] + self->field_0x2EC[1]));
         self->field_0x2DC[2] =
             self->field_0x30C *
-            (lbl_eu_8066A904 * (self->field_0x2EC[5] + self->field_0x2EC[2]));
+            (0.5f * (self->field_0x2EC[5] + self->field_0x2EC[2]));
         f32 mx = self->field_0x304;
         if (self->field_0x308 > mx) {
             mx = self->field_0x308;
@@ -1427,7 +1427,7 @@ extern "C" CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     if (enable != 0) {
         flags |= 1;
     }
-    // The factory's first argument is the scene (callers pass lbl_eu_80663E14);
+    // The factory's first argument is the scene (callers pass gmScene);
     // `self` is still typed as the model here, so view it as the CScn.
     handle = reinterpret_cast<CScn*>(self)->getAllocHandle();
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
@@ -1729,7 +1729,7 @@ static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
 // scnImN4ScanUserData: scan the +0x824 node table (walked by 4-byte entries against
 // a reloaded base+count*4 end, retail keeps the reloads). For every node, open
 // its nw4r ResUserData and scan the named items: an item whose name matches
-// the global lbl_eu_806638D0 target raises the entry's +2 flag bit 1; when its
+// the global spScnImN4UserDataItemName target raises the entry's +2 flag bit 1; when its
 // data slot (item+dataOffset) holds a non-zero first word, the +0x7A4 bit-2
 // flag is raised on the model.
 extern "C" void scnImN4ScanUserData(CScnItemModelNw4r* self) {
@@ -1765,7 +1765,7 @@ extern "C" void scnImN4ScanUserData(CScnItemModelNw4r* self) {
                                    ? (const char*)item + item->nameOffset
                                    : NULL;
 
-            if (strcmp(name, lbl_eu_806638D0) == 0) {
+            if (strcmp(name, spScnImN4UserDataItemName) == 0) {
                 // GetData() is fully inlined TWICE by retail: once to pick
                 // the entry flag, once to dereference the value word.
                 if (item == NULL) {
@@ -1825,7 +1825,7 @@ extern "C" void  scnImN4UpdateMatFade(CScnItemModelNw4r* self, f32 param) {
     if (self->field_0x858 == param) {
         return;
     }
-    if (param == lbl_eu_8066A8E0) {
+    if (param == 0.0f) {
         // param == 0: restore every material's original blend/alpha state.
         if (self->field_0x7A4 & 0x400) {
             u32 numMats = nw4r::g3d::ResMdl(self->field_0x146C)
@@ -1951,9 +1951,9 @@ extern "C" void  scnImN4UpdateMatFade(CScnItemModelNw4r* self, f32 param) {
                 tevColor.GXSetTevColor((GXTevRegID)1, color);
             } else {
                 GXColor color;
-                color.r = (u8)(lbl_eu_8066A8E4 * lbl_eu_8066A8E0);
-                color.g = (u8)(lbl_eu_8066A8E4 * lbl_eu_8066A8E0);
-                color.b = (u8)(lbl_eu_8066A8E4 * lbl_eu_8066A8E0);
+                color.r = (u8)(lbl_eu_8066A8E4 * 0.0f);
+                color.g = (u8)(lbl_eu_8066A8E4 * 0.0f);
+                color.b = (u8)(lbl_eu_8066A8E4 * 0.0f);
                 color.a = (u8)(lbl_eu_8066A8E4 * (lbl_eu_8066A8FC - param));
                 tevColor.GXSetTevKColor((GXTevKColorID)3, color);
             }
@@ -2048,7 +2048,7 @@ extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX3
         }
         // Vertical step clamped to +/-1 per frame.
         if (ml::math::abs(adj.y) > lbl_eu_8066A8FC) {
-            f32 dirY = adj.y < lbl_eu_8066A8E0 ? lbl_eu_8066A910
+            f32 dirY = adj.y < 0.0f ? lbl_eu_8066A910
                                                : lbl_eu_8066A8FC;
             node->vecA.y = tgt.y - dirY;
         }
@@ -2077,7 +2077,7 @@ extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX3
             node->vecB.y *= lbl_eu_8066A920;
             node->vecB.z *= lbl_eu_8066A920;
         }
-        if (scale != lbl_eu_8066A8E0) {
+        if (scale != 0.0f) {
             node->vecA.x += node->vecB.x;
             node->vecA.y += node->vecB.y;
             node->vecA.z += node->vecB.z;
@@ -2096,7 +2096,7 @@ extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX3
         diff.y = node->vecA.y - tgt.y;
         diff.z = node->vecA.z - tgt.z;
         nw4r::math::MTX34 rotMtx;
-        if (diff.x != lbl_eu_8066A8E0 || diff.z != lbl_eu_8066A8E0) {
+        if (diff.x != 0.0f || diff.z != 0.0f) {
             // Build a rotation tilting the -Y axis toward the horizontal
             // direction of the offset.
             nw4r::math::VEC3& dir = tmpVec;
@@ -2104,44 +2104,44 @@ extern "C" void scnImN4UpdateShadowMtx(CScnItemModelNw4r* self, nw4r::math::MTX3
             dir.z = diff.z;
             dir.y = lbl_eu_8066A910;
             f32 dlen = dir.y * dir.y + dir.x * dir.x + dir.z * dir.z;
-            if (dlen == lbl_eu_8066A8E0) {
+            if (dlen == 0.0f) {
                 dir = *(nw4r::math::VEC3*)&ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
             }
             nw4r::math::VEC3 up;
-            up.x = lbl_eu_8066A8E0;
+            up.x = 0.0f;
             up.y = lbl_eu_8066A910;
-            up.z = lbl_eu_8066A8E0;
+            up.z = 0.0f;
             f32 dot = up.x * dir.x + up.y * dir.y + up.z * dir.z;
             nw4r::math::VEC3 quat;
-            quat.x = lbl_eu_8066A8E0;
+            quat.x = 0.0f;
             quat.y = lbl_eu_8066A8FC;
-            quat.z = lbl_eu_8066A8E0;
-            f32 quatW = lbl_eu_8066A8E0;
+            quat.z = 0.0f;
+            f32 quatW = 0.0f;
             if (dot >= lbl_eu_8066A924) {
                 nw4r::math::VEC3 cross;
                 PSVECCrossProduct((const Vec*)&up, (const Vec*)&dir,
                                   (Vec*)&cross);
                 f32 v = (lbl_eu_8066A8FC + dot) * lbl_eu_8066A928;
-                if (!(v >= lbl_eu_8066A8E0)) {
+                if (!(v >= 0.0f)) {
                     nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                       lbl_eu_80526300);
                 }
                 f32 sinH;
                 if (((lbl_eu_8066A8FC + dot) * lbl_eu_8066A928) >
-                    lbl_eu_8066A8E0) {
+                    0.0f) {
                     sinH = (lbl_eu_8066A8FC + dot) * lbl_eu_8066A928 *
                            nw4r::math::FrSqrt((lbl_eu_8066A8FC + dot) *
                                               lbl_eu_8066A928);
                 } else {
-                    sinH = lbl_eu_8066A8E0;
+                    sinH = 0.0f;
                 }
                 f32 invSin = lbl_eu_8066A8FC / sinH;
                 quat.x = cross.x * invSin;
                 quat.y = cross.y * invSin;
                 quat.z = cross.z * invSin;
-                quatW = lbl_eu_8066A904 * sinH;
+                quatW = 0.5f * sinH;
             }
             // Quaternion -> rotation matrix (w kept separate, retail layout).
             Quaternion q;
@@ -2424,20 +2424,20 @@ extern "C" void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
         self->field_0x2DC[0] = mtx.m[0][3];
         self->field_0x2DC[1] = mtx.m[1][3];
         self->field_0x2DC[2] = mtx.m[2][3];
-        self->field_0x2E8 = lbl_eu_8066A8E0;
+        self->field_0x2E8 = 0.0f;
     } else {
-        f32 c = lbl_eu_8066A904;
+        f32 c = 0.5f;
         self->field_0x2DC[0] =
             (self->field_0x2EC[3] + self->field_0x2EC[0]) * c;
         self->field_0x2DC[1] =
             (self->field_0x2EC[4] + self->field_0x2EC[1]) * c;
         self->field_0x2DC[2] =
             (self->field_0x2EC[5] + self->field_0x2EC[2]) * c;
-        self->field_0x2E8 = lbl_eu_8066A8E0;
+        self->field_0x2E8 = 0.0f;
     }
     ml::CAttrTransform* t = (ml::CAttrTransform*)simGetLeafActData(self);
     *(nw4r::math::VEC3*)&self->field_0x2DC[0] += *(nw4r::math::VEC3*)&t->mPrevPos;
-    f32 maxDist = lbl_eu_8066A8E0;
+    f32 maxDist = 0.0f;
     // Each candidate mixes components from the two stored vec3s: x from
     // tbl[(i>>2)&1], y from tbl[(i>>1)&1], z from tbl[i&1] (the 8 corners
     // of the min/max box).
@@ -2453,14 +2453,14 @@ extern "C" void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
             maxDist = mag2;
         }
     }
-    if (maxDist == lbl_eu_8066A8E0 || maxDist > lbl_eu_8066A8E0) {
+    if (maxDist == 0.0f || maxDist > 0.0f) {
         // no warning
     } else {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 len;
-    if (maxDist == lbl_eu_8066A8E0 || maxDist < lbl_eu_8066A8E0) {
-        len = lbl_eu_8066A8E0;
+    if (maxDist == 0.0f || maxDist < 0.0f) {
+        len = 0.0f;
     } else {
         len = maxDist * nw4r::math::FrSqrt(maxDist);
     }
@@ -2697,15 +2697,15 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     self->field_0x14A8 = -1;
     self->field_0x14AC = 0;
     self->field_0x14B0 = 0;
-    self->field_0x14B4.x = lbl_eu_8066A8E0;
-    self->field_0x14B4.y = lbl_eu_8066A8E0;
-    self->field_0x14B4.z = lbl_eu_8066A8E0;
+    self->field_0x14B4.x = 0.0f;
+    self->field_0x14B4.y = 0.0f;
+    self->field_0x14B4.z = 0.0f;
     self->field_0x14C0 = 0;
 
     // Sub-objects.
     __ct__CScnEffectActNw4r(&self->field_0x14C4);
     __ct__CScnMaruShadowNw4r(&self->field_0x1650);
-    self->field_0x16BC = lbl_eu_8066A8E0;
+    self->field_0x16BC = 0.0f;
     self->field_0x16C0 = (s16)param;
     self->field_0x16C4 = 0;
     __ct__CMdlMaterial(&self->field_0x16C8);
@@ -2750,7 +2750,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     // getScnRoot49C allocator path, later ones getScnRoot44C (the .sbss byte
     // is a one-shot switch cleared right after the read).
     u32 scnMdlSize;
-    if (lbl_eu_806658D8 != 0) {
+    if (gScnImN4AllocPathFlag != 0) {
         nw4r::g3d::ResMdl resMdl(self->field_0x146C);
         self->field_0x147C = nw4r::g3d::ScnMdl::Construct(
             (MEMAllocator*)getScnRoot49C((CScn*)pSrc), &scnMdlSize, resMdl,
@@ -2761,7 +2761,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
             (MEMAllocator*)getScnRoot44C((CScn*)pSrc), &scnMdlSize, resMdl,
             bufferOption, 2);
     }
-    lbl_eu_806658D8 = 0;
+    gScnImN4AllocPathFlag = 0;
 
     // Optional group tree (bit-0) and the camera hookup (RootNw4r_AttachCamOne).
     if (flags & 1) {
@@ -3016,7 +3016,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     // stash its world-matrix slot for the material sub-object.
     {
         nw4r::g3d::ResMdl resMdl(self->field_0x146C);
-        nw4r::g3d::ResNode node = resMdl.GetResNode(lbl_eu_806638D4);
+        nw4r::g3d::ResNode node = resMdl.GetResNode(spScnImN4NodeName);
         if (node.ptr() != 0) {
             if (node.ptr() == 0) {
                 nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -3421,6 +3421,6 @@ extern "C" u32 lbl_eu_8056DE80[386] = {
 
 // [.sbss] 0x806658D8-0x806658E8 (16B): one-shot allocator-switch byte
 // (hpp: extern u8) + 7 pad bytes, then the second 8-byte zero-fill slot.
-u8 lbl_eu_806658D8;
-u32 lbl_eu_806658D8_pad;
+u8 gScnImN4AllocPathFlag;
+u32 gScnImN4AllocPathFlag_pad;
 u32 lbl_eu_806658E0[2];

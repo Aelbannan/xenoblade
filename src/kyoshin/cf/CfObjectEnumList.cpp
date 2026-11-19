@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"  // Sc4798_GetSignedItemValue
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
@@ -1363,8 +1365,8 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
     list->mPtrCount = 0;
 
     const float padA = lbl_eu_80666EB8;        // probe offset x/z
-    const float padB = lbl_eu_80666ECC;        // probe offset y
-    const float depthScale = lbl_eu_80666EC8;  // z-blend factor
+    const float padB = 0.1f;        // probe offset y
+    const float depthScale = 0.2f;  // z-blend factor
     struct SRect16 {
         s16 x, y, w, h;
     };
@@ -1446,7 +1448,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
                     }
                 }
                 if (keep) {
-                    keep = ColiQuerySegment(lbl_eu_80665958, (u8*)pose + 0x10C,
+                    keep = ColiQuerySegment(sEneColiProbe, (u8*)pose + 0x10C,
                                          &t[k], 1, 0) == 0;
                 }
             }
@@ -1531,7 +1533,7 @@ void __ct__800FAE3C(cf::CfObjEnumList* list, ml::CVec3* arg1, u32 options) {
         if (!flag) {
             flag = (flag |
                     ColiQuerySegment(
-                        reinterpret_cast<cf::CfCamFollow*>(lbl_eu_80665958),
+                        reinterpret_cast<cf::CfCamFollow*>(sEneColiProbe),
                         &vec, arg1, 1, 0)) != 0;
         }
         if (options & 2) {
@@ -1660,8 +1662,8 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     const float pi = ml::pi;
     const float negPi = -pi;
     const float twoPi = ml::tau;
-    const float angScale = lbl_eu_80666ED0;
-    const float halfScale = lbl_eu_80666ED4;
+    const float angScale = 0.024543693f;
+    const float halfScale = 0.5f;
     RebuildCtx ctx;
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
@@ -1755,8 +1757,8 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     self->mPtrCount = 0;
     const float pi = ml::pi;         // f22
     const float twoPi = ml::tau;      // f21
-    const float angScale = lbl_eu_80666ED0;   // f29
-    const float halfScale = lbl_eu_80666ED4;  // f31
+    const float angScale = 0.024543693f;   // f29
+    const float halfScale = 0.5f;  // f31
     u32 invert = flags & 2;
     for (u32 i = 0; i < ctx.count; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
@@ -1877,8 +1879,8 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
     vb.x = lbl_eu_80666EB8;
     vb.y = lbl_eu_80666EB8;
     vb.z = threshold;
-    float s1 = nw4r::math::SinFIdx(lbl_eu_80666ED8 * angle);
-    float c1 = nw4r::math::CosFIdx(lbl_eu_80666ED8 * angle);
+    float s1 = nw4r::math::SinFIdx(40.743664f * angle);
+    float c1 = nw4r::math::CosFIdx(40.743664f * angle);
     EnumRotMtx33 rot1;
     rot1._00 = c1;
     rot1._01 = lbl_eu_80666EB8;
@@ -1905,8 +1907,8 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
     va.x = lbl_eu_80666EB8;
     va.y = lbl_eu_80666EB8;
     va.z = range;
-    float s2 = nw4r::math::SinFIdx(lbl_eu_80666ED8 * angle);
-    float c2 = nw4r::math::CosFIdx(lbl_eu_80666ED8 * angle);
+    float s2 = nw4r::math::SinFIdx(40.743664f * angle);
+    float c2 = nw4r::math::CosFIdx(40.743664f * angle);
     const double tMin = lbl_eu_80666EE0;
     const double tMax = lbl_eu_80666EE8;
     EnumRotMtx33 rot2;
@@ -2885,8 +2887,8 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
     // retail (fcmpo on f1=spotCopy.y vs f0=objPos.y).
     ml::CVec3* high = &objPos;    // larger Y -> first probe arg
     ml::CVec3* low = &spotCopy;   // smaller Y
-    spotCopy.y += lbl_eu_80666ECC;
-    objPos.y += lbl_eu_80666ECC;
+    spotCopy.y += 0.1f;
+    objPos.y += 0.1f;
     if (spotCopy.y > objPos.y) {
         low = &objPos;
         high = &spotCopy;
@@ -2898,7 +2900,7 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
     // out.set(temp); } - the ps result lands in a helper temp (0x20), then a
     // scalar copy into zero (0x50), exactly the retail's dead zero block.
     ml::CVec3::sub(zero, *high, *high);
-    if (lbl_eu_80663F08 == 0) {
+    if (gCfEnumProbeOffsetsInitFlag == 0) {
         // Probe-offset table: four diagonal direction vectors.
         gCfEnumListProbeOffsets[0] = lbl_eu_80666EBC;
         gCfEnumListProbeOffsets[1] = lbl_eu_80666EB8;
@@ -2912,7 +2914,7 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
         gCfEnumListProbeOffsets[9] = lbl_eu_80666EBC;
         gCfEnumListProbeOffsets[10] = lbl_eu_80666EB8;
         gCfEnumListProbeOffsets[11] = lbl_eu_80666EF0;
-        lbl_eu_80663F08 = 1;
+        gCfEnumProbeOffsetsInitFlag = 1;
     }
     const ml::CVec3* tblBase =
         reinterpret_cast<const ml::CVec3*>(gCfEnumListProbeOffsets);

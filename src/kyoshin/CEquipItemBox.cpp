@@ -9,7 +9,6 @@
 #include "kyoshin/cf/CItemImpl.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
-#undef CItem_initItemImplInstances
 #include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CBaseCur.hpp"
@@ -42,6 +41,10 @@
 // Float constants in .sdata2, referenced via sda21 reloc.
 extern const float lbl_eu_80668B28;
 extern const float lbl_eu_80668B04;
+
+// Constant records owned by this translation unit; MWCC emits them into .rodata.
+static const CEquipItemBoxCatTable12 sEquipSlotClearCategories = {{ 2, 4, 5, 6, 7, 8, 2, 4, 5, 6, 7, 8 }};
+static const CEquipItemBoxMoveTable sEquipMoveSearchTypes = {{ 0x10, 0x100000, 0x200000 }};
 
 // varargs name formatter (MWCC keeps the unmangled library name).
 int sprintf(char*, const char*, ...);
@@ -290,14 +293,13 @@ char* CEquipItemGrid::fmtEIBItemName(u32 param) {
 // category 3 the name-byte chain (page 3..0xB special-cases re-sort after a
 // category rebuild). -O4,s selects retail's stmw r30 prologue.
 void CEquipItemGrid::sortEIBGridByPage() {
-    u8 cat = this->cat;
-    sortEIBGridByCat(cat);
-    u8 page = (u8)CItemBlock_getFlag120EC(cat);
-    // Category dispatch first (retail test order), then the three per-category
+    sortEIBGridByCat(this->cat);
+    u8 page = (u8)CItemBlock_getFlag120EC(this->cat);
+    // Category dispatch first
     // page dispatches with the cat-2 body laid out first (retail body order).
-    if ((u32)(cat - 4) <= 4) goto cat48;
-    if (cat == 2) goto cat2;
-    if (cat == 3) goto cat3;
+    if ((u32)(this->cat - 4) <= 4) goto cat48;
+    if ((int)this->cat == 2) goto cat2;
+    if ((int)this->cat == 3) goto cat3;
     goto done;
 cat2:
     sortEIBByFlags();
@@ -332,103 +334,99 @@ cat2:
     goto done;
 cat48:
     sortEIBByFlags();
-    if (page <= 9) {
-        switch (page) {
-        case 0:
-            sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
-            sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
-            break;
-        case 1:
-            sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
-            sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm7A();
-            break;
-        case 2:
-            sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
-            sortEIBByNm17(3); sortEIBByNm17(2); sortEIBByNm17(1);
-            break;
-        case 3:
-            sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
-            sortEIBByNm17(3); sortEIBByNm17(1); sortEIBByNm17(2);
-            break;
-        case 4:
-            sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
-            sortEIBByNm17(2); sortEIBByNm17(1); sortEIBByNm17(3);
-            break;
-        case 5:
-            sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
-            sortEIBByNm72(); sortEIBFlagAsc(); sortEIBByVf30();
-            sortEIBByNm82();
-            break;
-        case 6:
-            sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
-            sortEIBByNm72(); sortEIBByVf30(); sortEIBFlagDesc();
-            break;
-        case 7:
-            sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
-            sortEIBByNm72(); sortEIBByVf30(); sortEIBFlagAsc();
-            break;
-        case 8:
-        case 9:
-            sortEIBByCount();
-            break;
-        }
+    switch (page) {
+    case 0:
+        sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
+        sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
+        break;
+    case 1:
+        sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
+        sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm7A();
+        break;
+    case 2:
+        sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
+        sortEIBByNm17(3); sortEIBByNm17(2); sortEIBByNm17(1);
+        break;
+    case 3:
+        sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
+        sortEIBByNm17(3); sortEIBByNm17(1); sortEIBByNm17(2);
+        break;
+    case 4:
+        sortEIBFlagAsc(); sortEIBByVf30(); sortEIBByNm72();
+        sortEIBByNm17(2); sortEIBByNm17(1); sortEIBByNm17(3);
+        break;
+    case 5:
+        sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
+        sortEIBByNm72(); sortEIBFlagAsc(); sortEIBByVf30();
+        sortEIBByNm82();
+        break;
+    case 6:
+        sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
+        sortEIBByNm72(); sortEIBByVf30(); sortEIBFlagDesc();
+        break;
+    case 7:
+        sortEIBByNm17(1); sortEIBByNm17(2); sortEIBByNm17(3);
+        sortEIBByNm72(); sortEIBByVf30(); sortEIBFlagAsc();
+        break;
+    case 8:
+    case 9:
+        sortEIBByCount();
+        break;
     }
     goto done;
 cat3:
-    if (page <= 0xB) {
-        switch (page) {
-        case 0:
-            sortEIBByFlags();
-            break;
-        case 1:
-            sortEIBByVf90(); sortEIBGridByCat(cat); sortEIBByVf08();
-            break;
-        case 2:
-            sortEIBGridByCat(cat); sortEIBByVf90(); sortEIBByVf08();
-            sortEIBByNm00(2); sortEIBByNm00(0); sortEIBByNm00(1);
-            break;
-        case 3:
-            sortEIBGridByCat(cat); sortEIBByVf90(); sortEIBByVf08();
-            sortEIBByNm00(1); sortEIBByNm00(0); sortEIBByNm00(2);
-            break;
-        case 4:
-            sortEIBGridByCat(cat); sortEIBByVf90(); sortEIBByVf08();
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            break;
-        case 5:
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
-            sortEIBByNm58(1);
-            break;
-        case 6:
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
-            sortEIBByNm58(2);
-            break;
-        case 7:
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
-            sortEIBByNm58(3);
-            break;
-        case 8:
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
-            sortEIBByNm58(4);
-            break;
-        case 9:
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
-            sortEIBByNm58(5);
-            break;
-        case 10:
-            sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
-            sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
-            sortEIBByNm58(6);
-            break;
-        case 11:
-            sortEIBByCount();
-            break;
-        }
+    switch (page) {
+    case 0:
+        sortEIBByFlags();
+        break;
+    case 1:
+        sortEIBByVf90(); sortEIBGridByCat(cat); sortEIBByVf08();
+        break;
+    case 2:
+        sortEIBGridByCat(cat); sortEIBByVf90(); sortEIBByVf08();
+        sortEIBByNm00(2); sortEIBByNm00(0); sortEIBByNm00(1);
+        break;
+    case 3:
+        sortEIBGridByCat(cat); sortEIBByVf90(); sortEIBByVf08();
+        sortEIBByNm00(1); sortEIBByNm00(0); sortEIBByNm00(2);
+        break;
+    case 4:
+        sortEIBGridByCat(cat); sortEIBByVf90(); sortEIBByVf08();
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        break;
+    case 5:
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
+        sortEIBByNm58(1);
+        break;
+    case 6:
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
+        sortEIBByNm58(2);
+        break;
+    case 7:
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
+        sortEIBByNm58(3);
+        break;
+    case 8:
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
+        sortEIBByNm58(4);
+        break;
+    case 9:
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
+        sortEIBByNm58(5);
+        break;
+    case 10:
+        sortEIBByNm00(2); sortEIBByNm00(1); sortEIBByNm00(0);
+        sortEIBByVf90(); sortEIBByVf08(); sortEIBGridByCat(cat);
+        sortEIBByNm58(6);
+        break;
+    case 11:
+        sortEIBByCount();
+        break;
     }
     goto done;
 done: ;
@@ -474,7 +472,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
                 double dcount = (double)(u32)count;
                 double dacc = (double)(u32)result;
                 result = __cvt_fp2unsigned(
-                    lbl_eu_80668B24 * (dcount * rec.f[id & 0x3F]) + dacc);
+                    0.25f * (dcount * rec.f[id & 0x3F]) + dacc);
             }
         }
     } else {
@@ -483,7 +481,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
         u8 n = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
         float inc = lbl_eu_80668B28;
         for (u8 i = 0; i < n; i++) {
-            inc += lbl_eu_80668B08;
+            inc += 0.2f;
         }
         result = __cvt_fp2unsigned((double)(u32)(u16)count * inc);
     }
@@ -659,8 +657,8 @@ void CEquipItemGrid::sortEIBByNm58(int param) {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u16 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
-            u16 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
+            u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
+            u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
             u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyA);
             u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x58], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
@@ -690,8 +688,8 @@ void CEquipItemGrid::sortEIBByNm00(int param) {
             CEquipItemData* b = &data[j + 1];
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
-            u16 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
-            u16 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
+            u32 keyA = CItem_initItemImplInstances((CItemData*)objA)->vf54((CItemData*)objA);
+            u32 keyB = CItem_initItemImplInstances((CItemData*)objB)->vf54((CItemData*)objB);
             u8 nameA = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyA);
             u8 nameB = BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0], (u16)keyB);
             u32 eqA = (u32)((u8)nameA == param);
@@ -1069,13 +1067,10 @@ void CEquipItemGrid::sortEIBByVf90() {
 
 // Scaled item-progress reader: look up the item's stored count and the row's
 // flag word; when bit 4 is set, rescale the count by the drop-rate table and
-// clamp the result at 999. Returns the value as a float (double-precision
-// container, MWCC's fsubs magic-trick conversion).
 // Scaled item-progress reader: look up the item's stored count and the row's
 // flag word; when bit 4 is set, rescale the count by the drop-rate table and
 // clamp the result at 999. All FP math is single precision: the (f32) casts
-// make MWCC emit its own 0x4330/lfd/fsubs s32->f32 magic (pool constants
-// lbl_eu_80668B18/B10 are compiler-generated, not source references).
+// make MWCC emit its own 0x4330/lfd/fsubs s32->f32 magic.
 double CEquipItemGrid::getEIBProgress(CItemInstance* item) {
     u32 word = item->word;
     u32 g = (u32)lbl_eu_806640F4;
@@ -1085,7 +1080,7 @@ double CEquipItemGrid::getEIBProgress(CItemInstance* item) {
     if (v2 & 4) {
         void* obj = CtrlObjectParam_GetCharEntry(1);
         u16 n = (u16)CtrlObjectParam_GetArtsDataWord(obj);
-        result = lbl_eu_80668B2C * (f32)(int)(result * n);
+        result = 1.5f * (f32)(int)(result * n);
         if (result >= 0x3E7) result = 0x3E7;
     }
     return (f32)result;
@@ -1270,7 +1265,7 @@ CEquipItemBox::CEquipItemBox()
     }
     ItemBlockSetDefaultFlags();
     mGrid = CEquipItemGrid();
-    lbl_eu_806649E0 = 0;
+    equipItemBoxEquipListFilePtr = 0;
     CItemBlock_setFlag120EC(2, 0);
     CItemBlock_setFlag120EC(4, 0);
     CItemBlock_setFlag120EC(5, 0);
@@ -1573,7 +1568,7 @@ void CEquipItemBox::eibNavDown() {
     playUISound(1);
 }
 
-// Up/back handler: mirror of eibNavDown - pages backward through the
+// Up/back handler
 // syswin window / sort menu scroll / name-pane columns / row cursor.
 void CEquipItemBox::eibNavUp() {
     if (reinterpret_cast<CSysWin*>(&mSysWin2)->isOpened() != 0) return;
@@ -1919,7 +1914,7 @@ void CEquipItemBox::handleEIBNamePane() {
             if (ItemBoxGetTab((const u8*)&list->mItemIds[0], idx) == 3) {
                 text = ((CItemBoxPage*)(list))->GetItemName(idx);
             } else {
-                text = BdatGetPtrDirect((const void*)lbl_eu_806649E0,
+                text = BdatGetPtrDirect((const void*)equipItemBoxEquipListFilePtr,
                                      &lbl_eu_8050EFDC[0x1a2], v);
             }
             reinterpret_cast<CSysWin*>(&mSysWin2)->switchKindPane(0);
@@ -1951,7 +1946,7 @@ void CEquipItemBox::handleEIBNamePane() {
             return;
         }
         u8 sel = list->mSelSlot;
-        s32 pos = (s32)(lbl_eu_80668B24 * (f32)(u32)sel);
+        s32 pos = (s32)(0.25f * (f32)(u32)sel);
         mCur44.mActive = 0;
         unk_375 = 1;
         unk_376 = (u8)pos;
@@ -2050,7 +2045,7 @@ u32 CEquipItemBox::findEIBEquipSlot() {
     items = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry(GetCollectedFlagByte((unk_1fc >> 8) & 0xFF));
     u8 idx = (u8)((u8)unk_1f5 * 5 + unk_1f4);
     target = mGrid.getEIBItemId(idx);
-    CEquipItemBoxSlotTable table = lbl_eu_8050EF90;
+    CEquipItemBoxSlotTable table = equipItemBoxSlotDefsTable;
     table.slots[0].item = items->slotIds[5];
     table.slots[1].item = items->slotIds[0];
     table.slots[2].item = items->slotIds[1];
@@ -2284,18 +2279,18 @@ void CEquipItemBox::refreshEIBCellText(s8 v,
         char* str = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36],
                                   0x1e - ((u8)n - 1));
         sprintf(bufText, &lbl_eu_8050EFDC[0x2a], str);
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649B0, (const GXColorS10*)lbl_eu_806649B8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom);
     } else if (v > 0) {
         sprintf(bufText, &lbl_eu_8050EFDC[0x225]);
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649B0, (const GXColorS10*)lbl_eu_806649B8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom);
     } else if (v == 0) {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
     } else if (v == -2) {
         sprintf(bufText, getErrMesText16());
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649C0, (const GXColorS10*)lbl_eu_806649C8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelSelectedTop, (const GXColorS10*)equipItemBox_sortOptionLabelSelectedBottom);
     } else if (v == -3) {
         sprintf(bufText, getErrMesText15());
-        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)lbl_eu_806649D0, (const GXColorS10*)lbl_eu_806649D8);
+        PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelAltTop, (const GXColorS10*)equipItemBox_sortOptionLabelAltBottom);
     } else {
         sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
     }
@@ -2595,10 +2590,12 @@ void CEquipItemBox::refreshEIBItemList() {
 // hanging off this+0x4C (sub-view +0x2C slot). The tail is duplicated per
 // branch in retail (no shared helper), so keep both copies textual.
 void CEquipItemBox::updateEIBCursorPos() {
+    // One shared VEC3 scratch slot and three name buffers; the retail frame
+    // reuses the low slot for winName/pos because their branches do not overlap.
+    char pageName[0x28];
+    char itemName[0x20];
     u8 winName[0x18];
-    // Retail allocates SEPARATE stack copies per branch (pageName sp+80,
-    // itemName sp+48, and two distinct 'pos' slots) because none of them
-    // live across the branch join. Keep declarations branch-local.
+    nw4r::math::VEC3 pos;
     // Polarity per retail: menu OPEN (!= 0) takes the win-name path.
     if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) {
         CSysWin::getPaneScreenPos(reinterpret_cast<nw4r::math::VEC3*>(winName), reinterpret_cast<CSysWin*>(&mSysWin1), unk_374);
@@ -2606,8 +2603,6 @@ void CEquipItemBox::updateEIBCursorPos() {
     } else {
         s8 sel = unk_1f5;
         if (sel == -1) {
-            char pageName[0x28];
-            nw4r::math::VEC3 pos;
             sprintf(pageName, &lbl_eu_8050EFDC[0x2C8], (s8)unk_373 + 1);
             nw4r::lyt::Pane* pane =
                 field_38->GetRootPane()
@@ -2619,8 +2614,6 @@ void CEquipItemBox::updateEIBCursorPos() {
             copyVEC3((float*)&mCur44.mpLayout->GetRootPane()->GetTranslate(),
                      &pos);
         } else {
-            char itemName[0x20];
-            nw4r::math::VEC3 pos;
             sprintf(itemName, &lbl_eu_8050EFDC[0x20C], (s8)unk_1f4 + sel * 5 + 1);
             nw4r::lyt::Pane* pane =
                 field_38->GetRootPane()
@@ -2746,11 +2739,11 @@ void CEquipItemBox::refreshEIBSortTabs() {
                 flagB = true;
             }
             if ((u32)(v - 4) <= 4 || (int)v == 2 || (int)v == 0xb) {
-                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
             } else {
-                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+                PaneMatSetTevColorsByName(field_38, buf1, (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+                PaneMatSetTevColorsByName(field_38, buf2, (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
             }
         }
         nw4r::lyt::Pane* pane1 = field_38->GetRootPane()->FindPaneByName(buf1, true);
@@ -2841,37 +2834,37 @@ void CEquipItemBox::refreshEIBSortPages(int a) {
     }
     u8 v2 = unk_36c[(s8)unk_373];
     if ((u32)(v2 - 4) <= 4 || (int)v2 == 2 || (int)v2 == 0xb) {
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)lbl_eu_80664940, (const GXColorS10*)lbl_eu_80664948);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)equipItemBox_sortMenuTabSelectedTop, (const GXColorS10*)equipItemBox_sortMenuTabSelectedBottom);
     } else {
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
-        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)lbl_eu_80664930, (const GXColorS10*)lbl_eu_80664938);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x3f9], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x405], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x411], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x41d], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x429], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x435], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x441], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x44d], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x459], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x465], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x470], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x47b], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x486], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x491], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
+        PaneMatSetTevColorsByName(field_38, &lbl_eu_8050EFDC[0x49c], (const GXColorS10*)equipItemBox_sortMenuTabNeutralTop, (const GXColorS10*)equipItemBox_sortMenuTabNeutralBottom);
     }
 }
 
@@ -3004,13 +2997,13 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     // The three int->float conversions use MWCC's own s32->f32 magic
     // ((f32) casts emit lis-0x4330/xoris/lfd/fsubs inline, sharing one
     // constant copy in r30 like retail); do NOT hand-roll unions here.
-    float f = (f32)(u32)(u8)BdatGetU8Direct((const void*)g, base + 0x612, kind2) / lbl_eu_80668B48;
+    float f = (f32)(u32)(u8)BdatGetU8Direct((const void*)g, base + 0x612, kind2) / 10.0f;
     name69 = BdatGetU8Direct((const void*)g, base + 0x69, kind2);
     u8 flag92 = BdatGetU8Direct((const void*)g, base + 0x92, kind2);
     if (flag92 & 4) {
         void* obj = CtrlObjectParam_GetCharEntry(1);
-        rateA = lbl_eu_80668B4C * (f32)(int)(rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj));
-        rateB = lbl_eu_80668B2C * (f32)(int)(rateB * (u32)CtrlObjectParam_GetArtsDataWord(obj));
+        rateA = 1.4f * (f32)(int)(rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj));
+        rateB = 1.5f * (f32)(int)(rateB * (u32)CtrlObjectParam_GetArtsDataWord(obj));
         if (rateA >= 0x3e7) rateA = 0x3e7;
         if (rateB >= 0x3e7) rateB = 0x3e7;
     }
@@ -3046,13 +3039,13 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     LayoutSetTextBoxFmtValue(field_38, base + 0x55e, base + 0x228, 0);
     LayoutSetTextBoxFmtValue(field_38, base + 0x50c, base + 0x228, 0);
     LayoutSetTextBoxFmtValue(field_38, base + 0x517, base + 0x228, 0);
-    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
+    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
     rebuildEIBKind2Cells(a, b);
 }
 
@@ -3131,13 +3124,13 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
         }
     }
     LayoutSetTextBoxFmtValue(field_38, base + 0x517, str2, 0);
-    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)lbl_eu_80664980, (const GXColorS10*)lbl_eu_80664988);
-    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
-    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)lbl_eu_80664970, (const GXColorS10*)lbl_eu_80664978);
+    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
     rebuildEIBKind2Cells(kind, item);
 }
 
@@ -3165,6 +3158,7 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
                       ->FindPaneByName(base + 0x5fe, true),
                   1);
     BdatGetItemType(kind);
+    BdatGetItemId(kind);
     CItemInstance* obj = (CItemInstance*)item;
     u32 key = CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj);
     // Count text: "xN" scaled by the vf08 slot count.
@@ -3420,7 +3414,7 @@ int CEquipItemBox::useEIBSelectedItem() {
     if (slot < 3) {
         // Move-list search: register the selected search type, take the first
         // resulting entry and resolve its CfObjectMove.
-        CEquipItemBoxMoveTable tbl = lbl_eu_8050EFB4;
+        CEquipItemBoxMoveTable tbl = sEquipMoveSearchTypes;
         CfEnumListHolder holder;
         void* list = holder.get();
         startEnumObjects(list, tbl.w[slot], 0);
@@ -3429,7 +3423,7 @@ int CEquipItemBox::useEIBSelectedItem() {
             CEquipItemBoxMoveEntryView* entry =
                 (CEquipItemBoxMoveEntryView*)getEntryAt(list, 0);
             if (entry != 0 && entry->field_4 != 0) {
-                void* moveObj = getCfObjectPc__FPQ22cf12CfObjectMove(entry);
+                void* moveObj = getCfObjectPc((cf::CfObjectMove*)entry);
                 if (kindByte != 3) {
                     // Clear the item from the owning party member's slots.
                     u8 cat = GetCollectedFlagByte(slot);
@@ -3450,7 +3444,7 @@ int CEquipItemBox::useEIBSelectedItem() {
     }
     // Shared tail: copy the 12-byte category table and free the first slot
     // (across all six categories) that still holds the item id.
-    CEquipItemBoxCatTable12 cats = lbl_eu_80668B50;
+    CEquipItemBoxCatTable12 cats = sEquipSlotClearCategories;
     bool cleared = false;
     for (u8 c2 = 0; c2 < 6; c2++) {
         if (cleared) break;
@@ -3546,19 +3540,15 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         void* tex = acc2->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, 0);
         if (tex != 0) {
             PaneSetTexPaletteByName(field_38, base + 0x778, (TPLPalette*)((u32)tex));
-            CEquipItemBoxTexDimsView* dims =
-                ((CEquipItemBoxTexObjView*)tex)->mChain->mDims;
-            u16 v2 = dims->field_2;
-            u16 v0 = dims->field_0;
+            const TPLPalette* palette = (const TPLPalette*)tex;
+            const TPLHeader* dims = palette->descriptorArray[0].textureHeader;
+            u16 v2 = dims->width;
+            u16 v0 = dims->height;
             nw4r::lyt::Pane* pane =
                 field_38->GetRootPane()->FindPaneByName(base + 0x778, true);
             if (pane != 0) {
-                CEquipItemBoxF64Conv c;
-                c.w[1] = (u32)v2;
-                c.w[0] = 0x43300000;
-                float fw = (float)(c.d - lbl_eu_80668B10);
-                c.w[1] = (u32)v0;
-                float fh = (float)(c.d - lbl_eu_80668B10);
+                float fw = (f32)(u32)v2;
+                float fh = (f32)(u32)v0;
                 ((float*)&pane->GetSize())[0] = fw;
                 float size[2];
                 size[0] = fw;
@@ -3571,19 +3561,19 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         copyVEC3((float*)&unk_200,
                  (float*)&posPane->GetTranslate());
         GXColorS10 c0 = PaneMatGetS16QuadByName(field_38, base + 0x791, 0);
-        CopyVec4s((GXColorS10*)lbl_eu_80664920, &c0);
+        CopyVec4s((GXColorS10*)equipItemBox_sortMenuColorSrcTop, &c0);
         GXColorS10 c1 = PaneMatGetS16QuadByName(field_38, base + 0x791, 1);
-        CopyVec4s((GXColorS10*)lbl_eu_80664928, &c1);
-        s16 v0c = lbl_eu_80664920[3];
-        s16 v1c = lbl_eu_80664928[3];
-        lbl_eu_80664930[3] = v0c;
-        lbl_eu_80664938[3] = v1c;
-        lbl_eu_80664940[3] = v0c;
-        lbl_eu_80664948[3] = v1c;
-        lbl_eu_80664950[3] = v0c;
-        lbl_eu_80664958[3] = v1c;
-        lbl_eu_80664960[3] = v0c;
-        lbl_eu_80664968[3] = v1c;
+        CopyVec4s((GXColorS10*)equipItemBox_sortMenuColorSrcBottom, &c1);
+        s16 v0c = equipItemBox_sortMenuColorSrcTop[3];
+        s16 v1c = equipItemBox_sortMenuColorSrcBottom[3];
+        equipItemBox_sortMenuTabNeutralTop[3] = v0c;
+        equipItemBox_sortMenuTabNeutralBottom[3] = v1c;
+        equipItemBox_sortMenuTabSelectedTop[3] = v0c;
+        equipItemBox_sortMenuTabSelectedBottom[3] = v1c;
+        equipItemBox_sortMenuTabColor2Top[3] = v0c;
+        equipItemBox_sortMenuTabColor2Bottom[3] = v1c;
+        equipItemBox_sortMenuTabColor3Top[3] = v0c;
+        equipItemBox_sortMenuTabColor3Bottom[3] = v1c;
         // Cursor objects: construct stack temps and assign them (the implicit
         // CEIBCur::operator= is called out of line, weak in CPartyStateWin), then
         // dispatch initLayout (CEIBCur's empty dtor inlines away; the
@@ -3626,29 +3616,29 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         nw4r::lyt::Pane* paneB =
             field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true);
         GXColorS10 p1 = PaneMatGetS16Quad(paneB, 0);
-        CopyVec4s((GXColorS10*)lbl_eu_80664970, &p1);
+        CopyVec4s((GXColorS10*)equipItemBox_cellLabelNeutralTop, &p1);
         GXColorS10 p2 = PaneMatGetS16Quad(paneB, 1);
-        CopyVec4s((GXColorS10*)lbl_eu_80664978, &p2);
-        lbl_eu_80664980[3] = lbl_eu_80664970[3];
-        lbl_eu_80664988[3] = lbl_eu_80664978[3];
+        CopyVec4s((GXColorS10*)equipItemBox_cellLabelNeutralBottom, &p2);
+        equipItemBox_cellLabelMutedTop[3] = equipItemBox_cellLabelNeutralTop[3];
+        equipItemBox_cellLabelMutedBottom[3] = equipItemBox_cellLabelNeutralBottom[3];
         nw4r::lyt::Pane* pane5 =
             field_38->GetRootPane()->FindPaneByName(base + 0x522, true);
         p1 = PaneMatGetS16Quad(pane5, 0);
-        CopyVec4s((GXColorS10*)lbl_eu_80664990, &p1);
+        CopyVec4s((GXColorS10*)equipItemBox_kind48LabelNeutralTop, &p1);
         p2 = PaneMatGetS16Quad(pane5, 1);
-        CopyVec4s((GXColorS10*)lbl_eu_80664998, &p2);
-        lbl_eu_806649A0[3] = lbl_eu_80664990[3];
-        lbl_eu_806649A8[3] = lbl_eu_80664998[3];
+        CopyVec4s((GXColorS10*)equipItemBox_kind48LabelNeutralBottom, &p2);
+        equipItemBox_kind48LabelMutedTop[3] = equipItemBox_kind48LabelNeutralTop[3];
+        equipItemBox_kind48LabelMutedBottom[3] = equipItemBox_kind48LabelNeutralBottom[3];
         nw4r::lyt::Pane* pane79 =
             field_38->GetRootPane()->FindPaneByName(base + 0x79e, true);
         p1 = PaneMatGetS16Quad(pane79, 0);
-        CopyVec4s((GXColorS10*)lbl_eu_806649B0, &p1);
+        CopyVec4s((GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, &p1);
         p2 = PaneMatGetS16Quad(pane79, 1);
-        CopyVec4s((GXColorS10*)lbl_eu_806649B8, &p2);
-        lbl_eu_806649C0[3] = lbl_eu_806649B0[3];
-        lbl_eu_806649C8[3] = lbl_eu_806649B8[3];
-        lbl_eu_806649D0[3] = lbl_eu_806649B0[3];
-        lbl_eu_806649D8[3] = lbl_eu_806649B8[3];
+        CopyVec4s((GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom, &p2);
+        equipItemBox_sortOptionLabelSelectedTop[3] = equipItemBox_sortOptionLabelNeutralTop[3];
+        equipItemBox_sortOptionLabelSelectedBottom[3] = equipItemBox_sortOptionLabelNeutralBottom[3];
+        equipItemBox_sortOptionLabelAltTop[3] = equipItemBox_sortOptionLabelNeutralTop[3];
+        equipItemBox_sortOptionLabelAltBottom[3] = equipItemBox_sortOptionLabelNeutralBottom[3];
         closeEIBSortMenu();
         field_24 = 0;
         mRegion04.validateHeap();
@@ -3678,7 +3668,7 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         if (getFP(&lbl_eu_8050EFDC[0x7b9]) == 0) {
             CBdat::setBdatEntry(5, buf3);
         }
-        lbl_eu_806649E0 = getFP(&lbl_eu_8050EFDC[0x7b9]);
+        equipItemBoxEquipListFilePtr = getFP(&lbl_eu_8050EFDC[0x7b9]);
         closeEIBSortMenu();
         field_2C = 0;
         return 1;
@@ -3691,30 +3681,30 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
 // sort-menu page rebuild (PaneMatSetTevColorsByName pairs). SplitU32ToS16s clears a table,
 // setGXColorS10 sets its RGBA values.
 extern "C" void sinit_8028DAB0() {
-    SplitU32ToS16s(lbl_eu_80664920, 0);
-    SplitU32ToS16s(lbl_eu_80664928, 0);
-    setGXColorS10(lbl_eu_80664930, 0x79, 0x49, 0x7, 0x0);
-    setGXColorS10(lbl_eu_80664938, 0xed, 0xcd, 0x83, 0x0);
-    setGXColorS10(lbl_eu_80664940, 0x1a, 0x43, 0x53, 0x0);
-    setGXColorS10(lbl_eu_80664948, 0xc4, 0xe8, 0xeb, 0x0);
-    setGXColorS10(lbl_eu_80664950, 0x74, 0x54, 0x1d, 0x0);
-    setGXColorS10(lbl_eu_80664958, 0xd5, 0xb9, 0x78, 0x0);
-    setGXColorS10(lbl_eu_80664960, 0x3d, 0x68, 0x78, 0x0);
-    setGXColorS10(lbl_eu_80664968, 0xc4, 0xe8, 0xeb, 0x0);
-    SplitU32ToS16s(lbl_eu_80664970, 0);
-    SplitU32ToS16s(lbl_eu_80664978, 0);
-    setGXColorS10(lbl_eu_80664980, 0x80, 0x80, 0x80, 0x0);
-    setGXColorS10(lbl_eu_80664988, 0x80, 0x80, 0x80, 0x0);
-    SplitU32ToS16s(lbl_eu_80664990, 0);
-    SplitU32ToS16s(lbl_eu_80664998, 0);
-    setGXColorS10(lbl_eu_806649A0, 0xff, 0xff, 0xfa, 0x0);
-    setGXColorS10(lbl_eu_806649A8, 0x80, 0x80, 0x80, 0x0);
-    SplitU32ToS16s(lbl_eu_806649B0, 0);
-    SplitU32ToS16s(lbl_eu_806649B8, 0);
-    setGXColorS10(lbl_eu_806649C0, 0x12, 0xa3, 0xe7, 0x0);
-    setGXColorS10(lbl_eu_806649C8, 0xff, 0xff, 0xff, 0x0);
-    setGXColorS10(lbl_eu_806649D0, 0xb3, 0x9, 0xc0, 0x0);
-    setGXColorS10(lbl_eu_806649D8, 0xff, 0xff, 0xff, 0x0);
+    SplitU32ToS16s(equipItemBox_sortMenuColorSrcTop, 0);
+    SplitU32ToS16s(equipItemBox_sortMenuColorSrcBottom, 0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabNeutralTop, 0x79, 0x49, 0x7, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabNeutralBottom, 0xed, 0xcd, 0x83, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabSelectedTop, 0x1a, 0x43, 0x53, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabSelectedBottom, 0xc4, 0xe8, 0xeb, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor2Top, 0x74, 0x54, 0x1d, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor2Bottom, 0xd5, 0xb9, 0x78, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor3Top, 0x3d, 0x68, 0x78, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortMenuTabColor3Bottom, 0xc4, 0xe8, 0xeb, 0x0);
+    SplitU32ToS16s(equipItemBox_cellLabelNeutralTop, 0);
+    SplitU32ToS16s(equipItemBox_cellLabelNeutralBottom, 0);
+    setGXColorS10((GXColorS10*)equipItemBox_cellLabelMutedTop, 0x80, 0x80, 0x80, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_cellLabelMutedBottom, 0x80, 0x80, 0x80, 0x0);
+    SplitU32ToS16s(equipItemBox_kind48LabelNeutralTop, 0);
+    SplitU32ToS16s(equipItemBox_kind48LabelNeutralBottom, 0);
+    setGXColorS10((GXColorS10*)equipItemBox_kind48LabelMutedTop, 0xff, 0xff, 0xfa, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_kind48LabelMutedBottom, 0x80, 0x80, 0x80, 0x0);
+    SplitU32ToS16s(equipItemBox_sortOptionLabelNeutralTop, 0);
+    SplitU32ToS16s(equipItemBox_sortOptionLabelNeutralBottom, 0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelSelectedTop, 0x12, 0xa3, 0xe7, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelSelectedBottom, 0xff, 0xff, 0xff, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelAltTop, 0xb3, 0x9, 0xc0, 0x0);
+    setGXColorS10((GXColorS10*)equipItemBox_sortOptionLabelAltBottom, 0xff, 0xff, 0xff, 0x0);
 }
 
 // Rebuild the equip grid for a page: clear all 0x400 cells (per-cell byte 6),
@@ -3857,7 +3847,7 @@ tail:
     if (cat != v) {
         cat = v;
         u32 cnt3 = count;
-        float fdiv = (float)(s32)cnt3 / lbl_eu_80668B00;
+        float fdiv = (float)(s32)cnt3 / 30.0f;
         s32 rows = (s32)fdiv;
         float frac = fdiv - (float)rows;
         if (lbl_eu_80668B04 != frac) rows++;
@@ -3876,7 +3866,7 @@ tail:
         for (i2 = last; i2 >= diff; i2--) {
             data[i2].unk7 = 1;
         }
-        int threshold = (int)(lbl_eu_80668B08 * (float)(s32)cnt);
+        int threshold = (int)(0.2f * (float)(s32)cnt);
         for (i2 = 0;; i2++) {
             int val = (i2 + 1) * 6;
             int diff2 = threshold - val;
@@ -3896,10 +3886,10 @@ tail:
 // allocation (constant into f0, conversion chain into f1).
 u8 CEquipItemGrid::countEIBPages() {
     f32 pages = (f32)(int)CItemBlock_countKindSlots(cat);
-    if (pages >= lbl_eu_80668B20) {
+    if (pages >= 200.0f) {
         return 10;
     }
-    f32 q = pages / lbl_eu_80668B00;
+    f32 q = pages / 30.0f;
     int n = (int)q;
     f32 frac = q - (f32)n;
     if (lbl_eu_80668B04 != frac) {

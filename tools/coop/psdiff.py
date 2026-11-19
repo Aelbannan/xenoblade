@@ -7,7 +7,8 @@ import sys
 unit, symbol = sys.argv[1], sys.argv[2]
 extra = sys.argv[3:]  # e.g. --no-build
 out = subprocess.run(
-    [".venv/bin/python3", "tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json", *extra],
+    [".venv/bin/python3", "tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json",
+     "--no-baseline", *extra],
     capture_output=True, text=True,
 )
 lines = out.stdout.splitlines()

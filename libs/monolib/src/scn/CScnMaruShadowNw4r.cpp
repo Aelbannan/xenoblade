@@ -56,7 +56,7 @@ extern "C" u32 lbl_eu_8056E598[8];  // CScnMaruShadowNw4r vtable (defined below)
 extern "C" void __ct__CScnMaruShadowNw4r(CScnMaruShadowNw4r* self) {
     const float b = lbl_eu_8066A948;
     const float a = lbl_eu_8066A944;
-    const float c = lbl_eu_8066A940;
+    const float c = 0.9f;
 
     self->vtable = (u32)&lbl_eu_8056E598;
     self->field_0x08 = c;
@@ -184,9 +184,9 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
 
     mlCVec3 pos;
     pos.x = ctx->field_0x2DC;
-    pos.y = ctx->field_0x2E0 + lbl_eu_8066A994;
+    pos.y = ctx->field_0x2E0 + 0.1f;
     pos.z = ctx->field_0x2E4;
-    float fscale = lbl_eu_8066A990 * ctx->field_0x2E8;
+    float fscale = 2.0f * ctx->field_0x2E8;
 
     float anchorY = 0.0f;
     if ((self->field_0x28 & 0x10) != 0) {
@@ -197,13 +197,13 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
         u32 cfg2 = ctx->field_0x7a4;
         if ((cfg2 & 0x20) == 0 && (cfg2 & 0x100) == 0) {
             void* p = ctx->field_0x14AC;
-            fscale = lbl_eu_8066A998;
+            fscale = 5.0f;
             if (p != NULL) {
                 pos.x = *(float*)((char*)p + 0xC);
                 pos.y = *(float*)((char*)p + 0x1C);
                 pos.z = *(float*)((char*)p + 0x2C);
             }
-            pos.y += lbl_eu_8066A994;
+            pos.y += 0.1f;
         } else {
             if (!ScnRes_VertRayForward_E398(&pos, -fscale, lbl_eu_8066A948, 0, 0)) {
                 return;
@@ -215,10 +215,10 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
 
     // Ground offset fades the shadow with height above the anchor plane.
     self->field_0x20 = lbl_eu_8066A944;
-    float lim = lbl_eu_8066A99C * fscale;
+    float lim = 0.7f * fscale;
     float d = ctx->field_0x2E0 - anchorY;
     if (d > lim) {
-        float t = (d - lbl_eu_8066A99C * fscale) / (lbl_eu_8066A9A0 * fscale);
+        float t = (d - 0.7f * fscale) / (0.3f * fscale);
         self->field_0x20 = lbl_eu_8066A944 - t;
         if (self->field_0x20 < 0.0f) {
             self->field_0x20 = 0.0f;
@@ -286,7 +286,7 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
         MaruShadowEntry* e = self->entries;
         for (int j = 0; j < n; j++) {
             double raw = (double)e[j].scaleQ;
-            float s = lbl_eu_8066A9B8 * (float)(baseScale * (raw));
+            float s = 0.01f * (float)(baseScale * (raw));
             MaruShadowDrawQuad(self, ctx, s, fscale, e[j].nodeId);
         }
         return;
@@ -364,8 +364,8 @@ void MaruShadowStreamVerts(void* entries, const float* head, u32 count, float of
     u8* walk = (u8*)entries;
     const float* bnd = lbl_eu_80658638;
     f32 ds = lbl_eu_806658E0;
-    f32 eps = lbl_eu_8066A9BC;
-    f32 half = lbl_eu_8066A9C0;
+    f32 eps = 0.005f;
+    f32 half = 0.5f;
 
     u32 pairs = count >> 1;
     for (u32 i = 0; i < pairs; i++) {
@@ -414,10 +414,10 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
         float ty = *(float*)(rec + 0x2C);
         float tzOff = *(float*)(rec + 0x1C);
         float* gvec = (float*)lbl_eu_80658638;
-        float depthScale = lbl_eu_8066A944 / (lbl_eu_8066A990 * f1);
+        float depthScale = lbl_eu_8066A944 / (2.0f * f1);
         gvec[0] = sx;
         gvec[1] = ty;
-        gvec[2] = tzOff - lbl_eu_8066A9C0 * f2;
+        gvec[2] = tzOff - 0.5f * f2;
         lbl_eu_806658E0 = depthScale;
 
         const float k = lbl_eu_8066A944;
@@ -425,7 +425,7 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
         float mtx[3][4];
         mtx[0][0] = k; mtx[0][1] = zero; mtx[0][2] = zero; mtx[0][3] = sx;
         mtx[1][0] = zero; mtx[1][1] = k; mtx[1][2] = zero; mtx[1][3] = ty;
-        mtx[2][0] = zero; mtx[2][1] = zero; mtx[2][2] = k; mtx[2][3] = tzOff - lbl_eu_8066A9C0 * f2;
+        mtx[2][0] = zero; mtx[2][1] = zero; mtx[2][2] = k; mtx[2][3] = tzOff - 0.5f * f2;
 
         void* posMtx = Scn_GetCamItemCC(ctx->field_0x04, -1);
         GXLoadPosMtxImm((const float (*)[4])posMtx, GX_PNMTX0);
@@ -444,7 +444,7 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
     float vx = *(float*)(rec + 0xC);
     float vy = *(float*)(rec + 0x1C);
     float vz = *(float*)(rec + 0x2C);
-    float topY = vy + lbl_eu_8066A994;
+    float topY = vy + 0.1f;
     float v1[3] = { vx, vy, vz };
     float v2[3] = { vx, topY, vz };
 
@@ -478,14 +478,14 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
         len = lenSq * inv;
     }
 
-    float ang1 = nw4r::math::Atan2FIdx(up.y, 0.0f) * lbl_eu_8066A9C4;
-    float ang2 = nw4r::math::Atan2FIdx(up.x, ang1) * lbl_eu_8066A9C4;
+    float ang1 = nw4r::math::Atan2FIdx(up.y, 0.0f) * 0.024543693f;
+    float ang2 = nw4r::math::Atan2FIdx(up.x, ang1) * 0.024543693f;
     (void)ang2;
-    float s1 = nw4r::math::SinFIdx(-ang1 * lbl_eu_8066A9C8);
-    float c1 = nw4r::math::CosFIdx(-ang1 * lbl_eu_8066A9C8);
+    float s1 = nw4r::math::SinFIdx(-ang1 * 40.743664f);
+    float c1 = nw4r::math::CosFIdx(-ang1 * 40.743664f);
     (void)s1; (void)c1;
-    float s2 = nw4r::math::SinFIdx(ang1 * lbl_eu_8066A9C8);
-    float c2 = nw4r::math::CosFIdx(ang1 * lbl_eu_8066A9C8);
+    float s2 = nw4r::math::SinFIdx(ang1 * 40.743664f);
+    float c2 = nw4r::math::CosFIdx(ang1 * 40.743664f);
 
     float rot1[3][4];
     rot1[0][0] = c1; rot1[0][1] = -s1; rot1[0][2] = 0.0f; rot1[0][3] = 0.0f;
@@ -494,8 +494,8 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
     float tmp[3][4];
     PSMTXConcat(rot1, rot1, tmp);
 
-    float s3 = nw4r::math::SinFIdx(ang2 * lbl_eu_8066A9C8);
-    float c3 = nw4r::math::CosFIdx(ang2 * lbl_eu_8066A9C8);
+    float s3 = nw4r::math::SinFIdx(ang2 * 40.743664f);
+    float c3 = nw4r::math::CosFIdx(ang2 * 40.743664f);
     float rot2[3][4];
     rot2[0][0] = c3; rot2[0][1] = 0.0f; rot2[0][2] = s3; rot2[0][3] = 0.0f;
     rot2[1][0] = 0.0f; rot2[1][1] = 1.0f; rot2[1][2] = 0.0f; rot2[1][3] = 0.0f;
@@ -561,14 +561,14 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
         // len scoped inside the guard: dies before the matrix builds, so it
         // never claims a callee-saved FP register.
         float len = lenSq * nw4r::math::FrSqrt(lenSq);
-        angPitch = nw4r::math::Atan2FIdx(dir->y, len) * lbl_eu_8066A9C4;
-        angYaw = nw4r::math::Atan2FIdx(dir->x, dir->z) * lbl_eu_8066A9C4;
+        angPitch = nw4r::math::Atan2FIdx(dir->y, len) * 0.024543693f;
+        angYaw = nw4r::math::Atan2FIdx(dir->x, dir->z) * 0.024543693f;
     }
 
     // Y-rotation by pitch (identity: flat mode carries no pitch).
     pitch = 0.0f;
-    float sP = nw4r::math::SinFIdx(pitch * lbl_eu_8066A9C8);
-    float cP = nw4r::math::CosFIdx(pitch * lbl_eu_8066A9C8);
+    float sP = nw4r::math::SinFIdx(pitch * 40.743664f);
+    float cP = nw4r::math::CosFIdx(pitch * 40.743664f);
     rotPitch.m[0][0] = cP; rotPitch.m[0][1] = -sP;
     rotPitch.m[0][2] = lbl_eu_8066A948; rotPitch.m[0][3] = lbl_eu_8066A948;
     rotPitch.m[1][0] = sP; rotPitch.m[1][1] = cP;
@@ -577,8 +577,8 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
     rotPitch.m[2][2] = lbl_eu_8066A944; rotPitch.m[2][3] = lbl_eu_8066A948;
 
     // X-rotation by -angPitch.
-    float sT = nw4r::math::SinFIdx(-angPitch * lbl_eu_8066A9C8);
-    float cT = nw4r::math::CosFIdx(-angPitch * lbl_eu_8066A9C8);
+    float sT = nw4r::math::SinFIdx(-angPitch * 40.743664f);
+    float cT = nw4r::math::CosFIdx(-angPitch * 40.743664f);
     rotTilt.m[0][0] = lbl_eu_8066A944; rotTilt.m[0][1] = lbl_eu_8066A948;
     rotTilt.m[0][2] = lbl_eu_8066A948; rotTilt.m[0][3] = lbl_eu_8066A948;
     rotTilt.m[1][0] = lbl_eu_8066A948; rotTilt.m[1][1] = cT;
@@ -587,8 +587,8 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
     rotTilt.m[2][2] = cT; rotTilt.m[2][3] = lbl_eu_8066A948;
 
     // Y-rotation by angYaw.
-    float sY = nw4r::math::SinFIdx(angYaw * lbl_eu_8066A9C8);
-    float cY = nw4r::math::CosFIdx(angYaw * lbl_eu_8066A9C8);
+    float sY = nw4r::math::SinFIdx(angYaw * 40.743664f);
+    float cY = nw4r::math::CosFIdx(angYaw * 40.743664f);
     rotYaw.m[0][0] = cY; rotYaw.m[0][1] = lbl_eu_8066A948;
     rotYaw.m[0][2] = sY; rotYaw.m[0][3] = lbl_eu_8066A948;
     rotYaw.m[1][0] = lbl_eu_8066A948; rotYaw.m[1][1] = lbl_eu_8066A944;
@@ -641,7 +641,7 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
     *flagAcc = 0;
     nw4r::g3d::ResMdl mdl = ctx->resMdl;
     int numNodes = GetResNodeNumEntries__Q34nw4r3g3d6ResMdlCFv(mdl);
-    const float baseScale = lbl_eu_8066A9D0;
+    const float baseScale = 100.0;
     MaruShadowEntry* cur = shadow->entries;
 
     // Panic-site strings hoisted out of the loop by MWCC (lis/addi pairs).

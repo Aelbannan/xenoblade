@@ -4,6 +4,11 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 
 namespace cf {
+    class CfObjectPc;
+
+    // Find the containing CfObjectPc for a CfObjectMove subobject.
+    CfObjectPc* getCfObjectPc(CfObjectMove* objMove);
+
     // 0x71C CfObjectMove base (mField718 at 0x718-0x71B) + u16 field_71C
     // This TU owns __vt__Q22cf11CfObjectObj and its RTTI (key function:
     // the out-of-line virtual destructor).

@@ -9,7 +9,7 @@
 template<>
 CTTask<cf::CfTaskMain>::~CTTask() {}
 
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 namespace cf {
 
@@ -19,7 +19,7 @@ void CfTaskMain::Init() {}
 void CfTaskMain::Term() {}
 
 void CfTaskMain::Move() {
-    if ((lbl_eu_80663E28 & 0x200000) != 0) return;
+    if ((gmPauseFlags & 0x200000) != 0) return;
     CfGameManager::func_8007F9C4();
 }
 

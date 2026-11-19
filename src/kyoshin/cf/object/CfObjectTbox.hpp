@@ -10,7 +10,10 @@ namespace cf {
         //0x0: vtable
         //0x0-71F: CfObjectObj (0x71C base + u16 field_71C, padded to 0x720)
         u32 field_720;      // 0x720
-        u8 _724[0x10];      // 0x724-0x733
+        u32 field_724;      // 0x724-0x727: x word
+        u32 field_728;      // 0x728-0x72B: y word
+        u32 field_72C;      // 0x72C-0x72F: z word
+        f32 field_730;      // 0x730-0x733
         u32 field_734;      // 0x734
         u16 field_738;      // 0x738
         u8 _73A[2];         // 0x73A-0x73B

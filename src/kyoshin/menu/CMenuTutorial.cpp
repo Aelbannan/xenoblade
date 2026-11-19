@@ -9,7 +9,7 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmGameFlags)
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 // Forward decl instead of including kyoshin/code_80135FDC.hpp: that header's
@@ -28,22 +28,11 @@
 
 // ---- Declarations private to this unit ----
 
-extern u32 lbl_eu_80663E28; // render-gate mode bitfield (bit 21 = busy)
+extern u32 gmPauseFlags; // render-gate mode bitfield (bit 21 = busy)
 
 extern "C" {
 
-    // CTitleAHelp widget callees (retail-unmangled func_ names).
-    void teardown(CTitleAHelp* self);
-    void updateHelp(CTitleAHelp* self);
 
-    void setNameText(CTitleAHelp* self, char* str);
-    void beginClose(CTitleAHelp* self);
-    void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-    void func_801C41E8(CTitleAHelp* self, u8 mode);
-    void func_801C412C(CTitleAHelp* self);
-    void applyPaneTevColorsAlt(CTitleAHelp* self);
-
-    // CF / ui helpers (retail-unmangled names).
     void CUICfManager_setTimeout30();
     // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
     // CfGameManager controller-type query: retail loads r3=-1 into the symbol
@@ -82,7 +71,7 @@ CMenuTutorial::CMenuTutorial(CProcess* parent, u32 arg2)
     mSavedInputFlags = 0;
     // Bit 1 of the Init flag word decides whether the open event is fired;
     // extracted once and stored, then tested.
-    u32 openBit = (lbl_eu_80663E24 >> 30) & 1;
+    u32 openBit = (gmGameFlags >> 30) & 1;
     mSomething = openBit;
     if (openBit == 0) {
         setPresentationFlag__Q22cf13CfGameManagerFv(1);
@@ -129,7 +118,7 @@ void CMenuTutorial::Term() {
 
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mTutorial.Tutorial_TeardownTutorial();
 
     sInstance = nullptr;
@@ -151,7 +140,7 @@ void CMenuTutorial::Move() {
     // (0x200000) is set. The &&-chain + goto body + return shape reproduces
     // retail's branch-over-branch `beq body; b exit` (MWCC_CASES §8960).
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & (1u << 21)) == 0) {
+        (gmPauseFlags & (1u << 21)) == 0) {
         goto body;
     }
     return;
@@ -170,7 +159,7 @@ body:
         MenuTutorialHandlePhase3(this);
         break;
     }
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     mTutorial.Tutorial_Move();
     return;
 }
@@ -183,7 +172,7 @@ void CMenuTutorial::cbRenderBefore() {
     // Gate: skip the render when the task is busy or the global mode bit
     // (0x200000) is set. Same branch-over-branch shape as Move().
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & (1u << 21)) == 0) {
+        (gmPauseFlags & (1u << 21)) == 0) {
         goto body;
     }
     return;
@@ -195,7 +184,7 @@ body:
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     mTutorial.Tutorial_DrawLayoutGated(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
     return;
 }
 
@@ -227,26 +216,25 @@ extern "C" unsigned long MenuTutorialIsCreated(void) { return CMenuTutorial::sIn
 void MenuTutorialHandlePhase0(CMenuTutorial* self) {
     if (self->mTitleAHelp.isInitialized() != 0 &&
         self->mTutorial.Tutorial_GetField46Mark() != 0) {
-        applyPaneTevColorsAlt(&self->mTitleAHelp);
-        setNameText(&self->mTitleAHelp,
-            BdatTouchStringCell("MNU_ttrl", "title", self->mType));
+        self->mTitleAHelp.applyPaneTevColorsAlt();
+        self->mTitleAHelp.setNameText(BdatTouchStringCell("MNU_ttrl", "title", self->mType));
 
         u8 phase = self->mTutorial.Tutorial_GetPageState();
         switch (phase) {
         case 0:
-            func_801C41E8(&self->mTitleAHelp, 0x6f);
+            self->mTitleAHelp.func_801C41E8(0x6f);
             break;
         case 1:
-            func_801C41E8(&self->mTitleAHelp, 0x70);
+            self->mTitleAHelp.func_801C41E8(0x70);
             break;
         case 2:
-            func_801C41E8(&self->mTitleAHelp, 0x71);
+            self->mTitleAHelp.func_801C41E8(0x71);
             break;
         case 3:
-            func_801C41E8(&self->mTitleAHelp, 0x72);
+            self->mTitleAHelp.func_801C41E8(0x72);
             break;
         }
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C412C();
         self->mTutorial.Tutorial_StartIfIdle();
         self->mIsInitialised = 1;
         playUISound(0x6d);
@@ -258,7 +246,7 @@ void MenuTutorialHandlePhase0(CMenuTutorial* self) {
  * current animation, mark the tutorial as having reached phase 2.
  */
 void MenuTutorialHandlePhase1(CMenuTutorial* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         self->mTutorial.Tutorial_GetField47Mark() != 0) {
         self->mIsInitialised = 2;
     }
@@ -284,7 +272,7 @@ void MenuTutorialHandlePhase2(CMenuTutorial* self) {
         if (first) {
             self->mTutorial.Tutorial_NextPage();
             if (self->mTutorial.Tutorial_GetField52Mark() != 0) {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 self->mTutorial.Tutorial_AdvanceState3To4();
                 self->mIsInitialised = 3;
             }
@@ -297,16 +285,16 @@ void MenuTutorialHandlePhase2(CMenuTutorial* self) {
         default:
             break;
         case 0:
-            func_801C41E8(&self->mTitleAHelp, 0x6f);
+            self->mTitleAHelp.func_801C41E8(0x6f);
             break;
         case 1:
-            func_801C41E8(&self->mTitleAHelp, 0x70);
+            self->mTitleAHelp.func_801C41E8(0x70);
             break;
         case 2:
-            func_801C41E8(&self->mTitleAHelp, 0x71);
+            self->mTitleAHelp.func_801C41E8(0x71);
             break;
         case 3:
-            func_801C41E8(&self->mTitleAHelp, 0x72);
+            self->mTitleAHelp.func_801C41E8(0x72);
             break;
         }
     }
@@ -317,7 +305,7 @@ void MenuTutorialHandlePhase2(CMenuTutorial* self) {
  * phase 1 (writes the state byte at offset 0x54).
  */
 void MenuTutorialHandlePhase3(CMenuTutorial* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         self->mTutorial.Tutorial_GetField47Mark() != 0) {
         self->mField54 = 1;
     }

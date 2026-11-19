@@ -36,7 +36,7 @@ cf::CfHikariItemManager::CfHikariItemManager() {
     this->field_00 = (u32)lbl_eu_8053AE90;
     this->field_1194 = 0;
     this->field_1198 = 0;
-    lbl_eu_80663E14->addRenderCB((IScnRender*)this, 1, 0);
+    gmScene->addRenderCB((IScnRender*)this, 1, 0);
 
     StaticDataHandle handle;
     if (CLibStaticData::getStaticFileData(lbl_eu_80513580, &handle, 0)) {
@@ -104,7 +104,7 @@ cf::CfHikariItemManager::~CfHikariItemManager() {
     this->field_11A0 = 0;
     this->field_1194 = 0;
 
-    lbl_eu_80663E14->removeRenderCB((IScnRender*)this);
+    gmScene->removeRenderCB((IScnRender*)this);
 }
 
 // (us-802b5304): allocate a 0x44-byte Hikari item record, initialize
@@ -223,15 +223,15 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     if (cf::CfGameManager::getPlayer(0) == 0) {
         return;
     }
-    if (lbl_eu_80663E24 & 0x02000200) {
+    if (gmGameFlags & 0x02000200) {
         return;
     }
     if (this->field_1194 & 1) {
         return;
     }
 
-    CfViewFrame* viewFrame = (CfViewFrame*)Scn_HasCamItem(lbl_eu_80663E14,
-                                                         lbl_eu_80663E10);
+    CfViewFrame* viewFrame = (CfViewFrame*)Scn_HasCamItem(gmScene,
+                                                         gmCurrentView);
     GXSetProjection(viewFrame->projection, GX_PERSPECTIVE);
     GXSetCurrentMtx(0);
 
@@ -307,11 +307,11 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     GXLoadTexObj((GXTexObj*)&this->unk1114[0x40], GX_TEXMAP2);
     GXLoadTexObj((GXTexObj*)&this->unk1114[0x60], GX_TEXMAP3);
     nw4r::g3d::G3DState::LoadFog(
-        ((const CfScnFogView*)lbl_eu_80663E14)->fogInfo->fogId);
+        ((const CfScnFogView*)gmScene)->fogInfo->fogId);
 
     // Fade amount from the frame timer; forced to 0 while the game is in a
     // menu/fade state or when the manager's bit-1 toggle was already set.
-    f32 fade = Scn_GetFrameDelta(lbl_eu_80663E14);
+    f32 fade = Scn_GetFrameDelta(gmScene);
     if (cf::CfGameManager::isSceneLoading()) {
         fade = lbl_eu_80668EC8;
     }
@@ -387,18 +387,18 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     // scaled by the pass-specific constants (retail vectorises the x/y pairs
     // into ps_muls0/ps_add runs).
     if (lbl_eu_80664C18 != 0) {
-        corners.v[0][0] = vec1.x * lbl_eu_80668ED4 + vec2.x * lbl_eu_80668EDC;
-        corners.v[0][1] = vec1.y * lbl_eu_80668ED4 + vec2.y * lbl_eu_80668EDC;
-        corners.v[0][2] = vec1.z * lbl_eu_80668ED4 + vec2.z * lbl_eu_80668EDC;
-        corners.v[1][0] = vec1.x * lbl_eu_80668ED4 + vec2.x * lbl_eu_80668EE0;
-        corners.v[1][1] = vec1.y * lbl_eu_80668ED4 + vec2.y * lbl_eu_80668EE0;
-        corners.v[1][2] = vec1.z * lbl_eu_80668ED4 + vec2.z * lbl_eu_80668EE0;
-        corners.v[2][0] = vec1.x * lbl_eu_80668ED8 + vec2.x * lbl_eu_80668EE0;
-        corners.v[2][1] = vec1.y * lbl_eu_80668ED8 + vec2.y * lbl_eu_80668EE0;
-        corners.v[2][2] = vec1.z * lbl_eu_80668ED8 + vec2.z * lbl_eu_80668EE0;
-        corners.v[3][0] = vec1.x * lbl_eu_80668ED8 + vec2.x * lbl_eu_80668EDC;
-        corners.v[3][1] = vec1.y * lbl_eu_80668ED8 + vec2.y * lbl_eu_80668EDC;
-        corners.v[3][2] = vec1.z * lbl_eu_80668ED8 + vec2.z * lbl_eu_80668EDC;
+        corners.v[0][0] = vec1.x * 0.4f + vec2.x * 0.5f;
+        corners.v[0][1] = vec1.y * 0.4f + vec2.y * 0.5f;
+        corners.v[0][2] = vec1.z * 0.4f + vec2.z * 0.5f;
+        corners.v[1][0] = vec1.x * 0.4f + vec2.x * -0.5f;
+        corners.v[1][1] = vec1.y * 0.4f + vec2.y * -0.5f;
+        corners.v[1][2] = vec1.z * 0.4f + vec2.z * -0.5f;
+        corners.v[2][0] = vec1.x * -0.4f + vec2.x * -0.5f;
+        corners.v[2][1] = vec1.y * -0.4f + vec2.y * -0.5f;
+        corners.v[2][2] = vec1.z * -0.4f + vec2.z * -0.5f;
+        corners.v[3][0] = vec1.x * -0.4f + vec2.x * 0.5f;
+        corners.v[3][1] = vec1.y * -0.4f + vec2.y * 0.5f;
+        corners.v[3][2] = vec1.z * -0.4f + vec2.z * 0.5f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C18 * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
@@ -406,18 +406,18 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         }
     }
     if (lbl_eu_80664C1C != 0) {
-        corners.v[0][0] = vec1.x * lbl_eu_80668EE4 + vec2.x * lbl_eu_80668EE4;
-        corners.v[0][1] = vec1.y * lbl_eu_80668EE4 + vec2.y * lbl_eu_80668EE4;
-        corners.v[0][2] = vec1.z * lbl_eu_80668EE4 + vec2.z * lbl_eu_80668EE4;
-        corners.v[1][0] = vec1.x * lbl_eu_80668EE4 + vec2.x * lbl_eu_80668EE8;
-        corners.v[1][1] = vec1.y * lbl_eu_80668EE4 + vec2.y * lbl_eu_80668EE8;
-        corners.v[1][2] = vec1.z * lbl_eu_80668EE4 + vec2.z * lbl_eu_80668EE8;
-        corners.v[2][0] = vec1.x * lbl_eu_80668EE8 + vec2.x * lbl_eu_80668EE8;
-        corners.v[2][1] = vec1.y * lbl_eu_80668EE8 + vec2.y * lbl_eu_80668EE8;
-        corners.v[2][2] = vec1.z * lbl_eu_80668EE8 + vec2.z * lbl_eu_80668EE8;
-        corners.v[3][0] = vec1.x * lbl_eu_80668EE8 + vec2.x * lbl_eu_80668EE4;
-        corners.v[3][1] = vec1.y * lbl_eu_80668EE8 + vec2.y * lbl_eu_80668EE4;
-        corners.v[3][2] = vec1.z * lbl_eu_80668EE8 + vec2.z * lbl_eu_80668EE4;
+        corners.v[0][0] = vec1.x * 0.125f + vec2.x * 0.125f;
+        corners.v[0][1] = vec1.y * 0.125f + vec2.y * 0.125f;
+        corners.v[0][2] = vec1.z * 0.125f + vec2.z * 0.125f;
+        corners.v[1][0] = vec1.x * 0.125f + vec2.x * -0.125f;
+        corners.v[1][1] = vec1.y * 0.125f + vec2.y * -0.125f;
+        corners.v[1][2] = vec1.z * 0.125f + vec2.z * -0.125f;
+        corners.v[2][0] = vec1.x * -0.125f + vec2.x * -0.125f;
+        corners.v[2][1] = vec1.y * -0.125f + vec2.y * -0.125f;
+        corners.v[2][2] = vec1.z * -0.125f + vec2.z * -0.125f;
+        corners.v[3][0] = vec1.x * -0.125f + vec2.x * 0.125f;
+        corners.v[3][1] = vec1.y * -0.125f + vec2.y * 0.125f;
+        corners.v[3][2] = vec1.z * -0.125f + vec2.z * 0.125f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP3, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C1C * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
@@ -428,9 +428,9 @@ void cf::CfHikariItemManager::cbRenderBefore() {
     nw4r::g3d::G3DState::LoadFog(0x40);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
     if (lbl_eu_80664C20 != 0) {
-        corners.v[0][0] = vec1.x * lbl_eu_80668EDC;
-        corners.v[0][1] = vec1.y * lbl_eu_80668EDC;
-        corners.v[0][2] = vec1.z * lbl_eu_80668EDC;
+        corners.v[0][0] = vec1.x * 0.5f;
+        corners.v[0][1] = vec1.y * 0.5f;
+        corners.v[0][2] = vec1.z * 0.5f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C20 * 4);
         for (u32 i = 0; i < this->field_1198; i++) {
@@ -438,18 +438,18 @@ void cf::CfHikariItemManager::cbRenderBefore() {
         }
     }
     if (lbl_eu_80664C24 != 0) {
-        corners.v[0][0] = vec1.x * lbl_eu_80668EDC + vec2.x * lbl_eu_80668EDC;
-        corners.v[0][1] = vec1.y * lbl_eu_80668EDC + vec2.y * lbl_eu_80668EDC;
-        corners.v[0][2] = vec1.z * lbl_eu_80668EDC + vec2.z * lbl_eu_80668EDC;
-        corners.v[1][0] = vec1.x * lbl_eu_80668EDC + vec2.x * lbl_eu_80668EE0;
-        corners.v[1][1] = vec1.y * lbl_eu_80668EDC + vec2.y * lbl_eu_80668EE0;
-        corners.v[1][2] = vec1.z * lbl_eu_80668EDC + vec2.z * lbl_eu_80668EE0;
-        corners.v[2][0] = vec1.x * lbl_eu_80668EE0 + vec2.x * lbl_eu_80668EE0;
-        corners.v[2][1] = vec1.y * lbl_eu_80668EE0 + vec2.y * lbl_eu_80668EE0;
-        corners.v[2][2] = vec1.z * lbl_eu_80668EE0 + vec2.z * lbl_eu_80668EE0;
-        corners.v[3][0] = vec1.x * lbl_eu_80668EE0 + vec2.x * lbl_eu_80668EDC;
-        corners.v[3][1] = vec1.y * lbl_eu_80668EE0 + vec2.y * lbl_eu_80668EDC;
-        corners.v[3][2] = vec1.z * lbl_eu_80668EE0 + vec2.z * lbl_eu_80668EDC;
+        corners.v[0][0] = vec1.x * 0.5f + vec2.x * 0.5f;
+        corners.v[0][1] = vec1.y * 0.5f + vec2.y * 0.5f;
+        corners.v[0][2] = vec1.z * 0.5f + vec2.z * 0.5f;
+        corners.v[1][0] = vec1.x * 0.5f + vec2.x * -0.5f;
+        corners.v[1][1] = vec1.y * 0.5f + vec2.y * -0.5f;
+        corners.v[1][2] = vec1.z * 0.5f + vec2.z * -0.5f;
+        corners.v[2][0] = vec1.x * -0.5f + vec2.x * -0.5f;
+        corners.v[2][1] = vec1.y * -0.5f + vec2.y * -0.5f;
+        corners.v[2][2] = vec1.z * -0.5f + vec2.z * -0.5f;
+        corners.v[3][0] = vec1.x * -0.5f + vec2.x * 0.5f;
+        corners.v[3][1] = vec1.y * -0.5f + vec2.y * 0.5f;
+        corners.v[3][2] = vec1.z * -0.5f + vec2.z * 0.5f;
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP2, GX_COLOR0A0);
         GXBegin(GX_QUADS, GX_VTXFMT0, lbl_eu_80664C24 * 4);
         u32 slot = this->field_11A0;
@@ -509,9 +509,9 @@ extern "C" void hikariSpawnSlot(cf::CfHikariItemManager* self, const f32* src,
     out[1] = src[1];
     out[2] = src[2];
 
-    rnd[0] = hikariS32ToF32(c0, ml::math::mtRand(-100, 100)) * lbl_eu_80668EEC;
-    rnd[1] = hikariS32ToF32(c1, ml::math::mtRand(-100, 100)) * lbl_eu_80668EEC;
-    rnd[2] = hikariS32ToF32(c2, ml::math::mtRand(-100, 100)) * lbl_eu_80668EEC;
+    rnd[0] = hikariS32ToF32(c0, ml::math::mtRand(-100, 100)) * 0.01f;
+    rnd[1] = hikariS32ToF32(c1, ml::math::mtRand(-100, 100)) * 0.01f;
+    rnd[2] = hikariS32ToF32(c2, ml::math::mtRand(-100, 100)) * 0.01f;
 
     out[0] += rnd[0] * scaleX;
     out[1] += rnd[1] * scaleX;
@@ -612,20 +612,20 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
             for (int i = 0; i < 8; i++) {
                 cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                 hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
-                              lbl_eu_80668EFC, lbl_eu_80668F00);
+                              0.1f, 1.5f);
             }
         }
         rec->field_1C += delta;
-        if (rec->field_1C >= lbl_eu_80668F04) {
-            rec->field_1C = lbl_eu_80668F08; // crossed the threshold: expire
+        if (rec->field_1C >= 10.0f) {
+            rec->field_1C = 15.0f; // crossed the threshold: expire
         } else {
             ret = 0;
             rec->field_14 += delta;
-            if (rec->field_14 < lbl_eu_80668F0C) {
+            if (rec->field_14 < 2.0f) {
                 rec->field_14 = lbl_eu_80668EF8;
                 cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                 hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
-                              lbl_eu_80668EFC, lbl_eu_80668F00);
+                              0.1f, 1.5f);
             }
         }
     } else {
@@ -637,7 +637,7 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
                             (nw4r::math::VEC3*)&rec->field_00);
         f32 dist2 = d.x * d.x + d.y * d.y + d.z * d.z;
 
-        if (dist2 <= lbl_eu_80668F10) {
+        if (dist2 <= 2500.0f) {
             // Near the anchor: drift toward it and re-derive both gradient
             // colours from the moving progress values.
             rec->field_0C += delta;
@@ -645,21 +645,21 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
             rec->field_30 = hikariGradColor(
                 &rec->field_0C,
                 (const f32*)&g[4 + (s16)rec->field_40 * 8],
-                lbl_eu_80513588, 2);
+                sHikariRecordColorStops, 2);
             rec->field_34 = hikariGradColor(
                 &rec->field_10,
                 (const f32*)&g[0x14 + (s16)rec->field_40 * 8],
-                lbl_eu_80513588, 2);
+                sHikariRecordColorStops, 2);
             rec->field_42 |= 0x100;
         } else if (!(flags & 0x100)) {
             rec->field_30 = hikariGradColor(
                 &rec->field_0C,
                 (const f32*)&g[4 + (s16)rec->field_40 * 8],
-                lbl_eu_80513588, 2);
+                sHikariRecordColorStops, 2);
             rec->field_34 = hikariGradColor(
                 &rec->field_10,
                 (const f32*)&g[0x14 + (s16)rec->field_40 * 8],
-                lbl_eu_80513588, 2);
+                sHikariRecordColorStops, 2);
             rec->field_42 |= 0x100;
         }
 
@@ -674,30 +674,30 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
         // keeps the pre-add value in f3 for the band check below).
         f32 old18 = rec->field_18;
         rec->field_18 = old18 + delta;
-        if (rec->field_18 >= lbl_eu_80513598[1]) {
+        if (rec->field_18 >= sHikariSparkleColorStops[1]) {
             rec->field_18 = lbl_eu_80668EF8;
         }
 
-        if (dist2 <= lbl_eu_80668F14) {
+        if (dist2 <= 4225.0f) {
             f32 new18 = rec->field_18;
             if (new18 <= lbl_eu_80668EF8) {
                 rec->field_20 = lbl_eu_80668EF8;
                 rec->field_42 |= 0x10;
-                rec->field_28 = lbl_eu_80668F18 +
-                                lbl_eu_80668F1C * (f32)ml::math::mtRand(0, 100);
-            } else if (old18 < lbl_eu_80668F20 && new18 <= lbl_eu_80668F28) {
+                rec->field_28 = 0.75f +
+                                0.005f * (f32)ml::math::mtRand(0, 100);
+            } else if (old18 < 20.0f && new18 <= 20.0) {
                 rec->field_24 = lbl_eu_80668EF8;
                 rec->field_42 |= 0x20;
-                rec->field_2C = lbl_eu_80668F18 +
-                                lbl_eu_80668F1C * (f32)ml::math::mtRand(0, 100);
+                rec->field_2C = 0.75f +
+                                0.005f * (f32)ml::math::mtRand(0, 100);
             }
-            if ((s16)rec->field_40 == 0 && dist2 <= lbl_eu_80668F30) {
+            if ((s16)rec->field_40 == 0 && dist2 <= 225.0f) {
                 rec->field_14 += delta;
-                if (rec->field_14 >= lbl_eu_80668F04) {
+                if (rec->field_14 >= 10.0f) {
                     rec->field_14 = lbl_eu_80668EF8;
                     cf::CfHikariItemManager* mgr = ClearMenu_GetGlobal10();
                     hikariSpawnSlot(mgr, (const f32*)rec, rec->field_40,
-                                  lbl_eu_80668F34, lbl_eu_80668F0C);
+                                  0.2f, 2.0f);
                 }
             }
         }
@@ -711,7 +711,7 @@ extern "C" s32 hikariTickRecord(CfHikariItemRecord* self, f32 delta) {
             *fp += delta;
             rec->colors[2 + i] = hikariGradColor(
                 fp, (const f32*)&g[0x24 + (s16)rec->field_40 * 8],
-                lbl_eu_80513598, 2);
+                sHikariSparkleColorStops, 2);
             if (*fp == lbl_eu_80668EF8) {
                 rec->field_42 &= ~(0x10 << i);
             } else if (countersOn) {
@@ -741,11 +741,11 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
             self->field_30 = hikariGradColor(
                 &self->field_0C,
                 (const f32*)&g[4 + (s16)self->field_40 * 8],
-                lbl_eu_80513588, 2);
+                sHikariRecordColorStops, 2);
             self->field_34 = hikariGradColor(
                 &self->field_10,
                 (const f32*)&g[0x14 + (s16)self->field_40 * 8],
-                lbl_eu_80513588, 2);
+                sHikariRecordColorStops, 2);
             self->field_42 |= 0x100;
         }
         if (flagClear != 0) {
@@ -763,7 +763,7 @@ extern "C" void hikariUpdateRecord(CfHikariItemRecord* self) {
             self->colors[2 + i] = hikariGradColor(
                 src,
                 rows + (s16)self->field_40 * 8,
-                lbl_eu_80513598, 2);
+                sHikariSparkleColorStops, 2);
             if (flagClear != 0) {
                 self->field_42 = (u16)(self->field_42 | (0x4 << i));
                 lbl_eu_80664C20++;
@@ -890,9 +890,9 @@ extern "C" void hikariEmitSparkle(CfHikariItemRecord* self,
         if (!(self->field_42 & (0x4 << i))) {
             continue;
         }
-        f32 k = lbl_eu_80668F40 * (&self->field_20)[i];
-        f32 s = lbl_eu_80668F44 *
-                (lbl_eu_80668F48 - lbl_eu_80668F4C * k);
+        f32 k = 0.025f * (&self->field_20)[i];
+        f32 s = 0.5f *
+                (0.9f - 0.7f * k);
         f32 bright = k + (&self->field_28)[i];
         f32 px = self->field_00f;
         f32 py = self->field_04f;
@@ -920,14 +920,14 @@ extern "C" void hikariEmitSparkle(CfHikariItemRecord* self,
         WGPIPE.uc = 0;
 
         WGPIPE.f = va.x;
-        WGPIPE.f = lbl_eu_80668F50 + va.y;
+        WGPIPE.f = -0.3f + va.y;
         WGPIPE.f = va.z;
         WGPIPE.ui = self->colors[2 + i];
         WGPIPE.uc = 1;
         WGPIPE.uc = 1;
 
         WGPIPE.f = vb.x;
-        WGPIPE.f = lbl_eu_80668F50 + vb.y;
+        WGPIPE.f = -0.3f + vb.y;
         WGPIPE.f = vb.z;
         WGPIPE.ui = self->colors[2 + i];
         WGPIPE.uc = 0;
@@ -1000,9 +1000,9 @@ extern "C" __declspec(noinline) void hikariInitRandomEntry(CfHikariItemRecord* s
     self->field_04 = src[1];
     self->field_08 = src[2];
 
-    self->field_0C = (f32)ml::math::mtRand(-10, 10) * lbl_eu_80668F58;
-    self->field_10 = (f32)ml::math::mtRand(3, 8) * lbl_eu_80668F5C * scale;
-    self->field_14 = lbl_eu_80668F58 * (f32)ml::math::mtRand(-10, 10);
+    self->field_0C = (f32)ml::math::mtRand(-10, 10) * 0.001f;
+    self->field_10 = (f32)ml::math::mtRand(3, 8) * 0.002f * scale;
+    self->field_14 = 0.001f * (f32)ml::math::mtRand(-10, 10);
     self->field_18 = lbl_eu_80668EF8;
 }
 
@@ -1036,16 +1036,16 @@ extern "C" void hikariEmitGradQuad(CfHikariItemRecord* self, const CfHikariQuadC
     u32 color = hikariGradColor(
         &self->field_18,
         (const f32*)&lbl_eu_80577750[(s16)self->field_1C_h[1] * 8],
-        lbl_eu_805135A8, 2);
+        sHikariGradQuadColorStops, 2);
 
     // Gradient-driven size: linear ramp up to table[0], ramp down after.
     f32 progress = self->field_18;
     f32 scale;
-    if (progress < lbl_eu_805135A8[0]) {
-        scale = lbl_eu_80668F64 + lbl_eu_80668F68 * progress * lbl_eu_805135A8[2];
+    if (progress < sHikariGradQuadColorStops[0]) {
+        scale = 0.05f + 0.4f * progress * sHikariGradQuadColorStops[2];
     } else {
-        scale = lbl_eu_80668F6C -
-                lbl_eu_805135A8[3] * (lbl_eu_80668F68 * (progress - lbl_eu_805135A8[0]));
+        scale = 0.45f -
+                sHikariGradQuadColorStops[3] * (0.4f * (progress - sHikariGradQuadColorStops[0]));
     }
 
     // Scaled corner offsets (paired (x,y) first, z second - MWCC vectorises
@@ -1119,139 +1119,89 @@ void sinit_802B46E0() {
     f32* row10 = t + 0x10 / 4;
     f32* row90 = t + 0x90 / 4;
 
-    t[0x10 / 4] = lbl_eu_80668F70;
-    row10[1] = lbl_eu_80668F74;
-    row10[2] = lbl_eu_80668F78;
-    row10[3] = lbl_eu_80668F7C;
-    row10[4] = lbl_eu_80668F70;
-    row10[5] = lbl_eu_80668F80;
-    row10[6] = lbl_eu_80668F84;
-    row10[7] = lbl_eu_80668F7C;
-    row10[8] = lbl_eu_80668F88;
-    row10[9] = lbl_eu_80668F8C;
-    row10[10] = lbl_eu_80668F70;
-    row10[11] = lbl_eu_80668F90;
-    row10[12] = lbl_eu_80668F94;
-    row10[13] = lbl_eu_80668F98;
-    row10[14] = lbl_eu_80668F70;
-    row10[15] = lbl_eu_80668F90;
+    t[0x10 / 4] = 255.0f;
+    row10[1] = 102.0f;
+    row10[2] = 114.0f;
+    row10[3] = 155.0f;
+    row10[4] = 255.0f;
+    row10[5] = 149.0f;
+    row10[6] = 157.0f;
+    row10[7] = 155.0f;
+    row10[8] = 32.0f;
+    row10[9] = 170.0f;
+    row10[10] = 255.0f;
+    row10[11] = 100.0f;
+    row10[12] = 64.0f;
+    row10[13] = 200.0f;
+    row10[14] = 255.0f;
+    row10[15] = 100.0f;
 
-    t[0x50 / 4] = lbl_eu_80668F70;
-    row50[1] = lbl_eu_80668F9C;
-    row50[2] = lbl_eu_80668F98;
-    row50[3] = lbl_eu_80668F70;
-    row50[4] = lbl_eu_80668F70;
-    row50[5] = lbl_eu_80668FA0;
-    row50[6] = lbl_eu_80668FA4;
-    row50[7] = lbl_eu_80668F70;
-    row50[8] = lbl_eu_80668FA8;
-    row50[9] = lbl_eu_80668F70;
-    row50[10] = lbl_eu_80668F70;
-    row50[11] = lbl_eu_80668F70;
-    row50[12] = lbl_eu_80668F98;
-    row50[13] = lbl_eu_80668F70;
-    row50[14] = lbl_eu_80668F70;
-    row50[15] = lbl_eu_80668F70;
+    t[0x50 / 4] = 255.0f;
+    row50[1] = 196.0f;
+    row50[2] = 200.0f;
+    row50[3] = 255.0f;
+    row50[4] = 255.0f;
+    row50[5] = 215.0f;
+    row50[6] = 218.0f;
+    row50[7] = 255.0f;
+    row50[8] = 150.0f;
+    row50[9] = 255.0f;
+    row50[10] = 255.0f;
+    row50[11] = 255.0f;
+    row50[12] = 200.0f;
+    row50[13] = 255.0f;
+    row50[14] = 255.0f;
+    row50[15] = 255.0f;
 
-    t[0x90 / 4] = lbl_eu_80668F70;
-    row90[1] = lbl_eu_80668F74;
-    row90[2] = lbl_eu_80668F78;
+    t[0x90 / 4] = 255.0f;
+    row90[1] = 102.0f;
+    row90[2] = 114.0f;
     row90[3] = lbl_eu_80668EF8;
-    row90[4] = lbl_eu_80668F70;
-    row90[5] = lbl_eu_80668F74;
-    row90[6] = lbl_eu_80668F78;
-    row90[7] = lbl_eu_80668FAC;
-    row90[8] = lbl_eu_80668F88;
-    row90[9] = lbl_eu_80668F8C;
-    row90[10] = lbl_eu_80668F70;
+    row90[4] = 255.0f;
+    row90[5] = 102.0f;
+    row90[6] = 114.0f;
+    row90[7] = 250.0f;
+    row90[8] = 32.0f;
+    row90[9] = 170.0f;
+    row90[10] = 255.0f;
     row90[11] = lbl_eu_80668EF8;
-    row90[12] = lbl_eu_80668F88;
-    row90[13] = lbl_eu_80668F8C;
-    row90[14] = lbl_eu_80668F70;
-    row90[15] = lbl_eu_80668FAC;
+    row90[12] = 32.0f;
+    row90[13] = 170.0f;
+    row90[14] = 255.0f;
+    row90[15] = 250.0f;
 
-    t[0xD0 / 4] = lbl_eu_80668F70;
-    rowD0[1] = lbl_eu_80668FB0;
-    rowD0[2] = lbl_eu_80668F90;
+    t[0xD0 / 4] = 255.0f;
+    rowD0[1] = 96.0f;
+    rowD0[2] = 100.0f;
     rowD0[3] = lbl_eu_80668EF8;
-    rowD0[4] = lbl_eu_80668F70;
-    rowD0[5] = lbl_eu_80668FA0;
-    rowD0[6] = lbl_eu_80668FA4;
-    rowD0[7] = lbl_eu_80668F70;
-    rowD0[8] = lbl_eu_80668F88;
-    rowD0[9] = lbl_eu_80668FB4;
-    rowD0[10] = lbl_eu_80668F70;
+    rowD0[4] = 255.0f;
+    rowD0[5] = 215.0f;
+    rowD0[6] = 218.0f;
+    rowD0[7] = 255.0f;
+    rowD0[8] = 32.0f;
+    rowD0[9] = 190.0f;
+    rowD0[10] = 255.0f;
     rowD0[11] = lbl_eu_80668EF8;
-    rowD0[12] = lbl_eu_80668F98;
-    rowD0[13] = lbl_eu_80668FAC;
-    rowD0[14] = lbl_eu_80668F70;
-    rowD0[15] = lbl_eu_80668F70;
+    rowD0[12] = 200.0f;
+    rowD0[13] = 250.0f;
+    rowD0[14] = 255.0f;
+    rowD0[15] = 255.0f;
 }
 
 // absorb: retail data (generated)
 __declspec(section ".rodata") char lbl_eu_80513568[0x18] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x48, 0x69, 0x6b, 0x61, 0x72, 0x69, 0x49, 0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00};
 __declspec(section ".rodata") const char lbl_eu_80513580[0x7] = {0x48, 0x49, 0x4b, 0x41, 0x52, 0x49, 0x00};
-__declspec(section ".rodata") const float lbl_eu_80513588[4] = {21.0f, 40.0f, 0.0476190485f, 0.0526315793f};
-__declspec(section ".rodata") const float lbl_eu_80513598[4] = {10.0f, 40.0f, 0.1f, 0.0333333351f};
-__declspec(section ".rodata") float lbl_eu_805135A8[4] = {10.0f, 40.0f, 0.1f, 0.0333333351f};
+__declspec(section ".rodata") const float sHikariRecordColorStops[4] = {21.0f, 40.0f, 0.0476190485f, 0.0526315793f};
+__declspec(section ".rodata") const float sHikariSparkleColorStops[4] = {10.0f, 40.0f, 0.1f, 0.0333333351f};
+__declspec(section ".rodata") float sHikariGradQuadColorStops[4] = {10.0f, 40.0f, 0.1f, 0.0333333351f};
 __declspec(section ".data") char lbl_eu_8053AE90[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 __declspec(section ".data") char lbl_eu_8053AEA0[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 __declspec(section ".sdata2") float lbl_eu_80668EC8 = 0.0f;
-__declspec(section ".sdata2") u32 lbl_eu_80668ECC = 0xFFFFFFFFu;
 const float lbl_eu_80668ED0 = 1.0f;
-const float lbl_eu_80668ED4 = 0.4f;
-const float lbl_eu_80668ED8 = -0.4f;
-const float lbl_eu_80668EDC = 0.5f;
-const float lbl_eu_80668EE0 = -0.5f;
-const float lbl_eu_80668EE4 = 0.125f;
-const float lbl_eu_80668EE8 = -0.125f;
-__declspec(section ".sdata2") float lbl_eu_80668EEC = 0.00999999978f;
 __declspec(section ".sdata2") double lbl_eu_80668EF0 = 4503601774854144;
 const float lbl_eu_80668EF8 = 0.0f;
-__declspec(section ".sdata2") float lbl_eu_80668EFC = 0.1f;
-__declspec(section ".sdata2") float lbl_eu_80668F00 = 1.5f;
-const float lbl_eu_80668F04 = 10.0f;
-const float lbl_eu_80668F08 = 15.0f;
-const float lbl_eu_80668F0C = 2.0f;
-const float lbl_eu_80668F10 = 2500.0f;
-const float lbl_eu_80668F14 = 4225.0f;
-const float lbl_eu_80668F18 = 0.75f;
-const float lbl_eu_80668F1C = 0.005f;
-const float lbl_eu_80668F20 = 20.0f;
-const double lbl_eu_80668F28 = 20.0;
-const float lbl_eu_80668F30 = 225.0f;
-const float lbl_eu_80668F34 = 0.2f;
-const double lbl_eu_80668F38 = 4503601774854144;
-const float lbl_eu_80668F40 = 0.025f;
-const float lbl_eu_80668F44 = 0.5f;
-const float lbl_eu_80668F48 = 0.9f;
-const float lbl_eu_80668F4C = 0.7f;
-const float lbl_eu_80668F50 = -0.3f;
 const float lbl_eu_80668F54 = 1.0f;
-const float lbl_eu_80668F58 = 0.00100000005f;
-const float lbl_eu_80668F5C = 0.00200000009f;
 const float lbl_eu_80668F60 = 40.0f;
-__declspec(section ".sdata2") float lbl_eu_80668F64 = 0.0500000007f;
-__declspec(section ".sdata2") float lbl_eu_80668F68 = 0.4f;
-__declspec(section ".sdata2") float lbl_eu_80668F6C = 0.449999988f;
-const float lbl_eu_80668F70 = 255.0f;
-const float lbl_eu_80668F74 = 102.0f;
-const float lbl_eu_80668F78 = 114.0f;
-const float lbl_eu_80668F7C = 155.0f;
-const float lbl_eu_80668F80 = 149.0f;
-const float lbl_eu_80668F84 = 157.0f;
-const float lbl_eu_80668F88 = 32.0f;
-const float lbl_eu_80668F8C = 170.0f;
-const float lbl_eu_80668F90 = 100.0f;
-const float lbl_eu_80668F94 = 64.0f;
-const float lbl_eu_80668F98 = 200.0f;
-const float lbl_eu_80668F9C = 196.0f;
-const float lbl_eu_80668FA0 = 215.0f;
-const float lbl_eu_80668FA4 = 218.0f;
-const float lbl_eu_80668FA8 = 150.0f;
-const float lbl_eu_80668FAC = 250.0f;
-const float lbl_eu_80668FB0 = 96.0f;
-const float lbl_eu_80668FB4 = 190.0f;
 // .sbss counters (MWCC rejects __declspec(section ".sbss") (33044); plain
 // zero-init tentatives auto-route to .sbss).
 unsigned long lbl_eu_80664C18 = 0;

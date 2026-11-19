@@ -47,21 +47,9 @@ namespace cf {
 
     CChainActorList::CChainActorList(){
         mChainActorList.reserve(CWorkThreadSystem::getWorkMem(), 59);
-        // Detach every node of the freshly built reslist (inlined clearList
-        // shape). NOTE: every equivalent source shape here colors the walker
-        // into r5 where retail uses r3 - a compiler-internal tie-break
-        // (MWCC_CASES wall #11); this is the best-known form.
-        _reslist_node<cf::CChainActor*>* nul = 0;
-        _reslist_node<cf::CChainActor*>* p = mChainActorList.mStartNodePtr;
-        p = p->mNext;
-        _reslist_node<cf::CChainActor*>* node;
-        while (mChainActorList.mStartNodePtr != p) {
-            node = p;
-            p = p->mNext;
-            node->mNext = nul;
-        }
-        mChainActorList.mStartNodePtr->mNext = mChainActorList.mStartNodePtr;
-        mChainActorList.mStartNodePtr->mPrev = mChainActorList.mStartNodePtr;
+        // Detach every node of the freshly reserved list through the real
+        // reslist API (reslist::clear -> _reslist_base::clearList).
+        mChainActorList.clear();
         ScnLog_ClearStateWords(this);
         unk1DA8[0] = 0;
     }
@@ -129,16 +117,10 @@ namespace cf {
         }
         ScnLog_ClearStateWords(this);
         unk1DA8[0] = 0;
-        // Retail clears the ring once more before releasing the node array
-        // (inlined reslist::clearList).
-        mChainActorList.clearList();
-        // Inlined reslist::destroyList.
-        mChainActorList.clearList();
-        if (mChainActorList.unk1C == false && mChainActorList.mList != nullptr) {
-            delete[] mChainActorList.mList;
-            mChainActorList.mList = nullptr;
-        }
-        mChainActorList.mCapacity = 0;
+        // Retail clears the ring once more before releasing the node array.
+        mChainActorList.clear();
+        // Release the node array through the real reslist API.
+        mChainActorList.destroyList();
     }
 
 }
@@ -351,15 +333,7 @@ extern "C" void Chain_InsertOrdered(cf::CChainActorList* self, cf::CChainActor* 
 place:;
     // Find an empty slot in the preallocated node array and link before @p pre.
     _reslist_node<cf::CChainActor*>* temp;
-    int i;
-    int byteOff;
-    int capacity = self->mChainActorList.mCapacity;
-    for (i = 0, byteOff = 0; i < capacity; i++) {
-        if (reinterpret_cast<_reslist_node<cf::CChainActor*>*>(
-                (u8*)self->mChainActorList.mList + byteOff)->mNext == 0)
-            break;
-        byteOff += 12;
-    }
+    int i = self->mChainActorList.findFirstEmptySlotIndex();
     temp = &self->mChainActorList.mList[i];
     temp->setItem(actor);
     temp->mNext = pre;
@@ -402,13 +376,12 @@ extern "C" void Chain_MergeList(cf::CChainActorList* self, cf::CChainList* list)
 // phase, MWCC keeps the key in the caller's incoming param register and emits
 // the retail two-branch shape (bne-next / b-merge with li r3,0 at the merge).
 static cf::CChainActor* findActorByTarget(u32 key, cf::CChainActorList* self) {
-    _reslist_node<cf::CChainActor*>* node =
-        self->mChainActorList.mStartNodePtr->mNext;
-    _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
-    while (node != head) {
-        cf::CChainActor* x = node->mItem;
+    typedef reslist<cf::CChainActor*>::iterator ActorIter;
+    for (ActorIter it = self->mChainActorList.begin(),
+                   end = self->mChainActorList.end();
+         it != end; ++it) {
+        cf::CChainActor* x = *it;
         if (key == x->unk0) return x;
-        node = node->mNext;
     }
     return 0;
 }
@@ -418,18 +391,18 @@ static cf::CChainActor* findActorByTarget(u32 key, cf::CChainActorList* self) {
 // caching it across the loop).
 static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
                            cf::CfObjectActor* target) {
-    _reslist_node<cf::CChainActor*>* node =
-        self->mChainActorList.mStartNodePtr->mNext;
-    while (node != self->mChainActorList.mStartNodePtr) {
-        if (node->mItem->CChain_getZero_A9FC((void*)(int)target) != 0) {
-            if (node->mItem->CChainActor_CheckReady(
+    typedef reslist<cf::CChainActor*>::iterator ActorIter;
+    for (ActorIter it = self->mChainActorList.begin(),
+                   end = self->mChainActorList.end();
+         it != end; ++it) {
+        if ((*it)->CChain_getZero_A9FC((void*)(int)target) != 0) {
+            if ((*it)->CChainActor_CheckReady(
                     reinterpret_cast<cf::CChainBattleObj*>(target)->mSub.v17()) != 0) {
-                ChainList_PushBack(other, node->mItem);
-                self->mChainActorList.remove(node->mItem);
-                node = node->mPrev;
+                ChainList_PushBack(other, *it);
+                self->mChainActorList.remove(*it);
+                --it;
             }
         }
-        node = node->mNext;
     }
 }
 
@@ -460,14 +433,15 @@ extern "C" int Chain_CheckActivatable(cf::CChainActorList* self, u32 key){
     if (getAnimModelId(reinterpret_cast<cf::CChainBattleObj*>(key)->field_3F60) == 0x31)
         return 0;
     if (actor->CChainActor_ScanArtsSlots(1) == 0) return 0;
-    // Count how many other actors are chainable against the candidate. The
-    // sentinel is NOT cached here: retail re-reads self->... every iteration.
+    // Count how many other actors are chainable against the candidate.
+    // The end iterator is cached; MWCC keeps the retail sentinel compare.
     int count = 0;
-    _reslist_node<cf::CChainActor*>* cur;
-    for (cur = self->mChainActorList.mStartNodePtr->mNext;
-         cur != self->mChainActorList.mStartNodePtr; cur = cur->mNext) {
-        if (cur->mItem->CChain_getZero_A9FC((void*)(int)key) != 0) {
-            if (cur->mItem->CChainActor_CheckReady(
+    typedef reslist<cf::CChainActor*>::iterator ActorIter;
+    for (ActorIter it = self->mChainActorList.begin(),
+                   end = self->mChainActorList.end();
+         it != end; ++it) {
+        if ((*it)->CChain_getZero_A9FC((void*)(int)key) != 0) {
+            if ((*it)->CChainActor_CheckReady(
                     reinterpret_cast<cf::CChainBattleObj*>(key)->mSub.v17()) != 0) {
                 count++;
             }
@@ -489,21 +463,18 @@ static cf::CChainActor* searchActorByHead(_reslist_node<cf::CChainActor*>* head,
     }
     return 0;
 }
-// BB4C-private search: no head local, so the sentinel is an unnamed temp
-// colored into r6 while the walker takes r7 (retail shape). Best-known
-// shape (banked draft): structural bytes match retail exactly; the residual
-// is a fixed r6/r7 Chaitin swap between the sentinel and the walker inside
-// the inlined loop (see open-item notes).
+// BB4C-private search: the iterator pair keeps the same inlined walk as the
+// original head-pointer form. Best-known shape (banked draft): structural
+// bytes match retail exactly; the residual is a fixed r6/r7 Chaitin swap
+// between the sentinel and the walker inside the inlined loop (see notes).
+// The list API is used here for source shape, not to change codegen.
 static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
-    _reslist_node<cf::CChainActor*>* node =
-        self->mChainActorList.mStartNodePtr->mNext;
-    _reslist_node<cf::CChainActor*>* head =
-        self->mChainActorList.mStartNodePtr;
-    cf::CChainActor* x;
-    while (node != head) {
-        x = node->mItem;
+    typedef reslist<cf::CChainActor*>::iterator ActorIter;
+    for (ActorIter it = self->mChainActorList.begin(),
+                   end = self->mChainActorList.end();
+         it != end; ++it) {
+        cf::CChainActor* x = *it;
         if (key == x->unk0) return x;
-        node = node->mNext;
     }
     return 0;
 }
@@ -532,13 +503,12 @@ extern "C" int Chain_HasValidTarget(cf::CChainActorList* self){
 // Same-TU search helper inlined at Chain_CheckActivatable. Argument order (self, key)
 // reproduces retail's register coloring (the located actor lands in r31).
 static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
-    _reslist_node<cf::CChainActor*>* head =
-        self->mChainActorList.mStartNodePtr;
-    _reslist_node<cf::CChainActor*>* node = head->mNext;
-    while (node != head) {
-        cf::CChainActor* x = node->mItem;
+    typedef reslist<cf::CChainActor*>::iterator ActorIter;
+    for (ActorIter it = self->mChainActorList.begin(),
+                   end = self->mChainActorList.end();
+         it != end; ++it) {
+        cf::CChainActor* x = *it;
         if (key == x->unk0) return x;
-        node = node->mNext;
     }
     return 0;
 }

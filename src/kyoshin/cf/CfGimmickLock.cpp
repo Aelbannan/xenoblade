@@ -2,10 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGimmickLock.hpp"
 #include <nw4r/math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 namespace cf {}
 using namespace cf;
@@ -21,7 +22,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     self->typeId = 2;
 
     void* bdat = Bdat_GetTable_AA34();
-    void* holder = lbl_eu_8066412C;
+    void* holder = gLockBdatTable;
     self->rowId = row;
 
     CfGimmick_LoadBdatAreaPos(self, &self->position, bdat, &holder);
@@ -32,7 +33,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     // string pointers; only the low 16 bits are used).
     // Byte offsets into the pointer table (cast through char* -- the label is
     // typed void*[], so bare +0x34 would scale by 4 -> lwz 0xD0).
-    u8* colTab = (u8*)lbl_eu_805357E8;
+    u8* colTab = (u8*)gGimmickBdatColumns;
     u32 vMin = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x34), row);
     self->minVal = *(u16*)&vMin;
     u32 vMax = getBdatStringColumnValue(holder, *(const char**)(colTab + 0x38), row);
@@ -43,7 +44,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     // Four lock-id columns; the shared column-name buffer is patched in place
     // with the per-slot character (index + 0x31).
     for (int i = 0; i < 4; ++i) {
-        u8* nameBuf = (u8*)lbl_eu_80662798[0];
+        u8* nameBuf = (u8*)sGimmickLockIdColumns[0];
         nameBuf[5] = (u8)(i + 0x31);
         u32 v = getBdatStringColumnValue(holder, (const char*)nameBuf, row);
         // Base+displacement store (offset last) so MWCC keeps the retail
@@ -85,16 +86,16 @@ cf::CfGimmickLock::~CfGimmickLock() {
 
     // Inner region (0x8C) was registered with the global manager.
     if (this->flags & 1) {
-        if (lbl_eu_80665958 != 0) {
-            Coli_ListRemoveNode(lbl_eu_80665958, &this->subA);
+        if (sEneColiProbe != 0) {
+            Coli_ListRemoveNode(sEneColiProbe, &this->subA);
             this->flags &= ~0x801;
         }
     }
 
     // Outer region (0x140) was registered; reset its radius timer.
     if (this->flags & 0x1000) {
-        if (lbl_eu_80665958 != 0) {
-            Coli_ListRemoveNode(lbl_eu_80665958, &this->subB);
+        if (sEneColiProbe != 0) {
+            Coli_ListRemoveNode(sEneColiProbe, &this->subB);
         }
         this->flags &= ~0x1000;
         this->field_1F4 = lbl_eu_806683B0;
@@ -109,7 +110,7 @@ cf::CfGimmickLock::~CfGimmickLock() {
 // refresh, and the timed player probe that opens the lock.
 extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
     int flag = 1;
-    if ((lbl_eu_806646BC & 0x4) != 0 && (lbl_eu_80663E24 & 0x10000000) == 0) {
+    if ((gGimmickPartyFlags & 0x4) != 0 && (gmGameFlags & 0x10000000) == 0) {
         flag = 0;
     } else if (self->maxVal != 0) {
         u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
@@ -159,7 +160,7 @@ extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
         CfGimmickLock_Refresh(self);
         if ((self->configFlags & 1) != 0) {
             int hit = jumptable_eu_80535830[self->stateIndex](
-                (cf::CfGimmick*)&self->scale, &lbl_eu_805765A0, &self->position);
+                (cf::CfGimmick*)&self->scale, &gGimmickAnchorPoint, &self->position);
             if (hit != 0) {
                 CfGimmickLock_Activate(self);
                 if ((self->flags & 0xF00) != 0) {
@@ -171,8 +172,8 @@ extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
                     self->flags &= ~0x803;
                     CfGimmick_ClearManagerBinding(self);
                     if ((self->flags & 0x1000) != 0) {
-                        if (lbl_eu_80665958 != 0) {
-                            Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
+                        if (sEneColiProbe != 0) {
+                            Coli_ListRemoveNode(sEneColiProbe, &self->subB);
                         }
                         self->flags &= ~0x1000;
                         self->field_1F4 = lbl_eu_806683B0;
@@ -223,14 +224,14 @@ extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
 cleanup:
     // Deactivation path: release the registered regions.
     if ((self->flags & 1) != 0) {
-        if (lbl_eu_80665958 != 0) {
-            Coli_ListRemoveNode(lbl_eu_80665958, &self->subA);
+        if (sEneColiProbe != 0) {
+            Coli_ListRemoveNode(sEneColiProbe, &self->subA);
         }
         self->flags &= ~0x802;
     }
     if ((self->flags & 0x1000) != 0) {
-        if (lbl_eu_80665958 != 0) {
-            Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
+        if (sEneColiProbe != 0) {
+            Coli_ListRemoveNode(sEneColiProbe, &self->subB);
         }
         self->flags &= ~0x1000;
         self->field_1F4 = lbl_eu_806683B0;
@@ -239,8 +240,8 @@ cleanup:
         self->flags &= ~0x803;
         CfGimmick_ClearManagerBinding(self);
         if ((self->flags & 0x1000) != 0) {
-            if (lbl_eu_80665958 != 0) {
-                Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
+            if (sEneColiProbe != 0) {
+                Coli_ListRemoveNode(sEneColiProbe, &self->subB);
             }
             self->flags &= ~0x1000;
             self->field_1F4 = lbl_eu_806683B0;
@@ -261,8 +262,8 @@ void gimmickLockClearBinding(cf::CfGimmickLock* self) {
         *(volatile u32*)&self->flags &= ~0x802;
         CfGimmick_ClearManagerBinding(self);
         if (self->flags & 0x1000) {
-            if (lbl_eu_80665958 != 0) {
-                Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
+            if (sEneColiProbe != 0) {
+                Coli_ListRemoveNode(sEneColiProbe, &self->subB);
             }
             self->flags &= ~0x1000;
             self->field_1F4 = lbl_eu_806683B0;
@@ -319,8 +320,8 @@ void CfGimmickLock_Rebuild(cf::CfGimmickLock* self) {
 // placement kind, then run the timed unlock state machine on the outer region.
 extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
     if ((self->flags & 1) == 0) {
-        if (lbl_eu_80665958 != 0) {
-            ColiListAppend(lbl_eu_80665958, &self->subA);
+        if (sEneColiProbe != 0) {
+            ColiListAppend(sEneColiProbe, &self->subA);
         }
         self->flags |= 1;
         if (self->stateIndex - 3 <= 1) {
@@ -359,14 +360,14 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
 
     // Probe the lock area; on success mark it open and release the outer
     // region if it was registered.
-    void* scene = Scn_HasCamItem(lbl_eu_80663E14, lbl_eu_80663E10);
+    void* scene = Scn_HasCamItem(gmScene, gmCurrentView);
     int hit = jumptable_eu_80535830[self->stateIndex](
         (cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)((u8*)scene + 0x10c), &self->position);
     if (hit != 0) {
         self->flags |= 0x800;
         if ((self->flags & 0x1000) != 0) {
-            if (lbl_eu_80665958 != 0) {
-                Coli_ListRemoveNode(lbl_eu_80665958, &self->subB);
+            if (sEneColiProbe != 0) {
+                Coli_ListRemoveNode(sEneColiProbe, &self->subB);
             }
             self->flags &= ~0x1000;
             self->field_1F4 = lbl_eu_806683B0;
@@ -375,7 +376,7 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
     }
 
     // Open countdown: shrink the radius, then place the outer region.
-    f32 f = self->field_1F4 - lbl_eu_806683BC * Scn_GetFrameDelta(lbl_eu_80663E14);
+    f32 f = self->field_1F4 - lbl_eu_806683BC * Scn_GetFrameDelta(gmScene);
     self->field_1F4 = f;
     if (f < lbl_eu_806683C0) {
         self->field_1F4 = lbl_eu_806683C0;
@@ -410,8 +411,8 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
     self->subB.state = 2;
     if ((self->flags & 0x1000) == 0) {
         self->flags |= 0x1000;
-        if (lbl_eu_80665958 != 0) {
-            ColiListAppend(lbl_eu_80665958, &self->subB);
+        if (sEneColiProbe != 0) {
+            ColiListAppend(sEneColiProbe, &self->subB);
         }
     }
 }
@@ -541,7 +542,7 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805086D8[0
 __declspec(section ".rodata") __attribute__((used)) char lbl_eu_805086EC[0x0C] = "rockTYPE";
 
 __declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf12CfGimmickElv[2] = { lbl_eu_80508668, lbl_eu_805358EC };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662798[2] = { lbl_eu_806683A8, nullptr };
+__declspec(section ".sdata") __attribute__((used)) const void* sGimmickLockIdColumns[2] = { lbl_eu_806683A8, nullptr };
 
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_806683A8[] = "popID1";
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B0 = 2.0f;

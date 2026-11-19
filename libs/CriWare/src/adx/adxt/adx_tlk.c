@@ -203,14 +203,14 @@ extern void SJ_SplitChunk(void*, u32, void*, void*);
 extern u32 __cvt_fp2unsigned(float);
 extern u32 lbl_eu_805E26DC;
 extern void (*lbl_eu_805E4F20)();
-extern void (*lbl_eu_805E4F24)(void*);
-extern u32 lbl_eu_805E4F10;
-extern u32 lbl_eu_805E4F18;
-extern u32 lbl_eu_805E4F1C;
-extern u32 lbl_eu_805E4F28[0x12];
-extern u8 lbl_eu_805E4EF0[0x20];
-extern u32 lbl_eu_80560044;
-extern u32 lbl_eu_80560040;
+extern void (*ADXT_DestroyFunc)(void*);
+extern u32 ADXT_TimeGuard[2];
+extern u32 ADXT_DefSvrFreq;
+extern u32 ADXT_SvrFreq;
+typedef union ADXT_F32U32_ { u32 u; f32 f; } ADXT_F32U32_;
+extern ADXT_F32U32_ ADXT_SvrFreqTable[0x12];
+extern u32 ADXT_RecalcSw;
+extern u32 ADXT_EosMode;
 /* rodata constant pool used by the adxt time/sfreq helpers */
 extern f32 lbl_eu_805162D0;
 extern f32 lbl_eu_805162F0;
@@ -232,24 +232,6 @@ typedef struct ADXT_ {
     u8 _pad1[0x48 - 0x3C];
     s32 maxDec; /* 0x48 */
 } ADXT_;
-
-/* Server control block rooted at lbl_eu_805E4EF0 (0x805E4EF0..0x805E4F44) */
-typedef struct ADXT_SVR_ {
-    void (*callback0)(void*); /* 0x00 */
-    void* callback0Arg;       /* 0x04 */
-    void (*callback1)(void*); /* 0x08 */
-    void* callback1Arg;       /* 0x0C */
-    void (*callback2)(void*); /* 0x10 */
-    void* callback2Arg;       /* 0x14 */
-    void (*callback3)(void*); /* 0x18 */
-    void* callback3Arg;       /* 0x1C */
-    u32 active;               /* 0x20 */
-    u32 state;                /* 0x24 */
-    u8 _pad0[0x38 - 0x28];
-    u32 svrFreq;              /* 0x38 */
-    u32 recalcCount;          /* 0x3C */
-    f32 spd;                  /* 0x40 */
-} ADXT_SVR_;
 
 /* Overlay over the read-only literal pool at lbl_eu_805162D0 */
 typedef struct ADXT_CST_ {
@@ -376,7 +358,7 @@ void* adxt_Create(s32 numChan, void* work, s32 workEnd) {
     }
     LSC_SetStmHndl(h->lsc, h->stm);
     ADXCRS_Lock();
-    h->svrFreq = lbl_eu_805E4F18;
+    h->svrFreq = ADXT_DefSvrFreq;
     h->numSector = (s16)((s32)h->workSize / 0x800);
     h->sectorSize = (s16)(lbl_eu_805162D0 *
                           (f32)(ADXT_BiasDouble((u32)(s32)h->numSector ^
@@ -440,8 +422,8 @@ void adxt_Destroy(void* self) {
             ((void (*)(void))fn)();
         }
     }
-    if (lbl_eu_805E4F24 != NULL) {
-        lbl_eu_805E4F24(h);
+    if (ADXT_DestroyFunc != NULL) {
+        ADXT_DestroyFunc(h);
     }
     /* signed-int temps keep retail's lbz+cmpi shape (no extsb/cmpli) */
     act = h->active;
@@ -582,7 +564,7 @@ void adxt_start_stm(ADXT_OBJ_* self, void* fname, void* sctOfst, void* sctLen, s
     ADXSTM_SetBufSize(self->stm,
                       (u32)self->sectorSize << 11,
                       (u32)self->numSector << 11);
-    ADXSTM_SetEos(*(void**)((u8*)self + 8), (void*)lbl_eu_80560040);
+    ADXSTM_SetEos(*(void**)((u8*)self + 8), (void*)ADXT_EosMode);
     ADXSTM_EntryEosFunc(*(void**)((u8*)self + 8), NULL, NULL);
     ADXSTM_Seek(*(void**)((u8*)self + 8), 0);
     ADXSTM_StopNw(*(void**)((u8*)self + 8));
@@ -734,17 +716,16 @@ void adxt_GetTime(void* self_, u32* time, u32* sfreq) {
     u32 time2;
     u32 sfreq2;
     ADXT_CST_* cst = (ADXT_CST_*)&lbl_eu_805162D0;
-    ADXT_SVR_* svr = (ADXT_SVR_*)&lbl_eu_805E4EF0;
 
     if (self == NULL || time == NULL || sfreq == NULL) {
         ADXERR_CallErrFunc1_(adxt_mes + 0x14B);
         return;
     }
-    if (svr->active == 0) {
+    if (ADXT_TimeGuard[0] == 0) {
         adxt_GetTimeSfreq2(self_, time, sfreq);
         return;
     }
-    svr->spd = cst->zero;
+    ADXT_SvrFreqTable[2].f = cst->zero;
     if ((u8)(((u8*)self)[1] - 3) <= 1) {
         /* decode-ahead extrapolation against the server clock */
         if ((s8)self[0x72] == 0) {
@@ -754,20 +735,20 @@ void adxt_GetTime(void* self_, u32* time, u32* sfreq) {
             *time = *(u32*)(self + 0x9C);
         }
         adxt_GetTimeSfreq2(self_, &time2, &sfreq2);
-        svr->spd = cst->thousand *
+        ADXT_SvrFreqTable[2].f = cst->thousand *
                    (ADXT_S2F(cst, time2) / ADXT_S2F(cst, sfreq2) -
-                    ADXT_S2F(cst, *time) / ADXT_S2F(cst, svr->svrFreq));
-        if (svr->spd > cst->limitHi || svr->spd < cst->limitLo) {
+                    ADXT_S2F(cst, *time) / ADXT_S2F(cst, ADXT_SvrFreqTable[0].u));
+        if (ADXT_SvrFreqTable[2].f > cst->limitHi || ADXT_SvrFreqTable[2].f < cst->limitLo) {
             /* drift too large: resync the sample counter via a clean re-query */
-            if (lbl_eu_80560044 == 1) {
-                u32 savedActive = svr->active;
-                svr->active = 0;
+            if (ADXT_RecalcSw == 1) {
+                u32 savedActive = ADXT_TimeGuard[0];
+                ADXT_TimeGuard[0] = 0;
                 adxt_GetTime(self_, &time2, &sfreq2);
-                svr->recalcCount = svr->recalcCount + 1;
-                svr->active = savedActive;
+                ADXT_SvrFreqTable[1].u = ADXT_SvrFreqTable[1].u + 1;
+                ADXT_TimeGuard[0] = savedActive;
             }
             *(u32*)(self + 0x9C) = __cvt_fp2unsigned(
-                ADXT_S2F(cst, svr->svrFreq) *
+                ADXT_S2F(cst, ADXT_SvrFreqTable[0].u) *
                 (ADXT_S2F(cst, time2) / ADXT_S2F(cst, sfreq2)));
             *(u32*)(self + 0xA0) = lbl_eu_805E26DC;
         }
@@ -779,14 +760,14 @@ void adxt_GetTime(void* self_, u32* time, u32* sfreq) {
         totalSmpl = ADXSJD_GetTotalNumSmpl(*(void**)(self + 4));
         sf = ADXSJD_GetSfreq(*(void**)(self + 4));
         tmp = totalSmpl * (16 / (s32)ADXSJD_GetOutBps(*(void**)(self + 4)));
-        *time = (u32)(s32)(ADXT_S2F(cst, svr->svrFreq) *
+        *time = (u32)(s32)(ADXT_S2F(cst, ADXT_SvrFreqTable[0].u) *
                            (ADXT_S2F(cst, tmp) / ADXT_S2F(cst, sf)));
         *time = *time + 1 + *(u32*)(self + 0x9C);
     } else {
         *time = 0;
     }
     *time += *(u32*)(self + 0x88);
-    *sfreq = svr->svrFreq;
+    *sfreq = ADXT_SvrFreqTable[0].u;
 }
 
 void ADXT_GetTime(void* a, void* b, void* c) {
@@ -950,13 +931,13 @@ s32 ADXT_GetOutVol(ADXT_OBJ_* self) {
     return vol;
 }
 
-extern u32 lbl_eu_805E4F18;
-extern u32 lbl_eu_805E4F1C;
+extern u32 ADXT_DefSvrFreq;
+extern u32 ADXT_SvrFreq;
 
 void ADXT_SetDefSvrFreq(void* self) {
     ADXCRS_Enter();
-    lbl_eu_805E4F18 = (u32)self;
-    lbl_eu_805E4F1C = (u32)self;
+    ADXT_DefSvrFreq = (u32)self;
+    ADXT_SvrFreq = (u32)self;
     ADXCRS_Leave();
 }
 
@@ -973,7 +954,7 @@ void ADXT_SetSvrFreq(void* self, s32 freq) {
     } else {
         adxt = (ADXT_*)self;
         adxt->sfreq = freq;
-        lbl_eu_805E4F1C = (u32)freq;
+        ADXT_SvrFreq = (u32)freq;
         sjd = *(void**)((u8*)self + 4);
         if ((s32)ADXSJD_GetStat(sjd) == 2) {
             sfreq = (s32)ADXSJD_GetSfreq(sjd);
@@ -1043,21 +1024,21 @@ void ADXT_ExecServer(void) {
 }
 
 void adxt_ExecServer(void) {
-    ADXT_SVR_* srv = (ADXT_SVR_*)&lbl_eu_805E4EF0;
+    ADXT_SVR_* srv = &ADXT_ServerWork;
     u8* p;
     s32 i;
     ADXCRS_Lock();
-    if (srv->state != 0) {
+    if (ADXT_TimeGuard[1] != 0) {
         ADXCRS_Unlock();
         return;
     }
-    srv->state = 1;
+    ADXT_TimeGuard[1] = 1;
     ADXCRS_Unlock();
     if (srv->callback0 != NULL) {
         srv->callback0(srv->callback0Arg);
     }
     ADXSJD_ExecServer();
-    srv->state = 2;
+    ADXT_TimeGuard[1] = 2;
     p = lbl_eu_805E26E8;
     for (i = 0; i < 16; i++) {
         if ((s8)*p == 1) {
@@ -1069,7 +1050,7 @@ void adxt_ExecServer(void) {
      * volatile store pins the stw before the cmpwi like retail */
     {
         void (*fn)(void*) = srv->callback2;
-        *(volatile u32*)&srv->state = 3;
+        *(volatile u32*)&ADXT_TimeGuard[1] = 3;
         if (fn != NULL) {
             fn(srv->callback2Arg);
         }
@@ -1083,7 +1064,7 @@ void adxt_ExecServer(void) {
     }
     {
         void (*fn)(void*) = srv->callback1;
-        *(volatile u32*)&srv->state = 0;
+        *(volatile u32*)&ADXT_TimeGuard[1] = 0;
         if (fn != NULL) {
             fn(srv->callback1Arg);
         }
@@ -1221,13 +1202,13 @@ void adxt_Pause(ADXT_OBJ_* self, int pause) {
     }
 update_time:
     /* refresh the sample-position estimate against the server clock */
-    savedSvr = lbl_eu_805E4F10;
-    lbl_eu_805E4F10 = 0;
+    savedSvr = ADXT_TimeGuard[0];
+    ADXT_TimeGuard[0] = 0;
     adxt_GetTime(self, &time, &sfreq);
     self->time =
-        __cvt_fp2unsigned((float)(s32)lbl_eu_805E4F28[0] *
+        __cvt_fp2unsigned((float)(s32)ADXT_SvrFreqTable[0].u *
                           ((float)(s32)time / (float)(s32)sfreq));
-    lbl_eu_805E4F10 = savedSvr;
+    ADXT_TimeGuard[0] = savedSvr;
     ADXCRS_Unlock();
 }
 
@@ -1267,12 +1248,12 @@ s32 ADXT_DiscardSmpl(ADXT_OBJ_* self, u32 num) {
         ADXCRS_Enter();
         adxt_ExecServer();
         ADXCRS_Leave();
-        savedLock = lbl_eu_805E4F10;
-        lbl_eu_805E4F10 = 0;
+        savedLock = ADXT_TimeGuard[0];
+        ADXT_TimeGuard[0] = 0;
         adxt_GetTime(self, &time, &sfreq);
-        lbl_eu_805E4F10 = savedLock;
+        ADXT_TimeGuard[0] = savedLock;
         self->time = __cvt_fp2unsigned(
-            (float)(s32)time / (float)(s32)sfreq * (float)(s32)lbl_eu_805E4F28[0]);
+            (float)(s32)time / (float)(s32)sfreq * (float)(s32)ADXT_SvrFreqTable[0].u);
         self->tick = lbl_eu_805E26DC;
     }
     ADXCRS_Leave();
@@ -1395,10 +1376,10 @@ s32 ADXT_InsertSilence(void* self, s32 ch, s32 smpl) {
 }
 
 /* .bss: reverse retail order for MWCC emission. */
-u32 lbl_eu_805E4F28[0x12];
-void (*lbl_eu_805E4F24)(void*);
+ADXT_F32U32_ ADXT_SvrFreqTable[0x12];
+void (*ADXT_DestroyFunc)(void*);
 void (*lbl_eu_805E4F20)();
-u32 lbl_eu_805E4F1C;
-u32 lbl_eu_805E4F18;
-u32 lbl_eu_805E4F10;
-u8 lbl_eu_805E4EF0[0x20];
+u32 ADXT_SvrFreq;
+u32 ADXT_DefSvrFreq;
+u32 ADXT_TimeGuard[2];
+ADXT_SVR_ ADXT_ServerWork;

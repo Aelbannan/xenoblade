@@ -102,5 +102,5 @@ extern "C" void CUICfManager_queueShopBuyMenu(u32);
 extern "C" void CUICfManager_queueShopSellMenu();
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern u32 lbl_eu_80663E28;             // cbRenderBefore gate flag (.sbss)
+extern u32 gmPauseFlags;             // cbRenderBefore gate flag (.sbss)
 extern char lbl_eu_80503AE0[];          // memory-region name string (.rodata)

@@ -17,6 +17,6 @@ extern "C" {
     extern u32 lbl_eu_80663730[2];
     extern u32 lbl_eu_80663738[2];
     extern u32 lbl_eu_80663740[2];
-    extern void* lbl_eu_80665690;
-    extern u32 lbl_eu_80665694;
+    extern void* sFontCommandBuffer;
+    extern u32 sFontCommandCursor;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 
 class CResLookup;
@@ -506,10 +506,10 @@ extern "C" void CTaskGame_setLoadScreen(int a, int b);
 
 // Game-manager flag words read/written by CfResPcImpl_handleMapChangeEvent / CfResPcImpl_loadFileEventTable /
 // CfResPcImpl_requestResourceLoad / CfResPcImpl_reloadMapSection.
-extern u32 lbl_eu_80663E28;
-extern u16 lbl_eu_80663E46;
-extern u16 lbl_eu_80663E42;  // current area id (written by CfResPcImpl_reloadMapSection)
-extern u16 lbl_eu_80663E44;  // current area sub-id (written by CfResPcImpl_reloadMapSection)
+extern u32 gmPauseFlags;
+extern u16 gmGlobalFlag46;
+extern u16 gmGlobalFlag42;  // current area id (written by CfResPcImpl_reloadMapSection)
+extern u16 gmGlobalFlag44;  // current area sub-id (written by CfResPcImpl_reloadMapSection)
 
 // C-ABI import (defined in CfTFile.cpp, retail C name CfTFile_LoadEventArchive): loads
 // the file-event archive for a packed token. extern "C" keeps the call-site

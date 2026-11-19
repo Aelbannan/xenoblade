@@ -43,7 +43,7 @@ CSystemWindow::CSystemWindow(CScn* scene, u32 opt, const char* str1, const char*
 CSystemWindow::~CSystemWindow() {}
 
 void CSystemWindow::Init() {
-    u32 w = lbl_eu_80663E24;
+    u32 w = gmGameFlags;
     mFlag2B6 = (w >> 30) & 1;
     if (mFlag2B6 == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(true);
@@ -100,7 +100,7 @@ void CSystemWindow::Move() {
     // Bail out if the task is busy or the global render flag is set.
     // (single OR so MWCC emits short-circuit branches: A -> bne exit,
     //  B -> beq continue / b exit)
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -151,7 +151,7 @@ void CSystemWindow::Move() {
 
 void CSystemWindow::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0)
         return;

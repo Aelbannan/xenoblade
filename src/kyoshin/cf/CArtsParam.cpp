@@ -210,7 +210,7 @@ extern const char lbl_eu_80526324[];      // warning file name
 extern const char lbl_eu_80526300[];      // warning message
 extern f64 lbl_eu_80667490;               // 2^52 (u32 -> float magic)
 extern f64 lbl_eu_80667498;               // 2^31 magic (s32 -> float)
-extern u16 lbl_eu_80663E42;               // current area id
+extern u16 gmGlobalFlag42;               // current area id
 // lbl_eu_8066746C / 80667470 / 80667474 / 80667478 / 8066747C / 80667480 /
 // 80667484 / 80667488 / 8066748C and ml::pi / 8066A1FC / 8066A210
 // are declared by headers already in the include chain (CfObjectModel.hpp /
@@ -576,14 +576,14 @@ int checkArtsFull(void* param, void* actor, int flags) {
                 if (p->unk48 == 0xea) {
                     if (a->v84() < lbl_eu_8066747C) result |= 0x80;
                     int kind = CtrlRemote_TouchBitByArg(0x20);
-                    if (kind > 0x108 && kind < 0x116 && (lbl_eu_80663E42 & 0x1F000) != 0) {
+                    if (kind > 0x108 && kind < 0x116 && (gmGlobalFlag42 & 0x1F000) != 0) {
                         result |= 0x80;
                     }
                 }
             } else if (p->unk78 & 2) {
                 if (p->unk78 & 0x4000) {
                     int kind = CtrlRemote_TouchBitByArg(0x20);
-                    if (kind > 0x108 && kind < 0x116 && (lbl_eu_80663E42 & 0x1F000) != 0) {
+                    if (kind > 0x108 && kind < 0x116 && (gmGlobalFlag42 & 0x1F000) != 0) {
                         result |= 0x80;
                     }
                 } else {

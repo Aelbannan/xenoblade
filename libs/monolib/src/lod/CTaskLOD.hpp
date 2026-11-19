@@ -18,7 +18,7 @@ struct LODParam1Obj {
 Task wrapper around a LODMemMan instance.
 
 CTaskLOD manages the LOD (level-of-detail) memory manager lifecycle.  A single
-global instance is reachable through `lbl_eu_80665730`; most public methods
+global instance is reachable through `spTaskLODInstance`; most public methods
 delegate to the manager pointed at by mpActiveLOD (offset 0x1D40).
 
 Inherits from CTTask<CTaskLOD> (0x54 bytes: CDoubleListNode + vtable +
@@ -94,5 +94,6 @@ extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b);
 extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b);
 extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b);
 
-// The one CTaskLOD instance reference used by the delegates below.
-extern CTaskLOD* lbl_eu_80665730;
+// The one CTaskLOD instance reference used by the delegates below.  The
+// retail slot spans 8 bytes; element 0 holds the live instance pointer.
+extern CTaskLOD* spTaskLODInstance[2];

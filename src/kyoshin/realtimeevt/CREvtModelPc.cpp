@@ -6,7 +6,7 @@
 #include "kyoshin/realtimeevt/CREvtModelPc.hpp"
 
 #include <cstring>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 (CScn)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene (CScn)
 #include "kyoshin/cf/object/CfObject.hpp"
 
 // Per-character body variant used in co-op mode (indexed by character id).
@@ -359,9 +359,9 @@ void CREvtModelPc::loadFiles() {
                     mFileReq[i] = CDeviceFile::readCommonArchiveFile(mem, path.c_str(), this, 0, 0);
                 } else {
                     mtl::ALLOC_HANDLE heap = mtl::MemManager::getHandleMEM2();
-                    mtl::ALLOC_HANDLE param = lbl_eu_80663E14->getAllocHandle();
+                    mtl::ALLOC_HANDLE param = gmScene->getAllocHandle();
                     if (((CREvtModelPcEvtData*)mPtr1C)->mLoadFlags & 2) {
-                        heap = lbl_eu_80663E14->getAllocHandle();
+                        heap = gmScene->getAllocHandle();
                         param = mtl::MemManager::getHandleMEM2();
                     }
                     mFileReq[i] = CDeviceFile::readFile(heap, path.c_str(), this, 0, 0);
@@ -398,9 +398,9 @@ void CREvtModelPc::loadFiles() {
             mFileReq[0] = CDeviceFile::readCommonArchiveFile(mem, path0.c_str(), this, 0, 0);
         } else {
             mtl::ALLOC_HANDLE heap = mtl::MemManager::getHandleMEM2();
-            mtl::ALLOC_HANDLE param = lbl_eu_80663E14->getAllocHandle();
+            mtl::ALLOC_HANDLE param = gmScene->getAllocHandle();
             if (((CREvtModelPcEvtData*)mPtr1C)->mLoadFlags & 2) {
-                heap = lbl_eu_80663E14->getAllocHandle();
+                heap = gmScene->getAllocHandle();
                 param = mtl::MemManager::getHandleMEM2();
             }
             mFileReq[0] = CDeviceFile::readFile(heap, path0.c_str(), this, 0, 0);
@@ -435,9 +435,9 @@ void CREvtModelPc::loadFiles() {
             mFileReq[5] = CDeviceFile::readCommonArchiveFile(mem, path5.c_str(), this, 0, 0);
         } else {
             mtl::ALLOC_HANDLE heap = mtl::MemManager::getHandleMEM2();
-            mtl::ALLOC_HANDLE param = lbl_eu_80663E14->getAllocHandle();
+            mtl::ALLOC_HANDLE param = gmScene->getAllocHandle();
             if (((CREvtModelPcEvtData*)mPtr1C)->mLoadFlags & 2) {
-                heap = lbl_eu_80663E14->getAllocHandle();
+                heap = gmScene->getAllocHandle();
                 param = mtl::MemManager::getHandleMEM2();
             }
             mFileReq[5] = CDeviceFile::readFile(heap, path5.c_str(), this, 0, 0);
@@ -512,7 +512,7 @@ void CREvtModelPc::createModel() {
     }
 
     if (data0 != 0 && allLoaded) {
-        mModel = (CScnItemModel*)Scn_SetupAnim(lbl_eu_80663E14, data0, -1, 1);
+        mModel = (CScnItemModel*)Scn_SetupAnim(gmScene, data0, -1, 1);
         simSetLeafDist7B0(mModel, 0.0f);
         simSetFlag2000Chain(mModel, 1);
         simSetLeafFlag4000(mModel, 1);

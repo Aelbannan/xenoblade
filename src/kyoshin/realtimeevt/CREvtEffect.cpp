@@ -9,16 +9,8 @@
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "kyoshin/code_801862C0.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
-// Named .sdata2 signed int->float conversion magic (0x4330000080000000).
-// Defining it here lets MWCC reuse the retail SDA symbol instead of a TU-local @N.
-extern "C" {
-// Named .sdata2 signed int->float conversion magic. Hex init matches
-// CFloorMap so MWCC can coalesce the builtin (f32)(s32) pool onto this
-// retail symbol instead of a TU-local @N.
-__declspec(section ".sdata2") const double lbl_eu_80667950 = 0x4330000080000000ll;
-}
 
 // C-linkage imports relocated to CREvtEffect.hpp (see the "C-linkage imports"
 // section there). This TU still defines the CREvt* functions below.
@@ -150,7 +142,7 @@ void cf::CREvtEffect::refreshChrAnim() {
     if (alpha > lbl_eu_8066793C) {
         int intPart = (int)alpha;
         f32 fracPart = alpha - (f32)intPart;
-        if (fracPart > lbl_eu_80667944) {
+        if (fracPart > 0.9f) {
             fracPart = lbl_eu_80667940;
         }
         mAnm1Scale[2] = (f32)(int)mAnm1Scale[2] + fracPart;
@@ -168,10 +160,10 @@ void cf::CREvtEffect::refreshChrAnim() {
     resultTgt->GetTranslate((nw4r::math::VEC3*)mAnm3Translate);
 
     // Refresh the spawned effects when the translate.y threshold is crossed
-    if (mAnm1Translate[1] > lbl_eu_80667948) {
+    if (mAnm1Translate[1] > 0.95f) {
         if (mLastFrame != EvtSeqGetCounter100()) {
-            if (Scn_GetFrameDelta(lbl_eu_80663E14) >= lbl_eu_8066794C ||
-                (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
+            if (Scn_GetFrameDelta(gmScene) >= 0.001f ||
+                (Scn_GetFrameDelta(gmScene) < 0.001f &&
                  mFlag134 == 0)) {
                 spawnEffect();
             }
@@ -207,7 +199,7 @@ bool cf::CREvtEffect::spawnEffect() {
 
     // Create the effect instance and register it in the slot array
     CEffectInst* effect = (CEffectInst*)EffRoot_AddSchedReq(
-        &lbl_eu_8065FC18, mBdatData, lbl_eu_80663E14, 0, 1, 0);
+        &lbl_eu_8065FC18, mBdatData, gmScene, 0, 1, 0);
     if (effect == 0) {
         return 0;
     }
@@ -221,7 +213,7 @@ bool cf::CREvtEffect::spawnEffect() {
 
     // Scale: mAnm1Scale.y clamped below -1.0 to 0.0
     f32 scale = mAnm1Scale[1];
-    if (scale < lbl_eu_80667958) {
+    if (scale < 0.5f) {
         scale = lbl_eu_80667940;
     }
 
@@ -287,8 +279,8 @@ void cf::CREvtEffect::updateEffects() {
             nameObj = EvtSeqFindEventByNameData(nameData);
         }
 
-        f32 fpsDiv = ml::pi / lbl_eu_8066795C;
-        f32 half = lbl_eu_80667960;
+        f32 fpsDiv = ml::pi / 180.0f;
+        f32 half = 0.1f;
 
         // Push the current anim state into every running effect.
         int i = 0;
@@ -340,12 +332,12 @@ void cf::CREvtEffect::updateEffects() {
 
         // Random chance to clear the spawn flag.
         if (mFlag134 != 0 &&
-            Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C) {
+            Scn_GetFrameDelta(gmScene) < 0.001f) {
             mFlag134 = 0;
         }
 
         // Invalidate the last-frame cache once per new frame.
-        if (Scn_GetFrameDelta(lbl_eu_80663E14) < lbl_eu_8066794C &&
+        if (Scn_GetFrameDelta(gmScene) < 0.001f &&
             mLastFrame != EvtSeqGetCounter100()) {
             mLastFrame = -1;
         }
@@ -388,7 +380,7 @@ void cf::CREvtEffect::initModel(void* src, void* bdatEntry) {
             getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
                 &lbl_eu_80503800[0], &handle, 0);
 
-            mModel = scnImN4BuildByIdx(lbl_eu_80663E14, handle, 1, 1, 0, 0x50);
+            mModel = scnImN4BuildByIdx(gmScene, handle, 1, 1, 0, 0x50);
             simSetLeafDist7B0(mModel, lbl_eu_8066793C);
             ((CLibLayoutModel*)mModel)->mFlags |= 4;
 
@@ -408,7 +400,7 @@ void cf::CREvtEffect::initModel(void* src, void* bdatEntry) {
         }
 
         // Load the material entry for the source.
-        void* material = Scn_InitGlobalA(lbl_eu_80663E14, src, 0);
+        void* material = Scn_InitGlobalA(gmScene, src, 0);
         mMaterial = material;
         if (material != 0) {
             simBindChrAnim(mModel, material, 0, 0, 0, 1, -1);

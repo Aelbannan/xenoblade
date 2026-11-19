@@ -7,7 +7,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlEnemy.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/CfEnumListHolder.hpp"
 
 namespace cf {
@@ -175,7 +175,7 @@ L_8852C:
     if (enemy == 0) goto L_8854C;
     if (CtrlMoveEne_TryLatchTargetActor(&self->mSub84, enemy) != 0) kept = 1;
 L_8854C:
-        if (lbl_eu_80663E24 & 0x2000) {
+        if (gmGameFlags & 0x2000) {
             if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) kept = 0;
         }
         if (kept != 0) {

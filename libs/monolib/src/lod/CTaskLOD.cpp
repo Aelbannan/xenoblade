@@ -68,7 +68,7 @@ public:
 // (plain definition: global data names are never mangled by MWCC, and an
 // `extern "C"` qualified declaration would be taken as extern storage class,
 // emitting no storage)
-__attribute__((aligned(8))) CTaskLOD* lbl_eu_80665730[2];
+__attribute__((aligned(8))) CTaskLOD* spTaskLODInstance[2];
 
 // Shared float pool owned by CTaskLOD's sibling split (values verified from
 // the retail object: 8066A5B8 = 1.0f, 8066A5BC = 0.0f). Referencing the
@@ -114,7 +114,7 @@ extern "C" void configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(LOD::UnkCl
 // --- FULL_MATCH functions ---
 
 // Delegate wrappers.  Each checks the singleton instance pointer
-// `lbl_eu_80665730` and, if non-null, forwards to its active LODMemMan
+// `spTaskLODInstance` and, if non-null, forwards to its active LODMemMan
 // (mpActiveLOD at 0x1D40).  The forwarding call is tail-call optimised by
 // MWCC into a `b` branch.
 //
@@ -125,34 +125,34 @@ extern "C" void configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(LOD::UnkCl
 // (`.Fi`/`.FP8CTaskLOD` vs retail `.Fv`).
 
 void CTaskLOD::notifyLODTick(float scale) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setLodScaleAndRefresh(scale);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setLodScaleAndRefresh(scale);
     }
 }
 
 void CTaskLOD::updateLODFrame(float scale) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setBaseScale(scale);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setBaseScale(scale);
     }
 }
 
 void CTaskLOD::enableLOD() {
-    if (lbl_eu_80665730[0]) {
+    if (spTaskLODInstance[0]) {
         // Retail symbol is .Fv though r4 carries the arg; route through the
         // extern "C" retail-named wrapper so the reloc name matches.
-        lbl_eu_80665730[0]->mpActiveLOD->setPauseFlag(1);
+        spTaskLODInstance[0]->mpActiveLOD->setPauseFlag(1);
     }
 }
 
 void CTaskLOD::disableLOD() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setPauseFlag(0);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setPauseFlag(0);
     }
 }
 
 void CTaskLOD::bindTaskToLOD() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->attachSceneObjects((u32)this);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->attachSceneObjects((u32)this);
     }
 }
 
@@ -208,16 +208,16 @@ extern "C" CTaskLOD* create__8CTaskLODFv(CTaskLOD* parent, LODParam1Obj* p1,
                                           void* p2, u32 handle, u32 size) {
     CTaskLOD* t = new (CWorkThreadSystem::getWorkMem()) CTaskLOD(p1, p2, handle, size);
     t->Regist(parent, false);
-    lbl_eu_80665730[0] = t;
+    spTaskLODInstance[0] = t;
     return t;
 }
 
 // Allocate/replace the secondary LODMemMan when `enable` is set, then return
 // the active LODMemMan's resetAndReload result (0 when there is no singleton).
 extern "C" bool acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
-    if (lbl_eu_80665730[0]) {
+    if (spTaskLODInstance[0]) {
         if (enable) {
-            CTaskLOD* t = lbl_eu_80665730[0];
+            CTaskLOD* t = spTaskLODInstance[0];
             if (t->mpSecondaryLOD) {
                 if (t->mpSecondaryLOD) {
                     delete t->mpSecondaryLOD;
@@ -235,8 +235,8 @@ extern "C" bool acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
             t->mpActiveLOD = lod;
             t->mLODMemMan.setPauseFlag(0);
         }
-        return lbl_eu_80665730[0]->mpActiveLOD->resetAndReload(
-            (u32)self, (u8*)lbl_eu_80665730[0]->mParam1);
+        return spTaskLODInstance[0]->mpActiveLOD->resetAndReload(
+            (u32)self, (u8*)spTaskLODInstance[0]->mParam1);
     }
     return 0;
 }
@@ -246,9 +246,9 @@ extern "C" bool acquireLODResource__8CTaskLODFv(CTaskLOD* self, bool enable) {
 // mLODMemMan and enable the LOD system.  The whole body works on the global
 // instance (retail never touches `this` except via the delegate call).
 void CTaskLOD::resetActiveLOD() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->teardownG3dObjects((int)this);
-        CTaskLOD* t = lbl_eu_80665730[0];
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->teardownG3dObjects((int)this);
+        CTaskLOD* t = spTaskLODInstance[0];
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
                 delete t->mpSecondaryLOD;
@@ -264,8 +264,8 @@ void CTaskLOD::resetActiveLOD() {
 // mpActiveLOD at the embedded mLODMemMan, and enable the LOD system.  The
 // whole body works on the global instance (retail never touches `this`).
 void CTaskLOD::restorePrimaryLOD() {
-    if (lbl_eu_80665730[0]) {
-        CTaskLOD* t = lbl_eu_80665730[0];
+    if (spTaskLODInstance[0]) {
+        CTaskLOD* t = spTaskLODInstance[0];
         if (t->mpSecondaryLOD) {
             if (t->mpSecondaryLOD) {
                 delete t->mpSecondaryLOD;
@@ -281,8 +281,8 @@ void CTaskLOD::restorePrimaryLOD() {
 // then unconditionally returns the constant 1.0f (retail loads the 1.0f pool
 // entry at 0x8066A5B8 after the call).
 float CTaskLOD::getLODScale() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->getBaseScale();
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->getBaseScale();
     }
     return 1.0f;
 }
@@ -290,8 +290,8 @@ float CTaskLOD::getLODScale() {
 // Toggle the 0x40 flag bit on the active LODMemMan at offset 0x6c: set when
 // `this` is non-null, clear when null.
 void CTaskLOD::setLODFilterFlag() {
-    if (lbl_eu_80665730[0]) {
-        LOD::UnkClass_8046D144* lod = lbl_eu_80665730[0]->mpActiveLOD;
+    if (spTaskLODInstance[0]) {
+        LOD::UnkClass_8046D144* lod = spTaskLODInstance[0]->mpActiveLOD;
         if (this) {
             lod->field_0x6C |= 0x40;
         } else {
@@ -303,18 +303,18 @@ void CTaskLOD::setLODFilterFlag() {
 // Forwards the tail call to the active LODMemMan's func_8046F024 with args
 // (1, this - 1) when `this` is non-null, otherwise (0, 0).
 void CTaskLOD::updateLODRange() {
-    if (lbl_eu_80665730[0]) {
+    if (spTaskLODInstance[0]) {
         if (this) {
-            configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(lbl_eu_80665730[0]->mpActiveLOD, 1, (int)this - 1);
+            configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(spTaskLODInstance[0]->mpActiveLOD, 1, (int)this - 1);
         } else {
-            configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(lbl_eu_80665730[0]->mpActiveLOD, 0, 0);
+            configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(spTaskLODInstance[0]->mpActiveLOD, 0, 0);
         }
     }
 }
 
 void CTaskLOD::syncLODTask() {
-    if (lbl_eu_80665730[0]) {
-        updateSubObject__Q23LOD17UnkClass_8046D144Fv(lbl_eu_80665730[0]->mpActiveLOD, this);
+    if (spTaskLODInstance[0]) {
+        updateSubObject__Q23LOD17UnkClass_8046D144Fv(spTaskLODInstance[0]->mpActiveLOD, this);
     }
 }
 
@@ -323,8 +323,8 @@ void CTaskLOD::syncLODTask() {
 // c is unused (dropped).  Defined as a global function carrying the retail
 // `.Fv` symbol name (see note above).
 extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setTimeParams((u32)(int)self, (u32)(int)a, (u32)(int)b);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setTimeParams((u32)(int)self, (u32)(int)a, (u32)(int)b);
     }
 }
 
@@ -332,16 +332,16 @@ extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, v
 // manager, then dispatch the same task + flag through the singleton's
 // scene-light control list (scnLgtCallLightV26 ring walk).
 void CTaskLOD::activateLOD() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->clearElementFlag((int)this);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)1);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->clearElementFlag((int)this);
+        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)1);
     }
 }
 
 void CTaskLOD::deactivateLOD() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setElementFlag((int)this);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)0);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setElementFlag((int)this);
+        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV26(this, (void*)0);
     }
 }
 
@@ -350,25 +350,25 @@ void CTaskLOD::deactivateLOD() {
 // `.Fv` symbol name because the body reads a real r4 argument (see the note
 // on the dispatchLODArgs family above).
 extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->toggleElementFlag((int)self, flag);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV26(self, (void*)flag);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->toggleElementFlag((int)self, flag);
+        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV26(self, (void*)flag);
     }
 }
 // Value-delegates.  Like the void wrappers above, each forwards to the
-// active LODMemMan when the singleton `lbl_eu_80665730` is set, passing
+// active LODMemMan when the singleton `spTaskLODInstance` is set, passing
 // `this` as the trailing CTaskLOD* argument (retail `mr r4, r3`).  The
 // pointer/float returns come straight back from the delegate.
 void* CTaskLOD::getLODData() {
-    if (lbl_eu_80665730[0]) {
-        return (void*)lbl_eu_80665730[0]->mpActiveLOD->isElementFlagClear((int)this);
+    if (spTaskLODInstance[0]) {
+        return (void*)spTaskLODInstance[0]->mpActiveLOD->isElementFlagClear((int)this);
     }
     return 0;
 }
 
 void CTaskLOD::refreshLOD() {
-    if (lbl_eu_80665730[0]) {
-        setElementLodLevel__Q23LOD17UnkClass_8046D144Fif(lbl_eu_80665730[0]->mpActiveLOD, this);
+    if (spTaskLODInstance[0]) {
+        setElementLodLevel__Q23LOD17UnkClass_8046D144Fif(spTaskLODInstance[0]->mpActiveLOD, this);
     }
 }
 
@@ -376,71 +376,71 @@ void CTaskLOD::refreshLOD() {
 // walk the singleton's scene-light control ring (scnLgtCallLightV27) with the same
 // task/arg and the float value.  `b` is unused in retail.
 extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b) {
-    if (lbl_eu_80665730[0]) {
-        configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(lbl_eu_80665730[0]->mpActiveLOD, self, a);
-        (lbl_eu_80665730[0]->mParam1->field_0x7C)->CallLightV27(self, (void*)a, val);
+    if (spTaskLODInstance[0]) {
+        configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(spTaskLODInstance[0]->mpActiveLOD, self, a);
+        (spTaskLODInstance[0]->mParam1->field_0x7C)->CallLightV27(self, (void*)a, val);
     }
 }
 
 // Same delegate-shape as dispatchLODArgs: forwards `self` + first arg `a` to the
 // active LODMemMan (tail-call `b`).  `b` is unused in retail.
 extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setElementVisibility((int)self, a);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setElementVisibility((int)self, a);
     }
 }
 
 void CTaskLOD::removeLODEntry() {
-    if (lbl_eu_80665730[0]) {
-        setElementScale__Q23LOD17UnkClass_8046D144Fif(lbl_eu_80665730[0]->mpActiveLOD, this);
+    if (spTaskLODInstance[0]) {
+        setElementScale__Q23LOD17UnkClass_8046D144Fif(spTaskLODInstance[0]->mpActiveLOD, this);
     }
 }
 
 void CTaskLOD::clearLODEntry() {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->refreshElementScale((int)this);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->refreshElementScale((int)this);
     }
 }
 
 float CTaskLOD::getLODDistance() {
-    if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->getElementScale((int)this);
+    if (spTaskLODInstance[0]) {
+        return spTaskLODInstance[0]->mpActiveLOD->getElementScale((int)this);
     }
     return 0.0f;
 }
 extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->updateElementVisibility((int)self, a);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->updateElementVisibility((int)self, a);
     }
 }
 
 extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->setElementFlag80((int)self, a);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->setElementFlag80((int)self, a);
     }
 }
 
 extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
-    if (lbl_eu_80665730[0]) {
-        lbl_eu_80665730[0]->mpActiveLOD->linkTaskElements((int)self, a);
+    if (spTaskLODInstance[0]) {
+        spTaskLODInstance[0]->mpActiveLOD->linkTaskElements((int)self, a);
     }
 }
 void* CTaskLOD::getLODObject() {
-    if (lbl_eu_80665730[0]) {
-        return (void*)lbl_eu_80665730[0]->mpActiveLOD->getElementState((int)this);
+    if (spTaskLODInstance[0]) {
+        return (void*)spTaskLODInstance[0]->mpActiveLOD->getElementState((int)this);
     }
     return 0;
 }
 
 void CTaskLOD::updateLODObject() {
-    if (lbl_eu_80665730[0]) {
-        setElementCachedValue__Q23LOD17UnkClass_8046D144Fif(lbl_eu_80665730[0]->mpActiveLOD, this);
+    if (spTaskLODInstance[0]) {
+        setElementCachedValue__Q23LOD17UnkClass_8046D144Fif(spTaskLODInstance[0]->mpActiveLOD, this);
     }
 }
 
 float CTaskLOD::getLODLevel() {
-    if (lbl_eu_80665730[0]) {
-        return lbl_eu_80665730[0]->mpActiveLOD->getElementCachedValue((int)this);
+    if (spTaskLODInstance[0]) {
+        return spTaskLODInstance[0]->mpActiveLOD->getElementCachedValue((int)this);
     }
     return 0.0f;
 }
@@ -448,8 +448,8 @@ float CTaskLOD::getLODLevel() {
 // func_8046EF7C returns a pointer; when there is no active LOD the retail
 // body returns `this` unchanged (beqlr with r3 still holding `this`).
 CTaskLOD* CTaskLOD::getLODOrSelf() {
-    if (lbl_eu_80665730[0]) {
-        return (CTaskLOD*)(u32)lbl_eu_80665730[0]->mpActiveLOD->updateSingleElement((int)this);
+    if (spTaskLODInstance[0]) {
+        return (CTaskLOD*)(u32)spTaskLODInstance[0]->mpActiveLOD->updateSingleElement((int)this);
     }
     return this;
 }

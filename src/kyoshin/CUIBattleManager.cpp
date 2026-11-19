@@ -87,7 +87,7 @@ extern "C" {
 void* UIBattleArtsSelectHandle;
 char UIBattleArcPathStrings[];
 u32 __ptmf_null[3];
-u32 lbl_eu_80663E28;
+u32 gmPauseFlags;
 
 CUIBattleManager* CUIBattleManager::spInstance;
 
@@ -174,7 +174,7 @@ void CUIBattleManager::Move() {
     if (CTaskGame::isFlag01Set()) {
         return;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if ((gmPauseFlags & (1u << 21)) != 0) {
         return;
     }
 

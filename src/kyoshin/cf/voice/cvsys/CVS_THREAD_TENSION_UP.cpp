@@ -52,12 +52,6 @@ struct CVS_THREAD_TENSION_UP_raw {
     u8 field_0x28;              // 0x28
 };
 
-// PtMF-typed alias of offsets 0x00-0x0B: retail installs the default
-// voice-event handler by a 12-byte member-pointer copy.
-struct CVS_THREAD_TENSION_UP_ptmf {
-    VoiceCb cb;                 // 0x00-0x0B
-};
-
 // us-802ab51c (__ct__802A8DE8)
 // Factory constructor for CVS_THREAD_TENSION_UP.
 // Takes a factory/manager pointer and a thread index (must be >= 3).

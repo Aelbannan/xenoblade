@@ -860,5 +860,3 @@ u32 MmlParser::ParseAllocTrack(const void* pBase, u32 offset,
 } // namespace snd
 } // namespace nw4r
 
-// Absorb: pad .sbss 0x1->0x8
-unsigned int snd_MmlParser_sbss_pad;

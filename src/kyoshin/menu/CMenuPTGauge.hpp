@@ -10,7 +10,7 @@
 
 // PTGauge widget state machine:
 //   mPhase 0 = entry/appear, 1 = appearing anim, 2 = active, 3 = disappearing anim
-//   mActionIdx indexes into the PTMF dispatch table lbl_eu_805323F8
+//   mActionIdx indexes into the PTMF dispatch table sPTGaugeActionDispatch
 
 // novtable: retail's dtor emits NO class-vtable store.
 // Intermediate base mirroring the CTTask<IUICf> tail (ptmf slots at
@@ -78,4 +78,9 @@ struct CMenuPTGaugeFont {
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Global pointer to the active CMenuPTGauge instance (sda21-relative in retail).
-extern CMenuPTGauge* lbl_eu_806642D8;
+extern CMenuPTGauge* spPTGaugeInstance;
+
+// PTMF dispatch tables owned by this widget: (s32 partyVal) -> void.
+typedef void (CMenuPTGauge::*CMenuPTGaugePtmf)(s32);
+extern CMenuPTGaugePtmf sPTGaugeActionDispatch[];
+extern CMenuPTGaugePtmf sPTGaugeValueDispatch[];

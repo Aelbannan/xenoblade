@@ -152,7 +152,7 @@ extern "C" int ChainEne_MatchOwner_14E4(cf::CChainActorEne* self, void* arg2) {
 // 0x96b timeline and uses that id; otherwise it falls back to the actor's own
 // timeline object.
 // Special enemy-chain types (0x96b/0x96c) share the 0x96b timeline.
-static inline bool isChainEneSpecial(EneChainObj* obj) {
+inline bool cf::CChainActorEne::isChainEneSpecial(EneChainObj* obj) {
     if (obj != 0) {
         return obj->type == 0x96b || obj->type == 0x96c;
     }
@@ -160,7 +160,7 @@ static inline bool isChainEneSpecial(EneChainObj* obj) {
 }
 
 // Scan the gimmick-object circular list for the 0x96b timeline owner.
-static inline EneChainObj* findChainEneTimeline() {
+inline EneChainObj* cf::CChainActorEne::findChainEneTimeline() {
     GlistList* list = (GlistList*)getReslistB48();
     for (GlistNode* node = list->field_04->next; node != list->field_04; node = node->next) {
         EneChainObj* o = (EneChainObj*)getEffOwner__(node->obj);
@@ -171,7 +171,7 @@ static inline EneChainObj* findChainEneTimeline() {
     return 0;
 }
 
-static inline BattleActor* findChainEneActor(EneChainObj* obj) {
+inline BattleActor* cf::CChainActorEne::findChainEneActor(EneChainObj* obj) {
     if (obj != 0) {
         return (BattleActor*)CPartsChange_FindActorById(CPartsChange_GetActorTable(), obj->id);
     }
@@ -181,8 +181,8 @@ static inline BattleActor* findChainEneActor(EneChainObj* obj) {
 extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
     u32 a0 = self->unk0;
     if (a0 != 0) a0 += 0x3e9c;
-    if (isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a0))) {
-        BattleActor* act = findChainEneActor(findChainEneTimeline());
+    if (cf::CChainActorEne::isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a0))) {
+        BattleActor* act = cf::CChainActorEne::findChainEneActor(cf::CChainActorEne::findChainEneTimeline());
         if (act != 0) return (act->flagA0 >> 1) & 1;
     }
     u32 a2 = self->unk0;
@@ -201,8 +201,8 @@ extern "C" int ChainEne_GetReworkFlag_15B8(cf::CChainActorEne* self) {
 extern "C" void ChainEne_ClearReworkFlag_16FC(cf::CChainActorEne* self) {
     u32 a1 = self->unk0;
     if (a1 != 0) a1 += 0x3e9c;
-    if (isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a1))) {
-        BattleActor* act = findChainEneActor(findChainEneTimeline());
+    if (cf::CChainActorEne::isChainEneSpecial((EneChainObj*)getEffOwner__((void*)a1))) {
+        BattleActor* act = cf::CChainActorEne::findChainEneActor(cf::CChainActorEne::findChainEneTimeline());
         if (act != 0) act->flagA0 &= ~2;
     }
     u32 a2 = self->unk0;

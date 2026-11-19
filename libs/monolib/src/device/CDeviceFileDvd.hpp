@@ -66,7 +66,7 @@ public:
     u8 field_0x1D0;  //0x1D0 (dvd file open flag)
     u32 field_0x1D4; //0x1D4 (drive-status retry counter)
 
-    static CDeviceFileDvd* spInstance; // -> retail lbl_eu_80665670
+    static CDeviceFileDvd* spInstance; // retail .sbss symbol spInstance__14CDeviceFileDvd
 };
 
 struct CFileHandle;

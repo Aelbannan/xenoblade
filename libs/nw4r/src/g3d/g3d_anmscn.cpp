@@ -133,8 +133,10 @@ void GetLightSet__Q34nw4r3g3d12LightSettingFi(nw4r::g3d::LightSet* result, nw4r:
     nw4r::g3d::LightSet* lightSet = result;
     *lightSet = setting->GetLightSet(index);
 }
-int Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes(void) { return 0x0; }
-int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
+nw4r::g3d::AnmScnRes* nw4r::g3d::AnmScn::Attach(int idx, AnmScnRes* pRes) {
+    return NULL;
+}
+nw4r::g3d::AnmScnRes* nw4r::g3d::AnmScn::Detach(int idx) { return NULL; }
 unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
 
 unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_ptr) {
@@ -393,8 +395,8 @@ void AnmScnRes::SetFrame(f32 frame) {
 } // namespace nw4r
 
 
-float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_ptr) {
-    return *(const float*)((const unsigned char*)this_ptr + 0xC);
+float nw4r::g3d::AnmScnRes::GetFrame() const {
+    return *(const float*)((const unsigned char*)this + 0xC);
 }
 namespace nw4r {
 namespace g3d {
@@ -416,7 +418,7 @@ void AnmScnRes::SetUpdateRate(f32 rate) {
 } // namespace nw4r
 
 
-float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) { return *(const float*)((const char*)this_ + 0x10); }
+float nw4r::g3d::AnmScnRes::GetUpdateRate() const { return *(const float*)((const char*)this + 0x10); }
 // FrameCtrl::smBaseUpdateRate (1.0f), shipped in retail .sdata2 as this named
 // object (file scope so the symbol stays unmangled).
 extern const f32 lbl_eu_80663460;

@@ -4,12 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
+#include "kyoshin/SysWinLogCounterApi.hpp"
 
 #include "monolib/util/MemManager.hpp"
 #include <string.h>
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 (CScn*)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene (CScn*)
 #include "monolib/scn/CScnTimeApi.hpp"        // Scn_GetFrameDelta
 #include "kyoshin/CfEnumListHolder.hpp"
 
@@ -127,7 +128,7 @@ const void* lbl_eu_8052A660[12] = {
 // .rodata 0x40: NUL-led battle-command string table (retail lbl_eu_804FC758).
 // Code offsets: +1 INPUT, +7 ENCO, +0xC AWAKE, +0x12 HELP, +0x17 REVIVE,
 // +0x1E REVIVE_ME, +0x28 REVIVE_END, +0x33 FISHING, +0x3B core.
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) char lbl_eu_804FC758[0x40] =
+extern const char lbl_eu_804FC758[0x40] =
     "\0INPUT\0ENCO\0AWAKE\0HELP\0REVIVE\0REVIVE_ME\0REVIVE_END\0FISHING\0core";
 // .sdata2 0x40: battle float/double pool in retail order. Elv-style struct so
 // MWCC cannot reorder by first use; the explicit pad word mirrors retail +0xC.
@@ -153,17 +154,7 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
     1.0f, 0.0f, 0.01f, 0, 4503599627370496.0, 4503601774854144.0,
     100.0f, 0.15f, -1.0f, 10.0f, 30.0f, 15.0f, -10.0f, 0.0f
 };
-#define lbl_eu_80666BC8 sdata2_ImplPc.f_BC8
-#define lbl_eu_80666BCC sdata2_ImplPc.f_BCC
-#define lbl_eu_80666BD0 sdata2_ImplPc.f_BD0
 #define lbl_eu_80666BE0 sdata2_ImplPc.d_BE0
-#define lbl_eu_80666BE8 sdata2_ImplPc.f_BE8
-#define lbl_eu_80666BEC sdata2_ImplPc.f_BEC
-#define lbl_eu_80666BF0 sdata2_ImplPc.f_BF0
-#define lbl_eu_80666BF4 sdata2_ImplPc.f_BF4
-#define lbl_eu_80666BF8 sdata2_ImplPc.f_BF8
-#define lbl_eu_80666BFC sdata2_ImplPc.f_BFC
-#define lbl_eu_80666C00 sdata2_ImplPc.f_C00
 
 
 // KEEP (blockers-A 2026-10-23): minimal cf::CBattleManager view. This TU walks the
@@ -290,7 +281,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         // Battle start: replay arts 0xea while the state word (slot 0x160)
         // is still below the idle threshold.
         if (isBattleStatusActive(&obj->mArts, 0xea)) {
-            if (obj->v160() < lbl_eu_80666BC8) {
+            if (obj->v160() < 1.0f) {
                 obj->mArts.vf20(0xea);
             }
         }
@@ -327,7 +318,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         // Multi battle: once the state word passes the threshold, register
         // the arts-0xf1 status record, gate the lists, replay arts 0xef,
         // then run the shared setup-effect table below.
-        if (obj->v160() >= lbl_eu_80666BC8) {
+        if (obj->v160() >= 1.0f) {
             if (isBattleStatusActive(&obj->mArts, 0xf1) == 0) {
                 u32 id = *obj->field_04->vf30();
                 if (testActorStatus(obj, &id, 6) != 0) {
@@ -338,7 +329,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
                     rec.field_0D = 6;
                     rec.field_10 = 0;
                     rec.field_12 = 0;
-                    rec.field_14 = lbl_eu_80666BCC;
+                    rec.field_14 = 0.0f;
                     aiRingPrepend(&obj->field_3380, &rec);
                 }
             }
@@ -375,7 +366,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         // forward the arts container's pending flag and notify the manager;
         // otherwise only when the state word is still low does a present
         // 0x10a entry get reported.
-        if (obj->v160() >= lbl_eu_80666BC8) {
+        if (obj->v160() >= 1.0f) {
             u32 id = *obj->field_04->vf30();
             if (testActorStatus(obj, &id, 6) != 0 &&
                 isBattleStatusActive(&obj->mArts, 0x10a) == 0) {
@@ -390,7 +381,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
                 goto L_table;
             }
         }
-        if (obj->v160() < lbl_eu_80666BC8) {
+        if (obj->v160() < 1.0f) {
             if (isBattleStatusActive(&obj->mArts, 0x10a)) {
                 CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), obj, 0x10a);
             }
@@ -403,8 +394,8 @@ L_table:
     // Per-battle setup effects: copy the six handler ids, count how many of
     // the three player slots requested each one, and fire whatever nobody
     // requested through the arts container check.
-    u32 ids[6] = {lbl_eu_804FC718[0], lbl_eu_804FC718[1], lbl_eu_804FC718[2],
-                  lbl_eu_804FC718[3], lbl_eu_804FC718[4], lbl_eu_804FC718[5]};
+    u32 ids[6] = {sBattleEffectHandlerIds[0], sBattleEffectHandlerIds[1], sBattleEffectHandlerIds[2],
+                  sBattleEffectHandlerIds[3], sBattleEffectHandlerIds[4], sBattleEffectHandlerIds[5]};
     int counts[6] = {0, 0, 0, 0, 0, 0};
     for (u32 i = 0; i < 3; i++) {
         int v = getSlotEffectId(i);
@@ -433,7 +424,7 @@ L_table:
 }
 L_tail:
     obj = self->field_18;
-    if (obj->v12C() == lbl_eu_80666BCC) {
+    if (obj->v12C() == 0.0f) {
         goto L_end;
     }
     {
@@ -516,7 +507,7 @@ L_tail:
                 CfEnumListHolder h50;
                 startEnumObjects(h50.get(), 0x20, 0x1000);
                 if (((cf::CfEnumList*)h50.get())->field_620 != 0) {
-                    obj->v11C(lbl_eu_80666BC8);
+                    obj->v11C(1.0f);
                     obj->v314();
                     CfObjectMove_setAnimModeArgs(&obj->mSub, 0x2f, 1, -1, 1);
                     obj->mSub.v08(0x200);
@@ -526,7 +517,7 @@ L_tail:
         }
         // 0x1c clear path: four more flags must pass before either the
         // raise or the reset branch runs.
-        if (!(obj->v128() <= lbl_eu_80666BCC)) {
+        if (!(obj->v128() <= 0.0f)) {
             goto L_end;
         }
         u32 a = *obj->field_04->vf30();
@@ -625,7 +616,7 @@ L_tail:
                                 // double bias, then rescale by BD0.
                                 s32 amt =
                                     (s32)(((f64)(u32)w38 - lbl_eu_80666BE0));
-                                o2->v124(lbl_eu_80666BD0 * (f32)amt);
+                                o2->v124(0.01f * (f32)amt);
                             }
                         }
                     }
@@ -708,7 +699,7 @@ void ObjPc_BattleTargetSync_6A58(cf::CfObjectImplPc* self)
     if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666BCC) {
+    if (Scn_GetFrameDelta(gmScene) == 0.0f) {
         return;
     }
     // NOTE: field_18 is deliberately never cached in a local - retail
@@ -775,8 +766,8 @@ L_flags:
         if (target != 0) {
             target -= 0x3e9c;  // back up from the embedded mSub to the owner
         }
-        self->field_18->vf2C4(target, lbl_eu_80666BCC, lbl_eu_80666BCC,
-                              lbl_eu_80666BCC);
+        self->field_18->vf2C4(target, 0.0f, 0.0f,
+                              0.0f);
     } else {
         // Empty list: chase the player's current target instead.
         cf::CfObjectImplPc18* player =
@@ -1031,6 +1022,339 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
     }
 }
 
+// Battle event command dispatcher (request mode 0x12): after the scenario
+// token gate, dispatches on the ASCII command name in the event record
+// (+0x1C) against offsets into the string table at lbl_eu_804FC758. Each
+// command drives a different mix of actor refresh (MapFx_ResolveOwner of
+// findObjectById over field_3E5C), battle-manager notifications, arts
+// queries and status-effect structs. Every exit shares one tail that
+// replays the landing sound for battle state 4.
+void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
+                   cf::CfObjectImplPcEvtCmd* evt)
+{
+    MoveImplDispatchRequest();
+    if (token != self->field_14->field_C4) {
+        return;
+    }
+    if (evt->field_0A != 0x12) {
+        goto L_tail;
+    }
+    do {
+        // Fired for every mode-0x12 event regardless of which command matches.
+        reinterpret_cast<cf::CfObjectImplPcSubV10*>(&self->field_18->mSub)
+            ->vf10(0xFFFFFDFF);
+        const char* cmd = evt->cmd;
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 1) == 0) {
+            // Self-target guard: the embedded sub-object must not be player 0.
+            cf::CfObjectImplPc18* owner = self->field_18;
+            cf::CfObjectImplPcSub3E9C* me = owner != 0 ? &owner->mSub : 0;
+            if ((void*)me == (void*)cf::CfGameManager::getPlayer(0)) {
+                break;
+            }
+            // State machine must sit in states 7..9 and no cancel flags set.
+            cf::CfObjectImplPc298Res* res = self->field_18->v298();
+            if (self->field_18->v298()->field_48 < 7) {
+                break;
+            }
+            if (self->field_18->v298()->field_48 > 9) {
+                break;
+            }
+            if ((res->field_74 & 0x62) != 0) {
+                break;
+            }
+            CtrlPc_DispatchPadAction(self->field_18->mSub.v110(), 5);
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 7) == 0) {
+            // Actor refresh; retail duplicates the F3970 notify (once in the
+            // non-idle branch, once unconditionally).
+            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
+                MapFx_ResolveOwner((u8*)findObjectById(
+                    (int)self->field_18->field_3380.field_ADC)));
+            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
+                break;
+            }
+            if (res->vf308() >= 2) {
+                break;
+            }
+            if (res->vf308() != 0) {
+                func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
+                              res, 6, 0);
+            } else {
+                res->v314();
+            }
+            func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
+                          res, 6, 0);
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+                                                   res->field_3F28, 0x14);
+            u32 f6 = *res->field_04->vf30();
+            bool hit = testActorStatus(res, &f6, 6) != 0;
+            if (!hit) {
+                u32 f9 = *res->field_04->vf30();
+                hit = testActorStatus(res, &f9, 9) != 0;
+            }
+            if (hit) {
+                CfObjectMove_setAnimModeArgs(&res->mSub, 0x1b, 0, 6, 1);
+            }
+            if (self->field_18->vf290() == 0) {
+                break;
+            }
+            // Battle 1: build the 0x34-byte status-effect request and fire it
+            // four times with ids 0x5f/0x58/0x59/0x5a.
+            if (self->field_18->field_3F28 == 1 && res->vf290() != 0 &&
+                res->vf290() != 0) {
+                u32 effW;
+                f32 effF;
+                if (IdTable_QuerySumFloat(res->vf290(), 0x2f, &effW, &effF)) {
+                    cf::CfObjectImplPcEffArg eff;
+                    memset(&eff, 0, sizeof(eff));
+                    eff.field_0C = 0x5f;
+                    eff.field_10 = effW;
+                    eff.field_20 = effF;
+                    eff.field_2E = 0x2e;
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
+                                  0x2e, 0);
+                    eff.field_0C = 0x58;
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
+                                  0, 0);
+                    eff.field_0C = 0x59;
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
+                                  0, 0);
+                    eff.field_0C = 0x5a;
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
+                                  0, 0);
+                }
+            }
+            if (self->field_18->field_3F28 == 0xb) {
+                res->vf154(100.0f);
+            }
+            void* q43 = self->field_18->vf290();
+            s32 out43;
+            if (q43 != 0 && IdTable_GetSum(q43, 0x43, &out43)) {
+                if (res->v2BC() == 0) {
+                    // Damage amount scaled by the idle rate, then fed back
+                    // through v11C after the D81A8 cancel.
+                    s32 amt = (s32)((f64)out43 *
+                                    (res->v12C() / 100.0f));
+                    calcBattleDamage(0, res, 0);
+                    res->v11C((f32)((f64)amt * lbl_eu_80666BE0));
+                }
+            }
+            s32 out60;
+            if (IdTable_GetSum(self->field_18->vf290(), 0x60, &out60)) {
+                addTableValueWithClamp__Q22cf13CfGameManagerFv(
+                    self->field_18->field_3F28, res->field_3F28, (u32)out60);
+            }
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 0xC) == 0) {
+            // Like +7 but drives the arts container with ids 9 / 0xb and
+            // notifies with kind 7 (no duplicated call, no query ladder).
+            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
+                MapFx_ResolveOwner((u8*)findObjectById(
+                    (int)self->field_18->field_3380.field_ADC)));
+            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
+                break;
+            }
+            res->v5A8();
+            res->mArts.vf20(9);
+            res->mArts.vf20(0xb);
+            if (res->vf308() != 0) {
+                func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
+                              res, 7, 0);
+            } else {
+                res->v314();
+            }
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+                                                   res->field_3F28, 0x14);
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 0x12) == 0) {
+            // Same shape as +0xC minus the arts dispatch, slot 0x5AC.
+            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
+                MapFx_ResolveOwner((u8*)findObjectById(
+                    (int)self->field_18->field_3380.field_ADC)));
+            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
+                break;
+            }
+            res->v5AC();
+            if (res->vf308() != 0) {
+                func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
+                              res, 7, 0);
+            } else {
+                res->v314();
+            }
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+                                                   res->field_3F28, 0x14);
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 0x17) == 0) {
+            // Fixed-damage command: 100 HP scaled down by the 0x7a query,
+            // pushed into the party gauge block at CBattleManager+0x194.
+            cf::CfGameManager::getInstance();
+            if (isGlobalCamFlagSet(0x04000000)) {
+                break;
+            }
+            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
+                MapFx_ResolveOwner((u8*)findObjectById(
+                    (int)self->field_18->field_3380.field_ADC)));
+            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
+                break;
+            }
+            u32 w = *res->field_04->vf30();
+            if (testActorStatus(res, &w, 0x1c) == 0) {
+                break;
+            }
+            CfObjectMove_setAnimModeArgs(&res->mSub, 0x2f, 1, -1, 1);
+            s32 dmg = 100;
+            void* q7a = self->field_18->vf290();
+            if (q7a != 0) {
+                s32 o18;
+                if (IdTable_GetSum(self->field_18->vf290(), 0x7a, &o18)) {
+                    dmg = 100 - o18;
+                }
+            }
+            PartyGaugeAddClamped(&cf::CBattleManager::getInstance()->unk194, -dmg);
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+                                                   res->field_3F28, 0x14);
+            CCharVoiceMan_EnqueueGaugeResultVoice(self->field_18, res);
+            SysWinLog_TickCounter23();
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 0x1E) == 0) {
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 0x28) == 0) {
+            // Chain-gauge accumulation over all three players.
+            if ((self->field_18->field_3374 & 0x02000000) != 0) {
+                break;
+            }
+            cf::CfGameManager::getInstance();
+            if (isGlobalCamFlagSet(0x04000000)) {
+                break;
+            }
+            f32 total = 0.15f;
+            if (isBattleStatusActive(&self->field_18->mArts, 0xc4)) {
+                cf::CfObjectImplPc149154* p =
+                    (cf::CfObjectImplPc149154*)findBattleStatusEntry(
+                        &self->field_18->mArts, 0xc4);
+                total = 0.01f * (f64)p->field_10 + total;
+            }
+            if (self->field_18->vf290() != 0) {
+                // Retail pins the rate divisor in a callee-saved FPR across
+                // the whole player loop.
+                f32 scale = 100.0f;
+                for (s32 i = 0; i < 3; i++) {
+                    cf::CfObjectImplPc18* pl =
+                        reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
+                            (u8*)cf::CfGameManager::getPlayer(i)));
+                    if (pl == 0) {
+                        continue;
+                    }
+                    void* pq = pl->vf290();
+                    if (pq == 0) {
+                        continue;
+                    }
+                    s32 w49;
+                    if (IdTable_GetSum(pq, 0x49, &w49)) {
+                        total += (f32)(((f64)w49 - lbl_eu_80666BE0) / scale);
+                    }
+                }
+            }
+            self->field_18->v11C(total * self->field_18->v12C());
+            break;
+        }
+
+        if (strcmp(cmd, lbl_eu_804FC758 + 0x33) == 0) {
+            // Summon command: resolve the summonable via RTTI, refresh its
+            // gauge display, then pick a handler from the copied entry table
+            // indexed by the current battle id.
+            void* dc = __dynamic_cast((void*)self->field_18->field_3ED4, 0,
+                                      (const void*)&lbl_eu_80661C60,
+                                      (const void*)&lbl_eu_80661BE8,
+                                      (void*)0);
+            if (dc == 0) {
+                break;
+            }
+            cf::CfObjectImplPc18* obj = reinterpret_cast<cf::CfObjectImplPc18*>(
+                MapFx_ResolveOwner((u8*)findObjectById(
+                    (int)((cf::CfObjectImplPc18*)dc)->vFC())));
+            if (obj == 0) {
+                break;
+            }
+            if (isBattleStatusActive(&obj->mArts, 0x116) == 0) {
+                obj->v11C(-1.0f);
+            }
+            if (self->field_18->field_3F10 == 0) {
+                obj->mSub.sf50(self->field_18->field_3F10);
+                obj->vf2C4((u8*)self->field_18, 10.0f,
+                           0.0f, 0.0f);
+            }
+            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), obj) == 0) {
+                obj->mSub.v08(0x100);
+            }
+            // Retail materializes this local table by copying the hidden
+            // const initializer at sBattleEffectSlotIndices word-by-word.
+            u32 tbl[9] = {sBattleEffectSlotIndices[0], sBattleEffectSlotIndices[1],
+                          sBattleEffectSlotIndices[2], sBattleEffectSlotIndices[3],
+                          sBattleEffectSlotIndices[4], sBattleEffectSlotIndices[5],
+                          sBattleEffectSlotIndices[6], sBattleEffectSlotIndices[7],
+                          sBattleEffectSlotIndices[8]};
+            if (self->field_18->field_3F28 > 8) {
+                break;
+            }
+            cf::CfObjectImplPcSub3E9C* tgt =
+                obj != 0 ? &obj->mSub : (cf::CfObjectImplPcSub3E9C*)0;
+            bindIndexedEffect(tbl[self->field_18->field_3F28], tgt);
+            break;
+        }
+        break;
+    } while (0);
+L_tail:
+    // Shared tail: when the event targets the player's own battle object in
+    // mode 0x12 with command +1 while battle state is 4, replay the landing
+    // sound through the resolved actor info record.
+    cf::CfObjectImplPc18* owner = self->field_18;
+    cf::CfObjectImplPcSub3E9C* me = owner != 0 ? &owner->mSub : 0;
+    if ((void*)me != (void*)cf::CfGameManager::getPlayer(0)) {
+        return;
+    }
+    if (evt->field_0A != 0x12) {
+        return;
+    }
+    if (strcmp(evt->cmd, lbl_eu_804FC758 + 1) != 0) {
+        return;
+    }
+    cf::CfObjectImplPc18* bt = self->field_18;
+    if (bt->field_3F28 != 4) {
+        return;
+    }
+    cf::CfObjectImplPc298Res* res = bt->v298();
+    bt = self->field_18;
+    cf::CfObjectImplPc2A4Sub* sub = res->field_50;
+    u8* info = CtrlObjectParam_GetArtsStatsRow((u8*)CtrlObjectParam_GetCharEntry(bt->field_3F28) + 0x1c, 5);
+    if (info[0x1c] != 0) {
+        return;
+    }
+    if ((res->field_78 & 0x800) == 0) {
+        return;
+    }
+    if (sub->field_76 >= 3) {
+        return;
+    }
+    if ((res->field_74 & 0x62) != 0) {
+        return;
+    }
+    CUICfManager_queueFactoryMenu(4, 1.0f);
+}
+
 // Player battle-event dispatcher: gates on the sender id matching the
 // object's own battle id (+0x3F60), special-cases command 0x2F (arts
 // confirm -> 0x1B state push), syncs the field_3F64/field_3F68 battle-id
@@ -1217,7 +1541,7 @@ void ObjPc_BattleEventDispatch_819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u3
         CfSoundMan_StopSlotByMode(0, 0x1bb, 0);
         break;
     case 17:
-        cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, lbl_eu_80666BC8);
+        cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, 1.0f);
         break;
     case 6:
         if (self->field_18->field_3F60 != 0 &&
@@ -1276,7 +1600,7 @@ void ObjPc_BattleActorScan_86E8(cf::CfObjectImplPc* self)
         while (i < ((cf::CfEnumList*)holder.get())->field_620) {
             cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)MapFx_ResolveOwner(
                 getObjectAt(holder.get(), i));
-            self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
+            self->field_18->vf2C4((u8*)obj, 0.0f, 0.0f, 0.0f);
             i++;
         }
         listId = (u32)findFirstCleanObjectId(holder.get());
@@ -1294,7 +1618,7 @@ void ObjPc_BattleActorScan_86E8(cf::CfObjectImplPc* self)
                 return;
             }
             self->field_18->mSub.sf50(pobj->field_3F10);
-            self->field_18->vf2C4((u8*)pobj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
+            self->field_18->vf2C4((u8*)pobj, 0.0f, 0.0f, 0.0f);
         }
     }
     ObjPc_BattleStartEffects_891C(self);
@@ -1364,7 +1688,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
         eff.field_00 = bt->field_3F10;
         eff.field_0C = 0x44;
         eff.field_10 = mag;
-        eff.field_20 = lbl_eu_80666BF8;
+        eff.field_20 = 30.0f;
         eff.field_08 = 0x8000;
         cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
         func_800EC918(mgr, bt, bt, &eff, 0);
@@ -1379,7 +1703,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
         eff.field_00 = bt->field_3F10;
         eff.field_0C = 0x45;
         eff.field_10 = mag;
-        eff.field_20 = lbl_eu_80666BF8;
+        eff.field_20 = 30.0f;
         eff.field_08 = 0x8000;
         cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
         func_800EC918(mgr, bt, bt, &eff, 0);
@@ -1403,7 +1727,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
                 wB = IdTable_MaxValueC(self->field_18->vf290(), id_);           \
                 if (wB != 0) {                                              \
                     fv = IdTable_MaxValue10(self->field_18->vf290(), id_);       \
-                    if (fv != lbl_eu_80666BCC) {                            \
+                    if (fv != 0.0f) {                            \
                         if ((s16)ml::math::mtRand(100) < (s16)wB) {         \
                             memset(&eff, 0, sizeof(eff));                   \
                             eff.field_10 = wA;                              \
@@ -1428,7 +1752,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
             wA = IdTable_SumValues(self->field_18->vf290(), id_);               \
             if (wA != 0 && IdTable_MaxValueC(self->field_18->vf290(), id_) != 0) { \
                 fv = IdTable_MaxValue10(self->field_18->vf290(), id_);           \
-                if (fv != lbl_eu_80666BCC) {                                \
+                if (fv != 0.0f) {                                \
                     memset(&eff, 0, sizeof(eff));                           \
                     eff.field_10 = wA;                                      \
                     eff.field_20 = fv;                                      \
@@ -1458,7 +1782,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
                 wA = IdTable_MaxValueC(self->field_18->vf290(), 0x31);
                 if (wA != 0) {
                     fv = IdTable_MaxValue10(self->field_18->vf290(), 0x31);
-                    if (fv != lbl_eu_80666BCC) {
+                    if (fv != 0.0f) {
                         if ((s16)ml::math::mtRand(100) < (s16)wA) {
                             memset(&eff, 0, sizeof(eff));
                             eff.field_10 = wB;
@@ -1499,7 +1823,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
             wA = IdTable_SumValues(self->field_18->vf290(), 0x2e);
             if (wA != 0 && IdTable_MaxValueC(self->field_18->vf290(), 0x2e) != 0) {
                 fv = IdTable_MaxValue10(self->field_18->vf290(), 0x2e);
-                if (fv != lbl_eu_80666BCC) {
+                if (fv != 0.0f) {
                     memset(&eff, 0, sizeof(eff));
                     eff.field_10 = wA;
                     eff.field_20 = fv;
@@ -1621,13 +1945,13 @@ void ObjPc_EventDispatch_9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt)
     }
     goto L_chainEnd;
 L_ea:
-    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, 1.0f, 0, 30.0f, 0);
     goto L_chainEnd;
 L_f0:
-    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, 1.0f, 0, 30.0f, 0);
     goto L_chainEnd;
 L_10a:
-    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, 1.0f, 0, 30.0f, 0);
 L_chainEnd:
     if (CChain_HasMemberEntry(&cf::CBattleManager::getInstance()->mChain, self->field_18) == 0) {
         if ((u32)(evt->id() - 0xF) <= 1 || evt->id() == 9 || evt->id() == 0xB) {
@@ -1746,7 +2070,7 @@ L_f8:
             // into the battle manager.
             CfObjectImplPcEvt copy = *evt;
             copy.field_0C = 0x93;
-            copy.field_20 = lbl_eu_80666BFC;
+            copy.field_20 = 15.0f;
             cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
             CBattleMan_RunBattleEvent(mgr, obj, &copy, 0);
             mgr = cf::CBattleManager::getInstance();
@@ -1776,7 +2100,7 @@ L_f8:
     }
     goto L_default;
 L_10a:
-    self->field_18->vf154(lbl_eu_80666C00);
+    self->field_18->vf154(-10.0f);
 L_default:
     // Three ids share the same body; retail emits them as duplicated
     // out-of-line blocks after an equality chain (KB 1379), so keep the
@@ -1897,7 +2221,7 @@ int ObjPc_BattleActorRecount_A294(cf::CfObjectImplPc* self)
         self->field_18->mSub.sf208(0x11);
         self->field_18->mSub.sf204(0x11, 0, -1, 0, 0);
         if (v == 0) {
-            cf::CfSoundMan::playActorSound(0, 0x5c, 0, 0, lbl_eu_80666BC8);
+            cf::CfSoundMan::playActorSound(0, 0x5c, 0, 0, 1.0f);
         }
         return 1;
     }
@@ -1925,7 +2249,7 @@ void ObjPc_TickPlayer_A458(cf::CfObjectImplPc* self)
     self->field_18->field_3F60->field_0C |= 0x400000;
     if (self->field_14->field_8C == 8) {
         if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {
-            self->field_14->field_98->vf28((const char*)(lbl_eu_804FC758 + 0x3b), 0);
+            self->field_14->field_98->vf28(lbl_eu_804FC758 + 0x3B, 0);
         }
     }
 }
@@ -1942,339 +2266,6 @@ extern "C" void ObjPc_DtorThunkC_A4DC(void* self)
 extern "C" void ObjPc_DtorThunk10_A4E4(void* self)
 {
     __dt__Q22cf14CfObjectImplPcFv((u8*)self - 0x10);
-}
-
-// Battle event command dispatcher (request mode 0x12): after the scenario
-// token gate, dispatches on the ASCII command name in the event record
-// (+0x1C) against offsets into the string table at lbl_eu_804FC758. Each
-// command drives a different mix of actor refresh (MapFx_ResolveOwner of
-// findObjectById over field_3E5C), battle-manager notifications, arts
-// queries and status-effect structs. Every exit shares one tail that
-// replays the landing sound for battle state 4.
-void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
-                   cf::CfObjectImplPcEvtCmd* evt)
-{
-    MoveImplDispatchRequest();
-    if (token != self->field_14->field_C4) {
-        return;
-    }
-    if (evt->field_0A != 0x12) {
-        goto L_tail;
-    }
-    do {
-        // Fired for every mode-0x12 event regardless of which command matches.
-        reinterpret_cast<cf::CfObjectImplPcSubV10*>(&self->field_18->mSub)
-            ->vf10(0xFFFFFDFF);
-        const char* cmd = evt->cmd;
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 1) == 0) {
-            // Self-target guard: the embedded sub-object must not be player 0.
-            cf::CfObjectImplPc18* owner = self->field_18;
-            cf::CfObjectImplPcSub3E9C* me = owner != 0 ? &owner->mSub : 0;
-            if ((void*)me == (void*)cf::CfGameManager::getPlayer(0)) {
-                break;
-            }
-            // State machine must sit in states 7..9 and no cancel flags set.
-            cf::CfObjectImplPc298Res* res = self->field_18->v298();
-            if (self->field_18->v298()->field_48 < 7) {
-                break;
-            }
-            if (self->field_18->v298()->field_48 > 9) {
-                break;
-            }
-            if ((res->field_74 & 0x62) != 0) {
-                break;
-            }
-            CtrlPc_DispatchPadAction(self->field_18->mSub.v110(), 5);
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 7) == 0) {
-            // Actor refresh; retail duplicates the F3970 notify (once in the
-            // non-idle branch, once unconditionally).
-            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                MapFx_ResolveOwner((u8*)findObjectById(
-                    (int)self->field_18->field_3380.field_ADC)));
-            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
-                break;
-            }
-            if (res->vf308() >= 2) {
-                break;
-            }
-            if (res->vf308() != 0) {
-                func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
-                              res, 6, 0);
-            } else {
-                res->v314();
-            }
-            func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
-                          res, 6, 0);
-            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
-                                                   res->field_3F28, 0x14);
-            u32 f6 = *res->field_04->vf30();
-            bool hit = testActorStatus(res, &f6, 6) != 0;
-            if (!hit) {
-                u32 f9 = *res->field_04->vf30();
-                hit = testActorStatus(res, &f9, 9) != 0;
-            }
-            if (hit) {
-                CfObjectMove_setAnimModeArgs(&res->mSub, 0x1b, 0, 6, 1);
-            }
-            if (self->field_18->vf290() == 0) {
-                break;
-            }
-            // Battle 1: build the 0x34-byte status-effect request and fire it
-            // four times with ids 0x5f/0x58/0x59/0x5a.
-            if (self->field_18->field_3F28 == 1 && res->vf290() != 0 &&
-                res->vf290() != 0) {
-                u32 effW;
-                f32 effF;
-                if (IdTable_QuerySumFloat(res->vf290(), 0x2f, &effW, &effF)) {
-                    cf::CfObjectImplPcEffArg eff;
-                    memset(&eff, 0, sizeof(eff));
-                    eff.field_0C = 0x5f;
-                    eff.field_10 = effW;
-                    eff.field_20 = effF;
-                    eff.field_2E = 0x2e;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0x2e, 0);
-                    eff.field_0C = 0x58;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0, 0);
-                    eff.field_0C = 0x59;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0, 0);
-                    eff.field_0C = 0x5a;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0, 0);
-                }
-            }
-            if (self->field_18->field_3F28 == 0xb) {
-                res->vf154(lbl_eu_80666BE8);
-            }
-            void* q43 = self->field_18->vf290();
-            s32 out43;
-            if (q43 != 0 && IdTable_GetSum(q43, 0x43, &out43)) {
-                if (res->v2BC() == 0) {
-                    // Damage amount scaled by the idle rate, then fed back
-                    // through v11C after the D81A8 cancel.
-                    s32 amt = (s32)((f64)out43 *
-                                    (res->v12C() / lbl_eu_80666BE8));
-                    calcBattleDamage(0, res, 0);
-                    res->v11C((f32)((f64)amt * lbl_eu_80666BE0));
-                }
-            }
-            s32 out60;
-            if (IdTable_GetSum(self->field_18->vf290(), 0x60, &out60)) {
-                addTableValueWithClamp__Q22cf13CfGameManagerFv(
-                    self->field_18->field_3F28, res->field_3F28, (u32)out60);
-            }
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 0xC) == 0) {
-            // Like +7 but drives the arts container with ids 9 / 0xb and
-            // notifies with kind 7 (no duplicated call, no query ladder).
-            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                MapFx_ResolveOwner((u8*)findObjectById(
-                    (int)self->field_18->field_3380.field_ADC)));
-            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
-                break;
-            }
-            res->v5A8();
-            res->mArts.vf20(9);
-            res->mArts.vf20(0xb);
-            if (res->vf308() != 0) {
-                func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
-                              res, 7, 0);
-            } else {
-                res->v314();
-            }
-            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
-                                                   res->field_3F28, 0x14);
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 0x12) == 0) {
-            // Same shape as +0xC minus the arts dispatch, slot 0x5AC.
-            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                MapFx_ResolveOwner((u8*)findObjectById(
-                    (int)self->field_18->field_3380.field_ADC)));
-            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
-                break;
-            }
-            res->v5AC();
-            if (res->vf308() != 0) {
-                func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
-                              res, 7, 0);
-            } else {
-                res->v314();
-            }
-            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
-                                                   res->field_3F28, 0x14);
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 0x17) == 0) {
-            // Fixed-damage command: 100 HP scaled down by the 0x7a query,
-            // pushed into the party gauge block at CBattleManager+0x194.
-            cf::CfGameManager::getInstance();
-            if (isGlobalCamFlagSet(0x04000000)) {
-                break;
-            }
-            cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                MapFx_ResolveOwner((u8*)findObjectById(
-                    (int)self->field_18->field_3380.field_ADC)));
-            if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
-                break;
-            }
-            u32 w = *res->field_04->vf30();
-            if (testActorStatus(res, &w, 0x1c) == 0) {
-                break;
-            }
-            CfObjectMove_setAnimModeArgs(&res->mSub, 0x2f, 1, -1, 1);
-            s32 dmg = 100;
-            void* q7a = self->field_18->vf290();
-            if (q7a != 0) {
-                s32 o18;
-                if (IdTable_GetSum(self->field_18->vf290(), 0x7a, &o18)) {
-                    dmg = 100 - o18;
-                }
-            }
-            PartyGaugeAddClamped(&cf::CBattleManager::getInstance()->unk194, -dmg);
-            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
-                                                   res->field_3F28, 0x14);
-            CCharVoiceMan_EnqueueGaugeResultVoice(self->field_18, res);
-            SysWinLog_TickCounter23();
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 0x1E) == 0) {
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 0x28) == 0) {
-            // Chain-gauge accumulation over all three players.
-            if ((self->field_18->field_3374 & 0x02000000) != 0) {
-                break;
-            }
-            cf::CfGameManager::getInstance();
-            if (isGlobalCamFlagSet(0x04000000)) {
-                break;
-            }
-            f32 total = lbl_eu_80666BEC;
-            if (isBattleStatusActive(&self->field_18->mArts, 0xc4)) {
-                cf::CfObjectImplPc149154* p =
-                    (cf::CfObjectImplPc149154*)findBattleStatusEntry(
-                        &self->field_18->mArts, 0xc4);
-                total = lbl_eu_80666BD0 * (f64)p->field_10 + total;
-            }
-            if (self->field_18->vf290() != 0) {
-                // Retail pins the rate divisor in a callee-saved FPR across
-                // the whole player loop.
-                f32 scale = lbl_eu_80666BE8;
-                for (s32 i = 0; i < 3; i++) {
-                    cf::CfObjectImplPc18* pl =
-                        reinterpret_cast<cf::CfObjectImplPc18*>(MapFx_ResolveOwner(
-                            (u8*)cf::CfGameManager::getPlayer(i)));
-                    if (pl == 0) {
-                        continue;
-                    }
-                    void* pq = pl->vf290();
-                    if (pq == 0) {
-                        continue;
-                    }
-                    s32 w49;
-                    if (IdTable_GetSum(pq, 0x49, &w49)) {
-                        total += (f32)(((f64)w49 - lbl_eu_80666BE0) / scale);
-                    }
-                }
-            }
-            self->field_18->v11C(total * self->field_18->v12C());
-            break;
-        }
-
-        if (strcmp(cmd, lbl_eu_804FC758 + 0x33) == 0) {
-            // Summon command: resolve the summonable via RTTI, refresh its
-            // gauge display, then pick a handler from the copied entry table
-            // indexed by the current battle id.
-            void* dc = __dynamic_cast((void*)self->field_18->field_3ED4, 0,
-                                      (const void*)&lbl_eu_80661C60,
-                                      (const void*)&lbl_eu_80661BE8,
-                                      (void*)0);
-            if (dc == 0) {
-                break;
-            }
-            cf::CfObjectImplPc18* obj = reinterpret_cast<cf::CfObjectImplPc18*>(
-                MapFx_ResolveOwner((u8*)findObjectById(
-                    (int)((cf::CfObjectImplPc18*)dc)->vFC())));
-            if (obj == 0) {
-                break;
-            }
-            if (isBattleStatusActive(&obj->mArts, 0x116) == 0) {
-                obj->v11C(lbl_eu_80666BF0);
-            }
-            if (self->field_18->field_3F10 == 0) {
-                obj->mSub.sf50(self->field_18->field_3F10);
-                obj->vf2C4((u8*)self->field_18, lbl_eu_80666BF4,
-                           lbl_eu_80666BCC, lbl_eu_80666BCC);
-            }
-            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), obj) == 0) {
-                obj->mSub.v08(0x100);
-            }
-            // Retail materializes this local table by copying the hidden
-            // const initializer at lbl_eu_804FC730 word-by-word.
-            u32 tbl[9] = {lbl_eu_804FC730[0], lbl_eu_804FC730[1],
-                          lbl_eu_804FC730[2], lbl_eu_804FC730[3],
-                          lbl_eu_804FC730[4], lbl_eu_804FC730[5],
-                          lbl_eu_804FC730[6], lbl_eu_804FC730[7],
-                          lbl_eu_804FC730[8]};
-            if (self->field_18->field_3F28 > 8) {
-                break;
-            }
-            cf::CfObjectImplPcSub3E9C* tgt =
-                obj != 0 ? &obj->mSub : (cf::CfObjectImplPcSub3E9C*)0;
-            bindIndexedEffect(tbl[self->field_18->field_3F28], tgt);
-            break;
-        }
-        break;
-    } while (0);
-L_tail:
-    // Shared tail: when the event targets the player's own battle object in
-    // mode 0x12 with command +1 while battle state is 4, replay the landing
-    // sound through the resolved actor info record.
-    cf::CfObjectImplPc18* owner = self->field_18;
-    cf::CfObjectImplPcSub3E9C* me = owner != 0 ? &owner->mSub : 0;
-    if ((void*)me != (void*)cf::CfGameManager::getPlayer(0)) {
-        return;
-    }
-    if (evt->field_0A != 0x12) {
-        return;
-    }
-    if (strcmp(evt->cmd, lbl_eu_804FC758 + 1) != 0) {
-        return;
-    }
-    cf::CfObjectImplPc18* bt = self->field_18;
-    if (bt->field_3F28 != 4) {
-        return;
-    }
-    cf::CfObjectImplPc298Res* res = bt->v298();
-    bt = self->field_18;
-    cf::CfObjectImplPc2A4Sub* sub = res->field_50;
-    u8* info = CtrlObjectParam_GetArtsStatsRow((u8*)CtrlObjectParam_GetCharEntry(bt->field_3F28) + 0x1c, 5);
-    if (info[0x1c] != 0) {
-        return;
-    }
-    if ((res->field_78 & 0x800) == 0) {
-        return;
-    }
-    if (sub->field_76 >= 3) {
-        return;
-    }
-    if ((res->field_74 & 0x62) != 0) {
-        return;
-    }
-    CUICfManager_queueFactoryMenu(4, lbl_eu_80666BC8);
 }
 
 // Trailing .data pad word (retail gap_07_8052A7E4_data, all zero): a plain

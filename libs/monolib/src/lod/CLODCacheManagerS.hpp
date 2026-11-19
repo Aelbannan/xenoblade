@@ -24,7 +24,7 @@ public:
 };
 
 /**
- * LOD linear distance-table entry (lbl_eu_8066573C, stride 8).
+ * LOD linear distance-table entry (sLodDistTable, stride 8).
  * near is a float distance (0x00); far is an unsigned cutoff (0x04).
  */
 struct LODDistEntry {
@@ -33,7 +33,7 @@ struct LODDistEntry {
 };
 
 /**
- * LOD level-table entry (lbl_eu_80665740, stride 0x10) used by the cubic
+ * LOD level-table entry (sLodLevelTable, stride 0x10) used by the cubic
  * catmull-rom interpolator.  Four float sample slots (0x00/0x04/0x08) and an
  * unsigned far cutoff (0x0C).
  */
@@ -45,7 +45,7 @@ struct LODLevelEntry {
 };
 
 /**
- * LOD short-table entry (lbl_eu_80665744, stride 8) backing the 2D
+ * LOD short-table entry (sLodShortTable, stride 8) backing the 2D
  * interpolator.  val is a signed sample, outX/outY are output words, and
  * far is an unsigned cutoff.
  */
@@ -57,7 +57,7 @@ struct LODShortEntry {
 };
 
 /**
- * LOD distance-key element (index table lbl_eu_80665748, stride 4).
+ * LOD distance-key element (index table sLodCacheIndexTable, stride 4).
  * near is a signed distance (0x00), far an unsigned cutoff (0x02).
  */
 struct LODCacheIndex {
@@ -86,24 +86,10 @@ typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 // Shared sbss / sdata2 data (retail symbol names).
 // ---------------------------------------------------------------------------
 
-// Cache record / pair-table bases (set up by initLodTables).
-extern LOD::CLODCacheManagerS* lbl_eu_80665738;  // cache records, stride 0xC
-extern LOD::LODDistEntry* lbl_eu_8066573C;   // distance table, stride 8
-extern u32* lbl_eu_8066574C;    // index -> pair-table offset
-extern void* lbl_eu_80665750;   // pair table, stride 2 (u16 entries)
-extern LOD::LODLevelEntry* lbl_eu_80665740;   // level table, stride 0x10
-extern LOD::LODShortEntry* lbl_eu_80665744;   // short table, stride 8
-extern LOD::LODCacheIndex* lbl_eu_80665748;   // distance-key index table, stride 4
+// Cache record / pair-table bases are declared once in the public owner
+// header (monolib/lod/CLODCacheManagerS.hpp).
 
-extern LOD::LODRecordFn lbl_eu_80665760;  // active record lookup fn
-extern f32 lbl_eu_80665754;     // LOD threshold distance
-extern u16 lbl_eu_80665758;     // per-entry distance key threshold
-extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 
-// sdata2 constants used by the interpolation helpers.
-extern const f32 lbl_eu_8066A5C0;  // 1.0f
-extern const f32 lbl_eu_8066A5C4;  // default LOD value
-extern const f32 lbl_eu_8066A5D8;
-extern const f32 lbl_eu_8066A5DC;
-extern const f32 lbl_eu_8066A5E0;
-extern const f32 lbl_eu_8066A5E4;
+extern f32 sLodThresholdDist;     // LOD threshold distance
+extern u16 sLodEntryKeyThreshold;     // per-entry distance key threshold
+extern void (*sLodRecordDispatchTable[])(LOD::UnkClass_8046368C*);  // .data dispatch

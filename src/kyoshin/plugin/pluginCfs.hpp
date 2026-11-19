@@ -1,6 +1,7 @@
 #pragma once
 
 #include "monolib/vm/yvm2.h"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
 
 // Plugin script functions for the CFS (Common File System / script) subsystem.
 // These are registered via pluginCfsRegist() and called from the VM.
@@ -18,13 +19,6 @@ struct CVec3;
 } // namespace ml
 
 namespace cf {
-
-class CfObject {
-public:
-    float CfObject_getMoveHeadAngle();
-
-    // TODO: add fields
-};
 
 // Dispatch-only shim for the party-player vtable. Never instantiated; all
 // virtuals are pure (so no vtable/code is emitted). Slots 0x00-0x10C are

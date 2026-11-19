@@ -133,12 +133,12 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Shared data pools (retail names; global scope - no C++ mangling).
 extern char lbl_eu_80509AB4[];  // string pool (split1 .rodata)
-extern char lbl_eu_80576670[];   // 0x22-byte quest text entry table
-extern s32 lbl_eu_8066472C;      // quest-list page/scroll boundary (.sbss)
-extern u32 lbl_eu_80664728;      // quest-list init flag (.sbss)
-extern u32 lbl_eu_80664730;      // current quest id (.sbss)
-extern u32 lbl_eu_80664734;      // current quest index (.sbss)
-extern u32 lbl_eu_80664738;      // current quest resource (.sbss)
+extern char sQuestLogEntries[];   // 0x22-byte quest text entry table
+extern s32 sQuestListScrollBase;      // quest-list page/scroll boundary (.sbss)
+extern u32 sQuestEntryCount;      // quest-list init flag (.sbss)
+extern u32 sSelectedQuestId;      // current quest id (.sbss)
+extern u32 sSelectedQuestIndex;      // current quest index (.sbss)
+extern u32 sSelectedQuestResource;      // current quest resource (.sbss)
 extern u32 lbl_eu_80662860;      // quest pane color (.sbss)
 extern u8* lbl_eu_806640A8;      // BDAT table pointer (.sbss)
 extern u32 lbl_eu_80573D18[];    // quest name table (split1 .rodata)

@@ -23,7 +23,7 @@
 // NOTE: CBattleManager.hpp temporarily dropped - its include subtree currently
 // mixes a CfCam.hpp tentative definition of ml::tau with extern "C"
 // declarations of the same symbol (concurrent-edit conflict).
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -38,11 +38,11 @@ extern u32 lbl_eu_80532A28[3];   // 12-byte member-function-pointer pool entry
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
-    extern u32 lbl_eu_80663E28;
+    extern u32 gmPauseFlags;
     extern float lbl_eu_80667A70;
     extern float lbl_eu_80667A74;
-    extern u16 lbl_eu_80663E3C;
-    extern u8  lbl_eu_8066476D;
+    extern u16 gmTimerCounter;
+    extern u8  gNandTeardownByte;
     int*  CtrlObjectParam_GetSlotTableBase();
     void CfSoundMan_StopAllModes(int mode);
     void* NandPartySnap();
@@ -92,7 +92,7 @@ namespace cf {}
 using namespace cf;
 
 int CfCmd_Gate8000Fwd(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
-    if (lbl_eu_80663E24 & 0x8000) {
+    if (gmGameFlags & 0x8000) {
         pushBackwards(p0, 0x23, p1, p2, p3, p4);
     }
     return 1;
@@ -100,7 +100,7 @@ int CfCmd_Gate8000Fwd(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 
 int CfCmd_RecoverFwd24(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (scanBattleObjects() != 0) {
-        lbl_eu_80663E28 &= ~0x20;
+        gmPauseFlags &= ~0x20;
         recoverFieldState__Q22cf13CfGameManagerFv(true);
     } else {
         pushBackwards(p0, 0x24, p1, p2, p3, p4);
@@ -112,9 +112,9 @@ int CfCmd_ClearOrFwd25(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     // Clear the event-pending flag when an event is already active/disabled
     // (busy manager, bit9 latching, or bit7 set); otherwise forward the request.
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() != 0 ||
-        (lbl_eu_80663E24 & 0x400000) ||
-        (lbl_eu_80663E28 & 0x1000000)) {
-        lbl_eu_80663E24 &= ~0x2000;
+        (gmGameFlags & 0x400000) ||
+        (gmPauseFlags & 0x1000000)) {
+        gmGameFlags &= ~0x2000;
     } else {
         pushBackwards(p0, 0x25, p1, p2, p3, p4);
     }
@@ -134,17 +134,17 @@ struct FuncHostMgrView {
 int CfCmd_PartyRebuild(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     // Selector byte defaults to 0 and is only loaded when bit20 is set.
     u32 selectId = 0;
-    if (lbl_eu_80663E24 & 0x100000) {
-        selectId = lbl_eu_8066476D;
+    if (gmGameFlags & 0x100000) {
+        selectId = gNandTeardownByte;
     }
     FuncHostMgrView* mgr = reinterpret_cast<FuncHostMgrView*>(self->manager);
     cf::CfObjectMove* found = func_8007FF6C__Q22cf13CfGameManagerFv(
-        lbl_eu_80663E40, mgr->field_0xC, selectId, mgr->field_0x24);
-    if (lbl_eu_80663E24 & 0x100000) {
+        gmInitArg, mgr->field_0xC, selectId, mgr->field_0x24);
+    if (gmGameFlags & 0x100000) {
         // Fixed setup: force players into/out of "command" mode (bit 4 at
         // +0x68), then move each by an offset vector before the notify calls.
         float* base = reinterpret_cast<float*>(NandPartySnap());
-        u8 tag = lbl_eu_8066476D;
+        u8 tag = gNandTeardownByte;
         float ox = lbl_eu_80667A70;
         float oy = lbl_eu_80667A74;
         // Scratch buffers: component-wise sum of the fixed offset vector
@@ -196,7 +196,7 @@ int CfCmd_PartyRebuild(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         pushBackwards((u32)self, 0xe, 1, 1, 0, 0);
         assignCameraTarget__Q22cf13CfGameManagerFv(reinterpret_cast<u32>(found));
     }
-    if (lbl_eu_80663E24 & 0x80000) {
+    if (gmGameFlags & 0x80000) {
         // Mark all players as needing a full status refresh (bit 28 at +0x68).
         for (int i = 0; i < 3; i++) {
             cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
@@ -218,13 +218,13 @@ int CfCmd_PartyMove(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     // register, which is what fixes the callee-saved register allocation.
     if (self->manager->unk94[0] != 0) {
         CtrlObjectParam_GetSlotTableBase();
-        if (lbl_eu_80663E24 & 0x100000) {
+        if (gmGameFlags & 0x100000) {
             // Fixed setup: force players 0..2 into-or-out-of "command" mode
             // (bit 4 at +0x68) and move them by an offset vector before the
             // per-player notify calls. Declaration order mirrors retail's
             // stack window: pos@0x8, offset@0x14, sum@0x20.
             float* base = reinterpret_cast<float*>(NandPartySnap());
-            u8 tag = lbl_eu_8066476D;
+            u8 tag = gNandTeardownByte;
             float ox = lbl_eu_80667A70;
             float oy = lbl_eu_80667A74;
             float pos[3];
@@ -267,7 +267,7 @@ int CfCmd_PartyMove(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
                 cf::CfObjectMove* p = self->manager->unk94[i];
                 if (p != 0) {
                     func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
-                    if (!(lbl_eu_80663E28 & 0x100)) {
+                    if (!(gmPauseFlags & 0x100)) {
                         static_cast<cf::CfObject*>(p)->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(stk));
                         float ccRet90940 = self->manager->unk94[0]->CfObject_getMoveHeadAngle();
                         p->CfObject_setMoveYaw(ccRet90940);
@@ -283,23 +283,23 @@ int CfCmd_PartyMove(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
         return 1;
     }
 
-    if (lbl_eu_80663E24 & 0x200) {
-        lbl_eu_80663E3C = 0;
-        lbl_eu_80663E24 = (lbl_eu_80663E24 & ~0x200) | 0x8;
+    if (gmGameFlags & 0x200) {
+        gmTimerCounter = 0;
+        gmGameFlags = (gmGameFlags & ~0x200) | 0x8;
     }
-    if (lbl_eu_80663E24 & 0x400000) {
+    if (gmGameFlags & 0x400000) {
         // rlwinm 19,17 clears BOTH bits 0x2000 and 0x1000.
-        lbl_eu_80663E24 &= ~0x3000;
+        gmGameFlags &= ~0x3000;
     } else {
         if (b == 0) CfRes_pushRec((u32)self, 0x25, 0, 0, 0, 0);
     }
-    if (lbl_eu_80663E24 & 0x100000) {
+    if (gmGameFlags & 0x100000) {
         pushBackwards((u32)self, 0x24, 0, 0, 0, 0);
         pushBackwards((u32)self, 6, 2, 0, 0, 0);
         CfRes_pushRec((u32)self, 0x1f, 0, 0, 0, 0);
     }
-    lbl_eu_80663E24 = (lbl_eu_80663E24 & 0xffefbfff) | 0x80;
-    lbl_eu_80663E28 &= ~0x200;
+    gmGameFlags = (gmGameFlags & 0xffefbfff) | 0x80;
+    gmPauseFlags &= ~0x200;
     CfRes_tryRefreshSlot298(0x35300001, 5);
     CfRes_pushRec((u32)self, 6, 0xf, 0, 0, 0);
     pushBackwards((u32)self, 0xf, 0, 0, 0, 0);
@@ -365,11 +365,11 @@ int CfCmd_FadeColor(u32 p0, u32 p1, u32 color) {
     float cg = c[1] * scale;
     float cb = c[2] * scale;
     float ca = c[3] * scale;
-    if (!(lbl_eu_80663E28 & 0x1000000)) {
+    if (!(gmPauseFlags & 0x1000000)) {
         // Retail leaves arg2 (r4) unconsumed here; forwarding the untouched
         // p1 parameter keeps r4 untouched too.
         CTaskGame_setVec4_tmp v = { cr, cg, cb, ca };
-        Scn_ReleaseUnk80(reinterpret_cast<CScnNw4r*>(lbl_eu_80663E14), (int)p1, &v);
+        Scn_ReleaseUnk80(reinterpret_cast<CScnNw4r*>(gmScene), (int)p1, &v);
     }
     return 0;
 }
@@ -379,7 +379,7 @@ int CfCmd_CallC0094(int a, int b) { CfSoundMan_StopAllModes(b); return 0; }
 int CfCmd_Stub027C(void* self) { return 0; }
 
 unsigned long CfCmd_SetFlag8() {
-    lbl_eu_80663E24 |= 8;
+    gmGameFlags |= 8;
     return 0;
 }
 
@@ -393,7 +393,7 @@ int CfCmd_OpenMenu12(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         pushBackwards((u32)self, 0x12, p1, p2, p3, p4);
         return 1;
     }
-    lbl_eu_80663E24 &= ~0x100;
+    gmGameFlags &= ~0x100;
     // Retail invokes the reset hook with a null this pointer.
     ((cf::CfGameManager*)NULL)->func_80085FB8();
     CfScript_ClearReq2();
@@ -407,7 +407,7 @@ int CfCmd_Fwd13OrClear(u32 p0, u16 p1, u32 p2, u32 p3, u32 p4) {
         pushBackwards(p0, 0x13, (u16)(p1 - 1), p2, p3, p4);
         r = 1;
     } else {
-        lbl_eu_80663E28 &= ~1;
+        gmPauseFlags &= ~1;
     }
     return r;
 }
@@ -442,7 +442,7 @@ int CfCmd_FadeSetup(void* self) {
     // Otherwise set up an all-zero colour mix and dispatch a full-colour
     // request event when the colour-change latch (bit12) is set.
     // Bit 1 (0x2): colour-fade-active latch.
-    if (!(lbl_eu_80663E28 & 0x2)) {
+    if (!(gmPauseFlags & 0x2)) {
         float f = lbl_eu_80667A70;
         UnkFloat4 v;
         v.field_0x0 = f;
@@ -450,13 +450,13 @@ int CfCmd_FadeSetup(void* self) {
         v.field_0x8 = f;
         v.field_0xC = f;
         func_8008566C__Q22cf13CfGameManagerFv(0x1e, &v, 1);
-        if (lbl_eu_80663E24 & 0x80000) {
+        if (gmGameFlags & 0x80000) {
             CfRes_pushRec((u32)self, 0x1c, 0x28, 0, 0, 0);
         }
     } else {
         // Volatile view forces retail's fresh reload of the flag word here
         // (MWCC would otherwise CSE it with the test above).
-        lbl_eu_80663E28 = *(volatile u32*)&lbl_eu_80663E28 & ~0x2;
+        gmPauseFlags = *(volatile u32*)&gmPauseFlags & ~0x2;
     }
     cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
@@ -471,8 +471,8 @@ int CfCmd_PartyMenuDisp(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
     int result = 0;
     if (cmd != 0) {
         if (cmd == 0x19) {
-            triggerPlayerEffects__Q22cf13CfGameManagerFv(lbl_eu_80663E48[1],
-                                                  lbl_eu_80663E4C[1],
+            triggerPlayerEffects__Q22cf13CfGameManagerFv(gmFlagPairs48[1],
+                                                  gmFlagPairs4C[1],
                                                   lbl_eu_80667A88);
         }
         pushBackwards(self, 0x1c, (u16)(cmd - 1), a2, a3, a4);
@@ -504,7 +504,7 @@ int CfCmd_Fwd1EIfBusy(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 }
 
 extern "C" unsigned long CfCmd_Clear80000() {
-    lbl_eu_80663E24 &= ~0x80000;
+    gmGameFlags &= ~0x80000;
     return 0;
 }
 
@@ -532,7 +532,7 @@ int CfCmd_Fwd1BIfLocal(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 }
 
 int CfCmd_FadeClear() {
-    if (!(lbl_eu_80663E24 & 0x400000)) {
+    if (!(gmGameFlags & 0x400000)) {
         float f = lbl_eu_80667A70;
         UnkFloat4 v;
         v.field_0x0 = f;
@@ -559,7 +559,7 @@ int CfCmd_ResolveSlot1E4(CFuncHost408* self, u32 arg1, u32 arg2) {
 
 int CfCmd_Fwd28IfClear(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     int r = 0;
-    if (!(lbl_eu_80663E28 & 0x2000)) {
+    if (!(gmPauseFlags & 0x2000)) {
         pushBackwards(p0, 0x28, p1, p2, p3, p4);
         r = 1;
     }
@@ -573,7 +573,7 @@ int CfCmd_Fwd28IfClear(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 // publishes the command byte and ends the pump.
 int CfCmd_PumpRingBuf(CfResBuffer* buf, u32* outFlag) {
     *outFlag = 0;
-    if (!(lbl_eu_80663E28 & 0x10000) && cf::CfGameManager::isSceneLoading()) {
+    if (!(gmPauseFlags & 0x10000) && cf::CfGameManager::isSceneLoading()) {
         return buf->field_404 == 0;
     }
     MenuCmdHost* host = reinterpret_cast<MenuCmdHost*>(buf);

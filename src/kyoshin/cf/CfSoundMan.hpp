@@ -2,7 +2,7 @@
 
 #include <types.h>
 #include <nw4r/snd.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // FX-slot record (0x4FC bytes): two of these sit at CfSoundManGlobal +0x04
 // (mFxSlots). The full field layout lives in code_801C2C14.cpp; this TU only
@@ -77,7 +77,7 @@ namespace cf {
         u8 field_0x25C[0xC]; // tail pad: sizeof(SoundArchivePlayer)=0xE0 -> 0x268
     };
 
-    // Sound manager singleton (retail lbl_eu_80664430, .sbss). Layout:
+    // Sound manager singleton (retail gSoundManInstance, .sbss). Layout:
     // 0x00 header word, 0x04 the two FX slots (2 x 0x4FC = 0x9F8), 0x9FC the
     // record array (CfSoundMan_ClearFxEffect hands the FX-slot array to clearFxSlotEffect).
     struct CfSoundManGlobal {
@@ -88,7 +88,7 @@ namespace cf {
     };
 
     // 0x30-byte sound-slot record: 64 entries in the global table
-    // (lbl_eu_80575928). Initialized by CfSoundMan_InitSlotState, looked up by id
+    // (gCfSoundSlots). Initialized by CfSoundMan_InitSlotState, looked up by id
     // (CfSoundMan_FindSlotById), torn down by CfSoundMan_StopSlotsOfSound.
     struct CfSoundSlot {
         /* 0x00 */ nw4r::snd::detail::BasicSound* mSound;
@@ -210,7 +210,7 @@ namespace cf {
 }
 
 // 64-entry sound-slot table (retail .bss, 0xC00 bytes).
-extern cf::CfSoundSlot lbl_eu_80575928[64];
+extern cf::CfSoundSlot gCfSoundSlots[64];
 
 // Minimal linked-list node view matching nw4r::ut::LinkListNode's layout
 // (its real members are private), used for manual BasicSound list walks.
@@ -238,7 +238,7 @@ void* findObjectById(int id);
 
 // Global-object registration link cell for the sound-slot table (retail .bss,
 // sits 0x10 bytes before the table; passed by address to __register_global_object).
-extern u8 lbl_eu_80575918[0x10];
+extern u8 gCfSoundSlotRegNode[0x10];
 
 // MWCC runtime helpers (C linkage so the call relocs bind to the
 // retail-unmangled names; same pattern as CMenuQstCnt.hpp).
@@ -250,7 +250,7 @@ extern "C" void* __register_global_object(void* object, void* destructor, void* 
 extern "C" void __destroy_arr(void*, void* dtor, int size, int count);
 
 // Sound-pause request parameters (retail .bss, 0x10 bytes).
-extern cf::CfSoundPauseParam lbl_eu_80576528;
+extern cf::CfSoundPauseParam gCfSoundPauseParam;
 
 // Default sound-slot constants (retail .sdata2 floats; const routes them into
 // the readonly pool so MWCC can hoist the lfs loads early).
@@ -263,17 +263,17 @@ extern const float lbl_eu_80667EA0;
 
 // Master-volume backing store (retail .sdata, 8 bytes; written by
 // setMasterVolume).
-extern float lbl_eu_80662628;
+extern float gSoundMasterVolume;
 
 // Volume ramp multiplier (retail .sdata2 const; used by setMasterVolume).
 extern const float lbl_eu_80667E8C;
 
 // Retail sound-manager pointer (unmangled at global scope).
-extern cf::CfSoundManGlobal* lbl_eu_80664430;
+extern cf::CfSoundManGlobal* gSoundManInstance;
 
-// Global event/presentation flag words (.sbss). lbl_eu_80663E24 bit 9 / bit 11
-// and lbl_eu_80663E28 bit 7 gate the CfSoundMan_PlayRequest sound-start dispatch.
-extern u32 lbl_eu_80663E28;
+// Global event/presentation flag words (.sbss). gmGameFlags bit 9 / bit 11
+// and gmPauseFlags bit 7 gate the CfSoundMan_PlayRequest sound-start dispatch.
+extern u32 gmPauseFlags;
 
 // Sound-start gate helpers (defined in other TUs; C ABI so the call relocs
 // bind to the retail-unmangled names).
@@ -285,11 +285,11 @@ extern "C" bool isInitialized__10CMenuPauseFv();
 
 // Sound-id counter for freshly allocated slots (retail .sdata u16; read and
 // written by CfSoundMan_StartSlotSound when a new slot id is assigned).
-extern u16 lbl_eu_80664438;
+extern u16 gSoundSlotIdCounter;
 
 // Sound-system-init flag byte (retail .sbss, one byte; cleared by the
 // manager ctor before the first InitSoundSystem call).
-extern u8 lbl_eu_8066443A;
+extern u8 gSoundSystemInitFlag;
 
 // No-op notification handler. Called from CfSoundMan_StartSlotSound when
 // nw4r::snd::detail::SoundStartable::detail_StartSound succeeds.

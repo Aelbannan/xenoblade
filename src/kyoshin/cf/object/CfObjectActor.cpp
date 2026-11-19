@@ -1,32 +1,10 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/code_802B8A3C.hpp"  // findObjectById imports
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 #include "kyoshin/cf/CfMapItemManager.hpp"  // dispatchItemLoad / testActorStatus
 
-// Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
-// retail declaration order (emission follows first use; code uses alone
-// would hoist lbl_eu_8066776C second and permute the doubles).
-extern "C" void capdatatouch_CfObjectActor(void) {
-    // MWCC drops unreferenced const scalars, so volatile-read each label
-    // in retail order (plain reads fold away). lbl_eu_80667748 (s16->float
-    // magic) and the 67770/67774/67778 tail have no code uses.
-    volatile float sinkf;
-    sinkf = lbl_eu_80667738;
-    sinkf = lbl_eu_8066773C;
-    sinkf = lbl_eu_80667740;
-    volatile double sinkd;
-    sinkd = lbl_eu_80667748;
-    sinkd = lbl_eu_80667750;
-    sinkd = lbl_eu_80667758;
-    sinkf = lbl_eu_80667760;
-    sinkf = lbl_eu_80667764;
-    sinkf = lbl_eu_80667768;
-    sinkf = lbl_eu_8066776C;
-    (void)sinkf;
-    (void)sinkd;
-}
 
 // Object behind the CfObjectMove +0xC4 move target (stores the action id).
 struct CfObjectActorInner {
@@ -144,7 +122,7 @@ void CfObjectActor::CActorParam_setHp(float val) {
     // (lbl_eu_80667748); the decomp pools an @N entry of the same value at
     // the same reloc site (name-only drift - accepted, cf. getAdjustedFacing).
     float f = (float)(int)val;
-    if ((lbl_eu_80663E24 & 0x10000000) == 0 && (lbl_eu_80663E28 & 0x800) == 0) {
+    if ((gmGameFlags & 0x10000000) == 0 && (gmPauseFlags & 0x800) == 0) {
         if (f < lbl_eu_80667740) {
             void* bm = getInstance__Q22cf14CBattleManagerFv();
             if (CChain_ProbeActorReady((u8*)bm + 0x1A8, this) != 0) {
@@ -158,8 +136,8 @@ void CfObjectActor::CActorParam_setHp(float val) {
 
 void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
     float f = (float)(int)value;   // f31: rounded gauge delta
-    if ((lbl_eu_80663E24 & 0x10000000) != 0) return;
-    if ((lbl_eu_80663E28 & 0x800) != 0) return;
+    if ((gmGameFlags & 0x10000000) != 0) return;
+    if ((gmPauseFlags & 0x800) != 0) return;
     int v27 = 0;
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000) != 0) {

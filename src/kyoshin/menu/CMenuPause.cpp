@@ -18,7 +18,7 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Forward declaration for the pause-exit input handler (defined below). Retail
 // emits this under C linkage (`Pause_HandleExitInput`), so it must stay unmangled.
@@ -200,7 +200,7 @@ void CMenuPause::Term() {
 void CMenuPause::Move() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) goto exit;
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto exit;
+    if ((gmPauseFlags & (1u << 21)) != 0) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
     // `bne` -- it emits retail's `beq body; b exit` (docs/MWCC_CASES.md
@@ -247,7 +247,7 @@ void CMenuPause::cbRenderBefore() {
     if (CTaskGame::isFlag01Set()) goto done;
     // Branch-over-branch guard, same trick as Move(): keeps MWCC from folding
     // the bit test into the first bne -- retail emits `beq body; b done`.
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto done;
+    if ((gmPauseFlags & (1u << 21)) != 0) goto done;
     goto body;
 done:
     return;

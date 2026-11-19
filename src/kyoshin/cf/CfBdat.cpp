@@ -180,7 +180,7 @@ void* lbl_eu_806640A8;
 void* lbl_eu_806640AC;
 void* lbl_eu_806640B0;
 void* lbl_eu_806640B4;
-void* lbl_eu_806640B8;
+void* gpBattleCtrlBdatTable;
 void* lbl_eu_806640BC;
 void* lbl_eu_806640C0;
 void* lbl_eu_806640C4;

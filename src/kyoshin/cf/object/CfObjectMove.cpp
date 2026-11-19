@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 // CfObjectMove_setRegionAttached: unified on `void*, int` (the definition below);
 #include "kyoshin/cf/CfResObjImpl.hpp"
@@ -105,7 +106,7 @@ CfObjectMove::CfObjectMove() {
     mField6D4 = 0;
     mField6D8 = 0;
     mField6DC = 0;
-    float f = lbl_eu_80666A88;
+    float f = 0.0f;
     mField6E4 = f;
     mField6E8 = f;
     mField6EC = f;
@@ -131,8 +132,8 @@ cf::CfObjectMove::~CfObjectMove() {
     // literals; MWCC appends the delete-flag wrapper itself.
     *(void**)this = (void*)lbl_eu_80529690;
     CfObject_releaseMoveTargets();
-    if (lbl_eu_80665958 != 0) {
-        Coli_ListRemoveNode(lbl_eu_80665958, (void*)this->_60C_region);
+    if (sEneColiProbe != 0) {
+        Coli_ListRemoveNode(sEneColiProbe, (void*)this->_60C_region);
     }
     __dt__804B095C((void*)this->_60C_region, -1);
     __dt__Q22cf17CActParamAnimGameFv((void*)((u8*)this + 0xD0), -1);
@@ -178,10 +179,10 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
         // Global-mode gate: the two flag reads are kept separate (volatile
         // casts; the extern itthis is non-volatile to match CSystemWindow.hpp
         // and the CUICfManager.cpp definition) so MWCC emits the retail double
-        // lwz of lbl_eu_80663E24 (r0 for the mode test, r5 for the +0x40000
+        // lwz of gmGameFlags (r0 for the mode test, r5 for the +0x40000
         // advance gate).
-        u32 g0 = *(volatile u32*)&lbl_eu_80663E24;
-        u32 g1 = *(volatile u32*)&lbl_eu_80663E24;
+        u32 g0 = *(volatile u32*)&gmGameFlags;
+        u32 g1 = *(volatile u32*)&gmGameFlags;
         cond = (g0 & 0x02040000) != 0;
         if ((g0 & 0x10000000) != 0) {
             cond = 0;
@@ -197,7 +198,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
             }
             if (((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect() != 0) {
                 if (this->mSubObj98 != 0) {
-                    if (((CScnItemModel*)this->mSubObj98)->vfunc4C() > lbl_eu_80666A8C) {
+                    if (((CScnItemModel*)this->mSubObj98)->vfunc4C() > 0.9f) {
                         scaleHi = 1;
                     }
                 }
@@ -295,14 +296,14 @@ void cf::CfObjectMove::CfObjectModel_releaseModelList() {
     // and +0x6D4) through the C4 target, then hop the +0xB0 sub-object's
     // vtable slot +0x24.
     this->CfObjectMove_detachModelList();
-    // field_0x9C is the u8[4] base-class slot; access it as the pointer it
-    // holds (model list released through the C4 target).
-    void*& list9C = *reinterpret_cast<void**>(this->field_0x9C);
+    // The base class declares +0x9C as a packed u32 resource word; the model
+    // list handle is stored in that word.
+    u32& list9C = this->field_0x9C;
     if (list9C != 0) {
         if (this->mTargetC4 != 0) {
-            releaseAnimObj(this->mTargetC4, list9C);
+            releaseAnimObj(this->mTargetC4, reinterpret_cast<void*>(list9C));
         }
-        Scn_IsAnimActiveOrNull(list9C);
+        Scn_IsAnimActiveOrNull(reinterpret_cast<void*>(list9C));
         list9C = 0;
     }
     if (this->mField6D4 != 0) {
@@ -352,7 +353,7 @@ void cf::CfObjectMove::CfObjectMove_dropMoveRequest() {
 // CfObjectMove_setMoveSpeed twin and this retail body; retail keeps one unmangled copy.)
 extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
     u32 flags = self->mFlags68;
-    f32 value = lbl_eu_80666A88;
+    f32 value = 0.0f;
     self->mMoveSpeed = value;
     self->mFlags68 = flags & ~0xC00;
 }
@@ -364,7 +365,7 @@ extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* self) {
 // form keeps the Unk linker name that hand-built tables / CREvtModel
 // reference; the renamed member decl serves call-site codegen.
 void cf::CfObjectMove::CfObject_updateMoveRate() {
-    float v = Scn_GetFrameDelta(lbl_eu_80663E14);
+    float v = Scn_GetFrameDelta(gmScene);
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)this;
     // The flag word is read once for the direction tests (kept in a local)
     // while the clamp-path clears re-read the member - retail reloads
@@ -377,48 +378,48 @@ void cf::CfObjectMove::CfObject_updateMoveRate() {
         // The clamp-path clears go through a separate view type so MWCC
         // reloads mFlags68 (retail lwz r0,0x68) instead of reusing the test
         // register. :: on the constants avoids the namespace-cf copy.
-        float f = view->field_A4 - lbl_eu_80666AB4 * v;
+        float f = view->field_A4 - 0.05f * v;
         view->field_A4 = f;
-        if (f <= ::lbl_eu_80666A88) {
-            view->field_A4 = ::lbl_eu_80666A88;
+        if (f <= 0.0f) {
+            view->field_A4 = 0.0f;
             this->mFlags68 &= ~0x4000;
-            if (lbl_eu_80665958 != 0) {
-                Coli_ListRemoveNode(lbl_eu_80665958, this->_60C_region);
+            if (sEneColiProbe != 0) {
+                Coli_ListRemoveNode(sEneColiProbe, this->_60C_region);
             }
         }
     } else if ((flags & 0x2000) != 0) {
         // Increasing state: step the +0xA4 rate up toward the high clamp.
-        float f = view->field_A4 + lbl_eu_80666AB4 * v;
+        float f = view->field_A4 + 0.05f * v;
         view->field_A4 = f;
-        if (f >= lbl_eu_80666A94) {
-            view->field_A4 = lbl_eu_80666A94;
+        if (f >= 1.0f) {
+            view->field_A4 = 1.0f;
             this->mFlags68 &= ~0x2000;
-            if (lbl_eu_80665958 != 0) {
-                ColiListAppend(lbl_eu_80665958, this->_60C_region);
+            if (sEneColiProbe != 0) {
+                ColiListAppend(sEneColiProbe, this->_60C_region);
             }
         }
     }
     if (this->mSubObj98 != 0) {
         float spd = this->mMoveSpeed;
-        if (spd == ::lbl_eu_80666A88) {
-            spd = lbl_eu_80666A94;
+        if (spd == 0.0f) {
+            spd = 1.0f;
         }
-        float factor = lbl_eu_80666A94 / spd;
+        float factor = 1.0f / spd;
         u32 flags2 = this->mFlags68;
         if ((flags2 & 0x800) != 0) {
             // Move the +0xA0 position toward the high clamp.
             float f = factor * v + this->field_A0;
             this->field_A0 = f;
-            if (f >= lbl_eu_80666A94) {
-                this->field_A0 = lbl_eu_80666A94;
+            if (f >= 1.0f) {
+                this->field_A0 = 1.0f;
                 this->mFlags68 &= ~0x800;
             }
         } else if ((flags2 & 0x400) != 0) {
             // Move the +0xA0 position toward the low clamp.
             float f = this->field_A0 - factor * v;
             this->field_A0 = f;
-            if (f <= ::lbl_eu_80666A88) {
-                this->field_A0 = ::lbl_eu_80666A88;
+            if (f <= 0.0f) {
+                this->field_A0 = 0.0f;
                 this->mFlags68 &= ~0x400;
             }
         }
@@ -634,13 +635,13 @@ void cf::CfObjectMove::CfObject_snapMoveTarget(ml::CVec3* vec, float amount) {
         // (the negated ||-chain made MWCC add a cror to the fcmpo).
         if (((((u32)__cntlzw((u32)__cntlzw(flags & 0x10000000) >> 5)) >> 5) != 0) &&
             ((((u32)__cntlzw((u32)__cntlzw(flags & 0x8) >> 5)) >> 5) != 0) &&
-            amount > lbl_eu_80666AD4 && lbl_eu_80663E42 == 4u &&
-            lbl_eu_80663E44 == 1u) {
+            amount > 4.0f && gmGlobalFlag42 == 4u &&
+            gmGlobalFlag44 == 1u) {
             // Sum the incoming vector with the shared offset through
             // CVec3::operator+ (nw4r VEC3Add -> paired-single adds); the
             // copy-ctor init reproduces retail's second stack copy.
-            ml::CVec3 off(::lbl_eu_80666A88, lbl_eu_80666AD8[0],
-                          ::lbl_eu_80666A88);
+            ml::CVec3 off(0.0f, 2.4f,
+                          0.0f);
             ml::CVec3 arg;
             arg = *vec + off;
             CfObject_snapMoveTargetBase(this, &arg);
@@ -671,10 +672,10 @@ void cf::CfObjectMove::CfObject_applyMoveOffset(const ml::CVec3* vec, float amou
         // Same positive &&-chain shape as Func25.
         if (((((u32)__cntlzw((u32)__cntlzw(flags & 0x10000000) >> 5)) >> 5) != 0) &&
             ((((u32)__cntlzw((u32)__cntlzw(flags & 0x8) >> 5)) >> 5) != 0) &&
-            amount > lbl_eu_80666AD4 && lbl_eu_80663E42 == 4u &&
-            lbl_eu_80663E44 == 1u) {
-            ml::CVec3 off(::lbl_eu_80666A88, lbl_eu_80666AD8[0],
-                          ::lbl_eu_80666A88);
+            amount > 4.0f && gmGlobalFlag42 == 4u &&
+            gmGlobalFlag44 == 1u) {
+            ml::CVec3 off(0.0f, 2.4f,
+                          0.0f);
             ml::CVec3 arg;
             arg = *vec + off;
             CfObject_snapMoveTargetBase(this, &arg);
@@ -699,7 +700,7 @@ void cf::CfObjectMove::CfObject_applyMoveOffset(const ml::CVec3* vec, float amou
 ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
     // Both sub-objects present + busy flag bit 2 (mFlags68 & 4) -> return a
     // pointer into the C4 target; otherwise defer to the base implementation.
-    if (mSubObj98 != 0 && *(const u32*)field_0x9C != 0 && (mFlags68 & 0x4) != 0) {
+    if (mSubObj98 != 0 && field_0x9C != 0 && (mFlags68 & 0x4) != 0) {
         cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)mTargetC4;
         return (ml::CVec3*)&target->field_3A8;
     }
@@ -1232,15 +1233,15 @@ void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self,
 // CfObject_setMoveReadyFlag.
 void setPointEnabled__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self, int flag) {
     CfObjectModel_setPointEnabled(self, flag);
-    if ((self->unk64 & 8) != 0 && flag == 0 && lbl_eu_80665958 != 0) {
+    if ((self->unk64 & 8) != 0 && flag == 0 && sEneColiProbe != 0) {
         // flag is provably 0 here, so the attach path never runs; it is
         // retained because retail emits both sides of the inner flag test
         // (one cmpwi in cr1 serves both tests, with attach as the
         // fall-through).
         if (flag != 0) {
-            ColiListAppend(lbl_eu_80665958, self->_60C_region);
+            ColiListAppend(sEneColiProbe, self->_60C_region);
         } else {
-            Coli_ListRemoveNode(lbl_eu_80665958, self->_60C_region);
+            Coli_ListRemoveNode(sEneColiProbe, self->_60C_region);
         }
     }
 }
@@ -1475,7 +1476,7 @@ void cf::CfObjectMove::CfObject_syncModelRate(float value) {
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
-            CharEffSetSlotFloat((void*)r, lbl_eu_80666A94 - value);
+            CharEffSetSlotFloat((void*)r, 1.0f - value);
         }
     }
 }
@@ -1540,8 +1541,8 @@ extern "C" void CfObjectMove_attachMoveRegion(cf::CfObjectMove* self) {
     if (self->mSubObj98 != 0) {
         simSetFlag2OnTree(self->mSubObj98, 1);
     }
-    if (lbl_eu_80665958 != 0) {
-        ColiListAppend(lbl_eu_80665958, self->_60C_region);
+    if (sEneColiProbe != 0) {
+        ColiListAppend(sEneColiProbe, self->_60C_region);
     }
 }
 void CfObjectMove_detachMoveRegion(cf::CfObjectMove* self) {
@@ -1551,15 +1552,15 @@ void CfObjectMove_detachMoveRegion(cf::CfObjectMove* self) {
     u32 flags = self->mFlags68;
     flags = (flags & ~0x2000u) | 0x4000u;
     self->mFlags68 = flags;
-    if (lbl_eu_80663E28 & 0x04000000u) {
+    if (gmPauseFlags & 0x04000000u) {
         // const-declared SDA global: MWCC hoists the lfs above the flag
         // store and keeps the stw/stfs order, matching retail exactly.
-        float v = lbl_eu_80666A88;
+        float v = 0.0f;
         self->mFlags68 = flags & ~0x4000u;
         *(float*)self->field_0xA4 = v;
     }
-    if (lbl_eu_80665958 != 0) {
-        Coli_ListRemoveNode(lbl_eu_80665958, self->_60C_region);
+    if (sEneColiProbe != 0) {
+        Coli_ListRemoveNode(sEneColiProbe, self->_60C_region);
     }
 }
 extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
@@ -1582,7 +1583,7 @@ extern "C" int CfObjectMove_testMoveProximity(cf::CfObjectMove* self) {
             cf::CfObjectMove6B4View* v = (cf::CfObjectMove6B4View*)self;
             u32 w = v->field_6B4;
             v->field_6B4 = w | 0x1000;
-            result = ColiCheckMoveRadius(self->_60C_region, &scene->x, 0, 0, lbl_eu_80666A94);
+            result = ColiCheckMoveRadius(self->_60C_region, &scene->x, 0, 0, 1.0f);
             v->field_6B4 &= ~0x1000;
         } else {
             if (((u32)__cntlzw((u32)__cntlzw(flags & 0x100) >> 5) >> 5) != 0) {
@@ -1634,8 +1635,8 @@ void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg) {
     if (arg != 0) {
         float v = view->field_A8 - lbl_eu_80666AA4;
         view->field_A8 = v;
-        if (v < lbl_eu_80666A88) {
-            view->field_A8 = lbl_eu_80666A88;
+        if (v < 0.0f) {
+            view->field_A8 = 0.0f;
         }
         return;
     }
@@ -1659,8 +1660,8 @@ void CfObjectMove_updateSpeedA8(cf::CfObjectMove* self, u32 arg) {
     } else {
         float v = view->field_A8 + lbl_eu_80666AB0;
         view->field_A8 = v;
-        if (v > lbl_eu_80666A94) {
-            view->field_A8 = lbl_eu_80666A94;
+        if (v > 1.0f) {
+            view->field_A8 = 1.0f;
         }
     }
 }
@@ -1668,7 +1669,7 @@ extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self) {
     if (self->mSubObj98 == 0) {
         return;
     }
-    if ((*(volatile u32*)&lbl_eu_80663E24 & 0x02040000) == 0) {
+    if ((*(volatile u32*)&gmGameFlags & 0x02040000) == 0) {
         u32 flags = self->unk64;
         if ((flags & 0x2) != 0 || (flags & 0x4) != 0 || (flags & 0x8) != 0 ||
             (flags & 0x80000000u) != 0 || (flags & 0x100) != 0) {
@@ -1682,9 +1683,9 @@ extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self) {
         }
     }
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
-    float v = lbl_eu_80666A94 - view->field_AC * (view->field_A8 *
-              ((lbl_eu_80666A94 - self->field_A0) * view->field_A4));
-    if (v > lbl_eu_80666A88) {
+    float v = 1.0f - view->field_AC * (view->field_A8 *
+              ((1.0f - self->field_A0) * view->field_A4));
+    if (v > 0.0f) {
         if ((self->mFlags68 & 0x100000) != 0) {
             CfModel_SyncVisFlag(self, 1);
         }
@@ -1695,7 +1696,7 @@ extern "C" void CfObjectMove_tickSpeed(cf::CfObjectMove* self) {
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
-            CharEffSetSlotFloat((void*)r, lbl_eu_80666A94 - v);
+            CharEffSetSlotFloat((void*)r, 1.0f - v);
         }
     }
 }
@@ -1717,7 +1718,7 @@ extern "C" void CfObjectMove_refreshPosition(cf::CfObjectMove* self) {
         // The bit-3 test is normalized through the double-cntlzw idiom (the
         // retail booleanizes it; the top-level tests stay direct).
         if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0) {
-            if ((self->mSubObj98->field_7A4 & 0x10000) != 0 && (*(volatile u32*)&lbl_eu_80663E24 & 0x01040000) == 0) {
+            if ((self->mSubObj98->field_7A4 & 0x10000) != 0 && (*(volatile u32*)&gmGameFlags & 0x01040000) == 0) {
                 if (self->checkStateFlags8(0x1000) == 0) {
                     CfObjectMove_resetMoveTarget(self);
                     ((bool (*)(void*, void*))setAnimLastPos)(self->mTargetC4, &self->mPos3C);
@@ -1784,13 +1785,13 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
     origPos.y = pos->y;
     origPos.z = pos->z;
     cf::CfObjectMove6C0View* tgt = (cf::CfObjectMove6C0View*)self->mTarget6C0;
-    tgt->field_14 = lbl_eu_80666A88;
+    tgt->field_14 = 0.0f;
     ((cf::CtrlMoveTarget*)tgt)->resetMoveTarget();
     // Declared angle-first so MWCC colours rate into f30 (retail order).
     f32 angle = tgt->field_C;
     f32 rate = tgt->field_14;
     if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_isMoveActiveNow() == 0) {
-        rate = lbl_eu_80666A88;
+        rate = 0.0f;
         ColiSetAxisBlockInverse(self->_60C_region, &self->mPos3C);
     }
     int force = 0;
@@ -1807,11 +1808,11 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
         // Circular sweep: scale the position X by the rate, sweep the angle
         // through Sin/Cos, then step the +0x60C region toward the swept point.
         float sx = rate * *(const float*)self->CfObject_getMoveRateScale();
-        rate = lbl_eu_80666AB8 * sx;
-        f32 ang = lbl_eu_80666ABC * angle;
+        rate = 0.009259259f * sx;
+        f32 ang = 40.743664f * angle;
         ml::CVec3 step;
         step.x = rate * SinFIdx__Q24nw4r4mathFf(ang);
-        step.y = lbl_eu_80666A88;
+        step.y = 0.0f;
         step.z = rate * CosFIdx__Q24nw4r4mathFf(ang);
         const ml::CVec3* base = (const ml::CVec3*)self->CfObject_getPosVector();
         ml::CVec3 tmp;
@@ -1828,9 +1829,9 @@ extern "C" void CfObjectMove_resetMoveTarget(cf::CfObjectMove* self) {
         } else if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x4) >> 5) >> 5) != 0) {
             id = 0x44A11;
         }
-        float f3 = ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) != 0 ? lbl_eu_80666A88 : lbl_eu_80666AC0;
+        float f3 = ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) != 0 ? 0.0f : -0.1f;
         ScnRes_ResolveGroundHeight(&self->mPos3C, &step, id, 0, 0, 0,
-                      lbl_eu_80666AA8, lbl_eu_80666AA0, f3, lbl_eu_8066AF20, lbl_eu_80666AC4);
+                      lbl_eu_80666AA8, lbl_eu_80666AA0, f3, lbl_eu_8066AF20, 0.3f);
     }
     // Store the position difference against the snapshot into the +0x54 area.
     ml::CVec3 diff;
@@ -1895,7 +1896,7 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
     } else if ((f68 & 0x00800000) != 0) {
         u32 flags2 = self->unk64;
         self->mFlags68 &= ~0x00800000u;
-        f32 rate2 = (flags2 & 0x2) != 0 ? lbl_eu_80666AC8 : lbl_eu_80666ACC;
+        f32 rate2 = (flags2 & 0x2) != 0 ? 10.0f : 10000.0f;
         self->CfObject_applyMoveOffset((const ml::CVec3*)&self->mPos3C, rate2);
     } else {
         static_cast<cf::CfObject*>(self)->CfObject_syncMoveTarget((const ml::CVec3*)&self->mPos3C);
@@ -1938,11 +1939,11 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self) {
     if ((self->mFlags68 & 0x2000000) != 0) {
         ((cf::CfObject*)self)->CfObject_setMoveReadyFlag(1);
     }
-    simSetLeafDist7B0(self->mSubObj98, lbl_eu_80666A94);
+    simSetLeafDist7B0(self->mSubObj98, 1.0f);
     // Real spelling for slot 0x168 (inline alias in CfObject.hpp;
     // identical virtual dispatch to CfObject_syncModelRate).
     self->CfObject_syncModelRate(self->field_A0);
-    ((cf::CfObjectModel*)self)->CfObjectModel_setModelRate(lbl_eu_80666A94);
+    ((cf::CfObjectModel*)self)->CfObjectModel_setModelRate(1.0f);
     u32 f = self->mFlags68;
     if ((f & 0x800) != 0) {
         int bit14 = (f >> 14) & 1;
@@ -2176,15 +2177,15 @@ void CfObjectMove_setModelListLock(cf::CfObjectMove* self, int flag) {
     }
 }
 // Forward a position region (self+0x60C) to the region-library manager
-// (lbl_eu_80665958); flag selects the attach (ColiListAppend) vs detach
+// (sEneColiProbe); flag selects the attach (ColiListAppend) vs detach
 // (Coli_ListRemoveNode) helper.
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag) {
     cf::CfObjectMove* self = (cf::CfObjectMove*)obj;
-    if (lbl_eu_80665958 != 0) {
+    if (sEneColiProbe != 0) {
         if (flag != 0) {
-            ColiListAppend(lbl_eu_80665958, self->_60C_region);
+            ColiListAppend(sEneColiProbe, self->_60C_region);
         } else {
-            Coli_ListRemoveNode(lbl_eu_80665958, self->_60C_region);
+            Coli_ListRemoveNode(sEneColiProbe, self->_60C_region);
         }
     }
 }
@@ -2233,10 +2234,7 @@ extern "C" void CfResObj_noop28() {}
 // typed data sections - source shape for retail bytes (replaces absorb blobs)
 __attribute__((used)) const char lbl_eu_804FC550[0x20] = "mapATR\0def_mount\0bat_mount";
 
-__attribute__((used)) const float lbl_eu_80666A88 = 0.0f;
-__attribute__((used)) const float lbl_eu_80666A8C = 0.9f;
 __attribute__((used)) const float lbl_eu_80666A90 = 30.0f;
-__attribute__((used)) const float lbl_eu_80666A94 = 1.0f;
 __attribute__((used)) const float lbl_eu_80666A98 = 3.2399998f;
 __attribute__((used)) const float lbl_eu_80666A9C = 0.4f;
 __attribute__((used)) const float lbl_eu_80666AA0 = 1.4f;
@@ -2244,16 +2242,7 @@ __attribute__((used)) const float lbl_eu_80666AA4 = 0.1f;
 __attribute__((used)) const float lbl_eu_80666AA8 = 0.7f;
 __attribute__((used)) const float lbl_eu_80666AAC = 0.03f;
 __attribute__((used)) const float lbl_eu_80666AB0 = 0.06f;
-__attribute__((used)) const float lbl_eu_80666AB4 = 0.05f;
-__attribute__((used)) const float lbl_eu_80666AB8 = 0.009259259f;
-__attribute__((used)) const float lbl_eu_80666ABC = 40.743664f;
-__attribute__((used)) const float lbl_eu_80666AC0 = -0.1f;
-__attribute__((used)) const float lbl_eu_80666AC4 = 0.3f;
-__attribute__((used)) const float lbl_eu_80666AC8 = 10.0f;
-__attribute__((used)) const float lbl_eu_80666ACC = 10000.0f;
 __attribute__((used)) const float lbl_eu_80666AD0 = 0.5f;
-__attribute__((used)) const float lbl_eu_80666AD4 = 4.0f;
-__attribute__((used, aligned(8))) const float lbl_eu_80666AD8[2] = {2.4f, 0.0f};
 
 // Hand-assembled vtable data for this unit (the class is still
 // __declspec(novtable)); retail keeps it in this TU's .data.
@@ -2433,3 +2422,4 @@ void* lbl_eu_80529690[] = {
     (void*)CfObjectMove_isEffectSlotUsed__Q22cf12CfObjectMoveFUl, (void*)CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl, (void*)CfObjectMove_flushEffectSlots__Q22cf12CfObjectMoveFv, (void*)CfObjectMove_setAllEffectBits__Q22cf12CfObjectMoveFv,
     (void*)CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFUl, 0,
 };
+

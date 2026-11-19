@@ -27,6 +27,8 @@ public:
     CViewRoot(const char* pName, CWorkThread* pParent);
     virtual ~CViewRoot();
 
+    static CViewRoot* spInstance;
+    static u8 sRenderViewDisabled;
     static CViewRoot* create(CWorkThread* pParent);
     static CViewRoot* getInstance();
     static CView* getCurrent();
@@ -58,12 +60,10 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
-extern CViewRoot* lbl_eu_806655D0;
-extern u8 lbl_eu_806655D4;
-extern const char lbl_eu_8052266C[];
+
 extern u32 lbl_eu_8056B710[0xA0 / 4];
+// The base reslist vtable now uses its compiler name; only the derived label remains.
 extern char lbl_eu_8056B280[];
-extern char lbl_eu_8056B298[];
 mtl::ALLOC_HANDLE getWorkMem__17CWorkThreadSystemFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);

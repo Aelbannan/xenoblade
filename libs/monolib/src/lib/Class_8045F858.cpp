@@ -6,16 +6,12 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 
-extern "C" {
-extern CLibLayout* lbl_eu_80665710;
-}
-
 using namespace mtl;
 
 Class_8045F858::Class_8045F858(UnkClass_8045F564* ptr) {
     unk0 = ptr;
     
-    CLibLayout* layout = lbl_eu_80665710;
+    CLibLayout* layout = CLibLayout::spInstance;
     u32 idx = (layout->hashAccum + layout->hashCount) % layout->hashDivisor;
     layout->hashTable[idx] = ptr;
     layout->hashCount++;
@@ -24,7 +20,7 @@ Class_8045F858::Class_8045F858(UnkClass_8045F564* ptr) {
 }
 
 Class_8045F858::~Class_8045F858() {
-    CLibLayout* layout = lbl_eu_80665710;
+    CLibLayout* layout = CLibLayout::spInstance;
     layout->hashCount--;
     
     MemManager::setMemInitFlag(true);

@@ -7,8 +7,9 @@
 #include <revolution/os/OSFastCast.h>
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CScheduleItem.hpp"
+#include "monolib/core/code_804DEDA8.hpp"
 #include "monolib/effect/CERand.hpp"
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+
 extern "C" void SchedList_StepBoth(f32);
 #include "monolib/effect/code_804CC2B8.hpp"
 #include <revolution/MTX.h>
@@ -238,39 +239,18 @@ void cerandRandArc(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b);
 }
 
 struct CScnRootEnv;
-extern CScnRootEnv* lbl_eu_806659B8;
+extern CScnRootEnv* sActiveSceneRoot;
 extern u8 lbl_eu_80663B3C;
-extern f32 lbl_eu_8066B0A8;
-extern f32 lbl_eu_8066B0C0;
-extern f32 lbl_eu_8066B0C4;
 extern u32 lbl_eu_8066B0D0;
-extern const f64 lbl_eu_8066B0C8;   // 0x4330000000000000 (u->f magic)
-extern const f64 lbl_eu_8066B0B0;   // 0x4330000000000000 (s16->f magic)
-extern const f64 lbl_eu_8066B0B8;   // 0x4330000000000000 (u16 range-table base)
 
-// u16 -> float through the shared 0x4330000000000000 magic double. The
-// explicit extern reference pins the sdata2 reloc to the retail constant
-// name (a plain (f32) cast would emit the TU's own unnamed pool entry).
+// u16 -> float.
 inline f32 u16ToF_b0c8(u16 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0C8);
+    return (f32)v;
 }
 
-// Signed value -> float through the 0x4330000080000000 magic
-// (lbl_eu_8066B0B0). The xor folds the sign into the low word.
+// Signed value -> float.
 inline f32 s32ToF_b0b0(u32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v ^ 0x80000000u;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0B0);
+    return (f32)(s32)v;
 }
 
 // Cross-TU imports + in-TU C-linkage declarations (retail symbol names -
@@ -309,7 +289,6 @@ void CEBuildSinCos(void);
 u32 SchedRes_AllocEntries(u32 p, u32 size);
 u32 SchedItem_AllocPool(u32 p, u32 size);
 u32 SchedFx_AllocPool(u32 p, u32 size);
-u32 SchedNode_AllocPool(u32 p, u32 size);
 u32 SchedRes_FindEntryValue(u32* outC, CScheduleEntryData** out8, u32 a, u32 c);
 u32 SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5);
 extern EffectListNode* lbl_eu_80665A30;
@@ -388,10 +367,7 @@ struct EmitData {
 
 // Effect memory-region name string (.rodata at lbl_eu_805244E0, 0x20B
 // incl. zero padding; retail shape).
-extern "C" __declspec(align(8)) const char lbl_eu_805244E0[0x20] = {
-    0x43,0x45,0x66,0x66,0x65,0x63,0x74,0x48,0x65,0x61,0x70,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-};
+extern "C" __declspec(align(8)) const char lbl_eu_805244E0[0x20] = "CEffectHeap";
 
 // EffSys_AdvanceChain: advance the per-effect node chain head (0x24) using the
 // accumulated frame fraction at 0x14.
@@ -573,7 +549,7 @@ extern "C" void EffSys_Startup(EffectRoot* self, u32 memAlloc, u32 size2) {
     p = SchedRes_AllocEntries(p, 0x80);
     p = SchedItem_AllocPool(p, 0x200);
     p = SchedFx_AllocPool(p, 0x200);
-    p = SchedNode_AllocPool(p, 0xc80);
+    p = (u32)SchedNode_AllocPool(p, 0xc80);
     OSInitFastCast();
     CEBuildSinCos();
     CERand::init();
@@ -634,7 +610,7 @@ extern "C" void func_804CBB84(EffectRoot* self, void* scene) {
             if (a != 0 && b != 0) {
                 SchedRes_ReinitTables();
                 SchedList_FindBoth((u32)scene);
-                lbl_eu_80663B3C = (scene == lbl_eu_806659B8);
+                lbl_eu_80663B3C = (scene == sActiveSceneRoot);
                 DbgCopyCamProj(&self->field_0x08, scene);
                 f32 h = u16ToF_b0c8(CDeviceVI::getRenderModeObj()->efbHeight);
                 f32 w = u16ToF_b0c8(CDeviceVI::getRenderModeObj()->fbWidth);
@@ -996,16 +972,9 @@ s32 EffObject::Obj_Construct(const u8* base, const EffInitBlob* data, void* arg6
 // 0x4000 flag is set runs the spawn loop: computes the remaining-duration
 // count, spawns nodes via EffFxAppendChainNode, refreshes the 0x17c region and the
 // per-node alpha position, advancing through EffFxStepNextNode.
-// u16 -> float through the lbl_eu_8066B0B8 magic-base double (same shape as
-// u16ToF_b0c8).
+// u16 -> float.
 inline f32 u16ToF_b0b8(u16 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0B8);
+    return (f32)v;
 }
 
 static inline double s32ToF64_b0b0(s32 v);
@@ -1084,7 +1053,7 @@ static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
     f32 mag = PSVECMag((Vec*)&diff);
     DepthTable* dd = (DepthTable*)obj->field_0xdc[0];
     f32 v0 = u16ToF_b0b8(dd->f0);
-    f32 ratio = v0 / lbl_eu_8066B0A8;
+    f32 ratio = v0 / 100.0f;
     f32 v2 = u16ToF_b0b8(dd->f4);
     if (v2 <= mag) {
         factor = ratio;
@@ -1559,7 +1528,7 @@ void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
         if (mode1 != 0) {
             f31 = obj->field_0x134.y;
         } else {
-            f31 = lbl_eu_8066B0C0 * out1.y;
+            f31 = 2.0f * out1.y;
         }
         if (ScnRes_VertRayForward_E398((Vec*)&data.va, 0x4801, 0, 0, -f31, lbl_eu_8066B0A0) != 0) {
             ScnRes_CopyEntryHead(&data.va, 0);
@@ -1633,16 +1602,9 @@ s32 EffectRoot::EffSys_RebindSceneLinks(void* scene, void* node) {
     return result;
 }
 
-// s32 -> f64 through the shared signed magic double lbl_eu_8066B0B0 (retail
-// xoris + stack-double shape, no frsp - result stays double).
+// s32 -> f64 (no frsp - result stays double).
 static inline double s32ToF64_b0b0(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    c.w[0] = 0x43300000u;
-    return c.d - lbl_eu_8066B0B0;
+    return (double)v;
 }
 
 // EffType_PickEmitVec: fill `out` with a random emission vector selected by `mode`
@@ -1654,7 +1616,7 @@ void EffTypeObj::PickEmitVec(ml::CVec3* out, s32 mode, s32 emitScale, const ml::
     // Radius stays in double precision end-to-end (no frsp); the signed
     // argument converts through the shared 2^52+2^31 magic (helper above).
     double t = s32ToF64_b0b0(emitScale);
-    double div = t / lbl_eu_8066B0A8;
+    double div = t / 100.0f;
     double radius = lbl_eu_8066B0A4 - div;
     switch (mode) {
     case 7:
@@ -1667,14 +1629,14 @@ void EffTypeObj::PickEmitVec(ml::CVec3* out, s32 mode, s32 emitScale, const ml::
         break;
     case 2:
         cerandRandBox(out, in, refPos, radius);
-        if (this->field_0x00 == 0xe) out->y = __fabs(in->y) * lbl_eu_8066B0C4;
+        if (this->field_0x00 == 0xe) out->y = __fabs(in->y) * 0.5f;
         break;
     case 4:
         cerandRandArc(out, in, refPos);
         break;
     case 3:
         cerandRandCylinder(out, in, refPos, radius);
-        if (this->field_0x00 == 0xe) out->y = __fabs(in->y) * lbl_eu_8066B0C4;
+        if (this->field_0x00 == 0xe) out->y = __fabs(in->y) * 0.5f;
         break;
     }
 }

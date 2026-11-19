@@ -30,7 +30,7 @@ struct TlutCacheState {
 
     void Invalidate() { flag = 0; }
 };
-extern TlutCacheState lbl_eu_8061A6C0;
+extern TlutCacheState sTlutCache;
 
 // Tex cache (retail .bss at 8061A5A0): one cached GXTexObj per texmap ID;
 // the byte at 0x100 tracks which must be re-uploaded after an edit.
@@ -40,7 +40,7 @@ struct TexCacheState {
 
     void Invalidate() { flag = 0; }
 };
-extern TexCacheState lbl_eu_8061A5A0;
+extern TexCacheState sTexCache;
 
 // Per-texcoord scale pair of the texCoordScale cache.
 struct TexCoordScaleEntry {
@@ -168,24 +168,24 @@ struct G3DStateCache {
     };
     LightInvalBlock lightInval;            // at 0x1054
 };
-extern G3DStateCache lbl_eu_8061A520;
-extern TexCoordScaleCache lbl_eu_8061A52C;
+extern G3DStateCache sStateCache;
+extern TexCoordScaleCache sTexCoordScaleCache;
 
 // "sync" flag: cleared before every display-list upload.
-bool lbl_eu_80665448;
+bool sG3DSyncFlag;
 
 // Small-data flags in g3d_state.o's retail .sbss.
-u8 lbl_eu_8066544C;
-u32 lbl_eu_80665450;
-u32 lbl_eu_80665454;
-char lbl_eu_80665458[8];
+u8 sCurrentMtxResetFlag;
+u32 sTexMtxIdCache;
+u32 sCachedTevObj;
+char sViewNrmMtxDirty[8];
 // Z-comploc cache (retail small-data at 80665460): bit0 of the flag word
 // marks the cached byte valid.
 struct ZCompLocState {
     u32 flag;   // at 0x0
     u8 compLoc; // at 0x4
 };
-ZCompLocState lbl_eu_80665460;
+ZCompLocState sZCompLocCache;
 
 // Float constants in g3d_state.o's retail .sdata2 (IndMtxOpStd::SetNrmMapMtx
 // and ScnDependentMtxFunc::EnvironmentMapping).
@@ -216,33 +216,33 @@ namespace g3d {
 
 // Retail camera-state blob (8061DFA0). C linkage keeps the name unmangled
 // inside this namespace (used by detail::ScnDependentMtxFunc below).
-extern "C" CameraMtxStateData lbl_eu_8061DFA0;
+extern "C" CameraMtxStateData sCameraMtxState;
 
 LightObj::LightObj() : mFlag(0) {}
 
 const GXRenderModeObj* G3DState::GetRenderModeObj() {
-    return &lbl_eu_8061F9D4;
+    return &sRenderModeObj;
 }
 
 const math::MTX33* G3DState::GetViewNrmMtxPtr(u32 idx) {
     math::MTX33* pNrmMtx =
-        *reinterpret_cast<math::MTX33**>(lbl_eu_8061A750 + 4);
+        *reinterpret_cast<math::MTX33**>(sViewMtxPtrs + 4);
 
     if (pNrmMtx != NULL) {
         return &pNrmMtx[idx];
     }
 
-    if (!lbl_eu_80665458[0]) {
-        lbl_eu_80665458[0] = 1;
+    if (!sViewNrmMtxDirty[0]) {
+        sViewNrmMtxDirty[0] = 1;
     }
 
     math::MTX34* pViewMtx =
-        *reinterpret_cast<math::MTX34**>(lbl_eu_8061A750);
+        *reinterpret_cast<math::MTX34**>(sViewMtxPtrs);
 
-    detail::CalcViewNrmMtx(reinterpret_cast<math::MTX33*>(lbl_eu_8061FAB8),
+    detail::CalcViewNrmMtx(reinterpret_cast<math::MTX33*>(sViewNrmMtx),
                            pViewMtx != NULL ? &pViewMtx[idx] : NULL);
 
-    return reinterpret_cast<const math::MTX33*>(lbl_eu_8061FAB8);
+    return reinterpret_cast<const math::MTX33*>(sViewNrmMtx);
 }
 
 void G3DState::IndMtxOpStd::Reset() {
@@ -312,29 +312,29 @@ void G3DState::IndMtxOpStd::operator()(IndTexMtxInfo* pInfo) {
 }
 
 void G3DState::SetRenderModeObj(const GXRenderModeObj& rObj) {
-    lbl_eu_8061F9D4 = rObj;
+    sRenderModeObj = rObj;
 }
 
 void G3DState::SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
                                      const math::MTX33* pViewNrmMtxArray,
                                      const math::MTX34* pViewEnvTexMtxArray) {
-    *reinterpret_cast<const math::MTX34**>(lbl_eu_8061A750) = pViewPosMtxArray;
-    *reinterpret_cast<const math::MTX33**>(lbl_eu_8061A750 + 4) = pViewNrmMtxArray;
-    *reinterpret_cast<const math::MTX34**>(lbl_eu_8061A750 + 8) = pViewEnvTexMtxArray;
+    *reinterpret_cast<const math::MTX34**>(sViewMtxPtrs) = pViewPosMtxArray;
+    *reinterpret_cast<const math::MTX33**>(sViewMtxPtrs + 4) = pViewNrmMtxArray;
+    *reinterpret_cast<const math::MTX34**>(sViewMtxPtrs + 8) = pViewEnvTexMtxArray;
 
     if (pViewPosMtxArray != NULL) {
         GXSetArray(GX_POS_MTX_ARRAY, pViewPosMtxArray, 0x30);
     }
 
     math::MTX33* pNrm =
-        *reinterpret_cast<math::MTX33**>(lbl_eu_8061A750 + 4);
+        *reinterpret_cast<math::MTX33**>(sViewMtxPtrs + 4);
 
     if (pNrm != NULL) {
         GXSetArray(GX_NRM_MTX_ARRAY, pNrm, 0x24);
     }
 
     math::MTX34* pEnv =
-        *reinterpret_cast<math::MTX34**>(lbl_eu_8061A750 + 8);
+        *reinterpret_cast<math::MTX34**>(sViewMtxPtrs + 8);
 
     if (pEnv != NULL) {
         GXSetArray(GX_TEX_MTX_ARRAY, pEnv, 0x30);
@@ -348,22 +348,22 @@ void G3DState::SetFog(Fog fog, int id) {
 
     if (id >= 0 && id < 0x20 && f.ptr() != NULL) {
         // Skip when the same fog was already uploaded.
-        if (lbl_eu_8061AF60.curFogID == id) {
-            if (memcmp(f.ptr(), &lbl_eu_8061AF60.fogArray[id],
+        if (sFogState.curFogID == id) {
+            if (memcmp(f.ptr(), &sFogState.fogArray[id],
                        sizeof(FogData)) == 0) {
                 return;
             }
 
-            lbl_eu_8061AF60.flags = 0;
+            sFogState.flags = 0;
         }
 
-        f.CopyTo(&lbl_eu_8061AF60.fogArray[id]);
+        f.CopyTo(&sFogState.fogArray[id]);
     }
 }
 
 void G3DState::LoadFog(int id) {
-    if ((lbl_eu_8061AF60.flags & 1) && (lbl_eu_8061AF60.flags & 2) &&
-        id == lbl_eu_8061AF60.curFogID) {
+    if ((sFogState.flags & 1) && (sFogState.flags & 2) &&
+        id == sFogState.curFogID) {
         return;
     }
 
@@ -373,25 +373,25 @@ void G3DState::LoadFog(int id) {
                  lbl_eu_80669BEC, lbl_eu_80669BEC);
     } else {
         // Chained temporary keeps the ctor result in r3 for SetGP.
-        Fog(&lbl_eu_8061AF60.fogArray[id]).SetGP();
+        Fog(&sFogState.fogArray[id]).SetGP();
     }
 
-    lbl_eu_8061AF60.curFogID = id;
-    lbl_eu_8061AF60.flags |= 3;
+    sFogState.curFogID = id;
+    sFogState.flags |= 3;
 }
 
 void G3DState::LoadResMatTexCoordGen(ResMatTexCoordGen rObj) {
     if (rObj.IsValid()) {
-        bool sync = lbl_eu_80665448;
-        lbl_eu_80665448 = 0;
-        rObj.CallDisplayList(lbl_eu_8061A520.genMode.nTexGens, sync);
+        bool sync = sG3DSyncFlag;
+        sG3DSyncFlag = 0;
+        rObj.CallDisplayList(sStateCache.genMode.nTexGens, sync);
 
-        u32 flag = lbl_eu_8061A520.genMode.flag;
+        u32 flag = sStateCache.genMode.flag;
         if ((flag & 0x4) && (flag & 3) != 3) {
-            fifo::GDSetGenMode2(lbl_eu_8061A520.genMode.nTexGens, lbl_eu_8061A520.genMode.nChans,
-                                lbl_eu_8061A520.genMode.nTevs, lbl_eu_8061A520.genMode.nInds,
-                                lbl_eu_8061A520.genMode.cullMode);
-            lbl_eu_8061A520.genMode.flag |= 3;
+            fifo::GDSetGenMode2(sStateCache.genMode.nTexGens, sStateCache.genMode.nChans,
+                                sStateCache.genMode.nTevs, sStateCache.genMode.nInds,
+                                sStateCache.genMode.cullMode);
+            sStateCache.genMode.flag |= 3;
         }
     }
 }
@@ -401,30 +401,30 @@ void G3DState::LoadResMatPix(ResMatPix rObj) {
         return;
     }
 
-    u32 flag = lbl_eu_8061A520.genMode.flag;
+    u32 flag = sStateCache.genMode.flag;
     if ((flag & 0x4) && (flag & 3) == 2) {
         // Re-emit the genMode BP word (pix/tev caches share the dirty
         // genMode state with LoadResMatTexCoordGen, but only the BP
         // register write is repeated here).
         volatile u8* fifo = (volatile u8*)0xCC008000;
         const u8* cull = (const u8*)&lbl_eu_80669BE8;
-        GXCullMode cullMode = lbl_eu_8061A520.genMode.cullMode;
+        GXCullMode cullMode = sStateCache.genMode.cullMode;
 
         *fifo = 0x61;
         *(volatile u32*)fifo = 0xFE07FC3F;
 
         *fifo = 0x61;
-        *(volatile u32*)fifo = lbl_eu_8061A520.genMode.nTexGens |
-                               (lbl_eu_8061A520.genMode.nChans << 4) |
-                               ((lbl_eu_8061A520.genMode.nTevs - 1) << 10) |
+        *(volatile u32*)fifo = sStateCache.genMode.nTexGens |
+                               (sStateCache.genMode.nChans << 4) |
+                               ((sStateCache.genMode.nTevs - 1) << 10) |
                                (cull[cullMode] << 14) |
-                               (lbl_eu_8061A520.genMode.nInds << 16);
+                               (sStateCache.genMode.nInds << 16);
 
-        lbl_eu_8061A520.genMode.flag |= 1;
+        sStateCache.genMode.flag |= 1;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
     rObj.CallDisplayList(sync);
 }
 
@@ -433,27 +433,27 @@ void G3DState::LoadResMatTevColor(ResMatTevColor rObj) {
         return;
     }
 
-    u32 flag = lbl_eu_8061A520.genMode.flag;
+    u32 flag = sStateCache.genMode.flag;
     if ((flag & 0x4) && (flag & 3) == 2) {
         volatile u8* fifo = (volatile u8*)0xCC008000;
         const u8* cull = (const u8*)&lbl_eu_80669BE8;
-        GXCullMode cullMode = lbl_eu_8061A520.genMode.cullMode;
+        GXCullMode cullMode = sStateCache.genMode.cullMode;
 
         *fifo = 0x61;
         *(volatile u32*)fifo = 0xFE07FC3F;
 
         *fifo = 0x61;
-        *(volatile u32*)fifo = lbl_eu_8061A520.genMode.nTexGens |
-                               (lbl_eu_8061A520.genMode.nChans << 4) |
-                               ((lbl_eu_8061A520.genMode.nTevs - 1) << 10) |
+        *(volatile u32*)fifo = sStateCache.genMode.nTexGens |
+                               (sStateCache.genMode.nChans << 4) |
+                               ((sStateCache.genMode.nTevs - 1) << 10) |
                                (cull[cullMode] << 14) |
-                               (lbl_eu_8061A520.genMode.nInds << 16);
+                               (sStateCache.genMode.nInds << 16);
 
-        lbl_eu_8061A520.genMode.flag |= 1;
+        sStateCache.genMode.flag |= 1;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
     rObj.CallDisplayList(sync);
 }
 
@@ -462,35 +462,35 @@ void G3DState::LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind) {
         return;
     }
 
-    u32 flag = lbl_eu_8061A520.genMode.flag;
+    u32 flag = sStateCache.genMode.flag;
     if ((flag & 0x4) && (flag & 3) == 2) {
         // Re-emit the genMode BP word (ind-mtx uploads share the dirty
         // genMode state with LoadResMatTexCoordGen; only the BP register
         // write is repeated here).
         volatile u8* fifo = (volatile u8*)0xCC008000;
         const u8* cull = (const u8*)&lbl_eu_80669BE8;
-        GXCullMode cullMode = lbl_eu_8061A520.genMode.cullMode;
+        GXCullMode cullMode = sStateCache.genMode.cullMode;
 
         *fifo = 0x61;
         *(volatile u32*)fifo = 0xFE07FC3F;
 
         *fifo = 0x61;
-        *(volatile u32*)fifo = lbl_eu_8061A520.genMode.nTexGens |
-                               (lbl_eu_8061A520.genMode.nChans << 4) |
-                               ((lbl_eu_8061A520.genMode.nTevs - 1) << 10) |
+        *(volatile u32*)fifo = sStateCache.genMode.nTexGens |
+                               (sStateCache.genMode.nChans << 4) |
+                               ((sStateCache.genMode.nTevs - 1) << 10) |
                                (cull[cullMode] << 14) |
-                               (lbl_eu_8061A520.genMode.nInds << 16);
+                               (sStateCache.genMode.nInds << 16);
 
-        lbl_eu_8061A520.genMode.flag |= 1;
+        sStateCache.genMode.flag |= 1;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
-    ind.CallDisplayList(lbl_eu_8061A520.genMode.nInds, sync);
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
+    ind.CallDisplayList(sStateCache.genMode.nInds, sync);
 }
 
 void G3DState::Invalidate(u32 flag) {
-    G3DStateCache* pState = &lbl_eu_8061A520;
+    G3DStateCache* pState = &sStateCache;
 
     if (flag & INVALIDATE_TEX) {
         pState->texCache.Invalidate();
@@ -503,7 +503,7 @@ void G3DState::Invalidate(u32 flag) {
 
     if (flag & INVALIDATE_TEV) {
         pState->texCoordScale.flag = 0;
-        lbl_eu_80665454 = 0;
+        sCachedTevObj = 0;
     }
 
     if (flag & INVALIDATE_GENMODE) {
@@ -515,16 +515,16 @@ void G3DState::Invalidate(u32 flag) {
     }
 
     if (flag & INVALIDATE_CURRMTX) {
-        lbl_eu_8066544C = 0;
+        sCurrentMtxResetFlag = 0;
     }
 
     if (flag & INVALIDATE_TEXMTX) {
         pState->curMtx.Invalidate();
-        lbl_eu_80665450 = 0;
+        sTexMtxIdCache = 0;
     }
 
     if (flag & INVALIDATE_MISC) {
-        lbl_eu_80665460.flag &= ~1;
+        sZCompLocCache.flag &= ~1;
     }
 
     if (flag & INVALIDATE_FOG) {
@@ -539,7 +539,7 @@ void G3DState::Invalidate(u32 flag) {
         pState->viewMtxPtrs.Invalidate();
     }
 
-    lbl_eu_80665448 = 1;
+    sG3DSyncFlag = 1;
 }
 
 // The resource pointer is cached once; each getter re-tests it exactly like
@@ -550,36 +550,36 @@ void G3DState::LoadResGenMode(ResGenMode mode) {
         return;
     }
 
-    if (lbl_eu_8061A520.genMode.nTexGens !=
+    if (sStateCache.genMode.nTexGens !=
         (u8)(pRes != NULL ? pRes->nTexGens : 0)) {
-        lbl_eu_8061A520.genMode.nTexGens = (u8)(pRes != NULL ? pRes->nTexGens : 0);
-        lbl_eu_8061A520.genMode.flag &= ~3;
+        sStateCache.genMode.nTexGens = (u8)(pRes != NULL ? pRes->nTexGens : 0);
+        sStateCache.genMode.flag &= ~3;
     }
 
-    if (lbl_eu_8061A520.genMode.nChans != (u8)(pRes != NULL ? pRes->nChans : 0)) {
-        lbl_eu_8061A520.genMode.nChans = (u8)(pRes != NULL ? pRes->nChans : 0);
-        lbl_eu_8061A520.genMode.flag &= ~3;
+    if (sStateCache.genMode.nChans != (u8)(pRes != NULL ? pRes->nChans : 0)) {
+        sStateCache.genMode.nChans = (u8)(pRes != NULL ? pRes->nChans : 0);
+        sStateCache.genMode.flag &= ~3;
     }
 
-    if (lbl_eu_8061A520.genMode.nTevs != (u8)(pRes != NULL ? pRes->nTevs : 0)) {
-        lbl_eu_8061A520.genMode.nTevs = (u8)(pRes != NULL ? pRes->nTevs : 0);
-        lbl_eu_8061A520.genMode.flag &= ~1;
+    if (sStateCache.genMode.nTevs != (u8)(pRes != NULL ? pRes->nTevs : 0)) {
+        sStateCache.genMode.nTevs = (u8)(pRes != NULL ? pRes->nTevs : 0);
+        sStateCache.genMode.flag &= ~1;
     }
 
-    if (lbl_eu_8061A520.genMode.nInds != (u8)(pRes != NULL ? pRes->nInds : 0)) {
-        lbl_eu_8061A520.genMode.nInds = (u8)(pRes != NULL ? pRes->nInds : 0);
-        lbl_eu_8061A520.genMode.flag &= ~1;
+    if (sStateCache.genMode.nInds != (u8)(pRes != NULL ? pRes->nInds : 0)) {
+        sStateCache.genMode.nInds = (u8)(pRes != NULL ? pRes->nInds : 0);
+        sStateCache.genMode.flag &= ~1;
     }
 
     // Evaluated accessor-first to match MWCC's scheduling of the word compare.
     GXCullMode cull =
         pRes != NULL ? pRes->cullMode : GX_CULL_ALL;
-    if (lbl_eu_8061A520.genMode.cullMode != cull) {
-        lbl_eu_8061A520.genMode.cullMode = pRes != NULL ? pRes->cullMode : GX_CULL_ALL;
-        lbl_eu_8061A520.genMode.flag &= ~1;
+    if (sStateCache.genMode.cullMode != cull) {
+        sStateCache.genMode.cullMode = pRes != NULL ? pRes->cullMode : GX_CULL_ALL;
+        sStateCache.genMode.flag &= ~1;
     }
 
-    G3DStateCache* pCache = &lbl_eu_8061A520;
+    G3DStateCache* pCache = &sStateCache;
     if (!(pCache->genMode.flag & 4)) {
         pCache->genMode.flag = (pCache->genMode.flag & ~3) | 4;
     }
@@ -588,7 +588,7 @@ void G3DState::LoadResGenMode(ResGenMode mode) {
 void G3DState::LoadResShpPrePrimitive(ResShp shp) {
     // Declared before the validity test so MWCC schedules the cache base
     // address setup ahead of the null-check branch, like retail.
-    G3DStateCache* pState = &lbl_eu_8061A520;
+    G3DStateCache* pState = &sStateCache;
 
     if (shp.ptr() == NULL) {
         return;
@@ -649,8 +649,8 @@ void G3DState::LoadResShpPrePrimitive(ResShp shp) {
         uploadDesc = false;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
     shp.CallPrePrimitiveDisplayList(sync, uploadDesc);
 }
 
@@ -658,8 +658,8 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
     // Explicit bool-normalize reproduces MWCC's neg/or/srwi test.
     const ResTlutObjData* pData = tlutObj.ptr();
     if ((((u32) - (s32)pData | (u32)pData) >> 31) != 0) {
-        TexCacheState* pTexCache = &lbl_eu_8061A5A0;
-        TlutCacheState* pTlutCache = &lbl_eu_8061A6C0;
+        TexCacheState* pTexCache = &sTexCache;
+        TlutCacheState* pTlutCache = &sTlutCache;
 
         const ResTlutObj obj(const_cast<void*>((const void*)pData));
 
@@ -697,7 +697,7 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
             pTexCache->flag &= ~(1 << i);
         }
 
-        lbl_eu_80665448 = true;
+        sG3DSyncFlag = true;
     }
 }
 
@@ -725,32 +725,32 @@ void ProjectionMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
         if (camRef >= 0 && camRef < 0x20) {
             math::MTX34* pCamMtx;
             if (camRef < 0x20 && camRef >= 0) {
-                pCamMtx = &lbl_eu_8061DFA0.mViewMtxArray[camRef];
+                pCamMtx = &sCameraMtxState.mViewMtxArray[camRef];
             } else {
                 pCamMtx = NULL;
             }
 
-            if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+            if (!(sCameraMtxState.mFlag & 1)) {
                 // Lazily compute the inverse of the current camera's view
                 // matrix once per camera switch.
                 PSMTXInverse(
-                    lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
-                    lbl_eu_8061DFA0.mViewMtx);
-                lbl_eu_8061DFA0.mFlag |= 1;
+                    sCameraMtxState.mViewMtxArray[sCameraMtxState.mCurCameraID],
+                    sCameraMtxState.mViewMtx);
+                sCameraMtxState.mFlag |= 1;
             }
 
-            PSMTXConcat(*pCamMtx, lbl_eu_8061DFA0.mViewMtx, *pMtx);
+            PSMTXConcat(*pCamMtx, sCameraMtxState.mViewMtx, *pMtx);
 
             math::MTX34* pProjTexMtx;
             if (camRef < 0x20 && camRef >= 0) {
-                pProjTexMtx = &lbl_eu_8061DFA0.mNrmMtxArray[camRef];
+                pProjTexMtx = &sCameraMtxState.mNrmMtxArray[camRef];
             } else {
                 pProjTexMtx = NULL;
             }
             PSMTXConcat(*pProjTexMtx, *pMtx, *pMtx);
         } else {
             PSMTXCopy(
-                lbl_eu_8061DFA0.mNrmMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+                sCameraMtxState.mNrmMtxArray[sCameraMtxState.mCurCameraID],
                 *pMtx);
         }
     }
@@ -764,16 +764,15 @@ void ProjectionMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 // G3DState::IndTexMtxInfo::FifoSend: uploads each cached indirect matrix
 // whose dirty bit (flag bits 0..2) is set, using the retail matrix IDs
 // (0, 3, 6 = ITM stages with identity scale).
-void FifoSend__Q44nw4r3g3d8G3DState13IndTexMtxInfoCFv(
-    const nw4r::g3d::G3DState::IndTexMtxInfo* pThis) {
-    if (pThis->flag & 1) {
-        nw4r::g3d::fifo::GDSetIndTexMtx(0, pThis->offset_mtx[0]);
+void nw4r::g3d::G3DState::IndTexMtxInfo::FifoSend() const {
+    if (flag & 1) {
+        nw4r::g3d::fifo::GDSetIndTexMtx(0, offset_mtx[0]);
     }
-    if (pThis->flag & 2) {
-        nw4r::g3d::fifo::GDSetIndTexMtx(3, pThis->offset_mtx[1]);
+    if (flag & 2) {
+        nw4r::g3d::fifo::GDSetIndTexMtx(3, offset_mtx[1]);
     }
-    if (pThis->flag & 4) {
-        nw4r::g3d::fifo::GDSetIndTexMtx(6, pThis->offset_mtx[2]);
+    if (flag & 4) {
+        nw4r::g3d::fifo::GDSetIndTexMtx(6, offset_mtx[2]);
     }
 }
 
@@ -792,7 +791,7 @@ void LoadResTexObj(const ResTexObj texObj) {
     if ((((u32) - (s32)pData | (u32)pData) >> 31) != 0) {
         const ResTexObj obj(const_cast<void*>((const void*)pData));
 
-        TexCacheState* pTexCache = &lbl_eu_8061A5A0;
+        TexCacheState* pTexCache = &sTexCache;
 
         for (u32 i = 0; i < 8; i++) {
             if (!obj.IsValidTexObj(static_cast<GXTexMapID>(i))) {
@@ -847,13 +846,13 @@ void LoadResTexObj(const ResTexObj texObj) {
 
             // Remember the uploaded texture dimensions in the scale cache.
             u16 height = GXGetTexObjHeight(pObj);
-            lbl_eu_8061A52C.src[i].scaleS = GXGetTexObjWidth(pObj);
-            lbl_eu_8061A52C.src[i].scaleT = height;
+            sTexCoordScaleCache.src[i].scaleS = GXGetTexObjWidth(pObj);
+            sTexCoordScaleCache.src[i].scaleT = height;
 
-            lbl_eu_8061A52C.flag = (lbl_eu_8061A52C.flag | 2) & ~1u;
+            sTexCoordScaleCache.flag = (sTexCoordScaleCache.flag | 2) & ~1u;
         }
 
-        lbl_eu_80665448 = true;
+        sG3DSyncFlag = true;
     }
 }
 
@@ -875,29 +874,29 @@ void G3DState::LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind,
         return;
     }
 
-    u32 flag = lbl_eu_8061A520.genMode.flag;
+    u32 flag = sStateCache.genMode.flag;
     if ((flag & 0x4) && (flag & 3) == 2) {
         // Re-emit the genMode BP word (shared dirty genMode state).
         volatile u8* fifo = (volatile u8*)0xCC008000;
         const u8* cull = (const u8*)&lbl_eu_80669BE8;
-        GXCullMode cullMode = lbl_eu_8061A520.genMode.cullMode;
+        GXCullMode cullMode = sStateCache.genMode.cullMode;
 
         *fifo = 0x61;
         *(volatile u32*)fifo = 0xFE07FC3F;
 
         *fifo = 0x61;
-        *(volatile u32*)fifo = lbl_eu_8061A520.genMode.nTexGens |
-                               (lbl_eu_8061A520.genMode.nChans << 4) |
-                               ((lbl_eu_8061A520.genMode.nTevs - 1) << 10) |
+        *(volatile u32*)fifo = sStateCache.genMode.nTexGens |
+                               (sStateCache.genMode.nChans << 4) |
+                               ((sStateCache.genMode.nTevs - 1) << 10) |
                                (cull[cullMode] << 14) |
-                               (lbl_eu_8061A520.genMode.nInds << 16);
+                               (sStateCache.genMode.nInds << 16);
 
-        lbl_eu_8061A520.genMode.flag |= 1;
+        sStateCache.genMode.flag |= 1;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
-    ind.CallDisplayList(lbl_eu_8061A520.genMode.nInds, sync);
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
+    ind.CallDisplayList(sStateCache.genMode.nInds, sync);
 
     IndTexMtxInfo info;
     if (ind.GXGetIndTexMtx(static_cast<GXIndTexMtxID>(1),
@@ -1017,7 +1016,7 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
     // Second channel: only uploaded when the genMode cache says two channels
     // are active. Its registers are XF 0x100D/0x100B (mat/amb) and 0x100F/0x1011
     // (ctrl); on the one-channel path the specular ctrl registers are cleared.
-    if (lbl_eu_8061A520.genMode.nChans == 2) {
+    if (sStateCache.genMode.nChans == 2) {
         const ResChanData* pChan1Data = chan.ptr();
         u32 flag1 = pChan1Data->chan[1].flag;
 
@@ -1070,12 +1069,12 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
     }
 
     // Re-emit the genMode BP word if a pix/tev cache dirtied it.
-    u32 genFlag = lbl_eu_8061A520.genMode.flag;
+    u32 genFlag = sStateCache.genMode.flag;
     if ((genFlag & 0x4) && (genFlag & 3) != 3) {
-        fifo::GDSetGenMode2(lbl_eu_8061A520.genMode.nTexGens, lbl_eu_8061A520.genMode.nChans,
-                            lbl_eu_8061A520.genMode.nTevs, lbl_eu_8061A520.genMode.nInds,
-                            lbl_eu_8061A520.genMode.cullMode);
-        lbl_eu_8061A520.genMode.flag |= 3;
+        fifo::GDSetGenMode2(sStateCache.genMode.nTexGens, sStateCache.genMode.nChans,
+                            sStateCache.genMode.nTevs, sStateCache.genMode.nInds,
+                            sStateCache.genMode.cullMode);
+        sStateCache.genMode.flag |= 3;
     }
 }
 
@@ -1089,10 +1088,10 @@ void G3DState::LoadResTev(ResTev tev) {
     // uploaded when the resource pointer is unchanged.
     // Cache-on-left flips the compare operand order to match retail.
     bool cacheIsSame;
-    if (reinterpret_cast<u32>(tev.ptr()) == lbl_eu_80665454) {
+    if (reinterpret_cast<u32>(tev.ptr()) == sCachedTevObj) {
         cacheIsSame = true;
     } else {
-        lbl_eu_80665454 = reinterpret_cast<u32>(tev.ptr());
+        sCachedTevObj = reinterpret_cast<u32>(tev.ptr());
         cacheIsSame = false;
     }
 
@@ -1101,30 +1100,30 @@ void G3DState::LoadResTev(ResTev tev) {
     }
 
     // Re-emit the genMode BP word when the pix/tev caches dirtied it.
-    u32 flag = lbl_eu_8061A520.genMode.flag;
+    u32 flag = sStateCache.genMode.flag;
     if ((flag & 0x4) && (flag & 3) == 2) {
         volatile u8* fifo = (volatile u8*)0xCC008000;
         const u8* cull = (const u8*)&lbl_eu_80669BE8;
-        GXCullMode cullMode = lbl_eu_8061A520.genMode.cullMode;
+        GXCullMode cullMode = sStateCache.genMode.cullMode;
 
         *fifo = 0x61;
         *(volatile u32*)fifo = 0xFE07FC3F;
 
         *fifo = 0x61;
-        *(volatile u32*)fifo = lbl_eu_8061A520.genMode.nTexGens |
-                               (lbl_eu_8061A520.genMode.nChans << 4) |
-                               ((lbl_eu_8061A520.genMode.nTevs - 1) << 10) |
+        *(volatile u32*)fifo = sStateCache.genMode.nTexGens |
+                               (sStateCache.genMode.nChans << 4) |
+                               ((sStateCache.genMode.nTevs - 1) << 10) |
                                (cull[cullMode] << 14) |
-                               (lbl_eu_8061A520.genMode.nInds << 16);
+                               (sStateCache.genMode.nInds << 16);
 
-        lbl_eu_8061A520.genMode.flag |= 1;
+        sStateCache.genMode.flag |= 1;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
     tev.CallDisplayList(sync);
 
-    TexCoordScaleCache* pScale = &lbl_eu_8061A52C;
+    TexCoordScaleCache* pScale = &sTexCoordScaleCache;
 
     // Mirror the resource's texcoord->texmap assignments into the scale
     // cache; a change forces the per-texcoord scales to be re-emitted.
@@ -1144,7 +1143,7 @@ void G3DState::LoadResTev(ResTev tev) {
     // Re-emit texcoord scales when the texture cache was invalidated since
     // the last upload and the cached scales have not been re-emitted yet.
     u32 flag2 = pScale->flag;
-    u8 nTexGens = lbl_eu_8061A520.genMode.nTexGens;
+    u8 nTexGens = sStateCache.genMode.nTexGens;
 
     if ((flag2 & 2) && (flag2 & 1) == 0 && nTexGens != 0) {
         // The dst-cache updates are assignment expressions inside the call
@@ -1179,8 +1178,8 @@ struct ScnDependentTexMtxEntry {
     nw4r::g3d::G3DState::ScnDependentTexMtxFuncPtr func; // at 0x0
     unsigned long type;                                  // at 0x4
 };
-extern ScnDependentTexMtxEntry lbl_eu_8061A760[nw4r::g3d::G3DState::NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE];
-extern unsigned long lbl_eu_8061A730[8];
+extern ScnDependentTexMtxEntry sScnDependentTexMtxFuncTable[nw4r::g3d::G3DState::NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE];
+extern unsigned long sTexMtxFuncTypeCache[8];
 
 namespace nw4r {
 namespace g3d {
@@ -1191,7 +1190,7 @@ namespace G3DState {
 // mapping function selected by effect[i].map_mode, apply the resource
 // effect matrix, fold in the animated TexSrt via CalcTexMtx, then upload
 // either the result or an identity matrix (tracking validity in the
-// lbl_eu_80665450 dirty-flag word).
+// sTexMtxIdCache dirty-flag word).
 void LoadResTexSrt(const ResTexSrt srt) {
     const ResTexSrtData* pData = srt.ptr();
     u32 texMtxId = GX_PTTEXMTX0;
@@ -1212,14 +1211,14 @@ void LoadResTexSrt(const ResTexSrt srt) {
             }
 
             if (pEffect->map_mode != 0) {
-                (*lbl_eu_8061A760[funcIdx].func)(
+                (*sScnDependentTexMtxFuncTable[funcIdx].func)(
                     &mtx,
                     pEffect->ref_camera >= NUM_CAMERA ? -1 : pEffect->ref_camera,
                     pEffect->ref_light >= NUM_LIGHT ? -1 : pEffect->ref_light);
-                lbl_eu_8061A730[i] = lbl_eu_8061A760[funcIdx].type;
+                sTexMtxFuncTypeCache[i] = sScnDependentTexMtxFuncTable[funcIdx].type;
                 bSet = false;
             } else {
-                lbl_eu_8061A730[i] = 0;
+                sTexMtxFuncTypeCache[i] = 0;
             }
 
             // Only rebuild when the resource requests a full transform
@@ -1275,18 +1274,18 @@ void LoadResTexSrt(const ResTexSrt srt) {
             if (bSet) {
                 // Matrix unchanged: only upload a fresh identity once.
                 u32 bit = 1 << i;
-                if (!(lbl_eu_80665450 & bit)) {
-                    lbl_eu_80665450 |= bit;
+                if (!(sTexMtxIdCache & bit)) {
+                    sTexMtxIdCache |= bit;
                     math::MTX34 idMtx;
                     PSMTXIdentity(idMtx);
                     GXLoadTexMtxImm(idMtx, texMtxId, GX_MTX_3x4);
                 }
             } else {
-                lbl_eu_80665450 &= ~(1 << i);
+                sTexMtxIdCache &= ~(1 << i);
                 GXLoadTexMtxImm(mtx, texMtxId, GX_MTX_3x4);
             }
         } else {
-            lbl_eu_8061A730[i] = 0;
+            sTexMtxFuncTypeCache[i] = 0;
         }
 
         texMtxId += 3;
@@ -1302,7 +1301,7 @@ namespace g3d {
 
 void G3DState::LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos,
                                    const math::MTX34* pViewNrm) {
-    G3DStateCache* pState = &lbl_eu_8061A520;
+    G3DStateCache* pState = &sStateCache;
     const ResShpData* pData = shp.ptr();
 
     if (pData == NULL) {
@@ -1375,17 +1374,17 @@ void G3DState::LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos
                 if (pNrmArray != NULL) {
                     fifo::GDLoadTexMtxImm3x3(pNrmArray[curMtxIdx], mtxIds[i]);
                 } else {
-                    if (!lbl_eu_80665458[0]) {
-                        lbl_eu_80665458[0] = 1;
+                    if (!sViewNrmMtxDirty[0]) {
+                        sViewNrmMtxDirty[0] = 1;
                     }
                     detail::CalcViewNrmMtx(
-                        reinterpret_cast<math::MTX33*>(lbl_eu_8061FAB8),
+                        reinterpret_cast<math::MTX33*>(sViewNrmMtx),
                         pState->viewMtxPtrs.pos != NULL
                             ? &pState->viewMtxPtrs.pos[curMtxIdx]
                             : NULL);
                     fifo::GDLoadTexMtxImm3x3(
                         *reinterpret_cast<const math::MTX33*>(
-                            lbl_eu_8061FAB8),
+                            sViewNrmMtx),
                         mtxIds[i]);
                 }
                 bResetCurrentMtx = false;
@@ -1402,17 +1401,17 @@ void G3DState::LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos
         if (bResetCurrentMtx) {
             // No texcoord matrix was touched: only reset the XF current
             // matrices once after an invalidation.
-            if (!lbl_eu_8066544C) {
+            if (!sCurrentMtxResetFlag) {
                 fifo::GDResetCurrentMtx();
-                lbl_eu_8066544C = 1;
+                sCurrentMtxResetFlag = 1;
             }
         } else {
             fifo::GDSetCurrentMtx(mtxIds);
-            lbl_eu_8066544C = 0;
+            sCurrentMtxResetFlag = 0;
         }
-    } else if (!lbl_eu_8066544C) {
+    } else if (!sCurrentMtxResetFlag) {
         fifo::GDResetCurrentMtx();
-        lbl_eu_8066544C = 1;
+        sCurrentMtxResetFlag = 1;
     }
 
     // Re-emit the genMode BP word when the pix/tev caches dirtied it.
@@ -1423,12 +1422,12 @@ void G3DState::LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos
         pState->genMode.flag |= 3;
     }
 
-    bool sync = lbl_eu_80665448;
-    lbl_eu_80665448 = 0;
+    bool sync = sG3DSyncFlag;
+    sG3DSyncFlag = 0;
     shp.CallPrimitiveDisplayList(sync);
 
     if (envelope) {
-        lbl_eu_8066544C = 0;
+        sCurrentMtxResetFlag = 0;
     }
 }
 
@@ -1437,7 +1436,7 @@ void G3DState::LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos
 
 
 // Light object array (retail global at 8061B574).
-extern char lbl_eu_8061B574[];
+extern char sLightState[];
 
 namespace nw4r {
 namespace g3d {
@@ -1445,7 +1444,7 @@ namespace G3DState {
 
 const LightObj* GetLightObj(int id) {
     if (id >= 0 && id < NUM_LIGHT) {
-        return reinterpret_cast<const LightObj*>(lbl_eu_8061B574 +
+        return reinterpret_cast<const LightObj*>(sLightState +
                                                  id * sizeof(LightObj) + 0x2C);
     }
 
@@ -1461,7 +1460,7 @@ void G3DState::SetAmbLightObj(const AmbLightObj& rObj, int idx) {
     if (idx >= 0x80) {
         return;
     }
-    AmbLightObj* dst = reinterpret_cast<AmbLightObj*>(lbl_eu_8061B574 + idx * 4 + 0x222c);
+    AmbLightObj* dst = reinterpret_cast<AmbLightObj*>(sLightState + idx * 4 + 0x222c);
     *dst = rObj;
 }
 
@@ -1470,7 +1469,7 @@ void G3DState::SetAmbLightObj(const AmbLightObj& rObj, int idx) {
 
 
 // Keeps the GX z-comploc in sync with the material resource through the
-// one-entry cache at lbl_eu_80665460.
+// one-entry cache at sZCompLocCache.
 nw4r::g3d::G3DState::IndMtxOp* nw4r::g3d::G3DState::GetIndMtxOp() {
     extern u32 lbl_eu_8066346C;
     return reinterpret_cast<IndMtxOp*>(lbl_eu_8066346C);
@@ -1479,22 +1478,22 @@ nw4r::g3d::G3DState::IndMtxOp* nw4r::g3d::G3DState::GetIndMtxOp() {
 void nw4r::g3d::G3DState::LoadResMatMisc(const nw4r::g3d::ResMatMisc misc) {
     if (misc.ptr() != NULL) {
         GXBool compLoc = misc.GXGetZCompLoc();
-        if ((lbl_eu_80665460.flag & 1) == 0 ||
-            lbl_eu_80665460.compLoc != compLoc) {
-            lbl_eu_80665460.compLoc = compLoc;
-            lbl_eu_80665460.flag |= 1;
+        if ((sZCompLocCache.flag & 1) == 0 ||
+            sZCompLocCache.compLoc != compLoc) {
+            sZCompLocCache.compLoc = compLoc;
+            sZCompLocCache.flag |= 1;
             GXSetZCompLoc(compLoc);
-            lbl_eu_80665448 = true;
+            sG3DSyncFlag = true;
         }
     }
 }
 
-extern const unsigned char lbl_eu_8061DFA0[];
+extern const unsigned char sCameraMtxState[];
 
-const void* GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {
-    const unsigned char* base = lbl_eu_8061DFA0;
+const nw4r::math::MTX34* nw4r::g3d::G3DState::GetCameraMtxPtr() {
+    const unsigned char* base = (const unsigned char*)&sCameraMtxState;
     unsigned short index = *(const unsigned short*)(base + 2);
-    return base + index * 0x30 + 0x34;
+    return (const nw4r::math::MTX34*)(base + index * 0x30 + 0x34);
 }
 
 
@@ -1536,7 +1535,7 @@ namespace nw4r {
 
                 // Retail camera-state blob (8061DFA0). C linkage keeps the
                 // symbol name unmangled inside this namespace.
-                extern "C" CameraMtxState lbl_eu_8061DFA0;
+                extern "C" CameraMtxState sCameraMtxState;
 
                 // File-scope instance so MWCC emits the ctor body (the retail
                 // __sinit calls it on the camera-state blob at 8061DFA0).
@@ -1571,12 +1570,12 @@ namespace nw4r {
             } // anonymous namespace
 
             void SetLightSetting(const LightSetting& rSetting) {
-                reinterpret_cast<LightState*>(lbl_eu_8061B574)->SetLightSetting(
+                reinterpret_cast<LightState*>(sLightState)->SetLightSetting(
                     rSetting);
             }
 
             void SetLightObj(const LightObj& rObj, int idx) {
-                reinterpret_cast<LightState*>(lbl_eu_8061B574)->SetLightObj(
+                reinterpret_cast<LightState*>(sLightState)->SetLightObj(
                     rObj, idx);
             }
 
@@ -1589,7 +1588,7 @@ namespace nw4r {
                     mSetting.Import(rSetting);
 
                     mSetting.ApplyViewMtx(
-                        lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+                        sCameraMtxState.mViewMtxArray[sCameraMtxState.mCurCameraID],
                         rSetting.GetNumLightObj());
 
                     mCurLightSet = -1;
@@ -1624,7 +1623,7 @@ namespace nw4r {
 
                     LightObj tmp(rObj);
 
-                    const unsigned char* pCamBase = ::lbl_eu_8061DFA0;
+                    const unsigned char* pCamBase = ::sCameraMtxState;
                     u16 camID = *reinterpret_cast<const u16*>(pCamBase + 2);
                     const math::MTX34* pViewMtx =
                         reinterpret_cast<const math::MTX34*>(
@@ -1850,14 +1849,14 @@ namespace nw4r {
 
             void SetCameraProjMtx(const Camera& rCam, int id, bool view) {
                 if (id < NUM_CAMERA && id >= 0) {
-                    rCam.GetCameraMtx(&lbl_eu_8061DFA0.mViewMtxArray[id]);
-                    rCam.GetProjectionMtx(&lbl_eu_8061DFA0.mProjMtxArray[id]);
-                    rCam.GetProjectionTexMtx(&lbl_eu_8061DFA0.mNrmMtxArray[id]);
-                    rCam.GetEnvironmentTexMtx(&lbl_eu_8061DFA0.mEnvMtxArray[id]);
+                    rCam.GetCameraMtx(&sCameraMtxState.mViewMtxArray[id]);
+                    rCam.GetProjectionMtx(&sCameraMtxState.mProjMtxArray[id]);
+                    rCam.GetProjectionTexMtx(&sCameraMtxState.mNrmMtxArray[id]);
+                    rCam.GetEnvironmentTexMtx(&sCameraMtxState.mEnvMtxArray[id]);
 
                     if (view) {
-                        lbl_eu_8061DFA0.mCurCameraID = static_cast<u16>(id);
-                        lbl_eu_8061DFA0.mFlag &= ~1;
+                        sCameraMtxState.mCurCameraID = static_cast<u16>(id);
+                        sCameraMtxState.mFlag &= ~1;
                     }
                 }
             }
@@ -1884,13 +1883,13 @@ static LightState g_LightStateInstance;
 } // namespace g3d
 } // namespace nw4r
 
-// Thin forwarder into the persistent LightState blob at lbl_eu_8061B574.
+// Thin forwarder into the persistent LightState blob at sLightState.
 void nw4r::g3d::G3DState::LoadLightSet(int id, u32* pDiffColorMask,
                                        u32* pDiffAlphaMask,
                                        u32* pSpecColorMask,
                                        u32* pSpecAlphaMask,
                                        nw4r::g3d::AmbLightObj* pAmbLightObj) {
-    reinterpret_cast<nw4r::g3d::G3DState::LoadLightSetState*>(lbl_eu_8061B574)
+    reinterpret_cast<nw4r::g3d::G3DState::LoadLightSetState*>(sLightState)
         ->LoadLightSet(id, pDiffColorMask, pDiffAlphaMask, pSpecColorMask,
                        pSpecAlphaMask, pAmbLightObj);
 }
@@ -1910,22 +1909,22 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             if (camRef >= 0 && camRef < 0x20) {
                 // Lazily refresh the cached inverse of the current view
                 // matrix.
-                if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+                if (!(sCameraMtxState.mFlag & 1)) {
                     PSMTXInverse(
-                        lbl_eu_8061DFA0
-                            .mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
-                        lbl_eu_8061DFA0.mViewMtx);
-                    lbl_eu_8061DFA0.mFlag |= 1;
+                        sCameraMtxState
+                            .mViewMtxArray[sCameraMtxState.mCurCameraID],
+                        sCameraMtxState.mViewMtx);
+                    sCameraMtxState.mFlag |= 1;
                 }
 
-                PSMTXConcat(lbl_eu_8061DFA0.mViewMtxArray[camRef],
-                            lbl_eu_8061DFA0.mViewMtx, *pMtx);
+                PSMTXConcat(sCameraMtxState.mViewMtxArray[camRef],
+                            sCameraMtxState.mViewMtx, *pMtx);
 
                 f32 zero = lbl_eu_80669BEC;
                 pMtx->m[0][3] = pMtx->m[1][3] = pMtx->m[2][3] = zero;
 
                 PSMTXConcat(
-                    lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID],
+                    sCameraMtxState.mEnvMtxArray[sCameraMtxState.mCurCameraID],
                     *pMtx, *pMtx);
                 return;
             }
@@ -1937,11 +1936,11 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             pLight->GetLightDir(&dir);
 
             // Lazily refresh the cached inverse of the current view matrix.
-            if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+            if (!(sCameraMtxState.mFlag & 1)) {
                 PSMTXInverse(
-                    lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
-                    lbl_eu_8061DFA0.mViewMtx);
-                lbl_eu_8061DFA0.mFlag |= 1;
+                    sCameraMtxState.mViewMtxArray[sCameraMtxState.mCurCameraID],
+                    sCameraMtxState.mViewMtx);
+                sCameraMtxState.mFlag |= 1;
             }
 
                 // Diffuse lights drive the matrix from their position;
@@ -1954,7 +1953,7 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                                 dir.z == lbl_eu_80669BEC &&
                                 dir.y == lbl_eu_80669BEC)) {
                     pLight->GetLightPos(&dir);
-                    VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx,
+                    VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx,
                                         &dir);
                     dir.x = -dir.x;
                     dir.y = -dir.y;
@@ -1965,13 +1964,13 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                         dir.y != lbl_eu_80669BEC) {
                         // Retail quirk: the already-transformed direction is
                         // transformed a second time on this path.
-                        VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx,
+                        VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx,
                                             &dir);
                     } else {
                         dir.y = lbl_eu_80669BF0;
                     }
                 } else {
-                    VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx,
+                    VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx,
                                         &dir);
                 }
 
@@ -2007,7 +2006,7 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             rMtx.m[2][1] = -dir.y;
             rMtx.m[2][2] = -dir.z;
 
-            PSMTXConcat(*pMtx, lbl_eu_8061DFA0.mViewMtx, *pMtx);
+            PSMTXConcat(*pMtx, sCameraMtxState.mViewMtx, *pMtx);
 
             f32 zero = lbl_eu_80669BEC;
             rMtx.m[0][3] = rMtx.m[1][3] = rMtx.m[2][3] = zero;
@@ -2020,7 +2019,7 @@ void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
     }
 
     PSMTXCopy(
-        lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx);
+        sCameraMtxState.mEnvMtxArray[sCameraMtxState.mCurCameraID], *pMtx);
 }
 
 // Builds a specular environment texgen matrix. The half vector between the
@@ -2049,17 +2048,17 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 
     // View direction: negated third row of the current camera's view matrix.
     const math::MTX34& rCurView =
-        lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID];
+        sCameraMtxState.mViewMtxArray[sCameraMtxState.mCurCameraID];
     viewDir.x = -rCurView.m[2][0];
     viewDir.y = -rCurView.m[2][1];
     viewDir.z = -rCurView.m[2][2];
 
     // Lazily refresh the cached inverse of the current view matrix.
-    if (!(lbl_eu_8061DFA0.mFlag & 1)) {
+    if (!(sCameraMtxState.mFlag & 1)) {
         PSMTXInverse(
-            lbl_eu_8061DFA0.mViewMtxArray[lbl_eu_8061DFA0.mCurCameraID],
-            lbl_eu_8061DFA0.mViewMtx);
-        lbl_eu_8061DFA0.mFlag |= 1;
+            sCameraMtxState.mViewMtxArray[sCameraMtxState.mCurCameraID],
+            sCameraMtxState.mViewMtx);
+        sCameraMtxState.mFlag |= 1;
     }
 
     if (lightRef >= 0 && lightRef < 0x80 &&
@@ -2075,7 +2074,7 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
             (dir.x == lbl_eu_80669BEC && dir.y == lbl_eu_80669BEC &&
              dir.z == lbl_eu_80669BEC)) {
             pLight->GetLightPos(&dir);
-            VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx, &dir);
+            VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx, &dir);
 
             // Negate through a temporary: reproduces retail's raw-store /
             // forwarded-frsp-reload pair.
@@ -2092,7 +2091,7 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                 dir.y = lbl_eu_80669BF0;
             }
         } else {
-            VEC3TransformNormal(&dir, &lbl_eu_8061DFA0.mViewMtx, &dir);
+            VEC3TransformNormal(&dir, &sCameraMtxState.mViewMtx, &dir);
         }
 
         // Specular lights use the negated direction directly; everything
@@ -2124,7 +2123,7 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                                                : lbl_eu_80669BF0;
         }
     } else if (camRef >= 0 && camRef < 0x20) {
-        const math::MTX34& rView = lbl_eu_8061DFA0.mViewMtxArray[camRef];
+        const math::MTX34& rView = sCameraMtxState.mViewMtxArray[camRef];
 
         // Up = second row of the referenced view matrix; back = negated
         // third row.
@@ -2141,7 +2140,7 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
                        reinterpret_cast<Vec*>(&half));
     } else {
         PSMTXCopy(
-            lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx);
+            sCameraMtxState.mEnvMtxArray[sCameraMtxState.mCurCameraID], *pMtx);
         return;
     }
 
@@ -2162,13 +2161,13 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
     pMtx->m[2][1] = half.y;
     pMtx->m[2][2] = half.z;
 
-    PSMTXConcat(*pMtx, lbl_eu_8061DFA0.mViewMtx, *pMtx);
+    PSMTXConcat(*pMtx, sCameraMtxState.mViewMtx, *pMtx);
 
     f32 zero = lbl_eu_80669BEC;
     pMtx->m[0][3] = pMtx->m[1][3] = pMtx->m[2][3] = zero;
 
     PSMTXConcat(
-        lbl_eu_8061DFA0.mEnvMtxArray[lbl_eu_8061DFA0.mCurCameraID], *pMtx,
+        sCameraMtxState.mEnvMtxArray[sCameraMtxState.mCurCameraID], *pMtx,
         *pMtx);
 }
 
@@ -2179,9 +2178,9 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 
 // Absorbed data for g3d_state: sdata, rodata, bss, sbss
 // sdata 0x80663468 (8) + rodata 0x8051D660 (48) + bss/sbss pads to reach retail sizes
-extern "C" const char lbl_eu_8061FA20[];
+extern "C" const char sIndMtxOpStdInstance[];
 extern "C" __declspec(section ".sdata") u32 lbl_eu_80663468 = 0xFFFFFFFF;
-extern "C" __declspec(section ".sdata") u32 lbl_eu_8066346C = (u32)lbl_eu_8061FA20;
+extern "C" __declspec(section ".sdata") u32 lbl_eu_8066346C = (u32)sIndMtxOpStdInstance;
 extern "C" __declspec(section ".rodata") const unsigned char lbl_eu_8051D660[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
 // Retail bss 0x55E0 (21984) -- pad from end of actual bss symbols
 // (0x44D8) to reach retail size; sbss 0x20 via 8 small u32s.

@@ -4,26 +4,17 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
 #include "monolib/math/CVec3.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp" // owner of the +0xAC player slot (UVF23)
 #include <math.h>
 
 // KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 
-// SDA/sdata2 float pool labels used by the direction helpers below.
-extern const f32 lbl_eu_80667D64; // 1.0f
-extern const f32 lbl_eu_80667D68;
-extern const f32 lbl_eu_80667D6C; // rad -> FIdx degrees
-extern const f32 lbl_eu_80667D70; // FIdx degrees multiplier for SinFIdx
-extern const f32 lbl_eu_80667D78; // bdat column float scale
-extern const f64 lbl_eu_80667D80; // 0x4330 double-conversion bias A
-extern const f64 lbl_eu_80667D88; // 0x4330 double-conversion bias B
+// Global runtime-flag word
 
-// Global runtime-flag word (bit 0x2000 = bit 13 gates target selection).
-
-// Shared ctrl-state singleton pointer (retail .sdata).
-extern unsigned char lbl_eu_80664330;
+// Shared ctrl-state singleton pointer (retail .sbss).
+void* gpBattleCtrlStateWork;
 
 // Retail C-symbol import: camera/scene gate query.
 extern "C" int CamEvtGetFl46();
@@ -75,8 +66,8 @@ extern "C" void BattleWork_ComputeAim(ml::CVec3* outDir, float* outWeight, DirSr
     // NOTE: retail re-reads the singleton global at each use (no caching).
     s32 useTargetObj = 0;
     ml::CVec3 aim;
-    if ((lbl_eu_80663E24 & 0x40000) != 0 || CamEvtGetFl46() != 0) {
-        DirTargetInfo* pTarget = *(DirTargetInfo**)(&lbl_eu_80664330);
+    if ((gmGameFlags & 0x40000) != 0 || CamEvtGetFl46() != 0) {
+        DirTargetInfo* pTarget = (DirTargetInfo*)gpBattleCtrlStateWork;
         if (pTarget != 0 && pTarget->mFlag18 != 0) {
             useTargetObj = 1;
             aim = pTarget->m00;
@@ -84,13 +75,13 @@ extern "C" void BattleWork_ComputeAim(ml::CVec3* outDir, float* outWeight, DirSr
             aim = src->mPos;
         }
     } else {
-        aim = (src->mPos + *posB) * lbl_eu_80667D68;
+        aim = (src->mPos + *posB) * 0.5f;
     }
 
     float mag = PSVECMag(*targetPos - aim);
 
     // Linear falloff: 0 at/below innerRadius, 1 at/beyond outerRadius.
-    *outWeight = lbl_eu_80667D64;
+    *outWeight = 1.0f;
     if (mag < outerRadius) {
         if (mag < innerRadius) {
             *outWeight = 1.0f;
@@ -106,26 +97,26 @@ extern "C" void BattleWork_ComputeAim(ml::CVec3* outDir, float* outWeight, DirSr
         // singleton global, matching retail's separate loads around the calls.
         float angSelf;
         {
-            DirTargetInfo* t = *(DirTargetInfo**)(&lbl_eu_80664330);
+            DirTargetInfo* t = (DirTargetInfo*)gpBattleCtrlStateWork;
             ml::CVec3 v1 = t->m0C - t->m00;
-            angSelf = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v1.x, v1.z);
+            angSelf = 0.024543693f * nw4r::math::Atan2FIdx(v1.x, v1.z);
         }
         float delta;
         {
-            DirTargetInfo* t = *(DirTargetInfo**)(&lbl_eu_80664330);
+            DirTargetInfo* t = (DirTargetInfo*)gpBattleCtrlStateWork;
             ml::CVec3 v2 = *targetPos - t->m0C;
-            delta = lbl_eu_80667D6C * nw4r::math::Atan2FIdx(v2.x, v2.z) - angSelf;
+            delta = 0.024543693f * nw4r::math::Atan2FIdx(v2.x, v2.z) - angSelf;
         }
         while (ml::pi <= delta) delta -= ml::tau;
         while (delta < -ml::pi) delta += ml::tau;
-        outDir->x = -nw4r::math::SinFIdx(lbl_eu_80667D70 * delta);
+        outDir->x = -nw4r::math::SinFIdx(40.743664f * delta);
     } else {
         // Transform the target through the source matrix and normalize; fall
         // back to the zero vector when the length squared matches exactly.
         ml::CVec3 dir;
         PSMTXMultVec(*mtxOf(src->mMatrix), (Vec*)targetPos, (Vec*)&dir);
         float lenSq = dir.y * dir.y + (dir.x * dir.x + dir.z * dir.z);
-        if (lenSq == lbl_eu_80667D64) {
+        if (lenSq == 1.0f) {
             dir = ml::CVec3::zero;
         } else {
             PSVECNormalize((Vec*)&dir, (Vec*)&dir);
@@ -220,9 +211,7 @@ extern const char lbl_eu_80526324[]; // nw4r::db::Warning source string
 extern const char lbl_eu_80526300[]; // nw4r::db::Warning format string
 extern char lbl_eu_80503FA0[];       // bdat column-name blob
 struct BdatTable;
-extern BdatTable* lbl_eu_806640B8;
-extern u32 lbl_eu_8057164C[3];       // reference aim-point vector
-extern f32 lbl_eu_80667D74;          // initial best-distance sentinel
+extern BdatTable* gpBattleCtrlBdatTable;
 
 extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
                                int entryBase) {
@@ -242,8 +231,8 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
 
     // Presentation bit 13 or the camera gate enables the shared-singleton
     // aim override.
-    if ((lbl_eu_80663E24 & 0x40000) != 0 || CamEvtGetFl46() != 0) {
-        DirTargetInfo* tgt = *(DirTargetInfo**)(&lbl_eu_80664330);
+    if ((gmGameFlags & 0x40000) != 0 || CamEvtGetFl46() != 0) {
+        DirTargetInfo* tgt = (DirTargetInfo*)gpBattleCtrlStateWork;
         if (tgt != NULL && tgt->mFlag18 != 0) {
             aim = tgt->m00;
         }
@@ -254,31 +243,29 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
     if (self->m33 != 0) {
         if (self->m33 == 2) {
             // Nearest-position scan: rows self->m30 of the shared bdat table,
-            // columns built from the name blob + index suffix (signed columns
-            // converted through the 0x43300000 double trick).
-            BdatTable* tbl = lbl_eu_806640B8;
-            f32 best = lbl_eu_80667D74;
-            f64 bias = lbl_eu_80667D80;
-            f32 scale = lbl_eu_80667D78;
+            // columns built from the name blob + index suffix (signed words
+            // converted with a 32-bit sign reinterpretation).
+            BdatTable* tbl = gpBattleCtrlBdatTable;
+            f32 best = 1e+07f;
+            f32 scale = 0.01f;
             f32 thr = ml::epsilon;
             ml::CVec3 prev = self->mVec0;
             char colStorage[sizeof(ml::FixStr<32>)];
             ml::FixStr<32>& col = *reinterpret_cast<ml::FixStr<32>*>(colStorage);
             SndConv conv;
-            conv.w[0] = 0x43300000;
             for (s32 i = 1; i <= 10; i++) {
                 ml::CVec3 cur;
                 col.format(&lbl_eu_80503FA0[0], (char)i);
                 conv.w[1] = getBdatStringColumnValue(tbl, colStorage, self->m30) ^ 0x8000;
-                cur.x = (f32)(conv.d - bias) * scale;
+                cur.x = (f32)(s32)(conv.w[1] ^ 0x80000000) * scale;
 
                 col.format(&lbl_eu_80503FA0[9], (char)i);
                 conv.w[1] = getBdatStringColumnValue(tbl, colStorage, self->m30) ^ 0x8000;
-                cur.y = (f32)(conv.d - bias) * scale;
+                cur.y = (f32)(s32)(conv.w[1] ^ 0x80000000) * scale;
 
                 col.format(&lbl_eu_80503FA0[0x12], (char)i);
                 conv.w[1] = getBdatStringColumnValue(tbl, colStorage, self->m30);
-                cur.z = (f32)(conv.d - bias) * scale;
+                cur.z = (f32)(s32)(conv.w[1] ^ 0x80000000) * scale;
 
                 // All three coordinates within threshold: accept the current
                 // best and stop scanning.
@@ -304,14 +291,14 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
         // Distance gate against the updated position.
         ml::CVec3 diff = self->mVec1 - aim;
         f32 lenSq = diff.x * diff.x + diff.z * diff.z;
-        if (lenSq >= lbl_eu_80667D64) {
+        if (lenSq >= 1.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
         f32 dist;
-        if (lenSq < lbl_eu_80667D64) {
+        if (lenSq < 1.0f) {
             dist = lenSq * nw4r::math::FrSqrt(lenSq);
         } else {
-            dist = lbl_eu_80667D64;
+            dist = 1.0f;
         }
         // Close enough (or y-delta small): stop the entry sound and clear it.
         if (dist >= self->m18 || (f32)__fabs((f64)diff.y) < self->m18) {
@@ -325,11 +312,11 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
 
     // Start the sound if nothing is playing (priority depends on the mode).
     if (self->m2C == 0xFFFF) {
-        self->m20 = lbl_eu_80667D64;
+        self->m20 = 1.0f;
         self->m1C = self->m24;
         u32 prio = 0x78;
         if (self->m33 != 0) {
-            self->m1C = lbl_eu_80667D64;
+            self->m1C = 1.0f;
             prio = 0;
         }
         u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(1, self->m2E, prio, 0,
@@ -351,7 +338,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
         if (CfRes_getD80Flag()) {
             vol *= 1.0f - Scn_QueryUnk80State()->field_0xC;
         }
-        if ((lbl_eu_80663E24 & 0x40000) != 0) {
+        if ((gmGameFlags & 0x40000) != 0) {
             if (self->m32 != 0) {
                 self->m32--;
                 return;
@@ -363,11 +350,11 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
         }
         if (self->m34 != 0) {
             if (farArg == 0) {
-                vol *= lbl_eu_80667D68;
+                vol *= 0.5f;
             }
         } else {
             if ((self->m37 & 1) != 0 && farArg == 0) {
-                vol *= lbl_eu_80667D68;
+                vol *= 0.5f;
             }
         }
         CfSoundMan_SetSlotVolume(1, self->m2C, 0x1e, vol);
@@ -376,15 +363,15 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
 
     // Directed path: recompute the blend toward the scene pose target, then
     // apply the same D80/presentation-bit volume chain.
-    DirSrc* pose = (DirSrc*)Scn_FindCamItem(lbl_eu_80663E14, -1);
+    DirSrc* pose = (DirSrc*)Scn_FindCamItem(gmScene, -1);
     BattleWork_ComputeAim((ml::CVec3*)&self->m20, &self->m1C, pose,
-                  (ml::CVec3*)lbl_eu_8057164C, &self->mVec1,
-                  lbl_eu_80667D68, lbl_eu_80667D68 + self->m18);
+                  (ml::CVec3*)gmAimPoint, &self->mVec1,
+                  0.5f, 0.5f + self->m18);
     f32 vol = self->m1C * self->m24;
     if (CfRes_getD80Flag()) {
         vol *= 1.0f - Scn_QueryUnk80State()->field_0xC;
     }
-    if ((lbl_eu_80663E24 & 0x40000) != 0) {
+    if ((gmGameFlags & 0x40000) != 0) {
         if (self->m32 != 0) {
             self->m32--;
         }
@@ -405,7 +392,7 @@ extern "C" void BattleWork_TickSndCtrl(SndCtrlObj* self, ml::CVec3* unk4, int fa
 // member-function callback (pointer-to-member-function blob in .data) on all
 // 128 entries and publish the object as the singleton.
 // ----------------------------------------------------------------------------
-extern u32 lbl_eu_805333E0[3];
+extern u32 visionCallbackMarkSlotFFFFFirst[3];
 
 struct CtrlState {
     u8 _00[0x1C];
@@ -446,12 +433,12 @@ union CtrlStateFnBits {
 };
 
 CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
-    work->m00 = lbl_eu_80667D64;
+    work->m00 = 1.0f;
     work->m04 = 1.0f;
-    work->m08 = lbl_eu_80667D64;
-    work->m0C = lbl_eu_80667D64;
-    work->m10 = lbl_eu_80667D64;
-    work->m14 = lbl_eu_80667D64;
+    work->m08 = 1.0f;
+    work->m0C = 1.0f;
+    work->m10 = 1.0f;
+    work->m14 = 1.0f;
     work->m18 = 0;
     work->m19 = 0;
     work->m1A = 0;
@@ -463,8 +450,8 @@ CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
     CtrlState* stop = &work->mEntries[128];
     for (; cur < stop; ++cur) {
         cur->m1C = 1.0f;
-        cur->m20 = lbl_eu_80667D64;
-        cur->m28 = lbl_eu_80667D64;
+        cur->m20 = 1.0f;
+        cur->m28 = 1.0f;
         cur->m2C = -1;
         cur->m2E = 0;
         cur->m30 = 0;
@@ -477,9 +464,9 @@ CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
     // Load the shared pointer-to-member-function callback and invoke it on
     // every entry.
     CtrlStateFnBits cb;
-    cb.raw[0] = lbl_eu_805333E0[0];
-    cb.raw[1] = lbl_eu_805333E0[1];
-    cb.raw[2] = lbl_eu_805333E0[2];
+    cb.raw[0] = visionCallbackMarkSlotFFFFFirst[0];
+    cb.raw[1] = visionCallbackMarkSlotFFFFFirst[1];
+    cb.raw[2] = visionCallbackMarkSlotFFFFFirst[2];
     CtrlStateFn fn = cb.fn;
     CtrlStateFnBits cbCall;
     cbCall.fn = fn;
@@ -489,8 +476,7 @@ CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
     }
 
     // Singleton pointer (declared as raw bytes elsewhere in this TU).
-    extern unsigned char lbl_eu_80664330;
-    *(CtrlStateWork**)(&lbl_eu_80664330) = work;
+    gpBattleCtrlStateWork = work;
     return work;
 }
 
@@ -498,8 +484,7 @@ CtrlStateWork* BattleWork_InitStateWork(CtrlStateWork* work) {
 // extern "C" here trips MWCC error 10197.
 void* __dt__801A9F78(void* self, int dealloc) {
     if (self != nullptr) {
-        extern unsigned char lbl_eu_80664330;
-        *(void**)(&lbl_eu_80664330) = 0;
+        gpBattleCtrlStateWork = 0;
         if (dealloc > 0) {
             operator delete(self);
         }
@@ -528,7 +513,7 @@ public:
 typedef void (CtrlEntry::*CtrlEntryFn)();
 
 // 12-byte pointer-to-member-function in .data, invoked on every entry.
-extern u32 lbl_eu_805333EC[3];
+extern u32 visionCallbackMarkSlotFFFFSecond[3];
 
 // Word-level view so the three ptmf words load without a memcpy call.
 union CtrlEntryFnBits {
@@ -541,7 +526,7 @@ void BattleWork_InitCtrlWork(CtrlWork* work) {
     work->mField18 = 0;
     CtrlEntryFnBits cb;
     // Single aggregate copy of the 12-byte ptmf from .data.
-    cb = *(CtrlEntryFnBits*)lbl_eu_805333EC;
+    cb = *(CtrlEntryFnBits*)visionCallbackMarkSlotFFFFSecond;
     // Second ptmf copy: __ptmf_scall consumes a stack temp, matching retail.
     CtrlEntryFnBits cbCall;
     cbCall.fn = cb.fn;
@@ -555,13 +540,11 @@ void BattleWork_InitCtrlWork(CtrlWork* work) {
 // BattleWork_FillStateWork - fill the ctrl-state work entries from the shared bdat table:
 // for every row of the table's row range, read named columns (rodata name blob
 // at lbl_eu_80503FA0) into one 0x38-byte entry slot of the caller's array.
-// Integer columns are converted to float through the 0x43300000 double trick:
-// the union high words are preset once up front, each value is placed (with
-// the sign-bit xor for signed columns) into the low word, the double bias is
-// subtracted, and the result scaled by lbl_eu_80667D78.
+// Integer columns are converted from their 32-bit payloads with the usual
+// signed/unsigned casts and then scaled by 0.01f.
 // ----------------------------------------------------------------------------
 
-// Conversion scratch: w[0] = 0x43300000, w[1] holds the integer payload.
+// Conversion scratch: w[1] holds the integer payload.
 union BdatConv {
     u32 w[2];
     f64 d;
@@ -604,16 +587,14 @@ extern char lbl_eu_80503FA0[];
 
 // Bdat table handle owning the ctrl-state row range (import from split1).
 struct BdatTable;
-extern BdatTable* lbl_eu_806640B8;
+extern BdatTable* gpBattleCtrlBdatTable;
 
 void BattleWork_FillStateWork(void* param) {
-    BdatTable* tbl = lbl_eu_806640B8;
+    BdatTable* tbl = gpBattleCtrlBdatTable;
     BdatConv convA;
     BdatConv convB;
-    convA.w[0] = 0x43300000;
-    convB.w[0] = 0x43300000;
     s32 i = Bdat_GetRowBase_B41C(tbl);   // first row of the range
-    s32 end = i + Bdat_GetMaxRow_B1EC(tbl); // number of rows
+    s32 end = i + Bdat_GetMaxRow_B1EC(tbl);
     const char* cols = lbl_eu_80503FA0;
 
     CtrlRecHead* rec = (CtrlRecHead*)((u8*)param + i * 0x38);
@@ -624,17 +605,17 @@ void BattleWork_FillStateWork(void* param) {
         // (retail stfs to sp), and the final copy is three lwz/stw moves.
         CtrlRecHead h;
         convA.w[1] = getBdatStringColumnValue(tbl, cols + 0x1b, i) ^ 0x8000;
-        h.f00 = (f32)(convA.d - lbl_eu_80667D80) * lbl_eu_80667D78;
+        h.f00 = (f32)(s32)(convA.w[1] ^ 0x80000000) * 0.01f;
         convB.w[1] = getBdatStringColumnValue(tbl, cols + 0x20, i) ^ 0x8000;
-        h.f04 = (f32)(convB.d - lbl_eu_80667D80) * lbl_eu_80667D78;
+        h.f04 = (f32)(s32)(convB.w[1] ^ 0x80000000) * 0.01f;
         convA.w[1] = getBdatStringColumnValue(tbl, cols + 0x2a, i) ^ 0x8000;
-        h.f08 = (f32)(convA.d - lbl_eu_80667D80) * lbl_eu_80667D78;
+        h.f08 = (f32)(s32)(convA.w[1] ^ 0x80000000) * 0.01f;
         *rec = h;
 
         ColVal t31;
         t31.v = getBdatStringColumnValue(tbl, cols + 0x31, i);
         convB.w[1] = t31.h[0];
-        tail->f38 = (f32)(convB.d - lbl_eu_80667D88);
+        tail->f38 = (f32)(u32)convB.w[1];
         tail->f50 = (u16)i;
         ColVal t37;
         t37.v = getBdatStringColumnValue(tbl, cols + 0x37, i);
@@ -648,7 +629,7 @@ void BattleWork_FillStateWork(void* param) {
         ColVal t49;
         t49.v = getBdatStringColumnValue(tbl, cols + 0x49, i);
         convA.w[1] = t49.b[0];
-        tail->f44 = (f32)(convA.d - lbl_eu_80667D88) * lbl_eu_80667D78;
+        tail->f44 = (f32)(u32)convA.w[1] * 0.01f;
         ColVal t50;
         t50.v = getBdatStringColumnValue(tbl, cols + 0x50, i);
         tail->f54 = t50.b[0];
@@ -725,7 +706,7 @@ void BattleWork_TickDriver(UpdWork* self) {
     if (CfSoundMan_IsRecordActive(1) == 0) {
         return;
     }
-    BdatTable* tbl = lbl_eu_806640B8;
+    BdatTable* tbl = gpBattleCtrlBdatTable;
     if (tbl == NULL) {
         return;
     }
@@ -742,8 +723,8 @@ void BattleWork_TickDriver(UpdWork* self) {
     // Key scans: is any entry keyed 0x65 (else 0x66) present in the singleton?
     int keyFlag = 0;
     if (getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
-        CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
-        BdatTable* table = lbl_eu_806640B8;
+        CtrlStateWork* work = (CtrlStateWork*)gpBattleCtrlStateWork;
+        BdatTable* table = gpBattleCtrlBdatTable;
         if (work != NULL && table != NULL) {
             s32 r = Bdat_GetRowBase_B41C(table);
             s32 e = r + Bdat_GetMaxRow_B1EC(table);
@@ -758,8 +739,8 @@ void BattleWork_TickDriver(UpdWork* self) {
         }
     }
     if (keyFlag == 0 && getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
-        CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
-        BdatTable* table = lbl_eu_806640B8;
+        CtrlStateWork* work = (CtrlStateWork*)gpBattleCtrlStateWork;
+        BdatTable* table = gpBattleCtrlBdatTable;
         if (work != NULL && table != NULL) {
             s32 r = Bdat_GetRowBase_B41C(table);
             s32 e = r + Bdat_GetMaxRow_B1EC(table);
@@ -777,10 +758,10 @@ void BattleWork_TickDriver(UpdWork* self) {
     // Presentation-gate latch: bit 22 enables, unless bit 14 of the re-read
     // word clears it again; the scene query forces it on.
     int gate14 = 0;
-    u32 flagWord = *(volatile u32*)&lbl_eu_80663E24;
+    u32 flagWord = *(volatile u32*)&gmGameFlags;
     if ((flagWord & 0x400000) != 0) {
         gate14 = 1;
-        u32 flagWord2 = *(volatile u32*)&lbl_eu_80663E24;
+        u32 flagWord2 = *(volatile u32*)&gmGameFlags;
         if ((flagWord2 & 0x40000) == 0) {
             gate14 = 0;
         }
@@ -992,7 +973,7 @@ extern "C" void CfSoundMan_SetSlotVolume(s32 idx, u32 a, u32 b, float volume);
 
 // Bdat table handle owning the ctrl-state row range (import from split1).
 struct BdatTable;
-extern BdatTable* lbl_eu_806640B8;
+extern BdatTable* gpBattleCtrlBdatTable;
 
 // ----------------------------------------------------------------------------
 // BattleWork_CheckEffectTableReady - scan the shared ctrl-state singleton's entry table starting
@@ -1003,15 +984,14 @@ bool BattleWork_CheckEffectTableReady(u32 id) {
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return false;
     }
-    extern unsigned char lbl_eu_80664330;
-    BdatTable* table = lbl_eu_806640B8;
-    if (*(void**)(&lbl_eu_80664330) == nullptr || table == nullptr) {
+    BdatTable* table = gpBattleCtrlBdatTable;
+    if (gpBattleCtrlStateWork == nullptr || table == nullptr) {
         return false;
     }
     s32 row = Bdat_GetRowBase_B41C(table);   // first row of the range
     s32 count = Bdat_GetMaxRow_B1EC(table); // number of rows
     // Re-read the singleton: scan its entry table from 'row' for 'count' rows.
-    CtrlStateWork* work2 = *(CtrlStateWork**)(&lbl_eu_80664330);
+    CtrlStateWork* work2 = (CtrlStateWork*)gpBattleCtrlStateWork;
     s32 endRow = row + count;
     ScanEntry* it = (ScanEntry*)&work2->mEntries[row];
     for (; row < endRow; row++) {
@@ -1032,12 +1012,11 @@ bool BattleWork_CheckEffectTableReady(u32 id) {
 // The singleton global is re-read before each access, matching retail.
 // ----------------------------------------------------------------------------
 extern "C" void BattleWork_ApplyVolume(u32 id, u32 kind, int store, float scale) {
-    extern unsigned char lbl_eu_80664330;
     if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return;
     }
-    BdatTable* table = lbl_eu_806640B8;
-    if (*(void**)(&lbl_eu_80664330) == nullptr || table == nullptr) {
+    BdatTable* table = gpBattleCtrlBdatTable;
+    if (gpBattleCtrlStateWork == nullptr || table == nullptr) {
         return;
     }
     s32 row = Bdat_GetRowBase_B41C(table);   // first row of the range
@@ -1046,18 +1025,18 @@ extern "C" void BattleWork_ApplyVolume(u32 id, u32 kind, int store, float scale)
         // The singleton global is re-read for every statement (retail never
         // caches it across statements).
         if (id != 0 &&
-            (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m30 != id) {
+            ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m30 != id) {
             continue;
         }
-        if ((*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m2C != -1) {
+        if (((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m2C != -1) {
             CfSoundMan_SetSlotVolume(
-                1, (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m2C,
+                1, ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m2C,
                 kind,
-                scale * (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m1C);
+                scale * ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m1C);
         }
         if (store != 0) {
-            (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m28 = scale;
-            (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m32 = kind;
+            ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m28 = scale;
+            ((CtrlStateWork*)gpBattleCtrlStateWork)->mEntries[row].m32 = kind;
         }
     }
 }
@@ -1067,8 +1046,8 @@ extern "C" void BattleWork_ApplyVolume(u32 id, u32 kind, int store, float scale)
 extern "C" void BattleWork_ApplyVolumeStore(u32 a, u32 b, float s){ BattleWork_ApplyVolume(a, b, 1, s); }
 
 extern "C" void func_801AAC78(u8 v) {
-    extern unsigned char lbl_eu_80664330;
-    void* p = *(void**)(&lbl_eu_80664330);
+    extern const f32 lbl_eu_80667D64; // retail .sdata2 zero literal (0x80667D64)
+    void* p = gpBattleCtrlStateWork;
     if (p == 0) return;
     *(u8*)((u8*)p + 0x1A) = v;
     if (v == 0) return;
@@ -1076,14 +1055,12 @@ extern "C" void func_801AAC78(u8 v) {
 }
 
 extern "C" void BattleWork_StoreFlagByte1B(unsigned char v) {
-    extern unsigned char lbl_eu_80664330;
-    CtrlStateWork* p = *(CtrlStateWork**)(&lbl_eu_80664330);
+    CtrlStateWork* p = (CtrlStateWork*)gpBattleCtrlStateWork;
     if (p) p->m1B = v;
 }
 
 void BattleWork_CopyPairToWork(unsigned int* pSrcA, unsigned int* pSrcB) {
-    extern unsigned char lbl_eu_80664330;
-    void* p = *(void**)(&lbl_eu_80664330);
+    void* p = gpBattleCtrlStateWork;
     if (!p) return;
     unsigned int *dst = *(unsigned int **)p;
     unsigned int *src1 = pSrcA;
@@ -1098,7 +1075,6 @@ void BattleWork_CopyPairToWork(unsigned int* pSrcA, unsigned int* pSrcB) {
 }
 
 extern "C" void func_801AAD08() {
-    extern unsigned char lbl_eu_80664330;
-    void* p = *(void**)(&lbl_eu_80664330);
+    void* p = gpBattleCtrlStateWork;
     if (p) *(unsigned char*)((u8*)p + 0x18) = 0;
 }

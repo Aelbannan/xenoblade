@@ -33,6 +33,7 @@ public:
 
     bool isInitialized();
     CLibLayout* getInstance();
+    static CLibLayout* spInstance; // retail .sbss symbol spInstance__10CLibLayout
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
     nw4r::lyt::Layout* createLayout();
     nw4r::lyt::TextBox* createTextbox();

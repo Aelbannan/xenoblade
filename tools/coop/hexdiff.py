@@ -16,6 +16,12 @@ Extra modes:
   python3 tools/coop/hexdiff.py <unit> --list [SUBSTR]  # retail function symbols (no build)
   python3 tools/coop/hexdiff.py <unit> -s <sym> --brief  # one-line verdict + mismatches only
   python3 tools/coop/hexdiff.py <unit> -s <sym> --asm    # full clean disassembly, both sides
+
+Every diff also cross-checks objdiff's per-function percentage (generated into
+a temp file, never build/us/report.json). The ✓/≈/◇/✗ column requires BOTH the
+byte/reloc proof and objdiff == 100.0. --baseline PATH (default:
+build/<region>/report_baseline.json when present) prints per-symbol
+LOST/GAIN and exits 6 on any LOST; --no-baseline disables it.
 """
 
 from __future__ import annotations
@@ -27,6 +33,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Optional
@@ -41,6 +48,11 @@ from tools.coop.lib.project import Project
 from tools.ppc_equivalence.elf_symbols import list_code_functions as list_text_functions, FunctionBytes, FunctionRelocation
 from tools.coop.lib.full_match import (compare_functions, pair_function, recover_retail_names, unit_section_bases, load_layout, compare_unit_functions)
 from tools.coop.lib.reloc_canon import LinkerLayout
+from tools.coop.lib.objdiff_hexdiff import (
+    EXIT_LOST_BASELINE, VERDICT_LEGEND, combine_verdict, compare_baseline,
+    changes_for_symbols, generate_report, load_report_unit, load_retail_addresses,
+    pair_report_function, parse_report,
+)
 from dataclasses import replace
 from tools.ppc_equivalence.ir import Opcode
 
@@ -770,6 +782,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="do not build the decomp object before diffing",
     )
     parser.add_argument(
+        "--baseline",
+        metavar="PATH",
+        help="objdiff report.json to compare per-symbol 100%% against (default: "
+        "build/<region>/report_baseline.json when present)",
+    )
+    parser.add_argument(
+        "--no-baseline",
+        action="store_true",
+        help="disable the automatic build/<region>/report_baseline.json comparison",
+    )
+    parser.add_argument(
         "--build-timeout",
         type=int,
         default=600,
@@ -796,6 +819,26 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "contains the old one (memberize-bulk gate).",
     )
     return parser.parse_args(argv)
+
+
+def _select_baseline(args: argparse.Namespace, project: Project) -> tuple[Path | None, str | None, str | None]:
+    """(path, label, error) for the baseline report selected by CLI/default."""
+    if args.no_baseline:
+        return None, None, None
+    if args.baseline:
+        path = Path(args.baseline).expanduser()
+        if not path.is_file():
+            return None, None, f"ERROR: baseline report not found: {path}"
+        return path, "explicit", None
+    default = project.root / "build" / project.config.region / "report_baseline.json"
+    if default.is_file():
+        return default, "default", None
+    return None, None, None
+
+
+def _emit(message: str, args: argparse.Namespace) -> None:
+    """Keep --json stdout machine-readable; report lines go to stderr there."""
+    print(message, file=sys.stderr if args.json else sys.stdout)
 
 
 def _run(argv: list[str] | None = None) -> int:
@@ -865,6 +908,58 @@ def _run(argv: list[str] | None = None) -> int:
             print(f"ERROR: build failed for {rel_path}", file=sys.stderr)
             return 2
 
+    # Exact decomp code-symbol names decide objdiff pairing: report rows are
+    # named after the retail symbol, and complete units score unpaired rows
+    # 100.0 (objdiff 3.0.0-beta.14 phantom). An unreadable object leaves the
+    # pairing decision to objdiff's fuzzy key alone.
+    decomp_symbol_names: set[str] | None = None
+    try:
+        decomp_symbol_names = {fn.name for fn in list_text_functions(decomp_path)}
+    except Exception as exc:
+        print(f"WARNING: could not list decomp symbols for pairing: {exc}",
+              file=sys.stderr)
+
+    # Objdiff cross-check. Uses the same report args as the checkpoint
+    # reports (config.objdiff_report_args); writes only to a temp file.
+    objdiff_fns: list = []
+    try:
+        with tempfile.TemporaryDirectory(prefix="hexdiff-objdiff-") as tmp_dir:
+            objdiff_report = generate_report(project, Path(tmp_dir) / "report.json")
+        unit_fns = parse_report(
+            objdiff_report, unit.name,
+            decomp_symbols=({unit.name: decomp_symbol_names}
+                            if decomp_symbol_names is not None else None),
+        )
+        if unit_fns is None:
+            print(f"WARNING: unit {unit.name} missing from fresh objdiff report", file=sys.stderr)
+        else:
+            objdiff_fns = unit_fns
+    except Exception as exc:
+        print(f"WARNING: objdiff report unavailable: {exc}", file=sys.stderr)
+    args.objdiff_unit = objdiff_fns
+
+    baseline_path, baseline_label, baseline_error = _select_baseline(args, project)
+    if baseline_error:
+        print(baseline_error, file=sys.stderr)
+        return 2
+    baseline_changes: list = []
+    args.baseline_path = baseline_path
+    args.baseline_changes = baseline_changes
+    if baseline_path is not None:
+        _emit(f"baseline: {baseline_path} ({baseline_label})", args)
+        try:
+            old_fns = load_report_unit(baseline_path, unit.name)
+            if old_fns is None:
+                _emit(f"baseline: unit {unit.name} not present in {baseline_path}", args)
+            else:
+                addresses = load_retail_addresses(project.root, config.region)
+                baseline_changes.extend(compare_baseline(
+                    old_fns, objdiff_fns, addresses=addresses,
+                    decomp_symbols=decomp_symbol_names,
+                ))
+        except Exception as exc:
+            print(f"WARNING: could not read baseline {baseline_path}: {exc}", file=sys.stderr)
+
     if args.all:
         return _cmd_all(args, project, unit, retail_path, decomp_path, config)
 
@@ -893,12 +988,22 @@ def _run(argv: list[str] | None = None) -> int:
     decomp = decomp_match[0]
     compiler_cfg = _unit_compiler_config(project, unit.name)
 
+    entry = pair_report_function(objdiff_fns, decomp.name, retail.name)
+    args.objdiff_percent = entry.percent if entry is not None else None
+    args.objdiff_unpaired = bool(entry is not None and entry.unpaired)
+    args.verdict = combine_verdict(False, args.objdiff_percent,
+                                   unpaired=args.objdiff_unpaired)
+    args.baseline_changes = changes_for_symbols(baseline_changes, retail.name, decomp.name)
+
     if args.asm:
         return _cmd_asm(args, retail, decomp, compiler_cfg)
 
     args.original_pair = (retail, decomp)
     comparison = _compare(project, unit, retail, decomp)
     args.byte_match = comparison.match
+    args.verdict = combine_verdict(comparison.match, args.objdiff_percent,
+                                   unpaired=getattr(args, "objdiff_unpaired", False))
+    args.baseline_changes = changes_for_symbols(baseline_changes, retail.name, decomp.name)
     args.relocation_errors = list(comparison.reasons)
     unresolved = frozenset(offset & ~3 for offset in comparison.unresolved)
     retail, decomp = comparison.retail, comparison.decomp
@@ -1023,18 +1128,57 @@ def _counts_for(retail: FunctionBytes, decomp: FunctionBytes) -> dict:
     }
 
 
-def _summary_line(retail: FunctionBytes, decomp: FunctionBytes, c: dict, size_check=None) -> str:
-    """One-line triage verdict: pct | structural | reg_swap | size."""
+def _summary_line(retail: FunctionBytes, decomp: FunctionBytes, c: dict, size_check=None,
+                  objdiff_percent: float | None = None,
+                  objdiff_unpaired: bool = False) -> str:
+    """One-line triage verdict: pct | structural | reg_swap | size | objdiff."""
     total = c["total"] or 1
     pct = 100.0 * (total - c["mismatch"]) / total
     color = _GREEN if c["mismatch"] == 0 and c["reloc"] == 0 else _RED
     size = f"0x{retail.size:x}/0x{decomp.size:x}"
     if size_check is not None and size_check.budget is not None:
         size += " PASS" if size_check.ok else f" OVER({size_check.over_by})"
+    obj = ("unpaired" if objdiff_unpaired else
+           f"{objdiff_percent:.2f}%" if objdiff_percent is not None else "n/a")
     return (
         f"{retail.name}: {color}{pct:.1f}%{_RESET} | "
-        f"{c['structural']} structural | {c['reg_swap']} reg_swap | {size}"
+        f"{c['structural']} structural | {c['reg_swap']} reg_swap | {size} | "
+        f"objdiff={obj}"
     )
+
+
+def _function_json_row(rf: FunctionBytes, dm: FunctionBytes, c: dict, verdict) -> dict:
+    """Per-function --all --json row: old proof counts + joined verdict keys."""
+    row = {
+        "symbol": rf.name,
+        "present": True,
+        "decomp_symbol": dm.name,
+        "mismatch": c["mismatch"],
+        "structural": c["structural"],
+        "reg_swap": c["reg_swap"],
+        "pure_reg_swap": c["pure_reg_swap"],
+        "reloc": c["reloc"],
+        "relocation_errors": c["relocation_errors"],
+        "retail_size": rf.size,
+        "decomp_size": dm.size,
+    }
+    row.update(verdict.json_fields())
+    return row
+
+
+def _finish_baseline(args: argparse.Namespace, json_out: dict | None = None) -> int:
+    """Emit PHANTOM/LOST/GAIN lines; exit 6 only for a genuine LOST."""
+    changes = list(getattr(args, "baseline_changes", None) or [])
+    if json_out is not None:
+        json_out["baseline"] = {
+            "path": str(args.baseline_path) if getattr(args, "baseline_path", None) else None,
+            "changes": [change.as_dict() for change in changes],
+            "lost": sum(1 for change in changes if change.kind == "LOST"),
+            "phantom": sum(1 for change in changes if change.kind == "PHANTOM"),
+        }
+    for change in changes:
+        _emit(change.render(), args)
+    return EXIT_LOST_BASELINE if any(c.kind == "LOST" for c in changes) else 0
 
 
 def _unit_compiler_config(project: Project, unit_name: str) -> str:
@@ -1250,6 +1394,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
             "unit": unit.name,
             "functions": [],
             "matched": 0,
+            "bytes_matched": 0,
             "total": len(retail_fn),
         }
         if size_check is not None:
@@ -1262,31 +1407,27 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
                 "notes": size_check.notes,
             }
         for rf, dm, c in rows:
+            entry = pair_report_function(
+                getattr(args, "objdiff_unit", []),
+                dm.name if dm is not None else None, rf.name)
+            pct = entry.percent if entry is not None else None
+            verdict = combine_verdict(c["match"] if c else False, pct,
+                                      unpaired=bool(entry and entry.unpaired))
             if dm is None:
-                out["functions"].append({
-                    "symbol": rf.name, "present": False,
-                    "decomp_symbol": None,
-                })
+                row = {"symbol": rf.name, "present": False, "decomp_symbol": None}
+                row.update(verdict.json_fields())
+                out["functions"].append(row)
                 continue
-            ok = c["match"]
-            if ok:
+            if c["match"]:
+                out["bytes_matched"] += 1
+            if verdict.full_match:
                 out["matched"] += 1
-            out["functions"].append({
-                "symbol": rf.name,
-                "present": True,
-                "decomp_symbol": dm.name,
-                "match": ok,
-                "mismatch": c["mismatch"],
-                "structural": c["structural"],
-                "reg_swap": c["reg_swap"],
-                "pure_reg_swap": c["pure_reg_swap"],
-                "reloc": c["reloc"],
-                "relocation_errors": c["relocation_errors"],
-                "retail_size": rf.size,
-                "decomp_size": dm.size,
-            })
+            out["functions"].append(_function_json_row(rf, dm, c, verdict))
         out["extab"] = _extab_check(project, config, unit, retail_path, decomp_path)
+        lost_code = _finish_baseline(args, out)
         print(json.dumps(out))
+        if lost_code:
+            return lost_code
         return 0 if out["matched"] == out["total"] else 5
 
     compiler_cfg = _unit_compiler_config(project, unit.name)
@@ -1300,22 +1441,33 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
         print(f"linked-view: excluded {line}")
 
     n_match = 0
-    print(f"\n  {'':4s} {'MATCH':>7s} {'STRUC':>5s} {'REGSW':>5s} {'SIZE':>12s}  SYMBOL")
+    print(f"\n  {'':4s} {'MATCH':>7s} {'STRUC':>5s} {'REGSW':>5s} {'OBJDIFF':>8s} {'SIZE':>12s}  SYMBOL")
     for rf, dm, c in rows:
+        entry = pair_report_function(
+            getattr(args, "objdiff_unit", []),
+            dm.name if dm is not None else None, rf.name)
+        pct = entry.percent if entry is not None else None
+        verdict = combine_verdict(c["match"] if c else False, pct,
+                                  unpaired=bool(entry and entry.unpaired))
         if dm is None:
-            print(f"  {'-':4s} {'n/a':>7s} {'-':>5s} {'-':>5s} {f'0x{rf.size:x}':>12s}  {rf.name}  (not written yet)")
+            print(f"  {'-':4s} {'n/a':>7s} {'-':>5s} {'-':>5s} {'-':>8s} {f'0x{rf.size:x}':>12s}  {rf.name}  (not written yet)")
             continue
-        ok = c["match"]
-        if ok:
+        if verdict.full_match:
             n_match += 1
-        mark = "✓" if ok else "✗"
-        pct = 100.0 * (c["total"] - c["mismatch"]) / (c["total"] or 1)
+        mark = verdict.mark
+        pct_hex = 100.0 * (c["total"] - c["mismatch"]) / (c["total"] or 1)
+        pct_obj = ("unpaired" if verdict.unpaired else
+                   f"{pct:.2f}%" if pct is not None else "n/a")
         print(
-            f"  {mark:4s} {pct:6.1f}% {c['structural']:5d} {c['reg_swap']:5d} "
-            f"{f'0x{rf.size:x}/0x{dm.size:x}':>12s}  {rf.name}"
+            f"  {mark:4s} {pct_hex:6.1f}% {c['structural']:5d} {c['reg_swap']:5d} "
+            f"{pct_obj:>8s} {f'0x{rf.size:x}/0x{dm.size:x}':>12s}  {rf.name}"
         )
-    print(f"\n{n_match}/{len(retail_fn)} functions fully matched")
+    print(f"\n{VERDICT_LEGEND}")
+    print(f"{n_match}/{len(retail_fn)} functions fully matched")
+    lost_code = _finish_baseline(args)
     _print_extab(_extab_check(project, config, unit, retail_path, decomp_path))
+    if lost_code:
+        return lost_code
     return 0 if n_match == len(retail_fn) else 5
 
 
@@ -1348,7 +1500,9 @@ def _output_terminal(
 
     # One-line triage verdict first (kills the grep-the-JSON loop).
     counts = _counts_for(retail, decomp)
-    print(_summary_line(retail, decomp, counts, size_check))
+    print(_summary_line(retail, decomp, counts, size_check,
+                        getattr(args, "objdiff_percent", None),
+                        getattr(args, "objdiff_unpaired", False)))
     if compiler_cfg:
         print(f"{_DIM}compiler: {compiler_cfg}{_RESET}")
 
@@ -1469,25 +1623,35 @@ def _output_terminal(
         )
 
     print()
-    if getattr(args, "byte_match", byte_mismatches == 0 and reloc_count == 0):
-        print(f"{_GREEN}✓ 100% match — {total // 4} instructions identical{_RESET}")
-    elif not args.brief:
-        parts = []
-        if byte_mismatches:
-            pct = 100.0 * (total // 4 - byte_mismatches) / (total // 4)
-            parts.append(f"{_RED}{byte_mismatches} mismatch(es) ({pct:.1f}% match){_RESET}")
-            if reg_swap_count:
-                suffix = "" if reg_swap_count == 1 else "s"
-                parts.append(f"{_CYAN}{reg_swap_count} pure reg-swap{suffix} ({100*reg_swap_count//byte_mismatches}%){_RESET}")
-                if pure_reg_swap_count:
-                    suffix = "" if pure_reg_swap_count == 1 else "s"
-                    parts.append(
-                        f"{_DIM}{pure_reg_swap_count} role-clean swap{suffix} "
-                        f"(doc-31 role table){_RESET}"
-                    )
-        if reloc_count:
-            parts.append(f"{_YELLOW}{reloc_count} unresolved relocation(s){_RESET}")
-        print(f"  " + ", ".join(parts))
+    verdict = getattr(args, "verdict", None) or combine_verdict(
+        getattr(args, "byte_match", byte_mismatches == 0 and reloc_count == 0),
+        getattr(args, "objdiff_percent", None),
+    )
+    obj_suffix = ("objdiff=unpaired" if verdict.unpaired else
+                  f"objdiff={verdict.objdiff_percent:.2f}%"
+                  if verdict.objdiff_percent is not None else "objdiff=n/a")
+    if verdict.full_match:
+        print(f"{_GREEN}✓ 100% match — {total // 4} instructions identical | {obj_suffix}{_RESET}")
+    else:
+        if not args.brief:
+            parts = []
+            if byte_mismatches:
+                pct = 100.0 * (total // 4 - byte_mismatches) / (total // 4)
+                parts.append(f"{_RED}{byte_mismatches} mismatch(es) ({pct:.1f}% match){_RESET}")
+                if reg_swap_count:
+                    suffix = "" if reg_swap_count == 1 else "s"
+                    parts.append(f"{_CYAN}{reg_swap_count} pure reg-swap{suffix} ({100*reg_swap_count//byte_mismatches}%){_RESET}")
+                    if pure_reg_swap_count:
+                        suffix = "" if pure_reg_swap_count == 1 else "s"
+                        parts.append(
+                            f"{_DIM}{pure_reg_swap_count} role-clean swap{suffix} "
+                            f"(doc-31 role table){_RESET}"
+                        )
+            if reloc_count:
+                parts.append(f"{_YELLOW}{reloc_count} unresolved relocation(s){_RESET}")
+            if parts:
+                print(f"  " + ", ".join(parts))
+        print(f"  {verdict.mark} {verdict.reason} | {obj_suffix}")
 
     # Print register mapping table if any reg-swaps were detected
     if reg_map:
@@ -1556,7 +1720,10 @@ def _output_terminal(
         for h in hints:
             print(f"  - {h}")
 
-    return 0 if args.byte_match else 5
+    lost_code = _finish_baseline(args)
+    if lost_code:
+        return lost_code
+    return 0 if verdict.full_match else 5
 
 
 def _output_json(
@@ -1645,9 +1812,12 @@ def _output_json(
                 entries.append({"retail_reg": r_r, "decomp_regs": d_regs})
         reg_mapping[key] = entries
 
+    verdict = getattr(args, "verdict", None) or combine_verdict(
+        args.byte_match, getattr(args, "objdiff_percent", None),
+        unpaired=getattr(args, "objdiff_unpaired", False))
     output = {
         "symbol": retail.name,
-        "match": args.byte_match,
+        "match": verdict.full_match,
         "relocation_errors": args.relocation_errors,
         "retail_path": str(retail.path),
         "decomp_path": str(decomp.path),
@@ -1684,8 +1854,12 @@ def _output_json(
         "reloc_drift": [d.to_dict() for d in reloc_drifts],
         "reloc_suggestions": reloc_suggestions,
     }
+    output.update(verdict.json_fields())
+    lost_code = _finish_baseline(args, output)
     print(json.dumps(output, indent=2))
-    return 0 if args.byte_match else 5
+    if lost_code:
+        return lost_code
+    return 0 if verdict.full_match else 5
 
 
 def run(argv: list[str] | None = None) -> int:

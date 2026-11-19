@@ -169,39 +169,39 @@ extern void fn_803C34DC(void* area);
 extern int sprintf(char* str, const char* fmt, ...);
 
 // Global data
-extern void (*lbl_eu_80619BA0)(void*, void*);
-extern u32 lbl_eu_80619BA4;
-extern u32 lbl_eu_80619BA8;
-extern void* lbl_eu_80606E34;
-extern u8 lbl_eu_80606E38[];
-extern u8 lbl_eu_8056864C[];
-extern u8 lbl_eu_80567FAC[];
-extern u8 lbl_eu_80568080[];
-extern u8 lbl_eu_80568154[];
-extern u8 lbl_eu_80568228[];
-extern u8 lbl_eu_805682FC[];
-extern u8 lbl_eu_805683D0[];
-extern u8 lbl_eu_805684A4[];
-extern u8 lbl_eu_80568578[];
-extern u8 lbl_eu_80568C84[];
+extern void (*gpSfdFrameCallback)(void*, void*);
+extern u32 sSfdWorkMemSize;
+extern u32 gpSfdEventCallback;
+extern void* gpSfdCoreTraceCb;
+extern u8 sSfdGlob[];
+extern u8 sTraceSfdExecOne[];
+extern u8 sTraceSfdCreate[];
+extern u8 sTraceSfdDestroy[];
+extern u8 sTraceSfdStart[];
+extern u8 sTraceSfdStop[];
+extern u8 sTraceSfdRequestStop[];
+extern u8 sTraceSfdTermSupply[];
+extern u8 sTraceSfdGetFrm[];
+extern u8 sTraceSfdRelFrm[];
+extern u8 sTraceAdjustPrepEnd[];
 extern float lbl_eu_8051CBA4;
 extern char lbl_eu_8051CBA8[];
 
 // Field access helper
 #define FIELD(type, base, off) (*((type*)((u8*)(base) + (off))))
 
-// SofDec global work area (lbl_eu_80606E38)
+// SofDec global work area (sSfdGlob)
 typedef struct SfdGlob {
     u8 pad0[0x1F0];
     int resetFlg;       /* 0x1F0 */
     u8 pad1[0x8];
     void* hnSlots[8];   /* 0x1FC */
 } SfdGlob;
-#define SFD_GLOB ((SfdGlob*)lbl_eu_80606E38)
+#define SFD_GLOB ((SfdGlob*)sSfdGlob)
 
 // Trace helper - calls ctx->vtable[9](ctx, traceblock + offset)
 static void traceCall(void* traceBlock, int offset) {
-    void* ctx = lbl_eu_80606E34;
+    void* ctx = gpSfdCoreTraceCb;
     if (ctx) {
         ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, (u8*)traceBlock + offset);
     }
@@ -211,7 +211,7 @@ static void traceCall(void* traceBlock, int offset) {
 // SFPLY_Init
 // ---------------------------------------------------------------------------
 void SFPLY_Init(void) {
-    lbl_eu_80619BA0 = NULL;
+    gpSfdFrameCallback = NULL;
 }
 
 // ---------------------------------------------------------------------------
@@ -243,17 +243,17 @@ int SFD_ExecOne(void* self) {
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(0, 0xff000138);
     } else {
-        ctx = lbl_eu_80606E34;
+        ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            *(void**)(lbl_eu_8056864C + 0x0C) = self;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_8056864C + 4);
+            *(void**)(sTraceSfdExecOne + 0x0C) = self;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdExecOne + 4);
         }
 
         sfply_ExecOne(self);
 
-        ctx = lbl_eu_80606E34;
+        ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_8056864C + 0x6C);
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdExecOne + 0x6C);
         }
         return 0;
     }
@@ -470,15 +470,15 @@ int sfply_StatPrep(SfdPlyStatView* self, int canExec) {
     /* Trace: stash handle + pause/mode field pointers into the static record,
        then invoke the debug context's vtable entry */
  {
-        void* ctx = lbl_eu_80606E34;
+        void* ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            *(void**)(lbl_eu_80568C84 + 0x0C) = self;
-            *(void**)(lbl_eu_80568C84 + 0x18) = &self->avPauseV;
-            *(void**)(lbl_eu_80568C84 + 0x24) = &self->avPauseA;
-            *(void**)(lbl_eu_80568C84 + 0x30) = &self->playMode;
-            *(void**)(lbl_eu_80568C84 + 0x3C) = (u8*)self + 0xA80;
+            *(void**)(sTraceAdjustPrepEnd + 0x0C) = self;
+            *(void**)(sTraceAdjustPrepEnd + 0x18) = &self->avPauseV;
+            *(void**)(sTraceAdjustPrepEnd + 0x24) = &self->avPauseA;
+            *(void**)(sTraceAdjustPrepEnd + 0x30) = &self->playMode;
+            *(void**)(sTraceAdjustPrepEnd + 0x3C) = (u8*)self + 0xA80;
             {
-                ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568C84 + 4);
+                ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceAdjustPrepEnd + 4);
             }
         }
     }
@@ -796,7 +796,7 @@ void criware_803CA124(void* self, int fpsArg) {
 
     condF = SFSET_GetCond(self, 0xF);
     if (condF == 2) {
-        int gf = *(int*)(lbl_eu_80606E38 + 0x1A4);
+        int gf = *(int*)(sSfdGlob + 0x1A4);
         int gl;
         if (gf >= 1000) gl = (1 - (0x7FFFFFFF / gf)) * -1000;
         else gl = 0x7FFFFFFF - 1000;
@@ -817,7 +817,7 @@ int SFD_Create(void* config, void* extra) {
     int hn;
 
     /* trace-enter: dump the config through sprintf into the scratch buffer */
-    if (lbl_eu_80606E34 != NULL) {
+    if (gpSfdCoreTraceCb != NULL) {
         sprintf(buf, lbl_eu_8051CBA8,
                 FIELD(u32, config, 0x04), FIELD(u32, config, 0x08),
                 FIELD(u32, config, 0x0C), FIELD(u32, config, 0x10),
@@ -829,15 +829,15 @@ int SFD_Create(void* config, void* extra) {
                 FIELD(u32, config, 0x44), FIELD(u32, config, 0x48));
 
         /* sprintf is an external call, so the ctx global is re-checked */
-        if (lbl_eu_80606E34 != NULL) {
-            void* ctx = lbl_eu_80606E34;
-            void** rec = (void**)lbl_eu_80567FAC;
+        if (gpSfdCoreTraceCb != NULL) {
+            void* ctx = gpSfdCoreTraceCb;
+            void** rec = (void**)sTraceSfdCreate;
             rec[3] = (void*)buf;
             ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, (char*)rec + 4);
         }
     }
 
-    hnTable = (u32*)(lbl_eu_80606E38 + 0x1FC);
+    hnTable = (u32*)(sSfdGlob + 0x1FC);
 
     /* validate config: stream type and minimum work size */
     if (FIELD(u32, config, 0x04) == 0) {
@@ -852,14 +852,14 @@ int SFD_Create(void* config, void* extra) {
         hn = 0;
     } else {
         /* find a free handle-table slot (unrolled 8-entry scan) */
-        slot = ((SfdGlob*)lbl_eu_80606E38)->hnSlots[0] == NULL ? 0 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[1] == NULL ? 1 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[2] == NULL ? 2 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[3] == NULL ? 3 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[4] == NULL ? 4 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[5] == NULL ? 5 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[6] == NULL ? 6 :
-               ((SfdGlob*)lbl_eu_80606E38)->hnSlots[7] == NULL ? 7 : -1;
+        slot = ((SfdGlob*)sSfdGlob)->hnSlots[0] == NULL ? 0 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[1] == NULL ? 1 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[2] == NULL ? 2 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[3] == NULL ? 3 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[4] == NULL ? 4 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[5] == NULL ? 5 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[6] == NULL ? 6 :
+               ((SfdGlob*)sSfdGlob)->hnSlots[7] == NULL ? 7 : -1;
 
         if (slot == -1) {
             SFLIB_SetErr(0, 0xFF000206);
@@ -872,9 +872,9 @@ int SFD_Create(void* config, void* extra) {
 
     /* trace-exit */
     {
-        void* ctx = lbl_eu_80606E34;
+        void* ctx = gpSfdCoreTraceCb;
         if (ctx != NULL) {
-            void** rec = (void**)lbl_eu_80567FAC;
+            void** rec = (void**)sTraceSfdCreate;
             rec[0x1D] = (void*)hn;
             ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, (char*)rec + 0x6C);
         }
@@ -893,8 +893,8 @@ void* sfply_InitHn(SfdPlyCfg* config, void* extra) {
 
     if (work == NULL) return NULL;
     if ((s32)size <= 0 || size > 0x73A0) return NULL;
-    if ((int)lbl_eu_80619BA4 != 0 && (int)lbl_eu_80619BA4 != (int)size) return NULL;
-    lbl_eu_80619BA4 = size;
+    if ((int)sSfdWorkMemSize != 0 && (int)sSfdWorkMemSize != (int)size) return NULL;
+    sSfdWorkMemSize = size;
 
     UTY_MemsetDword(work, 0, words);
 
@@ -956,8 +956,8 @@ void* sfply_InitHn(SfdPlyCfg* config, void* extra) {
         hn->field_0x277C = fps;
 
         fn_803C34DC((u8*)hn + 0xA08);
-        MEM_Copy((u8*)hn + 0xA1C, lbl_eu_80606E38, 0x190);
-        MEM_Copy((u8*)hn + 0xBAC, lbl_eu_80606E38, 0x190);
+        MEM_Copy((u8*)hn + 0xA1C, sSfdGlob, 0x190);
+        MEM_Copy((u8*)hn + 0xBAC, sSfdGlob, 0x190);
         memset(hn->field_0xD3C, 0, 0x5C);
         hn->field_0xD8C = 0x7FFFFFFF;
         SFTIM_InitHn(hn, hn->tim);
@@ -1044,10 +1044,10 @@ int SFD_Destroy(void* self) {
         return SFLIB_SetErr(0, 0xff000131);
     }
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_80568080 + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568080 + 4);
+        *(void**)(sTraceSfdDestroy + 0x0C) = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdDestroy + 4);
     }
 
     if (FIELD(int, self, 0x54) == 1) {
@@ -1094,9 +1094,9 @@ trJoin:
     }
     SFLIB_UnlockCs(&cs);
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568080 + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdDestroy + 0x6C);
     }
     return result;
 }
@@ -1111,10 +1111,10 @@ int SFD_Start(void* self) {
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(0, 0xff000132);
     }
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_80568154 + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568154 + 4);
+        *(void**)(sTraceSfdStart + 0x0C) = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStart + 4);
     }
 
     if (SFSET_GetCond(self, 0x2F) == 1) {
@@ -1125,9 +1125,9 @@ int SFD_Start(void* self) {
     }
     FIELD(int, self, 0x50) = 1;
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568154 + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStart + 0x6C);
     }
     return result;
 }
@@ -1156,10 +1156,10 @@ int SFD_Stop(void* self) {
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(0, 0xff000133);
     }
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_80568228 + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568228 + 4);
+        *(void**)(sTraceSfdStop + 0x0C) = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStop + 4);
     }
 
     status = FIELD(int, self, 0x54);
@@ -1196,9 +1196,9 @@ stopCheck:
     }
     FIELD(int, self, 0x50) = 1;
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568228 + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdStop + 0x6C);
     }
     return result;
 }
@@ -1207,7 +1207,7 @@ stopCheck:
 // SFPLY_GetResetFlg
 // ---------------------------------------------------------------------------
 int SFPLY_GetResetFlg(void) {
-    return *(int*)(lbl_eu_80606E38 + 0x1F0);
+    return *(int*)(sSfdGlob + 0x1F0);
 }
 
 // ---------------------------------------------------------------------------
@@ -1360,12 +1360,12 @@ int sfply_ResetHn(void* self) {
 
             /* trace-enter */
             {
-                void* ctx = lbl_eu_80606E34;
+                void* ctx = gpSfdCoreTraceCb;
                 if (ctx) {
-                    *(void**)(lbl_eu_805683D0 + 0x0C) = nu;
+                    *(void**)(sTraceSfdTermSupply + 0x0C) = nu;
                     void* vtbl = *(void**)ctx;
                     void (*trace)(void*, void*) = *(void (**)(void*, void*))((u8*)vtbl + 0x24);
-                    trace(ctx, lbl_eu_805683D0 + 4);
+                    trace(ctx, sTraceSfdTermSupply + 4);
                 }
             }
 
@@ -1381,11 +1381,11 @@ int sfply_ResetHn(void* self) {
 
             /* trace-exit */
             {
-                void* ctx = lbl_eu_80606E34;
+                void* ctx = gpSfdCoreTraceCb;
                 if (ctx) {
                     void* vtbl = *(void**)ctx;
                     void (*trace)(void*, void*) = *(void (**)(void*, void*))((u8*)vtbl + 0x24);
-                    trace(ctx, lbl_eu_805683D0 + 0x6C);
+                    trace(ctx, sTraceSfdTermSupply + 0x6C);
                 }
             }
 
@@ -1408,14 +1408,14 @@ int sfply_ResetHn(void* self) {
                 FIELD(u32, nu, 0x1368) = cbGrp1[0];
                 FIELD(u32, nu, 0x136C) = cbGrp1[1];
                 FIELD(u32, nu, 0x1370) = cbGrp1[2];
-                void (*fp)(void*) = (void (*)(void*))lbl_eu_80619BA8;
+                void (*fp)(void*) = (void (*)(void*))gpSfdEventCallback;
                 if (fp != NULL) fp(cbGrp1);
             }
             if (cbGrp2[0] != 0) {
                 FIELD(u32, nu, 0x1374) = cbGrp2[0];
                 FIELD(u32, nu, 0x1378) = cbGrp2[1];
                 FIELD(u32, nu, 0x137C) = cbGrp2[2];
-                void (*fp)(void*) = (void (*)(void*))lbl_eu_80619BA8;
+                void (*fp)(void*) = (void (*)(void*))gpSfdEventCallback;
                 if (fp != NULL) fp(cbGrp2);
             }
 
@@ -1447,10 +1447,10 @@ void SFD_RequestStop(void* self) {
     }
     if (FIELD(int, self, 0x54) == 1) return;
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_805682FC + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805682FC + 4);
+        *(void**)(sTraceSfdRequestStop + 0x0C) = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRequestStop + 4);
     }
 
     FIELD(int, self, 0x70) = 1;
@@ -1458,9 +1458,9 @@ void SFD_RequestStop(void* self) {
     SFTRN_CallTrtTrif(self, 2, 5, 0, 0);
     SFTRN_CallTrtTrif(self, 3, 5, 0, 0);
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805682FC + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRequestStop + 0x6C);
     }
 }
 
@@ -1472,10 +1472,10 @@ int SFD_TermSupply(void* self) {
     int bufId;
     int result;
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_805683D0 + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805683D0 + 4);
+        *(void**)(sTraceSfdTermSupply + 0x0C) = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdTermSupply + 4);
     }
 
     if (SFLIB_CheckHn(self)) {
@@ -1491,9 +1491,9 @@ int SFD_TermSupply(void* self) {
     FIELD(int, self, 0x50) = 1;
     result = 0;
 out:
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805683D0 + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdTermSupply + 0x6C);
     }
     return result;
 }
@@ -1523,10 +1523,10 @@ int SFD_GetFrm(void* self, void** outFrm) {
     }
     if (result) return result;
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_805684A4 + 0x0C) = self;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805684A4 + 4);
+        *(void**)(sTraceSfdGetFrm + 0x0C) = self;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdGetFrm + 4);
     }
 
     result = SFTRN_CallTrtTrif(self, 6, 0xB, (int)outFrm, 0);
@@ -1539,26 +1539,26 @@ int SFD_GetFrm(void* self, void** outFrm) {
             }
             FIELD(int, self, 0x978)++;
         }
-        ctx = lbl_eu_80606E34;
+        ctx = gpSfdCoreTraceCb;
         if (ctx) {
             void* frm = *outFrm;
-            *(void**)(lbl_eu_805684A4 + 0x74) = frm;
-            *(void**)(lbl_eu_805684A4 + 0x80) = (u8*)frm + 0x14;
-            *(void**)(lbl_eu_805684A4 + 0x8C) = (u8*)frm + 0x10;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805684A4 + 0x6C);
+            *(void**)(sTraceSfdGetFrm + 0x74) = frm;
+            *(void**)(sTraceSfdGetFrm + 0x80) = (u8*)frm + 0x14;
+            *(void**)(sTraceSfdGetFrm + 0x8C) = (u8*)frm + 0x10;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdGetFrm + 0x6C);
         }
     } else {
-        ctx = lbl_eu_80606E34;
+        ctx = gpSfdCoreTraceCb;
         if (ctx) {
-            *(void**)(lbl_eu_805684A4 + 0x74) = NULL;
-            *(void**)(lbl_eu_805684A4 + 0x80) = NULL;
-            *(void**)(lbl_eu_805684A4 + 0x8C) = NULL;
-            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_805684A4 + 0x6C);
+            *(void**)(sTraceSfdGetFrm + 0x74) = NULL;
+            *(void**)(sTraceSfdGetFrm + 0x80) = NULL;
+            *(void**)(sTraceSfdGetFrm + 0x8C) = NULL;
+            ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdGetFrm + 0x6C);
         }
     }
 
-    if (lbl_eu_80619BA0 != NULL) {
-        lbl_eu_80619BA0(self, *outFrm);
+    if (gpSfdFrameCallback != NULL) {
+        gpSfdFrameCallback(self, *outFrm);
     }
     return result;
 }
@@ -1587,11 +1587,11 @@ int SFD_RelFrm(void* self, void* frm) {
     }
     if (result != 0) return result;
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        *(void**)(lbl_eu_80568578 + 0x0C) = self;
-        *(void**)(lbl_eu_80568578 + 0x18) = frm;
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568578 + 4);
+        *(void**)(sTraceSfdRelFrm + 0x0C) = self;
+        *(void**)(sTraceSfdRelFrm + 0x18) = frm;
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRelFrm + 4);
     }
 
     {
@@ -1603,9 +1603,9 @@ int SFD_RelFrm(void* self, void* frm) {
 
     result = SFTRN_CallTrtTrif(self, 6, 0xC, (int)frm, 0);
 
-    ctx = lbl_eu_80606E34;
+    ctx = gpSfdCoreTraceCb;
     if (ctx) {
-        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, lbl_eu_80568578 + 0x6C);
+        ((SfdTraceCtx*)ctx)->vtbl->trace(ctx, sTraceSfdRelFrm + 0x6C);
     }
     return result;
 }

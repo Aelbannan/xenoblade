@@ -2,7 +2,7 @@
 #include "monolib/core/CDrawGX.hpp"
 #include "kyoshin/cf/CfCollCircleImpl.hpp"
 #include "kyoshin/cf/object/CfObjectColl.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Shared debug color constant (sdata2). lbl_eu_80666910 (0.0f) and
 // lbl_eu_80666914 (1.0f) come from kyoshin/cf/object/CfObjectColl.hpp;
@@ -19,7 +19,7 @@ extern float lbl_eu_80666918;
 // (CfObject_getPosVector, cf. CfCollSphereImpl).
 void CollCircle_DrawDebugShape(void* context, cf::CfObjectColl* shape){
     CDrawGX gx;
-    TexMan_ApplyCamPersp_034C(lbl_eu_80663E14, &gx, 0);
+    TexMan_ApplyCamPersp_034C(gmScene, &gx, 0);
 
     ml::CCol4 col;
     col.r = lbl_eu_80666910;

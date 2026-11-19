@@ -65,14 +65,14 @@ typedef cf::CfGimmickWarp WarpData;
 // Removed fake iface - now using real classes.
 
 extern "C" {
-extern WarpColumns lbl_eu_805357E8;
+extern WarpColumns gGimmickBdatColumns;
 extern char lbl_eu_8050870C[];
 extern u8 lbl_eu_805359B0[];
 extern WarpStateProc lbl_eu_80535938[];
 extern WarpJumpProc jumptable_eu_80535830[];
-extern WarpVec3 lbl_eu_805765A0;
+extern WarpVec3 gGimmickAnchorPoint;
 extern void* lbl_eu_80664134;
-extern u32 lbl_eu_806646BC;
+extern u32 gGimmickPartyFlags;
 extern f32 lbl_eu_806683C8;
 extern f32 lbl_eu_806683CC;
 extern f32 lbl_eu_806683D0;
@@ -162,13 +162,13 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     u32 tableValue = (u32)lbl_eu_80664134;
     self->rowId = rowId;
 
-    u32 valueE4 = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c2c, rowId);
+    u32 valueE4 = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c2c, rowId);
     self->unkE4 = (u16)valueE4;
     u32 valueE7 = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C, rowId);
     self->flagE7 = (u8)valueE7;
     u32 valueE8 = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C + 7, rowId);
     self->unkE8 = (u16)valueE8;
-    u32 value6A = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c30, rowId);
+    u32 value6A = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c30, rowId);
 
     CfGimmick_LoadBdatAreaPosIndexed(self, &self->position, manager, &tableValue, 0);
     CfGimmick_LoadBdatAreaRotationIndexed(self, &self->rotation, manager, &tableValue, 0);
@@ -177,7 +177,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     CfGimmick_LoadBdatAreaRotationIndexed(self, &self->destination2, manager, &tableValue, 1);
     CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->destination3, manager, &tableValue, 1);
 
-    char* changingColumn = lbl_eu_805357E8.c28;
+    char* changingColumn = gGimmickBdatColumns.c28;
     *changingColumn = 0x41;
     u32 value66 = getBdatStringColumnValue((void*)tableValue, changingColumn, rowId);
     self->configFlags = (u16)value66;
@@ -188,13 +188,13 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     self->unkEA = (s16)valueEA;
     u32 valueEC = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C + 0x15, rowId);
     self->unkEC = (s16)valueEC;
-    u32 valueEE = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c3c, rowId);
+    u32 valueEE = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c3c, rowId);
     self->unkEE = (u16)valueEE;
-    u32 valueF0 = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c40, rowId);
+    u32 valueF0 = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c40, rowId);
     self->unkF0 = (u16)valueF0;
-    u32 value6c = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c34, rowId);
+    u32 value6c = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c34, rowId);
     self->minValue = (u16)value6c;
-    u32 value6e = getBdatStringColumnValue((void*)tableValue, lbl_eu_805357E8.c38, rowId);
+    u32 value6e = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c38, rowId);
     self->maxValue = (u16)value6e;
     self->resourceId = (u16)value6A;
 
@@ -262,7 +262,7 @@ extern "C" void CfGimmickWarp_RefreshMatrices(WarpData* self) {
 }
 
 extern "C" void CfGimmickWarp_TryFire(WarpData* self) {
-    if ((lbl_eu_806646BC & 2) == 0) {
+    if ((gGimmickPartyFlags & 2) == 0) {
         return;
     }
 
@@ -382,7 +382,7 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                     self->object104->owner = self;
                 }
                 if (self->unkE8 != 0) {
-                    self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
+                    self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &gGimmickAnchorPoint);
                 }
                 self->flags |= 1;
             }
@@ -463,7 +463,7 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                     self->object104->owner = self;
                 }
                 if (self->unkE8 != 0) {
-                    self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
+                    self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &gGimmickAnchorPoint);
                 }
                 self->flags |= 1;
             }
@@ -491,11 +491,11 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
     bool ready;
     if (self->phase != 0) {
         ready = jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
-                                                            &lbl_eu_805765A0,
+                                                            &gGimmickAnchorPoint,
                                                             &self->destination) != 0;
     } else {
         ready = jumptable_eu_80535830[self->stateIndex](&self->scale,
-                                                         &lbl_eu_805765A0,
+                                                         &gGimmickAnchorPoint,
                                                          &self->position) != 0;
     }
     if (!ready) {
@@ -504,7 +504,7 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
     }
 
     CfGimmick_SetGlobalFlag40000();
-    self->timer -= Scn_GetFrameDelta(lbl_eu_80663E14);
+    self->timer -= Scn_GetFrameDelta(gmScene);
     if (self->timer > lbl_eu_806683C8) {
         return;
     }
@@ -575,7 +575,7 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
             self->object104->owner = self;
         }
         if (self->unkE8 != 0) {
-            self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
+            self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &gGimmickAnchorPoint);
         }
         self->flags |= 1;
     }
@@ -586,13 +586,13 @@ extern "C" void CfGimmickWarp_CheckLaunch(WarpData* self) {
     int ready = 0;
     if (self->phase != 0) {
         if (jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
-                                                        &lbl_eu_805765A0,
+                                                        &gGimmickAnchorPoint,
                                                         &self->destination) != 0) {
             ready = 1;
         }
     } else {
         if (jumptable_eu_80535830[self->stateIndex](&self->scale,
-                                                     &lbl_eu_805765A0,
+                                                     &gGimmickAnchorPoint,
                                                      &self->position) != 0) {
             ready = 1;
         }
@@ -634,7 +634,7 @@ extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
         break;
     }
 
-    self->timer += Scn_GetFrameDelta(lbl_eu_80663E14);
+    self->timer += Scn_GetFrameDelta(gmScene);
     if (lbl_eu_806683D8 <= self->timer ||
         (allReady && lbl_eu_806683D0 <= self->timer)) {
         CfGimmick_SetGlobalFlagC0002();
@@ -685,7 +685,7 @@ extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
                 self->object104->owner = self;
             }
             if (self->unkE8 != 0) {
-                self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
+                self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &gGimmickAnchorPoint);
             }
             self->flags |= 1;
         }
@@ -708,7 +708,7 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
     CfGimmick_SetGlobalFlagC0002();
     CfGimmick_SetGlobalFlagD0000();
     if ((self->flags & 2) != 0) {
-        self->timer -= Scn_GetFrameDelta(lbl_eu_80663E14);
+        self->timer -= Scn_GetFrameDelta(gmScene);
         if (self->timer > lbl_eu_806683C8) {
             return;
         }
@@ -789,7 +789,7 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
     u32 flags = self->flags;
     if ((flags & 2) == 0) {
         f32 limit = lbl_eu_806683C8;
-        self->timer -= Scn_GetFrameDelta(lbl_eu_80663E14);
+        self->timer -= Scn_GetFrameDelta(gmScene);
         if (self->timer <= limit) {
             self->flags = flags | 2;
             self->timer = lbl_eu_806683F8;
@@ -803,7 +803,7 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
         return;
     }
 
-    f32 t = self->timer - Scn_GetFrameDelta(lbl_eu_80663E14);
+    f32 t = self->timer - Scn_GetFrameDelta(gmScene);
     self->timer = t;
     if ((flags & 4) == 0) {
         if (t > lbl_eu_806683CC) {
@@ -842,7 +842,7 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
                         self->object104->owner = self;
                     }
                     if (self->unkE8 != 0) {
-                        self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &lbl_eu_805765A0);
+                        self->soundHandle = CfGimmick_PlaySoundAtPos(self->unkE8, &gGimmickAnchorPoint);
                     }
                     self->flags |= 1;
                 }
@@ -878,14 +878,14 @@ extern "C" void CfGimmickWarp_CheckReady(WarpData* self) {
         if ((self->configFlags & 1) != 0) {
             ready = 1;
         } else if (jumptable_eu_80535830[self->stateIndex](&self->scale,
-                                                            &lbl_eu_805765A0,
+                                                            &gGimmickAnchorPoint,
                                                             &self->position) == 0) {
             ready = 1;
         }
     } else if ((self->flagE6 & 1) != 0) {
         ready = 1;
     } else if (jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
-                                                          &lbl_eu_805765A0,
+                                                          &gGimmickAnchorPoint,
                                                           &self->destination) == 0) {
         ready = 1;
     }
@@ -900,14 +900,14 @@ extern "C" void CfGimmickWarp_CheckReadyBoth(WarpData* self) {
     if ((self->configFlags & 1) != 0) {
         firstReady = 1;
     } else if (jumptable_eu_80535830[self->stateIndex](&self->scale,
-                                                       &lbl_eu_805765A0,
+                                                       &gGimmickAnchorPoint,
                                                        &self->position) == 0) {
         firstReady = 1;
     }
     if ((self->flagE6 & 1) != 0) {
         secondReady = 1;
     } else if (jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
-                                                          &lbl_eu_805765A0,
+                                                          &gGimmickAnchorPoint,
                                                           &self->destination) == 0) {
         secondReady = 1;
     }

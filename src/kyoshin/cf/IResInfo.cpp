@@ -8,19 +8,14 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // ============================================================
 // External globals
 // ============================================================
 extern "C" {
-    extern u32 lbl_eu_80663E28;
+    extern u32 gmPauseFlags;
     extern u32 lbl_eu_8065FC18[];
-    extern float lbl_eu_80666200;
-    extern float lbl_eu_80666204;
-    extern float lbl_eu_80666208;
-    extern float lbl_eu_8066620C;
-    extern char lbl_eu_804FB380[]; // "KYP" string (incomplete array -> lis/addi, not sda21)
     extern u32 lbl_eu_80526920[];
     extern u32 lbl_eu_80526938[];
     extern u32 lbl_eu_80526944[];
@@ -245,7 +240,7 @@ extern "C" void CfRes_resolveEventResource(int unused, ResInfoEntry* param) {
             }
         }
     }
-    lbl_eu_80663E24 |= 0x1000;
+    gmGameFlags |= 0x1000;
 }
 
 // ============================================================
@@ -254,7 +249,7 @@ extern "C" void CfRes_resolveEventResource(int unused, ResInfoEntry* param) {
 extern "C" void CfRes_publishBdatResource(int unused, ResInfoEntry* self) {
     void* result = self->field_0x2C->getResourceBase(self, 0);
     CBdat::setBdatEntry(1, result);
-    lbl_eu_80663E28 |= 0x2000;
+    gmPauseFlags |= 0x2000;
 }
 
 // ============================================================
@@ -404,7 +399,7 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryA(ResInfoEntry* self) {
     void* result = 0;
     base = self->field_0x2C->getResourceBase(self, 0);
     if (base != 0) {
-        if (strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
+        if (strcmp("KYP", (const char*)base) == 0) {
             // TU-local view of the resource blob header: entry count at
             // +0x08, entry words at +0x10 (16 bytes each; word 0 is the
             // base-relative offset, word 2 (+8) the tag).
@@ -440,7 +435,7 @@ extern "C" __declspec(noinline) void* CfRes_findKypEntryB(ResInfoEntry* self, u3
     u8* p;
     void* result = 0;
     base = self->field_0x2C->getResourceBase(self, 0);
-    if (base != 0 && strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
+    if (base != 0 && strcmp("KYP", (const char*)base) == 0) {
         // TU-local view of the resource blob header: entry count at +0x08,
         // entry words at +0x10 (16 bytes each; word 0 is the base-relative
         // offset, word 1 the index, word 2 (+8) the tag).
@@ -488,7 +483,7 @@ extern "C" void* CfRes_findEntryById(ResInfoEntry* self, u32 id) {
         if (self->field_0x2C->isInUse(self) != 0) return base;
         return 0;
     }
-    if (base != 0 && strcmp(lbl_eu_804FB380, (const char*)base) == 0) {
+    if (base != 0 && strcmp("KYP", (const char*)base) == 0) {
         ml::FixStr<64> buf(true);
         // TU-local view of the resource blob header: entry count at +0x08,
         // entry words at +0x10 (16 bytes each; word 0 is the base-relative
@@ -532,7 +527,7 @@ bool CfRes_updateEntry(ResInfoEntry* self, bool paramLoad, bool paramFade, bool 
     // Bit set while a system-wide clear is active (raises the unload floor).
     bool hasClear = false;
     if (gflagGateMask8()) {
-        if (lbl_eu_80663E28 & 0x10) {
+        if (gmPauseFlags & 0x10) {
             hasClear = true;
         }
     }
@@ -540,7 +535,7 @@ bool CfRes_updateEntry(ResInfoEntry* self, bool paramLoad, bool paramFade, bool 
     bool didWork = false;
 
     u32* data = self->data;
-    u32 gbit6 = (lbl_eu_80663E28 >> 6) & 1;
+    u32 gbit6 = (gmPauseFlags >> 6) & 1;
     if (data != 0) {
         if (self->field_0x00 & 0x80) {
             u32 flags = self->field_0x2C->getFlags();
@@ -587,9 +582,9 @@ bool CfRes_updateEntry(ResInfoEntry* self, bool paramLoad, bool paramFade, bool 
                     // mode bits and the entry flags.
                     int st = KyoshinHeap_GetCount38();
                     // Global mode word is read twice (retail keeps two loads).
-                    u32 f24a = *(volatile u32*)&lbl_eu_80663E24;
+                    u32 f24a = *(volatile u32*)&gmGameFlags;
                     int mode = 1;
-                    u32 f24b = *(volatile u32*)&lbl_eu_80663E24;
+                    u32 f24b = *(volatile u32*)&gmGameFlags;
                     if ((((f24a & 0x2000000) | (f24a & 0x400)) == 0) && ((f24b & 0x40000) == 0)) {
                         mode = 0;
                     }
@@ -685,7 +680,7 @@ bool CfRes_updateEntry(ResInfoEntry* self, bool paramLoad, bool paramFade, bool 
     if (didWork) {
         // Work was done this tick: clear the global reload bit and fully
         // reset the record back to its empty state.
-        lbl_eu_80663E28 &= ~0x40;
+        gmPauseFlags &= ~0x40;
         if (lbl_eu_8065FC18 != 0 && self->field_0x10 != 0) {
             walkReslistBE8vt((void*)self->field_0x10);
             EffSched_LookupB(lbl_eu_8065FC18, (void*)self->field_0x10);
@@ -805,8 +800,8 @@ extern "C" u8* CfRes_findHighEntryById(u8* self, u32 id, u32* outIdx, u32* outVa
 extern "C" bool CfRes_updateGrids(ResInfoContainer* self, bool param) {
     // Declaration order mirrors retail callee-saved coloring:
     // cond=r31, flag25=r30, res=r29, target=r28, base=r27, any=r26.
-    u32 fGate = *(volatile u32*)&lbl_eu_80663E24;
-    u32 flags = *(volatile u32*)&lbl_eu_80663E24;
+    u32 fGate = *(volatile u32*)&gmGameFlags;
+    u32 flags = *(volatile u32*)&gmGameFlags;
 
     bool cond;
     bool flag25;
@@ -827,21 +822,21 @@ extern "C" bool CfRes_updateGrids(ResInfoContainer* self, bool param) {
     if (processEventQueueB__Q22cf13CfGameManagerFv()) return false;
     if (flag25) return false;
 
-    minVal = lbl_eu_80666200;
+    minVal = 0.0f;
     if (cond || flag25) {
         // Shared-store form: MWCC emits one stfs for both arms (retail).
-        self->field_0x1ED0 = param ? lbl_eu_80666204 : lbl_eu_80666208;
+        self->field_0x1ED0 = param ? 3.0f : 120.0f;
     } else {
         // flag25 is provably 0 here (early-returned above); the redundant
         // test mirrors the retail `beq cr1` reusing the earlier compare flag.
-        float limit = lbl_eu_80666200;
-        self->field_0x1ED0 -= lbl_eu_8066620C;
+        float limit = 0.0f;
+        self->field_0x1ED0 -= 1.0f;
         if (self->field_0x1ED0 < limit) {
             self->field_0x1ED0 = limit;
         }
     }
 
-    minVal = lbl_eu_80666200;
+    minVal = 0.0f;
     base = self->grid;                                  // 0x14DC
     target = (ResGridEntry*)&self->grid[0].field_0x04;  // 0x14E0
     for (i = 0x59; i < 0x81; i++, base++, target++) {
@@ -859,13 +854,13 @@ extern "C" bool CfRes_updateGrids(ResInfoContainer* self, bool param) {
             if (unload) {
                 if (cond) {
                     if ((base->field_0x04 & 0x200) != 0
-                     && base->handle == (CFileHandle*)lbl_eu_80663E30) {
+                     && base->handle == (CFileHandle*)gmQueuedEventCount) {
                         continue;
                     }
                 }
                 if (flag25) {
                     if ((base->field_0x04 & 0x400) != 0
-                     && base->handle == (CFileHandle*)lbl_eu_80663E30) {
+                     && base->handle == (CFileHandle*)gmQueuedEventCount) {
                         continue;
                     }
                 }
@@ -1047,7 +1042,7 @@ extern "C" void CfRes_reloadLoadedEntries(u8* self) {
 // excludes the entry's category (8/11).
 extern "C" void CfRes_updateLowGrid(u8* self, bool param) {
     CDeviceVI::waitForDrawDone();
-    u32 flags24 = lbl_eu_80663E24;
+    u32 flags24 = gmGameFlags;
     bool flagResult = (flags24 & 0x40000) | (flags24 & 0x8000);
     ResGridEntry* target = (ResGridEntry*)(self + 0x14E0);
     ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
@@ -1361,7 +1356,7 @@ extern "C" void __dt__80067670(u8* self) {
 extern "C" void CfRes_initWork(ResInfoWork* self) {
     memset(&self->_04, 0, 0x1E78);
     u32 flags = self->flags | 1;
-    self->counter = lbl_eu_80666200;
+    self->counter = 0.0f;
     self->flags = flags;
 
     // Reset the embedded reslist ring: unlink every node, then close the
@@ -1493,7 +1488,7 @@ extern "C" void CfRes_initWork(ResInfoWork* self) {
 // ============================================================
 
 extern "C" __declspec(noinline) bool testResInfoFlag(u32 flags) {
-    return (lbl_eu_80663E28 & flags) != 0;
+    return (gmPauseFlags & flags) != 0;
 }
 
 extern "C" __declspec(noinline) bool testWordFlag(const u32* p, u32 mask) {

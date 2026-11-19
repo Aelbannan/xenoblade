@@ -28,15 +28,6 @@ extern void setEffectEnabled(u32 value);
 // func_80462D5C) conflicts with cf/CTaskREvent.hpp's caller-shape copies, so
 // this TU takes only these three signatures verbatim.
 
-// Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
-// 0x1C. Postprocess drops this FORCEACTIVE from .text (CGame.o drop_text_symbols)
-// after it packs @stringBase0 - stubs already fill the split to 0xD08.
-void force_cgame_strings(const char*, const char*, const char*, const char*, const char*);
-void FORCEACTIVECGame_cpp_wkStandbyLogin(void);
-void FORCEACTIVECGame_cpp_wkStandbyLogin(void) {
-    force_cgame_strings("CGameRestart", "", "43", "arc", "4_3mode.brlyt");
-}
-
 CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
 nw4r::lyt::Layout* CGame::lbl_80666604;
@@ -116,9 +107,7 @@ void CGame::wkUpdate() {
 
         mSceneReqId = -1;
         mSceneReqId2 = -1;
-        // Preserve the retail string-pool reference to the terminator after
-        // "CGameRestart"; a plain "" resolves to a different pool entry.
-        unk1FC = "CGameRestart" + 13;
+        unk1FC = "";
         mSceneReqFlag = 0;
     }
 
@@ -237,13 +226,10 @@ bool CGame::wkStandbyLogin() {
     VIEnableDimming(1); // enable VI dimming for controller disconnect
     VISetTimeToDimming(1); // dim after 1 frame of no input
 
-    // +14: "CGameRestart" after null → same string reused as resource filename
-    if (CLibStaticData::getStaticFileData("CGameRestart" + 14, &handle, nullptr)) {
+    if (CLibStaticData::getStaticFileData("43", &handle, nullptr)) {
         sArcResourceAccessor = CLibLayout::createArcResourceAccessor();
-        // +17: points past "CGameRestart".\0" → archive key within the ARC
-        sArcResourceAccessor->Attach(handle.data, "CGameRestart" + 17);
-        // +21: points past "CGameRestart".\0"arc" → "4_3mode.brlyt" layout name
-        buildLayout(&lbl_80666604, sArcResourceAccessor, "CGameRestart" + 21);
+        sArcResourceAccessor->Attach(handle.data, "arc");
+        buildLayout(&lbl_80666604, sArcResourceAccessor, "4_3mode.brlyt");
     }
 
     return CProc::wkStandbyLogin();
@@ -285,13 +271,6 @@ bool CGame::wkStandbyLogout() {
     }
 
     return false;
-}
-
-// Keep the ArcResourceAccessor destructor instantiated in this translation unit.
-static void dummy() {
-    nw4r::lyt::ArcResourceAccessor* accessor = new nw4r::lyt::ArcResourceAccessor();
-    accessor->Attach(0, 0);
-    delete accessor;
 }
 
 void CGame::GameMain() {

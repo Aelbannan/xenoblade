@@ -64,7 +64,6 @@ public:
 
 // Quest-log sub-object helpers. Retail uses the unmangled func_ names, so
 // declare them with C linkage (a C++ member call would re-mangle the reloc).
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" bool QstLogInfo_GetLoadedMark(CQstLogInfo* self);
 extern "C" bool QstLogInfo_GetReadyMark(CQstLogInfo* self);
 
@@ -77,9 +76,6 @@ struct CQuestLogPadData {
     u32 mTurboPressButtonFlags; // +0x104
 };
 extern "C" void QstLogInfo_Start(CQstLogInfo* self);
-extern "C" void markReplayClose(CTitleAHelp* self);
-extern "C" void reopenFromClose(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 
 // Init() imports (retail unmangled names).
@@ -88,7 +84,6 @@ extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
 // Embedded widgets are torn down through their owning helpers above.
-extern "C" void teardown(CTitleAHelp* self);
 
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
@@ -98,20 +93,17 @@ extern "C" void QstLogInfo_TeardownLayout(CQstLogInfo* self);
 extern "C" void CUICfManager_setTimeout30();
 
 // Singleton pointer for the quest-log menu (.sbss).
-extern CMenuQuestLog* lbl_eu_80663FC0[2];
+extern CMenuQuestLog* spQuestLogMenuInstance[2];
 
 // Global mode bitfield (bit 0x200000 gates the quest-log Move/render paths);
 // declared in kyoshin/CTaskGame.hpp, which this TU avoids including (see the
 // IScnRender note at the top).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void QstLogInfo_SetQuestIdSlot(void*, unsigned short);
 extern "C" void QstLogInfo_LoadCommonArchive(void*);
 
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 // Widget/base helpers with retail-unmangled names (US retail strips these
 // member manglings) - C linkage so calls bind the literal retail symbols.
 // Queries return int so callers compare with cmpwi directly.

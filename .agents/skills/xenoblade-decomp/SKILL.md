@@ -111,7 +111,15 @@ python3 tools/coop/hexdiff.py <unit> --symbol <mangled> [--brief|--json|--asm|--
 python3 tools/coop/hexdiff.py <unit> --all      # unit triage: one build, per-function table
 ```
 
-- Read the one-line verdict + `reg_swap`/`structural` breakdown. If a change raises a count, **revert**.
+- Verdict marks: `✓` = byte/reloc proof **and** objdiff 100%; `≈` = proof pass, objdiff <100
+  (reloc-name drift); `◇` = objdiff 100 but linked-address mismatch (hexdiff); `✗` = both fail.
+  `--all` adds an `OBJDIFF` column, `--symbol` adds `objdiff=NN.NN%`, and `--json` carries
+  `bytes_match` (old semantics), `full_match`, `match` (alias of `full_match`) and `objdiff_percent`.
+- Per-symbol baseline rule: `hexdiff <unit> --all` compares with `build/<region>/report_baseline.json`
+  when present (`--baseline PATH` overrides, `--no-baseline` disables). It prints `LOST sym old% ->
+  new%` / `GAIN ...` for functions crossing 100% (renames paired by address/resolver) and exits 6
+  on any LOST.
+- Read the one-line verdict + `reg_swap`/`structural` breakdown.
   After 3 non-improving attempts, record an open-item packet (status/%, size, categories, ruled-out
   hypotheses, exact residual, next 3 experiments) and switch angle.
 - **Prefer `hexdiff` over raw `ninja`** — it owns the build + repo-wide lock

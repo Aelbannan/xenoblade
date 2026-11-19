@@ -8,7 +8,7 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
@@ -75,4 +75,4 @@ extern "C" CSystemWindow* SysWinCreateSingleton(CProcess* parent, CScn* scene, u
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)
-extern u32 lbl_eu_80663E28;              // cbRenderBefore flag (.sbss)
+extern u32 gmPauseFlags;              // cbRenderBefore flag (.sbss)

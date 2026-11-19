@@ -28,8 +28,7 @@ extern "C" void* __dt__10CViewFrameFv(void* self, int flags) {
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
 extern "C" void CViewFrame_ComputeContentRect(ml::CRect16* rect, const CViewFrame* frame);
-extern "C" void __ct__CViewFrame(CViewFrame* frame);
-// CFontLayer base ctor (un-mangled retail symbol; defined in the shipped
+
 // CFontLayer.o, which is NonMatching so no C++ declaration exists anywhere).
 extern "C" void __ct__CFontLayer(CFontLayer* layer);
 // Third arg is the rect pointer CView::updateViewRect received (retail keeps
@@ -51,9 +50,6 @@ void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 void updateViewRoot__9CViewRootFv();
 void fontFlush__10CFontLayerFi(CFontLayer* layer, int flag);
 void render__10CViewFrameFv(CViewFrame* frame);
-// Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
-extern char lbl_eu_8056B298[];
-extern char lbl_eu_8056B280[];
 // FloatUtils-owned .sdata2 constants used by the ctor (retail references these
 // instead of pooling TU-local copies; CView.o has .sdata2 size 0).
 extern float lbl_eu_8066A2D0;  // 1.0f
@@ -1781,12 +1777,11 @@ CView::~CView() {
 }
 
 CView::CView(const char* pName, CWorkThread* pParent)
-    : CWorkThread(pName, pParent, 2) {
+    : CWorkThread(pName, pParent, 2), mFrame() {
     // The base classes and the reslist/CMsgParam members are constructed by
     // the compiler from their own inline ctors; only the view-specific state
     // is set here.
     mRectData.initViewRect();
-    __ct__CViewFrame(&mFrame);
 
     unk278 = 0;
     unk27C = 0;

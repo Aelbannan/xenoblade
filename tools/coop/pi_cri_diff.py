@@ -8,7 +8,8 @@ UNIT = "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv"
 
 
 def diff(sym, no_build=False):
-    cmd = [".venv/bin/python3", "tools/coop/hexdiff.py", UNIT, "--symbol", sym, "--json"]
+    cmd = [".venv/bin/python3", "tools/coop/hexdiff.py", UNIT, "--symbol", sym,
+           "--json", "--no-baseline"]
     if no_build:
         cmd.append("--no-build")
     r = subprocess.run(cmd, capture_output=True, text=True)

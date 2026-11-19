@@ -7,7 +7,7 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538(&lbl_eu_806654D0);
+NW4R_UT_RTTI_DEF_DERIVED(WaveSound, BasicSound);
 
 // A WSD file image loaded into memory. Typedef of 'const void' so signatures
 // spell out a named type while still mangling as PCv (const void*).
@@ -78,7 +78,7 @@ namespace snd {
 namespace detail {
 
 const nw4r::ut::detail::RuntimeTypeInfo* WaveSound::GetRuntimeTypeInfo() const {
-    return &lbl_eu_80665538;
+    return &typeInfo;
 }
 
 } // namespace detail

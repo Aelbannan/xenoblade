@@ -12,14 +12,14 @@ u32 SFD_GetHnStat(SfdHandle* self) {
     return self->errorState;
 }
 
-extern u32 lbl_eu_80606E38[]; /* SFD work area */
+extern u32 sSfdGlob[]; /* SFD work area */
 
 s32 SFD_SetCond(SfdHandle* self, s32 idx, s32 val) {
     if (self == NULL) {
         s32 ok;
         void* h;
         s32 i;
-        u32* p = lbl_eu_80606E38 + 0x7F;
+        u32* p = sSfdGlob + 0x7F;
         s32 off = idx * 4;
         for (i = 0; i < 8; i++, p++) {
             h = (void*)*p;
@@ -34,7 +34,7 @@ s32 SFD_SetCond(SfdHandle* self, s32 idx, s32 val) {
             if (ok)
                 *(u32*)((u8*)h + (off + 0xA1C)) = val;
         }
-        *(u32*)((u8*)lbl_eu_80606E38 + off) = val;
+        *(u32*)((u8*)sSfdGlob + off) = val;
         } else {
         if (SFLIB_CheckHn(self) != 0)
             return SFLIB_SetErr(0, 0xFF000112);
@@ -79,7 +79,7 @@ void SFSET_SetCond(SfdHandle* self, s32 idx, s32 val) {
 
 s32 SFD_GetCond(SfdHandle* self, u32 idx, s32* out) {
     if (self == NULL) {
-        *out = (s32)lbl_eu_80606E38[idx];
+        *out = (s32)sSfdGlob[idx];
     } else {
         if (SFLIB_CheckHn(self) != 0)
             return SFLIB_SetErr(0, 0xFF000113);

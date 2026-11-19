@@ -41,7 +41,7 @@
 
 // True when the pause flag is clear (game not frozen by a subwindow).
 static inline bool isSceneActive() {
-    return lbl_eu_80664772 == 0;
+    return gNandTeardownFlag == 0;
 }
 
 // Bump the scenario counter `id` by one (clamped to 0xFFFF) while the scene is
@@ -50,7 +50,7 @@ static inline bool isSceneActive() {
 // compare, giving retail's `lhz / mr / cmpi / beq / b` ladder.
 static inline u32 scenarioBump(u32 id) {
     u32 n = getEventValue40__Q22cf13CfGameManagerFv(id);
-    if (lbl_eu_80664772 != 0) {
+    if (gNandTeardownFlag != 0) {
         return n;
     }
     n = n + 1;
@@ -141,26 +141,15 @@ void SysWinLog_PollBattleStart() {
 
 
 // Bump sequence counter 0xB once (while not paused), then close it once the
-// counter passes 100. Written as a two-arm if/else so MWCC emits retail's
-// `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
-void SysWinLog_TickCounter0B(CScenarioFlagObj* self) {
-    if ((self->field_0x3F00 & 0x2) != 0) {
-        u32 n;
-        u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0xB);
-        u16 pauseFlag = lbl_eu_80664772;
-        if (pauseFlag != 0) {
-            // Scene frozen by a subwindow: keep the un-bumped value.
-            n = cur;
-        } else {
-            n = cur + 1;
-            if (n >= 0xFFFF) {
-                n = 0xFFFF;
-            }
-            setEventManagerValue__Q22cf13CfGameManagerFv(0xB, n);
-        }
+// counter passes 100. The shared scenarioBump helper is inlined, giving
+// retail's hoisted keep-copy and `beq bump; b after` guard pair.
+extern "C" void SysWinLog_TickCounter0B(void* self) {
+    CScenarioFlagObj* owner = (CScenarioFlagObj*)self;
+    if ((owner->field_0x3F00 & 0x2) != 0) {
+        u32 n = scenarioBump(0xB);
         if (n >= 0x64) {
             bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
-            if (!booting && lbl_eu_80664772 == 0) {
+            if (!booting && gNandTeardownFlag == 0) {
                 queueEventId__Q22cf13CfGameManagerFv(0xB);
             }
         }
@@ -230,7 +219,7 @@ void SysWinLog_PollBattleEnd() {
 // when all pass, bump/close the 0x3c counter (100-threshold close) and the
 // 0x57 counter (50-threshold close).
 // ---------------------------------------------------------------------------
-void SysWinLog_CheckOpenGate() {
+extern "C" void SysWinLog_CheckOpenGate() {
     int result;
     u32 n;
     CSysWinActorList* list = getListB28();
@@ -265,23 +254,7 @@ void SysWinLog_CheckOpenGate() {
     result = 1;
 done:
     if (result != 0) {
-        // Inline bump (scenarioBump shape hoists the keep-copy wrong here):
-        // the two-arm if/else makes MWCC hoist the phi copy above the branch,
-        // matching retail's lhz/mr/cmpi schedule.
-        // Two-arm keep-first bump (best known shape; MWCC sinks the phi
-        // copy after the branch - same residual 3 as siblings 80280804/
-        // 802809C8/80280BF0, scheduling-swap class per MWCC_CASES).
-        u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x3c);
-        if (lbl_eu_80664772 != 0) {
-            // Scene frozen by a subwindow: keep the un-bumped value.
-            n = cur;
-        } else {
-            n = cur + 1;
-            if (n >= 0xFFFF) {
-                n = 0xFFFF;
-            }
-            setEventManagerValue__Q22cf13CfGameManagerFv(0x3c, n);
-        }
+        n = scenarioBump(0x3c);
         if (n >= 1) {
             scenarioClose(0x3c);
         }
@@ -543,7 +516,7 @@ extern "C" void SysWinLog_DriveCounters(CSysWinDevice* arg0, void* arg1) {
         scenarioClose(0x7);
     }
 
-    if (lbl_eu_80663E42 != 0x16) {
+    if (gmGlobalFlag42 != 0x16) {
         if ((u32)(dev - 1) <= 1) {
             u32 vd = scenarioBump(0xD);
             if (vd >= 0x1E) {
@@ -783,35 +756,11 @@ void SysWinLog_GateOwner(CScenarioLogOwner* self) {
     }
 }
 
-void SysWinLog_TickCounter2C(s32 self) {
+extern "C" void SysWinLog_TickCounter2C(s32 self) {
     if (self < 4) {
         return;
     }
-    u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x2C);
-    // Two-arm phi merge reproduces retail's `beq bump; b after` pair.
-    // RESIDUAL (3 structural): MWCC sinks the keep-path copy (`mr r31,r3`)
-    // after the cmpi/beq; retail hoists it between the lhz and cmpi.
-    // Ruled out: goto dispatch (direct + negated), empty-then/else,
-    // do-while break, switch equality chain, ternary+comma merge (adds a
-    // temp), pre-assigned keep value (+duplicated arm), flag-read-first
-    // order (hoists lhz above the bl into r31), arms swapped. Same
-    // scheduling-swap class as rfc_FlowReq (MWCC_CASES ~line 703).
-    {
-        u16 pauseFlag = lbl_eu_80664772;
-        u32 n;
-        if (pauseFlag != 0) {
-            // Scene frozen by a subwindow: keep the un-bumped value.
-            n = seq;
-        } else {
-            n = seq + 1;
-            if (n >= 0xFFFF) {
-                n = 0xFFFF;
-            }
-            setEventManagerValue__Q22cf13CfGameManagerFv(0x2C, n);
-        }
-        seq = n;
-    }
-after:
+    u32 seq = scenarioBump(0x2C);
     if (seq >= 0x1) {
         bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -839,23 +788,8 @@ after:
 // 500). Retails only clamps once per open window and only closes each gate
 // when the scene is not booting and no subwindow is freezing the game.
 // ---------------------------------------------------------------------------
-void SysWinLog_TickCounter23() {
-    u32 n;
-    u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x23);
-    // Two-arm if/else assigning n on both sides reproduces retail's
-    // `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
-    if (lbl_eu_80664772 != 0) {
-        // Scene frozen by a subwindow: keep the un-bumped value.
-        n = cur;
-    } else {
-        n = cur + 1;
-        if (n >= 0xFFFF) {
-            n = 0xFFFF;
-        }
-        setEventManagerValue__Q22cf13CfGameManagerFv(0x23, n);
-    }
-after:
-    ;
+extern "C" void SysWinLog_TickCounter23() {
+    u32 n = scenarioBump(0x23);
     if (n >= 0xA) {
         bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -877,20 +811,8 @@ after:
 }
 
 
-void SysWinLog_TickCounter29() {
-    u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x29);
-    u32 n;
-    // Two-arm if/else assigning n on both sides reproduces retail's
-    // `beq bump; b after` pair (same shape as SysWinLog_TickCounter5A).
-    if (lbl_eu_80664772 == 0) {
-        n = seq + 1;
-        if (n >= 0xFFFF) {
-            n = 0xFFFF;
-        }
-        setEventManagerValue__Q22cf13CfGameManagerFv(0x29, n);
-    } else {
-        n = seq;
-    }
+extern "C" void SysWinLog_TickCounter29() {
+    u32 n = scenarioBump(0x29);
     if (n >= 0x1) {
         bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -915,21 +837,8 @@ void SysWinLog_TickCounter29() {
 // Bump sequence counter 0x5A once while the scene is active, then fire
 // one-shot closes at the 1 / 300 / 2000 thresholds. All three gates read the
 // post-bump value (retail keeps it live in r31 across every gate).
-void SysWinLog_TickCounter5A() {
-    u32 n;
-    u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x5A);
-    // Two-arm if/else assigning n on both sides reproduces retail's
-    // `beq bump; b after` guard pair (same shape as SysWinLog_TickCounter23).
-    if (lbl_eu_80664772 != 0) {
-        // Scene frozen by a subwindow: keep the un-bumped value.
-        n = cur;
-    } else {
-        n = cur + 1;
-        if (n >= 0xFFFF) {
-            n = 0xFFFF;
-        }
-        setEventManagerValue__Q22cf13CfGameManagerFv(0x5A, n);
-    }
+extern "C" void SysWinLog_TickCounter5A() {
+    u32 n = scenarioBump(0x5A);
     if (n >= 0x1) {
         bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -1262,7 +1171,7 @@ void* SysWinLog_AllocFreeSlot(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
 // ---------------------------------------------------------------------------
 extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self) {
     bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
-    if (!booting && lbl_eu_80664772 == 0) {
+    if (!booting && gNandTeardownFlag == 0) {
         queueEventId__Q22cf13CfGameManagerFv(self);
     }
 }
@@ -1270,7 +1179,7 @@ extern "C" void __declspec(noinline) SysWinLog_QueueEvent(u32 self) {
 
 extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg) {
     u32 v = getEventValue40__Q22cf13CfGameManagerFv(self);
-    if (lbl_eu_80664772 != 0) {
+    if (gNandTeardownFlag != 0) {
         // Scene frozen by a subwindow: return the un-bumped value.
         return v;
     }

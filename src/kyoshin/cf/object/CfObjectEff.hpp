@@ -194,8 +194,8 @@ public:
     virtual bool testFlagA4___(u16 flags);     // +0x1A4 - flag test
     void callVirt32___();
     void callVirtC4___();
-    void getEffYPos___();
-    void getScaleComp_() const;
+    float getEffYPos___();
+    float getScaleComp_();
     void thunkTear90__();
     void thunkDtor90__();
 };

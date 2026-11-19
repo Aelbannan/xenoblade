@@ -9,13 +9,15 @@ extern "C" int* CtrlObjectParam_GetSlotTableBase();  // owner: include/functions
 extern "C" void* __ct__Q22cf11CfObjectEneFv(void* self);
 extern "C" u32 getEneBdatColumn__Q22cf11CfObjectEneFPCc(void* self, const char* column);
 #include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/cf/IFactoryEvent.hpp"
 #include "kyoshin/code_800B06A4.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
+#include "kyoshin/cf/object/CfObjectTbox.hpp"
 #include <string.h>
 #include <math.h>
 #include <new>
 #include "monolib/util/MemManager.hpp"
-extern u32 lbl_eu_80663EE0;
+extern u32 gEventSequenceFlags;
 void* findObjectById(int id);
 
 void UnkClass_800B0AD8::clearCounters() {
@@ -23,18 +25,18 @@ void UnkClass_800B0AD8::clearCounters() {
     unkAFC = 0;
 }
 UnkClass_805764CC* getInstance();
-u32 Tok_Pack08(u32 a, u32 b);
+extern "C" u32 Tok_Pack08(u32 a, u32 b);
 extern "C" void subVec3f(void* out, void* a, void* b);
-u32 KyoshinHeap_Reset38();
-void CfRes_initHighGrid();
-void tickAnimFrame();
+extern "C" u32 KyoshinHeap_Reset38();
+extern "C" void CfRes_initHighGrid();
+extern "C" void tickAnimFrame(void* self);
 extern "C" void CfRes_tickIfFlagged(void* self);
 extern "C" int CfRes_hashIndex11(void* self, int a);
-void* CamEvtFetchSlotPtr(void* self, unsigned long idx);
+extern "C" void* CamEvtFetchSlotPtr(void* self, unsigned long idx);
 extern "C" void CfSoundMan_StopSoundSlots(u32 idx, u32 soundId, s32 stopFlag);
 extern "C" s32 CPartsChange_FindVoiceIndex(void* voice, u32 key);
-void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
-void CPartsChange_TeardownContainer(void* container, int flags);
+extern "C" void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
+extern "C" void CPartsChange_TeardownContainer(void* container, int flags);
 extern "C" void UIWin_Create44EE4Win(u32 a, u32 b);
 extern "C" int CollObjTestResIdReady(void* item);
 extern "C" unsigned long CollObjSetResIdReady(void* self, int flag);
@@ -68,16 +70,16 @@ extern "C" void setResourceField04__Q22cf13CfGameManagerFv(void* self, void* val
 // (double d = a; float sq = (float)d;) keeps the explicit conversion; a plain
 // `float sq = a` lets MWCC drop it.
 extern "C" void storeScaleSquare(float a) {
-    extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
-    extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
+    extern float sFactoryEventBaseReslistSize, sTboxReslistSize;
+    extern float sReslistGaugeA, sReslistGaugeASq, sReslistGaugeB, sReslistGaugeBSq;
     double d = (double)a;
     float sq = (float)d;
-    lbl_eu_80661CCC = a;
+    sFactoryEventBaseReslistSize = a;
     sq = sq * sq;
-    lbl_eu_80663EC8 = a;
-    lbl_eu_80663ED0 = lbl_eu_80661CD0;
-    lbl_eu_80663ECC = sq;
-    lbl_eu_80663ED4 = sq;
+    sReslistGaugeA = a;
+    sReslistGaugeB = sTboxReslistSize;
+    sReslistGaugeASq = sq;
+    sReslistGaugeBSq = sq;
 }
 
 void init_0A90(void){}
@@ -105,26 +107,26 @@ void loadLayoutScales() {
     int n1 = getBdatStringColumnValue(tbl, lbl_eu_804FC4D8, row);
     const char* base = lbl_eu_804FC4D8;
     convA.w[1] = (u8)n1;
-    lbl_eu_80661CC8 = (f32)(convA.d - lbl_eu_806669D0);
+    sFactoryEventReslistSize = (f32)(convA.d - lbl_eu_806669D0);
 
     int n2 = getBdatStringColumnValue(tbl, base + 0xb, row);
     convB.w[1] = (u8)n2;
-    lbl_eu_80661CD0 = (f32)(convB.d - lbl_eu_806669D0);
+    sTboxReslistSize = (f32)(convB.d - lbl_eu_806669D0);
 
     int n3 = getBdatStringColumnValue(tbl, base + 0x19, row);
     convA.w[1] = (u8)n3;
-    lbl_eu_80661CD4 = (f32)(convA.d - lbl_eu_806669D0);
+    sTboxBaseReslistSize = (f32)(convA.d - lbl_eu_806669D0);
 
     int n4 = getBdatStringColumnValue(tbl, base + 0x27, row);
     convB.w[1] = (u8)n4;
-    lbl_eu_80661CCC = (f32)(convB.d - lbl_eu_806669D0);
+    sFactoryEventBaseReslistSize = (f32)(convB.d - lbl_eu_806669D0);
 
     // Read the globals back directly (no cross-call float locals - retail
     // reloads each one here instead of keeping it in a callee-saved FPR).
-    lbl_eu_80663EC8 = lbl_eu_80661CC8;
-    lbl_eu_80663ECC = lbl_eu_80661CC8 * lbl_eu_80661CC8;
-    lbl_eu_80663ED0 = lbl_eu_80661CD0;
-    lbl_eu_80663ED4 = lbl_eu_80661CCC * lbl_eu_80661CCC;
+    sReslistGaugeA = sFactoryEventReslistSize;
+    sReslistGaugeASq = sFactoryEventReslistSize * sFactoryEventReslistSize;
+    sReslistGaugeB = sTboxReslistSize;
+    sReslistGaugeBSq = sFactoryEventBaseReslistSize * sFactoryEventBaseReslistSize;
 }
 // us-800b1118 - allocFactoryPool
 // Calls CfRes_getAllocHandle() to get a handle, then passes it along with `count` to allocNodePool.
@@ -207,10 +209,10 @@ u32 UnkClass_805764CC::get_u32_18(){return field_0x18;}
 // zeroFirstWord: zero the u32 at self (retail: li r0,0; stw r0,0x0(r3))
 extern "C" void zeroFirstWord(void* self) { *(u32*)self = 0; }
 void init_dispatchTarget_1(){}
-// gflagClearAll: zero the global flag word (retail: li r0,0; stw r0,lbl_eu_80663EE0@sda21)
-extern "C" void gflagClearAll() { extern u32 lbl_eu_80663EE0; lbl_eu_80663EE0 = 0; }
-void gflag_setBits(unsigned long flags){extern unsigned long lbl_eu_80663EE0;lbl_eu_80663EE0 |= flags;}
-void FactoryEvent3__Q22cf13IFactoryEventFv(){}
+// gflagClearAll: zero the global flag word (retail: li r0,0; stw r0,gEventSequenceFlags@sda21)
+extern "C" void gflagClearAll() { extern u32 gEventSequenceFlags; gEventSequenceFlags = 0; }
+void gflag_setBits(unsigned long flags){extern unsigned long gEventSequenceFlags;gEventSequenceFlags |= flags;}
+void cf::IFactoryEvent::FactoryEvent3() {}
 void init_137C(){}
 void node_copyNextPtr(void* dst, void* src){void* ptr = *(void**)((char*)src + 4); *(unsigned long*)dst = *(unsigned long*)ptr;}
 void* node_getDataPtr(void* self){return (char*)(*(void**)self) + 8;}
@@ -248,7 +250,7 @@ void __dt__800B151C(FactoryPoolList* self) {
 void init_dispatchTarget_2(){}
 extern u32 lbl_eu_80663F24;
 void gvar_clearF24(){lbl_eu_80663F24 = 0;}
-void FactoryEvent4__Q22cf13IFactoryEventFv(){}
+void cf::IFactoryEvent::FactoryEvent4() {}
 void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
 
@@ -469,7 +471,7 @@ public:
 // via the TU-wide extern (see line 59 family).
 extern "C" void rebuildTboxPool(void* self) {
     reslist<cf::TboxInfo>* obj = (reslist<cf::TboxInfo>*)getReslistC48();
-    __dt__800B183C(obj);
+    obj->destroy();
     allocTboxPool(obj, CfRes_getAllocHandle(), 0x14);
 }
 extern "C" void walkReslistByMask(void* object, u32 mask);
@@ -497,17 +499,17 @@ extern "C" void maybeNullThenFlag(void* self) {
     }
     gflagSetOrClear(8, self);
 }
-// gflagTestBit6: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
-extern "C" u32 gflagTestBit6(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
+// gflagTestBit6: bit 6 of the global flag word (retail: lwz r0,gEventSequenceFlags; extrwi r3,r0,1,25 = (x>>6)&1)
+extern "C" u32 gflagTestBit6(){ extern u32 gEventSequenceFlags; return (gEventSequenceFlags >> 6) & 1; }
 extern "C" s32 gflagHasMask(u32 mask) {
-    return (lbl_eu_80663EE0 & mask) != 0;
+    return (gEventSequenceFlags & mask) != 0;
 }
 extern "C" void gflagSetOrClear(int mask, void* ptr) {
-    u32 flags = lbl_eu_80663EE0 & ~mask;
+    u32 flags = gEventSequenceFlags & ~mask;
     if (ptr != 0) {
-        flags = lbl_eu_80663EE0 | mask;
+        flags = gEventSequenceFlags | mask;
     }
-    lbl_eu_80663EE0 = flags;
+    gEventSequenceFlags = flags;
 }
 void init_1C0C(){}
 void init_1C24(){}
@@ -518,10 +520,10 @@ extern "C" s32 gflagGateMask8() {
     return gflagHasMask(8);
 }
 extern "C" void gflagClearMask(int mask) {
-    lbl_eu_80663EE0 = lbl_eu_80663EE0 & ~mask;
+    gEventSequenceFlags = gEventSequenceFlags & ~mask;
 }
 extern "C" void gflagNandMask(int mask) {
-    lbl_eu_80663EE0 = lbl_eu_80663EE0 & ~mask;
+    gEventSequenceFlags = gEventSequenceFlags & ~mask;
 }
 
 // to `self` via setItemEnable, each null-guarded.
@@ -584,8 +586,8 @@ extern "C" void notifyObjCA0810(UnkClass_805764CC* self, void* obj){if (self->fi
 // us-800b2820 - field_0xCA0; if nonzero tail-call CPartsChange_UpdatePartyState(field, const)
 extern "C" void setCA0ScaleFloat(UnkClass_805764CC* self) {
     if (self->field_0xCA0 == 0) return;
-    extern float lbl_eu_80663EC8;
-    CPartsChange_UpdatePartyState(self->field_0xCA0, lbl_eu_80663EC8);
+    extern float sReslistGaugeA;
+    CPartsChange_UpdatePartyState(self->field_0xCA0, sReslistGaugeA);
 }
 void init_1F6C(){}
 extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
@@ -642,7 +644,7 @@ void* __dt__800B2D30(void* self, int flags) {
     }
     return ret;
 }
-void FactoryEvent1__Q22cf13IFactoryEventFv(){}
+void cf::IFactoryEvent::FactoryEvent1() {}
 void UnkClass_805764CC::fwdTo_2DB0(int param){extern void fwd_2DB0_body(void*, void*); fwd_2DB0_body(this, &param);}
 void fwd_2DB0_body(){}
 
@@ -969,7 +971,7 @@ u32 shift_u32_hi8_alt2(u32 val){return (val >> 16) & 0xFF;}
 void init_45A0(){}
 void init_47A8(){}
 void init_4A24(){}
-int CfObjectMove_hasActorScale__Q22cf12CfObjectMoveFv(void* self){return 0;}
+int cf::CfObjectMove::CfObjectMove_hasActorScale(){return 0;}
 // us-800b5408: flag cascade over field_0x15F0 - equivalent to (4 <= v <= 8)
 // but written as retail's chained guards so each stage short-circuits into
 // its own compare/branch pair.
@@ -1015,7 +1017,7 @@ extern "C" s32 hudCtrlSlot46(Func4CA0Obj* self) {
     if (flag == 0) {
         if ((self->field_3F00 & 0x08000000) == 0) {
             if (mgr != 0) {
-                if (CBattleMan_ListHasValue(mgr, self) != 0) {
+if (CBattleMan_ListHasValue(mgr, self) != 0) {
                     Func4CA0Sub* sub = (Func4CA0Sub*)self->field_3F60;
                     s32 bit = 0;
                     if (sub != 0) {
@@ -1035,7 +1037,7 @@ void init_4D84(){}
 u32 shift_u32_hi8_alt3(u32 val){return (val >> 16) & 0xFF;}
 extern u16 lbl_eu_8066408C;
 unsigned short gvar_get408C(){return lbl_eu_8066408C;}
-extern "C" u16 getGlobalU16_4314(){extern u16 lbl_eu_80664314; return lbl_eu_80664314;}
+extern "C" u16 getGlobalU16_4314(){extern u16 sPartsChangeLoadState; return sPartsChangeLoadState;}
 void init_4F6C(){}
 void init_4F80(){}
 void init_4F90(){}
@@ -1200,8 +1202,8 @@ void UnkClass_805764CC::maskField_6C(u32 mask, int enable){
     u32* field = (u32*)((u8*)this + 0x6C);
     if (enable) { *field |= mask; } else { *field &= ~mask; }
 }
-extern "C" u16 getGlobalU16_3E42(){extern u16 lbl_eu_80663E42; return lbl_eu_80663E42;}
-extern "C" u16 getGlobalU16_3E44(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E44;}
+extern "C" u16 getGlobalU16_3E42(){extern u16 gmGlobalFlag42; return gmGlobalFlag42;}
+extern "C" u16 getGlobalU16_3E44(){extern u16 gmGlobalFlag44; return gmGlobalFlag44;}
 void init_75EC(){}
 
 // us-800b7f9c - Count nodes
@@ -1307,9 +1309,9 @@ extern "C" void unlinkFactoryById(u8* self, u32 targetId) {
     }
 }
 extern "C" {
-    extern s8 lbl_eu_80663EE8;
-    extern u8 lbl_eu_80572CD4[];
-    extern u8 lbl_eu_80572CC8[];
+    extern s8 sFactoryMgrInitialized;
+    extern u8 sFactoryMgrInstance[];
+    extern u8 sFactoryMgrRegisterNode[];
     extern void __dt__17UnkClass_805764CCFv(void*, int);
     extern void __ct__17UnkClass_805764CCFv(void*);
     extern void __register_global_object(void*, void*, void*);
@@ -1319,12 +1321,12 @@ extern "C" {
 // us-800b10b4 - getInstance (singleton sinit: init once, then return &singleton)
 // so the -ipa pass folds this body into prepareReslistC28/6CF8's spans.
 UnkClass_805764CC* getInstance() {
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (sFactoryMgrInitialized == 0) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
-    return (UnkClass_805764CC*)lbl_eu_80572CD4;
+    return (UnkClass_805764CC*)sFactoryMgrInstance;
 }
 // us-800b1160 - allocNodePool (allocate + zero-fill array of count*0xc, store at +0x14/+0x18)
 // allocFactoryPool (its only caller), inflating the wrapper to 316B. Retail's
@@ -1373,7 +1375,7 @@ extern "C" void copyWordAt4(void* a, void* b);
 extern "C" int iterWordsDiffer(void* a, void* b);
 extern "C" void walkReslistByMask(void* object, u32 mask);
 extern float lbl_eu_80663EDC;
-extern u32 lbl_eu_80663EE4;
+extern u32 sBecListNodeCount;
 // us-800b2220: clear every event-mask bit, drain all reslists, reset HUD
 // state, then walk the C48 reslist nulling each entry.
 extern "C" void clearAllReslists(UnkClass_805764CC* self) {
@@ -1395,7 +1397,7 @@ extern "C" void clearAllReslists(UnkClass_805764CC* self) {
     self->field_0xD10 = 0;
     self->field_0xD04 = 0;
     lbl_eu_80663EDC = lbl_eu_806669D8;
-    lbl_eu_80663EE4 = 0;
+    sBecListNodeCount = 0;
     // Iterator slots as an array (retail sp+0x8 / sp+0xC / sp+0x10): A=iter[2],
     // B=iter[0], C=iter[1].
     u32 iter[3];
@@ -1416,14 +1418,14 @@ extern "C" void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSourc
 extern "C" void* getPtr_1A8__17UnkClass_805764CCFv();
 extern "C" void clear_700__17UnkClass_805764CCFv(void* buf);
 extern "C" void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor,
-                              void* list, const F8C0ListSource* buf, float f);
-extern "C" void processSortedBuffer(void* self, void* buf);
+                              void* list, SpeedSortBuffer* buf, float f);
+extern "C" void processSortedBuffer(UnkClass_805764CC* self, SpeedSortBuffer* buf);
 extern "C" int CfRes_getE24Bit22();
 extern "C" float CfT_PlayRateGet();
 extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 extern float lbl_eu_80663ED8;
-extern float lbl_eu_80663EC8;
-extern float lbl_eu_80661CCC;
+extern float sReslistGaugeA;
+extern float sFactoryEventBaseReslistSize;
 extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
     if (arg == 0) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
@@ -1444,13 +1446,13 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
         result = isTypeId1to24(tmp);
     }
     if (result == 0) {
-        char buf[0x700];
-        clear_700__17UnkClass_805764CCFv(buf);
+        SpeedSortBuffer buf;
+        clear_700__17UnkClass_805764CCFv(&buf);
         gatherSpeedEntries(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb48),
-                      (const F8C0ListSource*)buf, lbl_eu_80663EC8);
+                      &buf, sReslistGaugeA);
         gatherSpeedEntries(self, (IB8FC4Player*)arg, (void*)((u8*)self + 0xb68),
-                      (const F8C0ListSource*)buf, lbl_eu_80661CCC);
-        processSortedBuffer(self, buf);
+                      &buf, sFactoryEventBaseReslistSize);
+        processSortedBuffer(self, &buf);
     }
 }
 // us-800b70fc - setTrackedTarget
@@ -1485,15 +1487,15 @@ void* findObjectById(int id) {
 // then looks up the singleton and calls findWorkById(&singleton, *(this+0x74)).
 // Returns 1 if the check passes and findWorkById returns non-zero, else 0.
 extern "C" int lookupWorkAtAddr(u32 addr) {
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (sFactoryMgrInitialized == 0) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
 
     // Retail computes the singleton address once here (dominating the checks)
     // and reuses it for the findWorkById call below.
-    void* inst = (void*)lbl_eu_80572CD4;
+    void* inst = (void*)sFactoryMgrInstance;
 
     // Check alignment: low 2 bits must be 0, and address must be in [0x80000000, 0x93800000)
     if ((addr & 3) != 0 || addr < 0x80000000 || addr >= 0x93800000) {
@@ -1504,15 +1506,15 @@ extern "C" int lookupWorkAtAddr(u32 addr) {
     return findWorkById((UnkClass_805764CC*)inst, val) != 0;
 }
 // us-800b92e8 - lookupCA0ById
-// Singleton accessor for UnkClass_805764CC at lbl_eu_80572CD4.
-// If the singleton hasn't been initialized (lbl_eu_80663EE8 == 0),
+// Singleton accessor for UnkClass_805764CC at sFactoryMgrInstance.
+// If the singleton hasn't been initialized (sFactoryMgrInitialized == 0),
 // construct it and register as a global object.
 // Then access field_0xCA0 and call CPartsChange_FindActorById(field_0xCA0, id).
 // Returns the result of CPartsChange_FindActorById, or 0 if field_0xCA0 is NULL.
 extern "C" {
-    extern s8 lbl_eu_80663EE8;
-    extern u8 lbl_eu_80572CD4[];
-    extern u8 lbl_eu_80572CC8[];
+    extern s8 sFactoryMgrInitialized;
+    extern u8 sFactoryMgrInstance[];
+    extern u8 sFactoryMgrRegisterNode[];
     extern void __dt__17UnkClass_805764CCFv(void*, int);
     extern void __ct__17UnkClass_805764CCFv(void*);
     extern void __register_global_object(void*, void*, void*);
@@ -1522,13 +1524,13 @@ extern "C" {
 extern "C" void* lookupCA0ById(u32 id) {
     void* result = NULL;
 
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (sFactoryMgrInitialized == 0) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
 
-    void* ca0 = (void*)((UnkClass_805764CC*)(void*)lbl_eu_80572CD4)->field_0xCA0;
+    void* ca0 = (void*)((UnkClass_805764CC*)(void*)sFactoryMgrInstance)->field_0xCA0;
     if (ca0 != NULL) {
         result = CPartsChange_FindActorById(ca0, id);
     }
@@ -1543,13 +1545,13 @@ extern "C" void* lookupCA0By45C0(void* self) {
     u16 id = *(u16*)((u8*)self + 0x45C0);
     void* result = NULL;
 
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (sFactoryMgrInitialized == 0) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
 
-    void* ca0 = (void*)((UnkClass_805764CC*)(void*)lbl_eu_80572CD4)->field_0xCA0;
+    void* ca0 = (void*)((UnkClass_805764CC*)(void*)sFactoryMgrInstance)->field_0xCA0;
     if (ca0 != NULL) {
         result = CPartsChange_FindActorById(ca0, id);
     }
@@ -1562,13 +1564,13 @@ extern "C" void* lookupCA0By45C0(void* self) {
 extern "C" void* lookupCA0BySelf(void* self) {
     void* result = NULL;
 
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (sFactoryMgrInitialized == 0) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
 
-    void* ca0 = (void*)((UnkClass_805764CC*)lbl_eu_80572CD4)->field_0xCA0;
+    void* ca0 = (void*)((UnkClass_805764CC*)sFactoryMgrInstance)->field_0xCA0;
     if (ca0 != NULL) {
         result = CPartsChange_FindActorByObj(ca0, self);
     }
@@ -1587,20 +1589,20 @@ extern "C" void* findObjB28ById(s32 id) {
     if (id == 0) {
         return 0;
     }
-    if (!lbl_eu_80663EE8) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (!sFactoryMgrInitialized) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
     B8B94Obj* obj = (B8B94Obj*)firstReslistB28();
     while (obj != 0) {
         if (id == obj->field_8C) {
             return MapFx_ResolveOwner(obj);
         }
-        if (!lbl_eu_80663EE8) {
-            __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-            __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-            lbl_eu_80663EE8 = 1;
+        if (!sFactoryMgrInitialized) {
+            __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+            __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+            sFactoryMgrInitialized = 1;
         }
         obj = (B8B94Obj*)nextReslistB28((cf::CfObject*)obj);
     }
@@ -1611,10 +1613,10 @@ extern "C" void* findObjB48ById(s32 id) {
     if (id == 0) {
         return 0;
     }
-    if (!lbl_eu_80663EE8) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (!sFactoryMgrInitialized) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
     B8B94Obj* obj = (B8B94Obj*)firstReslistB48();
     while (obj != 0) {
@@ -1622,10 +1624,10 @@ extern "C" void* findObjB48ById(s32 id) {
         if (id == obj->field_8C) {
             return MapFx_ResolveOwner(obj);
         }
-        if (!lbl_eu_80663EE8) {
-            __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-            __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-            lbl_eu_80663EE8 = 1;
+        if (!sFactoryMgrInitialized) {
+            __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+            __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+            sFactoryMgrInitialized = 1;
         }
         obj = (B8B94Obj*)nextReslistB48((cf::CfObject*)obj);
     }
@@ -1718,7 +1720,6 @@ void* mapKindToSpawn(void* self, u32 arg) {
 // clearResourceStack / setResourceField04 are declared at the top of this
 // TU (shared with spawnObjFromRes).
 extern "C" void setResourceField00__Q22cf13CfGameManagerFv(void* self, unsigned long value);
-extern "C" void* mapKindToSpawn(void* self, void* value);
 // us-800ba178: build a scratch Unk812Data record on the stack, seed it from
 // the three arguments via the CfGameManager setters, then hand it to
 // mapKindToSpawn.
@@ -1727,7 +1728,7 @@ extern "C" void spawnFromRecord(void* argA, void* argB, void* argC) {
     clearResourceStack__Q22cf13CfGameManagerFv(buf);
     setResourceField04__Q22cf13CfGameManagerFv(buf, argA);
     setResourceField00__Q22cf13CfGameManagerFv(buf, (unsigned long)argB);
-    mapKindToSpawn(buf, argC);
+    mapKindToSpawn(buf, (u32)(uintptr_t)argC);
 }
 void init_98C8(){}
 u32 UnkClass_805764CC::get_u32_620(){return *(u32*)((u8*)this + 0x620);}
@@ -1777,11 +1778,9 @@ _reslist_base<T>::_reslist_base() {}
 extern "C" void __ct__reslist_cf_CfObject(void*);
 extern "C" void __ct__reslist_cf_TboxInfo(void*);
 extern "C" void __ct__reslist_cf_IFactoryEvent(void*);
-extern "C" void __ct__17UnkClass_800B0AD8Fv(void*);
-
 UnkClass_805764CC::UnkClass_805764CC() {
     __ct__reslist_cf_CfObject(this);
-    __ct__17UnkClass_800B0AD8Fv((u8*)this + 0x20);
+    new ((void*)&field_0x20) UnkClass_800B0AD8();
     __ct__reslist_cf_CfObject((u8*)this + 0xb28);
     __ct__reslist_cf_CfObject((u8*)this + 0xb48);
     __ct__reslist_cf_CfObject((u8*)this + 0xb68);
@@ -1803,8 +1802,8 @@ UnkClass_805764CC::UnkClass_805764CC() {
     field_0xD04 = 0;
     field_0xD0E = 0;
     field_0xD10 = 0;
-    extern u32 lbl_eu_80663EE0;
-    zeroFirstWord(&lbl_eu_80663EE0);
+    extern u32 gEventSequenceFlags;
+    zeroFirstWord(&gEventSequenceFlags);
 }
 
 // Target us-800b145c - _reslist_base<cf::TboxInfo>::~_reslist_base()
@@ -2111,21 +2110,21 @@ extern "C" void unlinkNodesByKey(void* list, void* arg) {
 
 // us-800ba35c - sinit_800B9A40
 extern "C" void sinit_800B9A40() {
-    extern float lbl_eu_80661CC8, lbl_eu_80661CCC, lbl_eu_80661CD0;
-    extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
-    extern u32 lbl_eu_80663EE0;
-    lbl_eu_80663EC8 = lbl_eu_80661CC8;
-    lbl_eu_80663ECC = lbl_eu_80661CC8 * lbl_eu_80661CC8;
-    lbl_eu_80663ED0 = lbl_eu_80661CD0;
-    lbl_eu_80663ED4 = lbl_eu_80661CCC * lbl_eu_80661CCC;
-    lbl_eu_80663EE0 = 0;
+    extern float sFactoryEventReslistSize, sFactoryEventBaseReslistSize, sTboxReslistSize;
+    extern float sReslistGaugeA, sReslistGaugeASq, sReslistGaugeB, sReslistGaugeBSq;
+    extern u32 gEventSequenceFlags;
+    sReslistGaugeA = sFactoryEventReslistSize;
+    sReslistGaugeASq = sFactoryEventReslistSize * sFactoryEventReslistSize;
+    sReslistGaugeB = sTboxReslistSize;
+    sReslistGaugeBSq = sFactoryEventBaseReslistSize * sFactoryEventBaseReslistSize;
+    gEventSequenceFlags = 0;
 }
 
-// us-800b1da0
-extern "C" void** factoryIterItem(void* self) {
-    return (void**)(*(u32*)self + 8);
+// us-800b1da0 - reslist<cf::IFactoryEvent*>::iterator::operator*()
+cf::IFactoryEvent*& reslist<cf::IFactoryEvent*>::iterator::operator*() const {
+    return *(cf::IFactoryEvent**)&mNode->mItem;
 }
-// us-800b1dc8 - compare two u32 for inequality (dual-subf/or/srwi idiom)
+
 // Retail teardownGameMgr / similar loops bl this out-of-line; without the
 // guard MWCC inlines it to lwz/lwz/cmp (4 bytes short of retail).
 extern "C" u32 wordsDiffer(void* a, void* b) {
@@ -2220,8 +2219,8 @@ extern "C" s32 evtTypeSlot7E(CEvtTypeArg* arg) {
 // splitting `accepted` into decl-then-assignment while `result` is initialized
 // at its declaration reproduces retail's li r30/li r31 emission order.
 extern "C" s32 evtTypeSlot80(CEvtTypeArg* arg) {
-    extern u32 lbl_eu_80663EE0;
-    if (lbl_eu_80663EE0 & 0x40) {
+    extern u32 gEventSequenceFlags;
+    if (gEventSequenceFlags & 0x40) {
         return 0;
     }
     s32 accepted;
@@ -2941,7 +2940,7 @@ check:
 // and the running count), and its id (+0x70 value) is appended to the local
 // dedup list unless already present; the count accumulates the per-entry
 // weight from CfObjectMove_relaySubB0Slot68.
-void processSortedBuffer(UnkClass_805764CC* self, void* buf) {
+extern "C" void processSortedBuffer(UnkClass_805764CC* self, SpeedSortBuffer* buf) {
     void** end = sortBufEnd(buf);
     qsortEntries(sortBufIdentity(buf), end, cmpFloatAt4);
     testResInfoFlag(0x10);
@@ -3018,10 +3017,10 @@ static inline bool listReady45A0(void* list) {
 // entry whose +0x64 flag word has bit 16 set must report ready through its
 // slot-0x1D callback. Any failure aborts with false.
 extern "C" bool probeReadyLists() {
-    if (!lbl_eu_80663EE8) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (!sFactoryMgrInitialized) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
     if (!listReady45A0(getListB28__Fv())) {
         return false;
@@ -3042,7 +3041,7 @@ extern "C" bool probeReadyLists() {
 // Singleton construction body: size every reslist pool, build the TboxInfo
 // pool, heap-construct the six optional sub-managers, clear the state words,
 // then drain the IFactoryEvent queue firing each event's slot-5 callback.
-void buildSingleton(UnkClass_805764CC* self) {
+extern "C" void buildSingleton(UnkClass_805764CC* self) {
     allocFactoryPool(self, 0x2be);
     allocFactoryPool((UnkClass_805764CC*)&self->field_0xBA8, 2);
     allocFactoryPool((UnkClass_805764CC*)&self->field_0xB28, 9);
@@ -3076,7 +3075,7 @@ void buildSingleton(UnkClass_805764CC* self) {
     self->field_0xD0E = 0;
     self->field_0xD10 = 0;
     self->field_0xD04 = 0;
-    lbl_eu_80663EE4 = 0;
+    sBecListNodeCount = 0;
     setFieldD08Hi(self);
     CfRes_initResEntries(-1);
     CfRes_initTblEntries(-1);
@@ -3084,16 +3083,16 @@ void buildSingleton(UnkClass_805764CC* self) {
     ensureFactoryPool(self);
 
     // Drain the IFactoryEvent queue, invoking slot 5 on each entry.
-    u32 it[3];
-    u32 endCur;
-    factoryIterBegin(it, &self->field_0xC80);
+    FactoryEventIter it;
+    FactoryEventIter endCur;
+    it.begin(self->field_0xC80);
     goto check;
 loop:
-    ((IFeEventBase*)*factoryIterItem(it))->vf05();
-    factoryIterNext(it);
+    ((IFeEventBase*)*it)->vf05();
+    ++it;
 check:
-    factoryIterSentinel(&endCur, &self->field_0xC80);
-    if (wordsDiffer(it, &endCur) != 0) {
+    endCur.end(self->field_0xC80);
+    if (wordsDiffer(&it, &endCur) != 0) {
         goto loop;
     }
 }
@@ -3111,10 +3110,10 @@ void teardownGameMgr(UnkClass_805764CC* self) {
     // Local block laid out to mirror retail stack slots.
     u32 d00;
     F8C0IteratorNode outer;
-    u32 it;
+    FactoryEventIter it;
     F8C0IteratorNode mid;
     F8C0IteratorNode end;
-    u32 itEnd;
+    FactoryEventIter itEnd;
 
     if (self->field_0xCAC != 0) {
         __dt__80206170((void*)self->field_0xCAC, 1);
@@ -3186,17 +3185,17 @@ check:
     factoryListDtor(&self->field_0xBA8);
     factoryListDtor(self);
     ((UnkClass_800B0AD8*)&self->field_0x20)->clearCounters();
-    __dt__800B183C(&self->field_0xC48);
+    self->field_0xC48.destroy();
     gflagClearAll();
 
     // Drain the queue firing slot 6, then destroy the queue list.
-    factoryIterBegin(&it, &self->field_0xC80);
+    it.begin(self->field_0xC80);
     goto check2;
 loop2:
-    ((IFeEventBase*)*factoryIterItem(&it))->vf06();
-    factoryIterNext(&it);
+    ((IFeEventBase*)*it)->vf06();
+    ++it;
 check2:
-    factoryIterSentinel(&itEnd, &self->field_0xC80);
+    itEnd.end(self->field_0xC80);
     if (wordsDiffer(&it, &itEnd) != 0) {
         goto loop2;
     }
@@ -3212,22 +3211,22 @@ check2:
 // failure a retry counter at singleton+0xD0E is bumped (up to 2).
 int scanBattleReady() {
     // rlwinm field masks: bits [9,9] / [27,27] (MSB-numbered).
-    if ((lbl_eu_80663E24 & 0x400000) != 0) {
+    if ((gmGameFlags & 0x400000) != 0) {
         CfRes_callFunc_68254();
     }
-    if ((lbl_eu_80663E28 & 0x10) != 0 && gflagGateMask8() != 0) {
+    if ((gmPauseFlags & 0x10) != 0 && gflagGateMask8() != 0) {
         return 0;
     }
-    if (!lbl_eu_80663EE8) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (!sFactoryMgrInitialized) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
     CfReslistNode* cur;
     void* list;
-    u8* inst = (u8*)lbl_eu_80572CD4;
+    u8* inst = (u8*)sFactoryMgrInstance;
     if (*(u32*)(inst + 0xCA0) != 0) {
-        CPartsChange_UpdatePartyState(*(u32*)(inst + 0xCA0), lbl_eu_80663EC8);
+        CPartsChange_UpdatePartyState(*(u32*)(inst + 0xCA0), sReslistGaugeA);
     }
     list = getReslistB48();
     cur = ((CfReslistNode*)*(u32*)((u8*)list + 4))->mNext;
@@ -3357,7 +3356,7 @@ extern "C" void applyProximitySpeed(UnkClass_805764CC* self, void* partner,
                 if (testObj68mask(obj, 0x10) != 0) {
                     float level = ((IB68Obj*)obj)->unk5D();
                     if (level > lbl_eu_806669D8) {
-                        CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
+                        CfObjectMove_setMoveSpeedGated(obj, 20.0f);
                     } else {
                         apply = 0;
                     }
@@ -3373,9 +3372,9 @@ extern "C" void applyProximitySpeed(UnkClass_805764CC* self, void* partner,
                     apply = 0;
                     if (testObj68mask(obj, 0xC00) == 0 && testObj68mask(obj, 0x10) != 0) {
                         float gap = limit - dist;
-                        if (gap < lbl_eu_80666A0C) {
+                        if (gap < 2.0f) {
                             // Inside the range ramp: fade volume down from one.
-                            float fade = lbl_eu_806669EC * (lbl_eu_80666A0C - gap);
+                            float fade = 0.5f * (2.0f - gap);
                             if (fade < lbl_eu_806669D8) {
                                 fade = lbl_eu_806669D8;
                             }
@@ -3411,7 +3410,7 @@ extern "C" u32 checkAudibleDistance(int modeY, float scale, const B47Vec3* posA,
     delta.y -= posA->y;
     delta.z -= posA->z;
     if (modeScale != 0) {
-        scale *= lbl_eu_806669E4;
+        scale *= 3.0f;
     }
     // Horizontal magnitude only (x/z); warns on a negative square sum.
     float distSq = delta.x * delta.x + delta.z * delta.z;
@@ -3426,9 +3425,9 @@ extern "C" u32 checkAudibleDistance(int modeY, float scale, const B47Vec3* posA,
     }
     *outDist = dist;
     float absY = (float)__fabs((double)delta.y);
-    float yLimit = lbl_eu_80663ED0;
+    float yLimit = sReslistGaugeB;
     if (modeY != 0) {
-        yLimit *= lbl_eu_806669E8;
+        yLimit *= 0.75f;
     }
     if (*outDist >= scale) {
         return 0;
@@ -3440,7 +3439,7 @@ extern "C" u32 checkAudibleDistance(int modeY, float scale, const B47Vec3* posA,
     // both stored out and switches the limit factor below. The endpoint temps
     // mix x/y from one shifted point with z from the other.
     u32 hit = 0;
-    B47EvtRoot* root = (B47EvtRoot*)lbl_eu_80663E14;
+    B47EvtRoot* root = (B47EvtRoot*)gmScene;
     if (root->field_B4 != 0) {
         B47Vec3 offA = { lbl_eu_806669D8, lbl_eu_806669DC, lbl_eu_806669D8 };
         B47Vec3 offB = { lbl_eu_806669D8, lbl_eu_806669DC, lbl_eu_806669D8 };
@@ -3468,9 +3467,9 @@ extern "C" u32 checkAudibleDistance(int modeY, float scale, const B47Vec3* posA,
     }
     float lim;
     if (modeNear != 0) {
-        lim = lbl_eu_806669EC;
+        lim = 0.5f;
     } else {
-        lim = lbl_eu_806669F0;
+        lim = 0.4f;
     }
     if (hit == 0) {
         lim = lbl_eu_806669DC;
@@ -3525,7 +3524,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
             } else {
                 if ((f68 & 0x20) != 0 && (data->flags64 & 0x100) != 0 &&
                     data->field_C4 != 0) {
-                    tickAnimFrame();
+                    tickAnimFrame((void*)data->field_C4);
                 }
                 data->unk19();
             }
@@ -3539,7 +3538,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
             } else if ((sub->field68 & 0x800) != 0) {
                 // Leave the flags untouched.
             } else if (((IB68Obj*)sub)->unk5B() < one) {
-                CfObjectMove_setMoveSpeed(sub, lbl_eu_80666A08);
+                CfObjectMove_setMoveSpeed(sub, 20.0f);
             } else {
                 data->flags68 = data->flags68 & 0x70;
             }
@@ -3571,7 +3570,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
     }
     if (instField != 0) {
         if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 &&
-            (lbl_eu_80663E28 & 0x20) == 0) {
+            (gmPauseFlags & 0x20) == 0) {
             CfRes_tickIfFlagged(instField);
         }
     }
@@ -3581,7 +3580,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
     for (u32 p = *(u32*)becHead; p != becHead; p = *(u32*)p) {
         count++;
     }
-    lbl_eu_80663EE4 = count;
+    sBecListNodeCount = count;
 }
 
 // us-800b4354 - removeManagedObject
@@ -3643,16 +3642,16 @@ extern "C" void removeManagedObject(UnkClass_805764CC* self, void* objv) {
         }
     }
     // Drain the factory-event queue, firing each payload's remove callback.
-    u32 it;
-    u32 endIt;
-    factoryIterBegin(&it, &self->field_0xC80);
+    FactoryEventIter it;
+    FactoryEventIter endIt;
+    it.begin(self->field_0xC80);
     goto check;
 loop:
-    ((IQItem4*)*factoryIterItem(&it))->unk04(obj);
-    factoryIterNext(&it);
+    ((IQItem4*)*it)->unk04(obj);
+    ++it;
 check:
-    factoryIterSentinel(&endIt, &self->field_0xC80);
-    if (wordsDiffer((int*)&it, (int*)&endIt) != 0) {
+    endIt.end(self->field_0xC80);
+    if (wordsDiffer(&it, &endIt) != 0) {
         goto loop;
     }
     unlinkMatchingNode(self, obj);
@@ -3815,7 +3814,7 @@ extern "C" void qsortEntriesIndirect(void** firstV, void** lastV, void** cmpV) {
             selectSortEntries((void**)first, (void**)last, cmpV);
             return;
         }
-        int j = lbl_eu_80661CDC;
+        int j = sQsortIndirectPivotJitter;
         SortEntryF* p1 = first + (count / 4 + j % 5);
         int k = j + 1;
         if (k >= 5) {
@@ -3824,9 +3823,9 @@ extern "C" void qsortEntriesIndirect(void** firstV, void** lastV, void** cmpV) {
         SortEntryF* p2 = first + (3 * count / 4 + k % 5);
         int nextJ = k + 1;
         if (nextJ >= 5) {
-            lbl_eu_80661CDC = -4;
+            sQsortIndirectPivotJitter = -4;
         } else {
-            lbl_eu_80661CDC = nextJ;
+            sQsortIndirectPivotJitter = nextJ;
         }
         // Median-of-3 anchor: the slot just below `last`, reused as the
         // partition sentinel.
@@ -3967,7 +3966,7 @@ extern "C" void qsortEntries(void** firstV, void** lastV, int (*cmp)(const void*
             selectSortEntries((void**)first, (void**)last, (void**)&cmp);
             return;
         }
-        int j = lbl_eu_80661CD8;
+        int j = sQsortDirectPivotJitter;
         SortEntryF* p1 = first + (count / 4 + j % 5);
         int k = j + 1;
         if (k >= 5) {
@@ -3976,9 +3975,9 @@ extern "C" void qsortEntries(void** firstV, void** lastV, int (*cmp)(const void*
         SortEntryF* p2 = first + (3 * count / 4 + k % 5);
         int nextJ = k + 1;
         if (nextJ >= 5) {
-            lbl_eu_80661CD8 = -4;
+            sQsortDirectPivotJitter = -4;
         } else {
-            lbl_eu_80661CD8 = nextJ;
+            sQsortDirectPivotJitter = nextJ;
         }
         // Median-of-3 anchor: the slot just below `last`, reused as both
         // the partition pivot and the descending cursor.
@@ -4062,32 +4061,32 @@ extern "C" void qsortEntries(void** firstV, void** lastV, int (*cmp)(const void*
 extern "C" float CfT_PlayRateGet();
 extern "C" s32 gflagGateMask8();
 extern "C" s32 scanBattleObjects() {
-    extern float lbl_eu_80663EC8;
+    extern float sReslistGaugeA;
     s32 mgr = gflagGateMask8();
     // Retail expands the getInstance singleton-init sequence inline here.
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv,
-                                 lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
+    if (sFactoryMgrInitialized == 0) {
+        __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
+        __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv,
+                                 sFactoryMgrRegisterNode);
+        sFactoryMgrInitialized = 1;
     }
-    UnkClass_805764CC* self = (UnkClass_805764CC*)lbl_eu_80572CD4;
+    UnkClass_805764CC* self = (UnkClass_805764CC*)sFactoryMgrInstance;
     // Bit 25 of the shared event-flag word gates the pause shortcut.
-    if ((lbl_eu_80663E28 & 0x40) != 0 && mgr == 0 && (s16)self->field_0xD10 == 0) {
+    if ((gmPauseFlags & 0x40) != 0 && mgr == 0 && (s16)self->field_0xD10 == 0) {
         return 1;
     }
     float dt = CfT_PlayRateGet();
     float accum = lbl_eu_80663EDC + dt;
     lbl_eu_80663EDC = accum;
-    if (accum > lbl_eu_80666A28) {
+    if (accum > 180.0f) {
         return 1;
     }
     if (self->field_0xCA0 != 0) {
-        CPartsChange_UpdatePartyState(self->field_0xCA0, lbl_eu_80663EC8);
+        CPartsChange_UpdatePartyState(self->field_0xCA0, sReslistGaugeA);
     }
     IB8FC4Player* player = (IB8FC4Player*)getPlayer__Q22cf13CfGameManagerFi(0);
     F8C0ListSource* list = (F8C0ListSource*)getReslistB48();
-    const float maxDistSq = lbl_eu_80666A2C;
+    const float maxDistSq = 5640.01f;
     const float maxY = lbl_eu_80666A30;
     s32 processed = 0;
     CfReslistNode* cur = *(CfReslistNode**)((u8*)list + 4);
@@ -4651,7 +4650,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
                 }
             }
             p->vtbl = (void*)lbl_eu_80528600;
-            float fE0 = lbl_eu_806669E0;
+            float fE0 = 360.0f;
             p->f148 = fE0;
             p->h158 = 0;
             B20B4_BUMP(obj);
@@ -4701,7 +4700,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             p->h8C = 0;
             p->h8E = 0;
             ((void (*)(void*))((void**)__vt__Q22cf8CfObject)[0x5c / 4])(mem);
-            p->vtbl = (void*)lbl_eu_8052A3B0;
+            p->vtbl = (void*)__vt__Q22cf13CfObjectPoint;
             p->b90 = 0;
             p->flags68 = (p->flags68 | 0x00100000) & 0x00380000;
             B20B4_BUMP(obj);
@@ -4715,7 +4714,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
 
     // Tail: optional flag bit from the global gate, registration, init hook,
     // then notify every queued factory event.
-    if ((lbl_eu_80663E24 & 0x40000) != 0) {
+    if ((gmGameFlags & 0x40000) != 0) {
         mask |= 0x10000;
     }
     if (obj == 0) {
@@ -4754,7 +4753,7 @@ struct SpdRec {          // record handed to emitSpeedEvent (sp+0x28)
     float w;             // +0x2c: weight
 };
 void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* listv,
-                   const F8C0ListSource* listSrc, float speed) {
+                   SpeedSortBuffer* listSrc, float speed) {
     typedef s32 (*Call2Fn)(void*, u32);
     typedef s32 (*EvtFn)(void*, void*);
     typedef u32 (*B47Fn)(int, float, const B47Vec3*, const B47Vec3*, int,
@@ -4769,7 +4768,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
         copyVec3Words(&base30, anchor->unk2B());
     }
 
-    float f24 = speed + lbl_eu_80661CD4;   // scaled base speed
+    float f24 = speed + sTboxBaseReslistSize;   // scaled base speed
     float f23 = f24;                        // current multiplier
     isTimerActive__Q22cf13CfGameManagerFv();
 
@@ -4813,21 +4812,21 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
 
     // Multiplier selection ladder.
     if (resFlag10 != 0 && resFlag40 != 0) {
-        f23 = lbl_eu_806669F4;
+        f23 = 10.0f;
     } else if (scaleBase != 0) {
-        f23 = lbl_eu_806669F8;
+        f23 = 30.0f;
     } else if (camBit15 != 0) {
-        f23 = f24 * lbl_eu_806669EC;
+        f23 = f24 * 0.5f;
     } else if (resFlag10 != 0) {
-        f23 = f24 * lbl_eu_806669EC;
+        f23 = f24 * 0.5f;
     } else if (resFlag20 != 0 && resFlag40 != 0) {
-        f23 = lbl_eu_806669F8;
+        f23 = 30.0f;
     } else if (resFlag20 != 0) {
-        f23 = f24 * lbl_eu_806669EC;
+        f23 = f24 * 0.5f;
     }
 
     F8C0IteratorNode it24;                  // sp+0x24 main iterator
-    copyItemSourceNode__Q22cf13CfGameManagerFv(&it24, listSrc);
+    copyItemSourceNode__Q22cf13CfGameManagerFv(&it24, (const F8C0ListSource*)listSrc);
     for (;;) {
         B5994Obj* obj = *(B5994Obj**)getObjectNodePtr__Q22cf13CfGameManagerFv(&it24);
         F8C0IteratorNode it1c;              // sp+0x1C step-back iterator
@@ -4850,7 +4849,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 if (resFlag10 == 0) {
                     f22 = f17;
                     if ((b18 & 0x10) != 0) {
-                        f22 = f23 * lbl_eu_806669E4;
+                        f22 = f23 * 3.0f;
                         boosted = 1;
                         f17 = f22;
                     }
@@ -4889,7 +4888,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 B47Vec3* pos2 = obj->pos2B();
                 volatile float t14 = base30.y - pos2->y;   // sp+0x14
                 (void)t14;
-                if (cfCam_absFloat((const f32*)&t14) < lbl_eu_80663ED0) {
+                if (cfCam_absFloat((const f32*)&t14) < sReslistGaugeB) {
                     audible = 1;
                 }
             }
@@ -4979,28 +4978,28 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 SpdRec rec;
                 rec.id = (u32)obj;
                 if (bit8Flag != 0 || bit2Flag != 0) {
-                    rec.w = lbl_eu_806669FC;
+                    rec.w = 0.1f;
                 } else if (boosted != 0) {
                     B47Vec3* p = obj->pos2B();
                     volatile float t10 = p->y - base30.y;      // sp+0x10
                     (void)t10;
                     float bv = cfCam_absFloat((const f32*)&t10);
-                    rec.w = (tmp20 + bv) / lbl_eu_806669E4;
+                    rec.w = (tmp20 + bv) / 3.0f;
                 } else {
                     B47Vec3* p = obj->pos2B();
                     volatile float t0c = p->y - base30.y;      // sp+0x0C
                     (void)t0c;
                     float bv = cfCam_absFloat((const f32*)&t0c);
-                    rec.w = lbl_eu_80666A00 * bv + tmp20;
+                    rec.w = 4.0f * bv + tmp20;
                 }
                 void* owner = MapFx_ResolveOwner(obj);
                 if (owner != 0 &&
                     testMode15F0Range((UnkClass_805764CC*)owner) != 0) {
-                    rec.w *= lbl_eu_80666A04;
+                    rec.w *= 0.6f;
                     if (CfObjectMove_relaySubB0Slot68((u8*)owner + 0x3e9c) != 0) {
                         if (CfObjectMove_relaySubB0Slot68((u8*)owner + 0x3e9c) >= 5 &&
                             testMode15F0Eq((UnkClass_805764CC*)owner, 5) != 0) {
-                            rec.w = rec.w / lbl_eu_806669F4;
+                            rec.w = rec.w / 10.0f;
                             goto emit;
                         }
                         // Raw 64-bit bit-cast of {r27, fc7c-result} minus D0.
@@ -5045,13 +5044,13 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
             {
                 float f17n = f22 - tmp20;
                 if (gFlag20 != 0 && cfCam_getBit2_64(obj) != 0 && obj->q74() != 0) {
-                    CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
+                    CfObjectMove_setMoveSpeedGated(obj, 20.0f);
                     goto loop_end;
                 }
                 if (bit8Flag != 0 || bit2Flag != 0) {
                     if (cfCam_getBit2_64(obj) != 0 &&
                         obj->lvl16C() > lbl_eu_806669D8) {
-                        CfObjectMove_setMoveSpeedGated(obj, lbl_eu_80666A08);
+                        CfObjectMove_setMoveSpeedGated(obj, 20.0f);
                     }
                     B5994Obj* tgt = getObjField98(obj);
                     if (tgt == 0) {
@@ -5060,12 +5059,12 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                     tgt->q88();
                     goto loop_end;
                 }
-                if (f17n > lbl_eu_80666A0C) {
+                if (f17n > 2.0f) {
                     obj->fade1A4(lbl_eu_806669DC);
                     goto loop_end;
                 }
-                float f0 = lbl_eu_80666A0C - f17n;
-                f0 *= lbl_eu_806669EC;
+                float f0 = 2.0f - f17n;
+                f0 *= 0.5f;
                 if (f0 < lbl_eu_806669D8) {
                     f0 = lbl_eu_806669D8;
                 } else if (f0 > lbl_eu_806669DC) {
@@ -5076,7 +5075,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
         loop_end:;
         }
         F8C0IteratorNode it08;                  // sp+0x08 end iterator
-        checkFlagEquality__Q22cf13CfGameManagerFv(&it08, listSrc);
+        checkFlagEquality__Q22cf13CfGameManagerFv(&it08, (const F8C0ListSource*)listSrc);
         if (compareFlagValues__Q22cf13CfGameManagerFv((const u32*)&it24,
                                                    (const u32*)&it08)) {
             continue;
@@ -5089,7 +5088,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
 // event flags / sequence counters accordingly.
 // extern "C": retail exports this entry under the unmangled name.
 extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
-    u32 flags = lbl_eu_80663E24;
+    u32 flags = gmGameFlags;
     u8 b64 = 0, b63 = 0, b62 = 0, b61 = 0;
     int flagR20 = 0;
     int flagR19 = 0;
@@ -5122,7 +5121,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     if (arg == 0 || !arg->p1D()) {
         return 0;
     }
-    if ((lbl_eu_80663E24 & 0x80) == 0) {   // retail reloads the flag word here
+    if ((gmGameFlags & 0x80) == 0) {   // retail reloads the flag word here
         return 0;
     }
     if (gateBits != 0) {
@@ -5158,7 +5157,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
         statusObj = (void*)(unsigned long)testActorStatus(rec, &word, 0x803);
     }
 
-    float minDistSq = lbl_eu_80666A14;
+    float minDistSq = 1e+07f;
     u32 inEventRange = isPlayerInEventRange__Q22cf13CfGameManagerFv(gm);
     void* bestObj = 0;
     int found = 0;
@@ -5183,7 +5182,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                         found = 1;
                         flagR19 = 1;
                     } else {
-                        if (statusObj == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_80666A18)) {
+                        if (statusObj == 0 && CollObjLoadResourceTimed(item, arg, 0, 75.0f)) {
                             B47Vec3 pa = *obj->unk2B();
                             B47Vec3 pb = *arg->unk2A();
                             float dx = pa.x - pb.x;
@@ -5199,7 +5198,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                                 bestObj = item;
                             }
                         }
-                        if (statusObj == 0 && CollObjLoadResourceTimed(item, arg, 0, lbl_eu_806669F4)) {
+                        if (statusObj == 0 && CollObjLoadResourceTimed(item, arg, 0, 10.0f)) {
                             if (eligible == 0 && sp6C != 0) {
                                 flagR19 = 1;
                             }
@@ -5273,9 +5272,9 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                         flagR20 = 1;
                     } else if (ty == 0) {
                         if (gate69 == 0 && gate13 == 0 &&
-                            (lbl_eu_80663E24 & 0x400) == 0 &&
+                            (gmGameFlags & 0x400) == 0 &&
                             flagR20 == 0 && flagR19 == 0 &&
-                            (lbl_eu_80663E24 & 0x40) == 0) {
+                            (gmGameFlags & 0x40) == 0) {
                             CfRes_runUpdatePipeline();
                             clearGlobalState__Q22cf13CfGameManagerFv(lo, hi, 0);
                             b63 = 1;
@@ -5302,7 +5301,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                                     break;
                                 }
                             }
-                            if (!found && (lbl_eu_80663E24 & 0x400) == 0) {
+                            if (!found && (gmGameFlags & 0x400) == 0) {
                                 void* out24;
                                 CollObjLerpVecPair(&out24, item);
                                 float fv = item->field148;
@@ -5348,56 +5347,37 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     }
     if (fired == 0) {
         // Retail masks the word down to bits 9-11 rather than clearing one.
-        lbl_eu_80663E28 = lbl_eu_80663E28 & 0xe00;
+        gmPauseFlags = gmPauseFlags & 0xe00;
     }
     if (b61 == 0 && eligible == 0 && sp68 == 0) {
         setEventCounterA__Q22cf13CfGameManagerFv(0);
     }
     if (b63 == 0) {
-        lbl_eu_80663E24 = lbl_eu_80663E24 & 0x38000000;
+        gmGameFlags = gmGameFlags & 0x38000000;
     }
     if (flagR20 == 0) {
-        lbl_eu_80663E24 = lbl_eu_80663E24 & 0x1c000000;
+        gmGameFlags = gmGameFlags & 0x1c000000;
     }
     if (b62 == 0) {
         clearFieldFlagsA__Q22cf13CfGameManagerFv(gm);
     if (b65 != 0) {
-        lbl_eu_80663E24 |= 8;
+        gmGameFlags |= 8;
     }
     }
     return b64;
 }
 
-// Typed layouts for the flag/word accessors below. Each field sits at the
-// retail offset; these are real data shapes, not pointer arithmetic.
-struct ObjFlagsEx {
-    u8 _00[0x64];
-    u32 flags64;
-    u32 flags68;
-    u32 flags6C;
-    u8 _70[0x74 - 0x70];
-    u32 field74;
-    u8 _78[0x94 - 0x78];
-    s32 type94;
-    u8 _98[0x9C - 0x98];
-    u32 field9C;
-    u8 _A0[0x214 - 0xA0];
-    u32 flags214;
-};
-struct SortBuffer { u8 entries[0x700]; u32 count; };
-struct ManagerD08 { u8 _00[0xD08]; u32 fieldD08; };
-struct Vec724Block { u8 _00[0x724]; u32 x, y, z; };
-
-// Iterator helpers shared by the factory and TboxInfo reslists.
-extern "C" void factoryIterBegin(void* dst, void* list) {
-    u32* head = *(u32**)((u8*)list + 4);
-    *(u32*)dst = *head;
+// reslist<cf::IFactoryEvent*> iterator members. begin/end initialize the
+// iterator in place from the owning list; operator++/operator* walk nodes.
+void reslist<cf::IFactoryEvent*>::iterator::begin(const reslist& list) {
+    mNode = list.mStartNodePtr->mNext;
 }
-extern "C" void factoryIterNext(void* it) {
-    *(u32*)it = **(u32**)it;
+reslist<cf::IFactoryEvent*>::iterator& reslist<cf::IFactoryEvent*>::iterator::operator++() {
+    mNode = mNode->mNext;
+    return *this;
 }
-extern "C" void factoryIterSentinel(void* dst, void* list) {
-    *(u32*)dst = *(u32*)((u8*)list + 4);
+void reslist<cf::IFactoryEvent*>::iterator::end(const reslist& list) {
+    mNode = list.mStartNodePtr;
 }
 extern "C" void* copyIterWord(void* dst, void* src) {
     *(u32*)dst = *(u32*)src;
@@ -5427,28 +5407,28 @@ extern "C" void tboxIterStep(void* dst, void* it, int) {
 }
 
 // Bit/word accessors over the shared manager and object layouts.
-extern "C" int testObj64bit9(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 9) & 1; }
-extern "C" int testFlag64b3(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 3) & 1; }
-extern "C" int testObj64bit5(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 5) & 1; }
-extern "C" int testObj64bit6(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 6) & 1; }
-extern "C" int testObj64bit14(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 14) & 1; }
-extern "C" int testObj64bit16(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 16) & 1; }
-extern "C" int testObj64bit26(void* obj) { return (((ObjFlagsEx*)obj)->flags64 >> 26) & 1; }
-extern "C" int testObj68bit6(void* obj) { return (((ObjFlagsEx*)obj)->flags68 >> 6) & 1; }
+extern "C" int testObj64bit9(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 9) & 1; }
+extern "C" int testFlag64b3(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 3) & 1; }
+extern "C" int testObj64bit5(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 5) & 1; }
+extern "C" int testObj64bit6(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 6) & 1; }
+extern "C" int testObj64bit14(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 14) & 1; }
+extern "C" int testObj64bit16(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 16) & 1; }
+extern "C" int testObj64bit26(void* obj) { return (((cf::CfObject*)obj)->unk64 >> 26) & 1; }
+extern "C" int testObj68bit6(void* obj) { return (((cf::CfObject*)obj)->mFlags68 >> 6) & 1; }
 extern "C" void* testCamBit15(void* obj) {
-    return (void*)((((ObjFlagsEx*)obj)->flags214 >> 15) & 1);
+    return (void*)((((CGimmickGlobal*)obj)->mFlags >> 15) & 1);
 }
 extern "C" void setFieldD08Hi(void* self) {
-    ((ManagerD08*)self)->fieldD08 = 0x10000;
+    ((UnkClass_805764CC*)self)->field_0xD08 = 0x10000;
 }
 extern "C" void orObj6Cmask(void* obj, u32 mask) {
-    ((ObjFlagsEx*)obj)->flags6C |= mask;
+    ((cf::CfObject*)obj)->field_0x6C |= mask;
 }
 extern "C" void orObj68bit6(void* obj) {
-    ((ObjFlagsEx*)obj)->flags68 |= 0x40;
+    ((cf::CfObject*)obj)->mFlags68 |= 0x40;
 }
 extern "C" void orObj68bits5_6(void* obj) {
-    ((ObjFlagsEx*)obj)->flags68 |= 0x60;
+    ((cf::CfObject*)obj)->mFlags68 |= 0x60;
 }
 extern "C" unsigned long workBufSize(void* ctx) {
     return ((UnkClass_800B0AD8*)ctx)->unkB04;
@@ -5457,8 +5437,8 @@ extern "C" void clearFixStrBuf(void* dst) {
     ((ml::FixStr<64>*)dst)->clear();
 }
 extern "C" void** sortBufEnd(void* buf) {
-    SortBuffer* sort = (SortBuffer*)buf;
-    return (void**)(sort->entries + sort->count * 8);
+    SpeedSortBuffer* sort = (SpeedSortBuffer*)buf;
+    return (void**)(sort->mRecords + sort->mCount);
 }
 extern "C" u32* sortBufAt(void* it, u32 index) {
     return (u32*)((u8*)it + index * 4);
@@ -5514,23 +5494,23 @@ extern "C" void unlinkMatchingNode(void* list, void* obj) {
     unlinkNodesByKey(list, &obj);
 }
 extern "C" int testObj68mask(void* obj, u32 mask) {
-    return (((ObjFlagsEx*)obj)->flags68 & mask) != 0;
+    return (((cf::CfObject*)obj)->mFlags68 & mask) != 0;
 }
-extern "C" void emitSpeedEvent(const F8C0ListSource* self, void* rec) {
-    SortBuffer* work = (SortBuffer*)self;
-    u32 count = work->count;
+extern "C" void emitSpeedEvent(SpeedSortBuffer* self, void* rec) {
+    SpeedSortBuffer* work = self;
+    u32 count = work->mCount;
     u32 word = *(u32*)rec;
     float value = *(float*)((u8*)rec + 4);
-    work->count = count + 1;
-    u32* dst = (u32*)work->entries + count * 2;
+    work->mCount = count + 1;
+    u32* dst = (u32*)&work->mRecords[count];
     *dst = word;
     *(float*)(dst + 1) = value;
 }
 extern "C" void copyObjVec724(void* self, void* src) {
-    Vec724Block* vec = (Vec724Block*)self;
-    vec->x = ((u32*)src)[0];
-    vec->y = ((u32*)src)[1];
-    vec->z = ((u32*)src)[2];
+    cf::CfObjectTbox* vec = (cf::CfObjectTbox*)self;
+    vec->field_724 = ((u32*)src)[0];
+    vec->field_728 = ((u32*)src)[1];
+    vec->field_72C = ((u32*)src)[2];
 }
 extern "C" u32 getGlobalU32_40F4() {
     extern void* lbl_eu_806640F4;
@@ -5559,9 +5539,9 @@ check:
     goto check2;
 loop2:
     void* data = cur->mItem;
-    ObjFlagsEx* payload = (ObjFlagsEx*)data;
-    u32 type = (u32)payload->type94;
-    u16 id = (u16)payload->field9C;
+    cf::CfObjectModel* payload = (cf::CfObjectModel*)data;
+    u32 type = (u32)payload->field_0x94;
+    u16 id = (u16)payload->field_0x9C;
     if (type == 5 && id == (u16)(u32)arg) {
         poolInsertThunk(&self->field_0xC28, data);
     }
@@ -5570,34 +5550,87 @@ check2:
     if (cur != (CfReslistNode*)self->field_0xBC8.field_0x04) goto loop2;
 }
 
-// Destructor for the standalone reslist-like object at 0x800B183C.
-extern "C" void __dt__800B183C(void* self) {
-    u32 obj = (u32)self;
-    u32 sentinel = *(u32*)(obj + 4);
-    u32 node = *(u32*)sentinel;
-    u32 zero = 0;
-    u32* p;
-    goto check;
-loop:
-    p = (u32*)node;
-    node = *p;
-    *p = zero;
-check:
-    sentinel = *(u32*)(obj + 4);
-    if (node != sentinel) goto loop;
-    *(u32*)sentinel = sentinel;
-    u32 head = *(u32*)(obj + 4);
-    *(u32*)(head + 4) = head;
-    TboxInfoReslistLayout* tbox = (TboxInfoReslistLayout*)self;
-    if (tbox->field_0x34 == 0) {
-        u32 pool = tbox->field_0x2c;
+// us-800b2108 - reslist<cf::TboxInfo>::destroy(): unlink every node,
+// restore the sentinel, free the biased pool array and clear the pool fields.
+void reslist<cf::TboxInfo>::destroy() {
+    CfReslistNode* node = mStartNodePtr->mNext;
+    while (node != mStartNodePtr) {
+        CfReslistNode* cur = node;
+        node = cur->mNext;
+        cur->mNext = 0;
+    }
+    mStartNodePtr->mNext = mStartNodePtr;
+    mStartNodePtr->mPrev = mStartNodePtr;
+    if (field_0x34 == 0) {
+        char* pool = (char*)field_0x2c;
         if (pool != 0) {
             if (pool != 0) {
-                operator delete[]((void*)(pool - 0x10));
+                operator delete[](pool - 0x10);
             }
-            tbox->field_0x2c = 0;
+            field_0x2c = 0;
         }
     }
-    tbox->field_0x30 = 0;
+    field_0x30 = 0;
 }
 
+
+
+// --- retail catalog helpers emitted at their own text addresses ---
+
+// us-800b13a4 - UnkClass_800B0AD8::UnkClass_800B0AD8()
+UnkClass_800B0AD8::UnkClass_800B0AD8() {
+    unkB04 = 0x2be;
+    unkAF8 = this;
+    unkB00 = 0;
+    unkAFC = 0;
+}
+
+// us-800b4648 - mask test over the object flag word.
+extern "C" int testObj6Cmask(void* obj, u32 mask) {
+    return (((cf::CfObject*)obj)->field_0x6C & mask) != 0;
+}
+
+// us-800b7414 - refresh the two proximity lists from the tracked target.
+extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
+extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void refreshCamItems(void* self) {
+    UnkClass_805764CC* mgr = (UnkClass_805764CC*)self;
+    if (gflagHasMask(4) == 0) return;
+    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
+    updatePlayerContainers__Q22cf13CfGameManagerFv(0);
+    void* partner = findObjectById(mgr->field_0xCF4);
+    float limit = mgr->field_0xCF8;
+    if (partner != 0) {
+        applyProximitySpeed(mgr, partner, &mgr->field_0xB48, 1, limit);
+        applyProximitySpeed(mgr, partner, &mgr->field_0xB68, 1, limit);
+    }
+}
+
+// us-800b9bd0/us-800b9c5c/us-800b9c80/us-800b9ca4 - one-line manager calls.
+extern "C" void gmCallInit1120() { buildSingleton(getInstance()); }
+extern "C" void gmCallNopA() { factoryEventNopA(); }
+extern "C" void gmCallNopB() { factoryEventNopB(); }
+extern "C" void gmCallInit1954() { clearAllReslists(getInstance()); }
+
+// us-800b9e40 - pack the two ids then spawn the object.
+extern "C" void gmSpawnAfterAA2(u32 first, u32 second) {
+    spawnObjFromRes((cf::CfObject*)Tok_Pack08(first, second));
+}
+
+// us-800ba1e4 - broadcast a model-side flag to every enumerated object.
+#include "kyoshin/CfEnumListHolder.hpp"
+extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
+extern "C" void* getObjectIdAt(void* list, int index);
+extern "C" void setMonoFlag(void* value) {
+    CfEnumListHolder holder;
+    startEnumObjects((void*)holder.get(), 0x408, 0);
+    for (int i = 0; i < getObjField620(holder.get()); i++) {
+        void* obj = findObjectById((int)(u32)getObjectIdAt((void*)holder.get(), i));
+        cf::CfObjectModel* model = (cf::CfObjectModel*)__dynamic_cast(
+            obj, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
+        if (model != 0) {
+            model->CfObjectModel_snapSubTarget((ml::CVec3*)value, 0.0f);
+        }
+    }
+    holder.~CfEnumListHolder();
+}

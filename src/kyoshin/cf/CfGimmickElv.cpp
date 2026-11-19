@@ -3,7 +3,7 @@
 
 #include "kyoshin/cf/CfGimmickElv.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/scn/code_804BC9EC.hpp"
 
 // retail data -- typed source shape (replaces absorb blobs)
@@ -59,12 +59,12 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8))) const Sdata2_Elv
 
 extern "C" {
 extern char lbl_eu_805358C8[];   // CfGimmickElv vtable (actually next TU, keep extern)
-extern char lbl_eu_805357E8[];   // bdat column pointer table
+extern char gGimmickBdatColumns[];   // bdat column pointer table
 extern char lbl_eu_80664130[];    // bdat table pointer (via sda21)
-extern char lbl_eu_806646BC[];    // global flag
+extern char gGimmickPartyFlags[];    // global flag
 typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
-extern char lbl_eu_805765B0[];  // bit array
-extern char lbl_eu_805765A0[];  // vec3 constant (player-relative check center)
+extern char gGimmickPartySlotState[];  // bit array
+extern char gGimmickAnchorPoint[];  // vec3 constant (player-relative check center)
 extern u32 jumptable_eu_80535830[]; // jump table
 }
 
@@ -86,7 +86,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 
     void* mgr = Bdat_GetTable_AA34();
     void* table = *(void**)((u8*)mgr + (u32)&lbl_eu_80664130);
-    u8* colBase = (u8*)lbl_eu_805357E8;
+    u8* colBase = (u8*)gGimmickBdatColumns;
 
     self->bdatRowId = rowId;
 
@@ -107,18 +107,18 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 
     // Initialize sub-objects (4 groups x 3 types)
     u32 stackVar = (u32)table;
-    CfGimmick_LoadBdatAreaPosIndexed(self, &self->vec0, (void*)lbl_eu_805357E8, &stackVar, 0);
-    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->vec1, (void*)lbl_eu_805357E8, &stackVar, 0);
-    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->vec2, (void*)lbl_eu_805357E8, &stackVar, 0);
-    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec0, (void*)lbl_eu_805357E8, &stackVar, 1);
-    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec3, (void*)lbl_eu_805357E8, &stackVar, 1);
-    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec6, (void*)lbl_eu_805357E8, &stackVar, 1);
-    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec1, (void*)lbl_eu_805357E8, &stackVar, 2);
-    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec4, (void*)lbl_eu_805357E8, &stackVar, 2);
-    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec7, (void*)lbl_eu_805357E8, &stackVar, 2);
-    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec2, (void*)lbl_eu_805357E8, &stackVar, 3);
-    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec5, (void*)lbl_eu_805357E8, &stackVar, 3);
-    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec8, (void*)lbl_eu_805357E8, &stackVar, 3);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->vec0, (void*)gGimmickBdatColumns, &stackVar, 0);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->vec1, (void*)gGimmickBdatColumns, &stackVar, 0);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->vec2, (void*)gGimmickBdatColumns, &stackVar, 0);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec0, (void*)gGimmickBdatColumns, &stackVar, 1);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec3, (void*)gGimmickBdatColumns, &stackVar, 1);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec6, (void*)gGimmickBdatColumns, &stackVar, 1);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec1, (void*)gGimmickBdatColumns, &stackVar, 2);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec4, (void*)gGimmickBdatColumns, &stackVar, 2);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec7, (void*)gGimmickBdatColumns, &stackVar, 2);
+    CfGimmick_LoadBdatAreaPosIndexed(self, &self->elvVec2, (void*)gGimmickBdatColumns, &stackVar, 3);
+    CfGimmick_LoadBdatAreaRotationIndexed(self, &self->elvVec5, (void*)gGimmickBdatColumns, &stackVar, 3);
+    CfGimmick_LoadBdatAreaExtentsIndexed(self, &self->elvVec8, (void*)gGimmickBdatColumns, &stackVar, 3);
 
     // Virtual call: vtable[8] (offset 0x20)
     void (*vfunc)(CfGimmickElvData*) = *(void(**)(CfGimmickElvData*))(*(u32*)self + 0x20);
@@ -137,7 +137,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
         u32 idx = self->lod0;
         u32 word = idx >> 3;  // rlwinm r6, r3, 29, 27, 29
         u32 bit = idx & 0x1F; // clrlwi r0, r3, 27
-        lbl_eu_805765B0[word] &= ~(1u << bit);
+        gGimmickPartySlotState[word] &= ~(1u << bit);
     }
 
     self->flag1B3 = getCol8(table, nameBase + 0x2F, rowId);
@@ -254,7 +254,7 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
 // GimmickElv_Update (0x58 bytes) - state dispatch + update
 // ============================================================
 extern "C" void GimmickElv_Update(CfGimmickElvData* self) {
-    if (*(u32*)lbl_eu_806646BC & 2) {
+    if (*(u32*)gGimmickPartyFlags & 2) {
         // PTMF call through state table
         typedef void (CfGimmickElvData::*PMF)(); PMF* tbl = (PMF*)lbl_eu_80535868; (self->*tbl[self->state])();
         GimmickElv_InitSubObjects(self);
@@ -484,7 +484,7 @@ extern "C" void GimmickElv_SetDir1(CfGimmickElvData* self) {
 // GimmickElv_FadeSingleAxis (0x1FC bytes) - LOD fade update (single axis)
 // ============================================================
 extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
-    f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
+    f32 dt = Scn_GetFrameDelta(gmScene);
     self->val1C8 += dt;
 
     u16 dir = self->direction;
@@ -552,7 +552,7 @@ extern "C" void GimmickElv_FadeSingleAxis(CfGimmickElvData* self) {
 // GimmickElv_FadeBothAxes (0x210 bytes) - LOD fade update (both axes loop)
 // ============================================================
 extern "C" void GimmickElv_FadeBothAxes(CfGimmickElvData* self) {
-    self->val1C8 += Scn_GetFrameDelta(lbl_eu_80663E14);
+    self->val1C8 += Scn_GetFrameDelta(gmScene);
 
     // Per-axis LOD fade driver (direction bits 0x20/0x40, latch bits 0x100/0x200)
     int allDone = 1;
@@ -651,7 +651,7 @@ extern "C" void GimmickElv_CheckComplete(CfGimmickElvData* self) {
             u32 idx = self->unk158;
             // Jump table call
             int (*fn)(void*, void*, void*) = (int(*)(void*, void*, void*))jumptable_eu_80535830[idx];
-            if (fn(&self->elvVec7, lbl_eu_805765A0, &self->elvVec1) != 0) {
+            if (fn(&self->elvVec7, gGimmickAnchorPoint, &self->elvVec1) != 0) {
                 return;
             }
         }
@@ -659,7 +659,7 @@ extern "C" void GimmickElv_CheckComplete(CfGimmickElvData* self) {
         if (!(self->flag1B2 & 5)) {
             u32 idx = self->unk1A0;
             int (*fn)(void*, void*, void*) = (int(*)(void*, void*, void*))jumptable_eu_80535830[idx];
-            if (fn(&self->elvVec8, lbl_eu_805765A0, &self->elvVec2) != 0) {
+            if (fn(&self->elvVec8, gGimmickAnchorPoint, &self->elvVec2) != 0) {
                 return;
             }
         }

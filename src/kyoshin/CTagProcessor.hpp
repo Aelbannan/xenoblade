@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/TagProcCompareIds.hpp"
 
 #include <nw4r/db/db_assert.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
@@ -905,7 +906,7 @@ void UIWin_CreateMenuUpdate(u32 a, u32 b, u32 c, u32 d);
 // but the call passes -1 in r3 (same convention as CTalkWindow.hpp).
 // Local context-walk helpers (defined in CTagProcessor.cpp).
 void* TagCtxGetNodeHeader(void* self);
-u32 TagProcCompareIds(const u32* a, const u32* b);
+// TagProcCompareIds is declared once in kyoshin/TagProcCompareIds.hpp.
 void* TagCtxAdvanceHead(void* self, int a);
 const wchar_t* getContextStr(u8* self);
 const wchar_t** getContextStrPtr(u8* self);

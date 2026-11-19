@@ -171,16 +171,16 @@ extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
-extern "C" u32 lbl_eu_806646B4;
-extern "C" u32 lbl_eu_806646BC;
+extern "C" u32 gGimmickPartyId;
+extern "C" u32 gGimmickPartyFlags;
 // Cached value written by CfGimmick_SetGlobalB8Value (retail: single stw + blr).
-extern "C" u32 lbl_eu_806646B8;
-extern "C" float lbl_eu_80662784;
-extern "C" u16 lbl_eu_806646C0;
-extern "C" int lbl_eu_805765B0[10];
+extern "C" u32 gGimmickSelectedRow;
+extern "C" float gGimmickMoveRateScale;
+extern "C" u16 gGimmickInitFlags;
+extern "C" int gGimmickPartySlotState[10];
 
 // Reference point the gimmick range checks are measured from.
-extern "C" CfGimmickVec3 lbl_eu_805765A0;
+extern "C" CfGimmickVec3 gGimmickAnchorPoint;
 
 // Downward drop offset recorded by CfGimmick_UpdatePartyAnchorState when the stage ground is
 // above zero (.sdata).
@@ -190,10 +190,10 @@ extern "C" const f32 lbl_eu_80668360;
 
 
 // Bdat table data used by CfGimmick_LookupBdatGimmickName / CfGimmick_LoadBdatAreaPos columns.
-extern "C" const void* lbl_eu_805357E8[];
-extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
+extern "C" const void* gGimmickBdatColumns[];
+extern "C" void* gGimmickBdatFile;   // .sbss - current bdat file pointer
 // Returned when CfGimmick_LookupBdatGimmickName cannot fetch a column row.
-extern "C" const void* lbl_eu_80662788[2];
+extern "C" const void* gGimmickFallbackName[2];
 
 // Column-capacity helpers (CBdat row begin/count).
 extern "C" void* Bdat_GetTable_AA34();
@@ -212,7 +212,6 @@ extern "C" const float lbl_eu_80668364;
 // (lfd + fsubs per bdat-column reader block).
 extern "C" const double lbl_eu_80668370;
 // Base of the +0, +0xA, +0x15, +0x20 column-name string block.
-extern "C" const char lbl_eu_80508634[];
 // Sentinel used by the player loops (CfGimmick_ApplyPartyMoveSpeed / CfGimmick_ApplyPartyMoveSpeedGated) and the
 // gimmick extent checks.  Const so MWCC treats the SDA load as read-only and
 // schedules it at retail's position (CfObjectMove.hpp pattern).
@@ -235,7 +234,7 @@ extern "C" CfGimmickChecker jumptable_eu_80535830[];
 extern "C" CfGimmickList* getReslistB48();
 extern "C" CfGimmickList* getReslistB68();
 // Fixed rotation angle used by CfGimmick_QueryTrigger's mask-0x4 occlusion test.
-extern "C" f32 lbl_eu_806646B0;
+extern "C" f32 gGimmickFixedRotationAngle;
 
 // Height-offset pair (1.5, 0.0) for spawned objects; [0] is the live offset.
 // Array shape preserves retail's trailing pad float at 8066837C.
@@ -248,4 +247,4 @@ extern "C" CfGimmickObject* spawnMaskedObject(void* mgr, int a, int b, int c);
 extern "C" u32 UIWin_GetInstance();
 extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
 // Shared message format buffer (retail .data, absolute-address access).
-extern "C" char lbl_eu_805765D8[128];
+extern "C" char gGimmickMessageBuffer[128];

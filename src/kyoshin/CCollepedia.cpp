@@ -492,25 +492,26 @@ extern "C" bool clpIsClaimabl(CLPCatalog* this_, u32 arg1, u32 arg2) {
 
 // us-80256178
 // Handle item selection in the collepedia grid.
-// Entry address folds as ((self + (s8)self[1]*0x140) + row*0x34)[col*0xA + off];
-// retail rematerializes self[1] per access, so the load stays inline.
+// The selected CLPCell is cached once and accessed through real fields.
+// Retail rematerializes the page index per access, so typed addressing adds
+// base increments here (see MWCC_CASES DQ3).
 // Grant path falls through first (if remaining<=0), consume call branched to.
-// Residual (16 mm / 3 structural): MWCC associates the pointer sum as
-// (self+row)+idx while retail folds self+idx first; scheduler-invariant
-// across every source shape tried (flat/subscript/cast/chained-&/locals).
+// Raw-offset spelling was retained here previously but was not faithful;
+// no matched function depended on it, so the typed form is kept.
 extern "C" void clpSelectItem(CLPCatalog* self_, u32 row, u32 col) {
-    u8* self = (u8*)self_;
     if (row >= 6) return;
     if (col >= 5) return;
 
-    CtrlObjectParam_SetStateBitFlag(*(u16*)&(self + (s8)self[1] * 0x140 + row * 0x34)[0x10 + col * 0xA], 1);
+    CLPCell* cell = &self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[row].mCells[col];
 
-    (self + (s8)self[1] * 0x140 + row * 0x34)[0x16 - 4 + col * 0xA] = 3;
+    CtrlObjectParam_SetStateBitFlag(cell->mKind, 1);
+
+    cell->mSortKey = 3;
 
     u8 count = clpGetCellCnt(self_, row, col);
     s32 remaining = count - 1;
 
-    u16 itemId = *(u16*)&(self + (s8)self[1] * 0x140 + row * 0x34)[col * 0xA + 0xE];
+    u16 itemId = cell->mItemId;
     u32 res = CItem_findRecByFamily(itemId);
 
     // Grant path falls through first in retail; consume call is branched to
@@ -599,13 +600,10 @@ extern "C" float clpGetPagePrg(CLPCatalog* this_) {
 extern "C" char* clpGetEntryStr(CLPCatalog* self_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return nullptr;
     if (arg2 >= 5) return nullptr;
-    u8* self = (u8*)self_;
-    // Fold the whole entry address into one expression to match retail dataflow
-    // (base+idx*0x140 must accumulate in r0; statement/index forms regress).
-    u8* entry = self + (s8)self[1] * 0x140 + arg1 * 0x34 + arg2 * 0xA;
-    u16 val = *(u16*)(entry + 0x10);
+    CLPCell* cell = &self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[arg1].mCells[arg2];
+    u16 val = cell->mKind;
     if (val == 0) return nullptr;
-    u8 b = entry[0x16];
+    u8 b = cell->mState;
     if (b == 1) return nullptr;
     return (char*)BdatGetPtrDirect(lbl_eu_80664104, &lbl_eu_8050C6E8[0xAE], val);
 }
@@ -614,20 +612,18 @@ extern "C" char* clpGetEntryStr(CLPCatalog* self_, u32 arg1, u32 arg2) {
 // Look up an entry in the sub-array, check if item is unlocked (via CtrlObjectParam_GetStateBitFlag), format its name
 // Returns nullptr if the entry is invalid or locked
 extern "C" char* clpGetItemName(CLPCatalog* self_, u32 arg2, u32 arg3) {
-    if (lbl_eu_806647D8 == NULL) return NULL;
+    if (gpClpItemMsgTable == NULL) return NULL;
     if (arg2 >= 6) return NULL;
     if (arg3 >= 5) return NULL;
 
-    u8* self = (u8*)self_;
-    s8 idx = (s8)self[1];
-    u8* entry = (self + idx * 0x140 + arg2 * 0x34) + arg3 * 0xA;
+    CLPCell* cell = &self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[arg2].mCells[arg3];
 
-    u16 val = *(u16*)(entry + 0x14);
+    u16 val = cell->mNameId;
     if (val == 0) return NULL;
 
-    u16 check = *(u16*)(entry + 0x10);
+    u16 check = cell->mKind;
     if (CtrlObjectParam_GetStateBitFlag(check) != 0) {
-        return (char*)BdatGetPtrDirect(lbl_eu_806647D8, &lbl_eu_8050C6E8[0x18f], val);
+        return (char*)BdatGetPtrDirect(gpClpItemMsgTable, &lbl_eu_8050C6E8[0x18f], val);
     }
     return NULL;
 }
@@ -647,45 +643,36 @@ extern "C" u8 clpGetCellCnt(CLPCatalog* self, u32 arg2, u32 arg3) {
 
 // Whether the current page has been fully collected.
 extern "C" bool clpIsPageDone(CLPCatalog* this_) {
-    s8 idx = (s8)this_->mCurrentPage;
-    u8* base = (u8*)this_ + idx * 0x140;
-    return *(bool*)&base[6];
+    CLPPage* page = &this_->mPageTable.mPages[(s8)this_->mCurrentPage];
+    return *(bool*)&page->mDone;
 }
 
 // us-802566d8
-// Fill one grid entry (stride 0xA at self + a*0x140 + b*0x34 + c*0xA):
+// Fill one grid entry through its CLPCell fields:
 // item id, category lookups, and an unlock-state byte.
 extern "C" void clpFillEntry(CLPCatalog* self_, int a, int b, int c, u16 itemId) {
-    u8* self = (u8*)self_;
-    // Retail rebuilds the entry address from three live stride offsets before
-    // every store (see open-item note below).
-    *(u16*)(self + a * 0x140 + b * 0x34 + c * 0xA + 0xE) = itemId;
+    CLPCell* cell = &self_->mPageTable.mPages[a].mRows[b].mCells[c];
+
+    cell->mItemId = itemId;
 
     u16 kind = BdatGetItemId(itemId);
 
-    *(u16*)(self + a * 0x140 + b * 0x34 + c * 0xA + 0x10) = kind;
+    cell->mKind = kind;
 
-    *(u16*)(self + a * 0x140 + b * 0x34 + c * 0xA + 0x12) =
+    cell->mSortKey =
         BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x197], (int)itemId);
-    *(u16*)(self + a * 0x140 + b * 0x34 + c * 0xA + 0x14) =
+    cell->mNameId =
         BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x18f], (int)itemId);
 
     // Unlock state: 0=kindless, 3=owned, 2=new/claimable, 1=locked
-    // OPEN ITEM (us-802566d8): retail rematerializes the entry base address
-    // into volatile regs before every store (7 callee-saved, stmw r25);
-    // this build GVN-caches the shared pointer sum in an extra callee-saved
-    // reg (stmw r24). Not source-controllable: 9 expression shapes tried
-    // (reassociation, strength variants, pressure changes, def-point moves,
-    // param retypes) all yield identical codegen. See MWCC_PATTERNS.md:1329
-    // and wall class 11 (uncontrollable CSE).
     if (kind == 0) {
-        *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 0;
+        cell->mState = 0;
     } else if (CtrlObjectParam_GetStateBitFlag(kind) != 0) {
-        *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 3;
+        cell->mState = 3;
     } else if (CItem_findRecByFamily(itemId) != 0) {
-        *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 2;
+        cell->mState = 2;
     } else {
-        *(self + a * 0x140 + b * 0x34 + c * 0xA + 0x16) = 1;
+        cell->mState = 1;
     }
 }
 
@@ -818,8 +805,8 @@ CCollepedia::CCollepedia() {
     *(CLPSysWinBody*)((u8*)this + 0xA0) = *(CLPSysWinBody*)&wt[4];
     __dt__7CSysWinFv(wt, -1);
 
-    lbl_eu_806647D8 = nullptr;
-    lbl_eu_806647DC = nullptr;
+    gpClpItemMsgTable = nullptr;
+    gpClpCollectMsgTable = nullptr;
 }
 
 // us-80256b68
@@ -1408,7 +1395,7 @@ extern "C" void collepediaCreateItemMulti(CCollepedia* this_) {
     s32 d9 = (s8)this_->field_D9;
     u16 entry = lbl_eu_8050C6A0[idx & 0xFF];
     u32 count = (u32)entry + 1;
-    u32 result = BdatGetU16Direct(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
+    u32 result = BdatGetU16Direct(gpClpCollectMsgTable, &lbl_eu_8050C6E8[0x1f9],
         (u32)(u16)count + d9);
 
     u32 zero = 0;
@@ -1447,7 +1434,7 @@ void clpPlayTblSe(CCollepedia* this_) {
     this_->field_49 = 0x10;
 
     // Table lookup folded into the call so the index comes straight from clpGetPageCat
-    u32 result = BdatGetU16Direct(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
+    u32 result = BdatGetU16Direct(gpClpCollectMsgTable, &lbl_eu_8050C6E8[0x1f9],
         lbl_eu_8050C6A0[clpGetPageCat(&this_->mCatalog) & 0xFF]);
     UIWin_CreateItemMulti((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -1456,7 +1443,7 @@ void clpPlayTblSe(CCollepedia* this_) {
 // Check layout/resource pointers and the two SDA string-pool pointers, then update display
 void clpTryShow(CCollepedia* this_) {
     if (this_->field_38 == nullptr || this_->field_34 == nullptr ||
-        lbl_eu_806647D8 == nullptr || lbl_eu_806647DC == nullptr) {
+        gpClpItemMsgTable == nullptr || gpClpCollectMsgTable == nullptr) {
         return;
     }
     clpSetPageVis();
@@ -1564,7 +1551,7 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
     nw4r::lyt::Pane* cursorPane =
         this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x28d], true);
     nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)&this_->field_DC[0];
-    pos.x = lbl_eu_80668810 * clpConvS32ToF64((s32)idx - 1) + pos.x;
+    pos.x = 16.0f * clpConvS32ToF64((s32)idx - 1) + pos.x;
     copyVEC3((float*)((u8*)cursorPane + 0x2C), &pos);
 
     LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x29b],
@@ -1573,7 +1560,7 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
     // "collected / total" label: scale the completion ratio to slot count.
     // Call first, constant load second - matches retail schedule.
     float ratio = clpGetPagePrg(&this_->mCatalog);
-    u8 slot = (u8)(lbl_eu_80668814 * ratio); // fctiwz truncation
+    u8 slot = (u8)(100.0f * ratio); // fctiwz truncation
     char* label = BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0xB);
     sprintf(buf, &lbl_eu_8050C6E8[0x2a3], slot, label);
     LayoutSetTextBoxText(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
@@ -1785,9 +1772,9 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         // Resolve the two message files used by the item/quest name lookups.
         Bdat_GetTable_AA34();
-        lbl_eu_806647D8 = getFP(&lbl_eu_8050C6E8[0x3a4]);
+        gpClpItemMsgTable = getFP(&lbl_eu_8050C6E8[0x3a4]);
         Bdat_GetTable_AA34();
-        lbl_eu_806647DC = (char*)getFP(&lbl_eu_8050C6E8[0x3b3]);
+        gpClpCollectMsgTable = (char*)getFP(&lbl_eu_8050C6E8[0x3b3]);
 
         clpTryShow(this);
         field_2C = nullptr;
@@ -1796,3 +1783,6 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
     return false;
 }
+
+void* gpClpItemMsgTable;
+char* gpClpCollectMsgTable;

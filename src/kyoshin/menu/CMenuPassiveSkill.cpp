@@ -214,7 +214,7 @@ void CMenuPassiveSkill::Term() {
     removeRenderCB__4CScnFP10IScnRender(mScnRef, this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     CPassiveSkill_teardown(mPassiveSkill);
 
     sInstance = nullptr;
@@ -231,7 +231,7 @@ void CMenuPassiveSkill::Move() {
     if (CTaskGame::isFlag01Set() != 0) goto exit;
     // Branch-over-branch guard keeps MWCC from folding the bit test into a
     // single conditional branch (see cbRenderBefore).
-    if (lbl_eu_80663E28 & (1u << 21)) goto exit;
+    if (gmPauseFlags & (1u << 21)) goto exit;
     goto body;
 exit:
     return;
@@ -256,7 +256,7 @@ case3:
 tick:
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     CPassiveSkill_update(mPassiveSkill);
 }
 
@@ -270,7 +270,7 @@ __declspec(noinline) void CMenuPassiveSkill::cbRenderBefore() {
     // Branch-over-branch guard: the exit label + return placed BEFORE `body`
     // keeps MWCC from folding the bit test to a single `bne` -- it emits
     // retail's `beq body; b exit` (see CMenuZeal::cbRenderBefore).
-    if (lbl_eu_80663E28 & (1u << 21)) goto exit;
+    if (gmPauseFlags & (1u << 21)) goto exit;
     goto body;
 exit:
     return;
@@ -286,7 +286,7 @@ body:
         SetWideLocAdjust(&drawInfo);
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         CPassiveSkill_draw(mPassiveSkill, &drawInfo);
-        drawHelp(&mTitleAHelp, &drawInfo);
+        mTitleAHelp.drawHelp(&drawInfo);
     }
 }
 
@@ -315,14 +315,14 @@ CMenuPassiveSkill* CMenuPassiveSkill::create(CProcess* parent, CScn* scene) {
 extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && self->mTitleAHelp.isInitialized() != 0 &&
         CPassiveSkill_getVisibleIfReady(self->mPassiveSkill) != 0) {
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C412C();
         CPassiveSkill_open(self->mPassiveSkill);
         self->field_2AC = 1;
 
         playUISound(0x6d);
 
         u8 curState = CPassiveSkill_pickOpenState(self->mPassiveSkill);
-        func_801C41E8(&self->mTitleAHelp, curState);
+        self->mTitleAHelp.func_801C41E8(curState);
     }
 }
 
@@ -334,7 +334,7 @@ void stub_us_80265db4() {}
 // Per-frame update (us-80265e54): once both the title/help widget and the
 // passive-skill sub-object report ready, mark the screen state as 2.
 extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
         self->field_2AC = 2;
     }
 }
@@ -456,12 +456,12 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
     }
 
     u8 curState = CPassiveSkill_pickOpenState(self->mPassiveSkill);
-    func_801C41E8(&self->mTitleAHelp, curState);
+    self->mTitleAHelp.func_801C41E8(curState);
 }
 
 // Same shape as updatePassiveSkillMenu but writes the +0x54 state flag instead.
 void setPassiveSkillReady(CMenuPassiveSkill* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
         self->mField54 = 1;
     }
 }
@@ -473,7 +473,7 @@ extern "C" void advancePassiveSkillState(CMenuPassiveSkill* self) {
     if (CPassiveSkill_cellAtLeast8(self->mPassiveSkill) != 0) {
         CPassiveSkill_confirm(self->mPassiveSkill);
     } else {
-        beginClose(&self->mTitleAHelp);
+        self->mTitleAHelp.beginClose();
         CPassiveSkill_close(self->mPassiveSkill);
         self->field_2AC = 3;
     }

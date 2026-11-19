@@ -17,18 +17,18 @@ struct GlobalStruct_80572B94;
 // plain extern at global scope -- MWCC does not mangle global variable names)
 // ---------------------------------------------------------------------------
 extern char lbl_eu_804FBF60[];
-extern char lbl_eu_80572AC8[];
-extern char lbl_eu_80572B78[];
-extern char lbl_eu_80572B38[];
+extern char sHeapRegionBlocks[];
+extern char sHeapList78[];
+extern char sHeapList38[];
 // Each entry points at a table of up to 14 pointers (indexed by the callers).
 struct LblPtrTable {
     char* slots[14];
 };
 extern LblPtrTable* lbl_eu_805282A0[6];
 extern LblPtrTable* lbl_eu_80528398[6];
-extern char lbl_eu_80572B88[];   // .bss: global-object registration node
-extern char lbl_eu_80572B58[];   // .bss
-extern s8 lbl_eu_80663E98;       // .sbss: singleton-initialized flag
+extern char sHeapSingletonRegistration[];   // .bss: global-object registration node
+extern char sHeapList58[];   // .bss
+extern s8 sKyoshinHeapInitialized;       // .sbss: singleton-initialized flag
 
 // External runtime / game functions (retail-unmangled symbols)
 extern "C" void CtrlObjectParam_MergeArtsListNode(void*, void*);

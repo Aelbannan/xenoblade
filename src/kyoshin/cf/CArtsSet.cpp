@@ -18,8 +18,8 @@ namespace cf {
     }
 
     // The virtual's body, defined under the retail mangled name so no local
-    // __vt__/RTTI is emitted (retail CArtsSet.o is text-only; the vtables
-    // live in the shared data split, lbl_eu_8052F5D8).
+    // __vt__/RTTI is emitted (retail CArtsSet.o is text-only; the vtable
+    // lives in the shared data split as __vt__Q22cf9_sArtsSet).
     extern "C" void _sArtsSet_UnkVirtualFunc1__Q22cf9_sArtsSetFv(_sArtsSet* self) {
         self->unk0 = 0;
         std::memset(self->unk4, 0, 0x30);

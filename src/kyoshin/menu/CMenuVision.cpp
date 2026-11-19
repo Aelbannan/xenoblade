@@ -10,13 +10,13 @@
 #include "monolib/lib/CLibStaticData.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include <revolution/gx/GXPixel.h>                 // GXSetZMode
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Globals shared across menu units
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 extern const f32 lbl_eu_80667DC0; // 0.0f
 extern const f32 lbl_eu_80667DD8;
 extern const f32 lbl_eu_80667DCC;
@@ -26,16 +26,16 @@ extern const f32 lbl_eu_80667DC4; // 1.0f
 extern const f32 lbl_eu_80667DC8; // scale factor
 // MWCC does not mangle global-scope data names.
 extern char lbl_eu_80504268[];    // string table base
-extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
-extern CMenuVision* lbl_eu_80664388;
+extern u32 visionPaneNameTable[];     // 6 pane-name pointers
+extern CMenuVision* sVisionMenuInstance;
 
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_* typed exports
 
 
 void tickVisionExpiry(CMenuVision*, CMenuVisionEntry*);
-extern "C" f32 ScMain_GetRatio(void*);
 
-// Read-only view of the current frame stored at AnimTransform+0x10.
+// Read-only view
 struct AnimFrameAccess {
     u8 _pad[0x10];
     f32 frame;
@@ -44,30 +44,26 @@ struct AnimFrameAccess {
 extern "C" {
 void* findObjectById__Fi(int);
 void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
-u32 CfCode_GetOptPtr0C(void*);
-void* CfCode_GetSubObject(void*);
-int ScMain_GetSummedInt(void*);
-struct ScMain; float ScMain_GetRoundedMetric(ScMain* self); // kyoshin/cf/code_800F42AC.hpp
 
-extern u32 lbl_eu_80662580;
-extern u32 lbl_eu_80662584;
-extern u32 lbl_eu_80662588;
-extern u32 lbl_eu_8066258C;
-extern u32 lbl_eu_80662590;
-extern u32 lbl_eu_80662594;
-extern u32 lbl_eu_80662598;
-extern u32 lbl_eu_8066259C;
-extern u32 lbl_eu_806625A0;
-extern u32 lbl_eu_806625A4;
-extern u32 lbl_eu_806625A8;
-extern u32 lbl_eu_806625AC;
-extern u32 lbl_eu_806625B0;
-extern u32 lbl_eu_806625B4;
+extern u32 visionTextColorNeutral;
+extern u32 visionPaneColorNeutralFirst;
+extern u32 visionPaneColorNeutralSecond;
+extern u32 visionTextColorMode42Ten;
+extern u32 visionTextColorMode3COne;
+extern u32 visionTextColorMode42One;
+extern u32 visionPaneColorMode42TenFirst;
+extern u32 visionPaneColorMode3COneFirst;
+extern u32 visionPaneColorMode42TenAltFirst;
+extern u32 visionPaneColorMode42OneFirst;
+extern u32 visionPaneColorMode42TenSecond;
+extern u32 visionPaneColorMode3COneSecond;
+extern u32 visionPaneColorMode42TenAltSecond;
+extern u32 visionPaneColorMode42OneSecond;
 extern f32 lbl_eu_80667DD4;
 extern u32 lbl_eu_80667DD0;
 extern void* lbl_eu_806640E0;
-extern const char* lbl_eu_80504238[4];
-extern const char* lbl_eu_80504248[4];
+extern const char* visionKnownStatusIconNames[4];
+extern const char* visionOtherStatusIconNames[4];
 }
 
 struct VisionQuad {
@@ -84,16 +80,16 @@ static inline void menuVisionCopyQuad(VisionQuad& dst, const VisionQuad& src) {
 
 // Damage/status text colour tables (.sbss, filled at startup by
 // sinit_801AFCE8).
-VisionQuad lbl_eu_80664380;
-VisionQuad lbl_eu_80664378;
-VisionQuad lbl_eu_80664370;
-VisionQuad lbl_eu_80664368;
-VisionQuad lbl_eu_80664360;
-VisionQuad lbl_eu_80664358;
-VisionQuad lbl_eu_80664350;
-VisionQuad lbl_eu_80664348;
-VisionQuad lbl_eu_80664340;
-VisionQuad lbl_eu_80664338;
+VisionQuad visionTevColorMode42OneSecond;
+VisionQuad visionTevColorMode42OneFirst;
+VisionQuad visionTevColorMode42TenSecond;
+VisionQuad visionTevColorMode42TenFirst;
+VisionQuad visionTevColorMode3C1Second;
+VisionQuad visionTevColorMode3C1First;
+VisionQuad visionTevColorMode3C23Second;
+VisionQuad visionTevColorMode3C23First;
+VisionQuad visionTevColorDefaultSecond;
+VisionQuad visionTevColorDefaultFirst;
 
 // Pad accessor for pane float fields at known retail offsets
 struct PaneTransAccess {
@@ -327,7 +323,7 @@ extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
 }
 
 extern "C" unsigned long isVisionMenuActive() {
-    return lbl_eu_80664388 != 0;
+    return sVisionMenuInstance != 0;
 }
 
 // Bitmask -> vision-slot lookup; returns true when the selected slot is
@@ -347,8 +343,8 @@ extern "C" bool isVisionSlotAnimating(u32 flags) {
     } else {
         return false;
     }
-    if (lbl_eu_80664388 != 0 &&
-        lbl_eu_80664388->mEntries[index].mState != 0) {
+    if (sVisionMenuInstance != 0 &&
+        sVisionMenuInstance->mEntries[index].mState != 0) {
         return true;
     }
     return false;
@@ -356,7 +352,7 @@ extern "C" bool isVisionSlotAnimating(u32 flags) {
 
 // Returns true while any vision slot is still animating.
 extern "C" bool isVisionAnimating() {
-    CMenuVision* menu = lbl_eu_80664388;
+    CMenuVision* menu = sVisionMenuInstance;
     if (menu != 0) {
         for (u8 i = 0; i < 6; i++) {
             if (menu->mEntries[i].mState != 0) {
@@ -369,8 +365,8 @@ extern "C" bool isVisionAnimating() {
 // Mark the vision screen active (set flag byte at 0x54) when the singleton
 // instance exists.
 extern "C" void activateVisionMenu() {
-    if (lbl_eu_80664388 != 0) {
-        lbl_eu_80664388->field_0x54 = 1;
+    if (sVisionMenuInstance != 0) {
+        sVisionMenuInstance->field_0x54 = 1;
     }
 }
 
@@ -395,7 +391,7 @@ void CMenuVision::Term() {
         }
     }
     mLayoutMem.deleteRegion();
-    lbl_eu_80664388 = 0;
+    sVisionMenuInstance = 0;
 }
 
 // us-801ae288: render-before callback. Same gate chain as Move(); only draws
@@ -405,13 +401,13 @@ void CMenuVision::cbRenderBefore() {
     // Combined first guard via || reproduces retail's short-circuit branch
     // shape (direct bne for clause 1, trampolined b for clause 2); the
     // remaining guards fold to direct branches.
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000)) {
         return;
     }
     if (!IsMenuState621F0()) {
         return;
     }
-    if (lbl_eu_80663E24 & 0x2000000) {
+    if (gmGameFlags & 0x2000000) {
         return;
     }
 
@@ -440,7 +436,7 @@ void CMenuVision::cbRenderBefore() {
 // construct it with the given parent, register it on `self`, and stash the
 // result in the global singleton slot. Only the first call sticks.
 extern "C" CMenuVision* createVisionMenu(CProcess* self, CProcess* parent) {
-    if (lbl_eu_80664388 != 0) {
+    if (sVisionMenuInstance != 0) {
         return 0;
     }
     CMenuVision* obj = (CMenuVision*)mtl::MemManager::allocate(
@@ -448,9 +444,9 @@ extern "C" CMenuVision* createVisionMenu(CProcess* self, CProcess* parent) {
     if (obj != 0) {
         obj = __ct__CMenuVision(obj, parent);
     }
-    lbl_eu_80664388 = obj;
+    sVisionMenuInstance = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(self, false);
-    return lbl_eu_80664388;
+    return sVisionMenuInstance;
 }
 
 // Restart one slot into the state-5 sustain phase: disable anims 8 and 1-6,
@@ -485,12 +481,12 @@ static inline void menuVisionResetAnims(CMenuVisionEntry& e) {
 // abort the whole call. Each restarted slot gets a timer weighted by how many
 // lower slots are also in state 5.
 extern "C" void restartVisionSlots(int flags) {
-    if (lbl_eu_80664388 == 0) {
+    if (sVisionMenuInstance == 0) {
         return;
     }
 
     if (flags & 1) {
-        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[0];
+        CMenuVisionEntry& e = sVisionMenuInstance->mEntries[0];
         if (e.mState == 0) {
             return;
         }
@@ -502,7 +498,7 @@ extern "C" void restartVisionSlots(int flags) {
     }
 
     if (flags & 2) {
-        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[1];
+        CMenuVisionEntry& e = sVisionMenuInstance->mEntries[1];
         if (e.mState == 0) {
             return;
         }
@@ -511,14 +507,14 @@ extern "C" void restartVisionSlots(int flags) {
         }
         menuVisionStartSustain(e);
         f32 t = lbl_eu_80667DC0;
-        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+        if (sVisionMenuInstance->mEntries[0].mState == 5) {
             t = lbl_eu_80667DCC;
         }
         e.mTimer = t;
     }
 
     if (flags & 4) {
-        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[2];
+        CMenuVisionEntry& e = sVisionMenuInstance->mEntries[2];
         if (e.mState == 0) {
             return;
         }
@@ -527,17 +523,17 @@ extern "C" void restartVisionSlots(int flags) {
         }
         menuVisionStartSustain(e);
         f32 t = lbl_eu_80667DC0;
-        if (lbl_eu_80664388->mEntries[1].mState == 5) {
+        if (sVisionMenuInstance->mEntries[1].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
-        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+        if (sVisionMenuInstance->mEntries[0].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
         e.mTimer = lbl_eu_80667DCC * t;
     }
 
     if (flags & 8) {
-        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[3];
+        CMenuVisionEntry& e = sVisionMenuInstance->mEntries[3];
         if (e.mState == 0) {
             return;
         }
@@ -546,13 +542,13 @@ extern "C" void restartVisionSlots(int flags) {
         }
         menuVisionStartSustain(e);
         f32 t = lbl_eu_80667DC0;
-        if (lbl_eu_80664388->mEntries[2].mState == 5) {
+        if (sVisionMenuInstance->mEntries[2].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
-        if (lbl_eu_80664388->mEntries[1].mState == 5) {
+        if (sVisionMenuInstance->mEntries[1].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
-        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+        if (sVisionMenuInstance->mEntries[0].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
         e.mTimer = lbl_eu_80667DCC * t;
@@ -560,7 +556,7 @@ extern "C" void restartVisionSlots(int flags) {
 
     if (flags & 0x10) {
         // Slot 5 restart also rewinds the HP-bar slot 4.
-        CMenuVisionEntry& e5 = lbl_eu_80664388->mEntries[5];
+        CMenuVisionEntry& e5 = sVisionMenuInstance->mEntries[5];
         if (e5.mState == 0) {
             return;
         }
@@ -568,31 +564,31 @@ extern "C" void restartVisionSlots(int flags) {
             return;
         }
         menuVisionStartSustain(e5);
-        CMenuVisionEntry& e4 = lbl_eu_80664388->mEntries[4];
+        CMenuVisionEntry& e4 = sVisionMenuInstance->mEntries[4];
         menuVisionResetAnims(e4);
-        lbl_eu_80664388->mEntries[4].mAnim7->SetFrame(lbl_eu_80667DC0);
-        lbl_eu_80664388->mEntries[4].mState = 5;
+        sVisionMenuInstance->mEntries[4].mAnim7->SetFrame(lbl_eu_80667DC0);
+        sVisionMenuInstance->mEntries[4].mState = 5;
         f32 t = lbl_eu_80667DC0;
-        if (lbl_eu_80664388->mEntries[3].mState == 5) {
+        if (sVisionMenuInstance->mEntries[3].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
-        if (lbl_eu_80664388->mEntries[2].mState == 5) {
+        if (sVisionMenuInstance->mEntries[2].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
-        if (lbl_eu_80664388->mEntries[1].mState == 5) {
+        if (sVisionMenuInstance->mEntries[1].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
-        if (lbl_eu_80664388->mEntries[0].mState == 5) {
+        if (sVisionMenuInstance->mEntries[0].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
         t = lbl_eu_80667DCC * t;
         e5.mTimer = t;
-        lbl_eu_80664388->mEntries[4].mTimer = t;
+        sVisionMenuInstance->mEntries[4].mTimer = t;
     }
 }
 
 extern "C" void driveVisionUpdate(int flags) {
-    if (lbl_eu_80664388 == 0) {
+    if (sVisionMenuInstance == 0) {
         return;
     }
 
@@ -602,7 +598,7 @@ extern "C" void driveVisionUpdate(int flags) {
     }
 
     if (flags & 1) {
-        CMenuVision* menu = lbl_eu_80664388;
+        CMenuVision* menu = sVisionMenuInstance;
         CMenuVisionEntry& entry = menu->mEntries[0];
         if (entry.mState != 0) {
             return;
@@ -680,9 +676,9 @@ extern "C" void driveVisionUpdate(int flags) {
     }
 
     if (flags & 2) {
-        CMenuVision* menu = lbl_eu_80664388;
+        CMenuVision* menu = sVisionMenuInstance;
         CMenuVisionEntry& entry = menu->mEntries[1];
-        u32 font = CfCode_GetOptPtr0C(battle);
+        u32 font = (u32)CfCode_GetOptPtr0C((cf::CfCode800F42AC*)battle);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1AB, (char*)font, 0);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1B8, (char*)font, 0);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1C5, (char*)font, 0);
@@ -690,9 +686,9 @@ extern "C" void driveVisionUpdate(int flags) {
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1DF, (char*)font, 0);
         LayoutSetTextBoxFmtValue(entry.mLayout, lbl_eu_80504268 + 0x1ED, (char*)font, 0);
 
-        u32 color1 = lbl_eu_80662580;
-        u32 color2 = lbl_eu_80662584;
-        u32 color3 = lbl_eu_80662588;
+        u32 color1 = visionTextColorNeutral;
+        u32 color2 = visionPaneColorNeutralFirst;
+        u32 color3 = visionPaneColorNeutralSecond;
         void* actor = findObjectById__Fi(battle->actor);
         if (actor != 0) {
             actor = (u8*)actor - 0x3E9C;
@@ -706,27 +702,27 @@ extern "C" void driveVisionUpdate(int flags) {
         }
         switch ((int)info->mode42) {
         case 1:
-            color1 = lbl_eu_80662594;
-            color2 = lbl_eu_806625A4;
-            color3 = lbl_eu_806625B4;
+            color1 = visionTextColorMode42One;
+            color2 = visionPaneColorMode42OneFirst;
+            color3 = visionPaneColorMode42OneSecond;
             break;
         case 10:
-            color1 = lbl_eu_8066258C;
-            color2 = lbl_eu_80662598;
-            color3 = lbl_eu_806625A8;
+            color1 = visionTextColorMode42Ten;
+            color2 = visionPaneColorMode42TenFirst;
+            color3 = visionPaneColorMode42TenSecond;
             break;
         default:
             switch ((int)info->mode3C) {
             case 1:
-                color1 = lbl_eu_80662590;
-                color2 = lbl_eu_8066259C;
-                color3 = lbl_eu_806625AC;
+                color1 = visionTextColorMode3COne;
+                color2 = visionPaneColorMode3COneFirst;
+                color3 = visionPaneColorMode3COneSecond;
                 break;
             case 2:
             case 3:
-                color1 = lbl_eu_8066258C;
-                color2 = lbl_eu_80662598;
-                color3 = lbl_eu_806625A8;
+                color1 = visionTextColorMode42Ten;
+                color2 = visionPaneColorMode42TenFirst;
+                color3 = visionPaneColorMode42TenSecond;
                 break;
             }
             break;
@@ -737,7 +733,7 @@ extern "C" void driveVisionUpdate(int flags) {
         PaneSetColorFieldSingle(entry.mLayout, lbl_eu_80504268 + 0x1D2, color1);
         PaneSetColorFieldPair(entry.mLayout, lbl_eu_80504268 + 0x1ED, color2, color3);
 
-        u16 range = *(u16*)((u8*)CfCode_GetSubObject(battle) + 0x5E);
+        u16 range = *(u16*)((u8*)CfCode_GetSubObject((cf::CfCode800F42AC*)battle) + 0x5E);
         void* image;
         switch (range) {
         case 4:
@@ -761,7 +757,7 @@ extern "C" void driveVisionUpdate(int flags) {
     }
 
     if (flags & 4) {
-        CMenuVision* menu = lbl_eu_80664388;
+        CMenuVision* menu = sVisionMenuInstance;
         CMenuVisionEntry& entry = menu->mEntries[2];
         nw4r::lyt::Pane* pane =
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x42A, true);
@@ -856,7 +852,7 @@ extern "C" void driveVisionUpdate(int flags) {
     }
 
     if (flags & 8) {
-        CMenuVision* menu = lbl_eu_80664388;
+        CMenuVision* menu = sVisionMenuInstance;
         CMenuVisionEntry& entry = menu->mEntries[3];
         nw4r::lyt::Pane* status = entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x52A, true);
         nw4r::lyt::Pane* statusAlt = entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x537, true);
@@ -872,9 +868,9 @@ extern "C" void driveVisionUpdate(int flags) {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x550, true)->SetVisible(true);
         } else {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true)->SetVisible(true);
-            if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || ScMain_GetSummedInt(battle) > 0) {
+            if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || ScMain_GetSummedInt((ScMain*)battle) > 0) {
                 setLayoutTextBoxNumber(
-                    entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), ScMain_GetSummedInt(battle));
+                    entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), ScMain_GetSummedInt((ScMain*)battle));
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DD4;
                 scale.y = lbl_eu_80667DD4;
@@ -894,10 +890,10 @@ extern "C" void driveVisionUpdate(int flags) {
                 pane->scaleY = scale.y;
             }
 
-            VisionQuad first = lbl_eu_80664338;
-            VisionQuad second = lbl_eu_80664340;
-            u32 color1 = lbl_eu_80662584;
-            u32 color2 = lbl_eu_80662588;
+            VisionQuad first = visionTevColorDefaultFirst;
+            VisionQuad second = visionTevColorDefaultSecond;
+            u32 color1 = visionPaneColorNeutralFirst;
+            u32 color2 = visionPaneColorNeutralSecond;
             void* actor = findObjectById__Fi(battle->actor);
             if (actor != 0) {
                 actor = (u8*)actor - 0x3E9C;
@@ -911,30 +907,30 @@ extern "C" void driveVisionUpdate(int flags) {
             }
             switch ((int)info->mode42) {
             case 1:
-                menuVisionCopyQuad(first, lbl_eu_80664378);
-                menuVisionCopyQuad(second, lbl_eu_80664380);
-                color1 = lbl_eu_806625A4;
-                color2 = lbl_eu_806625B4;
+                menuVisionCopyQuad(first, visionTevColorMode42OneFirst);
+                menuVisionCopyQuad(second, visionTevColorMode42OneSecond);
+                color1 = visionPaneColorMode42OneFirst;
+                color2 = visionPaneColorMode42OneSecond;
                 break;
             case 10:
-                menuVisionCopyQuad(first, lbl_eu_80664368);
-                menuVisionCopyQuad(second, lbl_eu_80664370);
-                color1 = lbl_eu_806625A0;
-                color2 = lbl_eu_806625B0;
+                menuVisionCopyQuad(first, visionTevColorMode42TenFirst);
+                menuVisionCopyQuad(second, visionTevColorMode42TenSecond);
+                color1 = visionPaneColorMode42TenAltFirst;
+                color2 = visionPaneColorMode42TenAltSecond;
                 break;
             default:
                 switch ((int)info->mode3C) {
                 case 1:
-                    menuVisionCopyQuad(first, lbl_eu_80664358);
-                    menuVisionCopyQuad(second, lbl_eu_80664360);
-                    color1 = lbl_eu_8066259C;
-                    color2 = lbl_eu_806625AC;
+                    menuVisionCopyQuad(first, visionTevColorMode3C1First);
+                    menuVisionCopyQuad(second, visionTevColorMode3C1Second);
+                    color1 = visionPaneColorMode3COneFirst;
+                    color2 = visionPaneColorMode3COneSecond;
                     break;
                 case 2:
-                    menuVisionCopyQuad(first, lbl_eu_80664348);
-                    menuVisionCopyQuad(second, lbl_eu_80664350);
-                    color1 = lbl_eu_80662598;
-                    color2 = lbl_eu_806625A8;
+                    menuVisionCopyQuad(first, visionTevColorMode3C23First);
+                    menuVisionCopyQuad(second, visionTevColorMode3C23Second);
+                    color1 = visionPaneColorMode42TenFirst;
+                    color2 = visionPaneColorMode42TenSecond;
                     break;
                 }
                 break;
@@ -962,7 +958,7 @@ extern "C" void driveVisionUpdate(int flags) {
             u32 tagHi = 0x74690000;
             if (known) {
                 if (previous != 0) {
-                    const char** src = lbl_eu_80504238;
+                    const char** src = visionKnownStatusIconNames;
                     const char* images[4];
                     const char* w0 = *src++;
                     images[0] = w0;
@@ -998,7 +994,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 }
             } else {
                 if (current != 0) {
-                    const char** src = lbl_eu_80504248;
+                    const char** src = visionOtherStatusIconNames;
                     const char* images[4];
                     const char* w0 = *src++;
                     images[0] = w0;
@@ -1048,7 +1044,7 @@ extern "C" void driveVisionUpdate(int flags) {
     }
 
     if (flags & 0x10) {
-        CMenuVision* menu = lbl_eu_80664388;
+        CMenuVision* menu = sVisionMenuInstance;
         CMenuVisionEntry& entry = menu->mEntries[5];
         int value = (int)ScMain_GetRoundedMetric(reinterpret_cast<ScMain*>(battle));
         if (value > 999) {
@@ -1066,7 +1062,7 @@ extern "C" void driveVisionUpdate(int flags) {
         nw4r::math::VEC2 position;
         position.x = trans->transX;
         position.y = trans->transY;
-        position.x = lbl_eu_80667DC8 * ScMain_GetRatio(battle);
+        position.x = lbl_eu_80667DC8 * ScMain_GetRatio((ScMain*)battle);
         bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
         trans = reinterpret_cast<PaneTransAccess*>(bar);
         trans->transX = position.x;
@@ -1083,7 +1079,7 @@ extern "C" void driveVisionUpdate(int flags) {
 // anims 1-3 and 5-8, enable anim4 and rewind it to frame 0. When `sel` is
 // non-zero only the matching slot index is reset.
 void resetVisionSlots(int sel) {
-    if (lbl_eu_80664388 == 0) {
+    if (sVisionMenuInstance == 0) {
         return;
     }
     if (CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()) == 0) {
@@ -1092,7 +1088,7 @@ void resetVisionSlots(int sel) {
 
     const f32 startFrame = lbl_eu_80667DC0;
     for (u8 i = 0; i < 6; i++) {
-        CMenuVisionEntry& e = lbl_eu_80664388->mEntries[i];
+        CMenuVisionEntry& e = sVisionMenuInstance->mEntries[i];
         if (e.mState == 0) {
             continue;
         }
@@ -1125,46 +1121,46 @@ extern "C" void fwdVisionDtor5C(void* self) { ((void(*)(void*))__dt__11CMenuVisi
 void sinit_801AFCE8() {
     // Component order matches retail's register allocation.
     // Component order [3],[2],[1],[0] matches retail's register allocation.
-    lbl_eu_80664338.values[3] = 0;
-    lbl_eu_80664338.values[2] = 0x8a;
-    lbl_eu_80664338.values[1] = 0x73;
-    lbl_eu_80664338.values[0] = 0x3c;
-    lbl_eu_80664340.values[3] = 0xff;
-    lbl_eu_80664340.values[2] = 0xfa;
-    lbl_eu_80664340.values[1] = 0xf0;
-    lbl_eu_80664340.values[0] = 0xf0;
-    lbl_eu_80664348.values[3] = 0;
-    lbl_eu_80664348.values[2] = 0xd2;
-    lbl_eu_80664348.values[1] = 0x14;
-    lbl_eu_80664348.values[0] = 0x40;
-    lbl_eu_80664350.values[3] = 0xff;
-    lbl_eu_80664350.values[2] = 0xff;
-    lbl_eu_80664350.values[1] = 0xff;
-    lbl_eu_80664350.values[0] = 0xff;
-    lbl_eu_80664358.values[3] = 0;
-    lbl_eu_80664358.values[2] = 0x1d;
-    lbl_eu_80664358.values[1] = 0x2d;
-    lbl_eu_80664358.values[0] = 0xd4;
-    lbl_eu_80664360.values[3] = 0xff;
-    lbl_eu_80664360.values[2] = 0xff;
-    lbl_eu_80664360.values[1] = 0xff;
-    lbl_eu_80664360.values[0] = 0xff;
-    lbl_eu_80664368.values[3] = 0;
-    lbl_eu_80664368.values[2] = 0x10;
-    lbl_eu_80664368.values[1] = 0x9f;
-    lbl_eu_80664368.values[0] = 0x10;
-    lbl_eu_80664370.values[3] = 0xff;
-    lbl_eu_80664370.values[2] = 0xff;
-    lbl_eu_80664370.values[1] = 0xff;
-    lbl_eu_80664370.values[0] = 0xff;
-    lbl_eu_80664378.values[3] = 0;
-    lbl_eu_80664378.values[2] = 0xf;
-    lbl_eu_80664378.values[1] = 0xf;
-    lbl_eu_80664378.values[0] = 0xf;
-    lbl_eu_80664380.values[3] = 0xff;
-    lbl_eu_80664380.values[2] = 0xff;
-    lbl_eu_80664380.values[1] = 0xff;
-    lbl_eu_80664380.values[0] = 0xff;
+    visionTevColorDefaultFirst.values[3] = 0;
+    visionTevColorDefaultFirst.values[2] = 0x8a;
+    visionTevColorDefaultFirst.values[1] = 0x73;
+    visionTevColorDefaultFirst.values[0] = 0x3c;
+    visionTevColorDefaultSecond.values[3] = 0xff;
+    visionTevColorDefaultSecond.values[2] = 0xfa;
+    visionTevColorDefaultSecond.values[1] = 0xf0;
+    visionTevColorDefaultSecond.values[0] = 0xf0;
+    visionTevColorMode3C23First.values[3] = 0;
+    visionTevColorMode3C23First.values[2] = 0xd2;
+    visionTevColorMode3C23First.values[1] = 0x14;
+    visionTevColorMode3C23First.values[0] = 0x40;
+    visionTevColorMode3C23Second.values[3] = 0xff;
+    visionTevColorMode3C23Second.values[2] = 0xff;
+    visionTevColorMode3C23Second.values[1] = 0xff;
+    visionTevColorMode3C23Second.values[0] = 0xff;
+    visionTevColorMode3C1First.values[3] = 0;
+    visionTevColorMode3C1First.values[2] = 0x1d;
+    visionTevColorMode3C1First.values[1] = 0x2d;
+    visionTevColorMode3C1First.values[0] = 0xd4;
+    visionTevColorMode3C1Second.values[3] = 0xff;
+    visionTevColorMode3C1Second.values[2] = 0xff;
+    visionTevColorMode3C1Second.values[1] = 0xff;
+    visionTevColorMode3C1Second.values[0] = 0xff;
+    visionTevColorMode42TenFirst.values[3] = 0;
+    visionTevColorMode42TenFirst.values[2] = 0x10;
+    visionTevColorMode42TenFirst.values[1] = 0x9f;
+    visionTevColorMode42TenFirst.values[0] = 0x10;
+    visionTevColorMode42TenSecond.values[3] = 0xff;
+    visionTevColorMode42TenSecond.values[2] = 0xff;
+    visionTevColorMode42TenSecond.values[1] = 0xff;
+    visionTevColorMode42TenSecond.values[0] = 0xff;
+    visionTevColorMode42OneFirst.values[3] = 0;
+    visionTevColorMode42OneFirst.values[2] = 0xf;
+    visionTevColorMode42OneFirst.values[1] = 0xf;
+    visionTevColorMode42OneFirst.values[0] = 0xf;
+    visionTevColorMode42OneSecond.values[3] = 0xff;
+    visionTevColorMode42OneSecond.values[2] = 0xff;
+    visionTevColorMode42OneSecond.values[1] = 0xff;
+    visionTevColorMode42OneSecond.values[0] = 0xff;
 }
 
 // --- CMenuVision::Move ---
@@ -1173,7 +1169,7 @@ void CMenuVision::Move() {
     if (CTaskGame::getInstance()->isFlag01Set()) {
         goto L_ret;
     }
-    if ((lbl_eu_80663E28 & 0x200000) != 0) {
+    if ((gmPauseFlags & 0x200000) != 0) {
         goto L_ret;
     }
     goto L_continue;
@@ -1183,7 +1179,7 @@ L_continue:
     if (!IsMenuState621F0()) {
         goto L_ret;
     }
-    if (lbl_eu_80663E24 & 0x2000000) {
+    if (gmGameFlags & 0x2000000) {
         goto L_ret;
     }
 
@@ -1222,7 +1218,7 @@ L_continue:
                     nw4r::math::VEC2 position;
                     position.x = trans->transX;
                     position.y = trans->transY;
-                    position.x = lbl_eu_80667DC8 * ScMain_GetRatio(bmObj);
+                    position.x = lbl_eu_80667DC8 * ScMain_GetRatio((ScMain*)bmObj);
                     posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
                     trans = reinterpret_cast<PaneTransAccess*>(posPane);
                     trans->transX = position.x;
@@ -1275,9 +1271,9 @@ void CMenuVision::Init() {
 
     Class_8045F858 regionGuard(&mLayoutMem);
 
-    // Copy 6 pane-name pointers from lbl_eu_805041C0 to local array
+    // Copy 6 pane-name pointers from visionPaneNameTable to local array
     u32 paneNames[6];
-    u32* namePtr = lbl_eu_805041C0;
+    u32* namePtr = visionPaneNameTable;
     paneNames[0] = *namePtr++;
     paneNames[1] = namePtr[0];
     paneNames[2] = namePtr[1];

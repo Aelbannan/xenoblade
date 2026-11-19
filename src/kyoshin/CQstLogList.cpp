@@ -42,10 +42,10 @@ CQstLogList::CQstLogList(u16 arg2)
         buf.mField1 = 0;
         sprintf((char*)&buf.mData[0], &lbl_eu_80509AB4[0x10], 0);
         QstLogList_CopyEntry(
-            (CQstLogListEntry*)&lbl_eu_80576670[(u8)tbl_i * 0x22], &buf);
+            (CQstLogListEntry*)&sQuestLogEntries[(u8)tbl_i * 0x22], &buf);
     }
 
-    lbl_eu_80664728 = 0;
+    sQuestEntryCount = 0;
 
     // CScrollBar's implicit operator= is emitted out of line (weak
     // __as__10CScrollBarFRC10CScrollBar) because the class is polymorphic.
@@ -86,20 +86,20 @@ int CQstLogList::ScrollFlag() {
 // Quest-log scroll down. With the sort menu open, scroll down through its
 // options instead; otherwise advance the row index (field_0x17D), wrapping
 // through the scroll position (field_0x17E) against the shared boundary
-// (lbl_eu_8066472C).
+// (sQuestListScrollBase).
 void CQstLogList::ScrollDown() {
     if (mSortDescending != 0) {
         mSortMenu.CursorDown();
         MoveCursor();
     } else {
-        if (lbl_eu_8066472C >= 10) {
+        if (sQuestListScrollBase >= 10) {
             u8 d = field_0x17D + 1;
             field_0x17D = (s8)d;
             if ((s8)d >= 10) {
                 s16 e = field_0x17E + 1;
                 field_0x17D = 9;
                 field_0x17E = e;
-                if (e > lbl_eu_8066472C - 10) {
+                if (e > sQuestListScrollBase - 10) {
                     field_0x17D = 0;
                     field_0x17E = 0;
                 }
@@ -107,7 +107,7 @@ void CQstLogList::ScrollDown() {
         } else {
             u8 d = field_0x17D + 1;
             field_0x17D = (s8)d;
-            if ((s8)d >= lbl_eu_8066472C) {
+            if ((s8)d >= sQuestListScrollBase) {
                 field_0x17D = 0;
                 field_0x17E = 0;
             }
@@ -126,7 +126,7 @@ void CQstLogList::PageUp() {
         mSortMenu.PageUp();
         MoveCursor();
     } else {
-        if (lbl_eu_8066472C >= 10) {
+        if (sQuestListScrollBase >= 10) {
             s16 v = field_0x17E - 10;
             field_0x17E = v;
             if (v < 0) {
@@ -154,19 +154,19 @@ void CQstLogList::PageDown() {
         mSortMenu.PageDown();
         MoveCursor();
     } else {
-        if (lbl_eu_8066472C >= 10) {
+        if (sQuestListScrollBase >= 10) {
             s16 v = field_0x17E + 10;
             field_0x17E = v;
-            if (v > lbl_eu_8066472C - 10) {
-                u8 b = (u8)(v - (lbl_eu_8066472C - 10));
+            if (v > sQuestListScrollBase - 10) {
+                u8 b = (u8)(v - (sQuestListScrollBase - 10));
                 field_0x17D = (s8)b;
-                field_0x17E = lbl_eu_8066472C - 10;
+                field_0x17E = sQuestListScrollBase - 10;
                 if ((s8)b >= 10) {
                     field_0x17D = 9;
                 }
             }
         } else {
-            field_0x17D = (s8)(lbl_eu_8066472C - 1);
+            field_0x17D = (s8)(sQuestListScrollBase - 1);
             field_0x17E = 0;
             if ((s8)field_0x17D < 0) {
                 field_0x17D = 0;
@@ -230,8 +230,8 @@ void CQstLogList::ConfirmSort(int flag) {
     }
 }
 
-// retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
-u32 CQstLogList::GetSelectedQuestLo() { return lbl_eu_80664730 & 0xFFFF; }
+// retail: lwz r0,sSelectedQuestId@sda21; clrlwi r3,r0,16 = (u16)global
+u32 CQstLogList::GetSelectedQuestLo() { return sSelectedQuestId & 0xFFFF; }
 
 void CQstLogList::StepOpenAnim() {
     f32 frame = lbl_eu_80668584;
@@ -389,11 +389,11 @@ void CQstLogList::RefreshRows() {
     s32 e0;
     s32 sum = field_0x17B + field_0x17C;
     int off = sum * 0x22;
-    row = &lbl_eu_80576670[off];
-    e0 = (s8)lbl_eu_80576670[off];
+    row = &sQuestLogEntries[off];
+    e0 = (s8)sQuestLogEntries[off];
     e1 = row[1];
     ClearRows();
-    lbl_eu_8066472C = 0;
+    sQuestListScrollBase = 0;
     mQstData.Sort(e1, (u8)e0);
 
     // Rebuild the visible rows from the quest-info buffer, starting at the
@@ -410,14 +410,14 @@ void CQstLogList::RefreshRows() {
         DrawRow((const char*)lbl_eu_80573D18[idx], questId,
                       (u8)(i + 1), res, entry->mShow, entry->mState);
         if (i == field_0x17D) {
-            lbl_eu_80664730 = questId;
-            lbl_eu_80664734 = idx;
-            lbl_eu_80664738 = res;
+            sSelectedQuestId = questId;
+            sSelectedQuestIndex = idx;
+            sSelectedQuestResource = res;
         }
     }
-    lbl_eu_8066472C = (u16)total;
+    sQuestListScrollBase = (u16)total;
     if (mScrollBar.isVisible()) {
-        mScrollBar.UpdateThumb(10, (u16)lbl_eu_8066472C);
+        mScrollBar.UpdateThumb(10, (u16)sQuestListScrollBase);
     }
 }
 
@@ -451,8 +451,8 @@ void CQstLogList::FillSortMenu() {
         return;
     }
     mSortMenu.Clear();
-    for (u8 i = 0; i < (int)lbl_eu_80664728; i++) {
-        mSortMenu.Add(&lbl_eu_80576670[i * 0x22] + 2);
+    for (u8 i = 0; i < (int)sQuestEntryCount; i++) {
+        mSortMenu.Add(&sQuestLogEntries[i * 0x22] + 2);
     }
     mSortMenu.SetSelect((u8)(field_0x17B + field_0x17C));
 }
@@ -461,7 +461,7 @@ void CQstLogList::FillSortMenu() {
 // quest text pane name and loads the entry text (LayoutSetTextBoxText).
 void CQstLogList::RefreshHeader() {
     LayoutSetTextBoxText(mpLayout, &lbl_eu_80509AB4[0x107],
-                  &lbl_eu_80576670[(field_0x17B + field_0x17C) * 0x22] + 2, 0);
+                  &sQuestLogEntries[(field_0x17B + field_0x17C) * 0x22] + 2, 0);
 }
 
 // Constructor for the 0x22-byte quest-log entry records; called as the array
@@ -479,7 +479,7 @@ extern "C" CQstLogListEntry* QstLogList_InitEntry(CQstLogListEntry* self) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void __construct_array(void*, void*, int, int, int);
 extern "C" void sinit_80229378() {
-    __construct_array(lbl_eu_80576670, (void*)QstLogList_InitEntry, 0, 0x22, 0x20);
+    __construct_array(sQuestLogEntries, (void*)QstLogList_InitEntry, 0, 0x22, 0x20);
 }
 
 // Loads the quest-log arc file (lbl_eu_80509AB4+0x13) into the mem2 handle,
@@ -553,33 +553,33 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
     row0.mField1 = 0;
     sprintf((char*)&row0.mData[0], &s[0x10],
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x44));
-    char* const table = lbl_eu_80576670;
-    u32 n0 = lbl_eu_80664728;
-    lbl_eu_80664728 = n0 + 1;
+    char* const table = sQuestLogEntries;
+    u32 n0 = sQuestEntryCount;
+    sQuestEntryCount = n0 + 1;
     QstLogList_CopyEntry((CQstLogListEntry*)&table[n0 * 0x22], &row0);
 
     row1.mField0 = 0xFF;
     row1.mField1 = 1;
     sprintf((char*)&row1.mData[0], &s[0x10],
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x45));
-    u32 n1 = lbl_eu_80664728;
-    lbl_eu_80664728 = n1 + 1;
+    u32 n1 = sQuestEntryCount;
+    sQuestEntryCount = n1 + 1;
     QstLogList_CopyEntry((CQstLogListEntry*)&table[n1 * 0x22], &row1);
 
     row2.mField0 = 0xFF;
     row2.mField1 = 2;
     sprintf((char*)&row2.mData[0], &s[0x10],
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x46));
-    u32 n2 = lbl_eu_80664728;
-    lbl_eu_80664728 = n2 + 1;
+    u32 n2 = sQuestEntryCount;
+    sQuestEntryCount = n2 + 1;
     QstLogList_CopyEntry((CQstLogListEntry*)&table[n2 * 0x22], &row2);
 
     row3.mField0 = 0xFF;
     row3.mField1 = 3;
     sprintf((char*)&row3.mData[0], &s[0x10],
             BdatTouchStringCell(&s[0x166], &s[0x76], 0x47));
-    u32 n3 = lbl_eu_80664728;
-    lbl_eu_80664728 = n3 + 1;
+    u32 n3 = sQuestEntryCount;
+    sQuestEntryCount = n3 + 1;
     QstLogList_CopyEntry((CQstLogListEntry*)&table[n3 * 0x22], &row3);
 
     // Collect every quest type (2..0x1c) that has at least one active,
@@ -632,8 +632,8 @@ bool CQstLogList::OnFileEvent(CEventFile* event) {
         rowSort.mField0 = idx;
         rowSort.mField1 = 4;
         sprintf((char*)&rowSort.mData[0], &s[0x10], text);
-        u32 nk = lbl_eu_80664728;
-        lbl_eu_80664728 = nk + 1;
+        u32 nk = sQuestEntryCount;
+        sQuestEntryCount = nk + 1;
         QstLogList_CopyEntry((CQstLogListEntry*)&table[nk * 0x22], &rowSort);
     }
 
@@ -730,7 +730,7 @@ void CQstLogList::BeginSortOpen() {
         pos[1] = lbl_eu_8066857C;
         pos[2] = lbl_eu_80668580;
         mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(pos));
-        mScrollBar.UpdateThumb(10, (u16)lbl_eu_8066472C);
+        mScrollBar.UpdateThumb(10, (u16)sQuestListScrollBase);
         mScrollBar.PlaceThumb((u16)field_0x17E);
         mScrollBar.requestScrollIn();
     }
@@ -750,7 +750,7 @@ void CQstLogList::ApplySortSelection() {
         ConfirmSort(1);
         RefreshRows();
     } else {
-        if (lbl_eu_8066472C > 0) {
+        if (sQuestListScrollBase > 0) {
             mSortEnabled = 0;
         }
     }
@@ -811,11 +811,11 @@ void CQstLogList::ScrollUp() {
             field_0x17D = 0;
             field_0x17E -= 1;
             if (field_0x17E < 0) {
-                if (lbl_eu_8066472C >= 10) {
+                if (sQuestListScrollBase >= 10) {
                     field_0x17D = 9;
-                    field_0x17E = lbl_eu_8066472C - 10;
+                    field_0x17E = sQuestListScrollBase - 10;
                 } else {
-                    u8 g = (u8)(lbl_eu_8066472C - 1);
+                    u8 g = (u8)(sQuestListScrollBase - 1);
                     field_0x17D = (s8)g;
                     field_0x17E = 0;
                     if ((s8)g < 0) {

@@ -449,7 +449,7 @@ int SFHDS_GetColType(void* obj) {
     return s->field_18;
 }
 
-extern char lbl_eu_80606E38[];
+extern char sSfdGlob[];
 void* fn_803C3300(void) {
-    return lbl_eu_80606E38 + 0x21c;
+    return sSfdGlob + 0x21c;
 }

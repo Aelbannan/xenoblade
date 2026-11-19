@@ -35,33 +35,24 @@ struct U16Pair {
 
 // C-linkage imports
 extern "C" f64 lbl_eu_8066B0F0;
-extern "C" f32 lbl_eu_8066B100;
 extern "C" f32 lbl_eu_8066B0D8;
-extern "C" f32 lbl_eu_8066B0E4;
 extern "C" f64 lbl_eu_8066B0E8;
-extern "C" f32 lbl_eu_8066B0E0;
 extern "C" f32 lbl_eu_8066B140;
 extern "C" f32 lbl_eu_8066B158;
 extern "C" f32 lbl_eu_8066B15C;
-extern "C" f32 lbl_eu_8066B160;
-extern "C" f32 lbl_eu_8066B164;
-extern "C" f32 lbl_eu_8066B168;
-extern "C" f32 lbl_eu_8066B110;
-extern "C" f32 lbl_eu_8066B144;
-extern "C" f32 lbl_eu_8066B148;
 extern "C" f32 lbl_eu_8066B14C;
 extern "C" f32 lbl_eu_8066B150;
-extern "C" const u8 lbl_eu_80524500[];
-extern "C" const u8 lbl_eu_80524520[];
+extern "C" const u8 sEffectPosPalette0[];
+extern "C" const u8 sEffectPosPalette1[];
 extern "C" void pushEffectFog(int type, int flag);
 extern "C" void* Scn_FindCamItem(void* src, int index);
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 mem);
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 count_bytes, u32 mem);
 extern "C" u32 lbl_eu_8065FC18[];
-extern "C" s32 lbl_eu_806659A8;
-extern "C" s32 lbl_eu_806659AC;
-extern "C" s32 lbl_eu_806659B0;
-extern "C" s32 lbl_eu_806659B4;
+extern "C" s32 sCachedZMode;
+extern "C" s32 sCachedTevMode;
+extern "C" s32 sCachedMatColor;
+extern "C" s32 sCachedTexGenCount;
 extern "C" u32 lbl_eu_8066B124;
 extern "C" void Scn_HasWorkItem(void* p);
 extern "C" void __dt__804D80F0(void* p, int flag);
@@ -76,10 +67,11 @@ extern "C" void lytBindRefreshMatrix(void* obj, void* node);
 extern "C" void lytBindRefreshTrans(void* obj, void* node);
 extern "C" void lytBindSetupForPane(void* obj, u32 a, u32 b, u32 c, u32 d);
 extern "C" U16Pair* SchedRes_EntryByIndex(const void* p);
-extern "C" f32 lbl_eu_8066B104;
 extern "C" void CERotZMatrix(Mtx* out);
 extern "C" void CERotEulerOrder(Mtx* out, const Vec* p, s32 field);
 extern "C" void CERotEulerXYZ(Mtx* out, const Vec* angles);
-extern "C" f32 lbl_eu_8066B108;
-extern "C" f32 lbl_eu_8066B10C;
 extern "C" void Scn_CopyCamProjMatrix(const void* src, Mtx out, s32 flag);
+
+// Active scene root cached by the effect system (defined in this unit's .sbss).
+struct CScnRootEnv;
+extern "C" CScnRootEnv* sActiveSceneRoot;

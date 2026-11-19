@@ -258,7 +258,7 @@ void CMenuKeyAssign::Move() {
     if (CTaskGame::isFlag01Set() != 0) {
         return;
     }
-    if (lbl_eu_80663E28 & (1u << 21)) {
+    if (gmPauseFlags & (1u << 21)) {
         return;
     }
     if (IsMenuState621F0() == 0) {
@@ -267,7 +267,7 @@ void CMenuKeyAssign::Move() {
     if (GetSysStateFlag20() == 0) {
         return;
     }
-    if (lbl_eu_80663E24 & 0xafa40000u) {
+    if (gmGameFlags & 0xafa40000u) {
         return;
     }
     if (cf::CfGameManager::isSceneLoading() != 0) {
@@ -690,7 +690,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     CTaskGame::getInstance();
     // Combined short-circuit produces retail's double branch for the bit-21
     // gate (bne return; beq continue; b return) - same shape as CMenuGCItem::Move.
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & (1u << 21))) {
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & (1u << 21))) {
         return;
     }
     if (!IsMenuState621F0()) {
@@ -702,7 +702,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     if (!GetSysStateFlag20()) {
         return;
     }
-    if (lbl_eu_80663E24 & 0xafa40000u) {
+    if (gmGameFlags & 0xafa40000u) {
         return;
     }
     if (cf::CfGameManager::isSceneLoading()) {

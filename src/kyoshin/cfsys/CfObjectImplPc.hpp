@@ -309,7 +309,7 @@ struct CfObjectImplPcEvtCmd {
     u8 _pad00[0x0A];
     u8 field_0A;                     // 0x0A request mode (0x12 gate)
     u8 _pad0B[0x1C - 0x0B];
-    char cmd[0x18];                  // 0x1C command name (vs lbl_eu_804FC758)
+    char cmd[0x18];                  // 0x1C command name
 };
 
 // View of the object returned by Selector_GetInstance: word at +0x90E4 feeds
@@ -1025,7 +1025,6 @@ int IdTable_QuerySumFloat(void* obj, int id, u32* outW, f32* outF);
 void CBattleMan_FireActorEvent918(void* mgr, void* obj, void* arg, int a, int b);
 void calcBattleDamage(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
-void SysWinLog_TickCounter23(void);
 void* findBattleStatusEntry(void* obj, int id);
 void CUICfManager_queueFactoryMenu(int a, float b);
 int CBattleMan_ListHasValue(void* mgr, void* obj);
@@ -1056,13 +1055,12 @@ extern f64 lbl_eu_80666BE0;
 
 // Handler-entry table copied to the stack by ObjPc_BattleEventCmdDispatch_75D4 (indexed by the
 // battle id at +0x3F28) and the two typeinfo operands of its __dynamic_cast.
-extern u32 lbl_eu_804FC730[9];
-extern u32 lbl_eu_804FC718[6];
+extern u32 sBattleEffectSlotIndices[9];
+extern u32 sBattleEffectHandlerIds[6];
 extern void* lbl_eu_80661C60;
 extern void* lbl_eu_80661BE8;
 
 // String table (rodata) referenced by ObjPc_TickPlayer_A458 (substring at +0x3B).
-extern char lbl_eu_804FC758[];
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);

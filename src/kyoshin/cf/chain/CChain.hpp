@@ -7,7 +7,7 @@
 #include "kyoshin/cf/chain/CChainTime.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Retail .data vtable mirrors assigned by the inlined sub-object ctors below.
 // Full-size (0x10) so MWCC emits the lis/addi HA-LO pair instead of sda21.

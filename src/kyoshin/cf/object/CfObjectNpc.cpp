@@ -8,9 +8,13 @@
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, isGlobalCamFlagSet
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/code_800F42AC.hpp"   // exported ScMain_* / CfCode_* declarations
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include <string.h>
+
+// Imports from code_800F42AC.cpp (TU-local, as in the other callers).
+extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 #include "kyoshin/plugin/ocBdat.hpp"
 
 
@@ -90,7 +94,7 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
 
     // Nothing pending if the global mask is clear AND the NPC is not already
     // in its "meet" state: skip straight to the timer reset below.
-    if ((lbl_eu_80663E24 & 0x9840000) == 0 &&
+    if ((gmGameFlags & 0x9840000) == 0 &&
         this->checkStateFlags8(1) == 0) {
         // fall through to timer reset (resetTimer stays true)
     } else {
@@ -111,7 +115,7 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
         }
 
         // Dialogue-decided path.
-        if (Scn_GetFrameDelta(lbl_eu_80663E14) > *(const float*)&lbl_eu_80666AE0 &&
+        if (Scn_GetFrameDelta(gmScene) > *(const float*)&lbl_eu_80666AE0 &&
             this->checkStateFlags8(1) != 0 &&
             this->checkStateFlags(1) == 0 &&
             this->checkStateFlags(0x10) == 0 &&
@@ -124,7 +128,7 @@ void CfObjectNpc::CfObject_UnkVirtualFunc4() {
             } else {
                 // Local forces the scene-pointer load before the slot call,
                 // matching retail's r31 hoist.
-                CScn* scene = lbl_eu_80663E14;
+                CScn* scene = gmScene;
                 this->mTimer += Scn_GetFrameDelta(scene) *
                                 static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / *(const float*)&lbl_eu_80666AF0;            }
             resetTimer = false;

@@ -286,8 +286,6 @@ extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6
     AdpcmLoopParam* pLoopParam, int channel);
 extern "C" bool SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(
     StrmPlayer* pStrmPlayer);
-extern "C" bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(
-    StrmPlayer* pStrmPlayer, int voices);
 extern "C" bool CalcStartOffset__Q44nw4r3snd6detail10StrmPlayerFPlPUlPl(
     StrmPlayer* pStrmPlayer, s32* pBlockIndex, u32* pBlockOffset,
     s32* pLoopCount);
@@ -498,8 +496,7 @@ bool StrmPlayer::Start() {
         StrmChannelRetail* pChannel;
         u32 level;
 
-        if (!AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(
-                this, self->mVoiceOutCount)) {
+        if (!AllocVoices(self->mVoiceOutCount)) {
             // Indexed access: MWCC strength-reduces to a this-based stride
             // register with the 0x838 displacement kept inline (retail shape).
             for (i = 0; i < self->mChannelCount; i++) {
@@ -1236,11 +1233,7 @@ void StrmPlayer::UpdatePlayingBlockIndex() {
             }
 
             Voice* pVoice = pTrack->voice;
-            // mFormat holds nw4r::snd::SampleFormat values (retail compares
-            // the raw field against 3 = SAMPLE_FORMAT_DSP_ADPCM; see
-            // AxVoice.cpp IsAdpcm note).
-            if (pVoice->GetFormat() !=
-                static_cast<AxVoice::Format>(SAMPLE_FORMAT_DSP_ADPCM)) {
+            if (pVoice->GetFormat() != SAMPLE_FORMAT_DSP_ADPCM) {
                 continue;
             }
 
@@ -1712,15 +1705,9 @@ extern "C" void VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6d
     nw4r::snd::detail::Voice*, nw4r::snd::detail::Voice::VoiceCallbackStatus,
     void*);
 
-// Retail AllocVoices(int) is a StrmPlayer member, but the stale header has no
-// declaration for it; define the retail mangled symbol as a free function
-// (same ABI: r3 = this, r4 = voices). Kept OUT of the anonymous namespace so
-// the symbol name is emitted verbatim.
-bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* pStrmPlayer,
-                                                   int voices) {
+bool StrmPlayer::AllocVoices(int voices) {
     nw4r::snd::detail::StrmPlayerRetailLayout* self =
-        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
-            pStrmPlayer);
+        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(this);
 
     // Retail uses a scope interrupt lock; the lock's scalarized mOldState
     // member occupies the last callee-saved slot.

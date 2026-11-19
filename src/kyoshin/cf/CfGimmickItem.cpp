@@ -99,13 +99,13 @@ cf::CfGimmickItem::CfGimmickItem(int rowId) {
     c9C.w = getBdatStringColumnValue((void*)bdat, "ct", rowId);
     this->field_9C = c9C.b;
     volatile BdatCol c6C;
-    c6C.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[13], rowId);
+    c6C.w = getBdatStringColumnValue((void*)bdat, ((char**)gGimmickBdatColumns)[13], rowId);
     this->field_6C = c6C.h;
     volatile BdatCol c6E;
-    c6E.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[14], rowId);
+    c6E.w = getBdatStringColumnValue((void*)bdat, ((char**)gGimmickBdatColumns)[14], rowId);
     this->field_6E = c6E.h;
     volatile BdatCol c94;
-    c94.w = getBdatStringColumnValue((void*)bdat, ((char**)lbl_eu_805357E8)[15], rowId);
+    c94.w = getBdatStringColumnValue((void*)bdat, ((char**)gGimmickBdatColumns)[15], rowId);
     this->field_94 = c94.h;
     volatile BdatCol c96;
     c96.w = getBdatStringColumnValue((void*)bdat, "quest_Max", rowId);
@@ -345,7 +345,7 @@ void GimItem_CollectScan(cf::CfGimmickItem* self) {
 void GimItem_PlaceDispatch(cf::CfGimmickItem* self) {
     if ((self->field_66 & 1) != 0 ||
         jumptable_eu_80535830[self->field_60](
-            (cf::CfGimmick*)self->field_1C, &lbl_eu_805765A0, &self->field_04) == 0) {
+            (cf::CfGimmick*)self->field_1C, &gGimmickAnchorPoint, &self->field_04) == 0) {
         self->field_9E = 0;
     }
 }

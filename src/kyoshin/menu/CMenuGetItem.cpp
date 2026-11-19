@@ -26,7 +26,7 @@
 // Get-item string table (layout name, anim name, pane names, sprintf formats).
 extern char lbl_eu_805018D0[];
 // cbRenderBefore gate flag (bit 21 skips the draw).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // GetItem singleton instance (retail SDA symbol).
 extern CMenuGetItem* lbl_eu_806641A8;
 
@@ -208,13 +208,13 @@ void CMenuGetItem::cbRenderBefore() {
     CTaskGame::getInstance();
     // Combined short-circuit produces retail's double branch for the bit-21
     // gate (bne return; beq continue; b return) - same shape as CMenuGCItem::Move.
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & (1u << 21))) {
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & (1u << 21))) {
         return;
     }
     if (!IsMenuState621F0()) {
         return;
     }
-    if (lbl_eu_80663E24 & 0xbfe40000u) {
+    if (gmGameFlags & 0xbfe40000u) {
         return;
     }
     if (cf::CfGameManager::isSceneLoading()) {

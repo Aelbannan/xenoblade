@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658, Gim* (owner)
 
 // Unmangled retail symbols called by code_800B06A4.cpp.
@@ -11,12 +11,12 @@ extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
 extern "C" void CfObjectMap_refreshRegion(void* self);
 extern "C" int isBattleStatusActive(void* obj, int id);
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/IFactoryEvent.hpp"
 
 namespace cf {
 class CfMapItemManager;
 struct TboxInfo { char _pad[4]; };
-struct IFactoryEvent { char _pad[4]; };
-struct CVoiceRec;  // canonical cfCam_queryVoxArts view (CfCam.hpp)
+struct CVoiceRec;
 }
 
 // Fixed-size pool node used by reslist<cf::IFactoryEvent*> (0xc bytes per entry).
@@ -659,6 +659,7 @@ template <>
 class reslist<cf::TboxInfo> {
 public:
     ~reslist();
+    void destroy();
     void* mVtbl;            // 0x00
     CfReslistNode* mStartNodePtr; // 0x04
     CfReslistNode mStartNode;     // 0x08 (0xc bytes)
@@ -677,6 +678,17 @@ public:
 template <>
 class reslist<cf::IFactoryEvent*> {
 public:
+    class iterator {
+    public:
+        // Retail initializes an iterator in place (dst in r3, list in r4),
+        // so begin/end are members of the iterator itself.
+        void begin(const reslist& list);
+        void end(const reslist& list);
+        iterator& operator++();
+        cf::IFactoryEvent*& operator*() const;
+        bool operator!=(const iterator& rhs) const;
+        CfReslistNode* mNode;      // 0x00
+    };
     ~reslist();
     void* mVtbl;                  // 0x00
     CfReslistNode* mStartNodePtr; // 0x04
@@ -687,7 +699,8 @@ public:
     u8 _pad_1d[3];                // 0x1d-0x1f
     // total 0x20
 };
-// Pool element view with a zeroing default ctor (experiment: placement-new
+typedef reslist<cf::IFactoryEvent*>::iterator FactoryEventIter;
+// Pool element view with a zeroing default ctor
 // construction over the raw array - MWCC refuses to unroll it, 112B simple
 // loop; kept for reference or future use).
 struct ResPoolNode {
@@ -805,6 +818,7 @@ public:
 
 class UnkClass_800B0AD8 {
 public:
+    UnkClass_800B0AD8();
     void clearCounters();
     u32 getCount();
     u32 getSize();
@@ -877,7 +891,8 @@ public:
     CGimmickGlobal* field_0xCFC;
     u32 field_0xD00;
     u32 field_0xD04;
-    u8 _pad_D08[6];     // 0xD08..0xD0E (unknown fields)
+    u32 field_0xD08;    // 0xD08..0xD0B
+    u16 _pad_D0C;       // 0xD0C..0xD0D
     u16 field_0xD0E;    // 0xD0E
     u16 field_0xD10;    // 0xD10
     u8 _pad_D12_to_15EF[0x15F0 - 0xD12];   // 0xD12 .. 0x15F0
@@ -967,6 +982,17 @@ struct SortEntryF {
     float mValue;   // +0x04
 };
 
+// Stack scratch owned by tickSpeedPass: 0xE0 eight-byte records followed by
+// the count at +0x700. A real local object with named members.
+struct SpeedSortRecord {
+    u32 mId;        // +0x00
+    float mValue;   // +0x04
+};
+struct SpeedSortBuffer {
+    SpeedSortRecord mRecords[0xE0];  // 0x000..0x6FF
+    u32 mCount;                      // 0x700
+};
+
 // --- batch targets: introsort family / ring buffer (us-800b58a8 etc.) ---
 extern "C" void qsortEntriesIndirect(void** first, void** last, void** cmp);
 extern "C" void selectSortEntries(void** first, void** last, void** cmp);
@@ -974,29 +1000,17 @@ extern "C" void insertSortTriple(void** a, void** b, void** c, void** cmp);
 extern "C" s32 removeRingEntry(UnkClass_800B0AD8* self, cf::CfObject** itemPtr);
 
 // Pivot-jitter statics rotated by the sort drivers (retail .data).
-extern int lbl_eu_80661CD8;
-extern int lbl_eu_80661CDC;
+extern int sQsortDirectPivotJitter;
+extern int sQsortIndirectPivotJitter;
 
 struct B47Vec3;
 
 // Globals used by func_800B8FC4.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Float/double pool constants shared by the cf object scan routines.
 extern const float lbl_eu_806669D8;
-extern const float lbl_eu_806669EC;
 extern const float lbl_eu_806669DC;
-extern const float lbl_eu_806669E0;
-extern const float lbl_eu_806669E4;
-extern const float lbl_eu_806669F4;
-extern const float lbl_eu_806669F8;
-extern const float lbl_eu_806669FC;
-extern const float lbl_eu_80666A00;
-extern const float lbl_eu_80666A04;
-extern const float lbl_eu_80666A0C;
-extern const float lbl_eu_80666A14;
-extern const float lbl_eu_80666A18;
-extern const double lbl_eu_80666A20;
 
 // ml::CVec3 static zero (retail symbol zero__Q22ml5CVec3).
 #include "monolib/math/CVec3.hpp"
@@ -1031,8 +1045,6 @@ extern "C" void func_80062600();
 extern "C" void* getReslistC08();
 extern "C" void* getReslistBC8();
 extern "C" int func_800AB580(void* obj, void* arg, int flag, float range);
-extern const float lbl_eu_80666A28;
-extern const float lbl_eu_80666A2C;
 extern const float lbl_eu_80666A30;
 
 
@@ -1182,7 +1194,7 @@ extern "C" void* func_80062E64(s32 id);
 extern "C" void* func_80062CE4(s32 id);
 extern "C" void* func_80062D44(s32 id);
 extern "C" void func_80066714(int flag);
-extern void* lbl_eu_8052A3B0[];
+extern void* __vt__Q22cf13CfObjectPoint[];
 extern u8 __vt__Q22cf8CfObject[];
 extern void* lbl_eu_80529128[];
 extern void* lbl_eu_80528600[];
@@ -1404,10 +1416,10 @@ extern "C" void func_8004B3F0(void* dst, const B47Vec3* src);
 extern "C" int testResInfoFlag(unsigned long mask);
 extern "C" void* scaleAboveZero();
 extern "C" int CfRes_getE24Bit22();
-extern float lbl_eu_80661CD4;
-extern float lbl_eu_80661CC8;
-extern float lbl_eu_80661CCC;
-extern float lbl_eu_80661CD0;
+extern float sTboxBaseReslistSize;
+extern float sFactoryEventReslistSize;
+extern float sFactoryEventBaseReslistSize;
+extern float sTboxReslistSize;
 
 // BDAT table/row globals used by func_800B06C8 (see CfBdat.cpp).
 extern void* lbl_eu_806640A8;
@@ -1538,7 +1550,7 @@ extern "C" void gmCallInit1120();
 extern "C" void gmCallNopA();
 extern "C" void gmCallNopB();
 extern "C" void gmCallInit1954();
-extern "C" void* gmSpawnAfterAA2(u32 first, u32 second);
+extern "C" void gmSpawnAfterAA2(u32 first, u32 second);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" unsigned long gflagTestBit6();
@@ -1561,6 +1573,7 @@ extern "C" void __dt__800B18CC(FactoryPoolList* self);
 extern "C" void notifyObjCA0(UnkClass_805764CC* self, void* arg);
 extern "C" void gmInsertObject(void* obj);
 extern "C" void gmNotifyCA0(void* obj);
+void* mapKindToSpawn(void* self, u32 arg);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* findWorkById(UnkClass_805764CC* self, int arg);
 extern "C" void gflagSetOrClear(int arg, void* ptr);
@@ -1638,9 +1651,9 @@ extern "C" void CActorParam_updateTick(void* obj, int arg);
 // --- imports for scanTboxByXY (us-800b7d30) ---
 extern float lbl_eu_80666A10;
 extern float lbl_eu_80666A08;
-extern float lbl_eu_80663EC8;
-extern float lbl_eu_80663ECC;
-extern float lbl_eu_80663ED4;
+extern float sReslistGaugeA;
+extern float sReslistGaugeASq;
+extern float sReslistGaugeBSq;
 
 // --- func_800B83AC support types ---
 // Embedded vtable-pointer sub-object at char+0x17c (status controller).
@@ -1856,14 +1869,9 @@ extern "C" void CfRes_runUpdatePipeline();
 extern "C" void setFieldD08Hi(void* self);
 
 // Factory-event queue iterator primitives (retail names).
-extern "C" void factoryIterBegin(void* dst, void* list);
-extern "C" void** factoryIterItem(void* self);
-extern "C" void factoryIterNext(void* it);
-extern "C" void factoryIterSentinel(void* dst, void* list);
 extern "C" u32 wordsDiffer(void* a, void* b);
 
 // Sub-object ctors/dtors driven by func_800B1120 / teardownGameMgr.
-extern "C" void __dt__800B183C(void* self);
 extern "C" void __dt__80206170(void* self, int flags);
 extern "C" void __dt__80193538(void* self, int flags);
 extern "C" void* __ct__80193270(void* self);
@@ -2079,13 +2087,8 @@ struct B7410Node {
 
 // Shared sdata2/sdata float constants.
 extern const float lbl_eu_806669DC;
-extern const float lbl_eu_806669E4;
-extern const float lbl_eu_806669E8;
-extern const float lbl_eu_806669EC;
-extern const float lbl_eu_806669F0;
-extern const float lbl_eu_80666A0C;
 // Runtime-tuned globals.
-extern float lbl_eu_80663ED0;
+extern float sReslistGaugeB;
 
 // Object behind the global pointer used by func_800B47A8; field +0xB4 holds
 // the listener instance.
@@ -2132,7 +2135,7 @@ struct B47Vec3 {
     }
 };
 
-// Listener/dispatch object behind *(lbl_eu_80663E14 + 0xB4): slot 5 (+0x14)
+// Listener/dispatch object behind *(gmScene + 0xB4): slot 5 (+0x14)
 // receives the shifted position vectors from func_800B47A8 and returns a hit id.
 class IBvt14 {
 public:
@@ -2575,7 +2578,7 @@ public:
 };
 
 // --- imports for func_800B5994 dispatch (retail symbol names) ---
-extern "C" void emitSpeedEvent(const F8C0ListSource* src, void* rec);
+extern "C" void emitSpeedEvent(SpeedSortBuffer* src, void* rec);
 extern "C" float cfCam_absFloat(const f32* self);  // canonical CfCam.hpp view
 extern "C" B5994Obj* getObjField98(void* obj);
 extern "C" int testObj64bit26(void* obj);

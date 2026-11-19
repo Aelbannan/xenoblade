@@ -8,7 +8,8 @@ unit = sys.argv[1]
 sym = sys.argv[2]
 no_build = "--no-build" in sys.argv
 
-cmd = [".venv/bin/python3", "tools/coop/hexdiff.py", unit, "--symbol", sym, "--json"]
+cmd = [".venv/bin/python3", "tools/coop/hexdiff.py", unit, "--symbol", sym,
+       "--json", "--no-baseline"]
 if no_build:
     cmd.append("--no-build")
 out = subprocess.run(cmd, capture_output=True, text=True, cwd="/Users/ahmed/projects/xenoblade")

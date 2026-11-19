@@ -53,14 +53,14 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
 
-    // Matrix slot + matrix select (u16 at +0x0E indexes lbl_eu_806581C8,
-    // zero selects the fixed lbl_eu_806583E0 table).
+    // Matrix slot + matrix select (u16 at +0x0E indexes LodBillboardMatrixTable,
+    // zero selects the fixed LodFixedMatrixTable table).
     setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv((h->field_0xE_u16 + 1) * 3);
     const nw4r::math::MTX34* mtx;
     if (h->field_0xE_u16 != 0) {
-        mtx = (const nw4r::math::MTX34*)lbl_eu_806581C8[h->field_0xE_u16 - 1];
+        mtx = (const nw4r::math::MTX34*)LodBillboardMatrixTable[h->field_0xE_u16 - 1];
     } else {
-        mtx = (const nw4r::math::MTX34*)&lbl_eu_806583E0[0][0][0];
+        mtx = (const nw4r::math::MTX34*)&LodFixedMatrixTable[0][0][0];
     }
 
     selectLodTexCoord(h->field_0x6);
@@ -165,7 +165,7 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
                                                 u8* arg2) {
     LodHeader34* o = (LodHeader34*)self;
     u32 idx = lbl_eu_80665794;
-    lbl_eu_8066576C = (u8*)self;
+    LodCurrentObject = (u8*)self;
     u16 count = *(u16*)((u8*)self + idx * 2 + 6);
     if (count == 0) {
         return;
@@ -174,16 +174,16 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
     // Select the view matrix: from the shared matrix tables (bit 5 of the
     // u16 at arg2+0x44) or copied from the caller's 12 floats.
     if ((*(u16*)(arg2 + 0x44) & 0x20) != 0) {
-        u8* p88 = *(u8**)((u8*)&lbl_eu_80665788 + lbl_eu_806657A0);
-        u8* p8C = *(u8**)((u8*)&lbl_eu_8066578C + lbl_eu_806657A0 * 2);
-        u8* src = p8C + *(u16*)(p88 + lbl_eu_806657A0 * 2) * 0x48;
-        u32* d = (u32*)&lbl_eu_80658008[0][0][0];
+        u8* p88 = *(u8**)((u8*)&LodMatrixIndexTable + LodMatrixSlotBias);
+        u8* p8C = *(u8**)((u8*)&LodMatrixDataTable + LodMatrixSlotBias * 2);
+        u8* src = p8C + *(u16*)(p88 + LodMatrixSlotBias * 2) * 0x48;
+        u32* d = (u32*)&LodViewMatrix[0][0][0];
         u32* s = (u32*)src;
         for (u32 i = 0; i < 12; i++) {
             d[i] = s[i];
         }
     } else {
-        f32* d = &lbl_eu_80658008[0][0][0];
+        f32* d = &LodViewMatrix[0][0][0];
         const f32* s = (const f32*)arg2;
         for (u32 i = 0; i < 12; i++) {
             d[i] = s[i];
@@ -193,66 +193,66 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
     // Concatenate the fixed view matrix with the shared one and upload both
     // position and normal matrices.
     Mtx mtxA;
-    PSMTXConcat(lbl_eu_80657FD8[0], lbl_eu_80658008[0], mtxA);
+    PSMTXConcat(lbl_eu_80657FD8[0], LodViewMatrix[0], mtxA);
     GXLoadPosMtxImm(mtxA, 3);
-    PSMTXInverse(mtxA, lbl_eu_806583E0[0]);
+    PSMTXInverse(mtxA, LodFixedMatrixTable[0]);
     Mtx mtxB;
-    PSMTXTranspose(lbl_eu_806583E0[0], mtxB);
+    PSMTXTranspose(LodFixedMatrixTable[0], mtxB);
     GXLoadNrmMtxImm(mtxB, 3);
 
     // Reassemble the per-record matrices when the object's bit 4 flag is set
     // and the matrix cache is stale (bit 0 of the dirty word) or the cached
     // distance value differs.
     if ((o->field_0x0 & 0x10) != 0) {
-        if ((lbl_eu_806657B0 & 1) != 0 ||
-            lbl_eu_806657A4 != lbl_eu_80665754) {
-            LodRec1* records = (LodRec1*)(lbl_eu_8066576C + o->field_0x28);
+        if ((LodStateFlags & 1) != 0 ||
+            LodCachedDistance != sLodThresholdDist) {
+            LodRec1* records = (LodRec1*)(LodCurrentObject + o->field_0x28);
             for (u32 i = 0; i < o->field_0x4; i++) {
                 LodRec1* rec = &records[i];
-                f32* mtx = &lbl_eu_80658048[i][0][0];
+                f32* mtx = &LodMatrixWorkArea[i][0][0];
                 ColiLodBuildRecordMatrix(mtx, rec);
                 if (rec->field_0x4 != 0) {
-                    PSMTXConcat(lbl_eu_80658048[rec->field_0x4 - 1],
+                    PSMTXConcat(LodMatrixWorkArea[rec->field_0x4 - 1],
                                 (const f32 (*)[4])mtx, (f32 (*)[4])mtx);
                 }
             }
-            lbl_eu_806657A4 = lbl_eu_80665754;
+            LodCachedDistance = sLodThresholdDist;
         }
     }
 
     // Record loop: per-record matrix concat + GX matrix upload.
-    LodRec1* records = (LodRec1*)(lbl_eu_8066576C + o->field_0x28);
+    LodRec1* records = (LodRec1*)(LodCurrentObject + o->field_0x28);
     for (u32 i = 0; i < o->field_0x4; i++) {
         LodRec1* rec = &records[i];
         if ((rec->field_0x0 & 1) != 0) {
             Mtx mtxC;
-            PSMTXConcat(lbl_eu_80658008[0], lbl_eu_80658048[i], mtxC);
+            PSMTXConcat(LodViewMatrix[0], LodMatrixWorkArea[i], mtxC);
             PSMTXConcat(mtxC, lbl_eu_80657FD8[0], mtxC);
             GXLoadPosMtxImm(mtxC, ((u8*)rec)[3] + 3);
-            PSMTXInverse(mtxC, lbl_eu_806581C8[0]);
-            PSMTXTranspose(lbl_eu_806581C8[0], mtxC);
+            PSMTXInverse(mtxC, LodBillboardMatrixTable[0]);
+            PSMTXTranspose(LodBillboardMatrixTable[0], mtxC);
             GXLoadNrmMtxImm(mtxC, ((u8*)rec)[3] + 3);
         }
     }
 
     // Register the vertex arrays.
     if (o->field_0x10 != 0) {
-        GXSetArray(GX_VA_NRM, lbl_eu_8066576C + o->field_0x10,
-                   (u8)lbl_eu_806657C8);
+        GXSetArray(GX_VA_NRM, LodCurrentObject + o->field_0x10,
+                   (u8)LodNormalStride);
     }
     if (o->field_0x18 != 0) {
-        GXSetArray(GX_VA_CLR0, lbl_eu_8066576C + o->field_0x18, 4);
+        GXSetArray(GX_VA_CLR0, LodCurrentObject + o->field_0x18, 4);
     }
     if (o->field_0x14 != 0) {
         for (u32 i = 0; i < o->field_0x2; i++) {
             GXSetArray((GXAttr)(GX_VA_TEX0 + i),
-                       lbl_eu_8066576C + o->field_0x14, 8);
+                       LodCurrentObject + o->field_0x14, 8);
         }
     }
 
     // Dispatch the record's render functions through the byte stream at
     // self + u32[self + idx*4 + 0x1C]; each callee advances the stream.
-    lbl_eu_806657B0 &= ~2u;
+    LodStateFlags &= ~2u;
     u8* p = (u8*)self + *(u32*)((u8*)self + idx * 4 + 0x1c);
     for (u32 i = 0; i < count; i++) {
         lbl_eu_8056D980[*p](p);
@@ -263,7 +263,7 @@ void dispatchLodRecord__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self,
 // us-8046e384  submitLodBillMtx  (billboard matrix assembly + submit)
 // Resolves the render object for the given type index through the LOD
 // per-type pointer tables (stride 0x18), stores it as the current object,
-// assembles the per-record matrices in lbl_eu_80658048, then copies the
+// assembles the per-record matrices in LodMatrixWorkArea, then copies the
 // caller's view matrix and submits every record flagged with bit 2.
 // ===========================================================================
 void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
@@ -271,10 +271,10 @@ void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     // Resolve the object: pool base + the u32 record table entry at
     // byte offset idx*0x18 of the draw-records pointer.
     u32 off = idx * 0x18;
-    u8* p78 = lbl_eu_80665778;
-    u8* p68 = lbl_eu_80665768;
+    u8* p78 = LodDrawRecords18;
+    u8* p68 = sLodCacheTailFlag;
     u8* obj = p68 + *(u32*)(p78 + off);
-    lbl_eu_8066576C = obj;
+    LodCurrentObject = obj;
 
     LodObj1* o = (LodObj1*)obj;
     LodRec1* records = (LodRec1*)(obj + o->field_0x28);
@@ -285,23 +285,23 @@ void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     // Loop 1: per-record setup; concatenate the parent matrix when the
     // record references one (parent index is 1-based).
     for (i = 0; i < o->field_0x4; i++) {
-        mtx = &lbl_eu_80658048[i][0][0];
+        mtx = &LodMatrixWorkArea[i][0][0];
         rec = &records[i];
         ColiLodBuildRecordMatrix(mtx, rec);
         if (rec->field_0x4 != 0) {
-            PSMTXConcat(lbl_eu_80658048[rec->field_0x4 - 1],
+            PSMTXConcat(LodMatrixWorkArea[rec->field_0x4 - 1],
                         (const f32 (*)[4])mtx, (f32 (*)[4])mtx);
         }
     }
 
     // Cache the shared LOD distance value, then copy the caller's 3x4 view
     // matrix into a stack buffer (used for the billboard concatenation).
-    lbl_eu_806657A4 = lbl_eu_80665754;
+    LodCachedDistance = sLodThresholdDist;
 
     // Loop 2: re-derive the record array from the current-object global and
     // submit the records flagged with bit 2 (view matrix concat + scene
     // submit through the ScnRes wrapper).
-    LodRec1* rec2 = (LodRec1*)(lbl_eu_8066576C + o->field_0x28);
+    LodRec1* rec2 = (LodRec1*)(LodCurrentObject + o->field_0x28);
 
     Mtx work;
     f32* dst = &work[0][0];
@@ -321,7 +321,7 @@ void submitLodBillMtx__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     dst[0] = srcMtx[3];
     for (i = 0; i < o->field_0x4; i++) {
         if ((rec2[i].field_0x0 & 4) != 0) {
-            PSMTXConcat(work, lbl_eu_80658048[i], work);
+            PSMTXConcat(work, LodMatrixWorkArea[i], work);
             ScnData_FwdB7E0C(getScnHandle(), arg2, (u8*)work);
         }
     }
@@ -381,7 +381,7 @@ u16* drawLodBillView48__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     nw4r::math::VEC3 in(one, zero, zero);
     for (u32 i = 0; i < 3; i++) {
         nw4r::math::VEC3TransformNormal(
-            &dirs[i], (const nw4r::math::MTX34*)lbl_eu_806581C8[i], &in);
+            &dirs[i], (const nw4r::math::MTX34*)LodBillboardMatrixTable[i], &in);
         f32 lenSq = dirs[i].x * dirs[i].x + dirs[i].y * dirs[i].y +
                     dirs[i].z * dirs[i].z;
         if (lenSq == zero) {
@@ -391,9 +391,9 @@ u16* drawLodBillView48__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         } else {
             PSVECNormalize((const Vec*)&dirs[i], (Vec*)&dirs[i]);
         }
-        trans[i].x = lbl_eu_806581C8[i][0][3];
-        trans[i].y = lbl_eu_806581C8[i][1][3];
-        trans[i].z = lbl_eu_806581C8[i][2][3];
+        trans[i].x = LodBillboardMatrixTable[i][0][3];
+        trans[i].y = LodBillboardMatrixTable[i][1][3];
+        trans[i].z = LodBillboardMatrixTable[i][2][3];
     }
 
     // Record billboard loop (records start at self + 0x48).
@@ -489,9 +489,9 @@ u16* drawLodBillNorm__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     nw4r::math::VEC3 inB(zero, one, zero);
     for (u32 i = 0; i < 3; i++) {
         nw4r::math::VEC3TransformNormal(
-            &dirsA[i], (const nw4r::math::MTX34*)lbl_eu_806581C8[i], &inA);
+            &dirsA[i], (const nw4r::math::MTX34*)LodBillboardMatrixTable[i], &inA);
         nw4r::math::VEC3TransformNormal(
-            &dirsB[i], (const nw4r::math::MTX34*)lbl_eu_806581C8[i], &inB);
+            &dirsB[i], (const nw4r::math::MTX34*)LodBillboardMatrixTable[i], &inB);
         f32 lenSqA = dirsA[i].x * dirsA[i].x + dirsA[i].y * dirsA[i].y +
                      dirsA[i].z * dirsA[i].z;
         if (lenSqA == zero) {
@@ -510,9 +510,9 @@ u16* drawLodBillNorm__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         } else {
             PSVECNormalize((const Vec*)&dirsB[i], (Vec*)&dirsB[i]);
         }
-        trans[i].x = lbl_eu_806581C8[i][0][3];
-        trans[i].y = lbl_eu_806581C8[i][1][3];
-        trans[i].z = lbl_eu_806581C8[i][2][3];
+        trans[i].x = LodBillboardMatrixTable[i][0][3];
+        trans[i].y = LodBillboardMatrixTable[i][1][3];
+        trans[i].z = LodBillboardMatrixTable[i][2][3];
     }
 
     // Record billboard loop (records start at self + 0x48).
@@ -587,16 +587,16 @@ u16* drawLodBillView1C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
 
-    // Matrix slot + matrix select (u16 at +0x0E indexes lbl_eu_806581C8,
-    // zero selects the fixed lbl_eu_806583E0 table).
+    // Matrix slot + matrix select (u16 at +0x0E indexes LodBillboardMatrixTable,
+    // zero selects the fixed LodFixedMatrixTable table).
     u16 e = *(u16*)&h->field_0xE;
     setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv((e + 1) * 3);
 
     const nw4r::math::MTX34* mtx;
     if (e != 0) {
-        mtx = (const nw4r::math::MTX34*)lbl_eu_806581C8[e - 1];
+        mtx = (const nw4r::math::MTX34*)LodBillboardMatrixTable[e - 1];
     } else {
-        mtx = (const nw4r::math::MTX34*)&lbl_eu_806583E0[0][0][0];
+        mtx = (const nw4r::math::MTX34*)&LodFixedMatrixTable[0][0][0];
     }
 
     selectLodTexCoord(h->field_0x6);
@@ -760,7 +760,7 @@ u16* cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* o
 // ===========================================================================
 void transformSpawnPos__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
                                                 const Vec* src, s32 idx) {
-    u8* record = (u8*)lbl_eu_806657AC + ((idx + lbl_eu_806657A0) & 4) * 0xb4;
+    u8* record = (u8*)LodMatrixRecordBase + ((idx + LodMatrixSlotBias) & 4) * 0xb4;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&vec[0],
                                     (nw4r::math::MTX34*)(record + 0x174),
                                     (nw4r::math::VEC3*)&vec[0]);
@@ -783,7 +783,7 @@ void transformSpawnPos__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
 // ===========================================================================
 void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
                                                 const Vec* src, s32 idx) {
-    u8* record = (u8*)lbl_eu_806657AC + (((idx + lbl_eu_806657A0) & 4) + 8) * 0xb4;
+    u8* record = (u8*)LodMatrixRecordBase + (((idx + LodMatrixSlotBias) & 4) + 8) * 0xb4;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&vec[1],
                                     (nw4r::math::MTX34*)(record + 0x174),
                                     (nw4r::math::VEC3*)&vec[1]);
@@ -807,7 +807,7 @@ void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
 // whose return value becomes the next pointer.  Returns the flag byte.
 // ===========================================================================
 s32 dispatchLodRecords__Q23LOD17UnkClass_80468434Fv(u8* self) {
-    lbl_eu_8066576C = self;
+    LodCurrentObject = self;
     s32 n = *(u16*)(self + lbl_eu_80665794 * 2 + 6);
     if (n != 0) {
         u8 flag = 0;
@@ -854,7 +854,7 @@ u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     selectLodTexCoord(self->records[0].field_0x8);
     applyLodRecState__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
     setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(self->records[0].field_0x14 + 3);
-    GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
+    GXCallDisplayList(LodCurrentObject + self->records[0].field_0xC,
                       self->records[0].field_0x10);
     return result;
 }
@@ -864,7 +864,7 @@ u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 // Same guard chain as renderLodBatch but returns self+0x58, uses the fade
 // group ids at records[1].field_0x20/0x22, uploads the matrix at self+0x1C
 // from bytes at self+0x18/0x19, and resets the cached-matrix sentinel
-// (lbl_eu_80665818) to -1 after submitting the display list.
+// (sCachedCurrentMtx) to -1 after submitting the display list.
 // ===========================================================================
 u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     u8* result = &self->records[2].field_0x0;
@@ -896,9 +896,9 @@ u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
                   (const f32 (*)[3][4])&self->records[0].field_0x1C);
     selectLodTexCoord(self->records[0].field_0x8);
     applyLodRecState__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
-    GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
+    GXCallDisplayList(LodCurrentObject + self->records[0].field_0xC,
                       self->records[0].field_0x10);
-    lbl_eu_80665818 = (u32)-1;
+    sCachedCurrentMtx = (u32)-1;
     return result;
 }
 
@@ -995,69 +995,69 @@ extern "C" char lbl_eu_8056DAD8[0x20] = {
 // [.bss] 0x80657FD8-0x80658458 (0x480, align 8): work matrices + record tables.
 extern "C" {
 __declspec(align(8)) f32 lbl_eu_80657FD8[3][4];
-f32 lbl_eu_80658008[3][4];
-u32 lbl_eu_80658038[4];
-f32 lbl_eu_80658048[8][3][4];
-f32 lbl_eu_806581C8[8][3][4];
-u32 lbl_eu_80658348[4];
-u32 lbl_eu_80658358[4];
-u32 lbl_eu_80658368[3];
-u32 lbl_eu_80658374[3];
-f32 lbl_eu_80658380[3][4];
-f32 lbl_eu_806583B0[3][4];
-f32 lbl_eu_806583E0[3][4];
+f32 LodViewMatrix[3][4];
+u32 LodFadeScalars[4];
+f32 LodMatrixWorkArea[8][3][4];
+f32 LodBillboardMatrixTable[8][3][4];
+u32 sAmbientScaleLut[4];
+u32 sAmbientAltScaleLut[4];
+u32 sLodAttnFnTable[3];
+u32 sLodDiffuseFnTable[3];
+f32 sLodFogRamp[3][4];
+f32 sLodFixedTexMtx[3][4];
+f32 LodFixedMatrixTable[3][4];
 u32 lbl_eu_80658410[3];
 u32 lbl_eu_8065841C[3];
-f32 lbl_eu_80658428[3][4];
+f32 sBillboardViewMatrix[3][4];
 }
 
 // [.sbss] 0x8066576C-0x80665828 (0xBC, align 4): scalar/pointer state.
 extern "C" {
-__declspec(align(4)) u8*  lbl_eu_8066576C;
+__declspec(align(4)) u8*  LodCurrentObject;
 u32  lbl_eu_80665770;
 u32  lbl_eu_80665774;
-u8*  lbl_eu_80665778;
-u32  lbl_eu_8066577C;
+u8*  LodDrawRecords18;
+u32  LodDrawRecords48;
 u32  lbl_eu_80665780;
-u32  lbl_eu_80665784;
-u32  lbl_eu_80665788;
-u32  lbl_eu_8066578C;
-u32  lbl_eu_80665790;
+u32  LodObjectRecords;
+u32  LodMatrixIndexTable;
+u32  LodMatrixDataTable;
+u32  LodTexcoordHighWater;
 s32  lbl_eu_80665794;
-u32  lbl_eu_80665798;
-u32  lbl_eu_8066579C;
-s32  lbl_eu_806657A0;
-f32  lbl_eu_806657A4;
-u32  lbl_eu_806657A8;
-LodDirEntry* lbl_eu_806657AC;
-u32  lbl_eu_806657B0;
-u32  lbl_eu_806657B4;
-u32  lbl_eu_806657B8;
-u32  lbl_eu_806657BC;
-u32  lbl_eu_806657C0;
-u32  lbl_eu_806657C4;
-s16  lbl_eu_806657C8;
+u32  LodMatrixCacheSlot;
+u32  LodMatrixCachePtr;
+s32  LodMatrixSlotBias;
+f32  LodCachedDistance;
+u32  LodFadeAlpha;
+LodDirEntry* LodMatrixRecordBase;
+u32  LodStateFlags;
+u32  LodCurrentRecordId;
+u32  LodDistanceLimit;
+u32  LodFadeGroupA;
+u32  LodFadeGroupB;
+u32  LodFadeGroupValue;
+s16  LodNormalStride;
 u16  lbl_eu_806657C8_hi;
 u32  lbl_eu_806657C8_x;
 s32  lbl_eu_806657D0;
 u32  lbl_eu_806657D4;
 u32  lbl_eu_806657D8;
-u32  lbl_eu_806657DC;
-u32  lbl_eu_806657E0;
-f32  lbl_eu_806657E4;
+u32  sLastColorChanMode;
+u32  sLastAlphaChanMode;
+f32  sAmbientIntensityScale;
 u32  lbl_eu_806657E8;
-u32  lbl_eu_806657EC;
-u32  lbl_eu_806657F0;
-u32  lbl_eu_806657F4;
+u32  sLodLightMask0;
+u32  sLodLightMask1;
+u32  sLodLightMask2;
 u32  lbl_eu_806657F8;
 u32  lbl_eu_806657FC;
 f32  lbl_eu_80665800;
 u32  lbl_eu_80665804;
-f32  lbl_eu_80665808;
+f32  sAmbientAlphaScale;
 u32  lbl_eu_8066580C;
 u32  lbl_eu_80665810;
-u32  lbl_eu_80665814;
-u32  lbl_eu_80665818;
+u32  sAmbientAlpha;
+u32  sCachedCurrentMtx;
 u32  lbl_eu_8066581C;
 u32  lbl_eu_80665820;
 u32  lbl_eu_80665824;

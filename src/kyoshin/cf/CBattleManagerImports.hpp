@@ -221,7 +221,7 @@ typedef char DB0FC_ck84[(offsetof(DB0FC_MoveTable, table)    == 0x84) ? 1 : -1];
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// Battle event dispatch table entry for lbl_eu_804FC828 (12 bytes each)
+// Battle event dispatch table entry for sBattleEventTable (12 bytes each)
 struct BattleTableEntry {
     u32 selector;
     s16 val;
@@ -236,14 +236,8 @@ extern "C" const float lbl_eu_80666DDC;
 extern "C" float lbl_eu_80666DD4;
 extern "C" float lbl_eu_80666DD0;   // 0.6f (attack-sound volume)
 extern "C" f64 lbl_eu_80666DE0;
-extern "C" float lbl_eu_80666DEC;   // time/frame-delta scale (updateBattleManager)
-extern "C" BattleTableEntry lbl_eu_804FC828[];
-extern u32 lbl_eu_804FCA08[];       // attack sound-id table (retail .rodata)
-
-// reslist<...> base-class vtables (named so the reslist deleting-dtor vtable
-// store emits the retail symbol rather than an auto-mangled __vt__ name).
-extern "C" u8 lbl_eu_8052BD68[];  // _reslist_base<CfObjectActor*> vtable
-extern "C" u8 lbl_eu_8052BD44[];  // _reslist_base<IBattleEvent*> vtable
+extern "C" BattleTableEntry sBattleEventTable[];
+extern u32 sAttackSoundIdTable[];       // attack sound-id table (retail .rodata)
 
 // Same-TU / shared battle helpers with retail-unmangled names (declared in
 // CBattleManager.hpp so call sites in this unit emit the retail reloc names

@@ -22,10 +22,14 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 // CtrlObjectParam_GetCharEntry stays defined until after the code_80135FDC.hpp include below.
 #include "kyoshin/cf/CfGameManager.hpp"
-// (findBattleStatusEntry: code_800F42AC.hpp / CAIAction.hpp / CtrlEnemy.hpp now all
-// declare the identical void*(void*, u32) form - no guard needed.)
+// (findBattleStatusEntry: CAIAction.hpp / CtrlEnemy.hpp declare the identical
+// void*(void*, u32) form - no guard needed.)
 #include "kyoshin/cf/code_800F42AC.hpp"
-// code_80135FDC.hpp declares ml::epsilon as u32 (line 188);
+
+// Imports from code_800F42AC.cpp (TU-local, as in the other callers).
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+extern "C" void* MapFx_ResolveOwner(void* src);
+
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
 // getReloadParam0: CAIAction.hpp's int form is already in; rename
@@ -45,7 +49,7 @@
 
 // Imports used by this unit (data/globals referenced at their retail names).
 // Secondary-mode flags bitfield (bit 21 = 0x200000 gated in Move/cbRenderBefore).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // sdata2 animation frame constants.
 extern const f32 lbl_eu_80667C80;
 extern const f32 lbl_eu_80667C84;
@@ -131,7 +135,7 @@ void CMenuBattleMode::Move() {
     // disjunct, `beq run; b end` for the second (CMenuGameClear idiom,
     // MWCC_CASES section on &&-gate branch-over-branch).
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & 0x200000) == 0) {
+        (gmPauseFlags & 0x200000) == 0) {
         goto run;
     }
     goto end;
@@ -212,7 +216,7 @@ void CMenuBattleMode::cbRenderBefore() {
     // disjunct, `beq draw; b end` for the second (CMenuGameClear idiom,
     // MWCC_CASES section on &&-gate branch-over-branch).
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & 0x200000) == 0) {
+        (gmPauseFlags & 0x200000) == 0) {
         goto draw;
     }
     goto end;

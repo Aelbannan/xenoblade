@@ -2,7 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // Minimal nw4r sound-object interface used by playReloadSound (slot entry +0x00
@@ -280,7 +280,7 @@ extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* player);
 
 // Flag words defined in CUICfManager.cpp (.sbss); read by tryResolveReloadSlot30 /
 // getReloadDelay.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // Delay/timer floats (.sdata2) selected by getReloadDelay.
 extern float lbl_eu_806676B4;
 extern float lbl_eu_806676B8;
@@ -310,11 +310,11 @@ extern char* lbl_eu_80531068[];
 
 // Reload-state globals owned by this unit (.sbss / .sdata2). Global-scope
 // declarations keep the retail symbol names unmangled.
-extern u16 lbl_eu_80664278;
-extern u16 lbl_eu_8066427A;
-extern u16 lbl_eu_8066427C;
-extern u16 lbl_eu_8066427E;
-extern u16 lbl_eu_80664280;
-extern float lbl_eu_80664284;
-extern u16 lbl_eu_80664288;
+extern u16 sReloadCount;
+extern u16 sReloadAreaId;
+extern u16 sReloadSubId;
+extern u16 sReloadParam1;
+extern u16 sReloadType;
+extern float sReloadTimer;
+extern u16 sReloadLocationChanged;
 extern float lbl_eu_806676C8;

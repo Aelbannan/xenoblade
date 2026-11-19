@@ -16,6 +16,7 @@
 #include <revolution/enc/encunicode.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <cstring>
+#include <new>
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 // Message ring header embedded in CWorkThread at +0x84 (the getMessageQueueSlot
@@ -35,22 +36,9 @@ extern "C" {
     // CProc constructor
     void __ct__5CProcFPCcP11CWorkThreads(CProc* self, const char* pName, CWorkThread* pParent, s16 capacity);
     
-    // CException vtable (defined in the data block below)
-    extern u32 lbl_eu_8056CCE0[40];
-    
-    // Global exception instance pointer
-    extern CException* lbl_eu_806656C0;
-    
-    // Global exception array and counter
-    extern u32 lbl_eu_806656C4;
-    extern CException* lbl_eu_80657B50[16];
-    
-    // Global state variables
-    extern u32 lbl_eu_806656C8;
     extern u32 lbl_eu_806656CC;
     
     // Shared exception strings/data and external helpers.
-    extern const char lbl_eu_80522F7C[];
     extern char lbl_eu_8053785C[];
     extern char lbl_eu_80537828[];
     extern char lbl_eu_805378A0[];
@@ -124,32 +112,26 @@ extern "C" {
 extern const f32 lbl_eu_8066A480;  // 0.0f
 extern const f32 lbl_eu_8066A484;  // 0.8f
 
-// Constructor - extern "C" to match retail symbol name
-extern "C" CException* __ct__CException(CException* self, const char* pName, CWorkThread* pParent) {
-    extern const f32 lbl_eu_8066A480;
-    __ct__5CProcFPCcP11CWorkThreads(self, pName, pParent, 8);
-    *(void**)self = lbl_eu_8056CCE0;
-    self->mExceptionCode = -1;
-    self->mMessage = nullptr;
-    self->mAlphaStep = lbl_eu_8066A480;
-    self->mAlpha = lbl_eu_8066A480;
-    self->mAnimState = 0;
-    self->mException = nullptr;
-    self->unk204 = 0;
-    self->unk208 = 0;
-    self->mFrameCounter = 0;
-    self->mFlag210 = 0;
-    self->mMaxExceptions = 5;
-    self->mType = CWorkThread::THREAD_CEXCEPTION;
-    lbl_eu_806656C0 = self;
-    return self;
+CException::CException(const char* pName, CWorkThread* pParent)
+    : CProc(pName, pParent, 8) {
+    mExceptionCode = -1;
+    mMessage = nullptr;
+    mAlphaStep = lbl_eu_8066A480;
+    mAlpha = lbl_eu_8066A480;
+    mAnimState = 0;
+    mException = nullptr;
+    unk204 = 0;
+    unk208 = 0;
+    mFrameCounter = 0;
+    mFlag210 = 0;
+    mMaxExceptions = 5;
+    mType = CWorkThread::THREAD_CEXCEPTION;
+    spExceptionInstance = this;
 }
 
-// The deleting destructor is emitted by the compiler from the real virtual
-// dtor; the retail vtable references its mangled name __dt__10CExceptionFv.
 CException::~CException() {
-    if (lbl_eu_806656C0 == this) {
-        lbl_eu_806656C0 = 0;
+    if (spExceptionInstance == this) {
+        spExceptionInstance = 0;
     }
 }
 
@@ -167,7 +149,7 @@ CException* CException::createException(CWorkThread* pThread, const wchar_t* mes
         return nullptr;
     }
 
-    exception = lbl_eu_806656C0;
+    exception = spExceptionInstance;
     if (exception != nullptr) {
         if (exception->mMaxExceptions <= value) {
             return nullptr;
@@ -183,7 +165,7 @@ CException* CException::createException(CWorkThread* pThread, const wchar_t* mes
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
         result = (CException*)mtl::MemManager::allocate(0x218, handle);
         if (result != nullptr) {
-            __ct__CException(result, lbl_eu_80522F7C, parent);
+            new (result) CException("CException\0\0CLibHbm\0CLibG3d\0CLibLayout\0CLibVM\0CLibStaticData\0\203\215\203\117\203\101\203\105\203\147\202\311\216\270\224\163\202\265\202\334\202\265\202\275\0CLib\0", parent);
         }
         entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(result, parent, false);
         result->unk1E4 = view->mWorkID;
@@ -193,7 +175,7 @@ CException* CException::createException(CWorkThread* pThread, const wchar_t* mes
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
         result = (CException*)mtl::MemManager::allocate(0x218, handle);
         if (result != nullptr) {
-            __ct__CException(result, lbl_eu_80522F7C, parent);
+            new (result) CException("CException\0\0CLibHbm\0CLibG3d\0CLibLayout\0CLibVM\0CLibStaticData\0\203\215\203\117\203\101\203\105\203\147\202\311\216\270\224\163\202\265\202\334\202\265\202\275\0CLib\0", parent);
         }
         entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(result, parent, false);
         exception = result->validateExceptionType();
@@ -523,7 +505,7 @@ bool CException::wkStandbyLogin() {
     mAlphaStep = 0.04f;
     mAlpha = 0.04f;
     mAnimState = 0;
-    lbl_eu_806656C8 = unk208;
+    sExceptionState = unk208;
     setAppException__8CDesktopFi(1);
     if (CLibCri::getInstance() != nullptr) {
         wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(CLibCri::getInstance(),
@@ -564,8 +546,8 @@ public:
 
 void CException::logExceptionMessage(const wchar_t* message) {
     int index = 0;
-    while (index < (int)lbl_eu_806656C4) {
-        CException* exception = lbl_eu_80657B50[index];
+    while (index < (int)sExceptionCount) {
+        CException* exception = sRegisteredExceptions[index];
         // Virtual call through hand-built vtable.
         ((CVirtualException*)exception)->render();
         index++;
@@ -576,7 +558,7 @@ void CException::logExceptionMessage(const wchar_t* message) {
         for (;;) {}
     }
     updateCmd2Color__8CGXCacheFv(cacheInstance__9CDeviceGX, &ml::CCol4::black, 1);
-    lbl_eu_806656C8 = 0;
+    sExceptionState = 0;
     for (;;) {
         endFrame__9CDeviceVIFv();
         beginFrame__9CDeviceVIFv();
@@ -586,19 +568,19 @@ void CException::logExceptionMessage(const wchar_t* message) {
 
 // Add to global array
 void CException::AddToGlobalArray(IException* pException) {
-    lbl_eu_80657B50[lbl_eu_806656C4++] = this;
+    sRegisteredExceptions[sExceptionCount++] = this;
 }
 
 // Remove from global array
 void CException::RemoveFromGlobalArray(IException* pException) {
-    int count = lbl_eu_806656C4;
+    int count = sExceptionCount;
     for (int index = 0; index < count; ++index) {
-        if (lbl_eu_80657B50[index] == (CException*)pException) {
+        if (sRegisteredExceptions[index] == (CException*)pException) {
             // Shift the tail entries down one slot.
             for (int shift = index; shift < count - 1; ++shift) {
-                lbl_eu_80657B50[shift] = lbl_eu_80657B50[shift + 1];
+                sRegisteredExceptions[shift] = sRegisteredExceptions[shift + 1];
             }
-            lbl_eu_806656C4--;
+            sExceptionCount--;
             return;
         }
     }
@@ -606,128 +588,23 @@ void CException::RemoveFromGlobalArray(IException* pException) {
 
 // Store this to global
 void CException::setGlobalMessage() {
-    if (lbl_eu_806656C0 != nullptr) {
-        *(CException**)((u8*)lbl_eu_806656C0 + 0x1F0) = this;
+    if (spExceptionInstance != nullptr) {
+        *(CException**)((u8*)spExceptionInstance + 0x1F0) = this;
     }
 }
 
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// ===== Dissolved monolibdata2 data owned by this TU =====
+// The primary vtable, RTTI locator and RTTI base list are emitted by MWCC
+// from the real CException class hierarchy (CProc -> CWorkThread -> IWorkEvent).
 // Retail ranges: .data 0x8056CCE0-0x8056CDA0, .rodata 0x80522F70-0x80522FD8,
 // .sdata 0x80663780-0x80663788, .bss 0x80657B50-0x80657FD8,
-// .sbss 0x806656C0-0x806656E0. All reloc names below are spellable, so no
-// UNIT_RULES postprocess is required.
+// .sbss 0x806656C0-0x806656E0.
 
-namespace CException_RTTI {
-extern "C" void* __RTTI__10IWorkEvent;
-extern "C" void* __RTTI__11CWorkThread;
-extern "C" void* __RTTI__5CProc;
-}
-
-extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
-extern "C" int WorkEvent3__10IWorkEventFPv(void*);
-extern "C" int WorkEvent4__10IWorkEventFv();
-extern "C" void OnPauseTrigger__10IWorkEventFb(int);
-extern "C" int WorkEvent6__10IWorkEventFv();
-extern "C" int WorkEvent7__10IWorkEventFv();
-extern "C" int WorkEvent8__10IWorkEventFv();
-extern "C" int WorkEvent9__10IWorkEventFv();
-extern "C" int WorkEvent10__10IWorkEventFv();
-extern "C" int WorkEvent11__10IWorkEventFv();
-extern "C" int WorkEvent12__10IWorkEventFv();
-extern "C" int WorkEvent13__10IWorkEventFv();
-extern "C" int WorkEvent14__10IWorkEventFv();
-extern "C" int WorkEvent15__10IWorkEventFv();
-extern "C" int WorkEvent16__10IWorkEventFv();
-extern "C" int WorkEvent17__10IWorkEventFv();
-extern "C" int WorkEvent18__10IWorkEventFv();
-extern "C" int WorkEvent19__10IWorkEventFv();
-extern "C" int WorkEvent20__10IWorkEventFv();
-extern "C" int WorkEvent21__10IWorkEventFv();
-extern "C" int WorkEvent22__10IWorkEventFv();
-extern "C" int WorkEvent23__10IWorkEventFv();
-extern "C" int WorkEvent24__10IWorkEventFv();
-extern "C" int WorkEvent25__10IWorkEventFv();
-extern "C" int WorkEvent26__10IWorkEventFv();
-extern "C" int WorkEvent27__10IWorkEventFv();
-extern "C" int WorkEvent28__10IWorkEventFv();
-extern "C" int WorkEvent29__10IWorkEventFv();
-extern "C" int WorkEvent30__10IWorkEventFv();
-extern "C" void WorkEvent31__10IWorkEventFv();
-extern "C" void wkUpdate__11CWorkThreadFv();
-extern "C" void wkRender__10CExceptionFv();
-extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyLogin__10CExceptionFv();
-extern "C" void wkStandbyLogout__10CExceptionFv();
-extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-extern "C" void __dt__10CExceptionFv(CException*, int);
-
-// forward decls (defined in the data block below)
-extern "C" const char lbl_eu_80522F70[];
-extern "C" const char lbl_eu_80522F88[];
-extern "C" u32 lbl_eu_8056CD80[];
-
-// [.sdata] 0x80663780-0x80663788 (8B): RTTI locator {name "CException", class-info}.
-extern "C" u32 __RTTI__10CException[2] = {
-    (u32)&lbl_eu_80522F70, (u32)&lbl_eu_8056CD80,
-};
-
-// [.data] 0x8056CCE0-0x8056CD80 (0xA0): CException primary vtable.
-extern "C" u32 lbl_eu_8056CCE0[40] = {
-    // IWorkEventVtbl
-    (u32)&__RTTI__10CException, 0, (u32)&__dt__10CExceptionFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__10CExceptionFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__10CExceptionFv,
-    (u32)&wkStandbyLogout__10CExceptionFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-
-// [.data] 0x8056CD80-0x8056CDA0 (0x20): RTTI class-info (IWorkEvent /
-// CWorkThread / CProc base RTTI chain).
-extern "C" u32 lbl_eu_8056CD80[8] = {
-    (u32)&CException_RTTI::__RTTI__10IWorkEvent, 0,
-    (u32)&CException_RTTI::__RTTI__11CWorkThread, 0,
-    (u32)&CException_RTTI::__RTTI__5CProc, 0, 0, 0,
-};
-
-// [.rodata] 0x80522F70-0x80522FD8 (0x68): "CException" x2 + class-name / SJIS
-// message pool + "CLib". Defined as byte arrays (with the retail inter-string
-// padding folded into each so offsets stay exact).
-extern "C" const char lbl_eu_80522F70[0xC] = {
-    0x43,0x45,0x78,0x63,0x65,0x70,0x74,0x69,0x6F,0x6E,0x00,0x00,
-};  // "CException\0" + 1B pad
-extern "C" const char lbl_eu_80522F7C[0xC] = {
-    0x43,0x45,0x78,0x63,0x65,0x70,0x74,0x69,0x6F,0x6E,0x00,0x00,
-};  // "CException\0" + 1B pad
-extern "C" const char lbl_eu_80522F88[0x50] = {
-    0x43,0x4C,0x69,0x62,0x48,0x62,0x6D,0x00,  // "CLibHbm\0"
-    0x43,0x4C,0x69,0x62,0x47,0x33,0x64,0x00,  // "CLibG3d\0"
-    0x43,0x4C,0x69,0x62,0x4C,0x61,0x79,0x6F,0x75,0x74,0x00,  // "CLibLayout\0"
-    0x43,0x4C,0x69,0x62,0x56,0x4D,0x00,  // "CLibVM\0"
-    0x43,0x4C,0x69,0x62,0x53,0x74,0x61,0x74,0x69,0x63,0x44,0x61,0x74,0x61,0x00,  // "CLibStaticData\0"
-    0x83,0x8D,0x83,0x4F,0x83,0x41,0x83,0x45,0x83,0x67,0x82,0xC9,0x8E,0xB8,0x94,0x73,
-    0x82,0xB5,0x82,0xDC,0x82,0xB5,0x82,0xBD,0x00,  // \u30e1\u30e2\u30ea\u304c\u2026\u306a\u304f\u3057\u307e\u3057\u305f
-    0x43,0x4C,0x69,0x62,0x00,0x00,  // "CLib\0" + 1B pad
-};
-
+// [.rodata] 0x80522F88-0x80522FD8 (0x50): class-name / SJIS message pool
+// + "CLib".  (0x80522F70 is the compiler-emitted RTTI class name.)
 // [.bss] 0x80657B50-0x80657FD8 (0x488, align 8): exception array + work buffer.
 extern "C" {
-CException* lbl_eu_80657B50[16];   // 0x40
+CException* sRegisteredExceptions[16];   // 0x40
 u8   lbl_eu_80657B90[0x400];       // 0x400
 u32  lbl_eu_80657F90[8];           // 0x20
 u32  lbl_eu_80657FB0[3];           // 0xC
@@ -739,9 +616,9 @@ u32  lbl_eu_80657FC8[4];           // 0x10
 // 0x18 is CLibCri::spInstance (defined below; retail .sbss owner is this TU),
 // 0x1C is CLibCri's AX callback pointer (imported by CLibCri.cpp).
 extern "C" {
-CException* lbl_eu_806656C0;       // 0x0
-u32  lbl_eu_806656C4;              // 0x4
-u32  lbl_eu_806656C8;              // 0x8
+CException* spExceptionInstance;       // 0x0
+u32  sExceptionCount;              // 0x4
+u32  sExceptionState;              // 0x8
 u32  lbl_eu_806656CC;              // 0xC
 u64  lbl_eu_806656D0;              // 0x10 (8B)
 u32  lbl_eu_806656DC;              // 0x1C

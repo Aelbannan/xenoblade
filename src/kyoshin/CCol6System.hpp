@@ -244,7 +244,7 @@ extern char lbl_eu_8052D238[];  // CProcess temp vtable (.data)
 extern char lbl_eu_8053001C[];  // CCol6System composite vtable (.data)
 extern char lbl_eu_8053011C[];  // CCol6Hint composite vtable (.data)
 extern char lbl_eu_8053021C[];  // CCol6CheckBat composite vtable (.data)
-extern char* lbl_eu_80662358;   // .sdata arc-path pointer
+extern char* sCol6ArcPath;   // .sdata arc-path pointer
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" const u32 lbl_eu_80667540;
@@ -273,5 +273,5 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide
 extern "C" void UIWin_CreateQuestWin(int id, int a, int b);                     // window open request
-extern u32 lbl_eu_80663E28;  // .sbss mode bitfield (bit 0x400000 gates hint draws)
+extern u32 gmPauseFlags;  // .sbss mode bitfield (bit 0x400000 gates hint draws)
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);

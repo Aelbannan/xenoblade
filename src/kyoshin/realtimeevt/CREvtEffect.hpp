@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "monolib/core/CSchedule.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // ---------------------------------------------------------------------------
 // Opaque helper objects touched by this TU (only the fields used here are
@@ -164,13 +164,6 @@ extern "C" {
     extern const char* lbl_eu_80662474;  // "effAtr"
     extern const char* lbl_eu_80662478;  // "eff"
     extern const char lbl_eu_80503800[]; // "EFFMonochrome\0MonoRGB\0"
-    extern const f32 lbl_eu_8066793C;    // 1.0f
-    extern const f32 lbl_eu_80667940;    // 0.0f
-    extern const f32 lbl_eu_80667944;    // epsilon
-    extern const f32 lbl_eu_80667948;    // 1.0f threshold
-    extern const f32 lbl_eu_8066794C;    // 0.0f
-    extern const double lbl_eu_80667950; // double magic for int->float
-    extern const f32 lbl_eu_80667958;    // -1.0f
-    extern const f32 lbl_eu_8066795C;    // frame rate divisor
-    extern const f32 lbl_eu_80667960;    // 0.5f
+    extern const f32 lbl_eu_8066793C;    // 0.0f
+    extern const f32 lbl_eu_80667940;    // 1.0f
 }

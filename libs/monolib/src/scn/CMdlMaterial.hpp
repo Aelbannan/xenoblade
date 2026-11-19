@@ -5,8 +5,8 @@
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/g3d/g3d_scnmdl.h>
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" const char* lbl_eu_80663C30;
+// Node user-data key defined by CMdlMaterial.cpp.
+extern const char* sMatCullModeKey;
 
 /**
  * CMdlMaterial - model material descriptor.

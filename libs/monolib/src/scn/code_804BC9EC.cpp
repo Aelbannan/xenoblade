@@ -229,7 +229,7 @@ int Coli_ParseChunks(void* outStruct, u32 data) {
 
 // tail calls with &lbl_eu_8065F32C (retail: lis;addi;b callee); callees are
 // extern "C" in monolib/scn/code_804BC9EC.hpp
-extern "C" void ScnData_FwdBC9A0() { Coli_CheckFlag(&lbl_eu_8065F32C); }
+extern "C" void ScnData_FwdBC9A0() { Coli_CheckFlag((u32*)&lbl_eu_8065F32C); }
 
 void resetScnData(void* p) {
     *(u32*)p = 0;
@@ -566,7 +566,7 @@ void sinit_804BD8A0() {
 // cf. kyoshin/cf/CfCam.o, whose retail .bss is likewise align 4.
 ScnResData lbl_eu_8065F32C;
 u8 lbl_eu_8065F3F0[0xC];
-u8 lbl_eu_8065F3FC[0x1C];
+ColiQueryBounds sColiQueryBounds;
 
 // [.sbss] 0x80665968-0x8066597C (0x14, align 8).
 __declspec(align(8)) u32 lbl_eu_80665968[2];

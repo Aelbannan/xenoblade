@@ -193,7 +193,7 @@ public:
 };
 
 // String-keyed record: 4-byte key string at +0 (compared via strcmp against
-// lbl_eu_80661A24, e.g. "DAP1") with a count word at +4.
+// gResKeyDap1, e.g. "DAP1") with a count word at +4.
 struct CfResNameRec {
     char mKey[4];   // 0x00 - inline key string
     int mCount;     // 0x04
@@ -220,10 +220,10 @@ struct CfResExtRec {
 };
 
 // Name-key string pointer (in .sdata; points at "DAP1" etc.).
-extern const char* lbl_eu_80661A24;
+extern const char* gResKeyDap1;
 
 // Name-key string pointer (in .sdata; table key compared by CfRes_lookupStrTable).
-extern const char* lbl_eu_80661A20;
+extern const char* gResKeyKyp;
 
 // Extension separator character (in .sdata, ".\0"): the key CfRes_stripExtension
 // strips from the end of a path. Declared as a scalar (not an array) so MWCC
@@ -236,7 +236,7 @@ extern char lbl_eu_80661A40[8];   // '.' separator + pad (retail .sdata 8 bytes)
 extern "C" void CfRes_resetAllEntries(ResInfoEntry* entry);
 
 // Global CfRes manager state word (zeroed by CfResTask::Term).
-extern u32 lbl_eu_80663D78;
+extern u32 gCfResManager;
 
 // Effect-singleton manager object (array form forces @ha/@l address refs;
 // also declared in kyoshin/CTaskGameEff.hpp).
@@ -457,7 +457,7 @@ struct CfResCleanupEntry {
 // object, passed through but unused by the cleanup).
 void CfRes_cancelPendingRead(CfResCleanupEntry* child, CfResCleanupEntry* parent);
 
-// Layout of the object addressed by the singleton at lbl_eu_80663D7C. The
+// Layout of the object addressed by the singleton at gCfResInstance. The
 // ctor stores the address of CfResManager's +0x54 storage-vtable subobject,
 // so the two entry tables are fields of this object at +0x1ED8 (3 slots) and
 // +0x1EFC (7 slots), ending exactly at the 0x1FA4-byte allocation.

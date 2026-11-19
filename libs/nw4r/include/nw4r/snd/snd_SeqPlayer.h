@@ -77,9 +77,7 @@ public:
         Update();
     } // at 0x5C
 
-    virtual void OnShutdownSoundThread() {
-        Stop();
-    } // at 0x60
+    virtual void OnShutdownSoundThread(); // at 0x60
 
     void InitParam(int voices, NoteOnCallback* pCallback);
 

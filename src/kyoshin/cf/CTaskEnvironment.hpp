@@ -71,7 +71,7 @@ struct CTaskEnvUnk {
     virtual void vfUnk1(int x);
 };
 
-// Global environment manager (retail lbl_eu_80663D58). Recovered layout:
+// Global environment manager (retail spTaskEnvironmentManager). Recovered layout:
 // +0x68 record index, +0x6C record array (60-byte records).
 struct CTaskEnvGlobal {
     u8 field_0x00[0x68];
@@ -201,7 +201,7 @@ union F64Conv {
 };
 
 // Retail global manager pointer (unmangled at global scope - no extern "C").
-extern CTaskEnvGlobal* lbl_eu_80663D58;
+extern CTaskEnvGlobal* spTaskEnvironmentManager;
 
 // CRTP task base (canonical monolib template). CTaskEnvironment derives from
 // CTTask<CTaskEnvironment>; the out-of-line Move/Draw/dtor specializations are

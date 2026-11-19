@@ -24,9 +24,6 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Unit-private imports (shared with code_80231950.cpp): see CMenuArtsSetImports.hpp.
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
 
 // Pad state import: cf::CfGameManager::getCfPadData() comes from the
 // harness_catalog include chain; CfPadData.hpp supplies the struct layout.
@@ -53,14 +50,14 @@ void CMenuArtsSet::Term() {
     CDeviceVI::waitForDrawDone();
     static_cast<CScn*>(mScene)->removeRenderCB(this);
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     CMenuArtsSet_teardown(&mList);
     sInstance = 0;
     setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuArtsSet::Move() {
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000)) {
         return;
     }
     switch (mState) {
@@ -74,7 +71,7 @@ void CMenuArtsSet::Move() {
         }
         break;
     case 1:
-        if (mTitleAHelp.isIdle() != 0 && mList.CMenuArtsSet_getReadyFlag() != 0) {
+        if (mTitleAHelp.func_801C4124() != 0 && mList.CMenuArtsSet_getReadyFlag() != 0) {
             mState = 2;
         }
         break;
@@ -82,19 +79,19 @@ void CMenuArtsSet::Move() {
         artsMenuInput(this);
         break;
     case 3:
-        if (mTitleAHelp.isIdle() != 0 && mList.CMenuArtsSet_getReadyFlag() != 0) {
+        if (mTitleAHelp.func_801C4124() != 0 && mList.CMenuArtsSet_getReadyFlag() != 0) {
             mField54 = 1;
         }
         break;
     }
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     artsStepState(&mList);
 }
 
 void CMenuArtsSet::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -103,7 +100,7 @@ void CMenuArtsSet::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     CMenuArtsSet_draw(&mList, &drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 CMenuArtsSet* CMenuArtsSet::sInstance;
@@ -180,7 +177,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             } else if (self->mList.CMenuArtsSet_isSlotWindowEmpty() != 0) {
                 CMenuArtsSet_armSysWin(&self->mList);
             } else {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 CMenuArtsSet_beginClose(&self->mList);
                 self->mState = 3;
             }
@@ -271,7 +268,7 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             } else if (self->mList.CMenuArtsSet_isSlotWindowEmpty() != 0) {
                 CMenuArtsSet_armSysWin(&self->mList);
             } else {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 CMenuArtsSet_beginClose(&self->mList);
                 self->mState = 3;
             }
@@ -322,5 +319,5 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
     }
 tail:
     u32 helpMode = CMenuArtsSet_getHelpMode(&self->mList);
-    func_801C41E8(&self->mTitleAHelp, (u8)helpMode);
+    self->mTitleAHelp.func_801C41E8((u8)helpMode);
 }

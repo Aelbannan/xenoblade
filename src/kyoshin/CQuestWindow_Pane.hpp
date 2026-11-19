@@ -8,10 +8,9 @@ class Pane;
 } // namespace lyt
 } // namespace nw4r
 
-// Lean public header for the pane helper defined in kyoshin/CQuestWindow.cpp.
-// Single canonical declaration -- do NOT re-declare it anywhere else (C
-// linkage: a second declaration with different parameter types is a hard
-// "illegal function overloading" error). Retail name is unmangled.
+// Lean public header for the pane helpers. Single canonical declarations --
+// do NOT re-declare them anywhere else (a second declaration with different
+// parameter types or linkage is a hard "illegal function overloading" error).
 extern "C" {
 
 // Pane visibility: nw4r::lyt::Pane::SetVisible(bool). Callers pass genuine
@@ -19,3 +18,6 @@ extern "C" {
 void setPaneVisible(nw4r::lyt::Pane* pane, bool visible);
 
 } // extern "C"
+
+// Defined in kyoshin/CTitleAHelp.cpp; retail emits the C++-mangled name.
+bool isPaneVisible(nw4r::lyt::Pane* pane);

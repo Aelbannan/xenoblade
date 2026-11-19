@@ -2,7 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 class CScn;
 

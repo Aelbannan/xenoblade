@@ -64,7 +64,7 @@ void CMenuPlayAward::Term() {
     mScene->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     PlayAward_ReleaseList(&mPlayAwardList);
 
     sInstance = 0;
@@ -78,7 +78,7 @@ void CMenuPlayAward::Move() {
     }
     // Branch-over-branch guard (same shape as cbRenderBefore / CMenuTutorialList):
     // exit label before body label emits retail's `beq body; b exit`.
-    if (!(lbl_eu_80663E28 & (1u << 21))) {
+    if (!(gmPauseFlags & (1u << 21))) {
         goto body;
     }
     goto exit;
@@ -121,7 +121,7 @@ body:
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     PlayAward_UpdateList(&mPlayAwardList);
 }
 
@@ -132,7 +132,7 @@ void CMenuPlayAward::cbRenderBefore() {
     }
     // Branch-over-branch guard (same shape as CMenuTutorialList::cbRenderBefore):
     // exit label before body label emits retail's `beq body; b exit`.
-    if (!(lbl_eu_80663E28 & (1u << 21))) {
+    if (!(gmPauseFlags & (1u << 21))) {
         goto body;
     }
     goto exit;
@@ -147,7 +147,7 @@ body:
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     PlayAward_DrawList(&mPlayAwardList, &drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 // ---------- Factory: lazily allocate + construct + register the menu ----------
@@ -173,7 +173,7 @@ void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0
         && self->mTitleAHelp.isInitialized() != 0
         && PlayAward_IsListReady(&self->mPlayAwardList) != 0) {
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C412C();
         PlayAward_RequestOpen(&self->mPlayAwardList);
         self->mField1160 = 1;
         playUISound(0x6d);
@@ -183,7 +183,7 @@ void PlayAward_Phase0_ShowHelp(CMenuPlayAward* self) {
 // Help-bar show: when the title/help bar is idle and the award list is in its
 // "ready" state, display the help bar (byte at 0x1160 = 2).
 void PlayAward_Phase1_Advance(CMenuPlayAward* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
         self->mField1160 = 2;
     }
 }
@@ -230,7 +230,7 @@ void PlayAward_Phase2_HandleInput(CMenuPlayAward* self) {
     if (left) {
         // nothing -- blocks the remaining input handlers
     } else if (right) {
-        beginClose(&self->mTitleAHelp);
+        self->mTitleAHelp.beginClose();
         PlayAward_RequestClose(&self->mPlayAwardList);
         self->mField1160 = 3;
     } else if (up) {
@@ -245,13 +245,13 @@ void PlayAward_Phase2_HandleInput(CMenuPlayAward* self) {
         PlayAward_FlipPage(&self->mPlayAwardList);
     }
     s32 page = PlayAward_GetPageCue(&self->mPlayAwardList);
-    func_801C41E8(&self->mTitleAHelp, (u8)page);
+    self->mTitleAHelp.func_801C41E8((u8)page);
 }
 
 // Help-bar hide: when the title/help bar is idle and the award list is in its
 // "ready" state, mark the menu as closing (byte at 0x54 = 1).
 void PlayAward_Phase3_RequestClose(CMenuPlayAward* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && PlayAward_IsReadyFlag(&self->mPlayAwardList) != 0) {
         self->mField54 = 1;
     }
 }

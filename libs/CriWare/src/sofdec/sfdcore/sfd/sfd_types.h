@@ -751,7 +751,7 @@ typedef struct SfdSee {
 /* Trace sink                                                                */
 /* ------------------------------------------------------------------------- */
 
-/* Software-filter trace context (lbl_eu_80606E34): slot 9 of the vtable is
+/* Software-filter trace context (gpSfdCoreTraceCb): slot 9 of the vtable is
  * the "write one trace record" hook every module calls with a pointer into
  * its shared static record. */
 typedef struct SfdTraceVtbl {
@@ -785,7 +785,7 @@ typedef struct SfdTimCtx {
     s32 field_0x10;        /* 0x10 */
 } SfdTimCtx;               /* 0x14 */
 
-/* Process-wide SFD work area (lbl_eu_80606E38): the configuration image the
+/* Process-wide SFD work area (sSfdGlob): the configuration image the
  * first created player copies in, plus the shared time/buffer/transport
  * contexts and the library version word. */
 typedef struct SfdSys {

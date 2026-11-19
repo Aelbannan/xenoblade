@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 extern UNKTYPE* findObjectById(BOOL r3);
 extern UNKTYPE* getEffOwner(UNKTYPE* r3);
@@ -112,8 +112,8 @@ struct Res10View {
 };
 
 // Imports used by CfObjectPc_refreshGauge.
-extern u16 lbl_eu_80663E42;
-extern u16 lbl_eu_80663E44;
+extern u16 gmGlobalFlag42;
+extern u16 gmGlobalFlag44;
 extern void* lbl_eu_806640D4;
 extern const float lbl_eu_80666B38;
 extern const double lbl_eu_80666B40;

@@ -8,7 +8,7 @@
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "monolib/util/FixStr.hpp"   // ml::FixStr<64> for the Tok_FormatStr import
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 struct CItemExt;
 
@@ -16,21 +16,21 @@ struct CItemExt;
 extern "C" void* Bdat_GetTable_AA34();
 
 // Global data imports (MWCC does not mangle global-scope variable names).
-extern u32 lbl_eu_80663E88;    // work-buffer pointer (.sbss, sda21)
+extern u32 spCtrlObjectParamWork;    // work-buffer pointer (.sbss, sda21)
 extern u32 __vt__Q22cf12CBattleState[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
 namespace cf { struct CHelpManager; }
 extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, CtrlObjectParam_ClaimArtsSlotRow byte flag at +0x16)
 
-// -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (lbl_eu_804FBC90, .rodata) ----
+// -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (sCtrlObjectParamOffsetTable, .rodata) ----
 // Copied to a local as a struct so MWCC inlines the 8 lwz/stw pairs
 // (retail copy shape) instead of emitting a memcpy call. Global-scope extern:
 // namespace-scope globals would mangle to lbl_eu_804FBC90__2cf.
 struct CtrlObjectParamOffsetTable {
     u32 words[8];
 };
-extern CtrlObjectParamOffsetTable lbl_eu_804FBC90;
-extern u32 lbl_eu_804FBC70[8];   // arts-learn offset table A (.rodata, CtrlObjectParam_LearnArtsSlots)
-extern u32 lbl_eu_804FBC50[8];   // arts-learn offset table B (.rodata, CtrlObjectParam_LearnArtsSlots)
+extern CtrlObjectParamOffsetTable sCtrlObjectParamOffsetTable;
+extern u32 sCtrlObjectParamPermTableB[8];   // arts-learn offset table A (.rodata, CtrlObjectParam_LearnArtsSlots)
+extern u32 sCtrlObjectParamPermTableA[8];   // arts-learn offset table B (.rodata, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, CtrlObjectParam_LearnArtsSlots)
 extern u32 lbl_eu_80664158;   // arts-table bdat handle (.sbss, sda21, CtrlObjectParam_ReapplyArtsSet)
@@ -52,7 +52,7 @@ extern f32 lbl_eu_80666790;    // rank*average-level divisor (.sdata2, CtrlObjec
 extern f32 lbl_eu_80666794;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
 extern f32 lbl_eu_80666798;    // (.sdata2, CtrlObjectParam_RefreshCharEntry scale)
 extern f32 lbl_eu_8066679C;    // (.sdata2, CtrlObjectParam_RefreshCharEntry scale)
-extern f32 lbl_eu_80663EC8;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
+extern f32 sReslistGaugeA;    // (.sdata2, CtrlObjectParam_RefreshCharEntry arts-set float)
 extern u32 lbl_eu_806667A8;    // arts column-name prefix word 0 (.sdata2, CtrlObjectParam_InitArtsSlotSet)
 extern const u32 lbl_eu_806667AC;    // arts column-name prefix word 1 (.sdata2, CtrlObjectParam_InitArtsSlotSet)
 extern char lbl_eu_804FBF58[]; // arts-list sprintf format string (.rodata, CtrlObjectParam_ScanArtsListRows)
@@ -768,7 +768,7 @@ namespace cf {
         u16  field_3E;      // +0x3E: slot3 flags
     };
 
-    // -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (lbl_eu_804FBC90) ---------
+    // -- CtrlObjectParam_ClaimArtsSlotRow view: 8-word offset table (sCtrlObjectParamOffsetTable) ---------
     // The struct/extern live at global scope (see top of header) so the
     // symbol stays unmangled.
     // -- CtrlObjectParam_ClaimArtsSlotRow view: arts-slot owner --------------------------------

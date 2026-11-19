@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Forward decls: full player-object layouts are declared after the cf
 // namespace (global scope) - see CtrlPlayerObj below.

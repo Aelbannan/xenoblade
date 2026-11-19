@@ -36,7 +36,9 @@ def main():
         stdout, stderr = io.StringIO(), io.StringIO()
         try:
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-                rc = hexdiff([unit, "--all", "--json"])
+                # FULL_MATCH re-audit uses hexdiff's objdiff-aware verdict;
+                # baseline LOST/GAIN is a separate check, not this sweep.
+                rc = hexdiff([unit, "--all", "--json", "--no-baseline"])
             report = json.loads(stdout.getvalue()) if rc in (0, 5) else {}
             functions = report.get("functions", [])
             by_name = {f["symbol"]: f for f in functions}
@@ -52,7 +54,8 @@ def main():
                         comparison = check_unit_function(project, project.resolve_unit(unit), target["symbol"])
                         from tools.coop.hexdiff import _counts_for
                         c = _counts_for(comparison.retail, comparison.decomp)
-                        f = dict(c, match=comparison.match, present=True,
+                        f = dict(c, match=comparison.match,
+                                 full_match=comparison.match, present=True,
                                  retail_size=comparison.retail.size, decomp_size=comparison.decomp.size,
                                  reloc=len(comparison.unresolved), relocation_errors=list(comparison.reasons))
                     except (OSError, RuntimeError, ValueError) as exc:
@@ -61,7 +64,7 @@ def main():
                 if not f.get("present", True):
                     status, pct = "COMPILES", 0.0
                     result["classification"] = "unproven: missing/ambiguous function pair or build failure"
-                elif f.get("match"):
+                elif f.get("full_match", f.get("match", False)):
                     status, pct = "FULL_MATCH", 100.0
                     result["classification"] = "proven byte match"
                 else:

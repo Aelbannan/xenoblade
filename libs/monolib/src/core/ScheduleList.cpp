@@ -143,8 +143,8 @@ extern "C" u32 lbl_eu_805700CC[3] __attribute__((weak)) = {
 // ============================================================================
 // .sbss (24B): zero-init globals owned by this unit.
 // ============================================================================
-extern "C" SLList* lbl_eu_80665A50 = 0;
-extern "C" SLList* lbl_eu_80665A54 = 0;
+extern "C" SLList* sMainScheduleList = 0;
+extern "C" SLList* sAlternateScheduleList = 0;
 extern "C" void*   lbl_eu_80665A58 = 0;
 extern "C" char    lbl_eu_80665A5C = 0;
 extern "C" void*   lbl_eu_80665A60 = 0;
@@ -500,7 +500,7 @@ void* SchedList_RingHead(u8* self) {
 
 // ---------------------------------------------------------------------------
 // __ct__804E4B64: allocate a ScheduleList (0x24), construct it, and store it
-// into the global list selected by arg (0 -> lbl_eu_80665A50, else 54).
+// into the global list selected by arg (0 -> sMainScheduleList, else sAlternateScheduleList).
 // ---------------------------------------------------------------------------
 void __ct__804E4B64(int arg) {
     SLList* list;
@@ -513,10 +513,10 @@ void __ct__804E4B64(int arg) {
         }
     }
     if (arg == 0) {
-        lbl_eu_80665A50 = list;
+        sMainScheduleList = list;
     }
     if (arg != 0) {
-        lbl_eu_80665A54 = list;
+        sAlternateScheduleList = list;
     }
 }
 
@@ -647,28 +647,28 @@ SLList* __dt__12ScheduleListFv(SLList* self, int flag) {
 // SchedList_TeardownAll: terminate the global schedule lists.
 extern "C" void SchedList_TeardownAll(u32 x) {
     if (x != 0) {
-        if (lbl_eu_80665A54 != 0) {
-            if (lbl_eu_80665A54 != 0) {
-                ((SLDispatch*)lbl_eu_80665A54)->destroy(1);
+        if (sAlternateScheduleList != 0) {
+            if (sAlternateScheduleList != 0) {
+                ((SLDispatch*)sAlternateScheduleList)->destroy(1);
             }
-            lbl_eu_80665A54 = 0;
+            sAlternateScheduleList = 0;
         }
     }
-    if (lbl_eu_80665A50 != 0) {
-        if (lbl_eu_80665A50 != 0) {
-            ((SLDispatch*)lbl_eu_80665A50)->destroy(1);
+    if (sMainScheduleList != 0) {
+        if (sMainScheduleList != 0) {
+            ((SLDispatch*)sMainScheduleList)->destroy(1);
         }
-        lbl_eu_80665A50 = 0;
+        sMainScheduleList = 0;
     }
 }
 
 // SchedList_AdvanceBoth: advance both global schedule lists (vtable 0x10).
 extern "C" void SchedList_AdvanceBoth() {
-    SLList* a = lbl_eu_80665A50;
+    SLList* a = sMainScheduleList;
     if (a != 0) {
         ((SLDispatch*)a)->updateAll();
     }
-    SLList* b = lbl_eu_80665A54;
+    SLList* b = sAlternateScheduleList;
     if (b != 0) {
         ((SLDispatch*)b)->updateAll();
     }
@@ -676,11 +676,11 @@ extern "C" void SchedList_AdvanceBoth() {
 
 // SchedList_StepBoth: forward delta to both global schedule lists (vtable 0xc).
 extern "C" void SchedList_StepBoth(f32 x) {
-    SLList* a = lbl_eu_80665A50;
+    SLList* a = sMainScheduleList;
     if (a != 0) {
         ((SLDispatch*)a)->step(x);
     }
-    SLList* b = lbl_eu_80665A54;
+    SLList* b = sAlternateScheduleList;
     if (b != 0) {
         ((SLDispatch*)b)->step(x);
     }
@@ -688,11 +688,11 @@ extern "C" void SchedList_StepBoth(f32 x) {
 
 // SchedList_FindBoth: hand an argument to both global schedule lists (vtable 0x14).
 extern "C" void SchedList_FindBoth(u32 x) {
-    SLList* a = lbl_eu_80665A50;
+    SLList* a = sMainScheduleList;
     if (a != 0) {
         ((SLDispatch*)a)->find((void*)x);
     }
-    SLList* b = lbl_eu_80665A54;
+    SLList* b = sAlternateScheduleList;
     if (b != 0) {
         ((SLDispatch*)b)->find((void*)x);
     }
@@ -705,7 +705,7 @@ extern "C" void SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u3
     if (((lbl_eu_8065FC18[0] >> 12) & 1) != 0 && p4 == 0) {
         use54 = 1;
     }
-    list = use54 ? lbl_eu_80665A54 : lbl_eu_80665A50;
+    list = use54 ? sAlternateScheduleList : sMainScheduleList;
     ((SLDispatch*)list)->add((ScheduleEntry*)p0, (void*)p1,
                              (void*)p2, p3, p4, (void*)p5);
 }
@@ -716,11 +716,11 @@ extern "C" void SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u3
 void __ct__804E4F9C() {
     SLList* list;
     SLList* old;
-    if (lbl_eu_80665A50 != 0) {
-        if (lbl_eu_80665A50 != 0) {
-            ((SLDispatch*)lbl_eu_80665A50)->destroy(1);
+    if (sMainScheduleList != 0) {
+        if (sMainScheduleList != 0) {
+            ((SLDispatch*)sMainScheduleList)->destroy(1);
         }
-        lbl_eu_80665A50 = 0;
+        sMainScheduleList = 0;
     }
     if (mtl::MemManager::getMaxAllocSize(slAllocHandle()) < 0x24) {
         list = 0;
@@ -730,14 +730,14 @@ void __ct__804E4F9C() {
             SCHEDULELIST_CTOR_BODY(list);
         }
     }
-    lbl_eu_80665A50 = list;
+    sMainScheduleList = list;
 
-    old = lbl_eu_80665A54;
+    old = sAlternateScheduleList;
     if (old != 0) {
         if (old != 0) {
             ((SLDispatch*)old)->destroy(1);
         }
-        lbl_eu_80665A54 = 0;
+        sAlternateScheduleList = 0;
         if (mtl::MemManager::getMaxAllocSize(slAllocHandle()) < 0x24) {
             list = 0;
         } else {
@@ -746,17 +746,17 @@ void __ct__804E4F9C() {
                 SCHEDULELIST_CTOR_BODY(list);
             }
         }
-        lbl_eu_80665A54 = list;
+        sAlternateScheduleList = list;
     }
 }
 
 // SchedList_DropBoth: forward an argument to both global schedule lists (vtable 0x1c).
 extern "C" void SchedList_DropBoth(u32 x) {
-    SLList* a = lbl_eu_80665A50;
+    SLList* a = sMainScheduleList;
     if (a != 0) {
         ((SLDispatch*)a)->removeItem((CSchedule*)x);
     }
-    SLList* b = lbl_eu_80665A54;
+    SLList* b = sAlternateScheduleList;
     if (b != 0) {
         ((SLDispatch*)b)->removeItem((CSchedule*)x);
     }
@@ -765,11 +765,11 @@ extern "C" void SchedList_DropBoth(u32 x) {
 // SchedList_TallyBoth: sum the per-list counts reported by both global lists.
 extern "C" u32 SchedList_TallyBoth() {
     u32 total = 0;
-    SLList* a = lbl_eu_80665A50;
+    SLList* a = sMainScheduleList;
     if (a != 0) {
         total = ((SLDispatch*)a)->count();
     }
-    SLList* b = lbl_eu_80665A54;
+    SLList* b = sAlternateScheduleList;
     if (b != 0) {
         total += ((SLDispatch*)b)->count();
     }

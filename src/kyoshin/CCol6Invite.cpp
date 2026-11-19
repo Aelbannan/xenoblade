@@ -8,8 +8,9 @@
 #include <stdarg.h>
 
 // Retail data symbols referenced by this factory.
+CCol6Invite* CCol6Invite::sInstance;
+
 extern "C" {
-CCol6Invite* lbl_eu_8066423C; // singleton instance (sda21-accessed)
 char lbl_eu_8052D238[];       // temporary vtable written before copying __ptmf_null
 char lbl_eu_8052FF3C[];       // CCol6Invite final vtable
 // __ptmf_null is declared extern in CCol6System.hpp (defined in CUICfManager.cpp).
@@ -47,15 +48,10 @@ struct CCol6InviteCtorShim {
 // singleton and registers as a child of `self`. Mirrors retail control flow:
 // the singleton store + Regist run even when the allocation failed (the
 // object register stays NULL) and the object (possibly NULL) is returned.
-// TU-local type-distinct view of __ptmf_null (unsigned long members, like
-// CCol6CheckBatPtmfView): keeps MWCC's type-based aliasing from coupling the
-// ptmf loads with the u32 obj stores.
-struct CCol6InvitePtmfView { unsigned long w0, w1, w2; };
-
 extern "C" CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, u8 arg4) {
     CCol6InviteCtorShim* obj;
     // Return NULL if the singleton already exists.
-    if (lbl_eu_8066423C != 0) {
+    if (CCol6Invite::sInstance != 0) {
         return 0;
     }
     u32 workMem = CWorkThreadSystem::getWorkMem();
@@ -67,18 +63,17 @@ extern "C" CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, 
 
         // Copy the null member-function pointer into both callback slots.
         // Retail loads [1],[0],[2] then stores per slot.
-        const CCol6InvitePtmfView* ptmf =
-            reinterpret_cast<const CCol6InvitePtmfView*>(__ptmf_null);
-        u32 ptmfWord1 = ptmf->w1;
-        u32 ptmfWord0 = ptmf->w0;
+        const u32* ptmf = __ptmf_null;
+        u32 ptmfWord1 = ptmf[1];
+        u32 ptmfWord0 = ptmf[0];
         obj->callbacks[0] = ptmfWord0;
         obj->callbacks[1] = ptmfWord1;
-        obj->callbacks[2] = ptmf->w2;
-        ptmfWord1 = ptmf->w1;
-        ptmfWord0 = ptmf->w0;
+        obj->callbacks[2] = ptmf[2];
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];
         obj->callbacks[3] = ptmfWord0;
         obj->callbacks[4] = ptmfWord1;
-        obj->callbacks[5] = ptmf->w2;
+        obj->callbacks[5] = ptmf[2];
 
         obj->field54 = 0;
         obj->field58 = 0;
@@ -98,9 +93,9 @@ extern "C" CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, 
         obj->field74 = 0;
     }
 
-    lbl_eu_8066423C = (CCol6Invite*)obj;
+    CCol6Invite::sInstance = (CCol6Invite*)obj;
     ((CProcess*)obj)->Regist(self, false);
-    return lbl_eu_8066423C;
+    return CCol6Invite::sInstance;
 }
 
 // Destructor defined in CCol6System.cpp as the extern "C" free function
@@ -180,7 +175,7 @@ extern "C" void Col6FormatBufferString(char* buffer, const char* format, ...) {
     va_start(va, format);
     vsnprintf(buf, 0x100, format, va);
     va_end(va);
-    struct Col6BufLenView { char data[0x100]; u32 len100; };
-    ((Col6BufLenView*)buffer)->len100 = strlen(buf);
+    u32* length = (u32*)(buffer + 0x100);
+    *length = strlen(buf);
     strcpy(buffer, buf);
 }

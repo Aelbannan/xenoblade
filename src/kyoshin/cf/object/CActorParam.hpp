@@ -42,9 +42,9 @@ extern const float lbl_eu_80667844; // 4.0f extended duration
 extern const float lbl_eu_80667808; // sdata2: unk1620 default (ctor)
 extern const float lbl_eu_8066780C; // sdata2: unk1630 multiplier (ctor)
 extern const float lbl_eu_80667810; // sdata2: unk1630 pi divisor (ctor)
-extern const float lbl_eu_80667858; // sdata2: 0.7f (unreferenced; kept by the TU pool anchor)
-extern const float lbl_eu_8066785C; // sdata2: 0.001f (unreferenced; kept by the TU pool anchor)
-extern const float lbl_eu_80667860; // sdata2: 9999.0f (unreferenced; kept by the TU pool anchor)
+extern const float lbl_eu_80667858; // sdata2: 0.7f (defined by this TU)
+extern const float lbl_eu_8066785C; // sdata2: 0.001f (defined by this TU)
+extern const float lbl_eu_80667860; // sdata2: 9999.0f (defined by this TU)
 
 namespace cf {
 
@@ -619,7 +619,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void CActorParam_refreshBattleAction(); //0x230 (was UnkVirtualFunc103)
         virtual float* CActorParam_UnkVirtualFunc104(); //0x234
         virtual void CActorParam_UnkVirtualFunc105(); //0x238
-        virtual void CActorParam_UnkVirtualFunc106(); //0x23C
+        virtual float CActorParam_UnkVirtualFunc106(); //0x23C
         virtual void CActorParam_UnkVirtualFunc107(); //0x240
         virtual void CActorParam_UnkVirtualFunc108(); //0x244
         virtual u32 CActorParam_UnkVirtualFunc109(); //0x248
@@ -668,7 +668,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void* CActorParam_getTensionStatus(); //0x2F4
         virtual void CActorParam_accumulateTension(int arg); //0x2F8
         virtual void CActorParam_raiseTensionValue(int arg); //0x2FC
-        virtual void CActorParam_UnkVirtualFunc155(); //0x300
+        virtual s16 CActorParam_UnkVirtualFunc155(); //0x300
         virtual void CActorParam_resetTensionState(int arg); //0x304
         virtual int CActorParam_getStatusCount(); //0x308
         virtual void CActorParam_UnkVirtualFunc158(); //0x30C

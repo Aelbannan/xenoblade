@@ -974,14 +974,13 @@ inline s32 GetTexSrtMatAnmIndex(const ResAnmTexSrt& srt, const ResName name) {
 } // namespace g3d
 } // namespace nw4r
 
-// Retail defines this as a member of AnmObjTexSrtRes, but g3d_anmtexsrt.h
-// (outside our writable scope) declares only the 1-arg overload. Identifiers
-// containing "__" are emitted verbatim by MWCC, so this free function defines
-// the exact retail symbol with an ABI identical to the member (this, mdl,
-// target, option).
-bool Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(
-    nw4r::g3d::AnmObjTexSrtRes* pThis, const nw4r::g3d::ResMdl mdl, u32 target,
-    nw4r::g3d::AnmObjChr::BindOption option) {
+// AnmObjTexSrtRes::Bind(mdl, target, option): the 3-argument overload
+// declared by g3d_anmtexsrt.h. BIND_PARTIAL binds the target node and all
+// siblings up to the depth-first successor; BIND_ONE binds just the target.
+// Each successful match writes the animation index into mpBinding and sets
+// the bound animation flag.
+bool nw4r::g3d::AnmObjTexSrtRes::Bind(
+    const ResMdl mdl, u32 target, AnmObjChr::BindOption option) {
     using namespace nw4r::g3d;
 
     bool bound = false;
@@ -1015,11 +1014,11 @@ bool Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjCh
             ResNode node = mdl.GetResNode(i);
             const void* pRaw = node.GetResName().ptr();
 
-            s32 idx = GetTexSrtMatAnmIndex(pThis->mRes, node.GetResName());
+            s32 idx = GetTexSrtMatAnmIndex(this->mRes, node.GetResName());
 
             if (idx != -1) {
                 bound = true;
-                *(u16*)(reinterpret_cast<u8*>(pThis->mpBinding) + ofs) =
+                *(u16*)(reinterpret_cast<u8*>(this->mpBinding) + ofs) =
                     (u16)idx;
             }
         }
@@ -1030,18 +1029,18 @@ bool Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjCh
         ResNode node = mdl.GetResNode(target);
         const void* pRaw = node.GetResName().ptr();
 
-        s32 idx = GetTexSrtMatAnmIndex(pThis->mRes, node.GetResName());
+        s32 idx = GetTexSrtMatAnmIndex(this->mRes, node.GetResName());
 
         if (idx != -1) {
             bound = true;
-            *(u16*)(reinterpret_cast<u8*>(pThis->mpBinding) +
+            *(u16*)(reinterpret_cast<u8*>(this->mpBinding) +
                     target * sizeof(u16)) = (u16)idx;
         }
         break;
     }
     }
 
-    pThis->SetAnmFlag(AnmObj::FLAG_ANM_BOUND, true);
+    this->SetAnmFlag(AnmObj::FLAG_ANM_BOUND, true);
     return bound;
 }
 

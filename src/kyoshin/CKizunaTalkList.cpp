@@ -25,11 +25,11 @@ TalkListEntryArray::TalkListEntryArray(nw4r::lyt::ArcResourceAccessor* parent) {
 
 // Build the talk-list entry table from the affinity talk data (retail
 // buildTalkList). Reads the shared character database handed off in
-// lbl_eu_806648B8, collects the candidate character IDs that have talk
+// sKizunaTalkBdatData, collects the candidate character IDs that have talk
 // entries, then runs four passes to assemble type-1/type-2/type-3/name0
 // entries and finally bubble-sorts the table by entry subtype (field_13).
 void TalkListEntryArray::Build() {
-    void* fp = lbl_eu_806648B8;
+    void* fp = sKizunaTalkBdatData;
     u16 charCount = (u16)Bdat_GetMaxRow_B1EC(fp);
     char* fmt12 = BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
     BdatTouchStringCell(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13); // result unused in retail
@@ -295,7 +295,7 @@ void CKizunaTalkList::teardownTalkList() {
     this->mCursor.cleanup();
     this->mScrollBar.Teardown();
     deleteRegion(&this->mMemRegion);
-    lbl_eu_806648B8 = NULL;
+    sKizunaTalkBdatData = NULL;
 }
 
 // Whether the talk-list has anything to show (retail hasVisibleTalks): returns
@@ -323,8 +323,8 @@ void CKizunaTalkList::showTalkList() {
         bindScrollOutAnims();
         moveTalkCursor();
         f32 vec[3];
-        vec[0] = lbl_eu_806689C8;
-        vec[1] = lbl_eu_806689CC;
+        vec[0] = 238.0f;
+        vec[1] = 118.0f;
         vec[2] = lbl_eu_806689D0;
         this->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
         this->mScrollBar.UpdateThumb(7, this->mEntryArray.mCount);
@@ -454,7 +454,7 @@ void CKizunaTalkList::advanceTalkAnim24() {
 }
 
 void CKizunaTalkList::advanceTalkAnim28() {
-    if (advanceAnimTransform(this->mpAnim28, 2.0f) != 0) {
+    if (advanceAnimTransform(this->mpAnim28, 1.0f) != 0) {
         this->mState85 = 3;
         moveTalkCursor();
         this->mNeedsRebuild = 1;
@@ -563,20 +563,20 @@ void CKizunaTalkList::renderTalkRows() {
         GXColorS10* c1;
         bool vis;
         if (entry->field_12 == 0) {
-            c0 = (GXColorS10*)&lbl_eu_806648D0;
-            c1 = (GXColorS10*)&lbl_eu_806648D8;
+            c0 = (GXColorS10*)&sKizunaTalkRowColorSelectedA;
+            c1 = (GXColorS10*)&sKizunaTalkRowColorSelectedB;
             vis = true;
         } else if (entry->field_12 == 1) {
-            c0 = (GXColorS10*)&lbl_eu_806648D0;
-            c1 = (GXColorS10*)&lbl_eu_806648D8;
+            c0 = (GXColorS10*)&sKizunaTalkRowColorSelectedA;
+            c1 = (GXColorS10*)&sKizunaTalkRowColorSelectedB;
             vis = false;
         } else if (entry->field_12 == 2) {
-            c0 = (GXColorS10*)&lbl_eu_806648C0;
-            c1 = (GXColorS10*)&lbl_eu_806648C8;
+            c0 = (GXColorS10*)&sKizunaTalkRowColorNeutralA;
+            c1 = (GXColorS10*)&sKizunaTalkRowColorNeutralB;
             vis = false;
         } else {   // == 3
-            c0 = (GXColorS10*)&lbl_eu_806648C0;
-            c1 = (GXColorS10*)&lbl_eu_806648C8;
+            c0 = (GXColorS10*)&sKizunaTalkRowColorNeutralA;
+            c1 = (GXColorS10*)&sKizunaTalkRowColorNeutralB;
             vis = false;
         }
 
@@ -618,7 +618,7 @@ void CKizunaTalkList::moveTalkCursor() {
 // shared BDAT data and the layout accessor. Builds a fresh local table via
 // a temporary table, assigns it over the member array, then rebuilds/sorts.
 void CKizunaTalkList::rebuildTalkList() {
-    if (this->mAccessor == NULL || lbl_eu_806648B8 == NULL)
+    if (this->mAccessor == NULL || sKizunaTalkBdatData == NULL)
         return;
 
     this->mEntryArray = TalkListEntryArray(this->mAccessor);
@@ -683,7 +683,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         void* data2 = fh2->getData();
         CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
-        lbl_eu_806648B8 = (void*)getFP(&lbl_eu_8050E990[0x217]);
+        sKizunaTalkBdatData = (void*)getFP(&lbl_eu_8050E990[0x217]);
         rebuildTalkList();
         this->mBdatHandle = NULL;
         return 1;
@@ -694,10 +694,10 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80274458() {
-    setGXColorS10(&lbl_eu_806648C0, 0x8c, 0x8c, 0x8c, 0);
-    setGXColorS10(&lbl_eu_806648C8, 0x8c, 0x8c, 0x8c, 0xff);
-    setGXColorS10(&lbl_eu_806648D0, 0x48, 0x3a, 0x21, 0);
-    setGXColorS10(&lbl_eu_806648D8, 0x48, 0x3a, 0x21, 0xff);
+    setGXColorS10(&sKizunaTalkRowColorNeutralA, 0x8c, 0x8c, 0x8c, 0);
+    setGXColorS10(&sKizunaTalkRowColorNeutralB, 0x8c, 0x8c, 0x8c, 0xff);
+    setGXColorS10(&sKizunaTalkRowColorSelectedA, 0x48, 0x3a, 0x21, 0);
+    setGXColorS10(&sKizunaTalkRowColorSelectedB, 0x48, 0x3a, 0x21, 0xff);
 }
 
 

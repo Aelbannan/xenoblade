@@ -13,7 +13,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 // dispatchItemLoad / testActorStatus: single unified decls on the owner header.
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTablePtrs/CfEneTailView/CfEneReloadSlot views
 
 #include "kyoshin/code_801F3BE0.hpp"  // getUnk80664658, GimBind/UnbindEnemyActor (owner)
@@ -123,7 +123,7 @@ void cf::CfObjectEne::CfObject_UnkVirtualFunc4() {
     // callee-saved reg (retail r31); the subobject address is re-derived per
     // site through distinct expression shapes (member-view / u32-domain /
     // byte-add) so GVN cannot merge them into one cached register
-    CScn* sceneTimeSrc = lbl_eu_80663E14;
+    CScn* sceneTimeSrc = gmScene;
     f32 sub = ((cf::CfObjectAt3E9C*)this)->CfObject_getMoveSpeedRate();
     // retail multiplies as time * sub (fmuls f1,f1,f31 with f31=sub)
     f32 t = Scn_GetFrameDelta(sceneTimeSrc);
@@ -644,7 +644,7 @@ u32 cf::CfObjectEne::getEneBdatByIndex(const char* col, u32 index) {
 
 
 // us-800b013c: enemy drop/reward application. Guard chain (flag bit
-// 0x100000, shared lbl_eu_80663E24 bits 0xAFA40000, +0x3F60 target bit 8,
+// 0x100000, shared gmGameFlags bits 0xAFA40000, +0x3F60 target bit 8,
 // primary vtable +0x2BC, CBattleManager party-count range and mode words)
 // then scans the enemy bdat rows [Bdat_GetRowBase_B41C, +Bdat_GetMaxRow_B1EC) for the
 // model id and channel, accumulates `scene time * sub8C + field_0x45CC`
@@ -653,7 +653,7 @@ u32 cf::CfObjectEne::getEneBdatByIndex(const char* col, u32 index) {
 // returning on the first hit.
 void cf::CfObjectEne::applyEnemyReward() {
     if ((((cf::CfActorParamFields*)this)->field_0x3374 & 0x100000) != 0) return;
-    if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
+    if ((gmGameFlags & 0xAFA40000) != 0) return;
     if (((cf::CfActorField3F60*)this)->field_0x3F60 == NULL) return;
     // retail reloads the +0x3F60 target for the flag test (short-lived r4)
     if (((((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)this)->field_0x3F60)->field_0x4EC) & 0x100) == 0) return;
@@ -672,8 +672,8 @@ bmCheck:
     s16 idx = bm3->field_0x20C8;
     if (idx != 0) return;
     // mode word is read SDA-indexed by the (always-zero) idx register
-    u32 modeOff = (u32)*(u16*)((u8*)&lbl_eu_80663E42 + idx) * 100;
-    int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
+    u32 modeOff = (u32)*(u16*)((u8*)&gmGlobalFlag42 + idx) * 100;
+    int channel = (int)*(u16*)((u8*)&gmGlobalFlag44 + modeOff) + (int)modeOff;
     s32 key = ((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)this)->field_0x3F60)->field_0x4B0;
     Bdat_GetTable_AA34();
     u8* bdat = (u8*)lbl_eu_806640D4;
@@ -687,7 +687,7 @@ bmCheck:
         u8 reward = (u8)getBdatStringColumnValue(bdat, "interval", row);
         // pin the scene-time source across the m8C() call so MWCC hoists
         // the SDA load above the bctrl (retail keeps it in a saved reg)
-        CScn* sceneSrc = lbl_eu_80663E14;
+        CScn* sceneSrc = gmScene;
         f32 sub = ((cf::CfObjectAt3E9C*)this)->CfObject_getMoveSpeedRate();
         f32 t = Scn_GetFrameDelta(sceneSrc);
         f32 now = t * sub + this->field_0x45cc;

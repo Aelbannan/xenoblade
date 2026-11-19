@@ -159,10 +159,10 @@ CTaskCulling* CTaskCulling::getInstance() {
 }
 
     void CTaskCulling::Init(){
-        cf::CfGameManager::spScene->addRenderCB(this, 1, 0);
+        gmScene->addRenderCB(this, 1, 0);
     }
     void CTaskCulling::Term(){
-        CScnNw4r* scene = cf::CfGameManager::spScene;
+        CScn* scene = gmScene;
         if(scene != nullptr){
             scene->removeRenderCB(this);
         }

@@ -14,8 +14,8 @@ extern s32 UTY_MulDiv(s32 a, s32 b, s32 c);
 extern s32 UTY_CmpTime(s32 a, s32 b, s32 c, s32 d);
 
 /* External globals */
-extern char lbl_eu_80606E38[];   /* SFD work area */
-extern void* lbl_eu_80606E34;    /* callback table pointer */
+extern char sSfdGlob[];   /* SFD work area */
+extern void* gpSfdCoreTraceCb;    /* callback table pointer */
 extern u32 lbl_eu_8051CBF8[];    /* fps denominator table */
 extern char lbl_eu_8051C888[];
 extern char lbl_eu_8051C628[];
@@ -342,7 +342,7 @@ void SFTIM_VbIn(void) {
     u32 csB;
     u32 csA;
 
-    wk = (u8*)lbl_eu_80606E38;
+    wk = (u8*)sSfdGlob;
     ppHn = (u32**)(wk + 0x1FC);
     *(u32*)(wk + 0x19C) = *(u32*)(wk + 0x19C) + 1;
     cb = (u8*)lbl_eu_80568EA0;
@@ -424,11 +424,11 @@ void SFTIM_VbIn(void) {
                 *(s32*)(hp + 0x1028) = timeVal;
                 *(s32*)(hp + 0x102C) = timeUnit;
 
-                if (lbl_eu_80606E34 != NULL) {
+                if (gpSfdCoreTraceCb != NULL) {
                     *(void**)(cb + 0x0C) = h;
                     *(void**)(cb + 0x18) = &timeVal;
                     *(void**)(cb + 0x24) = &timeUnit;
-                    ((void (*)(void*, void*))(*(u32**)lbl_eu_80606E34)[9])(lbl_eu_80606E34, cb + 4);
+                    ((void (*)(void*, void*))(*(u32**)gpSfdCoreTraceCb)[9])(gpSfdCoreTraceCb, cb + 4);
                 }
             }
             *(s32*)(hp + 0x50) = 1;
@@ -452,7 +452,7 @@ s32 SFTIM_IsStagnant(void* self) {
             if (SFSET_GetCond(self, 0x47) == 1) {
                 s32 base = *(s32*)(p + 0x1070);
                 num = *(s32*)(p + 0x1044) - base;
-                den = ((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c;
+                den = ((SfdSys *)sSfdGlob)->tim.field_0x0c;
             } else {
                 num = *(s32*)(p + 0x1084) - *(s32*)(p + 0x1070);
                 den = *(s32*)(p + 0x1088);
@@ -620,7 +620,7 @@ check:
         return 0;
     }
     *out1 = ((SfdHandle*)self)->tim.vsyncTime;
-    *out2 = ((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c;
+    *out2 = ((SfdSys *)sSfdGlob)->tim.field_0x0c;
     return 0;
 }
 
@@ -1011,7 +1011,7 @@ void SFTIM_Pause(void* self, s32 mode) {
         }
 
         {
-            s32 delta = UTY_MulDiv(((SfdSys *)lbl_eu_80606E38)->tim.field_0x0c, num, den);
+            s32 delta = UTY_MulDiv(((SfdSys *)sSfdGlob)->tim.field_0x0c, num, den);
             s32 t;
             SFLIB_LockCs(&cs1);
             t = ((SfdHandle*)p)->tim.vsyncTime;
@@ -1103,7 +1103,7 @@ s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
 
 void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
     u8* p = (u8*)self;
-    u8* wk = (u8*)lbl_eu_80606E38;
+    u8* wk = (u8*)sSfdGlob;
     s32 mode = ((SfdHandle*)p)->cond[15];
 
     if (mode == 0) {
@@ -1189,7 +1189,7 @@ void sftim_IsGrExecTime(void* self, s32 cmpA, s32 cmpB, s32 timeVal, s32 timeUni
             s32 counter = *(s32*)(p + 0x105C);
             s32 threshold = 0;
 
-            if ((u32)*(s32*)(lbl_eu_80606E38 + 0x1A4) == 60004u) {
+            if ((u32)*(s32*)(sSfdGlob + 0x1A4) == 60004u) {
                 if (*(s32*)(p + 0x930) <= 2) {
                     if (*(s32*)(p + 0x1048) == *(s32*)(p + 0x104C)) {
                         threshold = 1;
@@ -1288,7 +1288,7 @@ void SFD_CalcCycleFromFps(s32 fps, s32* out1, s32* out2) {
     /* The playback cycle is picked from the ratio of the vsync interval to the
      * frame duration; MWCC pools the ten thresholds and the 0x4330000080000000
      * s32->f32 magic double right after the tc2time jump table in .rodata. */
-    f32 ratio = (f32)*(s32*)(lbl_eu_80606E38 + 0x1A4) / (f32)fps;
+    f32 ratio = (f32)*(s32*)(sSfdGlob + 0x1A4) / (f32)fps;
 
     if (ratio < 0.4f) {
         *out1 = (s32)(0.5f + 1.0f / ratio);

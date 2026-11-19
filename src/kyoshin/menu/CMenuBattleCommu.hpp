@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
@@ -178,15 +178,14 @@ CBattleCommuFontObj* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
 }
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern CMenuBattleCommu* lbl_eu_80664390;   // singleton instance pointer (.sbss)
+extern CMenuBattleCommu* spMenuBattleCommuInstance;   // singleton instance pointer (.sbss)
 extern u32 __ptmf_null[3];                  // null pointer-to-member-function
 extern char lbl_eu_8052C1C0[];              // temp CProcess vtable
 extern char lbl_eu_80533638[];              // CMenuBattleCommu composite vtable
-extern char lbl_eu_805047FC[];              // battle commu ARC resource name table
 extern const f32 lbl_eu_80667DE0;           // 0.0f (animation frame reset)
 extern const f32 lbl_eu_80667DE4;           // animation "reached frame" bound
 extern void* lbl_eu_80664090;               // localized message table handle
-extern u32 lbl_eu_80663E28;                 // global state flags (bit 21 = event busy)
+extern u32 gmPauseFlags;                 // global state flags (bit 21 = event busy)
 extern const void* lbl_eu_80661C60;         // RTTI typeinfo (actor source type)
 extern const void* lbl_eu_80661BE8;         // RTTI typeinfo (actor dest type)
 

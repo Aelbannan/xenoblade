@@ -29,15 +29,18 @@ char __NANDVersion[0x60] =
     "<< RVL_SDK - NAND \trelease build: Feb 27 2009 10:05:16 (0x4302_145) >>";
 
 static NANDLibState s_libState = NAND_LIB_UNINITIALIZED;static char s_currentDir[64] ALIGN(32) = "/";
-/* Must remain a real .data object at +0xA0 (NANDInit may address via strBase). */
-#pragma force_active on
+/* Registered by NANDInit through the retail .data base. */
 static OSShutdownFunctionInfo s_shutdownFuncInfo = {nandOnShutdown, 255};
-#pragma force_active off
+
+/* Registration helper from the SDK; NANDInit uses the equivalent base+offset
+   form required by the retail instruction sequence. */
+void nandRegisterShutdownFunction(void) {
+    OSRegisterShutdownFunction(&s_shutdownFuncInfo);
+}
 
 static char s_homeDir[64] ALIGN(32);
 
 /* Contiguous after version: +0xB0 /shared2, +0xBC pooled strings (0x94). */
-#pragma force_active on
 static char s_shared2Prefix[12] = "/shared2";
 static char s_nandStringPool[0x94] =
     "/shared2/\0\0\0"
@@ -45,7 +48,6 @@ static char s_nandStringPool[0x94] =
     "CAUTION!  Unexpected error code [%d] was found.\n\0\0\0\0"
     "ISFS unexpected error code: %d\0\0"
     "Failed to set home directory.\n\0";
-#pragma force_active off
 
 /* Retail .sdata 0x28; explicit_zero_data keeps "" / L"" out of .sbss. */
 static char* s_nandVersion = __NANDVersion;

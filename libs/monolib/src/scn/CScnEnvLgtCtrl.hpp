@@ -806,8 +806,8 @@ struct CScnEnvLgtCtrlWorkBlob {
     u32 field_0x20;   // +0x20 handler status accumulator (bits 0-2 gate the
                       // direction rebuild in scnLgtSolveRowDirection)
 
-    // Handler family installed in the three ptmf tables (lbl_eu_8065FA40 /
-    // lbl_eu_8065FAF8 / lbl_eu_8065FBD0). Each entry is dispatched with the
+    // Handler family installed in the three ptmf tables (sLgtWorkBlobSetters /
+    // sLgtWorkBlobStores / sLgtWorkBlobGradFuncs). Each entry is dispatched with the
     // blob as `this` and a single pointer argument, so the handlers take the
     // concrete row/entry type plus the float the retail call site leaves set.
     void scnLgtPtmfSetF18(CScnEnvLgtCtrlWorkDst40* dst, float v);
@@ -1091,9 +1091,9 @@ struct CScnEnvLgtCtrlWorkDispatchTable {
     CScnEnvLgtCtrlWorkBlobFn mSlots[15];   // +0x00 (retail .bss 0xB8 spans the 4-byte tail)
     u32 mTail;                             // +0xB4 (never initialised)
 };
-extern CScnEnvLgtCtrlWorkDispatchTable lbl_eu_8065FA40;
-extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[];
-extern CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[];
+extern CScnEnvLgtCtrlWorkDispatchTable sLgtWorkBlobSetters;
+extern CScnEnvLgtCtrlWorkBlobFn sLgtWorkBlobStores[];
+extern CScnEnvLgtCtrlWorkBlobFn sLgtWorkBlobGradFuncs[];
 
 // Light-param control blob at CScnEnvLgtCtrl+0x30 (scnLgtToggleItemBit): element
 // count at +0x0C and the byte offset of the entry array within field_0x2C at
@@ -1430,8 +1430,8 @@ extern "C" u32 scnLgtRecomputeSlotField(CScnEnvLgtCtrl* self,
 // .rodata u32 tables indexed by the entry walkers' u16 words
 // (scnLgtFillTargetBack field_0x06; scnLgtFillTargetFront field_0x0A/0x0C via C0 and
 // field_0x10 via D0).
-extern const u32 lbl_eu_805244C0[4];
-extern const u32 lbl_eu_805244D0[4];
+extern const u32 sLgtTargetModeTable[4];
+extern const u32 sLgtTargetMaskTable[4];
 
 // .sdata2 fog constants for scnLgtRefreshLightMan: the 4-byte color word at AFE0
 // (stored byte-wise into FogData::color) and the startz/endz/nearz/farz
@@ -1498,10 +1498,10 @@ extern const float kLgtBlendWeightHi;
 
 // .sdata interpolation bounds consulted by scnLgtPushSlotBlend against the +0x3C
 // word (signed compares in retail).
-extern "C" u32 lbl_eu_80663AE8;  // .sdata raw words (defined in .cpp)
-extern "C" u32 lbl_eu_80663AEC;
-extern "C" u32 lbl_eu_80663AF0;
-extern "C" u32 lbl_eu_80663AF4;
+extern "C" u32 sLgtBlendRiseStart;  // .sdata raw words (defined in .cpp)
+extern "C" u32 sLgtBlendRiseEnd;
+extern "C" u32 sLgtBlendFallStart;
+extern "C" u32 sLgtBlendFallEnd;
 
 // Cubic-Hermite basis coefficients used by scnLgtSampleGradHermite's keyframe
 // interpolation (2, 3, 1, -2 in retail .sdata2).
@@ -1612,7 +1612,7 @@ struct CScnEnvLgtCtrlLgtView {
 
 // --- __ct__CScnEnvLgtCtrl ctor helper types ---
 // 3-word .bss blob copied by the ctor into +0x90..0x98 and +0x9C..0xA4.
-extern u32 lbl_eu_80656C58[3];
+// Its real name is ml::CCol3::black (declared in monolib/math/CCol3.hpp).
 
 // 8-byte resource elements walked by the ctor at data+0x1C: a type word
 // plus a byte offset into the resource blob.

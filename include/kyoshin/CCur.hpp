@@ -9,9 +9,7 @@ class CBaseCur;
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// Pane-visibility helper (retail C-linkage name; same convention as
-// CSysWin.hpp / CKizunagram.hpp / CEquipItemBox.hpp).
-extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
+// isPaneVisible is declared once in kyoshin/CQuestWindow_Pane.hpp.
 
-// Pane-name table (retail .data quad) used by CCur22's pane helpers.
+
 extern const char* lbl_eu_80534828[];

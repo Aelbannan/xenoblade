@@ -11,7 +11,7 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Render-gate mode bitfield (.sbss); bit 21 set means rendering is blocked.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Data block copied by MakeCrystalCopyParamBlock (fields +0x4..+0x14 only; +0x0 is not
 // part of the copy). Two bytes, three words, one byte - meaning unknown.
@@ -289,7 +289,7 @@ struct MCDoneFlag {
 };
 
 void CMenuMakeCrystal::Move() {
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     u8* self = reinterpret_cast<u8*>(this);
     MCStateBytes* st = reinterpret_cast<MCStateBytes*>(this);
@@ -335,7 +335,7 @@ void CMenuMakeCrystal::Move() {
 }
 
 void CMenuMakeCrystal::cbRenderBefore() {
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0)
         return;

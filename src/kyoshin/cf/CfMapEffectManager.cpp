@@ -31,7 +31,7 @@ extern float lbl_eu_806623E8;                 // sdata: global float (set by set
 extern const float lbl_eu_80667730;           // sdata2: clamp threshold
 // rodata: BDAT column-name string table (7 strings at 0x00/0x08/0x11/0x1A/0x20/0x26/0x2C)
 extern char lbl_eu_80503248[];
-extern u16 lbl_eu_80661AF4;                   // sdata: play-clock / BGM frame counter
+extern u16 gCfTCalendarDay;                   // sdata: play-clock / BGM frame counter
 extern u8* lbl_eu_806623EC;                   // sdata: scratch pointer (byte at +0x06)
 // sdata2 float/double pool constants (MapFx_UpdateRow)
 extern const float lbl_eu_80667710;           // default flash value (setChildScl__ arg 2)
@@ -39,7 +39,7 @@ extern const float lbl_eu_80667714;           // u32 column -> float scale
 extern const float lbl_eu_80667718;           // s16 column -> float scale
 extern const double lbl_eu_80667720;          // 2^52 + 2^31 (u32/s16 -> float magic)
 extern const double lbl_eu_80667728;          // 2^52 (u16 -> float magic)
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 using namespace cf;
 
@@ -152,7 +152,7 @@ void CfMapEffectManager::updateSceneFx() {
     u16 cur0 = (u16)cf::CfGameManager::getControllerWordA33C();
     u16 cur1 = (u16)cf::CfGameManager::getControllerWordA37C();
     int type = 0;
-    if (lbl_eu_80663E42 != 0x16 || lbl_eu_80663E44 != 1) {
+    if (gmGlobalFlag42 != 0x16 || gmGlobalFlag44 != 1) {
         cf::CfGameManager::getGlobalPtr640A8();
         cf::CfGameManager::getGlobalWord64184Dup();
         if (self->field_0x12E != cur0 || self->field_0x130 != cur1) {
@@ -161,14 +161,14 @@ void CfMapEffectManager::updateSceneFx() {
                 if (CDeviceSC::getLanguage() >= 1) {
                     type = (CDeviceSC::getLanguage() - 1) * 2 + 0xcf;
                 }
-                u16 bgm = lbl_eu_80661AF4;
+                u16 bgm = gCfTCalendarDay;
                 if (bgm != getEventValue40__Q22cf13CfGameManagerFv(0x6f)) {
                     u32 next = getEventValue40__Q22cf13CfGameManagerFv(0x81) + 1;
                     setEventManagerValue__Q22cf13CfGameManagerFv(0x81, next);
                     if (next == 0x16e) {
                         queueEventId__Q22cf13CfGameManagerFv(0x81);
                     }
-                    setEventManagerValue__Q22cf13CfGameManagerFv(0x6f, lbl_eu_80661AF4);
+                    setEventManagerValue__Q22cf13CfGameManagerFv(0x6f, gCfTCalendarDay);
                 }
             } else if ((int)cur0 == 0x12 && (int)cur1 == 0x3b) {
                 type = 0xb7;
@@ -206,7 +206,7 @@ void CfMapEffectManager::updateSceneFx() {
 // empty, then push the per-frame column data through the effect virtuals.
 void CfMapEffectManager::updateRow(int index, u8* bdat) {
     CfMapEffectManager* self = this;
-    u32 flags = lbl_eu_80663E24;
+    u32 flags = gmGameFlags;
     F64Conv convLo, convHi;
     convLo.w[0] = 0x43300000;
     convHi.w[0] = 0x43300000;

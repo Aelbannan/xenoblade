@@ -63,10 +63,10 @@ void CMenuQuestLog::Term() {
     CDeviceVI::waitForDrawDone();
     reinterpret_cast<CScn*>(mScene)->removeRenderCB(this);
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mQstLogList.Teardown();
     QstLogInfo_TeardownLayout(&mQstLogInfo);
-    lbl_eu_80663FC0[0] = 0;
+    spQuestLogMenuInstance[0] = 0;
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(false);
@@ -80,7 +80,7 @@ void CMenuQuestLog::Move() {
     }
     // Branch-over-branch guard (same shape as cbRenderBefore): exit label
     // before body label emits retail's `beq body; b exit`.
-    if (!(lbl_eu_80663E28 & (1u << 21))) {
+    if (!(gmPauseFlags & (1u << 21))) {
         goto body;
     }
     goto exit;
@@ -140,7 +140,7 @@ body:
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     mQstLogList.FrameUpdate();
     QstLogInfo_StepStateMachine(&mQstLogInfo);
 }
@@ -152,7 +152,7 @@ void CMenuQuestLog::cbRenderBefore() {
     }
     // Branch-over-branch guard keeps MWCC from folding the bit test into a
     // single branch -- emits retail's `beq body; b exit`.
-    if (!(lbl_eu_80663E28 & (1u << 21))) {
+    if (!(gmPauseFlags & (1u << 21))) {
         goto body;
     }
     goto exit;
@@ -169,7 +169,7 @@ body:
         BgTex_Draw_3D7C(&mBgTex, &drawInfo);
         mQstLogList.Draw(&drawInfo);
         QstLogInfo_DrawLayoutTail(&mQstLogInfo, &drawInfo);
-        drawHelp(&mTitleAHelp, &drawInfo);
+        mTitleAHelp.drawHelp(&drawInfo);
     }
 }
 
@@ -183,17 +183,17 @@ body:
 // CProcess::Regist is declared in monolib/work/CProcess.hpp.
 
 extern "C" CMenuQuestLog* createQuestLogMenu(CProcess* self, CProcess* parent, u32 arg2) {
-    if (lbl_eu_80663FC0[0] != 0) {
+    if (spQuestLogMenuInstance[0] != 0) {
         return 0;
     }
     CMenuQuestLog* obj = new (CWorkThreadSystem::getWorkMem()) CMenuQuestLog(parent, arg2);
-    lbl_eu_80663FC0[0] = obj;
+    spQuestLogMenuInstance[0] = obj;
     obj->Regist(self, false);
-    return lbl_eu_80663FC0[0];
+    return spQuestLogMenuInstance[0];
 }
 
-// (lbl_eu_80663FC0 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool isQuestLogMenuActive() { return lbl_eu_80663FC0[0] != 0; }
+// (spQuestLogMenuInstance != 0) - retail lwz sda21; subic; subfe
+extern "C" bool isQuestLogMenuActive() { return spQuestLogMenuInstance[0] != 0; }
 
 // State-machine step for state 1: once the background layout, title help,
 // list and info widget are all ready, open the title help + list, set state 1
@@ -203,7 +203,7 @@ extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
         if (self->mTitleAHelp.isInitialized()) {
             if (self->mQstLogList.ScrollFlag()) {
                 if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
-                    func_801C412C(&self->mTitleAHelp);
+                    self->mTitleAHelp.func_801C412C();
                     self->mQstLogList.BeginSortOpen();
                     self->mState = 1;
                     playUISound(0x6d);
@@ -216,7 +216,7 @@ extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.
 extern "C" void gateQuestLogList(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && self->mQstLogList.IsSortEnabled())
+    if (self->mTitleAHelp.func_801C4124() && self->mQstLogList.IsSortEnabled())
         self->mState = 2;
 }
 
@@ -255,18 +255,18 @@ extern "C" void handleQuestLogInput(CMenuQuestLog* self) {
     if (trigger1) {
         self->mQstLogList.ApplySortSelection();
         if (!self->mQstLogList.IsSortEnabled()) {
-            markReplayClose(&self->mTitleAHelp);
+            self->mTitleAHelp.markReplayClose();
             self->mQstLogList.EndSortMode(0);
             self->mState = 4;
         } else {
-            func_801C41E8(&self->mTitleAHelp, 0x3c);
+            self->mTitleAHelp.func_801C41E8(0x3c);
         }
     } else if (trigger2) {
         if (self->mQstLogList.IsSortDescending()) {
             self->mQstLogList.ConfirmSort(0);
-            func_801C41E8(&self->mTitleAHelp, 0x3c);
+            self->mTitleAHelp.func_801C41E8(0x3c);
         } else {
-            beginClose(&self->mTitleAHelp);
+            self->mTitleAHelp.beginClose();
             self->mQstLogList.EndSortMode(1);
             self->mState = 3;
         }
@@ -280,20 +280,20 @@ extern "C" void handleQuestLogInput(CMenuQuestLog* self) {
         self->mQstLogList.PageDown();
     } else if (trigger3) {
         self->mQstLogList.ToggleSort();
-        func_801C41E8(&self->mTitleAHelp, self->mQstLogList.IsSortDescending() ? 0x3e : 0x3c);
+        self->mTitleAHelp.func_801C41E8(self->mQstLogList.IsSortDescending() ? 0x3e : 0x3c);
     }
 }
 
 // Same gate as gateQuestLogList but toggles the +0x54 byte to 1.
 extern "C" void flagQuestLogReady(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && self->mQstLogList.IsSortEnabled())
+    if (self->mTitleAHelp.func_801C4124() && self->mQstLogList.IsSortEnabled())
         self->mField54 = 1;
 }
 
 extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 {
     CMenuQuestLog* base = self;
-    if (base->mTitleAHelp.isIdle() && base->mQstLogList.IsSortEnabled()) {
+    if (base->mTitleAHelp.func_801C4124() && base->mQstLogList.IsSortEnabled()) {
         unsigned int value = base->mQstLogList.GetSelectedQuestLo();
         QstLogInfo_SetQuestIdSlot(&base->mQstLogInfo, static_cast<unsigned short>(value));
         QstLogInfo_LoadCommonArchive(&base->mQstLogInfo);
@@ -308,8 +308,8 @@ extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 // ---------------------------------------------------------------------------
 extern "C" void startQuestLogInfo(CMenuQuestLog* self) {
     if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
-        func_801C41E8(&self->mTitleAHelp, 0x3d);
-        reopenFromClose(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C41E8(0x3d);
+        self->mTitleAHelp.reopenFromClose();
         QstLogInfo_Start(&self->mQstLogInfo);
         self->mState = 6;
     }
@@ -321,7 +321,7 @@ extern "C" void startQuestLogInfo(CMenuQuestLog* self) {
 // state 7.
 // ---------------------------------------------------------------------------
 extern "C" void finishQuestLogInfo(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
+    if (self->mTitleAHelp.func_801C4124() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
         self->mState = 7;
     }
 }
@@ -342,7 +342,7 @@ extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
         close = pad->mPressedButtonFlags & 0x30;
     }
     if (close) {
-        markReplayClose(&self->mTitleAHelp);
+        self->mTitleAHelp.markReplayClose();
         QstLogInfo_Resume(&self->mQstLogInfo);
         self->mState = 8;
     }
@@ -355,9 +355,9 @@ extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
 // to state 9.
 // ---------------------------------------------------------------------------
 extern "C" void resortQuestLogList(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
-        func_801C41E8(&self->mTitleAHelp, 0x3c);
-        reopenFromClose(&self->mTitleAHelp);
+    if (self->mTitleAHelp.func_801C4124() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
+        self->mTitleAHelp.func_801C41E8(0x3c);
+        self->mTitleAHelp.reopenFromClose();
         self->mQstLogList.BeginSortOpen();
         self->mState = 9;
     }
@@ -368,13 +368,13 @@ extern "C" void resortQuestLogList(CMenuQuestLog* self) {
 // When the title help is idle and sorting is enabled, advance to state 2.
 // ---------------------------------------------------------------------------
 extern "C" void reopenQuestLogList(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.isIdle() && self->mQstLogList.IsSortEnabled()) {
+    if (self->mTitleAHelp.func_801C4124() && self->mQstLogList.IsSortEnabled()) {
         self->mState = 2;
     }
 }
 
 // sbss singleton (retail 0x8: pointer + emitted zero word).
-CMenuQuestLog* lbl_eu_80663FC0[2] = { 0, 0 };
+CMenuQuestLog* spQuestLogMenuInstance[2] = { 0, 0 };
 
 // --- hand-built retail data (splits: .rodata 804FE508-804FE6F0,
 // .data 8052CC10-8052CD50, .sdata 80661E70-80661E78) ---
@@ -383,81 +383,27 @@ extern "C" __attribute__((used, aligned(8)))
 const char lbl_eu_804FE518[0x10] = "MNU_quest\0name";
 // .rodata marker-name table (each 0xF content+null, MWCC zero-pads to 0x10;
 // referenced by the .data string-pointer table below).
-extern "C" __attribute__((used)) const char lbl_eu_804FE528[0x10] = "markerlist0000";
-extern "C" __attribute__((used)) const char lbl_eu_804FE538[0x10] = "markerlist0101";
-extern "C" __attribute__((used)) const char lbl_eu_804FE548[0x10] = "markerlist0201";
-extern "C" __attribute__((used)) const char lbl_eu_804FE558[0x10] = "markerlist0301";
-extern "C" __attribute__((used)) const char lbl_eu_804FE568[0x10] = "markerlist0401";
-extern "C" __attribute__((used)) const char lbl_eu_804FE578[0x10] = "markerlist0402";
-extern "C" __attribute__((used)) const char lbl_eu_804FE588[0x10] = "markerlist0501";
-extern "C" __attribute__((used)) const char lbl_eu_804FE598[0x10] = "markerlist0601";
-extern "C" __attribute__((used)) const char lbl_eu_804FE5A8[0x10] = "markerlist0701";
-extern "C" __attribute__((used)) const char lbl_eu_804FE5B8[0x10] = "markerlist0801";
-extern "C" __attribute__((used)) const char lbl_eu_804FE5C8[0x10] = "markerlist0901";
-extern "C" __attribute__((used)) const char lbl_eu_804FE5D8[0x10] = "markerlist1001";
-extern "C" __attribute__((used)) const char lbl_eu_804FE5E8[0x10] = "markerlist1101";
-extern "C" __attribute__((used)) const char lbl_eu_804FE5F8[0x10] = "markerlist1201";
-extern "C" __attribute__((used)) const char lbl_eu_804FE608[0x10] = "markerlist1202";
-extern "C" __attribute__((used)) const char lbl_eu_804FE618[0x10] = "markerlist1301";
-extern "C" __attribute__((used)) const char lbl_eu_804FE628[0x10] = "markerlist1401";
-extern "C" __attribute__((used)) const char lbl_eu_804FE638[0x10] = "markerlist1501";
-extern "C" __attribute__((used)) const char lbl_eu_804FE648[0x10] = "markerlist1601";
-extern "C" __attribute__((used)) const char lbl_eu_804FE658[0x10] = "markerlist1701";
-extern "C" __attribute__((used)) const char lbl_eu_804FE668[0x10] = "markerlist1801";
-extern "C" __attribute__((used)) const char lbl_eu_804FE678[0x10] = "markerlist1901";
-extern "C" __attribute__((used)) const char lbl_eu_804FE688[0x10] = "markerlist2001";
-extern "C" __attribute__((used)) const char lbl_eu_804FE698[0x10] = "markerlist2101";
-extern "C" __attribute__((used)) const char lbl_eu_804FE6A8[0x10] = "markerlist2201";
-extern "C" __attribute__((used)) const char lbl_eu_804FE6B8[0x10] = "markerlist2301";
-extern "C" __attribute__((used)) const char lbl_eu_804FE6C8[0x10] = "markerlist2401";
-// .rodata float table (read cross-TU by CMenuSymbolMark as f32s).
-extern "C" __attribute__((used, aligned(8)))
-const float lbl_eu_804FE6D8[6] = { -0.2f, 1.81f, -260.26f, -0.18f, 1.76f, -338.3f };
-
 // .data string-pointer table (28 marker addresses + 8 zero words) and the
 // resource table below need the retail names visible here.
-extern "C" const char lbl_eu_804FE528[];
-extern "C" const char lbl_eu_804FE538[];
-extern "C" const char lbl_eu_804FE548[];
-extern "C" const char lbl_eu_804FE558[];
-extern "C" const char lbl_eu_804FE568[];
-extern "C" const char lbl_eu_804FE578[];
-extern "C" const char lbl_eu_804FE588[];
-extern "C" const char lbl_eu_804FE598[];
-extern "C" const char lbl_eu_804FE5A8[];
-extern "C" const char lbl_eu_804FE5B8[];
-extern "C" const char lbl_eu_804FE5C8[];
-extern "C" const char lbl_eu_804FE5D8[];
-extern "C" const char lbl_eu_804FE5E8[];
-extern "C" const char lbl_eu_804FE5F8[];
-extern "C" const char lbl_eu_804FE608[];
-extern "C" const char lbl_eu_804FE618[];
-extern "C" const char lbl_eu_804FE628[];
-extern "C" const char lbl_eu_804FE638[];
-extern "C" const char lbl_eu_804FE648[];
-extern "C" const char lbl_eu_804FE658[];
-extern "C" const char lbl_eu_804FE668[];
-extern "C" const char lbl_eu_804FE678[];
-extern "C" const char lbl_eu_804FE688[];
-extern "C" const char lbl_eu_804FE698[];
-extern "C" const char lbl_eu_804FE6A8[];
-extern "C" const char lbl_eu_804FE6B8[];
-extern "C" const char lbl_eu_804FE6C8[];
 // .data marker-pointer table (retail lbl_eu_8052CCA8, 28 addresses + zero fill).
 struct QuestLogStrTable { const char* p[28]; u32 reserved[8]; };
 __attribute__((used, aligned(4)))
 struct QuestLogStrTable lbl_eu_8052CCA8 = {
     {
-        lbl_eu_804FE528, lbl_eu_804FE538, lbl_eu_804FE548, lbl_eu_804FE558,
-        lbl_eu_804FE568, lbl_eu_804FE578, lbl_eu_804FE588, lbl_eu_804FE598,
-        lbl_eu_804FE5A8, lbl_eu_804FE5B8, lbl_eu_804FE5C8, lbl_eu_804FE5D8,
-        lbl_eu_804FE5E8, lbl_eu_804FE5F8, lbl_eu_804FE608, lbl_eu_804FE618,
-        lbl_eu_804FE628, lbl_eu_804FE638, lbl_eu_804FE648, lbl_eu_804FE648,
-        lbl_eu_804FE658, lbl_eu_804FE668, lbl_eu_804FE678, lbl_eu_804FE688,
-        lbl_eu_804FE698, lbl_eu_804FE6A8, lbl_eu_804FE6B8, lbl_eu_804FE6C8,
+        "markerlist0000", "markerlist0101", "markerlist0201", "markerlist0301",
+        "markerlist0401", "markerlist0402", "markerlist0501", "markerlist0601",
+        "markerlist0701", "markerlist0801", "markerlist0901", "markerlist1001",
+        "markerlist1101", "markerlist1201", "markerlist1202", "markerlist1301",
+        "markerlist1401", "markerlist1501", "markerlist1601", "markerlist1601",
+        "markerlist1701", "markerlist1801", "markerlist1901", "markerlist2001",
+        "markerlist2101", "markerlist2201", "markerlist2301", "markerlist2401",
     },
     { 0 },
 };
+// .rodata float table (read cross-TU by CMenuSymbolMark as f32s).
+extern "C" __attribute__((used, aligned(8)))
+const float lbl_eu_804FE6D8[6] = { -0.2f, 1.81f, -260.26f, -0.18f, 1.76f, -338.3f };
+
 // .data float table (retail lbl_eu_8052CD38).
 extern "C" __attribute__((used, aligned(4)))
 float lbl_eu_8052CD38[6] = { 1.0f, 1.0f, 1.0f, 0.9f, 0.7f, 0.9f };

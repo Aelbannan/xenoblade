@@ -14,6 +14,11 @@
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "monolib/core/CPadManager.hpp"
 
+// Imports from code_800F42AC.cpp (TU-local, as in the other callers).
+extern "C" int findObjectById__Fi(int id);
+extern "C" int isBattleStatusActive(void* self, int id);
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 // Retail __ct__cf_CtrlPad (0x80097274): base-constructs CtrlRemote (passing
 // posObj through, arg5 = 0), stores the CtrlPad vtable manually (novtable),
 // caches the current pad, then copies the 30-entry pad config table via
@@ -169,7 +174,7 @@ void CtrlPc_UpdatePadState(cf::CtrlPc* self) {
     self->mField4 = 0;
     obj = (CtrlPlayerObj*)getCfObjectPc(cf::CfGameManager::getPlayer(0));
     // Global gate: either cutscene-ish bit set -> skip everything but the tail.
-    if (((lbl_eu_80663E24 & 0x02000000) | (lbl_eu_80663E24 & 0x400)) != 0) {
+    if (((gmGameFlags & 0x02000000) | (gmGameFlags & 0x400)) != 0) {
         return;
     }
     dispatched = 0;

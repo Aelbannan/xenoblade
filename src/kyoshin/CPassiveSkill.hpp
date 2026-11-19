@@ -430,7 +430,7 @@ extern char lbl_eu_8050DC20[];
 // Skill-row table (split .rodata) indexed by (id-1)*8 + grid-entry - 1 by
 // CPassiveSkillLine_isLearned / CPassiveSkillLine_isOccupied; the byte selects the character-data record
 // row (CtrlObjectParam_GetCharEntry result + 0x3534).
-extern u8 lbl_eu_8050DB60[];
+extern const u8 sPassiveSkillCharRows[0x40];
 
 // C-library vararg formatter (flat retail symbol; same convention as
 // CUICfManager.hpp / CArtsInfo.hpp).
@@ -481,20 +481,11 @@ struct CPSkillTexRes {
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
 
 
-// 8-byte colour record filled by setGXColorS10 (retail GXColorS10 layout);
-// the helper returns the record pointer.
-struct CPSkillColorS10 {
-    s16 r, g, b, a;
-};
-
 // Pane-animation colour fetch (retail symbol unmangled): reads the 4 s16
 // animation vector of a named pane (index 0 = base, 1 = alternate).
 
-// RGB-colour builder (retail symbol unmangled): fills the record with the
-// four s16 channels and returns the record pointer (CTitle.hpp /
-// CKizunagram.hpp convention).
-extern "C" CPSkillColorS10* setGXColorS10(CPSkillColorS10* color, s16 r,
-                                            s16 g, s16 b, s16 a);
+// RGB-colour builder: declared once with C++ linkage in kyoshin/CTitle.hpp;
+// callers include that header instead of carrying a local extern copy.
 
 // Bind a texture resource to a pane (retail symbol unmangled).
 
@@ -507,11 +498,8 @@ struct CPSkillPaneB8 {
     u8 field_B8;      // +0xB8
 };
 
-// Cursor/skill-pane visibility helpers (retail symbols unmangled).
-// setPaneVisible (declared in CQuestWindow_Pane.hpp) sets a pane's visible flag;
-// isPaneVisible queries it. C linkage so call relocs are the plain retail
-// name (CTitleAHelp.hpp's C++ declaration would mangle it).
-extern "C" bool isPaneVisible(nw4r::lyt::Pane*);
+// setPaneVisible (declared in CQuestWindow_Pane.hpp) sets a pane's visible
+// flag; isPaneVisible queries it and is declared once in CTitleAHelp.hpp.
 
 // Message-table lookup used by CPassiveSkillLine_setSlotNamePanes (retail symbol unmangled):
 // returns the u16 id for (table, label, category).
@@ -529,15 +517,15 @@ extern void* lbl_eu_80664090;
 // Shared arc resource accessor (retail symbol unmangled; also in CPresentWin.hpp).
 
 // Skill grid data tables (.sdata pointers; values resolved at link time).
-// lbl_eu_8066488C is passed as the message table to BdatGetU16Direct by
+// gpPassiveSkillBdat is passed as the message table to BdatGetU16Direct by
 // CPassiveSkillLine_setSlotNamePanes; CPassiveSkillLine_refreshLearnGrid reads all three (80664880 name lookup,
 // 80664888 slot-category lookup, 8066488C learned-slot lookup).
-extern void* lbl_eu_8066488C;
-extern void* lbl_eu_80664880;
-extern void* lbl_eu_80664888;
-extern void* lbl_eu_80664890;
-extern void* lbl_eu_80664884;
-extern void* lbl_eu_80664894;
+extern void* gpPassiveSkillBdat;
+extern void* gpPassiveSkillHelpBdat;
+extern void* gpPassiveSkillIconBdat;
+extern void* gpPassiveSkillValueBdat;
+extern void* gpPassiveSkillCharBdat;
+extern void* gpPassiveSkillEffectBdat;
 
 // Character-data view for CPassiveSkillLine_updateSkillTabs: the current-grid-row counter word
 // at +0x3DD0 of the CtrlObjectParam_GetCharEntry result (compared against the loop row).
@@ -581,7 +569,7 @@ extern u8 lbl_eu_80668938;
 
 // 3-word scene-name table (.rodata) copied to the stack by CPassiveSkillLine_syncEquipState
 // and indexed by the +0xF3 countdown byte (when < 3).
-extern u32 lbl_eu_8050DBB8[3];
+extern const u32 sPassiveSkillSceneNames[3];
 
 // Character-data view for CPassiveSkillLine_syncEquipState: the five s16 equipment ids at
 // +0x1C..+0x24 (categories 4..8) on the CtrlObjectParam_GetCharEntry result.

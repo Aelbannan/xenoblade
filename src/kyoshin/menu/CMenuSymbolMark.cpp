@@ -24,7 +24,7 @@
 #include <monolib/util.hpp>         // ml::FixStr
 #include <string.h>
 #include <math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -90,7 +90,7 @@ extern "C" int SymMark_IsNew(u32 regionBase) {
 
 // Render-gate globals/callees (declared locally to avoid header conflicts).
 #include "kyoshin/code_801F3BE0.hpp"
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // C++-linkage helpers - retail emits the mangled forms
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo / drawLayout__FPQ34nw4r3lyt6Layout...
 
@@ -375,7 +375,7 @@ public:
 // timers tick; when the main timer passes the threshold all entries are
 // released and nearby markers (CtrlRemote_TouchBitByArg gate) re-add themselves.
 void CMenuSymbolMark::Move() {
-    if ((lbl_eu_80663E28 & 0x200000) != 0) {
+    if ((gmPauseFlags & 0x200000) != 0) {
         return;
     }
     if (mArchiveFP == 0) {
@@ -390,7 +390,7 @@ void CMenuSymbolMark::Move() {
         u32 x, y, z;
     };
     JunkTrio junkMain, junkExp;
-    if (lbl_eu_80663E24 & 0xAFA40000) {
+    if (gmGameFlags & 0xAFA40000) {
         // Display expired: hide everything once the timer passes.
         if (mTimer <= sMarkTimerLimit) {
             mTimer = sMarkTimerExpired;
@@ -437,7 +437,7 @@ void CMenuSymbolMark::Move() {
 void CMenuSymbolMark::cbRenderBefore() {
     // Nested guard reproduces retail's beq-body/b-exit branch pair.
     if (CTaskGame::getInstance()->isFlag01Set() == 0) {
-        if (!(lbl_eu_80663E28 & 0x200000)) {
+        if (!(gmPauseFlags & 0x200000)) {
             goto cont;
         }
     }
@@ -446,7 +446,7 @@ cont:
     if (mArchiveFP == 0) return;
     if (IsMenuState621F0() == 0) return;
     if (getUnk80664658()->mFlags & 0x100000) return;
-    if (lbl_eu_80663E24 & 0xAFA40000) return;
+    if (gmGameFlags & 0xAFA40000) return;
     if (mEntryCount == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
@@ -1676,10 +1676,10 @@ void CArrow3D::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() != 0) {
         return;
     }
-    if (lbl_eu_80663E28 & 0x200000) {
+    if (gmPauseFlags & 0x200000) {
         return;
     }
-    if (lbl_eu_80663E24 & 0x400000) {
+    if (gmGameFlags & 0x400000) {
         return;
     }
     if ((u32)(u8)CtrlRemote_TouchBitByArg(0x20) <= 4) {
@@ -1691,7 +1691,7 @@ void CArrow3D::cbRenderBefore() {
     if (GetSysStateFlag25() == 0) {
         return;
     }
-    if (lbl_eu_80663E24 & 0xAFA40200) {
+    if (gmGameFlags & 0xAFA40200) {
         return;
     }
     if (getUnk80664658()->mFlags & 0x100000) {
@@ -1736,7 +1736,7 @@ void CArrow3D::cbRenderBefore() {
             return;
         }
         ScnXformBlock* pose = (ScnXformBlock*)Scn_FindCamItem(
-            reinterpret_cast<CScn*>(lbl_eu_80663E14), -1);
+            reinterpret_cast<CScn*>(gmScene), -1);
         Vec* pos = (Vec*)( (cf::CfObject*)player)->CfObject_getPosVector();
         // Player-relative horizontal offset (y ignored by the length test).
         float dx = pos->x - mPosX;
@@ -2095,7 +2095,7 @@ void CArrow3D::Term() {
     if (this != 0) {
         render = reinterpret_cast<IScnRender*>((char*)this + 0x54);
     }
-    reinterpret_cast<CScn*>(lbl_eu_80663E14)->removeRenderCB(render);
+    reinterpret_cast<CScn*>(gmScene)->removeRenderCB(render);
 }
 
 // ---------- CArrow3D::Init ----------
@@ -2110,7 +2110,7 @@ void CArrow3D::Init() {
     if (this != 0) {
         render = reinterpret_cast<IScnRender*>((char*)this + 0x54);
     }
-    reinterpret_cast<CScn*>(lbl_eu_80663E14)->addRenderCB(render, 9, 0);
+    reinterpret_cast<CScn*>(gmScene)->addRenderCB(render, 9, 0);
     u8* handle = 0;
     CLibStaticData::getStaticFileData(S, (StaticDataHandle**)&handle, 0);
     mDataHandle = handle;

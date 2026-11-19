@@ -80,30 +80,30 @@ extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, 
 extern void CfT_PlayClockSnapshot(u16*, u16*);
 extern int CfT_DispatchFrameCounts();
 extern u16 getReloadParam0();
-extern u8 lbl_eu_8052E524[];
-extern u8 lbl_eu_8052E4F0[];
-extern u32 lbl_eu_805001C0[28];
-extern char lbl_eu_80573B30[];
-extern char lbl_eu_80573BB0[];
+extern u8 sNw4rMaterialFile[];
+extern u8 sNw4rTexMapAssertMsg[];
+extern u32 sThresholdLookup[28];
+extern char gTplNameBuffer[];
+extern char gIconNameBuffer[];
 
 // globals (Block C)
-extern u8 lbl_eu_806621F0;
-extern u8 lbl_eu_80664058;
-extern u8 lbl_eu_80664059;
-extern u8 lbl_eu_8066405A;
-extern u8 lbl_eu_8066405B;
-extern u32 lbl_eu_8066405C;
-extern u32 lbl_eu_80664060;
-extern u8 lbl_eu_80664064;
-extern u32 lbl_eu_80664068;
-extern u32 lbl_eu_8066406C;
+extern u8 gSysMenuActive;
+extern u8 gMenuStateMain;
+extern u8 gMenuNotifyFlag;
+extern u8 gMenuStateSecondary;
+extern u8 gMenuStateReady;
+extern u32 gMenuParamA;
+extern u32 gMenuParamB;
+extern u8 gMenuBlockedFlag;
+extern u32 gSysFileListBdat;
+extern u32 gSysIconListBdat;
 // 7-byte indexed buffer (GetCollectedFlagByte indexes &lbl[idx]); was scalar u8.
-extern u8 lbl_eu_80664070[7];
-extern u8 lbl_eu_80664077;
-extern u16 lbl_eu_80664078[3];
-extern u8 lbl_eu_8066407E;
-extern u8 lbl_eu_8066407F;
-extern u8 lbl_eu_80664080[8];
+extern u8 gCollectedFlags[7];
+extern u8 gCollectedFlagCount;
+extern u16 gSlotItemIds[3];
+extern u8 gSlotItemCount;
+extern u8 gMenuSubStateFlag;
+extern u8 gMenuDepth[8];
 extern u32 lbl_eu_80664098;
 // Defined as pointer globals in cf/CfBdat.cpp; keep the shared void* spelling
 // so callers that also include the owning bdat/item headers do not redeclare them.
@@ -151,36 +151,36 @@ extern f64 lbl_eu_80667358;
 extern f64 lbl_eu_80667360;
 #ifndef CODE_80135FDC_CPP
 #endif
-extern u32 lbl_eu_806621F4;
+extern u32 gSjisTablePtr;
 extern const char lbl_eu_80500664[];
 
 // Face pane names (defined in code_80135FDC.cpp .rodata; fwd here so the
 // .sdata2 pointer table can precede them in TU layout experiments).
-extern const char lbl_eu_80500248[0x0C];
-extern const char lbl_eu_80500254[0x0C];
-extern const char lbl_eu_80500260[0x0C];
-extern const char lbl_eu_8050026C[0x0C];
+extern const char sFacePaneN01[0x0C];
+extern const char sFacePaneM01[0x0C];
+extern const char sFacePaneN02[0x0C];
+extern const char sFacePaneM02[0x0C];
 
 // string/rodata data (Block B)
 extern u8 lbl_eu_8052CB40[];
 extern u8 lbl_eu_8052CB1C[];
-extern u8 lbl_eu_8052E4E4[];
-extern u8 lbl_eu_8052E4C0[];
-extern u8 lbl_eu_8052E558[];
-extern u8 lbl_eu_8052E530[];
+extern u8 sNw4rLinkListFile[];
+extern u8 sNw4rNullPointerAssertMsg[];
+extern u8 sNw4rTevColorAssertFile[];
+extern u8 sNw4rTevColorAssertMsg[];
 extern const char lbl_eu_80526324[]; // const: matches CActParamAnimGame.cpp definition + CfSoundMan.hpp chain
 extern const char lbl_eu_80526300[];  // const char: matches CfSoundMan.hpp chain (u8/char variants broke CMiniMap TU)
 extern const char lbl_eu_805262F0[];
 extern const char lbl_eu_805262C8[];
-extern u8 lbl_eu_80500108[];
-extern u8 lbl_eu_80500230[];
+extern u8 sSjisWordTable[];
+extern u8 sLodCharMap[];
 // Minimap pointer tables: heterogeneous (strings + NULLs); entries are relocs.
-extern const void* lbl_eu_80500480[32];
-extern const void* lbl_eu_805005A8[34];
+extern const void* sMinimapPtrTablePlain[32];
+extern const void* sMinimapPtrTable34[34];
 // 13-entry float table copied wholesale to the stack by GetFloatTableEntry.
 struct FloatTable13 { f32 w[13]; };
-extern FloatTable13 lbl_eu_80500630;
-extern char lbl_eu_80573C30[];
+extern FloatTable13 sRankFloatTable;
+extern char gItemNameBuffer[];
 extern ml::CVec3 zero__Q22ml5CVec3;
 
 // helpers
@@ -209,4 +209,4 @@ extern "C" void* getInstance__14Class_80296898Fv();
 }
 
 struct Table_80500188;
-extern "C" struct Table_80500188 lbl_eu_80500188;
+extern "C" struct Table_80500188 sThresholdPairTable;

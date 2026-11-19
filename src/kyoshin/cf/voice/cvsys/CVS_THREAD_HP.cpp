@@ -21,8 +21,8 @@ double lbl_eu_80668CA8 = 4503601774854144.0;
 // idle state, then picks the HP-change voice ID (0x516 / 0x515) from two
 // HP-ratio thresholds computed via vtable slots 72/73, allocates a 0xD2-byte
 // handle buffer and the 0x28-byte thread object, runs the base constructor
-// and sets the derived vtable / slot fields inside the try block, then copies
-// the init-state triple.
+// and sets the derived vtable / slot fields inside the try block, then installs
+// its advancePlay handler as a real member-function pointer.
 
 // Retail saves r28-r31 / f30-f31 individually; unit-level -O4,s merges them
 // into savegpr helpers, so size-opt must be off here.
@@ -83,31 +83,20 @@ CVS_THREAD_HP* CVS_THREAD_HP::create(CVoiceHandle* handle, int arg) {
         throw;
     }
 
-    CVS_THREAD_HP* result = self;
-    const u32* fin = lbl_eu_80539BF8;
-    u32 w1 = fin[1];
-    u32 w0 = fin[0];
-    u32* dst = (u32*)result;
-    dst[0] = w0;
-    dst[1] = w1;
-    dst[2] = fin[2];
-    return result;
+    self->mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_HP::advancePlay);
     return self;
 }
 #pragma optimize_for_size on
 
-// us-802a9b98 (HpVoice_AdvancePlay)
-// Advance/play function: restore the base state triple from the init table,
-// then if the voice handle slot is present and idle, play the HP-change
+// us-802a9b98 (CVS_THREAD_HP::advancePlay)
+// Advance/play handler: install the playChange handler as a real member-function
+// pointer, then if the voice handle slot is present and idle, play the HP-change
 // voice ID; on failure fire the playback-start virtual (PlayThreadVoice).
-void HpVoice_AdvancePlay(CVS_THREAD_HP* self) {
-    u32 v0;
-    const u32* p = lbl_eu_80539C04;
-    v0 = *p++;
-    u32* words = (u32*)self;
-    words[1] = *p++;
-    words[0] = (u32)v0;
-    words[2] = *p;
+void CVS_THREAD_HP::advancePlay() {
+    CVS_THREAD_HP* self = this;
+    mState = static_cast<void (CVS_THREAD::*)()>(
+        &CVS_THREAD_HP::playChange);
 
     // Idle-check via the handle's vtable slot at 0x2BC (real r12 chain).
     CVoiceHandle* handle = self->field_0x20;
@@ -123,14 +112,15 @@ void HpVoice_AdvancePlay(CVS_THREAD_HP* self) {
     }
 }
 
-// us-802a9c3c (HpVoice_PlayChange)
+// us-802a9c3c (CVS_THREAD_HP::playChange)
 // Retail saves/restores r30/r31 individually; unit-level -O4,s merges them
 // into stmw/lmw, so size-opt must be off here (same as HpVoice_RemoveVoice).
 #pragma optimize_for_size off
 // Advance/play: restore the base state triple from the init table, then pick
 // a random idle voice handle (excluding this thread's own slot) and play the
 // HP-change voice; on failure fire the playback-start virtual (blank1).
-void HpVoice_PlayChange(CVS_THREAD_HP* self) {
+void CVS_THREAD_HP::playChange() {
+    CVS_THREAD_HP* self = this;
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
@@ -160,9 +150,11 @@ void HpVoice_PlayChange(CVS_THREAD_HP* self) {
 }
 #pragma optimize_for_size on
 
-// Completion callback: if no active voice, invoke the playback-start virtual
+// us-802a9d00 (CVS_THREAD_HP::notifyComplete)
+// Completion handler: if no active voice, invoke the playback-start virtual
 // (CVS_THREAD::PlayThreadVoice, vtable slot 1).
-void HpVoice_NotifyComplete(CVS_THREAD* self) {
+void CVS_THREAD_HP::notifyComplete() {
+    CVS_THREAD_HP* self = this;
     if (IsThreadVoiceActive(self) == 0) {
         self->PlayThreadVoice();
     }

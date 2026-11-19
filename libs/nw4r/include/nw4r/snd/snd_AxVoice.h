@@ -2,6 +2,7 @@
 #define NW4R_SND_AX_VOICE_H
 #include <nw4r/types_nw4r.h>
 
+#include <nw4r/snd/snd_FxBase.h>
 #include <nw4r/snd/snd_Types.h>
 
 #include <nw4r/ut.h>
@@ -155,7 +156,8 @@ public:
     typedef void (*AxVoiceCallback)(AxVoice* pDropVoice,
                                     AxVoiceCallbackStatus status, void* pArg);
 
-    enum Format {
+    // AX parameter-block format codes (not the runtime SampleFormat).
+    enum AxFormat {
         FORMAT_ADPCM = 0,
         FORMAT_PCM16 = 10,
         FORMAT_PCM8 = 25,
@@ -218,7 +220,7 @@ public:
         mVpb.Sync();
     }
 
-    Format GetFormat() const {
+    SampleFormat GetFormat() const {
         return mFormat;
     }
 
@@ -230,7 +232,7 @@ public:
         return (ratio * mSampleRate) / AX_SAMPLE_RATE;
     }
 
-    void Setup(const void* pWave, Format fmt, int rate);
+    void Setup(const void* pWave, SampleFormat fmt, int rate);
 
     bool IsPlayFinished() const;
     void SetLoopStart(const void* pBase, u32 samples);
@@ -261,9 +263,10 @@ public:
     void SetRemoteFilter(u8 filter);
 
     static u32 GetDspAddressBySample(const void* pBase, u32 samples,
-                                     Format fmt);
-    static u32 GetSampleByDspAddress(const void* pBase, u32 addr, Format fmt);
-    static u32 GetSampleByByte(u32 addr, Format fmt);
+                                     SampleFormat fmt);
+    static u32 GetSampleByDspAddress(const void* pBase, u32 addr,
+                                     SampleFormat fmt);
+    static u32 GetSampleByByte(u32 addr, SampleFormat fmt);
 
     static void CalcOffsetAdpcmParam(u16* pPredScale, u16* pYN1, u16* pYN2,
                                      u32 offset, const void* pData,
@@ -275,7 +278,7 @@ private:
 private:
     AxVoiceParamBlock mVpb;    // at 0x0
     const void* mWaveData;     // at 0x10
-    Format mFormat;            // at 0x14
+    SampleFormat mFormat;      // at 0x14
     int mSampleRate;           // at 0x18
     bool mFirstMixUpdateFlag;  // at 0x1C
     bool mReserveForFreeFlag;  // at 0x1D

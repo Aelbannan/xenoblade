@@ -180,7 +180,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 // BdatGetU16ByTableKey/8013600C take byte-keyed lookups: retail masks the 3rd arg
 // to 8 bits at the call site, so the param is u8.
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" void setGXColorS10(void*, s16, s16, s16, s16); // colour init
+// setGXColorS10 is declared once with C++ linkage in kyoshin/CTitle.hpp.
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*); // character-data category
 // Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC

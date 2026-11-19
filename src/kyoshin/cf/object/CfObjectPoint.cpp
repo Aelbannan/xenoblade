@@ -7,7 +7,7 @@
 
 #include <types.h>
 #include <decomp.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // C-ABI import from the UI window manager (retail .text:0x8013F594, unmangled;
 // cf/object/CfObjectPc.hpp declares the same prototype).
@@ -300,7 +300,7 @@ void CfObjectPoint::releasePointLink() {
 void CfObjectPoint::updatePointState() {
     setStateBitMask3();
 
-    if ((lbl_eu_80663E24 & 0x01000000) != 0) {
+    if ((gmGameFlags & 0x01000000) != 0) {
         if (checkStateFlags8(1) != 0) {
             goto main_body;
         }
@@ -311,7 +311,7 @@ void CfObjectPoint::updatePointState() {
 
 main_body:
     {
-        float dist = Scn_GetFrameDelta(lbl_eu_80663E14);
+        float dist = Scn_GetFrameDelta(gmScene);
         if (dist > lbl_eu_80666B48) {
             if (checkStateFlags8(1) != 0) {
                 if (checkStateFlags(1) == 0) {
@@ -389,8 +389,8 @@ extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
     pos[1] = y;
     pos[2] = z;
 
-    if (lbl_eu_80663E14 == nullptr) {
-        u8* source = *(u8**)((u8*)lbl_eu_80663E14 + 0x74);
+    if (gmScene == nullptr) {
+        u8* source = *(u8**)((u8*)gmScene + 0x74);
         if (func_8049E51C(source) != 0) {
             if (ScnRes_VertRayForward_E398(pos, 0, 0, 0,
                               lbl_eu_80666B50[0], lbl_eu_80666B48) != nullptr) {

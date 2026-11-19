@@ -43,7 +43,9 @@
 #define BTM_SEC_STATE_SWITCHING_ROLE    5
 #define BTM_SUCCESS                     0
 #define BTM_CMD_STARTED                 1
+#define BTM_WRONG_MODE                  2
 #define BTM_NO_RESOURCES                3
+#define BTM_BUSY                        3
 #define BTM_MODE_UNSUPPORTED            4
 #define BTM_ILLEGAL_VALUE               5
 #define BTM_DEVICE_TIMEOUT              8
@@ -410,17 +412,21 @@ BOOLEAN BTM_SecDeleteRmtNameNotifyCallback(tBTM_RMT_NAME_CALLBACK *p_callback)
     return FALSE;
 }
 
-/* ------------------------------------------------------------------ */
-/*  String-pool orphans: the retail .data contains the format strings  */
-/*  of BTM_SetSecurityMode / BTM_SetEncryption even though those       */
-/*  functions were eliminated from the retail .text.  Reference them   */
-/*  here (in retail pool order) so the .data string layout matches.    */
-/* ------------------------------------------------------------------ */
-char *const btm_sec_pool_secmode_strings[] = {
-    "BTM_SetSecurityMode: mode:%d",
-    "BTM_SetSecurityMode: Authen Enable -> FALSE",
-    "BTM_SetSecurityMode: Authen Enable -> TRUE",
-};
+/* Security-mode setter retained by the SDK but unused in Xenoblade. */
+void BTM_SetSecurityMode(UINT8 sec_mode)
+{
+    BTM_TRACE_API1("BTM_SetSecurityMode: mode:%d", sec_mode);
+
+    if (sec_mode != BTM_SEC_MODE_LINK) {
+        BTM_TRACE_DEBUG0("BTM_SetSecurityMode: Authen Enable -> FALSE");
+        btm_cb.security_mode = sec_mode;
+        btsnd_hcic_write_auth_enable(FALSE);
+    } else {
+        btm_cb.security_mode = sec_mode;
+        btsnd_hcic_write_auth_enable(TRUE);
+        BTM_TRACE_DEBUG0("BTM_SetSecurityMode: Authen Enable -> TRUE");
+    }
+}
 
 /* ------------------------------------------------------------------ */
 /*  BTM_SetPinType -- set the PIN type, code and length for pairing.   */
@@ -821,15 +827,32 @@ UINT8 BTM_SecBond(BD_ADDR bd_addr, UINT8 pin_len, UINT8 *p_pin, UINT32 trusted_m
     return (BTM_NO_RESOURCES);
 }
 
-/* ------------------------------------------------------------------ */
-/*  String-pool orphans: BTM_SetEncryption strings (see note above).   */
-/* ------------------------------------------------------------------ */
-char *const btm_sec_pool_enc_strings[] = {
-    "Security Manager: BTM_SetEncryption not connected",
-    "Security Manager: BTM_SetEncryption already encrypted",
-    "Security Manager: BTM_SetEncryption busy",
-    "Security Manager: BTM_SetEncryption Handle:%d State:%d Flags:0x%x Required:0x%x",
-};
+/* Encryption setter retained by the SDK but unused in Xenoblade. */
+UINT8 BTM_SetEncryption(BD_ADDR bd_addr, void *p_callback,
+                        void *p_ref_data)
+{
+    BtmSecDevRec *p_dev_rec = btm_find_dev(bd_addr);
+
+    if (p_dev_rec == NULL || !p_dev_rec->sec_acl_connected) {
+        BTM_TRACE_ERROR0("Security Manager: BTM_SetEncryption not connected");
+        return BTM_WRONG_MODE;
+    }
+
+    if (p_dev_rec->sec_flags & BTM_SEC_ENCRYPTED) {
+        BTM_TRACE_ERROR0("Security Manager: BTM_SetEncryption already encrypted");
+        return BTM_SUCCESS;
+    }
+
+    if (p_dev_rec->sec_state != BTM_SEC_STATE_IDLE) {
+        BTM_TRACE_ERROR0("Security Manager: BTM_SetEncryption busy");
+        return BTM_BUSY;
+    }
+
+    BTM_TRACE_DEBUG4("Security Manager: BTM_SetEncryption Handle:%d State:%d Flags:0x%x Required:0x%x",
+                     p_dev_rec->hci_handle, p_dev_rec->sec_state,
+                     p_dev_rec->sec_flags, p_dev_rec->security_required);
+    return BTM_CMD_STARTED;
+}
 
 /* ------------------------------------------------------------------ */
 /*  btm_sec_l2cap_access_req -- grant/deny an L2CAP connection        */

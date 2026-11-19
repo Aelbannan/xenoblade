@@ -38,12 +38,12 @@ extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table p
 // data / rodata labels
 extern "C" char lbl_eu_8050E990[];            // file-name table (target 7)
 extern "C" void* lbl_eu_80664090;            // .sbss shared BDAT character table (target 7)
-extern "C" void* lbl_eu_806648B8;             // .sbss loaded file pointer (target 8); assigned from void* getFP -> kept void*
-extern "C" void* lbl_eu_806648C0;             // .sbss colour entries (target 8) - address anchor
-// lbl_eu_806648C0/C8/D0/D8 are address anchors (&lbl used directly): keep void*.
-extern "C" void* lbl_eu_806648C8;
-extern "C" void* lbl_eu_806648D0;
-extern "C" void* lbl_eu_806648D8;
+extern "C" void* sKizunaTalkBdatData;             // .sbss loaded file pointer (target 8); assigned from void* getFP -> kept void*
+extern "C" void* sKizunaTalkRowColorNeutralA;             // .sbss colour entries (target 8) - address anchor
+// sKizunaTalkRowColorNeutralA/C8/D0/D8 are address anchors (&lbl used directly): keep void*.
+extern "C" void* sKizunaTalkRowColorNeutralB;
+extern "C" void* sKizunaTalkRowColorSelectedA;
+extern "C" void* sKizunaTalkRowColorSelectedB;
 extern "C" f32 lbl_eu_806689C8;               // .sdata2 float constants (target 10)
 extern "C" f32 lbl_eu_806689CC;
 extern "C" f32 lbl_eu_806689D0;

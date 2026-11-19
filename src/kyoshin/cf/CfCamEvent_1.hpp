@@ -16,7 +16,7 @@ class UnkClass_800821F8;  // fwd decl: only pointer-position use (getCameraDataB
 class CfCamEventObj;
 
 // Global singleton object referenced by the CfCamEvent cam logic
-// (address lbl_eu_80663DF0, accessed via sda21 as a pointer).
+// (address cfCamEventManagerPtr, accessed via sda21 as a pointer).
 struct CfCamEventGlobal {
     u8  _000[0x38];
     u32 field_0x38;    // 0x38 - pointer/state word
@@ -177,16 +177,10 @@ struct CfCamEventShakeElem {
 // the triplet members are f32 to keep the lwz/stw copy schedule).
 struct CfCamEventCopySrc {
     u8  _000[0x10C - 0x000];
-    union { f32 f_10C; u32 w_10C; };   // 0x10C -> mgr 0x54
-    union { f32 f_110; u32 w_110; };   // 0x110
-    union { f32 f_114; u32 w_114; };   // 0x114
-    union { f32 f_118; u32 w_118; };   // 0x118 -> mgr 0x6C
-    union { f32 f_11C; u32 w_11C; };   // 0x11C
-    union { f32 f_120; u32 w_120; };   // 0x120
+    ml::CVec3 v_10C;   // 0x10C -> mgr 0x54
+    ml::CVec3 v_118;   // 0x118 -> mgr 0x6C
     u8  _124[0x138 - 0x124];
-    union { f32 f_138; u32 w_138; };   // 0x138 -> mgr 0x60
-    union { f32 f_13C; u32 w_13C; };   // 0x13C
-    union { f32 f_140; u32 w_140; };   // 0x140
+    ml::CVec3 v_138;   // 0x138 -> mgr 0x60
     u8  _144[0x1E0 - 0x144];
     f32 f_1E0;   // 0x1E0 -> mgr 0x78
 };
@@ -557,14 +551,12 @@ struct CamEventAimObj {
 struct CfCamEventAimRegion {
     void* field_0x0C;    // 0x0C
     u32   field_0x10;    // 0x10
-    f32   field_0x14;    // 0x14
-    f32   field_0x18;    // 0x18
-    f32   field_0x1C;    // 0x1C
+    ml::CVec3 vec14;     // 0x14 - aim vector from the voice
+
     void* field_0x20;    // 0x20
     u32   field_0x24;    // 0x24
-    f32   field_0x28;    // 0x28
-    f32   field_0x2C;    // 0x2C
-    f32   field_0x30;    // 0x30
+    ml::CVec3 vec28;     // 0x28 - aim vector from the follow object
+
     u32   field_0x34;    // 0x34
 };
 
@@ -752,7 +744,7 @@ public:
     void*           field_0x3F10; // 0x3F10
 };
 
-// Cam data table stored at the global lbl_eu_80570C90 / 0x80570C90.
+// Cam data table stored at the global cfCamEventDataTable / 0x80570C90.
 struct CfCamDataTable {
     u16 h00;   // 0x00
     u16 h02;
@@ -1283,7 +1275,7 @@ struct CamEventTableEntry {
     f32       f_28;  // +0x28
     u8        _2C[0x34 - 0x2C];
 };
-extern CamEventTableEntry lbl_eu_805273C8[12];
+extern CamEventTableEntry cfCamEventWeightTable[12];
 
 extern const f32 lbl_eu_80666458;   // sdata2 triplet constants used by the sinit
 extern const f32 lbl_eu_80666464;
@@ -1322,8 +1314,8 @@ extern const void* lbl_eu_80661B30;  // (pointer-object decls so MWCC emits @sda
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" CfCamDataTable lbl_eu_80570C90;
-extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
+extern "C" CfCamDataTable cfCamEventDataTable;
+extern "C" CfCamEventGlobal* cfCamEventManagerPtr;
 extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void* findObjectById__Fi(int id);
@@ -1333,19 +1325,19 @@ extern "C" f32   lbl_eu_80666418;
 extern "C" f64   lbl_eu_80666420;
 extern "C" f64   lbl_eu_80666438;   // signed-int -> double conversion constant
 extern "C" f32   lbl_eu_80666460;   // cam-table speed divisor
-extern "C" void* lbl_eu_80664168;   // event-cam bdat table pointer
+extern "C" void* cfCamEventBdatTableB;   // event-cam bdat table pointer
 extern "C" f32   lbl_eu_80666428;
 extern "C" f32   lbl_eu_80666448;
 extern "C" f32   lbl_eu_80666444;
 extern "C" f32   lbl_eu_8066644C;
 extern "C" f32   lbl_eu_80666454;
 extern "C" void* lbl_eu_806640BC;
-extern "C" const char lbl_eu_804FB5D0[0x1E0];
+extern "C" const char cfCamEventAssertStrings[0x1E0];
 extern "C" u32   Bdat_GetMaxRow_B1EC(void* self);
 extern "C" void* Bdat_GetTable_AA34(void);
 extern "C" u32   Bdat_GetRowBase_B41C(void* bdat);
-extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by Bdat_GetTable_AA34)
-extern char  lbl_eu_80661BB8[8];   // sdata column-name buffer (digit at +4)
+extern void* cfCamEventBdatTableA;      // sbss bdat-table pointer (set by Bdat_GetTable_AA34)
+extern char  cfCamEventSdaFloat[8];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
 extern f32   lbl_eu_8066645C;      // sdata2 compare constant
 extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
@@ -1410,7 +1402,8 @@ extern "C" int VecMath_IsTurnLeftXZ(void* dst, void* b, void* c);
 // Pose-solver helper called by CamEvtSolveAimPair.
 extern "C" void cfCam_applyBasis(void* out, void* in, void* vec, f32 f);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
-extern "C" void* Selector_GetInstance(void);
+struct CfObj90E4;
+extern "C" CfObj90E4* Selector_GetInstance(void);
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, u32 c, u32 d);
 extern "C" void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,

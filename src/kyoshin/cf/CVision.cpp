@@ -9,7 +9,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <new>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 // Forward decl: CfGameManager.hpp's `static cf::CfGameManager* init(...)` relies
 // on the class name being declared before its include chain is entered.
 namespace cf { class CfGameManager; }
@@ -29,9 +29,9 @@ namespace cf { class CfGameManager; }
 // int-id view this TU used to keep behind a guard was a stale-r3 dual-arity
 // artifact, and its id-passing call sites below now cast their args to
 // (void*) instead of redeclaring the symbol with an int parameter.
-// CfCode_GetSubObject keeps one extern "C" void*(void*) declaration in this TU;
-// the old no-arg copy on CfObjectImplMove.hpp moved TU-local into
-// CfObjectImplMove.cpp, which is the only caller of that ABI.
+// CfCode_GetSubObject is declared once in code_800F42AC.hpp; the old no-arg
+// copy on CfObjectImplMove.hpp moved TU-local into CfObjectImplMove.cpp,
+// which is the only caller of that ABI.
 // (Region line count preserved: MWCC -ipa file codegen is line-sensitive.)
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTaskGameApi.hpp"
@@ -44,6 +44,7 @@ extern "C" void UIWin_FlagBufClear();
 // flat-name form; BFE8C on void(u32,u32,u32)).
 
 #include "kyoshin/cf/CVisionImports.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_* typed exports
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CBattleState.hpp"
 
@@ -60,7 +61,7 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // chain headers pulled in by CBattleManager.hpp).
 //
 // CSuddenCommu.hpp's imports now match the chain headers (see CSuddenCommu.hpp);
-// the symbols this TU uses (lbl_eu_80663E24,
+// the symbols this TU uses (gmGameFlags,
 // Scn_GetFrameDelta, isGlobalCamFlagSet__Fi, IdTable_GetSum) resolve to the
 // chain-header / local declarations instead.
 //
@@ -214,8 +215,7 @@ struct CVisionRefObj {
     u32 w_78;        // 0x78
 };
 // Kept inline (not moved to CVision.hpp): sibling TUs declare these.
-extern "C" void* CfCode_GetSubObject(void* self); // canonical opaque owner form (code_800F42AC)
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);         // CfObjectActor.hpp/CChain.hpp declare bool(int); s32=long would clash
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 
 // Object passed to installVisionStateCallback / initVisionSlots-family (battle object).
 struct CVisionObj {
@@ -476,7 +476,7 @@ extern "C" void __ct__Q22cf7CVisionFv(cf::CVision* self) {
             ip++;
         } while (ip < ipEnd);
         p->field_824 = 0;
-        ScMain_Reset(p);
+        ScMain_Reset((ScMain*)p);
         p++;
     } while (p < pEnd);
 
@@ -740,7 +740,7 @@ extern "C" void initVisionSlots(CVision* self) {
     // Reset the four CVisionSub battle slots (0x834 stride).
     CVisionSub* pSub = &self->sub;
     for (int i = 0; i < 4; i++) {
-        ScMain_Reset(pSub);
+        ScMain_Reset((ScMain*)pSub);
         pSub++;
     }
 
@@ -856,7 +856,7 @@ extern "C" void driveVisionRingFx(CVision* self) {
         // Ring slot for element i, offset by the write cursor field_64.
         CVisionU32F32U32* el =
             &((CVisionU32F32U32*)self->unk261C4.w60)[(self->unk261C4.field_64 + i) % self->unk261C4.w6C];
-        el->b -= decay * Scn_GetFrameDelta(lbl_eu_80663E14);
+        el->b -= decay * Scn_GetFrameDelta(gmScene);
         if (!(zero < el->b)) {
             i++;
             continue;
@@ -891,7 +891,7 @@ extern "C" void driveVisionRingFx(CVision* self) {
     }
 
     if (__ptmf_test(&self->mPtmf) != 0) {
-        f32 step = lbl_eu_80667CDC * Scn_GetFrameDelta(lbl_eu_80663E14);
+        f32 step = lbl_eu_80667CDC * Scn_GetFrameDelta(gmScene);
         self->field_26198 = self->field_26194;
         self->field_26194 += step;
 
@@ -901,7 +901,7 @@ extern "C" void driveVisionRingFx(CVision* self) {
 
         // When the callback is the fade-out entry, play a sound each time the
         // fade timer crosses an integer boundary.
-        CVisionPtmf chk = *(CVisionPtmf*)&lbl_eu_80533128[0];
+        CVisionPtmf chk = *(CVisionPtmf*)&visionCallbackPollSlots[0];
         if (__ptmf_cmpr(&self->mPtmf, &chk) == 0) {
             if ((int)self->field_26198 != (int)self->field_26194) {
                 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c1, 0, 0,
@@ -1022,9 +1022,9 @@ extern "C" void openVisionPairEngage(CVision* self) {
         CfSoundMan_ApplyFxSendAll(1, 0x0, lbl_eu_80667CE4);
         CCharVoiceMan_ReleaseVoices(1);
         CVisionPtmf cb;
-        cb.mPfn = lbl_eu_80533134[0];
-        cb.mObj = lbl_eu_80533134[1];
-        cb.mDelta = lbl_eu_80533134[2];
+        cb.mPfn = visionCallbackResumeFromFader[0];
+        cb.mObj = visionCallbackResumeFromFader[1];
+        cb.mDelta = visionCallbackResumeFromFader[2];
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;
@@ -1074,7 +1074,7 @@ extern "C" void manageVisionPlayerCallbacks(CVision* self) {
             CUICfManager_queueFactoryMenu(5, lbl_eu_80667CF0);
         }
         if (sub->field_824 & 0x80000) {
-            u32* src = &lbl_eu_80533140.mPfn;
+            u32* src = &visionCallbackOpenForPairs.mPfn;
             u32 dlt, obj, pfn;
             pfn = *src++;
             obj = *src++;
@@ -1100,7 +1100,7 @@ extern "C" void manageVisionPlayerCallbacks(CVision* self) {
             w2 = 0;
         }
         if (w2) {
-        u32* src = &lbl_eu_8053314C.mPfn;
+        u32* src = &visionCallbackRunIdleWindows.mPfn;
         u32 dlt, obj, pfn;
         pfn = *src++;
         obj = *src++;
@@ -1217,7 +1217,7 @@ extern "C" void openVisionForPairs(CVision* self) {
         CCharVoiceMan_ReleaseVoices(1);
         CVisionPtmf cb;
         // Retail walks the triplet with an updating load (lwzu).
-        u32* src = &lbl_eu_80533158[0];
+        u32* src = &visionCallbackResumeFromFaderAlt[0];
         u32 pfn = *src++;
         u32 obj = *src++;
         u32 dlt = *src;
@@ -1361,7 +1361,7 @@ extern "C" void resumeVisionFromFader(CVision* self) {
     if (f == lbl_eu_80667CD4) {
         CVisionPtmf cb;
         // Retail walks the triplet with an updating load (lwzu).
-        u32* src = &lbl_eu_80533164[0];
+        u32* src = &visionCallbackCheckSecondFusion[0];
         cb.mPfn = *src++;
         cb.mObj = *src++;
         cb.mDelta = *src;
@@ -1432,7 +1432,7 @@ extern "C" void checkSecondFusionVision(CVision* self) {
         w3 = 0;
     }
     if (w3) {
-        u32* src = &lbl_eu_80533170.mPfn;
+        u32* src = &visionCallbackFunc801A5260.mPfn;
         u32 dlt, obj, pfn;
         pfn = *src++;
         obj = *src++;
@@ -1489,7 +1489,7 @@ extern "C" void func_801A5260(CVision* self) {
     if (w2) {
         // Retail walks the triplet with an updating load (lwzu).
         CVisionPtmf cb;
-        u32* src = &lbl_eu_8053317C[0];
+        u32* src = &visionCallbackRunTierWindows[0];
         cb.mPfn = *src++;
         cb.mObj = *src++;
         cb.mDelta = *src;
@@ -1536,7 +1536,7 @@ extern "C" void runVisionTierWindows(CVision* self) {
 // callback on the vision slots.
 extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* other) {
     // Identity/callback table base (retail anchors it in a saved GPR).
-    u32* tbl = lbl_eu_80533128;
+    u32* tbl = visionCallbackPollSlots;
     CVisionPtmf cur = self->mPtmf;
     if (__ptmf_test(&cur) == 0) {
         return;
@@ -1557,7 +1557,7 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
     }
 
     // The callback must equal one of the two identity triplets at
-    // lbl_eu_80533128+0x60 / +0x6C for the FX-install path to run.
+    // visionCallbackPollSlots+0x60 / +0x6C for the FX-install path to run.
     int ok = 1;
     CVisionPtmf t1 = *(CVisionPtmf*)&tbl[0x60 / 4];
     if (__ptmf_cmpr(&self->mPtmf, &t1) == 0) {
@@ -1571,7 +1571,7 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
         // slot, the +0x90 triplet is checked and ignored.
         CVisionPtmf t4 = *(CVisionPtmf*)&tbl[0x84 / 4];
         if (__ptmf_cmpr(&self->mPtmf, &t4) == 0) {
-            ScMain_Reset(sub);
+            ScMain_Reset((ScMain*)sub);
         } else {
             CVisionPtmf t5 = *(CVisionPtmf*)&tbl[0x90 / 4];
             __ptmf_cmpr(&self->mPtmf, &t5);
@@ -1767,7 +1767,7 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
         }
         // Retail walks the triplet with updating loads (lwzu), builds the
         // stack copy first, then installs it (mDelta re-read from the copy).
-        u32* src = &lbl_eu_805331C4.mPfn;
+        u32* src = &visionCallbackForwardShowRequests.mPfn;
         u32 dlt, obj, pfn;
         pfn = *src++;
         obj = *src++;
@@ -1820,8 +1820,8 @@ extern "C" void forwardVisionShowRequests(CVision* self) {
     }
     if (w1) {
         f32 scl = lbl_eu_80667D38;
-        if (CfCode_GetSubObject(sub) != 0) {
-            if (((CVisionRefObj*)CfCode_GetSubObject(sub))->b_42 == 1) {
+        if (CfCode_GetSubObject((cf::CfCode800F42AC*)sub) != 0) {
+            if (((CVisionRefObj*)CfCode_GetSubObject((cf::CfCode800F42AC*)sub))->b_42 == 1) {
                 scl = lbl_eu_80667D3C;
             }
         }
@@ -1867,7 +1867,7 @@ extern "C" void forwardVisionShowRequests(CVision* self) {
     }
     if (w2) {
         // Retail copies the 12-byte callback triplet as a struct.
-        CVisionPtmf cb = lbl_eu_805331D0;
+        CVisionPtmf cb = visionCallbackRunResetWindows;
         cv->mPtmf = cb;
         cv->field_2619C = lbl_eu_80667CD4;
         cv->field_261A0 = cv->field_26194;
@@ -1940,7 +1940,7 @@ extern "C" void runVisionResetWindows(CVision* self) {
         // Retail walks the callback triplet with an updating pointer load,
         // then copies it to the member as a struct.
         CVisionPtmf cb;
-        u32* src = &lbl_eu_805331DC.mPfn;
+        u32* src = &visionCallbackEvalTrigger.mPfn;
         cb.mPfn = *src++;
         cb.mObj = *src++;
         cb.mDelta = *src;
@@ -2050,11 +2050,11 @@ extern "C" void driveSubVisionFx(CVision* self) {
         if (aiFetchAction(&((CVisionFusion*)fu)->field_3380, &p) == 0) {
             aiActionClearBits0006(&((CVisionFusion*)fu)->field_3380);
             refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
-            // Install the lbl_eu_805331E8 callback with the fader fields reset.
+            // Install the visionCallbackPollSlotsAlt callback with the fader fields reset.
             CVisionPtmf cb;
-            cb.mPfn = lbl_eu_805331E8[0];
-            cb.mObj = lbl_eu_805331E8[1];
-            cb.mDelta = lbl_eu_805331E8[2];
+            cb.mPfn = visionCallbackPollSlotsAlt[0];
+            cb.mObj = visionCallbackPollSlotsAlt[1];
+            cb.mDelta = visionCallbackPollSlotsAlt[2];
             f32 f_6194 = self->field_26194;
             f32 f_cd4 = lbl_eu_80667CD4;
             self->mPtmf.mPfn = cb.mPfn;
@@ -2120,11 +2120,11 @@ extern "C" void driveSubVisionFx(CVision* self) {
     }
     if (w) {
         refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
-        // Install the lbl_eu_805331F4 callback with the fader fields reset.
+        // Install the visionCallbackPollSlotsAlt2 callback with the fader fields reset.
         CVisionPtmf cb;
-        cb.mPfn = lbl_eu_805331F4[0];
-        cb.mObj = lbl_eu_805331F4[1];
-        cb.mDelta = lbl_eu_805331F4[2];
+        cb.mPfn = visionCallbackPollSlotsAlt2[0];
+        cb.mObj = visionCallbackPollSlotsAlt2[1];
+        cb.mDelta = visionCallbackPollSlotsAlt2[2];
         f32 f_6194 = self->field_26194;
         f32 f_cd4 = lbl_eu_80667CD4;
         self->mPtmf.mPfn = cb.mPfn;
@@ -2165,7 +2165,7 @@ extern "C" int installVisionStateCallback(CVision* self, CVisionObj* obj) {
         return 0;
     }
     CVisionPtmf cb;
-    u32* src = lbl_eu_80533200;
+    u32* src = visionCallbackDriveSubFx;
     u32 t1 = *src++;
     u32 t2 = *src++;
     u32 dlt = *src++;
@@ -2234,7 +2234,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
         // No callback installed: proceed.
     } else {
         CVisionPtmf t1;
-        u32* src1 = lbl_eu_8053320C;
+        u32* src1 = visionCallbackPollSlotsAlt3;
         u32 s11 = *src1++;
         u32 s12 = *src1++;
         u32 s13 = *src1++;
@@ -2242,10 +2242,10 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
         t1.mObj = s12;
         t1.mDelta = s13;
         if (!__ptmf_cmpr(&self->mPtmf, &t1)) {
-            // lbl_eu_8053320C identity: allowed.
+            // visionCallbackPollSlotsAlt3 identity: allowed.
         } else {
             CVisionPtmf t2;
-            u32* src2 = lbl_eu_80533218;
+            u32* src2 = visionCallbackDriveSubFxAlt;
             u32 s21 = *src2++;
             u32 s22 = *src2++;
             u32 s23 = *src2++;
@@ -2253,7 +2253,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
             t2.mObj = s22;
             t2.mDelta = s23;
             if (!__ptmf_cmpr(&self->mPtmf, &t2)) {
-                // lbl_eu_80533218 terminal identity: allowed.
+                // visionCallbackDriveSubFxAlt terminal identity: allowed.
             } else {
                 return 0;
             }
@@ -2439,7 +2439,7 @@ extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
     if (lbl_eu_80667CD4 == ratio) {
         return 0;
     }
-    ScMain_Reset(sub);
+    ScMain_Reset((ScMain*)sub);
     sub->field_00 = o->field_3F10;
     sub->field_04 = ((CVisionObj*)obj2)->field_3F10;
     sub->field_0C = eff;
@@ -2478,14 +2478,14 @@ extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
     eff->field_7C = lbl_eu_80667D10;
     self->field_26194 = lbl_eu_80667CD4;
     self->field_26198 = lbl_eu_80667CD4;
-    lbl_eu_80663DA0 |= 0x1;
-    lbl_eu_80663E24 |= 0x400;
+    visionSharedStateFlags |= 0x1;
+    gmGameFlags |= 0x400;
     CCharVoiceMan_PushFreshSoundNode(obj, obj2);
     // Install the fade-in / fade-out resume callback depending on the
     // auto-vision flag captured above.
     if (sub->field_824 & 0x40000) {
         CVisionPtmf cb;
-        u32* src = lbl_eu_80533224;
+        u32* src = visionCallbackManagePlayerCallbacks;
         cb.mPfn = *src++;
         cb.mObj = *src++;
         cb.mDelta = *src;
@@ -2498,7 +2498,7 @@ extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
         __ptmf_test(&cb);
     } else {
         CVisionPtmf cb;
-        u32* src = lbl_eu_80533230;
+        u32* src = visionCallbackTypeInfoTable;
         cb.mPfn = *src++;
         cb.mObj = *src++;
         cb.mDelta = *src;
@@ -2521,7 +2521,7 @@ extern "C" int setupVisionEngagement(CVision* self, void* obj, void* obj2) {
 // entry (retail checkVisionCallbackState).
 // ---------------------------------------------------------------------------
 extern "C" void checkVisionCallbackState(CVision* self) {
-    u32* tbl = &lbl_eu_80533128[0];
+    u32* tbl = &visionCallbackPollSlots[0];
     CVisionPtmf cb114;
     cb114.mPfn = tbl[0x45];
     cb114.mObj = tbl[0x46];
@@ -2542,10 +2542,10 @@ extern "C" void checkVisionCallbackState(CVision* self) {
     // 0x114 entry matched: clear the vision field.
     self->field_26194 = lbl_eu_80667CD4;
         // Clear the two global state bytes/words (bit-range masks).
-        u8 da0 = lbl_eu_80663DA0;
-        lbl_eu_80663DA0 = da0 & 0x7E;
-        u32 e24 = lbl_eu_80663E24;
-        lbl_eu_80663E24 = e24 & 0xFBFFFFFF;
+        u8 da0 = visionSharedStateFlags;
+        visionSharedStateFlags = da0 & 0x7E;
+        u32 e24 = gmGameFlags;
+        gmGameFlags = e24 & 0xFBFFFFFF;
         CVisionSub* sub;
         if (self->sub.field_00 == 0) {
             sub = 0;
@@ -2716,7 +2716,7 @@ extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
             p2->field_3388 &= 0xFFFD;
             p2->field_04->v20(0x4000);
         }
-        ScMain_Reset(sub);
+        ScMain_Reset((ScMain*)sub);
     }
     startEnumObjects(vdlist.get(), 0x20, 0);
     for (u32 i = 0; i < *(u32*)((u8*)vdlist.get() + 0x620); i++) {
@@ -2733,8 +2733,8 @@ extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
     cb.mPfn = __ptmf_null[0];
     cb.mObj = __ptmf_null[1];
     cb.mDelta = __ptmf_null[2];
-    lbl_eu_80663E24 &= 0xFFFFFFC0;
-    lbl_eu_80663DA0 &= 0x7F;
+    gmGameFlags &= 0xFFFFFFC0;
+    visionSharedStateFlags &= 0x7F;
     self->mPtmf = cb;
     self->field_2619C = lbl_eu_80667CD4;
     self->field_261A0 = self->field_26194;
@@ -2767,7 +2767,7 @@ extern "C" void createVisionEffect(CVision* self, int index) {
         return;
     }
     CVisionEffect* eff =
-        (CVisionEffect*)bindIndexedEffect(lbl_eu_80503F60[index].field_00, 0);
+        (CVisionEffect*)bindIndexedEffect(visionEffectClassTable[index].field_00, 0);
     *slot = eff;
     if (eff != 0) {
         eff->field_B0 = (u32)self;
@@ -2877,7 +2877,7 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
     case 5:
         slot->w_824 |= 0x1;
         restartVisionSlots(1);
-        ScMain_Reset(slot);
+        ScMain_Reset((ScMain*)slot);
         PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
         func_800F3970(CBattleManager::getInstance(), fu, 0, 0x17, 0);
         engaged = 1;
@@ -2991,14 +2991,14 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
         break;
     }
 
-    lbl_eu_80663E28 |= 0x8;
+    gmPauseFlags |= 0x8;
     if (mode != 5) {
         return;
     }
     // Full-tier engage: fire vf1E8 on the slot and spawn a vision effect for
     // each player whose fusion state passes the Counter_TestBit probe.
     {
-        CVisionArg5 data = *(CVisionArg5*)lbl_eu_80503F80;
+        CVisionArg5 data = *(CVisionArg5*)visionEffectScaleWords;
         for (int i = 0; i < 3; i++) {
             CVisionBattleObj* pl = (CVisionBattleObj*)MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
             if (pl == 0) continue;
@@ -3054,7 +3054,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
         if (bs->w_824 & 0x10000) {
             return;
         }
-        if (ScMain_DecodeFlagPriority() > 2) {
+        if (ScMain_DecodeFlagPriority((ScMain*)bs) > 2) {
             return;
         }
         u32 x = *(u32*)((u8*)slot + 0x3f10);
@@ -3068,12 +3068,12 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
         if (fu->vf298()->w_04 != 0) {
             u32 v26 = bs->w_828;
             u32 v25 = bs->w_82C;
-            CVision* summed = (CVision*)ScMain_GetSummedInt(bs);
+            CVision* summed = (CVision*)ScMain_GetSummedInt((ScMain*)bs);
             // Out-params land in stack locals (retail reads sp+0x50 back).
             f32 outF;
             s32 outI;
             previewBattleDamage(CBattleManager::getInstance(), bs, fu, &outF, &outI);
-            if (ScMain_IsDistinctFrom(bs, fu) != 0) {
+            if (ScMain_IsDistinctFrom((ScMain*)bs, (Sc46C0Other*)fu) != 0) {
                 return;
             }
             f32 f1 = outF;
@@ -3157,7 +3157,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
                 }
             }
         }
-        if (ScMain_GetRatio(p) == f31) {
+        if (ScMain_GetRatio((ScMain*)p) == f31) {
             // Timer expired: re-arm unless a pair of progress bits is half-set
             // (started but not finished) or the effect flag is already up.
             u32 flags = p->w_824;
@@ -3222,13 +3222,14 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
             dataArg = (void*)4;
         }
         if (isBattleStatusActive((u8*)slot + 8, 0xc) != 0 &&
-            (CfCode_GetSubObject(p) == 0 || !(((CVisionRefObj*)CfCode_GetSubObject(p))->w_78 & 1))) {
+            (CfCode_GetSubObject((cf::CfCode800F42AC*)p) == 0 ||
+             !(((CVisionRefObj*)CfCode_GetSubObject((cf::CfCode800F42AC*)p))->w_78 & 1))) {
             dataArg = (void*)4;
         }
         if (!(p->w_824 & 4) && dataArg == 0) {
             // Fusion hand-off: run the embedded sub-object's slot-0x4C call
             // and feed the result plus both actors to the battle manager.
-            if (ScMain_IsDistinctFrom(p, (CVisionBattleObj*)slot) != 0 && !(p->w_824 & 0x20000)) {
+            if (ScMain_IsDistinctFrom((ScMain*)p, (Sc46C0Other*)slot) != 0 && !(p->w_824 & 0x20000)) {
                 dataArg = (void*)3;
                 void* emb = ((CVisionFusion*)slot)->field_3E9C;
                 u32 res = ((u32 (*)(void*))(*(void***)emb)[0x4C / 4])(emb);
@@ -3294,7 +3295,7 @@ void cf::CVision::setEffectScale(u32 active) {
 // line-sensitive, so no existing line above may shift).
 //
 // .data (0x2D0): 26 {0,-1,&func} condition triplets (lis/ori-read, e.g.
-// matchVisionModelCallback anchors tbl=lbl_eu_80533128 and compares entries
+// matchVisionModelCallback anchors tbl=visionCallbackPollSlots and compares entries
 // with __ptmf_cmpr), four more triplets + 14 {s32 id, u32 ptr} pairs under
 // 33230, the 14-word manual vtable 332D0 (novtable class: stored explicitly;
 // +4 is a zero word), the CMenuVision-read mixed block 33308, and two
@@ -3327,29 +3328,29 @@ extern "C" void BattleWork_MarkSlotFFFF(void);
 // DEFINE_POD_DTOR idiom: same asm name, C linkage, defined by the member).
 extern "C" void __dt__Q22cf7CVisionFv(void);
 
-extern "C" __attribute__((used)) u32 lbl_eu_80533128[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
-extern "C" __attribute__((used)) u32 lbl_eu_80533134[3] = {0, 0xFFFFFFFF, (u32)&resumeVisionFromFader};
-extern "C" __attribute__((used)) CVisionPtmf lbl_eu_80533140 = {0, 0xFFFFFFFF, (u32)&openVisionForPairs};
-extern "C" __attribute__((used)) CVisionPtmf lbl_eu_8053314C = {0, 0xFFFFFFFF, (u32)&runVisionIdleWindows};
-extern "C" __attribute__((used)) u32 lbl_eu_80533158[3] = {0, 0xFFFFFFFF, (u32)&resumeVisionFromFader};
-extern "C" __attribute__((used)) u32 lbl_eu_80533164[3] = {0, 0xFFFFFFFF, (u32)&checkSecondFusionVision};
-extern "C" __attribute__((used)) CVisionPtmf lbl_eu_80533170 = {0, 0xFFFFFFFF, (u32)&func_801A5260};
-extern "C" __attribute__((used)) u32 lbl_eu_8053317C[3] = {0, 0xFFFFFFFF, (u32)&runVisionTierWindows};
+extern "C" __attribute__((used)) u32 visionCallbackPollSlots[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __attribute__((used)) u32 visionCallbackResumeFromFader[3] = {0, 0xFFFFFFFF, (u32)&resumeVisionFromFader};
+extern "C" __attribute__((used)) CVisionPtmf visionCallbackOpenForPairs = {0, 0xFFFFFFFF, (u32)&openVisionForPairs};
+extern "C" __attribute__((used)) CVisionPtmf visionCallbackRunIdleWindows = {0, 0xFFFFFFFF, (u32)&runVisionIdleWindows};
+extern "C" __attribute__((used)) u32 visionCallbackResumeFromFaderAlt[3] = {0, 0xFFFFFFFF, (u32)&resumeVisionFromFader};
+extern "C" __attribute__((used)) u32 visionCallbackCheckSecondFusion[3] = {0, 0xFFFFFFFF, (u32)&checkSecondFusionVision};
+extern "C" __attribute__((used)) CVisionPtmf visionCallbackFunc801A5260 = {0, 0xFFFFFFFF, (u32)&func_801A5260};
+extern "C" __attribute__((used)) u32 visionCallbackRunTierWindows[3] = {0, 0xFFFFFFFF, (u32)&runVisionTierWindows};
 static __attribute__((used)) u32 s3317C_p1[3] = {0, 0xFFFFFFFF, (u32)&runVisionTierWindows};
 static __attribute__((used)) u32 s3317C_p2[3] = {0, 0xFFFFFFFF, (u32)&gateVisionByFusionParam};
 static __attribute__((used)) u32 s3317C_p3[3] = {0, 0xFFFFFFFF, (u32)&gateVisionByFusionParam};
 static __attribute__((used)) u32 s3317C_p4[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
 static __attribute__((used)) u32 s3317C_p5[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
-extern "C" __attribute__((used)) CVisionPtmf lbl_eu_805331C4 = {0, 0xFFFFFFFF, (u32)&forwardVisionShowRequests};
-extern "C" __attribute__((used)) CVisionPtmf lbl_eu_805331D0 = {0, 0xFFFFFFFF, (u32)&runVisionResetWindows};
-extern "C" __attribute__((used)) CVisionPtmf lbl_eu_805331DC = {0, 0xFFFFFFFF, (u32)&evalVisionTrigger};
-extern "C" __attribute__((used)) u32 lbl_eu_805331E8[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
-extern "C" __attribute__((used)) u32 lbl_eu_805331F4[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
-extern "C" __attribute__((used)) u32 lbl_eu_80533200[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
-extern "C" __attribute__((used)) u32 lbl_eu_8053320C[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
-extern "C" __attribute__((used)) u32 lbl_eu_80533218[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
-extern "C" __attribute__((used)) u32 lbl_eu_80533224[3] = {0, 0xFFFFFFFF, (u32)&manageVisionPlayerCallbacks};
-extern "C" __attribute__((used)) u32 lbl_eu_80533230[40] = {
+extern "C" __attribute__((used)) CVisionPtmf visionCallbackForwardShowRequests = {0, 0xFFFFFFFF, (u32)&forwardVisionShowRequests};
+extern "C" __attribute__((used)) CVisionPtmf visionCallbackRunResetWindows = {0, 0xFFFFFFFF, (u32)&runVisionResetWindows};
+extern "C" __attribute__((used)) CVisionPtmf visionCallbackEvalTrigger = {0, 0xFFFFFFFF, (u32)&evalVisionTrigger};
+extern "C" __attribute__((used)) u32 visionCallbackPollSlotsAlt[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __attribute__((used)) u32 visionCallbackPollSlotsAlt2[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __attribute__((used)) u32 visionCallbackDriveSubFx[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
+extern "C" __attribute__((used)) u32 visionCallbackPollSlotsAlt3[3] = {0, 0xFFFFFFFF, (u32)&pollVisionSlots};
+extern "C" __attribute__((used)) u32 visionCallbackDriveSubFxAlt[3] = {0, 0xFFFFFFFF, (u32)&driveSubVisionFx};
+extern "C" __attribute__((used)) u32 visionCallbackManagePlayerCallbacks[3] = {0, 0xFFFFFFFF, (u32)&manageVisionPlayerCallbacks};
+extern "C" __attribute__((used)) u32 visionCallbackTypeInfoTable[40] = {
     0, 4294967295, (u32)&openVisionPairEngage, 0, 4294967295, (u32)&evalVisionTrigger, 0, 4294967295, (u32)&pollVisionSlots, 0, 4294967295, (u32)&pollVisionSlots, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&__RTTI__Q22cf8CfObject, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 16028, (u32)__RTTI__Q22cf12CObjectParam, 16028, (u32)&__RTTI__Q22cf8CfObject, 16028, (u32)&__RTTI__Q22cf13CfObjectModel, 16028, (u32)__RTTI__Q22cf12CfObjectMove, 16028, (u32)__RTTI__Q22cf9CAIAction, 13184, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, (u32)__RTTI__Q22cf11CActorParam, 0, 0};
 extern "C" __attribute__((used)) u32 lbl_eu_805332D0[14] = {
     (u32)__RTTI__Q22cf7CVision, 0, (u32)&__dt__Q22cf7CVisionFv, (u32)&releaseVisionEffect, (u32)&tryEngageVisionCutscene, (u32)&setupVisionEngagement, (u32)&driveVisionFxUpdates, (u32)&checkVisionCallbackState, (u32)&teardownVisionFx, (u32)&detachVisionEffect, (u32)&matchVisionModelCallback, (u32)&createVisionEffect, (u32)&clearVisionEffect, (u32)&clearAllVisionEffects};
@@ -3360,13 +3361,13 @@ struct VisionBlk33308 { u32 w00; u32 z04[7]; u32 w20; u32 w24; u32 w28; u32 w2c;
     u32 w90; u32 w94; u32 w98; u32 w9c[15]; };
 extern "C" __attribute__((used)) VisionBlk33308 lbl_eu_80533308 = {
     (u32)__RTTI__Q22cf11IObjectInfo, {0, 0, 0, 0, 0, 0, 0}, (u32)__RTTI__Q22cf11CDebugState, 5596, (u32)__RTTI__Q22cf12CBattleState, 8, (u32)__RTTI__Q22cf11CActorState, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&__RTTI__Q22cf8CfObject, 0, (u32)&__RTTI__Q22cf13CfObjectModel, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, (u32)&__RTTI__Q22cf8CfObject, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, (u32)__RTTI__Q22cf12CObjectParam, 0, 0, (u32)__RTTI__Q22cf12CObjectState, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-extern "C" __attribute__((used)) u32 lbl_eu_805333E0[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
-extern "C" __attribute__((used)) u32 lbl_eu_805333EC[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
+extern "C" __attribute__((used)) u32 visionCallbackMarkSlotFFFFFirst[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
+extern "C" __attribute__((used)) u32 visionCallbackMarkSlotFFFFSecond[3] = {0, 0xFFFFFFFF, (u32)&BattleWork_MarkSlotFFFF};
 
 // ---- .rodata ----
-extern "C" __declspec(section ".rodata") __attribute__((used)) CVisionClassTableEntry lbl_eu_80503F60[4] = {
+extern "C" __declspec(section ".rodata") __attribute__((used)) CVisionClassTableEntry visionEffectClassTable[4] = {
     {0xa1, 0xa2}, {0xa3, 0xa4}, {0xb8, 0xb8}, {0xbd, 0xbd}};
-extern "C" __declspec(section ".rodata") __attribute__((used)) u32 lbl_eu_80503F80[5] = {
+extern "C" __declspec(section ".rodata") __attribute__((used)) u32 visionEffectScaleWords[5] = {
     0x3cf5c28f, 0x3d75c28f, 0x3db851ec, 0x3df5c28f, 0x3e19999a};
 extern "C" __attribute__((used)) const char lbl_eu_80503F94[12] = "cf::CVision";
 extern "C" __attribute__((used)) const char lbl_eu_80503FA0[0xD8] =

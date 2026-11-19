@@ -84,14 +84,15 @@ namespace cf{
         void* CBattleMan_FetchVisionObj();
 
         static CBattleManager* getInstance();
+        static CBattleManager* spInstance;
         // TUs that cannot include this class reach the same retail symbol
-        // through kyoshin/cf/CBattleManagerApi.hpp (the one shared copy).
+
         static void getBattleStateA();
         static void getBattleStateB();
         void resetBattleState();
 
         //0x0: vtable
-        //0x0-4: IFactoryEvent
+
         reslist<CfObjectActor*> mActorList1; //0x4
         reslist<CfObjectActor*> mActorList2; //0x24
         reslist<CfObjectActor*> mActorList3; //0x44
@@ -109,10 +110,10 @@ namespace cf{
         CVision mVision; //0x219C
 
         // sound-id table (10 known entries; retail .rodata symbol)
-        // static u32 lbl_804F8228[]; -> moved to global lbl_eu_804FCA08
+        // static u32 lbl_804F8228[]; -> moved to global sAttackSoundIdTable
 
     protected:
-        // static CBattleManager* spInstance; -> extern "C" lbl_eu_80663F00 in .cpp
+        // (spInstance is the real static member declared above)
     };
 }
 

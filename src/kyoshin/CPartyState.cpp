@@ -11,7 +11,7 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/work/IWorkEvent.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Sets the vtable, builds the scratch memory region, zeroes the panel state
@@ -631,12 +631,12 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 extern "C" void loadPartyLayoutArc(CPartyState* self) {
     int fileSize = getFileSize__11CDeviceFileFPCc(lbl_eu_80662728, 1);
     int mem1Max = (int)mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
-    int mem2Max = (int)mtl::MemManager::getMaxAllocSize(lbl_eu_80663E14->getAllocHandle());
+    int mem2Max = (int)mtl::MemManager::getMaxAllocSize(gmScene->getAllocHandle());
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     if (fileSize < mem1Max - 0x10000) {
         handle = mtl::MemManager::getHandleMEM1();
     } else if (fileSize < mem2Max - 0x80000) {
-        handle = lbl_eu_80663E14->getAllocHandle();
+        handle = gmScene->getAllocHandle();
     }
     self->mFileHandle = CDeviceFile::readFile(handle, lbl_eu_80662728,
         reinterpret_cast<IWorkEvent*>(self), 0, 0);

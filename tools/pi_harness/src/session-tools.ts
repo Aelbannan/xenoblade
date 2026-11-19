@@ -74,7 +74,8 @@ export function looksLikeJson(s: string): boolean {
 async function runHexdiffTool(
   repoRoot: string, python: string, unit: string, symbol: string, brief: boolean,
 ): Promise<string> {
-  const baseArgs = ["tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json"];
+  // Baseline LOST/GAIN is a separate regression gate, not this iteration loop.
+  const baseArgs = ["tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json", "--no-baseline"];
   // Transient failures (ninja lock contention with a parallel run, mid-write
   // objects, `premature end of file`) present as empty stdout + no real
   // compiler error. Retry a few times with backoff before surfacing.

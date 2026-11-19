@@ -5,15 +5,11 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// Retail .sbss type-info object: SeqSound::typeInfo at lbl_eu_806654F8
-// (parent = BasicSound::typeInfo lbl_eu_806654D0). Definition stays in
-// this TU.
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654F8(
-    &lbl_eu_806654D0);
+NW4R_UT_RTTI_DEF_DERIVED(SeqSound, BasicSound);
 
 const nw4r::ut::detail::RuntimeTypeInfo*
 SeqSound::GetRuntimeTypeInfo() const {
-    return &lbl_eu_806654F8;
+    return &typeInfo;
 }
 
 // Retail stores mLoadingFlag/mPreparedFlag before the temp-handle/manager
@@ -270,8 +266,7 @@ void SeqSound::SeqLoadTask::OnCancel() {
 // The manager's public UpdatePriority() inlines to exactly the retail body:
 // AutoLock(OSLockMutex/OSUnlockMutex around one Erase + one sorted Insert by
 // CalcCurrentPlayerPriority).
-void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(
-    nw4r::snd::detail::SeqSound* self) {
+void nw4r::snd::detail::SeqSound::OnUpdatePlayerPriority() {
 
     struct SeqSoundOfs {
         u8 _pad[0x294];
@@ -279,16 +274,14 @@ void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(
             mManager; // at 0x294
     };
 
-    nw4r::snd::detail::SeqSound* pSound = self; // retail's `mr r28, r3` copy
+    SeqSound* pSound = this; // retail's `mr r28, r3` copy
 
     reinterpret_cast<
         nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*>(
-        reinterpret_cast<SeqSoundOfs*>(self)->mManager)
-        ->UpdatePriority(pSound, self->CalcCurrentPlayerPriority());
+        reinterpret_cast<SeqSoundOfs*>(this)->mManager)
+        ->UpdatePriority(pSound, CalcCurrentPlayerPriority());
 }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return *(static_cast<u8*>(self) + 677); }
 
-// Absorb: pad .sbss 0x4->0x8 (typeInfo 4 + pad 4 = retail 8)
-unsigned int snd_SeqSound_sbss_pad;

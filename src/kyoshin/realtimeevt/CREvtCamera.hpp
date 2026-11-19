@@ -8,11 +8,11 @@
  *   cf::CREvtObj  (vtable 0x80532320, size 0x14)
  *   +-- CREvtCamera  (vtable 0x80531CE8, size 0x448)
  *
- * A global singleton pointer is stored at lbl_eu_806642A8.
+ * A global singleton pointer is stored in CREvtCamera::sInstance.
  */
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 
@@ -98,6 +98,7 @@ class CREvtCamera : public CREvtObj {
 public:
     CREvtCamera(u32 param);
     virtual ~CREvtCamera();
+    static CREvtCamera* sInstance;
     virtual void vfunc_04();  // load the camera scene model ("Cam"/"Cam2" handles)
     virtual void vfunc_08();  // release the animation handle at +0x24
     virtual int vfunc_0C();   // returns the scene model pointer (mField1C)
@@ -121,7 +122,6 @@ public:
 
     // +0x88: event-file descriptor pointer (set in REvtCam_SetupEvent)
     CREvtCamFile* mField88;
-    // +0x8C: float (default from lbl_eu_806678A4, updated from game manager)
     f32 mField8C;
     // +0x90: scene-item handle (set by REvtCam_SetupSceneModel)
     u32 mField90;
@@ -163,9 +163,7 @@ public:
 
     // +0x43C: some integer (initialized to -1)
     s32 mField43C;
-    // +0x440: float (default from lbl_eu_806678A8, updated from game manager)
     f32 mField440;
-    // +0x444: float (default from lbl_eu_806678AC, updated from game manager)
     f32 mField444;
 
 };
@@ -177,7 +175,6 @@ using cf::CREvtCamera;
 
 // Retail data symbols referenced by this TU (imports; global-scope externs are
 // unmangled by MWCC, so no extern "C" is needed here).
-extern unsigned long lbl_eu_806642A8;  // CREvtCamera* singleton
 // +0x00: "CamEvent" string pool (offsets used as sub-string names)
 extern const char lbl_eu_805036D8[];
 // +0x00: "Cam2", +0x04: "Cam" animation names
@@ -185,9 +182,6 @@ extern const char lbl_eu_805036D8[];
 extern const char* lbl_eu_80662448;
 extern const char* lbl_eu_8066244C;
 // Default floats (camera fov / player fields)
-extern f32 lbl_eu_806678A4;
-extern f32 lbl_eu_806678A8;
-extern f32 lbl_eu_806678AC;
 extern f32 lbl_eu_806678B0;
 // Double constant used by the manual u32->f64 bit trick in REvtCam_UpdateFromAnim
 // (0x4330000080000000).

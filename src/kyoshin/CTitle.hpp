@@ -116,11 +116,11 @@ extern "C" void CTitleMenu_calcCursorPos(nw4r::math::VEC3* dest, CTitleMenu* men
 // Shared string pool (split1 .rodata) - "/menu/Title.arc" etc.
 extern char lbl_eu_80513628[];
 // Secondary mode bitfield (.sbss) - bit 30 gates the menu color pass.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // RGB color builder (defined in CTitleAHelp.cpp; returns the dest pointer so
-// callers can thread it into PaneMatSetTevColorsByName). Retail keeps the unmangled short
-// name, so declare it with C linkage.
-extern "C" GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+// callers can thread it into PaneMatSetTevColorsByName). Retail resolves the
+// mangled C++ symbol setGXColorS10__FP11_GXColorS10ssss at this call site.
+GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
 // .sdata2 constants used by the logo/menu animation helpers (US/EU names).
 extern const float lbl_eu_80668FE0;
 extern double lbl_eu_80668FE8; // 0x4330000000000000 (2^52) - u32->f32 conversion magic
@@ -166,6 +166,7 @@ public:
 class CHelp_ToAttack {
 public:
     int updateState();
+    void clearHelpToAttackFlags();
 
     u8 pad00[0x0C];  // 0x00-0x0B
     u8 field_0xC;    // 0x0C - cached A-button state

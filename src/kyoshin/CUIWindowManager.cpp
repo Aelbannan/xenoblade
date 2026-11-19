@@ -1,5 +1,5 @@
 #include "kyoshin/CUIWindowManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // --- CTTask<CUIWindowManager> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -628,7 +628,7 @@ extern "C" void UIWin_OpenWindow(u32 arg0, int id, int arg2, int arg3) {
     case 0x609 ... 0x797: {
         // Talk-target update window: only while a talk event is active
         // and the player has a live, flagged talk target.
-        if ((lbl_eu_80663E24 & 0x00800000u) != 0) {
+        if ((gmGameFlags & 0x00800000u) != 0) {
             void* player = getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != NULL) {
                 int sel = ((int (*)(void*))((void**)player)[0x4C / 4])(
@@ -885,8 +885,8 @@ void UIWin_ShowTalkWindow(u32 id) {
         return;
     }
 
-    WindowIter endIt = inst->mWindowList2.end();
     WindowIter it = inst->mWindowList2.begin();
+    WindowIter endIt = inst->mWindowList2.end();
     for (; it != endIt; ++it) {
         IUIWindow* window = *it;
         if (window->field_0x68 == id) {

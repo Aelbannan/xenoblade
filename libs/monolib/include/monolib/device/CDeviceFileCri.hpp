@@ -75,11 +75,11 @@ extern "C" {
     int DevFile_GetByteA9();
     int DevFile_SubstLangPath(const char*);
     int findPackFileId(const char*, const char*);
-    extern u32 lbl_eu_806636C8[1];
-    extern u32 lbl_eu_806636CC[1];
-    extern u32 lbl_eu_806636D0[2];
+    extern const wchar_t* sCriFilePathA;
+    extern const wchar_t* sCriFilePathB;
+    extern const wchar_t* sCriFilePathC[2];
     extern u32 lbl_eu_8056C354[];
-    extern u8 lbl_eu_806576C8[];
+    extern u8 sFileCriState[];
 }
 
 extern "C" {

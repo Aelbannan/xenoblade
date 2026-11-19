@@ -49,7 +49,7 @@ typedef struct MWSFCRE_Para {
     void* field_0x40;       /* 0x40 */
 } MWSFCRE_Para;
 
-/* Per-slot scratch block living at lbl_eu_805FF2E0: stream-buffer sizes
+/* Per-slot scratch block living at sSfdWorkArea: stream-buffer sizes
  * computed by mwsfcre_CalcWorkStmBuf plus the frame-buffer sizes. */
 typedef struct SfdWork {
     u32 field_0x00;         /* 0x00 */
@@ -142,21 +142,21 @@ typedef struct MWSFCRE_SjArg {
 
 /* ---- External symbols / helpers ---- */
 
-extern TraceCb* lbl_eu_805FF3A0;
+extern TraceCb* gpMwPlyTraceCb;
 extern const char lbl_eu_8051A3CC[];
-extern TraceRec lbl_eu_805661AC;
-extern TraceRec lbl_eu_80566280;
+extern TraceRec sTraceCreateSofdec;
+extern TraceRec sTraceDestroy;
 
 
-extern SfdWork lbl_eu_805FF2E0;
-extern u32 lbl_eu_805FF2E4;
-extern u32 lbl_eu_805FF2E8;
-extern u32 lbl_eu_805660D0;
-extern MpvInfo lbl_eu_80567258;
-extern AdxtCfg lbl_eu_8056727C;
-extern const SfdCondTbl lbl_eu_80567168;
-extern const SfdCondTbl lbl_eu_805671B8;
-extern const SfdCondTbl lbl_eu_80567208;
+extern SfdWork sSfdWorkArea;
+extern u32 sSfdStmBufPos;
+extern u32 sSfdStmBufEnd;
+extern u32 sSfdBufAlign;
+extern MpvInfo sMpvInfo;
+extern AdxtCfg sAdxtConfig;
+extern const SfdCondTbl sSfdCondTblMode1;
+extern const SfdCondTbl sSfdCondTblMode2;
+extern const SfdCondTbl sSfdCondTblMode3;
 
 extern void MWSFSVM_Error(const char* message, ...);
 extern s32 MWSFLIB_SetErrCode(s32 code);
@@ -420,7 +420,7 @@ s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self) {
 }
 
 void* criware_8039FF34(MWSFDPLY* self) {
-    if (lbl_eu_805FF3A0 != NULL) {
+    if (gpMwPlyTraceCb != NULL) {
         char buf[0x200];
         sprintf(buf, &lbl_eu_8051A3CC[0x383], self->enable,
                 self->prm.field_0x00, self->prm.field_0x04, self->prm.width,
@@ -428,18 +428,18 @@ void* criware_8039FF34(MWSFDPLY* self) {
                 self->prm.field_0x18, self->prm.field_0x1c,
                 self->prm.field_0x20, self->prm.mode, self->prm.poolCount,
                 self->prm.poolSize, self->prm.pool);
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            lbl_eu_805661AC.self = (u32)buf;
-            cb->vtable->trace(cb, &lbl_eu_805661AC.field_0x04);
+            sTraceCreateSofdec.self = (u32)buf;
+            cb->vtable->trace(cb, &sTraceCreateSofdec.field_0x04);
         }
     }
     {
         void* hn = mwPlyCreateSofdec((PlyCprm*)self);
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            lbl_eu_805661AC.field_0x74 = (u32)hn;
-            cb->vtable->trace(cb, &lbl_eu_805661AC.field_0x6c);
+            sTraceCreateSofdec.field_0x74 = (u32)hn;
+            cb->vtable->trace(cb, &sTraceCreateSofdec.field_0x6c);
         }
         return hn;
     }
@@ -477,13 +477,13 @@ s32 mwsfcre_MallocCompoWork(MWSFDPLY* self) {
 
 void criware_803A09B4(MWSFDPLY* self) {
     fn_803A537C(self);
-    if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_80566280.self = (u32)self;
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+    if (gpMwPlyTraceCb != NULL) {
+        sTraceDestroy.self = (u32)self;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
     }
     mwply_Destroy(self);
-    if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+    if (gpMwPlyTraceCb != NULL) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
     }
     *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34F4) -= 1;
 }
@@ -677,23 +677,23 @@ void criware_eu_803A29E0(s32 mode, u32 unused, SfdCondTbl* dest, MWSFDPLY* self)
     return;
 case1:
     /* Copy the default SFD condition table and set the rbf supply params. */
-    *dest = lbl_eu_80567168;
-    self->field_0x508 = lbl_eu_805FF2E4;
-    self->field_0x50c = lbl_eu_805FF2E8 - lbl_eu_805660D0;
-    self->field_0x510 = lbl_eu_805660D0;
+    *dest = sSfdCondTblMode1;
+    self->field_0x508 = sSfdStmBufPos;
+    self->field_0x50c = sSfdStmBufEnd - sSfdBufAlign;
+    self->field_0x510 = sSfdBufAlign;
     return;
 case2:
-    *dest = lbl_eu_805671B8;
-    self->field_0x508 = lbl_eu_805FF2E4;
+    *dest = sSfdCondTblMode2;
+    self->field_0x508 = sSfdStmBufPos;
     /* Volatile forces MWCC to keep the retail store order (50c before 510). */
-    *(volatile u32*)&self->field_0x50c = lbl_eu_805FF2E8 - 0x800;
+    *(volatile u32*)&self->field_0x50c = sSfdStmBufEnd - 0x800;
     *(volatile u32*)&self->field_0x510 = 0x800;
     return;
 case3:
-    *dest = lbl_eu_80567208;
-    self->field_0x508 = lbl_eu_805FF2E4;
-    self->field_0x50c = lbl_eu_805FF2E8 - lbl_eu_805660D0;
-    self->field_0x510 = lbl_eu_805660D0;
+    *dest = sSfdCondTblMode3;
+    self->field_0x508 = sSfdStmBufPos;
+    self->field_0x50c = sSfdStmBufEnd - sSfdBufAlign;
+    self->field_0x510 = sSfdBufAlign;
     return;
 case8:
     MWSFSVM_Error(lbl_eu_8051A3CC + 0x13c);
@@ -710,7 +710,7 @@ case0xb:
  * buffer from the player heap and fills the SFD_Create parameter block.
  * Returns NULL (after releasing the heap) on any allocation/config failure. */
 void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
-    register SfdWork* w = &lbl_eu_805FF2E0;
+    register SfdWork* w = &sSfdWorkArea;
     SfdCreateCfg cfg;
     void* rbfOut[2];
     void* tabOut[16];
@@ -799,23 +799,23 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
 
     /* Publish the geometry the MPV decoder works from. */
     w->field_0x04 = ((u32)adxtBuf + 0x3f) & ~0x3fu;
-    lbl_eu_80567258.height = para->height;
-    lbl_eu_80567258.width = para->width;
-    lbl_eu_80567258.field_0x10 = 0;
-    lbl_eu_80567258.yStride = ((para->width / 2 + 0x1f) / 32) * 32;
-    lbl_eu_80567258.chromaHeight = para->height / 2;
-    lbl_eu_80567258.width2 = para->width;
-    lbl_eu_80567258.height2 = para->height;
-    lbl_eu_80567258.frameCount = frames;
-    lbl_eu_80567258.field_0x20 = 0;
-    lbl_eu_8056727C.field_0x08 = (u32)ex0;
-    lbl_eu_8056727C.field_0x18 = (u32)ex1;
+    sMpvInfo.height = para->height;
+    sMpvInfo.width = para->width;
+    sMpvInfo.field_0x10 = 0;
+    sMpvInfo.yStride = ((para->width / 2 + 0x1f) / 32) * 32;
+    sMpvInfo.chromaHeight = para->height / 2;
+    sMpvInfo.width2 = para->width;
+    sMpvInfo.height2 = para->height;
+    sMpvInfo.frameCount = frames;
+    sMpvInfo.field_0x20 = 0;
+    sAdxtConfig.field_0x08 = (u32)ex0;
+    sAdxtConfig.field_0x18 = (u32)ex1;
     criware_eu_803A29E0(para->fmt, (u32)para->field_0x40,
         (SfdCondTbl*)&cfg, ply);
 
-    cfg.field_0x2c = lbl_eu_805660D0;
+    cfg.field_0x2c = sSfdBufAlign;
     if (w->outB != 0) {
-        w->outB = w->outB - w->outB % lbl_eu_805660D0;
+        w->outB = w->outB - w->outB % sSfdBufAlign;
     }
 
     switch (para->mode) {
@@ -848,9 +848,9 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     cfg.field_0x48 = 0x4000;
     cfg.field_0x4c = 0;
 
-    SFD_SetMpvParaTbl((u32*)&lbl_eu_80567258, (u32*)rbfOut, (u32*)tabOut);
+    SFD_SetMpvParaTbl((u32*)&sMpvInfo, (u32*)rbfOut, (u32*)tabOut);
     if (para->fmt == 1 || para->fmt == 9) {
-        SFD_SetAdxtPara(&lbl_eu_8056727C);
+        SFD_SetAdxtPara(&sAdxtConfig);
     }
 
     sfd = SFD_Create(&cfg, 0);
@@ -1031,13 +1031,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     if (sfd == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x4c1);
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;
@@ -1052,13 +1052,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     if (ply->rbf == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x4e4);
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;
@@ -1068,13 +1068,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     if (ply->uni == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x506);
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;
@@ -1107,13 +1107,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     ply->stm = stm;
     if (stm == NULL) {
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;
@@ -1126,13 +1126,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     LSC_SetStmHndl(lsc, ply->stm);
     if (mwsfcre_MallocCompoWork(ply) == -1) {
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;
@@ -1143,13 +1143,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     if (sfx == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x52f);
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;
@@ -1161,13 +1161,13 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     if (MWSFTAG_SetAinfSj(ply)) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x54a);
         fn_803A537C(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_80566280.self = (u32)ply;
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        if (gpMwPlyTraceCb != NULL) {
+            sTraceDestroy.self = (u32)ply;
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
         }
         mwply_Destroy(ply);
-        if (lbl_eu_805FF3A0 != NULL) {
-            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        if (gpMwPlyTraceCb != NULL) {
+            gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
         }
         *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f4) -= 1;
         return NULL;

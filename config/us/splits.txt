@@ -102,7 +102,7 @@ kyoshin/CTaskGame.cpp:
 	extabindex  start:0x800218E0 end:0x80021C1C
 	.text       start:0x800406C0 end:0x80044704
 
-	.data        start:0x80525498 end:0x80525A98
+	.data        start:0x80525498 end:0x80525AB8
 	.rodata        start:0x804fa7e8 end:0x804fa920
 	.sbss        start:0x80663d18 end:0x80663d40
 	.sdata        start:0x80661910 end:0x80661948
@@ -112,7 +112,7 @@ kyoshin/cf/CTaskGameCf.cpp:
 	extabindex  start:0x80021C1C end:0x80021CAC
 	.text       start:0x80044704 end:0x80045058
 
-	.data        start:0x80525A98 end:0x80525BE0
+	.data        start:0x80525AB8 end:0x80525BE0
 	.rodata        start:0x804fa920 end:0x804fa948
 	.sdata        start:0x80661948 end:0x80661970
 	.sdata2     start:0x80665d88 end:0x80665d90

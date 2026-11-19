@@ -2,13 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <monolib/scn/code_804BC9EC.hpp>
 #include <nw4r/math/math_types.h>
 #include <cmath>
 
 // --- shared collision-query state ----------------------------------------
 // The bss block at 0x8065F3F0 holds a world-space AABB pair (see
 // ColiTestSegBoxEdge / ColiWalkSphereTree): min corner at lbl_eu_8065F3F0, max corner
-// at lbl_eu_8065F3FC, half-extents at +0x18.  lbl_eu_80665960 is the query
+// at sColiQueryBounds, half-extents at +0x18.  sColiQueryLimit is the query
 // radius (sbss).
 struct Vec3 {
     f32 x;
@@ -20,8 +21,7 @@ struct Vec3 {
 };
 
 extern Vec3 lbl_eu_8065F3F0;
-extern Vec3 lbl_eu_8065F3FC;
-extern f32 lbl_eu_80665960;
+extern f32 sColiQueryLimit;
 // sdata2 sweep tables: entries consumed with a 12-byte stride; the additive
 // base table sits 16 bytes into the same region and is indexed identically.
 struct SweepTab {
@@ -29,7 +29,6 @@ struct SweepTab {
     f32 field_0x4;
     f32 field_0x8;
 };
-extern Vec3 lbl_eu_8065F408;       // box extents (lbl_eu_8065F3F0 + 0x18)
 
 // 12-byte triangle element inside the collision object's element array
 // (layout matches ColiWalkBoxTreeA / ColiWalkSphereTree).
@@ -91,7 +90,7 @@ extern "C" void ColiQuery_Reset(void* self) { *(u32*)self = 0; }
 
 // Clamp the query box (a = max corner, b = min corner) to the shared world
 // AABB origin per-axis, then test the squared distance of the clamped point
-// against the query radius stored in lbl_eu_80665960.
+// against the query radius stored in sColiQueryLimit.
 extern "C" bool ColiTestQueryRadius(const Vec3* a, const Vec3* b) {
     Vec3 v = lbl_eu_8065F3F0;
     if (a->x < lbl_eu_8065F3F0.x) v.x = a->x;
@@ -104,7 +103,7 @@ extern "C" bool ColiTestQueryRadius(const Vec3* a, const Vec3* b) {
     nw4r::math::VEC3& vv = *reinterpret_cast<nw4r::math::VEC3*>(&v);
     const nw4r::math::VEC3& gv = *reinterpret_cast<const nw4r::math::VEC3*>(&lbl_eu_8065F3F0);
     nw4r::math::VEC3Sub(&vv, &vv, &gv);
-    return nw4r::math::VEC3Dot(&vv, &vv) < lbl_eu_80665960;
+    return nw4r::math::VEC3Dot(&vv, &vv) < sColiQueryLimit;
 }
 
 // Shared query state: three adjacent VEC3s at lbl_eu_8065F3F0 (min corner,
@@ -153,7 +152,7 @@ extern "C" bool ColiTestSegBoxEdge(const Vec3* a, const Vec3* b) {
 // collapses; axes whose scale equals the epsilon constant fall back to a
 // point-in-range check of the AABB corner.
 extern "C" bool ColiTestSegSlab(const f32* a, const f32* b) {
-    const f32* scale = &lbl_eu_8065F3FC.x;      // r5
+    const f32* scale = &sColiQueryBounds.max.x;      // r5
     const f32* minCorner = &lbl_eu_8065F3F0.x;  // r6
     f32 s;
     f32 eps;
@@ -188,16 +187,16 @@ extern "C" bool ColiTestSegSlab(const f32* a, const f32* b) {
 extern "C" bool Coli_PointInSlab(const Vec3* a, const Vec3* b) {
     if (b->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3F0.x <= a->x &&
         b->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3F0.z <= a->z &&
-        a->y >= lbl_eu_8065F3F0.y && lbl_eu_80665960 >= b->y) {
+        a->y >= lbl_eu_8065F3F0.y && sColiQueryLimit >= b->y) {
         return true;
     }
     return false;
 }
 
 extern "C" bool Coli_PointInBox(const Vec3* a, const Vec3* b) {
-    if (b->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3FC.x <= a->x &&
-        b->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3FC.z <= a->z &&
-        b->y <= lbl_eu_8065F3F0.y && lbl_eu_8065F3FC.y <= a->y) {
+    if (b->x <= lbl_eu_8065F3F0.x && sColiQueryBounds.max.x <= a->x &&
+        b->z <= lbl_eu_8065F3F0.z && sColiQueryBounds.max.z <= a->z &&
+        b->y <= lbl_eu_8065F3F0.y && sColiQueryBounds.max.y <= a->y) {
         return true;
     }
     return false;
@@ -224,7 +223,7 @@ extern "C" void ColiWalkSphereTree(ColiObj* self, ColiTri* tri) {
     nw4r::math::VEC3& vv = *reinterpret_cast<nw4r::math::VEC3*>(&v);
     const nw4r::math::VEC3& gv = *reinterpret_cast<const nw4r::math::VEC3*>(&lbl_eu_8065F3F0);
     nw4r::math::VEC3Sub(&vv, &vv, &gv);
-    if (nw4r::math::VEC3Dot(&vv, &vv) < lbl_eu_80665960) {
+    if (nw4r::math::VEC3Dot(&vv, &vv) < sColiQueryLimit) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
@@ -318,7 +317,7 @@ void ColiWalkBoxTreeA(ColiObj* self, ColiTri* tri) {
     const Vec3* vB = &self->verts[tri->field_0x6];
     if (vB->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3F0.x <= vA->x &&
         vB->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3F0.z <= vA->z &&
-        vA->y >= lbl_eu_8065F3F0.y && lbl_eu_80665960 >= vB->y) {
+        vA->y >= lbl_eu_8065F3F0.y && sColiQueryLimit >= vB->y) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
@@ -341,7 +340,7 @@ void ColiWalkBoxTreeA(ColiObj* self, ColiTri* tri) {
 }
 
 // Box-vs-triangle-tree walker. Culls the subtree as soon as the query box
-// (lbl_eu_8065F3F0 min / lbl_eu_8065F3FC max) lies entirely on the near side
+// (lbl_eu_8065F3F0 min / sColiQueryBounds max) lies entirely on the near side
 // of one of the node's bounding planes (vertex A far side / vertex B near
 // side); otherwise dispatches into branch children or the leaf triangle
 // range, mirroring ColiWalkSphereTree.
@@ -352,9 +351,9 @@ extern "C" void ColiWalkBoxTreeB(ColiObj* self, ColiTri* tri);
 void ColiWalkBoxTreeB(ColiObj* self, ColiTri* tri) {
     const Vec3* vA = &self->verts[tri->field_0x4];
     const Vec3* vB = &self->verts[tri->field_0x6];
-    if (vB->x <= lbl_eu_8065F3F0.x && lbl_eu_8065F3FC.x <= vA->x &&
-        vB->z <= lbl_eu_8065F3F0.z && lbl_eu_8065F3FC.z <= vA->z &&
-        vB->y <= lbl_eu_8065F3F0.y && lbl_eu_8065F3FC.y <= vA->y) {
+    if (vB->x <= lbl_eu_8065F3F0.x && sColiQueryBounds.max.x <= vA->x &&
+        vB->z <= lbl_eu_8065F3F0.z && sColiQueryBounds.max.z <= vA->z &&
+        vB->y <= lbl_eu_8065F3F0.y && sColiQueryBounds.max.y <= vA->y) {
         if ((tri->field_0x0 & 6) != 0) {
             u32 idx;
             if ((tri->field_0x0 & 2) != 0) {
@@ -379,12 +378,12 @@ void ColiWalkBoxTreeB(ColiObj* self, ColiTri* tri) {
 }
 
 // Axis-aligned BVH walker over the secondary arrays: split nodes test the
-// query box (lbl_eu_8065F3F0 min / lbl_eu_8065F3FC max) against the node's
+// query box (lbl_eu_8065F3F0 min / sColiQueryBounds max) against the node's
 // split plane on its axis; if the box lies entirely on one side only that
 // side's child is visited, otherwise the near child is visited first and the
 // far child visited only when the near side reported no hit.
 // Axis-aligned BVH walker over the secondary arrays: split nodes test the
-// query box (lbl_eu_8065F3F0 min / lbl_eu_8065F3FC max) against the node's
+// query box (lbl_eu_8065F3F0 min / sColiQueryBounds max) against the node's
 // split plane on its axis; if the box lies entirely on one side only that
 // side's child is visited, otherwise the near child is visited first and the
 // far child visited only when the near side reported no hit.
@@ -398,7 +397,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
     }
     u16 axis = node->field_0x8;
     f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[axis];
-    f32 dmax = node->field_0x4 - (&lbl_eu_8065F3FC.x)[axis];
+    f32 dmax = node->field_0x4 - (&sColiQueryBounds.max.x)[axis];
     // Written in retail layout order: straddle path falls through first with
     // plain forward branches; each direct self-call site is written out once
     // (retail one-level-inlines them); deeper levels stay truly recursive.
@@ -411,7 +410,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
         } else {
             u16 nAxis = nearChild->field_0x8;
             f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nAxis];
-            f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nAxis];
+            f32 ndmax = nearChild->field_0x4 - (&sColiQueryBounds.max.x)[nAxis];
             if (ndmin * ndmax < 0.0f) {
                 // gchild straddles its plane too
                 if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0]])) {
@@ -437,7 +436,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
         } else {
             u16 fAxis = farChild->field_0x8;
             f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[fAxis];
-            f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[fAxis];
+            f32 fdmax = farChild->field_0x4 - (&sColiQueryBounds.max.x)[fAxis];
             if (fdmin * fdmax < 0.0f) {
                 // gchild straddles its plane too
                 if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0]])) {
@@ -464,7 +463,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
         } else {
             u16 cAxis = child->field_0x8;
             f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
-            f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[cAxis];
+            f32 cdmax = child->field_0x4 - (&sColiQueryBounds.max.x)[cAxis];
             if (cdmin * cdmax < 0.0f) {
                 if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
                     hit = true;
@@ -485,7 +484,7 @@ bool ColiWalkBvhSplit(ColiObj* self, ColiNode* node) {
     } else {
         u16 cAxis = child->field_0x8;
         f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[cAxis];
-        f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[cAxis];
+        f32 cdmax = child->field_0x4 - (&sColiQueryBounds.max.x)[cAxis];
         if (cdmin * cdmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
                 hit = true;
@@ -510,7 +509,7 @@ extern "C" void ColiQuerySphere(ColiObj* self, const Vec3* src, int idx, f32 rad
     dst[0] = s[0];
     dst[1] = s[1];
     dst[2] = s[2];
-    lbl_eu_80665960 = radius * radius;
+    sColiQueryLimit = radius * radius;
     ColiWalkSphereTree(self, &self->tris[idx]);
 }
 
@@ -557,7 +556,7 @@ extern "C" void ColiQueryBoxPt(ColiObj* self, const Vec3* src, int idx, f32 radi
     dst[0] = s[0];
     dst[1] = s[1];
     dst[2] = s[2];
-    lbl_eu_80665960 = radius;
+    sColiQueryLimit = radius;
     ColiWalkBoxTreeA(self, &self->tris[idx]);
 }
 
@@ -601,7 +600,7 @@ extern "C" void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* b
     nw4r::math::VEC3Add(&c[6], &s01, &az1);
     nw4r::math::VEC3Add(&c[7], &s11, &az1);
     Vec3* mn = &lbl_eu_8065F3F0;
-    Vec3* mx = &lbl_eu_8065F3FC;
+    ColiQueryVec* mx = &sColiQueryBounds.max;
     mn->x = mn->y = mn->z = (-100000.0f);
     mx->x = mx->y = mx->z = 100000.0f;
     const volatile Vec3* cc = (const volatile Vec3*)corners;
@@ -617,13 +616,13 @@ extern "C" void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* b
     ColiWalkBoxTreeB(self, &self->tris[idx]);
 }
 // Box query entry: record the query box (arg2 -> min corner lbl_eu_8065F3F0,
-// arg3 -> max corner lbl_eu_8065F3FC, copied as raw u32 words) and walk the
+// arg3 -> max corner sColiQueryBounds, copied as raw u32 words) and walk the
 // secondary BVH rooted at self->tris2. The root level of the walk is written
 // out (retail one-level-inlines ColiWalkBvhSplit); deeper levels recurse
 // through ColiWalkBvhSplit.
 extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* maxSrc) {
     u32* dstMin = (u32*)&lbl_eu_8065F3F0;
-    u32* dstMax = (u32*)&lbl_eu_8065F3FC;
+    u32* dstMax = (u32*)&sColiQueryBounds;
     const u32* sMin = (const u32*)minSrc;
     const u32* sMax = (const u32*)maxSrc;
     *dstMin++ = *sMin++;
@@ -639,7 +638,7 @@ extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* m
         return ((CColiObj2*)self)->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
     }
     f32 dmin = node->field_0x4 - (&lbl_eu_8065F3F0.x)[node->field_0x8];
-    f32 dmax = node->field_0x4 - (&lbl_eu_8065F3FC.x)[node->field_0x8];
+    f32 dmax = node->field_0x4 - (&sColiQueryBounds.max.x)[node->field_0x8];
     bool hit;
     if (dmin * dmax < 0.0f) {
         // plane straddles the box: visit the near child first (inlined), then
@@ -650,7 +649,7 @@ extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* m
             return ((CColiObj2*)self)->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
         }
         f32 ndmin = nearChild->field_0x4 - (&lbl_eu_8065F3F0.x)[nearChild->field_0x8];
-        f32 ndmax = nearChild->field_0x4 - (&lbl_eu_8065F3FC.x)[nearChild->field_0x8];
+        f32 ndmax = nearChild->field_0x4 - (&sColiQueryBounds.max.x)[nearChild->field_0x8];
         if (ndmin * ndmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[nearChild->field_0x0]])) {
                 hit = true;
@@ -671,7 +670,7 @@ extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* m
             return ((CColiObj2*)self)->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
         }
         f32 fdmin = farChild->field_0x4 - (&lbl_eu_8065F3F0.x)[farChild->field_0x8];
-        f32 fdmax = farChild->field_0x4 - (&lbl_eu_8065F3FC.x)[farChild->field_0x8];
+        f32 fdmax = farChild->field_0x4 - (&sColiQueryBounds.max.x)[farChild->field_0x8];
         if (fdmin * fdmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[farChild->field_0x0]])) {
                 return true;
@@ -695,7 +694,7 @@ extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* m
             return ((CColiObj2*)self)->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
         }
         f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
-        f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
+        f32 cdmax = child->field_0x4 - (&sColiQueryBounds.max.x)[child->field_0x8];
         if (cdmin * cdmax < 0.0f) {
             if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
                 return true;
@@ -713,7 +712,7 @@ extern "C" bool ColiQueryBoxBvh(ColiObj* self, const Vec3* minSrc, const Vec3* m
         return ((CColiObj2*)self)->rayBoxHitTest(&self->indices2[idx + 1], self->indices2[idx]);
     }
     f32 cdmin = child->field_0x4 - (&lbl_eu_8065F3F0.x)[child->field_0x8];
-    f32 cdmax = child->field_0x4 - (&lbl_eu_8065F3FC.x)[child->field_0x8];
+    f32 cdmax = child->field_0x4 - (&sColiQueryBounds.max.x)[child->field_0x8];
     if (cdmin * cdmax < 0.0f) {
         if (ColiWalkBvhSplit(self, &self->tris2[self->indices2[child->field_0x0]])) {
             return true;
@@ -741,5 +740,5 @@ extern "C" void sinit_804BC9E8(void) {}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.sbss] 0x80665960-0x80665968 (8 bytes)
-f32 lbl_eu_80665960;  // zero-fill, word 0
-f32 lbl_eu_80665960_hi;  // zero-fill, word 1 (synthetic)
+f32 sColiQueryLimit;  // zero-fill, word 0
+f32 sColiQueryLimitHi;  // zero-fill, second word of the 8-byte query-limit object

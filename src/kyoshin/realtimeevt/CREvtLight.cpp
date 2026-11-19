@@ -23,7 +23,7 @@ struct GameSubMapFxView {
     CScnEnvLgtCtrlListItem* mapFx; // 0x2F3C
 };
 
-// Local view of lbl_eu_80663E14 past +0x7C (resource mgr); same slot as
+// Local view of gmScene past +0x7C (resource mgr); same slot as
 // UnkSceneView::field_0x7C in CfObjectMap.hpp.
 struct SceneResMgrView {
     u8 pad_00[0x7C];
@@ -61,7 +61,7 @@ cf::CREvtLight::~CREvtLight() {
     // (No `oldResource` local: a local here adds redundant destroy-base
     // actions to the retail exception table.)
     if (field_20 != nullptr) {
-        void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
+        void* mgr = reinterpret_cast<SceneResMgrView*>(gmScene)->resMgr;
         scnLgtRemoveLgtItem(mgr, field_20);
         field_20 = nullptr;
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
@@ -81,7 +81,7 @@ cf::CREvtLight::~CREvtLight() {
 extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceName, u32 fieldValue) {
     // Release old resource
     if (self->field_20 != nullptr) {
-        void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
+        void* mgr = reinterpret_cast<SceneResMgrView*>(gmScene)->resMgr;
         scnLgtRemoveLgtItem(mgr, self->field_20);
         self->field_20 = nullptr;
 
@@ -97,7 +97,7 @@ extern "C" void CREvtLight_SetResource(CREvtLight* self, const char* resourceNam
 
     // Load new resource
     if (resourceName != nullptr) {
-        void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
+        void* mgr = reinterpret_cast<SceneResMgrView*>(gmScene)->resMgr;
         void* handle = scnLgtCreateEnvController(mgr, resourceName, 7);
         self->field_20 = handle;
 

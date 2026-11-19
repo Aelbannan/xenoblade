@@ -4,12 +4,12 @@
 // position reaches the seek target. The seek-skip state lives in a small
 // control block embedded in the player handle at +0x2680; SFSEEKI_IsSkip()
 // is polled once per frame and reports the pending seek through the
-// software-filter trace callback (lbl_eu_80606E34, vtable slot 9).
+// software-filter trace callback (gpSfdCoreTraceCb, vtable slot 9).
 
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 
-extern void *lbl_eu_80606E34;
+extern void *gpSfdCoreTraceCb;
 
 // Absorbed from criware_data (retail bytes) - generated
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051CEC0[0x20] = {"before seeki\x00""after seeki\x00""\x00""\x00""\x00""\x00""\x00""\x00"}; // off 0x0
@@ -34,7 +34,7 @@ void SFSEEKI_InitHn(SfdSeeki* sk) {
 /* Seek/trace callback dispatch                                       */
 /* ------------------------------------------------------------------ */
 
-/* Trace entry filled in before each dispatch, at lbl_eu_80568CF0.
+/* Trace entry filled in before each dispatch, at sTraceSfdIsSkip.
    (The full retail entry is 0x6C bytes; only the head is modeled.) */
 typedef struct SfseekiCbArg {
     u32 field_0x0;          /* 0x00 */
@@ -69,7 +69,7 @@ typedef struct SfseekiCtxVtbl {
     SfseekiTraceFn trace;       /* 0x24 */
 } SfseekiCtxVtbl;
 
-/* Trace context object behind lbl_eu_80606E34. */
+/* Trace context object behind gpSfdCoreTraceCb. */
 typedef struct SfseekiCtx {
     SfseekiCtxVtbl* vtbl;   /* 0x00 */
 } SfseekiCtx;
@@ -77,7 +77,7 @@ typedef struct SfseekiCtx {
 /* Shared trace entry used by the seek dispatches. Declared here rather than
    in lbls_criware.hpp: the label is excluded from the generated header
    (type conflict with sfd_mpv.c's u32[] usage). */
-extern SfseekiCbArg lbl_eu_80568CF0;
+extern SfseekiCbArg sTraceSfdIsSkip;
 
 /* ------------------------------------------------------------------ */
 /* SFSEEKI_IsSkip                                                      */
@@ -85,7 +85,7 @@ extern SfseekiCbArg lbl_eu_80568CF0;
 
 /* Called once per frame while seeking: returns 1 when the frame should be
    dropped. While the seek target has not been reached it fills the shared
-   trace entry (lbl_eu_80568CF0) and dispatches the software-filter trace
+   trace entry (sTraceSfdIsSkip) and dispatches the software-filter trace
    callback with the "before seeki" / "after seeki" label. */
 int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
     *outSkipCount = hn->seeki.skipCount;
@@ -95,20 +95,20 @@ int SFSEEKI_IsSkip(SfdHandle* hn, u32* outSkipCount) {
 
     if (hn->field_0x0964 < hn->seeki.targetEnd) {
         /* seek target not reached yet: keep dropping frames */
-        if (lbl_eu_80606E34 != NULL) {
-            lbl_eu_80568CF0.hn = hn;
-            lbl_eu_80568CF0.str = &lbl_eu_8051CEC0[0];      /* "before seeki" */
-            ((SfseekiCtx*)lbl_eu_80606E34)->vtbl->trace((SfseekiCtx*)lbl_eu_80606E34, &lbl_eu_80568CF0.base);
+        if (gpSfdCoreTraceCb != NULL) {
+            sTraceSfdIsSkip.hn = hn;
+            sTraceSfdIsSkip.str = &lbl_eu_8051CEC0[0];      /* "before seeki" */
+            ((SfseekiCtx*)gpSfdCoreTraceCb)->vtbl->trace((SfseekiCtx*)gpSfdCoreTraceCb, &sTraceSfdIsSkip.base);
         }
         return 1;
     }
 
     if (hn->field_0x0960 >= hn->seeki.targetTime) {
         /* seek target passed: keep dropping frames */
-        if (lbl_eu_80606E34 != NULL) {
-            lbl_eu_80568CF0.hn = hn;
-            lbl_eu_80568CF0.str = &lbl_eu_8051CEC0[0x0D];   /* "after seeki" */
-            ((SfseekiCtx*)lbl_eu_80606E34)->vtbl->trace((SfseekiCtx*)lbl_eu_80606E34, &lbl_eu_80568CF0.base);
+        if (gpSfdCoreTraceCb != NULL) {
+            sTraceSfdIsSkip.hn = hn;
+            sTraceSfdIsSkip.str = &lbl_eu_8051CEC0[0x0D];   /* "after seeki" */
+            ((SfseekiCtx*)gpSfdCoreTraceCb)->vtbl->trace((SfseekiCtx*)gpSfdCoreTraceCb, &sTraceSfdIsSkip.base);
         }
         return 1;
     }

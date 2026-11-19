@@ -4,7 +4,7 @@
 #include "kyoshin/CTaskGameEffApi.hpp"
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
 
@@ -1054,7 +1054,7 @@ extern const f32 lbl_eu_80666BBC;   // sdata2 constant
 extern const f32 lbl_eu_80666BC0;   // sdata2 constant
 
 // Global-scope data symbols (MWCC does not mangle global variable names).
-extern u32 lbl_eu_80663E28;   // presentation bitfield 2 (.sbss)
+extern u32 gmPauseFlags;   // presentation bitfield 2 (.sbss)
 extern f32 lbl_eu_80666B8C;   // sdata2 constant
 extern const f32 lbl_eu_80666B88;  // sdata2 constant (0.5f)
 extern const f32 lbl_eu_80666B90;  // sdata2 constant

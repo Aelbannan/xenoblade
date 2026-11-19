@@ -23,11 +23,11 @@ namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 // global-scope externs - MWCC does not mangle global-scope variable names,
 // so they emit the exact retail lbl_eu_* symbols without extern "C".
 extern u8* lbl_eu_80665844;
-extern s32 lbl_eu_80665854;
-extern s16 lbl_eu_80665858;
-extern s16 lbl_eu_8066585A;
-extern s16 lbl_eu_8066585C;
-extern u32 lbl_eu_8066586C;
+extern s32 MpfTevSetupState;
+extern s16 MpfBoundTextureIndex;
+extern s16 MpfGfxMode;
+extern s16 MpfFogIndex;
+extern u32 MpfTevZModeFlags;
 // Ambient-color / key-color globals used by func_80474E24/E68/74DAC. The
 // effective compiled header (libs/monolib/include/...) does not declare
 // these, so they are declared here like the other lbl_* externs in this file.
@@ -40,8 +40,8 @@ extern const f32 lbl_eu_8066A738;
 extern const f32 lbl_eu_8066A73C;
 extern const f32 lbl_eu_8066A740;
 extern u32 lbl_eu_8066A7A0;
-extern u32 lbl_eu_80665868;
-extern u16* lbl_eu_80665850;
+extern u32 MpfTevEntryTable;
+extern u16* sBillboardTexCoordTable;
 extern const GXColor lbl_eu_8066A7D0;
 extern const GXColor lbl_eu_8066A7D4;
 extern const f32 lbl_eu_8066A744;
@@ -51,26 +51,26 @@ extern const f32 lbl_eu_8066A75C;
 extern const f32 lbl_eu_8066A770;
 // Embedded-subobject pointer cache (written by initMpfDrawBuffer in
 // code_8047BB54.cpp); func_80471FCC registers `this` here.
-extern void* lbl_eu_80665838;
+extern void* sMpfsysDrawState;
 // Panic file-name / message strings (retail rodata).
 extern const char lbl_eu_8052637C[];
 extern const char lbl_eu_80526354[];
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
-// Per-view render state shared by the layer draw path. lbl_eu_80665848 holds
+// Per-view render state shared by the layer draw path. MpfMapResFile holds
 // the active map ResFile handle table (indexed by texture slot),
-// lbl_eu_8066584C the per-view display-list offset table (12-byte entries),
+// sBillboardCornerTable the per-view display-list offset table (12-byte entries),
 // and lbl_eu_80658410 the scratch camera block used by pushLayerDraw.
 extern void* lbl_eu_80665840;
 extern u32 lbl_eu_80665864;
-extern u32 lbl_eu_80665860;
-extern u32 lbl_eu_80665870;
-extern u32 lbl_eu_80665874;
+extern u32 sLastBillDrawData;
+extern u32 MpfSlotChainHead;
+extern u32 MpfDrawWalkConfig;
 extern f32 lbl_eu_80665880;
 extern u32 lbl_eu_80665884;
 // Active map ResFile handle (single 4-byte sbss object).
-extern void* lbl_eu_80665848;
+extern void* MpfMapResFile;
 // Display-list base pointers for the view slots: 12-byte records whose
 // first word is the display-list base. Explicit bound keeps the object
 // small-data eligible (indexed SDA loads).
@@ -78,7 +78,7 @@ struct MpfsysViewEntry {
     u8* base; // +0x00 display-list base for this view slot
     u8 pad[8];
 };
-extern MpfsysViewEntry lbl_eu_8066584C[2];
+extern MpfsysViewEntry sBillboardCornerTable[2];
 extern u8 lbl_eu_80658410[];
 extern Mtx lbl_eu_80658458; // identity matrix (defined at the bottom of this TU)
 
@@ -245,7 +245,7 @@ void submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self,
     // push the layer draws into the MPF display list. The retail leaves r3
     // untouched at the end (the caller re-reads the view frame itself), so
     // this returns void.
-    lbl_eu_80665838 = self;
+    sMpfsysDrawState = self;
     MpfsysResState* s = (MpfsysResState*)self;
     MpfsysDescFCC* d = (MpfsysDescFCC*)a4;
     if (d->field_0x10 != 0) {
@@ -456,8 +456,8 @@ void mpfsys::UnkClass_80471EC8::initLayerRecords() {
         PSMTXIdentity(rec->mtxB);
         // Direction vector: two random draws scaled into [-c, c]. The first
         // draw lands on Z and is held in an FPR across the second call.
-        f32 dz = 0.01f * (f32)(rand() % 100) - lbl_eu_8066A74C;
-        rec->dir.x = 0.01f * (f32)(rand() % 100) - lbl_eu_8066A74C;
+        f32 dz = 0.01f * (f32)(rand() % 100) - 0.5f;
+        rec->dir.x = 0.01f * (f32)(rand() % 100) - 0.5f;
         rec->dir.y = lbl_eu_8066A744;
         rec->dir.z = dz;
         if (rec->dir.x == lbl_eu_8066A744 && rec->dir.y == lbl_eu_8066A744 &&
@@ -487,8 +487,8 @@ void mpfsys::UnkClass_80471EC8::initLayerRecords() {
     for (int i = 8; i < 56; i++) {
         st->w[i] = (-100000.0f);
     }
-    st->lod0[0] = lbl_eu_8066A758;
-    st->lod0[1] = lbl_eu_8066A75C;
+    st->lod0[0] = 0.3f;
+    st->lod0[1] = 0.1f;
     st->lod0[2] = 0.6f;
     st->lod1[0] = 1.0f;
     st->lod1[1] = 1.0f;
@@ -689,10 +689,10 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     // When amplitude is at its floor and dt is exactly 1, soften the
     // constraint response; the gate reads the PREVIOUS frame's tip target
     // Q[2] (still holding its integrated value at this point).
-    if (st->field_2DE8 <= lbl_eu_8066A758 && arg == 1.0f) {
+    if (st->field_2DE8 <= 0.3f && arg == 1.0f) {
         f32 lsq = Q[2].z * Q[2].z + (Q[2].x * Q[2].x + Q[2].y * Q[2].y);
         if (lsq <= 0.0001f) {
-            scaledDt = dt * lbl_eu_8066A74C;
+            scaledDt = dt * 0.5f;
         }
     }
 
@@ -701,12 +701,12 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     f32 wob = st->field_2DE8 * (lbl_eu_80663850 * (f32)(rand() % 500));
     f32 jz = st->field_2DEC *
              (0.4f *
-              (lbl_eu_80663850 * (f32)(rand() % 500) - lbl_eu_8066A74C));
+              (lbl_eu_80663850 * (f32)(rand() % 500) - 0.5f));
     rec->dir.x += lbl_eu_8066A744;
     rec->dir.z += jz;
     f32 jy = st->field_2DEC *
              (0.4f *
-              (lbl_eu_80663850 * (f32)(rand() % 500) - lbl_eu_8066A74C));
+              (lbl_eu_80663850 * (f32)(rand() % 500) - 0.5f));
     rec->dir.y += jy;
 
     {
@@ -732,7 +732,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     const f32 rest = 1.0f;
     const f32 gain = 0.4f;
     const f32 eps = 0.0001f;
-    const f32 damp = lbl_eu_8066A74C;
+    const f32 damp = 0.5f;
 
     // Distance constraints between consecutive chain points: the correction
     // blends the strain term with the dot of the P-difference and the
@@ -794,14 +794,14 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     Q[1].z += dz;
 
     // Clamp Q[1] into [min, max] (all highs first, then all lows).
-    if (Q[1].x > lbl_eu_8066A758) {
-        Q[1].x = lbl_eu_8066A758;
+    if (Q[1].x > 0.3f) {
+        Q[1].x = 0.3f;
     }
-    if (Q[1].y > lbl_eu_8066A758) {
-        Q[1].y = lbl_eu_8066A758;
+    if (Q[1].y > 0.3f) {
+        Q[1].y = 0.3f;
     }
-    if (Q[1].z > lbl_eu_8066A758) {
-        Q[1].z = lbl_eu_8066A758;
+    if (Q[1].z > 0.3f) {
+        Q[1].z = 0.3f;
     }
     if (Q[1].x < (-0.3f)) {
         Q[1].x = (-0.3f);
@@ -816,14 +816,14 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     Q[2].x *= shrink;
     Q[2].y *= shrink;
     Q[2].z *= shrink;
-    if (Q[2].x > lbl_eu_8066A758) {
-        Q[2].x = lbl_eu_8066A758;
+    if (Q[2].x > 0.3f) {
+        Q[2].x = 0.3f;
     }
-    if (Q[2].y > lbl_eu_8066A758) {
-        Q[2].y = lbl_eu_8066A758;
+    if (Q[2].y > 0.3f) {
+        Q[2].y = 0.3f;
     }
-    if (Q[2].z > lbl_eu_8066A758) {
-        Q[2].z = lbl_eu_8066A758;
+    if (Q[2].z > 0.3f) {
+        Q[2].z = 0.3f;
     }
     if (Q[2].x < (-0.3f)) {
         Q[2].x = (-0.3f);
@@ -871,7 +871,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         } else {
             Vec axis;
             PSVECCrossProduct((Vec*)&ml::CVec3::unitY, (Vec*)&n, &axis);
-            f32 m = lbl_eu_8066A73C * (1.0f + dot);
+            f32 m = 2.0f * (1.0f + dot);
             if (m < lbl_eu_8066A744) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
                                              lbl_eu_80526300);
@@ -885,7 +885,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             quat.x = axis.x * scale;
             quat.y = axis.y * scale;
             quat.z = axis.z * scale;
-            quat.w = lbl_eu_8066A74C * s4;
+            quat.w = 0.5f * s4;
         }
     }
     PSMTXQuat(rec->mtxA, &quat);
@@ -913,7 +913,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
         } else {
             Vec axis;
             PSVECCrossProduct((Vec*)&ml::CVec3::unitY, (Vec*)&n, &axis);
-            f32 m = lbl_eu_8066A73C * (1.0f + dot);
+            f32 m = 2.0f * (1.0f + dot);
             if (m < lbl_eu_8066A744) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
                                              lbl_eu_80526300);
@@ -927,7 +927,7 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             quat.x = axis.x * scale;
             quat.y = axis.y * scale;
             quat.z = axis.z * scale;
-            quat.w = lbl_eu_8066A74C * s4;
+            quat.w = 0.5f * s4;
         }
     }
     PSMTXQuat(rec->mtxB, &quat);
@@ -1035,7 +1035,7 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
     // Resolve the active map's texture dictionary entry.
     MpfsysResTexHandle tex;
     tex.mpData = (nw4r::g3d::ResTexData*)GetResTex__Q34nw4r3g3d7ResFileCFi(
-        lbl_eu_80665848, texIndex);
+        MpfMapResFile, texIndex);
     if (tex.mpData == NULL) {
         nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4, lbl_eu_80661E98,
                         lbl_eu_8066385C);
@@ -1141,13 +1141,13 @@ void setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
 
 extern "C" {
 void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(int texIndex, f32 texScale) {
-    if (lbl_eu_80665858 == texIndex) {
+    if (MpfBoundTextureIndex == texIndex) {
         return;
     }
     if (texIndex == -1) {
         return;
     }
-    lbl_eu_80665858 = texIndex;
+    MpfBoundTextureIndex = texIndex;
     setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(texIndex, 0, texScale);
 }
 }
@@ -1170,18 +1170,18 @@ void setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(s32 index, f32 scale) {
     // lazily install the fullscreen TEV/vertex-desc state for mode 6, then
     // feed every item of display-list entry `index` to setupMapTexture with
     // the given scale.
-    lbl_eu_80665858 = -1;
+    MpfBoundTextureIndex = -1;
     // The cached-index store above may alias the entry table, so the count
     // is re-read from the table rather than merged with the offset load.
     MpfsysTevItem* items =
         (MpfsysTevItem*)((u8*)lbl_eu_80665840 +
-                         ((MpfsysTevEntry*)&lbl_eu_80665868)[index].ofs);
-    u32 count = ((MpfsysTevEntry*)&lbl_eu_80665868)[index].count;
-    if (lbl_eu_80665854 != 1) {
+                         ((MpfsysTevEntry*)&MpfTevEntryTable)[index].ofs);
+    u32 count = ((MpfsysTevEntry*)&MpfTevEntryTable)[index].count;
+    if (MpfTevSetupState != 1) {
         GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
+        MpfTevSetupState = 1;
     }
-    if (lbl_eu_8066585A != 6) {
+    if (MpfGfxMode != 6) {
         GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
         GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
         GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
@@ -1191,10 +1191,10 @@ void setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(s32 index, f32 scale) {
         GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x1);
         GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
         GXSetArray((GXAttr)0xD, lbl_eu_80665844, 0x8);
-        lbl_eu_8066585A = 6;
-        if (lbl_eu_8066586C & 0x10) {
+        MpfGfxMode = 6;
+        if (MpfTevZModeFlags & 0x10) {
             GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-            lbl_eu_8066586C &= ~0x10;
+            MpfTevZModeFlags &= ~0x10;
         }
     }
     for (u32 i = 0; i < count; i++) {
@@ -1230,7 +1230,7 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     for (int i = 0; i < 12; i++) {
         cam->inv.w[i] = src->w[i];
     }
-    lbl_eu_80665848 = texBase;
+    MpfMapResFile = texBase;
     PSMTXInverse(cam->inv.m, cam->inv.m);
 
     // Rotation-only copy: the cached leading words are replayed, and the
@@ -1280,9 +1280,9 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     // Refresh the display-list pointer table via the two-level offset chase.
     u8* base = (u8*)self;
     lbl_eu_80665844 = base + *(u32*)(base + *(u32*)(base + 0x1C));
-    lbl_eu_8066584C[0].base = base + *(u32*)(base + *(u32*)(base + 0x24));
-    lbl_eu_80665850 = (u16*)(base + *(u32*)(base + *(u32*)(base + 0xC)));
-    *(u32*)&lbl_eu_80665868 = (u32)(base + *(u32*)(base + *(u32*)(base + 0x2C)));
+    sBillboardCornerTable[0].base = base + *(u32*)(base + *(u32*)(base + 0x24));
+    sBillboardTexCoordTable = (u16*)(base + *(u32*)(base + *(u32*)(base + 0xC)));
+    *(u32*)&MpfTevEntryTable = (u32)(base + *(u32*)(base + *(u32*)(base + 0x2C)));
     lbl_eu_80665880 = 1.0f / lenSq2;
     // FOV: tan of the scaled half-angle; its scaled store lands right after
     // the call, ahead of GXClearVtxDesc (retail schedule).
@@ -1341,7 +1341,7 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     GXLoadLightObjImm(&lightObj, GX_LIGHT1);
 
     getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
-        (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838,
+        (mpfsys::UnkClass_80471EC8*)sMpfsysDrawState,
         (GXColor*)&lbl_eu_80665878, (GXColor*)&lbl_eu_8066587C);
 
     GXColor ambColor;
@@ -1350,13 +1350,13 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     GXSetChanMatColor(GX_COLOR0, keyColor);
 
     // Invalidate cached render-state and publish per-view parameters.
-    lbl_eu_80665858 = -1;
-    lbl_eu_80665854 = 1;
-    lbl_eu_8066585A = 0;
-    lbl_eu_8066586C = 0;
-    lbl_eu_80665860 = 0;
-    lbl_eu_80665874 = (u32)a7;
-    lbl_eu_80665870 = (u32)a6;
+    MpfBoundTextureIndex = -1;
+    MpfTevSetupState = 1;
+    MpfGfxMode = 0;
+    MpfTevZModeFlags = 0;
+    sLastBillDrawData = 0;
+    MpfDrawWalkConfig = (u32)a7;
+    MpfSlotChainHead = (u32)a6;
 
     GXColor kColor;
     *(u32*)&kColor = lbl_eu_8066A7A0;
@@ -1384,12 +1384,12 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
 
     // Refresh the scene env-light controller, then reload fog state 0x40.
     scnLgtEnterMode20(((MpfsysSceneCtrl*)Scn_GetCurrentScene())->envLgtCtrl);
-    lbl_eu_8066585C = 0;
+    MpfFogIndex = 0;
     nw4r::g3d::G3DState::LoadFog(0x40);
 }
 
 void mpfsys::UnkClass_80471EC8::setupGfxMode0() {
-    if (lbl_eu_8066585A == 0) {
+    if (MpfGfxMode == 0) {
         return;
     }
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
@@ -1401,20 +1401,20 @@ void mpfsys::UnkClass_80471EC8::setupGfxMode0() {
     GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x1);
     GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
     GXSetArray((GXAttr)0xD, lbl_eu_80665844, 0x8);
-    lbl_eu_8066585A = 0;
-    if (lbl_eu_80665854 != 1) {
+    MpfGfxMode = 0;
+    if (MpfTevSetupState != 1) {
         GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
+        MpfTevSetupState = 1;
     }
-    if (lbl_eu_8066586C & 0x10) {
+    if (MpfTevZModeFlags & 0x10) {
         GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
+        MpfTevZModeFlags &= ~0x10;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::setupGfxMode1() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 1).
-    if (lbl_eu_8066585A == 1) {
+    if (MpfGfxMode == 1) {
         return;
     }
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
@@ -1424,20 +1424,20 @@ void mpfsys::UnkClass_80471EC8::setupGfxMode1() {
     GXClearVtxDesc();
     GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
     GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    lbl_eu_8066585A = 1;
-    if (lbl_eu_80665854 != 1) {
+    MpfGfxMode = 1;
+    if (MpfTevSetupState != 1) {
         GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
+        MpfTevSetupState = 1;
     }
-    if (!(lbl_eu_8066586C & 0x10)) {
+    if (!(MpfTevZModeFlags & 0x10)) {
         GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)0, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C |= 0x10;
+        MpfTevZModeFlags |= 0x10;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::setupGfxMode2() {
     // Fullscreen TEV two-stage setup (idempotent per state 2).
-    if (lbl_eu_8066585A == 2) {
+    if (MpfGfxMode == 2) {
         return;
     }
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
@@ -1452,20 +1452,20 @@ void mpfsys::UnkClass_80471EC8::setupGfxMode2() {
     GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
     GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x2);
     GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    lbl_eu_8066585A = 2;
-    if (lbl_eu_80665854 != 2) {
+    MpfGfxMode = 2;
+    if (MpfTevSetupState != 2) {
         GXSetNumTevStages(2);
-        lbl_eu_80665854 = 2;
+        MpfTevSetupState = 2;
     }
-    if (lbl_eu_8066586C & 0x10) {
+    if (MpfTevZModeFlags & 0x10) {
         GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
+        MpfTevZModeFlags &= ~0x10;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::setupGfxMode3() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 3).
-    if (lbl_eu_8066585A == 3) {
+    if (MpfGfxMode == 3) {
         return;
     }
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
@@ -1476,21 +1476,21 @@ void mpfsys::UnkClass_80471EC8::setupGfxMode3() {
     GXSetVtxDesc((GXAttr)0x0, (GXAttrType)0x1);
     GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
     GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    lbl_eu_8066585A = 3;
-    if (lbl_eu_80665854 != 1) {
+    MpfGfxMode = 3;
+    if (MpfTevSetupState != 1) {
         GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
+        MpfTevSetupState = 1;
     }
-    if (!(lbl_eu_8066586C & 0x10)) {
+    if (!(MpfTevZModeFlags & 0x10)) {
         GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)0, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C |= 0x10;
+        MpfTevZModeFlags |= 0x10;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::setupGfxMode4() {
     // Fullscreen TEV two-stage setup with a texture order on stage 1
     // (idempotent per state 4).
-    if (lbl_eu_8066585A == 4) {
+    if (MpfGfxMode == 4) {
         return;
     }
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
@@ -1507,21 +1507,21 @@ void mpfsys::UnkClass_80471EC8::setupGfxMode4() {
     GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
     GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x2);
     GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    lbl_eu_8066585A = 4;
-    if (lbl_eu_80665854 != 2) {
+    MpfGfxMode = 4;
+    if (MpfTevSetupState != 2) {
         GXSetNumTevStages(2);
-        lbl_eu_80665854 = 2;
+        MpfTevSetupState = 2;
     }
-    if (lbl_eu_8066586C & 0x10) {
+    if (MpfTevZModeFlags & 0x10) {
         GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
+        MpfTevZModeFlags &= ~0x10;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::setupGfxMode5() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 5);
     // position attribute arrives as direct u16 pairs like the texcoord.
-    if (lbl_eu_8066585A == 5) {
+    if (MpfGfxMode == 5) {
         return;
     }
     GXClearVtxDesc();
@@ -1533,34 +1533,34 @@ void mpfsys::UnkClass_80471EC8::setupGfxMode5() {
     GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
     GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
     GXSetArray((GXAttr)0xD, lbl_eu_80665844, 0x8);
-    lbl_eu_8066585A = 5;
-    if (lbl_eu_80665854 != 1) {
+    MpfGfxMode = 5;
+    if (MpfTevSetupState != 1) {
         GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
+        MpfTevSetupState = 1;
     }
-    if (lbl_eu_8066586C & 0x10) {
+    if (MpfTevZModeFlags & 0x10) {
         GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
+        MpfTevZModeFlags &= ~0x10;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::enableAlphaBlend() {
     // One-shot alpha/blend setup: when the 0x2 flag is clear, push the
     // transparent-overlay blend state and set the flag.
-    if (!(lbl_eu_8066586C & 0x2)) {
+    if (!(MpfTevZModeFlags & 0x2)) {
         GXSetAlphaCompare(GX_GEQUAL, 0x1, GX_AOP_AND, GX_LEQUAL, 0xff);
         GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-        lbl_eu_8066586C |= 0x2;
+        MpfTevZModeFlags |= 0x2;
     }
 }
 
 void mpfsys::UnkClass_80471EC8::disableAlphaBlend() {
     // One-shot alpha/blend teardown: when the 0x2 flag is set, push the
     // opaque blend state and clear the flag.
-    if (lbl_eu_8066586C & 0x2) {
+    if (MpfTevZModeFlags & 0x2) {
         GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_AND, GX_LEQUAL, 0xff);
         GXSetBlendMode(GX_BM_NONE, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR);
-        lbl_eu_8066586C &= ~0x2;
+        MpfTevZModeFlags &= ~0x2;
     }
 }
 
@@ -1572,7 +1572,7 @@ void mpfsys::UnkClass_80471EC8::disableAlphaBlend() {
 void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
                                                    u8 layerSel, f32 scale) {
     ml::CVec3* ofs =
-        (ml::CVec3*)(lbl_eu_8066584C[idx].base + idx * 0xC);
+        (ml::CVec3*)(sBillboardCornerTable[idx].base + idx * 0xC);
     Mtx m;
     Mtx out;
     f32 zero = 0.0f;
@@ -1606,7 +1606,7 @@ void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
     PSMTXConcat(lbl_eu_80658458, m, out);
     GXLoadPosMtxImm(out, 3);
     if (layerIdx != 0) {
-        mpfsys::UnkClass_80471EC8* inst = (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838;
+        mpfsys::UnkClass_80471EC8* inst = (mpfsys::UnkClass_80471EC8*)sMpfsysDrawState;
         u8* ent = (u8*)inst->getLayerRecord(layerSel);
         ent += (((u32)idx + layerIdx) & lbl_eu_8066A72C) * 0xB4;
         PSMTXConcat(m, *(Mtx*)(ent + 0x84), out);
@@ -1676,9 +1676,9 @@ void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     u32 w10 = src->w[10];
     u32 w11 = src->w[11];
 
-    lbl_eu_8066586C = flags;
-    lbl_eu_80665874 = (u32)a6;
-    lbl_eu_80665870 = (u32)a5;
+    MpfTevZModeFlags = flags;
+    MpfDrawWalkConfig = (u32)a6;
+    MpfSlotChainHead = (u32)a5;
 
     // Invert a copy of the source view matrix into cam->inv.
     inv->w[0] = w0;
@@ -1751,9 +1751,9 @@ void pushLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     u8* obj = (u8*)self;
     MpfsysDlHead* head =
         (MpfsysDlHead*)(obj + ((MpfsysDrawSrc*)obj)->field_0x24);
-    lbl_eu_8066584C[0].base = obj + head->field_0x0;
-    lbl_eu_80665850 = (u16*)(obj + head->field_0xC);
-    lbl_eu_80665864 = (u32)((u8*)lbl_eu_80665838 + 0x2D00);
+    sBillboardCornerTable[0].base = obj + head->field_0x0;
+    sBillboardTexCoordTable = (u16*)(obj + head->field_0xC);
+    lbl_eu_80665864 = (u32)((u8*)sMpfsysDrawState + 0x2D00);
 }
 
 void mpfsys::UnkClass_80471EC8::loadTevKColor() {
@@ -1763,13 +1763,10 @@ void mpfsys::UnkClass_80471EC8::loadTevKColor() {
     GXSetTevKColor((GXTevKColorID)0, color);
 }
 
-void applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(s32 index) {
-    // Push the channel-material colour for table entry `index` of the shared
-    // RGB565 colour table. The retail symbol is annotated Fv: r3 carries the
-    // table index and is never dereferenced, so the literal mangled name is
-    // kept (func_8047233C precedent) - a const member would mangle to
-    // ...CFv and never resolve against the retail ...Fv symbol.
-    u16 rgb565 = lbl_eu_80665850[index];
+void mpfsys::UnkClass_80471EC8::applyMatColor() {
+    // Push the channel-material colour for the table entry selected by the
+    // receiver value itself: r3 is consumed as an index, never dereferenced.
+    u16 rgb565 = sBillboardTexCoordTable[(u32)this];
     GXColor color = lbl_eu_8066A7D0;
     color.r = ((rgb565 >> 11) & 0x1F) << 3;
     color.g = ((rgb565 >> 5) & 0x3F) << 2;
@@ -1780,7 +1777,7 @@ void applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(s32 index) {
 void mpfsys::UnkClass_80471EC8::applyTevColor() {
     // Same RGB565->GXColor expansion as func_80474CF4 (alpha byte from
     // lbl_eu_8066A7D4), pushed as TEV register colour 0.
-    u16 rgb565 = lbl_eu_80665850[(u32)this];
+    u16 rgb565 = sBillboardTexCoordTable[(u32)this];
     GXColor color = lbl_eu_8066A7D4;
     color.r = ((rgb565 >> 11) & 0x1F) << 3;
     color.g = ((rgb565 >> 5) & 0x3F) << 2;
@@ -1804,10 +1801,10 @@ void mpfsys::UnkClass_80471EC8::setFogIndex() {
     // is written as a no-arg member: r3 (this) itself carries the new fog
     // index value and is compared/stored/loaded without ever being
     // dereferenced.
-    if ((s32)lbl_eu_8066585C == (s32)(u32)this) {
+    if ((s32)MpfFogIndex == (s32)(u32)this) {
         return;
     }
-    lbl_eu_8066585C = (s16)(u32)this;
+    MpfFogIndex = (s16)(u32)this;
     if ((u32)this != 0) {
         nw4r::g3d::G3DState::LoadFog((s32)(u32)this - 1);
     } else {
@@ -1819,9 +1816,9 @@ void mpfsys::UnkClass_80471EC8::resetAmbient(void) {
     // One-shot ambient-color push: when the 0x20 "ambient set" flag is set,
     // clear it and push the shared ambient color (lbl_eu_80665878) for
     // channel 0.
-    u32 flags = lbl_eu_8066586C;
+    u32 flags = MpfTevZModeFlags;
     if (flags & 0x20) {
-        lbl_eu_8066586C = flags & ~0x20;
+        MpfTevZModeFlags = flags & ~0x20;
         GXColor color;
         *(u32*)&color = lbl_eu_80665878;
         GXSetChanAmbColor(GX_COLOR0, color);
@@ -1831,11 +1828,11 @@ void mpfsys::UnkClass_80471EC8::resetAmbient(void) {
 void mpfsys::UnkClass_80471EC8::applyAmbient(void) {
     // One-shot ambient-color push: when the 0x20 flag is clear, push the
     // shared ambient color (lbl_eu_8066587C) for channel 0, then set the flag.
-    if (!(lbl_eu_8066586C & 0x20)) {
+    if (!(MpfTevZModeFlags & 0x20)) {
         GXColor color;
         *(u32*)&color = lbl_eu_8066587C;
         GXSetChanAmbColor(GX_COLOR0, color);
-        lbl_eu_8066586C |= 0x20;
+        MpfTevZModeFlags |= 0x20;
     }
 }
 
@@ -1851,20 +1848,20 @@ void mpfsys::UnkClass_80471EC8::resetTevSwap() {
 void mpfsys::UnkClass_80471EC8::disableZMode() {
     // One-shot Z-mode disable: when the 0x40 "Z configured" flag is set,
     // clear it and push GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE).
-    if (!(lbl_eu_8066586C & 0x40)) {
+    if (!(MpfTevZModeFlags & 0x40)) {
         return;
     }
-    lbl_eu_8066586C &= ~0x40;
+    MpfTevZModeFlags &= ~0x40;
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 }
 
 void mpfsys::UnkClass_80471EC8::enableZMode() {
     // One-shot Z-mode enable: when the 0x40 flag is clear, set it and push
     // GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE).
-    if (lbl_eu_8066586C & 0x40) {
+    if (MpfTevZModeFlags & 0x40) {
         return;
     }
-    lbl_eu_8066586C |= 0x40;
+    MpfTevZModeFlags |= 0x40;
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
 }
 
@@ -1899,12 +1896,12 @@ char lbl_eu_80663864[4] = {'r', 'e', 'f', '\0'};
 Mtx lbl_eu_80658458;
 
 // [.sbss] 0x80665860-0x80665888 (0x28 = 40B) zero-fill
-u32 lbl_eu_80665860;
+u32 sLastBillDrawData;
 u32 lbl_eu_80665864;
-u32 lbl_eu_80665868;
-u32 lbl_eu_8066586C;
-u32 lbl_eu_80665870;
-u32 lbl_eu_80665874;
+u32 MpfTevEntryTable;
+u32 MpfTevZModeFlags;
+u32 MpfSlotChainHead;
+u32 MpfDrawWalkConfig;
 u32 lbl_eu_80665878;
 u32 lbl_eu_8066587C;
 f32 lbl_eu_80665880;

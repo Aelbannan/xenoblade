@@ -115,11 +115,11 @@ extern const float lbl_eu_80667A8C;
 // u16 pair tables read at element [1] by CfCmd_PartyMenuDisp's cmd-0x19 path.
 // Sized [2]: MWCC only assumes .sbss small-data addressing (sda21 reloc)
 // for extern arrays whose bounds are visible.
-extern u16 lbl_eu_80663E48[2];
-extern u16 lbl_eu_80663E4C[2];
+extern u16 gmFlagPairs48[2];
+extern u16 gmFlagPairs4C[2];
 
 // Object id looked up by CfCmd_PartyRebuild through func_8007FF6C (.sdata halfword).
-extern const u16 lbl_eu_80663E40;
+extern const u16 gmInitArg;
 
 
 // CfGameManager pre-mangled imports (same convention as CPartyStateWin.hpp:

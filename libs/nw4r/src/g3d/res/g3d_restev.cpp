@@ -3,10 +3,6 @@
 #include <revolution/BASE.h>
 #include <revolution/GX.h>
 
-// Retail-owned data (nw4r_data.s): GX channel ID -> RAS channel ID conversion
-// table used by ResTev::GXSetTevOrder.
-extern const u8 lbl_eu_805690C0[];
-
 namespace nw4r {
 namespace g3d {
 
@@ -263,7 +259,7 @@ void ResTev::GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
 
     // Retail duplicates the BP register computation and the write in both arms
     if (op <= 1) {
-        u32 cmd = (clamp << 19) | (bias << 16) | ((op & 1) << 18);
+        u32 cmd = ((op & 1) << 18) | (bias << 16) | (clamp << 19);
         u32 t = (reg << 22) | (scale << 20);
 
         detail::ResWriteBPCmd(pCmd,
@@ -331,6 +327,11 @@ namespace g3d {
 #pragma dont_inline on  // noinline-ok: retail keeps bl GXSetTevOrder in SetNumTevStages (single-call-site fold); -ipa off and -inline noauto both lose other fns
 void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
                            GXTexMapID map, GXChannelID channel) {
+    static u8 channelToRas[32] = {
+        0, 1, 0, 1, 0, 1, 7, 5, 6, 0, 0, 0, 0, 0, 0, 7,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    };
+
     GXTexCoordID coord2;
     GXTexMapID map2;
 
@@ -352,7 +353,7 @@ void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
     detail::ResWriteBPCmd(pCmd,
         ((((coord & 7) << 3 | (map & 7) |
               (((map != 0xFF && (map & 0x100) == 0) ? 1 : 0) << 6)) |
-            (lbl_eu_805690C0[channel & 0xF] << 7))
+            (channelToRas[channel & 0xF] << 7))
            << shift) |
             ((n + 0x28) << GX_BP_OPCODE_SHIFT),
         (0x3FF << shift) | (0xFF << GX_BP_OPCODE_SHIFT));
@@ -370,7 +371,7 @@ void ResTev::GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
     u8* pCmd = ref().dl.dl.var[stage / 2].dl.tevColorCalc[stage % 2];
 
     if (op <= GX_TEV_SUB) {
-        u32 cmd = (bias << 16) | (clamp << 19);
+        u32 cmd = (clamp << 19) | (bias << 16);
         u32 t = (reg << 22) | (scale << 20);
 
         detail::ResWriteBPCmd(pCmd,

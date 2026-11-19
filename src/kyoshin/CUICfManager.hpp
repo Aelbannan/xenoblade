@@ -80,7 +80,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base);          // slot dispat
 extern "C" int CUICfManager_prepareMenus(); // flat helper using the real manager fields
 // --- flat imports for the free-menu helpers (CUICfManager_dispatchFreeSlot family) ---
 // Caller-shape CTaskGame imports (the full CTaskGame.hpp conflicts with this
-// TU's local flat decls for Scn_QueryUnk80State / lbl_eu_80663E14; declared with
+// TU's local flat decls for Scn_QueryUnk80State / gmScene; declared with
 // the verbatim retail names per the CLibCri caller-shape scheme in CTaskGame.hpp).
 class CTaskGame;
 // Sound/battle-state gates (member-shaped C-ABI imports; CfSoundMan.hpp and
@@ -391,6 +391,10 @@ public:
     class CTest : public CTTask<CTest> {
     public:
         ~CTest();
+        void Init();
+        void Term();
+        void Move();
+        void Draw();
     };
 
     static CUICfManager* spInstance;

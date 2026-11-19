@@ -7,6 +7,7 @@
 #include <revolution/mtx/mtxvec.h>
 #include <cstring>
 #include "monolib/coli/CColiProc.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "monolib/util/MemManager.hpp"
 
 // CColiProcTarget/CColiProc definitions live in CColiProc.hpp (single source).
@@ -96,18 +97,12 @@ static inline CColiTable* colitable(CColiWork* work) {
     return (CColiTable*)work->field_0x0;
 }
 
-// Owner whose +0x7C holds the ALLOC_HANDLE used for the output buffer.
-struct CColiAllocOwner {
-    u8 field_0x0[0x7C];
-    mtl::ALLOC_HANDLE field_0x7C;
-};
-// Shared bss globals (set/read by this routine and by siblings).
+
 extern u32 g_coliSpecTable;
 extern CColiBounds* g_coliBounds;
 extern CColiQx* g_coliXformPos;
 extern CColiHx* g_coliHalfExtent;
 extern s16 g_coliNodeIndex;
-extern CColiAllocOwner* lbl_eu_80665958;
 
 // Compute the packed buffer size for every entry, allocate it, then fill it
 // by dispatching each entry's data through ColiSpecDataHandlers[type]. Returns an
@@ -137,7 +132,7 @@ extern "C" int ColiProc_ClassifyEntries(CColiWork* work, u16* outIndex, void** o
     u8* buf = nullptr;
     if (total != 0) {
         buf = (u8*)mtl::MemManager::allocate_head(
-            lbl_eu_80665958->field_0x7C, (u32)total, 0x20);
+            sEneColiProbe->field_0x7C, (u32)total, 0x20);
     }
 
     // Pass 2: dispatch each entry's handler and pack its data into buf.

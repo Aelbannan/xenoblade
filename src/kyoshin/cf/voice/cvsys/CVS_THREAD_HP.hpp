@@ -76,15 +76,10 @@ struct CVoiceHandleState {
 };
 
 
-// Init-state triple for this thread variant.
-extern u32 lbl_eu_80539C04[3];
-
-// Init-state triple restored by the advance/play function HpVoice_PlayChange.
+// Init-state triple restored by CVS_THREAD_HP::playChange.
 extern u32 lbl_eu_80539C10[3];
 
-// Init-state triple copied by the factory __ct__802A7254.
-extern u32 lbl_eu_80539BF8[3];
-
+// CVS_THREAD_HP vtable installed by the factory.
 extern u32 lbl_eu_80539C1C[7];
 
 // HP-ratio thresholds used by the factory to pick the HP-change voice ID.
@@ -113,5 +108,11 @@ public:
     int field_0x24;            // 0x24: voice ID for HP-change playback
 
     int blank1() override;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void advancePlay();
+    void playChange();
+    void notifyComplete();
+
     static CVS_THREAD_HP* create(CVoiceHandle* handle, int arg);
 };

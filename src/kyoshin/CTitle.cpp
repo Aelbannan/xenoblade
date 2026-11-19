@@ -230,7 +230,7 @@ extern "C" __declspec(noinline) void CTitleMenu_build(CTitleMenu* self, nw4r::ly
     bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans4, self->mAccessor, &strs[0xda]);
     bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans5, self->mAccessor, &strs[0xf2]);
     self->mLayout->UnbindAllAnimation();
-    if ((lbl_eu_80663E28 & 0x40000000) != 0) {
+    if ((gmPauseFlags & 0x40000000) != 0) {
         // MWCC evaluates args right-to-left: colorA is built first.
         PaneMatSetTevColorsByName(self->mLayout, &strs[0x109],
                       setGXColorS10(&colorB, 0x80, 0x80, 0x80, 0x00),
@@ -615,7 +615,7 @@ extern "C" int CTitle_confirmSelection(CTitle* self) {
     }
     self->field_0x20->vf01(self->field_0x25);
     int result = 0;
-    if (self->field_0x25 == 1 && (lbl_eu_80663E28 & 0x40000000) != 0) {
+    if (self->field_0x25 == 1 && (gmPauseFlags & 0x40000000) != 0) {
         result = 1;
     }
     if (result != 0) {

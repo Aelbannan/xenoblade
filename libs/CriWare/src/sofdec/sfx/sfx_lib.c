@@ -23,7 +23,7 @@ const unsigned char lbl_eu_8051D1AC[108] = {
 void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height);
 
 /* ---- SFX library global state ----
- * lbl_eu_80619C10 is a 0x528-byte structure:
+ * sfxlib_state is a 0x528-byte structure:
  *   +0x00: init_count (number of times SFX_Init called)
  *   +0x04: max_handles
  *   +0x08: error_fn (function pointer)
@@ -55,39 +55,37 @@ typedef struct SFXLibState {
     u8 _518[0x10];        /* 0x518 - pad to 0x528 */
 } SFXLibState;
 
-/* Root block at lbl_eu_80619C00: 0x10-byte header followed by the 0x528-byte
- * library state. SFX_Init zeroes/reinits the library part. */
-typedef struct SFXRoot {
+/* The 0x10-byte header and the 0x528-byte library state are separate retail
+ * objects; SFX_Init zeroes/reinits the library part. */
+typedef struct SFXLibHeader {
     s32 init_count;                      /* 0x00 */
     s32 field_0x04;                      /* 0x04 */
     void (*default_error_fn)(u32, const char*); /* 0x08 */
     u32 field_0x0C;                      /* 0x0C */
-    SFXLibState lib;                     /* 0x10 */
-} SFXRoot;
-SFXRoot lbl_eu_80619C00;
-#define lbl_eu_80619C10 (lbl_eu_80619C00.lib)
-#define lbl_eu_80619C04 (lbl_eu_80619C00.field_0x04)
+} SFXLibHeader;
+SFXLibHeader sfxlib_header;
+SFXLibState sfxlib_state;
 #define lbl_eu_8051D178_str lbl_eu_8051D178
 
 
 void SFX_Init(void) {
-    if (lbl_eu_80619C00.init_count < 1) {
-        lbl_eu_80619C00.default_error_fn = (void (*)(u32, const char*))&lbl_eu_8051D178;
-        memset(&lbl_eu_80619C00.lib, 0, sizeof(SFXLibState));
-        lbl_eu_80619C00.lib.max_handles = 8;
-        lbl_eu_80619C00.lib.ccirFx = 1;
+    if (sfxlib_header.init_count < 1) {
+        sfxlib_header.default_error_fn = (void (*)(u32, const char*))&lbl_eu_8051D178;
+        memset(&sfxlib_state, 0, sizeof(SFXLibState));
+        sfxlib_state.max_handles = 8;
+        sfxlib_state.ccirFx = 1;
         CFT_Init();
         SFXSUD_Init();
         SFXZ_Init();
         SFXA_Init();
-        lbl_eu_80619C00.field_0x04 = 0;
-        lbl_eu_80619C00.init_count++;
+        sfxlib_header.field_0x04 = 0;
+        sfxlib_header.init_count++;
     }
 }
 
 void SFX_SetErrFn(void (*fn)(u32, const char*), u32 arg) {
-    lbl_eu_80619C10.error_fn = fn;
-    lbl_eu_80619C10.error_arg = arg;
+    sfxlib_state.error_fn = fn;
+    sfxlib_state.error_arg = arg;
 }
 
 /* Walk the handle pool for a free slot; returns the slot pointer or NULL.
@@ -97,8 +95,8 @@ static inline SFXHandlePoolEntry* SFX_FindFreeHandle(void) {
     SFXHandlePoolEntry* p;
     s32 count;
 
-    p = lbl_eu_80619C10.handle;
-    count = lbl_eu_80619C10.max_handles;
+    p = sfxlib_state.handle;
+    count = sfxlib_state.max_handles;
     while (count > 0) {
         if (p->active == 0) {
             return p;
@@ -125,9 +123,9 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
 
     zmv = SFXZ_Create();
         if (zmv == NULL) {
-            lbl_eu_80619C10.error_count++;
-            if (lbl_eu_80619C10.error_fn) {
-                lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+            sfxlib_state.error_count++;
+            if (sfxlib_state.error_fn) {
+                sfxlib_state.error_fn(sfxlib_state.error_arg,
                                          (const char*)&lbl_eu_8051D1AC[0x29]);
             }
             if (hn != NULL) {
@@ -136,7 +134,7 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
                 hn->active = 0;
                 SFXZ_Destroy(z);
                 SFXA_Destroy((void*)a);
-                lbl_eu_80619C10.init_count--;
+                sfxlib_state.init_count--;
             }
             return NULL;
         } else {
@@ -146,12 +144,12 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
         if (alp != NULL) {
             hn->field_0x30 = (u32)alp;
 
-            lbl_eu_80619C10.init_count++;
+            sfxlib_state.init_count++;
             return (SFXHandleState*)hn;
         } else {
-            lbl_eu_80619C10.error_count++;
-            if (lbl_eu_80619C10.error_fn) {
-                lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+            sfxlib_state.error_count++;
+            if (sfxlib_state.error_fn) {
+                sfxlib_state.error_fn(sfxlib_state.error_arg,
                                          (const char*)&lbl_eu_8051D1AC[0x48]);
             }
             if (hn != NULL) {
@@ -160,15 +158,15 @@ SFXHandleState* SFX_Create(u32 width, s32 height) {
                 hn->active = 0;
                 SFXZ_Destroy(z);
                 SFXA_Destroy((void*)a);
-                lbl_eu_80619C10.init_count--;
+                sfxlib_state.init_count--;
             }
             return NULL;
         }
         }
     } else {
-        lbl_eu_80619C10.error_count++;
-        if (lbl_eu_80619C10.error_fn) {
-            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+        sfxlib_state.error_count++;
+        if (sfxlib_state.error_fn) {
+            sfxlib_state.error_fn(sfxlib_state.error_arg,
                                      (const char*)lbl_eu_8051D1AC);
         }
         return NULL;
@@ -207,22 +205,22 @@ void SFX_Destroy(SFXHandleState* hn) {
     hn->active = 0;
     SFXZ_Destroy(zmv);
     SFXA_Destroy((void*)f30);
-    lbl_eu_80619C10.init_count--;
+    sfxlib_state.init_count--;
 }
 
 void SFXLIB_Error(void* self, void* stmInf, const char* msg) {
-    void (*fn)(u32, const char*) = lbl_eu_80619C10.error_fn;
-    u32 arg = lbl_eu_80619C10.error_arg;
-    lbl_eu_80619C10.error_count++;
+    void (*fn)(u32, const char*) = sfxlib_state.error_fn;
+    u32 arg = sfxlib_state.error_arg;
+    sfxlib_state.error_count++;
     if (fn) {
         fn(arg, msg);
     }
 }
 
 u32 SFX_SetCcirFx(void) {
-    return lbl_eu_80619C10.ccirFx;
+    return sfxlib_state.ccirFx;
 }
 
 u32 SFX_GetForceSplitField(void) {
-    return lbl_eu_80619C04;
+    return sfxlib_header.field_0x04;
 }

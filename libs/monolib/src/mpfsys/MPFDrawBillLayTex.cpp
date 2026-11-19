@@ -46,25 +46,22 @@ struct MPFDrawBillPairList {
 };
 
 extern "C" {
-    s8 lbl_eu_806658B0;
-    mpfsys::MPFDrawBillLayTex* lbl_eu_806658B4;
+    s8 sBillLayTexInitialised;
+    mpfsys::MPFDrawBillLayTex* sBillLayTexInstance;
     extern "C" u32 lbl_eu_8056DC00[4];  // retail singleton vtable (defined below)
 
-    extern MPFDrawBillData* lbl_eu_80665860;
-    extern void* lbl_eu_80665838;
-    extern Mtx lbl_eu_80658428;
-    extern Vec* lbl_eu_8066584C;
-    extern u16* lbl_eu_80665850;
+    extern MPFDrawBillData* sLastBillDrawData;
+    extern void* sMpfsysDrawState;
+    extern Mtx sBillboardViewMatrix;
+    extern Vec* sBillboardCornerTable;
+    extern u16* sBillboardTexCoordTable;
 
-    extern const u32 lbl_eu_80523E00[4];
-    extern const u32 lbl_eu_80523E10[4];
+    extern const u32 sBillBlendOrderAsc[4];
+    extern const u32 sBillBlendOrderDesc[4];
 
-    extern s32 lbl_eu_8066A728;
+    extern const s32 MpfBillboardCount;
     extern u32 lbl_eu_8066A72C;
     extern f32 lbl_eu_8066A730;
-    extern f32 lbl_eu_8066A848;
-    extern f32 lbl_eu_8066A84C;
-    extern f32 lbl_eu_8066A850;
 
     Vec* Coli_GetBitTable_5A68(void);
 
@@ -86,11 +83,11 @@ extern "C" {
 namespace mpfsys {
 
 MPFDrawBillLayTex* MPFDrawBillLayTex::getInstance() {
-    if (!lbl_eu_806658B0) {
-        lbl_eu_806658B4 = (mpfsys::MPFDrawBillLayTex*)&lbl_eu_8056DC00;
-        lbl_eu_806658B0 = 1;
+    if (!sBillLayTexInitialised) {
+        sBillLayTexInstance = (mpfsys::MPFDrawBillLayTex*)&lbl_eu_8056DC00;
+        sBillLayTexInitialised = 1;
     }
-    return (MPFDrawBillLayTex*)&lbl_eu_806658B4;
+    return (MPFDrawBillLayTex*)&sBillLayTexInstance;
 }
 
 } // namespace mpfsys
@@ -111,22 +108,22 @@ extern "C" void calcBillCorners(MPFDrawBillData* billboard, Vec* positions) {
         Vec left;
         Vec right;
         left.x = -billboard->halfWidth;
-        left.y = lbl_eu_8066A848;
-        left.z = lbl_eu_8066A848;
+        left.y = 0.0f;
+        left.z = 0.0f;
         right.x = billboard->halfWidth;
-        right.y = lbl_eu_8066A848;
-        right.z = lbl_eu_8066A848;
-        PSMTXMultVec(lbl_eu_80658428, &left, &positions[0]);
-        PSMTXMultVec(lbl_eu_80658428, &right, &positions[1]);
+        right.y = 0.0f;
+        right.z = 0.0f;
+        PSMTXMultVec(sBillboardViewMatrix, &left, &positions[0]);
+        PSMTXMultVec(sBillboardViewMatrix, &right, &positions[1]);
 
-        if (billboard->layerDepth != lbl_eu_8066A848) {
-            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-            s32 count = lbl_eu_8066A728;
-            f32 v = lbl_eu_8066A84C;
+        if (billboard->layerDepth != 0.0f) {
+            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(sMpfsysDrawState, billboard->layerIndex);
+            s32 count = MpfBillboardCount;
+            f32 v = 1.0f;
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
-            f32 scale = lbl_eu_8066A850;
+            f32 scale = 0.5f;
             v -= scale * billboard->layerDepth;
-            f32 zero = lbl_eu_8066A848;
+            f32 zero = 0.0f;
             v += scale * step;
             for (s32 i = 0; i < count; i++) {
                 f32 y = height * v;
@@ -136,8 +133,8 @@ extern "C" void calcBillCorners(MPFDrawBillData* billboard, Vec* positions) {
                 layerLeft.z = zero;
                 layerRight.y = y;
                 layerRight.z = zero;
-                PSMTXMultVec(lbl_eu_80658428, &layerLeft, &layerLeft);
-                PSMTXMultVec(lbl_eu_80658428, &layerRight, &layerRight);
+                PSMTXMultVec(sBillboardViewMatrix, &layerLeft, &layerLeft);
+                PSMTXMultVec(sBillboardViewMatrix, &layerRight, &layerRight);
                 PSMTXMultVec(layers->matrix, &layerLeft, &positions[2 + i * 2]);
                 PSMTXMultVec(layers->matrix, &layerRight, &positions[3 + i * 2]);
                 v += step;
@@ -147,39 +144,39 @@ extern "C" void calcBillCorners(MPFDrawBillData* billboard, Vec* positions) {
             layerRight.x = billboard->halfWidth;
             layerLeft.x = -billboard->halfWidth;
             layerLeft.y = height;
-            layerLeft.z = lbl_eu_8066A848;
+            layerLeft.z = 0.0f;
             layerRight.y = height;
-            layerRight.z = lbl_eu_8066A848;
-            PSMTXMultVec(lbl_eu_80658428, &layerLeft, &layerLeft);
-            PSMTXMultVec(lbl_eu_80658428, &layerRight, &layerRight);
-            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-            s32 count = lbl_eu_8066A728;
+            layerRight.z = 0.0f;
+            PSMTXMultVec(sBillboardViewMatrix, &layerLeft, &layerLeft);
+            PSMTXMultVec(sBillboardViewMatrix, &layerRight, &layerRight);
+            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(sMpfsysDrawState, billboard->layerIndex);
+            s32 count = MpfBillboardCount;
             for (s32 i = 0; i < count; i++) {
                 PSMTXMultVec(layers->matrix, &layerLeft, &positions[2 + i * 2]);
                 PSMTXMultVec(layers->matrix, &layerRight, &positions[3 + i * 2]);
                 layers++;
             }
         }
-    } else if (billboard->layerDepth != lbl_eu_8066A848) {
+    } else if (billboard->layerDepth != 0.0f) {
         Vec layerLeft;
         Vec layerRight;
         Vec left;
         Vec right;
         left.x = -billboard->halfWidth;
-        left.y = lbl_eu_8066A848;
-        left.z = lbl_eu_8066A848;
+        left.y = 0.0f;
+        left.z = 0.0f;
         right.x = billboard->halfWidth;
-        right.y = lbl_eu_8066A848;
-        right.z = lbl_eu_8066A848;
-        PSMTXMultVec(lbl_eu_80658428, &left, &positions[0]);
-        PSMTXMultVec(lbl_eu_80658428, &right, &positions[1]);
-        getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-        s32 count = lbl_eu_8066A728;
-        f32 v = lbl_eu_8066A84C;
+        right.y = 0.0f;
+        right.z = 0.0f;
+        PSMTXMultVec(sBillboardViewMatrix, &left, &positions[0]);
+        PSMTXMultVec(sBillboardViewMatrix, &right, &positions[1]);
+        getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(sMpfsysDrawState, billboard->layerIndex);
+        s32 count = MpfBillboardCount;
+        f32 v = 1.0f;
         f32 step = billboard->layerDepth * lbl_eu_8066A730;
-        f32 scale = lbl_eu_8066A850;
+        f32 scale = 0.5f;
         v -= scale * billboard->layerDepth;
-        f32 zero = lbl_eu_8066A848;
+        f32 zero = 0.0f;
         v += scale * step;
         for (s32 i = 0; i < count; i++) {
             f32 y = height * v;
@@ -189,12 +186,12 @@ extern "C" void calcBillCorners(MPFDrawBillData* billboard, Vec* positions) {
             layerLeft.z = zero;
             layerRight.y = y;
             layerRight.z = zero;
-            PSMTXMultVec(lbl_eu_80658428, &layerLeft, &positions[2 + i * 2]);
-            PSMTXMultVec(lbl_eu_80658428, &layerRight, &positions[3 + i * 2]);
+            PSMTXMultVec(sBillboardViewMatrix, &layerLeft, &positions[2 + i * 2]);
+            PSMTXMultVec(sBillboardViewMatrix, &layerRight, &positions[3 + i * 2]);
             v += step;
         }
     } else {
-        f32 zero = lbl_eu_8066A848;
+        f32 zero = 0.0f;
         positions[0].x = -billboard->halfWidth;
         positions[0].y = zero;
         positions[0].z = zero;
@@ -207,16 +204,16 @@ extern "C" void calcBillCorners(MPFDrawBillData* billboard, Vec* positions) {
         positions[3].x = billboard->halfWidth;
         positions[3].y = height;
         positions[3].z = zero;
-        PSMTXMultVec(lbl_eu_80658428, &positions[0], &positions[0]);
-        PSMTXMultVec(lbl_eu_80658428, &positions[1], &positions[1]);
-        PSMTXMultVec(lbl_eu_80658428, &positions[2], &positions[2]);
-        PSMTXMultVec(lbl_eu_80658428, &positions[3], &positions[3]);
+        PSMTXMultVec(sBillboardViewMatrix, &positions[0], &positions[0]);
+        PSMTXMultVec(sBillboardViewMatrix, &positions[1], &positions[1]);
+        PSMTXMultVec(sBillboardViewMatrix, &positions[2], &positions[2]);
+        PSMTXMultVec(sBillboardViewMatrix, &positions[3], &positions[3]);
     }
 }
 
 extern "C" void drawBillIndexed(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillIndexList* list) {
     s32 mask = -1;
-    if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
+    if (!(billboard->flags & 2) && billboard->layerDepth == 0.0f) {
         mask = 0;
     }
 
@@ -226,7 +223,7 @@ extern "C" void drawBillIndexed(MPFDrawBillData* billboard, Vec* positions, MPFD
     for (u32 i = 0; i < count - 1; i++, index++) {
         u32 value = *index;
         u32 first = ((value & lbl_eu_8066A72C) << 1 & mask) + 2;
-        const Vec* corner = &lbl_eu_8066584C[value];
+        const Vec* corner = &sBillboardCornerTable[value];
         nw4r::math::VEC3 vertex0;
         nw4r::math::VEC3 vertex2;
         nw4r::math::VEC3 vertex3;
@@ -236,28 +233,28 @@ extern "C" void drawBillIndexed(MPFDrawBillData* billboard, Vec* positions, MPFD
         nw4r::math::VEC3Add(&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first]);
         nw4r::math::VEC3Add(&vertex3, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first + 1]);
 
-        const u32* order = lbl_eu_80523E00;
+        const u32* order = sBillBlendOrderAsc;
         if (value & 1) {
-            order = lbl_eu_80523E10;
+            order = sBillBlendOrderDesc;
         }
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[0]]);
         GXPosition3f32(vertex2.x, vertex2.y, vertex2.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[1]]);
         GXPosition3f32(vertex3.x, vertex3.y, vertex3.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[2]]);
         GXPosition3f32(vertex1.x, vertex1.y, vertex1.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[3]]);
     }
 }
 
 extern "C" void drawBillPaired(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillPairList* list) {
     s32 mask = -1;
-    if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
+    if (!(billboard->flags & 2) && billboard->layerDepth == 0.0f) {
         mask = 0;
     }
 
@@ -270,7 +267,7 @@ extern "C" void drawBillPaired(MPFDrawBillData* billboard, Vec* positions, MPFDr
         u32 base = (value & lbl_eu_8066A72C) << 1;
         base &= mask;
         u32 first = base + 2;
-        const Vec* corner = &lbl_eu_8066584C[value];
+        const Vec* corner = &sBillboardCornerTable[value];
         nw4r::math::VEC3 vertex0;
         nw4r::math::VEC3 vertex2;
         nw4r::math::VEC3 vertex3;
@@ -280,30 +277,30 @@ extern "C" void drawBillPaired(MPFDrawBillData* billboard, Vec* positions, MPFDr
         nw4r::math::VEC3Add(&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first]);
         nw4r::math::VEC3Add(&vertex3, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first + 1]);
 
-        const u32* order = (value & 1) ? lbl_eu_80523E10 : lbl_eu_80523E00;
+        const u32* order = (value & 1) ? sBillBlendOrderDesc : sBillBlendOrderAsc;
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[0]]);
         GXPosition3f32(vertex2.x, vertex2.y, vertex2.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[1]]);
         GXPosition3f32(vertex3.x, vertex3.y, vertex3.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[2]]);
         GXPosition3f32(vertex1.x, vertex1.y, vertex1.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[order[3]]);
     }
 }
 
 extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
-    if (lbl_eu_80665860 != billboard) {
+    if (sLastBillDrawData != billboard) {
         setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
         bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
         calcBillCorners(billboard, positions);
-        lbl_eu_80665860 = billboard;
+        sLastBillDrawData = billboard;
     }
     if (billboard->flags & 1) {
         enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -322,11 +319,11 @@ extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillbo
 
 extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
-    if (lbl_eu_80665860 != billboard) {
+    if (sLastBillDrawData != billboard) {
         setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
         bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
         calcBillCorners(billboard, positions);
-        lbl_eu_80665860 = billboard;
+        sLastBillDrawData = billboard;
     }
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
@@ -352,12 +349,12 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
         MPFDrawBillLayer* layers;
         s32 count;
         Vec* out = positions;
-        if (billboard->layerDepth != lbl_eu_8066A848) {
-            layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+        if (billboard->layerDepth != 0.0f) {
+            layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(sMpfsysDrawState, billboard->layerIndex);
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
-            count = lbl_eu_8066A728;
-            f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
-            f32 zero = lbl_eu_8066A848;
+            count = MpfBillboardCount;
+            f32 v = 0.5f * step + (1.0f - 0.5f * billboard->layerDepth);
+            f32 zero = 0.0f;
             for (s32 i = 0; i < count; i++) {
                 f32 y = billboard->halfHeight * v;
                 vertex1.x = billboard->halfWidth;
@@ -381,7 +378,7 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
                 out += 4;
             }
         } else {
-            f32 zero = lbl_eu_8066A848;
+            f32 zero = 0.0f;
             vertex0.y = billboard->halfHeight;
             vertex0.x = -billboard->halfWidth;
             vertex0.z = zero;
@@ -394,8 +391,8 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
             vertex3.x = zero;
             vertex3.y = billboard->halfHeight;
             vertex3.z = billboard->halfWidth;
-            layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-            count = lbl_eu_8066A728;
+            layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(sMpfsysDrawState, billboard->layerIndex);
+            count = MpfBillboardCount;
             for (s32 i = 0; i < count; i++) {
                 PSMTXMultVec(layers->matrix, &vertex0, out);
                 PSMTXMultVec(layers->matrix, &vertex1, out + 1);
@@ -406,7 +403,7 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
             }
         }
         if ((billboard->flags & 4) && count > 0) {
-            s32 n = lbl_eu_8066A728;
+            s32 n = MpfBillboardCount;
             for (s32 j = 0; j < n; j++) {
                 positions[0].y = -positions[0].y;
                 positions[1].y = -positions[1].y;
@@ -417,12 +414,12 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
         }
     } else {
         Vec* out = positions;
-        if (billboard->layerDepth != lbl_eu_8066A848) {
-            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-            s32 count = lbl_eu_8066A728;
+        if (billboard->layerDepth != 0.0f) {
+            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(sMpfsysDrawState, billboard->layerIndex);
+            s32 count = MpfBillboardCount;
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
-            f32 zero = lbl_eu_8066A848;
-            f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
+            f32 zero = 0.0f;
+            f32 v = 0.5f * step + (1.0f - 0.5f * billboard->layerDepth);
             for (s32 i = 0; i < count; i++) {
                 vertex0.x = -billboard->halfWidth;
                 vertex0.y = billboard->halfHeight * v;
@@ -444,7 +441,7 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
                 out += 4;
             }
             if ((billboard->flags & 4) && count > 0) {
-                s32 n = lbl_eu_8066A728;
+                s32 n = MpfBillboardCount;
                 for (s32 j = 0; j < n; j++) {
                     positions[0].y = -positions[0].y;
                     positions[1].y = -positions[1].y;
@@ -454,7 +451,7 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
                 }
             }
         } else {
-            f32 zero = lbl_eu_8066A848;
+            f32 zero = 0.0f;
             positions[0].y = billboard->halfHeight;
             positions[0].x = -billboard->halfWidth;
             positions[0].z = zero;
@@ -479,13 +476,13 @@ extern "C" void setupBillDraw(void*, MPFDrawBillData* billboard, Vec* positions)
 
 extern "C" void submitBillIndexed(void* self, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
-    if (lbl_eu_80665860 != billboard) {
+    if (sLastBillDrawData != billboard) {
         setupBillDraw(self, billboard, positions);
-        lbl_eu_80665860 = billboard;
+        sLastBillDrawData = billboard;
     }
 
     s32 mask = -1;
-    if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
+    if (!(billboard->flags & 2) && billboard->layerDepth == 0.0f) {
         mask = 0;
     }
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
@@ -507,7 +504,7 @@ extern "C" void submitBillIndexed(void* self, MPFDrawBillData* billboard, MPFDra
         u32 value = *index;
         u32 base = (value & lbl_eu_8066A72C) << 2;
         base &= mask;
-        const Vec* corner = &lbl_eu_8066584C[value];
+        const Vec* corner = &sBillboardCornerTable[value];
         Vec vertex0;
         Vec vertex1;
         Vec vertex2;
@@ -534,41 +531,41 @@ extern "C" void submitBillIndexed(void* self, MPFDrawBillData* billboard, MPFDra
         vertex7.z = corner->z + billboard->halfWidth;
 
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[0]);
         GXPosition3f32(vertex1.x, vertex1.y, vertex1.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[1]);
         GXPosition3f32(vertex2.x, vertex2.y, vertex2.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[2]);
         GXPosition3f32(vertex3.x, vertex3.y, vertex3.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[3]);
         GXPosition3f32(vertex4.x, vertex4.y, vertex4.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[0]);
         GXPosition3f32(vertex5.x, vertex5.y, vertex5.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[1]);
         GXPosition3f32(vertex6.x, vertex6.y, vertex6.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[2]);
         GXPosition3f32(vertex7.x, vertex7.y, vertex7.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[3]);
     }
 }
 
 extern "C" void submitBillPaired(void* self, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
-    if (lbl_eu_80665860 != billboard) {
+    if (sLastBillDrawData != billboard) {
         setupBillDraw(self, billboard, positions);
-        lbl_eu_80665860 = billboard;
+        sLastBillDrawData = billboard;
     }
 
     s32 mask = -1;
-    if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
+    if (!(billboard->flags & 2) && billboard->layerDepth == 0.0f) {
         mask = 0;
     }
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
@@ -587,7 +584,7 @@ extern "C" void submitBillPaired(void* self, MPFDrawBillData* billboard, MPFDraw
         u32 value = pair->index;
         u32 base = (value & lbl_eu_8066A72C) << 2;
         base &= mask;
-        const Vec* corner = &lbl_eu_8066584C[value];
+        const Vec* corner = &sBillboardCornerTable[value];
         Vec vertex0;
         Vec vertex1;
         Vec vertex2;
@@ -615,28 +612,28 @@ extern "C" void submitBillPaired(void* self, MPFDrawBillData* billboard, MPFDraw
 
         GXBegin(GX_QUADS, GX_VTXFMT0, 8);
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[0]);
         GXPosition3f32(vertex1.x, vertex1.y, vertex1.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[1]);
         GXPosition3f32(vertex2.x, vertex2.y, vertex2.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[2]);
         GXPosition3f32(vertex3.x, vertex3.y, vertex3.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[3]);
         GXPosition3f32(vertex4.x, vertex4.y, vertex4.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[0]);
         GXPosition3f32(vertex5.x, vertex5.y, vertex5.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[1]);
         GXPosition3f32(vertex6.x, vertex6.y, vertex6.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[2]);
         GXPosition3f32(vertex7.x, vertex7.y, vertex7.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXTexCoord1u16(sBillboardTexCoordTable[value]);
         GXColor1x8(billboard->colors[3]);
     }
     loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -644,10 +641,10 @@ extern "C" void submitBillPaired(void* self, MPFDrawBillData* billboard, MPFDraw
 
 extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
-    if (lbl_eu_80665860 != billboard) {
+    if (sLastBillDrawData != billboard) {
         setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
         calcBillCorners(billboard, positions);
-        lbl_eu_80665860 = billboard;
+        sLastBillDrawData = billboard;
     }
     if (billboard->flags & 1) {
         enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -678,10 +675,10 @@ extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillL
 
 extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = Coli_GetBitTable_5A68();
-    if (lbl_eu_80665860 != billboard) {
+    if (sLastBillDrawData != billboard) {
         setupLayerDraw__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
         calcBillCorners(billboard, positions);
-        lbl_eu_80665860 = billboard;
+        sLastBillDrawData = billboard;
     }
     setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
@@ -748,8 +745,8 @@ extern "C" u32 lbl_eu_8056DC58[4] = {
 };
 
 // [.rodata] 0x80523E00-0x80523E98 (152B): blend-order tables + RTTI names.
-extern "C" __declspec(align(4)) const u32 lbl_eu_80523E00[4] = { 0x00000000, 0x00000001, 0x00000002, 0x00000003 };
-extern "C" __declspec(align(4)) const u32 lbl_eu_80523E10[4] = { 0x00000003, 0x00000002, 0x00000001, 0x00000000 };
+extern "C" __declspec(align(4)) const u32 sBillBlendOrderAsc[4] = { 0x00000000, 0x00000001, 0x00000002, 0x00000003 };
+extern "C" __declspec(align(4)) const u32 sBillBlendOrderDesc[4] = { 0x00000003, 0x00000002, 0x00000001, 0x00000000 };
 // CScnItemLight pattern: `__declspec(align(4)) const char[N]` with exact
 // string sizes makes MWCC pack the pool at 4-byte alignment like the retail
 // DOL layout (u32 arrays or unpadded char arrays get 8-aligned under -str

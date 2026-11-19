@@ -842,7 +842,7 @@ extern "C" void KizunagramRebuildSlotList(CPcKizunagramBig* self) {
     // Retail reuses the first-half id/saved registers for tbl/total here.
     int f89C = self->field_0x89C;
     int f86C = self->field_0x86C;
-    id = lbl_eu_8066415C;
+    id = gKizunagramBdatTableId;
     saved = f89C + (f86C - 1) * 5 + 1;
     slot = &self->slots[f89C];
 

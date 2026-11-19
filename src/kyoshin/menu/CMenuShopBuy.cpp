@@ -80,7 +80,7 @@ void CMenuShopBuy::Term() {
     removeRenderCB__4CScnFP10IScnRender(mScene, this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mItemBoxLine.UnloadFiles();
 
     lbl_eu_806642F8 = 0;
@@ -91,7 +91,7 @@ void CMenuShopBuy::Move() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
 
     switch (mState) {
@@ -113,13 +113,13 @@ void CMenuShopBuy::Move() {
 
     BgTex_Tick_3D54(&mBgTex);
     mItemBoxLine.UpdateStates();
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
 }
 
 void CMenuShopBuy::cbRenderBefore() {
     // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -127,7 +127,7 @@ void CMenuShopBuy::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mItemBoxLine.DrawLayout(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 // Shop-buy menu factory: if no instance exists yet, allocate 0x700 bytes from
@@ -158,7 +158,7 @@ extern "C" void ShopBuy_OpenPhase(CMenuShopBuy* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0) {
         if (self->mTitleAHelp.isInitialized() != 0) {
             if (self->mItemBoxLine.GetSelectReady() != 0) {
-                func_801C412C(&self->mTitleAHelp);
+                self->mTitleAHelp.func_801C412C();
                 self->mItemBoxLine.OpenLine();
                 self->mState = 1;
                 playUISound(0x6d);
@@ -170,7 +170,7 @@ extern "C" void ShopBuy_OpenPhase(CMenuShopBuy* self) {
 // Phase 1 -> 2 (advance): once the title bar is idle and the item box line
 // is ready, move to the next phase.
 extern "C" void ShopBuy_AdvancePhase(CMenuShopBuy* self) {
-    if (self->mTitleAHelp.isIdle() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0) {
         if (self->mItemBoxLine.IsReadyFlag() != 0) {
             self->mState = 2;
         }
@@ -207,7 +207,7 @@ extern "C" void ShopBuy_HandleInput(CMenuShopBuy* self) {
             if (self->mItemBoxLine.IsBusy() != 0) {
                 self->mItemBoxLine.ConfirmOverlayOrHint();
             } else {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 self->mItemBoxLine.LeaveState3();
                 self->mState = 3;
             }
@@ -245,7 +245,7 @@ extern "C" void ShopBuy_HandleInput(CMenuShopBuy* self) {
             if (self->mItemBoxLine.IsBusy() != 0) {
                 self->mItemBoxLine.ConfirmOverlayOrHint();
             } else {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 self->mItemBoxLine.LeaveState3();
                 self->mState = 3;
             }
@@ -263,14 +263,13 @@ extern "C" void ShopBuy_HandleInput(CMenuShopBuy* self) {
             self->mItemBoxLine.RefreshTabSelect();
         }
     }
-    func_801C41E8(&self->mTitleAHelp,
-                  self->mItemBoxLine.ResolveFocusId());
+    self->mTitleAHelp.func_801C41E8(self->mItemBoxLine.ResolveFocusId());
 }
 
 // Close: same idle+ready guard as ShopBuy_AdvancePhase, but marks the closing state
 // byte at 0x54 instead of advancing the phase byte.
 extern "C" void ShopBuy_MarkClosing(CMenuShopBuy* self) {
-    if (self->mTitleAHelp.isIdle() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0) {
         if (self->mItemBoxLine.IsReadyFlag() != 0) {
             self->mField54 = 1;
         }

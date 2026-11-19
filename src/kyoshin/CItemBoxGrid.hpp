@@ -62,7 +62,7 @@ public:
     virtual void Rebuild();    // +0x0C - retail RegisterLearnedSkills
 };
 
-// 7-float price scale row copied out of the lbl_eu_8050560C pool by the
+// 7-float price scale row copied out of the itemBoxGridPriceScaleRow pool by the
 // price functions; retail lowers the copy as an inline struct assignment.
 struct CItemPriceScaleRow {
     float v[7];

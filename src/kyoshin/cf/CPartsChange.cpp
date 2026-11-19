@@ -54,7 +54,7 @@ struct ActorFlagWords {
     u8 _pad0C[4];
     u32 f3F10;    // +0x3F10 id word
 };
-// Load-flag halfwords of the manager object reached through lbl_eu_8066430C
+// Load-flag halfwords of the manager object reached through spPartsActorTable
 // (+0xB276 cleared when a load starts, +0xB278 set to the load flag).
 struct PartsLoadFlags {
     u8 _pad[0xB276];
@@ -124,7 +124,7 @@ extern const char lbl_eu_80503BFC[];
 extern const char* lbl_eu_806624E8;
 
 // Collection-state helpers (raw retail symbol spellings).
-extern u32 lbl_eu_80663E24;
+extern u32 gmGameFlags;
 void awardCollectCount(void* self);
 int isCollepediaId(void* self);
 void* CtrlObjectParam_GetCharEntry(u16 id);
@@ -138,11 +138,11 @@ extern void* lbl_eu_80532AE4[];
 extern void* lbl_eu_80532ACC[];
 extern const f32 lbl_eu_80667AD0;
 extern const f32 lbl_eu_80667B28;
-extern int lbl_eu_80664308;
-extern u32 lbl_eu_8066430C;
-extern unsigned char lbl_eu_80664310;
-extern s16 lbl_eu_80664312;
-extern s16 lbl_eu_80664314;
+extern int spPartsLandmarkTable;
+extern u32 spPartsActorTable;
+extern unsigned char sPartsChangeEntryActive;
+extern s16 sPartsChangeScratch;
+extern s16 sPartsChangeLoadState;
 u32 CfRes_getAllocHandle();
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 
@@ -372,10 +372,10 @@ extern "C" u8* __ct__80193270(u8* self) {
     *(u16*)(self + 0xB270) = 1;
     *(u16*)(self + 0xB276) = 0xF;
     *(u16*)(self + 0xB278) = 1;
-    lbl_eu_80664308 = (u32)self;
-    lbl_eu_8066430C = (u32)self;
-    lbl_eu_80664310 = 0;
-    lbl_eu_80664314 = 0;
+    spPartsLandmarkTable = (u32)self;
+    spPartsActorTable = (u32)self;
+    sPartsChangeEntryActive = 0;
+    sPartsChangeLoadState = 0;
     memset(self + 0xA828, 0, 0xA40);
     void* arr = allocate_array__Q23mtl10MemManagerFUlUl(0xC0, CfRes_getAllocHandle());
     *(void**)(self + 0xA81C) = arr;
@@ -425,8 +425,8 @@ extern "C" void* __dt__reslist_cf_CfPartyInfo(u8* self, int flags) {
 extern "C" void* __dt__80193538(u8* self, int flags) {
     if (self != 0) {
     u32 zero = 0;
-    lbl_eu_80664308 = zero;
-    lbl_eu_8066430C = zero;
+    spPartsLandmarkTable = zero;
+    spPartsActorTable = zero;
     u32* node = (u32*)*(u32*)(*(u32**)(self + 0xA80C));
     while (node != *(u32**)(self + 0xA80C)) {
         u32* cur = node;
@@ -473,17 +473,17 @@ extern "C" void* __dt__80193538(u8* self, int flags) {
     return self;
 }
 
-extern "C" u32 lbl_eu_8066430C;
-extern "C" int lbl_eu_80664308;
+extern "C" u32 spPartsActorTable;
+extern "C" int spPartsLandmarkTable;
 extern "C" void CPartsChange_FlushChangeList(u8* self);
 
-extern "C" u32 CPartsChange_GetActorTable(void) { return lbl_eu_8066430C; }
+extern "C" u32 CPartsChange_GetActorTable(void) { return spPartsActorTable; }
 
 // 0x98: find the live party-change entry for an id, clear its 0x1E "fired"
 // bit, snap its 0x10 gauge to zero, and if it had not started falling wipe
 // the 9-byte 0x30 block.
 extern "C" void CPartsChange_FireIdEffect(u32 id) {
-    u8* mgr = (u8*)lbl_eu_8066430C;
+    u8* mgr = (u8*)spPartsActorTable;
     if (mgr == 0) return;
     // Retail inlines the FindEntryById body here (no bl), so call it plainly
     // and let MWCC's inliner decide per site (ResolveActorEntry keeps a call).
@@ -504,7 +504,7 @@ extern "C" void CPartsChange_FireIdEffect(u32 id) {
 // zero the 0x10 timer, and clear the 9-byte name when the 0x14 timer expired.
 extern "C" void CPartsChange_ClearElemTimerForObj(u8* obj) {
     u16 key;
-    u8* mgr = (u8*)lbl_eu_8066430C;
+    u8* mgr = (u8*)spPartsActorTable;
     if (mgr == 0) return;
     if ((*(u32*)(obj + 0x3F00) & 0x4) == 0) return;
     if (*(u16*)(obj + 0x45C0) == 0) return;
@@ -532,14 +532,14 @@ done:;
     }
 }
 
-extern "C" int CPartsChange_GetLandmarkTable(void) { return lbl_eu_80664308; }
+extern "C" int CPartsChange_GetLandmarkTable(void) { return spPartsLandmarkTable; }
 
 extern "C" void CPartsChange_DispatchChangeList(u8* self) { CPartsChange_FlushChangeList(self); }
 
 extern void* findObjectById(int);
 extern "C" int lookupWorkAtAddr(void* addr);
 extern "C" void gmFileObject(void* addr);
-extern "C" s16 lbl_eu_80664314;
+extern "C" s16 sPartsChangeLoadState;
 
 // Walk the party-change list at this+0xA80C: for each node whose slot
 // table has bit0 set, resolve up to 16 object ids through findObjectById,
@@ -603,7 +603,7 @@ extern "C" void CPartsChange_FlushChangeList(u8* self) {
     *(s16*)(self + 0xB272) = 5;
     *(s16*)(self + 0xB270) = 1;
     *(s16*)(self + 0xB274) = 0;
-    lbl_eu_80664314 = 0;
+    sPartsChangeLoadState = 0;
 }
 
 // 0x10C: append a change record for `id` -- bail when the id is already
@@ -772,9 +772,9 @@ extern "C" void CPartsChange_ReseedElemTimer(CfPartsElem4C* self) {
                                        (s32)lbl_eu_80664184);
     u8 row = *(u8*)&val;
     if (row == 0) row = 1;
-    f32 v = lbl_eu_80667AB8 * (lbl_eu_80667ABC * (f32)row);
+    f32 v = 60.0f * (30.0f * (f32)row);
     self->field_10 = v;
-    self->field_14 = lbl_eu_80667AC0;
+    self->field_14 = 1800.0f;
     memset((u8*)self + 0x42, 0, 9);
 }
 
@@ -785,7 +785,7 @@ extern "C" void CPartsChange_UpdateElemSpeeds(CfPartsManager* self) {
     CfPartsElemArray* arr = &self->mElems;
     for (CfPartsElem4C* e = arr->mElems; e != arr->mElems + arr->mCount; e++) {
         if (e->field_1E & 0x400) {
-            e->field_14 = lbl_eu_80667AC0;
+            e->field_14 = 1800.0f;
         } else if (e->field_14 > lbl_eu_80667AD4) {
             e->field_14 -= step;
             if (e->field_14 < lbl_eu_80667AD4) e->field_14 = lbl_eu_80667AD4;
@@ -825,7 +825,7 @@ struct PartsPlayer74View { u8 _00[0x74]; void* p74; };
 // callback for the first three players.
 extern "C" void CPartsChange_UpdateCollectionState(u8* self) {
     if (self == 0) return;
-    if ((lbl_eu_80663E24 & 0x400000u) != 0) return;
+    if ((gmGameFlags & 0x400000u) != 0) return;
     CtrlRemote_SetSharedBit((u32)(self + 0x1D44), 1);
     awardCollectCount(self);
     if (isCollepediaId(self) == 0) return;
@@ -912,7 +912,7 @@ void CfPartyInfo::SetField2D(u8 val) { field_2D = val; }
 // 0x810 armed flags. Returns whether an element matched.
 extern "C" int CPartsChange_SpawnById(u32 id) {
     u16 key = (u16)id;
-    u8* mgr = (u8*)lbl_eu_8066430C;
+    u8* mgr = (u8*)spPartsActorTable;
     CfPartsElem4C* found;
     if (key != 0) {
         CfPartsElem4C* p = (CfPartsElem4C*)mgr;
@@ -1066,9 +1066,9 @@ check:
 // 0x58: drop the container from the live manager (unlink + count-0 delete).
 extern "C" void CPartsChange_TeardownContainer(u8* self) {
     if (self == 0) return;
-    if (lbl_eu_8066430C == 0) return;
-    CPartsChange_RemoveBattleEntry((void*)lbl_eu_8066430C, self);
-    CPartsChange_ReleaseEntryWithDrop((void*)lbl_eu_8066430C, self, 0, 0);
+    if (spPartsActorTable == 0) return;
+    CPartsChange_RemoveBattleEntry((void*)spPartsActorTable, self);
+    CPartsChange_ReleaseEntryWithDrop((void*)spPartsActorTable, self, 0, 0);
 }
 
 // 0xC8: only when a live manager exists and the object reports ready (its
@@ -1076,7 +1076,7 @@ extern "C" void CPartsChange_TeardownContainer(u8* self) {
 // then drop the container from the manager.
 extern "C" void CPartsChange_ResetBattleEntry(u8* self, u32 a, u32 b) {
     if (self == 0) return;
-    if (lbl_eu_8066430C == 0) return;
+    if (spPartsActorTable == 0) return;
     bool flag = false;
     if (((cf::CPartsChangeDevView*)self)->mAt2BC() != 0 ||
         (reinterpret_cast<ActorFlagWords*>(self)->f3F08 & 0x08000000) != 0) {
@@ -1089,8 +1089,8 @@ extern "C" void CPartsChange_ResetBattleEntry(u8* self, u32 a, u32 b) {
             reinterpret_cast<cf::CfObjectPcExt*>(self)->mField45C8 = 0;
         }
     }
-    CPartsChange_RemoveBattleEntry((void*)lbl_eu_8066430C, self);
-    CPartsChange_ReleaseEntryWithDrop((void*)lbl_eu_8066430C, self, (int)a, (int)b);
+    CPartsChange_RemoveBattleEntry((void*)spPartsActorTable, self);
+    CPartsChange_ReleaseEntryWithDrop((void*)spPartsActorTable, self, (int)a, (int)b);
 }
 
 // 0x17C: spawn the item-drop actor for `id` unless it is already in the
@@ -1132,22 +1132,22 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
         node = node->next;
     }
     if (found) return;
-    if ((*(u32*)lbl_eu_80663E24 & 0x20) != 0) return;
-    s32 n = *(u16*)&lbl_eu_80664312;
+    if ((*(u32*)gmGameFlags & 0x20) != 0) return;
+    s32 n = *(u16*)&sPartsChangeScratch;
     if (n == 0) {
         n = CItem_rollBoxContents((u32)(size_t)obj, (u32)(size_t)arg4);
     }
-    *(u8*)lbl_eu_80664310 = 0;
+    *(u8*)sPartsChangeEntryActive = 0;
     if (n == 0) return;
     evictTboxOverflow();
     u8* actor = (u8*)spawnVoiceActor((void*)(size_t)n, obj, pos, ang);
     f32 vec[3];
     vec[0] = pos[0];
-    vec[1] = pos[1] + lbl_eu_80667AE8;
+    vec[1] = pos[1] + 0.1f;
     vec[2] = pos[2];
     ((cf::CPartsChangeDevView*)actor)->mAt9C(vec);
     ((cf::CPartsChangeDevView*)actor)->mAtC4(ang);
-    ((cf::CPartsChangeDevView*)actor)->mAtDC(lbl_eu_80667B24);
+    ((cf::CPartsChangeDevView*)actor)->mAtDC(1.5f);
     *(u32*)(actor + 0x73C) = id;
     copyTboxFromObj(actor);
     playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, lbl_eu_80662528[n], 0, 0, lbl_eu_80667AD0);
@@ -1155,15 +1155,15 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
 
 extern "C" void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b){}
 
-int lbl_eu_80664308;
-u32 lbl_eu_8066430C;
-unsigned char lbl_eu_80664310;
-short lbl_eu_80664312;
+int spPartsLandmarkTable;
+u32 spPartsActorTable;
+unsigned char sPartsChangeEntryActive;
+short sPartsChangeScratch;
 void CPartsChange_SetLoadFlag(int arg) {
-    if (lbl_eu_8066430C == 0) return;
-    ((PartsLoadFlags*)lbl_eu_8066430C)->setB278 = (unsigned short)arg;
+    if (spPartsActorTable == 0) return;
+    ((PartsLoadFlags*)spPartsActorTable)->setB278 = (unsigned short)arg;
     if (arg == 0) return;
-    ((PartsLoadFlags*)lbl_eu_8066430C)->clearB276 = 0;
+    ((PartsLoadFlags*)spPartsActorTable)->clearB276 = 0;
 }
 
 // 0x14C: first of the 16 eight-byte slots whose leading word is zero, found
@@ -1428,12 +1428,12 @@ extern "C" void CPartsChange_ComputeSpawnPoseModulo(SpawnPose* src, SpawnPose* d
     s32 rem100 = v % 100;
     f32 off = (f32)rem360 * ml::deg2rad;
     f32 angle = src->field_18 + off;
-    f32 rad = lbl_eu_80667B4C * (f32)rem100 * src->field_1C + src->field_20;
+    f32 rad = 0.01f * (f32)rem100 * src->field_1C + src->field_20;
     d[0] = s[0];
     d[1] = s[1];
     d[2] = s[2];
-    dst->x += rad * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-    dst->z += rad * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+    dst->x += rad * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+    dst->z += rad * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1451,11 +1451,11 @@ extern "C" void CPartsChange_ComputeSpawnPoseA(SpawnPose* src, SpawnPose* dst) {
     f32 radius = (f32)((n - 1) >> 1) * src->field_1C + src->field_1C;
     f32 angle = src->field_18 + ml::halfpi;
     if ((n & 1) != 0) {
-        dst->x += radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-        dst->z += radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+        dst->x += radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->z += radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     } else {
-        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     }
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
@@ -1472,8 +1472,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseDirect(SpawnPose* src, SpawnPose* d
     d[0] = w0;
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
-    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * src->field_18);
-    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * src->field_18);
+    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * src->field_18);
+    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * src->field_18);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1491,8 +1491,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseB(SpawnPose* src, SpawnPose* dst) {
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
     f32 angle = src->field_18 + ml::quarterpi;
-    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1507,8 +1507,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseC(SpawnPose* src, SpawnPose* dst) {
     d[2] = s[2];
     f32 radius = (f32)src->field_14 * src->field_1C;
     f32 angle = src->field_18 - ml::quarterpi;
-    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+    dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+    dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 
@@ -1526,12 +1526,12 @@ extern "C" void CPartsChange_ComputeSpawnPoseD(SpawnPose* src, SpawnPose* dst) {
     f32 radius = (f32)(m >> 1) * src->field_1C + src->field_1C;
     if ((m & 1) != 0) {
         f32 angle = src->field_18 + ml::quarterpi;
-        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     } else {
         f32 angle = src->field_18 - ml::quarterpi;
-        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
-        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * angle);
+        dst->x -= radius * SinFIdx__Q24nw4r4mathFf(40.743664f * angle);
+        dst->z -= radius * CosFIdx__Q24nw4r4mathFf(40.743664f * angle);
     }
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
@@ -1550,12 +1550,12 @@ extern "C" void CPartsChange_ComputeSpawnPoseStaggered(SpawnPose* src, SpawnPose
     f32 dz = lbl_eu_80667B28;
     if ((src->field_14 & 1) != 0) {
         f32 a = src->field_18 + ml::halfpi;
-        dx += src->field_1C * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * a);
-        dz += src->field_1C * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * a);
+        dx += src->field_1C * SinFIdx__Q24nw4r4mathFf(40.743664f * a);
+        dz += src->field_1C * CosFIdx__Q24nw4r4mathFf(40.743664f * a);
     }
     f32 rad = (f32)(src->field_14 >> 1) * src->field_1C;
-    dx -= rad * SinFIdx__Q24nw4r4mathFf(src->field_18 * lbl_eu_80667B50);
-    dz -= rad * CosFIdx__Q24nw4r4mathFf(src->field_18 * lbl_eu_80667B50);
+    dx -= rad * SinFIdx__Q24nw4r4mathFf(src->field_18 * 40.743664f);
+    dz -= rad * CosFIdx__Q24nw4r4mathFf(src->field_18 * 40.743664f);
     dst->x += dx;
     dst->z += dz;
     CPartsChange_ProbePartyCollisions(s, d);
@@ -1597,8 +1597,8 @@ extern "C" void CPartsChange_ComputeSpawnPoseFull(SpawnPose* src, SpawnPose* dst
         }
     }
     rad = (f32)(m / 3) * rad + rad;
-    dst->x -= rad * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * ang);
-    dst->z -= rad * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B50 * ang);
+    dst->x -= rad * SinFIdx__Q24nw4r4mathFf(40.743664f * ang);
+    dst->z -= rad * CosFIdx__Q24nw4r4mathFf(40.743664f * ang);
     CPartsChange_ProbePartyCollisions((u32*)src, (u32*)dst);
 }
 

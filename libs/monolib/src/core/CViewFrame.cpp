@@ -40,14 +40,6 @@ void fontFlush__10CFontLayerFi(CFontLayer* layer, int mode);
 
 // Retail sdata2 constants used by the frame drawing (imports; the definitions
 // live in the monolib shared data blob, not this TU).
-extern float lbl_eu_8066A308;  // pooled .sdata2 (FloatUtils)
-extern float lbl_eu_8066A30C;
-extern float lbl_eu_8066A310;
-extern float lbl_eu_8066A314;
-extern float lbl_eu_8066A318;
-extern float lbl_eu_8066A2EC;
-extern float lbl_eu_8066A2F0;
-extern float lbl_eu_8066A2F4;
 extern double lbl_eu_8066A300;
 
 // Definitions in this TU (retail symbol names; declared here so earlier
@@ -61,11 +53,8 @@ int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread
 int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int threadType);
 }
 
-// Retail sdata2 float constants + vtable used by the ctor (imports; the
-// definitions live in the monolib shared data blob, not this TU).
-extern float lbl_eu_8066A2E8; // 0.0
-extern float lbl_eu_8066A2F8; // 0.4
-extern float lbl_eu_8066A2FC; // 0.6
+// The frame colors/rect factors are source literals now; the only remaining
+// shared pool import is the int->float conversion magic below.
 
 // s16/s32 -> f32 conversion matching the retail code: build the 2^52+x double
 // on the stack (low word = x ^ 0x80000000, high word = 0x43300000) and
@@ -96,18 +85,6 @@ inline float convF32At(ConvBuf* u, s32 v) {
     return (float)(u->d - lbl_eu_8066A300);
 }
 
-// Blob monolibdata1/1d dissolve: this TU owns .rodata 0x80522650-
-// 0x80522660, .sdata 0x806635A0-0x806635A8, .data 0x8056B700-0x8056B710.
-#include "monolib/data_vtables.hpp"
-
-// RTTI name string (.rodata).
-const char lbl_eu_80522650[16] = {0x43,0x56,0x69,0x65,0x77,0x46,0x72,0x61,0x6D,0x65,0x00,0x00,0x00,0x00,0x00,0x00};  /* "CViewFrame" pad to 0x80522650-60 */
-// RTTI locator (.sdata, 8): { name, 0 }.
-extern "C" u32 lbl_eu_806635A0[2] = { (u32)&lbl_eu_80522650, 0 };
-// CViewFrame vtable (.data, 0x10): [RTTI, 0, dtor, 0].
-u32 lbl_eu_8056B700[4] = {
-    (u32)&lbl_eu_806635A0, 0, (u32)&__dt__10CViewFrameFv, 0,
-};
 
 // Render the view frame: compute the visible rectangle (with optional
 // border expansion for menu/target frames), clip to parent, and draw
@@ -325,11 +302,11 @@ extern "C" void drawFrameBorder__10CViewFrameFPvPv(CViewFrame* self, void* draw,
     ml::CCol4 drawCol2;
     ml::CCol4 col2;
 
-    drawCol.g = col.g * lbl_eu_8066A318;
-    drawCol.b = col.b * lbl_eu_8066A318;
+    drawCol.g = col.g * 1.2f;
+    drawCol.b = col.b * 1.2f;
     col.a = col.a * alpha;
     drawCol.a = col.a;
-    drawCol.r = col.r * lbl_eu_8066A318;
+    drawCol.r = col.r * 1.2f;
     d->setCol(drawCol);
 
     ml::CRect16 qL;
@@ -376,11 +353,11 @@ extern "C" void drawFrameBorder__10CViewFrameFPvPv(CViewFrame* self, void* draw,
     ml::CRect16 qOB;
     ml::CRect16 qOR;
 
-    drawCol2.b = col2.b * lbl_eu_8066A2F4;
-    drawCol2.g = col2.g * lbl_eu_8066A2F4;
+    drawCol2.b = col2.b * 0.8f;
+    drawCol2.g = col2.g * 0.8f;
     col2.a = col2.a * alpha;
     drawCol2.a = col2.a;
-    drawCol2.r = col2.r * lbl_eu_8066A2F4;
+    drawCol2.r = col2.r * 0.8f;
     d->setCol(drawCol2);
 
     // Left inner highlight line.
@@ -454,8 +431,8 @@ extern "C" void drawSplitBorder__10CViewFrameFPv(CViewFrame* self, void* draw) {
     ml::CCol4 col = self->mColor28;
     if (hasCurrent__5CViewCFv(self->mOwner) != 0) {
         // Grey out the frame colour when the view is not current.
-        float lum = lbl_eu_8066A310 * col.g + lbl_eu_8066A30C * col.r +
-                    lbl_eu_8066A308 * col.b;
+        float lum = 0.586611f * col.g + 0.298912f * col.r +
+                    0.114477f * col.b;
         col.r = lum;
         col.g = lum;
         col.b = lum;
@@ -469,33 +446,33 @@ extern "C" void drawSplitBorder__10CViewFrameFPv(CViewFrame* self, void* draw) {
     d->begin(8, 4);
     {
         ml::CCol4 c;
-        c.r = col.r * lbl_eu_8066A2EC;
-        c.g = col.g * lbl_eu_8066A2EC;
-        c.b = col.b * lbl_eu_8066A2EC;
+        c.r = col.r * 0.5f;
+        c.g = col.g * 0.5f;
+        c.b = col.b * 0.5f;
         c.a = col.a;
         d->add(border, border, c);
     }
     {
         ml::CCol4 c;
-        c.r = col.r * lbl_eu_8066A2F0;
-        c.g = col.g * lbl_eu_8066A2F0;
-        c.b = col.b * lbl_eu_8066A2F0;
+        c.r = col.r * 1.0f;
+        c.g = col.g * 1.0f;
+        c.b = col.b * 1.0f;
         c.a = col.a;
         d->add(xRight, border, c);
     }
     {
         ml::CCol4 c;
-        c.r = col.r * lbl_eu_8066A2EC;
-        c.g = col.g * lbl_eu_8066A2EC;
-        c.b = col.b * lbl_eu_8066A2EC;
+        c.r = col.r * 0.5f;
+        c.g = col.g * 0.5f;
+        c.b = col.b * 0.5f;
         c.a = col.a;
         d->add(border, y2, c);
     }
     {
         ml::CCol4 c;
-        c.r = col.r * lbl_eu_8066A2F0;
-        c.g = col.g * lbl_eu_8066A2F0;
-        c.b = col.b * lbl_eu_8066A2F0;
+        c.r = col.r * 1.0f;
+        c.g = col.g * 1.0f;
+        c.b = col.b * 1.0f;
         c.a = col.a;
         d->add(xRight, y2, c);
     }
@@ -504,7 +481,7 @@ extern "C" void drawSplitBorder__10CViewFrameFPv(CViewFrame* self, void* draw) {
     drawText__10CFontLayerFv(self->mOwner, 0);
     flushBuffer__10CFontLayerFv(self->mOwner, 0);
     clearBuffer__10CFontLayerFv(self->mOwner, &self->mColor18);
-    updateLayout__10CFontLayerFv(self->mOwner, lbl_eu_8066A314, lbl_eu_8066A2F0);
+    updateLayout__10CFontLayerFv(self->mOwner, 0.7f, 1.0f);
     s16 border2 = self->mBorder;
     int n = resetCursor__10CFontLayerFv(self->mOwner);
     printFormatted__10CFontLayerFv(self->mOwner, border2, border2 + 0xb - (n >> 1),
@@ -605,9 +582,9 @@ extern "C" void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, 
         ml::CCol4 col = frm->mFrameColor;
         col.a = col.a * frm->mOwner->mAlpha;
         ml::CCol4 c;
-        c.r = col.r * lbl_eu_8066A318;
-        c.g = col.g * lbl_eu_8066A318;
-        c.b = col.b * lbl_eu_8066A318;
+        c.r = col.r * 1.2f;
+        c.g = col.g * 1.2f;
+        c.b = col.b * 1.2f;
         c.a = col.a;
         d->setCol(c);
 
@@ -622,9 +599,9 @@ extern "C" void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, 
 
         col = frm->mFrameColor;
         col.a = col.a * frm->mOwner->mAlpha;
-        c.r = col.r * lbl_eu_8066A2F4;
-        c.g = col.g * lbl_eu_8066A2F4;
-        c.b = col.b * lbl_eu_8066A2F4;
+        c.r = col.r * 0.8f;
+        c.g = col.g * 0.8f;
+        c.b = col.b * 0.8f;
         c.a = col.a;
         d->setCol(c);
 
@@ -671,9 +648,9 @@ extern "C" void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, 
         ml::CCol4 col = frm->mFrameColor;
         col.a = col.a * frm->mOwner->mAlpha;
         ml::CCol4 c;
-        c.r = col.r * lbl_eu_8066A318;
-        c.g = col.g * lbl_eu_8066A318;
-        c.b = col.b * lbl_eu_8066A318;
+        c.r = col.r * 1.2f;
+        c.g = col.g * 1.2f;
+        c.b = col.b * 1.2f;
         c.a = col.a;
         d->setCol(c);
 
@@ -683,9 +660,9 @@ extern "C" void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, 
 
         col = frm->mFrameColor;
         col.a = col.a * frm->mOwner->mAlpha;
-        c.r = col.r * lbl_eu_8066A2F4;
-        c.g = col.g * lbl_eu_8066A2F4;
-        c.b = col.b * lbl_eu_8066A2F4;
+        c.r = col.r * 0.8f;
+        c.g = col.g * 0.8f;
+        c.b = col.b * 0.8f;
         c.a = col.a;
         d->setCol(c);
 
@@ -702,7 +679,7 @@ extern "C" void drawBorderEdge__10CViewFrameFPvPv(CViewFrame* self, void* draw, 
 
 // CViewFrame default constructor - empty; initialisation is done by the
 // placement-new caller or caller-side inline init.
-// (Real ctor body is defined below as __ct__CViewFrame.)
+// (Real ctor body is defined below as CViewFrame::CViewFrame.)
 // Compute the offset from the frame's outer rect to its viewport content
 // area (i.e. how much the content region is inset by border + split gap).
 // Only applies when the owner view has border-expand/split flags enabled.
@@ -1326,11 +1303,10 @@ done:
     return result;
 }
 
-// The retail binary declares the CViewFrame constructor as a plain global
-// function (symbol __ct__CViewFrame, no C++ mangling), so it is reconstructed
-// as one. Initialises the whole 0x5C-byte layout; the float constants are
-// imports from the shared sdata2 pool (declared above).
-extern "C" void __ct__CViewFrame(CViewFrame* self) {
+// Real constructor: MWCC stores the vptr itself at the head of an out-of-line
+// ctor and emits __vt__10CViewFrame in this TU. Initialises the whole 0x5C-byte
+// layout; the float constants are imports from the shared sdata2 pool.
+CViewFrame::CViewFrame() {
     // Preload the sdata2 float constants so MWCC hoists the lfs loads to the
     // top (retail loads f5..f0 in first-use order); declaration order drives
     // the register assignment - the retail claims HIGH first (fZero lands in
@@ -1340,38 +1316,37 @@ extern "C" void __ct__CViewFrame(CViewFrame* self) {
     // (lfs f5/lis/li r5/lfs f4/f3/addi/f2/li r4/f1/li r0/f0) is NOT
     // reproducible by reordering these decls alone - every variant tried
     // (decl flip, split fZero, int-first, stmt-interleave) regressed.
-    float f06 = lbl_eu_8066A2FC; // 0.6
-    float f04 = lbl_eu_8066A2F8; // 0.4
-    float f08 = lbl_eu_8066A2F4; // 0.8
-    float fOne = lbl_eu_8066A2F0; // 1.0
-    float fHalf = lbl_eu_8066A2EC; // 0.5
-    float fZero = lbl_eu_8066A2E8; // 0.0
+    float f06 = 0.6f; // 0.6
+    float f04 = 0.4f; // 0.4
+    float f08 = 0.8f; // 0.8
+    float fOne = 1.0f; // 1.0
+    float fHalf = 0.5f; // 0.5
+    float fZero = 0.0f; // 0.0
 
-    self->mVtable = (void*)&lbl_eu_8056B700;
-    self->mOwner = 0;
-    self->unk38 = 8;
-    self->unk3C = fZero;
-    self->unk40 = fZero;
-    self->unk44 = fZero;
-    self->unk48 = fZero;
-    self->unk4C = fZero;
-    self->mBorder = 4;
-    self->mFrameColor.r = fHalf;
-    self->mFrameColor.g = fHalf;
-    self->mFrameColor.b = fHalf;
-    self->mFrameColor.a = fOne;
-    self->mColor18.r = f08;
-    self->mColor18.g = f08;
-    self->mColor18.b = f08;
-    self->mColor18.a = fOne;
-    self->mColor28.r = f04;
-    self->mColor28.g = fHalf;
-    self->mColor28.b = f06;
-    self->mColor28.a = fOne;
-    self->unk50 = 0;
-    self->unk52 = 0;
-    self->mContentX = 0;
-    self->mContentY = 0;
+    this->mOwner = 0;
+    this->unk38 = 8;
+    this->unk3C = fZero;
+    this->unk40 = fZero;
+    this->unk44 = fZero;
+    this->unk48 = fZero;
+    this->unk4C = fZero;
+    this->mBorder = 4;
+    this->mFrameColor.r = fHalf;
+    this->mFrameColor.g = fHalf;
+    this->mFrameColor.b = fHalf;
+    this->mFrameColor.a = fOne;
+    this->mColor18.r = f08;
+    this->mColor18.g = f08;
+    this->mColor18.b = f08;
+    this->mColor18.a = fOne;
+    this->mColor28.r = f04;
+    this->mColor28.g = fHalf;
+    this->mColor28.b = f06;
+    this->mColor28.a = fOne;
+    this->unk50 = 0;
+    this->unk52 = 0;
+    this->mContentX = 0;
+    this->mContentY = 0;
 }
 
 // Compute the frame-to-view offset rect. Retail quirk: the caller passes a

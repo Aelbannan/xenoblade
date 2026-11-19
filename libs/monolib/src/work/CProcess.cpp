@@ -307,3 +307,4 @@ void CProcessMan::DeleteImpl(CProcess* proc) {
         }
     }
 }
+

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void TextState_DrawStaged();
@@ -53,10 +53,10 @@ extern "C" void __dt__8CProcessFv(CProcess* self, int flag);
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
 // .sbss presentation/mode flag (co-op secondary mode bitfield)
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // .sbss event-sequence flag word (bit 25 cleared by Term)
-extern u32 lbl_eu_80663EE0;
+extern u32 gEventSequenceFlags;
 
 // .sdata2 BGM fade volume used by EvtSeqSetBgmGateFlag
 extern f32 lbl_eu_80667658;
@@ -68,16 +68,16 @@ extern f32 lbl_eu_80667658;
 
 // Move-callback ptmf table copied into CTaskREvtSequence::field_0x3C by Init
 // (retail .data:0x80530AF4, size 0x18; only the first 3 words are read).
-extern u32 lbl_eu_80530AF4[6];
+extern u32 sMoveCallbacks[6];
 
 // ptmf table copied into field_0x3C by EvtSeqBeginFileRead (retail .data:0x80530A4C)
-extern u32 lbl_eu_80530A4C[3];
+extern u32 sFileReadCallbacks[3];
 
 // ptmf table copied into field_0x3C by EvtSeqBootSequence (retail .data:0x80530A40)
-extern u32 lbl_eu_80530A40[6];
+extern u32 sBootSeqCallbacks[6];
 
 // ptmf table copied into field_0x3C by EvtSeqLoadSeqFile (retail .data:0x80530A58)
-extern u32 lbl_eu_80530A58[6];
+extern u32 sLoadSeqFileCallbacks[6];
 
 // String pool used by EvtSeqCheckRegionStatus: name string at +0x5D passed to
 // EvtSeqResolveAnmChr (retail .data:0x80503098).
@@ -168,25 +168,23 @@ extern "C" nw4r::g3d::ResAnmChr ItemAnim_GetChr_E708(u8* data, int index);
 extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
 
 // .sdata2 floats used by EvtSeqFinishSequence (fade vec, camera/player values).
-extern f32 lbl_eu_80667668;
-extern f32 lbl_eu_8066766C;
 extern f32 lbl_eu_80667670;
 extern f32 lbl_eu_80667674;
 extern f32 lbl_eu_80667678;
 extern f32 lbl_eu_8066767C;
 
 // ptmf table copied into field_0x3C by EvtSeqUpdateRealtimeEvents (retail .data:0x80530A7C).
-extern u32 lbl_eu_80530A7C[3];
+extern u32 sUpdateRealtimeCallbacks[3];
 
 // ptmf tables copied into field_0x3C by EvtSeqPumpCxStream (retail .data:
 // 0x80530A88 / 0x80530A94).
-extern u32 lbl_eu_80530A88[3];
-extern u32 lbl_eu_80530A94[3];
+extern u32 sPumpCxCallbacks0[3];
+extern u32 sPumpCxCallbacks1[3];
 
 // ptmf tables copied into field_0x3C by EvtSeqSetupObjLists (retail .data:
 // 0x80530A64 / 0x80530A70).
-extern u32 lbl_eu_80530A64[3];
-extern u32 lbl_eu_80530A70[3];
+extern u32 sSetupObjCallbacks0[3];
+extern u32 sSetupObjCallbacks1[3];
 
 // Vtable block at retail .data:0x80530BF4 (interim, overwritten by the ctor)
 // and 0x80530B0C (final CTTask/IScnRender block written by the ctor: primary
@@ -224,10 +222,9 @@ extern char lbl_eu_806623C8[4];
 extern char lbl_eu_806623CC[4];
 
 // .sbss event-window halfword toggled by EvtSeqPumpCxStream (bit 0).
-extern u16 lbl_eu_806642E0;
+extern u16 gEventWindowFlags;
 
 // .sdata2 BGM volume used by EvtSeqPumpCxStream's fade calls.
-extern f32 lbl_eu_8066765C;
 
 // 4-float stack blob passed to Scn_ReleaseUnk80 by EvtSeqFinishSequence (fade vec).
 struct EvtSeqVec4 {
@@ -370,7 +367,7 @@ struct EvtSeqScn7C {
     u32* field_0x7C;
 };
 
-// Object whose address is cached in the .sbss pointer lbl_eu_80664268;
+// Object whose address is cached in the .sbss pointer spEvtSeqState;
 // EvtSeqGetCounter100 / EvtSeqGetCounter104 / EvtSeqGetWalkIndex read its words.
 struct UnkState_80664268 {
     u8 gap00[0x5C];                  // 0x00
@@ -401,7 +398,7 @@ struct UnkState_80664268 {
                                      // (indexed by field_0xF8-range indices,
                                      // bumped by EvtSeqProbeEvtSlot)
 };
-extern UnkState_80664268* lbl_eu_80664268;
+extern UnkState_80664268* spEvtSeqState;
 
 
 
@@ -846,12 +843,12 @@ extern "C" void BattleWork_StoreFlagByte1B(u8 v);
 extern "C" void Scn_SetTimeScale(CScn* scene, float value);
 
 // ptmf tables copied into field_0x3C by EvtSeqUpdateSeqAlt (retail .data:
-// fixed offsets 0x78/0x84/0x90 inside the lbl_eu_80530A40 pool).
+// fixed offsets 0x78/0x84/0x90 inside the sBootSeqCallbacks pool).
 
 // ptmf tables copied into field_0x3C by EvtSeqUpdateSequence (retail .data:
 // 0x80530ADC / 0x80530AE8).
-extern u32 lbl_eu_80530ADC[3];
-extern u32 lbl_eu_80530AE8[3];
+extern u32 sUpdateSequenceCallbacks0[3];
+extern u32 sUpdateSequenceCallbacks1[3];
 
 // Realtime-event camera task helpers (CREvtCamera.cpp) called by
 // EvtSeqUpdateSeqAlt's tail.
@@ -873,10 +870,8 @@ extern "C" f32 evtCalcStreamVolume();
 extern "C" EvtSeqMgrView* getGimmickList__Q22cf13CfGameManagerFv();
 extern "C" EvtSeqMgrView* spawnGimmickEntity__Q22cf13CfGameManagerFv();
 // Extra .sdata2 floats / ptmf tables used by EvtSeqStartSequence.
-extern f32 lbl_eu_80667660;
-extern f32 lbl_eu_80667664;
-extern u32 lbl_eu_80530AA0[3];
-extern u32 lbl_eu_80530AAC[3];
+extern u32 sUpdateSeqAltCallbacks0[3];
+extern u32 sUpdateSeqAltCallbacks1[3];
 
 // Flags object reached through the character container at +0x3F34 during the
 // event-sequence reset walks; its vtable slot at absolute 0x84 (user 31)
@@ -1090,7 +1085,6 @@ struct EvtSeqC4Pair {
 // .sdata2 int->double magic constant (2^52 + 2^31) and the scale float used
 // by EvtSeqUpdateEvtTable's frame-duration conversions.
 extern f64 lbl_eu_80667680;
-extern f32 lbl_eu_80667688;
 
 // ---- Imports for EvtSeqStopSequence (event-sequence teardown / Term body) ----
 class CFileHandle;

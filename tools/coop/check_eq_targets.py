@@ -44,8 +44,8 @@ for t in eq_targets:
     # Run hexdiff
     try:
         r = subprocess.run(
-            ["python3", "tools/coop/hexdiff.py", unit, 
-             "--symbol", mangled, "--no-build", "--json"],
+            ["python3", "tools/coop/hexdiff.py", unit,
+             "--symbol", mangled, "--no-build", "--json", "--no-baseline"],
             capture_output=True, text=True, timeout=120
         )
         if r.returncode == 0 or r.returncode == 5:

@@ -8,6 +8,7 @@
 // objdiff can pair them exactly with the retail object.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 
 #include "kyoshin/cf/CtrlMovePC.hpp"
@@ -61,42 +62,15 @@ extern int (CCtrlMovePC::*const lbl_eu_80532D34)();
 extern int (CCtrlMovePC::*const lbl_eu_80532D40)();
 extern int (CCtrlMovePC::*const lbl_eu_80532D4C)();
 
-extern const f32 lbl_eu_80667B60;  // 0.0f
-extern const f32 lbl_eu_80667B68;
-extern const f32 lbl_eu_80667BB4;
-extern const f32 lbl_eu_80667BB8;
-extern const f32 lbl_eu_80667B9C;
-extern const f32 lbl_eu_80667C40;
-extern const f32 lbl_eu_80667B70;
-extern const f32 lbl_eu_80667B90;
-extern const f32 lbl_eu_80667BA8;
-extern const f32 lbl_eu_80667BC0;
-extern const f32 lbl_eu_80667BC4;
-extern const f32 lbl_eu_80667BD0;
-extern const f32 lbl_eu_80667BDC;
-extern const f32 lbl_eu_80667BD8;
-extern const f32 lbl_eu_80667BE4;
-extern const f32 lbl_eu_80667C04;
-extern const f32 lbl_eu_80667C10;
-extern const f32 lbl_eu_80667C34;
-extern const f32 lbl_eu_80667C38;
-extern const f32 lbl_eu_80667C3C;
-extern f32 lbl_eu_8066AF20;  // canonical non-const form per CfObjectMove.hpp
-extern const f32 lbl_eu_80667B6C;
-extern const f32 lbl_eu_80667C28;
-extern const f32 lbl_eu_80667C2C;
-extern const f32 lbl_eu_80667C30;
-extern const f32 lbl_eu_80667BBC;
-extern const f32 lbl_eu_80667BC8;
-extern const f32 lbl_eu_80667BB0;
-extern const f32 lbl_eu_80667BF0;
-extern const f32 lbl_eu_80667BF4;
-extern const f32 lbl_eu_80667BF8;
-extern const f32 lbl_eu_80667BFC;
-extern const f32 lbl_eu_80667C00;
-extern const f32 lbl_eu_80667C0C;
 extern int (CCtrlMovePC::*const lbl_eu_80532CC8)();
 extern int (CCtrlMovePC::*const lbl_eu_80532CD4)();
+
+// Kept label spellings in fully matched functions: turning these frozen
+// constant-pool references into literals gives anonymous reloc targets there.
+extern const f32 lbl_eu_80667B60;    // 0.0f
+extern const f32 lbl_eu_80667B68;    // 1.0f
+extern const f32 lbl_eu_80667B9C;    // 40.7436637878418f
+extern const f32 lbl_eu_80667C40;    // 36.0f
 }
 
 // ============================================================================
@@ -121,7 +95,7 @@ CCtrlMovePC::CCtrlMovePC(void* owner, void* obj) : CCtrlMoveBase(owner) {
     mVecB4 = ml::CVec3::zero;
     mVec90 = ml::CVec3::zero;
 
-    mFloat100 = lbl_eu_80667B60;
+    mFloat100 = 0.0f;
 
     mArr124[17] = 0;
     mArr124[16] = 0;
@@ -177,7 +151,7 @@ extern "C" int movePcTickCounterWrap(CCtrlMovePC* self) {
         d[1] |= 1u;                    // *(data+4) |= 1
         self->mStateFunc = lbl_eu_80532D28;
     }
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
     return 0;
 }
 
@@ -226,7 +200,7 @@ extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
 }
 
 // ============================================================================
-// movePcCounterFacingUpdate - counter-gated facing update or transition (0xD8)
+// movePcCounterFacingUpdate
 // ============================================================================
 extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
     s16 old = self->mArr124[15];               // 0x142
@@ -263,7 +237,7 @@ struct CfWrapMoveAnchor {
 extern "C" void movePcTopTickDispatch(CCtrlMovePC* self) {
     cf::CfObject* emb = (cf::CfObject*)&((CfWrapMoveAnchor*)self->mObject)->moveObj;
     f32 v = emb->CfObject_getMoveSpeedRate();
-    if (lbl_eu_80667B60 == v) {
+    if (0.0f == v) {
         return;
     }
 
@@ -324,7 +298,7 @@ extern "C" void movePcCondFullReset(void* selfv, int flag) {
         self->mVecD8 = ml::CVec3::zero;
         self->mVecB4 = ml::CVec3::zero;
         self->mVec90 = ml::CVec3::zero;
-        self->mFloat100 = lbl_eu_80667B60;
+        self->mFloat100 = 0.0f;
         zeroArr(self);
         if (task != 0) {
             releaseTask(self);
@@ -352,7 +326,7 @@ extern "C" void movePcResetAndSetPos(CCtrlMovePC* self, const Vec* pos) {
         self->mVecD8 = ml::CVec3::zero;
         self->mVecB4 = ml::CVec3::zero;
         self->mVec90 = ml::CVec3::zero;
-        self->mFloat100 = lbl_eu_80667B60;
+        self->mFloat100 = 0.0f;
         zeroArr(self);
         if (task != 0) {
             releaseTask(self);
@@ -388,12 +362,12 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         }
         self->mTask = 0;
     }
-    self->mFloatParam1 = lbl_eu_80667BA8;
+    self->mFloatParam1 = 4.0f;
     self->mArr124[0] = 0;
     self->mArr124[1] = 0;
     self->mArr124[2] = 0;
     self->mArr124[3] = 0;
-    self->mFloat100 = lbl_eu_80667B60;
+    self->mFloat100 = 0.0f;
     self->mArr124[9] = 0;
     self->mArr124[10] = 0;
     self->mArr124[13] = 0;
@@ -401,7 +375,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     if (self->mObject != 0) {
         ((cf::CfObjWrap*)self->mObject)->mField455A = 100;
     }
-    self->mFloatParam2 = lbl_eu_80667B74;
+    self->mFloatParam2 = 0.25f;
     self->mFlags4C &= 0xE1634F1Fu;
     if (self->mPlayer != 0) {
     // --- proximity gate + contact handling ---
@@ -411,8 +385,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         ml::CVec3* pl = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_getPosVector();
         ml::CVec3* ob = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
         ml::CVec3 d = *pl - *ob;
-        if (!(d.x * d.x + d.y * d.y + d.z * d.z <= lbl_eu_80667BAC
-              || ml::math::abs(d.y) <= lbl_eu_80667BB0)) {
+        if (!(d.x * d.x + d.y * d.y + d.z * d.z <= 400.0f
+              || ml::math::abs(d.y) <= 8.0f)) {
             // Busy-state query twice: resolve an entity handle and run a
             // second proximity pass against it.
             if (((cf::CObjectParam*)((char*)self->mPlayer + 0x3e9c))->CObjectParam_getSelfObjectId() == 0) {
@@ -426,8 +400,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
                     ml::CVec3* pl2 = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_getPosVector();
                     ml::CVec3* eb = ((cf::CfObject*)((char*)ent + 0x3e9c))->CfObject_getPosVector();
                     ml::CVec3 e = *pl2 - *eb;
-                    if (e.x * e.x + e.y * e.y + e.z * e.z <= lbl_eu_80667BAC
-                        || ml::math::abs(e.y) <= lbl_eu_80667BB0) {
+                    if (e.x * e.x + e.y * e.y + e.z * e.z <= 400.0f
+                        || ml::math::abs(e.y) <= 8.0f) {
                         self->mFlags4C |= 0x80u;
                     }
                 }
@@ -519,8 +493,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
         ml::CVec3 delta = self->mVecA8 - *op;
         void* st = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getCurrentTarget();
-        bool anchorOk = (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z <= lbl_eu_80667B68)
-                        && (((cf::CfObjState*)st)->mField14 >= lbl_eu_80667B6C)
+        bool anchorOk = (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z <= 1.0f)
+                        && (((cf::CfObjState*)st)->mField14 >= 0.10000000149011612f)
                         && (condC == 0);
         op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
         if (!anchorOk) {
@@ -528,7 +502,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
             self->mArr124[8] = 0;
         } else {
             ml::CVec3 d2v = self->mPos - *op;
-            if (d2v.x * d2v.x + d2v.y * d2v.y + d2v.z * d2v.z < lbl_eu_80667BB4) {
+            if (d2v.x * d2v.x + d2v.y * d2v.y + d2v.z * d2v.z < 2500.0f) {
                 s16 c = self->mArr124[8];
                 self->mArr124[8] = (s16)(c + 1);
             } else {
@@ -553,7 +527,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
         ml::CVec3 dv = self->mPos - *op;
         s16 cnt = self->mArr124[8];
-        if (!(cnt < 0xD2 && dv.x * dv.x + dv.y * dv.y + dv.z * dv.z <= lbl_eu_80667BB8)) {
+        if (!(cnt < 0xD2 && dv.x * dv.x + dv.y * dv.y + dv.z * dv.z <= 10000.0f)) {
             if ((self->mFlags4C & 0x180u) == 0) {
                 return;
             }
@@ -563,7 +537,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     // --- commit step: gate on the wrapper float, plan a party spot ---
     {
         f32 gate = ((cf::CActorParam*)self->mObject)->CActorParam_getHp();   // vtable 0x128
-        if (gate <= lbl_eu_80667B60) {
+        if (gate <= 0.0f) {
             return;
         }
     }
@@ -572,24 +546,24 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     u32 rnd = (u32)ml::math::mtRand() & 0xffffu;
     CfPartyInfoIn info;                          // stack +0xe8 planner block
     InitRecord(&info, &tmp, 1, self->mFloat100,
-                  lbl_eu_80667B70, lbl_eu_80667BA8, rnd);
+                  2.0f, 4.0f, rnd);
     ml::CVec3 out;                               // stack +0xc0 candidate spot
     int planned = CPartsChange_ProcessPartyInfo(&info, &out);
     if (planned == 0) {
         // Planner failed: fall back to the global coli-probe result.
         ml::CVec3 nearPt = self->mPos
-            + ml::CVec3(lbl_eu_80667B60, lbl_eu_80667B70, lbl_eu_80667B60);
+            + ml::CVec3(0.0f, 2.0f, 0.0f);
         ml::CVec3 farPt = self->mPos
-            + ml::CVec3(lbl_eu_80667B60, lbl_eu_80667BBC, lbl_eu_80667B60);
+            + ml::CVec3(0.0f, -2.0f, 0.0f);
         (void)nearPt;
         (void)farPt;
-        if (((int (*)(void*, void*))ColiWalkSegment)(lbl_eu_80665958,
+        if (((int (*)(void*, void*))ColiWalkSegment)(sEneColiProbe,
                 (char*)self->mPlayer + 0x44a8) == 0) {
             return;
         }
-        ml::CVec3* gp = (ml::CVec3*)((char*)lbl_eu_80665958 + 0x60);
+        ml::CVec3* gp = (ml::CVec3*)((char*)sEneColiProbe + 0x60);
         self->mVecB4 = *gp;
-        self->mVecC0.y = lbl_eu_80667BC0 + gp->y;
+        self->mVecC0.y = 0.20000000298023224f + gp->y;
     }
 
     // --- move-task allocation and commit toward the candidate spot ---
@@ -611,9 +585,9 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         }
         if (okT != 0) {
             if (dispatchScnCommand__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
-                    lbl_eu_80667B60, lbl_eu_80667B60) != 0) {
+                    0.0f, 0.0f) != 0) {
                 if (updateWalker__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
-                        &out, lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
+                        &out, 0.0f, 0.0f, 1) == 0) {
                     return;
                 }
             }
@@ -622,7 +596,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     // --- final commit: raycast lifted positions, reset embedded move state ---
     {
-        ml::CVec3 up(lbl_eu_80667B60, lbl_eu_80667BC4, lbl_eu_80667B60);   // (0, BC4, 0)
+        ml::CVec3 up(0.0f, 0.800000011920929f, 0.0f);   // (0, BC4, 0)
         ml::CVec3 diff = out + up;                   // stack +0x18 -> +0x54
         ml::CVec3 sum = self->mPos + up;             // stack +0x24 -> +0x6c
         if (ScnRes_SegQueryForward_E348(&sum, &diff, 0x40004a05, 0, 0) != 0) {
@@ -632,8 +606,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     self->mFlags4C &= ~0x100u;
     cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
     emb->CfObject_syncMoveTarget(&out);                  // vtable 0xa8
-    emb->CfObject_syncModelRate(lbl_eu_80667B68);        // vtable 0x168
-    CfObjectMove_setMoveSpeedGated((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
+    emb->CfObject_syncModelRate(1.0f);        // vtable 0x168
+    CfObjectMove_setMoveSpeedGated((char*)self->mObject + 0x3e9c, 20.0f);
     cf::CfMoveSub* sub2 = ((cf::CfObjWrap*)self->mObject)->mSub;
     if (sub2 != 0) {
         sub2->mField3F0 = ml::CVec3::zero.x;
@@ -676,18 +650,18 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
         // ---- steering path ----
         u16 anim = plW->mField455A;
         plW->mField455A = anim - 3;
-        if (self->mVec90.x == lbl_eu_80667B60 && self->mVec90.z == lbl_eu_80667B60) {
+        if (self->mVec90.x == 0.0f && self->mVec90.z == 0.0f) {
             self->mArr124[3] = 0;
         } else {
             ml::CVec3 tgt;
             tgt.x = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->x;
-            tgt.y = lbl_eu_80667BC8
+            tgt.y = 0.5f
                   + ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->y;
             tgt.z = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->z;
-            ml::CVec3 dir = self->mVec90 * lbl_eu_80667B70;
+            ml::CVec3 dir = self->mVec90 * 2.0f;
             ml::CVec3 sum = tgt + dir;
-            if (ColiWalkSegment(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
-                              &tgt, &sum, 0, 0, lbl_eu_80571810) == 0) {
+            if (ColiWalkSegment(sEneColiProbe, (char*)self->mObject + 0x44a8,
+                              &tgt, &sum, 0, 0, sEneColiProbeBuffer) == 0) {
                 self->mArr124[3] = 0;
             } else {
                 s16 cnt = self->mArr124[3];
@@ -695,12 +669,12 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                 if (cnt >= 15) {
                     self->mArr124[3] = 0;
                     f32 ang = Atan2FIdx__Q24nw4r4mathFff(self->mVec90.x, self->mVec90.z);
-                    self->mFloat100 = lbl_eu_80667BD8 * ang;
-                    f32 a = lbl_eu_80667BD8 * ang + ml::pi;
-                    f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
-                    f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
-                    ml::CVec3 facing(s, lbl_eu_80667B60, c);
-                    ml::CVec3 off = facing * lbl_eu_80667BDC;
+                    self->mFloat100 = 0.02454369328916073f * ang;
+                    f32 a = 0.02454369328916073f * ang + ml::pi;
+                    f32 c = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * a);
+                    f32 s = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * a);
+                    ml::CVec3 facing(s, 0.0f, c);
+                    ml::CVec3 off = facing * 3.0f;
                     ml::CVec3 spot = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()
                                      + off;
                     self->mVecC0 = spot;
@@ -720,11 +694,11 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
             self->mArr124[3] = cnt;
             if (cnt >= 30 && (cnt & 0xF) == 15) {
                 // Periodic nudge: slide the follow anchor one step forward.
-                ml::CVec3 step(lbl_eu_80667B60, lbl_eu_80667BC8, lbl_eu_80667B60);
+                ml::CVec3 step(0.0f, 0.5f, 0.0f);
                 ml::CVec3 moved = self->mVecC0 + step;
                 ml::CVec3 movedCopy = moved;
                 (void)movedCopy;
-                if (((Probe2Fn)Coli_SweepSegNodes)(lbl_eu_80665958,
+                if (((Probe2Fn)Coli_SweepSegNodes)(sEneColiProbe,
                         (char*)self->mObject + 0x44a8)) {
                     self->mArr124[3] = 120;
                 }
@@ -739,13 +713,13 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
             u32 flags = self->mFlags4C;
             if (flags & 0x04000000u) {
                 if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z
-                    <= lbl_eu_80667BCC) {
+                    <= 2.25f) {
                     self->mArr124[3] = 0;
                     self->mFlags4C = (flags | 0x80000000u) & ~0x04000000u;
                 }
             } else {
                 if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z
-                    <= lbl_eu_80667B68) {
+                    <= 1.0f) {
                     self->mArr124[3] = 0;
                     self->mFlags4C &= 0xE1FFFFFFu;
                 }
@@ -755,22 +729,21 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
         if (self->mFlags4C & 0x08000000u) {
             u16 anim = plW->mField455A;
             plW->mField455A = anim - 3;
-            const f32 f28 = lbl_eu_80667BC8;
+            const f32 f28 = 0.5f;
             const f32 f29 = ml::quarterpi;
             const f32 f30 = f28 * f29;
-            const f64 bias = (f64)lbl_eu_80667BE8;
-            const f32 sideScale = lbl_eu_80667BD4;
+            const f32 sideScale = 5.0f;
             int notCommitted = 1;   // r23
             for (int i = 0; i < 2; i++) {
-                f32 ampBase = (i & 1) ? lbl_eu_80667B68 : lbl_eu_80667BD0;
+                f32 ampBase = (i & 1) ? 1.0f : -1.0f;
                 s16 cnt = self->mArr124[3];
-                f32 t = f30 * (f32)((f64)(cnt & 1) - bias) + f29;
+                f32 t = f30 * (f32)(cnt & 1) + f29;
                 f32 angle = ampBase * t + self->mFloat100;
-                f32 cosv = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * angle);
-                f32 sinv = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * angle);
+                f32 cosv = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * angle);
+                f32 sinv = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * angle);
                 ml::CVec3 dir;
                 dir.x = sinv;
-                dir.y = lbl_eu_80667B60;
+                dir.y = 0.0f;
                 dir.z = cosv;
                 ml::CVec3 probe;
                 probe.x = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->x;
@@ -779,8 +752,8 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                 probe.z = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()->z;
                 ml::CVec3 side = dir * sideScale;
                 ml::CVec3 dest = probe + side;
-                if (ColiWalkSegment(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
-                                  &probe, &dest, 0, 0, lbl_eu_80571810) != 0) {
+                if (ColiWalkSegment(sEneColiProbe, (char*)self->mObject + 0x44a8,
+                                  &probe, &dest, 0, 0, sEneColiProbeBuffer) != 0) {
                     continue;
                 }
                 if (moveBaseRoute(self, &dest, 1) == 0) {
@@ -804,7 +777,7 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                 ml::CVec3 delta = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()
                                   - self->mVecC0;
                 if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z
-                    <= lbl_eu_80667B74) {
+                    <= 0.25f) {
                     goalPtr = &self->mVec54;
                 }
             }
@@ -817,7 +790,7 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
         ml::CVec3* tp = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
                             ->CfObject_getPosVector();
         if (updateWalker__17UnkClass_8047D2ACFv(self->mpSomePtr, (Vec*)tp, (Vec*)goalPtr,
-                lbl_eu_80667B60, lbl_eu_80667B60, 1) != 0) {
+                0.0f, 0.0f, 1) != 0) {
             // Contact: slide along the surface normal toward the goal.
             self->mFlags4C &= ~0x01000000u;
             ml::CVec3 delta = *goalPtr
@@ -825,39 +798,39 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                       ->CfObject_getPosVector();
             ml::CVec3 dirTmp = delta;
             ml::CVec3 n = dirTmp;
-            if (n.x != lbl_eu_80667B60 || n.y != lbl_eu_80667B60 || n.z != lbl_eu_80667B60) {
-                if (n.x * n.x + n.y * n.y + n.z * n.z != lbl_eu_80667B60) {
+            if (n.x != 0.0f || n.y != 0.0f || n.z != 0.0f) {
+                if (n.x * n.x + n.y * n.y + n.z * n.z != 0.0f) {
                     PSVECNormalize((const Vec*)&n, (Vec*)&n);
                 } else {
                     n = ml::CVec3::zero;
                 }
             }
             ml::CVec3 out(self->mFloatParam2 * (n.x - self->mVelocity.x) + self->mVelocity.x,
-                          lbl_eu_80667B60,
+                          0.0f,
                           self->mFloatParam2 * (n.z - self->mVelocity.z) + self->mVelocity.z);
-            if (out.x != lbl_eu_80667B60 || out.y != lbl_eu_80667B60
-                || out.z != lbl_eu_80667B60) {
-                if (out.x * out.x + out.y * out.y + out.z * out.z != lbl_eu_80667B60) {
+            if (out.x != 0.0f || out.y != 0.0f
+                || out.z != 0.0f) {
+                if (out.x * out.x + out.y * out.y + out.z * out.z != 0.0f) {
                     PSVECNormalize((const Vec*)&out, (Vec*)&out);
                 } else {
                     out = ml::CVec3::zero;
                 }
             }
-            if (self->mFloatParam2 > lbl_eu_80667BE0) {
+            if (self->mFloatParam2 > 0.15000000596046448f) {
                 if (!(self->mFlags50 & 0x400u)) {
                     self->mFlags50 |= 0x400u;
                     ml::CVec3 probe;
-                    probe.x = lbl_eu_80667BC8 * out.x
+                    probe.x = 0.5f * out.x
                             + ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
                                   ->CfObject_getPosVector()->x;
-                    probe.y = lbl_eu_80667B70
+                    probe.y = 2.0f
                             + ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
                                   ->CfObject_getPosVector()->y;
-                    probe.z = lbl_eu_80667BC8 * out.z
+                    probe.z = 0.5f * out.z
                             + ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)
                                   ->CfObject_getPosVector()->z;
-                    if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4,
-                                      lbl_eu_80667B60) == 0) {
+                    if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, -4.0f,
+                                      0.0f) == 0) {
                         self->mFlags50 |= 0x800u;
                     } else if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) != 0) {
                         self->mFlags50 |= 0x1000u;
@@ -865,14 +838,14 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                 }
                 if (self->mFlags50 & 0x80000u) {
                     // Wall pressed: re-lerp with the tighter factor and latch bit 1.
-                    out.x = lbl_eu_80667B7C * (n.x - self->mVelocity.x) + self->mVelocity.x;
-                    out.y = lbl_eu_80667B60;
-                    out.z = lbl_eu_80667B7C * (n.z - self->mVelocity.z) + self->mVelocity.z;
+                    out.x = 0.6000000238418579f * (n.x - self->mVelocity.x) + self->mVelocity.x;
+                    out.y = 0.0f;
+                    out.z = 0.6000000238418579f * (n.z - self->mVelocity.z) + self->mVelocity.z;
                     self->mFlags50 |= 2u;
-                    if (out.x != lbl_eu_80667B60 || out.y != lbl_eu_80667B60
-                        || out.z != lbl_eu_80667B60) {
+                    if (out.x != 0.0f || out.y != 0.0f
+                        || out.z != 0.0f) {
                         if (out.x * out.x + out.y * out.y + out.z * out.z
-                            != lbl_eu_80667B60) {
+                            != 0.0f) {
                             PSVECNormalize((const Vec*)&out, (Vec*)&out);
                         } else {
                             out = ml::CVec3::zero;
@@ -929,8 +902,8 @@ extern "C" int movePcEnterApproach(cf::CCtrlMovePC* self) {
     } else {
         ml::CVec3 pos = self->mPos;
         CfPartyInfoIn info;
-        InitRecord(&info, &pos, 6, self->mFloat100, lbl_eu_80667B70,
-                      lbl_eu_80667B60, self->mShort120);
+        InitRecord(&info, &pos, 6, self->mFloat100, 2.0f,
+                      0.0f, self->mShort120);
         if (CPartsChange_ProcessPartyInfo(&info, &self->mVec54) == 0) {
             // Planner failed: head straight for our own position.
             self->mFlags4C |= 1u;
@@ -952,7 +925,7 @@ extern "C" int movePcEnterApproach(cf::CCtrlMovePC* self) {
             }
             if (ok && updateWalker__17UnkClass_8047D2ACFv(self->mTask,
                     (Vec*)&self->mPos, &self->mVec54,
-                    lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
+                    0.0f, 0.0f, 1) == 0) {
                 self->mFlags4C |= 1u;
                 self->mVec54 = self->mPos;
             }
@@ -993,9 +966,9 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
         if (self->mFlags50 & 1u) {
             // Party-blocked scan: bail if any other member is closer than us
             // to the goal or stands within BF8 of our current spot.
-            speed = lbl_eu_80667BF0;
+            speed = 0.4000000059604645f;
             int bail = 0;
-            if (self->mDistFC <= lbl_eu_80667BF4) {
+            if (self->mDistFC <= 3.5f) {
                 bail = 1;
             } else {
                 for (int i = 1; i < 3; i++) {
@@ -1008,7 +981,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                     ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
                     ml::CVec3* pp2 = ((cf::CfObject*)p)->CfObject_getPosVector();
                     ml::CVec3 d2 = *pp2 - *op;
-                    if (!(d2.x * d2.x + d2.y * d2.y + d2.z * d2.z <= lbl_eu_80667BF8)) break;
+                    if (!(d2.x * d2.x + d2.y * d2.y + d2.z * d2.z <= 12.25f)) break;
                     bail = 1;
                     break;
                 }
@@ -1020,34 +993,34 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             }
         } else {
             if (f4C & 0x00000800u) {
-                self->mFloatParam2 = lbl_eu_80667B74;
-                speed = lbl_eu_80667BC8;
+                self->mFloatParam2 = 0.25f;
+                speed = 0.5f;
             } else {
-                speed = lbl_eu_80667B6C;
+                speed = 0.10000000149011612f;
             }
-            if (self->mDistFC >= lbl_eu_80667BC4) {
+            if (self->mDistFC >= 0.800000011920929f) {
                 self->mStateFunc = tbl->mEntries[19];
             }
         }
     } else if (f4C & 0x00000400u) {
-        speed = lbl_eu_80667B68;
+        speed = 1.0f;
         f32 lim;
         if (f4C & 0x00000200u) {
-            lim = lbl_eu_80667BFC;
+            lim = 7.200000286102295f;
         } else {
-            lim = lbl_eu_80667C00;
+            lim = 6.0f;
         }
         if (self->mDistFC >= lim) {
             self->mStateFunc = tbl->mEntries[20];
         }
     } else if (f4C & 0x00010000u) {
-        speed = lbl_eu_80667BA8 * (f32)self->mShort122;
+        speed = 4.0f * (f32)self->mShort122;
         if (self->mDistFC >= speed) {
             self->mStateFunc = tbl->mEntries[21];
         }
     } else {
-        speed = lbl_eu_80667B68;
-        if (self->mDistFC >= lbl_eu_80667B70) {
+        speed = 1.0f;
+        if (self->mDistFC >= 2.0f) {
             self->mStateFunc = tbl->mEntries[22];
         }
     }
@@ -1056,7 +1029,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
     ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
     ml::CVec3 delta = *pos - self->mVec54;
     f32 dist2;
-    if (delta.y * delta.y <= lbl_eu_80667C04 || (self->mFlags50 & 1u)) {
+    if (delta.y * delta.y <= 9.0f || (self->mFlags50 & 1u)) {
         dist2 = delta.x * delta.x + delta.z * delta.z;      // horizontal only
     } else {
         dist2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
@@ -1067,47 +1040,47 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
         // --- pick the walk speed for this tick ---
         if (!(f4C & 0x00001000u)) {
             u32 f4Cb = self->mFlags4C;
-            if (dist2 < (lbl_eu_80667BA8 + speed) * (lbl_eu_80667BA8 + speed)) {
+            if (dist2 < (4.0f + speed) * (4.0f + speed)) {
                 if (!(f4Cb & 0x4u)) {
-                    if (dist2 > (lbl_eu_80667BDC + speed) * (lbl_eu_80667BDC + speed)) {
+                    if (dist2 > (3.0f + speed) * (3.0f + speed)) {
                         self->mFlags4C |= 0x2u;
                     }
                     self->mArr124[5] = 0;
-                    spd = lbl_eu_80667BC0;
+                    spd = 0.20000000298023224f;
                 } else if (f4Cb & 0x00100000u) {
-                    f32 th = lbl_eu_80667B70 + speed;
+                    f32 th = 2.0f + speed;
                     if (dist2 < th * th) {
-                        if (dist2 < lbl_eu_80667B60) {
+                        if (dist2 < 0.0f) {
                             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                         }
-                        f32 inv = (dist2 > lbl_eu_80667B60) ? dist2 * nw4r::math::FrSqrt(dist2) : lbl_eu_80667B60;
-                        spd = lbl_eu_80667C08 * (inv / th) + lbl_eu_80667B6C;
+                        f32 inv = (dist2 > 0.0f) ? dist2 * nw4r::math::FrSqrt(dist2) : 0.0f;
+                        spd = 0.30000001192092896f * (inv / th) + 0.10000000149011612f;
                     }
                 }
             } else {
                 self->mFlags4C |= 0x4u;
-                if (dist2 > lbl_eu_80667C0C) {
-                    if (dist2 < lbl_eu_80667B60) {
+                if (dist2 > 64.0f) {
+                    if (dist2 < 0.0f) {
                         Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                     }
-                    f32 inv = (dist2 <= lbl_eu_80667B60) ? dist2 * nw4r::math::FrSqrt(dist2) : lbl_eu_80667B60;
-                    spd = lbl_eu_80667B6C * (inv - lbl_eu_80667BB0) + lbl_eu_80667B68;
-                    self->mFloatParam2 = lbl_eu_80667B74;
-                    if (spd > lbl_eu_80667C10) {
-                        spd = lbl_eu_80667C10;
+                    f32 inv = (dist2 <= 0.0f) ? dist2 * nw4r::math::FrSqrt(dist2) : 0.0f;
+                    spd = 0.10000000149011612f * (inv - 8.0f) + 1.0f;
+                    self->mFloatParam2 = 0.25f;
+                    if (spd > 1.5f) {
+                        spd = 1.5f;
                     }
                 }
             }
         }
 
         // Close-range arrival snap: drop the run/walk latch bits.
-        if ((self->mFlags4C & 1u) && dist2 < (lbl_eu_80667B68 + speed) * (lbl_eu_80667B68 + speed)) {
+        if ((self->mFlags4C & 1u) && dist2 < (1.0f + speed) * (1.0f + speed)) {
             self->mFlags4C &= ~0x7u;
         }
 
         // --- ramp down when arriving / decelerate near the goal ---
         if (self->mFlags50 & 0x80000u) {
-            if (spd != lbl_eu_80667B60) {
+            if (spd != 0.0f) {
                 u32 g = self->mFlags4C;
                 s16 t = self->mArr124[4];
                 self->mArr124[4] = (s16)(t + 1);
@@ -1115,13 +1088,13 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                     if (t + 1 >= 15) {
                         self->mArr124[4] = 30;
                     } else {
-                        spd = lbl_eu_80667B60;
+                        spd = 0.0f;
                     }
                 } else {
                     if (t + 1 >= 30) {
                         self->mArr124[4] = 30;
                     } else {
-                        spd = lbl_eu_80667B60;
+                        spd = 0.0f;
                     }
                 }
             } else {
@@ -1129,13 +1102,13 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             }
         }
 
-        if (spd != lbl_eu_80667B60) {
+        if (spd != 0.0f) {
             if (!(self->mFlags4C & 0x10u)) {
                 movePcUpdateWalk(self);
             }
             u32 f50 = self->mFlags50;
             if (f50 & 0x20000u) {
-                spd = lbl_eu_80667B6C;
+                spd = 0.10000000149011612f;
             }
             if (!(f50 & 0x400u)) {
                 // Obstacle probe ahead: steer around or mark blocked.
@@ -1143,12 +1116,12 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 ml::CVec3* p1 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
                 f32 pz = p1->z;
                 ml::CVec3* p2 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
-                f32 tz = lbl_eu_80667BC8 * self->mVec90.z + pz;
+                f32 tz = 0.5f * self->mVec90.z + pz;
                 ml::CVec3* p3 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
-                f32 ty = lbl_eu_80667B70 + p3->y;
+                f32 ty = 2.0f + p3->y;
                 ml::CVec3* p4 = ((cf::CfObject*)((cf::CfMoveData*)self->mpDataPtr)->field_28)->CfObject_getPosVector();
-                ml::CVec3 probe(lbl_eu_80667BC8 * self->mVec90.x + p4->x, ty, tz);
-                if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_80667B60) == 0) {
+                ml::CVec3 probe(0.5f * self->mVec90.x + p4->x, ty, tz);
+                if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, -4.0f, 0.0f) == 0) {
                     self->mFlags50 |= 0x800u;
                 } else if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) != 0) {
                     self->mFlags50 |= 0x1000u;
@@ -1160,7 +1133,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             if (f50b & 0x40000u) {
                 if (self->mArr124[11] < 0x32) {
                     if (f50b & 0x800u) {
-                        spd = lbl_eu_80667B60;
+                        spd = 0.0f;
                         s16 c = self->mArr124[8];
                         self->mArr124[8] = (s16)(c + 1);
                         if (c + 1 >= 0x5a) {
@@ -1184,12 +1157,12 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             if ((f50e & 0x1000u) && !(f50e & 0x8000u)
                 && !(((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u)
                 && (((cf::CfObjWrap*)self->mPlayer)->mSub->mField4EC & 0x100u)) {
-                ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+                ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
                 return 0;
             }
 
             int moved = 0;
-            if (spd < lbl_eu_80667BC8) {
+            if (spd < 0.5f) {
                 if (self->mArr124[0] >= 0xa) {
                     u32 g = self->mFlags4C;
                     if ((g & 0x2000u) || (f50e & 0x100u)) {
@@ -1208,7 +1181,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 self->mArr124[1] = 0;
             }
             if (moved != 0) {
-                spd = lbl_eu_80667B60;
+                spd = 0.0f;
             }
 
             moved = 0;
@@ -1222,7 +1195,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 }
             }
             if (moved != 0) {
-                spd = lbl_eu_80667B60;
+                spd = 0.0f;
             }
 
             setMoveFacing(self, (const Vec*)&self->mVec90, spd);
@@ -1232,9 +1205,9 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
         // Overspeed: just face the movement direction.
         if (self->mFlags50 & 1u) {
             f32 ang = movePcProbeGoalAngle(self);
-            self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
-            self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
-            setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+            self->mVec90.x = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
+            self->mVec90.z = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
+            setMoveFacing(self, (const Vec*)&self->mVec90, 0.20000000298023224f);
             return 0;
         }
         self->mArr124[4] = 0;
@@ -1247,7 +1220,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
     self->mFlags4C = (g | 0x01000000u) & 0xE1FFFFFFu;
     self->mArr124[1] = 0;
     self->mArr124[3] = 0;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
     return 0;
 }
 // ============================================================================
@@ -1277,7 +1250,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         }
         ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
         self->mVecD8 = *pos;
-        self->mFloatParam1 = lbl_eu_80667B64;      // 32.0
+        self->mFloatParam1 = 32.0f;      // 32.0
         ((cf::CfObjWrap*)self->mObject)->mField455A = 100;
         ctrlActUpdateData70(self->mpDataPtr);
         // Retail interleaves the ptmf-table address calc between the array
@@ -1335,19 +1308,19 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         self->mPlayer = (char*)p0 - 0x3e9c;
     }
     if (self->mPlayer == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
         return 0;
     }
     if (mine == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
         return 0;
     }
     if (((cf::CfObjWrap*)self->mObject)->mSub == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
         return 0;
     }
     if (((cf::CfObjWrap*)self->mPlayer)->mSub == 0) {
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
         return 0;
     }
 
@@ -1366,22 +1339,22 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     self->mVec84.z = self->mPos.z - op->z;
     self->mDistFC = PSVECMag((const Vec*)&self->mVec84);
     f32 mag = (f32)(double)self->mDistFC;
-    if (mag != lbl_eu_80667B60) {
-        f32 k = lbl_eu_80667B68 / mag;
+    if (mag != 0.0f) {
+        f32 k = 1.0f / mag;
         ml::CVec3 t;
         t.x = self->mVec84.x * k;
         t.y = self->mVec84.y * k;
         t.z = self->mVec84.z * k;
         self->mVec78 = t;
     } else {
-        self->mVec78.x = lbl_eu_80667B60;
-        self->mVec78.y = lbl_eu_80667B60;
-        self->mVec78.z = lbl_eu_80667B68;
+        self->mVec78.x = 0.0f;
+        self->mVec78.y = 0.0f;
+        self->mVec78.z = 1.0f;
     }
 
     self->mFlags50 &= 0xFFF862FDu;
     self->mFlags4C &= 0xFFE3E15Fu;
-    self->mFloatParam2 = lbl_eu_80667B6C;       // 0.1
+    self->mFloatParam2 = 0.10000000149011612f;       // 0.1
 
     cf::CfMoveSub* own = ((cf::CfObjWrap*)self->mObject)->mSub;
     cf::CfMoveSub* plr = ((cf::CfObjWrap*)self->mPlayer)->mSub;
@@ -1395,10 +1368,10 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                 self->mVec9C = self->mPos;
             } else if ((fl & 0x10) != 0) {
                 self->mVec9C = self->mPos;
-                self->mVec9C.y += lbl_eu_80667B68;   // 1.0
+                self->mVec9C.y += 1.0f;   // 1.0
             } else if ((fl & 0x20) != 0) {
                 self->mVec9C = self->mPos;
-                self->mVec9C.y -= lbl_eu_80667B68;
+                self->mVec9C.y -= 1.0f;
             }
             self->mFlags50 |= 0x48u;
         }
@@ -1430,11 +1403,11 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
             self->mVec9C = self->mPos;
             if (plr->mField0C & 0x2u) {
                 self->mFlags50 |= 0x8u;
-                self->mVec9C.y -= lbl_eu_80667B70;   // 2.0
+                self->mVec9C.y -= 2.0f;   // 2.0
             }
         } else if ((self->mFlags50 & 0x40u) == 0 && (plr->mField0C & 0x2u)) {
             self->mFlags50 |= 0x40u;
-            self->mVec9C.y = self->mPos.y - lbl_eu_80667B70;
+            self->mVec9C.y = self->mPos.y - 2.0f;
         }
         self->mFlags4C |= 0x1000u;
         self->mFlags50 |= 0x102u;
@@ -1479,7 +1452,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
             f32 dx = self->mVecCC.x - pos->x;
             ml::CVec3* pos2 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
             f32 dz = self->mVecCC.z - pos2->z;
-            if (dx * dx + dz * dz <= lbl_eu_80667B74) {   // 0.25
+            if (dx * dx + dz * dz <= 0.25f) {   // 0.25
                 self->mFlags4C |= 0x2000u;
                 self->mVecCC = self->mPos;
             }
@@ -1488,17 +1461,17 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
 
     if (own->mField0C & 0x200000u) {
         self->mFlags4C |= 0x600u;
-    } else if (own->mField3F8 * own->mField3F8 + own->mField3F0 * own->mField3F0 >= lbl_eu_80667B78) {
+    } else if (own->mField3F8 * own->mField3F8 + own->mField3F0 * own->mField3F0 >= 25.0f) {
         self->mFlags4C |= 0x400u;
     }
 
     void* st = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_getCurrentTarget();
     if (st != 0) {
         f32 h = ((cf::CfObjState*)st)->mField14;
-        if (h >= lbl_eu_80667B7C) {       // 0.6
+        if (h >= 0.6000000238418579f) {       // 0.6
             self->mFlags4C |= 0x80000u;
         }
-        if (h < lbl_eu_80667B6C) {        // 0.1
+        if (h < 0.10000000149011612f) {        // 0.1
             self->mFlags4C |= 0x100000u;
         }
     }
@@ -1541,7 +1514,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     dd.x = self->mVecA8.x - op2->x;
     dd.y = self->mVecA8.y - op2->y;
     dd.z = self->mVecA8.z - op2->z;
-    if (dd.magnitude() <= lbl_eu_80667B68) {   // 1.0
+    if (dd.magnitude() <= 1.0f) {   // 1.0
         s16 v = self->mArr124[0];
         self->mArr124[0] = (s16)(v + 1);
         if (v + 1 >= 1000) {
@@ -1558,7 +1531,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
     dd.x = self->mVecB4.x - self->mPos.x;
     dd.y = self->mVecB4.y - self->mPos.y;
     dd.z = self->mVecB4.z - self->mPos.z;
-    if (dd.magnitude() <= lbl_eu_80667B68) {   // 1.0
+    if (dd.magnitude() <= 1.0f) {   // 1.0
         self->mFlags4C |= 0x20000000u;
     } else {
         self->mFlags4C &= 0xDFFFFFFFu;
@@ -1576,14 +1549,14 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                     self->mStateFunc = *sel;
                     self->mArr124[7] = 0;
                 }
-            } else if (self->mFlags4C & 0x100u || self->mDistFC >= lbl_eu_80667B80) {
+            } else if (self->mFlags4C & 0x100u || self->mDistFC >= 100.0f) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
                     const MoveFn* sel = &tbl->mEntries[6];
                     self->mStateFunc = *sel;
                     self->mArr124[7] = 0;
                 }
-            } else if ((self->mFlags50 & 0x100u) && self->mDistFC < lbl_eu_80667B84) {
+            } else if ((self->mFlags50 & 0x100u) && self->mDistFC < 10.0f) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
                     const MoveFn* sel = &tbl->mEntries[7];
@@ -1595,21 +1568,21 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                     d4.x = self->mPos.x - self->mVec6C.x;
                     d4.y = self->mPos.y - self->mVec6C.y;
                     d4.z = self->mPos.z - self->mVec6C.z;
-                    if (d4.magnitude() < lbl_eu_80667B88) {   // 16
+                    if (d4.magnitude() < 16.0f) {   // 16
                         if (self->mArr124[17] <= 0) {
                             self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
                             const MoveFn* sel = &tbl->mEntries[8];
                             self->mStateFunc = *sel;
                             self->mArr124[7] = 0;
                         }
-                    } else if ((self->mFlags4C & 0x40000u) && self->mDistFC < lbl_eu_80667B8C) {  // 40
+                    } else if ((self->mFlags4C & 0x40000u) && self->mDistFC < 40.0f) {  // 40
                         if (self->mArr124[17] <= 0) {
                             self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
                             const MoveFn* sel = &tbl->mEntries[9];
                             self->mStateFunc = *sel;
                             self->mArr124[7] = 0;
                         }
-                    } else if (self->mDistFC >= ((self->mFlags4C & 0x80000u) ? lbl_eu_80667B90 : lbl_eu_80667B94)) {
+                    } else if (self->mDistFC >= ((self->mFlags4C & 0x80000u) ? 20.0f : 15.0f)) {
                         s16 v = self->mArr124[9];
                         self->mArr124[9] = (s16)(v + 1);
                         if (v + 1 >= 1200) {
@@ -1626,7 +1599,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
                             dD8.x = self->mVecD8.x - op4->x;
                             dD8.y = self->mVecD8.y - op4->y;
                             dD8.z = self->mVecD8.z - op4->z;
-                            if (dD8.magnitude() <= lbl_eu_80667B98) {   // 225
+                            if (dD8.magnitude() <= 225.0f) {   // 225
                                 s16 v2 = self->mArr124[10];
                                 self->mArr124[10] = (s16)(v2 + 1);
                                 if (v2 + 1 >= 300) {
@@ -1654,17 +1627,17 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
 
     if (other == 0 || other <= mine) {
         f32 ang = self->mFloat100 + ml::halfpi;   // + pi/2
-        f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
-        f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
+        f32 s = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
+        f32 c = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
         f32 dir = self->mVec78.x * s + self->mVec78.z * c;
         if (self->mShort120 == 1) {
-            if (dir > lbl_eu_80667BA0) {
+            if (dir > 0.699999988079071f) {
                 self->mShort120 = 2;
             } else {
                 self->mShort120 = 1;
             }
         } else {
-            if (dir < lbl_eu_80667BA4) {
+            if (dir < -0.699999988079071f) {
                 self->mShort120 = 1;
             } else {
                 self->mShort120 = 2;
@@ -1698,13 +1671,13 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         }
     }
 
-    if ((lbl_eu_80663E28 & 0x4000000u) == 0) {
+    if ((gmPauseFlags & 0x4000000u) == 0) {
         if (((cf::CfBattleState*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0) {
-            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
             return 0;
         }
         if (isGlobalCamFlagSet(0x40000000) != 0) {
-            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
             return 0;
         }
         cf::CfObjWrap* obj2 = (cf::CfObjWrap*)self->mObject;
@@ -1713,16 +1686,16 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
         void* stateData = ((cf::CObjectState*)sub3)->getStateData();
         y = *(u32*)stateData;
         if (testActorStatus(obj2, (int*)&y, 8) != 0) {
-            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+            ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
             return 0;
         }
         f32 g = ((cf::CActorParam*)self->mObject)->CActorParam_getHp();
-        if (g > lbl_eu_80667B60) {
+        if (g > 0.0f) {
             return 1;
         }
     }
 
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
     return 0;
 }
 
@@ -1791,13 +1764,13 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
         }
     }
 
-    f32 spd = lbl_eu_80667B68;      // move speed fed to the steer helper
-    f32 slopeK = lbl_eu_80667C14;   // side-slip scale
+    f32 spd = 1.0f;      // move speed fed to the steer helper
+    f32 slopeK = 0.3330000042915344f;   // side-slip scale
     int act = 0;
     u32 f50 = self->mFlags50;
     if (f50 & 0x4u) {
         if (f50 & 0x20u) {
-            if (dist >= lbl_eu_80667C04) {
+            if (dist >= 9.0f) {
                 if (!(self->mFlags4C & 0x1000u) && best != 0) {
                     dGoal = dSelf;
                 }
@@ -1805,27 +1778,27 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
             } else {
                 self->mFlags50 = f50 & ~0x24u;
             }
-        } else if (dist <= lbl_eu_80667C04) {
+        } else if (dist <= 9.0f) {
             // Overshot: aim the opposite way from the goal.
-            dGoal = dSelf * lbl_eu_80667BD0;
-            spd = lbl_eu_80667C18;
-            slopeK = lbl_eu_80667B7C;
+            dGoal = dSelf * -1.0f;
+            spd = 1.2000000476837158f;
+            slopeK = 0.6000000238418579f;
             act = 1;
         } else {
             self->mFlags50 = f50 & ~0x4u;
         }
-    } else if (dist >= lbl_eu_80667C1C) {
+    } else if (dist >= 10.889999389648438f) {
         if (!(self->mFlags4C & 0x1000u) && best != 0) {
             dGoal = dSelf;
         }
         self->mFlags50 = f50 | 0x24u;
         act = 1;
     } else if (!(self->mFlags4C & 0x100000u)) {
-        if (dist <= lbl_eu_80667C20) {
+        if (dist <= 5.289999961853027f) {
             self->mFlags50 = f50 | 0x4u;
-            dGoal = dSelf * lbl_eu_80667BD0;
-            spd = lbl_eu_80667C18;
-            slopeK = lbl_eu_80667B7C;
+            dGoal = dSelf * -1.0f;
+            spd = 1.2000000476837158f;
+            slopeK = 0.6000000238418579f;
             act = 1;
         }
     }
@@ -1849,19 +1822,19 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
 
         // --- steer: rotate the facing toward the approach vector ---
         f32 cosA = CosFIdx__Q24nw4r4mathFf(
-            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle());
+            40.7436637878418f * ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle());
         f32 sinA = SinFIdx__Q24nw4r4mathFf(
-            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle());
+            40.7436637878418f * ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle());
 
-        ml::CVec3 facing(sinA, lbl_eu_80667B60, cosA);
-        ml::CVec3 up(lbl_eu_80667B60, lbl_eu_80667B68, lbl_eu_80667B60);
+        ml::CVec3 facing(sinA, 0.0f, cosA);
+        ml::CVec3 up(0.0f, 1.0f, 0.0f);
         ml::CVec3 right;
         PSVECCrossProduct((const Vec*)&facing, (const Vec*)&up, (Vec*)&right);
         // Right vector is flattened onto the XZ plane before normalizing.
-        right.y = lbl_eu_80667B60;
+        right.y = 0.0f;
         {
             f32 rl = right.x * right.x + right.y * right.y + right.z * right.z;
-            if (rl == lbl_eu_80667B60) {
+            if (rl == 0.0f) {
                 right = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)&right, (Vec*)&right);
@@ -1870,9 +1843,9 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
 
         ml::CVec3 work = dGoal;
         dist = dGoal.x * dGoal.x + dGoal.z * dGoal.z;   // horizontal length^2
-        if (lbl_eu_80667B74 >= dist) {                  // 0.25: stand still
-            work.x = lbl_eu_80667B60;
-            work.z = lbl_eu_80667B60;
+        if (0.25f >= dist) {                  // 0.25: stand still
+            work.x = 0.0f;
+            work.z = 0.0f;
             self->mFlags50 &= ~0x80u;
         } else if (self->mFlags50 & 0x80u) {
             // Wall-slide hold: reuse the cached direction until the counter
@@ -1887,41 +1860,41 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
         } else {
             f32 k;
             if (self->mFlags50 & 0x10u) {
-                k = lbl_eu_80667B68;
+                k = 1.0f;
             } else {
                 k = slopeK;
-                slopeK = lbl_eu_80667B68;
+                slopeK = 1.0f;
             }
-            if (dist < lbl_eu_80667B60) {
+            if (dist < 0.0f) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 inv;
-            if (dist > lbl_eu_80667B60) {
+            if (dist > 0.0f) {
                 inv = dist * nw4r::math::FrSqrt(dist);
             } else {
-                inv = lbl_eu_80667B60;
+                inv = 0.0f;
             }
             if (inv * k < slopeK * ml::math::abs(dGoal.y)) {
                 // Slope case: climb straight up the surface toward the goal.
                 int hit = 1;
-                ml::CVec3 v(lbl_eu_80667B60, work.y, lbl_eu_80667B60);
+                ml::CVec3 v(0.0f, work.y, 0.0f);
                 {
                     f32 vl = v.x * v.x + v.y * v.y + v.z * v.z;
-                    if (vl == lbl_eu_80667B60) {
+                    if (vl == 0.0f) {
                         v = ml::CVec3::zero;
                     } else {
                         PSVECNormalize((const Vec*)&v, (Vec*)&v);
                     }
                 }
-                ml::CVec3 scaled = v * lbl_eu_80667C08;   // 0.3
+                ml::CVec3 scaled = v * 0.30000001192092896f;   // 0.3
                 ml::CVec3* p3 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
                 ml::CVec3 a = *p3 - scaled;
                 ml::CVec3 diff = a - facing;
                 ml::CVec3 sum = a + facing;
                 if (ScnRes_SegQueryForward_E348(&diff, &sum, 0, 0x2000, 0) == 0) {
-                    if (dGoal.x != lbl_eu_80667B60 || dGoal.z != lbl_eu_80667B60) {
+                    if (dGoal.x != 0.0f || dGoal.z != 0.0f) {
                         hit = 0;
-                        work = ml::CVec3(dGoal.x, lbl_eu_80667B60, dGoal.z);
+                        work = ml::CVec3(dGoal.x, 0.0f, dGoal.z);
                     }
                 }
                 self->mFlags50 &= ~0x10u;
@@ -1933,24 +1906,24 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
             } else {
                 // Flat case: run around the goal keeping its height offset.
                 int hit = 1;
-                ml::CVec3 v(work.x, lbl_eu_80667B60, work.z);
+                ml::CVec3 v(work.x, 0.0f, work.z);
                 {
                     f32 vl = v.x * v.x + v.y * v.y + v.z * v.z;
-                    if (vl == lbl_eu_80667B60) {
+                    if (vl == 0.0f) {
                         v = ml::CVec3::zero;
                     } else {
                         PSVECNormalize((const Vec*)&v, (Vec*)&v);
                     }
                 }
-                ml::CVec3 scaled = v * lbl_eu_80667C08;   // 0.3
+                ml::CVec3 scaled = v * 0.30000001192092896f;   // 0.3
                 ml::CVec3* p3 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
                 ml::CVec3 a = *p3 - scaled;
                 ml::CVec3 diff = a - facing;
                 ml::CVec3 sum = a + facing;
                 if (ScnRes_SegQueryForward_E348(&diff, &sum, 0, 0x2000, 0) == 0) {
-                    if (dGoal.y != lbl_eu_80667B60) {
+                    if (dGoal.y != 0.0f) {
                         hit = 0;
-                        work = ml::CVec3(lbl_eu_80667B60, dGoal.y, lbl_eu_80667B60);
+                        work = ml::CVec3(0.0f, dGoal.y, 0.0f);
                     }
                 }
                 self->mFlags50 |= 0x10u;
@@ -1965,27 +1938,27 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
         // --- commit the steer direction ---
         {
             f32 wl = work.x * work.x + work.y * work.y + work.z * work.z;
-            if (wl == lbl_eu_80667B60) {
+            if (wl == 0.0f) {
                 work = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)&work, (Vec*)&work);
             }
         }
-        self->mVec90.y = lbl_eu_80667B60;
+        self->mVec90.y = 0.0f;
         self->mVec90.x = facing.x * (-work.y);
         self->mVec90.z = facing.z * (-work.y);
         dist = work.x * work.x + work.z * work.z;
-        if (dist < lbl_eu_80667B60) {
+        if (dist < 0.0f) {
             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
         f32 inv2;
-        if (dist > lbl_eu_80667B60) {
+        if (dist > 0.0f) {
             inv2 = dist * nw4r::math::FrSqrt(dist);
         } else {
-            inv2 = lbl_eu_80667B60;
+            inv2 = 0.0f;
         }
         f32 dot = work.x * right.x + work.z * right.z;
-        if (dot >= lbl_eu_80667B60) {
+        if (dot >= 0.0f) {
             inv2 = -inv2;
         }
         self->mVec90.x = right.x * inv2 + self->mVec90.x;
@@ -1999,7 +1972,7 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
     self->mArr124[2] = 0;
     self->mArr124[1] = 0;
     self->mArr124[3] = 0;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
     return 0;
 }
 // ============================================================================
@@ -2036,15 +2009,15 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
                     Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
 
-                bestLen = lbl_eu_80667B60;
-                if (e2 > lbl_eu_80667B60) {
+                bestLen = 0.0f;
+                if (e2 > 0.0f) {
                     bestLen = e2 * nw4r::math::FrSqrt(e2);
                 }
-                if (bestLen != lbl_eu_80667B60) {
+                if (bestLen != 0.0f) {
                     ml::CVec3 tmp;
                     nw4r::math::VEC3Scale(reinterpret_cast<nw4r::math::VEC3*>(&tmp),
                                           reinterpret_cast<nw4r::math::VEC3*>(pd),
-                                          lbl_eu_80667B68 / bestLen);
+                                          1.0f / bestLen);
                     ml::CVec3 tmp2(tmp);
                     goal = tmp2;
                 }
@@ -2052,8 +2025,8 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
             }
         }
 
-        if (bestLen < lbl_eu_80667BA8) {
-            if (bestLen >= lbl_eu_80667BDC) {
+        if (bestLen < 4.0f) {
+            if (bestLen >= 3.0f) {
                 self->mFlags4C &= ~0x20000000u;
             } else if (self->mFlags4C & 0x20000000u) {
                 // Steer toward the chosen target via the move helper.
@@ -2065,10 +2038,10 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
                 ml::CVec3 out(delta);
                 if (moveBaseRoute(self, &out, 1) != 0) {
                     moveBaseChase(self, &self->mVec90, &out);
-                    setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+                    setMoveFacing(self, (const Vec*)&self->mVec90, 0.20000000298023224f);
                     return 0;
                 }
-            } else if (bestLen < lbl_eu_80667C24) {
+            } else if (bestLen < 2.200000047683716f) {
                 self->mFlags4C |= 0x20000000u;
             }
         }
@@ -2077,7 +2050,7 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
         self->mFlags4C = (self->mFlags4C | 0x100u) & ~0x0F000000u;
         self->mArr124[1] = 0;
         self->mArr124[3] = 0;
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
         return 0;
     }
 
@@ -2092,7 +2065,7 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
 // ============================================================================
 extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
     self->mFlags4C |= 0x8;
-    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+    ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
 
     // Bail out while the move-state reports an active condition/anim lock.
     cf::CfMoveSub* sub = ((cf::CfObjWrap*)self->mObject)->mSub;
@@ -2119,29 +2092,29 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             } else {
                 angle = -ml::quarterpi;
             }
-            radius = lbl_eu_80667C28;
+            radius = 1.7999999523162842f;
         } else {
             angle = (f32)(u32)ml::math::mtRand(0x168) * ml::deg2rad;
-            radius = lbl_eu_80667BDC * (lbl_eu_80667B6C * (f32)(u32)ml::math::mtRand(0xa))
-                     + lbl_eu_80667C2C;
+            radius = 3.0f * (0.10000000149011612f * (f32)(u32)ml::math::mtRand(0xa))
+                     + 2.4000000953674316f;
         }
 
         // Rotate the local up vector into world space by facing yaw, then by
         // the approach angle, to get the lateral offset direction.
-        f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * self->mFloat100);
-        f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * self->mFloat100);
+        f32 s1 = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * self->mFloat100);
+        f32 c1 = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * self->mFloat100);
         Mtx mY = {
-            {c1, lbl_eu_80667B60, s1, lbl_eu_80667B60},
-            {lbl_eu_80667B60, lbl_eu_80667B68, lbl_eu_80667B60, lbl_eu_80667B60},
-            {-s1, lbl_eu_80667B60, c1, lbl_eu_80667B60},
+            {c1, 0.0f, s1, 0.0f},
+            {0.0f, 1.0f, 0.0f, 0.0f},
+            {-s1, 0.0f, c1, 0.0f},
         };
-        ml::CVec3 v(lbl_eu_80667B60, lbl_eu_80667BD0, lbl_eu_80667B60);
-        f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * angle);
-        f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * angle);
+        ml::CVec3 v(0.0f, -1.0f, 0.0f);
+        f32 s2 = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * angle);
+        f32 c2 = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * angle);
         Mtx mZ = {
-            {c2, -s2, lbl_eu_80667B60, lbl_eu_80667B60},
-            {s2, c2, lbl_eu_80667B60, lbl_eu_80667B60},
-            {lbl_eu_80667B60, lbl_eu_80667B60, lbl_eu_80667B68, lbl_eu_80667B60},
+            {c2, -s2, 0.0f, 0.0f},
+            {s2, c2, 0.0f, 0.0f},
+            {0.0f, 0.0f, 1.0f, 0.0f},
         };
         PSMTXConcat(mZ, mY, mY);
         nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
@@ -2149,9 +2122,9 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
         v = v * radius;
         target = target + v;
 
-        f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * self->mFloat100);
-        f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * self->mFloat100);
-        ml::CVec3 facing(s3, lbl_eu_80667B60, c3);
+        f32 c3 = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * self->mFloat100);
+        f32 s3 = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * self->mFloat100);
+        ml::CVec3 facing(s3, 0.0f, c3);
         ml::CVec3 diff = target - facing;
         ml::CVec3 sum = target + facing;
         if (ScnRes_SegQueryForward_E348(&diff, &sum, 0, 0x2000, 0) == 0) {
@@ -2170,8 +2143,8 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             }
             ml::CVec3* pp = ((cf::CfObject*)((char*)p + 0x3e9c))->CfObject_getPosVector();
             v = *pp - target;
-            if (v.x * v.x + v.z * v.z < lbl_eu_80667C30
-                && ml::math::abs(v.y) < lbl_eu_80667B70) {
+            if (v.x * v.x + v.z * v.z < 0.4899999797344208f
+                && ml::math::abs(v.y) < 2.0f) {
                 clear = 0;
             }
         }
@@ -2180,15 +2153,15 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
         }
 
         ScnRes_CopyEntryMid(&v, 0);
-        if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80667B60) {
+        if (v.x * v.x + v.y * v.y + v.z * v.z == 0.0f) {
             v = ml::CVec3::zero;
         } else {
             PSVECNormalize((const Vec*)&v, (Vec*)&v);
         }
         ScnRes_CopyEntryHead(&goal, 0);
-        goal.x += v.x * lbl_eu_80667BF0;
-        goal.y += v.y * lbl_eu_80667BF0;
-        goal.z += v.z * lbl_eu_80667BF0;
+        goal.x += v.x * 0.4000000059604645f;
+        goal.y += v.y * 0.4000000059604645f;
+        goal.z += v.z * 0.4000000059604645f;
         self->mArr124[9] = 0;
         self->mStateFunc = lbl_eu_80532CC8;
         self->mArr124[15] = 0;
@@ -2199,8 +2172,8 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             self->mFlags4C |= 0x20000;
             ml::CVec3 v0 = self->mPos;
             CfPartyInfoIn p1;
-            InitRecord(&p1, &v0, 6, self->mFloat100, lbl_eu_80667B70,
-                          lbl_eu_80667B60, self->mShort120);
+            InitRecord(&p1, &v0, 6, self->mFloat100, 2.0f,
+                          0.0f, self->mShort120);
             self->mArr124[9] = 0;
             p1.mField2E = 1;
             if (CPartsChange_ProcessPartyInfo(&p1, &goal) == 0) {
@@ -2214,8 +2187,8 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             ml::CVec3 v0 = self->mPos;
             u32 rnd = ml::math::mtRand();
             CfPartyInfoIn p2;
-            InitRecord(&p2, &v0, 1, self->mFloat100, lbl_eu_80667B70,
-                          lbl_eu_80667BA8, rnd & 0xffff);
+            InitRecord(&p2, &v0, 1, self->mFloat100, 2.0f,
+                          4.0f, rnd & 0xffff);
             s16 cnt = self->mArr124[9];
             self->mArr124[9] = (s16)(cnt + 1);
             if (cnt > 3) {
@@ -2226,15 +2199,15 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
             if (CPartsChange_ProcessPartyInfo(&p2, &goal) == 0) {
                 // No candidate: probe straight down/up for walkable floor.
                 ml::CVec3 vHi = self->mPos;
-                vHi.y += lbl_eu_80667BBC;
+                vHi.y += -2.0f;
                 ml::CVec3 vLo = self->mPos;
-                vLo.y += lbl_eu_80667B70;
-                if (ColiWalkSegment(lbl_eu_80665958,
+                vLo.y += 2.0f;
+                if (ColiWalkSegment(sEneColiProbe,
                     (char*)self->mPlayer + 0x44a8, &vHi, &vLo, 2, 1, 0) == 0) {
                     return 0;
                 }
-                ml::CVec3 tmp = *(ml::CVec3*)lbl_eu_80665958;
-                goal.y = tmp.y + lbl_eu_80667BC0;
+                ml::CVec3 tmp = *(ml::CVec3*)sEneColiProbe;
+                goal.y = tmp.y + 0.20000000298023224f;
             } else if (p2.mField2C != 0) {
                 height = p2.mField24;
                 flag = 1;
@@ -2246,9 +2219,9 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
     // Common tail: raycast current pos -> candidate pos (both lifted by BC4),
     // then commit the reposition state.
     ml::CVec3 vA = self->mPos;
-    vA.y += lbl_eu_80667BC4;
+    vA.y += 0.800000011920929f;
     ml::CVec3 vB(goal.x, goal.y, goal.z);
-    vB.y += lbl_eu_80667BC4;
+    vB.y += 0.800000011920929f;
     if (ScnRes_SegQueryForward_E348(&vA, &vB, 0x44a05, 0, 0) != 0) {
         return 0;
     }
@@ -2256,8 +2229,8 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
     cf::CfObjWrap* obj = (cf::CfObjWrap*)self->mObject;
     obj->mField455A = 0x64;
     if (flag != 0) {
-        if (goal.y - height >= lbl_eu_80667C28) {
-            goal.y -= lbl_eu_80667C28;
+        if (goal.y - height >= 1.7999999523162842f) {
+            goal.y -= 1.7999999523162842f;
         } else {
             goal.y = height;
         }
@@ -2276,8 +2249,8 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
     cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
     emb->CfObject_syncMoveTarget((const ml::CVec3*)&goal);
     emb->CfObject_setMoveYaw(self->mFloat100);
-    emb->CfObject_syncModelRate(lbl_eu_80667B68);
-    CfObjectMove_setMoveSpeedGated((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
+    emb->CfObject_syncModelRate(1.0f);
+    CfObjectMove_setMoveSpeedGated((char*)self->mObject + 0x3e9c, 20.0f);
 
     if (obj->mSub != 0) {
         cf::CfMoveSub* sub2 = obj->mSub;
@@ -2323,11 +2296,11 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
             if ((f & 0x00000800u)
                 && ((((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u) == 0)
                 && ((((cf::CfObjWrap*)self->mPlayer)->mSub->mField4EC & 0x100u) != 0)) {
-                if (self->mDistFC > lbl_eu_80667B90) {
+                if (self->mDistFC > 20.0f) {
                     self->mStateFunc = tbl->mEntries[33];
                     flag = 0;
                 }
-            } else if (self->mDistFC > lbl_eu_80667B68) {
+            } else if (self->mDistFC > 1.0f) {
                 self->mStateFunc = tbl->mEntries[34];
                 flag = 0;
             }
@@ -2335,39 +2308,39 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
             f32 lim;
             if (f & 0x00000200u) {
                 // Slow-walk steering: only when close enough and slow enough.
-                if (self->mDistFC < lbl_eu_80667B70) {
+                if (self->mDistFC < 2.0f) {
                     cf::CfMoveSub* sub = ((cf::CfObjWrap*)self->mObject)->mSub;
-                    if (sub->mField3F0 * sub->mField3F0 + sub->mField3F8 * sub->mField3F8 < lbl_eu_80667C04) {
+                    if (sub->mField3F0 * sub->mField3F0 + sub->mField3F8 * sub->mField3F8 < 9.0f) {
                         ml::CVec3 v;
                         ml::CVec3* vp = &v;
                         v.x = sub->mField3F0;
-                        v.y = lbl_eu_80667B60;
+                        v.y = 0.0f;
                         v.z = sub->mField3F8;
-                        if (!(v.x == lbl_eu_80667B60 && v.y == lbl_eu_80667B60 && v.z == lbl_eu_80667B60)) {
-                            if (v.y * v.y + v.x * v.x + v.z * v.z == lbl_eu_80667B60) {
+                        if (!(v.x == 0.0f && v.y == 0.0f && v.z == 0.0f)) {
+                            if (v.y * v.y + v.x * v.x + v.z * v.z == 0.0f) {
                                 v = ml::CVec3::zero;
                             } else {
                                 PSVECNormalize((const Vec*)vp, (Vec*)vp);
                             }
                             ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
                             ml::CVec3 tmp = *pos + *vp;
-                            ml::CVec3 probe(tmp.x, tmp.y + lbl_eu_80667B68, tmp.z);
-                            if (ScnRes_VertRayForward_E398(&probe, 0x44a05, 0, 0, lbl_eu_80667C34, lbl_eu_8066AF20) != 0) {
+                            ml::CVec3 probe(tmp.x, tmp.y + 1.0f, tmp.z);
+                            if (ScnRes_VertRayForward_E398(&probe, 0x44a05, 0, 0, -3.0f, 0.707099974155426f) != 0) {
                                 if (ScnRes_EntryFlagThunk_E5A4(0x400, 0) != 0) {
-                                    ml::CVec3 scaled = *vp * lbl_eu_80667BD0;
+                                    ml::CVec3 scaled = *vp * -1.0f;
                                     *vp = scaled;
                                     moveBaseLerp(self, vp);
                                     self->mVec90 = *vp;
-                                    setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+                                    setMoveFacing(self, (const Vec*)&self->mVec90, 1.0f);
                                     flag = 0;
                                 }
                             }
                         }
                     }
                 }
-                lim = lbl_eu_80667C38;
+                lim = 12.0f;
             } else {
-                lim = lbl_eu_80667C3C;
+                lim = 11.0f;
             }
             if (self->mDistFC > lim) {
                 self->mStateFunc = tbl->mEntries[35];
@@ -2376,12 +2349,12 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
         } else {
             if (f & 0x00010000u) {
                 // Limit arithmetic runs in double precision in retail.
-                f64 limit = (f64)lbl_eu_80667BA8 * self->mShort122 + (f64)lbl_eu_80667BDC;
+                f64 limit = (f64)4.0f * self->mShort122 + (f64)3.0f;
                 if (self->mDistFC > limit) {
                     self->mStateFunc = tbl->mEntries[36];
                     flag = 0;
                 }
-            } else if (self->mDistFC > lbl_eu_80667BA8) {
+            } else if (self->mDistFC > 4.0f) {
                 self->mStateFunc = tbl->mEntries[37];
                 flag = 0;
             }
@@ -2391,11 +2364,11 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
     // Tail: when no transition ran, steer toward the approach direction.
     // rlwinm masks here clear exactly bits 0x20000000 / 0x40.
     if (flag != 0) {
-        if (self->mDistFC >= lbl_eu_80667B70) {
+        if (self->mDistFC >= 2.0f) {
             self->mArr124[13] = 0;
             self->mFlags4C &= ~0x20000000u;
         } else if (!(self->mFlags4C & 0x20000000u)) {
-            if (self->mDistFC < lbl_eu_80667C10) {
+            if (self->mDistFC < 1.5f) {
                 u32 g = self->mFlags4C | 0x20000000u;
                 self->mArr124[13] = 0;
                 self->mFlags4C = g;
@@ -2406,15 +2379,15 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
             ml::CVec3 deltaArg = delta;
             moveBaseChase(self, &self->mVec90, &deltaArg);
 
-            ml::CVec3 scaled = self->mVec90 * lbl_eu_80667BC4;
+            ml::CVec3 scaled = self->mVec90 * 0.800000011920929f;
             ml::CVec3 scaledCopy = scaled;
             ml::CVec3* pos2 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector();
             ml::CVec3 sum = *pos2 + scaledCopy;
-            ml::CVec3 probePos(sum.x, sum.y + lbl_eu_80667BE4, sum.z);
+            ml::CVec3 probePos(sum.x, sum.y + -4.0f, sum.z);
             ml::CVec3 probeArg = probePos;
 
             blocked = 0;
-            if (ScnRes_VertRayForward_E398(&probeArg, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_8066AF20) != 0) {
+            if (ScnRes_VertRayForward_E398(&probeArg, 0x4a05, 0, 0, -4.0f, 0.707099974155426f) != 0) {
                 if (ScnRes_EntryFlagThunk_E5A4(0x20000, 0) == 0) {
                     blocked = 1;
                 } else if ((((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u) == 0) {
@@ -2422,7 +2395,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
                 }
             }
             if (blocked != 0) {
-                setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+                setMoveFacing(self, (const Vec*)&self->mVec90, 0.20000000298023224f);
                 self->mArr124[13] = 0;
                 self->mFlags4C &= ~0x40u;
                 flag = 0;
@@ -2461,7 +2434,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
         g &= 0xE1FFFFFFu;
         self->mArr124[3] = 0;
         self->mFlags4C = g;
-        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
+        ((cf::CfMoveData*)self->mpDataPtr)->mField14 = 0.0f;
     }
 }
 // ============================================================================
@@ -2474,7 +2447,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
 // on the first pass). If no ray hits anything, return the facing angle.
 // ============================================================================
 extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
-    ml::CVec3 goal(self->mVec54.x, self->mVec54.y + lbl_eu_80667B68, self->mVec54.z);
+    ml::CVec3 goal(self->mVec54.x, self->mVec54.y + 1.0f, self->mVec54.z);
     ml::CVec3 dir;
     ml::CVec3 n;
     ml::CVec3 start;
@@ -2484,9 +2457,9 @@ extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
     for (int i = 0; i < 2; i++) {
         f32 ang = ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();   // vtable 0x5b4
         for (int j = 0; j < 4; j++) {
-            dir.z = lbl_eu_80667B70 * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
-            dir.y = lbl_eu_80667B60;
-            dir.x = lbl_eu_80667B70 * SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
+            dir.z = 2.0f * CosFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
+            dir.y = 0.0f;
+            dir.x = 2.0f * SinFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
             diff = goal - dir;
             sum = goal + dir;
             start = diff;
@@ -2494,13 +2467,13 @@ extern "C" f32 movePcProbeGoalAngle(cf::CCtrlMovePC* self) {
             if (ScnRes_SegQueryForward_E348(&start, &end, 0, 0x2000, 0) != 0) {
                 ScnRes_CopyEntryMid(&n, 0);
                 if (i == 0) {
-                    return lbl_eu_80667BD8 * Atan2FIdx__Q24nw4r4mathFff(-n.x, -n.z);
+                    return 0.02454369328916073f * Atan2FIdx__Q24nw4r4mathFff(-n.x, -n.z);
                 }
-                return lbl_eu_80667BD8 * Atan2FIdx__Q24nw4r4mathFff(n.x, n.z);
+                return 0.02454369328916073f * Atan2FIdx__Q24nw4r4mathFff(n.x, n.z);
             }
             ang = ang + ml::halfpi;
         }
-        goal.y = goal.y - lbl_eu_80667BDC;
+        goal.y = goal.y - 3.0f;
     }
     return ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();
 }
@@ -2519,7 +2492,7 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
     u32 f50 = self->mFlags50;
 
     if (f50 & 0x4000u) {
-        if (!(self->mDistFC >= lbl_eu_80667B90)) {
+        if (!(self->mDistFC >= 20.0f)) {
             cf::CfObjWrap* ownW = (cf::CfObjWrap*)self->mObject;
             if (((ownW->mSub->mField4EC & 0x100u) != 0) ||
                 ((((cf::CfObjWrap*)self->mPlayer)->mSub->mField4EC & 0x100u) != 0)) {
@@ -2529,7 +2502,7 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
                     const ml::CVec3& d = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_getPosVector()
                                          - self->mVecF0;
                     f32 d2 = d.x * d.x + d.y * d.y + d.z * d.z;
-                    if (!(d2 > lbl_eu_80667C44)) {
+                    if (!(d2 > 0.36000001430511475f)) {
                         arrived = 0;
                         self->mFlags50 = (self->mFlags50 & 0x7FFu) | 0x8000u;
                     }
@@ -2556,11 +2529,11 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
     } else if (f50 & 0x2000u) {
         u32 t = f50 | 0x8000u;
         self->mFlags50 = t;
-        if (self->mDistFC < lbl_eu_80667BD4) {
+        if (self->mDistFC < 5.0f) {
             self->mFlags50 = t & 0x1FFFu;
         }
     } else {
-        if (!(self->mDistFC >= lbl_eu_80667BB0)) {
+        if (!(self->mDistFC >= 8.0f)) {
             self->mFlags50 = f50 | 0xA000u;
         }
     }
@@ -2575,7 +2548,7 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
     if (self->mFlags50 & 0x400u) {
         const ml::CVec3& d = self->mPos - self->mVecF0;
         f32 d2 = d.x * d.x + d.y * d.y + d.z * d.z;
-        if (!(d2 > lbl_eu_80667BAC)) {
+        if (!(d2 > 400.0f)) {
             self->mArr124[16] = 0;
             if (self->mFlags4C & 0x1000u) {
                 return;
@@ -2592,12 +2565,11 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
     // Hoisted constants match the retail FP-register allocation order.
     ml::CVec3 out;                 // ground query result
     ml::CVec3 probe;               // candidate spot
-    const f32 heightStep = lbl_eu_80667BD4;
-    const f64 angBias = lbl_eu_80667BE8;
+    const f32 heightStep = 5.0f;
     const f32 ampScale = ml::quarterpi;
-    const f32 baseRadius = lbl_eu_80667B68;
-    const f32 degScale = lbl_eu_80667B9C;
-    const f32 maxReach = lbl_eu_80667C50;
+    const f32 baseRadius = 1.0f;
+    const f32 degScale = 40.7436637878418f;
+    const f32 maxReach = 19.0f;
     for (int i = 0; i < 4; i++) {
         s16 h = self->mArr124[16];
         if (h >= 0xF0) {
@@ -2608,16 +2580,16 @@ extern "C" void movePcUpdatePairFollow(cf::CCtrlMovePC* self) {
         probe.x = pos->x;
         probe.z = pos->z;
         probe.y = pos->y + heightStep;
-        // direction index (low bits) and ring index (high bits), both biased
-        // by the same double constant before scaling
-        f32 amp = ((f32)((f64)(h & 7) - angBias)) * ampScale;
-        f32 rad = baseRadius + (f32)((f64)(h >> 4) - angBias);
+        // direction index (low bits) and ring index (high bits), both
+        // converted to f32 before scaling
+        f32 amp = (f32)(h & 7) * ampScale;
+        f32 rad = baseRadius + (f32)(h >> 4);
         f32 s = SinFIdx__Q24nw4r4mathFf(degScale * amp);
         probe.x += rad * s;
         f32 c = CosFIdx__Q24nw4r4mathFf(degScale * amp);
         probe.z += rad * c;
 
-        if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80667C48, lbl_eu_80667C4C) == 0) {
+        if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, -10.0f, 0.707099974155426f) == 0) {
             self->mArr124[16] = h + 1;
             continue;
         }

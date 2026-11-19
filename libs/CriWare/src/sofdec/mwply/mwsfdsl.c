@@ -345,7 +345,7 @@ typedef struct MWSFDPLY {
 } MWSFDPLY;
 
 /* ---- SVM trace callback infrastructure ----
- * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
+ * gpMwPlyTraceCb is a global pointer to an optional trace object whose
  * vtable exposes a "trace" method at offset 0x24. Each instrumented helper
  * records its arguments into a per-function trace record (lbl_eu_80566*) and
  * invokes the callback on entry (sub-record at +0x04) and exit (+0x6c). */
@@ -375,13 +375,13 @@ struct TraceRec {
     u8 pad_0x70[0x64];       /* 0x70..0xd3 */
 };
 
-extern TraceCb* lbl_eu_805FF3A0;
-extern TraceRec lbl_eu_80566428;
-extern TraceRec lbl_eu_805664FC;
-extern TraceRec lbl_eu_80566778;
-extern TraceRec lbl_eu_805665D0;
-extern TraceRec lbl_eu_805666A4;
-extern TraceRec lbl_eu_8056684C;
+extern TraceCb* gpMwPlyTraceCb;
+extern TraceRec sTraceStartFnameLp;
+extern TraceRec sTraceReleaseLp;
+extern TraceRec sTraceReleaseSeamless;
+extern TraceRec sTraceEntryFname;
+extern TraceRec sTraceStartSeamless;
+extern TraceRec sTraceSetSeamlessLp;
 
 /* ---- External symbols / helpers ---- */
 
@@ -435,18 +435,18 @@ void mwPlySetSeamlessLp(MWSFDPLY* self, s32 lpFlag) {
         return;
     }
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            lbl_eu_8056684C.self = (u32)self;
-            lbl_eu_8056684C.arg = (u32)&lpFlag;
-            cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+            sTraceSetSeamlessLp.self = (u32)self;
+            sTraceSetSeamlessLp.arg = (u32)&lpFlag;
+            cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
         }
     }
     LSC_SetLpFlg(self->field_0x64, lpFlag);
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+            cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
         }
     }
 }
@@ -461,10 +461,10 @@ void mwPlyStartSeamless(MWSFDPLY* self) {
         return;
     }
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            lbl_eu_805666A4.self = (u32)self;
-            cb->vtable->trace(cb, &lbl_eu_805666A4.field_0x04);
+            sTraceStartSeamless.self = (u32)self;
+            cb->vtable->trace(cb, &sTraceStartSeamless.field_0x04);
         }
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
@@ -484,9 +484,9 @@ void mwPlyStartSeamless(MWSFDPLY* self) {
     MWSFCRE_SetSupplySj(self);
     self->field_0x638 = 0;
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            cb->vtable->trace(cb, &lbl_eu_805666A4.field_0x6c);
+            cb->vtable->trace(cb, &sTraceStartSeamless.field_0x6c);
         }
     }
 }
@@ -504,11 +504,11 @@ void mwPlyEntryFname(MWSFDPLY* self, const char* fname) {
         return;
     }
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            lbl_eu_805665D0.self = (u32)self;
-            lbl_eu_805665D0.arg = (u32)fname;
-            cb->vtable->trace(cb, &lbl_eu_805665D0.field_0x04);
+            sTraceEntryFname.self = (u32)self;
+            sTraceEntryFname.arg = (u32)fname;
+            cb->vtable->trace(cb, &sTraceEntryFname.field_0x04);
         }
     }
     if (self->field_0x8 != 0xa) {
@@ -520,9 +520,9 @@ void mwPlyEntryFname(MWSFDPLY* self, const char* fname) {
         }
     }
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            cb->vtable->trace(cb, &lbl_eu_805665D0.field_0x6c);
+            cb->vtable->trace(cb, &sTraceEntryFname.field_0x6c);
         }
     }
 }
@@ -550,16 +550,16 @@ void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg
         if (MWSFD_IsEnableHndl(self) != 1) {
             MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
         } else {
-            TraceCb* cb = lbl_eu_805FF3A0;
+            TraceCb* cb = gpMwPlyTraceCb;
             if (cb != NULL) {
-                lbl_eu_8056684C.self = (u32)self;
-                lbl_eu_8056684C.arg = (u32)&lpFlag;
-                cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                sTraceSetSeamlessLp.self = (u32)self;
+                sTraceSetSeamlessLp.arg = (u32)&lpFlag;
+                cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
             }
             LSC_SetLpFlg(self->field_0x64, lpFlag);
-            cb = lbl_eu_805FF3A0;
+            cb = gpMwPlyTraceCb;
             if (cb != NULL) {
-                cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
             }
         }
     }
@@ -589,11 +589,11 @@ void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
         return;
     }
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            lbl_eu_80566428.self = (u32)self;
-            lbl_eu_80566428.arg = (u32)fname;
-            cb->vtable->trace(cb, &lbl_eu_80566428.field_0x04);
+            sTraceStartFnameLp.self = (u32)self;
+            sTraceStartFnameLp.arg = (u32)fname;
+            cb->vtable->trace(cb, &sTraceStartFnameLp.field_0x04);
         }
     }
     MWSFPLY_RecordFname(self, fname);
@@ -605,16 +605,16 @@ void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
             if (MWSFD_IsEnableHndl(self) != 1) {
                 MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
             } else {
-                TraceCb* cb = lbl_eu_805FF3A0;
+                TraceCb* cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
-                    lbl_eu_8056684C.self = (u32)self;
-                    lbl_eu_8056684C.arg = (u32)&lpFlag;
-                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                    sTraceSetSeamlessLp.self = (u32)self;
+                    sTraceSetSeamlessLp.arg = (u32)&lpFlag;
+                    cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
                 }
                 LSC_SetLpFlg(self->field_0x64, lpFlag);
-                cb = lbl_eu_805FF3A0;
+                cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
-                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                    cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
                 }
             }
         }
@@ -626,9 +626,9 @@ void mwPlyStartFnameLp(MWSFDPLY* self, const char* fname) {
         }
     }
     {
-        TraceCb* cb = lbl_eu_805FF3A0;
+        TraceCb* cb = gpMwPlyTraceCb;
         if (cb != NULL) {
-            cb->vtable->trace(cb, &lbl_eu_80566428.field_0x6c);
+            cb->vtable->trace(cb, &sTraceStartFnameLp.field_0x6c);
         }
     }
 }
@@ -730,16 +730,16 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
                 if (MWSFD_IsEnableHndl(self) != 1) {
                     MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
                 } else {
-                    TraceCb* cb = lbl_eu_805FF3A0;
+                    TraceCb* cb = gpMwPlyTraceCb;
                     if (cb != NULL) {
-                        lbl_eu_8056684C.self = (u32)self;
-                        lbl_eu_8056684C.arg = (u32)&lpFlag;
-                        cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                        sTraceSetSeamlessLp.self = (u32)self;
+                        sTraceSetSeamlessLp.arg = (u32)&lpFlag;
+                        cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
                     }
                     LSC_SetLpFlg(self->field_0x64, lpFlag);
-                    cb = lbl_eu_805FF3A0;
+                    cb = gpMwPlyTraceCb;
                     if (cb != NULL) {
-                        cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                        cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
                     }
                 }
             }
@@ -771,10 +771,10 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
         MWSFSVM_Error(lbl_eu_80519B90 + 0x162);
     } else {
         {
-            TraceCb* cb = lbl_eu_805FF3A0;
+            TraceCb* cb = gpMwPlyTraceCb;
             if (cb != NULL) {
-                lbl_eu_805664FC.self = (u32)self;
-                cb->vtable->trace(cb, &lbl_eu_805664FC.field_0x04);
+                sTraceReleaseLp.self = (u32)self;
+                cb->vtable->trace(cb, &sTraceReleaseLp.field_0x04);
             }
         }
         {
@@ -782,16 +782,16 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
             if (MWSFD_IsEnableHndl(self) != 1) {
                 MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
             } else {
-                TraceCb* cb = lbl_eu_805FF3A0;
+                TraceCb* cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
-                    lbl_eu_8056684C.self = (u32)self;
-                    lbl_eu_8056684C.arg = (u32)&lpFlag2;
-                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+                    sTraceSetSeamlessLp.self = (u32)self;
+                    sTraceSetSeamlessLp.arg = (u32)&lpFlag2;
+                    cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x04);
                 }
                 LSC_SetLpFlg(self->field_0x64, lpFlag2);
-                cb = lbl_eu_805FF3A0;
+                cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
-                    cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+                    cb->vtable->trace(cb, &sTraceSetSeamlessLp.field_0x6c);
                 }
             }
         }
@@ -799,10 +799,10 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
             MWSFSVM_Error(lbl_eu_80519B90 + 0x18e);
         } else {
             {
-                TraceCb* cb = lbl_eu_805FF3A0;
+                TraceCb* cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
-                    lbl_eu_80566778.self = (u32)self;
-                    cb->vtable->trace(cb, &lbl_eu_80566778.field_0x04);
+                    sTraceReleaseSeamless.self = (u32)self;
+                    cb->vtable->trace(cb, &sTraceReleaseSeamless.field_0x04);
                 }
             }
             if (MWSFD_IsEnableHndl(self) != 1) {
@@ -814,17 +814,17 @@ void mwPlyExecInfiniteLoopHandle(MWSFDPLY* self) {
                 self->field_0x90 = 0;
             }
             {
-                TraceCb* cb = lbl_eu_805FF3A0;
+                TraceCb* cb = gpMwPlyTraceCb;
                 if (cb != NULL) {
-                    cb->vtable->trace(cb, &lbl_eu_80566778.field_0x6c);
+                    cb->vtable->trace(cb, &sTraceReleaseSeamless.field_0x6c);
                 }
             }
         }
         self->field_0x64c = 4;
         {
-            TraceCb* cb = lbl_eu_805FF3A0;
+            TraceCb* cb = gpMwPlyTraceCb;
             if (cb != NULL) {
-                cb->vtable->trace(cb, &lbl_eu_805664FC.field_0x6c);
+                cb->vtable->trace(cb, &sTraceReleaseLp.field_0x6c);
             }
         }
     }

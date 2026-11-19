@@ -189,7 +189,7 @@ void tboxState0Tick(UnkCode8027513C* self) {
                 }
 
                 // Play sound effect at the fetched position
-                UnkCamObj* camObj = (UnkCamObj*)Scn_QueryUnk80State(lbl_eu_80663E14);
+                UnkCamObj* camObj = (UnkCamObj*)Scn_QueryUnk80State(gmScene);
                 CfSoundMan_PlayLinkedParam(0, mode, (u32)(uintptr_t)pos, lbl_eu_806689E8 - camObj->field_0xC,
                               lbl_eu_806689EC);
             }

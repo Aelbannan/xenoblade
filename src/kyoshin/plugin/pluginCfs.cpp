@@ -32,7 +32,7 @@ extern const f64 lbl_eu_80665E40;
 // External declarations (called functions not declared in included headers)
 // ============================================================================
 extern "C" {
-    extern unsigned long lbl_eu_80663E28;  // game state flags 2
+    extern unsigned long gmPauseFlags;  // game state flags 2
     extern float lbl_eu_80663EDC;          // wait pop timer
     extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
     extern float lbl_eu_80665E3C;          // 1.0f
@@ -915,7 +915,7 @@ int eventStart(VMThread* pThread) {
 }
 
 unsigned long battleEventStart() {
-    lbl_eu_80663E24 |= 0x40000;
+    gmGameFlags |= 0x40000;
     return 0;
 }
 
@@ -1210,12 +1210,16 @@ int makeParty(VMThread* pThread) {
     return 0;
 }
 
-// Data view for CfObject_getMoveHeadAngle: the head-angle float at +0x4C
-// (the TU's minimal cf::CfObject decl carries no fields; per-statement use).
-struct CfObjHeadAngleView { u8 _00[0x4C]; float headAngle4C; };
-
 float cf::CfObject::CfObject_getMoveHeadAngle() {
-    return ((CfObjHeadAngleView*)this)->headAngle4C;
+    return this->mField4C;
+}
+
+void* cf::CfObjectMove::CfObject_getCurrentTarget() {
+    void* ptr = *(void**)((u8*)this + 0xC4);
+    if (ptr != NULL) {
+        return *(void**)((u8*)ptr + 8);
+    }
+    return *(void**)((u8*)this + 0x6C0);
 }
 
 // --- makeGuestParty (us-80049f84) ---
@@ -1460,7 +1464,7 @@ int equipWeapon(VMThread* pThread) {
         CItem_findOrCreateRec(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
         CtrlObjectParam_SetEquipSlot5(charData, slotVal);
         walkListByItemId(charId, 0);
-        lbl_eu_80663E28 |= 0x08000000;
+        gmPauseFlags |= 0x08000000;
     } else {
         CtrlObjectParam_WriteU16RowEntry(CtrlObjectParam_GetCharEntry(charId & 0xFFFF), 5, weaponId & 0xFFFF);
 
@@ -1801,8 +1805,8 @@ int getMapID(VMThread* vmThread) {
 
 // --- clearGimmickJump (us-8004aff4) ---
 int clearGimmickJump(VMThread* vmThread) {
-    unsigned long flags = lbl_eu_80663E24;
-    lbl_eu_80663E24 = flags & ~0x80000;
+    unsigned long flags = gmGameFlags;
+    gmGameFlags = flags & ~0x80000;
 
     if (flags & 0x80) {
         resetPlayerEffectsA__Q22cf13CfGameManagerFv();
@@ -1844,13 +1848,13 @@ int clearPartyGauge(VMThread* vmThread) {
 // --- waitPop (us-8004b0e4) ---
 int waitPop(VMThread* vmThread) {
     if (!scanBattleReady()) {
-        if (!(lbl_eu_80663E28 & 0x10)) {
+        if (!(gmPauseFlags & 0x10)) {
             lbl_eu_80663EDC = lbl_eu_80665E4C;
         }
-        lbl_eu_80663E28 |= 0x10;
+        gmPauseFlags |= 0x10;
         vmWaitModeSet(vmThread);
     } else {
-        lbl_eu_80663E28 &= ~0x10;
+        gmPauseFlags &= ~0x10;
     }
 
     return 0;
@@ -1899,7 +1903,7 @@ int addMoney(VMThread* vmThread) {
 
 // --- isTimeSkip (us-8004b24c) ---
 int isTimeSkip(VMThread* vmThread) {
-    unsigned long flags = lbl_eu_80663E28;
+    unsigned long flags = gmPauseFlags;
     int bit = (flags >> 26) & 1;
     int result = (bit == 0) ? 2 : 1;
 
@@ -1975,7 +1979,7 @@ int setPcCtrl(VMThread* vmThread) {
         enable = vmArgBoolGet(2, arg);
     }
 
-    lbl_eu_80663E24 = enable ? (lbl_eu_80663E24 & ~0x2000) : (lbl_eu_80663E24 | 0x2000);
+    gmGameFlags = enable ? (gmGameFlags & ~0x2000) : (gmGameFlags | 0x2000);
     return 0;
 }
 
@@ -2004,7 +2008,7 @@ int setIgnorePal(VMThread* vmThread) {
     int val = vmArgBoolGet(2, arg);
     int neg = -val;
     int orVal = neg | val;
-    Scn_SetPalFixFlag((int)lbl_eu_80663E14, (unsigned int)orVal >> 31);
+    Scn_SetPalFixFlag((int)gmScene, (unsigned int)orVal >> 31);
     return 0;
 }
 
@@ -2030,14 +2034,6 @@ bool Cfs_AlwaysFalse_A2E8() {
 
 void Cfs_Noop_A400() {
     // Intentionally empty
-}
-
-void* CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv(void* self) {
-    void* ptr = *(void**)((u8*)self + 0xC4);
-    if (ptr != NULL) {
-        return *(void**)((u8*)ptr + 8);
-    }
-    return *(void**)((u8*)self + 0x6C0);
 }
 
 int clearTbox() {
@@ -2067,7 +2063,7 @@ int clearEquipGem() {
 }
 
 unsigned long setFieldVision() {
-    lbl_eu_80663E28 |= 0x20000000;
+    gmPauseFlags |= 0x20000000;
     return 0;
 }
 

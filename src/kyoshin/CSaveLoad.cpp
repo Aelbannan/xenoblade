@@ -37,9 +37,9 @@ extern "C" u8 lbl_eu_80538858[];
 extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
 extern "C" u8 lbl_eu_8050F7CC[];
 
-extern "C" u32 lbl_eu_80662AD0;
-extern "C" s32 lbl_eu_80662AC8;
-extern "C" u32 lbl_eu_80662ACC;
+extern "C" u32 gSaveLoadOperation;
+extern "C" s32 gSaveSlotCount;
+extern "C" u32 gSelectedSaveSlot;
 extern "C" void requestLandTelop();
 extern "C" void MenuUpdate_SignalGlobalField64();
 extern "C" void CMenuGetItem_SetField54();
@@ -76,18 +76,18 @@ extern const float lbl_eu_80668B74;
 // Forward declarations for functions called before their definitions
 // extern "C" to match retail unmangled reloc names
 extern cf::CfAward award;
-extern u8 lbl_eu_80576CF8[];
+extern u8 gCfAwardRegistration[];
 extern void __register_global_object(void*, void*, void*);
 extern void CtrlRemote_ResetSlotArrayObj(void*);
 
 // CDeviceFile / MemManager / CSysWin / game system function declarations
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // External function declarations needed by OnFileEvent
 // Declared as void* by kyoshin/cf/CfGameManager.hpp (via CWorkSystem.hpp)
 extern void* lbl_eu_806640A8;
 
-extern CSLData* lbl_eu_806649F0;
-extern CSaveLoad* lbl_eu_806649F4;
+extern CSLData* gCSLDataInstance;
+extern CSaveLoad* gCSaveLoadInstance;
 
 CSLData::CSLData() {
     mBuf[0] = nullptr;
@@ -105,7 +105,7 @@ CSLData::~CSLData() {}
 
 // Allocate the three 0xA000-byte slot header buffers from MEM2
 void CSLData::allocBufs() {
-    lbl_eu_806649F0 = this;
+    gCSLDataInstance = this;
     mBuf[0] = (CSLBuffer*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
     mBuf[1] = (CSLBuffer*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
     mBuf[2] = (CSLBuffer*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0xA000, 0x40);
@@ -115,7 +115,7 @@ void CSLData::freeBufs() {
     mtl::MemManager::deallocate(mBuf[0]);
     mtl::MemManager::deallocate(mBuf[1]);
     mtl::MemManager::deallocate(mBuf[2]);
-    lbl_eu_806649F0 = nullptr;
+    gCSLDataInstance = nullptr;
 }
 
 void CSLData::bindSlots() {
@@ -155,9 +155,9 @@ CSLSaveSlot* CSLData::getSlot(u8 index) {
 
 // NAND read callback: slot numbers are 1-based.
 void CSLData::onSlotRead(int, int index, u8 valid) {
-    if (lbl_eu_806649F0 == nullptr) return;
-    (lbl_eu_806649F0->mRead - 1)[index] = 1;
-    (lbl_eu_806649F0->mValid - 1)[index] = valid;
+    if (gCSLDataInstance == nullptr) return;
+    (gCSLDataInstance->mRead - 1)[index] = 1;
+    (gCSLDataInstance->mValid - 1)[index] = valid;
 }
 
 CSLCur::CSLCur(nw4r::lyt::ArcResourceAccessor* accessor)
@@ -320,8 +320,8 @@ void CSaveLoad::loadSaveData() {
     mSysWin98.loadSystemArc();
     mSysWinD4.loadSystemArc();
     mField122 = 0;
-    lbl_eu_806649F4 = this;
-    lbl_eu_80662AD0 = -1;
+    gCSaveLoadInstance = this;
+    gSaveLoadOperation = -1;
 }
 
 // Per-frame update: dispatch on mField121 state, then refresh layout,
@@ -437,7 +437,7 @@ void CSaveLoad::reset() {
     reinterpret_cast<CSysWin*>(&mSysWinD4)->termLayout();
     mSub.destroy();
     mMemRegion.deleteRegion();
-    lbl_eu_806649F4 = nullptr;
+    gCSaveLoadInstance = nullptr;
 }
 
 int CSaveLoad::isReady() {
@@ -476,7 +476,7 @@ void CSaveLoad::open() {
     vec[2] = lbl_eu_80668B6C;
     mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
 
-    int val = (int)(u16)lbl_eu_80662AC8;
+    int val = (int)(u16)gSaveSlotCount;
     mScrollBar.UpdateThumb(3, val);
 
     renderSlots();
@@ -528,10 +528,10 @@ void CSaveLoad::curUp() {
     
     // Underflow again: wrap to last row
     {
-        s32 maxRows = (s32)lbl_eu_80662AC8;
+        s32 maxRows = (s32)gSaveSlotCount;
         if (maxRows >= 3) {
             mField124 = 2;
-            mField126 = (u16)((s32)lbl_eu_80662AC8 - 3);
+            mField126 = (u16)((s32)gSaveSlotCount - 3);
         } else {
             u8 prev = (u8)(maxRows - 1);
             mField124 = prev;
@@ -570,7 +570,7 @@ void CSaveLoad::curDown() {
     }
     
     // Main scrollbar path
-    if (lbl_eu_80662AC8 >= 3) {
+    if (gSaveSlotCount >= 3) {
         u8 f124;
         f124 = mField124 + 1;
         mField124 = f124;
@@ -579,7 +579,7 @@ void CSaveLoad::curDown() {
             mField124 = 2;
             row = (s16)mField126 + 1;
             mField126 = (u16)row;
-            if (row > (lbl_eu_80662AC8 - 3)) {
+            if (row > (gSaveSlotCount - 3)) {
                 mField124 = 0;
                 mField126 = 0;
             }
@@ -589,7 +589,7 @@ void CSaveLoad::curDown() {
         u8 f124;
         f124 = mField124 + 1;
         mField124 = f124;
-        if ((s8)f124 >= lbl_eu_80662AC8) {
+        if ((s8)f124 >= gSaveSlotCount) {
             mField124 = 0;
             mField126 = 0;
         }
@@ -609,7 +609,7 @@ void CSaveLoad::pageUp() {
     if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
 
-    if ((s32)lbl_eu_80662AC8 >= 3) {
+    if ((s32)gSaveSlotCount >= 3) {
         s16 sval = (s16)mField126;
         s16 newVal = sval - 3;
         mField126 = (u16)newVal;
@@ -638,22 +638,22 @@ void CSaveLoad::pageDown() {
     if (reinterpret_cast<CSysWin*>(&mSysWinD4)->isOpened() != 0) return;
     if (mSub.mShown != 0) return;
 
-    if ((s32)lbl_eu_80662AC8 >= 3) {
+    if ((s32)gSaveSlotCount >= 3) {
         // Advance row cursor by 3; clamp/wrap when past the last page
         s16 newVal = (s16)mField126 + 3;
         mField126 = (u16)newVal;
-        if ((int)newVal > lbl_eu_80662AC8 - 3) {
+        if ((int)newVal > gSaveSlotCount - 3) {
             // Wrapped past the final row: derive column and clamp to 2
-            u8 diff = (u8)(newVal - (lbl_eu_80662AC8 - 3));
+            u8 diff = (u8)(newVal - (gSaveSlotCount - 3));
             mField124 = diff;
-            mField126 = (u16)(lbl_eu_80662AC8 - 3);
+            mField126 = (u16)(gSaveSlotCount - 3);
             if ((s8)diff >= 3) {
                 mField124 = 2;
             }
         }
     } else {
         // Decrement last column; wrap to previous row on underflow
-        int prev = lbl_eu_80662AC8 - 1;
+        int prev = gSaveSlotCount - 1;
         u8 prevU8 = prev;
         mField124 = prev;
         mField126 = 0;
@@ -853,7 +853,7 @@ void CSaveLoad::execOp() {
 
         NandQueueChk860((s8)mField124 + 1, (void*)onFile);
 
-        lbl_eu_80662AD0 = 0;
+        gSaveLoadOperation = 0;
     } else if (mField129 != 0) {
         // Load path
         char* msgText = (char*)BdatTouchStringCell((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
@@ -863,11 +863,11 @@ void CSaveLoad::execOp() {
 
         NandQueueLoadCk((s8)mField124 + 1, (void*)onFile);
 
-        lbl_eu_80662AD0 = 2;
+        gSaveLoadOperation = 2;
 
         // Retail runs the slot update only when the presentation bit is CLEAR
         // (rlwinm./bne skips over it otherwise).
-        if ((lbl_eu_80663E28 & 0x01000000u) == 0) {
+        if ((gmPauseFlags & 0x01000000u) == 0) {
             CSLSaveSlot* result = mData.getSlot(mField124);
             clearGlobalState__Q22cf13CfGameManagerFv(result->mStartPlace, result->mGender, 1);
         }
@@ -888,7 +888,7 @@ void CSaveLoad::execOp() {
 
         NandQueueSaveCk((s8)mField124 + 1, (void*)onFile, mField12B);
 
-        lbl_eu_80662AD0 = 3;
+        gSaveLoadOperation = 3;
     }
 
     playUISound(0x80);
@@ -908,7 +908,7 @@ void CSaveLoad::finish() {
 
     // Load global after function calls to prevent reordering
     {
-        u32 flags = lbl_eu_80663E28;
+        u32 flags = gmPauseFlags;
         if ((flags & 0x01000000u) != 0) {
             CTaskGame::getInstance();
             CTaskGame_offerLoadCap();
@@ -1002,7 +1002,7 @@ clear12E:
         reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
         reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
         reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
-        lbl_eu_80662ACC = (u32)(s8)mField124;
+        gSelectedSaveSlot = (u32)(s8)mField124;
         mField12D = 1;
         playUISound(0x28);
         return;
@@ -1019,7 +1019,7 @@ clear12E:
     reinterpret_cast<CSysWin*>(&mSysWinD4)->setKindContent(reinterpret_cast<char*>((u32)s1), 0);
     reinterpret_cast<CSysWin*>(&mSysWinD4)->applyKind(1);
     reinterpret_cast<CSysWin*>(&mSysWinD4)->openPhase1();
-    lbl_eu_80662ACC = (u32)(s8)mField124;
+    gSelectedSaveSlot = (u32)(s8)mField124;
     playUISound(0x28);
 }
 
@@ -1287,7 +1287,7 @@ void CSaveLoad::renderSlots() {
 // and find the one with the highest field values (lexicographic comparison).
 // Slot records are the CSLSaveSlot entries returned by CSLData::getSlot.
 void CSaveLoad::bestSlot() {
-    s32 globalVal = (s32)lbl_eu_80662ACC;
+    s32 globalVal = (s32)gSelectedSaveSlot;
     if (globalVal >= 0) {
         mField124 = (u8)globalVal;
         return;
@@ -1338,40 +1338,40 @@ void CSaveLoad::bestSlot() {
     }
 }
 
-// Load global CSaveLoad* from lbl_eu_806649F4. Takes 4 parameters (r3-r6)
+// Load global CSaveLoad* from gCSaveLoadInstance. Takes 4 parameters (r3-r6)
 // but only uses r5 (flag: non-zero = handle mField12C/mField129 branches + play sound)
 // and r6 (byte value stored into mField12F when r5 == 0).
 // r3 and r4 are unused params - they exist so r5/r6 are in the correct register slots.
-// No local variable for the global pointer - access lbl_eu_806649F4 directly
+// No local variable for the global pointer - access gCSaveLoadInstance directly
 // to force MWCC to reload after each function call, matching retail's repeated @sda21 loads.
 void CSaveLoad::onFile(int, int, int completed, int msgKind) {
-    if (lbl_eu_806649F4 == nullptr) return;
+    if (gCSaveLoadInstance == nullptr) return;
 
     if (completed != 0) {
-        if (lbl_eu_806649F4->mField12C != 0) {
-            lbl_eu_806649F4->mField121 = 0xc;
-            lbl_eu_806649F4->mData.bindSlots();
-        } else if (lbl_eu_806649F4->mField129 != 0) {
-            lbl_eu_806649F4->mField121 = 0xb;
+        if (gCSaveLoadInstance->mField12C != 0) {
+            gCSaveLoadInstance->mField121 = 0xc;
+            gCSaveLoadInstance->mData.bindSlots();
+        } else if (gCSaveLoadInstance->mField129 != 0) {
+            gCSaveLoadInstance->mField121 = 0xb;
             // Local pointer so MWCC reuses it for both stores (retail keeps
             // the reloaded pointer in one register for mSub.mState/mSub.mIdle).
-            CSaveLoad* q = lbl_eu_806649F4;
+            CSaveLoad* q = gCSaveLoadInstance;
             q->mSub.mState = 3;
             q->mSub.mIdle = 0;
         } else {
-            lbl_eu_806649F4->mField121 = 0xc;
-            lbl_eu_806649F4->mData.bindSlots();
+            gCSaveLoadInstance->mField121 = 0xc;
+            gCSaveLoadInstance->mData.bindSlots();
         }
         code80135FDC_thunk_BFE8C((u8*)0x80);
     } else {
-        lbl_eu_806649F4->mField121 = 0xb;
+        gCSaveLoadInstance->mField121 = 0xb;
         // Local pointer so MWCC reuses it for the mSub.mState/mSub.mIdle pair
         // (retail keeps one register for both stores).
-        CSaveLoad* q = lbl_eu_806649F4;
+        CSaveLoad* q = gCSaveLoadInstance;
         q->mSub.mState = 3;
         q->mSub.mIdle = 0;
-        lbl_eu_806649F4->mField12E = 1;
-        lbl_eu_806649F4->mField12F = (u8)msgKind;
+        gCSaveLoadInstance->mField12E = 1;
+        gCSaveLoadInstance->mField12F = (u8)msgKind;
     }
 }
 
@@ -1474,8 +1474,8 @@ bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
 }
 
 u32 getSaveLoadOp(void) {
-    extern u32 lbl_eu_80662AD0;
-    return lbl_eu_80662AD0;
+    extern u32 gSaveLoadOperation;
+    return gSaveLoadOperation;
 }
 
 // The cf::CfAward code from here to the end of the split is speed-optimised in
@@ -2163,6 +2163,6 @@ extern "C" void sinit_802930E0() {
     award.mSecondBase = (void*)&lbl_eu_80538858;
     award.mVtbl = (char*)&lbl_eu_80538858 + 8;
     CtrlRemote_ResetSlotArrayObj(&award);
-    __register_global_object(&award, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
+    __register_global_object(&award, (void*)__dt__Q22cf7CfAwardFv, (void*)gCfAwardRegistration);
 }
 #pragma pop

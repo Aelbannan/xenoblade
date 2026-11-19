@@ -514,7 +514,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, ctrlActDispatchEntry 98.5%/stepActMotion 91.5%/testHeightGap 94.8% now pure reg-swap; split PASS 0x2C4 spare
             Object(NonMatching, "kyoshin/cf/CBattleManager.cpp"),  # RTTI on (2026-11-19): hand-declared CtrlAct/__RTTI__ arrays removed; compiler emits the RTTI.
-            Object(NonMatching, "kyoshin/cf/code_800F42AC.cpp"),
+            Object(Matching, "kyoshin/cf/code_800F42AC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectEnumList.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectSelectorObj.cpp"),
             Object(NonMatching, "kyoshin/CMainMenu.cpp"),
@@ -1370,7 +1370,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/os/OSMemory.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSMutex.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSReboot.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/os/OSReset.c"),
+            Object(Matching, "RVL_SDK/src/revolution/os/OSReset.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSRtc.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSSync.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSThread.c"),  # promoted 2026: 23/23 FULL_MATCH, split PASS (hexdiff --all)
@@ -1634,7 +1634,7 @@ config.libs = [
         [
             Object(Matching, "nw4r/src/g3d/res/g3d_rescommon.cpp"),
             Object(Matching, "nw4r/src/g3d/res/g3d_resdict.cpp"),
-            Object(NonMatching, "nw4r/src/g3d/res/g3d_resfile.cpp"),
+            Object(Matching, "nw4r/src/g3d/res/g3d_resfile.cpp"),
             Object(Matching, "nw4r/src/g3d/res/g3d_resmdl.cpp"),
             Object(Matching, "nw4r/src/g3d/res/g3d_resshp.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_restev.cpp"),
@@ -1731,7 +1731,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/snd/snd_AxVoice.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_AxVoiceManager.cpp"),
             Object(Matching, "nw4r/src/snd/snd_AxfxImpl.cpp"),
-            Object(NonMatching, "nw4r/src/snd/snd_Bank.cpp"),
+            Object(Matching, "nw4r/src/snd/snd_Bank.cpp"),
             Object(Matching, "nw4r/src/snd/snd_BankFile.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_BasicPlayer.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_BasicSound.cpp"),
@@ -1901,7 +1901,7 @@ config.libs = [
 			Object(Matching, "monolib/src/device/CDeviceVICb.cpp"),
             Object(Matching, "monolib/src/core/CFontLayer.cpp"),
             Object(NonMatching, "monolib/src/device/CGXCache.cpp", extra_cflags=["-ipa off"]),  # wave-i forced A/B: -ipa off 30/48, default 20/48
-            Object(NonMatching, "monolib/src/device/CDevice.cpp", extra_cflags=["-RTTI off"]),
+            Object(NonMatching, "monolib/src/device/CDevice.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceClock.cpp", link_transform={
                 "renames": [
                     ("__dt__29reslist_P17IDeviceClockFrameFv", "__dt__29reslist<P17IDeviceClockFrame>Fv"),

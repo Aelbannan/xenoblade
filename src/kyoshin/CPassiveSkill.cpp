@@ -19,6 +19,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
+#include "kyoshin/CTitle.hpp"  // setGXColorS10 (canonical C++ declaration)
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
@@ -522,24 +523,24 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
     switch (state) {
     case 0: {
         u8 idx = (u8)(row + (id - 1) * 5 + 1);
-        char* text = BdatGetPtrDirect(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], idx);
+        char* text = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], idx);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
-        text = BdatGetPtrDirect(lbl_eu_80664884, &lbl_eu_8050DC20[0x1a4], idx);
+        text = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x1a4], idx);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
         text = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], text, 0);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
-        u8 v1 = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x235], idx);
-        text = BdatGetPtrDirect(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v1);
+        u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x235], idx);
+        text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v1);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
-        u8 v2 = BdatGetU8Direct((const void*)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v1);
+        u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v1);
         UI::CPSkillRecord* rec = reinterpret_cast<UI::CPSkillRecord*>(
             (u8*)CtrlObjectParam_GetCharEntry(id) + row * 0xc4 + 0x3534);
         u8 found = 1;
         for (u8 i = 1; i <= 5; i++) {
             if (rec->slots[i].word == 0) {
                 sprintf(buf3, &lbl_eu_8050DC20[0x24e], i);
-                u8 v3 = BdatGetU8Direct((const void*)lbl_eu_80664890, (const char*)buf3, idx);
+                u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, (const char*)buf3, idx);
                 if (v3 != 0 && rec->slots[i].word != 0xe && rec->slots[i].word != 0x4b &&
                     rec->slots[i].word != 0xa5 && rec->slots[i].word != 0xc8) {
                     char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
@@ -560,7 +561,7 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
             }
         }
         if (found != 0) {
-            u8 v3 = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x266], idx);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x266], idx);
             if (v3 != 0) {
                 char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
                 LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
@@ -585,14 +586,14 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
     case 1:
     case 2: {
         u8 idx = (u8)(col + row * 5 + (id - 1) * 0x19 + 1);
-        char* text = BdatGetPtrDirect(lbl_eu_8066488C, &lbl_eu_8050DC20[0x207], idx);
+        char* text = BdatGetPtrDirect(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x207], idx);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
-        text = BdatGetPtrDirect(lbl_eu_80664880, &lbl_eu_8050DC20[0x1a4], idx);
+        text = BdatGetPtrDirect(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x1a4], idx);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
-        u8 v0 = BdatGetU8Direct((const void*)lbl_eu_80664880, &lbl_eu_8050DC20[0x275], idx);
+        u8 v0 = BdatGetU8Direct((const void*)gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x275], idx);
         char* tSel = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], v0 == 1 ? 0x15 : 0x14);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], tSel, 0);
-        u8 v1 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27a], idx);
+        u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27a], idx);
         char* t6 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
         if (v1 == 0) {
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
@@ -600,11 +601,11 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
             sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v1, t6);
             LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x154], buf2, 0);
         }
-        u8 v2 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x235], idx);
-        text = BdatGetPtrDirect(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v2);
+        u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x235], idx);
+        text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v2);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
-        u8 v3 = BdatGetU8Direct((const void*)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v2);
-        u8 v4 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27f], idx);
+        u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v2);
+        u8 v4 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27f], idx);
         if (v4 != 0 && idx != 0xe && idx != 0x4b && idx != 0xa5 && idx != 0xc8) {
             char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
@@ -618,7 +619,7 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
         }
-        u8 v5 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x284], idx);
+        u8 v5 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x284], idx);
         if (v5 != 0) {
             char* t13 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x13);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], t13, 0);
@@ -666,14 +667,14 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
             }
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x178], &lbl_eu_8050DC20[0x182], 0);
         } else if (row != 0) {
-            char* text = BdatGetPtrDirect(lbl_eu_8066488C, &lbl_eu_8050DC20[0x207], row);
+            char* text = BdatGetPtrDirect(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x207], row);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
-            text = BdatGetPtrDirect(lbl_eu_80664880, &lbl_eu_8050DC20[0x1a4], row);
+            text = BdatGetPtrDirect(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x1a4], row);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
-            u8 v0 = BdatGetU8Direct((const void*)lbl_eu_80664880, &lbl_eu_8050DC20[0x275], row);
+            u8 v0 = BdatGetU8Direct((const void*)gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x275], row);
             char* tSel = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], v0 == 1 ? 0x15 : 0x14);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x22b], tSel, 0);
-            u8 v1 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27a], row);
+            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27a], row);
             char* t6 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
             if (v1 == 0) {
                 LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
@@ -681,11 +682,11 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
                 sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v1, t6);
                 LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x154], buf0, 0);
             }
-            u8 v2 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x235], row);
-            text = BdatGetPtrDirect(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v2);
+            u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x235], row);
+            text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v2);
             LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
-            u8 v3 = BdatGetU8Direct((const void*)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v2);
-            u8 v4 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27f], row);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v2);
+            u8 v4 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x27f], row);
             if (v4 != 0 && row != 0xe && row != 0x4b && row != 0xa5 && row != 0xc8) {
                 char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
                 LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
@@ -699,7 +700,7 @@ extern "C" void CPassiveSkillLine_refreshSkillCell(UI::CPassiveSkillLine* self, 
                 LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
                 LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
             }
-            u8 v5 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x284], row);
+            u8 v5 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x284], row);
             if (v5 != 0) {
                 char* t13 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x13);
                 LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x26b], t13, 0);
@@ -868,7 +869,7 @@ extern "C" void CPassiveSkillLine_refreshSP(UI::CPassiveSkillLine* self, int id)
         rec = &blob->records2[row];
         for (u8 slot = 1; slot <= 5; slot++) {
             if (rec->slots[slot].word != 0) {
-                sum += BdatGetU16Direct(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], rec->slots[slot].word);
+                sum += BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], rec->slots[slot].word);
             }
         }
     }
@@ -900,7 +901,7 @@ extern "C" void CPassiveSkillLine_setCellMessage(UI::CPassiveSkillLine* self, in
         sprintf(errBuf, &lbl_eu_8050DC20[0x33b], msg19, msg4, msg19, msgE);
         LayoutSetTextBoxText(self->field_8, &lbl_eu_8050DC20[0x139], errBuf, 0);
     } else {
-        u32 table = (u32)lbl_eu_8066488C;
+        u32 table = (u32)gpPassiveSkillBdat;
         u8 v = (u8)(row * 5 + slot + (charId - 1) * 0x19 + 1);
         u8 result = BdatGetU8Direct((const void*)table, &lbl_eu_8050DC20[0x344], v);
         u16 v100 = (u16)(result * 100);
@@ -943,7 +944,7 @@ void CPassiveSkill_linearizeGridSlot(UI_CPassiveSkill* self, u8 row, u8 col, u8 
 void CPassiveSkillLine_setSlotNamePanes(UI::CPassiveSkillLine* self, u8 index) {
     char* text = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x11);
     LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x356], text, 0);
-    u16 id = BdatGetU16Direct(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], index);
+    u16 id = BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], index);
     if (id == 0) {
         char* text2 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
         LayoutSetTextBoxFmtValue(self->field_8, &lbl_eu_8050DC20[0x145], text2, 0);
@@ -1236,18 +1237,18 @@ extern "C" void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self) {
     u8 idx = (u8)(row + t + 1);
     char buf[0x20];
 
-    char* text = BdatGetPtrDirect(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], idx);
+    char* text = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], idx);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x20c], text, 0);
-    text = BdatGetPtrDirect(lbl_eu_80664884, &lbl_eu_8050DC20[0x1a4], idx);
+    text = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x1a4], idx);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x215], text, 0);
     text = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x22b], text, 0);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x154],
                   &lbl_eu_8050DC20[0x182], 0);
-    u8 v1 = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x235], idx);
-    text = BdatGetPtrDirect(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v1);
+    u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x235], idx);
+    text = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], (u8)v1);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x23b], text, 0);
-    u8 v2 = BdatGetU8Direct((const void*)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v1);
+    u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], (u8)v1);
 
     // Scan the character's five learn slots for the first empty cell.
     u8* base = (u8*)CtrlObjectParam_GetCharEntry((u8)chId) + row * 0xc4;
@@ -1256,7 +1257,7 @@ extern "C" void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self) {
     for (found = 1, i = 1; i <= 5; i++) {
         if (rec->slots[i].word == 0) {
             sprintf(buf, &lbl_eu_8050DC20[0x24e], (u8)i);
-            u8 v3 = BdatGetU8Direct((const void*)lbl_eu_80664890, (const char*)buf, idx);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, (const char*)buf, idx);
             if (v3 != 0 && rec->slots[i].word != 0xe && rec->slots[i].word != 0x4b &&
                 rec->slots[i].word != 0xa5 && rec->slots[i].word != 0xc8) {
                 char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
@@ -1280,7 +1281,7 @@ extern "C" void CPassiveSkillLine_openRefresh(UI::CPassiveSkillLine* self) {
     }
     if (found != 0) {
         // All slots occupied: show the "no free slots" message instead.
-        u8 v3 = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x266], idx);
+        u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x266], idx);
         if (v3 != 0) {
             char* t12 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
             LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x254], t12, 0);
@@ -1744,7 +1745,7 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
                     CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
                         (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
                     s8 fe = (s8)self->field_FE;
-                    u8 row = lbl_eu_8050DB60[(ch - 1) * 8 + f4 - 1];
+                    u8 row = sPassiveSkillCharRows[(ch - 1) * 8 + f4 - 1];
                     ((CPcKizunaChart*)blob)->KizunagramStoreWorkEntry(row, fe + 1, self->field_F8 + self->field_F7 * 5 + (f4 - 1) * 0x19 + 1);
                     CPSkillSlot* slot = &blob->records2[row].slots[fe + 1];
                     slot->byte14 |= 1;
@@ -1765,7 +1766,7 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
                     for (u8 i = 0; i < f2;) {
                         if (self->field_EA[i] != ch) {
                             if (j == self->field_FD) {
-                                u8 row = lbl_eu_8050DB60[(ch - 1) * 8 + i];
+                                u8 row = sPassiveSkillCharRows[(ch - 1) * 8 + i];
                                 CPSkillSlot* slot =
                                     &blob->records2[row].slots[fe + 1];
                                 costLo = slot->word & 0xFF;
@@ -1842,13 +1843,13 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
         CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
             (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
         s8 fe = (s8)self->field_FE;
-        u8 skillId = lbl_eu_8050DB60[(ch - 1) * 8 + f4 - 1];
+        u8 skillId = sPassiveSkillCharRows[(ch - 1) * 8 + f4 - 1];
         CPSkillSlot* slot = &blob->records2[skillId].slots[fe + 1];
         if (slot->word != 0) {
             // Occupied slot: look up the acquisition message category and
             // either push the confirm dialogs or apply a free/unlearned
             // acquisition directly.
-            u8 itemCat = BdatGetU8Direct((const void*)lbl_eu_8066488C,
+            u8 itemCat = BdatGetU8Direct((const void*)gpPassiveSkillBdat,
                                        &lbl_eu_8050DC20[0x235], slot->word);
             self->field_11F = itemCat;
             if (itemCat == 0x85 || itemCat == 0x84) {
@@ -1919,7 +1920,7 @@ u8 CPassiveSkillLine_countSkillId(UI::CPassiveSkillLine* self, int id);
 // field_EA category entries for the selected character (field_F3 via
 // GetCollectedFlagByte), matches the +0xFD slot against the +0xFE category, and reads
 // the learned bit / cost word from the character's learn record (row from
-// lbl_eu_8066488C's table). On a learned entry: set state 16, push three
+// gpPassiveSkillBdat's table). On a learned entry: set state 16, push three
 // messages, open the syswin close sequence and quiet the cursor. Category 133
 // vs 132 variants select different message sets. Otherwise: clear the +0x287
 // flag, run the state-15 helper, play the sounds and run the update tail.
@@ -1960,7 +1961,7 @@ extern "C" void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
             }
             continue;
         }
-        u8 row = reinterpret_cast<const u8*>(lbl_eu_8066488C)[
+        u8 row = reinterpret_cast<const u8*>(gpPassiveSkillBdat)[
             (u8)(ch - 1) * 8 + self->field_EA[i7] - 1];
         u8* entry = learnBase + row * 0xC4 + (((s8)self->field_FE + 1) << 5);
         u32 cost = *reinterpret_cast<const u32*>(entry + 0x3D4);
@@ -1974,7 +1975,7 @@ extern "C" void CPassiveSkillLine_confirmAcquire(void* selfRaw) {
             return;
         }
         u16 msgId =
-            BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x235], cost);
+            BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x235], cost);
         u8 itemCat = (u8)msgId;
         u8 count = CPassiveSkillLine_countSkillId(self, 0);
         char* msgA;
@@ -2429,7 +2430,7 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
     // indexed lwz off the sda21 base) instead of passing the table base.
     int idxA = (int)(t16 * 5 + 4);
     int idxB = (int)(id * 5);
-    u8 v = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], (u8)idxA);
+    u8 v = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], (u8)idxA);
     if (CtrlRemote_TouchBitByArg((u8)v + 0x3509) != 0) {
         setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
@@ -2450,7 +2451,7 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
             setPaneVisible(self->cells[3][i].mpLayout->GetRootPane(), 0);
         }
     }
-    u8 v2 = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], (u8)idxB);
+    u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], (u8)idxB);
     if (CtrlRemote_TouchBitByArg(v2 + 0x3509) != 0) {
         setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
         void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
@@ -2490,9 +2491,9 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
         UI::CPSkillBlobCost* costBlob = reinterpret_cast<UI::CPSkillBlobCost*>(blob);
         for (u8 i = 1; i <= 5; i++) {
             int gridIdx = i + rowIdxBase;
-            u8 v1 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5ad], (u8)gridIdx);
-            u8 v2b = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5b3], (u8)gridIdx);
-            u8 v3 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x344], (u8)gridIdx);
+            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5ad], (u8)gridIdx);
+            u8 v2b = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5b3], (u8)gridIdx);
+            u8 v3 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x344], (u8)gridIdx);
             u32 word = rec->slots[i].word;
             u16 value = (u16)(v3 * 0x64);
             void* res2 = 0;
@@ -2525,7 +2526,7 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
                 sprintf(buf, &lbl_eu_8050DC20[0x431], rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)buf, (TPLPalette*)res2);
             }
-            u32 msgId = BdatGetU16Direct(lbl_eu_80664880, &lbl_eu_8050DC20[0x731], (u8)gridIdx);
+            u32 msgId = BdatGetU16Direct(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x731], (u8)gridIdx);
             char* text = MakeTplNameSysFile((u16)msgId);
             void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text, 0);
             if (res3 != 0) {
@@ -2539,15 +2540,15 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
                 // them distinct stack slots (retail r1+0x20/0x18 vs
                 // r1+0x10/0x8).
                 if (word == 0) {
-                    CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
-                    PaneMatSetTevColorsByName(self->field_8, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10 c1, c2;
+                    GXColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
                 } else {
-                    CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
-                    PaneMatSetTevColorsByName(self->field_8, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10 c1, c2;
+                    GXColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, buf, col2, col1);
                 }
             }
             sprintf(buf, &lbl_eu_8050DC20[0x749], rowP1, i);
@@ -2641,7 +2642,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
             for (u8 i = 1; i <= 5; i++) {
                 if ((u8)i == (s8)self->field_FE + 1) {
                     sprintf(bufB, &lbl_eu_8050DC20[0x772], i);
-                    v = BdatGetU8Direct((const void*)lbl_eu_80664888, (const char*)bufB, catBase + entry);
+                    v = BdatGetU8Direct((const void*)gpPassiveSkillIconBdat, (const char*)bufB, catBase + entry);
                     break;
                 }
             }
@@ -2672,7 +2673,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
     u32 t16 = (u32)((u8)entry2 - 1);
     u8 r0 = (u8)(t16 * 5 + 4);
     u8 nextRow = (u8)(entry2 * 5);
-    u8 vv = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r0);
+    u8 vv = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], r0);
     if (CtrlRemote_TouchBitByArg((u8)vv + 0x3509) != 0) {
         setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
@@ -2687,7 +2688,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
             PaneSetTexPaletteByName(self->field_8, &lbl_eu_8050DC20[0x531], (TPLPalette*)res3);
         }
     }
-    u8 vv2 = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], nextRow);
+    u8 vv2 = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x50c], nextRow);
     if (CtrlRemote_TouchBitByArg(vv2 + 0x3509) != 0) {
         setPaneVisible(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
         void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
@@ -2720,9 +2721,9 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
         UI::CPSkillRecord* rec = &blob->records[row];
         for (u8 i = 1; i <= 5; i++) {
             u32 gridIdx = (u8)(i + rowIdxBase + gridBase);
-            u8 v1 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5ad], gridIdx);
-            u8 v2 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5b3], gridIdx);
-            BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x344], gridIdx);
+            u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5ad], gridIdx);
+            u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5b3], gridIdx);
+            BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x344], gridIdx);
             u32 word = rec->slots[i].word;
             void* res2 = 0;
             if (word == 0) {
@@ -2754,7 +2755,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                 sprintf(bufB, &lbl_eu_8050DC20[0x431], rowP1, i);
                 PaneSetTexPaletteByName(self->field_8, (const char*)bufB, (TPLPalette*)res2);
             }
-            u32 msgId2 = BdatGetU16Direct(lbl_eu_80664880, &lbl_eu_8050DC20[0x731], gridIdx);
+            u32 msgId2 = BdatGetU16Direct(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x731], gridIdx);
             char* text2 = MakeTplNameSysFile((u16)msgId2);
             void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text2, 0);
             if (res3 != 0) {
@@ -2764,15 +2765,15 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                 GXColorS10 fs1 = fs0;
                 GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_8, bufB, 1);
                 GXColorS10 fs3 = fs2;
-                CPSkillColorS10 c1, c2;
+                GXColorS10 c1, c2;
                 if (word == 0) {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
-                    PaneMatSetTevColorsByName(self->field_8, bufB, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
                 } else {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
-                    PaneMatSetTevColorsByName(self->field_8, bufB, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_8, bufB, col2, col1);
                 }
             }
             sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
@@ -2794,10 +2795,10 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     GXColorS10 fs1 = fs0;
                     GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_8, bufB, 1);
                     GXColorS10 fs3 = fs2;
-                    CPSkillColorS10 c1, c2;
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0, 0, 0, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0, 0, 0, fs1.a);
-                    PaneMatSetTevColors(pane2, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10 c1, c2;
+                    GXColorS10* col1 = setGXColorS10(&c1, 0, 0, 0, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0, 0, 0, fs1.a);
+                    PaneMatSetTevColors(pane2, col2, col1);
                     reinterpret_cast<CPSkillPaneB8*>(pane2)->field_B8 = 0xa0;
                 }
             }
@@ -2807,7 +2808,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
             u8 id3 = GetCollectedFlagByte(self->field_F3);
             u8 id2b = self->field_F4;
             u8* data3 = (u8*)CtrlObjectParam_GetCharEntry(id3);
-            u8 rowR = lbl_eu_8050DB60[(u8)id3 * 8 + (u8)id2b - 9];
+            u8 rowR = sPassiveSkillCharRows[(u8)id3 * 8 + (u8)id2b - 9];
             u32* cellWords = reinterpret_cast<u32*>(data3 + rowR * 0xc4 + 0x3908);
             u8 found = 0;
             for (u8 i2 = 1; i2 <= 5; i2++) {
@@ -2825,10 +2826,10 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     void* res5 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7f6], 0);
                     if (res5 != 0) {
                         PaneSetTexPalette(pane5, (TPLPalette*)(reinterpret_cast<u32>(res5)));
-                        CPSkillColorS10 c1, c2;
-                        CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
-                        CPSkillColorS10* col2 = setGXColorS10(&c2, 0x48, 0x3a, 0x21, 0);
-                        PaneMatSetTevColors(pane5, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                        GXColorS10 c1, c2;
+                        GXColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
+                        GXColorS10* col2 = setGXColorS10(&c2, 0x48, 0x3a, 0x21, 0);
+                        PaneMatSetTevColors(pane5, col2, col1);
                     }
                 } else {
                     u32 sum = 0;
@@ -2836,19 +2837,19 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                         UI::CPSkillRecord* rec2 = &blob->records2[row2];
                         for (u8 i2 = 1; i2 <= 5; i2++) {
                             if (rec2->slots[i2].word != 0) {
-                                sum += BdatGetU16Direct(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], rec2->slots[i2].word);
+                                sum += BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], rec2->slots[i2].word);
                             }
                         }
                     }
                     u8 id3b = GetCollectedFlagByte(self->field_F3);
-                    u8 rowR2 = lbl_eu_8050DB60[(u8)id3b * 8 + (u8)self->field_F4 - 9];
+                    u8 rowR2 = sPassiveSkillCharRows[(u8)id3b * 8 + (u8)self->field_F4 - 9];
                     UI::CPSkillRecord* rec3 = &blob->records2[rowR2];
                     if (rec3->slots[(s8)self->field_FE + 1].word != 0) {
-                        sum -= BdatGetU16Direct(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], rec3->slots[(s8)self->field_FE + 1].word);
+                        sum -= BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], rec3->slots[(s8)self->field_FE + 1].word);
                     }
                     s32 remaining = (s32)((UI::CPSkillBlobTotal*)blob)->totalSP - (s32)sum;
                     u8 costIdx = (u8)(((u32)(u8)self->field_F4 - 1) * 0x19 + rowIdxBase + i);
-                    u32 costId = BdatGetU16Direct(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], costIdx);
+                    u32 costId = BdatGetU16Direct(gpPassiveSkillBdat, &lbl_eu_8050DC20[0x318], costIdx);
                     sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
                     if (remaining >= (s32)(u16)(u16)costId) {
                         nw4r::lyt::Pane* pane6b = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
@@ -2856,10 +2857,10 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                             void* res6 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x80c], 0);
                             if (res6 != 0) {
                                 PaneSetTexPalette(pane6b, (TPLPalette*)(reinterpret_cast<u32>(res6)));
-                                CPSkillColorS10 c1, c2;
-                                CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
-                                CPSkillColorS10* col2 = setGXColorS10(&c2, 0xff, 0xff, 0xfa, 0);
-                                PaneMatSetTevColors(pane6b, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                                GXColorS10 c1, c2;
+                                GXColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
+                                GXColorS10* col2 = setGXColorS10(&c2, 0xff, 0xff, 0xfa, 0);
+                                PaneMatSetTevColors(pane6b, col2, col1);
                             }
                             self->field_104[row * 5 + i - 1] = 1;
                         }
@@ -2867,10 +2868,10 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                         void* res7 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x822], 0);
                         if (res7 != 0) {
                             PaneSetTexPalette(pane5, (TPLPalette*)(reinterpret_cast<u32>(res7)));
-                            CPSkillColorS10 c1, c2;
-                            CPSkillColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
-                            CPSkillColorS10* col2 = setGXColorS10(&c2, 0xaa, 0x19, 0x19, 0);
-                            PaneMatSetTevColors(pane5, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                            GXColorS10 c1, c2;
+                            GXColorS10* col1 = setGXColorS10(&c1, 0xff, 0xff, 0xfa, 0xff);
+                            GXColorS10* col2 = setGXColorS10(&c2, 0xaa, 0x19, 0x19, 0);
+                            PaneMatSetTevColors(pane5, col2, col1);
                         }
                     }
                 }
@@ -2899,7 +2900,7 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
     u32 t = id - 1;
     u32 catBase = (t & 0x1F) * 8;
     f32 scale = lbl_eu_80668930[t * 2];
-    u8* table = &lbl_eu_8050DB60[t * 8];
+    const u8* table = &sPassiveSkillCharRows[t * 8];
     char buf[0x28];
     u8 slotCount = 0;
     for (u8 idx = 0; idx < self->field_F2; idx++) {
@@ -2923,7 +2924,7 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
         u8 learnedCount = 0;
         for (u8 s = 1; s <= 5; s++) {
             sprintf(buf, &lbl_eu_8050DC20[0x772], s);
-            u8 v = BdatGetU8Direct((const void*)lbl_eu_80664888, (const char*)buf, cat);
+            u8 v = BdatGetU8Direct((const void*)gpPassiveSkillIconBdat, (const char*)buf, cat);
             UI::CPSkillSlot* slotPtr = &rec->slots[s];
             void* res2 = 0;
             void* res3;
@@ -2937,7 +2938,7 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
                 }
                 res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x904], 0);
             } else if (slotPtr->word != 0) {
-                u8 v2 = BdatGetU8Direct((const void*)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5b3], slotPtr->word);
+                u8 v2 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, &lbl_eu_8050DC20[0x5b3], slotPtr->word);
                 if (v2 == 1) {
                     switch (v) {
                     case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
@@ -2955,7 +2956,7 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
                     case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
                     }
                 }
-                msgId = BdatGetU16Direct(lbl_eu_80664880, &lbl_eu_8050DC20[0x731], slotPtr->word);
+                msgId = BdatGetU16Direct(gpPassiveSkillHelpBdat, &lbl_eu_8050DC20[0x731], slotPtr->word);
                 text = MakeTplNameSysFile(msgId);
                 res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text, 0);
             } else {
@@ -2979,15 +2980,15 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
                 GXColorS10 fs1 = fs0;
                 GXColorS10 fs2 = PaneMatGetS16QuadByName(self->field_18, buf, 1);
                 GXColorS10 fs3 = fs2;
-                CPSkillColorS10 c1, c2;
+                GXColorS10 c1, c2;
                 if ((slotPtr->byte14 & 1) == 0) {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
-                    PaneMatSetTevColorsByName(self->field_18, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10* col1 = setGXColorS10(&c1, 0xf0, 0xf0, 0xeb, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0xf0, 0xf0, 0xeb, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_18, buf, col2, col1);
                 } else {
-                    CPSkillColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
-                    CPSkillColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
-                    PaneMatSetTevColorsByName(self->field_18, buf, (const GXColorS10*)col2, (const GXColorS10*)col1);
+                    GXColorS10* col1 = setGXColorS10(&c1, 0x2a, 0x22, 0x18, fs3.a);
+                    GXColorS10* col2 = setGXColorS10(&c2, 0x2a, 0x22, 0x18, fs1.a);
+                    PaneMatSetTevColorsByName(self->field_18, buf, col2, col1);
                 }
             }
             if (s > 1 && (slotPtr->byte14 & 1) != 0) {
@@ -3000,13 +3001,11 @@ extern "C" void CPassiveSkillLine_refreshLearnGrid(UI::CPassiveSkillLine* self) 
         // (store count into a u32 pair viewed as f64, subtract 2^52) rather
         // than a direct int->float conversion; lbl_eu_80668910 is the .sdata2
         // 2^52 constant the subtraction consumes.
-        CPSkillF64Conv conv;
         f32 pos[2];
         TagCopyVec2f(pos, reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x4C));
-        conv.w[0] = 0x43300000;
-        conv.w[1] = learnedCount;
-        pos[1] = self->field_100 + scale * (f32)(conv.d - lbl_eu_80668910);
-        writePanePos(pane, pos);
+        f32 countF = (f32)learnedCount;
+        pos[1] = self->field_100 + scale * countF;
+
         slotCount++;
         if (slotCount >= 6) {
             break;
@@ -3044,27 +3043,27 @@ void CPassiveSkillLine_updateStatePanes(UI::CPassiveSkillLine* self) {
     u8 slotId = GetCollectedFlagByte((s8)self->field_F3);
     int row5v = (s8)self->field_F5 - 1;
         u8 v = (u8)(slotId + row5v * 5 + 1);
-    char* msg = BdatGetPtrDirect(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], v);
+    char* msg = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], v);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x20c], msg, 0);
-    char* msg2 = BdatGetPtrDirect(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], v);
+    char* msg2 = BdatGetPtrDirect(gpPassiveSkillCharBdat, &lbl_eu_8050DC20[0x207], v);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x215], msg2, 0);
     char* msg3 = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x22b], msg3, 0);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x154],
                   &lbl_eu_8050DC20[0x182], 0);
-    u16 cost = BdatGetU8Direct((const void*)lbl_eu_80664890, &lbl_eu_8050DC20[0x235], v);
-    char* msg4 = BdatGetPtrDirect(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], cost);
+    u16 cost = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x235], v);
+    char* msg4 = BdatGetPtrDirect(gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x207], cost);
     LayoutSetTextBoxFmtValue(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x23b], msg4, 0);
-    u16 v100 = BdatGetU8Direct((const void*)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], cost);
+    u16 v100 = BdatGetU8Direct((const void*)gpPassiveSkillEffectBdat, &lbl_eu_8050DC20[0x245], cost);
     CtrlObjectParam_GetCharEntry((u8)slotId);
     UI::CPSkillLearnRecord* rec = reinterpret_cast<UI::CPSkillLearnRecord*>(
         (u8*)CtrlObjectParam_GetCharEntry((u8)slotId) + 0x3534 + (s8)self->field_F5 * 0xC4);
     for (u8 si = 1; si <= 5; si++) {
         u32 word = *(u32*)&rec[si];
         if (word != 0) {
-            char* msgS = BdatGetPtrDirect(lbl_eu_80664890, &lbl_eu_8050DC20[0x207], v);
+            char* msgS = BdatGetPtrDirect(gpPassiveSkillValueBdat, &lbl_eu_8050DC20[0x207], v);
             sprintf(buf, &lbl_eu_8050DC20[0x24e], (u8)si);
-            u16 sp = BdatGetU8Direct((const void*)lbl_eu_80664890, (const char*)buf, v);
+            u16 sp = BdatGetU8Direct((const void*)gpPassiveSkillValueBdat, (const char*)buf, v);
             if (sp != 0 && sp != 0xe && sp != 0x4b && sp != 0xa5 && sp != 0xc8) {
                 char* msgA = BdatTouchStringCell(&lbl_eu_8050DC20[0x21f],
                                            &lbl_eu_8050DC20[0x207], 0x12);
@@ -3111,7 +3110,7 @@ ScalePaneWorldPos(&pos, paneC, paneD, self->field_8->GetRootPane());
 CBaseCur::SetPaneTranslate(self->mInfo.field_24->GetRootPane(), &pos);
 u8 ch = GetCollectedFlagByte((s8)self->field_F3);
 CtrlObjectParam_GetCharEntry(ch);
-const u8* rowTab = &lbl_eu_8050DB60[(u8)(ch - 1) * 8];
+const u8* rowTab = &sPassiveSkillCharRows[(u8)(ch - 1) * 8];
 u8 found = 0;
 u8 cat = 0;
 u8 cost = 0;
@@ -3169,7 +3168,7 @@ u8 CPassiveSkillLine_isLearned(UI::CPassiveSkillLine* self) {
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry(id) + 0x3534);
-    u8* table = &lbl_eu_8050DB60[(id - 1) * 8];
+    const u8* table = &sPassiveSkillCharRows[(id - 1) * 8];
     u8 count = self->field_F2;
     u8 i = 0;
     for (u8 j = 0; j < count; j++) {
@@ -3201,7 +3200,7 @@ u8 CPassiveSkillLine_isOccupied(UI::CPassiveSkillLine* self) {
     u8 id = GetCollectedFlagByte(self->field_F3);
     UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry(id) + 0x3534);
-    u8* table = &lbl_eu_8050DB60[(id - 1) * 8];
+    const u8* table = &sPassiveSkillCharRows[(id - 1) * 8];
     u8 count = self->field_F2;
     u8 i = 0;
     for (u8 j = 0; j < count; j++) {
@@ -3288,7 +3287,7 @@ void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
     CtrlObjectParam_SyncParamFromActor(data);
     if ((s8)self->field_F3 < 3) {
         u32 names[3];
-        const u32* src = lbl_eu_8050DBB8;
+        const u32* src = sPassiveSkillSceneNames;
         names[0] = *src++;
         names[1] = *src++;
         names[2] = *src++;
@@ -3361,19 +3360,11 @@ void CPassiveSkillLine_refreshGridAlpha(UI::CPassiveSkillLine* self) {
     u8 v = self->field_8->GetRootPane()
                 ->FindPaneByName(&lbl_eu_8050DC20[0x9d5], true)
                 ->GetAlpha();
-    // u8 -> f32 via the 2^52 magic: build 0x43300000_<v> on the stack and
-    // subtract the NAMED .sdata2 magic so the pool reloc is lbl_eu_80668910
-    // (a plain (f32) cast synthesizes an unmerged TU-local @N entry).
-    union {
-        struct { u32 hi; u32 lo; } w;
-        double d;
-    } conv;
-    conv.w.lo = v;
-    conv.w.hi = 0x43300000u;
-    f32 f = (f32)(conv.d - lbl_eu_80668910) / lbl_eu_8066893C;
+    // The pane alpha is a byte fraction of 255.
+    f32 f = (f32)v / 255.0f;
     if (f > lbl_eu_80668900) {
         f = lbl_eu_80668900;
-    } else if (f < lbl_eu_80668904) {
+
         f = lbl_eu_80668904;
     }
     UI::CPSkillGridCell* cellRow;
@@ -3515,7 +3506,7 @@ extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
         u8* recBase1 = (u8*)CtrlObjectParam_GetCharEntry(b1) + 0x3534;
         u8 cat1 = 0;
         u32 idx1 = (b1 - 1) * 8;
-        u8 row1 = lbl_eu_8050DB60[idx1 + b0 - 1];
+        u8 row1 = sPassiveSkillCharRows[idx1 + b0 - 1];
         if (v < 3000) {
             if (v < 2000) {
                 if (v < 1000) {
@@ -3546,7 +3537,7 @@ extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
         u8* recBase2 = (u8*)CtrlObjectParam_GetCharEntry(b0) + 0x3534;
         u8 cat2 = 0;
         u32 idx2 = (b0 - 1) * 8;
-        u8 row2 = lbl_eu_8050DB60[idx2 + b1 - 1];
+        u8 row2 = sPassiveSkillCharRows[idx2 + b1 - 1];
         if (v < 3000) {
             if (v < 2000) {
                 if (v < 1000) {
@@ -3807,7 +3798,7 @@ void CPassiveSkill_learnAllSkills(UI::CPassiveSkill* self) {
             FetchRelatePair(&b1, &b0, ch);
             void* data1 = CtrlObjectParam_GetCharEntry(b1);
             u32 idx1 = b1 * 8;
-            u8 row1 = lbl_eu_8050DB60[idx1 + b0 - 9];
+            u8 row1 = sPassiveSkillCharRows[idx1 + b0 - 9];
             UI::CPSkillLearnRecord* rec1 = reinterpret_cast<UI::CPSkillLearnRecord*>(
                 (u8*)data1 + row1 * 0xC4);
             if ((rec1->byte393C & 1) == 0) {
@@ -3815,7 +3806,7 @@ void CPassiveSkill_learnAllSkills(UI::CPassiveSkill* self) {
             }
             void* data2 = CtrlObjectParam_GetCharEntry(b0);
             u32 idx2 = b0 * 8;
-            u8 row2 = lbl_eu_8050DB60[idx2 + b1 - 9];
+            u8 row2 = sPassiveSkillCharRows[idx2 + b1 - 9];
             UI::CPSkillLearnRecord* rec2 = reinterpret_cast<UI::CPSkillLearnRecord*>(
                 (u8*)data2 + row2 * 0xC4);
             if ((rec2->byte393C & 1) == 0) {
@@ -4049,19 +4040,43 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         *(void**)((u8*)fh2 + 4) = 0;
         CBdat::setBdatEntry(2, 0);
         Bdat_GetTable_AA34();
-        lbl_eu_80664880 = getFP(&lbl_eu_8050DC20[0xa24]);
+        gpPassiveSkillHelpBdat = getFP(&lbl_eu_8050DC20[0xa24]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664884 = getFP(&lbl_eu_8050DC20[0xa2f]);
+        gpPassiveSkillCharBdat = getFP(&lbl_eu_8050DC20[0xa2f]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664888 = getFP(&lbl_eu_8050DC20[0xa3a]);
+        gpPassiveSkillIconBdat = getFP(&lbl_eu_8050DC20[0xa3a]);
         Bdat_GetTable_AA34();
-        lbl_eu_8066488C = getFP(&lbl_eu_8050DC20[0xa44]);
+        gpPassiveSkillBdat = getFP(&lbl_eu_8050DC20[0xa44]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664890 = getFP(&lbl_eu_8050DC20[0xa51]);
+        gpPassiveSkillValueBdat = getFP(&lbl_eu_8050DC20[0xa51]);
         Bdat_GetTable_AA34();
-        lbl_eu_80664894 = getFP(&lbl_eu_8050DC20[0xa5d]);
+        gpPassiveSkillEffectBdat = getFP(&lbl_eu_8050DC20[0xa5d]);
         self->field_1C = 0;
         CPassiveSkill_learnAllSkills(self);
         return 1;
     }
 }
+
+// Retail .sbss block (0x18 bytes) owned by this TU: BDAT file handles filled
+// by the on-file-event loader above and read by the skill-pane refreshers.
+void* gpPassiveSkillHelpBdat;
+void* gpPassiveSkillCharBdat;
+void* gpPassiveSkillIconBdat;
+void* gpPassiveSkillBdat;
+void* gpPassiveSkillValueBdat;
+void* gpPassiveSkillEffectBdat;
+
+// Per-character eight-byte row selectors (retail .rodata, 0x40 bytes).
+const u8 sPassiveSkillCharRows[0x40] = {
+    0x00, 0x00, 0x05, 0x01, 0x02, 0x04, 0x03, 0x05,
+    0x00, 0x00, 0x05, 0x01, 0x02, 0x04, 0x03, 0x05,
+    0x00, 0x01, 0x00, 0x02, 0x03, 0x05, 0x04, 0x00,
+    0x00, 0x01, 0x05, 0x00, 0x02, 0x04, 0x03, 0x05,
+    0x00, 0x01, 0x05, 0x02, 0x00, 0x04, 0x03, 0x05,
+    0x00, 0x01, 0x05, 0x02, 0x03, 0x00, 0x04, 0x05,
+    0x00, 0x01, 0x05, 0x02, 0x03, 0x04, 0x00, 0x05,
+    0x00, 0x01, 0x00, 0x02, 0x03, 0x05, 0x04, 0x00,
+};
+
+// Scene-name words read by CPassiveSkillLine_syncEquipState.
+const u32 sPassiveSkillSceneNames[3] = { 0x00000010, 0x00100000, 0x00200000 };

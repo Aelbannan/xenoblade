@@ -5,6 +5,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/nand/CNand.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "monolib/work/CEventFile.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -13,160 +14,24 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/scn/CScn.hpp"
 
-extern "C" void dummy() {}
+namespace cf { class CfGameManager; }
 
 #pragma section data_type ".data" ".data"
 
-// --- typified .data (layout from build/us/asm/kyoshin/cf/CfNandManager.s) ---
-// Slots carrying relocs emit zero bytes + ADDR32 relocs in the .o, matching
-// retail (the gate compares bytes; reloc names are ignored once bytes match).
-// Slot targets owned by other TUs are extern (UNDEF here, resolved at link
-// via the global symbol map). The four CTTask<cf::CfNandManager> template
-// slots spell '<' and are not expressible in C++; they stay zero with the
-// retail target in comments. The 0x90 switch jumptable targets local case
-// labels of NandResolveOp (not in this stub TU), so it stays a named zero
-// table. The trailing zero word is split off so MWCC's 8-alignment of
-// size%8==0 .data objects cannot pad the section (retail packs at 4).
-extern "C" {
-void __dt__Q22cf13CfNandManagerFv();
-void Reset__14CChildListNodeFv();
-void Init__Q22cf13CfNandManagerFv();
-void Term__Q22cf13CfNandManagerFv();
-void Move__Q22cf13CfNandManagerFv();
-void Tail__8CProcessFv();
-void destroyViaWorkEvent__Q22cf13CfNandManagerFv();
-void WorkEvent1__10IWorkEventFPvPCc();
-void OnFileEvent__Q22cf13CfNandManagerFv();
-void WorkEvent3__10IWorkEventFPv();
-void WorkEvent4__10IWorkEventFv();
-void OnPauseTrigger__10IWorkEventFb();
-void WorkEvent6__10IWorkEventFv();
-void WorkEvent7__10IWorkEventFv();
-void WorkEvent8__10IWorkEventFv();
-void WorkEvent9__10IWorkEventFv();
-void WorkEvent10__10IWorkEventFv();
-void WorkEvent11__10IWorkEventFv();
-void WorkEvent12__10IWorkEventFv();
-void WorkEvent13__10IWorkEventFv();
-void WorkEvent14__10IWorkEventFv();
-void WorkEvent15__10IWorkEventFv();
-void WorkEvent16__10IWorkEventFv();
-void WorkEvent17__10IWorkEventFv();
-void WorkEvent18__10IWorkEventFv();
-void WorkEvent19__10IWorkEventFv();
-void WorkEvent20__10IWorkEventFv();
-void WorkEvent21__10IWorkEventFv();
-void WorkEvent22__10IWorkEventFv();
-void WorkEvent23__10IWorkEventFv();
-void WorkEvent24__10IWorkEventFv();
-void WorkEvent25__10IWorkEventFv();
-void WorkEvent26__10IWorkEventFv();
-void WorkEvent27__10IWorkEventFv();
-void WorkEvent28__10IWorkEventFv();
-void WorkEvent29__10IWorkEventFv();
-void WorkEvent30__10IWorkEventFv();
-void WorkEvent31__10IWorkEventFv();
-void destroyViaRender__Q22cf13CfNandManagerFv();
-void handleRenderCallback__Q22cf13CfNandManagerFv();
-void handleFileEvent__Q22cf13CfNandManagerFv();
-void cbRenderBefore__Q22cf13CfNandManagerFv();
-}
-extern char __RTTI__10IScnRender[];
-extern char __RTTI__8CProcess[];
-extern char __RTTI__14CChildListNode[];
-extern char __RTTI__15CDoubleListNode[];
-extern char __RTTI__10IWorkEvent[];
-// this TU's own .sdata pair tables (defined below; vtable slots point at them)
-extern const void* __RTTI__Q22cf13CfNandManager[2];
-extern const void* lbl_eu_806628D0[2];
-
+// Switch cases for NandResolveOp; the table itself is owned by this TU.
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char jumptable_eu_80536B2C[0x90] = {0};
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536BBC[49] = {
-    __RTTI__Q22cf13CfNandManager, 0,
-    (const void*)__dt__Q22cf13CfNandManagerFv,
-    (const void*)Reset__14CChildListNodeFv,
-    (const void*)Init__Q22cf13CfNandManagerFv,
-    (const void*)Term__Q22cf13CfNandManagerFv,
-    (const void*)Move__Q22cf13CfNandManagerFv,
-    0, // retail Draw__28CTTask<Q22cf13CfNandManager>Fv (unspellable '<')
-    (const void*)Tail__8CProcessFv,
-    __RTTI__Q22cf13CfNandManager, (const void*)0xFFFFFFAC,
-    (const void*)destroyViaWorkEvent__Q22cf13CfNandManagerFv,
-    (const void*)WorkEvent1__10IWorkEventFPvPCc,
-    (const void*)OnFileEvent__Q22cf13CfNandManagerFv,
-    (const void*)WorkEvent3__10IWorkEventFPv,
-    (const void*)WorkEvent4__10IWorkEventFv,
-    (const void*)OnPauseTrigger__10IWorkEventFb,
-    (const void*)WorkEvent6__10IWorkEventFv,
-    (const void*)WorkEvent7__10IWorkEventFv,
-    (const void*)WorkEvent8__10IWorkEventFv,
-    (const void*)WorkEvent9__10IWorkEventFv,
-    (const void*)WorkEvent10__10IWorkEventFv,
-    (const void*)WorkEvent11__10IWorkEventFv,
-    (const void*)WorkEvent12__10IWorkEventFv,
-    (const void*)WorkEvent13__10IWorkEventFv,
-    (const void*)WorkEvent14__10IWorkEventFv,
-    (const void*)WorkEvent15__10IWorkEventFv,
-    (const void*)WorkEvent16__10IWorkEventFv,
-    (const void*)WorkEvent17__10IWorkEventFv,
-    (const void*)WorkEvent18__10IWorkEventFv,
-    (const void*)WorkEvent19__10IWorkEventFv,
-    (const void*)WorkEvent20__10IWorkEventFv,
-    (const void*)WorkEvent21__10IWorkEventFv,
-    (const void*)WorkEvent22__10IWorkEventFv,
-    (const void*)WorkEvent23__10IWorkEventFv,
-    (const void*)WorkEvent24__10IWorkEventFv,
-    (const void*)WorkEvent25__10IWorkEventFv,
-    (const void*)WorkEvent26__10IWorkEventFv,
-    (const void*)WorkEvent27__10IWorkEventFv,
-    (const void*)WorkEvent28__10IWorkEventFv,
-    (const void*)WorkEvent29__10IWorkEventFv,
-    (const void*)WorkEvent30__10IWorkEventFv,
-    (const void*)WorkEvent31__10IWorkEventFv,
-    __RTTI__Q22cf13CfNandManager, (const void*)0xFFFFFFA8,
-    (const void*)destroyViaRender__Q22cf13CfNandManagerFv,
-    (const void*)handleRenderCallback__Q22cf13CfNandManagerFv,
-    (const void*)handleFileEvent__Q22cf13CfNandManagerFv,
-    (const void*)cbRenderBefore__Q22cf13CfNandManagerFv,
-};
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536C80[13] = {
-    __RTTI__10IScnRender, (const void*)0x58,
-    __RTTI__10IWorkEvent, (const void*)0x54,
-    __RTTI__15CDoubleListNode, 0, __RTTI__14CChildListNode, 0, __RTTI__8CProcess, 0,
-    lbl_eu_806628D0, 0, 0,
-};
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536CB4[9] = {
-    lbl_eu_806628D0, 0,
-    0, // retail __dt__28CTTask<Q22cf13CfNandManager>Fv (unspellable '<')
-    (const void*)Reset__14CChildListNodeFv,
-    0, 0,
-    0, // retail Move__28CTTask<Q22cf13CfNandManager>Fv (unspellable '<')
-    0, // retail Draw__28CTTask<Q22cf13CfNandManager>Fv (unspellable '<')
-    (const void*)Tail__8CProcessFv,
-};
-__declspec(section ".data") __attribute__((used)) const void* lbl_eu_80536CD8[7] = {
-    __RTTI__15CDoubleListNode, 0, __RTTI__14CChildListNode, 0, __RTTI__8CProcess, 0, 0,
-};
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char s_nandTail[4] = {0}; // retail +0x1C8 null word
 #pragma section data_type ".data" ".bss"
-// typed .rodata strings (each sized to its retail gap).
-__declspec(section ".rodata") __attribute__((used)) const char kNandTypeName[0x14] = "cf::CfNandManager";
-__declspec(section ".rodata") __attribute__((used)) const char kNandTaskTypeName[0x1C] = "CTTask<cf::CfNandManager>";
-__declspec(section ".rodata") __attribute__((used)) const char kNandSaveNameFormat[0x18] = "%s%02d\0banner.bin\0name";
-// typed .sdata pointer pairs (replaces old sdata blob which MWCC migrated
-// to nobits as all-zero bytes): relocs to the string/pool labels keep the
-// section live.
-__declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf13CfNandManager[2] = { kNandTypeName, lbl_eu_80536C80 };
-__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_806628D0[2] = { kNandTaskTypeName, lbl_eu_80536CD8 };
+extern const char kNandSaveNameFormat[0x18];
 // typed .bss/.sbss zero-fill (nobits compare sizes only; small sbss objects
 // stay in .sbss automatically, no section attr needed).
 char gCfNandPartySnapshot[0x38];
 cf::CfNandManager* gpCfNandManager;
 unsigned char gCfNandFileEventPending;
-unsigned char lbl_eu_8066476D;
+unsigned char gNandTeardownByte;
 unsigned short lbl_eu_8066476E;
 unsigned short gCfNandCaptureState;
-unsigned short lbl_eu_80664772;
+unsigned short gNandTeardownFlag;
 unsigned short lbl_eu_80664774;
 unsigned short gNandSbssGap64776;
 unsigned int lbl_eu_80664778;
@@ -176,145 +41,9 @@ unsigned int gNandSbssPad64780;
 
 #pragma section code_type ".text" ".text"
 
-// Manager base layout for the render-callback path: the CTTask (0x54) and
-// CIWorkEventSlot (4) bases come first, so the IScnRender base sub-object the
-// scene registers sits at +0x58. Never instantiated (data only), so MWCC emits
-// no vtable/RTTI for it.
-struct CfNandTaskPad {
-    u8 _pad58[0x58];
-};
-class CfNandMgrBases : public CfNandTaskPad, public IScnRender {};
-
 // Local copies of the save-image / work-entry views (the unit header cannot
 // be included here: it redeclares this TU's .sbss/.bss labels with different
 // types). Offsets match src/kyoshin/cf/CfNandManager.hpp.
-
-struct CfNandWorkEntryDst_Local {
-    CfNandEntryHead head;
-    u32 arr028[48];
-    u32 arr0E8[36];
-    u16 f178;
-    u16 gap17A;
-    u32 f17C;
-    f32 f180;
-    f32 f184;
-    f32 f188;
-    f32 f18C;
-    f32 f190;
-    f32 f194;
-    s16 f198;
-    s16 f19A;
-    s16 f19C;
-    u16 gap19E;
-    f32 f1A0;
-    f32 f1A4;
-    s16 f1A8;
-    s16 f1AA;
-    s16 f1AC;
-    s16 f1AE;
-    s16 f1B0;
-    s16 f1B2;
-    s16 f1B4;
-    s16 f1B6;
-    u8 f1B8;
-    u8 gap1B9[3];
-    f32 f1BC;
-    f32 f1C0;
-    f32 f1C4;
-    f32 f1C8;
-    f32 f1CC;
-    u8 f1D0;
-    u8 f1D1;
-    u8 f1D2;
-    u8 f1D3;
-    u8 f1D4;
-    u8 gap1D5[3];
-    f32 f1D8;
-    u32 f1DC;
-    u32 f1E0;
-    u32 f1E4;
-    u32 f1E8;
-    u32 f1EC;
-    u32 f1F0;
-    u8 kizuna[0xAC];
-    u32 f2A0;
-    u32 f2A4;
-    u32 f2A8;
-    s16 f2AC;
-    s16 f2AE;
-    u32 f2B0;
-    u8 f2B4;
-    u8 gap2B5[3];
-    f32 f2B8;
-    f32 f2BC;
-    u8 f2C0;
-    u8 tail[0x40];
-    u8 gapEnd[3];
-};
-
-struct CfNandWorkEntrySrc_Local {
-    CfNandEntryHead head;
-    u32 arr028[48];
-    u32 arr0E8[36];
-    u16 f178;
-    u16 gap17A;
-    u32 subSlot;
-    u8 gap180[0x159C];
-    u32 f177C;
-    u32 f1780;
-    u32 f1784;
-    u8 gap1788[0x1D4C];
-    u32 f17CC;
-    f32 f17D0;
-    f32 f17D4;
-    f32 f17D8;
-    f32 f17DC;
-    f32 f17E0;
-    f32 f17E4;
-    s16 f17E8;
-    s16 f17EA;
-    s16 f17EC;
-    u16 gap17EE;
-    f32 f17F0;
-    f32 f17F4;
-    s16 f17F8;
-    s16 f17FA;
-    s16 f17FC;
-    s16 f17FE;
-    s16 f1800;
-    s16 f1802;
-    s16 f1804;
-    s16 f1806;
-    u8 f1808;
-    u8 gap1809[3];
-    f32 f180C;
-    f32 f1810;
-    f32 f1814;
-    f32 f1818;
-    f32 f181C;
-    u8 f1820;
-    u8 f1821;
-    u8 f1822;
-    u8 f1823;
-    u8 f1824;
-    u8 gap1825[3];
-    f32 f1828;
-    u32 f182C;
-    u32 f1830;
-    u32 f1834;
-    u32 f1838;
-    u32 f183C;
-    u32 f1840;
-    s16 f34D4;
-    s16 f34D6;
-    u32 f34D8;
-    u8 f34DC;
-    u8 gap34DD[3];
-    f32 f34E0;
-    f32 f34E4;
-    u8 gap34E8[0x4C];
-    u8 kizunaSrc[0x8A0];
-};
 
 struct CfNandBattleParams {
     u32 p00;
@@ -359,52 +88,9 @@ struct CfNandBattleParams {
     u32 p74;
 };
 
-struct CfNandSaveTagBlock_Local {
-    u32 tag;
-    u32 length;
-    u32 unk08;
-    u32 crc;
-};
-
-struct CfNandProgressArea_Local {
-    u32 field00;
-    f32 f04;
-    u16 f08;
-    u16 f0A;
-};
-
-struct CfNandPartyEntry_Local {
-    u32 field_00;
-    u32 field_04;
-    u32 field_08;
-    f32 field_0C;
-};
-
-struct CfNandPartySnapshot_Local {
-    CfNandPartyEntry_Local mEntry[3];
-    u32 field_30;
-};
-
 struct CfNandCamBlock_Local {
     u8 _pad0[0xC];
     f32 f0C;
-};
-
-struct CfNandWthrBlock_Local {
-    u8 _pad0[0xE];
-    u16 f0E;
-};
-
-struct CfNandSndArea_Local {
-    f32 f00;
-    f32 f04;
-    f32 f08;
-    u32 f0C;
-};
-
-struct CfNandSaveNameTable_Local {
-    s32 count;
-    CfNandSaveNameEntry entries[20];
 };
 
 struct CfNandSaveImage_Local {
@@ -412,40 +98,40 @@ struct CfNandSaveImage_Local {
     u32 totalSize;
     u32 unk08;
     u32 version;
-    CfNandSaveTagBlock_Local slotTag;
+    CfNandSaveTagBlock slotTag;
     u8 slot[0xB8];
     u8 slotPad[0x9BE8];
     u8 pad9CC0[0x360];
-    CfNandSaveTagBlock_Local flagTag;
+    CfNandSaveTagBlock flagTag;
     u8 flagData[0x1220];
-    CfNandSaveTagBlock_Local gameTag;
+    CfNandSaveTagBlock gameTag;
     u8 workHead[0x41F0];
-    CfNandWorkEntryDst_Local workEntry[14];
+    CfNandWorkEntryDst workEntry[14];
     u8 pad11E88[0x18];
-    CfNandSaveTagBlock_Local timeTag;
-    CfNandProgressArea_Local progress;
+    CfNandSaveTagBlock timeTag;
+    CfNandProgressArea progress;
     u8 pad11EBC[0x14];
-    CfNandSaveTagBlock_Local partyTag;
-    CfNandPartySnapshot_Local snapshot;
+    CfNandSaveTagBlock partyTag;
+    CfNandPartySnapshot snapshot;
     u8 pad11F14[0xC];
-    CfNandSaveTagBlock_Local camTag;
+    CfNandSaveTagBlock camTag;
     CfNandCamBlock_Local camBlock;
     u8 pad11F40[0x10];
-    CfNandSaveTagBlock_Local itemTag;
+    CfNandSaveTagBlock itemTag;
     u8 itemBlob[0x12120];
-    CfNandSaveTagBlock_Local wthrTag;
-    CfNandWthrBlock_Local wthrBlock;
+    CfNandSaveTagBlock wthrTag;
+    CfNandWthrBlock wthrBlock;
     u8 pad240A0[0x10];
-    CfNandSaveTagBlock_Local sndTag;
-    CfNandSndArea_Local sndArea;
+    CfNandSaveTagBlock sndTag;
+    CfNandSndArea sndArea;
     u8 pad240D0[0x10];
-    CfNandSaveTagBlock_Local mineTag;
+    CfNandSaveTagBlock mineTag;
     u8 mineRegion[0x384];
     u8 pad24474[0x1C];
-    CfNandSaveTagBlock_Local tboxTag;
-    CfNandSaveNameTable_Local names;
+    CfNandSaveTagBlock tboxTag;
+    CfNandSaveNameTable names;
     u8 pad246D4[0x1CC];
-    CfNandSaveTagBlock_Local optdTag;
+    CfNandSaveTagBlock optdTag;
     u8 optdBlob[0x40];
 };
 
@@ -456,46 +142,41 @@ struct CfNandSaveImageV1 {
     u32 totalSize;
     u32 unk08;
     u32 version;
-    CfNandSaveTagBlock_Local slotTag;
+    CfNandSaveTagBlock slotTag;
     u8 slot[0xB8];
     u8 slotPad[0x9BE8];
     u8 pad9CC0[0x360];
-    CfNandSaveTagBlock_Local flagTag;
+    CfNandSaveTagBlock flagTag;
     u8 flagData[0x1220];
-    CfNandSaveTagBlock_Local gameTag;
+    CfNandSaveTagBlock gameTag;
     u8 workHead[0x41F0];
-    CfNandWorkEntryDst_Local workEntry[14];
+    CfNandWorkEntryDst workEntry[14];
     u8 pad11E88[0x18];
-    CfNandSaveTagBlock_Local timeTag;
-    CfNandProgressArea_Local progress;
+    CfNandSaveTagBlock timeTag;
+    CfNandProgressArea progress;
     u8 pad11EBC[0x14];
-    CfNandSaveTagBlock_Local partyTag;
-    CfNandPartySnapshot_Local snapshot;
+    CfNandSaveTagBlock partyTag;
+    CfNandPartySnapshot snapshot;
     u8 pad11F14[0xC];
-    CfNandSaveTagBlock_Local camTag;
+    CfNandSaveTagBlock camTag;
     CfNandCamBlock_Local camBlock;
     u8 pad11F40[0x10];
-    CfNandSaveTagBlock_Local itemTag;
+    CfNandSaveTagBlock itemTag;
     u8 itemBlob[0x157D0];
-    CfNandSaveTagBlock_Local wthrTag;
-    CfNandWthrBlock_Local wthrBlock;
+    CfNandSaveTagBlock wthrTag;
+    CfNandWthrBlock wthrBlock;
     u8 pad27760[0x10];
-    CfNandSaveTagBlock_Local sndTag;
-    CfNandSndArea_Local sndArea;
+    CfNandSaveTagBlock sndTag;
+    CfNandSndArea sndArea;
     u8 pad277A0[0x10];
-    CfNandSaveTagBlock_Local mineTag;
+    CfNandSaveTagBlock mineTag;
     u8 mineRegion[0x384];
     u8 pad27B44[0x1C];
-    CfNandSaveTagBlock_Local tboxTag;
-    CfNandSaveNameTable_Local names;
+    CfNandSaveTagBlock tboxTag;
+    CfNandSaveNameTable names;
     u8 pad27F34[0x1CC];
-    CfNandSaveTagBlock_Local optdTag;
+    CfNandSaveTagBlock optdTag;
     u8 optdBlob[0x40];
-};
-
-struct CfNandWorkBuf_Local {
-    u8 head[0x41F0];
-    CfNandWorkEntryDst_Local entry[14];
 };
 
 extern "C" int NandCheckSave(void* block);
@@ -507,16 +188,20 @@ extern "C" void NandVerifyBlk(void* self, u16 type, u8* ok, s32* result);
 extern "C" void NandResolveOp(void* self, u16 type, u8* ok, s32* result);
 extern "C" void NandDownsample(void* self);
 extern "C" void NandImageMake(void* buf, bool flag);
-extern "C" void __ct__cf_CfNandManager(void* self, void* arg);
 extern "C" void __dt__8023E63C(void* self);
 extern "C" void NandFlushEvts(void* self);
 extern "C" int CfRes_getD80Flag();
 extern "C" u32 CtrlRemote_GetFixedSize1214();
 extern "C" u8* CtrlRemote_GetSharedBufPtr();
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(u32);
+extern char lbl_eu_8050B470[];
 extern "C" u8* CtrlRemote_GetFileEventIds();
 extern "C" void CtrlObjectParam_RefreshCharEntry(void* data, u32 value);
 extern "C" void KizunagramUnpackChart(void* src, void* dst);
 namespace cf { struct CfGameManager {
+    static void resetBattlePresentation();
+    static void drainEventQueue();
+    static u32 getQueuedFileEventCount();
     static void queueEventId(u32);
     static void fadeOutGameEffects();
     static void setEventCounterA(u32);
@@ -540,7 +225,7 @@ extern u8 lbl_eu_80663E5D;
 
 #pragma inline_max_size(0x4000)
 #pragma inline_max_total_size(0x8000)
-inline static void expandWorkEntry(CfNandWorkEntrySrc_Local* src, CfNandWorkEntryDst_Local* dst) {
+inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* dst) {
     src->head.f000 = dst->head.f000;
     src->head.f002 = dst->head.f002;
     src->head.f006 = dst->head.f006;
@@ -648,11 +333,11 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc_Local* src, CfNandWorkEntr
 
     u8 flag = dst->f2C0 != 0;
     lbl_eu_80663E5D = flag;
-    lbl_eu_8066476D = flag;
+    gNandTeardownByte = flag;
     KizunagramUnpackChart(dst->kizuna, src->kizunaSrc);
 }
 
-inline static void restoreNameTable(CfNandSaveNameTable_Local* names) {
+inline static void restoreNameTable(CfNandSaveNameTable* names) {
     CfNandSaveNameEntry cur;
     rebuildTboxPool();
     CfNandNameRoot* root = getReslistC48();
@@ -701,8 +386,8 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
     CfNandSaveImage_Local* image = img;
     int ok = 1;
     u8* live;
-    CfNandWorkEntrySrc_Local* src;
-    CfNandWorkEntryDst_Local* dst;
+    CfNandWorkEntrySrc* src;
+    CfNandWorkEntryDst* dst;
     u32 ver = image->version - 0x70001;
     if (ver <= 1) {
         int valid = NandCheckSave(image);
@@ -714,7 +399,7 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
         lbl_eu_80664774 = image->slot[0x66];
         live = CtrlRemote_GetFileEventIds();
         memcpy(live, image->workHead, 0x41F0);
-        src = (CfNandWorkEntrySrc_Local*)(live + 0x7FC4);
+        src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
         dst = &image->workEntry[1];
         for (u32 i = 1; i < 14; i++) {
             expandWorkEntry(src, dst);
@@ -737,11 +422,11 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
         }
         CfT_FrameTimerSet(&image->progress.field00);
         CfT_PlayClockReset(image->progress.f04);
-        lbl_eu_80661AF4 = image->progress.f08;
-        lbl_eu_80661AF6 = image->progress.f0A;
-        CfNandPartySnapshot_Local* snapDst = (CfNandPartySnapshot_Local*)gCfNandPartySnapshot;
+        gCfTCalendarDay = image->progress.f08;
+        gCfTCalendarYear = image->progress.f0A;
+        CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)gCfNandPartySnapshot;
         *snapDst = image->snapshot;
-        memcpy(lbl_eu_806641B8, image->itemBlob, 0x12120);
+        memcpy(spItemBlock, image->itemBlob, 0x12120);
         cfCam_storeFollowD(&image->camBlock, image->camBlock.f0C);
         loadReloadInfo(&image->wthrBlock);
         cf::CfGameManager::fadeOutGameEffects();
@@ -819,7 +504,7 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
     memcpy(CtrlRemote_GetSharedBufPtr(), v1->flagData, flagLen);
     live = CtrlRemote_GetFileEventIds();
     memcpy(live, v1->workHead, 0x41F0);
-    src = (CfNandWorkEntrySrc_Local*)(live + 0x7FC4);
+    src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
     dst = &v1->workEntry[1];
     for (u32 i = 1; i < 14; i++) {
         expandWorkEntry(src, dst);
@@ -828,12 +513,12 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
     }
     CfT_FrameTimerSet(&v1->progress.field00);
     CfT_PlayClockReset(v1->progress.f04);
-    lbl_eu_80661AF4 = v1->progress.f08;
-    lbl_eu_80661AF6 = v1->progress.f0A;
-    CfNandPartySnapshot_Local* snapDst = (CfNandPartySnapshot_Local*)gCfNandPartySnapshot;
+    gCfTCalendarDay = v1->progress.f08;
+    gCfTCalendarYear = v1->progress.f0A;
+    CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)gCfNandPartySnapshot;
     *snapDst = v1->snapshot;
 
-    u8* item = (u8*)lbl_eu_806641B8;
+    u8* item = (u8*)spItemBlock;
     u8* blob = v1->itemBlob;
     memset(item, 0, 0x12120);
     memcpy(item + 0x0000, blob + 0x0000, 0x211C);
@@ -874,7 +559,7 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
 
 
 // Retail US 0x8024058C: apply the +0x5C save image (NandApplySave), then
-// operator-delete it. The in-progress flag at lbl_eu_80664772 is armed
+// operator-delete it. The in-progress flag at gNandTeardownFlag is armed
 // around the apply so CSysWinScenarioLog can poll the teardown.
 extern "C" int __dt__8023E448() {
     u8* none = 0;
@@ -886,9 +571,9 @@ extern "C" int __dt__8023E448() {
         return 0;
     }
     u16 clear = 0;
-    lbl_eu_80664772 = 1;
+    gNandTeardownFlag = 1;
     int result = NandApplySave((CfNandSaveImage_Local*)img);
-    lbl_eu_80664772 = clear;
+    gNandTeardownFlag = clear;
     u8* still = gpCfNandManager->field_0x5C;
     if (still != 0) {
         operator delete(still);
@@ -934,8 +619,8 @@ void cf::CfNandManager::cbRenderBefore() {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Address of the shared party-snapshot block (read by CfGameManager and the
 // status/save windows).
-extern "C" CfNandPartySnapshot_Local* NandPartySnap() {
-    return (CfNandPartySnapshot_Local*)gCfNandPartySnapshot;
+extern "C" CfNandPartySnapshot* NandPartySnap() {
+    return (CfNandPartySnapshot*)gCfNandPartySnapshot;
 }
 
 // Nonzero while the NAND request queue still has work: the global CNand's
@@ -950,24 +635,24 @@ extern "C" int NandQueueBusy() {
 
 // Build the 3-entry party snapshot saved into each slot. Missing players use
 // the static fallback record; the trailing word is the CRC16 of the snapshot.
-extern "C" CfNandPartySnapshot_Local* NandCopyParty(CfNandPartySnapshot_Local* snapshot) {
+extern "C" CfNandPartySnapshot* NandCopyParty(CfNandPartySnapshot* snapshot) {
     snapshot->field_30 = 0;
     if (cf::CBattleManager::getInstance() != 0) {
         snapshot->field_30 = *(u32*)((u8*)cf::CBattleManager::getInstance() + 0x194);
     }
-    CfNandPartyEntry_Local* entry = snapshot->mEntry;
+    CfNandPartyEntry* entry = snapshot->mEntry;
     for (u32 i = 0; i < 3; i++) {
         void* player = cf::CfGameManager::getPlayer(i);
         if (player != 0) {
             ml::CVec3* pos = ((cf::CfObjectMove*)player)->CfObject_getPosVector();
-            entry->field_00 = *(u32*)&pos->x;
-            entry->field_04 = *(u32*)&pos->y;
+            entry->mPair.field_00 = *(u32*)&pos->x;
+            entry->mPair.field_04 = *(u32*)&pos->y;
             entry->field_08 = *(u32*)&pos->z;
             entry->field_0C = ((cf::CfObjectMove*)player)->CfObject_getScaledAngle();
         } else {
-            entry->field_00 = lbl_eu_8057164C[0];
-            entry->field_04 = lbl_eu_8057164C[1];
-            entry->field_08 = lbl_eu_8057164C[2];
+            entry->mPair.field_00 = *(u32*)&gmAimPoint[0];
+            entry->mPair.field_04 = *(u32*)&gmAimPoint[1];
+            entry->field_08 = *(u32*)&gmAimPoint[2];
             entry->field_0C = lbl_eu_80663E54;
         }
         entry++;
@@ -978,15 +663,186 @@ extern "C" CfNandPartySnapshot_Local* NandCopyParty(CfNandPartySnapshot_Local* s
 // LLM-HARNESS-END: us-8023e320
 
 // LLM-HARNESS-BEGIN: us-8023e414
-extern "C" void NandPackEntry() {}
+// Compact the live 0x3DD4-byte work entries into the 0x304-byte save records.
+// The destination starts with the 0x41F0-byte bulk header copied from the
+// file-event id table; each entry ends with its compacted kizuna block.
+extern "C" u16 NandPackEntry(u8* dst) {
+    u8* live = (u8*)CtrlRemote_GetFileEventIds();
+    std::memcpy(dst, live, 0x41F0);
+
+    u8 placeFlag = 0;
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    if (player != 0) {
+        CfNandPlayerC4* c4 = (CfNandPlayerC4*)player;
+        if (c4->fieldC4 != 0) {
+            placeFlag = (u8)((c4->fieldC4->field4EC >> 30) & 1);
+        }
+    }
+
+    struct Arr48 { u32 w[48]; };
+    struct Arr36 { u32 w[36]; };
+    CfNandWorkEntrySrc* src = (CfNandWorkEntrySrc*)(live + 0x41F0);
+    CfNandWorkEntryDst* out = (CfNandWorkEntryDst*)(dst + 0x41F0);
+    for (u32 i = 0; i < 14; i++) {
+        cf::CActorParam* actor = (cf::CActorParam*)src->subSlot;
+        CfNandBattleParams* bp = (CfNandBattleParams*)actor->CActorParam_getBattleParams();
+
+        out->head.f000 = src->head.f000;
+        out->head.f002 = src->head.f002;
+        out->head.f006 = src->head.f006;
+        out->head.f00A = src->head.f00A;
+        out->head.f00E = src->head.f00E;
+        out->head.f012 = src->head.f012;
+        out->head.f016 = src->head.f016;
+        out->head.f01C = src->head.f01C;
+        out->head.f020 = src->head.f020;
+        *(Arr48*)&out->head.f024 = *(Arr48*)&src->head.f024;
+        *(Arr36*)&out->arr028[47] = *(Arr36*)&src->arr028[47];
+        out->f178 = src->f178;
+
+        out->f17C = src->f177C;
+        out->f180 = src->f17D0;
+        out->f184 = src->f17D4;
+        out->f188 = src->f17D8;
+        out->f18C = src->f17DC;
+        out->f190 = src->f17E0;
+        out->f194 = src->f17E4;
+        out->f198 = src->f17E8;
+        out->f19A = src->f17EA;
+        out->f19C = src->f17EC;
+        out->f1A0 = src->f17F0;
+        out->f1A4 = src->f17F4;
+        out->f1A8 = src->f17F8;
+        out->f1AA = src->f17FA;
+        out->f1AC = src->f17FC;
+        out->f1AE = src->f17FE;
+        out->f1B0 = src->f1800;
+        out->f1B2 = src->f1802;
+        out->f1B4 = src->f1804;
+        out->f1B6 = src->f1806;
+        out->f1B8 = src->f1808;
+        out->f1BC = src->f180C;
+        out->f1C0 = src->f1810;
+        out->f1C4 = src->f1814;
+        out->f1C8 = src->f1818;
+        out->f1CC = src->f181C;
+        out->f1D0 = src->f1820;
+        out->f1D1 = src->f1821;
+        out->f1D2 = src->f1822;
+        out->f1D3 = src->f1823;
+        out->f1D4 = src->f1824;
+        out->f1D8 = src->f1828;
+        out->f1DC = src->f182C;
+        out->f1E0 = src->f1830;
+        out->f1E4 = src->f1834;
+        out->f1E8 = src->f1838;
+        out->f1EC = src->f183C;
+        out->f1F0 = src->f1840;
+
+        if (bp->p04 > out->f18C) out->f180 = bp->p04;
+        if (bp->p0C <= out->f194) out->f188 = bp->p0C;
+        if (bp->p08 <= out->f190) out->f184 = bp->p08;
+
+        CfNandSub14 scratch;
+        initItemWorkState(&scratch);
+        scratch.f00 = src->f34D4;
+        scratch.f02 = src->f34D6;
+        scratch.f04 = src->f34D8;
+        scratch.f08 = src->f34DC;
+        scratch.f0C = src->f34E0;
+        scratch.f10 = src->f34E4;
+        out->f2A0 = src->f177C;
+        out->f2A4 = src->f1780;
+        out->f2A8 = src->f1784;
+        out->f2AC = scratch.f00;
+        out->f2AE = scratch.f02;
+        out->f2B0 = scratch.f04;
+        out->f2B4 = scratch.f08;
+        out->f2B8 = scratch.f0C;
+        out->f2BC = scratch.f10;
+        out->f2C0 = placeFlag;
+        std::memset(out->tail, 0, sizeof(out->tail));
+        KizunagramPackChart(out->kizuna, src->kizunaSrc);
+
+        src++;
+        out++;
+    }
+
+    u8* ev = dst + 0x44B1;
+    if (((u32)ev & 1) != 0) ev++;
+    cf::CfGameManager::drainEventQueue();
+    return OSCalcCRC16(dst, 0x6C28);
+}
 // LLM-HARNESS-END: us-8023e414
 
 // LLM-HARNESS-BEGIN: us-8023e7bc
-extern "C" void NandTileDescr() {}
+// Build the texture descriptor followed by a 32-byte-aligned copy of the
+// captured EFB tile. The caller's flag selects a zero fill over the capture.
+extern "C" void NandTileDescr(CfNandTexBlock* block, bool useCapture) {
+    u32 size = GXGetTexBufferSize(0xA4, 0x74, (GXTexFmt)4, (GXBool)0, (GXBool)0);
+    u32 subOffset = (u8*)&block->sub - (u8*)block;
+    u32 payloadOffset = (u8*)&block->sub.field34 - (u8*)block;
+    if ((payloadOffset & 0x1F) != 0) {
+        payloadOffset = payloadOffset + 0x20 - (payloadOffset & 0x1F);
+    }
+    block->field00 = 0x20AF30;
+    block->field04 = 1;
+    block->field08 = 0xC;
+    block->field0C = subOffset;
+    block->field10 = 0;
+    block->sub.height = 0x74;
+    block->sub.width = 0xA4;
+    block->sub.format = 4;
+    block->sub.offset = payloadOffset;
+    u8* payload = (u8*)block + payloadOffset;
+    block->sub.field20 = 0;
+    block->sub.field24 = 0;
+    block->sub.field28 = 1;
+    block->sub.field2C = 1;
+    block->sub.field30 = lbl_eu_806686E0;
+    std::memset(block->sub.field34, 0, sizeof(block->sub.field34));
+    if (!useCapture && gpCfNandCaptureBuf != 0) {
+        std::memcpy(payload, gpCfNandCaptureBuf, size);
+    } else {
+        std::memset(payload, 0, size);
+    }
+    DCStoreRangeNoSync(payload, size);
+}
 // LLM-HARNESS-END: us-8023e7bc
 
 // LLM-HARNESS-BEGIN: us-8023e8f4
-extern "C" void NandSaveBuild() {}
+// Assemble the 0x9C80-byte save slot from the live calendar, party records,
+// character table and the captured texture tile.
+extern "C" u16 NandSaveBuild(CfNandSaveSource* source, CfNandSaveBuf* buf, u8 slot) {
+    std::memset(buf, 0, 0x9C80);
+    OSCalendarTime time;
+    buf->field00 = (s16)cf::CfGameManager::getQueuedFileEventCount();
+    OSTicksToCalendarTime(OSGetTime(), &time);
+    buf->field04 = (u16)time.yday;
+    buf->field06 = (u16)(time.wday + 1);
+    buf->field09 = (u8)time.year;
+    buf->field03 = (u8)time.hour;
+    buf->field02 = (u8)time.mday;
+    buf->field08 = (u8)time.month;
+    buf->field67 = (u8)CtrlRemote_TouchBitByArg(0x3508);
+    buf->field10 = (u8)(buf->field10 & ~0xFF);
+    u32 timer = CfT_FrameTimerGet();
+    buf->field0A = (u16)((timer >> 4) & 0xFFFF);
+    buf->field0C = (u16)((timer >> 20) & 0x3F);
+    buf->field0E = source->fieldB262;
+    buf->field11 = (u8)((buf->field11 & 0xFF00) | (u8)source->fieldB260);
+    for (u32 i = 0; i < 2; i++) {
+        buf->mRecord[i] = source->mRecord[i];
+    }
+    u32 charEntry = (u32)CtrlObjectParam_GetCharEntry(buf->mRecord[0].w[0] >> 16);
+    buf->field64 = (u16)CtrlObjectParam_GetArtsDataWord(charEntry);
+    buf->field66 = slot;
+    const char* col = lbl_eu_8050B470 + 0x12;
+    const u8* name = (const u8*)getBdatStringColumnValue(lbl_eu_80664090, col, buf->mRecord[0].w[0]);
+    std::memcpy(buf->mName, name, 0x20);
+    NandTileDescr(&buf->tex, slot != 0);
+    return OSCalcCRC16((const u8*)buf, 0x9C80);
+}
 // LLM-HARNESS-END: us-8023e8f4
 
 // Assemble the on-media save image in the manager's staging buffer. The
@@ -1004,13 +860,13 @@ extern "C" void NandImageMake(void* buf, bool flag) {
     image->slotTag.tag = 0x444D4D59;
     image->slotTag.length = sizeof(CfNandSaveBuf);
     image->slotTag.unk08 = 0x10;
-    NandCopyParty((CfNandPartySnapshot_Local*)&image->snapshot);
+    NandCopyParty((CfNandPartySnapshot*)&image->snapshot);
     image->partyTag.tag = 0x50415254;
     image->partyTag.length = sizeof(CfNandPartySnapshot);
     image->partyTag.unk08 = 0x10;
     image->partyTag.crc = OSCalcCRC16((const u8*)&image->snapshot, sizeof(CfNandPartySnapshot));
     image->progress.field00 = CfT_FrameTimerGet();
-    image->progress.f04 = lbl_eu_80663D94;
+    image->progress.f04 = gCfTPlayClockSeconds;
     image->timeTag.tag = 0x54494D45;
     image->timeTag.length = sizeof(CfNandProgressArea);
     image->timeTag.crc = OSCalcCRC16((const u8*)&image->progress, sizeof(CfNandProgressArea));
@@ -1026,7 +882,22 @@ extern "C" void NandImageMake(void* buf, bool flag) {
 // LLM-HARNESS-END: us-8023ea80
 
 // LLM-HARNESS-BEGIN: us-80240618
-void cf::CfNandManager::handleFileEvent() {}
+// Handle the IWorkEvent file event delivered through the +0x54 vtable thunk.
+bool cf::CfNandManager::handleFileEvent(CEventFile* event) {
+    s32 mode = event->unk0;
+    gCfNandFileEventPending = 0;
+    if (mode == 1) {
+        if (event->field_14 != 0) {
+            cf::CfGameManager::resetBattlePresentation();
+        }
+    } else if (mode == 4) {
+        if (gpCfNandManager != 0 && gpCfNandManager->field_0x5C != 0) {
+            operator delete(gpCfNandManager->field_0x5C);
+            gpCfNandManager->field_0x5C = 0;
+        }
+    }
+    return true;
+}
 // LLM-HARNESS-END: us-80240618
 
 // Validate the save block in the pending payload. The dummy magic marks an
@@ -1355,7 +1226,7 @@ extern "C" void NandFlushEvts(void* self) {
                         mgr->mPending.mPayload = (u32)buf;
                         if (type == 11) {
                             nand.save(fileName.c_str(), buf, ev.mTag, 0, 0x34);
-                        } else if (type == 12 && (lbl_eu_80663E28 & 0x200000) == 0) {
+                        } else if (type == 12 && (gmPauseFlags & 0x200000) == 0) {
                             nand.save(fileName.c_str(), buf, ev.mTag, 0, 0x34);
                         } else {
                             nand.save(fileName.c_str(), buf, ev.mTag,
@@ -1411,7 +1282,7 @@ extern "C" int NandQueueChkFc(u32 value, void (*cb)(u32, u32, u32, u32)) {
 
 // Queue the save-state checks unless presentation state suppresses them.
 extern "C" int NandQueueSaveCk(int slot, void* cb, u8 flag) {
-    if ((lbl_eu_80663E24 & 0xafa40000) != 0) return 0;
+    if ((gmGameFlags & 0xafa40000) != 0) return 0;
     gpCfNandManager->queueEvent(0, 2, 0, 0x20, 0, 0);
     gpCfNandManager->queueEvent(0, 0x28000, 0, 0x22, (u8)slot, flag);
     gpCfNandManager->queueEvent(0, 0x28000, 0, 0x11, (u8)slot, 0);
@@ -1517,11 +1388,11 @@ extern "C" cf::CfNandManager* create__Q22cf13CfNandManagerFv(void* parent, void*
         return 0;
     }
     mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
-    cf::CfNandManager* mgr = (cf::CfNandManager*)mtl::MemManager::allocate(0x194, workMem);
-    if (mgr == 0) {
-        return mgr;
+    cf::CfNandManager* mgr =
+        (cf::CfNandManager*)mtl::MemManager::allocate(0x194, workMem);
+    if (mgr != 0) {
+        new (mgr) cf::CfNandManager(arg);
     }
-    __ct__cf_CfNandManager(mgr, arg);
     ((CProcess*)mgr)->Regist((CProcess*)parent, false);
     return mgr;
 }
@@ -1540,7 +1411,7 @@ void cf::CfNandManager::Term() {
 }
 
 void cf::CfNandManager::Move() {
-    if ((lbl_eu_80663E28 & 0x200000) != 0) return;
+    if ((gmPauseFlags & 0x200000) != 0) return;
     nand.update();
     if (mMoveHook != nullptr) (this->*mMoveHook)();
 }
@@ -1602,9 +1473,7 @@ extern "C" void NandAllocBufs() {
     }
     gCfNandCaptureState = 1;
     CScn* scn = (CScn*)CfRes_getD80Flag();
-    u32 render = (u32)gpCfNandManager;
-    if (render != 0) render += 0x58;
-    scn->addRenderCB((IScnRender*)render, 4, 0);
+    scn->addRenderCB(gpCfNandManager, 4, 0);
 }
 
 // Release the capture state: unregister the render callback from the D80
@@ -1612,8 +1481,7 @@ extern "C" void NandAllocBufs() {
 extern "C" void NandTeardown() {
     CScn* scn = (CScn*)CfRes_getD80Flag();
     if (scn != 0) {
-        CfNandMgrBases* mgr = (CfNandMgrBases*)gpCfNandManager;
-        scn->removeRenderCB(mgr);
+        scn->removeRenderCB(gpCfNandManager);
     }
     if (gpCfNandCaptureBuf != 0) {
         mtl::MemManager::deallocate(gpCfNandCaptureBuf);
@@ -1625,3 +1493,51 @@ extern "C" void NandTeardown() {
 // LLM-HARNESS-BEGIN: us-802427a8
 extern "C" void sinit_802405F0() {}
 // LLM-HARNESS-END: us-802427a8
+
+// The retail constructor is emitted at the head of the unit; its flat name is
+// the MWCC spelling of CfNandManager().  Keep the member-initialization order
+// of the original: queue storage, ring metadata, pending event, status words,
+// the move hook, then the manager/capture globals.
+extern u32 lbl_eu_80536B20[3];
+
+cf::CfNandManager::CfNandManager(void* arg)
+    : CTTask<cf::CfNandManager>(), IWorkEvent(), IScnRender(),
+      field_0x5C(0) {
+
+    mEventQueue.mRingBase = &mEventQueue.mFirst;
+    mEventQueue.mHead = 0;
+    mEventQueue.mTail = 0;
+    mEventQueue.mSize = 0x10;
+    mPending.mCb = 0;
+    mPending.mPayload = 0;
+    mPending.mType = 0;
+    mPending.mSubtype = 0;
+    mPending.mFlag = 0;
+    field_180 = 0;
+    field_184 = 0;
+    field_186 = 0;
+    typedef void (CfNandManager::*MoveHook)();
+    mMoveHook = *reinterpret_cast<MoveHook*>(__ptmf_null);
+    gpCfNandManager = this;
+    gCfNandFileEventPending = 0;
+    gNandTeardownByte = 0;
+    gCfNandCaptureState = 0;
+    gNandTeardownFlag = 0;
+    lbl_eu_80664774 = 0;
+    gpCfNandCaptureBuf = 0;
+    gpCfNandCaptureBufTail = 0;
+    lbl_eu_8066476E = 0;
+    mMoveHook = *reinterpret_cast<MoveHook*>(lbl_eu_80536B20);
+    mPending.mType = 0;
+    mPending.mPayload = 0;
+    mPending.mFlag = 0;
+}
+
+// Declared virtual so MWCC emits the primary vtable and MI thunks.  The full
+// retail teardown body is recovered separately; keeping the destructor as a
+// real member (instead of a hand-written C-ABI shim) also gives the ctor its
+// correct cleanup record.
+cf::CfNandManager::~CfNandManager() {}
+
+
+__attribute__((used)) const char kNandSaveNameFormat[0x18] = "%s%02d\0banner.bin\0name";

@@ -78,10 +78,9 @@ public:
     u8 mField9E;                      // 0x9E frame counter
     u8 _pad9F;                        // 0x9F
     void switchChainType(u8 arg);
-}; // size: 0xA0
 
-// Battle-chain singleton (retail SDA symbol, .sbss).
-extern CMenuBattleChain* lbl_eu_80664A60;
+    static CMenuBattleChain* sInstance;
+}; // size: 0xA0
 
 // Battle-chain resource-name strings: the layout region name and the
 // resource-name table (region at +0x00, layout at +0x11, anims at
@@ -94,84 +93,84 @@ extern const f32 lbl_eu_80668CB0;
 extern const f32 lbl_eu_80668CB4;
 
 // cbRenderBefore flag (.sbss); bit 0x200000 gates CMenuBattleChain::Move.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Battle-chain pane colour records (4x u16; zero-init .sbss, filled at
 // startup by sinit_802AAF24, passed as pairs to PaneMatSetTevColorsByName).
-extern u16 lbl_eu_80664A68[4];
-extern u16 lbl_eu_80664A70[4];
-extern u16 lbl_eu_80664A78[4];
-extern u16 lbl_eu_80664A80[4];
-extern u16 lbl_eu_80664A88[4];
-extern u16 lbl_eu_80664A90[4];
-extern u16 lbl_eu_80664A98[4];
-extern u16 lbl_eu_80664AA0[4];
-extern u16 lbl_eu_80664AA8[4];
-extern u16 lbl_eu_80664AB0[4];
-extern u16 lbl_eu_80664AB8[4];
-extern u16 lbl_eu_80664AC0[4];
-extern u16 lbl_eu_80664AC8[4];
-extern u16 lbl_eu_80664AD0[4];
-extern u16 lbl_eu_80664AD8[4];
-extern u16 lbl_eu_80664AE0[4];
-extern u16 lbl_eu_80664AE8[4];
-extern u16 lbl_eu_80664AF0[4];
-extern u16 lbl_eu_80664AF8[4];
-extern u16 lbl_eu_80664B00[4];
-extern u16 lbl_eu_80664B08[4];
-extern u16 lbl_eu_80664B10[4];
-extern u16 lbl_eu_80664B18[4];
-extern u16 lbl_eu_80664B20[4];
-extern u16 lbl_eu_80664B28[4];
-extern u16 lbl_eu_80664B30[4];
-extern u16 lbl_eu_80664B38[4];
-extern u16 lbl_eu_80664B40[4];
-extern u16 lbl_eu_80664B48[4];
-extern u16 lbl_eu_80664B50[4];
-extern u16 lbl_eu_80664B58[4];
-extern u16 lbl_eu_80664B60[4];
-extern u16 lbl_eu_80664B68[4];
-extern u16 lbl_eu_80664B70[4];
-extern u16 lbl_eu_80664B78[4];
-extern u16 lbl_eu_80664B80[4];
-extern u16 lbl_eu_80664B88[4];
-extern u16 lbl_eu_80664B90[4];
-extern u16 lbl_eu_80664B98[4];
-extern u16 lbl_eu_80664BA0[4];
-extern u16 lbl_eu_80664BA8[4];
-extern u16 lbl_eu_80664BB0[4];
-extern u16 lbl_eu_80664BB8[4];
-extern u16 lbl_eu_80664BC0[4];
-extern u16 lbl_eu_80664BC8[4];
-extern u16 lbl_eu_80664BD0[4];
-extern u16 lbl_eu_80664BD8[4];
-extern u16 lbl_eu_80664BE0[4];
+extern u16 chainIconColorT1A[4];
+extern u16 chainIconColorT1B[4];
+extern u16 chainIconColorT2A[4];
+extern u16 chainIconColorT2B[4];
+extern u16 chainIconColorT3A[4];
+extern u16 chainIconColorT3B[4];
+extern u16 chainIconColorT4A[4];
+extern u16 chainIconColorT4B[4];
+extern u16 chainIconColorT5A[4];
+extern u16 chainIconColorT5B[4];
+extern u16 chainIconColorT6A[4];
+extern u16 chainIconColorT6B[4];
+extern u16 chainIconColorT7A[4];
+extern u16 chainIconColorT7B[4];
+extern u16 chainIconColorT8A[4];
+extern u16 chainIconColorT8B[4];
+extern u16 chainIconGlossColorT1A[4];
+extern u16 chainIconGlossColorT1B[4];
+extern u16 chainIconGlossColorT2A[4];
+extern u16 chainIconGlossColorT2B[4];
+extern u16 chainIconGlossColorT3A[4];
+extern u16 chainIconGlossColorT3B[4];
+extern u16 chainIconGlossColorT4A[4];
+extern u16 chainIconGlossColorT4B[4];
+extern u16 chainIconGlossColorT5A[4];
+extern u16 chainIconGlossColorT5B[4];
+extern u16 chainIconGlossColorT6A[4];
+extern u16 chainIconGlossColorT6B[4];
+extern u16 chainIconGlossColorT7A[4];
+extern u16 chainIconGlossColorT7B[4];
+extern u16 chainIconGlossColorT8A[4];
+extern u16 chainIconGlossColorT8B[4];
+extern u16 chainBarColorT1A[4];
+extern u16 chainBarColorT1B[4];
+extern u16 chainBarColorT2A[4];
+extern u16 chainBarColorT2B[4];
+extern u16 chainBarColorT3A[4];
+extern u16 chainBarColorT3B[4];
+extern u16 chainBarColorT4A[4];
+extern u16 chainBarColorT4B[4];
+extern u16 chainBarColorT5A[4];
+extern u16 chainBarColorT5B[4];
+extern u16 chainBarColorT6A[4];
+extern u16 chainBarColorT6B[4];
+extern u16 chainBarColorT7A[4];
+extern u16 chainBarColorT7B[4];
+extern u16 chainBarColorT8A[4];
+extern u16 chainBarColorT8B[4];
 
 // Chain-type colour/position constants read by applyChainColorScheme (.sdata).
-extern u32 lbl_eu_80662D70;
-extern u32 lbl_eu_80662D74;
-extern u32 lbl_eu_80662D78;
-extern u32 lbl_eu_80662D7C;
-extern u32 lbl_eu_80662D80;
-extern u32 lbl_eu_80662D84;
-extern u32 lbl_eu_80662D88;
-extern u32 lbl_eu_80662D8C;
-extern u32 lbl_eu_80662D90;
-extern u32 lbl_eu_80662D94;
-extern u32 lbl_eu_80662D98;
-extern u32 lbl_eu_80662D9C;
-extern u32 lbl_eu_80662DA0;
-extern u32 lbl_eu_80662DA4;
-extern u32 lbl_eu_80662DA8;
-extern u32 lbl_eu_80662DAC;
-extern u32 lbl_eu_80662DB0;
-extern u32 lbl_eu_80662DB4;
-extern u32 lbl_eu_80662DB8;
-extern u32 lbl_eu_80662DBC;
-extern u32 lbl_eu_80662DC0;
-extern u32 lbl_eu_80662DC4;
-extern u32 lbl_eu_80662DC8;
-extern u32 lbl_eu_80662DCC;
+extern u32 chainVtxColorT1;
+extern u32 chainVtxColorT2;
+extern u32 chainVtxColorT3;
+extern u32 chainVtxColorT4;
+extern u32 chainVtxColorT5;
+extern u32 chainVtxColorT6;
+extern u32 chainVtxColorT7;
+extern u32 chainVtxColorT8;
+extern u32 chainTextWhiteT1;
+extern u32 chainTextColorT1;
+extern u32 chainTextWhiteT2;
+extern u32 chainTextColorT2;
+extern u32 chainTextWhiteT3;
+extern u32 chainTextColorT3;
+extern u32 chainTextWhiteT4;
+extern u32 chainTextColorT4;
+extern u32 chainTextWhiteT5;
+extern u32 chainTextColorT5;
+extern u32 chainTextWhiteT6;
+extern u32 chainTextColorT6;
+extern u32 chainTextWhiteT7;
+extern u32 chainTextColorT7;
+extern u32 chainTextWhiteT8;
+extern u32 chainTextColorT8;
 
 // Font-pane helper (retail mangled name getPackedFont__Fv).
 

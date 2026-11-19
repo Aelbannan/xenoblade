@@ -82,7 +82,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     // the first disjunct folds to a direct branch to the shared epilogue and
     // the second becomes the branch-over-branch gate (beq forward + b end).
     if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
-        (lbl_eu_80663E28 & 0x200000) != 0) {
+        (gmPauseFlags & 0x200000) != 0) {
         return;
     }
     // Separate single-condition early returns fold to direct branches
@@ -114,7 +114,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
 // ---------------------------------------------------------------------------
 void CSysWinScenarioLog::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
-        (lbl_eu_80663E28 & 0x200000) != 0) {
+        (gmPauseFlags & 0x200000) != 0) {
         return;
     }
     if (IsMenuState621F0() == 0) {

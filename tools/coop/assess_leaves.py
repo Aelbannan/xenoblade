@@ -34,7 +34,7 @@ for t in leaves:
     
     # Hexdiff
     r = subprocess.run(
-        [sys.executable, "tools/coop/hexdiff.py", unit, "--symbol", fn, "--json"],
+        [sys.executable, "tools/coop/hexdiff.py", unit, "--symbol", fn, "--json", "--no-baseline"],
         cwd=ROOT, capture_output=True, text=True, timeout=30
     )
     if r.returncode not in (0, 5):

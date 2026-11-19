@@ -45,7 +45,7 @@ long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
 // initial state-function ptmf triple (retail .data 0x80532DA8, 12 bytes).
-extern u32 lbl_eu_80532DA8[3];
+extern u32 sNpcMoveInitialStateFunc[3];
 
 // bdat helpers / task helpers / movement helper (unmangled global symbols).
 // Bdat_GetTable_AA34 and getBdatStringColumnValue come from kyoshin/code_801862C0.hpp.
@@ -104,9 +104,9 @@ extern const f32 lbl_eu_80667C78[2];
 
 // bdat column string table + row bitmap + other globals.
 extern const char lbl_eu_80503D30[];
-extern u32 lbl_eu_805757E0[];
+extern u32 sNpcRowUsableBitmap[];
 extern void* lbl_eu_806640B4;   // active table bdat data
-extern u32 lbl_eu_80663D90;     // global value copied into mField78
+extern u32 gCfTEventFrameCounter;     // global value copied into mField78
 
 // ---------------------------------------------------------------------------
 // CCtrlMoveNpc::CCtrlMoveNpc - constructor
@@ -134,7 +134,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
     // The base data pointer is re-loaded for each access in the retail.
     ths->mField74 =
         *reinterpret_cast<float*>(ths->mpDataPtr->mPosObj->CfObject_getMoveRateScale());
-    ths->mField78 = lbl_eu_80663D90;
+    ths->mField78 = gCfTEventFrameCounter;
     ths->mField70 = lbl_eu_80667C58;
     ths->mpDataPtr->field_0x14 = lbl_eu_80667C5C;
 
@@ -168,7 +168,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
 
     maskMoveChildFlags((cf::CCtrlMoveBase*)ths);
     ths->mVelocity = ml::CVec3::zero;
-    ths->mStateFunc = *reinterpret_cast<int (CCtrlMoveNpc::*const*)()>(lbl_eu_80532DA8);
+    ths->mStateFunc = *reinterpret_cast<int (CCtrlMoveNpc::*const*)()>(sNpcMoveInitialStateFunc);
 }
 
 }
@@ -191,7 +191,7 @@ extern "C" int NpcMove_DispatchState(CCtrlMoveNpc* ths) {
 
 // NpcMove_ClearRowBmp - clear the 16-byte Npc row bitmap.
 extern "C" void NpcMove_ClearRowBmp() {
-    memset(lbl_eu_805757E0, 0, 0x10);
+    memset(sNpcRowUsableBitmap, 0, 0x10);
 }
 
 
@@ -208,7 +208,7 @@ int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
     // call); the u8/u16 casts at each use site lower to lbz/lhz (retail
     // shape, cf. CfGimmickSaveOff ctor).
     u32 v0 = getBdatStringColumnValue(bdat, lbl_eu_80503D30, idx);
-    u32 f = lbl_eu_80663E24;
+    u32 f = gmGameFlags;
     if ((f & (0x02000000u | 0x400u)) && *(u8*)&v0 != 0) {
         return 0;
     }
@@ -319,7 +319,7 @@ extern "C" void refreshNpcRowFlags() {
     const char* str;
     s32 base = (s32)Bdat_GetRowBase_B41C(bdat);
     s32 count = (s32)Bdat_GetMaxRow_B1EC(bdat);
-    bitmap = lbl_eu_805757E0;
+    bitmap = sNpcRowUsableBitmap;
     str = lbl_eu_80503D30;
     s32 end = base + count;
 
@@ -365,7 +365,7 @@ extern u32 __RTTI__Q22cf11CtrlMoveNpc[];  // sdata word pair (defined below).
 // [.data] 0x80532DA8-0x80532DB4 (12B): ptmf-shaped triple {0, -1, tickNpcMove}.
 // Named with the retail label: the word-typed declaration above round-trips
 // the 12-byte copy into mStateFunc with identical codegen.
-u32 lbl_eu_80532DA8[3] = {
+u32 sNpcMoveInitialStateFunc[3] = {
     0x00000000, 0xFFFFFFFF, (u32)&cf::tickNpcMove,
 };
 
@@ -382,7 +382,7 @@ u32 lbl_eu_80532DC0[4] = {
 
 // [.bss] 0x805757E0-0x80575918 (312B): movement state storage, five objects
 // in retail order (all starts 16-aligned, so placement is exact).
-u32 lbl_eu_805757E0[4];
+u32 sNpcRowUsableBitmap[4];
 f32 lbl_eu_805757F0[12];
 f32 lbl_eu_80575820[14];
 u32 lbl_eu_80575858[6];

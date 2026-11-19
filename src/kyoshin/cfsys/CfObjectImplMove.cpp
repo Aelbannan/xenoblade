@@ -14,7 +14,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "monolib/math/CVec3.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/CfEnumListHolder.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
@@ -31,7 +31,7 @@ extern "C" void MoveImplInitFields(CfObjectImplMoveObj* self) {
     // Init helper: -1 at 0x20, 0 at 0x1c, shared float constant at 0x24.
     self->field_0x20 = 0xFFFFFFFF;
     self->field_0x1C = 0;
-    self->field_0x24 = lbl_eu_80666C60;
+    self->field_0x24 = 0.0f;
 }
 
 // Move-state update: when an actor is bound, run the four dispatch virtuals
@@ -102,10 +102,10 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     u16 id = param->field_C;
     MoveImplDispatch204(self, id);
     if (id == 0x111) {
-        cf::CfSoundMan::playActorSound(0, 0x1c8, 0, 0, lbl_eu_80666C64);
+        cf::CfSoundMan::playActorSound(0, 0x1c8, 0, 0, 1.0f);
     }
     if (id == 0x112) {
-        cf::CfSoundMan::playActorSound(0, 0x1c7, 0, 0, lbl_eu_80666C64);
+        cf::CfSoundMan::playActorSound(0, 0x1c7, 0, 0, 1.0f);
     }
     switch (id) {
     case 0x10:
@@ -130,7 +130,7 @@ void MoveImplDispatchStart(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         }
         break;
     case 0xf:
-        cf::CfSoundMan::playActorSound(0, 0x194, 0, 0, lbl_eu_80666C64);
+        cf::CfSoundMan::playActorSound(0, 0x194, 0, 0, 1.0f);
         // Reset driver state and re-init the move buffer (retail reloads
         // self->field_0x18 for each of these stores).
         self->field_0x18->mst.field_214 = 0;
@@ -315,13 +315,13 @@ void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         if (src != nullptr) {
             req.at4.body.field_D = 0x5a;
             req.field_12 = ((u8*)src)[0x77];
-            req.field_14 = lbl_eu_80666C60;
+            req.field_14 = 0.0f;
             req.at4.body.field_10 = 0;
             req.at4.body.field_6 = 6;
         } else {
             req.at4.body.field_D = 4;
             req.field_12 = 0xFFFF;
-            req.field_14 = lbl_eu_80666C60;
+            req.field_14 = 0.0f;
             req.at4.body.field_10 = 0;
             req.at4.body.field_6 = 6;
         }
@@ -364,13 +364,13 @@ void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
                 if (src != nullptr) {
                     req.at4.body.field_D = 0x5a;
                     req.field_12 = ((u8*)src)[0x77];
-                    req.field_14 = lbl_eu_80666C60;
+                    req.field_14 = 0.0f;
                     req.at4.body.field_10 = 0;
                     req.at4.body.field_6 = 6;
                 } else {
                     req.at4.body.field_D = 4;
                     req.field_12 = 0xFFFF;
-                    req.field_14 = lbl_eu_80666C60;
+                    req.field_14 = 0.0f;
                     req.at4.body.field_10 = 0;
                     req.at4.body.field_6 = 6;
                 }
@@ -487,7 +487,7 @@ void MoveImplGateEventCmd(void* selfV, u32 id) {
 // actor id 5 is registered and its float counter exceeds the threshold.
 void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (!isGlobalCamFlagSet(0x400) && Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666C60) {
+    if (!isGlobalCamFlagSet(0x400) && Scn_GetFrameDelta(gmScene) != 0.0f) {
         void* src = (void*)self->field_0x18->sub.vfn13();
         if (src == nullptr) {
             // No source bound: only reset when the probe stays empty.
@@ -537,8 +537,8 @@ void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
             void* arg = entry;
             if (entry != nullptr)
                 arg = (u8*)entry - 0x3e9c;
-            self->field_0x18->vf2C4(arg, lbl_eu_80666C60, lbl_eu_80666C60,
-                lbl_eu_80666C60);
+            self->field_0x18->vf2C4(arg, 0.0f, 0.0f,
+                0.0f);
             CfActorObj* act = self->field_0x18;
             u32 vD = act->field_04->b30()->field_0;
             if (testActorStatus(act, &vD, 0x806) != 0) {
@@ -557,7 +557,7 @@ void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
     actor = self->field_0x18;
     u32 vE = actor->field_04->b30()->field_0;
     if (testActorStatus(actor, &vE, 5) != 0) {
-        if (actor->f139()->field_0 > lbl_eu_80666C60) {
+        if (actor->f139()->field_0 > 0.0f) {
             self->field_0x18->sub.vfn00(0x200);
         }
     }
@@ -577,17 +577,17 @@ void MoveImplRepositionEffect(CfObjectImplMoveObj* self) {
     if (evt == nullptr)
         return;
     getInstance__Q22cf13CfGameManagerFv();
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) == lbl_eu_80666C60)
+    if (Scn_GetFrameDelta(gmScene) == 0.0f)
         return;
     f32 t = evt->field_4F8;
-    if (!(t > lbl_eu_80666C60) || evt->field_4AC == 8)
+    if (!(t > 0.0f) || evt->field_4AC == 8)
         return;
     self->vfD8();
     if ((actor->sub.field_64 & 2) == 0)
         return;
-    u32 mode = lbl_eu_80663E24;
+    u32 mode = gmGameFlags;
     // Bits 6 / 21 of the global mode word suppress this effect entirely.
-    if (((mode & 0x40) | (mode & 0x200000)) != 0 || !(t > lbl_eu_80666C6C))
+    if (((mode & 0x40) | (mode & 0x200000)) != 0 || !(t > 0.6f))
         return;
     t = evt->field_4FC;
     void* pos = actor->sub.getPos();
@@ -595,12 +595,12 @@ void MoveImplRepositionEffect(CfObjectImplMoveObj* self) {
     vec.x = *(f32*)&((u32*)pos)[0];
     vec.y = *(f32*)&((u32*)pos)[1];
     vec.z = *(f32*)&((u32*)pos)[2];
-    if (!(t - vec.y < lbl_eu_80666C70))
+    if (!(t - vec.y < 2.0f))
         return;
     // TODO(us-800cca54): the middle attach/reposition block of the retail
     // routine was elided from this pass's reference; the gate chain above is
     // complete, the effect dispatch below follows the visible tail.
-    vec.y = lbl_eu_80666C74 + t;
+    vec.y = 0.01f + t;
     if (self->field_0x1C == nullptr) {
         self->field_0x1C =
             (CfMoveField1CObj*)createNpcActor__Q22cf13CfGameManagerFv(0x16);
@@ -633,7 +633,7 @@ void MoveImplDriveRequest(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param)
         return;
     }
     CfMoveEventObj* evt = (CfMoveEventObj*)self->mSubObj->field_0x98;
-    if (evt != nullptr && evt->f17() > lbl_eu_80666C88) {
+    if (evt != nullptr && evt->f17() > 0.9f) {
         return;
     }
     u8 mode = param->field_0xA;    // scratch r3 (born first, dies before calls)
@@ -706,7 +706,7 @@ void MoveImplDriveRequest(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param)
         CfMoveF64Conv conv;
         conv.w[1] = (u32)param->field_0xF;
         conv.w[0] = 0x43300000;
-        schedSetStepIntervals(obj->field_0x94, (f32)(conv.d - lbl_eu_80666C90), lbl_eu_80666C64);
+        schedSetStepIntervals(obj->field_0x94, (f32)(conv.d - lbl_eu_80666C90), 1.0f);
     }
 }
 
@@ -749,13 +749,13 @@ void MoveImplDispatchRequest(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* 
         if ((u32)((u8)param->field_1C[0] - 0x30) <= 9) {
             snd = atoi(&param->field_1C[0]);
         }
-        if (lbl_eu_80663EF0 != 0) {
+        if (sMoveImplEffectCooldown != 0) {
             return;
         }
         u32 handle = ((CfObjectImplMoveSubObj*)self->mSubObj)->field_0x74;
-        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)gmScene))[3];
         CfSoundMan_PlayActorParam(0, snd, (u8*)(uintptr_t)handle,
-            lbl_eu_80666C64 - vol, lbl_eu_80666C98);
+            1.0f - vol, 30.0f);
         break;
     }
     case 3: {
@@ -826,18 +826,18 @@ void MoveImplDispatchRequest(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* 
         }
         f32 val = param->field_C_f;
         if (((CfEmbeddedSubObj_3E9C*)self->mSubObj)->field_6F8 != 0) {
-            if (val != lbl_eu_80666C60) {
+            if (val != 0.0f) {
                 ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn204(0xe, 0, digit, 0, 0);
             }
-            if (val == lbl_eu_80666C70) {
+            if (val == 2.0f) {
                 ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn20C(0xa);
             }
         }
         if (((CfEmbeddedSubObj_3E9C*)self->mSubObj)->field_6FC != 0) {
-            if (val != lbl_eu_80666C60) {
+            if (val != 0.0f) {
                 ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn204(0xf, 0, digit, 0, 0);
             }
-            if (val == lbl_eu_80666C70) {
+            if (val == 2.0f) {
                 ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn20C(0xb);
             }
         }
@@ -850,13 +850,13 @@ void MoveImplDispatchRequest(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* 
         f32 val = param->field_C_f;
         if (drv->field_6F8 != 0) {
             ((CfEmbeddedSubObj_3E9C*)drv->field_6F8)->vfn20C(0xe);
-            if (val == lbl_eu_80666C70) {
+            if (val == 2.0f) {
                 ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn204(0xa, 0, -1, 0, 0);
             }
         }
         if (drv->field_6FC != 0) {
             ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn20C(0xf);
-            if (val == lbl_eu_80666C70) {
+            if (val == 2.0f) {
                 ((CfEmbeddedSubObj_3E9C*)self->mSubObj)->vfn204(0xb, 0, -1, 0, 0);
             }
         }
@@ -976,7 +976,7 @@ extern "C" void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Ta
         return;
     }
 
-    CfMoveCd460Pose* pose = (CfMoveCd460Pose*)Scn_FindCamItem(lbl_eu_80663E14, -1);
+    CfMoveCd460Pose* pose = (CfMoveCd460Pose*)Scn_FindCamItem(gmScene, -1);
 
     // Position delta between the actor and the scene pose: VEC3Sub lowers to
     // the inlined PS kernel; the components are then re-stored through a
@@ -1002,9 +1002,9 @@ extern "C" void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Ta
     // Falloff: full shake at 0 distance, fading to 0 at the threshold edge.
     // Written without intermediates so MWCC fuses (dist - C9C*thresh) into
     // the retail fnmsubs.
-    f32 scale = lbl_eu_80666C64;
+    f32 scale = 1.0f;
     if (lbl_eu_80666C9C * thresh <= dist) {
-        scale = lbl_eu_80666C64 -
+        scale = 1.0f -
                 (dist - lbl_eu_80666C9C * thresh) /
                     (lbl_eu_80666C88 * thresh);
     }
@@ -1068,7 +1068,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                     (u32)((CfMoveVf29CItem*)actor->vf29C(0)->field_0x50)->field_0x48);
             }
         }
-        actor->sub.vfn90(lbl_eu_80666C64);
+        actor->sub.vfn90(1.0f);
         if (kind == 2 || kind == 0x11) {
             getInstance__Q22cf13CfGameManagerFv();
             if (!isGlobalCamFlagSet(0x400)) {
@@ -1139,7 +1139,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
             (((CfMoveBM824*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
                  ->field_824 &
                 0x800) == 0) {
-            ScMain_Reset(CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()));
+            ScMain_Reset((ScMain*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()));
         }
         CfActorObj* ac2 = self->field_0x18;
         CfMoveC4Obj* evt = (CfMoveC4Obj*)ac2->sub.field_C4;
@@ -1326,14 +1326,14 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         u32 v9 = aT->field_04->b30()->field_0;
         if (testActorStatus(aT, &v9, 9) == 0) {
             f32 val = ((CfVf218Result*)self->field_0x18->vf218())->field_28;
-            if (val > lbl_eu_80666C60) {
-                self->field_0x18->sub.vfn90(lbl_eu_80666C64 + val / lbl_eu_80666C78);
+            if (val > 0.0f) {
+                self->field_0x18->sub.vfn90(1.0f + val / 100.0f);
             } else {
-                self->field_0x18->sub.vfn90(lbl_eu_80666C64 /
-                    (lbl_eu_80666C64 + (-val / lbl_eu_80666C78)));
+                self->field_0x18->sub.vfn90(1.0f /
+                    (1.0f + (-val / 100.0f)));
             }
-            if (self->field_0x18->sub.vfn94() == lbl_eu_80666C60) {
-                self->field_0x18->sub.vfn90(lbl_eu_80666C64);
+            if (self->field_0x18->sub.vfn94() == 0.0f) {
+                self->field_0x18->sub.vfn90(1.0f);
             }
         }
         break;
@@ -1428,8 +1428,8 @@ void CfObjectImplMoveObj::SweepReposition() {
         for (u32 i = 0; i < ((CfMoveEnumList*)holder.get())->field_620; i++) {
             void* entry =
                 MapFx_ResolveOwner(getObjectAt(holder.get(), i));
-            this->field_0x18->vf2C4(entry, lbl_eu_80666C60, lbl_eu_80666C60,
-                lbl_eu_80666C60);
+            this->field_0x18->vf2C4(entry, 0.0f, 0.0f,
+                0.0f);
         }
     }
     this->vf70(findFirstCleanObjectId(holder.get()));
@@ -1579,7 +1579,7 @@ extern "C" void MoveImplBindDriver(CfObjectImplMoveObj* self, u8* param) {
 // 1; then, if an event object is bound, push the resulting active state into
 // its slot-0x88 callback.
 extern "C" void MoveImplStartDispatch(CfObjectImplMoveObj* self) {
-    if ((self->mSubObj->field_0x64 & 4) != 0 && (lbl_eu_80663E24 & 0x40000) == 0) {
+    if ((self->mSubObj->field_0x64 & 4) != 0 && (gmGameFlags & 0x40000) == 0) {
         self->vf30(0x100, 1);
         if (self->mSubObj->field_0x98 == 0) {
             return;
@@ -1646,7 +1646,7 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
         return;
     }
     // Retail performs this dead global reload; keep it (volatile in header).
-    u32 evtGate = lbl_eu_80661D40;
+    u32 evtGate = gMoveImplEventGate;
     (void)evtGate;
     CfMoveEvt98* evt =
         (CfMoveEvt98*)((CfActorObj*)self->field_0x18)->sub.field_98;
@@ -1692,24 +1692,24 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
     vec.x = vx;
     vec.y = vy;
     vec.z = vz;
-    vec.y = lbl_eu_80666C74 +
+    vec.y = 0.01f +
             ((CfMoveEvt60*)((CfActorObj*)self->field_0x18)->sub.field_C4)
                 ->field_4FC;
 
     CfObjectImplMoveSubObj* sub = self->mSubObj;
     CfMoveEvt60* e60 =
         (CfMoveEvt60*)((CfEmbeddedSubObj_3E9C*)sub)->field_C4;
-    if (e60->field_3C4 > lbl_eu_80666CA0 ||
-        e60->field_4F8 < lbl_eu_80666C88) {
+    if (e60->field_3C4 > -4.0f ||
+        e60->field_4F8 < 0.9f) {
         // Move window expired: fixed tier plus a shake trigger while the
         // global presentation counter runs.
         kind = 0x2d;
         sndId = 0xd8;
-        if ((int)lbl_eu_80663EF0 > 0) {
+        if ((int)sMoveImplEffectCooldown > 0) {
             flag = 1;
         }
     } else if ((sub->mPresentFlags & 0x10000) != 0) {
-        lbl_eu_80663EF0 = 0x3c;
+        sMoveImplEffectCooldown = 0x3c;
     }
     CfMoveMgrEfView* mgr =
         (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(kind);
@@ -1719,11 +1719,11 @@ void MoveImplPresentEffect(CfObjectImplMoveObj* self) {
         lbl_eu_80666C64};
     setChildV40__(mgr, epos);
     if (flag == 0) {
-        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
-        CfSoundMan_PlayLinkedParam(0, sndId, (u32)(uintptr_t)&vec, lbl_eu_80666C64 - vol,
-            lbl_eu_80666C98);
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)gmScene))[3];
+        CfSoundMan_PlayLinkedParam(0, sndId, (u32)(uintptr_t)&vec, 1.0f - vol,
+            30.0f);
     }
-    self->field_0x24 = lbl_eu_80666CA4;
+    self->field_0x24 = 14.0f;
 }
 
 // Contact/move-start driver: transforms the contact point into world space,
@@ -1759,15 +1759,15 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // Lift by the constant Y offset, run the screen probe on a copy of the
     // lifted point; the normal buffer is filled by ScnRes_CopyEntryMid.
     nw4r::math::VEC3 lift;
-    lift.x = lbl_eu_80666C60;
-    lift.y = lbl_eu_80666CA8;
-    lift.z = lbl_eu_80666C60;
+    lift.x = 0.0f;
+    lift.y = 0.3f;
+    lift.z = 0.0f;
     nw4r::math::VEC3 lifted;
     nw4r::math::VEC3Add(&lifted, (const nw4r::math::VEC3*)&world, &lift);
     nw4r::math::VEC3 chk = lifted;
     // Variant ABI (r7 ptr + f1): cast keeps the retail arg marshaling while
     // the header decl stays canonical (CfCam BE398Fn convention).
-    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&chk, 0, 0, 0, &lifted, lbl_eu_80666CAC) == 0) {
+    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&chk, 0, 0, 0, &lifted, -1.0f) == 0) {
         return;
     }
     ScnRes_CopyEntryHead(&world, 0);
@@ -1777,21 +1777,21 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // Only assigned on the early path; the orientation block below reads the
     // stack slot stale on the tier-selection path (matches retail).
     f32 timer98;
-    if (((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 > lbl_eu_80666C60) {
+    if (((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 > 0.0f) {
         if (((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4AC == 8) {
             return;
         }
         if (param->field_0xA == 0x13 &&
-            ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 >= lbl_eu_80666C9C) {
+            ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 >= 0.1f) {
             MoveImplPresentEffect(self);
             return;
         }
-        if (!(((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 <= lbl_eu_80666C6C)) {
+        if (!(((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4F8 <= 0.6f)) {
             return;
         }
         // Early presentation path: attach effect 0x15 at the contact point
         // and fire the fixed 0xce sound chain.
-        timer98 = lbl_eu_80666C74 +
+        timer98 = 0.01f +
                   ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4FC;
         CfMoveMgrEfView* mgr =
             (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(0x15);
@@ -1800,13 +1800,13 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
         f32 epos[4] = {evt->field_760, evt->field_764, evt->field_768,
             lbl_eu_80666C64};
         setChildV40__(mgr, epos);
-        if (lbl_eu_80663EF0 != 0) {
+        if (sMoveImplEffectCooldown != 0) {
             return;
         }
-        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)gmScene))[3];
         u32 handle = self->mSubObj->field_0x74;
         CfSoundMan_PlayActorParam(0, 0xce, (u8*)(uintptr_t)handle,
-            lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
+            0.3f * (1.0f - vol), 30.0f);
         return;
     }
 
@@ -1843,7 +1843,7 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
             effId = 0x32;
             sndId = 0xda;
         }
-        if (((CfMoveEvt60*)self->mSubObj->mSomeId)->field_39C < lbl_eu_80666CB0) {
+        if (((CfMoveEvt60*)self->mSubObj->mSomeId)->field_39C < -6.0f) {
             effId += 1;
         }
         if (state == 6) {
@@ -1861,20 +1861,20 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
         // then decompose into the angle triple.
         CfMoveMgrEfView* mgr =
             (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(effId);
-        timer98 += lbl_eu_80666CB4;
+        timer98 += 0.05f;
         if (state == 5) {
-            timer98 += lbl_eu_80666CB8;
+            timer98 += 0.04f;
         }
         mgr->vfn9C((CfMoveVec3f*)&world);
         CfMoveEvt60* mv = (CfMoveEvt60*)self->mSubObj->mSomeId;
-        f32 ang = lbl_eu_80666CBC * mv->field_444;
-        f32 k = lbl_eu_80666CC0 * ang;
+        f32 ang = 0.5f * mv->field_444;
+        f32 k = 40.743664f * ang;
         (void)SinFIdx__Q24nw4r4mathFf(ang);
         Quaternion dirq;
         dirq.x = ml::CVec3::unitY.x * k;
         dirq.y = ml::CVec3::unitY.y * k;
         dirq.z = ml::CVec3::unitY.z * k;
-        f32 k2 = lbl_eu_80666CC0 * ang;
+        f32 k2 = 40.743664f * ang;
         dirq.w = k2;
         (void)CosFIdx__Q24nw4r4mathFf(k2);
         f32 d = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&ml::CVec3::unitY,
@@ -1882,28 +1882,28 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
 
         // Rotation quaternion from unitY toward the surface normal.
         Quaternion q;
-        if (d < lbl_eu_80666CC4) {
-            q.x = lbl_eu_80666C60;
-            q.y = lbl_eu_80666C64;
-            q.z = lbl_eu_80666C60;
-            q.w = lbl_eu_80666C60;
+        if (d < -0.9999f) {
+            q.x = 0.0f;
+            q.y = 1.0f;
+            q.z = 0.0f;
+            q.w = 0.0f;
         } else {
             Vec cross;
             PSVECCrossProduct((const Vec*)&ml::CVec3::unitY,
                               (const Vec*)&nrm, &cross);
-            f32 m = lbl_eu_80666C70 * (lbl_eu_80666C64 + d);
-            if (m < lbl_eu_80666C60) {
+            f32 m = 2.0f * (1.0f + d);
+            if (m < 0.0f) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 norm = lbl_eu_80666C60;
-            if (m >= lbl_eu_80666C60) {
+            f32 norm = 0.0f;
+            if (m >= 0.0f) {
                 norm = m * nw4r::math::FrSqrt(m);
             }
-            f32 inv = lbl_eu_80666C64 / norm;
+            f32 inv = 1.0f / norm;
             q.x = cross.x * inv;
             q.y = cross.y * inv;
             q.z = cross.z * inv;
-            q.w = lbl_eu_80666CBC * norm;
+            q.w = 0.5f * norm;
         }
         PSQUATMultiply(&q, &dirq, &q);
 
@@ -1913,18 +1913,18 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
         f32 dz2 = q.z + q.z;
         f32 dx2 = q.x + q.x;
         f32 pitch = q.w * dy2 - q.x * dz2;
-        if (pitch >= lbl_eu_80666C64) {
-            pitch = lbl_eu_80666C64;
-        } else if (pitch <= lbl_eu_80666CAC) {
-            pitch = lbl_eu_80666CAC;
+        if (pitch >= 1.0f) {
+            pitch = 1.0f;
+        } else if (pitch <= -1.0f) {
+            pitch = -1.0f;
         }
-        if (pitch < lbl_eu_80666CAC) {
-            pitch = lbl_eu_80666CAC;
+        if (pitch < -1.0f) {
+            pitch = -1.0f;
         }
-        if (pitch > lbl_eu_80666C64) {
-            pitch = lbl_eu_80666C64;
+        if (pitch > 1.0f) {
+            pitch = 1.0f;
         }
-        if (!(pitch >= lbl_eu_80666CAC && pitch <= lbl_eu_80666C64)) {
+        if (!(pitch >= -1.0f && pitch <= 1.0f)) {
             nw4r::db::Warning(lbl_eu_8052ADB0, 0xe4, lbl_eu_8052AD88);
         }
         pitch = asin(pitch);
@@ -1938,27 +1938,27 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
             if (pitch > -lim) {
                 f32 ayd = q.y * dy2;
                 f32 awx = q.w * dx2;
-                angs[0] = lbl_eu_80666CC8 *
+                angs[0] = 0.024543693f *
                           Atan2FIdx__Q24nw4r4mathFff(
                               q.y * dz2 + awx,
-                              lbl_eu_80666C64 - (axd + ayd));
-                angs[2] = lbl_eu_80666CC8 *
+                              1.0f - (axd + ayd));
+                angs[2] = 0.024543693f *
                           Atan2FIdx__Q24nw4r4mathFff(
                               axy + awd,
-                              lbl_eu_80666C64 - (ayd + azd));
+                              1.0f - (ayd + azd));
             } else {
-                angs[2] = lbl_eu_80666C60;
-                angs[0] = -(lbl_eu_80666CC8 *
+                angs[2] = 0.0f;
+                angs[0] = -(0.024543693f *
                             Atan2FIdx__Q24nw4r4mathFff(
                                 axy - awd,
-                                lbl_eu_80666C64 - (axd + azd)));
+                                1.0f - (axd + azd)));
             }
         } else {
-            angs[2] = lbl_eu_80666C60;
-            angs[0] = lbl_eu_80666CC8 *
+            angs[2] = 0.0f;
+            angs[0] = 0.024543693f *
                       Atan2FIdx__Q24nw4r4mathFff(
                           axy - awd,
-                          lbl_eu_80666C64 - (axd + azd));
+                          1.0f - (axd + azd));
         }
         mgr->vfBC(angs);
         CfMoveEvt98* evt2 = (CfMoveEvt98*)self->mSubObj->field_0x98;
@@ -1968,11 +1968,11 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     }
 
     // Tail: tiered impact sound.
-    if ((int)sndId >= 0 && lbl_eu_80663EF0 == 0) {
-        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
+    if ((int)sndId >= 0 && sMoveImplEffectCooldown == 0) {
+        f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)gmScene))[3];
         u32 handle = self->mSubObj->field_0x74;
         CfSoundMan_PlayActorParam(0, sndId, (u8*)(uintptr_t)handle,
-            lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
+            0.3f * (1.0f - vol), 30.0f);
     }
 }
 
@@ -2008,9 +2008,9 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // Lift to presentation height and run the screen/ground probes; the
     // probe buffer at +0xa0 receives the surface normal used below.
     CfMoveVec3f lift;
-    lift.x = lbl_eu_80666C60;
-    lift.y = lbl_eu_80666CA8;
-    lift.z = lbl_eu_80666C60;
+    lift.x = 0.0f;
+    lift.y = 0.3f;
+    lift.z = 0.0f;
     CfMoveVec3f wpos;
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&wpos, (nw4r::math::VEC3*)&world,
                         (nw4r::math::VEC3*)&lift);
@@ -2018,7 +2018,7 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     probe.x = wpos.x;
     probe.y = wpos.y;
     probe.z = wpos.z;
-    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&probe, 0, 0, 0, &wpos, lbl_eu_80666CCC) == 0)
+    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&probe, 0, 0, 0, &wpos, -3.0f) == 0)
         return;
     ScnRes_CopyEntryHead(&world, 0);
     CfMoveVec3f nrm;
@@ -2031,10 +2031,10 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     // reads the stack slot stale and adds its offsets to garbage.
     f32 t;
     u32 sndId;
-    if (timer > lbl_eu_80666C60) {
-        if (timer > lbl_eu_80666C6C)
+    if (timer > 0.0f) {
+        if (timer > 0.6f)
             return;
-        t = lbl_eu_80666C74 +
+        t = 0.01f +
             ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4FC;
         CfMoveMgrEfView* mgr =
             (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(0x2d);
@@ -2045,21 +2045,21 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
         epos[0] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_760;
         epos[1] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_764;
         epos[2] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_768;
-        epos[3] = lbl_eu_80666C64;
+        epos[3] = 1.0f;
         setChildV40__(mgr, epos);
         if ((self->mSubObj->field_0x64 & 0x10) != 0) {
             CfMoveVec3f sv;
-            sv.x = lbl_eu_80666C6C * scale;
+            sv.x = 0.6f * scale;
             sv.y = sv.x;
             sv.z = sv.x;
             setChild34Sc_(mgr, &sv);
         }
         sndId = 0x19a;
-        if (scale > lbl_eu_80666CD0)
+        if (scale > 12.0f)
             sndId = 0x19d;
-        else if (scale > lbl_eu_80666CD4)
+        else if (scale > 8.0f)
             sndId = 0x19c;
-        else if (scale > lbl_eu_80666C70)
+        else if (scale > 2.0f)
             sndId = 0x19b;
     } else {
         u32 state = ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4AC;
@@ -2076,15 +2076,15 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
              0x01000000) == 0) {
             // Orientation update: rebuild the effect rotation from the move
             // direction. dirQuat is unitY scaled by k with w = k.
-            t += lbl_eu_80666CB4;
+            t += 0.05f;
             if (state == 5)
-                t += lbl_eu_80666CB8;
+                t += 0.04f;
             CfMoveMgrEfView* mgr = (CfMoveMgrEfView*)
                 createNpcActor__Q22cf13CfGameManagerFv(effId);
             mgr->vfn9C(&world);
-            f32 ang = lbl_eu_80666CBC *
+            f32 ang = 0.5f *
                       ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_444;
-            f32 k = lbl_eu_80666CC0 * ang;
+            f32 k = 40.743664f * ang;
             f32 sy = SinFIdx__Q24nw4r4mathFf(k);
             Quaternion dirq;
             dirq.x = ml::CVec3::unitY.x * k;
@@ -2100,30 +2100,30 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
             // Rotation quaternion from unitY toward the surface normal,
             // then compose with the direction quaternion.
             Quaternion q;
-            if (d < lbl_eu_80666CC4) {
-                q.x = lbl_eu_80666C60;
-                q.y = lbl_eu_80666C64;
-                q.z = lbl_eu_80666C60;
-                q.w = lbl_eu_80666C60;
+            if (d < -0.9999f) {
+                q.x = 0.0f;
+                q.y = 1.0f;
+                q.z = 0.0f;
+                q.w = 0.0f;
             } else {
                 Vec cross;
                 PSVECCrossProduct((const Vec*)&ml::CVec3::unitY,
                                   (const Vec*)&nrm, &cross);
-                f32 m = lbl_eu_80666C70 * (lbl_eu_80666C64 + d);
-                if (m < lbl_eu_80666C60)
+                f32 m = 2.0f * (1.0f + d);
+                if (m < 0.0f)
                     nw4r::db::Warning(lbl_eu_80526324, 0x273,
                                       lbl_eu_80526300);
-                f32 norm = lbl_eu_80666C60;
-                if (m > lbl_eu_80666C60) {
-                    f32 mag = lbl_eu_80666C64 + d;
-                    norm = lbl_eu_80666C70 * mag *
+                f32 norm = 0.0f;
+                if (m > 0.0f) {
+                    f32 mag = 1.0f + d;
+                    norm = 2.0f * mag *
                            nw4r::math::FrSqrt(mag);
                 }
-                f32 inv = lbl_eu_80666C64 / norm;
+                f32 inv = 1.0f / norm;
                 q.x = cross.x * inv;
                 q.y = cross.y * inv;
                 q.z = cross.z * inv;
-                q.w = lbl_eu_80666CBC * norm;
+                q.w = 0.5f * norm;
             }
             PSQUATMultiply(&q, &dirq, &q);
 
@@ -2132,14 +2132,14 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
             f32 dy = q.y + q.y;
             f32 dz = q.z + q.z;
             f32 sp = -(q.x * dz - q.w * dy);
-            if (sp > lbl_eu_80666C64)
-                sp = lbl_eu_80666C64;
-            else if (sp <= lbl_eu_80666CAC)
-                sp = lbl_eu_80666CAC;
-            if (sp < lbl_eu_80666CAC)
-                sp = lbl_eu_80666CAC;
-            if (sp > lbl_eu_80666C64)
-                sp = lbl_eu_80666C64;
+            if (sp > 1.0f)
+                sp = 1.0f;
+            else if (sp <= -1.0f)
+                sp = -1.0f;
+            if (sp < -1.0f)
+                sp = -1.0f;
+            if (sp > 1.0f)
+                sp = 1.0f;
             f32 pitch = asin(sp);
             f32 lim = ml::halfpi;
             f32 axd = q.x * dx;
@@ -2153,59 +2153,59 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
                     f32 aydy = q.y * dy;
                     f32 aydz = q.y * dz;
                     f32 awdx = q.w * dx;
-                    angs[0] = lbl_eu_80666CC8 *
+                    angs[0] = 0.024543693f *
                               Atan2FIdx__Q24nw4r4mathFff(
                                   aydz + awdx,
-                                  lbl_eu_80666C64 - (axd + aydy));
-                    angs[2] = lbl_eu_80666CC8 *
+                                  1.0f - (axd + aydy));
+                    angs[2] = 0.024543693f *
                               Atan2FIdx__Q24nw4r4mathFff(
                                   axy + awdz,
-                                  lbl_eu_80666C64 - (aydy + azdz));
+                                  1.0f - (aydy + azdz));
                 } else {
-                    angs[2] = lbl_eu_80666C60;
-                    angs[0] = -(lbl_eu_80666CC8 *
+                    angs[2] = 0.0f;
+                    angs[0] = -(0.024543693f *
                                 Atan2FIdx__Q24nw4r4mathFff(
                                     axy - awdz,
-                                    lbl_eu_80666C64 - (axd + azdz)));
+                                    1.0f - (axd + azdz)));
                 }
             } else {
-                angs[2] = lbl_eu_80666C60;
-                angs[0] = lbl_eu_80666CC8 *
+                angs[2] = 0.0f;
+                angs[0] = 0.024543693f *
                           Atan2FIdx__Q24nw4r4mathFff(
                               axy - awdz,
-                              lbl_eu_80666C64 - (axd + azdz));
+                              1.0f - (axd + azdz));
             }
             mgr->vfBC(angs);
             f32 epos[4];
             epos[0] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_760;
             epos[1] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_764;
             epos[2] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_768;
-            epos[3] = lbl_eu_80666C64;
+            epos[3] = 1.0f;
             setChildV40__(mgr, epos);
             if ((self->mSubObj->field_0x64 & 0x10) != 0) {
                 CfMoveVec3f sv;
-                sv.x = lbl_eu_80666C6C * scale;
+                sv.x = 0.6f * scale;
                 sv.y = sv.x;
                 sv.z = sv.x;
                 setChild34Sc_(mgr, &sv);
             }
         }
         sndId = 0x196;
-        if (scale > lbl_eu_80666CD0)
+        if (scale > 12.0f)
             sndId = 0x199;
-        else if (scale > lbl_eu_80666CD4)
+        else if (scale > 8.0f)
             sndId = 0x198;
-        else if (scale > lbl_eu_80666C70)
+        else if (scale > 2.0f)
             sndId = 0x197;
     }
     // Shared tail: tiered impact sound at the scene volume.
-    if (lbl_eu_80663EF0 != 0)
+    if (sMoveImplEffectCooldown != 0)
         return;
     u32 handle = self->mSubObj->field_0x74;
-    f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
+    f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)gmScene))[3];
     CfSoundMan_PlayActorParam(0, sndId, (u8*)(uintptr_t)handle,
-                  lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol),
-                  lbl_eu_80666C98);
+                  0.3f * (1.0f - vol),
+                  30.0f);
 }
 
 extern "C" void CfObjectImplMoveClearLinkIfMatch(unsigned int* self, unsigned int* param) {

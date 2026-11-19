@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp pulls CTaskGameEff.hpp -> CfObjectImplMove/Walker.hpp,
@@ -13,7 +14,7 @@
 
 #include "kyoshin/cf/CtrlAct.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 #include "kyoshin/cf/CArtsSet.hpp"  // real cf::CAttackParam (vptr at +0x84; slot +0x0C/+0x14)
 #include "kyoshin/CfEnumListHolder.hpp"
@@ -141,7 +142,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
         // match retail: radius->f31, height->f30, pf temp->f29, mag->f28,
         // margin->f27.
         f32 f31 = src->mField44D8;
-        f32 f30 = lbl_eu_80666D00;
+        f32 f30 = 999.0f;
         f32 pf;
         f32 f27;
         if (srcFlag != 0) {
@@ -185,7 +186,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                     f30 = self->mPlayer->table->method1C0(self->mPlayer)[0];
                 }
             }
-            if (f30 == lbl_eu_80666D00) {
+            if (f30 == 999.0f) {
                 float* v = self->mPlayer->table->method1D0(self->mPlayer);
                 if (v[0] != lbl_eu_80666CF8) {
                     f30 = self->mPlayer->table->method1D0(self->mPlayer)[0];
@@ -202,9 +203,9 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                 p = (u8*)p - 0x3E9C;
             }
             if (p == (void*)self->mPlayer) {
-                f30 = lbl_eu_80666D04;
+                f30 = 2.0f;
             } else {
-                f30 = lbl_eu_80666D08;
+                f30 = 3.5f;
             }
         }
         // Anchor position: the 0x12C slot returns a position block when
@@ -227,7 +228,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
         {
             CVoicePos* p = self->mPlayer->mSub3E9C.getPosition();
             f32 dy = pos58.y - p->f[1];
-            pos58.y = pos58.y - dy * lbl_eu_80666D0C;
+            pos58.y = pos58.y - dy * 0.5f;
         }
         f32 f28 = pos58.y - self->mPlayer->mSub3E9C.getPosition()->f[1];
         if (f28 != lbl_eu_80666CF8) {
@@ -254,7 +255,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
         f28 = PSVECMag((const Vec*)&magVec);   // f28 reused (retail fmr f28)
         if (self->mField74 & 0x8000) {
             s16 v = self->mField76;
-            f27 = f28 - lbl_eu_80666D10 * (f30 + f31);   // fnmsubs first
+            f27 = f28 - 0.7f * (f30 + f31);   // fnmsubs first
             self->mField76 = v - 1;
             if (v <= 0) {
                 self->mField74 &= ~0x8000;
@@ -262,7 +263,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
             }
             srcFlag = 0;
         } else {
-            f27 = f28 - lbl_eu_80666D14 * (f30 + f31);
+            f27 = f28 - 0.9f * (f30 + f31);
         }
         // Battle-manager range gate again: while in range and the chain
         // start gate is open, f27 comes from the chain helper; then the
@@ -271,13 +272,13 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
             u8 rangeByte2 =
                 (((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain.mHead.field_2);
             if ((rangeByte2 >= 1 && rangeByte2 <= 0x18) != 0
-                && lbl_eu_80666D18 > f28) {
+                && 3.0f > f28) {
                 int r = CChain_ValidateTarget(
                     &((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->mChain,
                     self->mPlayer);
                 // Retail lowers this via cntlzw/srwi: nonzero result picks
                 // D1C, zero keeps CF8.
-                f27 = (r != 0) ? lbl_eu_80666D1C : lbl_eu_80666CF8;
+                f27 = (r != 0) ? 9999.0f : lbl_eu_80666CF8;
             }
         }
         if (f27 <= lbl_eu_80666CF8) {
@@ -293,8 +294,8 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                 if (ColiQuerySpecDispatch((u8*)src + 0x44A8, ppos, 0, 1) != 0) {
                     self->mField14 = lbl_eu_80666CF8;
                 } else {
-                    if (f27 < lbl_eu_80666D20) {
-                        f27 = lbl_eu_80666D20;
+                    if (f27 < 0.1f) {
+                        f27 = 0.1f;
                     }
                     if (f27 > lbl_eu_80666CFC) {
                         f27 = lbl_eu_80666CFC;
@@ -303,7 +304,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                              (u32)__cntlzw(self->mPlayer->mField3F00 & 2) >>
                              5) >> 5) !=
                         0) {
-                        self->mField14 = lbl_eu_80666D24 * f27;
+                        self->mField14 = 0.81f * f27;
                     } else {
                         // mFlags58 bit 14/13 ladder: scale the player's
                         // height probe by the voice-owner 0x138 height and
@@ -314,12 +315,12 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                                 ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v76();
                             f32 f1;
                             if (self->mFlags58.mBit13) {
-                                f1 = lbl_eu_80666D28 / hv[0] * pf;
+                                f1 = 12.0f / hv[0] * pf;
                             } else {
-                                f1 = lbl_eu_80666D2C / hv[0] * pf;
+                                f1 = 18.0f / hv[0] * pf;
                             }
-                            if (f1 < lbl_eu_80666D30) {
-                                f1 = lbl_eu_80666D20;
+                            if (f1 < 0.1) {
+                                f1 = 0.1f;
                             }
                             self->mField14 = f1;
                             self->mField70 = f1;
@@ -330,22 +331,22 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                             float* hv2 =
                                 ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v76();
                             f32 f1 = hv2[0] * pf;
-                            if (f1 >= lbl_eu_80666D38) {
+                            if (f1 >= 34.0f) {
                                 self->mField70 = f27;
                                 self->mField14 = f27;
                             } else {
-                                f32 sum = lbl_eu_80666D3C + f30 + f31;
+                                f32 sum = 10.0f + f30 + f31;
                                 if (f28 < sum) {
                                     f30 =
                                         self->mPlayer->table->methodF0(self->mPlayer);
                                     float* hv3 =
                                         ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v76();
-                                    f32 f1b = lbl_eu_80666D38 / hv3[0] * f30;
-                                    if (f1b < lbl_eu_80666D30) {
-                                        f1b = lbl_eu_80666D20;
+                                    f32 f1b = 34.0f / hv3[0] * f30;
+                                    if (f1b < 0.1) {
+                                        f1b = 0.1f;
                                     }
                                     f32 m70 = self->mField70;
-                                    f27 = lbl_eu_80666D20 * (f1b - m70) + m70;
+                                    f27 = 0.1f * (f1b - m70) + m70;
                                     self->mField70 = f27;
                                 }
                                 self->mField70 = f27;
@@ -396,7 +397,7 @@ extern "C" void updateActMain(cf::CtrlAct* self) {
                                         (const nw4r::math::VEC3*)pp);
                     ml::CVec3 d2 = diff2;
                     f32 ang = nw4r::math::Atan2FIdx(d2.x, d2.z);
-                    self->mFieldC = lbl_eu_80666D40 * ang;
+                    self->mFieldC = 0.024543693f * ang;
                     self->mPlayer->mSub3E9C.v47(self->mFieldC);
                 }
             }
@@ -460,7 +461,7 @@ void aimVoiceOwner(cf::CtrlAct* self) {
                                     (const nw4r::math::VEC3*)p1);
                 ml::CVec3 d = diff;
                 f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-                self->mPlayer->mSub3E9C.v47(lbl_eu_80666D40 * ang);
+                self->mPlayer->mSub3E9C.v47(0.024543693f * ang);
                 CfObjectMove_setAnimModeArgs((u8*)&self->mPlayer->mSub3E9C, 3, 0, -1, 1);
             }
         }
@@ -501,12 +502,12 @@ void parseActEntry(cf::CtrlAct* self) {
             f32 h = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
                         ->CfObject_getMoveSpeedRate();
             if (h != lbl_eu_80666CF8) {
-                if (Scn_GetFrameDelta(lbl_eu_80663E14) != lbl_eu_80666CF8) {
-                    f32 scale = Scn_GetFrameDelta(lbl_eu_80663E14);
+                if (Scn_GetFrameDelta(gmScene) != lbl_eu_80666CF8) {
+                    f32 scale = Scn_GetFrameDelta(gmScene);
                     f32 h2 = ((CtrlActVoiceHeightIntf*)&self->mPlayer->mSub3E9C)
                                  ->CfObject_getMoveSpeedRate();
                     aiActionUpdateEntriesDelta(&self->mPlayer->mField3380,
-                                  h2 * scale / lbl_eu_80666D44);
+                                  h2 * scale / 30.0f);
                 }
             }
         }
@@ -591,7 +592,7 @@ void parseActEntry(cf::CtrlAct* self) {
             return;
         }
         // Rebuild the +0x2A4 action-state block from the entry.
-        CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
+        CtrlActSub2A4* sub = (CtrlActSub2A4*)((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
         sub->mField0 = 0;
         sub->mField4 = 0;
         sub->mField48 = 0;
@@ -743,7 +744,7 @@ void parseActEntry(cf::CtrlAct* self) {
     case 20: {
         CtrlActFxReq req;
         memset(&req, 0, sizeof(req));
-        req.mField20 = lbl_eu_80666D48;
+        req.mField20 = 60.0f;
         req.mIdC = 0x111;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
         CBattleMan_RunBattleEvent(bm, self->mPlayer, &req, 0);
@@ -752,7 +753,7 @@ void parseActEntry(cf::CtrlAct* self) {
     case 21: {
         CtrlActFxReq req;
         memset(&req, 0, sizeof(req));
-        req.mField20 = lbl_eu_80666D48;
+        req.mField20 = 60.0f;
         req.mIdC = 0x112;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
         CBattleMan_RunBattleEvent(bm, self->mPlayer, &req, 0);
@@ -793,12 +794,12 @@ void parseActEntry(cf::CtrlAct* self) {
 
 // Attack-param gauge-max getter (slot +0x14): scale the base arts power by
 // rate. Calls the +0x0C virtual on itself (retail r12 ABI dispatch). The
-// (f32)(s32) product conversion emits MWCC's 2^52 trick
-// (lis 0x4330 / xoris / lfd / fsubs); lbl_eu_80666D50 is that magic constant.
+// (f32)(int) product conversion emits MWCC's 2^52 trick
+// (lis 0x4330 / xoris / lfd / fsubs) for the signed int -> float cast.
 float cf::CAttackParam::CAttackParam_getArtsGaugeMax() {
     int prod = unk6C[4] * (CAttackParam_getArtsFlagByte() - 1);
     float fprod = (float)prod;
-    return unk30 * (lbl_eu_80666CFC - (fprod / lbl_eu_80666D4C));
+    return unk30 * (lbl_eu_80666CFC - (fprod / 100.0f));
 }
 
 // Target us-800d3544. Attack-action setup: gate on the player and source
@@ -810,7 +811,7 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     // self->mPlayer is re-read at every use site (no cached local) so the
     // compiler reloads it per block like the retail code; the casts only
     // select real virtual dispatch (see CtrlActPlayerReal in CtrlAct.hpp).
-    CtrlActSub2A4* sub = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
+    CtrlActSub2A4* sub = (CtrlActSub2A4*)((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
     sub->mField4 = arg->mField0;
     int kind = 0;
     CtrlActPlayerReal* p;
@@ -824,20 +825,20 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
         p = (CtrlActPlayerReal*)self->mPlayer;
         u32 local14;
         if (testActorStatus(p,
-                          (u32*)(local14 = *p->mField4->vf30(), &local14),
+                          (u32*)(local14 = *((CtrlPlayerSub4*)p->cf::CActorState::unk4)->vf30(), &local14),
                           9)
             == 0) {
             p = (CtrlActPlayerReal*)self->mPlayer;
             u32 local10;
             if (testActorStatus(p,
-                              (u32*)(local10 = *p->mField4->vf30(),
+                              (u32*)(local10 = *((CtrlPlayerSub4*)p->cf::CActorState::unk4)->vf30(),
                                      &local10),
                               6)
                 == 0) {
                 p = (CtrlActPlayerReal*)self->mPlayer;
                 u32 localC;
                 if (testActorStatus(p,
-                                  (u32*)(localC = *p->mField4->vf30(),
+                                  (u32*)(localC = *((CtrlPlayerSub4*)p->cf::CActorState::unk4)->vf30(),
                                          &localC),
                                   0x12)
                     == 0) {
@@ -854,12 +855,12 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     if (src->CActorParam_isBattleLocked() != 0) {
         return 0;
     }
-    u32 local8 = *src->mField4->vf30();
+    u32 local8 = *((CtrlPlayerSub4*)src->cf::CActorState::unk4)->vf30();
     if (testActorStatus(src, &local8, 0x100000) == 0) {
         return 0;
     }
     if (src == (CtrlActSrcReal*)self->mPlayer) {
-        ((CtrlActPlayerReal*)self->mPlayer)->mSub3E9C.v18(0);
+        ((cf::CObjectParam*)((u8*)self->mPlayer + 0x3E9C))->CObjectParam_signalActionEnd(0);
         return 0;
     }
     if (atkIndex >= 0) {
@@ -867,7 +868,7 @@ int ctrlActDispatchEntry(cf::CtrlAct* self, CtrlActAtkArg* arg) {
         void* base = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getArtsSlotIds();
         CtrlActAtkParam* atk =
             (CtrlActAtkParam*)getAtkParam(base, atkIndex);
-        CtrlActSub2A4* state = ((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
+        CtrlActSub2A4* state = (CtrlActSub2A4*)((CtrlActPlayerReal*)self->mPlayer)->CActorParam_getMoveRecord();
         state->mField0 = 0;
         // Local pin: forces the single lbl_eu_80666CF8 load (fused with the
         // -1 in r0 as the sda21 base) to sit here like retail.
@@ -1194,9 +1195,9 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
         } else {
             self->mField7A = 0;
             self->mField74 |= 0x10;
-            f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
-            self->mField54 = self->mField54 + lbl_eu_80666D58 * dt;
-            if (self->mField54 >= lbl_eu_80666D04) {
+            f32 dt = Scn_GetFrameDelta(gmScene);
+            self->mField54 = self->mField54 + 0.033333335f * dt;
+            if (self->mField54 >= 2.0f) {
                 memset(&self->mPos30, 0, 0x2c);
                 requestItemLoad(self->mPlayer, 0x40);
             }
@@ -1225,7 +1226,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
     } else {
         f138 = lbl_eu_80666CF8;
     }
-    f32 thresh = lbl_eu_80666D5C * f138 * self->mField14 * lbl_eu_80666D0C;
+    f32 thresh = 0.009259259f * f138 * self->mField14 * 0.5f;
     thresh = thresh * thresh;
     u32 kind = self->mFlags58.mKind;
     if (kind != 4 && kind != 0xa && mag2 < thresh) {
@@ -1304,22 +1305,16 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
         // facing magnitude, then snapshot the source position/facing.
         u32 flags = s->mPlayer->mField3F00;
         if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
-            s->mField14 = lbl_eu_80666D0C;
+            s->mField14 = 0.5f;
         } else {
             s->mField14 = lbl_eu_80666CFC;
         }
-        F64Conv conv;
-        conv.w[1] = ml::math::mtRand(0x65) ^ 0x80000000;
-        conv.w[0] = 0x43300000;
-        f32 t = (f32)(conv.d - lbl_eu_80666D50) / lbl_eu_80666D4C;
-        f32 f30 = lbl_eu_80666D60 * (lbl_eu_80666CFC + t) / lbl_eu_80666D44;
-        F64Conv conv2;
-        conv2.w[1] = ml::math::mtRand(0x65) ^ 0x80000000;
-        conv2.w[0] = 0x43300000;
-        f32 t2 = (f32)(conv2.d - lbl_eu_80666D50);
-        // Retail order: subtract, multiply by D64, divide by D4C, add D64.
+        f32 t = (f32)(int)ml::math::mtRand(0x65) / 100.0f;
+        f32 f30 = 20.0f * (lbl_eu_80666CFC + t) / 30.0f;
+        f32 t2 = (f32)(int)ml::math::mtRand(0x65);
+        // Retail order: cast, multiply, divide, add.
         f32 f31 =
-            (lbl_eu_80666D64 + lbl_eu_80666D64 * t2 / lbl_eu_80666D4C) * ml::deg2rad;
+            (50.0f + 50.0f * t2 / 100.0f) * ml::deg2rad;
         CVoicePos* pos = src->mOwner3E9C.getPosition();
         s->mPos30 = *(ml::CVec3*)pos;
         s->mField48 = src->table->method5B4(src);
@@ -1332,7 +1327,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
                             (const nw4r::math::VEC3*)&s->mPos30);
         ml::CVec3 d = diff;
         f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        s->mField4C = lbl_eu_80666D40 * ang;
+        s->mField4C = 0.024543693f * ang;
         aimNearestFoe(s);
         s->mFlags58.mPhase = s->mFlags58.mPhase + 1;
         break;
@@ -1340,8 +1335,8 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
     case 1: {
         // Decay the action timer; while live, re-aim at the source and bail
         // out when the heading delta exceeds the facing magnitude.
-        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
-        s->mField54 -= lbl_eu_80666D58 * dt;
+        f32 dt = Scn_GetFrameDelta(gmScene);
+        s->mField54 -= 0.033333335f * dt;
         if (s->mField54 <= lbl_eu_80666CF8) {
             s->mField14 = lbl_eu_80666CF8;
             memset(&s->mPos30, 0, 0x2c);
@@ -1355,9 +1350,9 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
                                 (const nw4r::math::VEC3*)&s->mPos30);
             ml::CVec3 d = diff;
             f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-            f32 delta = lbl_eu_80666D40 * ang - s->mField4C;
+            f32 delta = 0.024543693f * ang - s->mField4C;
             if (delta < lbl_eu_80666CF8) {
-                delta *= lbl_eu_80666D68;
+                delta *= -1.0f;
             }
             if (delta > s->mField50) {
                 s->mField14 = lbl_eu_80666CF8;
@@ -1403,9 +1398,9 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
     if (self->mFlags58.mPhase == 0) {
         u32 flags = self->mPlayer->mField3F00;
         if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
-            self->mField14 = lbl_eu_80666D6C;
+            self->mField14 = 0.25f;
         } else {
-            self->mField14 = lbl_eu_80666D0C;
+            self->mField14 = 0.5f;
         }
         f32 f138;
         if (self->mField28 != 0) {
@@ -1413,14 +1408,11 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
         } else {
             f138 = lbl_eu_80666CF8;
         }
-        f32 denom = lbl_eu_80666D70 * f138 * self->mField14;
+        f32 denom = 0.2777778f * f138 * self->mField14;
         // Cached zero spans the voice-owner calls (retail keeps it in an
         // FP reg across them).
         const f32 zero8 = lbl_eu_80666CF8;
-        F64Conv conv;
-        conv.w[0] = 0x43300000;
-        conv.w[1] = self->mFlags58.mParam;
-        f32 timer = (f32)(conv.d - lbl_eu_80666D78) / denom;
+        f32 timer = (f32)(u32)self->mFlags58.mParam / denom;
         CVoicePos* pos = src->mOwner3E9C.getPosition();
         self->mPos30 = *(ml::CVec3*)pos;
         self->mField48 = src->table->method5B4(src);
@@ -1433,12 +1425,12 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
                             (const nw4r::math::VEC3*)&self->mPos30);
         ml::CVec3 d = diff;
         f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        self->mField4C = lbl_eu_80666D40 * ang;
+        self->mField4C = 0.024543693f * ang;
         self->mFlags58.mAngleState = 3;
         self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
     } else if (self->mFlags58.mPhase == 1) {
-        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
-        self->mField54 -= lbl_eu_80666D58 * dt;
+        f32 dt = Scn_GetFrameDelta(gmScene);
+        self->mField54 -= 0.033333335f * dt;
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
@@ -1491,18 +1483,12 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
         } else {
             PSVECNormalize((Vec*)&dir, (Vec*)&dir);
         }
-        F64Conv conv;
-        conv.w[0] = 0x43300000;
-        conv.w[1] = self->mFlags58.mParam;
-        dir *= (f32)(conv.d - lbl_eu_80666D78);
-        F64Conv conv2;
-        conv2.w[0] = 0x43300000;
-        conv2.w[1] = ((int)ml::math::mtRand(0xc9) - 0x64) ^ 0x80000000;
-        f32 rnd = (f32)(conv2.d - lbl_eu_80666D50);
+        dir *= (f32)(u32)self->mFlags58.mParam;
+        f32 rnd = (f32)((int)ml::math::mtRand(0xc9) - 0x64);
         f32 ang =
-            lbl_eu_80666D3C * rnd / lbl_eu_80666D4C * ml::deg2rad;
-        f32 fs = nw4r::math::SinFIdx(lbl_eu_80666D80 * ang);
-        f32 fc = nw4r::math::CosFIdx(lbl_eu_80666D80 * ang);
+            10.0f * rnd / 100.0f * ml::deg2rad;
+        f32 fs = nw4r::math::SinFIdx(40.743664f * ang);
+        f32 fc = nw4r::math::CosFIdx(40.743664f * ang);
         CtrlActRotFrame frame;
         frame.mOffset.x = dir.x * fc + dir.z * fs;
         frame.mOffset.y = dir.y * lbl_eu_80666CFC;
@@ -1524,7 +1510,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
         f32 dist = PSVECMag((const Vec*)&dmag);
         u32 flags = self->mPlayer->mField3F00;
         if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
-            self->mField14 = lbl_eu_80666D0C;
+            self->mField14 = 0.5f;
         } else {
             self->mField14 = lbl_eu_80666CFC;
         }
@@ -1534,9 +1520,9 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
         } else {
             h = lbl_eu_80666CF8;
         }
-        f32 denom = lbl_eu_80666D70 * h * self->mField14;
+        f32 denom = 0.2777778f * h * self->mField14;
         self->mField54 = dist / denom;
-        f32 v = lbl_eu_80666D40 * nw4r::math::Atan2FIdx(dmag.x, dmag.z);
+        f32 v = 0.024543693f * nw4r::math::Atan2FIdx(dmag.x, dmag.z);
         self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
         self->mFieldC = v;
         self->mField10 = v;
@@ -1557,7 +1543,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
             f32 dSelf = PSVECMag((const Vec*)&m2);
             if (dPlayer < dSelf) {
                 f32 lim =
-                    lbl_eu_80666D14 *
+                    0.9f *
                     (self->mPlayer->table->method1C0(self->mPlayer)[0] +
                      src->mField44D8);
                 if (dPlayer < lim) {
@@ -1584,8 +1570,8 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
     } else {
         PSVECNormalize((Vec*)&dir3, (Vec*)&dir3);
     }
-    f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
-    self->mField54 -= lbl_eu_80666D58 * dt;
+    f32 dt = Scn_GetFrameDelta(gmScene);
+    self->mField54 -= 0.033333335f * dt;
     if (self->mField54 <= lbl_eu_80666CF8) {
         self->mField14 = lbl_eu_80666CF8;
         memset(&self->mPos30, 0, 0x2c);
@@ -1600,7 +1586,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
         ml::CVec3 off(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probePos = target + off;
         ml::CVec3 probeArg = probePos;
-        if (ScnRes_VertRayForward_E398(&probeArg, 0x4a05, 0, 0, lbl_eu_80666D84,
+        if (ScnRes_VertRayForward_E398(&probeArg, 0x4a05, 0, 0, -3.0f,
                           lbl_eu_80666CF8) != 0) {
             if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
                 doReset = false;
@@ -1615,7 +1601,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
         requestItemLoad(self->mPlayer, 0x40);
         return;
     }
-    f32 v2 = lbl_eu_80666D40 * nw4r::math::Atan2FIdx(dir3.x, dir3.z);
+    f32 v2 = 0.024543693f * nw4r::math::Atan2FIdx(dir3.x, dir3.z);
     self->mFieldC = v2;
     self->mField10 = v2;
 }
@@ -1651,7 +1637,7 @@ extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
         requestItemLoad(self->mPlayer, 0x40);
         return;
     }
-    f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
+    f32 dt = Scn_GetFrameDelta(gmScene);
     self->mField54 -= lbl_eu_80666D58 * dt;
     if (self->mField54 > lbl_eu_80666CF8) {
         CVoicePos* p2 =
@@ -1718,14 +1704,14 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
         {
             u32 flags = self->mPlayer->mField3F00;
             if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
-                self->mField14 = lbl_eu_80666D0C;
+                self->mField14 = 0.5f;
             } else {
                 self->mField14 = lbl_eu_80666CFC;
             }
             f32 f31;
             f32 f30;
             f30 = lbl_eu_80666CF8;
-            f31 = lbl_eu_80666D3C;
+            f31 = 10.0f;
             CVoicePos* pos = src->mOwner3E9C.getPosition();
             self->mPos30 = *(ml::CVec3*)pos;
             self->mField48 = src->table->method5B4(src);
@@ -1738,14 +1724,14 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
                                 (const nw4r::math::VEC3*)&self->mPos30);
             ml::CVec3 d = diff;
             f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-            self->mField4C = lbl_eu_80666D40 * ang;
+            self->mField4C = 0.024543693f * ang;
             snapFacingAng(self);
             self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
             // fallthrough
         }
     case 1: {
-        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
-        self->mField54 -= lbl_eu_80666D58 * dt;
+        f32 dt = Scn_GetFrameDelta(gmScene);
+        self->mField54 -= 0.033333335f * dt;
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
@@ -1755,8 +1741,8 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
         // First heading band: wrap the source-facing reference (base facing +
         // wobble D88) and the heading delta into (-pi, pi], then check the
         // delta is inside the [-f31, f31] band - if so the action ends.
-        f32 f31 = lbl_eu_80666D60 * ml::deg2rad;
-        f32 f30 = lbl_eu_80666D88 * ml::deg2rad;
+        f32 f31 = 20.0f * ml::deg2rad;
+        f32 f30 = 90.0f * ml::deg2rad;
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
@@ -1764,7 +1750,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
                             (const nw4r::math::VEC3*)&self->mPos30);
         ml::CVec3 d = diff;
         f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        f32 f3 = lbl_eu_80666D40 * ang;
+        f32 f3 = 0.024543693f * ang;
         f32 f2 = self->mField48 + f30;
         while (ml::pi <= f2) f2 -= ml::tau;
         while (f2 < -ml::pi) f2 += ml::tau;
@@ -1787,8 +1773,8 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
         // Second heading band: same test with the wider D8C wobble. Fresh
         // locals so MWCC keeps a distinct stack slot pair (retail frame 0x80).
         {
-            f32 f31b = lbl_eu_80666D60 * ml::deg2rad;
-            f32 f30b = lbl_eu_80666D8C * ml::deg2rad;
+            f32 f31b = 20.0f * ml::deg2rad;
+            f32 f30b = -90.0f * ml::deg2rad;
             CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
             ml::CVec3 diff2;
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff2,
@@ -1796,7 +1782,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
                                 (const nw4r::math::VEC3*)&self->mPos30);
             ml::CVec3 d2 = diff2;
             f32 ang2 = nw4r::math::Atan2FIdx(d2.x, d2.z);
-            f32 f3b = lbl_eu_80666D40 * ang2;
+            f32 f3b = 0.024543693f * ang2;
             f32 f2b = self->mField48 + f30b;
             while (ml::pi <= f2b) f2b -= ml::tau;
             while (f2b < -ml::pi) f2b += ml::tau;
@@ -1856,14 +1842,14 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
         {
             u32 flags = self->mPlayer->mField3F00;
             if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
-                self->mField14 = lbl_eu_80666D0C;
+                self->mField14 = 0.5f;
             } else {
                 self->mField14 = lbl_eu_80666CFC;
             }
             f32 f31;
             f32 f30;
             f30 = lbl_eu_80666CF8;
-            f31 = lbl_eu_80666D3C;
+            f31 = 10.0f;
             CVoicePos* pos = src->mOwner3E9C.getPosition();
             self->mPos30 = *(ml::CVec3*)pos;
             self->mField48 = src->table->method5B4(src);
@@ -1876,22 +1862,22 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
                                 (const nw4r::math::VEC3*)&self->mPos30);
             ml::CVec3 d = diff;
             f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-            self->mField4C = lbl_eu_80666D40 * ang;
+            self->mField4C = 0.024543693f * ang;
             snapFacingAng(self);
             self->mFlags58.mPhase = self->mFlags58.mPhase + 1;
             // fallthrough
         }
     case 1: {
-        f32 dt = Scn_GetFrameDelta(lbl_eu_80663E14);
-        self->mField54 -= lbl_eu_80666D58 * dt;
+        f32 dt = Scn_GetFrameDelta(gmScene);
+        self->mField54 -= 0.033333335f * dt;
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
             requestItemLoad(self->mPlayer, 0x40);
             break;
         }
-        f32 f31 = lbl_eu_80666D44 * ml::deg2rad;
-        f32 f30 = lbl_eu_80666D90 * ml::deg2rad;
+        f32 f31 = 30.0f * ml::deg2rad;
+        f32 f30 = 180.0f * ml::deg2rad;
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
@@ -1899,7 +1885,7 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
                             (const nw4r::math::VEC3*)&self->mPos30);
         ml::CVec3 d = diff;
         f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        f32 f3 = lbl_eu_80666D40 * ang;
+        f32 f3 = 0.024543693f * ang;
         // Wrap the facing reference (base + wobble) and the heading delta
         // into (-pi, pi], then check the delta is within the wobble band.
         f32 f2 = self->mField48 + f30;
@@ -1962,9 +1948,9 @@ void loadActionSrc(cf::CtrlAct* self) {
     ml::CVec3 v;
     v.x = lbl_eu_80666CF8;
     v.y = lbl_eu_80666CF8;
-    v.z = lbl_eu_80666D68;
-    f32 sin = nw4r::math::SinFIdx(lbl_eu_80666D80 * angle);
-    f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * angle);
+    v.z = -1.0f;
+    f32 sin = nw4r::math::SinFIdx(40.743664f * angle);
+    f32 cos = nw4r::math::CosFIdx(40.743664f * angle);
     // In-place Y-rotation of v: x' = -sin*x + cos*z, z' = cos*x + sin*z.
     f32 vx = v.x;
     f32 vz = v.z;
@@ -1972,7 +1958,7 @@ void loadActionSrc(cf::CtrlAct* self) {
     v.y = lbl_eu_80666CF8 * vx + lbl_eu_80666CFC * v.y + lbl_eu_80666CF8 * vz;
     v.z = cos * vx + lbl_eu_80666CF8 * v.y + sin * vz;
     float* h = self->mPlayer->table->method1C0(self->mPlayer);
-    f32 scale = lbl_eu_80666D14 * (h[0] + src->mField44D8);
+    f32 scale = 0.9f * (h[0] + src->mField44D8);
     v.x = v.x * scale;
     v.y = v.y * scale;
     v.z = v.z * scale;
@@ -1988,7 +1974,7 @@ void loadActionSrc(cf::CtrlAct* self) {
         up.z = lbl_eu_80666CF8;
         ml::CVec3 probe = point + up;
         ml::CVec3 probeCopy = probe;
-        if (ScnRes_VertRayForward_E398(&probeCopy, 0x40004a05, 0, 0, lbl_eu_80666D84,
+        if (ScnRes_VertRayForward_E398(&probeCopy, 0x40004a05, 0, 0, -3.0f,
                           lbl_eu_8066AF20) != 0) {
             if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
                 blocked = 0;
@@ -2028,7 +2014,7 @@ extern "C" void ctrlActHandleCase4Move(cf::CtrlAct* self) {
         memset(&self->mPos30, 0, 0x2c);
         requestItemLoad(self->mPlayer, 0x40);
     } else {
-        f32 next = self->mField54 - lbl_eu_80666D58 * Scn_GetFrameDelta(lbl_eu_80663E14);
+        f32 next = self->mField54 - lbl_eu_80666D58 * Scn_GetFrameDelta(gmScene);
         self->mField54 = next;
         if (next > lbl_eu_80666CF8) {
             ml::CVec3 vec;
@@ -2199,9 +2185,9 @@ extern "C" void aimNearestFoe(cf::CtrlAct* self) {
                             (const nw4r::math::VEC3*)playerPos);
         ml::CVec3 d2 = diff2;
         f32 a1 = nw4r::math::Atan2FIdx(d2.x, d2.z);
-        f32 f31 = lbl_eu_80666D40 * a1;
+        f32 f31 = 0.024543693f * a1;
         f32 a2 = nw4r::math::Atan2FIdx(vecs[sel].x, vecs[sel].z);
-        f32 f1 = lbl_eu_80666D40 * a2;
+        f32 f1 = 0.024543693f * a2;
         f32 delta = f31 - f1;
         while (delta >= ml::pi) delta -= ml::tau;
         while (delta < -ml::pi) delta += ml::tau;
@@ -2232,7 +2218,7 @@ void snapFacingAng(cf::CtrlAct* self) {
     ml::CVec3 d = diff;
     f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
     u32 kind = self->mFlags58.mKind;
-    f32 f3 = lbl_eu_80666D40 * ang;
+    f32 f3 = 0.024543693f * ang;
     f32 f4, f2;
     if (kind == 6) {
         f4 = self->mField48 + lbl_eu_80663EF8[0];
@@ -2253,11 +2239,11 @@ void snapFacingAng(cf::CtrlAct* self) {
     while (f2 < -ml::pi) f2 += ml::tau;
     f32 s1 = f4;
     if (f4 < lbl_eu_80666CF8) {
-        s1 = f4 * lbl_eu_80666D68;
+        s1 = f4 * -1.0f;
     }
     f32 s2 = f2;
     if (f2 < lbl_eu_80666CF8) {
-        s2 = f2 * lbl_eu_80666D68;
+        s2 = f2 * -1.0f;
     }
     // Pick the delta with the larger wrapped magnitude.
     if (s1 >= s2) {
@@ -2286,12 +2272,12 @@ extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
     ml::CVec3 diff1 = *(ml::CVec3*)spos - *(ml::CVec3*)ppos;
     ml::CVec3 d1 = diff1;
     f32 ang = nw4r::math::Atan2FIdx(diff1.x, diff1.z);
-    self->mField10 = lbl_eu_80666D40 * ang;
+    self->mField10 = 0.024543693f * ang;
     CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 diff2 = self->mPos30 - *(ml::CVec3*)ppos2;
     ml::CVec3 d2 = diff2;
     f32 ang2 = nw4r::math::Atan2FIdx(diff2.x, diff2.z);
-    f32 f1 = lbl_eu_80666D40 * ang2;
+    f32 f1 = 0.024543693f * ang2;
     f32 f3 = f1 + f31;
     while (ml::pi <= f3) f3 -= ml::tau;
     while (f3 < -ml::pi) f3 += ml::tau;
@@ -2301,10 +2287,10 @@ extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
     int band1000 = 0;
     f32 f1b = f31 * ml::rad2deg;
     self->mFieldC = f3;
-    if (f1b > lbl_eu_80666D94 && f1b < lbl_eu_80666D98) band800 = 1;
-    if (f1b < lbl_eu_80666D9C && f1b > lbl_eu_80666DA0) band400 = 1;
-    if (f1b < lbl_eu_80666D9C && f1b >= lbl_eu_80666D94) band2000 = 1;
-    if (f1b < lbl_eu_80666D98 || f1b > lbl_eu_80666DA0) band1000 = 1;
+    if (f1b > 35.0f && f1b < 140.0f) band800 = 1;
+    if (f1b < -35.0f && f1b > -140.0f) band400 = 1;
+    if (f1b < -35.0f && f1b >= 35.0f) band2000 = 1;
+    if (f1b < 140.0f || f1b > -140.0f) band1000 = 1;
     if (band800) {
         self->mField4 |= 0x800;
     } else {
@@ -2334,11 +2320,11 @@ extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
     // from mFieldC, rotate the (0, 0, 1) local, then scale it and add the
     // player position for the collision probe.
     f32 f30 = self->mFieldC;
-    f32 f1c = lbl_eu_80666D80 * f30;
+    f32 f1c = 40.743664f * f30;
     self->mFlags58.mBit14 = 1;
     ml::CVec3 v(lbl_eu_80666CF8, lbl_eu_80666CF8, lbl_eu_80666CFC);
     f32 sin = nw4r::math::SinFIdx(f1c);
-    f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * f30);
+    f32 cos = nw4r::math::CosFIdx(40.743664f * f30);
     ml::CMat33 mat(cos, lbl_eu_80666CF8, sin,
                    lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8,
                    -sin, lbl_eu_80666CF8, cos);
@@ -2352,7 +2338,7 @@ extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
         ml::CVec3 offset(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probe = sum + offset;
         int probeClear = 1;
-        if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, lbl_eu_80666D84,
+        if (ScnRes_VertRayForward_E398(&probe, 0x4a05, 0, 0, -3.0f,
                           lbl_eu_8066AF20) != 0) {
             if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666CF8) {
                 probeClear = 0;
@@ -2381,16 +2367,16 @@ extern "C" int isMoveBlocked(cf::CtrlAct* self) {
     if ((self->mPlayer->mField3374 & 0x10000) != 0) {
         CtrlPlayerSub3F60* target = self->mPlayer->mField3F60;
         if (target != 0 && target->mField4F8 > lbl_eu_80666CF8) {
-            f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
-            f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
+            f32 cos = nw4r::math::CosFIdx(self->mFieldC * 40.743664f);
+            f32 sin = nw4r::math::SinFIdx(self->mFieldC * 40.743664f);
             ml::CVec3 local(sin, lbl_eu_80666CF8, cos);
             ml::CVec3 pos =
                 *(ml::CVec3*)self->mPlayer->mSub3E9C.getPosition();
             ml::CVec3 sum = pos + local;
-            if (ScnRes_VertRayForward_E398(&sum, 0x4a11, 0, 1, lbl_eu_80666DA4,
+            if (ScnRes_VertRayForward_E398(&sum, 0x4a11, 0, 1, 4.0f,
                               lbl_eu_8066AF20) != 0) {
                 int best = -1;
-                f32 bestY = lbl_eu_80666DA8;
+                f32 bestY = -1e+06f;
                 // Retail scans with an unsigned counter here but a signed
                 // one in the second pass.
                 for (u32 i = 0; i < (u32)ScnRes_GetEntryCount_E4AC(); i++) {
@@ -2403,14 +2389,14 @@ extern "C" int isMoveBlocked(cf::CtrlAct* self) {
                     }
                 }
                 if (best >= 0 && ScnRes_EntryFlagThunk_E5A4(0x40000, best) != 0) {
-                    f32 low = bestY - lbl_eu_80666D4C;
+                    f32 low = bestY - 100.0f;
                     for (int i = 0; i < ScnRes_GetEntryCount_E4AC(); i++) {
                         if (best != i && bestY > ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y
                             && low < ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
                             low = ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y;
                         }
                     }
-                    if (bestY - low > lbl_eu_80666D20) {
+                    if (bestY - low > 0.1f) {
                         return 0;
                     }
                 }
@@ -2431,21 +2417,21 @@ extern "C" int testHeightGap(cf::CtrlAct* self, int flag) {
     self->mField74 &= 0xfff1;
     CtrlPlayerSub3F60* target = self->mPlayer->mField3F60;
     if (target != 0) {
-    f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
+    f32 cos = nw4r::math::CosFIdx(self->mFieldC * 40.743664f);
     f32 y;
     f32 z;
     z = self->mPlayer->mSub3E9C.getPosition()->f[2]
-        + lbl_eu_80666DAC * cos;
-    y = self->mPlayer->mSub3E9C.getPosition()->f[1] + lbl_eu_80666D04;
-    f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
+        + 0.8f * cos;
+    y = self->mPlayer->mSub3E9C.getPosition()->f[1] + 2.0f;
+    f32 sin = nw4r::math::SinFIdx(self->mFieldC * 40.743664f);
     ml::CVec3 local;
     local.x = self->mPlayer->mSub3E9C.getPosition()->f[0]
-              + lbl_eu_80666DAC * sin;
+              + 0.8f * sin;
     local.y = y;
     local.z = z;
-    if (ScnRes_VertRayForward_E398(&local, 0x4a05, 0, 1, lbl_eu_80666DB0,
+    if (ScnRes_VertRayForward_E398(&local, 0x4a05, 0, 1, -13.0f,
                       lbl_eu_8066AF20) != 0) {
-        f32 bestY = lbl_eu_80666DA8;
+        f32 bestY = -1e+06f;
         int best = -1;
         // Retail scans with an unsigned counter here.
         for (u32 i = 0; i < (u32)ScnRes_GetEntryCount_E4AC(); i++) {
@@ -2463,7 +2449,7 @@ extern "C" int testHeightGap(cf::CtrlAct* self, int flag) {
             }
             self->mField74 |= 2;
             if (ScnRes_EntryFlagThunk_E5A4(0x40000, best) != 0) {
-                f32 low = bestY - lbl_eu_80666D4C;
+                f32 low = bestY - 100.0f;
                 for (int i = 0; i < ScnRes_GetEntryCount_E4AC(); i++) {
                     if (best != i && bestY > ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y
                         && low < ((ml::CVec3*)ScnRes_GetEntryPtr_E50C(i))->y) {
@@ -2515,12 +2501,12 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                 && ((u8)self->mField7B & 0xf) == 0xf) {
                 ml::CVec3 sum =
                     self->mPos60 +
-                    ml::CVec3(lbl_eu_80666CF8, lbl_eu_80666D0C,
+                    ml::CVec3(lbl_eu_80666CF8, 0.5f,
                               lbl_eu_80666CF8);
                 // Pre-compute the range object so the world-pointer load
                 // lands last (right before the call) like retail.
                 u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
-                if (Coli_SweepSegNodes(lbl_eu_80665958, rangeObj, &sum, 0,
+                if (Coli_SweepSegNodes(sEneColiProbe, rangeObj, &sum, 0,
                                   0) != 0) {
                     self->mField7B = 0x78;
                 }
@@ -2531,7 +2517,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
             } else {
                 CVoicePos* pp = self->mPlayer->mSub3E9C.getPosition();
                 ml::CVec3 diff = *(ml::CVec3*)pp - self->mPos60;
-                if (diff.x * diff.x + diff.z * diff.z <= lbl_eu_80666DB4) {
+                if (diff.x * diff.x + diff.z * diff.z <= 2.25f) {
                     self->mField7B = 0;
                     if (self->mField74 & 0x80) {
                         self->mField74 = (self->mField74 | 0x200) & ~0x80;
@@ -2548,21 +2534,16 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
             // target block into mPos60 and the 0x100 latch.
             u16 save455A = src->mField455A;
             src->mField455A = 1;
-            f32 f30 = lbl_eu_80666D0C * ml::quarterpi;
+            f32 f30 = 0.5f * ml::quarterpi;
             f32 f29 = ml::quarterpi;
-            f32 f24 = lbl_eu_80666D80;
+            f32 f24 = 40.743664f;
             f32 f26 = lbl_eu_80666CF8;
             f32 f27 = lbl_eu_80666CFC;
-            f32 f28 = lbl_eu_80666DB8;
-            f64 magic = lbl_eu_80666D50;
-            u32 magicHi = 0x43300000;
+            f32 f28 = 5.0f;
             int missFlag = 1;
             for (int i = 0; i < 2; i++) {
-                f32 dir = (i & 1) ? lbl_eu_80666CFC : lbl_eu_80666D68;
-                F64Conv conv;
-                conv.w[0] = magicHi;
-                conv.w[1] = (u32)(self->mField7B & 1) ^ 0x80000000;
-                f32 t = (f32)(conv.d - magic);
+                f32 dir = (i & 1) ? lbl_eu_80666CFC : -1.0f;
+                f32 t = (f32)(int)(self->mField7B & 1);
                 f32 f23 = dir * (f30 * t + f29) + self->mField6C;
                 f32 cosv = nw4r::math::CosFIdx(f24 * f23);
                 f32 sinv = nw4r::math::SinFIdx(f24 * f23);
@@ -2576,7 +2557,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                 ml::CVec3 sum = pos2 + scaled;
                 ml::CVec3 probe = sum;
                 u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
-                if (ColiWalkSegment(lbl_eu_80665958, rangeObj, &pos2,
+                if (ColiWalkSegment(sEneColiProbe, rangeObj, &pos2,
                                   &probe, 0, 0, 0) == 0) {
                     if (self->ctrlActProbeTargetReset(&probe, 1) != 0) {
                         self->mField7B = 0;
@@ -2596,7 +2577,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                 }
                 CVoicePos* pp = self->mPlayer->mSub3E9C.getPosition();
                 ml::CVec3 diff = *(ml::CVec3*)pp - self->mPos60;
-                if (diff.x * diff.x + diff.z * diff.z <= lbl_eu_80666D6C) {
+                if (diff.x * diff.x + diff.z * diff.z <= 0.25f) {
                     target = pos;
                 }
             }
@@ -2608,30 +2589,30 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
         u16 save455A = src->mField455A;
         src->mField455A = 1;
         f32 facing = self->mPlayer->table->method5B4(self->mPlayer);
-        f32 cosv = nw4r::math::CosFIdx(lbl_eu_80666D80 * facing);
-        f32 sinv = nw4r::math::SinFIdx(lbl_eu_80666D80 * facing);
+        f32 cosv = nw4r::math::CosFIdx(40.743664f * facing);
+        f32 sinv = nw4r::math::SinFIdx(40.743664f * facing);
         ml::CVec3 dirVec(sinv, lbl_eu_80666CF8, cosv);
         f32 pz = self->mPlayer->mSub3E9C.getPosition()->f[2];
         f32 py =
             lbl_eu_80666CFC + self->mPlayer->mSub3E9C.getPosition()->f[1];
         f32 px = self->mPlayer->mSub3E9C.getPosition()->f[0];
         ml::CVec3 pos2(px, py, pz);
-        ml::CVec3 scaled = dirVec * lbl_eu_80666D04;
+        ml::CVec3 scaled = dirVec * 2.0f;
         ml::CVec3 sum = pos2 + scaled;
         ml::CVec3 probe = sum;
         int hit = 0;
         u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
-        if (ColiWalkSegment(lbl_eu_80665958, rangeObj,
+        if (ColiWalkSegment(sEneColiProbe, rangeObj,
                           &pos2, &probe, 0, 0, 0) == 0) {
             f32 scale =
-                (self->mField74 & 0x400) ? lbl_eu_80666DBC
-                                         : lbl_eu_80666DC0;
+                (self->mField74 & 0x400) ? 1.2f
+                                         : 1.6f;
             ml::CVec3 scaled2 = dirVec * scale;
-            pos2.y = pos2.y + lbl_eu_80666D0C;
+            pos2.y = pos2.y + 0.5f;
             ml::CVec3 sum2 = pos2 + scaled2;
             ml::CVec3 probe2 = sum2;
             u8* rangeObj2 = (u8*)self->mPlayer + 0x44A8;
-            if (Coli_WalkQuery(lbl_eu_80665958, rangeObj2, &probe2, 0, 0,
+            if (Coli_WalkQuery(sEneColiProbe, rangeObj2, &probe2, 0, 0,
                               0) != 0) {
                 hit = 1;
             } else {
@@ -2651,10 +2632,10 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                 f32 facing2 = self->mPlayer->table->method5B4(self->mPlayer);
                 self->mField6C = facing2;
                 f32 ang = facing2 + ml::pi;
-                f32 cosv2 = nw4r::math::CosFIdx(lbl_eu_80666D80 * ang);
-                f32 sinv2 = nw4r::math::SinFIdx(lbl_eu_80666D80 * ang);
+                f32 cosv2 = nw4r::math::CosFIdx(40.743664f * ang);
+                f32 sinv2 = nw4r::math::SinFIdx(40.743664f * ang);
                 ml::CVec3 dir3(sinv2, lbl_eu_80666CF8, cosv2);
-                ml::CVec3 scaled3 = dir3 * lbl_eu_80666D18;
+                ml::CVec3 scaled3 = dir3 * 3.0f;
                 CVoicePos* pp = self->mPlayer->mSub3E9C.getPosition();
                 ml::CVec3 sum3 = *(ml::CVec3*)pp + scaled3;
                 ml::CVec3 newPos = sum3;
@@ -2683,7 +2664,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
         f32 x8;
         ml::CVec3 outE4;
         if (self->ctrlActComputeAimVec(&outE4, &x8, target, 1, 0) != 0) {
-            f32 f23 = lbl_eu_80666D40 *
+            f32 f23 = 0.024543693f *
                       nw4r::math::Atan2FIdx(outE4.x, outE4.z);
             self->mFieldC = f23;
             if (testHeightGap(self, 0) != 0) {
@@ -2710,7 +2691,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                     CVoicePos* pp2 = self->mPlayer->mSub3E9C.getPosition();
                     f32 dz = pos->z - pp2->f[2];
                     f32 r = self->mPlayer->mField44D8;
-                    if (dx * dx + dz * dz <= lbl_eu_80666D04 * r) {
+                    if (dx * dx + dz * dz <= 2.0f * r) {
                         self->mFlags58.mParam = 0x3C;
                         self->mField74 |= 0x1000;
                         self->mField14 = lbl_eu_80666CF8;
@@ -2720,7 +2701,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
             self->mField10 = self->mFieldC;
         } else {
             self->mField79 = 0;
-            f32 f23 = lbl_eu_80666D40 *
+            f32 f23 = 0.024543693f *
                       nw4r::math::Atan2FIdx(outE4.x, outE4.z);
             self->mFieldC = f23;
             if (testHeightGap(self, 0) != 0) {
@@ -2733,7 +2714,7 @@ extern "C" void tickTargetAct(cf::CtrlAct* self, ml::CVec3* pos,
                 CVoicePos* pp2 = self->mPlayer->mSub3E9C.getPosition();
                 f32 dz = pos->z - pp2->f[2];
                 f32 r = self->mPlayer->mField44D8;
-                if (dx * dx + dz * dz <= lbl_eu_80666D04 * r) {
+                if (dx * dx + dz * dz <= 2.0f * r) {
                     self->mFlags58.mParam = 0x3C;
                     self->mField74 |= 0x1000;
                     self->mField14 = lbl_eu_80666CF8;
@@ -2760,7 +2741,7 @@ extern "C" void scanPlayerTgt(cf::CtrlAct* self, ml::CVec3* pos) {
         self->mField78 = 0x78;
         ml::CVec3 offset;
         offset.x = lbl_eu_80666CF8;
-        offset.y = lbl_eu_80666DC4;
+        offset.y = 1.5f;
         offset.z = lbl_eu_80666CF8;
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 playerProbe = *(ml::CVec3*)ppos + offset;
@@ -2787,19 +2768,19 @@ probe_done:
     }
     self->mField74 |= 0x20;
     if (segProbe == 0) {
-        f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
+        f32 cos = nw4r::math::CosFIdx(self->mFieldC * 40.743664f);
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
-        f32 f29 = lbl_eu_80666D0C * cos + ppos->f[2];
+        f32 f29 = 0.5f * cos + ppos->f[2];
         CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
-        f32 f30 = lbl_eu_80666D04 + ppos2->f[1];
-        f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
+        f32 f30 = 2.0f + ppos2->f[1];
+        f32 sin = nw4r::math::SinFIdx(self->mFieldC * 40.743664f);
         CVoicePos* ppos3 = self->mPlayer->mSub3E9C.getPosition();
-        f32 fx = lbl_eu_80666D0C * sin + ppos3->f[0];
+        f32 fx = 0.5f * sin + ppos3->f[0];
         ml::CVec3 local2;
         local2.x = fx;
         local2.y = f30;
         local2.z = f29;
-        if (ScnRes_VertRayForward_E398(&local2, 0x4a11, 0, 0, lbl_eu_80666DB0,
+        if (ScnRes_VertRayForward_E398(&local2, 0x4a11, 0, 0, -13.0f,
                           lbl_eu_8066AF20) != 0) {
             u16 v = self->mField74;
             if (v & 0x400) {
@@ -2844,7 +2825,7 @@ probe_done:
     }
 finish:
     f32 ang = nw4r::math::Atan2FIdx(out.x, out.z);
-    f32 v = lbl_eu_80666D40 * ang;
+    f32 v = 0.024543693f * ang;
     self->mFieldC = v;
     self->mPlayer->mSub3E9C.v47(v);
 }

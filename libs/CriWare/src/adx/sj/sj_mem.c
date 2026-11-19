@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80518A58[0x10] = {
+__declspec(section ".rodata") __attribute__((aligned(8))) char SJMEM_Uuid[0x10] = {
     0xDD, 0x9E, 0xEE, 0x41, 0x16, 0x79, 0x11, 0xD2, 0x93, 0x6C, 0x00, 0x60, 0x08, 0x94, 0x48, 0xBC
 };
 
@@ -31,8 +31,8 @@ __declspec(section ".data") __attribute__((aligned(8))) void *lbl_eu_80565C00[12
     SJMEM_EntryErrFunc
 };
 
-u32 lbl_eu_805ECE48[2];
-u8 lbl_eu_805ECE50[0x480];
+u32 SJMEM_InitCount[2];
+u8 SJMEM_HandleTable[0x480];
 
 extern void SJCRS_Init(void);
 extern void SJCRS_Finish(void);
@@ -76,18 +76,18 @@ void SJMEM_Error(void) {
 void SJMEM_Init(void) {
     SJCRS_Init();
     SJCRS_Lock();
-    if (lbl_eu_805ECE48[0] == 0) {
-        memset(lbl_eu_805ECE50, 0, 0x480);
+    if (SJMEM_InitCount[0] == 0) {
+        memset(SJMEM_HandleTable, 0, 0x480);
     }
-    lbl_eu_805ECE48[0]++;
+    SJMEM_InitCount[0]++;
     SJCRS_Unlock();
 }
 
 /* --- SJMEM_Finish --- */
 void SJMEM_Finish(void) {
     SJCRS_Lock();
-    if (--lbl_eu_805ECE48[0] == 0) {
-        memset(lbl_eu_805ECE50, 0, 0x480);
+    if (--SJMEM_InitCount[0] == 0) {
+        memset(SJMEM_HandleTable, 0, 0x480);
     }
     SJCRS_Unlock();
     SJCRS_Finish();
@@ -110,7 +110,7 @@ void *sjmem_Create(void *pool_mem, u32 flags) {
     SJMEM *self;
     char buf_invalid[64];
     char buf_null[64];
-    SJMEM *p = (SJMEM *)lbl_eu_805ECE50;
+    SJMEM *p = (SJMEM *)SJMEM_HandleTable;
     int i;
 
     /* scan the fixed table of 0x20 slots for a free (valid == 0) entry */
@@ -121,12 +121,12 @@ void *sjmem_Create(void *pool_mem, u32 flags) {
     if (i == 0x20) return NULL;
 
     {
-        self = &((SJMEM *)lbl_eu_805ECE50)[i];
+        self = &((SJMEM *)SJMEM_HandleTable)[i];
         self->valid = 1;
         self->vtable = lbl_eu_80565C00;
         self->pool_mem = (u8 *)pool_mem;
         self->buf_size = flags;
-        self->uuid = lbl_eu_80518A58;
+        self->uuid = SJMEM_Uuid;
         self->err_func = (void (*)(void *, int))SJMEM_Error;
         self->err_arg = self;
 

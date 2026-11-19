@@ -283,7 +283,7 @@ void* findObjectById(int id);
 #include "kyoshin/CTaskGame.hpp"
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern u32 lbl_eu_80663E28;    // cbRenderBefore flag (.sbss)
+extern u32 gmPauseFlags;    // cbRenderBefore flag (.sbss)
 extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
 extern char lbl_eu_8052D238[]; // temp base vtable
 

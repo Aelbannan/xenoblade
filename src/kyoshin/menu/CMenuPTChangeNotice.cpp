@@ -320,7 +320,7 @@ extern "C" void PTNotice_Rewind_3D2C(CMenuPTChangeNotice* self) {
     }
 }
 
-void OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile(void* self) { ((void(*)(void*))PTNotice_BuildLayout_348C)((char*)self - 0x6c); }
+void CMenuPTChangeNotice::OnFileEvent(CEventFile* pEvent) { ((void(*)(void*))PTNotice_BuildLayout_348C)((char*)this - 0x6c); }
 
 void PTNotice_DtorThunkA_3D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x6c); }
 

@@ -286,17 +286,22 @@ void gap_btm_cback0(void *p_msg)
 
 /* BTM event dispatcher: index selects the GAP control block (0 or 1),
  * p_msg is the BTM event message. gap_btm_cback0/1 tail-call into it. */
-#pragma push
-/* Retail keeps 2 dead strings (bdaddr/COD logging from the original inq results
-   callback) at .data 0xF0/0x134. They are pinned from a same-position anchor
-   function so the -ipa off pool layout matches retail: file-scope arrays land
-   at .data offset 0 and break the layout. The anchor only takes addresses
-   (never calls anything), emits no .sdata/.sdata2 entry, and .init is not
-   part of the data gate. Both literals carry retail's explicit trailing \x00. */
-__declspec(section ".init") void gap_utils_orphan_anchor(void) {
-    const char * volatile p;
-    p = "GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])\x00";
-    p = "                             (COD [%02x%02x%02x], clkoff 0x%04x)\x00";
+/* Inquiry-result logger owned by the GAP client. */
+void gap_inq_results_cb(tBTM_INQ_INFO *p_info)
+{
+    tBTM_INQ_RESULTS *p = &p_info->results;
+
+    if (gap_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {
+        LogMsg_6(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
+                 "GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])\x00",
+                 (UINT32)p->remote_bd_addr[0], (UINT32)p->remote_bd_addr[1],
+                 (UINT32)p->remote_bd_addr[2], (UINT32)p->remote_bd_addr[3],
+                 (UINT32)p->remote_bd_addr[4], (UINT32)p->remote_bd_addr[5]);
+        LogMsg_4(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
+                 "                             (COD [%02x%02x%02x], clkoff 0x%04x)\x00",
+                 (UINT32)p->dev_class[0], (UINT32)p->dev_class[1],
+                 (UINT32)p->dev_class[2], (UINT32)p->clock_offset);
+    }
 }
 
 void btm_cback(UINT16 index, void *p_msg)
@@ -413,4 +418,3 @@ void btm_cback(UINT16 index, void *p_msg)
         p_ccb->in_use = FALSE;
     }
 }
-#pragma pop

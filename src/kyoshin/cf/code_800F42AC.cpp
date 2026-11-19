@@ -10,7 +10,18 @@ extern "C" void UIWin_FlagBufClear();
 
 #include "kyoshin/cf/code_800F42AC.hpp"
 
-// Rounds a float to the nearest integer (as a float), matching MWCC's
+// Imported C-ABI symbols used only inside this TU.
+extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+extern "C" int findObjectById__Fi(int id);
+extern "C" void* MapFx_ResolveOwner(void* src);
+extern "C" int isBattleStatusActive(void* self, int id);
+extern "C" void* findBattleStatusEntry(void* self, u32 id);
+extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
+extern "C" void* UIWin_QueryPageFlag(u32 a);
+// UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
+
+// Rounds a float
 // double-arithmetic + fctiwz idiom: (f32)(s32)((double)v + 0.5-ish).
 static inline f32 roundf_to_f32(f32 v) {
     double round;
@@ -50,7 +61,7 @@ float ScMain_GetRoundedMetric(ScMain* self) {
 /// Returns a normalized ratio depending on status flags:
 /// bit 20 of field_824 -> 1.0f; if mask 0x400 is active in the game
 /// manager -> constant A; no sub-object -> 1.0f; else sub->field_7C / field_830.
-float ScMain_GetRatio(ScMain* self) {
+extern "C" float ScMain_GetRatio(ScMain* self) {
     if (self->flags_824 & 0x100000)
         return 0.0f;
     getInstance__Q22cf13CfGameManagerFv();
@@ -64,7 +75,7 @@ float ScMain_GetRatio(ScMain* self) {
 /// (Re)initialises a ScMain object: clears all slots, resets the per-sub
 /// table (0xCC, 5 entries) and zeroes the status flags. When the bit-17
 /// status flag is set, first tears down a register with id 0x375.
-void ScMain_Reset(ScMain* self) {
+extern "C" void ScMain_Reset(ScMain* self) {
     if (self->flags_824 & 0x20000) {
         if (UIWin_QueryPageFlag(0x375) == 0) {
             CtrlRemote_SetSharedBit(0x30e3, 0);
@@ -132,7 +143,7 @@ void ScMain_Reset(ScMain* self) {
 /// Applies status-flag priority to a combined size value, rounding to int.
 /// bit 17 of field_824 -> 99999; sum(f_6C+f_70) < 1.0 -> 0; bit 7 of field_84
 /// -> 0; otherwise round the sum to nearest integer (half-up / half-down).
-int ScMain_GetSummedInt(ScMain* self) {
+extern "C" int ScMain_GetSummedInt(ScMain* self) {
     if (self->flags_824 & 0x20000)
         return 99999;
     f32 sum = self->f_6C + self->f_70;
@@ -150,7 +161,7 @@ int ScMain_GetSummedInt(ScMain* self) {
 
 /// Returns whether `self`'s polymorphic query (vtable slot 19) and its
 /// 0x3F10 pointer both differ from `other->field_04`.
-int ScMain_IsDistinctFrom(ScMain* other, Sc46C0Other* self) {
+extern "C" int ScMain_IsDistinctFrom(ScMain* other, Sc46C0Other* self) {
     void* f = other->field_04;
     int result = 0;
     if (self->mSub.v17() != f && self->field_3F10 != f)
@@ -160,7 +171,7 @@ int ScMain_IsDistinctFrom(ScMain* other, Sc46C0Other* self) {
 
 /// Decodes low 5 bits of field_824: returns 5/4/3/2 for the top-priority bit
 /// that is set, else the value of bit 4.
-u32 ScMain_DecodeFlagPriority(ScMain* self) {
+extern "C" u32 ScMain_DecodeFlagPriority(ScMain* self) {
     u32 flags = self->flags_824;
     if (flags & 1)
         return 5;
@@ -174,18 +185,18 @@ u32 ScMain_DecodeFlagPriority(ScMain* self) {
 }
 
 /// Returns the sub-object pointer at offset 0x0C (field subObject).
-cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self) {
+extern "C" cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self) {
     return self->subObject;
 }
 
 struct CfCode0CView { u8 _pad[0xc]; void* p0c; };
-void* CfCode_GetOptPtr0C(void* self) {
+extern "C" void* CfCode_GetOptPtr0C(void* self) {
     void* v = ((CfCode0CView*)self)->p0c;
     return v ? v : 0;
 }
 
 /// Returns items[idx]->v_14, negated when field_60C == 1.
-float Sc4798_GetSignedItemValue(Sc4798* self, int idx) {
+extern "C" float Sc4798_GetSignedItemValue(Sc4798* self, int idx) {
     if (self->field_60C == 1)
         return -self->items[idx]->v_14;
     return self->items[idx]->v_14;

@@ -165,7 +165,7 @@ namespace cf {
         void CfObjectModel_lookAtBone(cf::CfObject* other, const char* name) { CfObjectModel_bindModelTo(other, name); } //0x1AC
         void CfObjectModel_UnkVirtualFunc15(cf::CfObject* other, const char* name) { CfObjectModel_snapToBone(other, name); } //0x1B0
         void CfObjectModel_UnkVirtualFunc16(int flag) { CfObjectModel_setBoneRotate(flag); } //0x1B4
-        void CfObjectModel_UnkVirtualFunc18(void* eff) { CfObjectModel_detachEffectSlot(eff); } //0x1BC
+        void CfObjectModel_UnkVirtualFunc18(); //0x1BC
         void CfObjectModel_UnkVirtualFunc19(int flag) { CfObjectModel_setModelVisible(flag); } //0x1C0
         void CfObjectModel_UnkVirtualFunc7(ml::CVec3* pos, float scale) { CfObjectModel_snapSubTarget(pos, scale); } //0x190
         u32 CfObjectModel_UnkVirtualFunc8() { return CfObjectModel_getSubFlag04(); } //0x194
@@ -183,12 +183,13 @@ namespace cf {
         u8 _78[0x8C - 0x78];          // 0x78-0x8B
         u16 unk8C_3;
         u16 field_0x8E;
-        u8 field_0x90[0x8];          // 0x90-0x97
+        u8 field_0x90[0x4];          // 0x90-0x93
+        s32 field_0x94;              // 0x94-0x97: object type selector
         CfObjectModelSub98* mSubObj98; // 0x98-0x9B
-        u8 field_0x9C[0x4];           // 0x9C-0x9F
-        float field_A0;               // 0xA0-0xA3
-        u8 field_0xA4[0xC];           // 0xA4-0xAF
-        void* mSubObjB0;      // 0xB0-0xB3
+        u32 field_0x9C;              // 0x9C-0x9F: packed resource id
+        float field_A0;              // 0xA0-0xA3
+        u8 field_0xA4[0xC];          // 0xA4-0xAF
+        void* mSubObjB0;             // 0xB0-0xB3
         cf::CfObjectModel* field_B4; // 0xB4 (source object stored by bindModelTo)
         const char* field_B8;        // 0xB8 (name/fallback label stored by bindModelTo)
         u8 field_BC;          // 0xBC

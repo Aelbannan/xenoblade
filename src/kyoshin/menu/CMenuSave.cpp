@@ -32,7 +32,7 @@ struct MenuSavePadData {
 // Message table base used by Init's CTitleAHelp name lookup (+0xb string).
 extern char lbl_eu_8050F7B0[];
 // Render-gate mode bitfield (.sbss; bit 21 = realtime event busy).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/BgTex_IsLoaded_3E34/... are declared int (not u8) so callers compare with
@@ -40,9 +40,6 @@ extern u32 lbl_eu_80663E28;
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 
-extern "C" void func_801C412C(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void NandTeardown();
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
@@ -54,9 +51,6 @@ extern "C" void handleSaveMenuInput(CMenuSave* self);
 extern "C" void flagSaveMenuReady(CMenuSave* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int CMainMenu_GetInstancePtr();
@@ -123,7 +117,7 @@ void CMenuSave::Term() {
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mSaveLoad.reset();
 
     sInstance = nullptr;
@@ -141,7 +135,7 @@ void CMenuSave::Term() {
 // title/help bar and save-load panel each frame.
 void CMenuSave::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
 
     switch (mState) {
@@ -160,7 +154,7 @@ void CMenuSave::Move() {
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     mSaveLoad.update();
 }
 
@@ -169,7 +163,7 @@ void CMenuSave::Move() {
 // title/help bar in that order.
 void CMenuSave::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -178,7 +172,7 @@ void CMenuSave::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mSaveLoad.draw(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 CMenuSave* CMenuSave::sInstance;
@@ -213,8 +207,8 @@ extern "C" void openSaveMenu(CMenuSave* self) {
         self->mTitleAHelp.isInitialized() != 0 &&
         self->mSaveLoad.isReady() != 0) {
         u8 slot = self->mSaveLoad.getHelpKind();
-        func_801C41E8(&self->mTitleAHelp, slot);
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C41E8(slot);
+        self->mTitleAHelp.func_801C412C();
         self->mSaveLoad.open();
         self->mState = 1;
         playUISound(0x6d);
@@ -224,7 +218,7 @@ extern "C" void openSaveMenu(CMenuSave* self) {
 /* Advance the save menu to phase 2 once the title bar is idle and the
  * save-load panel has finished its intro (writes the state byte at 0x20B). */
 extern "C" void advanceSaveMenuPhase(CMenuSave* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         self->mSaveLoad.getIdle() != 0) {
         self->mState = 2;
     }
@@ -259,7 +253,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
             self->mSaveLoad.confirm();
         } else if ((pressed >> 22) & 1) {
             if (self->mSaveLoad.isBusy() == 0) {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 self->mSaveLoad.close();
                 self->mState = 3;
             } else {
@@ -294,7 +288,7 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
             self->mSaveLoad.confirm();
         } else if ((pressed >> 5) & 1) {
             if (self->mSaveLoad.isBusy() == 0) {
-                beginClose(&self->mTitleAHelp);
+                self->mTitleAHelp.beginClose();
                 self->mSaveLoad.close();
                 self->mState = 3;
             } else {
@@ -323,13 +317,13 @@ extern "C" void handleSaveMenuInput(CMenuSave* self) {
         }
     }
 
-    func_801C41E8(&self->mTitleAHelp, self->mSaveLoad.getHelpKind());
+    self->mTitleAHelp.func_801C41E8(self->mSaveLoad.getHelpKind());
 }
 
 /* Same idle+advance check as advanceSaveMenuPhase, but advances the phase flag at
  * 0x54 instead of the state byte. */
 extern "C" void flagSaveMenuReady(CMenuSave* self) {
-    if (self->mTitleAHelp.isIdle() != 0 &&
+    if (self->mTitleAHelp.func_801C4124() != 0 &&
         self->mSaveLoad.getIdle() != 0) {
         self->mField54 = 1;
     }

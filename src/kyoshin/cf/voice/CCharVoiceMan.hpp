@@ -122,7 +122,7 @@ namespace cf{
     };
 }
 class CScn;
-extern "C" u32 lbl_eu_80664A5C;
+extern "C" u32 sVoiceEventIdCounter;
 extern "C" mtl::ALLOC_HANDLE Scn_CallUnk8C_V10(void* src);
 extern "C" int BtlBeg_IsVoiceBit_03A4(void* self);
 extern "C" cf::CSoundNode* VisBreak_AllocVoiceHandle();
@@ -150,7 +150,7 @@ extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" long __ptmf_test(void* ptmf);
 class CVS_THREAD;
 // PMF reference entry owned by CCharVoiceMan.cpp (retail .data
-// lbl_eu_805398C0 = {0, 0xFFFFFFFF, voiceNoop}); compared by address
+// voiceNoopPmfEntry = {0, 0xFFFFFFFF, voiceNoop}); compared by address
 // via __ptmf_cmpr/__ptmf_test, never dispatched here. The .p member keeps
 // the PMF shape (cf. CfGimmickObjectPmfEntry); init goes through .w.
 typedef int (cf::CCharVoiceMan::*VoiceManPmf)();
@@ -160,7 +160,7 @@ union VoicePmfEntry {
     } w;
     VoiceManPmf p;
 };
-extern "C" VoicePmfEntry lbl_eu_805398C0;
+extern "C" VoicePmfEntry voiceNoopPmfEntry;
 extern "C" void* MapFx_ResolveOwner(void* src);
 extern "C" void BmVoice_PlayGated(void* r3, int voiceId, int r5);
 extern "C" void unlinkFactoryById(void* self, cf::IFactoryEvent* event);
@@ -179,8 +179,8 @@ extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 extern "C" void* HpVoice_FindBySubState(int a);
 extern "C" void RunVoiceNodeHandler(void* node);
 extern "C" void releaseThreadVoice(void* node);
-extern "C" u8  lbl_eu_80663DA0;
-extern "C" u16 lbl_eu_80663E42;
+extern "C" u8  visionSharedStateFlags;
+extern "C" u16 gmGlobalFlag42;
 extern "C" cf::CSoundNode* playFaintVoice();
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);

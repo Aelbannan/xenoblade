@@ -31,10 +31,8 @@ extern "C" void handleOptionInput(CMenuOption* self);
 
 // Move()/cbRenderBefore() callees.
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Ready/idle-check and animation helpers for the embedded sub-widgets
 // (retail unmangles these member helpers; int returns so callers compare
@@ -47,17 +45,13 @@ extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 
-extern "C" void beginClose(CTitleAHelp* self);
 // Option-menu input-handler callees (retail-unmangled func_ names).
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
-extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/COptionGetLiveFlag are declared int (not u8) so callers compare with
 // cmpwi directly (no byte mask), matching retail.
-extern "C" void teardown(CTitleAHelp* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
@@ -124,7 +118,7 @@ void CMenuOption::Term() {
     reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mOption.teardown();
 
     lbl_eu_80664A38[0] = 0;
@@ -132,7 +126,7 @@ void CMenuOption::Term() {
 }
 
 void CMenuOption::Move() {
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
 
     switch (mState) {
@@ -143,13 +137,13 @@ void CMenuOption::Move() {
     }
 
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     mOption.tickState();
 }
 
 void CMenuOption::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0)
         return;
@@ -159,7 +153,7 @@ void CMenuOption::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mOption.draw(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 /* Singleton factory (retail unmangled symbol, called from CUICfManager). Returns
@@ -181,7 +175,7 @@ CMenuOption* createOptionMenu(CProcess* registParent, CProcess* parent, u32 arg)
 void advanceOptionPhase1(CMenuOption* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && self->mTitleAHelp.isInitialized() != 0 &&
         self->mOption.isWindowReady() != 0) {
-        func_801C412C(&self->mTitleAHelp);
+        self->mTitleAHelp.func_801C412C();
         self->mOption.beginScrollSetup();
         self->mState = 1;
         playUISound(0x6d);
@@ -191,7 +185,7 @@ void advanceOptionPhase1(CMenuOption* self) {
 /* Advance the option menu to phase 2 once the title bar is idle and the
  * option panel has finished its intro (writes the state byte at 0x1BC). */
 void advanceOptionPhase2(CMenuOption* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && self->mOption.getLiveFlag() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && self->mOption.getLiveFlag() != 0) {
         self->mState = 2;
     }
 }
@@ -262,7 +256,7 @@ void handleOptionInput(CMenuOption* self) {
     }
 
     int navCode = self->mOption.getNavCode();
-    func_801C41E8(&self->mTitleAHelp, (u8)navCode);
+    self->mTitleAHelp.func_801C41E8((u8)navCode);
 
     if (self->mOption.getConfirmGate() != 0) {
         if (self->mOption.getSecondConfirm() != 0) {
@@ -272,7 +266,7 @@ void handleOptionInput(CMenuOption* self) {
             self->mState = 4;
             self->mField54 = 1;
         } else {
-            beginClose(&self->mTitleAHelp);
+            self->mTitleAHelp.beginClose();
             self->mOption.confirmSelection();
             self->mState = 3;
         }
@@ -282,7 +276,7 @@ void handleOptionInput(CMenuOption* self) {
 /* Same idle+advance check as advanceOptionPhase2, but advances the option menu to
  * phase 1 (writes the state byte at offset 0x54). */
 void flagOptionPhase1(CMenuOption* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && self->mOption.getLiveFlag() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && self->mOption.getLiveFlag() != 0) {
         self->mField54 = 1;
     }
 }

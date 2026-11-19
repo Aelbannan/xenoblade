@@ -15,6 +15,7 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
+class DisposeCallback;
 struct WaveInfo;
 
 class Channel {
@@ -166,12 +167,24 @@ public:
     void SetOriginalKey(int key) {
         mOriginalKey = key;
     }
+    void SetAlternateAssign(int assign) {
+        mAlternateAssign = assign;
+    }
+    void SetReleaseIgnore(int ignore) {
+        mReleaseIgnore = ignore;
+    }
+    void SetDisposeCallback(DisposeCallback* pCallback) {
+        mpDisposeCallback = pCallback;
+    }
+    void SetWaveInfo(const WaveInfo* pWaveInfo) {
+        mpWaveInfo = pWaveInfo;
+    }
 
     // Xenoblade per-channel exclusivity tag: SeqTrack::AddChannel releases
     // every live channel that shares the new channel's non-zero tag. Nothing
     // in this build ever writes a non-zero value, so the loop stays dormant.
     s32 GetTag() const {
-        return mTag;
+        return mAlternateAssign;
     }
 
     s32 GetLength() const {
@@ -222,7 +235,7 @@ private:
     bool mAllocFlag;              // at 0x37
     bool mAutoSweep;              // at 0x38
     bool mReleasePriorityFixFlag; // at 0x39
-    u8 field_0x3A;                // at 0x3A
+    u8 mReleaseIgnore;            // at 0x3A
     u8 mBiquadFilterType;         // at 0x3B
     u8 mRemoteFilter;             // at 0x3C
     u8 PADDING_0x3D[3];           // at 0x3D
@@ -258,16 +271,16 @@ private:
     int mOriginalKey; // at 0xCC
     int mLength;      // at 0xD0
 
-    PanMode mPanMode;   // at 0xD4
-    PanCurve mPanCurve; // at 0xD8
-    s32 mTag;           // at 0xDC
+    PanMode mPanMode;      // at 0xD4
+    PanCurve mPanCurve;    // at 0xD8
+    s32 mAlternateAssign;  // at 0xDC
 
     ChannelCallback mCallback; // at 0xE0
     u32 mCallbackData;         // at 0xE4
 
-    Channel* mNextLink;         // at 0xE8
-    u32 field_0xEC;             // at 0xEC
-    Voice* mVoice;              // at 0xF0
+    DisposeCallback* mpDisposeCallback; // at 0xE8
+    const WaveInfo* mpWaveInfo;         // at 0xEC
+    Voice* mVoice;                      // at 0xF0
     Channel* mNextTrackChannel; // at 0xF4
 
 public:

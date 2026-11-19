@@ -87,13 +87,13 @@ void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
 
     mCallback = pCallback;
     mCallbackData = callbackArg;
-    mNextLink = NULL;
-    field_0xEC = 0;
+    mpDisposeCallback = NULL;
+    mpWaveInfo = NULL;
 
     mPauseFlag = false;
     mAutoSweep = true;
     mReleasePriorityFixFlag = false;
-    field_0x3A = false;
+    mReleaseIgnore = false;
 
     mLength = 0;
     mKey = KEY_INIT;
@@ -141,7 +141,7 @@ void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
     mLfoTarget = LFO_TARGET_PITCH;
     mPanMode = PAN_MODE_DUAL;
     mPanCurve = PAN_CURVE_SQRT;
-    mTag = 0;
+    mAlternateAssign = 0;
 }
 
 void Channel::Update(bool periodic) {
@@ -308,7 +308,7 @@ void Channel::Release() {
 }
 
 void Channel::NoteOff() {
-    if (field_0x3A) {
+    if (mReleaseIgnore) {
         return;
     }
 
@@ -336,9 +336,9 @@ void Channel::Stop() {
             mCallback(this, CALLBACK_STATUS_STOPPED, mCallbackData);
         }
 
-        if (mNextLink != NULL) {
-            reinterpret_cast<DisposeCallbackShim*>(mNextLink)
-                ->InvalidateData(reinterpret_cast<const void*>(field_0xEC));
+        if (mpDisposeCallback != NULL) {
+            reinterpret_cast<DisposeCallbackShim*>(mpDisposeCallback)
+                ->InvalidateData(reinterpret_cast<const void*>(mpWaveInfo));
         }
 
         if (mAllocFlag) {
@@ -419,10 +419,10 @@ void Channel::VoiceCallbackFunc(Voice* pDropVoice,
         pChannel->mCallback(pChannel, channelStatus, pChannel->mCallbackData);
     }
 
-    if (pChannel->mNextLink != NULL) {
-        reinterpret_cast<DisposeCallbackShim*>(pChannel->mNextLink)
+    if (pChannel->mpDisposeCallback != NULL) {
+        reinterpret_cast<DisposeCallbackShim*>(pChannel->mpDisposeCallback)
             ->InvalidateData(
-                reinterpret_cast<const void*>(pChannel->field_0xEC));
+                reinterpret_cast<const void*>(pChannel->mpWaveInfo));
     }
 
     pChannel->mVoice = NULL;
@@ -468,7 +468,5 @@ void Channel::FreeChannel(Channel* pChannel) {
 } // namespace snd
 } // namespace nw4r
 
-// Absorb: pad .sbss 0x1->0x8
-unsigned int snd_Channel_sbss_pad;
 
 

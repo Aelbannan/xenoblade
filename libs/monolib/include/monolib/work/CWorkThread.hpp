@@ -208,3 +208,9 @@ private:
     }                                                                            \
 
 #define CREATE_WORKTHREAD(class, parent) class::create(#class, parent);
+
+// CWorkSystemPack globals (defined in work/CWorkSystemPack.cpp).
+class CWorkSystemPack;
+extern CWorkSystemPack* sWorkSystemPackInstance;
+extern const char* const* spPkhFilenamesArray;
+extern const char* const* spStaticArcFilenames[2];

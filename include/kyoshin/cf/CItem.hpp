@@ -61,94 +61,94 @@ extern void* lbl_eu_80664150;
 extern char lbl_eu_80501C58[];
 
 // Global item block base pointer (allocated once; freed by __dt__80157150).
-extern char* lbl_eu_806641B8;
+extern char* spItemBlock;
 
 // Per-category name tables indexed by (itemWord >> 7) & 7.
-extern const char* lbl_eu_8052F628[8];
-extern const char* lbl_eu_8052F644[8];
-extern const char* lbl_eu_8052F660[8];
+extern const char* sItemNameTableA[8];
+extern const char* sItemNameTableB[8];
+extern const char* sItemNameTableC[8];
 
 // 4-byte .sdata column-name pointer globals (retail reads them with a plain
 // lwz sym@sda21(r0) - d-form r0 is the literal-zero base, not an index).
-extern const char* lbl_eu_80662288;
-extern const char* lbl_eu_8066228C;
+extern const char* sItemNameColumnA;
+extern const char* sItemNameColumnB;
 
 // u8 min/max pair table indexed by CItem_refRow2's slot-size roll. Fixed
 // size keeps it sdata-eligible (an incomplete array type is not, so MWCC
 // would emit lis/addi instead of the retail li sym@sda21).
-extern u8 lbl_eu_80662290[8];
+extern u8 sItemSlotSizeRange[8];
 
 // Introsort depth counters (CItem_introSort / CItem_introSortHalf pivot-sample
 // jitter - each recursive helper keeps its own counter).
-extern s32 lbl_eu_8066229C;
-extern s32 lbl_eu_806622A0;
+extern s32 sItemIntroSortDepth;
+extern s32 sItemIntroSortHalfDepth;
 
 // Item-name prefix string used by CItem_buildSortName's per-language name
 // concatenation (copied to the prefix buffer, then appended in language-
 // specific order). Fixed size keeps it sdata-eligible (an incomplete array
 // type is not, so MWCC would emit lis/addi instead of the retail li
 // sym@sda21).
-extern char lbl_eu_806622A4[8];
+extern char sItemSortNamePrefix[8];
 
 // Column-name string pointers mutated by CItem_rollSubColumns: the last character
 // of each pointed-to string is replaced with '1'..'8' per loop iteration.
-extern char* lbl_eu_806622D8;
-extern char* lbl_eu_806622DC;
+extern char* sSubColumnsColumnA;
+extern char* sSubColumnsColumnB;
 
 // Column-name string pointers mutated by CItem_rollTwoCol / CItem_rollTwoColAlt: the
 // last character of each pointed-to string is replaced with '1'..'8' per
 // loop iteration (same pattern as the CItem_rollSubColumns pair).
-extern char* lbl_eu_806622BC;
-extern char* lbl_eu_806622C0;
-extern char* lbl_eu_806622D0;
-extern char* lbl_eu_806622D4;
+extern char* sTwoColColumnA;
+extern char* sTwoColColumnB;
+extern char* sTwoColAltColumnA;
+extern char* sTwoColAltColumnB;
 
 // Column-name string pointers mutated by CItem_rollForced: the last character
 // of each pointed-to string is replaced with '1'..'4' per loop iteration.
-extern char* lbl_eu_806622E0;
-extern char* lbl_eu_806622E4;
+extern char* sForcedColumnA;
+extern char* sForcedColumnB;
 
 // Column-name string pointers mutated by CItem_rollThreeCol: the last character
 // of each pointed-to string is replaced with '1'..'4' per loop iteration
 // (three columns per iteration).
-extern char* lbl_eu_806622B0;
-extern char* lbl_eu_806622B4;
-extern char* lbl_eu_806622B8;
+extern char* sThreeColColumnA;
+extern char* sThreeColColumnB;
+extern char* sThreeColColumnC;
 
 // Column-name string pointers mutated by CItem_rollThreeColAlt: the last character
 // of each pointed-to string is replaced with '1'..'4' per loop iteration
 // (three columns per iteration).
-extern char* lbl_eu_806622C4;
-extern char* lbl_eu_806622C8;
-extern char* lbl_eu_806622CC;
+extern char* sThreeColAltColumnA;
+extern char* sThreeColAltColumnB;
+extern char* sThreeColAltColumnC;
 
 // Column-name string pointer mutated by func_80156350: the last character
 // of the pointed-to string is replaced with '1'.. per loop iteration.
-extern char* lbl_eu_80662298;
+extern char* sItemSingleColumn;
 
 // Column-name string pointers mutated by CItem_rollTwoColPick: the last character
 // of each pointed-to string is replaced with '1'/'2' per loop iteration.
-extern char* lbl_eu_806622A8;
-extern char* lbl_eu_806622AC;
+extern char* sTwoColPickColumnA;
+extern char* sTwoColPickColumnB;
 
 // Lazy strlen-1 cache + init flag for the CItem_rollTwoCol / CItem_rollTwoColAlt
 // column-string mutation (computed once from the BC/D0 strings).
-extern s32 lbl_eu_80664210;
-extern s8 lbl_eu_80664214;
-extern s32 lbl_eu_80664220;
-extern s8 lbl_eu_80664224;
+extern s32 sTwoColLen;
+extern s8 sTwoColLenInit;
+extern s32 sTwoColAltLen;
+extern s8 sTwoColAltLenInit;
 
 // Lazy strlen-1 cache + init flag for the CItem_rollThreeCol / CItem_rollThreeColAlt
 // column-string mutation (computed once from the B0/C4 strings).
-extern s32 lbl_eu_80664208;
-extern s8 lbl_eu_8066420C;
-extern s32 lbl_eu_80664218;
-extern s8 lbl_eu_8066421C;
+extern s32 sThreeColLen;
+extern s8 sThreeColLenInit;
+extern s32 sThreeColAltLen;
+extern s8 sThreeColAltLenInit;
 
 // Lazy strlen-1 cache + init flag for the CItem_rollTwoColPick column-string
 // mutation (computed once from the A8/AC strings).
-extern s32 lbl_eu_80664200;
-extern s8 lbl_eu_80664204;
+extern s32 sTwoColPickLen;
+extern s8 sTwoColPickLenInit;
 
 // ---------------------------------------------------------------------------
 // Item data types (unit kyoshin/cf/CItem)
@@ -308,24 +308,24 @@ struct CItemVtblSize {
 };
 
 // u16 flag table compared against the item kind by CItem_famFlag.
-extern u16 lbl_eu_8052F6B8[];
+extern u16 sItemFamFlagTable[];
 
 // Lazy-init guard flag and shared sort scratch buffer used by
 // CItem_sortBuf / CItem_buildSortName (u8 at 0x00, u32 at 0x40).
-extern s8 lbl_eu_806641FC;
+extern s8 sItemSortBufInit;
 struct CItemSortBuf {
     /* 0x00 */ u8 field_00;
     /* 0x01 */ u8 field_01[0x3F];
     /* 0x40 */ u32 field_40;
 };
-extern CItemSortBuf lbl_eu_80573FC0;
+extern CItemSortBuf sItemSortBuf;
 
 // Second lazy-init guard/buffer pair used by CItemData_fillSortBufA / CItemData_fillSortBufB
 // (same layout as CItemSortBuf).
-extern s8 lbl_eu_806641FD;
-extern s8 lbl_eu_806641FE;
-extern CItemSortBuf lbl_eu_80574004;
-extern CItemSortBuf lbl_eu_80574048;
+extern s8 sItemSortBufAInit;
+extern s8 sItemSortBufBInit;
+extern CItemSortBuf sItemSortBufA;
+extern CItemSortBuf sItemSortBufB;
 
 // ---------------------------------------------------------------------------
 // Per-category item-impl instances (lazy-initialized by
@@ -337,24 +337,24 @@ extern CItemSortBuf lbl_eu_80574048;
 struct CItemImplInst {
     void* vtable;
 };
-extern CItemImplInst lbl_eu_806641C0;
-extern CItemImplInst lbl_eu_806641C8;
-extern CItemImplInst lbl_eu_806641D0;
-extern CItemImplInst lbl_eu_806641D8;
-extern CItemImplInst lbl_eu_806641E0;
-extern CItemImplInst lbl_eu_806641E8;
-extern CItemImplInst lbl_eu_806641F0;
-extern CItemImplInst lbl_eu_806641F8;
+extern CItemImplInst sPurifyKessyouImpl;
+extern CItemImplInst sKessyouImpl;
+extern CItemImplInst sPurifyCrystalImpl;
+extern CItemImplInst sDropCrystalImpl;
+extern CItemImplInst sCrystalImpl;
+extern CItemImplInst sEquipImpl;
+extern CItemImplInst sConsImpl;
+extern CItemImplInst sDummyImpl;
 
 // Lazy-init guard flags (one per impl instance above).
-extern s8 lbl_eu_806641BC;
-extern s8 lbl_eu_806641C4;
-extern s8 lbl_eu_806641CC;
-extern s8 lbl_eu_806641D4;
-extern s8 lbl_eu_806641DC;
-extern s8 lbl_eu_806641E4;
-extern s8 lbl_eu_806641EC;
-extern s8 lbl_eu_806641F4;
+extern s8 sPurifyKessyouImplInit;
+extern s8 sKessyouImplInit;
+extern s8 sPurifyCrystalImplInit;
+extern s8 sDropCrystalImplInit;
+extern s8 sCrystalImplInit;
+extern s8 sEquipImplInit;
+extern s8 sConsImplInit;
+extern s8 sDummyImplInit;
 
 // Vtable objects written into the impl instances' vtable slots.
 extern u8 lbl_eu_8052FC58[];
@@ -377,9 +377,12 @@ extern u8 lbl_eu_8052F770[];
 // Lazy item-impl accessor: returns the per-category impl instance for self.
 extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 
-// Per-kind impl table (indexed by kind & 0xF) used by the default dispatch
+// Item-slot initializer defined in kyoshin/cf/CItem.cpp.
+extern "C" void CItem_initSlot(CItemData* self, u32 family, u32 row, u16 kind);
+
+// Per-kind impl table
 // of CItem_initItemImplInstances.
-extern CItemImpl* lbl_eu_8052F67C[16];
+extern CItemImpl* sItemKindImplTable[16];
 
 // Sort scratch filler shared with CItem_sortBuf (writes the u8 at 0x00 and
 // the u32 at 0x40 of buf).

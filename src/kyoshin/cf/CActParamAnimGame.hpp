@@ -7,7 +7,7 @@
 #include "kyoshin/action/CActParamData.hpp"
 #include "kyoshin/action/CActParamAnim.hpp"
 #include "monolib/math/CVec3.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 namespace cf {
@@ -52,6 +52,8 @@ public:
     bool startMoveGate(u32 type, u32 state);
     bool fireStateGate(u32 type, u32 state);
     bool isFiringAllowed() const { return (field530 & 0x200) == 0; }
+    bool hasFlag80000() const { return (field4EC & 0x80000) != 0; }
+    u32 getFlags4EC() const { return field4EC; }
     bool tryGroundStep(u32 type, u32 state);
     bool dashStartGate(u32 type);
     bool scanActorList(u32 type);
@@ -98,7 +100,7 @@ public:
 // through this view so every load/store uses the retail byte offset.
 struct CActParamAnimGameView {
     u8 _00[0x0C];
-    volatile u32 flags0C;            // 0x0C
+    u32 flags0C;                     // 0x0C
     u8 _10[0x270 - 0x10];            // 0x10 embedded CActParamData (child data)
     u32 flags270;                    // 0x270
     u8 _274[0x374 - 0x274];
@@ -234,7 +236,7 @@ extern const float lbl_eu_80666154;   // sdata2: height bound (func_8005EEB4)
 extern const float lbl_eu_80666158;   // sdata2: height bound (func_8005EEB4)
 extern const float lbl_eu_8066615C;   // sdata2: probe offset (func_8005EEB4)
 extern const float lbl_eu_80666160;   // sdata2: height bound (func_8005EEB4)
-extern u32 lbl_eu_80665958;   // sdata: object pointer passed to Coli_WalkReport (func_8005EEB4)
+// sEneColiProbe is declared once in monolib/coli/code_804B2FF0.hpp.
 extern const float lbl_eu_8066610C;   // sdata2: ground-probe constant (func_8005D2C4)
 extern const float lbl_eu_80666110;   // sdata2: drop threshold (func_8005D2C4)
 extern const float lbl_eu_80666114;   // sdata2: ground-probe constant (func_8005D2C4)

@@ -10,6 +10,8 @@
 */
 class CCol6Invite : public CProcess {
 public:
+    static CCol6Invite* sInstance;
+
     static CCol6Invite* Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
     virtual ~CCol6Invite();
 
@@ -37,12 +39,9 @@ public:
     /* 0x74 */ u8 mField74;       // init 0
 };
 
-// Singleton instance slot (lbl_eu_8066423C in retail).
-extern "C" CCol6Invite* lbl_eu_8066423C;
 
-// Named-member view of the null pointer-to-member-function constant. Reading
-// through w0/w1/w2 members keeps MWCC from re-folding __ptmf_null references
-// into duplicate @l relocs (retail materializes the pointer once).
+// The null pointer-to-member-function constant is three words wide; its
+// canonical declaration lives in CCol6System.hpp (u32[3]).
 struct PtmfNullWords {
     u32 w0;
     u32 w1;

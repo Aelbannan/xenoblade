@@ -211,8 +211,8 @@ extern "C" const float lbl_eu_80668814;
 extern "C" const double lbl_eu_80668818;
 extern "C" void* lbl_eu_80537474[];
 extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-extern "C" char* lbl_eu_806647DC;
-extern "C" void* lbl_eu_806647D8;
+extern "C" char* gpClpCollectMsgTable;
+extern "C" void* gpClpItemMsgTable;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 // CCur per-frame update

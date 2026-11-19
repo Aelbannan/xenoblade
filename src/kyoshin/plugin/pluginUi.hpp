@@ -15,9 +15,11 @@ struct UiFlags {
     u32 _00; // 0x0
     u32 _04; // 0x4
     u32 flags; // 0x8
-
-    bool hasAnyFlags(u32 mask) const;
 };
+
+// Retail symbol is plain `hasAnyFlags`; CFuncRefTable entries in
+// CfObjectImplPc.cpp take its address by that unmangled name.
+extern "C" bool hasAnyFlags(UiFlags* self, u32 mask);
 
 // ---------------------------------------------------------------------------
 // Imports (retail symbol names, C linkage via the extern "C" block below;
@@ -42,7 +44,7 @@ struct CfEnumListItem {
 struct CfSlotTable {
     u32 values[3];  // 0x0
 };
-extern CfSlotTable lbl_eu_804FA9F0;
+extern CfSlotTable pluginTrustEffectSlots;
 
 // RTTI typeinfo pair for __dynamic_cast in setTrust.
 // Declared as complete scalar types so MWCC sdata-addresses them
@@ -50,10 +52,8 @@ extern CfSlotTable lbl_eu_804FA9F0;
 extern u32 __RTTI__Q22cf12CfObjectMove;
 extern const void* __RTTI__Q22cf8CfObject;
 
-// sdata2 constant for fadeOut_1 (fade alpha value).
-extern f32 lbl_eu_80665DB8;
 // The int->double conversion magic (lbl_eu_80665DC0) is planted as a TU-local
-// static const double in pluginUi.cpp so MWCC unifies its implicit-cast magic
+
 // pool entry with it (see the comment there).
 
 // Message string tables / buffers used by the mesVision commands.
@@ -61,7 +61,7 @@ extern char lbl_eu_804FABF0[];
 // VM plugin command table (retail .data 0x80525D68, 38 name/function pairs).
 // Defined in pluginUi.cpp as a typed pointer table; vmPluginRegist takes its
 // address (decays identically for any array type, so call code is unchanged).
-extern const void* lbl_eu_80525D68[];
+extern const void* pluginCommandTable[];
 
 // Player RTTI source type / pointer table entry used by the talk commands.
 // Complete scalar type so MWCC emits EMB_SDA21 addressing (retail `li @sda21`),
@@ -85,7 +85,19 @@ extern "C" {
 
 void pluginUiRegist();
 
-// Fade controller hook: (int mode, int arg, float a, float b, float c).
+// VM-command callees with unmangled (C-linkage) retail symbols. Declared once
+// here for the pluginUi commands instead of function-local copies. Return
+// types mirror the owning definitions in CUIWindowManager.cpp.
+class IUIWindow;
+IUIWindow* UIWin_Create602F4Win();
+IUIWindow* UIWin_Create5DCD0Win();
+void InitCol6LodTables();
+int UIWin_CreateCol6Check();
+IUIWindow* UIWin_CreateSaveWin();
+u32 CUICfManager_queueGameClearMenu();
+void prepareTextBuffer__Q22cf13CfGameManagerFv();
+
+// Fade controller hook:
 // The last argument is an int->float cast: MWCC's inline expansion emits
 // xoris/0x43300000 word-pair + fsubs against the shared sdata2 magic
 // (renamed to lbl_eu_80665DC0 by the unit's postprocess pool rule).

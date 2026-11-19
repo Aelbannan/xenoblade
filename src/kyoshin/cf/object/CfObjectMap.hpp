@@ -3,7 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/util/FixStr.hpp"  // ml::FixStr<64> for Tok_FormatStr (matches IResInfo.hpp)
 class CResLookup;
 class CScnEnvLgtCtrlListItem;
@@ -44,7 +44,7 @@ struct UnkMapPool2F2C {
     u8 field_0x0[0xC];
 };
 
-// View of the global scene object (lbl_eu_80663E14) used to reach its
+// View of the global scene object (gmScene) used to reach its
 // resource manager at +0x7C.
 struct UnkSceneView {
     u8 field_0x0[0x7C];
@@ -139,8 +139,8 @@ extern "C" void CfRes_tryUpdateSlot16C(void* r3);
 }
 
 // ---- data symbols (global scope: no mangling, plain extern is enough) ----
-extern CView* lbl_eu_80663E10;     // global scene object (secondary)
-extern u32 lbl_eu_80663E28;        // global flag word
+extern CView* gmCurrentView;     // global scene object (secondary)
+extern u32 gmPauseFlags;        // global flag word
 extern void* lbl_eu_806640A8;      // bdat table pointer
 extern u32 lbl_eu_80664184;        // bdat row index
 extern char lbl_eu_804FC538[];     // map file-name suffix

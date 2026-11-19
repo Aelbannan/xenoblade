@@ -2,16 +2,21 @@
 
 #include <types.h>
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// Pointee types proven by the co-located TU libs/monolib/src/lod/CLODCacheManagerS.cpp.
-extern "C" u8*   lbl_eu_80665738;  // LOD cache records, stride 0xC
-// LOD linear distance-table entry (stride 8) -- u32 element pairs
-extern "C" u32*  lbl_eu_8066573C;
-extern "C" u32*  lbl_eu_8066574C;  // index -> pair-table offset
-// pair table, stride 2 (u16 entries)
-extern "C" u16*  lbl_eu_80665750;
-// LOD level-table entry (stride 0x10) used by the cubic lookup -- byte blob
-extern "C" u8*   lbl_eu_80665740;
-// LOD short-table entry (stride 8) backing the 2D lookup -- byte blob
-extern "C" u8*   lbl_eu_80665744;
-extern "C" u32*  lbl_eu_80665748;  // distance-key index table, stride 4
+// Canonical C-linkage declarations of the LOD tables owned by
+// monolib/src/lod/CLODCacheManagerS.cpp.  The pointee layouts live with the
+// owner; callers only need the opaque types and the retail symbol names.
+namespace LOD {
+struct CLODCacheManagerS;
+struct LODDistEntry;
+struct LODLevelEntry;
+struct LODShortEntry;
+struct LODCacheIndex;
+}
+
+extern "C" LOD::CLODCacheManagerS* sLodCacheRecords;  // cache records, stride 0xC
+extern "C" LOD::LODDistEntry* sLodDistTable;          // distance table, stride 8
+extern "C" u32* sLodPairOffsets;                      // index -> pair-table offset
+extern "C" u16* sLodPairTable;                        // pair table, stride 2
+extern "C" LOD::LODLevelEntry* sLodLevelTable;        // level table, stride 0x10
+extern "C" LOD::LODShortEntry* sLodShortTable;        // short table, stride 8
+extern "C" LOD::LODCacheIndex* sLodCacheIndexTable;   // distance-key index table

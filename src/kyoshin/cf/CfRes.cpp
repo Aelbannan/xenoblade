@@ -10,7 +10,7 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/work/CEventFile.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 
 // Out-of-line CResLookup vtable thunks (retail shares one dispatcher per slot).
@@ -237,27 +237,27 @@ bool CfRes_findKey(CfResBuffer* buffer, u32 mode) {
     return found;
 }
 
-extern u32 lbl_eu_80663D80;
-extern "C" int CfRes_getD80Flag() { return lbl_eu_80663D80; }
+extern u32 gCfResScene;
+extern "C" int CfRes_getD80Flag() { return gCfResScene; }
 
-extern u32 lbl_eu_80663D80;
-extern "C" u32 CfRes_setD80Flag(u32 val) { lbl_eu_80663D80 = val; return val; }
+extern u32 gCfResScene;
+extern "C" u32 CfRes_setD80Flag(u32 val) { gCfResScene = val; return val; }
 
 // retail: lwz r3,lbl; cmpwi; beq; b CScn::getAllocHandle / b getHandleMEM1 (tail calls)
 extern "C" void* CfRes_getHeapHandle() {
-    if (lbl_eu_80663D80 != 0) { return (void*)((CScn*)lbl_eu_80663D80)->getAllocHandle(); }
+    if (gCfResScene != 0) { return (void*)((CScn*)gCfResScene)->getAllocHandle(); }
     return (void*)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
 extern "C" mtl::ALLOC_HANDLE CfRes_getAllocHandle() {
-    if (lbl_eu_80663D80 != 0) { return Scn_CallUnk8C_V10((void*)lbl_eu_80663D80); }
+    if (gCfResScene != 0) { return Scn_CallUnk8C_V10((void*)gCfResScene); }
     return (mtl::ALLOC_HANDLE)(uintptr_t)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
 // Use explicit default return to match retail pattern
-extern u32 lbl_eu_80663D7C;
+extern u32 gCfResInstance;
 extern "C" int CfRes_getInstanceField() {
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -265,13 +265,13 @@ extern "C" int CfRes_getInstanceField() {
     return ret;
 }
 
-extern u32 lbl_eu_80663D7C;
-extern "C" int CfRes_getInstance() { return lbl_eu_80663D7C; }
+extern u32 gCfResInstance;
+extern "C" int CfRes_getInstance() { return gCfResInstance; }
 
-extern u32 lbl_eu_80663D7C;
+extern u32 gCfResInstance;
 extern int CfRes_updateHighGrid(int, int);
 extern "C" int CfRes_callFunc_67E78() {
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -282,10 +282,10 @@ extern "C" int CfRes_callFunc_67E78() {
     return ret;
 }
 
-extern u32 lbl_eu_80663D7C;
+extern u32 gCfResInstance;
 extern int CfRes_updateHighGridFiltered(int, int);
 extern "C" void CfRes_callFunc_67F10(s32 value) {
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -295,9 +295,9 @@ extern "C" void CfRes_callFunc_67F10(s32 value) {
     }
 }
 
-extern u32 lbl_eu_80663D7C;
+extern u32 gCfResInstance;
 extern "C" void CfRes_callFunc_68078() {
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -308,11 +308,11 @@ extern "C" void CfRes_callFunc_68078() {
 }
 
 extern "C" {
-extern u32 lbl_eu_80663D7C;
+extern u32 gCfResInstance;
 extern int CfRes_updateLowGrid(int, void*);
 }
 extern "C" void CfRes_callFunc_68110(u32 self) {
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -322,9 +322,9 @@ extern "C" void CfRes_callFunc_68110(u32 self) {
     }
 }
 
-extern u32 lbl_eu_80663D7C;
+extern u32 gCfResInstance;
 extern "C" void CfRes_callFunc_68254() {
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -335,9 +335,9 @@ extern "C" void CfRes_callFunc_68254() {
 }
 
 extern "C" void CfRes_callFunc_67FE0(){
-    extern u32 lbl_eu_80663D7C;
+    extern u32 gCfResInstance;
     extern void CfRes_updateHighGridFlagged(u32);
-    u32 val = lbl_eu_80663D7C;
+    u32 val = gCfResInstance;
     int ret = 0;
     if (val) {
         ret = val + 4;
@@ -348,13 +348,13 @@ extern "C" void CfRes_callFunc_67FE0(){
 }
 
 // CfRes_lookupStrTable: when the key string at `self` matches the global name key
-// (lbl_eu_80661A20), resolve the indexed table record: store the packed id
+// (gResKeyKyp), resolve the indexed table record: store the packed id
 // of its +0x18 string to *out and return the record's relative-offset target
 // (0 otherwise).
 extern "C" void* CfRes_lookupStrTable(char* self, int index, void** out) {
     void* result = 0;
     if (self != 0) {
-        int same = strcmp(lbl_eu_80661A20, self) == 0;
+        int same = strcmp(gResKeyKyp, self) == 0;
         if (same) {
             CfResStrTableRec* rec = (CfResStrTableRec*)(self + index * 16);
             *out = (void*)(uintptr_t)Tok_GetPrefix(rec->str);
@@ -365,10 +365,10 @@ extern "C" void* CfRes_lookupStrTable(char* self, int index, void** out) {
 }
 
 // CfRes_getNameRecCount: return the +4 count of a string-keyed record when its
-// inline key matches the global name key (lbl_eu_80661A24), else 0.
+// inline key matches the global name key (gResKeyDap1), else 0.
 extern "C" int CfRes_getNameRecCount(CfResNameRec* rec) {
     if (rec != 0) {
-        int same = strcmp(lbl_eu_80661A24, rec->mKey) == 0;
+        int same = strcmp(gResKeyDap1, rec->mKey) == 0;
         if (same) {
             return rec->mCount;
         }
@@ -392,11 +392,11 @@ extern "C" char* CfRes_extType(char* self, int index, u32* outType, u32* outFiel
     // Retail proceeds only when the key string equals self; the equality
     // result is materialized as an int before branching (cntlzw codegen).
     if (self != 0) {
-        int same = strcmp(lbl_eu_80661A24, self) == 0;
+        int same = strcmp(gResKeyDap1, self) == 0;
         if (same) {
             rec = 0;
             if (self != 0) {
-                int same2 = strcmp(lbl_eu_80661A24, self) == 0;
+                int same2 = strcmp(gResKeyDap1, self) == 0;
                 if (same2) {
                     rec = (u32*)((int)self + index * 0x18 + 8);
                 }
@@ -503,11 +503,11 @@ run:
 }
 
 extern "C" int CfRes_checkFlags_48000() {
-    return (lbl_eu_80663E24 & 0x00048000) != 0 ? 1 : 0;
+    return (gmGameFlags & 0x00048000) != 0 ? 1 : 0;
 }
 
 extern "C" int CfRes_checkFlags_2000400() {
-    return (lbl_eu_80663E24 & 0x02000400) != 0 ? 1 : 0;
+    return (gmGameFlags & 0x02000400) != 0 ? 1 : 0;
 }
 
 // CfRes_tryResolveSlotF4: forward (a, b, c) into the manager's resource resolver
@@ -940,7 +940,7 @@ extern "C" void CfRes_initTblEntries(u32 arg);
 // CfRes_initArchiveTables call out-of-line (bl); with auto-inlining this body
 // folds into __ct__Q22cf5CfResFv and the call relocs shift.
 void CfRes_initArchiveTables(u8* self, int arg) {
-    lbl_eu_80663D80 = arg;
+    gCfResScene = arg;
     CfRes_initWork(self + 4);
     CfRes_initResEntries(-1);
     CfRes_initTblEntries(-1);
@@ -1378,11 +1378,11 @@ extern "C" int CfRes_streq(const char* s1, const char* s2) {
 }
 
 extern "C" unsigned long CfRes_getE24Bit22() {
-    return (lbl_eu_80663E24 >> 22) & 1;
+    return (gmGameFlags >> 22) & 1;
 }
 
 extern "C" int CfRes_getE24Bit18() {
-    return (lbl_eu_80663E24 >> 18) & 1;
+    return (gmGameFlags >> 18) & 1;
 }
 
 // folded isInUse
@@ -1811,8 +1811,8 @@ int CfRes_dispatchLoad(void* self, u32 packed, int flag, int kind) {
 }
 
 extern "C" void CfRes_clearE28Mask(unsigned long mask) {
-    extern unsigned long lbl_eu_80663E28;
-    lbl_eu_80663E28 &= ~mask;
+    extern unsigned long gmPauseFlags;
+    gmPauseFlags &= ~mask;
 }
 
 struct CfResData {
@@ -1852,19 +1852,19 @@ extern "C" void CfRes_orBits_649B4(u8* self, u32 bits) {
     *(u32*)self |= bits;
 }
 
-// lbl_eu_80663E14 is declared by the shared headers (CScn*); cast at use.
-extern "C" int CfRes_getE14() { return (int)(uintptr_t)lbl_eu_80663E14; }
+// gmScene is declared by the shared headers (CScn*); cast at use.
+extern "C" int CfRes_getE14() { return (int)(uintptr_t)gmScene; }
 
 extern "C" void CfRes_orBits_649CC(u8* self, u32 bits) {
     *(u32*)self |= bits;
 }
 
-extern u32 lbl_eu_80663E30;
-extern "C" int CfRes_getE30() { return lbl_eu_80663E30; }
+extern u32 gmQueuedEventCount;
+extern "C" int CfRes_getE30() { return gmQueuedEventCount; }
 
 extern "C" void CfRes_setE28Mask(u32 bits) {
-    extern u32 lbl_eu_80663E28;
-    lbl_eu_80663E28 |= bits;
+    extern u32 gmPauseFlags;
+    gmPauseFlags |= bits;
 }
 
 // vtable+0xC dispatch on *(self+0x2C) (retail: lwz r3,0x2c; lwz r12,0; lwz r12,0xc; mtctr; bctr)
@@ -2483,9 +2483,9 @@ void cf::CfResTask::Draw() {}
 void cf::CfResTask::Term() {
     CfRes_resetAllEntries(mEntries);
     CfRes_dtorStoragePlus4(mField54);
-    lbl_eu_80663D80 = 0;
-    lbl_eu_80663D78 = 0;
-    lbl_eu_80663D7C = 0;
+    gCfResScene = 0;
+    gCfResManager = 0;
+    gCfResInstance = 0;
 }
 
 
@@ -2539,10 +2539,10 @@ CfResManager* __ct__Q22cf5CfResFv(CProcess* parent, int archiveId) {
         tbl2[1] = 0;
         tbl2[2] = 0;
         CfRes_zeroSlots(s2, s2 + 6);
-        lbl_eu_80663D7C = (u32)base54;
+        gCfResInstance = (u32)base54;
         CfRes_initArchiveTables((u8*)&base54[1], archiveId);
     }
-    lbl_eu_80663D78 = (u32)mgr;
+    gCfResManager = (u32)mgr;
     ((CProcess*)mgr)->Regist(parent, false);
     return mgr;
 }
@@ -2813,9 +2813,9 @@ extern const void* lbl_eu_80526D60[];
 extern const void* lbl_eu_80526DC0[];
 // .sdata 0xA0: archive-key pointers + RTTI typeinfo pairs + "." separator.
 __declspec(section ".sdata") __attribute__((aligned(8), used))
-const char* lbl_eu_80661A20 = lbl_eu_806661F0;
+const char* gResKeyKyp = lbl_eu_806661F0;
 __declspec(section ".sdata") __attribute__((used))
-const char* lbl_eu_80661A24 = lbl_eu_806661F4;
+const char* gResKeyDap1 = lbl_eu_806661F4;
 __declspec(section ".sdata") __attribute__((used))
 const void* __RTTI__Q22cf9CfResTask[2] = { lbl_eu_804FB1E0, lbl_eu_805267C8 };
 __declspec(section ".sdata") __attribute__((used))
@@ -2856,8 +2856,8 @@ __declspec(section ".sdata") __attribute__((used))
 const void* __RTTI__Q22cf8IResInfo[2] = { lbl_eu_804FB370, 0 };
 // .sbss 0x10: manager/instance state (retail sizes; 80663D84 has no named
 // users, covered by the static pad word).
-u32 lbl_eu_80663D78;
-u32 lbl_eu_80663D7C;
-u32 lbl_eu_80663D80;
+u32 gCfResManager;
+u32 gCfResInstance;
+u32 gCfResScene;
 __attribute__((used))
 static u32 s_CfResSbssPad84;

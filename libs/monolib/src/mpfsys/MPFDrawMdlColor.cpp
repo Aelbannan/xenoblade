@@ -79,7 +79,7 @@ extern "C" {
 extern s8 lbl_eu_80665898;                       // MPFDrawMdlColor singleton init flag
 extern mpfsys::MPFDrawMdlColor* lbl_eu_8066589C; // MPFDrawMdlColor singleton slot
 extern u8* lbl_eu_80665840;                      // model data arena base
-extern MPFDrawMdlData* lbl_eu_80665860;          // last draw data handed to the unit
+extern MPFDrawMdlData* sLastBillDrawData;          // last draw data handed to the unit
 
 // TEV / texture pipeline helpers implemented by mpfsys::UnkClass_80471EC8.
 // Retail mangles them as Fv members but they are invoked with the arguments
@@ -178,7 +178,7 @@ extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMd
 
     polys = (const MPFDrawMdlPolyNoColor*)(lbl_eu_80665840 + data->polyListOff);
     mats = (const MPFDrawMdlMat*)(lbl_eu_80665840 + data->matListOff);
-    lbl_eu_80665860 = data;
+    sLastBillDrawData = data;
     GXSetCurrentMtx(3);
 
     if (data->flags & 2) {
@@ -235,7 +235,7 @@ extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawM
     polys = (const MPFDrawMdlPolyNoColor*)(lbl_eu_80665840 + data->polyListOff);
     mats = (const MPFDrawMdlMat*)(lbl_eu_80665840 + data->matListOff);
     GXSetCurrentMtx(3);
-    lbl_eu_80665860 = data;
+    sLastBillDrawData = data;
 
     if (data->flags & 2) {
         setupGfxMode3__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -287,7 +287,7 @@ extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMd
 
     polys = (const MPFDrawMdlPolyColor*)(lbl_eu_80665840 + data->polyListOff);
     mats = (const MPFDrawMdlMat*)(lbl_eu_80665840 + data->matListOff);
-    lbl_eu_80665860 = data;
+    sLastBillDrawData = data;
     GXSetCurrentMtx(3);
 
     if (data->flags & 2) {
@@ -344,7 +344,7 @@ extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawM
 
     polys = (const MPFDrawMdlPolyColor*)(lbl_eu_80665840 + data->polyListOff);
     mats = (const MPFDrawMdlMat*)(lbl_eu_80665840 + data->matListOff);
-    lbl_eu_80665860 = data;
+    sLastBillDrawData = data;
     GXSetCurrentMtx(3);
 
     if (data->flags & 2) {

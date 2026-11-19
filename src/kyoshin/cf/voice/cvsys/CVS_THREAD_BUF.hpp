@@ -22,6 +22,11 @@ public:
     int           field_0x3c;      // 0x3C: current slot index
 
     int blank1() override;
+
+    // Voice-event state handlers installed into the inherited state member.
+    void advanceSlot();
+    void advanceIndex();
+
     static void create();
 };
 
@@ -41,7 +46,7 @@ extern "C" {
     int    RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*    CCharVoiceMan_AllocVoiceArena(int size);
-    void   __ct__cf_CVS_THREAD();
+    CVS_THREAD* __ct__cf_CVS_THREAD(CVS_THREAD* object);
     int    HpVoice_MapSubState(CVoiceHandle* handle);
     CVoiceHandle* HpVoice_FindBySubState(int a);
     void*  findObjectById__Fi(int id);
@@ -76,8 +81,11 @@ struct CVoiceVTV {
     virtual int idle();
 };
 
-// Globals: post-init state triples and this subclass's vtable.
-extern u32 lbl_eu_805399E0[3];
-extern u32 lbl_eu_805399EC[3];
-extern u32 lbl_eu_805399F8[3];
+// Typed PTMF triples consumed by the state handlers. The retail blobs are
+// owned by this unit's data range and are named by their split symbols.
+typedef void (CVS_THREAD::*BufState)();
+extern BufState const lbl_eu_805399EC;
+extern BufState const lbl_eu_805399F8;
+
+// Globals: this subclass's vtable.
 extern u32 lbl_eu_80539A04[7];

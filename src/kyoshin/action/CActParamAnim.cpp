@@ -69,78 +69,78 @@ void CActParamAnim::initAnimState() {
     view->field378 = 0;
     view->field37C = -1;
     view->field380 = 9.8f;
-    view->field384 = lbl_eu_80665E9C;
-    view->field388 = lbl_eu_80665E9C;
-    view->field38C = lbl_eu_80665E9C;
-    view->field390 = lbl_eu_80665E9C;
-    view->field394 = lbl_eu_80665E9C;
-    view->field398 = lbl_eu_80665E9C;
-    view->field39C = lbl_eu_80665EA0;
+    view->field384 = 1.0f;
+    view->field388 = 1.0f;
+    view->field38C = 1.0f;
+    view->field390 = 1.0f;
+    view->field394 = 1.0f;
+    view->field398 = 1.0f;
+    view->field39C = 0.0f;
     view->object3A0 = 0;
     view->state3A4 = 0;
-    view->field3A8 = lbl_eu_80665EA0;
-    view->field3AC = lbl_eu_80665EA0;
-    view->field3B0 = lbl_eu_80665EA0;
-    view->field3B4 = lbl_eu_80665EA0;
-    view->field3B8 = lbl_eu_80665EA0;
-    view->field3BC = lbl_eu_80665EA0;
-    view->field3C0 = lbl_eu_80665EA0;
-    view->field3C4 = lbl_eu_80665EA0;
-    view->field3C8 = lbl_eu_80665EA0;
-    view->field3CC = lbl_eu_80665EA0;
-    view->field3D0 = lbl_eu_80665EA0;
-    view->field3D4 = lbl_eu_80665EA0;
-    view->field3D8 = lbl_eu_80665EA0;
-    view->field3DC = lbl_eu_80665E9C;
-    view->field3E0 = lbl_eu_80665EA0;
-    view->field3E4 = lbl_eu_80665EA0;
-    view->field3E8 = lbl_eu_80665EA0;
-    view->field3EC = lbl_eu_80665EA0;
-    view->field3F0 = lbl_eu_80665EA0;
-    view->field3F4 = lbl_eu_80665EA0;
-    view->field3F8 = lbl_eu_80665EA0;
-    view->field3FC = lbl_eu_80665EA0;
-    view->field400 = lbl_eu_80665EA0;
-    view->field404 = lbl_eu_80665EA0;
-    view->field408 = lbl_eu_80665EA0;
-    view->field40C = lbl_eu_80665E9C;
-    view->field410 = lbl_eu_80665EA0;
-    view->field414 = lbl_eu_80665EA0;
-    view->field418 = lbl_eu_80665EA0;
-    view->field41C = lbl_eu_80665EA0;
-    view->field420 = lbl_eu_80665E9C;
+    view->field3A8 = 0.0f;
+    view->field3AC = 0.0f;
+    view->field3B0 = 0.0f;
+    view->field3B4 = 0.0f;
+    view->field3B8 = 0.0f;
+    view->field3BC = 0.0f;
+    view->field3C0 = 0.0f;
+    view->field3C4 = 0.0f;
+    view->field3C8 = 0.0f;
+    view->field3CC = 0.0f;
+    view->field3D0 = 0.0f;
+    view->field3D4 = 0.0f;
+    view->field3D8 = 0.0f;
+    view->field3DC = 1.0f;
+    view->field3E0 = 0.0f;
+    view->field3E4 = 0.0f;
+    view->field3E8 = 0.0f;
+    view->field3EC = 0.0f;
+    view->field3F0 = 0.0f;
+    view->field3F4 = 0.0f;
+    view->field3F8 = 0.0f;
+    view->field3FC = 0.0f;
+    view->field400 = 0.0f;
+    view->field404 = 0.0f;
+    view->field408 = 0.0f;
+    view->field40C = 1.0f;
+    view->field410 = 0.0f;
+    view->field414 = 0.0f;
+    view->field418 = 0.0f;
+    view->field41C = 0.0f;
+    view->field420 = 1.0f;
     view->field424 = ml::CVec3::unitZ.x;
     view->field428 = ml::CVec3::unitZ.y;
     view->field42C = ml::CVec3::unitZ.z;
-    view->field430 = lbl_eu_80665EA4;
-    view->field434 = lbl_eu_80665EA8;
-    view->field438 = lbl_eu_80665E9C;
-    view->field43C = lbl_eu_80665EA4;
-    view->field440 = lbl_eu_80665EA0;
-    view->field444 = lbl_eu_80665EA0;
-    view->field448 = lbl_eu_80665EA0;
-    view->field44C = lbl_eu_80665EA0;
-    view->field450 = lbl_eu_80665EA0;
-    view->field454 = lbl_eu_80665EA0;
-    view->field458 = lbl_eu_80665EA0;
-    view->field45C = lbl_eu_80665EA0;
-    view->field460 = lbl_eu_80665E9C;
-    view->field464 = lbl_eu_80665EA0;
-    view->field468 = lbl_eu_80665EAC;
-    view->field46C = lbl_eu_80665EA0;
-    view->field470 = lbl_eu_80665EB0;
-    view->field474 = lbl_eu_80665EB0;
-    view->field478 = lbl_eu_80665EA0;
-    view->field47C = lbl_eu_80665EA0;
-    view->field480 = lbl_eu_80665EA0;
-    view->field484 = lbl_eu_80665EA0;
-    view->field488 = lbl_eu_80665EA0;
-    view->field48C = lbl_eu_80665EA0;
-    view->field490 = lbl_eu_80665EB4;
-    view->field494 = lbl_eu_80665EB8;
+    view->field430 = 35.0f;
+    view->field434 = 14.0f;
+    view->field438 = 1.0f;
+    view->field43C = 35.0f;
+    view->field440 = 0.0f;
+    view->field444 = 0.0f;
+    view->field448 = 0.0f;
+    view->field44C = 0.0f;
+    view->field450 = 0.0f;
+    view->field454 = 0.0f;
+    view->field458 = 0.0f;
+    view->field45C = 0.0f;
+    view->field460 = 1.0f;
+    view->field464 = 0.0f;
+    view->field468 = 6.5f;
+    view->field46C = 0.0f;
+    view->field470 = 4.0f;
+    view->field474 = 4.0f;
+    view->field478 = 0.0f;
+    view->field47C = 0.0f;
+    view->field480 = 0.0f;
+    view->field484 = 0.0f;
+    view->field488 = 0.0f;
+    view->field48C = 0.0f;
+    view->field490 = 2.0f;
+    view->field494 = 0.699999988079071f;
     view->field498 = 0;
-    view->field49C = lbl_eu_80665EA0;
-    f32 kScale = lbl_eu_80665EBC * ml::deg2rad;
+    view->field49C = 0.0f;
+    f32 kScale = 17.0f * ml::deg2rad;
     view->field4A0 = kScale;
     view->field4A4 = kScale;
     view->field4A8 = 0x00040000;
@@ -154,8 +154,8 @@ void CActParamAnim::initAnimState() {
     view->field4BF = 0;
     view->field4C0 = 0;
     view->field4C8 = -1;
-    view->field4CC = lbl_eu_80665EA0;
-    view->field4D0 = lbl_eu_80665EA0;
+    view->field4CC = 0.0f;
+    view->field4D0 = 0.0f;
     view->field4D4 = 0;
     view->field4D6 = 0;
     view->field4D8 = 0;
@@ -299,8 +299,8 @@ bool setTurnScale(CActParamAnim* self, f32 value) {
         if (obj != 0) {
             f32 tmp[3];
             tmp[1] = (f32)(f64)value;
-            tmp[0] = lbl_eu_80665EA0;
-            tmp[2] = lbl_eu_80665EA0;
+            tmp[0] = 0.0f;
+            tmp[2] = 0.0f;
             CActParamAnimObjVec* dst =
                 reinterpret_cast<CActParamAnimObjVec*>(simGetLeafActData(obj));
             dst->x = *reinterpret_cast<u32*>(&tmp[0]);
@@ -417,14 +417,14 @@ float CActParamAnim::getAttachedAnimTime() {
     extern float simGetLeafAnimDist(void*);
     void* obj = this->object3A0;
     if (obj) return simGetLeafAnimDist(obj);
-    return lbl_eu_80665EA0;
+    return 0.0f;
 }
 
 float CActParamAnim::getAttachedAnimRate() {
     extern float simGetLeafAnimDist2(void*);
     void* obj = this->object3A0;
     if (obj != 0) return simGetLeafAnimDist2(obj);
-    return lbl_eu_80665EA0;
+    return 0.0f;
 }
 
 void CActParamAnim::callObjUpdate() {
@@ -437,7 +437,7 @@ float CActParamAnim::getAttachedAnimScale() {
     extern float simGetLeafDist7B0(void*);
     void* obj = this->object3A0;
     if (obj != 0) return simGetLeafDist7B0(obj);
-    return lbl_eu_80665EA0;
+    return 0.0f;
 }
 
 extern "C" void setSnapFlags(CActParamAnim* self, u32 param1, u32 param2, f32 value) {
@@ -469,11 +469,11 @@ extern "C" int checkAnimDist(CActParamAnim* self, int param) {
     u8* obj = self->object3A0;
     if (!obj) return 0;
     if (param == 0) {
-        return simGetLeafAnimDist(obj) <= lbl_eu_80665E9C;
+        return simGetLeafAnimDist(obj) <= 1.0f;
     }
     if (scn80496HasChild2Node(obj + 0xC) != 0) {
         u8* obj2 = self->object3A0;
-        return simGetLeafAnimDist4(obj2) <= lbl_eu_80665E9C;
+        return simGetLeafAnimDist4(obj2) <= 1.0f;
     }
     return 0;
 }
@@ -595,7 +595,7 @@ extern "C" void startAnimDual(CActParamAnim* self, u32 param) {
 // switchSubAnim: start (or switch) the anim `param` on the attached
 // sub-object. sel selects the heading/frame source pair, resId overrides the
 // sub-object's resource file when non-zero, useDefaultScale forces the blend
-// frame count to the lbl_eu_80665EA0 default.
+// frame count to the 0.0f default.
 void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                    u32 useDefaultScale) {
     CActParamAnim* view = (CActParamAnim*)self;
@@ -624,15 +624,15 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     view->field37C = -1;
     f32 blendFrames =
         getParamFloatByName(reinterpret_cast<CActParamData*>(view->mChildData10), sel);
-    if (useDefaultScale != 0) blendFrames = lbl_eu_80665EA0;
+    if (useDefaultScale != 0) blendFrames = 0.0f;
 
     f32 startAngle = (sel != 0) ? view->field334 : view->field2B4;
-    if (startAngle != lbl_eu_80665EA0) {
+    if (startAngle != 0.0f) {
         // Blend the stored heading toward the target, wrapped into (-pi, pi].
         // Each wrap branch duplicates the owner-gate store + sub-object mirror
         // tail (retail layout).
         f32 angle = startAngle + view->field444;
-        blendFrames = lbl_eu_80665EA0;
+        blendFrames = 0.0f;
         const f32 pi = ml::pi;
         const f32 twoPi = ml::tau;
         if (angle > pi) {
@@ -647,9 +647,9 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                 if (obj != NULL) {
                     // Mirror the blended heading onto the sub-object position.
                     CActParamAnimData3 pos;
-                    pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.x = 0;
                     pos.y = reinterpret_cast<const u32&>(angle);
-                    pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.z = 0;
                     *reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(obj)) = pos;
                 }
             }
@@ -664,9 +664,9 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                 u8* obj = view->object3A0;
                 if (obj != NULL) {
                     CActParamAnimData3 pos;
-                    pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.x = 0;
                     pos.y = reinterpret_cast<const u32&>(angle);
-                    pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.z = 0;
                     *reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(obj)) = pos;
                 }
             }
@@ -680,9 +680,9 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
                 u8* obj = view->object3A0;
                 if (obj != NULL) {
                     CActParamAnimData3 pos;
-                    pos.x = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.x = 0;
                     pos.y = reinterpret_cast<const u32&>(angle);
-                    pos.z = reinterpret_cast<const u32&>(lbl_eu_80665EA0);
+                    pos.z = 0;
                     *reinterpret_cast<CActParamAnimData3*>(simGetLeafActData(obj)) = pos;
                 }
             }
@@ -713,7 +713,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     }
 
     view->field370 = param;
-    f32 speed27 = lbl_eu_80665E9C;
+    f32 speed27 = 1.0f;
     if ((view->field270 & 0x4) != 0) {
         if ((view->field0C & 0x10000) == 0)
             speed27 = reinterpret_cast<CActParamAnimSubObjView*>(view->object3A0)->field304;
@@ -721,8 +721,8 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         f32 scale24 = view->field24;
         f32 spf = getSecPerFrame__9CDeviceVIFv();
         f32 f3 = sp390 * spf;
-        f32 f1 = lbl_eu_80665EC8;
-        f32 f2 = (lbl_eu_80665EC4 * scale24) / f1;
+        f32 f1 = 3600.0f;
+        f32 f2 = (1000.0f * scale24) / f1;
         f2 *= f3;
         speed27 = (view->field448 / f2) / speed27;
     }
@@ -732,23 +732,23 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
 
     if (((view->field274 & 0x10) != 0 || (view->field274 & 0x8) != 0) &&
         (view->field270 & 0x10) == 0 && (view->field270 & 0x8) == 0 &&
-        blendTime > lbl_eu_80665EA0) {
+        blendTime > 0.0f) {
         f32 t = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
         simRefreshFlag8(view->object3A0, prevBlend * t / blendTime);
     }
 
     if (view->field370 == (s32)param) {
-        f32 spdBase = lbl_eu_80665E9C;
+        f32 spdBase = 1.0f;
         if ((view->field0C & 0x10000) == 0)
             spdBase = reinterpret_cast<CActParamAnimSubObjView*>(view->object3A0)->field304;
-        f32 spd2 = lbl_eu_80665E9C;
+        f32 spd2 = 1.0f;
         if ((view->field270 & 0x4) != 0) {
             f32 sp390 = view->field390;
             f32 scale24 = view->field24;
             f32 spf = getSecPerFrame__9CDeviceVIFv();
             f32 f3 = sp390 * spf;
-            f32 f1 = lbl_eu_80665EC8;
-            f32 f2 = (lbl_eu_80665EC4 * scale24) / f1;
+            f32 f1 = 3600.0f;
+            f32 f2 = (1000.0f * scale24) / f1;
             f2 *= f3;
             spd2 = (view->field448 / f2) / spdBase;
         }
@@ -766,7 +766,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
         f32 len = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
         view->field4A0 = absDiff / len;
         view->field4D0 = reinterpret_cast<CActParamAnimVt14*>(view)->f03();
-    } else if (lbl_eu_80665EA0 == view->field4D0) {
+    } else if (0.0f == view->field4D0) {
         view->field4A0 = view->field4A4;
     }
 
@@ -887,10 +887,10 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
         // "Anim finished" gate: skip when the scaled remaining time is spent.
         owner = view->owner08;
         bool finished;
-        if (owner == NULL || view->field394 == lbl_eu_80665EA0) {
+        if (owner == NULL || view->field394 == 0.0f) {
             finished = true;
         } else {
-            finished = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            finished = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
         if (!finished) {
             // Derive the heading from the sub-object's frame-to-frame move.
@@ -912,14 +912,14 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
                 nw4r::math::VEC3 dir;
                 dir.x = diff.x;
                 dir.z = diff.y;
-                dir.y = lbl_eu_80665EA0;
-                if (dir.z * dir.z + dir.x * dir.x + dir.y * dir.y == lbl_eu_80665EA0) {
+                dir.y = 0.0f;
+                if (dir.z * dir.z + dir.x * dir.x + dir.y * dir.y == 0.0f) {
                     dir = *reinterpret_cast<const nw4r::math::VEC3*>(&ml::CVec3::zero);
                 } else {
                     PSVECNormalize(dir, dir);
                 }
                 view->field440 =
-                    lbl_eu_80665ED0 * nw4r::math::Atan2FIdx(dir.x, dir.z) - saved;
+                    0.02454369328916073f * nw4r::math::Atan2FIdx(dir.x, dir.z) - saved;
             }
         }
     } else {
@@ -927,10 +927,10 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
         // adopted directly, otherwise fall back to field444 under the flag.
         owner = view->owner08;
         bool finished;
-        if (owner == NULL || view->field394 == lbl_eu_80665EA0) {
+        if (owner == NULL || view->field394 == 0.0f) {
             finished = true;
         } else {
-            finished = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            finished = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
         if (!finished) {
             view->field440 = saved;
@@ -953,8 +953,8 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
     while (ml::pi <= d) d -= ml::tau;
     while (d < -ml::pi) d += ml::tau;
     f32 m = (f32)__fabs((f64)(d * ml::rad2deg));
-    if (m > lbl_eu_80665ED4) m -= lbl_eu_80665ED4;
-    if (m <= lbl_eu_80665E9C) {
+    if (m > 180.0f) m -= 180.0f;
+    if (m <= 1.0f) {
         // Close enough to the target: count the guard down.
         s16 g = view->field4D4;
         if (g > 0) view->field4D4 = g - 1;
@@ -962,17 +962,17 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
         view->field4D4 = 3;
     }
     owner = view->owner08;
-    f32 speed = lbl_eu_80665EA0;
+    f32 speed = 0.0f;
     f32 prod = owner->field14 * view->field430;
-    if (prod < lbl_eu_80665ECC) speed = owner->field14 * view->field394;
-    f32 sx = lbl_eu_80665ED8 * view->field440;
+    if (prod < 0.10000000149011612f) speed = owner->field14 * view->field394;
+    f32 sx = 40.7436637878418f * view->field440;
     f32 spf1 = CDeviceVI::getSecPerFrame();
     f32 sinv = nw4r::math::SinFIdx(sx);
-    res.x = speed * sinv * (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8) *
+    res.x = speed * sinv * (1000.0f * view->field43C / 3600.0f) *
             (view->field390 * spf1);
     f32 cosv = nw4r::math::CosFIdx(sx);
     f32 spf2 = CDeviceVI::getSecPerFrame();
-    res.z = speed * cosv * (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8) *
+    res.z = speed * cosv * (1000.0f * view->field43C / 3600.0f) *
             (view->field390 * spf2);
 
     if ((view->field270 & 0x100) == 0) return;
@@ -989,9 +989,9 @@ extern "C" void blendAnimHeading(CActParamAnim* self) {
         return;
     }
     // Curved-turn branch: offsets swing around the turn radius.
-    f32 amp2 = speed * (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8);
-    view->field3CC = view->field398 * (amp2 * nw4r::math::SinFIdx(lbl_eu_80665ED8 * view->field440));
-    view->field3D4 = view->field398 * (amp2 * nw4r::math::CosFIdx(lbl_eu_80665ED8 * view->field440));
+    f32 amp2 = speed * (1000.0f * view->field43C / 3600.0f);
+    view->field3CC = view->field398 * (amp2 * nw4r::math::SinFIdx(40.7436637878418f * view->field440));
+    view->field3D4 = view->field398 * (amp2 * nw4r::math::CosFIdx(40.7436637878418f * view->field440));
     f32 sc = view->field390 * CDeviceVI::getSecPerFrame();
     view->field3CC *= sc;
     view->field3D4 *= sc;
@@ -1011,7 +1011,7 @@ extern "C" void subVec3f(f32* out, const f32* a, const f32* b){
 extern "C" ml::CVec3* normVec3(ml::CVec3* vec) {
     // Normalize; degenerate (zero-length) vectors are replaced by the zero
     // vector instead (matches the retail lenSq == 0 branch).
-    if (vec->x * vec->x + vec->y * vec->y + vec->z * vec->z == lbl_eu_80665EA0) {
+    if (vec->x * vec->x + vec->y * vec->y + vec->z * vec->z == 0.0f) {
         *vec = ml::CVec3::zero;
     } else {
         PSVECNormalize(*vec, *vec);
@@ -1021,8 +1021,7 @@ extern "C" ml::CVec3* normVec3(ml::CVec3* vec) {
 
 float Atan2FIdx__Q24nw4r4mathFff(float, float);
 float CActParamAnim_atan2Scaled(float y, float x) {
-    extern float lbl_eu_80665ED0;
-    return lbl_eu_80665ED0 * Atan2FIdx__Q24nw4r4mathFff(y, x);
+    return 0.02454369328916073f * Atan2FIdx__Q24nw4r4mathFff(y, x);
 }
 
 extern "C" f32 sinAnimFIdx(f32 angle) {
@@ -1041,40 +1040,40 @@ extern "C" void updateLeafDist(CActParamAnim* self) {
     CActParamAnim* view = (CActParamAnim*)self;
     if ((view->field270 & 0x8) != 0) {
         f32 v = view->field450 + view->field390;
-        view->field44C = lbl_eu_80665EA0;
+        view->field44C = 0.0f;
         view->field450 = v;
         view->field454 = v;
     } else {
         f32 v = view->field44C + view->field390;
-        view->field450 = lbl_eu_80665EA0;
+        view->field450 = 0.0f;
         view->field44C = v;
-        if (!(v < lbl_eu_80665EE0)) {
-            view->field454 = lbl_eu_80665EA0;
+        if (!(v < 5.0f)) {
+            view->field454 = 0.0f;
         }
     }
     CActParamAnimOwner* owner = view->owner08;
     int t;
     if (owner == 0) {
         t = 1;
-    } else if (view->field394 == lbl_eu_80665EA0) {
+    } else if (view->field394 == 0.0f) {
         t = 1;
     } else {
-        t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+        t = (owner->field14 * view->field430) < 0.10000000149011612f;
     }
     if (t != 0) {
         view->field458 = view->field390 + view->field458;
     } else {
-        view->field458 = lbl_eu_80665EA0;
+        view->field458 = 0.0f;
     }
     u8* obj = view->object3A0;
     if (obj != 0) {
         if ((view->field270 & 0x4) != 0) {
-            if (view->field390 == lbl_eu_80665EA0) {
-                simSetLeafDist7B0(obj, lbl_eu_80665EA0);
+            if (view->field390 == 0.0f) {
+                simSetLeafDist7B0(obj, 0.0f);
             } else {
                 f32 divisor;
                 if ((view->field0C & 0x10000) != 0) {
-                    divisor = lbl_eu_80665E9C;
+                    divisor = 1.0f;
                 } else {
                     divisor = reinterpret_cast<CActParamAnimSubObjView*>(obj)->field304;
                 }
@@ -1084,8 +1083,8 @@ extern "C" void updateLeafDist(CActParamAnim* self) {
                 f32 field38C = view->field38C;
                 f32 frameSec = CDeviceVI::getSecPerFrame();
                 f32 frameScale = animSpeed * frameSec;
-                f32 scaled = lbl_eu_80665EC4 * field24;
-                f32 denom = (scaled / lbl_eu_80665EC8) * frameScale;
+                f32 scaled = 1000.0f * field24;
+                f32 denom = (scaled / 3600.0f) * frameScale;
                 f32 value = view->field448 / denom;
                 value = field388 * value;
                 value = field38C * value;
@@ -1114,7 +1113,7 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
     if ((view->field0C & 0x800) != 0) return;
     if (view->object3A0 != 0) {
         // The sub-object's current position is read as ints and re-floated
-        // (retail: fctiwz + lbl_eu_80665EE8 magic) before the state sync call.
+        // (retail: fctiwz + int-to-float conversion) before the state sync call.
         f32 v1 = (f32)(s32)simGetLeafAnimDist4(view->object3A0);
         f32 v2 = (f32)(s32)simGetLeafAnimDist(view->object3A0);
         updateParamFloats(reinterpret_cast<CActParamData*>(view->mChildData10), v2, v1);
@@ -1122,7 +1121,7 @@ extern "C" void tickAnimFrame(CActParamAnim* self) {
         f32 t = Scn_GetFrameDelta(reinterpret_cast<void**>(view->object3A0)[1]);
         view->field390 = t * rate;
         view->field4B0 = 0;
-        if (Scn_GetFrameDelta(reinterpret_cast<void**>(view->object3A0)[1]) > lbl_eu_80665EA0 && view->field4D8 < 10) {
+        if (Scn_GetFrameDelta(reinterpret_cast<void**>(view->object3A0)[1]) > 0.0f && view->field4D8 < 10) {
             view->field4D8++;
         }
     }
@@ -1157,7 +1156,7 @@ int calcAnimBlendWeight__13CActParamAnimFv(CActParamAnim* self, u32 param) {
             float progress = simGetLeafAnimDist4(view->object3A0);
             // Int threshold widened via the 0x4330 magic cast (retail
             // xoris/lis/fsubs template); the pool cookie it synthesizes maps
-            // to lbl_eu_80665EE8 through retail_reloc_map.json.
+            // to the compiler's signed int-to-float conversion sequence.
             if (!(progress >= (f32)v)) result = 0;
         }
         return result;
@@ -1222,7 +1221,7 @@ extern "C" int dispatchAnimSlot__13CActParamAnimFv(CActParamAnim* self, u32 para
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function. Gate: proceed only when the anim is NOT finished, i.e. owner
 // is null, or anim speed (+0x394) is zero, or the scaled remaining time
-// (+0x430 * owner +0x14) is still below lbl_eu_80665ECC.
+// (+0x430 * owner +0x14) is still below 0.10000000149011612f.
 extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnim* view = (CActParamAnim*)self;
     CActParamAnimOwner* owner = view->owner08;
@@ -1234,10 +1233,10 @@ extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 p
 
     int ok;
     if (owner != 0) {
-        if (lbl_eu_80665EA0 == view->field394) {
+        if (0.0f == view->field394) {
             ok = 1;
         } else {
-            ok = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            ok = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
     } else {
         ok = 1;
@@ -1282,12 +1281,12 @@ extern "C" int startUnfinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 p
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function. Gate: proceed only when the anim IS finished (owner non-null,
-// speed non-zero, and scaled remaining time below lbl_eu_80665ECC).
+// speed non-zero, and scaled remaining time below 0.10000000149011612f).
 // Open-item packet (best 85 mismatch / 75 structural / 10 reg-swap, decomp
 // 432B vs retail 420B, no name/type reloc drift - only presence drift from
 // the shifted call sites):
 // - Residual 1 (gate): retail emits fcmpo cr0,f0,f1 (const as frA) for the
-//   `field394 == lbl_eu_80665EA0` test with the mem load still scheduled
+//   `field394 == 0.0f` test with the mem load still scheduled
 //   first (lfs f1,0x394(r3)); every source form tried emits fcmpo cr0,f1,f0.
 //   Tried: natural/reversed operand order x positive/negative branch
 //   structure (if/else both polarities), nested ternary chain,
@@ -1311,10 +1310,10 @@ extern "C" int startFinishedAnim__13CActParamAnimFv(CActParamAnim* self, u32 par
     if (owner == 0) {
         ok = 1;
     } else {
-        if (view->field394 == lbl_eu_80665EA0) {
+        if (view->field394 == 0.0f) {
             ok = 1;
         } else {
-            ok = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            ok = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
     }
     if (!ok) return 0;
@@ -1623,10 +1622,10 @@ extern "C" int startFlag2000Anim__13CActParamAnimFv(CActParamAnim* self, u32 par
         int t;
         if (owner == 0) {
             t = 1;
-        } else if (view->field394 == lbl_eu_80665EA0) {
+        } else if (view->field394 == 0.0f) {
             t = 1;
         } else {
-            t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            t = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
         ok = 0;
         if (t == 0 && (owner->field04 & 0x2000) != 0) {
@@ -1687,10 +1686,10 @@ int startFlag0800Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         int t;
         if (owner == 0) {
             t = 1;
-        } else if (view->field394 == lbl_eu_80665EA0) {
+        } else if (view->field394 == 0.0f) {
             t = 1;
         } else {
-            t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            t = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
         ok = 0;
         if (t == 0 && (owner->field04 & 0x800) != 0) {
@@ -1752,10 +1751,10 @@ int startFlag0400Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         int t;
         if (owner == 0) {
             t = 1;
-        } else if (view->field394 == lbl_eu_80665EA0) {
+        } else if (view->field394 == 0.0f) {
             t = 1;
         } else {
-            t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            t = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
         ok = 0;
         if (t == 0 && (owner->field04 & 0x400) != 0) {
@@ -1817,10 +1816,10 @@ int startFlag1000Anim__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         int t;
         if (owner == 0) {
             t = 1;
-        } else if (view->field394 == lbl_eu_80665EA0) {
+        } else if (view->field394 == 0.0f) {
             t = 1;
         } else {
-            t = (owner->field14 * view->field430) < lbl_eu_80665ECC;
+            t = (owner->field14 * view->field430) < 0.10000000149011612f;
         }
         ok = 0;
         if (t == 0 && (owner->field04 & 0x1000) != 0) {
@@ -1892,7 +1891,7 @@ int fireSpeedGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         ok = 0;
     } else {
         f32 animSpeed = view->field394;
-        if (lbl_eu_80665EA0 == animSpeed) {
+        if (0.0f == animSpeed) {
             ok = 0;
         } else {
             // Gate: fail when the scaled owner value exceeds the anim upper bound.
@@ -1952,7 +1951,7 @@ int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
         ok = 0;
     } else {
         f32 animSpeed = view->field394;
-        if (lbl_eu_80665EA0 == animSpeed) {
+        if (0.0f == animSpeed) {
             ok = 0;
         } else {
             ok = owner->field14 * view->field430 > view->field434;
@@ -1998,7 +1997,7 @@ int fireSpeedOkGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function. Gate chain: blend accumulator (+0x44C) below the threshold,
-// +0x454 above lbl_eu_80665EF0, owner present, speed non-zero, and scaled
+// +0x454 above 10.0f, owner present, speed non-zero, and scaled
 // remaining time above +0x434.
 int fireBlendGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnim* view = (CActParamAnim*)self;
@@ -2006,10 +2005,10 @@ int fireBlendGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     u32 localSmall;
     u32 localBig;
 
-    if (!(view->field44C < lbl_eu_80665EE0)) return 0;
-    if (!(view->field454 > lbl_eu_80665EF0)) return 0;
+    if (!(view->field44C < 5.0f)) return 0;
+    if (!(view->field454 > 10.0f)) return 0;
     if (owner == 0) return 0;
-    if (view->field394 == lbl_eu_80665EA0) return 0;
+    if (view->field394 == 0.0f) return 0;
     if (!((owner->field14 * view->field430) > view->field434)) return 0;
 
     if (param == 0) return 1;
@@ -2054,11 +2053,11 @@ void func_8004E9EC__13CActParamAnimFv(CActParamAnim* self) {
 // extern "C": retail symbol is the unmangled safeFSqrt.
 extern "C" f32 safeFSqrt(f32 value) {
     // nw4r FSqrt semantics: warn on negative input, then x<=0 ? 0 : x*FrSqrt(x).
-    if (!(value >= lbl_eu_80665EA0)) {
+    if (!(value >= 0.0f)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                           (const char*)lbl_eu_80526300);
     }
-    return (value <= lbl_eu_80665EA0) ? lbl_eu_80665EA0
+    return (value <= 0.0f) ? 0.0f
                                       : value * nw4r::math::FrSqrt(value);
 }
 
@@ -2080,16 +2079,16 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     // Movement gate: horizontal anim delta above threshold, or the stopped
     // fallback (direction below gate, clamped Y, and last value outside band).
     f32 v1 = view->field3AC - view->field47C;
-    int gate = v1 >= lbl_eu_80665EF8;
+    int gate = v1 >= 1.2000000476837158f;
     f32 v2 = view->field488 - view->field3AC;
     int stop = 0;
     int cond = 0;
-    if (view->field3DC < lbl_eu_80663D48 && view->field3C4 <= lbl_eu_80665EFC) {
+    if (view->field3DC < lbl_eu_80663D48 && view->field3C4 <= -3.0f) {
         cond = 1;
     }
     if (cond != 0) {
         cond = 0;
-        if (v2 <= lbl_eu_80665EA0 || v2 >= lbl_eu_80665F00) {
+        if (v2 <= 0.0f || v2 >= 0.5f) {
             cond = 1;
         }
         if (cond != 0) {
@@ -2145,22 +2144,22 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     // matrix, scale by speed*dt, fold into +0x3C0..+0x3C8 and the stored
     // offset +0x3F0..+0x3F8, then clamp the resulting length.
     ml::CVec3 v = ml::CVec3::zero;
-    f32 f31 = lbl_eu_80665F04;
-    if (view->field3C4 < lbl_eu_80665F08) {
+    f32 f31 = 0.0020000000949949026f;
+    if (view->field3C4 < -0.009999999776482582f) {
         f31 = view->field3C4;
     }
-    if (view->field45C < lbl_eu_80665EF0) {
-        v.z = (lbl_eu_80665EF0 - view->field45C) *
-              (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8) /
-              lbl_eu_80665EF0;
+    if (view->field45C < 10.0f) {
+        v.z = (10.0f - view->field45C) *
+              (1000.0f * view->field43C / 3600.0f) /
+              10.0f;
     }
     f32 ang = view->field444;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_80665ED8 * ang);
-    f32 c = nw4r::math::CosFIdx(lbl_eu_80665ED8 * ang);
+    f32 s = nw4r::math::SinFIdx(40.7436637878418f * ang);
+    f32 c = nw4r::math::CosFIdx(40.7436637878418f * ang);
     f32 m[3][3] = {
-        {c, lbl_eu_80665EA0, s},
-        {lbl_eu_80665EA0, lbl_eu_80665E9C, lbl_eu_80665EA0},
-        {-s, lbl_eu_80665EA0, c},
+        {c, 0.0f, s},
+        {0.0f, 1.0f, 0.0f},
+        {-s, 0.0f, c},
     };
     ml::CVec3 r;
     r.x = m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z;
@@ -2176,23 +2175,23 @@ int stepAnimState__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     view->field3C4 += view->field3F4;
     view->field3C8 += view->field3F8;
     f32 lenSq = view->field3C0 * view->field3C0 + view->field3C8 * view->field3C8;
-    if (!(lenSq >= lbl_eu_80665EA0)) {
+    if (!(lenSq >= 0.0f)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                           (const char*)lbl_eu_80526300);
     }
-    f32 len = lbl_eu_80665EA0;
-    if (lenSq > lbl_eu_80665EA0) {
+    f32 len = 0.0f;
+    if (lenSq > 0.0f) {
         len = lenSq * nw4r::math::FrSqrt(lenSq);
     }
-    f32 limit = lbl_eu_80665EDC *
-                (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8);
+    f32 limit = 0.45000001788139343f *
+                (1000.0f * view->field43C / 3600.0f);
     if (len < limit) {
         len = limit;
     }
     view->field48C = len * (view->field390 * CDeviceVI::getSecPerFrame());
-    view->field498 = (len <= lbl_eu_80665F0C *
-                              (lbl_eu_80665EC4 * view->field43C /
-                               lbl_eu_80665EC8));
+    view->field498 = (len <= 1.100000023841858f *
+                              (1000.0f * view->field43C /
+                               3600.0f));
     view->field0C |= 0x80000;
     *reinterpret_cast<ml::CVec3*>(&view->field3F0) = ml::CVec3::zero;
     return 1;
@@ -2440,7 +2439,7 @@ void CActParamAnim::func_8004F884() {}
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnim* view = (CActParamAnim*)self;
-    view->field384 = lbl_eu_80665E9C;
+    view->field384 = 1.0f;
     if (param != 0) {
         if (param < 0x68) {
             // The 0x40000 guard flag skips the anim start while the requested
@@ -2480,12 +2479,12 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     v.y = view->field474;
     v.z = view->field470;
     f32 ang = view->field478;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_80665ED8 * ang);
-    f32 c = nw4r::math::CosFIdx(lbl_eu_80665ED8 * ang);
+    f32 s = nw4r::math::SinFIdx(40.7436637878418f * ang);
+    f32 c = nw4r::math::CosFIdx(40.7436637878418f * ang);
     f32 m[3][3] = {
-        {c, lbl_eu_80665EA0, s},
-        {lbl_eu_80665EA0, lbl_eu_80665E9C, lbl_eu_80665EA0},
-        {-s, lbl_eu_80665EA0, c},
+        {c, 0.0f, s},
+        {0.0f, 1.0f, 0.0f},
+        {-s, 0.0f, c},
     };
     ml::CVec3 r;
     r.x = m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z;
@@ -2518,7 +2517,7 @@ int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     // Both gates share the out-of-line return-0 block (retail: beq/ble to
     // .L_80050474).
     if ((view->field0C & 2) != 0) {
-        if (reinterpret_cast<CActParamAnimVt0C*>(view)->f01() > lbl_eu_80665EF0) {
+        if (reinterpret_cast<CActParamAnimVt0C*>(view)->f01() > 10.0f) {
             if (param != 0) {
                 if (param < 0x68) {
                     // The 0x40000 guard flag skips the anim start while the requested
@@ -2563,7 +2562,7 @@ int fireBlendCust__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnim* view = (CActParamAnim*)self;
     u32 localSmall;
     u32 localBig;
-    view->field384 = lbl_eu_80665EF0;
+    view->field384 = 10.0f;
     if (param != 0) {
         if (param < 0x68) {
             // The 0x40000 guard flag skips the anim start while the requested
@@ -2612,12 +2611,12 @@ void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
     f32 f29 = view->field440;
     f32 f31 = view->field460;
     ml::CVec3 v0 = ml::CVec3::zero;
-    f32 s = nw4r::math::SinFIdx(lbl_eu_80665ED8 * f29);
-    f32 c = nw4r::math::CosFIdx(lbl_eu_80665ED8 * f29);
+    f32 s = nw4r::math::SinFIdx(40.7436637878418f * f29);
+    f32 c = nw4r::math::CosFIdx(40.7436637878418f * f29);
     f32 m[3][3] = {
-        {c, lbl_eu_80665EA0, s},
-        {lbl_eu_80665EA0, lbl_eu_80665E9C, lbl_eu_80665EA0},
-        {-s, lbl_eu_80665EA0, c},
+        {c, 0.0f, s},
+        {0.0f, 1.0f, 0.0f},
+        {-s, 0.0f, c},
     };
 
     if ((sview->field0C & 0x400000) != 0) {
@@ -2627,7 +2626,7 @@ void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
             int r0;
             if (owner == 0) {
                 r0 = 0;
-            } else if (view->field394 == lbl_eu_80665EA0) {
+            } else if (view->field394 == 0.0f) {
                 r0 = 0;
             } else {
                 r0 = owner->field14 * view->field430 > view->field434;
@@ -2642,55 +2641,55 @@ void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
                       m[2][2] * ml::CVec3::unitZ.z;
                 f32 dot = ml::CVec3::dot(
                     *reinterpret_cast<ml::CVec3*>(&view->field424), r);
-                if (dot < lbl_eu_80665EA0) {
-                    f32 t = lbl_eu_80665E9C -
-                            (lbl_eu_80665F10 - view->field4CC) /
-                                lbl_eu_80665F14;
-                    if (t < lbl_eu_80665EA0) {
-                        t = lbl_eu_80665EA0;
-                    } else if (t > lbl_eu_80665E9C) {
-                        t = lbl_eu_80665E9C;
+                if (dot < 0.0f) {
+                    f32 t = 1.0f -
+                            (30.0f - view->field4CC) /
+                                45.0f;
+                    if (t < 0.0f) {
+                        t = 0.0f;
+                    } else if (t > 1.0f) {
+                        t = 1.0f;
                     }
                     f31 = view->field460 +
-                          lbl_eu_80665F18 * (view->field460 * dot * t);
+                          0.30000001192092896f * (view->field460 * dot * t);
                 }
             }
         }
     }
 
     if ((sview->field0C & 0x8) != 0) {
-        f32 len = f31 * (lbl_eu_80665EB4 * view->field380);
-        if (!(len >= lbl_eu_80665EA0)) {
+        f32 len = f31 * (2.0f * view->field380);
+        if (!(len >= 0.0f)) {
             nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                               (const char*)lbl_eu_80526300);
         }
-        if (len > lbl_eu_80665EA0) {
+        if (len > 0.0f) {
             v0.y = len * nw4r::math::FrSqrt(len);
         } else {
-            v0.y = lbl_eu_80665EA0;
+            v0.y = 0.0f;
         }
     } else {
         f31 = view->field380 * reinterpret_cast<CActParamAnimVt14*>(self)->f03();
-        v0.y = f31 * CDeviceVI::getSecPerFrame() * lbl_eu_80665F00;
+        v0.y = f31 * CDeviceVI::getSecPerFrame() * 0.5f;
     }
 
-    if (view->field45C < lbl_eu_80665EF0) {
+    if (view->field45C < 10.0f) {
         if ((sview->field0C & 0x2) != 0) {
             CActParamAnimOwner* owner = sview->owner08;
             int r0;
             if (owner == 0) {
                 r0 = 0;
-            } else if (view->field394 == lbl_eu_80665EA0) {
+            } else if (view->field394 == 0.0f) {
                 r0 = 0;
             } else {
                 r0 = owner->field14 * view->field430 > view->field434;
             }
             if (r0 != 0) {
-                v0.z = lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8;
+                v0.z = 1000.0f * view->field43C / 3600.0f;
             } else {
-                v0.z = (lbl_eu_80665EF0 - view->field45C) *
-                       (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8) /
-                       lbl_eu_80665EF0;
+                v0.z = (10.0f - view->field45C) *
+                       (1000.0f * view->field43C / 3600.0f) /
+                       10.0f;
             }
             v0.z *= view->field394;
         }
@@ -2707,23 +2706,23 @@ void solveHeadRate__13CActParamAnimFv(CActParamAnim* self) {
     *reinterpret_cast<ml::CVec3*>(&view->field3F0) = ml::CVec3::zero;
     f32 lenSq = view->field3C0 * view->field3C0 +
                 view->field3C8 * view->field3C8;
-    if (!(lenSq >= lbl_eu_80665EA0)) {
+    if (!(lenSq >= 0.0f)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                           (const char*)lbl_eu_80526300);
     }
-    f32 len = lbl_eu_80665EA0;
-    if (lenSq > lbl_eu_80665EA0) {
+    f32 len = 0.0f;
+    if (lenSq > 0.0f) {
         len = lenSq * nw4r::math::FrSqrt(lenSq);
     }
-    f32 limit = lbl_eu_80665EDC *
-                (lbl_eu_80665EC4 * view->field43C / lbl_eu_80665EC8);
+    f32 limit = 0.45000001788139343f *
+                (1000.0f * view->field43C / 3600.0f);
     if (len < limit) {
         len = limit;
     }
     view->field48C = len * (view->field390 * CDeviceVI::getSecPerFrame());
-    view->field498 = (len <= lbl_eu_80665F0C *
-                              (lbl_eu_80665EC4 * view->field43C /
-                               lbl_eu_80665EC8));
+    view->field498 = (len <= 1.100000023841858f *
+                              (1000.0f * view->field43C /
+                               3600.0f));
 }
 
 extern "C" f32 dotVec3f(const f32* a, const f32* b){
@@ -2942,7 +2941,7 @@ int startRandAnim__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg)
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function. Gate: wrap the anim angle delta into [-pi, pi), scale it,
-// and proceed only when lbl_eu_80665F50 < scaled <= lbl_eu_80665F4C.
+// and proceed only when -90.0f < scaled <= -20.0f.
 int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnim* view = (CActParamAnim*)self;
     u32 localSmall;
@@ -2952,8 +2951,8 @@ int fireAngleGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     while (ml::pi <= value) value -= ml::tau;
     while (value < -ml::pi) value += ml::tau;
     f32 scaled = value * ml::rad2deg;
-    if (!(scaled <= lbl_eu_80665F4C)) return 0;
-    if (!(scaled > lbl_eu_80665F50)) return 0;
+    if (!(scaled <= -20.0f)) return 0;
+    if (!(scaled > -90.0f)) return 0;
 
     if (param == 0) return 1;
     if (param < 0x68) {
@@ -3035,7 +3034,7 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     f32 value = view->field440 - v444;
     while (ml::pi <= value) value -= ml::tau;
     while (value < -ml::pi) value += ml::tau;
-    if (value * ml::rad2deg <= lbl_eu_80665F50) {
+    if (value * ml::rad2deg <= -90.0f) {
         if (param != 0) {
             if (param < 0x68) {
                 // The 0x40000 guard flag skips the anim start while the
@@ -3078,7 +3077,7 @@ int fireAngleLoGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function. Gate: wrap the anim angle delta into [-pi, pi), scale it,
-// and proceed only when lbl_eu_80665EC0 <= scaled < lbl_eu_80665F54.
+// and proceed only when 20.0f <= scaled < 90.0f.
 int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnim* view = (CActParamAnim*)self;
     u32 localSmall;
@@ -3088,8 +3087,8 @@ int fireAngleBand__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     while (ml::pi <= value) value -= ml::tau;
     while (value < -ml::pi) value += ml::tau;
     f32 scaled = value * ml::rad2deg;
-    if (!(scaled >= lbl_eu_80665EC0)) return 0;
-    if (!(scaled < lbl_eu_80665F54)) return 0;
+    if (!(scaled >= 20.0f)) return 0;
+    if (!(scaled < 90.0f)) return 0;
 
     if (param == 0) return 1;
     if (param < 0x68) {
@@ -3137,7 +3136,7 @@ int fireAngleHiGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     f32 value = view->field440 - v444;
     while (ml::pi <= value) value -= ml::tau;
     while (value < -ml::pi) value += ml::tau;
-    if (value * ml::rad2deg >= lbl_eu_80665F54) {
+    if (value * ml::rad2deg >= 90.0f) {
         if (param != 0) {
             if (param < 0x68) {
                 // The 0x40000 guard flag skips the anim start while the
@@ -3424,7 +3423,7 @@ int fire4D4ZeroGt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-void CActParamAnim::resetVec3Y() { *(float*)((u8*)this + 964) = lbl_eu_80665EA0; }
+void CActParamAnim::resetVec3Y() { *(float*)((u8*)this + 964) = 0.0f; }
 
 void CActParamAnim::setActiveFlag(s32 param) {
     if (param != 0) {
@@ -3452,7 +3451,7 @@ extern "C" int isSpeedAbove(CActParamAnim* self) {
     CActParamAnimOwner* owner = self->owner08;
     if (owner == NULL) return 0;
     f32 animSpeed = self->field394;
-    if (lbl_eu_80665EA0 == animSpeed) return 0;
+    if (0.0f == animSpeed) return 0;
     f32 val = owner->field14 * self->field430;
     // 1 while val exceeds the upper bound (mirror of isSpeedInRange's first condition).
     return val > self->field434 ? 1 : 0;
@@ -3464,24 +3463,21 @@ void CActParamAnim::startAnimA() {
 }
 
 void CActParamAnim::startAnimA2() {
-    extern float lbl_eu_80665F18;
     u32 v = field0C;
-    float f = lbl_eu_80665F18;
+    float f = 0.30000001192092896f;
     *(volatile u32*)((u8*)this + 0x4A8) = 0x44A05;
     *(volatile float*)((u8*)this + 0x484) = f;
     field0C = v | 0x00800000;
 }
 
 void CActParamAnim::startAnimB() {
-    extern float lbl_eu_80665F18;
-    float tmp = lbl_eu_80665F18;
+    float tmp = 0.30000001192092896f;
     *(volatile unsigned int*)((char*)this + 0x4A8) = 0x44A09;
     *(volatile float*)((char*)this + 0x484) = tmp;
 }
 
 void CActParamAnim::startAnimC() {
-    extern float lbl_eu_80665F18;
-    float tmp = lbl_eu_80665F18;
+    float tmp = 0.30000001192092896f;
     *(volatile unsigned int*)((char*)this + 0x4A8) = 0x44A11;
     *(volatile float*)((char*)this + 0x484) = tmp;
 }
@@ -3515,7 +3511,7 @@ extern "C" void shiftAnimPos(CActParamAnim* self) {
     if ((*flagp & 0x40) != 0) {
         return;
     }
-    if (view->field3C4 > lbl_eu_80665EA0) {
+    if (view->field3C4 > 0.0f) {
         *flagp &= ~2;
     }
 }
@@ -3560,8 +3556,8 @@ void CActParamAnim::stopAnim() {
 // push the result to the attached sub-object.
     #define COMMIT_QUAT()                                                        \
     do {                                                                          \
-        if (iv->field408 == lbl_eu_80665EA0 && iv->field40C == lbl_eu_80665EA0 && \
-            iv->field410 == lbl_eu_80665EA0) {                                     \
+        if (iv->field408 == 0.0f && iv->field40C == 0.0f && \
+            iv->field410 == 0.0f) {                                     \
             copyVec3Words(&iv->field408,                                           \
                           reinterpret_cast<const f32*>(&ml::CVec3::unitY));        \
         } else {                                                                  \
@@ -3592,7 +3588,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
     if (testAnimBit5(self) != 0) return;
     getAnimChild(self);
 
-    f32 f31 = lbl_eu_80665EA0;
+    f32 f31 = 0.0f;
     if (testAnimBit13(self) == 0) {
         // dt-scaled angular step limit.
         f32 f30 = getAnimPlayRate(self);
@@ -3659,15 +3655,15 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
         if (testAnimMoveBit(self) != 0) {
             nw4r::math::VEC3 n;
             copyVec3f(&n.x, &iv->field3D8);
-            if (iv->field3DC < lbl_eu_8066AF20) {
+            if (iv->field3DC < 0.707099974155426f) {
                 f32 root = safeFSqrt(iv->field3E0 * iv->field3E0 +
                                          iv->field3D8 * iv->field3D8);
-                if (root != lbl_eu_80665EA0) {
-                    f32 k = lbl_eu_80665E9C / root;
-                    f32 t = safeFSqrt(lbl_eu_80665E9C -
-                                          lbl_eu_8066AF20 * lbl_eu_8066AF20);
+                if (root != 0.0f) {
+                    f32 k = 1.0f / root;
+                    f32 t = safeFSqrt(1.0f -
+                                          0.707099974155426f * 0.707099974155426f);
                     n.x = iv->field3D8 * k * t;
-                    n.y = lbl_eu_8066AF20;
+                    n.y = 0.707099974155426f;
                     n.z = iv->field3E0 * k * t;
                 }
             }
@@ -3677,17 +3673,17 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
                 nw4r::math::VEC3 d;
                 subVec3f(&d.x, &n.x, &iv->field408);
                 nw4r::math::VEC3 d2;
-                scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+                scaleVec3f(&d2.x, &d.x, 0.10000000149011612f);
                 addVec3f(&iv->field408, &d2.x);
             }
         } else {
             nw4r::math::VEC3 fwd;
-            writeVec3f(&fwd, lbl_eu_80665EA0, lbl_eu_80665E9C,
-                          lbl_eu_80665EA0);
+            writeVec3f(&fwd, 0.0f, 1.0f,
+                          0.0f);
             nw4r::math::VEC3 d;
             subVec3f(&d.x, &fwd.x, &iv->field408);
             nw4r::math::VEC3 d2;
-            scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+            scaleVec3f(&d2.x, &d.x, 0.10000000149011612f);
             addVec3f(&iv->field408, &d2.x);
         }
         COMMIT_QUAT();
@@ -3697,31 +3693,31 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
         if (testAnimMoveBit(self) != 0) {
             nw4r::math::VEC3 n;
             copyVec3f(&n.x, &iv->field3D8);
-            if (iv->field3DC < lbl_eu_8066AF20) {
+            if (iv->field3DC < 0.707099974155426f) {
                 f32 root = safeFSqrt(iv->field3E0 * iv->field3E0 +
                                          iv->field3D8 * iv->field3D8);
-                if (root != lbl_eu_80665EA0) {
-                    f32 k = lbl_eu_80665E9C / root;
-                    n.y = lbl_eu_80665EA0;
-                    f32 t = safeFSqrt(lbl_eu_80665E9C -
-                                          lbl_eu_8066AF20 * lbl_eu_8066AF20);
+                if (root != 0.0f) {
+                    f32 k = 1.0f / root;
+                    n.y = 0.0f;
+                    f32 t = safeFSqrt(1.0f -
+                                          0.707099974155426f * 0.707099974155426f);
                     n.x = iv->field3D8 * k * t;
                     n.z = iv->field3E0 * k * t;
                 }
             }
             f32 mag = n.y;
-            if (mag == lbl_eu_80665EA0) {
-                mag = lbl_eu_80665E9C;
+            if (mag == 0.0f) {
+                mag = 1.0f;
             }
             nw4r::math::VEC3 radial;
-            writeVec3f(&radial.x, cosAnimFIdx(f31), lbl_eu_80665EA0,
+            writeVec3f(&radial.x, cosAnimFIdx(f31), 0.0f,
                           sinAnimFIdx(f31));
             // Remove the component along n so the radial stays on the plane.
             radial.y -= dotVec3f(&radial.x, &n.x) / mag;
             normVec3(reinterpret_cast<ml::CVec3*>(&radial));
             f32 ang2 = ml::halfpi + atan2AnimFIdx(radial.x, radial.z);
             nw4r::math::VEC3 dir;
-            writeVec3f(&dir.x, cosAnimFIdx(ang2), lbl_eu_80665EA0,
+            writeVec3f(&dir.x, cosAnimFIdx(ang2), 0.0f,
                           sinAnimFIdx(ang2));
             nw4r::math::VEC3 axis;
             noopAnimVec3(&axis);
@@ -3729,16 +3725,16 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
             nw4r::math::VEC3 d;
             subVec3f(&d.x, &axis.x, &iv->field408);
             nw4r::math::VEC3 d2;
-            scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+            scaleVec3f(&d2.x, &d.x, 0.10000000149011612f);
             addVec3f(&iv->field408, &d2.x);
         } else {
             nw4r::math::VEC3 fwd;
-            writeVec3f(&fwd.x, lbl_eu_80665EA0, lbl_eu_80665E9C,
-                          lbl_eu_80665EA0);
+            writeVec3f(&fwd.x, 0.0f, 1.0f,
+                          0.0f);
             nw4r::math::VEC3 d;
             subVec3f(&d.x, &fwd.x, &iv->field408);
             nw4r::math::VEC3 d2;
-            scaleVec3f(&d2.x, &d.x, lbl_eu_80665ECC);
+            scaleVec3f(&d2.x, &d.x, 0.10000000149011612f);
             addVec3f(&iv->field408, &d2.x);
         }
         COMMIT_QUAT();
@@ -3751,7 +3747,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
             subVec3f(&d.x, reinterpret_cast<const f32*>(&ml::CVec3::unitY),
                           &iv->field408);
             nw4r::math::VEC3 d2;
-            scaleVec3f(&d2.x, &d.x, lbl_eu_80665F58);
+            scaleVec3f(&d2.x, &d.x, 0.20000000298023224f);
             addVec3f(&iv->field408, &d2.x);
             COMMIT_QUAT();
             *counter = *counter - 1;
@@ -3759,7 +3755,7 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
             getAnimChild(self);
             if (testAnimBit13(self) == 0) {
                 nw4r::math::VEC3 v;
-                writeVec3f(&v.x, lbl_eu_80665EA0, f31, lbl_eu_80665EA0);
+                writeVec3f(&v.x, 0.0f, f31, 0.0f);
                 storeObjVec3(simGetLeafActData(s->object3A0), &v.x);
             }
         }
@@ -3767,13 +3763,13 @@ extern "C" void steerAnimHead(CActParamAnim* self) {
 
     // Tail: decay the snap timer and swap in the stored snap value.
     getAnimChild(self);
-    if (testAnimBit13(self) == 0 && s->field4D0 > lbl_eu_80665EA0) {
+    if (testAnimBit13(self) == 0 && s->field4D0 > 0.0f) {
         f32 dec = simGetLeafDist7B0(s->object3A0);
         f32 rem = s->field4D0 - dec;
         s->field4D0 = rem;
-        if (rem <= lbl_eu_80665EA0) {
+        if (rem <= 0.0f) {
             s->field4A0 = iv->field4A4;
-            s->field4D0 = lbl_eu_80665EA0;
+            s->field4D0 = 0.0f;
         }
     }
 
@@ -3804,11 +3800,11 @@ u32 CActParamAnim::testAndClearFlag18() {
 extern "C" void quatFromToVec(Quaternion* out, const Vec* a, const Vec* b) {
     f32 dot = nw4r::math::VEC3Dot(reinterpret_cast<const nw4r::math::VEC3*>(a),
                                   reinterpret_cast<const nw4r::math::VEC3*>(b));
-    if (dot < lbl_eu_80665F5C) {
-        out->x = lbl_eu_80665EA0;
-        out->y = lbl_eu_80665E9C;
-        out->z = lbl_eu_80665EA0;
-        out->w = lbl_eu_80665EA0;
+    if (dot < -0.9998999834060669f) {
+        out->x = 0.0f;
+        out->y = 1.0f;
+        out->z = 0.0f;
+        out->w = 0.0f;
         return;
     }
     Vec cross;
@@ -3816,20 +3812,20 @@ extern "C" void quatFromToVec(Quaternion* out, const Vec* a, const Vec* b) {
     // nw4r FSqrt wrapper inlined: warn on negative input, then
     // x <= 0 ? 0 : x * FrSqrt(x). The expression is re-derived around each
     // call (retail recomputes 2*(1+dot) instead of CSE-ing it).
-    if (!(lbl_eu_80665EB4 * (lbl_eu_80665E9C + dot) >= lbl_eu_80665EA0)) {
+    if (!(2.0f * (1.0f + dot) >= 0.0f)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                           (const char*)lbl_eu_80526300);
     }
     f32 root =
-        (lbl_eu_80665EB4 * (lbl_eu_80665E9C + dot) <= lbl_eu_80665EA0)
-            ? lbl_eu_80665EA0
-            : lbl_eu_80665EB4 * (lbl_eu_80665E9C + dot) *
-                  nw4r::math::FrSqrt(lbl_eu_80665EB4 * (lbl_eu_80665E9C + dot));
-    f32 scale = lbl_eu_80665E9C / root;
+        (2.0f * (1.0f + dot) <= 0.0f)
+            ? 0.0f
+            : 2.0f * (1.0f + dot) *
+                  nw4r::math::FrSqrt(2.0f * (1.0f + dot));
+    f32 scale = 1.0f / root;
     out->x = cross.x * scale;
     out->y = cross.y * scale;
     out->z = cross.z * scale;
-    out->w = lbl_eu_80665F00 * root;
+    out->w = 0.5f * root;
 }
 
 extern "C" void makeAxisAngleQ(Quaternion* out, const Vec* axis, f32 angle) {
@@ -3881,10 +3877,10 @@ void clampAnimMove(CActParamAnim* self) {
     Vec v;
     f32 limit = frameScale * (field384 * field380);
     v.x = x;
-    v.y = lbl_eu_80665EA0;
+    v.y = 0.0f;
     v.z = z;
     if (PSVECMag(&v) > limit) {
-        if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80665EA0) {
+        if (v.x * v.x + v.y * v.y + v.z * v.z == 0.0f) {
             *reinterpret_cast<ml::CVec3*>(&v) = ml::CVec3::zero;
         } else {
             PSVECNormalize(&v, &v);
@@ -3898,8 +3894,8 @@ void clampAnimMove(CActParamAnim* self) {
                             reinterpret_cast<nw4r::math::VEC3*>(&v));
     } else {
         if (PSVECMag(&v) < limit) {
-            view->field3C0 = lbl_eu_80665EA0;
-            view->field3C8 = lbl_eu_80665EA0;
+            view->field3C0 = 0.0f;
+            view->field3C8 = 0.0f;
         }
     }
 }
@@ -3980,7 +3976,7 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
     } else {
         s->field0C &= ~0x4;
     }
-    if ((s->field0C & 0x40) == 0 && s->field3C4 > lbl_eu_80665EA0) {
+    if ((s->field0C & 0x40) == 0 && s->field3C4 > 0.0f) {
         s->field0C &= ~0x2;
     }
 
@@ -4000,10 +3996,10 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
             f32 limit = s->field384 * base * (speed * sec);
             nw4r::math::VEC3 v;
             v.x = s->field3C0;
-            v.y = lbl_eu_80665EA0;
+            v.y = 0.0f;
             v.z = s->field3C8;
             if (PSVECMag(reinterpret_cast<const Vec*>(&v)) > limit) {
-                if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80665EA0) {
+                if (v.x * v.x + v.y * v.y + v.z * v.z == 0.0f) {
                     *reinterpret_cast<ml::CVec3*>(&v) = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(reinterpret_cast<const Vec*>(&v),
@@ -4014,13 +4010,13 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
                 s->field3C8 += -limit * v.z;
             } else {
                 if (PSVECMag(reinterpret_cast<const Vec*>(&v)) < limit) {
-                    s->field3C0 = lbl_eu_80665EA0;
-                    s->field3C8 = lbl_eu_80665EA0;
+                    s->field3C0 = 0.0f;
+                    s->field3C8 = 0.0f;
                 }
             }
         } else {
             if ((flags & 0x40) != 0) {
-                s->field3C4 = lbl_eu_80665EA0;
+                s->field3C4 = 0.0f;
             } else {
                 f32 speed = s->field390;
                 f32 n = -s->field380;
@@ -4035,10 +4031,10 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
                 f32 limit = s->field384 * base * (speed * sec);
                 nw4r::math::VEC3 v;
                 v.x = s->field3C0;
-                v.y = lbl_eu_80665EA0;
+                v.y = 0.0f;
                 v.z = s->field3C8;
                 if (PSVECMag(reinterpret_cast<const Vec*>(&v)) > limit) {
-                    if (v.x * v.x + v.y * v.y + v.z * v.z == lbl_eu_80665EA0) {
+                    if (v.x * v.x + v.y * v.y + v.z * v.z == 0.0f) {
                         *reinterpret_cast<ml::CVec3*>(&v) = ml::CVec3::zero;
                     } else {
                         PSVECNormalize(reinterpret_cast<const Vec*>(&v),
@@ -4049,17 +4045,17 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
                     s->field3C8 += -limit * v.z;
                 } else {
                     if (PSVECMag(reinterpret_cast<const Vec*>(&v)) < limit) {
-                        s->field3C0 = lbl_eu_80665EA0;
-                        s->field3C8 = lbl_eu_80665EA0;
+                        s->field3C0 = 0.0f;
+                        s->field3C8 = 0.0f;
                     }
                 }
             }
             // Clamp the anim height into [F64, F60].
-            if (s->field3C4 > lbl_eu_80665F60) {
-                s->field3C4 = lbl_eu_80665F60;
+            if (s->field3C4 > 120.0f) {
+                s->field3C4 = 120.0f;
             } else {
-                if (s->field3C4 < lbl_eu_80665F64) {
-                    s->field3C4 = lbl_eu_80665F64;
+                if (s->field3C4 < -120.0f) {
+                    s->field3C4 = -120.0f;
                 }
             }
         }
@@ -4090,17 +4086,17 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
         if (blendActive != 0 && (s->field0C & 0x1000) != 0) {
             // Ground-alignment probe: kill the horizontal components when the
             // normalized delta faces the ground normal (3FC/400/404).
-            if (p.x != lbl_eu_80665EA0 || p.z != lbl_eu_80665EA0) {
-                if (p.x * p.x + p.y * p.y + p.z * p.z == lbl_eu_80665EA0) {
+            if (p.x != 0.0f || p.z != 0.0f) {
+                if (p.x * p.x + p.y * p.y + p.z * p.z == 0.0f) {
                     *reinterpret_cast<ml::CVec3*>(&p) = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(reinterpret_cast<const Vec*>(&p),
                                    reinterpret_cast<Vec*>(&p));
                 }
                 f32 d = p.x * s->field3FC + p.y * s->field400 + p.z * s->field404;
-                if (d >= lbl_eu_80665EA0) {
-                    p.z = lbl_eu_80665EA0;
-                    p.x = lbl_eu_80665EA0;
+                if (d >= 0.0f) {
+                    p.z = 0.0f;
+                    p.x = 0.0f;
                 }
             }
         }
@@ -4112,27 +4108,27 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
             nw4r::math::VEC3 step2 = step;
             p += step2;
             f32 lenSq = p.x * p.x + p.z * p.z;
-            if (!(lenSq >= lbl_eu_80665EA0)) {
+            if (!(lenSq >= 0.0f)) {
                 nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                                   (const char*)lbl_eu_80526300);
             }
             f32 len = lenSq;
-            if (lenSq > lbl_eu_80665EA0) {
+            if (lenSq > 0.0f) {
                 len = lenSq * nw4r::math::FrSqrt(lenSq);
             }
             s->field448 = len;
-            f32 cap = lbl_eu_80665F68 * dt;
+            f32 cap = 13.88888931274414f * dt;
             if ((f32)len > cap) {
                 s->field448 = cap;
             }
         } else {
             f32 lenSq = p.x * p.x + p.z * p.z;
-            if (!(lenSq >= lbl_eu_80665EA0)) {
+            if (!(lenSq >= 0.0f)) {
                 nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                                   (const char*)lbl_eu_80526300);
             }
             f32 len = lenSq;
-            if (lenSq > lbl_eu_80665EA0) {
+            if (lenSq > 0.0f) {
                 len = lenSq * nw4r::math::FrSqrt(lenSq);
             }
             s->field448 = len;
@@ -4181,7 +4177,7 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
             }
             if (reinterpret_cast<CActParamAnimVtE8*>(s)->dispatchE8(
                     reinterpret_cast<const ml::CVec3*>(&cur)) != 0) {
-                s->field3C4 = lbl_eu_80665EA0;
+                s->field3C4 = 0.0f;
                 s->field0C |= 0x2;
             } else {
                 if ((s->field0C & 0x40) == 0) {
@@ -4191,7 +4187,7 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
             }
         } else {
             s->field0C |= 0x2;
-            s->field3C4 = lbl_eu_80665EA0;
+            s->field3C4 = 0.0f;
             cur.x += p.x;
             cur.z += p.z;
         }
@@ -4264,13 +4260,13 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
     const ml::CVec3* dir;
     if (dirParam == 0) {
         ml::CVec3 off;
-        off.x = lbl_eu_80665EA0;
-        off.y = lbl_eu_80665F18;
-        off.z = lbl_eu_80665EA0;
+        off.x = 0.0f;
+        off.y = 0.30000001192092896f;
+        off.z = 0.0f;
         ml::CVec3 sum = *reinterpret_cast<ml::CVec3*>(&view->field3A8) + off;
         ml::CVec3 v = sum;
-        if (ScnRes_VertRayForward_E398(&v, view->field4A8, 0, 0, lbl_eu_80665F40,
-                          lbl_eu_80665EA0) != 0) {
+        if (ScnRes_VertRayForward_E398(&v, view->field4A8, 0, 0, -2.0f,
+                          0.0f) != 0) {
             ml::CVec3 a;
             ml::CVec3 b;
             ScnRes_CopyEntryHead(&a, 0);
@@ -4280,21 +4276,21 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
             dir = &ml::CVec3::unitY;
         }
     } else {
-        view->field414 = lbl_eu_80665EA0;
-        view->field418 = lbl_eu_80665EA0;
-        view->field41C = lbl_eu_80665EA0;
-        view->field420 = lbl_eu_80665E9C;
+        view->field414 = 0.0f;
+        view->field418 = 0.0f;
+        view->field41C = 0.0f;
+        view->field420 = 1.0f;
         dir = dirParam;
     }
 
     f32 dot = ml::CVec3::dot(*dir, ml::CVec3::unitY);
-    if (dot < lbl_eu_80665F34) {
-        dot = lbl_eu_80665F34;
-    } else if (dot > lbl_eu_80665E9C) {
-        dot = lbl_eu_80665E9C;
+    if (dot < -1.0f) {
+        dot = -1.0f;
+    } else if (dot > 1.0f) {
+        dot = 1.0f;
     }
     int ok = 0;
-    if (dot <= lbl_eu_80665E9C && dot >= lbl_eu_80665F34) {
+    if (dot <= 1.0f && dot >= -1.0f) {
         ok = 1;
     }
     if (ok == 0) {
@@ -4302,8 +4298,8 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
                           (const char*)lbl_eu_805262C8);
     }
     f32 ang = ml::math::abs((f32)acos(dot) * ml::rad2deg);
-    if (ang > lbl_eu_80665F14) return 0;
-    if (dirParam != 0 && ang < lbl_eu_80665F00) return 0;
+    if (ang > 45.0f) return 0;
+    if (dirParam != 0 && ang < 0.5f) return 0;
 
     view->field4CC = ang;
     ml::CVec3 tmp;
@@ -4312,7 +4308,7 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
                       *reinterpret_cast<ml::CVec3*>(&view->field424));
     if (view->field424 * view->field424 + view->field428 * view->field428 +
             view->field42C * view->field42C ==
-        lbl_eu_80665EA0) {
+        0.0f) {
         *reinterpret_cast<ml::CVec3*>(&view->field424) = ml::CVec3::zero;
     } else {
         PSVECNormalize(*reinterpret_cast<ml::CVec3*>(&view->field424),
@@ -4321,69 +4317,68 @@ extern "C" int alignAnimQuat(CActParamAnim* self, const ml::CVec3* dirParam) {  
 
     if (dirParam != 0) {
         f32 d = ml::CVec3::dot(*dir, ml::CVec3::unitY);
-        if (d < lbl_eu_80665F5C) {
-            view->field414 = lbl_eu_80665EA0;
-            view->field418 = lbl_eu_80665E9C;
-            view->field41C = lbl_eu_80665EA0;
-            view->field420 = lbl_eu_80665EA0;
+        if (d < -0.9998999834060669f) {
+            view->field414 = 0.0f;
+            view->field418 = 1.0f;
+            view->field41C = 0.0f;
+            view->field420 = 0.0f;
         } else {
             ml::CVec3 c;
             PSVECCrossProduct(ml::CVec3::unitY, *dir, c);
             // nw4r FSqrt wrapper inlined: warn on negative input, then
             // x <= 0 ? 0 : x * FrSqrt(x). The expression is re-derived after
             // the warning/FrSqrt calls (retail recomputes EB4*(1+d) 3 times).
-            if (!(lbl_eu_80665EB4 * (lbl_eu_80665E9C + d) >= lbl_eu_80665EA0)) {
+            if (!(2.0f * (1.0f + d) >= 0.0f)) {
                 nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                                   (const char*)lbl_eu_80526300);
             }
-            f32 len = (lbl_eu_80665EB4 * (lbl_eu_80665E9C + d) <=
-                       lbl_eu_80665EA0)
-                          ? lbl_eu_80665EA0
-                          : lbl_eu_80665EB4 * (lbl_eu_80665E9C + d) *
-                                nw4r::math::FrSqrt(lbl_eu_80665EB4 *
-                                                    (lbl_eu_80665E9C + d));
-            f32 inv = lbl_eu_80665E9C / len;
+            f32 len = (2.0f * (1.0f + d) <=
+                       0.0f)
+                          ? 0.0f
+                          : 2.0f * (1.0f + d) *
+                                nw4r::math::FrSqrt(2.0f *
+                                                    (1.0f + d));
+            f32 inv = 1.0f / len;
             view->field414 = c.x * inv;
             view->field418 = c.y * inv;
             view->field41C = c.z * inv;
-            view->field420 = lbl_eu_80665F00 * len;
+            view->field420 = 0.5f * len;
         }
     } else {
         ml::CQuat q;
         f32 d = ml::CVec3::dot(*dir, ml::CVec3::unitY);
-        if (d < lbl_eu_80665F5C) {
-            q.set(lbl_eu_80665EA0, lbl_eu_80665E9C, lbl_eu_80665EA0,
-                  lbl_eu_80665EA0);
+        if (d < -0.9998999834060669f) {
+            q.set(0.0f, 1.0f, 0.0f,
+                  0.0f);
         } else {
             ml::CVec3 c;
             PSVECCrossProduct(ml::CVec3::unitY, *dir, c);
             // nw4r FSqrt wrapper inlined (see the dirParam != 0 branch).
-            if (!(lbl_eu_80665EB4 * (lbl_eu_80665E9C + d) >= lbl_eu_80665EA0)) {
+            if (!(2.0f * (1.0f + d) >= 0.0f)) {
                 nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                                   (const char*)lbl_eu_80526300);
             }
-            f32 len = (lbl_eu_80665EB4 * (lbl_eu_80665E9C + d) <=
-                       lbl_eu_80665EA0)
-                          ? lbl_eu_80665EA0
-                          : lbl_eu_80665EB4 * (lbl_eu_80665E9C + d) *
-                                nw4r::math::FrSqrt(lbl_eu_80665EB4 *
-                                                    (lbl_eu_80665E9C + d));
-            f32 inv = lbl_eu_80665E9C / len;
+            f32 len = (2.0f * (1.0f + d) <=
+                       0.0f)
+                          ? 0.0f
+                          : 2.0f * (1.0f + d) *
+                                nw4r::math::FrSqrt(2.0f *
+                                                    (1.0f + d));
+            f32 inv = 1.0f / len;
             q.x = c.x * inv;
             q.y = c.y * inv;
             q.z = c.z * inv;
-            q.w = lbl_eu_80665F00 * len;
+            q.w = 0.5f * len;
         }
         ml::CQuat out;
         ml::CQuat::slerp(out,
                          *reinterpret_cast<ml::CQuat*>(&view->field414), q,
-                         lbl_eu_80665F18);
+                         0.30000001192092896f);
         *reinterpret_cast<ml::CQuat*>(&view->field414) = out;
     }
     return 1;
 }
 
-extern "C" float CActParamAnim_getAnimConstant() { return lbl_eu_80665ECC; }
 
 int CActParamAnim::getChainInt() {
     int val = *(int*)((char*)this + 1220);
@@ -4396,7 +4391,7 @@ int CActParamAnim::getChainInt() {
 extern u8 lbl_eu_80663D4C;
 
 void clrAnimHeight(CActParamAnim* self) {
-    self->field3C4 = lbl_eu_80665EA0;
+    self->field3C4 = 0.0f;
 }
 
 
@@ -4513,8 +4508,8 @@ bool CActParamAnim::isAnimFrameActive() { return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_800539E0() {
-    extern float lbl_eu_8066AF20;
     extern float lbl_eu_80663D48;
+    extern float lbl_eu_8066AF20;
     lbl_eu_80663D48 = lbl_eu_8066AF20;
 }
 

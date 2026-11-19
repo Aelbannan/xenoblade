@@ -83,7 +83,7 @@ CTaskGameCf* CTaskGameCf::getInstance() {
     void CTaskGameCf::reqExit(){
         unk_54 |= 1;
         if(cf::CfGameManager::isManagerInitialized()){
-            cf::CfGameManager::sUnkFlags |= 0x200000;
+            gmGameFlags |= 0x200000;
         }
     }
 
@@ -95,12 +95,11 @@ extern "C" const u32 lbl_eu_80525B0C[3];
 extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AD0;
 
 void CTaskGameCf::startMode1New() {
-    mMoveFunc = lbl_eu_80525AB8;
+    mMoveFunc = &CTaskGameCf::startNewGame;
 }
 
 void CTaskGameCf::startMode2Con() {
-    typedef void (cf::CTaskGameCf::*Ptmf)();
-    *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::startContinue;
+    mMoveFunc = &CTaskGameCf::startContinue;
 }
 
     #pragma optimize_for_size on
@@ -111,7 +110,7 @@ void CTaskGameCf::startMode2Con() {
         unk_62 = 0;
         unk_64 = arg3;
         unk_88 = arg4;
-        mMoveFunc = lbl_eu_80525AD0;
+        mMoveFunc = &CTaskGameCf::chainNextMove;
     }
     #pragma optimize_for_size off
 
@@ -153,15 +152,14 @@ void CTaskGameCf::Draw() {}
     }
 
 void cf::CTaskGameCf::chainNextMove(){
-    typedef void (cf::CTaskGameCf::*Ptmf)();
-    *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::setPooledMove;
+    mMoveFunc = &CTaskGameCf::setPooledMove;
 }
 
 extern "C" CTaskGameCf::MoveFunc lbl_eu_80525B18;
 extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525B24;
 
 void CTaskGameCf::setPooledMove(){
-    mMoveFunc = lbl_eu_80525B18;
+    mMoveFunc = &CTaskGameCf::bootGameWorld;
 }
 
     #pragma optimize_for_size on
@@ -187,19 +185,19 @@ void CTaskGameCf::setPooledMove(){
         UnkClass_8007DAE0_init(pTaskGame->getScene(), pTaskGame->unk70, padInit);
         setPauseMode__Q22cf13CfGameManagerFv((unk_54 >> 3) & 1);
 
-        if((lbl_eu_80663E28 & 0x01000000) == 0){
+        if((gmPauseFlags & 0x01000000) == 0){
             // Scene argument is evaluated before the MEM2 handle query.
             CScnNw4r* wmScene = pTaskGame->getScene();
             u32 memHandle = mtl::MemManager::getHandleMEM2();
             UIWin_CreateManager(this, wmScene, memHandle);
             UIBattleGetOrCreate(this, pTaskGame->getScene(), -1);
-            lbl_eu_80663E28 |= 0x10000000;
+            gmPauseFlags |= 0x10000000;
         }
 
         if(CTaskGame::isFlag2000Set()){
-            lbl_eu_80663E28 |= 0x40000000;
+            gmPauseFlags |= 0x40000000;
         } else {
-            lbl_eu_80663E28 &= ~0x40000000u;
+            gmPauseFlags &= ~0x40000000u;
         }
 
         CUICfManager_createInstance(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), -1);
@@ -213,7 +211,7 @@ void CTaskGameCf::setPooledMove(){
             cf::CtrlObjectParamSlots* party = reinterpret_cast<cf::CtrlObjectParamSlots*>(CtrlObjectParam_GetSlotTableBase());
             CtrlObjectParam_GetSlotTableBase();
 
-            if((lbl_eu_80663E28 & 0x01000000) == 0){
+            if((gmPauseFlags & 0x01000000) == 0){
                 CtrlObjectParam_InsertSlotEntry(party, 2, 1, 1);
                 CtrlObjectParam_InsertSlotEntry(party, 4, 1, 2);
                 CtrlObjectParam_InsertSlotEntry(party, 3, 2, 0);
@@ -234,8 +232,7 @@ void CTaskGameCf::setPooledMove(){
         CTaskGame_setLoadScreen(1, 0);
         // Switch to the running-state move handler (pooled PTMF copy from
         // the retail .data constant at lbl_eu_80525B24).
-        MoveFunc nextMove = *(const MoveFunc*)&lbl_eu_80525B24;
-        mMoveFunc = nextMove;
+        mMoveFunc = &CTaskGameCf::tickExitCheck;
     }
     #pragma optimize_for_size off
 
@@ -261,8 +258,8 @@ void CTaskGameCf::setPooledMove(){
                 CTaskCulling::getInstance()->SetRemove();
             }
 
-            // Reset scene color while the message system is unloaded (bit 24 of lbl_eu_80663E28).
-            if(!(lbl_eu_80663E28 & 0x01000000)){
+            // Reset scene color while the message system is unloaded (bit 24 of gmPauseFlags).
+            if(!(gmPauseFlags & 0x01000000)){
                 CTaskGame_setVec4_tmp tmp;
                 Scn_ReleaseUnk80(pTaskGame->getScene(), 0, CTaskGame_setVec4(&tmp, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D88, lbl_eu_80665D8C));
             }
@@ -275,7 +272,7 @@ void CTaskGameCf::setPooledMove(){
 
             ((CProcess*)evtGetManagerAddr())->SetRemove();
 
-            mMoveFunc = lbl_eu_80525B30;
+            mMoveFunc = &CTaskGameCf::beginExit;
         }
     }
 

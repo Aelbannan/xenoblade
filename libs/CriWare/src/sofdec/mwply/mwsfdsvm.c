@@ -59,8 +59,8 @@ void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3) {
 s32 MWSFSVM_TestAndSet(void* p) { return SVM_TestAndSet(p); }
 
 /* ---- SVM trace callback infrastructure ----
- * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
- * vtable exposes a "trace" method at offset 0x24; lbl_eu_80566AC8 is this
+ * gpMwPlyTraceCb is a global pointer to an optional trace object whose
+ * vtable exposes a "trace" method at offset 0x24; sTraceSvmError is this
  * module's error data record (entry sub-record at +0x04, exit at +0x6c). */
 
 typedef struct TraceCb TraceCb;
@@ -86,8 +86,8 @@ struct TraceRec {
     u32 exit;           /* 0x6c (exit sub-record) */
 };
 
-extern TraceCb* lbl_eu_805FF3A0;
-extern TraceRec lbl_eu_80566AC8;
+extern TraceCb* gpMwPlyTraceCb;
+extern TraceRec sTraceSvmError;
 
 /* Shared 256-byte scratch buffer for formatted error messages. */
 
@@ -109,31 +109,31 @@ void MWSFSVM_Error(const char* fmt, ...) {
     memset(lbl_eu_805FF1E0, 0, 256);
     va_start(ap, fmt);
     vsprintf(lbl_eu_805FF1E0, fmt, ap);
-    if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_80566AC8.self = (u32)lbl_eu_805FF1E0;
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
-            &lbl_eu_80566AC8.entry);
+    if (gpMwPlyTraceCb != NULL) {
+        sTraceSvmError.self = (u32)lbl_eu_805FF1E0;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb,
+            &sTraceSvmError.entry);
     }
     SVM_CallErr1(lbl_eu_805FF1E0);
-    if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
-            &lbl_eu_80566AC8.exit);
+    if (gpMwPlyTraceCb != NULL) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb,
+            &sTraceSvmError.exit);
     }
 }
 
 /* Idle-border trace record for MWSFSVM_GotoIdleBorder. */
-extern TraceRec lbl_eu_80566B9C;
+extern TraceRec sTraceGotoIdleBorder;
 
 /* Jump the server thread to its idle border, bracketing the transition
  * with enter/exit trace records like MWSFSVM_Error. */
 void MWSFSVM_GotoIdleBorder(void) {
-    TraceCb* cb = lbl_eu_805FF3A0;
+    TraceCb* cb = gpMwPlyTraceCb;
     if (cb != NULL) {
-        cb->vtable->trace(cb, &lbl_eu_80566B9C.entry);
+        cb->vtable->trace(cb, &sTraceGotoIdleBorder.entry);
     }
     SVM_GotoSvrBorder(6);
-    cb = lbl_eu_805FF3A0;
+    cb = gpMwPlyTraceCb;
     if (cb != NULL) {
-        cb->vtable->trace(cb, &lbl_eu_80566B9C.exit);
+        cb->vtable->trace(cb, &sTraceGotoIdleBorder.exit);
     }
 }

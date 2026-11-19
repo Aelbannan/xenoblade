@@ -3,6 +3,7 @@
 
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.h"
 
 int SFD_SetElementOutSj(SfdHandle* self, s32 idx, s32 data, s32 arg3, s32 arg4);
 int SFMPS_Init(void);int SFMPS_Finish(void);
@@ -31,8 +32,8 @@ int SFMPS_Destroy(SfdHandle* self);
 int SFMPS_Seek(SfdHandle* self);
 
 // External symbols
-extern void* lbl_eu_80606E34;
-extern u32 lbl_eu_805687F4[];
+extern void* gpSfdCoreTraceCb;
+extern u32 sTraceSfmpsExecServer[];
 extern u32 lbl_eu_80607AF0;
 extern u8 lbl_eu_80607160[];
 extern u32 lbl_eu_8051C930[];
@@ -58,8 +59,7 @@ s32 SFBUF_RingAddRead(void* self, u32 idx, u32 size);
 s32 SFBUF_RingAddWrite(void* self, u32 idx, u32 size, void* extra);
 void SFBUF_GetFlowCnt(void* self, u32* readCnt, u32* writeCnt);
 u64 SFBUF_UpdateFlowCnt(u32 hi, u32 lo, u32 x);
-void SFBUF_GetUoch(void* self, int idx, int sub_idx, u32* dst);
-u32 SFTRN_GetPrepFlg(void* self, u32 idx);
+
 void SFTRN_SetTermFlg(void* self, u32 idx, u32 val);
 s32 SFCON_IsEndcodeSkip(void* h);
 s32 SFCON_IsSystemEndcodeSkip(void* h);
@@ -120,10 +120,10 @@ auto-clear cond conditions. */s32 SFMPS_ExecServer(SfdHandle* self) {
     s32 ret;
     SfdMps* sub;
 
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_805687F4[3] = (u32)self;
-        ((void (*)(void*, void*))(*(u32*)((u8*)*(u32*)lbl_eu_80606E34 + 0x24)))
-            (lbl_eu_80606E34, &lbl_eu_805687F4[1]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceSfmpsExecServer[3] = (u32)self;
+        ((void (*)(void*, void*))(*(u32*)((u8*)*(u32*)gpSfdCoreTraceCb + 0x24)))
+            (gpSfdCoreTraceCb, &sTraceSfmpsExecServer[1]);
     }
 
     /* all three ring buffers terminated? */
@@ -213,12 +213,12 @@ auto-clear cond conditions. */s32 SFMPS_ExecServer(SfdHandle* self) {
         }
     }
 
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_805687F4[0x74 / 4] = (u32)&self->supplied;
-        lbl_eu_805687F4[0x80 / 4] = (u32)&self->consumed;
-        lbl_eu_805687F4[0x8c / 4] = (u32)&self->discarded;
-        ((void (*)(void*, void*))(*(u32*)((u8*)*(u32*)lbl_eu_80606E34 + 0x24)))
-            (lbl_eu_80606E34, &lbl_eu_805687F4[0x6c / 4]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceSfmpsExecServer[0x74 / 4] = (u32)&self->supplied;
+        sTraceSfmpsExecServer[0x80 / 4] = (u32)&self->consumed;
+        sTraceSfmpsExecServer[0x8c / 4] = (u32)&self->discarded;
+        ((void (*)(void*, void*))(*(u32*)((u8*)*(u32*)gpSfdCoreTraceCb + 0x24)))
+            (gpSfdCoreTraceCb, &sTraceSfmpsExecServer[0x6c / 4]);
     }
 
     return ret;

@@ -7,11 +7,11 @@
 // global scope: MWCC does not mangle global-scope variable names, so these
 // emit the exact retail lbl_eu_* symbols without extern "C".
 extern u8* lbl_eu_80665844;
-extern s32 lbl_eu_80665854;
-extern s16 lbl_eu_80665858;
-extern s16 lbl_eu_8066585A;
-extern s16 lbl_eu_8066585C;
-extern u32 lbl_eu_8066586C;
+extern s32 MpfTevSetupState;
+extern s16 MpfBoundTextureIndex;
+extern s16 MpfGfxMode;
+extern s16 MpfFogIndex;
+extern u32 MpfTevZModeFlags;
 extern u32 lbl_eu_80665878;
 extern u32 lbl_eu_8066587C;
 extern GXColor lbl_eu_80663858;
@@ -19,7 +19,7 @@ extern f32 lbl_eu_8066A734;
 extern f32 lbl_eu_8066A738;
 extern f32 lbl_eu_8066A73C;
 extern const f32 lbl_eu_8066A740;
-extern u16* lbl_eu_80665850;
+extern u16* sBillboardTexCoordTable;
 extern u32 lbl_eu_8066A7A0;
 extern GXColor lbl_eu_8066A7D0;
 extern GXColor lbl_eu_8066A7D4;

@@ -27,7 +27,7 @@ extern float lbl_eu_80668A44;
 extern float lbl_eu_80668A48;
 extern float lbl_eu_80668A50;
 extern float lbl_eu_80668A54;
-extern u8 lbl_eu_80663DA0;
+extern u8 visionSharedStateFlags;
 // Battle-manager mode-flag word (.sbss) probed by CChain_TickChain's chain-start
 // gate (bit 22). Same declaration as CBattleManager.hpp's extern "C" row.
 
@@ -82,7 +82,7 @@ extern double lbl_eu_80668A20;
 extern double lbl_eu_80668A28;
 
 // CfGameManager mode-flag word (.sbss; sda21 access).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 namespace cf { class CfObjectActor; }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 namespace cf {
 
@@ -875,7 +875,8 @@ extern "C" void initBattleActorState(void* mgr, void* actor, u32 param);
 // Voice-manager hook fired at the end of MoveImplDriveTransition's case 8 body.
 extern "C" void CCharVoiceMan_FlushPendingActorVoice(void* actor);
 // Vision-system refresh (code_800F42AC.cpp), called by MoveImplDriveTransition.
-extern "C" void ScMain_Reset(void* obj);
+struct ScMain;
+extern "C" void ScMain_Reset(ScMain* obj);
 // Battle-status add helper (CActParamAnimGame.cpp), used by MoveImplDriveTransition.
 extern "C" void setAnimCount(void* obj, u32 param);
 
@@ -931,10 +932,10 @@ extern const f32 lbl_eu_80666C78;   // MoveImplDriveTransition knockback divisor
 // sdata2 magic paired with the 0x43300000 int->float conversion.
 extern const f64 lbl_eu_80666C80;
 
-extern u32 lbl_eu_80663EF0;
+extern u32 sMoveImplEffectCooldown;
 class CScn;  // monolib scene (canonical decl: cf/object/CfObjectMove.hpp)
 
-// float-returning probe over the lbl_eu_80663E14 object (retail symbol is
+// float-returning probe over the gmScene object (retail symbol is
 // unmangled - keep C linkage, declared above).
 extern const f32 lbl_eu_80666C6C;
 extern const f32 lbl_eu_80666C70;
@@ -978,7 +979,7 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 
 // Volatile here: MoveImplPresentEffect performs a dead reload of this word (retail
 // keeps the load), so the compiler must not elide it.
-extern volatile u32 lbl_eu_80661D40;
+extern volatile u32 gMoveImplEventGate;
 
 // Presentation / sound / effect helpers used by the move-event dispatchers.
 extern "C" void releaseVisionSlot(void* actor, int param); // canonical (void*,int) form (CfObjectActor.hpp)

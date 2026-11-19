@@ -14,7 +14,7 @@
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
-#include "kyoshin/cf/CVision.hpp" // lbl_eu_80663DA0, aiActionClearBits0006/F0
+#include "kyoshin/cf/CVision.hpp" // visionSharedStateFlags, aiActionClearBits0006/F0
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
@@ -56,7 +56,7 @@ cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {
 
     cf::CChainState* self = (cf::CChainState*)this;
     if (self->field_0 != 0) {
-        lbl_eu_80663DA0 &= 0xFE;
+        visionSharedStateFlags &= 0xFE;
         self->field_84.resetChainTime();
         self->field_10 = 0;
         self->field_14 = 0;
@@ -71,7 +71,7 @@ cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {
 // embedded chain timer and wave state; then zero the whole chain state.
 extern "C" void ChainTmr_Reset_D1A4(cf::CChainState* self) {
     if (self->field_0 != 0) {
-        lbl_eu_80663DA0 &= 0xFE;
+        visionSharedStateFlags &= 0xFE;
         self->field_84.resetChainTime();
         self->field_10 = 0;
         self->field_14 = 0;
@@ -118,7 +118,7 @@ void ChainTmr_Update_D20C(cf::CChainState* self) {
     if (changed) {
         self->Tmr_SetActive(0);
         if (self->field_0 != 0) {
-            lbl_eu_80663DA0 &= 0xFE;
+            visionSharedStateFlags &= 0xFE;
             self->field_84.resetChainTime();
             self->field_10 = 0;
             self->field_14 = 0;
@@ -316,7 +316,7 @@ void cf::CChainState::Tmr_Advance() {
     }
     case 3:
         this->Tmr_SetActive(0);
-        lbl_eu_80663DA0 &= 0xFE;
+        visionSharedStateFlags &= 0xFE;
         this->field_84.mTimer = lbl_eu_80668A98;
         this->field_84.mEnabled = 0;
         this->field_84.mPaused = 1;
@@ -446,7 +446,7 @@ int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     self->field_4 = p1;
     self->field_8 = p2;
     self->field_C = p3;
-    lbl_eu_80663DA0 |= 1;
+    visionSharedStateFlags |= 1;
     startChainTimer(&self->field_84, (p1->field_3F00 >> 1) & 1);
     self->field_84.mTimer = lbl_eu_80668AA8;
     self->field_84.mEnabled = 1;

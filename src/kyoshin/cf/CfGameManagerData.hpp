@@ -7,13 +7,16 @@
 
 class CScn;
 
-// Shared scene object (@sdata21); set by cf::CfGameManager.
-extern "C" CScn* lbl_eu_80663E14;
-
-// Event/presentation flag word (.sbss); canonical decl for the whole tree.
+// Shared scene object (@sdata21) and event/presentation flag word (.sbss):
+// canonical declarations for the whole tree; definitions in CfGameManager.cpp.
 // Reads that must stay separate loads use explicit volatile casts
-// (e.g. *(volatile u32*)&lbl_eu_80663E24).
-extern "C" u32 lbl_eu_80663E24;
+// (e.g. *(volatile u32*)&gmGameFlags).
+extern CScn* gmScene;
+extern u32 gmGameFlags;
 
 // CfGameManager mode-flag word (.sbss; sda21 access).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
+
+// Presentation flag word and aim-point vector owned by this module (.sbss/.bss).
+extern u32 gmPresentationFlag2C;
+extern float gmAimPoint[3];

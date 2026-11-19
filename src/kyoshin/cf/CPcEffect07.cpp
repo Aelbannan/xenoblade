@@ -5,7 +5,7 @@
 
 #include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 scene view
+#include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene scene view
 #include <monolib/scn/CScnTimeApi.hpp>       // Scn_GetFrameDelta frame-delta query
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
@@ -426,13 +426,13 @@ void tickPcEffects(CPcEffect07* self) {
     // Step each timer down by the scene's frame delta and clamp to epsilon.
     f32 nv;
     if (self->mField5C > lbl_eu_80667DE8) {
-        nv = self->mField5C - Scn_GetFrameDelta(lbl_eu_80663E14);
+        nv = self->mField5C - Scn_GetFrameDelta(gmScene);
         self->mField5C = nv;
         if (nv < lbl_eu_80667DE8)
             self->mField5C = lbl_eu_80667DE8;
     }
     if (self->mField60 > lbl_eu_80667DE8) {
-        nv = self->mField60 - Scn_GetFrameDelta(lbl_eu_80663E14);
+        nv = self->mField60 - Scn_GetFrameDelta(gmScene);
         self->mField60 = nv;
         if (nv < lbl_eu_80667DE8)
             self->mField60 = lbl_eu_80667DE8;

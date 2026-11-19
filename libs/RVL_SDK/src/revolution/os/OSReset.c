@@ -12,16 +12,13 @@ volatile BOOL __OSIsReturnToIdle;
 u32 bootThisDol;
 
 /*
- * Retail .data pool as separate small arrays (NOT one big array per pool:
- * MWCC 8-aligns large .data arrays, which would push the pool to 0x10
- * instead of retail's 0xC; pieces sized %8==4 pack 4-tight). Layout:
- * file 0xC, hot 0x2C+0x34, menu 0xA4+0xDC, obsolete 0x7C (total 0x268).
- * String merging (-str reuse) folds the functions' literals into these
- * pieces, so only one copy of each exists. Big callers use
- * strBase=&lbl_80552AF0 with +0xC/+0x38; thin wrappers / OSRestart use
- * distinct objects so MWCC emits two lis pairs.
+ * Panic strings owned by this TU. Each OSPanic call names the string it
+ * prints; the file name is shared by all of the reset paths. The objects
+ * are grouped in use order: file name, hot-reset failures, menu failures,
+ * then the obsolete-API warnings. Explicit sizes keep the string table's
+ * 4-byte-aligned layout. The menu table also carries the data-manager and
+ * menu-page strings used by the other reset paths.
  */
-#pragma force_active on
 char lbl_80552AF0[0xC] = "OSReset.c";
 char OSReset_hotResetPool[0x2C] =
     "__OSHotReset(): Falied to reset system.\n\0\0\0\0";
@@ -42,16 +39,6 @@ char OSReset_menuPool_b[0xDC] =
 char OSReset_obsoletePool[0x7C] =
     "OSResetSystem() is obsoleted. It doesn't work any longer.\n\0\0"
     "OSSetBootDol() is obsoleted. It doesn't work any longer.\n\0\0\0\0\0\0";
-#pragma force_active off
-
-/* Panic-string pool laid over lbl_80552AF0. Member addressing (base+offset,
- * including offset 0) is what makes MWCC emit `addi r3, base, 0` instead of
- * peepholing the argument copy to `mr`/`or`. */
-typedef struct OSResetErrStrings {
-    char file[0xC];      /* 0x00 */
-    char hotFail[0x2C];  /* 0x0C */
-    char menuFail[0x30]; /* 0x38 */
-} OSResetErrStrings;
 
 static void KillThreads(void);
 void __OSHotResetForError(void);
@@ -225,21 +212,19 @@ void OSShutdownSystem(void) {
     }
 }
 
-/* Member loads (strs->file etc.) make MWCC form arguments with
- * `addi rD, base, 0` instead of peepholing the base copy to `mr`. */
-static inline void HotResetPanic(OSResetErrStrings* strs) {
+static inline void HotResetPanic(void) {
     if (__OSInNandBoot || __OSInReboot) {
         __OSInitSTM();
     }
     __OSHotReset();
 
-    OSPanic(strs->file, 1034, strs->hotFail);
+    OSPanic(lbl_80552AF0, 1034, OSReset_hotResetPool);
 }
 
-static inline void HotResetPanicMenu(OSResetErrStrings* strs) {
-    HotResetPanic(strs);
+static inline void HotResetPanicMenu(void) {
+    HotResetPanic();
 
-    OSPanic(strs->file, 1010, strs->menuFail);
+    OSPanic(lbl_80552AF0, 1010, OSReset_hotResetPool_b);
 }
 
 void OSRestart(u32 resetCode) {
@@ -277,9 +262,6 @@ void __OSReturnToMenu(u8 menuMode) {
     OSStateFlags stateFlags;
     OSStateFlags stateFlagsEsp;
     OSStateFlags stateFlagsAlloc;
-    /* Decl order pins regalloc: strs -> r30, disc/3 + ticketView share r31,
-     * matching retail (menuMode lands in r29). */
-    OSResetErrStrings* strs = (OSResetErrStrings*)lbl_80552AF0;
     u8 disc;
     void* ticketView;
 
@@ -308,7 +290,7 @@ void __OSReturnToMenu(u8 menuMode) {
         __OSLaunchMenu();
         OSDisableScheduler();
         __VISetRGBModeImm();
-        HotResetPanicMenu(strs);
+        HotResetPanicMenu();
     }
 
     ticketView = OSAllocFromMEM1ArenaLo(0xE0, 0x20);
@@ -321,7 +303,7 @@ void __OSReturnToMenu(u8 menuMode) {
         __OSLaunchMenu();
         OSDisableScheduler();
         __VISetRGBModeImm();
-        HotResetPanicMenu(strs);
+        HotResetPanicMenu();
     }
 
     memset(ticketView, 0, 0xE0);
@@ -345,7 +327,7 @@ void __OSReturnToMenu(u8 menuMode) {
     __OSLaunchMenu();
     OSDisableScheduler();
     __VISetRGBModeImm();
-    HotResetPanic(strs);
+    HotResetPanic();
 }
 
 void OSReturnToMenu(void) {
@@ -356,7 +338,6 @@ void OSReturnToMenu(void) {
 
 void __OSReturnToMenuForError(void) {
     OSStateFlags stateFlags;
-    OSResetErrStrings* strs = (OSResetErrStrings*)lbl_80552AF0;
 
     __OSReadStateFlags(&stateFlags);
     stateFlags.discState = 2;
@@ -367,7 +348,7 @@ void __OSReturnToMenuForError(void) {
     OSDisableScheduler();
     __VISetRGBModeImm();
 
-    HotResetPanicMenu(strs);
+    HotResetPanicMenu();
 }
 
 void __OSHotResetForError(void) {

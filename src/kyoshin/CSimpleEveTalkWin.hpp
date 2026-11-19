@@ -218,16 +218,10 @@ void TagProcBuildOpenText(void* tagProc, nw4r::lyt::Pane* pane, int flag);
 void* findObjectById(int id);
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern CSimpleEveTalkWin* lbl_eu_80664320;  // singleton instance (.sbss)
-extern u8 lbl_eu_80664324;                  // Term flag (.sbss)
-extern u32 lbl_eu_80663E28;                 // cbRenderBefore flag (.sbss)
+extern CSimpleEveTalkWin* spEveTalkWinInstance;  // singleton instance (.sbss)
+extern u8 sEveTalkWinTerminated;                  // Term flag (.sbss)
+extern u32 gmPauseFlags;                 // cbRenderBefore flag (.sbss)
 extern u32 __ptmf_null[3];                  // null pointer-to-member-function
 extern char lbl_eu_8052D238[];              // temp base vtable
 extern char lbl_eu_80532EE0[];              // composite vtable
-extern char lbl_eu_80503E14[];              // rodata string blob
-extern const f32 lbl_eu_80667CA0;           // tag-proc message scales
 // (defined as struct members in the .cpp, Elv recipe; decls kept for docs)
-extern const f32 lbl_eu_80667CA4;           // early-init float
-extern const f32 lbl_eu_80667CA8;           // anim frame
-extern const f32 lbl_eu_80667CAC;           // translate Y
-extern const f32 lbl_eu_80667CB0;           // anim frame target

@@ -16,6 +16,7 @@ public:
 
     static bool isInitialized();
     static CLibLayout* getInstance();
+    static CLibLayout* spInstance; // retail .sbss symbol spInstance__10CLibLayout
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
     static mtl::ALLOC_HANDLE getAllocHandle();
     void createLayout();

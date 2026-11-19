@@ -52,7 +52,7 @@ const Sdata2_Jump sdata2_Jump = {
 
 
 static float speedScale = 1.0f;
-static float nearDistSq = 1.0f;  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+static float nearDistSq = 1.0f;  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Warning string literals used by the jump pull-vector sanity check.
 extern char lbl_eu_80526324[];
@@ -63,7 +63,7 @@ namespace cf {
 extern "C" {
 extern char lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
-extern char lbl_eu_805357E8[];
+extern char gGimmickBdatColumns[];
 extern char lbl_eu_80664138[];
 
 extern void __ct__cf_CfGimmick(void* self);
@@ -216,7 +216,7 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x1C, row);
     self->flags66 = (u8)value;
-    value = (u32)getBdatStringColumnValue(table, lbl_eu_805357E8 + 0x30, row);
+    value = (u32)getBdatStringColumnValue(table, gGimmickBdatColumns + 0x30, row);
     self->resourceId = (u16)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x24, row);
     self->duration = (u16)value;
@@ -265,8 +265,8 @@ extern "C" void CfGimmickJump_RefreshMatrices(CfGimmickJump* self) {
 }
 
 extern "C" void CfGimmickJump_UpdateState(CfGimmickJump* self) {
-    if ((lbl_eu_80663E24 & 0x4000000) == 0) {
-        self->timer += Scn_GetFrameDelta(lbl_eu_80663E14);
+    if ((gmGameFlags & 0x4000000) == 0) {
+        self->timer += Scn_GetFrameDelta(gmScene);
         // State handler dispatch: retail stores 12-byte member-function
         // pointers over CfGimmickJump (__ptmf_scall) indexed by motionState.
         JumpStateFn* stateTable = reinterpret_cast<JumpStateFn*>((void*)lbl_eu_805359E8);
@@ -448,7 +448,7 @@ extern "C" void CfGimmickJump_RunLift(CfGimmickJump* self) {
         }
     }
 
-    f32 elapsed = self->frameScale * Scn_GetFrameDelta(lbl_eu_80663E14);
+    f32 elapsed = self->frameScale * Scn_GetFrameDelta(gmScene);
     if (self->timer <= self->frameScale) {
         self->verticalOffset += elapsed;
         if (self->verticalOffset > self->height) {

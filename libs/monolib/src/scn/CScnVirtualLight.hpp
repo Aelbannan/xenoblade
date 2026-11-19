@@ -7,7 +7,6 @@
 
 // Retail-owned data referenced by sinit_80494300 (monolib bss / sdata2 slice).
 extern CTaskGame_setVec4_tmp lbl_eu_80658648;
-extern f32 lbl_eu_8066AA14;
 extern f32 lbl_eu_8066AA18;
 
 // Blend-factor step/clamp constants for scnVlBlendStep (sdata2).
@@ -16,7 +15,6 @@ extern f32 lbl_eu_8066AA24;
 
 // sdata2 constants for the light manager ctor / init walks (scnVlInitLights /
 // scnVlInitLights2) and the slot-distance loop (scnVlUpdate).
-extern f32 lbl_eu_8066AA10;
 extern f32 lbl_eu_8066AA1C;
 extern f32 lbl_eu_8066AA20;
 extern f32 lbl_eu_8066AA28;

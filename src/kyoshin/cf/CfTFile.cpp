@@ -10,6 +10,21 @@
 #include <math.h>
 #include <string.h>
 
+// Owner definitions of the file-event / play-clock state (retail .sbss/.sdata).
+// The counter groups keep the retail symbol widths.
+u32 gCfTEventFrameCounter;
+f32 gCfTPlayClockSeconds;
+f32 gCfTPlayClockPrevSeconds;
+f32 gCfTPlayClockRemainder;
+u32 gCfTClockDisplayFrame;
+u32 gCfTFrameTimerRaw[2];
+f32 gCfTPlayRate = 0.0f;
+u16 gCfTCalendarDay = 0;
+u16 gCfTCalendarYear = 0;
+u16 gCfTFrameCounter[4] = {0, 0, 0, 0};
+u16 gCfTFallbackHourTable[6] = {6, 12, 18, 0, 0, 0};
+u16 gCfTFallbackMinuteTable[6] = {30, 30, 30, 30, 0, 0};
+
 // Auto-scaffolded catalog TU for kyoshin/cf/CfTFile
 
 // The retail ctor symbol __ct__cf_CfTFile is a C-linkage name (no C++ mangling
@@ -207,23 +222,23 @@ CfTFile* __dt__Q22cf7CfTFileFv(CfTFile* obj, int flag) {
     return obj;
 }
 
-float CfT_PlayRateGet() { return lbl_eu_80661AF0; }
+float CfT_PlayRateGet() { return gCfTPlayRate; }
 
 void func_80069EA8(int param) {
     extern float lbl_eu_80666214;
     extern float lbl_eu_80666218;
     if (param != 0) {
-        unsigned char val = lbl_eu_80663DA0;
+        unsigned char val = visionSharedStateFlags;
         float rate = lbl_eu_80666214;
         val |= 0x02;
-        lbl_eu_80663DA0 = val;
-        lbl_eu_80661AF0 = rate;
+        visionSharedStateFlags = val;
+        gCfTPlayRate = rate;
     } else {
-        unsigned char val = lbl_eu_80663DA0;
+        unsigned char val = visionSharedStateFlags;
         float rate = lbl_eu_80666218;
         val &= 0x02;
-        lbl_eu_80663DA0 = val;
-        lbl_eu_80661AF0 = rate;
+        visionSharedStateFlags = val;
+        gCfTPlayRate = rate;
     }
 }
 
@@ -233,58 +248,58 @@ bool CfT_IsTvPal() { return CDeviceVI::isTvFormatPal(); }
 // shared float state (seconds vs frame-count split). The (float) cast of the
 // u16 emits the retail 2^52 double-magic conversion (fsubs, not fsub).
 float CfT_PlayTimeGet() {
-    if (lbl_eu_80663D94 < lbl_eu_80663D98) {
-        return lbl_eu_80661AF0 * (float)lbl_eu_80661AF8;
+    if (gCfTPlayClockSeconds < gCfTPlayClockPrevSeconds) {
+        return gCfTPlayRate * (float)gCfTFrameCounter[0];
     }
-    return lbl_eu_80663D94 - lbl_eu_80663D98;
+    return gCfTPlayClockSeconds - gCfTPlayClockPrevSeconds;
 }
 
 // Per-frame play-clock update: refresh the frame-delta scalar from the bdat
 // flag, advance the shared clock by the u16 frame counter (Kahan-style
-// residual kept in lbl_eu_80663D9C), then roll the elapsed-time counters once
+// residual kept in gCfTPlayClockRemainder), then roll the elapsed-time counters once
 // the clock passes the display threshold.
 void CfT_PlayClockUpdate() {
     if (CfRes_getD80Flag()) {
         // Retail reuses the flag call's r3 as the scene-pointer argument.
-        lbl_eu_80661AF0 = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
+        gCfTPlayRate = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
     }
-    int paused = lbl_eu_80663DA0 & 1;
-    float oldClock = lbl_eu_80663D94;
-    lbl_eu_80663D98 = oldClock;
+    int paused = visionSharedStateFlags & 1;
+    float oldClock = gCfTPlayClockSeconds;
+    gCfTPlayClockPrevSeconds = oldClock;
     if (!paused) {
         // Advance the clock by frames*rate, keeping a Kahan-style residual
-        // (what the addition lost) in lbl_eu_80663D9C. The u16 frame counter
+        // (what the addition lost) in gCfTPlayClockRemainder. The u16 frame counter
         // converts through MWCC's inline 2^52 double-magic (unsigned path).
-        float delta = lbl_eu_80661AF0 * (float)(u32)lbl_eu_80661AF8;
-        float sum = lbl_eu_80663D9C + delta;
+        float delta = gCfTPlayRate * (float)(u32)gCfTFrameCounter[0];
+        float sum = gCfTPlayClockRemainder + delta;
         // Kahan update through the shared clock global; the residual keeps
         // what the addition lost.
-        lbl_eu_80663D94 = oldClock + sum;
-        lbl_eu_80663D9C = sum - (lbl_eu_80663D94 - oldClock);
-        oldClock = lbl_eu_80663D94;
+        gCfTPlayClockSeconds = oldClock + sum;
+        gCfTPlayClockRemainder = sum - (gCfTPlayClockSeconds - oldClock);
+        oldClock = gCfTPlayClockSeconds;
     }
-    if ((float)(double)oldClock >= lbl_eu_80666228) {
+    if ((float)(double)oldClock >= 43200.0f) {
         // Elapsed-day / year counters roll over once the clock passes the
         // display threshold.
-        if (++lbl_eu_80661AF4 > 365) {
-            lbl_eu_80661AF4 = 1;
-            if (++lbl_eu_80661AF6 > 9999) {
-                lbl_eu_80661AF6 = 9999;
+        if (++gCfTCalendarDay > 365) {
+            gCfTCalendarDay = 1;
+            if (++gCfTCalendarYear > 9999) {
+                gCfTCalendarYear = 9999;
             }
         }
         // Discarded-calibration style wrap: keep only the fmod remainder,
         // reset the residual, store the residual constant first.
-        float t = (float)fmod(lbl_eu_80663D94, lbl_eu_80666230);
-        lbl_eu_80663D9C = lbl_eu_80666238;
-        lbl_eu_80663D94 = t;
+        float t = (float)fmod(gCfTPlayClockSeconds, 43200.0);
+        gCfTPlayClockRemainder = lbl_eu_80666238;
+        gCfTPlayClockSeconds = t;
     }
 }
 
 extern "C" void CfT_PlayClockReset(float v) {
     float c = lbl_eu_80666238;
-    lbl_eu_80663D94 = v;
-    lbl_eu_80663D98 = v;
-    lbl_eu_80663D9C = c;
+    gCfTPlayClockSeconds = v;
+    gCfTPlayClockPrevSeconds = v;
+    gCfTPlayClockRemainder = c;
 }
 
 // Play-clock advance: report the current rates as truncated u16 frames, then
@@ -292,15 +307,15 @@ extern "C" void CfT_PlayClockReset(float v) {
 // float casts emit MWCC's inline 2^52 double-magic conversion).
 void CfT_PlayClockAccumulate(u32 a, u32 b) {
     int y, x;
-    x = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
-    y = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
+    x = (int)(float)fmod(gCfTPlayClockSeconds / 1800.0f, 24.0);
+    y = (int)(float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
     // Discarded fmod: retail still performs the call.
-    fmod(lbl_eu_80663D94, lbl_eu_80666230);
+    fmod(gCfTPlayClockSeconds, 43200.0);
     CfT_SelectDisplayMode((u16)x, (u16)y);
-    lbl_eu_80663D9C = lbl_eu_80666238;
-    lbl_eu_80663D98 = lbl_eu_80663D94;
-    lbl_eu_80663D94 =
-        lbl_eu_8066623C * (float)a + lbl_eu_80666248 * (float)b;
+    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockPrevSeconds = gCfTPlayClockSeconds;
+    gCfTPlayClockSeconds =
+        1800.0f * (float)a + 30.0f * (float)b;
 }
 
 // Advance the shared play clock by one frame: the delta is fmod'ing the
@@ -309,9 +324,9 @@ void CfT_PlayClockAccumulate(u32 a, u32 b) {
 // magic, single fsubs, no xoris, no union). The A*t product is staged
 // before the conversion so retail's fmuls-before-stack-lfd schedule holds.
 void CfT_PlayClockAdvanceFrame(u32 v) {
-    float t = (float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
-    lbl_eu_80663D9C = lbl_eu_80666238;
-    lbl_eu_80663D94 = lbl_eu_8066623C * (float)v + lbl_eu_80666248 * t;
+    float t = (float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
+    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockSeconds = 1800.0f * (float)v + 30.0f * t;
 }
 
 // Same clock advance as CfT_PlayClockAdvanceFrame, but the frame-delta term is the
@@ -320,11 +335,11 @@ void CfT_PlayClockAdvanceFrame(u32 v) {
 // casts so MWCC emits the single-rounded 0x43300000 magic (fsubs) rather
 // than the double-rounded manual-union form.
 void CfT_PlayClockAdvanceInt(u32 v) {
-    float t = (float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
+    float t = (float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
     u16 m = (u16)(int)t;
-    lbl_eu_80663D9C = lbl_eu_80666238;
-    lbl_eu_80663D94 =
-        lbl_eu_8066623C * (float)(u16)(int)t + lbl_eu_80666248 * (float)v;
+    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockSeconds =
+        1800.0f * (float)(u16)(int)t + 30.0f * (float)v;
 }
 
 // Snapshot the current play-clock rates into two u16 frame counters, and
@@ -332,15 +347,15 @@ void CfT_PlayClockAdvanceInt(u32 v) {
 // CfT_DispatchFrameCounts fmod trio; the caller-supplied pair is written through the
 // out pointers.
 u16 CfT_PlayClockSnapshot(u16* outA, u16* outB) {
-    *outA = (u16)(int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
-    *outB = (u16)(int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
-    return (u16)(int)(lbl_eu_80666258 * (float)fmod(lbl_eu_80663D94, lbl_eu_80666230));
+    *outA = (u16)(int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
+    *outB = (u16)(int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
+    return (u16)(int)(lbl_eu_80666258 * (float)fmod(gCfTPlayClockSeconds, lbl_eu_80666230));
 }
 
 // True when the current sub-second frame falls in the [6,17] window of the
 // 60 Hz second (u16 wrap-around range check on the frame counter).
 int CfT_FrameInWindow() {
-    int frame = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
+    int frame = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
     int result = 0;
     // +0x10000 before -6 keeps MWCC from folding the offset into one addi
     // (0x10000 does not fit addi), matching retail's addis+subi pair.
@@ -353,20 +368,20 @@ int CfT_FrameInWindow() {
 // Play-time -> frame conversions: fmod the shared second counter against a
 // rate constant, round to int (frames).
 int CfT_FrameCountA() {
-    return (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
+    return (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
 }
 
 int CfT_FrameCountB() {
-    return (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
+    return (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
 }
 
 int CfT_FrameCountC() {
-    return (int)(lbl_eu_80666258 * (float)fmod(lbl_eu_80663D94, lbl_eu_80666260));
+    return (int)(lbl_eu_80666258 * (float)fmod(gCfTPlayClockSeconds, lbl_eu_80666260));
 }
 
-u16 CfT_FrameCounterStore(u16 val) { lbl_eu_80661AF8 = val; return val; }
+u16 CfT_FrameCounterStore(u16 val) { gCfTFrameCounter[0] = val; return val; }
 
-u16 CfT_FrameCounterLoad() { return lbl_eu_80661AF8; }
+u16 CfT_FrameCounterLoad() { return gCfTFrameCounter[0]; }
 
 // Resolve the current clock time from the bdat table: the column names for
 // the given mode are picked from the string table, the cells read back as
@@ -382,17 +397,17 @@ int CfT_GetClockTimeByMode(int mode) {
         pMin = 0;
         pSec = 0;
         if (mode == 1) {
-            pMin = lbl_eu_804FB420;
-            pSec = lbl_eu_804FB420 + 0xa;
+            pMin = "morning_h";
+            pSec = "morning_m";
         } else if (mode == 2) {
-            pMin = lbl_eu_804FB420 + 0x14;
-            pSec = lbl_eu_804FB420 + 0x1e;
+            pMin = "daytime_h";
+            pSec = "daytime_m";
         } else if (mode == 3) {
-            pMin = lbl_eu_804FB420 + 0x28;
-            pSec = lbl_eu_804FB420 + 0x32;
+            pMin = "evening_h";
+            pSec = "evening_m";
         } else if (mode == 4) {
-            pMin = lbl_eu_804FB420 + 0x3c;
-            pSec = lbl_eu_804FB420 + 0x44;
+            pMin = "night_h";
+            pSec = "night_m";
         }
         if (pMin != 0) {
             // Both column pointers are fetched before either byte is read
@@ -402,7 +417,7 @@ int CfT_GetClockTimeByMode(int mode) {
             return vMin[0] * 60 + vSec[0];
         }
     }
-    return lbl_eu_80527030[mode] * 60 + lbl_eu_8052703C[mode];
+    return gCfTFallbackHourTable[mode] * 60 + gCfTFallbackMinuteTable[mode];
 }
 
 // True when `target` (minutes-of-day) falls inside the minute window bounded
@@ -453,9 +468,9 @@ int CfT_SelectDisplayMode(u16 a, u16 b) {
 // file-event entry matcher as u16 pairs. The intermediate fmod against
 // lbl_eu_80666230 is a discarded calibration call kept for side effects.
 void CfT_DispatchFrameCounts() {
-    int a = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_8066623C, lbl_eu_80666240);
-    int b = (int)(float)fmod(lbl_eu_80663D94 / lbl_eu_80666248, lbl_eu_80666250);
-    fmod(lbl_eu_80663D94, lbl_eu_80666230);
+    int a = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
+    int b = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
+    fmod(gCfTPlayClockSeconds, lbl_eu_80666230);
     CfT_SelectDisplayMode((u16)a, (u16)b);
 }
 
@@ -463,24 +478,24 @@ void CfT_DispatchFrameCounts() {
 // fields) once the PAL/NTSC frame-count gate is reached. The timer is stored
 // back to the global after each carry stage, mirroring the retail stores.
 void CfT_AdvanceFrameTimer() {
-    lbl_eu_80663DA4++;
+    gCfTClockDisplayFrame++;
     int pal = CDeviceVI::isTvFormatPal();
-    if (lbl_eu_80663DA4 >= (pal ? 25 : 30)) {
-        lbl_eu_80663DA4 = 0;
+    if (gCfTClockDisplayFrame >= (pal ? 25 : 30)) {
+        gCfTClockDisplayFrame = 0;
         CfFrameTimer t;
-        t.raw = lbl_eu_80663DA8;
+        t.raw = gCfTFrameTimerRaw[0];
         t.subsec++;
-        lbl_eu_80663DA8 = t.raw;
+        gCfTFrameTimerRaw[0] = t.raw;
         if (t.subsec >= 60) {
             t.subsec = 0;
             t.sec++;
-            lbl_eu_80663DA8 = t.raw;
+            gCfTFrameTimerRaw[0] = t.raw;
             if (t.sec >= 60) {
                 t.sec = 0;
-                lbl_eu_80663DA8 = t.raw;
+                gCfTFrameTimerRaw[0] = t.raw;
                 if (t.min < 9999) {
                     t.min++;
-                    lbl_eu_80663DA8 = t.raw;
+                    gCfTFrameTimerRaw[0] = t.raw;
                 }
             }
         }
@@ -489,33 +504,33 @@ void CfT_AdvanceFrameTimer() {
 
 // Read-only getter for the file event frame timer.
 u32 CfT_FrameTimerGet() {
-    return lbl_eu_80663DA8;
+    return gCfTFrameTimerRaw[0];
 }
 
 void CfT_FrameTimerSet(u32* self) {
-    lbl_eu_80663DA8 = *self;
+    gCfTFrameTimerRaw[0] = *self;
 }
 
 // Reset the file-event state: clear the shared counters/flags and restart the
 // frame timer with only the minute counter preserved.
 void CfT_ResetEventState() {
     CfFrameTimer timer;
-    timer.raw = lbl_eu_80663DA8;
-    lbl_eu_80663D90 = 0;
-    lbl_eu_80663D94 = lbl_eu_80666238;
-    lbl_eu_80663D98 = lbl_eu_80666238;
-    lbl_eu_80663D9C = lbl_eu_80666238;
-    lbl_eu_80661AF4 = 1;
-    lbl_eu_80661AF6 = 1;
-    lbl_eu_80663DA0 = 0;
+    timer.raw = gCfTFrameTimerRaw[0];
+    gCfTEventFrameCounter = 0;
+    gCfTPlayClockSeconds = lbl_eu_80666238;
+    gCfTPlayClockPrevSeconds = lbl_eu_80666238;
+    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTCalendarDay = 1;
+    gCfTCalendarYear = 1;
+    visionSharedStateFlags = 0;
     timer.min = 0;
     timer.subsec = 0;
     timer.sec = 0;
-    lbl_eu_80663DA8 = timer.raw;
-    lbl_eu_80663DA4 = 0;
+    gCfTFrameTimerRaw[0] = timer.raw;
+    gCfTClockDisplayFrame = 0;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8006A820() {
-    lbl_eu_80663DA8 = 0;
+    gCfTFrameTimerRaw[0] = 0;
 }

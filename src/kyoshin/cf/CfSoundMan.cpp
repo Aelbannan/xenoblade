@@ -4,7 +4,7 @@
 #include "monolib/device/CDeviceSC.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 using namespace cf;
@@ -53,9 +53,9 @@ CfSoundManGlobal* __ct__801BF76C(CfSoundManGlobal* self) {
     FxPair_Init(self->mFxSlots);
     __construct_array(self->mRecords, (void*)CfSoundMan_CtorRecord,
                       (void*)__dt__801BF80C, 0x268, 0xD);
-    lbl_eu_80664430 = self;
+    gSoundManInstance = self;
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
-        lbl_eu_8066443A = 0;
+        gSoundSystemInitFlag = 0;
         nw4r::snd::SoundSystem::InitSoundSystem(4, 3);
         // Ternary keeps the selected mode in a callee-save across the
         // GetInstance call; the stereo default fuses with the top-of-function
@@ -90,10 +90,10 @@ void* __dt__801BF80C(CfSoundRecord* _this, int flags) {
 // ?: record-base resolver), same shape as stopSoundMan.
 void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
     if (self != 0) {
-        if (lbl_eu_80664430 != 0) {
+        if (gSoundManInstance != 0) {
             u32 i;
             CfSoundRecord* rec =
-                lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+                gSoundManInstance ? gSoundManInstance->mRecords : 0;
             // Pointer-cursor loop: retail advances the record base in place
             // (addi +0x268) with a separate counter.
             for (i = 0; i < 13; i++) {
@@ -102,7 +102,7 @@ void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
             }
             nw4r::snd::SoundSystem::ShutdownSoundSystem();
         }
-        lbl_eu_80664430 = 0;
+        gSoundManInstance = 0;
         __destroy_arr(self->mRecords, (void*)__dt__801BF80C, 0x268, 0xD);
         __dt__801C3340(self->mFxSlots, -1);
         if (flags > 0) {
@@ -118,10 +118,10 @@ void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
 // on the manager pointer plus the ?: record-base resolver reusing the same
 // CR0 result.
 void stopSoundMan() {
-    if (lbl_eu_80664430 == 0) {
+    if (gSoundManInstance == 0) {
         return;
     }
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     for (u32 i = 0; i < 13; i++) {
         CfSoundMan_ReleaseRecord(rec + i);
     }
@@ -145,7 +145,7 @@ extern "C" void* __dt__801C189C(CfSoundHandle* _this, int flags);
 // (CfSoundMan_TickRecordPlayer, 0x268-byte stride).
 void CfSoundMan_UpdateAllRecords() {
     CfSoundMan_SweepIdleSlots();
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     for (u32 i = 0; i < 13; i++) {
         CfSoundMan_TickRecordPlayer(rec);
         rec++;
@@ -153,7 +153,7 @@ void CfSoundMan_UpdateAllRecords() {
 }
 
 void CfSoundMan_BindRecordBuffer(u32 idx, u32 p1, u32 p2, u32 p3) {
-    CfSoundRecord* rec = (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+    CfSoundRecord* rec = (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     CfSoundMan_LoadRecordBuffer(rec, (u8*)p1, p2, p3);
     rec->field_0x1C = idx;
 }
@@ -161,17 +161,17 @@ void CfSoundMan_BindRecordBuffer(u32 idx, u32 p1, u32 p2, u32 p3) {
 // Resolve sound slot idx (record array at manager+0x9FC, 0x268-byte stride)
 // and delegate to CfSoundMan_ReleaseRecord.
 void CfSoundMan_CloseRecord(u32 idx) {
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     CfSoundMan_ReleaseRecord(rec + idx);
 }
 
 void CfSoundMan_OpenRecordPlayer(u32 idx, u32 p1, u32 p2, u32 p3) {
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     CfSoundMan_CommitRecordSetup(rec + idx, p2, p3, p1);
 }
 
 u32 CfSoundMan_IsRecordActive(u32 idx) {
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     return rec[idx].mFlag & 1;
 }
 
@@ -190,16 +190,16 @@ void CfSoundMan_WriteSlotParam(u32 id, const CfSoundSlotParam* param) {
 }
 
 // Sound-start dispatch gate: while the game is in a cutscene/presentation
-// state (lbl_eu_80663E24 bit 9) with no blocking UI, or in the pause/event
-// state (bit 11 without bit 7 of lbl_eu_80663E28), refuses the request and
+// state (gmGameFlags bit 9) with no blocking UI, or in the pause/event
+// state (bit 11 without bit 7 of gmPauseFlags), refuses the request and
 // returns 0xFFFF. Otherwise resolves the record slot and starts playback via
 // CfSoundMan_StartRecordSound, returning its result.
 u32 CfSoundMan_PlayRequest(u32 a, u32 b, u32 c, float volume) {
-    // While a cutscene is running (lbl_eu_80663E24 bit 22) with no blocking
+    // While a cutscene is running (gmGameFlags bit 22) with no blocking
     // UI, refuse the request. A non-zero gate-function result routes straight
     // to the record lookup, skipping the pause-state check below (retail
     // branch layout).
-    if ((lbl_eu_80663E24 & 0x400000) != 0 &&
+    if ((gmGameFlags & 0x400000) != 0 &&
         isSceneActive__Q22cf13CfGameManagerFv() != 0) {
         if (SysWinSaveIsCreated() != 0 || isSaveMenuActive() != 0 ||
             ClearMenu_IsPresent() != 0 || isInitialized__10CMenuPauseFv() != 0) {
@@ -207,13 +207,13 @@ u32 CfSoundMan_PlayRequest(u32 a, u32 b, u32 c, float volume) {
         }
         return 0xFFFF;
     }
-    if ((lbl_eu_80663E28 & 0x1000000) == 0 &&
-        (lbl_eu_80663E24 & 0x100000) != 0) {
+    if ((gmPauseFlags & 0x1000000) == 0 &&
+        (gmGameFlags & 0x100000) != 0) {
         return 0xFFFF;
     }
 lookup:
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + a;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + a;
     if (rec == 0) {
         return 0xFFFF;
     }
@@ -226,14 +226,14 @@ lookup:
 // time, and delegates to CfSoundMan_StartRecordSound on the requested record.
 u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
     // HUD/menu jingle on record 0 is blocked while event bit 22 is latched.
-    if (idx == 0 && (s32)a == 0x1BB && (lbl_eu_80663E24 & 0x400000) != 0) {
+    if (idx == 0 && (s32)a == 0x1BB && (gmGameFlags & 0x400000) != 0) {
         return 0xFFFF;
     }
     // Presentation/event flags: two back-to-back reads of the flag word
     // (volatile casts keep MWCC from CSE-ing them - retail issues separate
     // loads here).
-    u32 presFlags = *(volatile u32*)&lbl_eu_80663E24;
-    u32 evtFlags = *(volatile u32*)&lbl_eu_80663E24;
+    u32 presFlags = *(volatile u32*)&gmGameFlags;
+    u32 evtFlags = *(volatile u32*)&gmGameFlags;
     if ((presFlags & 0x40000) != 0 && c != 0) {
         // Presentation mode: force a 30-frame fade when the caller left the
         // fade count free and the game manager allows sound.
@@ -249,8 +249,8 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
                 ClearMenu_IsPresent() == 0 && !isInitialized__10CMenuPauseFv()) {
                 return 0xFFFF;
             }
-        } else if ((lbl_eu_80663E28 & 0x1000000) == 0) {
-            if ((lbl_eu_80663E24 & 0x100000) != 0) {
+        } else if ((gmPauseFlags & 0x1000000) == 0) {
+            if ((gmGameFlags & 0x100000) != 0) {
                 return 0xFFFF;
             }
             // Scale the volume by the scene's remaining display time unless
@@ -276,7 +276,7 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
         }
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return 0xFFFF;
     }
@@ -291,7 +291,7 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
 // touches f1/f2 in the tail call).
 u32 CfSoundMan_PlayLinkedParam(u32 idx, u32 a, u32 b, float f1, float f2) {
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return 0xFFFF;
     }
@@ -300,7 +300,7 @@ u32 CfSoundMan_PlayLinkedParam(u32 idx, u32 a, u32 b, float f1, float f2) {
 
 u32 CfSoundMan_PlayActorParam(u32 idx, u32 a, u32 b) {
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return 0xFFFF;
     }
@@ -316,7 +316,7 @@ void CfSoundMan_SetSlotVolume(s32 idx, u32 a, u32 b, float volume) {
         return;
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -332,7 +332,7 @@ void CfSoundMan_StopSlotByMode(s32 idx, s32 mode, u32 fadeFrames) {
         return;
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -348,7 +348,7 @@ void CfSoundMan_ApplySlotStop(s32 idx, u32 a, u32 b) {
         return;
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -362,7 +362,7 @@ void CfSoundMan_StopSoundSlots(u32 idx, u32 soundId, s32 stopFlag) {
         return;
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -373,7 +373,7 @@ void CfSoundMan_StopSoundSlots(u32 idx, u32 soundId, s32 stopFlag) {
 // CfSoundMan_PauseRecordVoices (mode == -1, three args) or CfSoundMan_PauseRecordSounds (slot only).
 void CfSoundMan_PauseSlotByMode(u32 idx, s32 mode, bool a, u32 b) {
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -391,7 +391,7 @@ void CfSoundMan_SetSlotPan(s32 idx, u32 a, float pan) {
         return;
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -403,7 +403,7 @@ void CfSoundMan_WriteSlotGain(s32 idx, u32 a, u32 b) {
         return;
     }
     CfSoundRecord* rec =
-        (lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0) + idx;
+        (gSoundManInstance ? gSoundManInstance->mRecords : 0) + idx;
     if (rec == 0) {
         return;
     }
@@ -414,7 +414,7 @@ void CfSoundMan_WriteSlotGain(s32 idx, u32 a, u32 b) {
 // applies it to the nw4r AxManager with the frame count scaled by the ramp
 // multiplier.
 void setMasterVolume(float f1, float f2) {
-    lbl_eu_80662628 = f1;
+    gSoundMasterVolume = f1;
     nw4r::snd::detail::AxManager::GetInstance().SetMasterVolume(
         f1, (int)(lbl_eu_80667E8C * f2));
 }
@@ -435,7 +435,7 @@ void CfSoundMan_StopAllModes(s32 mode) {
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         return;
     }
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     for (u32 i = 0; i < 13; i++) {
         CfSoundMan_StopRecordVoices(rec + i, mode);
     }
@@ -451,7 +451,7 @@ void CfSoundMan_PauseAllRecords(bool pause, int fade) {
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         return;
     }
-    CfSoundRecord* rec = lbl_eu_80664430 ? lbl_eu_80664430->mRecords : 0;
+    CfSoundRecord* rec = gSoundManInstance ? gSoundManInstance->mRecords : 0;
     for (u32 i = 0; i < 13; i++) {
         CfSoundMan_PauseRecordVoices(rec + i, pause, fade);
     }
@@ -467,7 +467,7 @@ void CfSoundMan_ApplyFxSendAll(int idx, int fxType, float volume) {
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         return;
     }
-    FxSoundSlot* fxSlots = lbl_eu_80664430 ? lbl_eu_80664430->mFxSlots : 0;
+    FxSoundSlot* fxSlots = gSoundManInstance ? gSoundManInstance->mFxSlots : 0;
     if (fxSlots == 0) {
         return;
     }
@@ -479,8 +479,8 @@ void CfSoundMan_ApplyFxSendAll(int idx, int fxType, float volume) {
         return;
     }
     CfSoundRecord* rec;
-    if (lbl_eu_80664430 != 0) {
-        rec = lbl_eu_80664430->mRecords;
+    if (gSoundManInstance != 0) {
+        rec = gSoundManInstance->mRecords;
     } else {
         rec = 0;
     }
@@ -499,7 +499,7 @@ void CfSoundMan_ClearFxEffect(u32 index, u32 frame) {
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         return;
     }
-    FxSoundSlot* slots = lbl_eu_80664430 ? lbl_eu_80664430->mFxSlots : 0;
+    FxSoundSlot* slots = gSoundManInstance ? gSoundManInstance->mFxSlots : 0;
     if (slots == 0) {
         return;
     }
@@ -687,7 +687,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                     slot->field_0x2E = -1;
                 }
             } else {
-                if (lbl_eu_8066443A != 0) {
+                if (gSoundSystemInitFlag != 0) {
                     // Mono output: fixed reference volume.
                     if (slot->mSound != 0) {
                         slot->mSound->SetVolume(lbl_eu_80667EA0, 15);
@@ -699,8 +699,8 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                     f32 vol;
                     CamMan_ComputeViewFalloff(&pan, &vol, pose,
                                   (CfSoundPos3*)&slot->field_0x08,
-                                  lbl_eu_80667EA4,
-                                  lbl_eu_80667EA4 + slot->field_0x18);
+                                  5.0f,
+                                  5.0f + slot->field_0x18);
                     // Restart a stopped looping slot with the computed gain.
                     if ((slot->field_0x2A & 0x10) != 0 && slot->mSound == 0) {
                         CfSoundMan_StartSlotSound((CfSoundRecord*)slot->field_0x20,
@@ -730,7 +730,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
 // clobbers CR0 in between (retail byte identity).
 extern "C" void CfSoundMan_StopSlotsByMask(u32 mask, int stopFlag) {
     u16 mask16 = (u16)mask;
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+    for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + 64; p++) {
         if (p->mSound != 0 && (p->field_0x2A & mask16) != 0) {
             if (p->mSound != 0) {
                 p->mSound->Stop(stopFlag);
@@ -744,7 +744,7 @@ extern "C" void CfSoundMan_StopSlotsByMask(u32 mask, int stopFlag) {
 // from CfSoundMan_TouchSlotById).
 CfSoundSlot* CfSoundMan_FindSlotById(u32 id) {
     if (id != 0xFFFF) {
-        for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+        for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + 64; p++) {
             if (id == p->mId) {
                 return p;
             }
@@ -759,7 +759,7 @@ CfSoundSlot* CfSoundMan_FindSlotById(u32 id) {
 // state (id 0xFFFF, cleared flags). Kept out-of-line so the retail call
 // from CfSoundMan_UpdateAllRecords survives.
 void CfSoundMan_SweepIdleSlots() {
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+    for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + 64; p++) {
         if (p->mSound != 0 ||
             (p->mId != 0xFFFF && (p->field_0x2A & 0x10) != 0)) {
             CfSoundMan_UpdateSlot(p);
@@ -775,7 +775,7 @@ void CfSoundMan_SweepIdleSlots() {
 // given fade frames, then resets each slot's id/flag state to idle.
 // Retail calls this out of line from CfSoundMan_StopAllModes.
 void CfSoundMan_ResetAllSlots(s32 stopFlag) {
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+    for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + 64; p++) {
         if (p->mSound != 0) {
             p->mSound->Stop(stopFlag);
         }
@@ -793,7 +793,7 @@ void CfSoundMan_StopSlotsOfSound(u32 soundId, s32 stopFlag) {
     if (soundId == 0) {
         return;
     }
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+    for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + 64; p++) {
         if (p->mSound != 0 && p->mSoundId == soundId) {
             if (p->mSound != 0) {
                 p->mSound->Stop(stopFlag);
@@ -958,7 +958,7 @@ void CfSoundMan_PlayFailHook() {}
 // findSlotById): for-form so the first iteration branches to the bottom
 // condition test, matching the retail layout.
 static inline CfSoundSlot* findFreeSlot() {
-    CfSoundSlot* p = lbl_eu_80575928;
+    CfSoundSlot* p = gCfSoundSlots;
     CfSoundSlot* end = p + 64;
     while (p != end) {
         if (p->mId == 0xFFFF) {
@@ -1001,15 +1001,15 @@ extern "C" u32 CfSoundMan_StartSlotSound(CfSoundRecord* rec, s32 id, float volum
                 // 16-bit wrap-around id counter (retail reads/writes it as
                 // u16 and bumps again when the incremented value hits
                 // 0xFFFF so the reserved value is never handed out).
-                u16 counter = lbl_eu_80664438 + 1;
-                lbl_eu_80664438 = counter;
+                u16 counter = gSoundSlotIdCounter + 1;
+                gSoundSlotIdCounter = counter;
                 if (counter == 0xFFFF) {
                     counter = counter + 1;
-                    lbl_eu_80664438 = counter;
+                    gSoundSlotIdCounter = counter;
                 }
                 slotId = counter;
                 slot->field_0x2A = 0;
-                slot->field_0x18 = lbl_eu_80667E98;
+                slot->field_0x18 = 30.0f;
                 slot->field_0x2C = 0;
                 slot->mSoundId = 0;
                 slot->field_0x2E = -1;
@@ -1059,7 +1059,7 @@ static inline CfSoundSlot* findSlotById(u32 id);
 // inline expansion (retail byte identity). Takes the raw id and masks
 // internally so the caller's compare temp colors ahead of the scan cursor.
 static inline CfSoundSlot* findSlotById2(int count, u32 id) {
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + count;
+    for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + count;
          p++) {
         if (id == p->mId) {
             return p;
@@ -1119,7 +1119,7 @@ extern "C" u32 CfSoundMan_StartTableSound(CfSoundRecord* rec, u32 a, CfSoundSlot
 // of the body on the match, li p, 0 on the not-found edge) - a goto-found /
 // break + p = 0 form inverts the branch and loses the li.
 static inline CfSoundSlot* findSlotById(u32 id) {
-    for (CfSoundSlot* p = lbl_eu_80575928; p != lbl_eu_80575928 + 64; p++) {
+    for (CfSoundSlot* p = gCfSoundSlots; p != gCfSoundSlots + 64; p++) {
         if (id == p->mId) {
             return p;
         }
@@ -1225,8 +1225,8 @@ extern "C" void CfSoundMan_SetSoundVolume(CfSoundRecord* rec, u32 soundId, u32 f
     if ((rec->mFlag & 1) == 0) {
         return;
     }
-    end = lbl_eu_80575928 + 64;
-    p = lbl_eu_80575928;
+    end = gCfSoundSlots + 64;
+    p = gCfSoundSlots;
     int searching = 1;
     while (searching && p != end) {
         searching = 0;
@@ -1252,7 +1252,7 @@ void CfSoundMan_StopRecordSounds(CfSoundRecord* rec, s32 mode, u32 fadeFrames) {
     if (!(rec->mFlag & 1)) {
         return;
     }
-    CfSoundPauseParam* g = &lbl_eu_80576528;
+    CfSoundPauseParam* g = &gCfSoundPauseParam;
     g->field_0x00 = id;
     g->field_0x04 = (u16)fadeFrames;
     u32 i;
@@ -1310,8 +1310,8 @@ extern "C" void CfSoundMan_StopSound(CfSoundRecord* rec, u32 soundId, s32 stopFl
     // Hoisted 0x10000 base: (base - 1) yields zero-extended 0xFFFF per
     // iteration (retail lis/subi pair).
     u32 idBase = 0x10000;
-    CfSoundSlot* end = lbl_eu_80575928 + 64;
-    CfSoundSlot* p = lbl_eu_80575928;
+    CfSoundSlot* end = gCfSoundSlots + 64;
+    CfSoundSlot* p = gCfSoundSlots;
     int searching = 1;
     while (searching && p != end) {
         searching = 0;
@@ -1339,7 +1339,7 @@ extern "C" void CfSoundMan_StopSound(CfSoundRecord* rec, u32 soundId, s32 stopFl
 // recorded fade frames.
 extern "C" void CfSoundMan_PauseMatchingSlot(CfSoundSlot* slot) {
     nw4r::snd::detail::BasicSound* sound = slot->mSound;
-    CfSoundPauseParam* g = &lbl_eu_80576528;
+    CfSoundPauseParam* g = &gCfSoundPauseParam;
     u32 soundId = (sound != 0) ? sound->GetId() : 0xFFFFFFFF;
     s32 target = g->field_0x00;
     if (soundId == target || target == -1) {
@@ -1364,9 +1364,9 @@ extern "C" void CfSoundMan_PauseRecordSounds(CfSoundRecord* rec, s32 targetId, u
     if (!(rec->mFlag & 1)) {
         return;
     }
-    lbl_eu_80576528.field_0x00 = id;
-    lbl_eu_80576528.field_0x08 = pauseFlag;
-    lbl_eu_80576528.field_0x04 = fadeFrames;
+    gCfSoundPauseParam.field_0x00 = id;
+    gCfSoundPauseParam.field_0x08 = pauseFlag;
+    gCfSoundPauseParam.field_0x04 = fadeFrames;
     u32 i;
     for (i = 0; i < rec->mArchive.GetPlayerCount(); i++) {
         CfSoundListNode* end = &reinterpret_cast<CfSoundPlayerView&>(
@@ -1407,8 +1407,8 @@ extern "C" void CfSoundMan_SetSoundPan(CfSoundRecord* rec, u32 soundId, float pa
     // table base is loaded first and end derived from it (addi r31, r30, 0xC00).
     // searching flag + nested while reproduce the retail loop rotation
     // (r0 toggles 1->0->1 per slot).
-    CfSoundSlot* end = lbl_eu_80575928 + 64;
-    CfSoundSlot* p = lbl_eu_80575928;
+    CfSoundSlot* end = gCfSoundSlots + 64;
+    CfSoundSlot* p = gCfSoundSlots;
     int searching = 1;
     // searching flag + nested while reproduce the retail loop rotation
     // (r0 toggles 1->0->1 per slot). NOTE: retail carries one extra dead
@@ -1438,8 +1438,8 @@ void CfSoundMan_ApplySlotGain(CfSoundRecord* rec, u32 a, u32 b) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }
-    CfSoundSlot* end = lbl_eu_80575928 + 64;
-    CfSoundSlot* p = lbl_eu_80575928;
+    CfSoundSlot* end = gCfSoundSlots + 64;
+    CfSoundSlot* p = gCfSoundSlots;
     int searching = 1;
     while (searching && p != end) {
         searching = 0;
@@ -1512,8 +1512,8 @@ void* __dt__801C18F4(CfSoundSlot* _this, int flags) {
 // (CfSoundMan_InitSlotState, 0x30-byte stride), then register the whole-array destructor
 // (__dt__801C18F4) as a global cleanup via the link cell before the table.
 void sinit_801C183C() {
-    __construct_array((void*)lbl_eu_80575928, (void*)CfSoundMan_InitSlotState,
+    __construct_array((void*)gCfSoundSlots, (void*)CfSoundMan_InitSlotState,
                       (void*)__dt__801C189C, 0x30, 0x40);
-    __register_global_object((void*)lbl_eu_80575928, (void*)__dt__801C18F4,
-                             (void*)lbl_eu_80575918);
+    __register_global_object((void*)gCfSoundSlots, (void*)__dt__801C18F4,
+                             (void*)gCfSoundSlotRegNode);
 }

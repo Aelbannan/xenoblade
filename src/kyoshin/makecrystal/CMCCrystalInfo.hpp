@@ -131,22 +131,21 @@ extern "C" void MCCrystal_BindAnim3(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindAnim4(CMCCrystalInfo* self);
 extern "C" void MCCrystal_ClearTexts(CMCCrystalInfo* self);
 extern "C" void MCCrystal_ShowSlots(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item);
-extern char lbl_eu_80508DF8[];
-extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata2)
+extern const float lbl_eu_80668498;
 
 // Imports whose retail symbols are unmangled (plain global C++ would be
 // mangled by MWCC, e.g. CUICfManager_getPackedFont9C__Fv) -- C linkage keeps the call relocs
 // bound to the retail names.
 // GXColorS10-style shared slot colours (4 s16 channels each); the alpha
 // channel is refreshed from the layout panes during file load.
-extern s16 lbl_eu_806646D8[4];
-extern s16 lbl_eu_806646E0[4];
-extern s16 lbl_eu_806646E8[4];
-extern s16 lbl_eu_806646F0[4];
-extern s16 lbl_eu_806646F8[4];
-extern s16 lbl_eu_80664700[4];
-extern s16 lbl_eu_80664708[4];
-extern s16 lbl_eu_80664710[4];
+extern s16 sPane1Color0[4];
+extern s16 sPane1Color1[4];
+extern s16 sPane1Alpha0[4];
+extern s16 sPane1Alpha1[4];
+extern s16 sPane2Color0[4];
+extern s16 sPane2Color1[4];
+extern s16 sPane2Alpha0[4];
+extern s16 sPane2Alpha1[4];
 
 // Cross-TU imports with unmangled retail symbols (C linkage required so call
 // relocs bind to the retail names, not MWCC-mangled C++ forms).

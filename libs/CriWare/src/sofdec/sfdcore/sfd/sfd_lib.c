@@ -19,9 +19,9 @@ extern s32 SFTIM_Init(void* ctx, u32 param);
 extern void SFBUF_Init(void* ctx);
 extern s32 SFTRN_Init(void* ctx, u32 param);extern u32 lbl_eu_8051C590[];
 extern u32 lbl_eu_8051CA10[];
-extern u32 lbl_eu_80567ED8[];
+extern u32 sTraceSfdInit[];
 extern u32 lbl_eu_80606E20[];
-extern SfdSys lbl_eu_80606E38;
+extern SfdSys sSfdGlob;
 extern void* lbl_eu_8060715C;
 
 s32 SFLIB_SetErr(s32 val, u32 err_code);
@@ -39,8 +39,8 @@ s32 fn_803C3320(void* cfg) {
     /* Notify listener object (virtual call: vtable method at +0x24) with event block */
     if (ctx[5] != 0) {
         u32* obj = (u32*)ctx[5];
-        lbl_eu_80567ED8[3] = (u32)cfg + 4;
-        (*(void (**)(void*, void*))((u8*)*obj + 0x24))(obj, &lbl_eu_80567ED8[1]);
+        sTraceSfdInit[3] = (u32)cfg + 4;
+        (*(void (**)(void*, void*))((u8*)*obj + 0x24))(obj, &sTraceSfdInit[1]);
     }
 
     ctx[0xCD] = 0x39B0;
@@ -59,8 +59,8 @@ s32 fn_803C3320(void* cfg) {
     /* Second notification carries the init result pointer */
     if (ctx[5] != 0) {
         u32* obj = (u32*)ctx[5];
-        lbl_eu_80567ED8[0x1D] = (u32)&result;
-        (*(void (**)(void*, void*))((u8*)*obj + 0x24))(obj, &lbl_eu_80567ED8[0x1B]);
+        sTraceSfdInit[0x1D] = (u32)&result;
+        (*(void (**)(void*, void*))((u8*)*obj + 0x24))(obj, &sTraceSfdInit[0x1B]);
     }
 
     return result;
@@ -68,7 +68,7 @@ s32 fn_803C3320(void* cfg) {
 
 s32 fn_803C3400(void* cfg) {
     s32 error;
-    SfdSys* sys = &lbl_eu_80606E38;
+    SfdSys* sys = &sSfdGlob;
 
     UTY_MemsetDword(sys, 0, 0xC7);
     MEM_Copy(sys, lbl_eu_8051CA10, 0x190);
@@ -121,8 +121,8 @@ s32 fn_803C34F8(s32 val, u32 err_code) {
     return SFLIB_SetErr(val, err_code);
 }
 
-extern void* lbl_eu_80606E34;
-extern u32 lbl_eu_80568720[];
+extern void* gpSfdCoreTraceCb;
+extern u32 sTraceSflibSetErr[];
 
 s32 SFLIB_SetErr(s32 val, u32 err_code) {
     void (*fn)(void*, void*);
@@ -131,11 +131,11 @@ s32 SFLIB_SetErr(s32 val, u32 err_code) {
         return 0;
     }
 
-    if (lbl_eu_80606E34 != NULL) {
-        lbl_eu_80568720[3] = val;
-        lbl_eu_80568720[6] = (u32)&err_code;
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568720[1]);
+    if (gpSfdCoreTraceCb != NULL) {
+        sTraceSflibSetErr[3] = val;
+        sTraceSflibSetErr[6] = (u32)&err_code;
+        fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+        fn(gpSfdCoreTraceCb, &sTraceSflibSetErr[1]);
     }
 
     if (val == 0) {
@@ -164,9 +164,9 @@ s32 SFLIB_SetErr(s32 val, u32 err_code) {
         }
     }
 
-    if (lbl_eu_80606E34 != NULL) {
-        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-        fn(lbl_eu_80606E34, &lbl_eu_80568720[27]);
+    if (gpSfdCoreTraceCb != NULL) {
+        fn = *(void (**)(void*, void*))((u8*)*(u32*)gpSfdCoreTraceCb + 0x24);
+        fn(gpSfdCoreTraceCb, &sTraceSflibSetErr[27]);
     }
 
     return err_code;

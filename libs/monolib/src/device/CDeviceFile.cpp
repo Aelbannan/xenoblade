@@ -9,13 +9,13 @@
 // of the file).  The three 1/1/6-byte .sdata bytes (language override +
 // standby flag) are separate u8 objects so references emit the retail
 // per-address symbols (chars have 1-byte alignment, so packing matches).
-extern "C" u8 lbl_eu_806636A8 = 0x01;
-u8 lbl_eu_806636A9 = 0x01;   // standby-login done flag
-s8 lbl_eu_806636AA = -1;     // language override (-1 = auto)
-u32 lbl_eu_80665660;   // CDeviceFile singleton pointer (.sbss)
-int lbl_eu_80665664;   // filename-substitution table entry count (.sbss)
-void* lbl_eu_80657580[16]; // filename-substitution table (.bss, 64B)
-extern u8 lbl_eu_806575C0[0x108]; // .bss 264B (defined at bottom)
+extern "C" u8 sStandbyReadyFlag = 0x01;
+u8 sStandbyLoginDoneFlag = 0x01;   // standby-login done flag
+s8 sLanguageOverride = -1;     // language override (-1 = auto)
+u32 sDeviceFileInstance;   // CDeviceFile singleton pointer (.sbss)
+int sSubstLangPathCount;   // filename-substitution table entry count (.sbss)
+void* sSubstLangPathTable[16]; // filename-substitution table (.bss, 64B)
+extern u8 sDeviceFileStaticState[0x108]; // .bss 264B (defined at bottom)
 extern "C" u32 lbl_eu_8056C30C[3];
 extern "C" u32 lbl_eu_8056C324[3]; // reslist<CFileHandle> vtable (defined below)
 extern "C" u32 lbl_eu_8056C250[40]; // CDeviceFile vtable (defined below)
@@ -307,6 +307,7 @@ class CDeviceFile : public CDeviceBase {
 public:
     CDeviceFile(const char* name, CWorkThread* parent);
     ~CDeviceFile();
+    static CDeviceFile* getInstance();
     static void cancel(CFileHandle* pFileHandle);
     static int setParent(CWorkThread* parent);
     bool clearParent();
@@ -363,8 +364,8 @@ CDeviceFile::CDeviceFile(const char* pName, CWorkThread* pParent)
     mFileList.mStartNode.mNext = mFileList.mStartNodePtr;
     mFileList.mStartNode.mPrev = mFileList.mStartNodePtr;
     mFileList.m_vtable = lbl_eu_8056C30C;        // reslist vtable (derived)
-    lbl_eu_80665660 = (u32)this;
-    lbl_eu_806636AA = -1;
+    sDeviceFileInstance = (u32)this;
+    sLanguageOverride = -1;
     mFileList.mList = (CDeviceFilePoolEntry*)mtl::MemManager::allocate_array(
         0xC00, CWorkThreadSystem::getWorkMem());
     // Clear the leading word of every 0x0C sub-slot in all 32 entries.
@@ -439,7 +440,7 @@ CFileHandleReslist* __dt__reslist_CFileHandle(CFileHandleReslist* t, int deletin
 
 CDeviceFile::~CDeviceFile() {
     CFileHandleReslist* list = &mFileList;
-    lbl_eu_80665660 = 0;
+    sDeviceFileInstance = 0;
     if (list != 0) {
         if (list != 0) {
             list->m_vtable = lbl_eu_8056C324;
@@ -459,7 +460,7 @@ CDeviceFile::~CDeviceFile() {
     }
 }
 
-u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
+CDeviceFile* CDeviceFile::getInstance() { return (CDeviceFile*)sDeviceFileInstance; }
 
 // A device thread is ready when it has no pending EVT_EXCEPTION (flag bit or
 // queued message) and its worker state is LOGIN or RUN.
@@ -495,7 +496,7 @@ static inline bool isDeviceFileReady(CDeviceFile* dev) {
 
 int CDeviceFile::isInitialized() {
     // All three devices (manager, DVD, CRI) must be ready.
-    if (!isDeviceFileReady((CDeviceFile*)lbl_eu_80665660)) return 0;
+    if (!isDeviceFileReady((CDeviceFile*)sDeviceFileInstance)) return 0;
 
     if (CDeviceFileDvd::getInstance() == NULL) return 0;
     if (!isDeviceFileReady(CDeviceFileDvd::getInstance())) return 0;
@@ -504,17 +505,17 @@ int CDeviceFile::isInitialized() {
     return isDeviceFileReady(CDeviceFileCri::getInstance()) ? 1 : 0;
 }
 
-extern "C" u8 isStandbyReady__11CDeviceFileFv() { return lbl_eu_806636A8; }
+extern "C" u8 isStandbyReady__11CDeviceFileFv() { return sStandbyReadyFlag; }
 
 int CDeviceFile::setParent(CWorkThread* parent) {
-    // spInstance (lbl_eu_80665660)->field_1C8 = parent; return true
-    ((CDeviceFile*)(u32)lbl_eu_80665660)->field_0x1C8 = parent;
+    // spInstance (sDeviceFileInstance)->field_1C8 = parent; return true
+    ((CDeviceFile*)(u32)sDeviceFileInstance)->field_0x1C8 = parent;
     return 1;
 }
 
 bool CDeviceFile::clearParent() {
-    // spInstance (lbl_eu_80665660)->field_0x1C8 = 0; return true
-    ((CDeviceFile*)(u32)lbl_eu_80665660)->field_0x1C8 = 0;
+    // spInstance (sDeviceFileInstance)->field_0x1C8 = 0; return true
+    ((CDeviceFile*)(u32)sDeviceFileInstance)->field_0x1C8 = 0;
     return true;
 }
 
@@ -600,7 +601,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
 
     if (handle != NULL) {
         // Append to the manager singleton's job ring via a free pool slot.
-        mgr = (CDeviceFile*)lbl_eu_80665660;
+        mgr = (CDeviceFile*)sDeviceFileInstance;
         CFileJobSlot* slots = (CFileJobSlot*)mgr->mFileList.mList;
         CWorkThreadListNode* sentinel =
             (CWorkThreadListNode*)mgr->mFileList.mStartNodePtr;
@@ -659,7 +660,7 @@ static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPa
 
     job = NULL;
     if (!absolute) {
-        if (lbl_eu_806636A8 == 0) {
+        if (sStandbyReadyFlag == 0) {
             CDeviceFile* dvd = CDeviceFileDvd::getInstance();
             job = (CDeviceFileJob*)mtl::MemManager::allocate(
                 0x250, CWorkThreadSystem::getWorkMem());
@@ -728,7 +729,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
         }
     }
     if (!absolute) {
-        if (lbl_eu_806636A8) {
+        if (sStandbyReadyFlag) {
             result = getFileSize__14CDeviceFileCriFPCci(path, param);
         } else {
             result = getFileSize__14CDeviceFileDvdFPCc(path, param);
@@ -740,7 +741,7 @@ extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
 bool CDeviceFile::removeFileJob(CDeviceFileJob* job) {
     bool result;
     CFileHandle* handle = job->mHandle;
-    CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
+    CDeviceFile* inst = (CDeviceFile*)sDeviceFileInstance;
     if (handle == NULL) {
         result = false;
     } else {
@@ -921,7 +922,7 @@ bool CDeviceFile::wkStandbyLogin() {
         }
         CWorkUtil::entryWork(cri, this, false);
 
-        lbl_eu_806636A9 = 1;
+        sStandbyLoginDoneFlag = 1;
         return CWorkThread::wkStandbyLogin();
     }
     return false;
@@ -939,9 +940,9 @@ bool CDeviceFile::wkStandbyLogout() {
 }
 
 extern "C" void func_eu_804520B0(void* fileName) {
-    int idx = (int)lbl_eu_80665664;
-    lbl_eu_80657580[idx] = fileName;
-    lbl_eu_80665664 = idx + 1;
+    int idx = (int)sSubstLangPathCount;
+    sSubstLangPathTable[idx] = fileName;
+    sSubstLangPathCount = idx + 1;
 }
 
 // Language-aware filename substitution. Walks the registered filename table
@@ -958,7 +959,7 @@ void DevFile_SubstLangPath(char* pPath) {
     const char* search;
 
     lang = CDeviceSC::getLanguage();
-    s8 langOverride = lbl_eu_806636AA;
+    s8 langOverride = sLanguageOverride;
     if (langOverride >= 0) {
         lang = langOverride;
     }
@@ -968,13 +969,13 @@ void DevFile_SubstLangPath(char* pPath) {
         lang = 1;
     }
 
-    count = lbl_eu_80665664;
-    pTable = (const char* const**)lbl_eu_80657580;
+    count = sSubstLangPathCount;
+    pTable = (const char* const**)sSubstLangPathTable;
     for (i = 0; i < count; i++) {
         search = pTable[0][0];
         found = strstr(pPath, search);
         if (found != NULL) {
-            memcpy(found, ((const char* const*)lbl_eu_80657580[i])[lang + 1], strlen(search));
+            memcpy(found, ((const char* const*)sSubstLangPathTable[i])[lang + 1], strlen(search));
             return;
         }
         pTable++;
@@ -986,19 +987,19 @@ void DevFile_SubstLangPath(char* pPath) {
 // because this catalog TU defines a local `struct CDeviceFile` that conflicts
 // with the class in that header, so this TU cannot include it.
 extern "C" void DevFile_SetLangOverride(s8 val) {
-    lbl_eu_806636AA = val;
+    sLanguageOverride = val;
 }
 
 extern "C" void func_eu_804521B0() {
-    lbl_eu_806636AA = -1;
+    sLanguageOverride = -1;
 }
 
 extern "C" void DevFile_SetByteA9(u8 val) {
-    lbl_eu_806636A9 = val;
+    sStandbyLoginDoneFlag = val;
 }
 
 extern "C" u8 DevFile_GetByteA9() {
-    return lbl_eu_806636A9;
+    return sStandbyLoginDoneFlag;
 }
 
 CEventFile::CEventFile(CBM cbm, CFileHandle* handle) {
@@ -1021,9 +1022,9 @@ u8* CEventFile::getFileDataPtr() {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_eu_80452248() {
-    extern unsigned char lbl_eu_806575C0[];
-    lbl_eu_806575C0[0] = 0;
-    *(unsigned int*)(lbl_eu_806575C0 + 0x100) = 0;
+    extern unsigned char sDeviceFileStaticState[];
+    sDeviceFileStaticState[0] = 0;
+    *(unsigned int*)(sDeviceFileStaticState + 0x100) = 0;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
@@ -1164,4 +1165,4 @@ extern "C" u32 lbl_eu_806636B8[2] = { (u32)&lbl_eu_80522BAC, (u32)&lbl_eu_8056C3
 extern "C" u32 lbl_eu_806636C0[2] = { (u32)&lbl_eu_80522BC4, 0x00000000 };
 
 // [.bss] 0x806575C0-0x806576C8 (264B).
-u8 lbl_eu_806575C0[0x108];
+u8 sDeviceFileStaticState[0x108];

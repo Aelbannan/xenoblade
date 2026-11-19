@@ -17,11 +17,10 @@ extern "C" void SkipTimer_Phase3Handle(CMenuSkipTimer* self);
 extern "C" int CSkipTimerGetSkipButton(CSkipTimer* self);
 extern "C" void CSkipTimerTeardown(CSkipTimer* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
-extern "C" void teardown(CTitleAHelp* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // Secondary mode bitfield (bit 21 / IBM bit 10 = realtime event busy).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Retail-unmangled same-unit CSkipTimer / CMenuSkipTimer helpers referenced by
 // Move/Init. Declared extern "C" so calls bind the literal (un)mangled retail
@@ -32,7 +31,6 @@ extern "C" int CSkipTimerIsEngaged(CSkipTimer* self);
 extern "C" void CSkipTimerTick(CSkipTimer* self);
 extern "C" void CSkipTimer_BeginLoad(CSkipTimer* self);
 extern "C" void SkipTimer_Phase2PollPad(CMenuSkipTimer* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 // Retail-unmangled CW helpers used by Init()'s temporary-object re-init pattern.
 extern "C" void __ct__6CBgTexFUc(void*, int);
@@ -50,9 +48,7 @@ extern "C" void CSkipTimerConfirmSkip(CSkipTimer* self);
 extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
 extern "C" void CSkipTimerNextKey(CSkipTimer* self);
 extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int isSkipActive(CSkipTimer* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);

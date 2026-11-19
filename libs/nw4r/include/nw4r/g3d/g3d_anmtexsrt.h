@@ -3,6 +3,7 @@
 #include <nw4r/types_nw4r.h>
 
 #include <nw4r/g3d/g3d_anmobj.h>
+#include <nw4r/g3d/g3d_anmchr.h>
 #include <nw4r/g3d/res/g3d_resanmtexsrt.h>
 #include <nw4r/g3d/res/g3d_resmat.h>
 
@@ -151,6 +152,7 @@ public:
     virtual f32 GetUpdateRate() const;    // at 0x2C
 
     virtual bool Bind(const ResMdl mdl); // at 0x30
+    bool Bind(const ResMdl mdl, u32 target, AnmObjChr::BindOption option);
 
     virtual const TexSrtAnmResult* GetResult(TexSrtAnmResult* pResult,
                                              u32 idx); // at 0x38

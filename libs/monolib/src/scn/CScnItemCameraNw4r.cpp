@@ -118,9 +118,10 @@ void ScnCamNw4r_RefreshFrustumB(CScnItemCameraNw4r* self) {
 // Keep the remaining (unmatched) unit symbols as stubs.
 // ===========================================================================
 // retail: addi r3,r3,0x2b8; b IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE
-extern "C" bool IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(void* frustum, const void* sphere);
 extern "C" bool ScnCamNw4r_TestSphereHit(u8* self, const void* sphere) {
-    return IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(self + 0x2b8, sphere);
+    const nw4r::math::FRUSTUM* frustum =
+        (const nw4r::math::FRUSTUM*)(self + 0x2b8);
+    return frustum->IntersectSphere((const nw4r::math::SPHERE*)sphere);
 }
 extern "C" void* ScnCamNw4r_NullHook40(u8* self) { return 0; }
 void ScnCamNw4r_EmptyHook48() {}

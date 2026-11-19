@@ -3,7 +3,7 @@
 // Node-pool manager shared by the scene path/walker classes (UnkClass_8047D2AC,
 // UnkClass_8047E064 -- see code_8047D2AC.cpp).  It tracks a single allocation
 // in the global lbl_eu_806658C8 slot, exposes a set of "get/clear" helpers on
-// the pool object at lbl_eu_80658540, and is initialised by sinit_8047D290.
+// the pool object at sWalkTableLocator, and is initialised by sinit_8047D290.
 //
 // Retail main.dol is stripped; symbols.txt annotates every method as Fv even
 // though getNodeBlock really takes a register index argument.  That one
@@ -100,7 +100,7 @@ extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* sel
 // linker names; plain globals are not mangled so no extern "C" needed).
 // ------------------------------------------------------------------
 
-extern UnkClass_8047CD0C lbl_eu_80658540; // node pool (bss)
+extern UnkClass_8047CD0C sWalkTableLocator; // node pool (bss)
 extern u8* lbl_eu_806658C8;              // owned allocation slot (sbss)
 
 // ------------------------------------------------------------------
@@ -121,7 +121,7 @@ extern "C" void initFromConfig__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
     config += 0xC;
     self->mData = config;
     init__17UnkClass_8047E110Fv((UnkClass_8047E110*)lbl_eu_80658560, config);
-    configurePoolLayout__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
+    configurePoolLayout__17UnkClass_8047CD0CFv(&sWalkTableLocator,
                                          (UnkClass_8047CD0C*)self->mData);
     if (self->mField08 != 0) {
         i = 0;
@@ -143,7 +143,7 @@ extern "C" void initNodePool__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       mtl::ALLOC_HANDLE handle,
                                                       u32 size, u32 nodeCount) {
     self->mField04 = (u32)allocateNodeStorage__17UnkClass_8047CD0CFv(
-        &lbl_eu_80658540, handle, size, nodeCount);
+        &sWalkTableLocator, handle, size, nodeCount);
     self->mField08 = nodeCount;
     s32 i = 0;
     s32 off = 0;
@@ -219,16 +219,16 @@ extern "C" void releaseNode__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
 // clearPoolData -- clear own data pointer, then clear pool flags
 void UnkClass_8047CD0C::clearPoolData() {
     mData = 0;
-    lbl_eu_80658540.clearPoolFlags();
+    sWalkTableLocator.clearPoolFlags();
 }
 
 // resetPoolState -- hand pool storage over to D1B0/D02C, clear own state
 void UnkClass_8047CD0C::resetPoolState() {
-    lbl_eu_80658540.freePoolAllocation();
+    sWalkTableLocator.freePoolAllocation();
     mField04 = 0;
     mField08 = 0;
     mData = 0;
-    lbl_eu_80658540.clearPoolFlags();
+    sWalkTableLocator.clearPoolFlags();
 }
 
 // refreshPoolMemory -- tail-call to createGlobalHeap (reallocate pool storage)
@@ -379,17 +379,17 @@ void UnkClass_8047CD0C::freeGlobalHeap() {
 // ------------------------------------------------------------------
 
 extern "C" void sinit_8047D290() {
-    lbl_eu_80658540.mData = 0;
-    lbl_eu_80658540.mField04 = 0;
-    lbl_eu_80658540.mFlags = 0;
+    sWalkTableLocator.mData = 0;
+    sWalkTableLocator.mField04 = 0;
+    sWalkTableLocator.mFlags = 0;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.bss] 0x80658540-0x80658648 (0x108 = 264B): node-pool manager object
 // (0x20) + scene-manager block (0xA8) + two tail objects (0x30 / 0x10).
-UnkClass_8047CD0C lbl_eu_80658540;  // node pool (0x20)
+UnkClass_8047CD0C sWalkTableLocator;  // node pool (0x20)
 u8 lbl_eu_80658560[0xA8];           // scene manager (UnkClass_8047E110)
-u8 lbl_eu_80658608[0x30];
+u8 sWalkWaypointTable[0x30];
 u8 lbl_eu_80658638[0x10];
 // NOTE: retail's split carries no FORCEACTIVE functions for this TU, and
 // every bss symbol below is a non-static definition, so nothing can be
@@ -401,4 +401,4 @@ u8 lbl_eu_80658638[0x10];
 // partner slot.
 u8* lbl_eu_806658C8;    // owned allocation slot
 u32 lbl_eu_806658C8x;     // retail symbol tail (unused)
-u8 lbl_eu_806658D0[8];
+u8 sWalkWaypointInitFlags[8];

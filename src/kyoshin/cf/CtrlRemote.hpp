@@ -80,14 +80,14 @@ extern "C" void CtrlRemote_WriteBufBits(u32* buffer, u32 index, u32 value);
 extern "C" u32* CtrlRemote_MapDataIndex(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
 // External data (retail linker symbols)
-extern "C" u32 lbl_eu_80571848[];
-extern "C" u8 lbl_eu_80663E80;
+extern "C" u32 sCtrlRemoteSharedBuf[];
+extern "C" u8 sCtrlRemoteBufInitialized;
 extern "C" u32 lbl_eu_80661C70[2];
-extern "C" u32 lbl_eu_80528048[4];
-extern "C" u32 lbl_eu_80528058[32];
+extern "C" u32 sCtrlRemoteByteMasks[4];
+extern "C" u32 sCtrlRemoteBitMasks[32];
 
-// Global flag word read by CtrlRemote_GetFileEventIds (retail: lwz r3, lbl_eu_80663E88@sda21).
-extern u32 lbl_eu_80663E88;
+// Global flag word read by CtrlRemote_GetFileEventIds (retail: lwz r3, spCtrlObjectParamWork@sda21).
+extern u32 spCtrlObjectParamWork;
 
 // 0x38-byte stack context handed to the retail UnkClass_80460C34 methods by
 // CtrlRemote_RunWithHeapCtx (fields at the offsets the retail prologue stores).
@@ -435,7 +435,7 @@ public:
 };
 
 // Second global flag word probed by func_80098EF8 (retail sda21 access).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // CtrlPc-compatible view exposing the virtuals CtrlRemote_FrameUpdate pokes (up to
 // slot 0xB8), the +0x2C state word, the 32-float ring buffer at 0x1DC, and
@@ -534,7 +534,6 @@ struct CtrlEnumListSweep {
 
 extern "C" int CfCmd_PickChain(void* res, void* actor, int mode, void* filter);
 extern "C" unsigned long SuddenCommuIsStateActive(void* self);
-extern "C" void SysWinLog_TickCounter29();
 extern "C" void AddZealEffect(void* obj, int arg);
 extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" u32 getAnimModelId(void* obj);

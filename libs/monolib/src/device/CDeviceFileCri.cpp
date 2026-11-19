@@ -7,7 +7,7 @@
 // Retail singleton pointer (sda21 .sbss) - the decomp's static sInstance member
 // resolves to the same address; referencing this name directly keeps the reloc
 // byte-identical to retail. Defined in the blob section below.
-extern CDeviceFileCri* lbl_eu_80665668;
+extern CDeviceFileCri* sInstance;
 // Shared rodata string pool: the ".adx" extension marker begins at +6.
 extern const char lbl_eu_80522CA0[];
 
@@ -41,23 +41,23 @@ extern "C" void destroy__11CFileHandleFv(CFileHandle* handle, u32 size, u32 allo
 
 CDeviceFileCri* CDeviceFileCri::getInstance() { return sInstance; }
 
-void CDeviceFileCri::setCriFilePathA(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636C8[0] = (wchar_t*)pData; }
-void CDeviceFileCri::setCriFilePathB(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636CC[0] = (wchar_t*)pData; }
-void CDeviceFileCri::setCriFilePathC(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636D0[0] = (wchar_t*)pData; }
+void CDeviceFileCri::setCriFilePathA(const wchar_t* pData) { sCriFilePathA = pData; }
+void CDeviceFileCri::setCriFilePathB(const wchar_t* pData) { sCriFilePathB = pData; }
+void CDeviceFileCri::setCriFilePathC(const wchar_t* pData) { sCriFilePathC[0] = pData; }
 
 extern "C" void sinit_80450B2C() {
-    lbl_eu_806576C8[0] = 0;
-    ((u32*)lbl_eu_806576C8)[0x20] = 0;
+    sFileCriState[0] = 0;
+    ((u32*)sFileCriState)[0x20] = 0;
 }
 
 void CDeviceFileCri::teardownAdxf(unsigned long) {
-    // retail names the singleton pointer lbl_eu_80665668 here (same storage as
+    // retail names the singleton pointer sInstance here (same storage as
     // the static member); reference the C-linkage label to avoid name drift.
-    if (lbl_eu_80665668 != nullptr && lbl_eu_80665668->mADXFHandle != nullptr) {
-        ADXF_Stop(lbl_eu_80665668->mADXFHandle);
-        ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-        ADXF_Close(lbl_eu_80665668->mADXFHandle);
-        lbl_eu_80665668->mADXFHandle = nullptr;
+    if (sInstance != nullptr && sInstance->mADXFHandle != nullptr) {
+        ADXF_Stop(sInstance->mADXFHandle);
+        ADXF_GetNumReqSct(sInstance->mADXFHandle);
+        ADXF_Close(sInstance->mADXFHandle);
+        sInstance->mADXFHandle = nullptr;
     }
 }
 
@@ -95,7 +95,7 @@ CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capa
     mExceptionPending = 0;
     mTimeoutCounter = 0;
 
-    lbl_eu_80665668 = this;
+    sInstance = this;
 
     mtl::ALLOC_HANDLE handle = CDevice::getDevSys2Handle();
     mBuffer = mtl::MemManager::allocate_head(handle, 0x800, 0x20);
@@ -124,7 +124,7 @@ CDeviceFileCri::~CDeviceFileCri() {
         pException = (IException*)((u8*)pException + 0x1C4);
     }
     CException::RemoveFromGlobalArray(pException);
-    lbl_eu_80665668 = nullptr;
+    sInstance = nullptr;
     if (mBuffer != nullptr) {
         mtl::MemManager::deallocate(mBuffer);
         mBuffer = nullptr;
@@ -180,17 +180,17 @@ bool CDeviceFileCri::checkDriveStatus() {
         // busy. The message pointers are static pointer VARIABLES (.sdata) -
         // retail loads their CONTENTS (lwz @sda21), not their addresses.
         if (!criIsException(this)) {
-            createException__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8[0], 4);
+            createException__10CExceptionFP11CWorkThreadPCwUl(this, sCriFilePathA, 4);
         }
         return false;
     } else if (status == 11) {
         if (!criIsException(this)) {
-            createException__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636CC[0], 4);
+            createException__10CExceptionFP11CWorkThreadPCwUl(this, sCriFilePathB, 4);
         }
         return false;
     } else if (status == 4) {
         if (!criIsException(this)) {
-            createException__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8[0], 4);
+            createException__10CExceptionFP11CWorkThreadPCwUl(this, sCriFilePathA, 4);
         }
         return false;
     }
@@ -199,14 +199,14 @@ bool CDeviceFileCri::checkDriveStatus() {
 }
 
 void CDeviceFileCri::closeAdxfHandle() {
-    // retail names the singleton pointer lbl_eu_80665668 here (same storage as
+    // retail names the singleton pointer sInstance here (same storage as
     // the static member); reference the C-linkage label to avoid name drift.
-    if (lbl_eu_80665668 == nullptr) return;
-    if (lbl_eu_80665668->mADXFHandle == nullptr) return;
+    if (sInstance == nullptr) return;
+    if (sInstance->mADXFHandle == nullptr) return;
     
-    ADXF_Stop(lbl_eu_80665668->mADXFHandle);
-    ADXF_Close(lbl_eu_80665668->mADXFHandle);
-    lbl_eu_80665668->mADXFHandle = nullptr;
+    ADXF_Stop(sInstance->mADXFHandle);
+    ADXF_Close(sInstance->mADXFHandle);
+    sInstance->mADXFHandle = nullptr;
 }
 
 int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
@@ -295,8 +295,8 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
 void CDeviceFileCri::cancelJobsForPath(const char* pPath) {
     // Cancel every DVD-read child job via vtable slot 0xA4
     // (cancel(const char*)).
-    for (_reslist_node<CWorkThread*>* node = lbl_eu_80665668->mChildren.mStartNodePtr->mNext;
-         node != lbl_eu_80665668->mChildren.mStartNodePtr; node = node->mNext) {
+    for (_reslist_node<CWorkThread*>* node = sInstance->mChildren.mStartNodePtr->mNext;
+         node != sInstance->mChildren.mStartNodePtr; node = node->mNext) {
         CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)node->mItem;
         // else-if chain (not ||): retail branches bne into the type check
         // with li r3,0 in both failure arms.
@@ -326,8 +326,8 @@ void CDeviceFileCri::cancel(CFileHandle* pHandle) {
     // result VR from entry, shifting all temps (item lands in r4 behind an
     // 'or r3,r4,r4' this-move). Best-known draft keeps the explicit return.
     for (_reslist_node<CWorkThread*>* node =
-             lbl_eu_80665668->mChildren.mStartNodePtr->mNext;
-         node != lbl_eu_80665668->mChildren.mStartNodePtr;
+             sInstance->mChildren.mStartNodePtr->mNext;
+         node != sInstance->mChildren.mStartNodePtr;
          node = node->mNext) {
         CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)node->mItem;
         if (job == nullptr) {
@@ -349,7 +349,7 @@ void CDeviceFileCri::abortRead() {
     // Declarations left uninitialized and ordered so MWCC's allocator maps
     // them to retail's registers (node->r3, count->r4, head->r5, self->r6).
     u32 count = 0;
-    CDeviceFileCri* self = lbl_eu_80665668;
+    CDeviceFileCri* self = sInstance;
     _reslist_node<CWorkThread*>* head = self->mChildren.mStartNodePtr;
     _reslist_node<CWorkThread*>* node = head->mNext;
     while (head != node) {
@@ -370,15 +370,15 @@ void CDeviceFileCri::abortRead() {
 
     // Teardown re-reads the global between every call (the callee may mutate
     // the singleton pointer, so MWCC cannot keep the cached copy live).
-    if (lbl_eu_80665668->mADXFHandle != nullptr) {
-        ADXF_Stop(lbl_eu_80665668->mADXFHandle);
-        ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-        ADXF_Close(lbl_eu_80665668->mADXFHandle);
-        lbl_eu_80665668->mADXFHandle = nullptr;
+    if (sInstance->mADXFHandle != nullptr) {
+        ADXF_Stop(sInstance->mADXFHandle);
+        ADXF_GetNumReqSct(sInstance->mADXFHandle);
+        ADXF_Close(sInstance->mADXFHandle);
+        sInstance->mADXFHandle = nullptr;
     }
 
     CDeviceFile::removeFileJob(job);
-    lbl_eu_80665668->mState = 0;
+    sInstance->mState = 0;
 }
 
 bool CDeviceFileCri::beginRead() {
@@ -398,7 +398,7 @@ bool CDeviceFileCri::beginRead() {
             // Abort: cancel the handle, then tear down ADXF state + job
             // (retail re-inlines this block per site).
             call__11CFileHandleF3CBM(handle, 3);
-            CDeviceFileCri* self = lbl_eu_80665668;
+            CDeviceFileCri* self = sInstance;
             u32 count = self->mChildren.size();
             if (count != 0) {
                 CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)self->mChildren.front();
@@ -409,12 +409,12 @@ bool CDeviceFileCri::beginRead() {
                 }
                 if (self->mADXFHandle != nullptr) {
                     ADXF_Stop(self->mADXFHandle);
-                    ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-                    ADXF_Close(lbl_eu_80665668->mADXFHandle);
-                    lbl_eu_80665668->mADXFHandle = nullptr;
+                    ADXF_GetNumReqSct(sInstance->mADXFHandle);
+                    ADXF_Close(sInstance->mADXFHandle);
+                    sInstance->mADXFHandle = nullptr;
                 }
                 removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
-                lbl_eu_80665668->mState = 0;
+                sInstance->mState = 0;
             }
         }
         return false;
@@ -431,7 +431,7 @@ bool CDeviceFileCri::beginRead() {
 
     if (fileSize <= 0) {
         call__11CFileHandleF3CBM(handle, 3);
-        CDeviceFileCri* self = lbl_eu_80665668;
+        CDeviceFileCri* self = sInstance;
         u32 count = self->mChildren.size();
         if (count != 0) {
             CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)self->mChildren.front();
@@ -442,12 +442,12 @@ bool CDeviceFileCri::beginRead() {
             }
             if (self->mADXFHandle != nullptr) {
                 ADXF_Stop(self->mADXFHandle);
-                ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-                ADXF_Close(lbl_eu_80665668->mADXFHandle);
-                lbl_eu_80665668->mADXFHandle = nullptr;
+                ADXF_GetNumReqSct(sInstance->mADXFHandle);
+                ADXF_Close(sInstance->mADXFHandle);
+                sInstance->mADXFHandle = nullptr;
             }
             removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
-            lbl_eu_80665668->mState = 0;
+            sInstance->mState = 0;
         }
         return false;
     }
@@ -466,7 +466,7 @@ bool CDeviceFileCri::beginRead() {
     if (layout->field_0x58 & 0x8) {
         // Allocation failed: cancel the handle and clean up the job.
         call__11CFileHandleF3CBM(handle, 3);
-        CDeviceFileCri* self = lbl_eu_80665668;
+        CDeviceFileCri* self = sInstance;
         u32 count = self->mChildren.size();
         if (count != 0) {
             CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)self->mChildren.front();
@@ -477,12 +477,12 @@ bool CDeviceFileCri::beginRead() {
             }
             if (self->mADXFHandle != nullptr) {
                 ADXF_Stop(self->mADXFHandle);
-                ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-                ADXF_Close(lbl_eu_80665668->mADXFHandle);
-                lbl_eu_80665668->mADXFHandle = nullptr;
+                ADXF_GetNumReqSct(sInstance->mADXFHandle);
+                ADXF_Close(sInstance->mADXFHandle);
+                sInstance->mADXFHandle = nullptr;
             }
             removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
-            lbl_eu_80665668->mState = 0;
+            sInstance->mState = 0;
         }
         return false;
     }
@@ -543,7 +543,7 @@ bool CDeviceFileCri::readChunk() {
     call__11CFileHandleF3CBM(job->mHandle, 3);
     // Retail caches the singleton here (r6); the ADXF args/state stores still
     // re-read the global between calls.
-    CDeviceFileCri* self = lbl_eu_80665668;
+    CDeviceFileCri* self = sInstance;
     u32 count = self->mChildren.size();
     if (count != 0) {
         CDeviceFileJobReadDvd* job2 =
@@ -556,13 +556,13 @@ bool CDeviceFileCri::readChunk() {
 
         if (self->mADXFHandle != nullptr) {
             ADXF_Stop(self->mADXFHandle);
-            ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-            ADXF_Close(lbl_eu_80665668->mADXFHandle);
-            lbl_eu_80665668->mADXFHandle = nullptr;
+            ADXF_GetNumReqSct(sInstance->mADXFHandle);
+            ADXF_Close(sInstance->mADXFHandle);
+            sInstance->mADXFHandle = nullptr;
         }
 
         CDeviceFile::removeFileJob(job2);
-        lbl_eu_80665668->mState = 0;
+        sInstance->mState = 0;
     }
     return false;
 
@@ -612,7 +612,7 @@ bool CDeviceFileCri::advanceSector() {
     // KNOWN RESIDUAL: reslist::size()'s inlined counter/iterator land in
     // r3/r4 swapped vs retail (every manual-walk spelling tried shifts
     // other webs; static cap for this shape).
-    CDeviceFileCri* self = lbl_eu_80665668;
+    CDeviceFileCri* self = sInstance;
     u32 count = self->mChildren.size();
     if (count != 0) {
         // Retail reuses the outer child/job registers for the second
@@ -626,14 +626,14 @@ bool CDeviceFileCri::advanceSector() {
         }
 
         if (self->mADXFHandle != nullptr) {
-            ADXF_Stop(lbl_eu_80665668->mADXFHandle);
-            ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-            ADXF_Close(lbl_eu_80665668->mADXFHandle);
-            lbl_eu_80665668->mADXFHandle = nullptr;
+            ADXF_Stop(sInstance->mADXFHandle);
+            ADXF_GetNumReqSct(sInstance->mADXFHandle);
+            ADXF_Close(sInstance->mADXFHandle);
+            sInstance->mADXFHandle = nullptr;
         }
 
         CDeviceFile::removeFileJob(job);
-        lbl_eu_80665668->mState = 0;
+        sInstance->mState = 0;
     }
     return false;
     }
@@ -680,7 +680,7 @@ bool CDeviceFileCri::copyTail() {    // Seed-then-null shape (retail): keeps job
         // Retail caches the singleton ONCE here (r6) for the size walk, the
         // front() extraction and the first ADXF-handle null check, but
         // re-reads the global between every call inside the teardown.
-        CDeviceFileCri* self = lbl_eu_80665668;
+        CDeviceFileCri* self = sInstance;
         const reslist<CWorkThread*>& children = self->mChildren;
         u32 count = children.size();
         if (count != 0) {
@@ -695,14 +695,14 @@ bool CDeviceFileCri::copyTail() {    // Seed-then-null shape (retail): keeps job
             }
 
             if (self->mADXFHandle != nullptr) {
-                ADXF_Stop(lbl_eu_80665668->mADXFHandle);
-                ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
-                ADXF_Close(lbl_eu_80665668->mADXFHandle);
-                lbl_eu_80665668->mADXFHandle = nullptr;
+                ADXF_Stop(sInstance->mADXFHandle);
+                ADXF_GetNumReqSct(sInstance->mADXFHandle);
+                ADXF_Close(sInstance->mADXFHandle);
+                sInstance->mADXFHandle = nullptr;
             }
 
             CDeviceFile::removeFileJob(job);
-            lbl_eu_80665668->mState = 0;
+            sInstance->mState = 0;
         }
         return false;
     }
@@ -931,7 +931,7 @@ bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
 
     mRetryCounter++;
     if (mRetryCounter < maxRetries) {
-        setGlobalMessage__10CExceptionFv((CException*)lbl_eu_806636D0[0]);
+        setGlobalMessage__10CExceptionFv((CException*)sCriFilePathC[0]);
         return false;
     }
     
@@ -952,9 +952,9 @@ extern "C" __declspec(align(8)) const char lbl_eu_80522C90[0x18] = {
 extern "C" u32 lbl_eu_8066A3B0;  // shared string ("CDeviceFileCri"-related)
 extern "C" u32 lbl_eu_806636D8[2];
 extern "C" u32 lbl_eu_8056C408[6];  // RTTI base list (defined below)
-extern "C" u32 lbl_eu_806636C8[1] = { (u32)&lbl_eu_8066A3B0 };
-extern "C" u32 lbl_eu_806636CC[1] = { (u32)&lbl_eu_8066A3B0 };
-extern "C" u32 lbl_eu_806636D0[2] = { (u32)&lbl_eu_8066A3B0, 0x00000000 };
+extern "C" const wchar_t* sCriFilePathA = (const wchar_t*)&lbl_eu_8066A3B0;
+extern "C" const wchar_t* sCriFilePathB = (const wchar_t*)&lbl_eu_8066A3B0;
+extern "C" const wchar_t* sCriFilePathC[2] = { (const wchar_t*)&lbl_eu_8066A3B0, NULL };
 extern "C" u32 lbl_eu_806636D8[2] = { (u32)&lbl_eu_80522C90, (u32)&lbl_eu_8056C408 };
 
 // [.data] 0x8056C330-0x8056C420 (0xF0 = 240B): wkUpdate jumptable (emitted
@@ -1057,12 +1057,12 @@ extern "C" u32 lbl_eu_8056C408[6] = {
 };
 
 // [.bss] 0x806576C8-0x80657B50 (0x488 = 1160B): file-cri state block.
-u8 lbl_eu_806576C8[136];
+u8 sFileCriState[136];
 u8 lbl_eu_80657750[1024];
 
 // [.sbss] 0x80665668-0x80665670 (8B): singleton pointer + pad.
-CDeviceFileCri* lbl_eu_80665668;
-u32 lbl_eu_8066566C;
+CDeviceFileCri* CDeviceFileCri::sInstance;
+u32 sInstanceReserved;
 
 // Only the jumptable lacks a live reference (wkUpdate's retail jump-table
 // form isn't reproduced yet); every other blob symbol is anchored by real

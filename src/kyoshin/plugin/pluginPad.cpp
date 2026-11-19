@@ -14,7 +14,7 @@ extern "C" {
         { lbl_eu_806661E4, pad_enable },
         { 0, 0 },
     };
-    extern u32 lbl_eu_80663E28;
+    extern u32 gmPauseFlags;
 }
 
 int pad_get(VMThread* pThread) {
@@ -53,15 +53,15 @@ int pad_enable(VMThread* pThread) {
     u32 enableFlags = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     BOOL enable = vmArgBoolGet(3, vmArgPtrGet(pThread, 2));
     
-    if (!(lbl_eu_80663E28 & 0x01000000)) {
+    if (!(gmPauseFlags & 0x01000000)) {
         bool dontEnable = enable == false;
         cf::CfGameManager::enablePadFlags(enableFlags, !dontEnable);
 
-        u32 newFlags = lbl_eu_80663E28 & ~(1 << 17);
+        u32 newFlags = gmPauseFlags & ~(1 << 17);
         if (dontEnable) {
-            newFlags = lbl_eu_80663E28 | (1 << 17);
+            newFlags = gmPauseFlags | (1 << 17);
         }
-        lbl_eu_80663E28 = newFlags;
+        gmPauseFlags = newFlags;
     }
     return 0;
 }

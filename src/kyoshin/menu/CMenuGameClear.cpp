@@ -44,7 +44,7 @@ void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80664C10;              // game-clear state word (.sbss)
-extern u32 lbl_eu_80663E28;              // task-state flag word (bit 21 gate)
+extern u32 gmPauseFlags;              // task-state flag word (bit 21 gate)
 
 
 // CMenuGameClear singleton storage.
@@ -125,7 +125,7 @@ void CMenuGameClear::cbRenderBefore() {
     // disjunct, `beq body; b end` for the second (MWCC_CASES
     // sec.&&-gate branch-over-branch).
     if (CTaskGame::isFlag01Set() == 0 &&
-        (lbl_eu_80663E28 & 0x200000) == 0) {
+        (gmPauseFlags & 0x200000) == 0) {
         goto body;
     }
     goto end;

@@ -53,30 +53,12 @@ struct CVoiceHandle {
     UnkTarget* unkTarget;                // 0x3F60
 };
 
-// ── Member-function-pointer dispatch support ───────────────────────────────
-
-// Polymorphic host class so the voice-node callback gets a full 12-byte
-// member-pointer type; MWCC lowers its compare/test/call to the retail
-// __ptmf_cmpr / __ptmf_test / __ptmf_scall runtime helpers.
-class CVoiceCbHost {
-public:
-    virtual void pad();
-};
-typedef void (CVoiceCbHost::*VoiceCb)();
-
-// Default voice-event handler ptmf installed into each CVS_THREAD
-// (.data blob, 12 bytes).
-extern VoiceCb lbl_eu_80539904;
-
 class CVS_THREAD{
 public:
-    // 0x00-0x0B: installed voice-event handler ptmf. The member-pointer form
-    // is the real state member; the CVoiceCbHost-typed view is kept for the
-    // voice-node helpers that compare it through __ptmf_cmpr.
-    union {
-        VoiceCb unk0;
-        void (CVS_THREAD::*mState)();
-    };
+    // 0x00-0x0B: installed voice-event handler ptmf. The state handler is a
+    // real member-function pointer of CVS_THREAD; subclasses install their
+    // own handlers here.
+    void (CVS_THREAD::*mState)();
 
     u32 unkC;
     u32 unk10;
@@ -96,9 +78,6 @@ public:
 };
 
 extern "C" int IsThreadVoiceActive(CVS_THREAD* thread);  // unmangled retail symbol (matches code_802B8A3C.hpp)
-
-// Raw ptmf reference the voice nodes are matched against (.data blob).
-extern unsigned char lbl_eu_805398F8[12];
 
 // MWCC member-function-pointer runtime helpers (compare / probe).
 extern "C" int __ptmf_cmpr(void* a, void* b);

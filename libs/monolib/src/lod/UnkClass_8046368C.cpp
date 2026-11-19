@@ -30,32 +30,32 @@ extern const f32 lbl_eu_8066A5FC; // 1000000.0f
 // ---------------------------------------------------------------------------
 // sbss state globals (small data, r13-relative).
 // ---------------------------------------------------------------------------
-extern u8* lbl_eu_80665738;      // cache records, stride 0xC
-extern u32* lbl_eu_8066574C;     // index -> pair table
-extern u8* lbl_eu_80665750;      // pair table, stride 2
-extern u8* lbl_eu_80665768;      // vertex pool base
+extern u8* sLodCacheRecords;      // cache records, stride 0xC
+extern u32* sLodPairOffsets;     // index -> pair table
+extern u8* sLodPairTable;      // pair table, stride 2
+extern u8* sLodCacheTailFlag;      // vertex pool base
 extern u8* lbl_eu_80665770;      // texcoord array (stride 8)
 extern u8* lbl_eu_80665774;      // colour array (stride 4)
-extern u8* lbl_eu_80665778;      // draw records, stride 0x18
-extern u8* lbl_eu_8066577C;      // draw records, stride 0x48
+extern u8* LodDrawRecords18;      // draw records, stride 0x18
+extern u8* LodDrawRecords48;      // draw records, stride 0x48
 extern u8* lbl_eu_80665780;      // current record + 8
-extern u8* lbl_eu_80665784;      // object records, stride 0xC
-extern u32 lbl_eu_80665788;
-extern u32 lbl_eu_8066578C;
-extern s32 lbl_eu_80665790;      // texcoord array high-water mark
-extern s32 lbl_eu_80665798;      // cached matrix slot
-extern const void* lbl_eu_8066579C; // cached matrix pointer
-extern s32 lbl_eu_806657A0;
-extern f32 lbl_eu_806657A4;
-extern s32 lbl_eu_806657A8;
-extern u8* lbl_eu_806657AC;      // matrix records, stride 0xB4
-extern u32 lbl_eu_806657B0;      // dirty flags
-extern u32 lbl_eu_806657B4;      // current record id
-extern s32 lbl_eu_806657B8;      // distance limit
-extern u32 lbl_eu_806657BC;
-extern u32 lbl_eu_806657C0;
-extern u32 lbl_eu_806657C4;
-extern u16 lbl_eu_806657C8;      // normal stride in bytes
+extern u8* LodObjectRecords;      // object records, stride 0xC
+extern u32 LodMatrixIndexTable;
+extern u32 LodMatrixDataTable;
+extern s32 LodTexcoordHighWater;      // texcoord array high-water mark
+extern s32 LodMatrixCacheSlot;      // cached matrix slot
+extern const void* LodMatrixCachePtr; // cached matrix pointer
+extern s32 LodMatrixSlotBias;
+extern f32 LodCachedDistance;
+extern s32 LodFadeAlpha;
+extern u8* LodMatrixRecordBase;      // matrix records, stride 0xB4
+extern u32 LodStateFlags;      // dirty flags
+extern u32 LodCurrentRecordId;      // current record id
+extern s32 LodDistanceLimit;      // distance limit
+extern u32 LodFadeGroupA;
+extern u32 LodFadeGroupB;
+extern u32 LodFadeGroupValue;
+extern u16 LodNormalStride;      // normal stride in bytes
 extern u8* lbl_eu_8066581C;
 extern u8* lbl_eu_80665820;
 extern u8* lbl_eu_80665824;
@@ -63,9 +63,9 @@ extern u8* lbl_eu_80665824;
 // ---------------------------------------------------------------------------
 // BSS objects (far access).
 // ---------------------------------------------------------------------------
-extern f32 lbl_eu_80658038[3];   // fade/colour scalars
-extern u8 lbl_eu_80658048[0x180]; // 8 x 0x30 work objects
-extern u8 lbl_eu_806581C8[0x180]; // 8 x 0x30 work objects
+extern f32 LodFadeScalars[3];   // fade/colour scalars
+extern u8 LodMatrixWorkArea[0x180]; // 8 x 0x30 work objects
+extern u8 LodBillboardMatrixTable[0x180]; // 8 x 0x30 work objects
 
 // ---------------------------------------------------------------------------
 // Large LOD state object at 0x80657FB0.
@@ -103,8 +103,8 @@ extern LodGlobal lbl_eu_80657FB0;
 // ---------------------------------------------------------------------------
 typedef void (*LodDrawFn)(void*, void*);
 typedef s32 (*LodPickFn)(void*);
-extern LodDrawFn lbl_eu_8056D710[3];
-extern LodPickFn lbl_eu_8056D71C[3];
+extern LodDrawFn LodDrawDispatchTable[3];
+extern LodPickFn LodPickDispatchTable[3];
 extern "C" void dispatchLodRecords__Q23LOD17UnkClass_80468434Fv();
 
 // ---------------------------------------------------------------------------
@@ -177,7 +177,7 @@ extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
 // [.data] 0x8056D71C-0x8056D728 (12B): retail pick-dispatch table.  Retail
 // split object's .data section is align 4; MWCC would otherwise emit align 8
 // for a u32[3], so force __declspec(align(4)).
-extern "C" __declspec(align(4)) LodPickFn lbl_eu_8056D71C[3] = {
+extern "C" __declspec(align(4)) LodPickFn LodPickDispatchTable[3] = {
     (LodPickFn)&isRangeActive__Q23LOD17UnkClass_8046368CFv,
     (LodPickFn)&dispatchLodRecords__Q23LOD17UnkClass_80468434Fv,
     (LodPickFn)&isRangeActive__Q23LOD17UnkClass_8046368CFv,
@@ -207,8 +207,8 @@ typedef struct LodVtxPool {
 // us-8046773c  func_8046376C  (rotation table entry, angle in f1)
 // ===========================================================================
 extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv(LodRotObj* self, f32 angle) {
-    f32 s = nw4r::math::SinFIdx(lbl_eu_8066A5E8 * angle);
-    f32 c = nw4r::math::CosFIdx(lbl_eu_8066A5E8 * angle);
+    f32 s = nw4r::math::SinFIdx(40.743664f * angle);
+    f32 c = nw4r::math::CosFIdx(40.743664f * angle);
     self->f00 = c;
     self->f04 = -s;
     self->f10 = s;
@@ -219,9 +219,9 @@ extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv(LodRotObj* self, f32
 // us-804677b8  func_804637E8  (index lookup + tail call)
 // ===========================================================================
 extern "C" void* getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index) {
-    u32 entry = lbl_eu_8066574C[index];
-    u16 kind = *(const u16*)(lbl_eu_80665750 + entry * 2 + 2);
-    return catmullRomBin__Q23LOD17CLODCacheManagerSFv(lbl_eu_80665738 + kind * 0xC);
+    u32 entry = sLodPairOffsets[index];
+    u16 kind = *(const u16*)(sLodPairTable + entry * 2 + 2);
+    return catmullRomBin__Q23LOD17CLODCacheManagerSFv(sLodCacheRecords + kind * 0xC);
 }
 
 // ===========================================================================
@@ -232,31 +232,31 @@ extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
     void* clrBase74, void* matsAC, void* records7C, u32 val8C, u32 val88) {
     LodGlobal* g = &lbl_eu_80657FB0;
 
-    lbl_eu_80665778 = (u8*)records78;
+    LodDrawRecords18 = (u8*)records78;
     *(LodMtxCopy*)g->mtx28 = *(const LodMtxCopy*)input;
-    lbl_eu_80665784 = (u8*)records84;
+    LodObjectRecords = (u8*)records84;
     lbl_eu_80665770 = (u8*)texBase70;
     lbl_eu_80665774 = (u8*)clrBase74;
-    lbl_eu_806657AC = (u8*)matsAC;
-    lbl_eu_8066577C = (u8*)records7C;
-    lbl_eu_80665788 = val88;
-    lbl_eu_8066578C = val8C;
+    LodMatrixRecordBase = (u8*)matsAC;
+    LodDrawRecords48 = (u8*)records7C;
+    LodMatrixIndexTable = val88;
+    LodMatrixDataTable = val8C;
 
     PSMTXInverse(g->mtx28, g->mtx28);
     GXSetCurrentMtx(0);
-    LodVtxPool* pool = (LodVtxPool*)lbl_eu_80665768;
+    LodVtxPool* pool = (LodVtxPool*)sLodCacheTailFlag;
     selectLinearLookup__Q23LOD17UnkClass_8046368CFv();
 
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     if (pool->version >= 0x3EE) {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S16, 14);
-        lbl_eu_806657C8 = 6;
+        LodNormalStride = 6;
         if (pool->version >= 0x3EF) {
             selectCubicLookup__Q23LOD17UnkClass_8046368CFv();
         }
     } else {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
-        lbl_eu_806657C8 = 12;
+        LodNormalStride = 12;
     }
 
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGB, GX_RGBA8, 0);
@@ -322,8 +322,8 @@ extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
         PSVECNormalize(axis1, axis1);
     }
 
-    lbl_eu_806657B4 = (u32)-1;
-    lbl_eu_806657A4 = lbl_eu_8066A5FC;
+    LodCurrentRecordId = (u32)-1;
+    LodCachedDistance = lbl_eu_8066A5FC;
     GXLoadPosMtxImm(g->mtx28, 0);
 }
 
@@ -331,22 +331,22 @@ extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
 // us-80467bf4  uploadLodMatrix  (matrix slot upload with 1-entry cache)
 // ===========================================================================
 void uploadLodMatrix(s32 index, s32 offset, const Mtx* mtx) {
-    s32 slot = (index << 3) + ((lbl_eu_806657A0 + offset) & 7);
+    s32 slot = (index << 3) + ((LodMatrixSlotBias + offset) & 7);
     LodGlobal* g = &lbl_eu_80657FB0;
 
-    if (!(lbl_eu_806657B0 & 0x4)) {
+    if (!(LodStateFlags & 0x4)) {
         goto update;
     }
-    if (lbl_eu_80665798 != slot) {
+    if (LodMatrixCacheSlot != slot) {
         goto update;
     }
-    if (lbl_eu_8066579C != mtx) {
+    if (LodMatrixCachePtr != mtx) {
         goto update;
     }
     return;
 
 update:
-    u8* record = lbl_eu_806657AC + slot * 0xB4;
+    u8* record = LodMatrixRecordBase + slot * 0xB4;
     Mtx work[3];
     PSMTXConcat(g->mtx58, *mtx, work[0]);
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x1A4), work[1]);
@@ -369,54 +369,54 @@ update:
         mtxId += 3;
     }
 
-    lbl_eu_80665798 = slot;
-    lbl_eu_8066579C = mtx;
-    lbl_eu_806657B0 |= 0x4;
+    LodMatrixCacheSlot = slot;
+    LodMatrixCachePtr = mtx;
+    LodStateFlags |= 0x4;
 }
 
 // ===========================================================================
 // us-80467d14  dispatchLodDraw  (per-record draw dispatch)
 // ===========================================================================
 extern "C" void dispatchLodDraw__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
-    LodRec18* rec = (LodRec18*)(lbl_eu_80665778 + p->f18 * 0x18);
+    LodRec18* rec = (LodRec18*)(LodDrawRecords18 + p->f18 * 0x18);
 
-    if (lbl_eu_806657B4 != rec->id) {
-        lbl_eu_806657B0 = (lbl_eu_806657B0 | 0x01) & ~0x82u;
+    if (LodCurrentRecordId != rec->id) {
+        LodStateFlags = (LodStateFlags | 0x01) & ~0x82u;
     } else {
-        lbl_eu_806657B0 &= ~0x81u;
+        LodStateFlags &= ~0x81u;
     }
 
-    lbl_eu_806657A0 = p->f1A;
-    lbl_eu_806657A8 = p->f0C;
+    LodMatrixSlotBias = p->f1A;
+    LodFadeAlpha = p->f0C;
     setLodColorFactor__Fl(p->f0E);
 
     if (p->flags & 0x1000) {
-        lbl_eu_806657BC = p->f1E;
+        LodFadeGroupA = p->f1E;
         if (p->flags & 0x2000) {
-            lbl_eu_806657C0 = p->f1F;
-            lbl_eu_806657C4 = p->f1C;
-            lbl_eu_806657B0 |= 0x40;
+            LodFadeGroupB = p->f1F;
+            LodFadeGroupValue = p->f1C;
+            LodStateFlags |= 0x40;
         }
-        lbl_eu_8056D710[rec->kind - 2](lbl_eu_80665768 + rec->id,
-                                       lbl_eu_8066577C + p->f1A * 0x48);
-        if ((lbl_eu_806657B0 & 0x40) && !(lbl_eu_806657B0 & 0x80)) {
+        LodDrawDispatchTable[rec->kind - 2](sLodCacheTailFlag + rec->id,
+                                       LodDrawRecords48 + p->f1A * 0x48);
+        if ((LodStateFlags & 0x40) && !(LodStateFlags & 0x80)) {
             p->flags &= ~0x2000u;
         }
     } else {
-        lbl_eu_8056D710[rec->kind - 2](lbl_eu_80665768 + rec->id,
-                                       lbl_eu_8066577C + p->f1A * 0x48);
+        LodDrawDispatchTable[rec->kind - 2](sLodCacheTailFlag + rec->id,
+                                       LodDrawRecords48 + p->f1A * 0x48);
     }
 
-    lbl_eu_806657B4 = rec->id;
+    LodCurrentRecordId = rec->id;
 }
 
 // ===========================================================================
 // us-80467e80  bindLodCache  (cache object bind + dispatch)
 // ===========================================================================
 extern "C" void bindLodCache__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value) {
-    u32* rec = (u32*)lbl_eu_80665784 + index * 3;
+    u32* rec = (u32*)LodObjectRecords + index * 3;
 
-    lbl_eu_806657B0 |= 0x3;
+    LodStateFlags |= 0x3;
     lbl_eu_80665780 = (u8*)(rec + 2);
 
     LodCacheObj* obj = (LodCacheObj*)rec[3];
@@ -429,15 +429,15 @@ extern "C" void bindLodCache__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value) 
 
     initLodTables__Q23LOD17CLODCacheManagerSFv((u8*)obj + obj->f20);
 
-    lbl_eu_806657A0 = value;
-    lbl_eu_8056D710[1]((u8*)obj + obj->f1C, lbl_eu_8066577C + value * 0x48);
+    LodMatrixSlotBias = value;
+    LodDrawDispatchTable[1]((u8*)obj + obj->f1C, LodDrawRecords48 + value * 0x48);
 }
 
 // ===========================================================================
 // us-80467f30  func_80463F60  (pick dispatch, tail call)
 // ===========================================================================
 extern "C" s32 dispatchLodPick__Q23LOD17UnkClass_8046368CFv(const LodPickObj* obj) {
-    return lbl_eu_8056D71C[obj->kind - 2](lbl_eu_80665768 + obj->off);
+    return LodPickDispatchTable[obj->kind - 2](sLodCacheTailFlag + obj->off);
 }
 
 // ===========================================================================
@@ -445,18 +445,18 @@ extern "C" s32 dispatchLodPick__Q23LOD17UnkClass_8046368CFv(const LodPickObj* ob
 // ===========================================================================
 void setLodFadeScalars(f32 a, f32 b, f32 c) {
     if (lbl_eu_8066A5F4 != a) {
-        lbl_eu_80658038[0] = a;
-        lbl_eu_806657B0 |= 0x8;
+        LodFadeScalars[0] = a;
+        LodStateFlags |= 0x8;
     }
     if (lbl_eu_8066A5F4 != b) {
-        lbl_eu_806657B0 |= 0x10;
-        lbl_eu_80658038[1] = b;
+        LodStateFlags |= 0x10;
+        LodFadeScalars[1] = b;
     }
     if (lbl_eu_8066A5F4 == c) {
         return;
     }
-    lbl_eu_806657B0 |= 0x20;
-    lbl_eu_80658038[2] = c;
+    LodStateFlags |= 0x20;
+    LodFadeScalars[2] = c;
 }
 
 // ===========================================================================
@@ -469,7 +469,7 @@ extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj
             goto ordered;
         }
 
-        lim = lbl_eu_806657B8;
+        lim = LodDistanceLimit;
         if ((s32)obj->start * 60 <= lim) {
             return 1;
         }
@@ -479,7 +479,7 @@ extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj
         return 1;
 
 ordered:
-        lim = lbl_eu_806657B8;
+        lim = LodDistanceLimit;
         if ((s32)obj->start * 60 > lim) {
             goto return_zero;
         }
@@ -498,23 +498,23 @@ return_zero:
 // us-8046803c  bindLodVertexArrays  (register vertex arrays with GX)
 // ===========================================================================
 void bindLodVertexArrays(s32 count) {
-    if (!(lbl_eu_806657B0 & 0x2)) {
-        lbl_eu_806657B0 |= 0x2;
+    if (!(LodStateFlags & 0x2)) {
+        LodStateFlags |= 0x2;
         GXSetArray(GX_VA_CLR0, lbl_eu_80665774, 4);
         s32 i = 0;
         while (i < count) {
             GXSetArray((GXAttr)(GX_VA_TEX0 + i), lbl_eu_80665770, 8);
             ++i;
         }
-        lbl_eu_80665790 = count;
+        LodTexcoordHighWater = count;
     } else {
-        s32 i = lbl_eu_80665790;
+        s32 i = LodTexcoordHighWater;
         while (i < count) {
             GXSetArray((GXAttr)(GX_VA_TEX0 + i), lbl_eu_80665770, 8);
             ++i;
         }
-        if (lbl_eu_80665790 < count) {
-            lbl_eu_80665790 = count;
+        if (LodTexcoordHighWater < count) {
+            LodTexcoordHighWater = count;
         }
     }
     GXSetCullMode(GX_CULL_NONE);
@@ -525,7 +525,7 @@ void bindLodVertexArrays(s32 count) {
 // ===========================================================================
 s32 updateLodFade(u32 arg) {
     if (arg & 0x4) {
-        s32 v = lbl_eu_806657A8;
+        s32 v = LodFadeAlpha;
         if (v == 0) {
             return 1;
         }
@@ -534,13 +534,13 @@ s32 updateLodFade(u32 arg) {
         }
     }
 
-    u32 flags = lbl_eu_806657B0;
+    u32 flags = LodStateFlags;
     if (flags & 0x38) {
         if (!(arg & 0x78)) {
             return 0;
         }
         if ((arg & 0x18) == 0x18) {
-            f32 cur = lbl_eu_80658038[2];
+            f32 cur = LodFadeScalars[2];
             if (lbl_eu_8066A5F8 == cur) {
                 return 1;
             }
@@ -548,7 +548,7 @@ s32 updateLodFade(u32 arg) {
             return 0;
         }
         if ((arg & 0x60) == 0x60) {
-            f32 cur = lbl_eu_80658038[2];
+            f32 cur = LodFadeScalars[2];
             if (lbl_eu_8066A5F8 != cur) {
                 scaleLodFadeAlpha__Ff(cur);
             }
@@ -558,7 +558,7 @@ s32 updateLodFade(u32 arg) {
             u32 bit = 8u << i;
             if (flags & bit) {
                 if (arg & bit) {
-                    f32 cur = lbl_eu_80658038[i];
+                    f32 cur = LodFadeScalars[i];
                     if (lbl_eu_8066A5F8 == cur) {
                         return 1;
                     }
@@ -566,7 +566,7 @@ s32 updateLodFade(u32 arg) {
                     return 0;
                 }
                 if (arg & (0x20u << i)) {
-                    f32 cur = lbl_eu_80658038[i];
+                    f32 cur = LodFadeScalars[i];
                     if (lbl_eu_8066A5F8 != cur) {
                         scaleLodFadeAlpha__Ff(cur);
                     }
@@ -589,42 +589,42 @@ s32 updateLodFade(u32 arg) {
 // us-8046828c  getLodFadeRatio  (fade ratio by group id)
 // ===========================================================================
 s32 getLodFadeRatio(s32 a, u32 b) {
-    if (lbl_eu_806657B0 & 0x40) {
-        if ((s32)lbl_eu_806657BC == a) {
-            if ((s32)lbl_eu_806657C4 >= (s32)b) {
+    if (LodStateFlags & 0x40) {
+        if ((s32)LodFadeGroupA == a) {
+            if ((s32)LodFadeGroupValue >= (s32)b) {
                 return 0;
             }
             if (b == 0) {
                 return 0;
             }
-            lbl_eu_806657B0 |= 0x80;
+            LodStateFlags |= 0x80;
             // Retail converts the u32 pair with the signed magic-number idiom
             // (xoris 0x8000 + 2^52+2^31 extern double); writing it explicitly
             // keeps this unit's .sdata2 empty (MWCC would pool its own 2^52
             // constant for a bare `(f32)u32 / (f32)u32` cast).
             union { double d; u32 w[2]; } m1, m2;
-            m1.w[0] = 0x43300000u; m1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
+            m1.w[0] = 0x43300000u; m1.w[1] = (u32)LodFadeGroupValue ^ 0x80000000u;
             m2.w[0] = 0x43300000u; m2.w[1] = b ^ 0x80000000u;
             scaleLodFadeAlpha__Ff((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
             return 0;
         }
-        if ((s32)lbl_eu_806657C0 == a) {
-            if ((s32)lbl_eu_806657C4 >= (s32)b) {
+        if ((s32)LodFadeGroupB == a) {
+            if ((s32)LodFadeGroupValue >= (s32)b) {
                 return 1;
             }
             if (b == 0) {
                 return 1;
             }
-            lbl_eu_806657B0 |= 0x80;
+            LodStateFlags |= 0x80;
             union { double d; u32 w[2]; } n1, n2;
-            n1.w[0] = 0x43300000u; n1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
+            n1.w[0] = 0x43300000u; n1.w[1] = (u32)LodFadeGroupValue ^ 0x80000000u;
             n2.w[0] = 0x43300000u; n2.w[1] = b ^ 0x80000000u;
             scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
             return 0;
         }
         return 1;
     }
-    if ((s32)lbl_eu_806657BC == a) {
+    if ((s32)LodFadeGroupA == a) {
         return 0;
     }
     return 1;
@@ -634,7 +634,7 @@ s32 getLodFadeRatio(s32 a, u32 b) {
 // us-804683a8  applyLodRangeFade  (range fade with entry/exit interpolation)
 // ===========================================================================
 s32 applyLodRangeFade(s32 a, s32 b, s32 da, s32 db) {
-    s32 lim = lbl_eu_806657B8;
+    s32 lim = LodDistanceLimit;
 
     if (a <= b) {
         goto ordered;
@@ -690,7 +690,7 @@ s32 isLodRangeStraddlesLimit(s32 a, s32 b) {
         goto ordered;
     }
 
-    lim = lbl_eu_806657B8;
+    lim = LodDistanceLimit;
     if (a <= lim) {
         return 1;
     }
@@ -700,7 +700,7 @@ s32 isLodRangeStraddlesLimit(s32 a, s32 b) {
     return 1;
 
 ordered:
-    lim = lbl_eu_806657B8;
+    lim = LodDistanceLimit;
     if (a > lim) {
         goto return_zero;
     }
@@ -717,8 +717,8 @@ return_zero:
 // us-8046853c  sinit_8046456C  (construct the two 8x0x30 BSS work arrays)
 // ===========================================================================
 extern "C" void sinit_8046456C(void) {
-    __construct_array(lbl_eu_80658048, (ConstructorDestructor)cfCam_nopCtorSlot, NULL, 0x30, 8);
-    __construct_array(lbl_eu_806581C8, (ConstructorDestructor)cfCam_nopCtorSlot, NULL, 0x30, 8);
+    __construct_array(LodMatrixWorkArea, (ConstructorDestructor)cfCam_nopCtorSlot, NULL, 0x30, 8);
+    __construct_array(LodBillboardMatrixTable, (ConstructorDestructor)cfCam_nopCtorSlot, NULL, 0x30, 8);
 }
 
 // Retail .ctors entry for this translation unit.

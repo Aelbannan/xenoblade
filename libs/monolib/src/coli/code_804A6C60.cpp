@@ -73,11 +73,11 @@ extern "C" int ColiProcessBoxTree(CColiObject* self);
 extern "C" int ColiClipCentreRadius(CColiObject* self);
 
 // .sdata 0x80663A90-0x80663AA8: RTTI locators {name, base-list} + the
-// view-base word. lbl_eu_80663A90 is the 8-byte locator {name-ptr, 0}; the
+// view-base word. sColiBaseName is the 8-byte locator {name-ptr, 0}; the
 // decl below was widened to the array type and its read sites use word 0.
-u32 lbl_eu_80663A90[2] = { (u32)&lbl_eu_8066AE30, 0x00000000 };
-extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&ColiBuildXformTranslate, (u32)&ColiBuildXformRotateOff, (u32)&ColiBuildXformRotScaleOff, (u32)&ColiBuildAxisFrameMixed, (u32)&ColiBuildXformRotate, (u32)&ColiBuildXformRotScale, (u32)&func_804A7834, 0x00000000 };
-extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSegmentSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereCylinder, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepClipSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSegmentCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCylinderClip, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCapsulePair, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiProcessBoxTree, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereOverlap, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSpherePointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestDualPointCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
+u32 sColiBaseName[2] = { (u32)&lbl_eu_8066AE30, 0x00000000 };
+extern "C" u32 sColiXformDispatch[0x8] = { (u32)&ColiBuildXformTranslate, (u32)&ColiBuildXformRotateOff, (u32)&ColiBuildXformRotScaleOff, (u32)&ColiBuildAxisFrameMixed, (u32)&ColiBuildXformRotate, (u32)&ColiBuildXformRotScale, (u32)&func_804A7834, 0x00000000 };
+extern "C" u32 sColiSweepDispatch[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSegmentSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepSphereCylinder, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepPointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepClipSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClassifyXfrmRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiResolveContacts, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSegmentCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCylinderClip, 0x00000000, 0xFFFFFFFF, (u32)&ColiSweepCapsulePair, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipPartnerBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiProcessBoxTree, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCylinderContains, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCapsule, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPointInXfrmBox, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereOverlap, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedSphere, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSpherePointPair, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestSphereCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestCappedCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestDualPointCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiTestPartnerCone, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipCentreRadius, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipClampedSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipDualSegment, 0x00000000, 0xFFFFFFFF, (u32)&ColiClipSampledRows, 0x00000000, 0xFFFFFFFF, (u32)&ColiReturnZeroStub, 0x00000000 };
 // ---- Class identity of this unit ----------------------------------------
 // This TU defines both derived classes' virtual functions, so MWCC emits
 // their vtables here (retail .data 0x8056F380/0x8056F3A8) together with the
@@ -92,7 +92,7 @@ extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&ColiSweep
 // CColiProc's own table is {RTTI, 0, ColiNoop} followed by 4 alignment bytes
 // before the next vtable; __ct__CColiProc (CColiProc.cpp) installs it.
 // The two static instances the .ctors entries initialise are
-// lbl_eu_8065D0A0 (CColiObjCall, .bss 0x48, built here) and g_coliResCall
+// sColiObjCall (CColiObjCall, .bss 0x48, built here) and g_coliResCall
 // (CColiResCall, .bss 0x50, built in the CColiProc unit); each one runs the
 // CColiProc base ctor and then installs its own vtable.
 // The per-type spec tables ColiSpecEntryStep/3D4/3E8 live in the next unit
@@ -115,7 +115,6 @@ extern const float lbl_eu_8066AE24;
 // SDA2 1.0f used for the rotation-matrix diagonal (ColiBuildXformRotScale / ColiBuildXformRotScaleOff).
 extern const float lbl_eu_8066AE20;
 // radians -> FIdx scale (128/pi) fed to SinFIdx/CosFIdx (ColiBuildXformRotScale / ColiBuildXformRotScaleOff).
-extern const float lbl_eu_8066AE28;
 // ml::epsilon - plane-distance guard (ColiVisitGroupMember loop).
 // nw4r FSqrt assert strings (retail .data, shared with other TUs).
 extern char lbl_eu_80526324[];
@@ -133,7 +132,6 @@ extern const float lbl_eu_8066AE90;
 extern const float lbl_eu_8066AE94;  // rotation angle scale (nw4r RAD_TO_FIDX)
 extern const float lbl_eu_8066AE38;  // radius/angle gate scale (ColiInitAngleSpec)
 extern const float lbl_eu_8066AE60;  // FIdx->angle scale (ColiTestSphereCone)
-extern const float lbl_eu_8066AE78;  // large radius bound (sweep tests)
 extern const float lbl_eu_8066AE98;  // move-scale factor (ColiResolveNodeMove)
 extern const float lbl_eu_8066AE9C;  // same-priority push weight (ColiResolveNodeMove)
 extern const float lbl_eu_8066AEA0;  // reset value for the current-segment global
@@ -183,28 +181,28 @@ extern const float lbl_eu_8066AE68;  // exit-face reach init (ColiSweepPointBox)
 
 // Data word written into the proc object's +0x08 slot at the start of the
 // sweep/contact helpers (ColiSweepBoxContact / ColiSweepSphereBound).
-extern u32 lbl_eu_80663A90[2];
+extern u32 sColiBaseName[2];
 
 // Current-segment global used by ColiDispatchMoveSegment: the active segment point
 // (+0x38), scalar (+0x3c), plus a flag byte (+0x40). The +0x3c slot is also
 // pointed at by the caller's object as its partner, so it is a real CColiObjCall
 // instance (built by the generated static initializer of this TU).
-extern CColiObjCall lbl_eu_8065D0A0;
+extern CColiObjCall sColiObjCall;
 
 // Registered-collision globals (sbss 0x65910..0x65938) written by
 // ColiRegisterSubObjects / ColiSetDispatchIndex: the current collision object plus its
 // sub-objects. Plain global-scope externs so MWCC emits the exact @sda21
 // symbol names (namespace-scope declarations would be mangled).
-extern ml::coli::CColiObject* lbl_eu_80665910;
-extern ml::coli::CColiObject* lbl_eu_80665914;
-extern ml::coli::CColiObject* lbl_eu_80665918;
-extern ml::coli::CColiObject* lbl_eu_8066591C;
-extern ml::coli::CColiObject* lbl_eu_80665920;
-extern ml::coli::CColiObject* lbl_eu_80665924;
-extern ml::coli::CColiObject* lbl_eu_80665928;
-extern ml::coli::CColiObject* lbl_eu_8066592C;
-extern ml::coli::CColiObject* lbl_eu_80665930;
-extern u32 lbl_eu_80665938;
+extern ml::coli::CColiObject* sColiVertices;
+extern ml::coli::CColiObject* sColiPartnerVertices;
+extern ml::coli::CColiObject* sColiDirections;
+extern ml::coli::CColiObject* sColiQuads;
+extern ml::coli::CColiObject* sColiTrianglesBase;
+extern ml::coli::CColiObject* sColiCurrentTriangle;
+extern ml::coli::CColiObject* sColiExtraVertices;
+extern ml::coli::CColiObject* sColiRecords;
+extern ml::coli::CColiObject* sColiCurrentObject;
+extern u32 sColiDispatchIndex[2];
 
 // Componentwise VEC3 subtract (non-asm twin of nw4r's register-asm
 // VEC3Sub): left as real loads/stores so MWCC schedules the paired-single
@@ -217,18 +215,18 @@ static inline VEC3* VEC3SubSched(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
 }
 
 // Sweep-control record for ColiProcessBoxTree: the +0x00 record count re-bases
-// the 0x14-stride array (lbl_eu_80665924), +0x04 is the top record index
+// the 0x14-stride array (sColiCurrentTriangle), +0x04 is the top record index
 // and +0x08 the member count sizing the visited-bitset memset.
 struct CColiSweepCtrl {
     u32 field_0x00;   // +0x00 record count
     u32 field_0x04;   // +0x04 top record index
     u32 field_0x08;   // +0x08 member count
 };
-extern CColiSweepCtrl* lbl_eu_80665934;
+extern CColiSweepCtrl* sColiSweepControl;
 
 // Visited-id bitset shared by the sweep/recursion helpers: each id marks
 // the sub-object as already processed (ColiTraverseRecordTree / ColiTraverseRecordRadius).
-extern u32 lbl_eu_8065CFA0[];
+extern u32 sColiVisitedIds[];
 
 /**
  * Collision object - layout recovered incrementally from retail access
@@ -321,8 +319,8 @@ struct CColiObject {
 };
 
 static inline f32 clamp01(f32 value) {
-    if (value < lbl_eu_8066AE44) return lbl_eu_8066AE44;
-    if (value > lbl_eu_8066AE3C) return lbl_eu_8066AE3C;
+    if (value < 0.0f) return 0.0f;
+    if (value > 1.0f) return 1.0f;
     return value;
 }
 
@@ -344,7 +342,7 @@ struct CColiLodRecA6C60 {
 // index is the record's field_0x2 byte; called with (out-matrix, buffer,
 // record).
 typedef void (*LodA6C60Fn)(f32*, f32*, CColiLodRecA6C60*);
-extern u32 lbl_eu_8056F1B8[];  // dispatch table (raw words + fn ptrs; cast at call site)
+extern u32 sColiXformDispatch[];  // dispatch table (raw words + fn ptrs; cast at call site)
 
 // LOD cache record (retail stride 0xC), defined in CLODCacheManagerS.cpp;
 // the member lookup is called via `bl` from ColiLodBuildRecordMatrix.
@@ -364,12 +362,12 @@ struct CLODCacheManagerS {
 // slots 3..8 with the record's +0x14/+0x20 vectors, sweep the record's LOD
 // pair list to write each cache record's distance value into
 // buf[rec->field_0x4], dispatch through the per-record table at
-// lbl_eu_8056F1B8 with (matrix, buf, record), and - when record bit 1 is
+// sColiXformDispatch with (matrix, buf, record), and - when record bit 1 is
 // set - premultiply self by the record's +0x2c matrix.
 extern "C" void ColiLodBuildRecordMatrix(f32* self, CColiLodRecA6C60* obj) {
     u16 idx = obj->field_0x6;
-    u32 entry = lbl_eu_8066574C[idx];
-    u16* pair = &lbl_eu_80665750[entry];
+    u32 entry = sLodPairOffsets[idx];
+    u16* pair = &sLodPairTable[entry];
     u16 count = *pair;
     f32 buf[9] = {0};
     s32 i = 0;
@@ -381,12 +379,12 @@ extern "C" void ColiLodBuildRecordMatrix(f32* self, CColiLodRecA6C60* obj) {
     buf[8] = obj->field_0x20[2];
     while (i < count) {
     LOD::CLODCacheManagerS* rec =
-            &((LOD::CLODCacheManagerS*)lbl_eu_80665738)[(u32)pair[1]];
+            &((LOD::CLODCacheManagerS*)sLodCacheRecords)[(u32)pair[1]];
         buf[rec->field_0x4] = rec->catmullRomBin();
         pair++;
         i++;
     }
-    ((LodA6C60Fn)lbl_eu_8056F1B8[obj->field_0x2])(self, buf, obj);
+    ((LodA6C60Fn)sColiXformDispatch[obj->field_0x2])(self, buf, obj);
     if (obj->field_0x0 & 0x2) {
         PSMTXConcat(obj->field_0x2c, (const f32 (*)[4])self,
                     (f32 (*)[4])self);
@@ -404,10 +402,10 @@ struct CColiLodIdxView {
 };
 extern "C" s32 ColiLodLookupRecordBin(void* self) {
     u32 idx = ((CColiLodIdxView*)self)->idx04;
-    u32 n = lbl_eu_8066574C[idx];
-    u16 h = lbl_eu_80665750[n + 1];
+    u32 n = sLodPairOffsets[idx];
+    u16 h = sLodPairTable[n + 1];
     LOD::CLODCacheManagerS* rec =
-        &((LOD::CLODCacheManagerS*)lbl_eu_80665738)[h];
+        &((LOD::CLODCacheManagerS*)sLodCacheRecords)[h];
     return rec->findCutBinIdx();
 }
 
@@ -440,17 +438,17 @@ extern "C" void ColiBuildXformTranslate(f32* out, const VEC3* pos,
     f32 tz = pos->z + off->field_0x08.z;
     f32 ty = pos->y + off->field_0x08.y;
     f32 tx = pos->x + off->field_0x08.x;
-    out[0] = lbl_eu_8066AE20;
-    out[1] = lbl_eu_8066AE24;
-    out[2] = lbl_eu_8066AE24;
+    out[0] = 1.0f;
+    out[1] = 0.0f;
+    out[2] = 0.0f;
     out[3] = tx;
-    out[4] = lbl_eu_8066AE24;
-    out[5] = lbl_eu_8066AE20;
-    out[6] = lbl_eu_8066AE24;
+    out[4] = 0.0f;
+    out[5] = 1.0f;
+    out[6] = 0.0f;
     out[7] = ty;
-    out[8] = lbl_eu_8066AE24;
-    out[9] = lbl_eu_8066AE24;
-    out[10] = lbl_eu_8066AE20;
+    out[8] = 0.0f;
+    out[9] = 0.0f;
+    out[10] = 1.0f;
     out[11] = tz;
 }
 
@@ -478,22 +476,22 @@ extern "C" void ColiBuildXformRotScale(f32* out, const CColiXformSrc* src) {
 
     if (src->field_0x0c.z != lbl_eu_8066AE24) {
         f32 az = src->field_0x0c.z;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * az);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * az);
+        f32 s = nw4r::math::SinFIdx(40.743664f * az);
+        f32 c = nw4r::math::CosFIdx(40.743664f * az);
         f32 m[12] = {c, -s, lbl_eu_8066AE24, lbl_eu_8066AE24, s, c, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24};
         PSMTXConcat((const f32 (*)[4])m, (const f32 (*)[4])out, (f32 (*)[4])out);
     }
     if (src->field_0x0c.y != lbl_eu_8066AE24) {
         f32 ay = src->field_0x0c.y;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ay);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ay);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ay);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ay);
         f32 m[12] = {c, lbl_eu_8066AE24, s, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, -s, lbl_eu_8066AE24, c, lbl_eu_8066AE24};
         PSMTXConcat((const f32 (*)[4])m, (const f32 (*)[4])out, (f32 (*)[4])out);
     }
     if (src->field_0x0c.x != lbl_eu_8066AE24) {
         f32 ax = src->field_0x0c.x;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ax);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ax);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ax);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ax);
         f32 m[12] = {lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, c, -s, lbl_eu_8066AE24, lbl_eu_8066AE24, s, c, lbl_eu_8066AE24};
         PSMTXConcat((const f32 (*)[4])m, (const f32 (*)[4])out, (f32 (*)[4])out);
     }
@@ -522,22 +520,22 @@ extern "C" void ColiBuildXformRotScaleOff(f32* out, const CColiXformSrc* src,
 
     if (src->field_0x0c.z != lbl_eu_8066AE24) {
         f32 az = src->field_0x0c.z;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * az);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * az);
+        f32 s = nw4r::math::SinFIdx(40.743664f * az);
+        f32 c = nw4r::math::CosFIdx(40.743664f * az);
         f32 m[12] = {c, -s, lbl_eu_8066AE24, lbl_eu_8066AE24, s, c, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24};
         PSMTXConcat((const f32 (*)[4])m, (const f32 (*)[4])out, (f32 (*)[4])out);
     }
     if (src->field_0x0c.y != lbl_eu_8066AE24) {
         f32 ay = src->field_0x0c.y;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ay);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ay);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ay);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ay);
         f32 m[12] = {c, lbl_eu_8066AE24, s, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, -s, lbl_eu_8066AE24, c, lbl_eu_8066AE24};
         PSMTXConcat((const f32 (*)[4])m, (const f32 (*)[4])out, (f32 (*)[4])out);
     }
     if (src->field_0x0c.x != lbl_eu_8066AE24) {
         f32 ax = src->field_0x0c.x;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ax);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ax);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ax);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ax);
         f32 m[12] = {lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, c, -s, lbl_eu_8066AE24, lbl_eu_8066AE24, s, c, lbl_eu_8066AE24};
         PSMTXConcat((const f32 (*)[4])m, (const f32 (*)[4])out, (f32 (*)[4])out);
     }
@@ -558,8 +556,8 @@ extern "C" void ColiBuildXformRotateOff(f32* out, const CColiXformSrc* src,
     int count = 0;
     if (src->field_0x0c.x != lbl_eu_8066AE24) {
         f32 ax = src->field_0x0c.x;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ax);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ax);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ax);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ax);
         f32 ns = -s;
         out[0] = lbl_eu_8066AE20;
         out[1] = lbl_eu_8066AE24;
@@ -577,8 +575,8 @@ extern "C" void ColiBuildXformRotateOff(f32* out, const CColiXformSrc* src,
     }
     if (src->field_0x0c.y != lbl_eu_8066AE24) {
         f32 ay = src->field_0x0c.y;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ay);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ay);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ay);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ay);
         f32 ns = -s;
         if (count != 0) {
             f32 m[12] = {c, lbl_eu_8066AE24, s, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, ns, lbl_eu_8066AE24, c, lbl_eu_8066AE24};
@@ -602,8 +600,8 @@ extern "C" void ColiBuildXformRotateOff(f32* out, const CColiXformSrc* src,
     }
     if (src->field_0x0c.z != lbl_eu_8066AE24) {
         f32 az = src->field_0x0c.z;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * az);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * az);
+        f32 s = nw4r::math::SinFIdx(40.743664f * az);
+        f32 c = nw4r::math::CosFIdx(40.743664f * az);
         f32 ns = -s;
         if (count != 0) {
             f32 m[12] = {c, ns, lbl_eu_8066AE24, lbl_eu_8066AE24, s, c, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24};
@@ -660,17 +658,17 @@ extern "C" void ColiBuildAxisFrameMixed(CColiObject* self, CColiObject* src, CCo
     y = src->field_0x00[2].y;
     x = src->field_0x00[2].x;
     self->field_0x00[0].x = x;
-    self->field_0x00[0].y = lbl_eu_8066AE24;
-    self->field_0x00[0].z = lbl_eu_8066AE24;
-    self->field_0x00[1].x = lbl_eu_8066AE24;
-    self->field_0x00[1].y = lbl_eu_8066AE24;
+    self->field_0x00[0].y = 0.0f;
+    self->field_0x00[0].z = 0.0f;
+    self->field_0x00[1].x = 0.0f;
+    self->field_0x00[1].y = 0.0f;
     self->field_0x00[1].z = y;
-    self->field_0x00[2].x = lbl_eu_8066AE24;
-    self->field_0x00[2].y = lbl_eu_8066AE24;
-    self->field_0x00[2].z = lbl_eu_8066AE24;
-    self->field_0x00[3].x = lbl_eu_8066AE24;
+    self->field_0x00[2].x = 0.0f;
+    self->field_0x00[2].y = 0.0f;
+    self->field_0x00[2].z = 0.0f;
+    self->field_0x00[3].x = 0.0f;
     self->field_0x00[3].y = z;
-    self->field_0x00[3].z = lbl_eu_8066AE24;
+    self->field_0x00[3].z = 0.0f;
     self->field_0x00[1].x = src->field_0x00[0].x + other->field_0x00[0].z;
     self->field_0x00[2].y = src->field_0x00[0].y + other->field_0x00[1].x;
     self->field_0x00[3].z = src->field_0x00[0].z + other->field_0x00[1].y;
@@ -686,8 +684,8 @@ extern "C" void ColiBuildXformRotate(f32* out, const CColiXformSrc* src) {
     int count = 0;
     if (src->field_0x0c.z != lbl_eu_8066AE24) {
         f32 az = src->field_0x0c.z;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * az);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * az);
+        f32 s = nw4r::math::SinFIdx(40.743664f * az);
+        f32 c = nw4r::math::CosFIdx(40.743664f * az);
         f32 ns = -s;
         out[0] = c;
         out[1] = ns;
@@ -705,8 +703,8 @@ extern "C" void ColiBuildXformRotate(f32* out, const CColiXformSrc* src) {
     }
     if (src->field_0x0c.y != lbl_eu_8066AE24) {
         f32 ay = src->field_0x0c.y;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ay);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ay);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ay);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ay);
         f32 ns = -s;
         if (count != 0) {
             f32 m[12] = {c, lbl_eu_8066AE24, s, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, ns, lbl_eu_8066AE24, c, lbl_eu_8066AE24};
@@ -730,8 +728,8 @@ extern "C" void ColiBuildXformRotate(f32* out, const CColiXformSrc* src) {
     }
     if (src->field_0x0c.x != lbl_eu_8066AE24) {
         f32 ax = src->field_0x0c.x;
-        f32 s = nw4r::math::SinFIdx(lbl_eu_8066AE28 * ax);
-        f32 c = nw4r::math::CosFIdx(lbl_eu_8066AE28 * ax);
+        f32 s = nw4r::math::SinFIdx(40.743664f * ax);
+        f32 c = nw4r::math::CosFIdx(40.743664f * ax);
         f32 ns = -s;
         if (count != 0) {
             f32 m[12] = {lbl_eu_8066AE20, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, lbl_eu_8066AE24, c, ns, lbl_eu_8066AE24, lbl_eu_8066AE24, s, c, lbl_eu_8066AE24};
@@ -771,17 +769,17 @@ extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
     y = other->field_0x00[2].y;
     x = other->field_0x00[2].x;
     self->field_0x00[0].x = x;
-    self->field_0x00[0].y = lbl_eu_8066AE24;
-    self->field_0x00[0].z = lbl_eu_8066AE24;
-    self->field_0x00[1].x = lbl_eu_8066AE24;
-    self->field_0x00[1].y = lbl_eu_8066AE24;
+    self->field_0x00[0].y = 0.0f;
+    self->field_0x00[0].z = 0.0f;
+    self->field_0x00[1].x = 0.0f;
+    self->field_0x00[1].y = 0.0f;
     self->field_0x00[1].z = y;
-    self->field_0x00[2].x = lbl_eu_8066AE24;
-    self->field_0x00[2].y = lbl_eu_8066AE24;
-    self->field_0x00[2].z = lbl_eu_8066AE24;
-    self->field_0x00[3].x = lbl_eu_8066AE24;
+    self->field_0x00[2].x = 0.0f;
+    self->field_0x00[2].y = 0.0f;
+    self->field_0x00[2].z = 0.0f;
+    self->field_0x00[3].x = 0.0f;
     self->field_0x00[3].y = z;
-    self->field_0x00[3].z = lbl_eu_8066AE24;
+    self->field_0x00[3].z = 0.0f;
 }
 // Constructor with angular parameters
 // at +0x04, copy the 3-word sub-spec into the +0x44/+0x50 point slots (raw
@@ -810,7 +808,7 @@ extern "C" CColiObject* ColiInitAngleSpec(CColiObject* self, const CColiSubSpec8
     self->field_0x60 = f2;
     d[4] = s[1];   // +0x54
     d[5] = s[2];   // +0x58
-    if ((f32)f2 > lbl_eu_8066AE38 * (f32)f1) {
+    if ((f32)f2 > 2.0f * (f32)f1) {
         self->field_0x8c |= 0x8;
         self->field_0x310 = self->field_0x50.y + (f32)f2 - (f32)f1;
     }
@@ -850,7 +848,7 @@ extern "C" CColiObject* ColiInitSegment(CColiObject* self, const CColiSubSpec804
     // const load lands in f2, and the +0x308 store folds the double->float
     // conversion into stfs straight from the call-result register (f1).
     double mag = PSVECMag((const Vec*)&self->field_0x68);
-    f32 inv = lbl_eu_8066AE3C / (f32)mag;
+    f32 inv = 1.0f / (f32)mag;
     self->field_0x308 = mag;
     VEC3Scale(&self->field_0x68, &self->field_0x68, inv);
     self->field_0x8c = 0;
@@ -1083,15 +1081,15 @@ extern "C" void ColiRegisterSubObjects(u32 unused, CColiObject* self) {
         CColiObject* p5 = (CColiObject*)((u8*)self + self->field_0x30_off);
         CColiObject* p6 = (CColiObject*)((u8*)self + self->field_0x40);
         // Store order matches retail's global-registration sequence.
-        lbl_eu_80665910 = p0;
-        lbl_eu_80665914 = p1;
-        lbl_eu_80665920 = p2;
-        lbl_eu_80665918 = p3;
-        lbl_eu_8066591C = p4;
-        lbl_eu_80665928 = p5;
-        lbl_eu_8066592C = p6;
+        sColiVertices = p0;
+        sColiPartnerVertices = p1;
+        sColiTrianglesBase = p2;
+        sColiDirections = p3;
+        sColiQuads = p4;
+        sColiExtraVertices = p5;
+        sColiRecords = p6;
     }
-    lbl_eu_80665930 = self;
+    sColiCurrentObject = self;
 }
 
 // Link a sweep record: sum the shared object pointer with the offset at
@@ -1111,21 +1109,21 @@ extern "C" void ColiLinkSweepRecord(CColiObject* self, u32 v, u8* p) {
     CColiSweepLinkView* rec = (CColiSweepLinkView*)p;
     u16 flag = rec->flag02;
     CColiSweepCtrl* ctrl = (CColiSweepCtrl*)(uintptr_t)self->field_0x3c_u;
-    ctrl->field_0x08 = (u32)lbl_eu_80665930 + rec->off04;
+    ctrl->field_0x08 = (u32)sColiCurrentObject + rec->off04;
     if (flag & 2) {
         self->field_0x8c |= 2;
     } else {
         self->field_0x8c &= ~2;
     }
-    lbl_eu_80665934 = &rec->node10;
-    lbl_eu_80665938 = v;
+    sColiSweepControl = &rec->node10;
+    sColiDispatchIndex[0] = v;
 }
 
-extern "C" u32 ColiSetDispatchIndex(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
+extern "C" u32 ColiSetDispatchIndex(u32 unused, u32 val) { sColiDispatchIndex[0] = val; return unused; }
 
 // Object handed to the collision dispatch handlers: ColiDispatchByIndex stores the
 // caller parameter into field_0x00 and dispatches through the ptmf table at
-// lbl_eu_8056F1D8 selected by (field_0x40 + lbl_eu_80665938).
+// sColiSweepDispatch selected by (field_0x40 + sColiDispatchIndex).
 struct CColiDispatchObj {
     u32 field_0x00;        // +0x00
     u8 _04[0x40 - 0x04];   // +0x04 .. +0x40
@@ -1136,7 +1134,7 @@ struct CColiDispatchObj {
 // Each entry is invoked with the dispatch object as `this` and no arguments;
 // MWCC lowers the member-fn-pointer call to __ptmf_scall.
 typedef void (CColiDispatchObj::*CColiDispatchFn)();
-extern u32 lbl_eu_8056F1D8[];  // 3-word PMF table (raw words + fn ptrs; cast at call site)
+extern u32 sColiSweepDispatch[];  // 3-word PMF table (raw words + fn ptrs; cast at call site)
 
 extern "C" void ColiTranslatePoints(CColiObject* self, const VEC3* v) {
     // Add v to both embedded vectors; the nw4r VEC3Add helper reproduces
@@ -1147,9 +1145,9 @@ extern "C" void ColiTranslatePoints(CColiObject* self, const VEC3* v) {
 
 extern "C" void ColiDispatchByIndex(CColiDispatchObj* self, u32 val) {
     self->field_0x00 = val;
-    u32 idx = self->field_0x40 + lbl_eu_80665938;
+    u32 idx = self->field_0x40 + sColiDispatchIndex[0];
     CColiDispatchFn const& pmf =
-        *(CColiDispatchFn const*)((u8*)&lbl_eu_8056F1D8[idx * 3]);
+        *(CColiDispatchFn const*)((u8*)&sColiSweepDispatch[idx * 3]);
     (self->*pmf)();
 }
 
@@ -1231,52 +1229,52 @@ extern "C" int ColiSweepSphereSegment(CColiObject* self) {
     pen = rsum;
     if (diff.y <= partner->field_0x14 && diff.y >= partner->field_0x18) {
         // Sphere centre vertically inside the segment: radial normal.
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             // Predicated definition: retail skips the FrSqrt entirely when
             // dist2 <= 0 instead of selecting a fallback.
             f32 dist;
-            if (dist2 > lbl_eu_8066AE44)
+            if (dist2 > 0.0f)
                 dist = dist2 * nw4r::math::FrSqrt(dist2);
             pen = rsum - dist;
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             n->x = diff.x * inv;
             n->z = diff.z * inv;
         } else {
             // Random horizontal direction when the centres coincide.
             n->z = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->x = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
                 }
             }
         }
-        n->y = lbl_eu_8066AE44;
+        n->y = 0.0f;
         proc->field_0x0c.x = n->x * partner->field_0x10 + partner->field_0x04.x;
         proc->field_0x0c.z = n->z * partner->field_0x10 + partner->field_0x04.z;
         proc->field_0x0c.y = self->field_0x44.y;
     } else if (self->field_0x5c * self->field_0x5c >= dist2) {
         // Sphere centre above/below the segment but horizontally within
         // its own radius: contact along the segment axis.
-        n->x = lbl_eu_8066AE44;
-        n->z = lbl_eu_8066AE44;
-        if (diff.y > lbl_eu_8066AE44) {
-            n->y = lbl_eu_8066AE3C;
+        n->x = 0.0f;
+        n->z = 0.0f;
+        if (diff.y > 0.0f) {
+            n->y = 1.0f;
             pen = partner->field_0x14 + self->field_0x5c - diff.y;
             proc->field_0x0c.y = partner->field_0x04.y + partner->field_0x14;
         } else {
-            n->y = lbl_eu_8066AE50;
+            n->y = -1.0f;
             pen = diff.y + self->field_0x5c - partner->field_0x18;
             proc->field_0x0c.y = partner->field_0x04.y + partner->field_0x18;
         }
@@ -1288,18 +1286,18 @@ extern "C" int ColiSweepSphereSegment(CColiObject* self) {
         // segment surface (base + horizontal normal * radius, y at the
         // near endcap); the sphere must contain it and the contact normal
         // is the (3D) offset from the contact point to the sphere centre.
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
         f32 dist;
-        if (dist2 > lbl_eu_8066AE44)
+        if (dist2 > 0.0f)
             dist = dist2 * nw4r::math::FrSqrt(dist2);
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         f32 nx = diff.x * inv;
         f32 nz = diff.z * inv;
         proc->field_0x0c.x = nx * partner->field_0x10 + partner->field_0x04.x;
         proc->field_0x0c.z = nz * partner->field_0x10 + partner->field_0x04.z;
-        if (diff.y > lbl_eu_8066AE44) {
+        if (diff.y > 0.0f) {
             proc->field_0x0c.y = partner->field_0x04.y + partner->field_0x14;
         } else {
             proc->field_0x0c.y = partner->field_0x04.y + partner->field_0x18;
@@ -1309,31 +1307,31 @@ extern "C" int ColiSweepSphereSegment(CColiObject* self) {
         // Containment here tests against the full sum of radii (rsum),
         // not the sphere radius alone.
         if (rsum * rsum < dist2b) return 0;
-        if (dist2b == lbl_eu_8066AE44) {
+        if (dist2b == 0.0f) {
             // Random direction when the sphere centre is on the axis.
             n->z = s32ToF_ae48(convA, (u32)(rand() % 200 - 100));
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->x = s32ToF_ae48(convB, (u32)(rand() % 200 - 100));
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
                 }
             }
         } else {
-            if (!(dist2b >= lbl_eu_8066AE44)) {
+            if (!(dist2b >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 distb;
-            if (dist2b > lbl_eu_8066AE44)
+            if (dist2b > 0.0f)
                 distb = dist2b * nw4r::math::FrSqrt(dist2b);
-            f32 invb = lbl_eu_8066AE3C / distb;
+            f32 invb = 1.0f / distb;
             VEC3Scale((VEC3*)&proc->field_0x18, &diff, invb);
             pen = self->field_0x5c - distb;
         }
@@ -1414,8 +1412,8 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj);
 // 16-byte collision registration record: two sub-object ids, a point and a
 // radius, plus the kind (+0x0c; 3 = group of sub-objects) and the group
 // member count (+0x0e). Records live in a stride-16 array behind the
-// lbl_eu_8066592C pointer; a group's member ids are u16s in the byte-offset
-// array behind lbl_eu_80665930.
+// sColiRecords pointer; a group's member ids are u16s in the byte-offset
+// array behind sColiCurrentObject.
 struct CColiRec16 {
     union {
         u32 field_0x00_off;   // +0x00 byte offset (group path)
@@ -1445,8 +1443,8 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
     // partner frame; its length seeds field_0x308/0x30c.
     VEC3 v;
     v.x = self->field_0x5c;
-    v.y = lbl_eu_8066AE44;
-    v.z = lbl_eu_8066AE44;
+    v.y = 0.0f;
+    v.z = 0.0f;
     nw4r::math::VEC3TransformNormal(
         &v, (const nw4r::math::MTX34*)((u8*)self->field_0x00_obj + 0x34), &v);
     f32 mag = PSVECMag((const Vec*)&v);
@@ -1456,20 +1454,20 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
                  (const Vec*)&self->field_0x44, (Vec*)&self->field_0x2d8);
 
     // Phase 2: registered-record traversal over ctrl's top record.
-    CColiSweepCtrl* ctrl = lbl_eu_80665934;
-    u32* visited = lbl_eu_8065CFA0;
+    CColiSweepCtrl* ctrl = sColiSweepControl;
+    u32* visited = sColiVisitedIds;
     memset(visited, 0, ((ctrl->field_0x08 >> 5) + 1) * 4);
-    lbl_eu_80665924 =
-        (ml::coli::CColiObject*)((u8*)lbl_eu_80665920 + ctrl->field_0x00 * 0x14);
+    sColiCurrentTriangle =
+        (ml::coli::CColiObject*)((u8*)sColiTrianglesBase + ctrl->field_0x00 * 0x14);
     self->field_0x80 = 0;
     self->field_0x84 = self->field_0x210;
     self->field_0x88 = self->field_0x2d4;
 
-    CColiRec16* recs = (CColiRec16*)lbl_eu_8066592C;
+    CColiRec16* recs = (CColiRec16*)sColiRecords;
     CColiRec16* rec = &recs[ctrl->field_0x04];
     if (rec->field_0x0c == 3) {
         // Top record is itself a group of sub-object ids.
-        u16* arr = (u16*)((u8*)lbl_eu_80665930 + rec->field_0x00_off);
+        u16* arr = (u16*)((u8*)sColiCurrentObject + rec->field_0x00_off);
         u16 count = rec->field_0x0e;
         int i = 0;
         while (i < count) {
@@ -1492,7 +1490,7 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
             rec->field_0x00 != 0) {
             CColiRec16* sub = &recs[rec->field_0x00];
             if (sub->field_0x0c == 3) {
-                u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub->field_0x00_off);
+                u16* arr = (u16*)((u8*)sColiCurrentObject + sub->field_0x00_off);
                 u16 count = sub->field_0x0e;
                 int i = 0;
                 while (i < count) {
@@ -1533,7 +1531,7 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
             rec->field_0x02 != 0) {
             CColiRec16* sub = &recs[rec->field_0x02];
             if (sub->field_0x0c == 3) {
-                u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub->field_0x00_off);
+                u16* arr = (u16*)((u8*)sColiCurrentObject + sub->field_0x00_off);
                 u16 count = sub->field_0x0e;
                 int i = 0;
                 while (i < count) {
@@ -1572,16 +1570,16 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
 
     // Phase 3: fold the newly gathered contacts into the proc object.
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x0c.set(lbl_eu_8066AE44, lbl_eu_8066AE44, lbl_eu_8066AE44);
-    proc->field_0x18.set(lbl_eu_8066AE44, lbl_eu_8066AE44, lbl_eu_8066AE44);
-    proc->field_0x24.set(lbl_eu_8066AE44, lbl_eu_8066AE44, lbl_eu_8066AE44);
+    proc->field_0x0c.set(0.0f, 0.0f, 0.0f);
+    proc->field_0x18.set(0.0f, 0.0f, 0.0f);
+    proc->field_0x24.set(0.0f, 0.0f, 0.0f);
     VEC3 posBuf(self->field_0x44.x, self->field_0x44.y, self->field_0x44.z);
-    VEC3 accNBuf(lbl_eu_8066AE44, lbl_eu_8066AE44, lbl_eu_8066AE44);
+    VEC3 accNBuf(0.0f, 0.0f, 0.0f);
     // Addressable views of the working vectors; retail keeps the three
     // stack-slot addresses in callee-saved registers across both loops.
     VEC3* pos = &posBuf;
     VEC3* accN = &accNBuf;
-    f32 cnt = lbl_eu_8066AE44;
+    f32 cnt = 0.0f;
     f32 rr = self->field_0x5c * self->field_0x5c;
     // Warning assert strings cached across the contact loops (retail keeps
     // their @ha halves in callee-saved registers).
@@ -1602,19 +1600,19 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
         VEC3* diff = &diffBuf;
         f32 d2 = diff->z * diff->z + diff->y * diff->y + diff->x * diff->x;
         if (!(d2 <= rr)) {
-            if (!(d2 >= lbl_eu_8066AE44)) {
+            if (!(d2 >= 0.0f)) {
                 if (!warnedA) {
                     nw4r::db::Warning(warnFile, 0x273, warnFunc);
                     warnedA = true;
                 }
             }
             f32 dist;
-            if (d2 > lbl_eu_8066AE44)
+            if (d2 > 0.0f)
                 dist = d2 * nw4r::math::FrSqrt(d2);
             else
-                dist = lbl_eu_8066AE44;
+                dist = 0.0f;
             _VEC3* n = &self->field_0x150[idx];
-            if (lbl_eu_8066AE40 < n->y) {
+            if (0.5f < n->y) {
                 // Steep normal: adjust only the y components.
                 f32 k = diff->z / dist * (self->field_0x5c - dist);
                 pos->y += k;
@@ -1629,10 +1627,10 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
                 pos->z += n->z * k;
             }
         }
-        cnt += lbl_eu_8066AE3C;
+        cnt += 1.0f;
         idx++;
     }
-    if (cnt != lbl_eu_8066AE44) {
+    if (cnt != 0.0f) {
         proc->field_0x24.set(accN->x, accN->y, accN->z);
     }
 
@@ -1652,33 +1650,33 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
         dir->y = self->field_0x44.y - p->y;
         dir->z = self->field_0x44.z - p->z;
         f32 d2 = dir->x * dir->x + dir->y * dir->y + dir->z * dir->z;
-        if (d2 != lbl_eu_8066AE44) {
-            if (!(d2 >= lbl_eu_8066AE44)) {
+        if (d2 != 0.0f) {
+            if (!(d2 >= 0.0f)) {
                 if (!warnedB) {
                     nw4r::db::Warning(warnFile, 0x273, warnFunc);
                     warnedB = true;
                 }
             }
             f32 len;
-            if (d2 > lbl_eu_8066AE44)
+            if (d2 > 0.0f)
                 len = d2 * nw4r::math::FrSqrt(d2);
             else
-                len = lbl_eu_8066AE44;
-            f32 inv = lbl_eu_8066AE3C / len;
+                len = 0.0f;
+            f32 inv = 1.0f / len;
             dir->x *= inv;
             dir->y *= inv;
             dir->z *= inv;
         } else {
             dir->z = s32ToF_ae48(convZ, rand() % 200 - 100);
-            dir->y = lbl_eu_8066AE44;
+            dir->y = 0.0f;
             dir->x = s32ToF_ae48(convX, rand() % 200 - 100);
-            if (dir->x == lbl_eu_8066AE44 && dir->z == lbl_eu_8066AE44) {
-                dir->x = lbl_eu_8066AE44;
-                dir->y = lbl_eu_8066AE44;
-                dir->z = lbl_eu_8066AE3C;
+            if (dir->x == 0.0f && dir->z == 0.0f) {
+                dir->x = 0.0f;
+                dir->y = 0.0f;
+                dir->z = 1.0f;
             } else {
                 f32 len2 = dir->y * dir->y + dir->x * dir->x + dir->z * dir->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *dir = *(const VEC3*)&ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)dir, (Vec*)dir);
@@ -1697,33 +1695,33 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
         d2 = dir->x * dir->x + dir->y * dir->y + dir->z * dir->z;
         if (d2 < rr) {
             f32 len;
-            if (d2 != lbl_eu_8066AE44) {
-                if (!(d2 >= lbl_eu_8066AE44)) {
+            if (d2 != 0.0f) {
+                if (!(d2 >= 0.0f)) {
                     if (!warnedC) {
                         nw4r::db::Warning(warnFile, 0x273, warnFunc);
                         warnedC = true;
                     }
                 }
-                if (d2 > lbl_eu_8066AE44)
+                if (d2 > 0.0f)
                     len = d2 * nw4r::math::FrSqrt(d2);
                 else
-                    len = lbl_eu_8066AE44;
-                f32 inv = lbl_eu_8066AE3C / len;
+                    len = 0.0f;
+                f32 inv = 1.0f / len;
                 dir->x *= inv;
                 dir->y *= inv;
                 dir->z *= inv;
             } else {
-                len = lbl_eu_8066AE44;
+                len = 0.0f;
                 dir->z = s32ToF_ae48(convZ, rand() % 200 - 100);
-                dir->y = lbl_eu_8066AE44;
+                dir->y = 0.0f;
                 dir->x = s32ToF_ae48(convX, rand() % 200 - 100);
-                if (dir->x == lbl_eu_8066AE44 && dir->z == lbl_eu_8066AE44) {
-                    dir->x = lbl_eu_8066AE44;
-                    dir->y = lbl_eu_8066AE44;
-                    dir->z = lbl_eu_8066AE3C;
+                if (dir->x == 0.0f && dir->z == 0.0f) {
+                    dir->x = 0.0f;
+                    dir->y = 0.0f;
+                    dir->z = 1.0f;
                 } else {
                     f32 len2 = dir->y * dir->y + dir->x * dir->x + dir->z * dir->z;
-                    if (len2 == lbl_eu_8066AE44) {
+                    if (len2 == 0.0f) {
                         *dir = *(const VEC3*)&ml::CVec3::zero;
                     } else {
                         PSVECNormalize((const Vec*)dir, (Vec*)dir);
@@ -1734,7 +1732,7 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
             dir->x *= k;
             dir->y *= k;
             dir->z *= k;
-            if (pos->y > p->y) dir->y = lbl_eu_8066AE44;
+            if (pos->y > p->y) dir->y = 0.0f;
             pos->x += dir->x;
             pos->y += dir->y;
             pos->z += dir->z;
@@ -1742,14 +1740,14 @@ extern "C" int ColiResolveContacts(CColiObject* self) {
             accN->y += dir->y;
             accN->z += dir->z;
         }
-        cnt += lbl_eu_8066AE3C;
+        cnt += 1.0f;
         j++;
     }
 
     // Average the accumulated point/normal by the processed-contact count
     // and fold the extra normal sum into the scaled-normal slot.
-    if (cnt != lbl_eu_8066AE44) {
-        f32 inv = lbl_eu_8066AE3C / cnt;
+    if (cnt != 0.0f) {
+        f32 inv = 1.0f / cnt;
         proc->field_0x0c.x *= inv;
         proc->field_0x0c.y *= inv;
         proc->field_0x0c.z *= inv;
@@ -1854,10 +1852,10 @@ BEYOND:
     if (self->field_0x8c & 0x2) {
         // Bit 1 set: normal keeps the sphere radius scale (cap / slanted
         // cap contact with y = 1 uplift).
-        if (diff.y > lbl_eu_8066AE40 * self->field_0x60) {
+        if (diff.y > 0.5f * self->field_0x60) {
             // Above the cylinder's top: straight-down normal on the top cap.
             n->x = lbl_eu_8066AE44;
-            n->y = lbl_eu_8066AE50;
+            n->y = -1.0f;
             n->z = lbl_eu_8066AE44;
             pen = self->field_0x60 + partner->field_0x10 - diff.y;
             point->y = partner->field_0x04.y - partner->field_0x10;
@@ -1926,7 +1924,7 @@ NEAR_TAIL:
                            ? lbl_eu_8066AE44
                            : dist2 * nw4r::math::FrSqrt(dist2);
             f32 inv = lbl_eu_8066AE3C / dist;
-            f32 s = lbl_eu_8066AE54 * (inv * self->field_0x5c);
+            f32 s = 0.2f * (inv * self->field_0x5c);
             n->x = -diff.x * s;
             n->z = -diff.z * s;
         } else {
@@ -1947,10 +1945,10 @@ NEAR_TAIL:
                     PSVECNormalize((const Vec*)n, (Vec*)n);
                 }
             }
-            n->x *= lbl_eu_8066AE54 * self->field_0x5c;
-            n->z *= lbl_eu_8066AE54 * self->field_0x5c;
+            n->x *= 0.2f * self->field_0x5c;
+            n->z *= 0.2f * self->field_0x5c;
         }
-        if (diff.y > lbl_eu_8066AE40 * self->field_0x60) {
+        if (diff.y > 0.5f * self->field_0x60) {
             n->y = -(self->field_0x60 + partner->field_0x10 - diff.y);
             point->y = partner->field_0x04.y - partner->field_0x10;
         } else {
@@ -2002,7 +2000,7 @@ FAR:
     }
     // Candidate contact point on the sphere surface, then re-measure the
     // distance from the cylinder axis point to it.
-    if (diff.y > lbl_eu_8066AE40 * self->field_0x60) {
+    if (diff.y > 0.5f * self->field_0x60) {
         diff.y = self->field_0x50.y + self->field_0x60;
     } else {
         diff.y = self->field_0x50.y;
@@ -2107,19 +2105,19 @@ extern "C" bool ColiTestSegmentCapsule(CColiObject* self) {
     f32 dist2 = VEC3LenSq(&diff);
     f32 r = partner->field_0x10;
     // Only proceed when the sphere is ahead of the segment start.
-    if (!(dist2 - r * r >= lbl_eu_8066AE44)) return false;
-    if (!(dot >= lbl_eu_8066AE44)) return false;
+    if (!(dist2 - r * r >= 0.0f)) return false;
+    if (!(dot >= 0.0f)) return false;
     f32 d = dot * dot - (dist2 - r * r);
-    if (!(d > lbl_eu_8066AE44)) return false;
-    if (!(d >= lbl_eu_8066AE44)) {
+    if (!(d > 0.0f)) return false;
+    if (!(d >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    f32 sq = lbl_eu_8066AE44;
-    if (d > lbl_eu_8066AE44) {
+    f32 sq = 0.0f;
+    if (d > 0.0f) {
         sq = d * nw4r::math::FrSqrt(d);
     }
     f32 t = -dot - sq;
-    if (t < lbl_eu_8066AE44 || self->field_0x308 < t) return false;
+    if (t < 0.0f || self->field_0x308 < t) return false;
 
     // Contact point: point + dir * t, written into the proc object (reuses
     // the dead diff local, so it keeps the single sp+0x8 slot).
@@ -2134,7 +2132,7 @@ extern "C" bool ColiTestSegmentCapsule(CColiObject* self) {
             &((CColiCyl804AA870*)self->field_0x00_obj)->field_0x04);
     ml::CVec3* n = &((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x18;
     f32 len2 = n->x * n->x + n->y * n->y + n->z * n->z;
-    if (len2 == lbl_eu_8066AE44) {
+    if (len2 == 0.0f) {
         *n = ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -2190,7 +2188,7 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
     f32 BB = B.x * B.x + B.y * B.y + B.z * B.z;
     f32 CB = C.x * B.x + C.y * B.y + C.z * B.z;
     // Early outs: both self endpoints strictly beyond one end of B.
-    if (AB < lbl_eu_8066AE44 && AB + CB < lbl_eu_8066AE44) return 0;
+    if (AB < 0.0f && AB + CB < 0.0f) return 0;
     if (AB > BB && AB + CB > BB) return 0;
 
     f32 CC = C.x * C.x + C.y * C.y + C.z * C.z;
@@ -2200,20 +2198,20 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
     f32 rad = o->field_0x28;
     // Infinite-line closest approach; near-parallel axes are rejected.
     f32 denom = BB * CC - CB * CB;
-    if ((f32)__fabs(denom) < lbl_eu_8066AE5C) return 0;
+    if ((f32)__fabs(denom) < 0.00001f) return 0;
     f32 discBase = BB * (AA - rad * rad) - AB * AB;
     f32 t1 = BB * AC - CB * AB;
     f32 disc = t1 * t1 - discBase;
-    f32 sq = lbl_eu_8066AE44;
-    if (!(disc >= lbl_eu_8066AE44)) {
+    f32 sq = 0.0f;
+    if (!(disc >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    if (disc > lbl_eu_8066AE44) {
+    if (disc > 0.0f) {
         sq = disc * nw4r::math::FrSqrt(disc);
     }
     f32 t = (-t1 - sq) / denom;
     f32 proj = t * CB + AB;
-    if (proj < lbl_eu_8066AE44) {
+    if (proj < 0.0f) {
         // ---- Q-endcap resolution -------------------------------------
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         // V = P44-Q; solve |V + k*N|^2 = r^2 for the approach distance.
@@ -2225,17 +2223,17 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
         f32 vv = vx * vx + vy * vy + vz * vz;
         f32 c0 = vv - rad * rad;
         // Outside and receding: no hit.
-        if (c0 >= lbl_eu_8066AE44 && vn >= lbl_eu_8066AE44) return 0;
+        if (c0 >= 0.0f && vn >= 0.0f) return 0;
         f32 d2 = vn * vn - c0;
-        f32 sq2 = lbl_eu_8066AE44;
-        if (!(d2 >= lbl_eu_8066AE44)) {
+        f32 sq2 = 0.0f;
+        if (!(d2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        if (d2 > lbl_eu_8066AE44) {
+        if (d2 > 0.0f) {
             sq2 = d2 * nw4r::math::FrSqrt(d2);
         }
         f32 k = -vn - sq2;
-        if (k < lbl_eu_8066AE44) return 0;
+        if (k < 0.0f) return 0;
         if (self->field_0x308 < k) return 0;
         proc->field_0x0c.x = self->field_0x44.x + self->field_0x68.x * k;
         proc->field_0x0c.y = self->field_0x44.y + self->field_0x68.y * k;
@@ -2245,7 +2243,7 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
         proc->field_0x18.z = proc->field_0x0c.z - o->field_0x04.z;
         ml::CVec3* n = &proc->field_0x18;
         f32 len2 = n->x * n->x + n->y * n->y + n->z * n->z;
-        if (len2 == lbl_eu_8066AE44) {
+        if (len2 == 0.0f) {
             *n = ml::CVec3::zero;
         } else {
             PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -2263,17 +2261,17 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
                  vz * self->field_0x68.z;
         f32 vv = vx * vx + vy * vy + vz * vz;
         f32 c0 = vv - rad * rad;
-        if (c0 >= lbl_eu_8066AE44 && vn >= lbl_eu_8066AE44) return 0;
+        if (c0 >= 0.0f && vn >= 0.0f) return 0;
         f32 d2 = vn * vn - c0;
-        f32 sq2 = lbl_eu_8066AE44;
-        if (!(d2 >= lbl_eu_8066AE44)) {
+        f32 sq2 = 0.0f;
+        if (!(d2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        if (d2 > lbl_eu_8066AE44) {
+        if (d2 > 0.0f) {
             sq2 = d2 * nw4r::math::FrSqrt(d2);
         }
         f32 k = -vn - sq2;
-        if (k < lbl_eu_8066AE44) return 0;
+        if (k < 0.0f) return 0;
         if (self->field_0x308 < k) return 0;
         proc->field_0x0c.x = self->field_0x44.x + self->field_0x68.x * k;
         proc->field_0x0c.y = self->field_0x44.y + self->field_0x68.y * k;
@@ -2283,7 +2281,7 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
         proc->field_0x18.z = proc->field_0x0c.z - o->field_0x10.z;
         ml::CVec3* n = &proc->field_0x18;
         f32 len2 = n->x * n->x + n->y * n->y + n->z * n->z;
-        if (len2 == lbl_eu_8066AE44) {
+        if (len2 == 0.0f) {
             *n = ml::CVec3::zero;
         } else {
             PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -2292,8 +2290,8 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
         return 1;
     }
     // ---- Interior: contact lies between the two self points ----------
-    if (t < lbl_eu_8066AE44) return 0;
-    if (t > lbl_eu_8066AE3C) return 0;
+    if (t < 0.0f) return 0;
+    if (t > 1.0f) return 0;
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     proc->field_0x0c.x = self->field_0x44.x + C.x * t;
     proc->field_0x0c.y = self->field_0x44.y + C.y * t;
@@ -2306,11 +2304,11 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
     f32 s = (dx * o->field_0x1c.x + dy * o->field_0x1c.y +
              dz * o->field_0x1c.z) /
             o->field_0x2c;
-    if (s < lbl_eu_8066AE44) {
-        s = lbl_eu_8066AE44;
+    if (s < 0.0f) {
+        s = 0.0f;
     }
-    if (s > lbl_eu_8066AE3C) {
-        s = lbl_eu_8066AE3C;
+    if (s > 1.0f) {
+        s = 1.0f;
     }
     f32 cx = o->field_0x1c.x * s + o->field_0x04.x;
     f32 cy = o->field_0x1c.y * s + o->field_0x04.y;
@@ -2320,7 +2318,7 @@ extern "C" int ColiSweepCapsulePair(CColiObject* self) {
     proc->field_0x18.z = proc->field_0x0c.z - cz;
     ml::CVec3* n = &proc->field_0x18;
     f32 len2 = n->x * n->x + n->y * n->y + n->z * n->z;
-    if (len2 == lbl_eu_8066AE44) {
+    if (len2 == 0.0f) {
         *n = ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -2389,20 +2387,20 @@ extern "C" int ColiProcessBoxTree(CColiObject* self) {
         self->field_0x2fc[2] = self->field_0x2e4[2];
     }
 
-    CColiSweepCtrl* ctrl = lbl_eu_80665934;
-    u32* visited = lbl_eu_8065CFA0;
+    CColiSweepCtrl* ctrl = sColiSweepControl;
+    u32* visited = sColiVisitedIds;
     memset(visited, 0, ((ctrl->field_0x08 >> 5) + 1) * 4);
-    lbl_eu_80665924 =
-        (ml::coli::CColiObject*)((u8*)lbl_eu_80665920 + ctrl->field_0x00 * 0x14);
+    sColiCurrentTriangle =
+        (ml::coli::CColiObject*)((u8*)sColiTrianglesBase + ctrl->field_0x00 * 0x14);
     self->field_0x80 = 0;
     VEC3Sub(&self->field_0x68, (const VEC3*)self->field_0x2e4,
             (const VEC3*)self->field_0x2d8);
 
-    CColiRec16* rec = &((CColiRec16*)lbl_eu_8066592C)[ctrl->field_0x04];
+    CColiRec16* rec = &((CColiRec16*)sColiRecords)[ctrl->field_0x04];
     if (rec->field_0x0c == 3) {
         // Group: mark each member id as visited and process it. The loop
         // keeps both the counter and a walking pointer (retail shape).
-        u16* arr = (u16*)((u8*)lbl_eu_80665930 + rec->field_0x00_off);
+        u16* arr = (u16*)((u8*)sColiCurrentObject + rec->field_0x00_off);
         u16 count = rec->field_0x0e;
         int i = 0;
         while (i < count) {
@@ -2422,9 +2420,9 @@ extern "C" int ColiProcessBoxTree(CColiObject* self) {
                 rec->field_0x04 + rec->field_0x08 &&
             self->field_0x2f0[rec->field_0x0c] >= rec->field_0x04 &&
             rec->field_0x00 != 0) {
-            CColiRec16* sub = &((CColiRec16*)lbl_eu_8066592C)[rec->field_0x00];
+            CColiRec16* sub = &((CColiRec16*)sColiRecords)[rec->field_0x00];
             if (sub->field_0x0c == 3) {
-                u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub->field_0x00_off);
+                u16* arr = (u16*)((u8*)sColiCurrentObject + sub->field_0x00_off);
                 u16 count = sub->field_0x0e;
                 int i = 0;
                 while (i < count) {
@@ -2444,14 +2442,14 @@ extern "C" int ColiProcessBoxTree(CColiObject* self) {
                     self->field_0x2f0[sub->field_0x0c] >= sub->field_0x04 &&
                     sub->field_0x00 != 0) {
                     ColiTraverseRecordTree(
-                        self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
+                        self, &((CColiRec16*)sColiRecords)[sub->field_0x00]);
                 }
                 if (self->field_0x2fc[sub->field_0x0c] <= sub->field_0x04 &&
                     self->field_0x2f0[sub->field_0x0c] >=
                         sub->field_0x04 - sub->field_0x08 &&
                     sub->field_0x02 != 0) {
                     ColiTraverseRecordTree(
-                        self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
+                        self, &((CColiRec16*)sColiRecords)[sub->field_0x02]);
                 }
             }
         }
@@ -2460,9 +2458,9 @@ extern "C" int ColiProcessBoxTree(CColiObject* self) {
             self->field_0x2f0[rec->field_0x0c] >=
                 rec->field_0x04 - rec->field_0x08 &&
             rec->field_0x02 != 0) {
-            CColiRec16* sub2 = &((CColiRec16*)lbl_eu_8066592C)[rec->field_0x02];
+            CColiRec16* sub2 = &((CColiRec16*)sColiRecords)[rec->field_0x02];
             if (sub2->field_0x0c == 3) {
-                u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub2->field_0x00_off);
+                u16* arr = (u16*)((u8*)sColiCurrentObject + sub2->field_0x00_off);
                 u16 count = sub2->field_0x0e;
                 int i = 0;
                 while (i < count) {
@@ -2482,14 +2480,14 @@ extern "C" int ColiProcessBoxTree(CColiObject* self) {
                     self->field_0x2f0[sub2->field_0x0c] >= sub2->field_0x04 &&
                     sub2->field_0x00 != 0) {
                     ColiTraverseRecordTree(
-                        self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
+                        self, &((CColiRec16*)sColiRecords)[sub2->field_0x00]);
                 }
                 if (self->field_0x2fc[sub2->field_0x0c] <= sub2->field_0x04 &&
                     self->field_0x2f0[sub2->field_0x0c] >=
                         sub2->field_0x04 - sub2->field_0x08 &&
                     sub2->field_0x02 != 0) {
                     ColiTraverseRecordTree(
-                        self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
+                        self, &((CColiRec16*)sColiRecords)[sub2->field_0x02]);
                 }
             }
         }
@@ -2668,7 +2666,7 @@ extern "C" bool ColiTestSphereCone(CColiObject* self) {
     if (rs * rs >= dist2) {
         // Split so the scale-constant load lands immediately after the
         // Atan2FIdx call and the phase-offset load follows it (retail order).
-        f32 scaled = lbl_eu_8066AE60 *
+        f32 scaled = 0.024543693f *
                      nw4r::math::Atan2FIdx(diff.x, diff.z);
         f32 ang = scaled - self->field_0x64;
         while (ml::pi <= ang) ang -= ml::tau;
@@ -2712,7 +2710,7 @@ extern "C" bool ColiTestCappedCone(CColiObject* self) {
     if (rs * rs < dist2) return false;
     // Split so the scale-constant load lands immediately after the
     // Atan2FIdx call and the phase-offset load follows it (retail order).
-    f32 scaled = lbl_eu_8066AE60 *
+    f32 scaled = 0.024543693f *
                  nw4r::math::Atan2FIdx(diff.x, diff.z);
     f32 ang = scaled - self->field_0x64;
     while (ml::pi <= ang) ang -= ml::tau;
@@ -2725,7 +2723,7 @@ extern "C" bool ColiTestCappedCone(CColiObject* self) {
 // [-pi, pi] and test it against the +0x60 bound (inline; MWCC expands it at
 // the condition site so the retail's bl Atan2FIdx lands inside the || chain).
 static inline bool angleOK804AC198(CColiObject* self, const VEC3* d) {
-    f32 ang = lbl_eu_8066AE60 * nw4r::math::Atan2FIdx(d->x, d->z) -
+    f32 ang = 0.024543693f * nw4r::math::Atan2FIdx(d->x, d->z) -
               self->field_0x64;
     while (ang >= ml::pi) ang -= ml::tau;
     while (ang < -ml::pi) ang += ml::tau;
@@ -2806,7 +2804,7 @@ extern "C" bool ColiTestPartnerCone(CColiObject* self) {
         // constant is loaded only after the call returns (retail order);
         // phase-offset load follows it, then the pi constants.
         f32 scaled =
-            nw4r::math::Atan2FIdx(diff.x, diff.z) * lbl_eu_8066AE60;
+            nw4r::math::Atan2FIdx(diff.x, diff.z) * 0.024543693f;
         f32 ang = scaled - self->field_0x64;
         while (ml::pi <= ang) ang -= ml::tau;
         while (ang < -ml::pi) ang += ml::tau;
@@ -2928,18 +2926,18 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
 // (field_0x2fc upper / field_0x2f0 lower) for its id-A child to be
 // processed, and its point (field_0x04) must sit within the shrunken box
 // for the id-B child. Group children enumerate their members instead of
-// recursing. Records are 16-byte entries behind lbl_eu_8066592C.
+// recursing. Records are 16-byte entries behind sColiRecords.
 // Retail re-reads obj->field_0x0c / arr[i] at every use rather than caching
 // them in locals (the callee-saved set stays at r25-r31).
 // Group-member enumeration shared by all three group sites (retail keeps
 // three inlined copies).
 static inline void GroupEnumAC9F4(CColiObject* self, const CColiRec16* rec) {
     u16 count = rec->field_0x0e;
-    u16* arr = (u16*)((u8*)lbl_eu_80665930 + rec->field_0x00_off);
+    u16* arr = (u16*)((u8*)sColiCurrentObject + rec->field_0x00_off);
     for (int i = 0; i < count; i++) {
         u32 bit = 1u << (arr[i] & 31);
-        if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
-            lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
+        if ((sColiVisitedIds[arr[i] >> 5] & bit) == 0) {
+            sColiVisitedIds[arr[i] >> 5] |= bit;
             ColiVisitGroupMember(self, arr[i]);
         }
     }
@@ -2958,7 +2956,7 @@ extern "C" void ColiTraverseRecordTree(CColiObject* self, CColiRec16* obj) {
         self->field_0x2f0[kind] >= obj->field_0x04 &&
         obj->field_0x00 != 0) {
         CColiRec16* sub =
-            &((CColiRec16*)lbl_eu_8066592C)[obj->field_0x00];
+            &((CColiRec16*)sColiRecords)[obj->field_0x00];
         if (sub->field_0x0c == 3) {
             GroupEnumAC9F4(self, sub);
         } else {
@@ -2967,14 +2965,14 @@ extern "C" void ColiTraverseRecordTree(CColiObject* self, CColiRec16* obj) {
                 self->field_0x2f0[sub->field_0x0c] >= sub->field_0x04 &&
                 sub->field_0x00 != 0) {
                 ColiTraverseRecordTree(
-                    self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
+                    self, &((CColiRec16*)sColiRecords)[sub->field_0x00]);
             }
             if (self->field_0x2fc[sub->field_0x0c] <= sub->field_0x04 &&
                 self->field_0x2f0[sub->field_0x0c] >=
                     sub->field_0x04 - sub->field_0x08 &&
                 sub->field_0x02 != 0) {
                 ColiTraverseRecordTree(
-                    self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
+                    self, &((CColiRec16*)sColiRecords)[sub->field_0x02]);
             }
         }
     }
@@ -2984,7 +2982,7 @@ extern "C" void ColiTraverseRecordTree(CColiObject* self, CColiRec16* obj) {
             obj->field_0x04 - obj->field_0x08 &&
         obj->field_0x02 != 0) {
         CColiRec16* sub2 =
-            &((CColiRec16*)lbl_eu_8066592C)[obj->field_0x02];
+            &((CColiRec16*)sColiRecords)[obj->field_0x02];
         if (sub2->field_0x0c == 3) {
             GroupEnumAC9F4(self, sub2);
         } else {
@@ -2993,14 +2991,14 @@ extern "C" void ColiTraverseRecordTree(CColiObject* self, CColiRec16* obj) {
                 self->field_0x2f0[sub2->field_0x0c] >= sub2->field_0x04 &&
                 sub2->field_0x00 != 0) {
                 ColiTraverseRecordTree(
-                    self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
+                    self, &((CColiRec16*)sColiRecords)[sub2->field_0x00]);
             }
             if (self->field_0x2fc[sub2->field_0x0c] <= sub2->field_0x04 &&
                 self->field_0x2f0[sub2->field_0x0c] >=
                     sub2->field_0x04 - sub2->field_0x08 &&
                 sub2->field_0x02 != 0) {
                 ColiTraverseRecordTree(
-                    self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
+                    self, &((CColiRec16*)sColiRecords)[sub2->field_0x02]);
             }
         }
     }
@@ -3021,13 +3019,13 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
 extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
     if (obj->field_0x0c == 3) {
         // Group: mark each member id as visited and process it.
-        u16* arr = (u16*)((u8*)lbl_eu_80665930 + obj->field_0x00_off);
+        u16* arr = (u16*)((u8*)sColiCurrentObject + obj->field_0x00_off);
         u16 count = obj->field_0x0e;
         int i;
         for (i = 0; i < count; i++) {
             u32 bit = 1u << (arr[i] & 31);
-            if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
-                lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
+            if ((sColiVisitedIds[arr[i] >> 5] & bit) == 0) {
+                sColiVisitedIds[arr[i] >> 5] |= bit;
                 ColiSweepTriangle(self, arr[i]);
             }
         }
@@ -3040,15 +3038,15 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
             obj->field_0x04 + obj->field_0x08 + self->field_0x5c &&
         obj->field_0x00 != 0) {
         CColiRec16* sub =
-            &((CColiRec16*)lbl_eu_8066592C)[obj->field_0x00];
+            &((CColiRec16*)sColiRecords)[obj->field_0x00];
         if (sub->field_0x0c == 3) {
-            u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub->field_0x00_off);
+            u16* arr = (u16*)((u8*)sColiCurrentObject + sub->field_0x00_off);
             u16 count = sub->field_0x0e;
             int i;
             for (i = 0; i < count; i++) {
                 u32 bit = 1u << (arr[i] & 31);
-                if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
-                    lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
+                if ((sColiVisitedIds[arr[i] >> 5] & bit) == 0) {
+                    sColiVisitedIds[arr[i] >> 5] |= bit;
                     ColiSweepTriangle(self, arr[i]);
                 }
             }
@@ -3059,7 +3057,7 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
                     sub->field_0x04 + sub->field_0x08 + self->field_0x5c &&
                 sub->field_0x00 != 0) {
                 ColiTraverseRecordRadius(self,
-                             &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
+                             &((CColiRec16*)sColiRecords)[sub->field_0x00]);
             }
             if (self->field_0x2d8[sub->field_0x0c] <=
                     sub->field_0x04 + self->field_0x5c &&
@@ -3067,7 +3065,7 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
                     sub->field_0x04 - sub->field_0x08 - self->field_0x5c &&
                 sub->field_0x02 != 0) {
                 ColiTraverseRecordRadius(self,
-                             &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
+                             &((CColiRec16*)sColiRecords)[sub->field_0x02]);
             }
         }
     }
@@ -3078,15 +3076,15 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
             obj->field_0x04 - obj->field_0x08 - self->field_0x5c &&
         obj->field_0x02 != 0) {
         CColiRec16* sub2 =
-            &((CColiRec16*)lbl_eu_8066592C)[obj->field_0x02];
+            &((CColiRec16*)sColiRecords)[obj->field_0x02];
         if (sub2->field_0x0c == 3) {
-            u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub2->field_0x00_off);
+            u16* arr = (u16*)((u8*)sColiCurrentObject + sub2->field_0x00_off);
             u16 count = sub2->field_0x0e;
             int i;
             for (i = 0; i < count; i++) {
                 u32 bit = 1u << (arr[i] & 31);
-                if ((lbl_eu_8065CFA0[arr[i] >> 5] & bit) == 0) {
-                    lbl_eu_8065CFA0[arr[i] >> 5] |= bit;
+                if ((sColiVisitedIds[arr[i] >> 5] & bit) == 0) {
+                    sColiVisitedIds[arr[i] >> 5] |= bit;
                     ColiSweepTriangle(self, arr[i]);
                 }
             }
@@ -3097,7 +3095,7 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
                     sub2->field_0x04 + sub2->field_0x08 + self->field_0x5c &&
                 sub2->field_0x00 != 0) {
                 ColiTraverseRecordRadius(self,
-                             &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
+                             &((CColiRec16*)sColiRecords)[sub2->field_0x00]);
             }
             if (self->field_0x2d8[sub2->field_0x0c] <=
                     sub2->field_0x04 + self->field_0x5c &&
@@ -3105,7 +3103,7 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
                     sub2->field_0x04 - sub2->field_0x08 - self->field_0x5c &&
                 sub2->field_0x02 != 0) {
                 ColiTraverseRecordRadius(self,
-                             &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
+                             &((CColiRec16*)sColiRecords)[sub2->field_0x02]);
             }
         }
     }
@@ -3113,11 +3111,11 @@ extern "C" void ColiTraverseRecordRadius(CColiObject* self, CColiRec16* obj) {
 
 extern "C" void ColiSweepTriangle(CColiObject* self, u16 id);
 
-// Triangle record (0x14-byte entries behind lbl_eu_80665924) used by
+// Triangle record (0x14-byte entries behind sColiCurrentTriangle) used by
 // ColiSweepTriangle: the plane offset scalar at +0x00, three vertex ids
-// (+0x04/+0x06/+0x08) into the point array (lbl_eu_80665910), a quad id
-// (+0x0a) into the 0x24-byte record array (lbl_eu_8066591C) and a direction
-// id (+0x10) into the 0xc-byte direction array (lbl_eu_80665918).
+// (+0x04/+0x06/+0x08) into the point array (sColiVertices), a quad id
+// (+0x0a) into the 0x24-byte record array (sColiQuads) and a direction
+// id (+0x10) into the 0xc-byte direction array (sColiDirections).
 struct CColiRec14 {
     f32 field_0x00;   // +0x00 plane offset
     u16 field_0x04;   // +0x04 vertex id 1
@@ -3130,7 +3128,7 @@ struct CColiRec14 {
     u16 field_0x12;   // +0x12
 };
 
-// 0x24-byte record behind lbl_eu_8066591C: three VEC3 rows used as the
+// 0x24-byte record behind sColiQuads: three VEC3 rows used as the
 // per-vertex half-space vectors of the triangle.
 struct CColiQuad {
     VEC3 field_0x00[3];
@@ -3143,17 +3141,17 @@ struct CColiQuad {
 // appending the transformed contact point/normal into the self lists.
 // Axis reads go through self directly; no axis pointer local.
 extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
-    CColiRec14* rec = &((CColiRec14*)lbl_eu_80665924)[id];
+    CColiRec14* rec = &((CColiRec14*)sColiCurrentTriangle)[id];
     // Plane cull: |dot(dir, self axis) - plane offset| >= reach. The axis
     // vector is addressed through self directly (retail keeps no pointer
     // register for it); dir is formed inside the dot argument list so MWCC
     // schedules the id -> pointer math between the paired loads.
     f32 d = VEC3Dot((const VEC3*)self->field_0x2d8,
-                    &((const VEC3*)lbl_eu_80665918)[rec->field_0x10])
+                    &((const VEC3*)sColiDirections)[rec->field_0x10])
           - rec->field_0x00;
     if ((f32)__fabs(d) >= self->field_0x308) return;
 
-    const VEC3* dir = &((const VEC3*)lbl_eu_80665918)[rec->field_0x10];
+    const VEC3* dir = &((const VEC3*)sColiDirections)[rec->field_0x10];
 
     const VEC3* pts[4];
     VEC3 o[3];
@@ -3164,9 +3162,9 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
     P.y = self->field_0x2d8[1] - dir->y * d;
     P.x = self->field_0x2d8[0] - dir->x * d;
 
-    const VEC3* base = (const VEC3*)lbl_eu_80665910;
-    const VEC3* quad = &((const VEC3*)lbl_eu_8066591C)[rec->field_0x0a];
-    f32 gate = lbl_eu_8066AE64;
+    const VEC3* base = (const VEC3*)sColiVertices;
+    const VEC3* quad = &((const VEC3*)sColiQuads)[rec->field_0x0a];
+    f32 gate = -0.00001f;
     pts[0] = &base[rec->field_0x04];
     VEC3Sub(&o[0], &P, pts[0]);
     pts[1] = &base[rec->field_0x06];
@@ -3187,8 +3185,8 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
     if (insideEdge != 3) {
         // Sweep the axis point along the triangle edges; P is dead here so
         // it doubles as the per-edge scratch (edge diff then closest point).
-        f32 lo = lbl_eu_8066AE44;
-        f32 hi = lbl_eu_8066AE3C;
+        f32 lo = 0.0f;
+        f32 hi = 1.0f;
         pts[3] = pts[0];
         for (int i = 0; i < 3; i++) {
             VEC3Sub(&P, pts[i + 1], pts[i]);
@@ -3222,7 +3220,7 @@ extern "C" void ColiSweepTriangle(CColiObject* self, u16 id) {
                 (const nw4r::math::MTX34*)((u8*)self->field_0x00_obj + 4), dir);
             VEC3* n = &self->field_0x150[self->field_0x210];
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = *(const VEC3*)(const void*)&ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -3287,18 +3285,18 @@ extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
     if (count == 3) {
         // All axes inside: pick the exit face with the smallest remaining
         // reach (a[i] - |local[i]|) and build the axis-aligned normal.
-        f32 best = lbl_eu_8066AE68;
-        f32 sign = lbl_eu_8066AE3C;
+        f32 best = 100000.0f;
+        f32 sign = 1.0f;
         int axis = 0;
         for (int i = 0; i < 3; i++) {
             f32 val;
             f32 s;
-            if (((f32*)&local)[i] < lbl_eu_8066AE44) {
+            if (((f32*)&local)[i] < 0.0f) {
                 val = a[i] + ((f32*)&local)[i];
-                s = lbl_eu_8066AE50;
+                s = -1.0f;
             } else {
                 val = a[i] - ((f32*)&local)[i];
-                s = lbl_eu_8066AE3C;
+                s = 1.0f;
             }
             if (best > val) {
                 best = val;
@@ -3306,9 +3304,9 @@ extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
                 sign = s;
             }
         }
-        out.x = lbl_eu_8066AE44;
-        out.y = lbl_eu_8066AE44;
-        out.z = lbl_eu_8066AE44;
+        out.x = 0.0f;
+        out.y = 0.0f;
+        out.z = 0.0f;
         ((f32*)&out)[axis] = sign * (f + best);
     } else {
         // Edge case: offset from the clamped box; outside the reach sphere
@@ -3317,15 +3315,15 @@ extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
         VEC3Sub(&out, &local, (const VEC3*)&clamped);
         f32 d2 = VEC3Dot(&out, &out);
         if (f * f < d2) return 0;
-        if (d2 != lbl_eu_8066AE44) {
-            if (!(d2 >= lbl_eu_8066AE44)) {
+        if (d2 != 0.0f) {
+            if (!(d2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = d2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = d2 <= 0.0f
+                           ? 0.0f
                            : d2 * nw4r::math::FrSqrt(d2);
             pen = f - dist;
-            VEC3Scale(&out, &out, lbl_eu_8066AE3C / dist);
+            VEC3Scale(&out, &out, 1.0f / dist);
         } else {
             // Degenerate offset: random horizontal direction. Both
             // s32->f32 conversions run through the shared signed magic
@@ -3333,14 +3331,14 @@ extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
             convZ.w[0] = 0x43300000u;
             convX.w[0] = 0x43300000u;
             f32 rz = s32ToF_ae48(convZ, rand() % 200 - 100);
-            out.y = lbl_eu_8066AE44;
+            out.y = 0.0f;
             out.z = rz;
             f32 rx = s32ToF_ae48(convX, rand() % 200 - 100);
             out.x = rx;
-            if (rx == lbl_eu_8066AE44 && rz == lbl_eu_8066AE44) {
-                out.x = lbl_eu_8066AE44;
-                out.y = lbl_eu_8066AE44;
-                out.z = lbl_eu_8066AE3C;
+            if (rx == 0.0f && rz == 0.0f) {
+                out.x = 0.0f;
+                out.y = 0.0f;
+                out.z = 1.0f;
             } else {
                 PSVECNormalize((const Vec*)&out, (Vec*)&out);
             }
@@ -3365,9 +3363,9 @@ extern "C" int ColiSweepPointBox(CColiObject* self, const f32* a, const VEC3* b,
 
     if (self->field_0x8c & 0x2) {
         self->field_0x8c |= 0x8000;
-    } else if (proc->field_0x24.x == lbl_eu_8066AE44 &&
-               proc->field_0x24.z == lbl_eu_8066AE44) {
-        proc->field_0x24.x = lbl_eu_8066AE54 * self->field_0x5c;
+    } else if (proc->field_0x24.x == 0.0f &&
+               proc->field_0x24.z == 0.0f) {
+        proc->field_0x24.x = 0.2f * self->field_0x5c;
     }
     proc->vtbl->field_0x08(proc, self->field_0x314);
     return 1;
@@ -3460,13 +3458,13 @@ int ColiCastSegmentSphere(CColiObject* self, const _VEC3* a, const _VEC3* b) {
                         n->y = lbl_eu_8066AE3C;
                     } else {
                         f28 = f29;
-                        n->y = lbl_eu_8066AE50;
+                        n->y = -1.0f;
                     }
                     if (f28 < f30 && nonzero != 0) {
                         // Scale the horizontal normal by the vertical reach,
                         // then normalise the result.
-                        n->x *= lbl_eu_8066AE54 * self->field_0x5c;
-                        n->z *= lbl_eu_8066AE54 * self->field_0x5c;
+                        n->x *= 0.2f * self->field_0x5c;
+                        n->z *= 0.2f * self->field_0x5c;
                         n->y *= f28;
                         f32 mag = PSVECMag((const Vec*)n);
                         f30 = mag;
@@ -3504,9 +3502,9 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
     VEC3 diff;
     VEC3Sub(&diff, &v2, &v1);
     f32 mag = PSVECMag((const Vec*)&diff);
-    f32 zero = lbl_eu_8066AE44;
-    f32 thresh = lbl_eu_8066AE6C;
-    f32 one = lbl_eu_8066AE3C;
+    f32 zero = 0.0f;
+    f32 thresh = 0.001f;
+    f32 one = 1.0f;
     int any = 0;
     f32 inv = one / mag;
     VEC3Scale(&diff, &diff, inv);
@@ -3534,8 +3532,8 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
     }
     if (any == 0) return 0;
 
-    f32 tmin = lbl_eu_8066AE70;
-    f32 tmax = lbl_eu_8066AE74;
+    f32 tmin = 1000000.0f;
+    f32 tmax = -1000000.0f;
     int hit = 0;
     int idx = 0;
     f32 sign;
@@ -3543,7 +3541,7 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
     int i;
     for (i = 0; i < 3; i++) {
         f32 val = vals[i];
-        if (val == lbl_eu_8066AE44) {
+        if (val == 0.0f) {
             if (v1p[i] < -a[i] || v1p[i] > a[i]) return 0;
         } else {
             f32 av = a[i];
@@ -3554,9 +3552,9 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
             if (t0 > t1) {
                 lo = t1;
                 hi = t0;
-                if (lo >= lbl_eu_8066AE44 && lo > tmax) {
+                if (lo >= 0.0f && lo > tmax) {
                     tmax = lo;
-                    sign = lbl_eu_8066AE3C;
+                    sign = 1.0f;
                     idx = i;
                     hit = 1;
                 }
@@ -3564,9 +3562,9 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
             } else {
                 lo = t0;
                 hi = t1;
-                if (lo >= lbl_eu_8066AE44 && lo > tmax) {
+                if (lo >= 0.0f && lo > tmax) {
                     tmax = lo;
-                    sign = lbl_eu_8066AE50;
+                    sign = -1.0f;
                     idx = i;
                     hit = 1;
                 }
@@ -3575,7 +3573,7 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
             if (tmax > tmin) return 0;
         }
     }
-    if (tmax < lbl_eu_8066AE44) return 0;
+    if (tmax < 0.0f) return 0;
     if (mag < tmax) return 0;
     if (hit == 0) return 0;
 
@@ -3592,9 +3590,9 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
                       ->field_0x0c);
 
     // Axis-aligned normal: +/-1 on the hit axis, transformed by b.
-    cp.x = lbl_eu_8066AE44;
-    cp.y = lbl_eu_8066AE44;
-    cp.z = lbl_eu_8066AE44;
+    cp.x = 0.0f;
+    cp.y = 0.0f;
+    cp.z = 0.0f;
     ((f32*)&cp)[idx] = sign;
     nw4r::math::VEC3TransformNormal(
         (VEC3*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x18,
@@ -3603,7 +3601,7 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
     // Normalise the transformed normal (or zero it when degenerate).
     ml::CVec3* n = &((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x18;
     f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-    if (len2 == lbl_eu_8066AE44) {
+    if (len2 == 0.0f) {
         *n = ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -3616,7 +3614,7 @@ int ColiCastRayAabb(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
 extern "C" int ColiSweepVecToPoint(CColiObject* self, const VEC3* v, f32 f1,
                               f32 f2) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     self->field_0x8c &= ~2;
     VEC3 vec;
     vec.x = f1;
@@ -3631,9 +3629,9 @@ extern "C" int ColiSweepSphereBound(CColiObject* self, const VEC3* arg4, f32 f1,
                              f32 f2) {
     // f6 is the sweep bound: the large constant when the +0x74 gate point is
     // inside the +0x74 radius, else zero.
-    f32 f6 = lbl_eu_8066AE44;
+    f32 f6 = 0.0f;
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     if (self->field_0x8c & 0x8) {
         f32 gy = self->field_0x74.y;
         f32 f1sq = f1 * f1;
@@ -3642,7 +3640,7 @@ extern "C" int ColiSweepSphereBound(CColiObject* self, const VEC3* arg4, f32 f1,
                         (self->field_0x74.z - arg4->z) +
                     (self->field_0x74.x - arg4->x) *
                         (self->field_0x74.x - arg4->x)) {
-            f6 = lbl_eu_8066AE78;
+            f6 = 20.0f;
         }
     }
     f32 py = self->field_0x50.y;
@@ -3651,25 +3649,25 @@ extern "C" int ColiSweepSphereBound(CColiObject* self, const VEC3* arg4, f32 f1,
     f32 dz = self->field_0x50.z - arg4->z;
     f32 f29 = f1 - self->field_0x5c;
     f32 dx = self->field_0x50.x - arg4->x;
-    if (f29 <= lbl_eu_8066AE44) return 0;
+    if (f29 <= 0.0f) return 0;
     f32 f30 = dz * dz + dx * dx;
     if (f29 * f29 >= f30) return 0;
     f32 g = f6 + self->field_0x5c + f1;
     if (g * g < f30) return 0;
     proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    if (!(f30 >= lbl_eu_8066AE44)) {
+    if (!(f30 >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    f32 dist = f30 <= lbl_eu_8066AE44
-                   ? lbl_eu_8066AE44
+    f32 dist = f30 <= 0.0f
+                   ? 0.0f
                    : f30 * nw4r::math::FrSqrt(f30);
-    f32 nx = dx * (lbl_eu_8066AE3C / dist);
-    f32 nz = dz * (lbl_eu_8066AE3C / dist);
+    f32 nx = dx * (1.0f / dist);
+    f32 nz = dz * (1.0f / dist);
     f32 scale = -(dist - f29);
     // Contact normal at +0x18 and contact point at +0x0c of the proc object.
     proc->field_0x18.x = nx;
     proc->field_0x18.z = nz;
-    proc->field_0x18.y = lbl_eu_8066AE44;
+    proc->field_0x18.y = 0.0f;
     proc->field_0x0c.y = arg4->y;
     proc->field_0x0c.x = arg4->x + f1 * nx;
     proc->field_0x0c.z = arg4->z + f1 * nz;
@@ -3699,7 +3697,7 @@ extern "C" int ColiProc_RunCollideScan(CColiProcLocal* proc, const VEC3* v,
 // penetration; the vtable slot-2 callback fires with the +0x314 argument.
 extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) {
     CColiObj3C* proc0 = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc0->field_0x08 = lbl_eu_80663A90[0];
+    proc0->field_0x08 = sColiBaseName[0];
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, (const VEC3*)vec);
     if (diff.y > y + self->field_0x5c) return 0;
@@ -3754,12 +3752,12 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
         // its own radius: contact along the segment axis.
         n->x = lbl_eu_8066AE44;
         n->z = lbl_eu_8066AE44;
-        if (diff.y > lbl_eu_8066AE40 * y) {
+        if (diff.y > 0.5f * y) {
             n->y = lbl_eu_8066AE3C;
             pen = y + self->field_0x5c - diff.y;
             proc->field_0x0c.y = vec->y + y;
         } else {
-            n->y = lbl_eu_8066AE50;
+            n->y = -1.0f;
             pen = self->field_0x5c + diff.y;
             proc->field_0x0c.y = vec->y;
         }
@@ -3784,7 +3782,7 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
         f32 nz = diff.z * inv;
         proc->field_0x0c.x = x * nx + vec->x;
         proc->field_0x0c.z = x * nz + vec->z;
-        if (diff.y > lbl_eu_8066AE40 * y) {
+        if (diff.y > 0.5f * y) {
             proc->field_0x0c.y = vec->y + y;
         } else {
             proc->field_0x0c.y = vec->y;
@@ -3841,7 +3839,7 @@ extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x,
 extern "C" int ColiFrameSweepClassify(CColiObject* self, const _VEC3* a, const _VEC3* b,
                              const _VEC3* c) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     self->field_0x8c &= ~0x2u;
     return ColiSweepPointBox(self, (const f32*)a, (const VEC3*)b,
                          (const f32(*)[4])c, self->field_0x5c);
@@ -3852,7 +3850,7 @@ extern "C" int ColiFrameSweepClassify(CColiObject* self, const _VEC3* a, const _
 extern "C" int ColiFrameSweepClip(CColiObject* self, const _VEC3* a, const _VEC3* b,
                              const _VEC3* c) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     self->field_0x8c &= ~0x2u;
     return ColiCastRayAabb(self, (const f32*)a, (const f32(*)[4])b,
                          (const f32(*)[4])c);
@@ -3908,47 +3906,47 @@ extern "C" int ColiSweepSegmentAabb(CColiObject* self, const _VEC3* a,
     // The partner-proc pointer is re-loaded from +0x3c at every use (retail
     // never caches it in a callee-saved register).
     ((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x08 =
-        lbl_eu_80663A90[0];
+        sColiBaseName[0];
     VEC3 dir;  // sp+0x20 outside - inside
     VEC3Sub(&dir, &out, &in);
     f32 mag = PSVECMag((const Vec*)&dir);
-    f32 inv = lbl_eu_8066AE3C / mag;
+    f32 inv = 1.0f / mag;
     VEC3Scale(&dir, &dir, inv);
 
     f32 oneOver[3];  // sp+0x14 per-axis inverse
     int nonzero = 0;
-    if ((f32)__fabs(dir.x) < lbl_eu_8066AE6C) {
-        oneOver[0] = lbl_eu_8066AE44;
+    if ((f32)__fabs(dir.x) < 0.001f) {
+        oneOver[0] = 0.0f;
     } else {
-        oneOver[0] = lbl_eu_8066AE3C / dir.x;
+        oneOver[0] = 1.0f / dir.x;
         nonzero = 1;
     }
-    if ((f32)__fabs(dir.y) < lbl_eu_8066AE6C) {
-        oneOver[1] = lbl_eu_8066AE44;
+    if ((f32)__fabs(dir.y) < 0.001f) {
+        oneOver[1] = 0.0f;
     } else {
-        oneOver[1] = lbl_eu_8066AE3C / dir.y;
+        oneOver[1] = 1.0f / dir.y;
         nonzero = 1;
     }
-    if ((f32)__fabs(dir.z) < lbl_eu_8066AE6C) {
-        oneOver[2] = lbl_eu_8066AE44;
+    if ((f32)__fabs(dir.z) < 0.001f) {
+        oneOver[2] = 0.0f;
     } else {
-        oneOver[2] = lbl_eu_8066AE3C / dir.z;
+        oneOver[2] = 1.0f / dir.z;
         nonzero = 1;
     }
     if (nonzero == 0) return 0;
 
     // Per-axis entry bounds along the segment; track the tightest lower
     // bound and the axis/sign that produced it.
-    f32 tLo = lbl_eu_8066AE74;
-    f32 tHi = lbl_eu_8066AE70;
-    f32 axisSign = lbl_eu_8066AE44;
+    f32 tLo = -1000000.0f;
+    f32 tHi = 1000000.0f;
+    f32 axisSign = 0.0f;
     int axis = 0;
     int found = 0;
     // Retail walks the extents pointer forward one float per iteration
     // (addi r29,r29,4): advance a itself.
     for (int i = 0; i < 3; i++) {
         f32 iv = oneOver[i];
-        if (iv == lbl_eu_8066AE44) {
+        if (iv == 0.0f) {
             // Zero direction on this axis: the inside point must already
             // lie within the AABB on it.
             if (((f32*)&in)[i] < -a->x || ((f32*)&in)[i] > a->x) {
@@ -3958,17 +3956,17 @@ extern "C" int ColiSweepSegmentAabb(CColiObject* self, const _VEC3* a,
             f32 t0 = iv * (a->x - ((f32*)&in)[i]);
             f32 t1 = iv * (-a->x - ((f32*)&in)[i]);
             if (t1 > t0) {
-                if (t0 >= lbl_eu_8066AE44 && t0 > tLo) {
+                if (t0 >= 0.0f && t0 > tLo) {
                     tLo = t0;
-                    axisSign = lbl_eu_8066AE3C;
+                    axisSign = 1.0f;
                     axis = i;
                     found = 1;
                 }
                 if (t1 < tHi) tHi = t1;
             } else {
-                if (t1 >= lbl_eu_8066AE44 && t1 > tLo) {
+                if (t1 >= 0.0f && t1 > tLo) {
                     tLo = t1;
-                    axisSign = lbl_eu_8066AE50;
+                    axisSign = -1.0f;
                     axis = i;
                     found = 1;
                 }
@@ -3978,7 +3976,7 @@ extern "C" int ColiSweepSegmentAabb(CColiObject* self, const _VEC3* a,
         }
         a = (const _VEC3*)((const f32*)a + 1);
     }
-    if (tLo < lbl_eu_8066AE44 || mag < tLo) return 0;
+    if (tLo < 0.0f || mag < tLo) return 0;
     if (found == 0) return 0;
 
     // Entry point: inside + dir * tLo, transformed into the proc contact.
@@ -3991,16 +3989,16 @@ extern "C" int ColiSweepSegmentAabb(CColiObject* self, const _VEC3* a,
                  (Vec*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)
                       ->field_0x0c);
     // Axis-aligned normal in the partner frame.
-    hit.x = lbl_eu_8066AE44;
-    hit.y = lbl_eu_8066AE44;
-    hit.z = lbl_eu_8066AE44;
+    hit.x = 0.0f;
+    hit.y = 0.0f;
+    hit.z = 0.0f;
     ((f32*)&hit)[axis] = -axisSign;
     VEC3TransformNormal(
         (VEC3*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x18,
         (const nw4r::math::MTX34*)b, (const VEC3*)&hit);
     VEC3* n = (VEC3*)&((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x18;
     f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-    if (len2 == lbl_eu_8066AE44) {
+    if (len2 == 0.0f) {
         *n = *(const VEC3*)(const void*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -4033,7 +4031,7 @@ extern "C" int ColiClipContactPoint(CColiContactObj* self, const VEC3* v, f32 f)
                     o->field_0x68.x * (v->x - o->field_0x44.x));
     f32 r = f + o->field_0x5c;
     w.x = o->field_0x68.x * t;
-    w.y = lbl_eu_8066AE44;
+    w.y = 0.0f;
     w.z = o->field_0x68.z * t;
     VEC3Add(&w, &w, &o->field_0x44);
     VEC3Sub(&w, &w, v);
@@ -4115,7 +4113,7 @@ extern "C" void ColiClipSegmentStrip(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
     VEC3 v1;
     VEC3 v3;
     v3_sub(&v1, pD, pC);
-    v3_scale(&v2, &v1, lbl_eu_8066AE50);
+    v3_scale(&v2, &v1, -1.0f);
     v3_sub(&v3, pB, pA);
     v3_sub(&v4, pC, pA);
 
@@ -4128,15 +4126,15 @@ extern "C" void ColiClipSegmentStrip(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
     f32 t = (b * e - c * d) / (a * b - c * c);
     f32 u = (d - c * t) / b;
 
-    if ((u < lbl_eu_8066AE44 || u > lbl_eu_8066AE3C) &&
-        (t < lbl_eu_8066AE44 || t > lbl_eu_8066AE3C)) {
+    if ((u < 0.0f || u > 1.0f) &&
+        (t < 0.0f || t > 1.0f)) {
         // both out of range
         f32 uc = clamp01(u);
         v3_scale(&scratch, &v3, uc);
         v3_add(pOutA, pA, &scratch);
         v3_sub(&v4, pOutA, pC);
         f32 s = v3_dot(&v1, &v4) / a;
-        if (s < lbl_eu_8066AE44 || s > lbl_eu_8066AE3C) {
+        if (s < 0.0f || s > 1.0f) {
             f32 sc = clamp01(s);
             v3_scale(&scratch, &v1, sc);
             v3_add(pOutB, pC, &scratch);
@@ -4150,7 +4148,7 @@ extern "C" void ColiClipSegmentStrip(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
             v3_add(pOutB, pC, &scratch);
         }
     } else {
-        if (u < lbl_eu_8066AE44 || u > lbl_eu_8066AE3C) {
+        if (u < 0.0f || u > 1.0f) {
             // u out, t in
             f32 uc = clamp01(u);
             v3_scale(&scratch, &v3, uc);
@@ -4161,7 +4159,7 @@ extern "C" void ColiClipSegmentStrip(VEC3* pOutA, VEC3* pOutB, VEC3* pA,
             v3_scale(&scratch, &v1, sc);
             v3_add(pOutB, pC, &scratch);
         } else {
-            if (t < lbl_eu_8066AE44 || t > lbl_eu_8066AE3C) {
+            if (t < 0.0f || t > 1.0f) {
                 // t out, u in
                 f32 tc = clamp01(t);
                 v3_scale(&scratch, &v1, tc);
@@ -4215,7 +4213,7 @@ extern "C" int ColiClipStripRadius(VEC3* a, VEC3* b, const VEC3* c, const VEC3* 
     v2v0 = VEC3Dot(&v0, &v2);
     // Endpoint gates: the whole segment before the frame start or past the
     // frame end misses.
-    if (v1v0 < lbl_eu_8066AE44 && v1v0 + v2v0 < lbl_eu_8066AE44) return 0;
+    if (v1v0 < 0.0f && v1v0 + v2v0 < 0.0f) return 0;
     if (v1v0 > v0sq && v1v0 + v2v0 > v0sq) return 0;
 
     v2sq = VEC3Dot(&v0, &v0);
@@ -4226,11 +4224,11 @@ extern "C" int ColiClipStripRadius(VEC3* a, VEC3* b, const VEC3* c, const VEC3* 
     f25v = f4v - f * f;
     v1v2 = VEC3Dot(&v1, &v0);
     f3v = v0sq * f25v - sq31;
-    if ((f32)__fabs(det) < lbl_eu_8066AE5C) {
+    if ((f32)__fabs(det) < 0.00001f) {
         // Near-parallel: project the frame-start offset onto the segment.
-        if (f3v > lbl_eu_8066AE44) return 0;
+        if (f3v > 0.0f) return 0;
         f32 t;
-        if (v1v0 < lbl_eu_8066AE44) {
+        if (v1v0 < 0.0f) {
             t = -v1v2 / v2sq;
         } else if (v1v0 > v0sq) {
             t = (v2v0 - v1v2) / v2sq;
@@ -4242,25 +4240,25 @@ extern "C" int ColiClipStripRadius(VEC3* a, VEC3* b, const VEC3* c, const VEC3* 
     // General (non-parallel) intersection: quadratic closest approach.
     f24v = v0sq * v1v2 - v2v0 * v1v0;
     disc = f24v * f24v - det * f3v;
-    if (disc < lbl_eu_8066AE44) return 0;
-    if (!(disc >= lbl_eu_8066AE44)) {
+    if (disc < 0.0f) return 0;
+    if (!(disc >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 sq;
-    if (disc > lbl_eu_8066AE44) {
+    if (disc > 0.0f) {
         sq = disc * nw4r::math::FrSqrt(disc);
     } else {
-        sq = lbl_eu_8066AE44;
+        sq = 0.0f;
     }
     f32 t = (-f24v - sq) / det;
     f32 proj = t * v2v0 + v1v0;
-    if (proj < lbl_eu_8066AE44) {
+    if (proj < 0.0f) {
         // Closest approach before the frame start: clip at the start line
         // and test the quadratic there.
-        if (v2v0 <= lbl_eu_8066AE44) return 0;
+        if (v2v0 <= 0.0f) return 0;
         f32 t2 = -v1v0 / v2v0;
-        if (t2 * (lbl_eu_8066AE38 * v1v2 + t2 * v2sq) + f25v >
-            lbl_eu_8066AE44) {
+        if (t2 * (2.0f * v1v2 + t2 * v2sq) + f25v >
+            0.0f) {
             return 0;
         }
         VEC3Scale(e, &v0, t2);
@@ -4269,11 +4267,11 @@ extern "C" int ColiClipStripRadius(VEC3* a, VEC3* b, const VEC3* c, const VEC3* 
     }
     if (proj > v0sq) {
         // Closest approach past the frame end: clip at the end line.
-        if (v2v0 >= lbl_eu_8066AE44) return 0;
+        if (v2v0 >= 0.0f) return 0;
         f32 t3 = (v0sq - v1v0) / v2v0;
-        if (t3 * (lbl_eu_8066AE38 * (v1v2 - v2v0) + t3 * v2sq) +
-                (f25v + v0sq - lbl_eu_8066AE38 * v1v0) >
-            lbl_eu_8066AE44) {
+        if (t3 * (2.0f * (v1v2 - v2v0) + t3 * v2sq) +
+                (f25v + v0sq - 2.0f * v1v0) >
+            0.0f) {
             return 0;
         }
         VEC3Scale(e, &v0, t3);
@@ -4281,7 +4279,7 @@ extern "C" int ColiClipStripRadius(VEC3* a, VEC3* b, const VEC3* c, const VEC3* 
         return 1;
     }
     // Closest approach within the frame: parameter must be interior.
-    if (t >= lbl_eu_8066AE44 && t <= lbl_eu_8066AE3C) {
+    if (t >= 0.0f && t <= 1.0f) {
         VEC3Scale(e, &v0, t);
         VEC3Add(e, e, a);
         return 1;
@@ -4301,19 +4299,19 @@ extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x,
     bool flagA = false;
     bool flagB = false;
     VEC3Sub(&diff, &self->field_0x44, (const VEC3*)vec);
-    if (diff.y <= y && diff.y >= lbl_eu_8066AE44 &&
+    if (diff.y <= y && diff.y >= 0.0f &&
         diff.z * diff.z + diff.x * diff.x <= x * x) {
         flagA = true;
     }
     VEC3Sub(&diff, &self->field_0x50, (const VEC3*)vec);
-    if (diff.y <= y && diff.y >= lbl_eu_8066AE44 &&
+    if (diff.y <= y && diff.y >= 0.0f &&
         diff.z * diff.z + diff.x * diff.x <= x * x) {
         flagB = true;
     }
     if (flagA == flagB) return 0;
 
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     VEC3 cpA;
     VEC3 cpB;
     cpA.x = vec->x;
@@ -4340,30 +4338,30 @@ extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x,
     }
     proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     if (cpA.y == proc->field_0x0c.y) {
-        const f32 flat = lbl_eu_8066AE44;
+        const f32 flat = 0.0f;
         proc->field_0x18.x = flat;
-        proc->field_0x18.y = lbl_eu_8066AE50;
+        proc->field_0x18.y = -1.0f;
         proc->field_0x18.z = flat;
     } else if (cpB.y == proc->field_0x0c.y) {
-        const f32 flat = lbl_eu_8066AE44;
+        const f32 flat = 0.0f;
         proc->field_0x18.x = flat;
-        proc->field_0x18.y = lbl_eu_8066AE3C;
+        proc->field_0x18.y = 1.0f;
         proc->field_0x18.z = flat;
     } else {
         f32 dz = cpB.z - proc->field_0x0c.z;
         f32 dx = cpB.x - proc->field_0x0c.x;
         f32 dist2 = dz * dz + dx * dx;
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = dist2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = dist2 <= 0.0f
+                           ? 0.0f
                            : dist2 * nw4r::math::FrSqrt(dist2);
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             CColiObj3C* p3 = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
             p3->field_0x18.x = dx * inv;
-            p3->field_0x18.y = lbl_eu_8066AE44;
+            p3->field_0x18.y = 0.0f;
             p3->field_0x18.z = dz * inv;
         } else {
             // Random horizontal direction when the clip is degenerate.
@@ -4371,16 +4369,16 @@ extern "C" int ColiSweepCylinderPair(CColiObject* self, const _VEC3* vec, f32 x,
             f32 rz = f32FromS32_ae48(rand() % 200 - 100);
             f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                const f32 flat = lbl_eu_8066AE44;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                const f32 flat = 0.0f;
                 n->x = flat;
                 n->y = flat;
-                n->z = lbl_eu_8066AE3C;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -4932,9 +4930,9 @@ struct CColiNodeKey1164 {
 // `bl`.
 extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VEC3* pos,
                               const VEC3* move) {
-    out->x = lbl_eu_8066AE88;
-    out->y = lbl_eu_8066AE88;
-    out->z = lbl_eu_8066AE88;
+    out->x = 0.0f;
+    out->y = 0.0f;
+    out->z = 0.0f;
     u32 flags = self->field_0xa8;
     // Bits 0x100 / 0x2 disable movement resolution entirely.
     if ((flags & 0x100) || (flags & 0x2)) {
@@ -4983,8 +4981,8 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
         // No collision data: refill the axis block with the default extents.
         f32 c2;
         f32 c1;
-        c1 = lbl_eu_8066AE8C;
-        c2 = lbl_eu_8066AE90;
+        c1 = -100000.0f;
+        c2 = 100000.0f;
         self->field_0x0c[0] = c1;
         self->field_0x0c[1] = c1;
         self->field_0x0c[2] = c1;
@@ -5005,19 +5003,19 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
         // Query box around the new position with the node's half-extents.
         ColiMakeAabbAsym((CColiObject*)&box, (const VEC3*)&self->field_0x24,
                       self->field_0x24[3], self->field_0x24[4],
-                      lbl_eu_8066AE88);
+                      0.0f);
 
         // Copy of the axis block: bounds[0] min triple, bounds[1] max triple.
         const VEC3* ax = (const VEC3*)self->field_0x0c;
         bounds[0] = ax[0];
         bounds[1] = ax[1];
 
-        if (move->x != lbl_eu_8066AE88 || move->y != lbl_eu_8066AE88 ||
-            move->z != lbl_eu_8066AE88) {
+        if (move->x != 0.0f || move->y != 0.0f ||
+            move->z != 0.0f) {
             // Scale the move by the global factor, shrink the query box along
             // it (ColiMoveAabbThreshold moves both corners) and tighten the copied
             // bounds so the chain walks only cover the swept region.
-            f32 s = lbl_eu_8066AE98;
+            f32 s = -1.0f;
             VEC3 scaled;
             scaled.x = move->x * s;
             scaled.y = move->y * s;
@@ -5027,17 +5025,17 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
             scaledCopy.y = scaled.y;
             scaledCopy.z = scaled.z;
             ColiMoveAabbThreshold((f32*)&box, (const f32*)&scaledCopy);
-            if (move->x > lbl_eu_8066AE88) {
+            if (move->x > 0.0f) {
                 bounds[1].x -= move->x;
             } else {
                 bounds[0].x -= move->x;
             }
-            if (move->y > lbl_eu_8066AE88) {
+            if (move->y > 0.0f) {
                 bounds[1].y -= move->y;
             } else {
                 bounds[0].y -= move->y;
             }
-            if (move->z > lbl_eu_8066AE88) {
+            if (move->z > 0.0f) {
                 bounds[1].z -= move->z;
             } else {
                 bounds[0].z -= move->z;
@@ -5061,8 +5059,8 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
                 }                                                             \
             } else {                                                          \
                 f32 k = (self->field_0xb2 == other_->field_0xb2)              \
-                            ? lbl_eu_8066AE9C                                 \
-                            : lbl_eu_8066AEA0;                                \
+                            ? 0.5f                                 \
+                            : 1.0f;                                \
                 if (ColiDispatchMoveSegment((CColiObject*)other_, &push, &objB, k)) {   \
                     out->x += push.x;                                         \
                     out->y += push.y;                                         \
@@ -5106,9 +5104,9 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
         basePos.y = self->field_0x24[1] + out->y;
         basePos.z = self->field_0x24[2] + out->z;
         VEC3 pushSum;
-        pushSum.x = lbl_eu_8066AE88;
-        pushSum.y = lbl_eu_8066AE88;
-        pushSum.z = lbl_eu_8066AE88;
+        pushSum.x = 0.0f;
+        pushSum.y = 0.0f;
+        pushSum.z = 0.0f;
         ColiInitAngleSpec(&objA, (const CColiSubSpec804A7878*)&basePos,
                       self->field_0x24[3], self->field_0x24[4], 0);
         objA.field_0x8c |= 0x10;
@@ -5118,8 +5116,8 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
         bool hitAny = false;
         for (u32 i = 0; i < count; i++) {
             CColiNode804B09C8* other = hits[i];
-            f32 k = (self->field_0xb2 == other->field_0xb2) ? lbl_eu_8066AE9C
-                                                            : lbl_eu_8066AEA0;
+            f32 k = (self->field_0xb2 == other->field_0xb2) ? 0.5f
+                                                            : 1.0f;
             if (ColiDispatchMoveSegment((CColiObject*)other, &push, &objA, k)) {
                 pushSum.x += push.x;
                 pushSum.y += push.y;
@@ -5130,8 +5128,8 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
         if (!hitAny) {
             return result;
         }
-        if (out->x == lbl_eu_8066AE88 && out->y == lbl_eu_8066AE88 &&
-            out->z == lbl_eu_8066AE88) {
+        if (out->x == 0.0f && out->y == 0.0f &&
+            out->z == 0.0f) {
             // First contact: the summed push is the answer verbatim.
             out->x = pushSum.x;
             out->y = pushSum.y;
@@ -5139,14 +5137,14 @@ extern "C" bool ColiResolveNodeMove(CColiNode804B09C8* self, VEC3* out, const VE
             return result;
         }
         f32 dot = pushSum.x * out->x + pushSum.y * out->y + pushSum.z * out->z;
-        if (dot < lbl_eu_8066AE88) {
+        if (dot < 0.0f) {
             // Push opposes `out`: project the excess onto the unit sphere so
             // the resolved direction stays normalised.
             VEC3 n;
             n.x = pushSum.x;
             n.y = pushSum.y;
             n.z = pushSum.z;
-            if (dot == lbl_eu_8066AE88) {
+            if (dot == 0.0f) {
                 n.x = ml::CVec3::zero.x;
                 n.y = ml::CVec3::zero.y;
                 n.z = ml::CVec3::zero.z;
@@ -5370,7 +5368,7 @@ extern "C" int ColiBoxSweepClassify(CColiObject* self, const VEC3* extents,
 // (ColiProc_RunCollideScan). Then dispatch to the sphere-sweep contact
 // (ColiSweepSphereBound / ColiSweepVecToPoint) or the box-sweep contact
 // (ColiSweepBoxContact / ColiBoxSweepClassify) depending on the +0xa8 bit combination,
-// sharing the current-segment global (lbl_eu_8065D0A0) with the callees.
+// sharing the current-segment global (sColiObjCall) with the callees.
 extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObject* obj, f32 f) {
     int result = 0;
     int w = 1;
@@ -5388,13 +5386,13 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     }
     if (w != 0) return 0;
 
-    outVec->x = lbl_eu_8066AE88;
-    outVec->y = lbl_eu_8066AE88;
-    outVec->z = lbl_eu_8066AE88;
+    outVec->x = 0.0f;
+    outVec->y = 0.0f;
+    outVec->z = 0.0f;
     obj->field_0x314 = (u32)self;
 
     if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
-        lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AEA0;
+        sColiObjCall.field_0x3c = 1.0f;
         CColiProcLocal proc;
         proc.InitQuad((CColiProcTarget*)self->field_0x00_obj, self->field_0x08, self->field_0x04);
         proc.field_0xC |= 0x2;
@@ -5409,9 +5407,9 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     // Behaviour 0x50/0x80 gate: seed the partner slot with the current-segment
     // global (or the embedded proc) and run the sphere-sweep contact. The
     // global address is kept in a local so it survives the callee call (r27).
-    CColiObjCall* g = &lbl_eu_8065D0A0;
-    if (&lbl_eu_8065D0A0 != 0) {
-        obj->field_0x3c_u = (u32)&lbl_eu_8065D0A0;
+    CColiObjCall* g = &sColiObjCall;
+    if (&sColiObjCall != 0) {
+        obj->field_0x3c_u = (u32)&sColiObjCall;
     } else {
         obj->field_0x3c_u = (u32)((u8*)obj + 4);
     }
@@ -5431,13 +5429,13 @@ extern "C" int ColiDispatchMoveSegment(CColiObject* self, VEC3* outVec, CColiObj
     goto exit;
 block60F4:
     if (fl & 0x20) {
-        CColiObjCall* g2 = &lbl_eu_8065D0A0;
-        if (&lbl_eu_8065D0A0 != 0) {
-            obj->field_0x3c_u = (u32)&lbl_eu_8065D0A0;
+        CColiObjCall* g2 = &sColiObjCall;
+        if (&sColiObjCall != 0) {
+            obj->field_0x3c_u = (u32)&sColiObjCall;
         } else {
             obj->field_0x3c_u = (u32)((u8*)obj + 4);
         }
-        g2->field_0x3c = lbl_eu_8066AEA0;
+        g2->field_0x3c = 1.0f;
         g2->field_0x38 = outVec;
         if (self->field_0xa8 & 0x400) {
             result = (result | ColiSweepBoxContact(
@@ -5466,8 +5464,8 @@ exit:
 // proc object and its vtable slot 2 fires with the +0x314 argument.
 extern "C" int ColiSweepBoxContact(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
-    f32 bound = lbl_eu_8066AE44;
-    ((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x08 = lbl_eu_80663A90[0];
+    f32 bound = 0.0f;
+    ((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x08 = sColiBaseName[0];
     Vec out;
     if (self->field_0x8c & 0x10) {
         PSMTXMultVec(m2, (const Vec*)&self->field_0x74, &out);
@@ -5475,7 +5473,7 @@ extern "C" int ColiSweepBoxContact(CColiObject* self, const VEC3* extents,
         if (extents->x >= out.x && -extents->x <= out.x) c++;
         if (extents->y >= out.y && -extents->y <= out.y) c++;
         if (extents->z >= out.z && -extents->z <= out.z) c++;
-        if (c == 3) bound = lbl_eu_8066AE78;
+        if (c == 3) bound = 20.0f;
     }
     PSMTXMultVec(m2, (const Vec*)&self->field_0x44, &out);
     Vec res;
@@ -5530,7 +5528,7 @@ contact:
 extern "C" int ColiBoxSweepClassify(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     self->field_0x8c &= ~0x2u;
     return ColiSweepPointBox(self, (const f32*)extents, (const VEC3*)m1, m2,
                          self->field_0x5c);
@@ -5707,7 +5705,7 @@ void CColiObjCall::Update() {
     v.z = off.z;
     VEC3Scale(&v, &v, field_0x3c);
     if (field_0x40 != 0) {
-        v.y = lbl_eu_8066AE88;
+        v.y = 0.0f;
     }
     VEC3Add(field_0x38, field_0x38, &v);
 }
@@ -5891,7 +5889,7 @@ struct CColiSeg2Pt804AA504 {
 // slot-2 callback fires.
 // ---------------------------------------------------------------------------
 extern "C" int ColiSweepClipSegment(CColiObject* self) {
-    if (lbl_eu_8066AE58 * self->field_0x5c >= self->field_0x60) {
+    if (2.1f * self->field_0x5c >= self->field_0x60) {
         return ColiSweepSegmentSphere(self);
     }
     CColiSeg2Pt804AA504* partner = (CColiSeg2Pt804AA504*)self->field_0x00_obj;
@@ -5913,15 +5911,15 @@ extern "C" int ColiSweepClipSegment(CColiObject* self) {
     f32 dist2 = VEC3LenSq(&diff);
     if (rsum * rsum < dist2) return 0;
     f32 pen = rsum;
-    if (dist2 != lbl_eu_8066AE44) {
-        if (!(dist2 >= lbl_eu_8066AE44)) {
+    if (dist2 != 0.0f) {
+        if (!(dist2 >= 0.0f)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 dist = dist2 <= lbl_eu_8066AE44
-                       ? lbl_eu_8066AE44
+        f32 dist = dist2 <= 0.0f
+                       ? 0.0f
                        : dist2 * nw4r::math::FrSqrt(dist2);
         pen = rsum - dist;
-        f32 inv = lbl_eu_8066AE3C / dist;
+        f32 inv = 1.0f / dist;
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         VEC3Scale((VEC3*)&proc->field_0x18, &diff, inv);
     } else {
@@ -5932,14 +5930,14 @@ extern "C" int ColiSweepClipSegment(CColiObject* self) {
         f32 rx = f32FromS32_ae48(rand() % 200 - 100);
         n->z = rz;
         n->x = rx;
-        n->y = lbl_eu_8066AE44;
-        if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-            n->x = lbl_eu_8066AE44;
-            n->y = lbl_eu_8066AE44;
-            n->z = lbl_eu_8066AE3C;
+        n->y = 0.0f;
+        if (n->x == 0.0f && n->z == 0.0f) {
+            n->x = 0.0f;
+            n->y = 0.0f;
+            n->z = 1.0f;
         } else {
             f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-            if (len2 == lbl_eu_8066AE44) {
+            if (len2 == 0.0f) {
                 *n = ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -6002,29 +6000,29 @@ extern "C" int ColiSweepCylinderClip(CColiObject* self) {
     }
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     if (clipA.y == proc->field_0x0c.y) {
-        proc->field_0x18.x = lbl_eu_8066AE44;
-        proc->field_0x18.y = lbl_eu_8066AE3C;
-        proc->field_0x18.z = lbl_eu_8066AE44;
+        proc->field_0x18.x = 0.0f;
+        proc->field_0x18.y = 1.0f;
+        proc->field_0x18.z = 0.0f;
     } else if (clipB.y == proc->field_0x0c.y) {
-        proc->field_0x18.x = lbl_eu_8066AE44;
-        proc->field_0x18.y = lbl_eu_8066AE50;
-        proc->field_0x18.z = lbl_eu_8066AE44;
+        proc->field_0x18.x = 0.0f;
+        proc->field_0x18.y = -1.0f;
+        proc->field_0x18.z = 0.0f;
     } else {
         // Radial normal: measured from the lower clip point.
         f32 dz = proc->field_0x0c.z - clipB.z;
         f32 dx = proc->field_0x0c.x - clipB.x;
         f32 dist2 = dz * dz + dx * dx;
-        if (dist2 != lbl_eu_8066AE44) {
-            if (!(dist2 >= lbl_eu_8066AE44)) {
+        if (dist2 != 0.0f) {
+            if (!(dist2 >= 0.0f)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
-            f32 dist = dist2 <= lbl_eu_8066AE44
-                           ? lbl_eu_8066AE44
+            f32 dist = dist2 <= 0.0f
+                           ? 0.0f
                            : dist2 * nw4r::math::FrSqrt(dist2);
-            f32 inv = lbl_eu_8066AE3C / dist;
+            f32 inv = 1.0f / dist;
             CColiObj3C* p3 = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
             p3->field_0x18.x = dx * inv;
-            p3->field_0x18.y = lbl_eu_8066AE44;
+            p3->field_0x18.y = 0.0f;
             p3->field_0x18.z = dz * inv;
         } else {
             // Random horizontal direction (y = 0) when the clip is degenerate.
@@ -6032,15 +6030,15 @@ extern "C" int ColiSweepCylinderClip(CColiObject* self) {
             f32 rz = f32FromS32_ae48(rand() % 200 - 100);
             f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
-            n->y = lbl_eu_8066AE44;
+            n->y = 0.0f;
             n->z = rz;
-            if (n->x == lbl_eu_8066AE44 && n->z == lbl_eu_8066AE44) {
-                n->x = lbl_eu_8066AE44;
-                n->y = lbl_eu_8066AE44;
-                n->z = lbl_eu_8066AE3C;
+            if (n->x == 0.0f && n->z == 0.0f) {
+                n->x = 0.0f;
+                n->y = 0.0f;
+                n->z = 1.0f;
             } else {
                 f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
-                if (len2 == lbl_eu_8066AE44) {
+                if (len2 == 0.0f) {
                     *n = ml::CVec3::zero;
                 } else {
                     PSVECNormalize((const Vec*)n, (Vec*)n);
@@ -6065,7 +6063,7 @@ extern "C" int ColiSweepCylinderClip(CColiObject* self) {
 extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
                              f32 y) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    proc->field_0x08 = sColiBaseName[0];
     VEC3 base(vec->x, vec->y, vec->z);
     VEC3 top(vec->x, vec->y + y, vec->z);
     if (ColiClipStripRadius(&self->field_0x44, &self->field_0x50, &base, &top,
@@ -6079,7 +6077,7 @@ extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
         proc->field_0x18.z = lbl_eu_8066AE44;
     } else if (top.y == proc->field_0x0c.y) {
         proc->field_0x18.x = lbl_eu_8066AE44;
-        proc->field_0x18.y = lbl_eu_8066AE50;
+        proc->field_0x18.y = -1.0f;
         proc->field_0x18.z = lbl_eu_8066AE44;
     } else {
         f32 dz = proc->field_0x0c.z - top.z;
@@ -6126,23 +6124,22 @@ extern "C" int ColiSweepSphereClip(CColiObject* self, const _VEC3* vec, f32 x,
 
 // ===== Dissolved monolibdata2 zero-fill (bss/sbss) owned by this TU =====
 // Definitions typed to match the pre-existing extern declarations above.
-u32 lbl_eu_8065CFA0[0x100 / 4];                 // .bss 256B
+u32 sColiVisitedIds[0x100 / 4];                 // .bss 256B
 // The CColiObjCall singleton (retail .bss 0x8065D0A0, 72B). MWCC emits this
 // TU's static initializer (retail sinit_804B2524, .ctors 0x804FA168) from it:
 // run the CColiProc base ctor, install __vt__12CColiObjCall, then the +0x38/
 // +0x3C/+0x40 member initializers of the class's inline ctor.
-CColiObjCall lbl_eu_8065D0A0;
+CColiObjCall sColiObjCall;
 // .sbss single-word globals (declared at top with their field types).
-ml::coli::CColiObject* lbl_eu_80665910;
-ml::coli::CColiObject* lbl_eu_80665914;
-ml::coli::CColiObject* lbl_eu_80665918;
-ml::coli::CColiObject* lbl_eu_8066591C;
-ml::coli::CColiObject* lbl_eu_80665920;
-ml::coli::CColiObject* lbl_eu_80665924;
-ml::coli::CColiObject* lbl_eu_80665928;
-ml::coli::CColiObject* lbl_eu_8066592C;
-ml::coli::CColiObject* lbl_eu_80665930;
-CColiSweepCtrl* lbl_eu_80665934;
-u32 lbl_eu_80665938;
-u32 lbl_eu_8066593C;              // 2nd word of the 8B retail lbl_eu_80665938
+ml::coli::CColiObject* sColiVertices;
+ml::coli::CColiObject* sColiPartnerVertices;
+ml::coli::CColiObject* sColiDirections;
+ml::coli::CColiObject* sColiQuads;
+ml::coli::CColiObject* sColiTrianglesBase;
+ml::coli::CColiObject* sColiCurrentTriangle;
+ml::coli::CColiObject* sColiExtraVertices;
+ml::coli::CColiObject* sColiRecords;
+ml::coli::CColiObject* sColiCurrentObject;
+CColiSweepCtrl* sColiSweepControl;
+u32 sColiDispatchIndex[2];
 u32 g_coliSpecTable;

@@ -55,7 +55,6 @@ BOOL __wudStartSyncDevice(u8 syncType, s8 syncLoopNum, u8 target,
 const u32 lbl_8066C260 = 0x57696900u;
 const u16 lbl_8066C264 = 0x0004;
 const u8 lbl_8066C266 = 0x48;
-const u8 lbl_8066C266_pad = 0; /* retail .sdata2 tail pad (size 8) */
 
 extern int _wudNandPhase;
 extern unsigned char _wudNandLocked;
@@ -1709,15 +1708,15 @@ u8 __wudSyncTryConnect(void) {
 
 
 u8 __wudSyncVirginStandard(void) {
-    WUDDevInfo* pFound;
     BOOL enabled;
+    WUDCB* pDev2;
     WUDDevInfo* pWork;
     char* pMsg = _wudWiiRemoteDescriptor;
     WUDDevInfoList* pIt;
+    WUDDevInfo* pFound;
     WUDCB* p = &_wcb;
     WUDCB* pDev;
     WUDCB* pDev3;
-    WUDCB* pDev2;
     u8 devNum;
     u32 crc;
     int i;

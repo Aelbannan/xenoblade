@@ -5,7 +5,7 @@
 
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 
@@ -214,7 +214,6 @@ extern "C" {
     float calcBattleDamage(void* obj, void* target, void* source);
     void PartyGaugeAddClamped(void* obj, int value);
     // Voice/battle-manager helpers.
-    void SysWinLog_TickCounter5A();
     void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
     // CfGameManager gate used by the commu re-arm: call
     // cf::CfGameManager::isTimerActive() from the canonical class header.
@@ -222,7 +221,7 @@ extern "C" {
     // Commu camera/trigger helpers (retail pre-mangled names; the Fv suffix
     // does not reflect the actual argument counts - see addTableValueWithClamp).
     void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
-    // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
+    // Camera/trigger object accessors (gmScene is a global pointer).
     int GetZealResult(int);
     void AddZealEffect(void* obj, int arg);
 }

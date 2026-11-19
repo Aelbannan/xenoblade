@@ -331,7 +331,9 @@ int ArtsSelect_CheckAvail(void* p, s32 row, const char* c1, const char* c2,
         cur = getResourceFromTable__Q22cf13CfGameManagerFv(*(u16*)&v1);
         v2 = getBdatStringColumnValue(bdat, c2, row);
         v3 = getBdatStringColumnValue(bdat, c3, row);
-        if ((u32)cur < *(u8*)&v2 || (u32)cur > *(u8*)&v3) {
+        u8 lo = *(u8*)&v2;
+        u8 hi = *(u8*)&v3;
+        if ((u32)cur < lo || (u32)cur > hi) {
             return 0;
         }
     }
@@ -408,7 +410,7 @@ void ArtsSelect_NotifyAll(void* p) {
    spawn the map object when the slot is empty and available, or tear down
    (flag + clear) when it is occupied but no longer available. Occupied rows
    then optionally apply a state id read from the bdat columns, gated on the
-   global flag words lbl_eu_80663E24/28 and a second availability window. */
+   global flag words gmGameFlags/28 and a second availability window. */
 void ArtsSelect_SyncRows(void* p) {
     void* bdat = lbl_eu_806640B0;
     const char* gateCol;
@@ -442,8 +444,8 @@ void ArtsSelect_SyncRows(void* p) {
         }
         if (*slots != NULL) {
             // Bits 6/10 of the global flag word gate the state refresh.
-            int flag = ((((lbl_eu_80663E24 >> 6) & 1) |
-                         ((lbl_eu_80663E24 >> 10) & 1)) != 0);
+            int flag = ((((gmGameFlags >> 6) & 1) |
+                         ((gmGameFlags >> 10) & 1)) != 0);
             curTable = lbl_eu_806640B0;
             u8 hasName = (u8)getBdatStringColumnValue(curTable, cols + 0x45, row);
             if (hasName != 0) {
@@ -452,7 +454,7 @@ void ArtsSelect_SyncRows(void* p) {
             int doState = 1;
             if (flag != 0) {
                 // Busy bit in the second flag word blocks the whole refresh.
-                if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+                if ((gmPauseFlags & 0x01000000) == 0) {
                     doState = 0;
                 }
             }

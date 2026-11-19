@@ -17,7 +17,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
-#include "libs/monolib/src/scn/CScnItemModel.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "libs/monolib/src/scn/CScnItemModel.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).  The
@@ -537,8 +537,8 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
         return;
     }
     int cond = 1;
-    if ((lbl_eu_80663E24 & 0x2000000) == 0 && (lbl_eu_80663E24 & 0x400) == 0 &&
-        (lbl_eu_80663E24 & 0x40000) == 0) {
+    if ((gmGameFlags & 0x2000000) == 0 && (gmGameFlags & 0x400) == 0 &&
+        (gmGameFlags & 0x40000) == 0) {
         cond = 0;
     }
     u8* inst = CfRes_getInstanceField();
@@ -677,7 +677,7 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
             (self)->CfResPcImpl_probeAndCapHandler(token);
         }
     } else if ((self->field_00->field_64 & 0x80000000) && runSync != 0 &&
-               (lbl_eu_80663E24 & 0x40000) && inst != 0 && token != 0) {
+               (gmGameFlags & 0x40000) && inst != 0 && token != 0) {
         u32 sp10 = 0xFFFFFFFF;
         u8* res = 0;
         if (initParticleSystem__Q22cf13CfGameManagerFv(self->field_00->field_8C) != 0) {
@@ -744,7 +744,7 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
     }
     int flag = 0;
     if ((cf::CfObjectMove*)self->field_00 == cf::CfGameManager::getPlayer(0) &&
-        (lbl_eu_80663E24 & 0x4000)) {
+        (gmGameFlags & 0x4000)) {
         // Position the player: add a fixed offset to its current position,
         // optionally corrected by ScnRes_Notify5Ptr_E470, then place it (slot +0xB8).
         nw4r::math::VEC3* p = reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getPosVector());
@@ -797,7 +797,7 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
         }
     }
     u32 f64 = self->field_00->field_64;
-    if ((f64 & 0x80000000) && !(f64 & 0x10000) && (lbl_eu_80663E24 & 0x09800000)) {
+    if ((f64 & 0x80000000) && !(f64 & 0x10000) && (gmGameFlags & 0x09800000)) {
         return;
     }
     if (ok == 0) {
@@ -996,12 +996,12 @@ void CfResPcImpl_open(cf::CfResPcImpl* self) {
         if ((self->field_00->field_6C & 0x1000) && self->field_00->field_6F8[0] == 0) {
             self->field_00->field_700 = (cf::CfResPc700Obj*)(entry_d->field_2C)->getResourceBase(entry_d, slot);
             if (self->field_00->field_700->field_00 != 0) {
-                self->field_00->field_6F8[0] = (CScnItemModel*)scnImN4BuildByIdx((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
+                self->field_00->field_6F8[0] = (CScnItemModel*)scnImN4BuildByIdx((u8*)gmScene, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
                 if (self->field_00->field_6F8[0] != 0) {
                     self->field_00->field_6F8[0]->flags7A4 |= 0x400000;
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[0] != 0) {
-                    if ((self->field_00->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
+                    if ((self->field_00->field_64 & 0x2) && !(gmGameFlags & 0x20400)) {
                         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
                         // lbl_eu_80667A60 is 0.0f (sdata2_ResPcPool.f60); a literal
                         // would pool a TU-local sdata2 entry.
@@ -1023,12 +1023,12 @@ u32 bdat = (u32)cf::CfBdat::getBdatStringEntry(self->field_00->field_70C[0]);
         if ((self->field_00->field_6C & 0x2000) && self->field_00->field_6F8[1] == 0) {
             self->field_00->field_700 = (cf::CfResPc700Obj*)(entry_d->field_2C)->getResourceBase(entry_d, slot);
             if (self->field_00->field_700->field_00 != 0) {
-                self->field_00->field_6F8[1] = (CScnItemModel*)scnImN4BuildByIdx((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
+                self->field_00->field_6F8[1] = (CScnItemModel*)scnImN4BuildByIdx((u8*)gmScene, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
                 if (self->field_00->field_6F8[1] != 0) {
                     self->field_00->field_6F8[1]->flags7A4 |= 0x400000;
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[1] != 0) {
-                    if ((self->field_00->field_64 & 0x2) && (lbl_eu_80663E24 & 0x20400)) {
+                    if ((self->field_00->field_64 & 0x2) && (gmGameFlags & 0x20400)) {
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(lbl_eu_80667A60);
                     } else {
                         reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
@@ -1167,12 +1167,12 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
     }
     int result = 0;
     if (CfTFile_TestField828((u8*)file) == 0) {
-        if ((lbl_eu_80663E24 & 0x2) != 0) {
+        if ((gmGameFlags & 0x2) != 0) {
             // Retail reloads the flag word for the mask store even though the
             // test read it moments earlier; the volatile load keeps MWCC from
             // CSE-eliminating the second read (same pattern as getReloadCand).
-            *(volatile u32*)&lbl_eu_80663E24 &= ~0x2;
-            lbl_eu_80663E28 &= ~0x10000;
+            *(volatile u32*)&gmGameFlags &= ~0x2;
+            gmPauseFlags &= ~0x10000;
             CfTFile_CancelResetNibble(file);
         } else {
             pushBackwards((u32)self, 9, arg2, arg3, arg4, arg5);
@@ -1183,13 +1183,13 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
     } else {
         // Retail loads the flag word twice for the two bit pairs; the volatile
         // first read keeps MWCC from CSE-merging the second pair's load.
-        u32 v24 = *(volatile u32*)&lbl_eu_80663E24;
-        u32 v24b = lbl_eu_80663E24;
+        u32 v24 = *(volatile u32*)&gmGameFlags;
+        u32 v24b = gmGameFlags;
         if (((v24 & 0x2000000) | (v24 & 0x400)) == 0 &&
             ((v24b & 0x40000) | (v24b & 0x8000)) == 0) {
             CfRes_runUpdatePipeline();
             if (CfRes_resolveSelfPacked((void*)arg3, 5) != 0) {
-                lbl_eu_80663E28 &= ~0x10000;
+                gmPauseFlags &= ~0x10000;
             } else {
                 pushBackwards((u32)self, 0x26, 0, arg3, 0, 0);
             }
@@ -1204,7 +1204,7 @@ int CfResPcImpl_handleFileEventLoad(cf::CfResPcFileHost* self, u32 arg2, u32 arg
 int CfResPcImpl_requestResourceLoad(cf::CfResPcImpl* self, int arg2, int arg3) {
     int result = 0;
     if (CfRes_resolveSelfPacked((void*)arg3, 5) != 0) {
-        lbl_eu_80663E28 &= ~0x10000;
+        gmPauseFlags &= ~0x10000;
     } else {
         pushBackwards((u32)self, 0x26, (u16)(arg2 + 1), (u32)arg3, 0, 0);
         result = 1;
@@ -1221,11 +1221,11 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
     stubEmptyC__Q22cf13CfGameManagerFv(0);
     setMgrFixStrName(0);
     self->field_408->func_8007D84C();
-    u32 v = lbl_eu_80663E24;
-    lbl_eu_80663E42 = arg2;
+    u32 v = gmGameFlags;
+    gmGlobalFlag42 = arg2;
     v &= ~0x1800;
-    lbl_eu_80663E44 = arg3;
-    lbl_eu_80663E24 = v;
+    gmGlobalFlag44 = arg3;
+    gmGameFlags = v;
     self->field_408->unkA0->releaseHandle();
     ArtsSelect_FreeSlots(self->field_408->field_0xA4);
     cf::CfBdat::resetMapBdatFileDataPointers();
@@ -1247,10 +1247,10 @@ int CfResPcImpl_reloadMapSection(cf::CfResPcHostGM* self, u32 arg2, u32 arg3) {
 // pad mask 0x1FE01EFF and seeds the event timer to 0x5A; then stops voice
 // id 4 and pokes character slots 1..13.
 int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
-    if (!(lbl_eu_80663E24 & 0x400000)) {
+    if (!(gmGameFlags & 0x400000)) {
         cf::CfGameManager::func_8008413C(arg2, 1);
         cf::CfGameManager::enablePadFlags(0x1FE01EFF, true);
-        lbl_eu_80663E46 = 0x5A;
+        gmGlobalFlag46 = 0x5A;
     }
     processMapChange__Q22cf13CfGameManagerFv(4);
     for (int i = 1; i <= 13; i++) {
@@ -1268,7 +1268,7 @@ int CfResPcImpl_handleMapChangeEvent(u32 arg1, u16 arg2) {
 // own cond through the tail call). Returns 0.
 extern "C" int CfResPcImpl_cleanupMgrSlotTable2(void* self, u32 arg2, u32 arg3) {
     cf::CfResPcMgrInner2* inner = ((cf::CfResPcMgrHost*)self)->field_408->field_04;
-    if (!(inner->field_82C & 0x4) && (lbl_eu_80663E24 & 0x20) && arg3 == inner->field_830) {
+    if (!(inner->field_82C & 0x4) && (gmGameFlags & 0x20) && arg3 == inner->field_830) {
         cf::CfResPcSlotTable2* tab = &inner->field_834;
         for (int i = 0; i < tab->field_618; i++) {
             u8* handle = tab->field_000[i].field_00;
@@ -1342,7 +1342,7 @@ int CfResPcImpl_loadFileEventTable(cf::CfResPcHost408* self, u32 arg1, u32 arg2)
     func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_408 + 0x28);
     loadBdatTableCache__Q22cf13CfGameManagerFv(self->field_408, p->field_0x2, p->field_0x0);
     CfScript_LoadSlot0(self->field_408 + 0x28);
-    lbl_eu_80663E24 |= 0x2000;
+    gmGameFlags |= 0x2000;
     return 0;
 }
 
@@ -1372,52 +1372,52 @@ int CfResPcImpl_loadPlayerOrEvent2(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, 
 void CfResPcImpl_refreshMapAreaEvents(void* self) {
     CamEvtSearchStateVal(0);
     loadLayoutScales();
-    if (lbl_eu_80663E24 & 0x80000) {
-CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (int)4);
+    if (gmGameFlags & 0x80000) {
+CfRes_tryRefreshByBits(((u32)gmGlobalFlag44 << 10) | (((u32)gmGlobalFlag42 << 20) | 0x98000000), (int)4);
         CfRes_pushRec((u32)self, 0x1b, 0,
-                      ((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 0, 0);
+                      ((u32)gmGlobalFlag44 << 10) | (((u32)gmGlobalFlag42 << 20) | 0x98000000), 0, 0);
     } else {
-CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (int)5);
+CfRes_tryRefreshByBits(((u32)gmGlobalFlag44 << 10) | (((u32)gmGlobalFlag42 << 20) | 0x98000000), (int)5);
     }
-    if (!(lbl_eu_80663E28 & 0x2000000)) {
+    if (!(gmPauseFlags & 0x2000000)) {
         CfScript_FlagSlot0();
         CfRes_pushRec((u32)self, 6, 2, 0, 0, 0);
         CfRes_pushRec((u32)self, 0x19, 0, 0, 0, 0);
         CfRes_pushRec((u32)self, 0x1a, 0, 0, 0, 0);
         if (CtrlRemote_TouchBitByArg(0x3520) != 0) {
-            lbl_eu_80663E28 |= 0x2;
-        } else if (lbl_eu_80663E28 & 0x8000) {
+            gmPauseFlags |= 0x2;
+        } else if (gmPauseFlags & 0x8000) {
             // Retail reloads the flag word for the mask store (test read it
             // moments earlier); volatile keeps MWCC from CSE-eliminating the
             // second read (same pattern as CfResPcImpl_handleFileEventLoad).
-            *(volatile u32*)&lbl_eu_80663E28 |= 0x2;
+            *(volatile u32*)&gmPauseFlags |= 0x2;
         } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() == 0x11 &&
-                   lbl_eu_80663E42 == 2 && lbl_eu_80663E44 == 1 &&
+                   gmGlobalFlag42 == 2 && gmGlobalFlag44 == 1 &&
                    CtrlRemote_TouchBitByArg(0x1e85) == 0) {
-            lbl_eu_80663E28 |= 0x2;
+            gmPauseFlags |= 0x2;
         } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() == 0x53 &&
-                   lbl_eu_80663E42 == 4 && lbl_eu_80663E44 == 1 &&
-                   ((lbl_eu_80663E24 & 0x100000) | (lbl_eu_80663E24 & 0x200)) == 0) {
-            lbl_eu_80663E28 |= 0x2;
+                   gmGlobalFlag42 == 4 && gmGlobalFlag44 == 1 &&
+                   ((gmGameFlags & 0x100000) | (gmGameFlags & 0x200)) == 0) {
+            gmPauseFlags |= 0x2;
         }
         cf::CfResPcAreaEntry* entry = lbl_eu_805327F8;
         for (u32 i = 0; i < 8; i++, entry++) {
             if ((u32)cf::CfGameManager::getQueuedFileEventCount() == entry->field_00 &&
-                entry->field_04 == lbl_eu_80663E42 &&
-                entry->field_06 == lbl_eu_80663E44 &&
-                ((lbl_eu_80663E24 & 0x100000) | (lbl_eu_80663E24 & 0x200)) == 0) {
-                lbl_eu_80663E28 |= 0x2;
+                entry->field_04 == gmGlobalFlag42 &&
+                entry->field_06 == gmGlobalFlag44 &&
+                ((gmGameFlags & 0x100000) | (gmGameFlags & 0x200)) == 0) {
+                gmPauseFlags |= 0x2;
                 break;
             }
         }
     }
-    lbl_eu_80663E24 |= 0x800;
+    gmGameFlags |= 0x800;
     CfTFile_CopyPayload(((cf::CfResPcMgrFileHost*)self)->field_408->field_08,
                   ((cf::CfResPcMgrFileHost*)self)->field_408->field_00);
-    if (((lbl_eu_80663E24 & 0x100000) | (lbl_eu_80663E24 & 0x200)) == 0) {
-        updateReloadTypeState(lbl_eu_80663E42, lbl_eu_80663E44);
+    if (((gmGameFlags & 0x100000) | (gmGameFlags & 0x200)) == 0) {
+        updateReloadTypeState(gmGlobalFlag42, gmGlobalFlag44);
     }
-    if (!(lbl_eu_80663E28 & 0x2000000)) {
+    if (!(gmPauseFlags & 0x2000000)) {
         scanTboxByXY();
     }
 }

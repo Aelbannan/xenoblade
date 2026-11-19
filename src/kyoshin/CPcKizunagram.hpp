@@ -240,7 +240,7 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 // Layout animation helpers from code_80135FDC (retail unmangled AnimRewindFrame).
 
 // BDAT table pointer (loaded via sda21 by KizunagramRebuildSlotList / KizunagramStoreChartEntry).
-extern "C" u32 lbl_eu_8066415C;
+extern "C" u32 gKizunagramBdatTableId;
 extern "C" u32 lbl_eu_80664158;
 
 // Format-string constants blended into a column-name buffer (KizunagramRebuildSlotList).
@@ -262,9 +262,7 @@ extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* ba
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 
 // BDAT / random / pane-text helpers with unmangled retail names.
-// Pane-visibility query: canonical form, shared with CCur.cpp / CPassiveSkill.hpp /
-// CKizunagram.hpp / CMenuArtsSetImports.hpp / CEquipItemBoxImports.hpp.
-extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
+// isPaneVisible is declared once in CQuestWindow_Pane.hpp.
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" int sprintf(char*, const char*, ...);
 extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)

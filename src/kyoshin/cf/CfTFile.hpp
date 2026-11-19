@@ -94,7 +94,7 @@ extern u8 lbl_eu_80526F98[];
 //   bits 0-5:   60 Hz sub-second counter (0-59)
 //   bits 6-11:  second counter (0-59)
 //   bits 12-31: minute counter (0-9999)
-extern u32 lbl_eu_80663DA8;
+extern u32 gCfTFrameTimerRaw[2];
 
 // Bitfield view of the packed frame timer (big-endian: first field = MSBs).
 union CfFrameTimer {
@@ -107,29 +107,26 @@ union CfFrameTimer {
 };
 
 // Shared play-time state used by the CfTFile helpers (sbss).
-extern u32 lbl_eu_80663D90;
-extern float lbl_eu_80663D94;
-extern float lbl_eu_80663D98;
-extern float lbl_eu_80663D9C;
-extern u8 lbl_eu_80663DA0;
-extern u32 lbl_eu_80663DA4;
+extern u32 gCfTEventFrameCounter;
+extern float gCfTPlayClockSeconds;
+extern float gCfTPlayClockPrevSeconds;
+extern float gCfTPlayClockRemainder;
+extern u8 visionSharedStateFlags;
+extern u32 gCfTClockDisplayFrame;
 
 // File-event flags / counters (sdata).
-extern float lbl_eu_80661AF0;
-extern u16 lbl_eu_80661AF4;
-extern u16 lbl_eu_80661AF6;
-extern u16 lbl_eu_80661AF8;
+extern float gCfTPlayRate;
+extern u16 gCfTCalendarDay;
+extern u16 gCfTCalendarYear;
+extern u16 gCfTFrameCounter[4];
 
 // Clock-display string table (bdat column names) and the static fallback
 // time tables indexed by display mode.
 extern char lbl_eu_804FB40C[];
-extern char lbl_eu_804FB420[];
-extern u16 lbl_eu_80527030[];
-extern u16 lbl_eu_8052703C[];
+extern u16 gCfTFallbackHourTable[6];
+extern u16 gCfTFallbackMinuteTable[6];
 
 // Float/double pool constants (retail .sdata2 entries used by the helpers).
-extern const double lbl_eu_80666220; // 2^52 (u16 -> float conversion magic)
-extern const float lbl_eu_80666228;  // play-clock display threshold
 extern const double lbl_eu_80666230; // fmod divisor for the discarded frame-mod call
 extern const float lbl_eu_80666238;
 extern const float lbl_eu_8066623C;

@@ -221,7 +221,7 @@ typedef struct MWSFDPLY {
     s32  field_0x68c;       /* 0x68c */
 } MWSFDPLY;
 
-/* SVM trace-callback infrastructure: lbl_eu_805FF3A0 is an optional trace
+/* SVM trace-callback infrastructure: gpMwPlyTraceCb is an optional trace
  * object whose vtable exposes a method at +0x24; each instrumented helper
  * stores its args into a per-function record (lbl_eu_80566*) and fires the
  * callback on entry (sub-record at +0x04) and exit (+0x6c). */
@@ -253,9 +253,9 @@ typedef struct SfdCbObj {
 } SfdCbObj;
 
 /* --- Cross-TU helpers referenced by the targets below --- */
-extern SfdTraceObj* lbl_eu_805FF3A0;
-extern SfdTraceRec lbl_eu_805669F4;
-extern SfdTraceRec lbl_eu_80566920;
+extern SfdTraceObj* gpMwPlyTraceCb;
+extern SfdTraceRec sTraceRequestStop;
+extern SfdTraceRec sTraceStop;
 extern s32 MWSFD_IsEnableHndl(void* self);
 extern void SFD_RequestStop(void* sst);
 extern void MWSFD_RequestStopRead(void* self);
@@ -287,7 +287,7 @@ extern void MWSFD_SetVideoSw(void* self, u32 sw);
 extern void mwPlySetSeamlessLp(void* self, s32 lpFlag);
 extern void MWSFSEE_StartFnameSub1(void* self, s32 a, s32 b);
 extern void MWSFSEE_StartFnameSub2(void* self, s32 a, s32 b);
-extern SfdTraceRec lbl_eu_80566354;
+extern SfdTraceRec sTraceStartFname;
 
 int mwPlySfdStart(void *h) {
     if (SFD_Start(*(void **)((u8 *)h + 0x58))) {
@@ -397,10 +397,10 @@ void mw_sfd_start_ex(MWSFDPLY* self) {
 /* Start playback of a named movie file: copy the fname into the player's
  * buffer (honouring the length limit), then arm the SFD/SST pipeline. */
 void mwPlyStartFname(MWSFDPLY* self, const char* fname) {
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_80566354.self = (u32)self;
-        lbl_eu_80566354.field_0x18 = (u32)fname;
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566354.entry);
+    if (gpMwPlyTraceCb) {
+        sTraceStartFname.self = (u32)self;
+        sTraceStartFname.field_0x18 = (u32)fname;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStartFname.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x130);
@@ -427,8 +427,8 @@ void mwPlyStartFname(MWSFDPLY* self, const char* fname) {
         MWSFSEE_StartFnameSub1(self, 0, -1);
         MWSFSEE_StartFnameSub2(self, 0, -1);
     }
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566354.exit);
+    if (gpMwPlyTraceCb) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStartFname.exit);
     }
 }
 
@@ -478,9 +478,9 @@ void mwSfdStopDec(MWSFDPLY* self) {
 }
 
 void mwPlyStop(MWSFDPLY* self) {
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_805669F4.self = (u32)self;
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_805669F4.entry);
+    if (gpMwPlyTraceCb) {
+        sTraceRequestStop.self = (u32)self;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
@@ -491,12 +491,12 @@ void mwPlyStop(MWSFDPLY* self) {
             MWSFD_RequestStopRead(self);
         }
     }
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_805669F4.exit);
+    if (gpMwPlyTraceCb) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.exit);
     }
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_80566920.self = (u32)self;
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566920.entry);
+    if (gpMwPlyTraceCb) {
+        sTraceStop.self = (u32)self;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStop.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x3ae);
@@ -506,8 +506,8 @@ void mwPlyStop(MWSFDPLY* self) {
         self->field_0x94 = 0;
         LSC_Stop(self->field_0x64);
     }
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566920.exit);
+    if (gpMwPlyTraceCb) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStop.exit);
     }
 }
 
@@ -587,9 +587,9 @@ void mwPlyStartSj(MWSFDPLY* self, s32 sj) {
 }
 
 void fn_803A537C(MWSFDPLY* self) {
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_805669F4.self = (u32)self;
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_805669F4.entry);
+    if (gpMwPlyTraceCb) {
+        sTraceRequestStop.self = (u32)self;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
@@ -600,8 +600,8 @@ void fn_803A537C(MWSFDPLY* self) {
             MWSFD_RequestStopRead(self);
         }
     }
-    if (lbl_eu_805FF3A0) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_805669F4.exit);
+    if (gpMwPlyTraceCb) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.exit);
     }
 }
 

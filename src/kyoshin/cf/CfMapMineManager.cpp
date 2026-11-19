@@ -261,7 +261,7 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
             }
         }
         self->mPoints.mCapacity = 0;
-        lbl_eu_806646A0 = 0;
+        sMineManagerInstance = 0;
         // Inlined ~MineMsgRing(&self->mMsgs, 0): MWCC retains the inlined
         // destructor's null-this branch even though the address is constant,
         // and keeps the member stores relative to the manager itself.
@@ -379,7 +379,7 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
     self->mSnd[0].mTime = zero;
     ClearTimers(&self->mSnd[1], &self->mSnd[16], 0, zero);
 
-    lbl_eu_806646A0 = self;
+    sMineManagerInstance = self;
 
     // Allocate the node array (150 nodes x 0x2C).
     u32 handle = CfRes_getAllocHandle();
@@ -391,9 +391,9 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
     self->mPoints.mCapacity = 0x96;
 
     // Reset the message ring and sound timers through the singleton global
-    // (retail re-reads lbl_eu_806646A0 between every store). The zeroed
+    // (retail re-reads sMineManagerInstance between every store). The zeroed
     // timer pair lives in stack homes like the InitTimerZero helper shape.
-    CfMapMineManager* mgr = lbl_eu_806646A0;
+    CfMapMineManager* mgr = sMineManagerInstance;
     if (mgr != 0) {
         MineNode* start = mgr->mPoints.mStartPtr;
         MineNode* n = start->mNext;
@@ -408,9 +408,9 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
         MineSoundTimer init;
         InitTimerZero(&init);
 
-        lbl_eu_806646A0->mMsgs.mCount = init.mId;
-        lbl_eu_806646A0->mMsgs.mReadIdx = init.mId;
-        lbl_eu_806646A0->mTime = init.mTime;
+        sMineManagerInstance->mMsgs.mCount = init.mId;
+        sMineManagerInstance->mMsgs.mReadIdx = init.mId;
+        sMineManagerInstance->mTime = init.mTime;
         ClearTimers(&mgr->mSnd[0], &mgr->mSnd[16], init.mId, init.mTime);
     }
     return self;
@@ -421,7 +421,7 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
 // ---------------------------------------------------------------------------
 extern "C" void mineResetAll() {
     MineSoundTimer init;
-    CfMapMineManager* mgr = lbl_eu_806646A0;
+    CfMapMineManager* mgr = sMineManagerInstance;
     if (mgr == 0) return;
 
     // Inlined _reslist_base::clearList(): the sentinel pointer is re-read
@@ -439,11 +439,11 @@ extern "C" void mineResetAll() {
 
     // Retail re-reads the singleton global between every store (the list-node
     // stores above may alias it), so keep the explicit global references.
-    lbl_eu_806646A0->mMsgs.mCount = init.mId;
-    lbl_eu_806646A0->mMsgs.mReadIdx = init.mId;
-    lbl_eu_806646A0->mTime = init.mTime;
+    sMineManagerInstance->mMsgs.mCount = init.mId;
+    sMineManagerInstance->mMsgs.mReadIdx = init.mId;
+    sMineManagerInstance->mTime = init.mTime;
 
-    MineSoundTimer* snd = lbl_eu_806646A0->mSnd;
+    MineSoundTimer* snd = sMineManagerInstance->mSnd;
     for (int i = 0; i < 16; i++) {
         snd[i] = init;
     }
@@ -515,13 +515,13 @@ extern "C" int mineFillPointFromRow(CfMapMineManager* self, u32 rowId, MinePoint
     // the shared 2^52+2^31 fixup double.
     row.posX =
         (f32)(s32)getBdatStringColumnValue(file, cols + 0x10, rowId) *
-        lbl_eu_806682B4;
+        0.0001f;
     row.posY =
         (f32)(s32)getBdatStringColumnValue(file, cols + 0x15, rowId) *
-        lbl_eu_806682B4;
+        0.0001f;
     row.posZ =
         (f32)(s32)getBdatStringColumnValue(file, cols + 0x1A, rowId) *
-        lbl_eu_806682B4;
+        0.0001f;
     row.val26 = (u16)getBdatStringColumnValue(file, cols + 0x1F, rowId);
     row.val2D = (u16)getBdatStringColumnValue(file, cols + 0x26, rowId);
     row.val34 = (u8)getBdatStringColumnValue(file, cols + 0x2D, rowId);
@@ -541,8 +541,8 @@ extern "C" int mineFillPointFromRow(CfMapMineManager* self, u32 rowId, MinePoint
         pt->mObj0 = 0;
         pt->mObj4 = 0;
         pt->mFlags = fl;
-        pt->mArea1E = (u8)lbl_eu_80663E42;
-        pt->mAreaSub1F = (u8)lbl_eu_80663E44;
+        pt->mArea1E = (u8)gmGlobalFlag42;
+        pt->mAreaSub1F = (u8)gmGlobalFlag44;
         pt->mCounter1A = 0;
         if (isNew != 0) {
             // Retail re-reads the bdat handle global into a fresh local here.
@@ -568,8 +568,8 @@ struct MineNameBuf {
 };
 
 extern "C" int mineRespawnPoint(CfMapMineManager* self, MinePoint* pt) {
-    if (pt->mArea1E != (u8)lbl_eu_80663E42 ||
-        pt->mAreaSub1F != (u8)lbl_eu_80663E44) {
+    if (pt->mArea1E != (u8)gmGlobalFlag42 ||
+        pt->mAreaSub1F != (u8)gmGlobalFlag44) {
         return 0;
     }
     if (pt->mObj4 != 0) {
@@ -604,10 +604,10 @@ extern "C" int mineRespawnPoint(CfMapMineManager* self, MinePoint* pt) {
 // mineHasNoActivePoint - true when no active point matches (id, area, sub).
 // ---------------------------------------------------------------------------
 extern "C" int mineHasNoActivePoint(u32 pointId, int area, int sub) {
-    if (lbl_eu_806646A0 == 0 || pointId == 0) {
+    if (sMineManagerInstance == 0 || pointId == 0) {
         return 1;
     }
-    MineNode* head = lbl_eu_806646A0->mPoints.mStartPtr;
+    MineNode* head = sMineManagerInstance->mPoints.mStartPtr;
     MineNode* n = head->mNext;
     while (n != head) {
         if (n->mItem.mId18 != 0 && (n->mItem.mFlagKind & 1) != 0 &&
@@ -634,8 +634,8 @@ struct MineSnapshot {
 
 extern "C" void mineSnapshotActivePoints(u8* out) {
     memset(out, 0, 0x384);
-    MineNode* n = lbl_eu_806646A0->mPoints.mStartPtr->mNext;
-    while (n != lbl_eu_806646A0->mPoints.mStartPtr) {
+    MineNode* n = sMineManagerInstance->mPoints.mStartPtr->mNext;
+    while (n != sMineManagerInstance->mPoints.mStartPtr) {
         MineSnapshot* snapshot = (MineSnapshot*)out;
         snapshot->mTimer = (s16)n->mItem.mTimer14;
         snapshot->mCount = (u8)((n->mItem.mFlags >> 8) & 0xFF);
@@ -673,8 +673,8 @@ extern "C" void minePlayCollectSfx(CfMapMineManager* self, u32 kind, void* pos) 
 extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
     // Read the current area/sub ids before taking the frame delta, as in
     // the original update routine.
-    u32 sub = lbl_eu_80663E44;
-    u32 area = lbl_eu_80663E42;
+    u32 sub = gmGlobalFlag44;
+    u32 area = gmGlobalFlag42;
     f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
     if (pt->mTimer14 > lbl_eu_806682B0) {
@@ -708,7 +708,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
             // the 160.0 sdata double literal, passed raw in fp1.
             setLODParam__8CTaskLODFv(
                 pt->mPointId1C, 1,
-                (f64)(0xA0 - ((lbl_eu_80663E24 >> 20) & 1)) -
+                (f64)(0xA0 - ((gmGameFlags >> 20) & 1)) -
                     lbl_eu_806682C0);
         } else {
             void* v = ArtsSelect_GetEntry(pt->mPointId1C);
@@ -776,8 +776,8 @@ extern "C" void mineUpdateMsgRing(CfMapMineManager* self) {
 extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
                               CfMapMineManager* list, f32* pos) {
     BdatFilePointer* file = lbl_eu_806640C8;
-    u16 area = lbl_eu_80663E42;
-    u16 sub = lbl_eu_80663E44;
+    u16 area = gmGlobalFlag42;
+    u16 sub = gmGlobalFlag44;
     u32 playerId = cf::CfGameManager::getQueuedFileEventCount();
     *out = 0;
     playerId &= 0xFFFF;
@@ -821,7 +821,7 @@ extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
                 f32 dz = diff[2];
                 f32 ady = (f32)__fabs((f64)dy);
                 f32 dist2 = dx * dx + dz * dz;
-                if (ady > lbl_eu_806682C8 || dist2 > lbl_eu_806682CC) {
+                if (ady > 50.0f || dist2 > 40000.0f) {
                     if (n->mItem.mObj0 != 0) {
                         *(u32*)((u8*)n->mItem.mObj0 + 0x68) |= 0x40;
                         n->mItem.mObj0 = released;
@@ -830,8 +830,8 @@ extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
                     if (n->mItem.mObj0 != 0 && n->mItem.mCounter1A > 0) {
                         n->mItem.mCounter1A -= 1;
                     }
-                    if (n->mItem.mCounter1A <= 0 && ady < lbl_eu_806682D0 &&
-                        dist2 < lbl_eu_806682D4 && n->mItem.mObj4 != 0) {
+                    if (n->mItem.mCounter1A <= 0 && ady < 2.5f &&
+                        dist2 < 6.25f && n->mItem.mObj4 != 0) {
                         n->mItem.mFlags |= 0x00020000;
                         if (*(u32*)((u8*)n->mItem.mObj4 + 0x74) == marker) {
                             *out = n;
@@ -851,8 +851,8 @@ void CfMapMineManager::ScanPoints() {
     BdatFilePointer* file = lbl_eu_806640C8;
     u32 rowBegin = Bdat_GetRowBase_B41C(file);
     u32 rowEnd = rowBegin + Bdat_GetMaxRow_B1EC(file);
-    u16 area = lbl_eu_80663E42;
-    u16 sub = lbl_eu_80663E44;
+    u16 area = gmGlobalFlag42;
+    u16 sub = gmGlobalFlag44;
 
     MineNode* start = this->mPoints.mStartPtr;
     MineNode* n = start->mNext;
@@ -902,7 +902,7 @@ void CfMapMineManager::ScanPoints() {
             if (found->mItem.mTimer14 < ml::epsilon) {
                 mineRespawnPoint(this, &found->mItem);
                 if ((found->mItem.mFlags & 0x00010000) != 0) {
-                    u32 g = lbl_eu_80663E24;
+                    u32 g = gmGameFlags;
                     setLODParam__8CTaskLODFv(
                         found->mItem.mPointId1C, 1,
                         (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
@@ -918,7 +918,7 @@ void CfMapMineManager::ScanPoints() {
                                   found->mItem.mArea1E,
                                   found->mItem.mAreaSub1F) != 0) {
                     if ((found->mItem.mFlags & 0x00010000) != 0) {
-                        u32 g = lbl_eu_80663E24;
+                        u32 g = gmGameFlags;
                         setLODParam__8CTaskLODFv(
                             found->mItem.mPointId1C, 0,
                             (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
@@ -975,9 +975,9 @@ struct MineDrop {
 
 extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
                              MineDrop* item, u8* outFlag) {
-    if (lbl_eu_806646A8 == 0) {
-        lbl_eu_806646A4 = strlen(lbl_eu_80662758) - 1;
-        lbl_eu_806646A8 = 1;
+    if (sMineNameInitialized == 0) {
+        sMineNameLength = strlen(sMineItemNameScratch) - 1;
+        sMineNameInitialized = 1;
     }
 
     BdatFilePointer* file = lbl_eu_806640C8;
@@ -1016,7 +1016,7 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
 
     // Rare-drop gate: (weighted ^ rnd) sign trick on the top bit.
     int rnd = mtRand__Q22ml4mathFi(10000);
-    u32 weighted = (total + lbl_eu_80662760[(pt->mFlags >> 16) & 1]) * 100;
+    u32 weighted = (total + sMineLotteryBias[(pt->mFlags >> 16) & 1]) * 100;
     u32 x = weighted ^ rnd;
     u32 q = ((s32)x >> 1) - (x & weighted);
     *outFlag = q >> 31;
@@ -1028,14 +1028,14 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
 
     // Area 4 raises the drop kind to a global cap.
     u16 cap = CtrlRemote_TouchBitByArg(0x800);
-    if (cap > kind && lbl_eu_80663E42 == 4) {
+    if (cap > kind && gmGlobalFlag42 == 4) {
         kind = cap;
     }
     CItemData_callVf0C(item, kind);
 
     int rangeIdx = ((pt->mFlags >> 16) & 1) * 2 + *outFlag;
-    u8 lo = lbl_eu_80662750[rangeIdx * 2];
-    u8 hi = lbl_eu_80662750[rangeIdx * 2 + 1];
+    u8 lo = sMineRangeBounds[rangeIdx * 2];
+    u8 hi = sMineRangeBounds[rangeIdx * 2 + 1];
 
     for (int k = 0; k < 4; k++) {
         CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances((CItemData*)item);
@@ -1059,14 +1059,14 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
     u16* dst = picked;
     int attempts = 0;
     int got = 0;
-    int nameLen = lbl_eu_806646A4;
+    int nameLen = sMineNameLength;
 
     // Lottery: per-attempt column names are formed by patching one character
     // of the scratch name buffers ('1'..'4'); roll against the rate column.
     for (;;) {
-        lbl_eu_80662758[nameLen] = attempts + '1';
+        sMineItemNameScratch[nameLen] = attempts + '1';
         lbl_eu_80535720[nameLen] = attempts + '1';
-        u16 itemId = getBdatStringColumnValue(file, lbl_eu_80662758,
+        u16 itemId = getBdatStringColumnValue(file, sMineItemNameScratch,
                                               pt->mFlags >> 22);
         u8 rateRaw = getBdatStringColumnValue(file, lbl_eu_80535720,
                                               pt->mFlags >> 22);
@@ -1125,7 +1125,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
         if (snd->mId != 0) {
             snd->mTime -= dt;
             if (snd->mTime <= zeroD) {
-                cf::CfSoundMan::playActorSound(0, snd->mId, 0, 0, lbl_eu_806682E4);
+                cf::CfSoundMan::playActorSound(0, snd->mId, 0, 0, 0.6f);
                 snd->mId = 0;
                 snd->mTime = zero;
             }
@@ -1150,7 +1150,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     }
 
     // Scan window open: clear the collected flag and find the nearest point.
-    lbl_eu_80663E24 &= ~0x80000000u;
+    gmGameFlags &= ~0x80000000u;
     mineFindNearestPoint(&nearest, mgr, (CfMapMineManager*)((u8*)mgr + 0x4), pos);
     if (nearest == 0) return;
     if (cf::CfGameManager::isTimerActive() != 0) return;
@@ -1165,14 +1165,14 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     if (ready == 0) return;
     if (UIWin_HasPendingUpdate(1) != 0) return;
     if (CMainMenu_IsOpen() != 0) return;
-    if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
+    if ((gmGameFlags & 0xAFA40000) != 0) return;
     if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
     UnkClass_800821F8* unk = getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (unk != 0) {
         if ((*(u32*)((u8*)unk + 0x4) & 0x01000000) != 0) return;
     }
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
-    if ((lbl_eu_80663E24 & 0x00002000) != 0) return;
+    if ((gmGameFlags & 0x00002000) != 0) return;
     void* pad = cf::CfGameManager::getCurrentPad();
     if ((*(u32*)((u8*)pad + 0x4) & 0x00000010) == 0) return;
 
@@ -1213,7 +1213,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
                 // Dispatcher re-reads the flags fresh from memory.
                 fl2 = nearest->mItem.mFlags;
                 if ((fl2 & 0x00010000) != 0) {
-                    u32 bit = (lbl_eu_80663E24 >> 20) & 1;
+                    u32 bit = (gmGameFlags >> 20) & 1;
                     setLODParam__8CTaskLODFv(
                         nearest->mItem.mPointId1C, 0,
                         (f64)(0xA0 & ~(u32)-(s32)bit) - lbl_eu_806682C0);
@@ -1229,23 +1229,23 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
             const char* colsb = lbl_eu_80508424;
             u8 kindCh = (u8)getBdatStringColumnValue(lbl_eu_806640C8,
                                                      colsb + 0x6C, id3);
-            f32 delay = lbl_eu_806682EC *
-                        (lbl_eu_806682F0 *
+            f32 delay = 60.0f *
+                        (30.0f *
                          ((f32)((f64)kindCh - lbl_eu_806682C0)));
             nearest->mItem.mTimer14 = delay;
         }
     }
 
-    mgr->mTime = lbl_eu_806682EC;
+    mgr->mTime = 60.0f;
     minePlayCollectSfx(mgr, drop.mKind07 & 0x3F, &nearest->mItem.mPosX);
-    cf::CfSoundMan::playActorSound(0, 0x3C, 0, 0, lbl_eu_806682E4);
+    cf::CfSoundMan::playActorSound(0, 0x3C, 0, 0, 0.6f);
 
     // Register a one-shot sound timer in the first free slot.
     u16 sndId = 0x46 + (u16)(dropFlag != 0 ? 1 : 0);
     for (MineSoundTimer* p = mgr->mSnd; p != &mgr->mSnd[16]; ++p) {
         if (p->mId == 0) {
             p->mId = sndId;
-            p->mTime = lbl_eu_806682E0;
+            p->mTime = 25.0f;
             break;
         }
     }
@@ -1257,7 +1257,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     const char* nm = im->vf20(&drop);
     u32 msgLen = strlen(nm);
     strcpy(msgText, nm);
-    f32 msgTime = lbl_eu_806682F4;
+    f32 msgTime = 22.0f;
 
     MineMsgRing* ring = &mgr->mMsgs;
     if (ring->mCount == 16) {
@@ -1302,7 +1302,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
         else if (sval == 0x4D) queueEventId__Q22cf13CfGameManagerFv(0x75);
     }
 
-    lbl_eu_80663E24 |= 0x80000000;
+    gmGameFlags |= 0x80000000;
 }
 
 // ---------------------------------------------------------------------------
@@ -1313,7 +1313,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
 // not touch them either).
 // ---------------------------------------------------------------------------
 extern "C" void mineLoadFromSave(u8* rec) {
-    CfMapMineManager* mgr = lbl_eu_806646A0;
+    CfMapMineManager* mgr = sMineManagerInstance;
     if (mgr != 0) {
         // Inlined reslist clear; the sentinel is re-read through the manager
         // on every test (the node stores may alias it).
@@ -1332,9 +1332,9 @@ extern "C" void mineLoadFromSave(u8* rec) {
         MineSoundTimer init;
         InitTimerZero(&init);
 
-        lbl_eu_806646A0->mMsgs.mCount = init.mId;
-        lbl_eu_806646A0->mMsgs.mReadIdx = init.mId;
-        lbl_eu_806646A0->mTime = init.mTime;
+        sMineManagerInstance->mMsgs.mCount = init.mId;
+        sMineManagerInstance->mMsgs.mReadIdx = init.mId;
+        sMineManagerInstance->mTime = init.mTime;
 
         for (int i = 0; i < 16; i++) {
             mgr->mSnd[i].mId = init.mId;
@@ -1374,7 +1374,7 @@ extern "C" void mineLoadFromSave(u8* rec) {
         tmp.mFlags = fl;
 
         // Singleton is re-read from the global every iteration.
-        CfMapMineManager* m = lbl_eu_806646A0;
+        CfMapMineManager* m = sMineManagerInstance;
         MineNode* head = m->mPoints.mStartPtr;
         tmp.mArea1E = area;
         tmp.mAreaSub1F = sub;

@@ -37,7 +37,7 @@ public:
     virtual void UpdateFrame() = 0;           // at 0x2C
 
     virtual AnmScnRes* Attach(int idx, AnmScnRes* pRes); // at 0x30
-    virtual AnmScnRes* Detach();                         // at 0x34
+    virtual AnmScnRes* Detach(int idx);                  // at 0x34
 
     virtual u32 GetNumLightSet() const = 0;      // at 0x38
     virtual u32 GetNumAmbLight() const = 0;      // at 0x3C

@@ -5,7 +5,7 @@ extern u64 UTY_GetTmrUnit(void);
 extern u64 UTY_GetTmr(void);
 
 u32 lbl_eu_80619BC8[2];  /* timer base (hi/lo) - .bss 0x80619BC8 size 0x8 */
-extern u32 lbl_eu_80606E38[];   /* SFD work area */
+extern u32 sSfdGlob[];   /* SFD work area */
 
 /* SFTMR_GetTmr: get current timer value as 64-bit */
 u64 SFTMR_GetTmr(void *sfd) {
@@ -32,9 +32,9 @@ u64 SFTMR_GetTmr(void *sfd) {
 
     /* fallback: use SFD work area frame timing */
     {
-        u32 rate = lbl_eu_80606E38[0x19C/4];
-        u32 frame_num_lo = lbl_eu_80606E38[0x1AC/4];
-        u32 frame_num_hi = lbl_eu_80606E38[0x1A8/4];
+        u32 rate = sSfdGlob[0x19C/4];
+        u32 frame_num_lo = sSfdGlob[0x1AC/4];
+        u32 frame_num_hi = sSfdGlob[0x1A8/4];
         u32 prod = rate * frame_num_lo;
         lbl_eu_80619BC8[1] = frame_num_hi;
         lbl_eu_80619BC8[0] = (u32)((s32)frame_num_hi >> 31);
@@ -76,9 +76,9 @@ u64 SFTMR_GetTmrUnit(SfdTmrClock *sfd) {
             /* fallback: SFD work-area frame counter (mirrors SFTMR_GetTmr);
              * retail also issues the (dead) 0x19C rate load here */
             u32 frame;
-            lbl_eu_80619BC8[1] = frame = lbl_eu_80606E38[0x1A8 / 4];
+            lbl_eu_80619BC8[1] = frame = sSfdGlob[0x1A8 / 4];
             lbl_eu_80619BC8[0] = (u32)((s64)(s32)frame >> 32);
-            *(volatile u32 *)&lbl_eu_80606E38[0x19C / 4];
+            *(volatile u32 *)&sSfdGlob[0x19C / 4];
         }
     }
     return ((u64)lbl_eu_80619BC8[0] << 32) | lbl_eu_80619BC8[1];

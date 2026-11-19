@@ -88,7 +88,7 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
-    void OnFileEvent();
+    void OnFileEvent(CEventFile* pEvent);
 };
 
 // The retail symbols for this class's own lifecycle functions are the

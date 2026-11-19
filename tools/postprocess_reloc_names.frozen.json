@@ -192,10 +192,6 @@
    "fields": {
     "exact_renames": [
      [
-      "__vt__Q22cf9_sArtsSet",
-      "lbl_eu_8052F5D8"
-     ],
-     [
       "setArtsSlotRC__Q22cf8CArtsSetFUsUsUs",
       "setArtsSlotRC"
      ],
@@ -314,14 +310,6 @@
      [
       "__vt__Q22cf14CBattleManager",
       "lbl_eu_8052BCE0"
-     ],
-     [
-      "__vt__36_reslist_base<PQ22cf13CfObjectActor>",
-      "lbl_eu_8052BD68"
-     ],
-     [
-      "__vt__35_reslist_base<PQ22cf12IBattleEvent>",
-      "lbl_eu_8052BD44"
      ],
      [
       "@stringBase0",
@@ -2646,10 +2634,6 @@
      [
       "@stringBase0",
       "lbl_eu_80522500"
-     ],
-     [
-      "__vt__17_reslist_base<Ul>",
-      "lbl_eu_8056B298"
      ],
      [
       "__vt__11reslist<Ul>",
@@ -7731,40 +7715,6 @@
      [
       "@GUARD@instance$",
       "lbl_eu_806654C0"
-     ]
-    ]
-   },
-   "owner": "category-d",
-   "reason": "EDS code-only-data: FUSED-RENAME-latent; batch 1"
-  },
-  "snd_Bank.o": {
-   "class": "layout",
-   "fields": {
-    "exact_renames": [
-     [
-      "lbl_eu_80669A68",
-      "lbl_eu_80669E78"
-     ]
-    ],
-    "extern_data_sections": [
-     ".sdata2"
-    ],
-    "pool_patterns": [
-     [
-      "hex:00000000",
-      "lbl_eu_80669A68"
-     ],
-     [
-      "hex:4330000000000000",
-      "lbl_eu_80669A78"
-     ],
-     [
-      "hex:42fe0000",
-      "lbl_eu_80669EB8"
-     ],
-     [
-      "hex:427c0000",
-      "lbl_eu_80669EBC"
      ]
     ]
    },

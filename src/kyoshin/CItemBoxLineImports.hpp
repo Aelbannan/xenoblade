@@ -319,29 +319,29 @@ extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
 extern "C" void SplitU32ToS16s(void*, u32);
 // GXColorS10 copy (retail __as__11_GXColorS10FRC11_GXColorS10)
-extern "C" void setGXColorS10(void*, u32, u32, u32, u32); // RGB color builder
+#include "kyoshin/CTitle.hpp" // canonical C++ declaration of setGXColorS10
 
 // ItemBoxLine_CompactTabList: .sbss item-box guard words (SDA-accessed, compared to 0).
-extern u32 gMnuItemMesA; // BDAT "MNU_item_mes_a" table cache
-extern u32 gMnuItemMesB; // BDAT "MNU_item_mes_b" table cache
-extern u32 gMnuSkill;    // BDAT "MNU_skill" table cache
+extern u32 gItemBoxLineMnuItemMesATable; // BDAT "MNU_item_mes_a" table cache
+extern u32 gItemBoxLineMnuItemMesBTable; // BDAT "MNU_item_mes_b" table cache
+extern u32 gItemBoxLineMnuSkillTable;    // BDAT "MNU_skill" table cache
 
 // sinit_801F32EC: the fourteen 8-byte .sbss color objects, constructed in
 // retail call order (SplitU32ToS16s resets, setGXColorS10 sets RGBA).
-extern u8 lbl_eu_806645D8[8];
-extern u8 lbl_eu_806645E0[8];
-extern u8 lbl_eu_806645E8[8];
-extern u8 lbl_eu_806645F0[8];
-extern u8 lbl_eu_806645F8[8];
-extern u8 lbl_eu_80664600[8];
-extern u8 lbl_eu_80664608[8];
-extern u8 lbl_eu_80664610[8];
-extern u8 lbl_eu_80664618[8];
-extern u8 lbl_eu_80664620[8];
-extern u8 lbl_eu_80664628[8];
-extern u8 lbl_eu_80664630[8];
-extern u8 lbl_eu_80664638[8];
-extern u8 lbl_eu_80664640[8];
+extern u8 itemBoxLine_tabLabelNeutralTop[8];
+extern u8 itemBoxLine_tabLabelNeutralBottom[8];
+extern u8 itemBoxLine_tabLabelSelectedTop[8];
+extern u8 itemBoxLine_tabLabelSelectedBottom[8];
+extern u8 itemBoxLine_tabValueNeutralTop[8];
+extern u8 itemBoxLine_tabValueNeutralBottom[8];
+extern u8 itemBoxLine_tabValueSelectedTop[8];
+extern u8 itemBoxLine_tabValueSelectedBottom[8];
+extern u8 itemBoxLine_pageLabelNeutralTop[8];
+extern u8 itemBoxLine_pageLabelNeutralBottom[8];
+extern u8 itemBoxLine_pageLabelSelectedTop[8];
+extern u8 itemBoxLine_pageLabelSelectedBottom[8];
+extern u8 itemBoxLine_pageValueSelectedTop[8];
+extern u8 itemBoxLine_pageValueSelectedBottom[8];
 
 // ItemBoxLine_RebuildTabList: per-slot tab dispatch (C-ABI; defined in this TU).
 // Retail helpers whose CItemBoxInfo.hpp declarations use other parameter types

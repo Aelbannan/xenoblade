@@ -559,7 +559,9 @@ def snapshot_from_hexdiff(
     """
     hexdiff = str(ROOT / "tools" / "coop" / "hexdiff.py")
     py = sys.executable
-    argv = [py, hexdiff, unit, "--all", "--json"]
+    # Tool-internal byte-identity snapshot: baseline LOST/GAIN is a separate
+    # regression gate, so do not let the default baseline change exit codes.
+    argv = [py, hexdiff, unit, "--all", "--json", "--no-baseline"]
     for old, new in (aliases or {}).items():
         argv += ["--pair-alias", f"{old}={new}"]
     all_proc = subprocess.run(

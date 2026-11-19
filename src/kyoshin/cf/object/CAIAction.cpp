@@ -521,22 +521,7 @@ void aiRingConsume(cf::CAIAction* self, u32 index) {
         self->ring.queue.head = (u32)(((s32)self->ring.queue.head + 1) % (s32)self->ring.queue.capacity);
     }
 
-    // Sink reads keep the (retail-dead) scratch stores alive.
-    { volatile u8 k0 = tmp.at0C; (void)k0; }
-    { volatile u8 k1 = tmp.at2D; (void)k1; }
-    { volatile u8 k2 = tmp.at4E; (void)k2; }
-    { volatile u8 k3 = tmp.at6F; (void)k3; }
-    { volatile u8 k4 = tmp.at90; (void)k4; }
-    { volatile u8 k5 = tmp.atB1; (void)k5; }
-    { volatile u8 k6 = tmp.atD2; (void)k6; }
-    { volatile u8 k7 = tmp.atF3; (void)k7; }
-    { volatile u8 k8 = tmp.at114; (void)k8; }
-    { volatile u8 k9 = tmp.at135; (void)k9; }
-    { volatile u8 kA = tmp.at156; (void)kA; }
-    { volatile u16 kB = tmp.at178; (void)kB; }
-    { volatile s16 kC = tmp.at19A; (void)kC; }
-    { volatile f32 kD = tmp.at1BC; (void)kD; }
-    { volatile u32 kE = tmp.at1C8; (void)kE; }
+
 }
 // extern "C" per the CfObjectPc.hpp declaration (retail symbol is unmangled;
 // CfObjectPc.cpp imports it under that exact name).

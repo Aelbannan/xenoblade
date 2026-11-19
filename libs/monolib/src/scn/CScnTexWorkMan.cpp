@@ -92,32 +92,32 @@ extern "C" void* TexObj_InitExt(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
                                u8* p6);
 
 // Texture-work memory-pool state (retail .sdata/.sbss).
-extern u32 lbl_eu_806639A8;  // foreign .sdata (current mem-handle)
-extern u32 lbl_eu_806639AC;  // foreign .sdata (user-supplied mem-handle)
-s32 lbl_eu_806658E8 = 0;           // live-instance count (retail bgt: signed)
-u32 lbl_eu_806658EC = 0;           // allocatable-region base
-u32 lbl_eu_806658F0 = 0;           // allocation cursor
-u32 lbl_eu_806658F4 = 0;           // max allocatable size
+extern u32 lbl_eu_806639A8;  // memory handle (owned by auto_09 .sdata split)
+extern u32 sTexWorkMemPoolSize;  // memory-pool size (owned by auto_09 .sdata split)
+s32 sTexWorkInstanceCount = 0;           // live-instance count (retail bgt: signed)
+u32 sTexWorkRegionBase = 0;           // allocatable-region base
+u32 sTexWorkAllocCursor = 0;           // allocation cursor
+u32 sTexWorkMaxAllocSize = 0;           // max allocatable size
 u32 lbl_eu_806658FC = 0;           // busy/reference counter
-u32 lbl_eu_80665900 = 0;           // last allocated texture-work object
+u32 sTexWorkLastObject = 0;           // last allocated texture-work object
 
 CScnTexWorkMan::CScnTexWorkMan(u32 param1, u32 param2, u32 param3) {
     this->field_0x4 = param1;
-    lbl_eu_806658E8++;
+    sTexWorkInstanceCount++;
     if (lbl_eu_806639A8 == mtl::INVALID_HANDLE) {
         lbl_eu_806639A8 = mtl::MemManager::create(param2, param3, lbl_eu_80524020);
-        lbl_eu_806639AC = param2;
-        lbl_eu_806658F4 = mtl::MemManager::getMaxAllocSize(lbl_eu_806639A8);
-        lbl_eu_806658EC = (u32)mtl::MemManager::getMaxAllocData(lbl_eu_806639A8);
-        lbl_eu_806658F0 = lbl_eu_806658EC;
+        sTexWorkMemPoolSize = param2;
+        sTexWorkMaxAllocSize = mtl::MemManager::getMaxAllocSize(lbl_eu_806639A8);
+        sTexWorkRegionBase = (u32)mtl::MemManager::getMaxAllocData(lbl_eu_806639A8);
+        sTexWorkAllocCursor = sTexWorkRegionBase;
         CDeviceVI::entryCb(this);
     }
 }
 
 CScnTexWorkMan::~CScnTexWorkMan() {
     *(void**)this = (void*)lbl_eu_8056E7D0;
-    lbl_eu_806658E8--;
-    if (lbl_eu_806658E8 <= 0) {
+    sTexWorkInstanceCount--;
+    if (sTexWorkInstanceCount <= 0) {
         mtl::MemManager::erase(lbl_eu_806639A8);
         lbl_eu_806639A8 = mtl::INVALID_HANDLE;
         CDeviceVI::removeCb(this);
@@ -171,13 +171,13 @@ extern "C" void* TexMan_AllocBuffer_0208(void* p, u16 w, u16 h, u32 fmt) {
         return 0;
     }
     u32 size = GXGetTexBufferSize(w, h, fmt, 0, 0);
-    u32 cursor = lbl_eu_806658F0;
+    u32 cursor = sTexWorkAllocCursor;
     u32 mask = cursor & 0x1F;
     u32 aligned = mask != 0 ? cursor + 0x20 - mask : cursor;
     u32 newCursor = aligned + size;
-    lbl_eu_806658F0 = newCursor;
-    if (newCursor > lbl_eu_806658EC + lbl_eu_806658F4) {
-        lbl_eu_806658F0 = cursor;
+    sTexWorkAllocCursor = newCursor;
+    if (newCursor > sTexWorkRegionBase + sTexWorkMaxAllocSize) {
+        sTexWorkAllocCursor = cursor;
         return 0;
     }
     u8* obj = (u8*)mtl::MemManager::allocate(
@@ -187,7 +187,7 @@ extern "C" void* TexMan_AllocBuffer_0208(void* p, u16 w, u16 h, u32 fmt) {
         // across the call in both paths.
         obj = (u8*)TexObj_InitExt(obj, (u8*)aligned, w, h, fmt, (u8*)cursor);
     }
-    lbl_eu_80665900 = (u32)obj;
+    sTexWorkLastObject = (u32)obj;
     return obj;
 }
 
@@ -314,8 +314,8 @@ extern "C" void __dt__804943A0(void* self, int flags);
 // arg is the SECOND parameter (retail compares r4; r3 self is unused).
 extern "C" void TexMan_ReleaseArg_02D8(void* self, void* arg) {
     if (lbl_eu_806658FC != 0) return;
-    if (lbl_eu_80665900 == (u32)arg) {
-        lbl_eu_806658F0 = ((CScnTexWorkManCursor*)arg)->field_0x28;
+    if (sTexWorkLastObject == (u32)arg) {
+        sTexWorkAllocCursor = ((CScnTexWorkManCursor*)arg)->field_0x28;
     }
     if (arg != 0) {
         __dt__804943A0(arg, 1);
@@ -324,18 +324,18 @@ extern "C" void TexMan_ReleaseArg_02D8(void* self, void* arg) {
 
 extern "C" void onViAfterDrawDone__14CScnTexWorkManFv(void) {}
 
-int lbl_eu_806658F8;
+int sTexWorkSavedCursor;
 
 extern "C" void TexMan_SnapCursor_0314() {
     if (lbl_eu_806658FC == 0) {
-        lbl_eu_806658F8 = lbl_eu_806658F0;
+        sTexWorkSavedCursor = sTexWorkAllocCursor;
     }
 }
 
 extern "C" void TexMan_RestoreCursor_032C() {
     if (lbl_eu_806658FC != 0) return;
-    lbl_eu_806658F0 = lbl_eu_806658F8;
-    lbl_eu_806658F8 = 0;
+    sTexWorkAllocCursor = sTexWorkSavedCursor;
+    sTexWorkSavedCursor = 0;
 }
 
 // Camera resolver in CScn.cpp (retail also receives the view in r4).

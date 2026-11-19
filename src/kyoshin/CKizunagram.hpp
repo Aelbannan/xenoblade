@@ -9,6 +9,8 @@
 #include "kyoshin/CQuestWindow_Pane.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
+#include "kyoshin/TagProcCompareIds.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
 class CEventFile;    // monolib/work/CEventFile.hpp
@@ -879,25 +881,23 @@ struct UnkKizunaFontView {
 // C-linkage imports for the current targets (retail names unmangled).
 // ---------------------------------------------------------------------------
 
-// Pane visibility check (CTitleAHelp.cpp) and GX color setter.
-extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
-extern "C" void setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+// setGXColorS10 is declared once with C++ linkage in kyoshin/CTitle.hpp.
 
 // sinit_8025D304 color table (14 GXColorS10 entries, 8-byte stride).
-extern GXColorS10 lbl_eu_806647E8;
-extern GXColorS10 lbl_eu_806647F0;
-extern GXColorS10 lbl_eu_806647F8;
-extern GXColorS10 lbl_eu_80664800;
-extern GXColorS10 lbl_eu_80664808;
-extern GXColorS10 lbl_eu_80664810;
-extern GXColorS10 lbl_eu_80664818;
-extern GXColorS10 lbl_eu_80664820;
-extern GXColorS10 lbl_eu_80664828;
-extern GXColorS10 lbl_eu_80664830;
-extern GXColorS10 lbl_eu_80664838;
-extern GXColorS10 lbl_eu_80664840;
-extern GXColorS10 lbl_eu_80664848;
-extern GXColorS10 lbl_eu_80664850;
+extern GXColorS10 kizLineTevColorRank01First;
+extern GXColorS10 kizLineTevColorRank01Second;
+extern GXColorS10 kizLineTevColorRank2First;
+extern GXColorS10 kizLineTevColorRank2Second;
+extern GXColorS10 kizLineTevColorRank3First;
+extern GXColorS10 kizLineTevColorRank3Second;
+extern GXColorS10 kizLineTevColorRank4First;
+extern GXColorS10 kizLineTevColorRank4Second;
+extern GXColorS10 kizLineTevColorRank5First;
+extern GXColorS10 kizLineTevColorRank5Second;
+extern GXColorS10 kizLineTevColorRegion19First;
+extern GXColorS10 kizLineTevColorRegion19Second;
+extern GXColorS10 kizLineTevColorRegion1AFirst;
+extern GXColorS10 kizLineTevColorRegion1ASecond;
 
 // Tag-context string helpers (CTagProcessor.cpp) and buildInfoLayout's font
 // result source.
@@ -905,7 +905,6 @@ extern "C" const wchar_t* getContextStr(u8* self);
 extern "C" const wchar_t** getContextStrPtr(u8* self);
 extern "C" void* TagCtxAdvanceHead(const wchar_t** self, u32 arg);
 extern "C" const wchar_t* TagCtxGetNodeHeader(const wchar_t** self);
-extern "C" int TagProcCompareIds(const wchar_t** a, const wchar_t** b);
 
 // sprintf for resetKizPaneTags's pane-name formatting.
 extern "C" int sprintf(char* str, const char* fmt, ...);
@@ -1062,5 +1061,5 @@ extern "C" int strcmp(const char*, const char*);
 extern "C" u16 findKizByName(UnkKizunaSelf5949C* self, const char* name);
 
 // Per-frame kizuna-entry row cursor shared with revealKizEntries.
-extern u16 lbl_eu_80664858;
-extern u16 lbl_eu_8066485A;
+extern u16 sKizRowCursor;
+extern u16 sKizRevealCursor;

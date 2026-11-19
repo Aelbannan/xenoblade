@@ -31,21 +31,21 @@ extern "C" void* Bdat_GetTable_AA34(void); extern "C" void CtrlObjectParam_Apply
 // (memberized: enableAnimB -> QuestWinObj::enableAnimB; declaration moved into class QuestWinObj)
 
 u32 getQuestWindow(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
+    extern u32 gQuestWindowRefCount;
+    return gQuestWindowRefCount;
 }
 
-// (lbl_eu_80663FD0 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool hasQuestWindow() { extern u32 lbl_eu_80663FD0; return lbl_eu_80663FD0 != 0; }
+// (gQuestWindowRefCount != 0) - retail lwz sda21; subic; subfe
+extern "C" bool hasQuestWindow() { extern u32 gQuestWindowRefCount; return gQuestWindowRefCount != 0; }
 
-int lbl_eu_80663D1C;
+int gLoadScreen;
 
 int CTaskGame_hasLoadScreen() {
-    return lbl_eu_80663D1C != 0;
+    return gLoadScreen != 0;
 }
 
-extern u32 lbl_eu_80663FD0;
-void resetQuestWindow(){ lbl_eu_80663FD0 = 0; }
+extern u32 gQuestWindowRefCount;
+void resetQuestWindow(){ gQuestWindowRefCount = 0; }
 
 // Install the retail Move-hook ptmf (+0x3C) only while no party / other menu
 // is active (PTNotice_IsActive_3C10, menuPTStateIsActive) and the window's own idle gates
@@ -53,7 +53,7 @@ void resetQuestWindow(){ lbl_eu_80663FD0 = 0; }
 void installMoveHook(QuestWinObj* self) {
     if (PTNotice_IsActive_3C10() == 0 && menuPTStateIsActive() == 0 &&
         self->field_0x88 == 0 && self->field_0x8C == 0) {
-        self->mMoveFunc = lbl_eu_8052D074;
+        self->mMoveFunc = gQuestWindowMoveFunc;
     }
 }
 
@@ -176,7 +176,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
         CBdat::setBdatEntry(2, fileData);
         Bdat_GetTable_AA34();
         self->field_0xD0 =
-            (u32)getFP(lbl_eu_8052CFF4[SearchThresholdIdx(self->field_B8)]);
+            (u32)getFP(gQuestBdatTableNames[SearchThresholdIdx(self->field_B8)]);
         refreshQuestContent(self);
         self->field_0x8C = 0;
         return true;
@@ -191,7 +191,7 @@ bool onQuestFileEvent(CQuestWindow* self, CEventFile* event) {
 // ---------------------------------------------------------------------------
 void CQuestWindow::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
@@ -210,7 +210,7 @@ void CQuestWindow::cbRenderBefore() {
 // installs the composite table (with the +0x24 IWorkEvent and +0xAC IScnRender
 // sub-vptrs) once the body starts. The body constructs the embedded
 // UnkClass_8045F564 / CCur18, initialises the scalar fields, bumps the window
-// counter and finishes with the initial Move hook (lbl_eu_8052D068).
+// counter and finishes with the initial Move hook (gQuestWindowInitialMoveFunc).
 // ---------------------------------------------------------------------------
 CQuestWindow::CQuestWindow(CScn* scn, u32 id, u32 flag)
     : mpScn(scn), mMemRegion(), field_0x88(NULL), field_0x8C(NULL), field_0x90(NULL),
@@ -234,7 +234,7 @@ CQuestWindow::CQuestWindow(CScn* scn, u32 id, u32 flag)
     field_0xD8 = 0;
     field_0xDA = 0;
 
-    lbl_eu_80663FD0 = lbl_eu_80663FD0 + 1;
+    gQuestWindowRefCount = gQuestWindowRefCount + 1;
     setPresentationFlag__Q22cf13CfGameManagerFv(true);
     code80135FDC_postIncByte_64080();
     field_0xE8 = getEnabledInputFlags__Q22cf13CfGameManagerFv();
@@ -247,25 +247,25 @@ CQuestWindow::CQuestWindow(CScn* scn, u32 id, u32 flag)
 
     // Install the initial Move hook (12-byte ptmf copy).
     mMoveFunc = *reinterpret_cast<const CTTask<IUIWindow>::MoveFunc*>(
-        lbl_eu_8052D068);
+        gQuestWindowInitialMoveFunc);
 }
 
 // ---------------------------------------------------------------------------
 // createQuestWindow (us-80123608): quest-window factory. The singleton guard
-// (lbl_eu_80663FD4) returns 0 when the window already exists; otherwise the
+// (spQuestWindow) returns 0 when the window already exists; otherwise the
 // 0xEC-byte object is allocated on the work heap, constructed (retail C-ABI
 // __ct__CQuestWindow) and registered under `parent`.
 // ---------------------------------------------------------------------------
 CQuestWindow* createQuestWindow(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) {
-    if (lbl_eu_80663FD4 != 0) {
+    if (spQuestWindow != 0) {
         return 0;
     }
     mtl::ALLOC_HANDLE mem = CWorkThreadSystem::getWorkMem();
-    lbl_eu_80663FD4 = reinterpret_cast<QuestWindowState*>(
+    spQuestWindow = reinterpret_cast<QuestWindowState*>(
         new (mtl::MemManager::allocate(0xec, mem))
             CQuestWindow((CScn*)arg1, arg2, arg3));
-    reinterpret_cast<CProcess*>(lbl_eu_80663FD4)->Regist(parent, 0);
-    return reinterpret_cast<CQuestWindow*>(lbl_eu_80663FD4);
+    reinterpret_cast<CProcess*>(spQuestWindow)->Regist(parent, 0);
+    return reinterpret_cast<CQuestWindow*>(spQuestWindow);
 }
 
 // Window open animation: wait until anim A (+0x98) reaches the completion
@@ -877,10 +877,10 @@ template<> void CTTask<IUIWindow>::Draw() {
     }
 }
 
-// Retail: lwz lbl_eu_80663FD4@sda21; null-check; lbz +0xDA; addic/subfe
+// Retail: lwz spQuestWindow@sda21; null-check; lbz +0xDA; addic/subfe
 // setnz (byte != 0). Returns 1 while the quest-window state byte is non-zero.
 bool isQuestWindowOpen() {
-    QuestWindowState* p = lbl_eu_80663FD4;
+    QuestWindowState* p = spQuestWindow;
     if (p != 0) {
         return p->field_0xDA != 0;
     }
@@ -889,17 +889,17 @@ bool isQuestWindowOpen() {
 
 // ---------------------------------------------------------------------------
 // CQuestWindow::Init (us-80122f6c): request the common-archive quest-name arc
-// (name chosen by field_B8 through lbl_eu_8052CF80) and the window arc file,
+// (name chosen by field_B8 through gQuestCommonArcNames) and the window arc file,
 // feeding the IWorkEvent subobject at +0x6C to both loaders.
 // ---------------------------------------------------------------------------
 void CQuestWindow::Init() {
     IWorkEvent* evt = this;
     field_0x8C = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
         KyoshinHeap_GetField44(),
-        lbl_eu_8052CF80[SearchThresholdIdx(field_B8)], evt, 0, 0);
+        gQuestCommonArcNames[SearchThresholdIdx(field_B8)], evt, 0, 0);
     IWorkEvent* evt2 = this;
     field_0x88 = (CFileHandle*)CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_80661EB8, evt2, 0, 0);
+        mtl::MemManager::getHandleMEM2(), gQuestWindowArcPath, evt2, 0, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -926,7 +926,7 @@ void CQuestWindow::Term() {
     }
     releaseArcResourceAccessor(field_0x94);
     field_0x94 = 0;
-    lbl_eu_80663FD4 = 0;
+    spQuestWindow = 0;
     mMemRegion.deleteRegion();
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 0);
     enablePadFlags__Q22cf13CfGameManagerFUlb(field_0xE8, 1);
@@ -937,7 +937,7 @@ void CQuestWindow::Term() {
         }
         CUICfManager_setTimeout30();
     }
-    lbl_eu_80663FD0 = lbl_eu_80663FD0 - 1;
+    gQuestWindowRefCount = gQuestWindowRefCount - 1;
 }
 
 // ---------------------------------------------------------------------------

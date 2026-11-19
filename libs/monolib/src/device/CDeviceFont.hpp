@@ -146,7 +146,7 @@ extern const char* lbl_eu_806636FC;
 // The retail class derives from CDeviceBase (CWorkThread, 0x0-0x1C4) and
 // carries its own state at 0x1C4-0x1F0: the font-info list (0x1C8) and the
 // current font layer/id (0x1E8). The retail singleton lives at
-// lbl_eu_80665678 (sdata2).
+// spDeviceFont (sdata2).
 class CDeviceFont : public CDeviceBase {
 public:
     CDeviceFont(const char* pName, CWorkThread* pParent);
@@ -204,8 +204,8 @@ public:
 };
 
 // Retail singleton pointer (sdata2). Declared here so the catalog TU's
-// global references emit the retail lbl_eu_80665678 reloc name.
-extern CDeviceFont* lbl_eu_80665678;
+// global references emit the retail spDeviceFont reloc name.
+extern CDeviceFont* spDeviceFont;
 
 // Retail font-info reslist vtables (.data). The base/derived dtors store
 // them into the reslist's vtable slot; declared here so the store emits the
@@ -221,7 +221,7 @@ extern u32 lbl_eu_8056C660[];
 extern const char lbl_eu_80522DDC[];
 
 // Retail font-device config/state word (sdata2).
-extern u32 lbl_eu_8066567C;
+extern u32 sDeviceFontInitCount;
 
 // Minimal CDeviceVI view (the full header would drag in CDeviceBase and
 // clash with this TU's minimal CWorkThread views).

@@ -15,9 +15,9 @@
 
 // .sdata: lottery column-name scratch keys (byte 3 rewritten per pick).
 __declspec(section ".sdata") __attribute__((used))
-char lbl_eu_80662420[8] = "itm?ID";
+char sMapItemIdScratchKey[8] = "itm?ID";
 __declspec(section ".sdata") __attribute__((used))
-char lbl_eu_80662428[8] = "itm?Per";
+char sMapItemPerScratchKey[8] = "itm?Per";
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
@@ -107,7 +107,7 @@ u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 v);
 int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 int isSceneActive__Q22cf13CfGameManagerFv();
 int isSceneReadyForInput__Q22cf13CfGameManagerFv();
-void SysWinLog_TickCounter2C(int v);
+#include "kyoshin/SysWinLogCounterApi.hpp"
 void* CItem_thunkAllocRecord(int v);
 void CUICfManager_queueGetItemMenuNarrowed(int v);
 int UIWin_BuildFlagBuf(int a, int b, int c, int d);
@@ -118,10 +118,10 @@ u32 hikariAddRecord(u8* a, u32* b, int c);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 }
 
-extern u32 lbl_eu_80663E24;
+extern u32 gmGameFlags;
 
 // External data (retail linker symbols)
-extern u8 lbl_eu_80664298;
+extern u8 gFixedMapItemFlag;
 extern u32 lbl_eu_80664184;
 
 // Buffer filled by the +0x10 virtual (rollItemLottery / placeValueItem).
@@ -169,7 +169,7 @@ void CfMapItemManager::clearMapItems() {
 }
 
 // Column-name scratch keys and sdata2 constants used by placeMapItemPick.
-// (lbl_eu_80662420 is defined at the top of this TU.)
+// (sMapItemIdScratchKey is defined at the top of this TU.)
 
 #pragma push
 #pragma auto_inline off
@@ -179,7 +179,7 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
 
     void* table = (void*)self->getItemTable();
     // Build the "itm<pick>Per" weight-column key for this lottery slot.
-    char* key = (char*)lbl_eu_80662420;
+    char* key = (char*)sMapItemIdScratchKey;
     key[3] = '1' + pick;
 
     // Spawn-offset columns (x/y/z) arrive as signed shorts converted to float.
@@ -217,7 +217,7 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
 
     if (sel == 0) {
         // No weight for this pick: fall back to the plain itm1Per column.
-        lbl_eu_80662420[3] = '1';
+        sMapItemIdScratchKey[3] = '1';
         cellSel.raw = getBdatStringColumnValue(table, key, row);
         sel = cellSel.u;
         if (sel != 0) {
@@ -231,11 +231,11 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
         int placed = 0;
         // Loop-invariant spread/sin constants; retail caches these in
         // callee-saved f27-f31 across the probe calls.
-        const f32 sinA = lbl_eu_80667788;
+        const f32 sinA = 45.0f;
         const f32 sinB = ml::deg2rad;
-        const f32 sinC = lbl_eu_8066778C;
+        const f32 sinC = 40.743664f;
         const f32 angStep = lbl_eu_80667790;
-        const f32 spread = lbl_eu_80667784;
+        const f32 spread = 0.01f;
         ml::CVec3 rnd;      // raw random offset
         ml::CVec3 scaled;   // random offset scaled by the spread factor
         ml::CVec3 center;   // column offsets as a vector
@@ -261,7 +261,7 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
                 ang = nw4r::math::SinFIdx(sinC * (sinA * sinB));
             }
             probe.y -= angStep;
-            if (VecMath_GroundProbeDown(&probe, &cur, 0x4a05, lbl_eu_80667794, ang)) {
+            if (VecMath_GroundProbeDown(&probe, &cur, 0x4a05, 30.0f, ang)) {
                 placed = 1;
                 break;
             }
@@ -279,7 +279,7 @@ int CfMapItemManager::placeMapItemPick(u32 row, void* c, int pick) {
         if (placed != 0) {
             // Commit the resolved position: y is lifted by the ground offset,
             // x/z are transferred as raw bit patterns.
-            cur.y += lbl_eu_80667798;
+            cur.y += 0.5f;
             buf->field_08 = *(u32*)&cur.y;
 
             buf->field_04 = *(u32*)&cur.x;
@@ -305,7 +305,7 @@ int CfMapItemManager::isEventActive() { return 0; }
 
 // sdata scratch key: "itm?Per" - byte 3 is rewritten each iteration with
 // '1'+i to select lottery weight column itm1Per..itm8Per.
-// (lbl_eu_80662428 is defined at the top of this TU.)
+// (sMapItemPerScratchKey is defined at the top of this TU.)
 
 // Weighted lottery over up to 8 columns: roll mtRand(100), walk cumulative
 // weights from the bdat row, and forward the winning column index.
@@ -333,8 +333,8 @@ int CfMapItemManager::placeItem(u32 row, void* item) {
     pick = 0;
     table = (void*)getItemTable();
     for (i = 0; i < 8; i++) {
-        lbl_eu_80662428[3] = '1' + i;
-        col.raw = getBdatStringColumnValue(table, (const char*)lbl_eu_80662428, row);
+        sMapItemPerScratchKey[3] = '1' + i;
+        col.raw = getBdatStringColumnValue(table, (const char*)sMapItemPerScratchKey, row);
         int next = col.b + total;
         if (rnd >= total && rnd < next) {
             pick = i;
@@ -358,7 +358,7 @@ u32 CfMapItemManager::getItemTable() { return lbl_eu_806640C0; }
 u32 CfValueItemManager::getItemTable() { return lbl_eu_806640D0; }
 
 // cf::CfMapItemManager +0x08 slot: collect the current map's item entries
-// into mItems.  When lbl_eu_80664298 (fixed-position flag) is set, synthesize
+// into mItems.  When gFixedMapItemFlag (fixed-position flag) is set, synthesize
 // each entry from ml::CVec3::zero instead of asking the +0x10 virtual.
 void CfMapItemManager::collectItems() {
     CfMapItemManager* self = this;
@@ -371,14 +371,14 @@ void CfMapItemManager::collectItems() {
     s32 row = (s32)Bdat_GetRowBase_B41C(table);
     end = row + (s32)Bdat_GetMaxRow_B1EC(table);    f32 one;
     f32 scale = lbl_eu_80667780;
-    if (lbl_eu_80664298 != 0) {
+    if (gFixedMapItemFlag != 0) {
         // Runtime-shaped int->double conversion via the 0x43300000 scratch
         // double, minus the shared magic constant (retail keeps the full
         // store/lfd/fsub sequence).
         union { double d; u32 w[2]; } cv;
         cv.w[1] = 1;
         cv.w[0] = 0x43300000;
-        scale = lbl_eu_806677A8 * (lbl_eu_80667794 * (cv.d - lbl_eu_806677B0));
+        scale = 60.0f * (30.0f * (cv.d - lbl_eu_806677B0));
     }
     self->mCount = 1;
     const u32* zeroW = reinterpret_cast<const u32*>(&ml::CVec3::zero);
@@ -392,7 +392,7 @@ void CfMapItemManager::collectItems() {
         buf.field_10 = one;
         buf.field_14 = 0;
         while (i < count) {
-            if (lbl_eu_80664298 != 0) {
+            if (gFixedMapItemFlag != 0) {
                 // Fixed-position path: synthesize flags from the row number
                 // (top 12 bits) plus the active bit, zero the position.
                 u32 fl = buf.field_18 & 0xFFFF;
@@ -515,15 +515,15 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
     BdatCell cSeLo;   // col +0x56 -> sp+0x0c (half)
     BdatCell cSeHi;   // col +0x60 -> sp+0x08 (half)
 
-    f32 bestDist = lbl_eu_806677BC;
+    f32 bestDist = 100.0f;
     f32 k80 = lbl_eu_80667780;
     f32 dyLimit = bestDist;
-    f32 kC4 = lbl_eu_806677C4;
-    f32 kC8 = lbl_eu_806677C8;
-    f32 kD0 = lbl_eu_806677D0;
-    f32 kCC = lbl_eu_806677CC;
-    f32 kC0 = lbl_eu_806677C0;
-    f32 kB8 = lbl_eu_806677B8;
+    f32 kC4 = 50.0f;
+    f32 kC8 = 22500.0f;
+    f32 kD0 = 2.25f;
+    f32 kCC = 1.5f;
+    f32 kC0 = 40000.0f;
+    f32 kB8 = 3600.0f;
     s32 resultIdx = 0;
     s32 nearestIdx = 0;
     // Held-in-register constants across the loop (retail keeps 3 and 0 in
@@ -540,7 +540,7 @@ int CfMapItemManager::updateMapItems(ml::CVec3* pos) {
             // Timer-only slot: decay timer back toward the default scale.
             if ((*flagsW & 0x10000) == 0) continue;
             CfRes_getD80Flag();
-            f32 dec = Scn_GetFrameDelta(lbl_eu_80663E14);
+            f32 dec = Scn_GetFrameDelta(gmScene);
             f32 t = rec->field_10_f;
             if (t > k80) {
                 rec->field_10_f = t - dec;
@@ -714,9 +714,9 @@ void CfMapItemManager::tryPickupMapItem() {
 
     pv = (u32)getPlayer__Q22cf13CfGameManagerFi(0);
     if (pv == 0) return;
-    if (lbl_eu_80663E24 & 0x00400000) return;          // bit 22: cutscene-ish gate
+    if (gmGameFlags & 0x00400000) return;          // bit 22: cutscene-ish gate
     if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
-    if (lbl_eu_80663E24 & 0xAFA40000) return;
+    if (gmGameFlags & 0xAFA40000) return;
     if (isSceneActive__Q22cf13CfGameManagerFv() != 0) return;
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
 
@@ -776,7 +776,7 @@ void CfMapItemManager::tryPickupMapItem() {
         rec->handle = 0;
         if (self->field_3806 != 0) self->field_3806--;
     }
-    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, lbl_eu_806677D4);
+    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, 0.6f);
     if (self->isEventActive()) {
         // No event: wipe the record and bump the flag-table reset counter.
         CUICfManager_queueGetItemMenuNarrowed(kind);
@@ -798,7 +798,7 @@ void CfMapItemManager::tryPickupMapItem() {
             rec->field_14 = 0;
             rec->handle = 0;
             rec->field_18 |= 0x10000;
-            rec->field_10_f = lbl_eu_806677A8 * (lbl_eu_80667794 * (cv.d - lbl_eu_806677B0));
+            rec->field_10_f = 60.0f * (30.0f * (cv.d - lbl_eu_806677B0));
         } else {
             rec->field_14 = 0;
             rec->handle = 0;

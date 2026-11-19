@@ -23,14 +23,9 @@ extern u32 lbl_eu_8056FC4C[]; // CETrail vtable
 extern u32 lbl_eu_8056FC64[]; // reslist<CETrail::POINT> vtable
 
 extern const f32 lbl_eu_8066B15C;
-extern f32 lbl_eu_8066B158;
-extern f32 lbl_eu_8066B178;
 extern f64 lbl_eu_8066B180;
-extern f32 lbl_eu_8066B188;
-extern f32 lbl_eu_8066B198;
 extern f32 lbl_eu_8066B19C;
 extern f32 lbl_eu_8066B1A0;
-extern f32 lbl_eu_8066B1A4;
 extern f32 lbl_eu_8066B1A8;
 extern f32 lbl_eu_8066B1AC;
 
@@ -75,7 +70,7 @@ struct CScnRootEnv {
     u8 m_pad00[0x78];
     CScnFogEnv* m_fogEnv; // 0x78
 };
-extern CScnRootEnv* lbl_eu_806659B8;
+extern CScnRootEnv* sActiveSceneRoot;
 extern s32 lbl_eu_80663B38;
 extern "C" s32 lbl_eu_806659BC;
 extern u8 lbl_eu_80663B3C[4];
@@ -656,7 +651,7 @@ extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, const ml::CVec4* colo
         return;
     }
 
-    f32 k = lbl_eu_8066B178;
+    f32 k = 0.5f;
 
     switch (t->m_mode) {
     default: {
@@ -664,7 +659,7 @@ extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, const ml::CVec4* colo
         off.x = lbl_eu_8066B15C;
         off.y = k * f;
         off.z = lbl_eu_8066B15C;
-        f32 c = lbl_eu_8066B188;
+        f32 c = -1.0f;
         ml::CVec3 offc = off * c;
         ml::CVec3 raw1;
         PSMTXMultVec(*M, offc, raw1);
@@ -858,28 +853,28 @@ extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::C
     if (scale->x > lbl_eu_8066B15C) {
         t->m_scale.x = frontAge / scale->x;
     } else {
-        t->m_scale.z = lbl_eu_8066B158;
-        t->m_scale.x = lbl_eu_8066B158;
+        t->m_scale.z = 1.0f;
+        t->m_scale.x = 1.0f;
     }
 
     if (scale->y > lbl_eu_8066B15C) {
         ml::CVec3 d = *posB - *posA;
         t->m_scale.y = PSVECMag(d) / scale->y;
     } else {
-        t->m_scale.y = lbl_eu_8066B158;
+        t->m_scale.y = 1.0f;
     }
 
     if (scale->z > lbl_eu_8066B15C) {
         t->m_scale.z = frontAge / scale->z;
     } else {
-        t->m_scale.z = lbl_eu_8066B158;
+        t->m_scale.z = 1.0f;
     }
 
     if (scale->w > lbl_eu_8066B15C) {
         ml::CVec3 d = *posB - *posA;
         t->m_scale.w = PSVECMag(d) / scale->w;
     } else {
-        t->m_scale.w = lbl_eu_8066B158;
+        t->m_scale.w = 1.0f;
     }
 }
 
@@ -937,28 +932,28 @@ void CETrailLight::Drive(void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 
         return;
     }
 
-    if (p->m_intensity <= lbl_eu_8066B198) {
+    if (p->m_intensity <= 0.0f) {
         LightCtlSetEnable(this->m_light, 0);
         return;
     }
 
     // Clamp the fade parameter
-    if (f2 < lbl_eu_8066B19C) {
-        f2 = lbl_eu_8066B19C;
+    if (f2 < 0.1f) {
+        f2 = 0.1f;
     }
-    if (lbl_eu_8066B1A0 < f2) {
-        f2 = lbl_eu_8066B1A0;
+    if (0.99f < f2) {
+        f2 = 0.99f;
     }
 
     // Clamp the light index through a float round-trip (retail does the same);
     // the int conversion stays inline at the call site so its stack round-trip
     // lands between the C08C8 and C09E0 calls like retail.
     f32 fm = (f32)mode;
-    if (fm < lbl_eu_8066B1A4) {
-        fm = lbl_eu_8066B1A4;
+    if (fm < 1.0f) {
+        fm = 1.0f;
     }
-    if (lbl_eu_8066B1A8 < fm) {
-        fm = lbl_eu_8066B1A8;
+    if (3.0f < fm) {
+        fm = 3.0f;
     }
     s32 m = (s32)fm;
 
@@ -967,11 +962,11 @@ void CETrailLight::Drive(void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 
     LightCtlInitDistAttn(this->m_light, m, f1, f2);
 
     LightColor out;
-    this->m_light->m_3C = lbl_eu_8066B1AC;
+    this->m_light->m_3C = 99999.0f;
     out.b = p->m_b * p->m_intensity;
     out.g = p->m_g * p->m_intensity;
     out.r = p->m_r * p->m_intensity;
-    out.a = lbl_eu_8066B1A4;
+    out.a = 1.0f;
     LightCtlSetColor(this->m_light, &out);
 }
 
@@ -982,7 +977,7 @@ void CETrailLight::Drive(void* arg, s32 mode, CETrailLightParam* p, f32 f1, f32 
 void Trail_SnapFog(CScnRootEnv* scene) {
     // -1 stays live in a register across both lookups; 0 is rematerialized.
     s32 invalid = -1;
-    lbl_eu_806659B8 = scene;
+    sActiveSceneRoot = scene;
     lbl_eu_80663B38 = invalid;
     lbl_eu_806659BC = 0;
     lbl_eu_80663B3C[0] = 1;
@@ -991,7 +986,7 @@ void Trail_SnapFog(CScnRootEnv* scene) {
     *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(0);
 
     // Retail re-reads the global for the second lookup.
-    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
+    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
     *(FogData*)&lbl_eu_8065FCD0 = *root2->GetFog(0);
 }
 
@@ -1000,7 +995,7 @@ void Trail_SnapFog(CScnRootEnv* scene) {
 // ---------------------------------------------------------------------------
 extern "C" void Trail_RestoreFog(void) {
     s32 saved = lbl_eu_80663B38;
-    s32 cur = lbl_eu_806659B8->m_fogEnv->m_index;
+    s32 cur = sActiveSceneRoot->m_fogEnv->m_index;
 
     if (saved == -1) {
         lbl_eu_8065FCA0 = lbl_eu_8065FCD0;

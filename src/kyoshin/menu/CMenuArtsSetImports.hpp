@@ -172,9 +172,8 @@ extern "C" void CMenuArtsSet_confirmLockedArt(CArtsList* self);
 // CArtsInfo draw (defined in CArtsInfo.cpp; C-linkage retail name).
 extern "C" void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo);
 // CSysWin draw (defined in CSysWin.cpp; C-linkage retail name).
-// Pane-visible check (defined in CTitleAHelp.cpp; C-linkage retail name).
-extern "C" bool isPaneVisible(nw4r::lyt::Pane* pane);
-// C-linkage CSysWin state query (defined in CSysWin.cpp).
+// isPaneVisible is declared once in CQuestWindow_Pane.hpp.
+
 // Drive/refresh helper (same TU, defined below; C-name for reloc parity).
 extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self);
 
@@ -324,8 +323,6 @@ extern "C" int CMainMenu_GetInstancePtr();
 extern "C" void ArtsInfo_SetReadyFlag();
 // Title/help bar close + mode-set (CTitleAHelp.cpp; free C symbols - the
 // member declarations in CTitleAHelp.hpp mangle differently).
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 // Member thunks called through their retail unmangled free-symbol forms by
 // artsMenuInput (the member declarations mangle differently).
 extern "C" void CMenuArtsSet_setArmedFlag(CArtsList* self, u8 val);
@@ -342,7 +339,7 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
-extern u32 lbl_eu_80663E28; // mode bitfield (bit 21 = realtime event busy)
+extern u32 gmPauseFlags; // mode bitfield (bit 21 = realtime event busy)
 extern "C" void artsMenuInput(CMenuArtsSet* self);
 int CArtsList_isReady(CArtsList* self);
 void CArtsList_startLoad(CArtsList* self);

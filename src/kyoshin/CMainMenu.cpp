@@ -76,8 +76,8 @@ extern f64 lbl_eu_80666F10;   // 0x80666F10 - s32->f32 conversion constant (0x43
 extern f32 lbl_eu_80666F18;   // 0x80666F18 - anim frame time (0.0f)
 extern f32 lbl_eu_80666F1C;   // 0x80666F1C - HP death threshold (0.0f)
 
-// Presentation/mode bitfield (sibling of lbl_eu_80663E24; split1 .sbss).
-extern u32 lbl_eu_80663E28;
+// Presentation/mode bitfield (sibling of gmGameFlags; split1 .sbss).
+extern u32 gmPauseFlags;
 
 // Resource/flag getter (resource id -> value; defined in CMiniMap.cpp).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
@@ -211,7 +211,7 @@ extern "C" void CUICfManager_queueOptionMenu(u32 value);
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 // Real player base/spot types are in CfGimmick.hpp (CfPlayerBase::getHP at 0x128,
 // CfPlayerSpot::partyOpen at 0x9C). Define minimal forward views here to avoid
 // pulling the full CfGimmick header which conflicts on several extern "C" globals
@@ -346,7 +346,7 @@ void CMainMenu::moveMain() {
     if (IsMenuState621F0() == 0) {
         return;
     }
-    if (lbl_eu_80663E24 & 0xAFE40000) {
+    if (gmGameFlags & 0xAFE40000) {
         self->mField54 = 1;
         return;
     }
@@ -549,11 +549,11 @@ bool CMainMenu::OnFileEvent(CEventFile* pEventFile) {
 void CMainMenu::cbRenderBefore() {
     // Single OR so MWCC emits the short-circuit branches: A -> bne exit,
     // B -> beq continue / b exit (same shape as CMiniMap::cbRenderBefore).
-    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0())
         return;
-    if (lbl_eu_80663E24 & 0xAFE40000)
+    if (gmGameFlags & 0xAFE40000)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Scope-exit dtor is auto-emitted as the retail direct call; an explicit
@@ -946,7 +946,7 @@ extern "C" void CMainMenu_AdvanceIdle(CMainMenu* self) {
         int cond;
         if (getUnk80664658() != 0 && (getUnk80664658()->mFlags & 0x8)) {
             cond = 1;
-        } else if (lbl_eu_80663E28 & 0x40000000) {
+        } else if (gmPauseFlags & 0x40000000) {
             cond = 1;
         } else {
             CMainMenuPlayerSpot* spot = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -1180,7 +1180,7 @@ tail:
             int cond;
             if (getUnk80664658() != 0 && (getUnk80664658()->mFlags & 0x8)) {
                 cond = 1;
-            } else if (lbl_eu_80663E28 & 0x40000000) {
+            } else if (gmPauseFlags & 0x40000000) {
                 cond = 1;
             } else {
                 CMainMenuPlayerSpot* spot = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -1198,8 +1198,8 @@ tail:
                 }
             }
             if (cond != 0) idx = 0x16;
-            if (lbl_eu_80663E28 & 0x40000000) idx = 0x17;
-        } else if (idx == 0x14 && (lbl_eu_80663E28 & 0x40000000)) {
+            if (gmPauseFlags & 0x40000000) idx = 0x17;
+        } else if (idx == 0x14 && (gmPauseFlags & 0x40000000)) {
             idx = 0x18;
         }
         break;
@@ -1307,8 +1307,8 @@ battle:
     // Presentation-flag / close gates share one return-1 tail (L1BC); the
     // volatile reads defeat MWCC's load CSE and keep both loads hoisted
     // before the masks (retail lwz r0 + lwz r3).
-    u32 ev0 = *(volatile u32*)&lbl_eu_80663E24;
-    u32 ev1 = *(volatile u32*)&lbl_eu_80663E24;
+    u32 ev0 = *(volatile u32*)&gmGameFlags;
+    u32 ev1 = *(volatile u32*)&gmGameFlags;
     if ((ev0 & 0x4) != 0) goto ret2;
     if ((ev1 & 0x400000) != 0) goto ret2;
     if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() == 0) goto end;
@@ -1358,7 +1358,7 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     int cond;
     if (getUnk80664658() != 0 && (getUnk80664658()->mFlags & 0x8)) {
         cond = 1;
-    } else if (lbl_eu_80663E28 & 0x40000000) {
+    } else if (gmPauseFlags & 0x40000000) {
         cond = 1;
     } else {
         CMainMenuPlayerSpot* spot = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -1377,7 +1377,7 @@ extern "C" void CMainMenu_RefreshFlags(CMainMenu* self) {
     }
     self->field_0xDA = cond;
 
-    self->field_0xDB = (lbl_eu_80663E28 >> 30) & 1;
+    self->field_0xDB = (gmPauseFlags >> 30) & 1;
     self->field_0xDC = 0;
 
     // Main cursor items 0..6: pane name is sprintf'ed, position is bright

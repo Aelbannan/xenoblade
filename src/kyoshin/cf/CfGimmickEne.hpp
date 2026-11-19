@@ -16,7 +16,7 @@
 #include "kyoshin/cf/CfGimmick.hpp"
 #include <nw4r/g3d/g3d_scnproc.h>
 #include <revolution/gx/GXTypes.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 namespace cf {
 

@@ -11,6 +11,7 @@ Bank::Bank(const void* pBankBin)
 Bank::~Bank() {}
 
 Channel* Bank::NoteOn(const NoteOnInfo& rInfo) const {
+    const WaveInfo* pWaveInfo;
     InstInfo instInfo;
     if (!mBankReader.ReadInstInfo(&instInfo, rInfo.prgNo, rInfo.key,
                                   rInfo.velocity)) {
@@ -19,7 +20,7 @@ Channel* Bank::NoteOn(const NoteOnInfo& rInfo) const {
 
     WaveInfo waveInfo;
     if (!mBankReader.ReadWaveInfo(&waveInfo, instInfo.waveDataLocation,
-                                  mWaveDataAddress, NULL)) {
+                                  mWaveDataAddress, &pWaveInfo)) {
         return NULL;
     }
 
@@ -41,6 +42,7 @@ Channel* Bank::NoteOn(const NoteOnInfo& rInfo) const {
 
     pChannel->SetTune(instInfo.tune);
     pChannel->SetAttack(instInfo.attack);
+    pChannel->SetHold(instInfo.hold);
     pChannel->SetDecay(instInfo.decay);
     pChannel->SetSustain(instInfo.sustain);
     pChannel->SetRelease(instInfo.release);
@@ -48,8 +50,19 @@ Channel* Bank::NoteOn(const NoteOnInfo& rInfo) const {
     f32 initPan = (instInfo.pan - 64) / 63.0f;
     initPan += rInfo.initPan / 63.0f;
     pChannel->SetInitPan(initPan);
-
     pChannel->SetInitSurroundPan(0.0f);
+
+    pChannel->SetAlternateAssign(instInfo.alternateAssign);
+    pChannel->SetReleaseIgnore(instInfo.noteOffType == 1);
+
+    if (instInfo.waveDataLocation.location == 2) {
+        const WaveInfo* pInfo = pWaveInfo;
+        s32 waveIndex = instInfo.waveDataLocation.waveIndex;
+        pChannel->SetDisposeCallback(
+            reinterpret_cast<DisposeCallback*>(waveIndex));
+        pChannel->SetWaveInfo(pInfo);
+    }
+
     pChannel->Start(waveInfo, rInfo.length, 0);
 
     return pChannel;

@@ -15,7 +15,7 @@
 
 
 #include "kyoshin/menu/CMenuLvUp.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -177,7 +177,7 @@ extern f32 lbl_eu_80668A04;      // anim frame target for advanceAnimTransform
 extern f32 lbl_eu_80668A08;      // screen-position post-scale offset x
 extern f32 lbl_eu_80668A0C;      // screen-position post-scale offset y
 extern f32 lbl_eu_80668A10;      // screen-position post-scale factor y
-extern u32 lbl_eu_80663E28;      // task-state flag word (bit 21 gates the menu)
+extern u32 gmPauseFlags;      // task-state flag word (bit 21 gates the menu)
 
 
 CMenuLvUp::~CMenuLvUp() {}
@@ -249,10 +249,10 @@ void CMenuLvUp::Term() {
 // ---------------------------------------------------------------------------
 void CMenuLvUp::Move() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
-    if (lbl_eu_80663E24 & 0xbfe40000) return;
+    if (gmGameFlags & 0xbfe40000) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
 
     if (mField11C != 0) {
@@ -301,10 +301,10 @@ void CMenuLvUp::Move() {
 // ---------------------------------------------------------------------------
 void CMenuLvUp::cbRenderBefore() {
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
-    if (lbl_eu_80663E24 & 0xbfe40000) return;
+    if (gmGameFlags & 0xbfe40000) return;
     if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
     if (mField11C == 0) return;
 

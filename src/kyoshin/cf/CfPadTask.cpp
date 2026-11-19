@@ -11,7 +11,7 @@
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 extern "C" {
-    extern u32 lbl_eu_80663E28;
+    extern u32 gmPauseFlags;
     extern const float lbl_eu_80667EA8; // 0.0f
     const wchar_t* getErrMesText04();
     const wchar_t* getErrMesText05();
@@ -184,7 +184,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
         mFrameCounter++;
         if(mFrameCounter > 0xFFFF) mFrameCounter = 0xFFFF;
 
-        if(lbl_eu_80663E28 & (1u << 21)) return;
+        if(gmPauseFlags & (1u << 21)) return;
 
         int result = checkForControllerError(update());
         if(result != ERROR_NONE && !CLibHbm::isHbmControlInitialized() && !CWorkSystem::isOff() && !isMoveFuncActive__9CTaskGameFv()
@@ -286,7 +286,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
                 break;
         }
 
-        bool flag24 = lbl_eu_80663E28 & (1u << 24);
+        bool flag24 = gmPauseFlags & (1u << 24);
         if(flag24 && mainPad != nullptr && (sMainPadType >= PAD_TYPE_CORE && sMainPadType <= PAD_TYPE_CLASSIC)){
                 if(mainPad->mConnected && (mainPad->mPadType >= PAD_TYPE_CORE && mainPad->mPadType <= PAD_TYPE_CLASSIC)){
                     sMainPadType = mainPad->mPadType;
@@ -322,7 +322,7 @@ void CfPadTask::setButtonDisableTime(float f1) {
             u32 padType = newPad.mPadType;
             u32 result = 0;
 
-            if(padType == sMainPadType || sMainPadType == PAD_TYPE_CORE || (padType == PAD_TYPE_CORE && !(lbl_eu_80663E28 & (1u << 28)))){
+            if(padType == sMainPadType || sMainPadType == PAD_TYPE_CORE || (padType == PAD_TYPE_CORE && !(gmPauseFlags & (1u << 28)))){
                 result = 1;
             }
 
@@ -463,13 +463,13 @@ int CfPadTask::checkForControllerError(bool noError) {
         if ((sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && sMainPadExtension != PAD_EXT_INVALID) || sMainPadIsGCController) {
             if (sMainPadIsGCController) return ERROR_WIIMOTE_DISCONNECTED;
 
-            if (lbl_eu_80663E28 & (1u << 28)) {
+            if (gmPauseFlags & (1u << 28)) {
                 if (sMainPadExtension == PAD_EXT_NUNCHUCK) return ERROR_NUNCHUCK_DISCONNECTED;
                 else if (sMainPadExtension == PAD_EXT_CLASSIC_CONTROLLER) return ERROR_CLASSIC_CONTROLLER_DISCONNECTED;
                 else if (sMainPadExtension == PAD_EXT_NONE) return ERROR_NO_EXTENSION;
             }
         }
-    } else if (sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && (lbl_eu_80663E28 & (1u << 28))) {
+    } else if (sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && (gmPauseFlags & (1u << 28))) {
         if (sMainPadExtension == PAD_EXT_NONE) return ERROR_NO_EXTENSION;
     }
 

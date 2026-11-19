@@ -16,7 +16,7 @@ namespace ml {
 struct CVec3;
 }
 
-class CScn;  // monolib scene (CfGameManager owns the shared lbl_eu_80663E14 global)
+class CScn;  // monolib scene (CfGameManager owns the shared gmScene global)
 
 // Base +0x9C implementation (defined in CfObjectModel.cpp as a forced-name
 // free function: the retail symbol is Fv but the body reads r4 as a position
@@ -48,7 +48,7 @@ extern "C" int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self);
 extern "C" void ColiNodeInit(void* region);
 extern "C" void ColiListAppend(void* manager, void* region);
 extern "C" void Coli_ListRemoveNode(void* manager, void* region);
-extern void* lbl_eu_80665958;   // region-library manager (sbss)
+#include "monolib/coli/code_804B2FF0.hpp"
 // CfObjectMove vtable (data TU; the destructor stores it explicitly, same
 // scheme as CfGimmickLock.hpp's lbl_eu_80535900).
 extern void* lbl_eu_80529690[];
@@ -67,15 +67,15 @@ extern "C" void* createEffectForPlayer__Q22cf13CfGameManagerFv(u32 first, u32 va
 
 // Retail data labels referenced by this unit.
 extern const char lbl_eu_804FC550[];   // bdat column-name table (CfObjectMove_lookupBdatCol7 / CfObjectMove_lookupBdatCol11)
-extern u32 lbl_eu_80663E28;   // global flag word (bit 26) gating the CfObjectMove_detachMoveRegion flag clear
+extern u32 gmPauseFlags;   // global flag word (bit 26) gating the CfObjectMove_detachMoveRegion flag clear
 // Global flag word (bits 25/9) gating CfObjectMove_tickSpeed's flag block. Non-volatile
 // extern so the type agrees with CSystemWindow.hpp and the .sbss definition in
 // CUICfManager.cpp; reads that must stay separate use explicit volatile casts
 // in CfObjectMove.cpp (retail loads it twice there - see the double-lwz note).
-extern u32 lbl_eu_80663E24;
-extern u16 lbl_eu_80663E42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
-extern u16 lbl_eu_80663E44;
-extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the Scn_GetFrameDelta time query
+extern u32 gmGameFlags;
+extern u16 gmGlobalFlag42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
+extern u16 gmGlobalFlag44;
+extern CScn* gmScene;  // shared scene pointer passed to the Scn_GetFrameDelta time query
 // Shared speed constant (retail unmangled name; the .cpp also defines a
 // namespace-cf copy used by the resetMoveSpeed helper). Declared const so
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
@@ -397,7 +397,7 @@ namespace cf {
         virtual void CfObjectMove_detachModelList();  //0x1CC
         virtual void CfObjectMove_releaseSlotById(int arg);  //0x1D0
         virtual void CfObjectMove_recordMoveValue(float value);  //0x1D4
-        virtual void CfObjectMove_getMovementRate();  //0x1D8
+        virtual void* CfObjectMove_getMovementRate();  //0x1D8
         // Base body is emitted in CtrlNpc.cpp (retail 0x800942FC).
         virtual void CfObjectMove_setTargetC4Arg(u32 arg);  //0x1DC
         // Retail ocUnit call sites leave args live into these bctrs (walkR

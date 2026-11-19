@@ -33,5 +33,5 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u8 lbl_eu_806636AA[6];
-extern "C" u8 lbl_eu_806636A9;
+extern "C" u8 sLanguageOverride[6];
+extern "C" u8 sStandbyLoginDoneFlag;

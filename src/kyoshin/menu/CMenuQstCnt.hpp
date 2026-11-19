@@ -8,7 +8,7 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/IUIWindow.hpp"
 #include "kyoshin/QstData.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
@@ -104,7 +104,7 @@ extern "C" int PTNotice_IsActive_3C10();
 extern "C" int MenuTutorialIsCreated();
 extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int isQuestLogMenuActive();
-extern "C" u32 lbl_eu_80663E28;
+extern "C" u32 gmPauseFlags;
 extern "C" f32 lbl_eu_8066856C;
 extern "C" f32 lbl_eu_80668568;
 extern "C" void* lbl_eu_80664094;

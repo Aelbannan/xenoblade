@@ -389,6 +389,7 @@ export async function runHexdiff(
   const runOnce = async (noBuild: boolean) => {
     const args = [
       "tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json",
+      "--no-baseline", // tool-internal feedback loop, not a regression gate
     ];
     if (noBuild) args.push("--no-build");
     try {

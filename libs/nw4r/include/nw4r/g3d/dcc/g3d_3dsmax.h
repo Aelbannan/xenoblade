@@ -27,7 +27,7 @@ extern "C" const float lbl_eu_80669CC4; // 0.5f
 extern "C" const float lbl_eu_80669CC8; // 1.0f
 extern "C" const float lbl_eu_80669CCC; // 256.0f/360.0f (deg_to_fidx)
 extern "C" const float lbl_eu_80669CD0; // -0.5f
-extern "C" const TexSrtMtxFunc lbl_eu_8051D730[];
-extern "C" const TexSrtMtxFunc lbl_eu_8051D74C[];
+extern "C" const TexSrtMtxFunc TexSrtMtxSetDispatch[];
+extern "C" const TexSrtMtxFunc TexSrtMtxProductDispatch[];
 
 #endif

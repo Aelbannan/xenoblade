@@ -95,6 +95,7 @@ public:
     PlayerTrack* GetPlayerTrack(int index);
 
     void Update();
+    bool AllocVoices(int voices);
 
 private:
     /******************************************************************************

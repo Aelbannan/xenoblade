@@ -125,7 +125,7 @@ void CMenuKizunaTalk::Term() {
     // CCur18 cursor virtual slot 3 (vtable + 0xC): per-frame update.
     mCur.cleanup();
 
-    lbl_eu_80664424 = 0;
+    sKizunaBdatTable = 0;
     mMemRegion.deleteRegion();
     CMenuKizunaTalk::sInstance = 0;
 }
@@ -166,7 +166,7 @@ extern "C" bool isKizunaTalkActive() { return CMenuKizunaTalk::sInstance != 0; }
 // null-this-safe).
 // ---------------------------------------------------------------------------
 void kickoffKizunaWindow(CMenuKizunaTalk* self) {
-    if (lbl_eu_80664424 == 0) {
+    if (sKizunaBdatTable == 0) {
         return;
     }
     self->mFieldA0 = 1;
@@ -233,7 +233,7 @@ extern "C" void updateKizunaTalkWindow(CMenuKizunaTalk* self) {
             return;
         }
         char* s1 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2a);
-        char* s2 = BdatGetPtrDirect(lbl_eu_80664424, &lbl_eu_80505118[0x43], self->mCharId);
+        char* s2 = BdatGetPtrDirect(sKizunaBdatTable, &lbl_eu_80505118[0x43], self->mCharId);
         char* s3 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2c);
         char* s4 = BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x2d);
         reinterpret_cast<CSysWin*>(&self->mSysWin[0])->setKindContent(reinterpret_cast<char*>((u32)s1), reinterpret_cast<char*>((int)s2));
@@ -400,13 +400,13 @@ extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
 // ---------------------------------------------------------------------------
 // Retail symbol is the unmangled checkKizunaGate.
 extern "C" void checkKizunaGate(CMenuKizunaTalk* self) {
-    u16 total = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
+    u16 total = BdatGetU16Direct(sKizunaBdatTable, &lbl_eu_80505118[0x49], self->mCharId);
     if ((u32)(u16)total <= CtrlRemote_TouchBitByArg((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-        u8 talk = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
-        u8 talk2 = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
-        u16 value = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
-        u8 rank = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
+        u8 talk = BdatGetU8Direct((const void*)sKizunaBdatTable, &lbl_eu_80505118[0x4e], self->mCharId);
+        u8 talk2 = BdatGetU8Direct((const void*)sKizunaBdatTable, &lbl_eu_80505118[0x57], self->mCharId);
+        u16 value = BdatGetU16Direct(sKizunaBdatTable, &lbl_eu_80505118[0x60], self->mCharId);
+        u8 rank = BdatGetU8Direct((const void*)sKizunaBdatTable, &lbl_eu_80505118[0x69], self->mCharId);
         if (CtrlRemote_TouchBitByArg((u32)0x20) >= 0x113) {
             if ((u8)talk == 3) talk = 8;
             if ((u8)talk2 == 3) talk2 = 8;
@@ -460,10 +460,10 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         u32 fontVal = ((u32 (*)(void*))((void**)fontObj)[0x24 / 4])(fontObj);
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontVal);
 
-        u32 charName = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x4e], self->mCharId);
-        u32 charName2 = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x57], self->mCharId);
-        u16 rank = BdatGetU16Direct(lbl_eu_80664424, &lbl_eu_80505118[0x60], self->mCharId);
-        u32 affinity = BdatGetU8Direct((const void*)lbl_eu_80664424, &lbl_eu_80505118[0x69], self->mCharId);
+        u32 charName = BdatGetU8Direct((const void*)sKizunaBdatTable, &lbl_eu_80505118[0x4e], self->mCharId);
+        u32 charName2 = BdatGetU8Direct((const void*)sKizunaBdatTable, &lbl_eu_80505118[0x57], self->mCharId);
+        u16 rank = BdatGetU16Direct(sKizunaBdatTable, &lbl_eu_80505118[0x60], self->mCharId);
+        u32 affinity = BdatGetU8Direct((const void*)sKizunaBdatTable, &lbl_eu_80505118[0x69], self->mCharId);
 
         LayoutSetTextBoxFmtValue(layout, &lbl_eu_80505118[0xb7],
                       BdatTouchStringCell(&lbl_eu_80505118[0x33], &lbl_eu_80505118[0x3e], 0x25), 0);
@@ -536,16 +536,10 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
             u32 res = ((u32 (*)(nw4r::lyt::Pane*, const char*, u32, void*))(
                 (void**)picPane)[0x3c / 4])(picPane, &lbl_eu_80505118[0x1db], 1, tex->mHeader);
             if (res != 0) {
-                // Convert the u16 texture dimensions to float via the shared
-                // 0x43300000 magic double and size the picture pane.
-                KizunaF64Conv cw, ch;
-                cw.w[1] = (u32)w;
-                cw.w[0] = 0x43300000;
-                ch.w[1] = (u32)h;
-                ch.w[0] = 0x43300000;
+                // Size the picture pane from the texture's u16 dimensions.
                 nw4r::lyt::Size size;
-                size.width = (f32)(cw.d - lbl_eu_80667E70);
-                size.height = (f32)(ch.d - lbl_eu_80667E70);
+                size.width = (f32)w;
+                size.height = (f32)h;
                 picPane->SetSize(size);
             }
         }
@@ -560,14 +554,14 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
         void* data2 = self->mFile2->getData();
         CBdat::setBdatEntry(2, data2);
         Bdat_GetTable_AA34();
-        lbl_eu_80664424 = (u8*)getFP(&lbl_eu_80505118[0x1e5]);
+        sKizunaBdatTable = (u8*)getFP(&lbl_eu_80505118[0x1e5]);
         self->mFile2 = 0;
         return 1;
     }
     return 0;
 }
 
-void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))handleKizunaFileEvent)((char*)self - 0x6c); }
+void CMenuKizunaTalk::OnFileEvent(CEventFile* pEvent) { ((void(*)(void*))handleKizunaFileEvent)((char*)this - 0x6c); }
 
 extern "C" void fwdKizunaDtor6C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x6c); }
 

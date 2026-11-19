@@ -13,8 +13,8 @@ public:
 
     CDeviceVICb();
     virtual ~CDeviceVICb();
-    virtual void viBeforeDrawDone(){}
-    virtual void viAfterDrawDone(){}
+    virtual void viBeforeDrawDone();
+    virtual void viAfterDrawDone();
     virtual void viBeginFrame();
 };
 

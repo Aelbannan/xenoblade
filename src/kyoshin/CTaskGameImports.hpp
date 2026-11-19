@@ -4,7 +4,7 @@
 // layout views used by CTaskGame.cpp. The class itself is in kyoshin/CTaskGame.hpp.
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Declared BEFORE the monolib includes: functions.hpp (pulled in via
@@ -287,7 +287,7 @@ struct CTaskGamePtmfPool {
 extern u8 lbl_eu_8052585C[];
 
 // .sdata flag byte (CTaskGame_movePrepFade branches on it to pick the move-hook).
-extern u8 lbl_eu_80663D2C;
+extern u8 gMoveHookFlag;
 
 // Object pointed to by CTaskGame::unkD0 / unkCC: a busy/active flag byte at
 // +0x8C (CTaskGame_movePrepFade clears/sets it).
@@ -400,7 +400,7 @@ extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int 
 // CTaskREvent.hpp).
 // Global flag word raised to 0x10000000 by retail CTaskGame_moveStartMission after the
 // cf::CTaskGameCf create call.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // FixStr<32> append helpers (flat retail names; defined later in this TU
 // with C linkage): retail CTaskGame_moveStartMission appends the mission-caption suffix
 // segments through them.
@@ -429,13 +429,13 @@ struct CTaskGameCamView {
 // in CLoad.cpp / CfGameManager.cpp / menu TUs).
 class CLoad;
 class CBattery;
-extern CLoad* lbl_eu_80663D1C;
-extern CBattery* lbl_eu_80663D20;
-extern u32 lbl_eu_80663D24;
-extern u32 lbl_eu_80663D28;
-extern u32 lbl_eu_80663D30;
-extern u32 lbl_eu_80663D34;
-extern u32 lbl_eu_806649F4;
+extern CLoad* gLoadScreen;
+extern CBattery* gBatteryDisplay;
+extern u32 gLoadStep;
+extern u32 gLoadIdleCounter;
+extern u32 gLoadTimeoutCounter;
+extern u32 gLoadDelayCounter;
+extern u32 gCSaveLoadInstance;
 extern const f32 lbl_eu_80665D78;
 
 // CLoad helpers: declared by CLoad.hpp (proper C++ linkage).

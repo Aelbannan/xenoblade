@@ -4,7 +4,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CAIAction.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
 extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_takeDamageValue threshold
@@ -16,7 +16,7 @@ extern const float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectM
 extern const float lbl_eu_80667740;   // CActorParam_setHp clamp threshold
 
 
-extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
+extern u32 gmPauseFlags;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
 
 extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_getAdjustedFacing s16 -> float)
 

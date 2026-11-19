@@ -176,7 +176,7 @@ int CREvtModelMap::reset()
         mEmoteModel = nullptr;
     }
     if (mLoadedModelData) {
-        scnLgtRemoveLgtItem(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
+        scnLgtRemoveLgtItem(*(void**)((u8*)gmScene + 0x7C));
         mLoadedModelData = nullptr;
     }
     void* p1 = mFileData1;
@@ -268,12 +268,12 @@ void CREvtModelMap::loadFiles()
             u32 innerFlags = ((CREvtModelMapNameInfo*)mPtr1C)->field_0x58;
             if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                 mFileHandle1 = CDeviceFile::readFile(
-                    lbl_eu_80663E14->getAllocHandle(), filePath.mString, this, 0, 0);
+                    gmScene->getAllocHandle(), filePath.mString, this, 0, 0);
                 setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, mtl::MemManager::getHandleMEM2());
             } else {
                 mFileHandle1 = CDeviceFile::readFile(
                     mtl::MemManager::getHandleMEM2(), filePath.mString, this, 0, 0);
-                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, lbl_eu_80663E14->getAllocHandle());
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, gmScene->getAllocHandle());
             }
             if (EvtSeqGetStateBit5()) {
                 setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle1, getScnCounter__Fv());
@@ -289,12 +289,12 @@ void CREvtModelMap::loadFiles()
                 u32 innerFlags = ((CREvtModelMapNameInfo*)mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     mFileHandle2 = CDeviceFile::readFile(
-                        lbl_eu_80663E14->getAllocHandle(), filePath.mString, this, 0, 0);
+                        gmScene->getAllocHandle(), filePath.mString, this, 0, 0);
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, mtl::MemManager::getHandleMEM2());
                 } else {
                     mFileHandle2 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString, this, 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, lbl_eu_80663E14->getAllocHandle());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, gmScene->getAllocHandle());
                 }
                 if (EvtSeqGetStateBit5()) {
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, getScnCounter__Fv());
@@ -311,12 +311,12 @@ void CREvtModelMap::loadFiles()
                 u32 innerFlags = ((CREvtModelMapNameInfo*)mPtr1C)->field_0x58;
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     mFileHandle3 = CDeviceFile::readFile(
-                        lbl_eu_80663E14->getAllocHandle(), filePath.mString, this, 0, 0);
+                        gmScene->getAllocHandle(), filePath.mString, this, 0, 0);
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle3, mtl::MemManager::getHandleMEM2());
                 } else {
                     mFileHandle3 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString, this, 0, 0);
-                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle3, lbl_eu_80663E14->getAllocHandle());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle3, gmScene->getAllocHandle());
                 }
                 if (EvtSeqGetStateBit5()) {
                     setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle2, getScnCounter__Fv());
@@ -339,7 +339,7 @@ void CREvtModelMap::finishLoad()
 {
     if (mFlags & 2) {
         if (!mFileHandle1 && mFileData1 && !mEmoteModel) {
-            mEmoteModel = (CScnItemModel*)Scn_SetupAnim(lbl_eu_80663E14, mFileData1, 7, 1);
+            mEmoteModel = (CScnItemModel*)Scn_SetupAnim(gmScene, mFileData1, 7, 1);
             simSetFlag2OnTree(mEmoteModel, 0);
             simSetLeafDist7B0(mEmoteModel, 0.0f);
             mEmoteModel->flags7A8 |= 4;
@@ -429,7 +429,7 @@ void CREvtModelMap::onEvent(u32 visible)
                 acquireLODResource__8CTaskLODFv(mFileData2, 1);
             }
             if (mFileData3) {
-                mLoadedModelData = scnLgtCreateEnvController(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), mFileData3, 7);
+                mLoadedModelData = scnLgtCreateEnvController(*(void**)((u8*)gmScene + 0x7C), mFileData3, 7);
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
@@ -443,7 +443,7 @@ void CREvtModelMap::onEvent(u32 visible)
                 sVisibleModel = 0;
             }
             if (mLoadedModelData) {
-                scnLgtRemoveLgtItem(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
+                scnLgtRemoveLgtItem(*(void**)((u8*)gmScene + 0x7C));
                 mLoadedModelData = 0;
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
@@ -478,7 +478,7 @@ void CREvtModelMap::setVisible(int visible)
         if (getGlobalSda()) {
             *(u8*)((u8*)getGlobalSda() + 0xA8) = visible;
         }
-        u8* taskState = (u8*)(*(void**)((u8*)lbl_eu_80663E14 + 0x78));
+        u8* taskState = (u8*)(*(void**)((u8*)gmScene + 0x78));
         taskState[0x28] = visible;
     } else if (mEmoteModel) {
         mEmoteModel->vfuncB4(REvtCam_IsField98Set());

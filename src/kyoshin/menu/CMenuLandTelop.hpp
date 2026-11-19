@@ -6,7 +6,7 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -89,7 +89,7 @@ struct CMenuLandTelop {
     void cbRenderBefore();
 };
 
-// Object behind the global lbl_eu_806641A0 pointer (real type not yet
+// Object behind the global landTelopInstance pointer (real type not yet
 // recovered). Only the byte offsets touched by this TU are modelled.
 struct CLandTelopGlobal {
     u8 _00[0x64];            // 0x00
@@ -155,9 +155,7 @@ const char* getTelopString(int index);
 // Font handles dispatch through IDeviceFontInfo::getFont at +0x24 (real
 // owner in monolib/device/CDeviceFont.hpp); no TU-local view is kept.
 
-// Land-telop string/layout-name table plus the anim timing constants used by
-// Move / buildTelopLayout.
-extern char lbl_eu_80501720[];
+// Anim timing constants used by Move / buildTelopLayout.
 extern f32 lbl_eu_806673CC;       // banner/frame step delta
 extern f32 lbl_eu_806673D0;       // banner timer limit
 extern f64 lbl_eu_806673D8;       // progress clamp (high)
@@ -188,10 +186,10 @@ u32 hasQuestWindow();                      // quest-menu gate
 // C++-linkage import (retail symbol is the mangled playUISound__FUl).
 
 // Global data imports (sbss/rodata; MWCC does not mangle global-scope data).
-extern CLandTelopGlobal* lbl_eu_806641A0;
+extern CLandTelopGlobal* landTelopInstance;
 extern u8* lbl_eu_806640E0;
 extern char lbl_eu_805018A8[];
-extern u32 lbl_eu_80663E28;      // render-gate mode bitfield (.sbss; bit 21 = busy)
+extern u32 gmPauseFlags;      // render-gate mode bitfield (.sbss; bit 21 = busy)
 extern f32 lbl_eu_806673C8;      // layout reset frame constant
 extern u32 __ptmf_null[3];       // null pointer-to-member-function constant
 extern u32 lbl_eu_8052D238[];    // primary vtable

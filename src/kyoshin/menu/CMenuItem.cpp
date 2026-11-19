@@ -29,8 +29,6 @@
 extern "C" {
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 void BgTex_Release_3D9C(CBgTex* self);
-void teardown(CTitleAHelp* self);
-void updateHelp(CTitleAHelp* self);
 void CfRes_getInstPtrBC();
 int KyoshinHeap_GetActive54();
 u32 KyoshinHeap_GetSize500000();
@@ -48,7 +46,7 @@ void BgTex_SetupRegion_3A24(CBgTex* self);
 
 // Render-gate mode bitfield (.sbss; bit 21 = busy), shared with the other
 // menu-screen TUs.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // Menu/task-flow imports previously pulled in via CSkipTimer.hpp (that header
 // carries a conflicting __ct__7CSysWinFUc declaration, so they are declared here).
@@ -67,15 +65,11 @@ struct CfMenuPadData {
 };
 
 // Input-handler callees (retail unmangled names).
-extern "C" void beginClose(CTitleAHelp* self);
 extern "C" CfMenuPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void func_801C412C(CTitleAHelp* self);
 
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 
 // Global: UI state flag read by InfoCfGetUiFlags.
@@ -139,7 +133,7 @@ void CMenuItem::Term() {
     mScene->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mItemBoxGrid.UnloadItemBox();
 
     sInstance = nullptr;
@@ -150,7 +144,7 @@ void CMenuItem::Term() {
 
 void CMenuItem::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
 
     // Button input: the confirm trigger comes from a different pad bit in
@@ -180,7 +174,7 @@ void CMenuItem::Move() {
         // start the panel intro animations and play the open cue.
         if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && mTitleAHelp.isInitialized() != 0 &&
             mItemBoxGrid.IsItemBoxReady() != 0) {
-            func_801C412C(&mTitleAHelp);
+            mTitleAHelp.func_801C412C();
             mItemBoxGrid.InitItemDisplay();
             mState = 1;
             playUISound(0x6d);
@@ -188,7 +182,7 @@ void CMenuItem::Move() {
         break;
     case 1:
         // Advance to phase 2 once the title bar is idle and the grid ready.
-        if (mTitleAHelp.isIdle() != 0 && mItemBoxGrid.GetField61() != 0) {
+        if (mTitleAHelp.func_801C4124() != 0 && mItemBoxGrid.GetField61() != 0) {
             mState = 2;
         }
         break;
@@ -197,7 +191,7 @@ void CMenuItem::Move() {
         break;
     case 3:
         // Same idle+ready check, but sets the phase flag at 0x54 instead.
-        if (mTitleAHelp.isIdle() != 0 && mItemBoxGrid.GetField61() != 0) {
+        if (mTitleAHelp.func_801C4124() != 0 && mItemBoxGrid.GetField61() != 0) {
             mField54 = 1;
         }
         break;
@@ -205,12 +199,12 @@ void CMenuItem::Move() {
 
     BgTex_Tick_3D54(&mBgTex);
     mItemBoxGrid.UpdateItemBox();
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
 }
 
 void CMenuItem::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -218,7 +212,7 @@ void CMenuItem::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mItemBoxGrid.DrawItemBoxGrid(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 /*
@@ -250,7 +244,7 @@ unsigned long ItemMenu_IsPresent(void) { return CMenuItem::sInstance != nullptr;
 void CMenuItem::HandleInput() {
     // Help bar follows the grid's current mode.
     u8 mode = mItemBoxGrid.GetPromptState();
-    func_801C41E8(&mTitleAHelp, mode);
+    mTitleAHelp.func_801C41E8(mode);
 
     CfMenuPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     bool up, down;
@@ -287,7 +281,7 @@ void CMenuItem::HandleInput() {
         } else {
             // Scroll failed: hide the help prompt, refresh the grid and move
             // to state 3.
-            beginClose(&mTitleAHelp);
+            mTitleAHelp.beginClose();
             mItemBoxGrid.AdvanceBoxState();
             mState = 3;
         }

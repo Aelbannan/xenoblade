@@ -93,12 +93,7 @@ extern "C" void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__12CItemBoxGridFUcUsUlUc(CItemBoxGrid* self, u32 a, u32 b, u32 c, u32 d);
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void markReplayClose(CTitleAHelp* self);
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
-extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
-extern "C" void reopenFromClose(CTitleAHelp* self);      // stop help-bar animation
 // Load/anim hooks used by the phase gates (retail unmangled names).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);            // bg layout load-done query
 
@@ -106,17 +101,15 @@ extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);            // bg layout load-d
 class CProcess;
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 
 // cbRenderBefore gates / draw pipeline (retail verbatim names).
 namespace nw4r { namespace lyt { class DrawInfo; } }
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* di);
-extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
+extern u32 gmPauseFlags;   // cbRenderBefore mode-flag word (.sbss)
 
 // Input-handler callees (retail unmangled names). isClassicController keeps the
 // u32 return declared by CItemBoxGrid.hpp (included above) - do not redeclare.
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void updateHelp(CTitleAHelp* self);     // help-bar per-frame update
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int MenuTutorialIsCreated();
 

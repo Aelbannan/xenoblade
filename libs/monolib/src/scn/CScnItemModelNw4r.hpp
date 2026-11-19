@@ -547,7 +547,7 @@ extern "C" u32 lbl_eu_8056DE80[];
 // .sbss byte: one-shot allocator-path switch read/cleared by the ctor (the
 // first constructed model uses the getScnRoot49C path, later ones
 // getScnRoot44C). Owned by monolibdata2.o.
-extern u8 lbl_eu_806658D8;
+extern u8 gScnImN4AllocPathFlag;
 
 // .sdata2 constants used by the ctor: 30.0f (radius flag threshold) and the
 // 2^52 u32->double conversion magic.
@@ -561,7 +561,7 @@ extern char lbl_eu_8056E008[];
 
 // Node-name pointer (.sdata) the ctor resolves with ResMdl::GetResNode(PCc)
 // for the +0x14A0 node index / frame-table setup.
-extern const char* lbl_eu_806638D4;
+extern const char* spScnImN4NodeName;
 
 // Cross-TU callees used by the flag-sync functions (scnImN4SyncVisFlg /
 // scnImN4SyncCamFlg): bit-21/bit-8 flag setters (CScnItemModel.cpp) and the
@@ -668,7 +668,7 @@ extern char lbl_eu_80530D94[];   // item null assert file #2
 extern char lbl_eu_80663920;     // item null assert vararg #2
 // scnImN4ScanUserData searched user-data item name (.sdata pointer; the string it
 // points to is .data). Loaded with lwz @sda21, passed to strcmp.
-extern const char* lbl_eu_806638D0;
+extern const char* spScnImN4UserDataItemName;
 
 // Node-buffer setup / owner-memory helpers (defined in CScnItemModel.cpp /
 // CScn.cpp): set the model's working param, resolve the owner's memory
@@ -706,13 +706,11 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
 
 // scnImN4SyncMatCol mode/color data: 12-float .data table (4 groups of 3) and
 // the .sdata2 zero-color constant the query vector is inited with.
-extern const float lbl_eu_8056DE50[12];
+extern const float sMatColorTable[12];
 extern const float lbl_eu_8066A8FC;   // 1.0f (scnImN4UpdateBounds scale denominator)
-extern const float lbl_eu_8066A8E0;   // 0.0f (scnImN4UpdateBounds zero/threshold)
 
 // scnImN4UpdateXform half-scale constant (.sdata2, 0.5f) used to halve the summed
 // bounding-box extents before scaling by the model scale.
-extern const float lbl_eu_8066A904;
 
 // nw4r FSqrt assert source-file + message (.data) used by scnImN4UpdateBounds's
 // column-normalize Warning (retail file/line of the inlined FSqrt helper).

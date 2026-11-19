@@ -19,7 +19,7 @@
 
 #include <new>
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // cf::CBattleManager::getInstance() - declared in CMenuLandTelop.hpp
 // (extern "C" so the pre-mangled retail symbol is emitted verbatim).
@@ -143,7 +143,7 @@ void CMenuLandTelop::Term() {
         field_54 = 0;
     }
     mMemRegion.deleteRegion();
-    lbl_eu_806641A0 = 0;
+    landTelopInstance = 0;
 }
 
 // Per-frame update: gate on pause/menu states, run the entry-banner timer
@@ -154,9 +154,9 @@ void CMenuLandTelop::Move() {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (cbRenderBefore shape).
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x00200000)) return;
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x00200000)) return;
     if (IsMenuState621F0() == 0) return;
-    if (lbl_eu_80663E24 & 0xBFE40000u) return;
+    if (gmGameFlags & 0xBFE40000u) return;
 
     switch (field_8E) {
     case 0: {
@@ -171,7 +171,7 @@ void CMenuLandTelop::Move() {
         if (field_DA != 0) {
             // Banner visible: run its hold timer, then hide it again.
             field_DC = field_DC + lbl_eu_806673CC;
-            if (lbl_eu_806673D0 < field_DC) {
+            if (3.0f < field_DC) {
                 field_DA = 0;
                 field_DC = lbl_eu_806673C8;
             }
@@ -186,22 +186,22 @@ void CMenuLandTelop::Move() {
                 if (field_E0 != 0) return;
             }
 
-            u16 msgId = BdatGetU16ByTableKey(&lbl_eu_80501720[0],
-                                      &lbl_eu_80501720[0xd], field_8C);
-            u8 kind = BdatGetU8ByTableKey(&lbl_eu_80501720[0],
-                                    &lbl_eu_80501720[0x14], field_8C);
+            u16 msgId = BdatGetU16ByTableKey("landmarklist",
+                                      "getEXP", field_8C);
+            u8 kind = BdatGetU8ByTableKey("landmarklist",
+                                    "category", field_8C);
             if (msgId != 0) {
                 if (kind == 1) msgId = msgId * 10;
 
-                u16 col0 = BdatGetU16ByTableKey(&lbl_eu_80501720[0],
-                                         &lbl_eu_80501720[0x1d], field_8C);
-                u16 col1 = BdatGetU16ByTableKey(&lbl_eu_80501720[0],
-                                         &lbl_eu_80501720[0x23], field_8C);
+                u16 col0 = BdatGetU16ByTableKey("landmarklist",
+                                         "getAP", field_8C);
+                u16 col1 = BdatGetU16ByTableKey("landmarklist",
+                                         "getPP", field_8C);
 
                 // Loop-hoisted constants (retail parks these in f29/f30/f31
                 // for the whole landmark scan).
                 f64 bias = lbl_eu_806673F8;
-                f32 scale = lbl_eu_806673E8;
+                f32 scale = 0.01f;
                 f32 reset = lbl_eu_806673C8;
 
                 // Per-landmark completion: scale the message id by the entry's
@@ -222,7 +222,7 @@ void CMenuLandTelop::Move() {
                     }
                     f64 frac = ((f64)(u32)(msgId * weight) - bias) * scale;
                     f64 limit =
-                        (reset < frac) ? lbl_eu_806673D8 : lbl_eu_806673E0;
+                        (reset < frac) ? 0.5 : -0.5;
                     // Retail re-converts the SAME (msgId*weight) product here
                     // (second stw-pair + magic-subtract block), not a literal
                     // 100.0 - a pooled {100.0} double would have no blob home.
@@ -245,19 +245,19 @@ void CMenuLandTelop::Move() {
             // Area-entry cue; volume comes from the scene BGM level.
             switch (kind) {
             case 0:
-                CTaskGame_openStream(0, &lbl_eu_80501720[0x29],
-                              lbl_eu_80663E14->getAllocHandle(), 2, 1, 0,
+                CTaskGame_openStream(0, "snd/adx/j04.adx",
+                              gmScene->getAllocHandle(), 2, 1, 0,
                               MenuSnd_GetMasterVol_95EC());
                 break;
             case 1:
-                CTaskGame_openStream(0, &lbl_eu_80501720[0x39],
-                              lbl_eu_80663E14->getAllocHandle(), 2, 1, 0x5a,
+                CTaskGame_openStream(0, "snd/adx/j05.adx",
+                              gmScene->getAllocHandle(), 2, 1, 0x5a,
                               MenuSnd_GetMasterVol_95EC());
                 break;
             case 2:
-                CTaskGame_openStream(0, &lbl_eu_80501720[0x49],
-                              lbl_eu_80663E14->getAllocHandle(), 2, 1, 0,
-                              lbl_eu_806673EC * MenuSnd_GetMasterVol_95EC());
+                CTaskGame_openStream(0, "snd/adx/j03.adx",
+                              gmScene->getAllocHandle(), 2, 1, 0,
+                              0.5f * MenuSnd_GetMasterVol_95EC());
                 break;
             }
             field_90 = 3;
@@ -289,7 +289,7 @@ void CMenuLandTelop::Move() {
             break;
         case 2:
             field_94 = field_94 + lbl_eu_806673CC;
-            if (lbl_eu_806673F0 <= field_94) field_90 = 3;
+            if (90.0f <= field_94) field_90 = 3;
             break;
         case 3:
             if (AnimRewindFrame(field_88, lbl_eu_806673CC)) {
@@ -309,9 +309,9 @@ void CMenuLandTelop::cbRenderBefore() {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000)) return;
     if (IsMenuState621F0() == 0) return;
-    if (lbl_eu_80663E24 & 0xBFE40000u) return;
+    if (gmGameFlags & 0xBFE40000u) return;
     if (cf::CfGameManager::isSceneLoading()) return;
     if (field_DA != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -337,8 +337,8 @@ CMenuLandTelop* createLandTelop(CProcess* parent, CScn* scene, u16 opt,
         }
         if (count != 0) return 0;
     }
-    if (lbl_eu_806641A0 != 0) {
-        retargetLandTelop(lbl_eu_806641A0, opt, param);
+    if (landTelopInstance != 0) {
+        retargetLandTelop(landTelopInstance, opt, param);
         return 0;
     }
     mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
@@ -347,15 +347,15 @@ CMenuLandTelop* createLandTelop(CProcess* parent, CScn* scene, u16 opt,
     if (obj != 0) {
         obj = __ct__CMenuLandTelop(obj, scene, opt, param);
     }
-    lbl_eu_806641A0 = reinterpret_cast<CLandTelopGlobal*>(obj);
+    landTelopInstance = reinterpret_cast<CLandTelopGlobal*>(obj);
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
-    return reinterpret_cast<CMenuLandTelop*>(lbl_eu_806641A0);
+    return reinterpret_cast<CMenuLandTelop*>(landTelopInstance);
 }
 
 // Quest-log gating helper: true while the land-telop state flag at +0x8E
 // of the global object is 1.
 int isLandTelopActive() {
-    CLandTelopGlobal* p = lbl_eu_806641A0;
+    CLandTelopGlobal* p = landTelopInstance;
     if (p != 0 && p->field_0x8E == 1) {
         return 1;
     }
@@ -365,7 +365,7 @@ int isLandTelopActive() {
 // Quest-log gating helper: true while the land-telop state flag at +0x8E
 // of the global object is 0.
 int isLandTelopIdle() {
-    CLandTelopGlobal* p = lbl_eu_806641A0;
+    CLandTelopGlobal* p = landTelopInstance;
     if (p != 0 && p->field_0x8E == 0) {
         return 1;
     }
@@ -373,15 +373,15 @@ int isLandTelopIdle() {
 }
 
 void requestLandTelop() {
-    CLandTelopGlobal* p = lbl_eu_806641A0;
+    CLandTelopGlobal* p = landTelopInstance;
     if (p != 0) {
         p->field_0x64 = 1;
     }
 }
 
 unsigned char getLandTelopE0(void) {
-    if (lbl_eu_806641A0 != 0) {
-        return lbl_eu_806641A0->field_0xE0;
+    if (landTelopInstance != 0) {
+        return landTelopInstance->field_0xE0;
     }
     return 0;
 }
@@ -433,7 +433,7 @@ int consumeTelopEntry(CMenuLandTelop* self) {
 #pragma auto_inline off
 void buildTelopLayout(CMenuLandTelop* self) {
     self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x3000,
-                                  &lbl_eu_80501720[0x59], 0);
+                                  "CMenuLandTelop", 0);
     // Scratch-region guard: everything allocated below lives in the embedded
     // region and is released as a block by the destructor at scope exit.
     Class_8045F858 regionGuard(&self->mMemRegion);
@@ -444,66 +444,66 @@ void buildTelopLayout(CMenuLandTelop* self) {
     switch (self->field_8E) {
     case 0:
         buildLayout(&self->field_54, CUICfManager_getArcResourceAccessor(),
-                      &lbl_eu_80501720[0x68]);
+                      "mf70_cf60_syswin11.brlyt");
         bindLayoutAnimTransform(self->field_54, &self->field_88, CUICfManager_getArcResourceAccessor(),
-                      &lbl_eu_80501720[0x81]);
+                      "mf70_cf60_syswin11_land_mes.brlan");
 
         // Retail re-derives the root pane inline for every lookup.
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0xa3], true)
+            ->FindPaneByName("nul_land00", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0xae], true)
+            ->FindPaneByName("nul_land01", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0xb9], true)
+            ->FindPaneByName("nul_land02", true)
             ->SetVisible(false);
 
         switch (
-            BdatGetU8ByTableKey(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
+            BdatGetU8ByTableKey("landmarklist", "category",
                           self->field_8C)) {
         case 0:
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0xa3], true)
+                ->FindPaneByName("nul_land00", true)
                 ->SetVisible(true);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0xd4],
-                BdatTouchStringCell(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                self->field_54, "txt_head00",
+                BdatTouchStringCell("MNU_update", "info",
                               4),
                 0);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0xe4],
-                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                self->field_54, "txt_land00",
+                BdatTouchStringCell("landmarklist", "name",
                               self->field_8C),
                 0);
             break;
         case 1:
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0xae], true)
+                ->FindPaneByName("nul_land01", true)
                 ->SetVisible(true);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0xef],
-                BdatTouchStringCell(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                self->field_54, "txt_head01",
+                BdatTouchStringCell("MNU_update", "info",
                               7),
                 0);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0xfa],
-                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                self->field_54, "txt_land01",
+                BdatTouchStringCell("landmarklist", "name",
                               self->field_8C),
                 0);
             break;
         case 2:
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0xb9], true)
+                ->FindPaneByName("nul_land02", true)
                 ->SetVisible(true);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0x105],
-                BdatTouchStringCell(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                self->field_54, "txt_head02",
+                BdatTouchStringCell("MNU_update", "info",
                               8),
                 0);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0x110],
-                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                self->field_54, "txt_land02",
+                BdatTouchStringCell("landmarklist", "name",
                               self->field_8C),
                 0);
             break;
@@ -511,74 +511,74 @@ void buildTelopLayout(CMenuLandTelop* self) {
         break;
     case 1: // field_8E == 1
         buildLayout(&self->field_54, CUICfManager_getArcResourceAccessor(),
-                      &lbl_eu_80501720[0x11b]);
+                      "mf70_cf51_sideinfo.brlyt");
         bindLayoutAnimTransform(self->field_54, &self->field_88, CUICfManager_getArcResourceAccessor(),
-                      &lbl_eu_80501720[0x134]);
+                      "mf70_cf51_sideinfo_in.brlan");
 
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0x150], true)
+            ->FindPaneByName("pic_landmark", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0x15d], true)
+            ->FindPaneByName("pic_secret", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0x168], true)
+            ->FindPaneByName("pic_area", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0x171], true)
+            ->FindPaneByName("txt_landmark", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0x17e], true)
+            ->FindPaneByName("txt_area", true)
             ->SetVisible(false);
         self->field_54->GetRootPane()
-            ->FindPaneByName(&lbl_eu_80501720[0x14], true)
+            ->FindPaneByName("category", true)
             ->SetVisible(false);
 
         switch (
-            BdatGetU8ByTableKey(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
+            BdatGetU8ByTableKey("landmarklist", "category",
                           self->field_8C)) {
         case 0:
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0x150], true)
+                ->FindPaneByName("pic_landmark", true)
                 ->SetVisible(true);
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0x171], true)
+                ->FindPaneByName("txt_landmark", true)
                 ->SetVisible(true);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0x171],
-                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                self->field_54, "txt_landmark",
+                BdatTouchStringCell("landmarklist", "name",
                               self->field_8C),
                 0);
             break;
         case 1:
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0x15d], true)
+                ->FindPaneByName("pic_secret", true)
                 ->SetVisible(true);
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0x171], true)
+                ->FindPaneByName("txt_landmark", true)
                 ->SetVisible(true);
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0xdf], true)
+                ->FindPaneByName("name", true)
                 ->SetVisible(true);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0x171],
-                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                self->field_54, "txt_landmark",
+                BdatTouchStringCell("landmarklist", "name",
                               self->field_8C),
                 0);
             break;
         case 2:
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0x168], true)
+                ->FindPaneByName("pic_area", true)
                 ->SetVisible(true);
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0x17e], true)
+                ->FindPaneByName("txt_area", true)
                 ->SetVisible(true);
             self->field_54->GetRootPane()
-                ->FindPaneByName(&lbl_eu_80501720[0xdf], true)
+                ->FindPaneByName("name", true)
                 ->SetVisible(true);
             LayoutSetTextBoxFmtValue(
-                self->field_54, &lbl_eu_80501720[0x17e],
-                BdatTouchStringCell(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                self->field_54, "txt_area",
+                BdatTouchStringCell("landmarklist", "name",
                               self->field_8C),
                 0);
             break;

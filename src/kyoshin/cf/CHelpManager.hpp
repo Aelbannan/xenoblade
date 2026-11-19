@@ -3,9 +3,19 @@
 #include <types.h>
 #include "kyoshin/help/CHelp.hpp"
 #include "kyoshin/help/CHelp_LandMark.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "monolib/util/reslist.hpp"
 
 namespace cf {
+
+class CfObjectActor;
+
+// Retail cf::CHelp_Always: the always-enabled help leaf queried by the
+// manager before dispatching a scenario tip.
+class CHelp_Always {
+public:
+    int isHelpAlwaysEnabled();
+};
 
 class __declspec(novtable) CHelp_EtherMakeTIPS : public CHelp {
 public:
@@ -72,14 +82,14 @@ struct CHelpManagerVtblSlot : CHelpManagerData {
     u8* mVptr; // 0x1C
 };
 
-// 8-byte entry of the scenario-help table (lbl_eu_80538E90): mKey is compared
+// 8-byte entry of the scenario-help table (sScenarioHelpTable): mKey is compared
 // against CHelpManager::mField10; mItems is a NULL-terminated CHelp array.
 struct CHelpTableEntry {
     s32 mKey;      // 0x0 (signed: retail compares with cmpw)
     void** mItems; // 0x4
 };
 
-// Static help-dispatch table (lbl_eu_80576D08) embedding the CHelp objects
+// Static help-dispatch table (sHelpDispatchObjects) embedding the CHelp objects
 // dispatchScenarioHelp drives when mField10 is 3 / 5.
 struct CHelpManagerTbl {
     u8 pad_00[0x20];
@@ -96,51 +106,20 @@ struct CHelpBattleObjArg {
     u32 mField3F08; // 0x3F08
 };
 
-// Battle-manager actor-list view used by updateBattleHelpState: mirrors
-// monolib's reslist/_reslist_base at CBattleManager+0x44 (mActorList3) so
-// the inlined size() walk reproduces retail codegen.
-struct CHelpBmListNode {
-    CHelpBmListNode* mNext; // 0x0
-    CHelpBmListNode* mPrev; // 0x4
-};
-struct CHelpBmResList {
-    void* mVptr;                    // +0x00 (virtual dtor)
-    CHelpBmListNode* mStartNodePtr; // +0x04
-    CHelpBmListNode mStartNode;     // +0x08
-    u32 size() const {
-        CHelpBmListNode* curNode;
-        CHelpBmListNode* endNode;
-
-        u32 length;
-        endNode = this->mStartNodePtr;
-        length = 0;
-        curNode = this->mStartNodePtr->mNext;
-
-        while (curNode != endNode) {
-            length++;
-            curNode = curNode->mNext;
-        }
-
-        return length;
-    }
-};
-struct CHelpBmView44 {
-    u8 pad_00[0x44];       // 0x0..0x43
-    CHelpBmResList mList3; // 0x44 (mActorList3)
-};
-
-// Minimal cf::CBattleManager stand-in so updateBattleHelpState can call the real
-// static member: its mangled name is exactly the retail import
-// getInstance__Q22cf14CBattleManagerFv. Only the fields the helper touches
-// are modeled (actor list at +0x44).
+// cf::CBattleManager stand-in so updateBattleHelpState can call its real
+// static member (mangled name = the retail import
+// getInstance__Q22cf14CBattleManagerFv). The actor list at +0x44 is the real
+// shared reslist<T> from monolib; only the preceding fields are opaque here
+// because CBattleManager.hpp conflicts with the C-linkage declaration this
+// TU receives from the harness catalog.
 class CBattleManager {
 public:
     static CBattleManager* getInstance();
-    u8 pad_00[0x44];         // 0x0..0x43
-    CHelpBmResList mActorList3; // 0x44
+    u8 pad_00[0x44];                     // 0x0..0x43
+    reslist<CfObjectActor*> mActorList3; // 0x44
 };
 
-// --- Static help-table entry shapes (lbl_eu_80576D08) ---
+// --- Static help-table entry shapes (sHelpDispatchObjects) ---
 // The TU static initializer (sinit_80295DB0) builds every entry of the help
 // table: base CHelp ctor call, then interface-table (vtable) override at +0x8
 // and the extra payload fields. These mirrors only model the fields the sinit
@@ -201,7 +180,7 @@ struct __declspec(novtable) CHelpWordC_1C : public CHelp {
     u32 mField18; // 0x18
 };
 
-// Full static help table (retail lbl_eu_80576D08, ~0x5C0 bytes of .bss):
+// Full static help table (retail sHelpDispatchObjects, ~0x5C0 bytes of .bss):
 // one member per entry the sinit constructs, laid out at retail offsets.
 // The sinit casts the CHelpManagerTbl extern to this type to reach the
 // deep entries.
@@ -312,9 +291,9 @@ extern "C" int isHelpPopupReady(cf::CHelpManager* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern cf::CHelpManager* lbl_eu_80664A10;
-extern u32 lbl_eu_80663E28; // menu-open flag (bit 24)
+extern u32 gmPauseFlags; // menu-open flag (bit 24)
 extern u8 lbl_eu_8053911C[]; // CHelpManager vtable (retail .data)
-extern cf::CHelpManagerTbl lbl_eu_80576D08; // static CHelp dispatch objects
+extern cf::CHelpManagerTbl sHelpDispatchObjects; // static CHelp dispatch objects
 
 // Vtable labels stored into the help-table entries' interface slot (+0x8) by
 // the TU static initializer (retail .data).
@@ -350,11 +329,7 @@ extern u8 lbl_eu_8053B770[];
 extern u8 lbl_eu_8053B798[];
 extern u8 lbl_eu_8053B7C0[];
 
-// .sdata2 float payloads stored at +0xC of the float entries.
-extern f32 lbl_eu_80668BC8; // 1.0f
-extern f32 lbl_eu_80668BCC; // 300.0f
 
-// C-linkage retail ctor of CHelp_LandMark (defined with C linkage in
 // CHelp_LandMark.cpp; retail symbol is unmangled, so the call site must
 // reference it under C linkage).
 extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self,
@@ -367,8 +342,8 @@ extern "C" cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkFv(
 // Compiler-runtime atexit registration (used by the sinit for the
 // CHelp_LandMark entry's destructor).
 extern void __register_global_object(void* object, void* dtor, void* cookie);
-extern void* lbl_eu_80538E30[]; // default mListB item array
-extern cf::CHelpTableEntry lbl_eu_80538E90[]; // mField10 -> item-array table
+extern void* sDefaultHelpItemList[]; // default mListB item array
+extern cf::CHelpTableEntry sScenarioHelpTable[]; // mField10 -> item-array table
 extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // scenario sequence counter
 extern "C" u32 CHelp_ForwardPartyNotice(); // help-active check (trampoline to MenuTutorialIsCreated)

@@ -2,13 +2,15 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp removed: it pulls CTaskGameEff.hpp ->
 // CfObjectImplMove.hpp, whose ScnRes_VertRayForward_E398 decl clashes with
 // CtrlMoveBase.hpp (via CtrlPc.hpp). Nothing in this TU needs it.
 
 #include "kyoshin/cf/CtrlRemote.hpp"
-// CtrlPc.hpp scaffolds __ct__CtrlRemote as `void`; this TU declares the real
+#include "kyoshin/SysWinLogCounterApi.hpp"
+// CtrlPc.hpp scaffolds
 // returning signature (CtrlRemote.hpp). Hide the scaffold decl so the two do
 // not conflict (the hidden name is never referenced in this TU).
 #include "kyoshin/cf/CtrlPc.hpp"
@@ -33,7 +35,7 @@ cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5)
     self->mField25C = 0;
     self->mField260 = 0;
     for (int i = 0; i < 32; i++) {
-        self->mFloats1DC[i] = lbl_eu_80666730;
+        self->mFloats1DC[i] = 0.0f;
     }
     CPadManager::updateLongHoldTimerThreshold(0xa);
     return obj;
@@ -51,7 +53,7 @@ static int probePlayerCtrl(cf::CtrlPc* self, u32* out, int gate);
 // mode) re-aim via vf37 and push one sample into the 32-float ring buffer.
 void CtrlRemote_FrameUpdate(CtrlPcVf44* self)
 {
-    if (((lbl_eu_80663E24 & 0x02000000) | (lbl_eu_80663E24 & 0x400)) != 0) {
+    if (((gmGameFlags & 0x02000000) | (gmGameFlags & 0x400)) != 0) {
         return;
     }
 
@@ -163,14 +165,14 @@ void func_80098EF8(CtrlPcVf38* self)
     // Player-state probe 0xb: re-aim the facing angle from the vf25 vector.
     if (isBattleStatusActive(&self->mField5C->mField8, 0xb) != 0) {
         float vec[3];
-        if (self->vf25(vec) != 0 && (lbl_eu_80663E24 & 0x4000000) == 0) {
+        if (self->vf25(vec) != 0 && (gmGameFlags & 0x4000000) == 0) {
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(vec[0], vec[2]);
-            f32 v = ang * lbl_eu_8066674C;
-            self->mField14 = lbl_eu_80666750;
+            f32 v = ang * 0.024543693f;
+            self->mField14 = 0.4f;
             self->mFieldC = v;
             self->mField10 = v;
         } else {
-            self->mField14 = lbl_eu_80666730;
+            self->mField14 = 0.0f;
         }
     }
 
@@ -188,8 +190,8 @@ void func_80098EF8(CtrlPcVf38* self)
         isBattleStatusActive(&self->mField5C->mField8, 0xb) != 0 ||
         (getUnk80664658()->mFlags & 2) != 0 ||
         SkipTimer_IsActiveFlag() != 0 ||
-        (lbl_eu_80663E24 & 0x8429A000) != 0 ||
-        ((lbl_eu_80663E28 & 0x20000) | (lbl_eu_80663E28 & 0x30)) != 0 ||
+        (gmGameFlags & 0x8429A000) != 0 ||
+        ((gmPauseFlags & 0x20000) | (gmPauseFlags & 0x30)) != 0 ||
         cf::CfPadTask::isInputDisabled() != 0 ||
         inBattle != 0 ||
         timerNZ != 0 ||
@@ -204,21 +206,21 @@ void func_80098EF8(CtrlPcVf38* self)
         // Fallback: clear the 0x800 aim range unless the aim timer already
         // ran out, and drop the facing angle when the 0x8 gate or menu state
         // is active.
-        if (vf14res == 0 || self->mField14 > lbl_eu_80666730) {
+        if (vf14res == 0 || self->mField14 > 0.0f) {
             self->mField5C->mSub3ED4->vf10(0x800, 1);
             if (isBattleStatusActive(&self->mField5C->mField8, 0xb) == 0) {
-                self->mField14 = lbl_eu_80666730;
+                self->mField14 = 0.0f;
             }
             if (probePlayerCtrl((cf::CtrlPc*)self, &v8b, 8) != 0 ||
                 isBattleStatusActive(&self->mField5C->mField8, 0xf) != 0) {
-                self->mField8 = lbl_eu_80666730;
+                self->mField8 = 0.0f;
                 if (self->mField5C->mField3F60 != NULL) {
                     self->mField5C->mField3F60->mFieldC |= 0x400;
                 }
             } else {
                 cf::CfGameManager::getInstance();
                 if (isGlobalCamFlagSet(0x4000000) != 0) {
-                    self->mField8 = lbl_eu_80666730;
+                    self->mField8 = 0.0f;
                     if (self->mField5C->mField3F60 != NULL) {
                         self->mField5C->mField3F60->mFieldC |= 0x400;
                     }
@@ -289,7 +291,7 @@ void func_80098EF8(CtrlPcVf38* self)
             ml::CVec3 d = diff;
             f32 dist2 = nw4r::math::VEC3LenSq(
                 reinterpret_cast<const nw4r::math::VEC3*>(&d));
-            if (dist2 < lbl_eu_80666754) {
+            if (dist2 < 225.0f) {
                 if (self->mField5C->mSub3ED4->vf14(0x1000) == 0) {
                     self->mField5C->mSub3ED4->vf10(0x1000, 1);
                 }
@@ -326,7 +328,7 @@ void func_80098EF8(CtrlPcVf38* self)
                 f32 f31v =
                     ml::pi +
                     ((CtrlGm8Vf1C*)gm8)->vf05()->mField4 - self->mFieldC;
-                f32 f1 = lbl_eu_8066674C * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                f32 f1 = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
                 f32 f3 = f31v - f1;
                 while (f3 >= ml::pi) {
                     f3 -= ml::tau;
@@ -335,29 +337,29 @@ void func_80098EF8(CtrlPcVf38* self)
                     f3 += ml::tau;
                 }
                 f32 ang = f3 * ml::rad2deg;
-                if (ang > lbl_eu_80666758 && ang < lbl_eu_8066675C) {
+                if (ang > 35.0f && ang < 140.0f) {
                     self->mField4 |= 0x800;
                 } else {
                     self->mField4 &= ~0x800;
                 }
-                if (ang < lbl_eu_80666760 && ang > lbl_eu_80666764) {
+                if (ang < -35.0f && ang > -140.0f) {
                     self->mField4 |= 0x400;
                 } else {
                     self->mField4 &= ~0x400;
                 }
-                if (ang >= lbl_eu_80666760 && ang <= lbl_eu_80666758) {
+                if (ang >= -35.0f && ang <= 35.0f) {
                     self->mField4 |= 0x2000;
                 } else {
                     self->mField4 &= ~0x2000;
                 }
-                if (ang >= lbl_eu_8066675C || ang <= lbl_eu_80666764) {
+                if (ang >= 140.0f || ang <= -140.0f) {
                     self->mField4 |= 0x1000;
                 } else {
                     self->mField4 &= ~0x1000;
                 }
             }
             self->mField10 =
-                lbl_eu_8066674C * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                0.024543693f * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
         } else if ((self->mField4 & 0x200) != 0) {
             self->mField4 |= 0x2000;
         }
@@ -370,28 +372,28 @@ void func_80098EF8(CtrlPcVf38* self)
     f32 f30;
     if (s2->mFieldED != 0) {
         f32 v = (f32)(s8)s2->mField58;
-        if (v < lbl_eu_80666734) {
-            v = lbl_eu_80666734;
+        if (v < -55.0f) {
+            v = -55.0f;
         }
-        if (v > lbl_eu_80666738) {
-            v = lbl_eu_80666738;
+        if (v > 55.0f) {
+            v = 55.0f;
         }
-        f31 = v / lbl_eu_80666738;
+        f31 = v / 55.0f;
     } else {
-        f31 = lbl_eu_80666730;
+        f31 = 0.0f;
     }
     CtrlPcSub37Ext* s3 = (CtrlPcSub37Ext*)self->vf37();
     if (s3->mFieldED != 0) {
         f32 v = (f32)(s8)s3->mField59;
-        if (v < lbl_eu_80666734) {
-            v = lbl_eu_80666734;
+        if (v < -55.0f) {
+            v = -55.0f;
         }
-        if (v > lbl_eu_80666738) {
-            v = lbl_eu_80666738;
+        if (v > 55.0f) {
+            v = 55.0f;
         }
-        f30 = v / lbl_eu_80666738;
+        f30 = v / 55.0f;
     } else {
-        f30 = lbl_eu_80666730;
+        f30 = 0.0f;
     }
 
     if (probePlayerCtrl((cf::CtrlPc*)self, &v1c, 0x1c) == 0 &&
@@ -399,27 +401,27 @@ void func_80098EF8(CtrlPcVf38* self)
         probePlayerCtrl((cf::CtrlPc*)self, &v12, 0x12) == 0 &&
         probePlayerCtrl((cf::CtrlPc*)self, &v13, 0x13) == 0 &&
         probePlayerCtrl((cf::CtrlPc*)self, &v805, 0x805) == 0) {
-        if (f31 != lbl_eu_80666730 || f30 != lbl_eu_80666730) {
+        if (f31 != 0.0f || f30 != 0.0f) {
             f32 a1 = Atan2FIdx__Q24nw4r4mathFff(f31, f30);
-            self->mFieldC = a1 * lbl_eu_8066674C;
+            self->mFieldC = a1 * 0.024543693f;
         }
-        if (f31 != lbl_eu_80666730 || f30 != lbl_eu_80666730) {
+        if (f31 != 0.0f || f30 != 0.0f) {
             f32 a2 = Atan2FIdx__Q24nw4r4mathFff(f31, f30);
-            self->mField8 = a2 * lbl_eu_8066674C;
+            self->mField8 = a2 * 0.024543693f;
         }
-        if (f31 * f31 + f30 * f30 < lbl_eu_80666730) {
+        if (f31 * f31 + f30 * f30 < 0.0f) {
             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
                                         lbl_eu_80526300);
         }
         f32 d2 = f31 * f31 + f30 * f30;
         f32 dist;
-        if (d2 > lbl_eu_80666730) {
+        if (d2 > 0.0f) {
             dist = d2 * nw4r::math::FrSqrt(d2);
         } else {
-            dist = lbl_eu_80666730;
+            dist = 0.0f;
         }
-        if (dist > lbl_eu_80666768) {
-            dist = lbl_eu_80666768;
+        if (dist > 1.0f) {
+            dist = 1.0f;
         }
         self->mField14 = dist;
 
@@ -428,7 +430,7 @@ void func_80098EF8(CtrlPcVf38* self)
             probePlayerCtrl((cf::CtrlPc*)self, &v4000b, 0x4000) == 0) {
             // keep the computed stick distance
         } else {
-            self->mField14 = lbl_eu_80666730;
+            self->mField14 = 0.0f;
             if (self->mField5C->mSub3ED4->vf14(0x1000) == 0) {
                 CtrlVoiceOwnerC4View* vo =
                     (CtrlVoiceOwnerC4View*)&self->mField5C->mSub3E9C;
@@ -444,7 +446,7 @@ void func_80098EF8(CtrlPcVf38* self)
     if (probePlayerCtrl((cf::CtrlPc*)self, &v803b, 0x803) != 0) {
         if (probePlayerCtrl((cf::CtrlPc*)self, &v19, 0x19) == 0 &&
             p1aHold == 0) {
-            self->mField14 *= lbl_eu_8066676C;
+            self->mField14 *= 0.81f;
         }
     }
 
@@ -473,8 +475,8 @@ a89c:
                 reinterpret_cast<nw4r::math::VEC3*>(&diff), pOther, pSelf);
             ml::CVec3 d = diff;
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
-            self->mField14 = lbl_eu_80666730;
-            self->mFieldC = ang * lbl_eu_8066674C;
+            self->mField14 = 0.0f;
+            self->mFieldC = ang * 0.024543693f;
             self->mField5C->mSub3E9C.v47(self->mFieldC);
         }
         self->mField5C->mSub3E9C.v02(4);
@@ -499,14 +501,14 @@ a89c:
                 reinterpret_cast<nw4r::math::VEC3*>(&diff), pT, pSelf);
             ml::CVec3 d = diff;
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
-            self->mFieldC = ang * lbl_eu_8066674C;
+            self->mFieldC = ang * 0.024543693f;
             self->mField5C->mSub3E9C.v47(self->mFieldC);
         }
     }
 }
 
 struct CActorParam1840View { u8 _pad[0x1840]; float f1840; };
-float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return ((CActorParam1840View*)self)->f1840; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc106() { return ((CActorParam1840View*)this)->f1840; }
 
 // Target us-8009abb4. Pad-handler gate: when the global "demo/idle" state
 // word clears, run a battery of player-state probes; if none of them flag a
@@ -1380,7 +1382,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         prm.b0D = 0x35;
         prm.b0E = 100;
         prm.h12 = 0;
-        prm.f14 = lbl_eu_80666730;
+        prm.f14 = 0.0f;
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
@@ -1393,7 +1395,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         prm.b0D = 0x36;
         prm.b0E = 100;
         prm.h12 = 0;
-        prm.f14 = lbl_eu_80666730;
+        prm.f14 = 0.0f;
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
@@ -1406,7 +1408,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         prm.b0D = 0x37;
         prm.b0E = 100;
         prm.h12 = 0;
-        prm.f14 = lbl_eu_80666730;
+        prm.f14 = 0.0f;
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
@@ -1419,7 +1421,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         prm.b0D = 0x3B;
         prm.b0E = 100;
         prm.h12 = 0;
-        prm.f14 = lbl_eu_80666730;
+        prm.f14 = 0.0f;
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
@@ -1432,7 +1434,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         prm.b0D = 0x3C;
         prm.b0E = 100;
         prm.h12 = 0;
-        prm.f14 = lbl_eu_80666730;
+        prm.f14 = 0.0f;
         prm.h10 = 0;
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
@@ -1758,27 +1760,27 @@ u32 CtrlRemote_DispatchBufOp(cf::CtrlRemote* self, CtrlRemoteBuf* src, s32 type,
 // Clear the shared control-data buffer (initializing it first if needed).
 void CtrlRemote_InitSharedBufVoid()
 {
-    s32 flag = (s8)lbl_eu_80663E80;
+    s32 flag = (s8)sCtrlRemoteBufInitialized;
     if (flag == 0) {
-        memset(lbl_eu_80571848, 0, 0x1214);
-        memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-        memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-        lbl_eu_80663E80 = 1;
+        memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+        memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+        memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+        sCtrlRemoteBufInitialized = 1;
     }
-    memset(lbl_eu_80571848, 0, 0x1214);
+    memset(sCtrlRemoteSharedBuf, 0, 0x1214);
 }
 
 // Return a pointer to the shared control-data buffer, initializing it once.
 u32* CtrlRemote_GetSharedBufPtr()
 {
-    s32 flag = (s8)lbl_eu_80663E80;
+    s32 flag = (s8)sCtrlRemoteBufInitialized;
     if (flag == 0) {
-        memset(lbl_eu_80571848, 0, 0x1214);
-        memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-        memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-        lbl_eu_80663E80 = 1;
+        memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+        memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+        memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+        sCtrlRemoteBufInitialized = 1;
     }
-    return lbl_eu_80571848;
+    return sCtrlRemoteSharedBuf;
 }
 
 int CtrlRemote_GetFixedSize1214(void* self) { return 4628; }
@@ -1787,41 +1789,41 @@ u32* CtrlRemote_MapDataIndex(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
 extern "C" void CtrlRemote_TouchBitByArg(void* arg)
 {
-	s32 flag = (s8)lbl_eu_80663E80;
+	s32 flag = (s8)sCtrlRemoteBufInitialized;
 	if (flag == 0) {
-		memset(lbl_eu_80571848, 0, 0x1214);
-		memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-		memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-		lbl_eu_80663E80 = 1;
+		memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+		memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+		memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+		sCtrlRemoteBufInitialized = 1;
 	}
-	CtrlRemote_TestSharedBit(lbl_eu_80571848, (s32)arg);
+	CtrlRemote_TestSharedBit(sCtrlRemoteSharedBuf, (s32)arg);
 }
 
 // Set a control-data bit: initialize the shared buffer if needed, then write
 // `value` at index `destination` via the retail bit-setter.
 void CtrlRemote_SetSharedBit(u32 destination, u32 value)
 {
-    s32 flag = (s8)lbl_eu_80663E80;
+    s32 flag = (s8)sCtrlRemoteBufInitialized;
     if (flag == 0) {
-        memset(lbl_eu_80571848, 0, 0x1214);
-        memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-        memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-        lbl_eu_80663E80 = 1;
+        memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+        memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+        memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+        sCtrlRemoteBufInitialized = 1;
     }
-    CtrlRemote_WriteBufBits(lbl_eu_80571848, destination, value);
+    CtrlRemote_WriteBufBits(sCtrlRemoteSharedBuf, destination, value);
 }
 
 // Return a pointer to the shared control-data buffer, initializing it once.
 u32* CtrlRemote_FetchSharedBufPtr()
 {
-    s32 flag = (s8)lbl_eu_80663E80;
+    s32 flag = (s8)sCtrlRemoteBufInitialized;
     if (flag == 0) {
-        memset(lbl_eu_80571848, 0, 0x1214);
-        memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-        memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-        lbl_eu_80663E80 = 1;
+        memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+        memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+        memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+        sCtrlRemoteBufInitialized = 1;
     }
-    return lbl_eu_80571848;
+    return sCtrlRemoteSharedBuf;
 }
 
 // Control-index -> (word pointer, type, sub-index) mapper. The four ranges
@@ -1900,14 +1902,14 @@ void CtrlRemote_WriteBufBits(u32* buffer, u32 index, u32 value)
             if (value > 0xFF) {
                 value = 0xFF;
             }
-            mask = lbl_eu_80528048[idx & 3];
+            mask = sCtrlRemoteByteMasks[idx & 3];
             shift = (idx & 3) << 3;
             break;
         case 1:
             if (value > 1) {
                 value = 1;
             }
-            mask = lbl_eu_80528058[idx & 0x1F];
+            mask = sCtrlRemoteBitMasks[idx & 0x1F];
             shift = idx & 0x1F;
             break;
         }
@@ -1952,11 +1954,11 @@ extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index)
 		shift = (idx & 1) << 4;
 		break;
 	case 2:
-		mask = lbl_eu_80528048[idx & 3];
+		mask = sCtrlRemoteByteMasks[idx & 3];
 		shift = (idx & 3) << 3;
 		break;
 	case 1:
-		mask = lbl_eu_80528058[idx & 0x1F];
+		mask = sCtrlRemoteBitMasks[idx & 0x1F];
 		shift = idx & 0x1F;
 		break;
 	}
@@ -1973,24 +1975,24 @@ extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index)
 // or reading it in the guard regresses the bytes.
 void CtrlRemote_ResetSlotArrayObj(void* obj)
 {
-    s8 flag = lbl_eu_80663E80;
+    s8 flag = sCtrlRemoteBufInitialized;
     for (s32 i = 0; i < 8; i++) {
-        if ((s8)lbl_eu_80663E80 == 0) {
-            memset(lbl_eu_80571848, 0, 0x1214);
-            memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-            memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-            lbl_eu_80663E80 = 1;
+        if ((s8)sCtrlRemoteBufInitialized == 0) {
+            memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+            memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+            memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+            sCtrlRemoteBufInitialized = 1;
             flag = 1;
         }
-        if (lbl_eu_80571848[0x1234 / 4 + i] == 0) {
-            if ((s8)lbl_eu_80663E80 == 0) {
-                memset(lbl_eu_80571848, 0, 0x1214);
-                memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
-                memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
-                lbl_eu_80663E80 = 1;
+        if (sCtrlRemoteSharedBuf[0x1234 / 4 + i] == 0) {
+            if ((s8)sCtrlRemoteBufInitialized == 0) {
+                memset(sCtrlRemoteSharedBuf, 0, 0x1214);
+                memset(&sCtrlRemoteSharedBuf[0x1234 / 4], 0, 0x20);
+                memset(&sCtrlRemoteSharedBuf[0x1214 / 4], 0, 0x20);
+                sCtrlRemoteBufInitialized = 1;
                 flag = 1;
             }
-            lbl_eu_80571848[0x1234 / 4 + i] = (u32)obj;
+            sCtrlRemoteSharedBuf[0x1234 / 4 + i] = (u32)obj;
             break;
         }
     }
@@ -2003,24 +2005,24 @@ void CtrlRemote_ResetSlotArrayObj(void* obj)
 // allocator keeps one pointer copy per block, as in retail.
 void CtrlRemote_ResetSlotArrayByIndex(u32 index)
 {
-    s32 flag = lbl_eu_80663E80;
-    u32* slot = lbl_eu_80571848;
+    s32 flag = sCtrlRemoteBufInitialized;
+    u32* slot = sCtrlRemoteSharedBuf;
     for (s32 i = 0; i < 8; i++) {
-        if ((s8)lbl_eu_80663E80 == 0) {
-            u32* b = lbl_eu_80571848;
+        if ((s8)sCtrlRemoteBufInitialized == 0) {
+            u32* b = sCtrlRemoteSharedBuf;
             memset(b, 0, 0x1214);
             memset(&b[0x1234 / 4], 0, 0x20);
             memset(&b[0x1214 / 4], 0, 0x20);
-            lbl_eu_80663E80 = 1;
+            sCtrlRemoteBufInitialized = 1;
             flag = 1;
         }
         if (slot[0x1234 / 4] == index) {
-            if ((s8)lbl_eu_80663E80 == 0) {
-                u32* b = lbl_eu_80571848;
+            if ((s8)sCtrlRemoteBufInitialized == 0) {
+                u32* b = sCtrlRemoteSharedBuf;
                 memset(b, 0, 0x1214);
                 memset(&b[0x1234 / 4], 0, 0x20);
                 memset(&b[0x1214 / 4], 0, 0x20);
-                lbl_eu_80663E80 = 1;
+                sCtrlRemoteBufInitialized = 1;
                 flag = 1;
             }
             slot[0x1234 / 4] = 0;
@@ -2030,6 +2032,6 @@ void CtrlRemote_ResetSlotArrayByIndex(u32 index)
 }
 
 // Live file-event IDs pointer: retail is a bare 0x8 global getter
-// (lwz r3, lbl_eu_80663E88@sda21; blr). Callers (CfGameManager,
+// (lwz r3, spCtrlObjectParamWork@sda21; blr). Callers (CfGameManager,
 // CfNandManager, CfResPcImpl) treat the word as the file-event IDs view.
-extern "C" CfFileEventIdsView* CtrlRemote_GetFileEventIds() { return (CfFileEventIdsView*)lbl_eu_80663E88; }
+extern "C" CfFileEventIdsView* CtrlRemote_GetFileEventIds() { return (CfFileEventIdsView*)spCtrlObjectParamWork; }

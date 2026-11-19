@@ -7,7 +7,7 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -193,7 +193,7 @@ extern "C" void func_80080888__Q22cf13CfGameManagerFv(u32, u32);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char*, int);
 
 // Scene object behind the common-archive alloc handle (virtual at vtable
-// 0x2C of *lbl_eu_80663E14; returns an mtl alloc handle).
+// 0x2C of *gmScene; returns an mtl alloc handle).
 class CScn;
 
 // Party-state layout arc path pointer (.sdata).

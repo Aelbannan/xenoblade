@@ -510,10 +510,10 @@ extern f32 lbl_eu_806687A0;
 extern f32 lbl_eu_80668794;
 
 // .sbss color tables used by PaneMatSetTevColorsByName (init in sinit_80250CB4).
-extern GXColorS10 lbl_eu_806647A0;
-extern GXColorS10 lbl_eu_806647A8;
-extern GXColorS10 lbl_eu_806647B0;
-extern GXColorS10 lbl_eu_806647B8;
+extern GXColorS10 sFloorRowColor0;
+extern GXColorS10 sFloorRowColor1;
+extern GXColorS10 sFoundRowColor0;
+extern GXColorS10 sFoundRowColor1;
 extern u32 lbl_eu_80664184;   // current world/map id (full word)
 
 // Pane flag-byte view (Pane::mFlag is protected; retail reads/writes it
@@ -541,9 +541,9 @@ struct CFloorMapPaneRotate {
 };
 
 // C-ABI helpers used by FloorMap_RefreshFloorRows (defined in code_80135FDC.cpp).
-extern u32 lbl_eu_8066479C;
+extern u32 spFloorDataTable;
 extern u32 lbl_eu_806640A8;
-extern u8 lbl_eu_80664798;
+extern u8 sCurrentMapId;
 extern u8 lbl_eu_8052CB40[];
 extern u8 lbl_eu_8052CB1C[];
 

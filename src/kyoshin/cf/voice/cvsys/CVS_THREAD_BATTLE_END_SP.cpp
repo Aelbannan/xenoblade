@@ -52,7 +52,7 @@ CVS_THREAD_BATTLE_END_SP* CVS_THREAD_BATTLE_END_SP::create() {
     const u32* cmdString = NULL;
     const u32* work;
     const u32* entry;
-    for (work = lbl_eu_8053A100;
+    for (work = BattleEndSpVoiceCommandList;
          (entry = (const u32*)*work) != NULL;
          work++) {
         const char* ids = (const char*)entry[0];
@@ -133,7 +133,7 @@ CVS_THREAD_BATTLE_END_SP* CVS_THREAD_BATTLE_END_SP::create() {
     }
 
     // Install the initial voice-event handler from its typed PTMF constant.
-    self->mState = lbl_eu_8053A194;
+    self->mState = BattleEndSpSweepState;
     return self;
 }
 
@@ -146,7 +146,7 @@ CVS_THREAD_BATTLE_END_SP* CVS_THREAD_BATTLE_END_SP::create() {
 // command string by 2 bytes while a full pair remains.
 void CVS_THREAD_BATTLE_END_SP::resetAndSweep() {
     CVS_THREAD_BATTLE_END_SP* self = this;
-    mState = lbl_eu_8053A1A0;
+    mState = BattleEndSpResetState;
 
     int cmd0;
     int i;
@@ -207,10 +207,10 @@ matched:
 
 // us-802ae1a8 (CVSBattleEndSPResetState)
 // If no voice is active, reset the base state triple in the object header
-// (offsets 0x00..0x08) from the init table lbl_eu_8053A1AC.
+// (offsets 0x00..0x08) from the init table BattleEndSpSweepStateAlt.
 void CVS_THREAD_BATTLE_END_SP::resetState() {
     if (IsThreadVoiceActive(this) == 0) {
-        mState = lbl_eu_8053A1AC;
+        mState = BattleEndSpSweepStateAlt;
     }
 }
 
@@ -254,7 +254,7 @@ int CVSBattleEndSPGetBufSize() {
 
 // Retail section reconstruction (measured in
 // .scratch/dlabels/a2/CVS_THREAD_BATTLE_END_SP.txt). The factory scans the
-// command-list table lbl_eu_8053A100 (a NULL-terminated array of entry
+// command-list table BattleEndSpVoiceCommandList (a NULL-terminated array of entry
 // pointers): each entry E is {id-string, command*, ..., NULL} where E[0]
 // points at an .sdata2 id-byte string (byte 0 = required active count,
 // bytes 1..count = expected voice IDs) and E[1..] point at command strings
@@ -349,62 +349,62 @@ static const u8 rodatablob[0x120] = {
 };
 extern const char lbl_eu_80510AF0[0x20] = "cf::CVS_THREAD_BATTLE_END_SP";
 
-u32 lbl_eu_80539F48[5] = { (u32)&sdata2blob1[0x0], (u32)&sdata2blob1[0x4], (u32)&sdata2blob1[0xC], (u32)&rodatablob[0x0], 0 };
-u32 lbl_eu_80539F5C[3] = { (u32)&sdata2blob1[0x14], (u32)&sdata2blob1[0x18], 0 };
-u32 lbl_eu_80539F68[3] = { (u32)&sdata2blob1[0x20], (u32)&sdata2blob1[0x24], 0 };
-u32 lbl_eu_80539F74[3] = { (u32)&sdata2blob1[0x2C], (u32)&rodatablob[0xC], 0 };
-u32 lbl_eu_80539F80[3] = { (u32)&sdata2blob1[0x30], (u32)&rodatablob[0x18], 0 };
-u32 lbl_eu_80539F8C[3] = { (u32)&sdata2blob1[0x34], (u32)&rodatablob[0x24], 0 };
-u32 lbl_eu_80539F98[3] = { (u32)&sdata2blob1[0x38], (u32)&rodatablob[0x30], 0 };
-u32 lbl_eu_80539FA4[3] = { (u32)&sdata2blob1[0x3C], (u32)&rodatablob[0x3C], 0 };
-u32 lbl_eu_80539FB0[3] = { (u32)&sdata2blob1[0x40], (u32)&rodatablob[0x4C], 0 };
-u32 lbl_eu_80539FBC[3] = { (u32)&sdata2blob1[0x44], (u32)&rodatablob[0x5C], 0 };
-u32 lbl_eu_80539FC8[3] = { (u32)&sdata2blob1[0x48], (u32)&rodatablob[0x6C], 0 };
-u32 lbl_eu_80539FD4[3] = { (u32)&sdata2blob1[0x4C], (u32)&rodatablob[0x7C], 0 };
-u32 lbl_eu_80539FE0[3] = { (u32)&sdata2blob1[0x50], (u32)&sdata2blob1[0x54], 0 };
-u32 lbl_eu_80539FEC[3] = { (u32)&sdata2blob1[0x5C], (u32)&rodatablob[0x88], 0 };
-u32 lbl_eu_80539FF8[3] = { (u32)&sdata2blob1[0x60], (u32)&rodatablob[0x94], 0 };
-u32 lbl_eu_8053A004[3] = { (u32)&sdata2blob1[0x64], (u32)&sdata2blob1[0x68], 0 };
-u32 lbl_eu_8053A010[3] = { (u32)&sdata2blob1[0x70], (u32)&sdata2blob1[0x74], 0 };
-u32 lbl_eu_8053A01C[3] = { (u32)&sdata2blob1[0x7C], (u32)&sdata2blob1[0x80], 0 };
-u32 lbl_eu_8053A028[3] = { (u32)&sdata2blob1[0x88], (u32)&rodatablob[0xA0], 0 };
-u32 lbl_eu_8053A034[3] = { (u32)&sdata2blob1[0x8C], (u32)&sdata2blob1[0x90], 0 };
-u32 lbl_eu_8053A040[3] = { (u32)&sdata2blob1[0x98], (u32)&rodatablob[0xB0], 0 };
-u32 lbl_eu_8053A04C[3] = { (u32)&sdata2blob1[0x9C], (u32)&rodatablob[0xC0], 0 };
-u32 lbl_eu_8053A058[3] = { (u32)&sdata2blob1[0xA0], (u32)&rodatablob[0xCC], 0 };
-u32 lbl_eu_8053A064[3] = { (u32)&sdata2blob1[0xA4], (u32)&sdata2blob1[0xA8], 0 };
-u32 lbl_eu_8053A070[3] = { (u32)&sdata2blob1[0xB0], (u32)&sdata2blob1[0xB4], 0 };
-u32 lbl_eu_8053A07C[3] = { (u32)&sdata2blob1[0xBC], (u32)&rodatablob[0xD8], 0 };
-u32 lbl_eu_8053A088[3] = { (u32)&sdata2blob1[0xC0], (u32)&rodatablob[0xE4], 0 };
-u32 lbl_eu_8053A094[3] = { (u32)&sdata2blob1[0xC4], (u32)&rodatablob[0xF0], 0 };
-u32 lbl_eu_8053A0A0[3] = { (u32)&sdata2blob1[0xC8], (u32)&sdata2blob1[0xCC], 0 };
-u32 lbl_eu_8053A0AC[3] = { (u32)&sdata2blob1[0xD4], (u32)&rodatablob[0xFC], 0 };
-u32 lbl_eu_8053A0B8[3] = { (u32)&sdata2blob1[0xD8], (u32)&sdata2blob1[0xDC], 0 };
-u32 lbl_eu_8053A0C4[3] = { (u32)&sdata2blob1[0xE4], (u32)&sdata2blob1[0xE8], 0 };
-u32 lbl_eu_8053A0D0[3] = { (u32)&sdata2blob1[0xF0], (u32)&rodatablob[0x108], 0 };
-u32 lbl_eu_8053A0DC[3] = { (u32)&sdata2blob1[0xF4], (u32)&lbl_eu_80668DB0, 0 };
-u32 lbl_eu_8053A0E8[3] = { (u32)&sdata2blob2[0x0], (u32)&sdata2blob2[0x4], 0 };
-u32 lbl_eu_8053A0F4[3] = { (u32)&sdata2blob2[0xC], (u32)&rodatablob[0x114], 0 };
+u32 BattleEndSpVoiceSet00[5] = { (u32)&sdata2blob1[0x0], (u32)&sdata2blob1[0x4], (u32)&sdata2blob1[0xC], (u32)&rodatablob[0x0], 0 };
+u32 BattleEndSpVoiceSet01[3] = { (u32)&sdata2blob1[0x14], (u32)&sdata2blob1[0x18], 0 };
+u32 BattleEndSpVoiceSet02[3] = { (u32)&sdata2blob1[0x20], (u32)&sdata2blob1[0x24], 0 };
+u32 BattleEndSpVoiceSet03[3] = { (u32)&sdata2blob1[0x2C], (u32)&rodatablob[0xC], 0 };
+u32 BattleEndSpVoiceSet04[3] = { (u32)&sdata2blob1[0x30], (u32)&rodatablob[0x18], 0 };
+u32 BattleEndSpVoiceSet05[3] = { (u32)&sdata2blob1[0x34], (u32)&rodatablob[0x24], 0 };
+u32 BattleEndSpVoiceSet06[3] = { (u32)&sdata2blob1[0x38], (u32)&rodatablob[0x30], 0 };
+u32 BattleEndSpVoiceSet07[3] = { (u32)&sdata2blob1[0x3C], (u32)&rodatablob[0x3C], 0 };
+u32 BattleEndSpVoiceSet08[3] = { (u32)&sdata2blob1[0x40], (u32)&rodatablob[0x4C], 0 };
+u32 BattleEndSpVoiceSet09[3] = { (u32)&sdata2blob1[0x44], (u32)&rodatablob[0x5C], 0 };
+u32 BattleEndSpVoiceSet10[3] = { (u32)&sdata2blob1[0x48], (u32)&rodatablob[0x6C], 0 };
+u32 BattleEndSpVoiceSet11[3] = { (u32)&sdata2blob1[0x4C], (u32)&rodatablob[0x7C], 0 };
+u32 BattleEndSpVoiceSet12[3] = { (u32)&sdata2blob1[0x50], (u32)&sdata2blob1[0x54], 0 };
+u32 BattleEndSpVoiceSet13[3] = { (u32)&sdata2blob1[0x5C], (u32)&rodatablob[0x88], 0 };
+u32 BattleEndSpVoiceSet14[3] = { (u32)&sdata2blob1[0x60], (u32)&rodatablob[0x94], 0 };
+u32 BattleEndSpVoiceSet15[3] = { (u32)&sdata2blob1[0x64], (u32)&sdata2blob1[0x68], 0 };
+u32 BattleEndSpVoiceSet16[3] = { (u32)&sdata2blob1[0x70], (u32)&sdata2blob1[0x74], 0 };
+u32 BattleEndSpVoiceSet17[3] = { (u32)&sdata2blob1[0x7C], (u32)&sdata2blob1[0x80], 0 };
+u32 BattleEndSpVoiceSet18[3] = { (u32)&sdata2blob1[0x88], (u32)&rodatablob[0xA0], 0 };
+u32 BattleEndSpVoiceSet19[3] = { (u32)&sdata2blob1[0x8C], (u32)&sdata2blob1[0x90], 0 };
+u32 BattleEndSpVoiceSet20[3] = { (u32)&sdata2blob1[0x98], (u32)&rodatablob[0xB0], 0 };
+u32 BattleEndSpVoiceSet21[3] = { (u32)&sdata2blob1[0x9C], (u32)&rodatablob[0xC0], 0 };
+u32 BattleEndSpVoiceSet22[3] = { (u32)&sdata2blob1[0xA0], (u32)&rodatablob[0xCC], 0 };
+u32 BattleEndSpVoiceSet23[3] = { (u32)&sdata2blob1[0xA4], (u32)&sdata2blob1[0xA8], 0 };
+u32 BattleEndSpVoiceSet24[3] = { (u32)&sdata2blob1[0xB0], (u32)&sdata2blob1[0xB4], 0 };
+u32 BattleEndSpVoiceSet25[3] = { (u32)&sdata2blob1[0xBC], (u32)&rodatablob[0xD8], 0 };
+u32 BattleEndSpVoiceSet26[3] = { (u32)&sdata2blob1[0xC0], (u32)&rodatablob[0xE4], 0 };
+u32 BattleEndSpVoiceSet27[3] = { (u32)&sdata2blob1[0xC4], (u32)&rodatablob[0xF0], 0 };
+u32 BattleEndSpVoiceSet28[3] = { (u32)&sdata2blob1[0xC8], (u32)&sdata2blob1[0xCC], 0 };
+u32 BattleEndSpVoiceSet29[3] = { (u32)&sdata2blob1[0xD4], (u32)&rodatablob[0xFC], 0 };
+u32 BattleEndSpVoiceSet30[3] = { (u32)&sdata2blob1[0xD8], (u32)&sdata2blob1[0xDC], 0 };
+u32 BattleEndSpVoiceSet31[3] = { (u32)&sdata2blob1[0xE4], (u32)&sdata2blob1[0xE8], 0 };
+u32 BattleEndSpVoiceSet32[3] = { (u32)&sdata2blob1[0xF0], (u32)&rodatablob[0x108], 0 };
+u32 BattleEndSpVoiceSet33[3] = { (u32)&sdata2blob1[0xF4], (u32)&lbl_eu_80668DB0, 0 };
+u32 BattleEndSpVoiceSet34[3] = { (u32)&sdata2blob2[0x0], (u32)&sdata2blob2[0x4], 0 };
+u32 BattleEndSpVoiceSet35[3] = { (u32)&sdata2blob2[0xC], (u32)&rodatablob[0x114], 0 };
 
-u32 lbl_eu_8053A100[37] = {
-    (u32)&lbl_eu_80539F48, (u32)&lbl_eu_80539F5C, (u32)&lbl_eu_80539F68,
-    (u32)&lbl_eu_80539F74, (u32)&lbl_eu_80539F80, (u32)&lbl_eu_80539F8C,
-    (u32)&lbl_eu_80539F98, (u32)&lbl_eu_80539FA4, (u32)&lbl_eu_80539FB0,
-    (u32)&lbl_eu_80539FBC, (u32)&lbl_eu_80539FC8, (u32)&lbl_eu_80539FD4,
-    (u32)&lbl_eu_80539FE0, (u32)&lbl_eu_80539FEC, (u32)&lbl_eu_80539FF8,
-    (u32)&lbl_eu_8053A004, (u32)&lbl_eu_8053A010, (u32)&lbl_eu_8053A01C,
-    (u32)&lbl_eu_8053A028, (u32)&lbl_eu_8053A034, (u32)&lbl_eu_8053A040,
-    (u32)&lbl_eu_8053A04C, (u32)&lbl_eu_8053A058, (u32)&lbl_eu_8053A064,
-    (u32)&lbl_eu_8053A070, (u32)&lbl_eu_8053A07C, (u32)&lbl_eu_8053A088,
-    (u32)&lbl_eu_8053A094, (u32)&lbl_eu_8053A0A0, (u32)&lbl_eu_8053A0AC,
-    (u32)&lbl_eu_8053A0B8, (u32)&lbl_eu_8053A0C4, (u32)&lbl_eu_8053A0D0,
-    (u32)&lbl_eu_8053A0DC, (u32)&lbl_eu_8053A0E8, (u32)&lbl_eu_8053A0F4,
+u32 BattleEndSpVoiceCommandList[37] = {
+    (u32)&BattleEndSpVoiceSet00, (u32)&BattleEndSpVoiceSet01, (u32)&BattleEndSpVoiceSet02,
+    (u32)&BattleEndSpVoiceSet03, (u32)&BattleEndSpVoiceSet04, (u32)&BattleEndSpVoiceSet05,
+    (u32)&BattleEndSpVoiceSet06, (u32)&BattleEndSpVoiceSet07, (u32)&BattleEndSpVoiceSet08,
+    (u32)&BattleEndSpVoiceSet09, (u32)&BattleEndSpVoiceSet10, (u32)&BattleEndSpVoiceSet11,
+    (u32)&BattleEndSpVoiceSet12, (u32)&BattleEndSpVoiceSet13, (u32)&BattleEndSpVoiceSet14,
+    (u32)&BattleEndSpVoiceSet15, (u32)&BattleEndSpVoiceSet16, (u32)&BattleEndSpVoiceSet17,
+    (u32)&BattleEndSpVoiceSet18, (u32)&BattleEndSpVoiceSet19, (u32)&BattleEndSpVoiceSet20,
+    (u32)&BattleEndSpVoiceSet21, (u32)&BattleEndSpVoiceSet22, (u32)&BattleEndSpVoiceSet23,
+    (u32)&BattleEndSpVoiceSet24, (u32)&BattleEndSpVoiceSet25, (u32)&BattleEndSpVoiceSet26,
+    (u32)&BattleEndSpVoiceSet27, (u32)&BattleEndSpVoiceSet28, (u32)&BattleEndSpVoiceSet29,
+    (u32)&BattleEndSpVoiceSet30, (u32)&BattleEndSpVoiceSet31, (u32)&BattleEndSpVoiceSet32,
+    (u32)&BattleEndSpVoiceSet33, (u32)&BattleEndSpVoiceSet34, (u32)&BattleEndSpVoiceSet35,
     0,
 };
 
-BattleEndSpState const lbl_eu_8053A194 = &CVS_THREAD_BATTLE_END_SP::resetAndSweep;
-BattleEndSpState const lbl_eu_8053A1A0 = &CVS_THREAD_BATTLE_END_SP::resetState;
-BattleEndSpState const lbl_eu_8053A1AC = &CVS_THREAD_BATTLE_END_SP::resetAndSweep;
+BattleEndSpState const BattleEndSpSweepState = &CVS_THREAD_BATTLE_END_SP::resetAndSweep;
+BattleEndSpState const BattleEndSpResetState = &CVS_THREAD_BATTLE_END_SP::resetState;
+BattleEndSpState const BattleEndSpSweepStateAlt = &CVS_THREAD_BATTLE_END_SP::resetAndSweep;
 
 u32 lbl_eu_8053A1B8[7] = {
     (u32)__RTTI__Q22cf24CVS_THREAD_BATTLE_END_SP,

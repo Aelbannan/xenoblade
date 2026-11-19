@@ -10,6 +10,9 @@
 #include "kyoshin/cf/IResInfo.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 
+// Global camera-flag query (code_800F42AC.cpp; TU-local import).
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+
 
 
 namespace cf {
@@ -137,7 +140,7 @@ void CfObjectEff::detachChildEf() {
 }
 } // namespace cf
 
-void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv() {}
+void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc18() {}
 
 namespace cf {
 // Retail symbol detachPrtnrA___Q22cf11CfObjectEffFv (void params in the name)

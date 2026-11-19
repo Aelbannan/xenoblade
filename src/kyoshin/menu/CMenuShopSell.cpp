@@ -58,20 +58,14 @@ struct ShopSellPadData {
 // declared int so the (u8) cast at the tail emits the retail clrlwi.
 extern "C" int MenuTutorialIsCreated();
 extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void beginClose(CTitleAHelp* self);
-extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
-extern "C" void func_801C412C(CTitleAHelp* self);
 
 // Retail-unmangled callee names (US strips the member manglings for these
 // func_ helpers; GetField61 keeps its bare name too). int returns keep the
 // caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.
-extern "C" void teardown(CTitleAHelp* self);
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 
@@ -79,7 +73,7 @@ extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // extern "C" for MWCC to re-mangle it.
 
 // Shop-sell render-gate mode bitfield (.sbss; bit 21 = busy).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 /* Constructor: bases and members are built in layout order, then the state
  * byte is cleared. */
@@ -122,7 +116,7 @@ void CMenuShopSell::Term() {
     mScene->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     mItemBoxGrid.UnloadItemBox();
 
     sInstance = 0;
@@ -133,7 +127,7 @@ void CMenuShopSell::Term() {
  * drive the 4-state FSM and refresh the bg / item grid / title bar each frame. */
 void CMenuShopSell::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
 
     switch (mState) {
@@ -155,7 +149,7 @@ void CMenuShopSell::Move() {
 
     BgTex_Tick_3D54(&mBgTex);
     mItemBoxGrid.UpdateItemBox();
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
 }
 
 /* Render the shop-sell screen through a stack DrawInfo: gate on the task/busy
@@ -163,7 +157,7 @@ void CMenuShopSell::Move() {
  * bar in that order. */
 void CMenuShopSell::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
 
@@ -172,7 +166,7 @@ void CMenuShopSell::cbRenderBefore() {
     SetWideLocAdjust(&drawInfo);
     BgTex_Draw_3D7C(&mBgTex, &drawInfo);
     mItemBoxGrid.DrawItemBoxGrid(&drawInfo);
-    drawHelp(&mTitleAHelp, &drawInfo);
+    mTitleAHelp.drawHelp(&drawInfo);
 }
 
 // Singleton storage (.sbss).
@@ -202,7 +196,7 @@ extern "C" bool MenuShopSellIsCreated() { return CMenuShopSell::sInstance != 0; 
 void CMenuShopSell::HandlePhase0() {
     if (BgTex_IsLoaded_3E34(&mBgTex) != 0 && mTitleAHelp.isInitialized() != 0 &&
         mItemBoxGrid.IsItemBoxReady() != 0) {
-        func_801C412C(&mTitleAHelp);
+        mTitleAHelp.func_801C412C();
         mItemBoxGrid.InitItemDisplay();
         mState = 1;
         playUISound(0x6d);
@@ -215,7 +209,7 @@ void CMenuShopSell::HandlePhase0() {
 void CMenuShopSell::HandlePhase1() {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxGrid.GetField61() != 0) {
         mState = 2;
     }
@@ -250,7 +244,7 @@ void CMenuShopSell::HandlePhase2() {
             if (mItemBoxGrid.IsItemBoxActive() != 0) {
                 mItemBoxGrid.HandleCancelBtn(0);
             } else {
-                beginClose(&mTitleAHelp);
+                mTitleAHelp.beginClose();
                 mItemBoxGrid.AdvanceBoxState();
                 mState = 3;
             }
@@ -289,7 +283,7 @@ void CMenuShopSell::HandlePhase2() {
             if (mItemBoxGrid.IsItemBoxActive() != 0) {
                 mItemBoxGrid.HandleCancelBtn(0);
             } else {
-                beginClose(&mTitleAHelp);
+                mTitleAHelp.beginClose();
                 mItemBoxGrid.AdvanceBoxState();
                 mState = 3;
             }
@@ -310,7 +304,7 @@ void CMenuShopSell::HandlePhase2() {
         }
     }
 
-    func_801C41E8(&mTitleAHelp, (u8)mItemBoxGrid.GetPromptState());
+    mTitleAHelp.func_801C41E8((u8)mItemBoxGrid.GetPromptState());
 }
 
 // Phase transition: once the title bar is idle and the item grid is ready,
@@ -319,7 +313,7 @@ void CMenuShopSell::HandlePhase2() {
 void CMenuShopSell::HandlePhase3() {
     // isIdle called via the int-returning extern declaration (CMenuCollepedia
     // pattern) so the caller compares with cmpi (retail), not a byte mask.
-    if (mTitleAHelp.isIdle() != 0 &&
+    if (mTitleAHelp.func_801C4124() != 0 &&
         mItemBoxGrid.GetField61() != 0) {
         mField54 = 1;
     }

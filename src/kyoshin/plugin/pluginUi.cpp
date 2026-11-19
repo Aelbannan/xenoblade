@@ -17,8 +17,6 @@ using namespace ml;
 // ---------------------------------------------------------------------------
 
 // .sdata2: fade alpha constant + int->float magic + plugin-name strings.
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used))
-float lbl_eu_80665DB8 = -1.0f;
 __declspec(section ".sdata2") __attribute__((used))
 double lbl_eu_80665DC0 = 4503601774854144.0;
 __declspec(section ".sdata2") __attribute__((used))
@@ -36,116 +34,49 @@ char lbl_eu_80665DF0[] = "save";
 
 // .rodata: effect-slot table + VM command names + shared message strings.
 __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used))
-CfSlotTable lbl_eu_804FA9F0 = {{0x00000010u, 0x00100000u, 0x00200000u}};
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FA9FC[] = "winTalkWait";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA08[] = "winTalkNoName";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA18[] = "fadeWait";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA24[] = "createCol6Sys";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA34[] = "createCol6Hint";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA44[] = "createCol6Invite";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA58[] = "createCol6Init";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA68[] = "checkCol6Bat";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA78[] = "simpleEventStart";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA8C[] = "simpleEventEnd";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAA9C[] = "setTrust";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAAA8[] = "setItemMulti";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAAB8[] = "setKizunaTalk";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAAC8[] = "winSysSelect";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAAD8[] = "getSelectNum";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAAE8[] = "mesGetArts";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAAF4[] = "mesAddPT";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB00[] = "mesSubPT";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB0C[] = "mesVisionON";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB18[] = "mesVisionOFF";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB28[] = "mesMonadoON";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB34[] = "mesMonadoOFF";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB44[] = "ptChangeNotice";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB58[] = "kizunaTalkStart";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB68[] = "kizunaTalkEnd";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB78[] = "isPrioReq";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB84[] = "gameClear";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FAB90[] = "setLastTalkNpc";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FABA0[] = "isSETalkVoiceWait";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FABB4[] = "setSETalkVoiceWait";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FABC8[] = "clearSETalkVoiceWait";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FABE0[] = "cf::CfObjectPc";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_804FABF0[] =
-"name\0pc_arts\0MNU_sysmes\0%s%s%s\0rlt_meet\0ui\0\0\0\0\0";
+CfSlotTable pluginTrustEffectSlots = {{0x00000010u, 0x00100000u, 0x00200000u}};
 
 // .data: VM plugin command table (38 name/function pairs + null terminator).
 // First table carries aligned(8) for the section alignment.
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
-const void* lbl_eu_80525D68[76] = {
+const void* pluginCommandTable[76] = {
     (const void*)lbl_eu_80665DC8, (const void*)winTalk,
     (const void*)lbl_eu_80665DD0, (const void*)pcTalk,
-    (const void*)lbl_eu_804FA9FC, (const void*)winTalkWait,
-    (const void*)lbl_eu_804FAA08, (const void*)winTalkNoName,
+    "winTalkWait", (const void*)winTalkWait,
+    "winTalkNoName", (const void*)winTalkNoName,
     (const void*)lbl_eu_80665DD8, (const void*)fadeIn_1,
     (const void*)lbl_eu_80665DE0, (const void*)fadeOut_1,
-    (const void*)lbl_eu_804FAA18, (const void*)fadeWait_1,
-    (const void*)lbl_eu_804FAA24, (const void*)createCol6Sys,
-    (const void*)lbl_eu_804FAA34, (const void*)createCol6Hint,
-    (const void*)lbl_eu_804FAA44, (const void*)createCol6Invite,
-    (const void*)lbl_eu_804FAA58, (const void*)createCol6Init,
-    (const void*)lbl_eu_804FAA68, (const void*)checkCol6Bat,
-    (const void*)lbl_eu_804FAA78, (const void*)simpleEventStart,
-    (const void*)lbl_eu_804FAA8C, (const void*)simpleEventEnd,
-    (const void*)lbl_eu_804FAA9C, (const void*)setTrust,
-    (const void*)lbl_eu_804FAAA8, (const void*)setItemMulti,
-    (const void*)lbl_eu_804FAAB8, (const void*)setKizunaTalk,
+    "fadeWait", (const void*)fadeWait_1,
+    "createCol6Sys", (const void*)createCol6Sys,
+    "createCol6Hint", (const void*)createCol6Hint,
+    "createCol6Invite", (const void*)createCol6Invite,
+    "createCol6Init", (const void*)createCol6Init,
+    "checkCol6Bat", (const void*)checkCol6Bat,
+    "simpleEventStart", (const void*)simpleEventStart,
+    "simpleEventEnd", (const void*)simpleEventEnd,
+    "setTrust", (const void*)setTrust,
+    "setItemMulti", (const void*)setItemMulti,
+    "setKizunaTalk", (const void*)setKizunaTalk,
     (const void*)lbl_eu_80665DE8, (const void*)winSys,
-    (const void*)lbl_eu_804FAAC8, (const void*)winSysSelect,
-    (const void*)lbl_eu_804FAAD8, (const void*)getSelectNum,
-    (const void*)lbl_eu_804FAAE8, (const void*)mesGetArts,
-    (const void*)lbl_eu_804FAAF4, (const void*)mesAddPT,
-    (const void*)lbl_eu_804FAB00, (const void*)mesSubPT,
-    (const void*)lbl_eu_804FAB0C, (const void*)mesVisionON,
-    (const void*)lbl_eu_804FAB18, (const void*)mesVisionOFF,
-    (const void*)lbl_eu_804FAB28, (const void*)mesMonadoON,
-    (const void*)lbl_eu_804FAB34, (const void*)mesMonadoOFF,
-    (const void*)lbl_eu_804FAB44, (const void*)ptChangeNotice,
+    "winSysSelect", (const void*)winSysSelect,
+    "getSelectNum", (const void*)getSelectNum,
+    "mesGetArts", (const void*)mesGetArts,
+    "mesAddPT", (const void*)mesAddPT,
+    "mesSubPT", (const void*)mesSubPT,
+    "mesVisionON", (const void*)mesVisionON,
+    "mesVisionOFF", (const void*)mesVisionOFF,
+    "mesMonadoON", (const void*)mesMonadoON,
+    "mesMonadoOFF", (const void*)mesMonadoOFF,
+    "ptChangeNotice", (const void*)ptChangeNotice,
     (const void*)lbl_eu_80665DF0, (const void*)save,
-    (const void*)lbl_eu_804FAB58, (const void*)kizunaTalkStart,
-    (const void*)lbl_eu_804FAB68, (const void*)kizunaTalkEnd,
-    (const void*)lbl_eu_804FAB78, (const void*)isPrioReq,
-    (const void*)lbl_eu_804FAB84, (const void*)gameClear,
-    (const void*)lbl_eu_804FAB90, (const void*)setLastTalkNpc,
-    (const void*)lbl_eu_804FABA0, (const void*)isSETalkVoiceWait,
-    (const void*)lbl_eu_804FABB4, (const void*)uiSetSETalkVoiceWait,
-    (const void*)lbl_eu_804FABC8, (const void*)uiClearSETalkVoiceWait,
+    "kizunaTalkStart", (const void*)kizunaTalkStart,
+    "kizunaTalkEnd", (const void*)kizunaTalkEnd,
+    "isPrioReq", (const void*)isPrioReq,
+    "gameClear", (const void*)gameClear,
+    "setLastTalkNpc", (const void*)setLastTalkNpc,
+    "isSETalkVoiceWait", (const void*)isSETalkVoiceWait,
+    "setSETalkVoiceWait", (const void*)uiSetSETalkVoiceWait,
+    "clearSETalkVoiceWait", (const void*)uiClearSETalkVoiceWait,
     (const void*)0, (const void*)0
 };
 
@@ -154,12 +85,12 @@ void ui_mesGetArts(VMThread* pThread) {
     int num2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 }
 
-bool UiFlags::hasAnyFlags(u32 mask) const {
-    return (this->flags & mask) != 0;
+extern "C" bool hasAnyFlags(UiFlags* self, u32 mask) {
+    return (self->flags & mask) != 0;
 }
 void pluginUiRegist() {
-    extern void vmPluginRegist(void*, void*);
-    vmPluginRegist((void*)((char*)lbl_eu_804FABF0 + 0x28), (void*)lbl_eu_80525D68);
+    vmPluginRegist((const char*)(lbl_eu_804FABF0 + 0x28),
+                   (PluginFuncData*)pluginCommandTable);
 }
 
 // winTalk: open a talk window. Script args: (window id, text). The window id
@@ -226,7 +157,7 @@ int fadeIn_1(VMThread* pThread) {
     } else {
         v2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    CUICfManager_queueFadeMenu(2, v2, lbl_eu_80665DB8, lbl_eu_80665DB8, (float)v1);
+    CUICfManager_queueFadeMenu(2, v2, -1.0f, -1.0f, (float)v1);
     return 0;
 }
 // Fade-out script command: (duration, count?). The duration is cast to float
@@ -240,7 +171,7 @@ int fadeOut_1(VMThread* pThread) {
     } else {
         v2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    CUICfManager_queueFadeMenu(0, v2, lbl_eu_80665DB8, (float)(s32)v1, lbl_eu_80665DB8);
+    CUICfManager_queueFadeMenu(0, v2, -1.0f, (float)(s32)v1, -1.0f);
     return 0;
 }
 // Fade-wait script command: park the thread while a fade is running.
@@ -251,12 +182,10 @@ int fadeWait_1(VMThread* pThread) {
     return 0;
 }
 int createCol6Sys(VMThread* pThread) {
-    extern void UIWin_Create602F4Win();
     UIWin_Create602F4Win();
     return 0;
 }
 int createCol6Hint(VMThread* pThread) {
-    extern void UIWin_Create5DCD0Win();
     UIWin_Create5DCD0Win();
     return 0;
 }
@@ -273,12 +202,10 @@ int createCol6Invite(VMThread* pThread) {
     return 0;
 }
 int createCol6Init(VMThread* pThread) {
-    extern void InitCol6LodTables();
     InitCol6LodTables();
     return 0;
 }
 int checkCol6Bat(VMThread* pThread) {
-    extern void UIWin_CreateCol6Check();
     UIWin_CreateCol6Check();
     return 0;
 }
@@ -307,7 +234,7 @@ void ml::FixStr<64>::format(const char* fmt, ...) {
 }
 
 // setTrust: adjust a character's trust value (clamped to [0, 5000]) and spawn
-// the appropriate effect on the two player slots from lbl_eu_804FA9F0.
+// the appropriate effect on the two player slots from pluginTrustEffectSlots.
 int setTrust(VMThread* pThread) {
     VMArg* p1 = vmArgPtrGet(pThread, 1);
     int arg1 = vmArgIntGet(2, p1);
@@ -351,7 +278,7 @@ int setTrust(VMThread* pThread) {
     if (arg2 < 0) arg2 = 0;
     if (arg2 > 2) arg2 = 2;
 
-    CfSlotTable tbl = lbl_eu_804FA9F0;
+    CfSlotTable tbl = pluginTrustEffectSlots;
     int done = 0;
     CfEnumListHolder holder;
 
@@ -389,7 +316,7 @@ int setTrust(VMThread* pThread) {
     return 0;
 }
 
-// setItemMulti: grant multiple items (up to 4 ids + a bool flag) via the
+// setItemMulti
 // shared item-queue helper.
 int setItemMulti(VMThread* pThread) {
     int v1, v2, v3, v4, b;
@@ -538,17 +465,14 @@ int ptChangeNotice(){
     return 0;
 }
 int save() {
-    extern u32 lbl_eu_80663E28;
-    extern void UIWin_CreateSaveWin();
-    if (!(lbl_eu_80663E28 & 0x40000000)) UIWin_CreateSaveWin();
+    extern u32 gmPauseFlags;
+    if (!(gmPauseFlags & 0x40000000)) UIWin_CreateSaveWin();
     return 0;
 }
 int kizunaTalkStart() {
-    extern void MenuStateSet64059Notify();
-    extern u32 lbl_eu_80663E28;
-    extern void prepareTextBuffer__Q22cf13CfGameManagerFv();
+    extern u32 gmPauseFlags;
     MenuStateSet64059Notify();
-    lbl_eu_80663E28 |= 0x1000;
+    gmPauseFlags |= 0x1000;
     prepareTextBuffer__Q22cf13CfGameManagerFv();
     return 0;
 }
@@ -556,8 +480,8 @@ int kizunaTalkStart() {
 // rejects extern "C" inside function bodies).
 
 int kizunaTalkEnd(){
-    extern u32 lbl_eu_80663E28;
-    lbl_eu_80663E28 &= ~0x1000;
+    extern u32 gmPauseFlags;
+    gmPauseFlags &= ~0x1000;
     code80135FDC_clearByte_64059();
     return 0;
 }
@@ -570,7 +494,6 @@ int isPrioReq(VMThread* pThread) {
     return 1;
 }
 int gameClear(VMThread* pThread) {
-    extern void CUICfManager_queueGameClearMenu();
     CUICfManager_queueGameClearMenu();
     return 0;
 }
@@ -604,8 +527,7 @@ int isSETalkVoiceWait(VMThread* pThread) {
     return 1;
 }
 extern "C" int uiSetSETalkVoiceWait(VMThread* pThread) {
-    extern void func_eu_8013C8DC();
-    func_eu_8013C8DC();
+    code80135FDC_setByte_64064();
     return 0;
 }
 extern "C" int uiClearSETalkVoiceWait(VMThread* pThread) {
@@ -613,3 +535,10 @@ extern "C" int uiClearSETalkVoiceWait(VMThread* pThread) {
     MenuStateClear64064();
     return 0;
 }
+
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABE0[] = "cf::CfObjectPc";
+
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABF0[] =
+"name\0pc_arts\0MNU_sysmes\0%s%s%s\0rlt_meet\0ui\0\0\0\0\0";

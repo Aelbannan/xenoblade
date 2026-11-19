@@ -167,19 +167,19 @@ void CMenuQstCnt::Move() {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000)) return;
     if (!IsMenuState621F0()) return;
     // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
     // destroys r0 and the andis needs a second copy. Two adjacent volatile
     // reads stop MWCC CSE-ing them into one load while keeping both loads
     // before the branch like retail.
-    u32 e24a = *(volatile u32*)&lbl_eu_80663E24;
-    u32 e24b = *(volatile u32*)&lbl_eu_80663E24;
+    u32 e24a = *(volatile u32*)&gmGameFlags;
+    u32 e24b = *(volatile u32*)&gmGameFlags;
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
     if (cf::CfGameManager::isSceneLoading()) return;
-    if (lbl_eu_80663E24 & (1u << 9)) return;
+    if (gmGameFlags & (1u << 9)) return;
     {
-        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14);
+        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(gmScene);
         // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
         // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
         f32 camDist = *(f32*)((u8*)cam + 0xC);
@@ -206,19 +206,19 @@ void CMenuQstCnt::cbRenderBefore() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
     // destroys r0 and the andis needs a second copy. Two adjacent volatile
     // reads stop MWCC CSE-ing them into one load (the missing 4 bytes) while
     // keeping both loads before the branch like retail.
-    u32 e24a = *(volatile u32*)&lbl_eu_80663E24;
-    u32 e24b = *(volatile u32*)&lbl_eu_80663E24;
+    u32 e24a = *(volatile u32*)&gmGameFlags;
+    u32 e24b = *(volatile u32*)&gmGameFlags;
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
     if (cf::CfGameManager::isSceneLoading()) return;
     {
-        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(lbl_eu_80663E14);
+        CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(gmScene);
         f32 camDist = cam->field_C;
         f32 result = lbl_eu_8066856C - camDist;
         if (result < lbl_eu_8066856C) return;

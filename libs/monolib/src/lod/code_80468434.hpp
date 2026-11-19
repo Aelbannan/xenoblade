@@ -8,7 +8,7 @@
 
 // Global-scope LOD distance-cull helper (defined in UnkClass_8046368C.cpp).
 // Returns non-zero when the distance range [a, b] straddles the shared LOD
-// distance limit (lbl_eu_806657B8).
+// distance limit (LodDistanceLimit).
 s32 isLodRangeStraddlesLimit(s32 a, s32 b);
 
 // LOD render-state helpers defined in sibling LOD TUs.  The retail symbol map
@@ -44,28 +44,28 @@ struct LodDirEntry {
     u8 pad_1C[0x24 - 0x1C];
 };
 
-// Per-type LOD pointer tables: lbl_eu_80665768 / lbl_eu_80665778 are the
+// Per-type LOD pointer tables: sLodCacheTailFlag / LodDrawRecords18 are the
 // first entries; the helpers index them at stride 0x18 with byte arithmetic.
 extern "C" {
-extern s32 lbl_eu_806657A0;          // spawn-direction table index bias
-extern LodDirEntry* lbl_eu_806657AC; // spawn table / matrix records (stride 0xB4)
+extern s32 LodMatrixSlotBias;          // spawn-direction table index bias
+extern LodDirEntry* LodMatrixRecordBase; // spawn table / matrix records (stride 0xB4)
 extern const f32 lbl_eu_8066A650;    // spawn spread scale
-extern u8* lbl_eu_8066576C;          // most recent object pointer
+extern u8* LodCurrentObject;          // most recent object pointer
 extern s32 lbl_eu_80665794;          // object index / record selector
 extern const u32 lbl_eu_8066A5F0;    // visibility flag mask
-extern u8* lbl_eu_80665768;          // per-type pointer table base (stride 0x18)
-extern u8* lbl_eu_80665778;          // per-type pointer table base (stride 0x18)
-extern const f32 lbl_eu_80665754;    // shared LOD distance constant
-extern f32 lbl_eu_806657A4;          // cached LOD distance value
-extern f32 lbl_eu_80658048[][3][4];  // per-record matrix work area (stride 0x30)
-extern f32 lbl_eu_806581C8[][3][4];  // shared billboard matrix table (stride 0x30)
-extern f32 lbl_eu_806583E0[][3][4];  // fixed LOD matrix table (stride 0x30)
-extern f32 lbl_eu_80658008[][3][4];  // shared view matrix (stride 0x30)
+extern u8* sLodCacheTailFlag;          // per-type pointer table base (stride 0x18)
+extern u8* LodDrawRecords18;          // per-type pointer table base (stride 0x18)
+extern const f32 sLodThresholdDist;    // shared LOD distance constant
+extern f32 LodCachedDistance;          // cached LOD distance value
+extern f32 LodMatrixWorkArea[][3][4];  // per-record matrix work area (stride 0x30)
+extern f32 LodBillboardMatrixTable[][3][4];  // shared billboard matrix table (stride 0x30)
+extern f32 LodFixedMatrixTable[][3][4];  // fixed LOD matrix table (stride 0x30)
+extern f32 LodViewMatrix[][3][4];  // shared view matrix (stride 0x30)
 extern f32 lbl_eu_80657FD8[][3][4];  // fixed LOD view matrix
-extern u32 lbl_eu_80665788;          // matrix-index pointer table base
-extern u32 lbl_eu_8066578C;          // matrix-data pointer table base
-extern u32 lbl_eu_806657B0;          // LOD dirty flags
-extern s16 lbl_eu_806657C8;          // vertex-array stride
+extern u32 LodMatrixIndexTable;          // matrix-index pointer table base
+extern u32 LodMatrixDataTable;          // matrix-data pointer table base
+extern u32 LodStateFlags;          // LOD dirty flags
+extern s16 LodNormalStride;          // vertex-array stride
 extern const f32 lbl_eu_8066A64C;    // 0.0f
 extern const f32 lbl_eu_8066A648;    // 1.0f
 }

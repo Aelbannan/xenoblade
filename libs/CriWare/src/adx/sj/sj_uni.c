@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80518DF0[0x10] = {
+__declspec(section ".rodata") __attribute__((aligned(8))) char SJUNI_Uuid[0x10] = {
     0x2E, 0x53, 0x4F, 0xA3, 0xAF, 0x97, 0x11, 0xD2, 0xA5, 0x27, 0x00, 0x60, 0x08, 0x94, 0x48, 0xBC
 };
 
@@ -31,8 +31,8 @@ __declspec(section ".data") __attribute__((aligned(8))) void *lbl_eu_80565C60[12
     SJUNI_EntryErrFunc
 };
 
-u32 lbl_eu_805F1AD8[2];
-u8 lbl_eu_805F1AE0[0xC00];
+u32 SJUNI_InitCount[2];
+u8 SJUNI_HandleTable[0xC00];
 
 extern void SJCRS_Init(void);
 extern void SJCRS_Finish(void);
@@ -89,18 +89,18 @@ void SJUNI_Error(void) {
 void SJUNI_Init(void) {
     SJCRS_Init();
     SJCRS_Lock();
-    if (lbl_eu_805F1AD8[0] == 0) {
-        memset(lbl_eu_805F1AE0, 0, 0xC00);
+    if (SJUNI_InitCount[0] == 0) {
+        memset(SJUNI_HandleTable, 0, 0xC00);
     }
-    lbl_eu_805F1AD8[0]++;
+    SJUNI_InitCount[0]++;
     SJCRS_Unlock();
 }
 
 /* --- SJUNI_Finish --- */
 void SJUNI_Finish(void) {
     SJCRS_Lock();
-    if (--lbl_eu_805F1AD8[0] == 0) {
-        memset(lbl_eu_805F1AE0, 0, 0xC00);
+    if (--SJUNI_InitCount[0] == 0) {
+        memset(SJUNI_HandleTable, 0, 0xC00);
     }
     SJCRS_Unlock();
     SJCRS_Finish();
@@ -120,15 +120,15 @@ void *sjuni_Create(int index, void *pool_mem, int pool_size) {
     int i;
 
     for (i = 0; i < 0x40; i++) {
-        if (((SJUNI *)lbl_eu_805F1AE0)[i].valid == 0) break;
+        if (((SJUNI *)SJUNI_HandleTable)[i].valid == 0) break;
     }
     if (i == 0x40) return NULL;
 
-    SJUNI *self = &((SJUNI *)lbl_eu_805F1AE0)[i];
+    SJUNI *self = &((SJUNI *)SJUNI_HandleTable)[i];
     self->valid = 1;
     self->vtable = lbl_eu_80565C60;
     self->index = (s8)index;
-    self->uuid = lbl_eu_80518DF0;
+    self->uuid = SJUNI_Uuid;
     self->pool_mem = (u8 *)pool_mem;
     self->num_chunks = pool_size / 16;
     self->err_func = (void (*)(void *, int))SJUNI_Error;

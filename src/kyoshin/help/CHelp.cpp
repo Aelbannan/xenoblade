@@ -9,8 +9,8 @@ cf::CHelp::CHelp(u32 owner, u32 param) {
 namespace cf {
 
 void CHelp::dispatchHelp() {
-    UNKWORD a = this->getSkipResetFlag();
-    UNKWORD b = this->getHelpSceneId();
+    UNKWORD a = this->CHelp_UnkVirtualFunc5();
+    UNKWORD b = this->CHelp_UnkVirtualFunc4();
     CUICfManager_queueTutorialMenu(static_cast<u8>(mParam), b, a);
     CtrlRemote_SetSharedBit(mOwner, 1);
 }

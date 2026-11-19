@@ -97,6 +97,8 @@ public:
     static bool isPackLoadIdle(int pExcept);
     static bool arePacksLoaded();
     static bool areArcsReady();
+    static void SavePkhFilenamesArrayPtr(const char* const[]);
+    static void SaveStaticArcFilenameStringPtr(const char* const*);
     bool wkStandbyLogin();
     bool wkStandbyLogout();
     void wkUpdate();
@@ -108,7 +110,6 @@ public:
 };
 
 // Work-system singleton pointer (.sbss).
-extern CWorkSystemPack* lbl_eu_80665A10;
 // _reslist_base<CPackItem*> / _reslist_base<CArcItem*> vtables (DOL data).
 extern u32 lbl_eu_8056FF48[4];
 extern u32 lbl_eu_8056FF24[3];
@@ -120,8 +121,6 @@ extern u32 lbl_eu_8056FE58[40];
 extern u32 lbl_eu_8056FF30[3];
 extern u32 lbl_eu_8056FF0C[3];
 // Static filename registration tables (set by the Save* helpers below).
-extern const char* const* lbl_eu_80665A14;
-extern const char* const* lbl_eu_80665A18[2];
 
 extern "C" {
 
@@ -231,7 +230,7 @@ int DevFile_SubstLangPath(const char*);
     CArcItem* raw = (CArcItem*)mtl::MemManager::allocate(0x58, CWorkThreadSystem::getWorkMem());
     CArcItem* newItem = new (raw) CArcItem(pStr);
 
-    CWorkSystemPack* sys = lbl_eu_80665A10;
+    CWorkSystemPack* sys = sWorkSystemPackInstance;
     int i = 0;
     int cap = sys->mArcList.mCapacity;
     ArcItemListNode* startNode = sys->mArcList.mStartNodePtr;
@@ -262,10 +261,10 @@ int DevFile_SubstLangPath(const char*);
 // calls. Declared under the retail mangled name to reproduce that call.
 extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, int idx, int partition);
  void registerPackFile(const char* pName, int pPartitionId) {
-    // No local singleton copy: retail reloads lbl_eu_80665A10 (SDA) at each
+    // No local singleton copy: retail reloads sWorkSystemPackInstance (SDA) at each
     // use site, keeping only pName/pPartitionId/i/newItem in callee-saved regs.
     int i = 0;
-    PackItemListNode* sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
+    PackItemListNode* sentinel = sWorkSystemPackInstance->mPackList.mStartNodePtr;
     while (true) {
         PackItemListNode* node = sentinel->mNext;
         bool found = false;
@@ -285,7 +284,7 @@ extern "C" CPackItem* __ct__9CPackItemFPCci(CPackItem* mem, const char* name, in
         newItem = __ct__9CPackItemFPCci(newItem, pName, i, pPartitionId);
     }
 
-    CWorkSystemPack* sys2 = lbl_eu_80665A10;
+    CWorkSystemPack* sys2 = sWorkSystemPackInstance;
     int j = 0;
     int cap = sys2->mPackList.mCapacity;
     PackItemListNode* startNode = sys2->mPackList.mStartNodePtr;
@@ -352,7 +351,7 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
     mArcList.mStartNodePtr->mPrev = mArcList.mStartNodePtr->mNext;
     mArcList.m_vtable = (u32)lbl_eu_8056FF0C;
 
-    lbl_eu_80665A10 = this;
+    sWorkSystemPackInstance = this;
     mType = CWorkThread::THREAD_CWORKSYSTEMPACK;
 
     // Node arrays: the arc list starts with one free slot, the pack list with 16.
@@ -370,14 +369,14 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
 
     // Register the static arc / pkh filename tables (both NULL-terminated).
     // 'it = p - 1; while (*++it)' reproduces retail's subi/lwzu walk rotation.
-    const char* const* p = lbl_eu_80665A18[0];
+    const char* const* p = spStaticArcFilenames[0];
     if (p != 0) {
         const char* const* it = p - 1;
         while (*++it != 0) {
             registerArcFile(*it);
         }
     }
-    const char* const* q = lbl_eu_80665A14;
+    const char* const* q = spPkhFilenamesArray;
     if (q != 0) {
         const char* const* jt = q - 1;
         while (*++jt != 0) {
@@ -393,7 +392,7 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent)
 extern "C" void __dt__11CWorkThreadFv(void* self, int flags);
 extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
     if (self != 0) {
-        lbl_eu_80665A10 = 0;
+        sWorkSystemPackInstance = 0;
         if (&self->mArcList != 0) {
             __dt___reslist_base_CArcItem(&self->mArcList, 0);
         }
@@ -418,7 +417,7 @@ extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPk
     const char* pFile = ml::CPathUtil::getFilePtrFromPath(pPath);
     PackItemListNode* sentinel;
     PackItemListNode* node;
-    sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
+    sentinel = sWorkSystemPackInstance->mPackList.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel) {
         if (!strcmp(node->mItem->mBaseName, pName)) {
@@ -460,7 +459,7 @@ s32 findPackFileId(const char* pName, const char* pPath) {
 // keeps retail's out-of-line bl - without it -inline auto
 // folds this small helper into findPackFileId below.
 bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
+    CWorkSystemPack* sys = sWorkSystemPackInstance;
     u8* head = (u8*)sys->mArcList.mStartNodePtr;
     u8* first = *(u8**)head;
     if (first != head) {
@@ -472,7 +471,7 @@ bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFile
 // Login gate: walk the circular pack-item list (head at +0x1E8, nodes link
 // via +0, data pointer at +8) and require every item's field_0x2C == 2.
 bool CWorkSystemPack::areArcsReady() {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
+    CWorkSystemPack* sys = sWorkSystemPackInstance;
     if (sys == 0) return false;
     u8* head = (u8*)sys->mArcList.mStartNodePtr;
     u8* n = *(u8**)head;
@@ -561,18 +560,18 @@ bool CWorkSystemPack::wkStandbyLogout() {
 }
 
 // Store the PKH filenames array pointer for later retrieval by the work system.
-void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
-    lbl_eu_80665A14 = pArray;
+void CWorkSystemPack::SavePkhFilenamesArrayPtr(const char* const* pArray) {
+    spPkhFilenamesArray = pArray;
 }
 
 // Store the static arc filename string pointer for later retrieval by the work system.
-void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* pFilenameStr) {
-    lbl_eu_80665A18[0] = pFilenameStr;
+void CWorkSystemPack::SaveStaticArcFilenameStringPtr(const char* const* pFilenameStr) {
+    spStaticArcFilenames[0] = pFilenameStr;
 }
 
 // Search the pack list for an item whose base name matches pName.
 int hasPackFile(const char* pName) {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
+    CWorkSystemPack* sys = sWorkSystemPackInstance;
     PackItemListNode* sentinel;
     PackItemListNode* node;
     if (sys == 0) return 0;
@@ -593,7 +592,7 @@ int hasPackFile(const char* pName) {
 void removePackFile(const char* pName) {
     // Don't cache the singleton in a local: retail only keeps 3 values live
     // (pName, sentinel, node) and saves r29-r31.
-    PackItemListNode* sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
+    PackItemListNode* sentinel = sWorkSystemPackInstance->mPackList.mStartNodePtr;
     PackItemListNode* node = sentinel->mNext;
     while (node != sentinel) {
         // Named bool with == 0 reproduces retail's addic.-1/subfe. setnz tail.
@@ -623,8 +622,8 @@ bool CWorkSystemPack::isPackLoadIdle(int pExcept) {
     CPackItem* item;
     PackItemListNode* sentinel;
     PackItemListNode* node;
-    if (lbl_eu_80665A10 == 0) return false;
-    sentinel = lbl_eu_80665A10->mPackList.mStartNodePtr;
+    if (sWorkSystemPackInstance == 0) return false;
+    sentinel = sWorkSystemPackInstance->mPackList.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel) {
         item = node->mItem;
@@ -636,10 +635,10 @@ bool CWorkSystemPack::isPackLoadIdle(int pExcept) {
 
 // Returns false while any pack item is still not loaded.
 bool CWorkSystemPack::arePacksLoaded() {
-    CWorkSystemPack* sys = lbl_eu_80665A10;
+    CWorkSystemPack* sys = sWorkSystemPackInstance;
     if (sys == 0) return false;
     PackItemListNode* node = sys->mPackList.mStartNodePtr->mNext;
-    while (node != lbl_eu_80665A10->mPackList.mStartNodePtr) {
+    while (node != sWorkSystemPackInstance->mPackList.mStartNodePtr) {
         if (node->mItem->isNotLoaded()) return false;
         node = node->mNext;
     }
@@ -648,13 +647,13 @@ bool CWorkSystemPack::arePacksLoaded() {
 
 // Update the arc-item list, then the pack-item list.
 void CWorkSystemPack::wkUpdate() {
-    ArcItemListNode* node = lbl_eu_80665A10->mArcList.mStartNodePtr->mNext;
-    while (node != lbl_eu_80665A10->mArcList.mStartNodePtr) {
+    ArcItemListNode* node = sWorkSystemPackInstance->mArcList.mStartNodePtr->mNext;
+    while (node != sWorkSystemPackInstance->mArcList.mStartNodePtr) {
         updateLoadState(node->mItem);
         node = node->mNext;
     }
-    PackItemListNode* pnode = lbl_eu_80665A10->mPackList.mStartNodePtr->mNext;
-    while (pnode != lbl_eu_80665A10->mPackList.mStartNodePtr) {
+    PackItemListNode* pnode = sWorkSystemPackInstance->mPackList.mStartNodePtr->mNext;
+    while (pnode != sWorkSystemPackInstance->mPackList.mStartNodePtr) {
         pnode->mItem->update();
         pnode = pnode->mNext;
     }
@@ -778,25 +777,11 @@ extern "C" u32 lbl_eu_8056FF48[4] = {
 };
 
 // [.rodata] 0x80524688-0x805246FC (116B): RTTI name pool.
-extern "C" __declspec(align(4)) const char lbl_eu_80524688[16] = {
-    0x43,0x57,0x6F,0x72,0x6B,0x53,0x79,0x73,0x74,0x65,0x6D,0x50,0x61,0x63,0x6B,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_80524698[20] = {
-    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x41,0x72,0x63,0x49,0x74,0x65,0x6D,
-    0x20,0x2A,0x3E,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_805246AC[26] = {
-    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x41,
-    0x72,0x63,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_805246C8[21] = {
-    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x50,0x61,0x63,0x6B,0x49,0x74,0x65,
-    0x6D,0x20,0x2A,0x3E,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_805246E0[28] = {
-    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x50,
-    0x61,0x63,0x6B,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,0x00,
-};
+extern "C" __declspec(align(4)) const char lbl_eu_80524688[16] = "CWorkSystemPack";
+extern "C" __declspec(align(4)) const char lbl_eu_80524698[20] = "reslist<CArcItem *>";
+extern "C" __declspec(align(4)) const char lbl_eu_805246AC[26] = "_reslist_base<CArcItem *>";
+extern "C" __declspec(align(4)) const char lbl_eu_805246C8[21] = "reslist<CPackItem *>";
+extern "C" __declspec(align(4)) const char lbl_eu_805246E0[28] = "_reslist_base<CPackItem *>";
 
 // [.sdata] 0x80663BC8-0x80663BF8 (48B): region handle + RTTI locators.
 extern "C" u32 lbl_eu_80663BC8[2] = { 0xFFFFFFFF, 0x00000000 };
@@ -807,6 +792,6 @@ extern "C" u32 lbl_eu_80663BE8[2] = { (u32)&lbl_eu_805246C8, (u32)&lbl_eu_8056FF
 extern "C" u32 lbl_eu_80663BF0[2] = { (u32)&lbl_eu_805246E0, 0x00000000 };
 
 // [.sbss] 0x80665A10-0x80665A20 (16B).
-CWorkSystemPack* lbl_eu_80665A10;
-const char* const* lbl_eu_80665A14;
-const char* const* lbl_eu_80665A18[2];
+CWorkSystemPack* sWorkSystemPackInstance;
+const char* const* spPkhFilenamesArray;
+const char* const* spStaticArcFilenames[2];

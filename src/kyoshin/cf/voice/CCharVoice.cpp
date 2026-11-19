@@ -1,6 +1,6 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include <string.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // ---------------------------------------------------------------------
 // Imported linker symbols (data).  At global scope MWCC does not mangle
@@ -161,7 +161,7 @@ extern "C" void updatePosition(CCharVoice* self)
             return;
         }
 
-        CVoicePoseBlock* ch = Scn_FindCamItem(lbl_eu_80663E14, -1);
+        CVoicePoseBlock* ch = Scn_FindCamItem(gmScene, -1);
 
         // Model position fetch: getModelPos is called twice by retail
         // (once for the null test, once in the body) -- mirror that.

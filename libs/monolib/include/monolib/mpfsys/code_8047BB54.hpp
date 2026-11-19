@@ -2,8 +2,11 @@
 
 #include <types.h>
 
+struct UnkSceneDataObj;
+
 class UnkClass_8047BB54 {
 public:
+    static UnkSceneDataObj* spInstance; // retail .sbss symbol spInstance__17UnkClass_8047BB54
     void initMpfSystem();
     void checkMpfFlags();
     void resetMpfInstance();

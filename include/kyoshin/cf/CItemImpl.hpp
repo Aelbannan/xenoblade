@@ -29,7 +29,7 @@ public:
     virtual void vf48(CItemData* p);             // 0x48
     virtual u32 vf4C(CItemData* p, u32 x);       // 0x4C
     virtual u32 vf50(CItemData* p, u32 x, u16 y); // 0x50
-    virtual u16 vf54(CItemData* p);              // 0x54 (rank/count; retail narrows to u16)
+    virtual u32 vf54(CItemData* p);              // 0x54 (retail keeps the full width)
     virtual void vf58(CItemData* p, u32 x);      // 0x58
     virtual void vf5C();                         // 0x5C
     virtual void vf60();                         // 0x60

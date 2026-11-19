@@ -13,7 +13,7 @@ public:
     virtual bool gameExceptionCB(u32 r4) = 0;
 };
 
-class __declspec(novtable) CException : public CProc {
+class CException : public CProc {
 public:
     CException(const char* pName, CWorkThread* pParent);
     virtual ~CException();
@@ -62,3 +62,11 @@ public:
     u8 pad211[3];                //0x211
     u32 mMaxExceptions;          //0x214
 };
+
+// Global exception bookkeeping, defined in CException.cpp.
+extern "C" {
+extern CException* spExceptionInstance;
+extern u32 sExceptionCount;
+extern u32 sExceptionState;
+extern CException* sRegisteredExceptions[16];
+}

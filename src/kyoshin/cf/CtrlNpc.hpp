@@ -193,13 +193,13 @@ union NpcColNarrow {
 
 // bdat tables / strings used by CtrlNpcUpdateTalk.
 // The page-hint halfwords sprintf'd into the bdat file name.
-extern u16 lbl_eu_80663E42;
-extern u32 lbl_eu_80663E28;   // global flags word (sbss)
-extern u16 lbl_eu_80663E44;
+extern u16 gmGlobalFlag42;
+extern u32 gmPauseFlags;   // global flags word (sbss)
+extern u16 gmGlobalFlag44;
 extern const char lbl_eu_804FBB0C[];      // column-name / format string base
-extern const char* lbl_eu_80527A48[];     // 6 per-kind column names
-extern const char* lbl_eu_80527A60[];     // per-row column names (index / 3)
-extern const char* lbl_eu_80527A80[];     // per-row column names (index / 3)
+extern const char* gNpcAutotalkColumnNames[];     // 6 per-kind column names
+extern const char* gNpcTimeColumnNames[];     // per-row column names (index / 3)
+extern const char* gNpcTimeColumnNamesAlt[];     // per-row column names (index / 3)
 
 // Character-object factory called by the free-function ctor; defined in
 // CfObjectModel.cpp (retail func_800BBC0C). extern "C" keeps the call reloc
@@ -230,7 +230,7 @@ extern "C" int CtrlNpcApproachTarget(cf::CtrlNpc* self);
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
 extern "C" u32 clearControllerState__Q22cf13CfGameManagerFv();
 // Play-frame helper returning a u32 (CfGameManager.cpp defines it as a plain
-// extern "C" free function returning lbl_eu_80663D90).
+// extern "C" free function returning gCfTEventFrameCounter).
 extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv();
 // Movement-timer helper defined in this TU (retail name unmangled); C linkage
 // keeps the call reloc from CtrlNpcRestartTimerGated matching retail.
@@ -271,7 +271,7 @@ extern const f32 lbl_eu_80666714;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 // Global flags word (sbss) read by CtrlNpcCanAdvanceAction.
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // Retail vtables stored by the free-function ctor (data lives in another TU).
 extern const u32 lbl_eu_80527BB0[];
 extern const u32 lbl_eu_80527B38[];
@@ -280,10 +280,10 @@ extern const u32 lbl_eu_80527B38[];
 // are {0, -1, handler} triples (MWCC __ptmf_scall layout), stored as raw words
 // and invoked as (void(*)(CtrlNpc*))tbl[i*3+2] -- see the definitions in
 // CtrlNpc.cpp.
-extern const void* lbl_eu_80527AE0[];   // actions 1..2 handlers
-extern const void* lbl_eu_80527AA0[];   // action 4 handlers
-extern const void* lbl_eu_80527AB8[];   // action 5 handlers
-extern const void* lbl_eu_80527B10[];   // action 3 handlers
+extern const void* gNpcActionState1Handlers[];   // actions 1..2 handlers
+extern const void* gNpcAnimMode16Handlers[];   // action 4 handlers
+extern const void* gNpcAnimModeHandlers[];   // action 5 handlers
+extern const void* gNpcActionState2Handlers[];   // action 3 handlers
 
 // CfGameManager singleton + presentation-flag probe (isGlobalCamFlagSet__Fi).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();

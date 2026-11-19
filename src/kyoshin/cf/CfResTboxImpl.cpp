@@ -199,7 +199,7 @@ extern "C" void ResTbox_OpenResource(CfResTboxImpl* ths) {
     CfResObjParent* parent = ths->field_00;
     parent->field_94 = 0;
     if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
-    if (lbl_eu_80663E24 & 0x100000) return;
+    if (gmGameFlags & 0x100000) return;
     if (isSceneActive__Q22cf13CfGameManagerFv() != 0) return;
     ResInfoEntry* entry = (ResInfoEntry*)CfRes_getInstPtr29C();
     int ok = 1;
@@ -213,7 +213,7 @@ extern "C" void ResTbox_OpenResource(CfResTboxImpl* ths) {
         ths->field_00->field_90 =
             (u8*)CfRes_lookupStrTable((char*)ths->field_00->field_90, 0, (void**)&outC);
         float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
-        u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
+        u8* obj = scnImN4BuildByIdx((u8*)gmScene, ths->field_00->field_90, 6, 1, 0, 0x70);
         CfModel_InstallSub(ths->field_00, obj);
         ((cf::CfObject*)ths->field_00)->CfObject_setObjScale(anim);
     }

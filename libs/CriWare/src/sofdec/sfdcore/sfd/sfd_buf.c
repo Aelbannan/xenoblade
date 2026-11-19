@@ -4,6 +4,7 @@
 
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.h"
 
 // Absorbed from criware_data (retail bytes) - generated
 __attribute__((aligned(8))) void * lbl_eu_80606E10; // bss off 0x0 (scalar, spec 0x4)
@@ -498,10 +499,6 @@ int fn_803C1CAC(void *self) {
  * @param sub_idx Sub-index (UOCH slot)
  * @param src     Source UOCH data (4 x u32)
  */
-typedef struct SfbufUoch {
-    u32 w[4];
-} SfbufUoch;
-
 void SFBUF_SetUoch(void *self, int idx, int sub_idx, u32 *src) {
     ((SfbufUoch *)((u8 *)self + idx * SFBUF_BUF_STRIDE + 0x13C8))[sub_idx] = *(SfbufUoch *)src;
 }

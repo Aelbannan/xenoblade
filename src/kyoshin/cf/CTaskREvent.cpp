@@ -6,6 +6,7 @@
 #include "kyoshin/cf/CTaskREvent.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceVICb.hpp"
 #include "monolib/scn/CScnNw4r.hpp"
 
 extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void*);
@@ -104,7 +105,7 @@ cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, C
     pMem->field_0x1F4 = zero;
     // The task doubles as the event manager root (the global is typed on the
     // manager struct; the ctor stores the task pointer).
-    lbl_eu_80664240 = reinterpret_cast<CEventMgr*>(pMem);
+    gEventMgr = reinterpret_cast<CEventMgr*>(pMem);
 
     // Register the IFlagEvent subobject (+0x58); the null-this guard shape
     // mirrors the dtor's CtrlRemote_ResetSlotArrayByIndex call.
@@ -127,8 +128,8 @@ cf::CTaskREvent* __ct__cf_CTaskREvent(cf::CTaskREvent* pMem, CScnNw4r* pScene, C
     VISetTimeToDimming(0);
 
     pMem->field_0x6C |= 0x800;
-    lbl_eu_80664244 = 2;
-    lbl_eu_80664248 = CDeviceVI::getTargetFramerate() * 300;
+    gAutoSleepState = 2;
+    gEventFrameCounter[0] = CDeviceVI::getTargetFramerate() * 300;
     return pMem;
 }
 
@@ -157,7 +158,7 @@ extern "C" cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::CTaskREvent* self, s3
         if (self != nullptr) {
             render = reinterpret_cast<IScnRender*>(&self->mVtbl5C);
         }
-        lbl_eu_80663E14->removeRenderCB(render);
+        gmScene->removeRenderCB(render);
 
         // Unregister the IFlagEvent subobject (same guarded shape).
         cf::IFlagEvent* flagEvent = reinterpret_cast<cf::IFlagEvent*>(self);
@@ -171,7 +172,7 @@ extern "C" cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::CTaskREvent* self, s3
         VIEnableDimming(1);
         VISetTimeToDimming(0);
 
-        lbl_eu_80664240 = 0;
+        gEventMgr = 0;
 
         // Destroy embedded subobjects (retail order: CREvtMem, CInfoCf,
         // CDeviceVICb, then CProcess).
@@ -193,7 +194,7 @@ extern "C" cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::CTaskREvent* self, s3
 // index valid, the +0xB0 gate set, or the +0x6C bit0 flag raised. The final
 // `mgr &&` reuses the CR1 null compare from the first guard (retail shape).
 int evtIsActiveSeq() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) return 0;
     if (mgr->field_0x1D4 != -1) return 1;
     if (mgr->field_0xB0 != 0) return 1;
@@ -221,14 +222,14 @@ int evtIsActiveSeq() {
 // whose value equals retail's shared .sdata2 blob lbl_eu_80667630 -
 // name-only reloc drift, accepted at EQUIVALENT_MATCH (MWCC_CASES §7i).
 float evtCalcStreamVolume() {
-    return lbl_eu_8066762C * (float)(s32)lbl_eu_80662384;
+    return 0.01f * (float)(s32)gStreamVolumeLevel;
 }
 
-extern "C" u32 evtGetBaseNameAddr() { return (u32)lbl_eu_80662380; }
+extern "C" u32 evtGetBaseNameAddr() { return (u32)gpEventBaseName; }
 
-extern "C" u32 evtGetManagerAddr() { return (u32)lbl_eu_80664240; }
+extern "C" u32 evtGetManagerAddr() { return (u32)gEventMgr; }
 void setAutoSleep(u32 arg) {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (!mgr) return;
     evtSetAutoSleepFlag(mgr, arg);
 }
@@ -399,22 +400,22 @@ int evtLookupEntryWord(const char* key, int slot) {
 }
 
 u32 isEventPending() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == nullptr) return 0;
     u32 result = 0;
     if (mgr->field_0x1BC != 0 ||
-        (mgr->field_0x1D4 >= 0 && (lbl_eu_80663E28 & 0x01000000) == 0)) {
+        (mgr->field_0x1D4 >= 0 && (gmPauseFlags & 0x01000000) == 0)) {
         result = 1;
     }
     return result;
 }
 
-// Shuffles the 0x26-byte lbl_eu_80530430 table (swap with a random slot for
+// Shuffles the 0x26-byte gEventShuffleOrder table (swap with a random slot for
 // every odd index) and marks the event manager busy (+0x6C bit1). Returns 1
 // on success; 0 when the manager is missing, the sequence counter is
 // running, or the busy flag is already set.
 int evtBeginShuffledSeq() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) return 0;
     if (mgr->field_0x1D4 >= 0) return 0;
     u32 flag;
@@ -428,7 +429,7 @@ int evtBeginShuffledSeq() {
     u8 v;
     u32 i;
     u8* p;
-    p = lbl_eu_80530430;
+    p = gEventShuffleOrder;
     for (i = 0; i < 0x26; i++, p++) {
         if (i & 1) {
             v = *p;
@@ -437,11 +438,11 @@ int evtBeginShuffledSeq() {
                 r += 1;
                 if (r >= 0x26) r = 1;
             }
-            *p = lbl_eu_80530430[r];
-            lbl_eu_80530430[r] = v;
+            *p = gEventShuffleOrder[r];
+            gEventShuffleOrder[r] = v;
         }
     }
-    lbl_eu_80664240->field_0x6C |= 2;
+    gEventMgr->field_0x6C |= 2;
     return 1;
 }
 
@@ -453,29 +454,29 @@ int evtBeginShuffledSeq() {
 // against the 32-entry event-name table, forwarding the index to
 // evtFillCharEntry on a hit.
 int evtStartSeqFromPath(const char* path, int arg1, int arg2) {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) return 0;
     if (arg1 == 0 && mgr->field_0x1D4 >= 0) return 0;
     InfoCfRefreshSettings(reinterpret_cast<cf::CInfoCf*>(mgr->field_0x70));
-    CEventMgr* m2 = lbl_eu_80664240;
+    CEventMgr* m2 = gEventMgr;
     if ((m2->field_0x74 & 1) == 0) {
         InfoCfNoopVirt(reinterpret_cast<cf::CInfoCf*>(m2->field_0x70));
         return 0;
     }
     if (getFileSize__11CDeviceFileFPCc(path, 1) < 0) return 0;
-    if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+    if ((gmPauseFlags & 0x01000000) == 0) {
         CTaskGame_resetStream();
     }
-    lbl_eu_80664240->field_0x1BC = 0;
-    lbl_eu_80664240->field_0xB0 =
-        EvtSeqCreateTask(reinterpret_cast<CProcess*>(lbl_eu_80664240), path);
+    gEventMgr->field_0x1BC = 0;
+    gEventMgr->field_0xB0 =
+        EvtSeqCreateTask(reinterpret_cast<CProcess*>(gEventMgr), path);
     // Remainder nested under the positive gate test: retail branches beq
     // straight to the shared return-0 block when the spawn failed.
-    if (lbl_eu_80664240->field_0xB0 != 0) {
+    if (gEventMgr->field_0xB0 != 0) {
         if (arg2 != 0) {
             EvtSeqSetStateBit9();
         }
-        lbl_eu_80664240->field_0x6C |= 1;
+        gEventMgr->field_0x6C |= 1;
         const char* file = ml::CPathUtil::getFilePtrFromPath(path);
         // The name-match workspace is declared before the path workspace: MWCC
         // assigns automatic storage in declaration order from the top of the
@@ -517,7 +518,7 @@ int evtStartSeqFromPath(const char* path, int arg1, int arg2) {
 }
 
 int evtIsBusyBitSet() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr) {
         return mgr->field_0x6C & 1;
     }
@@ -529,27 +530,27 @@ int evtIsBusyBitSet() {
 // counter clean, and no event word pending. Each guard is materialized as a
 // 0/1 word (cntlzw/srwi) and AND-accumulated (retail shape).
 int evtIsFullyIdle() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) return 0;
     if (cf::CfGameManager::isManagerInitialized() == 0) return 0;
-    int result = lbl_eu_80664240->field_0x74 & 1;
+    int result = gEventMgr->field_0x74 & 1;
     if (result) {
         u32 flag;
-        if (lbl_eu_80664240 != 0) {
-            flag = lbl_eu_80664240->field_0x6C & 1;
+        if (gEventMgr != 0) {
+            flag = gEventMgr->field_0x6C & 1;
         } else {
             flag = 0;
         }
         result = !flag;
     }
     if (result) {
-        result = !lbl_eu_80664240->field_0xB0;
+        result = !gEventMgr->field_0xB0;
     }
     if (result) {
         result = !EvtSeqGetSharedState();
     }
     if (result) {
-        result = !lbl_eu_80664240->field_0x1D0;
+        result = !gEventMgr->field_0x1D0;
     }
     return result;
 }
@@ -558,7 +559,7 @@ int evtIsFullyIdle() {
 // +0x1D0 word, the +0x6C bit0 flag, notifies the game manager, and clears
 // the global event bit when the +0x1BC byte flag is set.
 void evtTeardownActive() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) return;
     u32 v;
     if (mgr != 0) {
@@ -570,18 +571,18 @@ void evtTeardownActive() {
     CEventMgrB0* p = mgr->field_0xB0;
     if (p != 0) {
         p->field_0x39 = 1;
-        lbl_eu_80664240->field_0xB0 = 0;
-        lbl_eu_80664240->field_0x1D0 = 0;
+        gEventMgr->field_0xB0 = 0;
+        gEventMgr->field_0x1D0 = 0;
     }
-    lbl_eu_80664240->field_0x6C &= ~1;
+    gEventMgr->field_0x6C &= ~1;
     if (cf::CfGameManager::getGameSubManager() != 0) {
         if (&cf::CfGameManager::getGameSubManager()->field_0xF0 != 0) {
             flushMpfBuffer__17UnkClass_8047BB54Fv(
                 &cf::CfGameManager::getGameSubManager()->field_0xF0);
         }
     }
-    if (lbl_eu_80664240->field_0x1BC != 0) {
-        lbl_eu_80663E24 &= ~0x02000000;
+    if (gEventMgr->field_0x1BC != 0) {
+        gmGameFlags &= ~0x02000000;
     }
 }
 
@@ -590,15 +591,15 @@ void evtTeardownActive() {
 // +0x1D0 word and the +0x6C bit4 flag (re-reading the global after the calls
 // because they may have replaced the manager).
 void evtUpdateSequenceKick() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) return;
     if (mgr->field_0xB0 == 0) return;
     EvtSeqSetBgmGateFlag(1);
-    if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+    if ((gmPauseFlags & 0x01000000) == 0) {
         CTaskGame_resetStream();
     }
-    lbl_eu_80664240->field_0x1D0 = 0;
-    lbl_eu_80664240->field_0x6C &= ~0x10;
+    gEventMgr->field_0x1D0 = 0;
+    gEventMgr->field_0x6C &= ~0x10;
 }
 
 // Builds the 0x1400-byte string table: 0xAE entries of 0x14 bytes, each
@@ -615,37 +616,37 @@ void cf::CTaskREvent::Init() {
 
 // Loads an SFD movie through the CRI player when the manager is idle
 // (mCri == (CLibCri*)-1). `handle` selects the buffer source: a fresh MEM2
-// handle vs the scene alloc handle (lbl_eu_80663E14->getAllocHandle()). The
+// handle vs the scene alloc handle (gmScene->getAllocHandle()). The
 // finished player is stored back through the global, re-read after the call
 // because it may have been replaced.
 void evtStartMoviePlayback(const char* path, int flag, u8* handle) {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr != 0 && (u32)mgr->mCri == 0xFFFFFFFF) {
         u32 buffer;
         if (handle != 0) {
             buffer = mtl::MemManager::getHandleMEM2();
         } else {
-            buffer = lbl_eu_80663E14->getAllocHandle();
+            buffer = gmScene->getAllocHandle();
         }
         CLibCri* cri = startMovie__7CLibCriFv(
             path, mtl::MemManager::getHandleMEM2(), buffer, flag, 0);
-        lbl_eu_80664240->mCri = cri;
+        gEventMgr->mCri = cri;
     }
 }
 
 void evtStopMoviePlayback() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == nullptr) return;
     CLibCri* cri = mgr->mCri;
     if ((u32)cri == 0xFFFFFFFF) return;
     cri->stopMovie();
     // Store through the global again: the call above may have changed it,
-    // so retail re-reads lbl_eu_80664240 instead of reusing the local.
-    lbl_eu_80664240->mCri = (CLibCri*)-1;
+    // so retail re-reads gEventMgr instead of reusing the local.
+    gEventMgr->mCri = (CLibCri*)-1;
 }
 
 int evtIsMoviePaused() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr == 0) {
         return 0;
     }
@@ -657,14 +658,14 @@ int evtIsMoviePaused() {
 }
 
 int evtHasMoviePlayer(void) {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (!mgr) return 0;
     int val = (int)mgr->mCri;
     return (unsigned)((-1 - val) | (val + 1)) >> 31;
 }
 
 void evtClearMoviePause() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (!mgr) return;
     CLibCri* cri = mgr->mCri;
     if ((u32)cri == 0xFFFFFFFF) return;
@@ -683,7 +684,7 @@ extern "C" void evtClearSeqStateBit9() { EvtSeqClearStateBit9(); }
 // runs the bit7-gated cleanup, releases the CRI movie player and frees the
 // string-table buffer.
 void cf::CTaskREvent::Term() {
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     if (mgr != 0) {
         u32 flag;
         if (mgr != 0) {
@@ -695,18 +696,18 @@ void cf::CTaskREvent::Term() {
             CEventMgrB0* gate = mgr->field_0xB0;
             if (gate != 0) {
                 gate->field_0x39 = 1;
-                lbl_eu_80664240->field_0xB0 = 0;
-                lbl_eu_80664240->field_0x1D0 = 0;
+                gEventMgr->field_0xB0 = 0;
+                gEventMgr->field_0x1D0 = 0;
             }
-            lbl_eu_80664240->field_0x6C &= ~1;
+            gEventMgr->field_0x6C &= ~1;
             if (cf::CfGameManager::getGameSubManager() != 0) {
                 if (&cf::CfGameManager::getGameSubManager()->field_0xF0 != 0) {
                     flushMpfBuffer__17UnkClass_8047BB54Fv(
                         &cf::CfGameManager::getGameSubManager()->field_0xF0);
                 }
             }
-            if (lbl_eu_80664240->field_0x1BC != 0) {
-                lbl_eu_80663E24 &= ~0x02000000;
+            if (gEventMgr->field_0x1BC != 0) {
+                gmGameFlags &= ~0x02000000;
             }
         }
     }
@@ -718,14 +719,14 @@ void cf::CTaskREvent::Term() {
         CDeviceFile::cancel(this->field_0x1C4);
         this->field_0x1C4 = 0;
     }
-    if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+    if ((gmPauseFlags & 0x01000000) == 0) {
         CTaskGame_resetStream();
     }
     // Re-read the global (not the local) after the manager section: the calls
     // above may have replaced the manager object.
-    if (lbl_eu_80664240 != 0 && (u32)lbl_eu_80664240->mCri != 0xFFFFFFFF) {
-        lbl_eu_80664240->mCri->stopMovie();
-        lbl_eu_80664240->mCri = (CLibCri*)-1;
+    if (gEventMgr != 0 && (u32)gEventMgr->mCri != 0xFFFFFFFF) {
+        gEventMgr->mCri->stopMovie();
+        gEventMgr->mCri = (CLibCri*)-1;
     }
     if (this->mBuf != 0) {
         mtl::MemManager::deallocate(this->mBuf);
@@ -759,8 +760,8 @@ static inline void evtSubtitlePush(cf::CTaskREvent* self) {
     s32 idx = sec - (sec / 384) * 24;
     // Both scaled products stay live across the presenter calls (retail
     // re-converts `a` after each call, keeping f30/f31 callee-saved).
-    f32 a = lbl_eu_80667638 * (f32)(u32)(t % 1000);
-    f32 b = lbl_eu_8066763C * (a - (f32)(s32)a);
+    f32 a = 0.06f * (f32)(u32)(t % 1000);
+    f32 b = 60.0f * (a - (f32)(s32)a);
     func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)idx, (u32)(u16)(s32)a);
     u8* sda = getGlobalSda();
     Env_SetClock((u32)sda, (u32)(u16)idx, (u32)(u16)(s32)a, (u32)(u16)(s32)b);
@@ -769,7 +770,7 @@ static inline void evtSubtitlePush(cf::CTaskREvent* self) {
 void cf::CTaskREvent::Move() {
     // Active-event guard chain: manager present and either a sequence is
     // queued, the gate object is set, or the busy bit is raised.
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     int active;
     if (mgr == 0) {
         active = 0;
@@ -780,9 +781,9 @@ void cf::CTaskREvent::Move() {
     } else {
         active = 0;
     }
-    if (active != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+    if (active != 0 && (gmPauseFlags & 0x01000000) == 0) {
         // Keep the screen alive during an active event.
-        CTaskGame_setStreamVol(lbl_eu_8066762C * (float)(s32)lbl_eu_80662384);
+        CTaskGame_setStreamVol(0.01f * (float)(s32)gStreamVolumeLevel);
     }
 
     // CRI movie controller upkeep: drop a finished player, tick a live one.
@@ -796,13 +797,13 @@ void cf::CTaskREvent::Move() {
     }
 
     if (this->field_0x1D4 >= 0) {
-        u32 busy = (lbl_eu_80664240 != 0) ? lbl_eu_80664240->field_0x6C & 1 : 0;
+        u32 busy = (gEventMgr != 0) ? gEventMgr->field_0x6C & 1 : 0;
         if (busy == 0 && this->field_0x1B4 == 0) {
             // Build the next event name from base + middle + suffix table.
-            const char* base = lbl_eu_80662380;
+            const char* base = gpEventBaseName;
             this->field_0x1B4 = strlen(base);
             strcpy(this->mNameBuf, base);
-            if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+            if ((gmPauseFlags & 0x01000000) != 0) {
                 const char* mid = lbl_eu_80503008 + 3;
                 s32 midLen = strlen(mid);
                 strcat(this->mNameBuf, mid);
@@ -826,11 +827,11 @@ void cf::CTaskREvent::Move() {
             this->field_0x1B4 += strlen(lbl_eu_80503008 + 8);
             this->field_0x1D8 = this->field_0x1D4;
             s32 next = this->field_0x1D4 + 1;
-            if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+            if ((gmPauseFlags & 0x01000000) != 0) {
                 this->field_0x1D4 = next;
                 if (next >= 0x26) {
                     // Wrap the byte-table index and reshuffle odd slots.
-                    lbl_eu_80664240->field_0x1D4 = 0;
+                    gEventMgr->field_0x1D4 = 0;
                     u8* tbl = lbl_eu_80530300 + 0x130;
                     for (u32 i = 0; i < 0x26; i++, tbl++) {
                         if ((i & 1) != 0) {
@@ -849,7 +850,7 @@ void cf::CTaskREvent::Move() {
                 this->field_0x1D4 = next;
                 if (next >= 0xAE) this->field_0x1D4 = 0;
             }
-        } else if ((lbl_eu_80663E28 & 0x01000000) != 0 && this->field_0xB0 != 0 &&
+        } else if ((gmPauseFlags & 0x01000000) != 0 && this->field_0xB0 != 0 &&
                    EvtSeqGetStateBit10() != 0) {
             // Event-active path: advance the subtitle clock and set up the
             // current subtitle entry.
@@ -863,7 +864,7 @@ void cf::CTaskREvent::Move() {
 
     // ---- tail: info refresh + file-load state machine + battle fade ----
     InfoCfRefreshSettings(reinterpret_cast<cf::CInfoCf*>(this->mInfoCf));
-    u32 busy2 = (lbl_eu_80664240 != 0) ? lbl_eu_80664240->field_0x6C & 1 : 0;
+    u32 busy2 = (gEventMgr != 0) ? gEventMgr->field_0x6C & 1 : 0;
     if (busy2 != 0 || this->field_0x1B4 == 0) {
         if (this->field_0xB0 == 0) {
             this->field_0x1BC = 0;
@@ -894,13 +895,13 @@ void cf::CTaskREvent::Move() {
             }
             break;
         case 3:
-            if ((lbl_eu_80663E24 & 0x04000000) != 0) break;
-            lbl_eu_80663E24 |= 0x02000000;
-            if ((lbl_eu_80663E24 & 0x00800000) == 0) break;
+            if ((gmGameFlags & 0x04000000) != 0) break;
+            gmGameFlags |= 0x02000000;
+            if ((gmGameFlags & 0x00800000) == 0) break;
             this->field_0x1D0 = 4;
             // fallthrough
         case 4:
-            if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+            if ((gmPauseFlags & 0x01000000) != 0) {
                 evtStartSeqFromPath(this->mNameBuf, 1, (this->field_0x6C >> 1) & 1);
                 this->field_0x6C = this->field_0x6C & 7;
                 evtSubtitleSetup(this);
@@ -915,7 +916,7 @@ void cf::CTaskREvent::Move() {
                 this->field_0x1B4 = strlen(idle);
                 strcpy(this->mNameBuf, idle);
                 this->field_0x6C = this->field_0x6C & ~0x10;
-                lbl_eu_80663E24 |= 0x02000000;
+                gmGameFlags |= 0x02000000;
                 this->field_0x1D0 = 0;
             }
             break;
@@ -938,7 +939,7 @@ void cf::CTaskREvent::Move() {
     // Report the CRI playing state to the scene.
     u32 playing = 0;
     if ((u32)this->mCri != 0xFFFFFFFF) {
-        CEventMgr* m2 = lbl_eu_80664240;
+        CEventMgr* m2 = gEventMgr;
         u32 st;
         if (m2 == 0 || (u32)m2->mCri == 0xFFFFFFFF) {
             st = 0;
@@ -947,14 +948,14 @@ void cf::CTaskREvent::Move() {
         }
         playing = (st != 0) ? 1 : 0;
     }
-    Scn_SetStopFlag(reinterpret_cast<u8*>(lbl_eu_80663E14), playing);
+    Scn_SetStopFlag(reinterpret_cast<u8*>(gmScene), playing);
 
     // Frame-time tracking: watch for stalls while the game manager idles.
     s32 cur = CTaskGame_getStreamPos();
     EvtSeqSetStateBit18(0);
     if (cur >= 0) {
         if (CTaskGame_isStreamPaused() == 0 && (this->field_0x6C & 0x100) == 0 &&
-            (lbl_eu_80663E28 & 0x01000000) == 0 &&
+            (gmPauseFlags & 0x01000000) == 0 &&
             cf::CfGameManager::isSceneLoading() == 0) {
             if (this->field_0x1F0 == (u32)cur) {
                 this->field_0x1F4++;
@@ -980,7 +981,7 @@ void cf::CTaskREvent::Move() {
     // Battle fade: detect actors in battle-fade state while the global bit
     // allows it, then drive the fade virtuals in the matching direction.
     u32 battleFade = 0;
-    if ((lbl_eu_80663E24 & 0x04000000) != 0) {
+    if ((gmGameFlags & 0x04000000) != 0) {
         u32 bt = CBattleMan_FetchVisionObj((u32)getInstance__Q22cf14CBattleManagerFv());
         if (bt != 0 && (*(u32*)(bt + 0x824) & 0x00020000) != 0) {
             REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
@@ -1005,7 +1006,7 @@ void cf::CTaskREvent::Move() {
                  n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
                 REvtActor* mv = getCfObjectPc__FPQ22cf12CfObjectMove(n->item);
-                if (mv != 0) mv->mSub.vfn88(lbl_eu_80667640);
+                if (mv != 0) mv->mSub.vfn88(0.99f);
             }
             REvtMgrView* gf2 = getGimmickList__Q22cf13CfGameManagerFv();
             for (REvtListNode* n = gf2->list->first;
@@ -1016,7 +1017,7 @@ void cf::CTaskREvent::Move() {
                     u32 o0, o1, o2, o3;
                     Tok_Unpack(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
                     if (!(o1 == 1 && o2 == 0x3b)) {
-                        ad->mSub.vfn88(lbl_eu_80667640);
+                        ad->mSub.vfn88(0.99f);
                     }
                 }
             }
@@ -1068,24 +1069,24 @@ void cf::CTaskREvent::Draw() {
 void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
     // Each guard re-reads the flag globals: retail emits a fresh lwz per
     // source-level read (volatile casts block CSE).
-    u32 e24 = *(volatile u32*)&lbl_eu_80663E24;
-    int busy = ((*(volatile u32*)&lbl_eu_80663E28 & 0x00001000) != 0)
+    u32 e24 = *(volatile u32*)&gmGameFlags;
+    int busy = ((*(volatile u32*)&gmPauseFlags & 0x00001000) != 0)
                    ? ((e24 & 0x02440000) != 0)
                    : 0;
-    if ((*(volatile u32*)&lbl_eu_80663E28 & 0x01000000) != 0) {
+    if ((*(volatile u32*)&gmPauseFlags & 0x01000000) != 0) {
         busy = isMoveFuncActive__9CTaskGameFv();
     }
     if (busy != 0) {
-        if ((lbl_eu_80663E24 & 0x00040000) != 0 &&
+        if ((gmGameFlags & 0x00040000) != 0 &&
             Class_80296898::getInstance()->mConfigData[0x20] == 0) {
             busy = 0;
         }
-        if ((lbl_eu_80663E24 & 0x02040000) == 0 &&
-            (lbl_eu_80663E24 & 0x00400000) != 0 &&
-            (lbl_eu_80663E24 & 0x10000000) != 0) {
+        if ((gmGameFlags & 0x02040000) == 0 &&
+            (gmGameFlags & 0x00400000) != 0 &&
+            (gmGameFlags & 0x10000000) != 0) {
             busy = 0;
         }
-        if ((lbl_eu_80663E28 & 0x20000000) != 0 || TalkWin_IsActive_CD24() != 0) {
+        if ((gmPauseFlags & 0x20000000) != 0 || TalkWin_IsActive_CD24() != 0) {
             busy = 0;
         }
     }
@@ -1106,15 +1107,15 @@ void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
                 }
             }
             if (arg == 0) {
-                lbl_eu_80664244 = 2;
-                lbl_eu_80664248 = CDeviceVI::getTargetFramerate() * 300;
+                gAutoSleepState = 2;
+                gEventFrameCounter[0] = CDeviceVI::getTargetFramerate() * 300;
             }
         }
     }
     if ((self->field_0x6C & 0x20) == 0 || arg != 0) {
-        if (lbl_eu_80664244 > 0) {
-            lbl_eu_80664244 -= 1;
-            if (lbl_eu_80664244 == 0) {
+        if (gAutoSleepState > 0) {
+            gAutoSleepState -= 1;
+            if (gAutoSleepState == 0) {
                 if (isMoveFuncActive__9CTaskGameFv() == 0 &&
                     (self->field_0x6C & 0x800) == 0) {
                     VIEnableDimming(1);
@@ -1124,9 +1125,9 @@ void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
                 }
             }
         }
-        if (lbl_eu_80664248 > 0) {
-            lbl_eu_80664248 -= 1;
-            if (lbl_eu_80664248 == 0) {
+        if (gEventFrameCounter[0] > 0) {
+            gEventFrameCounter[0] -= 1;
+            if (gEventFrameCounter[0] == 0) {
                 WPADSetAutoSleepTime(5);
             }
         }
@@ -1136,15 +1137,15 @@ void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
         cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (cam->field_0xC != 0) {
             u32 mgrFlag;
-            if (lbl_eu_80664240 != 0) {
-                mgrFlag = lbl_eu_80664240->field_0x6C & 1;
+            if (gEventMgr != 0) {
+                mgrFlag = gEventMgr->field_0x6C & 1;
             } else {
                 mgrFlag = 0;
             }
             if (mgrFlag == 0) {
                 CfEvtCamPlayerObj* obj =
                     getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0xC;
-                obj->field_0x1EC = lbl_eu_80667644;
+                obj->field_0x1EC = 0.1f;
                 obj->field_0x1F0 = lbl_eu_80667648;
                 ScnCamDepthUp();
             }
@@ -1171,12 +1172,12 @@ void evtSyncBusyDimming(cf::CTaskREvent* self, int arg) {
         // cross-jump: the then-branch's bit6 failure branches into the
         // else-if's entry, whose flag re-test bails that path.
         if (flag != 0 && (self->field_0x6C & 0x40) == 0) {
-            lbl_eu_80664244 = 2;
-            lbl_eu_80664248 = CDeviceVI::getTargetFramerate() * 300;
+            gAutoSleepState = 2;
+            gEventFrameCounter[0] = CDeviceVI::getTargetFramerate() * 300;
             evtUpdateBusyDimming(self, 1);
         } else if (flag == 0 && (self->field_0x6C & 0x40) == 0) {
-            lbl_eu_80664244 = 2;
-            lbl_eu_80664248 = CDeviceVI::getTargetFramerate() * 300;
+            gAutoSleepState = 2;
+            gEventFrameCounter[0] = CDeviceVI::getTargetFramerate() * 300;
             evtUpdateBusyDimming(self, 1);
         }
     } else {
@@ -1202,8 +1203,8 @@ void evtSetAutoSleepFlag(CEventMgr* self, u32 arg) {
             self->field_0x6C = v & ~0x40;
         }
         if (arg == 0) {
-            lbl_eu_80664244 = 2;
-            lbl_eu_80664248 = CDeviceVI::getTargetFramerate() * 300;
+            gAutoSleepState = 2;
+            gEventFrameCounter[0] = CDeviceVI::getTargetFramerate() * 300;
         }
         // if/else-if with the shared bit7 (0x80) condition reproduces the
         // retail cross-jump (then-branch bit7 failure branches into the
@@ -1215,8 +1216,8 @@ void evtSetAutoSleepFlag(CEventMgr* self, u32 arg) {
                 VISetTimeToDimming(0);
                 self->field_0x6C |= 0x800;
             }
-            lbl_eu_80664244 = 2;
-            lbl_eu_80664248 = CDeviceVI::getTargetFramerate() * 300;
+            gAutoSleepState = 2;
+            gEventFrameCounter[0] = CDeviceVI::getTargetFramerate() * 300;
         } else if (arg == 0 && (self->field_0x6C & 0x80) == 0) {
             // The manager pointer is passed through unchanged (retail passes
             // r31 to a helper typed on the task object).
@@ -1231,7 +1232,7 @@ void evtSetAutoSleepFlag(CEventMgr* self, u32 arg) {
 void cf::CTaskREvent::cbRenderBefore() {
     if ((u32)this->mCri == 0xFFFFFFFF) return;
     CView* view = getCurrentView__5CViewFv();
-    CEventMgr* mgr = lbl_eu_80664240;
+    CEventMgr* mgr = gEventMgr;
     u32 result;
     // if/else-if chain laid out zero-first: each failed guard falls through
     // to its own li r3,0 block (retail shape).
@@ -1261,7 +1262,7 @@ void evtThrottleTaskUpdates(cf::CTaskREvent* self) {
     // retail emits bne end for the first disjunct and branch-over-branch
     // (beq body; b end) for the second (CSysWinSelect/CCol6Hint scheme).
     if (cf::CfGameManager::isSceneLoading() == 0 &&
-        (lbl_eu_80663E28 & 0x01000000) == 0) {
+        (gmPauseFlags & 0x01000000) == 0) {
         goto body;
     }
     goto end;
@@ -1324,11 +1325,11 @@ int evtOnFileEvent(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
                     u32 out0, out1, out2, out3;
                     Tok_Unpack(found->field_0x20, &out0, &out1, &out2, &out3);
                     if (out0 == 1) {
-                        if (out1 == lbl_eu_80663E42 && out2 == lbl_eu_80663E44) {
-                            lbl_eu_80663E24 |= 0x02000000;
+                        if (out1 == gmGlobalFlag42 && out2 == gmGlobalFlag44) {
+                            gmGameFlags |= 0x02000000;
                             self->field_0x1D0 = 4;
                         } else {
-                            lbl_eu_80663E24 &= ~0x02000000;
+                            gmGameFlags &= ~0x02000000;
                             f32 f = lbl_eu_80667628;
                             f32 v[3] = { f, f, f };
                             // Retail zero-narrows both ids to 16 bits
@@ -1337,7 +1338,7 @@ int evtOnFileEvent(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
                                 (u32)(u16)out1, (u32)(u16)out2,
                                 reinterpret_cast<u32>(v),
                                 reinterpret_cast<u32>(&lbl_eu_80503008[0xe]), f);
-                            lbl_eu_80663E28 &= ~0x00100000;
+                            gmPauseFlags &= ~0x00100000;
                             self->field_0x1D0 = 3;
                         }
                         return 1;
@@ -1350,7 +1351,7 @@ int evtOnFileEvent(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
                 self->field_0x1D0 = 4;
                 return 1;
             } else {
-                lbl_eu_80663E24 |= 0x02000000;
+                gmGameFlags |= 0x02000000;
                 self->field_0x1D0 = 4;
                 return 1;
             }
@@ -1378,9 +1379,9 @@ cf::CTaskREvent* evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CVie
     return task;
 }
 
-void viAfterDrawDone__11CDeviceVICbFv() {}
+void CDeviceVICb::viAfterDrawDone() {}
 
-void viBeforeDrawDone__11CDeviceVICbFv() {}
+void CDeviceVICb::viBeforeDrawDone() {}
 
 void evtVICbThrottleThunk(void* self) { ((void(*)(void*))evtThrottleTaskUpdates)((char*)self - 0x54); }
 
@@ -1405,3 +1406,17 @@ void ::CTaskREvent::OnFileEvent(CEventFile* ev) {
 extern "C" void evtWorkEventDtorThunk(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
 
 // CTTask<cf::CTaskREvent> specializations provided by header
+
+CEventMgr* gEventMgr;
+u32 gAutoSleepState;
+u32 gEventFrameCounter[2];
+
+u8 gEventShuffleOrder[0x28] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
+    0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B,
+    0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0, 0,
+};
+
+extern const char lbl_eu_80502FD0[];
+const char* gpEventBaseName = lbl_eu_80502FD0;
+u32 gStreamVolumeLevel = 100;

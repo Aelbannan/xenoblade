@@ -40,8 +40,8 @@ extern "C" {
     extern u32 lbl_eu_8056C884[];
     extern u32 lbl_eu_8056C890[];
     extern u32 lbl_eu_8056C89C[];
-    extern void* lbl_eu_80665690;
-    extern u32 lbl_eu_80665694;
+    extern void* sFontCommandBuffer;
+    extern u32 sFontCommandCursor;
     extern u32 __RTTI__10IWorkEvent[];
     extern u32 __RTTI__11CWorkThread[];
     extern void __dt__16CDeviceFontLayerFv();
@@ -84,10 +84,6 @@ extern "C" {
     extern void wkStandbyLogin__11CWorkThreadFv();
     extern void wkStandbyLogout__16CDeviceFontLayerFv();
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
-    extern f32 lbl_eu_8066A408;
-    extern f32 lbl_eu_8066A40C;
-    extern f32 lbl_eu_8066A410;
-    extern const f64 lbl_eu_8066A418; // 0x4330000080000000 int->double bias
 }
 
 
@@ -442,7 +438,7 @@ CDeviceFontLayer::CDeviceFontLayer(const char* pName, CWorkThread* pParent,
     mQueList.mStartNodePtr->mPrev = mQueList.mStartNodePtr;
     mQueList.mVtbl = (u32)lbl_eu_8056C884;
     // Chained assign: one shared lfs (retail shape), stores 0x1ec then 0x1f0.
-    mScaleY = mScaleX = lbl_eu_8066A408;
+    mScaleY = mScaleX = 1.0f;
     mFontId = 0;
     field_0x1F8 = 0;
     mFlag1FC = 1;
@@ -451,11 +447,11 @@ CDeviceFontLayer::CDeviceFontLayer(const char* pName, CWorkThread* pParent,
     // null guard (addic./beq) that retail does not have.
     __ct__7CDrawGXFv(drawGX());
     // Retail hoists all three constant reads to right after the ctor call.
-    f32 col = lbl_eu_8066A40C;
-    f32 bg = lbl_eu_8066A410;
+    f32 col = 1.0f;
+    f32 bg = -1.0f;
     mFlag2F0 = 0;
     mType = 0x3F; // CWorkThread::TYPE_FONT_LAYER
-    mScaleY = mScaleX = lbl_eu_8066A408;
+    mScaleY = mScaleX = 1.0f;
     mColor.set(col, col, col, col);
     mBgColor.set(bg, bg, bg, bg);
     mQueList.clearList();
@@ -566,26 +562,26 @@ void queueText__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
     // Carve the record out of the shared scratch buffer: TextQue is exactly
     // 8 bytes, so end-1 addresses the record header (the retail shape keeps
     // the end-of-record cursor live and rebases to the start afterwards).
-    u32 cursor = lbl_eu_80665694 + 8;
-    TextQue* cmd = (TextQue*)((u8*)lbl_eu_80665690 + cursor) - 1;
-    lbl_eu_80665694 = cursor;
+    u32 cursor = sFontCommandCursor + 8;
+    TextQue* cmd = (TextQue*)((u8*)sFontCommandBuffer + cursor) - 1;
+    sFontCommandCursor = cursor;
     cmd->mCmd = 0;
     cmd->mX = x;
     cmd->mY = y;
 
     // Inline string payload (with terminator).
     u32 len = strlen(str) + 1;
-    u32 newCursor = lbl_eu_80665694 + len;
-    lbl_eu_80665694 = newCursor;
-    memcpy((u8*)lbl_eu_80665690 + newCursor - len, str, len);
+    u32 newCursor = sFontCommandCursor + len;
+    sFontCommandCursor = newCursor;
+    memcpy((u8*)sFontCommandBuffer + newCursor - len, str, len);
 
     // Align the end cursor up to 4 and record the total record size.
-    int cur = lbl_eu_80665694;
+    int cur = sFontCommandCursor;
     int rem = cur & 3;
     if (rem != 0)
         cur = cur + 4 - rem;
-    int total = (u8*)lbl_eu_80665690 + cur - (u8*)cmd;
-    lbl_eu_80665694 = cur;
+    int total = (u8*)sFontCommandBuffer + cur - (u8*)cmd;
+    sFontCommandCursor = cur;
     cmd->mSize = (u16)total;
 
     // Hand-inlined reslist<const LAYER_QUE*> append (retail walks the slot
@@ -641,9 +637,9 @@ void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 
     // Record addressed via its end pointer (retail writes fields
     // end-relative), rebased to the start for the queue append.
-    u32 cursor = lbl_eu_80665694 + 0x14;
-    lbl_eu_80665694 = cursor;
-    cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor) - 1;
+    u32 cursor = sFontCommandCursor + 0x14;
+    sFontCommandCursor = cursor;
+    cmd = (LAYER_QUE*)((u8*)sFontCommandBuffer + cursor) - 1;
     cmd->mCmd = 1;
     cmd->mSize = 0x14;
     cmd->mCol = *col;
@@ -687,9 +683,9 @@ void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
                                          f32 scaleY) {
     FONT_LAYER_RESERVE_SLOTS(self);
 
-    u32 cursor = lbl_eu_80665694 + 0xc;
-    lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 0xc);
+    u32 cursor = sFontCommandCursor + 0xc;
+    sFontCommandCursor = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)sFontCommandBuffer + cursor - 0xc);
     cmd->mCmd = 3;
     cmd->mSize = 0xc;
     cmd->mF[0] = scaleX;
@@ -732,9 +728,9 @@ void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
 void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
     FONT_LAYER_RESERVE_SLOTS(self);
 
-    u32 cursor = lbl_eu_80665694 + 8;
-    lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 8);
+    u32 cursor = sFontCommandCursor + 8;
+    sFontCommandCursor = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)sFontCommandBuffer + cursor - 8);
     cmd->mCmd = 5;
     cmd->mSize = 8;
     cmd->mArg[0] = arg;
@@ -783,9 +779,9 @@ extern "C" void queueLineMode__16CDeviceFontLayerFv(CDeviceFontLayer* self,
     // Append the command record at the scratch-buffer write cursor. The
     // record is addressed via the end-of-record pointer, one 8-byte header
     // back (retail keeps the end pointer live and stores at [-1]).
-    u32 cursor = lbl_eu_80665694 + 8;
-    lbl_eu_80665694 = cursor;
-    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 8);
+    u32 cursor = sFontCommandCursor + 8;
+    sFontCommandCursor = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)sFontCommandBuffer + cursor - 8);
     cmd->mCmd = 6;
     cmd->mSize = 8;
     cmd->mArg[0] = arg;
@@ -817,7 +813,7 @@ extern "C" void drawTextGrid__16CDeviceFontLayerFP7CDrawGX(
 
     if (col != 0) {
         draw->setCol(*col);
-        if (lbl_eu_8066A40C != col->a) {
+        if (1.0f != col->a) {
             // Semi-transparent text: draw a background rect sized by the
             // measured text width and the scaled line height.
             u32 w = measureTextWidth__16CDeviceFontLayerFv(str, fontId, scaleX);
@@ -841,8 +837,7 @@ extern "C" void drawTextGrid__16CDeviceFontLayerFP7CDrawGX(
     ml::CCol4 lineCol[2];
     lineCol[0] = drawCol;
     if (flag != 0) {
-        lineCol[0].set(lbl_eu_8066A40C, lbl_eu_8066A40C, lbl_eu_8066A40C,
-                       drawCol.a);
+        lineCol[0].set(1.0f, 1.0f, 1.0f, drawCol.a);
         lineCol[1] = drawCol;
     }
 
@@ -967,10 +962,10 @@ extern "C" void replayQueue__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 
     self->mDirty = 1;
     if (flag != 0) {
-        // Color reset pulls 1.0f/0.0f from the shared float globals; both
+        // Color reset uses opaque white and a -1.0f background; both
         // loads are hoisted above their store groups (retail shape), with
-        // col landing in f1 and bg in f0.
-        f32 bg = lbl_eu_8066A410, col = lbl_eu_8066A40C;
+
+        f32 bg = -1.0f, col = 1.0f;
         self->mColor.set(col, col, col, col);
         self->mBgColor.set(bg, bg, bg, bg);
         // Unlink every queued node and reset the list ring to empty.
@@ -1016,30 +1011,28 @@ extern "C" void* allocate_array_ex__Q23mtl10MemManagerFUlUli(u32 size,
 // Lazily allocate the font-layer scratch object once: if the global slot is
 // still null, grab the device heap handle, allocate 0x10000 bytes aligned 16,
 // and reset the adjacent word.
-// lbl_eu_80665690 / 80665694 now dissolved above
+// The scratch buffer and its write cursor are defined at the top of this TU.
 
 void CDeviceFontLayer::allocFontHeap() {
-    if (lbl_eu_80665690 != 0)
+    if (sFontCommandBuffer != 0)
         return;
     int handle = getDevSys1Handle__7CDeviceFv();
-    lbl_eu_80665690 = allocate_array_ex__Q23mtl10MemManagerFUlUli(0x10000,
+    sFontCommandBuffer = allocate_array_ex__Q23mtl10MemManagerFUlUli(0x10000,
                                                                   handle, 16);
-    lbl_eu_80665694 = 0;
+    sFontCommandCursor = 0;
 }
-
-// Font-layer global state: an allocated object pointer plus an adjacent word.
 
 void CDeviceFontLayer::freeFontHeap() {
-    if (lbl_eu_80665690 == 0)
+    if (sFontCommandBuffer == 0)
         return;
-    if (lbl_eu_80665690 != 0) {
-        operator delete[](lbl_eu_80665690);
-        lbl_eu_80665690 = 0;
+    if (sFontCommandBuffer != 0) {
+        operator delete[](sFontCommandBuffer);
+        sFontCommandBuffer = 0;
     }
-    lbl_eu_80665694 = 0;
+    sFontCommandCursor = 0;
 }
 
-void CDeviceFontLayer::resetFontCursor() { lbl_eu_80665694 = 0; }
+void CDeviceFontLayer::resetFontCursor() { sFontCommandCursor = 0; }
 
 u32 CDeviceFontLayer::getFontHeapSize() { return 0x10000; }
 
@@ -1095,7 +1088,7 @@ extern "C" u32 lbl_eu_8056C89C[3] __attribute__((aligned(4))) = {
 };
 
 // .sbss 0x80665690 (0x8) - zero-initialized globals
-void* lbl_eu_80665690;
-u32 lbl_eu_80665694;
+void* sFontCommandBuffer;
+u32 sFontCommandCursor;
 
 

@@ -15,7 +15,7 @@
 #include "monolib/util/MemManager.hpp"
 
 // ---------------------------------------------------------------------------
-extern "C" u32 lbl_eu_8056F508[0x3E8 / 4]; // stage config table (defined at end of TU)
+extern "C" u32 sColiStageConfigTable[0x3E8 / 4]; // stage config table (defined at end of TU)
 // Data globals
 // ---------------------------------------------------------------------------
 
@@ -27,9 +27,9 @@ extern u32 lbl_eu_8066598C;
 extern u32 lbl_eu_80665990;
 
 // List of scene-resource category indices (bss, 16 u16 entries).
-extern u16 lbl_eu_8065F300[];
+extern u16 sScnResourceCategoryList[];
 
-// Collision state manager (lbl_eu_8065F1C8): ray offset at 0x00, ray
+// Collision state manager (sColiQueryState): ray offset at 0x00, ray
 // direction at 0x0C, reference position at 0x18, AABB at 0x24/0x30, sampled
 // normal at 0xC8, ray t at 0xD4, registration thresholds at 0xD8/0xDC,
 // mover hook at 0xE0, matrix source pointer at 0xE8, embedded matrix at 0xF0,
@@ -63,11 +63,11 @@ struct CColiMgr {
     u8 field_0x134;                  // 0x134
     u16 field_0x136;                 // 0x136 - registered-index count (== CColiListMgr.count)
 };
-extern CColiMgr lbl_eu_8065F1C8;
+extern CColiMgr sColiQueryState;
 
-// Collision registration workspace (lbl_eu_8065D1A0, .bss).  The 0x2000-byte
-// mover bit-table (also symbolised as lbl_eu_8065F1A0) starts at +0x2000 and
-// the collision manager (lbl_eu_8065F1C8) lives at +0x2028; the registered
+// Collision registration workspace (sColiWorkArea, .bss).  The 0x2000-byte
+// mover bit-table (also symbolised as sColiSeenBitTable) starts at +0x2000 and
+// the collision manager (sColiQueryState) lives at +0x2028; the registered
 // index list (count at +0x215E, entries at +0x2160) is appended by the
 // register helpers below.  The bit-table and the list region overlap in
 // memory, so the two views are expressed as union members.
@@ -80,34 +80,27 @@ struct CColiWork {
     union {
         struct {
             u8 field_0x0000[0x2000];  // 0x0000
-            u32 bitTable[0x80];       // 0x2000 (== lbl_eu_8065F1A0)
+            u32 bitTable[0x80];       // 0x2000 (== sColiSeenBitTable)
         } b;
         struct {
             u8 field_0x0000[0x2028];  // 0x0000
-            CColiListMgr listMgr;     // 0x2028 (== lbl_eu_8065F1C8)
+            CColiListMgr listMgr;     // 0x2028 (== sColiQueryState)
         } l;
     };
 };
-extern CColiWork lbl_eu_8065D1A0;
+extern CColiWork sColiWorkArea;
 
 // Base of the collision "seen" bit array (pointer value held in sdata).
-extern u32 lbl_eu_80663AC8;
+extern u32 spColiSeenBits;
 
 // Zeroing-window base for the seen-bit array (sdata).
-extern u8* lbl_eu_80663ACC;
+extern u8* spColiZeroWindow;
 
-// Acceptance-threshold constants (sdata2).
+// Acceptance-threshold constants: 0.0/1.0/-1.0 remain TU pool references;
+// the less common thresholds are written as literals at their use sites.
 extern const f32 lbl_eu_8066AED0;
 extern const f32 lbl_eu_8066AED4;
-extern const f32 lbl_eu_8066AEDC;
 extern const f32 lbl_eu_8066AED8;  // normal-orientation flip scale
-extern const f32 lbl_eu_8066AEE0;  // box raycast plane-distance threshold
-// GQR5 scale table default distance threshold (beginColiPass / beginLinkPass).
-extern const f32 lbl_eu_8066AEE8;
-// FIdx (512-count) to degree conversion factor (scanVertQuery heading math).
-extern const f32 lbl_eu_8066AEEC;
-// Default ray distance threshold installed by segVolumePass.
-extern const f32 lbl_eu_8066AEE4;
 
 
 
@@ -143,7 +136,7 @@ struct ScnResData {
     int count;
 };
 extern ScnResData lbl_eu_8065F32C;
-extern u8 lbl_eu_8065F320[0xC];
+extern u8 sScnResDtorReg[0xC];
 
 // 0x24-byte scene-resource entry (lbl_eu_8065F428 holds 32 of these).
 struct ScnResourceEntry {
@@ -495,12 +488,12 @@ extern "C" void gateMoverMove(CTrackedMover* self) {
 }
 
 extern "C" u32 Coli_GetBitTable_5A68(void) {
-    extern u32 lbl_eu_80663AC8;
-    return lbl_eu_80663AC8;
+    extern u32 spColiSeenBits;
+    return spColiSeenBits;
 }
 
-extern char lbl_eu_8065F1A0[];
-extern "C" void* Coli_GetWorkBase_5A70(void){ return (void*)&lbl_eu_8065F1A0; }
+extern char sColiSeenBitTable[];
+extern "C" void* Coli_GetWorkBase_5A70(void){ return (void*)&sColiSeenBitTable; }
 
 // Scalar deleting-style destructor wrapper registered by the sibling sinit:
 // reset the mover state, then free the object when the delete flag is set.
@@ -537,20 +530,20 @@ void Coli_Noop_5B34(void) {}
 extern "C" void func_804B5B38(CColiSrc* a, CColiMover* b) {
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
-    lbl_eu_8065F1C8.field_0xC8.x = __OSs16tof32(&tri[0]);
-    lbl_eu_8065F1C8.field_0xC8.y = __OSs16tof32(&tri[1]);
-    lbl_eu_8065F1C8.field_0xC8.z = __OSs16tof32(&tri[2]);
+    sColiQueryState.field_0xC8.x = __OSs16tof32(&tri[0]);
+    sColiQueryState.field_0xC8.y = __OSs16tof32(&tri[1]);
+    sColiQueryState.field_0xC8.z = __OSs16tof32(&tri[2]);
     // dot(normal, offset); MWCC lowers this to the paired-single
     // mul/madd/sum0 chain seen in retail.
-    f32 diff = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                   (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00)
+    f32 diff = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x00)
              - b->field_0x00;
-    lbl_eu_8065F1C8.field_0xD4 = diff;
+    sColiQueryState.field_0xD4 = diff;
     // Negated strict-less form (with fabs narrowing through an f32 local)
     // is what makes MWCC emit the direct bgelr without a cror merge.
     f32 absDiff = __fabs(diff);
-    if (!(absDiff < lbl_eu_8065F1C8.field_0x120)) return;
-    lbl_eu_8065F1C8.field_0xE0 = b;
+    if (!(absDiff < sColiQueryState.field_0x120)) return;
+    sColiQueryState.field_0xE0 = b;
     resolveHitBwd(a, b);
 }
 
@@ -560,21 +553,21 @@ extern "C" void func_804B5B38(CColiSrc* a, CColiMover* b) {
 extern "C" void sampleCastRay(CColiSrc* a, CColiMover* b) {
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
-    lbl_eu_8065F1C8.field_0xC8.x = __OSs16tof32(&tri[0]);
-    lbl_eu_8065F1C8.field_0xC8.y = __OSs16tof32(&tri[1]);
-    lbl_eu_8065F1C8.field_0xC8.z = __OSs16tof32(&tri[2]);
+    sColiQueryState.field_0xC8.x = __OSs16tof32(&tri[0]);
+    sColiQueryState.field_0xC8.y = __OSs16tof32(&tri[1]);
+    sColiQueryState.field_0xC8.z = __OSs16tof32(&tri[2]);
     // dot(normal, ray direction)
-    f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                   (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x0C);
+    f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
     if (dot2 == lbl_eu_8066AED0) return;
     // dot(normal, offset)
-    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                  (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00);
+    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                  (const nw4r::math::VEC3*)&sColiQueryState.field_0x00);
     f32 t = (b->field_0x00 - dot) / dot2;
-    lbl_eu_8065F1C8.field_0xD4 = t;
+    sColiQueryState.field_0xD4 = t;
     if (!(t >= lbl_eu_8066AED0)) return;
     if (!(t <= lbl_eu_8066AED4)) return;
-    lbl_eu_8065F1C8.field_0xE0 = b;
+    sColiQueryState.field_0xE0 = b;
     resolveHitFwd(a, b);
 }
 
@@ -585,18 +578,18 @@ extern "C" void sampleCastRay(CColiSrc* a, CColiMover* b) {
 void sampleInFront(CColiSrc* a, CColiMover* b) {
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
-    lbl_eu_8065F1C8.field_0xC8.x = __OSs16tof32(&tri[0]);
-    lbl_eu_8065F1C8.field_0xC8.y = __OSs16tof32(&tri[1]);
-    lbl_eu_8065F1C8.field_0xC8.z = __OSs16tof32(&tri[2]);
-    f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                   (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x0C);
+    sColiQueryState.field_0xC8.x = __OSs16tof32(&tri[0]);
+    sColiQueryState.field_0xC8.y = __OSs16tof32(&tri[1]);
+    sColiQueryState.field_0xC8.z = __OSs16tof32(&tri[2]);
+    f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
     if (dot2 == lbl_eu_8066AED0) return;
-    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                  (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00);
+    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                  (const nw4r::math::VEC3*)&sColiQueryState.field_0x00);
     f32 t = (b->field_0x00 - dot) / dot2;
-    lbl_eu_8065F1C8.field_0xD4 = t;
+    sColiQueryState.field_0xD4 = t;
     if (t <= lbl_eu_8066AED0) return;
-    lbl_eu_8065F1C8.field_0xE0 = b;
+    sColiQueryState.field_0xE0 = b;
     resolveHitFwd(a, b);
 }
 
@@ -608,20 +601,20 @@ void sampleInFront(CColiSrc* a, CColiMover* b) {
 void sampleGateRay(CColiSrc* a, CColiMover* b) {
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
-    lbl_eu_8065F1C8.field_0xC8.x = __OSs16tof32(&tri[0]);
-    lbl_eu_8065F1C8.field_0xC8.y = __OSs16tof32(&tri[1]);
-    lbl_eu_8065F1C8.field_0xC8.z = __OSs16tof32(&tri[2]);
-    if ((a->*a->field_0xB8)(lbl_eu_8065F1C8.field_0xC8.y) != 0) return;
-    f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                   (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x0C);
+    sColiQueryState.field_0xC8.x = __OSs16tof32(&tri[0]);
+    sColiQueryState.field_0xC8.y = __OSs16tof32(&tri[1]);
+    sColiQueryState.field_0xC8.z = __OSs16tof32(&tri[2]);
+    if ((a->*a->field_0xB8)(sColiQueryState.field_0xC8.y) != 0) return;
+    f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
     if (dot2 == lbl_eu_8066AED0) return;
-    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
-                                  (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00);
+    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
+                                  (const nw4r::math::VEC3*)&sColiQueryState.field_0x00);
     f32 t = (b->field_0x00 - dot) / dot2;
-    lbl_eu_8065F1C8.field_0xD4 = t;
+    sColiQueryState.field_0xD4 = t;
     if (!(t >= lbl_eu_8066AED0)) return;
     if (!(t <= lbl_eu_8066AED4)) return;
-    lbl_eu_8065F1C8.field_0xE0 = b;
+    sColiQueryState.field_0xE0 = b;
     resolveHitFwd(a, b);
 }
 
@@ -632,16 +625,16 @@ void sampleGateRay(CColiSrc* a, CColiMover* b) {
 void samplePlaneOk(CColiSrc* a, CColiMover* b) {
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
-    lbl_eu_8065F1C8.field_0xC8.x = __OSs16tof32(&tri[0]);
-    lbl_eu_8065F1C8.field_0xC8.y = __OSs16tof32(&tri[1]);
-    lbl_eu_8065F1C8.field_0xC8.z = __OSs16tof32(&tri[2]);
-    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00,
-                                  (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8);
+    sColiQueryState.field_0xC8.x = __OSs16tof32(&tri[0]);
+    sColiQueryState.field_0xC8.y = __OSs16tof32(&tri[1]);
+    sColiQueryState.field_0xC8.z = __OSs16tof32(&tri[2]);
+    f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0x00,
+                                  (const nw4r::math::VEC3*)&sColiQueryState.field_0xC8);
     f32 diff = dot - b->field_0x00;
-    lbl_eu_8065F1C8.field_0xD4 = diff;
+    sColiQueryState.field_0xD4 = diff;
     if (lbl_eu_8066AED0 > diff) return;
-    if (diff >= lbl_eu_8065F1C8.field_0x120) return;
-    lbl_eu_8065F1C8.field_0xE0 = b;
+    if (diff >= sColiQueryState.field_0x120) return;
+    sColiQueryState.field_0xE0 = b;
     resolveHitBwd(a, b);
 }
 
@@ -655,7 +648,7 @@ void samplePlaneOk(CColiSrc* a, CColiMover* b) {
 // surviving polygon and the sampled normal go to the mover callback (ptmf
 // +0x94) and the scene-resource count is incremented.
 void clipTri6Plane(CColiSrc* a, CColiMover* b) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
+    CColiMgr* mgr = &sColiQueryState;
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
     mgr->field_0xC8.x = __OSs16tof32(&tri[0]);
@@ -731,11 +724,11 @@ void Coli_Noop_61F8(void) {}
 // appendQryIdx1 / appendQryIdx2 / appendQryIdx3 / appendQryIdx4 - register
 // the query's collision index when its entry's segment test passes and the
 // index is not already registered: the entry's flag bits address the shared
-// bit-table (lbl_eu_8065D1A0+0x2000) and the accepted indices are appended to
+// bit-table (sColiWorkArea+0x2000) and the accepted indices are appended to
 // the 16-slot list at +0x2160.  The four wrappers differ only in the
 // segment-test callee.
 extern "C" void appendQryIdx1(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
+    CColiWork* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -749,7 +742,7 @@ extern "C" void appendQryIdx1(CColiObj* self, CColiQuery* query) {
 }
 
 extern "C" void appendQryIdx2(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
+    CColiWork* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -764,7 +757,7 @@ extern "C" void appendQryIdx2(CColiObj* self, CColiQuery* query) {
 }
 
 extern "C" void appendQryIdx3(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
+    CColiWork* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -783,7 +776,7 @@ extern "C" void appendQryIdx3(CColiObj* self, CColiQuery* query) {
 // segment test passes and the index is not already registered.  See the
 // wrapper family comment above for the shared shape.
 extern "C" void appendQryIdx4(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
+    CColiWork* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -798,7 +791,7 @@ extern "C" void appendQryIdx4(CColiObj* self, CColiQuery* query) {
 }
 
 void appendSlabIdx(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
+    CColiWork* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     u16 idx = query->field_0x02;
     u32* bits = w->b.bitTable;
@@ -817,7 +810,7 @@ void appendSlabIdx(CColiObj* self, CColiQuery* query) {
 }
 
 void func_804B6580(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &lbl_eu_8065D1A0;
+    CColiWork* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     u16 idx = query->field_0x02;
     CColiEntry* entry = &self->field_0x40[idx];
@@ -837,7 +830,7 @@ void Coli_Noop_6634(void) {}
 
 // appendScnEntA / appendScnEntB - append a new scene-resource entry to the
 // 32-slot table (lbl_eu_8065F428): copy the 12-byte header and info block
-// from the arguments and fill the manager-owned fields from lbl_eu_8065F1C8.
+// from the arguments and fill the manager-owned fields from sColiQueryState.
 // The leading parameter is unused in the retail body (r3 is immediately
 // reused as scratch for the manager address).
 extern "C" void appendScnEntA(u32 a, const u32* head, const u32* info) {
@@ -849,9 +842,9 @@ extern "C" void appendScnEntA(u32 a, const u32* head, const u32* info) {
     lbl_eu_8065F428[count].field_0x0C = info[0];
     lbl_eu_8065F428[count].field_0x10 = info[1];
     lbl_eu_8065F428[count].field_0x14 = info[2];
-    lbl_eu_8065F428[count].field_0x18 = lbl_eu_8065F1C8.field_0xE0;
-    lbl_eu_8065F428[count].field_0x1C = lbl_eu_8065F1C8.field_0xEC;
-    lbl_eu_8065F428[count].field_0x20 = lbl_eu_8065F1C8.field_0x130;
+    lbl_eu_8065F428[count].field_0x18 = sColiQueryState.field_0xE0;
+    lbl_eu_8065F428[count].field_0x1C = sColiQueryState.field_0xEC;
+    lbl_eu_8065F428[count].field_0x20 = sColiQueryState.field_0x130;
     lbl_eu_80665988 = count + 1;
 }
 
@@ -863,12 +856,12 @@ void appendScnEntB(u32 a, const u32* head, const u32* info) {
     if (count >= 0x20) return;
     lbl_eu_8065F428[count].field_0x04 = head[1];
     lbl_eu_8065F428[count].field_0x00 = head[0];
-    lbl_eu_8065F428[count].field_0x18 = lbl_eu_8065F1C8.field_0xE0;
+    lbl_eu_8065F428[count].field_0x18 = sColiQueryState.field_0xE0;
     lbl_eu_8065F428[count].field_0x08 = head[2];
-    lbl_eu_8065F428[count].field_0x1C = lbl_eu_8065F1C8.field_0xEC;
+    lbl_eu_8065F428[count].field_0x1C = sColiQueryState.field_0xEC;
     lbl_eu_8065F428[count].field_0x10 = info[1];
     lbl_eu_8065F428[count].field_0x0C = info[0];
-    lbl_eu_8065F428[count].field_0x20 = lbl_eu_8065F1C8.field_0x130;
+    lbl_eu_8065F428[count].field_0x20 = sColiQueryState.field_0x130;
     lbl_eu_8065F428[count].field_0x14 = info[2];
     lbl_eu_80665988 = count + 1;
 }
@@ -880,13 +873,13 @@ void appendScnEntB(u32 a, const u32* head, const u32* info) {
 // the head/info blocks and the manager's mover hook + counters.
 void regScnHitDist(u32 a, const ScnHeadWord* head, const u32* info) {
     Vec3 d;
-    d.x = lbl_eu_8065F1C8.field_0x18.x - head[0].f;
-    d.y = lbl_eu_8065F1C8.field_0x18.y - head[1].f;
-    d.z = lbl_eu_8065F1C8.field_0x18.z - head[2].f;
+    d.x = sColiQueryState.field_0x18.x - head[0].f;
+    d.y = sColiQueryState.field_0x18.y - head[1].f;
+    d.z = sColiQueryState.field_0x18.z - head[2].f;
     f32 dist2 = d.x * d.x + d.y * d.y + d.z * d.z;
-    if (lbl_eu_8065F1C8.field_0xD8 >= dist2) {
+    if (sColiQueryState.field_0xD8 >= dist2) {
         if (lbl_eu_80665988 != 0) {
-            if (lbl_eu_8065F1C8.field_0xDC > dist2) {
+            if (sColiQueryState.field_0xDC > dist2) {
                 ScnResourceEntry* e = &lbl_eu_8065F428[0];
                 e->field_0x00 = head[0].w;
                 e->field_0x04 = head[1].w;
@@ -894,10 +887,10 @@ void regScnHitDist(u32 a, const ScnHeadWord* head, const u32* info) {
                 e->field_0x0C = info[0];
                 e->field_0x10 = info[1];
                 e->field_0x14 = info[2];
-                e->field_0x18 = lbl_eu_8065F1C8.field_0xE0;
-                e->field_0x1C = lbl_eu_8065F1C8.field_0xEC;
-                e->field_0x20 = lbl_eu_8065F1C8.field_0x130;
-                lbl_eu_8065F1C8.field_0xDC = dist2;
+                e->field_0x18 = sColiQueryState.field_0xE0;
+                e->field_0x1C = sColiQueryState.field_0xEC;
+                e->field_0x20 = sColiQueryState.field_0x130;
+                sColiQueryState.field_0xDC = dist2;
             }
         } else {
             ScnResourceEntry* e = &lbl_eu_8065F428[0];
@@ -907,10 +900,10 @@ void regScnHitDist(u32 a, const ScnHeadWord* head, const u32* info) {
             e->field_0x0C = info[0];
             e->field_0x10 = info[1];
             e->field_0x14 = info[2];
-            e->field_0x18 = lbl_eu_8065F1C8.field_0xE0;
-            e->field_0x1C = lbl_eu_8065F1C8.field_0xEC;
-            e->field_0x20 = lbl_eu_8065F1C8.field_0x130;
-            lbl_eu_8065F1C8.field_0xDC = dist2;
+            e->field_0x18 = sColiQueryState.field_0xE0;
+            e->field_0x1C = sColiQueryState.field_0xEC;
+            e->field_0x20 = sColiQueryState.field_0x130;
+            sColiQueryState.field_0xDC = dist2;
         }
         lbl_eu_80665988 = 1;
     }
@@ -918,18 +911,18 @@ void regScnHitDist(u32 a, const ScnHeadWord* head, const u32* info) {
 
 void regScnHitVert(u32 a, const ScnHeadWord* head, const u32* info) {
     if (lbl_eu_80665988 != 0) {
-        f32 dy = __fabs(lbl_eu_8065F1C8.field_0x18.y - head[1].f);
-        if (lbl_eu_8065F1C8.field_0xDC > dy) {
+        f32 dy = __fabs(sColiQueryState.field_0x18.y - head[1].f);
+        if (sColiQueryState.field_0xDC > dy) {
             lbl_eu_8065F428[0].field_0x00 = head[0].w;
             lbl_eu_8065F428[0].field_0x04 = head[1].w;
             lbl_eu_8065F428[0].field_0x08 = head[2].w;
             lbl_eu_8065F428[0].field_0x0C = info[0];
             lbl_eu_8065F428[0].field_0x10 = info[1];
             lbl_eu_8065F428[0].field_0x14 = info[2];
-            lbl_eu_8065F428[0].field_0x18 = lbl_eu_8065F1C8.field_0xE0;
-            lbl_eu_8065F428[0].field_0x1C = lbl_eu_8065F1C8.field_0xEC;
-            lbl_eu_8065F428[0].field_0x20 = lbl_eu_8065F1C8.field_0x130;
-            lbl_eu_8065F1C8.field_0xDC = dy;
+            lbl_eu_8065F428[0].field_0x18 = sColiQueryState.field_0xE0;
+            lbl_eu_8065F428[0].field_0x1C = sColiQueryState.field_0xEC;
+            lbl_eu_8065F428[0].field_0x20 = sColiQueryState.field_0x130;
+            sColiQueryState.field_0xDC = dy;
         }
     } else {
         lbl_eu_8065F428[0].field_0x00 = head[0].w;
@@ -938,18 +931,18 @@ void regScnHitVert(u32 a, const ScnHeadWord* head, const u32* info) {
         lbl_eu_8065F428[0].field_0x0C = info[0];
         lbl_eu_8065F428[0].field_0x10 = info[1];
         lbl_eu_8065F428[0].field_0x14 = info[2];
-        lbl_eu_8065F428[0].field_0x18 = lbl_eu_8065F1C8.field_0xE0;
-        lbl_eu_8065F428[0].field_0x1C = lbl_eu_8065F1C8.field_0xEC;
-        lbl_eu_8065F428[0].field_0x20 = lbl_eu_8065F1C8.field_0x130;
-        lbl_eu_8065F1C8.field_0xDC = __fabs(lbl_eu_8065F1C8.field_0x18.y - head[1].f);
+        lbl_eu_8065F428[0].field_0x18 = sColiQueryState.field_0xE0;
+        lbl_eu_8065F428[0].field_0x1C = sColiQueryState.field_0xEC;
+        lbl_eu_8065F428[0].field_0x20 = sColiQueryState.field_0x130;
+        sColiQueryState.field_0xDC = __fabs(sColiQueryState.field_0x18.y - head[1].f);
     }
     lbl_eu_80665988 = 1;
 }
 
 // Invoke the manager's callback slot with the stored context pointer.
 void Coli_InvokeMgrCb_6954(void* a, void* b, void* c) {
-    void (*fn)(void*, void*, void*) = (void (*)(void*, void*, void*))lbl_eu_8065F1C8.field_0xA0;
-    void* p = (void*)lbl_eu_8065F1C8.field_0x9C;
+    void (*fn)(void*, void*, void*) = (void (*)(void*, void*, void*))sColiQueryState.field_0xA0;
+    void* p = (void*)sColiQueryState.field_0x9C;
     fn(b, c, p);
 }
 
@@ -960,8 +953,8 @@ void Coli_InvokeMgrCb_6954(void* a, void* b, void* c) {
 void xformNrmVecCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     ml::CVec3 out1;
     ml::CVec3 out2;
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, in1, out1);
-    PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in2, out2);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, in1, out1);
+    PSMTXMultVec(sColiQueryState.field_0xF0, in2, out2);
     f32 len2 = out2.x * out2.x + out2.y * out2.y;
     len2 = out2.z * out2.z + len2;
     if (lbl_eu_8066AED0 == len2) {
@@ -984,14 +977,14 @@ void buildRayTriCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     ml::CVec3 out2;
     ml::CVec3 p0;
     ml::CVec3 p1;
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, in1, out1);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, in1, out1);
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&p0, (const nw4r::math::VEC3*)in1,
-                        (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xA4[0]);
+                        (const nw4r::math::VEC3*)&sColiQueryState.field_0xA4[0]);
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&p1, (const nw4r::math::VEC3*)in1,
-                        (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xA4[1]);
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, p0, p0);
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, p1, p1);
-    PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in2, out2);
+                        (const nw4r::math::VEC3*)&sColiQueryState.field_0xA4[1]);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, p0, p0);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, p1, p1);
+    PSMTXMultVec(sColiQueryState.field_0xF0, in2, out2);
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&p0, (const nw4r::math::VEC3*)&p0,
                         (const nw4r::math::VEC3*)&out1);
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&p1, (const nw4r::math::VEC3*)&p1,
@@ -1000,7 +993,7 @@ void buildRayTriCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&p0,
                                   (const nw4r::math::VEC3*)&out2);
     if (dot < lbl_eu_8066AED0) {
-        out2 = p0 * lbl_eu_8066AED8;
+        out2 = p0 * -1.0f;
     } else {
         out2 = p0;
     }
@@ -1022,7 +1015,7 @@ void buildRayTriCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
 // callback (ptmf +0xA0).
 void Coli_XformNotifyA_6C48(CColiRegObj* self, const Vec* a, const Vec* in) {
     ml::CVec3 out;
-    PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in, out);
+    PSMTXMultVec(sColiQueryState.field_0xF0, in, out);
     f32 len2 = out.y * out.y;
     len2 = len2 + out.x * out.x;
     len2 = len2 + out.z * out.z;
@@ -1034,7 +1027,7 @@ void Coli_XformNotifyA_6C48(CColiRegObj* self, const Vec* a, const Vec* in) {
     }
     if ((self->*self->field_0xB8)(out.y) == 0) {
         ml::CVec3 transformed;
-        PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, a, transformed);
+        PSMTXMultVec(*sColiQueryState.field_0xE8, a, transformed);
         (self->*self->field_0xA0)(&transformed, &out);
     }
 }
@@ -1047,14 +1040,14 @@ void buildRayTriC2(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     ml::CVec3 out2;
     ml::CVec3 p0;
     ml::CVec3 p1;
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, in1, out1);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, in1, out1);
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&p0, (const nw4r::math::VEC3*)in1,
-                        (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xA4[0]);
+                        (const nw4r::math::VEC3*)&sColiQueryState.field_0xA4[0]);
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&p1, (const nw4r::math::VEC3*)in1,
-                        (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xA4[1]);
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, p0, p0);
-    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, p1, p1);
-    PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in2, out2);
+                        (const nw4r::math::VEC3*)&sColiQueryState.field_0xA4[1]);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, p0, p0);
+    PSMTXMultVec(*sColiQueryState.field_0xE8, p1, p1);
+    PSMTXMultVec(sColiQueryState.field_0xF0, in2, out2);
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&p0, (const nw4r::math::VEC3*)&p0,
                         (const nw4r::math::VEC3*)&out1);
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&p1, (const nw4r::math::VEC3*)&p1,
@@ -1063,7 +1056,7 @@ void buildRayTriC2(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&p0,
                                   (const nw4r::math::VEC3*)&out2);
     if (dot < lbl_eu_8066AED0) {
-        out2 = p0 * lbl_eu_8066AED8;
+        out2 = p0 * -1.0f;
     } else {
         out2 = p0;
     }
@@ -1086,7 +1079,7 @@ void buildRayTriC2(CColiRegObj* self, const Vec* in1, const Vec* in2) {
 // (ptmf +0xA0).
 void Coli_XformNotifyB_6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
     ml::CVec3 out;
-    PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in, out);
+    PSMTXMultVec(sColiQueryState.field_0xF0, in, out);
     f32 len2 = out.y * out.y;
     len2 = len2 + out.x * out.x;
     len2 = len2 + out.z * out.z;
@@ -1096,8 +1089,8 @@ void Coli_XformNotifyB_6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
     } else {
         PSVECNormalize(out, out);
     }
-    for (int i = 0; i < lbl_eu_8065F1C8.field_0x9C; i++) {
-        PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, (const Vec*)&vecs[i], (Vec*)&vecs[i]);
+    for (int i = 0; i < sColiQueryState.field_0x9C; i++) {
+        PSMTXMultVec(*sColiQueryState.field_0xE8, (const Vec*)&vecs[i], (Vec*)&vecs[i]);
     }
     (self->*self->field_0xA0)(vecs, &out);
 }
@@ -1119,27 +1112,27 @@ extern "C" void resolveHitFwd(CColiSrc* self, CColiMover* b) {
     Vec3 tmp;
     Vec3 d;
     // z, x, y evaluation order mirrors the retail load schedule.
-    tmp.z = lbl_eu_8065F1C8.field_0x00.z + lbl_eu_8065F1C8.field_0x0C.z * lbl_eu_8065F1C8.field_0xD4;
-    tmp.x = lbl_eu_8065F1C8.field_0x00.x + lbl_eu_8065F1C8.field_0x0C.x * lbl_eu_8065F1C8.field_0xD4;
-    tmp.y = lbl_eu_8065F1C8.field_0x00.y + lbl_eu_8065F1C8.field_0x0C.y * lbl_eu_8065F1C8.field_0xD4;
-    const f32 threshold = lbl_eu_8066AEDC;
-    u8* triBase = self->field_0x20 + lbl_eu_8065F1C8.field_0xE0->field_0x0A * 18;
+    tmp.z = sColiQueryState.field_0x00.z + sColiQueryState.field_0x0C.z * sColiQueryState.field_0xD4;
+    tmp.x = sColiQueryState.field_0x00.x + sColiQueryState.field_0x0C.x * sColiQueryState.field_0xD4;
+    tmp.y = sColiQueryState.field_0x00.y + sColiQueryState.field_0x0C.y * sColiQueryState.field_0xD4;
+    const f32 threshold = -0.0001f;
+    u8* triBase = self->field_0x20 + sColiQueryState.field_0xE0->field_0x0A * 18;
     for (int i = 0; i < 3; i++) {
         // Mover pointer re-read inside the loop: the global may change.
-        Vec3* e = (Vec3*)(self->field_0x18 + lbl_eu_8065F1C8.field_0xE0->field_0x04[i] * 12);
+        Vec3* e = (Vec3*)(self->field_0x18 + sColiQueryState.field_0xE0->field_0x04[i] * 12);
         d.x = tmp.x - e->x;
         d.y = tmp.y - e->y;
         d.z = tmp.z - e->z;
         s16* tri = (s16*)(triBase + i * 6);
-        lbl_eu_8065F1C8.field_0xA4[i].x = __OSs16tof32(&tri[0]);
-        lbl_eu_8065F1C8.field_0xA4[i].y = __OSs16tof32(&tri[1]);
-        lbl_eu_8065F1C8.field_0xA4[i].z = __OSs16tof32(&tri[2]);
-        f32 dist2 = d.x * lbl_eu_8065F1C8.field_0xA4[i].x
-                  + d.y * lbl_eu_8065F1C8.field_0xA4[i].y
-                  + d.z * lbl_eu_8065F1C8.field_0xA4[i].z;
+        sColiQueryState.field_0xA4[i].x = __OSs16tof32(&tri[0]);
+        sColiQueryState.field_0xA4[i].y = __OSs16tof32(&tri[1]);
+        sColiQueryState.field_0xA4[i].z = __OSs16tof32(&tri[2]);
+        f32 dist2 = d.x * sColiQueryState.field_0xA4[i].x
+                  + d.y * sColiQueryState.field_0xA4[i].y
+                  + d.z * sColiQueryState.field_0xA4[i].z;
         if (dist2 <= threshold) return;
     }
-    (self->*self->field_0x94)((const ml::CVec3*)&tmp, (const ml::CVec3*)&lbl_eu_8065F1C8.field_0xC8);
+    (self->*self->field_0x94)((const ml::CVec3*)&tmp, (const ml::CVec3*)&sColiQueryState.field_0xC8);
 }
 
 // resolveHitBwd - resolve the hit point (offset - normal * t) and test it
@@ -1152,7 +1145,7 @@ extern "C" void resolveHitFwd(CColiSrc* self, CColiMover* b) {
 // and the sampled normal.  When all three vertices pass, the callback gets
 // the raw hit point.
 extern "C" void resolveHitBwd(CColiSrc* a, CColiMover* b) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
+    CColiMgr* mgr = &sColiQueryState;
     Vec3 tmp;
     tmp.z = mgr->field_0x00.z - mgr->field_0xC8.z * mgr->field_0xD4;
     tmp.x = mgr->field_0x00.x - mgr->field_0xC8.x * mgr->field_0xD4;
@@ -1180,7 +1173,7 @@ extern "C" void resolveHitBwd(CColiSrc* a, CColiMover* b) {
         mgr->field_0xA4[i].z = __OSs16tof32(&tri[2]);
         f32 dot = d[i].x * mgr->field_0xA4[i].x + d[i].y * mgr->field_0xA4[i].y
                 + d[i].z * mgr->field_0xA4[i].z;
-        if (dot <= lbl_eu_8066AEE0) break;
+        if (dot <= -1e-05f) break;
     }
     if (i == 3) {
         (a->*a->field_0x94)((const ml::CVec3*)&tmp, (const ml::CVec3*)&mgr->field_0xC8);
@@ -1300,9 +1293,9 @@ extern "C" void allocMoverTbl(CColiMoverState* self, const CColiInEntry* input, 
 // (identity matrix, active flag, seen-bit window) and free the previous
 // allocation.
 void CColiMoverState::initColiMover() {
-    const u32* s0 = &lbl_eu_8056F508[0];
-    const u32* s1 = &lbl_eu_8056F508[3];
-    const u32* s2 = &lbl_eu_8056F508[6];
+    const u32* s0 = &sColiStageConfigTable[0];
+    const u32* s1 = &sColiStageConfigTable[3];
+    const u32* s2 = &sColiStageConfigTable[6];
     this->field_0x14 = 0;
     this->field_0x18 = 0;
     this->field_0x1C = 0;
@@ -1328,9 +1321,9 @@ void CColiMoverState::initColiMover() {
     this->field_0x9C = s2[2];
     this->field_0x5C = 0;
     ColiQuery_Reset(this);
-    PSMTXIdentity(lbl_eu_8065F1C8.field_0xF0);
-    lbl_eu_8065F1C8.field_0x134 = 1;
-    memset(lbl_eu_8065F1A0, 0, 0x28);
+    PSMTXIdentity(sColiQueryState.field_0xF0);
+    sColiQueryState.field_0x134 = 1;
+    memset(sColiSeenBitTable, 0, 0x28);
     if (this->field_0x60 != 0) {
         mtl::MemManager::deallocate(this->field_0x60);
         this->field_0x60 = 0;
@@ -1345,12 +1338,12 @@ void CColiRegObj::DispatchRegCb(u16* entry, u16 value) {
 }
 
 // regSeenListCb - register every index of the u16 list: set the index's bit
-// in the shared bit-table (base held in lbl_eu_80663AC8) and, when the
+// in the shared bit-table (base held in spColiSeenBits) and, when the
 // entry's category passes the manager's filter flags, invoke the register
 // callback (member-function pointer at +0x7C).
 void regSeenListCb(CColiRegObj* self, u16* list, int count) {
     for (int i = 0; i < count; i++, list++) {
-        u32 base = lbl_eu_80663AC8;
+        u32 base = spColiSeenBits;
         u32 wordIdx = *list >> 5;
         u32 bitIdx = *list & 0x1F;
         u32 w = ((u32*)base)[wordIdx];
@@ -1358,7 +1351,7 @@ void regSeenListCb(CColiRegObj* self, u16* list, int count) {
         if (w & mask) continue;
         ((u32*)base)[wordIdx] = w | mask;
         u32 v = self->field_0x28[self->field_0x30[*list].field_0x12];
-        if (lbl_eu_8065F1C8.field_0x128 & v) continue;
+        if (sColiQueryState.field_0x128 & v) continue;
         (self->*self->field_0x7C)();
     }
 }
@@ -1369,7 +1362,7 @@ void regSeenListCb(CColiRegObj* self, u16* list, int count) {
 void regSeenListC2(CColiRegObj* self, u16* list, int count) {
     for (int i = 0; i < count; i++, list++) {
         u16 idx = *list;
-        u32 base = lbl_eu_80663AC8;
+        u32 base = spColiSeenBits;
         u32 wordIdx = idx >> 5;
         u32 bitIdx = idx & 0x1F;
         u32 w = ((u32*)base)[wordIdx];
@@ -1377,8 +1370,8 @@ void regSeenListC2(CColiRegObj* self, u16* list, int count) {
         if (w & mask) continue;
         ((u32*)base)[wordIdx] = w | mask;
         u32 v = self->field_0x28[self->field_0x30[*list].field_0x12];
-        if (lbl_eu_8065F1C8.field_0x128 & v) continue;
-        if ((lbl_eu_8065F1C8.field_0x12C & v) == 0) continue;
+        if (sColiQueryState.field_0x128 & v) continue;
+        if ((sColiQueryState.field_0x12C & v) == 0) continue;
         (self->*self->field_0x7C)();
     }
 }
@@ -1408,13 +1401,13 @@ public:
 };
 
 // setSeenBitLst - reserve the seen-bit for every index in `list` (bit index
-// is the entry index plus the object's bit-array offset; lbl_eu_80663AC8
+// is the entry index plus the object's bit-array offset; spColiSeenBits
 // holds the base pointer of the shared bit array) and invoke the dispatch
 // callback for each newly reserved entry.
 void CColiBitObj::setSeenBitLst(u16* list, int count) {
     for (int i = 0; i < count; i++) {
         int n = this->field_0x6C + list[i];
-        u32* bits = (u32*)lbl_eu_80663AC8;
+        u32* bits = (u32*)spColiSeenBits;
         // Word fetched before the mask so the scheduler matches retail.
         u32 word = bits[n >> 5];
         u32 mask = 1u << (n & 0x1F);
@@ -1432,7 +1425,7 @@ void CColiBitObj::setSeenBitLst(u16* list, int count) {
 bool CColiObj2::rayBoxHitTest(const u16* list, int count) {
     for (int i = 0; i < count; i++) {
         u16 idx = list[i];
-        u32* bits = (u32*)lbl_eu_80663ACC;
+        u32* bits = (u32*)spColiZeroWindow;
         u32 wordIdx = idx >> 5;
         u32 bitIdx = idx & 0x1F;
         u32 w = bits[wordIdx];
@@ -1442,50 +1435,50 @@ bool CColiObj2::rayBoxHitTest(const u16* list, int count) {
         CColiEntry16* entry = &this->field_0x5C[idx];
         Vec3* vert = &this->field_0x54[entry->field_0x0E];
         f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)vert,
-                                       (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x0C);
+                                       (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
         if (dot2 == lbl_eu_8066AED0) continue;
         f32 t = (entry->field_0x00
                  - nw4r::math::VEC3Dot((const nw4r::math::VEC3*)vert,
-                                       (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00))
+                                       (const nw4r::math::VEC3*)&sColiQueryState.field_0x00))
                 / dot2;
         if (!(t >= lbl_eu_8066AED0)) continue;
         if (!(t <= lbl_eu_8066AED4)) continue;
         ml::CVec3 hit;
-        hit.y = lbl_eu_8065F1C8.field_0x00.y + lbl_eu_8065F1C8.field_0x0C.y * t;
-        hit.x = lbl_eu_8065F1C8.field_0x00.x + lbl_eu_8065F1C8.field_0x0C.x * t;
-        hit.z = lbl_eu_8065F1C8.field_0x00.z + lbl_eu_8065F1C8.field_0x0C.z * t;
+        hit.y = sColiQueryState.field_0x00.y + sColiQueryState.field_0x0C.y * t;
+        hit.x = sColiQueryState.field_0x00.x + sColiQueryState.field_0x0C.x * t;
+        hit.z = sColiQueryState.field_0x00.z + sColiQueryState.field_0x0C.z * t;
         Vec3* v2 = &this->field_0x50[entry->field_0x06];
         ml::CVec3 seg;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&seg, (const nw4r::math::VEC3*)&hit,
                             (const nw4r::math::VEC3*)v2);
         CColiMtx4* m2 = &this->field_0x58[entry->field_0x0C];
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
-                                (const nw4r::math::VEC3*)&m2->v[0]) <= lbl_eu_8066AEE0)
+                                (const nw4r::math::VEC3*)&m2->v[0]) <= -1e-05f)
             continue;
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
-                                (const nw4r::math::VEC3*)&m2->v[1]) <= lbl_eu_8066AEE0)
+                                (const nw4r::math::VEC3*)&m2->v[1]) <= -1e-05f)
             continue;
         Vec3* v3 = &this->field_0x50[entry->field_0x0A];
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&seg, (const nw4r::math::VEC3*)&hit,
                             (const nw4r::math::VEC3*)v3);
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
-                                (const nw4r::math::VEC3*)&m2->v[2]) <= lbl_eu_8066AEE0)
+                                (const nw4r::math::VEC3*)&m2->v[2]) <= -1e-05f)
             continue;
         if (nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&seg,
-                                (const nw4r::math::VEC3*)&m2->v[3]) <= lbl_eu_8066AEE0)
+                                (const nw4r::math::VEC3*)&m2->v[3]) <= -1e-05f)
             continue;
         return true;
     }
     return false;
 }
 
-extern char lbl_eu_8065F1A0[];
+extern char sColiSeenBitTable[];
 extern "C" void clrSeenBitTbl(int, int bit_index) {
     if (bit_index > 0x140) bit_index = 0x140;
     int word_idx = bit_index >> 5;
     int bit_off = bit_index & 0x1F;
     int mask = 1 << bit_off;
-    int* bits = (int*)&lbl_eu_8065F1A0;
+    int* bits = (int*)&sColiSeenBitTable;
     bits[word_idx] &= ~mask;
 }
 
@@ -1496,7 +1489,7 @@ extern "C" bool setSeenBitTbl(u32* self, int idx) {
     if (idx > 320) {
         idx = 320;
     }
-    u32* bits = (u32*)lbl_eu_8065F1A0;
+    u32* bits = (u32*)sColiSeenBitTable;
     // Word fetched before the mask so the scheduler matches retail.
     bits[idx >> 5] = bits[idx >> 5] | (1u << (idx & 0x1F));
     return true;
@@ -1578,9 +1571,9 @@ extern "C" int getMoverEntry(CColiMoverState* self, int idx) {
 // 0x3C/0x48/0x54/0x60/0x6C/0x78 (+/- each axis, flipped by 0x8066AED8) with
 // the plane offsets at 0x84..0x98 computed as (center +/- axis*scale).axis.
 extern "C" void makeObbPlanes(CColiMgr* unused, const Vec* center, const Mtx mtx, f32 scaleV2, f32 scaleV1, f32 scaleV0) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
+    CColiMgr* mgr = &sColiQueryState;
     const f32 zero = lbl_eu_8066AED0;
-    const f32 flip = lbl_eu_8066AED8;
+    const f32 flip = -1.0f;
     Vec3 v0;
     Vec3 v1;
     Vec3 v2;
@@ -1652,29 +1645,29 @@ extern "C" void makeObbPlanes(CColiMgr* unused, const Vec* center, const Mtx mtx
 // rotation into the manager's embedded matrix and update the hook pointers.
 extern "C" u32 regColiVolume(CColiThing* self, CColiVolume* vol, CColiQuery* query, u32 arg6) {
     u16 flags = query->field_0x02;
-    u32* bits = (u32*)&lbl_eu_8065F1A0;
+    u32* bits = (u32*)&sColiSeenBitTable;
     if (bits[flags >> 5] & (1u << (flags & 0x1F))) return 0;
-    if (vol->field_0xD4 > lbl_eu_8065F1C8.field_0x24.x) return 0;
-    if (vol->field_0xC8 < lbl_eu_8065F1C8.field_0x30.x) return 0;
-    if (vol->field_0xDC > lbl_eu_8065F1C8.field_0x24.z) return 0;
-    if (vol->field_0xD0 < lbl_eu_8065F1C8.field_0x30.z) return 0;
-    if (vol->field_0xD8 > lbl_eu_8065F1C8.field_0x24.y) return 0;
-    if (vol->field_0xCC < lbl_eu_8065F1C8.field_0x30.y) return 0;
+    if (vol->field_0xD4 > sColiQueryState.field_0x24.x) return 0;
+    if (vol->field_0xC8 < sColiQueryState.field_0x30.x) return 0;
+    if (vol->field_0xDC > sColiQueryState.field_0x24.z) return 0;
+    if (vol->field_0xD0 < sColiQueryState.field_0x30.z) return 0;
+    if (vol->field_0xD8 > sColiQueryState.field_0x24.y) return 0;
+    if (vol->field_0xCC < sColiQueryState.field_0x30.y) return 0;
     CColiEntry12* entry = &self->field_0x38[query->field_0x00];
-    DCZeroRange((u8*)lbl_eu_80663AC8, ((entry->field_0x02 >> 5) + 1) * 4);
-    lbl_eu_8065F1C8.field_0xF0[0][0] = vol->field_0x08[0][0];
-    lbl_eu_8065F1C8.field_0xF0[0][1] = vol->field_0x08[0][1];
-    lbl_eu_8065F1C8.field_0xF0[0][2] = vol->field_0x08[0][2];
-    lbl_eu_8065F1C8.field_0xF0[1][0] = vol->field_0x08[1][0];
-    lbl_eu_8065F1C8.field_0xF0[1][1] = vol->field_0x08[1][1];
-    lbl_eu_8065F1C8.field_0xF0[1][2] = vol->field_0x08[1][2];
-    lbl_eu_8065F1C8.field_0xF0[2][0] = vol->field_0x08[2][0];
-    lbl_eu_8065F1C8.field_0xF0[2][1] = vol->field_0x08[2][1];
-    lbl_eu_8065F1C8.field_0xF0[2][2] = vol->field_0x08[2][2];
+    DCZeroRange((u8*)spColiSeenBits, ((entry->field_0x02 >> 5) + 1) * 4);
+    sColiQueryState.field_0xF0[0][0] = vol->field_0x08[0][0];
+    sColiQueryState.field_0xF0[0][1] = vol->field_0x08[0][1];
+    sColiQueryState.field_0xF0[0][2] = vol->field_0x08[0][2];
+    sColiQueryState.field_0xF0[1][0] = vol->field_0x08[1][0];
+    sColiQueryState.field_0xF0[1][1] = vol->field_0x08[1][1];
+    sColiQueryState.field_0xF0[1][2] = vol->field_0x08[1][2];
+    sColiQueryState.field_0xF0[2][0] = vol->field_0x08[2][0];
+    sColiQueryState.field_0xF0[2][1] = vol->field_0x08[2][1];
+    sColiQueryState.field_0xF0[2][2] = vol->field_0x08[2][2];
     self->field_0x30 = self->field_0x14 + entry->field_0x08;
-    lbl_eu_8065F1C8.field_0xE8 = &vol->field_0x08;
-    lbl_eu_8065F1C8.field_0xEC = (u32)&vol->field_0x38;
-    lbl_eu_8065F1C8.field_0x130 = arg6 + 1;
+    sColiQueryState.field_0xE8 = &vol->field_0x08;
+    sColiQueryState.field_0xEC = (u32)&vol->field_0x38;
+    sColiQueryState.field_0x130 = arg6 + 1;
     return 1;
 }
 
@@ -1684,32 +1677,32 @@ extern "C" u32 regColiVolume(CColiThing* self, CColiVolume* vol, CColiQuery* que
 // the per-stage matrix configuration is read from the low block of the
 // default table.  Same GQR5 fast-cast wall as beginColiPass.
 extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 flags, int mode, f32 scale) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
+    CColiMgr* mgr = &sColiQueryState;
     mgr->field_0x00 = *(const nw4r::math::_VEC3*)offset;
     mgr->field_0x18 = *(const nw4r::math::_VEC3*)offset;
     mgr->field_0x120 = scale;
     mgr->field_0x124 = scale * scale;
-    state->field_0x7C = lbl_eu_8056F508[0x24 / 4];
-    state->field_0x80 = lbl_eu_8056F508[0x28 / 4];
-    state->field_0x84 = lbl_eu_8056F508[0x2C / 4];
-    state->field_0x94 = lbl_eu_8056F508[0x30 / 4];
-    state->field_0x98 = lbl_eu_8056F508[0x34 / 4];
-    state->field_0x9C = lbl_eu_8056F508[0x38 / 4];
-    state->field_0x88 = lbl_eu_8056F508[0x3C / 4];
-    state->field_0x8C = lbl_eu_8056F508[0x40 / 4];
-    state->field_0x90 = lbl_eu_8056F508[0x44 / 4];
+    state->field_0x7C = sColiStageConfigTable[0x24 / 4];
+    state->field_0x80 = sColiStageConfigTable[0x28 / 4];
+    state->field_0x84 = sColiStageConfigTable[0x2C / 4];
+    state->field_0x94 = sColiStageConfigTable[0x30 / 4];
+    state->field_0x98 = sColiStageConfigTable[0x34 / 4];
+    state->field_0x9C = sColiStageConfigTable[0x38 / 4];
+    state->field_0x88 = sColiStageConfigTable[0x3C / 4];
+    state->field_0x8C = sColiStageConfigTable[0x40 / 4];
+    state->field_0x90 = sColiStageConfigTable[0x44 / 4];
     mgr->field_0x128 = flags;
     mgr->field_0x12C = mode;
     if (mode != 0) {
-        state->field_0xAC = lbl_eu_8056F508[0x48 / 4];
-        state->field_0xB0 = lbl_eu_8056F508[0x4C / 4];
-        state->field_0xB4 = lbl_eu_8056F508[0x50 / 4];
+        state->field_0xAC = sColiStageConfigTable[0x48 / 4];
+        state->field_0xB0 = sColiStageConfigTable[0x4C / 4];
+        state->field_0xB4 = sColiStageConfigTable[0x50 / 4];
     } else {
-        state->field_0xAC = lbl_eu_8056F508[0x54 / 4];
-        state->field_0xB0 = lbl_eu_8056F508[0x58 / 4];
-        state->field_0xB4 = lbl_eu_8056F508[0x5C / 4];
+        state->field_0xAC = sColiStageConfigTable[0x54 / 4];
+        state->field_0xB0 = sColiStageConfigTable[0x58 / 4];
+        state->field_0xB4 = sColiStageConfigTable[0x5C / 4];
     }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
+    DCZeroRange((u8*)spColiSeenBits,
                 (((s32)(state->field_0x6C + state->field_0x70) >> 5) + 1) * 4);
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
@@ -1722,9 +1715,9 @@ extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 fla
             u32 ac = state->field_0xAC;
             u32 b0 = state->field_0xB0;
             u32 b4 = state->field_0xB4;
-            state->field_0xAC = lbl_eu_8056F508[0x60 / 4];
-            state->field_0xB0 = lbl_eu_8056F508[0x64 / 4];
-            state->field_0xB4 = lbl_eu_8056F508[0x68 / 4];
+            state->field_0xAC = sColiStageConfigTable[0x60 / 4];
+            state->field_0xB0 = sColiStageConfigTable[0x64 / 4];
+            state->field_0xB4 = sColiStageConfigTable[0x68 / 4];
             ColiQuerySphere(state, offset, state->field_0x34->field_0x04, scale);
             state->field_0xAC = ac;
             state->field_0xB0 = b0;
@@ -1733,25 +1726,25 @@ extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 fla
             ColiQuerySphere(state, offset, state->field_0x34->field_0x04, scale);
         }
         if (mgr->field_0x136 != 0 || state->field_0x78 != 0) {
-            state->field_0xA0 = lbl_eu_8056F508[0x6C / 4];
-            state->field_0xA4 = lbl_eu_8056F508[0x70 / 4];
-            state->field_0xA8 = lbl_eu_8056F508[0x74 / 4];
+            state->field_0xA0 = sColiStageConfigTable[0x6C / 4];
+            state->field_0xA4 = sColiStageConfigTable[0x70 / 4];
+            state->field_0xA8 = sColiStageConfigTable[0x74 / 4];
             for (int i = 0; i < mgr->field_0x136; i++) {
-                CColiVolEntry* entry = &state->field_0x40[lbl_eu_8065F300[i]];
+                CColiVolEntry* entry = &state->field_0x40[sScnResourceCategoryList[i]];
                 if ((entry->field_0x02 & 0x8000) != 0) {
-                    state->field_0x94 = lbl_eu_8056F508[0x78 / 4];
-                    state->field_0x98 = lbl_eu_8056F508[0x7C / 4];
-                    state->field_0x9C = lbl_eu_8056F508[0x80 / 4];
+                    state->field_0x94 = sColiStageConfigTable[0x78 / 4];
+                    state->field_0x98 = sColiStageConfigTable[0x7C / 4];
+                    state->field_0x9C = sColiStageConfigTable[0x80 / 4];
                 } else {
-                    state->field_0x94 = lbl_eu_8056F508[0x84 / 4];
-                    state->field_0x98 = lbl_eu_8056F508[0x88 / 4];
-                    state->field_0x9C = lbl_eu_8056F508[0x8C / 4];
+                    state->field_0x94 = sColiStageConfigTable[0x84 / 4];
+                    state->field_0x98 = sColiStageConfigTable[0x88 / 4];
+                    state->field_0x9C = sColiStageConfigTable[0x8C / 4];
                 }
                 mgr->field_0x120 = scale * entry->field_0x7C;
                 mgr->field_0x124 = mgr->field_0x120 * mgr->field_0x120;
                 PSMTXMultVec(entry->field_0x34, offset, (Vec*)&mgr->field_0x00);
                 CColiEntry12* e12 = &state->field_0x38[entry->field_0x00];
-                DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
+                DCZeroRange((u8*)spColiSeenBits, ((e12->field_0x02 >> 5) + 1) * 4);
                 mgr->field_0xF0[0][0] = entry->m[0][0];
                 mgr->field_0xF0[0][1] = entry->m[0][1];
                 mgr->field_0xF0[0][2] = entry->m[0][2];
@@ -1767,9 +1760,9 @@ extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 fla
                 ColiQuerySphere(state, offset, e12->field_0x04, mgr->field_0x120);
             }
             if (state->field_0x78 != 0) {
-                state->field_0x94 = lbl_eu_8056F508[0x90 / 4];
-                state->field_0x98 = lbl_eu_8056F508[0x94 / 4];
-                state->field_0x9C = lbl_eu_8056F508[0x98 / 4];
+                state->field_0x94 = sColiStageConfigTable[0x90 / 4];
+                state->field_0x98 = sColiStageConfigTable[0x94 / 4];
+                state->field_0x9C = sColiStageConfigTable[0x98 / 4];
                 mgr->field_0x24.x = offset->x + scale;
                 mgr->field_0x24.y = offset->y + scale;
                 mgr->field_0x24.z = offset->z + scale;
@@ -1795,7 +1788,7 @@ extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 fla
 
 // segVolumePass - segment query pass: seed the manager's ray offset (+0x00)
 // and direction (+0x0C) from the two endpoint vectors, install the default
-// distance threshold (lbl_eu_8066AEE4) and per-stage config blocks, then
+// distance threshold (100000000.0f) and per-stage config blocks, then
 // walk every registered scene-resource volume (expanding the manager AABB
 // to both transformed endpoints) and every mover-state volume, handing each
 // accepted pair to the segment registration helper ColiQuerySegmentSweep.
@@ -1803,8 +1796,8 @@ extern "C" void beginLinkPass(CColiMoverState* state, const Vec* offset, u32 fla
 // plain retail symbol name).
 extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec* pos2,
                    u32 flagsA, u32 flagsB, u32 flag) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
+    CColiMgr* mgr = &sColiQueryState;
+    const u32* tbl = sColiStageConfigTable;
     {
         // Raw word copies mirror the retail copy schedule.
         u32* d = (u32*)&mgr->field_0x00;
@@ -1820,7 +1813,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
         delta.z = data->z - pos2->z;
         mgr->field_0x0C = *(const nw4r::math::_VEC3*)&delta;
     }
-    mgr->field_0xD8 = lbl_eu_8066AEE4;
+    mgr->field_0xD8 = 1e+08f;
     mgr->field_0x18 = *(const nw4r::math::_VEC3*)data;
     state->field_0x7C = tbl[0x9C / 4];
     state->field_0x80 = tbl[0xA0 / 4];
@@ -1848,7 +1841,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
         state->field_0xB0 = tbl[0xDC / 4];
         state->field_0xB4 = tbl[0xE0 / 4];
     }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
+    DCZeroRange((u8*)spColiSeenBits,
                 (((s32)(state->field_0x6C + state->field_0x70) >> 5) + 1) * 4);
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
@@ -1870,7 +1863,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
     }
     if (mgr->field_0x136 != 0) {
         for (int i = 0; i < mgr->field_0x136; i++) {
-            CColiVolEntry* entry = &state->field_0x40[lbl_eu_8065F300[i]];
+            CColiVolEntry* entry = &state->field_0x40[sScnResourceCategoryList[i]];
             if ((entry->field_0x02 & 0x8000) != 0) {
                 state->field_0x94 = tbl[0xFC / 4];
                 state->field_0x98 = tbl[0x100 / 4];
@@ -1894,7 +1887,7 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
             mgr->field_0x24.z = p0.z > p1.z ? p0.z : p1.z;
             mgr->field_0x30.z = p0.z > p1.z ? p1.z : p0.z;
             CColiEntry12* e12 = &state->field_0x38[entry->field_0x00];
-            DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
+            DCZeroRange((u8*)spColiSeenBits, ((e12->field_0x02 >> 5) + 1) * 4);
             mgr->field_0xF0[0][0] = entry->m[0][0];
             mgr->field_0xF0[0][1] = entry->m[0][1];
             mgr->field_0xF0[0][2] = entry->m[0][2];
@@ -1943,8 +1936,8 @@ extern "C" void segVolumePass(CColiMoverState* state, const Vec* data, const Vec
 // window (restored to scale 0 in the epilogue).
 extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
                    u32 flag, f32 rayLen, f32 yBound) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
+    CColiMgr* mgr = &sColiQueryState;
+    const u32* tbl = sColiStageConfigTable;
     // Raw word copies mirror the retail lwz/stw schedule.
     {
         u32* d = (u32*)&mgr->field_0x00;
@@ -1990,7 +1983,7 @@ extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filter
         state->field_0xB0 = tbl[0x1F0 / 4];
         state->field_0xB4 = tbl[0x1F4 / 4];
     }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
+    DCZeroRange((u8*)spColiSeenBits,
                 (((s32)(state->field_0x6C + state->field_0x70) >> 5) + 1) * 4);
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
@@ -2032,7 +2025,7 @@ extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filter
     lifted.z = mgr->field_0x00.z;
     if (mgr->field_0x136 != 0) {
         for (int i = 0; i < mgr->field_0x136; i++) {
-            CColiVolEntry* entry = &state->field_0x40[lbl_eu_8065F300[i]];
+            CColiVolEntry* entry = &state->field_0x40[sScnResourceCategoryList[i]];
             if ((entry->field_0x02 & 0x8000) != 0) {
                 state->field_0x94 = tbl[0x21C / 4];
                 state->field_0x98 = tbl[0x220 / 4];
@@ -2049,7 +2042,7 @@ extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filter
                                 (const nw4r::math::VEC3*)&t,
                                 (const nw4r::math::VEC3*)&mgr->field_0x00);
             CColiEntry12* e12 = &state->field_0x38[entry->field_0x00];
-            DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
+            DCZeroRange((u8*)spColiSeenBits, ((e12->field_0x02 >> 5) + 1) * 4);
             mgr->field_0xF0[0][0] = entry->m[0][0];
             mgr->field_0xF0[0][1] = entry->m[0][1];
             mgr->field_0xF0[0][2] = entry->m[0][2];
@@ -2110,8 +2103,8 @@ extern "C" void updownRayPass(CColiMoverState* state, const Vec* pos, u32 filter
 // from the manager ray offset rather than the raw anchor.
 extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filterA, u32 mode,
                    f32 rayLen, f32 yBound) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
+    CColiMgr* mgr = &sColiQueryState;
+    const u32* tbl = sColiStageConfigTable;
     // Raw word copies mirror the retail lwz/stw schedule.
     {
         u32* d = (u32*)&mgr->field_0x00;
@@ -2151,7 +2144,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
         state->field_0xB0 = tbl[0x280 / 4];
         state->field_0xB4 = tbl[0x284 / 4];
     }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
+    DCZeroRange((u8*)spColiSeenBits,
                 (((s32)(state->field_0x6C + state->field_0x70) >> 5) + 1) * 4);
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
@@ -2187,7 +2180,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
     lifted.z = mgr->field_0x00.z;
     if (mgr->field_0x136 != 0) {
         for (int i = 0; i < mgr->field_0x136; i++) {
-            CColiVolEntry* entry = &state->field_0x40[lbl_eu_8065F300[i]];
+            CColiVolEntry* entry = &state->field_0x40[sScnResourceCategoryList[i]];
             CColiEntry12* e12 = &state->field_0x38[entry->field_0x00];
             if (!(e12->field_0x00 & 0x8000)) continue;
             if ((entry->field_0x02 & 0x8000) != 0) {
@@ -2205,7 +2198,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&mgr->field_0x0C,
                                 (const nw4r::math::VEC3*)&t,
                                 (const nw4r::math::VEC3*)&mgr->field_0x00);
-            DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
+            DCZeroRange((u8*)spColiSeenBits, ((e12->field_0x02 >> 5) + 1) * 4);
             mgr->field_0xF0[0][0] = entry->m[0][0];
             mgr->field_0xF0[0][1] = entry->m[0][1];
             mgr->field_0xF0[0][2] = entry->m[0][2];
@@ -2268,33 +2261,33 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
 // around the pass is a known wall: no high-level C emits the orphaned
 // mtspr writes, so the prologue/epilogue cannot be byte-matched.
 extern "C" void beginColiPass(CColiMoverState* state, const Vec* offset, u32 flags, int mode, f32 scale) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
+    CColiMgr* mgr = &sColiQueryState;
     mgr->field_0x00 = *(const nw4r::math::_VEC3*)offset;
     mgr->field_0x18 = *(const nw4r::math::_VEC3*)offset;
     mgr->field_0x120 = scale;
     mgr->field_0x124 = scale * scale;
-    mgr->field_0xD8 = lbl_eu_8066AEE8;
-    state->field_0x7C = lbl_eu_8056F508[0x2C4 / 4];
-    state->field_0x80 = lbl_eu_8056F508[0x2C8 / 4];
-    state->field_0x84 = lbl_eu_8056F508[0x2CC / 4];
-    state->field_0x94 = lbl_eu_8056F508[0x2D0 / 4];
-    state->field_0x98 = lbl_eu_8056F508[0x2D4 / 4];
-    state->field_0x9C = lbl_eu_8056F508[0x2D8 / 4];
-    state->field_0x88 = lbl_eu_8056F508[0x2DC / 4];
-    state->field_0x8C = lbl_eu_8056F508[0x2E0 / 4];
-    state->field_0x90 = lbl_eu_8056F508[0x2E4 / 4];
+    mgr->field_0xD8 = -10000.0f;
+    state->field_0x7C = sColiStageConfigTable[0x2C4 / 4];
+    state->field_0x80 = sColiStageConfigTable[0x2C8 / 4];
+    state->field_0x84 = sColiStageConfigTable[0x2CC / 4];
+    state->field_0x94 = sColiStageConfigTable[0x2D0 / 4];
+    state->field_0x98 = sColiStageConfigTable[0x2D4 / 4];
+    state->field_0x9C = sColiStageConfigTable[0x2D8 / 4];
+    state->field_0x88 = sColiStageConfigTable[0x2DC / 4];
+    state->field_0x8C = sColiStageConfigTable[0x2E0 / 4];
+    state->field_0x90 = sColiStageConfigTable[0x2E4 / 4];
     mgr->field_0x128 = flags;
     mgr->field_0x12C = mode;
     if (mode != 0) {
-        state->field_0xAC = lbl_eu_8056F508[0x2E8 / 4];
-        state->field_0xB0 = lbl_eu_8056F508[0x2EC / 4];
-        state->field_0xB4 = lbl_eu_8056F508[0x2F0 / 4];
+        state->field_0xAC = sColiStageConfigTable[0x2E8 / 4];
+        state->field_0xB0 = sColiStageConfigTable[0x2EC / 4];
+        state->field_0xB4 = sColiStageConfigTable[0x2F0 / 4];
     } else {
-        state->field_0xAC = lbl_eu_8056F508[0x2F4 / 4];
-        state->field_0xB0 = lbl_eu_8056F508[0x2F8 / 4];
-        state->field_0xB4 = lbl_eu_8056F508[0x2FC / 4];
+        state->field_0xAC = sColiStageConfigTable[0x2F4 / 4];
+        state->field_0xB0 = sColiStageConfigTable[0x2F8 / 4];
+        state->field_0xB4 = sColiStageConfigTable[0x2FC / 4];
     }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
+    DCZeroRange((u8*)spColiSeenBits,
                 (((s32)(state->field_0x6C + state->field_0x70) >> 5) + 1) * 4);
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
@@ -2305,28 +2298,28 @@ extern "C" void beginColiPass(CColiMoverState* state, const Vec* offset, u32 fla
     if (Coli_CheckFlag(state) != 0) {
         ColiQuerySphere(state, offset, state->field_0x34->field_0x04, scale);
         if (mgr->field_0x136 != 0 || state->field_0x78 != 0) {
-            state->field_0x7C = lbl_eu_8056F508[0x300 / 4];
-            state->field_0x80 = lbl_eu_8056F508[0x304 / 4];
-            state->field_0x84 = lbl_eu_8056F508[0x308 / 4];
-            state->field_0xA0 = lbl_eu_8056F508[0x30C / 4];
-            state->field_0xA4 = lbl_eu_8056F508[0x310 / 4];
-            state->field_0xA8 = lbl_eu_8056F508[0x314 / 4];
+            state->field_0x7C = sColiStageConfigTable[0x300 / 4];
+            state->field_0x80 = sColiStageConfigTable[0x304 / 4];
+            state->field_0x84 = sColiStageConfigTable[0x308 / 4];
+            state->field_0xA0 = sColiStageConfigTable[0x30C / 4];
+            state->field_0xA4 = sColiStageConfigTable[0x310 / 4];
+            state->field_0xA8 = sColiStageConfigTable[0x314 / 4];
             for (int i = 0; i < mgr->field_0x136; i++) {
-                CColiVolEntry* entry = &state->field_0x40[lbl_eu_8065F300[i]];
+                CColiVolEntry* entry = &state->field_0x40[sScnResourceCategoryList[i]];
                 if ((entry->field_0x02 & 0x8000) != 0) {
-                    state->field_0x94 = lbl_eu_8056F508[0x318 / 4];
-                    state->field_0x98 = lbl_eu_8056F508[0x31C / 4];
-                    state->field_0x9C = lbl_eu_8056F508[0x320 / 4];
+                    state->field_0x94 = sColiStageConfigTable[0x318 / 4];
+                    state->field_0x98 = sColiStageConfigTable[0x31C / 4];
+                    state->field_0x9C = sColiStageConfigTable[0x320 / 4];
                 } else {
-                    state->field_0x94 = lbl_eu_8056F508[0x324 / 4];
-                    state->field_0x98 = lbl_eu_8056F508[0x328 / 4];
-                    state->field_0x9C = lbl_eu_8056F508[0x32C / 4];
+                    state->field_0x94 = sColiStageConfigTable[0x324 / 4];
+                    state->field_0x98 = sColiStageConfigTable[0x328 / 4];
+                    state->field_0x9C = sColiStageConfigTable[0x32C / 4];
                 }
                 mgr->field_0x120 = scale * entry->field_0x7C;
                 mgr->field_0x124 = mgr->field_0x120 * mgr->field_0x120;
                 PSMTXMultVec(entry->field_0x34, offset, (Vec*)&mgr->field_0x00);
                 CColiEntry12* e12 = &state->field_0x38[entry->field_0x00];
-                DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
+                DCZeroRange((u8*)spColiSeenBits, ((e12->field_0x02 >> 5) + 1) * 4);
                 mgr->field_0xF0[0][0] = entry->m[0][0];
                 mgr->field_0xF0[0][1] = entry->m[0][1];
                 mgr->field_0xF0[0][2] = entry->m[0][2];
@@ -2342,9 +2335,9 @@ extern "C" void beginColiPass(CColiMoverState* state, const Vec* offset, u32 fla
                 ColiQuerySphere(state, offset, e12->field_0x04, mgr->field_0x120);
             }
             if (state->field_0x78 != 0) {
-                state->field_0x94 = lbl_eu_8056F508[0x330 / 4];
-                state->field_0x98 = lbl_eu_8056F508[0x334 / 4];
-                state->field_0x9C = lbl_eu_8056F508[0x338 / 4];
+                state->field_0x94 = sColiStageConfigTable[0x330 / 4];
+                state->field_0x98 = sColiStageConfigTable[0x334 / 4];
+                state->field_0x9C = sColiStageConfigTable[0x338 / 4];
                 mgr->field_0x24.x = offset->x + scale;
                 mgr->field_0x24.y = offset->y + scale;
                 mgr->field_0x24.z = offset->z + scale;
@@ -2377,9 +2370,9 @@ extern "C" void beginColiPass(CColiMoverState* state, const Vec* offset, u32 fla
 // slot (+0xA0) and gates the early-out checks.
 extern "C" void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, u32 flagsA,
                    u32 flagsB, f32 sx, f32 sy, f32 sz) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
-    DCZeroRange((u8*)lbl_eu_80663AC8,
+    CColiMgr* mgr = &sColiQueryState;
+    const u32* tbl = sColiStageConfigTable;
+    DCZeroRange((u8*)spColiSeenBits,
                 (((s32)(state->field_0x6C + state->field_0x70) >> 5) + 1) * 4);
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
@@ -2463,9 +2456,9 @@ extern "C" void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, 
         }
         if (!(ctx == 0 && lbl_eu_80665988 != 0)) {
             for (int i = 0; i < mgr->field_0x136; i++) {
-                CColiVolEntry* entry = &state->field_0x40[lbl_eu_8065F300[i]];
+                CColiVolEntry* entry = &state->field_0x40[sScnResourceCategoryList[i]];
                 CColiEntry12* e12 = &state->field_0x38[entry->field_0x00];
-                DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
+                DCZeroRange((u8*)spColiSeenBits, ((e12->field_0x02 >> 5) + 1) * 4);
                 mgr->field_0xF0[0][0] = entry->m[0][0];
                 mgr->field_0xF0[0][1] = entry->m[0][1];
                 mgr->field_0xF0[0][2] = entry->m[0][2];
@@ -2507,17 +2500,17 @@ extern "C" void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, 
 
 // launchRayScan - refresh the manager's reference vector (0x00) from `a` and
 // direction vector (0x0C) from the delta `b - a`, zero the word window just
-// below the shared bit-table (its base is stored in lbl_eu_80663ACC), then
+// below the shared bit-table (its base is stored in spColiZeroWindow), then
 // delegate to ColiQueryBoxBvh.
 extern "C" void launchRayScan(CColiScan* self, const Vec* a, const Vec* b) {
-    lbl_eu_8065F1C8.field_0x00 = *(const nw4r::math::_VEC3*)a;
+    sColiQueryState.field_0x00 = *(const nw4r::math::_VEC3*)a;
     nw4r::math::VEC3 tmp;
     nw4r::math::VEC3Sub(&tmp, (const nw4r::math::VEC3*)b, (const nw4r::math::VEC3*)a);
     nw4r::math::VEC3 out(tmp);
-    lbl_eu_8065F1C8.field_0x0C = out;
+    sColiQueryState.field_0x0C = out;
     s32 v = self->field_0x74;
-    u8* ptr = (u8*)&lbl_eu_8065D1A0 + (0x2000 - ((v >> 5) + 1) * 4);
-    lbl_eu_80663ACC = ptr;
+    u8* ptr = (u8*)&sColiWorkArea + (0x2000 - ((v >> 5) + 1) * 4);
+    spColiZeroWindow = ptr;
     DCZeroRange(ptr, ((v >> 5) + 1) * 4);
     ColiQueryBoxBvh(self, a, b);
 }
@@ -2532,7 +2525,7 @@ extern "C" void launchRayScan(CColiScan* self, const Vec* a, const Vec* b) {
 // non-null, the heading computed from the saved/current matrix Z columns.
 extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
                   u32 flagsA, u32 flagsB, f32 yOff, f32 yRange) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
+    CColiMgr* mgr = &sColiQueryState;
     if (Coli_CheckFlag(self) == 0) return 0;
     if (self->field_0x78 == 0) return 0;
     {
@@ -2547,29 +2540,29 @@ extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* ang
     mgr->field_0x128 = flagsA;
     mgr->field_0x12C = flagsB;
     if (flagsB != 0) {
-        self->field_0xAC = lbl_eu_8056F508[0x39C / 4];
-        self->field_0xB0 = lbl_eu_8056F508[0x3A0 / 4];
-        self->field_0xB4 = lbl_eu_8056F508[0x3A4 / 4];
+        self->field_0xAC = sColiStageConfigTable[0x39C / 4];
+        self->field_0xB0 = sColiStageConfigTable[0x3A0 / 4];
+        self->field_0xB4 = sColiStageConfigTable[0x3A4 / 4];
     } else {
-        self->field_0xAC = lbl_eu_8056F508[0x3A8 / 4];
-        self->field_0xB0 = lbl_eu_8056F508[0x3AC / 4];
-        self->field_0xB4 = lbl_eu_8056F508[0x3B0 / 4];
+        self->field_0xAC = sColiStageConfigTable[0x3A8 / 4];
+        self->field_0xB0 = sColiStageConfigTable[0x3AC / 4];
+        self->field_0xB4 = sColiStageConfigTable[0x3B0 / 4];
     }
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
     lbl_eu_80665990 = 0;
-    self->field_0x7C = lbl_eu_8056F508[0x3B4 / 4];
-    self->field_0x80 = lbl_eu_8056F508[0x3B8 / 4];
-    self->field_0x84 = lbl_eu_8056F508[0x3BC / 4];
-    self->field_0x94 = lbl_eu_8056F508[0x3C0 / 4];
-    self->field_0x98 = lbl_eu_8056F508[0x3C4 / 4];
-    self->field_0x9C = lbl_eu_8056F508[0x3C8 / 4];
-    self->field_0xA0 = lbl_eu_8056F508[0x3CC / 4];
-    self->field_0xA4 = lbl_eu_8056F508[0x3D0 / 4];
-    self->field_0xA8 = lbl_eu_8056F508[0x3D4 / 4];
-    self->field_0xB8 = lbl_eu_8056F508[0x3D8 / 4];
-    self->field_0xBC = lbl_eu_8056F508[0x3DC / 4];
-    self->field_0xC0 = lbl_eu_8056F508[0x3E0 / 4];
+    self->field_0x7C = sColiStageConfigTable[0x3B4 / 4];
+    self->field_0x80 = sColiStageConfigTable[0x3B8 / 4];
+    self->field_0x84 = sColiStageConfigTable[0x3BC / 4];
+    self->field_0x94 = sColiStageConfigTable[0x3C0 / 4];
+    self->field_0x98 = sColiStageConfigTable[0x3C4 / 4];
+    self->field_0x9C = sColiStageConfigTable[0x3C8 / 4];
+    self->field_0xA0 = sColiStageConfigTable[0x3CC / 4];
+    self->field_0xA4 = sColiStageConfigTable[0x3D0 / 4];
+    self->field_0xA8 = sColiStageConfigTable[0x3D4 / 4];
+    self->field_0xB8 = sColiStageConfigTable[0x3D8 / 4];
+    self->field_0xBC = sColiStageConfigTable[0x3DC / 4];
+    self->field_0xC0 = sColiStageConfigTable[0x3E0 / 4];
     Vec3 lo;
     Vec3 hi;
     lo.x = src->x;
@@ -2661,7 +2654,7 @@ extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* ang
         } else {
             f32 a1 = nw4r::math::Atan2FIdx(v1.z, v1.x);
             f32 a2 = nw4r::math::Atan2FIdx(v2.z, v2.x);
-            *angle = lbl_eu_8066AEEC * a2 - lbl_eu_8066AEEC * a1;
+            *angle = 0.024543693f * a2 - 0.024543693f * a1;
         }
     }
     return 1;
@@ -2679,7 +2672,7 @@ extern "C" void sinit_804BADB4() {
     ((ScnResData*)obj)->field_0x60 = NULL;
     obj->initColiMover();
     void* const dtor = (void*)&__dt__804B5AD0;
-    void* const reg = (void*)&lbl_eu_8065F320;
+    void* const reg = (void*)&sScnResDtorReg;
     __register_global_object(obj, dtor, reg);
 }
 
@@ -2691,7 +2684,7 @@ extern "C" void sinit_804BADB4() {
 // function-address } triple (83 full triples + one trailing 0 word).  The
 // addresses are the retail link-time values kept as raw words (the retail
 // split .data carries no relocations, so raw bytes are byte-identical).
-extern "C" u32 lbl_eu_8056F508[250] = {
+extern "C" u32 sColiStageConfigTable[250] = {
 
     0x00000000, 0xFFFFFFFF, (u32)&Coli_Noop_5B34, 0x00000000, 0xFFFFFFFF, (u32)&Coli_Noop_61F8, 0x00000000, 0xFFFFFFFF,
     (u32)&Coli_Noop_6634, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5B38, 0x00000000, 0xFFFFFFFF, (u32)&appendScnEntA, 0x00000000,
@@ -2727,13 +2720,13 @@ extern "C" u32 lbl_eu_8056F508[250] = {
     (u32)&Coli_IsHeightInRange_7044, 0x00000000,};
 
 // [.sdata] 0x80663AC8-0x80663AD8 (0x10 = 16B): seen-bit base pointer (points
-// at the .bss workspace lbl_eu_8065D1A0), zeroing-window base (same), then
+// at the .bss workspace sColiWorkArea), zeroing-window base (same), then
 // the acceptance radius / range floats (50.0f = 0x42480000, 20.0f =
 // 0x41A00000).  The two pointer words are R_PPC_ADDR32 relocs to
-// lbl_eu_8065D1A0 (retail split .sdata carries these relocs); the floats are
+// sColiWorkArea (retail split .sdata carries these relocs); the floats are
 // raw words.
 extern "C" __declspec(align(8)) u32 lbl_sdata_804B59C8_a[2] = {
-    (u32)&lbl_eu_8065D1A0, (u32)&lbl_eu_8065D1A0,
+    (u32)&sColiWorkArea, (u32)&sColiWorkArea,
 };
 extern "C" __declspec(align(8)) u32 lbl_sdata_804B59C8_b[2] = {
     0x42480000, 0x41A00000,
@@ -2747,4 +2740,4 @@ extern "C" __declspec(align(8)) u32 lbl_sdata_804B59C8_b[2] = {
 __declspec(align(8)) u8 lbl_bss_804B59C8[0x2180];
 // Exit-time destruction registration block for lbl_eu_8065F32C
 // (.bss 0x8065F320, 0xC bytes; consumed by __register_global_object).
-u8 lbl_eu_8065F320[0xC];
+u8 sScnResDtorReg[0xC];

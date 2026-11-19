@@ -141,9 +141,9 @@ cf::CfObjectModel::CfObjectModel() {
 // Retail returns 1 even though the base CfObject header declares the slot as
 // void; defined with the verbatim mangled name so the vtable slot 0x58
 // (pure-virtual override) still resolves to this symbol.
-int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
-    self->CfObject_notifyEventDone();  // vtable +0x70
-    self->mFlags68 |= 0x00400000;
+int cf::CfObjectModel::CfObject_UnkVirtualFunc2() {
+    this->CfObject_notifyEventDone();  // vtable +0x70
+    this->mFlags68 |= 0x00400000;
     return 1;
 }
 
@@ -313,9 +313,9 @@ void CfObject_notifyEventDone__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, v
 // functions) so vtable references still resolve to this symbol. The word at
 // +0x70 (first field of the derived layout) selects the flag via its top 5
 // bits; unk64's low 16 bits are the fallback/default value.
-u32 CfObject_readKindFlagWord__Q22cf8CfObjectFv(cf::CfObject* self) {
-    u32 word70 = *(u32*)((u8*)self + 0x70);  // first field of the derived layout
-    u32 result = self->unk64 & 0xFFFF;
+u32 cf::CfObject::CfObject_readKindFlagWord() {
+    u32 word70 = *(u32*)((u8*)this + 0x70);  // first field of the derived layout
+    u32 result = this->unk64 & 0xFFFF;
     if (word70 == 0) {
         return result;
     }
@@ -341,15 +341,15 @@ u32 CfObject_readKindFlagWord__Q22cf8CfObjectFv(cf::CfObject* self) {
 // result when both are non-zero; the +0x64 low 16 bits are the default.
 // Retail returns a u32 even though the base header declares the slot void -
 // written with the verbatim mangled name.
-u32 CfObject_readKindFlagWord__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
+u32 cf::CfObjectModel::CfObject_readKindFlagWord() {
     struct Object70 {
         u8 _pad00[0x70];
         u32 field_70;  // 0x70
     };
-    Object70* obj = (Object70*)self;
-    u32 result = self->unk64 & 0xFFFF;
+    Object70* obj = (Object70*)this;
+    u32 result = this->unk64 & 0xFFFF;
     u32 word = obj->field_70;
-    void* p = self->CfObjectModel_getModelName();  // vtable +0x180
+    void* p = this->CfObjectModel_getModelName();  // vtable +0x180
     if (p != 0) {
         u32 q = Tok_ParseFile(reinterpret_cast<const char*>(p));
         if (q != 0) {
@@ -550,13 +550,13 @@ void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     self->mField4C = value;
 }
 
-float CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv(void* self) {
-    void* ptr = *(void**)((unsigned char*)self + 0x98);
+float cf::CfObjectModel::CfObject_getMoveHeadAngle() {
+    void* ptr = *(void**)((unsigned char*)this + 0x98);
     if (ptr != 0) {
         void* result = simGetLeafActData(ptr);
         return *(float*)((unsigned char*)result + 0xc8);
     } else {
-        return *(float*)((unsigned char*)self + 0x4c);
+        return *(float*)((unsigned char*)this + 0x4c);
     }
 }
 
@@ -769,41 +769,40 @@ struct ModelFloatA4 {
 
 void cf::CfObjectModel::CfObject_setProgressHigh(float val) { reinterpret_cast<ModelFloatA4*>(this)->fA4 = val; }
 
-void CfObjectModel_setModelFloatA8__Q22cf13CfObjectModelFf(void* self, float val) { reinterpret_cast<ModelFloatA4*>(self)->fA8 = val; }
+void cf::CfObjectModel::CfObjectModel_setModelFloatA8(float val) { reinterpret_cast<ModelFloatA4*>(this)->fA8 = val; }
 
-void CfObjectModel_setModelRate__Q22cf13CfObjectModelFf(void* self, float val) { reinterpret_cast<ModelFloatA4*>(self)->fAC = val; }
+void cf::CfObjectModel::CfObjectModel_setModelRate(float val) { reinterpret_cast<ModelFloatA4*>(this)->fAC = val; }
 
 // Retail symbol is Fv (no params) but the body reads r4 and forwards it to
 // the sub-object's vtable slot +0x6C; written with the verbatim mangled
 // name. The sub-object is read fresh from +0x98 for each call (retail
 // reloads it after the simSetFlags7A8_12 call).
-void CfObjectModel_aimAtPosition__Q22cf13CfObjectModelFPCQ22ml5CVec3(cf::CfObjectModel* self, u32 arg) {
-    if (self->mSubObj98 != 0) {
-        simSetFlags7A8_12(self->mSubObj98, 1, self->field_BD);
-        reinterpret_cast<CScnItemModel*>(self->mSubObj98)->setModelFlag6C(arg);
+void cf::CfObjectModel::CfObjectModel_aimAtPosition(const ml::CVec3* pos) {
+    if (this->mSubObj98 != 0) {
+        simSetFlags7A8_12(this->mSubObj98, 1, this->field_BD);
+        reinterpret_cast<CScnItemModel*>(this->mSubObj98)->setModelFlag6C((u32)pos);
     }
 }
 
 // Retail symbol is Fv (no params) but the body reads r4/r5; written with the
 // verbatim mangled name. Copies another object's named node position into
 // this object via the sub-object, remembering the source and name.
-void CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc(
-    cf::CfObjectModel* self, cf::CfObjectModel* other, const char* name) {
+void cf::CfObjectModel::CfObjectModel_bindModelTo(cf::CfObject* other, const char* name) {
     // Hoisted: retail caches the name in r31 first (prologue or r31,r5),
-    // then other in r30 and self in r29.
+    // then other in r30 and this in r29.
     const char* target = name;
-    if (self->field_BC == 0) {
-        self->field_B4 = 0;
-        self->field_B8 = 0;
-        self->field_BD = 1;
+    if (((cf::CfObjectModel*)this)->field_BC == 0) {
+        ((cf::CfObjectModel*)this)->field_B4 = 0;
+        ((cf::CfObjectModel*)this)->field_B8 = 0;
+        ((cf::CfObjectModel*)this)->field_BD = 1;
     }
-    if (self->mSubObj98 == 0) {
+    if (((cf::CfObjectModel*)this)->mSubObj98 == 0) {
         return;
     }
     if (other != 0) {
         // Two separate null checks (retail beq's straight to the epilogue
         // for each; an || pair emits an extra branch).
-        if (other->mSubObj98 == 0) {
+        if (((cf::CfObjectModel*)other)->mSubObj98 == 0) {
             return;
         }
         if (name == 0) {
@@ -818,21 +817,21 @@ void CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc(
         }
 
         ml::CVec3 pos;
-        cf::CfObjectModelSub98* srcSub = other->mSubObj98;
+        cf::CfObjectModelSub98* srcSub = ((cf::CfObjectModel*)other)->mSubObj98;
         if (srcSub != 0) {
             float* mtx = (float*)reinterpret_cast<CScnItemModel*>(srcSub)->getNamedNodeMtx(target);
             pos = ml::CVec3(mtx[3], mtx[7], mtx[11]);
         } else {
             pos = zero__Q22ml5CVec3;
         }
-        self->CfObjectModel_aimAtPosition(&pos);
-        self->field_B4 = other;
-        self->field_B8 = target;
+        ((cf::CfObjectModel*)this)->CfObjectModel_aimAtPosition(&pos);
+        ((cf::CfObjectModel*)this)->field_B4 = (cf::CfObjectModel*)other;
+        ((cf::CfObjectModel*)this)->field_B8 = target;
         return;
     }
     // Release the current binding when inactive.
-    if (self->field_BC == 0) {
-        simSetFlags7A8_12(self->mSubObj98, 0, 1);
+    if (((cf::CfObjectModel*)this)->field_BC == 0) {
+        simSetFlags7A8_12(((cf::CfObjectModel*)this)->mSubObj98, 0, 1);
     }
 }
 
@@ -924,11 +923,10 @@ u32 cf::CfObjectModel::CfObjectModel_getSubFlag04() {
 // CfObject_getPosSample/70/72 below): the vtable's bare-Fv reference
 // resolves to this definition; the widened member decl in the header serves
 // call-site codegen only.
-void CfObjectModel_snapSubTarget__Q22cf13CfObjectModelFPQ22ml5CVec3f(
-    cf::CfObjectModel* self, ml::CVec3* pos, float scale) {
-    if (self->mSubObj98 != 0) {
+void cf::CfObjectModel::CfObjectModel_snapSubTarget(ml::CVec3* pos, float scale) {
+    if (this->mSubObj98 != 0) {
         // Sub-object is itself a CfObject; forward r4/f1 untouched.
-        cf::CfObject* sub = reinterpret_cast<cf::CfObject*>(self->mSubObj98);
+        cf::CfObject* sub = reinterpret_cast<cf::CfObject*>(this->mSubObj98);
         sub->CfObject_snapMoveTarget(pos, scale);
     }
 }
@@ -1084,6 +1082,17 @@ void CfObject_checkTargetState__Q22cf8CfObjectFv();
 void CfObject_setPosXYZ__Q22cf8CfObjectFv();
 void CfObject_applyMoveOffset__Q22cf8CfObjectFPCQ22ml5CVec3f();
 void CfObject_resetAnimSlots__Q22cf8CfObjectFUl();
+// Vtable-entry declarations for members whose definitions are now real
+// cf::CfObject(Class) members (the retail function symbols are unchanged).
+void CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv();
+u32 CfObject_readKindFlagWord__Q22cf8CfObjectFv();
+u32 CfObject_readKindFlagWord__Q22cf13CfObjectModelFv();
+void CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv();
+void CfObjectModel_setModelFloatA8__Q22cf13CfObjectModelFf();
+void CfObjectModel_setModelRate__Q22cf13CfObjectModelFf();
+void CfObjectModel_aimAtPosition__Q22cf13CfObjectModelFPCQ22ml5CVec3();
+void CfObjectModel_bindModelTo__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc();
+void CfObjectModel_snapSubTarget__Q22cf13CfObjectModelFPQ22ml5CVec3f();
 void CfObject_clearAnimEntry__Q22cf8CfObjectFUl();
 void CfObject_armAnimSlot0__Q22cf8CfObjectFUlUl();
 void CfObject_armAnimSlot0N__Q22cf8CfObjectFUlUl();

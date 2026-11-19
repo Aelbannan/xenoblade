@@ -24,7 +24,7 @@
 #include <nw4r/math/math_arithmetic.h>   // nw4r::math::FrSqrt
 #include <nw4r/math/math_triangular.h>   // nw4r::math::SinFIdx / CosFIdx
 #include <revolution/MTX.h>              // PSMTXConcat / PSMTXIdentity / PSVECNormalize
-#include "monolib/math/CVec3.hpp"        // ml::CVec3::zero
+#include "monolib/math/CCol3.hpp"        // ml::CCol3::black (CVec3 via CLight.hpp)
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // getScnRootSlot10 / Scn_GetFrameDelta queries
@@ -95,7 +95,7 @@ static inline f32 curveToF(s32 v) {
     return (f32)(c.d - kCurveIntToF64Magic);
 }
 
-extern const f64 lbl_eu_8066B0E8;  // 2^52 (u32->f32 magic, shared pool)
+// The shared 2^52 magic is owned by code_804CC2B8; this TU uses its own pool.
 // Signed u32 -> f32 through the .sdata2 2^52 magic this TU owns
 // (scnLgtPushSlotBlend's slot-blend bounds are the only users).
 static inline f32 u32ToF_b0e8(u32 v) {
@@ -480,15 +480,15 @@ void CScnEnvLgtCtrl::CallLightV27(void* a, void* b, float f) {
 extern "C" void scnLgtPushSlotBlend(CScnEnvLgtCtrl* self, int flag) {
     int v = (int)self->alt6.field_0x3C;
     f32 f1;
-    if (lbl_eu_80663AE8 >= v || lbl_eu_80663AF4 <= v || flag != 0) {
+    if (sLgtBlendRiseStart >= v || sLgtBlendFallEnd <= v || flag != 0) {
         f1 = kLgtBlendWeightHi;
-    } else if (v > lbl_eu_80663AE8 && v < lbl_eu_80663AEC) {
+    } else if (v > sLgtBlendRiseStart && v < sLgtBlendRiseEnd) {
         f32 vf = s32ToF_2((s32)v);
-        f32 t = (vf - u32ToF_b0e8(lbl_eu_80663AE8)) / (u32ToF_b0e8(lbl_eu_80663AEC) - u32ToF_b0e8(lbl_eu_80663AE8));
+        f32 t = (vf - u32ToF_b0e8(sLgtBlendRiseStart)) / (u32ToF_b0e8(sLgtBlendRiseEnd) - u32ToF_b0e8(sLgtBlendRiseStart));
         f1 = kLgtBlendWeightLo * t + kLgtBlendWeightHi * (kLgtBlendOne - t);
-    } else if (v > lbl_eu_80663AF0 && v < lbl_eu_80663AF4) {
+    } else if (v > sLgtBlendFallStart && v < sLgtBlendFallEnd) {
         f32 vf = s32ToF_2((s32)v);
-        f32 t = (vf - u32ToF_b0e8(lbl_eu_80663AF0)) / (u32ToF_b0e8(lbl_eu_80663AF4) - u32ToF_b0e8(lbl_eu_80663AF0));
+        f32 t = (vf - u32ToF_b0e8(sLgtBlendFallStart)) / (u32ToF_b0e8(sLgtBlendFallEnd) - u32ToF_b0e8(sLgtBlendFallStart));
         f1 = kLgtBlendWeightLo * (kLgtBlendOne - t) + kLgtBlendWeightHi * t;
     } else {
         f1 = kLgtBlendWeightLo;
@@ -779,12 +779,12 @@ extern "C" CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
     s->field_0xC8 = kLgtZeroShared;
     s->field_0xCC = kLgtOneShared;
     s->field_0xBC = -1;
-    s->ctor90.field_0x90 = lbl_eu_80656C58[0];
-    s->ctor90.field_0x94 = lbl_eu_80656C58[1];
-    s->ctor90.field_0x98 = lbl_eu_80656C58[2];
-    s->ctor90.field_0x9C = lbl_eu_80656C58[0];
-    s->ctor90.field_0xA0 = lbl_eu_80656C58[1];
-    s->ctor90.field_0xA4 = lbl_eu_80656C58[2];
+    s->ctor90.field_0x90 = ml::CCol3::black.r;
+    s->ctor90.field_0x94 = ml::CCol3::black.g;
+    s->ctor90.field_0x98 = ml::CCol3::black.b;
+    s->ctor90.field_0x9C = ml::CCol3::black.r;
+    s->ctor90.field_0xA0 = ml::CCol3::black.g;
+    s->ctor90.field_0xA4 = ml::CCol3::black.b;
     s->field_0xAC = arg;
     s->field_0x04 = 0;
     if (data[3] & 1) {
@@ -3180,7 +3180,7 @@ extern "C" int scnLgtFillTargetBack(u8* entry,
         out->field_0x68 = 0;
         break;
     }
-    out->field_0x58 = lbl_eu_805244C0[e->field_0x06w];
+    out->field_0x58 = sLgtTargetModeTable[e->field_0x06w];
     Blend_SetFlag2((u8*)out, e->field_0x08w != 0);
     f32* dst = e->field_0xB8_row;
     if (e->field_0x14 & 0x6) {
@@ -3268,9 +3268,9 @@ extern "C" int scnLgtFillTargetFront(u8* entry,
         break;
     }
     f32* dst = e->field_0xB8_row;
-    out->field_0x14 = lbl_eu_805244C0[e->field_0x0Aw];
-    out->field_0x28 = lbl_eu_805244C0[e->field_0x0Cw];
-    out->field_0x44 = lbl_eu_805244D0[e->field_0x10w];
+    out->field_0x14 = sLgtTargetModeTable[e->field_0x0Aw];
+    out->field_0x28 = sLgtTargetModeTable[e->field_0x0Cw];
+    out->field_0x44 = sLgtTargetMaskTable[e->field_0x10w];
     out->field_0x20 = (u8)e->field_0x0Ew;
     if (e->field_0x14 & 0x6) {
         f32* src;
@@ -3759,8 +3759,8 @@ extern "C" void scnLgtSolveRowDirection(
         (const CScnEnvLgtCtrlLgtTypeItem*)(blob->field_0x00 + tbl->offset);
     blob->field_0x20 = 0;
     for (int i = 0; i < count; i++, cur++) {
-        (blob->*lbl_eu_8065FBD0[cur->field_0x0C])((void*)cur);
-        (blob->*lbl_eu_8065FA40.mSlots[cur->field_0x08])(dst);
+        (blob->*sLgtWorkBlobGradFuncs[cur->field_0x0C])((void*)cur);
+        (blob->*sLgtWorkBlobSetters.mSlots[cur->field_0x08])(dst);
     }
 
     if (blob->field_0x20 & 7) {
@@ -3924,7 +3924,7 @@ extern "C" void scnLgtSolveRowDirection(
 // +0x16 index selects a 12-byte table (from the work blob's +0x08 base)
 // whose u16 count and u32 offset locate the 0x14-byte item rows (offset
 // from the blob's +0x00 base). Every item dispatches two member-function
-// pointers (tables lbl_eu_8065FBD0 / lbl_eu_8065FAF8, indexed by the item's
+// pointers (tables sLgtWorkBlobGradFuncs / sLgtWorkBlobStores, indexed by the item's
 // +0x0C / +0x08 u16s) with the blob as `this`. Finally the +0xB8..+0xC4
 // float quartet decides whether to set the +0x14 bit 0.
 extern "C" void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entry) {
@@ -3940,8 +3940,8 @@ extern "C" void scnLgtDispatchEntryEvents(CScnEnvLgtCtrlWorkBlob* blob, u8* entr
         CScnEnvLgtCtrlLgtTypeItem* item =
             (CScnEnvLgtCtrlLgtTypeItem*)(blob->field_0x00 + off);
         for (u16 i = 0; i < count; i++) {
-            (blob->*lbl_eu_8065FBD0[item->field_0x0C])(item);
-            (blob->*lbl_eu_8065FAF8[item->field_0x08])(entry);
+            (blob->*sLgtWorkBlobGradFuncs[item->field_0x0C])(item);
+            (blob->*sLgtWorkBlobStores[item->field_0x08])(entry);
             item++;
         }
         f32 v = kLgtFadeZero;
@@ -4251,7 +4251,7 @@ extern "C" u32 lbl_eu_8056FA58[4] = {
 // The first table keeps its retail .bss symbol span (0xB8 = 15 slots + the
 // 4-byte alignment tail MWCC leaves before the next table); the tail is not
 // part of the initialiser and stays zero.
-CScnEnvLgtCtrlWorkDispatchTable lbl_eu_8065FA40 = {
+CScnEnvLgtCtrlWorkDispatchTable sLgtWorkBlobSetters = {
     {
         (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF18,
         (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfSetF1C,
@@ -4271,7 +4271,7 @@ CScnEnvLgtCtrlWorkDispatchTable lbl_eu_8065FA40 = {
     0,
 };
 
-CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[18] = {
+CScnEnvLgtCtrlWorkBlobFn sLgtWorkBlobStores[18] = {
     (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreS04,
     (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFB8,
     (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmfStoreFBC,
@@ -4292,7 +4292,7 @@ CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FAF8[18] = {
     (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtPtmf2StoreD4,
 };
 
-CScnEnvLgtCtrlWorkBlobFn lbl_eu_8065FBD0[2] = {
+CScnEnvLgtCtrlWorkBlobFn sLgtWorkBlobGradFuncs[2] = {
     (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtSampleGradHermite,
     (CScnEnvLgtCtrlWorkBlobFn)&CScnEnvLgtCtrlWorkBlob::scnLgtSampleGradColor,
 };
@@ -4305,10 +4305,10 @@ extern "C" const u32 lbl_eu_80524468[30] = {
 };
 
 // [.sdata] 0x80663AE8-0x80663B20 (0x38): 4 raw words + 5 RTTI locator pairs.
-extern "C" u32 lbl_eu_80663AE8 = 0x00004650;
-extern "C" u32 lbl_eu_80663AEC = 0x00005460;
-extern "C" u32 lbl_eu_80663AF0 = 0x00010428;
-extern "C" u32 lbl_eu_80663AF4 = 0x00010B30;
+extern "C" u32 sLgtBlendRiseStart = 0x00004650;
+extern "C" u32 sLgtBlendRiseEnd = 0x00005460;
+extern "C" u32 sLgtBlendFallStart = 0x00010428;
+extern "C" u32 sLgtBlendFallEnd = 0x00010B30;
 extern "C" u32 lbl_sd_04[2] = { (u32)&lbl_eu_80524468, (u32)&lbl_eu_8056F96C };
 extern "C" u32 lbl_sd_06[2] = { (u32)&lbl_eu_80524480, 0x00000000 };
 extern "C" u32 lbl_sd_08[2] = { (u32)&lbl_eu_805244A0, (u32)&lbl_eu_8056FA58 };

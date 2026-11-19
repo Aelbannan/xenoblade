@@ -27,32 +27,9 @@ struct CScnItemAnim {
 // chain is missing (sda2 constant).
 extern "C" { extern const float lbl_eu_8066AAC0; }
 
-// 0x4330000000000000 magic double used for unsigned -> float conversion.
-extern const f64 lbl_eu_8066AAC8;
-// 0x4330000080000000 magic double used for signed -> float conversion.
-extern const f64 lbl_eu_8066AAD0;
-
-// Caller-owned punning slot for int -> float conversions (see
-// code_804CC2B8.cpp fconvS32).
-typedef union {
-    f64 d;
-    u32 w[2];
-} FConv;
-
-// u32 -> float through the shared 0x4330000000000000 magic double. Keeping
-// the subtrahend in a parameter pins the sdata2 reloc to the retail
-// constant name (a plain (f32) cast would emit the TU's own pool entry).
-// Integer -> float through the shared 0x4330 magic doubles. Keeping the
-// integer as a parameter pins the whole sequence to one expression (retail
-// schedules it as a unit); returning f64 lets the stfs do the narrowing.
-static inline f64 fconvS(u32 val, FConv& c, f64 sub) {
-    c.w[0] = 0x43300000u;
-    c.w[1] = val;
-    return c.d - sub;
-}
 extern "C" { extern const float lbl_eu_8066AAC4; }
-extern "C" { extern const float lbl_eu_8066AAD8; }
-extern "C" { extern const float lbl_eu_8066AADC; }
+extern const float lbl_eu_8066AAD8;
+extern const float lbl_eu_8066AADC;
 
 // Panic file/format strings used by the ResMdl node-binding assert.
 extern const char lbl_eu_8056E1C8[];
@@ -393,7 +370,6 @@ void scn80496UpdateCrossfade(CScn80496B0C* self) {
     if (self->field_0x8->field_0x84[0] == NULL) {
         return;
     }
-    FConv conv;
     if (self->field_0x4->field_0x7A4 & 0x2000) {
         // Quantized mode: round the scaled frame to an integer and feed the
         // same quantized frame to every bound animation object. The int->float
@@ -401,15 +377,14 @@ void scn80496UpdateCrossfade(CScn80496B0C* self) {
         // rematerializes the whole conversion per loop).
         s32 frames =
             (s32)(self->field_0x178 * Scn_GetFrameDelta(self->field_0x0) +
-                  lbl_eu_8066AAD8);
+                  0.5f);
         CScnChild80496B0C* walk = self->field_0x8;
         for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
             CScnNode80496B0C* n = walk->field_0x84[0];
             if (n == NULL) {
                 continue;
             }
-            n->field_0x10->v8((f32)fconvS(
-                (u32)frames ^ 0x80000000u, conv, lbl_eu_8066AAD0));
+            n->field_0x10->v8((f32)frames);
         }
         walk = self->field_0xC;
         for (u32 i = 0; i < 3; i++, walk = (CScnChild80496B0C*)((u8*)walk + 4)) {
@@ -417,8 +392,7 @@ void scn80496UpdateCrossfade(CScn80496B0C* self) {
             if (n == NULL) {
                 continue;
             }
-            n->field_0x10->v8((f32)fconvS(
-                (u32)frames ^ 0x80000000u, conv, lbl_eu_8066AAD0));
+            n->field_0x10->v8((f32)frames);
         }
     } else {
         f32 s = self->field_0x178 * Scn_GetFrameDelta(self->field_0x0);
@@ -457,13 +431,13 @@ void scn80496UpdateCrossfade(CScn80496B0C* self) {
         f32 prev = self->field_0x170;
         if (prev > self->field_0x174) {
             // Fade finished backwards: ease the weight toward the floor.
-            weight = lbl_eu_8066AAD8 +
-                     lbl_eu_8066AAD8 *
+            weight = 0.5f +
+                     0.5f *
                          ((prev - self->field_0x174) / prev);
         } else {
             // Fade progressing normally: drop to half, and when the fade has
             // regressed past the previous mark, release the head binding.
-            weight = lbl_eu_8066AAD8;
+            weight = 0.5f;
             if (prev > self->field_0x174 -
                            self->field_0x178 *
                                Scn_GetFrameDelta(self->field_0x0)) {
@@ -866,7 +840,7 @@ extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate) {
                 }
             }
         }
-    } else if (!(head->field_0x4 <= lbl_eu_8066AADC)) {
+    } else if (!(head->field_0x4 <= 0.0001f)) {
         // Fully grown past the threshold: drop the overflow bindings too.
         for (slot = &self->field_0x84[2], k = 2; k >= 1; k--) {
             n = self->field_0x84[k];
@@ -1164,7 +1138,6 @@ extern "C" nw4r::g3d::AnmObjChrRes*
 Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(
     MEMAllocator* pAllocator, u32* pSize, void* pChr, void* pMdl, int cache);
 
-extern "C" { extern const double lbl_eu_8066AAD0; }
 
 extern "C" u32 scn80496SetupChrAnim(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,

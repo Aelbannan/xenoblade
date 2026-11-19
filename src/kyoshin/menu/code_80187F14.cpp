@@ -6,25 +6,27 @@
 #include "monolib/lib/CLibCri.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+
+// Retail owns two fixed-size name objects (char[0x20] + length) whose
+// inline const-char* constructors initialize them from the empty string.
+ml::FixStr<0x20> sMenuSndBgmNameBuffer("");
+ml::FixStr<0x20> sMenuSndSeNameBuffer("");
+u16 gEventWindowFlags = 0;
+float sMenuSndFadeTarget = 0.0f;
 
 extern "C" {
-    extern s32 lbl_eu_80575798[];
-    extern s32 lbl_eu_805757BC[];
     extern float lbl_eu_80662490;
     extern float lbl_eu_80662494;
     extern float lbl_eu_80662498;
     extern float lbl_eu_8066249C;
     extern float lbl_eu_806624A0;
-    extern u16 lbl_eu_806642E0;
-    extern float lbl_eu_806642E4;
-    extern s32* lbl_eu_80663E60;
+    extern s32* gmSubManager60;
     extern float lbl_eu_80667A08;
     extern float lbl_eu_80667A0C;
     extern float lbl_eu_80667A10;
     extern float lbl_eu_80667A14;
     extern float lbl_eu_80667A18;
-    extern char lbl_eu_80503AB0[];
 }
 
 // CLibCri wrappers: retail reloc names are unmangled (C ABI), so C linkage
@@ -39,14 +41,8 @@ extern "C" void setStreamVolumeScale__7CLibCriFv(s32, float);
 extern "C" s32 setStreamPanVolume__7CLibCriFv(s32, void*, s32, float, float, float);
 extern "C" s32 isSceneActive__Q22cf13CfGameManagerFv();
 
-// Shared name buffers (lbl_eu_80575798/BC): s32-typed words holding a
-// NUL-terminated string with its length stored as the s32 at index 8
-// (byte offset 32). Member access compiles to the same byte store as the
-// previous ((char *)lbl)[0] idiom.
-struct SndNameBuf {
-    char name[32];
-    s32 len; // +0x20 == s32 index 8
-};
+// The two shared name buffers are ml::FixStr<0x20> objects (defined above):
+// a char[0x20] and its byte length at +0x20, both updated through real members.
 
 struct SoundSlot {
     s32 handle;              // 0x00
@@ -86,7 +82,7 @@ struct SoundSlotTmp {
 
 // --- SIMPLE HELPERS ---
 static inline SoundSlot* sptr(s32 i) {
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = ((SoundSlot*)b) + i;
     else s = nullptr;
@@ -125,13 +121,13 @@ extern "C" s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* para
 float MenuSnd_GetMasterVol_95EC() { return lbl_eu_80662490; }
 float MenuSnd_GetSeVol_96A0() { return lbl_eu_80662498; }
 
-s32* MenuSnd_GetNameBufB_9C34() { return lbl_eu_805757BC; }
+s32* MenuSnd_GetNameBufB_9C34() { return (s32*)&sMenuSndSeNameBuffer; }
 
-void MenuSnd_ResetFadeTargetA_9C70() { lbl_eu_806642E4 = lbl_eu_80667A14; }
-void MenuSnd_ResetFadeTargetB_9C7C() { lbl_eu_806642E4 = lbl_eu_80667A18; }
+void MenuSnd_ResetFadeTargetA_9C70() { sMenuSndFadeTarget = lbl_eu_80667A14; }
+void MenuSnd_ResetFadeTargetB_9C7C() { sMenuSndFadeTarget = lbl_eu_80667A18; }
 
 s32 MenuSnd_IsSlotFree_9BF4(s32 index) {
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
@@ -143,7 +139,7 @@ s32 MenuSnd_IsSlotFree_9BF4(s32 index) {
 }
 
 s32 MenuSnd_IsSlotLive_892C(s32 index) {
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
@@ -159,7 +155,7 @@ s32 MenuSnd_IsSlotLive_892C(s32 index) {
 // r4/r5/f1-f3 and the slot base lands in r6 (retail allocation).
 s32 MenuSnd_SetSlotPan_9C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
     SoundSlot* s;
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
     if (s == nullptr) return (s32)s;  // 0 - reuse the register so MWCC folds beq+{blr} into beqlr
@@ -169,7 +165,7 @@ s32 MenuSnd_SetSlotPan_9C40(s32 index, f32* pos, s32 val, float f1, float f2, fl
 // vol arrives in f1 from the caller and is passed straight through to
 // MenuSnd_StopSlot_882AC - retail never reloads it (no lfs in the body).
 void MenuSnd_StopSlot1_9424(float vol) {
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = ((SoundSlot*)b) + 1;
     else s = nullptr;
@@ -193,7 +189,7 @@ void MenuSnd_SetSlotsPause_8890(s32 active) {
     i = 0;
     off = 0;
     while (i < 5) {
-        s32* b = lbl_eu_80663E60;
+        s32* b = gmSubManager60;
         if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
         else s = nullptr;
         if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
@@ -210,31 +206,31 @@ void MenuSnd_SetSlotsPause_8890(s32 active) {
 // vol arrives in f1 from the caller and is passed straight through to
 // MenuSnd_StopSlot_882AC - retail never reloads it (no lfs before the call).
 void MenuSnd_StopSlot0Clear_9318(s32 clearName, float vol) {
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)b;
     else s = nullptr;
     if (s != nullptr) MenuSnd_StopSlot_882AC(s, vol, 2);
     if (clearName != 0) {
-        if (lbl_eu_80575798[8] != 0) {
-            ((SndNameBuf*)lbl_eu_80575798)->name[0] = '\0';
-            lbl_eu_80575798[8] = 0;
+        if (sMenuSndBgmNameBuffer.mLength != 0) {
+            sMenuSndBgmNameBuffer.mString[0] = '\0';
+            sMenuSndBgmNameBuffer.mLength = 0;
         }
     }
 }
 
 void MenuSnd_StopSlot0Store_9390(const char* name) {
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)b;
     else s = nullptr;
     if (s != nullptr) MenuSnd_StopSlot_882AC(s, lbl_eu_80667A08, 2);
     if (name != nullptr) {
-        lbl_eu_80575798[8] = strlen(name);
-        strcpy((char*)lbl_eu_80575798, name);
+        sMenuSndBgmNameBuffer.mLength = strlen(name);
+        strcpy(sMenuSndBgmNameBuffer.mString, name);
     } else {
-        ((SndNameBuf*)lbl_eu_80575798)->name[0] = '\0';
-        lbl_eu_80575798[8] = 0;
+        sMenuSndBgmNameBuffer.mString[0] = '\0';
+        sMenuSndBgmNameBuffer.mLength = 0;
     }
 }
 
@@ -305,7 +301,7 @@ void MenuSnd_SetMasterAndPush_9510(float f1) {
     s32 off = 0;
     s32 i = 0;
     while (i <= 1) {
-        s32* b = lbl_eu_80663E60;
+        s32* b = gmSubManager60;
         SoundSlot* s;
         if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
         else s = nullptr;
@@ -323,7 +319,7 @@ void MenuSnd_SetMasterAndPush_9510(float f1) {
             if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
             else vol = lbl_eu_80662498;
             // Fresh base read: recompute the slot pointer before the call.
-            b = lbl_eu_80663E60;
+            b = gmSubManager60;
             SoundSlot* s2;
             if (b != nullptr) s2 = (SoundSlot*)((u8*)b + off);
             else s2 = nullptr;
@@ -351,7 +347,7 @@ void MenuSnd_SetSeVolPush_95F4(float f1) {
         }
         if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
         else vol = lbl_eu_80662498;
-        s32* b = lbl_eu_80663E60;
+        s32* b = gmSubManager60;
         SoundSlot* s;
         if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
         else s = nullptr;
@@ -439,19 +435,6 @@ void MenuSnd_StopAllSlots_89C88() {
     }
 }
 
-void sinit_80189D68() {
-    // Two named pointers keep both the table base (r31) and base+4 (r30)
-    // live in callee-saved regs, matching retail's allocation.
-    const char* base = (const char*)lbl_eu_80503AB0;
-    const char* str = base + 4;
-    s32 len = strlen(str);
-    ((s32*)lbl_eu_80575798)[8] = len;
-    strcpy((char*)lbl_eu_80575798, str);
-    len = strlen(str);
-    ((s32*)lbl_eu_805757BC)[8] = len;
-    strcpy((char*)lbl_eu_805757BC, str);
-    lbl_eu_806642E0 = 0;
-}
 
 extern "C" void MenuSnd_ClearSlot_88584(SoundSlot* slot) {
     u8* start = (u8*)slot + 0xB8;
@@ -471,13 +454,13 @@ extern "C" void MenuSnd_ClearSlot_88584(SoundSlot* slot) {
     }
     // Reset the two stored sound names and the volume ramp state.
     lbl_eu_80662494 = lbl_eu_80667A0C;
-    ((char*)lbl_eu_80575798)[0] = '\0';
-    lbl_eu_80575798[8] = 0;
-    ((char*)lbl_eu_805757BC)[0] = '\0';
-    lbl_eu_805757BC[8] = 0;
-    lbl_eu_806642E0 = 0;
+    sMenuSndBgmNameBuffer.mString[0] = '\0';
+    sMenuSndBgmNameBuffer.mLength = 0;
+    sMenuSndSeNameBuffer.mString[0] = '\0';
+    sMenuSndSeNameBuffer.mLength = 0;
+    gEventWindowFlags = 0;
     lbl_eu_8066249C = lbl_eu_80667A0C;
-    lbl_eu_806642E4 = lbl_eu_80667A08;
+    sMenuSndFadeTarget = lbl_eu_80667A08;
     lbl_eu_806624A0 = lbl_eu_80667A10;
     // Full clear of every slot, written out longhand so MWCC emits the
     // unrolled displaced stores off the single base pointer.
@@ -600,7 +583,7 @@ void MenuSnd_RampMasterVol_889D0(SoundSlot* base) {
     // Ramp the master volume by the per-frame delta, clamped to the
     // target (lbl_eu_806624A0) and to 1.0; push the result to slot 1 with
     // the freshly computed value and to slot 0 with the stored one.
-    float cur = lbl_eu_806642E4;
+    float cur = sMenuSndFadeTarget;
     if (zero != cur) {
         float max = lbl_eu_806624A0;
         float v = lbl_eu_8066249C + cur;
@@ -608,11 +591,11 @@ void MenuSnd_RampMasterVol_889D0(SoundSlot* base) {
         if (v < max) {
             v = max;
             lbl_eu_8066249C = max;
-            lbl_eu_806642E4 = zero;
+            sMenuSndFadeTarget = zero;
         } else if (lbl_eu_80667A0C <= v) {
             v = lbl_eu_80667A0C;
             lbl_eu_8066249C = lbl_eu_80667A0C;
-            lbl_eu_806642E4 = zero;
+            sMenuSndFadeTarget = zero;
         }
         SoundSlot* s1 = sptr(1);
         if (s1 != nullptr) {
@@ -650,13 +633,14 @@ extern "C" s32 MenuSnd_QuerySlotLive_89A04(s32 index) {
         // path and search the slots for a live match.
         const char* name = (const char*)index;
         ml::FixStr<64> str;
-        bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
-        bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
-        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
-        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
-        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, name);
+        bool hasDot = strstr(name, ".") != nullptr;
+        bool hasSlash = strstr(name, "/") != nullptr;
+        const char* mid = hasDot ? "" : ".adx";
+        const char* fmt = "%s%s%s";
+        const char* prefix = hasSlash ? "" : "snd/adx/";
+        str.format(fmt, prefix, mid, name);
         s32 i;
-        SoundSlot* cur = (SoundSlot*)lbl_eu_80663E60;
+        SoundSlot* cur = (SoundSlot*)gmSubManager60;
         if (cur == nullptr) goto notFound;
         for (i = 0; i <= 4; i++, cur++) {
             if ((u32)cur->handle == 0xFFFFFFFF) continue;
@@ -785,11 +769,12 @@ s32 MenuSnd_DispatchPlay_87F14(SoundSlot* slot, SoundPlayParams* params, s32 fla
 s32 MenuSnd_RequestPlay_88B80(s32 index, const char* name, float f1, float f2, s32 flag) {
     if (index == -1) return 0;
     ml::FixStr<64> str;
-    bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
-    bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
-    const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
-    const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
-    str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, name);
+    bool hasDot = strstr(name, ".") != nullptr;
+    bool hasSlash = strstr(name, "/") != nullptr;
+    const char* mid = hasDot ? "" : ".adx";
+    const char* fmt = "%s%s%s";
+    const char* prefix = hasSlash ? "" : "snd/adx/";
+    str.format(fmt, prefix, mid, name);
 
     // Build the play-request param block for MenuSnd_DispatchPlay_87F14 (retail store order).
     SoundPlayParams params;
@@ -844,12 +829,12 @@ s32 MenuSnd_SetBGM_89034(const char* name, s32 flag, float f1, float f2) {
         // prefix. Ternaries stay inline in the format call: MWCC evaluates
         // varargs right-to-left, so the middle segment reuses the base
         // pointer from the probes while fmt+prefix recompute a fresh one.
-        bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
-        bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
-        str.format(&lbl_eu_80503AB0[0x0a],
-                   hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11],
+        bool hasDot = strstr(name, ".") != nullptr;
+        bool hasSlash = strstr(name, "/") != nullptr;
+        str.format("%s%s%s",
+                   hasSlash ? "" : "snd/adx/",
                    name,
-                   hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05]);
+                   hasDot ? "" : ".adx");
         match = (strcmp(str.mString, slotName) == 0);
     } else {
         match = 0;
@@ -905,8 +890,8 @@ s32 MenuSnd_SetBGM_89034(const char* name, s32 flag, float f1, float f2) {
     if (s0c != nullptr) {
         MenuSnd_StopSlot_882AC(s0c, f1, 1);
     }
-    lbl_eu_805757BC[8] = strlen(name);
-    strcpy((char*)lbl_eu_805757BC, name);
+    sMenuSndSeNameBuffer.mLength = strlen(name);
+    strcpy(sMenuSndSeNameBuffer.mString, name);
     return MenuSnd_RequestPlay_88B80(1, name, f1, f2, flag);
 }
 
@@ -919,8 +904,8 @@ s32 MenuSnd_RestartBGM_88D34(const char* name, s32 flag, float f1, float f2) {
     // Goto-chain mirrors retail's CFG: the non-null arm is laid out
     // out-of-line after the null arm.
     if (name != nullptr) goto store;
-    curName = (const char*)lbl_eu_80575798;
-    switch (lbl_eu_80575798[8]) {
+    curName = sMenuSndBgmNameBuffer.mString;
+    switch (sMenuSndBgmNameBuffer.mLength) {
     case 0:
         // No stored name either: just silence slot 1.
         {
@@ -934,19 +919,20 @@ s32 MenuSnd_RestartBGM_88D34(const char* name, s32 flag, float f1, float f2) {
         goto common;
     }
 store:
-    lbl_eu_80575798[8] = strlen(name);
-    strcpy((char*)lbl_eu_80575798, name);
+    sMenuSndBgmNameBuffer.mLength = strlen(name);
+    strcpy(sMenuSndBgmNameBuffer.mString, name);
 common:
     SoundSlot* s1 = sptr(1);
     s32 match;
     if (curName != nullptr && s1 != nullptr && (u32)s1->handle != 0xFFFFFFFF) {
         ml::FixStr<64> str;
         char* slotName = s1->name;
-        bool hasDot = strstr(curName, &lbl_eu_80503AB0[0x00]) != nullptr;
-        bool hasSlash = strstr(curName, &lbl_eu_80503AB0[0x02]) != nullptr;
-        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
-        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
-        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, curName);
+        bool hasDot = strstr(curName, ".") != nullptr;
+        bool hasSlash = strstr(curName, "/") != nullptr;
+        const char* mid = hasDot ? "" : ".adx";
+        const char* fmt = "%s%s%s";
+        const char* prefix = hasSlash ? "" : "snd/adx/";
+        str.format(fmt, prefix, mid, curName);
         match = (strcmp(str.mString, slotName) == 0);
     } else {
         match = 0;
@@ -999,14 +985,15 @@ void MenuSnd_SilenceByName_8986C(const char* name, float vol) {
     if (name != nullptr) {
         // Build the full sound path from the input name.
         ml::FixStr<64> str;
-        bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
-        bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
-        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
-        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
-        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, name);
+        bool hasDot = strstr(name, ".") != nullptr;
+        bool hasSlash = strstr(name, "/") != nullptr;
+        const char* mid = hasDot ? "" : ".adx";
+        const char* fmt = "%s%s%s";
+        const char* prefix = hasSlash ? "" : "snd/adx/";
+        str.format(fmt, prefix, mid, name);
         // Find the slot whose live name matches the formatted path.
         s32 i;
-        SoundSlot* cur = (SoundSlot*)lbl_eu_80663E60;
+        SoundSlot* cur = (SoundSlot*)gmSubManager60;
         if (cur == nullptr) goto notFound;
         for (i = 0; i <= 4; i++, cur++) {
             if ((u32)cur->handle == 0xFFFFFFFF) continue;
@@ -1035,7 +1022,7 @@ extern "C" s32 MenuSnd_FindFreeSlot_87C8(u32 wantId, s32 startIdx, s32 endIdx) {
     // pass-2 cursor -> r8, cached base -> r9.
     SoundSlot* p;
     SoundSlot* q;
-    SoundSlot* base = (SoundSlot*)lbl_eu_80663E60;
+    SoundSlot* base = (SoundSlot*)gmSubManager60;
     if (base != nullptr) {
         // One shared init expression -> single mulli/add, copied into two
         // running pointers (one per pass). Pass 1 returns the first slot in
@@ -1072,7 +1059,7 @@ void MenuSnd_PushSlotVolume_896C(s32 index, u32 type, float f1, float f2) {
     }
     if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
     else vol = lbl_eu_80662498;
-    s32* b = lbl_eu_80663E60;
+    s32* b = gmSubManager60;
     SoundSlot* s;
     if (b != nullptr) s = ((SoundSlot*)b) + index;
     else s = nullptr;
@@ -1083,8 +1070,8 @@ extern "C" s32 MenuSnd_TryPlayGated_97A0(s32 wantId, s32 type, float f1) {
     if (isSceneActive__Q22cf13CfGameManagerFv()) return 0;
     // Two explicit volatile loads (retail emits both up front).
     // Bit 22 (0x400000) set and bit 18 (0x40000) clear -> refuse.
-    u32 flagsA = *(volatile u32*)&lbl_eu_80663E24;  // canonical decl: CfGameManagerData.hpp (non-volatile)
-    u32 flagsB = lbl_eu_80663E24;
+    u32 flagsA = *(volatile u32*)&gmGameFlags;  // canonical decl: CfGameManagerData.hpp (non-volatile)
+    u32 flagsB = gmGameFlags;
     if ((flagsA & 0x400000) != 0 && (flagsB & 0x40000) == 0) return 0;
     if (MenuSnd_QuerySlotLive_89A04(wantId) == 0) return 0;
     s32 slot = MenuSnd_FindFreeSlot_87C8(type, 2, 4);
@@ -1111,13 +1098,13 @@ extern "C" s32 MenuSnd_CanPlayGate_9450() {
     // When the flag bit is set, refuse (return 0) if any of the two name
     // buffers (slot 0 / slot 1) lacks the substring at 80503AB0+0x1A while
     // its slot still holds a live handle; otherwise clear the flag and allow.
-    if ((lbl_eu_806642E0 & 1) != 0) {
+    if ((gEventWindowFlags & 1) != 0) {
         // Declaration order fixes retail's callee-saved allocation:
         // s->r28, off->r27, base->r26, i->r25; the string-table and name
         // buffer addresses are hoisted straight into r31/r30/r29 by MWCC.
         SoundSlot* s;
         s32 off;
-        char* base = (char*)lbl_eu_80663E60;
+        char* base = (char*)gmSubManager60;
         s32 i = 0;
         off = 0;
         while (i <= 1) {
@@ -1125,16 +1112,16 @@ extern "C" s32 MenuSnd_CanPlayGate_9450() {
             else s = nullptr;
             if (s != nullptr) {
                 // Default-then-override form matches retail's branch layout.
-                const char* name = (const char*)lbl_eu_805757BC;
-                if (i == 0) name = (const char*)lbl_eu_80575798;
-                if (strstr(name, &lbl_eu_80503AB0[0x1a]) != nullptr) goto next;
+                const char* name = sMenuSndSeNameBuffer.mString;
+                if (i == 0) name = sMenuSndBgmNameBuffer.mString;
+                if (strstr(name, "loop") != nullptr) goto next;
                 if ((u32)s->handle != 0xFFFFFFFF) return 0;
             }
         next:
             i++;
             off += 0xB8;
         }
-        lbl_eu_806642E0 &= 0xFFFE;
+        gEventWindowFlags &= 0xFFFE;
     }
     return 1;
 }

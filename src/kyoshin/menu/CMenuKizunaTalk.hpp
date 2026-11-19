@@ -149,6 +149,8 @@ struct KizunaScratch {
  * composite / subobject vtables by hand and the retail dtor emits no vtable
  * store, so the dtor is non-virtual and the bases carry no virtuals.
  */
+class CEventFile;
+
 class CMenuKizunaTalk : public IUIWindow, public KizunaWorkEvent, public KizunaScnRender {
 public:
     static CMenuKizunaTalk* sInstance;
@@ -172,10 +174,10 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
-    void OnFileEvent();
+    void OnFileEvent(CEventFile* pEvent);
 };
 
-// C-linkage imports not covered by a single conflict-free committed header
+// C-linkage imports
 // (the CSysWin / UnkClass_8045F564 dtors and the CDeviceVI / CProcess base
 // ctor); the rest come from CItemBoxGrid.hpp / functions.hpp.
 extern "C" void __dt__7CSysWinFv(void*, int);
@@ -212,13 +214,6 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 //@@KIZUNA_DECLS@@
 
-// u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
-// (subtracts the retail .sdata2 magic double lbl_eu_80667E70).
-union KizunaF64Conv {
-    u32 w[2];
-    f64 d;
-};
-
 // Minimal nw4r texture view returned by the arc accessor's texture lookup:
 // +0x08 points at the texture header (u16 height/width pair).
 struct KizunaTexHeader {
@@ -232,10 +227,9 @@ struct KizunaTextureView {
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505118[];            // shared-archive path string (.rodata)
-extern u8* lbl_eu_80664424;               // BDAT character table pointer (.sbss)
+extern u8* sKizunaBdatTable;               // BDAT character table pointer (.sbss)
 extern const f32 lbl_eu_80667E68;         // .sdata2 float (anim check)
 extern const f32 lbl_eu_80667E6C;         // .sdata2 float (anim frame reset 0.0f)
-extern const f64 lbl_eu_80667E70;         // .sdata2 double (0x43300000 int->float magic)
 extern char lbl_eu_8052D238[];            // CTTask_IUIWindow vtable (.data)
-extern char lbl_eu_80533A98[];            // CMenuKizunaTalk composite vtable (.data)
+extern char lbl_eu_80533A98[];
 extern u32 __ptmf_null[3];                // null pointer-to-member-function

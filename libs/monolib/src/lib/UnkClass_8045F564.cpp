@@ -10,7 +10,6 @@
 #include "monolib/util/MemManager.hpp"
 #include <revolution/mem.h>
 
-extern CLibLayout* lbl_eu_80665710;
 extern const char lbl_eu_805231BC[];
 
 using namespace mtl;
@@ -32,13 +31,13 @@ UnkClass_8045F564::~UnkClass_8045F564() {
     
     // Remove this instance from CLibLayout's tracking array by shifting
     // every later entry down one slot.
-    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
-        if (lbl_eu_80665710->instanceArray[i] != this) continue;
+    for (u32 i = 0; i < CLibLayout::spInstance->instanceCount; i++) {
+        if (CLibLayout::spInstance->instanceArray[i] != this) continue;
 
-        for (; i < lbl_eu_80665710->instanceCount - 1; i++) {
-            lbl_eu_80665710->instanceArray[i] = lbl_eu_80665710->instanceArray[i + 1];
+        for (; i < CLibLayout::spInstance->instanceCount - 1; i++) {
+            CLibLayout::spInstance->instanceArray[i] = CLibLayout::spInstance->instanceArray[i + 1];
         }
-        lbl_eu_80665710->instanceCount--;
+        CLibLayout::spInstance->instanceCount--;
         break;
     }
 }

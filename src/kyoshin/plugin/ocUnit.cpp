@@ -19,9 +19,9 @@
 
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {
-    extern u32 lbl_eu_80663E28;
-    extern u16 lbl_eu_80663E42;
-    extern u16 lbl_eu_80663E44;
+    extern u32 gmPauseFlags;
+    extern u16 gmGlobalFlag42;
+    extern u16 gmGlobalFlag44;
     void CfObjectMove_syncRegionToPos(void* obj);
     void cleanupMapEffects__Q22cf13CfGameManagerFv();
     extern char lbl_eu_804FA74C[];
@@ -75,14 +75,14 @@ extern "C" int isTalkBlocked(void* obj) {
     if (cur == NULL) {
         goto done;
     }
-    if (lbl_eu_80663E28 & 0x04000000) {
+    if (gmPauseFlags & 0x04000000) {
         goto done;
     }
     // Booleanize the state byte's low bit (MWCC clrlwi/neg/or/srwi idiom).
     bit = ((cf::CfObjectMove*)cur)->mFlags6C9 & 1;
     talkable = (u32)(-bit | bit) >> 31;
     CfObjectMove_setFlag6C9Bit0(cur, 0);
-    if (lbl_eu_80663E24 & 0x00400000) {
+    if (gmGameFlags & 0x00400000) {
         goto done;
     }
     if (!(((cf::CfObject*)cur)->unk64 & 8)) {
@@ -92,7 +92,7 @@ extern "C" int isTalkBlocked(void* obj) {
     v1 = ca->CfObject_getNpcActionState();
     v2 = ca->CfObject_getNpcTargetAction();
     ok = 0;
-    if (lbl_eu_80663E42 == 4 && lbl_eu_80663E44 == 1) {
+    if (gmGlobalFlag42 == 4 && gmGlobalFlag44 == 1) {
         ok = 1;
     }
     if (ok == 0) {
@@ -141,9 +141,9 @@ extern "C" int getUnitObject(VMThread* pThread, int handle, u16 unk) {
     // Save the talk-lock bit (volatile read keeps this load separate from
     // the reloads in the ternaries below, matching retail), then lift bit
     // 0x2000 into 0x40000 depending on the omitted-arg value.
-    u32 talkBit = (*(volatile u32*)&lbl_eu_80663E24 >> 13) & 1;
-    u32 flags = *(volatile u32*)&lbl_eu_80663E24;
-    lbl_eu_80663E24 = (extra != 0) ? (flags | 0x40000u) : (flags & ~0x2000u);
+    u32 talkBit = (*(volatile u32*)&gmGameFlags >> 13) & 1;
+    u32 flags = *(volatile u32*)&gmGameFlags;
+    gmGameFlags = (extra != 0) ? (flags | 0x40000u) : (flags & ~0x2000u);
     cf::CfObject* found = NULL;
     if (strcmp(str, lbl_eu_804FA74C) == 0 || strcmp(str, lbl_eu_804FA74C + 0xC) == 0) {
         found = (cf::CfObject*)createItemObjectWrapper__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
@@ -167,8 +167,8 @@ extern "C" int getUnitObject(VMThread* pThread, int handle, u16 unk) {
     }
 
     // Same bit lift as above, keyed on the saved talk bit this time.
-    u32 flags2 = *(volatile u32*)&lbl_eu_80663E24;
-    lbl_eu_80663E24 = (talkBit != 0) ? (flags2 | 0x40000u) : (flags2 & ~0x2000u);
+    u32 flags2 = *(volatile u32*)&gmGameFlags;
+    gmGameFlags = (talkBit != 0) ? (flags2 | 0x40000u) : (flags2 & ~0x2000u);
     if (found == NULL) {
         vmOCExceptionThrow(pThread);
         return 0;
@@ -408,11 +408,11 @@ extern "C" int applyPos(VMThread* pThread, int handle) {
     vec.z = p->z;
     obj->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&vec),
                                    1000.0f);
-    if (!(lbl_eu_80663E24 & 0xAFA40000) && (obj->unk64 & 8)) {
+    if (!(gmGameFlags & 0xAFA40000) && (obj->unk64 & 8)) {
         CfObjectMove_syncRegionToPos(obj);
     }
     if (obj != 0 && obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0) &&
-        (lbl_eu_80663E24 & 0x00400000)) {
+        (gmGameFlags & 0x00400000)) {
         cleanupMapEffects__Q22cf13CfGameManagerFv();
     }
     return 0;
@@ -549,7 +549,7 @@ int execNpcAction(VMThread* pThread, int handle) {
     return 0;
 }
 
-void CfObject_forwardNpcAction__Q22cf8CfObjectFi(cf::CfObject* self, u32 value) { (void)self; (void)value; }
+void cf::CfObject::CfObject_forwardNpcAction(int value) { (void)value; }
 
 extern "C" int getNpcAction(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
@@ -817,7 +817,7 @@ int onEvent(VMThread* pThread, int handle) {
         // Talkable / event object: ask the state machine (vtable slot 0x2C)
         // which talk mode is active and report TRUE/FALSE type to the VM.
         if (((cf::CObjectState*)obj)->setStateBitMask0(1, 1) != 0 || ((cf::CObjectState*)obj)->setStateBitMask0(2, 1) != 0) {
-            if ((lbl_eu_80663E24 & 0x08000000) == 0) {
+            if ((gmGameFlags & 0x08000000) == 0) {
                 retVal.type = 1;
             } else {
                 retVal.type = 2;
@@ -1506,13 +1506,13 @@ extern "C" int spawnParty(VMThread* pThread, int handle, int retType) {
     // Save the spawn-flag bit (volatile read keeps this load separate from
     // the reloads in the ternaries below, matching retail), toggle the bit
     // around the spawn, then restore the saved state.
-    u32 flags = *(volatile u32*)&lbl_eu_80663E24;
+    u32 flags = *(volatile u32*)&gmGameFlags;
     u32 savedFlag = (flags >> 14) & 1;
-    lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x40000u)
-                                  : (lbl_eu_80663E24 & ~0x40000u);
+    gmGameFlags = (arg3 != 0) ? (gmGameFlags | 0x40000u)
+                                  : (gmGameFlags & ~0x40000u);
     cf::CfObject* obj = (cf::CfObject*)createPlayerEffectInstance__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
-    lbl_eu_80663E24 = (savedFlag != 0) ? (lbl_eu_80663E24 | 0x40000u)
-                                       : (lbl_eu_80663E24 & ~0x40000u);
+    gmGameFlags = (savedFlag != 0) ? (gmGameFlags | 0x40000u)
+                                       : (gmGameFlags & ~0x40000u);
     if (!obj) {
         vmOCExceptionThrow(pThread);
         return 0;
@@ -1581,10 +1581,10 @@ extern "C" int findParty(VMThread* pThread, int handle, int retType) {
     void* result = NULL;
     // Save event-flag bit 0x40000, force it on/off around the lookup.
     // Volatile cast keeps this load independent of the ternary-arm loads.
-    u32 prevFlags = *(volatile u32*)&lbl_eu_80663E24;
+    u32 prevFlags = *(volatile u32*)&gmGameFlags;
     hadFlag = (prevFlags & 0x00040000) != 0;
-    lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x00040000u)
-                                  : (lbl_eu_80663E24 & ~0x00040000u);
+    gmGameFlags = (arg3 != 0) ? (gmGameFlags | 0x00040000u)
+                                  : (gmGameFlags & ~0x00040000u);
     if (strcmp(name, &lbl_eu_804FA74C[0x6B]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x54]) == 0) {
         result = getOrCreateBdatObj__Q22cf13CfGameManagerFv(&lbl_eu_804FA74C[0x6B], (u16)param);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x79]) == 0) {
@@ -1594,8 +1594,8 @@ extern "C" int findParty(VMThread* pThread, int handle, int retType) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    lbl_eu_80663E24 = (hadFlag != 0) ? (lbl_eu_80663E24 | 0x00040000u)
-                                     : (lbl_eu_80663E24 & ~0x00040000u);
+    gmGameFlags = (hadFlag != 0) ? (gmGameFlags | 0x00040000u)
+                                     : (gmGameFlags & ~0x00040000u);
     // Retail chains these: the ctx flowing into the retval is the return
     // value of ArtsSelect_Insert (kept in r3 across the call).
     void* ctx = ArtsSelect_Insert(ArtsSelect_GetContainer(), result);
@@ -1651,10 +1651,10 @@ extern "C" int findBattleActor(VMThread* pThread, int handle, int retType) {
         VMArg* ptr3 = vmArgPtrGet(pThread, 3);
         arg3 = vmArgIntGet(4, ptr3);
     }
-    u32 prevFlags = *(volatile u32*)&lbl_eu_80663E24;
+    u32 prevFlags = *(volatile u32*)&gmGameFlags;
     hadFlag = (prevFlags & 0x00040000) != 0;
-    lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x00040000u)
-                                  : (lbl_eu_80663E24 & ~0x00040000u);
+    gmGameFlags = (arg3 != 0) ? (gmGameFlags | 0x00040000u)
+                                  : (gmGameFlags & ~0x00040000u);
     void* result = NULL;
     if (strcmp(name, &lbl_eu_804FA74C[0x85]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x89]) == 0) {
         result = createBattleActor__Q22cf13CfGameManagerFv(index, 0);
@@ -1666,11 +1666,11 @@ extern "C" int findBattleActor(VMThread* pThread, int handle, int retType) {
         return 0;
     }
     cf::CfGameManager::getInstance();
-    if ((lbl_eu_80663E24 & 0x00040000) != 0) {
+    if ((gmGameFlags & 0x00040000) != 0) {
         ((cf::CfObject*)result)->unk64 |= 0x00010000;
     }
-    lbl_eu_80663E24 = (hadFlag != 0) ? (lbl_eu_80663E24 | 0x00040000u)
-                                     : (lbl_eu_80663E24 & ~0x00040000u);
+    gmGameFlags = (hadFlag != 0) ? (gmGameFlags | 0x00040000u)
+                                     : (gmGameFlags & ~0x00040000u);
     // Retail chains these: the ctx flowing into the retval is the return
     // value of ArtsSelect_Insert (kept in r3 across the call).
     void* ctx = ArtsSelect_Insert(ArtsSelect_GetContainer(), result);
@@ -1960,7 +1960,7 @@ extern "C" int chkRange(VMThread* pThread, int handle) {
                 ok = 0;
             }
         }
-        if (lbl_eu_80663E28 & 0x20000000) {
+        if (gmPauseFlags & 0x20000000) {
             ok = 0;
         }
     }
@@ -2221,7 +2221,7 @@ void cf::CObjectState::setStateBitFlag(u32 mask) {
 
 void cf::CfObjectModel::CfObjectModel_setBoneRotate(int val) { static_cast<cf::CfObjectModel*>(this)->field_BD = val; }
 
-u32 CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv(void* self) { return ((CObjectParamTail34*)self)->mWord34; }
+BOOL cf::CObjectParam::CObjectParam_getSelfObjectId() { return ((CObjectParamTail34*)this)->mWord34; }
 
 // us-8003f6d8: 12-byte word copy src -> this+0x48. Retail symbol is
 // Fv-mangled but the body consumes a pointer in r4. Element-wise u32 copy;

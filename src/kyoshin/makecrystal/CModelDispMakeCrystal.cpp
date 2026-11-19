@@ -140,7 +140,7 @@ void teardownMCGetItemBox(void*);
 void confirmMCGetItemBox(void*);
 int crystalListIsActive(void*);
 void tickAnimFrame(void*);
-void MakeCrystal_DispatchState(void*);
+void MakeCrystal_DispatchState(CModelDispMakeCrystal*);
 void releaseAnimObj(void*, void*);
 bool Scn_IsAnimActiveOrNull(void*);
 void* Scn_SetupAnim(void*, int, int, ...);
@@ -206,7 +206,7 @@ u32 bdatPcPartsRes(u32, s16, u32, u32);
 
 void syncFieldData__Q22cf13CfGameManagerFv(u32, bool);
 int Bdat_GetMaxRow_B1EC(void*);
-void CItem_initSlot(void*, u16, u16, u8);
+extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
 void crystalListResetAnim4Play(void*);
 // OnFileEvent constructor/helper imports (retail reloc names)
 void __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(void*, nw4r::lyt::ArcResourceAccessor*);
@@ -448,8 +448,8 @@ CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
       mField40(0),
       field_BDC(0),
       field_BDD(0),
-      field_BE0(lbl_eu_806684A0),
-      field_BE4(lbl_eu_806684A4),
+      field_BE0(1.0f),
+      field_BE4(0.0f),
       field_BE8(1),
       field_BE9(1),
       mGauge(0),
@@ -501,7 +501,7 @@ CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
     base[0x2dc6] = zero2;
     base[0x2dc7] = zero2;
     base[0x2dc8] = zero2;
-    *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
+    *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
     base[0x2dd0] = zero2;
     base[0x2dd1] = zero2;
     base[0x2dd2] = zero2;
@@ -516,10 +516,10 @@ CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
     group1[1].x = lbl_eu_806684B4;
     group1[1].y = lbl_eu_806684AC;
     group1[1].z = lbl_eu_806684B8;
-    group2[0].x = lbl_eu_806684A4;
+    group2[0].x = 0.0f;
     group2[0].y = g1y;
-    group2[0].z = lbl_eu_806684A4;
-    writeVec3f(&group2[1], lbl_eu_806684A4, g2y, lbl_eu_806684A4);
+    group2[0].z = 0.0f;
+    writeVec3f(&group2[1], 0.0f, g2y, 0.0f);
 
     // --- per-slot init (2 slots, stride 0x5cc at +0x44) ---
     // Retail colors: gp1=r23, gp2=r24, one=r25, eight=r26, sb=r28,
@@ -758,7 +758,7 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
     nw4r::math::VEC3 v;
     v.x = lbl_eu_806684C4;
     v.y = lbl_eu_806684C8;
-    v.z = lbl_eu_806684A4;
+    v.z = 0.0f;
     reinterpret_cast<CScrollBar*>(base + 0xe38)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(&v));
     reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateThumb(8, entries[0]);
     reinterpret_cast<CScrollBar*>(base + 0xe38)->requestScrollIn();
@@ -786,12 +786,12 @@ void MakeCrystal_TickCharge(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     f32* fbe4 = reinterpret_cast<f32*>(base + 0xbe4);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
-    f32 v4 = (*fbe4 += lbl_eu_806684A0);
+    f32 v4 = (*fbe4 += 1.0f);
     if (v4 >= lbl_eu_806684CC) {
         f32 v0 = *fbe0 - lbl_eu_806684D0;
         *fbe0 = v0;
-        if (v0 < lbl_eu_806684A4) {
-            *fbe0 = lbl_eu_806684A4;
+        if (v0 < 0.0f) {
+            *fbe0 = 0.0f;
             base[0xbdc] = 2;
             base[0xbe8] = 1;
             for (u8 i = 0; i < 8; i++) {
@@ -983,9 +983,9 @@ void MakeCrystal_FinishRound(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
-    *vel += lbl_eu_806684A0;
+    *vel += 1.0f;
     if (*vel < lbl_eu_806684DC) return;
-    *vel = lbl_eu_806684A4;
+    *vel = 0.0f;
     MakeCrystal_PlaceCrystals(self);
     incrementEventCounter(0x79);
     incrementEventCounter(0x7a);
@@ -1149,7 +1149,7 @@ extern "C" void MakeCrystal_TrySlots(void* selfp)
             ml::MTRand::getInstance();
             if ((s8)(rand31__Q22ml6MTRandFv() % 100) >= (u16)iv) continue;
             // Success: reset the charge, place the crystals, and stop.
-            *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
+            *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
             ml::MTRand::getInstance();
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
             s8 n = (s8)(rand31__Q22ml6MTRandFv() % 3) + 1;
@@ -2423,7 +2423,7 @@ extern "C" void MakeCrystal_RefreshSlotEntries(CModelDispMakeCrystal* self)
     u8 flagB = GetCollectedFlagByte(base[0xbbc]);
     u16 val = LookupRelateValue(flagA, flagB);
     s16 iv = (s16)(lbl_eu_806684FC * val + lbl_eu_806684F8);
-    *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
+    *reinterpret_cast<f32*>(base + 0x2dcc) = 0.0f;
     base[0x2dc8] = 0;
     *reinterpret_cast<u16*>(base + 0x2dc4) = iv;
     base[0x2dc6] = (u8)(iv / 30);
@@ -2590,7 +2590,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
                 lbl_eu_80668500);
         } else {
             reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
-                lbl_eu_806684A4);
+                0.0f);
         }
         reinterpret_cast<CMCEffStart*>((u8*)self + 0xcd4)->startInAnim();
         playUISound(0xb0);
@@ -2893,7 +2893,7 @@ extern "C" void MakeCrystal_SpawnCrystalItem(void* selfp, int sel, u8 chIn)
         break;
     }
     CTaskGame_openVision((u8)ch, off, (u32)getHandleMEM2__Q23mtl10MemManagerFv(), 2, 1,
-                  lbl_eu_806684A0);
+                  1.0f);
 }
 
 // Virtual dispatch at vtable offset +0xA8 (index 0x2a), returns a pointer.
@@ -3428,9 +3428,9 @@ void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
     loadMCGetItemBoxFiles(base + 0xecc);
     void* m = Scn_FindCamItem(*reinterpret_cast<void**>(base + 0xc), -1);
     nw4r::math::VEC3 v1;
-    writeVec3f(&v1, lbl_eu_806684A4, lbl_eu_806684A0, lbl_eu_806684A4);
+    writeVec3f(&v1, 0.0f, 1.0f, 0.0f);
     nw4r::math::VEC3 v2;
-    writeVec3f(&v2, lbl_eu_806684A4, lbl_eu_80668504, lbl_eu_806684CC);
+    writeVec3f(&v2, 0.0f, lbl_eu_80668504, lbl_eu_806684CC);
     ScnCamPointAt(m, &v2, &v1);
     for (u8 j = 0; j < 2; j++) {
         for (u8 i = 0; i < 6; i++) {

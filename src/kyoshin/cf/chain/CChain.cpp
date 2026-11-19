@@ -38,7 +38,7 @@ namespace cf {
             mChainTime.mTimer = lbl_eu_80668A18;
             mChainTime.mEnabled = 0;
             mChainTime.mPaused = 1;
-            lbl_eu_80663DA0 &= 0xFE;
+            visionSharedStateFlags &= 0xFE;
         }
         mHead.field_2 = 0;
         mHead.field_0 = 0;
@@ -288,7 +288,7 @@ void cf::CChain::CChain_ResetChainState() {
         mChainTime.mTimer = lbl_eu_80668A18;
         mChainTime.mEnabled = 0;
         mChainTime.mPaused = 1;
-        lbl_eu_80663DA0 &= 0xFE;
+        visionSharedStateFlags &= 0xFE;
     }
     mHead.field_2 = 0;
     mHead.field_0 = 0;
@@ -307,7 +307,7 @@ void cf::CChain::CChain_ResetChainState() {
 void cf::CChain::UpdatePerFrame() {
     if (cf::CfGameManager::isSceneLoading() != 0) return;
     // rlwinm r0,r0,0,12,12: bit 19 (0x80000) of the mode-flag word.
-    if ((lbl_eu_80663E28 & 0x80000) != 0) return;
+    if ((gmPauseFlags & 0x80000) != 0) return;
     Chain_SweepDeadActors(&this->mChainActorList);
     ChainList_SweepDead((cf::CChainList*)&this->mChainMember);
     Chain_RebuildLinks(&this->mChainActorList);
@@ -470,7 +470,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
     // mirror local gets enregistered into a callee-saved register and shifts
     // the whole allocation away from retail.
     int flag;
-    if ((lbl_eu_80663E24 & 0x400000) != 0) {
+    if ((gmGameFlags & 0x400000) != 0) {
         flag = 1;
     } else {
         u8 rawIdx = (u8)self->mHead.field_0;
@@ -510,7 +510,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
-        lbl_eu_80663DA0 &= 0xFE;
+        visionSharedStateFlags &= 0xFE;
         ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 0);
         _reslist_node<cf::CChainActor*>* node =
             self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
@@ -566,7 +566,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
              i++) {
             ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i]->CChainActor_FwdRunKey(runKey2);
         }
-        lbl_eu_80663DA0 |= 1;
+        visionSharedStateFlags |= 1;
         requestArtsRef((CBattleChainMenuState*)&self->unk1F0C[0]);
         if ((int)(s8)self->mHead.field_0 <
             (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
@@ -1092,7 +1092,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
             self->mChainTime.mTimer = lbl_eu_80668A18;
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
-            lbl_eu_80663DA0 &= 0xFE;
+            visionSharedStateFlags &= 0xFE;
             ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 0);
             _reslist_node<cf::CChainActor*>* node =
                 self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
@@ -1156,7 +1156,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         self->mChainTime.mTimer = lbl_eu_80668A18;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
-        lbl_eu_80663DA0 &= 0xFE;
+        visionSharedStateFlags &= 0xFE;
         ChainList_StepTargets((cf::CChainList*)&self->mChainMember, 0);
         _reslist_node<cf::CChainActor*>* node =
             self->mChainActorList.mChainActorList.mStartNodePtr->mNext;

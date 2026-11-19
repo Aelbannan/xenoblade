@@ -16,7 +16,7 @@
 extern "C" int Tok_FormatStr(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
 
 #include "monolib/math/Random.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 void* memset(void*, int, unsigned long);
@@ -84,31 +84,14 @@ extern "C" int getTypeId() { return 12; }
 
 // Computes a pseudo-random reload byte: calls the secondary-interface slot
 // +0x34 with (this, 1), and when both that result and CfRes_getResFileSize are
-// nonzero, hashes the value (multiply-high + correction) into field_1F.
-// Returns the byte, or 1 when it is zero.
-int getReloadByte(cf::CfResReloadImpl* self) {
+// nonzero, stores the rounded file-size bucket ((h + 0xBCFFF) / 0xBC000) into
+// field_1F. Returns the byte, or 1 when it is zero.
+extern "C" int getReloadByte(cf::CfResReloadImpl* self) {
     int v = self->getWorkValue(1);
     if (self->field_1F == 0 && v != 0) {
         unsigned int h = CfRes_getResFileSize(v);
         if (h != 0) {
-            // retail: magic materialized into r3, h+0xBCFFF built addis-
-            // first via addis/subi into r0, mulhwu + correction + extrwi.
-            // Residual reg-swap: our __mulhwu expands with r3 reserved for
-            // the product, so the magic low half is finalized into r0 while
-            // retail's divide-style template keeps it in r3 (read before
-            // write). Every high-level shape converges to one of these two
-            // colorings.
-            // retail: magic materialized into r3, h+0xBCFFF built addis-
-            // first via addis/subi into r0, mulhwu + correction + extrwi.
-            // Residual reg-swap: our __mulhwu expansion reserves r3 for the
-            // product, so the magic low half finalizes into r0 while
-            // retail's template keeps it in r3 (read before write).
-            u32 xh = h + 0xC0000;
-            u32 x = xh - 0x3001;
-            self->field_1F =
-                (u8)((((x - __mulhwu(0x5AC056B1u, x)) >> 1) +
-                      __mulhwu(0x5AC056B1u, x)) >>
-                     19);
+            self->field_1F = (u8)((h + 0xBCFFFu) / 774144u);
         }
     }
     u8 f = self->field_1F;
@@ -245,7 +228,7 @@ extern "C" void bumpReloadDeviceCounts(cf::CfResReloadImpl* self) {
 extern "C" int tryResolveReloadSlot30(cf::CfResReloadImpl* self, int arg2) {
     s16 v = self->field_0A;
     int p = 5;
-    if (lbl_eu_80663E28 & 0x20) {
+    if (gmPauseFlags & 0x20) {
         p = 3;
     } else if (self->field_00->field_68 & 0x04000000) {
         p = 3;
@@ -333,8 +316,8 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
         // Two independent SDA reads, both hoisted above the tests (retail
         // issues lwz r3/lwz r4 back to back). Empty then-branch keeps
         // MWCC's beq-next/b-exit pair.
-        u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
-        u32 chkB = *(volatile u32*)&lbl_eu_80663E24;
+        u32 chkA = *(volatile u32*)&gmGameFlags;
+        u32 chkB = *(volatile u32*)&gmGameFlags;
         if (!((chkA & 0x02000000) | (chkA & 0x400)) && !(chkB & 0x40000)) {
             ;
         } else {
@@ -342,7 +325,7 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
         }
     }
     int p = 5;
-    if (lbl_eu_80663E28 & 0x20) {
+    if (gmPauseFlags & 0x20) {
         p = 3;
     } else if (pB->field_68 & 0x04000000) {
         p = 3;
@@ -377,10 +360,10 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
     }
     if (found == 0) {
         if (cf::CfGameManager::isSceneLoading() == 0) {
-            if (lbl_eu_80663E28 & 0x40) {
+            if (gmPauseFlags & 0x40) {
                 if (self->field_00->field_64 & 0x4) {
                     CfRes_getResFileSize((s32)v);
-                    lbl_eu_80663E28 |= 0x40;
+                    gmPauseFlags |= 0x40;
                 }
             }
         }
@@ -425,7 +408,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
     cf::CfResReloadParent* parent = self->field_00;
     u32 f64 = parent->field_64;
     if (!(f64 & 0x10000)) {
-        if (lbl_eu_80663E24 & 0x09800000) {
+        if (gmGameFlags & 0x09800000) {
             return;
         }
     }
@@ -437,7 +420,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
         // retail keeps this pointer in r3 across these calls: it is `parent`
         // if evtTypeSlot7E was never called, else B4A24's return value.
         cf::CfGameManager* mgr = (cf::CfGameManager*)parent;
-        if (lbl_eu_80663E28 & 0x10) {
+        if (gmPauseFlags & 0x10) {
             mgr = (cf::CfGameManager*)evtTypeSlot7E(parent);
             if (mgr == 0) {
                 ok = 1;
@@ -460,7 +443,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
         if (self->field_00->field_98 == 0) {
             u8* slot18 = entry->field_2C->getHandle18(entry);
             self->field_00->field_90 = slot18;
-            u8* h = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
+            u8* h = scnImN4BuildByIdx((u8*)gmScene, self->field_00->field_90, -1, 1, 0, 0x76);
             CfModel_InstallSub(self->field_00, h);
         }
     }
@@ -508,7 +491,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
     if (!(pv->field_64 & 0x08000000)) {
         self->field_1E = 1;
     }
-    if (lbl_eu_80663E24 & 0x40000) {
+    if (gmGameFlags & 0x40000) {
         CfObjectMove_setRegionAttached(self->field_00, 0);
     } else if (self->field_00->field_C4 != 0) {
         u8* slot30 = entry->field_2C->getHandle30(entry);
@@ -538,7 +521,7 @@ reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8
             reinterpret_cast<CScnItemModel*>(p->field_98)->vfunc88(0);
             // fresh parent load: retail does not keep the pointer live
             // across the virtual call above
-            CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
+            CfObjectMove_setMoveSpeedGated((cf::CfObjectMove*)self->field_00, 2.0f);
         }
     }
     self->syncReloadObjectNameScale();
@@ -704,17 +687,17 @@ extern "C" void setWorkValue(cf::CfResReloadImpl* thisPtr, int index, unsigned i
     }
 }
 
-void* __dt__Q22cf15CfResReloadImplFv(void* this_, int deletingFlag) { if (this_ && deletingFlag > 0) ::operator delete(this_); return this_; }
+cf::CfResReloadImpl::~CfResReloadImpl() {}
 
 // Reload-state globals owned by this unit (.sbss / .sdata2). Defined here so
 // MWCC knows their addresses (enables load/store reordering like retail).
-u16 lbl_eu_80664278;
-u16 lbl_eu_8066427A;
-u16 lbl_eu_8066427C;
-u16 lbl_eu_8066427E;
-u16 lbl_eu_80664280;
-float lbl_eu_80664284;
-u16 lbl_eu_80664288;
+u16 sReloadCount;
+u16 sReloadAreaId;
+u16 sReloadSubId;
+u16 sReloadParam1;
+u16 sReloadType;
+float sReloadTimer;
+u16 sReloadLocationChanged;
 float lbl_eu_806676C8;
 
 float lbl_eu_806676B0;
@@ -726,12 +709,12 @@ float lbl_eu_80666210;
 const double lbl_eu_806676C0 = 0x4330000000000000ll;
 const double lbl_eu_806676D0 = 0x4330000000000000ll;
 
-extern "C" u16 getReloadParam0() { return lbl_eu_80664278; }
+extern "C" u16 getReloadParam0() { return sReloadCount; }
 
 extern "C" void updateReloadFloat(short param_1)
 {
-    lbl_eu_80664278 = param_1;
-    lbl_eu_80664284 = lbl_eu_806676B0 * lbl_eu_80666210;
+    sReloadCount = param_1;
+    sReloadTimer = 120.0f * lbl_eu_80666210;
 }
 
 // Refreshes the reload timer globals for a given type: stores the type,
@@ -739,28 +722,28 @@ extern "C" void updateReloadFloat(short param_1)
 // BDAT-derived value via calcReloadPrm), then picks the delay float by the
 // same flag/selector logic as getReloadDelay and drives the two sound slots.
 extern "C" void seedReloadTmr(u32 type) {
-    lbl_eu_80664280 = (u16)type;
+    sReloadType = (u16)type;
     if ((type & 0xFFFF) == 0) {
-        lbl_eu_80664278 = 1;
-        lbl_eu_80664284 = lbl_eu_806676B0 * lbl_eu_80666210;
+        sReloadCount = 1;
+        sReloadTimer = 120.0f * lbl_eu_80666210;
     } else {
         u16 v;
         // Cast through the stub so the -ipa inliner cannot fold the call.
         ((u16(*)(u16, u16, u16, u16*, u16*))calcReloadPrm)(
-            lbl_eu_80664280, 0x64, (u16)CfT_DispatchFrameCounts(), &v, &lbl_eu_80664278);
+            sReloadType, 0x64, (u16)CfT_DispatchFrameCounts(), &v, &sReloadCount);
         // u16 -> float via the 2^52 double-magic trick.
-        lbl_eu_80664284 = (f32)v * lbl_eu_80666210;
+        sReloadTimer = (f32)v * lbl_eu_80666210;
     }
     float delay;
-    if (lbl_eu_80663E24 & 0x00400000) {
+    if (gmGameFlags & 0x00400000) {
         goto defdelay;
     }
-    if ((lbl_eu_80663E24 & 0x02000000) || (lbl_eu_80663E24 & 0x400)) {
+    if ((gmGameFlags & 0x02000000) || (gmGameFlags & 0x400)) {
     defdelay:
         delay = lbl_eu_806676B4;
     } else {
         int sel = 0;
-        u16 p = lbl_eu_80664280;
+        u16 p = sReloadType;
         if (p == 1) {
             sel = 0x65;
         } else if (p == 2) {
@@ -773,33 +756,33 @@ extern "C" void seedReloadTmr(u32 type) {
             }
         }
         if (ok != 0) {
-            delay = lbl_eu_806676B8;
+            delay = 0.7f;
         } else {
             delay = lbl_eu_806676B4;
         }
     }
-    MenuSnd_PushSlotVolume_896C(0, 0, delay, lbl_eu_806676BC);
-    MenuSnd_PushSlotVolume_896C(1, 0, delay, lbl_eu_806676BC);
+    MenuSnd_PushSlotVolume_896C(0, 0, delay, 2.0f);
+    MenuSnd_PushSlotVolume_896C(1, 0, delay, 2.0f);
 }
 
-extern "C" u16 getReloadParam2() { return lbl_eu_80664280; }
+extern "C" u16 getReloadParam2() { return sReloadType; }
 
-extern "C" u16 getReloadParam1() { return lbl_eu_8066427E; }
+extern "C" u16 getReloadParam1() { return sReloadParam1; }
 
 // Initializes a 0x10-byte struct from global reload params
 extern "C" void initReloadInfoStruct(void* self) {
     unsigned char* p = static_cast<unsigned char*>(self);
     memset(self, 0, 0x10);
-    *reinterpret_cast<float*>(p + 0x0) = lbl_eu_80664284;
-    *reinterpret_cast<unsigned short*>(p + 0x4) = lbl_eu_80664278;
-    *reinterpret_cast<unsigned short*>(p + 0x6) = lbl_eu_8066427E;
-    *reinterpret_cast<unsigned short*>(p + 0xC) = lbl_eu_80664280;
-    *reinterpret_cast<unsigned short*>(p + 0x8) = lbl_eu_8066427A;
-    *reinterpret_cast<unsigned short*>(p + 0xA) = lbl_eu_8066427C;
+    *reinterpret_cast<float*>(p + 0x0) = sReloadTimer;
+    *reinterpret_cast<unsigned short*>(p + 0x4) = sReloadCount;
+    *reinterpret_cast<unsigned short*>(p + 0x6) = sReloadParam1;
+    *reinterpret_cast<unsigned short*>(p + 0xC) = sReloadType;
+    *reinterpret_cast<unsigned short*>(p + 0x8) = sReloadAreaId;
+    *reinterpret_cast<unsigned short*>(p + 0xA) = sReloadSubId;
 }
 
 // Reads a 0x10-byte reload-info struct back into the reload-state globals
-// (inverse of initReloadInfoStruct) and clears lbl_eu_80664288. Loads are
+// (inverse of initReloadInfoStruct) and clears sReloadLocationChanged. Loads are
 // assigned in retail order; declarations are reversed to steer MWCC's
 // register colors toward retail's descending r7..r3.
 extern "C" void loadReloadInfo(cf::ReloadInfo* p) {
@@ -811,40 +794,40 @@ extern "C" void loadReloadInfo(cf::ReloadInfo* p) {
     v3 = p->field_0C;
     v4 = p->field_08;
     v5 = p->field_0A;
-    lbl_eu_80664284 = v0;
-    lbl_eu_80664278 = v1;
-    lbl_eu_8066427E = v2;
-    lbl_eu_80664280 = v3;
-    lbl_eu_8066427A = v4;
-    lbl_eu_8066427C = v5;
-    lbl_eu_80664288 = 0;
+    sReloadTimer = v0;
+    sReloadCount = v1;
+    sReloadParam1 = v2;
+    sReloadType = v3;
+    sReloadAreaId = v4;
+    sReloadSubId = v5;
+    sReloadLocationChanged = 0;
 }
 
 // Clears the reload-state globals; the float is re-seeded from lbl_eu_806676C8.
 extern "C" void clearReloadGlobals() {
     f32 f = lbl_eu_806676C8;
-    lbl_eu_80664278 = 0;
-    lbl_eu_8066427A = 0;
-    lbl_eu_8066427C = 0;
-    lbl_eu_8066427E = 0;
-    lbl_eu_80664284 = f;
-    lbl_eu_80664280 = 0;
-    lbl_eu_80664288 = 0;
+    sReloadCount = 0;
+    sReloadAreaId = 0;
+    sReloadSubId = 0;
+    sReloadParam1 = 0;
+    sReloadTimer = f;
+    sReloadType = 0;
+    sReloadLocationChanged = 0;
 }
 
 extern "C" void updateReloadTypeState(u16 areaId, u16 subId) {
-    extern u16 lbl_eu_8066427A;
-    extern u16 lbl_eu_8066427C;
-    extern u16 lbl_eu_80664288;
+    extern u16 sReloadAreaId;
+    extern u16 sReloadSubId;
+    extern u16 sReloadLocationChanged;
     extern float lbl_eu_806676C8;
-    if (lbl_eu_8066427A == areaId && lbl_eu_8066427C == subId) {
-        lbl_eu_80664288 &= 0xFFFE;
+    if (sReloadAreaId == areaId && sReloadSubId == subId) {
+        sReloadLocationChanged &= 0xFFFE;
     } else {
-        lbl_eu_80664288 |= 0x1;
+        sReloadLocationChanged |= 0x1;
     }
-    *(volatile float*)&lbl_eu_80664284 = lbl_eu_806676C8;
-    *(volatile u16*)&lbl_eu_8066427A = areaId;
-    *(volatile u16*)&lbl_eu_8066427C = subId;
+    *(volatile float*)&sReloadTimer = lbl_eu_806676C8;
+    *(volatile u16*)&sReloadAreaId = areaId;
+    *(volatile u16*)&sReloadSubId = subId;
 }
 
 // Position vector view with the loop-operator -= so MWCC PS-vectorizes the
@@ -904,7 +887,7 @@ extern "C" int reloadInRange(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
         return 1;
     }
     if (arg3 != 0) {
-        radius -= lbl_eu_806676CC;
+        radius -= 10.0f;
     }
     ReloadPosVec delta = *(ReloadPosVec*)self;
     delta -= *(ReloadPosVec*)vals;
@@ -1095,10 +1078,10 @@ extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter,
         u16 rnd = (u16)CfT_DispatchFrameCounts();
         // Two separate volatile reads: retail keeps both SDA loads back to
         // back (first feeds the odd-bit test, second the even-mask clear).
-        u16 f0raw = *(volatile u16*)&lbl_eu_80664288;
+        u16 f0raw = *(volatile u16*)&sReloadLocationChanged;
         f0 = f0raw & 1;
-        u16 masked = *(volatile u16*)&lbl_eu_80664288 & 0xFFFE;
-        lbl_eu_80664288 = masked;
+        u16 masked = *(volatile u16*)&sReloadLocationChanged & 0xFFFE;
+        sReloadLocationChanged = masked;
         u16 mrand = (u16)ml::math::mtRand(0x64);
         *counter = 2;
         while (*counter >= 1) {
@@ -1130,7 +1113,7 @@ extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter,
             if (typeRet == 1) {
                 sel = 0x64;
             } else if (f0 != 0) {
-                if (spBv == lbl_eu_80664278) {
+                if (spBv == sReloadCount) {
                     sel = 0x64;
                 }
             } else if (*counter == initial) {
@@ -1154,24 +1137,24 @@ extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter,
     return 1;
 }
 
-// Returns a delay/timer float: two flag checks against lbl_eu_80663E24
+// Returns a delay/timer float: two flag checks against gmGameFlags
 // short-circuit to the default; otherwise the value depends on
-// lbl_eu_80664280 (1 -> 0x65, 2 -> 0x66) passing through BattleWork_CheckEffectTableReady.
+// sReloadType (1 -> 0x65, 2 -> 0x66) passing through BattleWork_CheckEffectTableReady.
 extern "C" float getReloadDelay() {
     // Both true-paths share one 'delay = B4' block. Retail issues a separate
-    // SDA load of lbl_eu_80663E24 for the bit-25/10 merge, so the first test
+    // SDA load of gmGameFlags for the bit-25/10 merge, so the first test
     // reads its own copy.
     float delay;
     // Two hoisted reads (first volatile so they cannot be merged); retail
     // issues both SDA loads up front, testing bit 22 from the first.
-    u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
-    u32 chkB = lbl_eu_80663E24;
+    u32 chkA = *(volatile u32*)&gmGameFlags;
+    u32 chkB = gmGameFlags;
     if ((chkA & 0x00400000) ||
         ((chkB & 0x02000000) | (chkB & 0x400))) {
         delay = lbl_eu_806676B4;
     } else {
         int sel = 0;
-        u16 p = lbl_eu_80664280;
+        u16 p = sReloadType;
         if (p == 1) {
             sel = 0x65;
         } else if (p == 2) {
@@ -1197,9 +1180,9 @@ extern "C" float getReloadDelay() {
 // tick the timer float and, once it expires, run the candidate search
 // (getReloadCand), convert the result to the timer and drive the sound slots.
 extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
-    int typeRet = isReloadReady(lbl_eu_80664280);
+    int typeRet = isReloadReady(sReloadType);
     if (typeRet == 1) {
-        u16 p = lbl_eu_80664280;
+        u16 p = sReloadType;
         u16 row = (u16)lbl_eu_80664184;
         char* tbl = lbl_eu_80503140;
         void* bdat = lbl_eu_806640A8;
@@ -1211,42 +1194,42 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
         // retail emits stw/lbz instead of folding the mask.
         u8 bytes[4];
         *(u32*)bytes = getBdatStringColumnValue(bdat, col, row);
-        lbl_eu_80664278 = bytes[0];
+        sReloadCount = bytes[0];
         return;
     }
     // Compound -=: ties the subtract to the store so the stfs lands ahead
     // of the compare like retail.
-    lbl_eu_80664284 -= CfT_PlayTimeGet();
-    if (lbl_eu_80664284 > lbl_eu_806676C8) {
-        u16 p = lbl_eu_80664280;
+    sReloadTimer -= CfT_PlayTimeGet();
+    if (sReloadTimer > lbl_eu_806676C8) {
+        u16 p = sReloadType;
         if (p == 0) {
             return;
         }
         // (p + 0x10000 - 1) & 0xFFFF <= 1 lowers to retail's addis/subi pair.
         u32 pw = p + 0x10000;
         if ((u16)(pw - 1) <= 1 && reloadInRange(self, p, 0) == 0) {
-            lbl_eu_80664284 = lbl_eu_806676C8;
+            sReloadTimer = lbl_eu_806676C8;
             return;
         }
         u16 rnd = (u16)CfT_DispatchFrameCounts();
-        u16 r = (u16)testReloadSub(lbl_eu_80664280, rnd);
+        u16 r = (u16)testReloadSub(sReloadType, rnd);
         if (r == 0 || typeRet == 0) {
             u16 o1;
             u16 o3;
             u16 o2;
-            u16 ret = getReloadCand(self, &o1, &lbl_eu_80664280, &o2, &o3);
-            // Volatile accesses keep the two SDA loads of lbl_eu_80663E24
+            u16 ret = getReloadCand(self, &o1, &sReloadType, &o2, &o3);
+            // Volatile accesses keep the two SDA loads of gmGameFlags
             // unmerged around the count store.
-            u32 chkA = *(volatile u32*)&lbl_eu_80663E24;
-            *(volatile u16*)&lbl_eu_80664278 = ret;
-            u32 chkB = *(volatile u32*)&lbl_eu_80663E24;
-            *(volatile float*)&lbl_eu_80664284 = (f32)o1 * lbl_eu_80666210;
+            u32 chkA = *(volatile u32*)&gmGameFlags;
+            *(volatile u16*)&sReloadCount = ret;
+            u32 chkB = *(volatile u32*)&gmGameFlags;
+            *(volatile float*)&sReloadTimer = (f32)o1 * lbl_eu_80666210;
             float delay;
             if ((chkA & 0x00400000) || ((chkB & 0x02000000) | (chkB & 0x400))) {
                 delay = lbl_eu_806676B4;
             } else {
                 int sel = 0;
-                u16 p2 = lbl_eu_80664280;
+                u16 p2 = sReloadType;
                 if (p2 == 1) {
                     sel = 0x65;
                 } else if (p2 == 2) {
@@ -1259,26 +1242,26 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
                     }
                 }
                 if (ok != 0) {
-                    delay = lbl_eu_806676B8;
+                    delay = 0.7f;
                 } else {
                     delay = lbl_eu_806676B4;
                 }
             }
-            MenuSnd_PushSlotVolume_896C(0, 0, delay, lbl_eu_806676BC);
-            MenuSnd_PushSlotVolume_896C(1, 0, delay, lbl_eu_806676BC);
+            MenuSnd_PushSlotVolume_896C(0, 0, delay, 2.0f);
+            MenuSnd_PushSlotVolume_896C(1, 0, delay, 2.0f);
         }
     }
 }
 
-// Refreshes the reload param 1 global (lbl_eu_8066427E) from the BDAT table
-// when a table is loaded: the column is selected by lbl_eu_80664280
+// Refreshes the reload param 1 global (sReloadParam1) from the BDAT table
+// when a table is loaded: the column is selected by sReloadType
 // (0 -> table lbl_eu_80531068 indexed by CfT_DispatchFrameCounts, 1 -> +0xDC string,
 // 2 -> +0xE4 string). Then forwards the object to runReloadMain.
 void updateReloadP1(cf::CfResReloadImpl* self) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
     if (bdat != 0) {
-        u16 p = lbl_eu_80664280;
+        u16 p = sReloadType;
         // Each branch owns its own result local: retail spills the three
         // call results to separate stack slots (0x8/0xc/0x10). The u32 ->
         // bytes[0] spill/reload forces the retail `stw r3,N(r1); lbz`
@@ -1288,17 +1271,17 @@ void updateReloadP1(cf::CfResReloadImpl* self) {
                 bdat, lbl_eu_80531068[(u16)CfT_DispatchFrameCounts()], row);
             u8 bytes[4];
             *(u32*)bytes = v;
-            lbl_eu_8066427E = bytes[0];
+            sReloadParam1 = bytes[0];
         } else if (p == 1) {
             u32 v = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xdc, row);
             u8 bytes[4];
             *(u32*)bytes = v;
-            lbl_eu_8066427E = bytes[0];
+            sReloadParam1 = bytes[0];
         } else if (p == 2) {
             u32 v = getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xe4, row);
             u8 bytes[4];
             *(u32*)bytes = v;
-            lbl_eu_8066427E = bytes[0];
+            sReloadParam1 = bytes[0];
         }
     }
     runReloadMain(self);
@@ -1306,6 +1289,6 @@ void updateReloadP1(cf::CfResReloadImpl* self) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8016ED44() {
-    extern unsigned short lbl_eu_80664288;
-    lbl_eu_80664288 = 0;
+    extern unsigned short sReloadLocationChanged;
+    sReloadLocationChanged = 0;
 }

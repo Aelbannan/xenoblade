@@ -138,7 +138,7 @@ void CMenuSelectShop::Move() {
     // shapes: first test -> bne exit, bit test -> beq continue / b exit
     // (CMenuShopBuy::Move / CSystemWindow::Move shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     if (ShopBuy_HasInstance() || MenuShopSellIsCreated())
@@ -292,7 +292,7 @@ extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
 void CMenuSelectShop::cbRenderBefore() {
     // Single short-circuit OR gate pair (CMenuShopBuy / CSystemWindow shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (IsMenuState621F0() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

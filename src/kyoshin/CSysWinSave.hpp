@@ -164,7 +164,7 @@ void CUICfManager_queueSaveMenu(int a, int b);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSysWinSave* lbl_eu_80664A08;   // singleton instance pointer (.sbss)
-extern u32 lbl_eu_80663E28;            // cbRenderBefore flag (.sbss)
+extern u32 gmPauseFlags;            // cbRenderBefore flag (.sbss)
 
 
 

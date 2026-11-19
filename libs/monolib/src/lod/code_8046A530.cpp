@@ -11,40 +11,17 @@
 #include "monolib/core/code_804E36DC.hpp"  // declares operator delete(C ABI)
 #include "monolib/math/CVec3.hpp"      // ml::CVec3 + nw4r math inlines (VEC3*, FrSqrt, Warning)
 
-// .sdata2 constants referenced by this TU (retail labels).  Declared at
-// global scope so MWCC emits the names unmangled.
-extern const f32 lbl_eu_8066A658;    // 0.0f
-extern const f32 lbl_eu_8066A65C;    // 1.0f
-extern const f32 lbl_eu_8066A660;    // 0.01f
-extern const f32 lbl_eu_8066A664;    // 0.5f
-extern const f32 lbl_eu_8066A668;    // 0.3f
-extern const f32 lbl_eu_8066A66C;    // 0.1f
-extern const f32 lbl_eu_8066A670;    // 0.6f
-extern const f32 lbl_eu_8066A674;    // 10.0f
-extern const double lbl_eu_8066A678; // 2^52 + 2^31 (int->float conversion trick)
+// .sdata2 constants are written as source literals; MWCC emits the TU's own
+// literal pool in first-use order, matching the retail 0x68-byte pool.
 
 // s32 -> f32 via a plain cast: MWCC lowers int-to-float through the shared
-// signed magic double (lbl_eu_8066A678 = 0x4330000080000000) natively, which
-// matches retail codegen exactly (retail .sdata2 pool is empty).
+// signed magic double (0x4330000080000000) natively, which reproduces the
+// two magic words at the retail pool's 0x8066A678/67c slots.
 static inline f32 s32ToF_678(s32 v) {
     return v;
 }
-extern const f32 lbl_eu_8066A680;    // updateLodPositions default x/z
-extern const f32 lbl_eu_8066A684;    // 1000.0f (rand() % 1000 divisor)
-extern const f32 lbl_eu_8066A688;    // 20.0f   (rand() % 20 divisor)
-extern const f32 lbl_eu_8066A68C;    // 0.4f
-extern const f32 lbl_eu_8066A690;    // 0.11f
-extern const f32 lbl_eu_8066A694;    // 0.002f
-extern const f32 lbl_eu_8066A698;    // 1/30
-extern const f32 lbl_eu_8066A69C;    // 0.0001f
-extern const f32 lbl_eu_8066A6A0;    // 0.02f
-extern const f32 lbl_eu_8066A6A4;    // 0.03f
-extern const f32 lbl_eu_8066A6A8;    // 10000.0f
-extern const f32 lbl_eu_8066A6AC;    // 0.13f
-extern const f32 lbl_eu_8066A6B0;    // -0.3f
-extern const f32 lbl_eu_8066A6B4;    // -0.9999f
-extern const f32 lbl_eu_8066A6B8;    // 2.0f
-extern const f32 lbl_eu_8066A6BC;    // -1.0f
+extern const f32 lbl_eu_8066A6B8;    // 2.0f, shared pool constant used by initLodState
+
 // .sdata constants (defined below in the data block).
 extern f32 lbl_eu_80663818;    // 0.005f
 extern f32 lbl_eu_8066381C;    // 0.005f
@@ -186,15 +163,15 @@ extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530
         f32* p = reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + i * 0x90);
         for (int j = 0; j < 4; j++) {
             f32* q = p + j * 9;
-            q[0] = lbl_eu_8066A658;
-            q[1] = lbl_eu_8066A658;
-            q[2] = lbl_eu_8066A658;
-            q[3] = lbl_eu_8066A658;
-            q[4] = lbl_eu_8066A658;
-            q[5] = lbl_eu_8066A658;
-            q[6] = lbl_eu_8066A658;
-            q[7] = lbl_eu_8066A658;
-            q[8] = lbl_eu_8066A65C;
+            q[0] = 0.0f;
+            q[1] = 0.0f;
+            q[2] = 0.0f;
+            q[3] = 0.0f;
+            q[4] = 0.0f;
+            q[5] = 0.0f;
+            q[6] = 0.0f;
+            q[7] = 0.0f;
+            q[8] = 1.0f;
         }
     }
 
@@ -203,14 +180,14 @@ extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530
         LODElement_8046A530* e = &elems[i];
         PSMTXIdentity(e->mtxA);
         PSMTXIdentity(e->mtxB);
-        f32 a = lbl_eu_8066A660 * s32ToF_678(rand() % 100) - lbl_eu_8066A664;
-        f32 b = lbl_eu_8066A660 * s32ToF_678(rand() % 100) - lbl_eu_8066A664;
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[6]) = Vec3Direct_8046A530(b, lbl_eu_8066A658, a);
-        if (e->v[6].x == lbl_eu_8066A658 && e->v[6].y == lbl_eu_8066A658 && e->v[6].z == lbl_eu_8066A658) {
-            *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[6]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A65C);
+        f32 a = 0.01f * s32ToF_678(rand() % 100) - 0.5f;
+        f32 b = 0.01f * s32ToF_678(rand() % 100) - 0.5f;
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[6]) = Vec3Direct_8046A530(b, 0.0f, a);
+        if (e->v[6].x == 0.0f && e->v[6].y == 0.0f && e->v[6].z == 0.0f) {
+            *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[6]) = Vec3Direct_8046A530(0.0f, 0.0f, 1.0f);
         } else {
             f32 len2 = e->v[6].y * e->v[6].y + e->v[6].x * e->v[6].x + e->v[6].z * e->v[6].z;
-            if (len2 == lbl_eu_8066A658) {
+            if (len2 == 0.0f) {
                 e->v[6] = ml::CVec3::zero;
             } else {
                 PSVECNormalize(e->v[6], e->v[6]);
@@ -220,40 +197,40 @@ extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530
 
     for (int i = 0; i < 8; i++) {
         LODElement_8046A530* e = &elems[i];
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(0.0f, 0.0f, 0.0f);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(0.0f, 1.0f, 0.0f);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(0.0f, lbl_eu_8066A6B8, 0.0f);
         e->v[3] = ml::CVec3::zero;
         e->v[4] = ml::CVec3::zero;
         e->v[5] = ml::CVec3::zero;
     }
     for (int i = 0; i < 8; i++) {
         LODElement_8046A530* e = &elems[8 + i];
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(0.0f, lbl_eu_8066A6B8, 0.0f);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(0.0f, 1.0f, 0.0f);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(0.0f, 0.0f, 0.0f);
         e->v[3] = ml::CVec3::zero;
         e->v[4] = ml::CVec3::zero;
         e->v[5] = ml::CVec3::zero;
     }
     for (int i = 0; i < 8; i++) {
         LODElement_8046A530* e = &elems[16 + i];
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
-        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(0.0f, 0.0f, 0.0f);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(0.0f, 1.0f, 0.0f);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(0.0f, lbl_eu_8066A6B8, 0.0f);
         e->v[3] = ml::CVec3::zero;
         e->v[4] = ml::CVec3::zero;
         e->v[5] = ml::CVec3::zero;
     }
 
     // Tail fields: blend limits, frame step and the 10-frame reset counter.
-    l->field_0x1200 = lbl_eu_8066A668;
-    l->field_0x1204 = lbl_eu_8066A66C;
-    l->field_0x1208 = lbl_eu_8066A670;
-    l->field_0x120C = lbl_eu_8066A65C;
-    l->field_0x1210 = lbl_eu_8066A65C;
-    l->field_0x1214 = lbl_eu_8066A674;
-    l->field_0x1218 = lbl_eu_8066A674;
+    l->field_0x1200 = 0.3f;
+    l->field_0x1204 = 0.1f;
+    l->field_0x1208 = 0.6f;
+    l->field_0x120C = 1.0f;
+    l->field_0x1210 = 1.0f;
+    l->field_0x1214 = 10.0f;
+    l->field_0x1218 = 10.0f;
     l->field_0x121C = 0xa;
 }
 
@@ -274,26 +251,26 @@ void setVariation__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     l->field_0x121C = type;
     if (type == 0) {
-        l->field_0x1200 = lbl_eu_8066A658;
-        l->field_0x1204 = lbl_eu_8066A658;
-        l->field_0x1208 = lbl_eu_8066A658;
+        l->field_0x1200 = 0.0f;
+        l->field_0x1204 = 0.0f;
+        l->field_0x1208 = 0.0f;
         return;
     }
     if (type == 1) {
-        l->field_0x1200 = lbl_eu_8066A668;
-        l->field_0x1204 = lbl_eu_8066A66C;
-        l->field_0x1208 = lbl_eu_8066A668;
+        l->field_0x1200 = 0.3f;
+        l->field_0x1204 = 0.1f;
+        l->field_0x1208 = 0.3f;
         return;
     }
     if (type == 2) {
-        l->field_0x1200 = lbl_eu_8066A664;
-        l->field_0x1204 = lbl_eu_8066A66C;
-        l->field_0x1208 = lbl_eu_8066A664;
+        l->field_0x1200 = 0.5f;
+        l->field_0x1204 = 0.1f;
+        l->field_0x1208 = 0.5f;
         return;
     }
-    l->field_0x1200 = lbl_eu_8066A680;
-    l->field_0x1204 = lbl_eu_8066A664;
-    l->field_0x1208 = lbl_eu_8066A680;
+    l->field_0x1200 = 1.5f;
+    l->field_0x1204 = 0.5f;
+    l->field_0x1208 = 1.5f;
 }
 
 // ---------------------------------------------------------------------------
@@ -322,11 +299,11 @@ extern "C" void advanceLodAnim__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A5
     l->field_0x1210 = step;
     f32 counter = l->field_0x1218 - step;
     l->field_0x1218 = counter;
-    if (counter <= lbl_eu_8066A658) {
+    if (counter <= 0.0f) {
         // Randomize the countdown (0..999 / 1000 of the 0x1214 range) and the
         // 0x1208 element (blend 0x1200 / 0x1204 by a 0..19 / 20 factor).
-        l->field_0x1218 = l->field_0x1214 * (s32ToF_678(rand() % 1000) / lbl_eu_8066A684);
-        l->field_0x1208 = l->field_0x1200 * (s32ToF_678(rand() % 20) / lbl_eu_8066A688) + l->field_0x1204;
+        l->field_0x1218 = l->field_0x1214 * (s32ToF_678(rand() % 1000) / 1000.0f);
+        l->field_0x1208 = l->field_0x1200 * (s32ToF_678(rand() % 20) / 20.0f) + l->field_0x1204;
     }
     if (flags & 0x8) {
         u8* p = reinterpret_cast<u8*>(self);
@@ -340,19 +317,19 @@ extern "C" void advanceLodAnim__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A5
         int i;
         u8* p = reinterpret_cast<u8*>(self) + 0x120;
         for (i = 0; i < 8; i++, p += 0xb4) {
-            updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(self, p, lbl_eu_8066A68C);
+            updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(self, p, 0.4f);
         }
     }
     if (flags & 0x20) {
         for (int i = 0; i < 8; i++) {
             updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(
-                self, reinterpret_cast<u8*>(self) + (i + 8) * 0xb4 + 0x120, lbl_eu_8066A68C);
+                self, reinterpret_cast<u8*>(self) + (i + 8) * 0xb4 + 0x120, 0.4f);
         }
     }
     if (flags & 0x40) {
         for (int i = 0; i < 8; i++) {
             updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(
-                self, reinterpret_cast<u8*>(self) + (i + 16) * 0xb4 + 0x120, lbl_eu_8066A68C);
+                self, reinterpret_cast<u8*>(self) + (i + 16) * 0xb4 + 0x120, 0.4f);
         }
     }
 }
@@ -379,10 +356,10 @@ extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
     // (f31, f30, f29) so the 2nd draw lands in f29 and the 3rd in f30 like
     // retail.
     f32 f31, f30, f29;
-    f31 = lbl_eu_8066A690 * (l->field_0x1208 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500)));
-    f29 = l->field_0x1210 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664);
-    f30 = l->field_0x1210 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664);
-    f32 f0 = l->field_0x1210 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664);
+    f31 = 0.11f * (l->field_0x1208 * (0.002f * s32ToF_678(rand() % 500)));
+    f29 = l->field_0x1210 * (0.002f * s32ToF_678(rand() % 500) - 0.5f);
+    f30 = l->field_0x1210 * (0.002f * s32ToF_678(rand() % 500) - 0.5f);
+    f32 f0 = l->field_0x1210 * (0.002f * s32ToF_678(rand() % 500) - 0.5f);
 
     // v[2] += (f0, f30, f29)
     tmp.x = f0;
@@ -392,7 +369,7 @@ extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
 
     // Normalize v[2] (or reset it when it is degenerate).
     f32 len2 = e->v[2].y * e->v[2].y + e->v[2].x * e->v[2].x + e->v[2].z * e->v[2].z;
-    if (len2 == lbl_eu_8066A658) {
+    if (len2 == 0.0f) {
         e->v[2] = ml::CVec3::zero;
     } else {
         PSVECNormalize(e->v[2], e->v[2]);
@@ -403,7 +380,7 @@ extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
     t.y = e->v[2].y * f31;
     t.x = e->v[2].x * f31;
     t.z = e->v[2].z * f31;
-    nw4r::math::VEC3Scale(tmp3, t, lbl_eu_8066A698 * l->field_0x1210);
+    nw4r::math::VEC3Scale(tmp3, t, 0.033333335f * l->field_0x1210);
     nw4r::math::VEC3Add(e->v[0], e->v[0], tmp3);
 
     // Repulsion: when -v[1] is long enough, push v[0] away from the origin.
@@ -411,9 +388,9 @@ extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
     t.y = -e->v[1].y;
     t.z = -e->v[1].z;
     f32 mag = PSVECMag(t);
-    if (mag >= lbl_eu_8066A69C) {
-        f32 inv = lbl_eu_8066A65C / mag;
-        f32 s = lbl_eu_8066A6A0 * mag;
+    if (mag >= 0.0001f) {
+        f32 inv = 1.0f / mag;
+        f32 s = 0.02f * mag;
         nw4r::math::VEC3Scale(tmp3, t, l->field_0x1210 * (inv * s));
         nw4r::math::VEC3Add(e->v[0], e->v[0], tmp3);
     }
@@ -421,7 +398,7 @@ extern "C" void updateLodWalk__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
     // Integrate v[0] into v[1] and damp v[0].
     nw4r::math::VEC3Scale(tmp3, e->v[0], l->field_0x1210);
     nw4r::math::VEC3Add(e->v[1], e->v[1], tmp3);
-    nw4r::math::VEC3Scale(e->v[0], e->v[0], lbl_eu_8066A65C - lbl_eu_8066A6A4 * l->field_0x1210);
+    nw4r::math::VEC3Scale(e->v[0], e->v[0], 1.0f - 0.03f * l->field_0x1210);
 }
 
 // ---------------------------------------------------------------------------
@@ -435,18 +412,18 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     f32 f31 = l->field_0x1210 * c;
-    f32 f30 = l->field_0x1208 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500));
-    f32 a2 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
-    f32 a3 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
+    f32 f30 = l->field_0x1208 * (0.002f * s32ToF_678(rand() % 500));
+    f32 a2 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
+    f32 a3 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
 
     // Randomize the orientation direction (y stays 0) and normalize it.
     ml::CVec3 tmp;
     tmp.x = a3;
-    tmp.y = lbl_eu_8066A658;
+    tmp.y = 0.0f;
     tmp.z = a2;
     nw4r::math::VEC3Add(e->v[6], e->v[6], tmp);
     f32 len2 = e->v[6].y * e->v[6].y + e->v[6].x * e->v[6].x + e->v[6].z * e->v[6].z;
-    if (len2 == lbl_eu_8066A658) {
+    if (len2 == 0.0f) {
         e->v[6] = ml::CVec3::zero;
     } else {
         PSVECNormalize(e->v[6], e->v[6]);
@@ -465,14 +442,14 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
         ml::CVec3 diff;
         nw4r::math::VEC3Sub(diff, e->v[i], e->v[i + 1]);
         f32 mag = PSVECMag(diff);
-        f32 m1 = mag - lbl_eu_8066A65C;
-        bool big = mag >= lbl_eu_8066A69C;
-        f32 f6 = lbl_eu_8066A68C * m1;
+        f32 m1 = mag - 1.0f;
+        bool big = mag >= 0.0001f;
+        f32 f6 = 0.4f * m1;
         ml::CVec3 tdiff;
         nw4r::math::VEC3Sub(tdiff, e->v[i + 3], e->v[i + 4]);
         f32 dot = nw4r::math::VEC3Dot(tdiff, diff);
-        f32 f4 = big ? lbl_eu_8066A65C / mag : lbl_eu_8066A6A8;
-        f32 s = f4 * (lbl_eu_8066A664 * dot);
+        f32 f4 = big ? 1.0f / mag : 10000.0f;
+        f32 s = f4 * (0.5f * dot);
         f32 t = -(f6 + s) * f31;
         ml::CVec3 tmp2;
         nw4r::math::VEC3Scale(tmp2, diff, f4);
@@ -488,9 +465,9 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
         tmp2.y = s32ToF_678(i) - e->v[i].y;
         tmp2.z = -e->v[i].z;
         f32 mag = PSVECMag(tmp2);
-        if (mag >= lbl_eu_8066A69C) {
-            f32 inv = lbl_eu_8066A65C / mag;
-            f32 s = lbl_eu_8066A6AC * mag * f31;
+        if (mag >= 0.0001f) {
+            f32 inv = 1.0f / mag;
+            f32 s = 0.13f * mag * f31;
             nw4r::math::VEC3Scale(tmp2, tmp2, inv);
             nw4r::math::VEC3Scale(tmp2, tmp2, s);
             nw4r::math::VEC3Add(e->v[i + 3], e->v[i + 3], tmp2);
@@ -499,7 +476,7 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
 
     // Reuse the top temp for the random velocity like retail (saves a stack
     // slot - retail allocates 9 vector temps, not 10).
-    nw4r::math::VEC3Scale(tmp, dir, lbl_eu_8066A698 * f31);
+    nw4r::math::VEC3Scale(tmp, dir, 0.033333335f * f31);
     nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
     tmp.x *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
     tmp.y *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
@@ -507,20 +484,20 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
 
     // Integrate vel into v[4]/v[5] and damp both, clamping to +/- 0.3.
     nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
-    nw4r::math::VEC3Scale(e->v[4], e->v[4], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
-    if (e->v[4].x > lbl_eu_8066A668) e->v[4].x = lbl_eu_8066A668;
-    if (e->v[4].y > lbl_eu_8066A668) e->v[4].y = lbl_eu_8066A668;
-    if (e->v[4].z > lbl_eu_8066A668) e->v[4].z = lbl_eu_8066A668;
-    if (e->v[4].x < lbl_eu_8066A6B0) e->v[4].x = lbl_eu_8066A6B0;
-    if (e->v[4].y < lbl_eu_8066A6B0) e->v[4].y = lbl_eu_8066A6B0;
-    if (e->v[4].z < lbl_eu_8066A6B0) e->v[4].z = lbl_eu_8066A6B0;
-    nw4r::math::VEC3Scale(e->v[5], e->v[5], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
-    if (e->v[5].x > lbl_eu_8066A668) e->v[5].x = lbl_eu_8066A668;
-    if (e->v[5].y > lbl_eu_8066A668) e->v[5].y = lbl_eu_8066A668;
-    if (e->v[5].z > lbl_eu_8066A668) e->v[5].z = lbl_eu_8066A668;
-    if (e->v[5].x < lbl_eu_8066A6B0) e->v[5].x = lbl_eu_8066A6B0;
-    if (e->v[5].y < lbl_eu_8066A6B0) e->v[5].y = lbl_eu_8066A6B0;
-    if (e->v[5].z < lbl_eu_8066A6B0) e->v[5].z = lbl_eu_8066A6B0;
+    nw4r::math::VEC3Scale(e->v[4], e->v[4], 1.0f - 0.02f * f31);
+    if (e->v[4].x > 0.3f) e->v[4].x = 0.3f;
+    if (e->v[4].y > 0.3f) e->v[4].y = 0.3f;
+    if (e->v[4].z > 0.3f) e->v[4].z = 0.3f;
+    if (e->v[4].x < -0.3f) e->v[4].x = -0.3f;
+    if (e->v[4].y < -0.3f) e->v[4].y = -0.3f;
+    if (e->v[4].z < -0.3f) e->v[4].z = -0.3f;
+    nw4r::math::VEC3Scale(e->v[5], e->v[5], 1.0f - 0.02f * f31);
+    if (e->v[5].x > 0.3f) e->v[5].x = 0.3f;
+    if (e->v[5].y > 0.3f) e->v[5].y = 0.3f;
+    if (e->v[5].z > 0.3f) e->v[5].z = 0.3f;
+    if (e->v[5].x < -0.3f) e->v[5].x = -0.3f;
+    if (e->v[5].y < -0.3f) e->v[5].y = -0.3f;
+    if (e->v[5].z < -0.3f) e->v[5].z = -0.3f;
 
     // Advance v[1]/v[2] along v[4]/v[5].
     nw4r::math::VEC3Scale(tmp, e->v[4], f31);
@@ -532,67 +509,67 @@ extern "C" void updateLodBatch0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     ml::CVec3 axis;
     nw4r::math::VEC3Sub(axis, e->v[2], e->v[0]);
     f32 lenA = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
-    if (lenA == lbl_eu_8066A658) {
+    if (lenA == 0.0f) {
         axis = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis, axis);
     }
     f32 dotA = nw4r::math::VEC3Dot(axis, ml::CVec3::unitY);
     Quaternion quat;
-    if (dotA < lbl_eu_8066A6B4) {
-        quat.x = lbl_eu_8066A658;
-        quat.y = lbl_eu_8066A65C;
-        quat.z = lbl_eu_8066A658;
-        quat.w = lbl_eu_8066A658;
+    if (dotA < -0.9999f) {
+        quat.x = 0.0f;
+        quat.y = 1.0f;
+        quat.z = 0.0f;
+        quat.w = 0.0f;
     } else {
         ml::CVec3 cross;
         PSVECCrossProduct(ml::CVec3::unitY, axis, cross);
-        if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotA) < lbl_eu_8066A658) {
+        if (2.0f * (1.0f + dotA) < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 w = lbl_eu_8066A658;
-        f32 x = lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotA);
-        if (x > lbl_eu_8066A658) {
+        f32 w = 0.0f;
+        f32 x = 2.0f * (1.0f + dotA);
+        if (x > 0.0f) {
             w = x * nw4r::math::FrSqrt(x);
         }
-        f32 inv = lbl_eu_8066A65C / w;
+        f32 inv = 1.0f / w;
         quat.x = cross.x * inv;
         quat.y = cross.y * inv;
         quat.z = cross.z * inv;
-        quat.w = lbl_eu_8066A664 * w;
+        quat.w = 0.5f * w;
     }
     PSMTXQuat(e->mtxA, &quat);
 
     // Orientation matrix B from the (v[1] - v[0]) axis against the Y axis.
     nw4r::math::VEC3Sub(axis, e->v[1], e->v[0]);
     f32 lenB = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
-    if (lenB == lbl_eu_8066A658) {
+    if (lenB == 0.0f) {
         axis = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis, axis);
     }
     f32 dotB = nw4r::math::VEC3Dot(axis, ml::CVec3::unitY);
-    if (dotB < lbl_eu_8066A6B4) {
-        quat.x = lbl_eu_8066A658;
-        quat.y = lbl_eu_8066A65C;
-        quat.z = lbl_eu_8066A658;
-        quat.w = lbl_eu_8066A658;
+    if (dotB < -0.9999f) {
+        quat.x = 0.0f;
+        quat.y = 1.0f;
+        quat.z = 0.0f;
+        quat.w = 0.0f;
     } else {
         ml::CVec3 cross;
         PSVECCrossProduct(ml::CVec3::unitY, axis, cross);
-        if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB) < lbl_eu_8066A658) {
+        if (2.0f * (1.0f + dotB) < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 w = lbl_eu_8066A658;
-        f32 x = lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB);
-        if (x > lbl_eu_8066A658) {
+        f32 w = 0.0f;
+        f32 x = 2.0f * (1.0f + dotB);
+        if (x > 0.0f) {
             w = x * nw4r::math::FrSqrt(x);
         }
-        f32 inv = lbl_eu_8066A65C / w;
+        f32 inv = 1.0f / w;
         quat.x = cross.x * inv;
         quat.y = cross.y * inv;
         quat.z = cross.z * inv;
-        quat.w = lbl_eu_8066A664 * w;
+        quat.w = 0.5f * w;
     }
     PSMTXQuat(e->mtxB, &quat);
 
@@ -611,10 +588,10 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     f32 f31 = l->field_0x1210 * c;
-    f32 f30 = l->field_0x1208 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500));
-    f32 a2 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
-    f32 a3 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
-    f32 a4 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
+    f32 f30 = l->field_0x1208 * (0.002f * s32ToF_678(rand() % 500));
+    f32 a2 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
+    f32 a3 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
+    f32 a4 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
 
     ml::CVec3 tmp;
     tmp.x = a4;
@@ -622,7 +599,7 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     tmp.z = a2;
     nw4r::math::VEC3Add(e->v[6], e->v[6], tmp);
     f32 len2 = e->v[6].y * e->v[6].y + e->v[6].x * e->v[6].x + e->v[6].z * e->v[6].z;
-    if (len2 == lbl_eu_8066A658) {
+    if (len2 == 0.0f) {
         e->v[6] = ml::CVec3::zero;
     } else {
         PSVECNormalize(e->v[6], e->v[6]);
@@ -637,14 +614,14 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
         ml::CVec3 diff;
         nw4r::math::VEC3Sub(diff, e->v[i], e->v[i + 1]);
         f32 mag = PSVECMag(diff);
-        f32 m1 = mag - lbl_eu_8066A65C;
-        bool big = mag >= lbl_eu_8066A69C;
-        f32 f6 = lbl_eu_8066A68C * m1;
+        f32 m1 = mag - 1.0f;
+        bool big = mag >= 0.0001f;
+        f32 f6 = 0.4f * m1;
         ml::CVec3 tdiff;
         nw4r::math::VEC3Sub(tdiff, e->v[i + 3], e->v[i + 4]);
         f32 dot = nw4r::math::VEC3Dot(tdiff, diff);
-        f32 f4 = big ? lbl_eu_8066A65C / mag : lbl_eu_8066A6A8;
-        f32 s = f4 * (lbl_eu_8066A664 * dot);
+        f32 f4 = big ? 1.0f / mag : 10000.0f;
+        f32 s = f4 * (0.5f * dot);
         f32 t = -(f6 + s) * f31;
         ml::CVec3 tmp2;
         nw4r::math::VEC3Scale(tmp2, diff, f4);
@@ -660,9 +637,9 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
         tmp2.y = s32ToF_678(2 - i) - e->v[i].y;
         tmp2.z = -e->v[i].z;
         f32 mag = PSVECMag(tmp2);
-        if (mag >= lbl_eu_8066A69C) {
-            f32 inv = lbl_eu_8066A65C / mag;
-            f32 s = lbl_eu_8066A6AC * mag * f31;
+        if (mag >= 0.0001f) {
+            f32 inv = 1.0f / mag;
+            f32 s = 0.13f * mag * f31;
             nw4r::math::VEC3Scale(tmp2, tmp2, inv);
             nw4r::math::VEC3Scale(tmp2, tmp2, s);
             nw4r::math::VEC3Add(e->v[i + 3], e->v[i + 3], tmp2);
@@ -671,27 +648,27 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
 
     // Reuse the top temp for the random velocity like retail (saves a stack
     // slot - retail allocates 9 vector temps, not 10).
-    nw4r::math::VEC3Scale(tmp, dir, lbl_eu_8066A698 * f31);
+    nw4r::math::VEC3Scale(tmp, dir, 0.033333335f * f31);
     nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
     tmp.x *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
     tmp.y *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
     tmp.z *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
 
     nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
-    nw4r::math::VEC3Scale(e->v[4], e->v[4], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
-    if (e->v[4].x > lbl_eu_8066A668) e->v[4].x = lbl_eu_8066A668;
-    if (e->v[4].y > lbl_eu_8066A668) e->v[4].y = lbl_eu_8066A668;
-    if (e->v[4].z > lbl_eu_8066A668) e->v[4].z = lbl_eu_8066A668;
-    if (e->v[4].x < lbl_eu_8066A6B0) e->v[4].x = lbl_eu_8066A6B0;
-    if (e->v[4].y < lbl_eu_8066A6B0) e->v[4].y = lbl_eu_8066A6B0;
-    if (e->v[4].z < lbl_eu_8066A6B0) e->v[4].z = lbl_eu_8066A6B0;
-    nw4r::math::VEC3Scale(e->v[5], e->v[5], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
-    if (e->v[5].x > lbl_eu_8066A668) e->v[5].x = lbl_eu_8066A668;
-    if (e->v[5].y > lbl_eu_8066A668) e->v[5].y = lbl_eu_8066A668;
-    if (e->v[5].z > lbl_eu_8066A668) e->v[5].z = lbl_eu_8066A668;
-    if (e->v[5].x < lbl_eu_8066A6B0) e->v[5].x = lbl_eu_8066A6B0;
-    if (e->v[5].y < lbl_eu_8066A6B0) e->v[5].y = lbl_eu_8066A6B0;
-    if (e->v[5].z < lbl_eu_8066A6B0) e->v[5].z = lbl_eu_8066A6B0;
+    nw4r::math::VEC3Scale(e->v[4], e->v[4], 1.0f - 0.02f * f31);
+    if (e->v[4].x > 0.3f) e->v[4].x = 0.3f;
+    if (e->v[4].y > 0.3f) e->v[4].y = 0.3f;
+    if (e->v[4].z > 0.3f) e->v[4].z = 0.3f;
+    if (e->v[4].x < -0.3f) e->v[4].x = -0.3f;
+    if (e->v[4].y < -0.3f) e->v[4].y = -0.3f;
+    if (e->v[4].z < -0.3f) e->v[4].z = -0.3f;
+    nw4r::math::VEC3Scale(e->v[5], e->v[5], 1.0f - 0.02f * f31);
+    if (e->v[5].x > 0.3f) e->v[5].x = 0.3f;
+    if (e->v[5].y > 0.3f) e->v[5].y = 0.3f;
+    if (e->v[5].z > 0.3f) e->v[5].z = 0.3f;
+    if (e->v[5].x < -0.3f) e->v[5].x = -0.3f;
+    if (e->v[5].y < -0.3f) e->v[5].y = -0.3f;
+    if (e->v[5].z < -0.3f) e->v[5].z = -0.3f;
 
     nw4r::math::VEC3Scale(tmp, e->v[4], f31);
     nw4r::math::VEC3Add(e->v[1], e->v[1], tmp);
@@ -699,72 +676,72 @@ extern "C" void updateLodBatch1__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     nw4r::math::VEC3Add(e->v[2], e->v[2], tmp);
 
     // Local "up" vector for the orientation rebuilds.
-    ml::CVec3 up(lbl_eu_8066A658, lbl_eu_8066A6BC, lbl_eu_8066A658);
+    ml::CVec3 up(0.0f, -1.0f, 0.0f);
 
     ml::CVec3 axis;
     nw4r::math::VEC3Sub(axis, e->v[2], e->v[0]);
     f32 lenA = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
-    if (lenA == lbl_eu_8066A658) {
+    if (lenA == 0.0f) {
         axis = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis, axis);
     }
     f32 dotA = nw4r::math::VEC3Dot(up, axis);
     Quaternion quat;
-    if (dotA < lbl_eu_8066A6B4) {
-        quat.x = lbl_eu_8066A658;
-        quat.y = lbl_eu_8066A65C;
-        quat.z = lbl_eu_8066A658;
-        quat.w = lbl_eu_8066A658;
+    if (dotA < -0.9999f) {
+        quat.x = 0.0f;
+        quat.y = 1.0f;
+        quat.z = 0.0f;
+        quat.w = 0.0f;
     } else {
         ml::CVec3 cross;
         PSVECCrossProduct(up, axis, cross);
-        if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotA) < lbl_eu_8066A658) {
+        if (2.0f * (1.0f + dotA) < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 w = lbl_eu_8066A658;
-        f32 x = lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotA);
-        if (x > lbl_eu_8066A658) {
+        f32 w = 0.0f;
+        f32 x = 2.0f * (1.0f + dotA);
+        if (x > 0.0f) {
             w = x * nw4r::math::FrSqrt(x);
         }
-        f32 inv = lbl_eu_8066A65C / w;
+        f32 inv = 1.0f / w;
         quat.x = cross.x * inv;
         quat.y = cross.y * inv;
         quat.z = cross.z * inv;
-        quat.w = lbl_eu_8066A664 * w;
+        quat.w = 0.5f * w;
     }
     PSMTXQuat(e->mtxA, &quat);
 
     // Both orientation rebuilds reuse one axis temp like retail.
     nw4r::math::VEC3Sub(axis, e->v[1], e->v[0]);
     f32 lenB = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
-    if (lenB == lbl_eu_8066A658) {
+    if (lenB == 0.0f) {
         axis = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis, axis);
     }
     f32 dotB = nw4r::math::VEC3Dot(up, axis);
-    if (dotB < lbl_eu_8066A6B4) {
-        quat.x = lbl_eu_8066A658;
-        quat.y = lbl_eu_8066A65C;
-        quat.z = lbl_eu_8066A658;
-        quat.w = lbl_eu_8066A658;
+    if (dotB < -0.9999f) {
+        quat.x = 0.0f;
+        quat.y = 1.0f;
+        quat.z = 0.0f;
+        quat.w = 0.0f;
     } else {
         ml::CVec3 cross;
         PSVECCrossProduct(up, axis, cross);
-        if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB) < lbl_eu_8066A658) {
+        if (2.0f * (1.0f + dotB) < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 w = lbl_eu_8066A658;
-        f32 x = lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB);
-        if (x > lbl_eu_8066A658) {
+        f32 w = 0.0f;
+        f32 x = 2.0f * (1.0f + dotB);
+        if (x > 0.0f) {
             w = x * nw4r::math::FrSqrt(x);
         }
-        f32 inv = lbl_eu_8066A65C / w;
+        f32 inv = 1.0f / w;
         quat.x = cross.x * inv;
         quat.y = cross.y * inv;
         quat.z = cross.z * inv;
-        quat.w = lbl_eu_8066A664 * w;
+        quat.w = 0.5f * w;
     }
     PSMTXQuat(e->mtxB, &quat);
 
@@ -781,17 +758,17 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
     f32 f31 = l->field_0x1210 * c;
-    f32 f30 = l->field_0x1208 * (lbl_eu_8066A694 * s32ToF_678(rand() % 500));
-    f32 a2 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
-    f32 a3 = l->field_0x1210 * (lbl_eu_8066A68C * (lbl_eu_8066A694 * s32ToF_678(rand() % 500) - lbl_eu_8066A664));
+    f32 f30 = l->field_0x1208 * (0.002f * s32ToF_678(rand() % 500));
+    f32 a2 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
+    f32 a3 = l->field_0x1210 * (0.4f * (0.002f * s32ToF_678(rand() % 500) - 0.5f));
 
     ml::CVec3 tmp;
     tmp.x = a3;
-    tmp.y = lbl_eu_8066A658;
+    tmp.y = 0.0f;
     tmp.z = a2;
     nw4r::math::VEC3Add(e->v[6], e->v[6], tmp);
     f32 len2 = e->v[6].y * e->v[6].y + e->v[6].x * e->v[6].x + e->v[6].z * e->v[6].z;
-    if (len2 == lbl_eu_8066A658) {
+    if (len2 == 0.0f) {
         e->v[6] = ml::CVec3::zero;
     } else {
         PSVECNormalize(e->v[6], e->v[6]);
@@ -806,14 +783,14 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
         ml::CVec3 diff;
         nw4r::math::VEC3Sub(diff, e->v[i], e->v[i + 1]);
         f32 mag = PSVECMag(diff);
-        f32 m1 = mag - lbl_eu_8066A65C;
-        bool big = mag >= lbl_eu_8066A69C;
-        f32 f6 = lbl_eu_8066A68C * m1;
+        f32 m1 = mag - 1.0f;
+        bool big = mag >= 0.0001f;
+        f32 f6 = 0.4f * m1;
         ml::CVec3 tdiff;
         nw4r::math::VEC3Sub(tdiff, e->v[i + 3], e->v[i + 4]);
         f32 dot = nw4r::math::VEC3Dot(tdiff, diff);
-        f32 f4 = big ? lbl_eu_8066A65C / mag : lbl_eu_8066A6A8;
-        f32 s = f4 * (lbl_eu_8066A664 * dot);
+        f32 f4 = big ? 1.0f / mag : 10000.0f;
+        f32 s = f4 * (0.5f * dot);
         f32 t = -(f6 + s) * f31;
         ml::CVec3 tmp2;
         nw4r::math::VEC3Scale(tmp2, diff, f4);
@@ -828,9 +805,9 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
         tmp2.y = s32ToF_678(i) - e->v[i].y;
         tmp2.z = -e->v[i].z;
         f32 mag = PSVECMag(tmp2);
-        if (mag >= lbl_eu_8066A69C) {
-            f32 inv = lbl_eu_8066A65C / mag;
-            f32 s = lbl_eu_8066A6AC * mag * f31;
+        if (mag >= 0.0001f) {
+            f32 inv = 1.0f / mag;
+            f32 s = 0.13f * mag * f31;
             nw4r::math::VEC3Scale(tmp2, tmp2, inv);
             nw4r::math::VEC3Scale(tmp2, tmp2, s);
             nw4r::math::VEC3Add(e->v[i + 3], e->v[i + 3], tmp2);
@@ -839,27 +816,27 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
 
     // Reuse the top temp for the random velocity like retail (saves a stack
     // slot - retail allocates 9 vector temps, not 10).
-    nw4r::math::VEC3Scale(tmp, dir, lbl_eu_8066A698 * f31);
+    nw4r::math::VEC3Scale(tmp, dir, 0.033333335f * f31);
     nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
     tmp.x *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
     tmp.y *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
     tmp.z *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
 
     nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
-    nw4r::math::VEC3Scale(e->v[4], e->v[4], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
-    if (e->v[4].x > lbl_eu_8066A668) e->v[4].x = lbl_eu_8066A668;
-    if (e->v[4].y > lbl_eu_8066A668) e->v[4].y = lbl_eu_8066A668;
-    if (e->v[4].z > lbl_eu_8066A668) e->v[4].z = lbl_eu_8066A668;
-    if (e->v[4].x < lbl_eu_8066A6B0) e->v[4].x = lbl_eu_8066A6B0;
-    if (e->v[4].y < lbl_eu_8066A6B0) e->v[4].y = lbl_eu_8066A6B0;
-    if (e->v[4].z < lbl_eu_8066A6B0) e->v[4].z = lbl_eu_8066A6B0;
-    nw4r::math::VEC3Scale(e->v[5], e->v[5], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
-    if (e->v[5].x > lbl_eu_8066A668) e->v[5].x = lbl_eu_8066A668;
-    if (e->v[5].y > lbl_eu_8066A668) e->v[5].y = lbl_eu_8066A668;
-    if (e->v[5].z > lbl_eu_8066A668) e->v[5].z = lbl_eu_8066A668;
-    if (e->v[5].x < lbl_eu_8066A6B0) e->v[5].x = lbl_eu_8066A6B0;
-    if (e->v[5].y < lbl_eu_8066A6B0) e->v[5].y = lbl_eu_8066A6B0;
-    if (e->v[5].z < lbl_eu_8066A6B0) e->v[5].z = lbl_eu_8066A6B0;
+    nw4r::math::VEC3Scale(e->v[4], e->v[4], 1.0f - 0.02f * f31);
+    if (e->v[4].x > 0.3f) e->v[4].x = 0.3f;
+    if (e->v[4].y > 0.3f) e->v[4].y = 0.3f;
+    if (e->v[4].z > 0.3f) e->v[4].z = 0.3f;
+    if (e->v[4].x < -0.3f) e->v[4].x = -0.3f;
+    if (e->v[4].y < -0.3f) e->v[4].y = -0.3f;
+    if (e->v[4].z < -0.3f) e->v[4].z = -0.3f;
+    nw4r::math::VEC3Scale(e->v[5], e->v[5], 1.0f - 0.02f * f31);
+    if (e->v[5].x > 0.3f) e->v[5].x = 0.3f;
+    if (e->v[5].y > 0.3f) e->v[5].y = 0.3f;
+    if (e->v[5].z > 0.3f) e->v[5].z = 0.3f;
+    if (e->v[5].x < -0.3f) e->v[5].x = -0.3f;
+    if (e->v[5].y < -0.3f) e->v[5].y = -0.3f;
+    if (e->v[5].z < -0.3f) e->v[5].z = -0.3f;
 
     nw4r::math::VEC3Scale(tmp, e->v[4], f31);
     nw4r::math::VEC3Add(e->v[1], e->v[1], tmp);
@@ -870,67 +847,67 @@ extern "C" void updateLodBatch2__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A
     ml::CVec3 axis;
     nw4r::math::VEC3Sub(axis, e->v[2], e->v[0]);
     f32 lenA = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
-    if (lenA == lbl_eu_8066A658) {
+    if (lenA == 0.0f) {
         axis = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis, axis);
     }
     f32 dotA = nw4r::math::VEC3Dot(axis, ml::CVec3::unitX);
     Quaternion quat;
-    if (dotA < lbl_eu_8066A6B4) {
-        quat.x = lbl_eu_8066A658;
-        quat.y = lbl_eu_8066A65C;
-        quat.z = lbl_eu_8066A658;
-        quat.w = lbl_eu_8066A658;
+    if (dotA < -0.9999f) {
+        quat.x = 0.0f;
+        quat.y = 1.0f;
+        quat.z = 0.0f;
+        quat.w = 0.0f;
     } else {
         ml::CVec3 cross;
         PSVECCrossProduct(ml::CVec3::unitX, axis, cross);
-        if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotA) < lbl_eu_8066A658) {
+        if (2.0f * (1.0f + dotA) < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 w = lbl_eu_8066A658;
-        f32 x = lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotA);
-        if (x > lbl_eu_8066A658) {
+        f32 w = 0.0f;
+        f32 x = 2.0f * (1.0f + dotA);
+        if (x > 0.0f) {
             w = x * nw4r::math::FrSqrt(x);
         }
-        f32 inv = lbl_eu_8066A65C / w;
+        f32 inv = 1.0f / w;
         quat.x = cross.x * inv;
         quat.y = cross.y * inv;
         quat.z = cross.z * inv;
-        quat.w = lbl_eu_8066A664 * w;
+        quat.w = 0.5f * w;
     }
     PSMTXQuat(e->mtxA, &quat);
 
     // Both orientation rebuilds reuse one axis temp like retail.
     nw4r::math::VEC3Sub(axis, e->v[1], e->v[0]);
     f32 lenB = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
-    if (lenB == lbl_eu_8066A658) {
+    if (lenB == 0.0f) {
         axis = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis, axis);
     }
     f32 dotB = nw4r::math::VEC3Dot(axis, ml::CVec3::unitX);
-    if (dotB < lbl_eu_8066A6B4) {
-        quat.x = lbl_eu_8066A658;
-        quat.y = lbl_eu_8066A65C;
-        quat.z = lbl_eu_8066A658;
-        quat.w = lbl_eu_8066A658;
+    if (dotB < -0.9999f) {
+        quat.x = 0.0f;
+        quat.y = 1.0f;
+        quat.z = 0.0f;
+        quat.w = 0.0f;
     } else {
         ml::CVec3 cross;
         PSVECCrossProduct(ml::CVec3::unitX, axis, cross);
-        if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB) < lbl_eu_8066A658) {
+        if (2.0f * (1.0f + dotB) < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 w = lbl_eu_8066A658;
-        f32 x = lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB);
-        if (x > lbl_eu_8066A658) {
+        f32 w = 0.0f;
+        f32 x = 2.0f * (1.0f + dotB);
+        if (x > 0.0f) {
             w = x * nw4r::math::FrSqrt(x);
         }
-        f32 inv = lbl_eu_8066A65C / w;
+        f32 inv = 1.0f / w;
         quat.x = cross.x * inv;
         quat.y = cross.y * inv;
         quat.z = cross.z * inv;
-        quat.w = lbl_eu_8066A664 * w;
+        quat.w = 0.5f * w;
     }
     PSMTXQuat(e->mtxB, &quat);
 

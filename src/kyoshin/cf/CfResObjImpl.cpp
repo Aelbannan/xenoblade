@@ -7,7 +7,7 @@
 #include "kyoshin/cf/CfResObjImpl.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
@@ -96,7 +96,7 @@ void ResObj_ReleaseModels_C98C(cf::CfResObjImpl* self) {
         u32 handle1 = self->ResObj_GetWork_CCBC(1);
         self->field_00->field_90 = CfRes_findEntryById(entry, handle1);
 f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
-        u8* obj = scnImN4BuildByIdx((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
+        u8* obj = scnImN4BuildByIdx((u8*)gmScene, self->field_00->field_90, 6, 1, 0, 0x70);
         CfModel_InstallSub(self->field_00, obj);
         if (self->field_00->field_98 != 0 &&
             (((cf::CfResObjModel98Data*)self->field_00->field_98)->field_7A4 & 0x800000) != 0 &&

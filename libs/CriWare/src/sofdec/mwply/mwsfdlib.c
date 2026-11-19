@@ -35,7 +35,7 @@ typedef struct MWSFDLibWork {
 
 /* SVM trace-callback infrastructure: the object's vtable exposes a method
  * at +0x24; each instrumented function stores its args into a per-function
- * record (lbl_eu_805660D8) and fires the callback on entry (+0x04) and
+ * record (sTraceInitSfdFx) and fires the callback on entry (+0x04) and
  * exit (+0x6C). Same shape as the mwsfdply TU's SfdTraceObj/SfdTraceRec. */
 typedef struct MWSFDTraceVtable {
     u8 pad_0x00[0x24];
@@ -107,7 +107,7 @@ extern char lbl_eu_8051ADD0[];      /* error message string pool */
 extern u32 lbl_eu_8051AB38;
 extern u32 lbl_eu_806029F4;
 extern MWSFDSfxPrmTbl lbl_eu_8051AAA8;
-extern MWSFDTraceRec lbl_eu_805660D8;
+extern MWSFDTraceRec sTraceInitSfdFx;
 
 extern void MWSFSVM_Error(const char*, ...);
 extern void MWSFSVM_Init(void);
@@ -167,7 +167,7 @@ void mwPlyInitSfdFx(MWSFDINITPRM* prm) {
         return;
     }
     if (g->traceObj != NULL) {
-        g->traceObj->vtable->trace(g->traceObj, &lbl_eu_805660D8.entry);
+        g->traceObj->vtable->trace(g->traceObj, &sTraceInitSfdFx.entry);
     }
     memset(&initPrm, 0, sizeof(initPrm));
     initPrm.fps = prm->fps;
@@ -216,7 +216,7 @@ void mwPlyInitSfdFx(MWSFDINITPRM* prm) {
     }
     g->refCount++;
     if (g->traceObj != NULL) {
-        g->traceObj->vtable->trace(g->traceObj, &lbl_eu_805660D8.exit);
+        g->traceObj->vtable->trace(g->traceObj, &sTraceInitSfdFx.exit);
     }
 }
 

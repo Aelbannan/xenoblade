@@ -5,7 +5,7 @@
 #include <nw4r/math.h>
 
 #include "kyoshin/cf/object/CfObjectColl.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 #include "kyoshin/cf/CfGameManager.hpp"
 
@@ -110,15 +110,15 @@ extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* ob
     }
     if ((int)self->field_0x94 == 6) {
         if (ok != 0) {
-            if (lbl_eu_80663E24 & 0x00200000) {
-                self->field_0x154 = lbl_eu_8066694C;
+            if (gmGameFlags & 0x00200000) {
+                self->field_0x154 = 30.0f;
             } else {
                 self->field_0x154 += cf::CfGameManager::updatePadState();
             }
-            if (self->field_0x154 < lbl_eu_8066694C) {
+            if (self->field_0x154 < 30.0f) {
                 ok = 0;
             } else {
-                self->field_0x154 = lbl_eu_8066694C;
+                self->field_0x154 = 30.0f;
             }
         } else {
             self->field_0x154 = lbl_eu_80666910;
@@ -126,10 +126,10 @@ extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* ob
     } else if ((int)self->field_0x94 == 4) {
         if (ok != 0) {
             self->field_0x154 += cf::CfGameManager::updatePadState();
-            if (self->field_0x154 < lbl_eu_80666950) {
+            if (self->field_0x154 < 3.0f) {
                 ok = 0;
             } else {
-                self->field_0x154 = lbl_eu_80666950;
+                self->field_0x154 = 3.0f;
             }
         } else {
             self->field_0x154 = lbl_eu_80666910;
@@ -351,7 +351,7 @@ void CollObjScaledVecSum(ml::CVec3* out, cf::CfObjectColl* self) {
     if ((int)self->field_0x98 == 3) {
         out->set(*self->CfObject_getPosVector());
     } else {
-        out->set(CollVecSum(self) * lbl_eu_80666930);
+        out->set(CollVecSum(self) * 0.5f);
     }
 }
 
@@ -667,7 +667,7 @@ int cf::CfObject::CfObject_queryTargetState() { return 1; }
 void cf::CfObject::CfObject_refreshSubB0() {}
 
 int cf::CfObject::CfObject_notifyMemberRemoved() {
-    return *(u32*)_pad6C & 1;
+    return field_0x6C & 1;
 }
 
 void cf::CfObject::CfObject_forwardSubObject() {

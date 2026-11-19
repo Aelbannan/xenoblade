@@ -30,6 +30,7 @@
 // const routes the symbol into the readonly sdata2 pool; MWCC then hoists the
 // lfs ABOVE the frame stores (retail shape) - see MWCC_CASES §CExchangeWin.
 extern const float lbl_eu_806682A8;
+static const u32 sEquipSceneNameTags[3] = { 0x10, 0x100000, 0x200000 };
 
 
 CEquipChange::~CEquipChange() {}
@@ -515,7 +516,7 @@ int CEquipChange::RunMainFlow() {
         u32 names[3];
         // Post-increment loads fold the base materialization into the first
         // access (retail: lis + lwzu + +4/+8 displacements).
-        const u32* src = lbl_eu_80508068;
+        const u32* src = sEquipSceneNameTags;
         names[0] = *src++;
         names[1] = *src++;
         names[2] = *src++;
@@ -941,7 +942,7 @@ void CEquipChange::RebuildCursorList() {
         u8 equipped = CItem_initItemImplInstances((CItemData*)weaponItem)->vf30((CItemData*)weaponItem);
         if (equipped != 0) {
             LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText16(), 0);
-            PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&lbl_eu_80664678, (const GXColorS10*)&lbl_eu_80664680);
+            PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&sEquipCursorColorA0, (const GXColorS10*)&sEquipCursorColorB0);
         }
 
         for (int i = 0; i < 3; i++) {
@@ -999,7 +1000,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, &base[0x55], getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&lbl_eu_80664688, (const GXColorS10*)&lbl_eu_80664690);
+                        PaneMatSetTevColorsByName(layout, &base[0x55], (const GXColorS10*)&sEquipCursorColorA1, (const GXColorS10*)&sEquipCursorColorB1);
                     } else {
                         marks[count++] = 1;
                         char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x2a);
@@ -1090,7 +1091,7 @@ void CEquipChange::RebuildCursorList() {
             if (CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item) != 0) {
                 sprintf(rebuildName, &base[0x1d8], i + 1);
                 LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText16(), 0);
-                PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&lbl_eu_80664678, (const GXColorS10*)&lbl_eu_80664680);
+                PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&sEquipCursorColorA0, (const GXColorS10*)&sEquipCursorColorB0);
                 int slot =
                     (s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, 0);
                 if (slot == -1) {
@@ -1134,7 +1135,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&lbl_eu_80664688, (const GXColorS10*)&lbl_eu_80664690);
+                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&sEquipCursorColorA1, (const GXColorS10*)&sEquipCursorColorB1);
                     } else {
                         marks[count++] = 1;
                         char* lbl = BdatTouchStringCell(&base[0xff], &base[0x108], 0x2a);
@@ -1184,7 +1185,7 @@ void CEquipChange::RebuildCursorList() {
                             break;
                         }
                         LayoutSetTextBoxFmtValue(layout, rebuildName, getErrMesText15(), 0);
-                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&lbl_eu_80664688, (const GXColorS10*)&lbl_eu_80664690);
+                        PaneMatSetTevColorsByName(layout, rebuildName, (const GXColorS10*)&sEquipCursorColorA1, (const GXColorS10*)&sEquipCursorColorB1);
                     }
                 }
             } else {
@@ -1265,19 +1266,19 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         // not the cached base pointer.
         scratch = ((nw4r::lyt::Layout*)field_34)->GetRootPane()->FindPaneByName(lbl_eu_80508168 + 0x60, true);
         GXColorS10 color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)0);
-        CopyVec4s((GXColorS10*)&lbl_eu_80664668, &color);
+        CopyVec4s((GXColorS10*)&sEquipCursorSrcColorA, &color);
         color = PaneMatGetS16Quad((nw4r::lyt::Pane*)scratch, (u32)1);
-        CopyVec4s((GXColorS10*)&lbl_eu_80664670, &color);
+        CopyVec4s((GXColorS10*)&sEquipCursorSrcColorB, &color);
         // Alpha halves propagate to the paired colour entries; retail keeps
         // each table address in its own register (pointer locals).
-        char* colA = (char*)&lbl_eu_80664668;
-        char* colB = (char*)&lbl_eu_80664670;
+        char* colA = (char*)&sEquipCursorSrcColorA;
+        char* colB = (char*)&sEquipCursorSrcColorB;
         s16 alpha0 = *(s16*)(colA + 6);
-        char* dstA = (char*)&lbl_eu_80664678;
-        char* dstC = (char*)&lbl_eu_80664688;
+        char* dstA = (char*)&sEquipCursorColorA0;
+        char* dstC = (char*)&sEquipCursorColorA1;
         s16 alpha1 = *(s16*)(colB + 6);
-        char* dstB = (char*)&lbl_eu_80664680;
-        char* dstD = (char*)&lbl_eu_80664690;
+        char* dstB = (char*)&sEquipCursorColorB0;
+        char* dstD = (char*)&sEquipCursorColorB1;
         *(s16*)(dstA + 6) = alpha0;
         *(s16*)(dstB + 6) = alpha1;
         *(s16*)(dstC + 6) = alpha0;
@@ -1314,7 +1315,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         field_30 = (u32)acc;
         acc->Attach(scratch, &base[0x1FA]);
         // Cache the second accessor in the global equip-page flag slot.
-        lbl_eu_80664698 = (u32)field_30;
+        sEquipChangeAccessor = (u32)field_30;
         MaybeRebuild();
         field_28 = 0;
         mRegion14.validateHeap();
@@ -1327,12 +1328,12 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
 // Target us-802077c8: static init - build the six equip-change colour/state
 // palette entries (sdata2) used by the item box UI.
 void sinit_802059E8() {
-    SplitU32ToS16s(&lbl_eu_80664668, 0);
-    SplitU32ToS16s(&lbl_eu_80664670, 0);
-    setGXColorS10(&lbl_eu_80664678, 0x12, 0xa3, 0xe7, 0);
-    setGXColorS10(&lbl_eu_80664680, 0xff, 0xff, 0xff, 0);
-    setGXColorS10(&lbl_eu_80664688, 0xb3, 0x9, 0xc0, 0);
-    setGXColorS10(&lbl_eu_80664690, 0xff, 0xff, 0xff, 0);
+    SplitU32ToS16s(&sEquipCursorSrcColorA, 0);
+    SplitU32ToS16s(&sEquipCursorSrcColorB, 0);
+    setGXColorS10(&sEquipCursorColorA0, 0x12, 0xa3, 0xe7, 0);
+    setGXColorS10(&sEquipCursorColorB0, 0xff, 0xff, 0xff, 0);
+    setGXColorS10(&sEquipCursorColorA1, 0xb3, 0x9, 0xc0, 0);
+    setGXColorS10(&sEquipCursorColorB1, 0xff, 0xff, 0xff, 0);
 }
 
 // --- function definitions kept at end of TU so earlier callers emit `bl` ----
@@ -1423,7 +1424,7 @@ void CEquipChange::RefreshCategory(u8 cat) {
 // the bdat row and return CItem_kindPtr(cat, id). The weapon-row path (cat 3)
 // maps the sub-cursor index to a category, fetches the item, then either
 // equips it through the item-impl vtable hooks or rebuilds the scratch item
-// lbl_eu_80576568 from bdat (guarded by lbl_eu_8066469C) and returns it.
+// sEquipChangeWorkItem from bdat (guarded by sEquipWorkItemInitialized) and returns it.
 // bdat-rebuild fallback shape needs the opt-space stmw r28 frame.
 void* CEquipChange::ResolveEquipItem() {
     // cat declared first - its home web (shared with mapped) gets priority.
@@ -1495,11 +1496,11 @@ void* CEquipChange::ResolveEquipItem() {
     if (res == NULL)
         return 0;
     // bdat-rebuild fallback: clear the scratch item once, find the last bdat
-    // row whose string column reads 3, rebuild lbl_eu_80576568 from it.
-    if (lbl_eu_8066469C == 0) {
-        lbl_eu_80576568.field_04 = 0;
-        lbl_eu_80576568.field_00 = 0;
-        lbl_eu_8066469C = 1;
+    // row whose string column reads 3, rebuild sEquipChangeWorkItem from it.
+    if (sEquipWorkItemInitialized == 0) {
+        sEquipChangeWorkItem.field_04 = 0;
+        sEquipChangeWorkItem.field_00 = 0;
+        sEquipWorkItemInitialized = 1;
     }
     void* table = (void*)lbl_eu_806640EC;
     u32 cnt = Bdat_GetMaxRow_B1EC(table);
@@ -1512,10 +1513,10 @@ void* CEquipChange::ResolveEquipItem() {
     }
     u32 w = res->field_00;
     u16 h = res->field_04;
-    CItem_initSlot(&lbl_eu_80576568, row, ((u32)h >> 16) & 0xFFF, (w >> 22) & 7);
-    CItemImpl* impl2 = CItem_initItemImplInstances((CItemData*)&lbl_eu_80576568);
-    impl2->vf94((CItemData*)&lbl_eu_80576568, (s16)((w >> 11) & 0x7FF));
-    return &lbl_eu_80576568;
+    CItem_initSlot((CItemData*)&sEquipChangeWorkItem, row, ((u32)h >> 16) & 0xFFF, (w >> 22) & 7);
+    CItemImpl* impl2 = CItem_initItemImplInstances((CItemData*)&sEquipChangeWorkItem);
+    impl2->vf94((CItemData*)&sEquipChangeWorkItem, (s16)((w >> 11) & 0x7FF));
+    return &sEquipChangeWorkItem;
     }
 }
 
@@ -1628,7 +1629,7 @@ void CEquipChange::CleanupFiles() {
         delete (nw4r::lyt::Layout*)layout;
         field_34 = 0;
     }
-    lbl_eu_80664698 = 0;
+    sEquipChangeAccessor = 0;
     releaseArcResourceAccessor(field_2C);
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)field_30);
     mRegion04.deleteRegion();

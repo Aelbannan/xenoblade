@@ -8,7 +8,9 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 
-// C-linkage runtime imports (retail symbol names - keep linkage/signature verbatim).
+struct CEventFile;
+
+// C-linkage runtime imports
 extern "C" long __ptmf_test(void* ptmf);
 
 
@@ -136,25 +138,19 @@ struct CfNandSaveTailCalc {
 };
 
 namespace cf{
-    // +0x54 interface slot (retail IWorkEvent): modelled as a novtable base so
-    // IScnRender lands at +0x58 like retail. Declared-only virtuals and the
-    // implicit trivial dtor keep the derived ctor/dtor free of base calls.
-    class __declspec(novtable) CIWorkEventSlot {
+    // The vtable and RTTI are emitted by MWCC from the real base classes and
+    // overrides below (retail's three subobject vtables live in one table).
+    class CfNandManager : public CTTask<CfNandManager>, public IWorkEvent, public IScnRender{
     public:
-        virtual void vf0C();
-    };
-    // The retail TU references its vtable blob through the plain
-    // lbl_eu_80536BBC label, so suppress MWCC's auto __vt__ emission and the
-    // auto vptr stores in ctors/dtors; the ctor/dtor hand-store all three
-    // subobject vtables explicitly (Clib/CLibLayout recipe).
-    class __declspec(novtable) CfNandManager : public CTTask<CfNandManager>, public CIWorkEventSlot, public IScnRender{
-    public:
+        CfNandManager(void* arg);
+        virtual ~CfNandManager();
+
         // Retail US symbol for this getter is the unmangled NandImageLive
         // (called as a static member only from kyoshin/CTaskGameCf.cpp).
         static u32 NandImageLive();
 
         //0x000-0x054 CTTask
-        //0x054-0x058 CIWorkEventSlot (novtable interface base, hand-stored)
+        //0x054-0x058 IWorkEvent
         //0x058-0x05C IScnRender
         /* 0x5C */ u8* field_0x5C;          // heap buffer (freed by Term)
         /* 0x60 */ CfNandEventQueue mEventQueue; // event queue + ring metadata
@@ -186,15 +182,11 @@ namespace cf{
         }
 
 
-        void Term();
-        void Move();
-        void cbRenderBefore();
-        void Init();
-        void OnFileEvent();
-        void handleFileEvent();
-        void destroyViaWorkEvent();
-        void handleRenderCallback();
-        void destroyViaRender();
+        virtual void Term();
+        virtual void Move();
+        virtual void Init();
+        virtual bool handleFileEvent(CEventFile* event);
+        virtual void cbRenderBefore();
     }; //size = 0x194
 } //namespace cf
 
@@ -216,26 +208,18 @@ extern u16 gCfNandCaptureState;   // u16 counter cleared on teardown
 // CfRes.cpp; declared here for the CfNandManager TU's teardown path.
 extern "C" int CfRes_getD80Flag();
 // Global mode flag (.sbss); bit 0x200000 gates CfNandManager::Move's NAND pump.
-extern u32 lbl_eu_80663E28;
-// Global presentation/event bitfield; 0xafa40000 mask gates NandQueueSaveCk.
+
 // NAND teardown in-progress flag (.sbss u16) set around NandApplySave in the
 // __dt__8023E448 teardown path (also polled by CSysWinScenarioLog).
-extern u16 lbl_eu_80664772;
+extern u16 gNandTeardownFlag;
 // Extra sbss words cleared by CfNandManager::~CfNandManager.
-extern u8  lbl_eu_8066476D;
+extern u8  gNandTeardownByte;
 extern u16 lbl_eu_80664774;
-// CfNandManager vtable (.data, 0xC4 bytes; the dtor stores it explicitly).
-extern const void* lbl_eu_80536BBC[49];
 
-// vtable overwrite in the ctor).
-extern const void* lbl_eu_80536CB4[9];
-
-// Null pointer-to-member-function constant (defined in CUICfManager.cpp).
 extern u32 __ptmf_null[3];
 
 // Party-snapshot fallback data (.bss, 3 words) for missing player slots
 // (NandCopyParty) and the fallback float (.sbss).
-extern u32 lbl_eu_8057164C[3];
 extern f32 lbl_eu_80663E54;
 
 // First 8 bytes shared by the snapshot entry and the player info struct;
@@ -556,10 +540,10 @@ extern "C" f32 MenuSnd_GetSeVol_96A0();
 extern "C" f32 MenuSnd_GetMasterVol_95EC();
 extern "C" struct CfNandNameRoot* getReslistC48(); // save-name directory container
 // Retail symbol is CfGameManager's static member but returns its result in r3.
-extern char* lbl_eu_806641B8;                       // item blob (see CItem.hpp)
-extern u16 lbl_eu_80661AF4;
-extern u16 lbl_eu_80661AF6;
-extern f32 lbl_eu_80663D94;                         // progress-area float default
+extern char* spItemBlock;                       // item blob (see CItem.hpp)
+extern u16 gCfTCalendarDay;
+extern u16 gCfTCalendarYear;
+extern f32 gCfTPlayClockSeconds;                         // progress-area float default
 
 // Descriptor block preceding each CRC'd region of the save image.
 struct CfNandSaveTagBlock {

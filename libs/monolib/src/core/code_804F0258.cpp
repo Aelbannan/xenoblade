@@ -15,21 +15,21 @@ namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // === .sbss size=0x28 align=8 (zero-fill globals owned by this TU) ===
 // A68-A74: last emitted marker screen position (written by recordMarkerPos).
-extern "C" f32 lbl_eu_80665A68 = 0;
-extern "C" f32 lbl_eu_80665A6C = 0;
-extern "C" f32 lbl_eu_80665A70 = 0;
-extern "C" f32 lbl_eu_80665A74 = 0;
+extern "C" f32 sMarkerTailX = 0;
+extern "C" f32 sMarkerTailY = 0;
+extern "C" f32 sMarkerTrailX = 0;
+extern "C" f32 sMarkerTrailY = 0;
 // Retail object spans 8 bytes; only the leading flag byte is accessed.
-extern "C" u8 lbl_eu_80665A78[8] = {0};
+extern "C" u8 sGradientRampInitFlag[8] = {0};
 // Retail layout: A80 is an 8-byte align-8 object and A8A spans 6 bytes; the
 // code only ever touches the leading flag byte.
-extern "C" u8 lbl_eu_80665A80[8] __attribute__((aligned(8))) = {0}; // gradient table init flag (+retail tail pad)
-extern "C" u8 lbl_eu_80665A88 = 0; // tex-scale param table init flag
-extern "C" u8 lbl_eu_80665A89 = 0;
+extern "C" u8 sDefaultQuadInitFlag[8] __attribute__((aligned(8))) = {0}; // gradient table init flag (+retail tail pad)
+extern "C" u8 sTexScaleInitFlag = 0; // tex-scale param table init flag
+extern "C" u8 sDefaultMatrixInitFlag = 0;
 // Retail A8A is a 6-byte object (flag + 5 anonymous tail bytes); MWCC
 // force-aligns any >=2-byte .sbss object to 4, so the tail is modeled as
 // separate 1-byte globals (CLODCacheManagerS retail-tail recipe).
-extern "C" u8 lbl_eu_80665A8A = 0;   // cache view init flag
+extern "C" u8 sCacheViewInitFlag = 0;   // cache view init flag
 extern "C" u8 lbl_eu_80665A8B_pad = 0;
 extern "C" u8 lbl_eu_80665A8C_pad = 0;
 extern "C" u8 lbl_eu_80665A8D_pad = 0;
@@ -74,7 +74,6 @@ int setupEffectDrawCtx(void* draw, void* desktop, void* material);
 void releaseEffectDrawTex(void* draw);
 void blitEffectViewRect(void* draw, int a, const void* b);
 void SchedTexLoadCached(void* tex, int index, int cacheIndex, int wrap);
-extern const f32 lbl_eu_8066B478; // draw-epsilon
 
 extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern void* cacheInstance__9CDeviceGX;
@@ -98,58 +97,12 @@ ml::CMat34* getTexMtx(int update, TexScaleParam* params);
 void DbgSetPerspectiveProj(const void* src);
 f32 getWidthScale__9CDeviceVIFv();
 
-// Shared read-only literals (monolibdata2 .sdata2).
-extern const f32 lbl_eu_8066B440; // size epsilon
-extern const f32 lbl_eu_8066B444; // direction clamp min
-extern const f32 lbl_eu_8066B448; // direction clamp max
-extern const f32 lbl_eu_8066B44C; // direction scale
-extern const f32 lbl_eu_8066B488; // spread scale
-// B4B8 declared BEFORE B498: MWCC unifies its internal (f32)u16 2^52 constant
-// with the first identical extern, and blitTexQuad's retail copy lives at
-// B4B8 while the explicitly-passed conv helpers pin their own aliases.
-extern const f64 lbl_eu_8066B498; // 0x4330000000000000 (u->f magic)
-extern const f64 lbl_eu_8066B4B8; // 0x4330000000000000 (u->f magic)
-extern const f64 lbl_eu_8066B4A0; // 0x4330000080000000 (s->f magic)
-extern const f32 lbl_eu_8066B4A8; // near distance threshold
-extern const f32 lbl_eu_8066B4AC; // far distance factor
-extern const f32 lbl_eu_8066B4B0; // 0.0f
-extern const f32 lbl_eu_8066B4F0; // 0.0f
-extern const f32 lbl_eu_8066B4F4; // quad inside threshold
-extern const f32 lbl_eu_8066B4F8;
-extern const f32 lbl_eu_8066B450;
-extern const f32 lbl_eu_8066B454;
-extern const f32 lbl_eu_8066B458;
-extern const f32 lbl_eu_8066B45C;
-extern const f32 lbl_eu_8066B460;
-extern const f64 lbl_eu_8066B468;
-extern const f32 lbl_eu_8066B464;
-extern const f64 lbl_eu_8066B470;
-extern const f32 lbl_eu_8066B4C0;
-extern const f32 lbl_eu_8066B4C4; // textured-path chan ambient
-extern const f32 lbl_eu_8066B4C8;
-extern const f32 lbl_eu_8066B4CC;
-extern const f32 lbl_eu_8066B4D0;
-extern const f64 lbl_eu_8066B4D8; // 0x4330000000000000 (i->f magic)
-extern const f64 lbl_eu_8066B500; // 0x4330000000000000 (u->f magic)
-extern const f32 lbl_eu_8066B508; // 0.5f
-extern const f32 lbl_eu_8066B50C;
-extern const f32 lbl_eu_8066B510; // 1.0f
-extern const f64 lbl_eu_8066B518; // 0x4330000000000000 (u->f magic)
-extern const f64 lbl_eu_8066B520; // 0x4330000080000000 (s->f magic)
-extern const u32 lbl_eu_8066B47C; // F10A0 chan ambient (word-loaded)
-extern const u32 lbl_eu_8066B480; // F10A0 textured-path chan ambient
-extern const f32 lbl_eu_8066B484; // F10A0
-extern const f32 lbl_eu_8066B488; // spread scale
-extern const f32 lbl_eu_8066B48C; // F10A0 size-scale
-extern const f32 lbl_eu_8066B490; // F10A0 chan ambient
-extern const f32 lbl_eu_8066B494; // 6.24 (2pi wrap)
-
 // .bss tables shared with code_804EE558.cpp (defined there).
-extern f32 lbl_eu_806617C0[12];
-extern f32 lbl_eu_806617F0[4];
-extern f32 lbl_eu_80661800[4];
-extern f32 lbl_eu_80661810[12];
-extern f32 lbl_eu_80661840[4];
+extern f32 sMarkerGradientRamp[12];
+extern f32 sDefaultDrawQuad[4];
+extern f32 sTexScaleParams[4];
+extern f32 sTexScaleMatrix[12];
+extern f32 sTexScaleOutput[4];
 }
 
 // Minimal draw-context object (see code_804D854C.cpp).
@@ -191,41 +144,6 @@ struct TexMtxSrc {
     u32 mField08;   // 0x08
 };
 
-// Explicit 0x4330-magic integer -> float conversions so MWCC references the
-// shared named .sdata2 magic doubles instead of synthesizing its own pool
-// entries (retail relocs point at lbl_eu_* names).
-static inline f32 convU16ToF(u16 v, f64 magic) {
-    union {
-        u32 w[2];
-        f64 d;
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000;
-    return (f32)(c.d - magic);
-}
-
-static inline f32 convS32ToF(s32 v, f64 magic) {
-    union {
-        u32 w[2];
-        f64 d;
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000;
-    c.w[0] = 0x43300000;
-    return (f32)(c.d - magic);
-}
-
-// Int -> double via the 0x4330 magic, kept in double precision (used for the
-// gradient-step loop counter comparison; MWCC keeps the full double).
-static inline f64 convS32ToD(s32 v, f64 magic) {
-    union {
-        u32 w[2];
-        f64 d;
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000;
-    c.w[0] = 0x43300000;
-    return c.d - magic;
-}
-
 class CMarkerDistProvider;
 
 // Marker trail renderer (see definition below).
@@ -238,8 +156,8 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
 void drawMarkerEntry(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDrawSize* size,
                    const f32* color, void* material, TexMtxSrc* mtxSrc, const void* clampInfo) {
     // Degenerate size or fully transparent: nothing to draw.
-    if (size->field_0x0c <= lbl_eu_8066B478) return;
-    if (alpha <= lbl_eu_8066B478) return;
+    if (size->field_0x0c <= 0.0f) return;
+    if (alpha <= 0.0f) return;
     if (clampInfo == NULL) clampInfo = (const void*)&ceRandomizer;
 
     snapTexCursor(desktop);
@@ -265,16 +183,6 @@ void drawMarkerEntry(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDr
     restoreTexCursor(desktop);
 }
 
-// Float -> u32 bit copy (spill through stack; see floatBits below).
-static inline u32 f32bits10A0(f32 f) {
-    union {
-        f32 f;
-        u32 u;
-    } c;
-    c.f = f;
-    return c.u;
-}
-
 class CMarkerDistProvider;
 class CMarkerUser;
 extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin, ml::CVec3* extent,
@@ -284,14 +192,6 @@ extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin,
 // Pack the four scaled size floats into the marker tint color bytes.
 struct ColorBytes {
     u8 c[4];
-};
-
-// Shared 0x4330-magic int->float conversion scratch (big-endian: w[0] holds
-// the high word). Reusing one union keeps the composite in a single stack
-// slot pair like retail instead of one spill slot per conversion site.
-union IntFltCvt {
-    u32 w[2];
-    f64 d;
 };
 
 // GX FIFO write window used by the direct vertex emitters here.
@@ -308,21 +208,18 @@ union FifoWord {
 // the four gradient-table segments emitting trail dots through
 // recordMarkerPos. The triangle strip is bookended by two FIFO vertices: the
 // scaled marker position up front and the first emitted trail point (saved
-// in lbl_eu_80665A68..74 via recordMarkerPos's saveFirst) at the end.
+// in the saved marker coordinates via recordMarkerPos's saveFirst) at the end.
 extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const ml::CVec3* pos,
                   const f32* sizeF, s32 density, CMarkerDistProvider* prov,
                   QuadTexCtx* mtxSrc, s32 boundFlag) {
-    IntFltCvt cvt;
-    cvt.w[0] = 0x43300000;
-    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    f32 scrH = (f32)(cvt.d - lbl_eu_8066B498);
+    f32 scrH = (f32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
 
     // Scale the four size floats and pack them to bytes (marker tint color).
     GXRenderModeObj* rm = getRenderModeObj__9CDeviceVIFv();
-    f32 s0 = lbl_eu_8066B484 * sizeF[0];
-    f32 s1 = lbl_eu_8066B484 * sizeF[1];
-    f32 s2 = lbl_eu_8066B484 * sizeF[2];
-    f32 s3 = lbl_eu_8066B484 * sizeF[3];
+    f32 s0 = 255.0f * sizeF[0];
+    f32 s1 = 255.0f * sizeF[1];
+    f32 s2 = 255.0f * sizeF[2];
+    f32 s3 = 255.0f * sizeF[3];
     u16 rawW = rm->fbWidth;
     ColorBytes col;
     col.c[0] = (u8)(s32)s0;
@@ -330,13 +227,10 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
     col.c[2] = (u8)(s32)s2;
     col.c[3] = (u8)(s32)s3;
     ColorBytes colOut = col;
-    cvt.w[1] = rawW;
-    f32 scrW1 = (f32)(cvt.d - lbl_eu_8066B498);
+    f32 scrW1 = (f32)rawW;
 
-    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    f32 scrW2 = (f32)(cvt.d - lbl_eu_8066B498);
-    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    f32 scrH2 = (f32)(cvt.d - lbl_eu_8066B498);
+    f32 scrW2 = (f32)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    f32 scrH2 = (f32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
     pushProjMtx(1, scrH2, scrW2);
 
     Mtx mtxId;
@@ -360,7 +254,7 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
         GXSetNumChans(1);
         GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)0, (GXColorSrc)1,
                       GX_LIGHT_NULL, GX_DF_NONE, (GXAttnFn)2);
-        GXColor amb = *reinterpret_cast<const GXColor*>(&lbl_eu_8066B47C);
+        GXColor amb = { 0xFF, 0xFF, 0xFF, 0xFF };
         GXSetChanAmbColor(GX_COLOR0A0, amb);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap,
                       GX_COLOR0A0);
@@ -375,7 +269,7 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
     } else {
         // Textured marker: second texcoord uses the shared matrix or one
         // rebuilt in place from the caller's source floats.
-        GXColor amb = *reinterpret_cast<const GXColor*>(&lbl_eu_8066B480);
+        GXColor amb = { 0xFF, 0xFF, 0xFF, 0xFF };
         GXSetNumTexGens(2);
         GXSetNumTevStages(2);
         ml::CMat34* tm = getTexMtx(1, 0);
@@ -386,7 +280,7 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
             GXSetTexCoordGen2(GX_TEXCOORD1, (GXTexGenType)1, (GXTexGenSrc)5,
                               0x3c, GX_FALSE, 0x7d);
         } else {
-            const f32 zc = lbl_eu_8066B478;
+            const f32 zc = 0.0f;
             mtxSrc->mtx[0][0] = mtxSrc->field_0x18;
             mtxSrc->mtx[0][1] = zc;
             mtxSrc->mtx[0][2] = zc;
@@ -433,97 +327,91 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
     }
 
     // Lazy init of the gradient ramp corners (B488-scaled unit square).
-    if (lbl_eu_80665A78[0] == 0) {
-        f32 z = lbl_eu_8066B478;
-        f32 gs = lbl_eu_8066B488;
-        lbl_eu_806617C0[0] = z;
-        lbl_eu_806617C0[1] = z;
-        lbl_eu_806617C0[2] = z;
-        lbl_eu_806617C0[3] = gs;
-        lbl_eu_806617C0[4] = z;
-        lbl_eu_806617C0[5] = z;
-        lbl_eu_806617C0[6] = gs;
-        lbl_eu_806617C0[7] = gs;
-        lbl_eu_806617C0[8] = z;
-        lbl_eu_806617C0[9] = z;
-        lbl_eu_806617C0[10] = gs;
-        lbl_eu_806617C0[11] = z;
-        lbl_eu_80665A78[0] = 1;
+    if (sGradientRampInitFlag[0] == 0) {
+        f32 z = 0.0f;
+        f32 gs = 1.0f;
+        sMarkerGradientRamp[0] = z;
+        sMarkerGradientRamp[1] = z;
+        sMarkerGradientRamp[2] = z;
+        sMarkerGradientRamp[3] = gs;
+        sMarkerGradientRamp[4] = z;
+        sMarkerGradientRamp[5] = z;
+        sMarkerGradientRamp[6] = gs;
+        sMarkerGradientRamp[7] = gs;
+        sMarkerGradientRamp[8] = z;
+        sMarkerGradientRamp[9] = z;
+        sMarkerGradientRamp[10] = gs;
+        sMarkerGradientRamp[11] = z;
+        sGradientRampInitFlag[0] = 1;
     }
 
     // Normalize the marker position against the framebuffer and clamp to the
     // unit square; textured markers carry a second texcoord pair per vertex.
     bool textured = boundFlag >= 0;
     f32 v[3];
-    v[2] = lbl_eu_8066B478;
+    v[2] = 0.0f;
     v[0] = pos->x / scrH;
     v[1] = pos->y / scrW1;
-    if (v[0] < lbl_eu_8066B478) v[0] = lbl_eu_8066B478;
-    if (lbl_eu_8066B488 < v[0]) v[0] = lbl_eu_8066B488;
-    if (v[1] < lbl_eu_8066B478) v[1] = lbl_eu_8066B478;
-    if (lbl_eu_8066B488 < v[1]) v[1] = lbl_eu_8066B488;
+    if (v[0] < 0.0f) v[0] = 0.0f;
+    if (1.0f < v[0]) v[0] = 1.0f;
+    if (v[1] < 0.0f) v[1] = 0.0f;
+    if (1.0f < v[1]) v[1] = 1.0f;
 
     // Angle from the normalized position to each ramp corner, wrapped into
     // [corner-PI, corner+PI]; each segment's dot count scales with the
     // wrapped angle magnitude relative to density/TAU.
     f32 ang[4];
-    ang[0] = (f32)atan2(lbl_eu_806617C0[1] - v[1], lbl_eu_806617C0[0] - v[0]);
-    ang[1] = (f32)atan2(lbl_eu_806617C0[4] - v[1], lbl_eu_806617C0[3] - v[0]);
-    ang[2] = (f32)atan2(lbl_eu_806617C0[7] - v[1], lbl_eu_806617C0[6] - v[0]);
-    ang[3] = (f32)atan2(lbl_eu_806617C0[10] - v[1], lbl_eu_806617C0[9] - v[0]);
+    ang[0] = (f32)atan2(sMarkerGradientRamp[1] - v[1], sMarkerGradientRamp[0] - v[0]);
+    ang[1] = (f32)atan2(sMarkerGradientRamp[4] - v[1], sMarkerGradientRamp[3] - v[0]);
+    ang[2] = (f32)atan2(sMarkerGradientRamp[7] - v[1], sMarkerGradientRamp[6] - v[0]);
+    ang[3] = (f32)atan2(sMarkerGradientRamp[10] - v[1], sMarkerGradientRamp[9] - v[0]);
 
     f32 a0 = ang[0];
-    f32 lo0 = ang[0] - lbl_eu_8066B490;
-    f32 hi0 = lbl_eu_8066B490 + ang[0];
-    while (a0 <= lo0) a0 += lbl_eu_8066B48C;
-    while (hi0 < a0) a0 -= lbl_eu_8066B48C;
-    cvt.w[1] = (u32)density ^ 0x80000000u;
-    s32 n0 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a0 - ang[0]) /
-                   lbl_eu_8066B494);
+    f32 lo0 = ang[0] - 3.14f;
+    f32 hi0 = 3.14f + ang[0];
+    while (a0 <= lo0) a0 += 6.28f;
+    while (hi0 < a0) a0 -= 6.28f;
+    s32 n0 = (s32)((f32)density * fabsf(a0 - ang[0]) /
+                   6.24f);
     if (n0 <= 0) n0 = 1;
 
     f32 a1 = ang[1];
-    f32 lo1 = ang[1] - lbl_eu_8066B490;
-    f32 hi1 = lbl_eu_8066B490 + ang[1];
-    while (a1 <= lo1) a1 += lbl_eu_8066B48C;
-    while (hi1 < a1) a1 -= lbl_eu_8066B48C;
-    cvt.w[1] = (u32)density ^ 0x80000000u;
-    s32 n1 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a1 - ang[1]) /
-                   lbl_eu_8066B494);
+    f32 lo1 = ang[1] - 3.14f;
+    f32 hi1 = 3.14f + ang[1];
+    while (a1 <= lo1) a1 += 6.28f;
+    while (hi1 < a1) a1 -= 6.28f;
+    s32 n1 = (s32)((f32)density * fabsf(a1 - ang[1]) /
+                   6.24f);
     if (n1 <= 0) n1 = 1;
 
     f32 a2 = ang[2];
-    f32 lo2 = ang[2] - lbl_eu_8066B490;
-    f32 hi2 = lbl_eu_8066B490 + ang[2];
-    while (a2 <= lo2) a2 += lbl_eu_8066B48C;
-    while (hi2 < a2) a2 -= lbl_eu_8066B48C;
-    cvt.w[1] = (u32)density ^ 0x80000000u;
-    s32 n2 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a2 - ang[2]) /
-                   lbl_eu_8066B494);
+    f32 lo2 = ang[2] - 3.14f;
+    f32 hi2 = 3.14f + ang[2];
+    while (a2 <= lo2) a2 += 6.28f;
+    while (hi2 < a2) a2 -= 6.28f;
+    s32 n2 = (s32)((f32)density * fabsf(a2 - ang[2]) /
+                   6.24f);
     if (n2 <= 0) n2 = 1;
 
     f32 a3 = ang[3];
-    f32 lo3 = ang[3] - lbl_eu_8066B490;
-    f32 hi3 = lbl_eu_8066B490 + ang[3];
-    while (a3 <= lo3) a3 += lbl_eu_8066B48C;
-    while (hi3 < a3) a3 -= lbl_eu_8066B48C;
-    cvt.w[1] = (u32)density ^ 0x80000000u;
-    s32 n3 = (s32)((f32)(cvt.d - lbl_eu_8066B4A0) * fabsf(a3 - ang[3]) /
-                   lbl_eu_8066B494);
+    f32 lo3 = ang[3] - 3.14f;
+    f32 hi3 = 3.14f + ang[3];
+    while (a3 <= lo3) a3 += 6.28f;
+    while (hi3 < a3) a3 -= 6.28f;
+    s32 n3 = (s32)((f32)density * fabsf(a3 - ang[3]) /
+                   6.24f);
     if (n3 <= 0) n3 = 1;
 
     // One triangle strip: two bookend vertices plus one dot per step.
     GXBegin((GXPrimitive)0xa0, GX_VTXFMT0, (u16)((n3 + n2) + (n1 + n0) + 2));
 
     // Leading strip vertex: scaled marker position with transparent tint.
-    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    f32 hh = (f32)(cvt.d - lbl_eu_8066B498);
-    cvt.w[1] = getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    f32 ww = (f32)(cvt.d - lbl_eu_8066B498);
+    f32 hh = (f32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    f32 ww = (f32)getRenderModeObj__9CDeviceVIFv()->fbWidth;
     FifoWord* fifo = reinterpret_cast<FifoWord*>(0xCC008000);
     fifo->f = v[0] * hh;
     fifo->f = v[1] * ww;
-    fifo->f = lbl_eu_8066B478;
+    fifo->f = 0.0f;
     fifo->b = colOut.c[0];
     fifo->b = colOut.c[1];
     fifo->b = colOut.c[2];
@@ -537,7 +425,7 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
 
     // Emit the four trail segments; only the first call remembers its first
     // emitted point (reused as the trailing strip vertex below).
-    ml::CVec3* t = reinterpret_cast<ml::CVec3*>(lbl_eu_806617C0);
+    ml::CVec3* t = reinterpret_cast<ml::CVec3*>(sMarkerGradientRamp);
     bool save = true;
     recordMarkerPos(reinterpret_cast<CMarkerUser*>(draw->field_0x00), alpha, t,
                   t + 1, reinterpret_cast<ml::CVec3*>(v), n0, colOut.c, prov,
@@ -556,18 +444,18 @@ extern "C" s32 drawMarkerTrail(s32 texMap, f32 alpha, CDrawCtxLocal* draw, const
                   textured, save);
 
     // Trailing strip vertex: first trail point saved by recordMarkerPos.
-    fifo->f = lbl_eu_80665A68;
-    fifo->f = lbl_eu_80665A6C;
-    fifo->f = lbl_eu_8066B478;
+    fifo->f = sMarkerTailX;
+    fifo->f = sMarkerTailY;
+    fifo->f = 0.0f;
     fifo->b = colOut.c[0];
     fifo->b = colOut.c[1];
     fifo->b = colOut.c[2];
     fifo->b = colOut.c[3];
-    fifo->f = lbl_eu_80665A70;
-    fifo->f = lbl_eu_80665A74;
+    fifo->f = sMarkerTrailX;
+    fifo->f = sMarkerTrailY;
     if (textured) {
-        fifo->f = lbl_eu_80665A70;
-        fifo->f = lbl_eu_80665A74;
+        fifo->f = sMarkerTrailX;
+        fifo->f = sMarkerTrailY;
     }
 }
 
@@ -593,19 +481,19 @@ extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin,
     // Screen-space basis: x is scaled against the framebuffer height and y
     // against the width (retail converts height first, then the loop count,
     // then reads/converts the width).
-    f32 scrX = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    f32 scrX = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
     // Width halfword is loaded before the vector setup but converted after it
     // (retail keeps the raw value live across the delta computation).
     u16 rawW = getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    f32 fkCount = convS32ToF(count, lbl_eu_8066B4A0);
+    f32 fkCount = (f32)(count);
 
     ml::CVec3 delta;
     nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(&delta),
                         reinterpret_cast<const nw4r::math::VEC3*>(extent),
                         reinterpret_cast<const nw4r::math::VEC3*>(origin));
     ml::CVec3 dir = delta;
-    f32 w = convU16ToF(rawW, lbl_eu_8066B498);
-    f32 k = lbl_eu_8066B488 / fkCount;
+    f32 w = (f32)(rawW);
+    f32 k = 1.0f / fkCount;
     ml::CVec3 inc;
     nw4r::math::VEC3Scale(reinterpret_cast<nw4r::math::VEC3*>(&inc),
                           reinterpret_cast<const nw4r::math::VEC3*>(&dir), k);
@@ -620,15 +508,15 @@ extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin,
         ml::CVec3 nrm = diff;
         ml::CVec3 work = nrm;
         f32 mag = PSVECMag(work);
-        if (lbl_eu_8066B4A8 >= mag) {
+        if (0.5f >= mag) {
             // Far path: fixed falloff factor times the distance factor.
             nw4r::math::VEC3Scale(reinterpret_cast<nw4r::math::VEC3*>(&work),
                                   reinterpret_cast<const nw4r::math::VEC3*>(&work),
-                                  lbl_eu_8066B4AC * scale * provider->getDistFactor());
+                                  2.0f * scale * provider->getDistFactor());
         } else {
             // Near path: normalize the offset (degenerate -> zero vector),
             // then scale by the distance factor alone.
-            if (work.x * work.x + work.y * work.y + work.z * work.z == lbl_eu_8066B478) {
+            if (work.x * work.x + work.y * work.y + work.z * work.z == 0.0f) {
                 work = ml::CVec3::zero;
             } else {
                 PSVECNormalize(work, work);
@@ -642,7 +530,7 @@ extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin,
         f32 py = cur.y * w + work.y;
         s_altFifo->f = px;
         s_altFifo->f = py;
-        s_altFifo->f = lbl_eu_8066B478;
+        s_altFifo->f = 0.0f;
         s_altFifo->b = colorBytes[0];
         s_altFifo->b = colorBytes[1];
         s_altFifo->b = colorBytes[2];
@@ -656,10 +544,10 @@ extern "C" void recordMarkerPos(CMarkerUser* user, f32 scale, ml::CVec3* origin,
         }
         if (saveFirst && i == 0) {
             // Remember the first emitted screen position for later reuse.
-            lbl_eu_80665A68 = px;
-            lbl_eu_80665A6C = py;
-            lbl_eu_80665A70 = cur.x;
-            lbl_eu_80665A74 = cur.y;
+            sMarkerTailX = px;
+            sMarkerTailY = py;
+            sMarkerTrailX = cur.x;
+            sMarkerTrailY = cur.y;
         }
         nw4r::math::VEC3Add(reinterpret_cast<nw4r::math::VEC3*>(&cur),
                             reinterpret_cast<const nw4r::math::VEC3*>(&cur),
@@ -681,15 +569,15 @@ void blitTexQuad(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
     f32 a;
     a = alpha;
     fadeMax = alphaMax;
-    if (size->field_0x0c <= lbl_eu_8066B4B0) return;
-    if (a <= lbl_eu_8066B4B0) return;
-    if (fadeMax <= lbl_eu_8066B4B0) fadeMax = a;
+    if (size->field_0x0c <= 0.0f) return;
+    if (a <= 0.0f) return;
+    if (fadeMax <= 0.0f) fadeMax = a;
 
     ml::CVec3 p = *pos;
     f32 fbH = (f32)getRenderModeObj__9CDeviceVIFv()->efbHeight;
     f32 fbW = (f32)getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    if (p.x < lbl_eu_8066B4B0) p.x = lbl_eu_8066B4B0;
-    if (p.y < lbl_eu_8066B4B0) p.y = lbl_eu_8066B4B0;
+    if (p.x < 0.0f) p.x = 0.0f;
+    if (p.y < 0.0f) p.y = 0.0f;
     if (fbW < p.x) p.x = fbW;
     if (fbH < p.y) p.y = fbH;
 
@@ -747,22 +635,22 @@ static inline u32 floatBits(f32 f) {
 void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32* rgba,
                    s32 boundFlag, const void* mtxSrc, f32 alpha, f32 alphaMax) {
     CDrawCtxLocal* draw = static_cast<CDrawCtxLocal*>(drawCtx);
-    const f32 zero = lbl_eu_8066B4B0;
+    const f32 zero = 0.0f;
 
     // Framebuffer dims: height first, then width, each via its own
     // getRenderModeObj fetch (matches retail fetch order).
-    f32 x1 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    f32 x1 = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
     f32 ratio = alpha / alphaMax;
-    f32 y1 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B498);
+    f32 y1 = (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
 
     f32 px = pos->x;
     f32 py = pos->y;
 
     // Normalize the quad position against the framebuffer size.
-    f32 kx = lbl_eu_8066B4C8 * x1;
+    f32 kx = 0.5f * x1;
     f32 tx = px / kx;
     f32 dx = (x1 - px) / kx;
-    f32 ky = lbl_eu_8066B4C8 * y1;
+    f32 ky = 0.5f * y1;
     f32 ty = py / ky;
     f32 dy = (y1 - py) / ky;
 
@@ -771,10 +659,10 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
     // (MWCC stages the four fctiwz results through spill slots and packs
     // them with a single word copy).
     s8 col[4];
-    col[0] = (s8)(rgba[0] * lbl_eu_8066B4CC);
-    col[1] = (s8)(rgba[1] * lbl_eu_8066B4CC);
-    col[2] = (s8)(rgba[2] * lbl_eu_8066B4CC);
-    col[3] = (s8)(rgba[3] * lbl_eu_8066B4CC);
+    col[0] = (s8)(rgba[0] * 255.0f);
+    col[1] = (s8)(rgba[1] * 255.0f);
+    col[2] = (s8)(rgba[2] * 255.0f);
+    col[3] = (s8)(rgba[3] * 255.0f);
 
     f32 u0 = px / x1;
     f32 v0 = py / y1;
@@ -789,8 +677,8 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
     f32 y0 = zero;
 
     // Projection refresh dims (retail reads efbHeight for both slots here).
-    f32 mh = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
-    f32 mw = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
+    f32 mh = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+    f32 mw = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
     pushProjMtx(1, mw, mh);
 
     Mtx mtxId;
@@ -803,7 +691,6 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
     GXLoadTexObj(reinterpret_cast<GXTexObj*>(draw->field_0x04), (GXTexMapID)texMap);
 
     FifoWord* fifo;
-    const f64 i2fMagic = lbl_eu_8066B4D8;
 
     if (boundFlag < 0) {
         // Untextured single-texgen gradient path.
@@ -815,7 +702,7 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
         GXSetNumChans(1);
         GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, (GXColorSrc)1, (GXColorSrc)0, GX_LIGHT_NULL,
                       GX_DF_NONE, (GXAttnFn)2);
-        u32 amb = floatBits(lbl_eu_8066B4C0);
+        u32 amb = 0xFFFFFFFFu;
         GXSetChanAmbColor(GX_COLOR0A0, *reinterpret_cast<GXColor*>(&amb));
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
         GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
@@ -829,7 +716,7 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
 
         fifo = reinterpret_cast<FifoWord*>(0xCC008000);
         s16 i = 0;
-        while (convS32ToD(i, i2fMagic) < ratio) {
+        while ((f64)i < ratio) {
             x0 -= stepPx;
             x1 += stepDx;
             col[3] >>= 1;
@@ -853,14 +740,14 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
             fifo->f = x1; fifo->f = y1;
             fifo->f = zero;
             fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
-            fifo->f = lbl_eu_8066B4D0; fifo->f = zero;
+            fifo->f = 1.0f; fifo->f = zero;
             fifo->f = x1; fifo->f = y1;
-            fifo->f = lbl_eu_8066B4D0; fifo->f = lbl_eu_8066B4D0;
-            fifo->f = lbl_eu_8066B4D0;
+            fifo->f = 1.0f; fifo->f = 1.0f;
+            fifo->f = 1.0f;
             fifo->f = x0; fifo->f = y1;
             fifo->f = zero;
             fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
-            fifo->f = zero; fifo->f = lbl_eu_8066B4D0;
+            fifo->f = zero; fifo->f = 1.0f;
             fifo->f = x0; fifo->f = y0;
             fifo->f = zero;
             fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
@@ -873,7 +760,7 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
 
     // Textured path: second texcoord either uses the shared matrix or a
     // transform rebuilt in place from mtxSrc's source floats.
-    u32 amb = floatBits(lbl_eu_8066B4C4);
+    u32 amb = 0xFFFFFFFFu;
     GXSetNumTexGens(2);
     GXSetNumTevStages(2);
     ml::CMat34* texMtx = getTexMtx(1, NULL);
@@ -883,7 +770,7 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
         GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x3c, GX_FALSE, 0x7d);
     } else {
         QuadTexCtx* ctx = (QuadTexCtx*)mtxSrc;
-        const f32 zc = lbl_eu_8066B4B0;
+        const f32 zc = 0.0f;
         ctx->mtx[0][0] = ctx->field_0x18;
         ctx->mtx[0][1] = zc;
         ctx->mtx[0][2] = zc;
@@ -916,7 +803,7 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
 
     fifo = reinterpret_cast<FifoWord*>(0xCC008000);
     s16 i = 0;
-    while (convS32ToD(i, i2fMagic) < ratio) {
+    while ((f64)i < ratio) {
         x0 -= stepPx;
         x1 += stepDx;
         col[3] >>= 1;
@@ -942,14 +829,14 @@ void streamGradStrip(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32*
         fifo->f = x1; fifo->f = y1;
         fifo->f = zero;
         fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
-        fifo->f = lbl_eu_8066B4D0; fifo->f = zero;
+        fifo->f = 1.0f; fifo->f = zero;
         fifo->f = x1; fifo->f = y1;
-        fifo->f = lbl_eu_8066B4D0; fifo->f = lbl_eu_8066B4D0;
-        fifo->f = lbl_eu_8066B4D0;
+        fifo->f = 1.0f; fifo->f = 1.0f;
+        fifo->f = 1.0f;
         fifo->f = x0; fifo->f = y1;
         fifo->f = zero;
         fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
-        fifo->f = zero; fifo->f = lbl_eu_8066B4D0;
+        fifo->f = zero; fifo->f = 1.0f;
         fifo->f = x0; fifo->f = y0;
         fifo->f = zero; fifo->f = zero;
         fifo->b = col[0]; fifo->b = col[1]; fifo->b = col[2]; fifo->b = col[3];
@@ -1043,11 +930,10 @@ extern "C" void attachAnim(CAnimPlayerRef* self, CAnim* anim) {
 extern "C" {
 void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 }
+// The FSqrt warning strings live in CActParamAnim's retail .data pool; local
+// string literals here would add a new .rodata section to this TU.
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
-extern const f32 lbl_eu_8066B4E0; // length epsilon
-extern const f32 lbl_eu_8066B4E4; // 1.0f
-extern const f32 lbl_eu_8066B4E8; // rad -> fidx scale
 
 namespace nw4r {
 namespace math {
@@ -1073,21 +959,21 @@ extern "C" bool getAnimRotMtx(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
             col.y = p->m[1][i];
             col.z = p->m[2][i];
             f32 mag = col.x * col.x + col.y * col.y + col.z * col.z;
-            if (mag == lbl_eu_8066B4E0) {
+            if (mag == 0.0f) {
                 mat[i] = p->m[0][i];
                 mat[4 + i] = p->m[1][i];
                 mat[8 + i] = p->m[2][i];
             } else {
-                if (!(mag >= lbl_eu_8066B4E0)) {
-                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                if (!(mag >= 0.0f)) {
+Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
                 f32 len;
-                if (mag > lbl_eu_8066B4E0) {
+                if (mag > 0.0f) {
                     len = mag * nw4r::math::FrSqrt(mag);
                 } else {
-                    len = lbl_eu_8066B4E0;
+                    len = 0.0f;
                 }
-                nw4r::math::VEC3Scale(col, col, lbl_eu_8066B4E4 / len);
+                nw4r::math::VEC3Scale(col, col, 1.0f / len);
                 mat[i] = col.x;
                 mat[4 + i] = col.y;
                 mat[8 + i] = col.z;
@@ -1100,7 +986,7 @@ extern "C" bool getAnimRotMtx(CAnimPlayerRef* self, nw4r::math::MTX34* out) {
     } else {
         reinterpret_cast<ml::CMat34*>(self->mPlayer)->getRotAxis(axis, &angle);
     }
-    nw4r::math::MTX34RotAxisFIdx(out, axis, lbl_eu_8066B4E8 * angle);
+    nw4r::math::MTX34RotAxisFIdx(out, axis, 40.743664f * angle);
     return true;
 }
 
@@ -1121,30 +1007,30 @@ extern "C" s32 getAnimPos(CAnimPlayerRef* self, ml::CVec3* out) {
 // threshold band.
 void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
                    TexMtxSrc* mtxSrc) {
-    if (quad->field_0xc <= lbl_eu_8066B4F0) return;
+    if (quad->field_0xc <= 0.0f) return;
     snapTexCursor(desktop);
     CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
     if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         bool bound = mtxSrc != NULL && mtxSrc->mTex != NULL && mtxSrc->mIndex >= 0;
-        bool inside = quad->x >= lbl_eu_8066B4F4 && quad->y >= lbl_eu_8066B4F4 &&
-                      quad->z >= lbl_eu_8066B4F4;
+        bool inside = quad->x >= 1.0f && quad->y >= 1.0f &&
+                      quad->z >= 1.0f;
         if (!bound) {
-            if (lbl_eu_80665A80[0] == 0) {
-                lbl_eu_806617F0[0] = lbl_eu_8066B4F4;
-                lbl_eu_806617F0[1] = lbl_eu_8066B4F4;
-                lbl_eu_806617F0[2] = lbl_eu_8066B4F4;
-                lbl_eu_806617F0[3] = lbl_eu_8066B4F4;
-                lbl_eu_80665A80[0] = 1;
+            if (sDefaultQuadInitFlag[0] == 0) {
+                sDefaultDrawQuad[0] = 1.0f;
+                sDefaultDrawQuad[1] = 1.0f;
+                sDefaultDrawQuad[2] = 1.0f;
+                sDefaultDrawQuad[3] = 1.0f;
+                sDefaultQuadInitFlag[0] = 1;
             }
             if (inside) {
                 blitEffectViewRect(&draw, 0, 0);
                 DbgSetTevSwapMode(mode);
-            } else if (quad->field_0xc >= lbl_eu_8066B4F4) {
+            } else if (quad->field_0xc >= 1.0f) {
                 DbgSetTevSwapMode(mode);
                 blitEffectViewRect(&draw, 0, 0);
                 drawTexQuad(0, &draw,
-                              reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
+                              reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
                 blitEffectViewRect(&draw, 0, 0);
                 DbgSetTevSwapMode(0);
             } else {
@@ -1154,32 +1040,32 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
                     blitEffectViewRect(&sub, 0, 0);
                     DbgSetTevSwapMode(mode);
                     drawTexQuad(0, &sub,
-                                  reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
+                                  reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
                     blitEffectViewRect(&draw, 0, 0);
                     DbgSetTevSwapMode(0);
                     drawTexQuad(0, &sub,
-                                  reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
+                                  reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
                     releaseEffectDrawTex(&sub);
                 }
             }
             drawTexQuad(0, &draw, quad, -1, NULL);
             DbgSetTevSwapMode(0);
         } else {
-            if (lbl_eu_80665A80[0] == 0) {
-                lbl_eu_806617F0[0] = lbl_eu_8066B4F4;
-                lbl_eu_806617F0[1] = lbl_eu_8066B4F4;
-                lbl_eu_806617F0[2] = lbl_eu_8066B4F4;
-                lbl_eu_806617F0[3] = lbl_eu_8066B4F4;
-                lbl_eu_80665A80[0] = 1;
+            if (sDefaultQuadInitFlag[0] == 0) {
+                sDefaultDrawQuad[0] = 1.0f;
+                sDefaultDrawQuad[1] = 1.0f;
+                sDefaultDrawQuad[2] = 1.0f;
+                sDefaultDrawQuad[3] = 1.0f;
+                sDefaultQuadInitFlag[0] = 1;
             }
             if (inside) {
                 blitEffectViewRect(&draw, 0, 0);
                 DbgSetTevSwapMode(mode);
-            } else if (quad->field_0xc >= lbl_eu_8066B4F4) {
+            } else if (quad->field_0xc >= 1.0f) {
                 DbgSetTevSwapMode(mode);
                 blitEffectViewRect(&draw, 0, 0);
                 drawTexQuad(0, &draw,
-                              reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
+                              reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
                 blitEffectViewRect(&draw, 0, 0);
                 DbgSetTevSwapMode(0);
             } else {
@@ -1189,11 +1075,11 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
                     blitEffectViewRect(&sub, 0, 0);
                     DbgSetTevSwapMode(mode);
                     drawTexQuad(0, &sub,
-                                  reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
+                                  reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
                     blitEffectViewRect(&draw, 0, 0);
                     DbgSetTevSwapMode(0);
                     drawTexQuad(0, &sub,
-                                  reinterpret_cast<const DrawQuad*>(lbl_eu_806617F0), -1, NULL);
+                                  reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
                     releaseEffectDrawTex(&sub);
                 }
             }
@@ -1220,12 +1106,12 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
     CDrawCtxLocal* draw = static_cast<CDrawCtxLocal*>(drawCtx);
     // Two distinct zero locals: MWCC keeps both live in f31/f29 across the
     // whole body and uses them for the register-sourced FIFO stores.
-    const f32 zA = lbl_eu_8066B4F0;
-    f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B500);
-    const f32 zB = lbl_eu_8066B4F0;
-    f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B500);
-    f32 fbH2 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B500);
-    f32 fbW2 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B500);
+    const f32 zA = 0.0f;
+    f32 fbW = (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
+    const f32 zB = 0.0f;
+    f32 fbH = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+    f32 fbH2 = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+    f32 fbW2 = (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
     pushProjMtx(1, fbH2, fbW2);
 
     Mtx mtxId;
@@ -1245,10 +1131,10 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
         // Untextured gradient path: tint comes from the quad position scaled
         // by the ramp constant, packed to bytes.
         GXColor col;
-        col.r = (u8)(s32)(quad->x * lbl_eu_8066B4F8);
-        col.g = (u8)(s32)(quad->y * lbl_eu_8066B4F8);
-        col.b = (u8)(s32)(quad->z * lbl_eu_8066B4F8);
-        col.a = (u8)(s32)(quad->field_0xc * lbl_eu_8066B4F8);
+        col.r = (u8)(s32)(quad->x * 255.0f);
+        col.g = (u8)(s32)(quad->y * 255.0f);
+        col.b = (u8)(s32)(quad->z * 255.0f);
+        col.a = (u8)(s32)(quad->field_0xc * 255.0f);
 
         GXSetNumTexGens(1);
         GXSetNumTevStages(1);
@@ -1273,22 +1159,22 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 5);
         // Full-screen strip: (0,0)-(W,0)-(W,H)-(0,H)-(0,0).
         f->f = zA; f->f = zB;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
+        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
         f->f = fbW; f->f = zB;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F0;
+        f->f = 0.0f; f->f = 1.0f; f->f = 0.0f;
         f->f = fbW; f->f = fbH;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4;
+        f->f = 0.0f; f->f = 1.0f; f->f = 1.0f;
         f->f = zA; f->f = fbH;
-        f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
+        f->f = 1.0f; f->f = 0.0f; f->f = 0.0f;
         f->f = zA; f->f = zB;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
+        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
     } else {
         // Textured path: tint color packed from the quad position.
         GXColor col;
-        col.r = (u8)(s32)(quad->x * lbl_eu_8066B4F8);
-        col.g = (u8)(s32)(quad->y * lbl_eu_8066B4F8);
-        col.b = (u8)(s32)(quad->z * lbl_eu_8066B4F8);
-        col.a = (u8)(s32)(quad->field_0xc * lbl_eu_8066B4F8);
+        col.r = (u8)(s32)(quad->x * 255.0f);
+        col.g = (u8)(s32)(quad->y * 255.0f);
+        col.b = (u8)(s32)(quad->z * 255.0f);
+        col.a = (u8)(s32)(quad->field_0xc * 255.0f);
 
         GXSetNumTexGens(2);
         GXSetNumTevStages(2);
@@ -1302,7 +1188,7 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
             // Rebuild the second texture matrix in place from ctx's source
             // floats: diagonal from 0x18/0x1c/0x20, translation from
             // 0x0c/0x10/0x14 added to zero.
-            const f32 zc = lbl_eu_8066B4F0;
+            const f32 zc = 0.0f;
             ctx->mtx[0][0] = ctx->field_0x18;
             ctx->mtx[0][1] = zc;
             ctx->mtx[0][2] = zc;
@@ -1336,22 +1222,22 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
 
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 5);
         f->f = zA; f->f = zB;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
+        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
+        f->f = 0.0f; f->f = 0.0f;
         f->f = fbW; f->f = zB;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F0;
+        f->f = 0.0f; f->f = 1.0f; f->f = 0.0f;
         f->f = fbW; f->f = fbH;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4;
-        f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4;
+        f->f = 0.0f; f->f = 1.0f; f->f = 1.0f;
+        f->f = 1.0f; f->f = 1.0f;
         f->f = zA; f->f = fbH;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F4;
+        f->f = 0.0f; f->f = 0.0f; f->f = 1.0f;
         f->f = zA; f->f = zB;
-        f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
+        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
         if (ctx != NULL) {
             // The custom-matrix variant emits a wider texcoord tail.
-            f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4;
-            f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0; f->f = lbl_eu_8066B4F0;
-            f->f = lbl_eu_8066B4F0;
+            f->f = 1.0f; f->f = 1.0f; f->f = 1.0f;
+            f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
+            f->f = 0.0f;
         }
     }
 }
@@ -1359,11 +1245,11 @@ void drawTexQuad(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
                    const void* mtxSrc) {
     CDrawCtxLocal* draw = static_cast<CDrawCtxLocal*>(drawCtx);
     const DrawQuad* quad = static_cast<const DrawQuad*>(quadData);
-    const f32 zero = lbl_eu_8066B4F0;
+    const f32 zero = 0.0f;
 
     GXRenderModeObj* rmode = getRenderModeObj__9CDeviceVIFv();
-    f32 fbH = convU16ToF(rmode->efbHeight, lbl_eu_8066B500);
-    f32 fbW = convU16ToF(rmode->fbWidth, lbl_eu_8066B500);
+    f32 fbH = (f32)(rmode->efbHeight);
+    f32 fbW = (f32)(rmode->fbWidth);
     pushProjMtx(1, fbH, fbW);
 
     Mtx mtxId;
@@ -1381,10 +1267,10 @@ void drawTexQuad(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
         // Untextured gradient path: tint comes from the quad position scaled
         // by the ramp constant, packed to bytes.
         GXColor col;
-        col.r = (u8)(s32)(quad->x * lbl_eu_8066B4F8);
-        col.g = (u8)(s32)(quad->y * lbl_eu_8066B4F8);
-        col.b = (u8)(s32)(quad->z * lbl_eu_8066B4F8);
-        col.a = (u8)(s32)(quad->field_0xc * lbl_eu_8066B4F8);
+        col.r = (u8)(s32)(quad->x * 255.0f);
+        col.g = (u8)(s32)(quad->y * 255.0f);
+        col.b = (u8)(s32)(quad->z * 255.0f);
+        col.a = (u8)(s32)(quad->field_0xc * 255.0f);
 
         GXSetNumTexGens(1);
         GXSetNumTevStages(1);
@@ -1410,18 +1296,18 @@ void drawTexQuad(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
         volatile FifoWord* f = s_fifo;
         // Vertex 1
         f->f = zero; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
-        f->f = fbH; f->f = zero; f->f = zero; f->f = lbl_eu_8066B4F4;
+        f->f = fbH; f->f = zero; f->f = zero; f->f = 1.0f;
         // Vertex 2
-        f->f = zero; f->f = fbW; f->f = zero; f->f = zero; f->f = lbl_eu_8066B4F4;
+        f->f = zero; f->f = fbW; f->f = zero; f->f = zero; f->f = 1.0f;
         f->f = fbH; f->f = fbW; f->f = zero; f->f = zero;
         // Vertex 3
-        f->f = lbl_eu_8066B4F4; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
+        f->f = 1.0f; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
         f->f = fbH; f->f = zero;
         // Vertex 4
-        f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4; f->f = zero; f->f = fbW;
+        f->f = 1.0f; f->f = 1.0f; f->f = zero; f->f = fbW;
         f->f = zero; f->f = fbH; f->f = zero;
         // Vertex 5
-        f->f = lbl_eu_8066B4F4; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
+        f->f = 1.0f; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
     }
 
     // Common/textured path: reconfigure and emit the textured quad strip.
@@ -1438,12 +1324,12 @@ void drawTexQuad(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
     f->f = zero; f->f = zero;
     f->f = zero; f->f = zero; f->f = zero;
     f->f = fbH; f->f = zero;
-    f->f = lbl_eu_8066B4F4;
+    f->f = 1.0f;
     f->f = zero; f->f = fbW;
     f->f = zero;
-    f->f = lbl_eu_8066B4F4;
+    f->f = 1.0f;
     f->f = fbH; f->f = fbW;
-    f->f = lbl_eu_8066B4F4; f->f = lbl_eu_8066B4F4;
+    f->f = 1.0f; f->f = 1.0f;
 }
 
 // Swap-mode tables indexed by mode: rows are swap table entries 0-3.
@@ -1486,27 +1372,27 @@ extern "C" void DbgCopyCamProj(Mtx mtx, const void* scene) {
 // cache view rectangle against the render mode dimensions.
 void getProjMatrix(Mtx44 mtx, s32 update, f32 bottom, f32 top) {
     if (update != 0 && getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
-        if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
+        if (sCacheViewInitFlag == 0) sCacheViewInitFlag = 1;
         const CGXCacheView* view = static_cast<const CGXCacheView*>(
             getSubRectPtr__8CGXCacheFv(cacheInstance__9CDeviceGX));
-        f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518);
-        f32 scaleX = fbW / convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);
-        f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518);
-        f32 scaleY = fbH / convS32ToF(view->field_0x6 - view->field_0x2, lbl_eu_8066B520);
-        f32 ax = scaleX * (convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518) /
-                           convS32ToF(view->field_0x0, lbl_eu_8066B520));
-        f32 ay = scaleY * (convS32ToF(view->field_0x2, lbl_eu_8066B520) /
-                           convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518));
+        f32 fbW = (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
+        f32 scaleX = fbW / (f32)(view->field_0x4 - view->field_0x0);
+        f32 fbH = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+        f32 scaleY = fbH / (f32)(view->field_0x6 - view->field_0x2);
+        f32 ax = scaleX * ((f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth) /
+                           (f32)(view->field_0x0));
+        f32 ay = scaleY * ((f32)(view->field_0x2) /
+                           (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight));
         f32 nx = -ax;
         f32 ny = -ay;
         (void)nx; (void)ny;
-        lbl_eu_80661840[0] = ax;
-        lbl_eu_80661840[2] = scaleX;
-        lbl_eu_80661840[3] = scaleY;
-        lbl_eu_80661840[1] = ay;
+        sTexScaleOutput[0] = ax;
+        sTexScaleOutput[2] = scaleX;
+        sTexScaleOutput[3] = scaleY;
+        sTexScaleOutput[1] = ay;
     }
-    C_MTXOrtho(mtx, lbl_eu_8066B508, bottom, lbl_eu_8066B508, top, lbl_eu_8066B508,
-               lbl_eu_8066B50C);
+    C_MTXOrtho(mtx, 0.0f, bottom, 0.0f, top, 0.0f,
+               -16777216.0f);
 }
 
 // Cached texture-matrix builder: converts the GX cache viewport state into a
@@ -1518,62 +1404,62 @@ struct TexScaleParam {
 };
 
 ml::CMat34* getTexMtx(int update, TexScaleParam* params) {
-    if (lbl_eu_80665A89 == 0) lbl_eu_80665A89 = 1;
-    if (lbl_eu_80665A88 == 0) {
-        lbl_eu_80661800[0] = lbl_eu_8066B510;
-        lbl_eu_80661800[1] = lbl_eu_8066B510;
-        lbl_eu_80661800[2] = lbl_eu_8066B510;
-        lbl_eu_80665A88 = 1;
+    if (sDefaultMatrixInitFlag == 0) sDefaultMatrixInitFlag = 1;
+    if (sTexScaleInitFlag == 0) {
+        sTexScaleParams[0] = 1.0f;
+        sTexScaleParams[1] = 1.0f;
+        sTexScaleParams[2] = 1.0f;
+        sTexScaleInitFlag = 1;
     }
-    if (params == NULL) params = reinterpret_cast<TexScaleParam*>(lbl_eu_80661800);
+    if (params == NULL) params = reinterpret_cast<TexScaleParam*>(sTexScaleParams);
 
     if (update == 0) {
-        ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
+        ml::CMat34* m = reinterpret_cast<ml::CMat34*>(sTexScaleMatrix);
         *m = ml::CMat34::identity;
         return m;
     }
     if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) == 0) {
-        ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
+        ml::CMat34* m = reinterpret_cast<ml::CMat34*>(sTexScaleMatrix);
         *m = ml::CMat34::identity;
         return m;
     }
-    if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
+    if (sCacheViewInitFlag == 0) sCacheViewInitFlag = 1;
     const CGXCacheView* view =
         static_cast<const CGXCacheView*>(getSubRectPtr__8CGXCacheFv(cacheInstance__9CDeviceGX));
 
     // Texture scale factors derived from the GX cache viewport rect.
-    f32 scaleX = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518) /
-                 convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);
-    f32 scaleY = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518) /
-                 convS32ToF(view->field_0x6 - view->field_0x2, lbl_eu_8066B520);
+    f32 scaleX = (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth) /
+                 (f32)(view->field_0x4 - view->field_0x0);
+    f32 scaleY = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight) /
+                 (f32)(view->field_0x6 - view->field_0x2);
     f32 ax = scaleX *
-             (convS32ToF(view->field_0x0, lbl_eu_8066B520) /
-              convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518));
-    lbl_eu_80661840[0] = ax;
-    f32 t = convS32ToF(view->field_0x2, lbl_eu_8066B520) /
-            convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518);
+             ((f32)(view->field_0x0) /
+              (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth));
+    sTexScaleOutput[0] = ax;
+    f32 t = (f32)(view->field_0x2) /
+            (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
     f32 ay = scaleY * t;
     f32 ny = -ay;
     f32 nx = -ax;
-    lbl_eu_80661840[2] = scaleX;
-    lbl_eu_80661840[3] = scaleY;
-    ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
+    sTexScaleOutput[2] = scaleX;
+    sTexScaleOutput[3] = scaleY;
+    ml::CMat34* m = reinterpret_cast<ml::CMat34*>(sTexScaleMatrix);
     m->m[0][0] = scaleX;
-    m->m[0][1] = lbl_eu_8066B508;
-    m->m[0][2] = lbl_eu_8066B508;
-    m->m[0][3] = lbl_eu_8066B508;
-    lbl_eu_80661840[1] = ay;
-    m->m[1][0] = lbl_eu_8066B508;
+    m->m[0][1] = 0.0f;
+    m->m[0][2] = 0.0f;
+    m->m[0][3] = 0.0f;
+    sTexScaleOutput[1] = ay;
+    m->m[1][0] = 0.0f;
     m->m[1][1] = scaleY;
-    m->m[1][2] = lbl_eu_8066B508;
-    m->m[1][3] = lbl_eu_8066B508;
-    m->m[2][0] = lbl_eu_8066B508;
-    m->m[2][1] = lbl_eu_8066B508;
-    m->m[2][2] = lbl_eu_8066B510;
-    m->m[2][3] = lbl_eu_8066B508;
-    m->m[2][3] = lbl_eu_8066B510;
-    m->m[1][3] = lbl_eu_8066B508 + ny * params->y;
-    m->m[0][3] = lbl_eu_8066B508 + nx * params->x;
+    m->m[1][2] = 0.0f;
+    m->m[1][3] = 0.0f;
+    m->m[2][0] = 0.0f;
+    m->m[2][1] = 0.0f;
+    m->m[2][2] = 1.0f;
+    m->m[2][3] = 0.0f;
+    m->m[2][3] = 1.0f;
+    m->m[1][3] = 0.0f + ny * params->y;
+    m->m[0][3] = 0.0f + nx * params->x;
     return m;
 }
 
@@ -1582,7 +1468,7 @@ ml::CMat34* getTexMtx(int update, TexScaleParam* params) {
 // a background pair via a nested sub-context and the main quad directly.
 void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* size,
                    void* material, TexMtxSrc* mtxSrc) {
-    if (size->field_0x0c <= lbl_eu_8066B440) return;
+    if (size->field_0x0c <= 0.0f) return;
     snapTexCursor(desktop);
 
     // Clamp the direction per axis: up to the unit vector first, then down
@@ -1591,16 +1477,16 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
     if (ml::CVec3::unit.x < v.x) v.x = ml::CVec3::unit.x;
     if (ml::CVec3::unit.y < v.y) v.y = ml::CVec3::unit.y;
     if (ml::CVec3::unit.z < v.z) v.z = ml::CVec3::unit.z;
-    if (v.x < lbl_eu_8066B444) v.x = lbl_eu_8066B444;
-    if (v.y < lbl_eu_8066B444) v.y = lbl_eu_8066B444;
-    if (v.z < lbl_eu_8066B444) v.z = lbl_eu_8066B444;
+    if (v.x < 0.01f) v.x = 0.01f;
+    if (v.y < 0.01f) v.y = 0.01f;
+    if (v.z < 0.01f) v.z = 0.01f;
 
     CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
     if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
         if (!(mtxSrc != NULL && mtxSrc->mTex != NULL && mtxSrc->mIndex >= 0)) {
             // Unbound path.
-            if (lbl_eu_8066B448 == v.x && lbl_eu_8066B448 == v.y) {
+            if (1.0f == v.x && 1.0f == v.y) {
                 blitEffectViewRect(&draw, 0, 0);
             } else {
                 f32 hiU[3];
@@ -1609,24 +1495,24 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                 initEffectDrawCtx(&subU);
                 if (setupEffectDrawCtx(&subU, draw.field_0x00, NULL) != 0) {
                     // Per-axis min/max band for the gradient falloff.
-                    f32 t = v.x * lbl_eu_8066B44C;
-                    if (t < lbl_eu_8066B448) {
+                    f32 t = v.x * 1.01f;
+                    if (t < 1.0f) {
                         loU[0] = t;
-                        hiU[0] = lbl_eu_8066B44C;
+                        hiU[0] = 1.01f;
                     } else {
                         loU[0] = v.x;
-                        hiU[0] = lbl_eu_8066B448;
+                        hiU[0] = 1.0f;
                     }
-                    t = v.y * lbl_eu_8066B44C;
-                    if (t < lbl_eu_8066B448) {
+                    t = v.y * 1.01f;
+                    if (t < 1.0f) {
                         loU[1] = t;
-                        hiU[1] = lbl_eu_8066B44C;
+                        hiU[1] = 1.01f;
                     } else {
                         loU[1] = v.y;
-                        hiU[1] = lbl_eu_8066B448;
+                        hiU[1] = 1.0f;
                     }
                     loU[2] = v.z;
-                    hiU[2] = lbl_eu_8066B448;
+                    hiU[2] = 1.0f;
 
                     blitEffectViewRect(&subU, 0, 0);
                     emitGradQuad(0, &subU, (const ml::CVec3*)&ml::CVec3::zero,
@@ -1647,7 +1533,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                           reinterpret_cast<const f32*>(size), -1, 1,
                           (QuadTexCtx*)NULL, 1);
         } else {
-            if (lbl_eu_8066B448 == v.x && lbl_eu_8066B448 == v.y) {
+            if (1.0f == v.x && 1.0f == v.y) {
                 blitEffectViewRect(&draw, 0, 0);
             } else {
                 CDrawCtxLocal subB;
@@ -1655,24 +1541,24 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                 f32 hiB[3];
                 initEffectDrawCtx(&subB);
                 if (setupEffectDrawCtx(&subB, draw.field_0x00, NULL) != 0) {
-                    f32 t = v.x * lbl_eu_8066B44C;
-                    if (t < lbl_eu_8066B448) {
+                    f32 t = v.x * 1.01f;
+                    if (t < 1.0f) {
                         loB[0] = t;
-                        hiB[0] = lbl_eu_8066B44C;
+                        hiB[0] = 1.01f;
                     } else {
                         loB[0] = v.x;
-                        hiB[0] = lbl_eu_8066B448;
+                        hiB[0] = 1.0f;
                     }
-                    t = v.y * lbl_eu_8066B44C;
-                    if (t < lbl_eu_8066B448) {
+                    t = v.y * 1.01f;
+                    if (t < 1.0f) {
                         loB[1] = t;
-                        hiB[1] = lbl_eu_8066B44C;
+                        hiB[1] = 1.01f;
                     } else {
                         loB[1] = v.y;
-                        hiB[1] = lbl_eu_8066B448;
+                        hiB[1] = 1.0f;
                     }
                     loB[2] = v.z;
-                    hiB[2] = lbl_eu_8066B448;
+                    hiB[2] = 1.0f;
 
                     blitEffectViewRect(&subB, 0, 0);
                     emitGradQuad(0, &subB, (const ml::CVec3*)&ml::CVec3::zero,
@@ -1721,10 +1607,10 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
         u8 b[4];
     };
     ByteColor in;
-    in.b[0] = (u8)(s32)(color[0] * lbl_eu_8066B450);
-    in.b[1] = (u8)(s32)(color[1] * lbl_eu_8066B450);
-    in.b[2] = (u8)(s32)(color[2] * lbl_eu_8066B450);
-    in.b[3] = (u8)(s32)(color[3] * lbl_eu_8066B450);
+    in.b[0] = (u8)(s32)(color[0] * 255.0f);
+    in.b[1] = (u8)(s32)(color[1] * 255.0f);
+    in.b[2] = (u8)(s32)(color[2] * 255.0f);
+    in.b[3] = (u8)(s32)(color[3] * 255.0f);
     union {
         ByteColor bytes;
         u32 raw;
@@ -1741,11 +1627,11 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
     // Quad corners: A = top-left, B = bottom-right; z = depth plane value.
     f32 ax, ay, bx, by, z;
 
-    if (flag != 0 && pos->z != lbl_eu_8066B440) {
+    if (flag != 0 && pos->z != 0.0f) {
         // Depth-sorted path.
         ProjInfo* pi = static_cast<ProjInfo*>(Scn_FindCamItem(drawCtx->field_0x00, -1));
-        f32 persp = lbl_eu_8066B454 * pi->field_0x1e0;
-        if (pos->z == lbl_eu_8066B440 || lbl_eu_8066B440 < pos->z) {
+        f32 persp = 0.5f * pi->field_0x1e0;
+        if (pos->z == 0.0f || 0.0f < pos->z) {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
             z = pos->z;
         } else {
@@ -1753,42 +1639,38 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
             z = -pos->z;
         }
         DbgSetPerspectiveProj(drawCtx->field_0x00);
-        f32 depthTan = z * (f32)tan(lbl_eu_8066B458 * persp / lbl_eu_8066B45C);
+        f32 depthTan = z * (f32)tan(3.14f * persp / 180.0f);
 
         // Aspect ratio of the GX cache viewport, scaled by device width scale.
         CGXCacheDims* gx = static_cast<CGXCacheDims*>(cacheInstance__9CDeviceGX);
-        f32 aspect = lbl_eu_8066B460 *
-                     (convS32ToF(gx->field_0x4bc, lbl_eu_8066B468) /
-                      convS32ToF(gx->field_0x4be, lbl_eu_8066B468));
+        f32 aspect = 0.947f *
+                     ((f32)(gx->field_0x4bc) /
+                      (f32)(gx->field_0x4be));
         aspect *= getWidthScale__9CDeviceVIFv();
 
         // Split position: x measured against height, y against width.
-        f32 splitX = lbl_eu_8066B464 * depthTan * pos->x /
-                     convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight,
-                                lbl_eu_8066B470);
+        f32 splitX = 2.0f * depthTan * pos->x /
+                     (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
         f32 negDT = -depthTan;
         ax = aspect * (splitX - depthTan);
         bx = aspect * (splitX + depthTan);
-        f32 splitY = lbl_eu_8066B464 * negDT * pos->y /
-                     convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth,
-                                lbl_eu_8066B470);
+        f32 splitY = 2.0f * negDT * pos->y /
+                     (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
         z = -depthTan;
         ay = splitY + depthTan;
         by = splitY - depthTan;
     } else {
         // Unsorted path.
         GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
-        pushProjMtx(mode, lbl_eu_8066B448, lbl_eu_8066B448);
-        z = lbl_eu_8066B440;
+        pushProjMtx(mode, 1.0f, 1.0f);
+        z = 0.0f;
         ax = pos->x;
         ay = pos->y;
-        if (ax != lbl_eu_8066B440) {
-            ax /= convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight,
-                             lbl_eu_8066B470);
+        if (ax != 0.0f) {
+            ax /= (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
         }
-        if (ay != lbl_eu_8066B440) {
-            ay /= convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth,
-                             lbl_eu_8066B470);
+        if (ay != 0.0f) {
+            ay /= (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
         }
         bx = ax + gradDir[0];
         by = ay + gradDir[1];
@@ -1835,10 +1717,10 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
         volatile FifoWord* f = s_fifo;
         f->f = ax; f->f = ay; f->f = z;
-        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
-        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = lbl_eu_8066B440;
+        f->f = 0.0f; f->f = 0.0f;
+        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = 0.0f;
         f->f = bx; f->f = by; f->f = z; f->f = uv[0]; f->f = uv[1];
-        f->f = ax; f->f = by; f->f = z; f->f = lbl_eu_8066B440; f->f = uv[1];
+        f->f = ax; f->f = by; f->f = z; f->f = 0.0f; f->f = uv[1];
     } else {
         // Two-texture path with an optional custom second matrix.
         GXSetNumTexGens(2);
@@ -1852,17 +1734,17 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
             // Rebuild the second texture matrix in place from the source
             // floats (diagonal at 0x18/0x1c/0x20, translation at 0x0c/0x10/0x14).
             mtxCtx->mtx[0][0] = mtxCtx->field_0x18;
-            mtxCtx->mtx[0][1] = lbl_eu_8066B440;
-            mtxCtx->mtx[0][2] = lbl_eu_8066B440;
-            mtxCtx->mtx[0][3] = lbl_eu_8066B440 + mtxCtx->field_0x0c;
-            mtxCtx->mtx[1][0] = lbl_eu_8066B440;
+            mtxCtx->mtx[0][1] = 0.0f;
+            mtxCtx->mtx[0][2] = 0.0f;
+            mtxCtx->mtx[0][3] = 0.0f + mtxCtx->field_0x0c;
+            mtxCtx->mtx[1][0] = 0.0f;
             mtxCtx->mtx[1][1] = mtxCtx->field_0x1c;
-            mtxCtx->mtx[1][2] = lbl_eu_8066B440;
-            mtxCtx->mtx[1][3] = lbl_eu_8066B440 + mtxCtx->field_0x10;
-            mtxCtx->mtx[2][0] = lbl_eu_8066B440;
-            mtxCtx->mtx[2][1] = lbl_eu_8066B440;
+            mtxCtx->mtx[1][2] = 0.0f;
+            mtxCtx->mtx[1][3] = 0.0f + mtxCtx->field_0x10;
+            mtxCtx->mtx[2][0] = 0.0f;
+            mtxCtx->mtx[2][1] = 0.0f;
             mtxCtx->mtx[2][2] = mtxCtx->field_0x20;
-            mtxCtx->mtx[2][3] = lbl_eu_8066B440 + mtxCtx->field_0x14;
+            mtxCtx->mtx[2][3] = 0.0f + mtxCtx->field_0x14;
             GXLoadTexMtxImm(mtxCtx->mtx, 0x21, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x21, GX_FALSE, 0x7d);
         }
@@ -1895,14 +1777,14 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
         volatile FifoWord* f = s_fifo;
         f->f = ax; f->f = ay; f->f = z;
-        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
-        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
-        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = lbl_eu_8066B440;
-        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B440;
+        f->f = 0.0f; f->f = 0.0f;
+        f->f = 0.0f; f->f = 0.0f;
+        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = 0.0f;
+        f->f = 0.0f; f->f = 0.0f;
         f->f = bx; f->f = by; f->f = z; f->f = uv[0]; f->f = uv[1];
-        f->f = lbl_eu_8066B448; f->f = lbl_eu_8066B448;
-        f->f = ax; f->f = by; f->f = z; f->f = lbl_eu_8066B440; f->f = uv[1];
-        f->f = lbl_eu_8066B440; f->f = lbl_eu_8066B448;
+        f->f = 1.0f; f->f = 1.0f;
+        f->f = ax; f->f = by; f->f = z; f->f = 0.0f; f->f = uv[1];
+        f->f = 0.0f; f->f = 1.0f;
     }
 }
 
@@ -1921,31 +1803,31 @@ void pushProjMtx(s32 update, f32 bottom, f32 top) {
     Mtx44 m;
     // Retail keeps three separate C_MTXOrtho call sites (one per path).
     if (update == 0) {
-        C_MTXOrtho(m, lbl_eu_8066B508, top, lbl_eu_8066B508, bottom, lbl_eu_8066B508,
-                   lbl_eu_8066B50C);
+        C_MTXOrtho(m, 0.0f, top, 0.0f, bottom, 0.0f,
+                   -16777216.0f);
     } else {
         if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
-            if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
+            if (sCacheViewInitFlag == 0) sCacheViewInitFlag = 1;
             const CGXCacheView* view = static_cast<const CGXCacheView*>(
                 getSubRectPtr__8CGXCacheFv(cacheInstance__9CDeviceGX));
             // Texture scale from the cache view rect vs the render mode size.
-            f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518);
-            f32 scaleX = fbW / convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);
-            f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518);
-            f32 scaleY = fbH / convS32ToF(view->field_0x6 - view->field_0x2, lbl_eu_8066B520);
-            f32 ax = scaleX * (convS32ToF(view->field_0x0, lbl_eu_8066B520) /
-                               convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518));
-            f32 ay = scaleY * (convS32ToF(view->field_0x2, lbl_eu_8066B520) /
-                               convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518));
-            lbl_eu_80661840[0] = ax;
-            lbl_eu_80661840[2] = scaleX;
-            lbl_eu_80661840[3] = scaleY;
-            lbl_eu_80661840[1] = ay;
-            C_MTXOrtho(m, lbl_eu_8066B508, top, lbl_eu_8066B508, bottom, lbl_eu_8066B508,
-                       lbl_eu_8066B50C);
+            f32 fbW = (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth);
+            f32 scaleX = fbW / (f32)(view->field_0x4 - view->field_0x0);
+            f32 fbH = (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+            f32 scaleY = fbH / (f32)(view->field_0x6 - view->field_0x2);
+            f32 ax = scaleX * ((f32)(view->field_0x0) /
+                               (f32)(getRenderModeObj__9CDeviceVIFv()->fbWidth));
+            f32 ay = scaleY * ((f32)(view->field_0x2) /
+                               (f32)(getRenderModeObj__9CDeviceVIFv()->efbHeight));
+            sTexScaleOutput[0] = ax;
+            sTexScaleOutput[2] = scaleX;
+            sTexScaleOutput[3] = scaleY;
+            sTexScaleOutput[1] = ay;
+            C_MTXOrtho(m, 0.0f, top, 0.0f, bottom, 0.0f,
+                       -16777216.0f);
         } else {
-            C_MTXOrtho(m, lbl_eu_8066B508, top, lbl_eu_8066B508, bottom, lbl_eu_8066B508,
-                       lbl_eu_8066B50C);
+            C_MTXOrtho(m, 0.0f, top, 0.0f, bottom, 0.0f,
+                       -16777216.0f);
         }
     }
     GXSetProjection(m, GX_ORTHOGRAPHIC);

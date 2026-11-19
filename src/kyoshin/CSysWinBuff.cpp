@@ -11,7 +11,7 @@
 // immediates; D28/DB0/E0/E8 are pointer tables anchored by clean refs (see below).
 extern char lbl_eu_8050E980[];
 // (decl was via CTaskGame.hpp; kept local after IWorkEvent decouple.)
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 // Singleton/word single defs (pre-code so no forwards are needed).
 CSysWinBuff* lbl_eu_806648E0 = 0;
 u32 lbl_eu_806648E4 = 0;
@@ -105,7 +105,7 @@ void CSysWinBuff::Term() {
 // ---------------------------------------------------------------------------
 void CSysWinBuff::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
     if (MenuTutorialIsCreated() != 0) return;

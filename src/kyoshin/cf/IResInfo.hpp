@@ -221,7 +221,7 @@ struct ResInfoContainer {
 };
 
 // Global cf flag words owned by CfGameManagerData / CUICfManager.
-extern u32 lbl_eu_80663E30;
+extern u32 gmQueuedEventCount;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);

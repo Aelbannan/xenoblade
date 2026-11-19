@@ -152,16 +152,16 @@ struct QuestWinObj {
 };
 
 // 12-byte Move-hook ptmf copied into +0x3C by installMoveHook (retail .data).
-extern CTTask<IUIWindow>::MoveFunc lbl_eu_8052D074;
+extern CTTask<IUIWindow>::MoveFunc gQuestWindowMoveFunc;
 
 // 12-byte initial Move-hook ptmf copied into +0x3C by the ctor (retail .data).
-extern u32 lbl_eu_8052D068[3];
+extern u32 gQuestWindowInitialMoveFunc[3];
 
 // Null pointer-to-member-function constant copied into the Move/Draw hooks.
 extern u32 __ptmf_null[3];
 
 
-extern u32 lbl_eu_80663FD0;
+extern u32 gQuestWindowRefCount;
 
 // Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to
 // BdatGetU8Direct (closeQuestWindow).
@@ -169,7 +169,7 @@ extern u32 lbl_eu_80573D18[];
 
 // Quest-name table indexed by SearchThresholdIdx(field_B8) then passed to getFP
 // (onQuestFileEvent stores the file pointer at +0xD0).
-extern const char* lbl_eu_8052CFF4[];
+extern const char* gQuestBdatTableNames[];
 
 // refreshQuestContent jump-table item-name pointers (.sdata): passed as the first
 // arg of BdatGetPtrDirect for the quest-slot name switch (cases 1, 3 and 4).
@@ -204,17 +204,17 @@ extern const u8 lbl_eu_80667148;
 extern const f32 lbl_eu_80667140;
 
 
-extern const char* lbl_eu_8052CF80[];
+extern const char* gQuestCommonArcNames[];
 
 // Window arc path pointer (.sdata) fed to CDeviceFile::readFile (Init).
-extern const char* lbl_eu_80661EB8;
+extern const char* gQuestWindowArcPath;
 
 // CfPadTask teardown float (.sdata2) passed to setInputDisableTime in the dtor.
 // `const` hoists the sdata2 load above the frame stores (CArtsInfo pattern).
 extern const f32 lbl_eu_80667138;
 
 // cbRenderBefore busy flag (.sbss; bit 0x200000 gates the draw).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 
 // C-ABI imports for the quest-window free functions. These retail symbols are
@@ -309,11 +309,11 @@ void refreshQuestContent(CQuestWindow* self);
 #include "kyoshin/CTaskGame.hpp"
 
 // Quest-window state record behind the retail .sbss singleton
-// lbl_eu_80663FD4; only the +0xDA byte is read by isQuestWindowOpen.
+// spQuestWindow; only the +0xDA byte is read by isQuestWindowOpen.
 struct QuestWindowState {
     u8 pad[0xDA];  // +0x00..0xD9
     u8 field_0xDA; // +0xDA
 };
 
 // Retail .sbss pointer (global-scope data symbols are not mangled by MWCC).
-extern QuestWindowState* lbl_eu_80663FD4;
+extern QuestWindowState* spQuestWindow;

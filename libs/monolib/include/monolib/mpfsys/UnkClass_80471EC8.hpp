@@ -33,7 +33,7 @@ public:
     void disableAlphaBlend();
     void loadLayerMatrix();
     void loadTevKColor();
-    void applyMatColor() const;
+    void applyMatColor();
     void applyTevColor();
     void setKeyAlpha();
     void setFogIndex();

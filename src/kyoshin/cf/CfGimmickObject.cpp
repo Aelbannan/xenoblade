@@ -45,7 +45,7 @@ int GimObjDriveStepActivation(cf::CfGimmickObject* self);
 int GimObjTickCountdownSteps(cf::CfGimmickObject* self);
 int GimObjTickSpawnSteps(cf::CfGimmickObject* self);
 int GimObjRefreshStepState(cf::CfGimmickObject* self);
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/scn/code_804BC9EC.hpp"
 
 // .data 0xD8: PMF dispatch tables and column-name pointer tables (the
@@ -127,7 +127,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     char* colBase = lbl_eu_80507B60;
     self->field_64 = row;
 
-    // Scalar columns from lbl_eu_80507B60 and the lbl_eu_805357E8 pointer
+    // Scalar columns from lbl_eu_80507B60 and the gGimmickBdatColumns pointer
     // table, read in the exact retail order.
     self->field_66 = ctorCol8(holder, &colBase[0], row);
 
@@ -139,16 +139,16 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     CfGimmick_LoadBdatAreaRotation(self, &self->field_10, mgr, &holder);
     self->vf_801F7930();
 
-    // Scalar columns from lbl_eu_80507B60 and the lbl_eu_805357E8 pointer
+    // Scalar columns from lbl_eu_80507B60 and the gGimmickBdatColumns pointer
     // table. Retail interleaves each call with the next column address, so
     // the reads/writes below are kept in the exact retail order.
     self->field_15E = ctorCol8(holder, &colBase[0x8], row);
     self->field_161 = ctorCol8(holder, &colBase[0xb], row);
-    self->field_13C = ctorCol16(holder, *(char**)&lbl_eu_805357E8[0x3c], row);
-    self->field_13E = ctorCol16(holder, *(char**)&lbl_eu_805357E8[0x40], row);
-    self->field_6C = ctorCol16(holder, *(char**)&lbl_eu_805357E8[0x34], row);
-    self->field_6E = ctorCol16(holder, *(char**)&lbl_eu_805357E8[0x38], row);
-    self->field_140 = ctorCol16(holder, *(char**)&lbl_eu_805357E8[0x2c], row);
+    self->field_13C = ctorCol16(holder, *(char**)&gGimmickBdatColumns[0x3c], row);
+    self->field_13E = ctorCol16(holder, *(char**)&gGimmickBdatColumns[0x40], row);
+    self->field_6C = ctorCol16(holder, *(char**)&gGimmickBdatColumns[0x34], row);
+    self->field_6E = ctorCol16(holder, *(char**)&gGimmickBdatColumns[0x38], row);
+    self->field_140 = ctorCol16(holder, *(char**)&gGimmickBdatColumns[0x2c], row);
     self->field_142 = ctorCol16(holder, &colBase[0x13], row);
     self->field_15F = ctorCol8(holder, &colBase[0x1d], row);
     self->field_160 = ctorCol8(holder, &colBase[0x26], row);
@@ -1145,7 +1145,7 @@ int GimObjStepDone() {
 }
 
 // Busy-gate: an object flagged busy in field_74 (bit 12) with the global
-// busy bit (lbl_eu_80663E28 bit 5) set, or whose +0x14A table fails
+// busy bit (gmPauseFlags bit 5) set, or whose +0x14A table fails
 // GimObjScanIdTable, is NOT available (returns 0).
 int GimObjCheckStepBusy(cf::CfGimmickObject* self) {
     return 0;

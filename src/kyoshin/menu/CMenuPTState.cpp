@@ -14,7 +14,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CAIAction.hpp"   // battle-list helpers (getObjectAt / isBattleStatusActive)
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -1063,7 +1063,7 @@ void CMenuPTState::Move() {
     CTaskGame::getInstance();
     // OR-combined guard: retail emits bne-exit for the first disjunct and a
     // beq-body / b-exit pair for the second (same shape as cbRenderBefore).
-    if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & 0x200000) != 0) {
+    if (CTaskGame::isFlag01Set() != 0 || (gmPauseFlags & 0x200000) != 0) {
         return;
     }
     {
@@ -1123,7 +1123,7 @@ void CMenuPTState::cbRenderBefore() {
     // OR-combined guard: MWCC emits the retail beq-body/b-exit pair for the
     // second disjunct (MWCC_CASES "OR-combined guard" pattern).
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if (CTaskGame::isFlag01Set() != 0 || (gmPauseFlags & (1u << 21)) != 0) {
         return;
     }
     if (IsMenuState621F0() == 0) {

@@ -38,9 +38,6 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 // Unit-private imports (shared with code_80231950.cpp): see CMenuArtsSetImports.hpp.
-extern "C" void drawHelp(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void updateHelp(CTitleAHelp* self);
-extern "C" void teardown(CTitleAHelp* self);
 
 // Pad state import: cf::CfGameManager::getCfPadData() comes from the
 // harness_catalog include chain; CfPadData.hpp supplies the struct layout.
@@ -167,7 +164,7 @@ extern "C" void ArtsLayoutPair_advance(SArts2FDF4* self) {
 // AnimTransform frame-check helper (defined in COption.cpp / CArtsInfo.cpp).
 // State-progression byte table (sdata, 8 bytes). Fixed-size decl: incomplete
 // array types are not sdata-eligible and force lis/addi instead of sda21.
-extern u8 lbl_eu_806628A8[8];
+extern u8 sArtsDemoModeFlag[8];
 // Switch-case handlers used by ArtsLayoutPair_advance (same TU, defined below).
 void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self);
 extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
@@ -498,7 +495,7 @@ extern "C" void artsSyncSlots(SArts308B0View* self, u8 v) {
         // Demo gate: only character 1 with the demo flag clear uses the
         // player-specific slot view.
         int flag = 0;
-        if (lbl_eu_806628A8[0] != 0 || self->field_0x26 != 1) {
+        if (sArtsDemoModeFlag[0] != 0 || self->field_0x26 != 1) {
             flag = 1;
         }
         int sel = (flag == 0);
@@ -720,7 +717,7 @@ extern "C" void artsClaimSlot(SArtsSub8022FA58* self,
         root = (SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(self->field_0x26);
         elems = &root->mElemsE8[0];
         arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
-        flag = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
+        flag = (sArtsDemoModeFlag[0] != 0) || (self->field_0x26 != 1);
         c20 = self->field_0x20;
         sel = (flag == 0);
         if ((u32)c20 >= 4) {
@@ -749,7 +746,7 @@ extern "C" void artsClaimSlot(SArtsSub8022FA58* self,
         if ((u32)cur >= 4) {
             cur -= 1;
         }
-        flag = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
+        flag = (sArtsDemoModeFlag[0] != 0) || (self->field_0x26 != 1);
         sel = (flag == 0);
         off = sel * 8;
         e = &elems[arts];
@@ -849,7 +846,7 @@ extern "C" u8 artsReadSelId(SArtsSub8022FA58* self) {
         // Same gate idiom as ArtsSlot_isWindowEmpty: phi-stored byte flag, re-booleaned
         // so the negate-multiply extract stays on the full 8-bit lane.
         u8 flag = 0;
-        if (lbl_eu_806628A8[0] != 0 || self->field_0x26 != 1) {
+        if (sArtsDemoModeFlag[0] != 0 || self->field_0x26 != 1) {
             flag = 1;
         }
         flag = (flag == 0);
@@ -879,7 +876,7 @@ extern "C" u8 artsAvailFlag(SArtsSub8022FA58* self) {
         }
         // Constant [0]: MWCC fuses the sda21 displacement, leaving clamped
         // idx as the dead d-form base register.
-        int flag = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
+        int flag = (sArtsDemoModeFlag[0] != 0) || (self->field_0x26 != 1);
         int off = (flag == 0) * 8;
         u8 v = elems[arts].data[off + idx];
         char* base = lbl_eu_8050AC70;
@@ -903,7 +900,7 @@ extern "C" u32 ArtsSlot_isWindowEmpty(SArtsSub8022FA58* self) {
     SArtsSubDElem* base = &root->mElemsE8[0];
     u8 arts = (u8)CtrlObjectParam_GetCurrentRowKey(root);
     u8 b = 0;
-    if (lbl_eu_806628A8[0] != 0 || self->field_0x26 != 1) {
+    if (sArtsDemoModeFlag[0] != 0 || self->field_0x26 != 1) {
         b = 1;
     }
     b = (b == 0);
@@ -1320,7 +1317,7 @@ extern "C" void artsFillTable(SArts322BC* self, u8 arg) {
     u32 charIdx = CtrlObjectParam_GetCurrentRowKey(root);
     SArts320C0Entry* p = (SArts320C0Entry*)&tmp + arg;
     // Demo/default override: first character gets a fixed starting art.
-    if (lbl_eu_806628A8[0] == 0 && arg == 1) {
+    if (sArtsDemoModeFlag[0] == 0 && arg == 1) {
         p->id = 3;
     }
     for (u8 i = 0; i < p->count; i++) {
@@ -1703,7 +1700,7 @@ extern "C" void artsRenderRow(SArts327B0* selfRaw) {
         void* recv =
             ((SArtsManagerRoot*)CtrlObjectParam_GetCharEntry(self->field_0x26))->mObj17C.v157();
         for (int j = 0; j < 8; j++) {
-            int flag = (lbl_eu_806628A8[0] != 0 || self->field_0x26 != 1);
+            int flag = (sArtsDemoModeFlag[0] != 0 || self->field_0x26 != 1);
             int sel = (flag == 0);
             if (row->field_0x00 == getArtsSlotRC(recv, sel, j)) {
                 if (pane2 != NULL) {
@@ -1890,7 +1887,7 @@ CArtsList::CArtsList()
     this->mSysWinE8.field_39 = ((CSysWin*)tempW)->field_39;
     __dt__7CSysWinFv(tempW, -1);
 
-    lbl_eu_806628A8[0] = 1;
+    sArtsDemoModeFlag[0] = 1;
 }
 
 // Retail dtor (stmw/lmw frame, -O4,s); the four member dtors
@@ -2370,7 +2367,7 @@ void artsDriveMenu(CArtsList* self) {
         } else if (ArtsTable_isRowSelectable((SArts322BC*)(SArts322BC*)&self->mSubObj174, key) != 0) {
             // Selectable entry: pick the help id from the learn-state table.
             u16 id;
-            if (lbl_eu_806628A8[0] == 0 &&
+            if (sArtsDemoModeFlag[0] == 0 &&
                 ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124,
                               ((SArts34D14*)self)->mSubObj124.field_0x14) == 1) {
                 id = 0x38;
@@ -2410,7 +2407,7 @@ void artsDriveMenu(CArtsList* self) {
         reinterpret_cast<CSysWin*>(&self->mSysWinE8)->openPhase1();
     } else if (ArtsTable_isRowSelectable((SArts322BC*)(SArts322BC*)&self->mSubObj174, -1) != 0) {
         u16 id;
-        if (lbl_eu_806628A8[0] == 0 &&
+        if (sArtsDemoModeFlag[0] == 0 &&
             ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124,
                           ((SArts34D14*)self)->mSubObj124.field_0x14) == 1) {
             id = 0x38;
@@ -2498,7 +2495,7 @@ void CMenuArtsSet_confirmLockedArt(CArtsList* self) {
         CMenuArtsSet_armSysWin(self);
         return;
     }
-    lbl_eu_806628A8[0] = (lbl_eu_806628A8[0] ^ 1) != 0;
+    sArtsDemoModeFlag[0] = (sArtsDemoModeFlag[0] ^ 1) != 0;
     artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
     artsFillTable((SArts322BC*)&self->mSubObj174, v);
     CMenuArtsSet_refreshArtsInfo(self);
@@ -2520,7 +2517,7 @@ void CMenuArtsSet_resetSubList(CArtsList* self) {
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     // Byte-table probe: retail fuses tbl[0] into lbz @sda21(r0), r0 being the
     // dead index register left over from the (v == 1) test.
-    if (v == 1 && lbl_eu_806628A8[0] == 0) return;
+    if (v == 1 && sArtsDemoModeFlag[0] == 0) return;
     if (artsReadSelId((SArtsSub8022FA58*)&self->mSubObj148) != 0) {
         playUISound(0x77);
     } else {
@@ -2634,12 +2631,12 @@ int CMenuArtsSet_isLockedArtOpen(SArts34D14* self) {
 }
 
 int CMenuArtsSet_isDemoLockedArt(SArts34D14* self) {
-    // Retail loads lbl_eu_806628A8[0] (fused lbz @sda21(r0); the r0 there is
+    // Retail loads sArtsDemoModeFlag[0] (fused lbz @sda21(r0); the r0 there is
     // the dead index register, not the subscript - PPC d-forms cannot encode
     // SDA base + variable index). Equivalent since r==1 and tbl[1..7]==0.
     int ret = 0;
     u8 r = ArtsCharList_getId(&self->mSubObj124, self->mSubObj124.field_0x14);
-    if (r == 1 && lbl_eu_806628A8[0] == 0) {
+    if (r == 1 && sArtsDemoModeFlag[0] == 0) {
         ret = 1;
     }
     return ret;

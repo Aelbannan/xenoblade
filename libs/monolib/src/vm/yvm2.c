@@ -1036,7 +1036,7 @@ u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName){
         if(strcmp(name, pPackageName) != 0){
             continue;
         }
-        SBHeader* struct1 = vmState.packages[i].scriptDataPtr;
+            SBHeader* struct1 = vmState.packages[i].scriptDataPtr;
             SBSectionHeader* funcPoolSectionHeader = struct1->functionPoolOfs;
             FunctionPoolEntry* entries = (FunctionPoolEntry*)getSectionEntriesPtr(funcPoolSectionHeader);
 
@@ -1059,7 +1059,7 @@ VMThread* vmThreadCreate(SBHeader* param1, u32 param2){
     //Search for an empty slot
     for(int i = 0; i < MAX_THREADS; i++){
         if(vmState.threads[i].scriptData == NULL){
-            //Initialize the thread slot
+
             VMThread* thread = &vmState.threads[i];
 
             //Add the pointer to this thread in the first empty slot in the pointer list

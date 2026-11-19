@@ -89,13 +89,13 @@ struct UnkClass_80466348 {
 using namespace LOD;
 
 // ---- shared LOD renderer data (.bss, non-small-data access) ----
-extern u32 lbl_eu_80658368[3];
-extern u32 lbl_eu_80658374[3];
-extern f32 lbl_eu_80658348[3]; // per-channel ambient scale LUT
+extern u32 sLodAttnFnTable[3];
+extern u32 sLodDiffuseFnTable[3];
+extern f32 sAmbientScaleLut[3]; // per-channel ambient scale LUT
 // per-channel ambient scale LUT (written by sinit)
-extern f32 lbl_eu_80658358[3];
-extern f32 lbl_eu_80658380[12]; // LOD fog/color ramp, written by sinit_804683E8
-extern f32 lbl_eu_806583B0[3][4]; // fixed LOD texture matrix
+extern f32 sAmbientAltScaleLut[3];
+extern f32 sLodFogRamp[12]; // LOD fog/color ramp, written by sinit_804683E8
+extern f32 sLodFixedTexMtx[3][4]; // fixed LOD texture matrix
 
 // ---- shared sdata2 float constants (small-data pool) ----
 extern const float lbl_eu_8066A620;
@@ -130,84 +130,84 @@ extern "C" void dispatchLodPair__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* 
 
 void LOD::UnkClass_80466348::setColorChanRegReg1() {
     // Latch the "diffuse channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 1) {
-        lbl_eu_806657DC = 1;
+    if ((s32)sLastColorChanMode != 1) {
+        sLastColorChanMode = 1;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_REG,
-                      (GXLightID)lbl_eu_806657F0, (GXDiffuseFn)lbl_eu_80658374[1],
-                      (GXAttnFn)lbl_eu_80658368[1]);
+                      (GXLightID)sLodLightMask1, (GXDiffuseFn)sLodDiffuseFnTable[1],
+                      (GXAttnFn)sLodAttnFnTable[1]);
     }
 }
 
 void LOD::UnkClass_80466348::setColorChanRegReg2() {
     // Latch the "diffuse channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 2) {
-        lbl_eu_806657DC = 2;
+    if ((s32)sLastColorChanMode != 2) {
+        sLastColorChanMode = 2;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_REG,
-                      (GXLightID)lbl_eu_806657EC, (GXDiffuseFn)lbl_eu_80658374[0],
-                      (GXAttnFn)lbl_eu_80658368[0]);
+                      (GXLightID)sLodLightMask0, (GXDiffuseFn)sLodDiffuseFnTable[0],
+                      (GXAttnFn)sLodAttnFnTable[0]);
     }
 }
 
 void LOD::UnkClass_80466348::setColorChanRegVtx1() {
     // Latch the "diffuse channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 3) {
-        lbl_eu_806657DC = 3;
+    if ((s32)sLastColorChanMode != 3) {
+        sLastColorChanMode = 3;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX,
-                      (GXLightID)lbl_eu_806657F0, (GXDiffuseFn)lbl_eu_80658374[1],
-                      (GXAttnFn)lbl_eu_80658368[1]);
+                      (GXLightID)sLodLightMask1, (GXDiffuseFn)sLodDiffuseFnTable[1],
+                      (GXAttnFn)sLodAttnFnTable[1]);
     }
 }
 
 void LOD::UnkClass_80466348::setColorChanRegVtx2() {
     // Latch the "diffuse channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 4) {
-        lbl_eu_806657DC = 4;
+    if ((s32)sLastColorChanMode != 4) {
+        sLastColorChanMode = 4;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX,
-                      (GXLightID)lbl_eu_806657EC, (GXDiffuseFn)lbl_eu_80658374[0],
-                      (GXAttnFn)lbl_eu_80658368[0]);
+                      (GXLightID)sLodLightMask0, (GXDiffuseFn)sLodDiffuseFnTable[0],
+                      (GXAttnFn)sLodAttnFnTable[0]);
     }
 }
 
 void LOD::UnkClass_80466348::setColorChanRegReg3() {
     // Latch the "diffuse channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 5) {
-        lbl_eu_806657DC = 5;
+    if ((s32)sLastColorChanMode != 5) {
+        sLastColorChanMode = 5;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_REG,
-                      (GXLightID)lbl_eu_806657F4, (GXDiffuseFn)lbl_eu_80658374[2],
-                      (GXAttnFn)lbl_eu_80658368[2]);
+                      (GXLightID)sLodLightMask2, (GXDiffuseFn)sLodDiffuseFnTable[2],
+                      (GXAttnFn)sLodAttnFnTable[2]);
     }
 }
 
 void LOD::UnkClass_80466348::setColorChanRegVtx3() {
     // Latch the "diffuse channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 6) {
-        lbl_eu_806657DC = 6;
+    if ((s32)sLastColorChanMode != 6) {
+        sLastColorChanMode = 6;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX,
-                      (GXLightID)lbl_eu_806657F4, (GXDiffuseFn)lbl_eu_80658374[2],
-                      (GXAttnFn)lbl_eu_80658368[2]);
+                      (GXLightID)sLodLightMask2, (GXDiffuseFn)sLodDiffuseFnTable[2],
+                      (GXAttnFn)sLodAttnFnTable[2]);
     }
 }
 
 void LOD::UnkClass_80466348::setColorChanDisable() {
     // Latch the "diffuse+specular channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657DC != 7) {
-        lbl_eu_806657DC = 7;
+    if ((s32)sLastColorChanMode != 7) {
+        sLastColorChanMode = 7;
         GXSetChanCtrl(GX_COLOR0, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
     }
 }
 
 void LOD::UnkClass_80466348::setAlphaChanVtx() {
     // Latch the "alpha channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657E0 != 1) {
-        lbl_eu_806657E0 = 1;
+    if ((s32)sLastAlphaChanMode != 1) {
+        sLastAlphaChanMode = 1;
         GXSetChanCtrl(GX_ALPHA0, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
     }
 }
 
 void LOD::UnkClass_80466348::setAlphaChanReg() {
     // Latch the "alpha channel setup" state, then emit it once.
-    if ((s32)lbl_eu_806657E0 != 2) {
-        lbl_eu_806657E0 = 2;
+    if ((s32)sLastAlphaChanMode != 2) {
+        sLastAlphaChanMode = 2;
         GXSetChanCtrl(GX_ALPHA0, GX_ENABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
     }
 }
@@ -621,7 +621,7 @@ void LOD::UnkClass_80466348::loadTexMtxImmPos() { GXLoadTexMtxImm((const float(*
 void LOD::UnkClass_80466348::loadTexMtxConcat() {
     // Concatenate the fixed LOD matrix with this object's matrix, then upload it.
     Mtx mtx;
-    PSMTXConcat(lbl_eu_806583B0, (const f32(*)[4])this, mtx);
+    PSMTXConcat(sLodFixedTexMtx, (const f32(*)[4])this, mtx);
     GXLoadTexMtxImm(mtx, 30, GX_MTX_3x4);
 }
 
@@ -631,33 +631,33 @@ void LOD::UnkClass_80466348::loadTexMtxConcat() {
 extern "C" void setAmbColorScaled1__Q23LOD17UnkClass_80466348Fv(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its own LUT factor and the
     // shared s16-derived scale, then clamped to 255; alpha is the raw latch.
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * lbl_eu_806657E4);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * lbl_eu_806657E4);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(color->r) * sAmbientScaleLut[0] * sAmbientIntensityScale);
+    s32 g = (s32)(u8ToF_a638(color->g) * sAmbientScaleLut[1] * sAmbientIntensityScale);
+    s32 b = (s32)(u8ToF_a638(color->b) * sAmbientScaleLut[2] * sAmbientIntensityScale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
 void LOD::UnkClass_80466348::setAmbColorDirect() {
     // Build the color-and-alpha ambient color from this object's RGB bytes and
     // the shared alpha latch, then emit it.
-    GXColor color = { field_0x0, field_0x1, field_0x2, (u8)lbl_eu_80665814 };
+    GXColor color = { field_0x0, field_0x1, field_0x2, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, color);
 }
 
 extern "C" void setAmbColorScaled2__Q23LOD17UnkClass_80466348Fv(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its own LUT factor and the
     // shared s16-derived scale, then clamped to 255; alpha is the raw latch.
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * lbl_eu_806657E4);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * lbl_eu_806657E4);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(color->r) * sAmbientAltScaleLut[0] * sAmbientIntensityScale);
+    s32 g = (s32)(u8ToF_a638(color->g) * sAmbientAltScaleLut[1] * sAmbientIntensityScale);
+    s32 b = (s32)(u8ToF_a638(color->b) * sAmbientAltScaleLut[2] * sAmbientIntensityScale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
@@ -665,27 +665,27 @@ extern "C" void setAmbColorScaledAlpha1__Q23LOD17UnkClass_80466348Fv(GXColor* co
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (A630 * latch * 806657E4), then clamped to 255;
     // alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
-    scale = scale * lbl_eu_806657E4;
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * scale);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * scale);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * scale);
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)sAmbientAlpha);
+    scale = scale * sAmbientIntensityScale;
+    s32 r = (s32)(u8ToF_a638(color->r) * sAmbientScaleLut[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * sAmbientScaleLut[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * sAmbientScaleLut[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
 extern "C" void setAmbColorAlphaSimple__Q23LOD17UnkClass_80466348Fv(GXColor* color) {
     // Ambient color: each RGB byte is scaled by the alpha latch (converted
     // through s32->f32) times the shared A630 factor; alpha stays raw.
-    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)sAmbientAlpha);
     GXColor out = {
         (u8)(s32)(u8ToF_a638(color->r) * scale),
         (u8)(s32)(u8ToF_a638(color->g) * scale),
         (u8)(s32)(u8ToF_a638(color->b) * scale),
-        (u8)lbl_eu_80665814,
+        (u8)sAmbientAlpha,
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
@@ -694,24 +694,24 @@ extern "C" void setAmbColorScaledAlpha2__Q23LOD17UnkClass_80466348Fv(GXColor* co
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (A630 * latch * 806657E4), then clamped to 255;
     // alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
-    scale = scale * lbl_eu_806657E4;
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * scale);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * scale);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * scale);
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)sAmbientAlpha);
+    scale = scale * sAmbientIntensityScale;
+    s32 r = (s32)(u8ToF_a638(color->r) * sAmbientAltScaleLut[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * sAmbientAltScaleLut[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * sAmbientAltScaleLut[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
 void LOD::UnkClass_80466348::setAmbColorWithAlpha1() {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)(u8ToF_a638(field_0x0) * lbl_eu_80658348[0] * lbl_eu_806657E4);
-    s32 g = (s32)(u8ToF_a638(field_0x1) * lbl_eu_80658348[1] * lbl_eu_806657E4);
-    s32 b = (s32)(u8ToF_a638(field_0x2) * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(field_0x0) * sAmbientScaleLut[0] * sAmbientIntensityScale);
+    s32 g = (s32)(u8ToF_a638(field_0x1) * sAmbientScaleLut[1] * sAmbientIntensityScale);
+    s32 b = (s32)(u8ToF_a638(field_0x2) * sAmbientScaleLut[2] * sAmbientIntensityScale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -719,14 +719,14 @@ void LOD::UnkClass_80466348::setAmbColorWithAlpha1() {
         (u8)r,
         (u8)g,
         (u8)b,
-        (u8)(s32)(s32ToF_a628((s32)lbl_eu_80665814) * lbl_eu_80665808),
+        (u8)(s32)(s32ToF_a628((s32)sAmbientAlpha) * sAmbientAlphaScale),
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
 void LOD::UnkClass_80466348::setAmbColorWithAlpha0() {
-    f32 conv = s32ToF_a628((s32)lbl_eu_80665814);
-    f32 scaled = conv * lbl_eu_80665808;
+    f32 conv = s32ToF_a628((s32)sAmbientAlpha);
+    f32 scaled = conv * sAmbientAlphaScale;
     GXColor color = {
         field_0x0,
         field_0x1,
@@ -739,9 +739,9 @@ void LOD::UnkClass_80466348::setAmbColorWithAlpha0() {
 void LOD::UnkClass_80466348::setAmbColorWithAlpha2() {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)(u8ToF_a638(field_0x0) * lbl_eu_80658358[0] * lbl_eu_806657E4);
-    s32 g = (s32)(u8ToF_a638(field_0x1) * lbl_eu_80658358[1] * lbl_eu_806657E4);
-    s32 b = (s32)(u8ToF_a638(field_0x2) * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(field_0x0) * sAmbientAltScaleLut[0] * sAmbientIntensityScale);
+    s32 g = (s32)(u8ToF_a638(field_0x1) * sAmbientAltScaleLut[1] * sAmbientIntensityScale);
+    s32 b = (s32)(u8ToF_a638(field_0x2) * sAmbientAltScaleLut[2] * sAmbientIntensityScale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -749,7 +749,7 @@ void LOD::UnkClass_80466348::setAmbColorWithAlpha2() {
         (u8)r,
         (u8)g,
         (u8)b,
-        (u8)(s32)(s32ToF_a628((s32)lbl_eu_80665814) * lbl_eu_80665808),
+        (u8)(s32)(s32ToF_a628((s32)sAmbientAlpha) * sAmbientAlphaScale),
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
@@ -758,29 +758,29 @@ extern "C" void setAmbColorComposite1__Q23LOD17UnkClass_80466348Fv(GXColor* colo
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (80665808 * A630 * latch * 806657E4), then clamped
     // to 255; alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
-    scale = scale * lbl_eu_806657E4;
-    scale = lbl_eu_80665808 * scale;
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * scale);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * scale);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * scale);
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)sAmbientAlpha);
+    scale = scale * sAmbientIntensityScale;
+    scale = sAmbientAlphaScale * scale;
+    s32 r = (s32)(u8ToF_a638(color->r) * sAmbientScaleLut[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * sAmbientScaleLut[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * sAmbientScaleLut[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
 extern "C" void setAmbColorComposite2__Q23LOD17UnkClass_80466348Fv(GXColor* color) {
     // Ambient color: each RGB byte is scaled by the alpha latch (converted
     // through s32->f32) times the A630 and 80665808 factors; alpha stays raw.
-    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
-    scale = scale * lbl_eu_80665808;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)sAmbientAlpha);
+    scale = scale * sAmbientAlphaScale;
     GXColor out = {
         (u8)(s32)(u8ToF_a638(color->r) * scale),
         (u8)(s32)(u8ToF_a638(color->g) * scale),
         (u8)(s32)(u8ToF_a638(color->b) * scale),
-        (u8)lbl_eu_80665814,
+        (u8)sAmbientAlpha,
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
@@ -789,16 +789,16 @@ extern "C" void setAmbColorComposite3__Q23LOD17UnkClass_80466348Fv(GXColor* colo
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (80665808 * A630 * latch * 806657E4), then clamped
     // to 255; alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
-    scale = scale * lbl_eu_806657E4;
-    scale = lbl_eu_80665808 * scale;
-    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * scale);
-    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * scale);
-    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * scale);
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)sAmbientAlpha);
+    scale = scale * sAmbientIntensityScale;
+    scale = sAmbientAlphaScale * scale;
+    s32 r = (s32)(u8ToF_a638(color->r) * sAmbientAltScaleLut[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * sAmbientAltScaleLut[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * sAmbientAltScaleLut[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)sAmbientAlpha };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
 
@@ -820,21 +820,21 @@ void LOD::UnkClass_80466348::setTevSwapIdentity() {
 
 void LOD::UnkClass_80466348::setCurrentMtxCached() {
     // Cache the current-matrix value; only re-issue GXSetCurrentMtx when it changes.
-    if ((s32)lbl_eu_80665818 != (s32)(u32)this) {
-        lbl_eu_80665818 = (u32)this;
+    if ((s32)sCachedCurrentMtx != (s32)(u32)this) {
+        sCachedCurrentMtx = (u32)this;
         GXSetCurrentMtx((u32)this);
     }
 }
 
 // --- static initializer (.ctors) ---
-// .ctors static initializer: fill the LOD fog/color ramp (lbl_eu_80658380)
+// .ctors static initializer: fill the LOD fog/color ramp (sLodFogRamp)
 // from the shared sdata2 float constants.
 //
 // KNOWN CEILING: the retail .o registers sinit_804683E8 in .ctors, but as a
 // plain C-linkage free function MWCC emits no .ctors entry, so the unit's
 // single unmatched data slot (data 99.5%) is deferred (see CNReqtaskCheck).
 extern "C" void sinit_804683E8() {
-    float* ramp = lbl_eu_80658380;
+    float* ramp = sLodFogRamp;
     ramp[0] = 0.5f;
     ramp[1] = lbl_eu_8066A620;
     ramp[2] = lbl_eu_8066A620;
@@ -859,11 +859,11 @@ extern "C" void setAmbColorWithAlpha1__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setAmbColorWithAlpha0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setAmbColorWithAlpha2__Q23LOD17UnkClass_80466348Fv();
 
-extern u32 lbl_eu_8056D75C[19];
-extern u32 lbl_eu_8056D7A8[118];
+extern u32 sLodTevStageSetupTable[19];
+extern u32 sLodRenderStateDispatchTable[118];
 
 // [.data] 0x258 bytes align 8
-extern "C" LodTexCoordSetup lbl_eu_8056D728[13] = { (LodTexCoordSetup)&setupVtxDescPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrIndexed__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex3__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex3__Q23LOD17UnkClass_80466348Fv };
-u32 lbl_eu_8056D75C[19] = { (u32)&tevStageTexRasc__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setAlphaCompareAlways, (u32)&LOD::UnkClass_80466348::setAlphaCompareGe80, (u32)&LOD::UnkClass_80466348::setAlphaCompareGe1, 0x00000000 };
-u32 lbl_eu_8056D7A8[118] = { (u32)&setTexGenMtx2x4Field__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Pos__Q23LOD17UnkClass_80466348Fv, (u32)&loadTexMtxAndSetGen__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setBlendModeNone, (u32)&LOD::UnkClass_80466348::setBlendModeBlend, (u32)&LOD::UnkClass_80466348::setBlendModeAdd, (u32)&LOD::UnkClass_80466348::setBlendModeReplace, (u32)&LOD::UnkClass_80466348::setBlendModeSubtract, 0x00000000, (u32)&setAmbColorScaled1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorDirect__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaled2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorAlphaSimple__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha0__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite3__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setColorChanRegReg1, (u32)&LOD::UnkClass_80466348::setColorChanRegReg2, (u32)&LOD::UnkClass_80466348::setColorChanRegReg1, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx1, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx2, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx1, (u32)&LOD::UnkClass_80466348::setColorChanRegReg3, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx3, (u32)&LOD::UnkClass_80466348::setColorChanDisable, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000002, 0x00000002, 0xFFFFFFFF, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x00000000 };
+extern "C" LodTexCoordSetup sLodTexCoordSetupTable[13] = { (LodTexCoordSetup)&setupVtxDescPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrIndexed__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex3__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex3__Q23LOD17UnkClass_80466348Fv };
+u32 sLodTevStageSetupTable[19] = { (u32)&tevStageTexRasc__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setAlphaCompareAlways, (u32)&LOD::UnkClass_80466348::setAlphaCompareGe80, (u32)&LOD::UnkClass_80466348::setAlphaCompareGe1, 0x00000000 };
+u32 sLodRenderStateDispatchTable[118] = { (u32)&setTexGenMtx2x4Field__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Pos__Q23LOD17UnkClass_80466348Fv, (u32)&loadTexMtxAndSetGen__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setBlendModeNone, (u32)&LOD::UnkClass_80466348::setBlendModeBlend, (u32)&LOD::UnkClass_80466348::setBlendModeAdd, (u32)&LOD::UnkClass_80466348::setBlendModeReplace, (u32)&LOD::UnkClass_80466348::setBlendModeSubtract, 0x00000000, (u32)&setAmbColorScaled1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorDirect__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaled2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorAlphaSimple__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha0__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite3__Q23LOD17UnkClass_80466348Fv, (u32)&LOD::UnkClass_80466348::setColorChanRegReg1, (u32)&LOD::UnkClass_80466348::setColorChanRegReg2, (u32)&LOD::UnkClass_80466348::setColorChanRegReg1, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx1, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx2, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx1, (u32)&LOD::UnkClass_80466348::setColorChanRegReg3, (u32)&LOD::UnkClass_80466348::setColorChanRegVtx3, (u32)&LOD::UnkClass_80466348::setColorChanDisable, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanReg, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, (u32)&LOD::UnkClass_80466348::setAlphaChanVtx, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000002, 0x00000002, 0xFFFFFFFF, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x00000000 };
 

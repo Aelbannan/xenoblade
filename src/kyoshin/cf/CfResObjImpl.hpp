@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Minimal nw4r sound-object interface used by ResObj_NotifySound_C888 (sound slot +0x00
 // dereferenced to call SetPlayerPriority). Declared here at global scope
@@ -25,7 +25,7 @@ class CScnItemModel; // fwd; real owner of parent+0x98 model (hot header)
 namespace cf {
 
 class CfObjectMove;      // fwd; CfObjectMove_initAnimTarget operand (real def in object/CfObjectMove.hpp)
-class CScn;              // fwd; shared scene (CfObjectMove.hpp declares lbl_eu_80663E14 as CScn*)
+class CScn;              // fwd; shared scene (CfObjectMove.hpp declares gmScene as CScn*)
 struct CfResObjImpl;     // fwd
 
 // Slot entry returned by CfSoundMan_TouchSlotById (CfSoundMan slot lookup); +0x00 holds

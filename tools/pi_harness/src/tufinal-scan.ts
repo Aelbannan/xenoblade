@@ -29,6 +29,8 @@ export interface UnitFunctionState {
   symbol: string;
   present: boolean;
   match: boolean;
+  /** objdiff-aware verdict; older payloads only carry `match`. */
+  full_match?: boolean;
   mismatch: number;
   structural: number;
   reg_swap: number;
@@ -273,13 +275,14 @@ export async function scanUnitState(
     size_check: null, dataPercent: null, sizeOutput: "", witnessCert: new Map(),
   };
   try {
-    // hexdiff --all --json exits 5 when any function mismatches — run()
+    // hexdiff --all --json exits 5 when any function mismatches; --no-baseline
+    // keeps baseline LOST (exit 6) out of this tool-internal sweep. run()
     // REJECTS on non-zero exit, so we must read stdout from the rejection
     // error (C1: swallowing the rejection returned an empty scan, making the
     // whole regression detector a no-op for any non-byte-identical unit).
     let stdout = "";
     try {
-      const r = await run(python, ["tools/coop/hexdiff.py", unit, "--all", "--json"], repoRoot);
+      const r = await run(python, ["tools/coop/hexdiff.py", unit, "--all", "--json", "--no-baseline"], repoRoot);
       stdout = r.stdout;
     } catch (err) {
       const e = err as { stdout?: string };
@@ -294,7 +297,9 @@ export async function scanUnitState(
       functions: (parsed.functions ?? []).map((f) => ({
         symbol: String((f as Record<string, unknown>).symbol ?? "?"),
         present: Boolean((f as Record<string, unknown>).present),
-        match: Boolean((f as Record<string, unknown>).match),
+        // TU-final acceptance is objdiff-aware (hexdiff full_match).
+        match: Boolean((f as Record<string, unknown>).full_match
+          ?? (f as Record<string, unknown>).match),
         mismatch: Number((f as Record<string, unknown>).mismatch ?? 0),
         structural: Number((f as Record<string, unknown>).structural ?? 0),
         reg_swap: Number((f as Record<string, unknown>).reg_swap ?? 0),

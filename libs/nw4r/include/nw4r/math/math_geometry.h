@@ -9,6 +9,7 @@ namespace math {
 
 // Forward declarations
 struct AABB;
+struct SPHERE;
 
 enum IntersectionResult {
     INTERSECTION_NONE,
@@ -96,6 +97,7 @@ public:
     void Set(f32 t, f32 b, f32 l, f32 r, f32 n, f32 f, const MTX34& rCamMtx);
 
     IntersectionResult IntersectAABB_Ex(const AABB* pBox) const;
+    bool IntersectSphere(const SPHERE* pSphere) const;
 
 private:
     MTX34 mCamMtx;            // at 0x0

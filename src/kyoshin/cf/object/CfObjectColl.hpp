@@ -3,7 +3,7 @@
 #include <types.h>
 #include <revolution/MTX.h>
 #include "monolib/util/FixStr.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail data symbols referenced from this unit.

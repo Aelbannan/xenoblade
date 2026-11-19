@@ -43,10 +43,5 @@ public:
     void CView_UnkVirtualFunc1();
 };
 
-class CViewFrame {
-public:
-    virtual ~CViewFrame();
-
-    // TODO: add fields
-};
+class CViewFrame;  // canonical definition lives in monolib/core/CViewFrame.hpp
 

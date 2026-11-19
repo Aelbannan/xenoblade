@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuEnemyState.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_GetSummedInt
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
@@ -21,7 +22,6 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
 extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
-extern "C" int ScMain_GetSummedInt(void* self);
 extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
 extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
 extern "C" void* lookupCA0By45C0(void);
@@ -76,7 +76,7 @@ extern u32 lbl_eu_806640CC;
 #include "decomp.h"
 #include <nw4r/math.h>
 #include <revolution/GX.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -421,7 +421,7 @@ CPcSelectCursor::~CPcSelectCursor() {
 }
 
 extern "C" {
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 }
 
 // CfObjectPc.hpp is not included (it pulls CfObjectActor.hpp, whose import
@@ -551,13 +551,13 @@ void CMenuEnemyState::cbRenderBefore() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if ((gmPauseFlags & (1u << 21)) != 0) {
         goto done;
     }
     if (!IsMenuState621F0()) {
         goto done;
     }
-    if (lbl_eu_80663E24 & 0xAFA40000u) {
+    if (gmGameFlags & 0xAFA40000u) {
         goto done;
     }
 
@@ -661,13 +661,13 @@ void CMenuEnemyState::Move() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if ((gmPauseFlags & (1u << 21)) != 0) {
         goto done;
     }
     if (!IsMenuState621F0()) {
         goto done;
     }
-    if (lbl_eu_80663E24 & 0xAFA40000u) {
+    if (gmGameFlags & 0xAFA40000u) {
         goto done;
     }
     if (isSceneActive__Q22cf13CfGameManagerFv()) {
@@ -2463,7 +2463,7 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     // The double damage adjustment is formed before the divisor test so the
     // fsubs pair sits between the compare and the branch (retail schedule).
     // hp-adjusted ratio: the double difference is formed before the tests.
-    f64 dmgVal = ScMain_GetSummedInt(bmRes);
+    f64 dmgVal = ScMain_GetSummedInt((ScMain*)bmRes);
     f64 dmgAdj = dmgVal - sEnemyTextDoubleBias;
     f64 hpDiff = v128 - dmgAdj;
     f32 ratio = sEnemyPanelAnimMarker;

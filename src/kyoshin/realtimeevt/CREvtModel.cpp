@@ -17,7 +17,7 @@ extern "C" void simSetFlag2OnTree(void* model, int flag);
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/g3d/res/g3d_resdict.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 extern "C" {
@@ -180,7 +180,7 @@ void CREvtModel::setEventData(void* pData, void* pModelData) {
         }
         return;
     }
-    void* newData = Scn_InitGlobalA(&lbl_eu_80663E14, pData, 0);
+    void* newData = Scn_InitGlobalA(&gmScene, pData, 0);
     mData = newData;
     simMarkTree100000(model, REvtCam_GetFieldA5Flag() == 0 ? 1 : 0);
     simBindChrAnim(model, (u32)newData, 0, 0, 0, 1, -1);

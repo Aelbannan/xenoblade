@@ -64,4 +64,18 @@ typedef struct ADXT_OBJ_ {
     u32 lpStartOfs; /* 0xC0 loop start offset the position is aligned to */
 } ADXT_OBJ_;        /* 0xC4 */
 
+/* Four callback/argument pairs forming the 0x20-byte server work block. */
+typedef struct ADXT_SVR_ {
+    void (*callback0)(void*); /* 0x00 */
+    void* callback0Arg;       /* 0x04 */
+    void (*callback1)(void*); /* 0x08 */
+    void* callback1Arg;       /* 0x0C */
+    void (*callback2)(void*); /* 0x10 */
+    void* callback2Arg;       /* 0x14 */
+    void (*callback3)(void*); /* 0x18 */
+    void* callback3Arg;       /* 0x1C */
+} ADXT_SVR_;
+
+extern ADXT_SVR_ ADXT_ServerWork;
+
 #endif

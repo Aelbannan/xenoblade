@@ -37,7 +37,7 @@ void TexObj_BlitRect(GXTexObj* self, ml::CRect* rect, u8 p3, u8 p4);
 extern s32 lbl_eu_806659BC;   // frames remaining in the fog fade
 extern u8  lbl_eu_806659C0[8]; // override fog color used while a fog is disabled
 struct CScnRootEnv;
-extern CScnRootEnv* lbl_eu_806659B8; // active scene
+extern CScnRootEnv* sActiveSceneRoot; // active scene
 extern s32 lbl_eu_80663B38;   // fog index used for the scene lookup
 
 // .sdata2 constants used by the blend math.
@@ -206,13 +206,13 @@ extern "C" void blitEffectViewRect(CDrawCtx* draw, GXTexMapID p2, const ml::CVec
 void resolveEffectFog() {
     if (lbl_eu_806659BC <= 0) {
         s32 idx = lbl_eu_80663B38;
-        nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
+        nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
         *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(idx);
         return;
     }
 
     s32 idx = lbl_eu_80663B38;
-    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(lbl_eu_806659B8);
+    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
 
     // GetFog only fills the leading 0x18 bytes; widening tmp to a full
     // FogState leaves its tail fields untouched (matching retail).

@@ -10,22 +10,22 @@ class __declspec(novtable) CTaskColiManager;
 #include <string.h>
 #include "monolib/coli/CTaskColiManager.hpp"
 #include <monolib/coli/CColiProc.hpp> // CColiResCall (the mover object this TU updates)
-// The shared header declares lbl_eu_8065D138 / lbl_eu_8056F4F0 as SDA-sized
+// The shared header declares sColiWalkState / sColiTargetTable as SDA-sized
 // externs (4-byte pointer / 1-byte u8), but retail addresses both as full
 // objects via lis/addi (ADDR16_HA/LO relocs). Rename the header's declarations
 // aside and re-declare them at their full size below so MWCC keeps the 32-bit
 // addressing the retail relocs require instead of SDA21. lbl_eu_8066AEC0 is
 // re-declared const so MWCC can hoist its load past the aliasing stores (like
 // a pooled literal) while still emitting the retail reloc name.
-#define lbl_eu_8056F4F0 lbl_eu_8056F4F0_hdr
-#define lbl_eu_8065D138 lbl_eu_8065D138_hdr
+#define sColiTargetTable sColiTargetTable_hdr
+#define sColiWalkState sColiWalkState_hdr
 #define lbl_eu_8066AEC0 lbl_eu_8066AEC0_hdr
 #define lbl_eu_8066AEB0 lbl_eu_8066AEB0_hdr
 #define lbl_eu_8066AEC4 lbl_eu_8066AEC4_hdr
 #define lbl_eu_8066AEC8 lbl_eu_8066AEC8_hdr
 #include "monolib/coli/code_804B2FF0.hpp"
-#undef lbl_eu_8056F4F0
-#undef lbl_eu_8065D138
+#undef sColiTargetTable
+#undef sColiWalkState
 #undef lbl_eu_8066AEC0
 #undef lbl_eu_8066AEB0
 #undef lbl_eu_8066AEC4
@@ -41,7 +41,7 @@ class __declspec(novtable) CTaskColiManager;
 
 // Full-size externs (retail: walk-state object at 0x8065D138, target table at
 // 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
-extern u32 lbl_eu_8056F4F0[3];
+extern u32 sColiTargetTable[3];
 extern const f32 lbl_eu_8066AEC0;
 extern const f32 lbl_eu_8066AEB0;
 extern const f32 lbl_eu_8066AEC4;
@@ -178,7 +178,7 @@ struct CColiQueryResult {
     f32 bbMax[3];         //0x6C
 };
 
-// Shared walk state (lbl_eu_8065D138): accumulated AABB (bbMin +0x38,
+// Shared walk state (sColiWalkState): accumulated AABB (bbMin +0x38,
 // bbMax +0x44), the queried source segment (+0x50), a scalar at +0x5C and
 // a flag at +0x60.
 // 3-word raw snapshot (u32 members force lwz/stw word copies like retail).
@@ -202,14 +202,14 @@ struct CColiWalkState {
     u8 flag;       //0x60
 };
 
-// Retail .bss object lbl_eu_8065D138 spans 0x68 bytes: the walk state plus a
+// Retail .bss object sColiWalkState spans 0x68 bytes: the walk state plus a
 // 4-byte retail tail pad. Defined (zero-initialised) in the dissolved block
 // at the bottom of this TU so the object owns its retail .bss slice.
 struct CColiWalkStateObj : CColiWalkState {
     u8 tail[4]; //0x64..0x67 retail padding
 };
 
-extern CColiWalkStateObj lbl_eu_8065D138;
+extern CColiWalkStateObj sColiWalkState;
 
 // Query scratch filled by ColiMakeAabbMinMax/ColiMakeAabbRadius: component-wise min x
 // at +0x0 and max x at +0xC (trailing pad keeps the retail 0x18-byte slot).
@@ -238,8 +238,8 @@ extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, con
         // sequence in retail order: AEC4 seed load, flag clear, init mark,
         // AEC8 seed, x/y snapshot with y stored first, the zero literal
         // load wedged between the snapshot stores, then z.
-        volatile CColiWalkState* vs = &lbl_eu_8065D138;
-        st = &lbl_eu_8065D138;
+        volatile CColiWalkState* vs = &sColiWalkState;
+        st = &sColiWalkState;
         f32 v5c;
         f32 v4c = lbl_eu_8066AEC4;
         vs->flag = 0;
@@ -311,13 +311,13 @@ extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, con
         if (found == 0) {
             return 0;
         }
-        if (lbl_eu_8065D138.flag != 0) {
+        if (sColiWalkState.flag != 0) {
             // Word copies of the accumulated AABB via the pipelined
             // two-word struct-copy expansion (y stored before x, trailing z).
             *(CColiPairCopy*)&self->bbMin[0] =
-                *(const CColiPairCopy*)&lbl_eu_8065D138.bbMin[0];
+                *(const CColiPairCopy*)&sColiWalkState.bbMin[0];
             *(CColiPairCopy*)&self->bbMax[0] =
-                *(const CColiPairCopy*)&lbl_eu_8065D138.bbMax[0];
+                *(const CColiPairCopy*)&sColiWalkState.bbMax[0];
             return 1;
         }
         return 0;
@@ -340,11 +340,11 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
     CColiWalkState* st = (CColiWalkState*)(u32)isFirst;
     int init = 0;
     if (isFirst == 0) {
-        st = &lbl_eu_8065D138;
+        st = &sColiWalkState;
         // All walk-state accesses are volatile so MWCC keeps the whole
         // sequence in retail order (seed load, flag clear, init mark, f5c
         // seed, x/y snapshot with y stored first, z, zero-fill seed).
-        volatile CColiWalkState* vs = &lbl_eu_8065D138;
+        volatile CColiWalkState* vs = &sColiWalkState;
         f32 v76 = lbl_eu_8066AEC4;
         vs->flag = 0;
         init = 1;
@@ -415,12 +415,12 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
 
     if (!init) return found;
     if (found == 0) return 0;
-    if (lbl_eu_8065D138.flag == 0) return 0;
+    if (sColiWalkState.flag == 0) return 0;
     // Word copies of the accumulated AABB: pipelined pairs (load x/y, store
     // y/x) plus a trailing z word.
     {
         const CColiSrcVec* smin =
-            (const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
+            (const CColiSrcVec*)&sColiWalkState.bbMin[0];
         CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
         u32 mlo = smin->x;
         u32 mhi = smin->y;
@@ -430,7 +430,7 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
     }
     {
         const CColiSrcVec* smax =
-            (const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
+            (const CColiSrcVec*)&sColiWalkState.bbMax[0];
         CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
         u32 xlo = smax->x;
         u32 xhi = smax->y;
@@ -1575,8 +1575,8 @@ done:
 }
 
 // Static initializer (.ctors) for the shared collision walk object at
-// lbl_eu_8065D138: run the CColiProc base constructor, then point its default
-// target data at the alternate table lbl_eu_8056F4F0.
+// sColiWalkState: run the CColiProc base constructor, then point its default
+// target data at the alternate table sColiTargetTable.
 struct CColiProcLocal {
     void* field_0x0; //0x0
     u32 field_0x4;   //0x4
@@ -1587,8 +1587,8 @@ extern "C" void sinit_804B598C() {
     // then point its default target data at the alternate table. The address
     // is taken twice, so MWCC keeps only the HA half in r31 and folds the LO
     // half into each use (call arg / store displacement) like retail.
-    __ct__9CColiProcFv((CColiProcLocal*)&lbl_eu_8065D138);
-    ((CColiProcLocal*)&lbl_eu_8065D138)->field_0x0 = &lbl_eu_8056F4F0;
+    __ct__9CColiProcFv((CColiProcLocal*)&sColiWalkState);
+    ((CColiProcLocal*)&sColiWalkState)->field_0x0 = &sColiTargetTable;
 }
 
 // Walk/traverse helpers (C-linkage retail symbols in the sibling coli unit).
@@ -1608,7 +1608,7 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
     CColiWalkState* st = (CColiWalkState*)(u32)isFirst;
     int init = 0;
     if (isFirst == 0) {
-        st = &lbl_eu_8065D138;
+        st = &sColiWalkState;
         st->flag = 0;
         // Local-pointer reads keep FPR coloring and load positions near
         // retail (plain const refs hoist to block start).
@@ -1660,11 +1660,11 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
 
     if (init != 0) {
         if (found == 0) return 0;
-        if (lbl_eu_8065D138.flag == 0) return 0;
+        if (sColiWalkState.flag == 0) return 0;
         // Word copies of the accumulated AABB: each 3-word group is a
         // pipelined pair (load x/y, store y/x) plus a trailing z word.
         const CColiSrcVec* smin =
-            (const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
+            (const CColiSrcVec*)&sColiWalkState.bbMin[0];
         CColiSrcVec* dmin = (CColiSrcVec*)&self->bbMin[0];
         u32 mlo = smin->x;
         u32 mhi = smin->y;
@@ -1672,7 +1672,7 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
         dmin->x = mlo;
         dmin->z = smin->z;
         const CColiSrcVec* smax =
-            (const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
+            (const CColiSrcVec*)&sColiWalkState.bbMax[0];
         CColiSrcVec* dmax = (CColiSrcVec*)&self->bbMax[0];
         u32 xlo = smax->x;
         u32 xhi = smax->y;
@@ -1740,11 +1740,7 @@ void CTaskColiManager::Move() {
             front = p;
             p = p->prev;
         }
-        // Volatile final store: retail restores LR first in the epilogue;
-        // MWCC only emits that order when the function's last store is
-        // volatile (MWCC_CASES, CriWare adx_mwii pattern).
-        CColiMoveNode* volatile* mhp = &mHead;
-        *mhp = front;
+        mHead = front;
     }
 }
 
@@ -1754,7 +1750,7 @@ void CTaskColiManager::Draw() {
 
 // Reset the shared walk flag then invoke the base (CProcess) destructor path.
 CTaskColiManager::~CTaskColiManager() {
-    lbl_eu_80665958 = 0;
+    sEneColiProbe = 0;
 }
 
 // Segment source (two endpoints) fed to the query builders.
@@ -1839,7 +1835,7 @@ extern "C" int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
     f32 big;
     f32 zero;
     u32 sx;
-    CColiWalkState* st = &lbl_eu_8065D138;
+    CColiWalkState* st = &sColiWalkState;
         st->flag = 0;
         zero = lbl_eu_8066AEC0;
         big = lbl_eu_8066AEC4;
@@ -1866,12 +1862,12 @@ extern "C" int Coli_WalkReport(CColiWalkOwner* self, Vec* out1, Vec* out2,
         }
     }
 
-    if (lbl_eu_8065D138.flag != 0) {
+    if (sColiWalkState.flag != 0) {
         // Word-wise POD copies via the pair+word snapshot type: the
         // {u32[2], u32} layout makes MWCC emit its pipelined 12-byte
         // copy (load-pair / store-pair / trailing word), like retail.
-        *(CColiPairCopy*)out1 = *(const CColiPairCopy*)&lbl_eu_8065D138.bbMin[0];
-        *(CColiPairCopy*)out2 = *(const CColiPairCopy*)&lbl_eu_8065D138.bbMax[0];
+        *(CColiPairCopy*)out1 = *(const CColiPairCopy*)&sColiWalkState.bbMin[0];
+        *(CColiPairCopy*)out2 = *(const CColiPairCopy*)&sColiWalkState.bbMax[0];
         return 1;
     }
     }
@@ -1950,7 +1946,7 @@ extern "C" CTaskColiManager* create__16CTaskColiManagerFv(CProcess* parent,
         init->f_0x60[3] = z;
         init->f_0x60[4] = z;
         init->f_0x60[5] = z;
-        lbl_eu_80665958 = (int)(uintptr_t)mem;
+        sEneColiProbe = (ColiProbeObj*)mem;
     }
     ((CProcess*)obj)->Regist(parent, false);
     return obj;
@@ -2081,7 +2077,7 @@ u32 lbl_eu_8056F4D4[7] = {
     (u32)&__RTTI__15CDoubleListNode, 0, (u32)&__RTTI__14CChildListNode, 0,
     (u32)&__RTTI__8CProcess, 0, 0,
 };
-u32 lbl_eu_8056F4F0[3] = {
+u32 sColiTargetTable[3] = {
     (u32)&__RTTI__12CColiManCall, 0, (u32)&gateMoverMove,
 };
 u32 lbl_eu_8056F4FC[3] = {
@@ -2089,7 +2085,7 @@ u32 lbl_eu_8056F4FC[3] = {
 };
 
 // .bss 0x8065D138..0x8065D1A0: shared collision walk state (+ tail pad).
-CColiWalkStateObj lbl_eu_8065D138;
+CColiWalkStateObj sColiWalkState;
 
 // .sbss 0x80665944..0x80665960: bounds/Hx/Qx holders, master-node index,
 // task singleton; _pad objects reproduce the retail 8-byte slots.
@@ -2097,6 +2093,6 @@ CColiBounds* g_coliBounds;
 CColiQx* g_coliXformPos;
 CColiHx* g_coliHalfExtent;
 s16 g_coliNodeIndex;
-int lbl_eu_80665958;
+ColiProbeObj* sEneColiProbe;
 u8 lbl_eu_80665950_pad[2];
 u8 lbl_eu_80665958_pad[4];

@@ -854,7 +854,7 @@ __attribute__((used))
 char lbl_eu_80570918[0x108];
 // Camera-default vector (copied as 3 words into CfCam's 80570A2C).
 __attribute__((used, aligned(8)))
-f32 lbl_eu_80570A20[3];
+f32 sCameraDefaults[3];
 
 // --- .sbss (retail 0x8): singleton-init flag + section-fill reservation ---
 // The file-static sort experiment showed MWCC emits sbss statics ahead of

@@ -46,7 +46,7 @@ void CTTask<CTaskGame>::Draw() {
 template<>
 CTTask<CTaskGame>::~CTTask() {}
 
-CTaskGame* lbl_eu_80663D18;
+CTaskGame* gTaskGameInstance;
 
 struct Fields {
     u8 field0;
@@ -114,12 +114,12 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int initFlag) :
     unk188(0) {
     // Retail calls the flat out-of-line setter: (self, u8 0, f32 1.0f, -1, 2, 0, 0, 0).
     CTaskGame_setVisionParam(reinterpret_cast<Fields*>(&unk18C), 0, 1.0f, -1, 2, 0, 0, 0);
-    lbl_eu_80663D18 = this;
-    // Retail zeroes lbl_eu_80663D1C/D24/D30/D34 (declared in the header; D20/D28 untouched).
-    lbl_eu_80663D1C = nullptr;
-    lbl_eu_80663D24 = 0;
-    lbl_eu_80663D30 = 0;
-    lbl_eu_80663D34 = 0;
+    gTaskGameInstance = this;
+    // Retail zeroes gLoadScreen/D24/D30/D34 (declared in the header; D20/D28 untouched).
+    gLoadScreen = nullptr;
+    gLoadStep = 0;
+    gLoadTimeoutCounter = 0;
+    gLoadDelayCounter = 0;
 }
 
 // Retail dtor saves r30/r31 as stmw/lmw (size-mode prologue) and destroys
@@ -127,7 +127,7 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int initFlag) :
 // the strong empty copy below is in this TU (MWCC empty-function call
 // elimination); the redundant this-guard branch retail shows stays.
 CTaskGame::~CTaskGame(){
-    lbl_eu_80663D18 = nullptr;
+    gTaskGameInstance = nullptr;
 }
 
 // Strong empty dtor for retail symbol placement (0x80040858 lives in this
@@ -137,11 +137,11 @@ CTaskGame::~CTaskGame(){
 IWorkEvent::~IWorkEvent() {}
 
 CTaskGame* CTaskGame::getInstance(){
-    return lbl_eu_80663D18;
+    return gTaskGameInstance;
 }
 
 u32 CTaskGame::isFlag2000Set() {
-    CTaskGame* instance = lbl_eu_80663D18;
+    CTaskGame* instance = gTaskGameInstance;
     if (instance == NULL) {
         return 0;
     }
@@ -182,7 +182,7 @@ void CTaskGame::Init(){
     // per-element overrides (retail keeps both store sequences).
     CTaskGameScnCreateParam param;
     param.field00 = 0;
-    param.field08 = lbl_eu_80665D70;
+    param.field08 = 10.0f;
     param.field0C = 0x100;
     param.field22 = 0x40;
     for (int j = 0; j < 10; j++) {
@@ -239,7 +239,7 @@ void CTaskGame::Init(){
     unkD4 = evt;
     evt->mFlags |= CTaskGameEvt::FLAG_ENABLED;
 
-    if (lbl_eu_80663D2C != 0) {
+    if (gMoveHookFlag != 0) {
         CTaskGame_setLoadScreen(1, 1);
         // Switch the move-hook ptmf from pool lbl_eu_80525568.
         // Pointer-walk form: MWCC emits the update-load (lwzu) for *pool++
@@ -405,16 +405,16 @@ extern "C" void CTaskGame_nop() {}
 // __declspec(noinline): retail callers (CTaskGame_moveReqExit) call this out of
 // line; without it MWCC inlines the instance/flag test into the caller.
 bool CTaskGame::isFlag01Set() {
-    extern CTaskGame* lbl_eu_80663D18;
-    if (lbl_eu_80663D18 == nullptr) return 1;
-    return lbl_eu_80663D18->unk68 & 1;
+    extern CTaskGame* gTaskGameInstance;
+    if (gTaskGameInstance == nullptr) return 1;
+    return gTaskGameInstance->unk68 & 1;
 }
 void CTaskGame_stub_80042710() {}
-CLoad* lbl_eu_80663D1C;
+CLoad* gLoadScreen;
 
 // -O4,s: retail booleanizes with addic/subfe, not neg/or/rlwinm.
 extern "C" int CTaskGame_hasLoadScreen() {
-    return lbl_eu_80663D1C != 0;
+    return gLoadScreen != 0;
 }
 // Retail CTaskGame_checkBusy7C: flag gate over unk7C bits. Returns 1 when either the
 // {0x80,0x40} or the {0x200,!0x100} bit-pair holds, or when bit 0x400 is set;
@@ -469,14 +469,14 @@ extern "C" __declspec(noinline) int CTaskGame_fileEventStub(void* self) { return
 // its object; null when all four slots are busy. __declspec(noinline):
 // retail callers (CTaskGame_enumListCtor / CTaskGame_enumListFill) call it out of line.
 extern "C" void* CTaskGame_allocObjSlot() {
-    CTaskGame* game = lbl_eu_80663D18;
+    CTaskGame* game = gTaskGameInstance;
     CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(game);
     for (u32 i = 0; i < 4; i++) {
         if (slots->busy[i] == 0) {
             slots->busy[i] = 1;
             // MWCC does not CSE the global reload (retail lwz lbl again).
             return reinterpret_cast<void*>(
-                reinterpret_cast<CTaskGameObjSlots*>(lbl_eu_80663D18)->objs[i]);
+                reinterpret_cast<CTaskGameObjSlots*>(gTaskGameInstance)->objs[i]);
         }
     }
     return nullptr;
@@ -488,7 +488,7 @@ extern "C" void* CTaskGame_allocObjSlot() {
 // without it MWCC inlines the registry scan into the dtor.
 extern "C" void CTaskGame_freeObjSlot(void* obj) {
     if (obj == 0) return;
-    CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(lbl_eu_80663D18);
+    CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(gTaskGameInstance);
     for (u32 i = 0; i < 4; i++) {
         if ((void*)slots->objs[i] == obj) {
             slots->busy[i] = 0;
@@ -608,7 +608,7 @@ extern "C" void CTaskGame_setFlag800000(CTaskGame* self, int enabled) {
 // the b/c moves). Each case is an explicit early return so MWCC emits the
 // retail tail-call `b` instead of bl+blr (cf. lytBindRefreshPlayer).
 extern "C" void CTaskGame_nandCallback(u32 mode, u32 a, u32 b, u32 c) {
-    CTaskGame* inst = lbl_eu_80663D18;
+    CTaskGame* inst = gTaskGameInstance;
     if (inst == nullptr) {
         return;
     }
@@ -671,17 +671,17 @@ extern "C" __declspec(noinline) void CTaskGame_setUnkF8(CTaskGame* obj, int val)
     obj->unkF8 = val;
 }
 extern "C" int CTaskGame_isStreamPaused() {
-    extern CTaskGame* lbl_eu_80663D18;
+    extern CTaskGame* gTaskGameInstance;
     extern int isStreamPaused__7CLibCriFv(unsigned int arg);
-    if (lbl_eu_80663D18 == nullptr) return 0;
-    return isStreamPaused__7CLibCriFv(static_cast<unsigned int>(lbl_eu_80663D18->unkD8));
+    if (gTaskGameInstance == nullptr) return 0;
+    return isStreamPaused__7CLibCriFv(static_cast<unsigned int>(gTaskGameInstance->unkD8));
 }
 // noinline: retail callers (moveTitleTick / openVision / setStreamVol) bl this.
 // -O4,s: retail uses addic/subfe on (unkD8 + 1) != 0.
 extern "C" int CTaskGame_playTimeGate() {
-    extern CTaskGame* lbl_eu_80663D18;
-    if (lbl_eu_80663D18 == nullptr) return 0;
-    return (lbl_eu_80663D18->unkD8 + 1) != 0;
+    extern CTaskGame* gTaskGameInstance;
+    if (gTaskGameInstance == nullptr) return 0;
+    return (gTaskGameInstance->unkD8 + 1) != 0;
 }
 cf::CfObjEnumList* CfEnumListHolder::get() { return list; }
 // IScnRender base impls (retail blr at 0x800444C0 / 0x800444C4): the vtable slot 1
@@ -689,8 +689,8 @@ cf::CfObjEnumList* CfEnumListHolder::get() { return list; }
 // RTTI live in this TU in retail).
 void IScnRender::cbRenderBefore() {}
 IScnRender::~IScnRender() {}
-void Tail__8CProcessFv() {}
 extern "C" void __dt__9CTaskGameFv(CTaskGame*);
+void CProcess::Tail() {}
 extern "C" void CTaskGame_thunkIWorkDtor(void *self) {
     __dt__9CTaskGameFv(&static_cast<CTaskGame&>(*reinterpret_cast<IWorkEvent*>(self)));
 }
@@ -743,51 +743,51 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
     if (CLibHbm::isHbmActive() == 0) {
 
     // ===== Hbm disabled: loading-screen state machine =====
-    if (lbl_eu_80663D1C != 0) {
-        lbl_eu_80663D1C->field_29 = (lbl_eu_806649F4 == 0);
+    if (gLoadScreen != 0) {
+        gLoadScreen->field_29 = (gCSaveLoadInstance == 0);
         // Pure if/else-if chain (no gotos): MWCC compiles each failed test
         // as a direct branch to the next test label, matching retail.
-        if (lbl_eu_80663D24 == 0) {
-            if (CLoadIsLoaded(lbl_eu_80663D1C) != 0) {
-                lbl_eu_80663D24++;
-                CLoadStartFadeInStep(lbl_eu_80663D1C);
+        if (gLoadStep == 0) {
+            if (CLoadIsLoaded(gLoadScreen) != 0) {
+                gLoadStep++;
+                CLoadStartFadeInStep(gLoadScreen);
             }
-        } else if (lbl_eu_80663D24 == 1) {
-            if (CLoadIsAnimSettled(lbl_eu_80663D1C) != 0) {
-                if (Scn_QueryUnk80State(scene)->field_0C < lbl_eu_80665D78) {
-                    lbl_eu_80663D24++;
-                    CLoadStartRetryStep(lbl_eu_80663D1C);
+        } else if (gLoadStep == 1) {
+            if (CLoadIsAnimSettled(gLoadScreen) != 0) {
+                if (Scn_QueryUnk80State(scene)->field_0C < 0.9f) {
+                    gLoadStep++;
+                    CLoadStartRetryStep(gLoadScreen);
                 }
             }
-        } else if (lbl_eu_80663D24 == 2) {
-            if (CLoadIsAnimSettled(lbl_eu_80663D1C) != 0) {
-                lbl_eu_80663D24++;
+        } else if (gLoadStep == 2) {
+            if (CLoadIsAnimSettled(gLoadScreen) != 0) {
+                gLoadStep++;
             }
-        } else if (lbl_eu_80663D24 == 3) {
-            CLoadTeardownLayout(lbl_eu_80663D1C);
-            lbl_eu_80663D24++;
-        } else if (lbl_eu_80663D24 == 4) {
-            if (lbl_eu_80663D1C != 0) {
+        } else if (gLoadStep == 3) {
+            CLoadTeardownLayout(gLoadScreen);
+            gLoadStep++;
+        } else if (gLoadStep == 4) {
+            if (gLoadScreen != 0) {
                 // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete
                 // expansion supplies the redundant pointer test (two beq).
-                delete lbl_eu_80663D1C;
+                delete gLoadScreen;
             }
-            lbl_eu_80663D1C = 0;
+            gLoadScreen = 0;
         }
         self->unk8C = 0;
     } else {
         // ===== D1C == 0: frame-counter / idle-pose gate =====
         if (Scn_IsScaleAtLeastOne(scene) != 0) {
-            if (lbl_eu_80663E24 & 0xafa40000) {
+            if (gmGameFlags & 0xafa40000) {
                 self->unk8C = 0;
             }
             self->unk8C++;
-            if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
+            if (!(gmPauseFlags & 0x01000000) && !(gmGameFlags & 0xafa40000)) {
                 if ((s16)self->unk8C > 0x1e) {
                     if (Scn_QueryUnk80State(scene)->field_04 == Scn_QueryUnk80State(scene)->field_00 &&
                         Scn_QueryUnk80State(scene)->field_08 == Scn_QueryUnk80State(scene)->field_04 &&
                         Scn_QueryUnk80State(scene)->field_00 == lbl_eu_80665D74) {
-                        lbl_eu_80663D28 = 1;
+                        gLoadIdleCounter = 1;
                     }
                 }
             }
@@ -797,11 +797,11 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
     }
     }
     // ===== loading-screen draw gate =====
-    if (lbl_eu_80663D1C != 0 && lbl_eu_80663D24 <= 2) {
+    if (gLoadScreen != 0 && gLoadStep <= 2) {
         if (CLibHbm::isHbmActive() == 0 && cf::CfGameManager::isSceneLoading() == 0) {
             if (CGame::getInstance() == 0 ||
                 CTaskGame_checkBusy7C(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
-                CLoadUpdateLayout(lbl_eu_80663D1C);
+                CLoadUpdateLayout(gLoadScreen);
             }
         }
         // Camera at idle pose with non-origin x -> skip the draw.
@@ -819,26 +819,26 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         {
             nw4r::lyt::DrawInfo drawInfo;
             SetWideLocAdjust(&drawInfo);
-            CLoadDrawIfVisible(lbl_eu_80663D1C, &drawInfo);
-            lbl_eu_80663D28 = 1;
+            CLoadDrawIfVisible(gLoadScreen, &drawInfo);
+            gLoadIdleCounter = 1;
         }
     }
 
 L_8004316C:
     // ===== battery timer upkeep =====
     if (CLibHbm::isHbmActive() == 0) {
-        if (getWiimoteBattery__Q22cf9CfPadTaskFv() == 1 && (lbl_eu_80663E24 & 0x02040000) == 0) {
-            lbl_eu_80663D30++;
-            if (lbl_eu_80663D30 >= getTargetFramerate__9CDeviceVIFv() * 0x258) {
-                lbl_eu_80663D30 = 0;
-                lbl_eu_80663D34 = getTargetFramerate__9CDeviceVIFv() * 0xa;
+        if (getWiimoteBattery__Q22cf9CfPadTaskFv() == 1 && (gmGameFlags & 0x02040000) == 0) {
+            gLoadTimeoutCounter++;
+            if (gLoadTimeoutCounter >= getTargetFramerate__9CDeviceVIFv() * 0x258) {
+                gLoadTimeoutCounter = 0;
+                gLoadDelayCounter = getTargetFramerate__9CDeviceVIFv() * 0xa;
             }
         }
-        if (lbl_eu_80663D34 > 0) {
-            lbl_eu_80663D34--;
+        if (gLoadDelayCounter > 0) {
+            gLoadDelayCounter--;
         }
         if (getWiimoteBattery__Q22cf9CfPadTaskFv() > 1) {
-            lbl_eu_80663D34 = 0;
+            gLoadDelayCounter = 0;
         }
     }
 
@@ -846,7 +846,7 @@ L_8004316C:
     if (getWiimoteBattery__Q22cf9CfPadTaskFv() != 1) {
         goto L_800434CC;
     }
-    if (lbl_eu_80663D28 > 0 || lbl_eu_80663D1C != 0 || lbl_eu_80663D34 != 0) {
+    if (gLoadIdleCounter > 0 || gLoadScreen != 0 || gLoadDelayCounter != 0) {
         goto L_8004321C;
     }
     goto L_800434CC;
@@ -854,53 +854,53 @@ L_8004316C:
 L_8004321C:
     {
         bool flag = false;
-        if (lbl_eu_80663D1C == 0 && lbl_eu_80663D34 == 0) {
+        if (gLoadScreen == 0 && gLoadDelayCounter == 0) {
             if (Scn_IsScaleAtLeastOne(scene) == 0) {
-                if (lbl_eu_80663D20 != 0) {
-                    lbl_eu_80663D20->releaseLayout();
+                if (gBatteryDisplay != 0) {
+                    gBatteryDisplay->releaseLayout();
                 }
-                if (lbl_eu_80663D20 != 0) {
-                    delete lbl_eu_80663D20;
-                    lbl_eu_80663D20 = 0;
+                if (gBatteryDisplay != 0) {
+                    delete gBatteryDisplay;
+                    gBatteryDisplay = 0;
                 }
                 flag = true;
             } else {
-                if (lbl_eu_80663D24 >= 3 && lbl_eu_80663D1C != 0) {
-                    if (lbl_eu_80663D20 != 0) {
-                        lbl_eu_80663D20->releaseLayout();
+                if (gLoadStep >= 3 && gLoadScreen != 0) {
+                    if (gBatteryDisplay != 0) {
+                        gBatteryDisplay->releaseLayout();
                     }
-                    if (lbl_eu_80663D20 != 0) {
-                        delete lbl_eu_80663D20;
-                        lbl_eu_80663D20 = 0;
+                    if (gBatteryDisplay != 0) {
+                        delete gBatteryDisplay;
+                        gBatteryDisplay = 0;
                     }
                     flag = true;
                 }
             }
         }
-        if (lbl_eu_80663D34 == 0 && lbl_eu_80663D1C == 0) {
+        if (gLoadDelayCounter == 0 && gLoadScreen == 0) {
             u32 fps3 = getTargetFramerate__9CDeviceVIFv() * 3;
-            lbl_eu_80663D28++;
-            if (lbl_eu_80663D28 >= fps3 || CMainMenu_IsOpen() != 0 || CMenuArtsSelect_isCreated() != 0) {
-                lbl_eu_80663D28 = 0;
-                if (lbl_eu_80663D20 != 0) {
-                    lbl_eu_80663D20->releaseLayout();
-                    if (lbl_eu_80663D20 != 0) {
-                        delete lbl_eu_80663D20;
-                        lbl_eu_80663D20 = 0;
+            gLoadIdleCounter++;
+            if (gLoadIdleCounter >= fps3 || CMainMenu_IsOpen() != 0 || CMenuArtsSelect_isCreated() != 0) {
+                gLoadIdleCounter = 0;
+                if (gBatteryDisplay != 0) {
+                    gBatteryDisplay->releaseLayout();
+                    if (gBatteryDisplay != 0) {
+                        delete gBatteryDisplay;
+                        gBatteryDisplay = 0;
                     }
                     flag = true;
                 }
             }
         }
-        if (lbl_eu_80663D20 != 0) {
-            lbl_eu_80663D20->setBatteryLevel((u8)getWiimoteBattery__Q22cf9CfPadTaskFv());
+        if (gBatteryDisplay != 0) {
+            gBatteryDisplay->setBatteryLevel((u8)getWiimoteBattery__Q22cf9CfPadTaskFv());
             if (CLibHbm::isHbmActive() == 0 && cf::CfGameManager::isSceneLoading() == 0) {
                 if (CGame::getInstance() == 0 ||
                     CTaskGame_checkBusy7C(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
-                    lbl_eu_80663D20->updateLayout();
+                    gBatteryDisplay->updateLayout();
                 }
             }
-            lbl_eu_80663D20->mLayoutReady = (lbl_eu_806649F4 == 0);
+            gBatteryDisplay->mLayoutReady = (gCSaveLoadInstance == 0);
             // Camera at idle pose with non-origin x -> D34-gated draw.
             if (Scn_QueryUnk80State(scene)->field_04 == Scn_QueryUnk80State(scene)->field_00 &&
                 Scn_QueryUnk80State(scene)->field_08 == Scn_QueryUnk80State(scene)->field_04 &&
@@ -915,25 +915,25 @@ L_8004321C:
             }
             goto L_80043460;
 L_80043454:
-            if (lbl_eu_80663D34 == 0) {
+            if (gLoadDelayCounter == 0) {
                 goto L_80043514;
             }
 L_80043460:
             {
                 nw4r::lyt::DrawInfo drawInfo;
                 SetWideLocAdjust(&drawInfo);
-                lbl_eu_80663D20->drawBattery(&drawInfo);
+                gBatteryDisplay->drawBattery(&drawInfo);
             }
             goto L_80043514;
         } else {
             // Create battery widget when idle pose + no delete flag this frame.
-            if ((lbl_eu_80663E28 & 0x01000000) == 0 && flag == 0) {
+            if ((gmPauseFlags & 0x01000000) == 0 && flag == 0) {
                 CBattery* battery = (CBattery*)mtl::MemManager::allocate(
                     0x28, CWorkThreadSystem::getWorkMem());
                 if (battery != 0) {
                     new (battery) CBattery(0);
                 }
-                lbl_eu_80663D20 = battery;
+                gBatteryDisplay = battery;
                 battery->loadBatteryArchive();
             }
             goto L_80043514;
@@ -941,14 +941,14 @@ L_80043460:
     }
 
 L_800434CC:
-    if (lbl_eu_80663D34 != 0) {
+    if (gLoadDelayCounter != 0) {
         goto L_80043514;
     }
-    if (lbl_eu_80663D20 != 0) {
-        lbl_eu_80663D20->releaseLayout();
-        if (lbl_eu_80663D20 != 0) {
-            delete lbl_eu_80663D20;
-            lbl_eu_80663D20 = 0;
+    if (gBatteryDisplay != 0) {
+        gBatteryDisplay->releaseLayout();
+        if (gBatteryDisplay != 0) {
+            delete gBatteryDisplay;
+            gBatteryDisplay = 0;
         }
     }
 
@@ -989,11 +989,11 @@ void CTaskGame::Term() {
             unk174[i] = nullptr;
         }
     }
-    if (lbl_eu_80663D1C != nullptr) {
-        CLoadTeardownLayout(lbl_eu_80663D1C);
-        if (lbl_eu_80663D1C != nullptr) {
-            delete lbl_eu_80663D1C;
-            lbl_eu_80663D1C = nullptr;
+    if (gLoadScreen != nullptr) {
+        CLoadTeardownLayout(gLoadScreen);
+        if (gLoadScreen != nullptr) {
+            delete gLoadScreen;
+            gLoadScreen = nullptr;
         }
     }
     __dt__8047BFFC();
@@ -1076,7 +1076,7 @@ extern "C" void CTaskGame_moveFadeOut(CTaskGame* self) {
 // Target us-80041204: bump the frame counter, then when the window-state
 // gate (CTaskGame_windowGate) is clear: store fps*5 into unk78, switch the
 // move-hook ptmf to pool lbl_eu_80525598, clear the busy byte at unkD0+0x8C,
-// then depending on the lbl_eu_80663D2C flag either switch the move-hook
+// then depending on the gMoveHookFlag flag either switch the move-hook
 // ptmf to pool lbl_eu_805255A4 or set the busy byte at unkCC+0x8C.
 // -O4,s: retail keeps a plain mulli for fps*5 (no rlwinm+add
 // strength reduction) and the stw/scheduling follow the size-optimized
@@ -1093,7 +1093,7 @@ extern "C" void CTaskGame_movePrepFade(CTaskGame* self) {
         words->field_0x3C = v0;
         words->field_0x44 = pool[2];
         reinterpret_cast<CTaskGameFlag8C*>(self->unkD0)->field_0x8C = 0;
-        if (lbl_eu_80663D2C != 0) {
+        if (gMoveHookFlag != 0) {
             u32 v1;
             u32* pool2 = reinterpret_cast<u32*>(lbl_eu_805255A4);
             v1 = pool2[0];
@@ -1219,7 +1219,7 @@ extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
 // constants through the vec4 setter into the unkCC/unkD0 objects (index 0)
 // and the scene (Scn_ReleaseUnk80, index 0), clear the busy bytes at +0x39 and
 // null the unkCC/unkD0 objects, and once the frame counter passes fps*8
-// switch the move-hook ptmf to pool lbl_eu_805255F8 (lbl_eu_80663D2C set) or
+// switch the move-hook ptmf to pool lbl_eu_805255F8 (gMoveHookFlag set) or
 // lbl_eu_80525604.
 extern "C" void CTaskGame_moveTeardown(CTaskGame* self) {
     self->unk100++;
@@ -1252,7 +1252,7 @@ extern "C" void CTaskGame_moveTeardown(CTaskGame* self) {
     }
     if (cf::CTaskGameCf::getInstance() != 0) {
         if (self->unk100 >= getTargetFramerate__9CDeviceVIFv() * 8) {
-            if (lbl_eu_80663D2C != 0) {
+            if (gMoveHookFlag != 0) {
                 u32 v0;
                 u32* pool = reinterpret_cast<u32*>(lbl_eu_805255F8);
                 v0 = pool[0];
@@ -1716,7 +1716,7 @@ extern "C" void CTaskGame_moveClrErrWin2(CTaskGame* self) {
 }
 // Target us-80042130: title-menu / move-hook setup. Marks save/load
 // reset-invalid, toggles the Hbm state off, sets the sound-state flag, clears
-// unk68 bit 0x200000 and raises the lbl_eu_80663D2C flag. When the
+// unk68 bit 0x200000 and raises the gMoveHookFlag flag. When the
 // window-state gate (CTaskGame_windowGate) is clear: clear the +0x39 busy bytes and
 // null the unkCC/unkD0 objects, run the CTaskGame_deleteLoad reset, poke the unkF0
 // object's +0x39 byte, create the title menu (CMenuTitle::create with the
@@ -1731,7 +1731,7 @@ extern "C" void CTaskGame_moveShowTitle(CTaskGame* self) {
     CLibHbm::setHbmActiveFlag(false);
     DevFile_SetByteA9(1);
     self->unk68 &= 0xFFDFFFFF;
-    lbl_eu_80663D2C = 1;
+    gMoveHookFlag = 1;
     if (CTaskGame_windowGate(self) == 0) {
         if (self->unkCC != 0) {
             reinterpret_cast<CTaskGameFlag39*>(self->unkCC)->field_0x39 = 1;
@@ -1986,7 +1986,7 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
 // (with the %s/%d suffix segments from lbl_eu_804FA890[0x83..0x87] appended
 // via CTaskGame_strAppend / the FixStr<32> format + CTaskGame_strAppend2), then reset the
 // unk86/unk88/unkA4/unk8A title fields. After the title path: disable the
-// Hbm state, create the cf::CTaskGameCf task, raise lbl_eu_80663E28 bit
+// Hbm state, create the cf::CTaskGameCf task, raise gmPauseFlags bit
 // 0x10000000, run the per-mode cf::CTaskGameCf start (startMode1New /
 // startMode2Con / startMission by unk128), and switch the move-hook ptmf to
 // pool lbl_eu_805257F0.
@@ -2043,7 +2043,7 @@ extern "C" void CTaskGame_moveStartMission(CTaskGame* self) {
     }
     CLibHbm::setHbmActiveFlag(false);
     create__Q22cf11CTaskGameCfFv(self, 0);
-    lbl_eu_80663E28 |= 0x10000000;
+    gmPauseFlags |= 0x10000000;
     if ((int)self->unk128 == 1) {
         // retail start helpers are flat C symbols; the instance flows in r3
         startMode1New(cf::CTaskGameCf::getInstance());
@@ -2191,14 +2191,14 @@ extern "C" u32 CTaskGame_windowGate(CTaskGame* self) {
 // dont_inline: retail callers keep this as a real bl call (e.g.
 // CTaskGame_moveShowTitle); without this IPA folds the small body into its callers.
 extern "C" void CTaskGame_deleteLoad() {
-    if (lbl_eu_80663D1C != nullptr) {
-        lbl_eu_80663D24 = 0;
-        CLoadTeardownLayout(lbl_eu_80663D1C);
+    if (gLoadScreen != nullptr) {
+        gLoadStep = 0;
+        CLoadTeardownLayout(gLoadScreen);
         // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete expansion
         // supplies the redundant pointer test (two beq).
-        if (lbl_eu_80663D1C != nullptr) {
-            delete lbl_eu_80663D1C;
-            lbl_eu_80663D1C = nullptr;
+        if (gLoadScreen != nullptr) {
+            delete gLoadScreen;
+            gLoadScreen = nullptr;
         }
     }
 }
@@ -2209,14 +2209,14 @@ void CTaskGame_stub_8004302C(){}
 // loader exists yet, MEM1 tail-aligned otherwise - then starts the load and
 // clears the state counter; a == 0 stops and deletes it.
 void CTaskGame_setLoadScreen(int a, int b) {
-    CTaskGame* game = lbl_eu_80663D18;
+    CTaskGame* game = gTaskGameInstance;
     if (game == nullptr) {
         return;
     }
     if (game->unk74 == nullptr) {
         return;
     }
-    if ((lbl_eu_80663E28 & 0x01000000) != 0 && b == 0) {
+    if ((gmPauseFlags & 0x01000000) != 0 && b == 0) {
         return;
     }
     if (a != 0) {
@@ -2224,35 +2224,35 @@ void CTaskGame_setLoadScreen(int a, int b) {
         // (bne to epilogue). Fresh + b == 0 is plain MEM2; fresh + b != 0
         // is MEM1 tail-aligned.
         CLoad* load;
-        if (lbl_eu_80663D1C == nullptr) {
+        if (gLoadScreen == nullptr) {
             if (b == 0) {
                 mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
                 load = static_cast<CLoad*>(mtl::MemManager::allocate(0x30, handle));
                 if (load != nullptr) {
                     load = __ct__CLoad(load, 0);
                 }
-                lbl_eu_80663D1C = load;
+                gLoadScreen = load;
             } else {
                 mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM1();
                 load = static_cast<CLoad*>(mtl::MemManager::allocate_ex(0x30, handle, -0x20));
                 if (load != nullptr) {
                     load = __ct__CLoad(load, 0);
                 }
-                lbl_eu_80663D1C = load;
+                gLoadScreen = load;
             }
             CLoadBeginFileRequest(load);
-            lbl_eu_80663D24 = 0;
+            gLoadStep = 0;
         }
     } else {
         // Teardown path.
-        if (lbl_eu_80663D1C != nullptr) {
-            CLoadTeardownLayout(lbl_eu_80663D1C);
+        if (gLoadScreen != nullptr) {
+            CLoadTeardownLayout(gLoadScreen);
             // The clearing store stays inside the recheck: if the stop
             // helper released the loader itself, nothing is stored (retail
             // branches straight to the epilogue).
-            if (lbl_eu_80663D1C != nullptr) {
-                delete lbl_eu_80663D1C;
-                lbl_eu_80663D1C = nullptr;
+            if (gLoadScreen != nullptr) {
+                delete gLoadScreen;
+                gLoadScreen = nullptr;
             }
         }
     }
@@ -2290,10 +2290,10 @@ extern "C" s32 CTaskGame_isMoveHook(CTaskGame* self) {
 // Defined after CTaskGame_isMoveHook so MWCC keeps the real call/tail-branch instead
 // of inlining the helper body.
 s32 CTaskGame::isMoveFuncActive() {
-    if (lbl_eu_80663D18 == nullptr) {
+    if (gTaskGameInstance == nullptr) {
         return 0;
     }
-    return CTaskGame_isMoveHook(lbl_eu_80663D18);
+    return CTaskGame_isMoveHook(gTaskGameInstance);
 }
 // Target us-80043cb4: streaming-open helper for voice/presentation files.
 // When the CTaskGame singleton is live and (with the play-time gate open)
@@ -2301,7 +2301,7 @@ s32 CTaskGame::isMoveFuncActive() {
 // hasPackFile pack check identifies an archive path (func_804DDD54) the
 // size check is skipped; otherwise getFileSize(path, 1) must be >= 0. Then
 // run the shared reset (CTaskGame_resetStream), pick the alloc handle (CScn::getAllocHandle
-// on lbl_eu_80663E14 when the caller passed -1), copy the path into a local
+// on gmScene when the caller passed -1), copy the path into a local
 // FixStr<256> (mLength + strcpy; DevFile_SubstLangPath path fix-up for the
 // non-archive case), open the CRI stream (dispatchFilePlayback) into unkD8, set the
 // unk68 0x40/0x80 flags from the a5/a6 args, and when the play-time gate
@@ -2310,11 +2310,11 @@ s32 CTaskGame::isMoveFuncActive() {
 // active state (setStreamPause) / run the MenuSnd_ResetFadeTargetA_9C70 sound reset and
 // store the unk8E ticker. Finally ramp the CRI volume (CTaskGame_setStreamVol).
 void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume) {
-    if (lbl_eu_80663D18 == 0) {
+    if (gTaskGameInstance == 0) {
         return;
     }
     if (CTaskGame_playTimeGate() != 0) {
-        if ((s32)lbl_eu_80663D18->unkDC < (s32)a4) {
+        if ((s32)gTaskGameInstance->unkDC < (s32)a4) {
             return;
         }
     }
@@ -2336,7 +2336,7 @@ void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 
     }
     CTaskGame_resetStream();
     if ((u32)(a3 + 0x10000) == 0xFFFF) {
-        a3 = lbl_eu_80663E14->getAllocHandle();
+        a3 = gmScene->getAllocHandle();
     }
     ml::FixStr<256> filename(false);
     filename.mLength = static_cast<int>(strlen(path));
@@ -2344,33 +2344,33 @@ void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 
     if (found == 0) {
         DevFile_SubstLangPath(filename.mString);
     }
-    lbl_eu_80663D18->unkD8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, a3, a1);
+    gTaskGameInstance->unkD8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, a3, a1);
     // Single textual read of the flag word: retail hoists the global-pointer
     // load above the branch and shares it between both arms.
-    u32 flags = lbl_eu_80663D18->unk68;
+    u32 flags = gTaskGameInstance->unk68;
     if (a5 != 0) {
-        lbl_eu_80663D18->unk68 = flags | 0x40;
+        gTaskGameInstance->unk68 = flags | 0x40;
     } else {
-        lbl_eu_80663D18->unk68 = flags & ~0x40u;
+        gTaskGameInstance->unk68 = flags & ~0x40u;
     }
     if (a6 != 0) {
-        lbl_eu_80663D18->unk68 |= 0x80;
+        gTaskGameInstance->unk68 |= 0x80;
     } else {
-        lbl_eu_80663D18->unk68 &= ~0x80;
+        gTaskGameInstance->unk68 &= ~0x80;
     }
     if (CTaskGame_playTimeGate() == 0) {
         CTaskGame_resetStream();
         return;
     }
-    reinterpret_cast<CTaskGameCaption130*>(lbl_eu_80663D18)->str = path;
-    lbl_eu_80663D18->unkDC = a4;
+    reinterpret_cast<CTaskGameCaption130*>(gTaskGameInstance)->str = path;
+    gTaskGameInstance->unkDC = a4;
     if (cf::CfGameManager::isManagerInitialized() != 0) {
-        if ((lbl_eu_80663D18->unk68 & 0x40) == 0) {
-            setStreamPause__7CLibCriFv(lbl_eu_80663D18->unkD8, cf::CfGameManager::isSceneLoading());
+        if ((gTaskGameInstance->unk68 & 0x40) == 0) {
+            setStreamPause__7CLibCriFv(gTaskGameInstance->unkD8, cf::CfGameManager::isSceneLoading());
         }
-        if ((lbl_eu_80663D18->unk68 & 0x80) != 0) {
+        if ((gTaskGameInstance->unk68 & 0x80) != 0) {
             MenuSnd_ResetFadeTargetA_9C70();
-            lbl_eu_80663D18->unk8E = static_cast<s16>(a6);
+            gTaskGameInstance->unk8E = static_cast<s16>(a6);
         }
     }
     CTaskGame_setStreamVol(volume);
@@ -2386,27 +2386,27 @@ void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 
 // open it via CLibCri and record the unkE8 handle / unkEC id. When the
 // gate is closed: start streaming via CTaskGame_openStream and record the unkE4 id.
 extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, float f) {
-    if (lbl_eu_80663D18 == 0) {
+    if (gTaskGameInstance == 0) {
         return 0;
     }
     ml::FixStr<32> filename;
     if (formatVoiceFilePath(filename.mString, a, b) == 0) {
         return 0;
     }
-    if ((s32)lbl_eu_80663D18->unkE4 == (s32)a || (s32)lbl_eu_80663D18->unkEC == (s32)a) {
-        if ((s32)lbl_eu_80663D18->unkE4 == (s32)a) {
+    if ((s32)gTaskGameInstance->unkE4 == (s32)a || (s32)gTaskGameInstance->unkEC == (s32)a) {
+        if ((s32)gTaskGameInstance->unkE4 == (s32)a) {
             CTaskGame_resetStream();
-        } else if ((u32)(lbl_eu_80663D18->unkE8 + 0x10000) != 0xFFFF) {
-            stopStream__7CLibCriFv(lbl_eu_80663D18->unkE8);
-            lbl_eu_80663D18->unkE8 = -1;
-            lbl_eu_80663D18->unkEC = 0;
+        } else if ((u32)(gTaskGameInstance->unkE8 + 0x10000) != 0xFFFF) {
+            stopStream__7CLibCriFv(gTaskGameInstance->unkE8);
+            gTaskGameInstance->unkE8 = -1;
+            gTaskGameInstance->unkEC = 0;
         }
     }
     if (CTaskGame_playTimeGate() != 0) {
         // Retail sinks the live-handle re-seed (CTaskGame_setVisionParam) out-of-line
         // after the allocate block: the unkE8 == -1 case is the fall-through,
         // the != -1 case is the else.
-        if ((u32)(lbl_eu_80663D18->unkE8 + 0x10000) == 0xFFFF) {
+        if ((u32)(gTaskGameInstance->unkE8 + 0x10000) == 0xFFFF) {
             if ((u32)(c + 0x10000) == 0xFFFF) {
                 c = static_cast<u32>(mtl::MemManager::getHandleMEM2());
             }
@@ -2414,19 +2414,19 @@ extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, float f) 
             if (mtl::MemManager::getMaxAllocSize(c) < budget) {
                 c = static_cast<u32>(mtl::MemManager::getHandleMEM1());
             }
-            lbl_eu_80663D18->unkE8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, c, 0);
-            if ((u32)(lbl_eu_80663D18->unkE8 + 0x10000) != 0xFFFF) {
-                lbl_eu_80663D18->unkEC = a;
+            gTaskGameInstance->unkE8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, c, 0);
+            if ((u32)(gTaskGameInstance->unkE8 + 0x10000) != 0xFFFF) {
+                gTaskGameInstance->unkEC = a;
                 return 1;
             }
         } else {
-            CTaskGame_setVisionParam(reinterpret_cast<Fields*>(&lbl_eu_80663D18->unk18C), 0, f, static_cast<int>(c), d, e, a, b);
+            CTaskGame_setVisionParam(reinterpret_cast<Fields*>(&gTaskGameInstance->unk18C), 0, f, static_cast<int>(c), d, e, a, b);
         }
         return 0;
     }
     CTaskGame_openStream(0, filename.mString, c, d, e, 0, f);
     if (CTaskGame_playTimeGate() != 0) {
-        lbl_eu_80663D18->unkE4 = a;
+        gTaskGameInstance->unkE4 = a;
         return 1;
     }
     return 0;
@@ -2439,18 +2439,18 @@ extern "C" int CTaskGame_playTimeGate();
 // (fmr f1, f31; bl CTaskGame_setStreamVol); without it MWCC inlines the 5-instruction
 // gate body into the caller.
 extern "C" void CTaskGame_setStreamVol(float f1) {
-    if (lbl_eu_80663D18 != nullptr && CTaskGame_playTimeGate() != 0) {
-        setStreamVolume__7CLibCriFv(lbl_eu_80663D18->unkD8, f1);
+    if (gTaskGameInstance != nullptr && CTaskGame_playTimeGate() != 0) {
+        setStreamVolume__7CLibCriFv(gTaskGameInstance->unkD8, f1);
     }
 }
 // Play-time seconds getter: -1 when no instance / gate closed, else the CRI
 // streaming-play query result for the instance's unkD8 handle.
 extern "C" s32 CTaskGame_getStreamPos() {
-    if (lbl_eu_80663D18 == nullptr) {
+    if (gTaskGameInstance == nullptr) {
         return -1;
     }
     if (CTaskGame_playTimeGate() != 0) {
-        return getStreamPosition__7CLibCriFv(lbl_eu_80663D18->unkD8);
+        return getStreamPosition__7CLibCriFv(gTaskGameInstance->unkD8);
     }
     return -1;
 }
@@ -2466,21 +2466,21 @@ extern "C" s32 CTaskGame_getStreamPos() {
 // __declspec(noinline): retail callers (CTaskGame_stopVision / CTaskGame_updateStream) call
 // this out of line; without it MWCC inlines the 0xC4 body into them.
 extern "C" void CTaskGame_resetStream() {
-    if (lbl_eu_80663D18 != nullptr) {
-        if ((u32)(lbl_eu_80663D18->unkD8 + 0x10000) != 0xFFFF) {
-            stopStream__7CLibCriFv(lbl_eu_80663D18->unkD8);
-            lbl_eu_80663D18->unkD8 = -1;
+    if (gTaskGameInstance != nullptr) {
+        if ((u32)(gTaskGameInstance->unkD8 + 0x10000) != 0xFFFF) {
+            stopStream__7CLibCriFv(gTaskGameInstance->unkD8);
+            gTaskGameInstance->unkD8 = -1;
         }
         if (cf::CfGameManager::isManagerInitialized() != 0) {
-            if ((lbl_eu_80663D18->unk68 & 0x80) != 0) {
+            if ((gTaskGameInstance->unk68 & 0x80) != 0) {
                 MenuSnd_ResetFadeTargetB_9C7C();
             }
         }
-        lbl_eu_80663D18->unkDC = 2;
-        lbl_eu_80663D18->unk68 &= ~0xC0;
-        lbl_eu_80663D18->unkE4 = 0;
+        gTaskGameInstance->unkDC = 2;
+        gTaskGameInstance->unk68 &= ~0xC0;
+        gTaskGameInstance->unkE4 = 0;
         const char* s = &lbl_eu_804FA890[0x6D];
-        reinterpret_cast<CTaskGameCaption130*>(lbl_eu_80663D18)->str = s;
+        reinterpret_cast<CTaskGameCaption130*>(gTaskGameInstance)->str = s;
     }
 }
 // Target us-80044224: after the shared reset (CTaskGame_resetStream), stop the CRI
@@ -2488,11 +2488,11 @@ extern "C" void CTaskGame_resetStream() {
 // length fields. The global instance is re-read after the call (retail shape).
 extern "C" void CTaskGame_stopVision() {
     CTaskGame_resetStream();
-    int handle = lbl_eu_80663D18->unkE8;
+    int handle = gTaskGameInstance->unkE8;
     if ((u32)handle != 0xFFFFFFFFu) {
         stopStream__7CLibCriFv(handle);
-        lbl_eu_80663D18->unkE8 = -1;
-        lbl_eu_80663D18->unkEC = 0;
+        gTaskGameInstance->unkE8 = -1;
+        gTaskGameInstance->unkEC = 0;
     }
 }
 // Target us-80044274: CRI stream volume/rate ramp. While a CTaskGame instance
@@ -2500,8 +2500,8 @@ extern "C" void CTaskGame_stopVision() {
 // ((f32)count * frame time) and forward (handle, volume, seconds, 2) to the
 // CRI streaming-play setter. The global instance is re-read for the handle.
 extern "C" void CTaskGame_fadeStream(int frames, float volume) {
-    if (lbl_eu_80663D18 != nullptr && (u32)lbl_eu_80663D18->unkD8 != 0xFFFFFFFFu) {
-        fadeStreamVolume__7CLibCriFv(lbl_eu_80663D18->unkD8, volume,
+    if (gTaskGameInstance != nullptr && (u32)gTaskGameInstance->unkD8 != 0xFFFFFFFFu) {
+        fadeStreamVolume__7CLibCriFv(gTaskGameInstance->unkD8, volume,
                                   (float)frames * getSecPerFrame__9CDeviceVIFv(), 2);
     }
 }
@@ -2613,7 +2613,7 @@ extern "C" void CTaskGame_updateStream(CTaskGame* self) {
     }
     if (CTaskGame_playTimeGate() != 0) {
         if (cf::CfGameManager::isManagerInitialized() != 0) {
-            if ((lbl_eu_80663D18->unk68 & 0x40) == 0) {
+            if ((gTaskGameInstance->unk68 & 0x40) == 0) {
                 // Right-to-left arg evaluation: write the CfGameManager gate
                 // first so EvtSeqGetStateBit19 runs first into r30 (retail
                 // mr r30, r3), then the gate returns in r3 and the OR is

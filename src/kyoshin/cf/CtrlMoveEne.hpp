@@ -9,7 +9,7 @@
 #include "kyoshin/cf/object/CfObjectEne.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 namespace cf {
 
@@ -43,12 +43,12 @@ public:
     ml::CVec3 mVec144;                  // 0x144 (ctor copies ml::CVec3::zero)
     u8 _pad150[0x15C - 0x150];          // 0x150-0x15B
     int field_0x15C;                    // 0x15C latched actor id (TryLatchTargetActor / ConsumeTargetResolve)
-    f32 field_0x160;                    // 0x160 (ctor stores lbl_eu_806665C4; CtrlMoveEne_TickMoveControl reads)
+    f32 field_0x160;                    // 0x160 (ctor stores 10.0f; CtrlMoveEne_TickMoveControl reads)
     f32 field_0x164;                    // 0x164 (ctor zeroes)
     f32 field_0x168;                    // 0x168 (zeroed by CtrlMoveEne_ResetMoveState)
     u8 _pad16C[0x170 - 0x16C];          // 0x16C-0x16F
-    f32 field_0x170;                    // 0x170 (ctor stores lbl_eu_806665C8)
-    f32 field_0x174;                    // 0x174 (ctor stores lbl_eu_806665C8)
+    f32 field_0x170;                    // 0x170 (ctor stores 0.699999988079071f)
+    f32 field_0x174;                    // 0x174 (ctor stores 0.699999988079071f)
     f32 field_0x178;                    // 0x178 (zeroed by CtrlMoveEne_ResetMoveState)
     u32 field_0x17C;                    // 0x17C flags word
     u32 field_0x180;                    // 0x180 flags word (ctor / CtrlMoveEne_InitMoveHook raise bit 0x800)
@@ -67,7 +67,7 @@ public:
     f32 field_0x19C;                    // 0x19C (zeroed by CtrlMoveEne_ResetMoveState)
 
     // Retail installs these as pointer-to-member hooks: the 12-byte ptmf
-    // records in lbl_eu_80527830 hold each member's address, and CtrlMoveEne
+    // records in sEneMoveHookTable hold each member's address, and CtrlMoveEne
     // copies them into its +0x12C move hook. Bodies in CtrlMoveEne.cpp.
     void RateZeroFlat(u32* out1, f32* out2);    // rate 0.0f
     void RateDivisorSlot0(u32* out1, f32* out2);
@@ -352,7 +352,7 @@ struct CFunc8008CDE8View {
     u16 field_0x18A;            // 0x18A timer
 };
 
-// Global coli-probe object behind lbl_eu_80665958 (CtrlMoveEne_TrackMoveTarget passes it to
+// Global coli-probe object behind sEneColiProbe (CtrlMoveEne_TrackMoveTarget passes it to
 // ColiWalkSegment).
 struct CFunc8008CDE8Probe {
     u8 _pad[0x60];              // 0x00-0x5F
@@ -819,11 +819,11 @@ extern "C" cf::CFunc8009156CList* getReslistB48();
 extern "C" int moveBaseRoute(cf::CtrlMoveEne* self, ml::CVec3* pos, int flag);
 extern "C" int ColiWalkSegment(void* a, void* b, void* c, void* d, int e, int f,
                              void* g);
-// Global coli probe object (retail .sdata pointer) and the probe-block buffer
+// Global coli probe object (retail .sbss pointer) and the probe-block buffer
 // CtrlMoveEne_TrackMoveTarget passes to ColiWalkSegment.
-// Typed as void* to match CtrlMoveEne.hpp (same .sbss global).
-extern void* lbl_eu_80665958;
-extern u8 lbl_eu_80571810[0x38];
+// Its typed C-linkage declaration lives in the monolib coli owner header.
+#include "monolib/coli/code_804B2FF0.hpp"
+extern u8 sEneColiProbeBuffer[0x38];
 // Collision-list height probe API used by CtrlMoveEne_ProbeApproachPoint (retail C-ABI names;
 // same declarations as CtrlAct.hpp). ScnRes_VertRayForward_E398's canonical declaration
 // lives in cfsys/CfObjectImplMove.hpp (visible via harness_catalog); its ABI
@@ -887,83 +887,37 @@ bool isGlobalCamFlagSet(int r3);
 // .sdata2 float constants compared/stored by the CtrlMoveEne_RateDivisorSlot0 family.
 // Declared const so MWCC treats the pool loads as constants and hoists them
 // to retail's early position (docs/MWCC_CASES.md SDA scheduling).
-extern const f32 lbl_eu_806665C0;  // 0.0f
-extern const f32 lbl_eu_806665E4;  // 1.0f (rand-gated fallback)
 
 // Further sdata2 constants used by the ctor (CtrlMoveEne::CtrlMoveEne) and the
 // CtrlMoveEne_TickMoveControl / CtrlMoveEne_InitMoveHook family.
-extern const f32 lbl_eu_806665C4;   // ctor -> field_0x160
-extern const f32 lbl_eu_806665C8;   // ctor -> field_0x170/0x174
-extern const f32 lbl_eu_806665E0;   // CtrlMoveEne_TickMoveControl -> writeMoveSlotFloat value
-extern const f32 lbl_eu_806665F0;   // CtrlMoveEne_TickMoveControl -> field_0x3C
 // Heading-scale factor (CtrlMoveEne_UpdateBattleMove / CtrlMoveEne_UpdateMoveHeading / CtrlMoveEne_UpdateFleeWander scale
 // the +0xCC heading index by it before CosFIdx/SinFIdx).
-extern const f32 lbl_eu_806665CC;
 // Heading-difference cosine threshold (CtrlMoveEne_UpdateMoveHeading compares against it).
-extern const f32 lbl_eu_806665DC;
 // CtrlMoveEne_ProbeApproachPoint scan constants: mtRand(201) walk scale, ground-probe depth,
 // height band and the fall-gap thresholds (upper 0.5 / lower 1.5 scales).
 extern const f32 lbl_eu_80661C30;   // 0.005 (mtRand(201) scale)
-extern const f32 lbl_eu_80666614;   // -20 (probe depth)
-extern const f32 lbl_eu_80666618;   // 100 (height band)
 extern const f32 _lbl_eu_80666604;  // 10000 (init best gap)
 extern const f32 _lbl_eu_80666608;  // CtrlMoveEne_InitBattleMove field_0x16C fallback (mode byte != 3)
-extern const f32 lbl_eu_8066661C;   // 0.5 (upper gap scale)
-extern const f32 lbl_eu_806665D0;   // 1.5 (lower gap scale)
 // CtrlMoveEne_TrackMoveTarget turn-probe constants: random-walk scale (-1), pi/2 turn bias.
-extern const f32 lbl_eu_8066663C;   // -1
 // CtrlMoveEne_UpdateFleeWander rand-scaled heading constants (angle scale, lerp offsets).
-extern const f32 lbl_eu_80666610;
-extern const f32 lbl_eu_80666638;
-extern const f32 lbl_eu_80666668;
 // CtrlMoveEne_ScanGimmickTargets gimmick-scan distance threshold.
-extern const f32 lbl_eu_80666678;
 // CtrlMoveEne_RunMoveStateMachine wander-scan constants: proximity radius scale and the
 // facing-alignment cosine threshold.
-extern const f32 lbl_eu_8066667C;
-extern const f32 lbl_eu_80666680;
-extern const f32 lbl_eu_80666684;
-extern const f32 lbl_eu_80666688;
-extern const f32 lbl_eu_8066668C;
-extern const f32 lbl_eu_80666690;
-extern const f32 lbl_eu_80666694;
-extern const f32 lbl_eu_80666648;   // CtrlMoveEne_InitMoveHook fallback for field_0x5C
-extern const f32 lbl_eu_80666628;   // CtrlMoveEne_StepMoveEntry pursuit-move scale
-extern const f32 lbl_eu_806665EC;   // CtrlMoveEne_CheckKeepMoving +0x168 reset threshold
-extern const f32 lbl_eu_80666640;   // CtrlMoveEne_CheckKeepMoving close-range threshold
-extern const f32 lbl_eu_80666644;   // CtrlMoveEne_CheckKeepMoving move-speed divisor
-extern const f32 lbl_eu_8066666C;   // CtrlMoveEne_StepMoveList lerp factor
 // CtrlMoveEne_StepMoveList turn-range / close thresholds.
-extern const f32 lbl_eu_80666670;
-extern const f32 lbl_eu_80666674;
 // CtrlMoveEne_UpdateBattleAI ground-probe / pursuit constants.
-extern const f32 lbl_eu_806665D4;
-extern const f32 lbl_eu_806665D8;
-extern const f32 lbl_eu_806665E8;
-extern const f32 lbl_eu_806665F4;
-extern const f32 lbl_eu_806665F8;
-extern const f32 lbl_eu_806665FC;
-extern const f32 lbl_eu_80666600;
-extern const f32 lbl_eu_8066660C;
 // CtrlMoveEne_InitBattleMove field_0x160/0x4 scale (mode 2), field_0x16C fallbacks for the
 // bdat bytes 0xFC / 0xFB, and the field_0x16C squaring threshold.
-extern const f32 lbl_eu_80666658;
-extern const f32 lbl_eu_8066665C;
-extern const f32 lbl_eu_80666660;
-extern const f32 lbl_eu_80666664;
 // MWCC int->float conversion doubles (CtrlMoveEne_InitMoveHook): 80666620 is the signed
 // 2^52+2^31 constant, 80666650 the plain 2^52 constant.
-extern const f64 lbl_eu_80666620;
-extern const f64 lbl_eu_80666650;
 // CtrlMoveEne_CheckKeepMoving bdat-state pointer (retail .sdata word).
 // bdat column-name table CtrlMoveEne_InitMoveHook passes to getEneBdatColumn (+0xA column).
 extern const char lbl_eu_804FB9E8[];
 
 // Ptmf hook constants (retail data symbols): the ctor installs __ptmf_null
-// and then the hook at lbl_eu_805278E4; CtrlMoveEne_InitMoveHook installs the hooks at
-// lbl_eu_80527830 + 0x118 / 0x124 / 0x130.
+// and then the hook at sEneMoveHookDefault; CtrlMoveEne_InitMoveHook installs the hooks at
+// sEneMoveHookTable + 0x118 / 0x124 / 0x130.
 extern void (cf::CtrlMoveEne::*const __ptmf_null)();
-extern void (cf::CtrlMoveEne::*const lbl_eu_805278E4)();
+extern void (cf::CtrlMoveEne::*const sEneMoveHookDefault)();
 typedef void (cf::CtrlMoveEne::*CfMoveDispatchPtmf)(void* a, void* b);
 struct CfMoveHookPtmfs {
     u8 _pad[0x118];                                  // 0x00-0x117
@@ -991,7 +945,7 @@ struct CfMoveHookPtmfsAll {
     void (cf::CtrlMoveEne::*hook1A8)();             // 0x1A8 (CtrlMoveEne_StepMoveEntry)
     void (cf::CtrlMoveEne::*hook1B4)();             // 0x1B4 (CtrlMoveEne_StepMoveEntry)
 };
-extern const CfMoveHookPtmfsAll lbl_eu_80527830;
+extern const CfMoveHookPtmfsAll sEneMoveHookTable;
 // CtrlMoveEne_InitMoveList's extension of the hook table (+0x13C / +0x148 records).
 struct CfMoveHookPtmfsE2D4 {
     u8 _pad[0x13C];                                  // 0x00-0x13B
@@ -1007,8 +961,8 @@ struct CfMoveHookPtmfsE760 {
     void (cf::CtrlMoveEne::*hook16C)();             // 0x16C
 };
 // Ptmf hook constant installed by CtrlMoveEne_ScanGimmickTargets (3-word record at
-// lbl_eu_805279F0).
-extern void (cf::CtrlMoveEne::*const lbl_eu_805279F0)();
+// sEneGimmickScanHook).
+extern void (cf::CtrlMoveEne::*const sEneGimmickScanHook)();
 // Secondary vtable installed at +0x48 by the ctor.
 extern const u8 lbl_eu_805279FC[];
 

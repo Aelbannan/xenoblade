@@ -21,13 +21,8 @@
 
 // Float constant 0.0f and the 0x4330000000000000 double magic, shared in this TU
 extern f32 lbl_eu_8066B0DC;
-extern f64 lbl_eu_8066B170;
 // Quad-render scale/divisor constants and cross-TU helpers used by the
 // EffFxRenderSceneQuad / EffFxRenderChainStrip render pair (retail C-linkage names).
-extern f32 lbl_eu_8066B11C;
-extern f32 lbl_eu_8066B128;
-extern f32 lbl_eu_8066B130;
-extern f32 lbl_eu_8066B134;
 extern "C" u32 lytBindCanResolveTarget(void* link);
 extern "C" void* SchedNode_FetchSlotPtr(s32 arg);
 extern "C" void SchedTexLoadCached(void* res, s32 index, s32 cacheIndex, s32 wrap);
@@ -37,10 +32,7 @@ extern "C" void cerandRotateX90Wrapper(Mtx mtx);
 extern "C" void cerandTransposeObjCC(Mtx mtx, const void* obj);
 extern "C" void cerandAimMatrix(Mtx mtx, const u8* obj);
 #include "monolib/math/FloatUtils.hpp"
-extern f32 lbl_eu_8066B0FC;
-extern f32 lbl_eu_8066B12C;
 extern f32 lbl_eu_8066B138;
-extern f32 lbl_eu_8066B120;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
@@ -100,7 +92,6 @@ extern "C" void SchedAnim_RefreshScaleVec(void* blk, void* src, void* mat, f32 v
 extern "C" void SchedAnim_LerpVec24(void* blk, void* src, void* mat, f32 v);
 extern "C" void SchedAnim_AdvanceQuad(void* blk, void* src, void* mat, f32 v);
 extern "C" void SchedAnim_AdvanceColor10(void* blk, void* src, void* mat, f32 v);
-extern f32 lbl_eu_8066B0F8;
 
 struct D3B14Cam;
 s32 EffFxProjectWorldToScreen(D3B14Cam* cam, Vec* outA, Vec* outB);
@@ -127,9 +118,6 @@ struct VecWords {
 
 // EffFxUpdateLightColor helper imports (retail C-linkage names; no shared header
 // declares them). Color scale + falloff constants and light-source helpers.
-extern f32 lbl_eu_8066B114;
-extern f32 lbl_eu_8066B118;
-extern f32 lbl_eu_8066B11C;
 extern "C" u32* SchedAnim_NoOp(void* a, void* b);
 extern "C" void* ScnRes_ProjThunk_E538(void* p);
 extern "C" s32 ScnRes_VertRayForward_E398(void* p, u32 a, u32 b, u32 c, f32 f1, f32 f2);
@@ -167,61 +155,31 @@ struct SceneFlags32 {
 
 // s32 -> float through the shared 0x4330000000000000 magic constant.
 inline f32 s32ToF_b170(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B170);
+    return (f32)v;
 }
 
 // s16 -> float through the magic constant 0x4330000080000000 (2^52 + 2^31,
 // the signed-conversion pool entry at lbl_eu_8066B0F0). Retail func_804CD9EC
 // references that named pool entry for its s16 tone-node conversions.
 inline f32 s16ToF_b0f0(s16 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = (u32)(s32)v ^ 0x80000000u;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0F0);
+    return (f32)(s32)v;
 }
 
 // u8/u32 -> float through the 2^52 magic constant (lbl_eu_8066B0E8).
 // Used by EffFxBuildScaleMatrix's byte-scale fallback conversions.
 inline f32 u8ToF_b0e8(u32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0E8);
+    return (f32)v;
 }
 
 // s32 -> float through the 2^52 + 2^31 magic constant at lbl_eu_8066B0F0.
 // (EffFxBuildScaleMatrix converts its i5/i6 params with this named entry.)
 inline f32 s32ToF_b0f0(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0F0);
+    return (f32)v;
 }
 
 // u16 -> float through the shared 0x4330000000000000 magic constant.
 inline f32 u16ToF_b0e8(u16 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (f32)(c.d - lbl_eu_8066B0E8);
+    return (f32)(u32)v;
 }
 
 // Effect struct - partial layout; only fields accessed by matching functions
@@ -633,7 +591,7 @@ extern "C" void func_804CD9EC(EffectScene* self) {
     SceneSubObj* sub = self->field_0x0c;
     ToneNode* t = (ToneNode*)sub->field_0x100;
     if (t) {
-        f32 scale = (t->field_0x08 / lbl_eu_8066B100) * self->field_0x18;
+        f32 scale = (t->field_0x08 / 30.0f) * self->field_0x18;
         if (scale != lbl_eu_8066B0DC) {
             ml::CVec3 v;
             union { double d; u32 w[2]; } c1, c2, c3;
@@ -1044,14 +1002,14 @@ extern "C" void EffFxUpdateSceneAim(EffectScene* self) {
         angIn.x = self->field_0x21c.x * self->field_0x234;
         angIn.y = self->field_0x21c.y * self->field_0x234;
         angIn.z = lbl_eu_8066B0DC;
-        f32 negYaw = -(nw4r::math::Atan2FIdx(diffC.x, -diffC.z) * lbl_eu_8066B0FC);
+        f32 negYaw = -(nw4r::math::Atan2FIdx(diffC.x, -diffC.z) * 0.024543693f);
         f32 sumsq = diffC.z * diffC.z + diffC.x * diffC.x;
         if (!(sumsq >= lbl_eu_8066B0DC)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
         f32 radius =
             (sumsq > lbl_eu_8066B0DC) ? sumsq * nw4r::math::FrSqrt(sumsq) : lbl_eu_8066B0DC;
-        f32 pitch = nw4r::math::Atan2FIdx(diffC.y, radius) * lbl_eu_8066B0FC;
+        f32 pitch = nw4r::math::Atan2FIdx(diffC.y, radius) * 0.024543693f;
         Mtx rotMtx; // sp+0x1e8
         CERotXMatrix(&rotMtx, pitch, radius);
         CERotYConcat(&rotMtx, negYaw);
@@ -1113,7 +1071,7 @@ extern "C" s32 EffFxSegmentRegionTest(void* self, Vec* a, Vec* b, Vec* c) {
         t.x = diff.x;
         t.y = diff.y;
         t.z = diff.z;
-        return t.x * t.x + t.y * t.y + t.z * t.z <= lbl_eu_8066B104;
+        return t.x * t.x + t.y * t.y + t.z * t.z <= 0.05f;
     }
     // fsubs/fabs/frsp shape comes from the double-width builtin here.
     f32 adx = (f32)__fabs(b->x - a->x);
@@ -1206,7 +1164,7 @@ extern "C" void EffFxSetupAxisRotation(EffectScene* self, Mtx* a, u32 type, Vec*
     case 2: {
         Vec v;
         v.x = self->field_0x2d0;
-        v.y = lbl_eu_8066B110 + self->field_0x2d4;
+        v.y = 1.57f + self->field_0x2d4;
         v.z = self->field_0x2d8;
         CERotEulerOrder(&out, &v, *(s32*)((u8*)self->field_0x0c + 0x48));
         // Retail computes the Y angle first, then X from sqrt (source order).
@@ -1279,7 +1237,7 @@ extern "C" void EffFxSetupMatrixPair(EffectScene* self, Mtx* a, Mtx* b, u32 type
                     // Angle vector fills as y, z, x (z cleared before the pitch lands).
                     f32 pitch = atan2(v8.y, sqrt(v8.x * v8.x + v8.z * v8.z));
                     ang.z = lbl_eu_8066B0DC;
-                    ang.x = lbl_eu_8066B110 - pitch;
+                    ang.x = 1.57f - pitch;
                     CERotEulerXYZ(&mtx1d0, &ang);
                     ok = 1;
                 }
@@ -1462,14 +1420,14 @@ extern "C" void EffFxUpdateLightColor(EffectScene* self, f32* out, Vec* p1) {
                         // Optional material tint re-read from field_0x114.
                         u8* pm = (u8*)((EffectScene*)self)->field_0x0c->field_0x114;
                         if (pm != 0) {
-                            f32 f3 = pm ? *(f32*)(pm - 4) : lbl_eu_8066B114;
+                            f32 f3 = pm ? *(f32*)(pm - 4) : 0.9f;
                             v24.x *= f3;
                             v24.y *= f3;
                             v24.z *= f3;
                         }
-                        v24.x = v24.x * lbl_eu_8066B118;
-                        v24.y = v24.y * lbl_eu_8066B118;
-                        v24.z = v24.z * lbl_eu_8066B118;
+                        v24.x = v24.x * 2.0f;
+                        v24.y = v24.y * 2.0f;
+                        v24.z = v24.z * 2.0f;
                         if (v24.x > lbl_eu_8066B0D8) v24.x = lbl_eu_8066B0D8;
                         if (v24.y > lbl_eu_8066B0D8) v24.y = lbl_eu_8066B0D8;
                         if (v24.z > lbl_eu_8066B0D8) v24.z = lbl_eu_8066B0D8;
@@ -1539,10 +1497,10 @@ extern "C" void EffFxUpdateLightColor(EffectScene* self, f32* out, Vec* p1) {
     }
     c1.w[1] = (u32)(alpha & 0xff);
     base.c[3] = (f32)(c1.d - lbl_eu_8066B0E8);
-    out[0] = base.c[0] / lbl_eu_8066B11C;
-    out[1] = base.c[1] / lbl_eu_8066B11C;
-    out[2] = base.c[2] / lbl_eu_8066B11C;
-    out[3] = base.c[3] / lbl_eu_8066B11C;
+    out[0] = base.c[0] / 255.0f;
+    out[1] = base.c[1] / 255.0f;
+    out[2] = base.c[2] / 255.0f;
+    out[3] = base.c[3] / 255.0f;
 }
 // Polymorphic render target driven by EffFxApplySceneMatrix. Vtable slots recovered
 // from the retail indirect calls (offsets 0x18/0x1c/0x20/0x24/0x28/0x5c).
@@ -1633,7 +1591,7 @@ void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, V
     // [-B120, 1]: truncate to integer and rescale by (1 - eps). The explicit
     // union round-trip mirrors retail's fctiwz + 0x4330000080000000 magic
     // conversion through the shared B0F0 constant.
-    if (m.m[2][3] > lbl_eu_8066B0D8 || m.m[2][3] < lbl_eu_8066B120) {
+    if (m.m[2][3] > lbl_eu_8066B0D8 || m.m[2][3] < -1.0f) {
         union {
             f64 d;
             u32 w[2];
@@ -1672,9 +1630,9 @@ extern "C" void EffFxNormalizeDirDelta(EffectScene* self, const ml::CVec3* a, co
     // stored direction is left untouched; otherwise it is renormalized (or
     // zeroed when it has no length) and written to field_0x190.
     ml::CVec3 out = *b - *a;
-    if (out.x < lbl_eu_8066B108 || lbl_eu_8066B10C < out.x ||
-        out.y < lbl_eu_8066B108 || lbl_eu_8066B10C < out.y ||
-        out.z < lbl_eu_8066B108 || lbl_eu_8066B10C < out.z) {
+    if (out.x < -0.0001f || 0.0001f < out.x ||
+        out.y < -0.0001f || 0.0001f < out.y ||
+        out.z < -0.0001f || 0.0001f < out.z) {
         if (out.x * out.x + out.y * out.y + out.z * out.z == lbl_eu_8066B0DC) {
             out = ml::CVec3::zero;
         } else {
@@ -1792,11 +1750,11 @@ extern "C" void EffFxComputeInheritDir(EffectScene* self, Vec* out, u32 type) {
 // argument setup (before the -1 cache stores).
 extern "C" void EffFxResetPlacerColors() {
     const GXColor& color = *(const GXColor*)&lbl_eu_8066B124;
-    lbl_eu_806659A8 = -1;
-    lbl_eu_806659AC = -1;
+    sCachedZMode = -1;
+    sCachedTevMode = -1;
     GXSetChanMatColor(GX_COLOR0A0, color);
-    lbl_eu_806659B0 = -1;
-    lbl_eu_806659B4 = -1;
+    sCachedMatColor = -1;
+    sCachedTexGenCount = -1;
 }
 
 // Target 1: us-804d4354 - render the scene's quad: copy the node matrix and
@@ -1846,10 +1804,10 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     // Byte-scaled RGBA staged through a 4-byte color struct copy.
     GXColor col;
-    col.r = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1cc);
-    col.g = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d0);
-    col.b = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d4);
-    col.a = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d8);
+    col.r = (u8)(s32)(255.0f * self->field_0x1cc);
+    col.g = (u8)(s32)(255.0f * self->field_0x1d0);
+    col.b = (u8)(s32)(255.0f * self->field_0x1d4);
+    col.a = (u8)(s32)(255.0f * self->field_0x1d8);
     GXColor col2 = col;
     node->b0 = col2.r;
     node->b1 = col2.g;
@@ -1880,12 +1838,12 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
                 if (bv == 0x10) {
                     convA.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
                     f32 ratio =
-                        (f32)((convA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                        (f32)((convA.d - lbl_eu_8066B0E8) / 854.0f);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     convB.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
                     f32 ratio =
-                        (f32)((convB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                        (f32)((convB.d - lbl_eu_8066B0E8) / 854.0f);
                     Vec svec;
                     svec.y = lbl_eu_8066B0D8;
                     svec.z = lbl_eu_8066B0D8;
@@ -1956,7 +1914,7 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
     }
 
     u8 tg = (u8)texgens;
-    if (lbl_eu_806659B4 != (s32)tg) {
+    if (sCachedTexGenCount != (s32)tg) {
         GXSetNumTexGens(tg);
         GXSetNumTevStages(tg ? tg : 1);
         switch (tg) {
@@ -1973,29 +1931,29 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
             GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
             break;
         }
-        lbl_eu_806659B4 = (s32)tg;
+        sCachedTexGenCount = (s32)tg;
     }
     u32 zbit = (self->field_0x0c->field_0x1c >> 7) & 1;
     u32 zb = (u32)(-(s32)zbit | zbit) >> 31;
-    if (lbl_eu_806659A8 != (s32)zb) {
+    if (sCachedZMode != (s32)zb) {
         if (zb) {
             GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
         } else {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
         }
-        lbl_eu_806659A8 = (s32)zb;
+        sCachedZMode = (s32)zb;
     }
-    if (lbl_eu_806659AC != 1) {
+    if (sCachedTevMode != 1) {
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-        lbl_eu_806659AC = 1;
+        sCachedTevMode = 1;
     }
     u32 colorWord = *(u32*)&node2->b0;
-    if (lbl_eu_806659B0 != (s32)colorWord) {
+    if (sCachedMatColor != (s32)colorWord) {
         GXColor color;
         *(u32*)&color = colorWord;
         GXSetChanMatColor(GX_COLOR0A0, color);
-        lbl_eu_806659B0 = (s32)colorWord;
+        sCachedMatColor = (s32)colorWord;
     }
     GXLoadPosMtxImm(node2->mtx, 0);
     if (texgens == 1) {
@@ -2052,10 +2010,10 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     // Byte-scaled RGBA staged through a 4-byte color struct copy.
     GXColor col;
-    col.r = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1cc);
-    col.g = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d0);
-    col.b = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d4);
-    col.a = (u8)(s32)(lbl_eu_8066B11C * self->field_0x1d8);
+    col.r = (u8)(s32)(255.0f * self->field_0x1cc);
+    col.g = (u8)(s32)(255.0f * self->field_0x1d0);
+    col.b = (u8)(s32)(255.0f * self->field_0x1d4);
+    col.a = (u8)(s32)(255.0f * self->field_0x1d8);
     GXColor col2 = col;
     node->b0 = col2.r;
     node->b1 = col2.g;
@@ -2086,12 +2044,12 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
                 if (bv == 0x10) {
                     cnv.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[0] = 0x43300000u;
-                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / 854.0f);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     cnv.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[0] = 0x43300000u;
-                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / 854.0f);
                     f32 scl = lbl_eu_8066B0D8;
                     PSMTXScaleApply(node->mtx, node->mtx, ratio, scl, scl);
                 }
@@ -2136,7 +2094,7 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
     if (texgens == 0) return;
 
     u8 tg = (u8)texgens;
-    if (lbl_eu_806659B4 != (s32)tg) {
+    if (sCachedTexGenCount != (s32)tg) {
         GXSetNumTexGens(tg);
         GXSetNumTevStages(tg ? tg : 1);
         switch (tg) {
@@ -2155,22 +2113,22 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
         default:
             break;
         }
-        lbl_eu_806659B4 = (s32)tg;
+        sCachedTexGenCount = (s32)tg;
     }
     u32 zbit = (self->field_0x0c->field_0x1c >> 7) & 1;
     u32 zb = (u32)(-zbit | zbit) >> 31;
-    if (lbl_eu_806659A8 != (s32)zb) {
+    if (sCachedZMode != (s32)zb) {
         if (zb) {
             GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
         } else {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
         }
-        lbl_eu_806659A8 = (s32)zb;
+        sCachedZMode = (s32)zb;
     }
-    if (lbl_eu_806659AC != 1) {
+    if (sCachedTevMode != 1) {
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-        lbl_eu_806659AC = 1;
+        sCachedTevMode = 1;
     }
 
     // Initial vertex state derived from the root node: the transformed
@@ -2178,8 +2136,8 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
     // translation column. The direction/scale constants live in explicit
     // locals so MWCC keeps them in f28-f31 across the whole node walk.
     f32 cZero = lbl_eu_8066B0DC;
-    f32 cDirX = lbl_eu_8066B12C;
-    f32 cDir2X = lbl_eu_8066B0E4;
+    f32 cDirX = -0.5f;
+    f32 cDir2X = 0.5f;
     EffectNode* walk = (EffectNode*)self;
     s16 count = self->field_0x0c->field_0x2e;
     Vec dir1 = {cDirX, cZero, cZero};
@@ -2192,7 +2150,7 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
     Vec dir2 = {cDir2X, cZero, cZero};
     Vec curOut2;
     PSMTXMultVec(self->field_0x19c, &dir2, &curOut2);
-    f32 cscale = lbl_eu_8066B11C;
+    f32 cscale = 255.0f;
     GXColor curCol;
     curCol.r = (u8)(s32)(cscale * self->field_0x1cc);
     curCol.g = (u8)(s32)(cscale * self->field_0x1d0);
@@ -2435,7 +2393,7 @@ void EffFxInitSceneFromSrc(EffectScene* out, const EffSrc3* src) {
         SceneSubObj* subU = (SceneSubObj*)out->field_0x0c;
         u8* tb = (u8*)subU->field_0xf4;
         s32 r = (s32)ml::math::mtRand();
-        f32 v = (s32ToF_b0f0(r) / lbl_eu_8066B0E0 - lbl_eu_8066B0E4) *
+        f32 v = (s32ToF_b0f0(r) / 2147483600.0f - 0.5f) *
                     *(f32*)(tb + 8) + lbl_eu_8066B0D8;
         *(f32*)&out->field_0x14 = v;
         // retail clamps the computed scale when it is not strictly positive
@@ -2499,7 +2457,7 @@ extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
 
     RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
+    f32 scale = 255.0f;
     // Color bytes staged through two local arrays (retail copies the packed
     // word between them before storing byte-wise into the render node).
     u8 colA[4];
@@ -2538,12 +2496,12 @@ extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnvA.w[1] = fbw;
-                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnvB.w[1] = fbw;
-                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -2588,56 +2546,56 @@ extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
     // Z-mode cache: sub-object bit 0x100 disables the depth compare.
     u32 zbit = (self->field_0x0c->field_0x1c >> 8) & 1;
     u32 zb = (u32)(-zbit | zbit) >> 31;
-    if (lbl_eu_806659A8 != (s32)zb) {
+    if (sCachedZMode != (s32)zb) {
         if (zb) {
             GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
         } else {
             GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
         }
-        lbl_eu_806659A8 = (s32)zb;
+        sCachedZMode = (s32)zb;
     }
 
     switch ((u8)texgens) {
     case 0:
-        if (lbl_eu_806659AC != 0) {
+        if (sCachedTevMode != 0) {
             GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
             GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-            lbl_eu_806659AC = 0;
+            sCachedTevMode = 0;
         }
-        if (lbl_eu_806659B4 != 0) {
+        if (sCachedTexGenCount != 0) {
             GXSetNumTexGens(0);
             GXSetNumTevStages(1);
             GXSetVtxDesc(GX_VA_TEX0, GX_NONE);
             GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
-            lbl_eu_806659B4 = 0;
+            sCachedTexGenCount = 0;
         }
         break;
     case 1:
-        if (lbl_eu_806659AC != 1) {
+        if (sCachedTevMode != 1) {
             GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
             GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-            lbl_eu_806659AC = 1;
+            sCachedTevMode = 1;
         }
-        if (lbl_eu_806659B4 != 1) {
+        if (sCachedTexGenCount != 1) {
             GXSetNumTexGens(1);
             GXSetNumTevStages(1);
             GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
             GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
-            lbl_eu_806659B4 = 1;
+            sCachedTexGenCount = 1;
         }
         break;
     case 2:
-        if (lbl_eu_806659AC != 1) {
+        if (sCachedTevMode != 1) {
             GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
             GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-            lbl_eu_806659AC = 1;
+            sCachedTevMode = 1;
         }
-        if (lbl_eu_806659B4 != 2) {
+        if (sCachedTexGenCount != 2) {
             GXSetNumTexGens(2);
             GXSetNumTevStages(2);
             GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
             GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
-            lbl_eu_806659B4 = 2;
+            sCachedTexGenCount = 2;
         }
         break;
     default:
@@ -2666,7 +2624,7 @@ extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
 
     RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
+    f32 scale = 255.0f;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
     node->b1 = (u8)(s32)(scale * self->field_0x1d0);
     node->b2 = (u8)(s32)(scale * self->field_0x1d4);
@@ -2691,12 +2649,12 @@ extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnvA.w[1] = fbw;
-                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnvB.w[1] = fbw;
-                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -2739,9 +2697,9 @@ extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
     // normalize into [limit, limit+step) with additive stepping loops.
     f32 ang;
     if (((SceneFlagBits*)&self->field_0x06)->b7) {
-        ang = lbl_eu_8066B130 * *(f32*)&self->field_0x10;
+        ang = 3.0f * *(f32*)&self->field_0x10;
     } else {
-        ang = lbl_eu_8066B134 * *(f32*)&self->field_0x10;
+        ang = -3.0f * *(f32*)&self->field_0x10;
     }
     const f32 step = lbl_eu_8066B138;
     const f32 limit = lbl_eu_8066B0DC;
@@ -2803,7 +2761,7 @@ extern "C" void EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
 
     RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
+    f32 scale = 255.0f;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
     node->b1 = (u8)(s32)(scale * self->field_0x1d0);
     node->b2 = (u8)(s32)(scale * self->field_0x1d4);
@@ -2833,12 +2791,12 @@ extern "C" void EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -2931,7 +2889,7 @@ extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
     }
     RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr((s16)self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
+    f32 scale = 255.0f;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
     node->b1 = (u8)(s32)(scale * self->field_0x1d0);
     node->b2 = (u8)(s32)(scale * self->field_0x1d4);
@@ -2961,12 +2919,12 @@ extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnvA.w[1] = fbw;
-                    f32 ratio = (f32)((cnvA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    f32 ratio = (f32)((cnvA.d - lbl_eu_8066B0E8) / 854.0f);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnvB.w[1] = fbw;
-                    f32 ratio = (f32)((cnvB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    f32 ratio = (f32)((cnvB.d - lbl_eu_8066B0E8) / 854.0f);
                     PSMTXScaleApply(node->mtx, node->mtx, ratio,
                                     lbl_eu_8066B0D8, lbl_eu_8066B0D8);
                 }
@@ -3060,7 +3018,7 @@ extern "C" void EffFxRenderType7Walk(EffectNode* nodeRaw, void* res) {
 
     RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr(self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
+    f32 scale = 255.0f;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
     node->b1 = (u8)(s32)(scale * self->field_0x1d0);
     node->b2 = (u8)(s32)(scale * self->field_0x1d4);
@@ -3090,12 +3048,12 @@ extern "C" void EffFxRenderType7Walk(EffectNode* nodeRaw, void* res) {
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -3178,7 +3136,7 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
 
     RenderNode* node = (RenderNode*)SchedNode_FetchSlotPtr((s16)self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
-    f32 scale = lbl_eu_8066B11C;
+    f32 scale = 255.0f;
     node->b0 = (u8)(scale * self->field_0x1cc);
     node->b1 = (u8)(scale * self->field_0x1d0);
     node->b2 = (u8)(scale * self->field_0x1d4);
@@ -3202,12 +3160,12 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     convA.w[1] = fbw;
-                    f32 ratio = (f32)(convA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(convA.d - lbl_eu_8066B0E8) / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     convB.w[1] = fbw;
-                    f32 ratio = (f32)(convB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    f32 ratio = (f32)(convB.d - lbl_eu_8066B0E8) / 854.0f;
                     PSMTXScaleApply(node->mtx, node->mtx, ratio, lbl_eu_8066B0D8,
                                     lbl_eu_8066B0D8);
                 }
@@ -3309,7 +3267,7 @@ void EffFxBuildScaleMatrix(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7) 
     out[0] = zero;
     out[1] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv);
     out[2] = zero;
-    f32 ka = lbl_eu_8066B0E4 * A;
+    f32 ka = 0.5f * A;
     out[3] = ka;
     out[4] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv);
     out[5] = zero;
@@ -3436,7 +3394,7 @@ extern "C" void EffFxUpdateNodeToneLight(void* nodeptr, f32 f) {
 
     f32 val = *(f32*)&node->field_0x18;
     s32 clamped = (*(f32*)&node->field_0x10 <= lbl_eu_8066B0D8);
-    f32 lim = CDeviceVI::isTvFormatPal() ? lbl_eu_8066B0F8 : lbl_eu_8066B0D8;
+    f32 lim = CDeviceVI::isTvFormatPal() ? 1.2f : lbl_eu_8066B0D8;
     if (lim < val) {
         if (clamped) {
             clamped = 0;
@@ -4127,11 +4085,11 @@ void RenderObj::EffFxPushPolyPass() {
         ColorSrc* cs = this->field_0x10->field_0x10->field_0x5c;
         ml::CCol4 src = *(ml::CCol4*)&cs->field_0xac;
         void* q2 = this->field_0x14->field_0x114;
-        f32 factor = q2 ? *(f32*)((u8*)q2 - 4) : lbl_eu_8066B144;
+        f32 factor = q2 ? *(f32*)((u8*)q2 - 4) : 0.9f;
         ml::CCol4 mult;
         ml::CCol4 scaled(src.r * factor, src.g * factor, src.b * factor, src.a);
-        mult.set(scaled.r * lbl_eu_8066B148, scaled.g * lbl_eu_8066B148,
-                 scaled.b * lbl_eu_8066B148, scaled.a);
+        mult.set(scaled.r * 2.0f, scaled.g * 2.0f,
+                 scaled.b * 2.0f, scaled.a);
         ml::CCol4 c = mult;
         if (c.r > lbl_eu_8066B14C) c.r = lbl_eu_8066B14C;
         else if (c.r < lbl_eu_8066B140) c.r = lbl_eu_8066B140;
@@ -4216,9 +4174,9 @@ void RenderObj::EffFxPushPalettePass() {
     u32 cond = bit != 0;
     const u8* arr;
     if (cond) {
-        arr = lbl_eu_80524520;
+        arr = sEffectPosPalette1;
     } else {
-        arr = lbl_eu_80524500;
+        arr = sEffectPosPalette0;
     }
     GXSetArray(GX_VA_POS, (void*)arr, 3);
     void* q = this->field_0x14->field_0x114;
@@ -4234,16 +4192,16 @@ void RenderObj::EffFxPushPalettePass() {
         ColorSrc* cs = this->field_0x10->field_0x10->field_0x5c;
         ml::CCol4 s = *(ml::CCol4*)&cs->field_0xac;
         void* q2 = this->field_0x14->field_0x114;
-        f32 f7 = q2 ? *(f32*)((u8*)q2 - 4) : lbl_eu_8066B144;
+        f32 f7 = q2 ? *(f32*)((u8*)q2 - 4) : 0.9f;
         f32 d[4];
         d[0] = s.r * f7;
         d[1] = s.g * f7;
         d[2] = s.b * f7;
         d[3] = s.a;
         f32 c[4];
-        c[0] = d[0] * lbl_eu_8066B148;
-        c[1] = d[1] * lbl_eu_8066B148;
-        c[2] = d[2] * lbl_eu_8066B148;
+        c[0] = d[0] * 2.0f;
+        c[1] = d[1] * 2.0f;
+        c[2] = d[2] * 2.0f;
         c[3] = d[3];
         if (c[0] > lbl_eu_8066B14C) c[0] = lbl_eu_8066B14C;
         else if (c[0] < lbl_eu_8066B140) c[0] = lbl_eu_8066B140;
@@ -4401,9 +4359,9 @@ f32* EffFxAllocCubicTable(void* this_, s32 count) {
     s16 i = 0;
     f32 f8 = lbl_eu_8066B158;
     f32 t = lbl_eu_8066B15C;
-    f32 f7 = lbl_eu_8066B164;
-    f32 f5 = lbl_eu_8066B160;
-    f32 f1 = lbl_eu_8066B168;
+    f32 f7 = 3.0f;
+    f32 f5 = 2.0f;
+    f32 f1 = -2.0f;
     f32 dt = f8 / count;
     while (t < f8) {
         f32 a2 = t * t;
@@ -4546,10 +4504,10 @@ s32 EffFxProjectWorldToScreen(D3B14Cam* cam, Vec* outA, Vec* outB) {
         outA->y *= s;
 
         u16 w = CDeviceVI::getRenderModeObj()->fbWidth;
-        outA->x = (outA->x * lbl_eu_8066B0E4 + lbl_eu_8066B0E4) * (f32)w;
+        outA->x = (outA->x * 0.5f + 0.5f) * (f32)w;
         u16 h = CDeviceVI::getRenderModeObj()->efbHeight;
         outA->z = lbl_eu_8066B0DC;
-        outA->y = (outA->y * lbl_eu_8066B12C + lbl_eu_8066B0E4) * (f32)h;
+        outA->y = (outA->y * -0.5f + 0.5f) * (f32)h;
 
         if (outB != 0) {
             Vec v2;
@@ -4585,16 +4543,17 @@ extern "C" u32 jumptable_eu_8056FC10[12] = {
 };
 
 // [.rodata] 0x80524500-0x80524530 (0x30): palette arrays (raw retail bytes).
-extern "C" const u8 lbl_eu_80524500[32] = {
+extern "C" const u8 sEffectPosPalette0[32] = {
     0xFF,0x01,0x00,0x01, 0x01,0x00,0x01,0xFF, 0x00,0xFF,0xFF,0x00,
     0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
 };
-extern "C" const u8 lbl_eu_80524520[16] = {
+extern "C" const u8 sEffectPosPalette1[16] = {
     0xFF,0xFF,0x00,0x01, 0xFF,0x00,0x01,0x01, 0x00,0xFF,0x01,0x00,
     0x00,0x00,0x00,0x00,
 };
 
 // [.sbss] 0x806659A8-0x806659BC (0x14 = 20B): 5 cache-state words.
-extern "C" { s32 lbl_eu_806659A8; s32 lbl_eu_806659AC; s32 lbl_eu_806659B0;
-              s32 lbl_eu_806659B4; s32 lbl_eu_806659B8; }
+struct CScnRootEnv;
+extern "C" { s32 sCachedZMode; s32 sCachedTevMode; s32 sCachedMatColor;
+              s32 sCachedTexGenCount; CScnRootEnv* sActiveSceneRoot; }

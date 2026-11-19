@@ -66,7 +66,7 @@ extern "C" __declspec(noinline) void tryActivate__Q22cf14CHelp_LandMarkFv(cf::CH
 
     self->mSavedFlags = cf::CfGameManager::getEnabledInputFlags();
     cf::CfGameManager::enablePadFlags(-1, false);
-    lbl_eu_80663E24 |= 0x2000;
+    gmGameFlags |= 0x2000;
     self->mTimer = 0x4B;
 }
 
@@ -102,7 +102,7 @@ u32 CHelp_LandMark::tickUpdate() {
         return 0;
     }
     CfGameManager::enablePadFlags(mSavedFlags, true);
-    lbl_eu_80663E24 &= ~0x2000;
+    gmGameFlags &= ~0x2000;
     return 1;
 }
 

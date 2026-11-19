@@ -14,7 +14,7 @@
  */
 
 #include "kyoshin/cf/CfGimmick.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // View of the singleton returned by Bdat_GetTable_AA34 whose members are the
 // per-gimmick-type bdat table pointers; the ctor loads the object-gimmick
@@ -176,7 +176,7 @@ extern u8 lbl_eu_80534F70[];
 extern "C" void __ct__cf_CfGimmick(void* self);
 
 // Bdat column-name bases used by the ctor: lbl_eu_80507B60 holds inline
-// column names, lbl_eu_805357E8 a pointer table (see CfGimmick.hpp).
+// column names, gGimmickBdatColumns a pointer table (see CfGimmick.hpp).
 extern char lbl_eu_80507B60[];
 // Area-table column-name slots: 8 pointers to shared name strings (retail
 // .data lbl_eu_80534F00). The ctor stamps each slot's second byte with the
@@ -208,7 +208,7 @@ extern CfGimmickObjectPmfEntry lbl_eu_80534E70[6];
 extern CfGimmickObjectPmfEntry lbl_eu_80534EB8[6];
 
 // Global flag word tested by GimObjCheckStepBusy (bit 5 = object busy).
-extern u32 lbl_eu_80663E28;
+extern u32 gmPauseFlags;
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (unmangled retail symbols used by this TU).  These are

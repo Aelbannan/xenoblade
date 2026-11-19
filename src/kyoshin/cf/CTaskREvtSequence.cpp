@@ -142,7 +142,7 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     strcpy(self->mPath, name);
     // Field block: zero words, the armed byte at 0x109, the ALLOC_HANDLE
     // sentinel at 0xB0, the fade volume and the sequence-id flag word.
-    f32 f0 = lbl_eu_80667658;
+    f32 f0 = 0.0f;
     self->field_0xA4 = 0;
     self->field_0xA8 = 0;
     self->field_0xB0 = 0xFFFFFFFF;
@@ -185,7 +185,7 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     self->field_0x130 = 1;
     self->field_0x134 = 0;
     self->field_0x138 = 0;
-    lbl_eu_80664268 = reinterpret_cast<UnkState_80664268*>(self);
+    spEvtSeqState = reinterpret_cast<UnkState_80664268*>(self);
     // Retail zeroes the id-list pointer block (0x23C..0x24F) with its own
     // memset before the 0x100-byte buffer clear.
     memset(&self->field_0x23C, 0, 0x14);
@@ -233,7 +233,7 @@ cf::CTaskREvtSequence::~CTaskREvtSequence() {
     // shared event-list pointer, then destruct the embedded memory block at
     // +0xA4 (null-guarded member pattern: addic. + beq; release the buffer
     // unless the alloc handle is invalid), then the CProcess base.
-    lbl_eu_80664268 = 0;
+    spEvtSeqState = 0;
     if (reinterpret_cast<u8*>(this) + 0xA4 != 0) {
         field_0xA8 = 0;
         if (field_0xB0 != 0xFFFFFFFF) {
@@ -255,52 +255,52 @@ cf::CTaskREvtSequence::~CTaskREvtSequence() {
 }
 
 extern "C" unsigned long EvtSeqGetStateBit14() {
-    unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
+    unsigned long* ptr = (unsigned long*)spEvtSeqState;
     return (ptr[0x5c/4] >> 14) & 1;
 }
 
 extern "C" unsigned long EvtSeqGetStateBit12() {
-    unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
+    unsigned long* ptr = (unsigned long*)spEvtSeqState;
     return (ptr[0x5c/4] >> 12) & 1;
 }
 
 void EvtSeqPublishIdHalfwords() {
     // Publish the halfword pair (field_0x116/0x118) to CfGameManager, then to
-    // the global-sda consumer; the retail re-reads lbl_eu_80664268 between
+    // the global-sda consumer; the retail re-reads spEvtSeqState between
     // the two calls (the first call may update it).
-    func_80086B5C__Q22cf13CfGameManagerFv(lbl_eu_80664268->field_0x116,
-                                          lbl_eu_80664268->field_0x118, 0);
-    Env_SetClock(getGlobalSda(), lbl_eu_80664268->field_0x116,
-                  lbl_eu_80664268->field_0x118, 0);
+    func_80086B5C__Q22cf13CfGameManagerFv(spEvtSeqState->field_0x116,
+                                          spEvtSeqState->field_0x118, 0);
+    Env_SetClock(getGlobalSda(), spEvtSeqState->field_0x116,
+                  spEvtSeqState->field_0x118, 0);
 }
 
 extern "C" u32 EvtSeqGetStateBit5(void) {
-    UnkState_80664268* g = (UnkState_80664268*)lbl_eu_80664268;
+    UnkState_80664268* g = (UnkState_80664268*)spEvtSeqState;
     return (g->field_0x5C >> 5) & 1;
 }
 
-extern "C" u32 EvtSeqGetSharedState() { return (u32)lbl_eu_80664268; }
+extern "C" u32 EvtSeqGetSharedState() { return (u32)spEvtSeqState; }
 extern "C" void EvtSeqSetBgmGateFlag(int a) {
     // Toggle the 0x8 / 0x100 bits of the shared state flag word, then fade
     // the BGM volume back in when the gate bit is set. The reassigned local
-    // mirrors the retail second load of lbl_eu_80664268 (shared by both
+    // mirrors the retail second load of spEvtSeqState (shared by both
     // branches of the first if).
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     p->field_0x5C |= 0x8;
-    p = lbl_eu_80664268;
+    p = spEvtSeqState;
     if (a != 0) {
         p->field_0x5C |= 0x100;
     } else {
         p->field_0x5C &= ~0x100;
     }
     if (a != 0) {
-        MenuSnd_StopSlot0Clear_9318(0, lbl_eu_80667658);
-        MenuSnd_StopSlot1_9424(lbl_eu_80667658);
+        MenuSnd_StopSlot0Clear_9318(0, 0.0f);
+        MenuSnd_StopSlot1_9424(0.0f);
     }
 }
 
 u32 EvtSeqGetStateBit10() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -320,7 +320,7 @@ int cf::CREvtModel::checkRunGuard() {
     if (flags & 0x100) {
         return 0;
     }
-    UnkState_80664268* st = lbl_eu_80664268;
+    UnkState_80664268* st = spEvtSeqState;
     if (st->field_0x114 != 0 && (st->field_0x5C & 0x8000) == 0) {
         return 0;
     }
@@ -339,7 +339,7 @@ int cf::CREvtModel::checkRunGuard() {
         return 0;
     }
     if (reset()) {
-        lbl_eu_80664268->field_0x114 = 1;
+        spEvtSeqState->field_0x114 = 1;
     }
     return 1;
 }
@@ -358,7 +358,7 @@ extern "C" void EvtSeqBootSequence(cf::CTaskREvtSequence* self) {
     getControllerValues__Q22cf13CfGameManagerFv(&self->field_0x116, &self->field_0x118);
     self->field_0x134 = (u16)getReloadParam2();
     u32 w1, w0, w2;
-    const u32* src = &lbl_eu_80530A40[0];
+    const u32* src = &sBootSeqCallbacks[0];
     w0 = *src++;
     w1 = *src++;
     self->field_0x40 = w1;
@@ -368,9 +368,9 @@ extern "C" void EvtSeqBootSequence(cf::CTaskREvtSequence* self) {
     if (isEventPending() == 0) {
         return;
     }
-    lbl_eu_80663EE0 |= 0x2;
+    gEventSequenceFlags |= 0x2;
     gmWalkByMask((void*)4);
-    lbl_eu_80663EE0 |= 0x40;
+    gEventSequenceFlags |= 0x40;
 }
 
 extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self) {
@@ -385,7 +385,7 @@ extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self) {
     self->field_0xB8 = (u32)CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), self->mPath, evt, 0, 0x800);
     u32 w1, w0, w2;
-    const u32* src = &lbl_eu_80530A4C[0];
+    const u32* src = &sFileReadCallbacks[0];
     w0 = *src++;
     w1 = *src++;
     self->field_0x40 = w1;
@@ -416,7 +416,7 @@ extern "C" void EvtSeqLoadSeqFile(cf::CTaskREvtSequence* self) {
     CDeviceFile::tryUpdateJobPriority(
         reinterpret_cast<CFileHandle*>(self->field_0xBC), 3);
     u32 w1, w0, w2;
-    const u32* src = &lbl_eu_80530A58[0];
+    const u32* src = &sLoadSeqFileCallbacks[0];
     w0 = *src++;
     w1 = *src++;
     self->field_0x40 = w1;
@@ -510,9 +510,9 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
     if (self->field_0xDC == 0) {
         // No camera table: arm the camera-rebuild flag and clear the
         // camera-active bit in the shared state.
-        UnkState_80664268* p = lbl_eu_80664268;
+        UnkState_80664268* p = spEvtSeqState;
         p->field_0x5C |= 0x8;
-        p = lbl_eu_80664268;
+        p = spEvtSeqState;
         p->field_0x5C &= ~0x100;
     }
     // Walk 6: type 0xa -> field_0xE0.
@@ -757,7 +757,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
     // camera-state dependent .data table.
     if (self->field_0x5C & 0x8) {
         u32 w1, w0, w2;
-        const u32* src = &lbl_eu_80530A64[0];
+        const u32* src = &sSetupObjCallbacks0[0];
         w0 = *src++;
         w1 = *src++;
         self->field_0x40 = w1;
@@ -766,7 +766,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
         self->field_0x44 = w2;
     } else {
         u32 w1, w0, w2;
-        const u32* src = &lbl_eu_80530A70[0];
+        const u32* src = &sSetupObjCallbacks1[0];
         w0 = *src++;
         w1 = *src++;
         self->field_0x40 = w1;
@@ -803,7 +803,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
     }
     // Restore the BGM fade volume unless the sequence already uses it.
     EvtSeqCC* cc = reinterpret_cast<EvtSeqCC*>(self->field_0xCC);
-    if (lbl_eu_80667658 != cc->field_0x10) {
+    if (0.0f != cc->field_0x10) {
         MaruShadowStoreGlobalFloat(cc->field_0x10);
     }
 }
@@ -854,7 +854,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     // (retail emits lwzu + lwz / stw,stw / lwz,stw). Value locals are declared
     // before the pointer so the allocator assigns w0/w1 the low scratch regs.
     u32 w1, w0, w2;
-    const u32* src = &lbl_eu_80530A7C[0];
+    const u32* src = &sUpdateRealtimeCallbacks[0];
     w0 = *src++;
     w1 = *src++;
     self->field_0x40 = w1;
@@ -900,13 +900,13 @@ void EvtSeqPumpCxStream(cf::CTaskREvtSequence* self) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
         if (t == 2) {
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(gmScene, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
         } else if (t != 3) {
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(gmScene, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
-        u32* pool = reinterpret_cast<u32*>(lbl_eu_80530A88);
+        u32* pool = reinterpret_cast<u32*>(sPumpCxCallbacks0);
         u32 v0 = pool[0];
         self->field_0x40 = pool[1];
         self->field_0x3C = v0;
@@ -922,7 +922,7 @@ void EvtSeqPumpCxStream(cf::CTaskREvtSequence* self) {
     if (self->field_0x5C & 0x200) {
         return;
     }
-    u32* pool94 = reinterpret_cast<u32*>(lbl_eu_80530A94);
+    u32* pool94 = reinterpret_cast<u32*>(sPumpCxCallbacks1);
     UnkE8Table* e8 = self->field_0xE8;
     u32 v94 = pool94[0];
     self->field_0x40 = pool94[1];
@@ -933,7 +933,7 @@ void EvtSeqPumpCxStream(cf::CTaskREvtSequence* self) {
     if (e8 != 0) {
         // Zero-extended halfword kept as int so the type-6 store matches
         // retail's clrlwi/ori/sth sequence.
-        int h = lbl_eu_806642E0;
+        int h = gEventWindowFlags;
         for (u32 j = 0;
              j < reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x38;
              j++) {
@@ -947,19 +947,19 @@ void EvtSeqPumpCxStream(cf::CTaskREvtSequence* self) {
                 }
                 flag1 = 1;
             } else if (entry->field_0xA == 6) {
-                lbl_eu_806642E0 = static_cast<u16>((h & 0xffff) | 1);
+                gEventWindowFlags = static_cast<u16>((h & 0xffff) | 1);
             }
         }
     }
     // Fade the BGM back in unless both walk flags were raised while the
     // event manager was already ready.
     if (flag1 == 0 || flag2 == 0 || isEventPending() != 0) {
-        MenuSnd_StopSlot0Clear_9318(0, lbl_eu_8066765C);
-        MenuSnd_StopSlot1_9424(lbl_eu_8066765C);
+        MenuSnd_StopSlot0Clear_9318(0, 0.16666667f);
+        MenuSnd_StopSlot1_9424(0.16666667f);
         clearBdatTextEntries__Q22cf13CfGameManagerFv();
     }
     if (isEventPending() != 0) {
-        lbl_eu_80663E28 |= 0x800000;
+        gmPauseFlags |= 0x800000;
         stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 1);
         func_801AAC78(1);
     }
@@ -1007,7 +1007,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
         u32 l3 = strlen(tail);
         strcat(buf, tail);
         len = len + l3;
-        u32 handle = lbl_eu_80663E14->getAllocHandle();
+        u32 handle = gmScene->getAllocHandle();
         if ((reinterpret_cast<UnkStateC4*>(self->field_0xC4)->field_0x4C &
              1) != 0) {
             handle = static_cast<u32>(mtl::MemManager::getHandleMEM1());
@@ -1016,13 +1016,13 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
              0x20) != 0) {
             handle = static_cast<u32>(mtl::MemManager::getHandleMEM2());
         }
-        f32 vol = evtCalcStreamVolume() * lbl_eu_80667660;
+        f32 vol = evtCalcStreamVolume() * 0.7f;
         CTaskGame_openStream(1, buf, handle, 1, 0, 0, vol);
     }
     // Publish the scene fade value, then the id halfword pair (only when
     // both are non-negative; the second consumer re-reads the buffer).
-    reinterpret_cast<EvtSeqScnView*>(lbl_eu_80663E14)
-        ->field_0x5C->field_0xD4 = lbl_eu_80667664;
+    reinterpret_cast<EvtSeqScnView*>(gmScene)
+        ->field_0x5C->field_0xD4 = 20.0f;
     EvtSeqC4Pair* pair = reinterpret_cast<EvtSeqC4Pair*>(self->field_0xC4);
     if (pair->field_0x40 >= 0 && pair->field_0x42 >= 0) {
         func_80086B5C__Q22cf13CfGameManagerFv(
@@ -1072,15 +1072,15 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
     // fade-out gate); otherwise clear the arm bit.
     {
         u32 flag = 0;
-        u32 i = reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
+        u32 i = reinterpret_cast<UnkStateC4Obj*>(spEvtSeqState->field_0xC4)
                     ->field_0x28;
         u32 scaled = i << 2;
-        while (i < reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
+        while (i < reinterpret_cast<UnkStateC4Obj*>(spEvtSeqState->field_0xC4)
                            ->field_0x20 +
                        reinterpret_cast<UnkStateC4Obj*>(
-                           lbl_eu_80664268->field_0xC4)
+                           spEvtSeqState->field_0xC4)
                            ->field_0x28) {
-            UnkState_80664268* st = lbl_eu_80664268;
+            UnkState_80664268* st = spEvtSeqState;
             UnkEvtListEntry* e = *(UnkEvtListEntry**) (
                 (u8*)st->field_0xA4 + scaled);
             if (e->field_0x14 == 1 && e->vf_0x14() != 0) {
@@ -1090,9 +1090,9 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
             scaled += 4;
         }
         if (flag != 0) {
-            lbl_eu_80664268->field_0x5C |= 0x10000;
+            spEvtSeqState->field_0x5C |= 0x10000;
         } else {
-            lbl_eu_80664268->field_0x5C &= ~0x8000u;
+            spEvtSeqState->field_0x5C &= ~0x8000u;
         }
         if (flag == 0) {
             // Nothing armed: stop the tasks on the third manager's object
@@ -1149,9 +1149,9 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
     u32 next = self->field_0xF8 + 1;
     const u32* src;
     if (next < cc->field_0x8) {
-        src = &lbl_eu_80530AAC[0];
+        src = &sUpdateSeqAltCallbacks1[0];
     } else {
-        src = &lbl_eu_80530AA0[0];
+        src = &sUpdateSeqAltCallbacks0[0];
     }
     u32 w1, w0, w2;
     w0 = *src++;
@@ -1161,11 +1161,11 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
     w2 = *src++;
     self->field_0x44 = w2;
     {
-        EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
-                         lbl_eu_80667658 };
-        Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF, &v);
+        EvtSeqVec4 v = { 0.0f, 0.0f, 0.0f,
+                         0.0f };
+        Scn_ReleaseUnk80(gmScene, 0xF, &v);
     }
-    Scn_SetPalFixFlag((u8*)lbl_eu_80663E14, 1);
+    Scn_SetPalFixFlag((u8*)gmScene, 1);
     self->field_0x104 = 0;
     self->field_0x5C |= 0x400;
 }
@@ -1186,7 +1186,7 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
     // The ptmf tables live at fixed offsets inside the 0x80530A40 pool;
     // holding the pool base in one register across the whole body lets MWCC
     // fold each access into lwz base,+off / addi+lwz pairs like retail.
-    const u32* tbl = lbl_eu_80530A40;
+    const u32* tbl = sBootSeqCallbacks;
     u32 cond;
     u32 snap104;
     u32 snap100;
@@ -1202,10 +1202,10 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
         if (t == 2) {
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(gmScene, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
         } else if (t != 3) {
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(gmScene, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         // Binding the table slice as an array reference forces MWCC to
@@ -1227,7 +1227,7 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
     // The shared-state pointer is read once here (retail hoists the sda
     // load above both snapshot loads); field_0x100 is read once into `cnt`
     // and reused across the virtual-call walk for both compares.
-    UnkState_80664268* g = lbl_eu_80664268;
+    UnkState_80664268* g = spEvtSeqState;
     snap104 = self->field_0x104;
     snap100 = self->field_0x100;
     if (g == 0) {
@@ -1236,14 +1236,14 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
         flag2 = (g->field_0x5C >> 18) & 1;
     }
     if (flag2 != 0) {
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80667668);
+        Scn_SetTimeScale(gmScene, 0.00001f);
         cond = 0;
     } else {
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066766C);
+        Scn_SetTimeScale(gmScene, 1.0f);
         UnkStateTable_D0* d0 = self->field_0xD0;
         entry = reinterpret_cast<UnkStateTable_D0*>(
             reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
-        if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80667658) {
+        if (Scn_GetFrameDelta(gmScene) > 0.0f) {
             self->field_0x104 += 1;
             self->field_0x100 += 1;
         }
@@ -1252,7 +1252,7 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
     if (cond != 0) {
         if ((self->field_0x5C & 0x4) == 0) {
             // Fade-in path: undo any fade-counter bump and arm the 0x800 bit.
-            Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80667668);
+            Scn_SetTimeScale(gmScene, 0.00001f);
             self->field_0x104 = snap104;
             self->field_0x5C |= 0x800;
             self->field_0x100 = snap100;
@@ -1261,7 +1261,7 @@ void EvtSeqUpdateSeqAlt(cf::CTaskREvtSequence* self) {
             // advance the walk index and dispatch, then swap the ptmf table
             // depending on whether the walk index is exhausted.
             self->field_0x5C &= ~0x1000u;
-            Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066766C);
+            Scn_SetTimeScale(gmScene, 1.0f);
             for (;;) {
                 s32 n = CXReadUncompLH(
                     reinterpret_cast<CXUncompContextLH*>(self->mCxBuffer),
@@ -1360,14 +1360,14 @@ void EvtSeqUpdateSequence(cf::CTaskREvtSequence* self) {
         EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
         s16 t = buf->field_0x44;
         if (t == 2) {
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(gmScene, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
         } else if (t != 3) {
-            Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+            Scn_ReleaseUnk80(gmScene, 0,
                           reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
         }
         u32 w0, w1, w2;
-        const u32* src = &lbl_eu_80530ADC[0];
+        const u32* src = &sUpdateSequenceCallbacks0[0];
         w0 = *src++;
         flag1 = true;
         w1 = *src++;
@@ -1383,24 +1383,24 @@ void EvtSeqUpdateSequence(cf::CTaskREvtSequence* self) {
     }
     // flag2: co-op presentation bit (1 when the shared state is absent).
     u32 flag2;
-    if (lbl_eu_80664268 == 0) {
+    if (spEvtSeqState == 0) {
         flag2 = 1;
     } else {
-        flag2 = (lbl_eu_80664268->field_0x5C >> 18) & 1;
+        flag2 = (spEvtSeqState->field_0x5C >> 18) & 1;
     }
     // cond (retail r31): unsigned field_0x100 >= entry->field_0xC, kept in a
     // callee-saved register across the walks and re-tested before BB38.
     u32 cond;
     UnkStateTable_D0* entry;
     if (flag2 != 0) {
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80667668);
+        Scn_SetTimeScale(gmScene, 0.00001f);
         cond = 0;
     } else {
-        Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066766C);
+        Scn_SetTimeScale(gmScene, 1.0f);
         UnkStateTable_D0* d0 = self->field_0xD0;
         entry = reinterpret_cast<UnkStateTable_D0*>(
             reinterpret_cast<u8*>(d0) + d0->field_0x4 * self->field_0xF8);
-        if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80667658) {
+        if (Scn_GetFrameDelta(gmScene) > 0.0f) {
             self->field_0x104 += 1;
             self->field_0x100 += 1;
         }
@@ -1408,7 +1408,7 @@ void EvtSeqUpdateSequence(cf::CTaskREvtSequence* self) {
     }
     if (cond != 0) {
         u32 w1, w0, w2;
-        const u32* src = &lbl_eu_80530AE8[0];
+        const u32* src = &sUpdateSequenceCallbacks1[0];
         w0 = *src++;
         w1 = *src++;
         self->field_0x40 = w1;
@@ -1454,10 +1454,10 @@ void EvtSeqUpdateSequence(cf::CTaskREvtSequence* self) {
                 EvtSeqC4Buf* buf = reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4);
                 s16 t = buf->field_0x44;
                 if (t == 2) {
-                    Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF,
+                    Scn_ReleaseUnk80(gmScene, 0xF,
                                   reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::white));
                 } else if (t != 3) {
-                    Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF,
+                    Scn_ReleaseUnk80(gmScene, 0xF,
                                   reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
                 }
                 self->field_0x5C |= 0x200000;
@@ -1480,12 +1480,12 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
                                           self->field_0x118, 0);
     Env_SetClock(getGlobalSda(), self->field_0x116, self->field_0x118, 0);
     seedReloadTmr(self->field_0x134);
-    EvtSeqScnView* scene = reinterpret_cast<EvtSeqScnView*>(lbl_eu_80663E14);
-    scene->field_0x5C->field_0xD4 = lbl_eu_80667670;
-    if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+    EvtSeqScnView* scene = reinterpret_cast<EvtSeqScnView*>(gmScene);
+    scene->field_0x5C->field_0xD4 = 5.0f;
+    if (isEventPending() != 0 && (gmPauseFlags & 0x01000000) == 0) {
         EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
                          lbl_eu_80667658 };
-        Scn_ReleaseUnk80(lbl_eu_80663E14, 0xF, &v);
+        Scn_ReleaseUnk80(gmScene, 0xF, &v);
     }
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
     ((void(*)(void*))EvtSeqStopSequence)(self);
@@ -1498,13 +1498,13 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
         CfEvtCamManager* mgr2 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (mgr2->field_0xC != 0) {
             ((CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())
-                ->vf_0x3C(lbl_eu_80667674);
+                ->vf_0x3C(30.0f);
             CfEvtCamManager* mgr4 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
             // Local keeps the player object in one register (retail reuses r3
             // across the two float stores and the ScnCamDepthUp call).
             UnkEvtPlayer* player = mgr4->field_0xC;
-            player->field_0x1EC = lbl_eu_80667678;
-            player->field_0x1F0 = lbl_eu_8066767C;
+            player->field_0x1EC = 0.1f;
+            player->field_0x1F0 = 85000.0f;
             ScnCamDepthUp(player);
         }
     }
@@ -1549,9 +1549,9 @@ void EvtSeqAdvanceSequence(cf::CTaskREvtSequence* self, u32 idx) {
     if (idx != 0) {
         s32 k = 0;
         u32 scaled = 0;
-        while (k < lbl_eu_80664268->field_0x110) {
+        while (k < spEvtSeqState->field_0x110) {
             UnkEvtListEntry* e = *(UnkEvtListEntry**)(
-                (u8*)lbl_eu_80664268->field_0x10C + scaled);
+                (u8*)spEvtSeqState->field_0x10C + scaled);
             if ((u32)idx == e->field_0x1C->field_0x30) {
                 e->vf_0x2C();
             }
@@ -1735,12 +1735,12 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
     // 8-11 of the object flag word. Retail re-reads the flag word into a
     // scratch register for each test (no cached local).
     if (entry->field_0x38 & 1) {
-        reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C[0] |= 4;
+        reinterpret_cast<EvtSeqScn7C*>(gmScene)->field_0x7C[0] |= 4;
     }
     if (entry->field_0x38 & 2) {
-        reinterpret_cast<EvtSeqScn7C*>(lbl_eu_80663E14)->field_0x7C[0] &= ~4u;
+        reinterpret_cast<EvtSeqScn7C*>(gmScene)->field_0x7C[0] &= ~4u;
     }
-    if (lbl_eu_80667658 != entry->field_0x3C) {
+    if (0.0f != entry->field_0x3C) {
         MaruShadowStoreGlobalFloat(entry->field_0x3C);
     }
     cf::CTaskCulling::setOccDisabled((entry->field_0x38 >> 3) & 1);
@@ -1748,7 +1748,7 @@ void EvtSeqDispatchObjs(cf::CTaskREvtSequence* self) {
 }
 
 u32 EvtSeqResolveListEntryAddr(int idx) {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     UnkStateEntry_E4* list = p->field_0xE4;
     if (list == 0) {
         return 0;
@@ -1761,21 +1761,21 @@ extern "C" void* EvtSeqFindEventByNameData(void* nameData) {
     // `nameData` is asked to resolve (vtable+0x14), and the resolved object's
     // vtable+0xA8 result is returned. The walk bounds are re-read from the
     // shared state in the loop header each iteration (retail reloads
-    // lbl_eu_80664268 there and reuses it for the entry load). `scaled` is an
+    // spEvtSeqState there and reuses it for the entry load). `scaled` is an
     // explicit induction variable so the back-edge increments sit in source
     // order (i++, scaled+=4) like retail.
     u32 scaled;
     u32 i;
     UnkEvtListEntry* entry;
-    UnkState_80664268* st = lbl_eu_80664268;
+    UnkState_80664268* st = spEvtSeqState;
     UnkStateC4Obj* obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     i = obj->field_0x28;
     scaled = i << 2;
-    while (i < reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
+    while (i < reinterpret_cast<UnkStateC4Obj*>(spEvtSeqState->field_0xC4)
                     ->field_0x20 +
-               reinterpret_cast<UnkStateC4Obj*>(lbl_eu_80664268->field_0xC4)
+               reinterpret_cast<UnkStateC4Obj*>(spEvtSeqState->field_0xC4)
                     ->field_0x28) {
-        u8* abase = (u8*)lbl_eu_80664268->field_0xA4;
+        u8* abase = (u8*)spEvtSeqState->field_0xA4;
         entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if ((u32)nameData == entry->field_0x1C->field_0x0C) {
             if (entry->vf_0x14() != 0) {
@@ -1793,7 +1793,7 @@ extern "C" void* EvtSeqFindEventByNameData(void* nameData) {
 int cf::CREvtModel::vfunc_0C() { return (int)mModel; }
 
 u32 EvtSeqGetCounter100() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -1801,7 +1801,7 @@ u32 EvtSeqGetCounter100() {
 }
 
 u32 EvtSeqGetEntryLimit() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -1814,7 +1814,7 @@ u32 EvtSeqGetEntryLimit() {
 }
 
 u32 EvtSeqGetCounter104() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -1822,7 +1822,7 @@ u32 EvtSeqGetCounter104() {
 }
 
 u32 EvtSeqGetWalkIndex() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -1837,7 +1837,7 @@ void cf::CTaskREvtSequence::Init() {
     // before the pointer so the allocator assigns w0/w1 the low scratch regs
     // (retail: lwzu r3 / lwz r0 / lis r4).
     u32 w1, w0, w2;
-    const u32* src = &lbl_eu_80530AF4[0];
+    const u32* src = &sMoveCallbacks[0];
     w0 = *src++;
     w1 = *src++;
     field_0x40 = w1;
@@ -1850,12 +1850,12 @@ void cf::CTaskREvtSequence::Term() {
     // Clear the scene's byte flag, then run the sequence teardown callback if
     // the 0x115 gate is clear. EvtSeqStopSequence's stub body is empty, so call it
     // through a cast to stop MWCC from inlining/eliding the call.
-    Scn_SetPalFixFlag((u8*)lbl_eu_80663E14, 0);
+    Scn_SetPalFixFlag((u8*)gmScene, 0);
     if (field_0x115 == 0) {
         ((void(*)(void*))EvtSeqStopSequence)(this);
     }
     CTaskCulling::setOccDisabled(0);
-    lbl_eu_80663EE0 &= ~0x40;
+    gEventSequenceFlags &= ~0x40;
     MaruShadowStoreGlobalFloat(field_0x12C);
 }
 
@@ -1870,7 +1870,7 @@ void EvtSeqStopSequence(void* selfv) {
     CDeviceVI::waitForDrawDone();
     self->field_0x115 = 1;
     if (isEventPending() != 0) {
-        lbl_eu_80663E28 &= ~0x00800000u;
+        gmPauseFlags &= ~0x00800000u;
         stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 0);
     }
     cf::CREvtModelMap::enablePoints();
@@ -1915,8 +1915,8 @@ void EvtSeqStopSequence(void* selfv) {
     }
     // Stop the tasks on the third list unless presentation mode is armed and
     // the shared event state has bit 16 set.
-    if ((lbl_eu_80663E28 & 0x01000000) != 0 ||
-        (lbl_eu_80664268->field_0x5C & 0x00010000) == 0) {
+    if ((gmPauseFlags & 0x01000000) != 0 ||
+        (spEvtSeqState->field_0x5C & 0x00010000) == 0) {
         EvtSeqMgrView* mgr = spawnGimmickEntity__Q22cf13CfGameManagerFv();
         UnkNode4594* node = mgr->field_0x4->field_0x0;
         while (node != spawnGimmickEntity__Q22cf13CfGameManagerFv()->field_0x4) {
@@ -2021,13 +2021,13 @@ void EvtSeqStopSequence(void* selfv) {
                                 if (gate == 0) {
                                     play = true;
                                 } else if (gate == 1) {
-                                    u32 cond = lbl_eu_80664268 != 0 &&
+                                    u32 cond = spEvtSeqState != 0 &&
                                                cf::CfGameManager::getCurrentSlotIndex() == 4;
                                     if (cond == 0) {
                                         play = true;
                                     }
                                 } else if (gate == 2) {
-                                    u32 cond = lbl_eu_80664268 != 0 &&
+                                    u32 cond = spEvtSeqState != 0 &&
                                                cf::CfGameManager::getCurrentSlotIndex() == 4;
                                     if (cond != 0) {
                                         play = true;
@@ -2043,7 +2043,7 @@ void EvtSeqStopSequence(void* selfv) {
                             f32 f1;
                             s16 dur = e->field_0xC;
                             if (dur < 0) {
-                                f1 = lbl_eu_8066766C;
+                                f1 = 1.0f;
                             } else {
                                 f1 = static_cast<f32>(
                                     (static_cast<f64>(dur) - lbl_eu_80667680) *
@@ -2052,11 +2052,11 @@ void EvtSeqStopSequence(void* selfv) {
                             if (ty == 1) {
                                 MenuSnd_SetBGM_89034(
                                     reinterpret_cast<const char*>(&e->field_0x10),
-                                    1, f1, lbl_eu_8066766C);
+                                    1, f1, 1.0f);
                             } else {
                                 MenuSnd_RestartBGM_88D34(
                                     reinterpret_cast<const char*>(&e->field_0x10),
-                                    1, f1, lbl_eu_8066766C);
+                                    1, f1, 1.0f);
                             }
                         }
                     }
@@ -2064,7 +2064,7 @@ void EvtSeqStopSequence(void* selfv) {
             }
             // Type-tag pass: rows tagged 4/6 set/clear the event-window bit.
             if (self->field_0xE8 != 0) {
-                u16 bits = lbl_eu_806642E0;
+                u16 bits = gEventWindowFlags;
                 for (u32 k = 0;
                      k < reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)
                              ->field_0x38;
@@ -2078,7 +2078,7 @@ void EvtSeqStopSequence(void* selfv) {
                     } else if (ty == 6) {
                         bits &= ~1u;
                     }
-                    lbl_eu_806642E0 = bits;
+                    gEventWindowFlags = bits;
                 }
             }
         }
@@ -2086,20 +2086,20 @@ void EvtSeqStopSequence(void* selfv) {
     // Presentation mode fades the BGM out; otherwise only reset the screen
     // dimmer once the event manager is up.
     if ((self->field_0x5C & 0x00400000) != 0) {
-        if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+        if ((gmPauseFlags & 0x01000000) == 0) {
             CTaskGame_resetStream();
         }
-        MenuSnd_StopSlot0Clear_9318(0, lbl_eu_80667658);
-        MenuSnd_StopSlot1_9424(lbl_eu_80667658);
+        MenuSnd_StopSlot0Clear_9318(0, 0.0f);
+        MenuSnd_StopSlot1_9424(0.0f);
     } else {
-        if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+        if (isEventPending() != 0 && (gmPauseFlags & 0x01000000) == 0) {
             CTaskGame_resetStream();
         }
     }
     // Push a flat black fade into the scene when no sequence data remains.
     if (isEventPending() == 0 && self->field_0xC4 != 0 &&
         reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x44 == 3) {
-        Scn_ReleaseUnk80(lbl_eu_80663E14, 0,
+        Scn_ReleaseUnk80(gmScene, 0,
                       reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
     }
     if (self->field_0xC0 != 0) {
@@ -2110,7 +2110,7 @@ void EvtSeqStopSequence(void* selfv) {
     // the shared menu-text state.
     if ((self->field_0x5C & 0x08000000) != 0) {
         if (self != 0) {
-            lbl_eu_80663E14->removeRenderCB(
+            gmScene->removeRenderCB(
                 static_cast<IScnRender*>(
                     reinterpret_cast<EvtSeqWithRender*>(self)));
         }
@@ -2188,8 +2188,8 @@ bool EvtSeqOnFileEvent(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev) {
                 // Upcast to the +0x58 IScnRender secondary base (MWCC
                 // null-guards the adjustment).
                 IScnRender* cb = reinterpret_cast<EvtSeqWithRender*>(self);
-                lbl_eu_80663E14->addRenderCB(cb, 0x12, 0);
-                TextState_Init(Scn_SetCamIndex(lbl_eu_80663E14, -1));
+                gmScene->addRenderCB(cb, 0x12, 0);
+                TextState_Init(Scn_SetCamIndex(gmScene, -1));
                 TextState_Reset(self->field_0xC4 + v);
             }
         }
@@ -2218,7 +2218,7 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
     // Walk the realtime-event list (bounds clamped to the state limit); return
     // the first type-3 entry, other than self, whose name string matches
     // self's name (evtModelDataPtr -> field_0x1C + 0x10).
-    UnkState_80664268* st = lbl_eu_80664268;
+    UnkState_80664268* st = spEvtSeqState;
     UnkStateC4Obj* obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     u32 limit = st->field_0xA8;
     // MWCC allocates callee-saved registers in REVERSE declaration order:
@@ -2238,7 +2238,7 @@ extern "C" void* EvtSeqFindSameNameType3(void* self) {
     }
     scaled = i << 2;
     while (i < end) {
-        UnkState_80664268* cur = lbl_eu_80664268;
+        UnkState_80664268* cur = spEvtSeqState;
         u8* abase = (u8*)cur->field_0xA4;
         entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if (entry->field_0x14 == 3 &&
@@ -2266,7 +2266,7 @@ int UnkEvtListEntry::SeqIsSameNameType3Busy() {
     u32 end;
     u32 i;
     UnkEvtListEntry* entry;
-    UnkState_80664268* st = lbl_eu_80664268;
+    UnkState_80664268* st = spEvtSeqState;
     UnkStateC4Obj* obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     u32 limit = st->field_0xA8;
     i = obj->field_0x28;
@@ -2276,7 +2276,7 @@ int UnkEvtListEntry::SeqIsSameNameType3Busy() {
     }
     scaled = i << 2;
     while (i < end) {
-        UnkState_80664268* cur = lbl_eu_80664268;
+        UnkState_80664268* cur = spEvtSeqState;
         u8* abase = (u8*)cur->field_0xA4;
         entry = reinterpret_cast<UnkEvtListEntry*>(*(u32*)&abase[scaled]);
         if (entry->field_0x14 == 3 && entry != this) {
@@ -2633,7 +2633,7 @@ void EvtSeqUpdateEvtTable(cf::CTaskREvtSequence* self) {
         }
         f32 dur;
         if (entry->field_0xC < 0) {
-            dur = lbl_eu_8066766C;
+            dur = 1.0f;
         } else {
             f32 fps = CDeviceVI::getSecPerFrame();
             dur = (f32)(s32)entry->field_0xC * fps;
@@ -2643,31 +2643,31 @@ void EvtSeqUpdateEvtTable(cf::CTaskREvtSequence* self) {
         case 1:
             MenuSnd_SetBGM_89034(reinterpret_cast<const char*>(
                               reinterpret_cast<u8*>(entry) + 0x10),
-                          1, dur, lbl_eu_8066766C);
+                          1, dur, 1.0f);
             self->field_0x108 = 1;
             break;
         case 2:
             if (entry->field_0xE == 0) {
                 MenuSnd_RestartBGM_88D34(reinterpret_cast<const char*>(
                                   reinterpret_cast<u8*>(entry) + 0x10),
-                              1, dur, lbl_eu_8066766C);
+                              1, dur, 1.0f);
             } else {
                 if (entry->field_0xE == 1) {
-                    u32 c1 = (lbl_eu_80664268 != 0) &&
+                    u32 c1 = (spEvtSeqState != 0) &&
                              (cf::CfGameManager::getCurrentSlotIndex() == 4);
                     if (c1 == 0) {
                         MenuSnd_RestartBGM_88D34(reinterpret_cast<const char*>(
                                           reinterpret_cast<u8*>(entry) + 0x10),
-                                      1, dur, lbl_eu_8066766C);
+                                      1, dur, 1.0f);
                     }
                 }
                 if (entry->field_0xE == 2) {
-                    u32 c2 = (lbl_eu_80664268 != 0) &&
+                    u32 c2 = (spEvtSeqState != 0) &&
                              (cf::CfGameManager::getCurrentSlotIndex() == 4);
                     if (c2 != 0) {
                         MenuSnd_RestartBGM_88D34(reinterpret_cast<const char*>(
                                           reinterpret_cast<u8*>(entry) + 0x10),
-                                      1, dur, lbl_eu_8066766C);
+                                      1, dur, 1.0f);
                     }
                 }
             }
@@ -2678,9 +2678,9 @@ void EvtSeqUpdateEvtTable(cf::CTaskREvtSequence* self) {
             MenuSnd_StopSlot0Clear_9318(0, dur);
             break;
         case 5:
-            MenuSnd_PushSlotVolume_896C(0, 0, lbl_eu_80667688 * (f32)(s32)entry->field_0x10,
+            MenuSnd_PushSlotVolume_896C(0, 0, 0.01f * (f32)(s32)entry->field_0x10,
                           dur);
-            MenuSnd_PushSlotVolume_896C(1, 0, lbl_eu_80667688 * (f32)(s32)entry->field_0x10,
+            MenuSnd_PushSlotVolume_896C(1, 0, 0.01f * (f32)(s32)entry->field_0x10,
                           dur);
             break;
         case 7:
@@ -2752,7 +2752,7 @@ void cf::CREvtModel::insertRtEvent() {
     // - Declaration order below is retail's allocation order
     //   (first-declared -> highest register), which matches siblings in
     //   this TU. BUT any variable initialized DIRECTLY from the global
-    //   lbl_eu_80664268 jumps the allocation queue to the top slot: here
+    //   spEvtSeqState jumps the allocation queue to the top slot: here
     //   state lands in r30 instead of r26, shifting scaled/count/eName/
     //   selfName down one. Embedding the load in count's initializer
     //   (`count = (state = lbl)->f110`, kept below - it fixes i to r25)
@@ -2761,7 +2761,7 @@ void cf::CREvtModel::insertRtEvent() {
     //   global through a dead intermediary pointer - the coalescer merges
     //   it straight back. Open problem: find a source shape where the
     //   global-loaded pointer does not claim the top callee-saved register.
-    // - Reloc drift: decomp emits one FEWER lbl_eu_80664268 reference than
+    // - Reloc drift: decomp emits one FEWER spEvtSeqState reference than
     //   retail - retail reloads the global for the append's array base even
     //   though the cached state register holds the same value (decomp
     //   forwards it, including across the strcmp call). Every sort-pass
@@ -2774,7 +2774,7 @@ void cf::CREvtModel::insertRtEvent() {
     s32 i;
     i = 0;
     scaled = 0;
-    count = (state = lbl_eu_80664268)->field_0x110;
+    count = (state = spEvtSeqState)->field_0x110;
     while (i < count) {
         // Load order mirrors retail: base, this's name data, then the entry
         // (lwzx), then the entry's name data.
@@ -2792,18 +2792,18 @@ void cf::CREvtModel::insertRtEvent() {
                     swapped = 0;
                     j = 0;
                     scaledJ = 0;
-                    while (j < (s32)lbl_eu_80664268->field_0x110 - 1) {
+                    while (j < (s32)spEvtSeqState->field_0x110 - 1) {
                         UnkEvtListEntry* a = *(UnkEvtListEntry**) (
-                            (u8*)lbl_eu_80664268->field_0x10C + scaledJ);
+                            (u8*)spEvtSeqState->field_0x10C + scaledJ);
                         UnkEvtListEntry* b = *(UnkEvtListEntry**) (
-                            (u8*)lbl_eu_80664268->field_0x10C + scaledJ + 4);
+                            (u8*)spEvtSeqState->field_0x10C + scaledJ + 4);
                         if (a->field_0x1C->field_0x30 >
                             b->field_0x1C->field_0x30) {
-                            *(UnkEvtListEntry**)((u8*)lbl_eu_80664268
+                            *(UnkEvtListEntry**)((u8*)spEvtSeqState
                                                      ->field_0x10C +
                                                  scaledJ + 4) = a;
                             swapped = 1;
-                            *(UnkEvtListEntry**)((u8*)lbl_eu_80664268
+                            *(UnkEvtListEntry**)((u8*)spEvtSeqState
                                                      ->field_0x10C +
                                                  scaledJ) = b;
                         }
@@ -2818,7 +2818,7 @@ void cf::CREvtModel::insertRtEvent() {
         i++;
     }
     // Append at the end of the list, then bubble-sort pass 2.
-    lbl_eu_80664268->field_0x10C[state->field_0x110] = reinterpret_cast<UnkEvtListEntry*>(this);
+    spEvtSeqState->field_0x10C[state->field_0x110] = reinterpret_cast<UnkEvtListEntry*>(this);
     state->field_0x110 = state->field_0x110 + 1;
     int swapped;
     s32 j;
@@ -2827,16 +2827,16 @@ void cf::CREvtModel::insertRtEvent() {
         swapped = 0;
         j = 0;
         scaledJ = 0;
-        while (j < (s32)lbl_eu_80664268->field_0x110 - 1) {
+        while (j < (s32)spEvtSeqState->field_0x110 - 1) {
             UnkEvtListEntry* a = *(UnkEvtListEntry**)(
-                (u8*)lbl_eu_80664268->field_0x10C + scaledJ);
+                (u8*)spEvtSeqState->field_0x10C + scaledJ);
             UnkEvtListEntry* b = *(UnkEvtListEntry**)(
-                (u8*)lbl_eu_80664268->field_0x10C + scaledJ + 4);
+                (u8*)spEvtSeqState->field_0x10C + scaledJ + 4);
             if (a->field_0x1C->field_0x30 > b->field_0x1C->field_0x30) {
-                *(UnkEvtListEntry**)((u8*)lbl_eu_80664268->field_0x10C +
+                *(UnkEvtListEntry**)((u8*)spEvtSeqState->field_0x10C +
                                      scaledJ + 4) = a;
                 swapped = 1;
-                *(UnkEvtListEntry**)((u8*)lbl_eu_80664268->field_0x10C +
+                *(UnkEvtListEntry**)((u8*)spEvtSeqState->field_0x10C +
                                      scaledJ) = b;
             }
             scaledJ += 4;
@@ -2853,7 +2853,7 @@ int cf::CREvtModel::probeEvtSlot(u32* out) {
     // byte counter (+6 when the event is a type-2, else +1) and reports the
     // id through `out`.
     s32 sum;  // declared first: drives MWCC's callee-saved coloring (r31)
-    UnkState_80664268* st = lbl_eu_80664268;
+    UnkState_80664268* st = spEvtSeqState;
     if ((s32)st->field_0xF8 >= 1 && (s32)st->field_0x100 < 3) {
         return 0;
     }
@@ -2871,10 +2871,10 @@ int cf::CREvtModel::probeEvtSlot(u32* out) {
                 if (h == 0) {
                     goto notFound;
                 }
-                if (lbl_eu_80664268->field_0xF8 ==
+                if (spEvtSeqState->field_0xF8 ==
                     (h & 0xFF) -
                     (reinterpret_cast<EvtSeqC4View80*>(
-                         lbl_eu_80664268->field_0xC4)
+                         spEvtSeqState->field_0xC4)
                          ->field_0x80 +
                      2)) {
                     if (out != 0) {
@@ -2906,7 +2906,7 @@ int cf::CREvtModel::probeEvtSlot(u32* out) {
     if (isEvtDataFlagSet() == 0) {
         // Re-read the shared state and this model's slot object after the
         // probe call - neither is kept live across the call.
-        UnkState_80664268* post = lbl_eu_80664268;
+        UnkState_80664268* post = spEvtSeqState;
         EvtBdabPtr1C* pc = static_cast<EvtBdabPtr1C*>(mPtr1C);
         u32 idv2 = pc->field_0x30;
         u32 f8 = post->field_0xF8;
@@ -2935,7 +2935,7 @@ int cf::CREvtModel::probeEvtSlot(u32* out) {
         }
         if (diff < base + 5) {
             // Second scan reads the shared state afresh.
-            UnkState_80664268* cur = lbl_eu_80664268;
+            UnkState_80664268* cur = spEvtSeqState;
             u32 idx = idv2 - 1;
             while ((s32)idx >= (s32)f8) {
                 if (cur->field_0x13C[idx] < 8) {
@@ -2954,7 +2954,7 @@ int cf::CREvtModel::probeEvtSlot(u32* out) {
     // Final gate: only when the claimed slot directly follows the state index.
     u32 finId =
         static_cast<EvtBdabPtr1C*>(mPtr1C)->field_0x30;
-    UnkState_80664268* fin = lbl_eu_80664268;
+    UnkState_80664268* fin = spEvtSeqState;
     if (fin->field_0xF8 == finId - 1) {
         fin->field_0x13C[fin->field_0xF8] +=
             (u8)((s32)mField14 == 2 ? 6 : 1);
@@ -3016,21 +3016,21 @@ u32 EvtSeqResolvePackedResId(u32 resId) {
 }
 
 void cf::CTaskREvtSequence::cbRenderBefore() {
-    if (lbl_eu_80663E28 & 0x01000000) {
+    if (gmPauseFlags & 0x01000000) {
         return;
     }
     TextState_DrawStaged();
 }
 
 void EvtSeqSetStateBit9() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p != 0) {
         p->field_0x5C |= 0x200;
     }
 }
 
 void EvtSeqClearStateBit9() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p != 0) {
         p->field_0x5C &= ~0x200;
     }
@@ -3050,10 +3050,10 @@ int UnkEvtListEntry::SeqCheckRunGate() {
     u32 limit;
     UnkStateC4Obj* obj;
     u32 i;
-    if (lbl_eu_80664268->field_0x5C & 0x800) {
+    if (spEvtSeqState->field_0x5C & 0x800) {
         return 1;
     }
-    st = lbl_eu_80664268;
+    st = spEvtSeqState;
     limit = st->field_0xA8;
     obj = reinterpret_cast<UnkStateC4Obj*>(st->field_0xC4);
     i = obj->field_0x28;
@@ -3074,7 +3074,7 @@ int UnkEvtListEntry::SeqCheckRunGate() {
             }
             // Retail reloads the global pointer here (the call may have
             // changed it), hence the direct lbl access instead of st.
-            lbl_eu_80664268->field_0x5C |= 0x800;
+            spEvtSeqState->field_0x5C |= 0x800;
             break;
         }
     }
@@ -3082,7 +3082,7 @@ int UnkEvtListEntry::SeqCheckRunGate() {
 }
 
 u32 EvtSeqGetC4FlagBit1() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -3094,7 +3094,7 @@ u32 EvtSeqGetC4FlagBit1() {
 }
 
 u32 EvtSeqIsSlotIndexFour() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }
@@ -3231,7 +3231,7 @@ found_ext:
 }
 
 void EvtSeqSetStateBit18(bool flag) {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return;
     }
@@ -3243,7 +3243,7 @@ void EvtSeqSetStateBit18(bool flag) {
 }
 
 u32 EvtSeqGetStateBit19() {
-    UnkState_80664268* p = lbl_eu_80664268;
+    UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
     }

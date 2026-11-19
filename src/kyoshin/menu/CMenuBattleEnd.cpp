@@ -122,7 +122,7 @@ void CMenuBattleEnd::Move() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
     if (mState == 1) {
@@ -134,7 +134,7 @@ void CMenuBattleEnd::Move() {
 void CMenuBattleEnd::cbRenderBefore() {
     // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
     if (CTaskGame::getInstance()->isFlag01Set() ||
-        (lbl_eu_80663E28 & 0x200000))
+        (gmPauseFlags & 0x200000))
         return;
     if (!IsMenuState621F0()) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

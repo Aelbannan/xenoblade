@@ -40,8 +40,8 @@ asm void copySpawnPos__Q23LOD17UnkClass_80468434Fv(register void* out,
                                                     register const void* in,
                                                     register s32 idx) {
     nofralloc
-    lwz        r0, lbl_eu_806657A0(r0)      // bias
-    lwz        r4, lbl_eu_806657AC(r0)      // table base
+    lwz        r0, LodMatrixSlotBias(r0)      // bias
+    lwz        r4, LodMatrixRecordBase(r0)      // table base
     add        r0, r6, r0
     lfs        f1, lbl_eu_8066A650(r0)      // spread
     rlwinm     r0, r0, 0, 29, 31              // (idx + bias) & 7
@@ -81,7 +81,7 @@ void copySpawnPos__Q23LOD17UnkClass_80468434Fv(void* out, void*,
     const f32* iv = (const f32*)in;
     f32* ov = (f32*)out;
     f32 scale = lbl_eu_8066A650 * iv[3];
-    const LodDirEntry* entry = &lbl_eu_806657AC[(idx + lbl_eu_806657A0) & 7];
+    const LodDirEntry* entry = &LodMatrixRecordBase[(idx + LodMatrixSlotBias) & 7];
     f32 sx = (scale < 0.0f) ? scale : entry->dir.x;
     f32 sy = (scale < 0.0f) ? scale : entry->dir.y;
     f32 sz = (scale < 0.0f) ? scale : entry->dir.z;

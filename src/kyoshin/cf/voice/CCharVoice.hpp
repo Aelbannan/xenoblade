@@ -3,7 +3,7 @@
 #include <types.h>
 
 // Opaque sound-system / scene types referenced through pointers only.
-struct CVoiceSndMgr;        // sound-manager singleton (lbl_eu_80663E14)
+struct CVoiceSndMgr;        // sound-manager singleton (gmScene)
 struct CVoicePoseBlock;     // scene pose/xform block (Scn_FindCamItem result)
 struct CVoiceBattleSndMgr;  // battle sound manager (CfObjectMove_relaySubB0Slot60 result)
 

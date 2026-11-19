@@ -453,34 +453,53 @@ void AxManager::AiDmaCallbackFunc() {
 }
 
 // ---------------------------------------------------------------------------
-// Biquad filter preset destructors (see the note at the top of this file).
-// The filter classes are stateless, so each destructor body is empty; MWCC
-// emits the standard "delete when this != 0 and flag != 0" epilogue calling
-// __dl__FPv, matching the retail __dt__ bodies.
+// Biquad filter presets (see the note at the top of this file). These are the
+// real preset classes: the empty virtual destructors are defined here, so MWCC
+// emits both their destructors and their vtables from this translation unit.
 // ---------------------------------------------------------------------------
-class BiquadFilterLpf {
+} // namespace detail
+
+class BiquadFilterCallback {
 public:
-    ~BiquadFilterLpf();
+    struct BiquadCoef {
+        u16 b0;
+        u16 b1;
+        u16 b2;
+        u16 a1;
+        u16 a2;
+    };
 };
 
-class BiquadFilterHpf {
+namespace detail {
+
+class BiquadFilterLpf : public BiquadFilterCallback {
 public:
-    ~BiquadFilterHpf();
+    virtual ~BiquadFilterLpf();
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
-class BiquadFilterBpf512 {
+class BiquadFilterHpf : public BiquadFilterCallback {
 public:
-    ~BiquadFilterBpf512();
+    virtual ~BiquadFilterHpf();
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
-class BiquadFilterBpf1024 {
+class BiquadFilterBpf512 : public BiquadFilterCallback {
 public:
-    ~BiquadFilterBpf1024();
+    virtual ~BiquadFilterBpf512();
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
-class BiquadFilterBpf2048 {
+class BiquadFilterBpf1024 : public BiquadFilterCallback {
 public:
-    ~BiquadFilterBpf2048();
+    virtual ~BiquadFilterBpf1024();
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+};
+
+class BiquadFilterBpf2048 : public BiquadFilterCallback {
+public:
+    virtual ~BiquadFilterBpf2048();
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
 BiquadFilterLpf::~BiquadFilterLpf() {}
@@ -493,27 +512,4 @@ BiquadFilterBpf2048::~BiquadFilterBpf2048() {}
 } // namespace snd
 } // namespace nw4r
 
-// Absorb: retail .data 0x50 = 5 x Biquad vtables (0,0,dtor,GetCoef)
-extern "C" void __dt__Q44nw4r3snd6detail15BiquadFilterLpfFv();
-extern "C" void __dt__Q44nw4r3snd6detail15BiquadFilterHpfFv();
-extern "C" void __dt__Q44nw4r3snd6detail18BiquadFilterBpf512Fv();
-extern "C" void __dt__Q44nw4r3snd6detail19BiquadFilterBpf1024Fv();
-extern "C" void __dt__Q44nw4r3snd6detail19BiquadFilterBpf2048Fv();
-extern "C" void GetCoef__Q44nw4r3snd6detail15BiquadFilterLpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
-extern "C" void GetCoef__Q44nw4r3snd6detail15BiquadFilterHpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
-extern "C" void GetCoef__Q44nw4r3snd6detail18BiquadFilterBpf512CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
-extern "C" void GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf1024CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
-extern "C" void GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf2048CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
-__declspec(section ".data") __attribute__((aligned(8), used)) const void* snd_AxManager_data_blob[20] = {
-    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail19BiquadFilterBpf2048Fv, (const void*)&GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf2048CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
-    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail19BiquadFilterBpf1024Fv, (const void*)&GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf1024CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
-    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail18BiquadFilterBpf512Fv, (const void*)&GetCoef__Q44nw4r3snd6detail18BiquadFilterBpf512CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
-    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail15BiquadFilterHpfFv, (const void*)&GetCoef__Q44nw4r3snd6detail15BiquadFilterHpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
-    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail15BiquadFilterLpfFv, (const void*)&GetCoef__Q44nw4r3snd6detail15BiquadFilterLpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
-};
 unsigned char snd_AxManager_bss_pad[0x248] __attribute__((aligned(8)));
-unsigned int snd_AxManager_sbss_pad0;
-unsigned int snd_AxManager_sbss_pad1;
-unsigned int snd_AxManager_sbss_pad2;
-unsigned int snd_AxManager_sbss_pad3;
-unsigned int snd_AxManager_sbss_pad4;

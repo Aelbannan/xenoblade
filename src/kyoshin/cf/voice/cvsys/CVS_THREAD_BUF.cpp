@@ -9,22 +9,13 @@ void CVS_THREAD_BUF::create() {}
 
 void BufVxFillSchedDesc(){}
 
-// us-802a76d8 (BufVxAdvanceSlot)
+// us-802a76d8 (CVS_THREAD_BUF::advanceSlot)
 // Advance the current voice slot: restore the base state triple, then if the
 // current slot's voice is still strongly active pull the next line; otherwise
 // (no handle / active / play rejected) restart via the playback virtual.
-void BufVxAdvanceSlot(CVS_THREAD_BUF* self) {
-    // Restore the base state triple via the lwzu/spread load-with-update
-    // pattern (v0 declared first so the lwzu destination colours low).
-    // Head words accessed via raw view (0x00/0x04/0x08) like
-    // CVS_THREAD_HEAD_VIEW in the sibling thread TUs.
-    u32 v0;
-    u32* head = reinterpret_cast<u32*>(self);
-    const u32* p = lbl_eu_805399EC;
-    v0 = *p++;
-    head[1] = *p++;
-    head[0] = v0;
-    head[2] = *p;
+void CVS_THREAD_BUF::advanceSlot() {
+    CVS_THREAD_BUF* self = this;
+    mState = lbl_eu_805399EC;
 
     CVoiceHandle* handle = self->slotHandles[self->field_0x3c];
     if (handle == NULL) {
@@ -50,10 +41,11 @@ restart:
     self->PlayThreadVoice();
 }
 
-// us-802a7794 (BufVxAdvanceIndex)
+// us-802a7794 (CVS_THREAD_BUF::advanceIndex)
 // Advance the slot index; when it passes the slot limit, restart the thread,
 // otherwise re-copy the init-state triple into the base fields.
-void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
+void CVS_THREAD_BUF::advanceIndex() {
+    CVS_THREAD_BUF* self = this;
     if (IsThreadVoiceActive(self) != 0) {
         return;
     }
@@ -61,13 +53,7 @@ void BufVxAdvanceIndex(CVS_THREAD_BUF* self) {
     int idx = self->field_0x3c + 1;
     self->field_0x3c = idx;
     if (idx < self->field_0x38) {
-        u32 v0;
-        u32* head = reinterpret_cast<u32*>(self);
-        const u32* p = lbl_eu_805399F8;
-        v0 = *p++;
-        head[1] = *p++;
-        head[0] = v0;
-        head[2] = *p;
+        mState = lbl_eu_805399F8;
     } else {
         self->PlayThreadVoice();
     }

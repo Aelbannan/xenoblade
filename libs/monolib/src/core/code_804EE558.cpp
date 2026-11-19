@@ -29,11 +29,8 @@ extern const float lbl_eu_8066B414;  // 0.5f
 extern const float lbl_eu_8066B418; // gradient scale
 extern const float lbl_eu_8066B41C; // gradient scale
 extern const float lbl_eu_8066B420;  // 255.0f
-extern const double lbl_eu_8066B428; // 0x4330000000000000 (u->f magic)
-extern const double lbl_eu_8066B430; // 0x4330000080000000 (s->f magic)
-extern const float lbl_eu_8066B438;  // 45.0f
 
-// Gradient tables: 360 entries of {base, slope}, one per degree.
+// Gradient tables
 struct CGradEntry {
     float base;
     float slope;
@@ -65,15 +62,15 @@ extern Mtx* getTexMtx(u32 a, u32 b);
 extern void pushProjMtx(u32 a, float w, float h);
 
 // Static per-vertex color table, initialized by sinit_804F01C8.
-extern float lbl_eu_80661748[30];
+extern float sMarkerFanVertexColors[30];
 // [.bss] 0x80661748-0x80661850 (0x108 = 264B): zero-fill blocks.
-float lbl_eu_80661748[30];
+float sMarkerFanVertexColors[30];
 // [.bss] 0x806617C0-0x80661850 (0x90 = 144B): remaining zero-fill blocks.
-float lbl_eu_806617C0[12];
-float lbl_eu_806617F0[4];
-float lbl_eu_80661800[4];
-float lbl_eu_80661810[12];
-float lbl_eu_80661840[4];
+float sMarkerGradientRamp[12];
+float sDefaultDrawQuad[4];
+float sTexScaleParams[4];
+float sTexScaleMatrix[12];
+float sTexScaleOutput[4];
 
 } // extern "C"
 
@@ -97,28 +94,6 @@ inline void setTevAlphaIn6(GXTevStageID stage, u32 a, u32 b, u32 c, u32 d, u32 e
                                                                                        b, c, d, e);
 }
 
-// u16 -> float through the shared 0x4330000000000000 magic constant.
-inline float u16ToF(u16 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[1] = v;
-    c.w[0] = 0x43300000u;
-    return (float)(c.d - lbl_eu_8066B428);
-}
-
-// s32 -> float through the shared 0x4330000080000000 magic constant.
-inline float s32ToF(s32 v) {
-    union {
-        double d;
-        u32 w[2];
-    } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (float)(c.d - lbl_eu_8066B430);
-}
-
 // Table interpolation over one of the 360-entry gradient tables.
 inline float gradLookup(const CGradEntry* table, float deg) {
     int n = (int)deg;
@@ -126,7 +101,7 @@ inline float gradLookup(const CGradEntry* table, float deg) {
     if (idx < 0) {
         idx += 360;
     }
-    float frac = deg - s32ToF(n);
+    float frac = deg - (float)n;
     return table[idx].base + frac * table[idx].slope;
 }
 
@@ -326,44 +301,54 @@ extern "C" void lytBindRefreshTrans(CLytBind* self, CBindSource* src) {
     ml::CVec3 pos(self->mMtx.m[0][3], self->mMtx.m[1][3], self->mMtx.m[2][3]);
 
     u32 mt = self->mType;
-    if (mt == 0 || mt == 16 || mt == 17) {
+    switch (mt) {
+    case 0:
+    case 16:
+    case 17: {
         const ml::CMat34* m = &self->mPane->mWorldMtx;
         pos.set(m->m[0][3], m->m[1][3], m->m[2][3]);
+        break;
     }
-    if (mt == 6) {
+    case 6:
         if (src != NULL) {
             const ml::CMat34* m = &src->mMtx;
             pos.set(m->m[0][3], m->m[1][3], m->m[2][3]);
         }
-    }
-    if (mt == 11) {
+        break;
+    case 11: {
         void* obj = Scn_FindCamItem(self->mPane->mRsrc, -1);
         const float* v = (const float*)((u8*)obj + 0x10C);
         pos.set(v[0], v[1], v[2]);
+        break;
     }
-    if (mt == 21) {
+    case 21: {
         CBindAnim* obj = self->mPane->mAnimA;
         if (obj != NULL) {
             const float* v = (const float*)obj->getPos();
             pos.set(v[0], v[1], v[2]);
         }
+        break;
     }
-    if (mt == 22) {
+    case 22: {
         CBindAnim* obj = self->mPane->mAnimB;
         if (obj != NULL) {
             const float* v = (const float*)obj->getPos();
             pos.set(v[0], v[1], v[2]);
         }
+        break;
     }
-    if (mt == 26) {
+    case 26:
         if (self->mPane->mAnimA != NULL) {
             self->mPlayer.getPos(&pos);
         }
-    }
-    if (mt == 27) {
+        break;
+    case 27:
         if (self->mPane->mAnimB != NULL) {
             self->mPlayer.getPos(&pos);
         }
+        break;
+    default:
+        break;
     }
 
     self->mMtx.m[0][3] = pos.x;
@@ -396,9 +381,9 @@ extern "C" void buildMarkerFan(ml::CVec3* verts) {
         if (i == 0) {
             verts[i].set(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
         } else if (i < 9) {
-            float deg = s32ToF(i - 1) * lbl_eu_8066B438;
-            float rad = lbl_eu_8066B418 * deg;
-            float angle = lbl_eu_8066B41C * rad;
+            float deg = (float)(i - 1) * 45.0f;
+            float rad = 0.017453292f * deg;
+            float angle = 57.29578f * rad;
             verts[i].x = gradLookup(lbl_eu_80660B78, angle);
             verts[i].y = gradLookup(lbl_eu_80660038, angle);
             verts[i].z = lbl_eu_8066B408;
@@ -448,8 +433,8 @@ extern "C" void placeMarkerFan(ml::CVec3* verts, const ml::CVec3* pos,
 
 // clampMarkerFan: clamp the fan to the screen; returns the scale factor.
 extern "C" float clampMarkerFan(ml::CVec3* verts) {
-    float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
-    float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
+    float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
+    float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
 
     float scale = lbl_eu_8066B40C;
     for (s16 i = 1; i < 9; i++) {
@@ -491,8 +476,8 @@ extern "C" float clampMarkerFan(ml::CVec3* verts) {
 
 // clampMarkerFanAttrs: clamp positions to the screen and drag texcoords/colors along.
 extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* colors) {
-    float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
-    float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
+    float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
+    float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
 
     // Loop-lifetime vector temps; retail keeps every slot's address in a
     // register for the whole loop, which drives the callee-save allocation.
@@ -582,8 +567,8 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
                              const float* color, const ml::CVec3* size, void* clampInfo,
                              s16 flag, CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha,
                              float vertRot) {
-    float fbW = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
-    float fbH = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+    float fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    float fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
 
     if (pos->x < lbl_eu_8066B408 || fbW < pos->x) {
         return 0;
@@ -600,15 +585,15 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
         verts[1] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
         verts[2] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B40C, lbl_eu_8066B408);
         verts[3] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B40C, lbl_eu_8066B408);
-        verts[4] = ml::CVec3(lbl_eu_8066B410, lbl_eu_8066B40C, lbl_eu_8066B408);
-        verts[5] = ml::CVec3(lbl_eu_8066B410, lbl_eu_8066B408, lbl_eu_8066B408);
-        verts[6] = ml::CVec3(lbl_eu_8066B410, lbl_eu_8066B410, lbl_eu_8066B408);
-        verts[7] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B410, lbl_eu_8066B408);
-        verts[8] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B410, lbl_eu_8066B408);
+        verts[4] = ml::CVec3(-1.0f, lbl_eu_8066B40C, lbl_eu_8066B408);
+        verts[5] = ml::CVec3(-1.0f, lbl_eu_8066B408, lbl_eu_8066B408);
+        verts[6] = ml::CVec3(-1.0f, -1.0f, lbl_eu_8066B408);
+        verts[7] = ml::CVec3(lbl_eu_8066B408, -1.0f, lbl_eu_8066B408);
+        verts[8] = ml::CVec3(lbl_eu_8066B40C, -1.0f, lbl_eu_8066B408);
         verts[9] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
     }
 
-    ml::CVec3 scaledSize = *size * lbl_eu_8066B414;
+    ml::CVec3 scaledSize = *size * 0.5f;
     placeMarkerFan(verts, pos, scaledSize, vertRot);
 
     if (clampInfo != NULL) {
@@ -616,8 +601,8 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
     }
 
     ml::CVec3 tex[10];
-    fbW = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
-    fbH = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+    fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
     for (s16 i = 0; i < 10; i++) {
         if (i < 9) {
             tex[i].x = verts[i].x / fbW;
@@ -629,17 +614,17 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
     }
 
     CFanColor colors[10];
-    memcpy(colors, lbl_eu_80661748, 0x78);
+    memcpy(colors, sMarkerFanVertexColors, 0x78);
 
     if (clampInfo == NULL) {
         clampMarkerFanAttrs(verts, tex, (ml::CVec3*)colors);
     }
 
     if (alpha > lbl_eu_8066B408) {
-        float gfbW = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
+        float gfbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
         float rad = ml::deg2rad * angleDeg;
         float deg = ml::rad2deg * rad;
-        float gfbH = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+        float gfbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
         float ax = alpha * (size->x / gfbW);
         float ay = alpha * (size->y / gfbH);
         tex[0].x = tex[0].x + size->x * (ax * gradLookup(lbl_eu_80660038, deg)) / gfbW;
@@ -657,13 +642,13 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
     }
 
     GXColor matColor;
-    matColor.r = (u8)(lbl_eu_8066B420 * color[0]);
-    matColor.g = (u8)(lbl_eu_8066B420 * color[1]);
-    matColor.b = (u8)(lbl_eu_8066B420 * color[2]);
-    matColor.a = (u8)(lbl_eu_8066B420 * color[3]);
+    matColor.r = (u8)(255.0f * color[0]);
+    matColor.g = (u8)(255.0f * color[1]);
+    matColor.b = (u8)(255.0f * color[2]);
+    matColor.a = (u8)(255.0f * color[3]);
 
-    float h4628 = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
-    float w4628 = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
+    float h4628 = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    float w4628 = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
     pushProjMtx(1, w4628, h4628);
 
     Mtx ident;
@@ -804,7 +789,7 @@ extern "C" void drawScreenMarker(void* desktop, const ml::CVec3* pos, const floa
 
 // sinit_804F01C8: static initializer for the per-vertex color table.
 extern "C" void sinit_804F01C8() {
-    float* t = lbl_eu_80661748;
+    float* t = sMarkerFanVertexColors;
     t[0] = lbl_eu_8066B414;
     t[1] = lbl_eu_8066B414;
     t[2] = lbl_eu_8066B408;
@@ -837,26 +822,8 @@ extern "C" void sinit_804F01C8() {
     t[29] = lbl_eu_8066B408;
 }
 
-// ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
-// [.data] 0x805702B8-0x80570328 (0x70 = 112B): lytBindRefreshTrans's switch
-// jumptable (case lbl_eu_8066B40Cffsets relative tlbl_eu_8066B40C lytBindRefreshTrans, retail slbl_eu_8066B414ape).
-extern "C" u32 jumptable_eu_805702B8[28] = {
-    (u32)((char*)&lytBindRefreshTrans + 80),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 136),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 196), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 80),
-    (u32)((char*)&lytBindRefreshTrans + 80), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 240), (u32)((char*)&lytBindRefreshTrans + 300),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 420),
-    (u32)((char*)&lytBindRefreshTrans + 420), (u32)((char*)&lytBindRefreshTrans + 360),
-    (u32)((char*)&lytBindRefreshTrans + 392),
-};
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 
-// ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x805702B8-0x80570328 (0x70 = 112B): lytBindRefreshTrans's switch

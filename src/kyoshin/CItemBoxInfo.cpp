@@ -87,11 +87,11 @@ extern const char lbl_eu_8050630C[];
 extern const char lbl_eu_80506318[];
 extern const char lbl_eu_80506324[];
 struct Rodata_ItemBoxTbls { const void* t1[7]; const void* t2[7]; };
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTbls lbl_eu_80506330 = {
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTbls itemBoxInfoCategoryStringTables = {
     { "", lbl_eu_805062E8, lbl_eu_805062F4, lbl_eu_80506300, lbl_eu_8050630C, lbl_eu_80506318, lbl_eu_80506324 },
     { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 }
 };
-#define lbl_eu_8050634C (lbl_eu_80506330.t2)
+#define lbl_eu_8050634C (itemBoxInfoCategoryStringTables.t2)
 
 // .rodata [0x80..0x920]: single 8-aligned tail struct (int table + reversed
 // string table + class names + format/path pool). Interior labels have no
@@ -99,13 +99,10 @@ __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) 
 struct Rodata_ItemBoxTail {
     u32 ints[6];
     const void* t[7];
-    char blob[0x84C];
 };
 __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTail rodata_ItemBoxTail = {
     { 2, 4, 5, 6, 7, 8 },
     { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 },
-   
-    "%d\000rvs_type\000rvs_caption\000%s\000<col=red>%s<col=def>\000<col=red>%s %%<col=def>\000<col=red>%s%%<col=def>\000<col=red>%d %%<col=def>\000<col=red>%d%%<col=def>\000menu/jp/ItemBoxInfo.arc\000menu/jp/tpl/CrystalIcon.arc\000nul_para_01\000nul_para_30\000nul_para_50\000nul_para_60\000nul_para_80\000nul_para_700\000nul_eth\000nul_infbcln01\000nul_infbcln700\000MNU_item\000name\000%d%s\000txt_gold01_00\000txt_excange%02d\000pic_pcbs%02d\000nul_proportion\000txt_scnd01\000txt_scnd03\000nul_scnd\000dmg_low\000dmg_hi\000arm_phy\000arm_eth\000att_lev\000speed\000grd_rate\000flag\000equip_pc%d\000eva_rate\000arm_type\000pc%d\000rankType\000MNU_shop\000atr_type\000type\000MNU_collect\000mapID\000memory_type\000pc_type\000get_arts\000pc_arts\000idx\000%d%s%d\000txt_value02\000txt_value08\000txt_value09\000%s%d%s\000txt_value04\000txt_value07\000txt_value22\000\000txt_para25\000txt_para01\000txt_para10\000txt_para11\000txt_para04\000txt_para08\000txt_para22\000txt_para23\000pic_pc%02d\000pic_eq%02d\000mf00_reg00_eq01.tpl\000mf00_reg00_eq00.tpl\000mf00_com00_dmy.tpl\000txt_para24\000pic_ethcol%02d\000mf00_reg30_crys00.tpl\000mf00_reg30_crys01.tpl\000mf00_reg30_crys02.tpl\000mf00_reg30_crys03.tpl\000mf00_reg30_crys04.tpl\000mf00_reg30_crys05.tpl\000mf00_reg30_crys06.tpl\000txt_ethvalue%02d\000%s%s\000%s \000%d \000txt_eth%02d\000jwl_slot\000jwl_skill%d\000percent\000txt_para80\000txt_value50\000txt_value51\000txt_para51\000attach\000txt_para52\000txt_value60\000txt_value61\000txt_value30\000txt_para%02d\000txt_value%02d\000tag_icon\000txt_para736\000txt_value700\000txt_value702\000accum\000max\000txt_para7%02d\000txt_value7%02d\000CItemBoxInfo\000arc\000mf02_box02_inf.brlyt\000mf02_box02_inf_in.brlan\000mf02_box02_inf_info_in.brlan\000txt_value31\000txt_value32\000txt_value33\000txt_value34\000txt_ethvalue01\000txt_ethvalue02\000txt_ethvalue03\000txt_value703\000txt_value704\000txt_value705\000txt_value708\000txt_value710\000txt_value706\000txt_value709\000txt_value712\000txt_value714\000txt_value715\000txt_value716\000txt_value717\000txt_value718\000txt_value719\000txt_value720\000txt_value721\000txt_value722\000txt_value723\000txt_para704\000txt_scnd02\000nul_shop\000nul_excange\000txt_para30\000txt_para50\000txt_para60\000txt_para61\000txt_para700\000txt_para702\000txt_para703\000txt_para705\000txt_para706\000txt_para708\000txt_para709\000txt_para710\000txt_para713\000txt_para716\000txt_para717\000MNU_relate\000txt_npctype\000txt_npcname\000txt_npcframe\000txt_excange00\000txt_excange01\000pic_pcbs01\000txt_scnd00\000CItemBoxInfoTex\000itemID\000jwl_skill1\000CItemBoxInfo2\000CItemBoxInfo2Tex\000",
 };
 #define lbl_eu_80506380 (rodata_ItemBoxTail.t)
 // Interior blob is at +0x54 (non-8-aligned): member decay emits parent+0x54+imm.
@@ -122,38 +119,38 @@ extern "C" char lbl_eu_805063AC[];
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
 // 4-byte entries are u32, 8-byte entries GXColorS10; first carries aligned(8)
 // for the section align, the rest pack without pads.
-__attribute__((aligned(8))) __attribute__((used)) u32 lbl_eu_80664518;
-__attribute__((used)) u32 lbl_eu_8066451C;
-__attribute__((used)) u32 lbl_eu_80664520;
-__attribute__((used)) u32 lbl_eu_80664524;
-__attribute__((used)) GXColorS10 lbl_eu_80664528;
-__attribute__((used)) GXColorS10 lbl_eu_80664530;
-__attribute__((used)) GXColorS10 lbl_eu_80664538;
-__attribute__((used)) GXColorS10 lbl_eu_80664540;
-__attribute__((used)) GXColorS10 lbl_eu_80664548;
-__attribute__((used)) GXColorS10 lbl_eu_80664550;
-__attribute__((used)) u32 lbl_eu_80664558;
-__attribute__((used)) u32 lbl_eu_8066455C;
-__attribute__((used)) u32 lbl_eu_80664560;
-__attribute__((used)) u32 lbl_eu_80664564;
-__attribute__((used)) GXColorS10 lbl_eu_80664568;
-__attribute__((used)) GXColorS10 lbl_eu_80664570;
-__attribute__((used)) GXColorS10 lbl_eu_80664578;
-__attribute__((used)) GXColorS10 lbl_eu_80664580;
-__attribute__((used)) GXColorS10 lbl_eu_80664588;
-__attribute__((used)) GXColorS10 lbl_eu_80664590;
-__attribute__((used)) GXColorS10 lbl_eu_80664598;
-__attribute__((used)) GXColorS10 lbl_eu_806645A0;
-__attribute__((used)) u32 lbl_eu_806645A8;
-__attribute__((used)) u32 lbl_eu_806645AC;
-__attribute__((used)) u32 lbl_eu_806645B0;
-__attribute__((used)) u32 lbl_eu_806645B4;
-__attribute__((used)) GXColorS10 lbl_eu_806645B8;
-__attribute__((used)) GXColorS10 lbl_eu_806645C0;
-__attribute__((used)) u32 lbl_eu_806645C8;
-__attribute__((used)) u32 lbl_eu_806645CC;
-__attribute__((used)) u32 lbl_eu_806645D0;
-__attribute__((used)) u32 lbl_eu_806645D4;
+__attribute__((aligned(8))) __attribute__((used)) u32 itemBoxInfo_labelNeutralTop;
+__attribute__((used)) u32 itemBoxInfo_labelNeutralTopPad;
+__attribute__((used)) u32 itemBoxInfo_labelNeutralBottom;
+__attribute__((used)) u32 itemBoxInfo_labelNeutralBottomPad;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelUpTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelUpBottom;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelDownTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelDownBottom;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelSpecialTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_labelSpecialBottom;
+__attribute__((used)) u32 itemBoxInfo_valueNeutralTop;
+__attribute__((used)) u32 itemBoxInfo_valueNeutralTopPad;
+__attribute__((used)) u32 itemBoxInfo_valueNeutralBottom;
+__attribute__((used)) u32 itemBoxInfo_valueNeutralBottomPad;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueUpTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueUpBottom;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueDownTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueDownBottom;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueSpecialTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_valueSpecialBottom;
+__attribute__((used)) GXColorS10 itemBoxInfo_slotLabelTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_slotLabelBottom;
+__attribute__((used)) u32 itemBoxInfo_slotValueTop;
+__attribute__((used)) u32 itemBoxInfo_slotValueTopPad;
+__attribute__((used)) u32 itemBoxInfo_slotValueBottom;
+__attribute__((used)) u32 itemBoxInfo_slotValueBottomPad;
+__attribute__((used)) GXColorS10 itemBoxInfo_nameLabelTop;
+__attribute__((used)) GXColorS10 itemBoxInfo_nameLabelBottom;
+__attribute__((used)) u32 itemBoxInfo_nameValueTop;
+__attribute__((used)) u32 itemBoxInfo_nameValueTopPad;
+__attribute__((used)) u32 itemBoxInfo_nameValueBottom;
+__attribute__((used)) u32 itemBoxInfo_nameValueBottomPad;
 
 
 
@@ -412,14 +409,14 @@ CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
     // time, no shared masked temp).
     u16 v2 = BdatGetItemId((u32)arg3);
     char* base = (char*)&lbl_eu_805063BC;
-    rec.s2C =(u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x19c)), v2);
-    rec.s2E = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x1a4)), v2);
-    rec.s30 = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, v2);
-    rec.s32 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, v2);
-    rec.s34 = (u8)BdatGetU8Direct((const void*)global, base + 0x1bb, v2);
-    rec.f38 = (f32)((u8)BdatGetU8Direct((const void*)global, base + 0x1c3, v2) / 10.0f);
-    rec.s3C = (u8)BdatGetU8Direct((const void*)global, base + 0x1c9, v2);
-    if (BdatGetU8Direct((const void*)global, base + 0x1d2, v2) & 4) {
+    rec.s2C =(u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_low")), v2);
+    rec.s2E = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_hi")), v2);
+    rec.s30 = (u8)BdatGetU8Direct((const void*)global, "arm_phy", v2);
+    rec.s32 = (u8)BdatGetU8Direct((const void*)global, "arm_eth", v2);
+    rec.s34 = (u8)BdatGetU8Direct((const void*)global, "att_lev", v2);
+    rec.f38 = (f32)((u8)BdatGetU8Direct((const void*)global, "speed", v2) / 10.0f);
+    rec.s3C = (u8)BdatGetU8Direct((const void*)global, "grd_rate", v2);
+    if (BdatGetU8Direct((const void*)global, "flag", v2) & 4) {
         void* lookup = CtrlObjectParam_GetCharEntry(1);
         u32 r = CtrlObjectParam_GetArtsDataWord(lookup);
         rec.s2C = (s16)(1.4f * (f32)(rec.s2C * (u16)r));
@@ -432,7 +429,7 @@ CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
         // slot stays raw and re-masks per use, matching retail r21.
         u32 slot = GetCollectedFlagByte(i);
         char buf[0x20];
-        sprintf(buf, base + 0x1d7, (u8)slot);
+        sprintf(buf, "equip_pc%d", (u8)slot);
         u16 flag = BdatGetU8Direct((const void*)global, (const char*)buf, v2);
         // name-flag bank (+0x16): set when the slot tag resolves; slot 0xB
         // is forced on for candidate category 0x4C.
@@ -445,12 +442,12 @@ CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
         if (item == NULL || *(u32*)item == 0) continue;
         // cat is likewise narrow-typed for per-site promotion.
         u16 cat = BdatGetItemId(*(u32*)item >> 20);
-        u16 a = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x19c)), cat);
-        u16 b = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x1a4)), cat);
-        f32 ratio = (f32)((u8)BdatGetU8Direct((const void*)global, base + 0x1c3, cat) / 10.0f);
+        u16 a = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_low")), cat);
+        u16 b = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_hi")), cat);
+        f32 ratio = (f32)((u8)BdatGetU8Direct((const void*)global, "speed", cat) / 10.0f);
         rec.f28 = BlendFloatAvgScale((u32)a, (u32)b, 0, ratio);
-        u8 v1ab = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, cat);
-        u8 v1b3 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, cat);
+        u8 v1ab = (u8)BdatGetU8Direct((const void*)global, "arm_phy", cat);
+        u8 v1b3 = (u8)BdatGetU8Direct((const void*)global, "arm_eth", cat);
         if (rec.f28 > ratio) rec.flags[1][i] = 1;
         else if (rec.f28 < ratio) rec.flags[1][i] = 2;
         else rec.flags[1][i] = 0;
@@ -478,14 +475,14 @@ CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
     u16 type = BdatGetItemType(item);
     u16 id = BdatGetItemId(item);
     char* base = (char*)&lbl_eu_805063BC;
-    rec.v[0] = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, id);
-    rec.v[1] = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, id);
-    rec.v[2] = (u8)BdatGetU8Direct((const void*)global, base + 0x1e2, id);
-    u32 reqKind = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x1eb, id);
+    rec.v[0] = (u8)BdatGetU8Direct((const void*)global, "arm_phy", id);
+    rec.v[1] = (u8)BdatGetU8Direct((const void*)global, "arm_eth", id);
+    rec.v[2] = (u8)BdatGetU8Direct((const void*)global, "eva_rate", id);
+    u32 reqKind = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", id);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 slot = GetCollectedFlagByte((u8)i);
         char buf[0x20];
-        sprintf(buf, base + 0x1f4, (u8)slot);
+        sprintf(buf, "pc%d", (u8)slot);
         rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)buf, id) != 0;
         if (rec.equipable[(u8)i] == 0) continue;
         CItemBoxCharEntry* member = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry((u8)slot);
@@ -507,8 +504,8 @@ CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
                 void* equipped = CItem_kindPtr((u16)type, value);
                 if (equipped != NULL && *(u32*)equipped != 0) {
                     u32 cat = BdatGetItemId(*(u32*)equipped >> 20);
-                    u8 n1 = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, cat);
-                    u8 n2 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, cat);
+                    u8 n1 = (u8)BdatGetU8Direct((const void*)global, "arm_phy", cat);
+                    u8 n2 = (u8)BdatGetU8Direct((const void*)global, "arm_eth", cat);
                     if (rec.v[0] > n1) rec.cmp0[(u8)i] = 1;
                     else if (rec.v[0] < n1) rec.cmp0[(u8)i] = 2;
                     else rec.cmp0[(u8)i] = 0;
@@ -545,21 +542,21 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         count = (u16)inst->vf08((CItemData*)item);
     } else {
-        count = BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805063BC[0x1f9], (u32)data);
+        count = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", (u32)data);
     }
     char* base = (char*)&lbl_eu_805063BC;
     CItemBoxNameRecord rec;
     rec.count = (u8)count;
-    rec.str = (u32)BdatTouchStringCell(base + 0x130, base + 0x139, 0x1e - ((u8)count - 1));
-    char* s2 = BdatTouchStringCell(base + 0x202, base + 0x139, 0xf);
+    rec.str = (u32)BdatTouchStringCell("MNU_item", "name", 0x1e - ((u8)count - 1));
+    char* s2 = BdatTouchStringCell("MNU_shop", "name", 0xf);
     if (arg3 != NULL) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
-        sprintf(rec.name, base, inst->vf90((CItemData*)item));
+        sprintf(rec.name, "%d", inst->vf90((CItemData*)item));
     } else {
-        sprintf(rec.name, base + 0x18, s2);
+        sprintf(rec.name, "%s", s2);
     }
-    rec.e0 = (u8)BdatGetU8Direct((const void*)gd8, base + 0x3, (u16)cat);
-    rec.e1 = (u8)BdatGetU8Direct((const void*)gd8, base + 0x20b, (u16)cat);
+    rec.e0 = (u8)BdatGetU8Direct((const void*)gd8, "rvs_type", (u16)cat);
+    rec.e1 = (u8)BdatGetU8Direct((const void*)gd8, "atr_type", (u16)cat);
     rec.color = 0xFFFFFFFF;
     switch (rec.e1) {
         case 4: rec.color = 0xFF00FFFF; break;
@@ -569,8 +566,8 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
         case 8: rec.color = 0x00FFFFFF; break;
         case 9: rec.color = 0x775544FF; break;
     }
-    sprintf(rec.text, base + 0x18,
-            ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(gd8, base + 0xc, (u16)cat));
+    sprintf(rec.text, "%s",
+            ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(gd8, "rvs_caption", (u16)cat));
     u32 wide = 1;
     if (getLanguage__9CDeviceSCFv() != 3) {
         if (getLanguage__9CDeviceSCFv() != 2) {
@@ -589,23 +586,23 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
                 cur++;
                 switch (rec.e0) {
                     case 1:
-                        sprintf(buf28, base + 0x1b, rec.name);
+                        sprintf(buf28, "<col=red>%s<col=def>", rec.name);
                         break;
                     case 2:
-                        sprintf(buf28, base + 0x1b, rec.name);
+                        sprintf(buf28, "<col=red>%s<col=def>", rec.name);
                         break;
                     case 3:
                         if (wide != 0) {
-                            sprintf(buf28, base + 0x30, rec.name);
+                            sprintf(buf28, "<col=red>%s %%<col=def>", rec.name);
                         } else {
-                            sprintf(buf28, base + 0x48, rec.name);
+                            sprintf(buf28, "<col=red>%s%%<col=def>", rec.name);
                         }
                         break;
                     case 4:
                         if (wide != 0) {
-                            sprintf(buf28, base + 0x30, rec.name);
+                            sprintf(buf28, "<col=red>%s %%<col=def>", rec.name);
                         } else {
-                            sprintf(buf28, base + 0x48, rec.name);
+                            sprintf(buf28, "<col=red>%s%%<col=def>", rec.name);
                         }
                         break;
                     default:
@@ -628,9 +625,9 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
                 cur++;
                 u8 name = BdatGetU8Direct((const void*)gd8, tbl.labels[(u8)count], (u16)cat);
                 if (wide != 0) {
-                    sprintf(buf28, base + 0x5f, (u8)name);
+                    sprintf(buf28, "<col=red>%d %%<col=def>", (u8)name);
                 } else {
-                    sprintf(buf28, base + 0x77, (u8)name);
+                    sprintf(buf28, "<col=red>%d%%<col=def>", (u8)name);
                 }
             }
             // strlen of buf28: retail's counter runs one past the terminator
@@ -639,11 +636,11 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
             while (buf28[len - 1] != 0) {
                 len++;
             }
-            sprintf(buf48, base + 0x18, cur);
+            sprintf(buf48, "%s", cur);
             cur -= 2;
-            sprintf(cur, base + 0x18, buf28);
+            sprintf(cur, "%s", buf28);
             cur = cur + len - 1;
-            sprintf(cur, base + 0x18, buf48);
+            sprintf(cur, "%s", buf48);
         } else {
             s8 sc = (s8)*cur;
             if ((sc >= 0x81 && sc <= 0x9f) || (sc >= 0xe0 && sc <= 0xef)) {
@@ -689,16 +686,16 @@ CItemBoxSelRec CItemBoxInfo::BuildSelRec(u32 item) {
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
     CItemBoxSelRec rec;
-    rec.category = (u8)BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    rec.category = (u8)BdatGetU8Direct((const void*)global, (char*)"memory_type", v2);
     // count stays u32: retail keeps the raw call result (r28) and masks at
     // each (u8)count use (loop mask hoisted to r29).
-    u8 count = BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 count = BdatGetU8Direct((const void*)global, (char*)"pc_type", v2);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 a = (u8)GetCollectedFlagByte((u8)i);
         rec.selected[(u8)i] = a == (u8)count;
     }
-    u8 key = BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x23f], v2);
-    u8 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
+    u8 key = BdatGetU8Direct((const void*)global, (char*)"get_arts", v2);
+    u8 val = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"idx", (u8)key);
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
     u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
     rec.flag2 = 0;
@@ -771,36 +768,36 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
     // NOTE (open item): spelling the label-pool base inline at every use
     // re-anchors it MORE than retail (which uses r19/r19/r28) and regressed
     // the diff; one cached base pointer is the closest shape tried so far.
-    char* lbl = BdatTouchStringCell(&base[0x130], &base[0x139], 0xb);
-    ((ml::FixStr<32>*)&text)->format(&base[0x254], local.s2C, lbl, local.s2E);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x25b], text.mString, 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &base[0x267], (u8)local.s30);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &base[0x273], (u8)local.s32);
-    char* str7f = BdatTouchStringCell(&base[0x130], &base[0x139], 0x7f);
-    char* str80 = BdatTouchStringCell(&base[0x130], &base[0x139], 0x80);
+    char* lbl = BdatTouchStringCell("MNU_item", "name", 0xb);
+    ((ml::FixStr<32>*)&text)->format("%d%s%d", local.s2C, lbl, local.s2E);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value02", text.mString, 0);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value08", (u8)local.s30);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value09", (u8)local.s32);
+    char* str7f = BdatTouchStringCell("MNU_item", "name", 0x7f);
+    char* str80 = BdatTouchStringCell("MNU_item", "name", 0x80);
     if (local.s34 != 0) {
-        ((ml::FixStr<32>*)&text)->format(&base[0x27f], str7f, str80, local.s34);
+        ((ml::FixStr<32>*)&text)->format("%s%d%s", str7f, str80, local.s34);
     } else {
-        ((ml::FixStr<32>*)&text)->format(&base[0x13e], local.s34, str80);
+        ((ml::FixStr<32>*)&text)->format("%d%s", local.s34, str80);
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x286], text.mString, 0);
-    str7f = BdatTouchStringCell(&base[0x130], &base[0x139], 0x7f);
-    str80 = BdatTouchStringCell(&base[0x130], &base[0x139], 0x80);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value04", text.mString, 0);
+    str7f = BdatTouchStringCell("MNU_item", "name", 0x7f);
+    str80 = BdatTouchStringCell("MNU_item", "name", 0x80);
     if (local.s3C != 0) {
-        ((ml::FixStr<32>*)&text)->format(&base[0x27f], str7f, str80, local.s3C);
+        ((ml::FixStr<32>*)&text)->format("%s%d%s", str7f, str80, local.s3C);
     } else {
-        ((ml::FixStr<32>*)&text)->format(&base[0x13e], local.s3C, str80);
+        ((ml::FixStr<32>*)&text)->format("%d%s", local.s3C, str80);
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x292], text.mString, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x29e], &base[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &base[0x2ab], &base[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2b6], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2c1], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2cc], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2d7], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2e2], &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2ed], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &base[0x2f8], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value07", text.mString, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", "", 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
     u32 playerIdx = (arg4 >> 16) & 0xFF;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
     // constant at its use site with a single addi.
@@ -810,7 +807,7 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
         u8 flag = local.flags[0][(u8)i];
         u32 color = darkBase + 0x77ff;  // 0x777777ff
         if (flag != 0) color = 0xFFFFFFFF;
-        sprintf(paneName, base + 0x303, (u8)i + 1);
+        sprintf(paneName, "pic_pc%02d", (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, paneName, color);
         // Default vertex colours carry data only in the alpha channel
         // (this+0xA2 / this+0xAA); the selected-slot pair comes from
@@ -854,7 +851,7 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
         }
         args[2] = selB.w[0];
         args[3] = selB.w[1];
-        sprintf(paneName, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
+        sprintf(paneName, "pic_pcbs%02d", (u8)i + 1, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane =
             mpLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (pane != NULL) {
@@ -870,15 +867,15 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
                 // Fixed equip category 2: candidate value read at member+0x26.
                 void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)member)->slotIds[5]);
                 if (item != NULL && *(u32*)item != 0 && arg3 == item) {
-                    sprintf(label, base + 0x30e, (u8)i + 1);
+                    sprintf(label, "pic_eq%02d", (u8)i + 1);
                     u32 tex;
                     if (slot == (u8)GetCollectedFlagByte(playerIdx)) {
-                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
+                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, "mf00_reg00_eq01.tpl", NULL);
                     } else {
-                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
+                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, "mf00_reg00_eq00.tpl", NULL);
                     }
                     if (tex == 0) {
-                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
+                        tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, "mf00_com00_dmy.tpl", NULL);
                     }
                     if (tex != 0) {
                         PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)label, (TPLPalette*)tex);
@@ -948,44 +945,44 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
     ResetRowPanes();
     CItemBoxSlotFlags flags = BuildSlotFlags(itemId);
     char* base = lbl_eu_805063BC;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x25b, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x286, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x292, base + 0x2aa, 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, base + 0x267, (u8)flags.v[0]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, base + 0x273, (u8)flags.v[1]);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, base + 0x29e, (u8)flags.v[2]);
-    u32 v1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x1eb, (u16)BdatGetItemId(itemId));
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value02", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value04", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value07", "", 0);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value08", (u8)flags.v[0]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value09", (u8)flags.v[1]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_value22", (u8)flags.v[2]);
+    u32 v1 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", (u16)BdatGetItemId(itemId));
     char* s1;
     switch ((u8)v1) {
-        case 3: s1 = BdatTouchStringCell(base + 0x130, base + 0x139, 0x32); break;
-        case 2: s1 = BdatTouchStringCell(base + 0x130, base + 0x139, 0x31); break;
-        case 1: s1 = BdatTouchStringCell(base + 0x130, base + 0x139, 0x30); break;
+        case 3: s1 = BdatTouchStringCell("MNU_item", "name", 0x32); break;
+        case 2: s1 = BdatTouchStringCell("MNU_item", "name", 0x31); break;
+        case 1: s1 = BdatTouchStringCell("MNU_item", "name", 0x30); break;
         case 4: case 5: case 6: case 7: case 8:
         case 9: case 10: case 11: case 12: case 13:
-            s1 = BdatTouchStringCell(base + 0x130, base + 0x139, 0x2e); break;
+            s1 = BdatTouchStringCell("MNU_item", "name", 0x2e); break;
         default: s1 = 0; break;
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x354, s1, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para24", s1, 0);
     char* s2;
     switch ((u8)v1) {
-        case 4: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x77); break;
-        case 5: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x78); break;
-        case 6: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x79); break;
-        case 7: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7a); break;
-        case 8: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7b); break;
-        case 9: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7c); break;
-        case 10: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7d); break;
-        case 11: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7e); break;
-        case 12: s2 = BdatTouchStringCell(base + 0x248, base + 0x139, 0x7f); break;
+        case 4: s2 = BdatTouchStringCell("pc_arts", "name", 0x77); break;
+        case 5: s2 = BdatTouchStringCell("pc_arts", "name", 0x78); break;
+        case 6: s2 = BdatTouchStringCell("pc_arts", "name", 0x79); break;
+        case 7: s2 = BdatTouchStringCell("pc_arts", "name", 0x7a); break;
+        case 8: s2 = BdatTouchStringCell("pc_arts", "name", 0x7b); break;
+        case 9: s2 = BdatTouchStringCell("pc_arts", "name", 0x7c); break;
+        case 10: s2 = BdatTouchStringCell("pc_arts", "name", 0x7d); break;
+        case 11: s2 = BdatTouchStringCell("pc_arts", "name", 0x7e); break;
+        case 12: s2 = BdatTouchStringCell("pc_arts", "name", 0x7f); break;
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x2ab, s2, 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2b6, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2c1, &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2cc, &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2d7, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2e2, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2ed, &lbl_eu_80664598, &lbl_eu_806645A0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2f8, &lbl_eu_80664598, &lbl_eu_806645A0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", s2, 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", &itemBoxInfo_slotLabelTop, &itemBoxInfo_slotLabelBottom);
     u32 cur = (arg4 >> 16) & 0xFF;
     u32 tag = 0x74696D67;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
@@ -993,7 +990,7 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
         u32 color = 0x777777FF;
         if (flag != 0) color = 0xFFFFFFFF;
         u32 idx = (u8)i + 1;
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
+        sprintf(buf, (char*)"pic_pc%02d", idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, color);
         // two vertex colours: filled slots use the this stat words, empty ones
         // fall back to transparent-black quads built member-wise here.
@@ -1022,7 +1019,7 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
         }
         *(u32*)&quadCol[1].r = w2;
         *(u32*)&quadCol[1].b = w3;
-        sprintf(buf2, base + 0x161, idx);
+        sprintf(buf2, "pic_pcbs%02d", idx);
         nw4r::lyt::Pane* pane =
             mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
@@ -1046,16 +1043,16 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
         }
         void* r = CItem_kindPtr(cat & 0xFFFF, value);
         if (r == NULL || *(u32*)r == 0 || r != record) continue;
-        sprintf(buf2, base + 0x30e, idx);
+        sprintf(buf2, "pic_eq%02d", idx);
         int curSlot = GetCollectedFlagByte(cur);
         u32 tex;
         if ((u8)slot == (u8)curSlot) {
-            tex = (u32)mArcResAcc->GetResource(tag, base + 0x319, NULL);
+            tex = (u32)mArcResAcc->GetResource(tag, "mf00_reg00_eq01.tpl", NULL);
         } else {
-            tex = (u32)mArcResAcc->GetResource(tag, base + 0x32d, NULL);
+            tex = (u32)mArcResAcc->GetResource(tag, "mf00_reg00_eq00.tpl", NULL);
         }
         if (tex == 0) {
-            tex = (u32)mArcResAcc->GetResource(tag, base + 0x341, NULL);
+            tex = (u32)mArcResAcc->GetResource(tag, "mf00_com00_dmy.tpl", NULL);
         }
         if (tex != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf2, (TPLPalette*)tex);
@@ -1082,7 +1079,7 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
         u32 tag = 0x74696D67;
         for (u32 i = 0; i < 3; i++) {
             u32 idx = (u8)i + 1;
-            sprintf(buf, base + 0x35f, idx);
+            sprintf(buf, "pic_ethcol%02d", idx);
             nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
             if ((u8)i < count) {
                 setPaneVisible(pane, 1);
@@ -1106,26 +1103,26 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                     {
                         // (was switch: retail compiles this dispatch as compares)
                         u32 _e = (u32)(rec2b.e1);
-                        if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
-                        else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x384, NULL);
-                        else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x39a, NULL);
-                        else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3b0, NULL);
-                        else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3c6, NULL);
-                        else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3dc, NULL);
-                        else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3f2, NULL);
+                        if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys00.tpl", NULL);
+                        else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys01.tpl", NULL);
+                        else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys02.tpl", NULL);
+                        else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys03.tpl", NULL);
+                        else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys04.tpl", NULL);
+                        else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys05.tpl", NULL);
+                        else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys06.tpl", NULL);
                     }
                     if (rec2b.name[0] == '0') {
-                        sprintf(buf, base + 0x408, idx);
-                        LayoutSetTextBoxFmtValue(mpLayout, buf, base + 0x2aa, 0);
+                        sprintf(buf, "txt_ethvalue%02d", idx);
+                        LayoutSetTextBoxFmtValue(mpLayout, buf, "", 0);
                     } else {
                         if (rec2b.e0 == 0) {
-                            text.format(base + 0x41e, rec2b.name);
+                            text.format("%s ", rec2b.name);
                         } else if ((u8)(rec2b.e0 - 3) <= 1) {
-                            text.format(base + 0x419, rec2b.name, BdatTouchStringCell(base + 0x130, base + 0x139, 0x21));
+                            text.format("%s%s", rec2b.name, BdatTouchStringCell("MNU_item", "name", 0x21));
                         } else {
-                            text.format(base + 0x41e, rec2b.name);
+                            text.format("%s ", rec2b.name);
                         }
-                        sprintf(buf, base + 0x408, idx);
+                        sprintf(buf, "txt_ethvalue%02d", idx);
                         LayoutSetTextBoxFmtValue(mpLayout, buf, text.c_str(), 0);
                     }
                     inst = CItem_initItemImplInstances((CItemData*)rec);
@@ -1136,49 +1133,49 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                     // equipped-gear path via the sub-record; no-item fallback.
                     CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst->vf2C((CItemData*)record, (u8)i);
                     if (sub == NULL || (sub->field_04 & 1) == 0) {
-                        tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
-                        text.format(base + 0x18, BdatTouchStringCell(base + 0x130, base + 0x139, 0x2a));
+                        tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys00.tpl", NULL);
+                        text.format("%s", BdatTouchStringCell("MNU_item", "name", 0x2a));
                     } else {
                         u16 equip = (u16)((sub->field_04 >> 16) & 0xFFF);
                         u32 w = sub->_00;
-                        char* label = BdatTouchStringCell(base + 0x130, base + 0x139, 0x1e - ((w >> 22 & 7) - 1));
-                        u32 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0x20b, equip);
+                        char* label = BdatTouchStringCell("MNU_item", "name", 0x1e - ((w >> 22 & 7) - 1));
+                        u32 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", equip);
                         {
                             // (was switch: retail compiles this dispatch as compares)
                             u32 _e = (u32)(st & 0xFF);
-                            if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
-                            else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x384, NULL);
-                            else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x39a, NULL);
-                            else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3b0, NULL);
-                            else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3c6, NULL);
-                            else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3dc, NULL);
-                            else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3f2, NULL);
+                            if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys00.tpl", NULL);
+                            else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys01.tpl", NULL);
+                            else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys02.tpl", NULL);
+                            else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys03.tpl", NULL);
+                            else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys04.tpl", NULL);
+                            else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys05.tpl", NULL);
+                            else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys06.tpl", NULL);
                         }
                         s16 val = (s16)((w >> 11) & 0x7FF);
                         if (val != 0) {
-                            u32 v2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0x3, equip);
+                            u32 v2 = BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", equip);
                             if (v2 != 0 && (u8)(v2 - 3) <= 1) {
-                                text.format(base + 0x13e, val, BdatTouchStringCell(base + 0x130, base + 0x139, 0x21));
+                                text.format("%d%s", val, BdatTouchStringCell("MNU_item", "name", 0x21));
                             } else {
-                                text.format(base + 0x422, val);
+                                text.format("%d ", val);
                             }
-                            sprintf(buf, base + 0x408, idx);
+                            sprintf(buf, "txt_ethvalue%02d", idx);
                             LayoutSetTextBoxFmtValue(mpLayout, buf, text.c_str(), 0);
                         } else {
-                            sprintf(buf, base + 0x408, idx);
-                            LayoutSetTextBoxFmtValue(mpLayout, buf, base + 0x2aa, 0);
+                            sprintf(buf, "txt_ethvalue%02d", idx);
+                            LayoutSetTextBoxFmtValue(mpLayout, buf, "", 0);
                         }
-                        char* s = BdatGetPtrDirect((const void*)lbl_eu_806640D8, base + 0x139, equip);
-                        text.format(base + 0x419, s, label);
+                        char* s = BdatGetPtrDirect((const void*)lbl_eu_806640D8, "name", equip);
+                        text.format("%s%s", s, label);
                         itemCount = (u8)((w >> 22) & 7);
                         value = (s16)((w >> 11) & 0x7FF);
                     }
                 }
-                sprintf(buf, base + 0x426, idx);
+                sprintf(buf, "txt_eth%02d", idx);
                 LayoutSetTextBoxFmtValue(mpLayout, buf, text.c_str(), 0);
                 if (tex != 0) PaneSetTexPalette(pane, (TPLPalette*)tex);
                 if (((u8*)this)[0x9A] != 4) {
-                    nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(base + 0x16e, true);
+                    nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
                     // POD vectors: default/copy ctors would emit extra bl calls
                     // absent from retail; field-wise staging reproduces the
                     // three lwz/stw word pairs before copyVEC3.
@@ -1202,11 +1199,11 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
         // No candidate record: plain item-name list driven by the name table.
         void* obj = (void*)((char* (*)(u32))LookupItemTypeTable)(itemId);
         u32 cat = BdatGetItemId(itemId);
-        u8 sel = (u8)BdatGetU8Direct((const void*)obj, base + 0x432, (u16)cat);
+        u8 sel = (u8)BdatGetU8Direct((const void*)obj, "jwl_slot", (u16)cat);
         u32 tag = 0x74696D67;
         for (u32 i = 0; i < 3; i++) {
             u32 idx = (u8)i + 1;
-            sprintf(buf2, base + 0x35f, idx);
+            sprintf(buf2, "pic_ethcol%02d", idx);
             nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf2, true);
             if ((u8)i < sel) {
                 setPaneVisible(pane, 1);
@@ -1214,11 +1211,11 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                 u32 itemCount = 0;
                 u8 val = 0;
                 u32 tex = 0;
-                text.format(base + 0x43b, idx);
+                text.format("jwl_skill%d", idx);
                 u16 nameId = (u16)BdatGetU16Direct((void*)obj, text.c_str(), (u16)cat);
                 if (nameId == 0) {
-                    tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
-                    text.format(base + 0x18, BdatTouchStringCell(base + 0x130, base + 0x139, 0x2a));
+                    tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys00.tpl", NULL);
+                    text.format("%s", BdatTouchStringCell("MNU_item", "name", 0x2a));
                 } else {
                     CItemBoxNameRecord rec3;
                     rec3 = BuildNameRec((void*)nameId, 0);
@@ -1226,39 +1223,39 @@ void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
                     {
                         // (was switch: retail compiles this dispatch as compares)
                         u32 _e = (u32)(rec3b.e1);
-                        if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x36e, NULL);
-                        else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x384, NULL);
-                        else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x39a, NULL);
-                        else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3b0, NULL);
-                        else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3c6, NULL);
-                        else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3dc, NULL);
-                        else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, base + 0x3f2, NULL);
+                        if (_e == 0) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys00.tpl", NULL);
+                        else if (_e == 4) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys01.tpl", NULL);
+                        else if (_e == 5) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys02.tpl", NULL);
+                        else if (_e == 6) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys03.tpl", NULL);
+                        else if (_e == 7) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys04.tpl", NULL);
+                        else if (_e == 8) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys05.tpl", NULL);
+                        else if (_e == 9) tex = (u32)mTexArcResAcc->GetResource(tag, "mf00_reg30_crys06.tpl", NULL);
                     }
                     if (rec3b.name[0] == '0') {
-                        sprintf(buf2, base + 0x408, idx);
-                        LayoutSetTextBoxFmtValue(mpLayout, buf2, base + 0x2aa, 0);
+                        sprintf(buf2, "txt_ethvalue%02d", idx);
+                        LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
                     } else {
                         if (rec3b.e0 == 0) {
-                            text.format(base + 0x41e, rec3b.name);
+                            text.format("%s ", rec3b.name);
                         } else if ((u8)(rec3b.e0 - 3) <= 1) {
-                            text.format(base + 0x419, rec3b.name, BdatTouchStringCell(base + 0x130, base + 0x139, 0x21));
+                            text.format("%s%s", rec3b.name, BdatTouchStringCell("MNU_item", "name", 0x21));
                         } else {
-                            text.format(base + 0x41e, rec3b.name);
+                            text.format("%s ", rec3b.name);
                         }
-                        sprintf(buf2, base + 0x408, idx);
+                        sprintf(buf2, "txt_ethvalue%02d", idx);
                         LayoutSetTextBoxFmtValue(mpLayout, buf2, text.c_str(), 0);
                     }
                     char* s = BuildItemNameStr(nameId);
-                    text.format(base + 0x419, rec3b.str, s);
+                    text.format("%s%s", rec3b.str, s);
                     itemVal = BdatGetItemId(nameId);
-                    itemCount = BdatGetU8Direct((const void*)lbl_eu_806640EC, base + 0x1f9, nameId);
-                    val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, base + 0x447, nameId);
+                    itemCount = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", nameId);
+                    val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", nameId);
                 }
-                sprintf(buf2, base + 0x426, idx);
+                sprintf(buf2, "txt_eth%02d", idx);
                 LayoutSetTextBoxFmtValue(mpLayout, buf2, text.c_str(), 0);
                 if (tex != 0) PaneSetTexPalette(pane, (TPLPalette*)tex);
                 if (((u8*)this)[0x9A] != 4) {
-                    nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(base + 0x16e, true);
+                    nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
                     nw4r::math::_VEC3 pos;
                     ScalePaneWorldPos((nw4r::math::VEC3*)&pos, pane, pane2, mpLayout->GetRootPane());
                     nw4r::math::_VEC3 tmp;
@@ -1292,13 +1289,13 @@ void CItemBoxInfo::RefreshSlotRows(u16 arg2) {
     CItemBoxSelRec local = BuildSelRec(arg2);
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
-    char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], rowHeight);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x44f], label, 0);
+    char* label = BdatTouchStringCell("MNU_item", "name", rowHeight);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para80", label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 flag = local.selected[(u8)i];
         u32 color = 0x777777ff;
         if (flag) color = 0xFFFFFFFF;
-        sprintf(buf, &lbl_eu_805063BC[0x303], (u8)i + 1);
+        sprintf(buf, "pic_pc%02d", (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, color);
         // Unselected rows keep only the alpha of the highlight colours.
         CItemBoxQuadColorView dimA;
@@ -1311,7 +1308,7 @@ void CItemBoxInfo::RefreshSlotRows(u16 arg2) {
             flag ? mColorA : dimA,
             flag ? mColorB : dimB,
         };
-        sprintf(buf, &lbl_eu_805063BC[0x161], (u8)i + 1);
+        sprintf(buf, "pic_pcbs%02d", (u8)i + 1);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -1343,7 +1340,7 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
 
 
     char* base = (char*)&lbl_eu_805063BC;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x45a, (char*)rec.str, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value50", (char*)rec.str, 0);
 
     caption.mString[0] = 0;
     caption.mLength = 0;
@@ -1352,25 +1349,25 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
         item = arg3;
     }
     if (rec.name[0] == 0x30) {
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x466, base + 0x2aa, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value51", "", 0);
     } else {
         if (rec.e0 != 0) {
             // Flag values 3/4 pick a count-formatted caption label.
             if ((u32)(rec.e0 - 3) <= 1) {
-                char* label = BdatTouchStringCell(base + 0x130, base + 0x139, 0x21);
-                caption.format(base + 0x419, &rec.name[0], label);
+                char* label = BdatTouchStringCell("MNU_item", "name", 0x21);
+                caption.format("%s%s", &rec.name[0], label);
             } else {
-                caption.format(base + 0x41e, &rec.name[0]);
+                caption.format("%s ", &rec.name[0]);
             }
         } else {
-            caption.format(base + 0x41e, &rec.name[0]);
+            caption.format("%s ", &rec.name[0]);
         }
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x466, caption.mString, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value51", caption.mString, 0);
     }
 
     // Ternaries kept inline at their use sites so the results stay in the
     // ABI return register instead of living across the whole state!=4 block.
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x472,
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para51",
                   (arg3 != NULL)
                       ? CItem_initItemImplInstances((CItemData*)item)->vf20((CItemData*)item)
                       : BuildItemNameStr(arg2),
@@ -1378,9 +1375,9 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
 
     if (mKind != 4) {
         nw4r::lyt::Pane* pane =
-            mpLayout->GetRootPane()->FindPaneByName(base + 0x472, true);
+            mpLayout->GetRootPane()->FindPaneByName("txt_para51", true);
         nw4r::lyt::Pane* pane2 =
-            mpLayout->GetRootPane()->FindPaneByName(base + 0x16e, true);
+            mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
         ScalePaneWorldPos((nw4r::math::VEC3*)((nw4r::math::_VEC3*)&pos), pane, pane2,
                       mpLayout->GetRootPane());
 
@@ -1405,9 +1402,9 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
     u16 cat2 = (arg3 != NULL)
         ? CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item)
         : BdatGetItemId(arg2);
-    u8 rows = (u8)BdatGetU8Direct((const void*)((u32)(&lbl_eu_806640D8)[cat2]), base + 0x47d, cat2);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x484,
-                  BdatTouchStringCell(base + 0x130, base + 0x139, rows + 0x15), 0);
+    u8 rows = (u8)BdatGetU8Direct((const void*)((u32)(&lbl_eu_806640D8)[cat2]), "attach", cat2);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para52",
+                  BdatTouchStringCell("MNU_item", "name", rows + 0x15), 0);
 
     // volatile: retail retains this never-read slot-kind table copy; a plain
     // local gets it DCE'd.
@@ -1416,7 +1413,7 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
 
     for (u32 i = 0; (u32)(u8)i < (u32)(u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
-        sprintf(caption.mString, base + 0x303, idx);
+        sprintf(caption.mString, "pic_pc%02d", idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, caption.mString, -1);
         cols.w[0] = 0;
         cols.w[1] = 0;
@@ -1426,7 +1423,7 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
         cols.w[1] = mColorA.w[1];
         cols.w[2] = mColorB.w[0];
         cols.w[3] = mColorB.w[1];
-        sprintf(caption.mString, base + 0x161, idx);
+        sprintf(caption.mString, "pic_pcbs%02d", idx);
         nw4r::lyt::Pane* pane =
             mpLayout->GetRootPane()->FindPaneByName(textStorage, true);
         if (pane != NULL) {
@@ -1455,16 +1452,16 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
                 s16 v40 = CItem_initItemImplInstances((CItemData*)hit)->vf40((CItemData*)hit, m);
                 void* rec3 = CItem_kindPtr(3, v40);
                 if (rec3 == NULL || *(u32*)rec3 == 0 || rec3 != arg3) continue;
-                sprintf(caption.mString, base + 0x30e, idx);
+                sprintf(caption.mString, "pic_eq%02d", idx);
                 u8 owner = GetCollectedFlagByte((u32)playerByte);
                 u32 name;
                 if (flag == owner) {
-                    name = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x319, NULL);
+                    name = (u32)mArcResAcc->GetResource(0x74696d67, "mf00_reg00_eq01.tpl", NULL);
                 } else {
-                    name = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x32d, NULL);
+                    name = (u32)mArcResAcc->GetResource(0x74696d67, "mf00_reg00_eq00.tpl", NULL);
                 }
                 if (name == 0) {
-                    name = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x341, NULL);
+                    name = (u32)mArcResAcc->GetResource(0x74696d67, "mf00_com00_dmy.tpl", NULL);
                 }
                 if (name != 0) {
                     PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)caption.mString, (TPLPalette*)name);
@@ -1531,24 +1528,24 @@ void CItemBoxInfo::SetupSlotPanes() {
     // post-stmw callee-saved addi exactly like retail.
     char buf[0x20];
     u32 i;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x25b], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x286], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x292], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x354], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ab], &lbl_eu_805063BC[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2f8], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value02", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value08", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value09", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value04", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value07", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para24", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", "", 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
-        sprintf(buf, &lbl_eu_805063BC[0x303], idx);
+        sprintf(buf, "pic_pc%02d", idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, 0x777777ff);
         u32 args[4];
         // Zero via a variable: MWCC materializes it in a register and cannot
@@ -1570,7 +1567,7 @@ void CItemBoxInfo::SetupSlotPanes() {
         args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
-        sprintf(buf, &lbl_eu_805063BC[0x161], idx);
+        sprintf(buf, "pic_pcbs%02d", idx);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -1580,8 +1577,8 @@ void CItemBoxInfo::SetupSlotPanes() {
         }
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
-        sprintf(buf, &lbl_eu_805063BC[0x30e], idx);
-        u32 tex = (u32)mArcResAcc->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
+        sprintf(buf, "pic_eq%02d", idx);
+        u32 tex = (u32)mArcResAcc->GetResource(0x74696D67, "mf00_com00_dmy.tpl", NULL);
         if (tex != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf, (TPLPalette*)tex);
         }
@@ -1593,24 +1590,24 @@ void CItemBoxInfo::ResetRowPanes() {
     u32 idx;
     u32 tag;
     u32 white;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x267, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x273, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x29e, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x354, base + 0x2aa, 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x2ab, base + 0x2aa, 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2b6, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2c1, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2cc, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2d7, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2e2, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2ed, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, base + 0x2f8, (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value08", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value09", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para24", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para25", "", 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para23", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
     char buf[0x20];
     tag = 0x74696D67u;
     white = 0x777777FFu;
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u32)((u8)i + 1);
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
+        sprintf(buf, (char*)"pic_pc%02d", idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, white);
         u32 args[4];
         // zero via a variable: MWCC materializes it in a register and cannot
@@ -1625,7 +1622,7 @@ void CItemBoxInfo::ResetRowPanes() {
         args[0] = *(u32*)c0lo;
         args[3] = *(u32*)c1hi;
         args[2] = *(u32*)c1lo;
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx);
+        sprintf(buf, (char*)"pic_pcbs%02d", idx);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -1635,8 +1632,8 @@ void CItemBoxInfo::ResetRowPanes() {
         }
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
-        sprintf(buf, base + 0x30e, idx);
-        u32 tex = (u32)mArcResAcc->GetResource(tag, base + 0x341, NULL);
+        sprintf(buf, "pic_eq%02d", idx);
+        u32 tex = (u32)mArcResAcc->GetResource(tag, "mf00_com00_dmy.tpl", NULL);
         if (tex != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf, (TPLPalette*)tex);
         }
@@ -1898,20 +1895,20 @@ struct D8EStatB {
 };
 
 static inline void applyItemBoxDeltaColor(void* valuePane, void* labelPane, s16 delta) {
-    D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-    D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-    D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-    D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+    D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+    D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+    D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+    D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
     if (delta < 0) {
-        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
     } else if (delta > 0) {
-        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
     }
     PaneMatSetTevColors((nw4r::lyt::Pane*)valuePane, (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
     PaneMatSetTevColors((nw4r::lyt::Pane*)labelPane, (const GXColorS10*)&labelTop, (const GXColorS10*)&labelBottom);
@@ -1919,20 +1916,20 @@ static inline void applyItemBoxDeltaColor(void* valuePane, void* labelPane, s16 
 
 static inline void applyItemBoxDeltaColorAt(CItemBoxInfo* info, u32 valueIndex,
                                              u32 labelIndex, s16 delta) {
-    D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-    D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-    D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-    D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+    D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+    D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+    D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+    D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
     if (delta < 0) {
-        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
     } else if (delta > 0) {
-        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
     }
     nw4r::lyt::Pane** panes = &info->mSlotPane0;
     PaneMatSetTevColors(panes[valueIndex], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -1942,20 +1939,20 @@ static inline void applyItemBoxDeltaColorAt(CItemBoxInfo* info, u32 valueIndex,
 static inline void applyItemBoxDeltaColorPair(void* firstValuePane, void* firstLabelPane,
                                                void* secondValuePane, void* secondLabelPane,
                                                s16 delta) {
-    D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-    D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-    D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-    D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+    D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+    D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+    D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+    D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
     if (delta < 0) {
-        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
     } else if (delta > 0) {
-        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
     }
     PaneMatSetTevColors((nw4r::lyt::Pane*)firstValuePane, (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
     PaneMatSetTevColors((nw4r::lyt::Pane*)firstLabelPane, (const GXColorS10*)&labelTop, (const GXColorS10*)&labelBottom);
@@ -1965,7 +1962,7 @@ static inline void applyItemBoxDeltaColorPair(void* firstValuePane, void* firstL
 
 void copyItemBoxEntry(CItemBoxInfoEntry*, const CItemBoxInfoEntry*);
 void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
-extern const u32 lbl_eu_80506368[6];
+extern const u32 itemBoxInfoEquippedTypeIds[6];
 
 // Named views keep the item-stat calculations readable while leaving the
 // backing entry as a plain 13-word record, which is how MWCC copies it.
@@ -2046,13 +2043,13 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     // Retail: BdatGetPtrDirect(lbl_eu_80664090, base+0x139, member) -- 3-arg.
     // lbl_eu_805063BC is an UNDEF extern (blob is +0x54 inside packed rodata)
     // so immediates stay plain +0x139, not parent+0x54+imm.
-    LayoutSetTextBoxFmtValue(mpLayout, &base[0x4D7],
-        ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_80664090, &base[0x139], member), 0);
-    setLayoutTextBoxNumber(mpLayout, &base[0x4E3], (u8)stats->CActorParam_getActorLevel());
-    setLayoutTextBoxNumber(mpLayout, &base[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
+    LayoutSetTextBoxFmtValue(mpLayout, "txt_para736",
+        ((char*(*)(void*, char*, u32))&BdatGetPtrDirect)(lbl_eu_80664090, "name", member), 0);
+    setLayoutTextBoxNumber(mpLayout, "txt_value700", (u8)stats->CActorParam_getActorLevel());
+    setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotalCurrency());
     LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, hp1);
     LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, hp2);
-    SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, BdatTouchStringCell(&base[0x130], &base[0x139], 0x82), 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, BdatTouchStringCell("MNU_item", "name", 0x82), 0);
 
     // ---- stat sub-objects ----
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
@@ -2111,8 +2108,8 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 s32 atk2 = (s32)barB + s2;
                 if (atk1 > atk2) atk1 = atk2;
                 char* rangeSeparator = BdatTouchStringCell(
-                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                textBuffer.format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
+                    "MNU_item", "name", 0xB);
+                textBuffer.format("%d%s%d", atk1, rangeSeparator, atk2);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
             }
 
@@ -2125,17 +2122,17 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)bar3);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, hpStat);
             char* percentSuffix = BdatTouchStringCell(
-                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
-            textBufferB.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
+                "MNU_item", "name", 0x80);
+            textBuffer.format("%d%s", (s16)bar6, percentSuffix);
+            textBufferB.format("%d%s", (s16)(stA->b55), percentSuffix);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, (const char*)textBuffer.mString, 0);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, (const char*)textBufferB.mString, 0);
 
             // ---- 20x color application ----
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
             PaneMatSetTevColors(mSlotPane0, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane2, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane3, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
@@ -2173,20 +2170,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, nb);
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
             if (d < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (d > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane8, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane9, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
@@ -2198,20 +2195,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
             dB = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, nb);
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
             if (dB < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (dB > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane4, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane5, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
@@ -2234,20 +2231,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 (f32)(oldAgilityBase + GetEffect(member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, nb);
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
             if (dC < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (dC > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane6, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane7, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
@@ -2264,20 +2261,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
             if (dD < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (dD > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane0, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane2, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
@@ -2348,112 +2345,112 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             s16 disp2 = v612;
             s16 disp3 = v614;
             char* rangeSeparator = BdatTouchStringCell(
-                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-            textBuffer.format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
+                "MNU_item", "name", 0xB);
+            textBuffer.format("%d%s%d", atkD, rangeSeparator, atkC);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)disp1);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)disp2);
             char* percentSuffix2 = BdatTouchStringCell(
-                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
+                "MNU_item", "name", 0x80);
+            textBuffer.format("%d%s", (s16)disp3, percentSuffix2);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, (const char*)textBuffer.mString, 0);
             char* percentSuffix3 = BdatTouchStringCell(
-                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            textBuffer.format(&lbl_eu_805063BC[0x13E],
+                "MNU_item", "name", 0x80);
+            textBuffer.format("%d%s",
                            (s32)stA->b55 + (s32)d3, percentSuffix3);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, (const char*)textBuffer.mString, 0);
             // delta colors (5 rows)
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (dW > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane10, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane11, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (d1 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d1 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane12, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane13, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (d2 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d2 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane14, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane15, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (d4 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d4 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane16, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane17, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (d3 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d3 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane18, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane19, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
@@ -2481,7 +2478,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             if (CheckGemChain(member, arg3, NULL)) eq2 = GetCondStat((void*)(u32)member, 0x30);
             // arm-type scaling of the entry value pairs
             u8 arm1 = BdatGetU8Direct(
-                (const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
+                (const void*)lbl_eu_806640F8, "arm_type",
                 BdatGetItemId((u32)((item != NULL && *(u32*)item != 0)
                     ? (u16)(*(u32*)item >> 20)
                     : 0)));
@@ -2520,7 +2517,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                         }
                     }
                 }
-            u8 arm2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             {
                     switch (arm2) {
                         case 3: {
@@ -2602,8 +2599,8 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                     (f32)(stA->s38 + GetEffect(member, 0x54, NULL))));
                 percentDelta = (s16)(newPercent - oldPercent);
                 char* percentSuffix = BdatTouchStringCell(
-                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-                textBuffer.format(&lbl_eu_805063BC[0x13E], newPercent,
+                    "MNU_item", "name", 0x80);
+                textBuffer.format("%d%s", newPercent,
                                    percentSuffix);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16,
                               (const char*)textBuffer.mString, 0);
@@ -2636,8 +2633,8 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 s32 wmin = wc < wd ? wc : wd;
                 attackDelta = (s16)(wd - wa);
                 char* rangeSeparator = BdatTouchStringCell(
-                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                    "MNU_item", "name", 0xB);
+                textBuffer.format("%d%s%d", wmin, rangeSeparator, wd);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
 
             }
@@ -2647,96 +2644,96 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // delta colors (4 rows)
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (attackDelta < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (attackDelta > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane10, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane11, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (d2 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d2 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane12, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane13, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (d1 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d1 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane14, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane15, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+                D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+                D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+                D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
                 if (percentDelta < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (percentDelta > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane6, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
                 PaneMatSetTevColors(mSlotPane7, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             }
             {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((agilityDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((agilityDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(8)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2757,20 +2754,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         s16 strengthDelta = (s16)(newStrength - oldStrength);
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, newStrength);
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((strengthDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((strengthDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(8)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2782,20 +2779,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         s16 physicalDelta = (s16)(newPhysical - oldPhysical);
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, newPhysical);
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((physicalDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((physicalDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(4)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2816,20 +2813,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         }
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, newHp);
         {
-            D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+            D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
             if (hpDelta < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
             } else if (hpDelta > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane0,
                           (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2846,20 +2843,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         s16 etherDelta = (s16)(newEther - oldEther);
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, newEther);
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((etherDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((etherDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(12)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2883,20 +2880,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         s16 agilityDelta = (s16)(newAgility - oldAgility);
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, newAgility);
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((agilityDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((agilityDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(6)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2908,20 +2905,20 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         s16 defenseDelta = (s16)(newDefense - oldDefense);
         LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, newDefense);
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((defenseDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((defenseDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(14)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2931,26 +2928,26 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         s16 oldResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (GetEffect(member, 0x54, NULL)))));
         s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (SumGemBonus((void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = BdatTouchStringCell(
-            &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-        textBuffer.format(&lbl_eu_805063BC[0x13E], newResistance,
+            "MNU_item", "name", 0x80);
+        textBuffer.format("%d%s", newResistance,
                               percentSuffix);
         SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, (const char*)textBuffer.mString, 0);
         s16 resistanceDelta = (s16)(newResistance - oldResistance);
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((resistanceDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((resistanceDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(16)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -2987,27 +2984,27 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             attackDelta = (s16)(newAttackHigh - oldAttackHigh);
 
             char* rangeSeparator = BdatTouchStringCell(
-                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-            textBuffer.format(&lbl_eu_805063BC[0x254], displayLow,
+                "MNU_item", "name", 0xB);
+            textBuffer.format("%d%s%d", displayLow,
                               rangeSeparator, newAttackHigh);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10,
                           (const char*)textBuffer.mString, 0);
         }
         {
-        D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
-        D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
-        D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
-        D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+        D8EQuad labelTop = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+        D8EQuad labelBottom = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+        D8EQuad valueTop = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+        D8EQuad valueBottom = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
         if ((attackDelta) < 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelDownBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueDownTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueDownBottom);
         } else if ((attackDelta) > 0) {
-            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
-            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
-            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &itemBoxInfo_labelUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &itemBoxInfo_labelUpBottom);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &itemBoxInfo_valueUpTop);
+            __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &itemBoxInfo_valueUpBottom);
         }
         nw4r::lyt::Pane** panes = &mSlotPane0;
         PaneMatSetTevColors(panes[(10)], (const GXColorS10*)&valueTop, (const GXColorS10*)&valueBottom);
@@ -3063,7 +3060,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             // arm-type scaling of entry value pairs
             u8 arm1 = BdatGetU8Direct(
-                (const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
+                (const void*)lbl_eu_806640F8, "arm_type",
                 BdatGetItemId((u32)((item != NULL && *(u32*)item != 0)
                     ? (u16)(*(u32*)item >> 20)
                     : 0)));
@@ -3102,7 +3099,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                         }
                     }
                 }
-            u8 arm2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             {
                     switch (arm2) {
                         case 3: {
@@ -3185,8 +3182,8 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 s32 wd = (s32)wpb + CalcBonus2(member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 char* rangeSeparator = BdatTouchStringCell(
-                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                    "MNU_item", "name", 0xB);
+                textBuffer.format("%d%s%d", wmin, rangeSeparator, wd);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, (const char*)textBuffer.mString, 0);
             }
             // numbers
@@ -3194,10 +3191,10 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, c_new.etherDefense);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_806645A8;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_slotValueTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_slotValueBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_nameValueTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_nameValueBottom;
             PaneMatSetTevColors(mSlotPane0, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane2, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
             PaneMatSetTevColors(mSlotPane3, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
@@ -3221,36 +3218,36 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
 
         }
         // ---- simple path ----
-        D8EQuad q1 = *(D8EQuad*)&lbl_eu_806645A8;
-        D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
-        D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
-        D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, &lbl_eu_805063BC[0x2AA], 0);
+        D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_slotValueTop;
+        D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_slotValueBottom;
+        D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_nameValueTop;
+        D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_nameValueBottom;
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, "", 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, "", 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, "", 0);
         PaneMatSetTevColors(mSlotPane1, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane4, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane4, "", 0);
         PaneMatSetTevColors(mSlotPane4, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane5, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane6, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane6, "", 0);
         PaneMatSetTevColors(mSlotPane6, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane7, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane8, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane8, "", 0);
         PaneMatSetTevColors(mSlotPane8, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane9, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, "", 0);
         PaneMatSetTevColors(mSlotPane10, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane11, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane12, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane12, "", 0);
         PaneMatSetTevColors(mSlotPane12, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane13, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane14, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane14, "", 0);
         PaneMatSetTevColors(mSlotPane14, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane15, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, "", 0);
         PaneMatSetTevColors(mSlotPane16, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane17, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, "", 0);
         PaneMatSetTevColors(mSlotPane18, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
         PaneMatSetTevColors(mSlotPane19, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
     }
@@ -3467,7 +3464,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 u32 values[6];
             };
             EquippedTypes equippedTypes =
-                *(const EquippedTypes*)lbl_eu_80506368;
+                *(const EquippedTypes*)itemBoxInfoEquippedTypeIds;
             s16 equippedIds[6] = {
                 ((CItemBoxCharEntry*)charObj)->slotIds[5], ((CItemBoxCharEntry*)charObj)->slotIds[0],
                 ((CItemBoxCharEntry*)charObj)->slotIds[1], ((CItemBoxCharEntry*)charObj)->slotIds[2],
@@ -3547,7 +3544,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 vals[n] = val;
                 flags[n] = flag;
                 n++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], id) != 0) {
+            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n; j++) {
                     if (id == ids[j]) {
@@ -3582,7 +3579,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 vals2[n2] = val;
                 flags2[n2] = flag;
                 n2++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], id) != 0) {
+            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n2; j++) {
                     if (id == ids2[j]) {
@@ -3609,11 +3606,11 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         for (u8 i = 0; i < 8; i++) {
             if (ids[i] != 0) {
                 u32 cap = BdatGetU16Direct(lbl_eu_806640D8,
-                                       &lbl_eu_805063BC[0x503], ids[i]);
+                                       "max", ids[i]);
                 if (vals[i] > cap) vals[i] = cap;
             }
             if (ids2[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], ids2[i]);
+                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", ids2[i]);
                 if (vals2[i] > cap) vals2[i] = cap;
             }
         }
@@ -3623,7 +3620,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         for (u8 i = 0; i < 8; i++) {
             u16 compareId = ids2[i];
             s32 compareValue = (s32)vals2[i];
-            if (compareId != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], compareId) != 0) {
+            if (compareId != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", compareId) != 0) {
                 u8 done = 0;
                 for (u8 j = 0; j < 8; j++) {
                     if (compareId == ids[j]) {
@@ -3646,7 +3643,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         }
         // clear duplicate ids in listB
         for (u8 i = 0; i < 8; i++) {
-            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], ids2[i]) != 0) {
+            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", ids2[i]) != 0) {
                 for (u8 j = i + 1; j < 8; j++) {
                     if (ids2[i] == ids2[j]) ids2[j] = 0;
                 }
@@ -3654,14 +3651,14 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
         }
 
         // pane name setup
-        nw4r::lyt::Pane* root = mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        nw4r::lyt::Pane* root = mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
         for (u8 i = 0; i < 8; i++) {
             char buf1[0x20];
             char buf2[0x20];
-            sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
-            sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            LayoutSetTextBoxFmtValue(mpLayout, buf1, &lbl_eu_805063BC[0x2AA], 0);
-            LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+            sprintf(buf1, "txt_para7%02d", i * 2 + 0x13);
+            sprintf(buf2, "txt_value7%02d", i + 0x10);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, "", 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
         }
 
         // per-slot render
@@ -3674,8 +3671,8 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
             if (id == 0) continue;
             char buf1[0x20];
             char buf2[0x20];
-            sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
-            sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
+            sprintf(buf1, "txt_para7%02d", i * 2 + 0x13);
+            sprintf(buf2, "txt_value7%02d", i + 0x10);
             nw4r::lyt::Pane* pane1 = mpLayout->GetRootPane()->FindPaneByName(buf1, true);
             ScalePaneWorldPos((nw4r::math::VEC3*)&quad, pane1, root, mpLayout->GetRootPane());
             // Transpose alternating UI rows into the two four-slot columns.
@@ -3700,23 +3697,23 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 copyVEC3(&mPage.mPos[(u8)idx],
                          (void*)dstWords);
             }
-            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, "name", id), 0);
             if (val == 0) {
                 LayoutSetTextBoxFmtValue(mpLayout,
-                              buf2, &lbl_eu_805063BC[0x2AA], 0);
+                              buf2, "", 0);
             }
             u8 rvs = BdatGetU8Direct((const void*)lbl_eu_806640D8,
-                                       &lbl_eu_805063BC[0x3], id);
+                                       "rvs_type", id);
             if (rvs != 0) {
                 if (rvs == 0xFF || rvs == 0xFE) {
-                    textBuffer.format(&lbl_eu_805063BC[0x13E], (s32)val,
-                        BdatTouchStringCell(&lbl_eu_805063BC[0x130],
-                                      &lbl_eu_805063BC[0x139], 0x21));
+                    textBuffer.format("%d%s", (s32)val,
+                        BdatTouchStringCell("MNU_item",
+                                      "name", 0x21));
                 } else {
-                    textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
+                    textBuffer.format("%d ", (s32)val);
                 }
             } else {
-                textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
+                textBuffer.format("%d ", (s32)val);
             }
             LayoutSetTextBoxFmtValue(mpLayout,
                           buf2, textBuffer.mString, 0);
@@ -3724,34 +3721,34 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 (cf != 0 || type == 2 || !TestBdatFlag(member, arg3))) {
                 cf = 0;
                 LayoutSetTextBoxFmtValue(mpLayout,
-                              buf2, &lbl_eu_805063BC[0x2AA], 0);
+                              buf2, "", 0);
             }
-            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
-            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
-            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
-            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
-            u32 cap = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], id);
+            D8EQuad q1 = *(D8EQuad*)&itemBoxInfo_labelNeutralTop;
+            D8EQuad q2 = *(D8EQuad*)&itemBoxInfo_labelNeutralBottom;
+            D8EQuad q3 = *(D8EQuad*)&itemBoxInfo_valueNeutralTop;
+            D8EQuad q4 = *(D8EQuad*)&itemBoxInfo_valueNeutralBottom;
+            u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", id);
             if ((u32)val >= cap) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664548);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664550);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664588);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664590);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelSpecialTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelSpecialBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueSpecialTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueSpecialBottom);
             } else if (cf == 1) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             } else if (cf == 2) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             }
             if (arg4 == 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_806645A8);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_806645B0);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_806645C8);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_806645D0);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_slotValueTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_slotValueBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_nameValueTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_nameValueBottom);
             }
             PaneMatSetTevColorsByName(mpLayout, buf1, (const GXColorS10*)&q1, (const GXColorS10*)&q2);
             PaneMatSetTevColorsByName(mpLayout, buf2, (const GXColorS10*)&q3, (const GXColorS10*)&q4);
@@ -3892,7 +3889,7 @@ u32 CItemBoxInfo::GetEffect(u16 lookup_key, u32 category, void* arg3) {
         }
     }
     // cap is u16: retail clrlwi's the call result and compares signed.
-    u16 cap = (u16)BdatGetU16Direct((char*)lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x503], category);
+    u16 cap = (u16)BdatGetU16Direct((char*)lbl_eu_806640D8, (char*)"max", category);
     if ((s32)cap < (s32)result) result = cap;
     return result;
 }
@@ -4150,63 +4147,63 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     char* base = lbl_eu_805063BC;
     if (mFileHandle1 == file->mFileHandle) {
         mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x14000,
-                                      &lbl_eu_805063BC[0x524], 1);
+                                      "CItemBoxInfo", 1);
         Class_8045F858 host(&mRegion1);
         u8* data = (u8*)mFileHandle1->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         mArcResAcc = acc;
-        acc->Attach(data, &lbl_eu_805063BC[0x531]);
-        buildLayout(&mpLayout, acc, &lbl_eu_805063BC[0x535]);
-        bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, &lbl_eu_805063BC[0x54a]);
-        bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, &lbl_eu_805063BC[0x562]);
+        acc->Attach(data, "arc");
+        buildLayout(&mpLayout, acc, "mf02_box02_inf.brlyt");
+        bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, "mf02_box02_inf_in.brlan");
+        bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, "mf02_box02_inf_info_in.brlan");
         nw4r::lyt::Pane* root = mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
         char* text = (char*)CUICfManager_getPackedFont9C();
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x25b], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x267], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x273], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x286], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x292], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x29e], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x45a], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x466], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4a7], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x57f], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x58b], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x597], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5a3], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5af], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5be], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5cd], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x143], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4e3], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4f0], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5dc], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5e9], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5f6], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x603], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x610], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x61d], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x62a], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x637], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x644], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x651], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x65e], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x66b], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x678], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x685], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x692], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x69f], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6ac], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6b9], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6c6], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x17d], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6d2], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x188], (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value02", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value08", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value09", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value04", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value07", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value22", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value50", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value51", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value30", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value31", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value32", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value33", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value34", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_ethvalue01", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_ethvalue02", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_ethvalue03", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_gold01_00", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value700", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value702", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value703", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value704", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value705", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value708", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value710", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value706", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value709", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value712", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value714", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value715", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value716", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value717", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value718", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value719", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value720", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value721", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value722", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value723", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_para704", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_scnd01", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_scnd02", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_scnd03", (u32)text);
 
         mpLayout->SetAnimationEnable(mAnimInfoIn, false);
         mpLayout->SetAnimationEnable(mAnimIn, true);
@@ -4214,168 +4211,168 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
 
         u8 mode = mKind;
         if (mode != 1 && mode != 2) {
-            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
+            setPaneVisible(root->FindPaneByName("nul_shop", true), 0);
         }
         if (mode != 3) {
-            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
+            setPaneVisible(root->FindPaneByName("nul_excange", true), 0);
         }
 
         // Fixed label texts for the closed item-box view.
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xa), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xd), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x11), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x12), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xc), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x13), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x6f2],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x18), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x6fd],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x18), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x708],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x24), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x713],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x25), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x71e],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x70), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x72a],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x72), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x736],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x73), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x742],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x74), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x74e],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x79), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x75a],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x75), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x766],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x7b), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x772],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x76), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x77e],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x77), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x78a],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x78), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x796],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x7e), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2f8],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2f), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para01",
+                      BdatTouchStringCell("MNU_item", "name", 0xa), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para04",
+                      BdatTouchStringCell("MNU_item", "name", 0xd), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para08",
+                      BdatTouchStringCell("MNU_item", "name", 0x11), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para10",
+                      BdatTouchStringCell("MNU_item", "name", 0x12), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para11",
+                      BdatTouchStringCell("MNU_item", "name", 0xc), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para22",
+                      BdatTouchStringCell("MNU_item", "name", 0x13), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para30",
+                      BdatTouchStringCell("MNU_item", "name", 0x18), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para50",
+                      BdatTouchStringCell("MNU_item", "name", 0x18), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para60",
+                      BdatTouchStringCell("MNU_item", "name", 0x24), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para61",
+                      BdatTouchStringCell("MNU_item", "name", 0x25), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para700",
+                      BdatTouchStringCell("MNU_item", "name", 0x70), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para702",
+                      BdatTouchStringCell("MNU_item", "name", 0x72), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para703",
+                      BdatTouchStringCell("MNU_item", "name", 0x73), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para705",
+                      BdatTouchStringCell("MNU_item", "name", 0x74), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para706",
+                      BdatTouchStringCell("MNU_item", "name", 0x79), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para708",
+                      BdatTouchStringCell("MNU_item", "name", 0x75), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para709",
+                      BdatTouchStringCell("MNU_item", "name", 0x7b), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para710",
+                      BdatTouchStringCell("MNU_item", "name", 0x76), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para713",
+                      BdatTouchStringCell("MNU_item", "name", 0x77), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para716",
+                      BdatTouchStringCell("MNU_item", "name", 0x78), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para717",
+                      BdatTouchStringCell("MNU_item", "name", 0x7e), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para23",
+                      BdatTouchStringCell("MNU_item", "name", 0x2f), 0);
 
         // Per-mode caption: modes 0/1 show the owned-item count; mode 3 shows
         // the category name resolved from the selected item id.
         if ((s8)mode <= 1) {
             ml::FixStr<32> caption(true);
-            caption.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(),
-                           BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3));
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143],
+            caption.format("%d%s", CItemBlock_getPtr20E8(),
+                           BdatTouchStringCell("MNU_item", "name", 3));
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_gold01_00",
                           caption.c_str(), 0);
         } else if (mode == 3) {
             u16 itemId = mMode;
             u8 kind = (u8)MapSexFlagGroup(itemId);
             char* s;
             if (kind == 0) {
-                s = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x24);
+                s = BdatTouchStringCell("MNU_item", "name", 0x24);
             } else {
-                s = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], kind + 0x1F);
+                s = BdatTouchStringCell("MNU_item", "name", kind + 0x1F);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7ad], s, 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npctype", s, 0);
             char* name = ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(
-                &lbl_eu_80664098, &lbl_eu_805063BC[0x139], itemId);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7b9],
+                &lbl_eu_80664098, "name", itemId);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcname",
                           GetBdatNameByNumId(name), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7c5],
-                          BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2d), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7d2],
-                          &lbl_eu_805063BC[0x2aa], 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7e0],
-                          &lbl_eu_805063BC[0x2aa], 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcframe",
+                          BdatTouchStringCell("MNU_item", "name", 0x2d), 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_excange00",
+                          "", 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_excange01",
+                          "", 0);
         }
 
         // Vertex colours: the highlight pair goes onto this (+0x9C/+0xA4); the
         // three named panes' pairs go into the .sbss colour globals with their
         // alpha halves propagated to the paired globals.
-        nw4r::lyt::Pane* hl = root->FindPaneByName(&lbl_eu_805063BC[0x7ee], true);
+        nw4r::lyt::Pane* hl = root->FindPaneByName("pic_pcbs01", true);
         GXColorS10 c1 = PaneMatGetS16Quad(hl, 0);
         __as__11_GXColorS10FRC11_GXColorS10(&mColorA, &c1);
         GXColorS10 c2 = PaneMatGetS16Quad(hl, 1);
         __as__11_GXColorS10FRC11_GXColorS10(&mColorB, &c2);
 
-        nw4r::lyt::Pane* p71e = root->FindPaneByName(&lbl_eu_805063BC[0x71e], true);
+        nw4r::lyt::Pane* p71e = root->FindPaneByName("txt_para700", true);
         GXColorS10 c3 = PaneMatGetS16Quad(p71e, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664518, &c3);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_labelNeutralTop, &c3);
         GXColorS10 c4 = PaneMatGetS16Quad(p71e, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664520, &c4);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_labelNeutralBottom, &c4);
         {
-            s16 a0 = *(s16*)((char*)&lbl_eu_80664518 + 6);
-            s16 a1 = *(s16*)((char*)&lbl_eu_80664520 + 6);
-            *(s16*)((char*)&lbl_eu_80664528 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664530 + 6) = a1;
-            *(s16*)((char*)&lbl_eu_80664538 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664540 + 6) = a1;
-            *(s16*)((char*)&lbl_eu_80664548 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664550 + 6) = a1;
+            s16 a0 = *(s16*)((char*)&itemBoxInfo_labelNeutralTop + 6);
+            s16 a1 = *(s16*)((char*)&itemBoxInfo_labelNeutralBottom + 6);
+            *(s16*)((char*)&itemBoxInfo_labelUpTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_labelUpBottom + 6) = a1;
+            *(s16*)((char*)&itemBoxInfo_labelDownTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_labelDownBottom + 6) = a1;
+            *(s16*)((char*)&itemBoxInfo_labelSpecialTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_labelSpecialBottom + 6) = a1;
         }
 
-        nw4r::lyt::Pane* p4e3 = root->FindPaneByName(&lbl_eu_805063BC[0x4e3], true);
+        nw4r::lyt::Pane* p4e3 = root->FindPaneByName("txt_value700", true);
         GXColorS10 c5 = PaneMatGetS16Quad(p4e3, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664558, &c5);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_valueNeutralTop, &c5);
         GXColorS10 c6 = PaneMatGetS16Quad(p4e3, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664560, &c6);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_valueNeutralBottom, &c6);
 
-        nw4r::lyt::Pane* p2b6 = root->FindPaneByName(&lbl_eu_805063BC[0x2b6], true);
+        nw4r::lyt::Pane* p2b6 = root->FindPaneByName("txt_para01", true);
         GXColorS10 c7 = PaneMatGetS16Quad(p2b6, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664598, &c7);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_slotLabelTop, &c7);
         GXColorS10 c8 = PaneMatGetS16Quad(p2b6, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645A0, &c8);
-        *(s16*)((char*)&lbl_eu_806645A8 + 6) = *(s16*)((char*)&lbl_eu_80664598 + 6);
-        *(s16*)((char*)&lbl_eu_806645B0 + 6) = *(s16*)((char*)&lbl_eu_806645A0 + 6);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_slotLabelBottom, &c8);
+        *(s16*)((char*)&itemBoxInfo_slotValueTop + 6) = *(s16*)((char*)&itemBoxInfo_slotLabelTop + 6);
+        *(s16*)((char*)&itemBoxInfo_slotValueBottom + 6) = *(s16*)((char*)&itemBoxInfo_slotLabelBottom + 6);
 
-        nw4r::lyt::Pane* p25b = root->FindPaneByName(&lbl_eu_805063BC[0x25b], true);
+        nw4r::lyt::Pane* p25b = root->FindPaneByName("txt_value02", true);
         GXColorS10 c9 = PaneMatGetS16Quad(p25b, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645B8, &c9);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_nameLabelTop, &c9);
         GXColorS10 c10 = PaneMatGetS16Quad(p25b, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645C0, &c10);
-        *(s16*)((char*)&lbl_eu_806645C8 + 6) = *(s16*)((char*)&lbl_eu_806645B8 + 6);
-        *(s16*)((char*)&lbl_eu_806645D0 + 6) = *(s16*)((char*)&lbl_eu_806645C0 + 6);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_nameLabelBottom, &c10);
+        *(s16*)((char*)&itemBoxInfo_nameValueTop + 6) = *(s16*)((char*)&itemBoxInfo_nameLabelTop + 6);
+        *(s16*)((char*)&itemBoxInfo_nameValueBottom + 6) = *(s16*)((char*)&itemBoxInfo_nameLabelBottom + 6);
 
         StampSlotTex();
 
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7f9],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 6), 0);
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x6d2],
-                      BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 9), 0);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x17d], (u8)0);
-        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x188], (u8)0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 1);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_scnd00",
+                      BdatTouchStringCell("MNU_item", "name", 6), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_scnd02",
+                      BdatTouchStringCell("MNU_item", "name", 9), 0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_scnd01", (u8)0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)mpLayout, "txt_scnd03", (u8)0);
+        setPaneVisible(root->FindPaneByName("nul_scnd", true), 1);
 
         // Cache the slot panes at +0x40..+0x8C for the renderer (retail keeps
         // the layout's root pane live in r28 across all 20 lookups).
         nw4r::lyt::Pane* cacheRoot = mpLayout->GetRootPane();
-        mSlotPane0 = cacheRoot->FindPaneByName(&base[0x5dc], true);
-        mSlotPane1 = cacheRoot->FindPaneByName(&base[0x736], true);
-        mSlotPane2 = cacheRoot->FindPaneByName(&base[0x5e9], true);
-        mSlotPane3 = cacheRoot->FindPaneByName(&base[0x6c6], true);
-        mSlotPane4 = cacheRoot->FindPaneByName(&base[0x5f6], true);
-        mSlotPane5 = cacheRoot->FindPaneByName(&base[0x742], true);
-        mSlotPane6 = cacheRoot->FindPaneByName(&base[0x603], true);
-        mSlotPane7 = cacheRoot->FindPaneByName(&base[0x75a], true);
-        mSlotPane8 = cacheRoot->FindPaneByName(&base[0x610], true);
-        mSlotPane9 = cacheRoot->FindPaneByName(&base[0x772], true);
-        mSlotPane10 = cacheRoot->FindPaneByName(&base[0x61d], true);
-        mSlotPane11 = cacheRoot->FindPaneByName(&base[0x74e], true);
-        mSlotPane12 = cacheRoot->FindPaneByName(&base[0x637], true);
-        mSlotPane13 = cacheRoot->FindPaneByName(&base[0x77e], true);
-        mSlotPane14 = cacheRoot->FindPaneByName(&base[0x644], true);
-        mSlotPane15 = cacheRoot->FindPaneByName(&base[0x78a], true);
-        mSlotPane16 = cacheRoot->FindPaneByName(&base[0x62a], true);
-        mSlotPane17 = cacheRoot->FindPaneByName(&base[0x766], true);
-        mSlotPane18 = cacheRoot->FindPaneByName(&base[0x651], true);
-        mSlotPane19 = cacheRoot->FindPaneByName(&base[0x796], true);
+        mSlotPane0 = cacheRoot->FindPaneByName("txt_value703", true);
+        mSlotPane1 = cacheRoot->FindPaneByName("txt_para703", true);
+        mSlotPane2 = cacheRoot->FindPaneByName("txt_value704", true);
+        mSlotPane3 = cacheRoot->FindPaneByName("txt_para704", true);
+        mSlotPane4 = cacheRoot->FindPaneByName("txt_value705", true);
+        mSlotPane5 = cacheRoot->FindPaneByName("txt_para705", true);
+        mSlotPane6 = cacheRoot->FindPaneByName("txt_value708", true);
+        mSlotPane7 = cacheRoot->FindPaneByName("txt_para708", true);
+        mSlotPane8 = cacheRoot->FindPaneByName("txt_value710", true);
+        mSlotPane9 = cacheRoot->FindPaneByName("txt_para710", true);
+        mSlotPane10 = cacheRoot->FindPaneByName("txt_value706", true);
+        mSlotPane11 = cacheRoot->FindPaneByName("txt_para706", true);
+        mSlotPane12 = cacheRoot->FindPaneByName("txt_value712", true);
+        mSlotPane13 = cacheRoot->FindPaneByName("txt_para713", true);
+        mSlotPane14 = cacheRoot->FindPaneByName("txt_value714", true);
+        mSlotPane15 = cacheRoot->FindPaneByName("txt_para716", true);
+        mSlotPane16 = cacheRoot->FindPaneByName("txt_value709", true);
+        mSlotPane17 = cacheRoot->FindPaneByName("txt_para709", true);
+        mSlotPane18 = cacheRoot->FindPaneByName("txt_value715", true);
+        mSlotPane19 = cacheRoot->FindPaneByName("txt_para717", true);
 
         Activate();
         mFileHandle1 = 0;
@@ -4384,13 +4381,13 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     }
     if (mFileHandle2 == file->mFileHandle) {
         mRegion2.createRegion(mtl::MemManager::getHandleMEM2(), 0x100,
-                                      &lbl_eu_805063BC[0x804], 1);
+                                      "CItemBoxInfoTex", 1);
         Class_8045F858 host(&mRegion2);
         u8* data = (u8*)mFileHandle2->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 = CLibLayout::createArcResourceAccessor();
         mTexArcResAcc = acc2;
-        acc2->Attach(data, &lbl_eu_805063BC[0x531]);
+        acc2->Attach(data, "arc");
         Activate();
         mFileHandle2 = 0;
         mRegion2.validateHeap();
@@ -4660,15 +4657,15 @@ CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
         BdatGetItemType((u32)arg3);
         u32 v2 = BdatGetItemId((u32)arg3);
         char* base = (char*)&lbl_eu_805063BC;
-        rec.s2C = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x19c)), (int)(u16)v2);
-        rec.s2E = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x1a4)), (int)(u16)v2);
-        rec.s30 = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, (u16)v2);
-        rec.s32 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, (u16)v2);
-        rec.s34 = (u8)BdatGetU8Direct((const void*)global, base + 0x1bb, (u16)v2);
-        u1.w[1] = (u8)BdatGetU8Direct((const void*)global, base + 0x1c3, (u16)v2);
+        rec.s2C = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_low")), (int)(u16)v2);
+        rec.s2E = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_hi")), (int)(u16)v2);
+        rec.s30 = (u8)BdatGetU8Direct((const void*)global, "arm_phy", (u16)v2);
+        rec.s32 = (u8)BdatGetU8Direct((const void*)global, "arm_eth", (u16)v2);
+        rec.s34 = (u8)BdatGetU8Direct((const void*)global, "att_lev", (u16)v2);
+        u1.w[1] = (u8)BdatGetU8Direct((const void*)global, "speed", (u16)v2);
         rec.f38 = (f32)(u1.d - 4503599627370496.0) / 10.0f;
-        rec.s3C = (u8)BdatGetU8Direct((const void*)global, base + 0x1c9, (u16)v2);
-        if (BdatGetU8Direct((const void*)global, base + 0x1d2, (u16)v2) & 4) {
+        rec.s3C = (u8)BdatGetU8Direct((const void*)global, "grd_rate", (u16)v2);
+        if (BdatGetU8Direct((const void*)global, "flag", (u16)v2) & 4) {
             void* lookup = CtrlObjectParam_GetCharEntry(1);
             u32 r = CtrlObjectParam_GetArtsDataWord(lookup);
             u2.w[1] = (u32)((s32)rec.s2C * (s32)r) ^ 0x80000000;
@@ -4684,7 +4681,7 @@ CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
         for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
             u8 slot = (u8)GetCollectedFlagByte((u8)i);
             char buf[0x20];
-            sprintf(buf, base + 0x1d7, slot);
+            sprintf(buf, "equip_pc%d", slot);
             u8 v = (u8)BdatGetU8Direct((const void*)global, (const char*)buf, (u16)v2);
             // +0x16 flag bank: slot has a resolvable entry at all.
             rec.flags[0][(u8)i] = (v != 0);
@@ -4695,13 +4692,13 @@ CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
             void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)lookup)->slotIds[5]);
             if (item == NULL || *(u32*)item == 0) continue;
             u16 cat = (u16)BdatGetItemId(*(u32*)item >> 20);
-            s16 n1 = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x19c)), (int)cat);
-            s16 n2 = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)(base + 0x1a4)), (int)cat);
-            u2.w[1] = (u8)BdatGetU8Direct((const void*)global, base + 0x1c3, cat);
+            s16 n1 = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_low")), (int)cat);
+            s16 n2 = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_hi")), (int)cat);
+            u2.w[1] = (u8)BdatGetU8Direct((const void*)global, "speed", cat);
             f32 slotRatio =
                 BlendFloatAvgScale(n1, n2, 0, (f32)(u2.d - 4503599627370496.0) / 10.0f);
-            u8 v1ab = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, cat);
-            u8 v1b3 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, cat);
+            u8 v1ab = (u8)BdatGetU8Direct((const void*)global, "arm_phy", cat);
+            u8 v1b3 = (u8)BdatGetU8Direct((const void*)global, "arm_eth", cat);
             f32 curRatio = rec.f28;
             if (curRatio > slotRatio) rec.flags[1][(u8)i] = 1;
             else if (curRatio < slotRatio) rec.flags[1][(u8)i] = 2;
@@ -4737,14 +4734,14 @@ CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
     u16 type = BdatGetItemType(item);
     u16 id = BdatGetItemId(item);
     char* base = (char*)&lbl_eu_805063BC;
-    rec.v[0] = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, id);
-    rec.v[1] = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, id);
-    rec.v[2] = (u8)BdatGetU8Direct((const void*)global, base + 0x1e2, id);
-    u32 reqKind = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x1eb, id);
+    rec.v[0] = (u8)BdatGetU8Direct((const void*)global, "arm_phy", id);
+    rec.v[1] = (u8)BdatGetU8Direct((const void*)global, "arm_eth", id);
+    rec.v[2] = (u8)BdatGetU8Direct((const void*)global, "eva_rate", id);
+    u32 reqKind = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", id);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 slot = GetCollectedFlagByte((u8)i);
         char buf[0x20];
-        sprintf(buf, base + 0x1f4, (u8)slot);
+        sprintf(buf, "pc%d", (u8)slot);
         rec.equipable[(u8)i] = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, (const char*)buf, id) != 0;
         if (rec.equipable[(u8)i] == 0) continue;
         CItemBoxCharEntry* member = (CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry((u8)slot);
@@ -4766,8 +4763,8 @@ CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
                 void* equipped = CItem_kindPtr((u16)type, value);
                 if (equipped != NULL && *(u32*)equipped != 0) {
                     u32 cat = BdatGetItemId(*(u32*)equipped >> 20);
-                    u8 n1 = (u8)BdatGetU8Direct((const void*)global, base + 0x1ab, cat);
-                    u8 n2 = (u8)BdatGetU8Direct((const void*)global, base + 0x1b3, cat);
+                    u8 n1 = (u8)BdatGetU8Direct((const void*)global, "arm_phy", cat);
+                    u8 n2 = (u8)BdatGetU8Direct((const void*)global, "arm_eth", cat);
                     if (rec.v[0] > n1) rec.cmp0[(u8)i] = 1;
                     else if (rec.v[0] < n1) rec.cmp0[(u8)i] = 2;
                     else rec.cmp0[(u8)i] = 0;
@@ -4805,23 +4802,23 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
         count = (u16)inst->vf08((CItemData*)item);
     } else {
-        count = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805063BC[0x1f9], (u32)data);
+        count = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", (u32)data);
     }
     // base is only materialized after the cat/count joins (retail lis/addi at
     // the join point, not in the prologue).
     char* base = (char*)&lbl_eu_805063BC;
     CItemBoxNameRecord rec;
     rec.count = (u8)count;
-    rec.str = (u32)BdatTouchStringCell(base + 0x130, base + 0x139, 0x1e - ((u8)count - 1));
-    char* s2 = BdatTouchStringCell(base + 0x202, base + 0x139, 0xf);
+    rec.str = (u32)BdatTouchStringCell("MNU_item", "name", 0x1e - ((u8)count - 1));
+    char* s2 = BdatTouchStringCell("MNU_shop", "name", 0xf);
     if (arg3 != NULL) {
         CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
-        sprintf(rec.name, base, inst->vf90((CItemData*)item));
+        sprintf(rec.name, "%d", inst->vf90((CItemData*)item));
     } else {
-        sprintf(rec.name, base + 0x18, s2);
+        sprintf(rec.name, "%s", s2);
     }
-    rec.e0 = (u8)BdatGetU8Direct((const void*)gd8, base + 0x3, (u16)cat);
-    rec.e1 = (u8)BdatGetU8Direct((const void*)gd8, base + 0x20b, (u16)cat);
+    rec.e0 = (u8)BdatGetU8Direct((const void*)gd8, "rvs_type", (u16)cat);
+    rec.e1 = (u8)BdatGetU8Direct((const void*)gd8, "atr_type", (u16)cat);
     rec.color = 0xFFFFFFFF;
     switch (rec.e1) {
         case 4: rec.color = 0xFF00FFFF; break;
@@ -4831,7 +4828,7 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
         case 8: rec.color = 0x00FFFFFF; break;
         case 9: rec.color = 0x775544FF; break;
     }
-    sprintf(rec.text, base + 0x18, ((char*(*)(void*, const char*, u16))&BdatGetPtrDirect)(gd8, base + 0xc, (u16)cat));
+    sprintf(rec.text, "%s", ((char*(*)(void*, const char*, u16))&BdatGetPtrDirect)(gd8, "rvs_caption", (u16)cat));
     u32 wide = 1;
     if (getLanguage__9CDeviceSCFv() != 3) {
         if (getLanguage__9CDeviceSCFv() != 2) {
@@ -4857,23 +4854,23 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
                 cur++;
                 switch (rec.e0) {
                     case 1:
-                        sprintf(buf28, base + 0x1b, rec.name);
+                        sprintf(buf28, "<col=red>%s<col=def>", rec.name);
                         break;
                     case 2:
-                        sprintf(buf28, base + 0x1b, rec.name);
+                        sprintf(buf28, "<col=red>%s<col=def>", rec.name);
                         break;
                     case 3:
                         if (wide != 0) {
-                            sprintf(buf28, base + 0x30, rec.name);
+                            sprintf(buf28, "<col=red>%s %%<col=def>", rec.name);
                         } else {
-                            sprintf(buf28, base + 0x48, rec.name);
+                            sprintf(buf28, "<col=red>%s%%<col=def>", rec.name);
                         }
                         break;
                     case 4:
                         if (wide != 0) {
-                            sprintf(buf28, base + 0x30, rec.name);
+                            sprintf(buf28, "<col=red>%s %%<col=def>", rec.name);
                         } else {
-                            sprintf(buf28, base + 0x48, rec.name);
+                            sprintf(buf28, "<col=red>%s%%<col=def>", rec.name);
                         }
                         break;
                     default:
@@ -4896,9 +4893,9 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
                 cur++;
                 u8 name = BdatGetU8Direct((const void*)gd8, (char*)labels2[rec.count], (u16)cat);
                 if (wide != 0) {
-                    sprintf(buf28, base + 0x5f, (u8)name);
+                    sprintf(buf28, "<col=red>%d %%<col=def>", (u8)name);
                 } else {
-                    sprintf(buf28, base + 0x77, (u8)name);
+                    sprintf(buf28, "<col=red>%d%%<col=def>", (u8)name);
                 }
             }
             // strlen of buf28 (post-increment counter: retail counts len+1).
@@ -4908,11 +4905,11 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
                 len++;
                 p++;
             }
-            sprintf(buf48, base + 0x18, cur);
+            sprintf(buf48, "%s", cur);
             cur = cur - 2;
-            sprintf(cur, base + 0x18, buf28);
+            sprintf(cur, "%s", buf28);
             cur = cur + len - 1;
-            sprintf(cur, base + 0x18, buf48);
+            sprintf(cur, "%s", buf48);
         } else {
             s8 sc = (s8)*cur;
             if ((sc >= 0x81 && sc <= 0x9f) || (sc >= 0xe0 && sc <= 0xef)) {
@@ -4960,16 +4957,16 @@ CItemBoxSelRec CItemBoxInfo2::BuildSelRec(u32 item) {
     u16 v1 = BdatGetItemType(item);
     u16 v2 = BdatGetItemId(item);
     CItemBoxSelRec rec;
-    rec.category = (u8)BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    rec.category = (u8)BdatGetU8Direct((const void*)global, (char*)"memory_type", v2);
     // count stays u32: retail keeps the raw call result (r28) and masks at
     // each (u8)count use (loop mask hoisted to r29).
-    u8 count = BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 count = BdatGetU8Direct((const void*)global, (char*)"pc_type", v2);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 a = (u8)GetCollectedFlagByte((u8)i);
         rec.selected[(u8)i] = a == (u8)count;
     }
-    u8 key = BdatGetU8Direct((const void*)global, (char*)&lbl_eu_805063BC[0x23f], v2);
-    u8 val = BdatGetU8ByTableKey((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
+    u8 key = BdatGetU8Direct((const void*)global, (char*)"get_arts", v2);
+    u8 val = BdatGetU8ByTableKey((char*)"pc_arts", (char*)"idx", (u8)key);
     void* lookup = CtrlObjectParam_GetCharEntry((u8)count);
     u8 cat = (u8)CtrlObjectParam_GetCurrentRowKey(lookup);
     rec.flag2 = 0;
@@ -5023,7 +5020,7 @@ void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
         u8 flag = local.flags[0][(u8)i];
         u32 color = 0x777777FF;
         if (flag != 0) color = 0xFFFFFFFF;
-        sprintf(paneName, base + 0x303, (u8)i + 1);
+        sprintf(paneName, "pic_pc%02d", (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, paneName, color);
         // Unselected rows keep only the alpha of the highlight colours.
         CItemBoxQuadColorView dimA;
@@ -5036,7 +5033,7 @@ void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
             flag ? mColorA : dimA,
             flag ? mColorB : dimB,
         };
-        sprintf(paneName, &lbl_eu_805063BC[0x161], (u8)i + 1);
+        sprintf(paneName, "pic_pcbs%02d", (u8)i + 1);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
@@ -5052,16 +5049,16 @@ void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
                 void* item = CItem_kindPtr(2, ((CItemBoxCharEntry*)member)->slotIds[5]);
                 if (item != NULL && *(u32*)item != 0) {
                     if (arg2 == item || arg1 == (u32)(*(u32*)item >> 20)) {
-                        sprintf(label, base + 0x30e, (u8)i + 1);
+                        sprintf(label, "pic_eq%02d", (u8)i + 1);
                         u8 otherSlot = (u8)GetCollectedFlagByte(arg3);
                         u32 tex;
-                        if (slot == otherSlot) {
-                            tex = (u32)mArcResAcc->GetResource(0x74696D67, base + 0x319, NULL);
+                        if ((s32)slot == (s32)otherSlot) {
+                            tex = (u32)mArcResAcc->GetResource(0x74696D67, "mf00_reg00_eq01.tpl", NULL);
                         } else {
-                            tex = (u32)mArcResAcc->GetResource(0x74696D67, base + 0x32d, NULL);
+                            tex = (u32)mArcResAcc->GetResource(0x74696D67, "mf00_reg00_eq00.tpl", NULL);
                         }
                         if (tex == 0) {
-                            tex = (u32)mArcResAcc->GetResource(0x74696D67, base + 0x341, NULL);
+                            tex = (u32)mArcResAcc->GetResource(0x74696D67, "mf00_com00_dmy.tpl", NULL);
                         }
                         if (tex != 0) {
                             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)label, (TPLPalette*)tex);
@@ -5090,7 +5087,7 @@ void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
         u8 flag = record.equipable[(u8)i];
         u32 color = darkBase + 0x77ff;  // 0x777777ff
         if (flag != 0) color = 0xFFFFFFFF;
-        sprintf(buf, base + 0x303, (u8)i + 1);
+        sprintf(buf, "pic_pc%02d", (u8)i + 1);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, color);
         // Unselected rows keep only the alpha of the highlight colours.
         CItemBoxQuadColorView dimA;
@@ -5103,7 +5100,7 @@ void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
             flag ? mColorA : dimA,
             flag ? mColorB : dimB,
         };
-        sprintf(buf, &lbl_eu_805063BC[0x161], (u8)i + 1);
+        sprintf(buf, "pic_pcbs%02d", (u8)i + 1);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
@@ -5127,15 +5124,15 @@ void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
                 void* item = CItem_kindPtr(category, value);
                 if (item != NULL && *(u32*)item != 0) {
                     if (arg3 == item || arg2 == (*(u32*)item >> 20)) {
-                        sprintf(bufName, base + 0x30e, (u8)i + 1);
+                        sprintf(bufName, "pic_eq%02d", (u8)i + 1);
                         u32 tex;
                         if (slot == (u8)GetCollectedFlagByte(arg4)) {
-                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
+                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, "mf00_reg00_eq01.tpl", NULL);
                         } else {
-                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
+                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, "mf00_reg00_eq00.tpl", NULL);
                         }
                         if (tex == 0) {
-                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
+                            tex = (u32)mArcResAcc->GetResource(tagHi + 0x6d67, "mf00_com00_dmy.tpl", NULL);
                         }
                         if (tex != 0) {
                             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)bufName, (TPLPalette*)tex);
@@ -5168,13 +5165,13 @@ void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
     char* base = (char*)&lbl_eu_805063BC;
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
-    char* label = BdatTouchStringCell(base + 0x130, base + 0x139, rowHeight);
-    LayoutSetTextBoxFmtValue(mpLayout, base + 0x44f, label, 0);
+    char* label = BdatTouchStringCell("MNU_item", "name", rowHeight);
+    LayoutSetTextBoxFmtValue(mpLayout, "txt_para80", label, 0);
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 flag = local.selected[(u8)i];
         u32 color = 0x777777ff;
         if (flag != 0) color = 0xFFFFFFFF;
-        sprintf(buf, base + 0x303, (u8)i + 1);
+        sprintf(buf, "pic_pc%02d", (u8)i + 1);
         PaneSetVtxColorByName(mpLayout, buf, color);
         s16 vA2 = mColorA.s[3];
         s16 vAA = mColorB.s[3];
@@ -5192,7 +5189,7 @@ void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
                              : *(CItemBoxColorBlock*)&cols[1];
         out[1] = (flag != 0) ? *(CItemBoxColorBlock*)&mColorB
                              : *(CItemBoxColorBlock*)&cols[0];
-        sprintf(buf, base + 0x161, (u8)i + 1, cols[0]);
+        sprintf(buf, "pic_pcbs%02d", (u8)i + 1, cols[0]);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             void* obj = pane->GetMaterial();
@@ -5220,21 +5217,21 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
     // Retail materializes the pool base only after the record copy.
     char* base = (char*)&lbl_eu_805063BC;
 
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x45a, (char*)vals.str, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value50", (char*)vals.str, 0);
     if ((s8)vals.name[0] == 0x30) {
-        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x466, base + 0x2aa, 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value51", "", 0);
     } else {
         if (vals.e0 != 0) {
             if ((u8)(vals.e0 - 3) <= 1) {
-                sprintf(textBuf, base + 0x419, vals.name,
-                        BdatTouchStringCell(base + 0x130, base + 0x139, 0x21));
+                sprintf(textBuf, "%s%s", vals.name,
+                        BdatTouchStringCell("MNU_item", "name", 0x21));
             } else {
-                sprintf(textBuf, base + 0x41e, vals.name);
+                sprintf(textBuf, "%s ", vals.name);
             }
         } else {
-            sprintf(textBuf, base + 0x41e, vals.name);
+            sprintf(textBuf, "%s ", vals.name);
         }
-        LayoutSetTextBoxText((nw4r::lyt::Layout*)mpLayout, base + 0x466, textBuf, 0);
+        LayoutSetTextBoxText((nw4r::lyt::Layout*)mpLayout, "txt_value51", textBuf, 0);
     }
 
     // Candidate item name (via the item vtable) or the raw item-name lookup.
@@ -5247,7 +5244,7 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
         item = NULL;
         txt = ((char* (*)(u32))BuildItemNameStr)(arg2);
     }
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x472, txt, 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para51", txt, 0);
 
     u16 cat;
     if (arg3 != NULL) {
@@ -5255,15 +5252,15 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
     } else {
         cat = BdatGetItemId(arg2);
     }
-    u8 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0x47d, cat);
-    char* label = BdatTouchStringCell(base + 0x130, base + 0x139, (u8)st + 0x15);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, base + 0x484, label, 0);
+    u8 st = BdatGetU8Direct((const void*)lbl_eu_806640D8, "attach", cat);
+    char* label = BdatTouchStringCell("MNU_item", "name", (u8)st + 0x15);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para52", label, 0);
 
     // Table handle pair is loop-invariant: staged once before the loop.
     CItemBoxTagStage stage = { { 2, 4, 5, 6, 7, 8 } };
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u32 idx = (u8)i + 1;
-        sprintf(textBuf, base + 0x303, idx);
+        sprintf(textBuf, "pic_pc%02d", idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, textBuf, -1);
         // Row colour pair: zeroed memberwise, then filled from the this
         // selection block; passed to sprintf as one 0x10-byte vararg.
@@ -5272,7 +5269,7 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
         cols.w[1] = mColorA.w[1];
         cols.w[2] = mColorB.w[0];
         cols.w[3] = mColorB.w[1];
-        sprintf(textBuf, base + 0x161, idx, cols);
+        sprintf(textBuf, "pic_pcbs%02d", idx, cols);
         nw4r::lyt::Pane* pane =
             mpLayout->GetRootPane()->FindPaneByName(textBuf, true);
         if (pane != NULL) {
@@ -5303,15 +5300,15 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
                     CItem_initItemImplInstances((CItemData*)cand)->vf40((CItemData*)cand, (u8)k);
                 void* hit = CItem_kindPtr(3, itemVal);
                 if (hit == NULL || *(u32*)hit == 0 || hit != arg3) continue;
-                sprintf(buf2, base + 0x30e, idx);
+                sprintf(buf2, "pic_eq%02d", idx);
                 u32 tex;
                 if (slot == (u8)GetCollectedFlagByte(arg4)) {
-                    tex = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x319, NULL);
+                    tex = (u32)mArcResAcc->GetResource(0x74696d67, "mf00_reg00_eq01.tpl", NULL);
                 } else {
-                    tex = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x32d, NULL);
+                    tex = (u32)mArcResAcc->GetResource(0x74696d67, "mf00_reg00_eq00.tpl", NULL);
                 }
                 if (tex == 0) {
-                    tex = (u32)mArcResAcc->GetResource(0x74696d67, base + 0x341, NULL);
+                    tex = (u32)mArcResAcc->GetResource(0x74696d67, "mf00_com00_dmy.tpl", NULL);
                 }
                 if (tex != 0) {
                     PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf2, (TPLPalette*)tex);
@@ -5368,21 +5365,21 @@ void CItemBoxInfo2::SetupSlotPanes() {
     u32 i;
     u32 idx;
     s16 zero = 0;
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x25b], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x286], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x292], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value02", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value08", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value09", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value04", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value07", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
     for (i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         idx = (u8)i + 1;
-        sprintf(buf, &lbl_eu_805063BC[0x303], idx);
+        sprintf(buf, "pic_pc%02d", idx);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, buf, 0x777777ff);
         u32 args[4];
         s16 c0hi[2] = {zero, mColorA.s[3]};
@@ -5399,7 +5396,7 @@ void CItemBoxInfo2::SetupSlotPanes() {
         args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
         args[3] = *(u32*)c1hi;
-        sprintf(buf, &lbl_eu_805063BC[0x161], idx);
+        sprintf(buf, "pic_pcbs%02d", idx);
         nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(buf, true);
         if (pane != NULL) {
             nw4r::lyt::Material* material = pane->GetMaterial();
@@ -5409,8 +5406,8 @@ void CItemBoxInfo2::SetupSlotPanes() {
         }
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
-        sprintf(buf, &lbl_eu_805063BC[0x30e], idx);
-        u32 tex = (u32)mArcResAcc->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
+        sprintf(buf, "pic_eq%02d", idx);
+        u32 tex = (u32)mArcResAcc->GetResource(0x74696D67, "mf00_com00_dmy.tpl", NULL);
         if (tex != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)buf, (TPLPalette*)tex);
         }
@@ -5422,21 +5419,21 @@ void CItemBoxInfo2::ResetRowPanes() {
     // compiler CSE temporary (lis into a scratch register during prologue
     // argument prep), which fixes both its schedule and its register.
     char text[0x20];
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x267], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x273], &lbl_eu_805063BC[0x2aa], 0);
-    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x29e], &lbl_eu_805063BC[0x2aa], 0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2b6], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2c1], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2cc], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2d7], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2e2], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
-    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x2ed], (const GXColorS10*)&lbl_eu_806645A8, (const GXColorS10*)&lbl_eu_806645B0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value08", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value09", "", 0);
+    LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value22", "", 0);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para01", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para10", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para11", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para04", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para08", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
+    PaneMatSetTevColorsByName((nw4r::lyt::Layout*)mpLayout, "txt_para22", (const GXColorS10*)&itemBoxInfo_slotValueTop, (const GXColorS10*)&itemBoxInfo_slotValueBottom);
     // Zero lives outside the loop: retail materializes it once in the
     // preheader (a loop-invariant CSE), not per-iteration.
     s16 shade = 0;
     for (u32 index = 0; (u8)index < (u8)code80135FDC_getByte_64077(); index++) {
         u32 slot = (u8)index + 1;
-        sprintf(text, &lbl_eu_805063BC[0x303], slot);
+        sprintf(text, "pic_pc%02d", slot);
         PaneSetVtxColorByName((nw4r::lyt::Layout*)mpLayout, text, 0x777777ff);
         u32 args[4];
         s16 hiA[2] = {shade, mColorA.s[3]};
@@ -5456,7 +5453,7 @@ void CItemBoxInfo2::ResetRowPanes() {
         args[1] = *(u32*)hiA;
         args[2] = *(u32*)loB;
         args[3] = *(u32*)hiB;
-        sprintf(text, &lbl_eu_805063BC[0x161], slot);
+        sprintf(text, "pic_pcbs%02d", slot);
         nw4r::lyt::Pane* pPane = mpLayout->GetRootPane()->FindPaneByName(text, true);
         if (pPane != NULL) {
             nw4r::lyt::Material* pMaterial = pPane->GetMaterial();
@@ -5466,8 +5463,8 @@ void CItemBoxInfo2::ResetRowPanes() {
         }
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
-        sprintf(text, &lbl_eu_805063BC[0x30e], slot);
-        u32 texId = (u32)mArcResAcc->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
+        sprintf(text, "pic_eq%02d", slot);
+        u32 texId = (u32)mArcResAcc->GetResource(0x74696D67, "mf00_com00_dmy.tpl", NULL);
         if (texId != 0) {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)mpLayout, (const char*)text, (TPLPalette*)texId);
         }
@@ -5742,12 +5739,12 @@ void CItemBoxInfo2::SetupDetail(u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    LayoutSetTextBoxFmtValue(mpLayout, &lbl_eu_805063BC[0x4D7], BdatGetPtrDirect(lbl_eu_80664090, &lbl_eu_805063BC[0x139], member), 0);
-    setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
-setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
+    LayoutSetTextBoxFmtValue(mpLayout, "txt_para736", BdatGetPtrDirect(lbl_eu_80664090, "name", member), 0);
+    setLayoutTextBoxNumber(mpLayout, "txt_value700", (u8)stats->CActorParam_getActorLevel());
+setLayoutTextBoxNumber(mpLayout, "txt_value702", (u8)stats->CActorParam_getTotalCurrency());
     LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, hp1);
     LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, hp2);
-    SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, BdatTouchStringCell("MNU_item", "name", 0x82), 0);
 
     // ---- stat sub-objects ----
     E43StatA* stA = (E43StatA*)stats->CActorParam_getBaseStats();
@@ -5793,7 +5790,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 s32 atk2 = (s32)barB + s2;
                 if (atk1 > atk2) atk1 = atk2;
                 ml::FixStr<32> fmtBuf;
-                fmtBuf.format(&lbl_eu_805063BC[0x254], atk1, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atk2);
+                fmtBuf.format("%d%s%d", atk1, BdatTouchStringCell("MNU_item", "name", 0xB), atk2);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             }
 
@@ -5805,17 +5802,17 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)bar5);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)bar3);
             ml::FixStr<32> fmtBuf2;
-            fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)bar6, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
+            fmtBuf2.format("%d%s", (s16)bar6, BdatTouchStringCell("MNU_item", "name", 0x80));
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, fmtBuf2.c_str(), 0);
             ml::FixStr<32> fmtBuf3;
-            fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
+            fmtBuf3.format("%d%s", (s16)(stA->b55), BdatTouchStringCell("MNU_item", "name", 0x80));
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, fmtBuf3.c_str(), 0);
 
             // ---- 20x color application ----
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
             PaneMatSetTevColors(mSlotPane0, &q3, &q4);
             PaneMatSetTevColors(mSlotPane2, &q3, &q4);
             PaneMatSetTevColors(mSlotPane3, &q3, &q4);
@@ -5853,20 +5850,20 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + GetEffect(member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane8, nb);
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
             if (d < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (d > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane8, &q3, &q4);
             PaneMatSetTevColors(mSlotPane9, &q1, &q2);
@@ -5878,20 +5875,20 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + GetEffect(member, 0x1, arg3))));
             dB = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane4, nb);
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
             if (dB < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (dB > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane4, &q3, &q4);
             PaneMatSetTevColors(mSlotPane5, &q1, &q2);
@@ -5903,20 +5900,20 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) * (f32)(dB + GetEffect(member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, nb);
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
             if (dC < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (dC > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane6, &q3, &q4);
             PaneMatSetTevColors(mSlotPane7, &q1, &q2);
@@ -5933,20 +5930,20 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane0, nb);
             }
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
             if (dD < 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             } else if (dD > 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             }
             PaneMatSetTevColors(mSlotPane0, &q3, &q4);
             PaneMatSetTevColors(mSlotPane2, &q3, &q4);
@@ -6010,7 +6007,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 d4 = 0;
             }
             ml::FixStr<32> fmtBuf;
-            fmtBuf.format(&lbl_eu_805063BC[0x254], atkD, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atkC);
+            fmtBuf.format("%d%s%d", atkD, BdatTouchStringCell("MNU_item", "name", 0xB), atkC);
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             s16 disp1 = v610;
             s16 disp2 = v612;
@@ -6023,103 +6020,103 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane12, (s16)disp1);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)disp2);
             ml::FixStr<32> fmtBuf2;
-            fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)disp3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
+            fmtBuf2.format("%d%s", (s16)disp3, BdatTouchStringCell("MNU_item", "name", 0x80));
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, fmtBuf2.c_str(), 0);
             ml::FixStr<32> fmtBuf3;
-            fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s32)stA->b55 + (s32)d3, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
+            fmtBuf3.format("%d%s", (s32)stA->b55 + (s32)d3, BdatTouchStringCell("MNU_item", "name", 0x80));
             SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, fmtBuf3.c_str(), 0);
             // delta colors (5 rows)
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (dW > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane10, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (d1 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d1 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane12, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (d2 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d2 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane14, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (d4 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d4 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane16, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane17, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (d3 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d3 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane18, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane19, &q1, &q2);
@@ -6142,7 +6139,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             u16 v484 = (u16)SumTypeCounts(member, (void*)(u32)w0);
             u16 v468 = (u16)SumTypeCounts(member, arg3);
             // arm-type scaling of the entry value pairs
-            u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
+            u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)w0));
             if (arm1 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6166,7 +6163,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
-            u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6238,7 +6235,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 s32 wmin = wc < wd ? wc : wd;
                 dW = (s16)(wd - wa);
                 ml::FixStr<32> fmtBuf;
-                fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
+                fmtBuf.format("%d%s%d", wmin, BdatTouchStringCell("MNU_item", "name", 0xB), wd);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             }
             // numbers
@@ -6247,77 +6244,77 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // delta colors (4 rows)
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (dW > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane10, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane11, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (d2 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d2 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane12, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane13, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (d1 < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (d1 > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane14, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane15, &q1, &q2);
             }
             {
-                GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-                GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-                GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-                GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
+                GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+                GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+                GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+                GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
                 if (dW < 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
                 } else if (dW > 0) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
                 }
                 PaneMatSetTevColors(mSlotPane6, &q3, &q4);
                 PaneMatSetTevColors(mSlotPane7, &q1, &q2);
@@ -6369,7 +6366,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             }
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane2, nb);
             // arm-type scaling of entry value pairs
-            u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
+            u8 arm1 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)w0));
             if (arm1 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6393,7 +6390,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
-            u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
+            u8 arm2 = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
                 s32 v = GetCondStatById(member, 0xD);
                 if (v != 0) {
@@ -6458,7 +6455,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 s32 wd = (s32)wpb + CalcBonus2(member, (u16)(cw.w04 >> 16), arg3);
                 s32 wmin = wc < wd ? wc : wd;
                 ml::FixStr<32> fmtBuf;
-                fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
+                fmtBuf.format("%d%s%d", wmin, BdatTouchStringCell("MNU_item", "name", 0xB), wd);
                 SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, fmtBuf.c_str(), 0);
             }
             // numbers
@@ -6466,10 +6463,10 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane14, (s16)c_new.w14);
             LayoutSetTextBoxInt((nw4r::lyt::Layout*)mSlotPane6, (s16)b14);
             // 20x color application (selected palette A8/B0/C8/D0)
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_806645A8;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_806645B0;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_806645C8;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_806645D0;
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_slotValueTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_slotValueBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_nameValueTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_nameValueBottom;
             PaneMatSetTevColors(mSlotPane0, &q3, &q4);
             PaneMatSetTevColors(mSlotPane2, &q3, &q4);
             PaneMatSetTevColors(mSlotPane3, &q3, &q4);
@@ -6493,36 +6490,36 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
 
         }
         // ---- simple path ----
-        GXColorS10 q1 = *(GXColorS10*)&lbl_eu_806645A8;
-        GXColorS10 q2 = *(GXColorS10*)&lbl_eu_806645B0;
-        GXColorS10 q3 = *(GXColorS10*)&lbl_eu_806645C8;
-        GXColorS10 q4 = *(GXColorS10*)&lbl_eu_806645D0;
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, &lbl_eu_805063BC[0x2AA], 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, &lbl_eu_805063BC[0x2AA], 0);
+        GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_slotValueTop;
+        GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_slotValueBottom;
+        GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_nameValueTop;
+        GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_nameValueBottom;
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane0, "", 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane2, "", 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane3, "", 0);
         PaneMatSetTevColors(mSlotPane1, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane4, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane4, "", 0);
         PaneMatSetTevColors(mSlotPane4, &q3, &q4);
         PaneMatSetTevColors(mSlotPane5, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane6, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane6, "", 0);
         PaneMatSetTevColors(mSlotPane6, &q3, &q4);
         PaneMatSetTevColors(mSlotPane7, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane8, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane8, "", 0);
         PaneMatSetTevColors(mSlotPane8, &q3, &q4);
         PaneMatSetTevColors(mSlotPane9, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane10, "", 0);
         PaneMatSetTevColors(mSlotPane10, &q3, &q4);
         PaneMatSetTevColors(mSlotPane11, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane12, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane12, "", 0);
         PaneMatSetTevColors(mSlotPane12, &q3, &q4);
         PaneMatSetTevColors(mSlotPane13, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane14, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane14, "", 0);
         PaneMatSetTevColors(mSlotPane14, &q3, &q4);
         PaneMatSetTevColors(mSlotPane15, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane16, "", 0);
         PaneMatSetTevColors(mSlotPane16, &q3, &q4);
         PaneMatSetTevColors(mSlotPane17, &q1, &q2);
-        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, &lbl_eu_805063BC[0x2AA], 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)mSlotPane18, "", 0);
         PaneMatSetTevColors(mSlotPane18, &q3, &q4);
         PaneMatSetTevColors(mSlotPane19, &q1, &q2);
     }
@@ -6584,7 +6581,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         }
         // crystal list (type == 2 && arg5 != 0)
         if (type == 2 && arg5 != 0) {
-            u8 cnt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, &lbl_eu_805063BC[0x432], BdatGetItemId(*(u32*)arg3 >> 20));
+            u8 cnt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640F4, "jwl_slot", BdatGetItemId(*(u32*)arg3 >> 20));
             for (u8 i = 0; i < 3; i++) {
                 ItemBoxInfoCopy tmp;
                 tmp.itemId = 0;
@@ -6592,11 +6589,11 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 tmp.state = 0;
                 if (i < cnt) {
                     char buf[0x20];
-                    sprintf(buf, &lbl_eu_805063BC[0x43B], i + 1);
+                    sprintf(buf, "jwl_skill%d", i + 1);
                     u32 id = BdatGetU16Direct(lbl_eu_806640F4, buf, BdatGetItemId(*(u32*)arg3 >> 20));
-                    u16 nameId = (u16)BdatGetU16Direct(lbl_eu_806640EC, &lbl_eu_805063BC[0x814], id);
-                    u8 icon = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805063BC[0x447], id);
-                    u8 val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805063BC[0x1F9], id);
+                    u16 nameId = (u16)BdatGetU16Direct(lbl_eu_806640EC, "itemID", id);
+                    u8 icon = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", id);
+                    u8 val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", id);
                     if (id != 0) {
                         ItemBoxInfoCopy tmp2;
                         tmp2.itemId = nameId;
@@ -6647,11 +6644,11 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                     tmp3.value = 0;
                     tmp3.state = 0;
                     if (arg5 != 0) {
-                        if (BdatGetU8Direct((const void*)lbl_eu_806640F8, &lbl_eu_805063BC[0x432], BdatGetItemId(*(u32*)arg3 >> 20)) != 0) {
-                            u16 nameId = (u16)BdatGetU16Direct(lbl_eu_806640F8, &lbl_eu_805063BC[0x81B], BdatGetItemId(*(u32*)arg3 >> 20));
-                            u16 capId = (u16)BdatGetU16Direct(lbl_eu_806640EC, &lbl_eu_805063BC[0x814], nameId);
-                            u8 icon = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805063BC[0x447], nameId);
-                            u8 val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_805063BC[0x1F9], nameId);
+                        if (BdatGetU8Direct((const void*)lbl_eu_806640F8, "jwl_slot", BdatGetItemId(*(u32*)arg3 >> 20)) != 0) {
+                            u16 nameId = (u16)BdatGetU16Direct(lbl_eu_806640F8, "jwl_skill1", BdatGetItemId(*(u32*)arg3 >> 20));
+                            u16 capId = (u16)BdatGetU16Direct(lbl_eu_806640EC, "itemID", nameId);
+                            u8 icon = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", nameId);
+                            u8 val = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", nameId);
                             if (nameId != 0) {
                                 tmp3.itemId = capId;
                                 tmp3.value = icon;
@@ -6680,7 +6677,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 vals[n] = val;
                 flags[n] = flag;
                 n++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], id) != 0) {
+            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n; j++) {
                     if (id == ids[j]) {
@@ -6706,7 +6703,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         }
         for (u8 i = 0; i < 8; i++) {
             if (ids[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], ids[i]);
+                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", ids[i]);
                 if (vals[i] > cap) vals[i] = cap;
             }
         }
@@ -6724,7 +6721,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 vals2[n2] = val;
                 flags2[n2] = flag;
                 n2++;
-            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], id) != 0) {
+            } else if (BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", id) != 0) {
                 u8 found = 0;
                 for (u8 j = 0; j < n2; j++) {
                     if (id == ids2[j]) {
@@ -6750,7 +6747,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         }
         for (u8 i = 0; i < 8; i++) {
             if (ids2[i] != 0) {
-                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], ids2[i]);
+                u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", ids2[i]);
                 if (vals2[i] > cap) vals2[i] = cap;
             }
         }
@@ -6758,7 +6755,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         // better/worse flags comparing listB vs listA
         u8 cmp[8];
         for (u8 i = 0; i < 8; i++) {
-            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], ids2[i]) != 0) {
+            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", ids2[i]) != 0) {
                 u8 done = 0;
                 for (u8 j = 0; j < 8; j++) {
                     if (ids2[i] == ids[j]) {
@@ -6784,7 +6781,7 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         }
         // clear duplicate ids in listB
         for (u8 i = 0; i < 8; i++) {
-            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], ids2[i]) != 0) {
+            if (ids2[i] != 0 && BdatGetU8Direct((const void*)lbl_eu_806640D8, "accum", ids2[i]) != 0) {
                 for (u8 j = i + 1; j < 8; j++) {
                     if (ids2[i] == ids2[j]) ids2[j] = 0;
                 }
@@ -6792,14 +6789,14 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
         }
 
         // pane name setup
-        nw4r::lyt::Pane* root = mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        nw4r::lyt::Pane* root = mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
         for (u8 i = 0; i < 8; i++) {
             char buf1[0x20];
             char buf2[0x20];
-            sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
-            sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
-            LayoutSetTextBoxFmtValue(mpLayout, buf1, &lbl_eu_805063BC[0x2AA], 0);
-            LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+            sprintf(buf1, "txt_para7%02d", i * 2 + 0x13);
+            sprintf(buf2, "txt_value7%02d", i + 0x10);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, "", 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
         }
 
         // per-slot render
@@ -6811,8 +6808,8 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
             if (id == 0) continue;
             char buf1[0x20];
             char buf2[0x20];
-            sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
-            sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
+            sprintf(buf1, "txt_para7%02d", i * 2 + 0x13);
+            sprintf(buf2, "txt_value7%02d", i + 0x10);
             nw4r::lyt::Pane* pane1 = mpLayout->GetRootPane()->FindPaneByName(buf1, true);
             nw4r::lyt::Pane* pane2 = mpLayout->GetRootPane()->FindPaneByName(buf2, true);
             CItemBoxQuad quad;
@@ -6838,50 +6835,50 @@ setLayoutTextBoxNumber(mpLayout, &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam
                 f32 dst[3] = {v0, v1, v2};
                 copyVEC3(&mPage.mPos[idx], (void*)dst);
             }
-            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805063BC[0x139], id), 0);
+            LayoutSetTextBoxFmtValue(mpLayout, buf1, BdatGetPtrDirect(lbl_eu_806640D8, "name", id), 0);
             if (val == 0) {
-                LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+                LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
             } else {
-                u8 rvs = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805063BC[0x3], id);
+                u8 rvs = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", id);
                 if (rvs != 0 && (rvs == 0xFF || rvs == 0xFE)) {
                     ml::FixStr<32> fmtBuf;
-                    fmtBuf.format(&lbl_eu_805063BC[0x13E], (s32)val, BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
+                    fmtBuf.format("%d%s", (s32)val, BdatTouchStringCell("MNU_item", "name", 0x21));
                     LayoutSetTextBoxFmtValue(mpLayout, buf2, fmtBuf.c_str(), 0);
                 } else {
                     ml::FixStr<32> fmtBuf;
-                    fmtBuf.format(&lbl_eu_805063BC[0x422], (s32)val);
+                    fmtBuf.format("%d ", (s32)val);
                     LayoutSetTextBoxFmtValue(mpLayout, buf2, fmtBuf.c_str(), 0);
                 }
             }
             if (arg5 == 0) {
-                LayoutSetTextBoxFmtValue(mpLayout, buf2, &lbl_eu_805063BC[0x2AA], 0);
+                LayoutSetTextBoxFmtValue(mpLayout, buf2, "", 0);
             }
-            GXColorS10 q1 = *(GXColorS10*)&lbl_eu_80664518;
-            GXColorS10 q2 = *(GXColorS10*)&lbl_eu_80664520;
-            GXColorS10 q3 = *(GXColorS10*)&lbl_eu_80664558;
-            GXColorS10 q4 = *(GXColorS10*)&lbl_eu_80664560;
-            u32 cap = BdatGetU16Direct(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], id);
+            GXColorS10 q1 = *(GXColorS10*)&itemBoxInfo_labelNeutralTop;
+            GXColorS10 q2 = *(GXColorS10*)&itemBoxInfo_labelNeutralBottom;
+            GXColorS10 q3 = *(GXColorS10*)&itemBoxInfo_valueNeutralTop;
+            GXColorS10 q4 = *(GXColorS10*)&itemBoxInfo_valueNeutralBottom;
+            u32 cap = BdatGetU16Direct(lbl_eu_806640D8, "max", id);
             if ((u32)val >= cap) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664548);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664550);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664588);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664590);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelSpecialTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelSpecialBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueSpecialTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueSpecialBottom);
             } else if (cf == 1) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelUpBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueUpTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueUpBottom);
             } else if (cf == 2) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_labelDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_labelDownBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_valueDownTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_valueDownBottom);
             }
             if (arg5 == 0) {
-                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_806645A8);
-                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_806645B0);
-                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_806645C8);
-                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_806645D0);
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &itemBoxInfo_slotValueTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &itemBoxInfo_slotValueBottom);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &itemBoxInfo_nameValueTop);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &itemBoxInfo_nameValueBottom);
             }
             PaneMatSetTevColors(pane1, &q1, &q2);
             PaneMatSetTevColors(pane2, &q3, &q4);
@@ -6939,14 +6936,14 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
             void* item = CItem_kindPtr(slotByte, id);
             if (d != NULL && slotByte == equipSlot) {
                 // candidate slot: name-based lookup over the item names
-                u8 count = (u8)BdatGetU8Direct((const void*)nameObj, base + 0x432, (u16)nameId);
+                u8 count = (u8)BdatGetU8Direct((const void*)nameObj, "jwl_slot", (u16)nameId);
                 for (u8 j = 0; (u8)j < count; j++) {
-                    sprintf(buf, base + 0x43b, (u8)j + 1);
+                    sprintf(buf, "jwl_skill%d", (u8)j + 1);
                     u32 v = BdatGetU16Direct((char*)nameObj, buf, nameId);
                     if ((u16)v != 0) {
                         u16 cat = (u16)BdatGetItemId(v);
                         if (c == cat) {
-                            result += (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, base + 0x447, (u16)v);
+                            result += (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", (u16)v);
                         }
                     }
                 }
@@ -6983,21 +6980,21 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
         } else {
             if (d != NULL && bytes[(u8)slot] == equipSlot) {
                 // candidate slot: name-based lookup
-                u8 count = (u8)BdatGetU8Direct((const void*)nameObj, base + 0x432, (u16)nameId);
+                u8 count = (u8)BdatGetU8Direct((const void*)nameObj, "jwl_slot", (u16)nameId);
                 for (u8 j = 0; (u8)j < count; j++) {
-                    sprintf(buf, base + 0x43b, (u8)j + 1);
+                    sprintf(buf, "jwl_skill%d", (u8)j + 1);
                     u32 v = BdatGetU16Direct((char*)nameObj, buf, nameId);
                     if ((u16)v != 0) {
                         u16 cat = (u16)BdatGetItemId(v);
                         if (c == cat) {
-                            result += (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, base + 0x447, (u16)v);
+                            result += (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "percent", (u16)v);
                         }
                     }
                 }
             }
         }
     }
-    u16 cap = (u16)BdatGetU16Direct(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x503], c);
+    u16 cap = (u16)BdatGetU16Direct(lbl_eu_806640D8, (char*)"max", c);
     if ((s16)cap < (s32)result) result = cap;
     return result;
 }
@@ -7070,9 +7067,9 @@ bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
             if (c != NULL && slot == slotId) {
                 // candidate matches the equipped slot: verify every indexed
                 // item name still resolves.
-                u8 j; u8 count = (u8)BdatGetU8Direct((const void*)nameObj, &lbl_eu_805063BC[0x432], nameId);
+                u8 j; u8 count = (u8)BdatGetU8Direct((const void*)nameObj, "jwl_slot", nameId);
                 for (j = 0; j < count; j++) {
-                    sprintf(buf, &lbl_eu_805063BC[0x43b], j + 1);
+                    sprintf(buf, "jwl_skill%d", j + 1);
                     if ((u16)BdatGetU16Direct((void*)nameObj, buf, nameId) != 0) return false;
                 }
             } else if (item != NULL && *(u32*)item != 0) {
@@ -7093,9 +7090,9 @@ bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
             }
         } else {
             if (c != NULL && tbl[i] == slotId) {
-                u8 j; u8 count = (u8)BdatGetU8Direct((const void*)nameObj, &lbl_eu_805063BC[0x432], nameId);
+                u8 j; u8 count = (u8)BdatGetU8Direct((const void*)nameObj, "jwl_slot", nameId);
                 for (j = 0; j < count; j++) {
-                    sprintf(buf, &lbl_eu_805063BC[0x43b], j + 1);
+                    sprintf(buf, "jwl_skill%d", j + 1);
                     if ((u16)BdatGetU16Direct((void*)nameObj, buf, nameId) != 0) return false;
                 }
             }
@@ -7111,60 +7108,60 @@ bool CItemBoxInfo2::TestEquip(u16 b, void* c) {
 bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
     if (mFileHandle1 == file->mFileHandle) {
         mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x18000,
-                                      &lbl_eu_805063BC[0x826], 1);
+                                      "CItemBoxInfo2", 1);
         Class_8045F858 host(&mRegion1);
         u8* data = (u8*)mFileHandle1->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = CLibLayout::createArcResourceAccessor();
         mArcResAcc = acc;
-        acc->Attach(data, &lbl_eu_805063BC[0x531]);
-        buildLayout(&mpLayout, acc, &lbl_eu_805063BC[0x535]);
-        bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, &lbl_eu_805063BC[0x54a]);
-        bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, &lbl_eu_805063BC[0x562]);
+        acc->Attach(data, "arc");
+        buildLayout(&mpLayout, acc, "mf02_box02_inf.brlyt");
+        bindLayoutAnimTransform(mpLayout, &mAnimIn, acc, "mf02_box02_inf_in.brlan");
+        bindLayoutAnimTransform(mpLayout, &mAnimInfoIn, acc, "mf02_box02_inf_info_in.brlan");
         nw4r::lyt::Pane* root = mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, mpLayout);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(static_cast<IDeviceFontInfo*>(fontObj)->getFont()));
 
         // Seed the label textboxes with the shared text object.
         char* text = (char*)CUICfManager_getPackedFont9C();
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x25b], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x267], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x273], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x286], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x292], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x29e], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x45a], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x466], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4a7], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x57f], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x58b], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x597], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5a3], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5af], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5be], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5cd], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x143], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4e3], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x4f0], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5dc], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5e9], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x5f6], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x603], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x610], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x61d], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x62a], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x637], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x644], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x651], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x65e], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x66b], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x678], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x685], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x692], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x69f], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6ac], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6b9], (u32)text);
-        setLayoutTextBoxFont(mpLayout, &lbl_eu_805063BC[0x6c6], (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value02", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value08", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value09", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value04", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value07", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value22", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value50", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value51", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value30", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value31", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value32", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value33", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value34", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_ethvalue01", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_ethvalue02", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_ethvalue03", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_gold01_00", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value700", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value702", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value703", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value704", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value705", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value708", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value710", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value706", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value709", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value712", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value714", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value715", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value716", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value717", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value718", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value719", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value720", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value721", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value722", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_value723", (u32)text);
+        setLayoutTextBoxFont(mpLayout, "txt_para704", (u32)text);
 
         mpLayout->SetAnimationEnable(mAnimInfoIn, false);
         mpLayout->SetAnimationEnable(mAnimIn, true);
@@ -7175,163 +7172,163 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
         // Mode-gated pane clears (retail: mode!=1&&mode!=2 / mode!=3).
         if (mode != 1 && mode != 2) {
-            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6dd], true), 0);
+            setPaneVisible(root->FindPaneByName("nul_shop", true), 0);
         }
         if (mode != 3) {
-            setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x6e6], true), 0);
+            setPaneVisible(root->FindPaneByName("nul_excange", true), 0);
         }
 
         // Fixed label texts: each pane gets string-table entry [len].
         #define SEED_ITEMBOX2_LABEL(off, len) \
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[off], \
                           BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], len), 0)
-        SEED_ITEMBOX2_LABEL(0x2b6, 10);
-        SEED_ITEMBOX2_LABEL(0x2d7, 13);
-        SEED_ITEMBOX2_LABEL(0x2e2, 17);
-        SEED_ITEMBOX2_LABEL(0x2c1, 18);
-        SEED_ITEMBOX2_LABEL(0x2cc, 12);
-        SEED_ITEMBOX2_LABEL(0x2ed, 19);
-        SEED_ITEMBOX2_LABEL(0x6f2, 24);
-        SEED_ITEMBOX2_LABEL(0x6fd, 24);
-        SEED_ITEMBOX2_LABEL(0x708, 36);
-        SEED_ITEMBOX2_LABEL(0x713, 37);
-        SEED_ITEMBOX2_LABEL(0x71e, 112);
-        SEED_ITEMBOX2_LABEL(0x72a, 114);
-        SEED_ITEMBOX2_LABEL(0x736, 115);
-        SEED_ITEMBOX2_LABEL(0x742, 116);
-        SEED_ITEMBOX2_LABEL(0x74e, 121);
-        SEED_ITEMBOX2_LABEL(0x75a, 117);
-        SEED_ITEMBOX2_LABEL(0x766, 123);
-        SEED_ITEMBOX2_LABEL(0x772, 118);
-        SEED_ITEMBOX2_LABEL(0x77e, 119);
-        SEED_ITEMBOX2_LABEL(0x78a, 126);
-        SEED_ITEMBOX2_LABEL(0x796, 130);
-        SEED_ITEMBOX2_LABEL(0x2f8, 47);
-        SEED_ITEMBOX2_LABEL(0x6c6, 130);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para01", BdatTouchStringCell("MNU_item", "name", 10), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para04", BdatTouchStringCell("MNU_item", "name", 13), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para08", BdatTouchStringCell("MNU_item", "name", 17), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para10", BdatTouchStringCell("MNU_item", "name", 18), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para11", BdatTouchStringCell("MNU_item", "name", 12), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para22", BdatTouchStringCell("MNU_item", "name", 19), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para30", BdatTouchStringCell("MNU_item", "name", 24), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para50", BdatTouchStringCell("MNU_item", "name", 24), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para60", BdatTouchStringCell("MNU_item", "name", 36), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para61", BdatTouchStringCell("MNU_item", "name", 37), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para700", BdatTouchStringCell("MNU_item", "name", 112), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para702", BdatTouchStringCell("MNU_item", "name", 114), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para703", BdatTouchStringCell("MNU_item", "name", 115), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para705", BdatTouchStringCell("MNU_item", "name", 116), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para706", BdatTouchStringCell("MNU_item", "name", 121), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para708", BdatTouchStringCell("MNU_item", "name", 117), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para709", BdatTouchStringCell("MNU_item", "name", 123), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para710", BdatTouchStringCell("MNU_item", "name", 118), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para713", BdatTouchStringCell("MNU_item", "name", 119), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para716", BdatTouchStringCell("MNU_item", "name", 126), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para717", BdatTouchStringCell("MNU_item", "name", 130), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para23", BdatTouchStringCell("MNU_item", "name", 47), 0);
+        LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para704", BdatTouchStringCell("MNU_item", "name", 130), 0);
         #undef SEED_ITEMBOX2_LABEL
 
         // Per-mode caption / detail text.
         if (mode == 1 || mode == 2) {
             ml::FixStr<32> caption(true);
-            caption.format(&lbl_eu_805063BC[0x13e], CItemBlock_getPtr20E8(),
-                           BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3));
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x143],
+            caption.format("%d%s", CItemBlock_getPtr20E8(),
+                           BdatTouchStringCell("MNU_item", "name", 3));
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_gold01_00",
                           caption.c_str(), 0);
         } else if (mode == 3) {
             u16 itemId = mMode;
             u8 kind = (u8)MapSexFlagGroup(itemId);
             char* s;
             if (kind == 0) {
-                s = BdatTouchStringCell(&lbl_eu_805063BC[0x7a2], &lbl_eu_805063BC[0x139], 0x24);
+                s = BdatTouchStringCell("MNU_relate", "name", 0x24);
             } else {
-                s = BdatTouchStringCell(&lbl_eu_805063BC[0x7a2], &lbl_eu_805063BC[0x139], kind + 0x1F);
+                s = BdatTouchStringCell("MNU_relate", "name", kind + 0x1F);
             }
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7ad], s, 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npctype", s, 0);
             char* name = ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(
-                &lbl_eu_80664098, &lbl_eu_805063BC[0x139], itemId);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7b9],
+                &lbl_eu_80664098, "name", itemId);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcname",
                           GetBdatNameByNumId(name), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7c5],
-                          BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x2d), 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7d2],
-                          &lbl_eu_805063BC[0x2aa], 0);
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[0x7e0],
-                          &lbl_eu_805063BC[0x2aa], 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_npcframe",
+                          BdatTouchStringCell("MNU_item", "name", 0x2d), 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_excange00",
+                          "", 0);
+            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_excange01",
+                          "", 0);
         }
 
         // Vertex colours: highlight pair onto this (+0x9C/+0xA4); the named
         // panes' pairs go into the .sbss colour globals with their alpha
         // halves propagated to the paired globals.
-        nw4r::lyt::Pane* hl = root->FindPaneByName(&lbl_eu_805063BC[0x7ee], true);
+        nw4r::lyt::Pane* hl = root->FindPaneByName("pic_pcbs01", true);
         GXColorS10 c1 = PaneMatGetS16Quad(hl, 0);
         __as__11_GXColorS10FRC11_GXColorS10(&mColorA, &c1);
         GXColorS10 c2 = PaneMatGetS16Quad(hl, 1);
         __as__11_GXColorS10FRC11_GXColorS10(&mColorB, &c2);
 
-        nw4r::lyt::Pane* p71e = root->FindPaneByName(&lbl_eu_805063BC[0x71e], true);
+        nw4r::lyt::Pane* p71e = root->FindPaneByName("txt_para700", true);
         GXColorS10 c3 = PaneMatGetS16Quad(p71e, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664518, &c3);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_labelNeutralTop, &c3);
         GXColorS10 c4 = PaneMatGetS16Quad(p71e, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664520, &c4);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_labelNeutralBottom, &c4);
         {
-            s16 a0 = *(s16*)((char*)&lbl_eu_80664518 + 6);
-            s16 a1 = *(s16*)((char*)&lbl_eu_80664520 + 6);
-            *(s16*)((char*)&lbl_eu_80664528 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664530 + 6) = a1;
-            *(s16*)((char*)&lbl_eu_80664538 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664540 + 6) = a1;
-            *(s16*)((char*)&lbl_eu_80664548 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664550 + 6) = a1;
+            s16 a0 = *(s16*)((char*)&itemBoxInfo_labelNeutralTop + 6);
+            s16 a1 = *(s16*)((char*)&itemBoxInfo_labelNeutralBottom + 6);
+            *(s16*)((char*)&itemBoxInfo_labelUpTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_labelUpBottom + 6) = a1;
+            *(s16*)((char*)&itemBoxInfo_labelDownTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_labelDownBottom + 6) = a1;
+            *(s16*)((char*)&itemBoxInfo_labelSpecialTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_labelSpecialBottom + 6) = a1;
         }
 
-        nw4r::lyt::Pane* p4e3 = root->FindPaneByName(&lbl_eu_805063BC[0x4e3], true);
+        nw4r::lyt::Pane* p4e3 = root->FindPaneByName("txt_value700", true);
         GXColorS10 c5 = PaneMatGetS16Quad(p4e3, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664558, &c5);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_valueNeutralTop, &c5);
         GXColorS10 c6 = PaneMatGetS16Quad(p4e3, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664560, &c6);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_valueNeutralBottom, &c6);
         {
-            s16 a0 = *(s16*)((char*)&lbl_eu_80664558 + 6);
-            s16 a1 = *(s16*)((char*)&lbl_eu_80664560 + 6);
-            *(s16*)((char*)&lbl_eu_80664568 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664570 + 6) = a1;
-            *(s16*)((char*)&lbl_eu_80664578 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664580 + 6) = a1;
-            *(s16*)((char*)&lbl_eu_80664588 + 6) = a0;
-            *(s16*)((char*)&lbl_eu_80664590 + 6) = a1;
+            s16 a0 = *(s16*)((char*)&itemBoxInfo_valueNeutralTop + 6);
+            s16 a1 = *(s16*)((char*)&itemBoxInfo_valueNeutralBottom + 6);
+            *(s16*)((char*)&itemBoxInfo_valueUpTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_valueUpBottom + 6) = a1;
+            *(s16*)((char*)&itemBoxInfo_valueDownTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_valueDownBottom + 6) = a1;
+            *(s16*)((char*)&itemBoxInfo_valueSpecialTop + 6) = a0;
+            *(s16*)((char*)&itemBoxInfo_valueSpecialBottom + 6) = a1;
         }
 
-        nw4r::lyt::Pane* p2b6 = root->FindPaneByName(&lbl_eu_805063BC[0x2b6], true);
+        nw4r::lyt::Pane* p2b6 = root->FindPaneByName("txt_para01", true);
         GXColorS10 c7 = PaneMatGetS16Quad(p2b6, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_80664598, &c7);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_slotLabelTop, &c7);
         GXColorS10 c8 = PaneMatGetS16Quad(p2b6, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645A0, &c8);
-        *(s16*)((char*)&lbl_eu_806645A8 + 6) = *(s16*)((char*)&lbl_eu_80664598 + 6);
-        *(s16*)((char*)&lbl_eu_806645B0 + 6) = *(s16*)((char*)&lbl_eu_806645A0 + 6);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_slotLabelBottom, &c8);
+        *(s16*)((char*)&itemBoxInfo_slotValueTop + 6) = *(s16*)((char*)&itemBoxInfo_slotLabelTop + 6);
+        *(s16*)((char*)&itemBoxInfo_slotValueBottom + 6) = *(s16*)((char*)&itemBoxInfo_slotLabelBottom + 6);
 
-        nw4r::lyt::Pane* p25b = root->FindPaneByName(&lbl_eu_805063BC[0x25b], true);
+        nw4r::lyt::Pane* p25b = root->FindPaneByName("txt_value02", true);
         GXColorS10 c9 = PaneMatGetS16Quad(p25b, 0);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645B8, &c9);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_nameLabelTop, &c9);
         GXColorS10 c10 = PaneMatGetS16Quad(p25b, 1);
-        __as__11_GXColorS10FRC11_GXColorS10(&lbl_eu_806645C0, &c10);
-        *(s16*)((char*)&lbl_eu_806645C8 + 6) = *(s16*)((char*)&lbl_eu_806645B8 + 6);
-        *(s16*)((char*)&lbl_eu_806645D0 + 6) = *(s16*)((char*)&lbl_eu_806645C0 + 6);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxInfo_nameLabelBottom, &c10);
+        *(s16*)((char*)&itemBoxInfo_nameValueTop + 6) = *(s16*)((char*)&itemBoxInfo_nameLabelTop + 6);
+        *(s16*)((char*)&itemBoxInfo_nameValueBottom + 6) = *(s16*)((char*)&itemBoxInfo_nameLabelBottom + 6);
 
         StampSlotTex();
 
         // Pane clears for the selection view.
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xc2], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xce], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xda], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xe6], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xf2], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0xfe], true), 1);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x10b], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x113], true), 0);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x121], true), 1);
-        setPaneVisible(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 0);
+        setPaneVisible(root->FindPaneByName("nul_para_01", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_para_30", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_para_50", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_para_60", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_para_80", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_para_700", true), 1);
+        setPaneVisible(root->FindPaneByName("nul_eth", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_infbcln01", true), 0);
+        setPaneVisible(root->FindPaneByName("nul_infbcln700", true), 1);
+        setPaneVisible(root->FindPaneByName("nul_scnd", true), 0);
 
         // Cache the 20 slot panes at +0x40..+0x8C for the renderer (retail
         // keeps the layout's root pane live in r28 across all lookups).
-        mSlotPane0 = root->FindPaneByName(base + 0x5dc, true);
-        mSlotPane1 = root->FindPaneByName(base + 0x736, true);
-        mSlotPane2 = root->FindPaneByName(base + 0x5e9, true);
-        mSlotPane3 = root->FindPaneByName(base + 0x6c6, true);
-        mSlotPane4 = root->FindPaneByName(base + 0x5f6, true);
-        mSlotPane5 = root->FindPaneByName(base + 0x742, true);
-        mSlotPane6 = root->FindPaneByName(base + 0x603, true);
-        mSlotPane7 = root->FindPaneByName(base + 0x75a, true);
-        mSlotPane8 = root->FindPaneByName(base + 0x610, true);
-        mSlotPane9 = root->FindPaneByName(base + 0x772, true);
-        mSlotPane10 = root->FindPaneByName(base + 0x61d, true);
-        mSlotPane11 = root->FindPaneByName(base + 0x74e, true);
-        mSlotPane12 = root->FindPaneByName(base + 0x637, true);
-        mSlotPane13 = root->FindPaneByName(base + 0x77e, true);
-        mSlotPane14 = root->FindPaneByName(base + 0x644, true);
-        mSlotPane15 = root->FindPaneByName(base + 0x78a, true);
-        mSlotPane16 = root->FindPaneByName(base + 0x62a, true);
-        mSlotPane17 = root->FindPaneByName(base + 0x766, true);
-        mSlotPane18 = root->FindPaneByName(base + 0x651, true);
-        mSlotPane19 = root->FindPaneByName(base + 0x796, true);
+        mSlotPane0 = root->FindPaneByName("txt_value703", true);
+        mSlotPane1 = root->FindPaneByName("txt_para703", true);
+        mSlotPane2 = root->FindPaneByName("txt_value704", true);
+        mSlotPane3 = root->FindPaneByName("txt_para704", true);
+        mSlotPane4 = root->FindPaneByName("txt_value705", true);
+        mSlotPane5 = root->FindPaneByName("txt_para705", true);
+        mSlotPane6 = root->FindPaneByName("txt_value708", true);
+        mSlotPane7 = root->FindPaneByName("txt_para708", true);
+        mSlotPane8 = root->FindPaneByName("txt_value710", true);
+        mSlotPane9 = root->FindPaneByName("txt_para710", true);
+        mSlotPane10 = root->FindPaneByName("txt_value706", true);
+        mSlotPane11 = root->FindPaneByName("txt_para706", true);
+        mSlotPane12 = root->FindPaneByName("txt_value712", true);
+        mSlotPane13 = root->FindPaneByName("txt_para713", true);
+        mSlotPane14 = root->FindPaneByName("txt_value714", true);
+        mSlotPane15 = root->FindPaneByName("txt_para716", true);
+        mSlotPane16 = root->FindPaneByName("txt_value709", true);
+        mSlotPane17 = root->FindPaneByName("txt_para709", true);
+        mSlotPane18 = root->FindPaneByName("txt_value715", true);
+        mSlotPane19 = root->FindPaneByName("txt_para717", true);
 
         Activate();
         mFileHandle1 = 0;
@@ -7340,13 +7337,13 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
     }
     if (mFileHandle2 == file->mFileHandle) {
         mRegion2.createRegion(mtl::MemManager::getHandleMEM2(), 0x100,
-                                      &lbl_eu_805063BC[0x834], 1);
+                                      "CItemBoxInfo2Tex", 1);
         Class_8045F858 host(&mRegion2);
         u8* data = (u8*)mFileHandle2->getData();
         mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 = CLibLayout::createArcResourceAccessor();
         mTexArcResAcc = acc2;
-        acc2->Attach(data, &lbl_eu_805063BC[0x531]);
+        acc2->Attach(data, "arc");
         Activate();
         mFileHandle2 = 0;
         mRegion2.validateHeap();
@@ -7357,30 +7354,30 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 
 
 void sinit_801EABC4() {
-    SplitU32ToS16s(&lbl_eu_80664518, 0);
-    SplitU32ToS16s(&lbl_eu_80664520, 0);
-    setGXColorS10(&lbl_eu_80664528, 0x25, 0x8a, 0xce, 0);
-    setGXColorS10(&lbl_eu_80664530, 0x25, 0x8a, 0xce, 0);
-    setGXColorS10(&lbl_eu_80664538, 0xd2, 0x28, 0x14, 0);
-    setGXColorS10(&lbl_eu_80664540, 0xd2, 0x28, 0x14, 0);
-    setGXColorS10(&lbl_eu_80664548, 0x1f, 0xb0, 0x1a, 0);
-    setGXColorS10(&lbl_eu_80664550, 0x1f, 0xb0, 0x1a, 0);
-    SplitU32ToS16s(&lbl_eu_80664558, 0);
-    SplitU32ToS16s(&lbl_eu_80664560, 0);
-    setGXColorS10(&lbl_eu_80664568, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(&lbl_eu_80664570, 0x25, 0x8a, 0xce, 0);
-    setGXColorS10(&lbl_eu_80664578, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(&lbl_eu_80664580, 0xd2, 0x28, 0x14, 0);
-    setGXColorS10(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(&lbl_eu_80664590, 0x1f, 0xa6, 0x1a, 0);
-    SplitU32ToS16s(&lbl_eu_80664598, 0);
-    SplitU32ToS16s(&lbl_eu_806645A0, 0);
-    setGXColorS10(&lbl_eu_806645A8, 0x80, 0x80, 0x80, 0);
-    setGXColorS10(&lbl_eu_806645B0, 0x80, 0x80, 0x80, 0);
-    SplitU32ToS16s(&lbl_eu_806645B8, 0);
-    SplitU32ToS16s(&lbl_eu_806645C0, 0);
-    setGXColorS10(&lbl_eu_806645C8, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(&lbl_eu_806645D0, 0x80, 0x80, 0x80, 0);
+    SplitU32ToS16s(&itemBoxInfo_labelNeutralTop, 0);
+    SplitU32ToS16s(&itemBoxInfo_labelNeutralBottom, 0);
+    setGXColorS10(&itemBoxInfo_labelUpTop, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&itemBoxInfo_labelUpBottom, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&itemBoxInfo_labelDownTop, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&itemBoxInfo_labelDownBottom, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&itemBoxInfo_labelSpecialTop, 0x1f, 0xb0, 0x1a, 0);
+    setGXColorS10(&itemBoxInfo_labelSpecialBottom, 0x1f, 0xb0, 0x1a, 0);
+    SplitU32ToS16s(&itemBoxInfo_valueNeutralTop, 0);
+    SplitU32ToS16s(&itemBoxInfo_valueNeutralBottom, 0);
+    setGXColorS10(&itemBoxInfo_valueUpTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&itemBoxInfo_valueUpBottom, 0x25, 0x8a, 0xce, 0);
+    setGXColorS10(&itemBoxInfo_valueDownTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&itemBoxInfo_valueDownBottom, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10(&itemBoxInfo_valueSpecialTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&itemBoxInfo_valueSpecialBottom, 0x1f, 0xa6, 0x1a, 0);
+    SplitU32ToS16s(&itemBoxInfo_slotLabelTop, 0);
+    SplitU32ToS16s(&itemBoxInfo_slotLabelBottom, 0);
+    setGXColorS10(&itemBoxInfo_slotValueTop, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxInfo_slotValueBottom, 0x80, 0x80, 0x80, 0);
+    SplitU32ToS16s(&itemBoxInfo_nameLabelTop, 0);
+    SplitU32ToS16s(&itemBoxInfo_nameLabelBottom, 0);
+    setGXColorS10(&itemBoxInfo_nameValueTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&itemBoxInfo_nameValueBottom, 0x80, 0x80, 0x80, 0);
 }
 
 // Retail formatItemBoxName: fills the item-name buffer at item_data+0xD9 from
@@ -7399,11 +7396,11 @@ char* CItemBoxPage::GetItemName(u8 index) {
     char tmp[0x40];
     char buf[0x40];
     char* base = lbl_eu_805063BC;
-    sprintf(buf, base, val);
-    u8 fmt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 3, item_id);
-    char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, base + 0xC, item_id);
+    sprintf(buf, "%d", val);
+    u8 fmt = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", item_id);
+    char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(lbl_eu_806640D8, "rvs_caption", item_id);
     char* out = mText.mName;
-    sprintf(out, base + 0x18, name);
+    sprintf(out, "%s", name);
     u8 is_jp = 1;
     u8 lang = getLanguage__9CDeviceSCFv();
     if (lang != 3 && getLanguage__9CDeviceSCFv() != 2) is_jp = 0;
@@ -7415,15 +7412,15 @@ char* CItemBoxPage::GetItemName(u8 index) {
             if (c == '1') {
                 scan++;
                 switch (fmt) {
-                    case 1: sprintf(tmp, base + 0x1B, buf); break;
-                    case 2: sprintf(tmp, base + 0x1B, buf); break;
+                    case 1: sprintf(tmp, "<col=red>%s<col=def>", buf); break;
+                    case 2: sprintf(tmp, "<col=red>%s<col=def>", buf); break;
                     case 3:
-                        if (is_jp) sprintf(tmp, base + 0x30, buf);
-                        else sprintf(tmp, base + 0x48, buf);
+                        if (is_jp) sprintf(tmp, "<col=red>%s %%<col=def>", buf);
+                        else sprintf(tmp, "<col=red>%s%%<col=def>", buf);
                         break;
                     case 4:
-                        if (is_jp) sprintf(tmp, base + 0x30, buf);
-                        else sprintf(tmp, base + 0x48, buf);
+                        if (is_jp) sprintf(tmp, "<col=red>%s %%<col=def>", buf);
+                        else sprintf(tmp, "<col=red>%s%%<col=def>", buf);
                         break;
                 }
             } else if (c == '2') {
@@ -7432,14 +7429,14 @@ char* CItemBoxPage::GetItemName(u8 index) {
                 // the category string table; entry [1+category] is the text id.
                 u32 tbl[7];
                 u32* d = tbl;
-                u32* s = (u32*)&lbl_eu_80506330;
+                u32* s = (u32*)&itemBoxInfoCategoryStringTables;
                 for (u32 k = 0; k < 3; k++) {
                     *d++ = *s++;
                 }
                 *d = *s;
                 u8 r = (u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, (const char*)tbl[1 + category], item_id);
-                if (is_jp) sprintf(tmp, base + 0x5F, r);
-                else sprintf(tmp, base + 0x77, r);
+                if (is_jp) sprintf(tmp, "<col=red>%d %%<col=def>", r);
+                else sprintf(tmp, "<col=red>%d%%<col=def>", r);
             }
             // re-splice: back up the tail, insert the formatted text over
             // the 2-char tag, then restore the tail after it. The length
@@ -7453,12 +7450,12 @@ char* CItemBoxPage::GetItemName(u8 index) {
                 len++;
                 p++;
             } while (b != 0);
-            sprintf(tailBuf, base + 0x18, scan);
+            sprintf(tailBuf, "%s", scan);
             scan -= 2;
-            sprintf(scan, base + 0x18, tmp);
+            sprintf(scan, "%s", tmp);
             scan += len;
             scan -= 1;
-            sprintf(scan, base + 0x18, tailBuf);
+            sprintf(scan, "%s", tailBuf);
         } else {
             s8 c = (s8)*scan;
             if ((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xEF)) scan += 2;
@@ -7477,21 +7474,21 @@ void CItemBoxInfo::HidePanes(u16 arg2) {
     char* base = (char*)&lbl_eu_805063BC;
 #define SET_PANE(_off, _val) \
     setPaneVisible(mpLayout->GetRootPane()->FindPaneByName(base + _off, true), _val)
-    SET_PANE(0xc2, 0x0);
-    SET_PANE(0xce, 0x0);
-    SET_PANE(0xda, 0x0);
-    SET_PANE(0xe6, 0x0);
-    SET_PANE(0xf2, 0x0);
-    SET_PANE(0xfe, 0x0);
-    SET_PANE(0x10b, 0x0);
-    SET_PANE(0x113, 0x0);
-    SET_PANE(0x121, 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_01", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_30", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_50", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_60", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_80", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_700", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_eth", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_infbcln01", true), 0x0);
+    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_infbcln700", true), 0x0);
     if (mKind == 4) {
         if (mFlagAE == 0) {
-            SET_PANE(0xfe, 0x1);
-            SET_PANE(0x121, 0x1);
+            setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_700", true), 0x1);
+            setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_infbcln700", true), 0x1);
         } else {
-            SET_PANE(0x113, 0x1);
+            setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_infbcln01", true), 0x1);
             // (was switch: retail compiles this dispatch as compares)
             if ((u32)arg2 - 4 > 4) {
                 if ((s16)arg2 != 2) {
@@ -7499,28 +7496,28 @@ void CItemBoxInfo::HidePanes(u16 arg2) {
                         if ((s16)arg2 != 9) {
                             if ((s16)arg2 != 0xa) {
                                 if ((s16)arg2 == 0xd) {
-                                    SET_PANE(0xf2, 0x1);
+                                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_80", true), 0x1);
                                 }
                             } else {
-                                SET_PANE(0xe6, 0x1);
+                                setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_60", true), 0x1);
                             }
                         } else {
-                            SET_PANE(0xce, 0x1);
+                            setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_30", true), 0x1);
                         }
                     } else {
-                        SET_PANE(0xda, 0x1);
+                        setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_50", true), 0x1);
                     }
                 } else {
-                    SET_PANE(0xc2, 0x1);
-                    SET_PANE(0x10b, 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_01", true), 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_eth", true), 0x1);
                 }
             } else {
-                    SET_PANE(0xc2, 0x1);
-                    SET_PANE(0x10b, 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_01", true), 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_eth", true), 0x1);
             }
         }
     } else {
-        SET_PANE(0x113, 0x1);
+        setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_infbcln01", true), 0x1);
         // (was switch: retail compiles this dispatch as compares)
         if ((u32)arg2 - 4 > 4) {
                 if ((s16)arg2 != 2) {
@@ -7528,24 +7525,24 @@ void CItemBoxInfo::HidePanes(u16 arg2) {
                         if ((s16)arg2 != 9) {
                             if ((s16)arg2 != 0xa) {
                                 if ((s16)arg2 == 0xd) {
-                                    SET_PANE(0xf2, 0x1);
+                                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_80", true), 0x1);
                                 }
                             } else {
-                                SET_PANE(0xe6, 0x1);
+                                setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_60", true), 0x1);
                             }
                         } else {
-                            SET_PANE(0xce, 0x1);
+                            setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_30", true), 0x1);
                         }
                     } else {
-                        SET_PANE(0xda, 0x1);
+                        setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_50", true), 0x1);
                     }
                 } else {
-                    SET_PANE(0xc2, 0x1);
-                    SET_PANE(0x10b, 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_01", true), 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_eth", true), 0x1);
                 }
             } else {
-                    SET_PANE(0xc2, 0x1);
-                    SET_PANE(0x10b, 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_01", true), 0x1);
+                    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_eth", true), 0x1);
             }
     }
 #undef SET_PANE

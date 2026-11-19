@@ -15,28 +15,13 @@
 #include <nw4r/math/math_triangular.h>
 
 #include "kyoshin/cf/CtrlNpc.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/plugin/ocBdat.hpp"
 // CfT_PlayRateGet is declared in CfGameManager.hpp as extern "C" float.
 
 // typed retail data (replaces old byte blobs): strings sized to retail gaps,
 // sdata2 as one struct to freeze MWCC order and keep the leading 0.0 live.
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBA58[0x0C] = "autotalk1";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBA64[0x0C] = "autotalk2";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBA70[0x0C] = "autotalk3";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBA7C[0x0C] = "autotalk4";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBA88[0x0C] = "autotalk5";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBA94[0x0C] = "autotalk6";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAA0[0x0C] = "OCLOCK_0";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAAC[0x0C] = "OCLOCK_3";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAB8[0x0C] = "OCLOCK_6";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAC4[0x0C] = "OCLOCK_9";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAD0[0x0C] = "OCLOCK_12";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBADC[0x0C] = "OCLOCK_15";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAE8[0x0C] = "OCLOCK_18";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBAF4[0x0C] = "OCLOCK_21";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBB00[0x0C] = "cf::CtrlNpc";
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBB0C[0xBC] = "JUhead\0FLD_npclist\0autotalklist%02d%02d\0scenario_s\0scenario_e\0quest_no\0relate_no\0relate\0select_no\0select\0popular_no\0popular\0npcmeet_no\0col6_h_no\0col6_h\0col6_k_no\0col6_k\0auto_mes\0no name";
 struct Sdata2_CtrlNpc {
     float f0,f1,f2,f3,f4,f5,f6,f7,f8,f9;
     double d0;
@@ -110,7 +95,7 @@ cf::CtrlNpc* __ct__CtrlNpc(cf::CtrlNpc* self, cf::CfObject* param) {
     self->field_C2 = 0;
     self->field_C3 = 0;
     self->field_C4 = 0;
-    self->field_D4 = lbl_eu_8066669C;
+    self->field_D4 = 10.0f;
     self->field_DC = 0;
     self->field_DE = 0x1e;
     self->field_172 = 0;
@@ -145,9 +130,9 @@ void CtrlNpcSetAction(cf::CtrlNpc* self, u32 param) {
             const nw4r::math::VEC3* pd =
                 reinterpret_cast<const nw4r::math::VEC3*>(&diff);
             if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_checkSubReady(&v) != 0 &&
-                (lbl_eu_80663E28 & 0x04000000) == 0) {
+                (gmPauseFlags & 0x04000000) == 0) {
                 f32 len2 = nw4r::math::VEC3LenSq(pd);
-                if (len2 < lbl_eu_806666A0) {
+                if (len2 < 4.0f) {
                     self->field_DC += 1;
                     if (self->field_C0 == 4) {
 reinterpret_cast<cf::CfObjectMove*>(self->field_28)->CfObjectMove_setTargetC4Arg(0);
@@ -175,8 +160,8 @@ struct CtrlNpcC4Target {
     u8 _pad[0x37C];            // 0x00-0x37B
     unsigned long field_37C;  // 0x37C-0x37F
 };
-void CfObjectMove_setTargetC4Arg__Q22cf12CfObjectMoveFUl(void* self, unsigned long val) {
-    void* ptr = static_cast<cf::CfObjectMove*>(self)->mTargetC4;
+void cf::CfObjectMove::CfObjectMove_setTargetC4Arg(u32 val) {
+    void* ptr = this->mTargetC4;
     if (ptr != 0)
         reinterpret_cast<CtrlNpcC4Target*>(ptr)->field_37C = val;
 }
@@ -215,7 +200,7 @@ bodyStart:
             if ((NpcCharView(self->field_28)->field_68 & 0x00100000) == 0 &&
                 reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags(1) != 0) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(1);
-            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(nullptr, lbl_eu_804FBB0C);
+            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(nullptr, "JUhead");
         }
 
         if ((self->field_2C & 0x08) != 0) {
@@ -265,7 +250,7 @@ bodyStart:
                 int be = self->field_BE;
                 if (be >= 0) {
                     if (be < 4)
-                        ((void (*)(cf::CtrlNpc*))lbl_eu_80527AE0[be*3+2])(self);
+                        ((void (*)(cf::CtrlNpc*))gNpcActionState1Handlers[be*3+2])(self);
                 }
                 goto tail;
             } else {
@@ -283,7 +268,7 @@ bodyStart:
                 int be = self->field_BE;
                 if (be >= 0) {
                     if (be < 3)
-                        ((void (*)(cf::CtrlNpc*))lbl_eu_80527B10[be*3+2])(self);
+                        ((void (*)(cf::CtrlNpc*))gNpcActionState2Handlers[be*3+2])(self);
                 }
             }
             if (NpcCharView(self->field_28)->field_98 != 0) {
@@ -310,7 +295,7 @@ bodyStart:
             int be = self->field_BE;
             if (be >= 0) {
                 if (be < 2)
-                    ((void (*)(cf::CtrlNpc*))lbl_eu_80527AA0[be*3+2])(self);
+                    ((void (*)(cf::CtrlNpc*))gNpcAnimMode16Handlers[be*3+2])(self);
             }
             if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
@@ -332,7 +317,7 @@ bodyStart:
             int be = self->field_BE;
             if (be >= 0) {
                 if (be < 3)
-                    ((void (*)(cf::CtrlNpc*))lbl_eu_80527AB8[be*3+2])(self);
+                    ((void (*)(cf::CtrlNpc*))gNpcAnimModeHandlers[be*3+2])(self);
             }
             if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
@@ -390,7 +375,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
     NpcColNarrow v48, v44, v40, v3C, v38, v34, v30, v2C, v28, v24, v20, v1C,
         v18, v14, v10, v0C, v08;
 
-    if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666698) {
+    if (Scn_GetFrameDelta(gmScene) > lbl_eu_80666698) {
         msg.text[0] = 0;
         msg.len = 0;
 
@@ -404,7 +389,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->setStateBitFlag(1);
         } else if (self->field_172 != 0) {
             f32 d = self->field_178 - reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveHeadAngle();
-            if (ml::math::abs(d) <= lbl_eu_806666A8)
+            if (ml::math::abs(d) <= 0.1f)
                 self->field_172 = 0;
         }
 
@@ -425,12 +410,12 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                         // retail compares against 0xFFFFFFFF (unsigned ->
                         // addis+cmplwi form).
                         u32 found =
-                            (u32)search->findNameIndex(lbl_eu_804FBB0C);
+                            (u32)search->findNameIndex("JUhead");
                         if (found != 0xFFFFFFFF) {
                             char* t = (char*)target;
                             if (t != 0) t -= 0x3E9C;
                             if (t != 0) t += 0x3E9C;
-                            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(reinterpret_cast<cf::CfObject*>(t), lbl_eu_804FBB0C);
+                            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(reinterpret_cast<cf::CfObject*>(t), "JUhead");
                         }
                     }
                 }
@@ -452,7 +437,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                     diffCopy = diff;
                     // atan args come from the snapshot copy (retail reuses
                     // the copy's f1/f2 loads for the call arguments).
-                    f32 h = lbl_eu_806666AC *
+                    f32 h = 0.024543693f *
                             nw4r::math::Atan2FIdx(diffCopy.x, diffCopy.z);
                     reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(h);
                     CfObjectMove_setAnimModeArgs((u8*)self->field_28, 3, 0, -1, 1);
@@ -487,12 +472,12 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
 
         Bdat_GetTable_AA34();
         Bdat_GetTable_AA34();
-        void* fp1 = getFP(lbl_eu_804FBB0C + 0x7);
+        void* fp1 = getFP("FLD_npclist");
         // Zeroed here (not at function top) so the 8-word inline clear lands
         // between the getFP call and sprintf, like retail.
         char sbuf[0x20] = {0};
-        sprintf(sbuf, lbl_eu_804FBB0C + 0x13, lbl_eu_80663E42,
-                lbl_eu_80663E44);
+        sprintf(sbuf, "autotalklist%02d%02d", gmGlobalFlag42,
+                gmGlobalFlag44);
         Bdat_GetTable_AA34();
         void* fp2 = getFP(sbuf);
 
@@ -506,15 +491,15 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
             // object.
             for (u32 i = 0; i < 6; i++) {
                 v48.w = getBdatStringColumnValue(
-                    fp1, lbl_eu_80527A48[i], NpcCharView(self->field_28)->field_8C);
+                    fp1, gNpcAutotalkColumnNames[i], NpcCharView(self->field_28)->field_8C);
                 u8 count = v48.b;
                 if (count == 0)
                     continue;
 
                 v44.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x28, count);
+                    fp2, "scenario_s", count);
                 v40.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x33, count);
+                    fp2, "scenario_e", count);
                 u32 cur = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x200001, 0));
                 if ((int)cur < (int)v44.h)
                     continue;
@@ -522,14 +507,14 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                     continue;
 
                 const char* col2 =
-                    lbl_eu_80527A60[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
+                    gNpcTimeColumnNames[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
                                     3];
                 v3C.w = getBdatStringColumnValue(fp2, col2, count);
                 if (v3C.b == 0)
                     continue;
 
                 v38.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x3E, count);
+                    fp2, "quest_no", count);
                 if (v38.h != 0) {
                     u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x2203E8, v38.h));
                     if (f != 0xFE && f != 0xFF)
@@ -537,38 +522,38 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                 }
 
                 v34.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x47, count);
+                    fp2, "relate_no", count);
                 if (v34.h != 0) {
                     u32 f =
                         CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x608190, v34.h));
                     v30.w = getBdatStringColumnValue(
-                        fp2, lbl_eu_804FBB0C + 0x51, count);
+                        fp2, "relate", count);
                     if (f != v30.b)
                         continue;
                 }
 
                 v2C.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x58, count);
+                    fp2, "select_no", count);
                 if (v2C.b != 0) {
                     u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x798064, v2C.b));
                     v28.w = getBdatStringColumnValue(
-                        fp2, lbl_eu_804FBB0C + 0x62, count);
+                        fp2, "select", count);
                     if (f != v28.b)
                         continue;
                 }
 
                 v24.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x69, count);
+                    fp2, "popular_no", count);
                 if (v24.b != 0) {
                     u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x210007, v24.b));
                     v20.w = getBdatStringColumnValue(
-                        fp2, lbl_eu_804FBB0C + 0x74, count);
+fp2, "popular", count);
                     if (f < v20.h)
                         continue;
                 }
 
                 v1C.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x7C, count);
+fp2, "npcmeet_no", count);
                 if (v1C.h != 0) {
                     u32 f =
                         CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0xA2012C, v1C.h));
@@ -577,27 +562,27 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
                 }
 
                 v18.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x87, count);
+                    fp2, "col6_h_no", count);
                 if (v18.b != 0) {
                     u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x7FC008, v18.b));
                     v14.w = getBdatStringColumnValue(
-                        fp2, lbl_eu_804FBB0C + 0x91, count);
+                        fp2, "col6_h", count);
                     if (f < v14.h)
                         continue;
                 }
 
                 v10.w = getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0x98, count);
+                    fp2, "col6_k_no", count);
                 if (v10.b != 0) {
                     u32 f = CtrlRemote_TouchBitByArg(UIWin_PackHiLo(0x25781E, v10.b));
                     v0C.w = getBdatStringColumnValue(
-                        fp2, lbl_eu_804FBB0C + 0xA2, count);
+                        fp2, "col6_k", count);
                     if (f != v0C.b)
                         continue;
                 }
 
                 const char* text = (const char*)getBdatStringColumnValue(
-                    fp2, lbl_eu_804FBB0C + 0xA9, count);
+                    fp2, "auto_mes", count);
                 msg.len = strlen(text);
                 strcpy(msg.text, text);
                 UIWin_CreateTalkWin(NpcCharView(self->field_28)->field_74, msg.text, 0);
@@ -607,7 +592,7 @@ void CtrlNpcUpdateTalk(cf::CtrlNpc* self) {
         } else if (reinterpret_cast<cf::CObjectState*>(self->field_28)->checkStateFlags8(0x2000) != 0 &&
                    self->field_17C != 0) {
             const char* col3 =
-                lbl_eu_80527A80[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
+                gNpcTimeColumnNamesAlt[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
                                 3];
             v08.w = getBdatStringColumnValue(fp2, col3, self->field_17C);
             if (v08.b == 0) {
@@ -738,7 +723,7 @@ int CtrlNpcCanAdvanceAction(const cf::CtrlNpc* self) {
     int result = 0;
     u32 c0 = self->field_C0;
     if (c0 == 3) {
-        if ((lbl_eu_80663E28 & 0x04000000) != 0) {
+        if ((gmPauseFlags & 0x04000000) != 0) {
             if (self->field_BE == 2)
                 result = 1;
         } else {
@@ -919,14 +904,14 @@ void CtrlNpcTurnToTarget(cf::CtrlNpc* self) {
     f32 f1;
     // Far: aim at the target; close: wander.
     if (v.x * v.x + v.z * v.z >=
-        lbl_eu_806666B4 * (self->field_D4 * self->field_D4)) {
+        0.8f * (self->field_D4 * self->field_D4)) {
         // Jittered aim; the angle stays in a callee-saved float across the
         // rand call, and the rand int promotes straight to double like
         // retail's __cvt_s2d sequence.
-        f32 ang = lbl_eu_806666AC * nw4r::math::Atan2FIdx(v.x, v.z);
+        f32 ang = 0.024543693f * nw4r::math::Atan2FIdx(v.x, v.z);
         f32 jitA = ml::pi * ml::math::mtRand(-30, 30);
         self->field_BA = 0x10;
-        f32 jitB = lbl_eu_806666B8 * jitA;
+        f32 jitB = 0.01f * jitA;
         jitB += ang;
         f1 = jitB;
     } else {
@@ -935,7 +920,7 @@ void CtrlNpcTurnToTarget(cf::CtrlNpc* self) {
             // Retail evaluates the rand int-to-double conversion before the
             // _vD8() virtual call (the value lives in f31 across the call).
             double rnd = ml::math::mtRand(60);
-            f32 base = lbl_eu_806666BC + reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getScaledAngle();
+            f32 base = 180.0f + reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getScaledAngle();
             f1 = (base + rnd) * ml::deg2rad;
         } else {
             f1 = ml::math::mtRand(360) * ml::deg2rad;
@@ -1051,7 +1036,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
 
     // Implicit int->bool conversion; MWCC expands it branchlessly
     // (neg/or/srwi), matching retail.
-    bool flag20 = lbl_eu_80663E28 & 0x20;
+    bool flag20 = gmPauseFlags & 0x20;
     cf::CfObjectMove* ch = self->field_28;
     if (!flag20 &&
         (((u32)tick & 3) != ((u32)reinterpret_cast<u32>(NpcCharView(ch)->field_74) & 3)))
@@ -1109,9 +1094,9 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
     // Minimum progress implied by the character's movement rate.
     f32 scale = *reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveRateScale());
     f32 prog = reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveFactor();
-    f32 adj = lbl_eu_806666C8 *
+    f32 adj = 1000.0f *
               (f32)((f64)(int)self->field_16A * (prog * scale)) /
-              lbl_eu_806666CC;
+              3600.0f;
     if (adj > ml::epsilon)
         adj = adj / total;
     else
@@ -1127,7 +1112,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
     pt.z = *reinterpret_cast<const f32*>(&self->field_E0[0].z);
 
     f32 heading = reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveHeadAngle();
-    flag20 = lbl_eu_80663E28 & 0x20;
+    flag20 = gmPauseFlags & 0x20;
 
     if (!(ratio >= lbl_eu_806666A4)) {
         // Interpolate along the segments to find the current position.
@@ -1148,7 +1133,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
                 ml::CVec3 off = seg * f;
                 pt = *ta + off;
                 heading =
-                    lbl_eu_806666AC * nw4r::math::Atan2FIdx(seg.x, seg.z);
+                    0.024543693f * nw4r::math::Atan2FIdx(seg.x, seg.z);
                 nextWp = j + 1;
                 break;
             }
@@ -1159,29 +1144,29 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
             reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector());
         ml::CVec3 d = pt - *pos;
         f32 lenSq = d.x * d.x + d.z * d.z;
-        bool far = lenSq > lbl_eu_806666D4 ||
-                   (f32)__fabs((f64)d.y) >= lbl_eu_806666D8;
+        bool far = lenSq > 9.0f ||
+                   (f32)__fabs((f64)d.y) >= 5.9f;
         if (far) {
             // Teleport / reposition near the interpolated point.
             u32 mgrA = getControllerWordA33C__Q22cf13CfGameManagerFv();
             getControllerWordA37C__Q22cf13CfGameManagerFv();
-            u16 evt = lbl_eu_80663E42;
+            u16 evt = gmGlobalFlag42;
             if (evt == 1 && NpcCharView(ch)->field_8C == 0x91 && (u16)mgrA == 4) {
                 if (flag20) {
-                    pt.y = lbl_eu_806666DC;
+                    pt.y = -0.21f;
                     reinterpret_cast<cf::CfObject*>(ch)->CfObject_syncMoveTarget(&pt);
                 } else {
-                    pt.y = pt.y + lbl_eu_806666E0;
-                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&pt, lbl_eu_806666C8);
+                    pt.y = pt.y + 2.0f;
+                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&pt, 1000.0f);
                 }
             } else if (evt == 0xa && NpcCharView(ch)->field_8C == 0x2fa) {
-                pt.y = pt.y + lbl_eu_806666E0;
+                pt.y = pt.y + 2.0f;
                 ml::CVec3 out = pt;
-                VecMath_GroundProbeDual(&pt, &out, 0x4004A09, lbl_eu_806666E4,
+                VecMath_GroundProbeDual(&pt, &out, 0x4004A09, 100.0f,
                               lbl_eu_80666698);
                 reinterpret_cast<cf::CfObject*>(ch)->CfObject_syncMoveTarget(&out);
             } else {
-                reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&pt, lbl_eu_806666C8);
+                reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&pt, 1000.0f);
             }
             self->field_C4 = nextWp;
             if (flag20) {
@@ -1217,7 +1202,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
             reinterpret_cast<const ml::CVec3*>(&self->field_E0[nn - 2]);
         ml::CVec3 hd = last - *prev;
         nw4r::math::Atan2FIdx(hd.x, hd.z);
-        reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&last, lbl_eu_806666D0);
+        reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&last, 50.0f);
         ColiSetAxisBlockInverse((u8*)ch + 0x60C,
                       reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector()));
 
@@ -1237,8 +1222,8 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
 
     f32 p = reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveFactor();
     self->field_D8 = p;
-    if (p < lbl_eu_806666A8)
-        self->field_D8 = lbl_eu_806666A8;
+    if (p < 0.1f)
+        self->field_D8 = 0.1f;
 }
 
 // 0x80095F44: per-frame movement update. Steers the NPC toward its current
@@ -1272,15 +1257,15 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
 
     u32 frames = clearControllerState__Q22cf13CfGameManagerFv();
     f32 cap = (f32)(f64)frames;
-    if (!(cap > lbl_eu_806666F0)) {
+    if (!(cap > 8.0f)) {
         cap = (f32)(f64)frames;
     }
 
     // Base speed: shorter stride on the final leg.
-    f32 speed = (self->field_15C - 1 == idx) ? lbl_eu_806666F8
-                                             : lbl_eu_806666F4;
+    f32 speed = (self->field_15C - 1 == idx) ? 0.0121f
+                                             : 0.0625f;
     if (self->field_D8 >= lbl_eu_806666A4)
-        speed *= lbl_eu_806666E0;
+        speed *= 2.0f;
 
     // While a forced-wait flag is set on the C4 status object and few
     // waypoints remain, creep forward until within the small threshold.
@@ -1290,7 +1275,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
             f32 mag = PSVECMag(
                 reinterpret_cast<const Vec*>(CfObjectMove_getSubObj54(self->field_28)));
             s16 bc = self->field_BC;
-            if (bc >= 0x1e || mag >= lbl_eu_806666A8) {
+            if (bc >= 0x1e || mag >= 0.1f) {
                 distSq = lbl_eu_80666698;
             } else {
                 self->field_BC = bc + 1;
@@ -1302,19 +1287,19 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
 
     f32 threshold = cap * (speed * (f32)(f64)frames);
     if (!(distSq <= threshold) &&
-        !((f32)__fabs((f64)(threshold - distSq)) < lbl_eu_806666FC)) {
+        !((f32)__fabs((f64)(threshold - distSq)) < 0.3f)) {
         // Not arrived yet.
         f32 prog = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
         self->field_D8 = prog;
         if (self->field_15C - 1 != idx) {
-            f32 f30 = lbl_eu_806666FC * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
-            if (!(f30 >= lbl_eu_806666A8))
-                f30 = lbl_eu_806666A8;
+            f32 f30 = 0.3f * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
+            if (!(f30 >= 0.1f))
+                f30 = 0.1f;
             if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor() >= lbl_eu_806666A4) {
-                f30 = lbl_eu_80666704 * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
-                if (!(f30 >= lbl_eu_806666A8))
-                    f30 = lbl_eu_806666A8;
-                speed = lbl_eu_806666E0;
+                f30 = 0.09f * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
+                if (!(f30 >= 0.1f))
+                    f30 = 0.1f;
+                speed = 2.0f;
             }
             if (distSq < speed * speed) {
                 f32 ratio =
@@ -1331,7 +1316,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
         if (next >= self->field_15C) {
             self->field_14 = lbl_eu_80666698;
             cf::CfObjectMove* obj2 = self->field_28;
-            reinterpret_cast<cf::CfObject*>(obj2)->CfObject_snapMoveTarget(curTgt, lbl_eu_806666D0);
+            reinterpret_cast<cf::CfObject*>(obj2)->CfObject_snapMoveTarget(curTgt, 50.0f);
             reinterpret_cast<cf::CfObject*>(obj2)->CfObject_getScaledAngle();
             f32 f158 = self->field_158;
             if ((int)f158 != 0x168) {
@@ -1342,10 +1327,10 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
                         CfObjectMove_setAnimModeArgs((u8*)obj2, 3, 0, -1, 1);
                 }
             }
-            if ((lbl_eu_80663E28 & 0x20) != 0)
+            if ((gmPauseFlags & 0x20) != 0)
                 self->field_D4 = lbl_eu_80666698;
             else
-                self->field_D4 = lbl_eu_80666700;
+                self->field_D4 = 5.0f;
             self->field_BE += 1;
             return;
         }
@@ -1363,7 +1348,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self) {
     // Common tail: face along the current diff, advance by speed*dt, and
     // snapshot the character position into the raw target words.
     f32 ang = nw4r::math::Atan2FIdx(diff.x, diff.z);
-    self->field_0C = lbl_eu_806666AC * ang;
+    self->field_0C = 0.024543693f * ang;
     self->field_14 = self->field_D8 *
                      (f32)(f64)frames;
     cf::CtrlNpcVec3W* posw = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
@@ -1399,9 +1384,9 @@ int CtrlNpcApproachTarget(cf::CtrlNpc* self) {
     ml::CVec3 diff = *tgt - *posf;
     ml::CVec3& v = diff;
     f32 len2 = v.x * v.x + v.z * v.z;
-    if (len2 > lbl_eu_80666708) {
+    if (len2 > 0.040000003f) {
         f32 target = self->field_D8;
-        if (len2 < lbl_eu_806666A0) {
+        if (len2 < 4.0f) {
             // nw4r FSqrt: warn on negative input, else sqrt via FrSqrt.
             if (!(len2 >= lbl_eu_80666698)) {
                 nw4r::db::Warning(lbl_eu_80526324, 0x273,
@@ -1410,10 +1395,10 @@ int CtrlNpcApproachTarget(cf::CtrlNpc* self) {
             f32 len = (len2 <= lbl_eu_80666698)
                           ? lbl_eu_80666698
                           : len2 * nw4r::math::FrSqrt(len2);
-            f32 scaled = len - lbl_eu_8066670C;
-            target = (self->field_D8 - lbl_eu_806666A8) *
-                         (scaled * lbl_eu_80666710) +
-                     lbl_eu_806666A8;
+            f32 scaled = len - 0.2f;
+            target = (self->field_D8 - 0.1f) *
+                         (scaled * 0.5f) +
+                     0.1f;
         }
         // Retail computes the angle first so 'target' stays live in a
         // callee-saved float across the Atan2FIdx call.
@@ -1422,14 +1407,14 @@ int CtrlNpcApproachTarget(cf::CtrlNpc* self) {
         f32 vz = v.z;
         f32 idx = nw4r::math::Atan2FIdx(v.x, vz);
         self->field_14 = target;
-        self->field_0C = lbl_eu_806666AC * idx;
+        self->field_0C = 0.024543693f * idx;
         if (VecMath_CircleOverlapXZ(posf, tgt,
-                          self->field_D8, lbl_eu_8066670C) == 0)
+                          self->field_D8, 0.2f) == 0)
             return 1;
     }
     self->field_14 = lbl_eu_80666698;
     self->field_D4 = lbl_eu_80666698;
-    if (self->field_158 < lbl_eu_80666714) {
+    if (self->field_158 < 360.0f) {
         self->field_0C = self->field_158 * ml::deg2rad;
         if (self->field_28 != 0) {
             reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
@@ -1503,36 +1488,36 @@ extern "C" int CtrlNpcAlwaysFalse(u8* self) { return 0; }
 cf::CtrlNpc::~CtrlNpc() {}
 
 // absorb: split1 retail data sections - generated (pointer tables via relocs)
-__declspec(section ".data") const char* lbl_eu_80527A48[6] = {
-    lbl_eu_804FBA58, lbl_eu_804FBA64, lbl_eu_804FBA70,
-    lbl_eu_804FBA7C, lbl_eu_804FBA88, lbl_eu_804FBA94
+__declspec(section ".data") const char* gNpcAutotalkColumnNames[6] = {
+    "autotalk1", "autotalk2", "autotalk3",
+    "autotalk4", "autotalk5", "autotalk6"
 };
-__declspec(section ".data") const char* lbl_eu_80527A60[8] = {
-    lbl_eu_804FBAA0, lbl_eu_804FBAAC, lbl_eu_804FBAB8, lbl_eu_804FBAC4,
-    lbl_eu_804FBAD0, lbl_eu_804FBADC, lbl_eu_804FBAE8, lbl_eu_804FBAF4
+__declspec(section ".data") const char* gNpcTimeColumnNames[8] = {
+    "OCLOCK_0", "OCLOCK_3", "OCLOCK_6", "OCLOCK_9",
+    "OCLOCK_12", "OCLOCK_15", "OCLOCK_18", "OCLOCK_21"
 };
-__declspec(section ".data") const char* lbl_eu_80527A80[8] = {
-    lbl_eu_804FBAA0, lbl_eu_804FBAAC, lbl_eu_804FBAB8, lbl_eu_804FBAC4,
-    lbl_eu_804FBAD0, lbl_eu_804FBADC, lbl_eu_804FBAE8, lbl_eu_804FBAF4
+__declspec(section ".data") const char* gNpcTimeColumnNamesAlt[8] = {
+    "OCLOCK_0", "OCLOCK_3", "OCLOCK_6", "OCLOCK_9",
+    "OCLOCK_12", "OCLOCK_15", "OCLOCK_18", "OCLOCK_21"
 };
 // handler tables: member function pointers (0, -1, func)
-__declspec(section ".data") const void* lbl_eu_80527AA0[] = {
+__declspec(section ".data") const void* gNpcAnimMode16Handlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcFireAnimMode16C,
     (void*)0, (void*)-1, (void*)CtrlNpcNoop
 };
-__declspec(section ".data") const void* lbl_eu_80527AB8[] = {
+__declspec(section ".data") const void* gNpcAnimModeHandlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcFireAnimMode16CorE,
     (void*)0, (void*)-1, (void*)CtrlNpcFireAnimModeIdleE,
     (void*)0, (void*)-1, (void*)CtrlNpcNoop,
     (void*)0
 };
-__declspec(section ".data") const void* lbl_eu_80527AE0[] = {
+__declspec(section ".data") const void* gNpcActionState1Handlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcSyncTargetFromPos,
     (void*)0, (void*)-1, (void*)CtrlNpcTurnToTarget,
     (void*)0, (void*)-1, (void*)CtrlNpcUpdateMovement,
     (void*)0, (void*)-1, (void*)CtrlNpcTickTimer
 };
-__declspec(section ".data") const void* lbl_eu_80527B10[] = {
+__declspec(section ".data") const void* gNpcActionState2Handlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcRestartMoveTimer,
     (void*)0, (void*)-1, (void*)CtrlNpcAdvanceWaypoint,
     (void*)0, (void*)-1, (void*)CtrlNpcRestartTimerGated,

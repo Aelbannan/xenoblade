@@ -3,7 +3,7 @@
 #include "kyoshin/cf/CItemBlockApi.hpp"
 #include <types.h>
 #include "kyoshin/cf/CBattleManagerApi.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 / lbl_eu_80663E24 (defined in this module)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene / gmGameFlags (defined in this module)
 
 class CPad;
 class CScn;
@@ -76,12 +76,16 @@ public:
     u32 field_0x100;
 };
 
-// Heap-id slot block on the shared list-head object behind lbl_eu_80665958:
-// func_8007C6C0 stores the current heap id at +0x7C.
 struct Unk65958Object {
     u8 field_0x0[0x7C];
     u32 field_0x7C;
 };
+
+// Heap-id slot block on the shared list-head object behind sEneColiProbe:
+// func_8007C6C0 stores the current heap id at +0x7C.
+
+// Typed C-linkage declaration lives in the monolib coli owner header.
+#include "monolib/coli/code_804B2FF0.hpp"
 
 // (The old UnkContainerIntf3E9C / UnkObj3E9C container view was deleted:
 // func_80086B5C now addresses the +0x3E9C CfObjectMove subobject directly
@@ -157,12 +161,12 @@ namespace cf{
         static CPad* getCurrentPad();
 
         static bool checkUnkFlag(int bit){
-            return sUnkFlags & (1 << bit);
+            return gmGameFlags & (1 << bit);
         }
 
         static void setUnkFlag(int bit, bool state){
-            if(state == true) sUnkFlags |= (1 << bit);
-            else sUnkFlags &= ~(1 << bit);
+            if(state == true) gmGameFlags |= (1 << bit);
+            else gmGameFlags &= ~(1 << bit);
         }
 
         u32 unk0;
@@ -208,8 +212,8 @@ namespace cf{
         u8 field_0xB8[0x4EC - 0xB8];
         u32 field_0x4EC;
 
-        static u32 sUnkFlags;
-        static CScnNw4r* spScene;
+        // sUnkFlags / spScene are exported globals gmGameFlags / gmScene
+        // (declared in CfGameManagerData.hpp, defined in CfGameManager.cpp).
 public:
     void clearBdatTextEntries();
     void resetGameFlags();
@@ -428,8 +432,8 @@ public:
     bool isAnyFieldFlagSet();
     void clearFieldFlagsA();
     void func_80084CA4();
-    void resetBattlePresentation();
-    void setPartyMaskFlag();
+    static void resetBattlePresentation();
+
     void clearPartyMaskFlag();
     void loadPartyResources();
     void func_800853C8();
@@ -566,9 +570,9 @@ extern "C" void CtrlObjectParam_WriteU16RowEntry(void* table, u16 index, u16 val
 extern "C" void func_8009EF9C(void* data, u32 value);
 extern "C" void CItem_findOrCreateRec(u32 value, void* result, s32 mode, void* other);
 // func_8007DCB8 bdat-table scratch globals (.sbss /.data).
-extern s8 lbl_eu_80663E78;
+extern s8 gmBdatTableReady;
 extern void* lbl_eu_80664090;
-extern void* lbl_eu_80663E74;
+extern void* gmBdatTablePtr;
 
 // ---------------------------------------------------------------------------
 // teardownGameManager / resetBattlePresentation / func_8007E514 teardown imports (retail
@@ -615,9 +619,9 @@ struct CfGameManagerSlotArray {
 
 class CProcess;
 // CProcess hooks removed by teardownGameManager (defined in other TUs, .sbss).
-extern CProcess* lbl_eu_80663E1C;
-extern CProcess* lbl_eu_80663E18;
-extern CProcess* lbl_eu_80663E20;
+extern CProcess* gmTaskMain;
+extern CProcess* gmResManager;
+extern CProcess* gmPadTask;
 
 extern "C" void func_8012F87C(u32 value);
 extern "C" void CCharVoiceMan_DestroySingleton();
@@ -710,8 +714,8 @@ extern float lbl_eu_80663ED8;
 extern float lbl_eu_80663EDC;
 
 // --- func_8007C8C8 imports ---
-extern u32 lbl_eu_80663D90;
-extern u32 lbl_eu_80663E6C;
+extern u32 gCfTEventFrameCounter;
+extern u32 gmFrameCounter;
 extern "C" void* func_80190840(void* object, u32* e04);
 extern "C" void func_801889D0(u32 object);
 // func_800D9354: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.
@@ -783,5 +787,5 @@ extern "C" void func_80199678(void* ctrl, int flag); // 2-arg form per CtrlMoveP
 // CfGameManagerUnityHelpers.hpp (ResetVectorWords view) in this TU; a global
 // extern here would clash with that declaration's type.
 // Event-done halfword counters read by func_8008413C.
-extern u16 lbl_eu_80663E42;
-extern u16 lbl_eu_80663E44;
+extern u16 gmGlobalFlag42;
+extern u16 gmGlobalFlag44;

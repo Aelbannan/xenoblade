@@ -154,15 +154,15 @@ struct CPaneScaleView {
 
 
 // Color/sound palette entries initialised by sinit_802059E8 (sdata2).
-extern void* lbl_eu_80664668;
-extern void* lbl_eu_80664670;
-extern void* lbl_eu_80664678;
-extern void* lbl_eu_80664680;
-extern void* lbl_eu_80664688;
-extern void* lbl_eu_80664690;
+extern void* sEquipCursorSrcColorA;
+extern void* sEquipCursorSrcColorB;
+extern GXColorS10 sEquipCursorColorA0;
+extern GXColorS10 sEquipCursorColorB0;
+extern GXColorS10 sEquipCursorColorA1;
+extern GXColorS10 sEquipCursorColorB1;
 
 // Global equip-page flag (sdata), cleared by CEquipChange::CleanupFiles.
-extern u32 lbl_eu_80664698;
+extern u32 sEquipChangeAccessor;
 
 // Palette source (16 u32 colours) and string pool used by CEquipChange::RefreshCursorPos and
 // the bind-file loader CEquipChange::LoadBindFiles.
@@ -184,18 +184,18 @@ struct CEquipV9Result {
 };
 
 // Scratch CItem record rebuilt from bdat by CEquipChange::ResolveEquipItem's fallback path
-// (cleared once, guarded by lbl_eu_8066469C).
+// (cleared once, guarded by sEquipWorkItemInitialized).
 struct CEquipWorkItem {
     u32 field_00;
     u16 field_04;
     u8 _pad06[0xF8];
 };
-extern CEquipWorkItem lbl_eu_80576568;
-extern s8 lbl_eu_8066469C;
+extern CEquipWorkItem sEquipChangeWorkItem;
+extern s8 sEquipWorkItemInitialized;
 
 // bdat helpers used by CEquipChange::ResolveEquipItem's rebuild path.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
-extern "C" void CItem_initSlot(void* self, u32 family, u32 row, u16 kind);
+// CItem_initSlot is declared in kyoshin/cf/CItem.hpp.
 
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -229,7 +229,7 @@ extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
 extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
 
 // 3-word scene-name table read by CEquipChange::RunMainFlow's refresh block (.rodata).
-extern u32 lbl_eu_80508068[3];
+extern const u32 sEquipSceneNameTags[3];
 
 // CfObjEnumList helper family (opaque void* params repo-wide - see
 // CPartyStateWin.hpp); struct views for the stack holder / list / slot used

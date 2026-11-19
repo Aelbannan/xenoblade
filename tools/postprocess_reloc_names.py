@@ -1469,7 +1469,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         pad_data_section=((".data", 0xC8),),  # retail .data range 0x8056B1E0-0x8056B2A8; MWCC emits 0xC4 (4B splitter align pad)
         exact_renames=(
             ("@stringBase0", "lbl_eu_80522500"),
-            ("__vt__17_reslist_base<Ul>", "lbl_eu_8056B298"),
             ("__vt__11reslist<Ul>", "lbl_eu_8056B280"),
         ),
         # pssCreateView: exact-size -0xF0 / FixStr@0x68 / 0x3AC body after workId hoist.
@@ -2014,10 +2013,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
             (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
         ),
-        exact_renames=(
-            ("__vt__Q44nw4r3snd6detail10BasicSound", "lbl_eu_8056A710"),
-        ),
-        extern_data_sections=(".sdata2", ".data"),
+
     ),
     # SortPriorityList() static buckets + C++ guard; LinkList Ofs is 252 in
     # source (node@0xFC) but retail construct_array mangles 256.
@@ -2738,21 +2734,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         extern_data_sections=(".sdata2",),
     ),
-    "snd_Bank.o": UnitRules(
-        pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
-            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
-            (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
-        ),
-        exact_renames=(
-            # GetAnmResult's inlined-detail 0.0f pools to the A68 copy, but
-            # retail loads lbl_eu_80669E78 at that site (content-equal dup;
-            # no other site in this TU references A68).
-            ("lbl_eu_80669A68", "lbl_eu_80669E78"),
-        ),
-        extern_data_sections=(".sdata2",),
-    ),
     "snd_AxVoice.o": UnitRules(
         pool_patterns=(
             (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
@@ -2976,11 +2957,10 @@ UNIT_RULES: dict[str, UnitRules] = {
     # kyoshin data dissolve: retail split objects are .text-only; all class
     # data ships from the shared split1.s blob (see each entry's comment).
     "CArtsSet.o": UnitRules(
-        # TU is text-only: retail keeps the _sArtsSet vtable in the shared
-        # data split (lbl_eu_8052F5D8), so the ctor's implicit vptr store +
-        # slot-1 dispatch reference the compiler-generated __vt__ name as an
-        # UNDEF while retail names the shared label. Pure symbol rename; no
-        # codegen or data-section impact (hexdiff 15/15 byte-identical).
+        # The _sArtsSet vtable is owned by the shared data split under its
+        # compiler name (__vt__Q22cf9_sArtsSet, renamed in symbols.txt); the
+        # ctor's implicit vptr store and slot-1 dispatch already use that
+        # name, so no vtable rename is needed here.
         # 2026-10-03 (wave4-n1): the seven C-linkage helpers retail defines
         # as globals (get/setArts* at 0x8015468C-0x801548BC, same sizes and
         # split offsets) are emitted here as CArtsSet members under mangled
@@ -2989,7 +2969,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the retail names (internal REL24 relocs follow the symtab index;
         # no external referrer uses the mangled spellings).
         exact_renames=(
-            ("__vt__Q22cf9_sArtsSet", "lbl_eu_8052F5D8"),
             ("setArtsSlotRC__Q22cf8CArtsSetFUsUsUs", "setArtsSlotRC"),
             ("getArtsSlotRC__Q22cf8CArtsSetFii", "getArtsSlotRC"),
             ("setArtsSlotByIdx__Q22cf8CArtsSetFUsi", "setArtsSlotByIdx"),
@@ -3471,20 +3450,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         # globalize_symbols retired 2026-09-28 (category A): see
         # globalize_local_undefs (generic LOCAL UNDEF promotion).
     ),
-    "code_800F42AC.o": UnitRules(
-        # unsigned int->double magic {2^52, 2^31}; retail site lfd's
-        # lbl_eu_80666EA8 (.double 4503601774854144).
-        pool_patterns=(
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666EA8"),
-        ),
-        extern_data_sections=(".sdata2",),
-    ),
+
     "CfObjectEff.o": UnitRules(
         # Base CfObject vtable (0x178, text-ref'd from __dt__) =
         # split1.s lbl_eu_805294E0; CObjectParam/CObjectState sub-vtables,
         # RTTI and name strings ride along in the strip.
         exact_renames=(("__vt__Q22cf8CfObject", "lbl_eu_805294E0"),),
-        drop_data_range=((".data", 0x50, 0x1E8),),
+
     ),
     "CfObjectNpc.o": UnitRules(
         # .data vtable/RTTI emission (retail keeps it in split1.s); .sdata2 trailing int->double magic duplicate (MWCC pools an extra 43300000_00000000 after our typed 0x28 pool) — trim to retail 0x28.
@@ -3549,14 +3521,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         # switch tables stay MWCC-local (@N, link-consistent in-TU), and the
         # old @31218/@33055/@33211/@34366/@34737 renames went stale with MWCC
         # renumbering (current emission is @35078+/@36679+/@36835/@37719+/
-        # @38092+) so they were dead no-ops. Only the vtable ctor mapping
-        # below is still needed for the link.
+        # @38092+) so they were dead no-ops. The base reslist vtables now
+        # carry their compiler names in symbols.txt and are emitted by real
+        # virtual dtors, so only the CBattleManager vtable mapping remains.
         exact_renames=(
             # Ctor positional mapping (retail ctor 800D8FE8 loads BCE0,
             # BD68, BD50, BD44, BD2C in sub-object order):
             ("__vt__Q22cf14CBattleManager", "lbl_eu_8052BCE0"),
-            ("__vt__36_reslist_base<PQ22cf13CfObjectActor>", "lbl_eu_8052BD68"),
-            ("__vt__35_reslist_base<PQ22cf12IBattleEvent>", "lbl_eu_8052BD44"),
             # rodata id/string pools (content + retail-ref verified).
             # (@17348/@17350 used to rename the sTable_28C/ CAD8-duplicate
             # pools onto the retail labels; both labels are real in-source

@@ -748,8 +748,8 @@ extern const float lbl_eu_806669B0;
 // applyEnemyReward bdat file pointer (.sdata2) and drop-channel tables (.sbss):
 // u16 mode word at 0x80663E42 and the per-mode channel halfword table whose
 // entries are addressed at byte offset mode*100 from 0x80663E44.
-extern u16 lbl_eu_80663E42;
-extern u16 lbl_eu_80663E44;
+extern u16 gmGlobalFlag42;
+extern u16 gmGlobalFlag44;
 
 // applyEnemyReward bdat file pointer (.sbss).
 extern void* lbl_eu_806640D4;   // unified pointer form (was u8*)

@@ -835,8 +835,8 @@ extern "C" u32  getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // unsigned c
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int   CBattleMan_ListHasValue(void* bm, void* obj); // battle-list membership check
 extern "C" void* MapFx_ResolveOwner(void* source);
-extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag
-extern "C" u16  lbl_eu_80663E42;          // current area id (SysWinLog_DriveCounters gate)
+extern "C" u16  gNandTeardownFlag;          // pause / non-enemy-scene flag
+extern "C" u16  gmGlobalFlag42;          // current area id (SysWinLog_DriveCounters gate)
 extern "C" u32  lbl_eu_80664908;          // CSysWinScenarioLog singleton
 extern "C" u8   lbl_eu_80664910;
 extern "C" u8   lbl_eu_80664911;
@@ -884,11 +884,15 @@ extern "C" double lbl_eu_80668AD8;
 
 // CSysWinScenarioLog::Move helpers.
 extern "C" s32  MenuTutorialIsCreated();
-extern "C" u32  lbl_eu_80663E28;
+extern "C" u32  gmPauseFlags;
 extern "C" f32  lbl_eu_80668AD0;
 extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);
 
-// Bottom-of-file helper definitions (see CSysWinScenarioLog.cpp): declared
+// Retail-unmangled scenario-counter entry points defined in code_8028130C:
+// their one canonical declaration lives in SysWinLogCounterApi.hpp.
+#include "kyoshin/SysWinLogCounterApi.hpp"
+
+// Bottom-of-file helper definitions
 // here so callers below emit a direct `bl` to the retail symbol instead of an
 // inline body at each call site (retail calls them out-of-line).
 extern "C" u32 __declspec(noinline) SysWinLog_BumpEventValue(u32 self, u32 arg);

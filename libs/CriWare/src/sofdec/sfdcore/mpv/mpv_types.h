@@ -48,8 +48,15 @@ typedef struct MpvWork {
 #define MPV_HN_STATE_FREE 1
 #define MPV_HN_STATE_USED 2
 
+/* One motion-compensation output-row descriptor: a plane base and its stride. */
+typedef struct MpvMcRow {
+    void* base;             /* +0x0 plane base */
+    s32 stride;             /* +0x4 row stride */
+} MpvMcRow;                 /* 0x8 */
+
 typedef struct MpvHn {
-    u8  _pad0x000[0x980];   /* 0x000 decoder context (mpv_dec.c owns it) */
+    u8  _pad0x000[0x380];   /* 0x000 decoder state (mpv_dec.c owns it) */
+    u8  mcWork[0x600];      /* 0x380 motion-compensation work area */
     u32 bitsHi;             /* 0x980 bit accumulator, high word */
     u32 bitsLo;             /* 0x984 bit accumulator, low word */
     s32 bitCnt;             /* 0x988 bit count in the accumulator */
@@ -69,7 +76,10 @@ typedef struct MpvHn {
     struct MpvHn* hnSelf;   /* 0xa94 */
     u8* sub380;             /* 0xa98 handle + 0x380 */
     u8* sub500;             /* 0xa9c handle + 0x500 */
-    u8  _pad0xaa0[0xB08 - 0xaa0];
+    u32 mcRowCount;         /* 0xaa0 motion-compensation output row count */
+    s32 mcRows[12];         /* 0xaa4 output row bases/strides (six pairs) */
+    u32 mcOiTaCount;        /* 0xad4 one-reference output row count */
+    MpvMcRow mcOiTa[6];     /* 0xad8 one-reference output row descriptors */
     s32 state;              /* 0xb08 MPV_HN_STATE_* */
     u32 field_0xb0c;        /* 0xb0c */
     u32 cfgImg[0x10];       /* 0xb10 64-byte copy of the MpvCfg block */
@@ -77,7 +87,10 @@ typedef struct MpvHn {
     void (*mbCb)(void*);    /* 0xb54 macroblock callback */
     void* mbCtx;            /* 0xb58 its context */
     SfdMpvPicAtr picAtr;    /* 0xb5c attributes of the current picture */
-    u8  errInfo[0xCFC - 0xBDC]; /* 0xbdc MPVERR error record */
+    u8  errInfo[0xC0C - 0xBDC]; /* 0xbdc MPVERR error record */
+    s16 outStride;          /* 0xc0c output frame luma stride */
+    s16 outChromaStride;    /* 0xc0e output frame chroma stride */
+    u8  errInfoTail[0xCFC - 0xC10]; /* 0xc10 MPVERR error record tail */
     u8  _pad0xcfc[0xD0C - 0xcfc];
     u8* plane[6];           /* 0xd0c reference plane pointers handed to MC */
     u8  _pad0xd24[0xD38 - 0xd24];

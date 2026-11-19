@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "monolib/math/CVec3.hpp"
 class UnkClass_800821F8;
@@ -94,15 +94,15 @@ extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 id);
 
 // External data (retail linker symbols)
-extern "C" CfMapMineManager* lbl_eu_806646A0;   // sbss: singleton instance
-extern "C" u16 lbl_eu_80663E42;                 // sbss: current area id
-extern "C" u16 lbl_eu_80663E44;                 // sbss: current area sub-id
+extern "C" CfMapMineManager* sMineManagerInstance;   // sbss: singleton instance
+extern "C" u16 gmGlobalFlag42;                 // sbss: current area id
+extern "C" u16 gmGlobalFlag44;                 // sbss: current area sub-id
 extern "C" BdatFilePointer* lbl_eu_806640C8;    // sbss: bdat file handle
-extern "C" s32 lbl_eu_806646A4;                 // sbss: cached name length
-extern "C" s8 lbl_eu_806646A8;                  // sbss: one-time init flag
-extern "C" char lbl_eu_80662758[8];            // sdata: scratch name buffer
-extern "C" u8 lbl_eu_80662750[8];              // sdata: range-pair table
-extern "C" u32 lbl_eu_80662760[2];             // sdata: lottery bias table
+extern "C" s32 sMineNameLength;                 // sbss: cached name length
+extern "C" s8 sMineNameInitialized;                  // sbss: one-time init flag
+extern "C" char sMineItemNameScratch[8];            // sdata: scratch name buffer
+extern "C" u8 sMineRangeBounds[8];              // sdata: range-pair table
+extern "C" u32 sMineLotteryBias[2];             // sdata: lottery bias table
 extern "C" char lbl_eu_80508424[];              // rodata: bdat column names
 extern "C" char lbl_eu_80535720[];              // data: scratch name buffer 2
 extern "C" u8 lbl_eu_8053572C[];                // data: reslist vtable

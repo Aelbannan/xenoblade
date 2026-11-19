@@ -28,23 +28,10 @@ struct CfCode800F42AC {
 
 } // namespace cf
 
-// ---------------------------------------------------------------------------
-// Imported C-ABI symbols referenced by this TU (declared here so callers in
-// code_800F42AC.cpp link to the retail addresses; the symbol map handles
-// resolution).
-// ---------------------------------------------------------------------------
-extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-extern "C" bool isGlobalCamFlagSet__Fi(int mask);
-extern "C" int findObjectById__Fi(int id);
-extern "C" void* MapFx_ResolveOwner(void* src);
-extern "C" int isBattleStatusActive(void* self, int id);
-extern "C" void* findBattleStatusEntry(void* self, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)
-extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
-extern "C" void* UIWin_QueryPageFlag(u32 a);
-// UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
+// Imported C-ABI symbols live as TU-local declarations in code_800F42AC.cpp;
+// this header owns only the exported types and functions below.
 
 
-// ---------------------------------------------------------------------------
 // sdata2 floating point constants referenced via sda21/@sda21 by this TU.
 // (f32/f64 small-data literals; values live in data, only the offset is
 // encoded in the instruction.)
@@ -190,5 +177,16 @@ struct Sc46C0Other {
     void* field_3F10;            // 0x3F10
 };
 
-// Defined in kyoshin/cf/code_800F42AC.cpp (callers: CVision, CMenuVision).
+// Exports defined in kyoshin/cf/code_800F42AC.cpp. The retail symbol map
+// gives C linkage to all of these except ScMain_GetRoundedMetric, whose name
+// carries its C++ argument type. Callers include this header for the real
+// signatures instead of repeating TU-local externs.
 float ScMain_GetRoundedMetric(ScMain* self);
+extern "C" f32 ScMain_GetRatio(ScMain* self);
+extern "C" void ScMain_Reset(ScMain* self);
+extern "C" int ScMain_GetSummedInt(ScMain* self);
+extern "C" int ScMain_IsDistinctFrom(ScMain* other, Sc46C0Other* self);
+extern "C" u32 ScMain_DecodeFlagPriority(ScMain* self);
+extern "C" float Sc4798_GetSignedItemValue(Sc4798* self, int idx);
+extern "C" cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self);
+extern "C" void* CfCode_GetOptPtr0C(void* self);

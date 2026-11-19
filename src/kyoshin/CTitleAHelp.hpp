@@ -18,17 +18,23 @@ public:
     void teardown();
     int isInitialized();
     u8 isActive();
-    int isIdle();  // retail callers test r3 with cmpwi (no u8 mask)
+    int func_801C4124();  // retail callers test r3 with cmpwi (no u8 mask)
     void func_801C412C();
     void beginClose();
     void reopenFromClose();
     void markReplayClose();
     void setNameText(char*);
-    // retail keeps func_801C41E8 unmangled (C linkage): free function in .cpp
+    void func_801C41E8(u8);
     void func_801C4654(u32);
     void setInfoText(char*);
     void func_801C46DC(u32);
     void setActive(u8);
+    void applyPaneTevColors();
+    void applyPaneTevColorsAlt();
+    void stepOpenAnim();
+    void stepShownAnim();
+    void stepCloseAnim();
+    void stepHiddenAnim();
     virtual bool OnFileEvent(CEventFile* pEventFile) override;
 
     UnkClass_8045F564 unk4;

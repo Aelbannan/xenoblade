@@ -20,7 +20,6 @@ extern "C" void Colle_BeginOpen(CMenuCollepedia* self);
 extern "C" void Colle_MarkClosing(CMenuCollepedia* self);
 extern "C" void clpDoFrameUpd(CCollepedia* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
-extern "C" void updateHelp(CTitleAHelp* self);
 
 CMenuCollepedia::CMenuCollepedia(CScn* scene)
     : mScene(scene), mBgTex(0), mTitleAHelp(nullptr, 0), mState(0), mTimer(0.0f) {}
@@ -139,7 +138,7 @@ void CMenuCollepedia::Term() {
     mScene->removeRenderCB(this);
 
     BgTex_Release_3D9C(&mBgTex);
-    teardown(&mTitleAHelp);
+    mTitleAHelp.teardown();
     clpFreeAllRes(&mCollepedia);
 
     lbl_eu_806647D0 = 0;
@@ -164,7 +163,7 @@ void CMenuCollepedia::Move() {
         break;
     }
     BgTex_Tick_3D54(&mBgTex);
-    updateHelp(&mTitleAHelp);
+    mTitleAHelp.updateHelp();
     clpDoFrameUpd(&mCollepedia);
 }
 
@@ -179,7 +178,7 @@ void Colle_BeginOpen(){}
 // Advance the collepedia menu: once the title bar is idle and the collepedia
 // core is ready, open the menu (state 2).
 void CMenuCollepedia::Colle_OpenMenu() {
-    if (this->mTitleAHelp.isIdle() != 0) {
+    if (this->mTitleAHelp.func_801C4124() != 0) {
         if (clpGetInputOk(&this->mCollepedia) != 0) {
             this->mState = 2;
         }
@@ -204,9 +203,9 @@ void CMenuCollepedia::Colle_HandleInput() {
     if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic-controller (co-op) layout.
         if (clpCanClaim(&this->mCollepedia) != 0) {
-            func_801C41E8(&this->mTitleAHelp, 0x50);
+            this->mTitleAHelp.func_801C41E8(0x50);
         } else {
-            func_801C41E8(&this->mTitleAHelp, 0x51);
+            this->mTitleAHelp.func_801C41E8(0x51);
         }
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
@@ -249,9 +248,9 @@ void CMenuCollepedia::Colle_HandleInput() {
     } else {
         // Single-player Wiimote-style layout.
         if (clpCanClaim(&this->mCollepedia) != 0) {
-            func_801C41E8(&this->mTitleAHelp, 0x50);
+            this->mTitleAHelp.func_801C41E8(0x50);
         } else {
-            func_801C41E8(&this->mTitleAHelp, 0x51);
+            this->mTitleAHelp.func_801C41E8(0x51);
         }
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
@@ -259,7 +258,7 @@ void CMenuCollepedia::Colle_HandleInput() {
         // open sound once and restarts the timer, then feeds the pad through.
         if (((pad->mPadHeldFlags >> 19) & 1) &&
             clpIsBusy(&this->mCollepedia) == 0) {
-            func_801C41E8(&this->mTitleAHelp, 0x52);
+            this->mTitleAHelp.func_801C41E8(0x52);
             if (this->mTimer > 1.0f) {
                 playUISound(2);
             }
@@ -307,7 +306,7 @@ void CMenuCollepedia::Colle_HandleInput() {
 // Same idle+advance check as Colle_OpenMenu, but marks the menu as closing
 // (mField54 = 1) instead of opening.
 void Colle_MarkClosing(CMenuCollepedia* self) {
-    if (self->mTitleAHelp.isIdle() != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0) {
         if (clpGetInputOk(&self->mCollepedia) != 0) {
             self->mField54 = 1;
         }
@@ -334,7 +333,7 @@ void CMenuCollepedia::Colle_NavigateBack() {
         clpOnCancel(&this->mCollepedia);
     } else {
         if (clpIsBusy(&this->mCollepedia) == 0) {
-            beginClose(&this->mTitleAHelp);
+            this->mTitleAHelp.beginClose();
             clpReqCloseVw(&this->mCollepedia);
             this->mState = 3;
         }

@@ -5,7 +5,7 @@
 #include "monolib/work/CWorkThread.hpp"
 
 //size: 0x1c8
-class __declspec(novtable) CDevice : public CWorkThread {
+class CDevice : public CWorkThread {
 public:
     CDevice(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
         spInstance = this;

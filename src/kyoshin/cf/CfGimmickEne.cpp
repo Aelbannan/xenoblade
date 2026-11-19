@@ -1,7 +1,3 @@
-// Anchor for the TU; the real .sdata2 touch lives at the bottom
-// (dummy must see the label declarations first).
-extern "C" void dummy();
-
 #include <revolution/GX.h>
 #include "monolib/math/CMat34.hpp"
 
@@ -31,7 +27,8 @@ __declspec(section ".rodata") __attribute__((used))
 const char lbl_eu_8050E6A4[0x44] =
     "eneID\0artID\0state\0EFF\0SE\0envSE\0wet\0hour\0spWF\0startF\0watiF\0endF";
 
-// .sdata2 0x48: short tags (with retail padding) then float pool.
+// .sdata2: short tags (with retail padding) and the material color used by
+// gimmickEneSetupGXState; the rest of retail's float pool has no use site yet.
 __declspec(section ".sdata2") __attribute__((used))
 const char lbl_eu_80668948[8] = "aLOD1";
 __declspec(section ".sdata2") __attribute__((used))
@@ -43,23 +40,7 @@ const char lbl_eu_80668960[4] = "aCL";
 __declspec(section ".sdata2") __attribute__((used))
 const char lbl_eu_80668964[4] = "cl1";
 __declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668968 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_8066896C = 0.0f;
-__declspec(section ".sdata2") __attribute__((used))
 const int lbl_eu_80668970 = -1;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668974 = -1.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668978 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_8066897C = 0.01f;
-__declspec(section ".sdata2") __attribute__((used))
-const double lbl_eu_80668980 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668988 = 255.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_8066898C = 0.1f;
 
 // .sdata 0x28: RTTI-ish pointer pairs (reloc sites are zero bytes in .o).
 extern char lbl_eu_8050DBC4[];
@@ -175,22 +156,3 @@ extern "C" __declspec(noinline) void gimmickEneSetupGXState(CfGimmickEneQuad* se
     GXPosition3f32(-1.0f, -1.0f, -1.0f);
 }
 
-extern "C" void dummy() {
-    // Anchor the .sdata2 scalar pool above: MWCC drops unreferenced const
-    // scalars, so volatile-read each label in retail order (emission =
-    // first use). Plain arithmetic folds at compile time and drops the
-    // labels, so every read goes through a volatile pointer.
-    volatile float sinkf;
-    sinkf = lbl_eu_80668968;
-    sinkf = lbl_eu_8066896C;
-    volatile int sinki = lbl_eu_80668970;
-    sinkf = lbl_eu_80668974;
-    sinkf = lbl_eu_80668978;
-    sinkf = lbl_eu_8066897C;
-    volatile double sinkd = lbl_eu_80668980;
-    sinkf = lbl_eu_80668988;
-    sinkf = lbl_eu_8066898C;
-    (void)sinkf;
-    (void)sinki;
-    (void)sinkd;
-}

@@ -169,7 +169,7 @@ struct CModelDispParent {
     CModelDispObj* field_0x3A0; // +0x3A0
 };
 
-// 12-byte filter triple copied by value out of lbl_eu_80507FDC in
+// 12-byte filter triple copied by value out of equipFilterTriple in
 // ModelDispEquip_SwapPartyEquip (retail loads it as one struct: lwzu/lwz/lwz).
 struct CModelDispFilterTbl {
     u32 slot[3];
@@ -279,14 +279,14 @@ extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip*, int);
 
 // Data written by sinit_802019F8 (set-vector helper args); read back as raw
 // 32-bit words by ModelDispEquip_SyncScalePose (lwzu/lwz word copies into scale1/scale2).
-extern u32 lbl_eu_80576550[3];
-extern u32 lbl_eu_8057655C[3];
+extern u32 equipScaleBaseA[3];
+extern u32 equipScaleBaseB[3];
 // Vtable base written by the ctor into _vtable/_vtable2/_vtable3
 // (offsets +0x0 / +0x88 / +0xB4 within the vtable block).
 extern u32 lbl_eu_805354C8[];
 // 3 state filter values selected by equipSlot (ModelDispEquip_BuildPartyModel / ModelDispEquip_SwapPartyEquip).
-extern u32 lbl_eu_80507FD0[];
-extern u32 lbl_eu_80507FDC[];
+extern u32 equipFilterTripleAlt[];
+extern u32 equipFilterTriple[];
 // Equip-name string table (accessed at +0x0/+0x4/+0x8/+0xC/+0x58/+0x62).
 extern char lbl_eu_80507FF8[];
 // Effect-singleton manager object (array forces @ha/@l at the call sites in
@@ -309,7 +309,7 @@ extern const f32 lbl_eu_80668298; // scale1[2] upper clamp
 // indexes the array, so the middle entry sits at the label (sdata2 -> @sda21).
 // Declared as [2] (8 bytes) so MWCC keeps it small-data eligible and emits
 // li r3, lbl@sda21 like retail (a 12-byte extern falls back to lis/addi).
-extern const u32 lbl_eu_80662738[2];
+extern const u32 equipSignAnimTable[2];
 // Imports used by this unit's functions. Retail C symbols: extern "C" keeps
 // MWCC from C++-mangling the call relocs (plain decls emit tickAnimFrame__FP..).
 extern "C" void tickAnimFrame(CActParamAnimView* self);

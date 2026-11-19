@@ -86,7 +86,6 @@ extern const float lbl_eu_8066A998;
 extern const float lbl_eu_8066A99C;
 extern const float lbl_eu_8066A9A0;
 extern const float lbl_eu_8066A9B8;
-extern const double lbl_eu_8066A950;
 extern const double lbl_eu_8066A9A8;
 extern const double lbl_eu_8066A9B0;
 
@@ -114,7 +113,6 @@ extern const char lbl_eu_80530E30[];
 extern const char lbl_eu_80530E74[];
 extern const char lbl_eu_80530EE0[];
 extern const char lbl_eu_80530F08[];
-extern const float lbl_eu_8066A9D0;
 
 extern "C" const mlCVec3 unitY__Q22ml5CVec3;
 

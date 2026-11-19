@@ -71,24 +71,24 @@ extern "C" __declspec(section ".sdata") const u32 gap_09_80663844_sdata = 0;
 // .sbss: cached scale / flag byte / shared persistent buffer handle and the
 // unreferenced LOD distance cache slots.
 extern "C" {
-__attribute__((aligned(8))) f32 lbl_eu_80665828;
-s8 lbl_eu_8066582C;
+__attribute__((aligned(8))) f32 LodMemCachedScale;
+s8 LodMemScaleInitFlag;
 u8 gap_10_8066582D_sbss;
 u8 gap_10_8066582E_sbss;
 u8 gap_10_8066582F_sbss;
-int lbl_eu_80665830;
+int LodMemPersistentBuffer;
 u32 lbl_eu_80665834;
-u32 lbl_eu_80665838;
+u32 sMpfsysDrawState;
 u32 lbl_eu_8066583C;
 u32 lbl_eu_80665840;
 u32 lbl_eu_80665844;
-u32 lbl_eu_80665848;
-u32 lbl_eu_8066584C;
-u32 lbl_eu_80665850;
-u32 lbl_eu_80665854;
-u16 lbl_eu_80665858;
-u16 lbl_eu_8066585A;
-u16 lbl_eu_8066585C;
+u32 MpfMapResFile;
+u32 sBillboardCornerTable;
+u32 sBillboardTexCoordTable;
+u32 MpfTevSetupState;
+u16 MpfBoundTextureIndex;
+u16 MpfGfxMode;
+u16 MpfFogIndex;
 u16 gap_10_8066585E_sbss;
 }
 
@@ -178,10 +178,10 @@ extern f32 lbl_eu_8066A6C4;   // random-value scale (rebuildFromSharedBuffer)
 extern f32 lbl_eu_8066A6F8;   // FIdx angle scale (updateElementsByDesc)
 // Shared LOD distance globals published by the per-element update
 // (updateElementLod writes the float value and its integer truncation).
-extern f32 lbl_eu_80665754;
-extern s16 lbl_eu_80665758;
+extern f32 sLodThresholdDist;
+extern s16 sLodEntryKeyThreshold;
 // One-time-initialised global scale: the byte flag gates the division
-// c11 / lbl_eu_80663830, whose result is cached in lbl_eu_80665828.
+// c11 / lbl_eu_80663830, whose result is cached in LodMemCachedScale.
 extern f32 lbl_eu_8066A70C;
 extern f32 lbl_eu_8066A710;
 extern f32 lbl_eu_8066A714;
@@ -664,8 +664,8 @@ extern "C" void isLodActive__Q23LOD17UnkClass_8046A530Fv(
 // ScnGroup::Construct in initSceneGroup).
 extern "C" MEMAllocator* getScnRoot45C(CScn* scene);
 // Globals published by the element-list walk in updateLodTick.
-extern u32 lbl_eu_80665778;
-extern u32 lbl_eu_80665768;
+extern u32 LodDrawRecords18;
+extern u32 sLodCacheTailFlag;
 
 // TU-internal callees used by the two rebuild/update passes below.
 extern "C" void initLodState__Q23LOD17UnkClass_8046A530Fv(
@@ -852,11 +852,11 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     // f26=E8, f27=C4, f30=C0, f31=D8, f28=D0, f29=C8.
     if (field_0xA4 != 0) {
         const f64 kM52b = lbl_eu_8066A6E8;
-        const f32 cScale = lbl_eu_8066A6C4;
+        const f32 cScale = 0.001f;
         const f32 cZero2 = lbl_eu_8066A6C0;
         const f32 cDiv = lbl_eu_8066A6D8;
-        const f64 kMul = lbl_eu_8066A6D0;
-        const f64 kBase = lbl_eu_8066A6C8;
+        const f64 kMul = 0.004;
+        const f64 kBase = 1.2000000476837158;
         (void)kM52b;
         LODDesc74* d = field_0x9C;
         LODOut48* o = (LODOut48*)field_0xC;
@@ -1105,8 +1105,8 @@ void LOD::UnkClass_8046D144::updateLodTick() {
         field_0x6C |= 0x80;
         LODCacheBuf58* buf = (LODCacheBuf58*)field_0x5C;
         initLodTables__Q23LOD17CLODCacheManagerSFv((u8*)buf + buf->field_0x58);
-        lbl_eu_80665778 = (u32)field_0x94;
-        lbl_eu_80665768 = (u32)field_0x5C;
+        LodDrawRecords18 = (u32)field_0x94;
+        sLodCacheTailFlag = (u32)field_0x5C;
         if (field_0x10 != 0) {
             // Walk the index-linked element chain until the sentinel.
             int idx = field_0x10->field_0x1A;
@@ -1148,7 +1148,7 @@ extern f32 lbl_eu_8066A6F4;      // angle chain factor
 extern f32 lbl_eu_8066A6FC;      // sin scale (+0x74)
 extern f32 lbl_eu_8066A704;      // tan arg factor
 extern f32 lbl_eu_8066A708;      // degenerate FOV fallback
-extern u32 lbl_eu_806657B8;      // elapsed time global
+extern u32 LodDistanceLimit;      // elapsed time global
 extern u32 lbl_eu_80665794;      // flag mirror global
 extern const char lbl_eu_80526324[];  // Warning source path
 extern const char lbl_eu_80526300[];  // Warning message
@@ -1223,19 +1223,19 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     ((f32*)m)[11] = lbl_eu_8066A6C0;
     field_0x2C = lbl_eu_8066A6C0;
     field_0x30 = lbl_eu_8066A6C0;
-    field_0x34 = lbl_eu_8066A6F0;
+    field_0x34 = -1.0f;
     PSMTXMultVec(m, (Vec*)&field_0x2C, (Vec*)&field_0x2C);
 
     f32 lenSq = field_0x2C * field_0x2C + field_0x30 * field_0x30
               + field_0x34 * field_0x34;
     field_0x38 = lbl_eu_8066A6D8 / lenSq;
 
-    f32 ang = ((scale * ml::deg2rad) * lbl_eu_8066A6F4) * lbl_eu_8066A6F8;
+    f32 ang = ((scale * ml::deg2rad) * 0.5f) * 40.743664f;
     f32 s = nw4r::math::SinFIdx(ang);
-    field_0x74 = lbl_eu_8066A6FC * s;
+    field_0x74 = 2.0f * s;
     if (s - scale > 0.0f) {
-        f32 tv = tan((((s - scale) * ml::deg2rad) * lbl_eu_8066A6F8)
-                     * lbl_eu_8066A704);
+        f32 tv = tan((((s - scale) * ml::deg2rad) * 40.743664f)
+                     * 0.024543693f);
         f32 t = lbl_eu_8066A6D8 / tv;
         f32 q1 = t * t + lbl_eu_8066A6D8;
         if (q1 < 0.0f) {
@@ -1248,7 +1248,7 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
             field_0x78 = lbl_eu_8066A6C0;
         }
     } else {
-        field_0x78 = lbl_eu_8066A708;
+        field_0x78 = 100.0f;
     }
 
     LOLDBufHdr* bh = (LOLDBufHdr*)buf;
@@ -1269,9 +1269,9 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     this->mG3dMgr.teardownSubEntries(&this->mMemMan);
     if ((field_0x68 & 0x10) == 0) {
         // Publish the buffer/time bookkeeping globals.
-        lbl_eu_806657B8 = ((field_0xB8 * 60) + field_0xBA) * 60
+        LodDistanceLimit = ((field_0xB8 * 60) + field_0xBA) * 60
                         + field_0xBC;
-        lbl_eu_80665768 = (u32)field_0x5C;
+        sLodCacheTailFlag = (u32)field_0x5C;
         lbl_eu_80665794 = field_0x68;
     }
 
@@ -1479,8 +1479,8 @@ void* LOD::UnkClass_8046D144::isElementFlagClear(int task) {
 // (u16 truncation of pool*f1) and store it into field_0xE of every element
 // matching `task`.
 // ---------------------------------------------------------------------------
-void setElementLodLevel__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* self, int task, f32 f1) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
+void LOD::UnkClass_8046D144::setElementLodLevel(int task, f32 f1) {
+    LODMemManLayout* l = (LODMemManLayout*)this;
     if (!(l->field_0x6C & 1)) return;
     u16 v = (u16)(s32)(lbl_eu_8066A70C * f1);
     LODElem48* p48 = l->field_0x90;
@@ -1506,8 +1506,8 @@ void setElementLodLevel__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* se
 // according to `flag`, while a non-positive value walks the matching
 // elements setting/clearing their bit 0x10 per `flag`.
 // ---------------------------------------------------------------------------
-void configureShrinkTargets__Q23LOD17UnkClass_8046D144Ffsi(LOD::UnkClass_8046D144* self, f32 val, s16 task, int flag) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
+void LOD::UnkClass_8046D144::configureShrinkTargets(f32 val, s16 task, int flag) {
+    LODMemManLayout* l = (LODMemManLayout*)this;
     u32 flags = l->field_0x6C;
     if (!(flags & 1)) return;
     if (flags & 0x400) {
@@ -1601,8 +1601,8 @@ void LOD::UnkClass_8046D144::setElementVisibility(int task, int flag) {
 // every element whose id matches `task`; elements with the follow-through
 // flag bit and a nonzero enable field then refresh their animation state.
 // ---------------------------------------------------------------------------
-void setElementScale__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* self, int task, f32 v) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
+void LOD::UnkClass_8046D144::setElementScale(int task, f32 v) {
+    LODMemManLayout* l = (LODMemManLayout*)this;
     if (l->field_0x6C & 1) {
         LODElem48* p48 = l->field_0x90;
         LODElem20* p20 = l->field_0x4;
@@ -1796,8 +1796,8 @@ void* LOD::UnkClass_8046D144::getElementState(int task) {
 // setElementCachedValue: when the LOD system is enabled, store `value` into the +0x8
 // float of every element matching `task`.
 // ---------------------------------------------------------------------------
-void setElementCachedValue__Q23LOD17UnkClass_8046D144Fif(LOD::UnkClass_8046D144* self, int task, f32 value) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
+void LOD::UnkClass_8046D144::setElementCachedValue(int task, f32 value) {
+    LODMemManLayout* l = (LODMemManLayout*)this;
     if (!(l->field_0x6C & 1)) return;
     LODElem48* p48 = l->field_0x90;
     LODElem20* p20 = l->field_0x4;
@@ -1865,8 +1865,8 @@ void LOD::UnkClass_8046D144::setBaseScale(float a) { ((LODMemManLayout*)this)->f
 // otherwise clear the flag.  Then scale +0x84 by 1/f1 unless f1 matches the
 // A6C0 pool constant (then the stored scale is used as-is).
 // ---------------------------------------------------------------------------
-void configureFadeMode__Q23LOD17UnkClass_8046D144FiUsf(LOD::UnkClass_8046D144* self, int mode, u16 value, f32 f1) {
-    LODMemManLayout* l = (LODMemManLayout*)self;
+void LOD::UnkClass_8046D144::configureFadeMode(int mode, u16 value, f32 f1) {
+    LODMemManLayout* l = (LODMemManLayout*)this;
     if (mode) {
         l->field_0xBE = value;
         l->field_0x6C |= 0x100;
@@ -2078,7 +2078,7 @@ void LOD::UnkClass_8046D144::updateElementsByDesc() {
     }
     const f32 cZero = lbl_eu_8066A6C0;
     const f32 cAng = ml::deg2rad;
-    const f32 cFIdx = lbl_eu_8066A6F8;
+    const f32 cFIdx = 40.743664f;
     const f32 cOne = lbl_eu_8066A6D8;
     LODOutRec* out = (LODOutRec*)field_0xC;
     LODVec3f delta;
@@ -2558,7 +2558,7 @@ void LOD::UnkClass_8046D144::updateElementLod(LODElem20* elem) {
         if (d44 & 2) {
             // Integer byte parameter -> float via the 0x4330_0000 exponent
             // trick (MWCC expands the direct cast itself).
-            f32 base = lbl_eu_8066A710 * (f32)desc->field_0x46;
+            f32 base = 0.1f * (f32)desc->field_0x46;
             step = base * field_0x80;
         } else {
             step = field_0x80;
@@ -2616,8 +2616,8 @@ void LOD::UnkClass_8046D144::updateElementLod(LODElem20* elem) {
                 }
                 f32 v0 = elem->field_0x4;
                 f32 v = v0 + step * field_0x1CDC;
-                lbl_eu_80665754 = v;
-                lbl_eu_80665758 = (s16)v;
+                sLodThresholdDist = v;
+                sLodEntryKeyThreshold = (s16)v;
                 if (rec->field_0x0 & 2) {
                     if (ColiLodLookupRecordBin(rec) != 0) {
                         void* p = getScnHandle();
@@ -2686,11 +2686,11 @@ void LOD::UnkClass_8046D144::updateLodFrame() {
     } c;
     nw4r::math::VEC3 tmp;
     f64 magic = lbl_eu_8066A6E0;
-    f32 c0 = lbl_eu_8066A710;
+    f32 c0 = 0.1f;
     f32 c11 = lbl_eu_8066A6D8;
-    f32 c9 = lbl_eu_8066A70C;
-    f32 c6 = lbl_eu_8066A714;
-    double scale = lbl_eu_80665828;
+    f32 c9 = 255.0f;
+    f32 c6 = 360.0f;
+    double scale = LodMemCachedScale;
     u8* ps = (u8*)desc + countA4 * 0x74;  // PS vector stream after descriptors
     int i = 0;
     while (i < field_0xA4) {
@@ -2714,10 +2714,10 @@ void LOD::UnkClass_8046D144::updateLodFrame() {
                 }
                 if (desc->field_0x44 <= v) v -= desc->field_0x44;
                 out->field_0x40 = v;
-                if (lbl_eu_8066582C == 0) {
-                    lbl_eu_8066582C = 1;
+                if (LodMemScaleInitFlag == 0) {
+                    LodMemScaleInitFlag = 1;
                     scale = c11 / lbl_eu_80663830;
-                    lbl_eu_80665828 = scale;
+                    LodMemCachedScale = scale;
                     cur = scale;
                 }
                 s32 idx = 0xff;
@@ -3403,40 +3403,40 @@ extern "C" void initElementList__Q23LOD9LODMemManFv(LODElemList* head, u32 arg) 
 }
 
 // ---------------------------------------------------------------------------
-// allocPersistentBuffer: release the shared persistent buffer (lbl_eu_80665830) if
+// allocPersistentBuffer: release the shared persistent buffer (LodMemPersistentBuffer) if
 // present (retail keeps a redundant inner null-check doubling the beq), then
 // allocate a fresh 32-aligned block from `handle` into it.
 // ---------------------------------------------------------------------------
 void LOD::LODMemMan::allocPersistentBuffer(u32 handle, u32 size) {
-    int old = lbl_eu_80665830;
+    int old = LodMemPersistentBuffer;
     if (old != 0) {
         if (old != 0) {
             mtl::MemManager::deallocate((void*)old);
-            lbl_eu_80665830 = 0;
+            LodMemPersistentBuffer = 0;
         }
     }
-    lbl_eu_80665830 = (int)mtl::MemManager::allocate_head(handle, size, 0x20);
+    LodMemPersistentBuffer = (int)mtl::MemManager::allocate_head(handle, size, 0x20);
 }
 
 // ---------------------------------------------------------------------------
-// freePersistentBuffer: release the shared persistent buffer (lbl_eu_80665830) and
+// freePersistentBuffer: release the shared persistent buffer (LodMemPersistentBuffer) and
 // clear it (retail keeps a redundant inner null-check doubling the beq).
 // ---------------------------------------------------------------------------
 void LOD::LODMemMan::freePersistentBuffer() {
-    int old = lbl_eu_80665830;
+    int old = LodMemPersistentBuffer;
     if (old != 0) {
         if (old != 0) {
             mtl::MemManager::deallocate((void*)old);
         }
     }
-    lbl_eu_80665830 = 0;
+    LodMemPersistentBuffer = 0;
 }
 
 // ---------------------------------------------------------------------------
 // initElementBuffers: (re)initialise the element buffer.  The secondary buffer
 // (+0x8) is released first, then - when `size` is nonzero - the element
 // buffer (+0x4) is either adopted from the shared persistent buffer
-// (lbl_eu_80665830) or freshly allocated from `handle`; a zero size only
+// (LodMemPersistentBuffer) or freshly allocated from `handle`; a zero size only
 // releases the element buffer.  The tail re-seeds the name string and flags
 // exactly like resetManagerState.
 // ---------------------------------------------------------------------------
@@ -3448,8 +3448,8 @@ void LOD::LODMemMan::initElementBuffers(u32 handle, u32 size) {
         }
     }
     if (size != 0) {
-        if (lbl_eu_80665830 != 0) {
-            mData = (u8*)lbl_eu_80665830;
+        if (LodMemPersistentBuffer != 0) {
+            mData = (u8*)LodMemPersistentBuffer;
         } else {
             if (mData) {
                 if (mData) {
@@ -3487,7 +3487,7 @@ void LOD::LODMemMan::initElementBuffers(u32 handle, u32 size) {
 // with its length recorded at +0x74.
 // ---------------------------------------------------------------------------
 void LOD::LODMemMan::resetManagerState() {
-    if (lbl_eu_80665830 == 0) {
+    if (LodMemPersistentBuffer == 0) {
         if (mData) {
             if (mData) {
                 mtl::MemManager::deallocate(mData);

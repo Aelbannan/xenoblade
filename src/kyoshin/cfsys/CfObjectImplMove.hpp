@@ -923,43 +923,14 @@ struct CfMoveCd460Pose {
 // Retail float constants (sdata2 pool) used by MoveImplDriveRequest.
 extern const f32 lbl_eu_80666C88;   // event-object f17() comparison threshold
 extern const f32 lbl_eu_80666C68;   // move-distance base threshold
-// sdata2 int->float magic (2^52 = 0x4330000000000000) for the 0x43300000
-// conversion (CfMapEffectManager.hpp convention).
-extern const f64 lbl_eu_80666C90;
 extern const f32 lbl_eu_80666C64;   // schedSetStepIntervals second argument
-extern const f32 lbl_eu_80666C78;   // MoveImplDriveTransition knockback divisor
-// sdata2 magic paired with the 0x43300000 int->float conversion.
-extern const f64 lbl_eu_80666C80;
 
 extern u32 sMoveImplEffectCooldown;
 class CScn;  // monolib scene (canonical decl: cf/object/CfObjectMove.hpp)
 
-// float-returning probe over the gmScene object (retail symbol is
-// unmangled - keep C linkage, declared above).
-extern const f32 lbl_eu_80666C6C;
-extern const f32 lbl_eu_80666C70;
-extern const f32 lbl_eu_80666C74;
-extern const f32 lbl_eu_80666C7C;
-extern const f32 lbl_eu_80666CA8;
-extern const f32 lbl_eu_80666C98;
-extern const f32 lbl_eu_80666CCC;
-extern const f32 lbl_eu_80666CD0;
-extern const f32 lbl_eu_80666CD4;
 extern const f32 lbl_eu_80666C9C;
-extern const f32 lbl_eu_80666CA0;   // MoveImplPresentEffect timer threshold / vec.y seed
-extern const f32 lbl_eu_80666CA4;   // MoveImplPresentEffect final field_0x24 store
-extern const f32 lbl_eu_80666CAC;
-extern const f32 lbl_eu_80666CB0;
-extern const f32 lbl_eu_80666CB4;
-extern const f32 lbl_eu_80666CB8;
-extern const f32 lbl_eu_80666CBC;
-extern const f32 lbl_eu_80666CC0;
-extern const f32 lbl_eu_80666CC8;
 extern const char lbl_eu_8052ADB0[]; // nw4r::db::Warning source file
 extern const char lbl_eu_8052AD88[]; // nw4r::db::Warning message
-extern const char lbl_eu_80526300[]; // nw4r::db::Warning message
-extern const char lbl_eu_80526324[]; // nw4r::db::Warning source file
-extern const f32 lbl_eu_80666CC4;    // dot-product threshold
 
 // nw4r math FIdx trig helpers (retail symbols unmangled).
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);

@@ -21,7 +21,6 @@ extern const char lbl_eu_8056E1A8[];
 extern const char lbl_eu_8056E194[];
 extern const char lbl_eu_8056E178[];
 
-extern "C" const char lbl_eu_805247DC[0xC];  // def below (this TU .rodata)
 extern "C" u32 lbl_eu_80663C80;  // def below (this TU .sdata, "ref")
 extern "C" nw4r::g3d::ResMdl scnImN4AddFrameId(void* model, int flag);  // CScnItemModel.cpp: model -> ResMdl accessor
 
@@ -123,19 +122,19 @@ extern "C" bool UVAnm_PushPairSRT(CMdlAnmUV* self, u32 nodeId,
         if ((self->field_3c != 0 && i == 0) || self->field_3d != 0) {
             f32 ty = t.y;
             f32 tz = t.z;
-            mtx._00 = lbl_eu_8066B350; mtx._01 = lbl_eu_8066B354; mtx._02 = lbl_eu_8066B354;
+            mtx._00 = 1.0f; mtx._01 = 0.0f; mtx._02 = 0.0f;
             mtx._03 = -tz;
-            mtx._10 = lbl_eu_8066B354; mtx._11 = lbl_eu_8066B350; mtx._12 = lbl_eu_8066B354;
+            mtx._10 = 0.0f; mtx._11 = 1.0f; mtx._12 = 0.0f;
             mtx._13 = -ty;
-            mtx._20 = lbl_eu_8066B354; mtx._21 = lbl_eu_8066B354; mtx._22 = lbl_eu_8066B350; mtx._23 = lbl_eu_8066B354;
+            mtx._20 = 0.0f; mtx._21 = 0.0f; mtx._22 = 1.0f; mtx._23 = 0.0f;
         } else {
             f32 tz = t.z;
             f32 tx = t.x;
-            mtx._00 = lbl_eu_8066B350; mtx._01 = lbl_eu_8066B354; mtx._02 = lbl_eu_8066B354;
+            mtx._00 = 1.0f; mtx._01 = 0.0f; mtx._02 = 0.0f;
             mtx._03 = -tx;
-            mtx._10 = lbl_eu_8066B354; mtx._11 = lbl_eu_8066B350; mtx._12 = lbl_eu_8066B354;
+            mtx._10 = 0.0f; mtx._11 = 1.0f; mtx._12 = 0.0f;
             mtx._13 = -tz;
-            mtx._20 = lbl_eu_8066B354; mtx._21 = lbl_eu_8066B354; mtx._22 = lbl_eu_8066B350; mtx._23 = lbl_eu_8066B354;
+            mtx._20 = 0.0f; mtx._21 = 0.0f; mtx._22 = 1.0f; mtx._23 = 0.0f;
         }
         texSrt.SetEffectMtx(0, &mtx);
         texSrt.SetEffectMtx(1, &mtx);
@@ -217,7 +216,7 @@ void UVAnm_RegisterPairs(CMdlAnmUV* self, CMdlAnmUVResModel* model) {
         }
         const char* nodeName = node.ofs_to_ptr<char>(node.ref().name);
         ml::FixStr<16> expect;
-        expect.format(lbl_eu_805247DC, nodeName);
+        expect.format("%s%d%d", nodeName);
             const u32 nMats = scanMdl.GetResMatNumEntries();
             for (u32 j = 0; j < nMats; j++) {
                 nw4r::g3d::ResMat mat = scanMdl.GetResMat(j);
@@ -267,11 +266,7 @@ extern "C" u32 lbl_eu_8066B348;    // foreign .sdata2 string
 extern "C" __declspec(align(4)) const char lbl_eu_805247D0[0xC] = {
     0x43,0x4D,0x64,0x6C,0x41,0x6E,0x6D,0x55,0x56,0x00,0x00,0x00,
 };
-extern "C" __declspec(align(4)) const char lbl_eu_805247DC[0xC] = {
-    0x25,0x73,0x25,0x64,0x25,0x64,0x00,0x00,0x00,0x00,0x00,0x00,
-};
 
-// [.sdata] 0x80663C74-0x80663C88 (20B, 5 words) -- defined as 5 separate scalars to satisfy header's scalar decl for lbl_eu_80663C74
 // Header declares lbl_eu_80663C74 as u32; we define it and the following 4 words as separate globals placed contiguously in .sdata
 extern "C" __declspec(section ".sdata") u32 lbl_eu_80663C74 = (u32)&lbl_eu_8066B348;
 extern "C" u32 __RTTI__9CMdlAnmUV = (u32)&lbl_eu_805247D0;

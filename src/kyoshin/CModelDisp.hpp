@@ -65,16 +65,6 @@ extern const f32 lbl_eu_806681F8; // .sdata2 float -> field_2FDC increment
 // Filter-word tables copied to the stack by ModelDispScanRebind (.rodata).
 extern u32 lbl_eu_80507CDC[];
 extern u32 lbl_eu_80507CD0[];
-// Name-string buffer holding several NUL-terminated strings back to back
-// (elements addressed at +0/+4/+8/+0xC by ModelDispUpdateSlots).
-extern char lbl_eu_80507CF4[];
-// .sdata2 floats used by ModelDispUpdateSlots's per-slot color selection.
-extern const f32 lbl_eu_806681FC;
-extern const f32 lbl_eu_80668200;
-extern const f32 lbl_eu_80668204;
-extern const f32 lbl_eu_80668208;
-extern const f32 lbl_eu_8066820C;
-extern const f32 lbl_eu_80668210;
 
 // Overlay view of CActParamHolder words the shared view does not expose:
 // the owner back-pointers at +0x10/+0x40 and the act-param flag word at

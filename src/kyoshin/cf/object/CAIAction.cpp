@@ -34,10 +34,6 @@
 namespace cf {
 
 CAIAction::CAIAction() {
-    // Retail installs __vt__Q22cf9CAIAction (lbl_eu_8052F598) at +0 before
-    // any field init. The class is novtable (no compiler __vt__), so the
-    // store is explicit, same as CHelp / CToken.
-    this->vtbl() = &lbl_eu_8052F598;
     // Retail homes: r31=p (then end2), r30=q, r29=end, r28=this.
     // Reuse p as the second-loop limit so it coalesces with end2, not q.
     u8* p;

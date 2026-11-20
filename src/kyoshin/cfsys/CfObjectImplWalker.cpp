@@ -905,10 +905,17 @@ L4070:
 // resets the walker's battle fields. Returns 1 when a step was taken.
 // Statement order mirrors retail so the callee-saved allocation matches
 // (self=r26, battleId=r27, slot=r23, probe=r28, base=r25, fp=r31...).
+// Retail .rodata table (.rodata+0x18): bdat file names for the three battle-arts slots; name-guess: pctalk_* relocs.
+static const char* const sBattleArtsTalkFiles[3] = {
+    "pctalk_01",
+    "pctalk_02",
+    "pctalk_02",
+};
+
 int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
-    u32 tbl[3];
+    const char* tbl[3];
     for (int j = 0; j < 3; j++) {
-        tbl[j] = lbl_eu_804FC670[j];
+        tbl[j] = sBattleArtsTalkFiles[j];
     }
     void* probe = Bdat_GetTable_AA34();
     if (battleId == 0) goto reset;
@@ -919,7 +926,7 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
         self->field_384 = battleId;
     }
     Bdat_GetTable_AA34();
-    void* fp = getFP((const char*)tbl[self->field_388]);
+    void* fp = getFP(tbl[self->field_388]);
     if (fp == 0) goto reset;
     if (probe == 0) goto reset;
     int rowCount = Bdat_GetMaxRow_B1EC(fp);

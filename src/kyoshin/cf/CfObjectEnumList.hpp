@@ -253,9 +253,6 @@ extern "C" void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options);
 // descriptor table; only its address is taken, at +0 and +8).
 extern u8 gCfEnumListSortDispatch[0x20];
 
-// Context blob passed to CfEnumProjView::vX120 by sortEntriesByScreenX.
-extern u8 lbl_eu_804FCD24[];
-
 // reslist<T> vtable stored by the CfObjectSelectorObj +4 list dtor (retail
 // inlines the reslist-base dtor body: vtable store + sentinel walk + free).
 extern u8 lbl_eu_8052585C[0xC];
@@ -264,17 +261,8 @@ extern u8 lbl_eu_8052585C[0xC];
 // vtable store; the retail linker keeps both vtable stores).
 extern u8 lbl_eu_8052BD80[0xC];
 
-// .sdata2 float constants (shared sdata2 pool, loaded via sda21).
-// lbl_eu_80666EB8 / lbl_eu_80666EBC are declared in the cpp's extern "C"
-// block: their declaration position keeps runEnumObjects's reloc pairing.
-extern const float lbl_eu_80666EC8;   // 0.2f
-extern const float lbl_eu_80666ECC;   // 0.1f
+// .sdata2 float constant (shared sdata2 pool, loaded via sda21).
 extern const float lbl_eu_80666EF0;   // -1.0f (sdata2 word)
-extern const float lbl_eu_80666ED0;   // 0.024543693f (angle scale)
-extern const float lbl_eu_80666ED4;   // 0.5f (half-angle scale)
-extern const float lbl_eu_80666ED8;   // radians -> FIdx scale (SinFIdx/CosFIdx arg)
-extern const double lbl_eu_80666EE0;  // sdata2 double
-extern const double lbl_eu_80666EE8;  // sdata2 double
 
 // 3x3 rotation matrix helper used by the segment-probe ctor __ct__800FBA18
 // (Y-rotation rows: [c,0,s] / [0,1,0] / [-s,0,c]).
@@ -295,7 +283,3 @@ extern float gCfEnumListProbeOffsets[12];
 // .sbss flag byte guarding the probe-offset table init (signed: retail
 // lbz + extsb. tests the raw byte).
 extern s8 gCfEnumProbeOffsetsInitFlag;
-
-// s32->f32 conversion magic double (2^52 + 2^31) referenced by MWCC's
-// xoris/lfd/fsubs int->float idiom in __ct__800FA9B4.
-extern const double lbl_eu_80666EC0;

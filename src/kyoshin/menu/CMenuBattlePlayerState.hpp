@@ -171,22 +171,10 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
 
-// Float/double constant pool labels (retail .sdata2 symbols).
-extern const f32 lbl_eu_80666FCC; // gauge width scale A
-extern const f32 lbl_eu_80666FD0; // gauge width scale B
-extern const f32 lbl_eu_80666FD4; // gauge table blend factor
-extern const f32 lbl_eu_80666FD8; // gauge quantization step
-extern const f32 lbl_eu_80666FDC; // tension timer wrap limit
-extern const double lbl_eu_80666FB8; // unsigned-int -> double bias
-
 // BDAT message-table pointer: declared by cf/object/CBattleState.hpp as
 // `extern u8* ::cf::CfBdat::spBtlBuffListFileData;`.
 // Per-level HP-gauge width table indexed by the quantized gauge value.
 extern f32 sBpsHpGaugeWidths[5];
-
-// Tension state-machine thresholds (BpsStateRefreshSlot switch arms).
-extern const f32 lbl_eu_80666FE0;
-extern const f32 lbl_eu_80666FE4;
 
 struct CMenuBattleDamageQueue;
 // Draws one queued damage number; the caller embeds the queue object at

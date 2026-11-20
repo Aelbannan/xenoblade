@@ -100,27 +100,15 @@ struct CAIActionRing {
     CAIActionSlotQueue queue; // 0x8
 };
 
-// Retail __vt__Q22cf9CAIAction (US symbols.txt: lbl_eu_8052F598, size 0x10,
-// in CItem TU .data): RTTI at +0x00 (__RTTI__Q22cf9CAIAction), 0 at +0x04, then
-// the two virtuals. This TU emits no __vt__ (novtable); the ctor writes
-// the label explicitly, same pattern as CHelp / CToken.
-struct CAIActionVtbl {
-    void* rtti;  // +0x00
-    u32 zero;    // +0x04
-    void* slot8; // +0x08 CAIAction_UnkVirtualFunc1
-    void* slotC; // +0x0C CAIAction_UnkVirtualFunc2
-};
-
+// CAIAction has the real retail vtable: RTTI, a zero word, then the two
+// virtual functions declared below. Keeping the class polymorphic lets MWCC
+// emit __vt__Q22cf9CAIAction and its RTTI here; the constructor no longer
+// installs a hand-written table pointer.
 // size: 0xB1C
-class __declspec(novtable) CAIAction {
+class CAIAction {
 public:
     CAIAction();
     ~CAIAction();
-
-    // Overlay on the vptr at +0 so the ctor can install the retail table.
-    CAIActionVtbl*& vtbl() {
-        return *reinterpret_cast<CAIActionVtbl**>(this);
-    }
 
     // 0x8: export the trailer slot to outA and the ring entries to outB.
     virtual void CAIAction_UnkVirtualFunc1(CAIActionSlot* outA, CAIActionExport* outB);
@@ -146,10 +134,6 @@ public:
 inline CAIAction::~CAIAction() {}
 
 } // namespace cf
-
-// US symbols.txt name for __vt__Q22cf9CAIAction. Plain extern (not mangled),
-// same pattern as CHelp.hpp's lbl_eu_8053B3A0.
-extern cf::CAIActionVtbl lbl_eu_8052F598;
 
 // (The former C++-linkage forward decls of aiRebootAction / aiAppendToRing /
 // aiRingPrepend were removed: they overloaded the extern "C" forms on

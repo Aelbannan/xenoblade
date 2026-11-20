@@ -920,7 +920,7 @@ class CMenuArtsSet : public IUICf, public IScnRender {
 public:
     CMenuArtsSet(CScn* scene)
         : mScene(scene), mBgTex(0), mTitleAHelp(0, 0), mList(), mState(0),
-          mTimer(lbl_eu_80668638) {}
+          mTimer(0.0f) {}
     virtual ~CMenuArtsSet();
 
     virtual void Init();

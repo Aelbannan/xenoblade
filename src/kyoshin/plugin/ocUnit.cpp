@@ -241,9 +241,7 @@ extern "C" int getObjParam(VMThread* pThread, int handle) {
 
 // Retail linker name for slot 0x40 (hand-built tables in CfObjectModel /
 // CfCollSphereImpl). Virtual decl is CObjectParam_getParamPtr.
-extern "C" void* CObjectParam_getParamPtr__Q22cf12CObjectParamFv(cf::CObjectParam* self) {
-    return &self->mPtr10;
-}
+void* cf::CObjectParam::CObjectParam_getParamPtr() { return &mPtr10; }
 
 extern "C" int getObjId(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
@@ -313,10 +311,9 @@ extern "C" int setPosX(VMThread* pThread, int handle) {
 // CfObject_syncMoveTarget (alias UnkVirtualFunc22).
 // Move-target triple at CfObject+0x3C (copied word-wise by
 // CfObject_UnkVirtualFunc22 / CfObject_setMoveTargetVec).
-extern "C" void CfObject_syncMoveTarget__Q22cf8CfObjectFPCQ22ml5CVec3(void* self, const void* src) {
-    cf::CfObject* dst = (cf::CfObject*)self;
-    u32* words3C = (u32*)&dst->mPos3C;
-    const u32* words = (const u32*)src;
+void cf::CfObject::CfObject_syncMoveTarget(const ml::CVec3* vec) {
+    u32* words3C = (u32*)&mPos3C;
+    const u32* words = (const u32*)vec;
     words3C[0] = words[0];
     words3C[1] = words[1];
     words3C[2] = words[2];
@@ -414,12 +411,10 @@ extern "C" int applyPos(VMThread* pThread, int handle) {
 }
 
 // Base UVF26: forward the position vector into UVF19, then mark interacted.
-extern "C" void CfObject_applyMoveOffset__Q22cf8CfObjectFPCQ22ml5CVec3f(cf::CfObject* self,
-                                                           const ml::CVec3* vec,
-                                                           float amount) {
+void cf::CfObject::CfObject_applyMoveOffset(const ml::CVec3* vec, float amount) {
     (void)amount;
-    self->CfObject_setMoveTargetVec(vec);
-    self->mFlags68 |= 0x100;
+    CfObject_setMoveTargetVec(vec);
+    mFlags68 |= 0x100;
 }
 
 // Base +0x9C implementation (retail Fv symbol, body reads r4 as a 12-byte
@@ -564,10 +559,7 @@ extern "C" int getNpcAction(VMThread* pThread, int handle) {
 
 // Retail linker name for base slot 0x118 (hand-built tables). Virtual decl is
 // CfObject_getNpcActionState.
-extern "C" int CfObject_getNpcActionState__Q22cf8CfObjectFv(cf::CfObject* self) {
-    (void)self;
-    return -1;
-}
+int cf::CfObject::CfObject_getNpcActionState() { return -1; }
 
 // CfObjectMove UVF50/51 overrides (retail 0x8003C2E0/0x8003C2EC, 0xC each:
 // lbz r3,0x6CE/0x6CF(r3); extsb; blr). Decls were removed from
@@ -805,9 +797,7 @@ int isTalk(VMThread* pThread, int handle) {
     return 0;
 }
 
-extern "C" void* CObjectState_getStateData__Q22cf12CObjectStateFv(void* self) {
-    return &static_cast<cf::CObjectState*>(self)->unk8;
-}
+void* cf::CObjectState::getStateData() { return &unk8; }
 
 int onEvent(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
@@ -2220,6 +2210,4 @@ void cf::CfObject::CfObject_setMoveBusyState(int flag) {
 
 float cf::CfObject::CfObject_getScaledAngle() { return mField4C * ml::rad2deg; }
 
-extern "C" void CfObject_setMoveYaw__Q22cf8CfObjectFf(cf::CfObject* self, float value) {
-    self->CfObject_setMoveHeadAngle(value);
-}
+void cf::CfObject::CfObject_setMoveYaw(float value) { CfObject_setMoveHeadAngle(value); }

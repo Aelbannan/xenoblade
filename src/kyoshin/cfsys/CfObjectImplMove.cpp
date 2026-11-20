@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfObjectEnumList.hpp" // canonical nw4r warning-string decls
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/object/CAIActionApi.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }

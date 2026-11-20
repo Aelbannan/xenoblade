@@ -87,18 +87,6 @@ public:
 extern "C" void gimmickEneNoopVtable20();
 extern "C" void gimmickEneNoopDispatch5();
 
-// CfGimmickEne vtable (stored at +0x00 by the constructor/destructor).
-extern u8 lbl_eu_80537A78[];
-
-// sdata2 float constants used by the arts-interaction logic (gimmickEneArtsSetup).
-extern f32 lbl_eu_80668968;
-extern f32 lbl_eu_8066896C;
-extern f32 lbl_eu_8066897C;
-extern f64 lbl_eu_80668980;
-// Alpha scale / interpolation constants (gimmickEneUpdateLOD).
-extern f32 lbl_eu_80668988;
-extern f32 lbl_eu_8066898C;
-
 // sdata2 constants used by the marker-quad renderer (gimmickEneSetupGXState).
 // The quad corner coordinates (-1.0/1.0) are written as literals so MWCC
 // reloads them per FIFO write exactly like retail (extern refs get CSE'd or
@@ -132,12 +120,11 @@ extern void CfGimmick_LoadBdatAreaPos(cf::CfGimmick* self, float* out, void* bda
 // Fixed column-name string block used by the ctor (offsets 0x00..0x3A).
 extern char lbl_eu_8050E6A4[];
 
-// Runtime-patched column-name table (4 char*): the ctor writes 'a'+row into
-// each name and '1'+i into name[0][4] to build the per-cell column names.
-extern char* lbl_eu_80537A68[4];
-
-// Color-column name buffer: the ctor writes '1'+i into [2] before each read.
-extern char* lbl_eu_806629B0;
+// Runtime-patched BDAT tag names: the ctor writes 'a'+row into each name and
+// '1'+i into the color tag to build the per-cell column names.
+// name-guess: roles inferred from the aLOD1/aType/aSpd/cl1 tag strings.
+extern const void* const gGimmickEneColumnNames[3];
+extern const void* gGimmickEneColorTable[2];
 
 // CTaskLOD delegates (monolib lod) and sound helpers used by gimmickEneUpdateLOD.
 extern void setLODEnable__8CTaskLODFv(u8 lod, int mode);

@@ -4,16 +4,12 @@
 #include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 // Retail data symbols (linker-provided)
-extern const float lbl_eu_80666960;  // X component baked into the move vector (moveEffOfs___)
-extern const float lbl_eu_80666964;  // scale passed to the vtable 0xB4 slot (moveEffOfs___)
 extern u8 lbl_eu_80528870[];         // CfObjectEff vtable (retail data, 0x1A8 bytes)
 extern u8 __vt__Q22cf8CfObject[];         // CfObject vtable (retail .data at 0x805294E0) -
                                      // stored by the inlined base ctor
 extern u8 __vt__Q22cf8CfObject[];    // compiler-generated name for the same CfObject
                                      // vtable; the devirtualized slot-0x5C call in the
                                      // ctor references it
-extern const float lbl_eu_80666958;  // default position/scale fill (CfObjectEff ctor)
-extern const float lbl_eu_8066695C;  // default mFloat60 fill (CfObjectEff ctor)
 
 // C-ABI imports used by createEffect_. These retail symbols are unmangled
 // C names, so they are declared extern "C" (as CREvtEffect.hpp does) - a

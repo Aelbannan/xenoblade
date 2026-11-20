@@ -61,16 +61,16 @@ CfObjectEff::CfObjectEff() {
     v->f34 = 0;
     *(void**)this = (void*)&__vt__Q22cf8CfObject;
     mSubObj38 = nullptr;
-    mPos3C = lbl_eu_80666958;
-    mPos40 = lbl_eu_80666958;
-    mPos44 = lbl_eu_80666958;
-    v->f48 = lbl_eu_80666958;
-    mField4C = lbl_eu_80666958;
-    v->f50 = lbl_eu_80666958;
-    v->f54 = lbl_eu_80666958;
-    v->f58 = lbl_eu_80666958;
-    v->f5C = lbl_eu_80666958;
-    mFloat60 = lbl_eu_8066695C;
+    mPos3C = 0.0f;
+    mPos40 = 0.0f;
+    mPos44 = 0.0f;
+    v->f48 = 0.0f;
+    mField4C = 0.0f;
+    v->f50 = 0.0f;
+    v->f54 = 0.0f;
+    v->f58 = 0.0f;
+    v->f5C = 0.0f;
+    mFloat60 = 1.0f;
     mFlags68 = 0;
     v->f6C = 0;
     mField70 = 0;
@@ -316,10 +316,10 @@ namespace cf {
 extern "C" void moveEffOfs_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float a, float b) {
     float arr[3];
     arr[0] = a;
-    arr[1] = lbl_eu_80666960;
+    arr[1] = 0.5f;
     arr[2] = b;
     self->CfObject_snapMoveTarget(reinterpret_cast<ml::CVec3*>(arr),
-                                    lbl_eu_80666964);
+                                    1000.0f);
 }
 
 // Retail symbol setEffRotVec___Q22cf11CfObjectEffFv (void params in the name)

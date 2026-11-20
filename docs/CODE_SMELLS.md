@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 13405 |
-| extern "C" declarations (non-lbl_*, imports) | 5672 |
-| extern "C" definitions (forced names) | 4519 |
-| `self`/register-style params | 9786 |
-| `void*` (params + locals) | 6481 |
+| extern "C" (total lines) | 13396 |
+| extern "C" declarations (non-lbl_*, imports) | 5671 |
+| extern "C" definitions (forced names) | 4515 |
+| `self`/register-style params | 9779 |
+| `void*` (params + locals) | 6478 |
 | raw pointer offset arithmetic | 2497 |
 | deref-through-cast arithmetic | 578 |
 | inline asm / `register` | 106 |
@@ -49,8 +49,8 @@ Derived faithfulness tier on top of acceptance (`tools/coop/clean_tier.py`): a f
 |---|---|---|
 | accepted | 11511 | 1403328 |
 | **clean** | 3617 | 460844 |
-| accepted but dirty | 4605 | 676936 |
-| accepted, body unlocated | 3289 | 265548 |
+| accepted but dirty | 4600 | 676808 |
+| accepted, body unlocated | 3294 | 265676 |
 
 - Clean TUs (every target clean): **82** / 665
 
@@ -58,10 +58,10 @@ Dirty accepted functions by smell family (a function can hit several):
 
 | metric | dirty functions |
 |---|---|
-| extC-def | 2809 |
-| self | 2702 |
-| void* | 1522 |
-| extC-decl | 473 |
+| extC-def | 2805 |
+| self | 2697 |
+| void* | 1519 |
+| extC-decl | 472 |
 | ptr-arith | 233 |
 | goto | 231 |
 | deref-arith | 71 |
@@ -78,7 +78,7 @@ Top TUs by accepted-but-dirty bytes:
 | src/kyoshin/menu/code_80231950.cpp | 79 | 14688 | 1 | 120 |
 | src/kyoshin/cf/CfRes.cpp | 142 | 11412 | 12 | 1156 |
 | src/kyoshin/code_8025FB10.cpp | 9 | 11356 | 6 | 504 |
-| src/kyoshin/plugin/ocUnit.cpp | 70 | 10280 | 1 | 40 |
+| src/kyoshin/plugin/ocUnit.cpp | 65 | 10152 | 1 | 40 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 53 | 9908 | 0 | 0 |
 | src/kyoshin/cf/CBattleManager.cpp | 28 | 9892 | 6 | 792 |
 | src/kyoshin/code_800B06A4.cpp | 97 | 9584 | 7 | 208 |
@@ -442,7 +442,7 @@ Top TUs by view debt:
 | src/kyoshin/CTagProcessor.cpp | 1 | 11 | 9 | 13 | 9 | 1 | 0 | 0 | 8 | 0 | 0 | 0 | 10 | 2 |
 | src/kyoshin/CTalkWindow.cpp | 1 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGame.cpp | 9 | 81 | 138 | 15 | 0 | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 4 | 0 |
-| src/kyoshin/CTaskGameEff.cpp | 4 | 13 | 15 | 25 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 4 |
+| src/kyoshin/CTaskGameEff.cpp | 4 | 14 | 15 | 25 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 4 |
 | src/kyoshin/CTaskGameEvt.cpp | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGamePic.cpp | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/CTimeLightGrp.cpp | 1 | 6 | 5 | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 |
@@ -490,7 +490,7 @@ Top TUs by view debt:
 | src/kyoshin/cf/CfGameManager.cpp | 105 | 63 | 25 | 63 | 6 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 21 | 2 |
 | src/kyoshin/cf/CfGimmick.cpp | 18 | 41 | 26 | 10 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 12 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 1 | 15 | 41 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 | 0 |
-| src/kyoshin/cf/CfGimmickEne.cpp | 9 | 3 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickEne.cpp | 9 | 3 | 1 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickItem.cpp | 0 | 1 | 5 | 1 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 | 3 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 26 | 7 | 25 | 32 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 10 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 5 | 0 |
@@ -668,7 +668,7 @@ Top TUs by view debt:
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocMsg.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 1 |
 | src/kyoshin/plugin/ocThread.cpp | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/ocUnit.cpp | 20 | 76 | 22 | 120 | 13 | 4 | 0 | 0 | 9 | 0 | 0 | 0 | 14 | 0 |
+| src/kyoshin/plugin/ocUnit.cpp | 19 | 71 | 15 | 119 | 13 | 4 | 0 | 0 | 9 | 0 | 0 | 0 | 14 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 14 | 1 | 3 | 33 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 2 |
 | src/kyoshin/plugin/pluginCam.cpp | 8 | 20 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCfs.cpp | 66 | 2 | 1 | 21 | 14 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 |
@@ -3835,7 +3835,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CTaskGameEff.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 13,
+  "extern_c_nonlbl_def": 14,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "ptr_sites": 9,
@@ -4369,7 +4369,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 1,
-  "void_ptr": 11
+  "void_ptr": 9
  },
  "src/kyoshin/cf/CfGimmickItem.cpp": {
   "asm_code": 1,
@@ -6357,15 +6357,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/plugin/ocUnit.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 4,
-  "extern_c_nonlbl_decl": 20,
-  "extern_c_nonlbl_def": 76,
+  "extern_c_nonlbl_decl": 19,
+  "extern_c_nonlbl_def": 71,
   "goto_count": 9,
   "init_side_effect": 0,
   "ptr_arith": 13,
   "ptr_sites": 14,
   "schedule_pragma": 0,
-  "self_params": 22,
-  "void_ptr": 120
+  "self_params": 15,
+  "void_ptr": 119
  },
  "src/kyoshin/plugin/pluginBtl.cpp": {
   "asm_insn_shim": 0,

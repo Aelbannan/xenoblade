@@ -919,7 +919,7 @@ kyoshin/cf/object/CAIAction.cpp:
 	extabindex  start:0x80028654 end:0x80028708
 	.text       start:0x8014B270 end:0x80154630
 
-	.data        start:0x8052eb40 end:0x8052f598
+	.data        start:0x8052eb40 end:0x8052f5a8
 	.sdata2     start:0x80667428 end:0x80667460
 kyoshin/cf/CArtsSet.cpp:
 	extab       start:0x8000D39C end:0x8000D3B4
@@ -942,7 +942,7 @@ kyoshin/cf/CItem.cpp:
 	.ctors      start:0x804FA024 end:0x804FA028
 
 	.bss        start:0x80573e18 end:0x80574090
-	.data        start:0x8052f598 end:0x8052fd08
+	.data        start:0x8052f5a8 end:0x8052fd08
 	.rodata        start:0x80501a38 end:0x80501df8
 	.sbss        start:0x80664128 end:0x80664228
 	.sdata        start:0x80662258 end:0x80662330

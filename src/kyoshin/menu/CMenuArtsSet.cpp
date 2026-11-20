@@ -41,9 +41,6 @@ struct PtmfNullWordsArts {
 
 // C++-linkage draw helper (mangles to the retail symbol).
 
-// Arts archive path string (accessed via sda21 small-data relocation).
-extern char lbl_eu_8050AC70[];
-
 CMenuArtsSet::~CMenuArtsSet() {}
 
 void CMenuArtsSet::Term() {
@@ -132,9 +129,9 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
     }
 
     // Idle timer ramp, clamped at lbl_eu_80668640.
-    self->mTimer += lbl_eu_8066863C;
-    if (self->mTimer > lbl_eu_80668640) {
-        self->mTimer = lbl_eu_80668640;
+    self->mTimer += 1.0f;
+    if (self->mTimer > 10.0f) {
+        self->mTimer = 10.0f;
     }
 
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
@@ -234,10 +231,10 @@ extern "C" void artsMenuInput(CMenuArtsSet* self) {
             code80135FDC_getByte_64077() > 1) {
             // First C-down press: play a cue when the timer had ramped, then
             // reset it and re-arm the list for pointer-style input.
-            if (self->mTimer > lbl_eu_8066863C) {
+            if (self->mTimer > 1.0f) {
                 playUISound(2);
             }
-            self->mTimer = lbl_eu_80668638;
+            self->mTimer = 0.0f;
             self->mList.CMenuArtsSet_setArmedFlag(1);
             u32 turbo = pad->mTurboPressButtonFlags;
             if ((turbo & 0x00002001) != 0) {

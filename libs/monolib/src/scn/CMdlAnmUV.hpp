@@ -3,10 +3,6 @@
 #include <types.h>
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
-// .sdata2 float constants referenced by UVAnm_PushPairSRT (retail linker names).
-extern const f32 lbl_eu_8066B350; // effect-matrix diagonal value
-extern const f32 lbl_eu_8066B354; // effect-matrix off-diagonal value
-
 // .sdata pointer constants referenced by UVAnm_RegisterPairs (node/material name
 // prefixes for the UV-animation registration scan).
 extern const char* lbl_eu_80663C70;

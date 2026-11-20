@@ -77,7 +77,6 @@ void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 //
 // Unmangled retail name (extern "C" in code_80135FDC.hpp).
 extern char lbl_eu_804FD720[];
-extern const f32 lbl_eu_80666F90; // 1.0f
 extern const f32 lbl_eu_80666F98; // 110.0f
 extern const f32 lbl_eu_80666F9C; // 86.0f
 extern const f32 lbl_eu_80666FA0; // -178.0f
@@ -648,7 +647,7 @@ void CMenuBattlePlayerState::Move() {
                 f32 tB = static_cast<f32>(static_cast<int>(
                     actor->CActorParam_getLevelExp()));
                 // Constant on the left → retail fcmpu cr0,fNV,f0 (not f0,fNV).
-                if (lbl_eu_80666F90 == tB) {
+                if (1.0f == tB) {
                     f32 tB2 = static_cast<f32>(static_cast<int>(
                         actor->CActorParam_getLevelExp()));
                     if (slot->unk228 != tB2) {

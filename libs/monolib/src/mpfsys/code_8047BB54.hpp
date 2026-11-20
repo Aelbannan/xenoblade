@@ -30,12 +30,9 @@ struct MPFDrawVtC_2 {
 
 // .sdata2 constants / bitmask-table pointer / warning strings referenced by
 // mpfCullMarkLayers (retail names kept so the relocs match).
-extern const f32 lbl_eu_8066A860;
 extern const f32 lbl_eu_8066A864;
-extern const f32 lbl_eu_8066A868;
 extern const f32 lbl_eu_80665880;
 extern const f32 lbl_eu_80665884;
-extern const f32 lbl_eu_806638A0;
 extern u32* lbl_eu_80665864;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];

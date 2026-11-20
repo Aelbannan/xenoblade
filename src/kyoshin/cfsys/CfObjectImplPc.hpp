@@ -1039,21 +1039,6 @@ u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 cf::CfObjectImplPc18* getCfObjectPc(cf::CfObjectMove* objMove);  // getCfObjectPc__FPQ22cf12CfObjectMove
 // (findObjectById__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
 
-// sdata2 constants used by ObjPc_BattleActorRecount_A294 / ObjPc_BattleActorScan_86E8 / ObjPc_EventDispatch_9A20 /
-// ObjPc_BattleEventCmdDispatch_75D4.
-extern f32 lbl_eu_80666BC8;
-extern f32 lbl_eu_80666BCC;
-extern f32 lbl_eu_80666BD0;
-extern f32 lbl_eu_80666BE8;
-extern f32 lbl_eu_80666BEC;
-extern f32 lbl_eu_80666BF0;
-extern f32 lbl_eu_80666BF4;
-extern f32 lbl_eu_80666BF8;
-extern f32 lbl_eu_80666BFC;
-extern f32 lbl_eu_80666C00;
-extern f64 lbl_eu_80666BD8;
-extern f64 lbl_eu_80666BE0;
-
 // Handler-entry table copied to the stack by ObjPc_BattleEventCmdDispatch_75D4 (indexed by the
 // battle id at +0x3F28) and the two typeinfo operands of its __dynamic_cast.
 extern u32 sBattleEffectSlotIndices[9];

@@ -336,15 +336,46 @@ struct MPFDrawVtC_2 {
 };
 
 // .sdata2 constants / bitmask-table pointer / warning strings used below.
-extern const f32 lbl_eu_8066A860;
 extern const f32 lbl_eu_8066A864;
-extern const f32 lbl_eu_8066A868;
 extern f32 lbl_eu_80665880;
 extern f32 lbl_eu_80665884;
 extern f32 sMpfCullHeightScale[2];  // defined in this TU (.sdata, dissolved monolibdata2)
 extern u32* lbl_eu_80665864;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
+
+// --- Target 1: us-8047fb24 ---------------------------------------------------
+// Map-attach entry: tear down the previous state, ask the embedded
+// UnkClass_80471EC8 to (re)attach the descriptor + ResFile, and on success
+// allocate the draw buffer, create the ScnProc callback node and append it
+// to the scene root group.
+extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
+                                         UnkDesc8047BB54* desc,
+                                         CScn* cscn, u32 a6) {
+    UnkClass_8047BB54Layout* layout = (UnkClass_8047BB54Layout*)self;
+    __dt__8047BDA8(self);
+    if (((mpfsys::UnkClass_80471EC8*)layout->gap_0x24)->tryAttach(
+            desc, (MpfsysResFileHandle*)&layout->mResFile, cscn, a6) != 0) {
+        layout->field_0xC = desc;
+        layout->field_0x10 = 0x15;
+        __dt__8047BC74(self, 0x96000, 0x64000);
+        setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
+            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, 4.0);
+        u32 size;
+        nw4r::g3d::ScnProc* proc = nw4r::g3d::ScnProc::Construct(
+            (MEMAllocator*)getScnRoot45C(cscn), &size,
+            &initMpfDrawBuffer__17UnkClass_8047BB54Fv, true, true, 0);
+        layout->field_0x2E38 = proc;
+        proc->SetUserData(self);
+        nw4r::g3d::ScnObj* procCopy =
+            (nw4r::g3d::ScnObj*)layout->field_0x2E38;
+        nw4r::g3d::ScnGroup* group =
+            (nw4r::g3d::ScnGroup*)getScnGroupChild(cscn, 8);
+        group->PushBack(procCopy);
+        return 1;
+    }
+    return 0;
+}
 
 // --- Target 1: us-80480010 ---------------------------------------------------
 // Map-draw culling/marking pass. For each 8-byte layer-view record, resolve
@@ -385,7 +416,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
         }
         f32 f24 = f1v * f1v;
         f32 f23 = f27v * f27v;
-        f32 f26 = lbl_eu_8066A860 / (f1v - f27v);
+        f32 f26 = 1.0 / (f1v - f27v);
 
         for (int j = 0; j < numElems; j++) {
             nw4r::math::VEC3Sub(&diff, &elems[j],
@@ -433,7 +464,7 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
                         slot[0] = 1;
                     }
                 } else {
-                    f32 d = sub->field_0x4 - lbl_eu_8066A868;
+                    f32 d = sub->field_0x4 - 3.0;
                     if (dist2 > d * d) {
                         if (!(dist2 >= lbl_eu_8066A864)) {
                             nw4r::db::Warning(lbl_eu_80526324, 0x273,
@@ -474,39 +505,6 @@ extern "C" void mpfCullMarkLayers__17UnkClass_8047BB54Fv(void* self, void* ptr,
         }
         view++;
     }
-}
-
-// --- Target 1: us-8047fb24 ---------------------------------------------------
-// Map-attach entry: tear down the previous state, ask the embedded
-// UnkClass_80471EC8 to (re)attach the descriptor + ResFile, and on success
-// allocate the draw buffer, create the ScnProc callback node and append it
-// to the scene root group.
-extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
-                                         UnkDesc8047BB54* desc,
-                                         CScn* cscn, u32 a6) {
-    UnkClass_8047BB54Layout* layout = (UnkClass_8047BB54Layout*)self;
-    __dt__8047BDA8(self);
-    if (((mpfsys::UnkClass_80471EC8*)layout->gap_0x24)->tryAttach(
-            desc, (MpfsysResFileHandle*)&layout->mResFile, cscn, a6) != 0) {
-        layout->field_0xC = desc;
-        layout->field_0x10 = 0x15;
-        __dt__8047BC74(self, 0x96000, 0x64000);
-        setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, 4.0f);
-        u32 size;
-        nw4r::g3d::ScnProc* proc = nw4r::g3d::ScnProc::Construct(
-            (MEMAllocator*)getScnRoot45C(cscn), &size,
-            &initMpfDrawBuffer__17UnkClass_8047BB54Fv, true, true, 0);
-        layout->field_0x2E38 = proc;
-        proc->SetUserData(self);
-        nw4r::g3d::ScnObj* procCopy =
-            (nw4r::g3d::ScnObj*)layout->field_0x2E38;
-        nw4r::g3d::ScnGroup* group =
-            (nw4r::g3d::ScnGroup*)getScnGroupChild(cscn, 8);
-        group->PushBack(procCopy);
-        return 1;
-    }
-    return 0;
 }
 
 // --- Target 2: us-8047fc44 ---------------------------------------------------

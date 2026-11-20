@@ -269,7 +269,6 @@ public:
 // stays local to CMCEffStart.cpp (the defining TU).
 
 // Retail string pool (SDA-data base for pooled string literals).
-extern "C" char lbl_eu_805095EC[];
 extern "C" const float lbl_eu_80668550;  // 0.0f (SetFrame reset)
 extern "C" const float lbl_eu_80668554;   // 1.0f (anim done threshold)
 extern "C" const double lbl_eu_80668558;  // int->float magic (0x4330000080000000)

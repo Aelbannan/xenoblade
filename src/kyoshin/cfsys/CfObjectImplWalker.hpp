@@ -1037,23 +1037,12 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b);
 // float hoist).
 extern const f32 lbl_eu_80666B84;
 extern f32 lbl_eu_80666BA4;
-extern const f32 lbl_eu_80666B80;   // sdata2 constant
-extern const f32 lbl_eu_80666BA0;   // sdata2 constant
-extern const f32 lbl_eu_80666BB0;   // sdata2 constant
-extern const f32 lbl_eu_80666BB4;   // sdata2 constant
-extern const f32 lbl_eu_80666BB8;   // sdata2 constant
-extern const f32 lbl_eu_80666BBC;   // sdata2 constant
-extern const f32 lbl_eu_80666BC0;   // sdata2 constant
 
 // Global-scope data symbols (MWCC does not mangle global variable names).
 extern u32 gmPauseFlags;   // presentation bitfield 2 (.sbss)
 extern f32 lbl_eu_80666B8C;   // sdata2 constant
 extern const f32 lbl_eu_80666B88;  // sdata2 constant (0.5f)
-extern const f32 lbl_eu_80666B90;  // sdata2 constant
-extern const f64 lbl_eu_80666B98;  // sdata2 int->float magic (0x4330000080000000)
-extern const f64 lbl_eu_80666BA8;  // sdata2 int->float magic (0x4330000080000000)
 extern char lbl_eu_804FC694[];  // .rodata string/buffer
-extern u32 lbl_eu_804FC670[3];  // .data table (player-slot effect ids)
 // RTTI typeinfo labels for the move sub-object dynamic_cast. Declared as
 // 4-byte pointers so MWCC treats them as sdata2 (emits li @sda21, not lis/addi).
 extern const void* lbl_eu_80661C08;

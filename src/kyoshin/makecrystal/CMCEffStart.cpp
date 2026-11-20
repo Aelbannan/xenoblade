@@ -96,52 +96,7 @@ const void* __RTTI__14CMCCrystalList[2] = {
     (const void*)lbl_eu_80536008
 };
 
-// .rodata RTTI names in retail order. Explicit char arrays (one per class)
-// so MWCC 4-packs them exactly like retail; the compiler-pooled @ copies
-// trail the pool below and are tail-dropped by UnitRules.
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80509548[] = "CMCEffCylinder";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80509558[] = "CMCEffDivide";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80509568[] = "CMCEffUpRank";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80509578[] = "CMCEffCrystal";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80509588[] = "CMCEffFailure";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80509598[] = "CMCEffSuccess";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_805095A8[] = "CMCEffUpPrm";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_805095B4[] = "CMCEffUpGreen";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_805095C4[] = "CMCEffUpBlue";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_805095D4[] = "CMCEffUpRed";
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_805095E0[] = "CMCEffStart";
 
-// .rodata pool: shared layout/animation resource names (0x414). Single
-// unsized array so MWCC packs it contiguously like retail.
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_805095EC[] =
-"mf10_cry06_start.brlyt\0mf10_cry06_start_in.brlan\0mf10_cry02_prt00.brlyt\0"
-"mf10_cry02_prt00_in.brlan\0mf10_cry02_prt01.brlyt\0mf10_cry02_prt01_in.brlan\0"
-"mf10_cry02_prt02.brlyt\0mf10_cry02_prt02_in.brlan\0mf10_cry02_prt03.brlyt\0"
-"mf10_cry02_prt03_in.brlan\0txt_bns\0mf10_cry06_comp.brlyt\0"
-"mf10_cry06_comp_in.brlan\0mf10_cry06_comp_out.brlan\0mf10_cry06_fail.brlyt\0"
-"mf10_cry06_fail_in.brlan\0mf10_cry02_trc.brlyt\0mf10_cry02_trc_in.brlan\0"
-"mf10_cry02_trc_out.brlan\0mf10_cry03_crys.brlyt\0mf10_cry03_crys_in.brlan\0"
-"mf10_cry03_crys_change.brlan\0mf10_cry03_crys_spl.brlan\0"
-"mf10_cry03_crys_out.brlan\0mf10_cry04_lst.brlyt\0mf10_cry04_lst_roop.brlan\0"
-"nul_trc01\0name\0MNU_item\0%s%s\0txt_listname01\0atr_type\0"
-"mf00_com00_dmy.tpl\0mf10_cry00_crys01.tpl\0mf10_cry00_crys02.tpl\0"
-"mf10_cry00_crys03.tpl\0mf10_cry00_crys04.tpl\0mf10_cry00_crys05.tpl\0"
-"mf10_cry00_crys06.tpl\0pic_crs\0pic_crs01\0mf10_cry05_rank.brlyt\0"
-"mf10_cry05_rank_in.brlan\0mf10_cry05_spl.brlyt\0mf10_cry05_spl_in.brlan\0"
-"mf10_cry06_chn.brlyt\0mf10_cry06_chn_in.brlan\0mf10_cry06_chn_change.brlan\0"
-"mf10_cry06_chn_out.brlan\0txt_num\0\0\0\0\0\0";
 
 // Kept inline (not promoted to CMCEffStart.hpp): see the NOTE in the header.
 
@@ -177,8 +132,8 @@ CMCEffStart::CMCEffStart(nw4r::lyt::ArcResourceAccessor* arcResourceAccessor)
 CMCEffStart::~CMCEffStart() {}
 
 void CMCEffStart::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x0]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x17]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry06_start.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry06_start_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -233,8 +188,8 @@ CMCEffUpRed::CMCEffUpRed(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
 CMCEffUpRed::~CMCEffUpRed() {}
 
 void CMCEffUpRed::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x31]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x48]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry02_prt00.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry02_prt00_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -255,8 +210,8 @@ CMCEffUpBlue::CMCEffUpBlue(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
 CMCEffUpBlue::~CMCEffUpBlue() {}
 
 void CMCEffUpBlue::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x62]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x79]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry02_prt01.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry02_prt01_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -277,8 +232,8 @@ CMCEffUpGreen::CMCEffUpGreen(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 CMCEffUpGreen::~CMCEffUpGreen() {}
 
 void CMCEffUpGreen::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x93]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xaa]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry02_prt02.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry02_prt02_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -310,8 +265,8 @@ void CMCEffUpPrm::init() {
     for(u8 i = 0; i < 8; ++i) {
         UnkStruct* unkStructure = &unkStruct[i];
         // String pool at 0xc4 / 0xdb.
-        buildLayout(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
-        bindLayoutAnimTransform(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
+        buildLayout(&unkStructure->layout, mArcResourceAccessor, "mf10_cry02_prt03.brlyt");
+        bindLayoutAnimTransform(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, "mf10_cry02_prt03_in.brlan");
         nw4r::lyt::Pane* rootPane = unkStructure->layout->GetRootPane();
         ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)((u32)CUICfManager_getPackedFont9C()));
         unkStructure->layout->SetAnimationEnable(unkStructure->animTrans, true);
@@ -377,7 +332,7 @@ void CMCEffUpPrm::setNumber(u32 arg1, u8 arg2) {
     if(arg1 >= 8) {
         return;
     }
-    setLayoutTextBoxNumber(unkStruct[arg1].layout, &lbl_eu_805095EC[0xf5], arg2);
+    setLayoutTextBoxNumber(unkStruct[arg1].layout, "txt_bns", arg2);
 }
 /******************************************************************************
  *
@@ -396,9 +351,9 @@ CMCEffSuccess::CMCEffSuccess(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 CMCEffSuccess::~CMCEffSuccess() {}
 
 void CMCEffSuccess::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0xfd]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x113]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x12c]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry06_comp.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry06_comp_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry06_comp_out.brlan");
     bindInAnim();
     mLayout->Animate(0);
     unk18 = 1;
@@ -497,8 +452,8 @@ CMCEffFailure::CMCEffFailure(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 CMCEffFailure::~CMCEffFailure() {}
 
 void CMCEffFailure::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x146]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x15c]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry06_fail.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry06_fail_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(false);
     unk14 = 1;
@@ -530,14 +485,14 @@ CMCEffCrystal::~CMCEffCrystal() {}
 
 void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // String pool: trace 0x175/0x18a/0x1a2, crystal 0x1bb/0x1d1/0x1ea/0x207/0x221, list 0x23b/0x250.
-    buildLayout(&mLayoutC, mArcResourceAccessor, &lbl_eu_805095EC[0x175]);
-    bindLayoutAnimTransform(mLayoutC, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x18a]);
-    bindLayoutAnimTransform(mLayoutC, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x1a2]);
-    buildLayout(&mLayout18, mArcResourceAccessor, &lbl_eu_805095EC[0x1bb]);
-    bindLayoutAnimTransform(mLayout18, &mAnimTrans1c, mArcResourceAccessor, &lbl_eu_805095EC[0x1d1]);
-    bindLayoutAnimTransform(mLayout18, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805095EC[0x1ea]);
-    bindLayoutAnimTransform(mLayout18, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805095EC[0x207]);
-    bindLayoutAnimTransform(mLayout18, &mAnimTrans28, mArcResourceAccessor, &lbl_eu_805095EC[0x221]);
+    buildLayout(&mLayoutC, mArcResourceAccessor, "mf10_cry02_trc.brlyt");
+    bindLayoutAnimTransform(mLayoutC, &mAnimTrans10, mArcResourceAccessor, "mf10_cry02_trc_in.brlan");
+    bindLayoutAnimTransform(mLayoutC, &mAnimTrans14, mArcResourceAccessor, "mf10_cry02_trc_out.brlan");
+    buildLayout(&mLayout18, mArcResourceAccessor, "mf10_cry03_crys.brlyt");
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans1c, mArcResourceAccessor, "mf10_cry03_crys_in.brlan");
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans20, mArcResourceAccessor, "mf10_cry03_crys_change.brlan");
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans24, mArcResourceAccessor, "mf10_cry03_crys_spl.brlan");
+    bindLayoutAnimTransform(mLayout18, &mAnimTrans28, mArcResourceAccessor, "mf10_cry03_crys_out.brlan");
 
     nw4r::lyt::Pane* rootPane = mLayout18->GetRootPane();
     CFontPanel* fontObj =
@@ -546,8 +501,8 @@ void CMCEffCrystal::MCCrystal_BuildLayouts(){
     // crystal's font pane is set from.
     u32 result = fontObj->sf9();
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)result);
-    buildLayout(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
-    bindLayoutAnimTransform(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);
+    buildLayout(&mLayout2c, mArcResourceAccessor, "mf10_cry04_lst.brlyt");
+    bindLayoutAnimTransform(mLayout2c, &mAnimTrans30, mArcResourceAccessor, "mf10_cry04_lst_roop.brlan");
     bindInAnimTrace();
     bindInAnimCrystal();
     bindLoopAnim();
@@ -657,47 +612,47 @@ void CMCEffCrystal::startSpecial() {
 }
 
 void CMCEffCrystal::setTraceVisible(bool arg1) {
-    setPaneVisible(mLayoutC->GetRootPane()->FindPaneByName(&lbl_eu_805095EC[0x26a], true), arg1);
+    setPaneVisible(mLayoutC->GetRootPane()->FindPaneByName("nul_trc01", true), arg1);
 }
 
 void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     unk36 = arg1;
     unk38 = arg2;
-    char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805095EC[0x274], arg1);
-    char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - (arg2 - 1));
+    char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, "name", arg1);
+    char* itemName = (char*)BdatTouchStringCell("MNU_item", "name", 0x1e - (arg2 - 1));
     char buffer[0x20];
-    sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
-    LayoutSetTextBoxText(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
+    sprintf(buffer, "%s%s", name, itemName);
+    LayoutSetTextBoxText(mLayout18, "txt_listname01", buffer, 0);
     void* resource = nullptr;
-    u8 result = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805095EC[0x296], arg1);
+    u8 result = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "atr_type", arg1);
     switch(result) {
         case 0:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x29f], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf00_com00_dmy.tpl", 0);
             break;
         case 4:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2b2], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys01.tpl", 0);
             break;
         case 5:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2c8], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys02.tpl", 0);
             break;
         case 6:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2de], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys03.tpl", 0);
             break;
         case 7:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2f4], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys04.tpl", 0);
             break;
         case 8:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x30a], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys05.tpl", 0);
             break;
         case 9:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x320], 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys06.tpl", 0);
             break;
         default:
             break;
     }
     if(resource != nullptr) {
-        PaneSetTexPaletteByName(mLayout18, &lbl_eu_805095EC[0x336], (TPLPalette*)resource);
-        PaneSetTexPaletteByName(mLayout18, &lbl_eu_805095EC[0x33e], (TPLPalette*)resource);
+        PaneSetTexPaletteByName(mLayout18, "pic_crs", (TPLPalette*)resource);
+        PaneSetTexPaletteByName(mLayout18, "pic_crs01", (TPLPalette*)resource);
     }
 }
 
@@ -730,11 +685,11 @@ void CMCEffCrystal::updateChange() {
         unk5 = 1;
     }
     if(mAnimTrans20->GetFrame() >= 5.0f) {
-        char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, &lbl_eu_805095EC[0x274], unk36);
-        char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
+        char* name = BdatGetPtrDirect(::cf::CfBdat::spBtlSkillListFileData, "name", unk36);
+        char* itemName = (char*)BdatTouchStringCell("MNU_item", "name", 0x1e - unk38);
         char buffer[0x20];
-        sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
-        LayoutSetTextBoxText(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
+        sprintf(buffer, "%s%s", name, itemName);
+        LayoutSetTextBoxText(mLayout18, "txt_listname01", buffer, 0);
     }
 }
 
@@ -804,8 +759,8 @@ CMCEffUpRank::CMCEffUpRank(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
 CMCEffUpRank::~CMCEffUpRank() {}
 
 void CMCEffUpRank::init() {
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x348]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x35e]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry05_rank.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry05_rank_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
     unk14 = 1;
@@ -827,8 +782,8 @@ CMCEffDivide::~CMCEffDivide() {}
 
 void CMCEffDivide::init() {
     // String pool refs at retail offsets 0x377 / 0x38c.
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x377]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, &lbl_eu_805095EC[0x38c]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry05_spl.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry05_spl_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
     mLayout->Animate(0);
     unk14 = 1;
@@ -857,13 +812,13 @@ CMCEffCylinder::~CMCEffCylinder() {}
 
 void CMCEffCylinder::init() {
     // String pool: 0x3a4 / 0x3b9 / 0x3d1 / 0x3ed / 0x406.
-    buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805095EC[0x3a4]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, &lbl_eu_805095EC[0x3b9]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, &lbl_eu_805095EC[0x3d1]);
-    bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, &lbl_eu_805095EC[0x3ed]);
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry06_chn.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry06_chn_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry06_chn_change.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, "mf10_cry06_chn_out.brlan");
     u32 ul = (u32)getPackedFont();
     if(ul) {
-        setLayoutTextBoxFont(mLayout, &lbl_eu_805095EC[0x406], ul);
+        setLayoutTextBoxFont(mLayout, "txt_num", ul);
     }
     bindInAnim();
     unk1c = 1;
@@ -932,7 +887,7 @@ void CMCEffCylinder::startChange() {
 }
 
 void CMCEffCylinder::setNumber(u8 arg) {
-    setLayoutTextBoxNumber(mLayout, &lbl_eu_805095EC[0x406], arg);
+    setLayoutTextBoxNumber(mLayout, "txt_num", arg);
 }
 
 void CMCEffCylinder::updateIn() {

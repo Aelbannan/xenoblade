@@ -229,8 +229,8 @@ public:
 extern "C" void Scn_CallUnk8C_V6(CScn* scn, IScnRender* cb, u32 prio);
 extern "C" void Scn_CallUnk8C_V7(CScn* scn, IScnRender* cb, u32 prio);
 
-// Effect-task singleton (set by Init; retail lbl_eu_80663D40).
-extern CTaskGameEff* lbl_eu_80663D40;
+// Effect-task singleton (set by Init; renamed from the retail .sbss label).
+extern CTaskGameEff* spGameEffTask;
 
 
 // Thin owner-API header for kyoshin/CTaskGameEff.cpp's C-linkage exports

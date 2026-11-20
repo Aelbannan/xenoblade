@@ -11,6 +11,9 @@
 #include "monolib/core/CViewRoot.hpp"
 #include "monolib/core/CTaskManager.hpp"
 
+// name-guess: .sbss:0x80663D40 singleton set by Init/Term and read by the effect helpers.
+CTaskGameEff* spGameEffTask;
+
 // RTTI typeinfos for the __dynamic_cast of effect objects (CfObject ->
 // CfObjectEff). Declared here rather than in the header: CfObjectEff.cpp
 // generates __RTTI__Q22cf8CfObject itself and MWCC rejects an extern of that
@@ -156,11 +159,11 @@ extern "C" __declspec(noinline) void* __dt__12CTaskGameEffFv(void* self, int fla
 #pragma optimize_for_size off
 
 // Returns a global word from the sdata2/sdata pool (single lwz+sda21 reloc).
-extern "C" u32 getEffectTask() { return (u32)lbl_eu_80663D40; }
+extern "C" u32 getEffectTask() { return (u32)spGameEffTask; }
 
 #pragma optimize_for_size on
 void CTaskGameEff::Init() {
-    lbl_eu_80663D40 = this;
+    spGameEffTask = this;
 
     void* size = EffSys_GetConstBase();
     mMemAlloc = (u32)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(),
@@ -227,7 +230,7 @@ void CTaskGameEff::Term() {
         mtl::MemManager::deallocate((void*)mMemAlloc);
         mMemAlloc = 0;
     }
-    lbl_eu_80663D40 = nullptr;
+    spGameEffTask = nullptr;
 }
 
 
@@ -236,11 +239,11 @@ void CTaskGameEff::Term() {
 // uses the default effect time constant (lbl_eu_80665D94) and sets bit 0x2 of
 // field_0x68; zero uses the per-instance field_0x6C time and clears the bit.
 void setEffectEnabled(u32 enable) {
-    CTaskGameEff* gTask = lbl_eu_80663D40;
+    CTaskGameEff* gTask = spGameEffTask;
     if (gTask == nullptr) return;
     f32 time = (enable != 0) ? lbl_eu_80665D94 : gTask->field_0x6C;
     EffSys_DriveRandom(lbl_eu_8065FC18, time);
-    gTask = lbl_eu_80663D40;
+    gTask = spGameEffTask;
     if (enable != 0) {
         gTask->field_0x68 |= 0x2;
     } else {
@@ -319,7 +322,7 @@ void* bindIndexedEffect(int index, void* manager) {
     if (cf::CfGameManager::getInstance() == nullptr) {
         return nullptr;
     }
-    if (lbl_eu_80663D40 == nullptr) {
+    if (spGameEffTask == nullptr) {
         return nullptr;
     }
     void* eff = createNpcActor__Q22cf13CfGameManagerFv(index);
@@ -358,22 +361,22 @@ extern "C" void runEffectPassB(void* unused, void* param) {
 // optimize_for_size on: retail saves r30+r31 via stmw and keeps sp in r31
 // (the inlined setItem try-block SP store targets 0x1c(r31)).
 extern "C" void registerEffScene(CScn* scene) {
-    CTaskGameEff* gTask = lbl_eu_80663D40;
+    CTaskGameEff* gTask = spGameEffTask;
     if (gTask != nullptr && scene != nullptr) {
         gTask->mSceneList.push_back(scene);
 
         // Retail re-reads the singleton and null-guards each callback thunk.
-        CTaskGameEff* gt = lbl_eu_80663D40;
+        CTaskGameEff* gt = spGameEffTask;
         IScnRender* cb54 = reinterpret_cast<IScnRender*>(gt);
         if (gt != nullptr) cb54 = &gt->field_0x54;
         Scn_CallUnk8C_V6(scene, cb54, 8);
 
-        gt = lbl_eu_80663D40;
+        gt = spGameEffTask;
         IScnRender* cb58 = reinterpret_cast<IScnRender*>(gt);
         if (gt != nullptr) cb58 = &gt->field_0x58;
         scene->addRenderCB(cb58, 1, 0);
 
-        gt = lbl_eu_80663D40;
+        gt = spGameEffTask;
         scene->addRenderCB(&gt->field_0x70, 0xe, 0);
     }
 }
@@ -382,7 +385,7 @@ extern "C" void registerEffScene(CScn* scene) {
 // from the effect-task's scene list. Finds the list node whose scene matches,
 // detaches the task's callbacks, then unlinks the node.
 extern "C" void unregisterEffectScene(CScn* scene) {
-    CTaskGameEff* gTask = lbl_eu_80663D40;
+    CTaskGameEff* gTask = spGameEffTask;
     if (gTask == nullptr) return;
     if (scene == nullptr) return;
 
@@ -394,17 +397,17 @@ extern "C" void unregisterEffectScene(CScn* scene) {
     if (node == header) return;
 
     // Retail re-reads the singleton and null-guards each callback thunk.
-    CTaskGameEff* gt = lbl_eu_80663D40;
+    CTaskGameEff* gt = spGameEffTask;
     IScnRender* cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x58;
     node->mItem->removeRenderCB(cb);
 
-    gt = lbl_eu_80663D40;
+    gt = spGameEffTask;
     cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x54;
     Scn_CallUnk8C_V7(node->mItem, cb, 8);
 
-    gt = lbl_eu_80663D40;
+    gt = spGameEffTask;
     node->mItem->removeRenderCB(&gt->field_0x70);
 
     EffResListNode* p = node->mPrev;

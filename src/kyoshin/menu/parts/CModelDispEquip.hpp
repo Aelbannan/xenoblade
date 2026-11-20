@@ -276,19 +276,6 @@ extern char lbl_eu_80507FF8[];
 // Effect-singleton manager object (array forces @ha/@l at the call sites in
 // OnFileEvent / ModelDispEquip_ResetDisplay).
 extern u32 lbl_eu_8065FC18[];
-extern const f32 lbl_eu_80668274;
-extern const f32 lbl_eu_8066829C;
-extern const f32 lbl_eu_80668278;
-extern const f32 lbl_eu_80668270;
-extern const f32 lbl_eu_8066827C; // alpha step for ModelDispEquip_StepFadeIn
-// Step / clamp constants for ModelDispEquip_FadeAlphaUp/15D4/1740/17A4 and 1638/16BC.
-extern const f32 lbl_eu_80668280;
-extern const f32 lbl_eu_80668284; // scale1[1] upper clamp
-extern const f32 lbl_eu_80668288; // scale2[1] upper clamp
-extern const f32 lbl_eu_8066828C; // scale1[1] lower clamp
-extern const f32 lbl_eu_80668290; // scale2[1] lower clamp
-extern const f32 lbl_eu_80668294; // scale1[2] lower clamp
-extern const f32 lbl_eu_80668298; // scale1[2] upper clamp
 // 3-word anim-id table read by ModelDispEquip_TickAnim: the random sign (-1/0/+1)
 // indexes the array, so the middle entry sits at the label (sdata2 -> @sda21).
 // Declared as [2] (8 bytes) so MWCC keeps it small-data eligible and emits

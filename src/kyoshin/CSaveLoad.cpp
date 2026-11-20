@@ -1374,8 +1374,7 @@ void CSaveLoad::onFile(int, int, int completed, int msgKind) {
 bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    u8* strBase = lbl_eu_8050F7CC;
-    mMemRegion.createRegion(handle, 0x10000, (const char*)&strBase[0x224], 0);
+    mMemRegion.createRegion(handle, 0x10000, "CSaveLoad", 0);
     Class_8045F858 regionGuard(&mMemRegion);
 
     void* fileData = mFileHandle->getData();
@@ -1383,11 +1382,11 @@ bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
 
     nw4r::lyt::ArcResourceAccessor* accessor = CLibLayout::createArcResourceAccessor();
     mArcAccessor = accessor;
-    accessor->Attach(fileData, (const char*)&strBase[0x22e]);
+    accessor->Attach(fileData, "arc");
 
-    buildLayout(&mLayout, mArcAccessor, (const char*)&strBase[0x232]);
-    bindLayoutAnimTransform(mLayout, &mAnimTransA, mArcAccessor, (char*)&strBase[0x248]);
-    bindLayoutAnimTransform(mLayout, &mAnimTransB, mArcAccessor, (char*)&strBase[0x261]);
+    buildLayout(&mLayout, mArcAccessor, "mf95_sys10_sv00.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimTransA, mArcAccessor, "mf95_sys10_sv00_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTransB, mArcAccessor, "mf95_sys10_sv00_info_in.brlan");
 
     ApplyFontToTxtPanes(mLayout->GetRootPane(),
                         (const nw4r::ut::Font*)static_cast<IDeviceFontInfo*>(
@@ -1396,50 +1395,50 @@ bool CSaveLoad::OnFileEvent(CEventFile* pEventFile) {
     // Japanese-only caption strings applied to fixed pane names
     char* capJp = (char*)CUICfManager_getPackedFontD8();
     if (capJp != nullptr) {
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x27f], (u32)capJp);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x288], (u32)capJp);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x295], (u32)capJp);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x29e], (u32)capJp);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2ab], (u32)capJp);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2b4], (u32)capJp);
+        setLayoutTextBoxFont(mLayout, "txt_lv01", (u32)capJp);
+        setLayoutTextBoxFont(mLayout, "txt_lvpara01", (u32)capJp);
+        setLayoutTextBoxFont(mLayout, "txt_lv02", (u32)capJp);
+        setLayoutTextBoxFont(mLayout, "txt_lvpara02", (u32)capJp);
+        setLayoutTextBoxFont(mLayout, "txt_lv03", (u32)capJp);
+        setLayoutTextBoxFont(mLayout, "txt_lvpara03", (u32)capJp);
     }
 
     // Localized caption strings applied to fifteen fixed pane names
     char* capLoc = (char*)CUICfManager_getPackedFont9C();
     if (capLoc != nullptr) {
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x30a], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x316], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x322], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x32d], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x33b], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x347], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x353], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x35f], (u32)capLoc);
-        setLayoutTextBoxFont(mLayout, (char*)&strBase[0x36a], (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm01_00", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm01_01", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm01_02", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_date01", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_date01_01", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm02_00", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm02_01", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm02_02", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_date02", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_date02_01", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm03_00", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm03_01", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_tm03_02", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_date03", (u32)capLoc);
+        setLayoutTextBoxFont(mLayout, "txt_date03_01", (u32)capLoc);
     }
 
     enAnimA();
     mLayout->Animate(0);
 
     // L/R button labels for all three rows
-    char* str31 = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x31);
-    char* str32 = (char*)BdatTouchStringCell((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x32);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x378], str32, 0u);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x389], str31, 0u);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x39a], str32, 0u);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x3ab], str31, 0u);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x3bc], str32, 0u);
-    LayoutSetTextBoxFmtValue(mLayout, (char*)&strBase[0x3cd], str31, 0u);
+    char* str31 = BdatTouchStringCell("MNU_sysmes", "name", 0x31);
+    char* str32 = BdatTouchStringCell("MNU_sysmes", "name", 0x32);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_datetit01_00", str32, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_datetit01_01", str31, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_datetit02_00", str32, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_datetit02_01", str31, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_datetit03_00", str32, 0u);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_datetit03_01", str31, 0u);
 
-    setPaneVisible(mLayout->GetRootPane()->FindPaneByName((const char*)&strBase[0x3de], true), 0);
-    setPaneVisible(mLayout->GetRootPane()->FindPaneByName((const char*)&strBase[0x3ea], true), 0);
-    setPaneVisible(mLayout->GetRootPane()->FindPaneByName((const char*)&strBase[0x3f6], true), 0);
+    setPaneVisible(mLayout->GetRootPane()->FindPaneByName("pic_sh43_01", true), 0);
+    setPaneVisible(mLayout->GetRootPane()->FindPaneByName("pic_sh43_02", true), 0);
+    setPaneVisible(mLayout->GetRootPane()->FindPaneByName("pic_sh43_03", true), 0);
 
     mCur = CSLCur(mArcAccessor);
     mCur.createLayout();

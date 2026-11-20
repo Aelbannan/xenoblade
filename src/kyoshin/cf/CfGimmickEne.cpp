@@ -56,8 +56,9 @@ __declspec(section ".sdata") __attribute__((used))
 const void* __RTTI__Q22UI17CPassiveSkillInfo[2] = { lbl_eu_8050DBF0, 0 };
 __declspec(section ".sdata") __attribute__((used))
 const void* __RTTI__Q22UI16CPassiveSkillCur[2] = { lbl_eu_8050DC08, 0 };
+// name-guess: .sdata 0x806629B0 holds the cl1 color-column tag pointer.
 __declspec(section ".sdata") __attribute__((used))
-const void* lbl_eu_806629B0[2] = { lbl_eu_80668964, 0 };
+const void* gGimmickEneColorTable[2] = { lbl_eu_80668964, 0 };
 
 // .data 0x7C: dtor-descriptor triples, dispatch rows, tag-pointer table.
 extern "C" {
@@ -71,11 +72,6 @@ void gimmickEneUpdateLOD();
 void gimmickEneDispatchRow4Handler();
 void gimmickEneNoopDispatch5();
 }
-struct EneTagTrio {
-    const void* a;
-    const void* b;
-    const void* c;
-};
 struct EneDataRow {
     const void* a;
     unsigned int b;
@@ -108,10 +104,12 @@ __declspec(section ".data") __attribute__((used))
 static const EneDataRow s_dispatchRow4 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneDispatchRow4Handler };
 __declspec(section ".data") __attribute__((used))
 static const EneDataRow s_dispatchRow5 = { 0, 0xFFFFFFFFu, (const void*)gimmickEneNoopDispatch5 };
+// name-guess: .data 0x80537A68 holds the aLOD1/aType/aSpd BDAT tag pointers.
 __declspec(section ".data") __attribute__((used))
-const EneTagTrio lbl_eu_80537A68 = { lbl_eu_80668948, lbl_eu_80668950, lbl_eu_80668958 };
+const void* const gGimmickEneColumnNames[3] = { lbl_eu_80668948, lbl_eu_80668950, lbl_eu_80668958 };
+// name-guess: the fourth tag pointer (cl1) at .data 0x80537A74.
 __declspec(section ".data") __attribute__((used))
-static const void* s_tagD = lbl_eu_80668960;
+static const void* gGimmickEneColorColumn = lbl_eu_80668960;
 
 extern "C" __declspec(noinline) void gimmickEneSetupGXState(CfGimmickEneQuad* self, int arg) {
     (void)arg;

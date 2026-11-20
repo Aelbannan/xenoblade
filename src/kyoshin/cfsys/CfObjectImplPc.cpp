@@ -152,9 +152,6 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
     1.0f, 0.0f, 0.01f, 0, 4503599627370496.0, 4503601774854144.0,
     100.0f, 0.15f, -1.0f, 10.0f, 30.0f, 15.0f, -10.0f, 0.0f
 };
-#define lbl_eu_80666BE0 sdata2_ImplPc.d_BE0
-
-
 
 // 0xE4 and feeds its result + sub-fields into CharEffInit, binds the +0x28
 // holder to the battle object's +0x3E9C sub-object, and when the +0x70 token
@@ -593,7 +590,7 @@ L_tail:
                                 // Rebase the stored gauge off the magic
                                 // double bias, then rescale by BD0.
                                 s32 amt =
-                                    (s32)(((f64)(u32)w38 - lbl_eu_80666BE0));
+                                    (s32)(((f64)(u32)w38 - sdata2_ImplPc.d_BE0));
                                 o2->v124(0.01f * (f32)amt);
                             }
                         }
@@ -1117,7 +1114,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                     s32 amt = (s32)((f64)out43 *
                                     (res->v12C() / 100.0f));
                     calcBattleDamage(0, res, 0);
-                    res->v11C((f32)((f64)amt * lbl_eu_80666BE0));
+                    res->v11C((f32)((f64)amt * sdata2_ImplPc.d_BE0));
                 }
             }
             s32 out60;
@@ -1242,7 +1239,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                     }
                     s32 w49;
                     if (IdTable_GetSum(pq, 0x49, &w49)) {
-                        total += (f32)(((f64)w49 - lbl_eu_80666BE0) / scale);
+                        total += (f32)(((f64)w49 - sdata2_ImplPc.d_BE0) / scale);
                     }
                 }
             }

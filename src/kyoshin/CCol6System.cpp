@@ -1,3 +1,6 @@
+#define IWORK_EVENT_INLINE_DTOR
+#define IUIWINDOW_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
@@ -66,10 +69,6 @@ int sCol6SystemInstance;
 int sCol6InviteInstance;
 int sCol6QueuedWindowId;
 
-// Composite vtable data for the check-bat / hint factories (retail sizes 0xC4
-// / 0xAC; only the symbol names/relocs matter for the function matches).
-char lbl_eu_8053011C[0xC4];
-char lbl_eu_8053021C[0xAC];
 char* sCol6ArcPath; // .sdata arc-path pointer
 
 void Col6_ClearGlobals_D0B8() {
@@ -130,34 +129,12 @@ void CCol6CheckBat::Move() {
 
         // Retail keeps a copy of this store in BOTH arms (the b-over-else
         // emits the extra branch); do not hoist it out of the if/else.
-        mFlag64 = 1;
+        mField64 = 1;
     } else {
-        mFlag64 = 1;
+        mField64 = 1;
     }
 }
 
-// Byte-range shim over the CProcess header + owned fields so the factory can
-// write the vtable (+0x10), the __ptmf_null callback slots (+0x3C..0x53) and
-// the trailing scalars without raw pointer arithmetic. Matches CProcess's
-// 0x00-0x3B layout exactly (CProcess.hpp: CProcess : CChildListNode).
-struct CCol6CheckBatCtorShim {
-    u8 _00[0x10];
-    void* vtable;        // 0x10 - CProcess vtable, overwritten by this factory
-    u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
-    u32 moveCallbacks[3]; // 0x3C-0x47 - __ptmf_null move-callback slots
-    u32 drawCallbacks[3]; // 0x48-0x53 - __ptmf_null draw-callback slots
-    u32 field54;         // 0x54
-    u32 field58;         // 0x58
-    u32 field5C;         // 0x5C
-    s32 index;           // 0x60 - init -1
-    u8 flag64;           // 0x64
-    u8 flag65;           // 0x65
-    u8 flag66;           // 0x66
-    u8 active;           // 0x67 - init 1
-    u32 field68;         // 0x68
-    u32 field6C;         // 0x6C - lbl_eu_8053021C + 0x24
-    u8 flag70;           // 0x70
-};
 
 // CCol6CheckBat ctor - self-allocating factory (retail symbol
 // __ct__CCol6CheckBat). Returns NULL if the singleton already exists;
@@ -166,52 +143,25 @@ struct CCol6CheckBatCtorShim {
 // registers as a child of `parent`. Mirrors retail control flow: the
 // singleton store + Regist run even when the allocation failed (obj stays
 // NULL) and the (possibly NULL) object is returned.
-CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
-    // Return NULL if the singleton already exists.
+extern "C" CCol6CheckBat* __ct__CCol6CheckBat(CProcess* parent) {
     if (sCol6CheckBatInstance != 0) {
         return 0;
     }
 
-    CCol6CheckBatCtorShim* obj =
-        (CCol6CheckBatCtorShim*)mtl::MemManager::allocate(
-            0x74, CWorkThreadSystem::getWorkMem());
+    CCol6CheckBat* obj = reinterpret_cast<CCol6CheckBat*>(
+        mtl::MemManager::allocate(0x74, CWorkThreadSystem::getWorkMem()));
 
     if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-        obj->vtable = (void*)lbl_eu_8052D238;
-
-        // Copy the null member-function pointer into both callback slots;
-        // retail loads [1],[0],[2] then stores per slot.
-        const unsigned long* ptmf = (const unsigned long*)__ptmf_null;
-        u32 ptmfWord1 = ptmf[1];
-        u32 ptmfWord0 = ptmf[0];
-        obj->moveCallbacks[0] = ptmfWord0;
-        obj->moveCallbacks[1] = ptmfWord1;
-        obj->moveCallbacks[2] = ptmf[2];
-        ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
-        obj->drawCallbacks[0] = ptmfWord0;
-        obj->drawCallbacks[1] = ptmfWord1;
-        obj->drawCallbacks[2] = ptmf[2];
-
-        obj->field54 = 0;
-        obj->field58 = 0;
-        obj->field5C = 0;
-        obj->index = -1;
-        obj->flag64 = 0;
-        obj->flag65 = 0;
-        obj->flag66 = 0;
-        obj->active = 1;
-        obj->field68 = 0;
-
-        obj->vtable = (void*)lbl_eu_8053021C;
-        obj->field6C = (u32)(lbl_eu_8053021C + 0x24);
-        obj->flag70 = 0;
+        new (obj) CCol6CheckBat(parent);
     }
 
     sCol6CheckBatInstance = (int)(uintptr_t)obj;
     ((CProcess*)obj)->Regist(parent, false);
     return (CCol6CheckBat*)(uintptr_t)sCol6CheckBatInstance;
+}
+
+CCol6CheckBat::CCol6CheckBat(CProcess* parent) {
+    mFlag70 = 0;
 }
 
 int Col6_ScanItemSlots_D310() {
@@ -271,97 +221,23 @@ void Col6_ReserveBoxSlot_D3A0() {
     }
 }
 
-// Byte-range shim over the CProcess header + owned fields (0x00..0x70) so the
-// ctor can write the vtable slot, the __ptmf_null callback slots and the
-// trailing scalars without raw pointer arithmetic (same shape as
-// CCol6Invite::Create). The embedded subobjects at 0x74+ go through the real
-// CCol6Hint class.
-struct CCol6HintCtorShim {
-    u8 _00[0x10];
-    void* vtable;        // 0x10 - CProcess vtable, overwritten by this ctor
-    u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
-    u32 callbacks[6];    // 0x3C-0x53 - __ptmf_null callback slots
-    u32 field54;         // 0x54
-    u32 field58;         // 0x58
-    u32 field5C;         // 0x5C
-    s32 index;           // 0x60 - init -1
-    u8 flag64;           // 0x64
-    u8 flag65;           // 0x65
-    u8 flag66;           // 0x66
-    u8 active;           // 0x67 - init 1
-    u32 field68;         // 0x68
-    u32 field6C;         // 0x6C - lbl_eu_8053011C + 0x24
-    u32 field70;         // 0x70 - lbl_eu_8053011C + 0xac
-};
 
-// CCol6Hint ctor - free-function form (retail symbol __ct__CCol6Hint): the
-// CProcess base is constructed on the raw object, the vtable slot is written
-// manually (temp lbl_eu_8052D238, then the composite vtable lbl_eu_8053011C
-// whose sub-tables back the +0x6C/+0x70 interface pointers), the __ptmf_null
-// callback slots are copied, and the embedded subobjects (UnkClass_8045F564
-// region, CCur18 cursor, CScrollBar) are placement-built before the 0x80-byte
-// scratch block is cleared.
-// CCol6Hint ctor - extern "C" free-function form (retail emits the bare
-// symbol __ct__CCol6Hint; a C++-linkage definition would mangle on the
-// factory's call site).
-extern "C" CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
-    CCol6HintCtorShim* shim = reinterpret_cast<CCol6HintCtorShim*>(self);
-    __ct__8CProcessFv((CProcess*)self);
-    shim->vtable = (void*)lbl_eu_8052D238;
-
-    char* finalVt = lbl_eu_8053011C;
-
-    // Copy the null member-function pointer into both callback slots. Retail
-    // materializes the __ptmf_null base once via an update-form first load
-    // (*p++ folds the symbol's low half into lwzu), then indexes the remaining
-    // words relative to the advanced pointer; the composite-vtable offset adds
-    // interleave between the reads, and each block stores its second slot
-    // first.
-    u32* ptmf = __ptmf_null;
-    u32 ptmfWord0 = *ptmf++;
-    u32 vt6c = (u32)(finalVt + 0x24);
-    u32 ptmfWord1 = ptmf[0];
-    shim->callbacks[1] = ptmfWord1;
-    u32 vt70 = (u32)(finalVt + 0xac);
-    shim->callbacks[0] = ptmfWord0;
-    u32 ptmfWord2 = ptmf[1];
-    shim->callbacks[2] = ptmfWord2;
-    ptmfWord0 = ptmf[-1];
-    ptmfWord1 = ptmf[0];
-    shim->callbacks[4] = ptmfWord1;
-    shim->callbacks[3] = ptmfWord0;
-    ptmfWord2 = ptmf[1];
-    shim->callbacks[5] = ptmfWord2;
-
-    shim->field54 = 0;
-    shim->field58 = 0;
-    shim->field5C = 0;
-    shim->index = -1;
-    shim->flag64 = 0;
-    shim->flag65 = 0;
-    shim->flag66 = 0;
-    shim->active = 1;
-    shim->field68 = 0;
-
-    shim->vtable = finalVt;
-    shim->field6C = vt6c;
-    shim->field70 = vt70;
-
+// CCol6Hint::CCol6Hint - real member ctor. The IUIWindow/CTTask/IWorkEvent/
+// IScnRender base ctors emit the primary, +0x6C and +0x70 vptr stores and the
+// null PTMF slots; the body only initializes this class's own members.
+CCol6Hint::CCol6Hint(CProcess* parent) : mCur18(0), mScrollBar(0) {
     __ct__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(self->mMemRegion));
-    self->mParentPtr = parent;
-    self->mField88 = 0;
-    self->mField90 = 0;
-    self->mField94 = 0;
-    self->mFlag98 = 0;
-    self->mState = 0;
-    self->mField11C = 0;
-    self->mField120 = 0;
-    self->mField121 = 0;
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCur18, 0);
-    __ct__10CScrollBarFUc(&self->mScrollBar, 0);
-    memset(self->mUnk9C, 0, 0x80);
-    return self;
+        reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
+    mParentPtr = parent;
+    mField88 = 0;
+    mField90 = 0;
+    mField94 = 0;
+    mFlag98 = 0;
+    mState = 0;
+    mField11C = 0;
+    mField120 = 0;
+    mField121 = 0;
+    memset(mUnk9C, 0, 0x80);
 }
 
 // CCol6Hint dtor (extern "C" free-function form, default -O4,p - retail keeps
@@ -393,11 +269,10 @@ extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
 void CCol6Hint::Init() {
     // Null-this guard: MWCC keeps r31 = this and conditionally adds the
     // subobject offset, so mirror that single-branch shape here.
-    char* selfBytes = reinterpret_cast<char*>(this);
-    if (selfBytes != 0) {
-        selfBytes += offsetof(CCol6Hint, mField6C);
+    IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(this);
+    if (this != 0) {
+        evt = &static_cast<IWorkEvent&>(*this);
     }
-    IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(selfBytes);
     mField88 = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), sCol6ArcPath, evt, 0, 0);
 
@@ -413,7 +288,7 @@ void CCol6Hint::Term() {
     // for the IScnRender subobject passed to removeRenderCB.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mField70);
+        render = &static_cast<IScnRender&>(*this);
     }
     reinterpret_cast<CScn*>(mParentPtr)->removeRenderCB(render);
 
@@ -423,9 +298,9 @@ void CCol6Hint::Term() {
 
     // Release the anim host through its virtual deleting destructor; MWCC's
     // delete expansion supplies the second null check retail shows here.
-    if (mAnimHost != 0) {
-        delete mAnimHost;
-        mAnimHost = 0;
+    if (mLayout != 0) {
+        delete mLayout;
+        mLayout = 0;
     }
 
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
@@ -455,8 +330,8 @@ void CCol6Hint::Move() {
             // Wait for the out anim to finish, then swap both anims and
             // kick the scroll bar in (open sound).
             if (advanceAnimTransform(mField90, lbl_eu_80667558) == 0) break;
-            mAnimHost->SetAnimationEnable(mField90, 0);
-            mAnimHost->SetAnimationEnable(mField94, 1);
+            mLayout->SetAnimationEnable(mField90, 0);
+            mLayout->SetAnimationEnable(mField94, 1);
             mState = 2;
             {
                 ml::CVec3 vec3(lbl_eu_8066755C, lbl_eu_80667560, lbl_eu_80667564);
@@ -480,11 +355,11 @@ void CCol6Hint::Move() {
                 char buf[0x20];
                 sprintf(buf, &lbl_eu_80502050[0xe], (s8)mField120 + 1);
                 nw4r::lyt::Pane* pane1 =
-                    mAnimHost->GetRootPane()->FindPaneByName(buf, true);
+                    mLayout->GetRootPane()->FindPaneByName(buf, true);
                 nw4r::lyt::Pane* pane2 =
-                    mAnimHost->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
+                    mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80502050[0x17], true);
                 nw4r::math::VEC3 vec;
-                ScalePaneWorldPos(&vec, pane1, pane2, mAnimHost->GetRootPane());
+                ScalePaneWorldPos(&vec, pane1, pane2, mLayout->GetRootPane());
                 mCur18.setRootPaneTranslate(&vec);
             }
             break;
@@ -497,8 +372,8 @@ void CCol6Hint::Move() {
             // Scroll bar sliding out: swap the anims back and wait for done.
             if (AnimRewindFrame(mField94, lbl_eu_80667558) == 0) break;
             if (mScrollBar.isActive() == 0) break;
-            mAnimHost->SetAnimationEnable(mField94, 0);
-            mAnimHost->SetAnimationEnable(mField90, 1);
+            mLayout->SetAnimationEnable(mField94, 0);
+            mLayout->SetAnimationEnable(mField90, 1);
             mState = 5;
             break;
 
@@ -510,13 +385,13 @@ void CCol6Hint::Move() {
                 s32 idx = (s8)mField120 + (s8)mField121;
                 u32 entry = mUnk9C[idx];
                 if (entry != 0) {
-                    mIndex = (u8)BdatGetU8ByTableKey(
+                    mField60 = (u8)BdatGetU8ByTableKey(
                         &lbl_eu_80502050[0x26], &lbl_eu_80502050[0x33], entry);
                 } else {
-                    mIndex = 0xff;
+                    mField60 = 0xff;
                 }
             }
-            mFlag64 = 1;
+            mField64 = 1;
             break;
 
         default:
@@ -524,7 +399,7 @@ void CCol6Hint::Move() {
         }
 
         // Common tail: per-frame updates.
-        mAnimHost->Animate(0);
+        mLayout->Animate(0);
         mCur18.Update();
         mScrollBar.UpdateDispatch();
 }
@@ -567,7 +442,7 @@ extern "C" int Col6_HintOnFile_DB08(CCol6Hint* self, CEventFile* event) {
 
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
         if (self != 0) {
-            render = reinterpret_cast<IScnRender*>(&self->mField70);
+            render = &static_cast<IScnRender&>(*self);
         }
         reinterpret_cast<CScn*>(self->mParentPtr)->addRenderCB(render, 0xd, 0);
 
@@ -610,7 +485,7 @@ draw:
 
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
+    drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mLayout),
                   &drawInfo, 0, 1);
     mScrollBar.draw(&drawInfo);
     mCur18.DrawLayout(&drawInfo);
@@ -631,11 +506,9 @@ extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene) {
 
     CCol6Hint* obj = reinterpret_cast<CCol6Hint*>(
         mtl::MemManager::allocate(0x17c, CWorkThreadSystem::getWorkMem()));
-    if (obj != 0) {
-        // Reassign the (self-returning) ctor result so MWCC keeps obj in r3
-        // across the call instead of spilling it to a callee-saved register.
-        obj = __ct__CCol6Hint(obj, reinterpret_cast<CProcess*>(pScene));
-    }
+    // Reassign the (self-returning) ctor result so MWCC keeps obj in r3
+    // across the call instead of spilling it to a callee-saved register.
+    obj = new (obj) CCol6Hint(reinterpret_cast<CProcess*>(pScene));
     sCol6SystemInstance = (int)(uintptr_t)obj;
     reinterpret_cast<CProcess*>((uintptr_t)sCol6SystemInstance)->Regist(pParent, false);
     return reinterpret_cast<IUIWindow*>((uintptr_t)sCol6SystemInstance);
@@ -649,21 +522,21 @@ extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene) {
 extern "C" void col6HintBuild(CCol6Hint* self) {
     // Build the layout into the +0x54 slot and load the two anim transforms
     // (the +0x54 anim host IS the layout object).
-    buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&self->mAnimHost), reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00.brlyt");
-    bindLayoutAnimTransform(self->mAnimHost, &self->mField90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00_in.brlan");
-    bindLayoutAnimTransform(self->mAnimHost, &self->mField94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00_info_in.brlan");
+    buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&self->mLayout), reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00.brlyt");
+    bindLayoutAnimTransform(self->mLayout, &self->mField90, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00_in.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mField94, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C), (char*)"mf35_rv00_info_in.brlan");
 
     // Bind the device font into the layout's root pane.
-    nw4r::lyt::Pane* rootPane = self->mAnimHost->GetRootPane();
+    nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
     CDeviceFontInfo* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-        1, self->mAnimHost);
+        1, self->mLayout);
     ApplyFontToTxtPanes(rootPane,
                   fontObj->getFont());
 
     // Start the two anims (setAnim at +0x2C) and tick once (+0x38).
-    self->mAnimHost->SetAnimationEnable(self->mField94, 0);
-    self->mAnimHost->SetAnimationEnable(self->mField90, 1);
-    self->mAnimHost->Animate(0);
+    self->mLayout->SetAnimationEnable(self->mField94, 0);
+    self->mLayout->SetAnimationEnable(self->mField90, 1);
+    self->mLayout->Animate(0);
 
     // Rebuild the embedded cursor from a stack temp (data fields only).
     self->mCur18 = CCur18(CUICfManager_getArcResourceAccessor());
@@ -671,14 +544,14 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
 
     // Label the two count panes.
     char* s1 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1c);
-    LayoutSetTextBoxFmtValue(self->mAnimHost,
+    LayoutSetTextBoxFmtValue(self->mLayout,
                   (char*)"txt_title", s1, 0);
     char* s2 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0xb);
-    LayoutSetTextBoxFmtValue(self->mAnimHost,
+    LayoutSetTextBoxFmtValue(self->mLayout,
                   (char*)"txt_help", s2, 0);
 
     // Label the item pane and clear its visibility flag.
-    nw4r::lyt::Pane* pane = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_inf01", true);
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_inf01", true);
     pane->SetVisible(false);
 
     Bdat_GetTable_AA34();
@@ -741,7 +614,7 @@ extern "C" void col6HintBuild(CCol6Hint* self) {
         } else if (self->mUnk9C[idx - 1] != 0) {
             str = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 5);
         }
-        LayoutSetTextBoxFmtValue(self->mAnimHost,
+        LayoutSetTextBoxFmtValue(self->mLayout,
                       buf, str, 0);
     }
 }
@@ -821,18 +694,18 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                 str = BdatTouchStringCell((char*)"CL6_hintlist",
                                     (char*)"title", entry);
             }
-            LayoutSetTextBoxFmtValue(self->mAnimHost,
+            LayoutSetTextBoxFmtValue(self->mLayout,
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
         // Root pane re-derived for every use - keeping it in a named local
         // across the virtual calls costs an extra callee-saved register.
-        nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+        nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf2, true);
+        nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
-                      self->mAnimHost->GetRootPane());
+                      self->mLayout->GetRootPane());
         self->mCur18.setRootPaneTranslate(&vec);
         self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
@@ -870,16 +743,16 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                 str = BdatTouchStringCell((char*)"CL6_hintlist",
                                     (char*)"title", entry);
             }
-            LayoutSetTextBoxFmtValue(self->mAnimHost,
+            LayoutSetTextBoxFmtValue(self->mLayout,
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+        nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf2, true);
+        nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
-                      self->mAnimHost->GetRootPane());
+                      self->mLayout->GetRootPane());
         self->mCur18.setRootPaneTranslate(&vec);
         self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
@@ -913,16 +786,16 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                 str = BdatTouchStringCell((char*)"CL6_hintlist",
                                     (char*)"title", entry);
             }
-            LayoutSetTextBoxFmtValue(self->mAnimHost,
+            LayoutSetTextBoxFmtValue(self->mLayout,
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+        nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf2, true);
+        nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
-                      self->mAnimHost->GetRootPane());
+                      self->mLayout->GetRootPane());
         self->mCur18.setRootPaneTranslate(&vec);
         self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
@@ -960,114 +833,42 @@ extern "C" void col6HintInput(CCol6Hint* self) {
                 str = BdatTouchStringCell((char*)"CL6_hintlist",
                                     (char*)"title", entry);
             }
-            LayoutSetTextBoxFmtValue(self->mAnimHost,
+            LayoutSetTextBoxFmtValue(self->mLayout,
                           buf, str, 0);
         }
         char buf2[0x20];
         sprintf(buf2, (char*)"txt_%02d", (s8)self->mField120 + 1);
-        nw4r::lyt::Pane* pane1 = self->mAnimHost->GetRootPane()->FindPaneByName(buf2, true);
-        nw4r::lyt::Pane* pane2 = self->mAnimHost->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+        nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf2, true);
+        nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
         nw4r::math::VEC3 vec;
         ScalePaneWorldPos(&vec, pane1, pane2,
-                      self->mAnimHost->GetRootPane());
+                      self->mLayout->GetRootPane());
         self->mCur18.setRootPaneTranslate(&vec);
         self->mScrollBar.PlaceThumb((u16)(s8)self->mField121);
         playUISound(1);
     }
 }
 
-// Byte-range shim over the CProcess header + owned fields (0x00..0x70) so the
-// ctor can write the vtable slot, the __ptmf_null callback slots and the
-// trailing scalars without raw pointer arithmetic (same shape as the
-// CCol6Hint / CCol6CheckBat ctors). The embedded subobjects at 0x74+ go
-// through the real CCol6System class.
-struct CCol6SystemCtorShim {
-    u8 _00[0x10];
-    void* vtable;        // 0x10 - CProcess vtable, overwritten by this ctor
-    u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
-    u32 callbacks[6];    // 0x3C-0x53 - __ptmf_null callback slots
-    u32 field54;         // 0x54
-    u32 field58;         // 0x58
-    u32 field5C;         // 0x5C
-    s32 index;           // 0x60 - init -1
-    u8 flag64;           // 0x64
-    u8 flag65;           // 0x65
-    u8 flag66;           // 0x66
-    u8 active;           // 0x67 - init 1
-    u32 field68;         // 0x68
-    u32 field6C;         // 0x6C - lbl_eu_8053001C + 0x24
-    u32 field70;         // 0x70 - lbl_eu_8053001C + 0xac
-};
 
-// CCol6System ctor - free-function form (retail symbol __ct__CCol6System): the
-// CProcess base is constructed on the raw object, the vtable slot is written
-// manually (temp lbl_eu_8052D238, then the composite vtable lbl_eu_8053001C
-// whose sub-tables back the +0x6C/+0x70 interface pointers), the __ptmf_null
-// callback slots are copied, and the embedded subobjects (UnkClass_8045F564
-// region, two CCur18 cursors, two CSysWin windows) are placement-built before
-// the camera/vector block is initialized from the 0.0f float.
-// CCol6System ctor - extern "C" free-function form (retail bare symbol,
-// same reason as __ct__CCol6Hint).
-extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
-    CCol6SystemCtorShim* shim = reinterpret_cast<CCol6SystemCtorShim*>(self);
-    __ct__8CProcessFv((CProcess*)self);
-    shim->vtable = (void*)lbl_eu_8052D238;
-
-    char* finalVt = lbl_eu_8053001C;
-
-    // Copy the null member-function pointer into both callback slots (same
-    // shape as the CCol6Hint ctor: retail materializes the __ptmf_null base
-    // once via an update-form first load (*p++ folds the symbol's low half
-    // into lwzu), then indexes the remaining words relative to the advanced
-    // pointer; each block stores its second slot first).
-    u32* ptmf = __ptmf_null;
-    u32 ptmfWord0 = *ptmf++;
-    u32 vt6c = (u32)(finalVt + 0x24);
-    u32 ptmfWord1 = ptmf[0];
-    shim->callbacks[1] = ptmfWord1;
-    u32 vt70 = (u32)(finalVt + 0xac);
-    shim->callbacks[0] = ptmfWord0;
-    u32 ptmfWord2 = ptmf[1];
-    shim->callbacks[2] = ptmfWord2;
-    ptmfWord0 = ptmf[-1];
-    ptmfWord1 = ptmf[0];
-    shim->callbacks[4] = ptmfWord1;
-    shim->callbacks[3] = ptmfWord0;
-    ptmfWord2 = ptmf[1];
-    shim->callbacks[5] = ptmfWord2;
-
-    shim->field54 = 0;
-    shim->field58 = 0;
-    shim->field5C = 0;
-    shim->index = -1;
-    shim->flag64 = 0;
-    shim->flag65 = 0;
-    shim->flag66 = 0;
-    shim->active = 1;
-    shim->field68 = 0;
-
-    shim->vtable = finalVt;
-    shim->field6C = vt6c;
-    shim->field70 = vt70;
-
+// CCol6System::CCol6System - real member ctor; base ctors emit all three vptrs
+// and the PTMF slots. The body initializes only this class's own members.
+CCol6System::CCol6System(CProcess* parent) : mCur1(0), mCur2(0) {
     __ct__17UnkClass_8045F564Fv(
-        reinterpret_cast<UnkClass_8045F564*>(self->mMemRegion));
-    self->mScn = reinterpret_cast<CScn*>(parent);
-    self->mFileHandle = 0;
-    self->mAnim90 = 0;
-    self->mAnim94 = 0;
-    self->mAnim98 = 0;
-    self->mAnim9C = 0;
-    self->mFlagA0 = 0;
-    self->mFlagA1 = 0;
-    self->mFieldA2 = 0;
-    self->mFieldA4 = 0;
-    self->mPadA5[0] = 0;
-    self->mPadA5[1] = 0;
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCur1, 0);
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&self->mCur2, 0);
-    __ct__7CSysWinFUc(self->mSysWin1, 0);
-    __ct__7CSysWinFUc(self->mSysWin2, 0);
+        reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
+    mScn = reinterpret_cast<CScn*>(parent);
+    mFileHandle = 0;
+    mAnim90 = 0;
+    mAnim94 = 0;
+    mAnim98 = 0;
+    mAnim9C = 0;
+    mFlagA0 = 0;
+    mFlagA1 = 0;
+    mFieldA2 = 0;
+    mFieldA4 = 0;
+    mPadA5[0] = 0;
+    mPadA5[1] = 0;
+    __ct__7CSysWinFUc(mSysWin1, 0);
+    __ct__7CSysWinFUc(mSysWin2, 0);
 
     // Camera/vector block: every CVec3 is built from a stack temp
     // CVec3(f,f,f) and copied memberwise (MWCC routes the bits through GPRs,
@@ -1084,19 +885,18 @@ extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     // (statement reorder, named locals both decl orders, local CVec3[8],
     // placement-new element ctors, record-pointer loop) yields descending
     // slots or extra out-of-line/round-trip code instead.
-    self->mCamPos = ml::CVec3(f, f, f);
-    self->mCamLookAt = ml::CVec3(f, f, f);
-    self->mVec168 = ml::CVec3(f, f, f);
-    self->mVec174 = ml::CVec3(f, f, f);
-    self->mField180 = f;
-    self->mField184 = 0;
-    self->mVec188 = ml::CVec3(f, f, f);
-    self->mVec194 = ml::CVec3(f, f, f);
-    self->mVec1A0 = ml::CVec3(f, f, f);
-    self->mVec1AC = ml::CVec3(f, f, f);
-    self->mField1B8 = f;
-    self->mField1BC = 0;
-    return self;
+    mCamPos = ml::CVec3(f, f, f);
+    mCamLookAt = ml::CVec3(f, f, f);
+    mVec168 = ml::CVec3(f, f, f);
+    mVec174 = ml::CVec3(f, f, f);
+    mField180 = f;
+    mField184 = 0;
+    mVec188 = ml::CVec3(f, f, f);
+    mVec194 = ml::CVec3(f, f, f);
+    mVec1A0 = ml::CVec3(f, f, f);
+    mVec1AC = ml::CVec3(f, f, f);
+    mField1B8 = f;
+    mField1BC = 0;
 }
 
 // extern "C" free-function form (CCol6Hint precedent): sub-dtors in retail
@@ -1130,7 +930,7 @@ void CCol6System::Init() {
     // conditionally add +0x6C (retail: mr r30,r31 / beq / addi r30,r3,0x6c).
     IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(this);
     if (this != 0) {
-        evt = reinterpret_cast<IWorkEvent*>(&mField6C);
+        evt = &static_cast<IWorkEvent&>(*this);
     }
     mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(), sCol6ArcPath, evt, 0, 0);
@@ -1200,7 +1000,7 @@ void CCol6System::Term() {
     // for the IScnRender subobject passed to removeRenderCB.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
+        render = &static_cast<IScnRender&>(*this);
     }
     mScn->removeRenderCB(render);
 
@@ -1212,9 +1012,9 @@ void CCol6System::Term() {
 
     // The outer guard plus delete's own null-check reproduce retail's two beq's
     // on the same CR0 test (MWCC D2-inlined-into-D1 artifact).
-    if (mpLayout != 0) {
-        delete mpLayout;
-        mpLayout = 0;
+    if (mLayout != 0) {
+        delete mLayout;
+        mLayout = 0;
     }
 
     releaseArcResourceAccessor(mArcAccessor);
@@ -1239,7 +1039,7 @@ inline void CCol6System::updateCursorPos() {
             sprintf(buf, &lbl_eu_80502050[0xe], (s8)mPadA5[0] + 1);
         }
         nw4r::lyt::Pane* rootPane =
-            mpLayout->GetRootPane();
+            mLayout->GetRootPane();
         nw4r::lyt::Pane* pane1 =
             rootPane->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 = rootPane->FindPaneByName(&lbl_eu_80502050[0x17], true);
@@ -1274,10 +1074,10 @@ body:
         // Out anim finished: swap the pair and open the box.
         if (advanceAnimTransform(mAnim90, lbl_eu_80667558) == 0) break;
         mFieldA4 = 2;
-        mpLayout->SetAnimationEnable(mAnim98, 0);
-        mpLayout->SetAnimationEnable(mAnim9C, 0);
-        mpLayout->SetAnimationEnable(mAnim90, 0);
-        mpLayout->SetAnimationEnable(mAnim94, 1);
+        mLayout->SetAnimationEnable(mAnim98, 0);
+        mLayout->SetAnimationEnable(mAnim9C, 0);
+        mLayout->SetAnimationEnable(mAnim90, 0);
+        mLayout->SetAnimationEnable(mAnim94, 1);
         break;
 
     case 2:
@@ -1295,30 +1095,30 @@ body:
         // In anim done: swap back and close.
         if (AnimRewindFrame(mAnim94, lbl_eu_80667558) == 0) break;
         mFieldA4 = 5;
-        mpLayout->SetAnimationEnable(mAnim94, 0);
-        mpLayout->SetAnimationEnable(mAnim98, 0);
-        mpLayout->SetAnimationEnable(mAnim9C, 0);
-        mpLayout->SetAnimationEnable(mAnim90, 1);
+        mLayout->SetAnimationEnable(mAnim94, 0);
+        mLayout->SetAnimationEnable(mAnim98, 0);
+        mLayout->SetAnimationEnable(mAnim9C, 0);
+        mLayout->SetAnimationEnable(mAnim90, 1);
         break;
 
     case 5:
         // Out anim done: resolve the target index from the player slot.
         if (AnimRewindFrame(mAnim90, lbl_eu_80667558) == 0) break;
-        mIndex = 0xff;
-        if ((s8)mPadA5[0] == 2) mIndex = 1;
-        else if ((s8)mPadA5[0] == 1) mIndex = 2;
+        mField60 = 0xff;
+        if ((s8)mPadA5[0] == 2) mField60 = 1;
+        else if ((s8)mPadA5[0] == 1) mField60 = 2;
         mPadA5[0] = 0;
-        mFlag64 = 1;
+        mField64 = 1;
         break;
 
     case 6:
         // Second-layer out anim: switch to the box anim and reset the cursor.
         if (advanceAnimTransform(mAnim98, lbl_eu_80667558) == 0) break;
         mFieldA4 = 7;
-        mpLayout->SetAnimationEnable(mAnim90, 0);
-        mpLayout->SetAnimationEnable(mAnim94, 0);
-        mpLayout->SetAnimationEnable(mAnim98, 0);
-        mpLayout->SetAnimationEnable(mAnim9C, 1);
+        mLayout->SetAnimationEnable(mAnim90, 0);
+        mLayout->SetAnimationEnable(mAnim94, 0);
+        mLayout->SetAnimationEnable(mAnim98, 0);
+        mLayout->SetAnimationEnable(mAnim9C, 1);
         mPadA5[0] = 0;
         updateCursorPos();
         break;
@@ -1330,8 +1130,8 @@ body:
     case 8:
         // Box anim done: resolve target.
         if (advanceAnimTransform(mAnim9C, lbl_eu_80667558) == 0) break;
-        mIndex = 0xff;
-        mFlag64 = 1;
+        mField60 = 0xff;
+        mField64 = 1;
         break;
 
     case 9:
@@ -1375,8 +1175,8 @@ body:
     case 0xe:
         // Fade idle: resolve target and flag.
         if (getFadeMenu() != 0) break;
-        mIndex = 0xff;
-        mFlag64 = 1;
+        mField60 = 0xff;
+        mField64 = 1;
         break;
 
     case 0xf:
@@ -1691,7 +1491,7 @@ body:
     }
 
     // Common tail: per-frame updates.
-    mpLayout->Animate(0);
+    mLayout->Animate(0);
     mCur1.Update();
     mCur2.Update();
     reinterpret_cast<CSysWin*>(&mSysWin1)->dispatchPhase();
@@ -1729,7 +1529,7 @@ extern "C" int Col6_SysOnFile_0118(CCol6System* self, CEventFile* event) {
 
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
         if (self != 0) {
-            render = reinterpret_cast<IScnRender*>(&self->mScnRender);
+            render = &static_cast<IScnRender&>(*self);
         }
         self->mScn->addRenderCB(render, 0xd, 0);
 
@@ -1759,7 +1559,7 @@ draw:
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
     if (mFlagA1 == 0) {
-        drawLayout(mpLayout, &drawInfo, 0, 1);
+        drawLayout(mLayout, &drawInfo, 0, 1);
         mCur1.DrawLayout(&drawInfo);
         reinterpret_cast<CSysWin*>(&mSysWin1)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo));
         mCur2.DrawLayout(&drawInfo);
@@ -1777,9 +1577,7 @@ extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
 
     CCol6System* obj = reinterpret_cast<CCol6System*>(
         mtl::MemManager::allocate(0x240, CWorkThreadSystem::getWorkMem()));
-    if (obj != 0) {
-        obj = __ct__CCol6System(obj, reinterpret_cast<CProcess*>(pScene));
-    }
+    obj = new (obj) CCol6System(reinterpret_cast<CProcess*>(pScene));
     sCol6InviteInstance = (int)(uintptr_t)obj;
     reinterpret_cast<CProcess*>((uintptr_t)sCol6InviteInstance)->Regist(pParent, false);
     return reinterpret_cast<IUIWindow*>((uintptr_t)sCol6InviteInstance);
@@ -1793,51 +1591,51 @@ extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene) {
 extern "C" void col6SysLayout(CCol6System* self) {
     self->mPadA5[0] = 0;
 
-    buildLayout(&self->mpLayout, self->mArcAccessor, (char*)"mf35_rv00.brlyt");
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim90, self->mArcAccessor, (char*)"mf35_rv00_in.brlan");
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim94, self->mArcAccessor, (char*)"mf35_rv00_info_in.brlan");
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim98, self->mArcAccessor, (char*)"mf35_rv00_next.brlan");
-    bindLayoutAnimTransform(self->mpLayout, &self->mAnim9C, self->mArcAccessor, (char*)"mf35_rv00_out.brlan");
+    buildLayout(&self->mLayout, self->mArcAccessor, (char*)"mf35_rv00.brlyt");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnim90, self->mArcAccessor, (char*)"mf35_rv00_in.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnim94, self->mArcAccessor, (char*)"mf35_rv00_info_in.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnim98, self->mArcAccessor, (char*)"mf35_rv00_next.brlan");
+    bindLayoutAnimTransform(self->mLayout, &self->mAnim9C, self->mArcAccessor, (char*)"mf35_rv00_out.brlan");
 
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane =
-        self->mpLayout->GetRootPane();
+        self->mLayout->GetRootPane();
     CDeviceFontInfo* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-        1, self->mpLayout);
+        1, self->mLayout);
     ApplyFontToTxtPanes(rootPane, fontObj->getFont());
 
     // If the font value is present, label all 21 count panes with it.
     u32 fontVal = (u32)CUICfManager_getPackedFont9C();
     if (fontVal != 0) {
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_now02", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_now_val01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_now_val02", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num02", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num03", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_num04", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val02", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val03", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val04", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val05", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold00", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val01_01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val02_01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val03_01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val04_01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_mat_val05_01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold00_01", fontVal);
-        setLayoutTextBoxFont(self->mpLayout, (char*)"txt_gold01_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_now02", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_now_val01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_now_val02", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_num01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_num02", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_num03", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_num04", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val02", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val03", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val04", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val05", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_gold00", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_gold01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val01_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val02_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val03_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val04_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_mat_val05_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_gold00_01", fontVal);
+        setLayoutTextBoxFont(self->mLayout, (char*)"txt_gold01_01", fontVal);
     }
 
     // Start the four anims (setAnim at +0x2C) and tick once (+0x38).
-    self->mpLayout->SetAnimationEnable(self->mAnim94, 0);
-    self->mpLayout->SetAnimationEnable(self->mAnim98, 0);
-    self->mpLayout->SetAnimationEnable(self->mAnim9C, 0);
-    self->mpLayout->SetAnimationEnable(self->mAnim90, 1);
-    self->mpLayout->Animate(0);
+    self->mLayout->SetAnimationEnable(self->mAnim94, 0);
+    self->mLayout->SetAnimationEnable(self->mAnim98, 0);
+    self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
+    self->mLayout->SetAnimationEnable(self->mAnim90, 1);
+    self->mLayout->Animate(0);
 
     // Rebuild cursor 1 (mCur1 at +0xA8) from a stack temp (data fields only).
     self->mCur1 = CCur18(CUICfManager_getArcResourceAccessor());
@@ -1848,10 +1646,10 @@ extern "C" void col6SysLayout(CCol6System* self) {
     self->mCur2.initLayout();
 
     // Label the two count panes.
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_title",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_title",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1c),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_help",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_help",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1),
                   0);
 
@@ -1859,25 +1657,25 @@ extern "C" void col6SysLayout(CCol6System* self) {
     for (s32 i = 0; i < 3; i++) {
         char buf[0x20];
         sprintf(buf, (char*)"txt_%02d", i + 1);
-        LayoutSetTextBoxFmtValue(self->mpLayout, buf,
+        LayoutSetTextBoxFmtValue(self->mLayout, buf,
                       BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                     i + 2),
                       0);
     }
 
     // Blank rows and static summary labels.
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_04",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_04",
                   (char*)"", 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_05",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_05",
                   (char*)"", 0);
     char* s1e = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x1e);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_mes", s1e, 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_sel05",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_mes", s1e, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_sel05",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 5), 0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_material",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_material",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x43),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_material_01",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_material_01",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x47),
                   0);
 
@@ -1889,11 +1687,11 @@ extern "C" void col6SysLayout(CCol6System* self) {
         u32 c = CtrlRemote_TouchBitByArg(i + 0x7fe);
         char buf[0x20];
         sprintf(buf, (char*)"txt_num%02d", idx);
-        setLayoutTextBoxNumber(self->mpLayout, buf, c);
+        setLayoutTextBoxNumber(self->mLayout, buf, c);
         sprintf(buf, (char*)"txt_lv%02d", idx);
-        LayoutSetTextBoxFmtValue(self->mpLayout, buf, s46, 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, buf, s46, 0);
         sprintf(buf, (char*)"txt_sel%02d", idx);
-        LayoutSetTextBoxFmtValue(self->mpLayout, buf,
+        LayoutSetTextBoxFmtValue(self->mLayout, buf,
                       BdatTouchStringCell((char*)"MNU_col6", (char*)"name",
                                     i + 0x3d),
                       0);
@@ -1902,32 +1700,32 @@ extern "C" void col6SysLayout(CCol6System* self) {
     col6FillSlots(self, (s8)self->mPadA5[0]);
 
     // Remaining summary rows.
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x15),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now01",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now01",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x16),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now02",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now02",
                   BdatTouchStringCell((char*)"help",
                                 (char*)"name", 0x16),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now03",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now03",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x17),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now04",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now04",
                   BdatTouchStringCell((char*)"help",
                                 (char*)"name", 0x17),
                   0);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now05",
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now05",
                   BdatTouchStringCell((char*)"MNU_col6", (char*)"name", 0x18),
                   0);
 
     // Player counts on the two slots.
-    setLayoutTextBoxNumber(self->mpLayout,
+    setLayoutTextBoxNumber(self->mLayout,
                                             (char*)"txt_now_val01",
                                             CtrlRemote_TouchBitByArg(0x7fc));
-    setLayoutTextBoxNumber(self->mpLayout,
+    setLayoutTextBoxNumber(self->mLayout,
                                             (char*)"txt_now_val02",
                                             CtrlRemote_TouchBitByArg(0x7fd));
 
@@ -1941,7 +1739,7 @@ extern "C" void col6SysLayout(CCol6System* self) {
         }
     }
     char* s2b6 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", cnt);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now06", s2b6, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now06", s2b6, 0);
 }
 
 // col6FillSlots - refresh the item-box layout for a player slot: write the
@@ -1953,7 +1751,7 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
     for (s32 i = 0; i < 4; i++) {
         char buf[0x20];
         sprintf(buf, (char*)"txt_num%02d", i + 1);
-        setLayoutTextBoxNumber(self->mpLayout, buf,
+        setLayoutTextBoxNumber(self->mLayout, buf,
                                                 CtrlRemote_TouchBitByArg(i + 0x7fe));
     }
 
@@ -1961,22 +1759,22 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
         s32 f = (s32)CtrlRemote_TouchBitByArg((u32)(playerIdx + 0x7fe));
         char* str = BdatTouchStringCell((char*)"MNU_col6", (char*)"help",
                                   f + playerIdx * 6 + 0x1f);
-        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_comment", str, 0);
+        LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_comment", str, 0);
 
         if (f < 5) {
             u32 n = (u32)(f + playerIdx * 5 + 1);
             u16 id = BdatGetU16ByTableKey((char*)"CL6_materiallist",
                                    (char*)"money", n);
             setLayoutTextBoxNumber(
-                self->mpLayout, (char*)"txt_gold01", id * 100);
+                self->mLayout, (char*)"txt_gold01", id * 100);
             char* s3 = BdatTouchStringCell((char*)"MNU_item",
                                      (char*)"name", 3);
-            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00", s3, 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold00", s3, 0);
             setLayoutTextBoxNumber(
-                self->mpLayout, (char*)"txt_gold01_01", CItemBlock_getPtr20E8());
+                self->mLayout, (char*)"txt_gold01_01", CItemBlock_getPtr20E8());
             char* s4 = BdatTouchStringCell((char*)"MNU_item",
                                      (char*)"name", 3);
-            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00_01", s4, 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold00_01", s4, 0);
 
             // Per-slot rows: 4 format strings + a lookup for the count value.
             for (s32 i = 0; i < 5; i++) {
@@ -1998,29 +1796,29 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
                     sprintf(bufC8, (char*)"number%d", idx);
                     u8 v = (u8)BdatGetU8ByTableKey((char*)"CL6_materiallist", bufC8,
                                              n);
-                    LayoutSetTextBoxFmtValue(self->mpLayout, buf148, name, 0);
-                    setLayoutTextBoxNumber(self->mpLayout,
+                    LayoutSetTextBoxFmtValue(self->mLayout, buf148, name, 0);
+                    setLayoutTextBoxNumber(self->mLayout,
                                                             buf128, v);
                     u32 cnt = CItem_sumFamilyByte6(id2);
-                    setLayoutTextBoxNumber(self->mpLayout,
+                    setLayoutTextBoxNumber(self->mLayout,
                                                             buf108, cnt);
                 } else {
-                    LayoutSetTextBoxFmtValue(self->mpLayout, buf148,
+                    LayoutSetTextBoxFmtValue(self->mLayout, buf148,
                                   (char*)"", 0);
-                    LayoutSetTextBoxFmtValue(self->mpLayout, buf128,
+                    LayoutSetTextBoxFmtValue(self->mLayout, buf128,
                                   (char*)"", 0);
-                    LayoutSetTextBoxFmtValue(self->mpLayout, buf108,
+                    LayoutSetTextBoxFmtValue(self->mLayout, buf108,
                                   (char*)"", 0);
                 }
             }
         } else {
-            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00",
+            LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold00",
                           (char*)"", 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01",
+            LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold01",
                           (char*)"", 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00_01",
+            LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold00_01",
                           (char*)"", 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01_01",
+            LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold01_01",
                           (char*)"", 0);
             for (s32 i = 0; i < 5; i++) {
                 u8 idx = (u8)(i + 1);
@@ -2030,24 +1828,24 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
                 sprintf(buf88, (char*)"txt_mat_val%02d", idx);
                 char buf68[0x20];
                 sprintf(buf68, (char*)"txt_mat_val%02d_01", idx);
-                LayoutSetTextBoxFmtValue(self->mpLayout, bufA8,
+                LayoutSetTextBoxFmtValue(self->mLayout, bufA8,
                               (char*)"", 0);
-                LayoutSetTextBoxFmtValue(self->mpLayout, buf88,
+                LayoutSetTextBoxFmtValue(self->mLayout, buf88,
                               (char*)"", 0);
-                LayoutSetTextBoxFmtValue(self->mpLayout, buf68,
+                LayoutSetTextBoxFmtValue(self->mLayout, buf68,
                               (char*)"", 0);
             }
         }
     } else {
-        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_comment",
+        LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_comment",
                       (char*)"", 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00",
+        LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold00",
                       (char*)"", 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01",
+        LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold01",
                       (char*)"", 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold00_01",
+        LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold00_01",
                       (char*)"", 0);
-        LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_gold01_01",
+        LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_gold01_01",
                       (char*)"", 0);
         for (s32 i = 0; i < 5; i++) {
             u8 idx = (u8)(i + 1);
@@ -2057,9 +1855,9 @@ extern "C" void col6FillSlots(CCol6System* self, s32 playerIdx) {
             sprintf(buf28, (char*)"txt_mat_val%02d", idx);
             char buf8[0x20];
             sprintf(buf8, (char*)"txt_mat_val%02d_01", idx);
-            LayoutSetTextBoxFmtValue(self->mpLayout, buf48, (char*)"", 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, buf28, (char*)"", 0);
-            LayoutSetTextBoxFmtValue(self->mpLayout, buf8, (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, buf48, (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, buf28, (char*)"", 0);
+            LayoutSetTextBoxFmtValue(self->mLayout, buf8, (char*)"", 0);
         }
     }
 }
@@ -2161,29 +1959,29 @@ void col6PadHandle(CCol6System* self) {
         if ((s8)self->mPadA5[0] == 0) {
             // Player 1: open the box (all four anims on) and refresh it.
             self->mFieldA4 = 6;
-            self->mpLayout->SetAnimationEnable(self->mAnim9C, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim90, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim94, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim98, 1);
+            self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim90, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim94, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim98, 1);
             col6FillSlots(self, 0);
             playUISound(0x6d);
         } else {
             // Other players: switch the anim pair.
             self->mFieldA4 = 4;
-            self->mpLayout->SetAnimationEnable(self->mAnim98, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim9C, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim90, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim94, 1);
+            self->mLayout->SetAnimationEnable(self->mAnim98, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim90, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim94, 1);
         }
         self->mCur1.SetVisible(0);
         if (self->mPadA5[0] == 2) self->mPadA5[0] = 3;
         playUISound(3);
     } else if (down) {
         self->mFieldA4 = 4;
-        self->mpLayout->SetAnimationEnable(self->mAnim98, 0);
-        self->mpLayout->SetAnimationEnable(self->mAnim9C, 0);
-        self->mpLayout->SetAnimationEnable(self->mAnim90, 0);
-        self->mpLayout->SetAnimationEnable(self->mAnim94, 1);
+        self->mLayout->SetAnimationEnable(self->mAnim98, 0);
+        self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
+        self->mLayout->SetAnimationEnable(self->mAnim90, 0);
+        self->mLayout->SetAnimationEnable(self->mAnim94, 1);
         self->mCur1.SetVisible(0);
         self->mPadA5[0] = 3;
         playUISound(6);
@@ -2204,12 +2002,12 @@ void col6PadHandle(CCol6System* self) {
             } else {
                 sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
-            nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+            nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
-                self->mpLayout->GetRootPane());
+                self->mLayout->GetRootPane());
             self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
@@ -2230,12 +2028,12 @@ void col6PadHandle(CCol6System* self) {
             } else {
                 sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
-            nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+            nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
-                self->mpLayout->GetRootPane());
+                self->mLayout->GetRootPane());
             self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
@@ -2265,10 +2063,10 @@ void col6SwitchBox(CCol6System* self) {
         if (pid == 4) {
             // Player 5: open the box (all four anims on).
             self->mFieldA4 = 9;
-            self->mpLayout->SetAnimationEnable(self->mAnim90, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim94, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim9C, 0);
-            self->mpLayout->SetAnimationEnable(self->mAnim98, 1);
+            self->mLayout->SetAnimationEnable(self->mAnim90, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim94, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
+            self->mLayout->SetAnimationEnable(self->mAnim98, 1);
             self->mCur1.SetVisible(0);
             playUISound(3);
         } else if (CtrlRemote_TouchBitByArg(pid + 0x7fe) < 5) {
@@ -2303,10 +2101,10 @@ void col6SwitchBox(CCol6System* self) {
         }
     } else if (down) {
         self->mFieldA4 = 9;
-        self->mpLayout->SetAnimationEnable(self->mAnim90, 0);
-        self->mpLayout->SetAnimationEnable(self->mAnim94, 0);
-        self->mpLayout->SetAnimationEnable(self->mAnim9C, 0);
-        self->mpLayout->SetAnimationEnable(self->mAnim98, 1);
+        self->mLayout->SetAnimationEnable(self->mAnim90, 0);
+        self->mLayout->SetAnimationEnable(self->mAnim94, 0);
+        self->mLayout->SetAnimationEnable(self->mAnim9C, 0);
+        self->mLayout->SetAnimationEnable(self->mAnim98, 1);
         self->mCur1.SetVisible(0);
         playUISound(6);
     } else if (sels) {
@@ -2327,12 +2125,12 @@ void col6SwitchBox(CCol6System* self) {
             } else {
                 sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
-            nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+            nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
-                self->mpLayout->GetRootPane());
+                self->mLayout->GetRootPane());
             self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
@@ -2354,12 +2152,12 @@ void col6SwitchBox(CCol6System* self) {
             } else {
                 sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
-            nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+            nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
-                self->mpLayout->GetRootPane());
+                self->mLayout->GetRootPane());
             self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
@@ -2401,12 +2199,12 @@ void col6WinScroll(CCol6System* self) {
             } else {
                 sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
-            nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+            nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
-                self->mpLayout->GetRootPane());
+                self->mLayout->GetRootPane());
             self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
@@ -2427,12 +2225,12 @@ void col6WinScroll(CCol6System* self) {
             } else {
                 sprintf(buf, (char*)"txt_%02d", (s8)self->mPadA5[0] + 1);
             }
-            nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-            nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
+            nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName((char*)"nul_proportion", true);
             nw4r::math::VEC3 vec;
             ScalePaneWorldPos(
                 &vec, pane1, pane2,
-                self->mpLayout->GetRootPane());
+                self->mLayout->GetRootPane());
             self->mCur1.setRootPaneTranslate(&vec);
         }
         playUISound(1);
@@ -2709,10 +2507,10 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
         (char*)"CL6_uplist", (char*)"rev_cam4key", n);
 
     // Player counts on the two slots.
-    setLayoutTextBoxNumber(self->mpLayout,
+    setLayoutTextBoxNumber(self->mLayout,
                                             (char*)"txt_now_val01",
                                             CtrlRemote_TouchBitByArg(0x7fc));
-    setLayoutTextBoxNumber(self->mpLayout,
+    setLayoutTextBoxNumber(self->mLayout,
                                             (char*)"txt_now_val02",
                                             CtrlRemote_TouchBitByArg(0x7fd));
 
@@ -2726,7 +2524,7 @@ extern "C" void col6DoOpenBox(CCol6System* self) {
         }
     }
     char* s2b6 = BdatTouchStringCell((char*)"MNU_col6", (char*)"name", cnt);
-    LayoutSetTextBoxFmtValue(self->mpLayout, (char*)"txt_now06", s2b6, 0);
+    LayoutSetTextBoxFmtValue(self->mLayout, (char*)"txt_now06", s2b6, 0);
 
     col6FillSlots(self, (s8)self->mPadA5[0]);
     self->mFlagA1 = 1;

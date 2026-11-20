@@ -201,16 +201,16 @@ void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src) {
     F175_PAIR(0x1844, 0x1848);
     F175_PAIR(0x184C, 0x1850);
     F175_CP(0x1854, u32); F175_CP(0x1858, u32);
-    { int n = 24; u32* se = (u32*)((u8*)src + 0x1924); u32* de = (u32*)((u8*)dst + 0x1924);
-      for (int i = 0; i < n; i++) { de[1] = se[1]; de[2] = se[2]; se += 2; de += 2; } }
+    { int n = ARRAY_SIZE(dst->unk1928); for (int i = 0; i < n; i++) dst->unk1928[i] = src->unk1928[i];
+    }
     F175_CP(0x19E8, u16); F175_CP(0x19EA, u16);
     F175_PAIR(0x19EC, 0x19F0); F175_PAIR(0x19F4, 0x19F8);
     F175_PAIR(0x19FC, 0x1A00); F175_PAIR(0x1A04, 0x1A08);
     F175_PAIR(0x1A0C, 0x1A10); F175_PAIR(0x1A14, 0x1A18);
     { // elem A
         F175ElemA* ee = (F175ElemA*)dst->unk2740;
-        F175ElemA* de = (F175ElemA*)((u8*)dst + 0x1A20);
-        F175ElemA* se = (F175ElemA*)((u8*)src + 0x1A20);
+        F175ElemA* de = reinterpret_cast<F175ElemA*>(dst->mArtsSet.mArtsParams);
+        F175ElemA* se = reinterpret_cast<F175ElemA*>(src->mArtsSet.mArtsParams);
         do {
             de->len = strlen(se->name); strcpy(de->name, se->name);
             de->f24 = se->f24; de->f28 = se->f28;
@@ -235,8 +235,8 @@ void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src) {
     F175_CP(0x2740, u32); F175_CP(0x2744, u32); F175_CP(0x2758 - 8, u32);
     { // elem B
         F175ElemB* ee = (F175ElemB*)&dst->unk2A80;
-        F175ElemB* de = (F175ElemB*)((u8*)dst + 0x2750);
-        F175ElemB* se = (F175ElemB*)((u8*)src + 0x2750);
+        F175ElemB* de = reinterpret_cast<F175ElemB*>(dst->mAttackSet.mAttackParams);
+        F175ElemB* se = reinterpret_cast<F175ElemB*>(src->mAttackSet.mAttackParams);
         do {
             de->len = strlen(se->name); strcpy(de->name, se->name);
             de->f24 = se->f24; de->f28 = se->f28;
@@ -293,19 +293,19 @@ void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src) {
     F175_CP(0x3290, u32); F175_CP(0x3294, u32);
     F175_CP(0x3354, u8); F175_CP(0x3358, s16); F175_CP(0x335A, s16);
     { // bulk 676 x 8 from 0xC
-        u32* de = (u32*)((u8*)dst + 0xC);
-        u32* se = (u32*)((u8*)src + 0xC);
+        cf::CBattleState* deState = static_cast<cf::CBattleState*>(dst);
+        const cf::CBattleState* seState = static_cast<const cf::CBattleState*>(src);
         F175_CP(0x335C, u32); F175_CP(0x3360, u8);
         F175_CP(0x3364, f32); F175_CP(0x3368, f32);
         F175_CP(0x336C, u32); F175_CP(0x3374, u32);
         F175_CP(0xC, u16); F175_CP(0xE, u16);
-        for (int i = 0; i < 676; i++) { de[1] = se[1]; de[2] = se[2]; se += 2; de += 2; }
+        deState->CBattleState::CBattleState_copyStatusEntries(seState);
     }
     F175_CP(0x1530, u32);
     { // 16 x 8 from 0x1530
-        u32* de = (u32*)((u8*)dst + 0x1530);
-        u32* se = (u32*)((u8*)src + 0x1530);
-        for (int i = 0; i < 16; i++) { de[1] = se[1]; de[2] = se[2]; se += 2; de += 2; }
+        std::memcpy(dst->CBattleState::unk152C, src->CBattleState::unk152C,
+                    sizeof(dst->CBattleState::unk152C));
+        std::memcpy(dst->CBattleState::unk15AC, src->CBattleState::unk15AC, 8);
     }
     F175_PAIR(0x15B4, 0x15B8);
     F175_PAIR(0x15BC, 0x15C0);

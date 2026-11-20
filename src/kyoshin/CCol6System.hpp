@@ -2,6 +2,8 @@
 
 #include "kyoshin/cf/CfBdat.hpp"
 
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
 #include "kyoshin/CSysWin.hpp"
@@ -29,28 +31,15 @@
 
 class UnkClass_80083298;  // cf::CfGameManager::getGameSubManager() result
 
-class CCol6Hint : public CProcess {
+class CCol6Hint : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
     CCol6Hint(CProcess* parent);
-    virtual ~CCol6Hint();
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    virtual void cbRenderBefore();
+    virtual ~CCol6Hint();
 
-    /* 0x3C */ u8 mCallbackA[12];          // pointer-to-member-function null (3 words)
-    /* 0x48 */ u8 mCallbackB[12];          // pointer-to-member-function null (3 words)
-    /* 0x54 */ nw4r::lyt::Layout* mAnimHost;    // layout anim host (SetAnimationEnable/Animate)
-    /* 0x58 */ u32 mField58;               // init 0
-    /* 0x5C */ u32 mField5C;               // init 0
-    /* 0x60 */ s32 mIndex;                 // init -1
-    /* 0x64 */ u8 mFlag64;                 // byte flag, init 0
-    /* 0x65 */ u8 mFlag65;                 // byte flag, init 0
-    /* 0x66 */ u8 mFlag66;                 // byte flag, init 0
-    /* 0x67 */ u8 mActive;                 // byte flag, init 1
-    /* 0x68 */ u32 mField68;               // init 0
-    /* 0x6C */ u32 mField6C;               // vtable-like ptr
-    /* 0x70 */ u32 mField70;               // vtable-like ptr
     /* 0x74 */ u8 mMemRegion[0x10];        // UnkClass_8045F564
     /* 0x84 */ CProcess* mParentPtr;       // stored parent pointer
     /* 0x88 */ CFileHandle* mField88;      // loaded arc file handle
@@ -83,30 +72,17 @@ struct CCol6PadData {
     u32 mField104;     // +0x104 short-press flags
 };
 
-class CCol6System : public CProcess {
+class CCol6System : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
-    CCol6System();
-    virtual ~CCol6System();
+    CCol6System(CProcess* parent);
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    virtual void cbRenderBefore();
+    virtual ~CCol6System();
     // Cursor/window position sync; MWCC inlines this into every Move() call site.
     void updateCursorPos();
 
-    /* 0x3C */ u8 mCallbackA[12];               // pointer-to-member-function null (3 words)
-    /* 0x48 */ u8 mCallbackB[12];               // pointer-to-member-function null (3 words)
-    /* 0x54 */ nw4r::lyt::Layout* mpLayout;     // layout (released in Term)
-    /* 0x58 */ u32 mField58;                    // init 0
-    /* 0x5C */ u32 mField5C;                    // init 0
-    /* 0x60 */ s32 mIndex;                      // init -1
-    /* 0x64 */ u8 mFlag64;                      // byte flag, init 0
-    /* 0x65 */ u8 mFlag65;                      // byte flag, init 0
-    /* 0x66 */ u8 mFlag66;                      // byte flag, init 0
-    /* 0x67 */ u8 mFlag67;                      // byte flag, init 1
-    /* 0x68 */ u32 mField68;                    // init 0
-    /* 0x6C */ u32 mField6C;                    // vtable-like ptr
-    /* 0x70 */ u8 mScnRender[4];                // IScnRender vptr slot (this-adjust target)
     /* 0x74 */ u8 mMemRegion[0x10];             // UnkClass_8045F564 scratch region
     /* 0x84 */ CScn* mScn;                      // owning scene (render-CB receiver)
     /* 0x88 */ CFileHandle* mFileHandle;        // loaded arc file handle
@@ -240,11 +216,6 @@ extern char lbl_eu_80502050[];
 // Data symbols for the check-bat/hint factories (defined in CCol6System.cpp /
 // CCol6Invite.cpp as common symbols; plain global-scope externs emit the same
 // unmangled symbols).
-extern u32 __ptmf_null[3];      // null pointer-to-member-function constant
-extern char lbl_eu_8052D238[];  // CProcess temp vtable (.data)
-extern char lbl_eu_8053001C[];  // CCol6System composite vtable (.data)
-extern char lbl_eu_8053011C[];  // CCol6Hint composite vtable (.data)
-extern char lbl_eu_8053021C[];  // CCol6CheckBat composite vtable (.data)
 extern char* sCol6ArcPath;   // .sdata arc-path pointer
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

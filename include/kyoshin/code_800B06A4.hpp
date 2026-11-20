@@ -1018,12 +1018,8 @@ extern const float lbl_eu_806669DC;
 #include "monolib/math/CVec3.hpp"
 
 // CfGameManager imports (retail mangled names).
-extern "C" void* getInstance__Q22cf13CfGameManagerFv();
-extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv(void* gm);
 extern "C" u32 isPlayerInEventRange__Q22cf13CfGameManagerFv(void* gm);
-extern "C" void func_8008360C__Q22cf13CfGameManagerFv(void* gm);
 extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void clearFieldFlagsA__Q22cf13CfGameManagerFv(void* gm);
 extern "C" void queueSceneEventC__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
                                                           u32 e, u32 f, u32 g, u32 h,
                                                           float value);
@@ -1038,7 +1034,6 @@ extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
 extern "C" int func_800AC470(void* item);
 extern "C" void func_800AC460(void* item, int flag);
 extern "C" void func_8013DCAC(u32 a, u32 b);
-extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
@@ -1183,7 +1178,6 @@ extern "C" void __ct__Q22cf10CfObjectPcFv(void* self);
 extern "C" void CfObjectMove_setSubB0FieldC(void* obj, u16 id);
 extern "C" void CfObjectMove_setSubB0FieldA(void* obj, s32 a);
 extern "C" void CfObjectMove_setSubB0FieldE(void* obj, s32 a);
-extern "C" s32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 extern "C" s32 func_80063560(s32 kind, s32 a, s32 b);
 extern "C" s32 cfResNopValueSink(s32 a);
 extern "C" u32 func_80063310(u32 a);

@@ -88,7 +88,9 @@ struct CScnItemModelNw4rOwner {
 struct CScnItemModelNw4rEnvLight {
     u8 data[0xC8];              // 0x31C..0x3E4
     u8 field_0x3E4;             // abs 0x3E4 (busy flag, scnImN4CreateModel)
-    u8 data2[0x420 - 0xC9];     // 0x3E5..0x73C
+    u8 data2[0xC7];             // 0x3E5..0x4AC
+    u32 field_0x4AC;            // abs 0x4AC (scnImN4GetWord4AC)
+    u8 data3[0x28C];            // 0x4B0..0x73C
 };
 
 // Scale-source object at CScnItemModelNw4r+0x14AC: a 4x3 matrix view.

@@ -117,7 +117,6 @@ extern "C" void* Scn_HasCamItem(void* camera, void* view);
 extern "C" void* Scn_GetCurrentScene();
 extern "C" void scnLgtEnterMode20(void* ctrl);
 // nw4r diagnostics / math helpers used by simulateLayer (retail-named).
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" void paintDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* inst, u8* ptr, u8 byte, u32 count);
 // Layer-draw push (defined below): Fv-annotated but actually receives
@@ -197,11 +196,6 @@ struct MpfsysResFileHandle {
     void* mpData;
 };
 
-// Retail-named nw4r g3d ResFile readers. extern "C" keeps the call-site
-// relocs verbatim (MWCC would otherwise append the parameter encoding).
-extern "C" bool CheckRevision__Q34nw4r3g3d7ResFileCFv(const MpfsysResFileHandle*);
-extern "C" bool HasResTex__Q34nw4r3g3d7ResFileCFv(const MpfsysResFileHandle*);
-extern "C" void Init__Q34nw4r3g3d7ResFileFv(MpfsysResFileHandle*);
 
 // Map attach: validate the descriptor magic/revision, then bind the embedded
 // ResFile (alignment-panic, revision/tex checks, Init) and stash the camera /
@@ -211,22 +205,21 @@ bool mpfsys::UnkClass_80471EC8::tryAttach(
     MpfsysResDesc* d = (MpfsysResDesc*)a4;
     if (d->field_0x0 == 0x4D504646 && d->field_0x4 == 0x3EA) {
         if (d->field_0x18 != 0) {
-            MpfsysResFileHandle resFile;
-            resFile.mpData = (u8*)a4 + d->field_0x14;
+            nw4r::g3d::ResFile resFile((u8*)a4 + d->field_0x14);
             // ResFile data must be 32-byte aligned.
-            if ((u32)resFile.mpData & 0x1F) {
+            if ((u32)resFile.ptr() & 0x1F) {
                 nw4r::db::Panic(lbl_eu_8052637C, 0x3C, lbl_eu_80526354);
             }
-            if (!CheckRevision__Q34nw4r3g3d7ResFileCFv(&resFile)) {
+            if (!resFile.CheckRevision()) {
                 return false;
             }
-            if (!HasResTex__Q34nw4r3g3d7ResFileCFv(&resFile)) {
+            if (!resFile.HasResTex()) {
                 return false;
             }
-            Init__Q34nw4r3g3d7ResFileFv(&resFile);
+            resFile.Init();
             // Memberwise copy: struct assignment would emit an out-of-line
             // copy-assignment operator call that retail does not have.
-            a5->mpData = resFile.mpData;
+            a5->mpData = resFile.ptr();
             MpfsysResState* s = (MpfsysResState*)this;
             s->field_0x2E08 = a6;
             s->field_0x2E0C = (void*)a7;
@@ -871,8 +864,8 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             PSVECCrossProduct((Vec*)&ml::CVec3::unitY, (Vec*)&n, &axis);
             f32 m = 2.0f * (1.0f + dot);
             if (m < lbl_eu_8066A744) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
-                                             lbl_eu_80526300);
+                nw4r::db::Warning(lbl_eu_80526324, 0x273,
+                                  lbl_eu_80526300);
             }
             // Degenerate case falls back to m itself (not zero).
             f32 s4 = m;
@@ -913,8 +906,8 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
             PSVECCrossProduct((Vec*)&ml::CVec3::unitY, (Vec*)&n, &axis);
             f32 m = 2.0f * (1.0f + dot);
             if (m < lbl_eu_8066A744) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
-                                             lbl_eu_80526300);
+                nw4r::db::Warning(lbl_eu_80526324, 0x273,
+                                  lbl_eu_80526300);
             }
             // Degenerate case falls back to m itself (not zero).
             f32 s4 = m;
@@ -1006,35 +999,11 @@ void* mpfsys::UnkClass_80471EC8::getLayerRecord(u8 layerIndex) {
 // CI-format textures get their palette loaded as a TLUT first; mipmapped
 // textures receive LOD parameters derived from `lodBias`.
 
-// Single-pointer resource handles (nw4r::g3d::ResCommon<T> wrappers are one
-// pointer wide; the trivial members below are written as direct field accesses
-// so they inline exactly like the retail build).
-struct MpfsysResTexHandle {
-    nw4r::g3d::ResTexData* mpData;
-};
-struct MpfsysResPlttHandle {
-    nw4r::g3d::ResPlttData* mpData;
-};
-
-// Out-of-line nw4r g3d accessors (retail-named; see the CScnMaruShadowNw4r
-// precedent - this build does not auto-inline the header wrappers).
-extern "C" void* GetResTex__Q34nw4r3g3d7ResFileCFi(void* resFile, int idx);
-extern "C" void* GetParent__Q34nw4r3g3d6ResTexFv(MpfsysResTexHandle* tex);
-extern "C" void* GetResPltt__Q34nw4r3g3d7ResFileCFPCc(MpfsysResFileHandle* resFile,
-                                                      const char* name);
-extern "C" bool GetTexObjCIParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP11_GXCITexFmtPfPfPUc(
-    MpfsysResTexHandle* tex, void** ppTexData, u16* pWidth, u16* pHeight,
-    GXCITexFmt* pFormatCI, f32* pMinLod, f32* pMaxLod, u8* pMipMap);
-extern "C" bool GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(
-    MpfsysResTexHandle* tex, void** ppTexData, u16* pWidth, u16* pHeight,
-    GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod, u8* pMipMap);
-
 void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f32 lodBias) {
     // Resolve the active map's texture dictionary entry.
-    MpfsysResTexHandle tex;
-    tex.mpData = (nw4r::g3d::ResTexData*)GetResTex__Q34nw4r3g3d7ResFileCFi(
-        MpfMapResFile, texIndex);
-    if (tex.mpData == NULL) {
+    nw4r::g3d::ResTex tex =
+        ((nw4r::g3d::ResFile*)MpfMapResFile)->GetResTex(texIndex);
+    if (tex.ptr() == NULL) {
         nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4, lbl_eu_80661E98,
                         sMpfRefTag0);
     }
@@ -1043,15 +1012,15 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
     f32 minLod;
     f32 maxLod;
     u8 mipmap;
-    if (tex.mpData->flag & nw4r::g3d::ResTexData::FLAG_CIFMT) {
-        if (tex.mpData == NULL) {
+    if (tex.ref().flag & nw4r::g3d::ResTexData::FLAG_CIFMT) {
+        if (tex.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4, lbl_eu_80661E98,
                             sMpfRefTag0);
         }
         // Palette name: relative offset resolved against the tex data (null
         // when the offset is 0).
-        const char* plttName = (tex.mpData->name != 0)
-                                   ? (const char*)tex.mpData + tex.mpData->name
+        const char* plttName = (tex.ref().name != 0)
+                                   ? (const char*)tex.ptr() + tex.ref().name
                                    : NULL;
 
         void* imgData;
@@ -1059,13 +1028,10 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
 
         u16 width;
         u16 height;
-        MpfsysResFileHandle parent;
-        parent.mpData = GetParent__Q34nw4r3g3d6ResTexFv(&tex);
-        MpfsysResPlttHandle pltt;
-        pltt.mpData = (nw4r::g3d::ResPlttData*)GetResPltt__Q34nw4r3g3d7ResFileCFPCc(
-            &parent, plttName);
-        GetTexObjCIParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP11_GXCITexFmtPfPfPUc(
-            &tex, &imgData, &width, &height, &ciFmt, &minLod, &maxLod, &mipmap);
+        nw4r::g3d::ResFile parent = tex.GetParent();
+        nw4r::g3d::ResPltt pltt = parent.GetResPltt(plttName);
+        tex.GetTexObjCIParam(&imgData, &width, &height, &ciFmt, &minLod,
+                             &maxLod, &mipmap);
 
         // C14X2 entries use the 0x10-entry TLUT slot.
         u32 tlutName = 0;
@@ -1075,23 +1041,23 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
 
         // Palette entries / format / data offset, each access guarded by an
         // assertion on the resolved ResPltt.
-        if (pltt.mpData == NULL) {
+        if (pltt.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2A, lbl_eu_8052CF50, lbl_eu_80661EA8,
                             sMpfRefTag2);
         }
-        u16 numEntries = pltt.mpData->numEntries;
-        if (pltt.mpData == NULL) {
+        u16 numEntries = pltt.ref().numEntries;
+        if (pltt.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2A, lbl_eu_8052CF50, lbl_eu_80661EA8,
                             sMpfRefTag2);
         }
-        GXTlutFmt plttFmt = pltt.mpData->fmt;
-        if (pltt.mpData == NULL) {
+        GXTlutFmt plttFmt = pltt.ref().fmt;
+        if (pltt.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF3C, 0x2A, lbl_eu_8052CF20, lbl_eu_80661EA8,
                             sMpfRefTag1);
         }
-        u32 tblOfs = pltt.mpData->toPlttData;
+        u32 tblOfs = pltt.ref().toPlttData;
         const void* table = (tblOfs != 0)
-                                ? (const char*)pltt.mpData + tblOfs
+                                ? (const char*)pltt.ptr() + tblOfs
                                 : NULL;
 
         GXTlutObj tlutObj;
@@ -1105,8 +1071,8 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
         u16 width;
         u16 height;
         GXTexFmt fmt;
-        GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(
-            &tex, &imgData, &width, &height, &fmt, &minLod, &maxLod, &mipmap);
+        tex.GetTexObjParam(&imgData, &width, &height, &fmt, &minLod, &maxLod,
+                           &mipmap);
         GXInitTexObj(&texObj, imgData, width, height, fmt, (GXTexWrapMode)1,
                      (GXTexWrapMode)1, (GXBool)mipmap);
     }

@@ -2322,7 +2322,7 @@ int EvtSeqResolveAnmChr(u8* data, const char* name, s32* out) {
     int numAnmChr;
     int i;
     numAnmChr =
-        GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
+        reinterpret_cast<const nw4r::g3d::ResFile*>(data + 0xC)->GetResAnmChrNumEntries();
     for (i = 0; i < numAnmChr; i++) {
         nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
@@ -2387,7 +2387,7 @@ int EvtSeqResolveAnmChr2(u8* data, const char* name, s32* out, s32* out2) {
     int numAnmChr;
     int i;
     numAnmChr =
-        GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
+        reinterpret_cast<const nw4r::g3d::ResFile*>(data + 0xC)->GetResAnmChrNumEntries();
     for (i = 0; i < numAnmChr; i++) {
         nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
@@ -2444,7 +2444,7 @@ int EvtSeqFindResFloat(u8* data, const char* name, f32* out) {
     // published into `out`. Locals follow EvtSeqFindResAddr's register plan.
     int numAnmChr;
     numAnmChr =
-        GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
+        reinterpret_cast<const nw4r::g3d::ResFile*>(data + 0xC)->GetResAnmChrNumEntries();
     for (int i = 0; i < numAnmChr; i++) {
         nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());
@@ -2512,7 +2512,7 @@ int EvtSeqFindResAddr(u8* data, const char* name, s32* out) {
     // -> r30, in-loop userData/result -> r31.
     int numAnmChr;
     numAnmChr =
-        GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(data + 0xC);
+        reinterpret_cast<const nw4r::g3d::ResFile*>(data + 0xC)->GetResAnmChrNumEntries();
     for (int i = 0; i < numAnmChr; i++) {
         nw4r::g3d::ResAnmChr anmChr(ItemAnim_GetChr_E708(data, i));
         u8* userData = reinterpret_cast<u8*>(anmChr.GetResUserData());

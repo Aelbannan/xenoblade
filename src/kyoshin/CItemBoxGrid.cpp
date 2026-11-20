@@ -986,14 +986,14 @@ u32 CItemBoxGridFull::FormatCellName(u32 idx) {
     CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
     const char* name = inst->vf20((CItemData*)obj);
 
-    sprintf((char*)(p + 0x2805), (const char*)&lbl_eu_8050566C[0x14c], name);
+    sprintf((char*)field_2805, (const char*)&lbl_eu_8050566C[0x14c], name);
 
     if (((CItemBoxGridFull*)p)->field_2802 == 3) {
         CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)obj);
         u32 count = inst2->vf08((CItemData*)obj);
         u8 b = (u8)count;
         u32 r = (u32)BdatTouchStringCell((const char*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
-        sprintf((char*)(p + 0x2805), (const char*)&lbl_eu_8050566C[0x15d], (char*)(p + 0x2805), r);
+        sprintf((char*)field_2805, (const char*)&lbl_eu_8050566C[0x15d], (char*)field_2805, r);
     }
 
     return (u32)(p + 0x2805);

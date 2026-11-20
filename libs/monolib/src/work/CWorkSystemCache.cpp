@@ -5,21 +5,13 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/math/CMat34.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "monolib/data_vtables.hpp"
 
 #include "monolib/work/CWorkSystemCache.hpp"
-
-// Retail CWorkSystemCache vtable (.data) - the class is novtable, so the ctor
-// stores this retail vtable manually (same pattern as CDeviceFileDvd).
-extern "C" u32 lbl_eu_8056FC70[];
-// reslist<CCacheItem> vtables (DOL data, defined at the bottom of this TU).
-extern "C" u32 lbl_eu_8056FD3C[];
-extern "C" u32 lbl_eu_8056FD24[];
 
 extern "C" {
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
- void SysCacheClearListLinks(CacheList* list) {
+ void SysCacheClearListLinks(_reslist_base<CCacheItem*>* list) {
     CacheListNode* walk = list->mStartNodePtr->mNext;
     while (walk != list->mStartNodePtr) {
         CacheListNode* node = walk;
@@ -86,40 +78,19 @@ void SysCacheStoreIdentityMat(ml::CMat34* out) {
     *out = ml::CMat34::identity;
 }
 
-// _reslist_base<CCacheItem>::~_reslist_base(int deleting)
-#pragma optimize_for_size on
- void* __dt___reslist_base_CCacheItem(CacheList* ths, int deleting) {
-    if (ths != 0) {
-        ths->m_vtable = (u32)lbl_eu_8056FD3C;
-        SysCacheClearListLinks(ths);
-        if (ths->unk1C == 0) {
-            if (ths->mList != 0) {
-                delete[] ths->mList;
-                ths->mList = 0;
-            }
-        }
-        if (deleting > 0) {
-            delete ths;
-        }
-    }
-    return ths;
-}
-#pragma optimize_for_size off
-
-// reslist<CCacheItem>::~reslist(int deleting)
-#pragma optimize_for_size on
-void* __dt__reslist_CCacheItem(CacheList* ths, int deleting) {
-    if (ths != 0) {
-        __dt___reslist_base_CCacheItem(ths, 0);
-        if (deleting > 0) {
-            delete ths;
-        }
-    }
-    return ths;
-}
-#pragma optimize_for_size off
-
 } // extern "C"
+
+// _reslist_base<CCacheItem*>::~_reslist_base(): the real template destructor
+// emits the retail FD3C vptr store, ring clear, array free and deleting path.
+#pragma optimize_for_size on
+template <> _reslist_base<CCacheItem*>::~_reslist_base() {
+    SysCacheClearListLinks(this);
+    if (unk1C == false && mList != 0) {
+        delete[] mList;
+        mList = 0;
+    }
+}
+#pragma optimize_for_size off
 
 bool CWorkSystemCache::wkStandbyLogin() {
     return CWorkThread::wkStandbyLogin();
@@ -128,10 +99,6 @@ bool CWorkSystemCache::wkStandbyLogin() {
 #pragma optimize_for_size on
 CWorkSystemCache::~CWorkSystemCache() {
     lbl_eu_806659C8 = NULL;
-    CacheList* cache = &mCache;
-    if (cache != NULL) {
-        __dt___reslist_base_CCacheItem(cache, 0);
-    }
 }
 
 void CWorkSystemCache::wkUpdate() {
@@ -174,19 +141,6 @@ bool CWorkSystemCache::wkStandbyLogout() {
 
 CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 0) {
-    // Retail vtable store (novtable class -> stored manually, CDeviceFileDvd
-    // pattern). The inlined _reslist_base/reslist ctor chain below keeps the
-    // FD3C -> FD24 vtable-slot overwrite; the pointer-based sentinel reads
-    // between the two stores block MWCC's dead-store elimination.
-    *(u32**)this = (u32*)lbl_eu_8056FC70;
-    mCache.m_vtable = (u32)lbl_eu_8056FD3C;
-    mCache.mList = NULL;
-    mCache.mCapacity = 0;
-    mCache.unk1C = false;
-    mCache.mStartNodePtr = &mCache.mStartNode;
-    mCache.mStartNodePtr->mNext = &mCache.mStartNode;
-    mCache.mStartNodePtr->mPrev = mCache.mStartNodePtr->mNext;
-    mCache.m_vtable = (u32)lbl_eu_8056FD24;
     lbl_eu_806659C8 = this;
     mType = THREAD_CWORKSYSTEMCACHE;
     mCache.mList = (CacheListNode*)mtl::MemManager::allocate_array(
@@ -202,54 +156,9 @@ extern "C" void SysCacheDecLoginRef(CCacheItem* ths) {
         ths->field_0x44 -= 1;
     }
 }
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.rodata] 0x80524568-0x805245B0 (72B): RTTI name strings, spelled as source
-// literals so MWCC emits the names and their retail padding itself.
-
-// Forward declarations for the .data block below (referenced by the .sdata
-// locators above).
-extern "C" u32 lbl_eu_8056FD10[];
-extern "C" u32 lbl_eu_8056FD30[];
-extern "C" u32 lbl_eu_8056FD24[];
-extern "C" u32 lbl_eu_8056FD3C[];
-
-// [.sdata] 0x80663B40-0x80663B58 (24B): RTTI locators + shared "ref"-style
-// string pointers (u32* slots; same bytes as void* pointer tables).
-extern "C" u32 __RTTI__16CWorkSystemCache[2] = { (u32)&"CWorkSystemCache"[0], (u32)lbl_eu_8056FD10 };
-extern "C" u32 lbl_eu_80663B48[2] = { (u32)&"reslist<CCacheItem *>"[0], (u32)lbl_eu_8056FD30 };
-extern "C" u32 lbl_eu_80663B50[2] = { (u32)&"_reslist_base<CCacheItem *>"[0], 0 };
-
-// [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
-// RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.
-extern "C" u32 lbl_eu_8056FC70[40] = {
-    (u32)&__RTTI__16CWorkSystemCache, 0x00000000, (u32)&__dt__16CWorkSystemCacheFv,
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
-    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
-    (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
-    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
-    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
-    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
-    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
-    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
-    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
-    (u32)&wkUpdate__16CWorkSystemCacheFv, (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__16CWorkSystemCacheFv,
-    (u32)&wkStandbyLogout__16CWorkSystemCacheFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-extern "C" u32 lbl_eu_8056FD10[5] = {
-    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000,
-    0x00000000,
-};
-extern "C" u32 lbl_eu_8056FD24[3] = { (u32)&lbl_eu_80663B48, 0x00000000, (u32)&__dt__reslist_CCacheItem };
-extern "C" u32 lbl_eu_8056FD30[3] = { (u32)&lbl_eu_80663B50, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_8056FD3C[3] = { (u32)&lbl_eu_80663B50, 0x00000000, (u32)&__dt___reslist_base_CCacheItem };
+// Compiler-emitted data owns the vtables, base lists, RTTI locators and
+// RTTI name strings for CWorkSystemCache, reslist<CCacheItem*> and
+// _reslist_base<CCacheItem*>.
 
 // [.sbss] 0x806659C8-0x806659D0 (8B): singleton cache pointer + pad word.
 CWorkSystemCache* lbl_eu_806659C8;

@@ -32,11 +32,8 @@ extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 // already-accepted helpers below. Offsets are exact by construction (array
 // indexing / explicit holes); every address computation still compiles to a
 // plain addi and every field access to a single d-form lwz/stw.
-struct CfResByteView { u8 byte[0x29d]; }; // flat +0x00..+0x29c prefix for CfRes_ptrPlusNN
-struct CfResField18View { u8 pad_00[0x18]; u32 field_18; }; // +0x18 word (CfRes_getField18)
 struct CfResEntryBaseView { u8 pad_00[4]; char entries[1]; }; // inst+4 entry-table base
 struct CfResTableBaseView { u8 pad_00[0xbc]; ResInfoEntry entries[1]; }; // self+0xbc entry table
-struct CfResLookupHolder { u8 pad_00[0x2c]; CResLookup* lookup; }; // *(self+0x2c) lookup
 
 // Two-word ring record built on the caller's frame by CfRes_pushRec; both
 // members stay memory-resident in retail (header at 0x8(sp), data at 0xC(sp)).
@@ -1347,11 +1344,11 @@ extern "C" int CfRes_stripExtension(ml::FixStr<64>& dest, const char* src) {
     if (dest.mLength == 0) {
         extPos = -1;
     } else {
-        u32 sepLen = strlen(lbl_eu_80661A40);
+        u32 sepLen = strlen(sCfResExtSep);
         char* searchEnd = dest.mString - 1;
         char* searchPos = (dest.mString - 1) + dest.mLength;
         while (searchPos > searchEnd) {
-            if (strncmp(searchPos, lbl_eu_80661A40, sepLen) == 0) {
+            if (strncmp(searchPos, sCfResExtSep, sepLen) == 0) {
                 extPos = (int)(searchPos - dest.mString);
                 goto found_ext;
             }
@@ -1868,7 +1865,7 @@ extern "C" void CfRes_setE28Mask(u32 bits) {
 }
 
 // vtable+0xC dispatch on *(self+0x2C) (retail: lwz r3,0x2c; lwz r12,0; lwz r12,0xc; mtctr; bctr)
-extern "C" int CfRes_getLookupFlags(void* self) { return ((CfResLookupHolder*)self)->lookup->getFlags(); }
+extern "C" int CfRes_getLookupFlags(void* self) { return ((ResInfoEntry*)self)->field_0x2C->getFlags(); }
 
 extern "C" int CfRes_checkMask_64A08(u8* self, u32 mask) {
     u32 val = *(u32*)self;
@@ -2823,7 +2820,7 @@ const void* lbl_eu_80661A30[2] = { lbl_eu_804FB1F0, lbl_eu_80526810 };
 __attribute__((used))
 const void* __RTTI__Q22cf5CfRes[2] = { lbl_eu_804FB208, lbl_eu_805268B8 };
 __attribute__((used))
-char lbl_eu_80661A40[8] = ".";
+char sCfResExtSep[8] = ".";
 __attribute__((used))
 const void* lbl_eu_80661A48[2] = { lbl_eu_804FB258, lbl_eu_8052692C };
 __attribute__((used))

@@ -46,7 +46,7 @@ void Col6HintDtorThunk6C(u8* self) {
 
 // Col6HintRenderThunk70: CCol6Hint::cbRenderBefore at subobject +0x70.
 void Col6HintRenderThunk70(u8* self) {
-    reinterpret_cast<CCol6Hint*>(self - 0x70)->cbRenderBefore();
+    reinterpret_cast<CCol6Hint*>(self - 0x70)->CCol6Hint::cbRenderBefore();
 }
 
 // Col6SystemDtorThunk6C: CCol6System dtor at subobject +0x6c.
@@ -57,7 +57,7 @@ void Col6SystemDtorThunk6C(u8* self) {
 
 // Col6SystemRenderThunk70: CCol6System::cbRenderBefore at subobject +0x70.
 void Col6SystemRenderThunk70(u8* self) {
-    reinterpret_cast<CCol6System*>(self - 0x70)->cbRenderBefore();
+    reinterpret_cast<CCol6System*>(self - 0x70)->CCol6System::cbRenderBefore();
 }
 
 // Col6SystemDtorThunk70: CCol6System dtor at subobject +0x70.

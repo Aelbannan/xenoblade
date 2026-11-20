@@ -79,7 +79,6 @@ static const char* const itemBoxLabelStrings[7] = { // name-guess: retail lbl_eu
 };
 // Interior blob
 // Code must relocate against the retail symbol name with plain immediates.
-extern "C" char lbl_eu_805063BC[];
 
 // .sdata: two RTTI-ish pairs (class-name string + .data RTTI pad). Both
 // halves stay UNDEF reads: the strings are struct members below and the
@@ -370,7 +369,6 @@ CItemBoxCompRecord CItemBoxInfo::BuildCmpRecord(void* arg3) {
     // the u16->u32 promotion per call site (retail clrlwi r5,r29,16 each
     // time, no shared masked temp).
     u16 v2 = BdatGetItemId((u32)arg3);
-    char* base = (char*)&lbl_eu_805063BC;
     rec.s2C =(u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_low")), v2);
     rec.s2E = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_hi")), v2);
     rec.s30 = (u8)BdatGetU8Direct((const void*)global, "arm_phy", v2);
@@ -436,7 +434,6 @@ CItemBoxSlotFlags CItemBoxInfo::BuildSlotFlags(u32 item) {
     void* global = ::cf::CfBdat::spItmEquipListFileData;
     u16 type = BdatGetItemType(item);
     u16 id = BdatGetItemId(item);
-    char* base = (char*)&lbl_eu_805063BC;
     rec.v[0] = (u8)BdatGetU8Direct((const void*)global, "arm_phy", id);
     rec.v[1] = (u8)BdatGetU8Direct((const void*)global, "arm_eth", id);
     rec.v[2] = (u8)BdatGetU8Direct((const void*)global, "eva_rate", id);
@@ -506,7 +503,6 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
     } else {
         count = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", (u32)data);
     }
-    char* base = (char*)&lbl_eu_805063BC;
     CItemBoxNameRecord rec;
     rec.count = (u8)count;
     rec.str = (u32)BdatTouchStringCell("MNU_item", "name", 0x1e - ((u8)count - 1));
@@ -721,7 +717,6 @@ void CItemBoxInfo::RenderKind2(u16 arg2, void* arg3, u32 arg4) {
     } text;
     char paneName[0x20];
     char label[0x20];
-    char* base = (char*)&lbl_eu_805063BC;
     // Raw-storage binding: retail inlines the bool-ctor clear as bare stb/stw
     // stores; format() is invoked through a cast so no reference web occupies
     // a register.
@@ -906,7 +901,6 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
     // buildItemBoxSlotFlags and block-copied to a second local.
     ResetRowPanes();
     CItemBoxSlotFlags flags = BuildSlotFlags(itemId);
-    char* base = lbl_eu_805063BC;
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value02", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value04", "", 0);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value07", "", 0);
@@ -1029,7 +1023,6 @@ void CItemBoxInfo::RenderDetail(u32 itemId, void* record, u32 arg4) {
 void CItemBoxInfo::RenderTripleRows(u32 itemId, void* record) {
     ml::FixStr<32> text(true);
     ClearTripleRows();
-    char* base = lbl_eu_805063BC;
     char buf[0x20];
     char buf2[0x20];
     record = record != NULL ? record : NULL;
@@ -1301,7 +1294,6 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
     CItemBoxTagStage cur;
 
 
-    char* base = (char*)&lbl_eu_805063BC;
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value50", (char*)rec.str, 0);
 
     caption.mString[0] = 0;
@@ -1548,7 +1540,6 @@ void CItemBoxInfo::SetupSlotPanes() {
 }
 void CItemBoxInfo::ResetRowPanes() {
     u32 i;
-    char* base = (char*)&lbl_eu_805063BC;
     u32 idx;
     u32 tag;
     u32 white;
@@ -1993,7 +1984,6 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
 
     // ---- HP values (clamped to 9999) ----
     // String-pool base before HP so it takes r14 (retail) and HP lands in r18/r19.
-    char* base = lbl_eu_805063BC;
     // Both virtuals before either clamp -- retail interleaves the two
     // fctiwz conversions around the second vcall, not the first clamp.
     s32 hp1 = (s32)stats->CActorParam_getHp();
@@ -4106,7 +4096,6 @@ u32 CItemBoxInfo::CheckGemChain(u16 lookup_key, void* arg3, void* unused2) {
 // 560/598/5A0/5B8/5C0) with their alpha halves propagated to the paired
 // globals. Finally caches the 20 slot panes at +0x40..+0x8C.
 bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
-    char* base = lbl_eu_805063BC;
     if (mFileHandle1 == file->mFileHandle) {
         mRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x14000,
                                       "CItemBoxInfo", 1);
@@ -4618,7 +4607,6 @@ CItemBoxCompRecord CItemBoxInfo2::BuildCmpRecord(void* arg3) {
         void* global = ::cf::CfBdat::spItmWpnListFileData;
         BdatGetItemType((u32)arg3);
         u32 v2 = BdatGetItemId((u32)arg3);
-        char* base = (char*)&lbl_eu_805063BC;
         rec.s2C = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_low")), (int)(u16)v2);
         rec.s2E = (u16)BdatGetU16Direct((const void*)global, (const char*)((const void*)("dmg_hi")), (int)(u16)v2);
         rec.s30 = (u8)BdatGetU8Direct((const void*)global, "arm_phy", (u16)v2);
@@ -4695,7 +4683,6 @@ CItemBoxSlotFlags CItemBoxInfo2::BuildSlotFlags(u32 item) {
     void* global = ::cf::CfBdat::spItmEquipListFileData;
     u16 type = BdatGetItemType(item);
     u16 id = BdatGetItemId(item);
-    char* base = (char*)&lbl_eu_805063BC;
     rec.v[0] = (u8)BdatGetU8Direct((const void*)global, "arm_phy", id);
     rec.v[1] = (u8)BdatGetU8Direct((const void*)global, "arm_eth", id);
     rec.v[2] = (u8)BdatGetU8Direct((const void*)global, "eva_rate", id);
@@ -4768,7 +4755,6 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
     }
     // base is only materialized after the cat/count joins (retail lis/addi at
     // the join point, not in the prologue).
-    char* base = (char*)&lbl_eu_805063BC;
     CItemBoxNameRecord rec;
     rec.count = (u8)count;
     rec.str = (u32)BdatTouchStringCell("MNU_item", "name", 0x1e - ((u8)count - 1));
@@ -4977,7 +4963,6 @@ void CItemBoxInfo2::RenderKind2(u16 arg1, void* arg2, u16 arg3) {
     CItemBoxCompRecord local = BuildCmpRecord((void*)arg1);
     char paneName[0x20];
     char label[0x20];
-    char* base = (char*)&lbl_eu_805063BC;
     for (u32 i = 0; (u8)i < (u8)code80135FDC_getByte_64077(); i++) {
         u8 flag = local.flags[0][(u8)i];
         u32 color = 0x777777FF;
@@ -5040,7 +5025,6 @@ void CItemBoxInfo2::RenderDetail(u16 arg2, void* arg3, u16 arg4) {
     char buf[0x20];
     char bufName[0x20];
     CItemBoxSlotFlags record = BuildSlotFlags(arg2);
-    char* base = (char*)&lbl_eu_805063BC;
     // Hoisted halves: MWCC materializes these once (lis) and rebuilds each
     // constant at its use site with a single addi.
     u32 darkBase = 0x77770000;
@@ -5124,7 +5108,6 @@ void CItemBoxInfo2::RefreshSlotRows(u16 arg2) {
     // 9-byte per-slot selection record: bytes [1..8] are the per-slot flags,
     // byte [8] also selects the row-height label size.
     CItemBoxSelRec local = BuildSelRec(arg2);
-    char* base = (char*)&lbl_eu_805063BC;
     u32 rowHeight = 0x2c;
     if (local.flag2 != 0) rowHeight = 0x2b;
     char* label = BdatTouchStringCell("MNU_item", "name", rowHeight);
@@ -5177,7 +5160,6 @@ void CItemBoxInfo2::RenderKind3(u16 arg2, void* arg3, u16 arg4) {
     CItemBoxSlotEntry entry;
 
     // Retail materializes the pool base only after the record copy.
-    char* base = (char*)&lbl_eu_805063BC;
 
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value50", (char*)vals.str, 0);
     if ((s8)vals.name[0] == 0x30) {
@@ -6880,7 +6862,6 @@ u32 CItemBoxInfo2::GetEffect(u32 b, u32 c, void* d) {
     // argument site (see testItemBox2Equip note).
     u16 nameId = BdatGetItemId((u32)d);
     u8 equipSlot = (u8)BdatGetItemType((u32)d);
-    char* base = lbl_eu_805063BC;
     s16 slotIds[6];
     slotIds[0] = ((CItemBoxCharEntry*)lookup)->slotIds[5];
     slotIds[1] = ((CItemBoxCharEntry*)lookup)->slotIds[0];
@@ -7129,7 +7110,6 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         mpLayout->SetAnimationEnable(mAnimIn, true);
         mpLayout->Animate(0);
 
-        char* base = lbl_eu_805063BC;
         u8 mode = mKind;
 
         // Mode-gated pane clears (retail: mode!=1&&mode!=2 / mode!=3).
@@ -7141,9 +7121,6 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         }
 
         // Fixed label texts: each pane gets string-table entry [len].
-        #define SEED_ITEMBOX2_LABEL(off, len) \
-            LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, &lbl_eu_805063BC[off], \
-                          BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], len), 0)
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para01", BdatTouchStringCell("MNU_item", "name", 10), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para04", BdatTouchStringCell("MNU_item", "name", 13), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para08", BdatTouchStringCell("MNU_item", "name", 17), 0);
@@ -7167,7 +7144,6 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para717", BdatTouchStringCell("MNU_item", "name", 130), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para23", BdatTouchStringCell("MNU_item", "name", 47), 0);
         LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para704", BdatTouchStringCell("MNU_item", "name", 130), 0);
-        #undef SEED_ITEMBOX2_LABEL
 
         // Per-mode caption / detail text.
         if (mode == 1 || mode == 2) {
@@ -7357,7 +7333,6 @@ char* CItemBoxPage::GetItemName(u8 index) {
     char tailBuf[0x40];
     char tmp[0x40];
     char buf[0x40];
-    char* base = lbl_eu_805063BC;
     sprintf(buf, "%d", val);
     u8 fmt = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", item_id);
     char* name = ((char*(*)(void*, const char*, u32))&BdatGetPtrDirect)(::cf::CfBdat::spBtlSkillListFileData, "rvs_caption", item_id);
@@ -7433,9 +7408,6 @@ char* CItemBoxPage::GetItemName(u8 index) {
 // switch is emitted twice (both the state==4/byte!=0 and the state!=4 paths run the
 // identical category dispatch).
 void CItemBoxInfo::HidePanes(u16 arg2) {
-    char* base = (char*)&lbl_eu_805063BC;
-#define SET_PANE(_off, _val) \
-    setPaneVisible(mpLayout->GetRootPane()->FindPaneByName(base + _off, true), _val)
     setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_01", true), 0x0);
     setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_30", true), 0x0);
     setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_para_50", true), 0x0);
@@ -7507,7 +7479,6 @@ void CItemBoxInfo::HidePanes(u16 arg2) {
                     setPaneVisible(mpLayout->GetRootPane()->FindPaneByName("nul_eth", true), 0x1);
             }
     }
-#undef SET_PANE
 }
 
 

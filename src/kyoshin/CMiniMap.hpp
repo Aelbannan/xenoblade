@@ -62,7 +62,7 @@ extern u32 spMiniMap2;
 extern char lbl_eu_8052C958[];
 extern char lbl_eu_8052C9F0[];
 // Current BDAT table pointer / per-row name-pointer table used by the ctor.
-extern char* sMiniMapLayoutNames[];
+extern const char* sMiniMapLayoutNames[];
 
 #include "kyoshin/CTaskGame.hpp"
 
@@ -92,8 +92,9 @@ extern "C" bool MapSelectSCIsCreated();
 // factory calls it as a plain function).
 void __ct__8CProcessFv(CProcess* self);
 
-class CMMClock {
+class CMMClock : public IWorkEvent {
 public:
+    CMMClock();
     virtual ~CMMClock();
     bool OnFileEvent(CEventFile* pEventFile);
 
@@ -110,7 +111,7 @@ public:
     UnkClass_8045F564 mUnk1C;   // 0x1C..0x2C
 };
 
-class CMMTex {
+class CMMTex : public IWorkEvent {
 public:
     virtual ~CMMTex();
     bool OnFileEvent(CEventFile* pEventFile);
@@ -150,23 +151,6 @@ struct CMMTableBlock {
     u32 mW[0x4F];    // 0x3C..0x178 (MiniMapBuildMarkerPanes marker table)
 };
 
-
-// temp (vtable + zeroed fields + gate bytes), member-copies it into mClock,
-// then runs the embedded UnkClass dtor, so the UnkClass storage stays raw here
-// and is placement-new'd by Init.
-struct CMMClockInit {
-    void* mVtable;                              // lbl_eu_8052CA88
-    CFileHandle* mFileHandle;
-    nw4r::lyt::ArcResourceAccessor* mAccessor;
-    nw4r::lyt::Layout* mLayout;
-    nw4r::lyt::AnimTransform* mAnimTrans0;
-    nw4r::lyt::AnimTransform* mAnimTrans1;
-    u8 field_0x18;
-    u8 field_0x19;
-    u8 mReady;
-    u8 pad_0x1B;
-    u8 mUnk1C[0x10];
-};
 
 // Minimap map-image loader object (MiniMapRequestMapImage): requests the current map's
 // image arc into MEM2 and records the selected BDAT row / resource variant.
@@ -235,12 +219,12 @@ struct CMMViewBlock {
     u32 mW[0x1AA];   // MiniMapInitGimmickTables gimmick view
 };
 
-class CMiniMap {
+class CMiniMap : public IWorkEvent {
 public:
-    ~CMiniMap();
-    bool OnFileEvent(CEventFile* pEventFile);
+    CMiniMap();
+    virtual ~CMiniMap();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    void* mVtable;                         // 0x00 - retail vtable (lbl_eu_8052C958)
     CFileHandle* mFileHandle;              // 0x04 - requested file handle
     nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x08 - arc resource accessor
     nw4r::lyt::Layout* mLayout0C;          // 0x0C..0x10 (drawn by cbRenderBefore)
@@ -262,57 +246,22 @@ public:
     // Raw UnkClass_8045F564 storage: retail constructs these mid-ctor body
     // (after the table init calls), so they are placement-new'd there instead
     // of being auto-constructed at ctor entry.
-    u32 m824[4];                           // 0x824..0x834 (destroyed last)
-    u32 m834[4];                           // 0x834..0x844 (destroyed first)
+    UnkClass_8045F564 m824;                // 0x824..0x834 (destroyed last)
+    UnkClass_8045F564 m834;                // 0x834..0x844 (destroyed first)
 };
 
-// Intermediate base (CMenuFadeBase idiom, MWCC_CASES §190): holds the flag
-// bytes after IUICf/CTask<IUICf> (0x54 bytes) plus the raw IWorkEvent vtable
-// word at 0x58 so that the IScnRender secondary base lands at the retail
-// offset 0x5C. Do NOT inherit IWorkEvent directly (its out-of-line dtor pulls
-// weak stubs); the factory hand-writes the +0x58 table instead.
-class CMenuMiniMap2Base : public IUICf {
+class CMenuMiniMap2 : public IUICf, public IWorkEvent, public IScnRender {
 public:
-
-
-
-    u32 mFn58;                    // 0x58 raw IWorkEvent vtable (lbl_eu_8052C858 + 0x24)
-};
-
-class CMenuMiniMap2 : public CMenuMiniMap2Base, public IScnRender {
-public:
-    // Declared only, never defined here: undefined key function suppresses
-    // compiler __vt__/@88@ thunk emission (the composite vtable data lives in
-    // the retail block lbl_eu_8052C858, written by hand by __ct__8011C1B8).
+    CMenuMiniMap2(CScn* scn);
     virtual ~CMenuMiniMap2();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();        // IScnRender override (+0x5C subobject)
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    virtual void cbRenderBefore();  // IScnRender override (+0x5C subobject)
 
     CScn* mScn;                   // 0x60 - owning scene (removeRenderCB receiver)
     CMMClock mClock;              // 0x64..0x90 (declared first -> destroyed last)
     CMiniMap mMiniMap;            // 0x90..0x8D4 (declared second -> destroyed first)
-    u8 mField8D4;                 // 0x8D4
-};
-
-// Manual-layout twin of the CMenuMiniMap2 object used by the __ct__8011C1B8
-// factory (CMenuGameClear idiom): the factory fills the CProcess storage and
-// the IUIWindow/Move region by hand, then hand-builds CMMClock/CMiniMap.
-struct CMenuMiniMap2CreateView {
-    u8 mProcess[0x10];            // 0x00..0x10
-    u32 mVtable10;                // 0x10 - CProcess vtable (temp then composite)
-    u8 mProcess14[0x3C - 0x14];   // 0x14..0x3C
-    u32 mPtMf3C[3];               // 0x3C..0x48
-    u32 mPtMf48[3];               // 0x48..0x54
-    u8 mField54;                  // 0x54
-    u8 mField55;                  // 0x55
-    u8 mPad56[0x58 - 0x56];       // 0x56..0x58
-    u32 mFn58;                    // 0x58
-    u32 mScnRender;               // 0x5C
-    CScn* mScn;                   // 0x60
-    CMMClock mClock;              // 0x64..0x90 (vtable written by hand)
-    CMiniMap mMiniMap;            // 0x90..0x8D4
     u8 mField8D4;                 // 0x8D4
 };
 
@@ -333,10 +282,9 @@ struct MiniMapTable {
 };
 
 // Same-unit minimap helpers whose retail symbols are unmangled (func_*):
-// extern "C" keeps the emitted call relocs matching retail
-// (MiniMapTeardownMarkerPanes / __ct__CMiniMap) instead of re-deriving mangled names.
+// extern "C" keeps the emitted call reloc matching retail
+// (MiniMapTeardownMarkerPanes) instead of re-deriving a mangled name.
 extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self);
-extern "C" void __ct__CMiniMap(CMiniMap* self);
 MiniMapTable* MiniMapInitTable3x5(MiniMapTable* self);
 void MiniMapResetGimmickTables(CMiniMapGimmickData* self);
 // Per-frame gimmick-view updater (retail unmangled symbol).

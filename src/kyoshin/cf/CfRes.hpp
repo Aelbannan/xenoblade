@@ -230,8 +230,8 @@ extern const char* gResKeyKyp;
 
 // Extension separator character (in .sdata, ".\0"): the key CfRes_stripExtension
 // strips from the end of a path. Declared as a scalar (not an array) so MWCC
-// emits the retail @sda21 addressing; use &lbl_eu_80661A40 as the string.
-extern char lbl_eu_80661A40[8];   // '.' separator + pad (retail .sdata 8 bytes)
+// emits the retail @sda21 addressing.
+extern char sCfResExtSep[8]; // name-guess: retail .sdata:0x80661A40 string "."; sole use is extension stripping
 
 // Reset the ResInfoEntry array (defined in kyoshin/cf/IResInfo.cpp).
 void CfRes_resetAllEntries(ResInfoEntry* entry);

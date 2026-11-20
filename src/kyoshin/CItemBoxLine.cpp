@@ -28,6 +28,27 @@ extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, 
 
 int sprintf(char*, const char*, ...);
 
+static const char* const sItemBoxLineTabFormats[14] = { // name-guess: retail .rodata table at 0x80506D90+0
+    NULL, NULL, "wpn", NULL, "head", "body", "arm", "waist", "legg", NULL, NULL, NULL, NULL, "arts",
+};
+static const char* const sItemBoxLineTabNames[27] = { // name-guess: retail .rodata table at 0x80506D90+0x240
+    "exchangelist0000", "exchangelist0101", "exchangelist0201", "exchangelist0301",
+    "exchangelist0401", "exchangelist0402", "exchangelist0501", "exchangelist0601",
+    "exchangelist0701", "exchangelist0801", "exchangelist0901", "exchangelist1001",
+    "exchangelist1101", "exchangelist1201", "exchangelist1202", "exchangelist1301",
+    "exchangelist1401", "exchangelist1501", "exchangelist1601", "exchangelist1601",
+    "exchangelist1701", "exchangelist1801", "exchangelist1901", "exchangelist2001",
+    "exchangelist2101", "exchangelist2201", "exchangelist2301",
+};
+static const char* const sItemBoxLineTabKinds[28] = { // name-guess: retail .rodata table at 0x80506D90+0x2F8
+    NULL, NULL, NULL, NULL, "wpn1", NULL, "kessyou1", "kessyou2", "head1", NULL,
+    "body1", NULL, "arm1", NULL, "waist1", NULL, "legg1", NULL, NULL, NULL,
+    "collect1", "collect2", "materia1", "materia2", NULL, NULL, NULL, NULL,
+};
+static const char* const sItemBoxLinePercentColumns[7] = { // name-guess: retail .rodata table at 0x80507140
+    "", "percent_E", "percent_D", "percent_C", "percent_B", "percent_A", "percent_S",
+};
+
 // ============================================================================
 // ItemBoxLine_GetSelectReady: busy-guard chain - only read the selector byte when every
 // sub-system (info2 state, num-select, scrollbar, syswin) reports active/ready.
@@ -104,11 +125,10 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
     }
     if (self->field93 != 1) {
         // Item-name probe path: per-tab format table, then a 12-entry scan.
-        struct TabFmtTable { const char* v[14]; };
-        TabFmtTable fmt = *(const TabFmtTable*)&lbl_eu_80506D90[0];
+        const char* const* fmt = sItemBoxLineTabFormats;
         u32 cur = (u32)CItemBlock_getPtr20E8();
         for (u16 i = 1; i <= 12; i++) {
-            str.format("%s%d", fmt.v[self->field92], i);
+            str.format("%s%d", fmt[self->field92], i);
             u16 result = BdatGetU16ByTableKey("shoplist", str.mString, arg3);
             if (result == 0) return;
             CIBLTabEntry* entry = &self->entries[self->count++];
@@ -154,11 +174,10 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
     } else {
         // Name-table path: copy the name list, resolve the file via the name
         // index byte, then walk the two kind-owner pairs.
-        struct TabNameTable { const char* v[27]; };
-        TabNameTable names = *(const TabNameTable*)&lbl_eu_80506D90[0x240];
+        const char* const* names = sItemBoxLineTabNames;
         u8 n = (u8)lbl_eu_80664184;
         Bdat_GetTable_AA34();
-        void* fp = getFP(names.v[n - 1]);
+        void* fp = getFP(names[n - 1]);
         u8 v = (u8)MapValueToRank6(n);
         u16 id = CtrlRemote_TouchBitByArg(v + 0x21);
         u8 rowIdx;
@@ -173,12 +192,11 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
         } else {
             rowIdx = (u8)BdatGetU8Direct((const void*)::cf::CfBdat::spFldNpcListFileData, "exc_id1", arg3);
         }
-        struct TabKindTable { const char* v[28]; };
-        TabKindTable kinds = *(const TabKindTable*)&lbl_eu_80506D90[0x2f8];
+        const char* const* kinds = sItemBoxLineTabKinds;
         CItemBlock_getPtr20E8();
         for (int j = 0; j < 2; j++) {
-            if (kinds.v[self->field92 * 2 + j] == 0) return;
-            u16 result = BdatGetU16Direct((const void*)fp, kinds.v[self->field92 * 2 + j], rowIdx);
+            if (kinds[self->field92 * 2 + j] == 0) return;
+            u16 result = BdatGetU16Direct((const void*)fp, kinds[self->field92 * 2 + j], rowIdx);
             if (result == 0) return;
             CIBLTabEntry* entry = &self->entries[self->count++];
             entry->f0 = result;
@@ -327,6 +345,7 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
         BdatGetItemType(f0);
         u16 kind = BdatGetItemId(f0);
         u8 n = BdatGetU8Direct((const void*)::cf::CfBdat::spItmItemListFileData, "rankType", f0);
+        u8 pct = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, sItemBoxLinePercentColumns[n], kind);
         ml::FixStr<32> partName(true);
         partName.format("%s", BdatTouchStringCell("MNU_shop", "name", n));
         u8 sub = BdatGetU8Direct((const void*)::cf::CfBdat::spBtlSkillListFileData, "rvs_type", kind);
@@ -360,7 +379,11 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
                         sprintf(tmp, "<col=red>%s<col=def2>", partName.mString);
                         break;
                     case 3:
-                        sprintf(tmp, full ? "<col=red>%s %%<col=def2>" : "<col=red>%s%%<col=def2>", partName.mString);
+                        if (full) {
+                            sprintf(tmp, "<col=red>%d %%<col=def2>", pct);
+                        } else {
+                            sprintf(tmp, "<col=red>%d%%<col=def2>", pct);
+                        }
                         break;
                     }
                 } else if (d == '2') {
@@ -459,7 +482,6 @@ ret0:
 // through. Result is returned *10.
 // ============================================================================
 extern "C" u32 __cvt_fp2unsigned(double);
-extern const float lbl_eu_80668118;
 /* RankType-indexed float multipliers from retail .rodata:0x8050715C; CalcCountKey
    indexes them with the owner lookup byte (mask allows past the end on
    purpose, same as the equip item box's F32Record idiom). */
@@ -1974,7 +1996,7 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
         u16 c1 = CtrlObjectParam_GetArtsDataWord(CtrlObjectParam_GetCharEntry(1));
         v23 = (int)(1.4f * (float)(a * c1));
         u16 c2 = CtrlObjectParam_GetArtsDataWord(CtrlObjectParam_GetCharEntry(1));
-        v22 = (int)(lbl_eu_80668130 * (float)(b * c2));
+        v22 = (int)(1.5f * (float)(b * c2));
         if ((u16)v23 >= 0x3e7) v23 = 0x3e7;
         if ((u16)v22 >= 0x3e7) v22 = 0x3e7;
     }

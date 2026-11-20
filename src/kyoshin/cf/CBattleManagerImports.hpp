@@ -7,7 +7,11 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/chain/CChainImports.hpp"
 #include "kyoshin/cf/CVisionImports.hpp"
-#include "kyoshin/cf/CSuddenCommuImports.hpp"
+#include "kyoshin/cfsys/CfObjectImplMove.hpp"  // canonical extern "C" evalBattleTarget
+// Canonical owner is kyoshin/code_8025FB10.hpp; declared here until its
+// conflicting C++ copies in CfObjectImplPc/Walker are converted (decl debt).
+extern "C" int IdTable_QuerySumFloat(void* obj, int id, u32* outW, f32* outF);
+extern "C" int IdTable_GetSum(void* obj, int id, void* outVal);
 
 // --- Standalone function access structs (CBattleManager.cpp) ---
 

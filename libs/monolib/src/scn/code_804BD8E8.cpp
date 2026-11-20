@@ -6,6 +6,7 @@
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <revolution/MTX.h>
 #include <nw4r/math/math_types.h>
+#include <nw4r/db/db_assert.h>
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // [.bss] work areas defined at the bottom of this TU.
@@ -68,25 +69,8 @@ struct CColiMoverState {
 };
 
 // .sdata2 constants (retail .sdata2 pool; see owning absorb/typed defs in the defining TU).
-extern const f32 lbl_eu_8066AF44;
-extern const f32 lbl_eu_8066AF4C;
-extern const f64 lbl_eu_8066AF58;
 extern const f32 lbl_eu_8066AF24;
-extern const f32 lbl_eu_8066AF60;
-extern const f32 lbl_eu_8066AF64;
-extern const f32 lbl_eu_8066AF68;
-extern const f32 lbl_eu_8066AF6C;
-extern const f32 lbl_eu_8066AF70;
-extern const f32 lbl_eu_8066AF74;
-extern const f32 lbl_eu_8066AF78;
-extern const f32 lbl_eu_8066AF7C;
-extern const f32 lbl_eu_8066AF38;
 extern const f32 lbl_eu_8066AF28;
-extern const f32 lbl_eu_8066AF2C;
-extern const f32 lbl_eu_8066AF3C;
-extern const f32 lbl_eu_8066AF40;
-extern const f32 lbl_eu_8066AF48;
-extern const f32 lbl_eu_8066AF50;
 
 // [.sbss] state shared with the scn/coli managers.
 extern s32 lbl_eu_80665974;
@@ -105,7 +89,6 @@ s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale);
 void ScnRes_DispatchCrossCb_EEEC();
 
 // nw4r math/db helpers (retail plain symbols; C linkage keeps them unmangled).
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
@@ -220,7 +203,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
                 continue;
             }
             if (distSq <= zero) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
@@ -257,7 +240,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
                 continue;
             }
             if (distSq <= zero) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
@@ -275,7 +258,7 @@ s32 ScnRes_ResolveGroundHeight(ml::CVec3* pos, ml::CVec3* anchor, f32 t1, f32 t2
                 continue;
             }
             if (distSq <= zero) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 inv = (distSq <= zero) ? zero : distSq * nw4r::math::FrSqrt(distSq);
             f32 scale = eps / inv;
@@ -602,12 +585,12 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
 
     ml::CVec3 r;
     // Edge AB region: barycentric solve along the first axis pair.
-    if (dotA <= lbl_eu_8066AF44 && dotA >= -0.001f) {
+    if (dotA <= 0.0f && dotA >= -0.001f) {
         f32 ex0 = (ax[cb] - qx[cb]) < 0.0f ? -(ax[cb] - qx[cb]) : (ax[cb] - qx[cb]);
         f32 ex1 = (cx[cb] - qx[cb]) < 0.0f ? -(cx[cb] - qx[cb]) : (cx[cb] - qx[cb]);
         f32 sum = ex0 + ex1;
-        if (sum != lbl_eu_8066AF44) {
-            f32 t = lbl_eu_8066AF4C / sum;
+        if (sum != 0.0f) {
+            f32 t = 1.0f / sum;
             f32 u = ex0 - ex0 * t;
             f32 v = ex1 - ex1 * t;
             r.x = bx[0] * u + dx[0] * v;
@@ -624,12 +607,12 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
     }
 
     // Edge AC region.
-    if (dotB <= lbl_eu_8066AF44 && dotB >= -0.001f) {
+    if (dotB <= 0.0f && dotB >= -0.001f) {
         f32 ex0 = (bx[cb] - qx[cb]) < 0.0f ? -(bx[cb] - qx[cb]) : (bx[cb] - qx[cb]);
         f32 ex1 = (dx[cb] - qx[cb]) < 0.0f ? -(dx[cb] - qx[cb]) : (dx[cb] - qx[cb]);
         f32 sum = ex0 + ex1;
-        if (sum != lbl_eu_8066AF44) {
-            f32 t = lbl_eu_8066AF4C / sum;
+        if (sum != 0.0f) {
+            f32 t = 1.0f / sum;
             f32 u = ex0 - ex0 * t;
             f32 v = ex1 - ex1 * t;
             r.x = cx[0] * u + ve->x * v;
@@ -650,8 +633,8 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
         f32 ex0 = (cx[ca] - qx[ca]) < 0.0f ? -(cx[ca] - qx[ca]) : (cx[ca] - qx[ca]);
         f32 ex1 = (ex[ca] - qx[ca]) < 0.0f ? -(ex[ca] - qx[ca]) : (ex[ca] - qx[ca]);
         f32 sum = ex0 + ex1;
-        if (sum != lbl_eu_8066AF44) {
-            f32 t = lbl_eu_8066AF4C / sum;
+        if (sum != 0.0f) {
+            f32 t = 1.0f / sum;
             f32 u = ex0 - ex0 * t;
             f32 v = ex1 - ex1 * t;
             r.x = bx[0] * u + cx[0] * v;
@@ -682,7 +665,7 @@ s32 ScnRes_ProjectTracked(ml::CVec3* out) {
             r.z = bx[2];
         }
     } else {
-        f32 t = lbl_eu_8066AF4C / dist;
+        f32 t = 1.0f / dist;
         f32 u = (qx[2] - ax[2]) - (qx[2] - ax[2]) * t;
         f32 v = (qx[1] - ax[1]) - (qx[1] - ax[1]) * t;
         r.x = ax[0] * u + bx[0] * v;
@@ -770,17 +753,17 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
     if (mask != 0) {
         crossing = 1;
         ml::CVec3* cur = (ml::CVec3*)lbl_eu_80665970;
-        const f32 zeroChk = lbl_eu_8066AF44;
+        const f32 zeroChk = 0.0f;
         ml::CVec3* dchk = &diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)cur, (const nw4r::math::VEC3*)pos);
         if (dchk->x == zeroChk && dchk->y == zeroChk && dchk->z == zeroChk) {
             dir.x = zeroChk;
-            dir.y = lbl_eu_8066AF4C;
+            dir.y = 1.0f;
             dir.z = zeroChk;
         } else {
             dir = diff;
             f32 mag2 = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
-            if (mag2 == lbl_eu_8066AF44) {
+            if (mag2 == 0.0f) {
                 dir = ML_ZERO;
             } else {
                 PSVECNormalize((const Vec*)&dir, (Vec*)&dir);
@@ -823,13 +806,13 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
         slot->x = ref->x;
         slot->z = ref->z;
         f32 mag2 = slot->z * slot->z + slot->x * slot->x;
-        if (mag2 < lbl_eu_8066AF44) {
-            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+        if (mag2 < 0.0f) {
+            nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 inv = (mag2 > lbl_eu_8066AF44)
+        f32 inv = (mag2 > 0.0f)
                       ? mag2 * nw4r::math::FrSqrt(mag2)
-                      : lbl_eu_8066AF44;
-        f32 scale = lbl_eu_8066AF4C / inv;
+                      : 0.0f;
+        f32 scale = 1.0f / inv;
         slot->x *= scale;
         slot->z *= scale;
         if (lbl_eu_80665978 != 0) {
@@ -854,7 +837,7 @@ s32 ScnRes_ValidateCrossing(s32 idx) {
         }
         if (check) {
             f32 t = w->anchor[2] * ref->z + w->anchor[0] * ref->x;
-            if (t < lbl_eu_8066AF44) {
+            if (t < 0.0f) {
                 ScnResGroundCrossFlag = 1;
             }
         }
@@ -904,7 +887,7 @@ s32 ScnRes_RecordCrossing(s32 index) {
     }
     if (ScnResGroundCrossFlag == 0 && e->field_0x10 < ScnResHeightThreshold) {
         f32 t = w->anchor[2] * e->field_0x14 + w->anchor[0] * e->field_0x0C;
-        if (t < lbl_eu_8066AF44) {
+        if (t < 0.0f) {
             ScnResGroundCrossFlag = 1;
         }
     }
@@ -930,13 +913,13 @@ extern "C" void ScnRes_InstallCrossCb_F3B4(s32 flag) {
 // sub-step clamped, else the quantized step count).
 s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale) {
     s32 result = 1;
-    outLen[0] = lbl_eu_8066AF4C;
+    outLen[0] = 1.0f;
     // Single-exit shape: retail branches straight to the epilogue for the
     // zero-vector early out (no `li r3, 1` materialisation).
-    if (v[0] != lbl_eu_8066AF44 || v[1] != lbl_eu_8066AF44 ||
-        v[2] != lbl_eu_8066AF44) {
+    if (v[0] != 0.0f || v[1] != 0.0f ||
+        v[2] != 0.0f) {
         f32 mag = PSVECMag((const Vec*)v);
-        if (mag != lbl_eu_8066AF44) {
+        if (mag != 0.0f) {
             result = (s32)(mag / scale);
             if (result == 0) {
                 if (flag != 0) {
@@ -954,7 +937,7 @@ s32 ScnRes_QuantizeVecSteps(f32* v, f32* outLen, s32 flag, f32 scale) {
                 if (flag != 0) {
                     result <<= 1;
                 }
-                outLen[0] = lbl_eu_8066AF4C / mag;
+                outLen[0] = 1.0f / mag;
                 f32 t = mag / (f32)(s32)result;
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)v,
                                       (const nw4r::math::VEC3*)v, t);

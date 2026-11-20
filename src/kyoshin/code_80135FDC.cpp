@@ -457,10 +457,10 @@ extern "C" void WcsToUpperInPlace(u16* str) {
 }
 
 extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* node, const nw4r::ut::Font* font) {
-    extern const char lbl_eu_80500664[];
     if (node == NULL) return;
-    void* child = *(void**)((u8*)node + 0x14);
-    void* head = (u8*)node + 0x14;
+    nw4r::ut::detail::LinkListImpl& children = node->GetChildList();
+    nw4r::ut::LinkListNode* child = children.GetBeginIter().operator->();
+    nw4r::ut::LinkListNode* head = children.GetEndIter().operator->();
     char buf[32];
     // tokens is oversized in retail (stack frame reserves 18 entries);
     // SplitStringTrim never fills more than a handful.
@@ -469,7 +469,7 @@ extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* node, const nw4r::ut::Font*
         if (child == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
-        u32 type = (u32)child - 4;
+        u32 type = (u32)nw4r::lyt::PaneList::GetPointerFromNode(child);
         if (type == 0) {
             nw4r::db::Panic((const char*)sNw4rLinkListFile, 0x193, (const char*)sNw4rNullPointerAssertMsg);
         }
@@ -489,7 +489,7 @@ extern "C" void ApplyFontToTxtPanes(nw4r::lyt::Pane* node, const nw4r::ut::Font*
             }
         }
         ApplyFontToTxtPanes((nw4r::lyt::Pane*)type, font);
-        child = *(void**)child;
+        child = child->GetNext();
     }
 }
 
@@ -506,7 +506,6 @@ void setLayoutTextBoxFont(
 void setLayoutTextBoxNumber(
     nw4r::lyt::Layout* layout, char* name, int value) {
     char buf[512];
-    extern const char lbl_eu_80500664[];
     sprintf(buf, &lbl_eu_80500664[7], value);
     LayoutSetTextBoxText(layout, name, buf, 0);
 }
@@ -558,7 +557,6 @@ extern "C" void LayoutSetTextBoxFmtValue(
     nw4r::lyt::Layout* layout, const char* name, const char* text, u32 tagProc) {
     // Retail ignores the fmt param (r5 is never read) and formats with the
     // constant string-table extern lbl_eu_80500664 (lis/@l relocs, offset 0).
-    extern const char lbl_eu_80500664[];
     char buf[520];
     // Retail passes the fmt param (r5) as the sprintf vararg; the format is
     // the constant lbl_eu_80500664 (r4 = lis/@l, fmt param never read as a
@@ -2465,8 +2463,8 @@ extern "C" void RevealMinimapArea() {
     u8* tbl = sSjisWordTable;
     if (CtrlRemote_TouchBitByArg(0x20) <= 4) return;
     if ((gmGameFlags & 0x100) == 0) return;
-    void* cam = (void*)Scn_QueryUnk80State((CScn*)gmScene);
-    f32 f = 1.0f - *(f32*)((u8*)cam + 0xC);
+    ScnFadeColor* cam = Scn_QueryUnk80State((CScn*)gmScene);
+    f32 f = 1.0f - cam->field_0C;
     if (f < 1.0f) return;
 
     void* player = cf::CfGameManager::getPlayer(0);
@@ -2753,8 +2751,6 @@ extern "C" u8 code80135FDC_getByte_64080() { return gMenuDepth[0]; }
 // the raw call result (nonzero) rather than a literal 1.
 extern "C" nw4r::lyt::AnimationLink* FindAnimLink(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     nw4r::lyt::Pane* owner = self;
-    void* anchor;
-    void* current;
     nw4r::lyt::AnimationLink* found = owner->FindAnimationLinkSelf(*arg);
     if (found != 0) return found;
     u8 n = owner->GetMaterialNum();
@@ -2763,19 +2759,20 @@ extern "C" nw4r::lyt::AnimationLink* FindAnimLink(nw4r::lyt::Pane* self, const n
         nw4r::lyt::AnimationLink* r = item->FindAnimationLink(*arg);
         if (r != 0) return r;
     }
-    anchor = (u8*)self + 0x14;
-    current = *(void**)anchor;
+    nw4r::ut::detail::LinkListImpl& children = self->GetChildList();
+    nw4r::ut::LinkListNode* anchor = children.GetEndIter().operator->();
+    nw4r::ut::LinkListNode* current = children.GetBeginIter().operator->();
     while (current != anchor) {
         if (current == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
-        nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)((u8*)current - 4);
+        nw4r::lyt::Pane* child = nw4r::lyt::PaneList::GetPointerFromNode(current);
         if (child == NULL) {
             nw4r::db::Panic((const char*)sNw4rLinkListFile, 0x193, (const char*)sNw4rNullPointerAssertMsg);
         }
         nw4r::lyt::AnimationLink* r2 = FindAnimLink(child, arg);
         if (r2 != 0) return r2;
-        current = *(void**)current;
+        current = current->GetNext();
     }
     return 0;
 }
@@ -2793,18 +2790,19 @@ extern "C" void SetAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimRes
             *(f32*)(*(u32*)((u8*)item + 8) + 0x10) = val;
         }
     }
-    void* listAnchor = (char*)self + 0x14;
-    void* current = *(void**)listAnchor;
+    nw4r::ut::detail::LinkListImpl& children = self->GetChildList();
+    nw4r::ut::LinkListNode* listAnchor = children.GetEndIter().operator->();
+    nw4r::ut::LinkListNode* current = children.GetBeginIter().operator->();
     while (current != listAnchor) {
         if (current == NULL) {
             nw4r::db::Panic((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
         }
-        nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)((char*)current - 4);
+        nw4r::lyt::Pane* child = nw4r::lyt::PaneList::GetPointerFromNode(current);
         if (child == NULL) {
             nw4r::db::Panic((const char*)sNw4rLinkListFile, 0x193, (const char*)sNw4rNullPointerAssertMsg);
         }
         SetAnimLinkFrame(child, arg, val);
-        current = *(void**)current;
+        current = current->GetNext();
     }
 }
 

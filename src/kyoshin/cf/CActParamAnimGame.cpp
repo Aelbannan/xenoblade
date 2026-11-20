@@ -686,7 +686,7 @@ extern "C" void runBattleMove(void* selfV) {
     self->field4EC &= ~0xC0000;
     self->field394 = 1.0f;
     self->field398 = 1.0f;
-    *(ml::CVec3*)((u8*)self + 0x3F0) = zero__Q22ml5CVec3;
+    self->vec3F0() = zero__Q22ml5CVec3;
     setAnimPosVec(self, &zero__Q22ml5CVec3);
     shiftAnimPos(self);
 
@@ -960,7 +960,7 @@ ground:
                 target2.y += 0.9f;
                 if (((BE398Fn4)ScnRes_VertRayForward_E398)(&target2, self->field4A8, 0, 0) != 0) {  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
                     void* e = ScnRes_GetEntryPtr_E50C(0);
-                    target2.y -= 1.4f - (*(f32*)((u8*)e + 0x4) - target2.y);
+                    target2.y -= 1.4f - (((CActParamAnimGameBeObj*)e)->y - target2.y);
                 }
                 {
                     ml::CVec3 d2 = dirM * 2.0f;

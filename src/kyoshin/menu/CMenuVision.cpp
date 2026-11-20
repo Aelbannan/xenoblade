@@ -1,5 +1,11 @@
+#define CTTASK_INLINE_DTOR
+#define IWORK_EVENT_INLINE_DTOR
+
 #include "kyoshin/cf/CfBdat.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
+
 #include "kyoshin/menu/CMenuVision.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 
@@ -197,43 +203,18 @@ static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image
 // Null-ptmf word triple view over __ptmf_null (3-word member-function pointer).
 struct PtmfWords;
 
-// Retail ctor symbol is unmangled (`__ct__CMenuVision`, C-ABI); kept as a
-// C-linkage out-of-line helper so the factory (createVisionMenu) emits a real bl
-// to it, returning `this` in r3 like a real constructor (retail relies on it).
-extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(self));
-
-    // Retail forms both vtable-group addresses up front, then writes them.
-    void* baseVt = (void*)lbl_eu_8052C1C0;
-    char* finalVt = lbl_eu_80533538;
-    // Retail first stores the plain base vtable group, then overwrites the same
-    // slot with the final composite vtable group (both stores are live bytes).
-    self->field_0x10 = baseVt;
-
-    // Two null-ptmf callback slots copied as 12-byte word triples.
-    const PtmfWords* np = reinterpret_cast<const PtmfWords*>(__ptmf_null);
-    void* npFn = np->fn;
-    self->cbSlot0.adj1 = np->adj1;
-    self->cbSlot0.fn = npFn;
-    self->cbSlot0.adj2 = np->adj2;
-    void* npFn2 = np->fn;
-    self->cbSlot1.adj1 = np->adj1;
-    self->cbSlot1.fn = npFn2;
-    self->cbSlot1.adj2 = np->adj2;
-
-    self->field_0x54 = 0;
-    self->field_0x55 = 0;
-    self->field_0x10 = (void*)finalVt;
-    self->field_0x58 = (void*)(finalVt + 0x24);
-    self->field_0x5C = (void*)(finalVt + 0xac);
-    self->mScn = reinterpret_cast<CScn*>(parent);
-    __ct__17UnkClass_8045F564Fv(&self->mLayoutMem);
+// Real out-of-line constructor: the bases emit the interim/final vtables,
+// null ptmf hooks and both sub-vptrs.
+CMenuVision::CMenuVision(CScn* scn) {
+    this->unk54 = 0;
+    this->unk55 = 0;
+    this->mScn = scn;
 
     // Pass 1: clear slot 0 explicitly, then walk slots 1-5.
-    CMenuVisionEntry* e = &self->mEntries[1];
-    CMenuVisionEntry* end = &self->mEntries[6];
+    CMenuVisionEntry* e = &this->mEntries[1];
+    CMenuVisionEntry* end = &this->mEntries[6];
     {
-        CMenuVisionEntry& e0 = self->mEntries[0];
+        CMenuVisionEntry& e0 = this->mEntries[0];
         e0.mLayout = 0;
         e0.mAnim1 = 0;
         e0.mAnim2 = 0;
@@ -279,32 +260,13 @@ extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self
         ep->mState = 0;
         ep->field_0x28 = 0;
         ep->mTimer = 0.0f;
-        self->mEntries[i] = *ep;
-        self->mEntries[i + 1] = *ep;
+        this->mEntries[i] = *ep;
+        this->mEntries[i + 1] = *ep;
     }
-    return self;
 }
 
-// Complete-object destructor, forced-name form: the retail body behaves like
-// a plain function (no vptr reset, single member-dtor call) - as a real C++
-// virtual dtor MWCC adds the vptr store and double-destroys mLayoutMem.
-// The nested null-check reproduces retail's guard pair; the conditional
-// operator delete follows the deleting flag.
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
-    if (self != 0) {
-        __dt__17UnkClass_8045F564Fv(&((CMenuVision*)self)->mLayoutMem, -1);
-        if (self != 0) {
-            if (self != 0) {
-                __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
-            }
-        }
-        if (flag > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+
+CMenuVision::~CMenuVision() {}
 
 extern "C" unsigned long isVisionMenuActive() {
     return sVisionMenuInstance != 0;
@@ -350,7 +312,7 @@ extern "C" bool isVisionAnimating() {
 // instance exists.
 extern "C" void activateVisionMenu() {
     if (sVisionMenuInstance != 0) {
-        sVisionMenuInstance->field_0x54 = 1;
+        sVisionMenuInstance->unk54 = 1;
     }
 }
 
@@ -361,7 +323,7 @@ void CMenuVision::Term() {
     // retail `mr r4,this; beq; addi r4,this,0x5c` shape.
     IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        renderCB = reinterpret_cast<IScnRender*>(&field_0x5C);
+        renderCB = &static_cast<IScnRender&>(*this);
     }
     mScn->removeRenderCB(renderCB);
 
@@ -425,9 +387,7 @@ extern "C" CMenuVision* createVisionMenu(CProcess* self, CProcess* parent) {
     }
     CMenuVision* obj = (CMenuVision*)mtl::MemManager::allocate(
         0x194, CWorkThreadSystem::getWorkMem());
-    if (obj != 0) {
-        obj = __ct__CMenuVision(obj, parent);
-    }
+    obj = new (obj) CMenuVision(reinterpret_cast<CScn*>(parent));
     sVisionMenuInstance = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(self, false);
     return sVisionMenuInstance;
@@ -1092,6 +1052,8 @@ void resetVisionSlots(int sel) {
 }
 
 // Mangled linker names used by adjustor thunks below
+extern "C" void* __dt__11CMenuVisionFv(void* self, int flags);
+extern "C" void cbRenderBefore__11CMenuVisionFv(void* self);
 
 extern "C" void fwdVisionDtor58(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 
@@ -1332,7 +1294,7 @@ void CMenuVision::Init() {
     // Register render-before callback (null-safe IScnRender subobject at +0x5C)
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(&field_0x5C);
+        cb = &static_cast<IScnRender&>(*this);
     }
     mScn->addRenderCB(cb, 0xF, 0);
 }

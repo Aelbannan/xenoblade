@@ -4091,8 +4091,6 @@ extern "C" void FloorMap_ConfirmSelect(void* self) {
 }
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
 

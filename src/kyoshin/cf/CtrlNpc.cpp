@@ -23,7 +23,7 @@
 
 // typed retail data (replaces old byte blobs): strings sized to retail gaps,
 // sdata2 as one struct to freeze MWCC order and keep the leading 0.0 live.
-__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FBB00[0x0C] = "cf::CtrlNpc";
+__attribute__((used)) const char lbl_eu_804FBB00[0x0C] = "cf::CtrlNpc";
 struct Sdata2_CtrlNpc {
     float f0,f1,f2,f3,f4,f5,f6,f7,f8,f9;
     double d0;
@@ -40,34 +40,11 @@ const Sdata2_CtrlNpc sdata2_CtrlNpc = {
     8.0f, 0.0625f, 0.0121f, 0.3f, 5.0f, 0.09f, 0.040000003f, 0.2f, 0.5f, 360.0f
 };
 #define lbl_eu_80666698 sdata2_CtrlNpc.f0
-#define lbl_eu_8066669C sdata2_CtrlNpc.f1
-#define lbl_eu_806666A0 sdata2_CtrlNpc.f2
 #define lbl_eu_806666A4 sdata2_CtrlNpc.f3
 #define lbl_eu_806666A8 sdata2_CtrlNpc.f4
 #define lbl_eu_806666AC sdata2_CtrlNpc.f5
 #define lbl_eu_806666B0 sdata2_CtrlNpc.f6
-#define lbl_eu_806666B4 sdata2_CtrlNpc.f7
-#define lbl_eu_806666B8 sdata2_CtrlNpc.f8
-#define lbl_eu_806666BC sdata2_CtrlNpc.f9
-#define lbl_eu_806666C0 sdata2_CtrlNpc.d0
-#define lbl_eu_806666C8 sdata2_CtrlNpc.f10
-#define lbl_eu_806666CC sdata2_CtrlNpc.f11
-#define lbl_eu_806666D0 sdata2_CtrlNpc.f12
-#define lbl_eu_806666D4 sdata2_CtrlNpc.f13
-#define lbl_eu_806666D8 sdata2_CtrlNpc.f14
-#define lbl_eu_806666DC sdata2_CtrlNpc.f15
-#define lbl_eu_806666E0 sdata2_CtrlNpc.f16
-#define lbl_eu_806666E4 sdata2_CtrlNpc.f17
-#define lbl_eu_806666E8 sdata2_CtrlNpc.d1
-#define lbl_eu_806666F0 sdata2_CtrlNpc.f18
-#define lbl_eu_806666F4 sdata2_CtrlNpc.f19
-#define lbl_eu_806666F8 sdata2_CtrlNpc.f20
-#define lbl_eu_806666FC sdata2_CtrlNpc.f21
 #define lbl_eu_80666700 sdata2_CtrlNpc.f22
-#define lbl_eu_80666704 sdata2_CtrlNpc.f23
-#define lbl_eu_80666708 sdata2_CtrlNpc.f24
-#define lbl_eu_8066670C sdata2_CtrlNpc.f25
-#define lbl_eu_80666710 sdata2_CtrlNpc.f26
 #define lbl_eu_80666714 sdata2_CtrlNpc.f27
 
 // Retail ctor is a free function (MWCC_CASES §4193): stores the base
@@ -1489,36 +1466,36 @@ extern "C" int CtrlNpcAlwaysFalse(u8* self) { return 0; }
 cf::CtrlNpc::~CtrlNpc() {}
 
 // absorb: split1 retail data sections - generated (pointer tables via relocs)
-__declspec(section ".data") const char* gNpcAutotalkColumnNames[6] = {
+const char* gNpcAutotalkColumnNames[6] = {
     "autotalk1", "autotalk2", "autotalk3",
     "autotalk4", "autotalk5", "autotalk6"
 };
-__declspec(section ".data") const char* gNpcTimeColumnNames[8] = {
+const char* gNpcTimeColumnNames[8] = {
     "OCLOCK_0", "OCLOCK_3", "OCLOCK_6", "OCLOCK_9",
     "OCLOCK_12", "OCLOCK_15", "OCLOCK_18", "OCLOCK_21"
 };
-__declspec(section ".data") const char* gNpcTimeColumnNamesAlt[8] = {
+const char* gNpcTimeColumnNamesAlt[8] = {
     "OCLOCK_0", "OCLOCK_3", "OCLOCK_6", "OCLOCK_9",
     "OCLOCK_12", "OCLOCK_15", "OCLOCK_18", "OCLOCK_21"
 };
 // handler tables: member function pointers (0, -1, func)
-__declspec(section ".data") const void* gNpcAnimMode16Handlers[] = {
+const void* gNpcAnimMode16Handlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcFireAnimMode16C,
     (void*)0, (void*)-1, (void*)CtrlNpcNoop
 };
-__declspec(section ".data") const void* gNpcAnimModeHandlers[] = {
+const void* gNpcAnimModeHandlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcFireAnimMode16CorE,
     (void*)0, (void*)-1, (void*)CtrlNpcFireAnimModeIdleE,
     (void*)0, (void*)-1, (void*)CtrlNpcNoop,
     (void*)0
 };
-__declspec(section ".data") const void* gNpcActionState1Handlers[] = {
+const void* gNpcActionState1Handlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcSyncTargetFromPos,
     (void*)0, (void*)-1, (void*)CtrlNpcTurnToTarget,
     (void*)0, (void*)-1, (void*)CtrlNpcUpdateMovement,
     (void*)0, (void*)-1, (void*)CtrlNpcTickTimer
 };
-__declspec(section ".data") const void* gNpcActionState2Handlers[] = {
+const void* gNpcActionState2Handlers[] = {
     (void*)0, (void*)-1, (void*)CtrlNpcRestartMoveTimer,
     (void*)0, (void*)-1, (void*)CtrlNpcAdvanceWaypoint,
     (void*)0, (void*)-1, (void*)CtrlNpcRestartTimerGated,

@@ -231,7 +231,7 @@ extern "C" void scnVlStoreWord(int* dst, int* src){
 // light slots. Each slot is a pair of vector builders - a vec3 direction
 // (writeVec3f) and a vec4 color (CTaskGame_setVec4) - feeding
 // scnVlMakeAmb0C (ambient) / scnVlMakeDir0C (directional); the +0x4C/+0x2C/
-// +0x6C reslists share the lbl_eu_80658648 vec4 (scnVlMakeAmb4C/DE0/DFC).
+// +0x6C reslists share the sVlBlendVec vec4 (scnVlMakeAmb4C/DE0/DFC).
 // Ends by seeding the blend fields (+0x8C/+0x9C/+0xAC) with the AA14 vec4
 // and the +0xBC factor with AA24.
 extern "C" void scnVlInitLights(CScnVirtualLight* self) {
@@ -260,54 +260,54 @@ extern "C" void scnVlInitLights(CScnVirtualLight* self) {
     scnVlResetMgr(self, 0);
     scnVlMakeAmb0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v_d8, 0.5f, 0.5f,
-                                0.5f, lbl_eu_8066AA18),
-                  lbl_eu_8066AA18);
-    p_b8 = writeVec3f(&v_b8, lbl_eu_8066AA1C, lbl_eu_8066AA20,
-                         lbl_eu_8066AA1C);
+                                0.5f, 1.0f),
+                  1.0f);
+    p_b8 = writeVec3f(&v_b8, -4.0f, 4.0f,
+                         -4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v_c8, 0.5f, 0.5f,
-                                0.5f, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)p_b8, lbl_eu_8066AA18);
-    p_98 = writeVec3f(&v_98, lbl_eu_8066AA20, lbl_eu_8066AA20,
-                         lbl_eu_8066AA20);
+                                0.5f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)p_b8, 1.0f);
+    p_98 = writeVec3f(&v_98, 4.0f, 4.0f,
+                         4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v_a8, 0.5f, 0.5f,
-                                0.5f, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)p_98, lbl_eu_8066AA18);
-    p_78 = writeVec3f(&v_78, lbl_eu_8066AA20, lbl_eu_8066AA20,
-                         lbl_eu_8066AA20);
+                                0.5f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)p_98, 1.0f);
+    p_78 = writeVec3f(&v_78, 4.0f, 4.0f,
+                         4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_88, lbl_eu_8066AA24, lbl_eu_8066AA24,
-                                lbl_eu_8066AA24, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)p_78, lbl_eu_8066AA18);
-    p_58 = writeVec3f(&v_58, lbl_eu_8066AA20, lbl_eu_8066AA20,
-                         lbl_eu_8066AA20);
+                  CTaskGame_setVec4(&v_88, 0.0f, 0.0f,
+                                0.0f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)p_78, 1.0f);
+    p_58 = writeVec3f(&v_58, 4.0f, 4.0f,
+                         4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_68, lbl_eu_8066AA24, lbl_eu_8066AA24,
-                                lbl_eu_8066AA24, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)p_58, lbl_eu_8066AA18);
-    p_38 = writeVec3f(&v_38, lbl_eu_8066AA20, lbl_eu_8066AA20,
-                         lbl_eu_8066AA20);
+                  CTaskGame_setVec4(&v_68, 0.0f, 0.0f,
+                                0.0f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)p_58, 1.0f);
+    p_38 = writeVec3f(&v_38, 4.0f, 4.0f,
+                         4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_48, lbl_eu_8066AA24, lbl_eu_8066AA24,
-                                lbl_eu_8066AA24, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)p_38, lbl_eu_8066AA18);
-    scnVlMakeAmb4C((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
-    scnVlMakeAmb2C((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
+                  CTaskGame_setVec4(&v_48, 0.0f, 0.0f,
+                                0.0f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)p_38, 1.0f);
+    scnVlMakeAmb4C((CScnVirtualLightData*)self, &sVlBlendVec, 1.0f);
+    scnVlMakeAmb2C((CScnVirtualLightData*)self, &sVlBlendVec, 1.0f);
     scnVlMakeDir2C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_28, lbl_eu_8066AA28, lbl_eu_8066AA2C,
-                                lbl_eu_8066AA30, lbl_eu_8066AA18),
+                  CTaskGame_setVec4(&v_28, 0.4000000059604645f, 0.34117648005485535f,
+                                0.29411765933036804f, 1.0f),
                   (const CTaskGame_setVec4_tmp*)writeVec3f(
-                      &v_18, lbl_eu_8066AA34, 5.0f,
-                      lbl_eu_8066AA34),
-                  lbl_eu_8066AA18);
-    scnVlMakeAmb6C((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
+                      &v_18, -3.0f, 5.0f,
+                      -3.0f),
+                  1.0f);
+    scnVlMakeAmb6C((CScnVirtualLightData*)self, &sVlBlendVec, 1.0f);
     CTaskGame_setVec4_tmp* p_8 = CTaskGame_setVec4(
-        &v_8, 0.5f, 0.5f, 0.5f, lbl_eu_8066AA18);
+        &v_8, 0.5f, 0.5f, 0.5f, 1.0f);
     u32* d = copyWord4((u32*)&self->field_0xAC, (const u32*)p_8);
     d = copyWord4((u32*)&self->field_0x9C, d);
     copyWord4((u32*)&self->field_0x8C, d);
-    self->field_0xBC = lbl_eu_8066AA24;
+    self->field_0xBC = 0.0f;
 }
 
 // Creates a CVirtualLightAmb for the given light-data field and initializes it
@@ -371,7 +371,7 @@ void scnVlMakeAmb6C(CScnVirtualLightData* self, const CTaskGame_setVec4_tmp* arg
 // Retail scnVlInitLights2: richer sibling of scnVlInitLights - five directional
 // slots built from (vec3 direction via writeVec3f, vec3 copy via
 // scaleVec3f, vec4 color via CTaskGame_setVec4) before the shared
-// lbl_eu_80658648 vec4 feeds scnVlMakeAmb4C/DE0/DFC, plus the same blend
+// sVlBlendVec vec4 feeds scnVlMakeAmb4C/DE0/DFC, plus the same blend
 // seed tail. The local declaration order mirrors the retail stack layout
 // (vec4 then the direction/copy vec3 pair, top-down).
 extern "C" void scnVlInitLights2(CScnVirtualLight* self) {
@@ -396,65 +396,65 @@ extern "C" void scnVlInitLights2(CScnVirtualLight* self) {
     CTaskGame_setVec4_tmp v_8;
     // No named local for the B60C result feeding scnVlMakeDir2C: as a nested
     // call temp it gets its own callee-saved register (r31), leaving r30 for
-    // the lbl_eu_80658648 address constant, matching retail.
+    // the sVlBlendVec address constant, matching retail.
 
     scnVlResetMgr(self, 0);
     scnVlMakeAmb0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v100, 0.5f, 0.5f,
-                                0.5f, lbl_eu_8066AA18),
-                  lbl_eu_8066AA18);
+                                0.5f, 1.0f),
+                  1.0f);
     scaleVec3f(&v_e4, writeVec3f(&v_d8, lbl_eu_8066AA3C, lbl_eu_8066AA40,
                                         lbl_eu_8066AA3C),
-                  lbl_eu_8066AA20);
+                  4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_f0, lbl_eu_8066AA38, lbl_eu_8066AA38,
-                                lbl_eu_8066AA38, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)&v_e4, lbl_eu_8066AA18);
+                  CTaskGame_setVec4(&v_f0, 0.25f, 0.25f,
+                                0.25f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)&v_e4, 1.0f);
     scaleVec3f(&v_bc, writeVec3f(&v_b0, lbl_eu_8066AA44, lbl_eu_8066AA48,
                                         lbl_eu_8066AA44),
-                  lbl_eu_8066AA20);
+                  4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_c8, lbl_eu_8066AA38, lbl_eu_8066AA38,
-                                lbl_eu_8066AA38, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)&v_bc, lbl_eu_8066AA18);
+                  CTaskGame_setVec4(&v_c8, 0.25f, 0.25f,
+                                0.25f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)&v_bc, 1.0f);
     scaleVec3f(&v_94, writeVec3f(&v_88, lbl_eu_8066AA4C, lbl_eu_8066AA50,
                                         lbl_eu_8066AA54),
-                  lbl_eu_8066AA20);
+                  4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_a0, lbl_eu_8066AA38, lbl_eu_8066AA38,
-                                lbl_eu_8066AA38, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)&v_94, lbl_eu_8066AA18);
+                  CTaskGame_setVec4(&v_a0, 0.25f, 0.25f,
+                                0.25f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)&v_94, 1.0f);
     scaleVec3f(&v_6c, writeVec3f(&v_60, lbl_eu_8066AA58, lbl_eu_8066AA5C,
                                         lbl_eu_8066AA60),
-                  lbl_eu_8066AA20);
+                  4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_78, lbl_eu_8066AA38, lbl_eu_8066AA38,
-                                lbl_eu_8066AA38, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)&v_6c, lbl_eu_8066AA18);
+                  CTaskGame_setVec4(&v_78, 0.25f, 0.25f,
+                                0.25f, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)&v_6c, 1.0f);
     scaleVec3f(&v_44, writeVec3f(&v_38, lbl_eu_8066AA68, lbl_eu_8066AA6C,
                                         lbl_eu_8066AA70),
-                  lbl_eu_8066AA20);
+                  4.0f);
     scnVlMakeDir0C((CScnVirtualLightData*)self,
                   CTaskGame_setVec4(&v_50, lbl_eu_8066AA64, lbl_eu_8066AA64,
-                                lbl_eu_8066AA64, lbl_eu_8066AA18),
-                  (const CTaskGame_setVec4_tmp*)&v_44, lbl_eu_8066AA18);
-    scnVlMakeAmb4C((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
-    scnVlMakeAmb2C((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
+                                lbl_eu_8066AA64, 1.0f),
+                  (const CTaskGame_setVec4_tmp*)&v_44, 1.0f);
+    scnVlMakeAmb4C((CScnVirtualLightData*)self, &sVlBlendVec, 1.0f);
+    scnVlMakeAmb2C((CScnVirtualLightData*)self, &sVlBlendVec, 1.0f);
     scnVlMakeDir2C((CScnVirtualLightData*)self,
-                  CTaskGame_setVec4(&v_28, lbl_eu_8066AA28, lbl_eu_8066AA2C,
-                                lbl_eu_8066AA30, lbl_eu_8066AA18),
+                  CTaskGame_setVec4(&v_28, 0.4000000059604645f, 0.34117648005485535f,
+                                0.29411765933036804f, 1.0f),
                   (const CTaskGame_setVec4_tmp*)writeVec3f(
-                      &v_18, lbl_eu_8066AA34, 5.0f,
-                      lbl_eu_8066AA34),
-                  lbl_eu_8066AA18);
+                      &v_18, -3.0f, 5.0f,
+                      -3.0f),
+                  1.0f);
     // Fresh address expression for the tail call keeps the label web short.
-    scnVlMakeAmb6C((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
+    scnVlMakeAmb6C((CScnVirtualLightData*)self, &sVlBlendVec, 1.0f);
     CTaskGame_setVec4_tmp* p_8 = CTaskGame_setVec4(
-        &v_8, 0.5f, 0.5f, 0.5f, lbl_eu_8066AA18);
+        &v_8, 0.5f, 0.5f, 0.5f, 1.0f);
     u32* d = copyWord4((u32*)&self->field_0xAC, (const u32*)p_8);
     d = copyWord4((u32*)&self->field_0x9C, d);
     copyWord4((u32*)&self->field_0x8C, d);
-    self->field_0xBC = lbl_eu_8066AA24;
+    self->field_0xBC = 0.0f;
 }
 
 // Retail scnVlSetIntens: store `val` into the light's +0x14 field. The bl from
@@ -750,7 +750,7 @@ extern "C" void scnVlPushFrame(CScnVirtualLight* self, CLightEnv* env) {
                                     } else {
                                         LightCtlScaleColor(
                                             (CLight*)(*p48 + *p68 * 64),
-                                            lbl_eu_8066AA18);
+                                            1.0f);
                                     }
                                     (*p68)++;
                                 }
@@ -894,7 +894,7 @@ extern "C" void scnVlUpdate(CScnVirtualLight* self, CScnEnvLgtData* data,
                             LightCtlScaleColor(dst, (range - safeFSqrt(dist2)) /
                                                    (range - scaled));
                         } else {
-                            LightCtlScaleColor(dst, lbl_eu_8066AA18);
+                            LightCtlScaleColor(dst, 1.0f);
                         }
                         dst++;
                         count++;
@@ -1046,7 +1046,7 @@ extern "C" void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
         // Declaration order fixes fpr assignment (lim=f0, step=f1,
         // cur=f2); initializing cur before step puts the member load first
         // in the instruction stream, as retail.
-        f32 lim = lbl_eu_8066AA18;
+        f32 lim = 1.0f;
         f32 step;
         f32 cur = self->field_0xBC;
         step = lbl_eu_8066AA78;
@@ -1056,7 +1056,7 @@ extern "C" void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
             self->field_0xBC = lim;
         }
     } else {
-        f32 lim = lbl_eu_8066AA24;
+        f32 lim = 0.0f;
         f32 step;
         f32 cur = self->field_0xBC;
         step = lbl_eu_8066AA78;
@@ -1070,7 +1070,7 @@ extern "C" void scnVlBlendStep(CScnVirtualLightData* self, int flag) {
     ml::CVec4 v8;
     Env_ScaleVec4(&v18, (const ml::CVec4*)&self->field_0x9C, self->field_0xBC);
     copyWord4((u32*)&self->field_0xAC, (const u32*)&v18);
-    Env_ScaleVec4(&v8, (const ml::CVec4*)&self->field_0x8C, lbl_eu_8066AA18 - self->field_0xBC);
+    Env_ScaleVec4(&v8, (const ml::CVec4*)&self->field_0x8C, 1.0f - self->field_0xBC);
     scnVlVec4Add((f32*)&self->field_0xAC, (const f32*)&v8);
 }
 
@@ -1085,11 +1085,11 @@ void scnVlVec4Add(f32* a, const f32* b) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Static-init for the retail-owned vec4 object lbl_eu_80658648: fills it with
+// Static-init for the retail-owned vec4 object sVlBlendVec: fills it with
 // (v, v, v, w) from the two sdata2 constants and tail-calls the vec4 setter.
 extern "C" void sinit_80494300() {
-    CTaskGame_setVec4(&lbl_eu_80658648, 0.5f, 0.5f,
-                  0.5f, lbl_eu_8066AA18);
+    CTaskGame_setVec4(&sVlBlendVec, 0.5f, 0.5f,
+                  0.5f, 1.0f);
 }
 
 // clearList for the virtual-light reslist (retail scnVlClearList): walk the
@@ -1295,4 +1295,4 @@ extern "C" void scnVlResetMgr(CScnVirtualLight* self, int arg) {
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.bss] 0x80658648-0x80658658 (16B): shared vec4 written by sinit_80494300
 // (declared extern in CScnVirtualLight.hpp).
-CTaskGame_setVec4_tmp lbl_eu_80658648;
+CTaskGame_setVec4_tmp sVlBlendVec;

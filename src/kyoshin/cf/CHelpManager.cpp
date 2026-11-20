@@ -107,22 +107,22 @@ void fireArtsLearnedHint() {
 
 void dispatchScenarioHelp(cf::CHelpManager* self) {
     // Base hoisted into a callee-saved register (retail holds it in r31).
-    cf::CHelpManagerTbl* tbl = &sHelpDispatchObjects;
+    cf::CHelpTableFull* tbl = &sHelpDispatchObjects;
     if (self->mField10 == 3) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
-        bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mHelp1.mOwner) != 0;
+        bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mObj20.mOwner) != 0;
         if (!isActive) {
-            tbl->mHelp1.dispatchHelp();
+            tbl->mObj20.dispatchHelp();
         }
     }
     if (self->mField10 == 5) {
-        bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mHelp2.mOwner) != 0;
+        bool isActive = CtrlRemote_TouchBitByArg((u32)tbl->mObj50.mOwner) != 0;
         if (!isActive) {
-            tbl->mHelp2.dispatchHelp();
+            tbl->mObj50.dispatchHelp();
         }
-        bool isActive2 = CtrlRemote_TouchBitByArg((u32)tbl->mHelp3.mOwner) != 0;
+        bool isActive2 = CtrlRemote_TouchBitByArg((u32)tbl->mObj60.mOwner) != 0;
         if (!isActive2) {
-            tbl->mHelp3.dispatchHelp();
+            tbl->mObj60.dispatchHelp();
         }
     }
 }
@@ -220,7 +220,7 @@ extern "C" void clearHelpList(cf::CHelpListHolder* self) {
 // addresses / small constants in callee-saved registers across the ctor
 // calls (retail: base in r22, constants in r23-r31).
 void sinit_80295DB0() {
-    cf::CHelpTableFull* t = (cf::CHelpTableFull*)&sHelpDispatchObjects;
+    cf::CHelpTableFull* t = &sHelpDispatchObjects;
 
     // obj0 @ 0x00: base ctor, vtable override, extra word at +0xC.
     __ct__Q22cf5CHelpFUlUl(&t->mObj00, (void*)0x3341, 0x2);

@@ -72,7 +72,6 @@ extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();
 extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long count);
 
-extern "C" void clearResourceStack__Q22cf13CfGameManagerFv(void* self);
 extern "C" void setResourceField04__Q22cf13CfGameManagerFv(void* self, void* value);
 
 // us-800b0f70 - Store float and its square to several globals.
@@ -299,7 +298,7 @@ extern "C" void gmResetSubMgrs() {
 // us-800b9df0 - spawnObjFromRes
 void spawnObjFromRes(cf::CfObject* obj) {
     u8 stackBuf[0x28];
-    clearResourceStack__Q22cf13CfGameManagerFv(stackBuf);
+    ((cf::CfGameManager*)stackBuf)->clearResourceStack();
     setResourceField04__Q22cf13CfGameManagerFv(stackBuf, obj);
     spawnMaskedObject(getInstance(), 0x200, (const B20B4Payload*)stackBuf, 0);
 }
@@ -599,11 +598,10 @@ extern "C" void setCA0ScaleFloat(UnkClass_805764CC* self) {
     CPartsChange_UpdatePartyState(self->field_0xCA0, sReslistGaugeA);
 }
 void init_1F6C(){}
-extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 // us-800b2838: with the game manager active, run the virtual slot-2 callback
 // on the optional 0xCA4 / 0xCA8 sub-objects (each null-guarded).
 void tickPadSubobjects(UnkClass_805764CC* self) {
-    if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
+    if (((cf::CfGameManager*)self)->getEffectFlagState() == 0) {
         return;
     }
     if (self->mMapItemManager != nullptr) {
@@ -925,13 +923,12 @@ extern "C" void findListNode(void** out, void** headPtr, void** valA, void** val
 
 // Null-guarded triple dispatch: fetch a handle, reset, then pass the reset
 // result + handle to the forwarder (retail: handle in r4).
-extern "C" void* getPtr_720__17UnkClass_805764CCFv();
 extern "C" void* getReslistC48();
 extern "C" void allocTboxEntry(void* a, void* b);
 
 extern "C" void copyTboxFromObj(void* arg) {
     if (arg != 0) {
-        void* v = getPtr_720__17UnkClass_805764CCFv();
+        void* v = ((UnkClass_805764CC*)arg)->getPtr_720();
         allocTboxEntry(getReslistC48(), v);
     }
 }
@@ -1276,13 +1273,12 @@ extern "C" void insertReslistC08(cf::CfObject* obj) {
     ::reslistFindObj(&ctx->field_0xC08, obj);
 }
 void init_79A4(){}
-extern "C" void* getResetDataPtr__Q22cf13CfGameManagerFv();
 extern "C" void* firstReslistBE8();
 // us-800b82c0: while the game manager is active, iterate the object chain
 // starting at firstReslistBE8(), invoking virtual slot 0x67 (vtable + 0x19C)
 // with the singleton as argument; nextReslistBE8 yields the next entry.
 extern "C" void walkReslistBE8vt(UnkClass_805764CC* self) {
-    if (getResetDataPtr__Q22cf13CfGameManagerFv() == 0) {
+    if (((cf::CfGameManager*)self)->getResetDataPtr() == 0) {
         return;
     }
     IDispB79A4* node = (IDispB79A4*)firstReslistBE8();
@@ -1426,18 +1422,16 @@ check:
 // us-800b6fb8 - tickSpeedPass (guard-chain + event queue dispatch)
 extern "C" void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list);
 extern "C" void* getPtr_1A8__17UnkClass_805764CCFv();
-extern "C" void clear_700__17UnkClass_805764CCFv(void* buf);
 extern "C" void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor,
                               void* list, SpeedSortBuffer* buf, float f);
 extern "C" void processSortedBuffer(UnkClass_805764CC* self, SpeedSortBuffer* buf);
 extern "C" int CfRes_getE24Bit22();
-extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 extern float lbl_eu_80663ED8;
 extern float sReslistGaugeA;
 extern float sFactoryEventBaseReslistSize;
 extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
     if (arg == 0) return;
-    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
+    if (cf::CfGameManager::isSceneLoading() != 0) return;
     if (gflagHasMask(2) == 0) {
     reloadMatchingItems(self, (const F8C0ListSource*)&self->field_0xB48);
     }
@@ -1456,7 +1450,7 @@ extern "C" void tickSpeedPass(UnkClass_805764CC* self, void* arg) {
     }
     if (result == 0) {
         SpeedSortBuffer buf;
-        clear_700__17UnkClass_805764CCFv(&buf);
+        ((UnkClass_805764CC*)&buf)->clear_700();
         gatherSpeedEntries(self, (IB8FC4Player*)arg, &self->field_0xB48,
                       &buf, sReslistGaugeA);
         gatherSpeedEntries(self, (IB8FC4Player*)arg, &self->field_0xB68,
@@ -1735,7 +1729,7 @@ extern "C" void setResourceField00__Q22cf13CfGameManagerFv(void* self, unsigned 
 // mapKindToSpawn.
 extern "C" void spawnFromRecord(void* argA, void* argB, void* argC) {
     u8 buf[0x28];
-    clearResourceStack__Q22cf13CfGameManagerFv(buf);
+    ((cf::CfGameManager*)buf)->clearResourceStack();
     setResourceField04__Q22cf13CfGameManagerFv(buf, argA);
     setResourceField00__Q22cf13CfGameManagerFv(buf, (unsigned long)argB);
     mapKindToSpawn(buf, (u32)(uintptr_t)argC);
@@ -2371,7 +2365,6 @@ extern "C" void allocEventPool(void* listv, unsigned long handle, unsigned long 
 
 // CfGameManager / player objects whose status callback lives at vtable
 // slot 0x1D (+0x74).
-extern "C" IDispB74* getGameSubManager__Q22cf13CfGameManagerFv();
 extern "C" bool CfRes_checkFlags_2000400();
 void CPartsChange_SetLoadFlag(int arg);
 extern "C" void disableGameFlag__Q22cf13CfGameManagerFv(void* arg);
@@ -2384,7 +2377,7 @@ extern "C" bool CfRes_getE24Bit18();
 // ready; bail out early on the scene-blockers, otherwise tear down and rebuild
 // the optional sub-objects (with the E24-bit18 shortcut restarting the reload).
 extern "C" void syncPlayerSubMgr(UnkClass_805764CC* self) {
-    IDispB74* mgr = getGameSubManager__Q22cf13CfGameManagerFv();
+    IDispB74* mgr = (IDispB74*)cf::CfGameManager::getGameSubManager();
     IDispB74* player = (IDispB74*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (CfRes_checkFlags_2000400()) {
         CPartsChange_SetLoadFlag(1);
@@ -2398,7 +2391,7 @@ extern "C" void syncPlayerSubMgr(UnkClass_805764CC* self) {
     }
     // Retail calls this import without materializing r3 (leftover from the
     // preceding virtual call).
-    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
     if (testResInfoFlag(0x04000000)) {
@@ -2420,9 +2413,7 @@ extern "C" void syncPlayerSubMgr(UnkClass_805764CC* self) {
 }
 
 // Ring-buffer accessors over the AD8 block (sorted by the get_u32_74__17UnkClass_805764CCFv key).
-extern "C" unsigned long getCount__17UnkClass_800B0AD8Fv(void* ctx);
 extern "C" unsigned long workBufSize(void* ctx);
-extern "C" void** getRingElem__17UnkClass_800B0AD8FUl(void* ctx, int index);
 
 // us-800b77e0 - findWorkById
 // Binary search over the sorted ring buffer at singleton+0x20 by the key
@@ -2435,19 +2426,19 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
     UnkClass_805764CC* inst = getInstance();
     AD8Wrapper* ctx = &inst->field_0x20;
     int lo = 0;
-    unsigned long count = getCount__17UnkClass_800B0AD8Fv(ctx);
+    unsigned long count = ctx->getCount();
     workBufSize(ctx);
     if (count == 0) {
         return 0;
     }
-    void* entry = *getRingElem__17UnkClass_800B0AD8FUl(ctx, 0);
+    void* entry = *(void**)ctx->getRingElem(0);
     if ((u32)((UnkClass_805764CC*)entry)->get_u32_74() == (u32)id) {
         return entry;
     }
     if ((u32)id < (u32)((UnkClass_805764CC*)entry)->get_u32_74()) {
         return 0;
     }
-    entry = *getRingElem__17UnkClass_800B0AD8FUl(ctx, (int)count - 1);
+    entry = *(void**)ctx->getRingElem((int)count - 1);
     if ((u32)((UnkClass_805764CC*)entry)->get_u32_74() == (u32)id) {
         return entry;
     }
@@ -2457,7 +2448,7 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
     int hi = (int)count;
     while (lo <= hi) {
         int mid = (lo + hi) >> 1;
-        entry = *getRingElem__17UnkClass_800B0AD8FUl(ctx, mid);
+        entry = *(void**)ctx->getRingElem(mid);
         int delta = (int)((u32)id - (u32)((UnkClass_805764CC*)entry)->get_u32_74());
         if (delta == 0) {
             return entry;
@@ -2538,7 +2529,7 @@ extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, float val) {
     void* resA = CfRes_packFourFields(6, 0x53, 0, tag);
     void* resB = CfRes_packFourFields(0xa, 0x53, 0, tag);
     u8 buf[0x28];
-    clearResourceStack__Q22cf13CfGameManagerFv(buf);
+    ((cf::CfGameManager*)buf)->clearResourceStack();
     setResourceField04__Q22cf13CfGameManagerFv(buf, resA);
     setResourceField00__Q22cf13CfGameManagerFv(buf, (unsigned long)resB);
     UnkClass_805764CC* inst = getInstance();
@@ -2719,7 +2710,7 @@ void setObjField720(u8* self, u32 val) {
 void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list) {
     int big = testResInfoFlag(0x04000000) != 0;
     int small = testResInfoFlag(0x100) != 0;
-    if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 || big != 0) {
+    if (cf::CfGameManager::isSceneLoading() == 0 || big != 0) {
         if (small == 0) {
         void* ctx = (void*)(u32)CfT_DispatchFrameCounts();
         getInstance__Q22cf14CBattleManagerFv();
@@ -2857,10 +2848,10 @@ L2:
 // trigger sub-object; finally mark the controller reloaded.
 // extern "C": retail exports this helper under the unmangled name.
 extern "C" void refreshPartyStatus() {
-    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
-    if (isTimerActive__Q22cf13CfGameManagerFv() == 0) {
+    if (cf::CfGameManager::isTimerActive() == 0) {
         void* party = CtrlObjectParam_GetSlotTableBase();
         const float threshold = lbl_eu_806669D8;
         // Retail walks a cursor based at party+4 and reads the slot at +0xc
@@ -3576,7 +3567,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
         CfObjectMap_refreshRegion(probe);
     }
     if (instField != 0) {
-        if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 &&
+        if (cf::CfGameManager::isSceneLoading() == 0 &&
             (gmPauseFlags & 0x20) == 0) {
             CfRes_tickIfFlagged(instField);
         }
@@ -4337,11 +4328,11 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             s32 slot = -1;
             int ok = 1;
             if (sel == 3) {
-                if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x2a) {
+                if (cf::CfGameManager::getQueuedFileEventCount() >= 0x2a) {
                     ok = 0;
                 }
             } else if (sel == 8) {
-                if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() < 0x2a) {
+                if (cf::CfGameManager::getQueuedFileEventCount() < 0x2a) {
                     ok = 0;
                 }
             } else {
@@ -4718,7 +4709,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
 
     float f24 = speed + sTboxBaseReslistSize;   // scaled base speed
     float f23 = f24;                        // current multiplier
-    isTimerActive__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::isTimerActive();
 
     s32 gFlag20 = gflagHasMask(0x20);
     int camFlag200 = (isGlobalCamFlagSet(0x200) != 0);
@@ -5062,9 +5053,9 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     u8 b65 = (flags & 0x40) == 0 ? 1 : 0;
     int gateBits = ((flags & 0x80000) | (flags & 0x4)) != 0 ? 1 : 0;
 
-    void* gm = getInstance__Q22cf13CfGameManagerFv();
+    cf::CfGameManager* gm = cf::CfGameManager::getInstance();
     u32 sp68 = cf::CfGameManager::isSceneActive();
-    u32 sp6C = isSceneReadyForInput__Q22cf13CfGameManagerFv(gm);
+    u32 sp6C = gm->isSceneReadyForInput();
 
     if (arg == 0 || !arg->p1D()) {
         return 0;
@@ -5290,7 +5281,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
 
     int fired = 0;
     if (b63 == 0 && eligible == 0 && sp6C != 0 && bestObj != 0) {
-        func_8008360C__Q22cf13CfGameManagerFv(gm);
+        gm->func_8008360C();
         fired = 1;
     }
     if (fired == 0) {
@@ -5307,7 +5298,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
         gmGameFlags = gmGameFlags & 0x1c000000;
     }
     if (b62 == 0) {
-        clearFieldFlagsA__Q22cf13CfGameManagerFv(gm);
+        gm->clearFieldFlagsA();
     if (b65 != 0) {
         gmGameFlags |= 8;
     }
@@ -5537,12 +5528,11 @@ extern "C" int testObj6Cmask(void* obj, u32 mask) {
 }
 
 // us-800b7414 - refresh the two proximity lists from the tracked target.
-extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void refreshCamItems(void* self) {
     UnkClass_805764CC* mgr = (UnkClass_805764CC*)self;
     if (gflagHasMask(4) == 0) return;
-    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
+    if (cf::CfGameManager::isSceneLoading() != 0) return;
     updatePlayerContainers__Q22cf13CfGameManagerFv(0);
     void* partner = findObjectById(mgr->field_0xCF4);
     float limit = mgr->field_0xCF8;

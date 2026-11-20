@@ -1,8 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuGetItemMulti
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
+#include "kyoshin/cf/CfBdat.hpp"
 
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -207,18 +207,7 @@ CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1,
     // Zero constants drive most of the clear stores (retail keeps it in a
     // callee-saved reg across the UnkClass_8045F564 ctor call).
 
-    this->mLayout = reinterpret_cast<nw4r::lyt::Layout*>(zero); // 0x54
-    this->mField58 = (void*)zero;
-    this->mField5C = (void*)zero;
-    this->mField60 = -1;
-    this->mField64 = 0;
-    this->mField65 = 0;
-    this->mField66 = 0;
-    this->mField67 = 1;
-    this->mField68 = zero;
     this->mScn = scn;
-
-    __ct__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&this->mRegion[0]));
 
     this->mAnim = reinterpret_cast<nw4r::lyt::AnimTransform*>(zero);
     this->mInitialItems[0] = item0;
@@ -227,19 +216,8 @@ CMenuGetItemMulti::CMenuGetItemMulti(CScn* scn, u32 item0, u32 item1,
     this->mInitialItems[3] = item3;
     this->mVisibleItemCount = zero;
 
-    // Entry 0 is a standalone member (ctor inlined); entries 1..3 form the
-    // array MWCC clears via its guarded divwu/bdnz array-init loop.
-    this->mFirstEntry.value = (u16)zero;
-    this->mFirstEntry.packed = zero;
-    for (CMenuGetItemMultiEntry* cur = &this->mRestEntries[0];
-         cur < &this->mRestEntries[3]; cur++) {
-        cur->value = (u16)zero;
-        cur->packed = zero;
-    }
-
     this->mEntryCount = zero;
 
-    __ct__6CCur18FPQ34nw4r3lyt19ArcResourceAccessor(&this->mCursor, NULL);
     __ct__7CSysWinFUc(reinterpret_cast<CSysWin*>(&this->mSystemWindow[0]), 0);
 
     // Second zero constant for the tail clear (retail reuses the freed scn
@@ -295,25 +273,18 @@ u8* __dt__801B2754(u8* _this, int flags) {
 void __ct__801B2794(){}
 
 CMenuGetItemMulti::~CMenuGetItemMulti() {
-    // Sub-objects destroyed in reverse declaration order via their retail
-    // dtor symbols (r4=-1); the CProcess base region at +0x00 is destroyed
-    // last with flags=0 behind the nested double null-check (MWCC
-    // D2-inlined-into-D1 artifact - CMenuGetItem idiom).
+    // CSysWin is raw storage, so its dtor is explicit here; the real CCur18
+    // and UnkClass_8045F564 members are destroyed implicitly in reverse
+    // declaration order, followed by the IUIWindow/CProcess base dtor that
+    // MWCC emits with the retail double null-check.
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&mSystemWindow[0]), -1);
-    __dt__6CCur18Fv(&mCursor, -1);
-    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->~UnkClass_8045F564();
-    if (this != 0) {
-        if (this != 0) {
-            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
-        }
-    }
 }
 
 extern "C" void GetItemMulti_ClearDoneLatch() { gpItemMultiSkillBdat = 0; }
 
 void CMenuGetItemMulti::Init() {
     int memHandle = (int)mtl::MemManager::getHandleMEM2();
-    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->createRegion(
+    mRegion.createRegion(
         memHandle, 0x10000, "CMenuGetItemMulti", 0);
     // Raw-storage construction: keeping the object as a compiler-managed
     // local extends its address liveness to the destructor and steals one
@@ -321,7 +292,7 @@ void CMenuGetItemMulti::Init() {
     u32 regionHostStorage[sizeof(Class_8045F858) / sizeof(u32)];
     __ct__14Class_8045F858FP17UnkClass_8045F564(
         reinterpret_cast<Class_8045F858*>(&regionHostStorage[0]),
-        reinterpret_cast<UnkClass_8045F564*>(&mRegion[0]));
+        &mRegion);
 
     char setupPaneName[32];
     char itemPaneName[32];
@@ -945,7 +916,7 @@ void CMenuGetItemMulti::Init() {
         render = static_cast<IScnRender*>(this);
     }
     mScn->addRenderCB(render, 13, 0);
-    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->validateHeap();
+    mRegion.validateHeap();
     __dt__14Class_8045F858Fv(
         reinterpret_cast<Class_8045F858*>(&regionHostStorage[0]), -1);
     }
@@ -967,7 +938,7 @@ void CMenuGetItemMulti::Term() {
         delete mLayout;
         mLayout = 0;
     }
-    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->deleteRegion();
+    mRegion.deleteRegion();
     gpItemMultiInstance = 0;
     gpItemMultiSkillBdat = 0;
     if (mEntryCount != 0 || field_1F6 != 0) {

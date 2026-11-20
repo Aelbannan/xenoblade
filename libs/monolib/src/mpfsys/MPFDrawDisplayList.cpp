@@ -443,10 +443,8 @@ void MPFDrawDisplayList::deallocate() {}
 // retail build; referencing the named symbols avoids TU-local pool labels).
 extern "C" {
 
-extern const f32 lbl_eu_8066A7E8;  // 0.0f
 extern const f32 lbl_eu_8066A7F0;  // 1.0f
 extern const f32 lbl_eu_8066A810;  // probe range scale
-extern const f32 lbl_eu_8066A730;  // billboard spread scale (flags&2 path)
 extern const f32 lbl_eu_8066A824;  // fallback probe radius
 
 
@@ -742,7 +740,7 @@ bool checkProbeRange__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&d->field_0x14,
                        (const nw4r::math::VEC3*)&lbl_eu_80658410);
     f32 val = lbl_eu_8065841C.x * diff.x + lbl_eu_8065841C.z * diff.z;
-    if (val <= lbl_eu_8066A7E8) {
+    if (val <= 0.0f) {
         f32 d2 = diff.x * diff.x + diff.z * diff.z;
         f32 sel;
         if (d->field_0xe & 0x40) {
@@ -795,7 +793,7 @@ bool testDrawEntry__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     c12 = v1y * v2x - v1x * v2y;
     c20 = v2y * v0x - v2x * v0y;
 
-    if (c01 * c12 < lbl_eu_8066A7E8 || c01 * c20 < lbl_eu_8066A7E8 || c20 * c12 < lbl_eu_8066A7E8) return false;
+    if (c01 * c12 < 0.0f || c01 * c20 < 0.0f || c20 * c12 < 0.0f) return false;
 
     // Height plane of the containing triangle (quantized s16 gradients via
     // the Gekko fast-cast, plus a full-precision offset).
@@ -827,14 +825,14 @@ bool testDrawEntry__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     // along y (horizontal crossing -> final color) or along x (vertical
     // crossing -> intermediate color + crossing height, blended at the end).
     f32 p01 = v0x * v1x;
-    if (p01 > lbl_eu_8066A7E8) goto check12;  // no x-crossing on edge (v0,v1)
+    if (p01 > 0.0f) goto check12;  // no x-crossing on edge (v0,v1)
 
     if (p01 >= -0.001f) {
         // horizontal-line crossing of edge (v0, v1): final color
         f32 a0 = ml::math::abs(v0y);
         f32 a1 = ml::math::abs(v1y);
         f32 s = a0 + a1;
-        if (s != lbl_eu_8066A7E8) {
+        if (s != 0.0f) {
             f32 t = lbl_eu_8066A7F0 / s;
             nw4r::math::VEC3Scale((nw4r::math::VEC3*)&out, (const nw4r::math::VEC3*)&c0, lbl_eu_8066A7F0 - a0 * t);
             nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tmp, (const nw4r::math::VEC3*)&c1, lbl_eu_8066A7F0 - a1 * t);
@@ -867,14 +865,14 @@ bool testDrawEntry__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 check12:
     {
         f32 p12 = v1x * v2x;
-        if (p12 >= lbl_eu_8066A7E8) goto check_i;  // no x-crossing on edge (v1,v2)
+        if (p12 >= 0.0f) goto check_i;  // no x-crossing on edge (v1,v2)
 
         if (p12 >= -0.001f) {
             // horizontal-line crossing of edge (v1, v2): final color
             f32 a0 = ml::math::abs(v1y);
             f32 a1 = ml::math::abs(v2y);
             f32 s = a0 + a1;
-            if (s != lbl_eu_8066A7E8) {
+            if (s != 0.0f) {
                 f32 t = lbl_eu_8066A7F0 / s;
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&out, (const nw4r::math::VEC3*)&c1, lbl_eu_8066A7F0 - a0 * t);
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tmp, (const nw4r::math::VEC3*)&c2, lbl_eu_8066A7F0 - a1 * t);
@@ -914,7 +912,7 @@ check_i:
             f32 a0 = ml::math::abs(v0y);
             f32 a2 = ml::math::abs(v2y);
             f32 s = a0 + a2;
-            if (s != lbl_eu_8066A7E8) {
+            if (s != 0.0f) {
                 f32 t = lbl_eu_8066A7F0 / s;
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&out, (const nw4r::math::VEC3*)&c2, lbl_eu_8066A7F0 - a2 * t);
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tmp, (const nw4r::math::VEC3*)&c0, lbl_eu_8066A7F0 - a0 * t);
@@ -1217,7 +1215,7 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f27 = sMpfsysDrawState->field_0x2E00;
     MPFDispEntryFull* pendingA = 0;
     MPFDispEntryFull* pendingB = 0;
-    f32 f31 = lbl_eu_8066A7E8;
+    f32 f31 = 0.0f;
     f32 f30 = lbl_eu_8066A7F0;
     f32 f20 = 255.0f;
     const nw4r::math::VEC3* ref = (const nw4r::math::VEC3*)&lbl_eu_80658410;
@@ -1533,13 +1531,13 @@ bool trackGridStep__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f26 = s32ToF32_a808(spacing, &cvtA);
     f32 sq = f26 * f26;
     f32 dd = f26 * f26 + sq;
-    if (dd < lbl_eu_8066A7E8) {
+    if (dd < 0.0f) {
         Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    f32 norm = lbl_eu_8066A7E8;
+    f32 norm = 0.0f;
     sq = f26 * f26;
     dd = f26 * f26 + sq;
-    if (dd > lbl_eu_8066A7E8) {
+    if (dd > 0.0f) {
         f32 inv = nw4r::math::FrSqrt(dd);
         sq = f26 * f26;
         norm = (f26 * f26 + sq) * inv;
@@ -1779,7 +1777,7 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 
     // Density step selection from the scale/fallback comparison.
     s32 subSteps;
-    if (f22 <= lbl_eu_8066A7E8) {
+    if (f22 <= 0.0f) {
         subSteps = 2;
     } else if (f22 <= 70.0f) {
         subSteps = (mode > 8) ? 4 : 3;
@@ -1791,7 +1789,7 @@ bool buildDrawItem__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 
     // Probe spacing factor for the step-count rows.
-    f32 f21 = lbl_eu_8066A7E8;
+    f32 f21 = 0.0f;
     if (subSteps >= 3) {
         f21 = 0.5f * s32ToF32_a808(subSteps, &cvtA) /
               s32ToF32_a808(subSteps - 2, &cvtB);
@@ -2106,7 +2104,7 @@ bool probeDrawCell__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // otherwise a four-vector fan (spread == 0) or a 10-entry ramp is emitted.
 // When item->spread is non-zero the y offset ramps with the iteration
 // counter through the probe-range scale (lbl_eu_8066A810) and a spread
-// scale (lbl_eu_8066A730 / lbl_eu_8066A83C).  Bit 1 (flags & 4) mirrors the
+// spread scale (10.0f / 0.1f).  Bit 1 (flags & 4) mirrors the
 // emitted vectors' y components at the end.
 void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut) {
     MPFBillItem* item = (MPFBillItem*)self;
@@ -2119,10 +2117,10 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     if (item->flags & 2) {
         // Two base vectors, transformed by the shared matrix, then by each
         // layer's draw matrix (func_804734F4 result).
-        dst[0].y = lbl_eu_8066A7E8;
-        dst[0].z = lbl_eu_8066A7E8;
-        dst[1].y = lbl_eu_8066A7E8;
-        dst[1].z = lbl_eu_8066A7E8;
+        dst[0].y = 0.0f;
+        dst[0].z = 0.0f;
+        dst[1].y = 0.0f;
+        dst[1].z = 0.0f;
         dst[0].x = -item->x;
         dst[1].x = item->x;
         PSMTXMultVec(sBillboardViewMatrix, &dst[0], &dst[0]);
@@ -2131,7 +2129,7 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         MPFBillMtx* m = (MPFBillMtx*)getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc((mpfsys::UnkClass_80471EC8*)sMpfsysDrawState, item->layer);
         Vec* out = &dst[2];
 
-        if (item->spread != lbl_eu_8066A7E8) {
+        if (item->spread != 0.0f) {
             // Ramp the y offset with the iteration counter (Gekko fast-cast
             // int->float through a shared stack bit-cast slot).
             s32 count = MpfBillboardCount;
@@ -2141,13 +2139,13 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 cvt.w[0] = 0x43300000u;
                 cvt.w[1] = (u32)i ^ 0x80000000u;
                 f32 fi = (f32)(cvt.d - lbl_eu_8066A808);
-                f32 k = item->y * (fi * t * lbl_eu_8066A730 + lbl_eu_8066A7F0 - sp);
+                f32 k = item->y * (fi * t * 10.0f + lbl_eu_8066A7F0 - sp);
                 a.x = -item->x;
                 a.y = k;
-                a.z = lbl_eu_8066A7E8;
+                a.z = 0.0f;
                 b.x = item->x;
                 b.y = k;
-                b.z = lbl_eu_8066A7E8;
+                b.z = 0.0f;
                 PSMTXMultVec(sBillboardViewMatrix, &a, &a);
                 PSMTXMultVec(sBillboardViewMatrix, &b, &b);
                 PSMTXMultVec(m->mtx, &a, &out[0]);
@@ -2168,10 +2166,10 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             // Fixed base pair, reused for every layer entry.
             a.x = -item->x;
             a.y = item->y;
-            a.z = lbl_eu_8066A7E8;
+            a.z = 0.0f;
             b.x = item->x;
             b.y = item->y;
-            b.z = lbl_eu_8066A7E8;
+            b.z = 0.0f;
             PSMTXMultVec(sBillboardViewMatrix, &a, &a);
             PSMTXMultVec(sBillboardViewMatrix, &b, &b);
             s32 count = MpfBillboardCount;
@@ -2193,12 +2191,12 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         }
         *flagsOut = -1;
     } else {
-        if (item->spread != lbl_eu_8066A7E8) {
+        if (item->spread != 0.0f) {
             // Fixed 10-iteration ramp, transformed directly into the output.
-            dst[0].y = lbl_eu_8066A7E8;
-            dst[0].z = lbl_eu_8066A7E8;
-            dst[1].y = lbl_eu_8066A7E8;
-            dst[1].z = lbl_eu_8066A7E8;
+            dst[0].y = 0.0f;
+            dst[0].z = 0.0f;
+            dst[1].y = 0.0f;
+            dst[1].z = 0.0f;
             dst[0].x = -item->x;
             dst[1].x = item->x;
             PSMTXMultVec(sBillboardViewMatrix, &dst[0], &dst[0]);
@@ -2213,10 +2211,10 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 f32 k = item->y * (0.1f * (fi * t) + lbl_eu_8066A7F0 - sp);
                 a.x = -item->x;
                 a.y = k;
-                a.z = lbl_eu_8066A7E8;
+                a.z = 0.0f;
                 b.x = item->x;
                 b.y = k;
-                b.z = lbl_eu_8066A7E8;
+                b.z = 0.0f;
                 PSMTXMultVec(sBillboardViewMatrix, &a, &out[0]);
                 PSMTXMultVec(sBillboardViewMatrix, &b, &out[1]);
                 out += 2;
@@ -2232,14 +2230,14 @@ void scanBillboard__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             // Four-vector fan: two mirrored pairs, the second pair carrying
             // the y position.
             *flagsOut = 0;
-            dst[0].y = lbl_eu_8066A7E8;
-            dst[0].z = lbl_eu_8066A7E8;
-            dst[1].y = lbl_eu_8066A7E8;
-            dst[1].z = lbl_eu_8066A7E8;
+            dst[0].y = 0.0f;
+            dst[0].z = 0.0f;
+            dst[1].y = 0.0f;
+            dst[1].z = 0.0f;
             dst[2].y = item->y;
             dst[3].y = item->y;
-            dst[2].z = lbl_eu_8066A7E8;
-            dst[3].z = lbl_eu_8066A7E8;
+            dst[2].z = 0.0f;
+            dst[3].z = 0.0f;
             dst[0].x = -item->x;
             dst[1].x = item->x;
             dst[2].x = -item->x;

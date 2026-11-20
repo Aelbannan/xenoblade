@@ -6,6 +6,7 @@
 
 #include <monolib/scn/CScnItemCamera.hpp>
 #include "monolib/scn/CScnItemPool.hpp"
+#include <monolib/scn/CScn.hpp>
 #include <monolib/device/CDeviceGX.hpp>
 #include <monolib/device/CDeviceVI.hpp>
 #include <monolib/util/FixStr.hpp>
@@ -18,7 +19,6 @@
 
 // Shared .sdata2 float constants referenced by this TU (retail pool names).
 // Declared here at global scope (plain extern -> no name mangling).
-extern const f32 lbl_eu_8066ABF0;
 extern const f32 lbl_eu_8066AC38;
 extern const f32 lbl_eu_8066AC10;
 extern const f32 lbl_eu_8066AC14;
@@ -222,13 +222,6 @@ extern "C" void __ct__CScnItemCameraNw4r(CScnItemCamera* self,
                                          CScnCameraItemHost* parent,
                                          const char* name);
 
-// Parent scene item (self->mParent, +0x04); +0x8C holds the scene object the
-// camera registers itself on (its vtable slot 4 takes the camera).
-struct CScnItemParentLayout {
-    u8 pad_0x00[0x8C];
-    void* field_0x8C;            // +0x8C
-};
-
 // Host object for ScnCamFactory: a scene-item pool at +0x60.
 struct CScnCameraItemHost {
     u8 pad_0x00[0x60];
@@ -308,14 +301,14 @@ void sinit_8049FC60() {
     // bases (r6/r5/r4/r3); every high-level shape tried folds to one base
     // via MWCC CSE - see sinit_804C86C0 KNOWN RESIDUAL note in
     // code_804C8684.cpp (same codegen artifact).
-    sCamDefaults.v[0] = lbl_eu_8066ABF0;
+    sCamDefaults.v[0] = 0.0f;
     ((SCamDefaultRow*)&sCamDefaults)->y = 4.0f;
     ((SCamDefaultRow*)&sCamDefaults)->z = lbl_eu_8066AC38;
-    sCamDefaults.v[3] = lbl_eu_8066ABF0;
-    sCamDefaults.rows[1].y = lbl_eu_8066ABF0;
-    sCamDefaults.rows[1].z = lbl_eu_8066ABF0;
-    sCamDefaults.v[6] = lbl_eu_8066ABF0;
-    sCamDefaults.rows[2].y = lbl_eu_8066ABF0;
+    sCamDefaults.v[3] = 0.0f;
+    sCamDefaults.rows[1].y = 0.0f;
+    sCamDefaults.rows[1].z = 0.0f;
+    sCamDefaults.v[6] = 0.0f;
+    sCamDefaults.rows[2].y = 0.0f;
     sCamDefaults.rows[2].z = lbl_eu_8066AC1C;
 }
 
@@ -392,7 +385,7 @@ void ScnCamSetDist(CScnItemCamera* self, f32 f1) {
     ml::CVec3 v;
     ml::CVec3 out;
     ml::CVec3 sum;
-    normal.set(lbl_eu_8066ABF0, lbl_eu_8066ABF0, -f1);
+    normal.set(0.0f, 0.0f, -f1);
     // set() from the callee's sret return pointer makes MWCC consume r3 as
     // the copy source with member-wise lfs/stfs temporaries like retail.
     v.set(*(ml::CVec3*)nw4r::math::VEC3TransformNormal(
@@ -454,8 +447,8 @@ extern "C" void ScnCamViewReg(CScnItemCamera* self) {
     makePerspProj__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
                                fovY, nearZ, farZ);
 
-    CScnItemParentLayout* parent = (CScnItemParentLayout*)cam->mParent;
-    ((CScnItemSceneRegIf*)parent->field_0x8C)->registerCamera(self);
+    CScn* parent = (CScn*)cam->mParent;
+    ((CScnItemSceneRegIf*)parent->mUnk8C)->registerCamera(self);
 }
 
 // ============================================================
@@ -505,14 +498,14 @@ void ScnCamPointAt(CScnItemCamera* self, const ml::CVec3* v,
     // defaults to the 0.0f pool constant - shared with (and initialized
     // after) the guard compares below.
     f32 len2d = arg.x * arg.x + arg.z * arg.z;
-    if (!(len2d >= lbl_eu_8066ABF0)) {
+    if (!(len2d >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 lenXZ;
-    if (!(len2d <= lbl_eu_8066ABF0)) {
+    if (!(len2d <= 0.0f)) {
         lenXZ = len2d * nw4r::math::FrSqrt(len2d);
     } else {
-        lenXZ = lbl_eu_8066ABF0;
+        lenXZ = 0.0f;
     }
     self->mTransform.mRot.x =
         0.024543693f * nw4r::math::Atan2FIdx(arg.y, lenXZ);
@@ -536,10 +529,10 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
     obj->mCamParam0 = sCamDefaultFloats[0];
     obj->mCamParam1 = sCamDefaultFloats[1];
     obj->mCamParam2 = sCamDefaultFloats[2];
-    obj->mDepthNear = lbl_eu_8066ABF0;
-    obj->mDepthMid = lbl_eu_8066ABF0;
-    obj->mDepthFarNear = lbl_eu_8066ABF0;
-    obj->mDepthFar = lbl_eu_8066ABF0;
+    obj->mDepthNear = 0.0f;
+    obj->mDepthMid = 0.0f;
+    obj->mDepthFarNear = 0.0f;
+    obj->mDepthFar = 0.0f;
     cam->mUnk1DC = 0;
     cam->mFovY = 30.0f;
     cam->mNearZ = 0.1f;
@@ -614,21 +607,21 @@ extern "C" void ScnCamRebuild(CScnItemCamera* self) {
     // Depth-split projection matrix at 0x154.
     f32* mtx = &cam->mMtx154[0][0];
     mtx[0x0] = 2.0f * nearZ / (midD - nearD);
-    mtx[0x1] = lbl_eu_8066ABF0;
+    mtx[0x1] = 0.0f;
     mtx[0x2] = (midD + nearD) / (midD - nearD);
-    mtx[0x3] = lbl_eu_8066ABF0;
-    mtx[0x4] = lbl_eu_8066ABF0;
+    mtx[0x3] = 0.0f;
+    mtx[0x4] = 0.0f;
     mtx[0x5] = 2.0f * nearZ / (farD - farNearD);
     mtx[0x6] = (farD + farNearD) / (farD - farNearD);
-    mtx[0x7] = lbl_eu_8066ABF0;
-    mtx[0x8] = lbl_eu_8066ABF0;
-    mtx[0x9] = lbl_eu_8066ABF0;
+    mtx[0x7] = 0.0f;
+    mtx[0x8] = 0.0f;
+    mtx[0x9] = 0.0f;
     mtx[0xa] = -(farZ + nearZ) / (farZ - nearZ);
     mtx[0xb] = -2.0f * nearZ * farZ / (farZ - nearZ);
-    mtx[0xc] = lbl_eu_8066ABF0;
-    mtx[0xd] = lbl_eu_8066ABF0;
+    mtx[0xc] = 0.0f;
+    mtx[0xd] = 0.0f;
     mtx[0xe] = -1.0f;
-    mtx[0xf] = lbl_eu_8066ABF0;
+    mtx[0xf] = 0.0f;
     cam->mUnk1DC = 1;
 
     // Frustum half-extents: cot(half-fov) and the aspect-scaled half-width.
@@ -638,53 +631,53 @@ extern "C" void ScnCamRebuild(CScnItemCamera* self) {
     f32 wide = cam->mAspectRatio * CDeviceVI::getWidthScale();
 
     f32 h1 = cotHalf * cotHalf + lbl_eu_8066AC1C;
-    if (!(h1 >= lbl_eu_8066ABF0)) {
+    if (!(h1 >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 invH1;
-    if (h1 > lbl_eu_8066ABF0) {
+    if (h1 > 0.0f) {
         invH1 = h1 * nw4r::math::FrSqrt(h1);
     } else {
-        invH1 = lbl_eu_8066ABF0;
+        invH1 = 0.0f;
     }
     f32 e1 = lbl_eu_8066AC1C / invH1;
 
     f32 h2 = cotHalf * cotHalf + wide * wide;
-    if (!(h2 >= lbl_eu_8066ABF0)) {
+    if (!(h2 >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 invH2;
-    if (h2 > lbl_eu_8066ABF0) {
+    if (h2 > 0.0f) {
         invH2 = h2 * nw4r::math::FrSqrt(h2);
     } else {
-        invH2 = lbl_eu_8066ABF0;
+        invH2 = 0.0f;
     }
     f32 e2 = lbl_eu_8066AC1C / invH2;
 
     // Local frustum planes (4 floats each) in mSubObjArray1.
     f32* planes = (f32*)&cam->mSubObjArray1[0];
-    planes[0x0] = lbl_eu_8066ABF0;   // [0].x
-    planes[0x1] = lbl_eu_8066ABF0;   // [0].y
+    planes[0x0] = 0.0f;   // [0].x
+    planes[0x1] = 0.0f;   // [0].y
     planes[0x2] = lbl_eu_8066AC1C;   // [0].z
     planes[0x3] = farZ;              // [0].w
     planes[0x4] = -1.0f;   // [1].x
     planes[0x5] = -nearZ;            // [1].y
-    planes[0x6] = lbl_eu_8066ABF0;   // [1].z
+    planes[0x6] = 0.0f;   // [1].z
     planes[0x7] = -cotHalf * e1;     // [1].w
     planes[0x8] = -e1;               // [2].x
-    planes[0x9] = lbl_eu_8066ABF0;   // [2].y
-    planes[0xa] = lbl_eu_8066ABF0;   // [2].z
+    planes[0x9] = 0.0f;   // [2].y
+    planes[0xa] = 0.0f;   // [2].z
     planes[0xb] = cotHalf * e1;      // [2].w
     planes[0xc] = -e1;               // [3].x
-    planes[0xd] = lbl_eu_8066ABF0;   // [3].y
+    planes[0xd] = 0.0f;   // [3].y
     planes[0xe] = cotHalf * e2;      // [3].z
-    planes[0xf] = lbl_eu_8066ABF0;   // [3].w
+    planes[0xf] = 0.0f;   // [3].w
     planes[0x10] = -wide * e2;       // [4].x
-    planes[0x11] = lbl_eu_8066ABF0;  // [4].y
+    planes[0x11] = 0.0f;  // [4].y
     planes[0x12] = -cotHalf * e2;    // [4].z
-    planes[0x13] = lbl_eu_8066ABF0;  // [4].w
+    planes[0x13] = 0.0f;  // [4].w
     planes[0x14] = -wide * e2;       // [5].x
-    planes[0x15] = lbl_eu_8066ABF0;  // [5].y
+    planes[0x15] = 0.0f;  // [5].y
 
     // Transform the 6 planes by the local matrix into world space.
     for (int i = 0; i < 6; i++) {
@@ -695,7 +688,7 @@ extern "C" void ScnCamRebuild(CScnItemCamera* self) {
             (const nw4r::math::VEC3*)&cam->mSubObjArray1[i]);
 
         f32 w = ((f32*)&cam->mSubObjArray1[i])[3];
-        nw4r::math::VEC3 axis(lbl_eu_8066ABF0, lbl_eu_8066ABF0, fabsf(w));
+        nw4r::math::VEC3 axis(0.0f, 0.0f, fabsf(w));
         nw4r::math::VEC3 out2;
         PSMTXMultVec(self->mTransform.mLocalMat.mtx, (const Vec*)&axis,
                      (Vec*)&out2);
@@ -740,16 +733,16 @@ void ScnCamTurnAim(CScnItemCamera* self, const ml::CVec3* delta) {
 
     // M_A @retail sp+224..252: {cz,-sz,1 | sz,cz,1 | 1,1,AC1C}.
     f32 mz[3][3] = {
-        { cosZ, -sinZ, lbl_eu_8066ABF0 },
-        { sinZ, cosZ, lbl_eu_8066ABF0 },
-        { lbl_eu_8066ABF0, lbl_eu_8066ABF0, lbl_eu_8066AC1C },
+        { cosZ, -sinZ, 0.0f },
+        { sinZ, cosZ, 0.0f },
+        { 0.0f, 0.0f, lbl_eu_8066AC1C },
     };
 
     // Row-major X rotation matrix.
     f32 mx[3][3] = {
-        { lbl_eu_8066ABF0, lbl_eu_8066ABF0, lbl_eu_8066ABF0 },
-        { lbl_eu_8066ABF0, cosX, -sinX },
-        { lbl_eu_8066ABF0, sinX, cosX },
+        { 0.0f, 0.0f, 0.0f },
+        { 0.0f, cosX, -sinX },
+        { 0.0f, sinX, cosX },
     };
 
     // Compose: Z then X (full 3x3 multiplies).
@@ -763,9 +756,9 @@ void ScnCamTurnAim(CScnItemCamera* self, const ml::CVec3* delta) {
 
     // Y rotation matrix (trig computed above).
     f32 my[3][3] = {
-        { cosY, lbl_eu_8066ABF0, sinY },
-        { lbl_eu_8066ABF0, lbl_eu_8066AC1C, lbl_eu_8066ABF0 },
-        { -sinY, lbl_eu_8066ABF0, cosY },
+        { cosY, 0.0f, sinY },
+        { 0.0f, lbl_eu_8066AC1C, 0.0f },
+        { -sinY, 0.0f, cosY },
     };
 
     nw4r::math::MTX34 m;
@@ -838,7 +831,7 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
     lay->mCamParam0 = *(const u32*)&sCamDefaultFloats[0];
     lay->mCamParam1 = *(const u32*)&sCamDefaultFloats[1];
     lay->mCamParam2 = *(const u32*)&sCamDefaultFloats[2];
-    cam->mTransform.mRot.z = lbl_eu_8066ABF0;
+    cam->mTransform.mRot.z = 0.0f;
 
     // diff = aim point - table origin; distance + yaw/pitch derive from it.
     nw4r::math::VEC3 diff;
@@ -863,11 +856,11 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
     // Pitch from the y component against the horizontal length. Below the
     // guard threshold the length is left as-is (retail keeps len2d).
     f32 len2d = arg.x * arg.x + arg.z * arg.z;
-    if (!(len2d >= lbl_eu_8066ABF0)) {
+    if (!(len2d >= 0.0f)) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     f32 lenXZ = len2d;
-    if (len2d > lbl_eu_8066ABF0) {
+    if (len2d > 0.0f) {
         lenXZ = len2d * nw4r::math::FrSqrt(len2d);
     }
     cam->mTransform.mRot.x =

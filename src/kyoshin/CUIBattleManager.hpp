@@ -4,6 +4,7 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/util/reslist.hpp"
 #include "monolib/work.hpp"
+#include "monolib/work/CTTask.hpp"
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
@@ -23,15 +24,12 @@ class CProcess;
 class CUIBattleManager;
 struct CUIBattleFileEvt;
 
-// Battle-UI child item (retail IUIBattle): the reslist node payload.
-class IUIBattle {
-private:
-    u8 unk00[0x39];
-    bool mIsRemove; // 0x39
-    u8 unk3A[0x54 - 0x3A];
-
+// Real retail IUIBattle base: CTTask<IUIBattle> (0x00-0x53) plus the two
+// tail bytes at +0x54/+0x55.  The former byte-array view hid the inheritance
+// that CMenuVision's retail vtable and base list prove.
+class IUIBattle : public CTTask<IUIBattle> {
 public:
-    void SetRemove() { mIsRemove = true; }
+    void SetRemove() { CProcess::SetRemove(); }
 
     u8 unk54; // 0x54 - pending-remove request
     u8 unk55; // 0x55 - pending update-mark

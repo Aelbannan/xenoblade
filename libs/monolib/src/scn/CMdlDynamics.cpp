@@ -94,10 +94,6 @@ extern "C" void clearFlagMask(u32* self, u32 flags);
 extern "C" s32 simQueryLeafAnim(void* model);
 extern "C" void simSetValue7E8(void* model, s32 flag);
 
-// g3d ResMdl node lookup (member call emits this exact retail symbol).
-extern "C" unsigned long GetResNode__Q34nw4r3g3d6ResMdlCFUl(nw4r::g3d::ResMdl* mdl,
-                                                            unsigned long idx);
-
 // --- Cross-TU imports used by MdlDyn_BuildElem ---
 extern "C" float scaleByGlobal(float val);
 extern "C" void zeroFirstWord(void* self);   // zero the u32 at self
@@ -676,7 +672,7 @@ void MdlDyn_BuildElem(MdlDynObj* model, CMdlDynList* list, u32 index) {
     nw4r::g3d::ResMdl mdl(
         (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)model->field_0x4));
     unsigned long nodeIdx =
-        GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, index);
+        (unsigned long)mdl.GetResNode((u32)index).ptr();
     nw4r::g3d::ResNode resNode;
     MdlDyn_StoreResRef((u8*)&resNode, &nodeIdx);
 
@@ -881,7 +877,7 @@ void MdlDyn_BuildElem(MdlDynObj* model, CMdlDynList* list, u32 index) {
                 (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)model->field_0x4));
             u8* e98 = MdlDyn_GetAnchorElem((u8*)&model->elems18, ids[k]);
             unsigned long nid =
-                GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl2, *(u32*)e98);
+                (unsigned long)mdl2.GetResNode((u32)*(u32*)e98).ptr();
             nw4r::g3d::ResNode nres;
             MdlDyn_StoreResRef((u8*)&nres, &nid);
             MdlDyn_AppendWord((u8*)&last->buf90, &nres);
@@ -1346,7 +1342,7 @@ void MdlDyn_UpdateAnimSpeed(CMdlDynModelRef* self) {
     self->field_0x4->flags7A8 &= ~0x8;
 }
 
-extern "C" u32 MdlDyn_GetFrameCount(u8* self) { return *(u32*)((u8*)self + 0x7e8); }
+extern "C" u32 MdlDyn_GetFrameCount(u8* self) { return ((CScnItemModel*)self)->value7E8; }
 
 // --- Types shared by the dynamic-model collision helpers (targets 4/5) ---
 
@@ -1391,7 +1387,7 @@ extern "C" void MdlDyn_ClampToBounds(CMdlDynSet* owner, nw4r::math::VEC3* vec, C
 extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt,
                               nw4r::math::MTX34* matrices);
 // (memberized: MdlDyn_SolveContacts -> CMdlDynamics::Dyn_SolveContacts; declaration moved into class CMdlDynamics)
-extern "C" u32 MdlDyn_GetAnchorBase(u8* self);
+extern "C" u32 MdlDyn_GetAnchorBase(CMdlDynBuffer* self);
 extern "C" void* MdlDyn_GetAnchorEnd(u8* self);
 extern "C" u32 MdlDyn_IsEnabled(u8* self);
 extern "C" u32 MdlDyn_IsSuspended(u8* self);
@@ -1422,13 +1418,13 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
 
     // Pass 1: matrices[slot n]^-1 -> element local matrix, for kind-1 elements
     // of the model's own 0x98-stride array at model+0x18.
-    u8* it98 = (u8*)MdlDyn_GetAnchorBase((u8*)self->field_0x4 + 0x18);
+    u8* it98 = (u8*)MdlDyn_GetAnchorBase((CMdlDynBuffer*)&((MdlDynObj*)self->field_0x4)->elems18);
     while (it98 != (u8*)MdlDyn_GetAnchorEnd((u8*)self->field_0x4 + 0x18)) {
         if (((CMdlDynElem98*)it98)->field_0x94 == 1) {
             nw4r::g3d::ResMdl mdl(
                 (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)self->field_0x4));
             unsigned long node =
-                GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, *(u32*)it98);
+                (unsigned long)mdl.GetResNode((u32)*(u32*)it98).ptr();
             CMdlDynHolder wrapNode;
             MdlDyn_StoreResRef((u8*)&wrapNode, &node);
             CMdlDynHolder wrapData;
@@ -1463,7 +1459,7 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
                 nw4r::g3d::ResMdl mdl(
                     (void*)(unsigned long)MdlDyn_GetResMdlData((u8*)self->field_0x4));
                 unsigned long node =
-                    GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
+                    (unsigned long)mdl.GetResNode((u32)e->field_0x0).ptr();
                 CMdlDynHolder wrapNode; // node wrapper
                 MdlDyn_StoreResRef((u8*)&wrapNode, &node);
                 CMdlDynHolder wrapData;
@@ -1647,9 +1643,9 @@ extern "C" void MdlDyn_Update(CMdlDynamics* self, nw4r::math::MTX34* matrices) {
     simSetValue7E8((void*)self->field_0x4, 1);
 }
 
-extern "C" u32 MdlDyn_IsEnabled(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
+extern "C" u32 MdlDyn_IsEnabled(u8* self) { return (((CScnItemModel*)self)->flags7A4 >> 3) & 1; }
 
-extern "C" u32 MdlDyn_IsSuspended(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
+extern "C" u32 MdlDyn_IsSuspended(u8* self) { return (((CScnItemModel*)self)->flags7A4 >> 19) & 1; }
 
 u32 MdlDyn_GetMatrixIndex(const CMdlDynHolder* self) {
     CMdlDynSub* sub = self->field_0x0;
@@ -1659,19 +1655,20 @@ u32 MdlDyn_GetMatrixIndex(const CMdlDynHolder* self) {
     return self->field_0x0 != 0 ? self->field_0x0->field_0x10 : 0;
 }
 
-extern "C" u32 MdlDyn_IsAnimHeldA(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
+extern "C" u32 MdlDyn_IsAnimHeldA(u8* self) { return (((CScnItemModel*)self)->flags7A4 >> 20) & 1; }
 
-extern "C" u32 MdlDyn_IsAnimHeldB(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 7) & 1; }
+extern "C" u32 MdlDyn_IsAnimHeldB(u8* self) { return (((CScnItemModel*)self)->flags7A4 >> 7) & 1; }
 
-extern "C" u32 MdlDyn_IsPoseFrozen(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
+extern "C" u32 MdlDyn_IsPoseFrozen(u8* self) { return (((CScnItemModel*)self)->flags7A4 >> 17) & 1; }
 
 extern "C" void MdlDyn_FetchVec3(u8* self, void* out) {
     // Declared x/y/z ascending so the FPR colours are f0/f1/f2; the
     // assignments run z,y,x to reproduce retail's load-descending order.
     float a, b, c;
-    c = *(float*)((u8*)self + 0x2C);
-    b = *(float*)((u8*)self + 0x1C);
-    a = *(float*)((u8*)self + 0x0C);
+    nw4r::math::MTX34* m = (nw4r::math::MTX34*)self;
+    c = m->_23;
+    b = m->_13;
+    a = m->_03;
     *(float*)((u8*)out + 0) = a;
     *(float*)((u8*)out + 4) = b;
     *(float*)((u8*)out + 8) = c;
@@ -1844,7 +1841,7 @@ extern "C" void MdlDyn_NormalizeMtx(nw4r::math::MTX34* m) {
     }
 }
 
-u32 MdlDyn_GetAnchorBase(u8* self) { return *(u32*)((u8*)self + 0x0); }
+u32 MdlDyn_GetAnchorBase(CMdlDynBuffer* self) { return (u32)self->field_0x0; }
 
 extern "C" void* MdlDyn_GetAnchorEnd(u8* self) { return (char*)*(void**)self + *(u32*)((u8*)self + 4) * 0x98; }
 
@@ -1990,7 +1987,7 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
             // Resolve the element's res node (offset at 0x5C, 4-aligned).
             MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
             nw4r::g3d::ResMdl mdl((void*)(unsigned long)root->field_0x146C);
-            unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, elem->field_0x0);
+            unsigned long raw = (unsigned long)mdl.GetResNode((u32)elem->field_0x0).ptr();
             u8* node = (u8*)raw;
             if (node == 0) {
                 nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
@@ -2070,7 +2067,7 @@ extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math:
                 MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
                 nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
                 unsigned long raw =
-                    GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
+                    (unsigned long)mdl.GetResNode((u32)e->field_0x0).ptr();
                 u8* node = (u8*)raw;
                 if (node == 0) {
                     nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
@@ -2209,7 +2206,7 @@ void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
                                               sizeof(CMdlDynEntry))) {
                 MdlResRoot* root = (MdlResRoot*)this->field_0x4;
                 nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
-                unsigned long raw = GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, ent->id);
+                unsigned long raw = (unsigned long)mdl.GetResNode((u32)ent->id).ptr();
                 if (raw == 0) {
                     nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
                 }
@@ -2289,7 +2286,7 @@ void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
                         MdlResRoot* root = (MdlResRoot*)this->field_0x4;
                         nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
                         unsigned long raw =
-                            GetResNode__Q34nw4r3g3d6ResMdlCFUl(&mdl, e->field_0x0);
+                            (unsigned long)mdl.GetResNode((u32)e->field_0x0).ptr();
                         if (raw == 0) {
                             nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                                             lbl_eu_80663910, lbl_eu_80663CB8);

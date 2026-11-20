@@ -853,7 +853,7 @@ extern "C" void CPassiveSkillLine_refreshSP(UI::CPassiveSkillLine* self, int id)
     // the post-loop total load; declaring it after the loop colors it last
     // into a lower register (r26).
     u32 total;
-    UI::CPSkillBlobTotal* blob = reinterpret_cast<UI::CPSkillBlobTotal*>(
+    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry((u8)id) + 0x3534);
     UI::CPSkillRecord* rec;
     u32 sum = 0;
@@ -882,7 +882,7 @@ extern "C" void CPassiveSkillLine_refreshSP(UI::CPassiveSkillLine* self, int id)
 // its message and SP cost, and push the formatted text into the +0x139 pane. Always
 // refresh the three summary panes.
 extern "C" void CPassiveSkillLine_setCellMessage(UI::CPassiveSkillLine* self, int charId, int row, int slot) {
-    UI::CPSkillBlobCost* blob = reinterpret_cast<UI::CPSkillBlobCost*>(
+    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
         (u8*)CtrlObjectParam_GetCharEntry(charId) + 0x3534);
     UI::CPSkillRecord* rec = &blob->records[row];
     if (rec->slots[slot + 1].word != 0 || charId == 0) {
@@ -1052,7 +1052,7 @@ void CPassiveSkillCur_copyLite(UI::CPassiveSkillCur* dst, const UI::CPassiveSkil
 // later in this TU).
 // extern "C" on all dispatch targets: the retail call relocs from
 // CPassiveSkillLine_update use the plain (unmangled) names.
-extern "C" void CPassiveSkillLine_maybeEnterState2(void* self);
+extern "C" void CPassiveSkillLine_maybeEnterState2(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_stepOpenTo5(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_stepToState7(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_resetToState0(UI_CPassiveSkill* self);
@@ -1696,7 +1696,7 @@ void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self) {
 
 // Callees for CPassiveSkillLine_handleInput (definitions later in this TU unless noted).
 // C linkage so the call relocs are the plain retail names.
-using UI::CPSkillBlobCost;
+using UI::CPSkillBlob;
 using UI::CPSkillSlot;
 extern "C" void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self);
 extern "C" u8 CPassiveSkill_getCellFlag(UI_CPassiveSkill* self);
@@ -1734,7 +1734,7 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
                     // marker on the character's secondary record slot.
                     u8 ch = GetCollectedFlagByte(self->field_F3);
                     u8 f4 = self->field_F4;
-                    CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
+                    CPSkillBlob* blob = reinterpret_cast<CPSkillBlob*>(
                         (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
                     s8 fe = (s8)self->field_FE;
                     u8 row = sPassiveSkillCharRows[(ch - 1) * 8 + f4 - 1];
@@ -1748,7 +1748,7 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
                     // Learn-all flow: walk the grid column entries, find the
                     // field_FD-th non-matching entry, and pay its SP cost.
                     u8 ch = GetCollectedFlagByte(self->field_F3);
-                    CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
+                    CPSkillBlob* blob = reinterpret_cast<CPSkillBlob*>(
                         (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
                     s8 fe = (s8)self->field_FE;
                     u8 f2 = self->field_F2;
@@ -1798,7 +1798,7 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
         // SP-summary refresh: if the stored total still matches the current
         // one there is nothing to update.
         u8 ch = GetCollectedFlagByte(self->field_F3);
-        CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
+        CPSkillBlob* blob = reinterpret_cast<CPSkillBlob*>(
             (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
         if ((s8)self->field_F5 == (s32)blob->costs[5]) {
             playUISound(5);
@@ -1832,7 +1832,7 @@ extern "C" void CPassiveSkillLine_handleInput(u8* selfRaw) {
     {
         u8 ch = GetCollectedFlagByte(self->field_F3);
         u8 f4 = self->field_F4;
-        CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
+        CPSkillBlob* blob = reinterpret_cast<CPSkillBlob*>(
             (u8*)CtrlObjectParam_GetCharEntry(ch) + 0x3534);
         s8 fe = (s8)self->field_FE;
         u8 skillId = sPassiveSkillCharRows[(ch - 1) * 8 + f4 - 1];
@@ -2020,9 +2020,9 @@ extern "C" void CPassiveSkillLine_syswinAdvance(UI::CPassiveSkillLine* self) {
     reinterpret_cast<CSysWin*>(self->mInfo.field_54)->advancePhase3();
 }
 
-extern "C" void CPassiveSkillLine_maybeEnterState2(void* self){
-    if (*(u8*)((u8*)self + 0x13A) != 0) {
-        *(u8*)((u8*)self + 0xE8) = 2;
+extern "C" void CPassiveSkillLine_maybeEnterState2(UI::CPassiveSkillLine* self){
+    if (self->mInfo.field_1A != 0) {
+        self->field_E8 = 2;
     }
 }
 
@@ -2480,7 +2480,6 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
         u8 rowP1 = row + 1;
         u32 rowIdxBase = row * 5 + gridBase;
         UI::CPSkillRecord* rec = &blob->records[row];
-        UI::CPSkillBlobCost* costBlob = reinterpret_cast<UI::CPSkillBlobCost*>(blob);
         for (u8 i = 1; i <= 5; i++) {
             int gridIdx = i + rowIdxBase;
             u8 v1 = BdatGetU8Direct((const void*)gpPassiveSkillBdat, "shape", (u8)gridIdx);
@@ -2554,7 +2553,7 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
                     // Retail converts cost/value through the 0x4330-magic
                     // doubles (signed xoris trick for cost, plain u16 for
                     // value) instead of direct int->float casts.
-                    s32 cost = (s32)costBlob->costs[(u8)row];
+                    s32 cost = (s32)blob->costs[(u8)row];
                     convB.w[1] = value;
                     convA.w[1] = (u32)cost ^ 0x80000000u;
                     f64 ratio;
@@ -2569,7 +2568,7 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
                     anim->SetFrame(f);
                     cellLayout->Animate(0);
                 } else if (rec->slots[i - 1].word != 0) {
-                    s32 cost = (s32)costBlob->costs[(u8)row];
+                    s32 cost = (s32)blob->costs[(u8)row];
                     convB.w[1] = value;
                     convA.w[1] = (u32)cost ^ 0x80000000u;
                     f64 ratio;
@@ -2839,7 +2838,7 @@ void CPassiveSkillLine_updateLearnGrid(UI::CPassiveSkillLine* self) {
                     if (rec3->slots[(s8)self->field_FE + 1].word != 0) {
                         sum -= BdatGetU16Direct(gpPassiveSkillBdat, "point_SP", rec3->slots[(s8)self->field_FE + 1].word);
                     }
-                    s32 remaining = (s32)((UI::CPSkillBlobTotal*)blob)->totalSP - (s32)sum;
+                    s32 remaining = (s32)blob->totalSP - (s32)sum;
                     u8 costIdx = (u8)(((u32)(u8)self->field_F4 - 1) * 0x19 + rowIdxBase + i);
                     u32 costId = BdatGetU16Direct(gpPassiveSkillBdat, "point_SP", costIdx);
                     sprintf(bufB, "pic_msk_sl%02d_%02d", rowP1, i);
@@ -3147,7 +3146,8 @@ CPassiveSkillLine_refreshSkillCell(self, 2, 0, GetCollectedFlagByte((s8)self->fi
 // Skill-grid cell flag lookup: the cell byte at +0x104 for the signed row/col cursor
 // (row*5 + col).
 u8 CPassiveSkill_getCellFlag(UI_CPassiveSkill* self) {
-    return *(u8*)((u8*)self + 0x104 + self->field_F7 * 5 + self->field_F8);
+    s32 off = self->field_F7 * 5;
+    return self->field_104[off + self->field_F8];
 }
 
 // Skill-learn check (retail CPassiveSkillLine_isLearned): scan the line's grid column
@@ -3737,8 +3737,7 @@ u8 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
     }
 }
 
-struct PsByte180View { u8 _pad[0x180]; u8 b180; };
-extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 val) { ((PsByte180View*)self)->b180 = val; }
+extern "C" void UI_CPassiveSkill_setByte180(UI_CPassiveSkill* self, u8 val) { self->field_180 = val; }
 
 extern "C" void UI_CPassiveSkill_thunk28_68C38(u8* self) { CPassiveSkillLine_confirmAcquire(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 

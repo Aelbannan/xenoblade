@@ -106,40 +106,6 @@ extern u8 gMenuDepth[8];
 // so callers that also include the owning bdat/item headers do not redeclare them.
 extern void* lbl_eu_806640F0;
 extern u32 lbl_eu_80664184;
-extern f32 lbl_eu_806672D8;
-extern f32 lbl_eu_806672DC;
-extern f32 lbl_eu_806672E0;
-extern f32 lbl_eu_806672E4;
-extern f32 lbl_eu_806672E8;
-extern f32 lbl_eu_806672EC;
-// 672F0 is const: MWCC routes a non-const 0.0f to .sbss2 despite the
-// section attribute (all other pool floats survive as non-const).
-extern const f32 lbl_eu_806672F0;
-extern f64 lbl_eu_806672F8;
-extern f32 lbl_eu_80667300;
-extern f32 lbl_eu_80667304;
-extern f32 lbl_eu_80667308;
-extern f32 lbl_eu_8066730C;
-// 67310-6733C hold face-string pointers (read as u32 bit patterns via the
-// float externs below by LookupRelateValue/AC3C); typed as pointers here.
-extern const char* lbl_eu_80667310;
-extern const char* lbl_eu_80667314;
-extern const char* lbl_eu_80667318;
-extern const char* lbl_eu_8066731C;
-extern const char* lbl_eu_80667320;
-extern const char* lbl_eu_80667324;
-extern const char* lbl_eu_80667328;
-extern const char* lbl_eu_8066732C;
-extern const char* lbl_eu_80667330;
-extern const char* lbl_eu_80667334;
-extern const char* lbl_eu_80667338;
-extern const char* lbl_eu_8066733C;
-extern f32 lbl_eu_80667340;
-extern f32 lbl_eu_80667344;
-extern f32 lbl_eu_80667348;
-extern f64 lbl_eu_80667350;
-extern f64 lbl_eu_80667358;
-extern f64 lbl_eu_80667360;
 #ifndef CODE_80135FDC_CPP
 #endif
 extern u32 gSjisTablePtr;

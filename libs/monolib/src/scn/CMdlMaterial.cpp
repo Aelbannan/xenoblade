@@ -121,22 +121,6 @@ struct MdlMatApplier {
     /* 0x08 */ GXColor* colors;     // Null disables application
 };
 
-// Mirror of CMdlMaterial with signedness matching the retail codegen of the
-// helpers below (unsigned group value, byte flag table, signed entry count).
-struct CMdlMatView {
-    /* 0x00 */ void* vtable;
-    /* 0x04 */ void* field_0x04;
-    /* 0x08 */ void* buffer;
-    /* 0x0C */ u32 field_0x0C;
-    /* 0x10 */ u8 flag_0x10;
-    /* 0x11 */ u8 pad_0x11[3];
-    /* 0x14 */ u32 field_0x14;      // Initialized to -1
-    /* 0x18 */ u16 field_0x18[8];   // Accumulated material values
-    /* 0x28 */ u8 field_0x28[8];    // Per-material flag bytes
-    /* 0x30 */ u32 field_0x30;
-    /* 0x34 */ s32 field_0x34;      // Write index for field_0x18 array
-};
-
 // ===========================================================================
 // nw4r g3d ResUserData reconstruction (g3d_resuser_ac.h accessor semantics)
 // ===========================================================================
@@ -382,7 +366,7 @@ extern "C" void setupFromModel(CMdlMaterial* self, void* arg) {
 // group id (digit value); items named via sMatCullModeKey append their S32
 // values as bytes to the flag table.
 void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
-    CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
+    CMdlMaterial* self = reinterpret_cast<CMdlMaterial*>(selfPtr);
 
     // Pass the node handle straight through (no stack temporary).
     void* ud = reinterpret_cast<nw4r::g3d::ResNode*>(nodePtr)->GetResUserData();
@@ -469,7 +453,7 @@ void scanNodeUserData(void* selfPtr, void* nodePtr, void* /*mtx*/) {
 // (value / 10) matches the requested value, copy that material's cull mode
 // from the model resource into the scene model.
 extern "C" void applyCullByGroup(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
-    CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
+    CMdlMaterial* self = reinterpret_cast<CMdlMaterial*>(selfPtr);
     MdlMatContext* ctx = reinterpret_cast<MdlMatContext*>(self->field_0x04);
 
     for (s32 i = 0; i < self->field_0x34; i++) {
@@ -649,7 +633,7 @@ extern "C" bool applyAmbientArray(MdlMatApplier* ap) {
 // owner material's accumulated value, invoke the chain-notify helper with
 // the byte's sub-index (byte % 10).
 extern "C" void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
-    CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
+    CMdlMaterial* self = reinterpret_cast<CMdlMaterial*>(selfPtr);
     for (u32 i = 0; i < self->field_0x30; i++) {
         s32 b = self->field_0x28[i];
         s32 subIdx = b % 10;

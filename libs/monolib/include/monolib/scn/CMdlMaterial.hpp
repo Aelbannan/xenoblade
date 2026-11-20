@@ -23,8 +23,9 @@ public:
     /* 0x0C */ u32 field_0x0C;      // Write index for GXColor buffer
     /* 0x10 */ u8 flag_0x10;        // Controls buffer ownership: 0 = owned (delete[]), non-0 = unowned
     /* 0x11 */ u8 pad_0x11[3];
-    /* 0x14 */ s32 field_0x14;      // Initialized to -1
-    /* 0x18 */ u16 field_0x18[12];   // Accumulated material values (max 12 entries, indexed by field_0x34)
+    /* 0x14 */ u32 field_0x14;      // Initialized to -1
+    /* 0x18 */ u16 field_0x18[8];   // Accumulated material values
+    /* 0x28 */ u8 field_0x28[8];    // Per-material flag bytes
     /* 0x30 */ u32 field_0x30;
-    /* 0x34 */ u32 field_0x34;      // Write index for field_0x18 array
+    /* 0x34 */ s32 field_0x34;      // Write index for field_0x18 array
 };

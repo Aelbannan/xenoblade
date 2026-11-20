@@ -38,8 +38,6 @@ extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
 // BDAT text / name helpers (retail unmangled).
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
-// Font-info lookup (retail pre-mangled name).
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // Layout-build helpers (retail unmangled).
 extern "C" void* __ct__CTagProcessor(void*);
 // BDAT manager (C-linkage free function; the CBdat:: form would mangle).
@@ -48,27 +46,6 @@ extern "C" void* Bdat_GetTable_AA34();
 // BDAT table handles used by the quest-log sub-updates (.sbss).
 // Quest-category name table indexed by SearchThresholdIdx (split1 .data).
 extern char* sQstLogBdatColumnNames[];
-
-// View into a nw4r::lyt::Pane's trailing user-data region: OnFileEvent stores
-// the tag-processor pointer (field_0x2C) into each bound pane at +0xF8.
-struct CQstLogInfoPaneUser {
-    u8 pad[0xF8];
-    u32 field_F8;
-};
-
-// Mirror of the font object returned by CDeviceFont::getFontInfo: vtable
-// slot 9 (+0x24) yields the u32 bound into the layout's font pane. Never
-// instantiated (all pure virtual) so no vtable is emitted.
-struct CQstLogInfoFontView {
-    virtual void sf2() = 0;
-    virtual void sf3() = 0;
-    virtual void sf4() = 0;
-    virtual void sf5() = 0;
-    virtual void sf6() = 0;
-    virtual void sf7() = 0;
-    virtual void sf8() = 0;
-    virtual u32 sf9() = 0; // vtable offset 0x24
-};
 
 class CQstLogInfo;
 

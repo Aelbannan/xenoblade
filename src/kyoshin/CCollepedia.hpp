@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kyoshin/cf/CfBdat.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 #include <types.h>
 #include "kyoshin/menu/MenuSndApi.hpp"
@@ -140,19 +141,9 @@ struct CLPPageInfo {
 
 
 
-// nw4r offset views (forbidden headers: views live here, not TU-local, for -ipa line stability).
-struct CLPLytRootView { // layout root-pane view (clpCalcCurPos)
-    u8 pad_00[0x10];
-    nw4r::lyt::Pane* rootPane; // +0x10
-};
-struct CLPPanePosView { // pane position view (clpInitLayout/clpSetPageVis)
-    u8 pad_00[0x2C];
-    f32 pos[3]; // +0x2C position triple
-};
-// NOTE: +0x00 vtable-ptr field, dtors via __dt__ thunks; +0x0C doubles as state bytes/AnimTransform*.
-// (flat non-virtual layout; see field_0/field_c_ptr.)
-struct CCollepedia {
-    /* 0x00 */ int field_0; // vtable ptr (set by ctor)
+// CCollepedia is a real IWorkEvent: MWCC emits its vptr and event virtuals.
+// +0x0C doubles as state bytes/AnimTransform* in the recovered bodies.
+struct CCollepedia : public IWorkEvent {
     /* 0x04 */ nw4r::lyt::Layout* field_4;
     /* 0x08 */ nw4r::lyt::Layout* field_8; // used as Layout* in rendering, AnimTransform* in state checks
     /* 0x0C */ nw4r::lyt::AnimTransform* field_c_ptr; // state machine (low bytes) or AnimTransform*
@@ -245,7 +236,6 @@ extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void copyVEC3(void*, const void*);
 
 // Additional imports for the CCollepedia constructor
-extern void* lbl_eu_805373E0[]; // CCollepedia vtable (retail .data)
 extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
 extern "C" void __ct__7CSysWinFUc(CSysWin* self, int arg);   // CSysWin ctor
 

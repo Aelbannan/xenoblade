@@ -15,6 +15,8 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "nw4r/lyt/lyt_textBox.h"
 
 #include <stdio.h>
 #include "kyoshin/plugin/ocBdat.hpp"
@@ -767,8 +769,8 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
                       &lbl_eu_8050A0B4[0x397]);
 
         nw4r::lyt::Pane* rootPane = mUnk20->GetRootPane();
-        void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
-        ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)(((CQstLogInfoFontView*)font)->sf9()));
+        void* font = CDeviceFont::getFontInfo(1, mUnk20);
+        ApplyFontToTxtPanes(rootPane, ((CDeviceFontInfo*)font)->getFont());
 
         char* questName = (char*)CUICfManager_getPackedFont9C();
         if (questName != 0) {
@@ -786,11 +788,13 @@ bool CQstLogInfo::OnFileEvent(CEventFile* event) {
             sprintf(buf, &lbl_eu_8050A0B4[0x12f], i);
             nw4r::lyt::Pane* pane = mUnk20->GetRootPane()->FindPaneByName(
                 buf, true);
-            ((CQstLogInfoPaneUser*)pane)->field_F8 = field_0x2C;
+            static_cast<nw4r::lyt::TextBox*>(pane)->SetTagProcessor(
+                (nw4r::ut::WideTagProcessor*)field_0x2C);
         }
         nw4r::lyt::Pane* pane = mUnk20->GetRootPane()->FindPaneByName(
             &lbl_eu_8050A0B4[0xbb], true);
-        ((CQstLogInfoPaneUser*)pane)->field_F8 = field_0x2C;
+        static_cast<nw4r::lyt::TextBox*>(pane)->SetTagProcessor(
+            (nw4r::ut::WideTagProcessor*)field_0x2C);
         mField38 = 1;
         mUnk30 = 1;
         mFileHandle = 0;

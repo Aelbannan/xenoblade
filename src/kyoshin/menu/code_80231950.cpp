@@ -479,7 +479,7 @@ extern "C" void ArtsSlotCursor_moveUp(SArtsSub8022FA58* self, int a) {
 // arts receiver (SArtsManager::v157 result) for the current record and binds
 // or hides its panes; finally maps the character id through the message
 // tables to a help-text id and binds that text onto both panes.
-extern "C" void artsSyncSlots(SArts308B0View* self, u8 v) {
+extern "C" void artsSyncSlots(SArtsSub8022FA58* self, u8 v) {
     self->field_0x26 = v;
     // Reload the two 8-word label tables onto the stack (MWCC counted
     // word-copy loops): the AB88 table feeds PaneSetTexPaletteByName resource binds,
@@ -682,7 +682,7 @@ extern "C" void ArtsBusyPane_showPrimary(SArts30D18* self) {
                 pc->vf32C();                                                   \
             }                                                                  \
         }                                                                      \
-        artsSyncSlots((SArts308B0View*)(self), (self)->field_0x26);                \
+        artsSyncSlots(self, (self)->field_0x26);                \
     } while (0)
 
 // Arts-slot update: val == -1 clears the current cursor entries; otherwise
@@ -1440,7 +1440,7 @@ extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key) {
         *p += 1;
         row[2] = *p;
         SysWinLog_ScanGrid((u8*)base);
-        CtrlObjectParam_SyncParamFromActor((cf::CtrlObjectParamArtsView*)root);
+        CtrlObjectParam_SyncParamFromActor(root);
         artsRenderRow((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
     } else {
@@ -1466,7 +1466,7 @@ extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key) {
         *p += 1;
         row[2] = *p;
         SysWinLog_ScanGrid((u8*)base);
-        CtrlObjectParam_SyncParamFromActor((cf::CtrlObjectParamArtsView*)root);
+        CtrlObjectParam_SyncParamFromActor(root);
         artsRenderRow((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
     }
@@ -2446,7 +2446,7 @@ void artsStepAhead(CArtsList* self) {
     if (self->mSubObj148.field_0x27 != 0) return;
     ArtsCharList_selectNext((SArtsSub8022FA58*)&self->mSubObj124);
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
-    artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
+    artsSyncSlots((SArtsSub8022FA58*)&self->mSubObj148, v);
     v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     artsFillTable((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
     CMenuArtsSet_refreshArtsInfo(self);
@@ -2467,7 +2467,7 @@ void CMenuArtsSet_selectPrevChar(CArtsList* self) {
     if (self->mSubObj148.field_0x27 != 0) return;
     artsGoPrevItem((SArtsSub8022FA58*)&self->mSubObj124);
     u8 v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
-    artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
+    artsSyncSlots((SArtsSub8022FA58*)&self->mSubObj148, v);
     v = ArtsCharList_getId((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     artsFillTable((SArts322BC*)&self->mSubObj174, v);
     CMenuArtsSet_refreshArtsInfo(self);
@@ -2493,7 +2493,7 @@ void CMenuArtsSet_confirmLockedArt(CArtsList* self) {
         return;
     }
     sArtsDemoModeFlag[0] = (sArtsDemoModeFlag[0] ^ 1) != 0;
-    artsSyncSlots((SArts308B0View*)&self->mSubObj148, v);
+    artsSyncSlots((SArtsSub8022FA58*)&self->mSubObj148, v);
     artsFillTable((SArts322BC*)&self->mSubObj174, v);
     CMenuArtsSet_refreshArtsInfo(self);
     playUISound(0xA);
@@ -2849,7 +2849,7 @@ bool CArtsList::OnFileEvent(CEventFile* pEventFile) {
     artsRebuildUI((SArtsSub8022FA58*)&mSubObj124);
     mSubObj148 = SArts3042C((u32)field_0x1C, (u32)field_0x18);
     ArtsLayoutPair_loadSlots((SArts304C4*)&mSubObj148);
-    artsSyncSlots((SArts308B0View*)&mSubObj148,
+    artsSyncSlots((SArtsSub8022FA58*)&mSubObj148,
                   ArtsCharList_getId((SArtsSub8022FA58*)&mSubObj124, mSubObj124.field_0x14));
     mSubObj174 = SArts319AC((u32)field_0x1C, (u32)field_0x18, (u32)&mScrollBar);
     ArtsTableLayout_load((SArts304C4*)&mSubObj174);

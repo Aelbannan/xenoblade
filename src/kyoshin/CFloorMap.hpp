@@ -563,44 +563,6 @@ struct CFloorMapLayoutSlots {
     u8 field_0C;               // +0x0C - current map-row id
 };
 
-// .sdata2 conversion magics: 0x4330000080000000 (signed s16->f32, retail
-// lbl_eu_80668770) and 0x4330000000000000 (unsigned u8->f32, retail
-// lbl_eu_80668788). Defined in CFloorMap.cpp.
-extern const double lbl_eu_80668770;
-extern const double lbl_eu_80668788;
-
-// u16/u8 -> f32 conversion scratch (CfTFile.cpp / CSysWinScenarioLog.cpp
-// convention): build the 0x43300000-prefixed bit pattern in memory and
-// subtract the named .sdata2 magic so the pool reloc matches retail instead
-// of an MWCC-synthesised @N entry. The two magics are defined in
-// CFloorMap.cpp (CMiniMap.cpp idiom).
-union CFloorMapF64Conv {
-    u32 w[2];
-    f64 d;
-};
-
-// s16 -> f32 conversions that reference the named retail .sdata2 magics
-// (lbl_eu_80668770 = 0x4330000080000000, lbl_eu_80668788 = 0x4330000000000000)
-// so the pool relocs match retail instead of MWCC-synthesised @N entries.
-static inline f32 CFloorMapS16ToF32(s16 v) {
-    CFloorMapF64Conv conv;
-    conv.w[0] = 0x43300000;
-    conv.w[1] = (u32)(s16)v ^ 0x80000000;
-    return (f32)(conv.d - lbl_eu_80668770);
-}
-
-static inline f32 CFloorMapU8ToF32(u8 v) {
-    CFloorMapF64Conv conv;
-    conv.w[0] = 0x43300000;
-    conv.w[1] = (u32)v;
-    return (f32)(conv.d - lbl_eu_80668788);
-}
-
-// .sdata2 floats used by the marker/coordinate maths.
-extern f32 lbl_eu_80668764;   // 0.0f
-extern f32 lbl_eu_80668778;   // marker y scale factor
-extern f32 lbl_eu_8066877C;   // marker x scale factor
-
 // (CCur18 cursors dispatch through CBaseCur::initLayout/cleanup/
 // setRootPaneTranslate at +0x08/+0x0C/+0x10; see kyoshin/CBaseCur.hpp.)
 
@@ -720,9 +682,6 @@ extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // BDAT row count (canonical void* form)
 extern "C" void* Bdat_GetTable_AA34();
 extern "C" void TagProcMeasureText(f32* out, nw4r::lyt::Pane* pane, u16* str);
-// Height thresholds picking which of the three status panes lights up.
-extern f32 lbl_eu_80668780;
-extern f32 lbl_eu_80668784;
 // getUnk80664658 is declared TU-locally in CFloorMap.cpp: the shared
 // code_801F3BE0.hpp owner uses a different (C++-linkage) return type.
 
@@ -731,16 +690,7 @@ extern f32 lbl_eu_80668784;
 // flat names).
 // (sysWinApplyKind comes from kyoshin/CSysWin.hpp: CSysWin* form.)
 
-// .sdata2 floats / .sbss globals for the floor-map update functions.
-extern f32 lbl_eu_80668760;   // 1.0f (per-frame countdown step / anim advance)
-extern f32 lbl_eu_8066879C;
-extern f32 lbl_eu_80668790;
-extern f32 lbl_eu_80668768;
-extern f32 lbl_eu_8066876C;
-extern f32 lbl_eu_806687BC;
-extern f32 lbl_eu_806687A0;
-extern f32 lbl_eu_80668794;
-
+// .sbss globals for the floor-map update functions.
 // .sbss color tables used by PaneMatSetTevColorsByName (init in sinit_80250CB4).
 extern GXColorS10 sFloorRowColor0;
 extern GXColorS10 sFloorRowColor1;
@@ -775,8 +725,6 @@ struct CFloorMapPaneRotate {
 // C-ABI helpers used by FloorMap_RefreshFloorRows (defined in code_80135FDC.cpp).
 extern u32 spFloorDataTable;
 extern u8 sCurrentMapId;
-extern u8 lbl_eu_8052CB40[];
-extern u8 lbl_eu_8052CB1C[];
 
 // MEM2 + device-file imports (retail mangled names, declared verbatim).
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();

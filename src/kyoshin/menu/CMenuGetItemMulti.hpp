@@ -9,6 +9,7 @@
 #include "kyoshin/IUIWindow.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 #include <revolution/gx/GXTypes.h>
 
 #include "kyoshin/CBaseCur.hpp"
@@ -63,7 +64,7 @@ public:
     // IUIWindow (+0x00..+0x6B), IWorkEvent (+0x6C) and IScnRender (+0x70)
     // are real bases; MWCC emits their vptrs and the composite vtable.
     CScn* mScn;                              // +0x74
-    u8 mRegion[0x10];                        // +0x78
+    UnkClass_8045F564 mRegion;               // +0x78 real sub-object (implicit ctor/dtor)
     nw4r::lyt::AnimTransform* mAnim;         // +0x88
     u32 mInitialItems[4];                    // +0x8C
     u32 mVisibleItemCount;                   // +0x9C

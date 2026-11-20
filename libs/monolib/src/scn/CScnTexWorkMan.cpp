@@ -866,7 +866,6 @@ namespace TWMBlob {
 extern "C" void __dt__14CScnTexWorkManFv();
 // onViAfterDrawDone__14CScnTexWorkManFv is defined (extern "C") earlier
 // in this TU; the unqualified use below resolves to it.
-extern "C" void __dt__16CScnVirtualLightFv();
 extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
 extern "C" void viBeginFrame__11CDeviceVICbFv();
 }

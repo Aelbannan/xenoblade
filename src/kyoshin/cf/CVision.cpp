@@ -81,7 +81,6 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // from CAIAction.hpp / CChainTimer.hpp (identical copies); this TU no longer
 // pre-includes them under a rename nor keeps a divergent (int id)
 // redeclaration -- id-passing call sites cast to (void*) at the call.
-#include "kyoshin/cf/CSuddenCommuImports.hpp"
 #include "kyoshin/cf/object/CAIActionApi.hpp"
 // The former CtrlObjectParam_GetCharEntry / getBdatStringColumnValue / getArtsSlotRC /
 // getArtsParamRC2 renames are gone: CAIAction.hpp no longer redeclares

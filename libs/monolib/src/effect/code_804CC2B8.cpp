@@ -288,15 +288,6 @@ extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color);
 extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, f32 f,
                               const ml::CVec4* scale, const ml::CVec4* out);
 
-// Target 3: position/transform layout.
-struct EffPos {
-    u8 pad_0x00[0xac];
-    Vec field_0xac;          // 0xac,0xb0,0xb4
-    Vec field_0xb8;          // 0xb8,0xbc,0xc0
-    u8 pad_0xc4[0x130 - 0xc4];
-    Mtx field_0x130;
-};
-
 // Target 2: singly-linked node and list-control layout.
 struct Node2 {
     Node2* field_0x00;       // next
@@ -350,7 +341,9 @@ struct SceneSubObj {
     u8 pad_0x30[0x40 - 0x30];
     u32 field_0x40;              // 0x40
     u32 field_0x44;              // 0x44
-    u8 pad_0x48[0xdc - 0x48];
+    u8 pad_0x48[0x5c - 0x48];
+    u32 field_0x5c;              // 0x5c
+    u8 pad_0x60[0xdc - 0x60];
     ToneRange* field_0xdc;       // 0xdc tone-range table
     u8 pad_0xe0[0xe4 - 0xe0];
     u32 field_0xe4;              // 0xe4
@@ -421,10 +414,12 @@ struct SceneSubObj {
 // Master effect/scene object shared across most of this TU. Field offsets are
 // recovered from the retail accesses. Many ranges are typed-punned (a matrix
 // region is also used as vectors), so several sub-ranges overlap in meaning.
-// Region at self+0xdc holding a matrix at +0x18 (0xf4). 0x48 bytes total.
+// Region at self+0xdc: two vectors followed by the transform matrix used by
+// the layout-bind helpers.
 struct SceneSubLater {
-    u8 pad_0x00[0x18];
-    Mtx field_0x18;
+    Vec field_0x00;          // 0xdc
+    Vec field_0x0c;          // 0xe8
+    Mtx field_0x18;          // 0xf4
 };
 
 // Forward decl: full SrcMtx view is defined below (used by the memberized
@@ -461,7 +456,7 @@ struct EffectScene {
     ml::CVec3 field_0xb8;    // 0xb8,0xbc,0xc0 (CVec3: PS-vector accumulate target)
     Vec field_0xc4;          // 0xc4,0xc8,0xcc
     Vec field_0xd0;          // 0xd0,0xd4,0xd8
-    SceneSubLater field_0xdc; // 0xdc..0x124 sub-object (matrix at +0x18 = 0xf4)
+    SceneSubLater field_0xdc; // 0xdc..0x124 layout vectors + matrix
     Vec field_0x124;         // 0x124,0x128,0x12c
     Mtx field_0x130;         // 0x130..0x160
     Mtx field_0x160;         // 0x160..0x190
@@ -595,16 +590,13 @@ extern "C" void func_804CD9EC(EffectScene* self) {
         f32 scale = (t->field_0x08 / 30.0f) * self->field_0x18;
         if (scale != lbl_eu_8066B0DC) {
             ml::CVec3 v;
-            union { double d; u32 w[2]; } c1, c2, c3;
-            c1.w[1] = (u32)(s32)t->field_0x00 ^ 0x80000000u;
-            c1.w[0] = 0x43300000u;
-            v.x = scale * (f32)(c1.d - lbl_eu_8066B0F0);
-            c2.w[1] = (u32)(s32)t->field_0x02 ^ 0x80000000u;
-            c2.w[0] = 0x43300000u;
-            v.y = scale * (f32)(c2.d - lbl_eu_8066B0F0);
-            c3.w[1] = (u32)(s32)t->field_0x04 ^ 0x80000000u;
-            c3.w[0] = 0x43300000u;
-            v.z = scale * (f32)(c3.d - lbl_eu_8066B0F0);
+            u32 c1, c2, c3;
+            c1 = (u32)(s32)t->field_0x00 ^ 0x80000000u;
+            v.x = scale * (f32)(s32)(c1 ^ 0x80000000u);
+            c2 = (u32)(s32)t->field_0x02 ^ 0x80000000u;
+            v.y = scale * (f32)(s32)(c2 ^ 0x80000000u);
+            c3 = (u32)(s32)t->field_0x04 ^ 0x80000000u;
+            v.z = scale * (f32)(s32)(c3 ^ 0x80000000u);
             if (t->field_0x06 == 0) {
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&v, (nw4r::math::VEC3*)&v,
                                       *(const f32*)&self->field_0x10);
@@ -1443,24 +1435,17 @@ extern "C" void EffFxUpdateLightColor(EffectScene* self, f32* out, Vec* p1) {
         }
     }
     u32 col = *(u32*)SchedAnim_NoOp(&self->field_0x2e8, base.c);
-    // Two hoisted 0x4330 magic slots mirror retail's prologue stores at sp+0x40
-    // and sp+0x48; every int/byte -> float conversion below reuses one of the
-    // two slots (alternating), which is what pins the named B0E8/B0F0 doubles.
-    union {
-        f64 d;
-        u32 w[2];
-    } c1, c2;
-    c1.w[0] = 0x43300000u;
-    c2.w[0] = 0x43300000u;
+    // Convert the RGBA bytes with ordinary unsigned/signed int -> float casts.
+    u32 c1, c2;
     const u8* cb = (const u8*)&col;
-    c1.w[1] = cb[3];
-    base.c[3] = (f32)(c1.d - lbl_eu_8066B0E8);
-    c2.w[1] = cb[2];
-    base.c[2] = (f32)(c2.d - lbl_eu_8066B0E8);
-    c1.w[1] = cb[1];
-    base.c[1] = (f32)(c1.d - lbl_eu_8066B0E8);
-    c2.w[1] = cb[0];
-    base.c[0] = (f32)(c2.d - lbl_eu_8066B0E8);
+    c1 = cb[3];
+    base.c[3] = (f32)(u32)c1;
+    c2 = cb[2];
+    base.c[2] = (f32)(u32)c2;
+    c1 = cb[1];
+    base.c[1] = (f32)(u32)c1;
+    c2 = cb[0];
+    base.c[0] = (f32)(u32)c2;
     s32 alpha = (s32)base.c[3];
     // Distance-based alpha falloff: two segments (rising then falling)
     // defined by the tone-range u16s; skipped when sub bit 0x0800 is set,
@@ -1470,33 +1455,33 @@ extern "C" void EffFxUpdateLightColor(EffectScene* self, f32* out, Vec* p1) {
         ml::CVec3 diff = *(const ml::CVec3*)p1 - rsrc->mPos;
         f32 mag = PSVECMag(diff);
         ToneRange* tr = sub->field_0xdc;
-        // Slot usage per conversion mirrors retail's alternating scratch words.
-        c1.w[1] = (u32)((s32)tr->field_0x00 - (s32)tr->field_0x02) ^ 0x80000000u;
-        f32 range1 = (f32)(c1.d - lbl_eu_8066B0F0);
-        c2.w[1] = tr->field_0x00;
-        f32 lim0 = (f32)(c2.d - lbl_eu_8066B0E8);
+        // Tone-range deltas are signed; the bounds themselves are unsigned.
+        c1 = (u32)((s32)tr->field_0x00 - (s32)tr->field_0x02) ^ 0x80000000u;
+        f32 range1 = (f32)(s32)(c1 ^ 0x80000000u);
+        c2 = tr->field_0x00;
+        f32 lim0 = (f32)(u32)c2;
         if (range1 > lbl_eu_8066B0DC && mag <= lim0) {
-            c1.w[1] = tr->field_0x02;
-            f32 t = (mag - (f32)(c1.d - lbl_eu_8066B0E8)) / range1;
+            c1 = tr->field_0x02;
+            f32 t = (mag - (f32)(u32)c1) / range1;
             if (t <= lbl_eu_8066B0DC) t = lbl_eu_8066B0DC;
-            c2.w[1] = (u32)(alpha & 0xff);
-            alpha = (s32)((f32)(c2.d - lbl_eu_8066B0E8) * t);
+            c2 = (u32)(alpha & 0xff);
+            alpha = (s32)((f32)(u32)c2 * t);
         } else {
-            c1.w[1] = (u32)((s32)tr->field_0x04 - (s32)tr->field_0x06) ^ 0x80000000u;
-            f32 range2 = (f32)(c1.d - lbl_eu_8066B0F0);
-            c2.w[1] = tr->field_0x04;
-            f32 lim2 = (f32)(c2.d - lbl_eu_8066B0E8);
+            c1 = (u32)((s32)tr->field_0x04 - (s32)tr->field_0x06) ^ 0x80000000u;
+            f32 range2 = (f32)(s32)(c1 ^ 0x80000000u);
+            c2 = tr->field_0x04;
+            f32 lim2 = (f32)(u32)c2;
             if (range2 > lbl_eu_8066B0DC && lim2 <= mag) {
                 f32 t = (mag - lim2) / range2;
                 f32 s = lbl_eu_8066B0D8 - t;
                 if (s <= lbl_eu_8066B0DC) s = lbl_eu_8066B0DC;
-                c2.w[1] = (u32)(alpha & 0xff);
-                alpha = (s32)((f32)(c2.d - lbl_eu_8066B0E8) * s);
+                c2 = (u32)(alpha & 0xff);
+                alpha = (s32)((f32)(u32)c2 * s);
             }
         }
     }
-    c1.w[1] = (u32)(alpha & 0xff);
-    base.c[3] = (f32)(c1.d - lbl_eu_8066B0E8);
+    c1 = (u32)(alpha & 0xff);
+    base.c[3] = (f32)(u32)c1;
     out[0] = base.c[0] / 255.0f;
     out[1] = base.c[1] / 255.0f;
     out[2] = base.c[2] / 255.0f;
@@ -1588,17 +1573,11 @@ void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, V
         }
     }
     // Wrap the Z translation component back into range when it escapes
-    // [-B120, 1]: truncate to integer and rescale by (1 - eps). The explicit
-    // union round-trip mirrors retail's fctiwz + 0x4330000080000000 magic
-    // conversion through the shared B0F0 constant.
+    // [-1, 1]: truncate to integer and rescale by (1 - eps).
     if (m.m[2][3] > lbl_eu_8066B0D8 || m.m[2][3] < -1.0f) {
-        union {
-            f64 d;
-            u32 w[2];
-        } conv;
-        conv.w[0] = 0x43300000u;
-        conv.w[1] = (u32)(s32)m.m[2][3] ^ 0x80000000u;
-        m.m[2][3] = (lbl_eu_8066B0D8 - ml::epsilon) * (f32)(conv.d - lbl_eu_8066B0F0);
+        u32 conv;
+        conv = (u32)(s32)m.m[2][3] ^ 0x80000000u;
+        m.m[2][3] = (lbl_eu_8066B0D8 - ml::epsilon) * (f32)(s32)(conv ^ 0x80000000u);
     }
     ml::CVec3 rot;
     m.getRotXYZ(rot);
@@ -1610,10 +1589,10 @@ void EffectScene::EffFxApplySceneMatrix(CFBC8Target* obj, const ml::CMat34* a, V
 // The retail calls these as real functions; -inline auto would otherwise fold
 // the stub bodies into the callers (the retail never inlines them).
 extern "C" u32 EffFxGetSubWord04(const SceneSubObj* self) {
-    return *(u32*)((u8*)self + 0x4);
+    return self->field_0x04;
 }
 
-extern "C" u32 EffFxGetSubWord5C(const SceneSubObj* self) { return *(u32*)((u8*)self + 0x5c); }
+extern "C" u32 EffFxGetSubWord5C(const SceneSubObj* self) { return self->field_0x5c; }
 
 // Target 2: us-804d24fc - drive the attached light (field_0x330) when the
 // sub-object has a tone table (field_0x110). The 0x29c/0x2a0/0x2a4 values are
@@ -1662,19 +1641,10 @@ extern "C" void EffFxTransformStoredDir(EffectScene* self, Vec* out) {
 }
 
 // Target 7: compute the inherited/dir vector `out` for a node from self position
-// and scale by per-sub-node u16 factors based on its type. The two magic-double
-// slots below mirror retail's prologue-hoisted 0x43300000 hi words (one per
-// conversion site).
-// Signed-int -> float through a caller-owned 0x4330 magic slot; keeping the
-// subtrahend in a caller local makes every inlined expansion reload the slot
-// (retail alternates two slots and shares one register-held constant).
-typedef union {
-    f64 d;
-    u32 w[2];
-} FConv;
-static inline f32 fconvS32(FConv& c, u32 w, f64 sub) {
-    c.w[1] = w;
-    return (f32)(c.d - sub);
+// and scale by per-sub-node u16 factors based on its type. Signed integers are
+// converted with ordinary casts; MWCC emits the conversion constant.
+static inline f32 fconvS32(u32 w) {
+    return (f32)(s32)w;
 }
 
 // MSB-first bitfield view of a u16 flag word for EffFxComputeInheritDir:
@@ -1764,12 +1734,8 @@ extern "C" void EffFxResetPlacerColors() {
 // by the 0x258/0x25a texgen indices and emit a 4-vertex quad with byte-scaled
 // UVs.
 extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
-    // Retail hoists TWO 0x4330 magic-double slots in the prologue and
-    // alternates them for every u8/u16 -> float conversion.
-    FConv convA;
-    FConv convB;
-    convA.w[0] = 0x43300000u;
-    convB.w[0] = 0x43300000u;
+    u32 convA;
+    u32 convB;
 
     // Gate: class 5 bypasses the flag checks; otherwise bits 15 and 10 of
     // the scene flag word must be set, then bit 11, then the link check.
@@ -1836,14 +1802,14 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
                 u8* p = (u8*)sub2->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
-                    convA.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
+                    convA = CDeviceVI::getRenderModeObj()->fbWidth;
                     f32 ratio =
-                        (f32)((convA.d - lbl_eu_8066B0E8) / 854.0f);
+                        (f32)((f64)(u32)convA / 854.0f);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
-                    convB.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
+                    convB = CDeviceVI::getRenderModeObj()->fbWidth;
                     f32 ratio =
-                        (f32)((convB.d - lbl_eu_8066B0E8) / 854.0f);
+                        (f32)((f64)(u32)convB / 854.0f);
                     Vec svec;
                     svec.y = lbl_eu_8066B0D8;
                     svec.z = lbl_eu_8066B0D8;
@@ -1900,17 +1866,17 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
     u8* pb = (u8*)self->field_0x0c->field_0x108;
     if (pb) {
         u8* q = (u8*)self->field_0x0c->field_0x108;
-        convA.w[1] = q ? q[-4] : 1;
-        c0 = (f32)(convA.d - lbl_eu_8066B0E8);
+        convA = q ? q[-4] : 1;
+        c0 = (f32)(u32)convA;
         q = (u8*)self->field_0x0c->field_0x108;
-        convB.w[1] = q ? q[-3] : 1;
-        c1 = (f32)(convB.d - lbl_eu_8066B0E8);
+        convB = q ? q[-3] : 1;
+        c1 = (f32)(u32)convB;
         q = (u8*)self->field_0x0c->field_0x108;
-        convA.w[1] = q ? q[-2] : 1;
-        c2 = (f32)(convA.d - lbl_eu_8066B0E8);
+        convA = q ? q[-2] : 1;
+        c2 = (f32)(u32)convA;
         q = (u8*)self->field_0x0c->field_0x108;
-        convB.w[1] = q ? q[-1] : 1;
-        c3 = (f32)(convB.d - lbl_eu_8066B0E8);
+        convB = q ? q[-1] : 1;
+        c3 = (f32)(u32)convB;
     }
 
     u8 tg = (u8)texgens;
@@ -1991,9 +1957,7 @@ extern "C" void EffFxRenderSceneQuad(EffectScene* self, void* res) {
 // transformed position/direction and byte-scaled color.
 void EffFxBuildScaleMatrix(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7);
 extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
-    // Shared 0x4330 magic slot for the fbWidth conversions; retail rebuilds
-    // both words at each use site.
-    FConv cnv;
+    u32 cnv;
 
     // Gate: class 5 bypasses the flag checks; otherwise bits 15 and 10 of
     // the scene flag word must be set. Every path funnels into one shared
@@ -2042,14 +2006,12 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
                 u8* p = (u8*)sub2->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
-                    cnv.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[0] = 0x43300000u;
-                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / 854.0f);
+                    cnv = CDeviceVI::getRenderModeObj()->fbWidth;
+                    f32 ratio = (f32)((f64)(u32)cnv / 854.0f);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
-                    cnv.w[1] = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[0] = 0x43300000u;
-                    f32 ratio = (f32)((cnv.d - lbl_eu_8066B0E8) / 854.0f);
+                    cnv = CDeviceVI::getRenderModeObj()->fbWidth;
+                    f32 ratio = (f32)((f64)(u32)cnv / 854.0f);
                     f32 scl = lbl_eu_8066B0D8;
                     PSMTXScaleApply(node->mtx, node->mtx, ratio, scl, scl);
                 }
@@ -2237,13 +2199,6 @@ extern "C" void EffFxRenderChainStrip(EffectScene* self, s32 index) {
     }
 }
 
-// Init-region view used by EffFxInitSceneFromSrc (matrices + color at 0x19c..0x20c).
-struct EffInitView {
-    ml::CVec3 field_0x190;
-    Mtx field_0x19c;
-    ml::CCol4 field_0x1cc;
-    Mtx field_0x1dc;
-};
 // Source node: +0/+0x4 u32s, +0x8 s16, +0xa u8 flag selector. The +4 word is
 // aliased as both an integer and a sub-object pointer; the distinct access
 // types keep MWCC from merging the two reads.
@@ -2298,11 +2253,10 @@ void EffFxInitSceneFromSrc(EffectScene* out, const EffSrc3* src) {
     out->field_0x1c = lbl_eu_8066B0DC;
     memset((u8*)out + 0x20, 0, 0x80);
 
-    EffInitView* iv = (EffInitView*)((u8*)out + 0x190);
-    *(ml::CMat34*)iv->field_0x19c = ml::CMat34::identity;
-    iv->field_0x1cc = ml::CCol4::white;
-    iv->field_0x190 = ml::CVec3(lbl_eu_8066B0DC, lbl_eu_8066B0DC, lbl_eu_8066B0D8);
-    *(ml::CMat34*)iv->field_0x1dc = ml::CMat34::identity;
+    *(ml::CMat34*)out->field_0x19c = ml::CMat34::identity;
+    *(ml::CCol4*)&out->field_0x1cc = ml::CCol4::white;
+    *(ml::CVec3*)&out->field_0x190 = ml::CVec3(lbl_eu_8066B0DC, lbl_eu_8066B0DC, lbl_eu_8066B0D8);
+    *(ml::CMat34*)out->field_0x1dc = ml::CMat34::identity;
 
     // Eight anim blocks built from the sub-object's resource pointers; retail
     // caches the sub pointer only for the first call and reloads it afterwards.
@@ -2414,10 +2368,7 @@ void EffFxInitSceneFromSrc(EffectScene* out, const EffSrc3* src) {
 extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
     EffectScene* self = (EffectScene*)nodeRaw;
     void* res = arg;
-    // Shared 0x4330 magic slots for the byte -> float conversions.
-    union { f64 d; u32 w[2]; } cnvA, cnvB;
-    cnvA.w[0] = 0x43300000u;
-    cnvB.w[0] = 0x43300000u;
+    u32 cnvA, cnvB;
 
     // Visibility gate, same shape as EffFxRenderTypeCWalk.
     s32 ok = 1;
@@ -2440,14 +2391,14 @@ extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
         // Rebuild the trail from four tone bytes hanging before the sample
         // table (each converted to float minus one).
         ml::CVec4 v;
-        cnvB.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 4) : 1;
-        v.x = (f32)(cnvB.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
-        cnvA.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 3) : 1;
-        v.y = (f32)(cnvA.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
-        cnvB.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 2) : 1;
-        v.z = (f32)(cnvB.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
-        cnvA.w[1] = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 1) : 1;
-        v.w = (f32)(cnvA.d - lbl_eu_8066B0E8) - lbl_eu_8066B0D8;
+        cnvB = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 4) : 1;
+        v.x = (f32)(u32)cnvB - lbl_eu_8066B0D8;
+        cnvA = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 3) : 1;
+        v.y = (f32)(u32)cnvA - lbl_eu_8066B0D8;
+        cnvB = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 2) : 1;
+        v.z = (f32)(u32)cnvB - lbl_eu_8066B0D8;
+        cnvA = (u8*)self->field_0x0c->field_0x108 ? *((u8*)self->field_0x0c->field_0x108 - 1) : 1;
+        v.w = (f32)(u32)cnvA - lbl_eu_8066B0D8;
         Trail_ReleaseLinks((CETrail*)self->field_0x328);
         Trail_UpdateGeom((CETrail*)self->field_0x328, (const Mtx*)&self->field_0x19c,
                       *(f32*)&self->field_0x29c,
@@ -2495,13 +2446,13 @@ extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnvA.w[1] = fbw;
-                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnvA = fbw;
+                    f32 ratio = (f32)(u32)cnvA / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnvB.w[1] = fbw;
-                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnvB = fbw;
+                    f32 ratio = (f32)(u32)cnvB / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -2607,12 +2558,7 @@ extern "C" void EffFxRenderType8Trail(EffectNode* nodeRaw, void* arg) {
 }
 extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
-    union {
-        f64 d;
-        u32 w[2];
-    } cnvA, cnvB;
-    cnvA.w[0] = 0x43300000u;
-    cnvB.w[0] = 0x43300000u;
+    u32 cnvA, cnvB;
     // Visibility gate (same shape as EffFxRenderType6Walk).
     if (*(s32*)&((SceneSubObj*)self->field_0x0c)->field_0x04 != 5) {
         SceneFlagBits* flg = (SceneFlagBits*)&self->field_0x06;
@@ -2648,13 +2594,13 @@ extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnvA.w[1] = fbw;
-                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnvA = fbw;
+                    f32 ratio = (f32)(u32)cnvA / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnvB.w[1] = fbw;
-                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnvB = fbw;
+                    f32 ratio = (f32)(u32)cnvB / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -2745,11 +2691,7 @@ extern "C" void EffFxRenderTypeCWalk(EffectNode* nodeRaw, void* res) {
 
 extern "C" void EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
-    union {
-        f64 d;
-        u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
+    u32 cnv;
     // Visibility gate: type-5 scenes only need the tone bit, others need
     // master+enable too; the link check runs last.
     if (self->field_0x0c->field_0x04 != 5) {
@@ -2790,13 +2732,13 @@ extern "C" void EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnv = fbw;
+                    f32 ratio = (f32)(u32)cnv / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnv = fbw;
+                    f32 ratio = (f32)(u32)cnv / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -2858,15 +2800,7 @@ extern "C" void EffFxRenderType6Walk(EffectNode* nodeRaw, void* res) {
 
 extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
-    // Two 0x4330 magic-double int->float conversion slots initialized up front
-    // (retail prologue scratch words); they are shared between the widescreen
-    // aspect fixes and the trailing texture-source byte conversions.
-    union {
-        f64 d;
-        u32 w[2];
-    } cnvA, cnvB;
-    cnvA.w[0] = 0x43300000u;
-    cnvB.w[0] = 0x43300000u;
+    u32 cnvA, cnvB;
     // Visibility gate: type-5 scenes only need the tone bit (bit 10); other
     // types need bits 14 and 9 as well before the link check decides.
     s32 ok = 0;
@@ -2918,13 +2852,13 @@ extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnvA.w[1] = fbw;
-                    f32 ratio = (f32)((cnvA.d - lbl_eu_8066B0E8) / 854.0f);
+                    cnvA = fbw;
+                    f32 ratio = (f32)((f64)(u32)cnvA / 854.0f);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnvB.w[1] = fbw;
-                    f32 ratio = (f32)((cnvB.d - lbl_eu_8066B0E8) / 854.0f);
+                    cnvB = fbw;
+                    f32 ratio = (f32)((f64)(u32)cnvB / 854.0f);
                     PSMTXScaleApply(node->mtx, node->mtx, ratio,
                                     lbl_eu_8066B0D8, lbl_eu_8066B0D8);
                 }
@@ -2986,12 +2920,11 @@ extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
             src.field_0x10 = self->field_0x274;
             src.field_0x14 = zero;
         }
-        // Byte conversions reuse the prologue magic-double slots; a missing
-        // payload defaults each byte to 1.
-        cnvA.w[1] = pb ? *(pb - 1) : 1;
-        cnvB.w[1] = pb ? *(pb - 2) : 1;
-        src.field_0x1c = (f32)(cnvA.d - lbl_eu_8066B0E8);
-        src.field_0x18 = (f32)(cnvB.d - lbl_eu_8066B0E8);
+        // A missing payload defaults each byte to 1.
+        cnvA = pb ? *(pb - 1) : 1;
+        cnvB = pb ? *(pb - 2) : 1;
+        src.field_0x1c = (f32)(u32)cnvA;
+        src.field_0x18 = (f32)(u32)cnvB;
 
         MatFlags* mat = (MatFlags*)self->field_0x08;
         void* material;
@@ -3003,11 +2936,7 @@ extern "C" void EffFxRenderType4Walk(EffectNode* nodeRaw, void* res) {
 
 extern "C" void EffFxRenderType7Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
-    union {
-        f64 d;
-        u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
+    u32 cnv;
     // Visibility gate (same shape as EffFxRenderType6Walk).
     if (self->field_0x0c->field_0x04 != 5) {
         if (!(self->field_0x06 & 0x8000)) return;
@@ -3047,13 +2976,13 @@ extern "C" void EffFxRenderType7Walk(EffectNode* nodeRaw, void* res) {
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnv = fbw;
+                    f32 ratio = (f32)(u32)cnv / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / 854.0f;
+                    cnv = fbw;
+                    f32 ratio = (f32)(u32)cnv / 854.0f;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -3116,12 +3045,7 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
     // Two 0x4330 integer-to-float conversion slots, initialized up front like
     // retail's prologue stores (slots 0xe0/0xe8).
-    union {
-        f64 d;
-        u32 w[2];
-    } convA, convB;
-    convA.w[0] = 0x43300000u;
-    convB.w[0] = 0x43300000u;
+    u32 convA, convB;
 
     // Visibility gate: type-5 scenes only need flag bit 10; other types need
     // bits 15 and 9 as well before the link check decides.
@@ -3159,13 +3083,13 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    convA.w[1] = fbw;
-                    f32 ratio = (f32)(convA.d - lbl_eu_8066B0E8) / 854.0f;
+                    convA = fbw;
+                    f32 ratio = (f32)(u32)convA / 854.0f;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    convB.w[1] = fbw;
-                    f32 ratio = (f32)(convB.d - lbl_eu_8066B0E8) / 854.0f;
+                    convB = fbw;
+                    f32 ratio = (f32)(u32)convB / 854.0f;
                     PSMTXScaleApply(node->mtx, node->mtx, ratio, lbl_eu_8066B0D8,
                                     lbl_eu_8066B0D8);
                 }
@@ -3221,10 +3145,10 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
         src.field_0x0c = self->field_0x270;
         src.field_0x10 = self->field_0x274;
         src.field_0x14 = zero;
-        convA.w[1] = *(pb - 1);
-        src.field_0x18 = (f32)(convA.d - lbl_eu_8066B0E8);
-        convB.w[1] = *(pb - 2);
-        src.field_0x1c = (f32)(convB.d - lbl_eu_8066B0E8);
+        convA = *(pb - 1);
+        src.field_0x18 = (f32)(u32)convA;
+        convB = *(pb - 2);
+        src.field_0x1c = (f32)(u32)convB;
         src.field_0x20 = zero;
     }
     DrawQuad quad;
@@ -3240,48 +3164,45 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
 // terms built from i5 and the reciprocal of i6. Both 0x4330 conversion slots
 // are initialized up front (retail stores the magic twice in the prologue).
 void EffFxBuildScaleMatrix(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7) {
-    FConv cB, cA;
+    u32 cB, cA;
     f32 A = lbl_eu_8066B0D8;
     f32 B = lbl_eu_8066B0D8;
     SceneSubObj* sub = self->field_0x0c;
-    cA.w[0] = 0x43300000u;
     u8* p = (u8*)sub->field_0x108;
-    cB.w[0] = 0x43300000u;
     if (p != NULL) {
         if (i7 == 0) {
-            cA.w[1] = (u32)(p ? p[-4] : 1);
-            A = (f32)(cA.d - lbl_eu_8066B0E8);
-            cB.w[1] = (u32)(p ? p[-3] : 1);
-            B = (f32)(cB.d - lbl_eu_8066B0E8);
+            cA = (u32)(p ? p[-4] : 1);
+            A = (f32)(u32)cA;
+            cB = (u32)(p ? p[-3] : 1);
+            B = (f32)(u32)cB;
         } else {
-            cA.w[1] = (u32)(p ? p[-2] : 1);
-            A = (f32)(cA.d - lbl_eu_8066B0E8);
-            cB.w[1] = (u32)(p ? p[-1] : 1);
-            B = (f32)(cB.d - lbl_eu_8066B0E8);
+            cA = (u32)(p ? p[-2] : 1);
+            A = (f32)(u32)cA;
+            cB = (u32)(p ? p[-1] : 1);
+            B = (f32)(u32)cB;
         }
     }
-    f64 convSub = lbl_eu_8066B0F0;
-    f32 fi6 = fconvS32(cA, (u32)i6 ^ 0x80000000u, convSub);
+    f32 fi6 = fconvS32((u32)i6);
     f32 inv = lbl_eu_8066B0D8 / fi6;
     f32 zero = lbl_eu_8066B0DC;
     out[0] = zero;
-    out[1] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv);
+    out[1] = B * (fconvS32((u32)i5) * inv);
     out[2] = zero;
     f32 ka = 0.5f * A;
     out[3] = ka;
-    out[4] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv);
+    out[4] = B * (fconvS32((u32)i5) * inv);
     out[5] = zero;
     out[6] = A;
-    out[7] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv);
+    out[7] = B * (fconvS32((u32)i5) * inv);
     out[8] = zero;
     out[9] = zero;
-    out[10] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv + inv);
+    out[10] = B * (fconvS32((u32)i5) * inv + inv);
     out[11] = zero;
     out[12] = ka;
-    out[13] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv + inv);
+    out[13] = B * (fconvS32((u32)i5) * inv + inv);
     out[14] = zero;
     out[15] = A;
-    out[16] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv + inv);
+    out[16] = B * (fconvS32((u32)i5) * inv + inv);
     out[17] = zero;
 }
 

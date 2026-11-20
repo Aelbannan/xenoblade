@@ -6,22 +6,13 @@
 #include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"  // ConstructorDestructor (__construct_new_array)
 
 // Retail-owned data referenced by sinit_80494300 (monolib bss / sdata2 slice).
-extern CTaskGame_setVec4_tmp lbl_eu_80658648;
-extern f32 lbl_eu_8066AA18;
+extern CTaskGame_setVec4_tmp sVlBlendVec;  // name-guess: bss vec4 used by scnVlMakeAmb4C/2C/6C
 
 // Blend-factor step/clamp constants for scnVlBlendStep (sdata2).
 extern f32 lbl_eu_8066AA78;
-extern f32 lbl_eu_8066AA24;
 
 // sdata2 constants for the light manager ctor / init walks (scnVlInitLights /
 // scnVlInitLights2) and the slot-distance loop (scnVlUpdate).
-extern f32 lbl_eu_8066AA1C;
-extern f32 lbl_eu_8066AA20;
-extern f32 lbl_eu_8066AA28;
-extern f32 lbl_eu_8066AA2C;
-extern f32 lbl_eu_8066AA30;
-extern f32 lbl_eu_8066AA34;
-extern f32 lbl_eu_8066AA38;
 extern f32 lbl_eu_8066AA3C;
 extern f32 lbl_eu_8066AA40;
 extern f32 lbl_eu_8066AA44;

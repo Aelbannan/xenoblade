@@ -58,15 +58,10 @@ static inline f32 cvtToF_A8F0(DblCvtSlots& s) {
 }
 
 
-// TU-local word view at +0x4AC (inside the opaque env-light bytes);
-// replaces the raw offset deref in scnImN4GetWord4AC (exact layout).
-struct ScnImN4Word4ACView {
-    u8 _pad[0x4AC];
-    u32 word;  // 0x4AC
-};
-
 // Multiple targets map to the same function - single definition
-extern "C" u32 scnImN4GetWord4AC(u8* self) { return ((ScnImN4Word4ACView*)self)->word; }
+extern "C" u32 scnImN4GetWord4AC(u8* self) {
+    return ((CScnItemModelNw4r*)self)->field_0x31C.field_0x4AC;
+}
 
 extern "C" u32  scnImN4GetEffAct(u8* self) { return ((CScnItemModelNw4r*)self)->field_0x14C0; }
 
@@ -1132,8 +1127,8 @@ extern "C" void scnImN4SyncShadow(CScnItemModelNw4r* self, nw4r::math::MTX34* mt
                                 .GetResNodeNumEntries();
                 nw4r::g3d::ResMdl srcMdl(other->field_0x146C);
                 nw4r::math::MTX34* srcArray =
-                    ((CScnItemModelNw4rScnMdlView*)other->field_0x147C)
-                        ->mpWorldMtxArray;
+                    static_cast<nw4r::g3d::ScnMdlSimple*>(other->field_0x147C)
+                        ->GetWldMtxArray();
                 for (u32 i = 0; i < count; i++) {
                     nw4r::g3d::ResNode node =
                         nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(i);
@@ -2407,17 +2402,21 @@ extern "C" void scnImN4UpdateShadowPos(CScnItemModelNw4r* self) {
     if (self->member824.field_4 == 0) {
         return;
     }
-    nw4r::math::VEC3* vv = (nw4r::math::VEC3*)self->field_0x146C;
-    if (vv == 0) {
+    const nw4r::g3d::ResMdlData* mdl = self->field_0x146C;
+    if (mdl == 0) {
         nw4r::db::Panic(lbl_eu_8056E100, 0x78, lbl_eu_8056E0E0,
                         &lbl_eu_80663900, &lbl_eu_80663908);
     }
-    vv = (nw4r::math::VEC3*)((u8*)vv + 0x4C);
-    if ((u32)vv & 3) {
+    const nw4r::g3d::ResMdlInfoData* info = &mdl->info;
+    if ((u32)info & 3) {
         nw4r::db::Panic(lbl_eu_8056E168, 0x39, lbl_eu_8056E140);
     }
-    *(nw4r::math::VEC3*)&self->field_0x2EC[0] = vv[0];
-    *(nw4r::math::VEC3*)&self->field_0x2EC[3] = vv[1];
+    self->field_0x2EC[0] = info->volume_min.x;
+    self->field_0x2EC[1] = info->volume_min.y;
+    self->field_0x2EC[2] = info->volume_min.z;
+    self->field_0x2EC[3] = info->volume_max.x;
+    self->field_0x2EC[4] = info->volume_max.y;
+    self->field_0x2EC[5] = info->volume_max.z;
     if (self->field_0x14AC != 0) {
         nw4r::g3d::ResNode node =
             nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(self->field_0x14A0);

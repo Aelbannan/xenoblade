@@ -57,8 +57,10 @@ extern "C" const char lbl_eu_80523D90[8];
 
 // .sdata: sentinel pair {0xFFFF, 0}, 90.0f divisor, three "ref" strings,
 // flag word and trailing pad.
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663828[2] = {0x0000FFFF, 0x00000000};
-extern "C" __declspec(section ".sdata") f32 lbl_eu_80663830 = 90.0f;
+// name-guess: index-list sentinel pair used by every LOD element link
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 sLodLinkSentinel[2] = {0x0000FFFF, 0x00000000};
+// name-guess: fixed 90.0 divisor used by the per-frame LOD scale update
+extern "C" __declspec(section ".sdata") f32 sLodScaleDivisor = 90.0f;
 // "" (the LODMemMan ctor's name re-seed source).  Retail keeps it as a
 // local .sdata object in TU order; an inline-ctor "" literal is emitted weak
 // at the section tail instead (see MWCC_CASES LODMemMan note).
@@ -99,8 +101,8 @@ u16 gap_10_8066585E_sbss;
 // plain unmangled names, so plain extern declarations suffice (no extern "C").
 // .bss global flag array: index 0..2 holds "3/4-kind descriptor seen" flags
 // (registerChildSlot writes 1 at [index]).
-extern int lbl_eu_80658368[];
-extern int lbl_eu_80658374[];
+extern int sLodAttnFnTable[];
+extern int sLodDiffuseFnTable[];
 extern const char lbl_eu_8052637C[];  // acquireResFileSlot Panic file path
 // Float-pool slot for the +0x96C/+0x970 scale pair init (initLightScales).
 // Panic message for the ResFile alignment check (acquireResFileSlot).
@@ -163,29 +165,20 @@ struct LODTexGroup {
 };
 
 // Light scale/clamp constants (.sdata2 pool).
-extern f32 lbl_eu_8066A720;      // light scale clamp constant
 // Light colour base: the low byte becomes the alpha; the RGB bytes are
 // overwritten per slot.
-extern GXColor lbl_eu_8066A71C;
 
 // updateLodFrame per-type update constants (.sdata2 pool).
 extern f64 lbl_eu_8066A6E0;   // 2^52 double magic (u8 -> double conversion)
-extern f64 lbl_eu_8066A6E8;   // 2^52 double magic variant (rebuildFromSharedBuffer)
-extern f64 lbl_eu_8066A6C8;   // double base (random offset addend)
-extern f64 lbl_eu_8066A6D0;   // double scale (random offset factor)
 extern f32 lbl_eu_8066A6D8;   // scale divisor
 extern f32 lbl_eu_8066A6C0;   // 0.0f LOD distance constant
-extern f32 lbl_eu_8066A6C4;   // random-value scale (rebuildFromSharedBuffer)
-extern f32 lbl_eu_8066A6F8;   // FIdx angle scale (updateElementsByDesc)
 // Shared LOD distance globals published by the per-element update
 // (updateElementLod writes the float value and its integer truncation).
 extern f32 sLodThresholdDist;
 extern s16 sLodEntryKeyThreshold;
 // One-time-initialised global scale: the byte flag gates the division
-// c11 / lbl_eu_80663830, whose result is cached in LodMemCachedScale.
+// c11 / sLodScaleDivisor, whose result is cached in LodMemCachedScale.
 extern f32 lbl_eu_8066A70C;
-extern f32 lbl_eu_8066A710;
-extern f32 lbl_eu_8066A714;
 
 
 // Recovered LODMemMan field layout.  The shared header only exposes opaque
@@ -197,7 +190,7 @@ extern f32 lbl_eu_8066A714;
 // 0x20-byte LOD element.  The flag word at 0x0 is the embedded
 // UnkClass_8046A530 view (checkLodFlagState is called with the element pointer).
 // The element also participates in an index-linked list: +0x16 holds the next
-// element index (sentinel lbl_eu_80663828), +0x1A the element's own index,
+// element index (sentinel sLodLinkSentinel), +0x1A the element's own index,
 // and +0x1C/+0x1E/+0x1F are per-element byte state.
 struct LODElem20 {
     u32 field_0x0;                 // 0x00 flag word (UnkClass_8046A530 view)
@@ -806,8 +799,6 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     // Per-element init pass.  The float constants are scoped to this pass:
     // retail loads them fresh here (f27 = 0.0f, f26 = 2^52 magic).
     const f32 cZero = lbl_eu_8066A6C0;
-    const f64 kMagic52 = lbl_eu_8066A6E0;
-    (void)kMagic52;
     for (int i = 0; i < (int)bh->field_0x34; i++) {
         LODElem20* rec = field_0x4 + i;
         LODElem48* e = field_0x90 + i;
@@ -832,7 +823,7 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
                 rec->field_0x1D = ScnData_FwdB80CC(p, e->field_0x40);
             }
         }
-        rec->field_0x16 = (u16)lbl_eu_80663828[0];
+        rec->field_0x16 = (u16)sLodLinkSentinel[0];
         if (e->field_0x42 == 0) {
             rec->field_0x0 |= 0x40;
         } else {
@@ -851,13 +842,11 @@ void LOD::UnkClass_8046D144::rebuildFromSharedBuffer(u32 arg) {
     // constants are (re)loaded at block entry in retail order:
     // f26=E8, f27=C4, f30=C0, f31=D8, f28=D0, f29=C8.
     if (field_0xA4 != 0) {
-        const f64 kM52b = lbl_eu_8066A6E8;
         const f32 cScale = 0.001f;
         const f32 cZero2 = lbl_eu_8066A6C0;
         const f32 cDiv = lbl_eu_8066A6D8;
         const f64 kMul = 0.004;
         const f64 kBase = 1.2000000476837158;
-        (void)kM52b;
         LODDesc74* d = field_0x9C;
         LODOut48* o = (LODOut48*)field_0xC;
         for (int di = 0; di < field_0xA4; di++, d++) {
@@ -962,7 +951,7 @@ bool LOD::UnkClass_8046D144::resetAndReload(u32 arg, u8* view) {
     field_0xA8 = 0;
     field_0xAC = 0;
     field_0xB0 = 0;
-    field_0x84 = lbl_eu_8066A6D8;
+    field_0x84 = 1.0f;
     field_0x44 = 0;
     field_0x40 = 0;
     field_0x3C = 0;
@@ -1110,7 +1099,7 @@ void LOD::UnkClass_8046D144::updateLodTick() {
         if (field_0x10 != 0) {
             // Walk the index-linked element chain until the sentinel.
             int idx = field_0x10->field_0x1A;
-            while ((u32)idx != lbl_eu_80663828[0]) {
+            while ((u32)idx != sLodLinkSentinel[0]) {
                 LODElem20* e = &field_0x4[idx];
                 updateElementLod(e);
                 idx = e->field_0x16;
@@ -1143,11 +1132,6 @@ void LOD::UnkClass_8046D144::updateLodTick() {
 // teardownSubEntries: now a real LOD::UnkClass_8046D144 member (declaration in the header).
 extern "C" u8* Coli_GetBitTable_5A68(u8* buf);           // bitmap allocator
 extern "C" int dispatchLodPick__Q23LOD17UnkClass_8046368CFv(LODTypeDesc18* td);
-extern f32 lbl_eu_8066A6F0;      // direction vector z constant
-extern f32 lbl_eu_8066A6F4;      // angle chain factor
-extern f32 lbl_eu_8066A6FC;      // sin scale (+0x74)
-extern f32 lbl_eu_8066A704;      // tan arg factor
-extern f32 lbl_eu_8066A708;      // degenerate FOV fallback
 extern u32 LodDistanceLimit;      // elapsed time global
 extern u32 lbl_eu_80665794;      // flag mirror global
 extern const char lbl_eu_80526324[];  // Warning source path
@@ -1177,17 +1161,17 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
 
     DD9Chans* ch = (DD9Chans*)this;
     if ((flags & 0x200) == 0) {
-        ch->c[0] -= step; if (ch->c[0] < lbl_eu_8066A6C0) ch->c[0] = lbl_eu_8066A6C0;
-        ch->c[1] -= step; if (ch->c[1] < lbl_eu_8066A6C0) ch->c[1] = lbl_eu_8066A6C0;
-        ch->c[2] -= step; if (ch->c[2] < lbl_eu_8066A6C0) ch->c[2] = lbl_eu_8066A6C0;
+        ch->c[0] -= step; if (ch->c[0] < 0.0f) ch->c[0] = 0.0f;
+        ch->c[1] -= step; if (ch->c[1] < 0.0f) ch->c[1] = 0.0f;
+        ch->c[2] -= step; if (ch->c[2] < 0.0f) ch->c[2] = 0.0f;
     } else {
         // Exactly one channel grows: the one selected by the mode byte.
         s16 mode = field_0xBE;
-        if (mode == 0) { ch->c[0] += step; if (ch->c[0] > lbl_eu_8066A6D8) ch->c[0] = lbl_eu_8066A6D8; }
-        else           { ch->c[0] -= step; if (ch->c[0] < lbl_eu_8066A6C0) ch->c[0] = lbl_eu_8066A6C0; }
-        if (mode == 1) { ch->c[1] += step; if (ch->c[1] > lbl_eu_8066A6D8) ch->c[1] = lbl_eu_8066A6D8; }
-        else           { ch->c[1] -= step; if (ch->c[1] < lbl_eu_8066A6C0) ch->c[1] = lbl_eu_8066A6C0; }
-        ch->c[2] += step; if (ch->c[2] > lbl_eu_8066A6D8) ch->c[2] = lbl_eu_8066A6D8;
+        if (mode == 0) { ch->c[0] += step; if (ch->c[0] > 1.0f) ch->c[0] = 1.0f; }
+        else           { ch->c[0] -= step; if (ch->c[0] < 0.0f) ch->c[0] = 0.0f; }
+        if (mode == 1) { ch->c[1] += step; if (ch->c[1] > 1.0f) ch->c[1] = 1.0f; }
+        else           { ch->c[1] -= step; if (ch->c[1] < 0.0f) ch->c[1] = 0.0f; }
+        ch->c[2] += step; if (ch->c[2] > 1.0f) ch->c[2] = 1.0f;
     }
 
     // Transform {0,0,c} by the rotation-only copy of the view matrix.
@@ -1218,17 +1202,17 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     ((f32*)m)[8] = a20;
     ((f32*)m)[9] = a21;
     ((f32*)m)[10] = a22;
-    ((f32*)m)[3] = lbl_eu_8066A6C0;
-    ((f32*)m)[7] = lbl_eu_8066A6C0;
-    ((f32*)m)[11] = lbl_eu_8066A6C0;
-    field_0x2C = lbl_eu_8066A6C0;
-    field_0x30 = lbl_eu_8066A6C0;
+    ((f32*)m)[3] = 0.0f;
+    ((f32*)m)[7] = 0.0f;
+    ((f32*)m)[11] = 0.0f;
+    field_0x2C = 0.0f;
+    field_0x30 = 0.0f;
     field_0x34 = -1.0f;
     PSMTXMultVec(m, (Vec*)&field_0x2C, (Vec*)&field_0x2C);
 
     f32 lenSq = field_0x2C * field_0x2C + field_0x30 * field_0x30
               + field_0x34 * field_0x34;
-    field_0x38 = lbl_eu_8066A6D8 / lenSq;
+    field_0x38 = 1.0f / lenSq;
 
     f32 ang = ((scale * ml::deg2rad) * 0.5f) * 40.743664f;
     f32 s = nw4r::math::SinFIdx(ang);
@@ -1236,16 +1220,16 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
     if (s - scale > 0.0f) {
         f32 tv = tan((((s - scale) * ml::deg2rad) * 40.743664f)
                      * 0.024543693f);
-        f32 t = lbl_eu_8066A6D8 / tv;
-        f32 q1 = t * t + lbl_eu_8066A6D8;
+        f32 t = 1.0f / tv;
+        f32 q1 = t * t + 1.0f;
         if (q1 < 0.0f) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        f32 q2 = t * t + lbl_eu_8066A6D8;
+        f32 q2 = t * t + 1.0f;
         if (q2 > 0.0f) {
             field_0x78 = nw4r::math::FrSqrt(q2) * q2;
         } else {
-            field_0x78 = lbl_eu_8066A6C0;
+            field_0x78 = 0.0f;
         }
     } else {
         field_0x78 = 100.0f;
@@ -1289,7 +1273,7 @@ void LOD::UnkClass_8046D144::updateLodLayersForView(u8* p, f32 scale) {
                 break;
             }
             idx = e->field_0x16;
-            if (idx == (int)lbl_eu_80663828[0]) break;
+            if (idx == (int)sLodLinkSentinel[0]) break;
         }
     }
     this->refreshPaletteBinding();
@@ -1759,7 +1743,7 @@ void LOD::UnkClass_8046D144::linkTaskElements(int task, int value) {
                         field_0x14->field_0x16 = own;
                     }
                     field_0x14 = p20;
-                    p20->field_0x16 = lbl_eu_80663828[0];
+                    p20->field_0x16 = sLodLinkSentinel[0];
                     p20->field_0x0 |= 0x10000;
                 }
             }
@@ -2321,7 +2305,7 @@ void LOD::UnkClass_8046D144::refreshPaletteBinding() {
 
 // ---------------------------------------------------------------------------
 // unlinkElement: unlink `elem` from the index-linked list.  Each element's
-// +0x16 holds the next element index (sentinel lbl_eu_80663828) and +0x1A the
+// +0x16 holds the next element index (sentinel sLodLinkSentinel) and +0x1A the
 // element's own index; head removal advances the head, empty-list removal
 // clears both pointers, and mid-list removal splices the successor into the
 // predecessor's link.
@@ -2330,12 +2314,12 @@ void LOD::UnkClass_8046D144::unlinkElement(LODElem20* elem) {
     if (!(elem->field_0x0 & 0x10000)) return;
     elem->field_0x0 &= ~0x10000;
     if (field_0x14 == 0 || field_0x10 == 0) {
-        elem->field_0x16 = lbl_eu_80663828[0];
+        elem->field_0x16 = sLodLinkSentinel[0];
         return;
     }
     if (field_0x10 == elem) {
         int next = elem->field_0x16;
-        if (next != lbl_eu_80663828[0]) {
+        if (next != sLodLinkSentinel[0]) {
             field_0x10 = &field_0x4[next];
         } else {
             field_0x10 = 0;
@@ -2347,7 +2331,7 @@ void LOD::UnkClass_8046D144::unlinkElement(LODElem20* elem) {
         // the loop; field_0x4 and elem->field_0x16 are re-read per iteration.
         s16 elemIdx = elem->field_0x1A;
         int idx = field_0x10->field_0x1A;
-        while (idx != lbl_eu_80663828[0]) {
+        while (idx != sLodLinkSentinel[0]) {
             LODElem20* p = &field_0x4[idx];
             if (p->field_0x16 == elemIdx) {
                 p->field_0x16 = elem->field_0x16;
@@ -2357,7 +2341,7 @@ void LOD::UnkClass_8046D144::unlinkElement(LODElem20* elem) {
             idx = p->field_0x16;
         }
     }
-    elem->field_0x16 = lbl_eu_80663828[0];
+    elem->field_0x16 = sLodLinkSentinel[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -2506,10 +2490,10 @@ void LOD::UnkClass_8046D144::rebuildElementChains(int count) {
     }
     for (int i = 0; i < 3; i++) {
         if (tail2[i] != 0) {
-            ((LODLinkNode*)tail2[i])->mLinks[i] = (u16)lbl_eu_80663828[0];
+            ((LODLinkNode*)tail2[i])->mLinks[i] = (u16)sLodLinkSentinel[0];
         }
         if (tail1[i] != 0) {
-            ((LODLinkNode*)tail1[i])->mLinks[i] = (u16)lbl_eu_80663828[0];
+            ((LODLinkNode*)tail1[i])->mLinks[i] = (u16)sLodLinkSentinel[0];
         }
     }
 }
@@ -2551,7 +2535,7 @@ void LOD::UnkClass_8046D144::updateElementLod(LODElem20* elem) {
         LODElem48* desc = &field_0x90[elem->field_0x1A];
         f32 lo;
         f32 hi = elem->field_0x8;   // upper bound (cached value)
-        lo = lbl_eu_8066A6C0;       // lower bound (0.0f)
+        lo = 0.0f;       // lower bound (0.0f)
         f32 orig;
         u16 d44 = desc->field_0x44;
         f32 step;
@@ -2716,16 +2700,16 @@ void LOD::UnkClass_8046D144::updateLodFrame() {
                 out->field_0x40 = v;
                 if (LodMemScaleInitFlag == 0) {
                     LodMemScaleInitFlag = 1;
-                    scale = c11 / lbl_eu_80663830;
+                    scale = c11 / sLodScaleDivisor;
                     LodMemCachedScale = scale;
                     cur = scale;
                 }
                 s32 idx = 0xff;
                 LODElem20* elem = &field_0x4[*group];
-                if (out->field_0x40 >= desc->field_0x44 - lbl_eu_80663830) {
+                if (out->field_0x40 >= desc->field_0x44 - sLodScaleDivisor) {
                     idx = (s32)((f32)cur *
                                 (c9 * (desc->field_0x44 - out->field_0x40)));
-                } else if (out->field_0x40 <= lbl_eu_80663830) {
+                } else if (out->field_0x40 <= sLodScaleDivisor) {
                     idx = (s32)((f32)cur * (c9 * out->field_0x40));
                 }
                 elem->field_0xE = (s16)idx;
@@ -2768,7 +2752,7 @@ struct LODChildDesc {
     f32 field_0x1C;
     u8  mPad_20[0x30 - 0x20];
     u32 field_0x30;            // 0x30 gate word (bit 16: seen this frame)
-    s32 field_0x34;            // kind (3 or 4 -> lbl_eu_80658368 path)
+    s32 field_0x34;            // kind (3 or 4 -> sLodAttnFnTable path)
     f32 field_0x38;            // scale
     u8  mPad_3C[0x40 - 0x3C];  // 64-byte stride
 };
@@ -2792,8 +2776,8 @@ void LOD::UnkClass_8046D144::bindLodChildren(const f32* matrixBlock) {
     mG3dMgr.resetLightColor();
 
     // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
-    int* flagA = lbl_eu_80658368;
-    int* flagB = lbl_eu_80658374;
+    int* flagA = sLodAttnFnTable;
+    int* flagB = sLodDiffuseFnTable;
     // Group table: view -> +0x64 -> +0x8, plus the leading 0x14 skip.
     u8* view = mView_1C;
     u8* tbl = *(u8**)(view + 0x64);
@@ -3202,7 +3186,7 @@ void registerChildSlot__Q23LOD9LODMemManFv(LOD::UnkClass_8046D144* self, LODChil
     if (desc->field_0x34 == 3) goto kind34;
     if (desc->field_0x34 != 4) goto otherKind;
 kind34:
-    lbl_eu_80658368[index] = 1;
+    sLodAttnFnTable[index] = 1;
     goto floatsDone;
 otherKind:
     p->field_0x284 |= 1 << p->field_0x280;
@@ -3271,10 +3255,10 @@ void LOD::LODG3dMgr::reloadChildGxLights(int childIdx) {
     // shift-one.
     f32 scale = mLightScale;
     mLastChildIdx = childIdx;
-    f32 limit = lbl_eu_8066A720;
+    f32 limit = 255.0f;
     mStoredLightScale = scale;
     int i = 0;
-    GXColor baseColor = lbl_eu_8066A71C;
+    GXColor baseColor = {0, 0, 0, 255};
     for (; i < p->mSlotCount; i++) {
         if (p->mUsedMask & (1 << i)) {
             f32 c0 = mLightScale * (limit * p->mDirScales[i][0]);

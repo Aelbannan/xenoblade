@@ -197,7 +197,6 @@ union NpcColNarrow {
 extern u16 gmGlobalFlag42;
 extern u32 gmPauseFlags;   // global flags word (sbss)
 extern u16 gmGlobalFlag44;
-extern const char lbl_eu_804FBB0C[];      // column-name / format string base
 extern const char* gNpcAutotalkColumnNames[];     // 6 per-kind column names
 extern const char* gNpcTimeColumnNames[];     // per-row column names (index / 3)
 extern const char* gNpcTimeColumnNamesAlt[];     // per-row column names (index / 3)
@@ -239,34 +238,11 @@ extern "C" void CtrlNpcRestartMoveTimer(cf::CtrlNpc* self);
 
 // Retail float constants (sdata2) referenced by the CtrlNpc unit.
 extern const f32 lbl_eu_80666698;
-extern const f32 lbl_eu_8066669C;
-extern const f32 lbl_eu_806666A0;
 extern const f32 lbl_eu_806666A4;
 extern const f32 lbl_eu_806666A8;
 extern const f32 lbl_eu_806666AC;
-extern const f32 lbl_eu_806666C8;
-extern const f32 lbl_eu_806666CC;
-extern const f32 lbl_eu_806666D4;
-extern const f32 lbl_eu_806666D8;
-extern const f32 lbl_eu_806666DC;
-extern const f32 lbl_eu_806666E4;
 extern const f32 lbl_eu_806666B0;
-extern const f32 lbl_eu_806666B4;
-extern const f32 lbl_eu_806666B8;
-extern const f32 lbl_eu_806666BC;
-extern const f32 lbl_eu_806666D0;
-extern const f64 lbl_eu_806666C0;
-extern const f32 lbl_eu_806666E0;
-extern const f64 lbl_eu_806666E8;   // 0x4330 int->double magic constant
-extern const f32 lbl_eu_806666F0;
-extern const f32 lbl_eu_806666F4;
-extern const f32 lbl_eu_806666F8;
-extern const f32 lbl_eu_806666FC;
-extern const f32 lbl_eu_80666704;
 extern const f32 lbl_eu_80666700;
-extern const f32 lbl_eu_80666708;
-extern const f32 lbl_eu_8066670C;
-extern const f32 lbl_eu_80666710;
 extern const f32 lbl_eu_80666714;
 // nw4r FSqrt warning strings (rodata).
 extern const char lbl_eu_80526324[];

@@ -90,17 +90,6 @@ struct CHelpTableEntry {
     void** mItems; // 0x4
 };
 
-// Static help-dispatch table (sHelpDispatchObjects) embedding the CHelp objects
-// dispatchScenarioHelp drives when mField10 is 3 / 5.
-struct CHelpManagerTbl {
-    u8 pad_00[0x20];
-    cf::CHelp mHelp1; // 0x20 (mField10 == 3)
-    u8 pad_2C[0x24];
-    cf::CHelp mHelp2; // 0x50 (mField10 == 5)
-    u8 pad_5C[0x4];
-    cf::CHelp mHelp3; // 0x60 (mField10 == 5)
-};
-
 // Battle-object argument for updateBattleHelpState (flags word at +0x3F08).
 struct CHelpBattleObjArg {
     u8 pad[0x3F08]; // 0x0..0x3F07
@@ -281,11 +270,10 @@ extern "C" int isHelpPopupReady(cf::CHelpManager* self);
 extern cf::CHelpManager* lbl_eu_80664A10;
 extern u32 gmPauseFlags; // menu-open flag (bit 24)
 extern u8 lbl_eu_8053911C[]; // CHelpManager vtable (retail .data)
-extern cf::CHelpManagerTbl sHelpDispatchObjects; // static CHelp dispatch objects
+extern cf::CHelpTableFull sHelpDispatchObjects; // static CHelp dispatch objects
 
 // Vtable labels stored into the help-table entries' interface slot (+0x8) by
 // the TU static initializer (retail .data).
-extern u8 lbl_eu_8050FF08[];
 extern u8 lbl_eu_80538F98[];
 extern u8 lbl_eu_80538FD4[];
 extern u8 lbl_eu_80539028[];

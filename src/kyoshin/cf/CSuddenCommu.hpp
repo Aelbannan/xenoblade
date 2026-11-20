@@ -9,13 +9,13 @@ struct CSuddenCommuVoiceCue;
 
 namespace cf{
     //size: 0x30?
-    // novtable: the retail vtable is a split-data object (lbl_eu_805339C0);
-    // suppressing MWCC's own __vt__ keeps the ctor reloc name byte-identical.
-    class __declspec(novtable) CSuddenCommu : public IObjectInfo {
+    // Real polymorphic class: MWCC emits __vt__ + RTTI in this TU (key function
+    // is the out-of-line virtual SuddenCommuClearCueSlot).
+    class CSuddenCommu : public IObjectInfo {
     public:
         CSuddenCommu();
         virtual ~CSuddenCommu(){}
-        virtual void IObjectInfo_UnkVirtualFunc1();
+        virtual void SuddenCommuClearCueSlot();
 
         //0x0: vtable
         //0x0-4: IObjectInfo?

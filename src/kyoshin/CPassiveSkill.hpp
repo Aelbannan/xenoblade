@@ -83,25 +83,9 @@ struct CPSkillRecord {
 struct CPSkillBlob {
     CPSkillRecord records[5];   // +0x00..0x3D3
     CPSkillRecord records2[6];  // +0x3D4..0x86B
-};
-
-// Skill-blob view for CPassiveSkillLine_setCellMessage: the 5+6 records plus the per-row
-// SP-cost table at +0x888 (u32 stride 4, masked to u16 at the read site).
-struct CPSkillBlobCost {
-    CPSkillRecord records[5];   // +0x00..0x3D3
-    CPSkillRecord records2[6];  // +0x3D4..0x86B
     u8 _pad86C[0x18];           // +0x86C..0x883
-    u32 totalSP;                // +0x884
-    u32 costs[8];               // +0x888
-};
-
-// Character-data view for CPassiveSkillLine_refreshSP: the skill blob at +0x3534 of the
-// CtrlObjectParam_GetCharEntry result plus the total-SP word at +0x884 past the blob base.
-struct CPSkillBlobTotal {
-    CPSkillRecord records[5];   // +0x00..0x3D3 (aliases CPSkillBlob.records)
-    CPSkillRecord records2[6];  // +0x3D4..0x86B (aliases CPSkillBlob.records2)
-    u8 _pad86C[0x18];           // +0x86C..0x883
-    u32 totalSP;                // +0x884
+    u32 totalSP;                // +0x884 - total available SP
+    u32 costs[8];               // +0x888 - per-row SP costs
 };
 
 // 8-byte skill-grid cell embedded at CPassiveSkillLine+0x20 (the ctor's

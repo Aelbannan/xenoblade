@@ -161,13 +161,6 @@ extern "C" void* EneSt_GetSingleton();
 extern "C" nw4r::g3d::ResAnmChr ItemAnim_GetChr_E708(u8* data, int index);
 // ResFile entry-count getter called on the raw file base + 0xC (retail emits
 // addi+bl with no ResFile object spill; CREvtModel precedent).
-extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
-
-// .sdata2 floats used by EvtSeqFinishSequence (fade vec, camera/player values).
-extern f32 lbl_eu_80667670;
-extern f32 lbl_eu_80667674;
-extern f32 lbl_eu_80667678;
-extern f32 lbl_eu_8066767C;
 
 // ptmf table copied into field_0x3C by EvtSeqUpdateRealtimeEvents (retail .data:0x80530A7C).
 extern u32 sUpdateRealtimeCallbacks[3];

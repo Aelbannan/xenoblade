@@ -1,7 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/CMiniMap
 // Replace stubs with high-level C/C++ during decomp.
+#define IWORK_EVENT_INLINE_DTOR
+#define CTTASK_INLINE_DTOR
 #include "kyoshin/cf/CtrlRemoteApi.hpp"
-#define ISCN_RENDER_NO_DTOR // see CMiniMap.hpp (IScnRender sub-vtable dtor slot)
+
 
 #include "kyoshin/cf/CfBdat.hpp"
 #include "kyoshin/CMiniMap.hpp"
@@ -20,26 +22,41 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 
+// Retail minimap row-id table (owned by this TU in retail .data at 0x8052C740).
+u16 sMiniMapRowIds[0x24] = {
+    0x0000, 0x0065, 0x00C9, 0x012D, 0x0191, 0x0192, 0x01F5, 0x0259,
+    0x02BD, 0x0321, 0x0385, 0x03E9, 0x044D, 0x04B1, 0x04B2, 0x0515,
+    0x0579, 0x05DD, 0x0641, 0x0641, 0x06A5, 0x0709, 0x076D, 0x07D1,
+    0x0835, 0x0899, 0x08FD, 0x0961, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000,
+};
+
+// Retail pane-name tables.  The strings are emitted in this order by MWCC,
+// ahead of the RTTI name strings and the ordinary code string pool.
+extern "C" char lbl_eu_80667088[];  // retail "txt_obj" sentinel in .sdata2
+const char* sMiniMapClockPaneNames[12] = {
+    lbl_eu_80667088, "txt_land", "txt_map_jump", "txt_crystal", "txt_commu",
+    "txt_shop", "txt_qst1", "txt_qst2", "txt_navi", "txt_qst3", "txt_scene", 0,
+};
+const char* sMiniMapCleanupPaneNames[12] = {
+    lbl_eu_80667088, "txt_map_jump", "txt_crystal", "txt_commu", "txt_shop",
+    "txt_qst1", "txt_qst2", "txt_navi", "txt_qst3", "txt_scene", 0, 0,
+};
+const char* sMiniMapLayoutNames[28] = {
+    "markerlist0000", "markerlist0101", "markerlist0201", "markerlist0301",
+    "markerlist0401", "markerlist0402", "markerlist0501", "markerlist0601",
+    "markerlist0701", "markerlist0801", "markerlist0901", "markerlist1001",
+    "markerlist1101", "markerlist1201", "markerlist1202", "markerlist1301",
+    "markerlist1401", "markerlist1501", "markerlist1601", "markerlist1601",
+    "markerlist1701", "markerlist1801", "markerlist1901", "markerlist2001",
+    "markerlist2101", "markerlist2201", "markerlist2301", "markerlist2401",
+};
+
 // Resolve ml::FixStr<128>::format to the explicit specialization defined in
 // CfScript.cpp (retail symbol format__Q22ml10FixStr<128>FPCce).
 template <> void ml::FixStr<128>::format(const char* fmt, ...);
 #include <revolution/gx/GXPixel.h>
 #include "kyoshin/CfEnumListHolder.hpp"
-
-// Pre-mangled global-view declarations so the offset-adjusted dispatch thunks
-// can address the CMenuMiniMap2 member methods by their retail symbol names
-// (same pattern as CSysWinSelect.cpp).
-extern "C" void* __dt__13CMenuMiniMap2Fv(CMenuMiniMap2* self, int flags);
-void cbRenderBefore__13CMenuMiniMap2Fv(void* self);
-
-// Library D1 imports used by the manual CMenuMiniMap2 destructor.
-extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
-extern "C" void __dt__8CProcessFv(void* self, int flags);
-
-// Offset-adjusted vtable dispatch thunk: the CMenuMiniMap2 subobject sits at
-// self-0x58, so adjust and tail-jump straight to the dtor (retail:
-// subi r3,r3,0x58 / b __dt__13CMenuMiniMap2Fv).
-void MiniMap2DtorThunk58(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 
 // (MiniMapRequestMapImage defined below, after the MiniMapObj view declaration)
 
@@ -65,42 +82,16 @@ bool CMMTex::OnFileEvent(CEventFile* pEventFile) {
 // deleting-flag tail (cmpwi flag / ble / operator delete) for the virtual dtor.
 CMMClock::~CMMClock() {}
 
+CMMClock::CMMClock()
+    : mFileHandle(0), mAccessor(0), mLayout(0), mAnimTrans0(0),
+      mAnimTrans1(0), field_0x18(0), field_0x19(1), mReady(0), pad_0x1B(0) {}
+
 // (destructor defined below, after the retail data/helper declarations)
 
-// Manual complete-object destructor (CMenuPause/CMenuBattleChain idiom):
-// retail inlines the CMiniMap and CMMClock subobject destructors (each guarded
-// on its subobject address), destroys the CProcess base through the library
-// D1 __dt__8CProcessFv under the dead double null-check, and conditionally
-// runs operator delete when the deleting flag is set.
-// Manual complete-object destructor (CSysWinSave/CMenuPause idiom):
-// retail inlines the CMiniMap and CMMClock subobject destructors (each guarded
-// on its subobject address), destroys the CProcess base through the library
-// D1 __dt__8CProcessFv under the dead double null-check, and conditionally
-// runs operator delete when the deleting flag is set.
-extern "C" void* __dt__13CMenuMiniMap2Fv(CMenuMiniMap2* _this, int flags) {
-    if (_this != 0) {
-        CMiniMap* minimap = &_this->mMiniMap;
-        if (minimap != 0) {
-            __dt__17UnkClass_8045F564Fv(minimap->m834, -1);
-            __dt__17UnkClass_8045F564Fv(minimap->m824, -1);
-        }
-        CMMClock* clock = &_this->mClock;
-        if (clock != 0) {
-            __dt__17UnkClass_8045F564Fv(&clock->mUnk1C, -1);
-        }
-        // Duplicate null-check reproduces retail's dead double beq
-        // (MWCC D2-inlined-into-D1 artifact).
-        if (_this != 0) {
-            if (_this != 0) {
-                __dt__8CProcessFv(_this, 0);
-            }
-        }
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
+// Real complete-object destructor: the real CMiniMap/CMMClock members and
+// IWorkEvent/IScnRender bases are destroyed implicitly in reverse order; the
+// IWorkEvent base is inline-empty, and CProcess is reached through IUICf.
+CMenuMiniMap2::~CMenuMiniMap2() {}
 
 // MiniMapUpdateSubobject - per-frame minimap subobject update (called from Move with
 // &mMiniMap). Body defined below, after MiniMapUpdateMapView.
@@ -120,12 +111,9 @@ extern "C" float sClockFrameStep = 0.2f;
 s32 sMiniMapFrameCounter;          // frame counter (periodic cleanup gate)
 extern "C" u32 lbl_eu_80664184;          // current BDAT row index
 void* spMiniMapBdat;        // current BDAT table pointer
-extern "C" u32 sMiniMapCleanupPaneNames[];        // pane-name table (periodic cleanup)
-extern u16 sMiniMapRowIds[];
-extern const char* sMiniMapClockPaneNames[];  // clock pane-name table (textbox labels)
 extern "C" void* lbl_eu_80573D18[];      // per-row BDAT entry table
 extern "C" char lbl_eu_804FE1FC[];       // string pool (columns/formats/names)
-// (u8[] declarations
+
 
 // ---- cross-TU helpers (retail unmangled symbols) ----
 extern "C" {
@@ -175,10 +163,10 @@ void* findObjectById(int id);
 // localized map name via sprintf+getFP into the global BDAT cache, then
 // initializes the marker/gimmick tables and pulls the per-row pane ids/scale
 // from the current BDAT row.
-extern "C" void __ct__CMiniMap(CMiniMap* self) {
+CMiniMap::CMiniMap() {
+    CMiniMap* self = this;
     // Shared string-pool base (retail keeps it in a callee-saved register).
     CMMSubHead* sub = &self->mSub;
-    self->mVtable = (void*)lbl_eu_8052C958;
     self->mFileHandle = 0;
     self->mAccessor = 0;
     self->mLayout0C = 0;
@@ -225,11 +213,8 @@ extern "C" void __ct__CMiniMap(CMiniMap* self) {
     self->mField28 = (u32)getFP(sMiniMapLayoutNames[lbl_eu_80664184 - 1]);
 }
 
-// m834 then m824 destroyed in reverse construction order.
-CMiniMap::~CMiniMap() {
-    __dt__17UnkClass_8045F564Fv(m834, -1);
-    __dt__17UnkClass_8045F564Fv(m824, -1);
-}
+// m834 then m824 destroyed in reverse construction order by their real members.
+CMiniMap::~CMiniMap() {}
 
 // ============================================================================
 // CMMClock::OnFileEvent - build the clock layout + animations once the arc
@@ -276,7 +261,7 @@ struct MiniMapLayout {
 bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         if (pEventFile->unk0 == 1) {
-        Class_8045F858 guard((UnkClass_8045F564*)m824);
+        Class_8045F858 guard(&m824);
         // Take the loaded buffer, then clear the handle's data pointer before
         // building the accessor (retail order).
         void* data = mFileHandle->getData();
@@ -386,7 +371,7 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         ((MiniMapTable*)(mField3C.mW))->BuildMarkerPanes(spMiniMapBdat, mLayout0C, mField20);
         ((CMiniMapGimmickData*)mField17C.mW)->InitGimmickTables(mField28, mLayout0C, mField20);
         mReady = 1;
-        ((UnkClass_8045F564*)m824)->validateHeap();
+        (&m824)->validateHeap();
         }
         mFileHandle = 0;
         return true;
@@ -642,8 +627,8 @@ extern "C" void MiniMapTeardownMarkerPanes(CMiniMap* self) {
         }
     }
     releaseArcResourceAccessor(self->mAccessor);
-    ((UnkClass_8045F564*)&self->m824)->deleteRegion();
-    ((UnkClass_8045F564*)&self->m834)->deleteRegion();
+    (&self->m824)->deleteRegion();
+    (&self->m834)->deleteRegion();
     closeFileHandle((CFileHandle**)&self->mSub.mPtr04);
     if (self->mSub.mPtr08 != NULL) {
         deallocate__Q23mtl10MemManagerFPv(self->mSub.mPtr08);
@@ -705,11 +690,11 @@ extern "C" void MiniMapUpdateMapIcons(MiniMapSelf* self) {
             }
         }
         MiniMapRebuildGimmickPanes(self->m17C);
-        clearFrmHeap__17UnkClass_8045F564Fv(self->m834);
+        clearFrmHeap__17UnkClass_8045F564Fv(&self->m834);
     }
     {
         u8 guard[0x10];
-        __ct__14Class_8045F858FP17UnkClass_8045F564(guard, self->m834);
+        __ct__14Class_8045F858FP17UnkClass_8045F564(guard, &self->m834);
         {
             u16 row = (u16)CtrlRemote_TouchBitByArg(32);
             if (row != 0) {
@@ -1824,19 +1809,8 @@ void CMenuMiniMap2::Init() {
     // the mr/beq/addi adjusted-this sequence for the non-primary base cast.
     mScn->addRenderCB(this, 0xA, 0);
 
-    // Hand-built CMMClock temp: vtable + zeroed fields + gate bytes, embedded
-    // UnkClass constructed explicitly so its bl lands after the field stores.
-    CMMClockInit clockInit;
-    clockInit.mVtable = (void*)lbl_eu_8052CA88;
-    clockInit.mFileHandle = NULL;
-    clockInit.mAccessor = NULL;
-    clockInit.mLayout = NULL;
-    clockInit.mAnimTrans0 = NULL;
-    clockInit.mAnimTrans1 = NULL;
-    clockInit.field_0x18 = 0;
-    clockInit.field_0x19 = 1;
-    clockInit.mReady = 0;
-    UnkClass_8045F564* pClockUnk = new (&clockInit.mUnk1C) UnkClass_8045F564();
+    // Real CMMClock temp; MWCC emits its vptr and member construction.
+    CMMClock clockInit;
 
     // Whole-object member copy into mClock (vtable word skipped).
     mClock.mFileHandle = clockInit.mFileHandle;
@@ -1847,8 +1821,7 @@ void CMenuMiniMap2::Init() {
     mClock.field_0x18 = clockInit.field_0x18;
     mClock.field_0x19 = clockInit.field_0x19;
     mClock.mReady = clockInit.mReady;
-    mClock.mUnk1C = *pClockUnk;
-    __dt__17UnkClass_8045F564Fv(pClockUnk, -1);
+    mClock.mUnk1C = clockInit.mUnk1C;
 
     if (mClock.mReady == 0) {
         mClock.mFileHandle = CDeviceFile::readFile(
@@ -1859,7 +1832,6 @@ void CMenuMiniMap2::Init() {
     // Fresh CMiniMap temp; the scope-exit dtor emits the two UnkClass D1 calls.
     {
         CMiniMap map;
-        __ct__CMiniMap(&map);
 
         // Whole-object member copy into mMiniMap (both vtable words skipped).
         mMiniMap.mFileHandle = map.mFileHandle;
@@ -1880,14 +1852,8 @@ void CMenuMiniMap2::Init() {
         mMiniMap.mSub.mPtr08 = map.mSub.mPtr08;
         mMiniMap.mField3C = map.mField3C;
         mMiniMap.mField17C = map.mField17C;
-        mMiniMap.m824[0] = map.m824[0];
-        mMiniMap.m824[1] = map.m824[1];
-        mMiniMap.m824[2] = map.m824[2];
-        mMiniMap.m824[3] = map.m824[3];
-        mMiniMap.m834[0] = map.m834[0];
-        mMiniMap.m834[1] = map.m834[1];
-        mMiniMap.m834[2] = map.m834[2];
-        mMiniMap.m834[3] = map.m834[3];
+        mMiniMap.m824 = map.m824;
+        mMiniMap.m834 = map.m834;
     }
 
     if (mMiniMap.mReady == 0) {
@@ -2260,50 +2226,19 @@ void CMenuMiniMap2::cbRenderBefore() {
     }
 }
 
-// Singleton factory for the minimap process (retail unmangled symbol; the
-// CMenuMiniMap2 ctor body is inlined here). Allocates the 0x8D8-byte object,
-// fills the CProcess storage + IUIWindow region by hand (temp vtable, null PMF
-// triple copy, composite vtable + sub-vtable slots), hand-builds CMMClock and
-// CMiniMap, registers under `parent` and returns the stored instance.
+// Real constructor: base-class vptrs and member subobjects are constructed by
+// MWCC; only the scene pointer and trailing flag byte are body assignments.
+CMenuMiniMap2::CMenuMiniMap2(CScn* scn) : mScn(scn), mField8D4(0) {}
+
+// Singleton factory for the minimap process (retail unmangled symbol).
 CMenuMiniMap2* __ct__8011C1B8(CProcess* parent, CScn* scene) {
     if (spMiniMap2 != 0) {
         return 0;
     }
-    CMenuMiniMap2CreateView* obj = (CMenuMiniMap2CreateView*)mtl::MemManager::allocate(
-        sizeof(CMenuMiniMap2CreateView), CWorkThreadSystem::getWorkMem());
+    CMenuMiniMap2* obj = (CMenuMiniMap2*)mtl::MemManager::allocate(
+        sizeof(CMenuMiniMap2), CWorkThreadSystem::getWorkMem());
     if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-
-        // Null PMF triple copy, then the composite vtable and the
-        // +0x24/+0xAC sub-vtable slots.
-        u32* ptmf = __ptmf_null;
-        obj->mPtMf3C[0] = ptmf[0];
-        obj->mPtMf3C[1] = ptmf[1];
-        obj->mPtMf3C[2] = ptmf[2];
-        obj->mPtMf48[0] = ptmf[0];
-        obj->mPtMf48[1] = ptmf[1];
-        obj->mPtMf48[2] = ptmf[2];
-        obj->mField54 = 0;
-        obj->mField55 = 0;
-        obj->mVtable10 = (u32)lbl_eu_8052C858;
-        obj->mFn58 = (u32)lbl_eu_8052C858 + 0x24;
-        obj->mScnRender = (u32)lbl_eu_8052C858 + 0xAC;
-        obj->mScn = scene;
-
-        // Hand-build the CMMClock: vtable + zeroed fields + flag bytes, then
-        // the embedded UnkClass region and the CMiniMap subobject.
-        *(u32*)&obj->mClock = (u32)lbl_eu_8052CA88;
-        obj->mClock.mFileHandle = 0;
-        obj->mClock.mAccessor = 0;
-        obj->mClock.mLayout = 0;
-        obj->mClock.mAnimTrans0 = 0;
-        obj->mClock.mAnimTrans1 = 0;
-        obj->mClock.field_0x18 = 0;
-        obj->mClock.field_0x19 = 1;
-        obj->mClock.mReady = 0;
-        new (&obj->mClock.mUnk1C) UnkClass_8045F564();
-        __ct__CMiniMap(&obj->mMiniMap);
-        obj->mField8D4 = 0;
+        new (obj) CMenuMiniMap2(scene);
     }
     spMiniMap2 = (u32)obj;
     ((CProcess*)obj)->Regist(parent, false);
@@ -2361,11 +2296,6 @@ void MiniMapSetActiveFlag()
         ((CMenuMiniMap2*)spMiniMap2)->mField54 = 1;
     }
 }
-
-// Offset-adjusted dispatch thunks: the CMenuMiniMap2 subobject sits at self-0x5C.
-void MiniMap2RenderThunk5C(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
-
-void MiniMap2DtorThunk5C(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8011C418() {

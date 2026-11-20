@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -50,6 +51,7 @@ struct CfMapMineManager;
 
 // External runtime / game functions (retail-unmangled symbols)
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
+#include "kyoshin/CUICfManager.hpp"
 extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 extern "C" u32 Bdat_GetRowBase_B41C(void* file);
 extern "C" int CfRes_getD80Flag();
@@ -60,7 +62,7 @@ extern "C" void* __construct_new_array(void* block, void* ctor, void* dtor,
                                        u32 size, u32 n);
 extern "C" int mtRand__Q22ml4mathFi(int n);
 extern "C" int mtRand__Q22ml4mathFii(int lo, int hi);
-extern "C" void* lookupWorkAtAddr(void* obj);
+extern "C" int lookupWorkAtAddr(void* obj);
 extern "C" void gmFileObject(void* obj);
 extern "C" void* ArtsSelect_GetEntry(int id);
 extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
@@ -71,19 +73,14 @@ extern "C" void CItem_resolveFamilyBdat(u16 v, void* outA, void* outB);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 v);
-extern "C" int Counter_TestBit(void* data, u32 flag);
-extern "C" u32 IdTable_SumValues(void* data, u32 flag);
 extern "C" void* CItemData_lookupOrAlloc(void* item, int v);
-extern "C" void CUICfManager_queueGetItemMenuById(void* mgr);
 extern "C" void* getInstance__Fv();
 extern "C" void* spawnMaskedObject(void* a, u32 b, u32 c, u32 d);
 extern "C" void ObjPoint_SetName_13FC(void* obj, void* name, u32 len);
 extern "C" void setChildB59__(void* obj, int mode);
-extern "C" void bindPartnerO_(void* obj, void* player, u32 v);
+
 extern "C" int UIWin_HasPendingUpdate(int v);
 extern "C" int CMainMenu_IsOpen();
-extern "C" void UIWin_CreateSysWin0(void* a, u32 b, u32 c);
-extern "C" void* Selector_GetInstance();
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
 
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();

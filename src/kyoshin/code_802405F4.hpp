@@ -93,3 +93,10 @@ struct FxParams {
     float field_2c;   // +0x2c end-scale (channels 0-2)
     float field_30;   // +0x30 end-scale (channels 3-5)
 };
+
+struct MapPointEntry;
+
+// C++-linkage helpers owned by kyoshin/code_802405F4.
+void MenuFx_ClearSlotFlags(u8* base);
+void MapFxClearSlotFlags(MapPointEntry* entries, u32 id);
+void MapFxResetEntries(MapPointEntry* entries, u32 id);

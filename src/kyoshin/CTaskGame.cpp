@@ -4,6 +4,12 @@
 #define ISCN_RENDER_OUT_OF_LINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/CTaskGameImports.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "monolib/device/CDeviceSC.hpp"
+
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
+#include "kyoshin/menu/MenuSndApi.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/CTaskGameEvt.hpp"
@@ -255,7 +261,7 @@ void CTaskGame::Init(){
         CTaskGamePic* pic1 = create__12CTaskGamePicFv(this, (int)unk74);
         unkCC = reinterpret_cast<u32>(pic1);
         const char* path1;
-        if (getLanguage__9CDeviceSCFv() == 6) {
+        if (CDeviceSC::getLanguage() == 6) {
             path1 = &lbl_eu_804FA890[5];
         } else {
             path1 = &lbl_eu_804FA890[0x21];
@@ -265,7 +271,7 @@ void CTaskGame::Init(){
         CTaskGamePic* pic2 = create__12CTaskGamePicFv(this, (int)unk74);
         unkD0 = reinterpret_cast<u32>(pic2);
         const char* path2;
-        if (getLanguage__9CDeviceSCFv() == 6) {
+        if (CDeviceSC::getLanguage() == 6) {
             path2 = &lbl_eu_804FA890[0x39];
         } else {
             path2 = &lbl_eu_804FA890[0x55];
@@ -649,7 +655,7 @@ struct CTaskGameFlagE9 {
 // Object pointed to by CTaskGame::unkF0 has a flag byte at offset 0xEA
 struct CTaskGameFlag1000Object {
     u8 gap0[0xEA];
-    volatile u8 flagEA;
+    u8 flagEA;
 };
 
 extern "C" void CTaskGame_enableFlag1000(CTaskGame* self, int value) {
@@ -2045,8 +2051,8 @@ extern "C" void CTaskGame_moveStartMission(CTaskGame* self) {
     create__Q22cf11CTaskGameCfFv(self, 0);
     gmPauseFlags |= 0x10000000;
     if ((int)self->unk128 == 1) {
-        // retail start helpers are flat C symbols; the instance flows in r3
-        startMode1New(cf::CTaskGameCf::getInstance());
+        // retail start helper is a cf::CTaskGameCf member
+        cf::CTaskGameCf::getInstance()->startMode1New();
     } else if ((int)self->unk128 == 2) {
         startMode2Con(cf::CTaskGameCf::getInstance());
     } else if ((int)self->unk128 == 3) {
@@ -2323,7 +2329,7 @@ void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 
     if (ext == 0) {
         return;
     }
-    if (hasPackFile() != 0) {
+    if (hasPackFile(ext) != 0) {
         u32 v0, v1, v2, v3;
         if (func_804DDD54(ext, path, &v0, &v1, &v2, &v3) != 0) {
             found = 1;

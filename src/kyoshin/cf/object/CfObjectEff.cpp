@@ -385,12 +385,9 @@ float CfObjectEff::getScaledVal_() {
 }
 } // namespace cf
 
-// Retail symbol setEffScale____Q22cf11CfObjectEffFv is Fv-mangled but the
-// body consumes a float scale in f1 - defined at global scope so MWCC's
-// mangled name still contains the retail symbol as a prefix.
-void setEffScale____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) {
-    if (!(self->mFlagsA4 & 0x4)) {
-        cf::CfObjectEffChild* child = self->mChildEff;
+void cf::CfObjectEff::setEffScale__(float value) {
+    if (!(this->mFlagsA4 & 0x4)) {
+        cf::CfObjectEffChild* child = this->mChildEff;
         if (child != nullptr) {
             // Word-copy the float bits into the child's three 0x34 slots; the
             // local's address spills it to the stack (stfs/lwz/stw) like retail.
@@ -402,7 +399,7 @@ void setEffScale____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) {
             child->unk34[1] = *reinterpret_cast<u32*>(&v.y);
             child->unk34[2] = *reinterpret_cast<u32*>(&v.z);
         }
-        self->mFloat60 = value;
+        this->mFloat60 = value;
     }
 }
 

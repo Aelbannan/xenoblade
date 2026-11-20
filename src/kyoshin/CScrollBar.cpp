@@ -47,12 +47,12 @@ static const char* sThumbPaneNames[6] = {
 // leaves the float-load relocs of the ctor/UpdateThumb/PlaceThumb/StepScroll*
 // on pool symbols (see .scratch/dlabels7/w4 probe notes in git history).
 #pragma section data_type ".sdata2" ".sdata2"
-extern __declspec(section ".sdata2") const float lbl_eu_80668138 = 0.0f;
-extern __declspec(section ".sdata2") const float lbl_eu_8066813C = 4.0f;
-extern __declspec(section ".sdata2") const double lbl_eu_80668140 = 4503599627370496.0;
-extern __declspec(section ".sdata2") const double lbl_eu_80668148 = 4503601774854144.0;
-extern __declspec(section ".sdata2") const float lbl_eu_80668150 = 1.0f;
-extern __declspec(section ".sdata2") const float lbl_eu_80668154 = 5.0f;
+extern const float lbl_eu_80668138 = 0.0f;
+extern const float lbl_eu_8066813C = 4.0f;
+extern const double lbl_eu_80668140 = 4503599627370496.0;
+extern const double lbl_eu_80668148 = 4503601774854144.0;
+extern const float lbl_eu_80668150 = 1.0f;
+extern const float lbl_eu_80668154 = 5.0f;
 // Restore the default so the compiler RTTI base list stays in .data.
 #pragma section data_type ".data" ".bss"
 

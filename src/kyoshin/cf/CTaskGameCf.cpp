@@ -8,6 +8,7 @@
 #include "kyoshin/CUIWindowManager.hpp"
 #include "kyoshin/cf/CTaskCulling.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/cf/CfNandManager.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/code_80296898.hpp"
@@ -18,6 +19,9 @@
 // conflicts with CfGameManager.hpp (both declare a global CtrlRemote_GetFileEventIds with
 // different return types), so this TU re-declares only the members it uses.
 // Signatures match the real header so the mangled symbols link to retail.
+extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int, int, int);
+extern "C" void Env_CreateTask__FP8CProcessP8CProcess(CProcess*, CProcess*);
+
 namespace cf {
     class CTaskREvent : public CProcess {
     public:
@@ -224,7 +228,7 @@ void CTaskGameCf::setPooledMove(){
         func_80086B5C__Q22cf13CfGameManagerFv(unk_60, unk_62, 0);
         func_8007E514__Q22cf13CfGameManagerFv(unk_5C, unk_5E,
             unk_64.mString[0] ? unk_64.c_str() : nullptr, unk_88, NandImageLive());
-        Env_CreateTask(pTaskGame, pTaskGame->getScene());
+        Env_CreateTask__FP8CProcessP8CProcess(pTaskGame, pTaskGame->getScene());
         CTaskCulling::create(pTaskGame, pTaskGame->getScene());
         if(CtrlRemote_TouchBitByArg((u32)0x20) == 0){
             CtrlRemote_SetSharedBit(0x20, 1);
@@ -310,8 +314,8 @@ void CTaskGameCf::finishExit() {
 
 } //namespace cf
 
-// Direct call to the real constructor: placement new would insert a null
-// guard that retail's create() does not have.
+// Direct call to the real constructor: placement new would inline the ctor
+// under this TU's -inline auto, expanding create() from 0x6c to 0xf8.
 extern "C" cf::CTaskGameCf* __ct__Q22cf11CTaskGameCfFP8CProcessi(cf::CTaskGameCf* self, CProcess* taskGame, BOOL arg2);
 
 #pragma optimize_for_size on
@@ -323,7 +327,7 @@ extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int 
         task = __ct__Q22cf11CTaskGameCfFP8CProcessi(task, pParent, arg2);
     }
 
-    Regist__8CProcessFP8CProcessb(task, pParent, false);
+    task->Regist(pParent, false);
     return task;
 }
 #pragma optimize_for_size off

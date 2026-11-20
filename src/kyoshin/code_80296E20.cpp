@@ -17,7 +17,7 @@
 
 // sdata2 scalar used by setChainGauge; defined after the pooling functions so
 // its 8-byte slot lands last, like retail's third .sdata2 entry.
-extern const volatile f64 kChainGaugeTwo;
+extern const f64 kChainGaugeTwo;
 
 // C++ linkage: retail's symbols are the C++ mangled initChainGauge__FPv /
 // resetChainGauge__FPv (both take the gauge as void*).
@@ -43,7 +43,7 @@ void resetChainGauge(void* p) {
 // to both slots (the whole point: clamp/recentre toward a target).
 // ---------------------------------------------------------------------------
 extern "C" void setChainGauge(float* self, float param) {
-    // Birth order b,a (Rule A: first-declared volatile takes the lowest
+    // Birth order b,a (Rule A: first-declared variable takes the lowest
     // FPR, so b lands f0 and a lands f2); assignment order keeps retail's
     // load sequence (BA4 into f2 before BA0 into f0).
     float b, a;
@@ -53,11 +53,11 @@ extern "C" void setChainGauge(float* self, float param) {
     self[1] = b;
     if (a < param) {
         param -= a;
-        // 8-byte 2.0 pooled via the file-scope const volatile below (lands
+        // 8-byte 2.0 pooled via the file-scope const double below (lands
         // last like retail's third slot); reading its low word emits a
-        // plain lfs with no conversion code. Volatile blocks MWCC folding
-        // the known constant through the pointer read (which would collapse
-        // it to a 4-byte pool entry).
+        // plain lfs with no conversion code. The address-taken global keeps
+        // the 8-byte pool alive instead of collapsing to a 4-byte literal,
+        // which is what retail's third sdata2 slot requires.
         float c = *(const f32*)&kChainGaugeTwo;
         float r = (c * param) - a;
         self[1] = r;
@@ -65,8 +65,8 @@ extern "C" void setChainGauge(float* self, float param) {
     }
 }
 
-// 8-byte 2.0 constant for setChainGauge above. File-scope const volatile
-// (global linkage so the earlier use compiles; volatile blocks const-
-// folding) placed after the literal-pooling functions so it emits last,
+// 8-byte 2.0 constant for setChainGauge above. File-scope const double
+// (global linkage so the earlier use compiles; address-taken so it is not
+// folded away) placed after the literal-pooling functions so it emits last,
 // matching retail's third sdata2 slot.
-const volatile f64 kChainGaugeTwo = 2.0;
+const f64 kChainGaugeTwo = 2.0;

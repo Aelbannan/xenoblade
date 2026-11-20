@@ -1,8 +1,12 @@
 #pragma once
+#include "kyoshin/cf/CfTFile.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/menu/MenuSndApi.hpp"
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 class CResLookup;
 
@@ -356,23 +360,7 @@ struct CfResPcHostGM {
 // (CfFileEventIdsView); declared there - forward view here only.
 struct CfFileEventIdsView;
 
-// Minimal nw4r sound-object interface used by CfResPcImpl_notifySound (sound slot +0x00
-// dereferenced to call SetPlayerPriority). Declared here at global scope
-// rather than via snd_BasicSound.h; MWCC mangles the member call to the
-// retail name SetPlayerPriority__Q44nw4r3snd6detail10BasicSoundFi (same
-// pattern as CfResReloadImpl.hpp - a copy inside namespace cf would mangle
-// the extra cf scope into the name).
-namespace nw4r {
-namespace snd {
-namespace detail {
-class BasicSound {
-public:
-    void SetPlayerPriority(int priority);
-};
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
-
+#include <nw4r/snd/snd_BasicSound.h>
 // Forward decl so the cast-only parent vtable view can return/accept VEC3
 // (the real definition comes from <nw4r/math/math_types.h> in the .cpp).
 namespace nw4r { namespace math { struct VEC3; } }
@@ -410,7 +398,6 @@ struct CfResPcPlayerBase {
 } // namespace cf
 
 // Forward decl so the C-ABI import below can name the type.
-namespace cf { class CfTFile; }
 
 // PMTF dispatch table (4 x 12-byte member pointers) selected by field_08 in
 // CfResPcImpl_dispatchReloadHandler. Declared at global scope so MWCC keeps the retail name
@@ -451,7 +438,6 @@ extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx);  // canonical owner-form
 extern "C" void CfScript_LoadSlot0(u8* name);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
 extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
-extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
 extern "C" int CfRes_tryResolveByBits(s32 destination, u32 source, u32 size);
 extern "C" int CfRes_tryResolveType0(int a, int b, int c);
 extern "C" int CfSoundMan_CloseRecord(int index);
@@ -487,7 +473,6 @@ extern "C" char* CfRes_getInstPtr170();
 // the plain retail names.
 extern "C" u8* CfRes_getInstanceField();
 extern "C" void CfRes_tryReregisterSlot(int index, u8* ptr);
-extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" int CfRes_resolveSelfPacked(void* self, int arg2);
 extern "C" int pushBackwards(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 second);
@@ -501,7 +486,6 @@ extern "C" void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
 extern "C" void loadPartyResources__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void syncGameTime__Q22cf13CfGameManagerFv(cf::CfGameManager* object, u32 first, u32 second);
 extern "C" void resetGameFlags__Q22cf13CfGameManagerFv(int arg);
-extern "C" int MenuSnd_IsSlotLive_892C(int index);
 extern "C" void CTaskGame_setLoadScreen(int a, int b);
 
 // Game-manager flag words read/written by CfResPcImpl_handleMapChangeEvent / CfResPcImpl_loadFileEventTable /
@@ -514,23 +498,20 @@ extern u16 gmGlobalFlag44;  // current area sub-id (written by CfResPcImpl_reloa
 // C-ABI import (defined in CfTFile.cpp, retail C name CfTFile_LoadEventArchive): loads
 // the file-event archive for a packed token. extern "C" keeps the call-site
 // reloc at the plain retail name (CfTFile.hpp does not declare it).
-extern "C" int CfTFile_LoadEventArchive(cf::CfTFile* self, u32 param);
 
 // C-ABI imports used by CfResPcImpl_handleFileEventLoad / CfResPcImpl_refreshMapAreaEvents (defined in
 // CfTFile.cpp / CfRes.cpp / CfScript.cpp / CfCamEvent_1.cpp / the model
 // layer). extern "C" keeps the call-site relocs at the plain retail names.
 extern "C" u32 CfTFile_TestField828(u8* self);
-extern "C" void CfTFile_CancelResetNibble(cf::CfTFile* self);
-extern "C" void CfTFile_CopyPayload(cf::CfTFile* dst, cf::CfTFile* src);
 extern "C" void CfRes_runUpdatePipeline();
 extern "C" u32 CfRes_pushRec(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
-extern "C" int CamEvtSearchStateVal(int val);
 extern "C" void loadLayoutScales();
 extern "C" int CfRes_tryRefreshByBits(int a, int b);
 extern "C" void CfScript_FlagSlot0();
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void updateReloadTypeState(u32 a, u32 b);
-extern "C" void scanTboxByXY();
+// Defined in code_800B06A4.cpp with C++ linkage.
+void scanTboxByXY();
 
 // Stack-buffer slot query (CfGameManager helper): fills CfResPcLoadBuffer.
 extern "C" void func_80080F48__Q22cf13CfGameManagerFv(u32 value, cf::CfResPcLoadBuffer* resource, u32 first, u32 second);
@@ -549,7 +530,6 @@ extern "C" void* CfRes_findMidEntry(u8* self, u32 id, u32* outIdx);
 extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value);
 extern "C" u32 func_8009E120(cf::CfResPcCharData* object, u16 value);
 extern "C" u32 bdatPcPartsRes(u32 param1, s16 param2, u32 param3, u32 param4);
-extern "C" void CfObjectMove_setModelListLock(void* object, u32 value);
 extern "C" void CfObjectMove_ensureAnimTargets(void* parent);
 extern "C" int CfRes_getD80Flag();
 class CMcaFile;

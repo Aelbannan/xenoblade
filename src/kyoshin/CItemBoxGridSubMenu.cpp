@@ -11,7 +11,6 @@
 #include "kyoshin/CUICfManager_Res.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" char lbl_eu_805084BC[];
 extern "C" const float lbl_eu_80668300; // 80.0f
 extern "C" const float lbl_eu_80668304; // 0.0f
 extern "C" const float lbl_eu_80668308; // 3.0f
@@ -19,10 +18,9 @@ extern "C" const float lbl_eu_8066830C; // 100.0f
 extern "C" const float lbl_eu_80668310; // -17.0f
 extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
-extern "C" const double lbl_eu_806682F8;
 #include "kyoshin/cf/CfGameManager.hpp"
 
-// C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
+// C-linkage pseudo-imports for this TU (playUISound__FUl,
 // the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
 // getPackedFont__Fv, CUICfManager_getArcResourceAccessor,
 // drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
@@ -54,8 +52,8 @@ CItemBoxGridSubMenu::~CItemBoxGridSubMenu() {
 void CItemBoxGridSubMenu::GridSubMenu_InitLayout(nw4r::lyt::ArcResourceAccessor* accessor) {
     mAccessor = accessor;
 
-    buildLayout(&mLayout, accessor, &lbl_eu_805084BC[0x00]);
-    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, &lbl_eu_805084BC[0x19]);
+    buildLayout(&mLayout, accessor, "mf70_cf60_syswin07.brlyt");
+    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, "mf70_cf60_syswin07_in.brlan");
 
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     nw4r::lyt::Pane* root = mLayout->GetRootPane();
@@ -63,34 +61,34 @@ void CItemBoxGridSubMenu::GridSubMenu_InitLayout(nw4r::lyt::ArcResourceAccessor*
     ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)fontVal);
 
     u32 color = (u32)getPackedFont();
-    setLayoutTextBoxFont(mLayout, &lbl_eu_805084BC[0x35], color);
+    setLayoutTextBoxFont(mLayout, "txt_point", color);
 
     mLayout->BindAnimation(mAnimDefault);
     mLayout->Animate(0);
 
-    mRootPane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x3f], true);
-    mTxtBoxA = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x4e], true);
-    mTxtBoxB = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x59], true);
-    mTxtBoxC = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x64], true);
+    mRootPane = mLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
+    mTxtBoxA = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName("txt_slct01", true);
+    mTxtBoxB = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName("txt_slct02", true);
+    mTxtBoxC = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName("txt_slct03", true);
 
-    nw4r::lyt::Pane* collPane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x6f], true);
+    nw4r::lyt::Pane* collPane = mLayout->GetRootPane()->FindPaneByName("nul_coll", true);
     collPane->SetVisible(false);
 
-    char* str = (char*)BdatTouchStringCell(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
-    LayoutSetTextBoxFmtValue(mLayout, &lbl_eu_805084BC[0x8b], str, 0);
+    char* str = (char*)BdatTouchStringCell("MNU_kyeassign", "help", 0x2b);
+    LayoutSetTextBoxFmtValue(mLayout, "txt_close01", str, 0);
 
     int gmVal = cf::CfGameManager::isClassicController(-1);
-    const char* fileID = (gmVal == 0) ? &lbl_eu_805084BC[0xa0] : &lbl_eu_805084BC[0x97];
+    const char* fileID = (gmVal != 0) ? "fileID_2" : "fileID_1";
 
-    u16 msgId = BdatGetU16ByTableKey(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);
+    u16 msgId = BdatGetU16ByTableKey("MNU_kyeassign", (char*)fileID, 0x2b);
     u8* tex = (u8*)MakeTplNameSysFile(msgId);
 
     u8* sys = (u8*)CUICfManager_getArcResourceAccessor();
     u8* mat = (u8*)((nw4r::lyt::ArcResourceAccessor*)sys)->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat != NULL) {
-        PaneSetTexPaletteByName(mLayout, &lbl_eu_805084BC[0xa9], (TPLPalette*)mat);
+        PaneSetTexPaletteByName(mLayout, "pic_btn01", (TPLPalette*)mat);
 
-        nw4r::lyt::Pane* picPane = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xa9], true);
+        nw4r::lyt::Pane* picPane = mLayout->GetRootPane()->FindPaneByName("pic_btn01", true);
         u16 w = *(u16*)(*(u8**)mat + 8 + 2);
         u16 h = *(u16*)(*(u8**)mat + 8 + 0);
 
@@ -187,24 +185,24 @@ void CItemBoxGridSubMenu::GridSubMenu_SetupOptions(int arg) {
 
     mSubState = 1;
 
-    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), &lbl_eu_805084BC[0xb3], 0);
-    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), &lbl_eu_805084BC[0xb3], 0);
-    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxC), &lbl_eu_805084BC[0xb3], 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), "", 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), "", 0);
+    SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxC), "", 0);
 
     if (arg == 10) {
-        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell("MNU_item", "name", 'A'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), (char*)BdatTouchStringCell("MNU_item", "name", 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell("MNU_item", "name", '@'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxB), (char*)BdatTouchStringCell("MNU_item", "name", 'C'), 0);
         mSubState = 2;
     } else {
-        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        SetLayoutSelfText((nw4r::lyt::Layout*)((char*)mTxtBoxA), (char*)BdatTouchStringCell("MNU_item", "name", 'C'), 0);
     }
 
-    nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
-    nw4r::lyt::Pane* pane2 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xcb], true);
+    nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName("win_slct", true);
+    nw4r::lyt::Pane* pane2 = mLayout->GetRootPane()->FindPaneByName("nul_close01", true);
 
     switch (mSubState) {
     case 1: {

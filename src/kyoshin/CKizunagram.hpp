@@ -14,6 +14,7 @@
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
 class CEventFile;    // monolib/work/CEventFile.hpp
+struct UnkKizunaDisp;
 
 class CKizunaRadar {
 public:
@@ -725,9 +726,9 @@ extern const float lbl_eu_80668830;
 extern const float lbl_eu_8066884C;
 extern "C" void CMenuArtsSet_setPaneScale(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
 extern "C" void copyVEC2(void*, const void*);
-extern "C" void copyVEC3(float* dst, const float* src);
+extern "C" void copyVEC3(void* dst, const void* src);
 extern "C" void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a);
-extern "C" void copyKizTag3(char* dst, const char* src);
+void copyKizTag3(unsigned char* dst, const unsigned char* src);
 extern "C" void publishKizScaledVals(UnkKizunaSelfCE00* self);
 
 // ---------------------------------------------------------------------------
@@ -1044,8 +1045,8 @@ extern "C" void tickCurAnim(UnkKizunaSelf57EE0* self);
 extern "C" void layoutKizLinePanes(UnkKizunaSelf57B6C* self);
 extern "C" void tryKizMode2(void* self);
 extern "C" void tryKizMode3(void* self);
-extern "C" void tryKizMode5(UnkKizunaSelfC580* self);
-extern "C" void tryKizIdle(UnkKizunaSelfC580* self);
+void tryKizMode5(u8* self);
+void tryKizIdle(u8* self);
 extern "C" void tickKizLine(void* self);
 
 // BDAT/layout-manager helpers (unmangled retail symbols).
@@ -1063,3 +1064,13 @@ extern "C" u16 findKizByName(UnkKizunaSelf5949C* self, const char* name);
 // Per-frame kizuna-entry row cursor shared with revealKizEntries.
 extern u16 sKizRowCursor;
 extern u16 sKizRevealCursor;
+
+// Kizunagram logic functions defined in this unit (C++ linkage; retail emits
+// their mangled names).
+void drawKizLayouts(UnkKizunaSelfC61C* self, nw4r::lyt::DrawInfo* drawInfo);
+void teardownKizuna(UnkKizunaSelfC6F0* self);
+void kizCloseChart(UnkKizunaSelfC7FC* self, int arg);
+void tickKizMove(UnkKizunaDisp* self);
+void kizCursorHoldA(UnkKizunaSelfCAE4* self);
+void kizCursorHoldB(UnkKizunaSelfCAE4* self);
+u8 kizChartStatus(UnkKizunaSelfCBCC* self);

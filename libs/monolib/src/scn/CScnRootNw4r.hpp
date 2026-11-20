@@ -104,7 +104,7 @@ extern "C" void scnLgtEnterMode20(CScnEnvLgtCtrl* ctrl);
 // (CamMan_RefreshCurrentCamera is the CScnCameraMan member refreshCurrentCamera)
 extern "C" void LightManInvokeLightV3(CScnLightMan* man);
 extern "C" void FogManIsFogEnabled(CScnFogMan* man);
-extern "C" void CScnItemPool_forEachCallVfunc14(CScnItemPool* pool);
+
 extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateViewRoot__9CViewRootFv();
 

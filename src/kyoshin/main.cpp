@@ -18,6 +18,7 @@
 // Retail imports for main.cpp - proper header so there is no local
 // C-linkage import block (lint rule).
 #include "kyoshin/main_imports.hpp"
+#include "kyoshin/CErrMes.hpp"
 #include "kyoshin/CNandData.hpp"
 
 #if defined(VERSION_JP)

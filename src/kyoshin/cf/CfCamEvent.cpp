@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CfCamEvent.hpp"
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // canonical isTimerActive declaration
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
@@ -18,16 +19,15 @@ char* sCamType10Dispatch;
 #pragma section data_type ".data" ".data"
 #pragma push
 #pragma section data_type ".data" ".data"
-extern "C" const volatile unsigned char lbl_eu_80527130[];
-extern "C" const volatile unsigned char lbl_eu_80527108[];
-extern "C" const volatile unsigned char lbl_eu_805270D8[];
-extern "C" const volatile unsigned char lbl_eu_805270C0[];
-extern "C" const volatile unsigned char lbl_eu_805270F0[];
-extern "C" const volatile unsigned char lbl_eu_80527120[];
-extern "C" const volatile unsigned char lbl_eu_80527148[];
-extern "C" const volatile unsigned char lbl_eu_80527154[];
-extern "C" const volatile unsigned char sCamBdatTableNameTable[];
-extern "C" const volatile unsigned char lbl_eu_80527048[];
+extern "C" const unsigned char lbl_eu_80527130[];
+extern "C" const unsigned char lbl_eu_80527108[];
+extern "C" const unsigned char lbl_eu_805270D8[];
+extern "C" const unsigned char lbl_eu_805270C0[];
+extern "C" const unsigned char lbl_eu_805270F0[];
+extern "C" const unsigned char lbl_eu_80527120[];
+extern "C" const unsigned char lbl_eu_80527148[];
+extern "C" const unsigned char lbl_eu_80527154[];
+extern "C" const unsigned char lbl_eu_80527048[];
 #pragma pop
 }
 
@@ -220,7 +220,8 @@ void CfCamEvt_Update(CfCamEvent* self) {
         }
     }
 
-    if (CfRes_getD80Flag() == 0 || Scn_GetFrameDelta() == lbl_eu_80666268) {
+    void* scene = reinterpret_cast<void*>(CfRes_getD80Flag());
+    if (scene == 0 || Scn_GetFrameDelta(scene) == lbl_eu_80666268) {
         return;
     }
 
@@ -301,10 +302,10 @@ void CfCamEvt_Update(CfCamEvent* self) {
     f32 ang = ml::CVec3::dot(srcBlock.dir, self->unk160->block.dir);
     if (ang < -1.0f) {
         ang = -1.0f;
-    } else if (ang > lbl_eu_80666280) {
-        ang = lbl_eu_80666280;
+    } else if (ang > 1.0f) {
+        ang = 1.0f;
     }
-    if (!(ang <= lbl_eu_80666280 && ang >= -1.0f)) {
+    if (!(ang <= 1.0f && ang >= -1.0f)) {
         Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
                                      (const char*)lbl_eu_805262C8);
     }
@@ -336,7 +337,7 @@ void cfCam_nopVirt24();
 void cfCam_copyToPlus10();
 void cfCam_copyCamState();
 void cfCam_getActivePad();
-void runCamAction();
+
 extern const char lbl_eu_804FB470[];
 extern const char lbl_eu_804FB480[];
 extern const char lbl_eu_804FB494[];
@@ -356,9 +357,6 @@ void CfCamDirectionIntf_setDir();
 void CfCamDirectionIntf_setLookat();
 extern char __RTTI__Q22cf11CfCamFollow[];
 extern char lbl_eu_80661B30[];
-extern char lbl_eu_80666288[];
-extern char lbl_eu_80666290[];
-extern char lbl_eu_80666298[];
 extern const void* lbl_eu_80661B00[];
 extern const void* __RTTI__Q22cf15CfCamTargetIntf[];
 extern const void* __RTTI__Q22cf15CfCamLookatIntf[];
@@ -403,15 +401,15 @@ __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB4C0[0
 
 #pragma push
 #pragma section data_type ".data" ".data"
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_80527048[0x78] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_805270C0[0x18] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_805270D8[0x18] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_805270F0[0x18] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_80527108[0x18] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_80527120[0x10] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char lbl_eu_80527130[0x18] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char lbl_eu_80527148[0x0C] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char lbl_eu_80527154[0x0C] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_80527048[0x78] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_805270C0[0x18] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_805270D8[0x18] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_805270F0[0x18] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_80527108[0x18] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_80527120[0x10] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char lbl_eu_80527130[0x18] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const unsigned char lbl_eu_80527148[0x0C] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const unsigned char lbl_eu_80527154[0x0C] = {0};
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned int sCamDefaultTable[39] = {
     0x3F800000,
     0,
@@ -453,7 +451,7 @@ __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) co
     0x3F000000,
     0x3F000000
 };
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char sCamBdatTableNameTable[0x0C] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const unsigned char sCamBdatTableNameTable[0x0C] = {0};
 #pragma pop
 
 __declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666268 = 0.0f;

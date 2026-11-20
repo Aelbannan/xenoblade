@@ -197,8 +197,7 @@ struct KizunaTalkPadData {
 // retail symbols are unmangled, so they must stay C-linkage (the C++-linkage
 // declarations in CSysWinSelect.hpp/CSysWinSave.hpp would mangle them).
 extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int CfT_DispatchFrameCounts();
-extern "C" void* Bdat_GetTable_AA34();
+
 
 // Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).
 

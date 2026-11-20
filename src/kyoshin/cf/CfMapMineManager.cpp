@@ -1,14 +1,17 @@
 // CfMapMineManager - mine-point management (field collection points)
 #include "kyoshin/cf/CfMapMineManager.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 // High-level C++ reconstruction from retail ASM (US, 0x8020785C..0x80209D20).
 // All 20 TU functions carry placeholder retail symbol names; they are emitted
 // with C linkage so the object exports the exact retail symbols.
 
 #include <types.h>
+#include "kyoshin/code_8025FB10.hpp"
 #include <decomp.h>
 #include <string.h>
 #include <math.h>
@@ -142,7 +145,7 @@ static inline u32 ListFindFree(CfMapMineManager* m) {
 extern "C" void mineNodeCtorClear(MineNode* node) {
     node->mItem.mObj0 = 0;
     node->mItem.mObj4 = 0;
-    node->mItem.mTimer14 = lbl_eu_806682B0;
+    node->mItem.mTimer14 = 0.0f;
     node->mItem.mId18 = 0;
     node->mItem.mPointId1C = 0;
     node->mItem.mFlags &= 0x003FFFFF;
@@ -305,7 +308,7 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
 // ---------------------------------------------------------------------------
 static inline void InitTimerZero(MineSoundTimer* t) {
     t->mId = 0;
-    t->mTime = lbl_eu_806682B0;
+    t->mTime = 0.0f;
 }
 
 // ---------------------------------------------------------------------------
@@ -344,7 +347,7 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
     u32 flags = self->mPoints.mStartNode.mItem.mFlags;
     flags &= 0x003FFFFF;
 
-    f32 zero = lbl_eu_806682B0;
+    f32 zero = 0.0f;
     self->mPoints.mVtable = lbl_eu_80535744;
     self->mTime = zero;
 
@@ -484,7 +487,7 @@ extern "C" void mineReleasePoints(CfMapMineManager* self) {
         snd[16 - i] = t;
         i--;
     } while (i != 0);
-    self->mTime = lbl_eu_806682B0;
+    self->mTime = 0.0f;
 }
 
 // ---------------------------------------------------------------------------
@@ -550,7 +553,7 @@ extern "C" int mineFillPointFromRow(CfMapMineManager* self, u32 rowId, MinePoint
             u8 lo = (u8)getBdatStringColumnValue(file2, cols + 0x00, rowId);
             u8 hi = (u8)getBdatStringColumnValue(file2, cols + 0x08, rowId);
             int r = mtRand__Q22ml4mathFi((hi - lo) + 1);
-            pt->mTimer14 = lbl_eu_806682B0;
+            pt->mTimer14 = 0.0f;
             u32 fl2 = pt->mFlags;
             fl2 = (fl2 & ~(0xFFu << 8)) | (((lo + r) & 0xFF) << 8);
             pt->mFlags = fl2;
@@ -663,7 +666,7 @@ extern "C" void minePlayCollectSfx(CfMapMineManager* self, u32 kind, void* pos) 
     if (player == 0) return;
     void* obj = createNpcActor__Q22cf13CfGameManagerFv(sfx);
     if (obj == 0) return;
-    bindPartnerO_(obj, player, 0);
+    bindPartnerO_((cf::CfObjectEff*)obj, (u8*)player, (u8*)0);
     ((cf::CfObject*)obj)->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
 }
 
@@ -677,7 +680,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
     u32 area = gmGlobalFlag42;
     f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
 
-    if (pt->mTimer14 > lbl_eu_806682B0) {
+    if (pt->mTimer14 > 0.0f) {
         // Duplicate active point: let time advance (retail branches out
         // with beq when the scan returns zero).
         if (mineHasNoActivePoint(pt->mPointId1C, pt->mArea1E, pt->mAreaSub1F) != 0) {
@@ -687,7 +690,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
     }
 
     u32 fl = pt->mFlags;
-    pt->mTimer14 = lbl_eu_806682B0;
+    pt->mTimer14 = 0.0f;
     if (((fl >> 8) & 0xFF) != 0) return;
     if (area != pt->mArea1E) return;
     if (sub != pt->mAreaSub1F) return;
@@ -704,12 +707,11 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
 
     if (((f2 >> 8) & 0xFF) != 0) {
         if (((f2 >> 15) & 1) != 0) {
-            // (double)(160 - flagBit): 0x4330 int->double sequence minus
-            // the 160.0 sdata double literal, passed raw in fp1.
+            // (double)(0xA0 & ~bit): the int->f64 conversion leaves the
+            // 0x4330 magic in fp0 and subtracts it in the callee's fp1.
             setLODParam__8CTaskLODFv(
                 pt->mPointId1C, 1,
-                (f64)(0xA0 - ((gmGameFlags >> 20) & 1)) -
-                    lbl_eu_806682C0);
+                (f64)(0xA0 & ~(u32)-(s32)((gmGameFlags >> 20) & 1)));
         } else {
             void* v = ArtsSelect_GetEntry(pt->mPointId1C);
             if (v != 0) {
@@ -727,7 +729,7 @@ extern "C" void mineUpdatePoint(CfMapMineManager* self, MinePoint* pt) {
 // ---------------------------------------------------------------------------
 extern "C" void mineUpdateMsgRing(CfMapMineManager* self) {
     f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
-    f32 zero = lbl_eu_806682B0;
+    f32 zero = 0.0f;
 
     int changed = 0;
     s32 cnt = self->mMsgs.mCount;
@@ -750,7 +752,7 @@ extern "C" void mineUpdateMsgRing(CfMapMineManager* self) {
         // back, then advances by one modulo the ring capacity.
         MineMsg* oldSlot =
             &self->mMsgs.mBase[self->mMsgs.mReadIdx % self->mMsgs.mCapacity];
-        CUICfManager_queueGetItemMenuById(oldSlot);
+        CUICfManager_queueGetItemMenuById((u32)(uintptr_t)oldSlot);
         // The expiring slot is addressed from a fresh read of the cursor.
         s32 cap = self->mMsgs.mCapacity;
         s32 count = self->mMsgs.mCount;
@@ -795,7 +797,7 @@ extern "C" void mineFindNearestPoint(MineNode** out, CfMapMineManager* mgr,
     // Retail re-reads the sentinel from the list object on every iteration.
     while (n != list->mPoints.mStartPtr) {
         n->mItem.mFlags &= ~0x00060000u;
-        if (n->mItem.mTimer14 > lbl_eu_806682B0 ||
+        if (n->mItem.mTimer14 > 0.0f ||
             ((n->mItem.mFlags >> 8) & 0xFF) == 0) {
             mineUpdatePoint(mgr, &n->mItem);
         } else if (area != n->mItem.mArea1E || sub != n->mItem.mAreaSub1F) {
@@ -905,7 +907,7 @@ void CfMapMineManager::ScanPoints() {
                     u32 g = gmGameFlags;
                     setLODParam__8CTaskLODFv(
                         found->mItem.mPointId1C, 1,
-                        (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
+                        (f64)(0xA0 & ~(u32)-(s32)((g >> 20) & 1)));
                 } else {
                     cf::CfObjectObj* obj = (cf::CfObjectObj*)ArtsSelect_GetEntry(found->mItem.mPointId1C);
                     if (obj != 0) {
@@ -921,7 +923,7 @@ void CfMapMineManager::ScanPoints() {
                         u32 g = gmGameFlags;
                         setLODParam__8CTaskLODFv(
                             found->mItem.mPointId1C, 0,
-                            (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
+                            (f64)(0xA0 & ~(u32)-(s32)((g >> 20) & 1)));
                     } else {
                         cf::CfObjectObj* obj = (cf::CfObjectObj*)ArtsSelect_GetEntry(found->mItem.mPointId1C);
                         if (obj != 0) {
@@ -1009,7 +1011,7 @@ extern "C" int mineDropItem(CfMapMineManager* self, MinePoint* pt,
             u8* rec = (u8*)CtrlObjectParam_GetCharEntry((u16)v);
             u8* data = rec + 0x3534;
             if (data != NULL && Counter_TestBit(data, 0x91) != 0) {
-                total += IdTable_SumValues(data, 0x91);
+                total += IdTable_SumValues((CUnkObj8025FB10*)data, 0x91);
             }
         }
     }
@@ -1115,7 +1117,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
 
     mineUpdateMsgRing(mgr);
     f32 dt = Scn_GetFrameDelta((void*)CfRes_getD80Flag());
-    const f32 zero = lbl_eu_806682B0;
+    const f32 zero = 0.0f;
     const f64 zeroD = lbl_eu_806682D8;
 
     // Sound-timer countdown over the 16 fixed slots.
@@ -1137,7 +1139,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
     {
         void* pv = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
         pos[0] = ((f32*)pv)[0];
-        pos[1] = ((f32*)pv)[1] + lbl_eu_806682E8;
+        pos[1] = ((f32*)pv)[1] + 1.0f;
         pos[2] = ((f32*)pv)[2];
     }
 
@@ -1187,7 +1189,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
         const char* cols = lbl_eu_80508424;
         u32 msg = getBdatStringColumnValue(
             (BdatFilePointer*)getFP(cols + 0x77), cols + 0x4E, 0x1B);
-        UIWin_CreateSysWin0((void*)msg, 0, 0);
+        UIWin_CreateSysWin0((const char*)msg, 0, 0);
         return;
     }
 
@@ -1216,7 +1218,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
                     u32 bit = (gmGameFlags >> 20) & 1;
                     setLODParam__8CTaskLODFv(
                         nearest->mItem.mPointId1C, 0,
-                        (f64)(0xA0 & ~(u32)-(s32)bit) - lbl_eu_806682C0);
+                        (f64)(0xA0 & ~(u32)-(s32)bit));
                 } else {
                     void* v = ArtsSelect_GetEntry(nearest->mItem.mPointId1C);
                     if (v != 0) {
@@ -1231,7 +1233,7 @@ extern "C" void mineUpdateAll(CfMapMineManager* self) {
                                                      colsb + 0x6C, id3);
             f32 delay = 60.0f *
                         (30.0f *
-                         ((f32)((f64)kindCh - lbl_eu_806682C0)));
+                         ((f32)((f64)kindCh)));
             nearest->mItem.mTimer14 = delay;
         }
     }
@@ -1349,7 +1351,7 @@ extern "C" void mineLoadFromSave(u8* rec) {
     MinePoint tmp;
     tmp.mObj0 = 0;
     tmp.mObj4 = 0;
-    tmp.mTimer14 = lbl_eu_806682B0;
+    tmp.mTimer14 = 0.0f;
     tmp.mId18 = 0;
     tmp.mPointId1C = 0;
     tmp.mCounter1A = 0;
@@ -1367,7 +1369,7 @@ extern "C" void mineLoadFromSave(u8* rec) {
         u8 count = rec[2];
         u8 pidHi = rec[3];
 
-        tmp.mTimer14 = (f32)((f64)(u32)pid - lbl_eu_806682C0);
+        tmp.mTimer14 = (f32)((f64)(u32)pid);
         u32 fl = tmp.mFlags;
         fl = (fl & 0xFF00FFFF) | ((u32)count << 8);
         fl = (fl & 0xFFC00FFF) | ((u32)pidHi << 22);

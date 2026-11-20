@@ -63,7 +63,10 @@ public:
     void aimAtActorPos();
     void syncYawToLink();
     void checkNotFalling();
-    void checkFlag40000();
+    // Retail vtable +0xD0/+0xDC override the CActParamAnim base slots
+    // isAnimChainActive/isAnimBlendActive (base decl at CActParamAnim.hpp:413).
+    virtual bool isAnimChainActive();
+    virtual bool isAnimBlendActive();
 
     // Only the class's own tail lives here; all fields up to +0x4E7 are
     // declared in ::CActParamAnim.

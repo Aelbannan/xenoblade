@@ -1,4 +1,5 @@
 #include "kyoshin/plugin/pluginGame.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/plugin/pluginCam.hpp"
 #include "monolib/vm/yvm2.h"
@@ -6,20 +7,10 @@
 #include "kyoshin/code_801862C0.hpp"
 #include "monolib/core.hpp"
 
-extern "C" {
-extern char lbl_eu_804FB1A4[];
-extern PluginFuncData lbl_eu_80526560[];
-}
-
-// 0x4330000080000000: MWCC (double)(s32) conversion magic (2^52 + 0x8000),
-// defined under its retail sdata2 pool name so the literal pool relocs to
-// lbl_eu_80666170 instead of a synthesised @N entry.
-__declspec(section ".sdata2") extern const f64 lbl_eu_80666170 = 4503601774854144.0;
-
 // Camera manager driven by the cam plugin VM funcs (retail object behind
 // getCameraDataBlock). Each used slot is named after its caller: 0x14 set
 // camera position, 0x3C set fov, 0x4C set direction, 0x50/0x54 set rotation,
-// 0x58 get fov float, 0x5C set target, 0x64 set look-at, 0x68/0x6C set
+// 0x58 get fov float
 // position/look-at offsets. Same slots as CREvtCamManager in
 // realtimeevt/CREvtCamera.hpp.
 class UnkCamIntf {
@@ -65,16 +56,14 @@ u32 notifyBattleSystem__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                           u32 fourth, u32 fifth);
 void isEffectReady__Q22cf13CfGameManagerFv(u32 first, ml::CVec3* pos,
                                            ml::CVec3* lookat, u32 extra, f32 seventh);
-void CamEvtForwardShakeFlag(void* data, int flag);
-void CamEvtLookupStateVal(s32 val);
 }
 
 static inline f32 fixedToFloat(s32 fixed) {
-    return (f32)fixed / lbl_eu_80666168;
+    return (f32)fixed / 4096.0f;
 }
 
 static inline s32 floatToFixed(f32 val) {
-    return (s32)(lbl_eu_80666168 * val);
+    return (s32)(4096.0f * val);
 }
 
 static inline f32 degToRad(s32 fixedDeg) {
@@ -82,17 +71,7 @@ static inline f32 degToRad(s32 fixedDeg) {
 }
 
 static inline s32 radToDegFixed(f32 rad) {
-    return (s32)(lbl_eu_80666168 * (rad * ml::rad2deg));
-}
-
-// s32 -> f32 via the shared sdata2 magic double (pluginCam.hpp F64Conv
-// convention): builds the 0x43300000-prefixed bit pattern and subtracts the
-// named pool constant so the reloc matches retail.
-static inline f32 s32ToF32(s32 v) {
-    F64Conv conv;
-    conv.w[1] = (u32)v ^ 0x80000000;
-    conv.w[0] = 0x43300000;
-    return (f32)(conv.d - lbl_eu_80666170);
+    return (s32)(4096.0f * (rad * ml::rad2deg));
 }
 
 extern "C" int select(VMThread* pThread) {
@@ -139,9 +118,9 @@ extern "C" int setPos(VMThread* pThread) {
     s32 fixedZ = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
 
     ml::CVec3 pos;
-    pos.x = (f32)fixedX / lbl_eu_80666168;
-    pos.y = (f32)fixedY / lbl_eu_80666168;
-    pos.z = (f32)fixedZ / lbl_eu_80666168;
+    pos.x = (f32)fixedX / 4096.0f;
+    pos.y = (f32)fixedY / 4096.0f;
+    pos.z = (f32)fixedZ / 4096.0f;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->setPosition(&pos);
@@ -155,13 +134,13 @@ extern "C" int setLookat(VMThread* pThread) {
     s32 fixedZ = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
 
     ml::CVec3 lookat;
-    lookat.x = (f32)fixedX / lbl_eu_80666168;
-    lookat.y = (f32)fixedY / lbl_eu_80666168;
-    lookat.z = (f32)fixedZ / lbl_eu_80666168;
+    lookat.x = (f32)fixedX / 4096.0f;
+    lookat.y = (f32)fixedY / 4096.0f;
+    lookat.z = (f32)fixedZ / 4096.0f;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->setLookAt(&lookat);
-    cf::CfMapEffectManager::pushFlash(lbl_eu_80666178, lbl_eu_8066617C);
+    cf::CfMapEffectManager::pushFlash(0.0f, 1.0f);
     return 0;
 }
 
@@ -170,9 +149,9 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
     ml::CVec3 dir;
-    dir.x = (f32)fixedAngle / lbl_eu_80666168 * ml::deg2rad;
-    dir.y = (f32)fixedDist / lbl_eu_80666168 * ml::deg2rad;
-    dir.z = lbl_eu_80666178;
+    dir.x = (f32)fixedAngle / 4096.0f * ml::deg2rad;
+    dir.y = (f32)fixedDist / 4096.0f * ml::deg2rad;
+    dir.z = 0.0f;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->setDirection(&dir);
@@ -231,9 +210,9 @@ extern "C" int setPosOfs(VMThread* pThread) {
     }
 
     ml::CVec3 pos;
-    pos.x = (f32)fixedX / lbl_eu_80666168;
-    pos.y = (f32)fixedY / lbl_eu_80666168;
-    pos.z = (f32)fixedZ / lbl_eu_80666168;
+    pos.x = (f32)fixedX / 4096.0f;
+    pos.y = (f32)fixedY / 4096.0f;
+    pos.z = (f32)fixedZ / 4096.0f;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = ArtsSelect_GetContainer();
@@ -256,15 +235,15 @@ extern "C" int setLookatOfs(VMThread* pThread) {
     }
 
     ml::CVec3 lookat;
-    lookat.x = (f32)fixedX / lbl_eu_80666168;
-    lookat.y = (f32)fixedY / lbl_eu_80666168;
-    lookat.z = (f32)fixedZ / lbl_eu_80666168;
+    lookat.x = (f32)fixedX / 4096.0f;
+    lookat.y = (f32)fixedY / 4096.0f;
+    lookat.z = (f32)fixedZ / 4096.0f;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = ArtsSelect_GetContainer();
     void* slot = ArtsSelect_Lookup(obj, oc->field_0x04);
     cam->setLookAtOfs(slot, &lookat, -flags);
-    cf::CfMapEffectManager::pushFlash(lbl_eu_80666178, lbl_eu_8066617C);
+    cf::CfMapEffectManager::pushFlash(0.0f, 1.0f);
     return 0;
 }
 
@@ -411,16 +390,16 @@ extern "C" int keyAdd(VMThread* pThread) {
         ml::CVec3 lookat;
         ml::CVec3 pos;
     } cam;
-    cam.pos.x = (f32)fixed1 / lbl_eu_80666168;
-    cam.pos.y = (f32)fixed2 / lbl_eu_80666168;
-    cam.pos.z = (f32)fixed3 / lbl_eu_80666168;
-    cam.lookat.x = (f32)fixed4 / lbl_eu_80666168;
-    cam.lookat.y = (f32)fixed5 / lbl_eu_80666168;
-    cam.lookat.z = (f32)fixed6 / lbl_eu_80666168;
+    cam.pos.x = (f32)fixed1 / 4096.0f;
+    cam.pos.y = (f32)fixed2 / 4096.0f;
+    cam.pos.z = (f32)fixed3 / 4096.0f;
+    cam.lookat.x = (f32)fixed4 / 4096.0f;
+    cam.lookat.y = (f32)fixed5 / 4096.0f;
+    cam.lookat.z = (f32)fixed6 / 4096.0f;
 
     isEffectReady__Q22cf13CfGameManagerFv(
         (u32)first & 0xFFFF, &cam.pos, &cam.lookat, extraArg,
-        (f32)seventh / lbl_eu_80666168);
+        (f32)seventh / 4096.0f);
     return 0;
 }
 
@@ -465,20 +444,20 @@ extern "C" int shake(VMThread* pThread) {
     memset(data, 0, sizeof(data));
 
     data[0] = (f32)intParam;
-    data[1] = (f32)fixed1 / lbl_eu_80666168;
-    data[2] = (f32)fixed2 / lbl_eu_80666168;
-    data[3] = (f32)fixed3 / lbl_eu_80666168;
-    data[4] = (f32)fixed4 / lbl_eu_80666168;
-    data[5] = (f32)fixed5 / lbl_eu_80666168;
-    data[6] = (f32)fixed6 / lbl_eu_80666168;
-    data[7] = lbl_eu_80666178; // 0.0f
-    data[8] = (f32)fixed7 / lbl_eu_80666168;
-    data[9] = (f32)fixed8 / lbl_eu_80666168;
-    data[10] = (f32)fixed9 / lbl_eu_80666168;
-    data[11] = (f32)fixed10 / lbl_eu_80666168;
-    data[12] = (f32)fixed11 / lbl_eu_80666168;
+    data[1] = (f32)fixed1 / 4096.0f;
+    data[2] = (f32)fixed2 / 4096.0f;
+    data[3] = (f32)fixed3 / 4096.0f;
+    data[4] = (f32)fixed4 / 4096.0f;
+    data[5] = (f32)fixed5 / 4096.0f;
+    data[6] = (f32)fixed6 / 4096.0f;
+    data[7] = 0.0f; // 0.0f
+    data[8] = (f32)fixed7 / 4096.0f;
+    data[9] = (f32)fixed8 / 4096.0f;
+    data[10] = (f32)fixed9 / 4096.0f;
+    data[11] = (f32)fixed10 / 4096.0f;
+    data[12] = (f32)fixed11 / 4096.0f;
 
-    CamEvtForwardShakeFlag(data, (u32)(-boolParam | boolParam) >> 31);
+    CamEvtForwardShakeFlag((int)(uintptr_t)data, (u32)(-boolParam | boolParam) >> 31);
     return 0;
 }
 
@@ -487,6 +466,32 @@ extern "C" int stopShake(VMThread* pThread) {
     return 0;
 }
 
+// name-guess: 20-entry VM function dispatch table registered by
+// pluginCamRegist; retail .data object 0x80526560.
+static PluginFuncData sCamPluginFuncs[] = {
+    { "select", select },
+    { "restore", restore },
+    { "setPos", setPos },
+    { "setDir", setDir },
+    { "setLookat", setLookat },
+    { "setTarget", setTarget },
+    { "setRotX", setRotX },
+    { "setRotY", setRotY },
+    { "setFov", setFov },
+    { "getPos", getPos },
+    { "getRot", getRot },
+    { "setPosOfs", setPosOfs },
+    { "setLookatOfs", setLookatOfs },
+    { "keyBegin", keyBegin },
+    { "keyEnd", keyEnd },
+    { "keyAdd", keyAdd },
+    { "isKeyMove", isKeyMove },
+    { "waitKeyMove", waitKeyMove },
+    { "shake", shake },
+    { "stopShake", stopShake },
+    { nullptr, nullptr },
+};
+
 void pluginCamRegist() {
-    vmPluginRegist(lbl_eu_804FB1A4, lbl_eu_80526560);
+    vmPluginRegist("cam", sCamPluginFuncs);
 }

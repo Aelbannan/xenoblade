@@ -4,6 +4,7 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuSave.hpp"
 
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -53,7 +54,7 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void NandAllocBufs();
 

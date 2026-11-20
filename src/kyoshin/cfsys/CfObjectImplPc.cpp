@@ -1,18 +1,29 @@
 // Auto-scaffolded catalog TU for kyoshin/cfsys/CfObjectImplPc
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
-#include "kyoshin/SysWinLogCounterApi.hpp"
+#include "kyoshin/cf/CPcEffect07.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/cfsys/WalkerApi.hpp"
+#include "kyoshin/code_8028130C.hpp"
 
 #include "monolib/util/MemManager.hpp"
 #include <string.h>
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene (CScn*)
-#include "monolib/scn/CScnTimeApi.hpp"        // Scn_GetFrameDelta
+#include "monolib/scn/CScn.hpp"        // Scn_GetFrameDelta
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 
 // TU-local C-ABI imports (moved out of CfObjectImplPc.hpp so that header
 // stays co-includable with kyoshin/cf/object/CfObjectMove.hpp, whose owner
@@ -30,7 +41,6 @@ void func_8004B9D4(void* obj, u32 a, u32 b, void* c, u32 d);
 extern "C" {
 extern void __dt__Q22cf18CfObjectImplWalkerFv();
 extern void ObjPc_ArtsCmdFeedback_6F30(cf::CfObjectImplPc* self, int arg2, int arg3, int arg4);
-extern void Walker_ForwardBattleEntry();
 extern void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param);
 extern void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token, cf::CfObjectImplPcEvtCmd* evt);
 extern void MoveImplDriveMoveSounds();
@@ -54,10 +64,7 @@ extern void dispatchObjectFunc46__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc48__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc52b__Q22cf13CfGameManagerFv();
 extern void dispatchObjectFunc53__Q22cf13CfGameManagerFUl();
-extern void Walker_SwitchTargetParty();
 extern void ObjPc_TickPlayer_A458(cf::CfObjectImplPc* self);
-extern void Walker_UpdatePartyBattle();
-extern void Walker_LeaveBattle();
 extern void MoveImplResolveActorRef();
 extern void ObjPc_StoreSubVal_A274(void* self, int value);
 extern void ObjPc_EventDispatch_9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
@@ -66,24 +73,15 @@ extern void ObjPc_ArtsCmdEventDispatch_9CEC(cf::CfObjectImplPc* self, CfObjectIm
 extern void ObjPc_DispatchArtsTable_A104(cf::CfObjectImplPc* self, u32 param);
 extern void ObjPc_DispatchArtsCmd_A084(cf::CfObjectImplPc* self, u32 param);
 extern void Walker_ExitBattleSweep();
-extern void Walker_ResetBattleHook();
 extern void Walker_SyncBattleFrame();
-extern void Walker_VtNoopA0();
 extern void ObjPc_ClearSub_5AA0(cf::CfObjectImplPc* self);
 extern void MoveImplPushEventId();
-extern void Walker_Adjust0C_Dtor();
-extern void Walker_Adjust0C_6EC0();
-extern void Walker_Adjust10_Dtor();
-extern void Walker_Adjust10_FFA0();
 extern void Walker_OnBattleChange();
 extern void Walker_DispatchTalkSrc();
 extern void Walker_SweepBattleActors();
 extern void MoveImplRepositionEffect();
-extern void Walker_InnerPtr68();
 extern void ObjPc_NotifyVf10_6EC0(cf::CfObjectImplPc* self, u32 param);
 extern void CfObjectImplMoveClearLinkIfMatch();
-extern void Walker_FanfareBattleStart();
-extern void Walker_VtNoopF0();
 extern void Walker_SetField380();
 extern void Walker_GetField380();
 extern void Walker_TryStartBattle();
@@ -157,27 +155,7 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
 #define lbl_eu_80666BE0 sdata2_ImplPc.d_BE0
 
 
-// KEEP (blockers-A 2026-10-23): minimal cf::CBattleManager view. This TU walks the
-// +0x28/+0x48 actor-list sentinels through its own CfBattleChainNode type
-// while the real class holds reslist<CfObjectActor*> members; replacing the
-// view needs those list walks retyped onto reslist first.
-namespace cf {
-struct CfBattleChainNode;  // defined in CfObjectImplPc.hpp
-class CBattleManager {
-public:
-    virtual ~CBattleManager();
-    static CBattleManager* getInstance();
-    u8 _pad04[0x28 - 0x04];
-    CfBattleChainNode mListA;        // 0x28: second intrusive list sentinel
-    u8 _pad2C[0x48 - 0x2C];
-    CfBattleChainNode mListHead;     // 0x48: intrusive list sentinel, next at +0
-    u8 _pad4C[0x194 - 0x4C];
-    u8 unk194[0x1A8 - 0x194];        // party-gauge sub-object
-    u8 mChain[0x283D8 - 0x1A8];      // chain gauge block at +0x1A8
-};
-} // namespace cf
 
-// Player init/refresh: prepares via MoveImplInitFields, dispatches vtable slot
 // 0xE4 and feeds its result + sub-fields into CharEffInit, binds the +0x28
 // holder to the battle object's +0x3E9C sub-object, and when the +0x70 token
 // formats with entry id 7, allocates + constructs a CPcEffect07 whose +4
@@ -290,7 +268,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         // Solo battle: exactly one actor in the +0x28 list, none queued at
         // +0x48, then replay arts 0xeb.
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        cf::CfBattleChainNode* head = &bm->mListA;
+        cf::CfBattleChainNode* head = (cf::CfBattleChainNode*)&bm->mActorList2.mStartNodePtr;
         cf::CfBattleChainNode* p = head->mNext;
         int n = 0;
         while (p != head) {
@@ -300,7 +278,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         if (n != 1) {
             goto L_tail;
         }
-        head = &bm->mListHead;
+        head = (cf::CfBattleChainNode*)&bm->mActorList3.mStartNodePtr;
         p = head->mNext;
         n = 0;
         while (p != head) {
@@ -336,7 +314,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
         }
         {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-            cf::CfBattleChainNode* head = &bm->mListA;
+            cf::CfBattleChainNode* head = (cf::CfBattleChainNode*)&bm->mActorList2.mStartNodePtr;
             cf::CfBattleChainNode* p = head->mNext;
             int n = 0;
             while (p != head) {
@@ -346,7 +324,7 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
             if (n != 1) {
                 goto L_tail;
             }
-            head = &bm->mListHead;
+            head = (cf::CfBattleChainNode*)&bm->mActorList3.mStartNodePtr;
             p = head->mNext;
             n = 0;
             while (p != head) {
@@ -377,13 +355,13 @@ void ObjPc_BattleChangeDriver_5B00(cf::CfObjectImplPc* self)
                         reinterpret_cast<CfObjectImplPcArtsData*>(&obj->mArts)
                             ->field_1528);
                 }
-                CBattleMan_ClearEventNotify(cf::CBattleManager::getInstance(), obj, 0x10a);
+                CBattleMan_ClearEventNotify(cf::CBattleManager::getInstance(), (u32)obj, (u16)0x10a);
                 goto L_table;
             }
         }
         if (obj->v160() < 1.0f) {
             if (isBattleStatusActive(&obj->mArts, 0x10a)) {
-                CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), obj, 0x10a);
+                CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), obj, (void*)0x10a);
             }
         }
         goto L_table;
@@ -417,7 +395,7 @@ L_table:
         if (counts[j] == 0) {
             if (isBattleStatusActive(&self->field_18->mArts, (int)ids[j])) {
                 CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), self->field_18,
-                              (s32)ids[j]);
+                              (void*)ids[j]);
             }
         }
     }
@@ -463,7 +441,7 @@ L_tail:
             // player 0's, and the paired object reports a live target.
             {
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                cf::CfBattleChainNode* head = &bm->mListHead;
+                cf::CfBattleChainNode* head = (cf::CfBattleChainNode*)&bm->mActorList3.mStartNodePtr;
                 cf::CfBattleChainNode* p = head->mNext;
                 int n = 0;
                 while (p != head) {
@@ -577,7 +555,7 @@ L_tail:
             }
             CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 5, 0, -1, 1);
             CfObjectImplPcEA444* res = reinterpret_cast<CfObjectImplPcEA444*>(
-                CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
+                cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj());
             cf::CfGameManager::getInstance();
             bool runRest = false;
             if (isGlobalCamFlagSet(0x04000000) == 0 && res != 0) {
@@ -638,41 +616,41 @@ L_tail:
                         eff.field_0C = 0x58;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
-                                      &eff, 5, 0);
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)o2,
+                                      (Func800EA9A8_Arg5*)&eff, (void*)5);
                     }
                     if (IdTable_QuerySumFloat(o2->vf290(), 8, &w38, &fv34)) {
                         memset(&eff, 0, sizeof(eff));
                         eff.field_0C = 0x58;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
-                                      &eff, 8, 0);
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)o2,
+                                      (Func800EA9A8_Arg5*)&eff, (void*)8);
                         eff.field_0C = 0x5b;
-                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
-                                      &eff, 8, 0);
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)o2,
+                                      (Func800EA9A8_Arg5*)&eff, (void*)8);
                     }
                     if (IdTable_QuerySumFloat(o2->vf290(), 0x18, &w38, &fv34)) {
                         memset(&eff, 0, sizeof(eff));
                         eff.field_0C = 0x5d;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
-                                      &eff, 0x18, 0);
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)o2,
+                                      (Func800EA9A8_Arg5*)&eff, (void*)0x18);
                     }
                     if (IdTable_QuerySumFloat(o2->vf290(), 0x9a, &w38, &fv34)) {
                         memset(&eff, 0, sizeof(eff));
                         eff.field_0C = 0x59;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
-                                      &eff, 0x9a, 0);
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)o2,
+                                      (Func800EA9A8_Arg5*)&eff, (void*)0x9a);
                     }
                     if (IdTable_GetSum(o2->vf290(), 0x62, (s32*)&w38)) {
                         if (((cf::CfEnumList*)h40.get())->field_620
                             == 1) {
-                            PartyGaugeAddClamped(
-                                &cf::CBattleManager::getInstance()->unk194,
+                            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(
+                                &cf::CBattleManager::getInstance()->unk194),
                                 (s32)w38);
                         }
                     }
@@ -829,7 +807,7 @@ void ObjPc_ArtsCmdFeedback_6F30(cf::CfObjectImplPc* self, int arg2, int arg3, in
     cf::CfObjectImplPc18* battleObj = getCfObjectPc((cf::CfObjectMove*)(
         self->field_18 != 0 ? (cf::CfObjectImplPc18*)((u8*)self->field_18 + 0x3E9C)
                             : (cf::CfObjectImplPc18*)0));
-    char* name = 0;
+    const char* name = 0;
     int flag = 0;
     switch (arg3) {
     case 0:
@@ -838,10 +816,10 @@ void ObjPc_ArtsCmdFeedback_6F30(cf::CfObjectImplPc* self, int arg2, int arg3, in
         // slot-0 body, jump, slot-1 body, then the shared name check.
         if (arg4 == 0) {
             flag = 0;
-            name = CfObjectMove_getBdatNameCol11((u8*)&battleObj->mSub, 0);
+            name = CfObjectMove_getBdatNameCol11((cf::CfObjectMove*)&battleObj->mSub, 0);
         } else if (arg4 == 1) {
             flag = 1;
-            name = CfObjectMove_getBdatNameCol11((u8*)&battleObj->mSub, 1);
+            name = CfObjectMove_getBdatNameCol11((cf::CfObjectMove*)&battleObj->mSub, 1);
         }
         if (strcmp(name, lbl_eu_804FC758) == 0) {
             name = 0;
@@ -856,10 +834,10 @@ void ObjPc_ArtsCmdFeedback_6F30(cf::CfObjectImplPc* self, int arg2, int arg3, in
     {
         if (arg4 == 0) {
             flag = 0;
-            name = CfObjectMove_getBdatNameCol7((u8*)&battleObj->mSub, 0);
+            name = CfObjectMove_getBdatNameCol7((cf::CfObjectMove*)&battleObj->mSub, 0);
         } else if (arg4 == 1) {
             flag = 1;
-            name = CfObjectMove_getBdatNameCol7((u8*)&battleObj->mSub, 1);
+            name = CfObjectMove_getBdatNameCol7((cf::CfObjectMove*)&battleObj->mSub, 1);
         }
         if (strcmp(name, lbl_eu_804FC758) == 0) {
             name = 0;
@@ -908,7 +886,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
         if (mgr == 0) {
             return;
         }
-        bindPartnerO_(mgr, actor != 0 ? (u8*)&actor->mSub : 0, child);
+        bindPartnerO_((cf::CfObjectEff*)mgr, (u8*)actor != 0 ? (u8*)&actor->mSub : 0, (u8*)child);
         mgr->vf194(bit7);
         if (self->field_14->field_98 != 0) {
             setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
@@ -919,7 +897,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
         if (mgr == 0) {
             return;
         }
-        bindPartnerO_(mgr, actor != 0 ? (u8*)&actor->mSub : 0, child);
+        bindPartnerO_((cf::CfObjectEff*)mgr, (u8*)actor != 0 ? (u8*)&actor->mSub : 0, (u8*)child);
         mgr->vf194(bit7);
         if (self->field_14->field_98 != 0) {
             setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
@@ -939,7 +917,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
                     if (actor != 0) {
                         actor = (cf::CfObjectImplPc18*)((u8*)actor + 0x3E9C);
                     }
-                    bindPartnerO_(mgr, actor, child);
+                    bindPartnerO_((cf::CfObjectEff*)mgr, (u8*)actor, (u8*)child);
                     mgr->vf194(bit7);
                     if (self->field_14->field_98 != 0) {
                         setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
@@ -952,7 +930,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
                     if (actor != 0) {
                         actor = (cf::CfObjectImplPc18*)((u8*)actor + 0x3E9C);
                     }
-                    bindPartnerO_(mgr, actor, child);
+                    bindPartnerO_((cf::CfObjectEff*)mgr, (u8*)actor, (u8*)child);
                     mgr->vf194(bit7);
                     if (self->field_14->field_98 != 0) {
                         setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
@@ -967,7 +945,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
                 if (actor != 0) {
                     actor = (cf::CfObjectImplPc18*)((u8*)actor + 0x3E9C);
                 }
-                bindPartnerO_(mgr, actor, child);
+                bindPartnerO_((cf::CfObjectEff*)mgr, (u8*)actor, (u8*)child);
                 mgr->vf194(bit7);
                 if (self->field_14->field_98 != 0) {
                     setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
@@ -1013,7 +991,7 @@ void ObjPc_BattleEffectDispatch_70BC(cf::CfObjectImplPc* self, u32 id, CfObjectI
             }
         }
         if (actor != 0) {
-            setTargetObj_(mgr, actor != 0 ? (u8*)&actor->mSub : 0);
+            setTargetObj_((cf::CfObjectEff*)mgr, (u8*)actor != 0 ? (u8*)&actor->mSub : 0);
             if (actor->field_3F34 != 0) {
                 setChild34Sc_(mgr, (u8*)actor->field_3F34 + 0x304);
             }
@@ -1114,17 +1092,17 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                     eff.field_10 = effW;
                     eff.field_20 = effF;
                     eff.field_2E = 0x2e;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0x2e, 0);
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)res, (Func800EA9A8_Arg5*)&eff,
+                                  (void*)0x2e);
                     eff.field_0C = 0x58;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0, 0);
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)res, (Func800EA9A8_Arg5*)&eff,
+                                  (void*)0);
                     eff.field_0C = 0x59;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0, 0);
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)res, (Func800EA9A8_Arg5*)&eff,
+                                  (void*)0);
                     eff.field_0C = 0x5a;
-                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
-                                  0, 0);
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), (BattleObjAccessor*)res, (Func800EA9A8_Arg5*)&eff,
+                                  (void*)0);
                 }
             }
             if (self->field_18->field_3F28 == 0xb) {
@@ -1219,7 +1197,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                     dmg = 100 - o18;
                 }
             }
-            PartyGaugeAddClamped(&cf::CBattleManager::getInstance()->unk194, -dmg);
+            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&cf::CBattleManager::getInstance()->unk194), -dmg);
             addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
                                                    res->field_3F28, 0x14);
             CCharVoiceMan_EnqueueGaugeResultVoice(self->field_18, res);
@@ -1297,7 +1275,7 @@ void ObjPc_BattleEventCmdDispatch_75D4(cf::CfObjectImplPc* self, u32 token,
                 obj->vf2C4((u8*)self->field_18, 10.0f,
                            0.0f, 0.0f);
             }
-            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), obj) == 0) {
+            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)obj) == 0) {
                 obj->mSub.v08(0x100);
             }
             // Retail materializes this local table by copying the hidden
@@ -1722,11 +1700,11 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     do {                                                                    \
         q = self->field_18->vf290();                                        \
         if (q != 0 && Counter_TestBit(q, id_) != 0) {                         \
-            wA = IdTable_SumValues(self->field_18->vf290(), id_);               \
+            wA = IdTable_SumValues((CUnkObj8025FB10*)self->field_18->vf290(), id_);               \
             if (wA != 0) {                                                  \
-                wB = IdTable_MaxValueC(self->field_18->vf290(), id_);           \
+                wB = IdTable_MaxValueC((CUnkObj8025FB10*)self->field_18->vf290(), id_);           \
                 if (wB != 0) {                                              \
-                    fv = IdTable_MaxValue10(self->field_18->vf290(), id_);       \
+                    fv = IdTable_MaxValue10((CUnkObj8025FB10*)self->field_18->vf290(), id_);       \
                     if (fv != 0.0f) {                            \
                         if ((s16)ml::math::mtRand(100) < (s16)wB) {         \
                             memset(&eff, 0, sizeof(eff));                   \
@@ -1735,8 +1713,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
                             eff.field_0C = eff_;                            \
                             cf::CBattleManager* mgr =                       \
                                 cf::CBattleManager::getInstance();          \
-                            CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, id_,   \
-                                          0);                               \
+                            CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)id_);                               \
                         }                                                   \
                     }                                                       \
                 }                                                           \
@@ -1749,9 +1726,9 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     do {                                                                    \
         q = self->field_18->vf290();                                        \
         if (q != 0 && Counter_TestBit(q, id_) != 0) {                         \
-            wA = IdTable_SumValues(self->field_18->vf290(), id_);               \
-            if (wA != 0 && IdTable_MaxValueC(self->field_18->vf290(), id_) != 0) { \
-                fv = IdTable_MaxValue10(self->field_18->vf290(), id_);           \
+            wA = IdTable_SumValues((CUnkObj8025FB10*)self->field_18->vf290(), id_);               \
+            if (wA != 0 && IdTable_MaxValueC((CUnkObj8025FB10*)self->field_18->vf290(), id_) != 0) { \
+                fv = IdTable_MaxValue10((CUnkObj8025FB10*)self->field_18->vf290(), id_);           \
                 if (fv != 0.0f) {                                \
                     memset(&eff, 0, sizeof(eff));                           \
                     eff.field_10 = wA;                                      \
@@ -1759,7 +1736,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
                     eff.field_0C = eff_;                                    \
                     cf::CBattleManager* mgr =                               \
                         cf::CBattleManager::getInstance();                  \
-                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, id_, 0);       \
+                    CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)id_);       \
                 }                                                           \
             }                                                               \
         }                                                                   \
@@ -1777,11 +1754,11 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     do {
         q = self->field_18->vf290();
         if (q != 0 && Counter_TestBit(q, 0x31) != 0) {
-            wB = IdTable_SumValues(self->field_18->vf290(), 0x31);
+            wB = IdTable_SumValues((CUnkObj8025FB10*)self->field_18->vf290(), 0x31);
             if (wB != 0) {
-                wA = IdTable_MaxValueC(self->field_18->vf290(), 0x31);
+                wA = IdTable_MaxValueC((CUnkObj8025FB10*)self->field_18->vf290(), 0x31);
                 if (wA != 0) {
-                    fv = IdTable_MaxValue10(self->field_18->vf290(), 0x31);
+                    fv = IdTable_MaxValue10((CUnkObj8025FB10*)self->field_18->vf290(), 0x31);
                     if (fv != 0.0f) {
                         if ((s16)ml::math::mtRand(100) < (s16)wA) {
                             memset(&eff, 0, sizeof(eff));
@@ -1790,7 +1767,7 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
                             eff.field_0C = 2;
                             cf::CBattleManager* mgr =
                                 cf::CBattleManager::getInstance();
-                            CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0x31, 0);
+                            CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)0x31);
                         }
                     }
                 }
@@ -1820,9 +1797,9 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
     do {
         q = self->field_18->vf290();
         if (q != 0 && Counter_TestBit(q, 0x2e) != 0) {
-            wA = IdTable_SumValues(self->field_18->vf290(), 0x2e);
-            if (wA != 0 && IdTable_MaxValueC(self->field_18->vf290(), 0x2e) != 0) {
-                fv = IdTable_MaxValue10(self->field_18->vf290(), 0x2e);
+            wA = IdTable_SumValues((CUnkObj8025FB10*)self->field_18->vf290(), 0x2e);
+            if (wA != 0 && IdTable_MaxValueC((CUnkObj8025FB10*)self->field_18->vf290(), 0x2e) != 0) {
+                fv = IdTable_MaxValue10((CUnkObj8025FB10*)self->field_18->vf290(), 0x2e);
                 if (fv != 0.0f) {
                     memset(&eff, 0, sizeof(eff));
                     eff.field_10 = wA;
@@ -1831,16 +1808,16 @@ void ObjPc_BattleStartEffects_891C(cf::CfObjectImplPc* self)
                     eff.field_2E = 0x2e;
                     cf::CBattleManager* mgr =
                         cf::CBattleManager::getInstance();
-                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0x2e, 0);
+                    CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)0x2e);
                     eff.field_0C = 0x58;
                     mgr = cf::CBattleManager::getInstance();
-                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0, 0);
+                    CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)0);
                     eff.field_0C = 0x59;
                     mgr = cf::CBattleManager::getInstance();
-                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0, 0);
+                    CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)0);
                     eff.field_0C = 0x5a;
                     mgr = cf::CBattleManager::getInstance();
-                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0, 0);
+                    CBattleMan_FireActorEvent918(mgr, (BattleObjAccessor*)self->field_18, (Func800EA9A8_Arg5*)&eff, (void*)0);
                 }
             }
         }
@@ -1953,7 +1930,7 @@ L_f0:
 L_10a:
     CfObjectMove_relaySubB0Slot54(&self->field_18->mSub, 0x66, 1.0f, 0, 30.0f, 0);
 L_chainEnd:
-    if (CChain_HasMemberEntry(&cf::CBattleManager::getInstance()->mChain, self->field_18) == 0) {
+    if (CChain_HasMemberEntry(&cf::CBattleManager::getInstance()->mChain, (CChainBattleObjTail*)self->field_18) == 0) {
         if ((u32)(evt->id() - 0xF) <= 1 || evt->id() == 9 || evt->id() == 0xB) {
             if (self->field_18->vf308() == 4) {
                 self->field_18->vf304(3);
@@ -1973,7 +1950,7 @@ L_chainEnd:
         s32 gauge;
         if (self->field_18->vf290() != 0 && IdTable_GetSum(self->field_18->vf290(), 0x63, &gauge) != 0 &&
             isBattleEventKind3(evt->field_0C)) {
-            PartyGaugeAddClamped(&cf::CBattleManager::getInstance()->unk194, gauge);
+            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&cf::CBattleManager::getInstance()->unk194), gauge);
         }
     }
     MoveImplDispatchStart(self, evt);
@@ -2072,12 +2049,13 @@ L_f8:
             copy.field_0C = 0x93;
             copy.field_20 = 15.0f;
             cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
-            CBattleMan_RunBattleEvent(mgr, obj, &copy, 0);
+            CBattleMan_RunBattleEvent((u32)mgr, (u32)obj, &copy, 0);
             mgr = cf::CBattleManager::getInstance();
             // Count nodes in the intrusive list rooted at +0x48; skip when
             // any actor holds a chain entry.
+            cf::CfBattleChainNode* head = (cf::CfBattleChainNode*)&mgr->mActorList3.mStartNodePtr;
             u32 count = 0;
-            for (cf::CfBattleChainNode* n = mgr->mListHead.mNext; n != &mgr->mListHead;
+            for (cf::CfBattleChainNode* n = head->mNext; n != head;
                  n = n->mNext) {
                 count++;
             }

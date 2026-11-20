@@ -3,6 +3,7 @@
 // removal, and buffer-size getter.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
@@ -73,7 +74,7 @@ void CVS_THREAD_REVIVE::playSlot1() {
     int iter = HpVoice_MapSubState(self->field_0x24);
 
     if (HpVoice_ValidIter(iter) != 0 &&
-        HpVoice_CheckPair26(self->field_0x20, self->field_0x24) == 0 &&
+        HpVoice_CheckPair26((CVoiceHandleState*)self->field_0x20, (CVoiceHandleState*)self->field_0x24) == 0 &&
         ml::math::mtRand(2) != 0) {
         // Valid state -- play the state-specific voice (iter + 0x204)
         CVoiceHandle* tmpHandle = self->field_0x20;

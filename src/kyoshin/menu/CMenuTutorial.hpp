@@ -10,6 +10,10 @@
 // retail extab for the ctor/dtor.
 #include "monolib/scn/IScnRender.hpp"
 
+// Retail symbol is the plain C name MenuTutorialIsCreated (defined in
+// menu/CMenuTutorial.cpp); callers include this owning header.
+extern "C" u32 MenuTutorialIsCreated();
+
 /*
  * Tutorial menu screen process (IUICf + IScnRender MI).
  *

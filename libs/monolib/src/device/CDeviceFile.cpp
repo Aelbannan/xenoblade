@@ -40,7 +40,8 @@ class IWorkEvent;
 void DevFile_SubstLangPath(char* pPath);
 
 // Pack-archive queries shared with CWorkSystemPack.
-extern "C" int hasPackFile(const char* pName);
+// Defined in monolib/src/work/CWorkSystemPack.cpp with C++ linkage.
+int hasPackFile(const char* pName);
 extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
                               u32* outB, u32* outC, u32* outD);
 
@@ -141,7 +142,7 @@ public:
     void wkSetEvent(EVT evt);
 
     //0x0..0x1C4: CWorkThread base (name/state/id/type/alloc/parent)
-    u32* volatile vptr;              //0x0 (vtable, set by each ctor)
+    u32* vptr;              //0x0 (vtable, set by each ctor)
     u8 field_0x4[0x48 - 0x4];        //0x4
     int mState;                      //0x48 (ThreadState)
     u8 field_0x4C[0x50 - 0x4C];      //0x4C
@@ -280,7 +281,7 @@ struct CFileJobSlot {
 struct CFileHandleReslist {
     union {
         u32* m_vtable;                     //0x0
-        u32* volatile m_vtable_raw;        //0x0 (base-construction store)
+        u32* m_vtable_raw;        //0x0 (base-construction store)
     };
     CFileHandleReslistNode* mStartNodePtr; //0x4
     CFileHandleReslistNode mStartNode;     //0x8..0x14 (embedded sentinel)
@@ -300,7 +301,7 @@ public:
         : CWorkThread(pName, pParent, capacity) {}
     ~CDeviceBase() {}
 
-    u32 volatile mFlags; //0x1C4
+    u32 mFlags; //0x1C4
 };
 
 class CDeviceFile : public CDeviceBase {

@@ -50,3 +50,7 @@ void CfRes_getInstPtrBC();
 int KyoshinHeap_GetActive54();
 u32 KyoshinHeap_GetSize500000();
 }
+
+void InfoCfNoopVirt();
+void InfoCfSetBit2ClearBit1();
+void InfoCfRefreshSettings(cf::CInfoCf* self);

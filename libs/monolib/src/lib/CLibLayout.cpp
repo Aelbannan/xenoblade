@@ -261,13 +261,6 @@ bool CLibLayout::wkStandbyLogout() {
     return false;
 }
 
-// Volatile word view of a CLibLayout singleton: blocks CSE so retail's
-// double hashCount load and per-access reloads survive.
-#define CLIBLAYOUT_WORD(inst, i) \
-    (*static_cast<const volatile u32*>(static_cast<const volatile void*>( \
-        static_cast<const volatile u8*>(static_cast<const volatile void*>(inst)) \
-            + (i) * 4)))
-
 // Allocator callback. Resolves the buffer either from the hash table's
 // registered frame heap or from the default accelerator-allocator handle.
 // extern "C" (see header) reproduces the retail synthetic "Fv" symbol.
@@ -302,7 +295,6 @@ void* layoutAllocCallback__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     // Align parameter lives in the allocator's heapParam1 field.
     return mtl::MemManager::allocate_head(val, size, allocator->heapParam1);
 }
-#undef CLIBLAYOUT_WORD
 
 void layoutFreeCallback__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // Free callback for the nw4r layout allocator: blocks inside the layout

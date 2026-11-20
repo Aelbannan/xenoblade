@@ -2,11 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
 #include "kyoshin/CTaskGameApi.hpp"
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
+#include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
 #include "kyoshin/makecrystal/CMCCrystalParamTable.hpp"
 
@@ -28,8 +30,9 @@
 // carrying the item from preceding code simply pass that live value (MWCC
 // emits nothing when it is already in r3). No guard needed here anymore.
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CItemImpl.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
-#include "kyoshin/CBaseCur.hpp"
+
 #include "monolib/util/MemManager.hpp"
 #include "monolib/math/MTRand.hpp"
 #include "monolib/work/CEventFile.hpp"
@@ -126,19 +129,10 @@ extern "C" {
 void* writeVec3f(void*, f32, f32, f32);
 float scaleByGlobal(float val);
 void initCrystalData(unsigned char* p);
-int isMCGetItemBoxActive(void* self);
-int crystalListGetDataFlag(void* self);
-void crystalListState3To4(void* self);
-void crystalListDrawIfActive(void*, void*);
 void crystalListDispatch(void* self);
 void CrySupTickAnim(void* self);
 void CrySupUnloadLayout(void* self);
 void CrySupDrawLayout(void*, void*);
-void drawMCGetItemBox(void*, void*);
-void updateMCGetItemBox(void* self);
-void teardownMCGetItemBox(void*);
-void confirmMCGetItemBox(void*);
-int crystalListIsActive(void*);
 void tickAnimFrame(void*);
 void MakeCrystal_DispatchState(CModelDispMakeCrystal*);
 void releaseAnimObj(void*, void*);
@@ -169,28 +163,17 @@ void CUICfManager_queuePauseItemMenu(u32, u32, u32);
 void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void schedDetachChildSlot(void*, void*);
-int getMCGetItemBoxKeyCode(void*);
 // func_8004B9D4: canonical CActParamAnim.hpp declaration.
 void MakeCrystal_SpawnCrystalItem(void*, int, u8);
 void openMCGetItemBox(void*, int, void*, u8);
 void crystalListAlignSlot(void*, void*, u8);
 void crystalListResetAnim3(void*);
-void crystalListLoadFiles(void*);
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 int isFinished__FPv(void*);
-int isMCGetItemBoxReady(void*);
-int isMCGetItemBoxGridMode(void*);
-void confirmMCGetItemBox(void*);
 void moveMCGetItemBoxLeft(void*);
-void toggleMCGetItemBoxSysWin(void*);
-void openMCGetItemBoxSysWin(void*);
-int getMCGetItemBoxPageState(void*);
-void cacheMCGetItemBoxEntries(void*);
-void moveMCGetItemBoxDown(void*);
-void moveMCGetItemBoxUp(void*);
-void moveMCGetItemBoxRight(void*);
 void forwardMCSubObj88(void*, int);
+extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* self, int flag);
 void advanceMCGetItemBox(void*);
 char lbl_eu_805090FC[];
 int sprintf(char*, const char*, ...);
@@ -228,7 +211,6 @@ void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 void Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(void*, void*, const char*);
 void init__16CMCCylinderGaugeFv(void*);
 void CrySupBuildLayout(void*);
-void MakeCrystalCopyParamBlock(void*, void*);
 void init__11CMCEffUpPrmFv(void*);
 void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
@@ -240,27 +222,19 @@ void crystalListClearSlots(void*, u8);
 void __dt__80222984(void*);
 void func_80222B14(void*, u8, u16, u16);
 void crystalListUpdateSlot(void*, u8, u16, u8);
-void crystalListState0To1(void*);
-void crystalListState3To6(void*);
-void crystalListState3To7(void*);
-void crystalListState3To8(void*);
 // CMCEffUpPrm::setNumber called with a u16 second arg: retail passes the raw
 // halfword as the u8 param (callee reads only the low byte), so declaring the
 // param as u16 here avoids MWCC's truncation mask at the call site.
 void setNumber__11CMCEffUpPrmFUlUc(CMCEffUpPrm*, u32, u16);
-void loadMCGetItemBoxFiles(void*);
 void* Scn_FindCamItem(void*, int);
 void ScnCamPointAt(void*, void*, void*);
 s32 getInstance__Q22ml6MTRandFv();
 s32 rand31__Q22ml6MTRandFv();
 void* CtrlObjectParam_GetCharEntry(u32);
-int Counter_TestBit(void*, int);
-u8 IdTable_SumValues(void*, int);
 void MakeCrystal_PlaceCrystals(void*);
 // CtrlRemote_SetSharedBit: retail flat name (cf. code_80135FDC.cpp:180).
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
-void __destroy_arr(void*, void*, int, int);
-void __dt__13CMCGetItemBoxFv(void*, int);
+
 void __dt__7CSysWinFv(void*, int);
 void __dt__10CScrollBarFv(void*, int);
 void __dt__14CMCEffCylinderFv(void*, int);
@@ -279,10 +253,7 @@ void __dt__14CMCCrystalListFv(void*, int);
 void __dt__16CMCCylinderGaugeFv(void*, int);
 void __dt__17UnkClass_8045F564Fv(void*, int);
 }
-extern void* lbl_eu_806640EC;   // sdata: character/enum table pointer (MakeCrystal_AppendItemSteps)
-extern void* lbl_eu_806640D8;   // sdata: item-source pointer (MakeCrystal_AppendItemSteps)
-extern u8 lbl_eu_80576658[0xC];
-extern u8 lbl_eu_80576664[0xC];
+
 extern u32 lbl_eu_8065FC18[];
 
 // ===== typified split1 retail data (wave6) =====
@@ -397,8 +368,10 @@ extern const f32 lbl_eu_806684A4;
 
 // .bss 2x0xC (crystal vec work) + .sbss crystal-state bytes (hpp declares u8[8]).
 // Plain zero-init: MWCC sorts by size into .bss/.sbss like the old absorbs.
-__attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80576658[0xC];
-__attribute__((used)) u8 lbl_eu_80576664[0xC];
+// name-guess: sinit writes two Vec3f; RebuildSubStruct copies them into the
+// sim leaf act data at +0x0 and +0xC (no retail name in any region).
+__attribute__((aligned(8))) __attribute__((used)) u8 sCrystalLeafVecA[0xC];
+__attribute__((used)) u8 sCrystalLeafVecB[0xC];
 __attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80664718[8];
 
 
@@ -539,7 +512,7 @@ CModelDispMakeCrystal::CModelDispMakeCrystal(CScn* scene)
             *reinterpret_cast<u32*>(sb + 0x544 + ((u32)(u8)i << 2)) = zero2;
         }
         for (u8 j = 0; j < 6; j++) {
-            ::initCrystalSubStruct(sub);
+            reinterpret_cast<CModelDispMakeCrystal*>(sub)->initCrystalSubStruct();
             u8* d = sb + 0x564 + (u32)(u8)j * 0xc;
             *reinterpret_cast<u32*>(d + 0) = *reinterpret_cast<u32*>(sub + 0);
             *reinterpret_cast<u32*>(d + 4) = *reinterpret_cast<u32*>(sub + 4);
@@ -591,7 +564,7 @@ CMCrystalDispSub::CMCrystalDispSub()
     __ct__Q22cf17CActParamAnimGameFv(base + 0x8);
     u8* p = base + 0x564;
     do {
-        ::initCrystalSubStruct(p);
+        reinterpret_cast<CModelDispMakeCrystal*>(p)->initCrystalSubStruct();
         p += 0xc;
     } while (p < base + 0x5ac);
 }
@@ -623,7 +596,7 @@ void MakeCrystal_InitFiles(CModelDispMakeCrystal* self)
     *reinterpret_cast<void**>(base + 0x3c) =
         readFile__11CDeviceFileFUlPCcP10IWorkEventii(
             getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805090FC[0x25], self, 0, 0);
-    crystalListLoadFiles(base + 0xc18);
+    crystalListLoadFiles(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
     reinterpret_cast<CScrollBar*>(base + 0xe38)->loadLayoutArc();
     reinterpret_cast<CSysWin*>(base + 0xe78)->loadSystemArc();
     base[0xbe9] = 0;
@@ -670,7 +643,7 @@ void MakeCrystal_TickAll(CModelDispMakeCrystal* self)
     reinterpret_cast<CScrollBar*>(base + 0xe38)->UpdateDispatch();
     reinterpret_cast<CSysWin*>(base + 0xe78)->dispatchPhase();
     ((CBaseCur*)(base + 0xeb4))->Update();
-    updateMCGetItemBox(base + 0xecc);
+    updateMCGetItemBox((CMCGetItemBox*)(base + 0xecc));
 }
 
 void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
@@ -679,7 +652,7 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
     MakeCrystal_TeardownUI(self);
     reinterpret_cast<CSysWin*>(base + 0xe78)->termLayout();
     reinterpret_cast<CBaseCur*>(base + 0xeb4)->cleanup();
-    teardownMCGetItemBox(base + 0xecc);
+    teardownMCGetItemBox((CMCGetItemBox*)(base + 0xecc));
     closeFileHandle(reinterpret_cast<CFileHandle**>(base + 0x3c));
     releaseArcResourceAccessor(*reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
     *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) = nullptr;
@@ -692,7 +665,7 @@ void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
 void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    crystalListDrawIfActive(base + 0xc18, drawInfo);
+    reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListDrawIfActive(drawInfo);
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->draw(drawInfo);
     CrySupDrawLayout(base + 0xc70, drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xc8c), drawInfo);
@@ -708,12 +681,12 @@ void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawI
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->draw(drawInfo);
     ((CBaseCur*)(base + 0xe20))->DrawLayout(drawInfo);
     reinterpret_cast<CScrollBar*>(base + 0xe38)->draw(drawInfo);
-    drawMCGetItemBox(base + 0xecc, drawInfo);
+    drawMCGetItemBox((CMCGetItemBox*)(base + 0xecc), drawInfo);
     reinterpret_cast<CSysWin*>(base + 0xe78)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
     ((CBaseCur*)(base + 0xeb4))->DrawLayout(drawInfo);
 }
 
-u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_BE8; }
+u32 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_BE8; }
 
 // Retail 0x8021E894: "ready to advance" gate - every crystal display slot
 // must be built, plus the crystal-list / scrollbar / syswin gates, then the
@@ -727,15 +700,15 @@ int MakeCrystal_CheckReady(CModelDispMakeCrystal* self)
     }
     if (base[0xbe9] == 0) return 0;
     if (*reinterpret_cast<u32*>(base + 0x40) == 0) return 0;
-    if (crystalListGetDataFlag(base + 0xc18) == 0) return 0;
+    if (reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListGetDataFlag() == 0) return 0;
     if (reinterpret_cast<CScrollBar*>(base + 0xe38)->isVisible() == 0) return 0;
     if (reinterpret_cast<CSysWin*>(base + 0xe78)->isReady() == 0) return 0;
-    return isMCGetItemBoxActive(base + 0xecc);
+    return isMCGetItemBoxActive((CMCGetItemBox*)(base + 0xecc));
 }
 
-u8 CModelDispMakeCrystal::getCrystalStateB() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DC3; }
+u32 CModelDispMakeCrystal::getCrystalStateB() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DC3; }
 
-u8 CModelDispMakeCrystal::getCrystalStateC() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DD2; }
+u32 CModelDispMakeCrystal::getCrystalStateC() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DD2; }
 
 void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
 {
@@ -753,7 +726,7 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->setLevel(1);
     }
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->start();
-    crystalListState0To1(base + 0xc18);
+    crystalListState0To1(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
     u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
     nw4r::math::VEC3 v;
     v.x = lbl_eu_806684C4;
@@ -1124,7 +1097,7 @@ void MakeCrystal_StateChargeLoop(CModelDispMakeCrystal* self)
     }
     base[0xbdd] = 8;
     MakeCrystal_ResetSlotList(self, 0);
-    crystalListState3To6(base + 0xc18);
+    crystalListState3To6(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
     if (*reinterpret_cast<u32*>(base + 0x10)) {
         reinterpret_cast<u8*>(*reinterpret_cast<u32*>(base + 0x10))[0x59] = 7;
     }
@@ -1242,7 +1215,7 @@ struct MCCSuccessAnchor {
 void MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!crystalListIsActive(base + 0xc18)) return;
+    if (!reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive()) return;
     u16 crystalCount = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
     if (crystalCount >= 0x64) {
         // Success: full crystal count reached.
@@ -1287,7 +1260,7 @@ void MakeCrystal_StatePlacedDone(CModelDispMakeCrystal* self)
     // and switch the crystal list to its final state.
     if (isFinished__FPv(base + 0xd5c)) {
         base[0xbdd] = 0xb;
-        crystalListState3To8(base + 0xc18);
+        crystalListState3To8(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
     }
 }
 
@@ -1308,7 +1281,7 @@ void MakeCrystal_StateFailWait(CModelDispMakeCrystal* self) {
 void MakeCrystal_StateDivideSel(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (crystalListIsActive(base + 0xc18)) {
+    if (reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive()) {
         if (lbl_eu_806684D4 == *reinterpret_cast<f32*>(base + 0x2dcc)) {
             base[0xbdd] = 0xf;
         } else {
@@ -1413,7 +1386,7 @@ void MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* self)
         u16 count = ((MCCountHead*)*reinterpret_cast<u8**>(base + 0xe1c))->count04;
         if (count >= 0x64) {
             base[0xbdd] = 0xb;
-            crystalListState3To8(base + 0xc18);
+            crystalListState3To8(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
         } else {
             *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
             base[0xbdd] = 0x10;
@@ -1655,54 +1628,6 @@ void MakeCrystal_DispatchTuneInput(CModelDispMakeCrystal* self)
     }
 }
 
-// Item-impl dispatch folded onto the real owner CItemImpl: the retail
-// item-impl tables (lbl_eu_8052F770 etc., 0xA0 = 38 virtuals) show the
-// method list IS the original virtuals. Slots used here: +0x1C=vf1C,
-// +0x50=vf50, +0x58=vf58, +0x68=vf68, +0x84=vf84, +0x94=vf94 (declared
-// index i => +0x08+4i). Signatures match kyoshin/cf/CItem.hpp; the void*
-// init form matches cf/CfGameManager.hpp (cf. CfMapMineManager precedent).
-struct CItemData;
-struct CItemRec;
-class __declspec(novtable) CItemImpl {
-public:
-    virtual u32 vf08(CItemData* p);
-    virtual void vf0C(CItemData* p, u32 x);
-    virtual void vf10(CItemData* p);
-    virtual void vf14();
-    virtual void vf18();
-    virtual u32 vf1C(CItemData* p);
-    virtual void vf20();
-    virtual void vf24();
-    virtual u16 vf28(CItemData* p, const char* col);
-    virtual CItemRec* vf2C(CItemData* p, u32 x);
-    virtual u32 vf30(CItemData* p);
-    virtual void vf34(CItemData* p, u32 x);
-    virtual void vf38();
-    virtual void vf3C(CItemData* p, u32 x);
-    virtual u32 vf40(CItemData* p, u32 x);
-    virtual void vf44(CItemData* p, u32 x, u32 y);
-    virtual void vf48(CItemData* p);
-    virtual u32 vf4C(CItemData* p, u32 x);
-    virtual u32 vf50(CItemData* p, u32 x, u16 y);
-    virtual u16 vf54(CItemData* p);
-    virtual void vf58(CItemData* p, u32 x);
-    virtual void vf5C();
-    virtual void vf60();
-    virtual void vf64();
-    virtual u32 vf68(CItemData* p, u32 x, u16 y);
-    virtual void vf6C();
-    virtual void vf70();
-    virtual void vf74();
-    virtual u32 vf78(CItemData* p);
-    virtual void vf7C(CItemData* p, u16 x);
-    virtual u32 vf80(CItemData* p);
-    virtual u32 vf84(CItemData* p, u32 x);
-    virtual void vf88();
-    virtual void vf8C(CItemData* p, u32 x);
-    virtual int vf90(CItemData* p);
-    virtual u32 vf94(CItemData* p, u32 x);
-};
-
 // Local mirror of the item record used by MakeCrystal_FinalizeCylCount: 0x34 bytes, head
 // zeroed as a u32 + u16, then copied into the 0x34-stride step slots at
 // +0x13c0 by CItem_copyRecMasked.
@@ -1827,7 +1752,7 @@ void MakeCrystal_StateCylDone(CModelDispMakeCrystal* self)
     // advance the crystal list state.
     if (isFinished__14CMCEffCylinderFv(base + 0xdfc)) {
         base[0xbdd] = 0x15;
-        crystalListState3To7(base + 0xc18);
+        crystalListState3To7(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
     }
 }
 
@@ -1856,9 +1781,9 @@ void MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* self)
         }
     }
     if (!(*fbe0 < lbl_eu_806684A0)) {
-        if (crystalListIsActive(base + 0xc18)) {
+        if (reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive()) {
             base[0xbdd] = 0x16;
-            crystalListState3To4(base + 0xc18);
+            crystalListState3To4(reinterpret_cast<CMCCrystalList*>(base + 0xc18));
             reinterpret_cast<CScrollBar*>(base + 0xe38)->requestScrollOut();
             ((CBaseCur*)(base + 0xe20))->SetVisible(0);
         }
@@ -1871,7 +1796,7 @@ void MakeCrystal_StateChargeFinal(CModelDispMakeCrystal* self)
 void MakeCrystal_PickPassFail(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (crystalListIsActive(base + 0xc18) == 0) return;
+    if (reinterpret_cast<CMCCrystalList*>(base + 0xc18)->crystalListIsActive() == 0) return;
     MakeCrystal_TeardownUI(self);
     u8 count = base[0x2dc0];
     int found = 0;
@@ -1922,13 +1847,13 @@ void MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         // Confirm/advance trigger: drive the makecrystal file-state machine.
-        if (!isMCGetItemBoxGridMode(base + 0xecc)) {
-            int r = getMCGetItemBoxPageState(base + 0xecc);
+        if (!((CMCGetItemBox*)(base + 0xecc))->isMCGetItemBoxGridMode()) {
+            int r = getMCGetItemBoxPageState((CMCGetItemBox*)(base + 0xecc));
             if (r == 1) {
                 // Proceed to the pass/fail tuning state.
                 base[0xbdd] = 0x19;
-                cacheMCGetItemBoxEntries(base + 0xecc);
-                confirmMCGetItemBox(base + 0xecc);
+                cacheMCGetItemBoxEntries((CMCGetItemBox*)(base + 0xecc));
+                confirmMCGetItemBox((CMCGetItemBox*)(base + 0xecc));
                 playUISound(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
@@ -1946,18 +1871,18 @@ void MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self)
                 playUISound(5);
             }
         } else {
-            openMCGetItemBoxSysWin(base + 0xecc);
+            openMCGetItemBoxSysWin((CMCGetItemBox*)(base + 0xecc));
         }
     } else if (trigger2) {
-        toggleMCGetItemBoxSysWin(base + 0xecc);
+        toggleMCGetItemBoxSysWin((CMCGetItemBox*)(base + 0xecc));
     } else if (cancel) {
         moveMCGetItemBoxLeft(base + 0xecc);
     } else if (dir) {
-        moveMCGetItemBoxRight(base + 0xecc);
+        moveMCGetItemBoxRight((CMCGetItemBox*)(base + 0xecc));
     } else if (confirm) {
-        moveMCGetItemBoxUp(base + 0xecc);
+        moveMCGetItemBoxUp((CMCGetItemBox*)(base + 0xecc));
     } else if (menu) {
-        moveMCGetItemBoxDown(base + 0xecc);
+        moveMCGetItemBoxDown((CMCGetItemBox*)(base + 0xecc));
     } else if (trigger3) {
         advanceMCGetItemBox(base + 0xecc);
     }
@@ -1966,7 +1891,7 @@ void MakeCrystal_MoveCursorPane(CModelDispMakeCrystal* self)
 void func_8021EF30(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!isMCGetItemBoxReady(base + 0xecc)) return;
+    if (!((CMCGetItemBox*)(base + 0xecc))->isMCGetItemBoxReady()) return;
     u8 count = base[0x2dc0];
     int found = 0;
     // While-form loop: retail jumps to the condition before the first body
@@ -2073,7 +1998,7 @@ void MakeCrystal_StateConfirmStep(CModelDispMakeCrystal* self)
             CUICfManager_queuePauseItemMenu(0x9, *reinterpret_cast<u32*>(base + 0xc), 0x0);
         } else {
             base[0xbdd] = 0x19;
-            confirmMCGetItemBox(base + 0xecc);
+            confirmMCGetItemBox((CMCGetItemBox*)(base + 0xecc));
         }
     }
 }
@@ -2126,15 +2051,15 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         // Confirm/advance trigger: drive the makecrystal file-state machine.
-        if (isMCGetItemBoxGridMode((u8*)self + 0xecc) != 0) {
-            openMCGetItemBoxSysWin((u8*)self + 0xecc);
+        if (((CMCGetItemBox*)((u8*)self + 0xecc))->isMCGetItemBoxGridMode() != 0) {
+            openMCGetItemBoxSysWin((CMCGetItemBox*)((u8*)self + 0xecc));
         } else {
-            u8 r = (u8)getMCGetItemBoxPageState((u8*)self + 0xecc);
+            u8 r = (u8)getMCGetItemBoxPageState((CMCGetItemBox*)((u8*)self + 0xecc));
             if (r == 1) {
                 // Proceed to the pass/fail tuning state.
                 ((u8*)self)[0xbdd] = 0x20;
-                cacheMCGetItemBoxEntries((u8*)self + 0xecc);
-                confirmMCGetItemBox((u8*)self + 0xecc);
+                cacheMCGetItemBoxEntries((CMCGetItemBox*)((u8*)self + 0xecc));
+                confirmMCGetItemBox((CMCGetItemBox*)((u8*)self + 0xecc));
                 playUISound(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
@@ -2153,15 +2078,15 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
             }
         }
     } else if (trigger2) {
-        toggleMCGetItemBoxSysWin((u8*)self + 0xecc);
+        toggleMCGetItemBoxSysWin((CMCGetItemBox*)((u8*)self + 0xecc));
     } else if (cancel) {
         moveMCGetItemBoxLeft((u8*)self + 0xecc);
     } else if (dir) {
-        moveMCGetItemBoxRight((u8*)self + 0xecc);
+        moveMCGetItemBoxRight((CMCGetItemBox*)((u8*)self + 0xecc));
     } else if (confirm) {
-        moveMCGetItemBoxUp((u8*)self + 0xecc);
+        moveMCGetItemBoxUp((CMCGetItemBox*)((u8*)self + 0xecc));
     } else if (menu) {
-        moveMCGetItemBoxDown((u8*)self + 0xecc);
+        moveMCGetItemBoxDown((CMCGetItemBox*)((u8*)self + 0xecc));
     } else if (trigger3) {
         advanceMCGetItemBox((u8*)self + 0xecc);
     }
@@ -2246,7 +2171,7 @@ void MakeCrystal_StateSuccessMenu(CModelDispMakeCrystal* self)
             CUICfManager_queuePauseItemMenu(0x3, *reinterpret_cast<u32*>(base + 0xc), 0x0);
         } else {
             base[0xbdd] = 0x20;
-            confirmMCGetItemBox(base + 0xecc);
+            confirmMCGetItemBox((CMCGetItemBox*)(base + 0xecc));
         }
     }
 }
@@ -2441,12 +2366,12 @@ extern "C" void MakeCrystal_RefreshSlotEntries(CModelDispMakeCrystal* self)
     u8* a = reinterpret_cast<u8*>(CtrlObjectParam_GetCharEntry(flagA));
     u8* b = a + 0x3534;
     if (Counter_TestBit(b, 0x90)) {
-        base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues(b, 0x90));
+        base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues((CUnkObj8025FB10*)b, 0x90));
     }
     u8* a2 = reinterpret_cast<u8*>(CtrlObjectParam_GetCharEntry(flagB));
     u8* b2 = a2 + 0x3534;
     if (Counter_TestBit(b2, 0x90)) {
-        base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues(b2, 0x90));
+        base[0x2dd3] = (u8)(base[0x2dd3] + IdTable_SumValues((CUnkObj8025FB10*)b2, 0x90));
     }
 }
 
@@ -2484,7 +2409,7 @@ void MakeCrystal_DispatchState(CModelDispMakeCrystal* self)
     case 0x17:
         // Charged state: wait for the crystal-box file state machine to be
         // ready, then move to the pass/fail tuning state (0x18).
-        if (isMCGetItemBoxReady(base + 0xecc)) base[0xbdd] = 0x18;
+        if (((CMCGetItemBox*)(base + 0xecc))->isMCGetItemBoxReady()) base[0xbdd] = 0x18;
         break;
     case 0x18: MakeCrystal_MoveCursorPane(self); break;
     case 0x19: func_8021EF30(self); break;
@@ -2495,13 +2420,13 @@ void MakeCrystal_DispatchState(CModelDispMakeCrystal* self)
     case 0x1e:
         // Tuning-cancel path: wait for the file state machine, then jump to
         // the item-menu-open state (0x1f).
-        if (isMCGetItemBoxReady(base + 0xecc)) base[0xbdd] = 0x1f;
+        if (((CMCGetItemBox*)(base + 0xecc))->isMCGetItemBoxReady()) base[0xbdd] = 0x1f;
         break;
     case 0x1f: func_8021F2D8(self); break;
     case 0x20:
         // Success confirm path: wait for the file state machine, then jump to
         // the success state (0x25).
-        if (isMCGetItemBoxReady(base + 0xecc)) base[0xbdd] = 0x25;
+        if (((CMCGetItemBox*)(base + 0xecc))->isMCGetItemBoxReady()) base[0xbdd] = 0x25;
         break;
     case 0x21: MakeCrystal_StateConfirmPrompt(self); break;
     case 0x22: MakeCrystal_CheckItemMenuDone(self); break;
@@ -2921,13 +2846,13 @@ void MakeCrystal_SetupDispBuffers(CModelDispMakeCrystal* self)
         reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfunc48(
             *reinterpret_cast<f32*>(base + 0xbe0));
         void* p1 = simGetLeafActData(*reinterpret_cast<void**>(base + 0x20));
-        u8* s1 = reinterpret_cast<u8*>(lbl_eu_80576658);
+        u8* s1 = reinterpret_cast<u8*>(sCrystalLeafVecA);
         u8* o1 = reinterpret_cast<u8*>(p1);
         *reinterpret_cast<u32*>(o1 + 0x0) = *reinterpret_cast<u32*>(s1 + 0x0);
         *reinterpret_cast<u32*>(o1 + 0x4) = *reinterpret_cast<u32*>(s1 + 0x4);
         *reinterpret_cast<u32*>(o1 + 0x8) = *reinterpret_cast<u32*>(s1 + 0x8);
         void* p2 = simGetLeafActData(*reinterpret_cast<void**>(base + 0x20));
-        u8* s2 = reinterpret_cast<u8*>(lbl_eu_80576664);
+        u8* s2 = reinterpret_cast<u8*>(sCrystalLeafVecB);
         u8* o2 = reinterpret_cast<u8*>(p2);
         *reinterpret_cast<u32*>(o2 + 0xc) = *reinterpret_cast<u32*>(s2 + 0x0);
         *reinterpret_cast<u32*>(o2 + 0x10) = *reinterpret_cast<u32*>(s2 + 0x4);
@@ -3275,25 +3200,25 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __ct__11CMCEffStartFPQ34nw4r3lyt19ArcResourceAccessor(
             effStart,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xc8c, effStart);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xc8c), (CMakeCrystalCopyBlock*)effStart);
         __dt__11CMCEffStartFv(effStart, -1);
         reinterpret_cast<CMCEffStart*>(base + 0xc8c)->init();
         __ct__11CMCEffUpRedFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpRed,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xca4, effUpRed);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xca4), (CMakeCrystalCopyBlock*)effUpRed);
         __dt__11CMCEffUpRedFv(effUpRed, -1);
         reinterpret_cast<CMCEffUpRed*>(base + 0xca4)->init();
         __ct__12CMCEffUpBlueFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpBlue,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xcbc, effUpBlue);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xcbc), (CMakeCrystalCopyBlock*)effUpBlue);
         __dt__12CMCEffUpBlueFv(effUpBlue, -1);
         reinterpret_cast<CMCEffUpBlue*>(base + 0xcbc)->init();
         __ct__13CMCEffUpGreenFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpGreen,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xcd4, effUpGreen);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xcd4), (CMakeCrystalCopyBlock*)effUpGreen);
         __dt__13CMCEffUpGreenFv(effUpGreen, -1);
         reinterpret_cast<CMCEffUpGreen*>(base + 0xcd4)->init();
         // UpPrm: larger copy with an 8-byte-per-iteration counted loop
@@ -3334,7 +3259,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __ct__13CMCEffFailureFPQ34nw4r3lyt19ArcResourceAccessor(
             effFailure,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xd78, effFailure);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xd78), (CMakeCrystalCopyBlock*)effFailure);
         __dt__13CMCEffFailureFv(effFailure, -1);
         reinterpret_cast<CMCEffFailure*>(base + 0xd78)->init();
         __ct__13CMCEffCrystalFPQ34nw4r3lyt19ArcResourceAccessor(
@@ -3361,13 +3286,13 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __ct__12CMCEffUpRankFPQ34nw4r3lyt19ArcResourceAccessor(
             effUpRank,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xdcc, effUpRank);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xdcc), (CMakeCrystalCopyBlock*)effUpRank);
         __dt__12CMCEffUpRankFv(effUpRank, -1);
         reinterpret_cast<CMCEffUpRank*>(base + 0xdcc)->init();
         __ct__12CMCEffDivideFPQ34nw4r3lyt19ArcResourceAccessor(
             effDivide,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
-        MakeCrystalCopyParamBlock(base + 0xde4, effDivide);
+        MakeCrystalCopyParamBlock((CMakeCrystalCopyBlock*)(base + 0xde4), (CMakeCrystalCopyBlock*)effDivide);
         __dt__12CMCEffDivideFv(effDivide, -1);
         reinterpret_cast<CMCEffDivide*>(base + 0xde4)->init();
         __ct__14CMCEffCylinderFPQ34nw4r3lyt19ArcResourceAccessor(
@@ -3425,7 +3350,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
 void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 slotA, u8 slotB)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    loadMCGetItemBoxFiles(base + 0xecc);
+    loadMCGetItemBoxFiles((CMCGetItemBox*)(base + 0xecc));
     void* m = Scn_FindCamItem(*reinterpret_cast<void**>(base + 0xc), -1);
     nw4r::math::VEC3 v1;
     writeVec3f(&v1, 0.0f, 1.0f, 0.0f);
@@ -3466,7 +3391,7 @@ int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
     u8 state = base[0xbdd];
     if ((u8)(state + 0xee) <= 1) return 0x38;
     if (state == 0x18 || state == 0x1f)
-        return getMCGetItemBoxKeyCode(base + 0xecc);
+        return getMCGetItemBoxKeyCode((CMCGetItemBox*)(base + 0xecc));
     return (state < 0x12) ? 0x3b : 0;
 }
 
@@ -3508,8 +3433,8 @@ extern "C" void destroyCrystalDispThunk8(CModelDispMakeCrystal* self) { ((void(*
 
 void sinit_80221DDC() {
     initCrystalData(lbl_eu_80664718);
-    writeVec3f(lbl_eu_80576658, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
-    writeVec3f(lbl_eu_80576664, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
+    writeVec3f(sCrystalLeafVecA, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
+    writeVec3f(sCrystalLeafVecB, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
 }
 
 

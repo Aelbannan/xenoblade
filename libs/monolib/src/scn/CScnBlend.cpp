@@ -7,13 +7,10 @@
 #include <monolib/core/CView.hpp>
 #include <monolib/device/CDeviceGX.hpp>
 #include <monolib/math/CMat34.hpp>
+#include "libs/monolib/src/scn/CScnBlend.hpp"
 
-// --- Cross-TU imports (declared here; .cpp-only TU, CScnFilter.hpp is read-only) ---
-extern "C" void __ct__CScnFilter(CScnFilter* ths);
-extern "C" void __dt__10CScnFilterFv(CScnFilter* ths, int flag);
 // Global operator delete -- MWCC mangles this to operator delete(defined in MemManager.cpp).
 void operator delete(void* p) throw();
-extern "C" void FilterUpdateIntensity();   // CScnBloom (foreign TU)
 
 // Opaque render-work object (CScnTexWorkMan instance), only forwarded.
 struct CTexWorkObj;
@@ -33,39 +30,6 @@ extern "C" void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
 extern "C" void updateCmd1Words__8CGXCacheFv(CGXCache* cache, u32 a, u32 b,
                                            u32 c, u32 d, u32 e);
 extern "C" void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
-extern u32 __RTTI__9CScnBlend;    // CScnBlend RTTI locator (owned by CScnItemCamera TU)
-extern u32 __RTTI__10CScnFilter;    // CScnFilter RTTI locator (owned by CScnItemCamera TU)
-
-// Region + tint as one anonymous aggregate (MWCC struct-copies via lwz/stw).
-// x/y/w/h describe the blend quad in normalised screen space; tR/tG/tB are the
-// per-channel tint factors (h doubles as the "effect active" marker: it equals
-// the pool constant when the filter is disabled).
-struct RectRegion {
-    struct {
-        f32 x;      // 0x38
-        f32 y;      // 0x3C
-        f32 w;      // 0x40
-        f32 h;      // 0x44
-        f32 tR;     // 0x48
-        f32 tG;     // 0x4C
-        f32 tB;     // 0x50
-    };
-};
-
-struct CScnBlend : public CScnFilter {
-    virtual ~CScnBlend();
-
-    u8 pad_18[0x38 - 0x18];
-    RectRegion mRect;   // 0x38
-    u8 mFlags;      // 0x54 bit0: render-to-texture, bit1: halve target size
-    u8 pad_55[3];
-    u32 field_0x58; // texture format passed to the tex-work allocator
-    s32 field_0x5C; // blend mode (compared against 3 for the two-stage path)
-    u32 field_0x60;
-    u32 field_0x64;
-    u32 field_0x68;
-    u32 field_0x6C;
-};
 
 // Owning scene view as seen here: only field 0x6C (texture work manager) read.
 struct CScnBlendView {
@@ -73,43 +37,12 @@ struct CScnBlendView {
     CTexWorkObj* mTexWork;
 };
 
-extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param);  // defined below
-
-extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag); // defined below
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056E9E8-0x8056EA08 (32B): CScnBlend vtable (20B) + RTTI chain (12B).
-// The vtable is installed by __ct__CScnBlend; writing the dtor as an extern "C"
-// free function keeps MWCC from auto-emitting __vt__/__RTTI__ here (the retail
-// RTTI locators __RTTI__9CScnBlend/__RTTI__10CScnFilter live in the CScnItemCamera TU).
-u32 lbl_eu_8056E9E8[5] = {
-    (u32)&__RTTI__9CScnBlend, 0x00000000, (u32)&__dt__9CScnBlendFv,
-    (u32)&FilterUpdateIntensity, (u32)&Blend_DrawFilter,
-};
-u32 lbl_eu_8056E9FC[3] = {
-    (u32)&__RTTI__10CScnFilter, 0x00000000, 0x00000000,
-};
-
-// [.rodata] 0x805240A0-0x805240B8 (24B): RTTI class-name strings. This TU
-// emits CScnBlend's own name plus its CScnFilter base's name (the base vtable
-// lives in the CScnFilter TU, whose weak copy of this string is dead-stripped
-// in favour of this one at link).
-extern "C" const u32 lbl_eu_805240A0[3] = {
-    0x4353636E, 0x426C656E, 0x64000000,
-};
-extern "C" __declspec(align(4)) const char CScnFilterName[0xB] = { 0x43, 0x53, 0x63, 0x6E, 0x46, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x00 };
-
-// Retail __ct__CScnBlend (flat name): calls the base ctor, installs the
-// CScnBlend vtable, fills the default blend rect/tint region and the
-// blend-mode fields. Returns the object.
-extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* ths) {
-    __ct__CScnFilter(ths);
-
-    *(u32**)ths = lbl_eu_8056E9E8;
-
+// Retail __ct__CScnBlend: fills the default blend rect/tint region and the
+// blend-mode fields; the compiler emits the base ctor call and the vptr store.
+CScnBlend::CScnBlend() {
     // First 0-store is consumed by the flags OR (store-to-load forward); the
     // second (redundant) store keeps the physical stw at the end of the block.
-    ths->field_0x68 = 0;
+    field_0x68 = 0;
 
     RectRegion tmp;
     tmp.x = 1.0f;
@@ -119,29 +52,18 @@ extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* ths) {
     tmp.tR = 0.0f;
     tmp.tG = 0.0f;
     tmp.tB = 0.0f;
-    ths->mRect = tmp;
+    mRect = tmp;
 
-    ths->mFlags = (u8)((u32)ths->field_0x68 | 3);
-    ths->field_0x58 = 4;
-    ths->field_0x5C = 1;
-    ths->field_0x60 = 4;
-    ths->field_0x64 = 1;
-    ths->field_0x68 = 0;
-    return ths;
+    mFlags = (u8)((u32)field_0x68 | 3);
+    field_0x58 = 4;
+    field_0x5C = 1;
+    field_0x60 = 4;
+    field_0x64 = 1;
+    field_0x68 = 0;
 }
 
-// extern "C" free-function dtor (CFontLayer pattern): keeps MWCC from
-// auto-emitting __vt__/__RTTI__ for CScnBlend in this TU (the retail vtable
-// is the dissolved .data blob above).
 // MWCC destructors return the object pointer (see trailing mr r3, r30 in retail).
-extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag) {
-    if (ths != 0) {
-        __dt__10CScnFilterFv((CScnFilter*)ths, 0);
-        if (flag > 0) {
-            operator delete(ths);
-        }
-    }
-    return ths;
+CScnBlend::~CScnBlend() {
 }
 
 extern "C" void func_80498D98(CScnBlend* blend, int enable) {
@@ -168,7 +90,9 @@ extern "C" void Blend_SetFlag2(CScnBlend* ths, u32 enable) {
 // set the current view is first rendered into a texture (halved when bit1 is
 // set) and drawn back with a TEV stage modulated by the negated tint color.
 // ============================================================================
-extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
+void CScnBlend::drawFilter(CScnFilterHost* param) {
+    CScnBlend* ths = this;
+    CScnBlendView* view = reinterpret_cast<CScnBlendView*>(param);
     ml::CRect rect;
     insetRectToView__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
@@ -201,7 +125,7 @@ extern "C" void Blend_DrawFilter(CScnBlend* ths, CScnBlendView* param) {
             drawFlatQuad(&rect, &ths->mRect);
         } else {
             // Texture path: render the view into a work texture first.
-            CTexWorkObj* texWork = param->mTexWork;
+            CTexWorkObj* texWork = view->mTexWork;
             u16 tw;
             u16 th;
             if (ths->mFlags & 2) {

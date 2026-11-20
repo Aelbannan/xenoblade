@@ -19,8 +19,8 @@ struct CFileHandleLayout {
     u8 field_0x0[0x4];    //0x0
     u8* mData;            //0x4
     u8 field_0x8[0x8];    //0x8
-    volatile int unk10;   //0x10 (volatile: retail re-reads the field from
-                          // memory at every use instead of caching it)
+    int unk10;   //0x10 (plain field; retail keeps the loads in source order)
+                          //
     u8 field_0x14[0x24];  //0x14
     u32 field_0x38;       //0x38 current read offset
     u32 mLength;          //0x3C
@@ -657,8 +657,8 @@ bool CDeviceFileCri::copyTail() {    // Seed-then-null shape (retail): keeps job
 
     if (numReq == 3) {
         // Success: copy out the unread tail of the read.
-        // Layout view (volatile unk10): retail re-reads the position field
-        // from memory at every use instead of keeping it in a register.
+        // Layout view: unk10 is the current read position and is read
+        // alongside mLength and mData in retail order.
         CFileHandleLayout* handle = (CFileHandleLayout*)job->mHandle;
         // The subf./ble guard skips both the copy and the cache flush when
         // the remainder is empty, but advanceReadProgress always runs.

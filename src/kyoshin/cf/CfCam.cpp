@@ -1,7 +1,13 @@
 #include "kyoshin/cf/CfCam.hpp"
+#include "kyoshin/code_800A3B24.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "monolib/scn/code_804BD8E8.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
+#include "kyoshin/code_8027513C.hpp" // cam-control dispatch helpers (owning header)
+#include "kyoshin/cf/CfTFile.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp" // Scn_GetFrameDelta / Scn_SetTimeScale
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
@@ -20,8 +26,7 @@
 // libs/monolib/src/scn/CScn_8049603C.hpp (owner: monolib CScn).
 extern "C" void* Scn_QueryUnk80State();
 extern "C" void ScnCamPointAt(void* cam, f32 f, void* pos, void* arg);
-extern "C" float CfT_PlayRateGet();
-// TEMP unblock: monolib/core/CPadManager.hpp currently fails under MWCC
+
 // (C++11 static_assert / illegal offsetof constant expressions) and
 // CDeviceRemotePad.hpp pulls it in. This TU only needs CDeviceRemotePad::
 // getMainGCPad(), so declare that locally; restore the real includes once the
@@ -51,6 +56,7 @@ class cfCamGameManagerObjMoveFwd;
 #undef CfObjectMove
 #include <revolution/mtx/quat.h>
 #include <revolution/mtx/mtxvec.h>
+#include "kyoshin/menu/CMenuBattleCommu.hpp"
 // Runtime RTTI helper + typeinfo pair for cfCam_copyCamState's dynamic_cast
 // (extern "C" keeps the retail unmangled __dynamic_cast reloc; fixed-size
 // 8-byte typeinfo decls keep them sdata-eligible -> li @sda21).
@@ -656,7 +662,7 @@ extern "C" void cfCam_clearUnk04Bits_EDFF(cf::CfCamFollow* self) { self->field_0
 
 extern "C" bool cfCam_setUnk1E0AndValidate(void* obj, float val) {
     *(float*)((char*)obj + 0x1e0) = val;
-    return ScnCamDepthUp(obj);
+    return ScnCamDepthUp((CScnItemCamera*)obj);
 }
 extern "C" void cfCam_stub_80071B74() {}
 extern "C" void cfCam_stub_80071B78() {}
@@ -764,7 +770,7 @@ void sinit_80074D7C() {
     f32 den = cfCamVar_1p25f;
     f32 ratio = cD0 / den;
 
-    volatile ml::CVec3 t[6];
+    ml::CVec3 t[6];
 
     f32 b60 = cfCamVar_8p0f;
     f32 c39C = 1.1f;
@@ -895,11 +901,11 @@ extern "C" void cfCam_reloadDefaults(int arg1, int arg2) {
     short* cellA;
     NameBuf nameB;
     NameBuf nameA;
-    volatile union {
+    union {
         double d;
         u32 w[2];
     } convA;
-    volatile union {
+    union {
         double d;
         u32 w[2];
     } convB;
@@ -1472,12 +1478,12 @@ cfCam_frameUpdate__FPvPviiiii(cf::CfCamFollow* self, void* arg, int a, int b,
     }
     subVec3f(&l68.x, &lA4.x, &lBC.x);
     *reinterpret_cast<f32*>(self->unk168 + 0x00) =
-        cfCam_pitchFromVec(static_cast<const void*>(&lB0));
+        cfCam_pitchFromVec((const ml::CVec3*)(&lB0));
     *reinterpret_cast<f32*>(self->unk168 + 0x04) =
         cfCam_yawFromVec((const ml::CVec3*)&lB0);
     *reinterpret_cast<f32*>(self->unk168 + 0x08) = lbl_eu_806662DC;
     *reinterpret_cast<f32*>(self->unk168 + 0x0C) =
-        cfCam_pitchFromVec(static_cast<const void*>(&l68));
+        cfCam_pitchFromVec((const ml::CVec3*)(&l68));
     *reinterpret_cast<f32*>(self->unk168 + 0x10) =
         cfCam_yawFromVec((const ml::CVec3*)&l68);
     *reinterpret_cast<f32*>(self->unk168 + 0x14) = lbl_eu_806662DC;
@@ -1606,10 +1612,10 @@ void cfCam_recomputeEyeTarget(cf::CfCamFollow* self, void* argA, void* argB, voi
     // Store each result immediately: retail keeps no float live across these
     // calls except dist (f31), so batching temporaries would force extra
     // callee-saved fpr saves.
-    *reinterpret_cast<f32*>(self->unk168 + 0x00) = cfCam_pitchFromVec(static_cast<const void*>(&l44));
+    *reinterpret_cast<f32*>(self->unk168 + 0x00) = cfCam_pitchFromVec((const ml::CVec3*)(&l44));
     *reinterpret_cast<f32*>(self->unk168 + 0x04) = cfCam_yawFromVec((&l44));
     *reinterpret_cast<f32*>(self->unk168 + 0x08) = lbl_eu_806662DC;
-    *reinterpret_cast<f32*>(self->unk168 + 0x0C) = cfCam_pitchFromVec(static_cast<const void*>(&l20));
+    *reinterpret_cast<f32*>(self->unk168 + 0x0C) = cfCam_pitchFromVec((const ml::CVec3*)(&l20));
     *reinterpret_cast<f32*>(self->unk168 + 0x10) = cfCam_yawFromVec((&l20));
     *reinterpret_cast<f32*>(self->unk168 + 0x14) = lbl_eu_806662DC;
     self->unk208 = cfCam_vecLength(static_cast<const void*>(&l44));
@@ -1722,9 +1728,7 @@ void cfCam_syncSelFlags(cf::CfCamFollow* self) {
 // keep-alive, clamp `>` vs `<=` polarity (the latter
 // reschedules the whole tail; `<=` + `<` posFlag is the byte-matching shape).
 void cfCam_syncCamFlags(cf::CfCamFollow* self, void* arg) {
-    // CfGameManager.hpp declares CfT_PlayRateGet as void, but the retail call
-    // consumes its f1 return (CfTFile.cpp defines it as `float`) - call it
-    // through a float-returning cast at the use site.
+    // CfT_PlayRateGet is declared with its real float return in CfTFile.hpp.
     void* obj = func_800BBC0C(arg);
     int flag;
     void* x;
@@ -1757,7 +1761,7 @@ void cfCam_syncCamFlags(cf::CfCamFollow* self, void* arg) {
         magFlag = cfCam_vecLength(&self->unk168[0x24]) < 0.01f;
         cfCam_setClear1D4(self, 0x100, magFlag);
         if (magFlag != 0) {
-            self->unk238 -= ((float (*)())CfT_PlayRateGet)();
+            self->unk238 -= CfT_PlayRateGet();
             if (self->unk238 <= lbl_eu_806662DC) {
                 self->unk238 = lbl_eu_806662DC;
             }
@@ -1843,7 +1847,7 @@ void cfCam_updateFollowCam(cf::CfCamFollow* self, void* arg) {
             cfCam_testUnk04M(reinterpret_cast<int>(self), 0x20000) == 0 &&
             Selector_GetInstance() != 0) {
             Selector_GetInstance();
-            int sel = findObjectById__Fi(cfCam_getInt90E4(Selector_GetInstance()));
+int sel = findObjectById__Fi(cfCam_getInt90E4((int)Selector_GetInstance()));
             // angle lands in tmp2c.y (retail stores it at tmp+4)
             ml::CVec3 tmp2c;
             if (sel != 0) {
@@ -3420,7 +3424,7 @@ int cfCam_probeCamPos(ml::CVec3* arg1, ml::CVec3* arg2, int arg3) {
 int cfCam_probeKeepClosest(ml::CVec3* out, u32 probeArg, float f) {
     // ScnRes_VertRayForward_E398's retail ABI here passes only four GPR args.
     typedef int (*BE398Fn4)(void*, u32, u32, u32);
-    int probe = ((BE398Fn4)ScnRes_VertRayForward_E398)(out, probeArg, 0, 0);
+    int probe = ((BE398Fn4)ScnRes_VertRayForward_E398)(out, probeArg, 0, 0);  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
     if (probe != 0) {
         cfCam_seedProbeVec(reinterpret_cast<ml::CVec3*>(cfCamProbeVec),
                       reinterpret_cast<ml::CVec3*>(cfCamProbeWeights));
@@ -3761,7 +3765,7 @@ int cfCam_correctCamGround(cf::CfCamFollow* self, ml::CVec3* arg2, ml::CVec3* ou
     }
 
     if (hit != 0 || allowSnap != 0) {
-        if (ScnRes_RegPassSelect_E2E8(out, 0x404a03, 0, 1) != 0) {
+        if (ScnRes_RegPassSelect_E2E8((const f32*)out, 0x404a03, 0, 1) != 0) {
             noopAnimVec3(&snapA4);
             noopAnimVec3(&snap98);
             ScnRes_CopyEntryHead(&snapA4, 0);
@@ -4187,6 +4191,6 @@ extern "C" int cfCam_getBit2_64(void* obj) {
 int cfCam_histCount(void* self) { return 0x10; }
 bool cfCam_set1E0Check(cf::CfCamFollow* self, float val) {
     self->unk1E0 = val;
-    return ScnCamDepthUp(self);
+    return ScnCamDepthUp((CScnItemCamera*)self);
 }
 extern "C" u8* cfCam_getPlus6C(cf::CfCamFollow* self) { return self->unk1C + 0x50; }

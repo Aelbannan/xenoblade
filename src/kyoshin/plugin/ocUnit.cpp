@@ -1,13 +1,17 @@
 // Auto-scaffolded catalog TU for kyoshin/plugin/ocUnit
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/cf/object/CfObjectColl.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/plugin/ocUnit.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"  // bindPartnerO_/setTargetObj_ (real owners)
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 
 // .sdata2 pool plant: MWCC's implicit int->double conversion magic
 // (2^52 + 2^31). With this planted under its retail name AND the other
@@ -31,16 +35,9 @@ extern "C" {
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
     void CfObjectMove_setRegionAttached(void* obj, int flag);
     void CfObjectMove_setMoveModeField(void* obj, int target);
-    void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
     void* func_800BBC0C();
     void CfObjectMove_setFlag6C9Bit0(void* obj, int flag);
-    void CBattleMan_ClearEventNotify(void* battleMgr, void* actor, int flag);
-    void CBattleMan_ClearActorStatus(void* battleMgr, void* actor, int index);
-    void CBattleMan_RunBattleEvent(void* battleMgr, void* actor, void* data, int flag);
-    u32 Selector_GetInstance();
     void setChildB59__(void* obj, s8 val);
-    void bindPartnerO_(void* obj, void* target, void* child);
-    void setTargetObj_(void* obj, void* target);
     void CollObjStoreResIdRaw(void* obj, u16 param);
     void CollObjSetupVecsState5(void* obj, void* pos, void* offset, float f);
     void UIWin_CreateTalkWin(void* subObj, const char* str, int flag);
@@ -457,7 +454,6 @@ int dispOn(VMThread* pThread, int handle) {
     return 0;
 }
 
-extern "C" void CfObjectMove_detachMoveRegion(void* obj);
 
 int dispOff(VMThread* pThread, int handle) {
     int flag;
@@ -483,7 +479,7 @@ int dispOff(VMThread* pThread, int handle) {
     if (flag == 0) {
         obj->setPointEnabled(0);
     } else {
-        CfObjectMove_detachMoveRegion(obj);
+        CfObjectMove_detachMoveRegion((cf::CfObjectMove*)obj);
     }
     return 0;
 }
@@ -507,7 +503,7 @@ extern "C" int hideUnit(VMThread* pThread, int handle) {
     if (arg == 0) {
         obj->setPointEnabled(0);
     } else {
-        CfObjectMove_detachMoveRegion(obj);
+        CfObjectMove_detachMoveRegion((cf::CfObjectMove*)obj);
     }
     return 0;
 }
@@ -1176,7 +1172,7 @@ extern "C" int getPartyHandle(VMThread* pThread, int handle) {
     ocHandle = obj->CObjectParam_getSelfObjectId();
     if (!ocHandle) {
         if (obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0)) {
-            ocHandle = ((Selector90E4View*)Selector_GetInstance())->h90E4;
+            ocHandle = ((Selector90E4View*)(uintptr_t)Selector_GetInstance())->h90E4;
         }
     }
     VMArg retVal;
@@ -1290,9 +1286,9 @@ extern "C" int invin(VMThread* pThread, int handle) {
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         if (enable) {
-            CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
+            CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), (u32)actor, (u16)1);
         } else {
-            CBattleMan_ClearActorStatus(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
+            CBattleMan_ClearActorStatus(getInstance__Q22cf14CBattleManagerFv(), actor, (void*)1);
         }
     }
     return 0;
@@ -1363,7 +1359,7 @@ extern "C" int sendBattleEvent(VMThread* pThread, int handle) {
         data.field_14 = (u16)arg4;
         data.field_20 = arg2;
         data.field_24 = arg5;
-        CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &data, 0);
+        CBattleMan_RunBattleEvent((u32)getInstance__Q22cf14CBattleManagerFv(), (u32)actor, &data, (u32)0);
     }
     return 0;
 }
@@ -1380,7 +1376,7 @@ extern "C" int delBuff(VMThread* pThread, int handle) {
                                         (void*)&__RTTI__Q22cf8CfObject, 0);
     if (actor) {
         void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
-        CBattleMan_ClearActorStatus(battleMgr, actor, index);
+        CBattleMan_ClearActorStatus(battleMgr, actor, (void*)index);
     }
     return 0;
 }
@@ -1458,7 +1454,7 @@ extern "C" int setUnitState(VMThread* pThread, int handle) {
     void* ctx = ArtsSelect_GetContainer();
     cf::CfObject* obj = (cf::CfObject*)ArtsSelect_Lookup(ctx, handle);
     if (obj) {
-        CfObjectMove_setModelDisplayFlag(obj, enable ? 1 : 0);
+        CfObjectMove_setModelDisplayFlag((cf::CfObjectMove*)obj, enable ? 1 : 0);
     }
     return 0;
 }
@@ -1517,9 +1513,7 @@ extern "C" int spawnParty(VMThread* pThread, int handle, int retType) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    // ArtsSelect_Insert's shared header declares it 1-arg; retail passes (ctx, obj).
-    typedef void* (*CtxObjFn)(void*, void*);
-    ctx = ((CtxObjFn)&ArtsSelect_Insert)(ArtsSelect_GetContainer(), obj);
+    ctx = ArtsSelect_Insert(ArtsSelect_GetContainer(), obj);
     obj->mFlags68 |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
@@ -1748,7 +1742,7 @@ extern "C" int followUnit(VMThread* pThread, int handle) {
         ctx = ArtsSelect_GetContainer();
         target = ArtsSelect_Lookup(ctx, ((OcUnitHandle*)targetOC)->mObjId04);
     }
-    bindPartnerO_(obj, target, 0);
+    bindPartnerO_((cf::CfObjectEff*)obj, (u8*)target, (u8*)0);
     return 0;
 }
 
@@ -1790,7 +1784,7 @@ extern "C" int bindFollow(VMThread* pThread, int handle) {
             }
         }
     }
-    bindPartnerO_(obj, parent, child);
+    bindPartnerO_((cf::CfObjectEff*)obj, (u8*)parent, (u8*)child);
     return 0;
 }
 
@@ -1811,7 +1805,7 @@ extern "C" int setUnitTarget(VMThread* pThread, int handle) {
         ctx = ArtsSelect_GetContainer();
         target = ArtsSelect_Lookup(ctx, ((OcUnitHandle*)targetOC)->mObjId04);
     }
-    setTargetObj_(obj, target);
+    setTargetObj_((cf::CfObjectEff*)obj, (u8*)target);
     return 0;
 }
 
@@ -1834,11 +1828,7 @@ extern "C" int startBattle(VMThread* pThread, int handle, int retType) {
         return 0;
     }
     ctx = ArtsSelect_GetContainer();
-    // ArtsSelect_Insert is declared single-arg in code_801862C0.hpp, but the
-    // retail callee receives (container, object). Route through a matching
-    // function-pointer cast so both argument registers are set up.
-    typedef void* (*GetEntryFn)(void*, void*);
-    void* entry = ((GetEntryFn)&ArtsSelect_Insert)(ctx, battleMgr);
+    void* entry = ArtsSelect_Insert(ctx, battleMgr);
     ((cf::CfObject*)battleMgr)->mFlags68 |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
@@ -1926,7 +1916,7 @@ extern "C" int moveToPos(VMThread* pThread, int handle) {
         pos.x = fx;
         pos.y = fy;
         pos.z = fz;
-        CollObjSetupRotBoxState5(obj, (void*)moveObj, &pos, fAngle * ml::deg2rad);
+        CollObjSetupRotBoxState5((cf::CfObjectColl*)obj, (ml::CVec3*)moveObj, &pos, fAngle * ml::deg2rad);
     }
     return 0;
 }

@@ -1,7 +1,11 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlRemote
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 // harness_catalog.hpp removed: it pulls CTaskGameEff.hpp ->
@@ -9,7 +13,9 @@
 // CtrlMoveBase.hpp (via CtrlPc.hpp). Nothing in this TU needs it.
 
 #include "kyoshin/cf/CtrlRemote.hpp"
-#include "kyoshin/SysWinLogCounterApi.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/code_8028130C.hpp"
 // CtrlPc.hpp scaffolds
 // returning signature (CtrlRemote.hpp). Hide the scaffold decl so the two do
 // not conflict (the hidden name is never referenced in this TU).
@@ -24,6 +30,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/menu/CMenuBattleCommu.hpp"
+#include "kyoshin/cf/CSuddenCommu.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 cf::CtrlRemote* __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5)
@@ -119,7 +127,7 @@ void func_80098EF8(CtrlPcVf38* self)
     cf::CfGameManager::getInstance();
     UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)findObjectById(Selector_GetInstance()->mField90E4);
+        (CtrlVoiceHandle*)findObjectById(((CfObjAe80*)Selector_GetInstance())->mField90E4);
 
     u32 v1a;
     u32 v1, v2, v8, v1000, v4000, v8b;
@@ -482,8 +490,8 @@ a89c:
         self->mField5C->mSub3E9C.v02(4);
     }
 
-    if (CChain_HasMemberEntry(&((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1A8,
-                      self->mField5C) != 0 &&
+    if (CChain_HasMemberEntry((cf::CChain*)&((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField1A8,
+                      (CChainBattleObjTail*)self->mField5C) != 0 &&
         probePlayerCtrl((cf::CtrlPc*)self, &v801b, 0x801) != 0) {
         CtrlPlayerSub298Vf4* sub298 =
             (CtrlPlayerSub298Vf4*)self->mField5C->vf164();
@@ -561,7 +569,7 @@ void CtrlRemote_PollPadLatchBit(cf::CtrlPc* self)
         probePlayerCtrl(self, &v4, 4) == 0) {
         flag = false;
     }
-    if (Selector_GetInstance()->mField90E4 != 0) {
+    if (((CfObjAe80*)Selector_GetInstance())->mField90E4 != 0) {
         flag = false;
     }
     if (flag) {
@@ -598,7 +606,7 @@ void CtrlRemote_SweepAimVoiceFlags(CtrlPcVf38* self)
     cf::CfGameManager::getInstance();
     UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)findObjectById(Selector_GetInstance()->mField90E4);
+        (CtrlVoiceHandle*)findObjectById(((CfObjAe80*)Selector_GetInstance())->mField90E4);
 
     u32 v1;
     u32 v2;
@@ -948,9 +956,9 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
         self->mField2C = (self->mField2C & ~0x400) | 0x200;
         u32 v803;
         if (probePlayerCtrl((cf::CtrlPc*)self, &v803, 0x803) == 0) {
-            setRequestParams(Selector_GetInstance(), 0x80000004, 0x4802, 0);
+            Selector_GetInstance()->setRequestParams( 0x80000004, 0x4802, 0);
         } else {
-            setRequestParams(Selector_GetInstance(), 0x80000003, 0x4802, 0);
+            Selector_GetInstance()->setRequestParams( 0x80000003, 0x4802, 0);
         }
     }
 
@@ -967,12 +975,12 @@ void CtrlRemote_MenuBattleSweep(CtrlPcVf37State* self)
     if (probePlayerCtrl((cf::CtrlPc*)self, &v805, 0x805) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0xf) != 0 ||
         isBattleStatusActive(&self->mField5C->mField8, 0x11) != 0) {
-        Selector_SetActive(Selector_GetInstance(), 1);
+        Selector_SetActive((cf::CfObjectSelectorData*)Selector_GetInstance(), 1);
     }
     if ((((CfObjAe80*)Selector_GetInstance())->mFieldC180 & 2) == 0) {
         return;
     }
-    if (testFlagBit10(Selector_GetInstance()) != 0) {
+    if (Selector_GetInstance()->testFlagBit10() != 0) {
         return;
     }
     if (cf::CfGameManager::isClassicController(-1) != 0 &&
@@ -1000,7 +1008,7 @@ void CtrlRemote_PollActionLatchBit8(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
     getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void* handle = findObjectById(Selector_GetInstance()->mField90E4);
+    void* handle = findObjectById(((CfObjAe80*)Selector_GetInstance())->mField90E4);
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x4000000)) {
         return;
@@ -1123,7 +1131,7 @@ void CtrlRemote_MenuComboSweep(CtrlPcVf38* self)
     // Declared at function scope: MWCC creates the pseudo early, which pins
     // the counter's register ahead of the list-walk temps (retail r4).
     s32 count;
-    void* handle = findObjectById(Selector_GetInstance()->mField90E4);
+    void* handle = findObjectById(((CfObjAe80*)Selector_GetInstance())->mField90E4);
     if (handle == 0) {
         return;
     }
@@ -1357,7 +1365,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         }
         if (sel == 5) {
             ea =
-                (CtrlRemoteEaView*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+                (CtrlRemoteEaView*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
             if (ea != NULL) {
                 page = GetZealResult(fd);
                 if ((u32)(page - 1) <= 1) {
@@ -1449,8 +1457,7 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
         {
             u8* gaugeBase =
                 (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x219c;
-            u32 chainId = *(u32*)CBattleMan_FetchVisionObj(
-                getInstance__Q22cf14CBattleManagerFv());
+            u32 chainId = *(u32*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
             cf::CChainState* chain =
                 (cf::CChainState*)((u8*)getInstance__Q22cf14CBattleManagerFv() +
                                    0x20c8);
@@ -1460,8 +1467,8 @@ void CtrlRemote_ArtsWindowDispatch(CtrlPcVf38State* self)
                               chainId) != 0) {
                 CCharVoiceMan_PushChainVoiceNode(self->mField5C, obj374);
                 gaugeBase[0x261a4] = 1;
-                PartyGaugeAddClamped(
-                    (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194,
+                cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(
+                    (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194),
                     -100);
             }
         }

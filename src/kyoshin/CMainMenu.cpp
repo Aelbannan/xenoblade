@@ -3,12 +3,15 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/CSystemWindowApi.hpp"
+#include "kyoshin/CUICfManager.hpp"
 #include <types.h>
 #include "monolib/lib/CLibLayout.hpp"
 #include <string.h>
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
+#include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
 // Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
 // Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
@@ -49,7 +52,8 @@ extern "C" void CMainMenu_DispatchMenuState(CMainMenu* self);
 extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
 
 // Menu singleton/state guards (defined in their owning menu TUs)
-extern "C" u32 ItemMenu_IsPresent();   // item menu active (CMenuItem.cpp)
+// Defined in CMenuItem.cpp with C++ linkage.
+unsigned long ItemMenu_IsPresent();
 extern "C" u32 isMapSelectActive();   // map-select menu active (CMenuMapSelect.cpp)
 extern "C" u32 Colle_HasInstance();   // collepedia active (CMenuCollepedia.cpp)
 extern "C" u32 KizunagramIsCreated();   // kizunagram active (CMenuKizunagram.cpp)
@@ -57,13 +61,10 @@ extern "C" u32 PlayAward_IsActive();   // play-award active (CMenuPlayAward.cpp)
 extern "C" u32 KizunaList_IsPresent();   // kizuna-talk-list active (CMenuKizunaTalkList.cpp)
 extern "C" u32 hasOptionMenu();   // option menu active (CMenuOption.cpp)
 extern "C" u32 CMenuTutorialList_IsActive();   // tutorial-list active (CMenuTutorialList.cpp)
-extern "C" u32 isQuestLogMenuActive();   // quest-log active (CMenuQuestLog.cpp)
 extern "C" u32 isSaveMenuActive();   // save-menu active (CMenuSave.cpp)
 extern "C" u32 SkipTimer_IsActiveFlag();   // update menu active (CMenuUpdate.cpp)
-extern "C" u32 hasQuestWindow();   // close-quest-menu gate (CHelp_CloseQuestMenu.cpp)
 extern "C" int CUICfManager_hasInUseSlot();   // menu-system close (CUICfManager.cpp)
 extern "C" u32 menuPTStateIsActive();   // party-state screen active (CMenuPTState.cpp)
-extern "C" u32 MakeCrystalIsCreated();   // make-crystal menu active (CMenuMakeCrystal.cpp)
 extern "C" u32 CMenuArtsSet_isCreated();   // arts-set menu active (CMenuArtsSet.cpp)
 
 // Gameplay-input gate helpers (cf::CfGameManager / cf::CBattleManager)
@@ -102,8 +103,6 @@ extern "C" u32 SysWinLog_IsBusy();
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 // Window focus gates (CUICfManager.cpp).
-extern "C" void CUICfManager_queueMapSelectMenu();
-extern "C" void CUICfManager_queuePTStateMenu();
 // Pad-enable/disable and mode gates (cf::CfGameManager).
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -122,7 +121,6 @@ extern "C" CMainMenuPad* getCurrentPad__Q22cf13CfGameManagerFv();
 #include "kyoshin/CTaskGame.hpp"
 // Cursor per-frame update helper (defined in CCur.cpp).
 // Pane-config finish gate (defined in CUICfManager.cpp).
-extern "C" void UIWin_CreateExtraWin();
 
 // Sub-menu pane-name table (14 words) and cursor->angle s16 table.
 struct CMainMenuNameTable {
@@ -174,7 +172,7 @@ struct CMainMenuBattleMgr {
     u8 _0[0x8];
     CMainMenuBattleNode* list;  // 0x8 - sentinel node
 };
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 
 #include "kyoshin/code_801F3BE0.hpp"
 
@@ -182,21 +180,8 @@ struct CMainMenuBattleMgr {
 // the vtable+0x10 dispatch (setRootPaneTranslate, takes a translate VEC3).
 
 // Menu dispatch handlers (defined in CUICfManager.cpp / menu TUs)
-extern "C" int MenuTutorialIsCreated();            // party-change notice gate
-extern "C" void CUICfManager_queueBaseMenuItem();
-extern "C" void CUICfManager_queueMakeCrystalMenu();
-extern "C" void CUICfManager_queueCollepediaMenu();
-extern "C" void CUICfManager_queueArtsSetMenu();
-extern "C" void CUICfManager_queuePassiveSkillMenu();
-extern "C" void CUICfManager_queueQuestLogMenu(u32 value);
-extern "C" void CUICfManager_queueKizunagramMenu(u32 value);
-extern "C" void CUICfManager_queueKizunaTalkMenu();
-extern "C" void CUICfManager_queuePlayAwardMenu();
 extern "C" void CUICfManager_queueSkipTimerMenu();
-extern "C" void CUICfManager_queueTutorialListMenu(u32 value);
-extern "C" void CUICfManager_queueSaveMenu(int a, int b);
 extern "C" void CUICfManager_openSaveMenu();
-extern "C" void CUICfManager_queueOptionMenu(u32 value);
 #include "kyoshin/IUICf.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -578,7 +563,7 @@ CMainMenu* CMainMenu::create(CProcess* parent, CScn* scene) {
 }
 
 // Returns 1 if isMenuOpen() is non-zero, else checks the singleton.
-extern "C" u32 CMainMenu_IsOpen(CMainMenu* self) {
+extern "C" int CMainMenu_IsOpen() {
     if (CMainMenu::isAnyMenuOpen() != 0) {
         return 1;
     }

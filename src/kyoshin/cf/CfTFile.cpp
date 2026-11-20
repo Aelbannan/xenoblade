@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfTFile.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -354,9 +354,9 @@ u16 CfT_PlayClockSnapshot(u16* outA, u16* outB) {
 
 // True when the current sub-second frame falls in the [6,17] window of the
 // 60 Hz second (u16 wrap-around range check on the frame counter).
-int CfT_FrameInWindow() {
+bool CfT_FrameInWindow() {
     int frame = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
-    int result = 0;
+    bool result = false;
     // +0x10000 before -6 keeps MWCC from folding the offset into one addi
     // (0x10000 does not fit addi), matching retail's addis+subi pair.
     if ((u16)(frame + 0x10000 - 6) <= 11) {
@@ -441,7 +441,7 @@ static int inWindow(u32 target, u32 hi, u32 lo) {
 // wrap-shifted copy sel[] = times[2..4],times[1], then scans the three
 // consecutive minute windows with wrap-around indexing; returns 1..3 for a
 // window hit and 4 when the target falls in none of them.
-int CfT_SelectDisplayMode(u16 a, u16 b) {
+__declspec(noinline) int CfT_SelectDisplayMode(u16 a, u16 b) {
     u32 target = (u16)(b + a * 60);
     u16 times[5];
     u16 sel[4];
@@ -467,11 +467,11 @@ int CfT_SelectDisplayMode(u16 a, u16 b) {
 // Truncated frame counts of the two play-time rates, passed to the
 // file-event entry matcher as u16 pairs. The intermediate fmod against
 // lbl_eu_80666230 is a discarded calibration call kept for side effects.
-void CfT_DispatchFrameCounts() {
+u32 CfT_DispatchFrameCounts() {
     int a = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_8066623C, lbl_eu_80666240);
     int b = (int)(float)fmod(gCfTPlayClockSeconds / lbl_eu_80666248, lbl_eu_80666250);
     fmod(gCfTPlayClockSeconds, lbl_eu_80666230);
-    CfT_SelectDisplayMode((u16)a, (u16)b);
+    return CfT_SelectDisplayMode((u16)a, (u16)b);
 }
 
 // Advance the file-event frame timer (60 Hz sub-second / second / minute

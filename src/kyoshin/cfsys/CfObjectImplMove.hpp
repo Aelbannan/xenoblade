@@ -2,6 +2,8 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+// CfSoundMan is included by the .cpp; keeping it out of this widely-included
+// header avoids pulling real nw4r/ut headers into TU-local ut:: color views.
 
 namespace cf {
 
@@ -829,14 +831,13 @@ extern void* findObjectById(int id);
 // isGlobalCamFlagSet__Fi: presentation/event flag-bit probe (mangled C++ match).
 extern bool isGlobalCamFlagSet(int mask);
 
+#include "kyoshin/cf/CfMapItemManager.hpp" // testActorStatus / requestItemLoad (owner decl)
+
 // C-linkage imports (retail symbol names are unmangled - keep verbatim).
 extern "C" {
 void* MapFx_ResolveOwner(void* source);
-void aiActionClearBlockADC(void* buf); // canonical void* form (CtrlAct.hpp/ImplPc.hpp)
 void simPushWordToBuf(u32 id, void* source);
-void* CBattleMan_FetchVisionObj(void* bm);
-#include "kyoshin/cf/CfMapItemManager.hpp" // testActorStatus (owner decl)
-void* getInstance__Q22cf13CfGameManagerFv();
+
 void updatePosition(void* self);
 void CCharVoiceMan_EnqueueRebindVoice(void* a, void* b, void* c);
 // Enum-list helper family: canonical extern "C" void* forms (CVision.hpp).
@@ -853,13 +854,12 @@ void __dt__Q22cf16CfObjectImplMoveFv(void* self);
 int isBattleStatusActive(void* obj, int id);
 void aiRingCompact(void* buf);   // move-state buffer init (actor +0x3380)
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-void setTargetObj_(void* obj, void* target);
+
 void schedSetStepIntervals(void* effect, f32 f1, f32 f2);
 extern "C" void simRemoveWordFromBuf(void* handler, void* source);
 void CharEffDetachAllSlots(void* effect);
 extern "C" void stopVoiceA(void* self);
 void* Scn_FindCamItem(void* scene, int index);  // scene pose lookup (MoveImplTriggerCamShake)
-void CamEvtForwardShakeFlag(void* shake, int flag);    // camera-shake dispatch (MoveImplTriggerCamShake)
 }
 
 // Talk-source getter (cf::CfObjectModel.cpp) and battle-entry helper.
@@ -868,7 +868,6 @@ extern "C" void MoveImplDispatch204(CfObjectImplMoveObj* self, u32 id);
 
 // Battle-manager helpers dispatched by MoveImplDriveTransition (retail symbols are
 // unmangled; owners: CfObjectImplEne.cpp / CBattleManager.cpp).
-extern "C" int CBattleMan_ListHasValue(void* mgr, void* obj);
 extern "C" void registerBattleActor(void* mgr, void* obj);
 extern "C" void unregisterBattleActor(void* mgr, void* target);
 extern "C" void initBattleActorState(void* mgr, void* actor, u32 param);
@@ -889,7 +888,7 @@ extern "C" void* func_800BBC0C(void* objParam);
 extern "C" void evalBattleTarget(void* mgr, void* battleObj);
 
 // getInstance__Q22cf14CBattleManagerFv: the one shared declaration lives in
-// kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
+// kyoshin/cf/CBattleManager.hpp (included at the top of this header).
 // Camera-shake parameter block
 // vectors at +0x04 / +0x10 are scaled by the distance falloff factor before
 // the call.
@@ -983,8 +982,7 @@ extern volatile u32 gMoveImplEventGate;
 
 // Presentation / sound / effect helpers used by the move-event dispatchers.
 extern "C" void releaseVisionSlot(void* actor, int param); // canonical (void*,int) form (CfObjectActor.hpp)
-extern "C" void requestItemLoad(void* actor, u32 mask);
-// CfCode_GetSubObject: TU-local no-arg view now in CfObjectImplMove.cpp (only caller).
+// CfCode_GetSubObject
 extern "C" void aiRingPrepend(void* buf, void* req); // canonical void* form (CVision.hpp/CtrlPc.hpp)
 #include <string.h>
 // Scn_QueryUnk80State is declared once in libs/monolib/src/scn/CScn_8049603C.hpp;
@@ -995,9 +993,6 @@ extern "C" void aiRingPrepend(void* buf, void* req); // canonical void* form (CV
 // signature; retail function returns the sound id).
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" void setChildV40__(void* a, void* b);
-extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, f32 first,
-    f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
-extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" void* simGetLeafActData(void* object);
 // MoveImplGroundProbeB shape: ground/screen probe writing the adjusted position and
 // taking the source vector plus a float constant. The canonical BE398 declaration

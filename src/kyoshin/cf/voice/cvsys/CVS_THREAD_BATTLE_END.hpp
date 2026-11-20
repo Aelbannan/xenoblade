@@ -81,8 +81,6 @@ extern "C" {
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
     CVS_THREAD*   __ct__cf_CVS_THREAD(CVS_THREAD* object);
-    int           HpVoice_MapSubState(CVoiceHandle* handle);
-    int           HpVoice_CollectIdle(void* arr, int capacity, int unused);
 
     // Runtime rethrow (NMWException runtime, C ABI): declared noreturn so MWCC
     // elides the __end__catch epilogue of a catch-all handler that ends with

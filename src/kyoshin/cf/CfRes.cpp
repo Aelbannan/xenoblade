@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include <revolution/os/OSCache.h>  // DCFlushRange (C linkage)
@@ -429,8 +431,7 @@ extern "C" char* CfRes_extType(char* self, int index, u32* outType, u32* outFiel
 }
 
 extern "C" void CfRes_delegateOp2(void* a, void* b, void* c) {
-    extern void CtrlRemote_DispatchBufOp(void*, void*, unsigned long, void*);
-    CtrlRemote_DispatchBufOp(a, b, 2, c);
+    CtrlRemote_DispatchBufOp((cf::CtrlRemote*)a, (CtrlRemoteBuf*)b, 2, (u32)c);
 }
 
 // CfRes_getPackedFileSize: resolve a resource via the CfRes manager; returns the
@@ -2693,10 +2694,10 @@ extern "C" void CfRes_cacheSoundBase(int unused, ResInfoEntry* self) {
             u8 type = self->field_0x32;
             *(u32*)self->field_0x14 = (u32)(uintptr_t)result;
             if (type == 10) {
-                CfSoundMan_BindRecordBuffer(0, result, self->field_0x18, 0x106000);
+                CfSoundMan_BindRecordBuffer(0, (u32)(uintptr_t)result, self->field_0x18, 0x106000);
                 CfSoundMan_OpenRecordPlayer(0, 7, 0, 0);
             } else if (type == 7) {
-                CfSoundMan_BindRecordBuffer(1, result, self->field_0x18, 0x1A0000);
+                CfSoundMan_BindRecordBuffer(1, (u32)(uintptr_t)result, self->field_0x18, 0x1A0000);
                 CfSoundMan_OpenRecordPlayer(1, 8, 0, 0);
             }
         }

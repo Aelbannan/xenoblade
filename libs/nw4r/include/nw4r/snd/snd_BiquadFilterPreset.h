@@ -20,27 +20,37 @@ namespace detail {
 
 class BiquadFilterLpf : public BiquadFilterCallback {
 public:
-    void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    virtual ~BiquadFilterLpf() {}
+
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
 class BiquadFilterHpf : public BiquadFilterCallback {
 public:
-    void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    virtual ~BiquadFilterHpf() {}
+
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
 class BiquadFilterBpf512 : public BiquadFilterCallback {
 public:
-    void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    virtual ~BiquadFilterBpf512() {}
+
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
 class BiquadFilterBpf1024 : public BiquadFilterCallback {
 public:
-    void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    virtual ~BiquadFilterBpf1024() {}
+
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
 class BiquadFilterBpf2048 : public BiquadFilterCallback {
 public:
-    void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
+    virtual ~BiquadFilterBpf2048() {}
+
+    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

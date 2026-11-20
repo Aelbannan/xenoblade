@@ -65,7 +65,7 @@ using ::CfTFile;
 // (outside namespace cf) so the TU's global-scope helpers can call them.
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 extern "C" {
-__declspec(noinline) int CfT_SelectDisplayMode(u16 a, u16 b);
+int CfT_SelectDisplayMode(u16 a, u16 b);
 int CfT_GetClockTimeByMode(int mode);
 // Retail emits these five helpers with plain C-linkage names (cf. nm of the
 // retail object: no __Fv/__FP7CfTFile suffixes). Declaring them here gives
@@ -75,6 +75,7 @@ cf::CfTFileEntry* CfTFile_FirstEntry3(CfTFile* self);
 cf::CfTFileEntry* CfTFile_FindEntryByKey(CfTFile* self, int key);
 float CfT_PlayTimeGet();
 void CfT_PlayClockUpdate();
+void CfT_PlayClockReset(float v);
 void CfT_PlayClockAdvanceFrame(u32 v);
 int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
@@ -135,3 +136,25 @@ extern const float lbl_eu_80666248;
 extern const double lbl_eu_80666250;
 extern const float lbl_eu_80666258;
 extern const double lbl_eu_80666260;
+
+// File-event / play-clock helpers defined in CfTFile.cpp. Retail mangles these
+// as C++ free functions; callers include this header instead of repeating a
+// per-TU C-linkage prototype.
+int CfTFile_LoadEventArchive(CfTFile* self, u32 param);
+void CfTFile_CancelResetNibble(CfTFile* self);
+void CfTFile_CancelResetFull(CfTFile* self);
+void CfTFile_CopyPayload(CfTFile* dst, CfTFile* src);
+float CfT_PlayRateGet();
+void func_80069EA8(int param);
+bool CfT_IsTvPal();
+u16 CfT_PlayClockSnapshot(u16* outA, u16* outB);
+bool CfT_FrameInWindow();
+int CfT_FrameCountA();
+int CfT_FrameCountB();
+int CfT_FrameCountC();
+u16 CfT_FrameCounterLoad();
+u32 CfT_DispatchFrameCounts();
+void CfT_AdvanceFrameTimer();
+u32 CfT_FrameTimerGet();
+void CfT_FrameTimerSet(u32* self);
+void CfT_ResetEventState();

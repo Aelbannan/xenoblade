@@ -10,7 +10,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // Retail callee keeps its flat, unmangled name (reloc-name fix, PLAN.md 17.6).
-extern "C" u32 Tok_Pack08(u32 a, u32 b);
+#include "kyoshin/code_800AA008_Tok.hpp"
 extern "C" u32 Tok_ParseFile(const char* path);
 
 // Null-guarded bit-15 flag test on +0x64

@@ -1,5 +1,8 @@
 #include <types.h>
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainImports.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
@@ -8,12 +11,13 @@
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "kyoshin/cf/CArtsSet.hpp" // cf::CAttackParam (arts param +0x5e probe)
 #include "monolib/math/Random.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
+#include "kyoshin/cf/CSuddenCommu.hpp"
 extern "C" CChainGimmickList* getReslistB48();
-extern "C" int aiActionClearBits0006(void* self);
 // CfObjectMove_setAnimModeArgs is also declared locally (with different arg spellings) by
 // CBattleManager.cpp / CVision.cpp, which include CChain.hpp via
 // CBattleManager.hpp - keep it out of the header like the trio above.
-// (func_800F3970: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.)
+// (func_800F3970: single shared decl on kyoshin/cf/CBattleManager.hpp.)
 extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
 
 // (The former TU-local voice-dispatch pads are gone. Their slots are
@@ -35,7 +39,7 @@ namespace cf {
         // Retail keeps this branch: the condition is forwarded to the constant
         // 0 just stored, but MWCC does not fold the branch itself.
         if (mHead.field_2 != 0) {
-            mChainTime.mTimer = lbl_eu_80668A18;
+            mChainTime.mTimer = 1.0f;
             mChainTime.mEnabled = 0;
             mChainTime.mPaused = 1;
             visionSharedStateFlags &= 0xFE;
@@ -48,7 +52,7 @@ namespace cf {
         ChainList_Clear((cf::CChainList*)&mChainMember);
         mChainCombo.func1();
         trackChainPlayer((CBattleChainMenuState*)&unk1F0C[0]);
-        CChain_DiscardVoiceId(func_802B48A0((CErrMesEntry*)&unk1F0C[8]));
+        CChain_DiscardVoiceId(((void* (*)(CErrMesEntry*))func_802B48A0)((CErrMesEntry*)&unk1F0C[8]));
     }
 
     bool CChain::chkActorList() {
@@ -285,7 +289,7 @@ extern "C" void CChain_DiscardVoiceId(void* self) {
 // member list, combo, chain-menu state, error-message record, voice).
 void cf::CChain::CChain_ResetChainState() {
     if (mHead.field_2 != 0) {
-        mChainTime.mTimer = lbl_eu_80668A18;
+        mChainTime.mTimer = 1.0f;
         mChainTime.mEnabled = 0;
         mChainTime.mPaused = 1;
         visionSharedStateFlags &= 0xFE;
@@ -298,7 +302,7 @@ void cf::CChain::CChain_ResetChainState() {
     ChainList_Clear((cf::CChainList*)&mChainMember);
     mChainCombo.func1();
     trackChainPlayer(reinterpret_cast<CBattleChainMenuState*>(&unk1F0C[0]));
-    CChain_DiscardVoiceId(func_802B48A0(reinterpret_cast<CErrMesEntry*>(&unk1F0C[8])));
+    CChain_DiscardVoiceId(((void* (*)(CErrMesEntry*))func_802B48A0)(reinterpret_cast<CErrMesEntry*>(&unk1F0C[8])));
 }
 // Per-frame chain update: after the battle-manager / mode-flag gates, sweep
 // the actor list (dead-actor removal, member rebuild, run-linkage), then when
@@ -384,21 +388,21 @@ void CChain_StartArtsCombo(cf::CChain* chain, cf::CChainBattleObj* target) {
         int amt; \
         /* Single short-circuit condition keeps the zero paths joined; */\
         /* ternary selects the truncation addend.                       */\
-        if (sum >= lbl_eu_80668A1C && !((g)->field_74 & 0x1000000)) { \
-            amt = (int)(sum + ((sum <= lbl_eu_80668A1C) ? lbl_eu_80668A28 : lbl_eu_80668A20)); \
+        if (sum >= 0.0f && !((g)->field_74 & 0x1000000)) { \
+            amt = (int)(sum + ((sum <= 0.0f) ? -1.75f : 1.75f)); \
         } else { \
             amt = 0; \
         } \
         if ((tgt)->v162() != 0) { \
-            mul = lbl_eu_80668A30 * (float)IdTable_SumValues((void*)(tgt)->v162(), id); \
+            mul = 0.01f * (float)IdTable_SumValues((CUnkObj8025FB10*)(void*)(tgt)->v162(), id); \
         } else { \
-            mul = lbl_eu_80668A1C; \
+            mul = 0.0f; \
         } \
         (g)->field_5C += (float)amt * mul; \
         if ((tgt)->v162() != 0) { \
-            mul = lbl_eu_80668A30 * (float)IdTable_SumValues((void*)(tgt)->v162(), id); \
+            mul = 0.01f * (float)IdTable_SumValues((CUnkObj8025FB10*)(void*)(tgt)->v162(), id); \
         } else { \
-            mul = lbl_eu_80668A1C; \
+            mul = 0.0f; \
         } \
         (g)->field_58 += mul; \
     } while (0)
@@ -507,7 +511,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
             self->mHead.field_8 != 0)
             ChainEne_TouchBattle194_18F8();
         Chain_LinkList((cf::CChainList*)&self->mChainMember, 0, -1);
-        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mTimer = 1.0f;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         visionSharedStateFlags &= 0xFE;
@@ -589,7 +593,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         ChainChance_Reset((cf::CChainChance*)&self->mChainChance);
         CChain_ResetVoiceMgr();
         actor0->CChain_noop_78E00(0, 0);
-        cf::CfSoundMan::playActorSound(0, 0x69, 0, 0, lbl_eu_80668A40);
+        cf::CfSoundMan::playActorSound(0, 0x69, 0, 0, 0.6f);
         self->mHead.field_7 = 1;
         self->mHead.field_5 = 0;
         self->mHead.field_2++;
@@ -666,14 +670,14 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         // (float is hoisted). Assignment order must match that birth order.
         scratchB.mFields.field_D = 0xe;
         scratchB.field_12 = -1;
-        scratchB.field_14 = lbl_eu_80668A1C;
+        scratchB.field_14 = 0.0f;
         scratchB.mFields.field_10 = 0;
         scratchB.mFields.field_6 = 6;
         aiAppendToRing(&((cf::CChainBattleObj*)actor->unk0)->mField3380, &scratchB);
         {
             u8 state = self->mHead.field_2;
             u8 next = (u8)(state + 1);
-            self->mChainTime.mTimer = lbl_eu_80668A44;
+            self->mChainTime.mTimer = 1.25f;
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
             self->mChainTimer1.unk0 = 0x3c;
@@ -722,7 +726,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
     }
     case 7: {
         if (self->mChainTimer1.unk0 > 0) break;
-        self->mChainTime.mTimer = lbl_eu_80668A48;
+        self->mChainTime.mTimer = 0.3f;
         self->mChainTime.mEnabled = 1;
         self->mChainTime.mPaused = 1;
         self->mChainTimer1.unk0 = 0xa;
@@ -731,7 +735,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
     }
     case 8: {
         if (self->mChainTimer1.unk0 > 0) break;
-        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mTimer = 1.0f;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         self->mHead.field_2 = 0xa;
@@ -840,7 +844,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         } else {
             nextActor = 0;
         }
-        self->mChainTime.mTimer = lbl_eu_80668A48;
+        self->mChainTime.mTimer = 0.3f;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         Chain_LinkList((cf::CChainList*)&self->mChainMember, 1,
@@ -922,7 +926,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         if (Chain_RollActivation((cf::CChainChance*)&self->mChainChance, (cf::CChainBattleObj*)actor->unk0,
                           (cf::CChainBattleObj*)nextActor->unk0) != 0) {
             u8 newState = (u8)(self->mHead.field_2 + 1);
-            self->mChainTime.mTimer = lbl_eu_80668A48;
+            self->mChainTime.mTimer = 0.3f;
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
             self->mHead.field_2 = newState;
@@ -1033,7 +1037,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
             ChainCounter_Drain((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         u8 newState = (u8)(self->mHead.field_2 + 1);
-        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mTimer = 1.0f;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         self->mHead.field_2 = newState;
@@ -1089,7 +1093,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
             self->mHead.field_2++;
         } else {
             Chain_LinkList((cf::CChainList*)&self->mChainMember, 0, -1);
-            self->mChainTime.mTimer = lbl_eu_80668A18;
+            self->mChainTime.mTimer = 1.0f;
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
             visionSharedStateFlags &= 0xFE;
@@ -1153,7 +1157,7 @@ __declspec(noinline) void CChain_TickChain(cf::CChain* self) {
         }
         if (ChainList_CheckCondition((cf::CChainList*)&self->mChainMember, 6, 1) == 0) break;
         Chain_LinkList((cf::CChainList*)&self->mChainMember, 0, -1);
-        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mTimer = 1.0f;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
         visionSharedStateFlags &= 0xFE;
@@ -1344,11 +1348,11 @@ void CChain_TryExtend(cf::CChain* self) {
     // timer has expired, run the A1C chain-time record; otherwise the A18 one.
     if (actor->CChainActor_CheckVoice() == 0 &&
         self->mChainTimer1.unk0 <= 0) {
-        self->mChainTime.mTimer = lbl_eu_80668A1C;
+        self->mChainTime.mTimer = 0.0f;
         self->mChainTime.mEnabled = 1;
         self->mChainTime.mPaused = 1;
     } else {
-        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mTimer = 1.0f;
         self->mChainTime.mEnabled = 0;
         self->mChainTime.mPaused = 1;
     }
@@ -1356,7 +1360,7 @@ void CChain_TryExtend(cf::CChain* self) {
     if (isChainReady((CBattleChainMenuState*)&self->unk1F0C[0], &local) ==
         0)
         return;
-    self->mChainTime.mTimer = lbl_eu_80668A18;
+    self->mChainTime.mTimer = 1.0f;
     self->mChainTime.mEnabled = 0;
     self->mChainTime.mPaused = 1;
     // The result byte is re-read from the stack for each branch (its address
@@ -1450,7 +1454,7 @@ int CChain_TryActivateChain(cf::CChain* self, u32 param) {
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x4000000)) return 0;
     if (param != 0 && (((cf::CChainFlag*)param)->field_0x3F00 & 4) != 0) {
-        if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) != 0) return 0;
+        if (cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj() != 0) return 0;
     }
     if (param == 0) {
         void* player = cf::CfGameManager::getPlayer(0);
@@ -1861,10 +1865,10 @@ int CChainActor_CheckReady(cf::CChainActor* self, int param) {
                     // computation inside each threshold branch.
                     if ((self->unk6C & 1) == 0) {
                         distOk =
-                            (nw4r::math::VEC3LenSq(&scratch) <= lbl_eu_80668A50);
+                            (nw4r::math::VEC3LenSq(&scratch) <= 1225.0f);
                     } else {
                         distOk =
-                            (nw4r::math::VEC3LenSq(&scratch) <= lbl_eu_80668A54);
+                            (nw4r::math::VEC3LenSq(&scratch) <= 1600.0f);
                     }
                 }
             }
@@ -1975,12 +1979,12 @@ int CChainActor_CheckFacing(cf::CChainActor* self) {
         delta.x = srcPos->x - minePos->x;
         delta.y = srcPos->y - minePos->y;
         delta.z = srcPos->z - minePos->z;
-        f32 ang = lbl_eu_80668A58 * nw4r::math::Atan2FIdx(delta.x, delta.z);
+        f32 ang = 0.024543693f * nw4r::math::Atan2FIdx(delta.x, delta.z);
         f32 lim = gauge - ml::pi;
         while (ang < lim) ang += ml::tau;
         lim = gauge + ml::pi;
         while (lim < ang) ang -= ml::tau;
-        if (!(lbl_eu_80668A5C * ml::deg2rad >= fabsf(gauge - ang)))
+        if (!(35.0f * ml::deg2rad >= fabsf(gauge - ang)))
             return 0;
     }
     for (int i = 0; i <= 8; i++) {
@@ -2032,12 +2036,12 @@ int CChainActor_CheckFacing(cf::CChainActor* self) {
     return 1;
 }
 // Chain-voice usability check: probes the embedded voice sub-object's timing
-// (vtable slot 0x110) against the lbl_eu_80668A60 threshold, then validates
+// (vtable slot 0x110) against the 0.0f threshold, then validates
 // the battle object's actor ids (testActorStatus with 0x1000 / 0x6 masks) and
 // rejects the special 0x31 battle-object id.
 int CChainActor_CheckVoice(cf::CChainVoiceHolder* self) {
     f32 t = self->field_0->mSub.v066()->field_14;
-    if (lbl_eu_80668A60 < t) return 0;
+    if (0.0f < t) return 0;
     cf::CChainBattleObj* battleObj = self->field_0;
     int local1 = *(int*)battleObj->field_04->f30();
     if (testActorStatus(battleObj, &local1, 0x1000) != 0) return 0;

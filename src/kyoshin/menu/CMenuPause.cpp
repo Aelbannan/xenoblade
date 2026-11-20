@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuPause.hpp"
+#include "kyoshin/menu/MenuSndApi.hpp"
 
 
 #include "monolib/device/CDeviceVI.hpp"
@@ -17,6 +18,7 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 extern u32 gmPauseFlags;
 
@@ -61,8 +63,6 @@ struct CMenuPauseTexObj {
 };
 
 extern "C" {
-    void MenuSnd_SetSlotsPause_8890(u32);
-    void CfSoundMan_PlayRequest(f32, int, int, int);
     void func_800853C8__Q22cf13CfGameManagerFv();
     // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
@@ -307,8 +307,8 @@ extern "C" void Pause_HandleExitInput(CMenuPause* p) {
     if (first) {
         MenuStateClear64064();
         func_800853C8__Q22cf13CfGameManagerFv();
-        CfSoundMan_PlayRequest(0.6f, 0, 3, 0);
-        CfSoundMan_PlayRequest(0.6f, 0, 0xe, 0);
+        CfSoundMan_PlayRequest(0, 3, 0, 0.6f);
+        CfSoundMan_PlayRequest(0, 0xe, 0, 0.6f);
         p->mState = 3;
     } else if (second) {
         playUISound(6);

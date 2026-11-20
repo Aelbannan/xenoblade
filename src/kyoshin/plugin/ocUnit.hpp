@@ -45,7 +45,6 @@ extern "C" int CollObjLoadResourceTimed(cf::CfObjectColl* self, cf::CfObject* ob
 
 // Moves an object to pos with the given angle, relative to its move object.
 // Also defined in CfObjectColl.cpp.
-extern "C" void CollObjSetupRotBoxState5(cf::CfObject* obj, void* moveObj, ml::CVec3* pos, float angle);
 
 // Fake vtables removed - all slots folded onto owning classes
 // cf::CfObject / cf::CfObjectMove / cf::CActorParam etc. See headers for real virtuals.
@@ -126,5 +125,8 @@ bool isPlayerInEventRange__Q22cf13CfGameManagerFv(int arg);
 }
 #endif
 
-
-
+// C++-linkage plugin exports owned by kyoshin/plugin/ocUnit (the retail
+// symbols carry MWCC's mangled names).
+bool isValid();
+int walkR(VMThread* pThread, int handle);
+int onEvent(VMThread* pThread, int handle);

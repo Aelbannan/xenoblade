@@ -755,7 +755,7 @@ struct CfPartsManager {
     CfPartsElemArray mElems;
 };
 extern "C" int CfRes_getD80Flag();
-extern "C" f32 Scn_GetFrameDelta(void);
+f32 Scn_GetFrameDelta(void* view);
 extern const f32 lbl_eu_80667AC0;
 extern const f32 lbl_eu_80667AD4;
 extern const f32 lbl_eu_80667AB8;
@@ -780,8 +780,8 @@ extern "C" void CPartsChange_ReseedElemTimer(CfPartsElem4C* self) {
 
 // Per-frame speed decay across the party-change element array.
 extern "C" void CPartsChange_UpdateElemSpeeds(CfPartsManager* self) {
-    CfRes_getD80Flag();
-    f32 step = Scn_GetFrameDelta();
+    void* scene = reinterpret_cast<void*>(CfRes_getD80Flag());
+    f32 step = Scn_GetFrameDelta(scene);
     CfPartsElemArray* arr = &self->mElems;
     for (CfPartsElem4C* e = arr->mElems; e != arr->mElems + arr->mCount; e++) {
         if (e->field_1E & 0x400) {
@@ -1114,7 +1114,7 @@ extern "C" void evictTboxOverflow();
 extern "C" void* spawnVoiceActor(void* tag, void* argB, void* argC, f32 val);
 extern "C" void copyTboxFromObj(void* arg);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
-extern const u16 lbl_eu_80662528[4];
+extern const u16 sPartsChangeDropSoundIds[4];  // name-guess: 0/0x1CC/0x1CD/0x1CE sound IDs indexed by the box roll result; only xref is CPartsChange_SpawnItemDrop
 extern const f32 lbl_eu_80667AE8;
 extern const f32 lbl_eu_80667B24;
 
@@ -1150,7 +1150,7 @@ extern "C" void CPartsChange_SpawnItemDrop(u32 id, u8* obj, f32* pos, u8* arg4, 
     ((cf::CPartsChangeDevView*)actor)->mAtDC(1.5f);
     *(u32*)(actor + 0x73C) = id;
     copyTboxFromObj(actor);
-    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, lbl_eu_80662528[n], 0, 0, lbl_eu_80667AD0);
+    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, sPartsChangeDropSoundIds[n], 0, 0, lbl_eu_80667AD0);
 }
 
 extern "C" void CPartsChange_ReleaseEntryWithDrop(void* mgr, void* obj, int a, int b){}
@@ -1207,9 +1207,9 @@ extern "C" int CPartsChange_UnregisterEntry(u8* actor, u8* obj) {
     if (obj != 0 && reinterpret_cast<ActorFlagWords*>(obj)->f3F10 != 0) {
         u8* p = actor;
         for (u32 i = 0; i < 16; i++) {
-            // volatile: retail re-reads the 0x3F10 id every iteration (the
-            // slot stores may alias obj), so it must not be CSE'd.
-            if (*(u32*)p == *(volatile u32*)(obj + 0x3F10)) {
+            // Retail re-reads the 0x3F10 id every iteration (the slot
+            // stores may alias obj), so the id load must stay in the loop.
+            if (*(u32*)p == *(u32*)(obj + 0x3F10)) {
                 u32* slots = (u32*)actor;
                 slots[i * 2] = 0;
                 slots[i * 2 + 1] = 0;

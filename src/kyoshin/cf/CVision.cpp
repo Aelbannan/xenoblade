@@ -2,11 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManager.hpp"
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/code_8028130C.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/cf/CfCamSymbols.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include <types.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <new>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -34,6 +37,7 @@ namespace cf { class CfGameManager; }
 // which is the only caller of that ABI.
 // (Region line count preserved: MWCC -ipa file codegen is line-sensitive.)
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CTaskGameApi.hpp"
 // (CUIWindowManagerApi.hpp omitted: conflicts with this TU's closure.)
 extern "C" void* UIWin_BuildFlagBuf(u32 target);
@@ -70,6 +74,7 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // pre-includes them under a rename nor keeps a divergent (int id)
 // redeclaration -- id-passing call sites cast to (void*) at the call.
 #include "kyoshin/cf/CSuddenCommu.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 // The former CtrlObjectParam_GetCharEntry / getBdatStringColumnValue / getArtsSlotRC /
 // getArtsParamRC2 renames are gone: CAIAction.hpp no longer redeclares
 // CtrlObjectParam_GetCharEntry, its getBdatStringColumnValue shim is type-identical to the
@@ -79,6 +84,7 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
 // This TU uses the CSuddenCommu form; rename the other out of the way.
 #include "kyoshin/cf/object/CAIAction.hpp"
+#include "kyoshin/code_801A929C.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 // CBattleManager.hpp pulls CfObjectActor.hpp; its declarations of the
@@ -88,6 +94,7 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/cf/CSuddenCommuImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
+#include "kyoshin/cf/CfSoundMan.hpp"
 // The explicit extern "C" declarations below stay: they are identical
 // duplicates of the chain-header forms (legal redeclaration) and act as
 // this TU's visible import anchors.
@@ -95,12 +102,9 @@ extern "C" void* __dt__801A36D0(cf::CVisionSlot* self, int deleting);
 // #undef get__16CfEnumListHolderFv, #undef getObjectAt, #undef __dt__16CfEnumListHolderFv, #undef startEnumObjects.
 // Region line count preserved: MWCC -ipa file codegen in this TU is
 // sensitive to downstream source line numbers (CMenuPTGauge case).
-#undef CBattleMan_FetchVisionObj // active since line 4 (CfObjectActor.hpp); CVision.hpp:633 was renamed too
-extern "C" void* CBattleMan_FetchVisionObj(void* self); // retail C decl
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void* getObjectAt(void* list, u32 idx);
 extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
-extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 
 using namespace cf;
 
@@ -205,7 +209,7 @@ struct CVisionFxParam {
 
 // Kept inline (not moved to CVision.hpp): sibling TUs stub these.
 extern "C" void CCharVoiceMan_PushFreshSoundNode(void* a, void* b); // CCharVoiceMan.cpp defines an empty stub
-extern "C" void resetVisionSlots(u32 a);            // CMenuVision.cpp defines an empty stub
+void resetVisionSlots(int sel);            // CMenuVision.cpp
 
 // Object handed to forwardVisionShowRequests by CfCode_GetSubObject (reads byte at 0x42).
 struct CVisionRefObj {
@@ -1260,7 +1264,7 @@ extern "C" void runVisionIdleWindows(CVision* self) {
     }
     if (w1) {
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
-        cfCam_pushStateToActive();
+        cfCam_pushStateToActive((cf::CfCamFollow*)0);
     }
     int w2;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CFC &&
@@ -1926,7 +1930,7 @@ extern "C" void runVisionResetWindows(CVision* self) {
         self->vt_18();
         self->vt_30(1);
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
-        cfCam_pushStateToActive();
+        cfCam_pushStateToActive((cf::CfCamFollow*)0);
     }
     f32 t3 = lbl_eu_80667D44;
     int w3;
@@ -2615,7 +2619,7 @@ extern "C" void driveVisionFxUpdates(CVision* self) {
     if (p2 != 0 && p1 != p2) {
         p2->sub8.s30(0x10);
         Vision_CopyFxActor(p2, &self->unk20D4[1]);
-        requestItemLoad(p2, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(p2), 0x40);
     }
 
     {
@@ -2631,7 +2635,7 @@ extern "C" void driveVisionFxUpdates(CVision* self) {
                 continue;
             }
             Vision_CopyFxActor(obj, (u8*)self + (off + 0x10000) - 0x4efc);
-            requestItemLoad(obj, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(obj), 0x40);
         }
     }
     refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CD4, 3);
@@ -2701,7 +2705,7 @@ extern "C" void teardownVisionFx(CVision* self, void* releaseFx) {
     self->vt_30(1);
     if (releaseFx != 0) {
         lookupEffectForResource__Q22cf13CfGameManagerFv(1, 0, 0);
-        cfCam_pushStateToActive();
+        cfCam_pushStateToActive((cf::CfCamFollow*)0);
     }
     refreshBattleActors(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
     resetVisionSlots(0);
@@ -2878,14 +2882,14 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
         slot->w_824 |= 0x1;
         restartVisionSlots(1);
         ScMain_Reset((ScMain*)slot);
-        PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+        cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)CBattleManager::getInstance() + 0x194), 0);
         func_800F3970(CBattleManager::getInstance(), fu, 0, 0x17, 0);
         engaged = 1;
     case 4:
         slot->w_824 = (slot->w_824 | 0x2) & ~0x40;
         restartVisionSlots(2);
         if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)CBattleManager::getInstance() + 0x194), 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x18, 0);
             engaged = 1;
         }
@@ -2893,7 +2897,7 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
         slot->w_824 = (slot->w_824 | 0x4) & ~0x80;
         restartVisionSlots(4);
         if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)CBattleManager::getInstance() + 0x194), 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x19, 0);
             engaged = 1;
         }
@@ -2925,7 +2929,7 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             slot->w_824 &= ~0x400;
         }
         if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)CBattleManager::getInstance() + 0x194), 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1a, 0);
             engaged = 1;
         }
@@ -2951,7 +2955,7 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
         slot->w_824 = ((slot->w_824 | 0x10) & ~0x200) | 0x4000;
         restartVisionSlots(0x10);
         if (engaged == 0) {
-            PartyGaugeAddClamped((u8*)CBattleManager::getInstance() + 0x194, 0);
+            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)CBattleManager::getInstance() + 0x194), 0);
             func_800F3970(CBattleManager::getInstance(), fu, 0, 0x1b, 0);
         }
         {
@@ -3047,7 +3051,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
         if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
             return;
         }
-        CVisionBtlSlot* bs = (CVisionBtlSlot*)CBattleMan_FetchVisionObj(CBattleManager::getInstance());
+        CVisionBtlSlot* bs = (CVisionBtlSlot*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         if (bs == 0) {
             return;
         }
@@ -3323,7 +3327,6 @@ extern "C" u8 __RTTI__Q22cf12CObjectParam[];
 extern "C" u8 __RTTI__Q22cf12CObjectState[];
 extern "C" u8 __RTTI__Q22cf7CVision[];
 extern "C" u8 __RTTI__Q22cf11IObjectInfo[];
-extern "C" void BattleWork_MarkSlotFFFF(void);
 // Address-of view of the member dtor for the vtable slot (cf. the
 // DEFINE_POD_DTOR idiom: same asm name, C linkage, defined by the member).
 extern "C" void __dt__Q22cf7CVisionFv(void);

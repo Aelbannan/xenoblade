@@ -1,12 +1,12 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"
 
 // TU-private imports for kyoshin/cf/chain/CChainActorList.cpp (moved out of the public
 // CChainActorList.hpp, which keeps the classes).
 
 #include "kyoshin/cf/chain/CChainActorList.hpp"
-#include "kyoshin/cf/chain/CChainEffectImports.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void chainResolveMemberPtr(int, void*);
 extern "C" u32 UIWin_GetInstance();
 extern "C" void UIWin_Create6F8B0Win(int);
 extern "C" int lbl_eu_80662A80;
@@ -28,7 +28,6 @@ extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 // CChainTimer.hpp so both headers co-exist without rename guards.
 namespace cf { class CChainBattleObj; }
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
-extern "C" int IdTable_SumValues(void* data, u32 flag);
 extern "C" int GetZealObjPtr(void);
 extern "C" int GetZealResult(int);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);

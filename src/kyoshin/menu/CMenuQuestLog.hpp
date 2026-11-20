@@ -64,8 +64,6 @@ public:
 
 // Quest-log sub-object helpers. Retail uses the unmangled func_ names, so
 // declare them with C linkage (a C++ member call would re-mangle the reloc).
-extern "C" bool QstLogInfo_GetLoadedMark(CQstLogInfo* self);
-extern "C" bool QstLogInfo_GetReadyMark(CQstLogInfo* self);
 
 // cf::CfPadData view for getCfPadData: pressed-button flags at +0x04 and
 // short-press turbo flags at +0x104 (cf::CfPadData itself is incomplete).
@@ -82,7 +80,6 @@ extern "C" void QstLogInfo_Resume(CQstLogInfo* self);
 extern "C" const char lbl_eu_804FE518[];   // menu text string pool (split1 .rodata)
 extern "C" bool BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
-extern "C" void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
 // Embedded widgets are torn down through their owning helpers above.
 
 // Widget teardown helpers called by Term (retail unmangled names).
@@ -101,8 +98,6 @@ extern CMenuQuestLog* spQuestLogMenuInstance[2];
 extern u32 gmPauseFlags;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void QstLogInfo_SetQuestIdSlot(void*, unsigned short);
-extern "C" void QstLogInfo_LoadCommonArchive(void*);
 
 // Widget/base helpers with retail-unmangled names (US retail strips these
 // member manglings) - C linkage so calls bind the literal retail symbols.
@@ -110,12 +105,11 @@ extern "C" void QstLogInfo_LoadCommonArchive(void*);
 extern "C" int BgTex_IsLoaded_3E34(CBgTex* self);
 extern "C" void BgTex_Tick_3D54(CBgTex* self);
 extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void QstLogInfo_StepStateMachine(CQstLogInfo* self);
 
 // CfGameManager helpers (retail pre-mangled names).
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 // Save/skip system busy queries (retail unmangled).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 // Frame counter post-increment helper (code_80135FDC.cpp).

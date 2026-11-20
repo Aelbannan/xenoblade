@@ -20,6 +20,16 @@ namespace cf {
 
 extern "C" void chainBindEffectLink(cf::CChainEffect*, int a, int b, int c, int d, int e);
 
+// Real C++ linkage helpers defined in CChainEffect.cpp (retail symbols carry
+// these manglings). Callers include this owning header instead of keeping
+// per-TU extern "C" copies.
+void* chainResolveMemberPtr(u32 cls, int mem);
+void* chainResolveMemberFromSrc(u32 cls, u32* src);
+int chainUnbindMatchingObjects(s32 id, u32 p2);
+void chainClearTwoWords(void* self);
+void chainTeardownLinkClear(cf::CChainEffect* self);
+void chainClearLinkOnObjMatch(cf::CChainEffect* self, u32 obj);
+
 // ---------------------------------------------------------------------------
 // Effect linkage / registry shapes (global scope members of this TU).
 // ---------------------------------------------------------------------------
@@ -52,3 +62,25 @@ struct CChainItem {
     u8 pad_8E[0xE];               //0x8E
     u32 field_9C;                 //0x9C
 };
+
+
+// TU-private imports for kyoshin/cf/chain/CChainEffect.cpp (moved out of the public
+// CChainEffect.hpp, which keeps the classes).
+
+// Cross-TU C-ABI imports. These retail symbols are emitted unmangled, so they
+// are declared with C linkage (matches the C-linkage import blocks used across
+// the codebase). getInstance is a plain global C++ function whose retail
+// symbol already carries the MWCC `__Fv` mangle, so it is left as-is.
+extern "C" {
+
+void setChildB59__(void* obj, s8 val);
+// Canonical signature from the definition in code_800B06A4.cpp.
+void removeManagedObject(class UnkClass_805764CC* self, void* target);
+// Definition (code_800B06A4.cpp) returns the raw manager pointer with C linkage.
+void* getReslistBE8(void);
+void* CollObjHasFlag64Bit5(void* param);
+extern f32 lbl_eu_80668C50;
+}
+// Plain global C++ callee (retail symbol getInstance__Fv); canonical
+// declaration lives in the owning code_800B06A4.hpp.
+UnkClass_805764CC* getInstance(void);

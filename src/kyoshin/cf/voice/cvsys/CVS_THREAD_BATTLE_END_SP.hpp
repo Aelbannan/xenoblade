@@ -108,8 +108,6 @@ extern "C" {
     int  IsThreadVoiceActive(CVS_THREAD* self);
     void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
     int  TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int  HpVoice_MapSubState(CVoiceHandle* handle);
-    int  HpVoice_SeqBelow94();
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*  CCharVoiceMan_AllocVoiceArena(int size);
     // Zero-arg declaration: the factory keeps the allocator result live in r3

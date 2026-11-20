@@ -525,7 +525,7 @@ int CEquipChange::RunMainFlow() {
         if (((CEquipEnumList*)holder.get())->field_0x620 >= 1) {
             CEquipEnumListSlot* slot = (CEquipEnumListSlot*)getEntryAt(holder.get(), 0);
             if (slot->field_0x4 != 0) {
-                CfObjectPc_setupFrame(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
+                CfObjectPc_setupFrame(reinterpret_cast<cf::CfObjectPc*>(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4)));
             }
         }
     }

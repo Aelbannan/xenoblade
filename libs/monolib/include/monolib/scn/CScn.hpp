@@ -99,3 +99,14 @@ public:
     u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
 }; // size = 0x3EC
 
+
+// Thin owner-API header for monolib/src/scn/CScn (retail Scn_GetFrameDelta,
+// defined in CScn.cpp; canonical declaration also appears in
+// monolib/core/code_804E36DC.hpp). Scene delta-time query: PAL consoles
+// without the speed fix run at 1.2x.
+
+class CScn;
+
+// Real C++ entry points defined in monolib/src/scn/CScn.cpp.
+f32 Scn_GetFrameDelta(void* view);
+void Scn_SetTimeScale(CScn* self, float value);

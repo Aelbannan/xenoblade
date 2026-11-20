@@ -17,7 +17,6 @@
 
 // Globals shared across menu units
 extern u32 gmPauseFlags;
-extern const f32 lbl_eu_80667DC0; // 0.0f
 extern const f32 lbl_eu_80667DD8;
 extern const f32 lbl_eu_80667DCC;
 extern const f32 lbl_eu_80667DDC;
@@ -43,7 +42,6 @@ struct AnimFrameAccess {
 
 extern "C" {
 void* findObjectById__Fi(int);
-void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
 
 extern u32 visionTextColorNeutral;
 extern u32 visionPaneColorNeutralFirst;
@@ -165,7 +163,7 @@ static inline void menuVisionBegin(CMenuVisionEntry& entry) {
     entry.mLayout->SetAnimationEnable(entry.mAnim7, false);
     entry.mLayout->SetAnimationEnable(entry.mAnim8, false);
     entry.mLayout->SetAnimationEnable(entry.mAnim1, true);
-    entry.mAnim1->SetFrame(lbl_eu_80667DC0);
+    entry.mAnim1->SetFrame(0.0f);
     entry.field_0x28 = 0;
     entry.mState = 1;
     playUISound(0x1C3);
@@ -180,7 +178,7 @@ static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
     entry.mLayout->SetAnimationEnable(entry.mAnim7, false);
     entry.mLayout->SetAnimationEnable(entry.mAnim8, false);
     entry.mLayout->SetAnimationEnable(entry.mAnim1, true);
-    entry.mAnim1->SetFrame(lbl_eu_80667DC0);
+    entry.mAnim1->SetFrame(0.0f);
     entry.field_0x28 = 0;
     entry.mState = 1;
     playUISound(0x1C3);
@@ -195,7 +193,7 @@ static inline void menuVisionBeginSilent(CMenuVisionEntry& entry) {
     entry.mLayout->SetAnimationEnable(entry.mAnim7, false);
     entry.mLayout->SetAnimationEnable(entry.mAnim8, false);
     entry.mLayout->SetAnimationEnable(entry.mAnim1, true);
-    entry.mAnim1->SetFrame(lbl_eu_80667DC0);
+    entry.mAnim1->SetFrame(0.0f);
     entry.field_0x28 = 0;
     entry.mState = 1;
 }
@@ -261,7 +259,7 @@ extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self
         e0.mAnim8 = 0;
         e0.mState = 0;
         e0.field_0x28 = 0;
-        e0.mTimer = lbl_eu_80667DC0;
+        e0.mTimer = 0.0f;
     }
     while (e < end) {
         e->mLayout = 0;
@@ -275,7 +273,7 @@ extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self
         e->mAnim8 = 0;
         e->mState = 0;
         e->field_0x28 = 0;
-        e->mTimer = lbl_eu_80667DC0;
+        e->mTimer = 0.0f;
         ++e;
     }
     // Pass 2: stage a cleared slot through an address-taken local, then
@@ -294,7 +292,7 @@ extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self
         ep->mAnim8 = 0;
         ep->mState = 0;
         ep->field_0x28 = 0;
-        ep->mTimer = lbl_eu_80667DC0;
+        ep->mTimer = 0.0f;
         self->mEntries[i] = *ep;
         self->mEntries[i + 1] = *ep;
     }
@@ -460,7 +458,7 @@ static inline void menuVisionStartSustain(CMenuVisionEntry& e) {
     e.mLayout->SetAnimationEnable(e.mAnim5, false);
     e.mLayout->SetAnimationEnable(e.mAnim6, false);
     e.mLayout->SetAnimationEnable(e.mAnim7, true);
-    e.mAnim7->SetFrame(lbl_eu_80667DC0);
+    e.mAnim7->SetFrame(0.0f);
     e.mState = 5;
 }
 
@@ -494,7 +492,7 @@ extern "C" void restartVisionSlots(int flags) {
             return;
         }
         menuVisionStartSustain(e);
-        e.mTimer = lbl_eu_80667DC0;
+        e.mTimer = 0.0f;
     }
 
     if (flags & 2) {
@@ -506,7 +504,7 @@ extern "C" void restartVisionSlots(int flags) {
             return;
         }
         menuVisionStartSustain(e);
-        f32 t = lbl_eu_80667DC0;
+        f32 t = 0.0f;
         if (sVisionMenuInstance->mEntries[0].mState == 5) {
             t = lbl_eu_80667DCC;
         }
@@ -522,7 +520,7 @@ extern "C" void restartVisionSlots(int flags) {
             return;
         }
         menuVisionStartSustain(e);
-        f32 t = lbl_eu_80667DC0;
+        f32 t = 0.0f;
         if (sVisionMenuInstance->mEntries[1].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
@@ -541,7 +539,7 @@ extern "C" void restartVisionSlots(int flags) {
             return;
         }
         menuVisionStartSustain(e);
-        f32 t = lbl_eu_80667DC0;
+        f32 t = 0.0f;
         if (sVisionMenuInstance->mEntries[2].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
@@ -566,9 +564,9 @@ extern "C" void restartVisionSlots(int flags) {
         menuVisionStartSustain(e5);
         CMenuVisionEntry& e4 = sVisionMenuInstance->mEntries[4];
         menuVisionResetAnims(e4);
-        sVisionMenuInstance->mEntries[4].mAnim7->SetFrame(lbl_eu_80667DC0);
+        sVisionMenuInstance->mEntries[4].mAnim7->SetFrame(0.0f);
         sVisionMenuInstance->mEntries[4].mState = 5;
-        f32 t = lbl_eu_80667DC0;
+        f32 t = 0.0f;
         if (sVisionMenuInstance->mEntries[3].mState == 5) {
             t = t + lbl_eu_80667DC4;
         }
@@ -592,7 +590,7 @@ extern "C" void driveVisionUpdate(int flags) {
         return;
     }
 
-    MenuVisionBattleData* battle = static_cast<MenuVisionBattleData*>(CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
+    MenuVisionBattleData* battle = static_cast<MenuVisionBattleData*>(cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj());
     if (battle == 0) {
         return;
     }
@@ -1082,11 +1080,11 @@ void resetVisionSlots(int sel) {
     if (sVisionMenuInstance == 0) {
         return;
     }
-    if (CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()) == 0) {
+    if (cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj() == 0) {
         return;
     }
 
-    const f32 startFrame = lbl_eu_80667DC0;
+    const f32 startFrame = 0.0f;
     for (u8 i = 0; i < 6; i++) {
         CMenuVisionEntry& e = sVisionMenuInstance->mEntries[i];
         if (e.mState == 0) {
@@ -1208,7 +1206,7 @@ L_continue:
             break;
 
         case 2: {
-            bmObj = CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance());
+            bmObj = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
             if (bmObj != NULL) {
                 // While the HP-bar pane is visible, track the target position.
                 nw4r::lyt::Pane* pane1 = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);
@@ -1234,7 +1232,7 @@ L_continue:
                 e->mLayout->SetAnimationEnable(e->mAnim8, false);
                 e->mLayout->SetAnimationEnable(e->mAnim1, false);
                 e->mLayout->SetAnimationEnable(e->mAnim2, true);
-                e->mAnim2->SetFrame(lbl_eu_80667DC0);
+                e->mAnim2->SetFrame(0.0f);
                 e->mState = 3;
             }
             break;
@@ -1305,7 +1303,7 @@ void CMenuVision::Init() {
         e.mLayout->SetAnimationEnable(e.mAnim7, false);
         e.mLayout->SetAnimationEnable(e.mAnim8, false);
         e.mLayout->SetAnimationEnable(e.mAnim1, true);
-        e.mAnim1->SetFrame(lbl_eu_80667DC0);
+        e.mAnim1->SetFrame(0.0f);
         e.mLayout->Animate(0);
 
         // Hide 6 standard panes by clearing bit 0 of visByte
@@ -1362,7 +1360,7 @@ void CMenuVision::Init() {
 // slot's field_0x28 so the update runs only once.
 void tickVisionExpiry(CMenuVision*, CMenuVisionEntry* entry) {
     entry->mTimer -= lbl_eu_80667DC4;
-    if (entry->mTimer >= lbl_eu_80667DC0) {
+    if (entry->mTimer >= 0.0f) {
         return;
     }
     // Cue-frame jingle once the timer lapses to the exact cue value.

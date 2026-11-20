@@ -25,7 +25,6 @@
 extern "C" void CTitleLogo_bindIntro(CTitleLogo* self);
 extern "C" void CTitleLogo_bindAnim1(CTitleLogo* self);
 // (memberized: CTitleMenu_bindAnim1 -> CTitleMenu::bindAnim1; declaration moved into class CTitleMenu)
-extern "C" void CTitleMenu_bindAnim4(CTitleLogo* self);
 extern "C" void CTitleLogo_bindAnim2(CTitleLogo* self);
 extern "C" void CTitleMenu_bindIntro(CTitleMenu* self);
 void CTitleMenu_bindAnim4(CTitleMenu* self);
@@ -127,7 +126,7 @@ extern "C" void CTitleLogo_beginOutro(CTitleLogo* self) {
 // the phase flag so the caller can proceed.
 extern "C" void CTitleLogo_stepState1(CTitleLogo* self) {
     if (self->field_0x1A == 1) {
-        self->mAnimTrans0->SetFrame((float)self->mAnimTrans0->GetFrameSize() - lbl_eu_80668FE0);
+        self->mAnimTrans0->SetFrame((float)self->mAnimTrans0->GetFrameSize() - 1.0f);
         self->mLayout->Animate(0);
         self->field_0x1A = 2;
         CTitleLogo_bindAnim1((CTitleLogo*)self);
@@ -140,7 +139,7 @@ extern "C" void CTitleLogo_nop() {}
 // When the +0xC layout is visible, raise the +0x1A state to 2, run the
 // +0x6C hook, and set the +0x19 flag.
 extern "C" void CTitleLogo_onAnim0Done(CTitleLogo* self) {
-    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668FE0)) {
+    if (advanceAnimTransform(self->mAnimTrans0, 1.0f)) {
         self->field_0x1A = 2;
         CTitleLogo_bindAnim1(self);
         self->field_0x19 = 1;
@@ -148,12 +147,12 @@ extern "C" void CTitleLogo_onAnim0Done(CTitleLogo* self) {
 }
 
 
-extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform(((CTitleLogo*)self)->mAnimTrans1, lbl_eu_80668FE0); }
+extern "C" void CTitleLogo_tickAnim1(void* self) { advanceAnimTransform(((CTitleLogo*)self)->mAnimTrans1, 1.0f); }
 
 // Logo state step: when animation 2 finishes, reset the state machine,
 // rebind the intro animation, and clear/set the phase flags.
 extern "C" void CTitleLogo_onAnim2Done(CTitleLogo* self) {
-    if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans2, 1.0f) != 0) {
         self->field_0x1A = 0;
         CTitleLogo_bindIntro(self);
         self->field_0x18 = 0;
@@ -167,7 +166,7 @@ extern "C" void CTitleLogo_bindIntro(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
-    self->mAnimTrans0->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans0->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 
@@ -177,7 +176,7 @@ void CTitleLogo_bindAnim1(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans0);
     self->mLayout->BindAnimation(self->mAnimTrans1);
     self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
-    self->mAnimTrans1->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans1->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 
@@ -186,7 +185,7 @@ extern "C" void CTitleLogo_bindAnim2(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans1);
     self->mLayout->BindAnimation(self->mAnimTrans2);
     self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
-    self->mAnimTrans2->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans2->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 
@@ -336,7 +335,7 @@ extern "C" __declspec(noinline) void CTitleMenu_calcCursorPos(nw4r::math::VEC3* 
 // phase flag so the caller can proceed.
 extern "C" void CTitleMenu_stepState4(CTitleMenu* self) {
     if (self->field_0x26 == 4) {
-        self->mAnimTrans3->SetFrame((float)self->mAnimTrans3->GetFrameSize() - lbl_eu_80668FE0);
+        self->mAnimTrans3->SetFrame((float)self->mAnimTrans3->GetFrameSize() - 1.0f);
         self->mLayout->Animate(0);
         self->field_0x26 = 5;
         CTitleMenu_bindAnim4(self);
@@ -349,18 +348,18 @@ extern "C" void CTitleMenu_nop() {}
 // Visibility-gated state set (+0x26 = 2, hook, +0x25 = 1) for the logo's
 // second phase.
 extern "C" void CTitleMenu_onAnim0Done(CTitleMenu* self) {
-    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668FE0)) {
+    if (advanceAnimTransform(self->mAnimTrans0, 1.0f)) {
         self->field_0x26 = 2;
         self->bindAnim1();
         self->field_0x25 = 1;
     }
 }
 
-extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform(((CTitleMenu*)self)->mAnimTrans1, lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim1(void* self) { advanceAnimTransform(((CTitleMenu*)self)->mAnimTrans1, 1.0f); }
 
 // When the +0x14 anim transform has finished, set +0x24 = 0 and +0x25 = 1.
 extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
-    if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans2, 1.0f) != 0) {
         self->field_0x24 = 0;
         self->field_0x25 = 1;
     }
@@ -369,19 +368,19 @@ extern "C" void CTitleMenu_onAnim2Done(CTitleMenu* self) {
 // Visibility-gated state set (+0x26 = 5, hook, +0x25 = 1) via the +0x18
 // layout and the shared anim-visibility test.
 extern "C" void CTitleMenu_onAnim3Done(CTitleMenu* self) {
-    if (advanceAnimTransform(self->mAnimTrans3, lbl_eu_80668FE0)) {
+    if (advanceAnimTransform(self->mAnimTrans3, 1.0f)) {
         self->field_0x26 = 5;
         CTitleMenu_bindAnim4(self);
         self->field_0x25 = 1;
     }
 }
 
-extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform(((CTitleMenu*)self)->mAnimTrans4, lbl_eu_80668FE0); }
+extern "C" void CTitleMenu_tickAnim4(void* self) { advanceAnimTransform(((CTitleMenu*)self)->mAnimTrans4, 1.0f); }
 
 // Menu state step: when animation 5 finishes, reset the state machine,
 // run the menu intro hook, and clear/set the phase flags.
 extern "C" void CTitleMenu_onAnim5Done(CTitleMenu* self) {
-    if (advanceAnimTransform(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans5, 1.0f) != 0) {
         self->field_0x26 = 0;
         CTitleMenu_bindAnim3(self);
         self->field_0x24 = 0;
@@ -395,7 +394,7 @@ extern "C" void CTitleMenu_bindIntro(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans5);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
-    self->mAnimTrans0->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans0->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 
@@ -405,7 +404,7 @@ void CTitleMenu::bindAnim1() {
     this->mLayout->UnbindAnimation(this->mAnimTrans0);
     this->mLayout->BindAnimation(this->mAnimTrans1);
     this->mLayout->SetAnimationEnable(this->mAnimTrans1, true);
-    this->mAnimTrans1->SetFrame(lbl_eu_80668FF0);
+    this->mAnimTrans1->SetFrame(0.0f);
     this->mLayout->Animate(0);
 }
 
@@ -415,7 +414,7 @@ extern "C" void CTitleMenu_bindAnim2(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans1);
     self->mLayout->BindAnimation(self->mAnimTrans2);
     self->mLayout->SetAnimationEnable(self->mAnimTrans2, true);
-    self->mAnimTrans2->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans2->SetFrame(0.0f);
     self->mLayout->Animate();
 }
 
@@ -425,7 +424,7 @@ extern "C" void CTitleMenu_bindAnim3(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans3);
     self->mLayout->SetAnimationEnable(self->mAnimTrans3, true);
-    self->mAnimTrans3->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans3->SetFrame(0.0f);
     self->mLayout->Animate();
 }
 
@@ -435,7 +434,7 @@ void CTitleMenu_bindAnim4(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans3);
     self->mLayout->BindAnimation(self->mAnimTrans4);
     self->mLayout->SetAnimationEnable(self->mAnimTrans4, true);
-    self->mAnimTrans4->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans4->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 
@@ -445,7 +444,7 @@ extern "C" void CTitleMenu_bindOutro(CTitleMenu* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans4);
     self->mLayout->BindAnimation(self->mAnimTrans5);
     self->mLayout->SetAnimationEnable(self->mAnimTrans5, true);
-    self->mAnimTrans5->SetFrame(lbl_eu_80668FF0);
+    self->mAnimTrans5->SetFrame(0.0f);
     self->mLayout->Animate(0);
 }
 

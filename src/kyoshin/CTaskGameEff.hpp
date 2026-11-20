@@ -107,7 +107,7 @@ struct EffHostObj {
 };
 
 // C-linkage retail effect helpers (CfObjectMove/CScn management).
-extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
+
 extern "C" void setChild34Sc_(void* obj, const void* src);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
@@ -232,3 +232,10 @@ extern "C" void Scn_CallUnk8C_V7(CScn* scn, IScnRender* cb, u32 prio);
 // Effect-task singleton (set by Init; retail lbl_eu_80663D40).
 extern CTaskGameEff* lbl_eu_80663D40;
 
+
+// Thin owner-API header for kyoshin/CTaskGameEff.cpp's C-linkage exports
+// (CTaskGameEff.hpp itself is heavy). Retail names are unmangled.
+
+// Resolve effect `index` off the game manager, attach it to `manager` (an
+// embedded CfObjectMove sub-object, may be null) and return it (or null).
+extern "C" void* bindIndexedEffect(int index, void* manager);

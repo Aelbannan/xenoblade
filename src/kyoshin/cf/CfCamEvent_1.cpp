@@ -2,8 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "kyoshin/cf/CfCamSymbols.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <monolib/math/Random.hpp>
@@ -11,10 +13,13 @@
 #include <math.h>
 
 #include "kyoshin/cf/CfCamEvent_1.hpp"
+#include "kyoshin/code_800A3B24.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/cf/CtrlPc.hpp"  // CfObj90E4: real selector object type
 
 
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+#include "kyoshin/code_802405F4.hpp"
 
 
 // Typed vtables + interleaved assert strings (retail .data 0x0..0x168).
@@ -36,7 +41,7 @@ void cfCam_copyToPlus10(); void cfCam_getPlus10(); void cfCam_getPlus40(); void 
 void cfCam_setFollowD(); void cfCam_storeUnk08(); void cfCam_returnZero(); void cfCam_copyCamState();
 void camPluginNoopV4C(); void camPluginNoopV50(); void camPluginNoopV54(); void cfCam_get1E0Again();
 void cfCam_setFollowTg(); void cfCam_loadUnk164(); void camPluginNoopV64(); void propagateFollowParam();
-void camPluginNoopV6C(); void cfCam_getActivePad(); void runCamAction(); void camPluginNoopV68();
+void camPluginNoopV6C(); void cfCam_getActivePad(); void camPluginNoopV68();
 }
 const void* lbl_eu_80527260[34] = {
     __RTTI__Q22cf11CfCamFollow, 0,
@@ -93,7 +98,7 @@ CamEventTableEntry cfCamEventWeightTable[12] = {
     { {0x40,0x00,0x00,0x00}, {0,0,0}, {0,0,0}, 0.0f, 1.0f, 0.0f, 4.0f, {0x3F,0x80,0x00,0x00, 0x3D,0x8F,0x5C,0x29} },
 };
 // Typed mid-tail of retail .data: cam_name (0x3D8, 0xA) + pointer table
-// lbl_eu_80527648 (0x3E8, 0xA8 = 21 x {sdata2 float*, int}).
+// cfCamEventWeightPtrTable (0x3E8, 0xA8 = 21 x {sdata2 float*, int}).
 // Retail pairs: (A8,0),(AC,0),(B0,0),(B4,0),(B8,0),(BC,1),(C0,2),(C4,0),
 // (C4,0),(C8,0),(CC,0),(D0,0),(D4,0),(D8,0),(DC,0),(E0,2),(E4,0),(E8,0),
 // (EC,0),(F0,0),(F4,0). MWCC pads cam_name (0xA) to 8-align the table,
@@ -122,7 +127,9 @@ extern const float lbl_eu_806664F0;
 extern const float lbl_eu_806664F4;
 }
 struct CfCamEventDataPtrPair { const void* ptr; int val; };
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const CfCamEventDataPtrPair lbl_eu_80527648[21] = {
+// name-guess: 21 {float*, int} pairs alongside cfCamEventWeightTable, cam_name and
+// the BDAT cam-name column reads in CamEvtProgramEventCam; no retail name in symbols.
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) const CfCamEventDataPtrPair cfCamEventWeightPtrTable[21] = {
     { &lbl_eu_806664A8, 0 }, { &lbl_eu_806664AC, 0 }, { &lbl_eu_806664B0, 0 },
     { &lbl_eu_806664B4, 0 }, { &lbl_eu_806664B8, 0 }, { &lbl_eu_806664BC, 1 },
     { &lbl_eu_806664C0, 2 }, { &lbl_eu_806664C4, 0 }, { &lbl_eu_806664C4, 0 },
@@ -131,7 +138,7 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) co
     { &lbl_eu_806664E0, 2 }, { &lbl_eu_806664E4, 0 }, { &lbl_eu_806664E8, 0 },
     { &lbl_eu_806664EC, 0 }, { &lbl_eu_806664F0, 0 }, { &lbl_eu_806664F4, 0 },
 };
-DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_data_mid, lbl_eu_80527648);
+DECOMP_FORCEACTIVE(kyoshin_cf_CfCamEvent_1_data_mid, cfCamEventWeightPtrTable);
 // Typed tail of retail .data (0x490..0x4C8): int table lbl_eu_805276F0.
 // Retail words: 4x0, 8000, 2000, 10000, 10000, 40000, 5x0.
 u32 lbl_eu_805276F0[14] = {
@@ -472,7 +479,7 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
                 (ml::halfpi * t - ml::halfpi));
         break;
     case 2:
-        t = lbl_eu_80666418 *
+        t = 0.5f *
             (lbl_eu_80666428 +
              SinFIdx__Q24nw4r4mathFf(40.743664f *
                  (ml::pi * t - ml::halfpi)));
@@ -482,12 +489,12 @@ int CamEvtAdvanceShake(CfCamShakeState* self, int mode) {
             (ml::halfpi * t));
         break;
     case 3:
-        if (t > lbl_eu_80666418)
-            t = lbl_eu_80666428 - lbl_eu_80666418 *
+        if (t > 0.5f)
+            t = lbl_eu_80666428 - 0.5f *
                 SinFIdx__Q24nw4r4mathFf(40.743664f *
                     (ml::pi * t));
         else
-            t = lbl_eu_80666418 *
+            t = 0.5f *
                 SinFIdx__Q24nw4r4mathFf(40.743664f *
                     (ml::pi * t));
         break;
@@ -517,7 +524,7 @@ void lookupEffectForResource__Q22cf13CfGameManagerFv(int a, int b, int c){}
 // Vector-normalize helper; the body is provided by this TU (declared in
 // CfCamEvent_1.hpp). Callers pass raw triplet/element storage, so the
 // call sites region it through the CVec3 parameter type.
-extern void VecMath_WrapAnglesPi(ml::CVec3*) {}
+
 void func_800B24B0(){}
 
 // CfCamEventManager constructor. Clears the field/flag words, walks the two
@@ -984,11 +991,11 @@ void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSr
             CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)handle)
                                   ->getVecOut();
             if (vb->v.y - ya >= lbl_eu_80666428) {
-                if (((CamGroundQueryFn)ScnRes_VertRayForward_E398)(
+                if (((CamGroundQueryFn)ScnRes_VertRayForward_E398)(  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
                         (float*)out2, 0x4044a05, 0, 0,
                         1.5f, lbl_eu_8066641C)) {
                     CamTripletLocals t; // retail 0x1B8
-                    ((CamGroundRecordFn)ScnRes_CopyEntryHead)((float*)&t, 0);
+                    ((CamGroundRecordFn)ScnRes_CopyEntryHead)((float*)&t, 0);  // DEBT(callcast): C symbol; retail caller passes a stale second GPR argument
                     out2->y = t.y + lbl_eu_80666428;
                 } else {
                     out2->y = out2->y + lbl_eu_80666428;
@@ -1336,7 +1343,7 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         self->tab0.field_0x160 = 1;
         self->tab0.count = 0;
         self->tab0.field_0x168 = 0;
-        self->tab0.field_0x16C = lbl_eu_80666418;
+        self->tab0.field_0x16C = 0.5f;
         self->tab0.field_0x170 = lbl_eu_8066641C;
         self->tab0.field_0x174 = lbl_eu_8066641C;
         self->tab0.flag_active = 0;
@@ -1344,7 +1351,7 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         self->shake[0].field_0x160 = 1;
         self->shake[0].field_0x166 = 0;
         self->shake[0].field_0x168 = 0;
-        self->shake[0].field_0x16C = lbl_eu_80666418;
+        self->shake[0].field_0x16C = 0.5f;
         self->shake[0].field_0x170 = lbl_eu_8066641C;
         self->shake[0].field_0x174 = lbl_eu_8066641C;
         self->shake[0].field_0x162 = 0;
@@ -1352,7 +1359,7 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
         self->shake[1].field_0x160 = 1;
         self->shake[1].field_0x166 = 0;
         self->shake[1].field_0x168 = 0;
-        self->shake[1].field_0x16C = lbl_eu_80666418;
+        self->shake[1].field_0x16C = 0.5f;
         self->shake[1].field_0x170 = lbl_eu_8066641C;
         self->shake[1].field_0x174 = lbl_eu_8066641C;
         self->shake[1].field_0x162 = 0;
@@ -1394,7 +1401,7 @@ void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
     CfCamEventCopySrc* blk = (CfCamEventCopySrc*)((CfCamEventSlot*)self->slots[0])->field_0x0C;
     void* va = ((CamEventVoice*)followObj)->getVecOut();
     void* vb = ((cf::CfObject*)&src->voice)->CfObject_getPosVector();
-    if (VecMath_IsTurnLeftXZ(&blk->v_10C, vb, va) != 0 &&
+    if (VecMath_IsTurnLeftXZ(*(const ml::CVec3*)&blk->v_10C, *(const ml::CVec3*)vb, *(const ml::CVec3*)va) != 0 &&
         (self->field_0x48 & 0x10) == 0) {
         self->field_0x48 |= 0x10000;
     }
@@ -1684,7 +1691,7 @@ done:
     return result;
 }
 
-void CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
+void* CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
     u32 n = (u32)CamEvtClassId(self, idx);
     CfCamEventSlot* p = self->slots[n];
     if (p) {
@@ -1694,15 +1701,15 @@ void CamEvtReleaseThenFire(CfCamEventManager* self, u32 idx, u32 param) {
         }
         self->slots[n] = 0;
     }
-    CamEvtCreateSlotObj(idx, (CfCamEventObj*)param, 0, 0, 0, 0, 0);
+    return CamEvtCreateSlotObj(idx, (CfCamEventObj*)param, 0, 0, 0, 0, 0);
 }
 
 // Reset the cam-event manager: clear the low halfword of the flags word,
 // re-seed the three shake-table groups (manager 0x1DC group + the two shake
 // units) with the given id/float constants, then forward the parameters to
 // the cam-data setup helper when the game manager is alive.
-void CamEvtResetManager(CfCamEventManager* self, u32 first, u32 second,
-                   u32 third, u32 fourth, u32 fifth) {
+u32 CamEvtResetManager(CfCamEventManager* self, u32 first, u32 second,
+                       u32 third, u32 fourth, u32 fifth) {
     getCamManagerData__Q22cf13CfGameManagerFv(first);
     f32 f1C = lbl_eu_8066641C;
     f32 f18 = lbl_eu_80666418;
@@ -1741,7 +1748,7 @@ void CamEvtResetManager(CfCamEventManager* self, u32 first, u32 second,
     }
 }
 
-// Camera-event state machine: dispatches on the manager's cam-state id (0x3E).
+// Camera-event state machine
 // State 9 scales the +0x18 triplet into a temp and appends it; states 8 / 0xA
 // subtract the +0x34 source's aim vector (PS vector sub) or run cfCam_xformAimPairInv
 // on the two +0x00/+0x0C aim vectors; the default state appends the raw pair
@@ -1795,7 +1802,7 @@ void CamEvtDispatchState(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* 
         v2.y = c->v1.y;
         v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
-            cfCam_xformAimPairInv((ml::CVec3*)&v1, (ml::CVec3*)&v2);
+            cfCam_xformAimPairInv((cf::CfObject*)self->field_0x34, (ml::CVec3*)&v1, (ml::CVec3*)&v2);
         }
         CamEvtPushCamEntry(self, a, (ml::CVec3*)&v1, (ml::CVec3*)&v2, b, 0, c->f_24);
     } else {
@@ -2703,7 +2710,8 @@ int CamEvtLookupStateVal(int val) {
     if (g == nullptr) return val;
     u32 state = g->field_0x38;
     if (state == 0) return state;  // r3 already holds 0 here
-    return MapFxClearSlotFlags(state, val);
+    MapFxClearSlotFlags((MapPointEntry*)state, val);
+    return 0;
 }
 
 int CamEvtSearchStateVal(int val) {
@@ -2711,7 +2719,8 @@ int CamEvtSearchStateVal(int val) {
     if (g == nullptr) return val;
     u32 state = g->field_0x38;
     if (state == 0) return state;  // r3 already holds 0 here
-    return MapFxResetEntries(state, val);
+    MapFxResetEntries((MapPointEntry*)state, val);
+    return 0;
 }
 
 // bdat column reads as function-like macros: MWCC ignores inline hints for
@@ -2934,8 +2943,8 @@ void CamEvtProgramEventCam(int idx) {
 }
 
 
-u8 CamEvtGetFl46() {
-    u8 result = 0;
+bool CamEvtGetFl46() {
+    bool result = false;
     if (cfCamEventManagerPtr) {
         result = cfCamEventManagerPtr->field_0x46;
     }

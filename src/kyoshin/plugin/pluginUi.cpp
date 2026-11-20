@@ -1,4 +1,5 @@
 #include "kyoshin/plugin/pluginUi.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
 #include "monolib/util.hpp"
@@ -399,8 +400,8 @@ int getSelectNum(VMThread* pThread) {
 // caption comes from the fixed string-table entry at +0xD (index 11/12).
 static void mesPTSet(int id, int captionIdx) {
     char* name = BdatGetPtrDirect(lbl_eu_80664090, lbl_eu_804FABF0, id);
-    UIWin_CreateSysWin1(name,
-                  BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0,
+    UIWin_CreateSysWin1((u32)(uintptr_t)name,
+                  (void*)BdatTouchStringCell(&lbl_eu_804FABF0[0xd], lbl_eu_804FABF0,
                                 captionIdx),
                   0, 0);
 }
@@ -450,14 +451,13 @@ int mesGetArts(VMThread* pThread) {
 
     ml::FixStr<64> str;
     str.format(&lbl_eu_804FABF0[0x18], row, sName, sIdx);
-    UIWin_CreateSysWin1(str.mString, sFoot, 0, 0);
+    UIWin_CreateSysWin1((u32)(uintptr_t)str.mString, sFoot, 0, 0);
     return 0;
 }
 
 // Retail symbol is the .Fb form (bool param) though args pass via r4/r5.
 extern "C" void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
 // Retail symbol is the unmangled .Fv-registered name (args pass via r4).
-extern "C" void UIWin_CreatePTChange(int);
 
 int ptChangeNotice(){
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);

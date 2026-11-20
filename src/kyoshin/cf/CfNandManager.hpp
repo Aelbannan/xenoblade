@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kyoshin/menu/MenuSndApi.hpp"
+
 #include <types.h>
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
@@ -9,6 +11,15 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 
 struct CEventFile;
+
+// Retail exports the save-image presence test as a plain C function; this is
+// its single owner declaration (defined in CfNandManager.cpp).
+extern "C" u32 NandImageLive();
+
+// name-guess: pending NAND request result/callback pump. No retail name
+// survived; the old numeric symbol was an address-derived placeholder, not a
+// destructor (its 0x480-byte body is a direct call from NandFileEvent).
+extern "C" void NandDispatchPendingEvent(void* self);
 
 // C-linkage runtime imports
 extern "C" long __ptmf_test(void* ptmf);
@@ -60,7 +71,7 @@ struct CfNandEventQueue {
 };
 
 // Pending-event scratch copied out of the ring by NandFlushEvts and consumed
-// by the event handler __dt__8023E63C. Note that mPayload (offset 0x178)
+// by the pending-event result handler. Note that mPayload (offset 0x178)
 // aliases the save-block pointer read by NandCheckSave / NandVerifyBlk.
 struct CfNandPendingEvent {
     u32 mCb;      // 0x170: raw callback dispatched when nonzero
@@ -145,10 +156,6 @@ namespace cf{
         CfNandManager(void* arg);
         virtual ~CfNandManager();
 
-        // Retail US symbol for this getter is the unmangled NandImageLive
-        // (called as a static member only from kyoshin/CTaskGameCf.cpp).
-        static u32 NandImageLive();
-
         //0x000-0x054 CTTask
         //0x054-0x058 IWorkEvent
         //0x058-0x05C IScnRender
@@ -214,7 +221,7 @@ extern "C" int CfRes_getD80Flag();
 extern u16 gNandTeardownFlag;
 // Extra sbss words cleared by CfNandManager::~CfNandManager.
 extern u8  gNandTeardownByte;
-extern u16 lbl_eu_80664774;
+extern u16 gCfNandRestoredEventFlag;
 
 extern u32 __ptmf_null[3];
 
@@ -251,9 +258,7 @@ struct CfNandPartySnapshot {
 // --- imports used by the CfNandManager TU (declared here so the .cpp stays
 // free of local extern "C" scaffolding) ---
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);   // message-count lookup - (u32) form must match CUICfManager.hpp (10197)
-extern "C" u32 CtrlRemote_GetFixedSize1214();                 // save-region size lookup
-extern "C" u32 CfT_FrameTimerGet();                 // game-progress bitfield
-extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);      // character-data lookup
+
 
 extern void* lbl_eu_80664090;                   // bdat table object
 extern f32 lbl_eu_806686E0;
@@ -531,14 +536,11 @@ struct CfNandWorkBuf {
 };
 
 // --- imports for the save-image builder (NandImageMake) ---
-extern "C" u8* CtrlRemote_GetSharedBufPtr();                     // capture-region source pointer
 extern "C" void cfCam_pullFollowD(u8* dst, u8* src);    // camera settings fill
 extern "C" void initReloadInfoStruct(struct CfNandWthrBlock* w);
 extern "C" void mineSnapshotActivePoints(u8* dst);             // MINE region builder
 f32 getMasterVolume();                                // mangled __Fv in retail
-extern "C" f32 MenuSnd_GetSeVol_96A0();
-extern "C" f32 MenuSnd_GetMasterVol_95EC();
-extern "C" struct CfNandNameRoot* getReslistC48(); // save-name directory container
+
 // Retail symbol is CfGameManager's static member but returns its result in r3.
 extern char* spItemBlock;                       // item blob (see CItem.hpp)
 extern u16 gCfTCalendarDay;

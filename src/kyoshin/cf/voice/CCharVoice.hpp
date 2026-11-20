@@ -42,6 +42,7 @@ struct CCharVoice {
     u16   mBattleSndHandle;  // 0x38
     // 2 bytes padding to 0x3C
     void* mVtable;           // 0x3C -- vtable pointer
+    void voiceNoop();
 };
 
 // 4-byte zero blob at .rodata:0x805106D4 (empty default voice name).

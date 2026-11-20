@@ -33,6 +33,14 @@ struct U16Pair {
     u16 b;
 };
 
+struct EffectStruct;
+struct EffectInit;
+
+// Real C++ entry points defined in code_804CC2B8.cpp.
+void EffFxInitStructLinks(EffectStruct* self);
+void EffFxRenderDispatch(EffectInit* self, void* arg);
+void EffFxEmptyStub();
+
 // C-linkage imports
 extern "C" f64 lbl_eu_8066B0F0;
 extern "C" f32 lbl_eu_8066B0D8;
@@ -44,7 +52,6 @@ extern "C" f32 lbl_eu_8066B14C;
 extern "C" f32 lbl_eu_8066B150;
 extern "C" const u8 sEffectPosPalette0[];
 extern "C" const u8 sEffectPosPalette1[];
-extern "C" void pushEffectFog(int type, int flag);
 extern "C" void* Scn_FindCamItem(void* src, int index);
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 mem);
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 count_bytes, u32 mem);

@@ -2,8 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/CInfoCf.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "nw4r/g3d/res/g3d_resfile.h"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <string.h>
 
 // CTaskCulling::setOccDisabled (static) is called by Term. Note: this TU does
@@ -12,6 +16,8 @@
 #include "kyoshin/cf/CTaskCulling.hpp"
 
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
+#include "kyoshin/menu/CMenuEnemyState.hpp"  // EneSt_MarkUnk54 (real owner)
+
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 // CTaskGameEffAfter.hpp pre-declares the retail __ptmf_test runtime helper
 // with C linkage (the out-of-line Move specialization below dispatches its
@@ -197,8 +203,7 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     }
     if (EneSt_GetSingleton() != 0 && isEventPending() == 0 &&
         strstr(name, &lbl_eu_80503098[0xB]) != 0) {
-        EneSt_GetSingleton();
-        EneSt_MarkUnk54();
+        EneSt_MarkUnk54((CMenuEnemyState*)EneSt_GetSingleton());
     }
     if (strstr(name, &lbl_eu_80503098[0x16]) != 0) {
         self->field_0x5C |= 0xA000;
@@ -270,7 +275,7 @@ void EvtSeqPublishIdHalfwords() {
     // the two calls (the first call may update it).
     func_80086B5C__Q22cf13CfGameManagerFv(spEvtSeqState->field_0x116,
                                           spEvtSeqState->field_0x118, 0);
-    Env_SetClock(getGlobalSda(), spEvtSeqState->field_0x116,
+    Env_SetClock((CTaskEnvTime*)getGlobalSda(), spEvtSeqState->field_0x116,
                   spEvtSeqState->field_0x118, 0);
 }
 
@@ -782,8 +787,7 @@ extern "C" void EvtSeqSetupObjLists(cf::CTaskREvtSequence* self) {
             activateVisionMenu();
         }
         if (EneSt_GetSingleton() != 0) {
-            EneSt_GetSingleton();
-            EneSt_MarkUnk54();
+            EneSt_MarkUnk54((CMenuEnemyState*)EneSt_GetSingleton());
         }
     }
     // Play the movie entries (list slots [total2, total2+movieCount)).
@@ -1028,7 +1032,7 @@ void EvtSeqStartSequence(cf::CTaskREvtSequence* self) {
         func_80086B5C__Q22cf13CfGameManagerFv(
             (u16)pair->field_0x40, (u16)pair->field_0x42, 0);
         pair = reinterpret_cast<EvtSeqC4Pair*>(self->field_0xC4);
-        Env_SetClock(getGlobalSda(), (u16)pair->field_0x40,
+        Env_SetClock((CTaskEnvTime*)getGlobalSda(), (u16)pair->field_0x40,
                       (u16)pair->field_0x42, 0);
     }
     // Walk 1+2: full reset (two virtual steps + flags-object arm) over the
@@ -1478,7 +1482,7 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
     // manager holds a live player object, restore its fov/position floats.
     func_80086B5C__Q22cf13CfGameManagerFv(self->field_0x116,
                                           self->field_0x118, 0);
-    Env_SetClock(getGlobalSda(), self->field_0x116, self->field_0x118, 0);
+    Env_SetClock((CTaskEnvTime*)getGlobalSda(), self->field_0x116, self->field_0x118, 0);
     seedReloadTmr(self->field_0x134);
     EvtSeqScnView* scene = reinterpret_cast<EvtSeqScnView*>(gmScene);
     scene->field_0x5C->field_0xD4 = 5.0f;
@@ -1505,7 +1509,7 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
             UnkEvtPlayer* player = mgr4->field_0xC;
             player->field_0x1EC = 0.1f;
             player->field_0x1F0 = 85000.0f;
-            ScnCamDepthUp(player);
+            ScnCamDepthUp((CScnItemCamera*)player);
         }
     }
 }
@@ -1813,7 +1817,7 @@ u32 EvtSeqGetEntryLimit() {
     return entry->field_0xC;
 }
 
-u32 EvtSeqGetCounter104() {
+int EvtSeqGetCounter104() {
     UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
@@ -1821,7 +1825,7 @@ u32 EvtSeqGetCounter104() {
     return p->field_0x104;
 }
 
-u32 EvtSeqGetWalkIndex() {
+int EvtSeqGetWalkIndex() {
     UnkState_80664268* p = spEvtSeqState;
     if (p == 0) {
         return 0;
@@ -2574,7 +2578,8 @@ int EvtSeqCheckRegionStatus(u8* data) {
     const char* name = (const char*)lbl_eu_80503098;
     // Cast keeps MWCC from inlining the empty sibling stub (tiny body).
     ((void(*)(u8*, const char*, s32*))EvtSeqResolveAnmChr)(data, name + 0x5D, &out);
-    int v = Env_RegionCode(getGlobalSda());
+    getGlobalSda();
+    int v = (int)Env_RegionCode();
     switch (out) {
     case 1:
         return v != 0;

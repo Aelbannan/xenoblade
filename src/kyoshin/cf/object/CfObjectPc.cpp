@@ -1,19 +1,21 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectPc
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: CfSoundMan.hpp now carries the
 // single winning decl from CfGameManagerApi.hpp; only playActorSound is
 // needed from it.)
 #include "kyoshin/cf/CfSoundMan.hpp"   // cf::CfSoundMan::playActorSound (single decl on owner header)
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 // (CtrlObjectParam_GetCharEntry is declared by kyoshin/cf/object/CAIAction.hpp - u16 form;
 // including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
+#include "kyoshin/cf/CSuddenCommu.hpp"
 
 namespace cf {
 // CfObjectPoint: leaf over CfObject so slot 0x70 is CfObject_notifyEventDone
@@ -118,7 +120,7 @@ int cf::CfObjectPc::CfObject_UnkVirtualFunc2() {
         ((CfObjectPcSubFields*)self)->field_0x3F08 |= 1;
     }
     this->setPointEnabled(1);
-    CfObjectMove_setModelDisplayFlag((char*)self + 0x3E9C, 1);
+    CfObjectMove_setModelDisplayFlag((cf::CfObjectMove*)((char*)self + 0x3E9C), 1);
     this->CfObjectModel_setModelVisible(1);
     dispatchItemLoad(self, 0x8000000);
     dispatchItemLoad(self, 0x10000000);
@@ -188,7 +190,7 @@ void cf::CfObjectPc::CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u
     } else {
         u8* obj = ((CfObjectPcSubFields*)this)->mPtr3ED4;
         if (obj != NULL) {
-            ObjPc_ForwardVf0C_A42C(obj);
+            ObjPc_ForwardVf0C_A42C(reinterpret_cast<cf::CfObjectImplPc*>(obj), a, b, c, d, e);
         }
     }
 }
@@ -467,7 +469,7 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc88(u32 arg1, u32 arg2, u32 arg3) 
         f->field_0x1608 = 0x05F60000u - 0x1F01u;
     }
     Obj89cField* obj = (Obj89cField*)this->CActorParam_getStatusTable();
-    Counter_AddClamped((u8*)obj, obj->field_0x89C, arg3);
+    Counter_AddClamped((CUnk8025FB10*)(u8*)obj, obj->field_0x89C, arg3);
     int acted = 0;
     // Drain the action queue through slot 0x35C.
     while (this->CActorParam_consumeCurrencyStep() != 0) {

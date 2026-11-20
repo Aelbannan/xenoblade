@@ -84,7 +84,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     if (self->mFileHandle == (u32)evt->mFileHandle) {
         // Scoped MEM2 region guard, then build the layout + animations.
     self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x10000,
-                                  lbl_eu_8050FC20, 0);
+                                  "CMenuPTChangeNotice", 0);
     char buf[0x20];
     float srcA[2];
     float srcB[2];
@@ -97,11 +97,11 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     fh->mData = NULL;
     mtl::MemManager::setMemInitFlag(false);
     self->mAccessor = CLibLayout::createArcResourceAccessor();
-    self->mAccessor->Attach(data, &lbl_eu_8050FC20[0x14]);
+    self->mAccessor->Attach(data, "arc");
 
-    buildLayout(&self->mLayout90, self->mAccessor, &lbl_eu_8050FC20[0x18]);
+    buildLayout(&self->mLayout90, self->mAccessor, "mf70_cf60_syswin15.brlyt");
     bindLayoutAnimTransform(self->mLayout90, &self->mAnim94, self->mAccessor,
-                  &lbl_eu_8050FC20[0x31]);
+                  "mf70_cf60_syswin15_in.brlan");
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = self->mLayout90->GetRootPane();
@@ -115,38 +115,41 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     self->mLayout90->Animate(0);
 
     // Default-0 text fields.
-    LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0x5c],
-                  BdatTouchStringCell(&lbl_eu_8050FC20[0x4d], &lbl_eu_8050FC20[0x57],
+    const char* bdatTableName = "MNU_party";
+    const char* bdatColumnName = "name";
+    LayoutSetTextBoxFmtValue(self->mLayout90, "txt_sysmes01",
+                  BdatTouchStringCell(bdatTableName, bdatColumnName,
                                 0xb),
                   0);
-    LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0x69],
-                  BdatTouchStringCell(&lbl_eu_8050FC20[0x4d], &lbl_eu_8050FC20[0x57],
+    LayoutSetTextBoxFmtValue(self->mLayout90, "txt_titlemes",
+                  BdatTouchStringCell(bdatTableName, bdatColumnName,
                                 0xa),
                   0);
-    LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0x89],
-                  BdatTouchStringCell(&lbl_eu_8050FC20[0x76], &lbl_eu_8050FC20[0x84],
-                                0x2f),
+    char* closeText = BdatTouchStringCell("MNU_kyeassign", "help",
+                                0x2f);
+    LayoutSetTextBoxFmtValue(self->mLayout90, "txt_close00",
+                  closeText,
                   0);
 
     // Party-member icon texture: pick the message name by pad type, load the
     // "timg" texture, bind it and set its pixel size on the pane.
     {
         const char* msgName = cf::CfGameManager::isClassicController(-1)
-                                  ? &lbl_eu_8050FC20[0x95]
-                                  : &lbl_eu_8050FC20[0x9e];
-        u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2f);
+                                  ? "fileID_2"
+                                  : "fileID_1";
+        u16 msg = BdatGetU16ByTableKey("MNU_kyeassign", msgName, 0x2f);
         char* handle = MakeTplNameSysFile(msg);
         nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xa7], (TPLPalette*)tex);
+            PaneSetTexPaletteByName(self->mLayout90, "pic_btn00", (TPLPalette*)tex);
             // Texture sub-resource carries a 2D dimension header (u16 w,h).
             CMenuPTChangeNotice::CTextureDims* dims = ((CMenuPTChangeNotice::CTextureObj*)tex)->mChain->mDims;
             u16 h = dims->mH;
             u16 w = dims->mW;
             nw4r::lyt::Pane* pane = self->mLayout90->GetRootPane();
             void* res = ((void* (*)(void*, const char*, u32, void*))(
-                (*(void***)pane))[0x3c / 4])(pane, &lbl_eu_8050FC20[0xa7], 1,
+                (*(void***)pane))[0x3c / 4])(pane, "pic_btn00", 1,
                                              dims);
             if (res != NULL) {
                 srcA[0] = (float)(u32)h;
@@ -159,36 +162,36 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     if (!CtrlRemote_TouchBitByArg(0x334b)) {
         // Party icons unavailable: hide the two member panes.
         nw4r::lyt::Pane* pane = self->mLayout90->GetRootPane()
-                                     ->FindPaneByName(&lbl_eu_8050FC20[0xb1],
+                                     ->FindPaneByName("txt_pt",
                                                       true);
         if (pane != NULL) {
             setPaneVisible(pane, 0);
         }
         pane = self->mLayout90->GetRootPane()
-                   ->FindPaneByName(&lbl_eu_8050FC20[0xb8], true);
+                   ->FindPaneByName("pic_btn01", true);
         if (pane != NULL) {
             setPaneVisible(pane, 0);
         }
     } else {
-        LayoutSetTextBoxFmtValue(self->mLayout90, &lbl_eu_8050FC20[0xb1],
-                      BdatTouchStringCell(&lbl_eu_8050FC20[0x76],
-                                    &lbl_eu_8050FC20[0x84], 0x2e),
+        LayoutSetTextBoxFmtValue(self->mLayout90, "txt_pt",
+                      BdatTouchStringCell("MNU_kyeassign",
+                                    "help", 0x2e),
                       0);
         const char* msgName = cf::CfGameManager::isClassicController(-1)
-                                  ? &lbl_eu_8050FC20[0x95]
-                                  : &lbl_eu_8050FC20[0x9e];
-        u16 msg = BdatGetU16ByTableKey(&lbl_eu_8050FC20[0x76], msgName, 0x2e);
+                                  ? "fileID_2"
+                                  : "fileID_1";
+        u16 msg = BdatGetU16ByTableKey("MNU_kyeassign", msgName, 0x2e);
         char* handle = MakeTplNameSysFile(msg);
         nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
         void* tex = mgr->GetResource(0x74696D67 /* 'timg' */, handle, NULL);
         if (tex != NULL) {
-            PaneSetTexPaletteByName(self->mLayout90, &lbl_eu_8050FC20[0xb8], (TPLPalette*)tex);
+            PaneSetTexPaletteByName(self->mLayout90, "pic_btn01", (TPLPalette*)tex);
             CMenuPTChangeNotice::CTextureDims* dims = ((CMenuPTChangeNotice::CTextureObj*)tex)->mChain->mDims;
             u16 h = dims->mH;
             u16 w = dims->mW;
             nw4r::lyt::Pane* pane = self->mLayout90->GetRootPane();
             void* res = ((void* (*)(void*, const char*, u32, void*))(
-                (*(void***)pane))[0x3c / 4])(pane, &lbl_eu_8050FC20[0xb8], 1,
+                (*(void***)pane))[0x3c / 4])(pane, "pic_btn01", 1,
                                              dims);
             if (res != NULL) {
                 srcB[0] = (float)(u32)h;
@@ -202,18 +205,23 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
     // inactive slots are hidden (pane cleared).
     {
         BuildSlotItemLists(0);
+        const char* inactiveBmFmt = "pic_bm%02d_bs";
+        const char* inactiveRsFmt = "pic_rs%02d_bs";
+        const char* activeBmFmt = "pic_bm%02d_fc";
+        const char* activeRsFmt = "pic_rs%02d_fc";
+        const char* iconTypeColumn = "icon_type2";
         u8 count = code80135FDC_getByte_64077();
         for (u32 i = 0; i < 7; i++) {
             u8 idx = (u8)i;
             if (idx < count) {
                 u8 val = GetCollectedFlagByte(idx);
                 if (idx < 3) {
-                    sprintf(buf, &lbl_eu_8050FC20[0xde], idx + 1);
+                    sprintf(buf, activeBmFmt, idx + 1);
                 } else {
-                    sprintf(buf, &lbl_eu_8050FC20[0xec], idx - 2);
+                    sprintf(buf, activeRsFmt, idx - 2);
                 }
                 u16 msg = BdatGetU16Direct(lbl_eu_80664090,
-                                        &lbl_eu_8050FC20[0xfa], val);
+                                        iconTypeColumn, val);
                 char* str = MakeTplNameSysFile(msg);
                 void* tex = self->mAccessor->GetResource(0x74696D67, str, NULL);
                 if (tex != NULL) {
@@ -221,9 +229,9 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
                 }
             } else {
                 if (idx < 3) {
-                    sprintf(buf, &lbl_eu_8050FC20[0xc2], idx + 1);
+                    sprintf(buf, inactiveBmFmt, idx + 1);
                 } else {
-                    sprintf(buf, &lbl_eu_8050FC20[0xd0], idx - 2);
+                    sprintf(buf, inactiveRsFmt, idx - 2);
                 }
                 nw4r::lyt::Pane* pane =
                     self->mLayout90->GetRootPane()->FindPaneByName(buf, true);
@@ -236,14 +244,16 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
 
     // Affinity panes: same pattern over the three affinity slots.
     {
+        const char* inactiveAffinityFmt = "pic_gs%02d_bs";
+        const char* activeAffinityFmt = "pic_gs%02d_fc";
         u8 count = code80135FDC_getByte_6407E();
         for (u32 i = 0; i < 3; i++) {
             u8 idx = (u8)i;
             if (idx < count) {
                 u8 val = GetCollectedFlagWord8(idx);
-                sprintf(buf, &lbl_eu_8050FC20[0x113], idx + 1);
+                sprintf(buf, activeAffinityFmt, idx + 1);
                 u16 msg = BdatGetU16Direct(lbl_eu_80664098,
-                                        &lbl_eu_8050FC20[0x121], val);
+                                        "rlt_texture", val);
                 char* str = MakeTplNameSysFile(msg);
                 nw4r::lyt::ArcResourceAccessor* mgr = CUICfManager_getArcResourceAccessor();
                 void* tex = mgr->GetResource(0x74696D67, str, NULL);
@@ -251,7 +261,7 @@ extern "C" int PTNotice_BuildLayout_348C(CMenuPTChangeNotice* self, CEventFile* 
                     PaneSetTexPaletteByName(self->mLayout90, (const char*)buf, (TPLPalette*)tex);
                 }
             } else {
-                sprintf(buf, &lbl_eu_8050FC20[0x105], idx + 1);
+                sprintf(buf, inactiveAffinityFmt, idx + 1);
                 nw4r::lyt::Pane* pane =
                     self->mLayout90->GetRootPane()->FindPaneByName(buf, true);
                 if (pane != NULL) {

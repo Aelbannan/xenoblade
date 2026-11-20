@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <string.h>
 
 #include "nw4r/g3d/res/g3d_resmdl.h"
@@ -23,13 +23,7 @@ struct CScnItemAnim {
     CScn* scn;
 };
 
-// Default value returned by the accessor helpers when the target object
-// chain is missing (sda2 constant).
-extern "C" { extern const float lbl_eu_8066AAC0; }
-
-extern "C" { extern const float lbl_eu_8066AAC4; }
-extern const float lbl_eu_8066AAD8;
-extern const float lbl_eu_8066AADC;
+// The accessor helpers return 0.0f when the target object chain is missing.
 
 // Panic file/format strings used by the ResMdl node-binding assert.
 extern const char lbl_eu_8056E1C8[];
@@ -234,10 +228,10 @@ void scn80496SetFloat178(u8* self, float val) { ((CScn80496B0C*)self)->field_0x1
 // that chain is missing.
 f32 scn80496GetChild1V6(CScn80496B0C* self) {
     CScnChild80496B0C* child = self->field_0x8;
-    if (child == 0) return lbl_eu_8066AAC0;
+    if (child == 0) return 0.0f;
     CScnNode80496B0C* node = child->field_0x84[0];
     if (node != 0) return node->field_0x10->v6();
-    return lbl_eu_8066AAC0;
+    return 0.0f;
 }
 
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
@@ -253,27 +247,27 @@ extern "C" void scn80496CallChild1V5(u8* self) {
 
 extern "C" float scn80496GetChild1Float(u8* self) {
     CScnChild80496B0C* child = ((CScn80496B0C*)self)->field_0x8;
-    if (child == 0) return lbl_eu_8066AAC0;
+    if (child == 0) return 0.0f;
     CScnNode80496B0C* node = child->field_0x84[0];
     if (node != 0) return node->field_0x1C;
-    return lbl_eu_8066AAC0;
+    return 0.0f;
 }
 
 extern "C" float scn80496GetChild2Float(u8* self) {
     CScnChild80496B0C* child = ((CScn80496B0C*)self)->field_0xC;
-    if (child == 0) return lbl_eu_8066AAC0;
+    if (child == 0) return 0.0f;
     CScnNode80496B0C* node = child->field_0x84[0];
     if (node != 0) return node->field_0x1C;
-    return lbl_eu_8066AAC0;
+    return 0.0f;
 }
 
 // Same as scn80496GetChild1V6 but walks the second child (self->field_0xC).
 f32 scn80496GetChild2V6(CScn80496B0C* self) {
     CScnChild80496B0C* child = self->field_0xC;
-    if (child == 0) return lbl_eu_8066AAC0;
+    if (child == 0) return 0.0f;
     CScnNode80496B0C* node = child->field_0x84[0];
     if (node != 0) return node->field_0x10->v6();
-    return lbl_eu_8066AAC0;
+    return 0.0f;
 }
 
 // Refreshes both child chains, then, when the first chain is unbound and an
@@ -331,7 +325,7 @@ void scn80496RefreshTRS(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
     // Volatile view of field_0x8: forces the second read (below the calls)
     // to be a fresh load, matching retail.
     CScnChild80496B0C* volatile& childRef =
-        (CScnChild80496B0C* volatile&)self->field_0x8;
+        (CScnChild80496B0C*&)self->field_0x8;
     if (childRef->field_0x84[0] == 0) {
         nw4r::g3d::ResNode node = self->field_0x1D0.GetResNode(nodeIdx);
         if (node.IsValid()) {
@@ -348,10 +342,10 @@ void scn80496RefreshTRS(CScn80496B0C* self, ml::CVec3* outA, ml::CVec3* outB,
             // to the destination (retail's exact shape).
             *outC = *(ml::CVec3*)&gv;
         } else {
-            outC->set(lbl_eu_8066AAC0, lbl_eu_8066AAC0, lbl_eu_8066AAC0);
+            outC->set(0.0f, 0.0f, 0.0f);
         }
-        outA->set(lbl_eu_8066AAC0, lbl_eu_8066AAC0, lbl_eu_8066AAC0);
-        outB->set(lbl_eu_8066AAC0, lbl_eu_8066AAC0, lbl_eu_8066AAC0);
+        outA->set(0.0f, 0.0f, 0.0f);
+        outB->set(0.0f, 0.0f, 0.0f);
         return;
     }
     // Retail re-reads field_0x8 here instead of reusing the earlier load.
@@ -420,7 +414,7 @@ void scn80496UpdateCrossfade(CScn80496B0C* self) {
     // Advance the fade weight on the second child. The fading child stays
     // cached in a callee-saved register from here to the end of the update.
     CScnChild80496B0C* fade = self->field_0xC;
-    f32 weight = lbl_eu_8066AAC4;
+    f32 weight = 1.0f;
     if (fade->field_0x84[0] != NULL) {
         // No accumulator local: retail re-reads field_0x174 around the rate
         // call, keeping the running sum only in volatile registers. prev is
@@ -514,7 +508,7 @@ void scn80496UpdateCrossfade(CScn80496B0C* self) {
             wk = (CScnChild80496B0C*)((u8*)wk + 4);
         }
     }
-    scn80496StepBlendWeight(fade, lbl_eu_8066AAC4 - weight);
+    scn80496StepBlendWeight(fade, 1.0f - weight);
 }
 
 // Child-object initializer: zeroes the three node-binding slots and the
@@ -534,9 +528,9 @@ extern "C" CScnChild80496B0C* scn80496ResetChildElems(CScnChild80496B0C* self) {
     self->field_0x94 = 0;
     self->field_0x96 = 0;
     self->field_0x98 = 0;
-    self->field_0x9C.x = lbl_eu_8066AAC0;
-    self->field_0x9C.y = lbl_eu_8066AAC0;
-    self->field_0x9C.z = lbl_eu_8066AAC0;
+    self->field_0x9C.x = 0.0f;
+    self->field_0x9C.y = 0.0f;
+    self->field_0x9C.z = 0.0f;
     self->field_0xA8 = 0;
     self->field_0xAC = 0;
     memset((void*)self, 0, 0x84);
@@ -701,9 +695,9 @@ u32 scn80496BindChrAnim(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
     // Plain int->float casts: MWCC emits its own 0x4330-magic sequence
     // (lis/stw punning + single-precision fsubs + stfs).
     rec->field_0x4 = (f32)value;
-    rec->field_0x8 = lbl_eu_8066AAC0;
-    rec->field_0xC = lbl_eu_8066AAC4;
-    rec->field_0x20 = lbl_eu_8066AAC0;
+    rec->field_0x8 = 0.0f;
+    rec->field_0xC = 1.0f;
+    rec->field_0x20 = 0.0f;
     // Anm-resource guard: one load serves the null test and the frame-rate
     // fetch; the later block reloads +0x2C (the flag stores force it).
     nw4r::g3d::ResAnmChrData* data = ((VTarget*)pAnmObj)->field_0x2C;
@@ -718,7 +712,7 @@ u32 scn80496BindChrAnim(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
     } else {
         rec->field_0x2 &= ~1;
     }
-    rec->field_0x24 = lbl_eu_8066AAC0;
+    rec->field_0x24 = 0.0f;
 
     if (data == NULL) {
         nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
@@ -747,7 +741,7 @@ u32 scn80496BindChrAnim(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
     self->field_0x96 = flag;
     self->field_0x92++;
     if (prev != NULL && !(prev->field_0x2 & 2)) {
-        prev->field_0x10->v8(lbl_eu_8066AAC0);
+        prev->field_0x10->v8(0.0f);
     }
 
     // Shift the slot stack down one level (re-reads slot 0, as in retail).
@@ -789,7 +783,7 @@ extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate) {
     if (node != NULL) {
         w = node->field_0x10->v6();
     } else {
-        w = lbl_eu_8066AAC0;
+        w = 0.0f;
     }
     self->field_0x84[0]->field_0x24 = w;
 
@@ -863,12 +857,12 @@ extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate) {
     // split over the surviving overflow bindings by their weights.
     f32 base = head->field_0xC;
     if ((s16)self->field_0x92 == 1) {
-        base = lbl_eu_8066AAC4;
+        base = 1.0f;
     }
     head->field_0x20 = base;
     // Double round-trip pins the retail frsp on the running total.
     f32 total = (f32)(f64)base;
-    f32 rem = lbl_eu_8066AAC4 - base;
+    f32 rem = 1.0f - base;
 
     if (self->field_0x84[1] != NULL) {
         self->field_0x84[1]->field_0x20 = rem * self->field_0x84[1]->field_0xC;
@@ -878,7 +872,7 @@ extern "C" void scn80496StepBlendWeight(CScnChild80496B0C* self, f32 rate) {
         self->field_0x84[2]->field_0x20 = rem * self->field_0x84[2]->field_0xC;
         total += self->field_0x84[1]->field_0x20;
     }
-    if (total > lbl_eu_8066AAC0) {
+    if (total > 0.0f) {
         if (self->field_0x84[0] != NULL) {
             self->field_0x84[0]->field_0x20 /= total;
         }
@@ -912,15 +906,15 @@ void scn80496AdvanceChrAnims(CScnChild80496B0C* child,
                                         ml::CVec3* vecC, u32 arg) {
     nw4r::g3d::ChrAnmResult result;
     nw4r::math::VEC3 t;
-    outDelta->x = lbl_eu_8066AAC0;
-    outDelta->y = lbl_eu_8066AAC0;
-    outDelta->z = lbl_eu_8066AAC0;
-    vecB->x = lbl_eu_8066AAC0;
-    vecB->y = lbl_eu_8066AAC0;
-    vecB->z = lbl_eu_8066AAC0;
-    vecC->x = lbl_eu_8066AAC0;
-    vecC->y = lbl_eu_8066AAC0;
-    vecC->z = lbl_eu_8066AAC0;
+    outDelta->x = 0.0f;
+    outDelta->y = 0.0f;
+    outDelta->z = 0.0f;
+    vecB->x = 0.0f;
+    vecB->y = 0.0f;
+    vecB->z = 0.0f;
+    vecC->x = 0.0f;
+    vecC->y = 0.0f;
+    vecC->z = 0.0f;
     // Each access re-reads the slot: the virtual call forces MWCC to
     // reload the binding record around it (retail keeps the base+off
     // view pointer in a register).
@@ -1177,9 +1171,9 @@ extern "C" u32 scn80496SetupChrAnim(
 
     if (f == 0) {
         CScnNode80496B0C* node = child->field_0x84[0];
-        f32 frame = (node != NULL) ? node->field_0x1C : lbl_eu_8066AAC0;
+        f32 frame = (node != NULL) ? node->field_0x1C : 0.0f;
         if (node != NULL) {
-            ((AnmObjResVt80497544*)node->field_0x10)->setFrame(frame - lbl_eu_8066AAC4);
+            ((AnmObjResVt80497544*)node->field_0x10)->setFrame(frame - 1.0f);
         }
     } else if (f > 0) {
         CScnNode80496B0C* node = child->field_0x84[0];
@@ -1230,9 +1224,9 @@ CScn80496B0C* __ct__80496B0C(CScn80496B0C* obj) {
     obj->field_0xC = 0;
     scn80496ResetChildElems(&obj->field_0x10);
     scn80496ResetChildElems(&obj->field_0xC0);
-    obj->field_0x170 = lbl_eu_8066AAC0;
-    obj->field_0x174 = lbl_eu_8066AAC0;
-    obj->field_0x178 = lbl_eu_8066AAC4;
+    obj->field_0x170 = 0.0f;
+    obj->field_0x174 = 0.0f;
+    obj->field_0x178 = 1.0f;
     obj->field_0x17C = 0;
     obj->field_0x17E = 0;
     obj->field_0x1CC = 0;
@@ -1327,13 +1321,13 @@ u32 scn80496CrossfadeStep(CScn80496B0C* self, CScnItemAnim* anim, int index,
                  << 16;
 
         // Current-frame query: result unused, kept for the virtual call's
-        // side effect. Reading child1 through a volatile view gives an
-        // unprovable head pointer, so retail's dead default-constant arm
-        // survives.
-        CScnChild80496B0C* volatile& c1v =
-            (CScnChild80496B0C* volatile&)self->field_0x8;
+        // side effect. Reading child1 as a direct member leaves the dead
+        // default-constant arm in retail's schedule.
+        //
+        CScnChild80496B0C*& c1v =
+            (CScnChild80496B0C*&)self->field_0x8;
         CScnNode80496B0C* fh = c1v->field_0x84[0];
-        f32 fv = fh != NULL ? fh->field_0x10->v6() : lbl_eu_8066AAC0;
+        f32 fv = fh != NULL ? fh->field_0x10->v6() : 0.0f;
         (void)fv;
         if (self->field_0xC->field_0x84[0] != 0) {
             self->field_0xC->field_0x84[0]->field_0x10->v5();
@@ -1353,7 +1347,7 @@ u32 scn80496CrossfadeStep(CScn80496B0C* self, CScnItemAnim* anim, int index,
                 break;
             }
         }
-        self->field_0x170 = lbl_eu_8066AAC0;
+        self->field_0x170 = 0.0f;
     }
 
     // Phase 2: evaluate into whichever child is (now) bound. Branches are

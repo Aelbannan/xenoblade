@@ -305,8 +305,10 @@ class __declspec(novtable) CDeviceFontLayer : public CWorkThread {
 public:
     CDeviceFontLayer(const char* pName, CWorkThread* pParent, int unk);
     ~CDeviceFontLayer();
+    void setBackgroundColor(const ml::CCol4* col);
+    void setFontId(u32 id);
 
-    // 0x0-0x5C: work-thread base (retail vtable stored manually in the ctor)
+    // 0x0-0x5C: work-thread base
     u8 _base[0x50];                // 0x00 (vtable + name + state)
     u32 mType;                     // 0x50 (CWorkThread::ThreadType)
     u32 mAllocHandle;              // 0x54
@@ -625,17 +627,16 @@ u32 CDeviceFontLayer::getScaledTextHeight() {
 }
 
 // Queue a background-color change unless the color already matches.
-void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* self,
-                                         const ml::CCol4* col) {
-    bool same = self->mBgColor.r == col->r && self->mBgColor.g == col->g &&
-                self->mBgColor.b == col->b && self->mBgColor.a == col->a;
+void CDeviceFontLayer::setBackgroundColor(const ml::CCol4* col) {
+    bool same = this->mBgColor.r == col->r && this->mBgColor.g == col->g &&
+                this->mBgColor.b == col->b && this->mBgColor.a == col->a;
     if (same)
         return;
 
     LAYER_QUE* cmd;
-    FONT_LAYER_RESERVE_SLOTS(self);
+    FONT_LAYER_RESERVE_SLOTS(this);
 
-    // Record addressed via its end pointer (retail writes fields
+    // Record addressed via its end pointer
     // end-relative), rebased to the start for the queue append.
     u32 cursor = sFontCommandCursor + 0x14;
     sFontCommandCursor = cursor;
@@ -646,7 +647,7 @@ void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 
     // Hand-inlined reslist<const LAYER_QUE*> append (retail walks the slot
     // array with a count + byte-offset pair, then links the node).
-    LayerQueList* list = &self->mQueList;
+    LayerQueList* list = &this->mQueList;
     int i;
     int byteOff;
     int capacity;
@@ -672,10 +673,10 @@ void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* self,
     sentinel->mPrev->mNext = temp;
     sentinel->mPrev = temp;
 
-    self->mBgColor = *col;
+    this->mBgColor = *col;
 }
 
-// Queue a text-scale change; the layer's own scale is updated immediately.
+// Queue a text-scale change;
 // Single chained record-pointer expression: MWCC forms the end-of-record
 // pointer, writes the leading fields end-relative, then rebases to the
 // record start (subi) for the trailing field and the queue append.
@@ -725,8 +726,8 @@ void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
 // The reslist append follows the CScnItemPool_pushItemToList/CDeviceVI recipe: hand-inlined
 // push_back walk with explicit byteOff + comma-init so the register assignment
 // matches retail (cmd r4, i r5, byteOff r6, capacity r7, sentinel r8).
-void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
-    FONT_LAYER_RESERVE_SLOTS(self);
+void CDeviceFontLayer::setFontId(u32 arg) {
+    FONT_LAYER_RESERVE_SLOTS(this);
 
     u32 cursor = sFontCommandCursor + 8;
     sFontCommandCursor = cursor;
@@ -735,7 +736,7 @@ void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
     cmd->mSize = 8;
     cmd->mArg[0] = arg;
 
-    LayerQueList* list = &self->mQueList;
+    LayerQueList* list = &this->mQueList;
     int i;
     int byteOff;
     int capacity;
@@ -761,7 +762,7 @@ void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
 
-    self->mFontId = arg;
+    this->mFontId = arg;
 }
 
 // ---------------------------------------------------------------------------

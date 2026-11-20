@@ -68,10 +68,10 @@ class CfGimmickEne;
 class CActorParam;
 }
 // (memberized: GimmickElv_SetLodVisible -> CfGimmickElvData::SetLodVisible; declaration moved into class CfGimmickElvData)
-extern "C" void gimmickLockClearBinding(cf::CfGimmickLock* self);
+void gimmickLockClearBinding(cf::CfGimmickLock* self);
 extern "C" void gimmickEneResolveArts(cf::CfGimmickEne* self, cf::CActorParam* actor);
 extern "C" void gimmickEneStopSound(cf::CfGimmickEne* self, cf::CActorParam* actor);
-extern "C" int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target);
+int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target);
 
 // Teardown / spawn helpers used by the lifecycle functions below.
 // CfGimmick_InitPartyGlobals resets the shared CfGimmick state globals (CfGimmick.cpp).

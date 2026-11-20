@@ -5,6 +5,7 @@
 #include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/CtrlNpcApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
 namespace cf {
 
@@ -145,7 +146,7 @@ namespace cf { class CCtrlMoveNpc; }
 bool VecMath_IsNearSegXZ(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b,
                    const nw4r::math::VEC3& c, float r2);
 // FSqrt-style sqrt with nw4r assert (retail VecMath_SafeSqrtF).
-extern "C" float VecMath_SafeSqrtF(float x);
+
 // XZ-plane segment length helper (code_800A3B24.cpp).
 extern "C" f32 VecMath_LengthXZ(const ml::CVec3& v);
 // Ground-probe walk helper (code_800A3B24.cpp); third arg is a packed flag word.

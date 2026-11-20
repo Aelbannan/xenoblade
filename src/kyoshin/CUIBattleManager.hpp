@@ -148,6 +148,12 @@ private:
     virtual ~CUIBattleManager();
 }; // size = 0xF0
 
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+class CScnNw4r;
+int UIBattleHasPendingLoads();
+CUIBattleManager* UIBattleGetOrCreate(CProcess* pParent, CScnNw4r* pScene,
+                                      u32 handle);
+
 // 3-word member-function-pointer pool in retail .data (split1 unit).
 // parkMoveHandler copies this pmf ({0, -1, no-op member}) into mMoveFunc.
 extern CUIBattleManager::MoveFunc UIBattleParkMovePmf;

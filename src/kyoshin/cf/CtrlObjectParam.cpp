@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CfBdat.hpp"       // owning declarations for the shared bdat globals
 #include "kyoshin/CPcKizunagram.hpp"  // owning declaration for KizunagramRebuildSlotList
 #include "monolib/math/MathConstants.hpp"
@@ -210,16 +211,14 @@ extern "C" void* CtrlObjectParam_InitEquipSlots(cf::CtrlObjectParamInit* p) {
 extern "C" u8* CtrlObjectParam_ResolveEquipItem(s16* arr, u32 idx) {
     // Equip-table helper: when the s16 entry is valid (> -1), resolve the
     // item instance for the category and entry value; 0 otherwise.
-    // The volatile read reproduces retail's reload of arr[idx] for the call
-    // argument (retail lhax r4,r3,r5 reloads; the cat ternary reuses r0 and
-    // clobbers the first read). Without volatile, MWCC CSEs the two reads
-    // into one lhax + or r4,r0,r0 and colors cat into r3 (MWCC_CASES
-    // instruction-selection: split-form reads need a volatile/walked read).
-    volatile s16* q = &arr[idx];
+    // Bind the slot through an element reference for the validity test; the
+    // call re-reads arr[idx] independently after the category is computed
+    // (retail lhax r4,r3,r5 reloads the element for the call argument).
+    s16& slot = arr[idx];
     u8* result = 0;
-    if (*q > -1) {
+    if (slot > -1) {
         result = reinterpret_cast<u8*>(
-            CItem_kindPtr(idx > 4 ? 2 : idx + 4, *q));
+            CItem_kindPtr(idx > 4 ? 2 : idx + 4, arr[idx]));
     }
     return result;
 }
@@ -494,9 +493,7 @@ long cf::CtrlObjectParamData::getShortAt1C(unsigned long index) {
     return entries[0].shortArr[index];
 }
 
-extern "C" void CtrlObjectParam_WriteU16RowEntry(void* tableV, u16 index, u16 value) {
-    cf::CtrlObjectParamU16RowTable* table =
-        reinterpret_cast<cf::CtrlObjectParamU16RowTable*>(tableV);
+void CtrlObjectParam_WriteU16RowEntry(cf::CtrlObjectParamU16RowTable* table, u16 index, u16 value) {
     // Resolve the item family (outputs discarded), then store value into the
     // u16 row table at +2.
     u16 a;
@@ -521,7 +518,7 @@ extern "C" u32 func_8009E120(cf::CtrlObjectParamRowView* p, u32 value) {
 
 // Locate the (type, index) pair for value a and for value b in the swap
 // object; when both are present, swap them via CtrlObjectParam_SwapSlotEntries.
-extern "C" int CtrlObjectParam_SwapSlotValues(cf::CtrlObjectParamSwap* self, unsigned int a, unsigned int b) {
+int CtrlObjectParam_SwapSlotValues(cf::CtrlObjectParamSwap* self, unsigned int a, unsigned int b) {
     int t1 = 0;
     int i1 = 0;
     int t2 = 0;
@@ -739,9 +736,9 @@ int cf::CtrlObjectParamClear::clearStruct() {
 // return 1. Straight-line stores: retail is one stb plus 24 stw with no
 // loop and no memset call, closed by li r3,1 / blr.
 extern "C" int CtrlObjectParam_InitItemSlotArea(u8* self) {
-    volatile u8* b = self;
+    u8* b = self;
     b[0] = 0;
-    volatile u32* w = reinterpret_cast<volatile u32*>(reinterpret_cast<cf::CtrlObjectParamClear*>(self)->words);
+    u32* w = reinterpret_cast<u32*>(reinterpret_cast<cf::CtrlObjectParamClear*>(self)->words);
     w[0] = 0;
     w[1] = 0;
     w[2] = 0;
@@ -858,7 +855,7 @@ extern "C" char* func_8009EB2C(u16 arg1, u16 arg2, const char* srcStr) {
     return strncpy(work->src.str, srcStr, 0x1f);
 }
 
-extern "C" void CtrlObjectParam_SetItemBitFlag(unsigned int idx, int flag) {
+void CtrlObjectParam_SetItemBitFlag(unsigned int idx, int flag) {
     // Set (flag != 0) or clear (flag == 0) bit (idx & 7) of the 50000-bit
     // bitmap at work-buffer +0x1FFC.
     if (idx >= 50000) return;
@@ -878,7 +875,7 @@ extern "C" int CtrlObjectParam_GetItemBitFlag(unsigned int idx) {
     return (bitmap[idx >> 3] >> (idx & 7)) & 1;
 }
 
-extern "C" void CtrlObjectParam_SetStateBitFlag(unsigned int idx, int flag) {
+void CtrlObjectParam_SetStateBitFlag(unsigned int idx, int flag) {
     // Set (flag != 0) or clear (flag == 0) bit (idx & 7) of the 320-bit
     // bitmap at work-buffer +0x3866.
     if (idx >= 0x140) return;
@@ -904,9 +901,9 @@ extern "C" void* CtrlObjectParam_GetCharEntry(unsigned long idx) {
     return &reinterpret_cast<cf::CtrlObjectParamWork*>(spCtrlObjectParamWork)->entries[idx];
 }
 
-extern "C" void* CtrlObjectParam_GetSlotTableBase() {
+extern "C" int* CtrlObjectParam_GetSlotTableBase() {
     extern unsigned long spCtrlObjectParamWork;
-    return reinterpret_cast<void*>(spCtrlObjectParamWork + 0x1f98);
+    return reinterpret_cast<int*>(spCtrlObjectParamWork + 0x1f98);
 }
 
 extern "C" void* CtrlObjectParam_GetItemSlotEntry(int idx) {
@@ -949,7 +946,7 @@ void __ct__8009ED08(u32 rowA, u32 rowB) {
     CtrlObjectParam_RampEntryArtsLevel(reinterpret_cast<cf::CtrlObjectParamSlotView*>(entryA), v);
     cf::CtrlObjectParamEntry* entryB = reinterpret_cast<cf::CtrlObjectParamEntry*>(
         reinterpret_cast<u8*>(spCtrlObjectParamWork) + ((u16)rowB * 0x3DD4) + 0x41F0);
-    volatile u32 lblAddr = (u32)__vt__Q22cf12CBattleState;  // dead store kept by retail
+    u32 lblAddr = (u32)__vt__Q22cf12CBattleState;  // dead store kept by retail
 
     // Snapshot entryB's param sub-region (inside the CActorParam area),
     // refresh entryA's CActorParam from entryB's, then restore the snapshot.
@@ -990,7 +987,7 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             reinterpret_cast<cf::CObjectParam*>(&reinterpret_cast<cf::CtrlObjectParamEF9CTail*>(&self->mParam)->field_34FC)->CObjectParam_setObjectName(reinterpret_cast<const char*>(v86));
             union { u32 w[2]; f64 d; } conv;
             conv.w[0] = 0x43300000;   // u32->f64 conversion magic
-            volatile u32 v8B = getBdatStringColumnValue(bdat, &strBase[0x8B], self->field_00);
+            u32 v8B = getBdatStringColumnValue(bdat, &strBase[0x8B], self->field_00);
             conv.w[1] = (u8)v8B;
             self->mParam.CActorParam_setStatScale(
                 (f32)(conv.d - lbl_eu_80666778) / 100.0f);
@@ -1005,26 +1002,26 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             *reinterpret_cast<u16*>(self->mParam.CActorParam_getBattleHitFlags()) |= 7;
             int rowType = self->field_00;
             if (rowType == 4) {
-                volatile u32 v = getBdatStringColumnValue(
+                u32 v = getBdatStringColumnValue(
                     reinterpret_cast<void*>(lbl_eu_806640F4), &strBase[0x58], self->field_0C);
                 if ((u8)v == 1) rowType = 12;
             }
             cf::CActorParamRetailView* view =
                 reinterpret_cast<cf::CActorParamRetailView*>(&self->mParam);
-            volatile u32 vA2 = getBdatStringColumnValue(bdat, &strBase[0xA2], rowType);
+            u32 vA2 = getBdatStringColumnValue(bdat, &strBase[0xA2], rowType);
             view->unk1629 = (u8)vA2;
-            volatile u32 vA9 = getBdatStringColumnValue(bdat, &strBase[0xA9], rowType);
+            u32 vA9 = getBdatStringColumnValue(bdat, &strBase[0xA9], rowType);
             view->unk162A = (u8)vA9;
-            volatile u32 vB1 = getBdatStringColumnValue(bdat, &strBase[0xB1], rowType);
+            u32 vB1 = getBdatStringColumnValue(bdat, &strBase[0xB1], rowType);
             view->unk162B = (u8)vB1;
-            volatile u32 vBB = getBdatStringColumnValue(bdat, &strBase[0xBB], rowType);
+            u32 vBB = getBdatStringColumnValue(bdat, &strBase[0xBB], rowType);
             view->unk162C = (u8)vBB;
-            volatile u32 vC6 = getBdatStringColumnValue(bdat, &strBase[0xC6], self->field_00);
-            volatile u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
-            volatile u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
+            u32 vC6 = getBdatStringColumnValue(bdat, &strBase[0xC6], self->field_00);
+            u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
+            u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
             MapItemStoreBytes567(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
             initItemNotch(&view->field_3358);
-            volatile u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
+            u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
             if ((u8)vDC != 0) view->unk15F0 = 1;
             dispatchItemLoad(&self->mParam, 3);
         } else {
@@ -1033,7 +1030,7 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             reinterpret_cast<cf::CObjectParam*>(&reinterpret_cast<cf::CtrlObjectParamEF9CTail*>(&self->mParam)->field_34FC)->CObjectParam_setObjectName(reinterpret_cast<const char*>(v86));
             union { u32 w[2]; f64 d; } conv;
             conv.w[0] = 0x43300000;   // u32->f64 conversion magic
-            volatile u32 v8B = getBdatStringColumnValue(bdat, &strBase[0x8B], self->field_00);
+            u32 v8B = getBdatStringColumnValue(bdat, &strBase[0x8B], self->field_00);
             conv.w[1] = (u8)v8B;
             self->mParam.CActorParam_setStatScale(
                 (f32)(conv.d - lbl_eu_80666778) / 100.0f);
@@ -1044,7 +1041,7 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             self->mParam.CActorParam_setGaugeRateB(4.0f);
             self->mParam.CActorParam_setMoveRate(
                 2.0f * (ml::pi / 3.0f));
-            volatile u32 v98 = getBdatStringColumnValue(bdat, &strBase[0x98], self->field_00);
+            u32 v98 = getBdatStringColumnValue(bdat, &strBase[0x98], self->field_00);
             self->mParam.CActorParam_setStatByte((u8)v98);
             cf::CtrlObjectParamStats* record =
                 reinterpret_cast<cf::CtrlObjectParamStats*>(
@@ -1055,41 +1052,41 @@ void CtrlObjectParam_RefreshCharEntry(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             conv2.w[0] = 0x43300000;
             conv2.w[1] = (u16)getBdatStringColumnValue(bdat, &strBase[0xE2], self->field_00);
             record->field_10 = (f32)(conv2.d - lbl_eu_80666778);
-            volatile u32 vE5 = getBdatStringColumnValue(bdat, &strBase[0xE5], self->field_00);
+            u32 vE5 = getBdatStringColumnValue(bdat, &strBase[0xE5], self->field_00);
             record->field_1C = (s16)vE5;
-            volatile u32 vE9 = getBdatStringColumnValue(bdat, &strBase[0xE9], self->field_00);
+            u32 vE9 = getBdatStringColumnValue(bdat, &strBase[0xE9], self->field_00);
             record->field_1E = (s16)vE9;
-            volatile u32 vED = getBdatStringColumnValue(bdat, &strBase[0xED], self->field_00);
+            u32 vED = getBdatStringColumnValue(bdat, &strBase[0xED], self->field_00);
             record->field_20 = (s16)vED;
             record->field_44 = 0.0f;
             record->field_48 = 0.0f;
-            volatile u32 vF1 = getBdatStringColumnValue(bdat, &strBase[0xF1], self->field_00);
+            u32 vF1 = getBdatStringColumnValue(bdat, &strBase[0xF1], self->field_00);
             record->field_56 = (u8)vF1;
-            volatile u32 vF9 = getBdatStringColumnValue(bdat, &strBase[0xF9], self->field_00);
+            u32 vF9 = getBdatStringColumnValue(bdat, &strBase[0xF9], self->field_00);
             record->field_57 = (u8)vF9;
             *reinterpret_cast<u16*>(self->mParam.CActorParam_getBattleHitFlags()) |= 7;
             int rowType = self->field_00;
             if (rowType == 4) {
-                volatile u32 v = getBdatStringColumnValue(
+                u32 v = getBdatStringColumnValue(
                     reinterpret_cast<void*>(lbl_eu_806640F4), &strBase[0x58], self->field_0C);
                 if ((u8)v == 1) rowType = 12;
             }
             cf::CActorParamRetailView* view =
                 reinterpret_cast<cf::CActorParamRetailView*>(&self->mParam);
-            volatile u32 vA2 = getBdatStringColumnValue(bdat, &strBase[0xA2], rowType);
+            u32 vA2 = getBdatStringColumnValue(bdat, &strBase[0xA2], rowType);
             view->unk1629 = (u8)vA2;
-            volatile u32 vA9 = getBdatStringColumnValue(bdat, &strBase[0xA9], rowType);
+            u32 vA9 = getBdatStringColumnValue(bdat, &strBase[0xA9], rowType);
             view->unk162A = (u8)vA9;
-            volatile u32 vB1 = getBdatStringColumnValue(bdat, &strBase[0xB1], rowType);
+            u32 vB1 = getBdatStringColumnValue(bdat, &strBase[0xB1], rowType);
             view->unk162B = (u8)vB1;
-            volatile u32 vBB = getBdatStringColumnValue(bdat, &strBase[0xBB], rowType);
+            u32 vBB = getBdatStringColumnValue(bdat, &strBase[0xBB], rowType);
             view->unk162C = (u8)vBB;
-            volatile u32 vC6 = getBdatStringColumnValue(bdat, &strBase[0xC6], self->field_00);
-            volatile u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
-            volatile u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
+            u32 vC6 = getBdatStringColumnValue(bdat, &strBase[0xC6], self->field_00);
+            u32 vCE = getBdatStringColumnValue(bdat, &strBase[0xCE], self->field_00);
+            u32 vD5 = getBdatStringColumnValue(bdat, &strBase[0xD5], self->field_00);
             MapItemStoreBytes567(&view->field_3358, (u8)vD5, (u8)vCE, (u8)vC6);
             initItemNotch(&view->field_3358);
-            volatile u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
+            u32 vDC = getBdatStringColumnValue(bdat, &strBase[0xDC], self->field_00);
             if ((u8)vDC != 0) view->unk15F0 = 1;
             CtrlObjectParam_RampEntryArtsLevel(reinterpret_cast<cf::CtrlObjectParamSlotView*>(self),
                           record->field_00);
@@ -1353,17 +1350,18 @@ extern "C" void CtrlObjectParam_RampEntryArtsLevel(void* selfV, u16 val) {
         self->mParam.CActorParam_getArtsDataBlock());
 
     // Column results spill to stack slots in retail (stw + later lbz/lhz/lha
-    // reloads), reproduced here with volatile locals of the raw return type.
-    volatile u32 rawHead = getBdatStringColumnValue(statBdat, cols + 0x83, self->field_00[0]);
+    // reloads), so keep each raw return in a narrow-use local rather than
+    // folding the cast straight into the next expression.
+    u32 rawHead = getBdatStringColumnValue(statBdat, cols + 0x83, self->field_00[0]);
     stats->field_00 = (u8)rawHead;
-    volatile u32 rawHp = getBdatStringColumnValue(statBdat, cols + 0xE2, self->field_00[0]);
+    u32 rawHp = getBdatStringColumnValue(statBdat, cols + 0xE2, self->field_00[0]);
     convA.w[1] = (u16)rawHp;
     stats->field_10 = (f32)(convA.d - lbl_eu_80666778);
-    volatile u32 rawA = getBdatStringColumnValue(statBdat, cols + 0xE5, self->field_00[0]);
+    u32 rawA = getBdatStringColumnValue(statBdat, cols + 0xE5, self->field_00[0]);
     stats->field_1C = (s16)rawA;
-    volatile u32 rawB = getBdatStringColumnValue(statBdat, cols + 0xE9, self->field_00[0]);
+    u32 rawB = getBdatStringColumnValue(statBdat, cols + 0xE9, self->field_00[0]);
     stats->field_1E = (s16)rawB;
-    volatile u32 rawC = getBdatStringColumnValue(statBdat, cols + 0xED, self->field_00[0]);
+    u32 rawC = getBdatStringColumnValue(statBdat, cols + 0xED, self->field_00[0]);
     stats->field_20 = (s16)rawC;
     void* actor = findObjB28ById(self->field_00[0]);
     if (actor != 0) {
@@ -1480,7 +1478,7 @@ extern "C" void CtrlObjectParam_RampArtsStatStep(u8* selfV, u16 valueArg) {
     do {
         // Retail stores the raw column word to a stack slot and reloads the
         // low half as u16 (stw + lhz round-trip).
-        volatile union { u32 w; u16 h[2]; } colRaw;
+        union { u32 w; u16 h[2]; } colRaw;
         colRaw.w = getBdatStringColumnValue(statBdat, pCol[i], self->field_00);
         u32 colByte = colRaw.h[0];
         u32 current = 0;
@@ -1564,7 +1562,7 @@ void CtrlObjectParam_RaiseArtsLevelBy(cf::CtrlObjectParamEntry11A4* self, int am
     }
     void* item = 0;
     if (self->shortArr[5] > -1) {
-        item = CItem_kindPtr(2, *const_cast<volatile s16*>(&self->field_26));
+        item = CItem_kindPtr(2, *const_cast<s16*>(&self->field_26));
     }
     if (item != 0) {
         u32* view2 = reinterpret_cast<u32*>(
@@ -1589,8 +1587,9 @@ void CtrlObjectParam_RaiseArtsLevelBy(cf::CtrlObjectParamEntry11A4* self, int am
     }
 }
 
-extern "C" void CtrlObjectParam_SyncParamFromActor(cf::CtrlObjectParamArtsView* self) {
-    // Resolve the actor for this arts type id, then hand the vtable-0x28C
+extern "C" void CtrlObjectParam_SyncParamFromActor(void* selfArg) {
+    cf::CtrlObjectParamArtsView* self = (cf::CtrlObjectParamArtsView*)selfArg;
+    // Resolve the actor
     // result (a pointer) plus the arts-data write target at +0x17C to
     // CActorParam_copyAll(reinterpret_cast<cf::CActorParam*>(retail arg order: value in r3), reinterpret_cast<cf::CActorParam*>(obj in r4)).
     u8* obj = reinterpret_cast<u8*>(findObjB28ById(self->field_00));
@@ -1625,7 +1624,7 @@ extern "C" void CtrlObjectParam_SyncParamFromActorEx(cf::CtrlObjectParamArtsView
 // scans the two offset tables (sCtrlObjectParamPermTableB / sCtrlObjectParamPermTableA) and
 // stamps the slot record via getArtsParamRC2 / setArtsSlotRC.
 extern "C" u8 CtrlObjectParam_LearnArtsSlots(cf::CtrlObjectParamArtsLearnView* self) {
-    volatile u8 learnFlag = 0;   // retail keeps this in a stack slot across all calls
+    u8 learnFlag = 0;   // retail keeps this in a stack slot across all calls
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) {   // retail cmpli
             return 0;
@@ -1783,12 +1782,12 @@ extern "C" void CtrlObjectParam_ClaimArtsSlotRow(cf::CtrlObjectParamArtsSlotOwne
     rows = &self->rows[0];
     Bdat_GetTable_AA34();
     void* fp = getFP(&strBase[0x101]);
-    volatile union { u32 w; u8 b[4]; } v;
+    union { u32 w; u8 b[4]; } v;
     v.w = getBdatStringColumnValue(reinterpret_cast<void*>(lbl_eu_806640F4),
                                    &strBase[0x58], rowKey);
     u8 rowIdx = v.b[0];
     getBdatStringColumnValue(fp, &strBase[0x253], arg2);
-    volatile union { u32 w; u8 b[4]; } v3;
+    union { u32 w; u8 b[4]; } v3;
     v3.w = getBdatStringColumnValue(fp, &strBase[0x109], arg2);
     u8 col = v3.b[0];
     if (rows[rowIdx * 0x49 + col * 2] != 0) return;
@@ -1863,7 +1862,7 @@ extern "C" void CtrlObjectParam_ApplyArtsRankUp(void* selfV, u32 value, u32 a, u
     }
     self->mParam.CActorParam_addSpentCurrency(val);
     self->mParam.CActorParam_addSecondCurrency(argA);
-    Counter_AddClamped(&self->big[0], view->field_3DD0, argB);
+    Counter_AddClamped((CUnk8025FB10*)&self->big[0], view->field_3DD0, argB);
     // Local declaration order mirrors the retail register pool fill:
     // r30=strBase, f29/f30/f31 constants, r27=repeat, r31=magic, r24=cap.
     const char* strBase = lbl_eu_804FBCB0;
@@ -1929,10 +1928,10 @@ extern "C" void CtrlObjectParam_ApplyArtsRankUp(void* selfV, u32 value, u32 a, u
                 if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) {
                     // skip
                 } else {
-                    Counter884_AddClamped(&self->big[0], 1);
+                    Counter884_AddClamped((CUnk8025FB10*)&self->big[0], 1);
                 }
             } else {
-                Counter884_AddClamped(&self->big[0], 1);
+                Counter884_AddClamped((CUnk8025FB10*)&self->big[0], 1);
             }
         }
         self->mParam.CActorParam_setSpentCurrency(-deficit);
@@ -2045,17 +2044,17 @@ extern "C" void CtrlObjectParam_AccumCharLevelRank(u32 rowIndex, int* outA, int*
         *outB += 25;
     }
     if (Counter_TestBit(lookup, 0x86)) {
-        *outA += IdTable_SumValues(lookup, 0x86);
+        *outA += IdTable_SumValues((CUnkObj8025FB10*)lookup, 0x86);
     }
     if (Counter_TestBit(lookup, 0x8D)) {
-        *outB += IdTable_SumValues(lookup, 0x8D);
+        *outB += IdTable_SumValues((CUnkObj8025FB10*)lookup, 0x8D);
     }
     u32 gameState = cf::CfGameManager::getCurrentSlotIndex();
     if (Counter_TestBit(lookup, 0x87) && gameState != 4) {
-        *outA += IdTable_SumValues(lookup, 0x87);
+        *outA += IdTable_SumValues((CUnkObj8025FB10*)lookup, 0x87);
     }
     if (Counter_TestBit(lookup, 0x88) && gameState == 4) {
-        *outA += IdTable_SumValues(lookup, 0x88);
+        *outA += IdTable_SumValues((CUnkObj8025FB10*)lookup, 0x88);
     }
     u8* entryBase = reinterpret_cast<u8*>(spCtrlObjectParamWork + rowOff);
     if (isBattleStatusActive(entryBase + 0x4374, 0xB7)) {
@@ -2225,7 +2224,7 @@ probed:
     if (self->field_00 == 3) {
         if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
     }
-    Counter884_AddClamped(self->big, arg4);
+    Counter884_AddClamped((CUnk8025FB10*)self->big, arg4);
 }
 
 // -- CtrlObjectParam_WriteArtsCounter (us-800a334c) -------------------------------------------
@@ -2336,7 +2335,7 @@ extern "C" int CtrlObjectParam_ReapplyArtsSet(cf::CtrlObjectParamTypeView* selfV
                     colv.w = getBdatStringColumnValue(table, &strBase[0x26D], idx);
                     int cost = (int)*(const u8*)&colv * 100;
                     if (cost <= cap) {
-                        Counter_AddClamped(reinterpret_cast<u8*>(view) + 0x3534,
+                        Counter_AddClamped((CUnk8025FB10*)(reinterpret_cast<u8*>(view) + 0x3534),
                                       view->field_3DD0, -cost);
                         KizunagramStoreTotalEntry(reinterpret_cast<u8*>(view) + 0x3534,
                                       row, s + 1, (u32)idx);
@@ -2546,9 +2545,9 @@ extern "C" u8 CtrlObjectParam_GetRowColumnByte(cf::CtrlObjectParamBdatRow* self)
 extern "C" void CtrlObjectParam_RefreshAllEquipImpls() {
     // Refresh every item instance in the equip rows for character rows
     // 1..13: resolve each valid slot entry and run the impl's 0x48 hook.
-    // Recipe variant: advance a row-typed cursor manually; both volatile
-    // reads share the address computation (single IV at the row base)
-    // while keeping retail's +0x1C load displacement.
+    // Recipe variant: advance a row-typed cursor manually; both reads share
+    // the address computation (single IV at the row base) while keeping
+    // retail's +0x1C load displacement.
     void* inst;
     int j;
     cf::CtrlObjectParamEquipRow* vp;
@@ -2838,7 +2837,7 @@ extern "C" void CtrlObjectParam_MergeArtsListNode(cf::CtrlObjectParamArtsList* l
     }
 }
 
-extern "C" u32 CtrlObjectParam_GetArtsListMaxSize(cf::CtrlObjectParamArtsList* list) {
+u32 CtrlObjectParam_GetArtsListMaxSize(cf::CtrlObjectParamArtsList* list) {
     // Walk the arts list keeping the maximum (count << 5) across 0x1111 rows;
     // 0xAAAA rows are skipped, anything else aborts with 0.
     u32 max = 0;

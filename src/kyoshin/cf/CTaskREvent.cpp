@@ -2,8 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <string.h>
 #include "kyoshin/cf/CTaskREvent.hpp"
+#include "kyoshin/cf/CInfoCf.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "kyoshin/cf/EvtSeqApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CTaskEnvironment.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVICb.hpp"
@@ -165,7 +171,7 @@ extern "C" cf::CTaskREvent* __dt__Q22cf11CTaskREventFv(cf::CTaskREvent* self, s3
         if (self != nullptr) {
             flagEvent = reinterpret_cast<cf::IFlagEvent*>(&self->mVtbl58);
         }
-        CtrlRemote_ResetSlotArrayByIndex(flagEvent);
+        CtrlRemote_ResetSlotArrayByIndex((u32)flagEvent);
 
         // Restore Wii Remote auto-sleep / dimming state.
         WPADSetAutoSleepTime(5);
@@ -460,7 +466,7 @@ int evtStartSeqFromPath(const char* path, int arg1, int arg2) {
     InfoCfRefreshSettings(reinterpret_cast<cf::CInfoCf*>(mgr->field_0x70));
     CEventMgr* m2 = gEventMgr;
     if ((m2->field_0x74 & 1) == 0) {
-        InfoCfNoopVirt(reinterpret_cast<cf::CInfoCf*>(m2->field_0x70));
+        InfoCfNoopVirt();
         return 0;
     }
     if (getFileSize__11CDeviceFileFPCc(path, 1) < 0) return 0;
@@ -672,7 +678,6 @@ void evtClearMoviePause() {
     cri->clearMoviePause();
 }
 
-extern "C" void EvtSeqClearStateBit9();
 extern "C" void evtClearSeqStateBit9() { EvtSeqClearStateBit9(); }
 
 // Tears down the active event sequence. Runs only while the manager is
@@ -764,7 +769,7 @@ static inline void evtSubtitlePush(cf::CTaskREvent* self) {
     f32 b = 60.0f * (a - (f32)(s32)a);
     func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)idx, (u32)(u16)(s32)a);
     u8* sda = getGlobalSda();
-    Env_SetClock((u32)sda, (u32)(u16)idx, (u32)(u16)(s32)a, (u32)(u16)(s32)b);
+    Env_SetClock((CTaskEnvTime*)sda, (int)(u32)(u16)idx, (int)(u32)(u16)(s32)a, (int)(u32)(u16)(s32)b);
 }
 
 void cf::CTaskREvent::Move() {
@@ -982,7 +987,7 @@ void cf::CTaskREvent::Move() {
     // allows it, then drive the fade virtuals in the matching direction.
     u32 battleFade = 0;
     if ((gmGameFlags & 0x04000000) != 0) {
-        u32 bt = CBattleMan_FetchVisionObj((u32)getInstance__Q22cf14CBattleManagerFv());
+u32 bt = (u32)((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->CBattleMan_FetchVisionObj();
         if (bt != 0 && (*(u32*)(bt + 0x824) & 0x00020000) != 0) {
             REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             REvtListNode* n = gf->list->first;
@@ -1146,8 +1151,8 @@ void evtUpdateBusyDimming(cf::CTaskREvent* self, int arg) {
                 CfEvtCamPlayerObj* obj =
                     getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0xC;
                 obj->field_0x1EC = 0.1f;
-                obj->field_0x1F0 = lbl_eu_80667648;
-                ScnCamDepthUp();
+                obj->field_0x1F0 = 100000.0f;
+                ScnCamDepthUp((CScnItemCamera*)obj);
             }
         }
     }

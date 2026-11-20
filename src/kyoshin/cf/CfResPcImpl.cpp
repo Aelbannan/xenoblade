@@ -4,7 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
-// NOTE: CfBdat.hpp is intentionally not included here - its `s32` (long)
+#include "kyoshin/cf/CfTFile.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
+// NOTE:
 // getBdatStringColumnValue declaration clashes with code_801862C0.hpp's
 // `int` spelling (pulled in via harness_catalog.hpp). The two static members
 // this TU needs are declared in CfResPcImpl.hpp instead.
@@ -15,6 +17,8 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -645,7 +649,7 @@ void CfResPcImpl_reload(cf::CfResPcImpl* self) {
         CfResPcImpl_requestResourceByBits((cf::CfResPcImpl*)self, (u32)v, (u32)i);
     }
     if (self->field_00->field_64 & 0x2) {
-        CfObjectMove_setModelListLock(self->field_00, 1);
+        CfObjectMove_setModelListLock((cf::CfObjectMove*)self->field_00, 1);
     }
     (self)->CfResPcImpl_probeAndDispatch0(v034_0);
     if (runSync != 0) {

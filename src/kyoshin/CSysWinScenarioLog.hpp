@@ -265,7 +265,7 @@ struct CSysWinSlotTable {
 // retail (a named vtable local spills it to a second register).
 inline void csysWinSlotCall3(CSysWinSlotEntry* entry) {
     typedef void (*Fn)(CSysWinSlotEntry*);
-    ((Fn)((u32*)entry->mpVtable)[3])(entry);
+    ((Fn)((u32*)entry->mpVtable)[3])(entry);  // DEBT(callcast): manual vtable dispatch cast instead of a real virtual member (r12 ABI)
 }
 
 
@@ -832,8 +832,7 @@ extern "C" u32  getEventValue40__Q22cf13CfGameManagerFv(u32 id);   // get sequen
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" u32  getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
-#include "kyoshin/cf/CBattleManagerApi.hpp"
-extern "C" int   CBattleMan_ListHasValue(void* bm, void* obj); // battle-list membership check
+#include "kyoshin/cf/CBattleManager.hpp"
 extern "C" void* MapFx_ResolveOwner(void* source);
 extern "C" u16  gNandTeardownFlag;          // pause / non-enemy-scene flag
 extern "C" u16  gmGlobalFlag42;          // current area id (SysWinLog_DriveCounters gate)
@@ -890,7 +889,7 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self);
 
 // Retail-unmangled scenario-counter entry points defined in code_8028130C:
 // their one canonical declaration lives in SysWinLogCounterApi.hpp.
-#include "kyoshin/SysWinLogCounterApi.hpp"
+#include "kyoshin/code_8028130C.hpp"
 
 // Bottom-of-file helper definitions
 // here so callers below emit a direct `bl` to the retail symbol instead of an

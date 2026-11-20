@@ -10,14 +10,20 @@
 // owner decl on action/CActParamAnim.hpp, with this TU's copies aligned to
 // CChain.hpp's const form (const is load-bearing for chain-TU scheduling).)
 #include "kyoshin/cf/object/CAIAction.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/chain/CChainActorList.hpp"
+#include "kyoshin/cf/chain/CChain.hpp"
 // ml::pi: CChain.hpp's const f32 form is kept (load-bearing for
 // chain-TU scheduling); CfObjectEne.hpp and this TU's local decl are aligned
 // to it, so no pre-include rename is needed.
 #include "kyoshin/cf/CBattleManagerImports.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "kyoshin/code_8028130C.hpp" // SysWinLog_PollBattleStart (C++ linkage)
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/cf/CPcEffect07.hpp"
 #include "monolib/math/CVec3.hpp"
 
 // BMIf removed: CVision real vt used via mVision.
@@ -35,7 +41,7 @@
 // it shares; guard only those (call sites bind to the global-scope decls,
 // same retail symbol names). (Scn_GetFrameDelta now has a single unified decl.)
 // (updateBattleManager: CfGameManager.hpp's copy is gone; single decl on
-// kyoshin/cf/CBattleManagerApi.hpp, included via CBattleManager.hpp above.)
+// kyoshin/cf/CBattleManager.hpp, included via CBattleManager.hpp above.)
 // (getEffOwner: CfObjectMove.hpp and CfGameManager.hpp now carry the
 // identical void*(void*) C++-linkage form - no guard needed.)
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -44,6 +50,8 @@
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+#include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/cf/CSuddenCommu.hpp"
 
 // Retail C++ symbol getEffOwner____FPv (0x800AE12C); the plain C++ name
 // getEffOwner__ mangles to it (same declaration as CChainActorEne.cpp).
@@ -70,7 +78,6 @@ extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 // keep the retail names.
 extern "C" void initVisionSlots(cf::CVision* self);
 extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self);
-extern "C" void CChain_ResetChainState(cf::CChain* self);
 extern "C" void ChainTmr_Reset_D1A4(cf::UnkClass_800D8DBC* self);
 extern "C" void SuddenCommuResetPairingState(cf::CSuddenCommu* self);
 // Generic-object holder register/deregister (retail unmangled: the static
@@ -92,20 +99,15 @@ extern "C" void unlinkFactoryById(UnkClass_805764CC* holder, cf::IFactoryEvent* 
 // +0x3ED4 holder is CfObject::CfObject_notifyEventDone; call sites use the
 // real virtual directly.)
 
+#include "kyoshin/cf/CtrlActApi.hpp"
+
 extern "C" {
 extern const u8 __RTTI__Q22cf7CtrlAct[];
-extern void __dt__Q22cf7CtrlActFv();  // cf::CtrlAct::~CtrlAct (defined in CtrlEnemy.cpp)
+extern void __dt__Q22cf7CtrlActFv();
 extern void CtrlNpcAlwaysFalse();
-extern void ctrlActIsFlagBit15Clear();
 extern void parseActEntry();
 extern void aimVoiceOwner();
 extern void updateActMain();
-extern void ctrlActComputeAimVec();
-extern void ctrlActAimAtTarget();
-extern void ctrlActFaceTargetVec();
-extern void ctrlActProbeTargetReset();
-extern void ctrlActCheckBlockedProbe();
-extern void ctrlActDispatchEntry();
 extern void runArtsAttack();
 extern void handleActKind();
 extern void CtrlEnemy_ret0_800888E8();
@@ -132,14 +134,15 @@ extern void gateVisionByFusionParam();
 }
 // Retail .data head as typed defs (MWCC emits file-scope .data in declaration
 // order ahead of function switch tables, so these land at retail 0x0/0x90).
-// lbl_eu_8052B080 (0x90 = 36 words) is cf::CtrlAct's vtable: the CtrlAct ctor
-// (CtrlAct TU) stores this address as the vtable pointer. Slots whose symbols
-// are not yet decompiled (15 ret0 stubs, CtrlAct typeinfo pair) stay UNDEF
-// externs and resolve when their TUs are typified; pre-link bytes are zeros
-// either way. lbl_eu_8052B110 (0xC) is the default-handler PMF triplet
+// lbl_eu_8052B080 (0x90 = 36 words) is cf::CtrlAct's vtable: word +0 is RTTI,
+// +4 the offset-to-top and +8 the dtor; +0x0C/+0x8C are the pure virtuals
+// named in CtrlAct.hpp. The 16 return-0 stubs at +0x18..+0x54 have only
+// placeholder names in symbols.txt (searched us/eu/jp, RTTI and strings).
+// lbl_eu_8052B110 (0xC) is the default-handler PMF triplet
 // {delta=0, vindex=-1, func} copied wholesale by initBattleActorState.
 __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_8052B080[36] = {
     (const void*)__RTTI__Q22cf7CtrlAct,
+    (const void*)0,
     (const void*)__dt__Q22cf7CtrlActFv,
     (const void*)0,
     (const void*)CtrlNpcAlwaysFalse,
@@ -579,7 +582,7 @@ CBattleManager* CBattleManager::getInstance() {
         mActorList3.clear();
         initVisionSlots(&mVision);
         __ct__80192C10(&unk19C);
-        CChain_ResetChainState(&mChain);
+        mChain.CChain_ResetChainState();
         ChainTmr_Reset_D1A4(&unk20C8);
         SuddenCommuResetPairingState(&mSuddenCommu);
         // Single read of the named lbl_eu_80666DDC global (retail does one lfs from
@@ -748,14 +751,15 @@ extern "C" void updatePtStateTimer(cf::UnkClass_80192BF4* self);
 extern "C" void refreshPtStateAccum(cf::UnkClass_80192BF4* self);
 // (memberized: CChain_UpdatePerFrame -> CChain::UpdatePerFrame; declaration moved into class CChain)
 extern "C" void ChainTmr_Update_D20C(cf::UnkClass_800D8DBC* self);
-extern "C" void SuddenCommuDriveFrame(cf::CSuddenCommu* self);
 extern "C" void SysWinBuff_EmptyStubB20(void* self);
-extern "C" void SysWinLog_PollBattleEnd();
+void SysWinLog_PollBattleEnd();
 extern "C" s32 isGimmickActive__Q22cf13CfGameManagerFv(void* self);
-// --- registerBattleActor imports (retail-unmangled names) ---
+
+// --- registerBattleActor imports
 extern "C" void CCharVoiceMan_ResetAndAppend();
-extern "C" void SysWinLog_ResetState();
 extern "C" void CCharVoiceMan_LatchPendingVoiceId(void* actor);
+void SysWinLog_ResetState();
+
 extern "C" f32 lbl_eu_80666DF8;  // 25.0f
 extern "C" f32 lbl_eu_80666E00;  // 100.0f
 extern "C" f32 lbl_eu_80666E18;  // 50.0f
@@ -782,20 +786,17 @@ extern "C" f32 lbl_eu_80666E74;  // 0.01f (squared-distance epsilon)
 // breaks the C++-linkage declaration when the header is included twice.)
 extern "C" s16 sStatusCountTable[];
 // --- shared battle-helper externs used by the updateBattleAction / processBattleMove ports ---
-extern "C" void PartyGaugeAddClamped(void*, int);                   // party-gauge add
 extern "C" u16 getReloadParam0();                              // current chapter/episode
 extern "C" void* bindIndexedEffect(u32 cls, int param);          // object factory
 extern "C" f32 getArtsFacing(void*);                         // table[clamp(idx,0,4)] @0x80501978
 extern "C" f32 getArtsClampedRate(void*);                         // table[clamp(idx,0,5)] @0x80501990
-extern "C" f32 getArtsScaledSpeed(void*);                         // per-frame-scaled table @0x805019A8
+f32 getArtsScaledSpeed(const u8* self);                         // per-frame-scaled table @0x805019A8
 extern "C" f32 getArtsGaugeRate(void*);                         // table[clamp(idx,0,5)] @0x805019C0
 extern "C" void CCharVoiceMan_EnqueueDamageVoice(void*, void*, void*);          // battle-voice enqueue (3 args)
 extern "C" void CCharVoiceMan_ClearPlayerVoiceCount(void*);                        // battle-voice clear
 extern "C" void CCharVoiceMan_EnqueueHurtVoice(void*, void*, void*);          // battle-voice enqueue (3 args)
-extern "C" void SysWinLog_PollSequenceProgress(void*, s32, void*);            // battle-voice (3 args)
+void SysWinLog_PollSequenceProgress(CScenarioLogOwner*, s32, CScenarioLogArg2*); // battle-voice (3 args)
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);      // nw4r math
-extern "C" void* Selector_GetInstance(void);
-extern "C" void Selector_UpdateFilter(void*, u32);
 extern "C" void seedReloadTmr(s32);
 extern "C" s32 CPartsChange_SubmitSpawnRequest(u32, u16);
 extern "C" void CCharVoiceMan_EnqueueBattleEventVoice(void*, void*, void*);
@@ -804,12 +805,11 @@ extern "C" void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void*, void*, int);
 extern "C" void CCharVoiceMan_PlayPairVoice(void*, void*);
 extern "C" void CCharVoiceMan_TriggerBattleOrPlainVoice(void*);
 extern "C" void CCharVoiceMan_TickPlayerVoiceCount(void*);
-#include "kyoshin/SysWinLogCounterApi.hpp"
-extern "C" void SysWinLog_DrivePair(void*, void*);
+#include "kyoshin/code_8028130C.hpp"
+void SysWinLog_DrivePair(CScenarioLogOwner*, CScenarioLogOwner*);
 extern "C" void* getLiveParamPtr(void*);
 extern "C" void attachEffectById(void*, void*, u32, u32);
 extern "C" void SuddenCommuDispatchAttacker(void*, void*, void*, void*);
-extern "C" void SuddenCommuDispatchPartner(void*, void*, void*);
 extern "C" int IdTable_GetSumMax(void*, int, u32*, u32*);
 extern "C" int IdTable_QuerySumMaxFloat(void*, int, u32*, u32*, u32*);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
@@ -1019,7 +1019,6 @@ extern "C" int mtRand__Q22ml4mathFii(int a, int b);
 extern "C" void* getFP__FPCc(const char* str);
 // Bdat_GetTable_AA34: already declared (void form) by a visible shared header.
 extern "C" u8 lbl_eu_80573EEC[];
-extern "C" void CUICfManager_queueMultiGetItemMenu(u8 v);
 extern "C" void* matchBattleStatusEntry(void*, u32, u32, u32, u32);
 extern "C" s32 CItem_rollBoxEntry(s32 a, u16 b);
 extern "C" s32 spawnBankByte(void);
@@ -1522,7 +1521,7 @@ extern "C" s32 func_800EC918(
         cf::CfObjectMove* subIdent = getObjectMove(acc);
         if (subIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
             void* hud = Selector_GetInstance();
-            Selector_UpdateFilter(hud, ((cf::CfObjectActor*)pc)->field_0x74);
+            Selector_UpdateFilter((cf::CfObjectSelectorObj*)hud, (unsigned int)((cf::CfObjectActor*)pc)->field_0x74);
         }
 
         // Second half: only when the tgt lacks bit0 of field_78
@@ -1545,7 +1544,7 @@ extern "C" s32 func_800EC918(
             cf::CfObjectMove* pcSubIdent = getObjectMove(pc);
             if (pcSubIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
                 void* hud = Selector_GetInstance();
-                Selector_UpdateFilter(hud, ((cf::CfObjectActor*)acc)->field_0x74);
+                Selector_UpdateFilter((cf::CfObjectSelectorObj*)hud, (unsigned int)((cf::CfObjectActor*)acc)->field_0x74);
             }
         }
         return 1;                               // li r3,1; b .L_800F41D4
@@ -3250,7 +3249,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 281: {
-        PartyGaugeAddClamped((void*)&((cf::CBattleManager*)self)->unk194, evt->field_10);
+        cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((void*)&((cf::CBattleManager*)self)->unk194), evt->field_10);
         break; // b .L_800F4000 (shared tail)
     }
 
@@ -3879,7 +3878,7 @@ __attribute__((used)) const void* lbl_eu_8052B790[3] = {
 void CBattleMan_ClearActorStatus(void* ignored, void* self, void* arg) {
     ((cf::CBattleState*)&static_cast<EC918_BattleObjAccessor*>(self)->subObject)->CBattleState_clearStatusId((u32)(uintptr_t)arg);
 }
-unsigned char CBattleMan_GetUnk94Count(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
+int CBattleMan_GetUnk94Count(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
 void CBattleMan_MarkList48Flag40(void* this_) {
     Func800F4004_Self* self = static_cast<Func800F4004_Self*>(this_);
     SimpleListNode* anchor = self->listHead;
@@ -4053,7 +4052,6 @@ extern "C" f32 CBattleMan_ApplyStatusRate(u8* obj, void* target) {
     if (result < lbl_eu_80666DDC) result = lbl_eu_80666DDC;
     return result;
 }
-extern "C" int CChain_HasMemberEntry(void*, void*);
 
 // Arts-data category (+0x3C) / art type (+0x40), read as int (retail cmpwi).
 static inline int artsCategory(const BattleSrcObjAccessor* arts) { return arts->type_3c; }
@@ -4095,7 +4093,7 @@ extern "C" float calcBattleDamage(void* obj, void* target, void* source){
     if (obj != nullptr) {
         // Chain gauge when the source is a chain art (or absent).
         if (src == nullptr || artsCategory(src) == 3) {
-            if (CChain_HasMemberEntry(&cf::CBattleManager::getInstance()->mChain, obj) != 0) {
+            if (CChain_HasMemberEntry(&cf::CBattleManager::getInstance()->mChain, (CChainBattleObjTail*)obj) != 0) {
                 result += ((CBattleManager_20AC*)cf::CBattleManager::getInstance())->field_20AC;
             }
         }
@@ -4827,7 +4825,7 @@ extern "C" void dispatchBattleAI(void* mgr, void* obj, void* enemy, void* arg4){
     case 4:
     case 5:
     case 6:
-        CBattleMan_HandleMoveType45(mgr, obj, enemy, arg4);
+CBattleMan_HandleMoveType45(mgr, obj, enemy, arg4);
         break;
     }
 
@@ -4879,7 +4877,7 @@ extern "C" void setupBattleMove(void* self, void* obj, void* enemyArg, void* arg
         prepareBattleMove(self, obj, enemyArg, arg4);
     }
 
-    if (CChain_HasMemberEntry(&((cf::CBattleManager*)self)->mChain, obj) != 0) {
+if (CChain_HasMemberEntry(&((cf::CBattleManager*)self)->mChain, (CChainBattleObjTail*)obj) != 0) {
         move->field_74 |= 0x80004000;
     }
 
@@ -4983,7 +4981,6 @@ void handleBattleMoveEvent(void* mgr, void* attacker, void* enemyArg, void* arg4
 
     emitBattleEvents(mgr, attacker, enemyArg, arg4);
 }
-extern int getFirstFreeSlot();
 extern void spawnPcEffect(u16 type, int slotSel);
 
 void CBattleMan_HandleMoveType45(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObjAccessor* arg2) {
@@ -6435,7 +6432,7 @@ post_dispatch:;
     // ================================================================
     // 0x800E0364: chain membership -> self->field_20A8 ; event dispatch
     // ================================================================
-    if (CChain_HasMemberEntry((u8*)&((cf::CBattleManager*)self)->mChain, attacker)) {
+    if (CChain_HasMemberEntry((cf::CChain*)((u8*)&((cf::CBattleManager*)self)->mChain), (CChainBattleObjTail*)attacker)) {
         move->field_58 += *(f32*)((u8*)self + 0x20A8);
     }
     emitBattleEvents(self, attacker, target, move);        // 0x800E0388
@@ -8604,7 +8601,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
         }
         CCharVoiceMan_EnqueueDamageVoice(attacker, target, (void*)amt);
         CCharVoiceMan_ClearPlayerVoiceCount(target);
-        SysWinLog_PollSequenceProgress(target, (s32)(move->field_5C * f27), move);
+SysWinLog_PollSequenceProgress((CScenarioLogOwner*)target, (s32)(move->field_5C * f27), (CScenarioLogArg2*)move);
         ((cf::CActorParam*)(attacker))->CActorParam_applyEventStatus((cf::CActorParam12Arg*)(move));
 
         // 0x3BF4
@@ -8799,7 +8796,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             ((cf::CActorParam*)(target))->CActorParam_applyDamage((float)((f64)(-appliedDamage)), (int)(mvType), (int)((u32)attackerKind), (int)(move->field_74));
             CCharVoiceMan_EnqueueDamageVoice(target, attacker, (void*)(-appliedDamage));
             CCharVoiceMan_ClearPlayerVoiceCount(attacker);
-            SysWinLog_PollSequenceProgress(attacker, appliedDamage, move);
+SysWinLog_PollSequenceProgress((CScenarioLogOwner*)attacker, appliedDamage, (CScenarioLogArg2*)move);
             if (move->field_50 == nullptr) return;
 
             if (appliedDamage >= 0) SuddenCommuDispatchAttacker(&self->mSuddenCommu, attacker, target, &localMove);
@@ -8852,9 +8849,9 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 if (((cf::CActorParam*)(target))->CActorParam_isBattleLocked() != 0) {
                     if (!(move->field_78 & 0x1)) dispatchItemLoad(attacker, 0x400000);
                     if (((cf::CBattleManager*)self)->mChain.mHead.field_2 >= 1 && ((cf::CBattleManager*)self)->mChain.mHead.field_2 <= 0x18) {
-                        PartyGaugeAddClamped(&self->unk194, 0x64);
+                        cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&self->unk194), 0x64);
                     }
-                    SysWinLog_DrivePair(target, attacker);
+SysWinLog_DrivePair((CScenarioLogOwner*)target, (CScenarioLogOwner*)attacker);
                     isSelfTarget = false;
                 } else {
                     if ((localMove.field_74 & 0x100) && (((cf::CfObjectActor*)target)->unk64 & 0x2)) {
@@ -8887,12 +8884,12 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                             u32 v = 0;
                             if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x3A, &v);
                             func_800F3970((void*)cf::CBattleManager::spInstance, attacker, target, 3, (s32)v);
-                            PartyGaugeAddClamped(&self->unk194, 0xA);
+                            cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&self->unk194), 0xA);
                         }
                     }
                     if (((cf::CfObjectActor*)attacker)->unk64 & 0x2) {
                         if ((localMove.field_74 & 0x2) || (localMove.field_74 & 0x40)) {
-                            if ((u32)((cf::CActorParam*)(attacker))->CActorParam_getStatusCount() == 4) PartyGaugeAddClamped(&self->unk194, 0xA);
+                            if ((u32)((cf::CActorParam*)(attacker))->CActorParam_getStatusCount() == 4) cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&self->unk194), 0xA);
                         }
                     }
                     if (localMove.field_78 & 0xC00) {
@@ -9116,7 +9113,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             } else if (localMove.field_74 & 0x2) {
                 if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
                     CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)attacker), 0x2D, 0, -1, 1);
-                    if (CChain_HasMemberEntry(&self->mChain, target) == 0) {
+                    if (CChain_HasMemberEntry(&self->mChain, (CChainBattleObjTail*)target) == 0) {
                         CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)target), 0x2E, 0, -1, 1);
                     }
                 }
@@ -9172,10 +9169,10 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                             }
                             if (((cf::CBattleManager*)self)->mChain.mHead.field_2 < 1 || ((cf::CBattleManager*)self)->mChain.mHead.field_2 > 0x18) {
                                 *(f32*)((u8*)st2 + 0x470) = getArtsClampedRate(sub);
-                                *(f32*)((u8*)st2 + 0x474) = getArtsScaledSpeed(sub);
+*(f32*)((u8*)st2 + 0x474) = getArtsScaledSpeed((const u8*)sub);
                             } else {
                                 *(f32*)((u8*)st2 + 0x470) = lbl_eu_80666DDC;
-                                f32 c0 = getArtsScaledSpeed(sub);
+f32 c0 = getArtsScaledSpeed((const u8*)sub);
                                 *(f32*)((u8*)st2 + 0x474) = c0 < lbl_eu_80666DDC ? lbl_eu_80666DDC : c0;
                             }
                             f32 f134 = getArtsGaugeRate(sub);
@@ -9247,7 +9244,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
                 if ((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable()) IdTable_GetSum((void*)((cf::CActorParam*)(attacker))->CActorParam_getStatusTable(), 0x74, &v);
                 func_800F3970((void*)cf::CBattleManager::spInstance, attacker, 0, 0xC, (s32)v);
             }
-            SuddenCommuDispatchPartner(&self->mSuddenCommu, attacker, target);
+            SuddenCommuDispatchPartner(&self->mSuddenCommu, (CSuddenCommuActor*)attacker, (CSuddenCommuActor*)target);
 
             bool idMatch = true;
             if ((u32)((cf::CfObjectActor*)target)->CObjectParam_getSelfObjectId() != ((cf::CfObjectActor*)attacker)->field_0x74) {
@@ -9273,7 +9270,7 @@ extern "C" void updateBattleAction(cf::CBattleManager* self, cf::CfObjectActor* 
             if (!hasStatus(target, 0x801) && !hasStatus(target, 0x16) &&
                 !hasStatus(target, 0x18) && !hasStatus(target, 0x19) &&
                 !hasStatus(target, 0x1A) && !hasStatus(target, 0x1B)) {
-                if (CChain_HasMemberEntry(&self->mChain, target) == 0) {
+                if (CChain_HasMemberEntry(&self->mChain, (CChainBattleObjTail*)target) == 0) {
                     s32 chainSlot = 0;
                     if (localMove.field_78 & 0x200) {
                         chainSlot = *(u8*)((u8*)sub + 0x77);
@@ -9678,7 +9675,7 @@ extern "C" void processBattleMove(cf::CBattleManager* self, void* actor, void* a
             // voice event B (0x74A0-0x7520)
             {
                 s32 p = calcPower(move);              // re-computed
-                SysWinLog_PollSequenceProgress(target, (s32)(rate * (f32)(s32)p), move);
+SysWinLog_PollSequenceProgress((CScenarioLogOwner*)target, (s32)(rate * (f32)(s32)p), (CScenarioLogArg2*)move);
             }
             ((cf::CActorParam*)(actor))->CActorParam_applyEventStatus((cf::CActorParam12Arg*)(move));   // 0x7524-0x7538
         }
@@ -9902,7 +9899,7 @@ postLoop:
 
         if (hit != 0) {                               // 0x8304-0x836C
             if ((((cf::CfObjectActor*)actor)->unk64 & 0x2) && sub->mType66 != 0) {
-                PartyGaugeAddClamped((u8*)&((cf::CBattleManager*)self)->unk194, 0x14);   // 0x8324-0x833C
+                cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)&((cf::CBattleManager*)self)->unk194), 0x14);   // 0x8324-0x833C
             }
             if (sub->mType67 == 9) {                  // 0x8340-0x836C
                 f24 += (f32)(s32)sub->mVal68 / k10_0f;   // 10.0f
@@ -10082,7 +10079,7 @@ postLoop:
 
             if (bm->mFlags74 & 0x2) {               // 0x8AEC
                 CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)actor), 0x2D, 0, -1, 1);
-                if (CChain_HasMemberEntry((u8*)&((cf::CBattleManager*)self)->mChain, target) == 0)
+                if (CChain_HasMemberEntry((cf::CChain*)((u8*)&((cf::CBattleManager*)self)->mChain), (CChainBattleObjTail*)target) == 0)
                     CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)target), 0x2E, 0, -1, 1);
             } else if (bm->mFlags74 & 0x60) {       // 0x8B40
                 CfObjectMove_setAnimModeArgs((u8*)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)actor), 0x2D, 0, -1, 1);
@@ -10143,13 +10140,13 @@ postLoop:
                             md2->mFacing478 = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * 0.024543693f;
                         }
                         if (chapterInRange(self)) {
-                            f32 v = getArtsScaledSpeed(sub);
+f32 v = getArtsScaledSpeed((const u8*)sub);
                             if (v >= lbl_eu_80666DD4) v = lbl_eu_80666DD4;   // min(v,1.0f) (0x8ED4)
                             md2->mSpeed470 = lbl_eu_80666DDC;
                             md2->mSpeed474 = v;
                         } else {
                             md2->mSpeed470 = getArtsClampedRate(sub);
-                            md2->mSpeed474 = getArtsScaledSpeed(sub);
+md2->mSpeed474 = getArtsScaledSpeed((const u8*)sub);
                         }
                     }
                     if (getArtsGaugeRate(sub) != lbl_eu_80666DDC) {   // 0x8EF4-0x8F38
@@ -10262,12 +10259,10 @@ struct E484_Global6C {      // getEffectTask result: f32 at +0x6C
 
 // ---- imports (retail-unmangled names) --------------------------------------
 extern "C" void CCharVoiceMan_FlagBattleActiveVoice();
-extern "C" void SysWinLog_PollBattleStart();
 extern "C" void dispatchScenarioHelp(void*);
 extern "C" void updateBattleHelpState(void*, void*);
-extern "C" s32 startPcEffect(void*, s32, void*, s32);
 extern "C" void CfObjectMove_relaySubB0Slot54(void*, int, int, u32, f32, f32);
-extern "C" void Scn_SetTimeScale(void*);
+void Scn_SetTimeScale(CScn* scene, float value);
 extern "C" void* getEffectTask();
 extern "C" void followUpBattleMove(void*, void*, void*, void*);
 extern "C" void dispatchBattleMove(void*, void*, void*, void*);
@@ -10296,7 +10291,7 @@ extern "C" void followUpBattleMove(void* self, void* actor, void* target, void* 
             stat = (void*)isBattleStatusActive((u8*)actor + 8, 0x10A);
             // Retail parks the chain type in the move pointer's register --
             // mirrored here by reusing the parameter slot.
-            move = (void*)(uintptr_t)startPcEffect(static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)target), -1, stat, 0);
+            move = (void*)(uintptr_t)startPcEffect((u32)(uintptr_t)static_cast<cf::CfObjectMove*>((cf::CfObjectActor*)target), -1, (s32)(uintptr_t)stat, 0);
             s32 type = (s32)(uintptr_t)move;
             // 0x800E91C4..0x800E92A0: art id picked per chain type; the
             // neg/or/srwi pair in retail computes (stat/0x10A result != 0).
@@ -10792,7 +10787,7 @@ extern "C" void CBattleMan_SendActorEvent(cf::CBattleManager* mgr, BattleObjAcce
 extern "C" void refreshBattleActors(cf::CBattleManager* self, f32 value, int flags) {
 
     if (flags & 0x8) {                                       // 0x800EAF78
-        Scn_SetTimeScale(gmScene);
+        Scn_SetTimeScale(gmScene, value);
     }
 
     CfEnumListHolder h1;
@@ -11829,7 +11824,7 @@ void CBattleMan_ClearEventNotify(void* self, u32 arg2, u16 arg3) {
 // Dispatches battle event calls to actor objects based on the dispatch-table
 // entry at sBattleEventTable[idx]: selector 0 -> obj1, 1 -> obj2, 2 -> both,
 // anything else -> every entry of the manager's second actor list.
-// Signature matches the single shared decl on CBattleManagerApi.hpp; the
+// Signature matches the single shared decl on CBattleManager.hpp; the
 // typed views are recovered up front (pointer casts emit no code).
 // f3970_tbl is an UNDEF alias for sBattleEventTable used only by this
 // function (see note at its use); UNIT_RULES add_symbols anchors it at
@@ -12011,8 +12006,10 @@ void CBattleMan_DropBattleFlag10(cf::CBattleManager* mgr) {
 extern "C" void CPartsChange_ResetBattleEntry(void*, u32, u32);
 extern "C" void CItem_clearSharedBox();
 extern "C" s32 CfRes_checkFlags_48000();
-extern "C" void UIWin_CreateB4790Win(void*, int);
+class IUIWindow;
+extern "C" IUIWindow* UIWin_CreateB4790Win(u32, u32);
 extern "C" void CCharVoiceMan_EnqueueItemVoice(void*);
+
 
 void CBattleMan_RefreshChainEnum(cf::CBattleManager* mgr) {
     // Chain maintenance
@@ -12114,7 +12111,7 @@ void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr) {
 
         list = holder.get();
         if (list->mPtrCount != 0) {
-            UIWin_CreateB4790Win(lbl_eu_80573EEC, 0);
+UIWin_CreateB4790Win((u32)(uintptr_t)lbl_eu_80573EEC, 0);
 
             CItem_clearSharedBox();
 

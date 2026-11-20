@@ -35,7 +35,9 @@ GXColorS10 sFoundRowColor1;
 extern u32 lbl_eu_80664184;
 extern const u16 sMapIdToBdatRow[0x1E] = { 0, 0, 1, 23, 46, 72, 83, 104, 126, 155, 0, 177, 188, 215, 227, 232, 251, 277, 294, 309, 0, 337, 0, 363, 386, 410, 425, 0, 431, 0 };
 extern u32 Bdat_GetMaxRow_B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
-extern u32 lbl_eu_8050BDF8[];
+// name-guess: 28-entry .rodata pointer table copied into namebuf for the
+// menu/jp/floor_ma*.arc reads in FloorMap_LoadMapFiles
+extern u32 sFloorMapArchivePaths[];
 
 // Wider-view import for the marker-placement lookups: retail masks the raw
 // results (rlwinm 16) at these call sites, which requires the untruncated
@@ -4103,7 +4105,7 @@ void FloorMap_LoadMapFiles(void* self) {
         u32* s;
         u32* d = (u32*)(namebuf)-1;
         u32 n;
-        s = (u32*)lbl_eu_8050BDF8 - 1;
+        s = (u32*)sFloorMapArchivePaths - 1;
         for (n = 14; n != 0; n--) {
             u32 a = *(s + 1);
             u32 b = *(s + 2);

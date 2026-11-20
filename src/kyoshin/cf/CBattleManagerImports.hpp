@@ -250,7 +250,7 @@ extern "C" void handleBattleMoveEvent(void* self, void* obj, void* enemy, void* 
 extern "C" void CBattleMan_HandleMoveType45(void* self, void* obj, void* enemy, void* move);
 extern "C" int CChain_HasMemberEntry(void* chain, void* obj);
 
-// C++-mangled retail import (findObjectById__Fi): actor id -> action source.
+// C++-mangled retail import
 void* findObjectById(int id);
 
 // Object scanned by findFreeBattleSlot: key word at +0x4, flags at +0x78 and the
@@ -265,7 +265,7 @@ struct D7D24_Obj {
 };
 
 // Battle-event slot 0xC (#1) dispatch shared copy lives in
-// CBattleManagerApi.hpp.
+// CBattleManager.hpp.
 // Move sub-object view for handleBattleMoveEvent (arg4->artsData): u16 type at
 // +0x58 and the sub-vtable pointer at +0x84.
 struct DB7F8_MoveSub {

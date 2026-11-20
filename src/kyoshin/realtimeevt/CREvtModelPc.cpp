@@ -4,6 +4,7 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/realtimeevt/CREvtModelPc.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
 
 #include <cstring>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene (CScn)
@@ -16,7 +17,6 @@ static const u32 sCoopVariant[12] = {0, 2, 3, 2, 2, 2, 3, 2, 4};
 
 extern "C" {
     // Task helpers
-    extern int EvtSeqGetWalkIndex();
     extern int EvtSeqGetStateBit14();
     extern int EvtSeqGetStateBit12();
     extern u32 evtLookupCmdWord(void* parent, u32 type, int slot);
@@ -27,11 +27,10 @@ extern "C" {
     // Resource helpers
 extern "C" void* CfRes_tryResolveToken(u32 handle, int* outType);
     extern void KyoshinHeap_Free78(void* p, int type);
-    // Packed-token helpers (retail C-symbol names)
+    // Packed-token helpers (canonical declarations in code_800AA008.hpp)
     extern char* Tok_FormatRes(u32 handle);
-    extern void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
     extern int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-    extern u32 Tok_Pack10(u32 a, u32 b, u32 c);
+
     // Archive
     extern int KyoshinHeap_AllocNode(u32 value, int enable);
 

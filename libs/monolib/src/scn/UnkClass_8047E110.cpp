@@ -9,6 +9,7 @@
 #include <revolution/os/OSFastCast.h>
 #include <math.h>
 #include <string.h>
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
 
 using ml::CVec3;
 
@@ -1864,12 +1865,8 @@ extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node);
 extern "C" void __dt__18CScnItemCameraNw4rFv();
 extern "C" void ScnCam_NoopVFunc();
-extern "C" void ScnCamNw4r_EmptyHook48();
-extern "C" void ScnCamNw4r_RefreshFrustumB();
-extern "C" void ScnCamNw4r_GetField10Ptr();
 extern "C" void ScnCamNw4r_NullHook40();
 extern "C" void ScnCamNw4r_TestSphereHit();
-extern "C" void ScnCamNw4r_RefreshFrustumA();
 extern "C" u32 __RTTI__18CScnItemCameraNw4r;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
 extern "C" u32 __RTTI__14CScnItemCamera;   // .sdata RTTI locator (foreign unit)

@@ -1,13 +1,15 @@
 #ifndef KYOSHIN_CODE_800B06A4_HPP
 #define KYOSHIN_CODE_800B06A4_HPP
 #include <types.h>
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658, Gim* (owner)
 
 // Unmangled retail symbols called by code_800B06A4.cpp.
-extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
+typedef void (*CfObjectPcSetupFrameFn)(cf::CfObjectPc* obj, u32 flag);  // DEBT(callcast): retail passes live r4 to 1-arg CfObjectPc_setupFrame (mangled arity 1; LOSTFIX proof)
 extern "C" void CfObjectMap_refreshRegion(void* self);
 extern "C" int isBattleStatusActive(void* obj, int id);
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -610,40 +612,34 @@ extern "C" void* firstReslistB88();
 extern "C" void* firstReslistBC8();
 extern "C" void* firstReslistC08();
 extern "C" void* MapFx_ResolveOwner(void* source);
-extern "C" int CBattleMan_ListHasValue(void* bm, void* obj);
 #include "monolib/util/FixStr.hpp"
-template <typename T>
-class _reslist_base {
-public:
-    _reslist_base();
-    ~_reslist_base();
-    u32 field_0x00;        // 0x00: vtable pointer
-    u32 field_0x04;        // 0x04: head pointer (this+8)
-    u32 sentinel_prev;     // 0x08: sentinel node prev
-    u32 sentinel_next;     // 0x0C: sentinel node next
-    // total 0x10
-};
-
-// Generic reslist template - adds 0x10 bytes of padding (total 0x20). No ctor
-// is declared: the retail reslist ctors are flattened free functions
-// (__ct__reslist_cf_*), and member-ctor mangling would emit __ct__23reslist<..>
-// (wrong reloc names), so the members must not auto-construct.
-template <typename T>
-class reslist : public _reslist_base<T> {
-public:
-    ~reslist();
-    u32 field_0x10;    // 0x10
-    u32 field_0x14;    // 0x14
-    u32 field_0x18;    // 0x18
-    u8 field_0x1c;     // 0x1c
-    u8 _pad_1d[3];     // 0x1d-0x1f
-};
-
-// Specialization for cf::CfObject - replaces padding with named fields (0x20)
+#include "monolib/util/reslist.hpp"
+// The two retail base destructors below are out-of-line symbols, and their
+// objects use the flattened layout cast in code_800B06A4.cpp rather than the
+// real base's 0x20 member map. Specialise the real template tag for them.
 template <>
-class reslist<cf::CfObject> : public _reslist_base<cf::CfObject> {
+class _reslist_base<cf::TboxInfo> {
+public:
+    ~_reslist_base();
+};
+template <>
+class _reslist_base<cf::IFactoryEvent*> {
+public:
+    ~_reslist_base();
+};
+
+// The retail subobjects use the real reslist template name. Their ctors are
+// flattened free functions and their dtors/iterators are out-of-line retail
+// symbols, so specialise the real template here instead of shadowing its tags.
+// No ctor is declared: member-ctor mangling would emit __ct__23reslist<..>.
+template <>
+class reslist<cf::CfObject*> {
 public:
     ~reslist();
+    u32 field_0x00;    // 0x00: vtable pointer
+    u32 field_0x04;    // 0x04: head pointer (this+8)
+    u32 sentinel_prev; // 0x08: sentinel node prev
+    u32 sentinel_next; // 0x0C: sentinel node next
     u32 field_0x10;    // 0x10
     u32 field_0x14;    // 0x14
     u32 field_0x18;    // 0x18
@@ -653,8 +649,8 @@ public:
 };
 
 // Specialization for cf::TboxInfo - adds fields at 0x10-0x37 (total 0x38).
-// NOT derived from _reslist_base: deriving makes MWCC emit a call to the base
-// dtor instead of the standalone body retail uses.
+// Deliberately not derived from _reslist_base: deriving makes MWCC emit a call
+// to the base dtor instead of the standalone body retail uses.
 template <>
 class reslist<cf::TboxInfo> {
 public:
@@ -840,8 +836,9 @@ public:
     UnkClass_805764CC();
     ~UnkClass_805764CC();
     static UnkClass_805764CC* getInstance();
-    u32 get_u32_18();
+
     u32 get_u32_04();
+    u32 get_u32_18();
     u32 get_u32_74();
     u32 get_u32_70();
     u32 get_u32_380();
@@ -1005,6 +1002,11 @@ extern int sQsortIndirectPivotJitter;
 
 struct B47Vec3;
 
+// Global factory-manager singleton defined in this TU (retail getInstance__Fv).
+UnkClass_805764CC* getInstance();
+// Retail plain-C work-address lookup (canonical spelling from the definition).
+extern "C" int lookupWorkAtAddr(void* addr);
+
 // Globals used by func_800B8FC4.
 extern u32 gmPauseFlags;
 
@@ -1017,7 +1019,6 @@ extern const float lbl_eu_806669DC;
 
 // CfGameManager imports (retail mangled names).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();
-extern "C" bool isSceneActive__Q22cf13CfGameManagerFv(void* gm);
 extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv(void* gm);
 extern "C" u32 isPlayerInEventRange__Q22cf13CfGameManagerFv(void* gm);
 extern "C" void func_8008360C__Q22cf13CfGameManagerFv(void* gm);
@@ -1578,16 +1579,15 @@ extern "C" void gmFileObject(void* obj);
 extern "C" void* findWorkById(UnkClass_805764CC* self, int arg);
 extern "C" void gflagSetOrClear(int arg, void* ptr);
 extern "C" void CfObjectMove_setMoveSpeedGated(void* obj, float val);
+// Owner declaration for the C++-linkage actor-id lookup defined in this unit
+// (retail mangling findObjectById__Fi). Callers include this header.
+void* findObjectById(int id);
 extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
-extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
+// startEnumObjects/getObjectIdAt are declared once in CfObjectEnumListApi.hpp;
+// the dynamic_cast uses the compiler-emitted RTTI.
 extern "C" void* func_800F6E98(void* list, int index);
 extern "C" int getObjField620(void* list);
-extern "C" void* __dynamic_cast(void* obj, long offset, const void* srcType,
-                                const void* dstType, void* src2dst);
-// RTTI typeinfo pair for the actor dynamic_cast.
-extern const void* __RTTI__Q22cf13CfObjectModel;
-extern const void* __RTTI__Q22cf8CfObject;
 extern "C" void* CPartsChange_FindActorByObj(void* a, void* b);
 extern "C" unsigned long CfRes_getAllocHandle();
 extern "C" void* copyIterFrom(void* a, void* b);
@@ -1604,7 +1604,6 @@ extern "C" u32 CfRes_extractBits27_5(void* self);
 extern "C" void allocFactoryPool(UnkClass_805764CC* self, unsigned long count);
 extern "C" void func_801742D4(void* obj);
 extern "C" void func_80173C6C(void* obj, void* arg);
-extern "C" void hikariSetFlagBit1(void* obj);
 extern "C" void tickPadSubobjects(UnkClass_805764CC* self);
 extern "C" void notifyObjCA0D48(UnkClass_805764CC* self, void* obj);
 extern "C" void tickMineSubobject(UnkClass_805764CC* self);
@@ -1645,7 +1644,7 @@ extern "C" void* func_8009EC9C(u32 index);
 extern "C" int func_80148778(void* obj, int arg);
 extern "C" int CfRes_getD80Flag();
 // Scn_GetFrameDelta is owned by monolib/src/scn/CScn (decl: monolib/scn/CScnTimeApi.hpp).
-extern "C" f32 Scn_GetFrameDelta(void* view);
+f32 Scn_GetFrameDelta(void* view);
 extern "C" void CActorParam_updateTick(void* obj, int arg);
 
 // --- imports for scanTboxByXY (us-800b7d30) ---
@@ -2106,8 +2105,8 @@ namespace math {
 float FrSqrt(float x);
 }
 }
-extern char lbl_eu_80526300[];
-extern char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
 
 // Simple 3-float vector manipulated by func_800B47A8. Component arithmetic
 // is written as loops so MWCC unrolls and PS-vectorizes into ps_add/ps_sub

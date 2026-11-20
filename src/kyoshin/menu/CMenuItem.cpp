@@ -1,6 +1,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuItem.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 
 #include "kyoshin/menu/CMenuGCItem.hpp"
 #include "kyoshin/cf/CInfoCf.hpp"
@@ -50,7 +51,7 @@ extern u32 gmPauseFlags;
 
 // Menu/task-flow imports previously pulled in via CSkipTimer.hpp (that header
 // carries a conflicting __ct__7CSysWinFUc declaration, so they are declared here).
-extern u32 CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern void ArtsInfo_SetReadyFlag();
 extern void playUISound(u32);
 

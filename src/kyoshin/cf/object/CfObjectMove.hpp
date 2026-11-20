@@ -1,4 +1,5 @@
 #pragma once
+#include "kyoshin/cf/CtrlNpcApi.hpp"
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
@@ -22,17 +23,13 @@ class CScn;  // monolib scene (CfGameManager owns the shared gmScene global)
 // free function: the retail symbol is Fv but the body reads r4 as a position
 // vector). Plain global so the call-site reloc references the retail name
 // (CfObjectMove::CfObject_setMoveTargetVec forwards its hidden r4 through).
-void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec);
 
 // Cross-TU dispatch targets for the CfObjectMove mTarget6C0 wrappers (defined
 // in kyoshin/cf/CtrlNpc.cpp, retail CtrlNpcInitMoveWindow family). extern "C" keeps
 // the call relocs unmangled - plain C++ global decls get __F-suffix mangled
 // at call sites (same scheme as CtrlNpc.hpp's CfObjectMove_setAnimModeArgs declarations).
-extern "C" void CtrlNpcInitMoveWindow(cf::CtrlNpc* self);
 extern "C" void CtrlNpcSetupAction(cf::CtrlNpc* self);
 extern "C" void CtrlNpcStoreTargetActivate(cf::CtrlNpc* self);
-extern "C" void func_80094E44(cf::CtrlNpc* self);
-extern "C" void CtrlNpcArmMoveTarget5(cf::CtrlNpc* self);
 extern "C" void CtrlNpcSetFlagActivate(cf::CtrlNpc* self);
 // NPC movement-target action setter (CtrlNpc.cpp, retail CtrlNpcSetAction):
 // CfObject_forwardNpcAction tail-dispatches the incoming action id.
@@ -122,7 +119,7 @@ extern const float lbl_eu_80666ACC;
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_CASES.md sec 2).
-extern "C" f32 Scn_GetFrameDelta(void* scene);
+f32 Scn_GetFrameDelta(void* scene);
 // Minimal bdat imports (CfBdat.hpp cannot be included here: its
 // getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
 // The static-member forms keep the retail mangled reloc names.
@@ -140,7 +137,7 @@ extern u32 lbl_eu_80664184;     // cached fld-map row index
 // One-arg call form of the CActParamAnim translation helper (defined 2-arg
 // in kyoshin/action/CActParamAnim.cpp). Retail CfObject_setMoveTargetVec
 // calls it with only r3 set. C linkage keeps the retail unmangled name.
-extern "C" void setAnimSubPos(void* self);
+
 // Second heap handle query (retail unmangled name, same family as
 // CfRes_getHeapHandle): used by CfObject_createMoveTarget's CtrlEnemy/CtrlNpc
 // allocations.
@@ -184,7 +181,6 @@ extern "C" void CfObjectMove_initAnimTarget(cf::CfObjectMove* self);
 // Scene/manager queries used by CfObjectMove_testMoveProximity / CfObjectMove_resetMoveTarget / CfObjectMove_initAnimTarget.
 extern "C" int CfRes_getD80Flag();
 extern "C" void* Scn_FindCamItem(void* obj, int index);
-extern "C" int CamEvtBusyChk();
 extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Camera-block getter (retail getCameraDataBlock__Q22cf13CfGameManagerFv,
@@ -232,10 +228,6 @@ void* getEffOwner(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
 // global C++ functions) used by CfObjectMove_initAnimTarget's dispatch tail. extern "C":
 // the retail symbols are the unmangled names.
-extern "C" u32 CfObj_KindBit1(cf::CfObject* obj);
-extern "C" u32 CfObj_KindBit3(cf::CfObject* obj);
-extern "C" u32 CfObj_KindBit2(cf::CfObject* obj);
-extern "C" u32 CfObj_KindBit7(cf::CfObject* obj);
 // CtrlEnemy/CtrlNpc/CtrlPc/CtrlRemote/CtrlPad retail constructors (plain
 // free functions in their own TUs; the symbol map links the unmangled names).
 // Declared here because the owning headers are not included in this TU.
@@ -262,7 +254,7 @@ extern "C" bool playGated(void* self);
 // calls it with only r3 set - r4 is left as the incoming vec, which the
 // base call below consumes (same scheme as the CfObjectModel setAnimSubPos
 // use). C linkage keeps the call-site reloc at the unmangled retail name.
-extern "C" bool setAnimLastPos(cf::CfObjectMoveTargetC4* self);
+
 // One-arg call form of the camera-event flush helper (defined in
 // kyoshin/cf/CfCamEvent.cpp, which declares it no-arg). Retail
 // CfObject_UnkVirtualFunc22 calls it with the +0x98 sub-object in r3, so the
@@ -276,40 +268,33 @@ extern "C" void CharEffSetSlotFloat(void* self, float value);
 // kyoshin/cf/CCharEffect.cpp with a self param). Retail
 // CfObjectMove_flushEffectSlots calls it with the vtable query result
 // leftover in r3 - the call site passes no argument.
-extern "C" void CharEffReleaseSlots0A10();
 // Two-arg call forms of the CCharEffect slot helpers (defined in
 // kyoshin/cf/CCharEffect.cpp with (CCharEffect*, u32)). Retail
 // CfObjectMove_setEffectSlotBit/18/20 pass the +0x38 sub-object's vtable
 // +0xE4 query result leftover in r3 and the incoming r4 as the index; C
 // linkage keeps the call relocs at the unmangled retail names (same scheme
 // as the CharEffReleaseSlots0A10 no-arg form).
-extern "C" void CharEffSetSlotBit(void* self, u32 idx);
-extern "C" void CharEffMoveBit(void* self, u32 idx);
-extern "C" void CharEffSetPointEnabled(void* self, u32 param);
 // Two-arg call forms of the CCharEffect slot helpers (defined in
 // kyoshin/cf/CCharEffect.cpp). CharEffRemoveByPtr removes a pointer from the
 // effect slot lists; CharEffIsSlotOccupied returns whether a slot is occupied.
 // Retail CfObjectModel_UnkVirtualFunc18 / CfObjectMove_isEffectSlotUsed
 // forward the +0x38 sub-object's vtable +0xE4 query result leftover in r3
 // plus the incoming r4 (same scheme as the CharEffSetSlotBit family above).
-extern "C" void CharEffRemoveByPtr(void* self, void* p);
 extern "C" bool CharEffIsSlotOccupied(unsigned int* param1, int param2);
 // CCharEffect slot-detach helper (defined in kyoshin/cf/CCharEffect.cpp
 // with (CCharEffect*, CCharEffectvtable*); CCharEffect.hpp is not
 // included here, so the canonical typed form is not visible). C linkage
 // keeps the call-site reloc at the plain retail name (same scheme as the
 // CharEffSetSlotBit family above).
-extern "C" void CharEffDetachBySubId(void* self, void* manager);
 // Six-arg call form of the CCharEffect slot-register helper (defined in
 // kyoshin/cf/CCharEffect.cpp with (CCharEffect*, u32, CCharEffectSlot*,
 // u16, u16, u8); the call site only forwards register values, so the arg
 // types below reproduce the retail call exactly - the s16 fourth arg emits
 // the retail extsh at the call site).
-extern "C" void CharEffRegisterSlot(void* self, u32 a, u32 b, s16 c, u32 d, u32 e);
 // CActParamAnim helpers (defined in kyoshin/action/CActParamAnim.cpp,
 // retail unmangled names). setTurnScale is the float-taking translation
 // helper. func_8004B9D4 is called at the retail CfObjectMove_setAnimModeArgs site with
-extern "C" bool setTurnScale(void* self, float value);
+
 extern "C" void func_8004B9D4(void* self, int a, int b, int c, int d);
 // CActParamAnim-view helpers used by CfObjectMove_ensureAnimTargets (defined in
 // kyoshin/action/CActParamAnim.cpp / CActParamAnimGame.cpp, retail
@@ -319,7 +304,8 @@ extern "C" void func_8004B9D4(void* self, int a, int b, int c, int d);
 // AnimGame_SetStateFlags advances the view's animation model; attachAnimObj
 // attaches a model list + state with a vtable-query parameter;
 // getAnimModelId returns the C4 target's page id.
-extern "C" void AnimGame_SetStateFlags(void* self);
+// Defined in kyoshin/cf/CActParamAnimGame.cpp with C++ linkage.
+void AnimGame_SetStateFlags(cf::CActParamAnimGame* self);
 extern "C" void attachAnimObj(void* self, void* object, void* state, u32 param);
 extern "C" u32 getAnimModelId(void* self);
 // Heap query + MemManager allocate used by CfObjectMove_ensureAnimTargets's +0xC8 target
@@ -352,31 +338,27 @@ extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d
 // CfObjectModel.cpp as plain globals). extern "C" keeps the call-site
 // relocs at the unmangled retail names (a plain C++ declaration makes MWCC
 // append a __FP<params> mangling at the call site).
-extern "C" void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec);
-extern "C" void CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int flag);
-// Base +0x68 forced-name implementation (defined in CfObjectModel.cpp as a
+
 // plain global). extern "C" keeps the call-site reloc at the unmangled
 // retail name (a plain C++ declaration inside namespace cf makes MWCC
 // append a __2cfF<params> mangling at the call site).
-extern "C" void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
-// Base +0xA0 forced-name implementation (defined in CfObjectModel.cpp as a
+
 // plain global taking the hidden float arg).
-extern "C" void CfObject_syncModelRate__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value);
 
 // Call-site aliases onto already-real virtual names: the Model/Object base
 // impls keep their UnkVirtual Fv linker symbols (hand-built vtables), but
 // Move call sites spell the recovered slot names. Same arity; MWCC inlines.
 inline void CfObjectModel_syncMoveTarget(cf::CfObjectModel* self, const ml::CVec3* vec) {
-    CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(self, vec);
+    self->CfObject_UnkVirtualFunc22(vec);
 }
 inline void CfObject_snapMoveTargetBase(cf::CfObject* self, const ml::CVec3* vec) {
     CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(self, vec);
 }
 inline void CfObjectModel_setPointEnabled(cf::CfObjectModel* self, int flag) {
-    CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(self, flag);
+    self->CfObject_UnkVirtualFunc66(flag);
 }
 inline void CfObjectModel_syncModelRate(cf::CfObjectModel* self, float value) {
-    CfObject_syncModelRate__Q22cf13CfObjectModelFv(self, value);
+    self->cf::CfObjectModel::CfObject_syncModelRate(value);
 }
 
 namespace cf {

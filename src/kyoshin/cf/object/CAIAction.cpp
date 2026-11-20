@@ -1,5 +1,6 @@
 #include <types.h>
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
@@ -19,6 +20,7 @@
 #include <cstring>
 #include "kyoshin/cf/chain/CChainActorListImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 
 // Retail float pools live in CMenuGetItem's sdata2; reference them as
 // externs so this TU emits no local sdata2 (raw .data MATCH needs empty
@@ -129,11 +131,11 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc1(cf::CAIActionSlot* outA, cf::CAIAc
 // entries from inB into this->ring.queue.buffer.
 //
 // Codegen note: retail keeps the leading word as `stwx r0, base, off` and
-// materializes the slot pointer afterwards (`add`). A plain C pointer lets
-// MWCC fold the store into `stwux`; routing base+offset through a
-// volatile-qualified pointer blocks that fold and reproduces retail's
-// stwx+add at the exact size (structural 23 -> 5). Residual is register
-// allocation only.
+// materializes the slot pointer afterwards (`add`). The plain base+offset
+// pointer reproduces that stwx+add at the exact size (structural 23 -> 5).
+// Residual is register allocation only.
+//
+//
 void cf::CAIAction::CAIAction_UnkVirtualFunc2(cf::CAIActionSlot* inA, cf::CAIActionExport* inB) {
     cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)this->trailer;
     u32 i;
@@ -161,11 +163,11 @@ void cf::CAIAction::CAIAction_UnkVirtualFunc2(cf::CAIActionSlot* inA, cf::CAIAct
         u32 srcIdx = (inB->unk204 + i) % inB->unk20C;
         cf::CAIActionSlot* src =
             (cf::CAIActionSlot*)((u8*)inB->buffer + (srcIdx << 5));
-        // See function comment: volatile access path prevents the stwux fold.
-        volatile u8* dstBase = (volatile u8*)this->ring.queue.buffer;
+        // See function comment: base+offset keeps the retail stwx form.
+        u8* dstBase = (u8*)this->ring.queue.buffer;
         u32 dstOff = (u32)dstIdx << 5;
-        cf::CAIActionSlot* dst = (cf::CAIActionSlot*)((u8*)dstBase + dstOff);
-        *(volatile u32*)(dstBase + dstOff) = src->unk00;
+        cf::CAIActionSlot* dst = (cf::CAIActionSlot*)(dstBase + dstOff);
+        *(u32*)(dstBase + dstOff) = src->unk00;
         {
             u32 t8 = src->unk08;
             u32 t4 = src->unk04;
@@ -822,7 +824,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (d == 4) {
         // Vision exclusion sweep + arts-slot lottery with power gates.
         CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
-        void* vision = CBattleMan_FetchVisionObj(bm);
+        void* vision = ((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
         if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
             && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
             return 0;
@@ -960,7 +962,7 @@ extern "C" int aiJudgeAction(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
         // Vision exclusion, relaxed when either flag bit is set.
         CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
-        void* vision = CBattleMan_FetchVisionObj(bm);
+        void* vision = ((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
         if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
             && !(param->field78 & 0x8000)
             && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
@@ -1372,7 +1374,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     }
 
     case 12: {
-        void* b = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+        void* b = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         if (b != 0) {
             u32 val = *(u32*)((u8*)b + 0x00);
             if (val != 0)
@@ -1382,7 +1384,7 @@ extern "C" void* aiDispatchAct(cf::CAIAction* self, const void* cmd) {
     }
 
     case 13: {
-        void* b = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+        void* b = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         if (b != 0) {
             u32 val = *(u32*)((u8*)b + 0x04);
             if (val != 0)
@@ -2022,7 +2024,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
         }
     } else if (b6 == 13) {
         // +0x61D0 : battle vision object's field +4
-        void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+        void* vision = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         if (vision != 0 && *(u32*)((u8*)vision + 4) != 0) {
             appendObjectById(it.get(), *(u32*)((u8*)vision + 4));
         }
@@ -2154,7 +2156,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 
             case 12: {
                 // +0x6680
-                void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+                void* vision = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
                 if (vision != 0 && *(u32*)((u8*)vision + 0) != 0) {
                     appendObjectById(it.get(), *(u32*)((u8*)vision + 0));
                 }
@@ -2473,7 +2475,7 @@ extern "C" void* aiQueryHandle(cf::CAIAction* self, CAIActionQuery* q) {
 
     // ---- common tail (+0x7470) --------------------------------------------
     {
-        void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+        void* vision = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         if (vision != 0 && *(u32*)((u8*)vision + 0) != ((CfObjBase*)self->unkB14)->unk3F10) {
             // Retail packs the four q bytes into two u32 word-pairs in a
             // stack array {q9,q11} / {q10,q12} and iterates the pair twice:

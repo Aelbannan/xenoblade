@@ -4,6 +4,9 @@
 #include "monolib/work/CTTask.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 
+// Defined in CfRes.cpp; canonical declaration for callers.
+extern "C" int CfRes_getD80Flag();
+
 struct CfResBuffer {
     u8 buffer[0x400]; // 0x400-byte ring (indexed as u32 words)
     u32 field_400;    // ring read index (byte 0-255)
@@ -231,9 +234,7 @@ extern const char* gResKeyKyp;
 extern char lbl_eu_80661A40[8];   // '.' separator + pad (retail .sdata 8 bytes)
 
 // Reset the ResInfoEntry array (defined in kyoshin/cf/IResInfo.cpp).
-// C linkage so the retail unmangled symbol name is emitted (struct params
-// would otherwise mangle it).
-extern "C" void CfRes_resetAllEntries(ResInfoEntry* entry);
+void CfRes_resetAllEntries(ResInfoEntry* entry);
 
 // Global CfRes manager state word (zeroed by CfResTask::Term).
 extern u32 gCfResManager;
@@ -260,7 +261,7 @@ extern "C" void CfRes_initWork(u8* self);
 // the call reloc from __ct__Q22cf5CfResFv carries the retail name).
 extern "C" void CfRes_initArchiveTables(u8* self, int arg);
 // Packed-token packer (kyoshin/code_800AA008.cpp) - retail C symbol name.
-extern "C" u32 Tok_Pack08(u32 a, u32 b);
+
 // Device-file allocation helper (retail C symbol name).
 extern "C" int KyoshinHeap_GetActive54();
 // Same-unit helpers under their retail unmangled names (CfRes.cpp stubs -
@@ -275,7 +276,7 @@ extern "C" u32 CfRes_packFourFields(u32 a, u32 b, u32 c, u32 d);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" char* getEntryPtr(char* base, int a, int b);
 extern "C" void CfRes_releaseCachedBase(ResInfoEntry* entry, bool cleanup);
-extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+
 
 // CfRes_dispatchArchiveRead (0x800645FC): async archive-read pipeline (path build + open
 // + per-entry init). 6 args, int result; C linkage so the call reloc from

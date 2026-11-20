@@ -3,7 +3,8 @@
 // IWorkEvent + IScnRender bases, an embedded CCur18 cursor and CSysWin panel.
 
 #include "kyoshin/menu/CMenuKizunaTalk.hpp"
-#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
+
 #include "kyoshin/plugin/ocBdat.hpp"
 
 #include "functions.hpp"
@@ -23,7 +24,6 @@
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 #include "kyoshin/cf/CfGameManager.hpp"  // CtrlRemote_SetSharedBit
-extern "C" void setGXColorS10(void*, s16, s16, s16, s16);
 extern "C" void SplitU32ToS16s(short*, unsigned long);
 
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
@@ -260,7 +260,7 @@ void advanceKizunaWindow(CMenuKizunaTalk* self) {
         }
         break;
     case 1:
-        if (advanceAnimTransform(self->mAnim, lbl_eu_80667E68) != 0) {
+        if (advanceAnimTransform(self->mAnim, 1.0f) != 0) {
             self->mFieldA0 = 3;
         }
         break;
@@ -381,7 +381,7 @@ extern "C" void pollKizunaTalkReady(CMenuKizunaTalk* self) {
         }
         break;
     case 1:
-        if (AnimRewindFrame(self->mAnim, lbl_eu_80667E68) != 0) {
+        if (AnimRewindFrame(self->mAnim, 1.0f) != 0) {
             self->mField64 = 1;
         }
         break;
@@ -544,7 +544,7 @@ int handleKizunaFileEvent(CMenuKizunaTalk* self, CEventFile* evt) {
             }
         }
 
-        self->mAnim->SetFrame(lbl_eu_80667E6C);
+        self->mAnim->SetFrame(0.0f);
         self->mLayout->Animate(0);
         self->mFile1 = 0;
         self->mMemRegion.validateHeap();

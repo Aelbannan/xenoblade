@@ -182,7 +182,8 @@ extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr);
 extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
 extern "C" void* EneSt_GetSingleton();
 extern "C" void* BpsStateSingletonToInt();
-extern "C" void EneSt_CursorReset(void*);
 extern "C" void BtlDmg_CursorReset(void*);
 extern "C" void CUICfManager_queueMoveBaseMenu();
 extern "C" void* MapFx_ResolveOwner(void* r3);
+
+int CMenuArtsSelect_IsAvailable();

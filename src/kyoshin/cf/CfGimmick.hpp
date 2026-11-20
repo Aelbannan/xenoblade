@@ -81,6 +81,7 @@ public:
 } // namespace cf
 
 #include "kyoshin/code_801F3BE0.hpp"  // CGimmickGlobal, getUnk80664658 (owner)
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 
 // u32-view of the 12-byte position block: CfGimmick_UpdatePartyAnchorState copies the player
@@ -166,8 +167,8 @@ struct CfPlayerIdView {
 // ---------------------------------------------------------------------------
 
 // Cross-TU callees (resolved via the retail symbol map).
-extern "C" void removeManagedObject(void* self, void* target);
-extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
+class UnkClass_805764CC;
+extern "C" void removeManagedObject(UnkClass_805764CC* self, void* target);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
@@ -219,8 +220,6 @@ extern "C" const float lbl_eu_80668350;
 
 // CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, float first, float second)
 // u32 spellings (not unsigned int): must match CfObjectImplMove.hpp/UnityHelpers exactly
-extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value,
-                               u32 playerValue, float first, float second);
 // Sound constants loaded in CfGimmick_PlaySoundAtPos / CfGimmick_PlaySoundAtPosScaled (retail .sda21 loads)
 extern "C" const float lbl_eu_80668358;
 extern "C" const float lbl_eu_8066835C;
@@ -245,6 +244,5 @@ extern "C" CfGimmickObject* spawnMaskedObject(void* mgr, int a, int b, int c);
 
 // Message-posting helpers (CUICfManager.cpp / CUIWindowManager.cpp).
 extern "C" u32 UIWin_GetInstance();
-extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
 // Shared message format buffer (retail .data, absolute-address access).
 extern "C" char gGimmickMessageBuffer[128];

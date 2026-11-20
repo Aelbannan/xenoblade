@@ -779,7 +779,7 @@ void CView::updateMsg() {
     u32 workId;
     s32 nextRead;
     s32 capS;
-    volatile CViewMsgTemplate* slotMsg;
+    CViewMsgTemplate* slotMsg;
 
     goto updateMsg_check;
 
@@ -1238,7 +1238,7 @@ renderView_y_accum_check:
     if (parentView != nullptr) {
         goto renderView_y_accum_body;
     }
-    *reinterpret_cast<volatile s16*>(&home08.mPos.y) = yAccum;
+    home08.mPos.y = yAccum;
 
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home34,
                                                               &mFrame);

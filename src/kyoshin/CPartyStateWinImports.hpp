@@ -21,8 +21,9 @@ extern "C" void ModelDispEquip_StartFadeOut(CModelDispEquipView*);
 extern "C" u32 ModelDispEquip_GetEquipSlot(CModelDispEquipView*);
 extern "C" void ModelDispEquip_NextEquipSlot(CModelDispEquipView*);
 extern "C" void ModelDispEquip_PrevEquipSlot(CModelDispEquipView*);
-extern "C" void ModelDispEquip_ResetColorStep(CModelDispEquipView*);
-extern "C" void ModelDispEquip_ResetColorWhite(CModelDispEquipView*);
+class CModelDispEquip;
+void ModelDispEquip_ResetColorStep(CModelDispEquip* self);
+void ModelDispEquip_ResetColorWhite(CModelDispEquip* self);
 extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquipView*);
 
 // C-linkage import for the embedded CEquipChange sub-object used by
@@ -33,18 +34,13 @@ extern "C" void ModelDispEquip_ResetDisplay(CModelDispEquipView*);
 // sub-objects (retail unmangled names; CModelDisp.cpp / CEquipChange.cpp
 // define the same symbols). int returns where the retail cmpwi's the call
 // result directly (an u8 return would add a normalizing rlwinm).
-extern "C" int isPartyIdle(CPartyState*);
-extern "C" int isPartySettled(CPartyState*);
 extern "C" void setupPartySelect(CPartyState*);
-extern "C" int ModelDispGetDoneFlag(CModelDisp*);
 extern "C" void ModelDispStartFadeOut(CModelDisp*);
 
 // Per-frame party-state input handlers used by PartyStateWin_StatePartyInput's pad chain
 // (retail unmangled; CPartyState.hpp cannot be included here). int returns
 // where the retail cmpwi's the call result directly.
 extern "C" void cancelPartySelect(CPartyState*);
-extern "C" int isPartyCloseRequested(CPartyState*);
-extern "C" int isPartyHighlightSet(CPartyState*);
 extern "C" void func_801FD594(CPartyState*);
 extern "C" void stepPartySelectBack(CPartyState*);
 extern "C" void stepPartySelectFwd(CPartyState*);
@@ -96,13 +92,11 @@ extern "C" void CopyPTSubBlob(u8* dst, const u8* src);
 // PartyStateWin_StateSettle / PartyStateWin_RefreshTitleHelp. func_801FD5C4 returns u8 here (the caller
 // masks at use sites, retail has no post-call rlwinm); isPartyReady returns
 // int (retail cmpwi's the call result directly).
-extern "C" int isPartyReady(CPartyState*);
 extern "C" u8 func_801FD5C4(CPartyState*);
 
 // Party-state selection getter used by PartyStateWin_StateRefresh's equip-display refresh
 // (retail unmangled; distinct from func_801FD5C4 above). Returns u8 here
 // (the caller masks the result with clrlwi at the use site).
-extern "C" u8 getPartySelectIndex(CPartyState*);
 
 // UI sound/announce helper (retail unmangled; declared in
 // CfGameManagerUnityHelpers.hpp, which is not included here).
@@ -258,7 +252,9 @@ namespace cf { class CfObjectMove; }
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
-extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
+typedef void (*CfObjectPcSetupFrameFn)(cf::CfObjectPc*, u32);  // DEBT(callcast): retail passes live r4 to 1-arg CfObjectPc_setupFrame (mangled arity 1; LOSTFIX proof)
 
 // 3-word name-table read by PartyStateWin_StateEquipRefresh's item-filter block (.rodata,
 // retail unmangled). const so MWCC can keep one base register for the three

@@ -1,14 +1,15 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CSuddenCommu
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CSuddenCommuImports.hpp"
-#include "kyoshin/SysWinLogCounterApi.hpp"
+#include "kyoshin/code_8028130C.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::playActorSound
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -21,6 +22,7 @@
 #include "kyoshin/cf/CCharEffect.hpp" // setChildB59__ (cue release)
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 
 namespace cf {}
 using namespace cf;
@@ -183,7 +185,7 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
                 if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
-                    CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), other, &cmd, 0x34, 0);
+                    CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)other, (Func800EA9A8_Arg5*)&cmd, (void*)0x34);
                 }
             }
         }
@@ -222,7 +224,7 @@ __declspec(noinline) void SuddenCommuTallyParty(CSuddenCommu* self) {
 
     if (total != 0) {
         if (self->field_24 & 0x4) total += 0x19;
-        PartyGaugeAddClamped(&((CSuddenCommuBmGauge*)getInstance__Q22cf14CBattleManagerFv())->field_194, total);
+        cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&((CSuddenCommuBmGauge*)getInstance__Q22cf14CBattleManagerFv())->field_194), total);
     }
 
     if (self->field_C == 4) {
@@ -302,9 +304,8 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_E = 0;
             CCharVoiceMan_PlayNodeById(self->field_10);
             f32 v30 = lbl_eu_80667E30;
-            volatile f32* p18 = &self->field_18;
             self->field_10 = -1;
-            *p18 = v30;
+            self->field_18 = v30;
             self->field_24 = 0;
             // Probe the actor's current voice action; a hit kicks vf314.
             u32 v = *player->field_4->vf30();
@@ -330,9 +331,8 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
             self->field_E = 0;
             CCharVoiceMan_PlayNodeById(self->field_10);
             f32 v30 = lbl_eu_80667E30;
-            volatile f32* p18 = &self->field_18;
             self->field_10 = -1;
-            *p18 = v30;
+            self->field_18 = v30;
             self->field_24 = 0;
         }
     } else {
@@ -346,9 +346,8 @@ __declspec(noinline) void SuddenCommuResolvePhaseState(CSuddenCommu* self) {
         self->field_E = 0;
         CCharVoiceMan_PlayNodeById(self->field_10);
         f32 v30 = lbl_eu_80667E30;
-        volatile f32* p18 = &self->field_18;
         self->field_10 = -1;
-        *p18 = v30;
+        self->field_18 = v30;
         self->field_24 = 0;
     }
 }

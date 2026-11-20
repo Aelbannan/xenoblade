@@ -40,22 +40,6 @@ extern char lbl_eu_8056EC30[];
 extern char lbl_eu_8056EC40[];
 extern char lbl_eu_8056EC60[];
 
-// vtable (blob data defined below).
-extern "C" u32 lbl_eu_8056EBD0[4];
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-extern "C" u32 __RTTI__10CScnFogMan[2];  // RTTI locator (owned by CScnItemCamera.cpp)
-extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag);
-
-// [.rodata] 0x80524218-0x80524228 (0x10 = 16B): RTTI name "CScnFogMan".
-extern "C" __declspec(align(8)) const char lbl_eu_80524218[0x10] = {
-    0x43,0x53,0x63,0x6E,0x46,0x6F,0x67,0x4D,0x61,0x6E,0x00,0x00,0x00,0x00,0x00,0x00,
-};
-
-// [.data] 0x8056EBD0-0x8056EC70 (0xA0 = 160B): vtable + NW4R assert strings.
-extern "C" u32 lbl_eu_8056EBD0[4] = {
-    (u32)&__RTTI__10CScnFogMan, 0x00000000, (u32)&__dt__10CScnFogManFv, 0x00000000,
-};
 
 // [.data] string definitions live at end of file (same order); keeping this
 // block comment-only preserves downstream line numbers for -ipa file.
@@ -71,58 +55,41 @@ extern "C" u32 lbl_eu_8056EBD0[4] = {
 // (retired DECOMP_FORCEACTIVE keep-alives: assert-blob and RTTI name are
 // section-defined globals that survive linking without text refs.)
 
-// Typed primary-vptr slot at +0x0 (retail blob vtable).
-struct CScnFogManVptrView {
-    u32* vtPrimary;
-};
-
-
-// Constructor is a C-ABI free function named __ct__CScnFogMan (retail has no
-// mangled arg suffix), so it must be given extern "C" linkage to keep the name.
-extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
-    reinterpret_cast<CScnFogManVptrView*>(self)->vtPrimary = lbl_eu_8056EBD0;
-    self->field_0x04 = param;
-    self->value08 = 0;
-    self->field_0xC = 0.0f;
-    self->field_0x10 = 0.0f;
-    self->field_0x14 = 0.0f;
-    self->field_0x18 = 1.0f;
-    self->field_0x1c = 1000.0f;
-    self->field_0x20 = 0.1f;
-    self->field_0x24 = 0;
-    self->field_0x28 = 0;
-    self->field_0x2c = 2;
-    self->field_0x30 = 1.0f;
-    self->field_0x34 = 100.0f;
-    self->field_0x38 = 1.0f;
-    self->field_0x3c = 100.0f;
-    self->field_0x40 = 1.0f;
-    self->field_0x44 = 1.0f;
-    self->field_0x48 = 1.0f;
-    self->field_0x4c = 1.0f;
-    self->field_0x50 = 2;
-    self->field_0x54 = 1.0f;
-    self->field_0x58 = 100.0f;
-    self->field_0x5c = 1.0f;
-    self->field_0x60 = 100.0f;
-    self->field_0x64 = 1.0f;
-    self->field_0x68 = 1.0f;
-    self->field_0x6c = 1.0f;
-    self->field_0x70 = 1.0f;
+CScnFogMan::CScnFogMan(u32 param) {
+    this->field_0x04 = param;
+    this->value08 = 0;
+    this->field_0xC = 0.0f;
+    this->field_0x10 = 0.0f;
+    this->field_0x14 = 0.0f;
+    this->field_0x18 = 1.0f;
+    this->field_0x1c = 1000.0f;
+    this->field_0x20 = 0.1f;
+    this->field_0x24 = 0;
+    this->field_0x28 = 0;
+    this->field_0x2c = 2;
+    this->field_0x30 = 1.0f;
+    this->field_0x34 = 100.0f;
+    this->field_0x38 = 1.0f;
+    this->field_0x3c = 100.0f;
+    this->field_0x40 = 1.0f;
+    this->field_0x44 = 1.0f;
+    this->field_0x48 = 1.0f;
+    this->field_0x4c = 1.0f;
+    this->field_0x50 = 2;
+    this->field_0x54 = 1.0f;
+    this->field_0x58 = 100.0f;
+    this->field_0x5c = 1.0f;
+    this->field_0x60 = 100.0f;
+    this->field_0x64 = 1.0f;
+    this->field_0x68 = 1.0f;
+    this->field_0x6c = 1.0f;
+    this->field_0x70 = 1.0f;
 }
 
 
 
-// Retail dtor (free-function form so MWCC emits no local vtable; the retail
-// vtable lives in the blob data above and the ctor stores it explicitly).
-extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
-    if (self != nullptr) {
-        if (flag > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
+// The virtual destructor supplies the retail deleting-dtor epilogue.
+CScnFogMan::~CScnFogMan() {}
 
 
 extern "C" void FogManSetValue08(u8* self, u32 val) {

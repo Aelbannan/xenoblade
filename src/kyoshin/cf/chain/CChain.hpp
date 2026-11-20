@@ -9,12 +9,11 @@
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
-// Retail .data vtable mirrors assigned by the inlined sub-object ctors below.
-// Full-size (0x10) so MWCC emits the lis/addi HA-LO pair instead of sda21.
-struct CChainVtSym { u8 bytes[0x10]; };
-extern CChainVtSym lbl_eu_80538284;
-extern CChainVtSym lbl_eu_80538278;
-extern CChainVtSym lbl_eu_8053826C;
+// Retail .data vtable mirrors defined in CChainActorList.cpp. The real
+// definition is a three-pointer array (RTTI, 0, destructor) in .data.
+extern void* lbl_eu_80538284[3];
+extern void* lbl_eu_80538278[3];
+extern void* lbl_eu_8053826C[3];
 
 extern "C" void ChainList_Clear(cf::CChainList* self);
 
@@ -35,7 +34,7 @@ namespace cf {
         void* mVtbl;     //0xE8
 
         CChainMemberInit() {
-            mVtbl = &lbl_eu_80538284;
+            mVtbl = (void*)lbl_eu_80538284;
             ChainList_Clear((CChainList*)this);
         }
     };
@@ -48,7 +47,7 @@ namespace cf {
         void* mVtbl;     //0x4
 
         CChainTimerInit() {
-            mVtbl = &lbl_eu_80538278;
+            mVtbl = (void*)lbl_eu_80538278;
             unk0 = 0;
         }
     };
@@ -65,8 +64,8 @@ namespace cf {
         s32 field_14;     //0x14 chain gauge accumulator (signed)
 
         CChainChanceInit() {
-            mTimerVtbl = &lbl_eu_80538278;
-            mVtbl = &lbl_eu_8053826C;
+            mTimerVtbl = (void*)lbl_eu_80538278;
+            mVtbl = (void*)lbl_eu_8053826C;
             mChainCount = 0;
         }
     };
@@ -225,3 +224,5 @@ namespace cf {
         u8 bytes[0xe];
     };
 }
+
+#include "kyoshin/cf/chain/CChainApi.hpp"

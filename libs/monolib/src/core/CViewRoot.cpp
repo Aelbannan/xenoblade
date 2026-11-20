@@ -940,73 +940,53 @@ void CViewRoot::renderView() {
     }
 }
 
-CViewRoot* CViewRoot::create(CWorkThread* pParent) {
-    const char* name;
-    CViewRoot* root;
+CViewRootPool::CViewRootPool(u32 capacity) {
+    mCapacity = capacity;
+    mStartNodePtr = &mSentinel;
+    mUsed = 0;
+    mList = NULL;
+}
+
+static inline void* initViewRootVptr(CViewRoot* root) {
+    *(void**)root = lbl_eu_8056B710;
+    return root;
+}
+
+CViewRoot::CViewRoot(const char* pName, CWorkThread* pParent)
+    : CWorkThread(pName, pParent, 0x80),
+      mPool0((initViewRootVptr(this), 0x20)), mPool1(0x20), mPool2(0x20) {
     u32 historyIndex;
     u32 historyNode;
 
-    name = lbl_eu_8052266C;
-    root = (CViewRoot*)mtl::MemManager::allocate(
-        0x520, getWorkMem__17CWorkThreadSystemFv());
+    mCurrentView = NULL;
+    mAttachedProc0 = NULL;
+    mAttachedProc1 = NULL;
 
-    if (root == nullptr) {
-        goto create_entry_work;
-    }
-
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(root, name, pParent, 0x80);
-
-    // No retail CViewRoot ctor exists: lay the subobject down manually,
-    // following the retail store order (pools, then the history reslist).
-    *(void**)root = lbl_eu_8056B710;
-
-    root->mPool0.mCapacity = 0x20;
-    _reslist_node<CWorkThread*>* sentinel0 = &root->mPool0.mSentinel;
-    _reslist_node<CWorkThread*>* sentinel1 = &root->mPool1.mSentinel;
-    root->mPool0.mStartNodePtr = sentinel0;
-    _reslist_node<CWorkThread*>* sentinel2 = &root->mPool2.mSentinel;
-    _reslist_node<WORK_ID>* histSentinel = &root->mViewHistory.mStartNode;
-    root->mPool0.mUsed = 0;
-    root->mPool0.mList = NULL;
-
-    root->mPool1.mCapacity = 0x20;
-    root->mPool1.mStartNodePtr = sentinel1;
-    root->mPool1.mUsed = 0;
-    root->mPool1.mList = NULL;
-
-    root->mPool2.mCapacity = 0x20;
-    root->mPool2.mStartNodePtr = sentinel2;
-    root->mPool2.mUsed = 0;
-    root->mPool2.mList = NULL;
-
-    // The history member is a real reslist<WORK_ID>; its base constructor
-    // installs the transient vtable and initialises the sentinel ring, then
-    // the derived vtable is installed for the live list.
-    new (&root->mViewHistory) _reslist_base<WORK_ID>();
-    *reinterpret_cast<void**>(&root->mViewHistory) = lbl_eu_8056B280;
-
-    root->mCurrentView = NULL;
-    root->mAttachedProc0 = NULL;
-    root->mAttachedProc1 = NULL;
-
-    spInstance = root;
-    root->mType = THREAD_CVIEWROOT;
+    spInstance = this;
+    mType = THREAD_CVIEWROOT;
 
     // Inlined reslist<WORK_ID>::reserve: array-new the node pool, clear every
     // node's mNext link, then publish the capacity.
-    root->mViewHistory.mList =
-        (_reslist_node<WORK_ID>*)allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
+    mViewHistory.mList =
+        (_reslist_node<WORK_ID>*)allocate_array__Q23mtl10MemManagerFUlUl(0x600, mAllocHandle);
     for (historyIndex = 0; historyIndex < 8; historyIndex++) {
         for (historyNode = 0; historyNode < 16; historyNode++) {
-            root->mViewHistory.mList[historyIndex * 16 + historyNode].mNext = NULL;
+            mViewHistory.mList[historyIndex * 16 + historyNode].mNext = NULL;
         }
     }
-    root->mViewHistory.mCapacity = 0x80;
+    mViewHistory.mCapacity = 0x80;
     sRenderViewDisabled = 0;
+}
 
-create_entry_work:
+CViewRoot* CViewRoot::create(CWorkThread* pParent) {
+    const char* name = lbl_eu_8052266C;
+    CViewRoot* root = (CViewRoot*)mtl::MemManager::allocate(
+        0x520, getWorkMem__17CWorkThreadSystemFv());
+
+    new (root) CViewRoot(name, pParent);
+
     entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(root, pParent, false);
-    root->setWorkParam(0);
+    root->handleExceptionRetry(0);
 
     return root;
 }

@@ -1,4 +1,5 @@
 #include "kyoshin/CSystemWindowApi.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
@@ -86,9 +87,6 @@ u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __dt__8CProcessFv(CProcess*, int);
 void CItem_copyRecMasked(CUICfInitBlock*, const CUICfInitBlock*);
-void CtrlRemote_FetchSharedBufPtr();
-void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent*);
-void CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent*);
 // Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
 // with the adjusted `this`, so it is referenced through the flat retail name.
 void __dt__12CUICfManagerFv(CUICfManager*);
@@ -237,7 +235,7 @@ void CUICfManager::Term() {
 
     cf::IFlagEvent* flagEvent = this;
     CtrlRemote_FetchSharedBufPtr();
-    CtrlRemote_ResetSlotArrayByIndex(flagEvent);
+    CtrlRemote_ResetSlotArrayByIndex((u32)flagEvent);
 
     unk144->unk39 = 1;
     CUICfManager::spInstance = NULL;
@@ -669,11 +667,11 @@ void CUICfManager::Move() {
     void* savedRet10;
     void* savedRet0C;
     void* savedRet08;
-    volatile void** home18;
-    volatile void** home14;
-    volatile void** home10;
-    volatile void** home0C;
-    volatile void** home08;
+    void** home18;
+    void** home14;
+    void** home10;
+    void** home0C;
+    void** home08;
     f32 posA[3];
     f32 posB[3];
     f32 posC[3];
@@ -706,11 +704,11 @@ void CUICfManager::Move() {
     int nextCount;
     int idx;
 
-    home18 = (volatile void**)&savedRet18;
-    home14 = (volatile void**)&savedRet14;
-    home10 = (volatile void**)&savedRet10;
-    home0C = (volatile void**)&savedRet0C;
-    home08 = (volatile void**)&savedRet08;
+    home18 = (void**)&savedRet18;
+    home14 = (void**)&savedRet14;
+    home10 = (void**)&savedRet10;
+    home0C = (void**)&savedRet0C;
+    home08 = (void**)&savedRet08;
     u16 flags = mFlags;
 
     if ((flags & 0x2) != 0) {
@@ -1011,7 +1009,7 @@ after_flags:
         party = cf::CfGameManager::getPlayer(0);
         {
             void** vt = *reinterpret_cast<void***>(party);
-            partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
+            partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);  // DEBT(callcast): manual vtable slot-0xAC dispatch cast; retail uses r12 ABI
         }
         list = holder.get();
         __ct__800FB044(list, 100.0f, partyHandle, 0);
@@ -1047,7 +1045,7 @@ after_flags:
         partyHandle = *(void**)((u8*)slot + 4);
         {
             void** vt = *reinterpret_cast<void***>(partyHandle);
-            qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(partyHandle);
+            qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(partyHandle);  // DEBT(callcast): manual vtable slot-0xAC dispatch cast; retail uses r12 ABI
         }
         posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
         posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
@@ -1478,7 +1476,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
         break;
     }
     case 3:
-        UIWin_CreateB4790Win(reinterpret_cast<u8*>(&slot->block_04), 1);
+        UIWin_CreateB4790Win((u32)(uintptr_t)&slot->block_04, 1);
         break;
     case 2: {
         // The three trailing 1 args share one materialized constant in
@@ -1495,7 +1493,7 @@ extern "C" void CUICfManager_dispatchFreeSlot(u8* base) {
         UIWin_CreateSysWin0(slot->str_E6, 0, 1);
         break;
     case 6:
-        UIWin_CreateSysWin1(slot->str_E6, slot->str_126, 0, 1);
+        UIWin_CreateSysWin1((u32)(uintptr_t)slot->str_E6, slot->str_126, 0, 1);
         break;
     default:
         break;
@@ -4099,7 +4097,7 @@ int CUICfManager_isUIBusy() {
         return 0;
     }
     // Retail holds the slot-array base (inst+0x14C) in r31 across the gates.
-    u8* volatile base = (u8*)inst + 0x14c;
+    u8* base = (u8*)inst + 0x14c;
     int flag;
     if (PTNotice_IsActive_3C10() != 0) {
         flag = 1;
@@ -4178,7 +4176,7 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
 
     {
         u32 g24a = gmGameFlags;
-        u32 g24b = *(volatile u32*)&gmGameFlags;
+        u32 g24b = gmGameFlags;
         if ((g24a & 0xafe40000u) != 0) {
             return 1;
         }
@@ -4197,7 +4195,7 @@ extern "C" int CUICfManager_checkMenuOpenGate(u8* singleton) {
         }
         if (px != NULL) {
             u8** vt = *reinterpret_cast<u8***>(px);
-            f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(px);
+            f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(px);  // DEBT(callcast): manual vtable slot-0x128 dispatch cast; retail uses r12 ABI
             if (v == 0.0f) {
                 return 2;
             }

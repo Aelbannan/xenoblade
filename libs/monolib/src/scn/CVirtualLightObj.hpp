@@ -20,14 +20,11 @@ extern const f32 lbl_eu_8066AAAC;  // distance-attenuation brightness (bindAtten
 // Cross-TU catalog imports (CLight.cpp). The retail symbols are unmangled
 // free functions, so extern "C" keeps the emitted reloc names byte-identical.
 extern "C" void LightCtlSetAttnMode(u8* self, int value);
-extern "C" void LightCtlSetObj(CLight* self, nw4r::g3d::LightObj* lightObj);
 extern "C" void LightCtlSetPos(u8* self, int value);
 extern "C" void LightCtlSetDir(CLight* self, const f32* dir);
 extern "C" void LightCtlSetColor(u8* self, int value);
 extern "C" void LightCtlScaleColor(CLight* self, f32 intensity);
 extern "C" void LightCtlSetDirFromAngle(CLight* self, f32 angleX, f32 angleY);
-extern "C" void LightCtlSetEnable(CLight* self, int enable);
-extern "C" void LightCtlInitSpot(CLight* self, float cutoff, _GXSpotFn spotFn);
 extern "C" void LightCtlInitDistAttn(u8* self, float a, float b, int c);
 
 // Post-light-update hook on the scene light data. The catalog header

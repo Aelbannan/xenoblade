@@ -2,6 +2,7 @@
 // Virtual method overrides and thread management for party gauge voice processing.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "monolib/math/Random.hpp"
 
 // us-802aa8a8 (constructor factory)
@@ -75,7 +76,7 @@ void CVS_THREAD_PARTY_GAGE::advanceA() {
             voiceId = 0x641;
             break;
         case 1:
-            voiceId = 0x641 + (HpVoice_CheckHpBase(self->partyMember) == 0);
+            voiceId = 0x641 + (HpVoice_CheckHpBase((CVoiceHandle*)self->partyMember) == 0);
             break;
         case 2:
             voiceId = lbl_eu_80662D18[ml::math::mtRand(2)];
@@ -121,7 +122,7 @@ void CVS_THREAD_PARTY_GAGE::advanceB() {
 
     // Measure the member's iterator and pick a voice ID by gauge threshold.
     // Retail re-reads self->partyMember from memory (no long-lived cache).
-    iter = HpVoice_MapSubState(self->partyMember);
+    iter = HpVoice_MapSubState((CVoiceHandle*)self->partyMember);
     voiceId = -1;
     switch ((s32)self->thresholdLevel) {
     case 0:
@@ -137,13 +138,13 @@ void CVS_THREAD_PARTY_GAGE::advanceB() {
 
     // Correction clauses: remap certain voice IDs based on companion state.
     if (voiceId == 0x649) {
-        if (HpVoice_CheckPair26(self->gaugeData, self->partyMember) != 0) voiceId = 0x65b;
+        if (HpVoice_CheckPair26((CVoiceHandleState*)self->gaugeData, (CVoiceHandleState*)self->partyMember) != 0) voiceId = 0x65b;
     }
     if (voiceId == 0x657) {
-        if (HpVoice_CheckPair26(self->gaugeData, self->partyMember) != 0) voiceId = 0x65d;
+        if (HpVoice_CheckPair26((CVoiceHandleState*)self->gaugeData, (CVoiceHandleState*)self->partyMember) != 0) voiceId = 0x65d;
     }
     if (voiceId == 0x64d) {
-        if (HpVoice_CheckPair13(self->gaugeData, self->partyMember) != 0) voiceId = 0x5e8;
+        if (HpVoice_CheckPair13((CVoiceHandleState*)self->gaugeData, (CVoiceHandleState*)self->partyMember) != 0) voiceId = 0x5e8;
     }
 
     if (voiceId > 0) {

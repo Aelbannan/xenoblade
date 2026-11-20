@@ -1,12 +1,16 @@
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/code_802B8A3C.hpp"  // findObjectById imports
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 #include "kyoshin/cf/CfMapItemManager.hpp"  // dispatchItemLoad / testActorStatus
 
+extern const u32 sVisionPairEngagePtmf[3];
 
-// Object behind the CfObjectMove +0xC4 move target (stores the action id).
+
+// Object behind
 struct CfObjectActorInner {
     u8 _pad00[0x37c];
     u32 mArgStorage;  // 0x37c
@@ -125,7 +129,7 @@ void CfObjectActor::CActorParam_setHp(float val) {
     if ((gmGameFlags & 0x10000000) == 0 && (gmPauseFlags & 0x800) == 0) {
         if (f < lbl_eu_80667740) {
             void* bm = getInstance__Q22cf14CBattleManagerFv();
-            if (CChain_ProbeActorReady((u8*)bm + 0x1A8, this) != 0) {
+            if (CChain_ProbeActorReady((cf::CChain*)((u8*)bm + 0x1A8), (CChainBattleObjTail*)this) != 0) {
                 f = lbl_eu_80667740;
             }
         }
@@ -142,9 +146,9 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet__Fi(0x04000000) != 0) {
         cf::CfPtmf3 ptmf;
-        ptmf.field_0 = lbl_eu_80531090[0];
-        ptmf.field_4 = lbl_eu_80531090[1];
-        ptmf.field_8 = lbl_eu_80531090[2];
+        ptmf.field_0 = sVisionPairEngagePtmf[0];
+        ptmf.field_4 = sVisionPairEngagePtmf[1];
+        ptmf.field_8 = sVisionPairEngagePtmf[2];
         if (__ptmf_cmpr((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x28354, &ptmf) == 0) {
             v27 = 1;
         }
@@ -228,7 +232,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
     BtlDmg_SetDamageDir((u8)b);
     if (f <= lbl_eu_80667738) {
         BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, (u32)(s32)-f);
-        CChain_AccumGaugeDelta((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, this, -f);
+        CChain_AccumGaugeDelta((cf::CChain*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8), (cf::CChainFlag*)this, -f);
     } else {
         BtlDmg_NotifyDamage((void*)reinterpret_cast<cf::CfActorField3F10*>(this)->field_0x3F10, (u32)(s32)f);
     }
@@ -287,7 +291,7 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                     f *= calcBattleDamage(0, this, 0);
                     this->CActorParam_addHp(f);
                     CBattleState_clearStatusId(0xFC);
-                    PartyGaugeAddClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x32);
+                    cf::PartyGaugeAddClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194), 0x32);
                 }
             }
         }
@@ -303,13 +307,13 @@ void CfObjectActor::CActorParam_applyDamage(float value, int a, int b, int c) {
                     this->CActorParam_addHp(f);
                     CBattleState_clearStatusId(0x100);
                     this->CActorParam_addArtsGauge(lbl_eu_80667768);
-                    CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), this, 0x93);
+                    CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), (u32)this, (u16)0x93);
                 }
             }
         }
     }
     if (this->CActorParam_getHp() < lbl_eu_80667740) {
-        if (CChain_ProbeActorReady((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, this) != 0) {
+        if (CChain_ProbeActorReady((cf::CChain*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8), (CChainBattleObjTail*)this) != 0) {
             this->CActorParam_setHp(lbl_eu_80667740);
         }
     }
@@ -490,9 +494,11 @@ void CfObjectActor::CfObjectMove_setTargetC4Arg(u32 id) {
 // .data table (retail 0xC) as a typed pointer table. Reloc sites read as
 // zero in the .o (relocs skipped when bytes match), so it stays MATCH.
 // ptmf constant {this-delta 0, non-virtual -1, CVision engage handler}.
+// name-guess: sole member is openVisionPairEngage; mirrors CVision.cpp's
+// named visionCallback* triplets.
 extern "C" void openVisionPairEngage(void* self);
 __declspec(section ".data") __attribute__((used))
-const u32 lbl_eu_80531090[3] = { 0, 0xFFFFFFFFu, (u32)openVisionPairEngage };
+const u32 sVisionPairEngagePtmf[3] = { 0, 0xFFFFFFFFu, (u32)openVisionPairEngage };
 
 // .sdata2 pool (retail 0x44) as typed consts in retail declaration order.
 __declspec(section ".sdata2") __attribute__((used))

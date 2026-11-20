@@ -1,14 +1,19 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CCharEffect
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "nw4r/g3d/res/g3d_resfile.h"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CCharEffect.hpp"
+#include "kyoshin/cf/CCharEffectHelpers.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp" // CfObjectImplPcBattle4 (mBattleObj +0x04 owner iface)
 #include "kyoshin/code_802B8A3C.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
+
 #include <string.h>
 
 // The retail symbol __ct__CCharEffect is a plain (non-member) function, not
@@ -309,7 +314,7 @@ void CharEffApplyToTarget(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32
         bitFlag = 1;
     }
 
-    bindPartnerO_(eff, (CCharEffectMgr*)self->mManager, 0);
+    bindPartnerO_((cf::CfObjectEff*)eff, (u8*)(CCharEffectMgr*)self->mManager, (u8*)0);
     eff->setEffLockFg_(bitFlag);
 
     s8 v = lbl_eu_80501DF8[type];

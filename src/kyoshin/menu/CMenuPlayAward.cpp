@@ -12,6 +12,7 @@
 
 #include "kyoshin/code_80135FDC.hpp" // AnimRewindFrame / advanceAnimTransform (anim frame advance)
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad / getCfPadData
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
 #include "kyoshin/menu/CMenuPlayAward.hpp"
 #include "monolib/work/CEventFile.hpp" // CEventFile (event->mFileHandle in OnFileEvent)

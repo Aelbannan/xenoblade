@@ -31,7 +31,6 @@ struct CHelpLearnArtsCharData {
 // kyoshin/cf/CHelpManager.hpp; see that header.
 extern "C" void* lbl_eu_806640F4;
 extern "C" UNKWORD hasQuestWindow();
-extern "C" u8 isQuestWindowOpen();
 extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" bool ResTbox_IsCellBitSet(unsigned char* p, int i, int j);

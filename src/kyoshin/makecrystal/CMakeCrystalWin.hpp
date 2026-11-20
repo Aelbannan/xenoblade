@@ -7,7 +7,8 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CLoad.hpp"
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
-// CModelDispMakeCrystal is only used through pointers here (the embedded area
+#include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
+
 // is raw bytes), so a forward declaration keeps CModelDispMakeCrystal.hpp's
 // member-type include graph (CMCGetItemBox.hpp et al.) out of this TU.
 class CModelDispMakeCrystal;
@@ -53,18 +54,9 @@ public:
 // these callees are unmangled free functions (per config/us/symbols.txt), so
 // they are declared extern "C" - C++ linkage would re-mangle them.
 extern "C" {
-int getCrystalStateA(CModelDispMakeCrystal* self);
-int getCrystalStateB(CModelDispMakeCrystal* self);
-int getCrystalStateC(CModelDispMakeCrystal* self);
-int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self);
-void setCrystalCursor(CModelDispMakeCrystal* self, u32 val);
 void MakeCrystal_UnlinkFileSlot(CModelDispMakeCrystal* self, u8 a, u8 b);
-void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo);
-void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self);
-void MakeCrystal_InitFiles(CModelDispMakeCrystal* self);
-void MakeCrystalCopyDispArea(u8* dst, const u8* src);
-int MenuTutorialIsCreated();
-void MakeCrystalCopyBox(CMCCrystalBox* self, const CMCCrystalBox* src);
+
+
 void unregisterEffectScene(CScn* scene);
 void __ct__11CTitleAHelpFPcUc(CTitleAHelp* self, char* name, u8 arg);
 void __ct__21CModelDispMakeCrystalFP4CScn(CModelDispMakeCrystal* self, CScn* scene);
@@ -80,11 +72,19 @@ void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 
 // C-linkage imports. The retail DOL symbols are unmangled (per the retail
 // relocs), so C++-linkage declarations would re-mangle the reloc names.
-extern "C" int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
 extern "C" void MakeCrystal_StartCharge(CModelDispMakeCrystal* self);
+
+// State-copy helpers defined in CMenuMakeCrystal.cpp. Retail uses the plain
+// C names at both call sites (config/us/symbols.txt).
+extern "C" void MakeCrystalCopyDispArea(u8* dst, const u8* src);
+extern "C" void MakeCrystalCopyBox(CMCCrystalBox* self, const CMCCrystalBox* src);
 
 // DrawInfo setup helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80535B70[];   // CMakeCrystalWin vtable data (IScnRender sub-vtable at +0x88)
 extern u32 gmPauseFlags;      // render-gate mode bitfield (.sbss; bit 21 = busy)
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+u32 mkCrystalGetFlag4361(void* self);
+u32 mkCrystalGetWord10(void* self);

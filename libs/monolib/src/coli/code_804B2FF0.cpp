@@ -20,14 +20,12 @@ class __declspec(novtable) CTaskColiManager;
 #define sColiTargetTable sColiTargetTable_hdr
 #define sColiWalkState sColiWalkState_hdr
 #define lbl_eu_8066AEC0 lbl_eu_8066AEC0_hdr
-#define lbl_eu_8066AEB0 lbl_eu_8066AEB0_hdr
 #define lbl_eu_8066AEC4 lbl_eu_8066AEC4_hdr
 #define lbl_eu_8066AEC8 lbl_eu_8066AEC8_hdr
 #include "monolib/coli/code_804B2FF0.hpp"
 #undef sColiTargetTable
 #undef sColiWalkState
 #undef lbl_eu_8066AEC0
-#undef lbl_eu_8066AEB0
 #undef lbl_eu_8066AEC4
 #undef lbl_eu_8066AEC8
 #include "monolib/work/CTTask.hpp"
@@ -43,7 +41,6 @@ class __declspec(novtable) CTaskColiManager;
 // 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
 extern u32 sColiTargetTable[3];
 extern const f32 lbl_eu_8066AEC0;
-extern const f32 lbl_eu_8066AEB0;
 extern const f32 lbl_eu_8066AEC4;
 extern const f32 lbl_eu_8066AEC8;
 
@@ -250,7 +247,7 @@ extern "C" int Coli_WalkQuery(CColiQueryResult* self, CColiQueryNode* owner, con
         u32 lo = av->x;
         hi = av->y;
         vs->src.y = hi;
-        f32 zero = *(const volatile f32*)&lbl_eu_8066AEC0;
+        f32 zero = lbl_eu_8066AEC0;
         vs->src.x = lo;
         u32 zv = av->z;
         vs->src.z = zv;
@@ -345,10 +342,10 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
         // sequence in retail order (seed load, flag clear, init mark, f5c
         // seed, x/y snapshot with y stored first, z, zero-fill seed).
         volatile CColiWalkState* vs = &sColiWalkState;
-        f32 v76 = lbl_eu_8066AEC4;
+        f32 v76 = 1.0f;
         vs->flag = 0;
         init = 1;
-        f32 v92 = lbl_eu_8066AEC8;
+        f32 v92 = 1000000.0f;
         const volatile CColiSrcVec* av = (const volatile CColiSrcVec*)a;
         u32 lo = av->x;
         u32 hi = av->y;
@@ -356,7 +353,7 @@ extern "C" int ColiWalkSegment(CColiQueryResult* self, CColiQueryNode* owner, co
         vs->src.x = lo;
         u32 zv = av->z;
         vs->src.z = zv;
-        f32 zero = lbl_eu_8066AEC0;
+        f32 zero = 0.0f;
         vs->bbMax[2] = v76;
         vs->f5c = v92;
         vs->bbMin[0] = zero;
@@ -813,8 +810,8 @@ void ColiSetSphereMtx(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other
 
     nw4r::math::VEC3 n;
     n.x = other->x;
-    n.y = lbl_eu_8066AEB0;
-    n.z = lbl_eu_8066AEB0;
+    n.y = 0.0f;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)&src->m,
                                     &n);
 
@@ -877,8 +874,8 @@ void ColiUpdateMtxNode(CColiMtxNode* self, const CColiMgr* mgr,
     // as the node's scalar radius.
     Vec n;
     n.x = other->radius;
-    n.y = lbl_eu_8066AEB0;
-    n.z = lbl_eu_8066AEB0;
+    n.y = 0.0f;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&n,
                                     (const nw4r::math::MTX34*)&self->mtxW,
                                     (const nw4r::math::VEC3*)&n);
@@ -1022,9 +1019,9 @@ void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
     PSMTXConcat(src, other->mtx, tmp);
 
     Vec v;
-    v.x = lbl_eu_8066AEB0;
+    v.x = 0.0f;
     v.y = 0.5f;
-    v.z = lbl_eu_8066AEB0;
+    v.z = 0.0f;
 
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
                                     (const nw4r::math::MTX34*)tmp,
@@ -1037,8 +1034,8 @@ void ColiUpdateCapsule(CColiCapsuleNode* self, const CColiMgr* mgr,
     // Radius-axis normal seed held as scalars: retail keeps these two
     // literals live in registers across the endpoint math and stores them
     // into the reused vector slot just before the second transform.
-    const f32 seedX = lbl_eu_8066AEB4;
-    const f32 seedYZ = lbl_eu_8066AEB0;
+    const f32 seedX = 1.0f;
+    const f32 seedYZ = 0.0f;
 
     self->posA[1] = ay;
     self->posA[0] = ax;
@@ -1094,9 +1091,9 @@ void ColiXformFixed(const CColiNode* unused, const CColiMgr* mgr,
     PSMTXMultVec(src, &other->pos, (Vec*)g_coliXformPos);
 
     nw4r::math::VEC3 n;
-    n.x = lbl_eu_8066AEB4;
-    n.y = lbl_eu_8066AEB0;
-    n.z = lbl_eu_8066AEB0;
+    n.x = 1.0f;
+    n.y = 0.0f;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
     f32 mag = PSVECMag((const Vec*)&n);
 
@@ -1249,8 +1246,8 @@ void ColiXformSphere(CColiSphereOb* self, const CColiMgr* mgr,
 
     nw4r::math::VEC3 n;
     n.x = o->val;
-    n.y = lbl_eu_8066AEB0;
-    n.z = lbl_eu_8066AEB0;
+    n.y = 0.0f;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
 
     // Radius stored straight from the magnitude; the first bounds check's
@@ -1313,9 +1310,9 @@ void ColiSetEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr, const Vec* ot
     self->pos[2] = pz;
 
     nw4r::math::VEC3 n;
-    n.x = lbl_eu_8066AEB4;
-    n.y = lbl_eu_8066AEB0;
-    n.z = lbl_eu_8066AEB0;
+    n.x = 1.0f;
+    n.y = 0.0f;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
 
     f32 mag = PSVECMag((const Vec*)&n);
@@ -1371,11 +1368,11 @@ void ColiXformEllipsoid(CColiEllipsoidOb* self, const CColiMgr* mgr,
     const f32 px = outv.x;
     self->pos[0] = px;
     nw4r::math::VEC3 n;
-    n.x = lbl_eu_8066AEB4;
+    n.x = 1.0f;
     self->pos[1] = py;
-    n.y = lbl_eu_8066AEB0;
+    n.y = 0.0f;
     self->pos[2] = pz;
-    n.z = lbl_eu_8066AEB0;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
     f32 mag = PSVECMag((const Vec*)&n);
 
@@ -1447,8 +1444,8 @@ void ColiSetCapsulePos(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* o
 
     nw4r::math::VEC3 n;
     n.x = ox;
-    n.y = lbl_eu_8066AEB0;
-    n.z = lbl_eu_8066AEB0;
+    n.y = 0.0f;
+    n.z = 0.0f;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)srcA, &n);
     self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
@@ -1612,18 +1609,15 @@ extern "C" int ColiQuerySegment(CColiQueryResult* self, const Vec* a, const Vec*
         st->flag = 0;
         // Local-pointer reads keep FPR coloring and load positions near
         // retail (plain const refs hoist to block start).
-        const f32* p8 = &lbl_eu_8066AEC8;
-        f32 v92 = *p8;
+        f32 v92 = 1000000.0f;
         init = 1;
-        const f32* p4 = &lbl_eu_8066AEC4;
-        f32 v76 = *p4;
+        f32 v76 = 1.0f;
         // Src snapshot: load x/y, store y (hi) before x (lo), then z.
         const CColiSrcVec* av = (const CColiSrcVec*)a;
         u32 lo = av->x;
         u32 hi = av->y;
         st->src.y = hi;
-        const f32* p0 = &lbl_eu_8066AEC0;
-        f32 zero = *p0;
+        f32 zero = 0.0f;
         st->src.x = lo;
         st->src.z = av->z;
         st->bbMax[2] = v76;
@@ -1939,7 +1933,7 @@ extern "C" CTaskColiManager* create__16CTaskColiManagerFv(CProcess* parent,
         init->field_0x5C = 0;
         init->field_0x78 = 0;
         init->field_0x7C = (u32)mtl::MemManager::getHandleMEM1();
-        f32 z = lbl_eu_8066AEC0;
+        f32 z = 0.0f;
         init->f_0x60[0] = z;
         init->f_0x60[1] = z;
         init->f_0x60[2] = z;
@@ -1975,9 +1969,6 @@ template<> void CTTask<CTaskColiManager>::Draw() {
 // per-object alignment (CDesktop pattern).
 
 // Forward decls for the dissolved blocks (definitions below, retail order).
-extern const char lbl_eu_80524428[17];
-extern const char lbl_eu_8052443C[25];
-extern const char lbl_eu_80524458[16];
 extern u32 __RTTI__16CTaskColiManager[2];
 extern u32 lbl_eu_80663AB8[2];
 extern u32 __RTTI__12CColiManCall[2];
@@ -2007,14 +1998,6 @@ extern u8 __RTTI__14CChildListNode[];
 extern u8 __RTTI__8CProcess[];
 extern u8 __RTTI__9CColiProc[];
 
-// .rodata 0x80524428..0x80524468: RTTI-name pool + dispatch name.
-extern __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80524428[17] =
-    "CTaskColiManager";
-extern __declspec(section ".rodata") __attribute__((aligned(4))) const char lbl_eu_8052443C[25] =
-    "CTTask<CTaskColiManager>";
-extern __declspec(section ".rodata") __attribute__((aligned(4))) const char lbl_eu_80524458[16] =
-    "CColiManCall\0\0\0";
-
 // .sdata 0x80663AA8..0x80663AC8: assert needle + monolib type descriptors
 // {name string, hierarchy table}.
 // "ref" needle: defined under a legal stand-in spelling (the retail-sized
@@ -2023,13 +2006,13 @@ extern __declspec(section ".rodata") __attribute__((aligned(4))) const char lbl_
 enum { sdata_ref_needle_size = 4 };
 extern __declspec(section ".sdata") __attribute__((aligned(8))) const char sdata_ref_needle[sdata_ref_needle_size] = "ref";
 extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__16CTaskColiManager[2] = {
-    (u32)&lbl_eu_80524428, (u32)&lbl_eu_8056F48C,
+    (u32)&"CTaskColiManager"[0], (u32)&lbl_eu_8056F48C,
 };
 extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663AB8[2] = {
-    (u32)&lbl_eu_8052443C, (u32)&lbl_eu_8056F4D4,
+    (u32)&"CTTask<CTaskColiManager>"[0], (u32)&lbl_eu_8056F4D4,
 };
 extern __declspec(section ".sdata") __attribute__((aligned(8))) u32 __RTTI__12CColiManCall[2] = {
-    (u32)&lbl_eu_80524458, (u32)&lbl_eu_8056F4FC,
+    (u32)&"CColiManCall\0\0\0"[0], (u32)&lbl_eu_8056F4FC,
 };
 
 // .data 0x8056F3C0..0x8056F3FC: per-type spec walk tables (step size, payload

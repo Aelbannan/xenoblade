@@ -63,6 +63,7 @@ public:
 #include "monolib/scn/CScn.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 // CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34)
 // invoked by Init. Leading pure virtuals occupy inherited slots so the target
@@ -157,7 +158,6 @@ void __dt__8CProcessFv(CProcess* self, int flags);
 // Additional C-ABI imports used by Init/Move/SysWinSaveHandleInput (retail symbols
 // are unmangled / non-namespace, so C linkage is required).
 void* getCfPadData__Q22cf13CfGameManagerFv();
-void CUICfManager_queueSaveMenu(int a, int b);
 }
 
 // DrawInfo helper (retail mangled name SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo).

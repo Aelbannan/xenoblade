@@ -30,8 +30,6 @@ extern const f64 lbl_eu_8066AB20;
 // Extra pool constants used by the downsampled bloom path.
 extern const f32 lbl_eu_8066AAF0;
 extern const f32 lbl_eu_8066AAF4;
-extern const f64 lbl_eu_8066AAF8;  // u32->f64 conversion bias (2^52)
-extern const f64 lbl_eu_8066AB38;  // u32->f64 conversion bias (2^52)
 
 // Bloom base parameters (0x00-0x47), initialized by CScnBloom_InitParams.
 // NOTE: this base is not polymorphic in retail (no vptr at 0x00); the

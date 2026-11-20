@@ -90,6 +90,7 @@ struct CMenuUpdatePadData {
 #include "kyoshin/IUIWindow.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 class CMenuUpdate : public IUIWindow, public IWorkEvent, public IScnRender {
 public:
@@ -151,25 +152,19 @@ extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 // BdatGetPtrDirect: declared with char* return in code_80135FDC.hpp
 // BdatTouchStringCell: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" bool CUICfManager_hasInUseSlot();
-extern "C" void CUICfManager_queueQuestLogMenu(u32);
-extern "C" void CUICfManager_queueKizunagramMenu(u32);
 extern "C" void UIWin_CreateSysWinBuff(u32);
-extern "C" void CUICfManager_queueTutorialListMenu(u32);
 extern "C" bool hasQuestWindow();
 extern "C" bool QstCnt_HasInstance_6B94();
 extern "C" void writePanePos(void*, void*);
 extern "C" bool isGlobalCamFlagSet__Fi(int);
 extern "C" bool isKizunaTalkActive();
-extern "C" bool MenuTutorialIsCreated();
 extern "C" bool SkipTimer_IsActiveFlag();
 // Scn_QueryUnk80State: declared once in libs/monolib/src/scn/CScn_8049603C.hpp.
 
 extern "C" void* CfRes_getE14();
-extern "C" bool CtrlRemote_TouchBitByArg(int);
 extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
 extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
-extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv();
 
 // C-linkage helpers for thunks

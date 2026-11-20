@@ -2,11 +2,12 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+
 #include "kyoshin/plugin/ocBdat.hpp"
 
 // C-ABI helper imports used by CfObjectNpc (retail-unmangled symbols).
 extern "C" void* Bdat_GetTable_AA34();
-extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
 extern "C" void ColiSetMoveVec2(void* obj, int param, float a, float b);
 extern "C" u32 CfRes_getAllocHandle();

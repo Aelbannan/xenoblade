@@ -84,3 +84,7 @@ extern CMenuPTGauge* spPTGaugeInstance;
 typedef void (CMenuPTGauge::*CMenuPTGaugePtmf)(s32);
 extern CMenuPTGaugePtmf sPTGaugeActionDispatch[];
 extern CMenuPTGaugePtmf sPTGaugeValueDispatch[];
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+CMenuPTGauge* PTGaugeCreate(CProcess* parent, CProcess* ctorArg);
+void PTGaugeTickSP();

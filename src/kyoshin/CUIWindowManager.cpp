@@ -1,4 +1,7 @@
 #include "kyoshin/CUIWindowManager.hpp"
+#include "kyoshin/CQuestWindowApi.hpp"
+#include "kyoshin/CCol6SystemApi.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // --- CTTask<CUIWindowManager> out-of-line specializations ---
@@ -49,8 +52,6 @@ CTTask<CUIWindowManager::CTest>::~CTTask() {}
 // Batch 2026-07-14g: window-mgr-move owns Move() exclusively in this TU.
 
 extern "C" {
-void CtrlRemote_FetchSharedBufPtr();
-void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent*);
 cf::IFlagEvent* CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent*);
 extern void __ct__8CProcessFv(void* self);
 extern u32 __ptmf_null[3];
@@ -161,7 +162,7 @@ void CUIWindowManager::Init() {
 void CUIWindowManager::Term() {
     cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
     CtrlRemote_FetchSharedBufPtr();
-    CtrlRemote_ResetSlotArrayByIndex(flagEvent);
+    CtrlRemote_ResetSlotArrayByIndex((u32)flagEvent);
 
     unk9C->SetRemove();
     CUIWindowManager::spInstance = NULL;
@@ -433,7 +434,7 @@ extern "C" void* UIWin_ThunkCBB4(void* self) {
     // Retail tail-jumps into UIWin_OpenWindow and forwards whatever it leaves in
     // r3; route through a matching prototype so no extra r3 setup is emitted.
     typedef void* (*ThunkFn)(u32);
-    return ((ThunkFn)&UIWin_OpenWindow)((u32)((char*)self - 0x54));
+    return ((ThunkFn)&UIWin_OpenWindow)((u32)((char*)self - 0x54));  // DEBT(callcast): C symbol with 4 params/defaults; retail thunk tail-jumps with only r3 set
 }
 extern "C" void __dt__16CUIWindowManagerFv(CUIWindowManager*);
 extern "C" void UIWin_DtorAdaptor(CUIWindowManager* p) {
@@ -1149,7 +1150,7 @@ queue_found:
 // Window creator (void): create through SysWinLog_Create and queue on the
 // primary window list. Retail spills the result to the frame across the
 // inlined push_back scan.
-extern "C" IUIWindow* SysWinLog_Create(CProcess* pProc, CScn* pScene);
+CSysWinScenarioLog* SysWinLog_Create(CProcess* pProc, u8* param);
 int UIWin_CreateExtraWin() {
     volatile u32 savedRet;
     CUIWindowManager* inst = CUIWindowManager::spInstance;
@@ -1157,7 +1158,7 @@ int UIWin_CreateExtraWin() {
         return 0;
     }
     {
-        u32 tempRet = (u32)SysWinLog_Create((CProcess*)inst->unk9C, inst->unk58);
+        u32 tempRet = (u32)SysWinLog_Create((CProcess*)inst->unk9C, (u8*)inst->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return 0;
@@ -1788,7 +1789,8 @@ extern "C" IUIWindow* UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 
         return NULL;
     }
     {
-        u32 tempRet = (u32)GetItemMulti_CreateInstance((CProcess*)CUIWindowManager::spInstance->unk9C,
+        u32 tempRet = (u32)((GetItemMultiCreateInstanceFn)GetItemMulti_CreateInstance)(  // DEBT(callcast): mangled last param is Uc; retail forwards raw byte without rlwinm remask
+                                         (CProcess*)CUIWindowManager::spInstance->unk9C,
                                          CUIWindowManager::spInstance->unk58, a1, a2, a3,
                                          a4, a6, a8, flag);
         savedRet = tempRet;
@@ -1847,7 +1849,7 @@ extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2) {
     }
     {
         u32 tempRet = (u32)GetItemMulti_CreateSimple((CProcess*)CUIWindowManager::spInstance->unk9C,
-                                         CUIWindowManager::spInstance->unk58, arg1);
+                                         (u32)CUIWindowManager::spInstance->unk58, arg1);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
@@ -3081,7 +3083,7 @@ extern "C" u8* UIWin_BuildFlagBufCanShow(u32 target) {
     }
     return NULL;
 }
-void UIWin_BuildFlagBufRec(){}
+extern "C" void UIWin_BuildFlagBufRec(u32 a, u32 b, u32 c) {}
 // Flag-slot availability query: map the page id into the flag-memory index
 // (1000..1543 -> 544..1087) and report whether the slot is not locked to the
 // 0xFE/0xFF pair.

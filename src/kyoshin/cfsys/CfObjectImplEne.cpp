@@ -2,10 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cfsys/CfObjectImplEne.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CPartsChange.hpp"  // CPartsChange_GetSlotEntryAt (real owner)
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
@@ -281,7 +283,7 @@ int MoveImplEne_ScanTimelineCount(cf::CfObjectImplEneObj* self) {
                 (cf::CfImplEneBattleObj*)getEffOwner____FPv((void*)findObjectById((int)CPartsChange_GetSlotEntryAt(actor, i)));
             if (p == 0) continue;
             if (p == (cf::CfImplEneBattleObj*)self->field_18) continue;
-            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (void*)p) != 0) continue;
+            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)(void*)p) != 0) continue;
             if (p->field_3F34 == 0) continue;
             if (p->field_3F60 == 0) continue;
             registerBattleActor(cf::CBattleManager::getInstance(), p);
@@ -302,7 +304,7 @@ int MoveImplEne_SyncTargetArrow(cf::CfObjectImplEneObj* self, int flag) {
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
     if (battleObj->bhBC() != 0) goto fail;
     if (battleObj->field_3374 & 0x800) goto fail;
-    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (void*)battleObj) == 0) goto fail;
+    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)(void*)battleObj) == 0) goto fail;
 
     cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)MapFx_ResolveOwner(
         findObjectById((int)battleObj->mSub.sf4C()));

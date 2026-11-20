@@ -129,7 +129,6 @@ extern "C" {
     int                 IsThreadVoiceActive(CVS_THREAD* self);
     int                 TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     int                 RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
-    int                 HpVoice_CollectIdle(void* arr, int capacity, void* unused);
     void*               HpVoice_FindBySubState(int arg);
     CVoiceHandle*       CCharVoiceMan_DispatchById(int size, int align);
     void*               CCharVoiceMan_AllocVoiceArena(int size);

@@ -74,12 +74,12 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
     // matrix; both normals are normalized (or zeroed when degenerate).
     // Corner slots double as scale temps: corner[0] holds the X-axis scale
     // and corner[1] the third Y-axis scale, so only one scratch VEC3 exists.
-    normalX.x = lbl_eu_8066A648;
-    normalX.y = lbl_eu_8066A64C;
-    normalX.z = lbl_eu_8066A64C;
-    normalY.x = lbl_eu_8066A64C;
-    normalY.y = lbl_eu_8066A648;
-    normalY.z = lbl_eu_8066A64C;
+    normalX.x = 1.0f;
+    normalX.y = 0.0f;
+    normalX.z = 0.0f;
+    normalY.x = 0.0f;
+    normalY.y = 1.0f;
+    normalY.z = 0.0f;
     // Right-to-left member order mirrors retail's load-descending /
     // store-ascending 3-float copy shape.
     f32 tcX, tcY, tcZ;
@@ -94,14 +94,14 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
 
     f32 lenSqX = normalX.x * normalX.x + normalX.y * normalX.y +
                  normalX.z * normalX.z;
-    if (lenSqX == lbl_eu_8066A64C) {
+    if (lenSqX == 0.0f) {
         normalX = *(nw4r::math::VEC3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&normalX, (Vec*)&normalX);
     }
     f32 lenSqY = normalY.x * normalY.x + normalY.y * normalY.y +
                  normalY.z * normalY.z;
-    if (lenSqY == lbl_eu_8066A64C) {
+    if (lenSqY == 0.0f) {
         normalY = *(nw4r::math::VEC3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&normalY, (Vec*)&normalY);
@@ -129,11 +129,11 @@ u16* LOD::UnkClass_80468434::drawLodBillDual() {
             pos.y = r->field_0x4;
             pos.z = r->field_0x8;
         }
-        if (r->field_0x14 != lbl_eu_8066A64C) {
+        if (r->field_0x14 != 0.0f) {
             // Lean the billboard toward the matrix translation column.
             nw4r::math::VEC3Sub(&diff, &transCol, &pos);
             f32 lenSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-            if (lenSq == lbl_eu_8066A64C) {
+            if (lenSq == 0.0f) {
                 diff = *(nw4r::math::VEC3*)&ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)&diff, (Vec*)&diff);
@@ -371,8 +371,8 @@ u16* drawLodBillView48__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
-    f32 zero = lbl_eu_8066A64C;
-    f32 one = lbl_eu_8066A648;
+    f32 zero = 0.0f;
+    f32 one = 1.0f;
 
     // Direction normals + translation columns of the shared billboard
     // matrix table; normalize (or zero) the transformed X axis.
@@ -477,8 +477,8 @@ u16* drawLodBillNorm__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
-    f32 zero = lbl_eu_8066A64C;
-    f32 one = lbl_eu_8066A648;
+    f32 zero = 0.0f;
+    f32 one = 1.0f;
 
     // X/Y axis direction normals + translation columns of the shared
     // billboard matrix table.
@@ -605,8 +605,8 @@ u16* drawLodBillView1C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
-    f32 zero = lbl_eu_8066A64C;
-    f32 one = lbl_eu_8066A648;
+    f32 zero = 0.0f;
+    f32 one = 1.0f;
 
     // Single direction normal: transform {1,0,0} by the selected matrix and
     // normalize (or zero); keep the translation column.

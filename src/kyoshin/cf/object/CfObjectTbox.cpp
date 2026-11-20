@@ -6,6 +6,7 @@
 #include "kyoshin/cf/CfResTboxImpl.hpp"  // complete type for delete below
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/code_8027513C.hpp" // owner of tboxSyncChild
 
 namespace cf {}
 using namespace cf;
@@ -50,8 +51,7 @@ void cf::CfObjectTbox::initTbox() {
 }
 
 struct TboxFwd38View { u8 _pad[0x38]; void* impl38; };
-extern "C" void CfObjectTbox_ForwardToImpl(u8* self) {
-    extern void tboxSyncChild(void*);
+extern "C" void CfObjectTbox_ForwardToImpl(u8* self, s16 flag) {
     void* ptr = ((TboxFwd38View*)self)->impl38;
-    if (ptr != 0) tboxSyncChild(ptr);
+    if (ptr != 0) tboxSyncChild((UnkCode8027513C*)ptr, flag);
 }

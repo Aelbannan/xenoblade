@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CActParamAnimGame.hpp"
+#include "kyoshin/action/CActParamAnim.hpp"
+#include "monolib/scn/code_804BD8E8.hpp"
+#include "kyoshin/action/CActParamAnimForeign.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/math/math_triangular.h>
@@ -93,10 +96,8 @@ void mulAnimHeight(void*, f32);
 void clampAnimMove(void*);
 void steerAnimHead(void*);
 void setActiveBit(void*, int);
-void clrAnimHeight(void*);
 void stopAnimMove(void*);
 f32 getSecPerFrame__9CDeviceVIFv();
-bool setAnimSubPos(void*, const ml::CVec3*);
 }
 
 // Fall/air update: runs while airborne. Refreshes the fall scale pair,
@@ -184,11 +185,11 @@ extern "C" void applyFallMove(cf::CActParamAnimGame* selfV) {
             }
         } else {
             setActiveBit(self, 1);
-            clrAnimHeight(self);
+            clrAnimHeight((CActParamAnim*)self);
             pos.x += delta.x;
             pos.z += delta.z;
         }
-        setAnimSubPos(self, &pos);
+        setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&pos);
     }
     if ((self->field0C & 0x40) == 0) {
         steerAnimHead(self);
@@ -218,20 +219,15 @@ void mulAnimHeight(void*, f32);
 void clampAnimMove(void*);
 void steerAnimHead(void*);
 void setActiveBit(void*, int);
-void clrAnimHeight(void*);
 int isSpeedBelow(void*);
 void stopAnimMove(void*);
 f32 getAnimWalkKmh(void*);
 f32 getAnimMinSpeed();
-bool setAnimSubPos(void*, const ml::CVec3*);
-bool setTurnScale(void*, f32);
 u32 ScnRes_SegQueryForward_E348(void*, void*, u32, u32, u32);
 u32 ScnRes_EntryFlagThunk_E5A4(u32, u32);
 u32 ScnRes_GetEntryCount_E4AC(void);
 int ScnRes_Notify5Ptr_E470(void*, void*, void*, void*, void*, f32, f32);
-int ScnRes_FetchScaleRow_E53C(void*, u32);
 int ScnRes_TableByteThunk_E5A8(void*, u32, u32, u32);
-int ScnRes_IsEntryValued_E604(u32);
 void* ScnRes_GetEntryHead2_E520(int);
 void* ScnRes_GetEntryPtr_E50C(u32);
 u32 getTargetFramerate__9CDeviceVIFv(void);
@@ -240,8 +236,6 @@ int ColiResolveNodeMove(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
 int Coli_WalkReport(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, ml::CVec3*);
 void setAnimHeight(void*, f32);
 void ScnRes_XCrossCbThunk_E628(int);
-int ScnRes_GetCrossFlagA_E5B8(void);
-int ScnRes_GetCrossFlagB_E5C0(void);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 extern "C" void* getGimmickListHead__Q22cf13CfGameManagerFv(void);
 int getEventValue40__Q22cf13CfGameManagerFv(int);
@@ -249,12 +243,12 @@ void setEventManagerValue__Q22cf13CfGameManagerFv(int, int);
 void queueEventId__Q22cf13CfGameManagerFv(int);
 void ColiSetAxisBlockInverse(void*, const ml::CVec3*);
 void ColiResolveMoveDefault(void*, void*, void*, void*, void*);
-s8 lbl_eu_80663D64;
-s8 lbl_eu_80663D6C;
-s8 lbl_eu_80663D74;
-f32 lbl_eu_80663D60;
-f32 lbl_eu_80663D68;
-f32 lbl_eu_80663D70;
+s8 sAnimGameYawUpperInit; // name-guess: one-shot flag for the +0xC owner-yaw upper bound (runBattleMove)
+s8 sAnimGameYawLowerInit; // name-guess: one-shot flag for the +0xC owner-yaw lower bound (runBattleMove)
+s8 sAnimGameQuarterPiInit; // name-guess: one-shot flag for the pi/4 turn-scale bound (runBattleMove)
+f32 sAnimGameYawUpperRad; // name-guess: cached +60 deg * 0.017453292 used as owner-yaw upper bound (runBattleMove)
+f32 sAnimGameYawLowerRad; // name-guess: cached -60 deg * 0.017453292 used as owner-yaw lower bound (runBattleMove)
+f32 sAnimGameQuarterPiRad; // name-guess: cached ml::pi * 0.25 used as turn-scale bound (runBattleMove)
 const char lbl_eu_80526324[];
 const char lbl_eu_80526300[];
 ml::CVec3 zero__Q22ml5CVec3;
@@ -263,7 +257,6 @@ ml::CVec3 zero__Q22ml5CVec3;
 // ScnRes_VertRayForward_E398's retail ABI passes two FP args (f1, f2) after the four GPR
 // args; the header now owns the extern "C" decl (6 GPR+FP args), and the
 // already-matched runBattleMove 4-arg call site casts to a 4-arg fn type.
-typedef int (*BE398Fn)(void*, u32, u32, u32, f32, f32);
 typedef int (*BE398Fn4)(void*, u32, u32, u32);
 // ScnRes_ResolveGroundHeight (11-arg; header-owned extern "C") cast helpers.
 typedef u32 (*BD94CFn)(void*, void*, u32, u32, u32, u32, f32, f32, f32, f32, f32);
@@ -304,7 +297,7 @@ extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
             } else {
                 ml::CVec3 vec88 = self->vec3A8() + self->vec520();
                 self->field488 += self->field524;
-                setAnimSubPos(self, &vec88);
+                setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&vec88);
                 if (self->object3A0) scnImN4DynStop(self->object3A0, &self->vec520());
             }
         }
@@ -330,8 +323,8 @@ extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
                 } else {
                     ml::CVec3 vec = self->vec3A8() + self->vec520();
                     self->field488 += self->field524;
-                    setAnimSubPos(self, &vec);
-                    if (localF != 0.0f) setTurnScale(self, localF + self->field444);
+                    setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&vec);
+                    if (localF != 0.0f) setTurnScale((CActParamAnim*)self, localF + self->field444);
                     if (self->object3A0) scnImN4DynStop(self->object3A0, &self->vec520());
                 }
             }
@@ -343,7 +336,7 @@ extern "C" void trackGroundAt(cf::CActParamAnimGame* selfV) {
                 } else {
                     ml::CVec3 vec = self->vec3A8() + self->vec520();
                     self->field488 += self->field524;
-                    setAnimSubPos(self, &vec);
+                    setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&vec);
                     if (self->object3A0) scnImN4DynStop(self->object3A0, &self->vec520());
                 }
             }
@@ -364,7 +357,7 @@ shared:
         ml::CVec3 vec4C = self->vec3A8() + vecB;
         ml::CVec3 vec124 = vec4C;
         int needDefault = 1;
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec124, 0xa04, 0, 1, -30.0f, lbl_eu_80666040)) {
+        if (ScnRes_VertRayForward_E398((float*)&vec124, 0xa04, 0, 1, -30.0f, lbl_eu_80666040)) {
             int count = ScnRes_GetEntryCount_E4AC();
             f32 f30 = 0.3f + self->field3AC;
             int lowerIdx = -1;
@@ -414,7 +407,7 @@ shared:
                     if (ml::math::abs(self->field3AC - f28) <= 0.01f) {
                         if ((self->field4EC & 4) == 0) {
                             ml::CVec3 vec1fc;
-                            if (ScnRes_FetchScaleRow_E53C(&vec1fc, lowerIdx)) {
+                            if (ScnRes_FetchScaleRow_E53C((f32*)&vec1fc, (s32)lowerIdx)) {
                                 f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                                 vec1fc *= fr;
                                 *(u32*)&self->field3F0 = *(u32*)&vec1fc.x;
@@ -434,7 +427,7 @@ shared:
                 selIdx = upperIdx;
                 if ((self->field4EC & 4) == 0) {
                     ml::CVec3 vec1f0;
-                    if (ScnRes_FetchScaleRow_E53C(&vec1f0, upperIdx)) {
+                    if (ScnRes_FetchScaleRow_E53C((f32*)&vec1f0, (s32)upperIdx)) {
                         f32 fr = (f32)getTargetFramerate__9CDeviceVIFv();
                         vec1f0 *= fr;
                         *(u32*)&self->field3F0 = *(u32*)&vec1f0.x;
@@ -546,7 +539,7 @@ shared:
                     }
                 }
                 self->field4AC = local8;
-                if (ScnRes_IsEntryValued_E604(selIdx)) {
+                if (ScnRes_IsEntryValued_E604((int)selIdx)) {
                     self->field4EC |= 0x1000000;
                 }
                 if (ScnRes_EntryFlagThunk_E5A4(0x4000, selIdx)) {
@@ -743,13 +736,13 @@ bit1clear:
             ml::CVec3 v;
             ScnRes_CopyEntryMid(&v, 0);
             if (v.y <= 0.7071f) {
-                setTurnScale(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
+                setTurnScale((CActParamAnim*)self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
             }
         }
     }
 commit:
     if (self->field4E8 != 0) ColiSetAxisBlockInverse((u8*)self->field4E8 + 0x60C, &pos);
-    setAnimSubPos(self, &pos);
+    setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&pos);
     goto next;
 
 mode0:
@@ -762,12 +755,12 @@ mode0:
             ml::CVec3 v;
             ScnRes_CopyEntryMid(&v, 0);
             if (v.y <= 0.7071f) {
-                setTurnScale(self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
+                setTurnScale((CActParamAnim*)self, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-v.x, -v.z));
             }
         }
         if (self->field530 & 0x20) {
             pos.y += 0.1f * (self->field518 - pos.y);
-            setAnimSubPos(self, &pos);
+            setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&pos);
         }
         moved = 0;
         goto next;
@@ -780,7 +773,7 @@ mode0:
         } else {
             pos.x += 0.3f * dx;
             pos.z += 0.3f * dz;
-            setAnimSubPos(self, &pos);
+            setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&pos);
             moved = 0;
         }
     }
@@ -789,10 +782,10 @@ next:
         if (((cf::CBattleState*)self->owner08)->CObjectParam_getParamPtr() != 0 || isSpeedBelow(self) != 0) {
             self->field530 &= 0xFDFF;
         } else {
-            if (lbl_eu_80663D64 == 0) { lbl_eu_80663D60 = 60.0f * 0.017453292f; lbl_eu_80663D64 = 1; }
-            if (lbl_eu_80663D6C == 0) { lbl_eu_80663D68 = -60.0f * 0.017453292f; lbl_eu_80663D6C = 1; }
+            if (sAnimGameYawUpperInit == 0) { sAnimGameYawUpperRad = 60.0f * 0.017453292f; sAnimGameYawUpperInit = 1; }
+            if (sAnimGameYawLowerInit == 0) { sAnimGameYawLowerRad = -60.0f * 0.017453292f; sAnimGameYawLowerInit = 1; }
             f32 ang = *(f32*)((u8*)self->owner08 + 0xC);
-            if (!(ang <= lbl_eu_80663D60) || ang <= lbl_eu_80663D68) {
+            if (!(ang <= sAnimGameYawUpperRad) || ang <= sAnimGameYawLowerRad) {
                 self->field530 &= 0xFDFF;
             }
         }
@@ -906,14 +899,14 @@ next:
             }
         }
         f28v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(nx, nz);
-        setTurnScale(self, f28v);
+        setTurnScale((CActParamAnim*)self, f28v);
         dirM.x = SinFIdx__Q24nw4r4mathFf(40.743663f * f28v);
         dirM.z = CosFIdx__Q24nw4r4mathFf(40.743663f * f28v);
         if (accel.x == 0.0f && accel.y == 0.0f && accel.z == 0.0f) goto ground;
         {
             f32 f2v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(accel.z * dirM.x - accel.x * dirM.z, accel.y);
-            if (lbl_eu_80663D74 == 0) { lbl_eu_80663D70 = ml::pi * 0.25f; lbl_eu_80663D74 = 1; }
-            f32 p4 = lbl_eu_80663D70;
+            if (sAnimGameQuarterPiInit == 0) { sAnimGameQuarterPiRad = ml::pi * 0.25f; sAnimGameQuarterPiInit = 1; }
+            f32 p4 = sAnimGameQuarterPiRad;
             if (p4 >= f2v && f2v >= -p4) {
                 self->field52C = 1;
             } else if (ml::pi - p4 <= f2v || f2v <= -(ml::pi - p4)) {
@@ -962,10 +955,10 @@ ground:
                             accel.z = v2c0.z - target2.z;
                         }
                     }
-                    ((BD94CFn6)ScnRes_ResolveGroundHeight)(&target2, &accel, self->field4A8, 0, (self->field0C & 0x100) != 0, 0);
+                    ((BD94CFn6)ScnRes_ResolveGroundHeight)(&target2, &accel, self->field4A8, 0, (self->field0C & 0x100) != 0, 0);  // DEBT(callcast): C symbol; this TU's retail calls omit the trailing FP args of the canonical 11-arg decl
                 }
                 target2.y += 0.9f;
-                if (((BE398Fn4)ScnRes_VertRayForward_E398)(&target2, self->field4A8, 0, 0) != 0) {
+                if (((BE398Fn4)ScnRes_VertRayForward_E398)(&target2, self->field4A8, 0, 0) != 0) {  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
                     void* e = ScnRes_GetEntryPtr_E50C(0);
                     target2.y -= 1.4f - (*(f32*)((u8*)e + 0x4) - target2.y);
                 }
@@ -993,20 +986,20 @@ ground:
         }
     }
 after_hit:
-    setAnimSubPos(self, &pos);
+    setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&pos);
     if (moved == 0) goto exit;
     self->field530 &= 0xF7FF;
     self->field4EC |= 0x40000;
     // func_8004B9D4 is declared in kyoshin/action/CActParamAnim.hpp
     // (CActParamAnim* first arg); cast the view pointer at the call site.
     func_8004B9D4((CActParamAnim*)self, 6, 0, -1, 0);
-    setTurnScale(self, self->field444);
+    setTurnScale((CActParamAnim*)self, self->field444);
     {
         ml::CVec3 zero2 = ml::CVec3(0.0f, 0.0f, 0.0f);
         setAnimPosVec(self, &zero2);
         ml::CVec3 d = ml::CVec3(0.2f * SinFIdx__Q24nw4r4mathFf(40.743663f * self->field444), 0.0f, 0.2f * CosFIdx__Q24nw4r4mathFf(40.743663f * self->field444));
         pos = pos - d;
-        setAnimSubPos(self, &pos);
+        setAnimSubPos((CActParamAnim*)self, (const CActParamAnimData3*)&pos);
     }
 exit:
     self->field488 = self->field47C = self->field3AC;
@@ -1057,7 +1050,7 @@ void cf::CActParamAnimGame::dispatchState() {
             u16 flags = v->field530;
             if (flags & 0x30) {
                 v->field530 &= 0xF5CF;
-                setAnimSubPos(this, (ml::CVec3*)&v->field514);
+                setAnimSubPos((CActParamAnim*)this, (const CActParamAnimData3*)&v->field514);
             } else if (flags & 0x800) {
                 // Small lateral pull toward the facing direction. Build the
                 // position member-wise, clear the flag between the position
@@ -1070,7 +1063,7 @@ void cf::CActParamAnimGame::dispatchState() {
                 v->field530 &= 0xF7FF;
                 p.x -= 0.3f * nw4r::math::SinFIdx(v->field444 * 40.743664f);
                 p.z -= 0.3f * nw4r::math::CosFIdx(v->field444 * 40.743664f);
-                setAnimSubPos(this, &p);
+                setAnimSubPos((CActParamAnim*)this, (const CActParamAnimData3*)&p);
             }
             if (v->field4F8 > lbl_eu_80666040) {
                 // Airborne: pick the ground-following scale pair from the
@@ -1306,9 +1299,9 @@ bool cf::CActParamAnimGame::dashStartGate(u32 type) {
     return true;
 }
 
-bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
-    if (((cf::CActParamAnimGame*)self)->field4EC & 0x00040000) {
-        startAnimDual(self);
+bool cf::CActParamAnimGame::isAnimChainActive() {
+    if (this->field4EC & 0x00040000) {
+        startAnimDual(this);
         return true;
     }
     return false;
@@ -1377,9 +1370,8 @@ bool cf::CActParamAnimGame::tryLinkActive(u32 type) {
     return false;
 }
 
-// cf::CActParamAnimGame::isAlwaysFalse - trivial leaf, returns false
-// Retail symbol lacks Fv suffix; preserves exact mangling for FULL_MATCH
-bool isAlwaysFalse__Q22cf17CActParamAnimGame() { return false; }
+// Trivial leaf: always false.
+bool cf::CActParamAnimGame::isAnimBlendActive() { return false; }
 
 // Rotation-matrix facing update (state 2 only): builds a 3x4 matrix from the
 // cached yaw (sin/cos of 40.743663f * field_444), rotates the yaw basis
@@ -1530,9 +1522,8 @@ bool probeGroundAt(cf::CActParamAnimGame* selfV) {
     vecEC.x = -norm.x * lbl_eu_806619F8 + hit.x;
     vecEC.y = self->field3AC + 0.5f;
     vecEC.z = -norm.z * lbl_eu_806619F8 + hit.z;
-    setTurnScale(selfV,
-                  0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
-    if (((BE398Fn)ScnRes_VertRayForward_E398)(&vecEC, self->field4A8, 0, 0,
+    setTurnScale((CActParamAnim*)selfV, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
+    if (ScnRes_VertRayForward_E398((float*)&vecEC, self->field4A8, 0, 0,
                                  -2.0f, lbl_eu_8066AF20) != 0) {
         ScnRes_CopyEntryHead(&self->field514, 0);
     } else {
@@ -1570,7 +1561,7 @@ bool refineHitNorm(cf::CActParamAnimGame* selfV) {
     if (ScnRes_SegQueryForward_E348(&base, &destC, self->field4A8, 0, 0) != 0) {
         return false;
     }
-    if (((BE398Fn)ScnRes_VertRayForward_E398)(&destC, self->field4A8, 0, 0,
+    if (ScnRes_VertRayForward_E398((float*)&destC, self->field4A8, 0, 0,
                                  -2.0f, lbl_eu_8066AF20) != 0) {
         return false;
     }
@@ -1596,13 +1587,12 @@ bool refineHitNorm(cf::CActParamAnimGame* selfV) {
     ml::CVec3 norm;
     ScnRes_CopyEntryMid(&norm, 0);
     // Re-aim along the ground normal's yaw.
-    setTurnScale(selfV,
-                  0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
+    setTurnScale((CActParamAnim*)selfV, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     // Retail reuses the dead 'base' slot for the retarget point.
     base.x = -norm.x * lbl_eu_806619FC + land.x;
     base.y = self->field3AC + lbl_eu_80666044;
     base.z = -norm.z * lbl_eu_806619FC + land.z;
-    if (((BE398Fn)ScnRes_VertRayForward_E398)(&base, self->field4A8, 0, 0,
+    if (ScnRes_VertRayForward_E398((float*)&base, self->field4A8, 0, 0,
                                  -2.0f, lbl_eu_8066AF20) != 0) {
         ScnRes_CopyEntryHead(&self->field514, 0);
     } else {
@@ -1621,7 +1611,7 @@ extern "C" bool probeStandGnd(cf::CActParamAnimGame* selfV) {
     cf::CActParamAnimGame* self = (cf::CActParamAnimGame*)selfV;
     if (self->field52C == 1 || (u32)(self->field52C - 3) <= 1) {
         ml::CVec3 vec(self->field3A8, self->field3AC, self->field3B0);
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->field4A8, 0, 0, 2.5f, lbl_eu_80666040) == 0) {
+        if (ScnRes_VertRayForward_E398((float*)&vec, self->field4A8, 0, 0, 2.5f, lbl_eu_80666040) == 0) {
             vec.y += 2.5f;
             f32 sinv = nw4r::math::SinFIdx(40.743664f * self->field444);
             ml::CVec3 dir;
@@ -1633,13 +1623,13 @@ extern "C" bool probeStandGnd(cf::CActParamAnimGame* selfV) {
             dir.y = dir.y * lbl_eu_80666044 + vec.y;
             dir.z = dir.z * lbl_eu_80666044 + vec.z;
             if (ScnRes_SegQueryForward_E348(&vec, &dir, self->field4A8, 0, 0) == 0) {
-                if (((BE398Fn)ScnRes_VertRayForward_E398)(&dir, self->field4A8, 0, 0, -2.0f, lbl_eu_8066AF20) != 0) {
+                if (ScnRes_VertRayForward_E398((float*)&dir, self->field4A8, 0, 0, -2.0f, lbl_eu_8066AF20) != 0) {
                     ml::CVec3 g;
                     ScnRes_CopyEntryHead(&g, 0);
                     if (g.y - self->field3AC <= 2.0f) {
                         ml::CVec3 t(self->field3A8, self->field3AC, self->field3B0);
                         t.y = g.y - 2.0f;
-                        setAnimSubPos(selfV, &t);
+                        setAnimSubPos((CActParamAnim*)selfV, (const CActParamAnimData3*)&t);
                         self->field514 = g.x;
                         self->field518 = g.y;
                         self->field51C = g.z;
@@ -1667,7 +1657,7 @@ extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
         f32 cosv = nw4r::math::CosFIdx(self->field444 * 40.743664f);
         vec.z = vec.z + 0.1f * (-cosv);
         vec.y = vec.y + lbl_eu_80666044;
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->field4A8, 0, 0, -1.0f, lbl_eu_80666040) != 0) {
+        if (ScnRes_VertRayForward_E398((float*)&vec, self->field4A8, 0, 0, -1.0f, lbl_eu_80666040) != 0) {
             ml::CVec3 g;
             ScnRes_CopyEntryHead(&g, 0);
             if (self->field3AC - g.y <= 0.5f) {
@@ -1680,7 +1670,7 @@ extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
                 *(u32*)&vec.x = *(u32*)&self->field514;
                 *(u32*)&vec.z = *(u32*)&self->field51C;
                 vec.y = lbl_eu_80666044 + self->field3AC;
-                if (((BE398Fn)ScnRes_VertRayForward_E398)(&vec, self->field4A8, 0, 0, -1.5f, lbl_eu_80666040) != 0) {
+                if (ScnRes_VertRayForward_E398((float*)&vec, self->field4A8, 0, 0, -1.5f, lbl_eu_80666040) != 0) {
                     ScnRes_CopyEntryHead(&g, 0);
                     self->field518 = g.y;
                 }
@@ -1688,7 +1678,7 @@ extern "C" bool snapActorDown(cf::CActParamAnimGame* selfV) {
                 *(u32*)&vec.x = *(u32*)&self->vec3A8();
                 *(u32*)&vec.z = *(u32*)&self->field3B0;
                 vec.y = self->field518;
-                setAnimSubPos(selfV, &vec);
+                setAnimSubPos((CActParamAnim*)selfV, (const CActParamAnimData3*)&vec);
                 return true;
             }
         }
@@ -1793,8 +1783,7 @@ bool probeWallPair(cf::CActParamAnimGame* selfV) {
         return false;
     }
     // Re-aim along the ground normal's yaw.
-    setTurnScale(selfV,
-                  0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
+    setTurnScale((CActParamAnim*)selfV, 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(-norm.x, -norm.z));
     // Commit the refined ground point.
     self->field514 = 0.08f * norm.x + hit.x;
     self->field518 = self->field3AC;
@@ -1882,7 +1871,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         ml::CVec3 v80(0.0f, 2.5f, 0.0f);
         ml::CVec3 v20 = v98 + v80;
         ml::CVec3 va4 = v20;
-        if (((BE398Fn)ScnRes_VertRayForward_E398)(&va4, field4A8 & ~0x2000, 0, 1, -5.0f, lbl_eu_8066AF20)) {
+        if (ScnRes_VertRayForward_E398((float*)&va4, field4A8 & ~0x2000, 0, 1, -5.0f, lbl_eu_8066AF20)) {
             if (field4EC & 0x8) {
                 f32 f29v = -1e+06f;
                 int topIdx = -1;
@@ -1927,7 +1916,7 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         ml::CVec3 v104(*pos);
         ml::CVec3 vF8(moveV.x, 0.0f, moveV.z);
         v104.y = field510;
-        ((BD94CFn)ScnRes_ResolveGroundHeight)(&v104, &vF8, field4A8, 0, (field0C & 0x10000) != 0, 1,
+        ((BD94CFn)ScnRes_ResolveGroundHeight)(&v104, &vF8, field4A8, 0, (field0C & 0x10000) != 0, 1,  // DEBT(callcast): C symbol; this TU's retail calls omit the trailing FP args of the canonical 11-arg decl
                                  field494, field490, -1.0f, lbl_eu_8066AF20, field484);
         field510 = v104.y;
         v104.x -= pos->x;
@@ -2003,12 +1992,12 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         }
         if (field530 & 0x400) {
             ScnRes_XCrossCbThunk_E628(1);
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,  // DEBT(callcast): C symbol; this TU's retail calls omit the trailing FP args of the canonical 11-arg decl
                         (field0C & 0x10000) != 0, 1,
                         field494, field490, f29v, lbl_eu_8066AF20, field484)) != 0;
             ScnRes_XCrossCbThunk_E628(0);
         } else {
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,  // DEBT(callcast): C symbol; this TU's retail calls omit the trailing FP args of the canonical 11-arg decl
                         (field0C & 0x10000) != 0, 1,
                         field494, field490, f29v, lbl_eu_8066AF20, field484)) != 0;
         }
@@ -2068,12 +2057,12 @@ int cf::CActParamAnimGame::steerForObsts(ml::CVec3* pos, ml::CVec3* move) {
         ml::CVec3 vE0 = *pos;
         if (field530 & 0x400) {
             ScnRes_XCrossCbThunk_E628(1);
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,  // DEBT(callcast): C symbol; this TU's retail calls omit the trailing FP args of the canonical 11-arg decl
                         (field0C & 0x10000) != 0, 1,
                         field494, field490, f30v, lbl_eu_8066AF20, field484)) != 0;
             ScnRes_XCrossCbThunk_E628(0);
         } else {
-            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,
+            groundOk = (groundOk | ((BD94CFn)ScnRes_ResolveGroundHeight)(pos, &moveV, field4A8, 0,  // DEBT(callcast): C symbol; this TU's retail calls omit the trailing FP args of the canonical 11-arg decl
                         (field0C & 0x10000) != 0, 1,
                         field494, field490, f30v, lbl_eu_8066AF20, field484)) != 0;
         }

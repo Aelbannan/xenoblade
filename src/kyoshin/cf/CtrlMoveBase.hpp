@@ -98,3 +98,17 @@ extern f32 lbl_eu_806665B4;
 extern f32 lbl_eu_806665B8;
 extern f32 lbl_eu_806665BC;
 extern f32 lbl_eu_8066AF20;
+
+// Canonical declarations for the free helpers defined in CtrlMoveBase.cpp.
+// Forward declarations keep the caller TUs independent of the defining TU's
+// private view types.
+namespace ml { struct CVec3; }
+struct maskMoveChildFlags_obj;
+
+void moveBaseSyncVel(cf::CCtrlMoveBase* self);
+void maskMoveBaseFlags(void* self);
+void setMoveFacing(cf::CCtrlMoveBase* self, const ml::CVec3* vec, f32 speed);
+void maskMoveChildFlags(maskMoveChildFlags_obj* self);
+void writeMoveSlotFloat(void* obj, f32 value);
+int moveBaseScnCmd(cf::CCtrlMoveBase* self);
+int moveBaseQuery(cf::CCtrlMoveBase* self, ml::CVec3* out);

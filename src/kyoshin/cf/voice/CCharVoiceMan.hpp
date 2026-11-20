@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/cf/IFactoryEvent.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
@@ -137,35 +138,21 @@ namespace cf { class CVS_THREAD_CHAIN { public: static CVS_THREAD_CHAIN* create(
 class CVS_THREAD_SUDDEN { public: static CVS_THREAD_SUDDEN* create(); };
 extern "C" cf::CSoundNode* requestOrderConfigVoice();
 extern "C" cf::CSoundNode* FindThreadVoiceNode();
-extern "C" cf::CSoundNode* BmVoice_PlayA0(void* self);
 extern "C" cf::CSoundNode* chainVoiceLifetimeHandler(void* a, void* c);
 class CVS_THREAD_HP { public: static CVS_THREAD_HP* create(struct CVoiceHandle*, int); };
 class CVS_THREAD_EHP { public: static CVS_THREAD_EHP* create(struct CVoiceHandle*, struct CVoiceHandle*, s32); };
-extern "C" cf::CSoundNode* BmVoice_PlayReqB4(void* self, void* c);
-extern "C" cf::CSoundNode* BmVoice_Play12C(void* a, void* b, void* c);
 extern "C" cf::CSoundNode* chainVoiceActorTrigger(void* self, int flag);
-extern "C" cf::CSoundNode* BmVoice_Play0A(void* self);
 extern "C" int isBattleStatusActive(void* self, int id);
 extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" long __ptmf_test(void* ptmf);
 class CVS_THREAD;
-// PMF reference entry owned by CCharVoiceMan.cpp (retail .data
-// voiceNoopPmfEntry = {0, 0xFFFFFFFF, voiceNoop}); compared by address
-// via __ptmf_cmpr/__ptmf_test, never dispatched here. The .p member keeps
-// the PMF shape (cf. CfGimmickObjectPmfEntry); init goes through .w.
-typedef int (cf::CCharVoiceMan::*VoiceManPmf)();
-union VoicePmfEntry {
-    struct {
-        u32 w0, w1, w2;
-    } w;
-    VoiceManPmf p;
-};
-extern "C" VoicePmfEntry voiceNoopPmfEntry;
+// PMF reference entry owned by CCharVoiceMan.cpp; compared by address via
+// __ptmf_cmpr/__ptmf_test, never dispatched here.
+struct CCharVoice;
+typedef void (CCharVoice::*VoiceManPmf)();
+extern "C" VoiceManPmf voiceNoopPmfEntry;
 extern "C" void* MapFx_ResolveOwner(void* src);
-extern "C" void BmVoice_PlayGated(void* r3, int voiceId, int r5);
 extern "C" void unlinkFactoryById(void* self, cf::IFactoryEvent* event);
-extern "C" cf::CSoundNode* BmVoice_Play32(void* c);
-extern "C" int HpVoice_CollectIdle(void* arr, int capacity, int unused);
 class CVS_THREAD_VISION_BREAK { public: static CVS_THREAD_VISION_BREAK* create(struct CVoiceHandle*, int); };
 extern "C" int IsThreadVoiceActive(void* node);
 extern "C" cf::CSoundNode* selectEhpVoicePair(int newCount, int oldCount);
@@ -182,9 +169,11 @@ extern "C" void releaseThreadVoice(void* node);
 extern "C" u8  visionSharedStateFlags;
 extern "C" u16 gmGlobalFlag42;
 extern "C" cf::CSoundNode* playFaintVoice();
+extern "C" int CCharVoiceMan_EnqueueFaintVoice(void);
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 class CVS_THREAD_PARTY_GAGE { public: static CVS_THREAD_PARTY_GAGE* create(int, int); };
 class CVS_THREAD_FAINT { public: static CVS_THREAD_FAINT* create(struct CVoiceHandle*, struct CVoiceHandle*); };
 class CVS_THREAD_DOWN { public: static CVS_THREAD_DOWN* create(struct CVoiceHandle*, struct CVoiceHandle*); };
@@ -193,7 +182,5 @@ class CVS_THREAD_HAGE { public: static CVS_THREAD_HAGE* create(struct CVoiceHand
 extern "C" cf::CSoundNode* BattleGaugeTierVoiceGate();
 extern "C" cf::CSoundNode* PlayRandomVoice();
 extern "C" cf::CSoundNode* TutorialList_PlayTutorialVoice();
-extern "C" cf::CSoundNode* HpVoice_InitPlayerVoice();
 extern "C" cf::CSoundNode* ReviveVxInitVoice6E();
-extern "C" cf::CSoundNode* HpVoice_InitVoiceId();
 extern "C" cf::CSoundNode* PartyGage_InitVoiceId_8628(void* self);

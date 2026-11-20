@@ -1,4 +1,7 @@
 #pragma once
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
+
+class CScnItemCamera;
 
 #include <types.h>
 
@@ -328,11 +331,8 @@ extern "C" {
     // Frame/timing helpers used by evtThrottleTaskUpdates (global retail names).
     int CTaskGame_playTimeGate();
     int CTaskGame_getStreamPos();
-    int EvtSeqGetCounter104();
-    int EvtSeqCheckWalkGate(u8* gate);
     // Event-callback unregister helper (retail global taking the IFlagEvent
     // subobject; same signature as CUICfManager.cpp / CUIWindowManager.cpp).
-    void CtrlRemote_ResetSlotArrayByIndex(cf::IFlagEvent* flagEvent);
     // Embedded subobject dtors driven by ~CTaskREvent (retail CW names).
     void __dt__Q22cf8CREvtMemFv(cf::CREvtMem* self, int flag);
     void __dt__Q22cf7CInfoCfFv(cf::CInfoCf* self, int flag);
@@ -349,22 +349,19 @@ extern "C" {
     // dtor; retail C-ABI name).
     cf::IFlagEvent* CtrlRemote_ResetSlotArrayObj(cf::IFlagEvent* p);
     // Imports for evtStartSeqFromPath
-    void InfoCfRefreshSettings(cf::CInfoCf* self);
-    void InfoCfNoopVirt(cf::CInfoCf* p);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flag);
     // Spawns the realtime-event task for `name` under `parent` and returns
     // its gate object (same signature as CTaskREvtSequence.hpp).
     CEventMgrB0* EvtSeqCreateTask(CProcess* parent, const char* name);
-    void EvtSeqSetStateBit9();
     // Imports for evtOnFileEvent
     void EvtSeqXorSeqBuffer(u32 a, u32 b, u32 c);
-    void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+
     // Imports for evtUpdateBusyDimming
     s32 isMoveFuncActive__9CTaskGameFv();
     Class_80296898* getInstance__14Class_80296898Fv();
     bool TalkWin_IsActive_CD24();
     UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void ScnCamDepthUp();
+    void ScnCamDepthUp(CScnItemCamera* obj);
     // Imports for Move (CRI player state / frame timing / object lists)
     void CTaskGame_setStreamVol(float v);
     u32 isMoviePlaying__7CLibCriFv(CLibCri* self);
@@ -376,18 +373,14 @@ extern "C" {
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void activateLOD__8CTaskLODFv(s16 taskID);
     // Imports for cf::CTaskREvent::Move
-    int EvtSeqGetStateBit10();
-    void EvtSeqSetStateBit18(int arg);
-    int EvtSeqGetCounter100();
+    u32 EvtSeqGetCounter100();
     int CTaskGame_isStreamPaused();
     void Scn_SetStopFlag(u8* self, u32 flag);
-    u32 CBattleMan_FetchVisionObj(u32 battle);
     extern f32 lbl_eu_80667638;
     extern f32 lbl_eu_8066763C;
     extern f32 lbl_eu_80667640;
     void func_80086B5C__Q22cf13CfGameManagerFv(u32 a, u32 b);
     u8* getGlobalSda();
-    void Env_SetClock(u32 a, u32 b, u32 c, u32 d);
     CFileHandle* readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         u32 handle, const char* path, IWorkEvent* sink, int a, int b);
 }

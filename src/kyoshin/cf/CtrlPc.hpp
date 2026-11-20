@@ -242,7 +242,6 @@ struct CfObj90E4 {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void moveBaseScnCmd(void* self);
 extern "C" int moveBaseSway(cf::CCtrlMoveBase* self, ml::CVec3* out);
 extern "C" void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                               const ml::CVec3* src, int flag);
@@ -260,14 +259,11 @@ extern "C" void* getObjectIdAt(void* list, int index);
 class UnkClass_800821F8View;   // defined below (getCameraDataBlock result view)
 extern "C" void clrAnimEff(void* obj);
 extern "C" void aiRingPrepend(void* a, void* b);
-extern "C" void CChain_TryActivateChain(void* a, int b);
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
-extern "C" void* CMainMenu_GetInstancePtr(void);
-extern "C" int CBattleMan_ListHasValue(void* bm, void* obj);
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void cfCam_andcUnk04(void* obj, u32 mask);
 extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag);
-extern "C" CfObj90E4* Selector_GetInstance(void);
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; call sites cast
 // to the UnkClass_800821F8View vtable proxy defined below.)
@@ -381,7 +377,7 @@ struct ArtsSelStateViewPc {
     s8 byte2;   // 0x02
 };
 extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
-extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
+
 extern "C" void CfObjectMove_setAnimModeArgs(u8* owner, int a, int b, int c, int d); // u8* (not void*) to match CfObjectMove.hpp/CfObjectMoveApi.hpp - distinct extern "C" first-param types are an illegal overload when co-visible
 extern "C" void appendObjectById(CfEnumList* list, u32 val);
 // void* parameter form matches CAIAction.hpp's declaration (two extern "C"
@@ -742,6 +738,3 @@ extern "C" void __ct__800D10DC(void* obj, void* posObj, void* arg5);
 extern "C" void setPadConfigEntry(int index, u32 value);
 
 extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
-extern "C" int hasAnyActiveSlot(void);
-extern "C" int findActiveEntryID(int arg);
-extern "C" int getFirstFreeSlot(void);

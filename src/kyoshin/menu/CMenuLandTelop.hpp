@@ -1,7 +1,10 @@
 #pragma once
+extern "C" int Counter_TestBit(void* data, u32 flag);
+#include "kyoshin/code_8025FB10.hpp"
 
 #include "kyoshin/CSystemWindowApi.hpp"
 #include <types.h>
+#include "kyoshin/menu/MenuSndApi.hpp"
 
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -137,7 +140,7 @@ void cbRenderBefore__14CMenuLandTelopFv(void* _this);
 int QstCnt_HasInstance_6B94();
 // getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
 // their canonical headers via the include chain (u32 / void* from
-// kyoshin/cf/CBattleManagerApi.hpp).
+// kyoshin/cf/CBattleManager.hpp).
 int isLandTelopActive();
 int isLandTelopIdle();
 void requestLandTelop();
@@ -171,12 +174,9 @@ extern "C" {
 void* BpsStateSingletonToInt();                    // system menu open gate
 unsigned char CMenuGetItem_IsActive();
 unsigned char CMenuGetItem_GetField90();
-f32 MenuSnd_GetMasterVol_95EC();                      // scene BGM volume
-void CTaskGame_openStream(u32, const char*, u32, u32, u32, u32, f32);
+
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
                                                          nw4r::lyt::Layout*);
-int Counter_TestBit(void* data, u32 flag);
-u32 IdTable_SumValues(void* data, u32 flag);
 u32 PTNotice_IsActive_3C10();                      // party-change notice gate
 s32 MenuTutorialIsCreated();                      // party-change notice gate
 u32 GetItemMulti_IsActiveFlag();                      // block-condition gate

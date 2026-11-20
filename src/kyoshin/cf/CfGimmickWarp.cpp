@@ -2,15 +2,17 @@
 // Retail disassembly is used only as a reference for the data layout and
 // control flow; all implementation below is ordinary C/C++.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGimmickWarp.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 // CObjectState is the owner for *(player+4) slot 0x30 (defined inline to avoid
 // header overload conflicts; matches CfObjectPc.hpp's cf::CObjectState).
 
@@ -66,24 +68,12 @@ typedef cf::CfGimmickWarp WarpData;
 
 extern "C" {
 extern WarpColumns gGimmickBdatColumns;
-extern char lbl_eu_8050870C[];
-extern u8 lbl_eu_805359B0[];
+
 extern WarpStateProc lbl_eu_80535938[];
 extern WarpJumpProc jumptable_eu_80535830[];
 extern WarpVec3 gGimmickAnchorPoint;
 extern void* lbl_eu_80664134;
 extern u32 gGimmickPartyFlags;
-extern f32 lbl_eu_806683C8;
-extern f32 lbl_eu_806683CC;
-extern f32 lbl_eu_806683D0;
-extern f32 lbl_eu_806683D4;
-extern f32 lbl_eu_806683D8;
-extern f32 lbl_eu_806683DC;
-extern f32 lbl_eu_806683E0;
-extern f32 lbl_eu_806683E4;
-extern f32 lbl_eu_806683E8;
-extern f64 lbl_eu_806683F0;
-extern f64 lbl_eu_806683F8;
 extern f32 lbl_eu_8066AF20;
 
 void __ct__cf_CfGimmick(WarpData*);
@@ -105,10 +95,10 @@ void CfGimmick_SetGlobalFlagD0000();
 void CfGimmick_SetGlobalFlag40000();
 void CfGimmick_ApplyPartyMoveSpeed(f32);
 void CfGimmick_ApplyPartyMoveSpeedGated(u32 flags);
-void CfSoundMan_ApplySlotStop(int, u16, int);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void cfCam_syncFollowD();
-void setChildB59__(WarpObject*, int);
+// Retail symbol is unmangled; match the C-linkage canonical declaration
+extern "C" void setChildB59__(void*, s8);
 extern "C" int ScnRes_VertRayForward_E398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void ScnRes_CopyEntryHead(void* out, int a);
 u16 CfGimmick_PlaySoundAtPos(u16, const WarpVec3*);
@@ -164,9 +154,9 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
 
     u32 valueE4 = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c2c, rowId);
     self->unkE4 = (u16)valueE4;
-    u32 valueE7 = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C, rowId);
+    u32 valueE7 = getBdatStringColumnValue((void*)tableValue, "warpEF", rowId);
     self->flagE7 = (u8)valueE7;
-    u32 valueE8 = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C + 7, rowId);
+    u32 valueE8 = getBdatStringColumnValue((void*)tableValue, "warpSE", rowId);
     self->unkE8 = (u16)valueE8;
     u32 value6A = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c30, rowId);
 
@@ -184,9 +174,9 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     *changingColumn = *changingColumn + 1;
     u32 valueE6 = getBdatStringColumnValue((void*)tableValue, changingColumn, rowId);
     self->flagE6 = (u8)valueE6;
-    u32 valueEA = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C + 0x0e, rowId);
+    u32 valueEA = getBdatStringColumnValue((void*)tableValue, "A_roty", rowId);
     self->unkEA = (s16)valueEA;
-    u32 valueEC = getBdatStringColumnValue((void*)tableValue, lbl_eu_8050870C + 0x15, rowId);
+    u32 valueEC = getBdatStringColumnValue((void*)tableValue, "B_roty", rowId);
     self->unkEC = (s16)valueEC;
     u32 valueEE = getBdatStringColumnValue((void*)tableValue, gGimmickBdatColumns.c3c, rowId);
     self->unkEE = (u16)valueEE;
@@ -209,7 +199,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
 
     self->state = 0;
     self->phase = 0;
-    self->timer = lbl_eu_806683C8;
+    self->timer = 0.0f;
     self->object108 = 0;
     self->object104 = 0;
     self->object100 = 0;
@@ -235,11 +225,11 @@ extern "C" void CfGimmickWarp_UpdateState(WarpData* self) {
     if ((self->flags & 0x10) != 0) {
         if ((self->configFlags & 1) != 0) {
             CfGimmick_UpdateProximity(&self->object7cState, &self->position,
-                          self->resourceId, lbl_eu_806683CC, 0, 0);
+                          self->resourceId, 5.0f, 0, 0);
         }
         if ((self->flagE6 & 1) != 0) {
             CfGimmick_UpdateProximity(&self->object108, &self->destination,
-                          self->resourceId, lbl_eu_806683CC, 0, 0);
+                          self->resourceId, 5.0f, 0, 0);
         }
         self->flags &= ~0x10u;
     } else {
@@ -328,7 +318,7 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                         tail->setStateBitMask(0x200);
                     }
                     self->state = 4;
-                    self->timer = lbl_eu_806683C8;
+                    self->timer = 0.0f;
                     return;
                 }
             }
@@ -359,17 +349,17 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                 WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object7c = first;
                 if (first != 0) {
-                    bindPartnerO_(first, cf::CfGameManager::getPlayer(0), 0);
+                    bindPartnerO_((cf::CfObjectEff*)first, (u8*)cf::CfGameManager::getPlayer(0), (u8*)0);
                 }
                 WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object100 = second;
                 if (second != 0) {
-                    bindPartnerO_(second, cf::CfGameManager::getPlayer(1), 0);
+                    bindPartnerO_((cf::CfObjectEff*)second, (u8*)cf::CfGameManager::getPlayer(1), (u8*)0);
                 }
                 WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object104 = third;
                 if (third != 0) {
-                    bindPartnerO_(third, cf::CfGameManager::getPlayer(2), 0);
+                    bindPartnerO_((cf::CfObjectEff*)third, (u8*)cf::CfGameManager::getPlayer(2), (u8*)0);
                 }
 
                 if (self->object7c != 0) {
@@ -386,10 +376,10 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                 }
                 self->flags |= 1;
             }
-            CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
+            CfGimmick_ApplyPartyMoveSpeed(10.0f);
         } else {
             self->state = 2;
-            self->timer = lbl_eu_806683D4;
+            self->timer = 30.0f;
         }
     } else if ((self->flags & 0x80) != 0 &&
                CfGimmick_CheckTriggerGated(self->flagE6, &self->destination3, &self->destination,
@@ -408,7 +398,7 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                         tail->setStateBitMask(0x200);
                     }
                     self->state = 4;
-                    self->timer = lbl_eu_806683C8;
+                    self->timer = 0.0f;
                     return;
                 }
             }
@@ -440,17 +430,17 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                 WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object7c = first;
                 if (first != 0) {
-                    bindPartnerO_(first, cf::CfGameManager::getPlayer(0), 0);
+                    bindPartnerO_((cf::CfObjectEff*)first, (u8*)cf::CfGameManager::getPlayer(0), (u8*)0);
                 }
                 WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object100 = second;
                 if (second != 0) {
-                    bindPartnerO_(second, cf::CfGameManager::getPlayer(1), 0);
+                    bindPartnerO_((cf::CfObjectEff*)second, (u8*)cf::CfGameManager::getPlayer(1), (u8*)0);
                 }
                 WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object104 = third;
                 if (third != 0) {
-                    bindPartnerO_(third, cf::CfGameManager::getPlayer(2), 0);
+                    bindPartnerO_((cf::CfObjectEff*)third, (u8*)cf::CfGameManager::getPlayer(2), (u8*)0);
                 }
 
                 if (self->object7c != 0) {
@@ -467,10 +457,10 @@ extern "C" void CfGimmickWarp_CheckTrigger(WarpData* self) {
                 }
                 self->flags |= 1;
             }
-            CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
+            CfGimmick_ApplyPartyMoveSpeed(10.0f);
         } else {
             self->state = 2;
-            self->timer = lbl_eu_806683D4;
+            self->timer = 30.0f;
         }
     }
 }
@@ -484,7 +474,7 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
         valid = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->chainValue != 0;
     }
     if (valid) {
-        self->timer = lbl_eu_806683D4;
+        self->timer = 30.0f;
         return;
     }
 
@@ -505,7 +495,7 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
 
     CfGimmick_SetGlobalFlag40000();
     self->timer -= Scn_GetFrameDelta(gmScene);
-    if (self->timer > lbl_eu_806683C8) {
+    if (self->timer > 0.0f) {
         return;
     }
 
@@ -521,7 +511,7 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
                 tail->setStateBitMask(0x200);
             }
             self->state = 4;
-            self->timer = lbl_eu_806683C8;
+            self->timer = 0.0f;
             return;
         }
     }
@@ -552,17 +542,17 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
         WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
         self->object7c = first;
         if (first != 0) {
-            bindPartnerO_(first, cf::CfGameManager::getPlayer(0), 0);
+            bindPartnerO_((cf::CfObjectEff*)first, (u8*)cf::CfGameManager::getPlayer(0), (u8*)0);
         }
         WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
         self->object100 = second;
         if (second != 0) {
-            bindPartnerO_(second, cf::CfGameManager::getPlayer(1), 0);
+            bindPartnerO_((cf::CfObjectEff*)second, (u8*)cf::CfGameManager::getPlayer(1), (u8*)0);
         }
         WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
         self->object104 = third;
         if (third != 0) {
-            bindPartnerO_(third, cf::CfGameManager::getPlayer(2), 0);
+            bindPartnerO_((cf::CfObjectEff*)third, (u8*)cf::CfGameManager::getPlayer(2), (u8*)0);
         }
 
         if (self->object7c != 0) {
@@ -579,7 +569,7 @@ extern "C" void CfGimmickWarp_ArmWarp(WarpData* self) {
         }
         self->flags |= 1;
     }
-    CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
+    CfGimmick_ApplyPartyMoveSpeed(10.0f);
 }
 
 extern "C" void CfGimmickWarp_CheckLaunch(WarpData* self) {
@@ -635,8 +625,8 @@ extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
     }
 
     self->timer += Scn_GetFrameDelta(gmScene);
-    if (lbl_eu_806683D8 <= self->timer ||
-        (allReady && lbl_eu_806683D0 <= self->timer)) {
+    if (120.0f <= self->timer ||
+        (allReady && 10.0f <= self->timer)) {
         CfGimmick_SetGlobalFlagC0002();
         CfGimmick_SetGlobalFlagD0000();
         self->state = 5;
@@ -664,15 +654,15 @@ extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
 
             self->object7c = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
             if (self->object7c != 0) {
-                bindPartnerO_(self->object7c, cf::CfGameManager::getPlayer(0), 0);
+                bindPartnerO_((cf::CfObjectEff*)self->object7c, (u8*)cf::CfGameManager::getPlayer(0), (u8*)0);
             }
             self->object100 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
             if (self->object100 != 0) {
-                bindPartnerO_(self->object100, cf::CfGameManager::getPlayer(1), 0);
+                bindPartnerO_((cf::CfObjectEff*)self->object100, (u8*)cf::CfGameManager::getPlayer(1), (u8*)0);
             }
             self->object104 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
             if (self->object104 != 0) {
-                bindPartnerO_(self->object104, cf::CfGameManager::getPlayer(2), 0);
+                bindPartnerO_((cf::CfObjectEff*)self->object104, (u8*)cf::CfGameManager::getPlayer(2), (u8*)0);
             }
 
             if (self->object7c != 0) {
@@ -689,7 +679,7 @@ extern "C" void CfGimmickWarp_GatherParty(WarpData* self) {
             }
             self->flags |= 1;
         }
-        CfGimmick_ApplyPartyMoveSpeed(lbl_eu_806683D0);
+        CfGimmick_ApplyPartyMoveSpeed(10.0f);
     } else {
         CfGimmick_SetGlobalFlagC0002();
         CfGimmick_SetGlobalFlagD0000();
@@ -709,7 +699,7 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
     CfGimmick_SetGlobalFlagD0000();
     if ((self->flags & 2) != 0) {
         self->timer -= Scn_GetFrameDelta(gmScene);
-        if (self->timer > lbl_eu_806683C8) {
+        if (self->timer > 0.0f) {
             return;
         }
         self->flags &= ~2u;
@@ -727,15 +717,15 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
         }
 
         WarpVec3 adjusted;
-        adjusted.x = lbl_eu_806683C8;
-        adjusted.y = lbl_eu_806683DC;
-        adjusted.z = lbl_eu_806683C8;
+        adjusted.x = 0.0f;
+        adjusted.y = 2.0f;
+        adjusted.z = 0.0f;
         WarpVec3 sum;
         sum.x = centre.x + adjusted.x;
         sum.y = centre.y + adjusted.y;
         sum.z = centre.z + adjusted.z;
         WarpVec3 effectPos = sum;
-        if (ScnRes_VertRayForward_E398(&effectPos, 0, 0, 0, lbl_eu_806683E0, lbl_eu_8066AF20)) {
+        if (ScnRes_VertRayForward_E398(&effectPos, 0, 0, 0, -4.0f, lbl_eu_8066AF20)) {
             ScnRes_CopyEntryHead(&centre, 0);
         }
 
@@ -752,7 +742,7 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
             WarpVec3 base = centre;
             WarpVec3 out68;
             InitRecord(&out68, &base, distance, 6, i,
-                          lbl_eu_806683DC, lbl_eu_806683C8);
+                          2.0f, 0.0f);
             WarpVec3 out4c;
             if (CPartsChange_ProcessPartyInfo(&out68, &out4c) != 0) {
                 player->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(&out4c));
@@ -769,15 +759,15 @@ extern "C" void CfGimmickWarp_DoWarp(WarpData* self) {
             manager->checkStateFlags(0);
         }
         self->state = 7;
-        self->timer = lbl_eu_806683D0;
+        self->timer = 10.0f;
     } else {
-        self->timer = lbl_eu_806683E4;
+        self->timer = 20.0f;
         self->flags |= 2;
         WarpVec4 area;
-        area.x = lbl_eu_806683C8;
-        area.y = lbl_eu_806683C8;
-        area.z = lbl_eu_806683C8;
-        area.w = lbl_eu_806683E8;
+        area.x = 0.0f;
+        area.y = 0.0f;
+        area.z = 0.0f;
+        area.w = 1.0f;
         func_8008566C__Q22cf13CfGameManagerFv(0x14, &area, 1);
     }
 }
@@ -788,11 +778,11 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
 
     u32 flags = self->flags;
     if ((flags & 2) == 0) {
-        f32 limit = lbl_eu_806683C8;
+        f32 limit = 0.0f;
         self->timer -= Scn_GetFrameDelta(gmScene);
         if (self->timer <= limit) {
             self->flags = flags | 2;
-            self->timer = lbl_eu_806683F8;
+            self->timer = 35.0f;
             WarpVec4 area;
             area.x = limit;
             area.y = limit;
@@ -806,8 +796,8 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
     f32 t = self->timer - Scn_GetFrameDelta(gmScene);
     self->timer = t;
     if ((flags & 4) == 0) {
-        if (t > lbl_eu_806683CC) {
-            if (t > lbl_eu_806683D4 || (flags & 8) != 0) {
+        if (t > 5.0f) {
+            if (t > 30.0f || (flags & 8) != 0) {
             } else {
                 if (self->flagE7 != 0) {
                     clearObject(self->object7c);
@@ -821,15 +811,15 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
 
                     self->object7c = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                     if (self->object7c != 0) {
-                        bindPartnerO_(self->object7c, cf::CfGameManager::getPlayer(0), 0);
+                        bindPartnerO_((cf::CfObjectEff*)self->object7c, (u8*)cf::CfGameManager::getPlayer(0), (u8*)0);
                     }
                     self->object100 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                     if (self->object100 != 0) {
-                        bindPartnerO_(self->object100, cf::CfGameManager::getPlayer(1), 0);
+                        bindPartnerO_((cf::CfObjectEff*)self->object100, (u8*)cf::CfGameManager::getPlayer(1), (u8*)0);
                     }
                     self->object104 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                     if (self->object104 != 0) {
-                        bindPartnerO_(self->object104, cf::CfGameManager::getPlayer(2), 0);
+                        bindPartnerO_((cf::CfObjectEff*)self->object104, (u8*)cf::CfGameManager::getPlayer(2), (u8*)0);
                     }
 
                     if (self->object7c != 0) {
@@ -856,15 +846,15 @@ extern "C" void CfGimmickWarp_FinishWarp(WarpData* self) {
         for (int i = 0; i < 3; ++i) {
             cf::CfObject* player = reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getPlayer(i));
             if (player != 0) {
-                player->CfObject_syncModelRate(lbl_eu_806683E8);
+                player->CfObject_syncModelRate(1.0f);
             }
         }
     }
 
-    if (self->timer > lbl_eu_806683C8) {
+    if (self->timer > 0.0f) {
         return;
     }
-    self->timer = lbl_eu_806683C8;
+    self->timer = 0.0f;
     if ((self->flags & 1) != 0) {
         return;
     }

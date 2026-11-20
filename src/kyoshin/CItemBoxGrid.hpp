@@ -1,4 +1,6 @@
 #pragma once
+extern "C" int Counter_TestBit(void*, u32);
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
@@ -385,60 +387,50 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 GridSubMenu_GetOptionCount(void*);  // not yet decompiled (CItemBoxGridSubMenu TU stub)
-extern "C" int isPresentSettled(void*);
-// CfGameManager.hpp (included transitively) now declares the unified
+
 // pointer-arg form, matching every call site here directly - no cast needed.
 extern "C" void CItemData_initFromFamily(void*, u32);
 extern "C" void GridSubMenu_GetCursorPos(void*, void*);
-extern "C" void getPresentPaneWorldPos(void*, void*);
-extern "C" u32 isPresentActive(void*);
-extern "C" u16 CItemBlock_getFlag120EC(int);
-extern "C" int getLanguage__9CDeviceSCFv();
+
 extern "C" int* CtrlObjectParam_GetSlotTableBase(void);
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 extern "C" void* CItemBlock_getPtr20E8(void);
 extern "C" void CItemBlock_setCount(int);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void dispatchCounterStepBack(void*);
-extern "C" int isPresentBusy(void*);
-extern "C" void stepPresentCounter(void*);
-extern "C" void togglePresentPath(void*);
-extern "C" u32 getPresentPath(void*);
-extern "C" void advancePresentState(void*);
 extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
+
+
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
-extern "C" void CfObjectPc_setupFrame(void*, u32);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
 extern "C" void func_80043E88(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot5(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot0(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot1(void*, int);
 extern "C" void CtrlObjectParam_SetEquipSlot4(void*, int);
-extern "C" int Counter_TestBit(void*, u32);
-extern "C" u32 IdTable_SumValues(void*, u32);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" char* getErrMesText16(void);
 extern "C" char* getErrMesText15(void);
 extern "C" int IsSkillItem(void*);
+extern "C" u16 CItemBlock_getFlag120EC(int);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" char* CopyEntry9Bytes(char*, const char*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32);
 extern "C" void deallocate__Q23mtl10MemManagerFPv(void*);
-extern "C" u32 MakeCrystalIsCreated();
 extern "C" int KyoshinHeap_GetField44();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void drawPresentWin(void*, nw4r::lyt::DrawInfo*);
-extern "C" void updatePresentWin(void*);
+
 extern "C" void termPresentWin(void*);
 extern "C" void CopyGridEntry9(void*, void*);
 extern "C" u32 CItem_slotCnt(u8);

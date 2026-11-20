@@ -7,7 +7,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/CPartyStateWinImports.hpp"
 #include "monolib/scn/CScn.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"

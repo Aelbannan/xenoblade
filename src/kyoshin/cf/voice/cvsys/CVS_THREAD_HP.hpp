@@ -116,3 +116,5 @@ public:
 
     static CVS_THREAD_HP* create(CVoiceHandle* handle, int arg);
 };
+
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"

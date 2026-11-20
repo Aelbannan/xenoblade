@@ -1,13 +1,20 @@
 // The header declares the 2-arg (delete-flag) form of the UnkClass_8018EF3C
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 // ctor for teardownGameManager; init() calls the 1-arg placement form. Rename the
 // 2-arg copy away while including the header, then declare the 1-arg form.
 #define __ct__Q22cf17UnkClass_8018EF3CFv ct_UnkClass_8018EF3C_2arg
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
+#include "kyoshin/menu/MenuSndApi.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #undef __ct__Q22cf17UnkClass_8018EF3CFv
 #include "kyoshin/cf/CfPadData.hpp"
 #include "kyoshin/cf/CfPadTask.hpp"
@@ -42,17 +49,12 @@
 
 // slot-0x40 virtual CtrlPlayerSub3ED4::vf14, int(int), same 0x400-probe
 // idiom as CtrlPc.cpp's mask-3 resets). Include-only: owned elsewhere.
-// (Func renames: this TU's cfCam_setClear04 takes s32 flag and Selector_GetInstance
-// returns void*; the header's int/CfObj90E4* copies are renamed away -
-// same MWCC-10505 pattern as above.)
 #define cfCam_setClear04 ctrlPcFunc_8006BBF4
-#define Selector_GetInstance ctrlPcFunc_800FE68C
 #define appendObjectById ctrlPcFunc_800F6D50
 #define GetZealObjPtr ctrlPcFunc_8017FD44
 #define GetZealResult ctrlPcFunc_8017FD4C
 #define getArtsParamRC2 ctrlPcGetArtsParamRC2
 #include "kyoshin/cf/CtrlPc.hpp"
-#undef Selector_GetInstance
 #undef cfCam_setClear04
 #undef appendObjectById
 #undef GetZealObjPtr
@@ -64,11 +66,9 @@
 #define CItem_getNameIdFromFam cbattleFunc_80158018
 #define isGlobalCamFlagSet__Fi cbattleIsGlobalCamFlagSet
 #define CtrlObjectParam_FindSlotTypeIndex cbattleFunc_8009E344
-#define Counter_TestBit cbattleFunc_8026178C
 #define lookupEffectForResource__Q22cf13CfGameManagerFv cbattleLookupEffectForResource
 #define __dt__Q22cf16CfObjectImplMoveFv cbattle_dt_CfObjectImplMove
 #define getPlayer__Q22cf13CfGameManagerFi cbattleGetPlayer
-#define IdTable_SumValues cbattleFunc_8025FB10
 #define lookupWorkAtAddr cbattleFunc_800B8920
 #define syncBattleState__Q22cf13CfGameManagerFv cbattleSyncBattleState
 #define getReslistBE8 cbattleFunc_800B6C34
@@ -76,12 +76,10 @@
 #define createBattleActor__Q22cf13CfGameManagerFv cbattleCreateBattleActor
 #include "kyoshin/cf/CBattleManager.hpp"
 #undef createBattleActor__Q22cf13CfGameManagerFv
-#undef Counter_TestBit
 #undef CtrlObjectParam_FindSlotTypeIndex
 #undef lookupEffectForResource__Q22cf13CfGameManagerFv
 #undef __dt__Q22cf16CfObjectImplMoveFv
 #undef getPlayer__Q22cf13CfGameManagerFi
-#undef IdTable_SumValues
 #undef lookupWorkAtAddr
 #undef syncBattleState__Q22cf13CfGameManagerFv
 #undef getReslistBE8
@@ -96,6 +94,10 @@
 #include "monolib/util/FixStr.hpp"
 #include <string.h>
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "kyoshin/cf/CfNandManager.hpp"  // gCfNandRestoredEventFlag (owner)
+#include "kyoshin/code_800AA008.hpp"  // Tok_ParseFile (owner)
+#include "kyoshin/cf/CTaskEnvironment.hpp"  // Scn_SetPalFixFlag (owner)
 
 extern "C" u32 getEffectFlagFromMgr(void* mgr);
 extern "C" void setGimmick(void* obj, bool enable);
@@ -112,7 +114,14 @@ struct CTaskGameCamView {
     float field_C;
 };
 
+// No owner header yet for these unmangled helpers.
+extern void clearReloadGlobals();
+extern "C" s32 MiniMapHasGlobalData();
 extern "C" void gmFileObject(void* object);
+extern "C" void MenuSnd_RestartBGM_88D34(const char* name, int flag, float f1, float f2);
+extern "C" void Scn_SetPalFixFlag(u8* scene, unsigned char value);
+
+
 // TU-local decl: loadBdatGroupData is a tail-call thunk (addi r3,r3,0x1c; b CtrlObjectParam_ResolveEquipItem)
 // that passes r4 through, so the 1-arg form is intentional here. The retail
 // 2-arg form (data + index) is declared in pluginCfs.cpp.
@@ -129,12 +138,9 @@ extern "C" void* __ct__80186578(void* self);
 extern "C" void* __ct__801BF76C(void* self);
 extern "C" void MenuSnd_ClearSlot_88584(void* self);
 extern "C" void BattleWork_InitStateWork(void* self);
-extern "C" void CfT_IsTvPal();
-extern "C" void func_80069EA8();
-extern "C" void clearReloadGlobals();
+
 extern "C" void cfCam_seedFollowD();
 extern "C" float getReloadDelay();
-extern "C" void MenuSnd_StopSlot0Store_9390(const void* text);
 extern "C" void CfT_PlayClockAccumulate(u32 first, u32 second, u32 third);
 extern "C" void dispatchLODArgs__8CTaskLODFv(u16 first, u16 second, u16 third);
 extern "C" void CfScript_UpdateMgr();
@@ -143,25 +149,19 @@ extern "C" void CfScript_ClearReq1();
 extern "C" void CfScript_ClearReq2();
 void CfScript_InitMgr();
 void CfScript_InitPath(int);
-extern "C" void CfSoundMan_UpdateAllRecords();
 extern "C" void CmText_DispatchCallbacks();
 extern "C" void clrAnimGate();
 extern "C" void CamEvtCheckAimAngles(CfCamEventManager* manager);
 extern "C" void MenuSnd_CanPlayGate_9450();
 extern "C" void MenuSnd_SilenceByName_8986C(int value, float first);
-extern "C" void MenuSnd_StopSlot0Clear_9318(int value, float first);
-extern "C" void CfSoundMan_StopMaskedSlots(u32 first, u32 second);
 extern "C" void UIWin_SweepQueue(u32 value);
 extern "C" void CfScript_SleepReq2();
 extern "C" void evtUpdateSequenceKick();
-extern "C" void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2);
-extern "C" void Scn_SetPalFixFlag(void* scene, u32 value);
-// 1-arg placement ctor form used by UnkClass_8007DAE0::init.
+
 extern "C" void* __ct__Q22cf17UnkClass_8018EF3CFv(void* self);
 extern "C" void func_8007DCB8__Q22cf13CfGameManagerFv();
 
 // --- imports for func_80086B5C ---
-extern "C" unsigned long CfT_DispatchFrameCounts();
 extern "C" void* MapFx_ResolveOwner(void* source);
 // Retail symbol is Fv but callers pass three values (see setPad precedent).
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
@@ -196,15 +196,12 @@ extern "C" u32 CfRes_packFourFields(u32 first, u32 second, u32 third, u32 fourth
 extern "C" u32 CfObjectMove_lookupBdatCol7(u32 id, u32 flag);
 extern "C" u32 CfObjectMove_lookupBdatCol11(u32 id, u32 flag);
 extern "C" void CamEvtClearSlotBytes(void* manager);
-extern "C" void CamEvtSearchStateVal(s32 value);
 extern "C" void func_801AAD08();
 extern u8 gSoundSystemInitFlag;
 extern "C" void cfCam_setClear04(void* manager, u32 mask, s32 flag);
-extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" void loadLayoutScales();
 extern "C" void setTrackedTarget(float value, u32 a, u32 b);
 extern "C" void cfCam_copyBlock16(void* dst, void* src);
-extern "C" void CfSoundMan_StopAllModes(s32 value);
 extern "C" void disableFlag20__Q22cf13CfGameManagerFv();
 extern "C" void cfCam_syncFollowD();
 extern "C" void CfScript_MakeName(char* dest, const char* src1, const char* src2,
@@ -230,7 +227,7 @@ cf::CfGameManager::~CfGameManager() {
     gmFileObject(unk90);
     unk90 = nullptr;
     if (unkA8 != nullptr) {
-        BattleWork_InitCtrlWork(unkA8);
+        BattleWork_InitCtrlWork((CtrlWork*)unkA8);
     }
     if (unkA0 != 0) {
         unkA0->releaseHandle();
@@ -335,7 +332,6 @@ cf::CfObjectMove** getPlayerSlotPtr__Q22cf13CfGameManagerFv(cf::CfObjectMove** s
 void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
 
 void* __register_global_object(void* object, void* destructor, void* registration);
-void MenuSnd_StopSlot1_9424(float value);
 }
 
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
@@ -344,7 +340,6 @@ extern const float lbl_eu_80666548;
 
 // func_80085978 imports.
 // MiniMapResetLayoutAnims: declared (s32()) by CfGameManager.hpp - local void form conflicts (10505)
-extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 // bindPadSubobjects: declared (s32) by CfGameManager.hpp - local u32 form conflicts (10197)
 extern "C" void UIBattleMarkFlags82();
 extern "C" void UIBattleRemoveAll(u32);
@@ -355,9 +350,7 @@ extern "C" void updateHelpManager(cf::CHelpManager* object);
 extern "C" void CCharVoiceMan_Tick();
 extern "C" void refreshNpcRowFlags();
 extern "C" void CfT_PlayClockUpdate();
-extern "C" void CfT_PlayClockAdvanceFrame();
 extern "C" void CfT_PlayClockAdvanceInt();
-extern "C" bool CfT_FrameInWindow();
 extern "C" void bdatTotalRows();
 extern "C" void bdatSetResRow(void*, void*);
 // CtrlObjectParam helpers: retail calls them by flat name (cf. CfObjectPc.cpp
@@ -683,7 +676,7 @@ void cf::CfGameManager::teardownGameManager() {
     gmFileObject(manager->unk90);
     manager->unk90 = nullptr;
     if (manager->unkA8 != nullptr) {
-        BattleWork_InitCtrlWork(manager->unkA8);
+        BattleWork_InitCtrlWork((CtrlWork*)manager->unkA8);
     }
     if (manager->unkA0 != 0) {
         manager->unkA0->releaseHandle();
@@ -734,7 +727,7 @@ void cf::CfGameManager::teardownGameManager() {
     CfGameManagerSlotArray* slots = reinterpret_cast<CfGameManagerSlotArray*>(manager);
     for (u32 i = 0; i < 3; ++i) {
         if (slots->slots[i] != nullptr) {
-            CfTFile_CancelResetFull(slots->slots[i]);
+            CfTFile_CancelResetFull((CfTFile*)slots->slots[i]);
             if (slots->slots[i] != nullptr) {
                 delete reinterpret_cast<CfDtor08*>(slots->slots[i]);
                 slots->slots[i] = nullptr;
@@ -776,12 +769,13 @@ extern "C" void getVoiceSourcePtr()
 }
 
 extern "C" void resetVoiceSystem(void){
-    nextReslistB48();
+    typedef cf::CfObject* (*NextReslistB48NoArg)();  // DEBT(callcast): retail calls nextReslistB48 with no r3 setup but owner decl takes an arg (LOSTFIX proof)
+    ((NextReslistB48NoArg)nextReslistB48)();
 }
 
 extern "C" VoiceSource* getVoiceSourceForSystem(VoiceSource* source)
 {
-    return insertReslistB68(source);
+    return (VoiceSource*)insertReslistB68((cf::CfObject*)source);
 }
 // cf::CfGameManager::func_80086B5C - battle-start pad/object reset. Refreshes
 // the party-slot pair, optionally (flag != 0) rotates the slot index into the
@@ -1037,7 +1031,7 @@ extern "C" void* bdatFetchCache(void* self);
 
 void cf::CfGameManager::syncFieldAndBattle() {
     bdatFetchCache(this);
-    setMgrFixStrName(this);
+    setMgrFixStrName((const char*)this);
 }
 
 void cf::CfGameManager::cleanupMapEffects() {
@@ -1069,15 +1063,13 @@ void CmText_InitCallbackTable();
 void CmText_RegisterCallback(void (*fn)(), int);
 // (memberized: KizunagramSetActiveSlot -> CPcKizunagramBig::SetActiveSlot; declaration moved into class CPcKizunagramBig)
 extern "C" void MiniMapResetLayoutAnims();
-void CollObjSetupRotBoxState4Timed(void* self, void* pos, const void* ext, float radius);
-extern "C" void CollObjPackResIdWords(void* self, unsigned long a, unsigned long b);
 
 void* cf::CfGameManager::func_8007C8C8() {
     void* ret = (void*)CfCmd_PumpRingBuf(this->unkAC, &gmCommandBufferState);
     if (gmSubManager60 != 0) {
         MenuSnd_RampMasterVol_889D0(gmSubManager60);
     }
-    // updateBattleManager takes cf::CBattleManager* (decl on CBattleManagerApi.hpp);
+    // updateBattleManager takes cf::CBattleManager* (decl on CBattleManager.hpp);
     // explicit cast - the singleton getter returns void* and MWCC rejects
     // the implicit void* conversion.
     updateBattleManager((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv());
@@ -1323,7 +1315,6 @@ void* cf::CfGameManager::getResetDataPtr() { return lbl_eu_8065FC18; }
 // cf::CfGameManager::func_8007D84C - battle-exit / scene reset. Tears down
 // the mode subsystems, wipes the manager's per-mode state block, clears the
 // presentation globals and the E24/E28 flag masks.
-extern "C" void CfSoundMan_ClearFxEffect(u32 first, u32 second);
 extern "C" void gmCallInit1954();
 extern "C" void resetBattleState__Q22cf14CBattleManagerFv(void* battle);
 extern "C" void CfRes_updateEntry(u32 a, u32 b, u32 c, u32 d);
@@ -1358,7 +1349,7 @@ void cf::CfGameManager::func_8007D84C() {
     gmCommandCounter = 0;
     gmBaseTimeScale = zeroF;
     if (unkA8 != nullptr) {
-        BattleWork_InitCtrlWork(unkA8);
+        BattleWork_InitCtrlWork((CtrlWork*)unkA8);
     }
     if (unkA0 != 0) {
         unkA0->releaseHandle();
@@ -1418,8 +1409,8 @@ extern "C" Unk80EE4Data* createEffectForResource__Q22cf13CfGameManagerFv(
 
 void cf::CfGameManager::resetFieldState() { gmNotifyCA0(this); }
 
-extern "C" void Counter_TestBit(void* object);
-void cf::CfGameManager::cleanupPlayerEffectList() { Counter_TestBit(this); }
+typedef int (*CounterTestBitNoArg)(void*);  // DEBT(callcast): retail passes only r3 to Counter_TestBit; canonical arity differs (LOSTFIX proof)
+void cf::CfGameManager::cleanupPlayerEffectList() { ((CounterTestBitNoArg)Counter_TestBit)(this); }
 
 void cf::CfGameManager::getGimmickListHead() { getListB28__Fv(); }
 
@@ -1430,17 +1421,15 @@ void cf::CfGameManager::getGimmickList() { getReslistB48(); }
 extern "C" void* getReslistB48();
 void cf::CfGameManager::spawnGimmickEntity() { getReslistB88(); }
 
-extern "C" void getReslistBE8();
 void cf::CfGameManager::clearGimmickFlags() { getReslistBE8(); }
 
-extern "C" bool lookupWorkAtAddr();
-void cf::CfGameManager::isGimmickActive() { lookupWorkAtAddr(); }
+void cf::CfGameManager::isGimmickActive() { lookupWorkAtAddr(this); }
 
 int cf::CfGameManager::initPadSubSystem() { bdatTotalRows(); }
 
 float cf::CfGameManager::updatePadState() { return CfT_PlayRateGet(); }
 
-void cf::CfGameManager::loadControllerConfigA() { CfT_PlayClockAdvanceFrame(); }
+void cf::CfGameManager::loadControllerConfigA() { CfT_PlayClockAdvanceFrame((u32)this); }
 
 void cf::CfGameManager::loadControllerConfigB() { CfT_PlayClockAdvanceInt(); }
 
@@ -1448,7 +1437,6 @@ extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* sec
 
 bool cf::CfGameManager::isControllerReady() { return CfT_FrameInWindow(); }
 
-extern "C" u32 CfT_FrameCountA();
 u32 cf::CfGameManager::getControllerWordA33C() { return CfT_FrameCountA(); }
 
 u32 cf::CfGameManager::getControllerWordA37C() { return CfT_FrameCountB(); }
@@ -1459,7 +1447,6 @@ void cf::CfGameManager::resetControllerState() { CfT_FrameCounterStore(); }
 
 void cf::CfGameManager::clearControllerState() { CfT_FrameCounterLoad(); }
 
-extern "C" u32 CfT_DispatchFrameCounts();
 u32 cf::CfGameManager::getCurrentSlotIndex() { return CfT_DispatchFrameCounts(); }
 
 u16 cf::CfGameManager::getItemId() {
@@ -1857,8 +1844,7 @@ extern "C" void func_8007C6C0__Q22cf13CfGameManagerFv(cf::CfGameManager* self, v
         reinterpret_cast<Unk65958Object*>(sEneColiProbe)->field_0x7C =
             CfRes_getAllocHandle();
     }
-    CfT_IsTvPal();
-    func_80069EA8();
+    func_80069EA8(CfT_IsTvPal());
     clearReloadGlobals();
     cfCam_seedFollowD();
 }
@@ -1906,21 +1892,21 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
                     updated = 1;
                     if (gmTransitionCounter > 0) {
                         if (direction != 0) {
-                            MenuSnd_StopSlot0Store_9390(entry);
+                            MenuSnd_StopSlot0Store_9390((const char*)entry);
                         } else {
-                            MenuSnd_StopSlot0Store_9390(&entry->secondaryText);
+                            MenuSnd_StopSlot0Store_9390((const char*)&entry->secondaryText);
                         }
                     } else if (direction != 0) {
                         UnkTextAreaView* area =
                             reinterpret_cast<UnkTextAreaView*>(entry);
-                        MenuSnd_RestartBGM_88D34(reinterpret_cast<u32>(area),
-                                     area->enabled_0x4C, area->value_0x48,
+                        MenuSnd_RestartBGM_88D34((const char*)area,
+                                     (int)area->enabled_0x4C, area->value_0x48,
                                      fade);
                     } else {
                         UnkTextAreaView* area = reinterpret_cast<UnkTextAreaView*>(
                             &entry->secondaryText);
-                        MenuSnd_RestartBGM_88D34(reinterpret_cast<u32>(area),
-                                     area->enabled_0x4C, area->value_0x48,
+                        MenuSnd_RestartBGM_88D34((const char*)area,
+                                     (int)area->enabled_0x4C, area->value_0x48,
                                      fade);
                     }
                     gmFloat68 = 60.0f;
@@ -1931,21 +1917,21 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
                     updated = 1;
                     if (gmTransitionCounter > 0) {
                         if (direction != 0) {
-                            MenuSnd_StopSlot0Store_9390(entry);
+                            MenuSnd_StopSlot0Store_9390((const char*)entry);
                         } else {
-                            MenuSnd_StopSlot0Store_9390(&entry->secondaryText);
+                            MenuSnd_StopSlot0Store_9390((const char*)&entry->secondaryText);
                         }
                     } else if (direction != 0) {
                         UnkTextAreaView* area =
                             reinterpret_cast<UnkTextAreaView*>(entry);
-                        MenuSnd_RestartBGM_88D34(reinterpret_cast<u32>(area),
-                                     area->enabled_0x4C, area->value_0x48,
+                        MenuSnd_RestartBGM_88D34((const char*)area,
+                                     (int)area->enabled_0x4C, area->value_0x48,
                                      fade);
                     } else {
                         UnkTextAreaView* area = reinterpret_cast<UnkTextAreaView*>(
                             &entry->secondaryText);
-                        MenuSnd_RestartBGM_88D34(reinterpret_cast<u32>(area),
-                                     area->enabled_0x4C, area->value_0x48,
+                        MenuSnd_RestartBGM_88D34((const char*)area,
+                                     (int)area->enabled_0x4C, area->value_0x48,
                                      fade);
                     }
                     gmFloat68 = 60.0f;
@@ -1988,13 +1974,13 @@ void cf::CfGameManager::func_8007DCB8() {
             s32 active = 0;
             if (value != 0 && gmInitArg != 0 && dataId <= 7) {
                 CItem_findOrCreateRec(value, &result, 1, &extra);
-                CtrlObjectParam_WriteU16RowEntry(data, col, value);
+                CtrlObjectParam_WriteU16RowEntry((cf::CtrlObjectParamU16RowTable*)data, col, value);
                 CtrlObjectParam_WriteEquipSlotValue(data, col, reinterpret_cast<void*>(static_cast<s32>(result)));
                 active = 1;
             }
             if (active == 0) {
                 CtrlObjectParam_WriteEquipSlotValue(data, col, reinterpret_cast<void*>(-1));
-                CtrlObjectParam_WriteU16RowEntry(data, col, value);
+                CtrlObjectParam_WriteU16RowEntry((cf::CtrlObjectParamU16RowTable*)data, col, value);
             }
         }
         CtrlObjectParam_RefreshCharEntry(data, 0);
@@ -2216,7 +2202,7 @@ void cf::CfGameManager::resetBattlePresentation() {
     // Only the last getInstance result is kept in a saved register (live
     // across the memset); the first two are consumed in scratch.
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
-        PartyGaugeSetClamped((u8*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194, 0);
+        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194), 0);
         cf::CBattleManager* battle = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
         memset(&battle->unk94, 0, 0x100);
         battle->setPartyMaskFlag(2, 0);
@@ -2250,7 +2236,7 @@ void cf::CfGameManager::resetBattlePresentation() {
         }
         __dt__8023E448();
         CItem_rerankAllKinds();
-        if (lbl_eu_80664774 != 0) {
+        if (gCfNandRestoredEventFlag != 0) {
             // Retail materializes the resource-loaded test as a bool
             // (neg/or/rlwinm booleanize) before the short-circuit &&, so the
             // != result is captured in a local first.
@@ -2271,11 +2257,11 @@ void cf::CfGameManager::resetBattlePresentation() {
         queueSceneEventA__Q22cf13CfGameManagerFv(
             ids->field_0x2, ids->field_0x0, reinterpret_cast<u32>(video),
             reinterpret_cast<u32>(ids->field_0x4), video->value_0xC);
-        u16 eventDone = lbl_eu_80664774;
+        u16 eventDone = gCfNandRestoredEventFlag;
         gmPauseFlags =
             (eventDone != 0) ? (gmPauseFlags | 0x8000)
                              : (gmPauseFlags & ~0x8000);
-        lbl_eu_80664774 = 0;
+        gCfNandRestoredEventFlag = 0;
     }
     gmGameFlags |= 0x100000;
     gmPauseFlags |= 0x20;
@@ -2329,7 +2315,7 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         if (gmInstance.unkAC != nullptr) {
             CfRes_pushRec(reinterpret_cast<u32>(gmInstance.unkAC), 0x12, 0, 0, 0, 0);
         }
-        Scn_SetPalFixFlag(gmScene, 0);
+        Scn_SetPalFixFlag((u8*)gmScene, 0);
     } else if ((gmGameFlags & 0x2000000) != 0 ||
                (gmGameFlags & 0x400) != 0) {
         evtUpdateSequenceKick();
@@ -2587,7 +2573,7 @@ void cf::CfGameManager::func_80085FB8() {
     getInstance__Fv();
     setTrackedTarget(lbl_eu_80666498, 0, 0);
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-    if (!lookupWorkAtAddr()) {
+    if (!lookupWorkAtAddr(this)) {
         player = nullptr;
     }
     if ((gmPauseFlags & 0x20000000) == 0) {
@@ -2724,9 +2710,9 @@ void cf::CfGameManager::func_80086778() {
             ml::CVec3 v30(fD, fE, fE2);
             cvtB.w[1] = (u32)(u16)raw12d;
             float radius = (float)(cvtB.d - u16magic) * scale;
-            CollObjSetupRotBoxState4Timed(obj, &v48, &v30, radius);
+            CollObjSetupRotBoxState4Timed((cf::CfObjectColl*)obj, &v48, &v30, radius);
         }
-        ::CollObjPackResIdWords(obj, (u32)row, code);
+        ::CollObjPackResIdWords((cf::CfObjectColl*)obj, (u32)row, code);
         obj->setPointEnabled(0);
         obj->unk64 &= ~0x10000;
         u16& pointFlag = *reinterpret_cast<u16*>(reinterpret_cast<u8*>(obj) + 0x158);
@@ -2824,7 +2810,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
     }
     func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
-        if (CBattleMan_FetchVisionObj(nullptr) != nullptr) {
+        if (((cf::CBattleManager*)nullptr)->CBattleMan_FetchVisionObj() != nullptr) {
             // Slot owner: cf::CVision owns 0x20 (vt_20(u32)) - CVision.hpp;
             // battle+0x219C is CBattleManager::mVision (CBattleManager.hpp).
             cf::CVision* sub = reinterpret_cast<cf::CVision*>(

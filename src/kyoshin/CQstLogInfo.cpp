@@ -20,9 +20,9 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 
 
-u8 CQstLogInfo::QstLogInfo_GetLoadedMark() { return mField38; }
+int CQstLogInfo::QstLogInfo_GetLoadedMark() { return mField38; }
 
-u8 CQstLogInfo::QstLogInfo_GetReadyMark() { return mField39; }
+int CQstLogInfo::QstLogInfo_GetReadyMark() { return mField39; }
 
 // Start the quest-log state machine: mark busy (+0x34=1), clear the 0x39
 // flag, run the state step and play sound 0x6d. Guarded by the state.

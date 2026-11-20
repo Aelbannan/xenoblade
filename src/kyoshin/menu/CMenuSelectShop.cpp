@@ -96,7 +96,7 @@ void CMenuSelectShop::Init() {
         mSelShop.mAnimActive = tempShop.mAnimActive;
     }
 
-    loadShopWinArc(&mSelShop);
+    mSelShop.loadShopWinArc();
 
     // Same pattern for the CCur18 cursor (payload +0x4..+0x15, slot sp+0x10).
     mCursor = CCur18(CUICfManager_getArcResourceAccessor());
@@ -122,7 +122,7 @@ void CMenuSelectShop::Term() {
 
     removeRenderCB__4CScnFP10IScnRender(mScene, this);
 
-    teardownShopWin(&mSelShop);
+    mSelShop.teardownShopWin();
     mCursor.cleanup();
     mMemRegion.deleteRegion();
     lbl_eu_806642E8 = 0;
@@ -160,7 +160,7 @@ void CMenuSelectShop::Move() {
         break;
     }
 
-    driveShopWinAnim(&mSelShop);
+    mSelShop.driveShopWinAnim();
     mCursor.Update();
 }
 
@@ -170,8 +170,8 @@ void CMenuSelectShop::Move() {
 // the menu state.
 // ---------------------------------------------------------------------------
 extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
-    if (isShopWinLoaded(&self->mSelShop) != 0) {
-        showShopWin(&self->mSelShop);
+    if (self->mSelShop.isShopWinLoaded() != 0) {
+        self->mSelShop.showShopWin();
         self->mState = 1;
     }
 }
@@ -183,7 +183,7 @@ extern "C" void ShopSel_State0Show(CMenuSelectShop* self) {
 // the cursor move virtual, and advance the menu state.
 // ---------------------------------------------------------------------------
 extern "C" void ShopSel_State1Cursor(CMenuSelectShop* self) {
-    if (isShopWinAnimActive(&self->mSelShop) != 0) {
+    if (self->mSelShop.isShopWinAnimActive() != 0) {
         self->mCursor.SetVisible(1);
         nw4r::math::VEC3 out;
         getShopWinPanePos(&out, &self->mSelShop, (u8)self->mSelIndex);
@@ -259,14 +259,14 @@ extern "C" void ShopSel_State2Input(CMenuSelectShop* self) {
             break;
         case 2:
             self->mState = 3;
-            hideShopWin(&self->mSelShop);
+            self->mSelShop.hideShopWin();
             self->mCursor.SetVisible(0);
             break;
         }
     } else if (closeButton != 0) {
         // Other dpad direction: close the shop window and leave this state.
         self->mState = 3;
-        hideShopWin(&self->mSelShop);
+        self->mSelShop.hideShopWin();
         self->mCursor.SetVisible(0);
     }
 }
@@ -277,7 +277,7 @@ extern "C" void ShopSel_State2Input(CMenuSelectShop* self) {
 // 0x64 busy flag.
 // ---------------------------------------------------------------------------
 extern "C" void ShopSel_State3Done(CMenuSelectShop* self) {
-    if (isShopWinAnimActive(&self->mSelShop) != 0) {
+    if (self->mSelShop.isShopWinAnimActive() != 0) {
         self->mState = 4;
         self->mField64 = 1;
     }
@@ -298,7 +298,7 @@ void CMenuSelectShop::cbRenderBefore() {
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    drawShopWin(&mSelShop, &drawInfo);
+    mSelShop.drawShopWin(&drawInfo);
     if ((s32)mSelIndex >= 0)
         mCursor.DrawLayout(&drawInfo);
 }

@@ -19,6 +19,7 @@ struct VTarget {
 // call in CScn::~CScn (retail shape; see IWorkEvent.hpp note).
 #define IWORK_EVENT_INLINE_DTOR
 #include "monolib/work.hpp"
+#include "monolib/src/scn/CScnItemPool.hpp"
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "monolib/scn/CScnItemCamera.hpp"
@@ -215,8 +216,8 @@ extern "C" bool Scn_IsAnimActiveOrNull(void* self) {
     return CScnItemPool_unlinkAndReleaseItem(((ScnItemOwnerView*)self)->owner04->pool, self);
 }
 extern "C" bool Scn_HasWorkItem(u8* self) {
-    extern bool CScnItemPool_releaseItemByKey(void*);
-    return CScnItemPool_releaseItemByKey(((ScnOwnerPoolView*)self)->pool);
+
+    return ((bool (*)(void*))CScnItemPool_releaseItemByKey)(((ScnOwnerPoolView*)self)->pool);
 }
 extern "C" void* Scn_SetupAnim(void* a, void* b, void* c, void* d) {
     return simFwdAnimSetup102(a, b, c, d, 0);
@@ -282,7 +283,7 @@ extern "C" bool Scn_IsScaleAtLeastOne(CScn* self) {
     return result;
 }
 extern "C" void* Scn_GetUnk80Resource(CScn* self) {
-    return isFadeSettled(self->mFadeMan);
+    return (void*)isFadeSettled((CScnFadeMan*)self->mFadeMan);
 }
 extern "C" void Scn_GetCamWorkInt(CScn* self, CView* view, u32 idx) {
     ((CScnCameraMan*)self->mCamWork)->swapViewParam(view, idx);

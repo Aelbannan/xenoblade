@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail data symbols (linker-provided)
@@ -33,7 +34,7 @@ extern "C" int CfRes_getD80Flag();
 
 // C-linkage validity check used by updateEffect_/teardownEff__ (returns the
 // object when it is still live, 0 when it has been released).
-extern "C" void* lookupWorkAtAddr(void* obj);
+extern "C" int lookupWorkAtAddr(void* obj);
 
 namespace cf {
 class CfObjectEff;
@@ -168,7 +169,7 @@ public:
     void setEffYPos___();
     void scaleVirt29__();
     float getScaledVal_();
-    void setEffScale__();
+    void setEffScale__(float value);
     void setEffLockFg_() const;
     void updateEffect_();
     int checkStsFlag_();

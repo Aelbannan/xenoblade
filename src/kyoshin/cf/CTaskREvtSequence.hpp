@@ -1,20 +1,21 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/EvtSeqApi.hpp"
+#include "kyoshin/cf/CTaskEnvironment.hpp"  // Env_SetClock (real owner)
+#include "kyoshin/menu/MenuSndApi.hpp"
 
-// C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void Scn_SetPalFixFlag(u8* self, unsigned char byte); // C-linkage runtime import (retail signature)
 extern "C" void TextState_DrawStaged();
 extern "C" float MaruShadowLoadGlobalFloat();
 extern "C" u8* getGlobalSda(void);
-extern "C" void Env_SetClock(void* sda, u32 a, u32 b, u32 c);
-extern "C" void Scn_SetPalFixFlag(u8* self, unsigned char byte);
 extern "C" void MaruShadowStoreGlobalFloat(float v);
 // Sibling in this TU: CTaskREvtSequence::Term forwards `this` (retail name
 // EvtSeqStopSequence, unmangled -> C linkage).
 extern "C" void EvtSeqStopSequence(void* self);
 // UI-state flag toggle used by EvtSeqBeginFileRead (defined in CInfoCf.cpp).
-extern "C" void InfoCfSetBit2ClearBit1();
 // Sibling ctor in this TU (retail __ct__cf_CTaskREvtSequence, 0x218-byte
 // body): takes (self, sequence-name string), returns self. The retail symbol
 // is the pre-mangled name (a global function, not a cf::CTaskREvtSequence
@@ -27,13 +28,11 @@ extern "C" cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     cf::CTaskREvtSequence* self, const char* name);
 // EvtSeqSetBgmGateFlag (this unit) toggles a flag and fades BGM (menu sound system).
 extern "C" void EvtSeqSetBgmGateFlag(int a);
-extern "C" void MenuSnd_StopSlot0Clear_9318(s32 clearName, float fadeTime);
-extern "C" void MenuSnd_StopSlot1_9424(float vol);
 
 // Imports for EvtSeqBootSequence (event-sequence boot): sequence-system / UI gates
 // (C-linkage, retail unmangled names), CfGameManager helpers, the id getter
 // and the sound-system flag arm.
-extern "C" bool UIBattleHasPendingLoads();
+int UIBattleHasPendingLoads();
 extern "C" int CfRes_isGridLoadIdle();
 extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv();
 extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
@@ -116,9 +115,9 @@ extern "C" u32 getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value);
 #include "kyoshin/cf/CfGameManagerApi.hpp"
 // Tok_ParseFile: path -> packed id (code_800AA008.cpp; flat retail name).
 extern "C" u32 Tok_ParseFile(const char* path);
-// ScnCamDepthUp: player/event-object refresh (CfCam.hpp declares the same
-// symbol with a void* shape).
-extern "C" bool ScnCamDepthUp(UnkEvtPlayer* obj);
+// Defined in monolib/src/scn/CScnItemCamera.cpp with C++ linkage.
+class CScnItemCamera;
+bool ScnCamDepthUp(CScnItemCamera* obj);
 
 // Imports for EvtSeqDispatchObjs (event-sequence dispatch): the four realtime-event
 // object setup helpers (kyoshin/realtimeevt/*.cpp). The third argument is the
@@ -148,8 +147,6 @@ extern "C" void EvtMovie_StartPlayback_4980(CREvtMovie* self);
 // (CfObjectImplWalker.cpp) and the menu tag-processor (re)init pair
 // (code_8025FB10.cpp).
 extern "C" u8* Scn_SetCamIndex(CScn* scene, int flag);
-extern "C" void TextState_Init(u8* arg);
-extern "C" void TextState_Reset(int arg);
 // Imports for EvtSeqPumpCxStream (fade/arm sequence state): CfGameManager helpers
 // (caller shape - retail symbols are Fv) and the voice/UI-system arm helper
 // (code_801A929C.cpp).
@@ -159,7 +156,6 @@ extern "C" void func_801AAC78(int v);
 // Imports for the ctor: menu/event-system singleton gate + arm
 // (CMenuEnemyState.cpp).
 extern "C" void* EneSt_GetSingleton();
-extern "C" void EneSt_MarkUnk54();
 // Character-anim resource lookup (CScnItemAnim.cpp): returns a single-word
 // ResAnmChr wrapper; EvtSeqResolveAnmChr / EvtSeqFindResAddr walk it.
 extern "C" nw4r::g3d::ResAnmChr ItemAnim_GetChr_E708(u8* data, int index);
@@ -793,13 +789,13 @@ extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self);
 // string from a data object into `out`; returns 1 on a hit. C linkage
 // (retail unmangled name).
 extern "C" int EvtSeqResolveAnmChr(u8* data, const char* name, s32* out);
-// Region-code helper (CTaskEnvironment.cpp): 0/1/2 region code from the
-// global sda. C linkage (retail unmangled name).
-extern "C" int Env_RegionCode(u8* sda);
+// Region-code helper (CTaskEnvironment.cpp): 0/1/2 region code.
+// The owning header clashes with this TU's local Env_* views, so keep the
+// real C++ identity here.
+u32 Env_RegionCode();
 // Token unpacker (code_800AA008.cpp): splits a packed word into four outputs.
 // C linkage (retail unmangled name).
-extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2,
-                              u32* out3);
+
 // CTaskLOD helpers (code_80135FDC.cpp): task id -> active flag. s16 id so the
 // call site passes the halfword directly (retail emits lha, no u8 conversion).
 extern "C" void deactivateLOD__8CTaskLODFv(s16 taskId);
@@ -831,16 +827,16 @@ extern "C" void EvtSeqXorSeqBuffer(const char* path, EvtC450Buf* buf, s32 limit)
 // (CMiniMap.cpp / CMenuKizunagram.cpp), tag-processor notify (code_8025FB10.cpp)
 // and the menu BGM/voice helpers (code_80187F14.cpp / code_801A929C.cpp).
 extern "C" s32 MiniMapHasGlobalData();
-extern "C" void MiniMapSetActiveFlag();
+void MiniMapSetActiveFlag();
 extern "C" void IdTable_SeekIndex(int index);
 extern "C" void MenuSnd_SetBGM_89034(const char* name, int flag, float f1, float f2);
 extern "C" void MenuSnd_RestartBGM_88D34(const char* name, int flag, float f1, float f2);
-extern "C" void MenuSnd_PushSlotVolume_896C(int index, u32 type, float f1, float f2);
 extern "C" void BattleWork_StoreFlagByte1B(u8 v);
+
 
 // Imports for EvtSeqUpdateSequence (event-sequence update): scene fade helpers
 // (CfObjectImplWalker.cpp).
-extern "C" void Scn_SetTimeScale(CScn* scene, float value);
+void Scn_SetTimeScale(CScn* scene, float value);
 
 // ptmf tables copied into field_0x3C by EvtSeqUpdateSeqAlt (retail .data:
 // fixed offsets 0x78/0x84/0x90 inside the sBootSeqCallbacks pool).

@@ -18,36 +18,29 @@ extern "C" void simSetFlag2OnTree(void* model, int flag);
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/g3d/res/g3d_resdict.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
 namespace nw4r { namespace db { void Panic(const char* file, int line, const char* fmt, ...); } }
 
 extern "C" {
 extern bool Scn_IsAnimActiveOrNull(void* ptr);
 extern void* Scn_InitGlobalA(void* global, void* data, int param);
-extern void EvtSeqResolveAnmChr(void* data, const char* name, int* outValue);
-extern void EvtSeqFindResFloat(void* data, const char* name, void* outValue);
-extern int  EvtSeqCheckRegionStatus(void* data);
-extern u32  REvtCam_GetFieldA5Flag(void);
+
+
 extern u32  REvtCam_IsField98Set(void);
-extern int EvtSeqGetCounter104(void);
 extern void ScnEnvLgt_EnableFlag100(void* ptr, int flag);
 
 extern void simMarkTree100000(void* model, int flag);
-extern void simBindChrAnim(void* model, u32 resId, void* animIdx, u32 frame, u32 gateBit, u32 flag, u32 half);
-extern "C" void simSetValue7E8(void* model, int value);
+
 extern void simMarkTree80000(void* model, int flag);
+extern "C" void simSetValue7E8(void* model, int value);
+
 extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);
 extern void* GetResUserData__Q34nw4r3g3d9ResAnmChrFv(void* self);
 extern void* __vc__Q34nw4r3g3d6ResDicCFPCc(void* self, const char* key);
 // nw4r panic file/format strings (shared .data pool of another unit).
-extern const char lbl_eu_80530F08[];
-extern const char lbl_eu_80530EE0[];
-extern const char lbl_eu_80530D54[];
-extern const char lbl_eu_80530D2C[];
-extern const char lbl_eu_80530ECC[];
-extern const char lbl_eu_80530E88[];
 }
 
-// Event-data block at CREvtModel::mPtr1C: model name at +0x10, flag word at
+// Event-data block
 // +0x58, four toggle frame numbers at +0x6C.
 struct CREvtModelData {
     /* 0x00 */ u8 _pad00[0x10];
@@ -183,27 +176,27 @@ void CREvtModel::setEventData(void* pData, void* pModelData) {
     void* newData = Scn_InitGlobalA(&gmScene, pData, 0);
     mData = newData;
     simMarkTree100000(model, REvtCam_GetFieldA5Flag() == 0 ? 1 : 0);
-    simBindChrAnim(model, (u32)newData, 0, 0, 0, 1, -1);
+simBindChrAnim(model, newData, 0, 0, 0, 1, -1);
     setupShadow(model);
     model->vfunc84(0);
     simSetValue7E8(model, 1);
     reinterpret_cast<CREvtItemModelView*>(model)->mFlags7A4 |= 0x20000000;
     mField2C = 0;
     mField30 = 0;
-    { int tmp = 0; EvtSeqResolveAnmChr(newData, "Monochrome", &tmp); mField2C = tmp; }
-    { int tmp = 0; EvtSeqResolveAnmChr(newData, "MonoRGB", &tmp); mField30 = tmp; }
+    { int tmp = 0; EvtSeqResolveAnmChr((u8*)newData, "Monochrome", (s32*)&tmp); mField2C = tmp; }
+    { int tmp = 0; EvtSeqResolveAnmChr((u8*)newData, "MonoRGB", (s32*)&tmp); mField30 = tmp; }
     if (REvtCam_IsField98Set() == 0) {
         setVisible((mField2C - 1) == 0 ? 1 : 0);
     } else {
         setVisible((mField2C != 2) ? 1 : 0);
     }
-    int sv = 0; EvtSeqResolveAnmChr(newData, "noDynamics", &sv);
+    int sv = 0; EvtSeqResolveAnmChr((u8*)newData, "noDynamics", (s32*)&sv);
     if (sv >= 1) { simMarkTree80000(model, 1); }
-    int sv2 = 1; EvtSeqResolveAnmChr(newData, "LgtID", &sv2);
+    int sv2 = 1; EvtSeqResolveAnmChr((u8*)newData, "LgtID", (s32*)&sv2);
     if (sv2 != 0) { reinterpret_cast<CREvtItemModelView*>(model)->mFlags7A0 |= 0x8; }
     else { reinterpret_cast<CREvtItemModelView*>(model)->mFlags7A0 &= ~0x8; }
     if (REvtCam_GetFieldA5Flag() == 0) { applyHideParts(newData, model, 0); }
-    int result = EvtSeqCheckRegionStatus(newData);
+    int result = EvtSeqCheckRegionStatus((u8*)newData);
     model->vfunc84(result);
 }
 
@@ -217,11 +210,11 @@ void CREvtModel::setupShadow(CScnItemModel* pModel) {
     int type = 0;
     f32 radius = 0.9f;
     f32 pow = 0.35f;
-    EvtSeqResolveAnmChr(mData, "SdwType", &type);
+    EvtSeqResolveAnmChr((u8*)mData, "SdwType", (s32*)&type);
     if (type > 0) {
         type--;
-        EvtSeqFindResFloat(mData, "SdwRadius", &radius);
-        EvtSeqFindResFloat(mData, "SdwPow", &pow);
+        EvtSeqFindResFloat((u8*)mData, "SdwRadius", &radius);
+        EvtSeqFindResFloat((u8*)mData, "SdwPow", &pow);
     } else { type = 1; }
     pModel->vfunc50(type == 0 ? 0 : 1);
     CScnMaruShadowNw4r* shadow =

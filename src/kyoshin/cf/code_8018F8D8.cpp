@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfRes.hpp"  // real CfResBuffer (popRecord ring pump)
 
 #include "kyoshin/cf/code_8018F8D8.hpp"
@@ -24,11 +25,12 @@
 // mixes a CfCam.hpp tentative definition of ml::tau with extern "C"
 // declarations of the same symbol (concurrent-edit conflict).
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // Imports used only by CfCmd_PickChain.
 extern float lbl_eu_80667A94;
@@ -44,7 +46,6 @@ extern "C" {
     extern u16 gmTimerCounter;
     extern u8  gNandTeardownByte;
     int*  CtrlObjectParam_GetSlotTableBase();
-    void CfSoundMan_StopAllModes(int mode);
     void* NandPartySnap();
 extern "C" void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
@@ -59,7 +60,6 @@ extern "C" void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void setMonoFlag(int);
     void UIBattleMarkFlags82();
     void CUICfManager_createQueuedMenus();
-    void CUICfManager_prepareMenus();
     s32 MiniMapHasGlobalData();
     void lookupResourceByKeys__Q22cf13CfGameManagerFv(void* this_, u32 second, u32 third);
 
@@ -81,7 +81,6 @@ extern "C" int  CfRes_tryResolveSlot1E4(u16 a, u16 b, int c);
 
     long GetZealObjPtr();
     // getAnimModelId: canonical u32(void*) decl comes from CfObjectMove.hpp.
-    int CBattleMan_FetchVisionObj();
     long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
     // get__16CfEnumListHolderFv: canonical void*(void*) decl comes from CPartyStateWin.hpp
     // (included via code_8018F8D8.hpp); call sites cast to CfEnumList90940*.
@@ -786,7 +785,7 @@ int CfCmd_PickChain(FuncResultRef* self, FuncActorRef* actor, int mode,
         // Mode 0/4: revive-target scan gated on the battle manager's
         // revive-handler registration (member-function-pointer compare).
         int gate = 0;
-        if (CBattleMan_FetchVisionObj() != 0 &&
+        if (reinterpret_cast<cf::CBattleManager*>(bm)->CBattleMan_FetchVisionObj() != 0 &&
             reinterpret_cast<BmByte261A4*>(bm)->field_0x261a4 == 0) {
             gate = 1;
         }

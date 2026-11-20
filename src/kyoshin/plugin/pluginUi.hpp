@@ -5,10 +5,11 @@
 // pointer tables registered with the VM plugin system.
 
 #include <types.h>
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/vm/yvm2.h"
 #include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 // Flag context block passed to some plugin callbacks; flags at offset 8.
 struct UiFlags {
@@ -70,7 +71,7 @@ extern u32 __RTTI__Q22cf10CfObjectPc;
 
 // Shared BDAT character-name table pointer (.sbss); resolved by
 // BdatGetPtrDirect against lbl_eu_804FABF0 keys.
-extern char* lbl_eu_80664090;
+extern void* lbl_eu_80664090;
 
 // Sub-object hanging off the player at +0x3ED4 (real owner:
 // cf::CfObjectImplWalker, whose vf40 at +0x40 is the talk-busy probe used
@@ -92,9 +93,7 @@ class IUIWindow;
 IUIWindow* UIWin_Create602F4Win();
 IUIWindow* UIWin_Create5DCD0Win();
 void InitCol6LodTables();
-int UIWin_CreateCol6Check();
 IUIWindow* UIWin_CreateSaveWin();
-u32 CUICfManager_queueGameClearMenu();
 void prepareTextBuffer__Q22cf13CfGameManagerFv();
 
 // Fade controller hook:
@@ -104,21 +103,17 @@ void prepareTextBuffer__Q22cf13CfGameManagerFv();
 void CUICfManager_queueFadeMenu(int r3, int r4, float f1, float f2, float f3);
 
 // Item-grant helper: 8 register args + 1 stack arg.
-void UIWin_CreateItemMulti(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,
-                   u32 a8, u32 a9);
 
 // Talk-window factory (window id, text, mode); used by winTalk.
 void UIWin_CreateTalkWin(u32 obj, const char* str, int mode);
 
-void startEnumObjects(void* list, int type, int value);
+extern "C" void startEnumObjects(void* list, u32 type, u32 value);
 void* getEntryAt(void* list, int index);
 void UIWin_CreateMenuUpdate(u32 first, u32 second, s32 third, s32 fourth);
-int CtrlRemote_TouchBitByArg(int index);
-void CtrlRemote_SetSharedBit(int index, int value);
+extern "C" void CtrlRemote_SetSharedBit(u32 index, u32 value);
 // Copies an entry out of a script string table into the given buffer.
 // BDAT row-name lookup: resolve key row in the character table.
 // Open a party-talk window over an existing message box.
-void UIWin_CreateSysWin1(char* msg, char* name, int c, int d);
 // Talk-state probe (window manager): nonzero when a talk is active.
 int UIWin_HasPendingUpdate(int v);
 // SE-talk voice busy probe (code80135FDC split unit).
@@ -129,7 +124,6 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* sub, u32 id, u32 flag);
 void UIWin_CreateKizunaTalk(int id);
 void UIWin_CreateEveTalkWin(int mode, const char* str);
 // Opens a system window with the given text.
-char* UIWin_CreateSysWin0(const char* str, int r4, int r5);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 

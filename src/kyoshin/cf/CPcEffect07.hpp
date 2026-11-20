@@ -385,9 +385,9 @@ struct PcEffectSpawnRec {
 };
 
 // Imports from other TUs used by this TU's free functions.
-extern "C" void setTargetObj_(void* obj, void* target);
+
 extern "C" void setChildB59__(void* obj, s8 val);
-extern "C" void bindPartnerO_(CPcEffect07Obj* obj, PcEffectScheduleSub* sub, s32 flags);
+
 
 // Effect-id -> wstring table index matrix (indexed by selector slot).
 extern u32 lbl_eu_80533738[];
@@ -440,3 +440,21 @@ public:
 };
 
 } // namespace cf
+
+
+struct PcEffectData;
+
+namespace cf {
+class CPcEffect07;
+}
+
+// Canonical declarations for the free slot helpers defined in CPcEffect07.cpp.
+s32 getSlotEffectId(int index);
+int findActiveEntryID(int index);
+s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount);
+s32 getFirstFreeSlot();
+int hasAnyActiveSlot();
+int countActiveSlots();
+void tickPcEffects(cf::CPcEffect07* self);
+void updatePcEffect(cf::CPcEffect07* self);
+void freePcEffects(PcEffectData* data);

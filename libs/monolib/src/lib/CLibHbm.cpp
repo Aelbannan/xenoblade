@@ -213,7 +213,7 @@ void CLibHbm::loadHbmArcFile(){
     // Retail passes an extra ignored int arg (r4=1) to the 1-param
     // CDeviceFile::getFileSize; route through a cast function-pointer type.
     typedef int (*GetFileSizeFn)(const char*, int);
-    if(((GetFileSizeFn)&CDeviceFile::getFileSize)(pArcFile, 1) > 0){
+    if(((GetFileSizeFn)&CDeviceFile::getFileSize)(pArcFile, 1) > 0){  // DEBT(callcast): getFileSize__11CDeviceFileFPCc has 1 param; retail leaves r4=1 stale
         CFileHandle* handle = CDeviceFile::readFile(spInstance->mHandle, pArcFile,
         spInstance, 0, 0);
         spInstance->mpHbmArcFileHandle = handle;

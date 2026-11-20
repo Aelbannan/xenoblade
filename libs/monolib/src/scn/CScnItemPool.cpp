@@ -1,24 +1,18 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnItemPool
 #include <harness_catalog.h>
 #include "monolib/util/MemManager.hpp"
+#include "monolib/src/scn/CScnItemPool.hpp"
 #include "monolib/data_vtables.hpp"
 
 class CScn;
 
-// Local mirror of the monolib reslist template (ScheduleList.cpp precedent):
-// the shared reslist.hpp instantiates remove()/find() which need operators the
-// opaque item type cannot provide, while the ctor/dtor/vtable codegen is
-// identical. Layout matches _reslist_base<T>: vtable@0, mStartNodePtr@4,
-// sentinel@8, mList@0x14, mCapacity@0x18, unk1C@0x1c.
-template <typename T>
-struct _reslist_node {
-    _reslist_node<T>* mNext;  // 0x0
-    _reslist_node<T>* mPrev;  // 0x4
-    T mItem;                  // 0x8
-};
-
-template <typename T>
-class _reslist_base {
+#include "monolib/util/reslist.hpp"
+// Explicit specialisations of the real reslist templates: the layout and the
+// ctor/dtor schedule match the shared header, but the node array uses an
+// opaque CScnItem and this TU's -inline noauto policy keeps the two bodies
+// separate. No new template tags are introduced.
+template <>
+class _reslist_base<CScnItem*> {
 public:
     _reslist_base() {
         mList = nullptr;
@@ -29,15 +23,13 @@ public:
         mStartNodePtr->mPrev = mStartNode.mNext;
     }
 
-    void ScnFilterList_destroyItem(T* item) {}
-    void ScnFilterList_freeNode(_reslist_node<T>* node) { node->mNext = nullptr; }
+    void ScnFilterList_destroyItem(CScnItem** item) {}
+    void ScnFilterList_freeNode(_reslist_node<CScnItem*>* node) { node->mNext = nullptr; }
 
-    // Shared-reslist.hpp clearList shape (proven FULL_MATCH in CWorkThread/
-    // CDeviceVI/CView): walker declared first, cur copy inside the body.
     void clearList() {
-        _reslist_node<T>* walker = mStartNodePtr->mNext;
+        _reslist_node<CScnItem*>* walker = mStartNodePtr->mNext;
         while (walker != mStartNodePtr) {
-            _reslist_node<T>* cur = walker;
+            _reslist_node<CScnItem*>* cur = walker;
             walker = walker->mNext;
             ScnFilterList_destroyItem(&cur->mItem);
             ScnFilterList_freeNode(cur);
@@ -52,30 +44,27 @@ public:
         if (unk1C == false) DELETE_ARRAY(mList);
     }
 
-    _reslist_node<T>* mStartNodePtr;  // 0x4
-    _reslist_node<T> mStartNode;      // 0x8
-    _reslist_node<T>* mList;          // 0x14
-    int mCapacity;                    // 0x18
-    bool unk1C;                       // 0x1c
+    _reslist_node<CScnItem*>* mStartNodePtr;  // 0x4
+    _reslist_node<CScnItem*> mStartNode;      // 0x8
+    _reslist_node<CScnItem*>* mList;          // 0x14
+    int mCapacity;                            // 0x18
+    bool unk1C;                               // 0x1c
 };
 
-template <typename T>
-class reslist : public _reslist_base<T> {
+template <>
+class reslist<CScnItem*> : public _reslist_base<CScnItem*> {
 public:
     reslist();
     virtual ~reslist();
 };
 
-// Out-of-class definition, declared `inline` so -inline noauto still expands it
-// into the derived ctor (noauto inlines only explicitly-inline bodies; without
-// the keyword __ct__16reslist_CScnItemFv shrinks 0x3c -> 0x30).
-template <typename T>
-inline reslist<T>::reslist() : _reslist_base<T>() {}
+// `inline` keeps __ct__16reslist_CScnItemFv at 0x3c under -inline noauto.
+template <>
+inline reslist<CScnItem*>::reslist() : _reslist_base<CScnItem*>() {}
 
-// Out-of-line: __dt__12CScnItemPoolFv CALLS this member dtor; the unit's
-// -inline noauto policy keeps it (and its base teardown) out of the caller.
-template <typename T>
-reslist<T>::~reslist() {}
+// __dt__12CScnItemPoolFv CALLS this out-of-line member dtor.
+template <>
+reslist<CScnItem*>::~reslist() {}
 
 // Item object stored in the pool's slot arrays and referenced by the reslist
 // sub-pools. The retail class carries a large vtable (>= 0xD0 bytes); only

@@ -1,5 +1,8 @@
 // Translation unit for kyoshin/plugin/pluginCfs
-// Plugin script functions for the CFS (Common File System / script) subsystem.
+#include "kyoshin/cf/object/CfObjectColl.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam U16-row helpers (owner)
+
+// Plugin script functions
 
 // Retail calls CItemBlock_getKindSlot/CItemBlock_getSlotU16 with a full-width character id (no truncation
 // mask at call sites); CfGameManager.hpp declares dataId as u16,
@@ -7,13 +10,14 @@
 // rule if redeclared alongside. Rename the header forms out of the way for
 // this TU and declare the retail (int) shapes instead.
 #include "kyoshin/cf/CItemBlockApi.hpp"
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/scn/code_804BC9EC.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 
 // Retail passes the character id to CItemBlock_getKindSlot untruncated; the
 // CfGameManager.hpp declaration takes u16, which would force a rlwinm mask
@@ -68,15 +72,12 @@ extern "C" {
     void* getInstance__14Class_80296898Fv();
     void walkListByItemId(int, int);
     int scanBattleReady();
-    void CfObjectMove_forwardNpcSignal(int, bool);
     bool CtrlRemote_TouchBitByArg(int);
     // CtrlRemote_SetSharedBit: declared (u32,u32) by CfGameManager.hpp:767 - local
     // (int,int) form conflicts (10197). The header decl was removed by a
     // concurrent rename, so spell the (u32,u32) form locally (identical
     // redeclaration is harmless even if a header provides it again).
     void CtrlRemote_SetSharedBit(u32, u32);
-    int* CtrlObjectParam_GetCharEntry(int);
-    int* CtrlObjectParam_GetSlotTableBase();
     void CtrlObjectParam_SetEquipSlot5(int*, int);
     int CtrlObjectParam_HasSlotValue(int*, int);
     int* CtrlObjectParam_ResolveEquipItem(int*, int);
@@ -94,12 +95,8 @@ extern "C" {
     void CollObjSetupVecsState6(void*, float, void*, void*, int, int, int, int);
     void CollObjSetupVecsState0(void*, float*, float*, float);
     void CollObjSetupVecsState2(void*, float*, float*, float);
-    void CollObjSetResIdPathName(void*, const char*, const char*);
     void CollObjSetupVecsState3(void*, float*, float*, float);
-    void CollObjSetNameSlot(void*, const char*, int);
     void CollObjSetupVecsState1(void*, float, void*, void*);
-    void CollObjSetupRotBoxFromAVec(float, float*, float*);
-    void CollObjSetResIdPairName(void*, int, int, const char*);
     void resetFieldState__Q22cf13CfGameManagerFv();
     void resetControllerState__Q22cf13CfGameManagerFv();
     void syncFieldAndBattle__Q22cf13CfGameManagerFv();
@@ -108,6 +105,8 @@ extern "C" {
     void func_80085FB8__Q22cf13CfGameManagerFv(int);
     void gmWalkByType();
     void setMonoFlag(int);
+    void CollObjSetResIdPathName(void*, const char*, const char*);
+    void CollObjSetResIdPairName(void*, int, int, const char*);
     void notifyFieldChange__Q22cf13CfGameManagerFv(const char*);
     bool isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
     bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
@@ -118,7 +117,6 @@ extern "C" {
     int  CItem_thunkAllocRecord(int, int);
     void CItem_consumeFamilyCnt(int, int);
     int  CItem_sumFamilyByte6(int);
-    void CBattleMan_MarkList48Flag40(void*);
     void activateLOD__8CTaskLODFv(int);
     void deactivateLOD__8CTaskLODFv(int);
     void ScnData_FwdB7D9C(void*, int);
@@ -401,7 +399,8 @@ int setMapJumpAreaBox(VMThread* pThread) {
         (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         CollObjSetupVecPair(mgr, lbl_eu_80665E48, 360.0f, &corners[3], &corners[3]);
-        CollObjSetupRotBoxFromAVec(lbl_eu_80665E4C, &corners[6], &corners[0]);
+        CollObjSetupRotBoxFromAVec((cf::CfObjectColl*)mgr, (cf::CollVec*)&corners[6],
+                                   (const ml::CVec3*)&corners[0], lbl_eu_80665E4C);
         CollObjSetResIdPairName(mgr, ids[1], ids[0], name);
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
@@ -834,7 +833,7 @@ int setTownArea(VMThread* pThread) {
             b.len += extLen;
             d.len = strlen(b.buf);
             strcpy(d.buf, b.buf);
-            CollObjSetNameSlot(mgr, d.buf, 0);
+            CollObjSetNameSlot((cf::CfObjectColl*)mgr, d.buf, 0);
 
             // Second tag: name + (ext + 3)
             ext += 3;
@@ -845,10 +844,10 @@ int setTownArea(VMThread* pThread) {
             a.len += extLen;
             d.len = strlen(a.buf);
             strcpy(d.buf, a.buf);
-            CollObjSetNameSlot(mgr, d.buf, 1);
+            CollObjSetNameSlot((cf::CfObjectColl*)mgr, d.buf, 1);
         } else {
-            CollObjSetNameSlot(mgr, name, 0);
-            CollObjSetNameSlot(mgr, name, 1);
+            CollObjSetNameSlot((cf::CfObjectColl*)mgr, name, 0);
+            CollObjSetNameSlot((cf::CfObjectColl*)mgr, name, 1);
         }
 
         // Preload notifier dispatch through CfGameManager vtable slot 0x158.
@@ -1353,7 +1352,7 @@ int equipItem(VMThread* vmThread) {
     slots[3] = s3;
     slots[4] = idx;
 
-    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
+    int* charData = (int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     int* mgrData = CtrlObjectParam_GetSlotTableBase();
     // Note: full (unmasked) char id passed here, unlike EC9C above.
     // The E284 result reuses the rolling-index variable (retail folds both
@@ -1389,7 +1388,7 @@ int equipItem(VMThread* vmThread) {
                 CItem_findOrCreateRec(itemId & 0xFFFF, &outShort, 1, &outInt);
                 CtrlObjectParam_WriteEquipSlotValue(charData, slot, (void*)(s32)outShort);
             } else {
-                CtrlObjectParam_WriteU16RowEntry(charData, slot & 0xFFFF, itemId & 0xFFFF);
+                CtrlObjectParam_WriteU16RowEntry((cf::CtrlObjectParamU16RowTable*)charData, slot & 0xFFFF, itemId & 0xFFFF);
             }
 
             // Equip-slot index -> item-type id
@@ -1449,7 +1448,7 @@ int equipWeapon(VMThread* pThread) {
         return 0;
     }
 
-    charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
+    charData = (int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     weaponSlot = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (weaponSlot != NULL) {
@@ -1466,7 +1465,7 @@ int equipWeapon(VMThread* pThread) {
         walkListByItemId(charId, 0);
         gmPauseFlags |= 0x08000000;
     } else {
-        CtrlObjectParam_WriteU16RowEntry(CtrlObjectParam_GetCharEntry(charId & 0xFFFF), 5, weaponId & 0xFFFF);
+        CtrlObjectParam_WriteU16RowEntry((cf::CtrlObjectParamU16RowTable*)(int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF), 5, weaponId & 0xFFFF);
 
         if (charId >= 1 && charId <= 11) {
             int syncId;
@@ -1502,7 +1501,7 @@ int getWeaponSlot(VMThread* vmThread) {
 
     VMArg* arg = vmArgPtrGet(vmThread, 1);
     charId = vmArgIntGet(2, arg);
-    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
+    int* charData = (int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     itemId = 0;
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
@@ -1545,7 +1544,7 @@ int setWeaponSlot(VMThread* vmThread) {
     arg = vmArgPtrGet(vmThread, 2);
     itemId = vmArgIntGet(3, arg);
 
-    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
+    int* charData = (int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
     slotData = CtrlObjectParam_ResolveEquipItem(&charData[7], 5);
 
     if (slotData != NULL) {
@@ -1683,7 +1682,8 @@ int setScheduleType(VMThread* vmThread) {
     if (obj != NULL) {
         int flags = ((CfsArtsEntryView*)obj)->flags;
         if (flags & 0x08) {
-            CfObjectMove_forwardNpcSignal((int)obj, enable);
+            typedef void (*ForwardNpcSignalRetail)(int, bool);  // DEBT(callcast): retail sets live r4 into 1-arg CfObjectMove_forwardNpcSignal (mangled arity 1; LOSTFIX proof)
+            ((ForwardNpcSignalRetail)CfObjectMove_forwardNpcSignal)((int)obj, enable != 0);
         }
     }
 
@@ -1835,12 +1835,14 @@ int partyMember(VMThread* vmThread) {
     return 1;
 }
 
+#include "kyoshin/menu/code_8018C5FC.hpp"
+
 // --- clearPartyGauge (us-8004b0a8) ---
 int clearPartyGauge(VMThread* vmThread) {
     void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
     if (battleMgr != NULL) {
         void* gauge = getInstance__Q22cf14CBattleManagerFv();
-        PartyGaugeSetClamped(&((CfsGaugeView*)gauge)->field_194, 0);
+        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&((CfsGaugeView*)gauge)->field_194), 0);
     }
     return 0;
 }
@@ -1948,7 +1950,7 @@ int getWeaponID(VMThread* vmThread) {
         charId = vmArgIntGet(2, arg);
     }
 
-    int* charData = CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
+    int* charData = (int*)CtrlObjectParam_GetCharEntry(charId & 0xFFFF);
 
     VMArg ret;
     ret.type = 3;

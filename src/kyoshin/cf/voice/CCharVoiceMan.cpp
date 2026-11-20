@@ -1,6 +1,10 @@
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include <decomp.h>
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
 // Local real dispatch for voice nodes: mirrors CVS_THREAD's vtable at +0x1C.
@@ -71,9 +75,8 @@ void registerFactoryEvent(void* self, cf::IFactoryEvent* event);
 // to avoid a duplicate getInstance__Q22cf14CBattleManagerFv declaration);
 // plain C++ linkage mangles them to the retail names getInstance__Fv /
 // CBattleMan_FetchVisionObj__FPv (symbol-map mapped).
-extern void* getInstance();
-void* CBattleMan_FetchVisionObj(void* bm);
-// Voice-cue / user-owned-sound helpers (previously via the CBattleManager.hpp
+extern UnkClass_805764CC* getInstance();
+
 // include chain; C++ linkage mangles to the retail names).
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 void CtrlRemote_SetSharedBit(u32 owner, u32 flag);
@@ -309,7 +312,7 @@ extern "C" void CCharVoiceMan_Tick(){
         if (icount <= 0) {
             iresult = 0;
         } else {
-            int n = HpVoice_CollectIdle(arr2, 3, 0);
+            int n = HpVoice_CollectIdle((CVoiceHandle**)arr2, 3, 0);
             if (n <= 1) {
                 iresult = 0;
             } else {
@@ -373,7 +376,7 @@ noFieldFlag:;
                 if (testActorStatus(srcNode, (int*)&sv, 6) == 0)
                     goto noAutoTalkClear;
                 if (!(gmGameFlags & 0x00400000))
-                    BmVoice_PlayGated(player, 0xbb9, 0x14);
+                    BmVoice_PlayGated((CVoiceHandle*)player, 0xbb9, 0x14);
             }
             m->mAutoTalkPending = 0;
         }
@@ -489,7 +492,7 @@ extern "C" void CCharVoiceMan_CheckAutoTalk(cf::CVoiceActorState* self) {
 // matches b's voice id, copy a's pending id into mPendingActorId.
 extern "C" void CCharVoiceMan_HookBattleSlotVoice(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
     cf::CCharVoiceMan* m = spCharVoiceMan;
-    cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+    cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
     if (bs != 0) {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet(0x04000000) == 0) {
@@ -548,7 +551,7 @@ int cf::CVoiceActorState::CharVoiceMan_TryPlayCharVoice() {
         return 0;
     if (((cf::CVoiceActorState*)r)->field_3F28 != 0x10c)
         return 0;
-    BmVoice_PlayGated(this, 0xfa5, 0x14);
+    BmVoice_PlayGated((CVoiceHandle*)this, 0xfa5, 0x14);
     return 1;
 }
 // Register a freshly-created sound node, then clear byte 0x22C.
@@ -605,7 +608,7 @@ extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(void* a, void* b, void* 
         }
     }
     if (c != 0) {
-        cf::CSoundNode* node = BmVoice_Play32(c);
+        cf::CSoundNode* node = (cf::CSoundNode*)BmVoice_Play32((CVoiceHandle*)c);
         cf::CCharVoiceMan* m = spCharVoiceMan;
         if (node != 0) {
             cf::CSoundNode* tail = m->mNodeTail;
@@ -667,7 +670,7 @@ extern "C" void CCharVoiceMan_EnqueueBreakAndGaugeVoice(void* a, void* b, void* 
         }
         m->mNodeTail = node;
     }
-    node = BmVoice_Play12C(a, b, c);
+    node = (cf::CSoundNode*)BmVoice_Play12C((CVoiceHandle*)a);
     cf::CCharVoiceMan* m2 = spCharVoiceMan;
     if (node != 0) {
         cf::CSoundNode* tail = m2->mNodeTail;
@@ -704,7 +707,7 @@ extern "C" void CCharVoiceMan_TriggerBattleOrPlainVoice(cf::CVoiceActorState* se
             m->mNodeTail = node;
         }
     } else {
-        cf::CSoundNode* node = BmVoice_Play0A(self);
+        cf::CSoundNode* node = (cf::CSoundNode*)BmVoice_Play0A((CVoiceHandle*)self);
         cf::CCharVoiceMan* m = spCharVoiceMan;
         if (node != 0) {
             cf::CSoundNode* tail = m->mNodeTail;
@@ -781,7 +784,7 @@ extern "C" void CCharVoiceMan_TickPlayerVoiceCount(cf::CVoiceActorBase* actor) {
         m->mPcVoiceCount++;
         if ((int)m->mPcVoiceCount >= 3) {
             if (ml::math::mtRand(0x64) < 0x19)
-                BmVoice_PlayGated(actor, 0x89c, 0x118);
+                BmVoice_PlayGated((CVoiceHandle*)actor, 0x89c, 0x118);
         }
     }
 }
@@ -814,7 +817,7 @@ extern "C" void CCharVoiceMan_PlayPairVoice(cf::CVoiceActorState* self, cf::CVoi
     if (player != 0)
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     if (player != 0)
-        BmVoice_PlayGated(player, 0x899, 0x118);
+        BmVoice_PlayGated((CVoiceHandle*)player, 0x899, 0x118);
 }
 extern "C" void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int unused, void* c) {
     if (gmGameFlags & 0x00400000)
@@ -845,7 +848,7 @@ extern "C" void CCharVoiceMan_EnqueueDamageVoice(cf::CVoiceActorState* self, int
             }
             m->mNodeTail = node;
         }
-        cf::CSoundNode* node2 = BmVoice_PlayReqB4(self, c);
+        cf::CSoundNode* node2 = (cf::CSoundNode*)BmVoice_PlayReqB4((CVoiceHandle*)self, (int)c);
         cf::CCharVoiceMan* m2 = spCharVoiceMan;
         if (node2 != 0) {
             cf::CSoundNode* tail = m2->mNodeTail;
@@ -1117,11 +1120,12 @@ extern void* findObjectById(BOOL id);
 extern "C" void CCharVoiceMan_PlayLevelUpVoice(int id) {
     if (gmGameFlags & 0x00400000)
         return;
-    if (MapFx_ResolveOwner(findObjectById(id)) == 0)
+    void* owner = MapFx_ResolveOwner(findObjectById(id));
+    if (owner == 0)
         return;
     if (gmGameFlags & 0x00400000)
         return;
-    cf::CSoundNode* node = HpVoice_InitVoiceId();
+    cf::CSoundNode* node = (cf::CSoundNode*)(uintptr_t)HpVoice_InitVoiceId((CVoiceHandle*)owner);
     cf::CCharVoiceMan* m = spCharVoiceMan;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -1167,7 +1171,7 @@ extern "C" void CCharVoiceMan_EnqueueFreqAndLevelVoice(void* self) {
         }
         m->mNodeTail = node;
     }
-    node = BmVoice_PlayA0(self);
+    node = (cf::CSoundNode*)BmVoice_PlayA0((CVoiceHandle*)self);
     cf::CCharVoiceMan* m2 = spCharVoiceMan;
     if (node != 0) {
         cf::CSoundNode* tail = m2->mNodeTail;
@@ -1199,7 +1203,7 @@ extern "C" void CCharVoiceMan_EnqueuePcStateVoice(void* obj) {
 extern "C" void CCharVoiceMan_EnqueuePcActionVoice(void* obj) {
     if (gmGameFlags & 0x00400000)
         return;
-    cf::CSoundNode* node = HpVoice_InitPlayerVoice();
+    cf::CSoundNode* node = (cf::CSoundNode*)(uintptr_t)HpVoice_InitPlayerVoice((CVoiceHandle*)obj);
     cf::CCharVoiceMan* m = spCharVoiceMan;
     if (node != 0) {
         cf::CSoundNode* tail = m->mNodeTail;
@@ -1244,7 +1248,7 @@ extern "C" void CCharVoiceMan_EnqueueItemVoice() {
         m->mNodeTail = node;
     }
 }
-extern "C" void CCharVoiceMan_EnqueueRebindVoice() {
+extern "C" void CCharVoiceMan_EnqueueRebindVoice(void* a, void* b, void* c) {
     if (gmGameFlags & 0x00400000)
         return;
     cf::CSoundNode* node = ErrWin_PlayBattleVoice_5970();
@@ -1474,7 +1478,7 @@ extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self) {
     int i;
     // Same compare-then-copy shape: retail interleaves the count copy
     // between cmpwi r3,1 and bgt.
-    if ((cnt = HpVoice_CollectIdle(arr, 3, 0)) <= 1)
+    if ((cnt = HpVoice_CollectIdle((CVoiceHandle**)arr, 3, 0)) <= 1)
         return 0;
     float limit = 0.5f;
     for (it = arr, i = 0; i < cnt; i++) {
@@ -1494,9 +1498,7 @@ extern "C" int CCharVoiceMan_CheckBattleGauge(cf::CCharVoiceMan* self) {
 // at link via the global symbol map).
 extern "C" {
 void __dt__Q22cf12CChainEffectFv();
-void chainClearLinkOnObjMatch();
 void __dt__Q22cf10CCharVoiceFv();
-void voiceNoop();
 }
 extern char __RTTI__Q22cf12CChainEffect[];
 extern char __RTTI__Q22cf11IObjectInfo[];
@@ -1523,4 +1525,4 @@ const VoiceVtableRow lbl_eu_805398B0 = {
     __RTTI__Q22cf10CCharVoice, 0, (const void*)__dt__Q22cf10CCharVoiceFv, 0,
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
-VoicePmfEntry voiceNoopPmfEntry = {{0, 0xFFFFFFFFu, (u32)voiceNoop}};
+VoiceManPmf voiceNoopPmfEntry = &CCharVoice::voiceNoop;

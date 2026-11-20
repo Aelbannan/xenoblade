@@ -23,11 +23,6 @@ extern u32 lbl_eu_8056FC4C[]; // CETrail vtable
 extern u32 lbl_eu_8056FC64[]; // reslist<CETrail::POINT> vtable
 
 extern const f32 lbl_eu_8066B15C;
-extern f64 lbl_eu_8066B180;
-extern f32 lbl_eu_8066B19C;
-extern f32 lbl_eu_8066B1A0;
-extern f32 lbl_eu_8066B1A8;
-extern f32 lbl_eu_8066B1AC;
 
 struct CETrailHeapInfo {
     u32 m_00;
@@ -81,6 +76,7 @@ void* __construct_new_array(void* block, void (*ctor)(void*), void (*dtor)(void*
 // ---------------------------------------------------------------------------
 // Cross-TU calls (placeholder symbols; extern "C" keeps retail reloc names)
 // ---------------------------------------------------------------------------
+struct CLight; // local layout below; LightCtlSetEnable is a real C++ function
 extern "C" {
 void lytBindSetupForPane(void* link, void* arg, u32 type, void* data, void* unk);
 void lytBindRefreshPlayer(void* link);
@@ -88,19 +84,20 @@ int lytBindCanResolveTarget(void* link);
 void lytBindRefreshTrans(void* link, u32 index);
 void DbgZeroTriple(void* obj);
 void* EffFxAllocCubicTable(void* self, s16 count);
-void EffFxEmptyStub(void* vtx);
 void EffFxBuildTrailSegments(void* trailSeg, void* trail, const void* color, u32 a, u32 b, const void* c, const void* d);
 void* scnVlAllocSlot(void* res);
 void scnVlFreeSlot(void* res);
 void LightCtlSetAttnMode(void* light, u32 mode);
 void LightCtlSetPos(void* light, void* arg);
 void LightCtlSetColor(void* light, const void* color);
-void LightCtlSetEnable(void* light, u32 mode);
 void LightCtlInitDistAttn(void* light, s32 mode, f32 a, f32 b);
 // Scene-root accessor (see CScnMem.cpp); single-argument signature keeps
 // MWCC's IPA register info intact so r4/r5 constants survive across the calls.
 void* getScnRootSlot10(void* scene);
 }
+
+void LightCtlSetEnable(CLight* light, int mode);
+void EffFxEmptyStub();
 
 namespace nw4r {
 namespace g3d {
@@ -274,7 +271,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     zb.z = ml::CVec3::zero.z;
     t->m_startNode.m_item.m_posA = za;
     t->m_startNode.m_item.m_posB = zb;
-    t->m_startNode.m_item.m_age = lbl_eu_8066B15C;
+    t->m_startNode.m_item.m_age = 0.0f;
     t->m_list = nullptr;
     t->m_capacity = 0;
     t->m_ownsList = false;
@@ -539,20 +536,7 @@ extern "C" void Trail_ReleaseLinks(CETrail* t) {
 // ---------------------------------------------------------------------------
 // Trail_DrawStrip: draw the trail strip
 // ---------------------------------------------------------------------------
-// Builds the integer->double bit pattern (0x43300000 exponent slot) directly,
-// so the only fsubs is the explicit lbl_eu_8066B180 offset like retail.
-union IntToF64 {
-    f64 f;
-    u32 u[2];
-};
-
 extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color) {
-    // Two persistent int->double bit-cast slots; retail pre-stores both
-    // 0x43300000 headers once in the prologue and only rewrites the low word.
-    IntToF64 convShade;
-    IntToF64 convGate;
-    convGate.u[0] = 0x43300000u;
-    convShade.u[0] = 0x43300000u;
 
     // Gate: valid vertex buffer, at least two counted nodes (the rotated
     // while counts the head sentinel once), and non-zero alpha.
@@ -567,8 +551,8 @@ extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color) {
         }
         if (n >= 2) {
             // Alpha through the integer->double round-trip, compared > 0.
-            convGate.u[1] = color[3];
-            draw = (convGate.f - lbl_eu_8066B180) > lbl_eu_8066B15C;
+            f64 gate = (f64)(u32)color[3];
+            draw = gate > 0.0f;
         } else {
             draw = false;
         }
@@ -594,8 +578,7 @@ extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            convShade.u[1] = v->m_shade;
-            WGPIPE.uc = (u8)(s32)(convShade.f - lbl_eu_8066B180);
+            WGPIPE.uc = (u8)(s32)(f64)(u32)v->m_shade;
         }
         break;
     }
@@ -609,8 +592,7 @@ extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            convShade.u[1] = v->m_shade;
-            WGPIPE.uc = (u8)(s32)(convShade.f - lbl_eu_8066B180);
+            WGPIPE.uc = (u8)(s32)(f64)(u32)v->m_shade;
             WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
             WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
         }
@@ -626,8 +608,7 @@ extern "C" void Trail_DrawStrip(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            convShade.u[1] = v->m_shade;
-            WGPIPE.uc = (u8)(s32)(convShade.f - lbl_eu_8066B180);
+            WGPIPE.uc = (u8)(s32)(f64)(u32)v->m_shade;
             WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
             WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
             WGPIPE.f = t->m_texU1Scale * (t->m_texU1 + v->m_u);
@@ -656,9 +637,9 @@ extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, const ml::CVec4* colo
     switch (t->m_mode) {
     default: {
         ml::CVec3 off;
-        off.x = lbl_eu_8066B15C;
+        off.x = 0.0f;
         off.y = k * f;
-        off.z = lbl_eu_8066B15C;
+        off.z = 0.0f;
         f32 c = -1.0f;
         ml::CVec3 offc = off * c;
         ml::CVec3 raw1;
@@ -687,13 +668,13 @@ extern "C" void Trail_UpdateGeom(CETrail* t, const Mtx* M, const ml::CVec4* colo
     case 2: {
         ml::CVec3 off;
         if (t->m_158 == 0) {
-            off.x = lbl_eu_8066B15C;
+            off.x = 0.0f;
             off.y = k * f;
-            off.z = lbl_eu_8066B15C;
+            off.z = 0.0f;
         } else {
             off.x = k * f;
-            off.y = lbl_eu_8066B15C;
-            off.z = lbl_eu_8066B15C;
+            off.y = 0.0f;
+            off.z = 0.0f;
         }
         lytBindRefreshTrans(&t->m_link0, t->m_15C);
         ml::CVec3 pos0;
@@ -811,11 +792,11 @@ extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::C
         ml::CVec3 d = *posA - t->m_head->m_next->m_item.m_posA;
         dist = PSVECMag(d);
     } else {
-        dist = lbl_eu_8066B15C;
+        dist = 0.0f;
     }
 
     // Trail would not advance: drop the oldest point
-    if (trailSize(t->m_head) != 0 && dist == lbl_eu_8066B15C) {
+    if (trailSize(t->m_head) != 0 && dist == 0.0f) {
         trailPopFront(t->m_head);
         return;
     }
@@ -828,7 +809,7 @@ extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::C
     CETrailPoint item;
     item.m_posA = *posA;
     item.m_posB = *posB;
-    item.m_age = lbl_eu_8066B15C;
+    item.m_age = 0.0f;
     trailPushBack(t->m_head, t, item);
 
     // Age every point by walking back from the last node; the loop exits on
@@ -845,32 +826,32 @@ extern "C" void Trail_AppendPoint(CETrail* t, const ml::CVec3* posA, const ml::C
         }
         frontAge = t->m_head->m_next->m_item.m_age;
     } else {
-        frontAge = lbl_eu_8066B15C;
+        frontAge = 0.0f;
     }
 
     t->m_color = *color;
 
-    if (scale->x > lbl_eu_8066B15C) {
+    if (scale->x > 0.0f) {
         t->m_scale.x = frontAge / scale->x;
     } else {
         t->m_scale.z = 1.0f;
         t->m_scale.x = 1.0f;
     }
 
-    if (scale->y > lbl_eu_8066B15C) {
+    if (scale->y > 0.0f) {
         ml::CVec3 d = *posB - *posA;
         t->m_scale.y = PSVECMag(d) / scale->y;
     } else {
         t->m_scale.y = 1.0f;
     }
 
-    if (scale->z > lbl_eu_8066B15C) {
+    if (scale->z > 0.0f) {
         t->m_scale.z = frontAge / scale->z;
     } else {
         t->m_scale.z = 1.0f;
     }
 
-    if (scale->w > lbl_eu_8066B15C) {
+    if (scale->w > 0.0f) {
         ml::CVec3 d = *posB - *posA;
         t->m_scale.w = PSVECMag(d) / scale->w;
     } else {

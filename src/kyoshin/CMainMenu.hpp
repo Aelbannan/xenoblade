@@ -1,5 +1,9 @@
 #pragma once
 
+// Defined in CMainMenu.cpp with C++ linkage (retail symbol CMainMenu_GetInstancePtr__Fv).
+class CMainMenu;
+CMainMenu* CMainMenu_GetInstancePtr();
+
 #include <types.h>
 
 #include "kyoshin/IUICf.hpp"

@@ -8,7 +8,10 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CQuestWindow.hpp"
+#include "kyoshin/CCol6SystemApi.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/code_80135FDC.hpp"              // advanceAnimTransform (anim frame wait)
 #include "kyoshin/cf/CfPadTask.hpp"               // cf::CfPadTask::setInputDisableTime
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
@@ -394,7 +397,7 @@ void closeQuestWindow(QuestWinObj* self) {
     self->field_64 = 1;
     if (self->field_0xC8 == 0) return;
     if (self->field_0xDC != 0) {
-        f64 two52 = lbl_eu_80667160;
+        f64 two52 = 4503599627370496.0;
         for (int i = 1; i <= 8; i++) {
             void* obj = CtrlObjectParam_GetCharEntry((u16)i);
             if (cf::CfGameManager::isResourceFlagSet(i) != 0 ||
@@ -402,21 +405,21 @@ void closeQuestWindow(QuestWinObj* self) {
                 char* p = (char*)obj + 0x3534;
                 int v = 0x64;
                 if (Counter_TestBit(p, 0x89) != 0) {
-                    v = IdTable_SumValues(p, 0x89) + 0x64;
+                    v = IdTable_SumValues((CUnkObj8025FB10*)p, 0x89) + 0x64;
                 }
                 // int->double via the 0x4330 magic-high-word idiom: bits
                 // (0x43300000|n) as f64 equal n+2^52; retail preloads the 2^52
-                // correction constant (lbl_eu_80667160, f29) before the loop.
+                // correction constant (2^52, f29) before the loop.
                 union {
                     u32 w[2];
                     f64 d;
                 } cvt;
                 cvt.w[0] = 0x43300000;
                 cvt.w[1] = (u32)(self->field_0xDC * v);
-                f64 val = (cvt.d - two52) * lbl_eu_8066714C;
+                f64 val = (cvt.d - two52) * 0.01f;
                 s32 result =
-                    (s32)(val + ((val > lbl_eu_8066713C) ? lbl_eu_80667150
-                                                          : lbl_eu_80667158));
+                    (s32)(val + ((val > lbl_eu_8066713C) ? 0.5
+                                                          : -0.5));
                 CtrlObjectParam_ApplyArtsRankUp(obj, (u16)result, 0, 0);
             }
         }
@@ -448,8 +451,8 @@ void closeQuestWindow(QuestWinObj* self) {
             };
             u8 bytes[5];
         } data;
-        data.w = lbl_eu_80667144;
-        data.b = lbl_eu_80667148;
+        data.w = 0x0306090CU;
+        data.b = 0x0F;
         s16 s = (s16)CtrlRemote_TouchBitByArg(0x7fc);
         s = (s16)(s + (s8)data.bytes[self->field_B8 - 0x100]);
         CtrlRemote_SetSharedBit(0x7fc, s);

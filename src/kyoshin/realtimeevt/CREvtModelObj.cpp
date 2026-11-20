@@ -7,7 +7,7 @@
 // Retail ~CREvtModelObj elides the empty IWorkEvent base-dtor call.
 #define IWORK_EVENT_INLINE_DTOR
 
-#include <string.h>
+#include "kyoshin/code_800AA008_Tok.hpp"
 
 #include "kyoshin/realtimeevt/CREvtModelObj.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
@@ -28,8 +28,6 @@ namespace nw4r { namespace db { void Panic(const char* file, int line, const cha
 extern "C" {
 // CTaskREvtSequence.cpp helpers that take the model as `this` (still C-linkage there).
 extern cf::CREvtModelObj* EvtSeqFindSameNameType3(void* self);
-extern int EvtSeqGetCounter104(void);
-extern int EvtSeqGetWalkIndex(void);
 extern int EvtSeqGetStateBit14(void);
 extern int EvtSeqGetStateBit5(void);
 extern int evtLookupEntryWord(const char* key, int slot);

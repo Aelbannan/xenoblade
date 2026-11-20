@@ -166,8 +166,6 @@ extern "C" void mpfDrawLayerXlu__17UnkClass_8047BB54Fv(
 // actually receive extra args; declaring them with the exact mangled name
 // (global scope keeps the name verbatim) matches the call-site relocs.
 // ---------------------------------------------------------------------------
-extern "C" int tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
-    mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7);
 extern "C" void* submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7);
 extern "C" void buildDisplayList__Q26mpfsys17UnkClass_80471EC8Fv(
@@ -219,20 +217,20 @@ extern "C" nw4r::g3d::ScnObj* getScnGroupChild(CScn* self, u32 idx);
 // MWCC's operator-delete runtime symbol; C linkage keeps the unmangled name
 // (same pattern as CNBanner.cpp).
 
-extern "C" void forwardMpfCallA__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))setColorMode__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void forwardMpfCallA__17UnkClass_8047BB54Fv(u8* self, int mode) {
+    ((mpfsys::UnkClass_80471EC8*)((char*)self + 0x24))->setColorMode(mode);
 }
 
 extern "C" void setMpfFloatParam__17UnkClass_8047BB54Fv(u8* self, float val) {
     *(float*)((u8*)self + 0x2e14) = val;
 }
 
-extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))clearFlag__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(u8* self, int index) {
+    ((mpfsys::UnkClass_80471EC8*)((char*)self + 0x24))->clearFlag(index);
 }
 
-extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))setFlag__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(u8* self, int index) {
+    ((mpfsys::UnkClass_80471EC8*)((char*)self + 0x24))->setFlag(index);
 }
 
 extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj);
@@ -488,9 +486,8 @@ extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
                                          CScn* cscn, u32 a6) {
     UnkClass_8047BB54Layout* layout = (UnkClass_8047BB54Layout*)self;
     __dt__8047BDA8(self);
-    if (tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
-            (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, desc,
-            &layout->mResFile, cscn, a6) != 0) {
+    if (((mpfsys::UnkClass_80471EC8*)layout->gap_0x24)->tryAttach(
+            desc, (MpfsysResFileHandle*)&layout->mResFile, cscn, a6) != 0) {
         layout->field_0xC = desc;
         layout->field_0x10 = 0x15;
         __dt__8047BC74(self, 0x96000, 0x64000);

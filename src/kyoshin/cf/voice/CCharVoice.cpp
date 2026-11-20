@@ -1,6 +1,9 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "kyoshin/menu/MenuSndApi.hpp"
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // ---------------------------------------------------------------------
 // Imported linker symbols (data).  At global scope MWCC does not mangle
@@ -22,16 +25,14 @@ extern float lbl_eu_80668C64;
 // linkage to resolve against the existing objects.
 // ---------------------------------------------------------------
 extern "C" {
-    void  Tok_Unpack(u32, float*, u32*, float*, float*);  // packed-token decode
+
     s32   MenuSnd_QuerySlotLive_89A04(const char*);                        // archive-voice busy check
     CVoicePoseBlock* Scn_FindCamItem(CScn*, s32);      // scene pose/xform block lookup
     s32   MenuSnd_TryPlayGated_97A0(const char*, float, s32);            // start archive voice
     void  MenuSnd_SilenceByName_8986C(const char*, float);                 // stop archive voice
-    void  MenuSnd_SetSlotPan_9C40(s32, CVoicePos*, CVoicePoseBlock*, float, float, float); // update archive voice
     CVoiceBattleSndMgr* CfObjectMove_relaySubB0Slot60(CVoiceOwnerIntf*);     // battle sound manager from owner
     s32   CfSoundMan_TouchSlotById(u16);                                // battle sound busy check
     void  CfSoundMan_WriteSlotParam(u16, CVoicePos*);                    // update battle sound position
-    void  CfSoundMan_ApplySlotStop(CVoiceBattleSndMgr*, u16, s32);      // stop battle sound
 
     // cf::CfSoundMan::playActorSound(unsigned long, unsigned long,
     //                               unsigned long, unsigned long, float)
@@ -85,7 +86,7 @@ extern "C" void attachOwner(CCharVoice* self, CVoiceOwnerIntf* owner)
         u32   posType;
         float pz;
         Tok_Unpack(((CVoiceOwnerData*)owner)->token70,
-                      &pz, &posType, &px, &py);
+                      (u32*)&pz, &posType, (u32*)&px, (u32*)&py);
 
         if (posType == 8) posType = 3;
 
@@ -179,7 +180,7 @@ extern "C" void updatePosition(CCharVoice* self)
             pos = *self->mOwner->getPosition();
         }
 
-        MenuSnd_SetSlotPan_9C40(self->mSoundHandle, &pos, ch,
+        MenuSnd_SetSlotPan_9C40(self->mSoundHandle, (f32*)&pos, (s32)ch,
                       lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
 
     } else if (flags & 4) {
@@ -226,7 +227,7 @@ extern "C" void stopVoiceA(CCharVoice* self)
         u16 bh = self->mBattleSndHandle;
         if (bh != 0xFFFF) {
             CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(self->mOwner);
-            CfSoundMan_ApplySlotStop(obj, bh, 0);
+            CfSoundMan_ApplySlotStop((s32)(uintptr_t)obj, bh, 0);
             self->mVoiceId          = -1;
             self->mBattleSndHandle  = 0xFFFF;
         }
@@ -261,7 +262,7 @@ extern "C" bool playGated(CCharVoice* self, float volume,
             u16 bh = self->mBattleSndHandle;
             if (bh != 0xFFFF) {
                 CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(self->mOwner);
-                CfSoundMan_ApplySlotStop(obj, bh, 0);
+                CfSoundMan_ApplySlotStop((s32)(uintptr_t)obj, bh, 0);
                 self->mVoiceId          = -1;
                 self->mBattleSndHandle  = 0xFFFF;
             }
@@ -339,7 +340,7 @@ extern "C" void stopVoiceB(CCharVoice* self)
         u16 bh = self->mBattleSndHandle;
         if (bh != 0xFFFF) {
             CVoiceBattleSndMgr* obj = CfObjectMove_relaySubB0Slot60(self->mOwner);
-            CfSoundMan_ApplySlotStop(obj, bh, 0);
+            CfSoundMan_ApplySlotStop((s32)(uintptr_t)obj, bh, 0);
             self->mVoiceId          = -1;
             self->mBattleSndHandle  = 0xFFFF;
         }
@@ -347,7 +348,7 @@ extern "C" void stopVoiceB(CCharVoice* self)
 }
 
 // voiceNoop (0x802A3AEC) -- no-op callback
-extern "C" void voiceNoop()
+void CCharVoice::voiceNoop()
 {
 }
 

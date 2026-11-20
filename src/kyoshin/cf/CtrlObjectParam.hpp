@@ -1,6 +1,9 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
+extern "C" int Counter_TestBit(void* data, u32 flag);
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CtrlObjectParamInit.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
@@ -92,11 +95,6 @@ extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);        
 
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);                                // CfGameManager.cpp (resource lookup)
 
-extern "C" int Counter_TestBit(void* data, u32 flag);                          // code_8025FB10.cpp (status lookup)
-extern "C" u32 IdTable_SumValues(void* data, u32 flag);                          // code_8025FB10.cpp (status value)
-extern "C" void Counter884_SetClamped(u8* obj, int value);                           // code_8025FB10.cpp (clamped counter set)
-extern "C" void Counter_AddClamped(u8* obj, u32 value, int flag);                // code_8025FB10.cpp (arts-slot write)
-extern "C" void Counter884_AddClamped(u8* obj, int value);                          // code_8025FB10.cpp (arts-change gate)
 
 // CtrlObjectParam_ReapplyArtsSet helpers (code_8025F2E8.cpp / code_80280F44.cpp).
 extern "C" void IdTable_DeepCopy(void* dst, void* artsSet);                  // arts-set copy hook
@@ -105,7 +103,7 @@ extern "C" void KizunagramStoreChartEntry(void* artsSet, u32 row, u32 slot);    
 extern "C" void SysWinLog_SweepSlotPressure();                                            // post-scan tick
 
 extern "C" void initItemNotch(void* self);                                  // CfMapItemManager.cpp (row-sync helper)
-extern "C" void MapItemStoreBytes567(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
+void MapItemStoreBytes567(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
 
 struct CPcKizunagramBig;  // defined in src/kyoshin/CPcKizunagram.hpp (only used through a pointer here)
 struct CEventDataTable;   // defined in src/kyoshin/cf/CTaskREvent.hpp (global scope; only used through a pointer here)

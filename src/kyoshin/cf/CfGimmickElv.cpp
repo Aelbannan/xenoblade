@@ -2,7 +2,7 @@
 // Decompiled from retail ASM at build/us/asm/kyoshin/cf/CfGimmickElv.s
 
 #include "kyoshin/cf/CfGimmickElv.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/scn/code_804BC9EC.hpp"
 

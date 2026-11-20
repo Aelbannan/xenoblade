@@ -1228,9 +1228,9 @@ void writeDispList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     MPFDrawNode* node = d->field_0x4;
     s32 prevLayer = -1;
-    // volatile: retail spills the item base to the stack (sp+0x3c) and
-    // reloads it every outer iteration.
-    volatile MPFBillItem* itemBase = (MPFBillItem*)(lbl_eu_80665840 + node->field_0x0);
+    // Retail keeps the item base in a stack home (sp+0x3c) across the
+    // outer loop iterations.
+    MPFBillItem* itemBase = (MPFBillItem*)(lbl_eu_80665840 + node->field_0x0);
     Vec* arena = (Vec*)Coli_GetBitTable_5A68();
     s32 countB = 0;
     s32 countA = 8;

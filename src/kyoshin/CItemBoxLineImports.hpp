@@ -1,4 +1,5 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"
 
 // Retail helper declarations used by CItemBoxLine.cpp (not part of the
 // class interface; kept out of CItemBoxLine.hpp so owners can include it).
@@ -213,10 +214,7 @@ extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, con
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44(void);
 // per-frame update helpers (external retail symbols, same merged unit)
-extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry byte accessor (external overload)
-extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
-extern "C" int ItemBoxLine_ProbeNameSlot(void*, unsigned int);   // name-dispatch lookup (external overload)
-// nav-state dispatch helpers (external overloads of the C++ bodies in this TU)
+
 extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
@@ -254,21 +252,15 @@ extern "C" u32 CtrlObjectParam_GetArtsDataWord(void*);
 
 // ItemBoxLine_BuildTabEntries: tab-format / item-name helpers + rodata tables.
 extern const char lbl_eu_80506D90[];        // rodata name/format tables
-// ItemBoxLine_FormatDisplayName: language selector (CDeviceS static getter, C-ABI).
-extern "C" u8 getLanguage__9CDeviceSCFv();
+// ItemBoxLine_FormatDisplayName: language selector is the static member
+// CDeviceSC::getLanguage (monolib/device/CDeviceSC.hpp).
 extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
 
 extern "C" u16 CtrlRemote_TouchBitByArg(u32);
 extern "C" u32 ItemBoxLine_CalcCountKey(void*, unsigned int);
 
-// Tab-accessor C-linkage overloads: the typed C++ bodies live in this TU
-// (their mangled names map to the retail symbols); these C-linkage
-// declarations keep the cross-.o calls (retail external relocs) external
-// instead of inlining the local body.
-extern "C" void* ItemBoxLine_FormatTabEntryName(void*, unsigned int);
-extern "C" u32 ItemBoxLine_GetTabEntryValue(void*, unsigned int);
-extern "C" u16 ItemBoxLine_GetTabEntryItem(CIBLTab*, unsigned int);
+// Tab-accessor C++ bodies are declared in kyoshin/CItemBoxLine.hpp.
 extern "C" u8 ItemBoxLine_ProbePageSlot(void*, unsigned int);
 
 // Sibling tab-dispatch helpers in this merged unit (external relocs in retail).
@@ -292,7 +284,6 @@ extern "C" void ItemBoxLine_BuildTabEntries(CIBLTab*, unsigned char, unsigned sh
 extern "C" void CopyTabSlotVec(CIBLVec3*, const u16*, u32);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u16 ArrayGet12(const u16*, u8);
-extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);   // same-TU body kept external
 extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull*, u16);    // tab-format setter (external call shape)
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
@@ -319,7 +310,7 @@ extern "C" u32 CtrlObjectParam_GetCurrentRowKey(void*);
 // sinit_801F32EC: static color-object ctor helpers (C-ABI).
 extern "C" void SplitU32ToS16s(void*, u32);
 // GXColorS10 copy (retail __as__11_GXColorS10FRC11_GXColorS10)
-#include "kyoshin/CTitle.hpp" // canonical C++ declaration of setGXColorS10
+#include "kyoshin/CTitleAHelp.hpp" // canonical C++ declaration of setGXColorS10
 
 // ItemBoxLine_CompactTabList: .sbss item-box guard words (SDA-accessed, compared to 0).
 extern u32 gItemBoxLineMnuItemMesATable; // BDAT "MNU_item_mes_a" table cache
@@ -328,24 +319,23 @@ extern u32 gItemBoxLineMnuSkillTable;    // BDAT "MNU_skill" table cache
 
 // sinit_801F32EC: the fourteen 8-byte .sbss color objects, constructed in
 // retail call order (SplitU32ToS16s resets, setGXColorS10 sets RGBA).
-extern u8 itemBoxLine_tabLabelNeutralTop[8];
-extern u8 itemBoxLine_tabLabelNeutralBottom[8];
-extern u8 itemBoxLine_tabLabelSelectedTop[8];
-extern u8 itemBoxLine_tabLabelSelectedBottom[8];
-extern u8 itemBoxLine_tabValueNeutralTop[8];
-extern u8 itemBoxLine_tabValueNeutralBottom[8];
-extern u8 itemBoxLine_tabValueSelectedTop[8];
-extern u8 itemBoxLine_tabValueSelectedBottom[8];
-extern u8 itemBoxLine_pageLabelNeutralTop[8];
-extern u8 itemBoxLine_pageLabelNeutralBottom[8];
-extern u8 itemBoxLine_pageLabelSelectedTop[8];
-extern u8 itemBoxLine_pageLabelSelectedBottom[8];
-extern u8 itemBoxLine_pageValueSelectedTop[8];
-extern u8 itemBoxLine_pageValueSelectedBottom[8];
+extern GXColorS10 itemBoxLine_tabLabelNeutralTop;
+extern GXColorS10 itemBoxLine_tabLabelNeutralBottom;
+extern GXColorS10 itemBoxLine_tabLabelSelectedTop;
+extern GXColorS10 itemBoxLine_tabLabelSelectedBottom;
+extern GXColorS10 itemBoxLine_tabValueNeutralTop;
+extern GXColorS10 itemBoxLine_tabValueNeutralBottom;
+extern GXColorS10 itemBoxLine_tabValueSelectedTop;
+extern GXColorS10 itemBoxLine_tabValueSelectedBottom;
+extern GXColorS10 itemBoxLine_pageLabelNeutralTop;
+extern GXColorS10 itemBoxLine_pageLabelNeutralBottom;
+extern GXColorS10 itemBoxLine_pageLabelSelectedTop;
+extern GXColorS10 itemBoxLine_pageLabelSelectedBottom;
+extern GXColorS10 itemBoxLine_pageValueSelectedTop;
+extern GXColorS10 itemBoxLine_pageValueSelectedBottom;
 
 // ItemBoxLine_RebuildTabList: per-slot tab dispatch (C-ABI; defined in this TU).
 // Retail helpers whose CItemBoxInfo.hpp declarations use other parameter types
 // (CItemBoxInfo.hpp's forms are renamed at its include above).
-extern "C" int Counter_TestBit(u32, u32);
 extern "C" GXColorS10* __as__11_GXColorS10FRC11_GXColorS10(GXColorS10* self, const GXColorS10* src);
 

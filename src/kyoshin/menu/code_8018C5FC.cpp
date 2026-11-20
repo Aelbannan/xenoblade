@@ -1,6 +1,9 @@
 #include <types.h>
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include <monolib/device/CDeviceVI.hpp>
 #include <functions.hpp>
@@ -72,7 +75,6 @@ extern "C" {
     // below shadows it so the unmangled CtrlRemote_TouchBitByArg reloc is emitted.
     u32 CtrlRemote_TouchBitByArg(u32);
     CMB_PartyList_8018C5FC* getListB28__Fv();
-    s32 Counter_TestBit(s32, u32);
     void CCharVoiceMan_EnqueuePartyGageVoice(s32, s32);
 }
 
@@ -120,8 +122,8 @@ void PartyGaugeTickDecay(UnkClass_8018C5FC* _this) {
                 }
 
                 ret = ret != 0
-                          ? Counter_TestBit(node->data->obj.vtable->func_290(&node->data->obj),
-                                          0x69)
+                          ? Counter_TestBit((void*)node->data->obj.vtable->func_290(&node->data->obj),
+                                            0x69)
                           : 0;
 
                 if (ret == 0) {

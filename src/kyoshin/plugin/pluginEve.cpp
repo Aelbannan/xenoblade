@@ -16,7 +16,7 @@ extern "C" void checkAvailableValue__Q22cf13CfGameManagerFv(int id);
 extern "C" int processBattleQueue__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const float* color,
                                                        u32 param);
-extern "C" void UIWin_BuildFlagBuf(int a, int b, int c);
+extern "C" void UIWin_BuildFlagBufRec(u32 a, u32 b, u32 c);
 extern "C" void awardQuestFlags();
 
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
@@ -28,7 +28,7 @@ extern u32 __RTTI__Q22cf12CfObjectMove; // RTTI typeinfo (src type) for actor dy
 extern f32 eve_sdata2_zero;
 extern f32 eve_sdata2_one;
 
-int getFlag(VMThread* pThread) {
+extern "C" int getFlag(VMThread* pThread) {
     // flags packs a base offset (high 16 bits) and a length (low 16 bits).
     // Push the flag value at base+idx, or throw a plugin exception if idx is
     // outside the packed range.
@@ -52,7 +52,7 @@ int getFlag(VMThread* pThread) {
     return 1;
 }
 
-int setFlag(VMThread* pThread) {
+extern "C" int setFlag(VMThread* pThread) {
     // flags packs a base address (high 16 bits) and a valid range (low 16
     // bits). If idx is in range and the value fits the trust level of that
     // address bank, write value to the flag memory, then apply two special
@@ -84,7 +84,7 @@ int setFlag(VMThread* pThread) {
             // split high/low halves to match retail codegen.
             if ((u32)(flags - 0x02200000) == 0x3e8) {
                 if ((u32)(value - 0xfe) <= 1) {
-                    UIWin_BuildFlagBuf(4, idx, 0);
+                    UIWin_BuildFlagBufRec(4, idx, 0);
                 }
             }
             if ((u32)(flags - 0x0a200000) == 0x12c) {
@@ -104,7 +104,7 @@ int setFlag(VMThread* pThread) {
 // Get the value of award/sequence flag F16 and push it back as the result.
 extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
-int getAwardFlagF16(VMThread* pThread) {
+extern "C" int getAwardFlagF16(VMThread* pThread) {
     VMArg arg;
     arg.value.uintVal =
         getEventValue40__Q22cf13CfGameManagerFv(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
@@ -113,7 +113,7 @@ int getAwardFlagF16(VMThread* pThread) {
     return 1;
 }
 
-int addAwardFlagF16(VMThread* pThread) {
+extern "C" int addAwardFlagF16(VMThread* pThread) {
     // Add the value in arg 2 (or 1 if omitted) to the 16-bit award/sequence
     // flag selected by arg 1 (flag F16), clamping the result to 16 bits.
     u32 id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -133,7 +133,7 @@ int addAwardFlagF16(VMThread* pThread) {
 extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" bool processEventQueueB__Q22cf13CfGameManagerFv();
 
-int setAwardFlagF1(VMThread* pThread) {
+extern "C" int setAwardFlagF1(VMThread* pThread) {
     // Set the award flag for the event passed as arg 1.
     queueEventId__Q22cf13CfGameManagerFv(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
     return 0;
@@ -142,8 +142,7 @@ int setAwardFlagF1(VMThread* pThread) {
 // Start a realtime event. If the request yields while syncing with the UI,
 // suspend the script; otherwise fire the event and battle-camera reset.
 extern "C" void processFieldLoad__Q22cf13CfGameManagerFv();
-extern "C" void CBattleMan_MarkList48Flag40(cf::CBattleManager* bm);
-int realtimeEventStart(VMThread* pThread) {
+extern "C" int realtimeEventStart(VMThread* pThread) {
     // Arg 1: skip-if-busy flag (default TRUE).
     int skipIfBusy;
     if (vmArgOmitChk(pThread, 1) != 0) {
@@ -166,7 +165,7 @@ int realtimeEventStart(VMThread* pThread) {
 // Play a realtime event named in arg 2; if the realtime flag is already set,
 // suspend the script instead.
 extern "C" void handleAreaChange__Q22cf13CfGameManagerFv(const char* name);
-int realtimeEventPlay(VMThread* pThread) {
+extern "C" int realtimeEventPlay(VMThread* pThread) {
     const char* name = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
     if (gmPauseFlags & 0x1) {
         vmWaitModeSet(pThread);
@@ -178,12 +177,12 @@ int realtimeEventPlay(VMThread* pThread) {
 
 extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
 
-int realtimeEventEnd(VMThread* pThread) {
+extern "C" int realtimeEventEnd(VMThread* pThread) {
     clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
     return 0;
 }
 
-int waitRealtimeEvent(VMThread* pThread) {
+extern "C" int waitRealtimeEvent(VMThread* pThread) {
     // Suspend the script while realtime event playback is active.
     if (processEventQueueB__Q22cf13CfGameManagerFv()) {
         vmWaitModeSet(pThread);
@@ -209,7 +208,7 @@ class CfActorTalkView : public CfActorTalkBasePad, public cf::CObjectState {
 // The retail symbol for this callback is the plain (C-style) name `onTalk`;
 // define it as a normal C++ function here and let the symbol-recovery tooling
 // map the emitted mangled name onto the retail symbol.
-int onTalk(VMThread* pThread) {
+extern "C" int onTalk(VMThread* pThread) {
     // Report (TRUE=1 / FALSE=2) whether the player actor's embedded move
     // object is currently talking. Query via setStateBitMask0(mask)
     // (same (1|2, 1) shape as ocUnit::onEvent); packed void* 0x1000x was wrong.
@@ -219,8 +218,8 @@ int onTalk(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->setStateBitMask0(1, 0) != 0 ||
-        view->setStateBitMask0(2, 0) != 0) {
+    if (view->setStateBitMask0(1, 1) != 0 ||
+        view->setStateBitMask0(2, 1) != 0) {
         ret = 1;
     } else {
         ret = 2;
@@ -229,8 +228,8 @@ int onTalk(VMThread* pThread) {
     return 1;
 }
 
-int onTalkEnd(VMThread* pThread) {
-    // Same talk-mode query as onTalk but without forcing the talk state on
+extern "C" int onTalkEnd(VMThread* pThread) {
+    // Same talk-mode query
     // (arg2 = 0 in both dispatch calls).
     cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
         cf::CfGameManager::getPlayer(0), 0,
@@ -248,7 +247,7 @@ int onTalkEnd(VMThread* pThread) {
     return 1;
 }
 
-int fadeIn(VMThread* pThread) {
+extern "C" int fadeIn(VMThread* pThread) {
     // Fade command: arg 1 selects the fade mode, optional arg 2 picks the
     // color (default = white/opaque). Builds a 4-float RGBA fade color and
     // hands it to CfGameManager twice. When the secondary flag isn't set,
@@ -263,18 +262,18 @@ int fadeIn(VMThread* pThread) {
     checkAvailableValue__Q22cf13CfGameManagerFv(0x10);
     float color[4];
     if (c == 0) {
-        color[0] = eve_sdata2_one;
-        color[1] = eve_sdata2_one;
-        color[2] = eve_sdata2_one;
-        color[3] = eve_sdata2_zero;
-    } else {
         color[0] = eve_sdata2_zero;
         color[1] = eve_sdata2_zero;
         color[2] = eve_sdata2_zero;
-        color[3] = eve_sdata2_zero;
+        color[3] = eve_sdata2_one;
+    } else {
+        color[0] = eve_sdata2_one;
+        color[1] = eve_sdata2_one;
+        color[2] = eve_sdata2_one;
+        color[3] = eve_sdata2_one;
     }
     func_8008566C__Q22cf13CfGameManagerFv(0, color, 1);
-    color[3] = eve_sdata2_one;
+    color[3] = eve_sdata2_zero;
     func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
     if ((gmGameFlags & 0x80) == 0) {
         gmPauseFlags |= 0x2;
@@ -282,7 +281,7 @@ int fadeIn(VMThread* pThread) {
     return 0;
 }
 
-int fadeOut(VMThread* pThread) {
+extern "C" int fadeOut(VMThread* pThread) {
     // Fade command: arg 1 selects the fade mode, optional arg 2 picks the
     // color (default = white/opaque). Builds a 4-float RGBA fade color and
     // hands it to CfGameManager, then raises the "in narrative fade" bit
@@ -298,15 +297,15 @@ int fadeOut(VMThread* pThread) {
     int fadeActive = processBattleQueue__Q22cf13CfGameManagerFv(0x19);
     float color[4];
     if (c == 0) {
-        color[0] = eve_sdata2_one;
-        color[1] = eve_sdata2_one;
-        color[2] = eve_sdata2_one;
-        color[3] = eve_sdata2_zero;
-    } else {
         color[0] = eve_sdata2_zero;
         color[1] = eve_sdata2_zero;
         color[2] = eve_sdata2_zero;
-        color[3] = eve_sdata2_zero;
+        color[3] = eve_sdata2_one;
+    } else {
+        color[0] = eve_sdata2_one;
+        color[1] = eve_sdata2_one;
+        color[2] = eve_sdata2_one;
+        color[3] = eve_sdata2_one;
     }
     func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
     if ((gmGameFlags & 0x80) == 0 || fadeActive) {
@@ -318,7 +317,7 @@ int fadeOut(VMThread* pThread) {
 // Query whether a fade/blank is active (/fadeWait command). If the game
 // is not currently presenting, suspend the script until it finishes.
 extern "C" int resetCameraManager__Q22cf13CfGameManagerFv();
-int fadeWait(VMThread* pThread) {
+extern "C" int fadeWait(VMThread* pThread) {
     if (resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
         vmWaitModeSet(pThread);
     }
@@ -327,13 +326,13 @@ int fadeWait(VMThread* pThread) {
 
 // Report whether an event is running. Normalizes the bool arg to 0/1.
 extern "C" void func_80085978__Q22cf13CfGameManagerFv(int active);
-int checkEvent(VMThread* pThread) {
+extern "C" int checkEvent(VMThread* pThread) {
     func_80085978__Q22cf13CfGameManagerFv(
         vmArgBoolGet(2, vmArgPtrGet(pThread, 1)) != 0);
     return 0;
 }
 
-int clearEventSkip() {
+extern "C" int clearEventSkip() {
     gmPauseFlags &= ~0x100000;
     return 0;
 }
@@ -345,15 +344,15 @@ static int eventFlagBool(VMThread* pThread, int shift) {
     return 1;
 }
 
-int isEvent(VMThread* pThread) {
+extern "C" int isEvent(VMThread* pThread) {
     return eventFlagBool(pThread, 22);
 }
 
-int isTalkEvent(VMThread* pThread) {
+extern "C" int isTalkEvent(VMThread* pThread) {
     return eventFlagBool(pThread, 24);
 }
 
-int isVisionEvent(VMThread* pThread) {
+extern "C" int isVisionEvent(VMThread* pThread) {
     return eventFlagBool(pThread, 26);
 }
 

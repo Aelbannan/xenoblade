@@ -36,7 +36,7 @@ extern "C" {
     // CProc constructor
     void __ct__5CProcFPCcP11CWorkThreads(CProc* self, const char* pName, CWorkThread* pParent, s16 capacity);
     
-    extern u32 lbl_eu_806656CC;
+    extern u32 sExceptionDrawCount;
     
     // Shared exception strings/data and external helpers.
     extern char lbl_eu_8053785C[];
@@ -536,20 +536,11 @@ bool CException::wkStandbyLogout() {
 }
 
 // Infinite render loop
-// Hand-built CException vtable layout: slot at offset 0xC is the render entry.
-// Declared as a polymorphic shim so MWCC emits a true r12 virtual-call sequence.
-class CVirtualException {
-public:
-    virtual void slot0();
-    virtual void render();
-};
-
 void CException::logExceptionMessage(const wchar_t* message) {
     int index = 0;
     while (index < (int)sExceptionCount) {
-        CException* exception = sRegisteredExceptions[index];
-        // Virtual call through hand-built vtable.
-        ((CVirtualException*)exception)->render();
+        IException* exception = sRegisteredExceptions[index];
+        exception->render();
         index++;
     }
     // Retail tests only the first byte of the wide string.
@@ -568,14 +559,14 @@ void CException::logExceptionMessage(const wchar_t* message) {
 
 // Add to global array
 void CException::AddToGlobalArray(IException* pException) {
-    sRegisteredExceptions[sExceptionCount++] = this;
+    sRegisteredExceptions[sExceptionCount++] = reinterpret_cast<IException*>(this);
 }
 
 // Remove from global array
 void CException::RemoveFromGlobalArray(IException* pException) {
     int count = sExceptionCount;
     for (int index = 0; index < count; ++index) {
-        if (sRegisteredExceptions[index] == (CException*)pException) {
+        if (sRegisteredExceptions[index] == pException) {
             // Shift the tail entries down one slot.
             for (int shift = index; shift < count - 1; ++shift) {
                 sRegisteredExceptions[shift] = sRegisteredExceptions[shift + 1];
@@ -604,8 +595,8 @@ void CException::setGlobalMessage() {
 // + "CLib".  (0x80522F70 is the compiler-emitted RTTI class name.)
 // [.bss] 0x80657B50-0x80657FD8 (0x488, align 8): exception array + work buffer.
 extern "C" {
-CException* sRegisteredExceptions[16];   // 0x40
-u8   lbl_eu_80657B90[0x400];       // 0x400
+IException* sRegisteredExceptions[16];   // 0x40
+u8   sExceptionMessageBuffer[0x400];  // name-guess: UTF-16 conversion destination in drawExceptionText (0x8045C1D8-0x8045C204)
 u32  lbl_eu_80657F90[8];           // 0x20
 u32  lbl_eu_80657FB0[3];           // 0xC
 u32  lbl_eu_80657FBC[3];           // 0xC
@@ -619,7 +610,7 @@ extern "C" {
 CException* spExceptionInstance;       // 0x0
 u32  sExceptionCount;              // 0x4
 u32  sExceptionState;              // 0x8
-u32  lbl_eu_806656CC;              // 0xC
+u32  sExceptionDrawCount;          // name-guess: incremented after message conversion (0x8045C218), bit 7 read at 0x8045C7A0
 u64  lbl_eu_806656D0;              // 0x10 (8B)
 u32  lbl_eu_806656DC;              // 0x1C
 }

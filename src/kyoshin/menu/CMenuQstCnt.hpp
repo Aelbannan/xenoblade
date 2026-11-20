@@ -96,13 +96,11 @@ public:
 extern "C" int isLandTelopIdle();
 extern "C" int getLandTelopE0(void);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
-extern "C" void __destroy_arr(void*, void*, int, int);
-extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" int PTNotice_IsActive_3C10();
-extern "C" int MenuTutorialIsCreated();
-extern "C" u32 GetItemMulti_IsActiveFlag();   // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
+
 extern "C" int isQuestLogMenuActive();
 extern "C" u32 gmPauseFlags;
 extern "C" f32 lbl_eu_8066856C;

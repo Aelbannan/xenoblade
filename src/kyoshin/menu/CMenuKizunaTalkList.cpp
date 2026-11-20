@@ -3,6 +3,7 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuKizunaTalkList.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/cf/CfGameManager.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
@@ -76,7 +77,7 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 // (memberized: updateTalkList -> CKizunaTalkList::updateTalkList; declaration moved into class CKizunaTalkList)
 
 // Skip-timer helpers used by the cancel handler in Move().
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 
 // CfGameManager one-arg controller-type query: declared extern "C" int(int)

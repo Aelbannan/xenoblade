@@ -4,6 +4,7 @@
 #include <string.h>
 #include "libs/monolib/src/scn/CScnItemLight.hpp"
 #include <nw4r/g3d/g3d_scnroot.h>
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
 
 // Opaque retail helper functions resolved by the symbol map (C linkage so the
 // emitted relocations keep the exact retail symbol names).
@@ -77,7 +78,6 @@ extern "C" u32 lbl_eu_806624D8;
 extern "C" void __dt__13CScnItemLightFv();
 extern "C" void __dt__17CScnItemLightNw4rFv();
 extern "C" void ScnCamNw4r_NullHook40();
-extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void scnItemIdNoopA();
 extern "C" u32 lbl_eu_8056DD08[8] = {
     (u32)&__RTTI__13CScnItemLight, 0x00000000,

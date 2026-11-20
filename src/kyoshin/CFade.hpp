@@ -38,6 +38,7 @@ public:
 };
 
 // Retail-unmangled fade helpers
+extern "C" int CFade_IsReady(CFade* self);
 // C-linkage symbols (verbatim CFade_StepFadeIn/CFade_StepFadeOut/CFade_MarkLoaded).
 // Mark the overlay loaded/ready once the layout is attached.
 extern "C" void CFade_MarkLoaded(CFade* self);

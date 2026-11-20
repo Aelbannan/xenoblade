@@ -40,7 +40,6 @@ extern "C" {
     int IsThreadVoiceActive(CVS_THREAD* self);
     void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
     int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
-    int HpVoice_CollectIdle(void* arr, int capacity, int unused);
     int BmVoice_FindPoolA(void);
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8* CCharVoiceMan_AllocVoiceArena(int size);
@@ -55,7 +54,6 @@ extern "C" {
 
 // Voice-playback state helper shared by the voice thread TUs (genuine
 // retail C-ABI symbol; kept extern "C" so the name is unmangled).
-extern "C" int HpVoice_MapSubState(CVoiceHandle* handle);
 
 // Offset layout over CVoiceHandle for the fields this TU's helpers access
 // (the manager's large handle block: state flags at 0x3374 and a half-word

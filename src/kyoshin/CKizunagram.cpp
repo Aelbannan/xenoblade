@@ -199,10 +199,9 @@ extern "C" void buildCurLayout(UnkKizunaSelf57E58* self) {
 // and finally refresh every label/texture pane from the BDAT tables.
 extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     char nameBuf[0x20];
-    char* str = lbl_eu_8050CB20;
 
-    buildLayout((nw4r::lyt::Layout**)&self->layout, (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x5c);
-    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->layout, &self->anim, (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x70);
+    buildLayout((nw4r::lyt::Layout**)&self->layout, (nw4r::lyt::ArcResourceAccessor*)self->acc, "mf40_kiz_line.brlyt");
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->layout, &self->anim, (nw4r::lyt::ArcResourceAccessor*)self->acc, "mf40_kiz_line_scale1.brlan");
 
     // Bind the device font to the layout's root pane.
     nw4r::lyt::Pane* rootPane =
@@ -217,44 +216,44 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
 
     // Reset then hide the shared line pane.
     ((UnkKizunaMid59344*)self->layout)
-        ->field10->target((int)(str + 0x8b), 1)
+        ->field10->target((int)("nul_all"), 1)
         ->fieldB8 = 0;
     setPaneVisible(
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
-            (int)(str + 0x8b), 1),
+            (int)("nul_all"), 1),
         0);
 
     // Region-dependent line color overrides.
     void* lytv = self->layout;
     u8 lang = (u8)lbl_eu_80664184;
     if (lang == 0x19) {
-        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRegion19First, &kizLineTevColorRegion19Second);
-        PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, (int)0xF9FFF2FF, 0x94AA8CFF);
+        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRegion19First, &kizLineTevColorRegion19Second);
+        PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", (int)0xF9FFF2FF, 0x94AA8CFF);
     } else if (lang == 0x1A) {
-        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRegion1AFirst, &kizLineTevColorRegion1ASecond);
-        PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0x8CA0EBFF);
+        PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRegion1AFirst, &kizLineTevColorRegion1ASecond);
+        PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", -1, 0x8CA0EBFF);
     } else {
         switch (MapValueToRank6(lang)) {
         case 0:
         case 1:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank01First, &kizLineTevColorRank01Second);
-            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xEEB88AFF);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRank01First, &kizLineTevColorRank01Second);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", -1, 0xEEB88AFF);
             break;
         case 2:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank2First, &kizLineTevColorRank2Second);
-            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE0C072FF);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRank2First, &kizLineTevColorRank2Second);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", -1, 0xE0C072FF);
             break;
         case 3:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank3First, &kizLineTevColorRank3Second);
-            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xE1F8A8FF);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRank3First, &kizLineTevColorRank3Second);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", -1, 0xE1F8A8FF);
             break;
         case 4:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank4First, &kizLineTevColorRank4Second);
-            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xB4DEFFFF);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRank4First, &kizLineTevColorRank4Second);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", -1, 0xB4DEFFFF);
             break;
         case 5:
-            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, str + 0x93, &kizLineTevColorRank5First, &kizLineTevColorRank5Second);
-            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, str + 0x93, -1, 0xBCBAE6FF);
+            PaneMatSetTevColorsByName((nw4r::lyt::Layout*)lytv, "pic_bg", &kizLineTevColorRank5First, &kizLineTevColorRank5Second);
+            PaneSetVtxColorPairsByName((nw4r::lyt::Layout*)lytv, "pic_bg", -1, 0xBCBAE6FF);
             break;
         }
     }
@@ -266,11 +265,11 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     if (paneMem != NULL) {
         newPane = new (paneMem) nw4r::lyt::Pane();
     }
-    newPane->SetName(str + 0x9a);
+    newPane->SetName("face_icon");
     setPaneVisible(newPane, 1);
     nw4r::lyt::Pane* parent =
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
-            (int)(str + 0xa4), 1);
+            (int)("nul_scroll"), 1);
     parent->AppendChild(newPane);
 
     u16 id;
@@ -288,13 +287,13 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
 
         // Pull both anchor panes and shift posA by the BDAT-scaled delta of
         // posB so posA ends up at the mirrored display position.
-        UnkKizunaRes59344* resA = rootP->target((int)(str + 0xa4), 1);
+        UnkKizunaRes59344* resA = rootP->target((int)("nul_scroll"), 1);
         UnkKizunaVec3 posA = resA->pos;
-        UnkKizunaRes59344* resB = rootP->target((int)(str + 0x9a), 1);
+        UnkKizunaRes59344* resB = rootP->target((int)("face_icon"), 1);
         UnkKizunaVec3 posB = resB->pos;
 
-        s16 vx = (s16)BdatGetS16Direct(mgr, str + 0xaf, id);
-        s16 vy = (s16)BdatGetS16Direct(mgr, str + 0xb8, id);
+        s16 vx = (s16)BdatGetS16Direct(mgr, "rlt_posX", id);
+        s16 vy = (s16)BdatGetS16Direct(mgr, "rlt_posY", id);
         UnkKizunaVec3 delta;
         delta.x = (f32)vx;
         delta.y = (f32)vy;
@@ -304,13 +303,13 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
                             (const nw4r::math::VEC3*)&delta.x);
         kizAddVec3(&posA.x, &posA.x, &posB.x);
 
-        resA = rootP->target((int)(str + 0xa4), 1);
+        resA = rootP->target((int)("nul_scroll"), 1);
         copyVEC3((f32*)&resA->pos, (f32*)&posA);
 
-        char* texRowName = BdatGetPtrDirect(mgr, str + 0xca, id);
-        if (strcmp(texRowName, str + 0xd3) != 0) {
+        char* texRowName = BdatGetPtrDirect(mgr, "rlt_face", id);
+        if (strcmp(texRowName, "") != 0) {
             char* tplName =
-                MakeTplNameSysFile(BdatGetU16Direct(mgr, str + 0xd4, id));
+                MakeTplNameSysFile(BdatGetU16Direct(mgr, "rlt_texture", id));
             TPLPalette* pal =
                 (TPLPalette*)self->texSrc->getTex(0x74696D67, (u32)tplName, 0);
             if (pal != 0) {
@@ -322,12 +321,12 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
                     pic = new (picMem) nw4r::lyt::Picture(texMap);
                 }
                 char picNameBuf[0x20];
-                sprintf(picNameBuf, str + 0xe0, texRowName);
+                sprintf(picNameBuf, "%s", texRowName);
                 pic->SetName(picNameBuf);
 
                 // Position the picture from the same BDAT columns (z fixed).
-                s16 px = (s16)BdatGetS16Direct(mgr, str + 0xaf, id);
-                s16 py = (s16)BdatGetS16Direct(mgr, str + 0xb8, id);
+                s16 px = (s16)BdatGetS16Direct(mgr, "rlt_posX", id);
+                s16 py = (s16)BdatGetS16Direct(mgr, "rlt_posY", id);
                 UnkKizunaVec3 picPos;
                 picPos.x = (f32)px;
                 picPos.y = (f32)py;
@@ -338,7 +337,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
                 setPaneVisible(pic, 1);
                 nw4r::lyt::Pane* picParent =
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
-                        ->field10->target((int)(str + 0x9a), 1);
+                        ->field10->target((int)("face_icon"), 1);
                 picParent->AppendChild(pic);
             }
         }
@@ -349,15 +348,15 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
         self->field26 = 0;
         UnkKizunaObj59344* rootP =
             ((UnkKizunaMid59344*)self->layout)->field10;
-        UnkKizunaRes59344* res = rootP->target((int)(str + 0xa4), 1);
+        UnkKizunaRes59344* res = rootP->target((int)("nul_scroll"), 1);
         UnkKizunaVec3 posBase = res->pos;
         UnkKizunaVec3 posCur = res->pos; // retail keeps this dead copy
         UnkKizunaRes59344* resAdd =
-            ((UnkKizunaObj59344*)res)->target((int)(str + 0xe3), 1);
+            ((UnkKizunaObj59344*)res)->target((int)("pic_pcbs"), 1);
         UnkKizunaVec3 posAdd = resAdd->pos;
         kizAddVec3(&posBase.x, &posBase.x, &posAdd.x);
         UnkKizunaRes59344* resScale =
-            ((UnkKizunaObj59344*)res)->target((int)(str + 0xe3), 1);
+            ((UnkKizunaObj59344*)res)->target((int)("pic_pcbs"), 1);
         f32 scalePair[2];
         TagCopyVec2f(scalePair, resScale->scale);
         f32 scaled[3];
@@ -378,31 +377,31 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     const char* msg;
     if (prog20 >= 0x64) {
         if (prog20 >= 0x89) {
-            msg = (prog20 >= 0x113) ? str + 0xec : str + 0xfe;
+            msg = (prog20 >= 0x113) ? "mf40_kiz_pc06.tpl" : "mf40_kiz_pc05.tpl";
         } else {
-            msg = (prog20 >= 0x80) ? str + 0x110 : str + 0x122;
+            msg = (prog20 >= 0x80) ? "mf40_kiz_pc04.tpl" : "mf40_kiz_pc03.tpl";
         }
     } else if (prog20 >= 0x2a) {
-        msg = (prog20 >= 0x45) ? str + 0x134 : str + 0x146;
+        msg = (prog20 >= 0x45) ? "mf40_kiz_pc02.tpl" : "mf40_kiz_pc00.tpl";
     } else if (prog20 >= 0xb) {
-        msg = str + 0x158;
+        msg = "mf40_kiz_pc01.tpl";
     } else {
-        msg = str + 0x146;
+        msg = "mf40_kiz_pc00.tpl";
     }
 
     void* msgTex = self->acc->getTex(0x74696D67, (u32)msg, 0);
     if (msgTex != 0) {
-        PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->layout, str + 0x16a, (TPLPalette*)msgTex);
+        PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->layout, "pic_pc", (TPLPalette*)msgTex);
     }
 
     // Hide the five fixed number/name pane pairs.
     for (u32 i = 1; i <= 5; i++) {
-        sprintf(nameBuf, str + 0x171, (u8)i);
+        sprintf(nameBuf, "pc_map%02d", (u8)i);
         setPaneVisible(
             (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
                 (int)nameBuf, 1),
             0);
-        sprintf(nameBuf, str + 0x17c, (u8)i);
+        sprintf(nameBuf, "mapicon_%02d", (u8)i);
         setPaneVisible(
             (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10->target(
                 (int)nameBuf, 1),
@@ -413,64 +412,64 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     nw4r::lyt::Layout* lytL = (nw4r::lyt::Layout*)self->layout;
     u32 rowCount = Bdat_GetMaxRow_B1EC(mgr);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x189, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x197, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1a5, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1b3, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1c1, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1cf, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1de, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1ed, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x1fc, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x20b, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x21a, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x229, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x238, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x247, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x256, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x265, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x274, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x283, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x292, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x2a1, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x2b0, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x2bf, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x2ce, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x2dd, str + 0xd3, 0);
-    LayoutSetTextBoxFmtValue(lytL, str + 0x2ec, str + 0xd3, 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area01_00", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area02_00", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area03_00", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area04_00", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area05_00", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area01_00u", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area02_00u", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area03_00u", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area04_00u", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area05_00u", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area01_00o", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area02_00o", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area03_00o", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area04_00o", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area05_00o", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area01_00r", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area02_00r", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area03_00r", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area04_00r", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area05_00r", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area01_00l", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area02_00l", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area03_00l", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area04_00l", "", 0);
+    LayoutSetTextBoxFmtValue(lytL, "txt_area05_00l", "", 0);
 
     for (u32 j = 1;; j++) {
         if ((s32)(u16)j > (s32)rowCount) {
             break;
         }
-        u32 rowProg = (u16)BdatGetU16Direct(mgr, str + 0xc1, (u16)j);
+        u32 rowProg = (u16)BdatGetU16Direct(mgr, "rlt_meet", (u16)j);
         if (rowProg != 0 && CtrlRemote_TouchBitByArg(rowProg + 0xa20) != 0) {
-            char* nm = BdatGetPtrDirect(mgr, str + 0xca, (u16)j);
-            if (strcmp(nm, str + 0xd3) != 0) {
-                u32 colv = (u16)BdatGetU16Direct(mgr, str + 0x2fb, (u16)j);
+            char* nm = BdatGetPtrDirect(mgr, "rlt_face", (u16)j);
+            if (strcmp(nm, "") != 0) {
+                u32 colv = (u16)BdatGetU16Direct(mgr, "rlt_lnd", (u16)j);
                 u32 state =
-                    MapValueToRank6(BdatGetU8ByTableKey(str + 0x303, str + 0x310, colv));
-                sprintf(nameBuf, str + 0x171, (u8)state);
+                    MapValueToRank6(BdatGetU8ByTableKey("landmarklist", "mapID", colv));
+                sprintf(nameBuf, "pc_map%02d", (u8)state);
                 setPaneVisible(
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
                         ->field10->target((int)nameBuf, 1),
                     1);
-                sprintf(nameBuf, str + 0x17c, (u8)state);
+                sprintf(nameBuf, "mapicon_%02d", (u8)state);
                 setPaneVisible(
                     (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)
                         ->field10->target((int)nameBuf, 1),
                     1);
                 char* label =
-                    BdatTouchStringCell(str + 0x316, str + 0x321, (u8)state + 0x24);
-                sprintf(nameBuf, str + 0x326, (u8)state);
+                    BdatTouchStringCell("MNU_relate", "name", (u8)state + 0x24);
+                sprintf(nameBuf, "txt_area%02d_00", (u8)state);
                 LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
-                sprintf(nameBuf, str + 0x336, (u8)state);
+                sprintf(nameBuf, "txt_area%02d_00u", (u8)state);
                 LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
-                sprintf(nameBuf, str + 0x347, (u8)state);
+                sprintf(nameBuf, "txt_area%02d_00o", (u8)state);
                 LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
-                sprintf(nameBuf, str + 0x358, (u8)state);
+                sprintf(nameBuf, "txt_area%02d_00r", (u8)state);
                 LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
-                sprintf(nameBuf, str + 0x369, (u8)state);
+                sprintf(nameBuf, "txt_area%02d_00l", (u8)state);
                 LayoutSetTextBoxFmtValue(lytL, nameBuf, label, 0);
             }
         }
@@ -478,7 +477,7 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
 
     // Texture panes for each affinity rank, plus its five progress digits.
     for (u32 k = 1; k <= 5; k++) {
-        sprintf(nameBuf, str + 0x17c, (u8)k);
+        sprintf(nameBuf, "mapicon_%02d", (u8)k);
         UnkKizunaRes59344* visPane =
             ((UnkKizunaMid59344*)self->layout)->field10->target((int)nameBuf, 1);
         if (isPaneVisible((nw4r::lyt::Pane*)visPane)) {
@@ -486,26 +485,26 @@ extern "C" void buildKizLineLayout(UnkKizunaLineBuild* self) {
             const char* texTag = NULL;
             if (prog >= 6000) {
                 if (prog < 8000) {
-                    texTag = str + 0x3b9;
+                    texTag = "mf40_kiz_pclin_b.tpl";
                 } else if (prog < 10001) {
-                    texTag = str + 0x3ce;
+                    texTag = "mf40_kiz_pclin_a.tpl";
                 }
             } else if (prog >= 4000) {
-                texTag = str + 0x3a4;
+                texTag = "mf40_kiz_pclin_c.tpl";
             } else if (prog >= 2000) {
-                texTag = str + 0x38f;
+                texTag = "mf40_kiz_pclin_d.tpl";
             } else {
-                texTag = str + 0x37a;
+                texTag = "mf40_kiz_pclin_e.tpl";
             }
             if (texTag != NULL) {
                 void* tpl = self->acc->getTex(0x74696D67, (u32)texTag, 0);
                 if (tpl != 0) {
-                    sprintf(nameBuf, str + 0x171, (u8)k);
+                    sprintf(nameBuf, "pc_map%02d", (u8)k);
                     PaneSetTexPaletteByName((nw4r::lyt::Layout*)self->layout, (const char*)nameBuf, (TPLPalette*)tpl);
                 }
             }
             for (u32 d = 0; d < 5; d++) {
-                sprintf(nameBuf, str + 0x3e3, (u8)(d + 1), (u8)k);
+                sprintf(nameBuf, "pic_est%02d_m%02d", (u8)(d + 1), (u8)k);
                 UnkKizunaRes59344* pane =
                     ((UnkKizunaMid59344*)self->layout)->field10->target(
                         (int)nameBuf, 1);
@@ -693,9 +692,9 @@ extern "C" int tickKizMarker(UnkKizunaSelf5949C* self) {
     self->field26 = 0;
     // retail reloads field0C per access (no cached child pointer)
     UnkKizunaRes59344* linePane =
-        self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
+        self->field0C->field10->target((int)("nul_scroll"), 1);
     UnkKizunaRes59344* tagPane =
-        self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x9a), 1);
+        self->field0C->field10->target((int)("face_icon"), 1);
     // the second pane embeds a tag processor at +0x10 driving the iteration
     u8* ctx = (u8*)&reinterpret_cast<UnkKizunaCtxPane59098*>(tagPane)->ctx;
     UnkKizunaVec3 linePos = linePane->pos;   // saved before the walk
@@ -761,11 +760,11 @@ extern "C" int tickKizMarker(UnkKizunaSelf5949C* self) {
     // the registered pane, then adds the registered pos in place.
     UnkKizunaVec3 eased = linePos;
     UnkKizunaRes59344* reg1 = ((UnkKizunaObj59344*)linePane)->target(
-        (int)(lbl_eu_8050CB20 + 0xe3), 1);
+        (int)("pic_pcbs"), 1);
     UnkKizunaVec3 regPos = reg1->pos;
     kizAddVec3(&eased.x, &eased.x, &regPos.x);
     UnkKizunaRes59344* reg2 = ((UnkKizunaObj59344*)linePane)->target(
-        (int)(lbl_eu_8050CB20 + 0xe3), 1);
+        (int)("pic_pcbs"), 1);
     f32 sz[2];
     TagCopyVec2f(sz, reg2->scale);
     f32 rad = lbl_eu_8066884C * (sz[0] - lbl_eu_80668858);
@@ -803,21 +802,21 @@ void refreshKizEntryPanes(UnkKizunaSelf9820* self) {
 
     setPaneVisible(
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->field0C)->field10->target(
-            (int)(lbl_eu_8050CB20 + 0x3f5), 1),
+            (int)("txt_relate01"), 1),
         1);
 
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    char* curName = BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xca, self->field26);
+    char* curName = BdatGetPtrDirect(mgr, "rlt_face", self->field26);
 
     // 4-byte (3 chars + NUL) name copies compared as words
     char nameCur[4];
     copyKizName3(nameCur, curName);
 
-    void* fp = getFP(lbl_eu_8050CB20 + 0x402);
+    void* fp = getFP("JNL_relatelist");
     u16 count = Bdat_GetMaxRow_B1EC(fp);
 
     // single base pointer for the shared arc string table (CSE of the above)
-    char* str = &lbl_eu_8050CB20[0];
+    char* str = "mf40_kiz_rdr.brlyt";
 
     char nameRow[4];
     char nameRowAlt[4];
@@ -917,7 +916,7 @@ extern "C" void lineCountUp(UnkKizunaSelf59C5C* self) {
 extern "C" void placeKizMarker(UnkKizunaSelf59394* self,
                                                    UnkKizunaVec3* arg) {
     UnkKizunaRes59344* res =
-        self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0xa4), 1);
+        self->field0C->field10->target((int)("nul_scroll"), 1);
     UnkKizunaVec3 pos = res->pos;      // word-copy of the animated position
     f32 size[2];
     TagCopyVec2f(size, res->scale);  // copy the pane's current size pair
@@ -961,7 +960,6 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
     // Unsigned 64-bit subtract; its high word gates the legacy tint below.
     u64 sub = 0x155;
     u64 chk = CtrlRemote_TouchBitByArg(0x20) - sub;
-    const char* str = lbl_eu_8050CB20;
     f32 scale = 0.5f;
     f32 posZ = lbl_eu_80668828;
     u32 i = 0;
@@ -984,16 +982,16 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
             if ((u32)(chk >> 32) != 0 && id == 0x30a) {
                 tinted = CtrlRemote_TouchBitByArg(0x54b) >= feConst;
             }
-            u16 unlockId = BdatGetU16Direct(mgr, str + 0xc1, id);
+            u16 unlockId = BdatGetU16Direct(mgr, "rlt_meet", id);
             if (CtrlRemote_TouchBitByArg(unlockId + 0xa20) == 0) {
                 goto next;
             }
-            char* nameStr = BdatGetPtrDirect(mgr, str + 0xca, id);
-            if (strcmp(nameStr, str + 0xd3) == 0) {
+            char* nameStr = BdatGetPtrDirect(mgr, "rlt_face", id);
+            if (strcmp(nameStr, "") == 0) {
                 goto next;
             }
             u32 texName =
-                (u32)MakeTplNameSysFile(BdatGetU16Direct(mgr, str + 0xd4, id));
+                (u32)MakeTplNameSysFile(BdatGetU16Direct(mgr, "rlt_texture", id));
             void* pal = self->field08->getTex(texTag, texName, 0);
             nw4r::lyt::Picture* pic = NULL;
             if (pal != 0) {
@@ -1009,10 +1007,10 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
                 CMenuArtsSet_setPaneScale(reinterpret_cast<UnkKizunaFunc31848Obj*>(pic),
                               reinterpret_cast<const UnkKizunaPair*>(&pairA[0]));
                 char name[0x40];
-                sprintf(name, str + 0xe0, nameStr);
+                sprintf(name, "%s", nameStr);
                 pic->SetName(name);
-                s16 px = (s16)BdatGetS16Direct(mgr, str + 0xaf, id);
-                s16 py = (s16)BdatGetS16Direct(mgr, str + 0xb8, id);
+                s16 px = (s16)BdatGetS16Direct(mgr, "rlt_posX", id);
+                s16 py = (s16)BdatGetS16Direct(mgr, "rlt_posY", id);
                 UnkKizunaVec3 v;
                 v.x = (f32)px;
                 v.y = (f32)py;
@@ -1020,7 +1018,7 @@ extern "C" bool buildKizEntryPanes(UnkKizunaSelf59DE8* self) {
                 copyVEC3((f32*)&((KizunaPaneTranslateView*)pic)->translate, &v.x);
                 setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(pic), 1);
                 nw4r::lyt::Pane* parent = reinterpret_cast<nw4r::lyt::Pane*>(
-                    self->field0C->field10->target((int)(str + 0x9a), 1));
+                    self->field0C->field10->target((int)("face_icon"), 1));
                 parent->AppendChild(reinterpret_cast<nw4r::lyt::Pane*>(pic));
             }
             if (tinted != 0) {
@@ -1139,28 +1137,28 @@ void rewriteKizEntryText(UnkKizunaSelfAB* self, u32 a) {
     }
 
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
-    char* curName = BdatGetPtrDirect(mgr, &lbl_eu_8050CB20[0xca], self->field36);
+    char* curName = BdatGetPtrDirect(mgr, "rlt_face", self->field36);
 
     // 4-byte (3 chars + NUL) name copies compared as words
     char nameCur[4];
-    copyKizTag3(nameCur, curName);
+    copyKizTag3((unsigned char*)nameCur, (const unsigned char*)curName);
 
-    void* fp = getFP(&lbl_eu_8050CB20[0x402]);
+    void* fp = getFP("JNL_relatelist");
     u16 count = (u16)Bdat_GetMaxRow_B1EC(fp);
 
     // shared arc string table base (CSE'd into a register across the loop)
-    char* str = &lbl_eu_8050CB20[0];
+    char* str = "mf40_kiz_rdr.brlyt";
 
     // fourcc of the texture tag ('timg'), hoisted out of the loop by MWCC
     const int timg = 0x74696d67;
 
-    char nameRow[4];
-    char nameRowAlt[4];
-    char fmtBuf[0x20];
-    for (u32 i = 1; (u16)i <= count; i++) {
-        char* rowName = BdatGetPtrDirect(fp, str + 0x411, i);
-        copyKizTag3(nameRow, rowName);
-        copyKizTag3(nameRowAlt, rowName + 3);
+        char nameRow[4];
+        char nameRowAlt[4];
+        char fmtBuf[0x20];
+        for (u32 i = 1; (u16)i <= count; i++) {
+            char* rowName = BdatGetPtrDirect(fp, str + 0x411, i);
+            copyKizTag3((unsigned char*)nameRow, (const unsigned char*)rowName);
+            copyKizTag3((unsigned char*)nameRowAlt, (const unsigned char*)(rowName + 3));
 
         // word compare: current name equals the row name or its offset-3 form
         if (*(s32*)nameCur != *(s32*)nameRow && *(s32*)nameCur != *(s32*)nameRowAlt) {
@@ -1389,20 +1387,20 @@ extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
     self->field18 = v;
     if (v == 0) {
         // Reset path: blank all ten text panes with the shared empty string.
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbd1, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbdc, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbe7, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbf2, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb87, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbfd, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xc0b, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb5d, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb79, lbl_eu_8050CB20 + 0xd3, 0);
-        LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb6b, lbl_eu_8050CB20 + 0xd3, 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info07", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info01", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info04", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info05", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info06_00", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info06_01", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info02", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info03_00", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info03_03", "", 0);
+        LayoutSetTextBoxFmtValue(self->field8, "txt_info03_02", "", 0);
         // Hide the root pane fetched through slot 15 of the layout child.
         setPaneVisible(reinterpret_cast<nw4r::lyt::Pane*>(
                           reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
-                              ->field10->slot15(lbl_eu_8050CB20 + 0xc16, 1)),
+                              ->field10->slot15("pic_npcicon", 1)),
                       0);
         return;
     }
@@ -1411,89 +1409,89 @@ extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
 
     // Progress-column color selector: look up the row value then map it to a
     // color index; the low byte picks which timg texture tag to bind.
-    u16 progRow = BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0x2fb, v);
-    u8 colIdx = BdatGetU8ByTableKey(lbl_eu_8050CB20 + 0x303, lbl_eu_8050CB20 + 0x310, progRow);
+    u16 progRow = BdatGetU16Direct(mgr, "rlt_lnd", v);
+    u8 colIdx = BdatGetU8ByTableKey("landmarklist", "mapID", progRow);
     char* texName = NULL;
     switch (MapValueToRank6(colIdx)) {
     case 1:
         texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
-                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc22, 0);
+                      ->getTex(0x74696d67, "mf00_com12_face_area01.tpl", 0);
         break;
     case 2:
         texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
-                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc3d, 0);
+                      ->getTex(0x74696d67, "mf00_com12_face_area02.tpl", 0);
         break;
     case 3:
         texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
-                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc58, 0);
+                      ->getTex(0x74696d67, "mf00_com12_face_area03.tpl", 0);
         break;
     case 4:
         texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
-                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc73, 0);
+                      ->getTex(0x74696d67, "mf00_com12_face_area04.tpl", 0);
         break;
     case 5:
         texName = ((UnkKizunaAccBA38*)CUICfManager_getArcResourceAccessor())
-                      ->getTex(0x74696d67, lbl_eu_8050CB20 + 0xc8e, 0);
+                      ->getTex(0x74696d67, "mf00_com12_face_area05.tpl", 0);
         break;
     }
     if (texName != NULL) {
         // Bind the color texture and show the tinted root pane.
-        PaneSetTexPaletteByName(self->field8, lbl_eu_8050CB20 + 0xc16, (TPLPalette*)texName);
+        PaneSetTexPaletteByName(self->field8, "pic_npcicon", (TPLPalette*)texName);
         setPaneVisible(
             reinterpret_cast<nw4r::lyt::Pane*>(
                 reinterpret_cast<UnkKizunaLayoutSub57AFC*>(self->field8)
-                    ->field10->slot15(lbl_eu_8050CB20 + 0xc16, 1)),
+                    ->field10->slot15("pic_npcicon", 1)),
             1);
     }
 
     // Progress color name for this save column and the kizuna's own color.
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbd1,
-                  BdatGetPtrDirect(lbl_eu_806640A8, lbl_eu_8050CB20 + 0x321, colIdx), 0);
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbdc,
-                  BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0x321, v), 0);
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info07",
+                  BdatGetPtrDirect(lbl_eu_806640A8, "name", colIdx), 0);
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info01",
+                  BdatGetPtrDirect(mgr, "name", v), 0);
 
     // Bond-stage label: stage indexes a per-language label table; stages above
     // 10 clamp to the first label.
     char* stageLabel;
     switch ((u8)BdatGetSexFlag(v)) {
     case 0:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x16);
         break;
     case 1:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x17);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x17);
         break;
     case 2:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x18);
         break;
     case 3:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x19);
         break;
     case 4:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1a);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x1a);
         break;
     case 5:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1b);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x1b);
         break;
     case 6:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1c);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x1c);
         break;
     case 7:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1d);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x1d);
         break;
     case 8:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x1e);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x1e);
         break;
     case 9:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x18);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x18);
         break;
     case 10:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x19);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x19);
         break;
     default:
-        stageLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x16);
+        stageLabel = BdatTouchStringCell("MNU_relate", "name", 0x16);
         break;
     }
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbe7, stageLabel, 0);
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info04", stageLabel, 0);
 
     // Heart-level icon name from the heart-state table (0 hides the icon).
     char* heartLabel;
@@ -1502,40 +1500,40 @@ extern "C" void refreshKizLineDisplay(UnkKizunaSelf57D90* selfArg,
         heartLabel = NULL;
         break;
     case 1:
-        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x20);
+        heartLabel = BdatTouchStringCell("MNU_relate", "name", 0x20);
         break;
     case 2:
-        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x21);
+        heartLabel = BdatTouchStringCell("MNU_relate", "name", 0x21);
         break;
     case 3:
-        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x22);
+        heartLabel = BdatTouchStringCell("MNU_relate", "name", 0x22);
         break;
     case 4:
-        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x23);
+        heartLabel = BdatTouchStringCell("MNU_relate", "name", 0x23);
         break;
     case 5:
-        heartLabel = BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x24);
+        heartLabel = BdatTouchStringCell("MNU_relate", "name", 0x24);
         break;
     }
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbf2, heartLabel, 0);
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info05", heartLabel, 0);
 
     // Encounter counter, both names, formatted "current/max" heart counts.
     setLayoutTextBoxNumber(
-        self->field8, lbl_eu_8050CB20 + 0xb87,
-        (u8)BdatGetU16Direct(mgr, lbl_eu_8050CB20 + 0xca9, v));
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xbfd,
-                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x15), 0);
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xc0b,
-                  BdatGetPtrDirect(mgr, lbl_eu_8050CB20 + 0xcb1, v), 0);
-    u8 heartsCur = BdatGetU8Direct((const void*)mgr, lbl_eu_8050CB20 + 0xcc9, v);
-    u8 heartsMax = BdatGetU8Direct((const void*)mgr, lbl_eu_8050CB20 + 0xcc1, v);
+        self->field8, "txt_info06_00",
+        (u8)BdatGetU16Direct(mgr, "rlt_age", v));
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info06_01",
+                  BdatTouchStringCell("MNU_relate", "name", 0x15), 0);
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info02",
+                  BdatGetPtrDirect(mgr, "rlt_job", v), 0);
+    u8 heartsCur = BdatGetU8Direct((const void*)mgr, "%02d:00", v);
+    u8 heartsMax = BdatGetU8Direct((const void*)mgr, "range_e", v);
     char buf[0x14];
-    sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsCur);
-    LayoutSetTextBoxText(self->field8, lbl_eu_8050CB20 + 0xb5d, buf, 0);
-    sprintf(buf, lbl_eu_8050CB20 + 0xcc9, heartsMax);
-    LayoutSetTextBoxText(self->field8, lbl_eu_8050CB20 + 0xb79, buf, 0);
-    LayoutSetTextBoxFmtValue(self->field8, lbl_eu_8050CB20 + 0xb6b,
-                  BdatTouchStringCell(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x14), 0);
+    sprintf(buf, "%02d:00", heartsCur);
+    LayoutSetTextBoxText(self->field8, "txt_info03_00", buf, 0);
+    sprintf(buf, "%02d:00", heartsMax);
+    LayoutSetTextBoxText(self->field8, "txt_info03_03", buf, 0);
+    LayoutSetTextBoxFmtValue(self->field8, "txt_info03_02",
+                  BdatTouchStringCell("MNU_relate", "name", 0x14), 0);
 }
 
 // Mode-2 update: when the +0x0C anim transform reaches its last frame,
@@ -2176,7 +2174,7 @@ extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
 
     Bdat_GetTable_AA34();
     const char* str = lbl_eu_8050CB20;
-    void* fp = getFP(str + 0x402);
+    void* fp = getFP("JNL_relatelist");
     u32 count = Bdat_GetMaxRow_B1EC(fp) & 0xffff;
 
     for (u32 i = 0; i < 0x10; i++) {
@@ -2185,7 +2183,7 @@ extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
             return true;
         }
         u32 id = ((u16)cnt + 1) & 0xffff;
-        char* rowName = BdatGetPtrDirect(fp, str + 0x411, id);
+        char* rowName = BdatGetPtrDirect(fp, "pain1", id);
         nw4r::lyt::Pane* pane =
             (nw4r::lyt::Pane*)self->field0C->field10->target((int)rowName, 1);
         u32 state = CtrlRemote_TouchBitByArg(id + 0x608) & 0xff;
@@ -2199,121 +2197,121 @@ extern "C" bool revealKizEntries(UnkKizunaSelfA11C* self) {
         }
 
         // Per-state tag: pick the formatted texture name from this row's tag.
-        char* tag = BdatGetPtrDirect(fp, str + 0x417, id);
+        char* tag = BdatGetPtrDirect(fp, "pain_txt1", id);
         switch (state) {
         case 1:
-            if (strcmp(tag, str + 0x494) == 0) {
-                sprintf(buf, str + 0x4a1);
-            } else if (strcmp(tag, str + 0x4ba) == 0) {
-                sprintf(buf, str + 0x4a1);
-            } else if (strcmp(tag, str + 0x4c7) == 0) {
-                sprintf(buf, str + 0x4d4);
-            } else if (strcmp(tag, str + 0x4ed) == 0) {
-                sprintf(buf, str + 0x4fa);
-            } else if (strcmp(tag, str + 0x513) == 0) {
-                sprintf(buf, str + 0x4fa);
-            } else if (strcmp(tag, str + 0x3f5) == 0) {
-                sprintf(buf, str + 0x520);
-            } else if (strcmp(tag, str + 0x539) == 0) {
-                sprintf(buf, str + 0x546);
-            } else if (strcmp(tag, str + 0x55f) == 0) {
-                sprintf(buf, str + 0x546);
-            } else if (strcmp(tag, str + 0x56c) == 0) {
-                sprintf(buf, str + 0x579);
+            if (strcmp(tag, "txt_relate07") == 0) {
+                sprintf(buf, "mf40_kiz_000line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate13") == 0) {
+                sprintf(buf, "mf40_kiz_000line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate05") == 0) {
+                sprintf(buf, "mf40_kiz_018line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate03") == 0) {
+                sprintf(buf, "mf40_kiz_045line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate16") == 0) {
+                sprintf(buf, "mf40_kiz_045line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate01") == 0) {
+                sprintf(buf, "mf40_kiz_090line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate02") == 0) {
+                sprintf(buf, "mf40_kiz_135line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate15") == 0) {
+                sprintf(buf, "mf40_kiz_135line_e00.tpl");
+            } else if (strcmp(tag, "txt_relate04") == 0) {
+                sprintf(buf, "mf40_kiz_162line_e00.tpl");
             } else {
-                sprintf(buf, str + 0x592);
+                sprintf(buf, "none");
             }
             break;
         case 2:
-            if (strcmp(tag, str + 0x494) == 0) {
-                sprintf(buf, str + 0x597);
-            } else if (strcmp(tag, str + 0x4ba) == 0) {
-                sprintf(buf, str + 0x597);
-            } else if (strcmp(tag, str + 0x4c7) == 0) {
-                sprintf(buf, str + 0x5b0);
-            } else if (strcmp(tag, str + 0x4ed) == 0) {
-                sprintf(buf, str + 0x5c9);
-            } else if (strcmp(tag, str + 0x513) == 0) {
-                sprintf(buf, str + 0x5c9);
-            } else if (strcmp(tag, str + 0x3f5) == 0) {
-                sprintf(buf, str + 0x5e2);
-            } else if (strcmp(tag, str + 0x539) == 0) {
-                sprintf(buf, str + 0x5fb);
-            } else if (strcmp(tag, str + 0x55f) == 0) {
-                sprintf(buf, str + 0x5fb);
-            } else if (strcmp(tag, str + 0x56c) == 0) {
-                sprintf(buf, str + 0x614);
+            if (strcmp(tag, "txt_relate07") == 0) {
+                sprintf(buf, "mf40_kiz_000line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate13") == 0) {
+                sprintf(buf, "mf40_kiz_000line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate05") == 0) {
+                sprintf(buf, "mf40_kiz_018line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate03") == 0) {
+                sprintf(buf, "mf40_kiz_045line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate16") == 0) {
+                sprintf(buf, "mf40_kiz_045line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate01") == 0) {
+                sprintf(buf, "mf40_kiz_090line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate02") == 0) {
+                sprintf(buf, "mf40_kiz_135line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate15") == 0) {
+                sprintf(buf, "mf40_kiz_135line_d00.tpl");
+            } else if (strcmp(tag, "txt_relate04") == 0) {
+                sprintf(buf, "mf40_kiz_162line_d00.tpl");
             } else {
-                sprintf(buf, str + 0x592);
+                sprintf(buf, "none");
             }
             break;
         case 3:
-            if (strcmp(tag, str + 0x494) == 0) {
-                sprintf(buf, str + 0x62d);
-            } else if (strcmp(tag, str + 0x4ba) == 0) {
-                sprintf(buf, str + 0x62d);
-            } else if (strcmp(tag, str + 0x4c7) == 0) {
-                sprintf(buf, str + 0x646);
-            } else if (strcmp(tag, str + 0x4ed) == 0) {
-                sprintf(buf, str + 0x65f);
-            } else if (strcmp(tag, str + 0x513) == 0) {
-                sprintf(buf, str + 0x65f);
-            } else if (strcmp(tag, str + 0x3f5) == 0) {
-                sprintf(buf, str + 0x678);
-            } else if (strcmp(tag, str + 0x539) == 0) {
-                sprintf(buf, str + 0x691);
-            } else if (strcmp(tag, str + 0x55f) == 0) {
-                sprintf(buf, str + 0x691);
-            } else if (strcmp(tag, str + 0x56c) == 0) {
-                sprintf(buf, str + 0x6aa);
+            if (strcmp(tag, "txt_relate07") == 0) {
+                sprintf(buf, "mf40_kiz_000line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate13") == 0) {
+                sprintf(buf, "mf40_kiz_000line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate05") == 0) {
+                sprintf(buf, "mf40_kiz_018line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate03") == 0) {
+                sprintf(buf, "mf40_kiz_045line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate16") == 0) {
+                sprintf(buf, "mf40_kiz_045line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate01") == 0) {
+                sprintf(buf, "mf40_kiz_090line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate02") == 0) {
+                sprintf(buf, "mf40_kiz_135line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate15") == 0) {
+                sprintf(buf, "mf40_kiz_135line_c00.tpl");
+            } else if (strcmp(tag, "txt_relate04") == 0) {
+                sprintf(buf, "mf40_kiz_162line_c00.tpl");
             } else {
-                sprintf(buf, str + 0x592);
+                sprintf(buf, "none");
             }
             break;
         case 4:
-            if (strcmp(tag, str + 0x494) == 0) {
-                sprintf(buf, str + 0x6c3);
-            } else if (strcmp(tag, str + 0x4ba) == 0) {
-                sprintf(buf, str + 0x6c3);
-            } else if (strcmp(tag, str + 0x4c7) == 0) {
-                sprintf(buf, str + 0x6dc);
-            } else if (strcmp(tag, str + 0x4ed) == 0) {
-                sprintf(buf, str + 0x6f5);
-            } else if (strcmp(tag, str + 0x513) == 0) {
-                sprintf(buf, str + 0x6f5);
-            } else if (strcmp(tag, str + 0x3f5) == 0) {
-                sprintf(buf, str + 0x70e);
-            } else if (strcmp(tag, str + 0x539) == 0) {
-                sprintf(buf, str + 0x727);
-            } else if (strcmp(tag, str + 0x55f) == 0) {
-                sprintf(buf, str + 0x727);
-            } else if (strcmp(tag, str + 0x56c) == 0) {
-                sprintf(buf, str + 0x740);
+            if (strcmp(tag, "txt_relate07") == 0) {
+                sprintf(buf, "mf40_kiz_000line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate13") == 0) {
+                sprintf(buf, "mf40_kiz_000line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate05") == 0) {
+                sprintf(buf, "mf40_kiz_018line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate03") == 0) {
+                sprintf(buf, "mf40_kiz_045line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate16") == 0) {
+                sprintf(buf, "mf40_kiz_045line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate01") == 0) {
+                sprintf(buf, "mf40_kiz_090line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate02") == 0) {
+                sprintf(buf, "mf40_kiz_135line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate15") == 0) {
+                sprintf(buf, "mf40_kiz_135line_b00.tpl");
+            } else if (strcmp(tag, "txt_relate04") == 0) {
+                sprintf(buf, "mf40_kiz_162line_b00.tpl");
             } else {
-                sprintf(buf, str + 0x592);
+                sprintf(buf, "none");
             }
             break;
         case 5:
-            if (strcmp(tag, str + 0x494) == 0) {
-                sprintf(buf, str + 0x759);
-            } else if (strcmp(tag, str + 0x4ba) == 0) {
-                sprintf(buf, str + 0x759);
-            } else if (strcmp(tag, str + 0x4c7) == 0) {
-                sprintf(buf, str + 0x772);
-            } else if (strcmp(tag, str + 0x4ed) == 0) {
-                sprintf(buf, str + 0x78b);
-            } else if (strcmp(tag, str + 0x513) == 0) {
-                sprintf(buf, str + 0x78b);
-            } else if (strcmp(tag, str + 0x3f5) == 0) {
-                sprintf(buf, str + 0x7a4);
-            } else if (strcmp(tag, str + 0x539) == 0) {
-                sprintf(buf, str + 0x7bd);
-            } else if (strcmp(tag, str + 0x55f) == 0) {
-                sprintf(buf, str + 0x7bd);
-            } else if (strcmp(tag, str + 0x56c) == 0) {
-                sprintf(buf, str + 0x7d6);
+            if (strcmp(tag, "txt_relate07") == 0) {
+                sprintf(buf, "mf40_kiz_000line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate13") == 0) {
+                sprintf(buf, "mf40_kiz_000line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate05") == 0) {
+                sprintf(buf, "mf40_kiz_018line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate03") == 0) {
+                sprintf(buf, "mf40_kiz_045line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate16") == 0) {
+                sprintf(buf, "mf40_kiz_045line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate01") == 0) {
+                sprintf(buf, "mf40_kiz_090line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate02") == 0) {
+                sprintf(buf, "mf40_kiz_135line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate15") == 0) {
+                sprintf(buf, "mf40_kiz_135line_a00.tpl");
+            } else if (strcmp(tag, "txt_relate04") == 0) {
+                sprintf(buf, "mf40_kiz_162line_a00.tpl");
             } else {
-                sprintf(buf, str + 0x592);
+                sprintf(buf, "none");
             }
             break;
         }
@@ -2340,10 +2338,10 @@ void tickKizMain(UnkKizunaSelfC580* self) {
         tryKizMode3(self);
         break;
     case 4:
-        tryKizMode5(self);
+        tryKizMode5((u8*)self);
         break;
     case 5:
-        tryKizIdle(self);
+        tryKizIdle((u8*)self);
         break;
     case 6:
         tickKizLine(self);
@@ -2373,7 +2371,7 @@ extern "C" void lineCountDown(UnkKizunaSelf59D44* self) {
 
 // Kizuna-line status query: when the anim at +0x78 sits at frame 0, refine the
 // answer with whether the +0x68 sub-anim has finished.
-int kizChartStatus(UnkKizunaSelfCBCC* self) {
+u8 kizChartStatus(UnkKizunaSelfCBCC* self) {
     // Sense: constant status when the anim sits AT frame 0; sub-anim query
     // runs while it is still moving.
     if (self->field8C != 0) {

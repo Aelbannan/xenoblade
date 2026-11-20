@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPartyState.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 
 #include "monolib/util/MemManager.hpp"
@@ -27,12 +28,12 @@ CPartyState::CPartyState()
     field_0x57 = 0;
 }
 
-u8 CPartyState::isPartySettled() { return field_0x30; }
+int CPartyState::isPartySettled() { return field_0x30; }
 
 
-u8 CPartyState::isPartyIdle() { return field_0x31; }
+int CPartyState::isPartyIdle() { return field_0x31; }
 
-u8 CPartyState::isPartyReady() { return field_0x57; }
+int CPartyState::isPartyReady() { return field_0x57; }
 
 
 // Selection page-down / left input: clamp the current member index against
@@ -133,7 +134,7 @@ same:
     playUISound(6);
 }
 
-u32 CPartyState::isPartyHighlightSet() {
+int CPartyState::isPartyHighlightSet() {
     s8 val = field_0x4D;
     // Match rlwinm extraction of sign bit followed by xori
     return ((u32)(val >> 31) & 1) ^ 1;
@@ -152,9 +153,9 @@ extern "C" int func_801FD5C4(void* self) {
     return (a - b) != 0 ? 1 : 2;
 }
 
-u8 CPartyState::isPartyCloseRequested() { return field_0x4E; }
+int CPartyState::isPartyCloseRequested() { return field_0x4E; }
 
-u8 CPartyState::getPartySelectIndex() { return field_0x4C; }
+int CPartyState::getPartySelectIndex() { return field_0x4C; }
 
 // Party-select confirm: swap the highlighted member (0x4D) into the current
 // slot (0x4C). Refuses when the target slot's character is busy (+0x176C==1);
@@ -230,7 +231,7 @@ extern "C" void refreshPartyCursor(CPartyState* self) {
 // : retail calls these helpers through real `bl`s from
 // advancePartyPanel; -inline auto would otherwise inline them into the switch.
 extern "C" void stepPartyOpenAnim(CPartyState* self) {
-    float target = lbl_eu_80668218;
+    float target = 1.0f;
     if (advanceAnimTransform(self->mAnimTrans1, target) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
@@ -260,7 +261,7 @@ CPartyState::~CPartyState() {
 // Intro-animation finish handler: when the +0x24 anim transform reaches the
 // target frame, move to state 3, show the cursor, and run the shared tail.
 extern "C" void finishPartyIntroAnim(CPartyState* self) {
-    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668218) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans0, 1.0f) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
         self->mCur22.SetVisible(1);
@@ -271,7 +272,7 @@ extern "C" void finishPartyIntroAnim(CPartyState* self) {
 // Party-state panel advance (closing): when the +0x24 anim transform reaches
 // the target frame, bind the panel anims and move to state 5.
 extern "C" void stepPartyCloseAnim(CPartyState* self) {
-    if (AnimRewindFrame(self->mAnimTrans0, lbl_eu_80668218) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans0, 1.0f) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, true);
         self->field_0x2C = 5;
@@ -315,7 +316,7 @@ extern "C" void swapPartyMembers(CPartyState* self) {
     int* party = CtrlObjectParam_GetSlotTableBase();
     // (u8) result cast instead of `& 0xFF` -- same mask, different VR birth.
     u8 slotA = (u8)GetCollectedFlagByte((u8)self->field_0x4D);
-    CtrlObjectParam_SwapSlotValues(party, slotA, GetCollectedFlagByte(self->field_0x4C));
+    ((void (*)(int*, u8, u8))CtrlObjectParam_SwapSlotValues)(party, slotA, GetCollectedFlagByte(self->field_0x4C));
     BuildSlotItemLists(0);
     func_80080888__Q22cf13CfGameManagerFv(GetCollectedFlagByte(0), 0);
     rebuildPartySelect(self);
@@ -346,8 +347,8 @@ extern "C" void scalePartySlotPane(CPartyState* self, u32 memberIdx, const char*
     } else {
         ratio = 0.0f;
     }
-    if (ratio > lbl_eu_80668218) {
-        ratio = lbl_eu_80668218;
+    if (ratio > 1.0f) {
+        ratio = 1.0f;
     }
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
     if (pane != NULL) {
@@ -418,8 +419,8 @@ extern "C" void rebuildPartySelect(CPartyState* self) {
         CPartyCharData* data = (CPartyCharData*)CtrlObjectParam_GetCharEntry(member);
         CPartySlotStats* s = &data->stats;
         s32 v0 = s->mVtbl->fn[0x42](s);
-        s32 v1 = (int)((CPartySlotFnF)s->mVtbl->fn[0x4A])(s);
-        s32 v2 = (int)((CPartySlotFnF)s->mVtbl->fn[0x4B])(s);
+        s32 v1 = (int)((CPartySlotFnF)s->mVtbl->fn[0x4A])(s);  // DEBT(callcast): vtable slot is Fv in the header but the override reads f1; typed cast forces float return
+        s32 v2 = (int)((CPartySlotFnF)s->mVtbl->fn[0x4B])(s);  // DEBT(callcast): vtable slot is Fv in the header but the override reads f1; typed cast forces float return
         u32 v3 = s->mVtbl->fn[0x7A](s);
         u32 v4 = s->mVtbl->fn[0x7C](s);
         char* v5 = (char*)s->mVtbl->fn[0x26](s);

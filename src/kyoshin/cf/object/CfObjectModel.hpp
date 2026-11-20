@@ -202,14 +202,19 @@ namespace cf {
     void CfObjectModel_teardownModel();
     void CfObject_notifyEventDone();
     virtual u32 CfObject_readKindFlagWord() override;
-    void CfObject_setMoveTargetVec();
     ml::CVec3* CfObject_getPosVector();
+
+    void CfObject_setMoveTargetVec(const ml::CVec3* vec);
+
     void CfObject_UnkVirtualFunc27(void* src);
-    void CfObject_setMoveHeadAngle();
-    void CfObject_setScaledHeadAngle();
+    void CfObject_setMoveHeadAngle(float value);
+
     float CfObject_getScaledAngle();
     void* CObjectParam_UnkVirtualFunc2();
     void setPointEnabled(int flag); //0x158 override (base renamed; keeps CfObjectModel non-abstract)
+    void CfObject_UnkVirtualFunc22(const ml::CVec3* vec);
+    void CfObject_UnkVirtualFunc66(int flag);
+    void CfObject_syncModelRate(float value);
     int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr) override;
     float CfObject_getMoveHeadAngle();
     // CfObject slot overrides (retail CfObjectModel symbols in the
@@ -231,6 +236,13 @@ namespace cf {
     float CfObject_getProgressHigh();                   //0x174
     };
 }
+
+// Object-kind predicates defined in CfObjectModel.cpp. Their C++ mangled
+// names are the exported retail symbols.
+u32 CfObj_KindBit1(cf::CfObject* obj);
+u32 CfObj_KindBit2(cf::CfObject* obj);
+u32 CfObj_KindBit3(cf::CfObject* obj);
+u32 CfObj_KindBit7(cf::CfObject* obj);
 
 // Output vector pair filled by TexMan_GetDefaultXf_0A44 (monolib scene helper used by
 // CfObject_UnkVirtualFunc56: the two positions' Y difference is returned).
@@ -268,7 +280,7 @@ extern "C" void simSetFlags7A8_12(void* self, u32 a, u32 b);
 // Effect-chain helpers (defined in CfObjectEff.cpp). C linkage keeps
 // the call-site reloc at the plain retail name (a C++ declaration makes
 // MWCC emit the mangled __FPUc reference).
-extern "C" void notifyDetach_(void* self);
+
 extern "C" void reattachTrg__(void* a, void* b);
 extern "C" void detachTrgPrt_(u8* arg);
 

@@ -31,6 +31,10 @@ GXTexObj* TexMan_AllocBuffer_0208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);
 void TexMan_ReleaseArg_02D8(CTexWorkObj* obj, GXTexObj* tex);
 void TexObj_BlitViewRect(GXTexObj* tex, int p2, int p3);
 void __dt__10CScnFilterFv(CScnFilter* self, s32 flags);
+// Real C++ symbols emitted by the converted CScnFilter TU. The C-linkage
+// declarations preserve the retail call/vtable-slot ABIs in this unconverted TU.
+extern "C" void __ct__10CScnFilterFv(CScnFilter* self);
+extern "C" void updateIntensity__10CScnFilterFP14CScnFilterHost(CScnFilter* self, void* host);
 void TexObj_BlitRect(GXTexObj* tex, ml::CRect* rect, u8 p3, u8 p4);
 u32 CScnBloom_ExtractBright(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
                   int maxBufs, ml::CRect* rect, u32 flag);
@@ -69,7 +73,7 @@ extern "C" void CScnBloom_renderBloomAdj48(CScnBloom* self, u32 param);
 // CScnBloom dispatch table (36B): typeinfo locators + virtual thunks.
 extern "C" u32 lbl_eu_8056EA08[9] = {
     (u32)&__RTTI__9CScnBloom, 0x00000000, (u32)&__RTTI__9CScnBloom, 0xFFFFFFB8,
-    (u32)&CScnBloom_destroyAdj48, (u32)&FilterUpdateIntensity, (u32)&CScnBloom_renderBloomAdj48,
+    (u32)&CScnBloom_destroyAdj48, (u32)&updateIntensity__10CScnFilterFP14CScnFilterHost, (u32)&CScnBloom_renderBloomAdj48,
     (u32)&__dt__9CScnBloomFv, (u32)&CScnBloom_RenderFiltered,
 };
 // Bloom param block (20B).
@@ -418,8 +422,8 @@ extern "C" void CScnBloom_RenderCached(CScnBloom* self) {
     }
 
     CTexWorkObj* texWork = ((CScnBloomView*)self->mView)->mTexWork;
-    ml::CCol4 col2(lbl_eu_8066AB28, lbl_eu_8066AB28, lbl_eu_8066AB28, lbl_eu_8066AB28);
-    ml::CCol4 col3(lbl_eu_8066AB30, lbl_eu_8066AB30, lbl_eu_8066AB28, lbl_eu_8066AB28);
+    ml::CCol4 col2(1.0f, 1.0f, 1.0f, 1.0f);
+    ml::CCol4 col3(0.0f, 0.0f, 1.0f, 1.0f);
 
     // Tile counts: viewport / mUnk44 rounded up to even, as in CScnBloom_RenderFiltered.
     s32 div = self->mUnk44;
@@ -568,10 +572,8 @@ u32 CScnBloom_ExtractBright(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
     GXInitTexObjFilter(tex, (GXTexFilter)1, (GXTexFilter)1);
     GXLoadTexObj(tex, GX_TEXMAP0);
 
-    ml::CCol4 colA(lbl_eu_8066AB0C, lbl_eu_8066AB0C, lbl_eu_8066AB00,
-                   lbl_eu_8066AB00);
-    ml::CCol4 colB(lbl_eu_8066AB00, lbl_eu_8066AB00, lbl_eu_8066AB00,
-                   lbl_eu_8066AB00);
+    ml::CCol4 colA(0.0f, 0.0f, 1.0f, 1.0f);
+    ml::CCol4 colB(1.0f, 1.0f, 1.0f, 1.0f);
     drawTexturedQuad(&rc, &colA, &colB);
 
     setupLightVtxFormat(0, 1);
@@ -579,9 +581,9 @@ u32 CScnBloom_ExtractBright(CScnBloom* self, CTexWorkObj* work, GXTexObj** bufs,
     setupLightTevColor(0, 2, 0);
     setupLightTevAlpha(0, 0, 0);
 
-    f32 scale = self->mEnabled ? lbl_eu_8066AB10 : lbl_eu_8066AB18;
-    const f32 one = lbl_eu_8066AB00;
-    const f32 zero = lbl_eu_8066AB0C;
+    f32 scale = self->mEnabled ? 0.2 : 0.5;
+    const f32 one = 1.0f;
+    const f32 zero = 0.0f;
     GXTexObj** pBuf = bufs;
     u32 count = 0;
     while (count < self->mRenderMode && count < (u32)maxBufs) {
@@ -786,7 +788,7 @@ extern "C" void CScnBloom_RenderFiltered(CScnBloom* self, u32 param) {
 // CScnBloom_InitWithView; the derived CScnFilter entry (+8) goes to +0x48).
 extern "C" CScnBloom* __ct__CScnBloom(CScnBloom* self) {
     CScnBloom_InitBase(self);
-    __ct__CScnFilter((void*)&self->mView);
+    __ct__10CScnFilterFv((CScnFilter*)&self->mView);
     void* vtbl = (void*)lbl_eu_8056EA08;
     *(void**)&self->mBlurScale.z = vtbl;
     self->mView = (CView*)((u8*)vtbl + 8);

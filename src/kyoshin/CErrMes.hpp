@@ -8,6 +8,9 @@
 
 #include <types.h>
 
+// Defined in CErrMes.cpp (C++ linkage, retail symbol loadErrMesTable__Fv).
+void loadErrMesTable();
+
 // Tail-call trampoline: sets error bdat index 6 and forwards to CBdat.
 extern "C" void touchErrMesEntry();
 

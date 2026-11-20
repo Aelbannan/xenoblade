@@ -53,3 +53,14 @@ likely mechanism. **Worth a tool hardening:** write `symbols.txt` atomically
   (check for a trailing partial line / expected line count).
 - A hand-repro of a failure mutates the real tree; prefer a scratch copy, and if
   not possible, back up and restore *everything* the operation touches.
+
+## Resolution (2026-11-20, orchestrator)
+
+`config/jp/symbols.txt` rebuilt to 50121 entries: the current truncated file's complete lines
+(all `.init`/`extab`/`extabindex`/`.text` up to 0x80405FBC, carrying every rename since) plus
+the tail of the last complete version (`22082e1ff`, 2026-10-03) from
+`GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv` onward. Renames made since then were carried into
+that tail by name: an old→new map was derived from US `22082e1ff` vs current US by address
+(6485 renames, 629 applied to the JP tail, 0 collisions). Duplicate-name count (45) is in line with
+the old file (48) and EU (41). JP renames of data symbols that never existed under a shared
+name in the October file may still be placeholders; re-run the mirror sweep.

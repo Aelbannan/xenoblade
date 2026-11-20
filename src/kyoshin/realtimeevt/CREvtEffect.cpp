@@ -2,7 +2,8 @@
 // Class: cf::CREvtEffect (CREvtObj + private CScheduleChild at 0x14), size 0x144
 
 #include <types.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "monolib/device/CDeviceSC.hpp"
 #include <string.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 #include <nw4r/math/math_types.h>
@@ -186,7 +187,7 @@ bool cf::CREvtEffect::spawnEffect() {
 
     // Language gating: default to language 1 when the console language is exotic.
     // lang is kept raw (upper bits garbage) and masked per use, like retail.
-    int lang = getLanguage__9CDeviceSCFv();
+    int lang = CDeviceSC::getLanguage();
     if ((lang & 0xFF) > 5) {
         lang = 1;
     }
@@ -380,7 +381,7 @@ void cf::CREvtEffect::initModel(void* src, void* bdatEntry) {
             getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
                 &lbl_eu_80503800[0], &handle, 0);
 
-            mModel = scnImN4BuildByIdx(gmScene, handle, 1, 1, 0, 0x50);
+        mModel = scnImN4BuildByIdx((u8*)gmScene, (u8*)handle, 1, 1, 0, 0x50);
             simSetLeafDist7B0(mModel, lbl_eu_8066793C);
             ((CLibLayoutModel*)mModel)->mFlags |= 4;
 

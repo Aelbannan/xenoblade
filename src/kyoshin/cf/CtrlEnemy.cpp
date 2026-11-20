@@ -1,7 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlEnemy
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -479,7 +480,7 @@ void cf::CtrlEnemy::delegateTo80089B24() { moveBaseSway(this->mSub84); }
 
 void cf::CtrlEnemy::delegateTo80089E88() { moveBaseRoute(this->mSub84); }
 
-void cf::CtrlEnemy::delegateTo80089F68() { moveBaseScnCmd(this->mSub84); }
+void cf::CtrlEnemy::delegateTo80089F68() { moveBaseScnCmd((cf::CCtrlMoveBase*)(this->mSub84)); }
 
 int cf::CtrlEnemy::ret0_80088870() { return 0; }
 int cf::CtrlEnemy::ret0_80088878() { return 0; }
@@ -525,7 +526,7 @@ extern "C" int CtrlEnemy_ret1_800888FC() { return 1; }
 
 extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { moveBaseSway(((cf::CtrlEnemy*)self)->mSub84); }
 extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { moveBaseRoute(((cf::CtrlEnemy*)self)->mSub84); }
-extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { moveBaseScnCmd(((cf::CtrlEnemy*)self)->mSub84); }
+extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { moveBaseScnCmd((cf::CCtrlMoveBase*)((cf::CtrlEnemy*)self)->mSub84); }
 
 // Typed view of cf::CBattleManager's +0x84 flag word (real member at +0x84
 // in kyoshin/cf/CBattleManager.hpp). This TU only forward-declares

@@ -1,5 +1,6 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CUIBattleManager.hpp"
+#include "kyoshin/menu/CMenuBattleDamageSymbols.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
@@ -50,9 +51,10 @@ void CTTask<CUIBattleManager::CTest>::Draw() {
 
 // CfGameManager.hpp and CAIAction.hpp (via CfObjectPc.hpp) declare clashing
 // return types for this import; the single canonical copy now lives in
-// kyoshin/cf/CBattleManagerApi.hpp (pulled in by both headers).
+// kyoshin/cf/CBattleManager.hpp (pulled in by both headers).
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CTaskGameImports.hpp"
+#include "kyoshin/menu/CMenuBattleCommu.hpp"
 // CfObjectPc.hpp is NOT included here: its chain (CfObjectActor.hpp ->
 // CAIAction.hpp vs ocBdat.hpp) currently carries divergent extern "C"
 // declarations of getBdatStringColumnValue (MWCC 10197). Only opaque pointer
@@ -92,12 +94,10 @@ u32 gmPauseFlags;
 CUIBattleManager* CUIBattleManager::spInstance;
 
 void __ct__8CProcessFv(CProcess*);
-void* BtlDmg_Create(void* proc, void* scn);
 void* createVisionMenu(void* proc, void* scn);
-void* PTGaugeCreate(void* proc, void* scn);
-void* battleCommuCreateRegister(void* proc, void* scn);
+class CMenuPTGauge;
+CMenuPTGauge* PTGaugeCreate(CProcess* proc, CProcess* scn);
 void* CMenuArtsSelect_CreateMenu(void* proc, void* scn);
-void* BpsStateCreateSingleton(void* proc, void* scn);
 void* BpsStateSingletonToInt();
 void BpsStateFlag7C9Set();
 
@@ -109,6 +109,12 @@ int CMainMenu_IsOpen();
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
 bool isGlobalCamFlagSet__Fi(UNKWORD flag);
 }
+
+// Defined in CMenuBattlePlayerState.cpp with C++ linkage.
+class CMenuBattlePlayerState;
+class CProcess;
+class CScn;
+CMenuBattlePlayerState* BpsStateCreateSingleton(CProcess* proc, CScn* scn);
 
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
@@ -193,7 +199,7 @@ void CUIBattleManager::Move() {
             } else {
                 CUIBattleManager::spInstance->unk82 &= 0xfd;
                 retCreate96B8 =
-                    BtlDmg_Create(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
+                    BtlDmg_Create((CProcess*)CUIBattleManager::spInstance->unk7C, (CScn*)CUIBattleManager::spInstance->unk58);
                 if (retCreate96B8 != NULL) {
                     inst = CUIBattleManager::spInstance;
                     i = 0;
@@ -250,7 +256,8 @@ void CUIBattleManager::Move() {
             } else {
                 CUIBattleManager::spInstance->unk82 &= 0xef;
                 retCreate87694 =
-                    PTGaugeCreate(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
+                    PTGaugeCreate(CUIBattleManager::spInstance->unk7C,
+                                  reinterpret_cast<CProcess*>(CUIBattleManager::spInstance->unk58));
                 if (retCreate87694 != NULL) {
                     inst = CUIBattleManager::spInstance;
                     i = 0;
@@ -277,7 +284,7 @@ void CUIBattleManager::Move() {
             } else {
                 CUIBattleManager::spInstance->unk82 &= 0xdf;
                 retCreateB0E0C =
-                    battleCommuCreateRegister(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
+                    battleCommuCreateRegister((CProcess*)CUIBattleManager::spInstance->unk7C, (CScn*)CUIBattleManager::spInstance->unk58);
                 if (retCreateB0E0C != NULL) {
                     inst = CUIBattleManager::spInstance;
                     i = 0;
@@ -842,7 +849,8 @@ extern "C" CUIBattleChild* UIBattleCreatePlayerState() {
         return NULL;
     }
     CUIBattleManager::spInstance->unk82 &= ~1u;
-    savedRet = BpsStateCreateSingleton(CUIBattleManager::spInstance->unk7C, CUIBattleManager::spInstance->unk58);
+    savedRet = BpsStateCreateSingleton((CProcess*)CUIBattleManager::spInstance->unk7C,
+                                       (CScn*)CUIBattleManager::spInstance->unk58);
     if (savedRet == NULL) {
         return NULL;
     }

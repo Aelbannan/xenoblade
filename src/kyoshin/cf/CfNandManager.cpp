@@ -1,6 +1,9 @@
+#define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include <cstring>
 #include "kyoshin/cf/CfNandManager.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 
 #include "monolib/util/MemManager.hpp"
 #include "monolib/nand/CNand.hpp"
@@ -9,6 +12,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/CNandData.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -19,8 +23,8 @@ namespace cf { class CfGameManager; }
 #pragma section data_type ".data" ".data"
 
 // Switch cases for NandResolveOp; the table itself is owned by this TU.
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char jumptable_eu_80536B2C[0x90] = {0};
-__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const volatile unsigned char s_nandTail[4] = {0}; // retail +0x1C8 null word
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char jumptable_eu_80536B2C[0x90] = {0};
+__attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) const unsigned char s_nandTail[4] = {0}; // retail +0x1C8 null word
 #pragma section data_type ".data" ".bss"
 extern const char kNandSaveNameFormat[0x18];
 // typed .bss/.sbss zero-fill (nobits compare sizes only; small sbss objects
@@ -32,7 +36,8 @@ unsigned char gNandTeardownByte;
 unsigned short lbl_eu_8066476E;
 unsigned short gCfNandCaptureState;
 unsigned short gNandTeardownFlag;
-unsigned short lbl_eu_80664774;
+// name-guess: loaded from save image slot[0x66] in NandRestore, mirrored into gmPauseFlags 0x8000 and cleared by CfGameManager after load; no retail name found (map/KB searched).
+unsigned short gCfNandRestoredEventFlag;
 unsigned short gNandSbssGap64776;
 unsigned int lbl_eu_80664778;
 void* gpCfNandCaptureBuf;
@@ -188,11 +193,8 @@ extern "C" void NandVerifyBlk(void* self, u16 type, u8* ok, s32* result);
 extern "C" void NandResolveOp(void* self, u16 type, u8* ok, s32* result);
 extern "C" void NandDownsample(void* self);
 extern "C" void NandImageMake(void* buf, bool flag);
-extern "C" void __dt__8023E63C(void* self);
-extern "C" void NandFlushEvts(void* self);
+
 extern "C" int CfRes_getD80Flag();
-extern "C" u32 CtrlRemote_GetFixedSize1214();
-extern "C" u8* CtrlRemote_GetSharedBufPtr();
 extern "C" u32 CtrlObjectParam_GetArtsDataWord(u32);
 extern char lbl_eu_8050B470[];
 extern "C" u8* CtrlRemote_GetFileEventIds();
@@ -207,8 +209,7 @@ namespace cf { struct CfGameManager {
     static void setEventCounterA(u32);
     static struct CfObjectMove* getPlayer(int);
 }; }
-extern "C" void CfT_FrameTimerSet(u32* self);
-extern "C" void CfT_PlayClockReset(f32 v);
+
 extern "C" void cfCam_storeFollowD(void* v, f32 f);
 extern "C" void loadReloadInfo(void* p);
 extern "C" void mineLoadFromSave(u8* rec);
@@ -394,9 +395,9 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
         if (valid == 0) {
             return 0;
         }
-        u32 flagLen = CtrlRemote_GetFixedSize1214();
-        memcpy(CtrlRemote_GetSharedBufPtr(), image->flagData, flagLen);
-        lbl_eu_80664774 = image->slot[0x66];
+        u32 flagLen = CtrlRemote_GetFixedSize1214((void*)0);
+        memcpy((u8*)(u8*)(u8*)(u8*)(u8*)(u8*)(u8*)(u8*)CtrlRemote_GetSharedBufPtr(), image->flagData, flagLen);
+        gCfNandRestoredEventFlag = image->slot[0x66];
         live = CtrlRemote_GetFileEventIds();
         memcpy(live, image->workHead, 0x41F0);
         src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
@@ -446,7 +447,7 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
     }
 
     CfNandSaveImageV1* v1 = (CfNandSaveImageV1*)image;
-    if ((mtl::MemManager::calculateCrc(v1->flagData, CtrlRemote_GetFixedSize1214()) & 0xFFFF) != v1->flagTag.crc) {
+    if ((mtl::MemManager::calculateCrc(v1->flagData, CtrlRemote_GetFixedSize1214((void*)0)) & 0xFFFF) != v1->flagTag.crc) {
         ok = 0;
     }
     if ((mtl::MemManager::calculateCrc(v1->workHead, 0x6C28) & 0xFFFF) != v1->gameTag.crc) {
@@ -500,8 +501,8 @@ extern "C" int NandApplySave(CfNandSaveImage_Local* img) {
         ok = 0;
     }
 
-    u32 flagLen = CtrlRemote_GetFixedSize1214();
-    memcpy(CtrlRemote_GetSharedBufPtr(), v1->flagData, flagLen);
+    u32 flagLen = CtrlRemote_GetFixedSize1214((void*)0);
+    memcpy((u8*)(u8*)(u8*)(u8*)(u8*)(u8*)(u8*)(u8*)CtrlRemote_GetSharedBufPtr(), v1->flagData, flagLen);
     live = CtrlRemote_GetFileEventIds();
     memcpy(live, v1->workHead, 0x41F0);
     src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
@@ -937,7 +938,7 @@ extern "C" void NandVerifyBlk(void* self, u16 type, u8* ok, s32* result) {
 // are the two out-parameters handed to NandResolveOp and the completion
 // callback. The request type selects which bits of the manager state are
 // updated before the callback runs.
-extern "C" void __dt__8023E63C(void* self) {
+extern "C" void NandDispatchPendingEvent(void* self) {
     cf::CfNandManager* mgr = (cf::CfNandManager*)self;
     u16 type = mgr->mPending.mType;
     u8 ok;
@@ -1268,7 +1269,7 @@ extern "C" void NandFileEvent(void* self) {
         busy = 1;
     }
     if (busy == 0) {
-        __dt__8023E63C(self);
+        NandDispatchPendingEvent(self);
         NandFlushEvts(self);
     }
 }
@@ -1523,7 +1524,7 @@ cf::CfNandManager::CfNandManager(void* arg)
     gNandTeardownByte = 0;
     gCfNandCaptureState = 0;
     gNandTeardownFlag = 0;
-    lbl_eu_80664774 = 0;
+    gCfNandRestoredEventFlag = 0;
     gpCfNandCaptureBuf = 0;
     gpCfNandCaptureBufTail = 0;
     lbl_eu_8066476E = 0;
@@ -1533,11 +1534,25 @@ cf::CfNandManager::CfNandManager(void* arg)
     mPending.mFlag = 0;
 }
 
-// Declared virtual so MWCC emits the primary vtable and MI thunks.  The full
-// retail teardown body is recovered separately; keeping the destructor as a
-// real member (instead of a hand-written C-ABI shim) also gives the ctor its
-// correct cleanup record.
-cf::CfNandManager::~CfNandManager() {}
+// The retail virtual destructor unregisters the render callback, frees the
+// capture buffer and clears the manager's global state before the base-class
+// teardown emitted by the compiler runs.
+cf::CfNandManager::~CfNandManager() {
+    CScn* scn = (CScn*)CfRes_getD80Flag();
+    if (scn != 0) {
+        scn->removeRenderCB(gpCfNandManager);
+    }
+    if (gpCfNandCaptureBuf != 0) {
+        mtl::MemManager::deallocate(gpCfNandCaptureBuf);
+        gpCfNandCaptureBuf = 0;
+    }
+    gpCfNandManager = 0;
+    gCfNandFileEventPending = 0;
+    gNandTeardownByte = 0;
+    gCfNandCaptureState = 0;
+    gNandTeardownFlag = 0;
+    gCfNandRestoredEventFlag = 0;
+}
 
 
 __attribute__((used)) const char kNandSaveNameFormat[0x18] = "%s%02d\0banner.bin\0name";

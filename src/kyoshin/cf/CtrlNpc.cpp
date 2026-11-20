@@ -1,9 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlNpc
+#include "kyoshin/code_800A3B24.hpp"
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 
 #include <cstdio>
 #include <cmath>
@@ -15,7 +16,8 @@
 #include <nw4r/math/math_triangular.h>
 
 #include "kyoshin/cf/CtrlNpc.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfTFile.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 // CfT_PlayRateGet is declared in CfGameManager.hpp as extern "C" float.
 
@@ -1454,9 +1456,8 @@ void CtrlNpcAdvanceBehavior(cf::CtrlNpc* self) {
             self->field_BE = 3;
         }
     } else if (self->field_BE == 3) {
-        // CfGameManager.hpp declares CfT_PlayRateGet void; it really returns
-        // the frame delta (see CfTFile.cpp), so call it through a cast.
-        f32 v = self->field_D4 - ((float (*)())CfT_PlayRateGet)();
+        // CfT_PlayRateGet's float return is declared in CfTFile.hpp.
+        f32 v = self->field_D4 - CfT_PlayRateGet();
         self->field_D4 = v;
         if (v <= lbl_eu_80666698) {
             self->field_D4 = lbl_eu_80666698;

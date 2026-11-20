@@ -3,6 +3,7 @@
 // High-level C++ reconstruction.
 
 #include <string.h>
+#include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
@@ -88,7 +89,6 @@ void* scnLgtCreateEnvController(void* pData, void* pFile, int flags);
 mtl::ALLOC_HANDLE getScnCounter__Fv();
 extern void* getMapEffectManager__Q22cf13CfGameManagerFv();
 extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
-extern void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 }
 
 namespace cf {

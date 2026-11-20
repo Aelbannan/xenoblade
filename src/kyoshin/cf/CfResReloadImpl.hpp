@@ -1,28 +1,20 @@
 #pragma once
+#include "kyoshin/menu/MenuSndApi.hpp"
 
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
+#include "kyoshin/cf/CfSoundMan.hpp"
 
-// Minimal nw4r sound-object interface used by playReloadSound (slot entry +0x00
-// dereferenced to call SetPlayerPriority). Declared here rather than via
-// snd_BasicSound.h to keep this catalog TU's include graph light; MWCC mangles
-// the member call to the retail name
-// SetPlayerPriority__Q44nw4r3snd6detail10BasicSoundFi.
-namespace nw4r {
-namespace snd {
-namespace detail {
-class BasicSound {
-public:
-    void SetPlayerPriority(int priority);
-};
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
+#include <nw4r/snd/snd_BasicSound.h>
+
+// Defined in CfResReloadImpl.cpp; canonical declaration for all callers.
+extern "C" u16 getReloadParam0();
 
 class CResLookup;
 class CScnItemModel; // fwd; real owner of parent+0x98 model (vfunc64/vfunc88)
+namespace cf { class CfObjectModel; }  // CfModel_ReattachTrg operand
 
 namespace cf {
 
@@ -262,18 +254,14 @@ extern "C" void CfRes_tryReregisterSlot(int index, u8* ptr);
 extern "C" void CfModel_ReleaseAll(cf::CfResReloadParent*);
 // More C-ABI imports (defined in CfSoundMan.cpp / CfRes.cpp /
 // code_801A929C.cpp); same extern "C" convention as above.
-extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
-extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
 extern "C" int CfRes_getResFileSize(int a);
-extern "C" int BattleWork_CheckEffectTableReady(int a);
+#include "kyoshin/code_801A929C.hpp"
 // More C-ABI imports used by this unit's functions.
 extern "C" cf::DeviceSearchEntry* CfRes_findIdInRange(u8* self, u32 id, int start, int end);
 extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
-extern "C" u16 CfT_DispatchFrameCounts();
 extern "C" void* CfRes_getInstanceField();
 // More C-ABI imports used by seedReloadTmr / tickReloadState / runReloadMain.
-extern "C" void MenuSnd_PushSlotVolume_896C(int index, unsigned int type, float f1, float f2);
 extern "C" float CfT_PlayTimeGet();
 extern "C" void CfObjectMove_setMoveSpeedGated(cf::CfObjectMove* player, float value);
 extern "C" void CfObjectMove_resetMoveSpeed(cf::CfObjectMove* player);

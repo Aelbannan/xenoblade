@@ -54,13 +54,8 @@ extern "C" {
     int           RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*           CCharVoiceMan_AllocVoiceArena(int size);
-    int           HpVoice_CountActiveVoices(CVoiceHandle* exclude);
     CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude);
-    int           HpVoice_CheckHpBase(CVoiceHandle* handle);
-    int           HpVoice_MapSubState(CVoiceHandle* handle);
     int           HpVoice_ValidIter(int iter);
-    int           HpVoice_CheckPair26(CVoiceHandle* handle1, CVoiceHandle* handle2);
-    int           HpVoice_CheckPair13(CVoiceHandle* handle1, CVoiceHandle* handle2);
     void          __ct__cf_CVS_THREAD(CVS_THREAD* object);
     // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
     // __end__catch epilogue of a catch-all handler that ends with `bl __throw`

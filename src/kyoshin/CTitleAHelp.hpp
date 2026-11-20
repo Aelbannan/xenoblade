@@ -52,3 +52,5 @@ public:
     u8 unk37;
     CTitleAHelp();
 };
+
+GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);

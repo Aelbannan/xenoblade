@@ -4,6 +4,7 @@
 #include <revolution/gx/GXTypes.h>  // GXColor (sLgtFogColorWhite fog color word)
 #include "monolib/scn/CLight.hpp"
 #include "libs/monolib/src/scn/CScnLightMan.hpp"  // CScnLightMan (scnLgtRefreshLightMan light-manager slot)
+#include "libs/monolib/src/scn/CScnBlend.hpp"  // real CScnBlend ctor
 
 class CScn;  // full definition in monolib/scn/CScn.hpp (CScnItemModelNw4r.hpp uses CScn*)
 
@@ -1368,7 +1369,6 @@ extern "C" void scnVlBlendStep(CScnVirtualLight* mgr, int flag);
 // Retail ABI here passes four GPRs plus one FP arg (f1); f2 is left unset
 // at this call site.
 extern "C" int ScnRes_VertRayForward_E398(ml::CVec3* req, u32 a, u32 b, u32 c, f32 d);
-extern "C" int ScnRes_HasHighFlagEntry_E5AC();
 extern "C" int ScnRes_HasFlaggedEntry_E5A0(int flag);
 
 // Shared .sdata2 constants and .data assert strings for the light-refresh
@@ -1379,8 +1379,8 @@ extern const float kLgtSpotFalloff;
 extern const float kLgtRankWeight;
 extern const float kLgtRankThreshold;
 extern const f32 kLgtRankGateValue[2];
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 
 // Same-TU helpers (definitions below).
 extern "C" void scnLgtRankGateLights(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtGate* gate);
@@ -1556,10 +1556,8 @@ extern "C" CScnEnvLgtCtrl* scnLgtFactoryCreate(u32 handle,
 // from folding into the call sites.
 extern "C" void scnLgtResetLightState(CScnEnvLgtCtrl* self);
 
-// The blend/bloom ctors are owned by their own TUs (CScnBlend.cpp /
-// CScnBloom.cpp, NonMatching); scnLgtSetBlendBloom only emits the ctor calls with
-// the retail short-form symbols.
-extern "C" CScnEnvLgtBlend* __ct__CScnBlend(CScnEnvLgtBlend* self);
+// The bloom ctor is owned by its own TU (CScnBloom.cpp); the blend object is
+// constructed here through its real class ctor from CScnBlend.hpp.
 extern "C" CScnEnvLgtBloom* __ct__CScnBloom(CScnEnvLgtBloom* self);
 
 // Cross-TU helpers (definitions live in CScn.cpp / CScnFilterMan.cpp).
@@ -1574,9 +1572,7 @@ extern "C" void LightCtlSetAttnMode(CScnEnvLgtLightView* view, u32 flag);
 extern "C" void LightCtlSetPos(CScnEnvLgtLightView* view, const u8* p);
 extern "C" void LightCtlSetDir(CScnEnvLgtLightView* view, const u8* p);
 extern "C" void LightCtlSetColor(CScnEnvLgtLightView* view, CScnEnvLgtCtrlLgtVec4* out);
-extern "C" void LightCtlSetEnable(CScnEnvLgtLightView* view, u32 flag);
 extern "C" void LightCtlInitDistAttn(CScnEnvLgtLightView* view, u32 a, f32 b, f32 c);
-extern "C" void LightCtlInitSpot(CScnEnvLgtLightView* view, u32 a, f32 b);
 
 // 16-byte light-data block copied by scnLgtReadLightDataWords (self+0x54 -> out).
 // Kept as a named struct so the copy sites use typed pointers: MWCC only

@@ -13,6 +13,7 @@
 #include <nw4r/math/math_triangular.h>
 #include "monolib/math/CVec3.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/coli/code_804B59C8.hpp"
 
 // ---------------------------------------------------------------------------
 extern "C" u32 sColiStageConfigTable[0x3E8 / 4]; // stage config table (defined at end of TU)
@@ -29,66 +30,10 @@ extern u32 lbl_eu_80665990;
 // List of scene-resource category indices (bss, 16 u16 entries).
 extern u16 sScnResourceCategoryList[];
 
-// Collision state manager (sColiQueryState): ray offset at 0x00, ray
-// direction at 0x0C, reference position at 0x18, AABB at 0x24/0x30, sampled
-// normal at 0xC8, ray t at 0xD4, registration thresholds at 0xD8/0xDC,
-// mover hook at 0xE0, matrix source pointer at 0xE8, embedded matrix at 0xF0,
-// registration filter flags at 0x128, acceptance thresholds at 0x120/0x130.
-struct CColiMover;
-struct CColiMgr {
-    nw4r::math::_VEC3 field_0x00;    // 0x00 - ray offset
-    nw4r::math::_VEC3 field_0x0C;    // 0x0C - ray direction
-    nw4r::math::_VEC3 field_0x18;    // 0x18 - reference position
-    nw4r::math::_VEC3 field_0x24;    // 0x24 - AABB min corner
-    nw4r::math::_VEC3 field_0x30;    // 0x30 - AABB max corner
-    nw4r::math::_VEC3 field_0x3C[6]; // 0x3C - six OBB plane normals (makeObbPlanes)
-    f32 field_0x84[6];               // 0x84 - six OBB plane offsets
-    int field_0x9C;                  // 0x9C - vector count for the array walk
-    void* field_0xA0;
-    nw4r::math::_VEC3 field_0xA4[3]; // 0xA4 - per-vertex sampled points
-    nw4r::math::_VEC3 field_0xC8;    // 0xC8 - sampled normal
-    f32 field_0xD4;                  // 0xD4 - ray t
-    f32 field_0xD8;                  // 0xD8 - distance threshold
-    f32 field_0xDC;                  // 0xDC - last registered distance
-    CColiMover* field_0xE0;          // 0xE0 - mover hook
-    u8 field_0xE4[0xE8 - 0xE4];      // 0xE4
-    Mtx* field_0xE8;                 // 0xE8 - matrix source pointer
-    u32 field_0xEC;                  // 0xEC
-    Mtx field_0xF0;                  // 0xF0 - embedded matrix
-    f32 field_0x120;                 // 0x120 - acceptance radius (ColiQuerySphere)
-    f32 field_0x124;                 // 0x124 - squared acceptance radius
-    u32 field_0x128;                 // 0x128 - registration filter flags
-    u32 field_0x12C;                 // 0x12C - second registration filter flags
-    u32 field_0x130;                 // 0x130
-    u8 field_0x134;                  // 0x134
-    u16 field_0x136;                 // 0x136 - registered-index count (== CColiListMgr.count)
-};
+// The query manager and the aliased workspace views live in
+// monolib/coli/code_804B59C8.hpp, next to the owning TU's data definition.
 extern CColiMgr sColiQueryState;
 
-// Collision registration workspace (sColiWorkArea, .bss).  The 0x2000-byte
-// mover bit-table (also symbolised as sColiSeenBitTable) starts at +0x2000 and
-// the collision manager (sColiQueryState) lives at +0x2028; the registered
-// index list (count at +0x215E, entries at +0x2160) is appended by the
-// register helpers below.  The bit-table and the list region overlap in
-// memory, so the two views are expressed as union members.
-struct CColiListMgr {
-    u8 field_0x00[0x136];  // 0x00
-    u16 count;             // 0x136 - number of registered indices
-    u16 list[0x10];        // 0x138
-};
-struct CColiWork {
-    union {
-        struct {
-            u8 field_0x0000[0x2000];  // 0x0000
-            u32 bitTable[0x80];       // 0x2000 (== sColiSeenBitTable)
-        } b;
-        struct {
-            u8 field_0x0000[0x2028];  // 0x0000
-            CColiListMgr listMgr;     // 0x2028 (== sColiQueryState)
-        } l;
-    };
-};
-extern CColiWork sColiWorkArea;
 
 // Base of the collision "seen" bit array (pointer value held in sdata).
 extern u32 spColiSeenBits;
@@ -96,10 +41,9 @@ extern u32 spColiSeenBits;
 // Zeroing-window base for the seen-bit array (sdata).
 extern u8* spColiZeroWindow;
 
-// Acceptance-threshold constants: 0.0/1.0/-1.0 remain TU pool references;
-// the less common thresholds are written as literals at their use sites.
+// 0.0/1.0 are literals; the -1.0 normal flip is still needed by the two
+// constant-vector initializers near the end of the TU.
 extern const f32 lbl_eu_8066AED0;
-extern const f32 lbl_eu_8066AED4;
 extern const f32 lbl_eu_8066AED8;  // normal-orientation flip scale
 
 
@@ -549,7 +493,7 @@ extern "C" void func_804B5B38(CColiSrc* a, CColiMover* b) {
 
 // sampleCastRay - sample the half-float normal triple, then ray-cast against
 // the manager's reference vectors; register the mover only when t lands in
-// [0, lbl_eu_8066AED4].  Same shape as sampleGateRay without the height gate.
+// [0, 1.0f].  Same shape as sampleGateRay without the height gate.
 extern "C" void sampleCastRay(CColiSrc* a, CColiMover* b) {
     u16 idx = b->field_0x10;
     s16* tri = (s16*)((u8*)a->field_0x1C + idx * 6);
@@ -559,14 +503,14 @@ extern "C" void sampleCastRay(CColiSrc* a, CColiMover* b) {
     // dot(normal, ray direction)
     f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
                                    (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
-    if (dot2 == lbl_eu_8066AED0) return;
+    if (dot2 == 0.0f) return;
     // dot(normal, offset)
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x00);
     f32 t = (b->field_0x00 - dot) / dot2;
     sColiQueryState.field_0xD4 = t;
-    if (!(t >= lbl_eu_8066AED0)) return;
-    if (!(t <= lbl_eu_8066AED4)) return;
+    if (!(t >= 0.0f)) return;
+    if (!(t <= 1.0f)) return;
     sColiQueryState.field_0xE0 = b;
     resolveHitFwd(a, b);
 }
@@ -583,12 +527,12 @@ void sampleInFront(CColiSrc* a, CColiMover* b) {
     sColiQueryState.field_0xC8.z = __OSs16tof32(&tri[2]);
     f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
                                    (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
-    if (dot2 == lbl_eu_8066AED0) return;
+    if (dot2 == 0.0f) return;
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x00);
     f32 t = (b->field_0x00 - dot) / dot2;
     sColiQueryState.field_0xD4 = t;
-    if (t <= lbl_eu_8066AED0) return;
+    if (t <= 0.0f) return;
     sColiQueryState.field_0xE0 = b;
     resolveHitFwd(a, b);
 }
@@ -607,13 +551,13 @@ void sampleGateRay(CColiSrc* a, CColiMover* b) {
     if ((a->*a->field_0xB8)(sColiQueryState.field_0xC8.y) != 0) return;
     f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
                                    (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
-    if (dot2 == lbl_eu_8066AED0) return;
+    if (dot2 == 0.0f) return;
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&sColiQueryState.field_0xC8,
                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0x00);
     f32 t = (b->field_0x00 - dot) / dot2;
     sColiQueryState.field_0xD4 = t;
-    if (!(t >= lbl_eu_8066AED0)) return;
-    if (!(t <= lbl_eu_8066AED4)) return;
+    if (!(t >= 0.0f)) return;
+    if (!(t <= 1.0f)) return;
     sColiQueryState.field_0xE0 = b;
     resolveHitFwd(a, b);
 }
@@ -632,7 +576,7 @@ void samplePlaneOk(CColiSrc* a, CColiMover* b) {
                                   (const nw4r::math::VEC3*)&sColiQueryState.field_0xC8);
     f32 diff = dot - b->field_0x00;
     sColiQueryState.field_0xD4 = diff;
-    if (lbl_eu_8066AED0 > diff) return;
+    if (0.0f > diff) return;
     if (diff >= sColiQueryState.field_0x120) return;
     sColiQueryState.field_0xE0 = b;
     resolveHitBwd(a, b);
@@ -662,7 +606,6 @@ void clipTri6Plane(CColiSrc* a, CColiMover* b) {
     poly[2] = *(Vec3*)(a->field_0x18 + b->field_0x04[2] * 12);
     Vec3* cur = poly;
     Vec3* nxt = out;
-    const f32 zero = lbl_eu_8066AED0;
     int count = 3;
     for (int i = 0; i < 6; i++) {
         const nw4r::math::_VEC3* n = &mgr->field_0x3C[i];
@@ -672,7 +615,7 @@ void clipTri6Plane(CColiSrc* a, CColiMover* b) {
             f32 d = cur[j].x * n->x + cur[j].y * n->y + cur[j].z * n->z - mgr->field_0x84[i];
             dist[j] = d;
             all |= 1u << j;
-            if (d < zero) below |= 1u << j;
+            if (d < 0.0f) below |= 1u << j;
         }
         if (all == below) return;
         if (below != 0) {
@@ -684,7 +627,7 @@ void clipTri6Plane(CColiSrc* a, CColiMover* b) {
                     if (!(below & (1u << j2))) {
                         f32 denom = (cur[j2].x - cur[j].x) * n->x + (cur[j2].y - cur[j].y) * n->y
                                   + (cur[j2].z - cur[j].z) * n->z;
-                        if (denom != zero) {
+                        if (denom != 0.0f) {
                             f32 t = -dist[j] / denom;
                             nxt[k].x = cur[j].x + (cur[j2].x - cur[j].x) * t;
                             nxt[k].y = cur[j].y + (cur[j2].y - cur[j].y) * t;
@@ -698,7 +641,7 @@ void clipTri6Plane(CColiSrc* a, CColiMover* b) {
                     if (below & (1u << j2)) {
                         f32 denom = (cur[j2].x - cur[j].x) * n->x + (cur[j2].y - cur[j].y) * n->y
                                   + (cur[j2].z - cur[j].z) * n->z;
-                        if (denom != zero) {
+                        if (denom != 0.0f) {
                             f32 t = -dist[j] / denom;
                             nxt[k].x = cur[j].x + (cur[j2].x - cur[j].x) * t;
                             nxt[k].y = cur[j].y + (cur[j2].y - cur[j].y) * t;
@@ -728,7 +671,7 @@ void Coli_Noop_61F8(void) {}
 // the 16-slot list at +0x2160.  The four wrappers differ only in the
 // segment-test callee.
 extern "C" void appendQryIdx1(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &sColiWorkArea;
+    CColiWorkArea* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -742,7 +685,7 @@ extern "C" void appendQryIdx1(CColiObj* self, CColiQuery* query) {
 }
 
 extern "C" void appendQryIdx2(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &sColiWorkArea;
+    CColiWorkArea* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -757,7 +700,7 @@ extern "C" void appendQryIdx2(CColiObj* self, CColiQuery* query) {
 }
 
 extern "C" void appendQryIdx3(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &sColiWorkArea;
+    CColiWorkArea* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -776,7 +719,7 @@ extern "C" void appendQryIdx3(CColiObj* self, CColiQuery* query) {
 // segment test passes and the index is not already registered.  See the
 // wrapper family comment above for the shared shape.
 extern "C" void appendQryIdx4(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &sColiWorkArea;
+    CColiWorkArea* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     CColiEntry* entry = &self->field_0x40[query->field_0x02];
     u32 flags = entry->field_0x02;
@@ -791,7 +734,7 @@ extern "C" void appendQryIdx4(CColiObj* self, CColiQuery* query) {
 }
 
 void appendSlabIdx(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &sColiWorkArea;
+    CColiWorkArea* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     u16 idx = query->field_0x02;
     u32* bits = w->b.bitTable;
@@ -810,7 +753,7 @@ void appendSlabIdx(CColiObj* self, CColiQuery* query) {
 }
 
 void func_804B6580(CColiObj* self, CColiQuery* query) {
-    CColiWork* w = &sColiWorkArea;
+    CColiWorkArea* w = &sColiWorkArea;
     if (query->field_0x00 != 0) return;
     u16 idx = query->field_0x02;
     CColiEntry* entry = &self->field_0x40[idx];
@@ -957,7 +900,7 @@ void xformNrmVecCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     PSMTXMultVec(sColiQueryState.field_0xF0, in2, out2);
     f32 len2 = out2.x * out2.x + out2.y * out2.y;
     len2 = out2.z * out2.z + len2;
-    if (lbl_eu_8066AED0 == len2) {
+    if (0.0f == len2) {
         out2 = ml::CVec3::zero;
     } else {
         PSVECNormalize(out2, out2);
@@ -992,7 +935,7 @@ void buildRayTriCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     PSVECCrossProduct(p0, p1, p0);
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&p0,
                                   (const nw4r::math::VEC3*)&out2);
-    if (dot < lbl_eu_8066AED0) {
+    if (dot < 0.0f) {
         out2 = p0 * -1.0f;
     } else {
         out2 = p0;
@@ -1000,7 +943,7 @@ void buildRayTriCb(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     f32 len2 = out2.y * out2.y;
     len2 = len2 + out2.x * out2.x;
     len2 = len2 + out2.z * out2.z;
-    if (lbl_eu_8066AED0 == len2) {
+    if (0.0f == len2) {
         out2 = ml::CVec3::zero;
     } else {
         PSVECNormalize(out2, out2);
@@ -1019,7 +962,7 @@ void Coli_XformNotifyA_6C48(CColiRegObj* self, const Vec* a, const Vec* in) {
     f32 len2 = out.y * out.y;
     len2 = len2 + out.x * out.x;
     len2 = len2 + out.z * out.z;
-    f32 zero = lbl_eu_8066AED0;
+    f32 zero = 0.0f;
     if (zero == len2) {
         out = ml::CVec3::zero;
     } else {
@@ -1055,7 +998,7 @@ void buildRayTriC2(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     PSVECCrossProduct(p0, p1, p0);
     f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&p0,
                                   (const nw4r::math::VEC3*)&out2);
-    if (dot < lbl_eu_8066AED0) {
+    if (dot < 0.0f) {
         out2 = p0 * -1.0f;
     } else {
         out2 = p0;
@@ -1063,7 +1006,7 @@ void buildRayTriC2(CColiRegObj* self, const Vec* in1, const Vec* in2) {
     f32 len2 = out2.y * out2.y;
     len2 = len2 + out2.x * out2.x;
     len2 = len2 + out2.z * out2.z;
-    if (lbl_eu_8066AED0 == len2) {
+    if (0.0f == len2) {
         out2 = ml::CVec3::zero;
     } else {
         PSVECNormalize(out2, out2);
@@ -1083,7 +1026,7 @@ void Coli_XformNotifyB_6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in) {
     f32 len2 = out.y * out.y;
     len2 = len2 + out.x * out.x;
     len2 = len2 + out.z * out.z;
-    f32 zero = lbl_eu_8066AED0;
+    f32 zero = 0.0f;
     if (zero == len2) {
         out = ml::CVec3::zero;
     } else {
@@ -1115,7 +1058,6 @@ extern "C" void resolveHitFwd(CColiSrc* self, CColiMover* b) {
     tmp.z = sColiQueryState.field_0x00.z + sColiQueryState.field_0x0C.z * sColiQueryState.field_0xD4;
     tmp.x = sColiQueryState.field_0x00.x + sColiQueryState.field_0x0C.x * sColiQueryState.field_0xD4;
     tmp.y = sColiQueryState.field_0x00.y + sColiQueryState.field_0x0C.y * sColiQueryState.field_0xD4;
-    const f32 threshold = -0.0001f;
     u8* triBase = self->field_0x20 + sColiQueryState.field_0xE0->field_0x0A * 18;
     for (int i = 0; i < 3; i++) {
         // Mover pointer re-read inside the loop: the global may change.
@@ -1130,7 +1072,7 @@ extern "C" void resolveHitFwd(CColiSrc* self, CColiMover* b) {
         f32 dist2 = d.x * sColiQueryState.field_0xA4[i].x
                   + d.y * sColiQueryState.field_0xA4[i].y
                   + d.z * sColiQueryState.field_0xA4[i].z;
-        if (dist2 <= threshold) return;
+        if (dist2 <= -0.0001f) return;
     }
     (self->*self->field_0x94)((const ml::CVec3*)&tmp, (const ml::CVec3*)&sColiQueryState.field_0xC8);
 }
@@ -1187,8 +1129,8 @@ extern "C" void resolveHitBwd(CColiSrc* a, CColiMover* b) {
         edge.z = v[j + 1]->z - v[j]->z;
         f32 denom = edge.x * edge.x + edge.y * edge.y + edge.z * edge.z;
         f32 t = (edge.x * d[j].x + edge.y * d[j].y + edge.z * d[j].z) / denom;
-        if (t < lbl_eu_8066AED0) t = lbl_eu_8066AED0;
-        if (t > lbl_eu_8066AED4) t = lbl_eu_8066AED4;
+        if (t < 0.0f) t = 0.0f;
+        if (t > 1.0f) t = 1.0f;
         tmp.x = v[j]->x + edge.x * t;
         tmp.y = v[j]->y + edge.y * t;
         tmp.z = v[j]->z + edge.z * t;
@@ -1277,7 +1219,7 @@ extern "C" void allocMoverTbl(CColiMoverState* self, const CColiInEntry* input, 
         out = (CColiOutEntry*)(self->field_0x60 + i * 0xE0);
         out->savedMtx = out->mtx;
         out->savedInv = out->inv;
-        out->field_0x04 = lbl_eu_8066AED0;
+        out->field_0x04 = 0.0f;
         out->field_0xC8 = in->m[3] + in->field_0x38;
         out->field_0xCC = in->m[7] + in->field_0x38;
         out->field_0xD0 = in->m[11] + in->field_0x38;
@@ -1436,13 +1378,13 @@ bool CColiObj2::rayBoxHitTest(const u16* list, int count) {
         Vec3* vert = &this->field_0x54[entry->field_0x0E];
         f32 dot2 = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)vert,
                                        (const nw4r::math::VEC3*)&sColiQueryState.field_0x0C);
-        if (dot2 == lbl_eu_8066AED0) continue;
+        if (dot2 == 0.0f) continue;
         f32 t = (entry->field_0x00
                  - nw4r::math::VEC3Dot((const nw4r::math::VEC3*)vert,
                                        (const nw4r::math::VEC3*)&sColiQueryState.field_0x00))
                 / dot2;
-        if (!(t >= lbl_eu_8066AED0)) continue;
-        if (!(t <= lbl_eu_8066AED4)) continue;
+        if (!(t >= 0.0f)) continue;
+        if (!(t <= 1.0f)) continue;
         ml::CVec3 hit;
         hit.y = sColiQueryState.field_0x00.y + sColiQueryState.field_0x0C.y * t;
         hit.x = sColiQueryState.field_0x00.x + sColiQueryState.field_0x0C.x * t;
@@ -1539,7 +1481,7 @@ extern "C" void Coli_ClearOutFlag_8078(CColiMoverState* self, int idx) {
     }
     CColiOutEntry* e = &reinterpret_cast<CColiOutEntry*>(self->field_0x60)[idx];
     e->field_0x00 = DECOMP_PPC_RLWINM(e->field_0x00, 0, 31, 29);
-    e->field_0x04 = lbl_eu_8066AED0;
+    e->field_0x04 = 0.0f;
 }
 
 // Coli_GetOutMatrix_80A4: when the mover state is active (field_0x78), return a
@@ -1572,71 +1514,69 @@ extern "C" int getMoverEntry(CColiMoverState* self, int idx) {
 // the plane offsets at 0x84..0x98 computed as (center +/- axis*scale).axis.
 extern "C" void makeObbPlanes(CColiMgr* unused, const Vec* center, const Mtx mtx, f32 scaleV2, f32 scaleV1, f32 scaleV0) {
     CColiMgr* mgr = &sColiQueryState;
-    const f32 zero = lbl_eu_8066AED0;
-    const f32 flip = -1.0f;
     Vec3 v0;
     Vec3 v1;
     Vec3 v2;
-    v2.x = zero;
-    v2.y = flip;
-    v2.z = zero;
-    v1.x = flip;
-    v1.y = zero;
-    v1.z = zero;
-    v0.x = zero;
-    v0.y = zero;
-    v0.z = flip;
+    v2.x = 0.0f;
+    v2.y = -1.0f;
+    v2.z = 0.0f;
+    v1.x = -1.0f;
+    v1.y = 0.0f;
+    v1.z = 0.0f;
+    v0.x = 0.0f;
+    v0.y = 0.0f;
+    v0.z = -1.0f;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v0, (const nw4r::math::MTX34*)mtx,
                                     (const nw4r::math::VEC3*)&v0);
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v1, (const nw4r::math::MTX34*)mtx,
                                     (const nw4r::math::VEC3*)&v1);
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v2, (const nw4r::math::MTX34*)mtx,
                                     (const nw4r::math::VEC3*)&v2);
-    if (zero == (v0.x * v0.x + v0.y * v0.y + v0.z * v0.z)) {
+    if (0.0f == (v0.x * v0.x + v0.y * v0.y + v0.z * v0.z)) {
         v0 = *(const Vec3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&v0, (Vec*)&v0);
     }
-    if (zero == (v1.x * v1.x + v1.y * v1.y + v1.z * v1.z)) {
+    if (0.0f == (v1.x * v1.x + v1.y * v1.y + v1.z * v1.z)) {
         v1 = *(const Vec3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&v1, (Vec*)&v1);
     }
-    if (zero == (v2.x * v2.x + v2.y * v2.y + v2.z * v2.z)) {
+    if (0.0f == (v2.x * v2.x + v2.y * v2.y + v2.z * v2.z)) {
         v2 = *(const Vec3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&v2, (Vec*)&v2);
     }
     mgr->field_0x3C[0] = *(const nw4r::math::_VEC3*)&v1;
-    mgr->field_0x3C[1].x = v1.x * flip;
-    mgr->field_0x3C[1].y = v1.y * flip;
-    mgr->field_0x3C[1].z = v1.z * flip;
+    mgr->field_0x3C[1].x = v1.x * -1.0f;
+    mgr->field_0x3C[1].y = v1.y * -1.0f;
+    mgr->field_0x3C[1].z = v1.z * -1.0f;
     mgr->field_0x3C[2] = *(const nw4r::math::_VEC3*)&v2;
-    mgr->field_0x3C[3].x = v2.x * flip;
-    mgr->field_0x3C[3].y = v2.y * flip;
-    mgr->field_0x3C[3].z = v2.z * flip;
+    mgr->field_0x3C[3].x = v2.x * -1.0f;
+    mgr->field_0x3C[3].y = v2.y * -1.0f;
+    mgr->field_0x3C[3].z = v2.z * -1.0f;
     mgr->field_0x3C[4] = *(const nw4r::math::_VEC3*)&v0;
-    mgr->field_0x3C[5].x = v0.x * flip;
-    mgr->field_0x3C[5].y = v0.y * flip;
-    mgr->field_0x3C[5].z = v0.z * flip;
-    mgr->field_0x84[0] = (center->x + v1.x * flip * scaleV1) * mgr->field_0x3C[0].x
-                        + (center->y + v1.y * flip * scaleV1) * mgr->field_0x3C[0].y
-                        + (center->z + v1.z * flip * scaleV1) * mgr->field_0x3C[0].z;
+    mgr->field_0x3C[5].x = v0.x * -1.0f;
+    mgr->field_0x3C[5].y = v0.y * -1.0f;
+    mgr->field_0x3C[5].z = v0.z * -1.0f;
+    mgr->field_0x84[0] = (center->x + v1.x * -1.0f * scaleV1) * mgr->field_0x3C[0].x
+                        + (center->y + v1.y * -1.0f * scaleV1) * mgr->field_0x3C[0].y
+                        + (center->z + v1.z * -1.0f * scaleV1) * mgr->field_0x3C[0].z;
     mgr->field_0x84[1] = (center->x + v1.x * scaleV1) * mgr->field_0x3C[1].x
                         + (center->y + v1.y * scaleV1) * mgr->field_0x3C[1].y
                         + (center->z + v1.z * scaleV1) * mgr->field_0x3C[1].z;
-    mgr->field_0x84[2] = (center->x + v2.x * flip * scaleV2) * mgr->field_0x3C[2].x
-                        + (center->y + v2.y * flip * scaleV2) * mgr->field_0x3C[2].y
-                        + (center->z + v2.z * flip * scaleV2) * mgr->field_0x3C[2].z;
+    mgr->field_0x84[2] = (center->x + v2.x * -1.0f * scaleV2) * mgr->field_0x3C[2].x
+                        + (center->y + v2.y * -1.0f * scaleV2) * mgr->field_0x3C[2].y
+                        + (center->z + v2.z * -1.0f * scaleV2) * mgr->field_0x3C[2].z;
     mgr->field_0x84[3] = (center->x + v2.x * scaleV2) * mgr->field_0x3C[3].x
                         + (center->y + v2.y * scaleV2) * mgr->field_0x3C[3].y
                         + (center->z + v2.z * scaleV2) * mgr->field_0x3C[3].z;
     mgr->field_0x84[4] = (center->x + v0.x * scaleV0) * mgr->field_0x3C[4].x
                         + (center->y + v0.y * scaleV0) * mgr->field_0x3C[4].y
                         + (center->z + v0.z * scaleV0) * mgr->field_0x3C[4].z;
-    mgr->field_0x84[5] = (center->x + v0.x * flip * scaleV0) * mgr->field_0x3C[5].x
-                        + (center->y + v0.y * flip * scaleV0) * mgr->field_0x3C[5].y
-                        + (center->z + v0.z * flip * scaleV0) * mgr->field_0x3C[5].z;
+    mgr->field_0x84[5] = (center->x + v0.x * -1.0f * scaleV0) * mgr->field_0x3C[5].x
+                        + (center->y + v0.y * -1.0f * scaleV0) * mgr->field_0x3C[5].y
+                        + (center->z + v0.z * -1.0f * scaleV0) * mgr->field_0x3C[5].z;
 }
 
 // regColiVolume - register a collision volume: reject when its bit is
@@ -2255,7 +2195,7 @@ extern "C" void updownRayFlag(CColiMoverState* state, const Vec* pos, u32 filter
 
 // beginColiPass - begin a registration pass: record the offset/scale into
 // the manager, install the per-stage matrix configuration from the default
-// table, zero the scene-resource state and then process every registered
+// table, 0.0f the scene-resource state and then process every registered
 // volume entry (0x80-byte stride) plus every mover-state entry, handing each
 // accepted volume to the query helper.  The GQR5 fast-cast setup (scale 14)
 // around the pass is a known wall: no high-level C emits the orphaned
@@ -2499,7 +2439,7 @@ extern "C" void obbVolumePass(CColiMoverState* state, void* ctx, const Mtx mtx, 
 }
 
 // launchRayScan - refresh the manager's reference vector (0x00) from `a` and
-// direction vector (0x0C) from the delta `b - a`, zero the word window just
+// direction vector (0x0C) from the delta `b - a`, 0.0f the word window just
 // below the shared bit-table (its base is stored in spColiZeroWindow), then
 // delegate to ColiQueryBoxBvh.
 extern "C" void launchRayScan(CColiScan* self, const Vec* a, const Vec* b) {
@@ -2571,7 +2511,7 @@ extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* ang
     hi.x = src->x;
     hi.y = src->y + yOff;
     hi.z = src->z;
-    if (yOff < lbl_eu_8066AED0) {
+    if (yOff < 0.0f) {
         mgr->field_0x24.x = lo.x;
         mgr->field_0x24.y = lo.y;
         mgr->field_0x24.z = lo.z;
@@ -2647,10 +2587,10 @@ extern "C" u32 scanVertQuery(CColiMoverState* self, Vec* src, Vec* dst, f32* ang
         v2.x -= last->mtx.m[0][3];
         v2.y -= last->mtx.m[1][3];
         v2.z -= last->mtx.m[2][3];
-        if (v1.x == lbl_eu_8066AED0 && v1.z == lbl_eu_8066AED0) {
-            *angle = lbl_eu_8066AED0;
-        } else if (v2.x == lbl_eu_8066AED0 && v2.z == lbl_eu_8066AED0) {
-            *angle = lbl_eu_8066AED0;
+        if (v1.x == 0.0f && v1.z == 0.0f) {
+            *angle = 0.0f;
+        } else if (v2.x == 0.0f && v2.z == 0.0f) {
+            *angle = 0.0f;
         } else {
             f32 a1 = nw4r::math::Atan2FIdx(v1.z, v1.x);
             f32 a2 = nw4r::math::Atan2FIdx(v2.z, v2.x);
@@ -2734,10 +2674,10 @@ extern "C" __declspec(align(8)) u32 lbl_sdata_804B59C8_b[2] = {
 
 // [.bss] 0x8065D1A0-0x8065F32C (0x218C = 8588B): zero-fill collision
 // registration workspace (the 0x2000-byte table region + bit-table + manager
-// + index list live at the sub-symbol offsets above).  Kept as an aligned
-// byte array so the .bss section is exactly the retail size/alignment.
-// (No extern/initializer so this is a true definition that allocates .bss.)
-__declspec(align(8)) u8 lbl_bss_804B59C8[0x2180];
-// Exit-time destruction registration block for lbl_eu_8065F32C
+// + index list live at the sub-symbol offsets above).  The typed object has
+// the retail 0x2180 size/alignment; the trailing dtor-registration block is a
+// separate global at +0x2180.
+__declspec(align(8)) CColiWorkArea sColiWorkArea;
+
 // (.bss 0x8065F320, 0xC bytes; consumed by __register_global_object).
 u8 sScnResDtorReg[0xC];

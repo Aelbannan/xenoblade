@@ -2,6 +2,7 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuMapSelect.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 
 #include <monolib/work/CWorkThreadSystem.hpp>
 #include <monolib/util/MemManager.hpp>
@@ -194,7 +195,6 @@ extern "C" {
 
 // Callee helpers (retail-unmangled names).
 // Use the C++ member (CfGameManager.hpp); no local pre-mangled copy.
-int CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 int CFade_IsVisible(CFade* self);
 // (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
@@ -217,8 +217,6 @@ void FloorMap_UpdateCursorMove(CFloorMap* self);
 void FloorMap_UpdateWorldMap(CFloorMap* self);
 void FloorMap_HandleMapDown(CFloorMap* self);
 void FloorMap_NormalizeMapPos(CFloorMap* self);
-void FloorMap_Log2Field208(CFloorMap* self);
-void FloorMap_Log2Field333C(CFloorMap* self);
 void FloorMap_ScrollDown(CFloorMap* self);
 void FloorMap_ScrollUp(CFloorMap* self);
 void FloorMap_ScrollRight(CFloorMap* self);
@@ -227,6 +225,11 @@ void FloorMap_MoveToCursorRow(CFloorMap* self);
 
 // CTitleAHelp help-bar id setter (retail-unmangled).
 }
+
+void FloorMap_Log2Field208(void* self);
+void FloorMap_Log2Field333C(void* self);
+
+// Declared by kyoshin/CMainMenu.hpp.
 
 // CTitleAHelp help-bar text reset (retail-unmangled name).
 
@@ -725,9 +728,9 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
             FloorMap_NormalizeMapPos(&self->mFloorMap);
         } else if ((pressed & 0x01000000) != 0) {
-            FloorMap_Log2Field208(&self->mFloorMap);
+            FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
         } else if ((pressed & 0x200) != 0) {
-            FloorMap_Log2Field333C(&self->mFloorMap);
+            FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
         } else if ((pressed & 0x800000) != 0) {
             if (FloorMap_IsSysWinBusy(&self->mFloorMap) == 0) {
                 if (CMainMenu_GetInstancePtr() != 0) {
@@ -816,9 +819,9 @@ void handleFloorMapInput(CMenuMapSelect* self) {
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
             FloorMap_NormalizeMapPos(&self->mFloorMap);
         } else if ((pressed & 0x800) != 0) {
-            FloorMap_Log2Field208(&self->mFloorMap);
+            FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
         } else if ((pressed & 0x200) != 0) {
-            FloorMap_Log2Field333C(&self->mFloorMap);
+            FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
         } else {
             // D-pad held: each direction moves the cursor once per press
             // transition; when no direction is held, confirm the selection.

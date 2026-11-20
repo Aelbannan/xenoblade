@@ -73,14 +73,18 @@ private:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
     int DevFile_GetByteA9();
-    int DevFile_SubstLangPath(const char*);
-    int findPackFileId(const char*, const char*);
     extern const wchar_t* sCriFilePathA;
     extern const wchar_t* sCriFilePathB;
     extern const wchar_t* sCriFilePathC[2];
     extern u32 lbl_eu_8056C354[];
     extern u8 sFileCriState[];
 }
+
+// Defined in monolib/src/device/CDeviceFile.cpp with C++ linkage.
+void DevFile_SubstLangPath(char* pPath);
+
+// Defined in monolib/src/work/CWorkSystemPack.cpp with C++ linkage.
+s32 findPackFileId(const char* pName, const char* pPath);
 
 extern "C" {
     void AddToGlobalArray__10CExceptionFP10IException(CException* self, IException* pException);

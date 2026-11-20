@@ -7,9 +7,10 @@
 // per-object runtime instance at +0x30 is lazily created through the game
 // manager's sub-object at +0x2F2C.
 
-// updateBattleManager has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
+// updateBattleManager has a single shared decl on kyoshin/cf/CBattleManager.hpp;
 // CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"

@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_800A75FC.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "monolib/util/MemManager.hpp"
 
 // Forward declarations for external functions in other TUs.

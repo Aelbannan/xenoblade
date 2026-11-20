@@ -3,6 +3,7 @@
 // slot-1 advance/play, slot-2 advance/play.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
@@ -79,7 +80,7 @@ void CVS_THREAD_VISION_TELL::playSlot1() {
         break;
     case 6:
         // Ternary arm order matters: retail emits li 0x76F; bne; li 0xCC.
-        voiceId = (HpVoice_CheckPair26(self->field_0x20, self->field_0x24) == 0) ? 0xCC : 0x76F;
+        voiceId = (HpVoice_CheckPair26((CVoiceHandleState*)self->field_0x20, (CVoiceHandleState*)self->field_0x24) == 0) ? 0xCC : 0x76F;
         break;
     case 7:
         voiceId = 0xCD;
@@ -88,7 +89,7 @@ void CVS_THREAD_VISION_TELL::playSlot1() {
         voiceId = 0xCE;
         break;
     case 1:
-        voiceId = (HpVoice_CheckPairGate(self->field_0x20, self->field_0x24) == 0) ? 0xCF : 0x51A;
+        voiceId = (HpVoice_CheckPairGate((CVoiceHandle*)self->field_0x20, (CVoiceHandle*)self->field_0x24) == 0) ? 0xCF : 0x51A;
         break;
     default:
         self->PlayThreadVoice();

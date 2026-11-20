@@ -118,13 +118,30 @@ public:
     /* 0x5A */ s16 mUnk5A[4];              // CMCCrystalBox's implicit assignment)
 };
 
+// Canonical declarations for the free helpers defined by CMCCrystalInfo.cpp.
+// MWCC mangles these C++ names; callers must include this header rather than
+// declaring flat extern "C" copies.
+namespace nw4r { namespace lyt { class DrawInfo; } }
+
+void MCCrystal_LoadLayouts(CMCCrystalInfo* self);
+void MCCrystal_StepState(CMCCrystalInfo* self);
+void MCCrystal_DrawLayout(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo);
+void MCCrystal_Teardown(CMCCrystalInfo* self);
+void MCCrystal_OpenFromClosed(CMCCrystalInfo* self);
+void MCCrystal_PlayOutro(CMCCrystalInfo* self);
+void MCCrystal_PlayAnim4(CMCCrystalInfo* self);
+void MCCrystal_PlayAnim3A(CMCCrystalInfo* self);
+void MCCrystal_PlayAnim3B(CMCCrystalInfo* self);
+void MCCrystal_AlignPane(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 paneIdx);
+
 // ---------------------------------------------------------------------------
 // Imports. All retail names here are unmangled, so plain global C++ (MWCC
-// does not mangle global-scope names) binds to the same symbols. The special
+
 // MWCC ctor/dtor/delete helpers below keep extern "C".
 // ---------------------------------------------------------------------------
 // Same-TU helpers; retail symbols are unmangled, so C linkage keeps both the
 // definitions and the call relocs bound to the retail names.
+extern "C" void MCCrystal_StepIntro(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindIntro(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindMain(CMCCrystalInfo* self);
 extern "C" void MCCrystal_BindAnim3(CMCCrystalInfo* self);

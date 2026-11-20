@@ -20,7 +20,6 @@ struct FogDesc {
 
 extern FogDesc lbl_eu_8065FCD0;
 extern u8    lbl_eu_80663B3C;
-extern f32   lbl_eu_8066B1D8;
 
 // The retail GXSetFog takes the color by pointer (repo header passes by value).
 typedef void (*GXSetFogPtr)(GXFogType, const GXColor*, f32, f32, f32, f32);
@@ -39,12 +38,6 @@ extern u8  lbl_eu_806659C0[8]; // override fog color used while a fog is disable
 struct CScnRootEnv;
 extern CScnRootEnv* sActiveSceneRoot; // active scene
 extern s32 lbl_eu_80663B38;   // fog index used for the scene lookup
-
-// .sdata2 constants used by the blend math.
-extern f32 lbl_eu_8066B1B8;  // 1.0 target weight
-extern f32 lbl_eu_8066B1BC;  // fade duration divisor
-extern f32 lbl_eu_8066B1C0;  // 255.0f color scale
-extern f32 lbl_eu_8066B1C4;  // 0.5f selection threshold
 
 // Leading 0x18 bytes of a fog record as returned by ScnRoot::GetFog.
 struct FogData {
@@ -111,6 +104,93 @@ struct CDrawCtx {
 extern "C" void* getScnRootSlot10(void* sceneEnv);
 extern "C" void* GetFog__Q34nw4r3g3d7ScnRootFi(void* self, int idx);
 
+// resolveEffectFog: resolve the active fog into lbl_eu_8065FCD0. While a fade is
+// running (lbl_eu_806659BC > 0) the saved fog (lbl_eu_8065FCA0) is blended
+// toward the scene fog by the remaining-frame ratio.
+void resolveEffectFog() {
+    if (lbl_eu_806659BC <= 0) {
+        s32 idx = lbl_eu_80663B38;
+        nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
+        *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(idx);
+        return;
+    }
+
+    s32 idx = lbl_eu_80663B38;
+    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
+
+    // GetFog only fills the leading 0x18 bytes; widening tmp to a full
+    // FogState leaves its tail fields untouched (matching retail).
+    FogState tmp;
+    *(FogData*)&tmp = *root->GetFog(idx);
+
+    // Fade weight derived from the frames-remaining counter.
+    f32 blend = 1.0f - (f32)lbl_eu_806659BC / 30.0f;
+
+    FogState work[2];
+    work[0] = *(FogState*)&lbl_eu_8065FCA0;
+    work[1] = tmp;
+
+    if (tmp.m_type == 0) {
+        work[1] = *(FogState*)&lbl_eu_8065FCA0;
+        work[1].m_r = lbl_eu_806659C0[0];
+        work[1].m_g = lbl_eu_806659C0[1];
+        work[1].m_b = lbl_eu_806659C0[2];
+        work[1].m_a = lbl_eu_806659C0[3];
+    }
+    if (work[0].m_type == 0) {
+        work[0] = tmp;
+        work[0].m_r = lbl_eu_806659C0[0];
+        work[0].m_g = lbl_eu_806659C0[1];
+        work[0].m_b = lbl_eu_806659C0[2];
+        work[0].m_a = lbl_eu_806659C0[3];
+    }
+
+    // Colors are normalized, blended, then rescaled for the output record.
+    f32 base[4];
+    base[0] = work[0].m_r / 255.0f;
+    base[1] = work[0].m_g / 255.0f;
+    base[2] = work[0].m_b / 255.0f;
+    base[3] = work[0].m_a / 255.0f;
+
+    f32 tgt[4];
+    tgt[0] = work[1].m_r / 255.0f;
+    tgt[1] = work[1].m_g / 255.0f;
+    tgt[2] = work[1].m_b / 255.0f;
+    tgt[3] = work[1].m_a / 255.0f;
+
+    // Past halfway the blend snaps to the scene fog record entirely.
+    u32 selType;
+    if (blend < 0.5f) {
+        selType = work[0].m_type;
+    } else {
+        selType = work[1].m_type;
+    }
+
+    f32 w = 1.0f - blend;
+
+    f32 out[4];
+    out[0] = tgt[0] * blend + base[0] * w;
+    out[1] = tgt[1] * blend + base[1] * w;
+    out[2] = tgt[2] * blend + base[2] * w;
+    out[3] = tgt[3] * blend + base[3] * w;
+
+    FogDesc* dst = &lbl_eu_8065FCD0;
+    dst->type = selType;
+
+    GXColor color;
+    *(u32*)&color = 0;
+    color.r = (u8)(out[0] * 255.0f);
+    color.g = (u8)(out[1] * 255.0f);
+    color.b = (u8)(out[2] * 255.0f);
+    color.a = (u8)(1.0f * 255.0f);
+
+    dst->f4 = blend * (work[1].m_startz - work[0].m_startz) + work[0].m_startz;
+    dst->f8 = blend * (work[1].m_endz - work[0].m_endz) + work[0].m_endz;
+    dst->fc = blend * (work[1].m_nearz - work[0].m_nearz) + work[0].m_nearz;
+    dst->f10 = blend * (work[1].m_farz - work[0].m_farz) + work[0].m_farz;
+    dst->color = *(u32*)&color;
+}
+
 // Retail: lwz r3,0x6C(r3); b TexMan_SnapCursor_0314 / TexMan_RestoreCursor_032C -- load the
 // desktop's tex-work pointer at +0x6C and forward it (callee ignores r3).
 extern "C" void TexMan_SnapCursor_0314(void* x);
@@ -124,14 +204,14 @@ void pushEffectFog(int p1, int UNUSED_p2) {
     if (lbl_eu_80663B3C != 0 && p1 != 0) {
         GXColor color;
         *(u32*)&color = lbl_eu_8065FCD0.color;
-        ((GXSetFogPtr)GXSetFog)((GXFogType)lbl_eu_8065FCD0.type, &color,
+        ((GXSetFogPtr)GXSetFog)((GXFogType)lbl_eu_8065FCD0.type, &color,  // DEBT(callcast): SDK header passes GXColor by value; retail view passes &color (pointer) in r4
                                 lbl_eu_8065FCD0.f4, lbl_eu_8065FCD0.f8,
                                 lbl_eu_8065FCD0.fc, lbl_eu_8065FCD0.f10);
     } else {
         GXColor color;
         *(u32*)&color = 0;
-        f32 c = lbl_eu_8066B1D8;
-        ((GXSetFogPtr)GXSetFog)((GXFogType)0, &color, c, c, c, c);
+        f32 c = 0.0f;
+        ((GXSetFogPtr)GXSetFog)((GXFogType)0, &color, c, c, c, c);  // DEBT(callcast): SDK header passes GXColor by value; retail view passes &color (pointer) in r4
     }
 }
 
@@ -198,91 +278,4 @@ extern "C" void blitEffectViewRect(CDrawCtx* draw, GXTexMapID p2, const ml::CVec
     local.mSize.x = (s16)w;
     local.mSize.y = (s16)h;
     TexObj_BlitRect((GXTexObj*)draw->field_0x04, &local, (u8)draw->field_0x08, 0);
-}
-
-// resolveEffectFog: resolve the active fog into lbl_eu_8065FCD0. While a fade is
-// running (lbl_eu_806659BC > 0) the saved fog (lbl_eu_8065FCA0) is blended
-// toward the scene fog by the remaining-frame ratio.
-void resolveEffectFog() {
-    if (lbl_eu_806659BC <= 0) {
-        s32 idx = lbl_eu_80663B38;
-        nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
-        *(FogData*)&lbl_eu_8065FCD0 = *root->GetFog(idx);
-        return;
-    }
-
-    s32 idx = lbl_eu_80663B38;
-    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)getScnRootSlot10(sActiveSceneRoot);
-
-    // GetFog only fills the leading 0x18 bytes; widening tmp to a full
-    // FogState leaves its tail fields untouched (matching retail).
-    FogState tmp;
-    *(FogData*)&tmp = *root->GetFog(idx);
-
-    // Fade weight derived from the frames-remaining counter.
-    f32 blend = lbl_eu_8066B1B8 - lbl_eu_806659BC / lbl_eu_8066B1BC;
-
-    FogState work[2];
-    work[0] = *(FogState*)&lbl_eu_8065FCA0;
-    work[1] = tmp;
-
-    if (tmp.m_type == 0) {
-        work[1] = *(FogState*)&lbl_eu_8065FCA0;
-        work[1].m_r = lbl_eu_806659C0[0];
-        work[1].m_g = lbl_eu_806659C0[1];
-        work[1].m_b = lbl_eu_806659C0[2];
-        work[1].m_a = lbl_eu_806659C0[3];
-    }
-    if (work[0].m_type == 0) {
-        work[0] = tmp;
-        work[0].m_r = lbl_eu_806659C0[0];
-        work[0].m_g = lbl_eu_806659C0[1];
-        work[0].m_b = lbl_eu_806659C0[2];
-        work[0].m_a = lbl_eu_806659C0[3];
-    }
-
-    // Colors are normalized, blended, then rescaled for the output record.
-    f32 base[4];
-    base[0] = work[0].m_r / lbl_eu_8066B1C0;
-    base[1] = work[0].m_g / lbl_eu_8066B1C0;
-    base[2] = work[0].m_b / lbl_eu_8066B1C0;
-    base[3] = work[0].m_a / lbl_eu_8066B1C0;
-
-    f32 tgt[4];
-    tgt[0] = work[1].m_r / lbl_eu_8066B1C0;
-    tgt[1] = work[1].m_g / lbl_eu_8066B1C0;
-    tgt[2] = work[1].m_b / lbl_eu_8066B1C0;
-    tgt[3] = work[1].m_a / lbl_eu_8066B1C0;
-
-    // Past halfway the blend snaps to the scene fog record entirely.
-    u32 selType;
-    if (blend < lbl_eu_8066B1C4) {
-        selType = work[0].m_type;
-    } else {
-        selType = work[1].m_type;
-    }
-
-    f32 w = lbl_eu_8066B1B8 - blend;
-
-    f32 out[4];
-    out[0] = tgt[0] * blend + base[0] * w;
-    out[1] = tgt[1] * blend + base[1] * w;
-    out[2] = tgt[2] * blend + base[2] * w;
-    out[3] = tgt[3] * blend + base[3] * w;
-
-    FogDesc* dst = &lbl_eu_8065FCD0;
-    dst->type = selType;
-
-    GXColor color;
-    *(u32*)&color = 0;
-    color.r = (u8)(out[0] * lbl_eu_8066B1C0);
-    color.g = (u8)(out[1] * lbl_eu_8066B1C0);
-    color.b = (u8)(out[2] * lbl_eu_8066B1C0);
-    color.a = (u8)(lbl_eu_8066B1B8 * lbl_eu_8066B1C0);
-
-    dst->f4 = blend * (work[1].m_startz - work[0].m_startz) + work[0].m_startz;
-    dst->f8 = blend * (work[1].m_endz - work[0].m_endz) + work[0].m_endz;
-    dst->fc = blend * (work[1].m_nearz - work[0].m_nearz) + work[0].m_nearz;
-    dst->f10 = blend * (work[1].m_farz - work[0].m_farz) + work[0].m_farz;
-    dst->color = *(u32*)&color;
 }

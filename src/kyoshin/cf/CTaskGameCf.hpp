@@ -86,17 +86,12 @@ extern "C" void init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs(CScnNw4r* scene, C
 extern "C" void* __ct__800FDB4C();
 extern "C" void setPauseMode__Q22cf13CfGameManagerFv(bool arg);
 extern "C" void UIWin_CreateManager(void* self, CScnNw4r* pScene, u32 memHandle);
-extern "C" void UIBattleGetOrCreate(void* self, CScnNw4r* pScene, s32 memHandle);
+class CUIBattleManager;
+CUIBattleManager* UIBattleGetOrCreate(CProcess* self, CScnNw4r* pScene, u32 memHandle);
 extern "C" void CUICfManager_createInstance(CProcess* pParent, CScnNw4r* pScene, s32 memHandle);
 extern "C" void evtCreateTaskRegister(CProcess* pParent, CScnNw4r* pScene, CView* pView);
-extern "C" void CfT_ResetEventState(); namespace cf { struct CtrlObjectParamSlots; } extern "C" int CtrlObjectParam_InsertSlotEntry(cf::CtrlObjectParamSlots* self, int value, int type, int index);
-extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2, int arg3);
-extern "C" u32 NandImageLive();
+namespace cf { struct CtrlObjectParamSlots; }
+extern "C" int CtrlObjectParam_InsertSlotEntry(cf::CtrlObjectParamSlots* self, int value, int type, int index);
 extern "C" void func_8007E514__Q22cf13CfGameManagerFv(int arg1, int arg2, const char* str, int arg4, u32 arg5);
-extern "C" void Env_CreateTask(CProcess* pParent, CScnNw4r* pScene);
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 id);
 extern "C" void CTaskGame_setLoadScreen(int a, int b);
-
-
-extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
-extern "C" void __ct__8CProcessFv(CProcess*);

@@ -3,11 +3,14 @@
 
 #include <types.h>
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include <new>
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuKizunagram.hpp"
-#include "monolib/util/MemManager.hpp"
+#include "kyoshin/CKizunagram.hpp"
+#include "kyoshin/CPcKizunagramHelpers.hpp"
+
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/core/CPadManager.hpp"   // CPad flag words (getCurrentPad)
 #include "kyoshin/cf/CfGameManager.hpp"   // cf::CfGameManager::getCurrentPad
@@ -36,18 +39,16 @@ static inline CFade* fadeOf(CMenuKizunagram* self) { return reinterpret_cast<CFa
 // Return types are int (not u8) so callers compare with cmpwi directly
 // (no byte mask), matching retail.
 extern "C" int kizChartOpen(UnkKizunaMenuSub98* self);
-extern "C" int KizunagramIsOpen(UnkKizunaMenuPcSub* self);
-extern "C" int CFade_IsReady(CFade* self);
+
 // (memberized: CFade_FadeIn -> CFade::In; declaration moved into class CFade)
 
 // Additional retail-unmangled callee names for the kizuna-gram screen state
 // helpers (same scheme as CMenuMapSelectSC / CMakeCrystalWin). Return types
 // are int where retail compares r3 with cmpwi directly (no byte mask);
-// kizChartStatus is u8 because retail masks its result with clrlwi.
+// kizChartStatus returns int; callers mask its result where retail does.
 extern "C" int CFade_IsVisible(CFade* self);
 extern "C" void CFade_FadeOut(CFade* self);
 extern "C" int kizChartReady(UnkKizunaMenuSub98* self);
-extern "C" u8 kizChartStatus(UnkKizunaMenuSub98* self);
 extern "C" void kizStartChart(UnkKizunaMenuSub98* self);
 
 
@@ -78,31 +79,18 @@ extern "C" void CLoadTeardownLayout(CLoad* self);
 extern "C" void CLoadDrawIfVisible(CLoad* self, nw4r::lyt::DrawInfo* drawInfo);
 
 // Kizuna-chart sub-object helpers (retail-unmangled; CKizunagram unit).
-extern "C" void teardownKizuna(UnkKizunaMenuSub98* self);
-extern "C" void drawKizLayouts(UnkKizunaMenuSub98* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void kizOpenWinNop(UnkKizunaMenuSub98* self);
 extern "C" int kizChartBusy(UnkKizunaMenuSub98* self);
 extern "C" int kizHasSelFlag(UnkKizunaMenuSub98* self);
-extern "C" void kizCloseChart(UnkKizunaMenuSub98* self, int arg);
 extern "C" void kizToggleHelp(UnkKizunaMenuSub98* self);
-extern "C" void kizCursorHoldA(UnkKizunaMenuSub98* self);
-extern "C" void kizCursorHoldB(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir1(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir2(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir3(UnkKizunaMenuSub98* self);
 extern "C" void kizCursorDir4(UnkKizunaMenuSub98* self);
-extern "C" void tickKizMove(UnkKizunaMenuSub98* self);
-// CPcKizunagram helpers. Return types are int (not u8) so callers compare
+// CPcKizunagram helpers.
 // with cmpwi directly (no byte mask), matching retail.
 extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
 extern "C" void KizunagramTerm(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramDraw(UnkKizunaMenuPcSub* self, nw4r::lyt::DrawInfo* drawInfo);
-extern "C" void KizunagramOpen(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramClose(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramCursorUp(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramCursorDown(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramCursorPageUp(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramCursorPageDown(UnkKizunaMenuPcSub* self);
 
 // Move() state-dispatch helpers (retail-unmangled; defined in this TU).
 // Declared extern "C" so the switch-dispatch call sites in Move() emit the
@@ -126,17 +114,16 @@ extern "C" void CLoadUpdateLayout(CLoad* self);
 extern "C" void CFade_Update(CFade* self);
 
 // Sound helpers used by Move() (retail-unmangled).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 
-extern "C" void __ct__CKizunagram(UnkKizunaMenuSub98* self, int arg);
 extern "C" void __ct__CPcKizunagram(UnkKizunaMenuPcSub* self);
 extern "C" void __ct__CLoad(CLoad* self, u8 arg);
 extern "C" void __ct__5CFadeFv(CFade* self);
 
 // Ctor tail helpers (retail-unmangled).
 extern "C" void CTaskGame_deleteLoad();
-extern "C" void MiniMapSetActiveFlag();
+void MiniMapSetActiveFlag();
 
 // C++-linkage helper - retail emits the mangled form
 // SetWideLocAdjust__FPQ34nw4r3lyt8DrawInfo.
@@ -168,7 +155,7 @@ extern u32 gmPauseFlags;    // global mode bitfield (bit 0x200000 = kizuna gate)
 // ---------------------------------------------------------------------------
 CMenuKizunagram::CMenuKizunagram(CProcess* parentRef, int b)
     : mParentRef(parentRef), mTitleAHelp(0, 0) {
-    __ct__CKizunagram(&mSub98, 0);
+    __ct__CKizunagram((CKizunagram*)&mSub98, 0);
     __ct__CPcKizunagram(&mPcKizunagram);
     __ct__CLoad(loadOf(this), 0);
     __ct__5CFadeFv(fadeOf(this));
@@ -201,7 +188,7 @@ void CMenuKizunagram::Term() {
     removeRenderCB__4CScnFP10IScnRender(reinterpret_cast<CScn*>(mParentRef), this);
 
     mTitleAHelp.teardown();
-    teardownKizuna(&mSub98);
+    teardownKizuna((UnkKizunaSelfC6F0*)&mSub98);
     KizunagramTerm(&mPcKizunagram);
     CLoadTeardownLayout(loadOf(this));
     (fadeOf(this))->Unload();
@@ -288,8 +275,8 @@ body:
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     nw4r::lyt::DrawInfo drawInfo;
     SetWideLocAdjust(&drawInfo);
-    drawKizLayouts(&mSub98, &drawInfo);
-    KizunagramDraw(&mPcKizunagram, &drawInfo);
+    drawKizLayouts((UnkKizunaSelfC61C*)&mSub98, &drawInfo);
+    KizunagramDraw((CPcKizunagram*)&mPcKizunagram, &drawInfo);
     // Draw the title/help bar once the per-character window is past the
     // opening phase (state >= 8) or when its visibility flag is set.
     if (field_0x21D != 0 || field_0x21C >= 8) {
@@ -356,7 +343,7 @@ void func_80257360(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void KizunagramConfirmChartAdvance(CMenuKizunagram* self) {
     if (self->mTitleAHelp.isInitialized() != 0 && kizChartReady(&self->mSub98) != 0) {
-        self->mTitleAHelp.func_801C41E8(kizChartStatus(&self->mSub98));
+        self->mTitleAHelp.func_801C41E8(kizChartStatus((UnkKizunaSelfCBCC*)&self->mSub98));
         self->mTitleAHelp.func_801C412C();
         kizStartChart(&self->mSub98);
         CLoadStartRetryStep(loadOf(self));
@@ -427,13 +414,13 @@ merged:
         kizOpenWinNop(&self->mSub98);
         if (kizChartBusy(&self->mSub98) == 0 && kizHasSelFlag(&self->mSub98) != 0) {
             self->mTitleAHelp.markReplayClose();
-            kizCloseChart(&self->mSub98, 0);
+            kizCloseChart((UnkKizunaSelfC7FC*)&self->mSub98, 0);
             self->field_0x21C = 6;
         }
     } else if (dismiss != 0) {
         // Back out of the chart: dismiss the help bar and go to state 5.
         self->mTitleAHelp.beginClose();
-        kizCloseChart(&self->mSub98, 1);
+        kizCloseChart((UnkKizunaSelfC7FC*)&self->mSub98, 1);
         self->field_0x21C = 5;
     } else if (toggle != 0) {
         // Toggle the help-bar visibility flag and play the corresponding SE.
@@ -445,13 +432,13 @@ merged:
             playUISound(0xe);
         }
     } else if (cursorA != 0) {
-        kizCursorHoldA(&self->mSub98);
+        kizCursorHoldA((UnkKizunaSelfCAE4*)&self->mSub98);
     } else if (cursorB != 0) {
-        kizCursorHoldB(&self->mSub98);
+        kizCursorHoldB((UnkKizunaSelfCAE4*)&self->mSub98);
     }
     // Mirror the chart selection into the help bar, then run the turbo
     // cursor helpers; refresh the chart only when none of them fired.
-    self->mTitleAHelp.func_801C41E8(kizChartStatus(&self->mSub98));
+    self->mTitleAHelp.func_801C41E8(kizChartStatus((UnkKizunaSelfCBCC*)&self->mSub98));
     if (kizChartBusy(&self->mSub98) == 0) {
         // changed stays 1 only when no turbo helper fired; the default
         // chart refresh then runs.
@@ -473,7 +460,7 @@ merged:
             changed = 0;
         }
         if (changed) {
-            tickKizMove(&self->mSub98);
+            tickKizMove((UnkKizunaDisp*)&self->mSub98);
         }
     }
 }
@@ -501,7 +488,7 @@ void KizunagramAdvanceToPcWin(CMenuKizunagram* self) {
         self->mTitleAHelp.setNameText(name);
         self->mTitleAHelp.func_801C41E8(0x59);
         self->mTitleAHelp.reopenFromClose();
-        KizunagramOpen(&self->mPcKizunagram);
+        KizunagramOpen((CPcKizunagram*)&self->mPcKizunagram);
         self->field_0x21C = 8;
     }
 }
@@ -513,7 +500,7 @@ void KizunagramAdvanceToPcWin(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void KizunagramAdvanceToState9(CMenuKizunagram* self) {
     if (self->mTitleAHelp.func_801C4124() != 0 &&
-        KizunagramIsOpen(&self->mPcKizunagram) != 0) {
+        KizunagramIsOpen((CPcKizunagram*)&self->mPcKizunagram) != 0) {
         self->field_0x21C = 9;
     }
 }
@@ -526,7 +513,7 @@ void KizunagramAdvanceToState9(CMenuKizunagram* self) {
 // helpers on the PC window.
 // ---------------------------------------------------------------------------
 void KizunagramHandleCharInput(CMenuKizunagram* self) {
-    if (KizunagramIsOpen(&self->mPcKizunagram) == 0) {
+    if (KizunagramIsOpen((CPcKizunagram*)&self->mPcKizunagram) == 0) {
         return;
     }
     KizunaPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
@@ -559,16 +546,16 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
     }
     if (a) {
         self->mTitleAHelp.markReplayClose();
-        KizunagramClose(&self->mPcKizunagram);
+        KizunagramClose((CPcKizunagram*)&self->mPcKizunagram);
         self->field_0x21C = 0xa;
     } else if (f1) {
-        KizunagramCursorUp(&self->mPcKizunagram);
+        KizunagramCursorUp((CPcKizunagram*)&self->mPcKizunagram);
     } else if (f2) {
-        KizunagramCursorDown(&self->mPcKizunagram);
+        KizunagramCursorDown((CPcKizunagram*)&self->mPcKizunagram);
     } else if (f3) {
-        KizunagramCursorPageUp(&self->mPcKizunagram);
+        KizunagramCursorPageUp((CPcKizunagram*)&self->mPcKizunagram);
     } else if (f4) {
-        KizunagramCursorPageDown(&self->mPcKizunagram);
+        KizunagramCursorPageDown((CPcKizunagram*)&self->mPcKizunagram);
     }
 }
 
@@ -579,10 +566,10 @@ void KizunagramHandleCharInput(CMenuKizunagram* self) {
 // ---------------------------------------------------------------------------
 void KizunagramAdvanceToState7(CMenuKizunagram* self) {
     if (self->mTitleAHelp.func_801C4124() != 0 &&
-        KizunagramIsOpen(&self->mPcKizunagram) != 0) {
+        KizunagramIsOpen((CPcKizunagram*)&self->mPcKizunagram) != 0) {
         char* name = BdatTouchStringCell(lbl_eu_8050CAB8, lbl_eu_8050CAB8 + 0xb, 1);
         self->mTitleAHelp.setNameText(name);
-        self->mTitleAHelp.func_801C41E8(kizChartStatus(&self->mSub98));
+        self->mTitleAHelp.func_801C41E8(kizChartStatus((UnkKizunaSelfCBCC*)&self->mSub98));
         self->mTitleAHelp.reopenFromClose();
         kizStartChart(&self->mSub98);
         self->field_0x21C = 7;

@@ -95,7 +95,6 @@ void CMenuItemExchange::Init() {
 
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void BgTex_Release_3D9C(void*);
-extern "C" void teardown(void*);
 extern u32 lbl_eu_80664428;
 
 // Detach the render callback, tear down the embedded widgets, clear the

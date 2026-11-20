@@ -6,6 +6,7 @@
 #include <types.h>
 #include <cstring>
 #include "kyoshin/realtimeevt/CREvtMovie.hpp"
+#include "kyoshin/cf/EvtSeqApi.hpp"
 #include "monolib/util/MemManager.hpp"
 
 namespace cf {
@@ -68,7 +69,7 @@ void EvtMovie_StartPlayback_4980(CREvtMovie* self) {
     std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
-    evtStartMoviePlayback(buf.mPath, 1, EvtSeqGetC4FlagBit1());
+    evtStartMoviePlayback(buf.mPath, 1, (void*)EvtSeqGetC4FlagBit1());
     self->mFlag19 = 0;
 }
 
@@ -111,7 +112,7 @@ void cf::CREvtMovie::vfunc_1C() {
     std::strcat(buf.mPath, name);
     buf.mLength += eLen;
 
-    evtStartMoviePlayback(buf.mPath, 1, EvtSeqGetC4FlagBit1());
+    evtStartMoviePlayback(buf.mPath, 1, (void*)EvtSeqGetC4FlagBit1());
     self->mFlag19 = 0;
 }
 
@@ -145,7 +146,7 @@ void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self) {
         std::strcat(buf.mPath, name);
         buf.mLength += eLen;
 
-        evtStartMoviePlayback(buf.mPath, 0, EvtSeqGetC4FlagBit1());
+        evtStartMoviePlayback(buf.mPath, 0, (void*)EvtSeqGetC4FlagBit1());
         self->mFlag19 = 1;
     }
     self->mFlag19 = 1;

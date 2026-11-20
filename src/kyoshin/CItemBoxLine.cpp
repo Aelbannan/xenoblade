@@ -4,6 +4,7 @@
 #define IWORK_EVENT_INLINE_DTOR // ~CItemBoxLine elides the empty base dtor (retail)
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -14,18 +15,15 @@
 #include <nw4r/lyt/lyt_material.h>
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include "monolib/device/CDeviceFont.hpp"
-#include "monolib/work/CEventFile.hpp"
+#include "monolib/device/CDeviceSC.hpp"
+
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 
-// Tab entry accessors (retail symbols are plain func_XXXX names).
-u8 ItemBoxGetTab(const CItemBoxPage* page, unsigned int index);
-u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index);
+// Tab entry accessors are declared in kyoshin/CItemBoxLine.hpp.
 extern "C" void ItemBoxLine_CopyTabEntry(CIBLTabEntry* dest, const CIBLTabEntry* src);
 extern "C" CIBLTabEntry* ItemBoxLine_InitTabEntry(CIBLTabEntry* self, u16 item, u32 value, u8 lock, u8 ready);
-u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
-u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
 
 int sprintf(char*, const char*, ...);
 
@@ -144,9 +142,9 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                                                  BdatGetItemId(result));
                         u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (v == 3) {
-                            if (Counter_TestBit(base, 0x85) == 0) entry->f9 = 0;
+                            if (Counter_TestBit((void*)base, 0x85) == 0) entry->f9 = 0;
                         } else if (v == 2) {
-                            if (Counter_TestBit(base, 0x84) == 0) entry->f9 = 0;
+                            if (Counter_TestBit((void*)base, 0x84) == 0) entry->f9 = 0;
                         }
                     }
                 }
@@ -209,9 +207,9 @@ void ItemBoxLine_BuildTabEntries(CIBLTab* self, u8 arg2, u16 arg3, u8 arg4) {
                                                  BdatGetItemId(result));
                         u32 base = (u32)CtrlObjectParam_GetCharEntry(arg4) + 0x3534;
                         if (w == 3) {
-                            if (Counter_TestBit(base, 0x85) == 0) entry->f9 = 0;
+                            if (Counter_TestBit((void*)base, 0x85) == 0) entry->f9 = 0;
                         } else if (w == 2) {
-                            if (Counter_TestBit(base, 0x84) == 0) entry->f9 = 0;
+                            if (Counter_TestBit((void*)base, 0x84) == 0) entry->f9 = 0;
                         }
                     }
                 } else {
@@ -335,7 +333,7 @@ extern "C" char* ItemBoxLine_FormatDisplayName(CIBLTabFull* self, u16 index) {
         self->strB8.format("%s", base);
         // Only some languages keep the full-width decoration around $-parts.
         int full = 1;
-        if ((u8)getLanguage__9CDeviceSCFv() == 3 || (u8)getLanguage__9CDeviceSCFv() == 2) {
+        if (CDeviceSC::getLanguage() == 3 || CDeviceSC::getLanguage() == 2) {
             full = 0;
         }
         // Placeholder rewrite pass over a stack copy of the composed name.
@@ -461,14 +459,13 @@ ret0:
 // ============================================================================
 extern "C" u32 __cvt_fp2unsigned(double);
 extern const float lbl_eu_80668118;
-/* 24-byte float record copied off lbl_eu_8050715C by ItemBoxLine_CalcCountKey and read
-   back indexed by the owner lookup byte (mask allows past the end on
+/* RankType-indexed float multipliers from retail .rodata:0x8050715C; CalcCountKey
+   indexes them with the owner lookup byte (mask allows past the end on
    purpose, same as the equip item box's F32Record idiom). */
-union CIBLF32Rec {
-    u32 w[6];
-    float f[6];
+struct CIBLF32Rec {
+    float f[7];
 };
-extern const CIBLF32Rec lbl_eu_8050715C;
+static const CIBLF32Rec sItemBoxLineRankMultipliers = {{ 0.0f, 1.0f, 1.2f, 1.5f, 1.8f, 2.0f, 2.5f }}; // name-guess: rankType-indexed multipliers from retail .rodata:0x8050715C
 extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     u32 itemId = LookupItemTypeTable(itemData);
     u32 kind = BdatGetItemType(itemData);
@@ -478,7 +475,7 @@ extern "C" u32 ItemBoxLine_CalcCountKey(void* self, unsigned int itemData) {
     if ((u16)kind == 3) {
         u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", itemData);
         u16 count = BdatGetU16Direct((const void*)itemId, "money", cat);
-        CIBLF32Rec rec = lbl_eu_8050715C;
+        CIBLF32Rec rec = sItemBoxLineRankMultipliers;
         result = __cvt_fp2unsigned((double)((float)count * rec.f[v & 0xFF]));
     } else if ((u16)kind == 9 || (u16)kind < 2 || (u16)kind > 8) {
         u16 count = BdatGetU16Direct((const void*)itemId, "money", cat);
@@ -702,9 +699,9 @@ void CItemBoxLine::OpenLine() {
     // retail keeps them in r28..r31 behind a _savegpr_28 prologue.
     CIBLTab* tabs = &unk3A4;
     u8 idx = (u8)(unk38C + unk38E);
-    int f9 = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
+    int f9 = ItemBoxLine_GetTabEntryReady(tabs, idx);
     mInfo2.SetItem((u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, field39F, f9);
-    mInfo2.SetNamedText(0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
+    mInfo2.SetNamedText(0, (char*)ItemBoxLine_FormatTabEntryName((CIBLTabFormat*)tabs, idx));
     SetInfo2Item((u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
     float vec[3];
     mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3((nw4r::math::VEC3*)vec, 276.0f, 53.0f, lbl_eu_806680F8)));
@@ -830,7 +827,7 @@ void CItemBoxLine::CursorPageBack() {
         if (!((u16)field392 > lim)) field392 = 1;
         mNumSel.CountUp();
         mNumSel.SetCount((u8)field392);
-        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, idx));
     } else {
         if (unk38C == 0 && unk38E == 0) {
             unk38C = -1;
@@ -911,7 +908,7 @@ void CItemBoxLine::CursorPageDown() {
         if ((s16)field392 < 1) field392 = lim;
         mNumSel.CountDown();
         mNumSel.SetCount((u8)field392);
-        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, idx));
     } else {
         u16 count = unk3A4.count;
         if (count >= 7) {
@@ -981,7 +978,7 @@ void CItemBoxLine::CursorPageUp() {
             if (field392 < 1) field392 = 1;
         }
         mNumSel.SetCount((u8)field392);
-        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, idx));
         playUISound(1);
     } else {
         if (unk38C == -1) {
@@ -1043,7 +1040,7 @@ void CItemBoxLine::CursorPageDownRow() {
             if ((u32)field392 > (u32)lim) field392 = (s16)lim;
         }
         mNumSel.SetCount((u8)field392);
-        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((void*)tabs, idx));
+        mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, idx));
         playUISound(1);
         return;
     }
@@ -1240,7 +1237,7 @@ void CItemBoxLine::RefreshTabPanes() {
     char* pool = lbl_eu_805071B0;
     for (u8 i = 0; i < 7; i++) {
         u16 idx = (u16)(unk38E + i);
-        if (ItemBoxLine_GetTabEntryLock((void*)tabs, idx) != 0) {
+        if (ItemBoxLine_GetTabEntryLock(tabs, idx) != 0) {
             __as__11_GXColorS10FRC11_GXColorS10(&colors[8], &colors[4]);
             __as__11_GXColorS10FRC11_GXColorS10(&colors[9], &colors[5]);
             __as__11_GXColorS10FRC11_GXColorS10(&colors[10], &colors[6]);
@@ -1254,9 +1251,9 @@ void CItemBoxLine::RefreshTabPanes() {
         u16 key = ItemBoxLine_GetTabEntryItem(tabs, idx);
         DrawTabRowText(key, i);
         DrawTabRowIcon(key, i);
-        u8 vis = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
+        u8 vis = ItemBoxLine_GetTabEntryReady(tabs, idx);
         SetPaneVisible(i, vis);
-        FormatName(key, (s8)ItemBoxLine_ProbeNameSlot((void*)tabs, idx), i);
+        FormatName(key, (s8)ItemBoxLine_ProbeNameSlot((CIBLTabFull*)tabs, idx), i);
         if (key == 0) {
             char nameBuf2[0x20];
             sprintf(nameBuf2, "txt_name%02d", i + 1);
@@ -1267,7 +1264,7 @@ void CItemBoxLine::RefreshTabPanes() {
             char nameBuf1[0x20];
             sprintf(nameBuf1, "txt_name%02d", i + 1);
             LayoutSetTextBoxFmtValue(field40, nameBuf1,
-                          (char*)ItemBoxLine_FormatTabEntryName((void*)tabs, idx), 0);
+                          (char*)ItemBoxLine_FormatTabEntryName((CIBLTabFormat*)tabs, idx), 0);
             GXColorS10 fs0 = PaneMatGetS16QuadByName(field40, nameBuf1, 0);
             GXColorS10 fs1 = fs0;
             GXColorS10 fs2 = PaneMatGetS16QuadByName(field40, nameBuf1, 1);
@@ -1276,7 +1273,7 @@ void CItemBoxLine::RefreshTabPanes() {
             colors[9].a = fs2.a;
             PaneMatSetTevColorsByName(field40, nameBuf1, &colors[8], &colors[9]);
             char* name = BdatTouchStringCell("MNU_item", "name", 3);
-            u32 count = ItemBoxLine_GetTabEntryValue((void*)tabs, idx);
+            u32 count = ItemBoxLine_GetTabEntryValue(tabs, idx);
             char buf3[0x20];
             sprintf(buf3, "%d%s", count, name);
             sprintf(nameBuf1, "txt_buyvalue%02d", i + 1);
@@ -1509,9 +1506,9 @@ void CItemBoxLine::CommitOverlayState() {
     // ItemBoxLine_GetTabEntryValue (retail object boundary) instead of inlining the same-TU
     // definitions.
     u8* tabs = (u8*)&unk3A4;
-    mNumSel.SetItemName((char*)ItemBoxLine_FormatTabEntryName(tabs, tabidx));
+    mNumSel.SetItemName((char*)ItemBoxLine_FormatTabEntryName((CIBLTabFormat*)tabs, tabidx));
     mNumSel.SetCount((u8)field392);
-    mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue(tabs, tabidx));
+    mNumSel.SetTotal(field392 * ItemBoxLine_GetTabEntryValue((const CIBLTab*)tabs, tabidx));
     mNumSel.Open();
     field50 = 6;
 }
@@ -1624,19 +1621,19 @@ void CItemBoxLine::FormatName(u32 arg4, s8 arg5, u32 arg6) {
         u8 v = BdatGetU8Direct((const void*)lbl_eu_806640EC, "rankType", arg4);
         char* name = BdatTouchStringCell("MNU_item", "name", 0x1e - (v - 1));
         str.format("%s", name);
-        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)itemBoxLine_pageLabelNeutralTop, (const GXColorS10*)itemBoxLine_pageLabelNeutralBottom);
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
     } else if (arg5 > 0) {
         str.format("%d");
-        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)itemBoxLine_pageLabelNeutralTop, (const GXColorS10*)itemBoxLine_pageLabelNeutralBottom);
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelNeutralTop, &itemBoxLine_pageLabelNeutralBottom);
     } else if (arg5 == 0) {
         const char* s = "";
         str = s;
     } else if (arg5 == -2) {
         str = getErrMesText16();
-        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)itemBoxLine_pageLabelSelectedTop, (const GXColorS10*)itemBoxLine_pageLabelSelectedBottom);
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageLabelSelectedTop, &itemBoxLine_pageLabelSelectedBottom);
     } else if (arg5 == -3) {
         str = getErrMesText15();
-        PaneMatSetTevColorsByName(field40, buf, (const GXColorS10*)itemBoxLine_pageValueSelectedTop, (const GXColorS10*)itemBoxLine_pageValueSelectedBottom);
+        PaneMatSetTevColorsByName(field40, buf, &itemBoxLine_pageValueSelectedTop, &itemBoxLine_pageValueSelectedBottom);
     } else {
         const char* s = "";
         str = s;
@@ -1780,11 +1777,11 @@ void CItemBoxLine::RefreshPageList() {
     LayoutSetTextBoxFmtValue(field40, "txt_comment", name,
                   reinterpret_cast<u32>(field54));
     if (mInfo2.GetState() != 0) {
-        u8 f9 = ItemBoxLine_GetTabEntryReady(reinterpret_cast<u8*>(tabs), idx);
+        u8 f9 = ItemBoxLine_GetTabEntryReady(tabs, idx);
         u16 f0 = ItemBoxLine_GetTabEntryItem(tabs, idx);
         mInfo2.SetItem(f0, 0, field39F, f9);
         char* tabName = reinterpret_cast<char*>(
-            ItemBoxLine_FormatTabEntryName(reinterpret_cast<u8*>(tabs), idx));
+            ItemBoxLine_FormatTabEntryName((CIBLTabFormat*)tabs, idx));
         mInfo2.SetNamedText(0, tabName);
         SetInfo2Item(
                       ItemBoxLine_GetTabEntryItem(tabs, idx));
@@ -2022,13 +2019,13 @@ void CItemBoxLine::ShowSlotCounts(u32 itemData) {
     LayoutSetTextBoxFmtValue(field40, "txt_value22", "", 0);
     LayoutSetTextBoxFmtValue(field40, "txt_para24", "", 0);
     LayoutSetTextBoxFmtValue(field40, "txt_para25", "", 0);
-    PaneMatSetTevColorsByName(field40, "txt_para01", (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, "txt_para10", (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, "txt_para11", (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, "txt_para04", (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, "txt_para08", (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, "txt_para22", (const GXColorS10*)itemBoxLine_tabLabelSelectedTop, (const GXColorS10*)itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, "txt_para23", (const GXColorS10*)itemBoxLine_tabLabelSelectedTop, (const GXColorS10*)itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para01", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para10", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para11", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para04", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para08", &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para22", &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, "txt_para23", &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
     BuildPageData(itemData);
 }
 
@@ -2115,13 +2112,13 @@ selDone:
     LayoutSetTextBoxFmtValue(field40, &lbl_eu_805071B0[0x49b], name2, 0);
 
     // Refresh the slot pane colors.
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], (const GXColorS10*)itemBoxLine_tabLabelSelectedTop, (const GXColorS10*)itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], (const GXColorS10*)itemBoxLine_tabLabelSelectedTop, (const GXColorS10*)itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], (const GXColorS10*)itemBoxLine_tabLabelSelectedTop, (const GXColorS10*)itemBoxLine_tabLabelSelectedBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], (const GXColorS10*)itemBoxLine_tabLabelNeutralTop, (const GXColorS10*)itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x443], &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x464], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x46f], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x44e], &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x459], &itemBoxLine_tabLabelSelectedTop, &itemBoxLine_tabLabelSelectedBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x47a], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field40, &lbl_eu_805071B0[0x485], &itemBoxLine_tabLabelNeutralTop, &itemBoxLine_tabLabelNeutralBottom);
     BuildPageData(itemData);
 }
 
@@ -2527,37 +2524,37 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* pane443 = this->field40->GetRootPane()->
                                        FindPaneByName("txt_para01", true);
         GXColorS10 c0 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane443, 0);
-        __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&itemBoxLine_tabLabelNeutralTop[0],
-                                            (const GXColorS10*)&c0);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabLabelNeutralTop,
+                                            &c0);
         GXColorS10 c1 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane443, 1);
-        __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&itemBoxLine_tabLabelNeutralBottom[0],
-                                            (const GXColorS10*)&c1);
-        *(s16*)&itemBoxLine_tabLabelSelectedTop[6] = *(s16*)&itemBoxLine_tabLabelNeutralTop[6];
-        *(s16*)&itemBoxLine_tabLabelSelectedBottom[6] = *(s16*)&itemBoxLine_tabLabelNeutralBottom[6];
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabLabelNeutralBottom,
+                                            &c1);
+        itemBoxLine_tabLabelSelectedTop.a = itemBoxLine_tabLabelNeutralTop.a;
+        itemBoxLine_tabLabelSelectedBottom.a = itemBoxLine_tabLabelNeutralBottom.a;
 
         nw4r::lyt::Pane* pane4A6 = this->field40->GetRootPane()->
                                        FindPaneByName("txt_value02", true);
         GXColorS10 c2 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane4A6, 0);
-        __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&itemBoxLine_tabValueNeutralTop[0],
-                                            (const GXColorS10*)&c2);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabValueNeutralTop,
+                                            &c2);
         GXColorS10 c3 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane4A6, 1);
-        __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&itemBoxLine_tabValueNeutralBottom[0],
-                                            (const GXColorS10*)&c3);
-        *(s16*)&itemBoxLine_tabValueSelectedTop[6] = *(s16*)&itemBoxLine_tabValueNeutralTop[6];
-        *(s16*)&itemBoxLine_tabValueSelectedBottom[6] = *(s16*)&itemBoxLine_tabValueNeutralBottom[6];
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_tabValueNeutralBottom,
+                                            &c3);
+        itemBoxLine_tabValueSelectedTop.a = itemBoxLine_tabValueNeutralTop.a;
+        itemBoxLine_tabValueSelectedBottom.a = itemBoxLine_tabValueNeutralBottom.a;
 
         nw4r::lyt::Pane* pane76B = this->field40->GetRootPane()->
                                        FindPaneByName("txt_num01", true);
         GXColorS10 c4 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane76B, 0);
-        __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&itemBoxLine_pageLabelNeutralTop[0],
-                                            (const GXColorS10*)&c4);
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_pageLabelNeutralTop,
+                                            &c4);
         GXColorS10 c5 = PaneMatGetS16Quad((nw4r::lyt::Pane*)pane76B, 1);
-        __as__11_GXColorS10FRC11_GXColorS10((GXColorS10*)&itemBoxLine_pageLabelNeutralBottom[0],
-                                            (const GXColorS10*)&c5);
-        *(s16*)&itemBoxLine_pageLabelSelectedTop[6] = *(s16*)&itemBoxLine_pageLabelNeutralTop[6];
-        *(s16*)&itemBoxLine_pageValueSelectedTop[6] = *(s16*)&itemBoxLine_pageLabelNeutralTop[6];
-        *(s16*)&itemBoxLine_pageLabelSelectedBottom[6] = *(s16*)&itemBoxLine_pageLabelNeutralBottom[6];
-        *(s16*)&itemBoxLine_pageValueSelectedBottom[6] = *(s16*)&itemBoxLine_pageLabelNeutralBottom[6];
+        __as__11_GXColorS10FRC11_GXColorS10(&itemBoxLine_pageLabelNeutralBottom,
+                                            &c5);
+        itemBoxLine_pageLabelSelectedTop.a = itemBoxLine_pageLabelNeutralTop.a;
+        itemBoxLine_pageValueSelectedTop.a = itemBoxLine_pageLabelNeutralTop.a;
+        itemBoxLine_pageLabelSelectedBottom.a = itemBoxLine_pageLabelNeutralBottom.a;
+        itemBoxLine_pageValueSelectedBottom.a = itemBoxLine_pageLabelNeutralBottom.a;
 
         // Build the four embedded cursors from stack temps (copy + teardown).
         this->mCur70 = CCur18(CUICfManager_getArcResourceAccessor());
@@ -2636,18 +2633,18 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 void sinit_801F32EC() {
     SplitU32ToS16s(&itemBoxLine_tabLabelNeutralTop, 0);
     SplitU32ToS16s(&itemBoxLine_tabLabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_tabLabelSelectedTop, 0x80, 0x80, 0x80, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_tabLabelSelectedBottom, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxLine_tabLabelSelectedTop, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxLine_tabLabelSelectedBottom, 0x80, 0x80, 0x80, 0);
     SplitU32ToS16s(&itemBoxLine_tabValueNeutralTop, 0);
     SplitU32ToS16s(&itemBoxLine_tabValueNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_tabValueSelectedTop, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_tabValueSelectedBottom, 0x80, 0x80, 0x80, 0);
+    setGXColorS10(&itemBoxLine_tabValueSelectedTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10(&itemBoxLine_tabValueSelectedBottom, 0x80, 0x80, 0x80, 0);
     SplitU32ToS16s(&itemBoxLine_pageLabelNeutralTop, 0);
     SplitU32ToS16s(&itemBoxLine_pageLabelNeutralBottom, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_pageLabelSelectedTop, 0x12, 0xa3, 0xe7, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_pageLabelSelectedBottom, 0xff, 0xff, 0xff, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_pageValueSelectedTop, 0xb3, 0x9, 0xc0, 0);
-    setGXColorS10((GXColorS10*)&itemBoxLine_pageValueSelectedBottom, 0xff, 0xff, 0xff, 0);
+    setGXColorS10(&itemBoxLine_pageLabelSelectedTop, 0x12, 0xa3, 0xe7, 0);
+    setGXColorS10(&itemBoxLine_pageLabelSelectedBottom, 0xff, 0xff, 0xff, 0);
+    setGXColorS10(&itemBoxLine_pageValueSelectedTop, 0xb3, 0x9, 0xc0, 0);
+    setGXColorS10(&itemBoxLine_pageValueSelectedBottom, 0xff, 0xff, 0xff, 0);
 }
 
 // Retail ItemBoxLine_InitTabFormat calls these as external relocs.
@@ -2718,3 +2715,20 @@ u8 ItemBoxLine_ProbePageSlot(CIBLTabFull* self, u32 index) {
     }
     return (u8)result;
 }
+
+// .sbss UI colour objects owned by this TU (retail 0x806645D8..0x80664640),
+// declared in retail address order in CItemBoxLineImports.hpp.
+GXColorS10 itemBoxLine_tabLabelNeutralTop;
+GXColorS10 itemBoxLine_tabLabelNeutralBottom;
+GXColorS10 itemBoxLine_tabLabelSelectedTop;
+GXColorS10 itemBoxLine_tabLabelSelectedBottom;
+GXColorS10 itemBoxLine_tabValueNeutralTop;
+GXColorS10 itemBoxLine_tabValueNeutralBottom;
+GXColorS10 itemBoxLine_tabValueSelectedTop;
+GXColorS10 itemBoxLine_tabValueSelectedBottom;
+GXColorS10 itemBoxLine_pageLabelNeutralTop;
+GXColorS10 itemBoxLine_pageLabelNeutralBottom;
+GXColorS10 itemBoxLine_pageLabelSelectedTop;
+GXColorS10 itemBoxLine_pageLabelSelectedBottom;
+GXColorS10 itemBoxLine_pageValueSelectedTop;
+GXColorS10 itemBoxLine_pageValueSelectedBottom;

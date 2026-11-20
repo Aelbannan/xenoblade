@@ -726,10 +726,8 @@ void CharEffInit(void* a, void* b, void* c);
 void attachOwner(void* self, void* owner);
 void* lookupCA0By45C0(void* self);
 void* MapFx_ResolveOwner(void* src);
-void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);
 void registerBattleActor(void* mgr, void* obj);
 int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void schedClearFlag15Update(void* effect);
 void schedAttachChildSlot(void* effect, void* parent);
 void schedDetachChildSlot(void* effect, void* parent);
@@ -766,7 +764,6 @@ struct CEffectInst {
 float simGetLeafDist7B0(void* obj);
 void CfObjectMove_setMoveSpeed(void* player, float value);
 void CfObjectMove_setRegionAttached(void* obj, int flag);
-void CBattleMan_BumpUnk94Key(void* mgr, u32 key);
 void spreadChainArtsHits(void* mgr, void* obj, int a, int b);
 void unregisterBattleActor(void* mgr, void* target);
 void CPartsChange_ResetBattleEntry(void* obj, int a, int b);

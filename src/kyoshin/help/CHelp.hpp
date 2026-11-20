@@ -58,6 +58,6 @@ public:
 extern "C" void CUICfManager_queueTutorialMenu(u32 param0, UNKWORD param1, UNKWORD param2);
 extern "C" void CtrlRemote_SetSharedBit(u32, u32);
 extern "C" void* UIWin_CreateMenuUpdate(int, u32, s32, s32);
-extern "C" void MenuTutorialIsCreated();
+extern "C" u32 MenuTutorialIsCreated();
 // US symbols.txt name for __vt__Q22cf5CHelp. Plain extern (not mangled).
 extern cf::CHelpVtbl lbl_eu_8053B3A0;

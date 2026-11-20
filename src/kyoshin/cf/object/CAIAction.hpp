@@ -319,12 +319,15 @@ extern "C" void __ct__800FD250(void*);
 extern "C" void* firstReslistB28(void*);
 extern "C" void* nextReslistB28(void*, void*);
 extern "C" void* findObjB28ById(s32);
-extern void* getInstance();   // C++ linkage -> getInstance__Fv
-extern "C" int isBattleStatusActive(void*, int);
-extern "C" void* findBattleStatusEntry(void*, u32);
-extern "C" void* CBattleMan_FetchVisionObj(void*);
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+extern "C" void* findBattleStatusEntry(void*, u32);
+
+#include "kyoshin/cf/CBattleManager.hpp"
 extern "C" int rand(void);
 extern "C" f32 CREvtLight_DistToTarget(void*, void*);
 extern "C" int CREvtLight_AngleState(void*, void*);
+
+// C++-linkage helpers owned by kyoshin/cf/object/CAIAction.
+void* aiActionClearBlockADC(void* p);
+void aiActionUpdateEntriesDelta(void* self, float delta);
+void aiActionClearBits0006(void* self);

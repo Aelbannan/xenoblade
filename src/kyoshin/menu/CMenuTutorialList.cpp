@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/menu/CMenuTutorialList.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/CTutorial.hpp"       // playUISound (retail playUISound__FUl)
 #include "kyoshin/code_80135FDC.hpp"   // BdatTouchStringCell string-format helper
 #include "kyoshin/CTaskGame.hpp"       // CTaskGame::getInstance / isFlag01Set
@@ -54,7 +55,7 @@ extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // UI sound playback (retail unmangled C symbol; id + param).
 extern "C" void CtrlRemote_SetSharedBit(u32 soundId, u32 arg);
 // Save/skip system busy queries (retail unmangled).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 
 /* Constructor: IUICf base (flags 0x54/0x55) is built by its own ctor; the

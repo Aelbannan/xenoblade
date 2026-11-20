@@ -21,10 +21,10 @@ void drawPresentWin(CPresentWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     drawLayout(self->mpLayout, drawInfo, 0, 1);
 }
 
-u8 isPresentActive(CPresentWin* self) { return self->mField30; }
+u32 isPresentActive(CPresentWin* self) { return self->mField30; }
 
 
-u8 isPresentSettled(CPresentWin* self) { return self->mField38; }
+u32 isPresentSettled(CPresentWin* self) { return self->mField38; }
 
 // State-machine transition: if state == 2, advance to state 3 and clear sub-state
 void advancePresentState(CPresentWin* self) {
@@ -203,9 +203,9 @@ void togglePresentPath(CPresentWin* self) {
     }
 }
 
-u8 getPresentPath(CPresentWin* self) { return self->mField31; }
+u32 getPresentPath(CPresentWin* self) { return self->mField31; }
 
-u8 isPresentBusy(CPresentWin* self) { return self->mField36; }
+u32 isPresentBusy(CPresentWin* self) { return self->mField36; }
 
 // Get the world position of the selected pane of another present window and
 // scale its x by that window's label pane (+0x14) horizontal scale factor.

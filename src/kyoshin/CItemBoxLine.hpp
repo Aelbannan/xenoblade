@@ -15,6 +15,9 @@
 #include <nw4r/math/math_types.h>
 
 class CEventFile;
+struct CIBLTabFormat;
+struct CIBLTabFull;
+class CItemBoxPage;
 
 /* 12-byte item-box tab entry: halves/words/bytes as stored per slot. */
 struct CIBLTabEntry {
@@ -178,3 +181,14 @@ public:
     ml::FixStr<128> str45C;     // +0x45C: second tab name buffer (mLength at +0x4DC)
     CItemBoxPage mPage;         // +0x4E0: per-page item table (ends +0x63C)
 };
+
+// Canonical declarations for the free tab helpers defined in CItemBoxLine.cpp.
+u8 ItemBoxLine_GetTabEntryLock(const CIBLTab* self, unsigned int index);
+u32 ItemBoxLine_GetTabEntryValue(const CIBLTab* self, unsigned int index);
+u16 ItemBoxLine_GetTabEntryItem(const CIBLTab* self, unsigned int index);
+u8 ItemBoxLine_GetTabEntryReady(const CIBLTab* self, unsigned int index);
+ml::FixStr<32>* ItemBoxLine_FormatTabEntryName(CIBLTabFormat* self, unsigned int index);
+void ItemBoxLine_AllocEntryStock(CIBLTabFull* self, u32 index, u32 count);
+int ItemBoxLine_ProbeNameSlot(CIBLTabFull* self, u32 index);
+u8 ItemBoxGetTab(const CItemBoxPage* page, unsigned int index);
+void sinit_801F32EC();

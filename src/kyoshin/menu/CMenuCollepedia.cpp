@@ -2,6 +2,7 @@
 // FULL_MATCH: ctor, dtor, Colle_ThunkRender/Colle_ThunkDtor (now compiler-emitted thunks)
 
 #include "kyoshin/menu/CMenuCollepedia.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"

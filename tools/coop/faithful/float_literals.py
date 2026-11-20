@@ -184,8 +184,47 @@ PREPRO_DECL_RE = re.compile(
 EXTERN_DECL_RE = re.compile(
     r"^[ \t]*extern\b[^;{}]*\b(lbl_eu_[0-9A-Fa-f]{8})\b[^;{}]*;[ \t]*\r?\n?", re.M
 )
+# A label can also be declared inside a C-linkage block, on one line or many:
+#   extern "C" { extern const float lbl_eu_8066AAC0; }
+# EXTERN_DECL_RE cannot see the one-line spelling (the `{` blocks it), which
+# used to let scan_source replace the label inside its own declaration with a
+# float literal and produce `extern const float 0.1f;`.
+EXTERN_C_BLOCK_RE = re.compile(
+    r'^[ \t]*extern\s+"C"\s*\{(?P<body>[^{}]*?)\}[ \t]*\r?\n?', re.M | re.S
+)
+BLOCK_STMT_RE = re.compile(r"[^;{}]*;")
 DEFINITION_RE = re.compile(r"\b(lbl_eu_[0-9A-Fa-f]{8})\b[ \t]*(?:=|\()")
-# `#define lbl_eu_80666698 sdata2_CtrlNpc.f0` names a TU-owned literal pool.
+
+
+def _linkage_declarations(code: str) -> list[tuple[str, int, int, tuple[str, ...] | None, int, int]]:
+    """Label declarations in ``extern "C" { ... }`` blocks.
+
+    Returns ``(name, start, end, whole_names, block_start, block_end)``.  When
+    the block contains nothing but label declarations, ``whole_names`` lists
+    them all: removing the declarations must remove the whole block, otherwise
+    an empty ``extern "C" { }`` is left behind.
+    """
+    sites: list[tuple[str, int, int, tuple[str, ...] | None, int, int]] = []
+    for block in EXTERN_C_BLOCK_RE.finditer(code):
+        body = block.group("body")
+        body_start = block.start("body")
+        stmts = [s for s in BLOCK_STMT_RE.finditer(body) if s.group(0).strip()]
+        if not stmts:
+            continue
+        found = [(LABEL_RE.search(s.group(0)), s) for s in stmts]
+        # An initializer is a definition, not a removable extern declaration.
+        decls = [(lab, s) for lab, s in found if lab and "=" not in s.group(0)]
+        if not decls:
+            continue
+        whole = len(decls) == len(stmts)
+        names = tuple(lab.group(0) for lab, _ in decls)
+        for lab, s in decls:
+            sites.append((lab.group(0),
+                          body_start + s.start(), body_start + s.end(),
+                          names if whole else None, block.start(), block.end()))
+    return sites
+
+
 POOL_ALIAS_RE = re.compile(
     r"^[ \t]*#[ \t]*define[ \t]+(lbl_eu_[0-9A-Fa-f]{8})[ \t]+([A-Za-z_]\w*)",
     re.M,
@@ -199,13 +238,21 @@ def _line_bounds(text: str, offset: int) -> tuple[int, int]:
     return start, end
 
 
-def _is_declaration_line(code: str, offset: int, name: str) -> bool:
+def _is_declaration_line(
+    code: str, offset: int, name: str,
+    linkage: list[tuple[str, int, int, tuple[str, ...] | None, int, int]] | None = None,
+) -> bool:
     start, end = _line_bounds(code, offset)
     line = code[start:end]
     if PREPRO_DECL_RE.match(line) or EXTERN_DECL_RE.search(line):
         return True
     if re.search(r"^[ \t]*(?:__declspec|const|static|extern)[^;{]*\b" + re.escape(name) + r"\b[^;{]*=", line):
         return True
+    for dname, dstart, dend, _names, _bstart, _bend in (
+        linkage if linkage is not None else _linkage_declarations(code)
+    ):
+        if dname == name and dstart <= offset < dend:
+            return True
     return False
 
 
@@ -324,14 +371,21 @@ def scan_source(
 ) -> ScanResult:
     result = ScanResult(texts={p: p.read_text(encoding="utf-8") for p in paths})
     used_globally: set[str] = set()
-    all_decls: list[tuple[Path, str, int, int]] = []
+    all_decls: list[tuple[Path, str, int, int, tuple[tuple[str, ...], int, int] | None]] = []
     codes: dict[Path, str] = {}
     for path in paths:
         code = mask_comments(result.texts[path])
         codes[path] = code
+        sites = _linkage_declarations(code)
         spans = _function_spans(code, symbols)
+        whole_blocks = {(bstart, bend) for _n, _s, _e, names, bstart, bend in sites if names}
         for m in EXTERN_DECL_RE.finditer(code):
-            all_decls.append((path, m.group(1), m.start(), m.end()))
+            if any(bs <= m.start() < be for bs, be in whole_blocks):
+                continue  # the whole linkage block is removed instead
+            all_decls.append((path, m.group(1), m.start(), m.end(), None))
+        for name, start, end, names, bstart, bend in sites:
+            all_decls.append((path, name, start, end,
+                              (names, bstart, bend) if names else None))
 
         for m in LABEL_RE.finditer(code):
             name = m.group(0)
@@ -339,14 +393,14 @@ def scan_source(
             if value is None:
                 continue
             result.occurrences[name] = result.occurrences.get(name, 0) + 1
-            if not _is_declaration_line(code, m.start(), name) and not DEFINITION_RE.match(code, m.start()):
+            if not _is_declaration_line(code, m.start(), name, sites) and not DEFINITION_RE.match(code, m.start()):
                 # Any surviving reference (including deliberately kept magic
                 # / shared labels) pins its declaration in place.
                 used_globally.add(name)
             if not value.replaceable:
                 result.kept[name] = result.kept.get(name, 0) + 1
                 continue
-            if _is_declaration_line(code, m.start(), name):
+            if _is_declaration_line(code, m.start(), name, sites):
                 continue
             if DEFINITION_RE.match(code, m.start()):
                 continue
@@ -367,30 +421,38 @@ def scan_source(
     remaining: dict[str, int] = {}
     for path, text in rendered.items():
         code = mask_comments(text)
+        sites = _linkage_declarations(code)
         for m in LABEL_RE.finditer(code):
             name = m.group(0)
-            if _is_declaration_line(code, m.start(), name) or DEFINITION_RE.match(code, m.start()):
+            if _is_declaration_line(code, m.start(), name, sites) or DEFINITION_RE.match(code, m.start()):
                 continue  # declarations are not references
             remaining[name] = remaining.get(name, 0) + 1
 
     # Unused extern spellings may be deleted, but only for real .sdata2
     # symbols with zero remaining references in the unit and no other users.
-    for path, name, start, end in all_decls:
-        value = values.get(name)
-        if value is None or not value.replaceable or value.section != ".sdata2":
-            continue
-        if remaining.get(name, 0) or name in shared_elsewhere:
-            continue
-        result.edits.append(Edit(
-            path=path,
-            start=start,
-            end=end,
-            old=result.texts[path][start:end],
-            new="",
-            label=name,
-            kind="decl",
-            functions=(),
-        ))
+    dropped_blocks: set[tuple[int, int]] = set()
+    for path, name, start, end, block in all_decls:
+        names = block[0] if block else (name,)
+        if all(
+            (n in values and values[n].replaceable and values[n].section == ".sdata2"
+             and not remaining.get(n, 0) and n not in shared_elsewhere)
+            for n in names
+        ):
+            if block and block[1:] in dropped_blocks:
+                continue
+            start, end = (block[1], block[2]) if block else (start, end)
+            if block:
+                dropped_blocks.add(block[1:])
+            result.edits.append(Edit(
+                path=path,
+                start=start,
+                end=end,
+                old=result.texts[path][start:end],
+                new="",
+                label=name,
+                kind="decl",
+                functions=(),
+            ))
 
     # A TU-owned literal pool whose every labelled slot became a source
     # literal is dead duplicate data: delete the pool definition as well.

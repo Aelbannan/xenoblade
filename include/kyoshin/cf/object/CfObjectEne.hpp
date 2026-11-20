@@ -1,6 +1,7 @@
 #ifndef CF_OBJECT_ENE_HPP
 #define CF_OBJECT_ENE_HPP
 
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 
 // CfResReloadImpl is only referenced as a pointer member (field_0x3f4c) below,
@@ -688,7 +689,6 @@ extern "C" cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* se
 // C-ABI imports used by the CfObjectEne ctor (func_80061FFC + MemManager),
 // initEnemyBattleState and the dtor (retail symbols are unmangled).
 extern "C" unsigned long func_80061FFC();
-extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);
 // func_80174B4C is declared in CfObjectActor.hpp with its full 5-arg ABI
 // signature; a second C-linkage declaration here would be an illegal overload.
@@ -710,7 +710,7 @@ extern "C" void func_8015396C(u8* obj, u32 a, u32 b);
 extern "C" void CActorParam_updateTick(void* actor, f32 value, u32 arg);
 extern "C" unsigned long func_801BA2C8(void* self);
 // func_80148778 and getInstance__Q22cf14CBattleManagerFv are declared in
-// CAIAction.hpp / kyoshin/cf/CBattleManagerApi.hpp (reachable via
+// CAIAction.hpp / kyoshin/cf/CBattleManager.hpp (reachable via
 // CfObjectActor.hpp) - keep
 // the shared declarations (C-linkage overloads with different pointer types
 // are illegal in MWCC).

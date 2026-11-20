@@ -4,11 +4,16 @@
 
 // Scene filter base class (size: 0x18)
 // Manages a visual filter effect with configurable parameters.
-// NOTE: constructor is extern "C" (short symbol), destructor is C++ virtual (full symbol)
 struct CScnFilterCallback; // fwd; overflow callback at +0x14
+struct CScnFilterHost;     // fwd; render/update host passed to the filter virtuals
 
-struct __declspec(novtable) CScnFilter {
+struct CScnFilter {
+    CScnFilter();
     virtual ~CScnFilter();
+
+    // Retail vtable: [RTTI, 0, dtor, updateIntensity, drawFilter].
+    virtual void updateIntensity(CScnFilterHost* host);
+    virtual void drawFilter(CScnFilterHost* host) = 0;
 
     // vtable at 0x00
     u8 mEnabled;      // 0x04

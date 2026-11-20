@@ -7,6 +7,10 @@
 class CDeviceFontLayer;
 class CException;
 
+namespace ml {
+struct CCol4;
+}
+
 namespace nw4r {
 namespace lyt {
 class Layout;
@@ -190,9 +194,9 @@ public:
     // though the bodies consume arguments; the wrappers in CDeviceFont.cpp
     // reference them under the literal retail names.
     void queueText();
-    void setBackgroundColor();
+    void setBackgroundColor(const ml::CCol4* col);
     void setFontScale();
-    void setFontId();
+    void setFontId(u32 id);
 
     static void allocFontHeap();  // font-layer unit helper (standby login)
     static void freeFontHeap();  // font-layer unit helper (standby logout)

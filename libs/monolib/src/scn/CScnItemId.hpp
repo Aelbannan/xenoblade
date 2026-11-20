@@ -20,9 +20,9 @@ int Coli_ParseChunks(void* outStruct, u32 data);
 
 // Host scene-object accessors (unmangled C-linkage retail names).
 extern "C" u32 Scn_CallUnk8C_V8(void* self);            // scene allocation handle
-extern "C" u32 CScnItemPool_hasFreeSlot(void* pool, s32 kind);  // sub-pool capacity check
+
 extern "C" void* CScnItemPool_lookupSubPool(void* pool, int kind);  // sub-pool slot accessor
-extern "C" void CScnItemPool_registerOtherList(void* pool, void* item, u32 value);  // register item
+
 
 // Node in the scene-id circular list (single link at +0x00).
 struct CScnItemIdNode {

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/action/CActParamData
 // Replace stubs with high-level C/C++ during decomp.
 
-// updateBattleManager has a single shared decl on kyoshin/cf/CBattleManagerApi.hpp;
+// updateBattleManager has a single shared decl on kyoshin/cf/CBattleManager.hpp;
 // CfGameManager.hpp carries no local copy.
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/action/CActParamData.hpp"
@@ -2282,7 +2282,7 @@ int appendParamByte(u32 flags, CActParamByteList* list, u8* unused, const CActPa
             return 0;
         }
     }
-    cnt = static_cast<volatile CActParamByteList*>(list)->mCount2C;
+    cnt = static_cast<CActParamByteList*>(list)->mCount2C;
     list->mEntries[cnt] = value;
     list->mCount2C = cnt + 1;
     return 0;

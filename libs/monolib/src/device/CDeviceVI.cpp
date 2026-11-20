@@ -225,8 +225,8 @@ mTargetFramerate(TARGET_FRAMERATE),
 mSecPerFrame(MS_PER_FRAME),
 unk2C0(0) {
     // novtable: store retail vtables by hand (primary at +0x0, IErrorWii at +0x1C8)
-    *(volatile void**)this = (void*)&__vt__9CDeviceVI;
-    *(volatile void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
+    *(void**)this = (void*)&__vt__9CDeviceVI;
+    *(void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
     spInstance = this;
     unk2A0.set(0,0);
     mtl::ALLOC_HANDLE handle = sUseStaticHandle ? mtl::MemManager::getHandleStatic() : CDevice::getDevSys1Handle();
@@ -242,8 +242,8 @@ unk2C0(0) {
 
 CDeviceVI::~CDeviceVI(){
     // novtable: restore retail vtables (primary + IErrorWii secondary) like retail dtor
-    *(volatile void**)this = (void*)&__vt__9CDeviceVI;
-    *(volatile void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
+    *(void**)this = (void*)&__vt__9CDeviceVI;
+    *(void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
     CErrorWii::removeCallback(this);
 
     DELETE_ARRAY(mXfbBuffersPtr);

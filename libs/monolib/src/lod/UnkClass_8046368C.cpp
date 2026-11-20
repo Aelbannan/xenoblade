@@ -19,15 +19,8 @@
 
 extern "C" {
 
-// ---------------------------------------------------------------------------
-// Shared sdata2 constants (named pool references for matching).
-// ---------------------------------------------------------------------------
-extern const f32 lbl_eu_8066A5E8; // 40.743664f: angle -> nw4r fidx scale
-extern const f32 lbl_eu_8066A5F4; // 0.0f
-extern const f32 lbl_eu_8066A5F8; // 1.0f
-extern const f32 lbl_eu_8066A5FC; // 1000000.0f
+extern const f32 lbl_eu_8066A5F4; // 0.0f (setLodFadeScalars pool label)
 
-// ---------------------------------------------------------------------------
 // sbss state globals (small data, r13-relative).
 // ---------------------------------------------------------------------------
 extern u8* sLodCacheRecords;      // cache records, stride 0xC
@@ -183,10 +176,6 @@ extern "C" __declspec(align(4)) LodPickFn LodPickDispatchTable[3] = {
     (LodPickFn)&isRangeActive__Q23LOD17UnkClass_8046368CFv,
 };
 
-// Shared sdata2 magic-number double (s32->f32 conversion, 2^52+2^31); owned
-// by CLODCacheManagerS.  Referenced explicitly so MWCC does not pool its own
-// copy in this unit's .sdata2 (retail keeps this unit's .sdata2 empty).
-extern const double lbl_eu_8066A600;
 
 typedef struct LodRotObj {
     f32 f00;
@@ -294,12 +283,12 @@ extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
     g->words[6] = inputBits->words[3];
     g->words[7] = inputBits->words[7];
     g->words[8] = inputBits->words[11];
-    g->v[0] = lbl_eu_8066A5F8;
-    g->v[1] = lbl_eu_8066A5F4;
-    g->v[2] = lbl_eu_8066A5F4;
-    g->v[3] = lbl_eu_8066A5F4;
-    g->v[4] = lbl_eu_8066A5F8;
-    g->v[5] = lbl_eu_8066A5F4;
+    g->v[0] = 1.0f;
+    g->v[1] = 0.0f;
+    g->v[2] = 0.0f;
+    g->v[3] = 0.0f;
+    g->v[4] = 1.0f;
+    g->v[5] = 0.0f;
 
     // Re-derive the working axes from the previous basis and normalize
     // (zero-length axes fall back to ml::CVec3::zero).
@@ -309,21 +298,21 @@ extern "C" void setupLodFrame__Q23LOD17UnkClass_8046368CFv(
     PSMTXMultVec(prev.m, axis1, axis1);
 
     f32 sq0 = g->v[0] * g->v[0] + g->v[1] * g->v[1] + g->v[2] * g->v[2];
-    if (sq0 == lbl_eu_8066A5F4) {
+    if (sq0 == 0.0f) {
         *reinterpret_cast<ml::CVec3*>(&g->v[0]) = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis0, axis0);
     }
 
     f32 sq1 = g->v[3] * g->v[3] + g->v[4] * g->v[4] + g->v[5] * g->v[5];
-    if (sq1 == lbl_eu_8066A5F4) {
+    if (sq1 == 0.0f) {
         *reinterpret_cast<ml::CVec3*>(&g->v[3]) = ml::CVec3::zero;
     } else {
         PSVECNormalize(axis1, axis1);
     }
 
     LodCurrentRecordId = (u32)-1;
-    LodCachedDistance = lbl_eu_8066A5FC;
+    LodCachedDistance = 1000000.0f;
     GXLoadPosMtxImm(g->mtx28, 0);
 }
 
@@ -541,15 +530,15 @@ s32 updateLodFade(u32 arg) {
         }
         if ((arg & 0x18) == 0x18) {
             f32 cur = LodFadeScalars[2];
-            if (lbl_eu_8066A5F8 == cur) {
+            if (1.0f == cur) {
                 return 1;
             }
-            scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - cur);
+            scaleLodFadeAlpha__Ff(1.0f - cur);
             return 0;
         }
         if ((arg & 0x60) == 0x60) {
             f32 cur = LodFadeScalars[2];
-            if (lbl_eu_8066A5F8 != cur) {
+            if (1.0f != cur) {
                 scaleLodFadeAlpha__Ff(cur);
             }
             return 0;
@@ -559,15 +548,15 @@ s32 updateLodFade(u32 arg) {
             if (flags & bit) {
                 if (arg & bit) {
                     f32 cur = LodFadeScalars[i];
-                    if (lbl_eu_8066A5F8 == cur) {
+                    if (1.0f == cur) {
                         return 1;
                     }
-                    scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - cur);
+                    scaleLodFadeAlpha__Ff(1.0f - cur);
                     return 0;
                 }
                 if (arg & (0x20u << i)) {
                     f32 cur = LodFadeScalars[i];
-                    if (lbl_eu_8066A5F8 != cur) {
+                    if (1.0f != cur) {
                         scaleLodFadeAlpha__Ff(cur);
                     }
                     return 0;
@@ -598,14 +587,7 @@ s32 getLodFadeRatio(s32 a, u32 b) {
                 return 0;
             }
             LodStateFlags |= 0x80;
-            // Retail converts the u32 pair with the signed magic-number idiom
-            // (xoris 0x8000 + 2^52+2^31 extern double); writing it explicitly
-            // keeps this unit's .sdata2 empty (MWCC would pool its own 2^52
-            // constant for a bare `(f32)u32 / (f32)u32` cast).
-            union { double d; u32 w[2]; } m1, m2;
-            m1.w[0] = 0x43300000u; m1.w[1] = (u32)LodFadeGroupValue ^ 0x80000000u;
-            m2.w[0] = 0x43300000u; m2.w[1] = b ^ 0x80000000u;
-            scaleLodFadeAlpha__Ff((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
+            scaleLodFadeAlpha__Ff((f32)(s32)LodFadeGroupValue / (f32)(s32)b);
             return 0;
         }
         if ((s32)LodFadeGroupB == a) {
@@ -616,10 +598,7 @@ s32 getLodFadeRatio(s32 a, u32 b) {
                 return 1;
             }
             LodStateFlags |= 0x80;
-            union { double d; u32 w[2]; } n1, n2;
-            n1.w[0] = 0x43300000u; n1.w[1] = (u32)LodFadeGroupValue ^ 0x80000000u;
-            n2.w[0] = 0x43300000u; n2.w[1] = b ^ 0x80000000u;
-            scaleLodFadeAlpha__Ff(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
+            scaleLodFadeAlpha__Ff(1.0f - (f32)(s32)LodFadeGroupValue / (f32)(s32)b);
             return 0;
         }
         return 1;

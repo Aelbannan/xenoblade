@@ -3,6 +3,7 @@
 
 
 #include "kyoshin/menu/CMenuQuestLog.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController
@@ -202,7 +203,7 @@ extern "C" void openQuestLogMenu(CMenuQuestLog* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex)) {
         if (self->mTitleAHelp.isInitialized()) {
             if (self->mQstLogList.ScrollFlag()) {
-                if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
+                if (self->mQstLogInfo.QstLogInfo_GetLoadedMark()) {
                     self->mTitleAHelp.func_801C412C();
                     self->mQstLogList.BeginSortOpen();
                     self->mState = 1;
@@ -295,7 +296,7 @@ extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
     CMenuQuestLog* base = self;
     if (base->mTitleAHelp.func_801C4124() && base->mQstLogList.IsSortEnabled()) {
         unsigned int value = base->mQstLogList.GetSelectedQuestLo();
-        QstLogInfo_SetQuestIdSlot(&base->mQstLogInfo, static_cast<unsigned short>(value));
+        base->mQstLogInfo.QstLogInfo_SetQuestIdSlot(static_cast<unsigned short>(value));
         QstLogInfo_LoadCommonArchive(&base->mQstLogInfo);
         base->mState = 5;
     }
@@ -307,7 +308,7 @@ extern "C" void selectQuestLogEntry(CMenuQuestLog* self)
 // title help, finish the log info and advance to state 6.
 // ---------------------------------------------------------------------------
 extern "C" void startQuestLogInfo(CMenuQuestLog* self) {
-    if (QstLogInfo_GetLoadedMark(&self->mQstLogInfo)) {
+    if (self->mQstLogInfo.QstLogInfo_GetLoadedMark()) {
         self->mTitleAHelp.func_801C41E8(0x3d);
         self->mTitleAHelp.reopenFromClose();
         QstLogInfo_Start(&self->mQstLogInfo);
@@ -321,7 +322,7 @@ extern "C" void startQuestLogInfo(CMenuQuestLog* self) {
 // state 7.
 // ---------------------------------------------------------------------------
 extern "C" void finishQuestLogInfo(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.func_801C4124() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
+    if (self->mTitleAHelp.func_801C4124() && self->mQstLogInfo.QstLogInfo_GetReadyMark()) {
         self->mState = 7;
     }
 }
@@ -355,7 +356,7 @@ extern "C" void closeQuestLogMenu(CMenuQuestLog* self) {
 // to state 9.
 // ---------------------------------------------------------------------------
 extern "C" void resortQuestLogList(CMenuQuestLog* self) {
-    if (self->mTitleAHelp.func_801C4124() && QstLogInfo_GetReadyMark(&self->mQstLogInfo)) {
+    if (self->mTitleAHelp.func_801C4124() && self->mQstLogInfo.QstLogInfo_GetReadyMark()) {
         self->mTitleAHelp.func_801C41E8(0x3c);
         self->mTitleAHelp.reopenFromClose();
         self->mQstLogList.BeginSortOpen();

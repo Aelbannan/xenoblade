@@ -13,9 +13,10 @@ struct ChrAnmResult;
 // in CMdlMouth.cpp. Forward declarations keep this header dependency-free.
 struct CMdlOwnerCtx;
 class CScnItemModelNw4r;
+class CMdlMouth;
 
 // Frame-table add + ascending bubble-sort for the owner model's frame table
-// (defined in CScnItemModelNw4r.cpp). Retail keeps the bare C-linkage name.
+
 extern "C" void scnImN4AddFrameId(CScnItemModelNw4r* ths, u32 value);
 
 // Shared .sdata2 constants referenced by CMdlMouth (retail linker names).
@@ -40,14 +41,20 @@ extern const char lbl_eu_8056E04C[0x1A];  // Panic fmt
 extern const char lbl_eu_806638E8[0x7];   // Panic arg (.sdata)
 extern const char lbl_eu_80663C68[0x4];   // Panic arg (.sdata)
 
+// Mouth-anim helpers are C-linkage free functions in retail (unmangled names
+// in config/*/symbols.txt); the defining CMdlMouth.cpp owns these one true
+// declarations, and callers include this header.
+extern "C" void MdlMouthBindModel(CMdlMouth* ths, CMdlOwnerCtx* model);
+extern "C" void MdlMouthSetMode(CMdlMouth* ths, int mode, int arg3);
+extern "C" void MdlMouthSetValue(CMdlMouth* ths, float val);
+extern "C" int  MdlMouthPollAnim(CMdlMouth* ths, u32 nodeId,
+                                 nw4r::g3d::ChrAnmResult* result);
+extern "C" void MdlMouthTeardown(CMdlMouth* ths);
+
 class CMdlMouth {
 public:
     CMdlMouth();
     virtual ~CMdlMouth();
-
-    void MdlMouthSetMode(int, int);
-    int  MdlMouthPollAnim(u32, nw4r::g3d::ChrAnmResult*);
-    void MdlMouthTeardown();
 
     /* 0x04 */ CMdlOwnerCtx* field_0x04;  // owner model (view in CMdlMouth.cpp)
     /* 0x08 */ s32   field_0x08;

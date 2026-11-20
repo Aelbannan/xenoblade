@@ -5,8 +5,8 @@
 
 #include "kyoshin/cf/chain/CChain.hpp"
 #include "kyoshin/cf/chain/CChainActorListImports.hpp"
-#include "kyoshin/cf/chain/CChainTimerImports.hpp"
-#include "kyoshin/cf/chain/CChainComboImports.hpp"
+#include "kyoshin/cf/chain/CChainTimer.hpp"
+#include "kyoshin/cf/chain/CChainCombo.hpp"
 
 // Forward decls for the CChain tail overlays (full defs live in
 // CMenuBattleChain.hpp / CUIErrMesWin.hpp; CChain_ResetChainState only passes their
@@ -97,8 +97,8 @@ extern "C" {
     extern "C" cf::CChainActor* ChainList_FindKey(cf::CChainList* self, u32 key);
     void ChainList_Clear(cf::CChainList* self);
     extern "C" void trackChainPlayer(CBattleChainMenuState* self);
-    u8* func_802B48A0(CErrMesEntry* self);
     int CChain_PickVoiceId(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p2);
+    extern "C++" void func_802B48A0(CErrMesEntry* self);
     // Same-TU voice reset helper (defined in CChain.cpp); C linkage keeps
     // the call reloc from CChain_UpdatePerFrame verbatim.
     void CChain_RetireVoiceId();
@@ -124,15 +124,12 @@ extern "C" {
     // carries the Fi suffix) and battle-manager sub-check (CBattleManager).
     bool func_8006EF04__Fi(int mask);
     bool isGlobalCamFlagSet__Fi(int mask);
-    void* CBattleMan_FetchVisionObj(void* bm);
     // Arts-select slot probe (CMenuArtsSelect.cpp): unmangled at the retail
     // call site, so declared here with C linkage rather than through the
     // class member (which mangles to checkSlotUsable__15CMenuArtsSelectFl).
     int checkSlotUsable(void* menu, int index);
-    // Arts-menu-up query (CtrlPc.cpp family) used by CChainActor_CheckFacing.
-    int hasAnyActiveSlot();
-    // Battle-event dispatcher (defined in CBattleManager.cpp): single shared
-    // decl on kyoshin/cf/CBattleManagerApi.hpp (extern "C", retail-unmangled
+
+    // decl on kyoshin/cf/CBattleManager.hpp (extern "C", retail-unmangled
     // symbol); the C++-linkage copy here clashed with it (10197).
     // Voice-act / chain arts-combo helpers. aiRebootAction lives in
     // CVision.hpp (same signature, no clash); aiRingCompact and
@@ -146,12 +143,12 @@ extern "C" {
     void CChain_DiscardVoiceId(void* self);
     // Chain-menu / err-mes helpers (CMenuBattleChain.cpp / CUIErrMesWin.cpp).
     extern "C" void consumeChainToggles(CBattleChainMenuState* self);
-    void func_802B48B8(CErrMesEntry* self);
+    extern "C++" void func_802B48B8(CErrMesEntry* self);
+    extern "C++" void ErrWin_RegEntryS1_48E4(CErrMesEntry* self, CErrMesOwner* owner);
+    extern "C++" void ErrWin_RegEntryS2_4968(CErrMesEntry* self, CErrMesOwner* owner);
+    extern "C++" void ErrWin_RegEntryS3_4A68(CErrMesEntry* self, CErrMesOwner* owner);
     // Error-message record register helpers (CUIErrMesWin.cpp) - same family
     // as func_802B48A0 / func_802B48B8 above (chain-state codes 1/2/3).
-    void ErrWin_RegEntryS1_48E4(CErrMesEntry* self, CErrMesOwner* owner);
-    void ErrWin_RegEntryS2_4968(CErrMesEntry* self, CErrMesOwner* owner);
-    void ErrWin_RegEntryS3_4A68(CErrMesEntry* self, CErrMesOwner* owner);
     // Battle-chain menu helpers (CMenuBattleChain.cpp).
     void requestAnimReset(CBattleChainMenuState* self);
     extern "C" int isChainReady(CBattleChainMenuState* self, u8* out);
@@ -174,7 +171,7 @@ extern "C" {
     extern "C" void updateChainPlayer(CBattleChainMenuState* self);
     void requestArtsRef(CBattleChainMenuState* self);
     extern "C" bool isChainMenuBusy(CBattleChainMenuState* self);
-    void ErrWin_ResetRecord_4B84(CErrMesEntry* self);
+    extern "C++" void ErrWin_ResetRecord_4B84(CErrMesEntry* self);
     void aiAppendToRing(u8* self, cf::CChainScratch20* scratch);
     void ChainEne_TouchBattle194_18F8();
 }

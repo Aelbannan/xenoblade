@@ -2,12 +2,14 @@
 
 #include <types.h>
 
+#include "libs/monolib/src/scn/CScn_80496B0C.hpp"
 #include "kyoshin/action/CActParamData.hpp"
-#include "kyoshin/action/CActParamAnimForeign.hpp"
+
 #include "monolib/math/CVec3.hpp"  // ml::CVec3 for alignAnimQuat (same-TU helper)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 class CActParamAnim; // real retail class; owning declaration for global-scope users
+struct CActParamAnimOwner; // pointer-only owner of the anim-state region
 
 // Full object layout for C-linkage accessors
 struct CActParamAnimFull {
@@ -317,6 +319,11 @@ extern "C" void resetParamShorts(void* self);
 extern "C" int hasParamSubObjB(CActParamData* self);
 extern "C" int checkParamBlks(void* data);
 extern "C" void clearParamShadow(void* data);
+bool setAnimSubPos(CActParamAnim* self, const CActParamAnimData3* value);
+bool setAnimLastPos(CActParamAnim* self, const CActParamAnimData3* value);
+bool setTurnScale(CActParamAnim* self, f32 value);
+void clrAnimHeight(CActParamAnim* self);
+
 extern "C" void blendAnimHeading(CActParamAnim* self);
 extern "C" void updateLeafDist(CActParamAnim* self);
 extern "C" void pushParamNode(void* data);
@@ -617,9 +624,8 @@ extern "C" void simRefreshFlag8(void* obj, f32 value);
 extern "C" void simBindChrAnimChain(void* obj, u32 resId, u32 animIdx, u16 frame, s16 half);
 extern "C" void simBindChrAnim(void* obj, u32 resId, u32 animIdx, u16 frame, u32 gateBit, u32 flag,
                               s16 half);
-extern "C" int scn80496ChildIdsDiffer(u8* obj);
 extern "C" int scn80496IsComplete(u8* obj);
-extern "C" void walkParamBlkB(void* self);
+
 extern "C" void* getSubObjPlus14(void* param);
 // resetParamSubB is a CActParamData member (CActParamData.hpp).
 extern "C" void flushParamPair(void* data, u32 flag);

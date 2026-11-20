@@ -152,12 +152,16 @@ void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFPCQ22ml5CVec3(void);
 void GimObjClearStepBits(void);
 void GimObjDriveStepMachine(void);
 void GimObjFinishStep(void);
-void GimObjRebuildColliders(void);
-void GimObjSetBusyBit(void);
+
 void initTbox__Q22cf12CfObjectTboxFv(void);
 void initialize__Q22cf11CfObjectObjFv(void);
 void reset__Q22cf11CfObjectObjFv(void);
 }
+
+namespace cf { class CfGimmickObject; }
+void GimObjSetBusyBit(void* self);
+void GimObjRebuildColliders(cf::CfGimmickObject* self);
+
 extern char __RTTI__Q22cf15CfGimmickObject[]; // .sdata RTTI (defined by CPartyStateWin.o)
 extern char __RTTI__Q22cf11IObjectInfo[];
 extern char __RTTI__Q22cf9CfGimmick[];

@@ -11,6 +11,8 @@ class CDesktop;
 class CViewFrame;
 
 struct CViewRootPool {
+    CViewRootPool(u32 capacity);
+
     bool empty() const { return mUsed == 0; }
     void pop() { if (!empty()) --mUsed; }
 
@@ -24,7 +26,7 @@ struct CViewRootPool {
 
 class __declspec(novtable) CViewRoot : public CWorkThread {
 public:
-    CViewRoot(const char* pName, CWorkThread* pParent);
+    inline CViewRoot(const char* pName, CWorkThread* pParent);
     virtual ~CViewRoot();
 
     static CViewRoot* spInstance;

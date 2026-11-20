@@ -1,7 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlAct
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -10,7 +11,7 @@
 // canonical extern "C" forms in CtrlMoveBase.hpp / CtrlPc.hpp. Hide them for
 // this TU (our call sites use the canonical extern "C" ABI).
 #include "kyoshin/harness_catalog.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
@@ -18,6 +19,7 @@
 
 #include "kyoshin/cf/CArtsSet.hpp"  // real cf::CAttackParam (vptr at +0x84; slot +0x0C/+0x14)
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 
 // Retail CAttackParam_getArtsGaugeMax__Q22cf12CAttackParamFv lives in this
 // TU's absorbed split (CtrlAct.s @ 800D34CC), so its out-of-line definition
@@ -449,7 +451,7 @@ void aimVoiceOwner(cf::CtrlAct* self) {
         if (arg != NULL) {
             arg = (u8*)arg + 0x3E9C;
         }
-        ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v105(arg, lbl_eu_804FC81C);
+        ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v105(arg, "JUhead");
         if (self->mPlayer->mField3F60 != 0) {
             int page = getAnimModelId(self->mPlayer->mField3F60);
             if (page < 0x21 || page > 0x2a) {
@@ -747,7 +749,7 @@ void parseActEntry(cf::CtrlAct* self) {
         req.mField20 = 60.0f;
         req.mIdC = 0x111;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        CBattleMan_RunBattleEvent(bm, self->mPlayer, &req, 0);
+        CBattleMan_RunBattleEvent((u32)bm, (u32)self->mPlayer, &req, (u32)0);
         break;
     }
     case 21: {
@@ -756,7 +758,7 @@ void parseActEntry(cf::CtrlAct* self) {
         req.mField20 = 60.0f;
         req.mIdC = 0x112;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        CBattleMan_RunBattleEvent(bm, self->mPlayer, &req, 0);
+        CBattleMan_RunBattleEvent((u32)bm, (u32)self->mPlayer, &req, (u32)0);
         break;
     }
     case 22: {
@@ -784,7 +786,7 @@ void parseActEntry(cf::CtrlAct* self) {
             break;
         }
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        CChain_TryActivateChain(&((cf::CBattleManager*)bm)->mChain, (int)self->mPlayer);
+        CChain_TryActivateChain(&((cf::CBattleManager*)bm)->mChain, (u32)self->mPlayer);
         break;
     }
     default:
@@ -947,8 +949,8 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
         }
     }
     void* bm = getInstance__Q22cf14CBattleManagerFv();
-    if (CBattleMan_FetchVisionObj(bm) != 0) {
-        CtrlActBattleSubView* bs = (CtrlActBattleSubView*)CBattleMan_FetchVisionObj(bm);
+    if (((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj() != 0) {
+        CtrlActBattleSubView* bs = (CtrlActBattleSubView*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
         if ((bs->mField824 & 0x100000) == 0
             && installVisionStateCallback(&bs->mField219C, self->mPlayer) != 0) {
             return 0;
@@ -956,8 +958,8 @@ extern "C" int runArtsAttack(cf::CtrlAct* self, CtrlActAtkArg* arg) {
     }
     CtrlActSub2A4* sub = self->mPlayer->table->method2A4(self->mPlayer);
     bm = getInstance__Q22cf14CBattleManagerFv();
-    if (CBattleMan_FetchVisionObj(bm) != 0
-        && ((CtrlActBattleSubView*)CBattleMan_FetchVisionObj(bm))->mField0
+    if (((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj() != 0
+        && ((CtrlActBattleSubView*)((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj())->mField0
                == self->mPlayer->mField3F10) {
         // battle target matches: keep the existing block
     } else if ((sub->mField78 & 0x10000000) == 0) {
@@ -1151,7 +1153,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
     if (self->mField74 & 0x2000) {
         self->mField14 = lbl_eu_80666CF8;
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return 0;
     }
     // Action-kind dispatch: kinds 0-7 run their own handler, kind 8 clears
@@ -1184,14 +1186,14 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
         break;
     case 8:
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         break;
     case 9:
     case 0xa: {
         u32 local = *self->mPlayer->mField4->vf30();
         if (testActorStatus(self->mPlayer, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         } else {
             self->mField7A = 0;
             self->mField74 |= 0x10;
@@ -1199,7 +1201,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
             self->mField54 = self->mField54 + 0.033333335f * dt;
             if (self->mField54 >= 2.0f) {
                 memset(&self->mPos30, 0, 0x2c);
-                requestItemLoad(self->mPlayer, 0x40);
+                requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             }
         }
         return 0;
@@ -1238,7 +1240,7 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
     self->mField44 = pos2->f[2];
     if (close != 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return 0;
     }
     // Facing-clearance gate: 0x3F00 bit 1 picks the height-clearance probe,
@@ -1248,12 +1250,12 @@ extern "C" int handleActKind(cf::CtrlAct* self) {
         if (testHeightGap(self, 0) != 0) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         }
     } else {
         if (isMoveBlocked(self) != 0) {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         }
     }
     {
@@ -1283,7 +1285,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
     u32 local = *player->mField4->vf30();
     if (testActorStatus(player, &local, 0x807) == 0) {
         memset(&s->mPos30, 0, 0x2c);
-        requestItemLoad(s->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(s->mPlayer), 0x40);
         return;
     }
     void* t = MapFx_ResolveOwner(
@@ -1295,7 +1297,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
     }
     if (src == 0) {
         memset(&s->mPos30, 0, 0x2c);
-        requestItemLoad(s->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(s->mPlayer), 0x40);
         return;
     }
     switch (s->mFlags58.mPhase) {
@@ -1340,7 +1342,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
         if (s->mField54 <= lbl_eu_80666CF8) {
             s->mField14 = lbl_eu_80666CF8;
             memset(&s->mPos30, 0, 0x2c);
-            requestItemLoad(s->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(s->mPlayer), 0x40);
         } else {
             testFacingGap(s, src);
             CVoicePos* ppos = s->mPlayer->mSub3E9C.getPosition();
@@ -1357,7 +1359,7 @@ extern "C" void setupActTimer(cf::CtrlAct* self) {
             if (delta > s->mField50) {
                 s->mField14 = lbl_eu_80666CF8;
                 memset(&s->mPos30, 0, 0x2c);
-                requestItemLoad(s->mPlayer, 0x40);
+                requestItemLoad(reinterpret_cast<CfMapItemLoader*>(s->mPlayer), 0x40);
             }
         }
         break;
@@ -1379,7 +1381,7 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
     u32 local = *player->mField4->vf30();
     if (testActorStatus(player, &local, 0x807) == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     CtrlActSrc* src;
@@ -1392,7 +1394,7 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
     }
     if (src == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     if (self->mFlags58.mPhase == 0) {
@@ -1434,7 +1436,7 @@ extern "C" void progressPhase(cf::CtrlAct* self) {
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         } else {
             testFacingGap(self, src);
         }
@@ -1452,7 +1454,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
     u32 local = *self->mPlayer->mField4->vf30();
     if (testActorStatus(self->mPlayer, &local, 0x807) == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     // Voice/battle-list resolve of this actor's action source.
@@ -1466,7 +1468,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
     }
     if (src == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     switch (self->mFlags58.mPhase) {
@@ -1549,7 +1551,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
                 if (dPlayer < lim) {
                     self->mField14 = lbl_eu_80666CF8;
                     memset(&self->mPos30, 0, 0x2c);
-                    requestItemLoad(self->mPlayer, 0x40);
+                    requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
                     return;
                 }
             }
@@ -1575,7 +1577,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
     if (self->mField54 <= lbl_eu_80666CF8) {
         self->mField14 = lbl_eu_80666CF8;
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     ml::CVec3 scopy = dir3 * lbl_eu_80666CFC;
@@ -1598,7 +1600,7 @@ extern "C" void rotateActPose(cf::CtrlAct* self) {
     if (doReset) {
         self->mField14 = lbl_eu_80666CF8;
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     f32 v2 = 0.024543693f * nw4r::math::Atan2FIdx(dir3.x, dir3.z);
@@ -1621,7 +1623,7 @@ extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             return;
         }
     }
@@ -1634,7 +1636,7 @@ extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
     }
     if (other == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     f32 dt = Scn_GetFrameDelta(gmScene);
@@ -1657,7 +1659,7 @@ extern "C" void ctrlActState4Handler(cf::CtrlAct* self) {
     }
     self->mField14 = lbl_eu_80666CF8;
     memset(&self->mPos30, 0, 0x2c);
-    requestItemLoad(self->mPlayer, 0x40);
+    requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
 }
 
 
@@ -1679,7 +1681,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             return;
         }
     }
@@ -1693,7 +1695,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
     }
     if (src == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     switch (self->mFlags58.mPhase) {
@@ -1735,7 +1737,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             break;
         }
         // First heading band: wrap the source-facing reference (base facing +
@@ -1767,7 +1769,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
         if (inRange != 0) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             break;
         }
         // Second heading band: same test with the wider D8C wobble. Fresh
@@ -1799,7 +1801,7 @@ extern "C" void testAimWobble(cf::CtrlAct* self) {
             if (inRange2 != 0) {
                 self->mField14 = lbl_eu_80666CF8;
                 memset(&self->mPos30, 0, 0x2c);
-                requestItemLoad(self->mPlayer, 0x40);
+                requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
                 break;
             }
         }
@@ -1817,7 +1819,7 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
         u32 local = *player->mField4->vf30();
         if (testActorStatus(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             return;
         }
     }
@@ -1831,7 +1833,7 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
     }
     if (src == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     switch (self->mFlags58.mPhase) {
@@ -1873,7 +1875,7 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
         if (self->mField54 <= lbl_eu_80666CF8) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             break;
         }
         f32 f31 = 30.0f * ml::deg2rad;
@@ -1904,7 +1906,7 @@ extern "C" void stepActMotion(cf::CtrlAct* self) {
         if (inRange != 0) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         } else {
             testFacingGap(self, src);
         }
@@ -1924,7 +1926,7 @@ void loadActionSrc(cf::CtrlAct* self) {
         u32 local = *self->mPlayer->mField4->vf30();
         if (testActorStatus(self->mPlayer, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             return;
         }
     }
@@ -1937,7 +1939,7 @@ void loadActionSrc(cf::CtrlAct* self) {
     }
     if (src == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
         return;
     }
     // Facing angle (retail f31) and sine (retail f30) stay live across every
@@ -1992,12 +1994,12 @@ void loadActionSrc(cf::CtrlAct* self) {
     }
     if (r0 != 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
     } else {
         ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v37(&point);
         ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v48(angle);
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
     }
 }
 
@@ -2012,7 +2014,7 @@ extern "C" void ctrlActHandleCase4Move(cf::CtrlAct* self) {
     u32 local = id;
     if (testActorStatus(player, &local, 0x807) == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        requestItemLoad(self->mPlayer, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
     } else {
         f32 next = self->mField54 - lbl_eu_80666D58 * Scn_GetFrameDelta(gmScene);
         self->mField54 = next;
@@ -2031,7 +2033,7 @@ extern "C" void ctrlActHandleCase4Move(cf::CtrlAct* self) {
             }
         } else {
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             self->mField14 = lbl_eu_80666CF8;
         }
     }
@@ -2041,7 +2043,7 @@ int ctrlActFaceTargetVec(void* self) { return 0; }
 
 void ctrlActClearState30(void* self) {
     memset(&((cf::CtrlAct*)self)->mPos30, 0, 0x2C);
-    requestItemLoad(((cf::CtrlAct*)self)->mPlayer, 0x40);
+    requestItemLoad(reinterpret_cast<CfMapItemLoader*>(((cf::CtrlAct*)self)->mPlayer), 0x40);
 }
 
 unsigned long ctrlActIsFlagBit15Clear(void* self) {
@@ -2132,15 +2134,15 @@ extern "C" void aimNearestFoe(cf::CtrlAct* self) {
     if (((u32)__cntlzw((u32)__cntlzw(player->mField3F00 & 2) >> 5) >> 5) != 0) {
         void* list[3] = {0, 0};
         f32 mags[3] = {0.0f, 0.0f};
-        u32 data[3] = {lbl_eu_804FC810[0], lbl_eu_804FC810[1],
-                       lbl_eu_804FC810[2]};
+        static const u32 masks[3] = {0x10, 0x100000,
+                                     0x200000}; // name-guess: retail .rodata enum filter masks
         ml::CVec3 vecs[3];
         int count = 0;
         for (int i = 0; i < 3; i++) {
             void* candidate = 0;
             CfEnumListHolder holder;
             CfEnumList* lst = (CfEnumList*)holder.get();
-            startEnumObjects(lst, data[i], 0);
+            startEnumObjects(lst, masks[i], 0);
             lst = (CfEnumList*)holder.get();
             int id = (int)(intptr_t)findFirstCleanObjectId(lst);
             if (id != 0) {
@@ -2347,7 +2349,7 @@ extern "C" int testFacingGap(cf::CtrlAct* self, CtrlActSrc* src) {
         if (probeClear != 0) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
-            requestItemLoad(self->mPlayer, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->mPlayer), 0x40);
             return 0;
         }
     }

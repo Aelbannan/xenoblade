@@ -145,7 +145,7 @@ extern "C" void initLightEnv(CLightEnv* self) {
         for (u32 i = 0; i < self->mSlotCounts[slot]; i++) {
             lightSet.SelectLightObj(i, lightIdx);
             lightSet.GetLightObj(i)->Clear();
-            LightCtlSetObj(light, lightSet.GetLightObj(i));
+            LightCtlSetObj(light, reinterpret_cast<int>(lightSet.GetLightObj(i)));
             lightIdx++;
             light++;
         }

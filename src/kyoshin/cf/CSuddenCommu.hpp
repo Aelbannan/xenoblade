@@ -47,3 +47,19 @@ namespace cf{
         }
     };
 }
+
+struct CSuddenCommuActor;
+
+void SuddenCommuDriveFrame(cf::CSuddenCommu* self);
+unsigned long SuddenCommuIsStateActive(void* self);
+void SuddenCommuDispatchPartner(cf::CSuddenCommu* self, CSuddenCommuActor* attacker, CSuddenCommuActor* target);
+
+
+// Thin owner-API header for kyoshin/cf/CSuddenCommu (declarations mirror the
+// canonical copies in CSuddenCommu.hpp).
+namespace cf { class CSuddenCommu; }
+struct CSuddenCommuActor;
+
+void SuddenCommuDriveFrame(cf::CSuddenCommu* self);
+unsigned long SuddenCommuIsStateActive(void* self);
+void SuddenCommuDispatchPartner(cf::CSuddenCommu* self, CSuddenCommuActor* attacker, CSuddenCommuActor* target);

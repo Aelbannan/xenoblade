@@ -6,6 +6,7 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 
 // External data tables
 extern "C" u16 lbl_eu_80501E48[];
@@ -14,7 +15,7 @@ extern "C" u16 lbl_eu_80501F28[];
 extern "C" u16 lbl_eu_80501F98[];
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-extern "C" void bindPartnerO_(void* obj, void* mgr, u32 val);
+
 extern "C" void setChild34Sc_(void* obj, const void* src);
 // setChildF50G_ / simGetLeafDist7B0 are owned by kyoshin/cf/CCharEffect.hpp
 // (canonical u8* form); do not redeclare here (MWCC 10197).
@@ -64,7 +65,7 @@ extern "C" void* ChEff_LoadRes_CD9C(CCharEffectEne* self, u32 index, s32 mode) {
         obj = self->mManager->CfObjectMove_loadResourceById((u32)mode);
     }
     if (obj != nullptr) {
-        bindPartnerO_(obj, self->mManager, 0);
+        bindPartnerO_((cf::CfObjectEff*)obj, (u8*)self->mManager, (u8*)0);
     }
     return obj;
 }
@@ -80,7 +81,7 @@ extern "C" void* ChEff_LoadActorA_CE44(CCharEffectEne* self, u32 index, s32 mode
         obj = createBattleActor__Q22cf13CfGameManagerFv((u32)mode, 0);
     }
     if (obj != nullptr) {
-        bindPartnerO_(obj, self->mManager, 0);
+        bindPartnerO_((cf::CfObjectEff*)obj, (u8*)self->mManager, (u8*)0);
     }
     return obj;
 }
@@ -93,7 +94,7 @@ extern "C" void* ChEff_LoadNpcBind_CED0(CCharEffectEne* self, u32 index, s32 mod
             if (entry < 0x200) {
                 obj = createNpcActor__Q22cf13CfGameManagerFv(entry);
                 if (obj != nullptr) {
-                    bindPartnerO_(obj, self->mManager, 0);
+                    bindPartnerO_((cf::CfObjectEff*)obj, (u8*)self->mManager, (u8*)0);
                 }
             } else {
                 obj = self->mManager->CfObjectMove_loadResourceById(entry - 0x200);
@@ -128,7 +129,7 @@ extern "C" void ChEff_Dispatch_CF90(CCharEffectEne* self, void* target, u32 type
     if (data != nullptr) {
         dataSrc = reinterpret_cast<void*>(reinterpret_cast<cf::CfObjectImplPcTgt*>(data)->vfA8());
     }
-    bindPartnerO_(target, self->mManager, (u32)(uintptr_t)dataSrc);
+    bindPartnerO_((cf::CfObjectEff*)target, (u8*)self->mManager, (u8*)(u32)(uintptr_t)dataSrc);
     reinterpret_cast<cf::CfObjectEff*>(target)->setEffLockFg_(bitFlag);
     setChild34Sc_(target, &self->mManager->mSubObj98->field_304);
     simGetLeafDist7B0(reinterpret_cast<u8*>(self->mManager->mSubObj98));

@@ -3,6 +3,7 @@
 // advance, slot-2 play, and the standalone EHP voice selector.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "monolib/math/Random.hpp"
 #include <string.h>
@@ -330,7 +331,7 @@ extern "C" void selectEhpVoiceByHp(CVS_THREAD_EHP* self) {
             (*(CVSlotState*)self).field_0 = v0;
             (*(CVSlotState*)self).callback = *p;
 
-            int count = HpVoice_CollectIdle(self->field_0x2c, 3, exclude);
+            int count = HpVoice_CollectIdle((CVoiceHandle**)self->field_0x2c, 3, exclude);
             self->field_0x3c = count;
             if (count > 0) {
                 int idx = ml::math::mtRand(count);
@@ -416,7 +417,7 @@ extern "C" void startEhpVoice(CVS_THREAD_EHP* self) {
                 // (cmpli 10) with only one pair-check block.
                 // Ternary arm order matters: retail emits li 0x450; bne; li 0xAF6.
                 voiceId =
-                    (HpVoice_CheckPair26(self->field_0x2c[self->field_0x38], self->field_0x24) == 0) ? 0xAF6 : 0x450;
+                    (HpVoice_CheckPair26((CVoiceHandleState*)self->field_0x2c[self->field_0x38], (CVoiceHandleState*)self->field_0x24) == 0) ? 0xAF6 : 0x450;
                 break;
             case 6:
                 voiceId = 0xAF7;

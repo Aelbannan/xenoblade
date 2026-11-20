@@ -11,11 +11,17 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 class IUIWindow;
 class IUIWindowSubView; // timer view behind IUIWindow::unk5C (defined in CUIWindowManager.cpp)
 class CTalkWindow;
 class CCol6Invite;
+class CProcess;
+class CScn;
+class CSimpleEveTalkWin;
+class CMenuKizunaTalk;
+class CSysWinScenarioLog;
 
 // Item-availability query row (0x2A bytes), indexed by arg1 in UIWin_QueryItemAvail.
 struct CItemQueryRow {
@@ -81,7 +87,8 @@ extern "C" IUIWindow* col6HintAlloc(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* col6SysCreate(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* __ct__802944D8(CProcess* pParent, CScn* pScene);
 extern "C" IUIWindow* ItemEx_Create(CProcess* pParent, CScn* pScene, u32 id);
-extern "C" IUIWindow* createKizunaTalkSingleton(CProcess* pParent, CScn* pScene, u32 charId);
+// Defined in CMenuKizunaTalk.cpp with C++ linkage.
+CMenuKizunaTalk* createKizunaTalkSingleton(CProcess* pParent, CScn* pScene, u32 charId);
 extern "C" IUIWindow* create__11CSysWinBuffFv(CProcess* pParent, CScn* pScene, u16 id);
 extern "C" IUIWindow* createBattleEndMenu(CProcess* pParent, CScn* pScene, u32 type, u32 id);
 extern "C" IUIWindow* createBattleChainMenu(CProcess* pParent, CScn* pScene, u8 id);
@@ -94,8 +101,11 @@ extern "C" IUIWindow* createLandTelop(CProcess* pParent, CScn* pScene, u16 a3, u
 // literal retail names.
 extern "C" {
 IUIWindow* createQuestWindow(CProcess* pParent, CScn* pScene, u32 a2, u32 a3);
-IUIWindow* eveTalkWinCreateRegister(CProcess* pParent, CScn* pScene, u32 text, const u8* msgSrc, u8 flag);
+// Defined in CSimpleEveTalkWin.cpp with C++ linkage.
+CSimpleEveTalkWin* eveTalkWinCreateRegister(CProcess* pParent, CScn* pScene, u32 text, const u8* msgSrc, u8 flag);
 extern "C" IUIWindow* SysWinCreateSingleton(CProcess* pParent, void* pSceneOrWin, u32 flag, u32 a3, u32 a4);
+// Defined in CSysWinScenarioLog.cpp with C++ linkage.
+CSysWinScenarioLog* SysWinLog_Create(CProcess* pParent, u8* param);
 int CUICfManager_claimSlotByIdState(u16 arg);
 int CUICfManager_claimSlotFormatted();
 int CUICfManager_claimSlotByTwoIds();
@@ -111,7 +121,6 @@ u32 Bdat_GetMaxRow_B1EC(void* fp);
 int CUICfManager_claimSlotByIds(u16 a, u16 b, u16 c, u16 d, u16 e);
 
 // Entry guard (owning TU: code_80135FDC family): nonzero blocks creation.
-int CUICfManager_tryResetSlots();
 int CUICfManager_claimSlotByTemplate();
 
 // Party-change-notice factory (owning TU: CMenuPTChangeNotice).
@@ -131,14 +140,6 @@ IUIWindow* ShopSel_CreateSingleton(CProcess* pParent, CScn* pScene, u32 a4);
 // CCol6Invite constructor (owning TU: CCol6System; unmangled retail symbol).
 CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, u8 arg4);
 
-// Item-multi window factory (owning TU: CMenuGetItemMulti). 8 reg args + a
-// byte flag on the stack (the caller forwards the 9th arg's low byte
-// unmasked; declared u32 so no re-mask is emitted at the call site).
-IUIWindow* GetItemMulti_CreateInstance(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
-                          u32 d, u32 e, u32 f, u32 g);
-
-// Related item-multi window factory (owning TU: CMenuGetItemMulti).
-IUIWindow* GetItemMulti_CreateSimple(CProcess* pParent, CScn* pScene, u32 a2);
 
 // Talk-window factory (owning TU: CTalkWindow) - creates the window under
 // the caller's parent and registers it.
@@ -185,6 +186,14 @@ void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
 // array delete (C-ABI import).
 }
 
+// Item-multi factories (owning TU: CMenuGetItemMulti); real C++ linkage.
+IUIWindow* GetItemMulti_CreateInstance(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
+                          u32 d, u32 e, u32 f, u8 g);
+u8* GetItemMulti_CreateSimple(CProcess* pParent, u32 arg2, u32 arg3);
+// Retail forwards the last byte unmasked (u32 in r11); keep that call shape.
+typedef IUIWindow* (*GetItemMultiCreateInstanceFn)(CProcess*, CScn*, u32, u32,  // DEBT(callcast): retail passes unmasked u32 for the Uc last param of GetItemMulti_CreateInstance (CALLCAST census)
+                                                   u32, u32, u32, u32, u32);
+
 
 // the 0x608 window path of UIWin_OpenWindow.
 
@@ -216,6 +225,8 @@ extern const u8 lbl_804FC1D0[0x70];  // per-table base offsets (rodata)
 // buffer, marks it active, refreshes per-table entry pointers, scans every
 // table's rows for `row + baseOffset[i] == target`.
 extern "C" u8* UIWin_BuildFlagBuf(u32 target);
+// Record-building sibling that callers reach through the retail C name.
+extern "C" void UIWin_BuildFlagBufRec(u32 a, u32 b, u32 c);
 
 // Pair of consecutive per-table base offsets; the flag-buffer builders copy
 // the 28-entry offset table as 14 x 8-byte chunks.
@@ -301,4 +312,8 @@ public:
 
     // TODO: add fields
 };
+
+int UIWin_CreateExtraWin();
+int UIWin_CreateCol6Check();
+void UIWin_FlagBufCommit(CFlagBuffer* self);
 

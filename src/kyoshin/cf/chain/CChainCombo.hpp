@@ -62,3 +62,9 @@ struct CChainCombo_ArtsCategory {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+
+
+// TU-private imports for kyoshin/cf/chain/CChainCombo.cpp (moved out of the public
+// CChainCombo.hpp, which keeps the classes).
+
+extern "C" void UIWin_CreateAA2A0Win();

@@ -9,8 +9,9 @@
 // of the way (same scheme as CMenuKizunaTalk.hpp's BdatGetU8Direct rename).
 // (CTaskGame_openVision now has a single unified decl.)
 // The battle-manager singleton getter has ONE canonical declaration in
-// kyoshin/cf/CBattleManagerApi.hpp; no rename guards are needed anymore.
+// kyoshin/cf/CBattleManager.hpp; no rename guards are needed anymore.
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/menu/CMenuBattleDamageSymbols.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
@@ -19,6 +20,9 @@
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
+#include "kyoshin/CQuestWindowApi.hpp"
+#include "kyoshin/cf/CPcEffect07.hpp"
+#include "kyoshin/menu/CMenuEnemyState.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
@@ -41,7 +45,7 @@
 #include "kyoshin/cf/CVision.hpp"
 // CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
 // headers (see CSuddenCommu.hpp); its battle-manager singleton copy is now
-// unified in kyoshin/cf/CBattleManagerApi.hpp.
+// unified in kyoshin/cf/CBattleManager.hpp.
 // CSuddenCommu.hpp declares GetZealObjPtr with the unified no-arg form
 // (retail callers never materialize r3 before this call).
 #include "kyoshin/cf/CSuddenCommu.hpp"
@@ -69,12 +73,12 @@
 #include "kyoshin/cf/chain/CChainImports.hpp"  // TU imports formerly reached via the fat CBattleManager/chain headers
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/cf/CSuddenCommu.hpp"
 
-// sdata2 conversion-magic doubles (2^52 family) are shared retail .sdata2 labels
-// (lbl_eu_80666F30 / lbl_eu_80666F38, owning TU or extern); declaring them here
-// lets conversions reference the shared .sdata2 pool entries by retail name.
-extern const double lbl_eu_80666F30;  // s16 -> f32 magic (2^52 + 2^31)
-extern const double lbl_eu_80666F38;  // u16 -> f32 magic (2^52)
+// The u16->f32 conversion uses the 2^52 magic as a plain double literal;
+// naming the compiler-generated pool entry is not needed. No s16 conversion
+// is present in this TU, so only the u16 form is referenced.
+extern const f32 lbl_eu_80666F28; // 0.0f
 
 
 extern "C" {
@@ -179,7 +183,6 @@ struct ArtsSelModeTbl {
 // Declaring them again inside this extern "C" block would conflict.
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
 int ShopSel_GetSingleton();
-int getQuestWindow();
 
 
 // refreshHelpText / refreshPaneTextures imports (unmangled retail names)
@@ -190,8 +193,6 @@ void* UIBattleFindSysTimg(const char* name);
 
 int UIBattleGetFlagE8();
 void setEffectEnabled__FUl(u32);
-int EneSt_CursorGetFlag(void*);
-int BtlDmg_CursorGetFlag(void*);
 // Layout/anim helpers defined in code_80135FDC.cpp with mangled C-linkage
 // names (retail reloc targets); no header declares them, so declare locally.
 
@@ -199,7 +200,6 @@ int BtlDmg_CursorGetFlag(void*);
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 // CMenuArtsSelect_CheckTalentUse player gate: converts a CfObjectMove to its actor container.
 extern "C" BattleActor* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* objMove);
-extern "C" int countActiveSlots();
 extern "C" bool pushYawToLink(void*);
 
 
@@ -222,20 +222,14 @@ extern "C" int checkSlotUsable(void*, int);   // aligned with CChain.hpp's form
 // reloc targets are the C-linkage names, not the mangled member names).
 extern "C" void updatePageMode(CMenuArtsSelect* self);
 extern "C" void handleConfirm(CMenuArtsSelect* self);
-extern "C" void advanceConfirmState(CMenuArtsSelect* self);
 extern "C" void driveArtsGauge(CMenuArtsSelect* self);
 extern "C" void driveTalentGauge(CMenuArtsSelect* self);
 // updateSlotGauge: member CMenuArtsSelect::updateSlotGauge(s32) (see header).
 extern "C" void updateSlotHighlight(CMenuArtsSelect*, s32);
-extern "C" void advanceSlotToggle(CMenuArtsSelect*, s32);
 extern "C" void updateSlotStates(CMenuArtsSelect*);
 extern "C" int isArtsSpecialKind(const u8*);
 extern "C" int hasArtsGauge(u8*);
 // handleConfirm imports (unmangled retail names)
-void EneSt_CursorToState3(void*);
-void EneSt_CursorToState4(void*);
-void BtlDmg_CursorToState3(void*);
-void BtlDmg_CursorToState4(void*);
 void* findObjB28ById(s32 id);                 // actor-container lookup by id
 void* Scn_FindCamItem(void* scn, int index);   // matches CfCam.hpp decl
 void CamMan_ProjectToScreen(f32* out, void* pose, nw4r::math::VEC3* pos);
@@ -248,30 +242,24 @@ extern const ArtsSelEnumIds lbl_eu_804FD128;
 // this TU's include closure; retail symbols are C-linkage names).
 extern "C" int CChain_isValidChain(u8* a1, u8* a2, int a3);
 extern "C" int ChainTmr_GateArts_DF38(u8* self, u8* actor, int flag, int index);
-extern "C" int CChain_CheckActivateReady(u8* self, int param);
 // (UIBattleFindElemTimg/UIBattleFindPartyTimg: declared on CUIBattleManager.hpp, void*
 // return - the old local u8* copies are gone; call sites cast.)
 
 extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
-extern "C" int CBattleMan_ListHasValue(void*, void*);
-extern "C" void EneSt_CursorSet41(void*, u8);
-extern "C" void EneSt_CursorActivate(void*);
 extern "C" void BtlDmg_CursorSetFlag(void*, u8);
-extern "C" void BtlDmg_CursorActivate(void*);
 extern "C" int getPTGaugeWord();
-extern "C" void PTGaugeTickSP();
+void PTGaugeTickSP();
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" char lbl_eu_80661E08[8];  // sdata: empty-name fallback (fixed size keeps @sda21)
 extern "C" u32 lbl_eu_80666F48;  // 4-byte talent table header
 extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
-// (lbl_eu_80666F50 is 100.0f -- declared below with the other floats)
+// (the 100.0f talent-gauge gate is declared below with the other floats)
 
 // Init-only declarations
 void __ct__CTagProcessor(void*);
 u8* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 u32 func_801392C0();
-extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
 extern const f32 lbl_eu_80666F40; // -80.0f
 extern const f32 lbl_eu_80666F44; // -1.0f
@@ -345,7 +333,7 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     // registers by VR birth order, and the retail prologue only saves
     // r29-r31, so these must not be born at function entry.
     s32 mode9 = 9;
-    f32 zeroF = lbl_eu_80666F28;
+    f32 zeroF = 0.0f;
     s32 mode4 = 4;
     s8 neg1 = -1;
     s32 modeB = 0xb;
@@ -791,7 +779,7 @@ void CMenuArtsSelect::Term() {
 
     // Retail calls each getter twice when non-null.
     if (EneSt_GetSingleton() != NULL) {
-        EneSt_CursorReset(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+        EneSt_CursorReset((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
     }
     if (BpsStateSingletonToInt() != NULL) {
         BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
@@ -902,7 +890,7 @@ void CMenuArtsSelect::Move() {
         break;
     case 1:
         unk308 |= 0x10u;
-        if (advanceAnimTransform(unk84, lbl_eu_80666F2C) != 0) {
+        if (advanceAnimTransform(unk84, 1.0f) != 0) {
             nw4r::lyt::Pane* rootPane8C = unk8C->GetRootPane();
             rootPane8C->SetVisible(true);
             char* nameStr =
@@ -920,14 +908,14 @@ void CMenuArtsSelect::Move() {
         break;
     case 3:
         unk308 |= 0x90u;
-        if (advanceAnimTransform(unk88, lbl_eu_80666F2C) != 0) {
+        if (advanceAnimTransform(unk88, 1.0f) != 0) {
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
             // MWCC inlines GetRootPane / GetFrame / SetTranslate here.
             f32 frame = unk88->GetFrame();
             unk98->GetRootPane()->SetTranslate(nw4r::math::VEC3(
-                lbl_eu_80666F28, lbl_eu_80666F40 * frame, lbl_eu_80666F28));
+                0.0f, -80.0f * frame, 0.0f));
             unk308 |= 0x1u;
         }
         break;
@@ -937,10 +925,10 @@ void CMenuArtsSelect::Move() {
     case 5:
         if (EneSt_GetSingleton() != NULL) {
             if (BpsStateSingletonToInt() != NULL) {
-                if (EneSt_CursorGetFlag(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4) !=
+                if (EneSt_CursorGetFlag((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4)) !=
                     0) {
-                    if (BtlDmg_CursorGetFlag(reinterpret_cast<u8*>(BpsStateSingletonToInt()) +
-                                      0x7cc) != 0) {
+                    if (BtlDmg_CursorGetFlag((CPcSelectCursor01*)(reinterpret_cast<u8*>(BpsStateSingletonToInt()) +
+                                      0x7cc)) != 0) {
                         unk298 = 6;
                     }
                 }
@@ -953,10 +941,10 @@ void CMenuArtsSelect::Move() {
     case 7:
         if (EneSt_GetSingleton() != NULL) {
             if (BpsStateSingletonToInt() != NULL) {
-                if (EneSt_CursorGetFlag(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4) !=
+                if (EneSt_CursorGetFlag((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4)) !=
                     0) {
-                    if (BtlDmg_CursorGetFlag(reinterpret_cast<u8*>(BpsStateSingletonToInt()) +
-                                      0x7cc) != 0) {
+                    if (BtlDmg_CursorGetFlag((CPcSelectCursor01*)(reinterpret_cast<u8*>(BpsStateSingletonToInt()) +
+                                      0x7cc)) != 0) {
                         unk8C->GetRootPane()->SetVisible(true);
                         unk298 = 2;
                     }
@@ -965,7 +953,7 @@ void CMenuArtsSelect::Move() {
         }
         break;
     case 8:
-        ::advanceConfirmState(this);
+        this->advanceConfirmState();
         break;
     default:
         break;
@@ -987,7 +975,7 @@ void CMenuArtsSelect::Move() {
                         break;
                     case 10:
                         unk308 |= 0x3u;
-                        if (advanceAnimTransform(unkA0, lbl_eu_80666F2C) != 0) {
+                        if (advanceAnimTransform(unkA0, 1.0f) != 0) {
                             unk29C = 0xb;
                         }
                         break;
@@ -999,7 +987,7 @@ void CMenuArtsSelect::Move() {
                     }
                 }
 
-                f32 zeroF = lbl_eu_80666F28;
+                f32 zeroF = 0.0f;
                 for (s32 i = 0; i < 8; i++) {
                     switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
@@ -1031,14 +1019,14 @@ void CMenuArtsSelect::Move() {
                                     denom = reinterpret_cast<ArtsParamLocal*>(infoRaw)->mFn14();
                                     ratio = info->mRatioNum / denom;
                                 } else {
-                                    ratio = lbl_eu_80666F44;
+                                    ratio = -1.0f;
                                 }
                                 if (ratio > zeroF) {
                                     ready = 1;
                                 }
                             }
                         }
-                        if (advanceAnimTransform(unkE4[i], lbl_eu_80666F2C) != 0 ||
+                        if (advanceAnimTransform(unkE4[i], 1.0f) != 0 ||
                             ready != 0) {
                             unk2A0[i] = 0xb;
                             unkA4[i]->SetAnimationEnable(unkE4[i], false);
@@ -1068,7 +1056,7 @@ void CMenuArtsSelect::Move() {
                     if (bit != 0) {
                         typedef f32 (*GetF32Fn)(void*);
                         f32 v = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getHp();
-                        if (v > lbl_eu_80666F28) {
+                        if (v > 0.0f) {
                             unk334 = 1;
                         }
                     }
@@ -1087,7 +1075,7 @@ void CMenuArtsSelect::Move() {
                         if (::checkSlotUsable(this, i) != 0) {
                             unk104[i]->SetAnimationEnable(unk14C[i], false);
                             unk104[i]->SetAnimationEnable(unk128[i], true);
-                            unk128[i]->SetFrame(lbl_eu_80666F28);
+                            unk128[i]->SetFrame(0.0f);
                             unk2C0[i] = 0xd;
                             unk310 |= mask;
                         }
@@ -1098,7 +1086,7 @@ void CMenuArtsSelect::Move() {
                     s32 nextIdx = (i >= 8) ? 0 : (i + 1);
                     if (unk200[nextIdx]->unkBB & 1) {
                         unk310 |= (one << i) | (one << (i + 9));
-                        if (advanceAnimTransform(unk128[i], lbl_eu_80666F2C) != 0) {
+                        if (advanceAnimTransform(unk128[i], 1.0f) != 0) {
                             unk2C0[i] = 0xe;
                         }
                     } else {
@@ -1108,11 +1096,11 @@ void CMenuArtsSelect::Move() {
                     break;
                 }
                 case 0xe:
-                    ::advanceSlotToggle(this, i);
+                    this->advanceSlotToggle(i);
                     break;
                 case 0xf:
                     unk310 |= (one << i) | (one << (i + 9));
-                    if (advanceAnimTransform(unk14C[i], lbl_eu_80666F2C) != 0) {
+                    if (advanceAnimTransform(unk14C[i], 1.0f) != 0) {
                         unk2C0[i] = 0xc;
                     }
                     break;
@@ -1129,7 +1117,7 @@ void CMenuArtsSelect::Move() {
                     break;
                 case 0x11:
                     unk314 |= (one << i) | (one << (i + 9));
-                    if (advanceAnimTransform(unk194[i], lbl_eu_80666F2C) != 0) {
+                    if (advanceAnimTransform(unk194[i], 1.0f) != 0) {
                         unk2E4[i] = 0x12;
                     }
                     break;
@@ -1142,7 +1130,7 @@ void CMenuArtsSelect::Move() {
                 case 0x13:
                     unk314 |= (one << i) | (one << (i + 9));
                     if (AnimRewindFrame(unk194[i],
-                                      lbl_eu_80666F2C) != 0) {
+                                      1.0f) != 0) {
                         unk2E4[i] = 0x10;
                     }
                     break;
@@ -1153,7 +1141,7 @@ void CMenuArtsSelect::Move() {
         }
 
         for (s32 i = 0; i < 9; i++) {
-            if (advanceAnimTransform(unk1DC[i], lbl_eu_80666F2C) != 0) {
+            if (advanceAnimTransform(unk1DC[i], 1.0f) != 0) {
                 unk30C = static_cast<u16>(unk30C & ~static_cast<u16>(one << i));
             } else {
                 unk30C = static_cast<u16>(unk30C | static_cast<u16>(one << i));
@@ -1409,7 +1397,7 @@ extern "C" void CMenuArtsSelect_CreateArtsRef() {
 // ---------------------------------------------------------------------------
 extern "C" void CMenuArtsSelect_ResetSlotAnims() {
     if (lbl_eu_80663F20 == NULL) return;
-    f32 zero = lbl_eu_80666F28;
+    f32 zero = 0.0f;
     for (u32 i = 0; i < 9; i++) {
         if (isSlotAvailable(lbl_eu_80663F20, (u8)i) != 0) continue;
         if (checkSlotUsable(lbl_eu_80663F20, (u8)i) != 0) continue;
@@ -1465,7 +1453,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 if (pl != NULL) adj = (char*)pl - 0x3e9c;
                 if (adj != NULL) {
                     f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getHp();
-                    if (g <= lbl_eu_80666F28) {
+                    if (g <= 0.0f) {
                         battle = true;
                     } else {
                         battle = false;
@@ -1598,7 +1586,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     if (pl != NULL) adj = (char*)pl - 0x3e9c;
                     if (adj != NULL) {
                         f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getHp();
-                        if (g <= lbl_eu_80666F28) {
+                        if (g <= 0.0f) {
                             battle2 = true;
                         } else {
                             battle2 = false;
@@ -1617,7 +1605,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 // Retail funnels both guard failures into one shared
                 // playUISound(5) tail (no early sound calls here).
                 if (testActorStatus(actor, &v11, 11) != 0 &&
-                    (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor) != 0 ||
                      ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData())), testActorStatus(actor, &v18, 18) != 0))) {
                     switch (self->unk328) {
                 case 0:
@@ -1636,7 +1624,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     self->unk328 = 2;
                     void* sub4 = actor->mSecondaryVtable;
                     int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->getStateData());
-                    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor) != 0 ||
                         testActorStatus(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 3;
                     }
@@ -1721,7 +1709,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     if (pl != NULL) adj = (char*)pl - 0x3e9c;
                     if (adj != NULL) {
                         f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getHp();
-                        if (g <= lbl_eu_80666F28) {
+                        if (g <= 0.0f) {
                             battle3 = true;
                         } else {
                             battle3 = false;
@@ -1739,7 +1727,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 int v18;
                 // Same shared-tail funnel as the b1 block.
                 if (testActorStatus(actor, &v11, 11) != 0 &&
-                    (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor) != 0 ||
                      ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->getStateData())), testActorStatus(actor, &v18, 18) != 0))) {
                     switch (self->unk328) {
                 case 0:
@@ -1758,7 +1746,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     self->unk328 = 0;
                     void* sub4 = actor->mSecondaryVtable;
                     int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->getStateData());
-                    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)actor) != 0 ||
                         testActorStatus(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 1;
                     }
@@ -1961,7 +1949,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     void* mgr = CtrlObjectParam_GetCharEntry(v);
                     void* sub = (char*)mgr + 0x17C;
                     f32 val = reinterpret_cast<cf::CActorParam*>(sub)->CActorParam_getArtsGauge();
-                    if (val == lbl_eu_80666F50) {
+                    if (val == 100.0f) {
                         /* ok */
                     } else {
                         goto useFail;
@@ -1985,7 +1973,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 for (s32 i = 0; i < 3; i++) {
                     if (cfg[i + 1] == (s32)actor->mField3F28) continue;
                     void* obj = findObjB28ById(cfg[i + 1]);
-                    if (reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_getHp() > lbl_eu_80666F28) {
+                    if (reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_getHp() > 0.0f) {
                         self->unk330 = i;
                         break;
                     }
@@ -1995,12 +1983,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             playUISound(95);
             self->unk298 = 5;
             if (EneSt_GetSingleton() != NULL) {
-                EneSt_CursorSet41((u8*)EneSt_GetSingleton() + 0x7E4, (u8)self->unk330);
-                EneSt_CursorActivate((u8*)EneSt_GetSingleton() + 0x7E4);
+                EneSt_CursorSet41((CPcSelectCursor*)((u8*)EneSt_GetSingleton() + 0x7E4), (u8)self->unk330);
+                EneSt_CursorActivate((CPcSelectCursor*)((u8*)EneSt_GetSingleton() + 0x7E4));
             }
             if (BpsStateSingletonToInt() != NULL) {
                 BtlDmg_CursorSetFlag((u8*)BpsStateSingletonToInt() + 0x7CC, (u8)self->unk330);
-                BtlDmg_CursorActivate((u8*)BpsStateSingletonToInt() + 0x7CC);
+                BtlDmg_CursorActivate((CPcSelectCursor01*)((u8*)BpsStateSingletonToInt() + 0x7CC));
             }
             goto end_body;
         }
@@ -2048,7 +2036,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         self->unk298 = 4;
         self->unk8C->SetAnimationEnable(self->unk94, false);
         self->unk8C->SetAnimationEnable(self->unk90, true);
-        self->unk90->SetFrame(lbl_eu_80666F28);
+        self->unk90->SetFrame(0.0f);
         self->unk8C->Animate(0);
         goto end_body;
     }
@@ -2057,7 +2045,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
 useFail:
     playUISound(5);
 end_body:
-    advanceAnimTransform(self->unk94, lbl_eu_80666F2C);
+    advanceAnimTransform(self->unk94, 1.0f);
 }
 
 void CMenuArtsSelect::updatePageMode() {
@@ -2139,10 +2127,10 @@ void CMenuArtsSelect::updatePageMode() {
         }
     }
 
-    if (advanceAnimTransform(unk90, lbl_eu_80666F2C) != 0) {
+    if (advanceAnimTransform(unk90, 1.0f) != 0) {
         unk8C->SetAnimationEnable(unk90, false);
         unk8C->SetAnimationEnable(unk94, true);
-        unk94->SetFrame(lbl_eu_80666F28);
+        unk94->SetFrame(0.0f);
         unk8C->Animate(0);
         unk298 = 2;
     }
@@ -2174,10 +2162,10 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         setEffectEnabled__FUl(6);
         self->unk298 = 7;
         if (EneSt_GetSingleton() != NULL) {
-            EneSt_CursorToState3(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+            EneSt_CursorToState3((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
         }
         if (BpsStateSingletonToInt() != NULL) {
-            BtlDmg_CursorToState3(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
+            BtlDmg_CursorToState3((CPcSelectCursor01*)(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc));
         }
     }
 
@@ -2194,10 +2182,10 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         setEffectEnabled__FUl(6);
         self->unk298 = 7;
         if (EneSt_GetSingleton() != NULL) {
-            EneSt_CursorToState3(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+            EneSt_CursorToState3((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
         }
         if (BpsStateSingletonToInt() != NULL) {
-            BtlDmg_CursorToState3(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
+            BtlDmg_CursorToState3((CPcSelectCursor01*)(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc));
         }
     }
 
@@ -2237,10 +2225,10 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
             setEffectEnabled__FUl(6);
             self->unk298 = 7;
             if (EneSt_GetSingleton() != NULL) {
-                EneSt_CursorToState3(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+                EneSt_CursorToState3((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
             }
             if (BpsStateSingletonToInt() != NULL) {
-                BtlDmg_CursorToState3(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
+                BtlDmg_CursorToState3((CPcSelectCursor01*)(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc));
             }
             return;
         }
@@ -2295,7 +2283,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         bool skipState = false;
         if (self->unk324 == 4 && self->unk328 == 7) {
             if (CChain_CheckActivateReady(
-                    reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8,
+                    reinterpret_cast<cf::CChain*>(reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8),
                     0) == 0) {
                 skipState = true;
             }
@@ -2303,10 +2291,10 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         if (!skipState) {
             self->unk298 = 8;
             if (EneSt_GetSingleton() != NULL) {
-                EneSt_CursorToState4(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+                EneSt_CursorToState4((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
             }
             if (BpsStateSingletonToInt() != NULL) {
-                BtlDmg_CursorToState4(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
+                BtlDmg_CursorToState4((CPcSelectCursor01*)(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc));
             }
             setEffectEnabled__FUl(0x5f);
         }
@@ -2340,7 +2328,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
         if (hasArtsGauge(reinterpret_cast<u8*>(p)) != 0) hasGauge = true;
     }
 
-    f32 zeroF = lbl_eu_80666F28;
+    f32 zeroF = 0.0f;
     s32 count = 0;
     for (s32 i = 0; i < 3; i++) {
         u32 entryId = cfg[i + 1];
@@ -2410,7 +2398,7 @@ extern "C" void handleConfirm(CMenuArtsSelect* self) {
     }
     if (changed) {
         if (EneSt_GetSingleton() != NULL) {
-            EneSt_CursorSet41((u8*)EneSt_GetSingleton() + 0x7e4, (u8)self->unk330);
+EneSt_CursorSet41((CPcSelectCursor*)((u8*)EneSt_GetSingleton() + 0x7e4), (u8)self->unk330);
         }
         if (BpsStateSingletonToInt() != NULL) {
             BtlDmg_CursorSetFlag((u8*)BpsStateSingletonToInt() + 0x7cc, (u8)self->unk330);
@@ -2432,7 +2420,7 @@ void CMenuArtsSelect::advanceConfirmState() {
     unk344 = v;
     if (v >= lbl_eu_80666F5C) {
         unk298 = 7;
-        unk344 = lbl_eu_80666F28;
+        unk344 = 0.0f;
     }
 
     cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
@@ -2474,7 +2462,7 @@ void CMenuArtsSelect::advanceConfirmState() {
                         ::refreshHelpText(this);
                     }
                     unk298 = 7;
-                    unk344 = lbl_eu_80666F28;
+                    unk344 = 0.0f;
                 }
             }
         }
@@ -2494,11 +2482,11 @@ void CMenuArtsSelect::driveArtsGauge() {
         actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
     }
     if (actor != NULL) {
-        // NOTE: retail names the shared .sdata2 2^52 magic (lbl_eu_80666F38)
-        // for this u16->f32 conversion; MWCC will not merge the implicit
-        // conversion literal against the named constant in this function's
-        // schedule, so the @N pool entry here stays a known residual.
-        f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - lbl_eu_80666F2C;
+        // The 2^52 u16->f32 magic is written as a plain double literal here.
+        // Naming the compiler-generated pool entry used to pin an anonymous
+        // reloc in this schedule; the literal keeps the retail pool shape
+        // without a label reference.
+        f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - 1.0f;
         f32 v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsGaugeRatio();
         if (v != unk9C->GetFrame() || (unk308 & 0x4) != 0) {
             unk308 |= 0x1;
@@ -2514,7 +2502,7 @@ void CMenuArtsSelect::driveArtsGauge() {
                 unk98->SetAnimationEnable(unk9C, false);
                 unk98->SetAnimationEnable(unkA0, true);
                 setEffectEnabled__FUl(0x9f);
-                unkA0->SetFrame(lbl_eu_80666F28);
+                unkA0->SetFrame(0.0f);
                 unk29C = 0xa;
                 unk308 |= 0x3;
             }
@@ -2585,9 +2573,9 @@ void CMenuArtsSelect::driveTalentGauge() {
                 u32 w[2];
             } conv;
             conv.w[1] = static_cast<u16>(unk9C->GetFrameSize());
-            double magic = lbl_eu_80666F38;  // blocks the idiom fold
+            double magic = 4503599627370496.0;  // 2^52 u16->f32 conversion
             conv.w[0] = 0x43300000;
-            frameLimit = static_cast<f32>(conv.d - magic) - lbl_eu_80666F2C;
+            frameLimit = static_cast<f32>(conv.d - magic) - 1.0f;
         }
         v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsGaugeRatio();
         if (v < frameLimit) {
@@ -2633,7 +2621,7 @@ void CMenuArtsSelect::driveTalentGauge() {
                               (const GXColorS10*)(reinterpret_cast<s16*>(&box)), 1);
                 unk98->SetAnimationEnable(unkA0, false);
                 unk98->SetAnimationEnable(unk9C, true);
-                unk9C->SetFrame(lbl_eu_80666F28);
+                unk9C->SetFrame(0.0f);
             }
         }
     }
@@ -2672,11 +2660,11 @@ void CMenuArtsSelect::updateSlotGauge(s32 index) {
                 max = info->mFn14();
                 ratio = info->mRatioNum / max;
             } else {
-                ratio = lbl_eu_80666F44;
+                ratio = -1.0f;
             }
 
             f32 f30 = static_cast<f32>(unkC4[index]->GetFrameSize()) -
-                      lbl_eu_80666F2C;
+                      1.0f;
             bool wasRunning = true;
             if (ratio > lbl_eu_80666F28) {
                 f32 fs2 = static_cast<f32>(unkC4[index]->GetFrameSize());
@@ -2701,7 +2689,7 @@ void CMenuArtsSelect::updateSlotGauge(s32 index) {
             }
 
             f32 fs3 = static_cast<f32>(unkC4[index]->GetFrameSize());
-            if (fs3 - lbl_eu_80666F2C > f30) {
+            if (fs3 - 1.0f > f30) {
                 unk318 |= bitA;
             }
             if (f30 != unkC4[index]->GetFrame()) {
@@ -2758,15 +2746,15 @@ void CMenuArtsSelect::updateSlotHighlight(s32 index) {
         // Latch the current/max gauge ratio into the slot's anim frame.
         ArtsParamLocal* p = reinterpret_cast<ArtsParamLocal*>(getArtsParamAtCnt(arts, index));
         f32 ratio;
-        if (p->mFn14() == lbl_eu_80666F28) {
-            ratio = lbl_eu_80666F44;
+        if (p->mFn14() == 0.0f) {
+            ratio = -1.0f;
         } else {
             ratio = p->mRatioNum / p->mFn14();
         }
         // u16 frame-size -> f32 (MWCC magic), then trim 2 frames.
         f32 frame = static_cast<f32>(static_cast<u16>(unkC4[index]->GetFrameSize())) -
-                    lbl_eu_80666F2C;
-        if (ratio > lbl_eu_80666F28) {
+                    1.0f;
+        if (ratio > 0.0f) {
             unk318 |= (1 << index) | (1 << (index + 9));
             unk2A0[index] = 9;
         } else {
@@ -2783,7 +2771,7 @@ void CMenuArtsSelect::updateSlotHighlight(s32 index) {
                       (const GXColorS10*)(reinterpret_cast<s16*>(&box2)), 1);
         PaneMatSetS16QuadByName(unkA4[index], "pic_gage01",
                       (const GXColorS10*)(reinterpret_cast<s16*>(&box2)), 1);
-        unkC4[index]->SetFrame(lbl_eu_80666F28);
+        unkC4[index]->SetFrame(0.0f);
         break;
     }
 }
@@ -2802,7 +2790,7 @@ void CMenuArtsSelect::advanceSlotToggle(s32 index) {
         if (::checkSlotUsable(this, index) == 0) {
             unk104[index]->SetAnimationEnable(unk128[index], false);
             unk104[index]->SetAnimationEnable(unk14C[index], true);
-            unk14C[index]->SetFrame(lbl_eu_80666F28);
+            unk14C[index]->SetFrame(0.0f);
             unk2C0[index] = 0xf;
             unk310 |= (1u << index) | (1u << (index + 9));
         }
@@ -3096,9 +3084,9 @@ int CMenuArtsSelect::isSlotAvailable(s32 index) {
         f32 dist = e.x * e.x + e.y * e.y + e.z * e.z;
         f32 limit;
         if (srcRaw->mFlags & 0x8) {
-            limit = lbl_eu_80666F60;
+            limit = 900.0f;
         } else {
-            limit = lbl_eu_80666F64;
+            limit = 625.0f;
         }
         if (dist > limit) return 1;
         return 0;
@@ -3237,7 +3225,7 @@ int CMenuArtsSelect::checkSlotUsable(s32 index) {
         u8* chain = reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x1a8;
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         if (*reinterpret_cast<s32*>(reinterpret_cast<u8*>(bm) + 0x194) != 0x12c ||
-            CChain_CheckActivateReady(chain, 0) == 0) {
+            CChain_CheckActivateReady(reinterpret_cast<cf::CChain*>(chain), 0) == 0) {
             return 1;
         }
     }
@@ -3256,7 +3244,7 @@ void CMenuArtsSelect::updateSlotStates() {
         MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0)));
     u8* arts = static_cast<u8*>(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
 
-    f32 zeroF = lbl_eu_80666F28;
+    f32 zeroF = 0.0f;
     s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
     s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
     f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
@@ -3305,7 +3293,7 @@ void CMenuArtsSelect::updateSlotStates() {
                         }
                     }
                     if (EneSt_GetSingleton() != NULL) {
-                        EneSt_CursorReset(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+                        EneSt_CursorReset((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
                     }
                     if (BpsStateSingletonToInt() != NULL) {
                         BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
@@ -3320,7 +3308,7 @@ void CMenuArtsSelect::updateSlotStates() {
                 }
             } else if (artId < 3 || artId > 10) {
                 if (EneSt_GetSingleton() != NULL) {
-                    EneSt_CursorReset(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4);
+                    EneSt_CursorReset((CPcSelectCursor*)(reinterpret_cast<u8*>(EneSt_GetSingleton()) + 0x7e4));
                 }
                 if (BpsStateSingletonToInt() != NULL) {
                     BtlDmg_CursorReset(reinterpret_cast<u8*>(BpsStateSingletonToInt()) + 0x7cc);
@@ -3478,7 +3466,7 @@ extern "C" int checkArtUsable(CMenuArtsSelect* self) {
             max = reinterpret_cast<ArtsParamLocal*>(p)->mFn14();
             ratio = p->mRatioNum / max;
         } else {
-            ratio = lbl_eu_80666F44;
+            ratio = -1.0f;
         }
         if (ratio > lbl_eu_80666F28) return 1;
     }

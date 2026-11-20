@@ -47,7 +47,7 @@ CPlayAwardEntry::~CPlayAwardEntry() {}
 CPlayAwardEntryArray::CPlayAwardEntryArray() {
     field_1000 = 0;
     field_1001 = 0;
-    field_1004 = lbl_eu_806689A8;
+    field_1004 = 0.0f;
     mPageIndex = 0;
     field_100C = 0;
     field_100E = 0;
@@ -79,7 +79,7 @@ void PlayAward_BuildEntries(CPlayAwardEntryArray* self) {
 
     // Page-progress ratio: present / total, scaled.
     self->field_1004 =
-        (float)self->field_1000 / (float)self->field_1001 * lbl_eu_806689AC;
+        (float)self->field_1000 / (float)self->field_1001 * 100.0f;
 
     CPlayAwardEntry entry;
     u8 buf[0x100];
@@ -262,9 +262,9 @@ void PlayAward_RequestOpen(CPlayAwardList* self) {
 
     // Scroll the bar in with the 3-float init vector.
     float vec[3];
-    vec[0] = lbl_eu_806689B8;
-    vec[1] = lbl_eu_806689BC;
-    vec[2] = lbl_eu_806689A8;
+    vec[0] = 252.0f;
+    vec[1] = 88.0f;
+    vec[2] = 0.0f;
     self->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
 
     self->mScrollBar.UpdateThumb(9, self->mEntryArray.field_1008[self->mEntryArray.mPageIndex]);
@@ -447,7 +447,7 @@ s32 PlayAward_GetPageCue(CPlayAwardList* self) { return (self->field_0x90 != 0) 
 // end, mark the list state as showing (2), run the page/scroll setup and
 // request the scroll bar scroll-in.
 void PlayAward_FinishOpenAnimA(CPlayAwardList* self) {
-    if (advanceAnimTransform(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans24, 1.0f) != 0) {
         self->field_0x89 = 2;
         PlayAward_BindOpenAnims(self);
         self->mScrollBar.requestScrollIn();
@@ -458,7 +458,7 @@ void PlayAward_FinishOpenAnimA(CPlayAwardList* self) {
 // end, mark the list state as opening (3), run the page/scroll setup and set
 // the ready flag.
 void PlayAward_FinishOpenAnimB(CPlayAwardList* self) {
-    if (advanceAnimTransform(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans28, 1.0f) != 0) {
         self->field_0x89 = 3;
         PlayAward_RefreshCursor(self);
         self->field_0x8B = 1;
@@ -468,7 +468,7 @@ void PlayAward_FinishOpenAnimB(CPlayAwardList* self) {
 // Award list close transition: once the list's reverse animation reaches its
 // start, mark the list state as closed (5) and run the close sequence.
 void PlayAward_FinishCloseAnimA(CPlayAwardList* self) {
-    if (AnimRewindFrame(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans28, 1.0f) != 0) {
         self->field_0x89 = 5;
         PlayAward_BindCloseAnims(self);
     }
@@ -477,7 +477,7 @@ void PlayAward_FinishCloseAnimA(CPlayAwardList* self) {
 // Award list close transition (reverse): when the list's reverse animation
 // reaches its start, reset the state (0) and set the ready flag (1).
 void PlayAward_FinishCloseAnimB(CPlayAwardList* self) {
-    if (AnimRewindFrame(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
+    if (AnimRewindFrame(self->mAnimTrans24, 1.0f) != 0) {
         self->field_0x89 = 0;
         self->field_0x8B = 1;
     }
@@ -678,3 +678,5 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
     }
     return 0;
 }
+
+void* lbl_eu_806648A8 = nullptr;

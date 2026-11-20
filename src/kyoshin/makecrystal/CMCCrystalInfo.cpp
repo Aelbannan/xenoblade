@@ -16,8 +16,8 @@
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
 void SplitU32ToS16s(void*, u32);
-void setGXColorS10(void*, u32, u32, u32, u32);
-extern "C" void MCCrystal_StepIntro(CMCCrystalInfo*);
+#include "kyoshin/CTitleAHelp.hpp"  // setGXColorS10 (defined in CTitleAHelp.cpp)
+
 extern "C" void MCCrystal_StepMain(CMCCrystalInfo*);
 extern "C" void MCCrystal_RewindMain(CMCCrystalInfo*);
 extern "C" void MCCrystal_RewindIntro(CMCCrystalInfo*);
@@ -615,10 +615,10 @@ void sinit_8021BBC4()
 {
     SplitU32ToS16s(sPane1Color0, 0);
     SplitU32ToS16s(sPane1Color1, 0);
-    setGXColorS10(sPane1Alpha0, 0xd2, 0x28, 0x14, 0);
-    setGXColorS10(sPane1Alpha1, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10((GXColorS10*)sPane1Alpha0, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10((GXColorS10*)sPane1Alpha1, 0xd2, 0x28, 0x14, 0);
     SplitU32ToS16s(sPane2Color0, 0);
     SplitU32ToS16s(sPane2Color1, 0);
-    setGXColorS10(sPane2Alpha0, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(sPane2Alpha1, 0xd2, 0x28, 0x14, 0);
+    setGXColorS10((GXColorS10*)sPane2Alpha0, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10((GXColorS10*)sPane2Alpha1, 0xd2, 0x28, 0x14, 0);
 }

@@ -1,7 +1,9 @@
 #pragma once
+extern "C" int Counter_TestBit(void* data, u32 flag);
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
@@ -262,11 +264,9 @@ u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 void UIWin_CreateSysWin0(char* msg, int a, int b);
 int Col6_ScanItemSlots_D310();
 void Col6_ReserveBoxSlot_D3A0();
-void UIWin_CreateCol6Check();
+int UIWin_CreateCol6Check();
 void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
 u32 CtrlObjectParam_GetCurrentRowKey(void*);
-int Counter_TestBit(void* data, u32 flag);
-u32 IdTable_SumValues(void* data, u32 flag);
 char* CItemBlock_getPtr20E8();
 void CItemBlock_setCount(s32 value);
 
@@ -317,3 +317,7 @@ struct QuestWindowState {
 
 // Retail .sbss pointer (global-scope data symbols are not mangled by MWCC).
 extern QuestWindowState* spQuestWindow;
+
+u32 getQuestWindow();
+void resetQuestWindow();
+bool isQuestWindowOpen();

@@ -9,6 +9,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_GetArtsStatsRow (owner)
 
 namespace nw4r {
 namespace lyt {
@@ -208,8 +209,7 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* file);
 
 // subcur visibility setter (CSubCur::ShowTwoSubPanes; see CCur.cpp).
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void* charObj, u32 flag);
-extern "C" void CtrlObjectParam_GetArtsStatsRow(void* rows, u32 count);
-extern "C" void* CtrlObjectParam_GetCharEntry(u32);
+
 // Canonical return type from the owner header (cf/CItem.hpp). Kept attribute-
 // free here: CItemExt is only ever used through this pointer.
 struct CItemExt;
@@ -239,7 +239,8 @@ struct CEquipEnumListSlot { u8 _00[0x4]; void* field_0x4; };
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
 extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
-extern "C" void CfObjectPc_setupFrame(void* obj, u32 flag);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
 
 // Sub-cursor activate (defined in CCur.cpp).
 

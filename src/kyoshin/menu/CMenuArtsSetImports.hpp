@@ -102,9 +102,9 @@ public:
 };
 
 // CArtsInfo helpers defined in CArtsInfo.cpp (plain-C retail symbols).
-extern "C" int CArtsInfo_GetFlag48(CArtsInfo* self);
-extern "C" void CArtsInfo_ReqState4(CArtsInfo* self);
-extern "C" void CArtsInfo_LoadFiles(CArtsInfo* self);
+u32 CArtsInfo_GetFlag48(CArtsInfo* self);
+void CArtsInfo_ReqState4(CArtsInfo* self);
+void CArtsInfo_LoadFiles(CArtsInfo* self);
 
 // Table lookup helper (defined later in this TU). Plain-C retail symbol;
 // kept out-of-line so callers emit a real bl instead of inlining.
@@ -154,23 +154,23 @@ extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self);
 
 // Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
 // Declared u32 so the ==0/!=0 tests compare the raw register (no rlwinm).
-extern "C" u32 CArtsInfo_GetFlag49(CArtsInfo* self);
-extern "C" void CArtsInfo_ReqState1(CArtsInfo* self);
-extern "C" u32 CArtsInfo_IsStateGE6(CArtsInfo* self);
+u32 CArtsInfo_GetFlag49(CArtsInfo* self);
+void CArtsInfo_ReqState1(CArtsInfo* self);
+u32 CArtsInfo_IsStateGE6(CArtsInfo* self);
 // CArtsInfo cursor-step helpers (CMenuArtsSet_cursorUp / CMenuArtsSet_cursorDown busy paths).
-extern "C" void CArtsInfo_CursorPrev(CArtsInfo* self);
-extern "C" void CArtsInfo_CursorNext(CArtsInfo* self);
+void CArtsInfo_CursorPrev(CArtsInfo* self);
+void CArtsInfo_CursorNext(CArtsInfo* self);
 // CArtsInfo state-machine advance (defined in CArtsInfo.cpp; C symbol).
-extern "C" void CArtsInfo_ToStateA(CArtsInfo* self);
+void CArtsInfo_ToStateA(CArtsInfo* self);
 // CArtsInfo advance helpers used by artsDriveMenu (CArtsInfo.cpp; C symbols).
-extern "C" u32 CArtsInfo_IsCursorZero(CArtsInfo* self);
-extern "C" void CArtsInfo_ToStateC(CArtsInfo* self);
-extern "C" void CArtsInfo_OpenDetail6(CArtsInfo* self);
+u32 CArtsInfo_IsCursorZero(CArtsInfo* self);
+void CArtsInfo_ToStateC(CArtsInfo* self);
+void CArtsInfo_OpenDetail6(CArtsInfo* self);
 // Locked-entry refresh driven by artsDriveMenu when the 0x168 mode is 4.
 extern "C" void CMenuArtsSet_confirmLockedArt(CArtsList* self);
 // CSysWin active/advance helpers (defined in CSysWin.cpp; C symbols).
 // CArtsInfo draw (defined in CArtsInfo.cpp; C-linkage retail name).
-extern "C" void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo);
+void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo);
 // CSysWin draw (defined in CSysWin.cpp; C-linkage retail name).
 // isPaneVisible is declared once in CQuestWindow_Pane.hpp.
 
@@ -182,7 +182,7 @@ extern "C" void CMenuArtsSet_refreshArtsInfo(CArtsList* self);
 // consumes it (CMenuArtsSet_completeLayoutIn). Declared here rather than including
 // CMenuPlayAward.hpp (same signature-clash reason as that header documents).
 // Scroll-bar teardown (CMenuArtsSet_teardown).
-extern "C" void CArtsInfo_UpdateAnims(CArtsInfo* self);
+void CArtsInfo_UpdateAnims(CArtsInfo* self);
 extern "C" void ArtsLayoutPair_advancePhases(SArts306F0* obj148);
 extern "C" void ArtsLayout_runTwinLayoutIn(SArts31648* self);
 extern "C" void ArtsTableLayout_runLayoutIn(SArts3150C* self);
@@ -223,7 +223,7 @@ extern "C" void ArtsLayout_runLayoutIn(SArts3150C* self);
 // Layout/anim binding helpers (code_80135FDC.cpp). C++ linkage: MWCC mangles
 // buildLayout/bindLayoutAnimTransform to the retail names (buildLayout__FPPQ...).
 // CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
-extern "C" void CArtsInfo_Cleanup(CArtsInfo* self);
+void CArtsInfo_Cleanup(CArtsInfo* self);
 // CSysWin teardown (defined in CSysWin.cpp, C symbol).
 
 // .sdata2 floats for the layout-animation drivers (ArtsLayout_runLayoutOut etc.).
@@ -284,14 +284,13 @@ extern "C" bool ResTbox_IsCellBitSet(unsigned char*, int, int);
 // AnimRewindFrame is a flat C symbol (anim-frame check helper).
 
 // CArtsInfo field setters / refresh (defined in CArtsInfo.cpp; C symbols).
-extern "C" void CArtsInfo_SetCharId(CArtsInfo* self, u8 val);
-extern "C" void CArtsInfo_SetField55(CArtsInfo* self, u8 val);
-extern "C" void CArtsInfo_SetField56(CArtsInfo* self, u8 val);
-extern "C" void CArtsInfo_SetLevel58(CArtsInfo* self, u16 val);
-extern "C" void CArtsInfo_RefreshIfReady(CArtsInfo* self);
+void CArtsInfo_SetCharId(CArtsInfo* self, u8 val);
+void CArtsInfo_SetField55(CArtsInfo* self, u8 val);
+void CArtsInfo_SetField56(CArtsInfo* self, u8 val);
+void CArtsInfo_SetLevel58(CArtsInfo* self, u16 val);
+void CArtsInfo_RefreshIfReady(CArtsInfo* self);
 // Arts-element scan / character-data refresh (C symbols).
-extern "C" void SysWinLog_ScanGrid(u8* self);
-extern "C" void CtrlObjectParam_SyncParamFromActor(void*);
+
 // BDAT string -> u16 (code_80135FDC.cpp). u32 3rd arg: retail passes the
 // raw int (no clrlwi at the call site).
 // sprintf (varargs): C declaration mirrors CArtsInfo.hpp (crclr cr1eq at
@@ -319,15 +318,12 @@ extern "C" void CMenuArtsSet_slotCursorDown(CArtsList* self);
 extern "C" void CMenuArtsSet_confirmSelect(CArtsList* self);
 extern "C" int CMenuArtsSet_isWindowBusy(CArtsList* self);
 // Scene/fade helpers (imports).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 // Title/help bar close + mode-set (CTitleAHelp.cpp; free C symbols - the
 // member declarations in CTitleAHelp.hpp mangle differently).
 // Member thunks called through their retail unmangled free-symbol forms by
 // artsMenuInput (the member declarations mangle differently).
-extern "C" void CMenuArtsSet_setArmedFlag(CArtsList* self, u8 val);
-extern "C" u32 CMenuArtsSet_isSlotWindowEmpty(CArtsList* self);
-extern "C" u32 CMenuArtsSet_isArtsInfoActive(CArtsList* self);
 
 // ---------------------------------------------------------------------------
 // Declarations shared by the two TUs the retail link keeps for this unit:
@@ -341,14 +337,10 @@ extern "C" void BgTex_Draw_3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 extern u32 gmPauseFlags; // mode bitfield (bit 21 = realtime event busy)
 extern "C" void artsMenuInput(CMenuArtsSet* self);
-int CArtsList_isReady(CArtsList* self);
-void CArtsList_startLoad(CArtsList* self);
 void artsStepState(CArtsList* self);
-void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo* info);
 void CMenuArtsSet_teardown(CArtsList* self);
-void CMenuArtsSet_beginOpen(CArtsList* self);
 extern const float lbl_eu_8066863C;     // 0x364 timer increment (.sdata2)
-extern const float lbl_eu_80668640;     // 0x364 timer cap (.sdata2)
+extern const float lbl_eu_80668640;
 extern const float lbl_eu_8066865C;     // arts-list gauge scale (.sdata2)
 extern const float lbl_eu_80668660;     // default pane offset x (.sdata2)
 extern const float lbl_eu_80668664;     // alt pane offset x (row flag 0x34)

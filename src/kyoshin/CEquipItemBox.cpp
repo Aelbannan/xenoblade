@@ -4,10 +4,12 @@
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CItemImpl.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/CItemBoxLine.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -456,7 +458,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
         u32 key = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
         u32 id = CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         u16 count =
-            (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x40], key);
+            (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8, "money", key);
         CEquipItemBoxF32Record rec = lbl_eu_8050EF68;
         // int->double via the 0x4330 magic, then scale by rec[id] and truncate.
         result = __cvt_fp2unsigned((double)(u32)count * (double)rec.f[id & 0x3F]);
@@ -468,7 +470,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
                 (CItemInstance*)CItem_initItemImplInstances((CItemData*)item)->vf2C((CItemData*)item, i);
             if (entry != 0) {
                 u16 count = (u16)BdatGetU16Direct((const void*)lbl_eu_806640D8,
-                                               &lbl_eu_8050EFDC[0x40], i);
+                                               "money", i);
                 double dcount = (double)(u32)count;
                 double dacc = (double)(u32)result;
                 result = __cvt_fp2unsigned(
@@ -477,7 +479,7 @@ u32 CEquipItemGrid::calcEIBCountKey(CItemInstance* item) {
         }
     } else {
         u32 v = LookupItemTypeTable(kind);
-        u32 count = BdatGetU16Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x40], kind);
+        u32 count = BdatGetU16Direct((const void*)lbl_eu_806640D8, "money", kind);
         u8 n = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
         float inc = lbl_eu_80668B28;
         for (u8 i = 0; i < n; i++) {
@@ -874,9 +876,9 @@ void CEquipItemGrid::sortEIBByNameKey() {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u32 gA = (u32)lbl_eu_806640F4;
-            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x61, (u16)BdatGetItemId(objA->word >> 20));
+            u8 nameA = BdatGetU8Direct((const void*)gA, "att_lev", (u16)BdatGetItemId(objA->word >> 20));
             u32 gB = (u32)lbl_eu_806640F4;
-            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x61, (u16)BdatGetItemId(objB->word >> 20));
+            u8 nameB = BdatGetU8Direct((const void*)gB, "att_lev", (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -905,9 +907,9 @@ void CEquipItemGrid::sortEIBByNameKey69() {
             CItemInstance* objA = (CItemInstance*)CItem_kindPtr(cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)CItem_kindPtr(cat, b->unk0);
             u32 gA = (u32)lbl_eu_806640F4;
-            u8 nameA = BdatGetU8Direct((const void*)gA, base + 0x69, (u16)BdatGetItemId(objA->word >> 20));
+            u8 nameA = BdatGetU8Direct((const void*)gA, "grd_rate", (u16)BdatGetItemId(objA->word >> 20));
             u32 gB = (u32)lbl_eu_806640F4;
-            u8 nameB = BdatGetU8Direct((const void*)gB, base + 0x69, (u16)BdatGetItemId(objB->word >> 20));
+            u8 nameB = BdatGetU8Direct((const void*)gB, "grd_rate", (u16)BdatGetItemId(objB->word >> 20));
             if ((u8)nameA < (u8)nameB) {
                 CEquipItemData tC;
                 CEquipItemData tB;
@@ -1892,7 +1894,7 @@ void CEquipItemBox::handleEIBNamePane() {
     if (reinterpret_cast<CSysWin*>(&mSysWin1)->isOpened() != 0) return;
     if (mSortMenu.IsOpen() != 0) return;
     nw4r::lyt::Pane* pane =
-        field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
+        field_38->GetRootPane()->FindPaneByName("nul_inf", true);
     if (pane == 0) return;
     // Retail dispatches the VISIBLE-pane cases immediately and defers the
     // invisible-pane handler to a tail block after them.
@@ -1911,11 +1913,11 @@ void CEquipItemBox::handleEIBNamePane() {
             u16 v = ArrayGet12(&list->mItemIds[0], idx);
             if (v == 0) return;
             void* text;
-            if (ItemBoxGetTab((const u8*)&list->mItemIds[0], idx) == 3) {
+            if (ItemBoxGetTab(list, idx) == 3) {
                 text = ((CItemBoxPage*)(list))->GetItemName(idx);
             } else {
                 text = BdatGetPtrDirect((const void*)equipItemBoxEquipListFilePtr,
-                                     &lbl_eu_8050EFDC[0x1a2], v);
+                                     "help", v);
             }
             reinterpret_cast<CSysWin*>(&mSysWin2)->switchKindPane(0);
             reinterpret_cast<CSysWin*>(&mSysWin2)->setKindContent(reinterpret_cast<char*>(text), 0);
@@ -2005,7 +2007,7 @@ int CEquipItemBox::isEIBSelectBlocked() {
     if (item == 0) return 1;
     u32 w = *(u32*)item;
     if (w == 0) return 1;
-    u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20],
+    u8 v = (u8)BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep",
                              w >> 20);
     if ((((u32)(s8)(v - 1)) >> 5) == 0) return 1;
     if (CtrlRemote_TouchBitByArg(0x3508) != 0) return 1;
@@ -2212,7 +2214,7 @@ void CEquipItemBox::bindEIBCellTexture(u16 kind, void* itemPtr,
     if (itemPtr != 0 && ((((CItemInstance*)itemPtr)->word >> 12) & 0xF) == 3) {
         u32 id = (u32)CItem_initItemImplInstances((CItemData*)itemPtr)
                      ->vf08((CItemData*)itemPtr);
-        switch ((u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_8050EFDC[0x1a7], (u16)id)) {
+        switch ((u8)BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", (u16)id)) {
         case 4: res = MakeTplNameSysFile(0x144); break;
         case 5: res = MakeTplNameSysFile(0x145); break;
         case 6: res = MakeTplNameSysFile(0x146); break;
@@ -2225,37 +2227,37 @@ void CEquipItemBox::bindEIBCellTexture(u16 kind, void* itemPtr,
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, (char*)res, 0);
         } else {
             res = field_30->GetResource(
-                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, &lbl_eu_8050EFDC[0x1b0], 0);
+                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_com00_dmy.tpl", 0);
         }
     }
     if (res == 0) {
         if (kind != 0) {
             res = MakeTplNameSysFile(
-                BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x1c3], kind));
+                BdatGetU16Direct((const void*)lbl_eu_806640EC, "icon_base", kind));
             res = field_34->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, (char*)res, 0);
             if (res == 0) {
                 res = field_30->GetResource(
                     nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-                    &lbl_eu_8050EFDC[0x1b0], 0);
+                    "mf00_com00_dmy.tpl", 0);
             }
         } else {
             res = field_30->GetResource(
-                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, &lbl_eu_8050EFDC[0x1b0], 0);
+                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_com00_dmy.tpl", 0);
         }
     }
     if (b7 != 0) {
         // b7 override: page 3 uses the alternate texture unconditionally.
         if (unk_36c[(s8)unk_373] == 3) {
             res = field_34->GetResource(
-                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, &lbl_eu_8050EFDC[0x1cd], 0);
+                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg10_base21.tpl", 0);
         } else {
             res = field_34->GetResource(
-                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, &lbl_eu_8050EFDC[0x1e3], 0);
+                nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg10_base20.tpl", 0);
         }
     }
     if (res != 0) {
-        sprintf(buf, &lbl_eu_8050EFDC[0x1f9], i + 1);
+        sprintf(buf, "pic_btnbs%02d", i + 1);
         PaneSetTexPaletteByName(field_38, (const char*)buf, (TPLPalette*)((u32)res));
     }
 }
@@ -2271,20 +2273,20 @@ void CEquipItemBox::refreshEIBCellText(s8 v,
     // Retail evaluates the null check before any buffer setup, but defers
     // the item->word load until after the name sprintf.
     CItemInstance* p = (item != 0) ? item : 0;
-    sprintf(bufName, &lbl_eu_8050EFDC[0x219], i + 1);
+    sprintf(bufName, "txt_num%02d", i + 1);
     u32 kind = (p != 0) ? ((p->word >> 16) & 0xF) : 0;
     if (kind == 3 || kind == 9) {
         CItemImpl* impl = CItem_initItemImplInstances((CItemData*)item);
         u32 n = impl->vf08((CItemData*)item);
-        char* str = BdatTouchStringCell(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36],
+        char* str = BdatTouchStringCell("MNU_item", "name",
                                   0x1e - ((u8)n - 1));
-        sprintf(bufText, &lbl_eu_8050EFDC[0x2a], str);
+        sprintf(bufText, "%s", str);
         PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom);
     } else if (v > 0) {
-        sprintf(bufText, &lbl_eu_8050EFDC[0x225]);
+        sprintf(bufText, "%d");
         PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, (const GXColorS10*)equipItemBox_sortOptionLabelNeutralBottom);
     } else if (v == 0) {
-        sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
+        sprintf(bufText, "");
     } else if (v == -2) {
         sprintf(bufText, getErrMesText16());
         PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelSelectedTop, (const GXColorS10*)equipItemBox_sortOptionLabelSelectedBottom);
@@ -2292,7 +2294,7 @@ void CEquipItemBox::refreshEIBCellText(s8 v,
         sprintf(bufText, getErrMesText15());
         PaneMatSetTevColorsByName(field_38, bufName, (const GXColorS10*)equipItemBox_sortOptionLabelAltTop, (const GXColorS10*)equipItemBox_sortOptionLabelAltBottom);
     } else {
-        sprintf(bufText, &lbl_eu_8050EFDC[0x228]);
+        sprintf(bufText, "");
     }
     LayoutSetTextBoxText(field_38, bufName, bufText, 0);
 }
@@ -2488,16 +2490,16 @@ void CEquipItemBox::refreshEIBPageDisp() {
     u8 pages = grid->countEIBPages();
     if (pages > 1) {
         nw4r::lyt::Pane* pane =
-            field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x285], true);
+            field_38->GetRootPane()->FindPaneByName("nul_pg", true);
         setPaneVisible(pane, 1);
         for (u8 i = 0; i < 10; i++) {
-            sprintf(buf1, &lbl_eu_8050EFDC[0x28c], i + 1);
+            sprintf(buf1, "pic_pghole%02d", i + 1);
             nw4r::lyt::Pane* p = field_38->GetRootPane()->FindPaneByName(buf1, true);
             setPaneVisible(p, (u8)i < pages);
         }
-        setLayoutTextBoxNumber(field_38, &lbl_eu_8050EFDC[0x29b], (u8)((u8)grid->idx + 1));
+        setLayoutTextBoxNumber(field_38, "txt_pg00", (u8)((u8)grid->idx + 1));
         nw4r::lyt::Pane* cur =
-            field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x2a4], true);
+            field_38->GetRootPane()->FindPaneByName("pic_pghole_on", true);
         // Move the cursor pane: start from the base position at +0x200 and
         // shift x by scale * (row + 10 - pages). The (f32) casts make MWCC
         // emit its own s32->f32 magic (pool consts B18/B10 are compiler-
@@ -2507,15 +2509,15 @@ void CEquipItemBox::refreshEIBPageDisp() {
         vec[2] = unk_208;
         float fp = (f32)(u32)(u8)(10 - pages);
         float fi = (f32)(int)((u8)((u8)grid->idx + 1) - 1);
-        ((float*)vec)[0] += lbl_eu_80668B44 * fi + lbl_eu_80668B44 * fp;
+        ((float*)vec)[0] += 11.0f * fi + 11.0f * fp;
         copyVEC3((float*)&cur->GetTranslate(), (const float*)vec);
     } else {
         nw4r::lyt::Pane* pane =
-            field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x285], true);
+            field_38->GetRootPane()->FindPaneByName("nul_pg", true);
         setPaneVisible(pane, 0);
     }
     for (u8 i = 0; i < 6; i++) {
-        sprintf(buf2, &lbl_eu_8050EFDC[0x2b2], i + 1);
+        sprintf(buf2, "pic_hole%02d", i + 1);
         nw4r::lyt::Pane* p = field_38->GetRootPane()->FindPaneByName(buf2, true);
         if (p != 0) {
             setPaneVisible(p, (u8)i < grid->getEIBColCount());
@@ -2547,9 +2549,9 @@ void CEquipItemBox::refreshEIBItemList() {
     u8 idx = (u8)(unk_1f4 + unk_1f5 * 5);
     CEquipItemGrid* grid = &mGrid;
     if ((s8)unk_1f5 == -1) {
-        LayoutSetTextBoxFmtValue(field_38, &lbl_eu_8050EFDC[0x2bf], getEIBPageHint(), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_name", getEIBPageHint(), 0);
     } else {
-        LayoutSetTextBoxFmtValue(field_38, &lbl_eu_8050EFDC[0x2bf], grid->fmtEIBItemName(idx), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_name", grid->fmtEIBItemName(idx), 0);
     }
     if (((CItemBoxInfo*)((void*)unk_20c))->GetState() == 0) return;
     void* item;
@@ -2568,7 +2570,7 @@ void CEquipItemBox::refreshEIBItemList() {
                 u16 v = ArrayGet12(&mPage.mItemIds[0], (u8)i);
         if (v == 0) continue;
         list->mItemIds[(u8)i] = v;
-        list->mBytesA8[(u8)i] = ItemBoxGetTab((const u8*)&mPage.mItemIds[0], (u8)i);
+        list->mBytesA8[(u8)i] = ItemBoxGetTab(&mPage, (u8)i);
         u8 b;
         if ((u8)i < 0xc) b = mPage.mBytesB4[(u8)i];
         else b = 0;
@@ -2603,24 +2605,24 @@ void CEquipItemBox::updateEIBCursorPos() {
     } else {
         s8 sel = unk_1f5;
         if (sel == -1) {
-            sprintf(pageName, &lbl_eu_8050EFDC[0x2C8], (s8)unk_373 + 1);
+            sprintf(pageName, "pic_cat%02d", (s8)unk_373 + 1);
             nw4r::lyt::Pane* pane =
                 field_38->GetRootPane()
                     ->FindPaneByName(pageName, true);
             AccumPaneWorldPos(&pos, pane);
             pane = field_38->GetRootPane()
-                       ->FindPaneByName(&lbl_eu_8050EFDC[0x193], true);
+                       ->FindPaneByName("nul_proportion", true);
             pos.x *= pane->GetScale().x;
             copyVEC3((float*)&mCur44.mpLayout->GetRootPane()->GetTranslate(),
                      &pos);
         } else {
-            sprintf(itemName, &lbl_eu_8050EFDC[0x20C], (s8)unk_1f4 + sel * 5 + 1);
+            sprintf(itemName, "pic_icon%02d", (s8)unk_1f4 + sel * 5 + 1);
             nw4r::lyt::Pane* pane =
                 field_38->GetRootPane()
                     ->FindPaneByName(itemName, true);
             AccumPaneWorldPos(&pos, pane);
             pane = field_38->GetRootPane()
-                       ->FindPaneByName(&lbl_eu_8050EFDC[0x193], true);
+                       ->FindPaneByName("nul_proportion", true);
             pos.x *= pane->GetScale().x;
             copyVEC3((float*)&mCur44.mpLayout->GetRootPane()->GetTranslate(),
                      &pos);
@@ -2768,30 +2770,30 @@ void CEquipItemBox::bindEIBPageTexture(u8 v, u8 i) {
     // + jumptable dispatch; case 0 jumps straight to the bind.
     switch (v) {
     case 0:
-        pane = (nw4r::lyt::Pane*)field_30->GetResource(0x74696D67, &lbl_eu_8050EFDC[0x1B0], 0);
+        pane = (nw4r::lyt::Pane*)field_30->GetResource(0x74696D67, "mf00_com00_dmy.tpl", 0);
         goto bind;
-    case 1: sprintf(texName, &lbl_eu_8050EFDC[0x2FD]); goto fetch;
-    case 2: sprintf(texName, &lbl_eu_8050EFDC[0x312]); goto fetch;
-    case 3: sprintf(texName, &lbl_eu_8050EFDC[0x327]); goto fetch;
-    case 4: sprintf(texName, &lbl_eu_8050EFDC[0x33C]); goto fetch;
-    case 5: sprintf(texName, &lbl_eu_8050EFDC[0x351]); goto fetch;
-    case 6: sprintf(texName, &lbl_eu_8050EFDC[0x366]); goto fetch;
-    case 7: sprintf(texName, &lbl_eu_8050EFDC[0x37B]); goto fetch;
-    case 8: sprintf(texName, &lbl_eu_8050EFDC[0x390]); goto fetch;
-    case 9: sprintf(texName, &lbl_eu_8050EFDC[0x3A5]); goto fetch;
-    case 10: sprintf(texName, &lbl_eu_8050EFDC[0x3BA]); goto fetch;
-    case 11: sprintf(texName, &lbl_eu_8050EFDC[0x3CF]); goto fetch;
-    case 12: sprintf(texName, &lbl_eu_8050EFDC[0x3E4]); goto fetch;
+    case 1: sprintf(texName, "mf00_reg20_cat00.tpl"); goto fetch;
+    case 2: sprintf(texName, "mf00_reg20_cat07.tpl"); goto fetch;
+    case 3: sprintf(texName, "mf00_reg20_cat01.tpl"); goto fetch;
+    case 4: sprintf(texName, "mf00_reg20_cat02.tpl"); goto fetch;
+    case 5: sprintf(texName, "mf00_reg20_cat03.tpl"); goto fetch;
+    case 6: sprintf(texName, "mf00_reg20_cat04.tpl"); goto fetch;
+    case 7: sprintf(texName, "mf00_reg20_cat05.tpl"); goto fetch;
+    case 8: sprintf(texName, "mf00_reg20_cat06.tpl"); goto fetch;
+    case 9: sprintf(texName, "mf00_reg20_cat09.tpl"); goto fetch;
+    case 10: sprintf(texName, "mf00_reg20_cat10.tpl"); goto fetch;
+    case 11: sprintf(texName, "mf00_reg20_cat11.tpl"); goto fetch;
+    case 12: sprintf(texName, "mf00_reg20_cat08.tpl"); goto fetch;
     default:
     fetch:
         pane = (nw4r::lyt::Pane*)field_34->GetResource(0x74696D67, texName, 0);
         if (pane == 0) {
-            pane = (nw4r::lyt::Pane*)field_30->GetResource(0x74696D67, &lbl_eu_8050EFDC[0x1B0], 0);
+            pane = (nw4r::lyt::Pane*)field_30->GetResource(0x74696D67, "mf00_com00_dmy.tpl", 0);
         }
     bind:;
     }
     if (pane != 0) {
-        sprintf(paneName, &lbl_eu_8050EFDC[0x2C8], i + 1);
+        sprintf(paneName, "pic_cat%02d", i + 1);
         PaneSetTexPaletteByName(field_38, (const char*)paneName, (TPLPalette*)((u32)pane));
     }
 }
@@ -2962,44 +2964,44 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
     char buf[0x20];
     char nb[0x28];
     base = lbl_eu_8050EFDC;
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x522, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x52e, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x53a, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("nul_para_01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para04", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para08", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para10", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para11", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para22", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para23", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para24", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para25", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value04", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value07", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value08", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value09", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("pic_ethcol01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("pic_ethcol02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("pic_ethcol03", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_eth01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_eth02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_eth03", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue03", true), 1);
     g = (u32)lbl_eu_806640F4;
     BdatGetItemType(a);
     kind2 = BdatGetItemId(a);
-    rateA = BdatGetU16Direct((const void*)g, base + 0x60a, kind2);
-    rateB = BdatGetU16Direct((const void*)g, base + 0x8b, kind2);
-    name72 = BdatGetU8Direct((const void*)g, base + 0x72, kind2);
-    name7a = BdatGetU8Direct((const void*)g, base + 0x7a, kind2);
-    name61 = BdatGetU8Direct((const void*)g, base + 0x61, kind2);
+    rateA = BdatGetU16Direct((const void*)g, "dmg_low", kind2);
+    rateB = BdatGetU16Direct((const void*)g, "dmg_hi", kind2);
+    name72 = BdatGetU8Direct((const void*)g, "arm_phy", kind2);
+    name7a = BdatGetU8Direct((const void*)g, "arm_eth", kind2);
+    name61 = BdatGetU8Direct((const void*)g, "att_lev", kind2);
     // The three int->float conversions use MWCC's own s32->f32 magic
     // ((f32) casts emit lis-0x4330/xoris/lfd/fsubs inline, sharing one
     // constant copy in r30 like retail); do NOT hand-roll unions here.
-    float f = (f32)(u32)(u8)BdatGetU8Direct((const void*)g, base + 0x612, kind2) / 10.0f;
-    name69 = BdatGetU8Direct((const void*)g, base + 0x69, kind2);
-    u8 flag92 = BdatGetU8Direct((const void*)g, base + 0x92, kind2);
+    float f = (f32)(u32)(u8)BdatGetU8Direct((const void*)g, "speed", kind2) / 10.0f;
+    name69 = BdatGetU8Direct((const void*)g, "grd_rate", kind2);
+    u8 flag92 = BdatGetU8Direct((const void*)g, "flag", kind2);
     if (flag92 & 4) {
         void* obj = CtrlObjectParam_GetCharEntry(1);
         rateA = 1.4f * (f32)(int)(rateA * (u32)CtrlObjectParam_GetArtsDataWord(obj));
@@ -3008,44 +3010,44 @@ void CEquipItemBox::rebuildEIBEquipPage(int a, int b) {
         if (rateB >= 0x3e7) rateB = 0x3e7;
     }
     for (u8 i = 1; i <= 10; i++) {
-        sprintf(nb, base + 0x7, i);
+        sprintf(nb, "equip_pc%d", i);
         if ((u8)BdatGetU8Direct((const void*)g, (const char*)nb, kind2)) {
             f += GetFloatTableEntry(i);
             break;
         }
     }
     BlendFloatAvgScale((u32)rateA, (u32)rateB, 0, f);
-    char* str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0xb);
-    sprintf(buf, base + 0x618, rateA, str, rateB);
-    LayoutSetTextBoxText(field_38, base + 0x522, buf, 0);
-    setLayoutTextBoxNumber(field_38, base + 0x546, (u8)name72);
-    setLayoutTextBoxNumber(field_38, base + 0x552, (u8)name7a);
-    char* n1 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
-    char* n2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x80);
+    char* str = BdatTouchStringCell("MNU_item", "name", 0xb);
+    sprintf(buf, "%d%s%d", rateA, str, rateB);
+    LayoutSetTextBoxText(field_38, "txt_value02", buf, 0);
+    setLayoutTextBoxNumber(field_38, "txt_value08", (u8)name72);
+    setLayoutTextBoxNumber(field_38, "txt_value09", (u8)name7a);
+    char* n1 = BdatTouchStringCell("MNU_item", "name", 0x7f);
+    char* n2 = BdatTouchStringCell("MNU_item", "name", 0x80);
     if ((u8)name61) {
-        sprintf(buf, base + 0x61f, n1, n2);
+        sprintf(buf, "%s%d%s", n1, n2);
     } else {
-        sprintf(buf, base + 0x626, (u8)name61, n2);
+        sprintf(buf, "%d%s", (u8)name61, n2);
     }
-    LayoutSetTextBoxText(field_38, base + 0x52e, buf, 0);
-    n1 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
-    n2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x80);
+    LayoutSetTextBoxText(field_38, "txt_value04", buf, 0);
+    n1 = BdatTouchStringCell("MNU_item", "name", 0x7f);
+    n2 = BdatTouchStringCell("MNU_item", "name", 0x80);
     if ((u8)name69) {
-        sprintf(buf, base + 0x61f, n1, n2);
+        sprintf(buf, "%s%d%s", n1, n2);
     } else {
-        sprintf(buf, base + 0x626, (u8)name69, n2);
+        sprintf(buf, "%d%s", (u8)name69, n2);
     }
-    LayoutSetTextBoxText(field_38, base + 0x53a, buf, 0);
-    LayoutSetTextBoxFmtValue(field_38, base + 0x55e, base + 0x228, 0);
-    LayoutSetTextBoxFmtValue(field_38, base + 0x50c, base + 0x228, 0);
-    LayoutSetTextBoxFmtValue(field_38, base + 0x517, base + 0x228, 0);
-    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    LayoutSetTextBoxText(field_38, "txt_value07", buf, 0);
+    LayoutSetTextBoxFmtValue(field_38, "txt_value22", "", 0);
+    LayoutSetTextBoxFmtValue(field_38, "txt_para24", "", 0);
+    LayoutSetTextBoxFmtValue(field_38, "txt_para25", "", 0);
+    PaneMatSetTevColorsByName(field_38, "txt_para01", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para10", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para11", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para04", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para08", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para22", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para23", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
     rebuildEIBKind2Cells(a, b);
 }
 
@@ -3058,79 +3060,79 @@ void CEquipItemBox::rebuildEIBKind48Page(int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     u16 kind2;
     u8 nameA, nameB, nameC;
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4a7, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4ca, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4d5, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4e0, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4eb, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x4f6, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x501, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x50c, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x517, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x546, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x552, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x55e, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x56a, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x577, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x584, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x591, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x59b, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5a5, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5af, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5be, true), 1);
-    setPaneVisible(field_38->GetRootPane()->FindPaneByName(base + 0x5cd, true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("nul_para_01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para04", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para08", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para10", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para11", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para22", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para23", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para24", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_para25", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value08", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value09", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_value22", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("pic_ethcol01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("pic_ethcol02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("pic_ethcol03", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_eth01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_eth02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_eth03", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue01", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue02", true), 1);
+    setPaneVisible(field_38->GetRootPane()->FindPaneByName("txt_ethvalue03", true), 1);
     // Loaded into a register only here (retail keeps it live across the
     // bdat-name lookups below).
     u32 g = (u32)lbl_eu_806640F8;
     BdatGetItemType(kind);
     kind2 = (u16)BdatGetItemId(kind);
-    nameA = BdatGetU8Direct((const void*)g, base + 0x72, kind2);
-    nameB = BdatGetU8Direct((const void*)g, base + 0x7a, kind2);
-    nameC = BdatGetU8Direct((const void*)g, base + 0x82, kind2);
-    setLayoutTextBoxNumber(field_38, base + 0x546, (u8)nameA);
-    setLayoutTextBoxNumber(field_38, base + 0x552, (u8)nameB);
-    setLayoutTextBoxNumber(field_38, base + 0x55e, (u8)nameC);
+    nameA = BdatGetU8Direct((const void*)g, "arm_phy", kind2);
+    nameB = BdatGetU8Direct((const void*)g, "arm_eth", kind2);
+    nameC = BdatGetU8Direct((const void*)g, "eva_rate", kind2);
+    setLayoutTextBoxNumber(field_38, "txt_value08", (u8)nameA);
+    setLayoutTextBoxNumber(field_38, "txt_value09", (u8)nameB);
+    setLayoutTextBoxNumber(field_38, "txt_value22", (u8)nameC);
     // Retail reloads lbl_eu_806640F8 here: the three setLayoutTextBoxNumber calls
     // above are opaque, so the global must not be cached across them.
-    u8 v = BdatGetU8Direct((const void*)lbl_eu_806640F8, base + 0x17, (u16)BdatGetItemId(kind));
+    u8 v = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", (u16)BdatGetItemId(kind));
     u8 b = (u8)v;
     char* str;
     if ((u32)(b - 4) <= 9) {
-        str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x2e);
+        str = BdatTouchStringCell("MNU_item", "name", 0x2e);
     } else if (b == 3) {
-        str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x32);
+        str = BdatTouchStringCell("MNU_item", "name", 0x32);
     } else if (b == 2) {
-        str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x31);
+        str = BdatTouchStringCell("MNU_item", "name", 0x31);
     } else if (b == 1) {
-        str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x30);
+        str = BdatTouchStringCell("MNU_item", "name", 0x30);
     } else {
         str = 0;
     }
-    LayoutSetTextBoxFmtValue(field_38, base + 0x50c, str, 0);
+    LayoutSetTextBoxFmtValue(field_38, "txt_para24", str, 0);
     u8 b2 = (u8)v;
     char* str2 = 0;
     if ((u32)(b2 - 4) <= 8) {
         switch (b2) {
-        case 4: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x77); break;
-        case 5: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x78); break;
-        case 6: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x79); break;
-        case 7: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x7a); break;
-        case 8: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x7b); break;
-        case 9: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x7c); break;
-        case 10: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x7d); break;
-        case 11: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x7e); break;
-        case 12: str2 = BdatTouchStringCell((char*)base + 0x62b, base + 0x36, 0x7f); break;
+        case 4: str2 = BdatTouchStringCell("pc_arts", "name", 0x77); break;
+        case 5: str2 = BdatTouchStringCell("pc_arts", "name", 0x78); break;
+        case 6: str2 = BdatTouchStringCell("pc_arts", "name", 0x79); break;
+        case 7: str2 = BdatTouchStringCell("pc_arts", "name", 0x7a); break;
+        case 8: str2 = BdatTouchStringCell("pc_arts", "name", 0x7b); break;
+        case 9: str2 = BdatTouchStringCell("pc_arts", "name", 0x7c); break;
+        case 10: str2 = BdatTouchStringCell("pc_arts", "name", 0x7d); break;
+        case 11: str2 = BdatTouchStringCell("pc_arts", "name", 0x7e); break;
+        case 12: str2 = BdatTouchStringCell("pc_arts", "name", 0x7f); break;
         }
     }
-    LayoutSetTextBoxFmtValue(field_38, base + 0x517, str2, 0);
-    PaneMatSetTevColorsByName(field_38, base + 0x4bf, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4e0, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4eb, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4ca, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4d5, (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x4f6, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
-    PaneMatSetTevColorsByName(field_38, base + 0x501, (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    LayoutSetTextBoxFmtValue(field_38, "txt_para25", str2, 0);
+    PaneMatSetTevColorsByName(field_38, "txt_para01", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para10", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para11", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para04", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para08", (const GXColorS10*)equipItemBox_cellLabelMutedTop, (const GXColorS10*)equipItemBox_cellLabelMutedBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para22", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
+    PaneMatSetTevColorsByName(field_38, "txt_para23", (const GXColorS10*)equipItemBox_cellLabelNeutralTop, (const GXColorS10*)equipItemBox_cellLabelNeutralBottom);
     rebuildEIBKind2Cells(kind, item);
 }
 
@@ -3143,19 +3145,19 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
     // All pane lookups in this handler go through the layout's pane-finder
     // sub-object (vtable slot 13), not the root pane.
     setPaneVisible(field_38->GetRootPane()
-                      ->FindPaneByName(base + 0x4b3, true),
+                      ->FindPaneByName("nul_para_50", true),
                   1);
     setPaneVisible(field_38->GetRootPane()
-                      ->FindPaneByName(base + 0x5dc, true),
+                      ->FindPaneByName("txt_para50", true),
                   1);
     setPaneVisible(field_38->GetRootPane()
-                      ->FindPaneByName(base + 0x5e7, true),
+                      ->FindPaneByName("txt_para51", true),
                   1);
     setPaneVisible(field_38->GetRootPane()
-                      ->FindPaneByName(base + 0x5f2, true),
+                      ->FindPaneByName("txt_value50", true),
                   1);
     setPaneVisible(field_38->GetRootPane()
-                      ->FindPaneByName(base + 0x5fe, true),
+                      ->FindPaneByName("txt_value51", true),
                   1);
     BdatGetItemType(kind);
     BdatGetItemId(kind);
@@ -3163,42 +3165,42 @@ void CEquipItemBox::rebuildEIBKind3Page(int kind, int item) {
     u32 key = CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj);
     // Count text: "xN" scaled by the vf08 slot count.
     u32 id = CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
-    char* str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x1e - ((u8)id - 1));
-    LayoutSetTextBoxFmtValue(field_38, base + 0x5f2, str, 0);
+    char* str = BdatTouchStringCell("MNU_item", "name", 0x1e - ((u8)id - 1));
+    LayoutSetTextBoxFmtValue(field_38, "txt_value50", str, 0);
     // Name text from the bdat lookup keyed by the vf54 name key.
     u32 name = BdatGetU8Direct(
-        (const void*)lbl_eu_806640D8, base + 0x36,
+        (const void*)lbl_eu_806640D8, "name",
         (u16)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj));
-    LayoutSetTextBoxFmtValue(field_38, base + 0x5e7, (char*)name, 0);
+    LayoutSetTextBoxFmtValue(field_38, "txt_para51", (char*)name, 0);
     // Detail text: when the vf90 value is present, prefix a per-name-byte
     // unit string for name bytes 3/4; otherwise bind the empty placeholder.
     if (CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj) == 0) {
-        LayoutSetTextBoxFmtValue(field_38, base + 0x5fe, base + 0x228, 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_value51", "", 0);
     } else {
         char buf[0x20];
-        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0x633, (u16)key);
+        u8 v = BdatGetU8Direct((const void*)lbl_eu_806640D8, "rvs_type", (u16)key);
         if (v != 0 && (u32)(v - 3) <= 1) {
-            char* str2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
-            sprintf(buf, base + 0x626,
+            char* str2 = BdatTouchStringCell("MNU_item", "name", 0x21);
+            sprintf(buf, "%d%s",
                     CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj), str2);
         } else {
-            sprintf(buf, base + 0x63c,
+            sprintf(buf, "%d ",
                     CItem_initItemImplInstances((CItemData*)obj)->vf90((CItemData*)obj));
         }
-        LayoutSetTextBoxText(field_38, base + 0x5fe, buf, 0);
+        LayoutSetTextBoxText(field_38, "txt_value51", buf, 0);
     }
     // Category label: name-byte + 0x15 selects the category string.
-    u32 cat = BdatGetU8Direct((const void*)lbl_eu_806640D8, base + 0, (u16)key);
-    char* str3 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, (u8)cat + 0x15);
-    LayoutSetTextBoxFmtValue(field_38, base + 0x640, str3, 0);
+    u32 cat = BdatGetU8Direct((const void*)lbl_eu_806640D8, "attach", (u16)key);
+    char* str3 = BdatTouchStringCell("MNU_item", "name", (u8)cat + 0x15);
+    LayoutSetTextBoxFmtValue(field_38, "txt_para52", str3, 0);
     // Cursor anchor: midpoint helper between the detail pane and anchor pane
     // (both looked up again through the pane-finder sub-object).
     nw4r::lyt::Pane* paneDetail =
         field_38->GetRootPane()
-            ->FindPaneByName(base + 0x5e7, true);
+            ->FindPaneByName("txt_para51", true);
     nw4r::lyt::Pane* paneAnchor =
         field_38->GetRootPane()
-            ->FindPaneByName(base + 0x193, true);
+            ->FindPaneByName("nul_proportion", true);
     float pos[3];
     ScalePaneWorldPos((nw4r::math::VEC3*)pos, paneDetail, paneAnchor,
                   field_38->GetRootPane());
@@ -3226,7 +3228,7 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
         char buf[0x20];
         char buf40[0x20];
         u8 i1 = (u8)idx + 1;
-        sprintf(buf, base + 0x64b, i1);
+        sprintf(buf, "pic_ethcol%02d", i1);
         nw4r::lyt::Pane* pane = field_38->GetRootPane()->FindPaneByName(buf, true);
         void* icon = 0;
         u16 storeKind = 0;
@@ -3234,10 +3236,10 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
         s16 storeKey = 0;
         if (idx >= count) {
             setPaneVisible(pane, 0);
-            sprintf(buf, base + 0x6f4, i1);
-            LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
-            sprintf(buf, base + 0x705, i1);
-            LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
+            sprintf(buf, "txt_ethvalue%02d", i1);
+            LayoutSetTextBoxFmtValue(field_38, buf, "", 0);
+            sprintf(buf, "txt_eth%02d", i1);
+            LayoutSetTextBoxFmtValue(field_38, buf, "", 0);
         } else {
             setPaneVisible(pane, 1);
             s16 slot = CItem_initItemImplInstances((CItemData*)b)
@@ -3247,48 +3249,48 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                 u32 g = (u32)lbl_eu_806640D8;
                 u16 kind = (u16)CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
                 storeKind = kind;
-                char* name = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36,
+                char* name = BdatTouchStringCell("MNU_item", "name",
                                             0x1e - ((u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item) - 1));
-                switch ((u8)BdatGetU8Direct((const void*)g, base + 0x1a7, kind)) {
+                switch ((u8)BdatGetU8Direct((const void*)g, "atr_type", kind)) {
                 case 0:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys00.tpl", 0);
                     break;
                 case 4:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x670, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys01.tpl", 0);
                     break;
                 case 5:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x686, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys02.tpl", 0);
                     break;
                 case 6:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x69c, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys03.tpl", 0);
                     break;
                 case 7:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6b2, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys04.tpl", 0);
                     break;
                 case 8:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6c8, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys05.tpl", 0);
                     break;
                 case 9:
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6de, 0);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys06.tpl", 0);
                     break;
                 }
                 u32 key90 = CItem_initItemImplInstances((CItemData*)item)->vf90((CItemData*)item);
                 if (key90 == 0) {
-                    sprintf(buf, base + 0x6f4, i1);
-                    LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
+                    sprintf(buf, "txt_ethvalue%02d", i1);
+                    LayoutSetTextBoxFmtValue(field_38, buf, "", 0);
                 } else {
-                    u8 v = BdatGetU8Direct((const void*)g, base + 0x633, kind);
+                    u8 v = BdatGetU8Direct((const void*)g, "rvs_type", kind);
                     if (v != 0 && (u8)(v - 3) <= 1) {
-                        char* str = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
-                        sprintf(buf40, base + 0x626, key90, str);
+                        char* str = BdatTouchStringCell("MNU_item", "name", 0x21);
+                        sprintf(buf40, "%d%s", key90, str);
                     } else {
-                        sprintf(buf40, base + 0x63c, key90);
+                        sprintf(buf40, "%d ", key90);
                     }
-                    sprintf(buf, base + 0x6f4, i1);
+                    sprintf(buf, "txt_ethvalue%02d", i1);
                     LayoutSetTextBoxText(field_38, buf, buf40, 0);
                 }
-                char* str2 = BdatGetPtrDirect((const void*)g, base + 0x36, kind);
-                sprintf(buf40, base + 0x3b, str2, name);
+                char* str2 = BdatGetPtrDirect((const void*)g, "name", kind);
+                sprintf(buf40, "%s%s", str2, name);
                 storeByte = (u8)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
                 storeKey = (s16)CItem_initItemImplInstances((CItemData*)item)->vf90((CItemData*)item);
                 PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
@@ -3300,63 +3302,63 @@ void CEquipItemBox::rebuildEIBKind2Cells(int a, int b) {
                     u32 g2 = (u32)lbl_eu_806640D8;
                     u32 bits3 = (entry->word >> 22) & 7;
                     storeKind = kind2;
-                    char* name2 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x1e - (bits3 - 1));
-                    switch ((u8)BdatGetU8Direct((const void*)g2, base + 0x1a7, kind2)) {
+                    char* name2 = BdatTouchStringCell("MNU_item", "name", 0x1e - (bits3 - 1));
+                    switch ((u8)BdatGetU8Direct((const void*)g2, "atr_type", kind2)) {
                     case 0:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys00.tpl", 0);
                         break;
                     case 4:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x670, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys01.tpl", 0);
                         break;
                     case 5:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x686, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys02.tpl", 0);
                         break;
                     case 6:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x69c, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys03.tpl", 0);
                         break;
                     case 7:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6b2, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys04.tpl", 0);
                         break;
                     case 8:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6c8, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys05.tpl", 0);
                         break;
                     case 9:
-                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x6de, 0);
+                        icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys06.tpl", 0);
                         break;
                     }
                     s16 bit11 = (s16)((entry->word >> 11) & 0x7FF);
                     if (bit11 == 0) {
-                        sprintf(buf, base + 0x6f4, i1);
-                        LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
+                        sprintf(buf, "txt_ethvalue%02d", i1);
+                        LayoutSetTextBoxFmtValue(field_38, buf, "", 0);
                     } else {
-                        u32 v2 = BdatGetU8Direct((const void*)g2, base + 0x633, kind2);
+                        u32 v2 = BdatGetU8Direct((const void*)g2, "rvs_type", kind2);
                         if (v2 != 0 && (u8)((u8)v2 - 3) <= 1) {
-                            char* str3 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x21);
-                            sprintf(buf40, base + 0x626, bit11, str3);
+                            char* str3 = BdatTouchStringCell("MNU_item", "name", 0x21);
+                            sprintf(buf40, "%d%s", bit11, str3);
                         } else {
-                            sprintf(buf40, base + 0x63c, bit11);
+                            sprintf(buf40, "%d ", bit11);
                         }
-                        sprintf(buf, base + 0x6f4, i1);
+                        sprintf(buf, "txt_ethvalue%02d", i1);
                         LayoutSetTextBoxText(field_38, buf, buf40, 0);
                     }
-                    char* str4 = BdatGetPtrDirect((const void*)g2, base + 0x36, kind2);
-                    sprintf(buf40, base + 0x3b, str4, name2);
+                    char* str4 = BdatGetPtrDirect((const void*)g2, "name", kind2);
+                    sprintf(buf40, "%s%s", str4, name2);
                     storeByte = (u8)bits3;
                     storeKey = (s16)((entry->word >> 11) & 0x7FF);
                     PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
                 } else {
-                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
-                    sprintf(buf, base + 0x6f4, i1);
-                    LayoutSetTextBoxFmtValue(field_38, buf, base + 0x228, 0);
-                    sprintf(buf40, base + 0x2a, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x2a));
-                    sprintf(buf, base + 0x705, i1);
+                    icon = field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, "mf00_reg30_crys00.tpl", 0);
+                    sprintf(buf, "txt_ethvalue%02d", i1);
+                    LayoutSetTextBoxFmtValue(field_38, buf, "", 0);
+                    sprintf(buf40, "%s", BdatTouchStringCell("MNU_item", "name", 0x2a));
+                    sprintf(buf, "txt_eth%02d", i1);
                     LayoutSetTextBoxText(field_38, buf, buf40, 0);
                     PaneSetTexPalette(pane, (TPLPalette*)((unsigned long)icon));
                 }
             }
         }
         nw4r::lyt::Pane* pane193 =
-            field_38->GetRootPane()->FindPaneByName(base + 0x193, true);
+            field_38->GetRootPane()->FindPaneByName("nul_proportion", true);
         float out[3];
         ScalePaneWorldPos((nw4r::math::VEC3*)out, pane, pane193, field_38->GetRootPane());
         u8 v = (u8)(idx + 8);
@@ -3437,7 +3439,7 @@ int CEquipItemBox::useEIBSelectedItem() {
                     case 8: CtrlObjectParam_SetEquipSlot4(owner, -1); break;
                     }
                     CtrlObjectParam_SyncParamFromActor(owner);
-                    CfObjectPc_setupFrame(moveObj, 0);
+                    CfObjectPc_setupFrame(reinterpret_cast<cf::CfObjectPc*>(moveObj));
                 }
             }
         }
@@ -3506,46 +3508,46 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
     if (field_24 == h) {
         char* base = lbl_eu_8050EFDC;
         void* mem = (void*)mtl::MemManager::getHandleMEM2();
-        mRegion04.createRegion((int)mem, 0x20000, base + 0x711, 1);
+        mRegion04.createRegion((int)mem, 0x20000, "CEquipItemBox", 1);
         Class_8045F858 host(&mRegion04);
         CFileHandle* fh = (CFileHandle*)field_24;
         void* buf = fh->mData;
         fh->mData = 0;
         mtl::MemManager::setMemInitFlag(false);
         field_30 = CLibLayout::createArcResourceAccessor();
-        field_30->Attach(buf, base + 0x71f);
-        buildLayout(&field_38, field_30, base + 0x723);
-        bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
+        field_30->Attach(buf, "arc");
+        buildLayout(&field_38, field_30, "mf02_eqbox.brlyt");
+        bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, "mf02_eqbox_box_in.brlan");
         nw4r::lyt::Pane* root = field_38->GetRootPane();
         void* font = CDeviceFont::getFontInfo(1, field_38);
         ApplyFontToTxtPanes(root, (const nw4r::ut::Font*)(((IDeviceFontInfo*)font)->getFont()));
         char* msg = (char*)getPackedFont();
-        setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
-        setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
+        setLayoutTextBoxFont(field_38, "txt_pg00", (u32)msg);
+        setLayoutTextBoxFont(field_38, "txt_pg01", (u32)msg);
         char* msg2 = (char*)CUICfManager_getPackedFont9C();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf2[0x20];
-            sprintf(buf2, base + 0x219, i);
+            sprintf(buf2, "txt_num%02d", i);
             setLayoutTextBoxFont(field_38, buf2, (u32)msg2);
         }
         field_38->SetAnimationEnable((nw4r::lyt::AnimTransform*)field_3C, true);
         field_38->Animate(0);
-        char* s4 = BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 4);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x74c, s4, 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x2d4, base + 0x228, 0);
-        const char* name = (cf::CfGameManager::isClassicController(-1) == 0) ? base + 0x761 : base + 0x758;
-        u16 key = BdatGetU16ByTableKey(base + 0x76a, name, 0x49);
+        char* s4 = BdatTouchStringCell("MNU_item", "name", 4);
+        LayoutSetTextBoxFmtValue(field_38, "txt_soattit", s4, 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_soat01", "", 0);
+        const char* name = (cf::CfGameManager::isClassicController(-1) == 0) ? "fileID_1" : "fileID_2";
+        u16 key = BdatGetU16ByTableKey("MNU_kyeassign", name, 0x49);
         char* texName = MakeTplNameSysFile(key);
         nw4r::lyt::ArcResourceAccessor* acc2 = CUICfManager_getArcResourceAccessor();
         void* tex = acc2->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, texName, 0);
         if (tex != 0) {
-            PaneSetTexPaletteByName(field_38, base + 0x778, (TPLPalette*)((u32)tex));
+            PaneSetTexPaletteByName(field_38, "pic_soatbtn", (TPLPalette*)((u32)tex));
             const TPLPalette* palette = (const TPLPalette*)tex;
             const TPLHeader* dims = palette->descriptorArray[0].textureHeader;
             u16 v2 = dims->width;
             u16 v0 = dims->height;
             nw4r::lyt::Pane* pane =
-                field_38->GetRootPane()->FindPaneByName(base + 0x778, true);
+                field_38->GetRootPane()->FindPaneByName("pic_soatbtn", true);
             if (pane != 0) {
                 float fw = (f32)(u32)v2;
                 float fh = (f32)(u32)v0;
@@ -3557,12 +3559,12 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
             }
         }
         nw4r::lyt::Pane* posPane =
-            field_38->GetRootPane()->FindPaneByName(base + 0x784, true);
+            field_38->GetRootPane()->FindPaneByName("pic_pghole10", true);
         copyVEC3((float*)&unk_200,
                  (float*)&posPane->GetTranslate());
-        GXColorS10 c0 = PaneMatGetS16QuadByName(field_38, base + 0x791, 0);
+        GXColorS10 c0 = PaneMatGetS16QuadByName(field_38, "pic_tbbcof01", 0);
         CopyVec4s((GXColorS10*)equipItemBox_sortMenuColorSrcTop, &c0);
-        GXColorS10 c1 = PaneMatGetS16QuadByName(field_38, base + 0x791, 1);
+        GXColorS10 c1 = PaneMatGetS16QuadByName(field_38, "pic_tbbcof01", 1);
         CopyVec4s((GXColorS10*)equipItemBox_sortMenuColorSrcBottom, &c1);
         s16 v0c = equipItemBox_sortMenuColorSrcTop[3];
         s16 v1c = equipItemBox_sortMenuColorSrcBottom[3];
@@ -3591,30 +3593,30 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         ccur18 = CCur18(CUICfManager_getArcResourceAccessor());
         ccur18.initLayout();
         char* msg3 = (char*)CUICfManager_getPackedFont9C();
-        setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x546, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x552, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x52e, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x53a, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x55e, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x5f2, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x5fe, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x5af, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x5be, (u32)msg3);
-        setLayoutTextBoxFont(field_38, base + 0x5cd, (u32)msg3);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x4bf, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0xa), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x4ca, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0xd), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x4d5, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x11), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x4e0, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x12), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x4eb, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0xc), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x4f6, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x13), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x5dc, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x18), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x501, BdatTouchStringCell((char*)base + 0x2d, (char*)base + 0x36, 0x2f), 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x591, base + 0x228, 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x59b, base + 0x228, 0);
-        LayoutSetTextBoxFmtValue(field_38, base + 0x5a5, base + 0x228, 0);
+        setLayoutTextBoxFont(field_38, "txt_value02", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value08", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value09", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value04", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value07", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value22", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value50", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_value51", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_ethvalue01", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_ethvalue02", (u32)msg3);
+        setLayoutTextBoxFont(field_38, "txt_ethvalue03", (u32)msg3);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para01", BdatTouchStringCell("MNU_item", "name", 0xa), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para04", BdatTouchStringCell("MNU_item", "name", 0xd), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para08", BdatTouchStringCell("MNU_item", "name", 0x11), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para10", BdatTouchStringCell("MNU_item", "name", 0x12), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para11", BdatTouchStringCell("MNU_item", "name", 0xc), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para22", BdatTouchStringCell("MNU_item", "name", 0x13), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para50", BdatTouchStringCell("MNU_item", "name", 0x18), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_para23", BdatTouchStringCell("MNU_item", "name", 0x2f), 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_eth01", "", 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_eth02", "", 0);
+        LayoutSetTextBoxFmtValue(field_38, "txt_eth03", "", 0);
         nw4r::lyt::Pane* paneB =
-            field_38->GetRootPane()->FindPaneByName(base + 0x4bf, true);
+            field_38->GetRootPane()->FindPaneByName("txt_para01", true);
         GXColorS10 p1 = PaneMatGetS16Quad(paneB, 0);
         CopyVec4s((GXColorS10*)equipItemBox_cellLabelNeutralTop, &p1);
         GXColorS10 p2 = PaneMatGetS16Quad(paneB, 1);
@@ -3622,7 +3624,7 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         equipItemBox_cellLabelMutedTop[3] = equipItemBox_cellLabelNeutralTop[3];
         equipItemBox_cellLabelMutedBottom[3] = equipItemBox_cellLabelNeutralBottom[3];
         nw4r::lyt::Pane* pane5 =
-            field_38->GetRootPane()->FindPaneByName(base + 0x522, true);
+            field_38->GetRootPane()->FindPaneByName("txt_value02", true);
         p1 = PaneMatGetS16Quad(pane5, 0);
         CopyVec4s((GXColorS10*)equipItemBox_kind48LabelNeutralTop, &p1);
         p2 = PaneMatGetS16Quad(pane5, 1);
@@ -3630,7 +3632,7 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         equipItemBox_kind48LabelMutedTop[3] = equipItemBox_kind48LabelNeutralTop[3];
         equipItemBox_kind48LabelMutedBottom[3] = equipItemBox_kind48LabelNeutralBottom[3];
         nw4r::lyt::Pane* pane79 =
-            field_38->GetRootPane()->FindPaneByName(base + 0x79e, true);
+            field_38->GetRootPane()->FindPaneByName("txt_num01", true);
         p1 = PaneMatGetS16Quad(pane79, 0);
         CopyVec4s((GXColorS10*)equipItemBox_sortOptionLabelNeutralTop, &p1);
         p2 = PaneMatGetS16Quad(pane79, 1);
@@ -3647,14 +3649,14 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
     if (field_28 == h) {
         char* base = lbl_eu_8050EFDC;
         void* mem = (void*)mtl::MemManager::getHandleMEM2();
-        mRegion14.createRegion((int)mem, 0x100, base + 0x7a8, 1);
+        mRegion14.createRegion((int)mem, 0x100, "CEquipItemBoxTex", 1);
         Class_8045F858 host(&mRegion14);
         CFileHandle* fh2 = (CFileHandle*)field_28;
         void* buf2 = fh2->mData;
         fh2->mData = 0;
         mtl::MemManager::setMemInitFlag(false);
         field_34 = CLibLayout::createArcResourceAccessor();
-        field_34->Attach(buf2, base + 0x71f);
+        field_34->Attach(buf2, "arc");
         closeEIBSortMenu();
         field_28 = 0;
         mRegion14.validateHeap();
@@ -3665,10 +3667,10 @@ bool CEquipItemBox::OnFileEvent(CEventFile* ev) {
         void* buf3 = fh3->mData;
         fh3->mData = 0;
         Bdat_GetTable_AA34();  // retail passes no args (r3 stale from the field_2C load)
-        if (getFP(&lbl_eu_8050EFDC[0x7b9]) == 0) {
+        if (getFP("MNU_skill") == 0) {
             CBdat::setBdatEntry(5, buf3);
         }
-        equipItemBoxEquipListFilePtr = getFP(&lbl_eu_8050EFDC[0x7b9]);
+        equipItemBoxEquipListFilePtr = getFP("MNU_skill");
         closeEIBSortMenu();
         field_2C = 0;
         return 1;
@@ -3798,22 +3800,22 @@ general:
             }
             char buf[0x28];
             if (v == 2) {
-                sprintf(buf, (char*)base + 0x7, b);
+                sprintf(buf, "equip_pc%d", b);
             } else {
-                sprintf(buf, (char*)base + 0x12, b);
+                sprintf(buf, "pc%d", b);
             }
             u16 kind2 = BdatGetItemId(obj->word >> 20);
             if (BdatGetU8Direct((const void*)g2, (const char*)buf, kind2) != 0) cell->unk6 = 1;
             if (v == 2 && b == 0xb && (obj->word >> 20) == 0x4c) cell->unk6 = 1;
             if (v != 2) {
-                u8 name3 = BdatGetU8Direct((const void*)lbl_eu_806640F8, (char*)base + 0x17, BdatGetItemId(obj->word >> 20));
+                u8 name3 = BdatGetU8Direct((const void*)lbl_eu_806640F8, "arm_type", BdatGetItemId(obj->word >> 20));
                 if ((u32)(name3 - 4) <= 9) {
                     /* no-op */
                 } else if (name3 == 3) {
-                    if (Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534, 0x85) == 0) cell->unk6 = 0;
+                    if (Counter_TestBit(((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534), 0x85) == 0) cell->unk6 = 0;
                 }
                 if (name3 == 2) {
-                    if (Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534, 0x84) == 0) cell->unk6 = 0;
+                    if (Counter_TestBit(((u8*)CtrlObjectParam_GetCharEntry(b) + 0x3534), 0x84) == 0) cell->unk6 = 0;
                 }
             }
             // Second category scan: match the cell's item id against the
@@ -3838,7 +3840,7 @@ general:
             }
         }
 tail:
-        u8 name4 = BdatGetU8Direct((const void*)lbl_eu_806640EC, (char*)base + 0x20, obj->word >> 20);
+        u8 name4 = BdatGetU8Direct((const void*)lbl_eu_806640EC, "item_keep", obj->word >> 20);
         cell->unk5 = ((u8)name4 == 1) ? 1 : 0;
         if (CtrlRemote_TouchBitByArg(0x3508) != 0) cell->unk5 = 0;
     }

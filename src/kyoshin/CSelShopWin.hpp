@@ -54,8 +54,8 @@ public:
     void markShopWinBuilt();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 isShopWinLoaded();
-    u8 isShopWinAnimActive();
+    int isShopWinLoaded();
+    int isShopWinAnimActive();
 
     // +0x00: IWorkEvent vptr
     // +0x04: layout memory region

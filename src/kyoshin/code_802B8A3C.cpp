@@ -2,6 +2,7 @@
 // FULL_MATCH: getOrderThreadBufferSize -- buffer-size getter (virtual method override).
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_ORDER.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
@@ -136,7 +137,7 @@ void dispatchOrderThreadPlayback(CVS_THREAD_ORDER* self) {
     ((OrderThreadWords*)self)->words[2] = src[1];
 
     handle = (CVoiceHandle*)MapFx_ResolveOwner(cf::CfGameManager::getPlayer(0));
-    count = HpVoice_CollectIdle(arr, 3, handle);
+    count = HpVoice_CollectIdle((CVoiceHandle**)arr, 3, handle);
 
     // Counter/walker loop matching retail's register layout: reusing
     // `handle` as the entry variable (instead of a separate loop local)

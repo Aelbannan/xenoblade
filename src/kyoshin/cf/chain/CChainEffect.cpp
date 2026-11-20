@@ -2,10 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
-#include "kyoshin/cf/chain/CChainEffectImports.hpp"
+// Reverted: this slot is a C-linkage tail-call target (callers pass only r3).
+extern "C" void chainUnlinkOnOwnerMatch(cf::CChainEffect* self);
 
 namespace cf {}
 
@@ -62,7 +64,7 @@ extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c,
             if (m2 != 0) {
                 m2 += 0x3E9C;
             }
-            setTargetObj_((void*)self->unk4, (void*)m2);
+            setTargetObj_((cf::CfObjectEff*)(void*)self->unk4, (u8*)(void*)m2);
         }
         self->unk8 = (u32)d;
         if (e != 0) {
@@ -75,10 +77,10 @@ extern "C" void chainBindEffectLink(cf::CChainEffect* self, int a, int b, int c,
     if (self->unk4 != 0) {
         ((CChainObj*)self->unk4)->field_b0 = 0;
         if (((CChainObj*)self->unk4)->field_98 != 0) {
-            setTargetObj_((void*)self->unk4, 0);
+            setTargetObj_((cf::CfObjectEff*)(void*)self->unk4, (u8*)0);
             setChildB59__((void*)self->unk4, 1);
         } else {
-            removeManagedObject(getInstance(), (void*)self->unk4);
+            removeManagedObject((UnkClass_805764CC*)getInstance(), (void*)self->unk4);
         }
         self->unk4 = 0;
         self->unk8 = 0;
@@ -138,7 +140,7 @@ loopback:
     found = 1;
 scan:
     {
-        mgr = getReslistBE8();
+        mgr = (CChainManager*)getReslistBE8();
         node = mgr->field_04->field_00;
         while (node != mgr->field_04) {
             item = (CChainItem*)CollObjHasFlag64Bit5(node->field_08);
@@ -154,7 +156,7 @@ scan:
                         goto next_node;
                     }
                 }
-                removeManagedObject(getInstance(), item);
+                removeManagedObject((UnkClass_805764CC*)getInstance(), item);
                 matched = 1;
                 goto check;
             }

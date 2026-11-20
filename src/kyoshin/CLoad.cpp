@@ -258,8 +258,8 @@ __declspec(section ".rodata") __attribute__((used)) char lbl_eu_80510CC8[0x98] =
     "mf00_load00_in.brlan\0"
     "mf00_load01_roop.brlan\0"
     "mf00_load00_roop.brlan\0";
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF0 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668DF4 = 0.0f;
+__attribute__((used)) const float lbl_eu_80668DF0 = 1.0f;
+__attribute__((used)) const float lbl_eu_80668DF4 = 0.0f;
 
 // __vt__5CLoad, its .sdata RTTI descriptor and the IWorkEvent base list are
 // emitted by MWCC from the real IWorkEvent inheritance declared in CLoad.hpp.

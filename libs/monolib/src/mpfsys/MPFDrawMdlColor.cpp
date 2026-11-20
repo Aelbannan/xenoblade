@@ -95,7 +95,6 @@ void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* 
 void loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
 void applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
-void setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(f32 param);
 void setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(u8 texMapId);
 void resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -251,7 +250,7 @@ extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawM
     pair = list->pairs;
     pairCount = list->count / 2;
     for (i = 0; i < pairCount; i++, pair++) {
-        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
+        mpfsys::UnkClass_80471EC8::setKeyAlpha(pair->param);
         loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
         applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
@@ -361,7 +360,7 @@ extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawM
     pair = list->pairs;
     pairCount = list->count / 2;
     for (i = 0; i < pairCount; i++, pair++) {
-        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
+        mpfsys::UnkClass_80471EC8::setKeyAlpha(pair->param);
         loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
         applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 

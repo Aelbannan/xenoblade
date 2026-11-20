@@ -4,7 +4,7 @@
 // out of the public CSuddenCommu.hpp, which keeps only the class).
 
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -74,6 +74,7 @@ struct CSuddenCommuVoiceCue {
 struct CSuddenCommuActBody;
 
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
+#include "kyoshin/CUICfManager.hpp"
 // View of the CBattleManager actor list: the reslist sentinel pointer
 // (mActorList3.mHead) sits at +0x48.
 struct CSuddenCommuBmList {
@@ -102,7 +103,6 @@ struct CSuddenCommuActBody {
     int field_48;                   // 0x48
 };
 
-// 0x34-byte command payload built for CBattleMan_FireActorEvent918 (voice/battle cue); only
 // the fields the retail writes are declared.
 struct CSuddenCommuCmd {
     u8 pad_00[0xC];
@@ -162,7 +162,7 @@ extern "C" {
     // headers can be included in one TU without a rename guard.
     int CCharVoiceMan_ForwardNodeCall(int a, CChainBattleObjTail* b, int c);
     // Battle-manager singleton: declared once in
-    // kyoshin/cf/CBattleManagerApi.hpp (included at the top of this header).
+    // kyoshin/cf/CBattleManager.hpp (included at the top of this header).
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
     u32 CtrlRemote_TouchBitByArg(u32 resourceId);
@@ -210,9 +210,7 @@ extern "C" {
     int IdTable_QuerySumFloat(void* self, int id, u32* outVal, f32* outF);
     int IdTable_GetSum(void* self, int id, void* outVal);
     // Battle-command dispatch and battle-move accessor (CBattleManager.cpp).
-    void CBattleMan_FireActorEvent918(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
     float calcBattleDamage(void* obj, void* target, void* source);
-    void PartyGaugeAddClamped(void* obj, int value);
     // Voice/battle-manager helpers.
     void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
     // CfGameManager gate used by the commu re-arm: call
@@ -252,8 +250,6 @@ extern u8 lbl_eu_80662600;
 extern u16 lbl_eu_80662608[1];
 extern const u8 lbl_eu_805050B0[];
 extern u32 lbl_eu_80575870[];   // .bss: state-handler PMF table (12-byte ptmf stride)
-extern "C" int CUICfManager_queueFactoryMenu(int id, float f);   // camera/trigger helper (CVision.hpp owner)
-extern "C" void aiActionClearBits0006(void* voiceAct);   // voice-act reset (CVision.hpp owner)
 // Battle-actor enum-list helpers are declared by CfObjectImplMove.hpp
 // (owner: code_800B06A4.hpp); this TU picks them up through the include chain.
 // Retail aliases the CfGameManager singleton getter under its raw symbol

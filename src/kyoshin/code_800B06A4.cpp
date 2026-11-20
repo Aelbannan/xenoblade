@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/code_800AA008_Tok.hpp"
+#include "kyoshin/cf/object/CfObjectColl.hpp"
 extern "C" int* CtrlObjectParam_GetSlotTableBase();  // owner: include/functions.hpp
 // cf::CfObjectEne members (CfObjectEne.hpp cannot be included here yet: its
 // CfObjectActor/CfObjectMove chain clashes with this unit's loosely typed
@@ -9,14 +11,22 @@ extern "C" int* CtrlObjectParam_GetSlotTableBase();  // owner: include/functions
 extern "C" void* __ct__Q22cf11CfObjectEneFv(void* self);
 extern "C" u32 getEneBdatColumn__Q22cf11CfObjectEneFPCc(void* self, const char* column);
 #include "kyoshin/cf/CfMapItemManager.hpp"
+#include "kyoshin/cf/CfHikariItemManager.hpp"
 #include "kyoshin/cf/IFactoryEvent.hpp"
 #include "kyoshin/code_800B06A4.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
 #include "kyoshin/cf/object/CfObjectTbox.hpp"
 #include <string.h>
 #include <math.h>
 #include <new>
 #include "monolib/util/MemManager.hpp"
+#include "monolib/math/MathConstants.hpp"
+#include "kyoshin/cf/CfObjectEnumListApi.hpp"
+#include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include <kyoshin/cf/CfGameManager.hpp>
 extern u32 gEventSequenceFlags;
 void* findObjectById(int id);
 
@@ -24,22 +34,18 @@ void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
     unkAFC = 0;
 }
-UnkClass_805764CC* getInstance();
-extern "C" u32 Tok_Pack08(u32 a, u32 b);
+
 extern "C" void subVec3f(void* out, void* a, void* b);
 extern "C" u32 KyoshinHeap_Reset38();
 extern "C" void CfRes_initHighGrid();
 extern "C" void tickAnimFrame(void* self);
 extern "C" void CfRes_tickIfFlagged(void* self);
 extern "C" int CfRes_hashIndex11(void* self, int a);
-extern "C" void* CamEvtFetchSlotPtr(void* self, unsigned long idx);
-extern "C" void CfSoundMan_StopSoundSlots(u32 idx, u32 soundId, s32 stopFlag);
 extern "C" s32 CPartsChange_FindVoiceIndex(void* voice, u32 key);
 extern "C" void CPartsChange_ResetBattleEntry(void* obj, int a, int b);
 extern "C" void CPartsChange_TeardownContainer(void* container, int flags);
 extern "C" void UIWin_Create44EE4Win(u32 a, u32 b);
 extern "C" int CollObjTestResIdReady(void* item);
-extern "C" unsigned long CollObjSetResIdReady(void* self, int flag);
 void CollObjLerpVecPair(void* out, void* item);
 extern "C" int CfRes_acquireSlot(int id, int incRef, int incCount);
 extern "C" int CollObjLoadResourceTimed(void* obj, void* arg, int flag, float range);
@@ -104,22 +110,22 @@ void loadLayoutScales() {
     // Full-word int temps: the raw call result gets its own stack home
     // (retail spills stw r3,N(sp)) and the union write narrows it with an
     // lbz from that slot.
-    int n1 = getBdatStringColumnValue(tbl, lbl_eu_804FC4D8, row);
-    const char* base = lbl_eu_804FC4D8;
+    const char* base = "ene_disp_r";
+    int n1 = getBdatStringColumnValue(tbl, base, row);
     convA.w[1] = (u8)n1;
-    sFactoryEventReslistSize = (f32)(convA.d - lbl_eu_806669D0);
+    sFactoryEventReslistSize = (f32)(u8)n1;
 
-    int n2 = getBdatStringColumnValue(tbl, base + 0xb, row);
+    int n2 = getBdatStringColumnValue(tbl, "ene_release_h", row);
     convB.w[1] = (u8)n2;
-    sTboxReslistSize = (f32)(convB.d - lbl_eu_806669D0);
+    sTboxReslistSize = (f32)(u8)n2;
 
-    int n3 = getBdatStringColumnValue(tbl, base + 0x19, row);
+    int n3 = getBdatStringColumnValue(tbl, "ene_release_r", row);
     convA.w[1] = (u8)n3;
-    sTboxBaseReslistSize = (f32)(convA.d - lbl_eu_806669D0);
+    sTboxBaseReslistSize = (f32)(u8)n3;
 
-    int n4 = getBdatStringColumnValue(tbl, base + 0x27, row);
+    int n4 = getBdatStringColumnValue(tbl, "npc_release_r", row);
     convB.w[1] = (u8)n4;
-    sFactoryEventBaseReslistSize = (f32)(convB.d - lbl_eu_806669D0);
+    sFactoryEventBaseReslistSize = (f32)(u8)n4;
 
     // Read the globals back directly (no cross-call float locals - retail
     // reloads each one here instead of keeping it in a callee-saved FPR).
@@ -298,7 +304,6 @@ void spawnObjFromRes(cf::CfObject* obj) {
 // Reset pass over the singleton: copy the default float, then release each
 // optional sub-object (each null-guarded) with its own teardown entry point.
 extern "C" void CPartsChange_DispatchChangeList(u32 obj);
-extern "C" void hikariResetManagerRecords(u32 obj);
 extern "C" void mineReleasePoints(u32 obj);
 extern "C" int reslistIsBusy(void* self);
 extern "C" void tboxIterBegin(void* iter, void* list);
@@ -323,7 +328,7 @@ extern "C" void resetSubManagers(UnkClass_805764CC* self) {
         GimTeardownAll(self->field_0xCFC);
     }
     if (self->field_0xD00 != 0) {
-        hikariResetManagerRecords(self->field_0xD00);
+        hikariResetManagerRecords(reinterpret_cast<cf::CfHikariItemManager*>(self->field_0xD00));
     }
     if (self->field_0xCAC != 0) {
         mineReleasePoints(self->field_0xCAC);
@@ -1017,7 +1022,7 @@ extern "C" s32 hudCtrlSlot46(Func4CA0Obj* self) {
     if (flag == 0) {
         if ((self->field_3F00 & 0x08000000) == 0) {
             if (mgr != 0) {
-if (CBattleMan_ListHasValue(mgr, self) != 0) {
+if (CBattleMan_ListHasValue(mgr, (unsigned int)self) != 0) {
                     Func4CA0Sub* sub = (Func4CA0Sub*)self->field_3F60;
                     s32 bit = 0;
                     if (sub != 0) {
@@ -1226,12 +1231,13 @@ extern "C" cf::CfObject* nextReslistB28(cf::CfObject* obj) {
     return next;
 }
 
-extern "C" void insertReslistB68(cf::CfObject* obj) {
+extern "C" cf::CfObject* insertReslistB68(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
-    ::reslistFindObj(&ctx->field_0xB68, obj);
+    // Retail leaves the next entry in r3 (kept from reslistFindObj).
+    return (cf::CfObject*)::reslistFindObj(&ctx->field_0xB68, obj);
 }
 
-// extern "C": retail exports this helper under the unmangled name (reloc fix).
+// extern "C"
 extern "C" cf::CfObject* nextReslistB48(cf::CfObject* obj);
 cf::CfObject* nextReslistB48(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = getInstance();
@@ -1314,7 +1320,7 @@ extern "C" {
     extern u8 sFactoryMgrRegisterNode[];
     extern void __dt__17UnkClass_805764CCFv(void*, int);
     extern void __ct__17UnkClass_805764CCFv(void*);
-    extern void __register_global_object(void*, void*, void*);
+    extern "C" void* __register_global_object(void*, void*, void*);
     extern void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
     extern int testObj68bit6(void* p);
 }
@@ -1421,7 +1427,6 @@ extern "C" void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor
                               void* list, SpeedSortBuffer* buf, float f);
 extern "C" void processSortedBuffer(UnkClass_805764CC* self, SpeedSortBuffer* buf);
 extern "C" int CfRes_getE24Bit22();
-extern "C" float CfT_PlayRateGet();
 extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 extern float lbl_eu_80663ED8;
 extern float sReslistGaugeA;
@@ -1486,7 +1491,7 @@ void* findObjectById(int id) {
 // Checks if an address is aligned and within a valid range [0x80000000, 0x93800000),
 // then looks up the singleton and calls findWorkById(&singleton, *(this+0x74)).
 // Returns 1 if the check passes and findWorkById returns non-zero, else 0.
-extern "C" int lookupWorkAtAddr(u32 addr) {
+extern "C" int lookupWorkAtAddr(void* addr) {
     if (sFactoryMgrInitialized == 0) {
         __ct__17UnkClass_805764CCFv(sFactoryMgrInstance);
         __register_global_object(sFactoryMgrInstance, (void*)__dt__17UnkClass_805764CCFv, sFactoryMgrRegisterNode);
@@ -1498,7 +1503,8 @@ extern "C" int lookupWorkAtAddr(u32 addr) {
     void* inst = (void*)sFactoryMgrInstance;
 
     // Check alignment: low 2 bits must be 0, and address must be in [0x80000000, 0x93800000)
-    if ((addr & 3) != 0 || addr < 0x80000000 || addr >= 0x93800000) {
+    u32 a = (u32)addr;
+    if ((a & 3) != 0 || a < 0x80000000 || a >= 0x93800000) {
         return 0;
     }
 
@@ -1517,7 +1523,7 @@ extern "C" {
     extern u8 sFactoryMgrRegisterNode[];
     extern void __dt__17UnkClass_805764CCFv(void*, int);
     extern void __ct__17UnkClass_805764CCFv(void*);
-    extern void __register_global_object(void*, void*, void*);
+    extern "C" void* __register_global_object(void*, void*, void*);
     extern void* CPartsChange_FindActorById(void*, u32);
 }
 
@@ -1763,13 +1769,8 @@ extern "C" void __ct__reslist_cf_TboxInfo(void* self) {
     obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
 }
 void factoryCtorNop() {} // empty pool-slot ctor (allocTboxPool)
-// Base reslist ctor is unused (the specialized ctors above are flattened
-// free functions); kept as an empty template so member-ctor instantiations
-// (e.g. generic reslist<T>) never emit stray code.
-template <typename T>
-_reslist_base<T>::_reslist_base() {}
 
-// us-800b128c - UnkClass_805764CC::UnkClass_805764CC()
+// us-800b128c
 // Retail constructs the reslist subobjects with flattened free-function ctors
 // (reloc names __ct__reslist_cf_*). Real member ctors would mangle to
 // __ct__23reslist<...> and drift, so each subobject ctor is called manually
@@ -1925,7 +1926,8 @@ extern "C" void walkListByItemId(u32 arg1, u32 arg2) {
         }
         u16 id = getItemId__Q22cf13CfGameManagerFv((void*)(node + 0x3E9C));
         if (arg1 == id) {
-            CfObjectPc_setupFrame((void*)node, arg2);
+            ((CfObjectPcSetupFrameFn)CfObjectPc_setupFrame)(  // DEBT(callcast): name mangles 1 param (...FPQ22cf10CfObjectPc) but retail callers set extra r4
+                reinterpret_cast<cf::CfObjectPc*>(node), arg2);
         }
         linkItemNode__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&dest, &outerIter, 0);
     }
@@ -2081,12 +2083,12 @@ check:
 // argument view (r3=flag, r4=self, r5..r8=a1..a4; a5 is dropped).
 typedef void* (*B99ShimFn)(long, void*, void*, void*, void*, void*, void*);
 void* call47A8flag1(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
-    return ((B99ShimFn)checkAudibleDistance)(1, self, a1, a2, a3, a4, a5);
+    return ((B99ShimFn)checkAudibleDistance)(1, self, a1, a2, a3, a4, a5);  // DEBT(callcast): C symbol; retail callers use all-GPR or mixed-FPR views incompatible with one canonical decl
 }
 
 // us-800ba2d8 - call47A8flag0
 void* call47A8flag0(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
-    return ((B99ShimFn)checkAudibleDistance)(0, self, a1, a2, a3, a4, a5);
+    return ((B99ShimFn)checkAudibleDistance)(0, self, a1, a2, a3, a4, a5);  // DEBT(callcast): C symbol; retail callers use all-GPR or mixed-FPR views incompatible with one canonical decl
 }
 
 // us-800ba308 - unlinkNodesByKey: walk the sentinel list at +4 and
@@ -2364,10 +2366,9 @@ extern "C" void allocEventPool(void* listv, unsigned long handle, unsigned long 
 // slot 0x1D (+0x74).
 extern "C" IDispB74* getGameSubManager__Q22cf13CfGameManagerFv();
 extern "C" bool CfRes_checkFlags_2000400();
-extern "C" void CPartsChange_SetLoadFlag(int arg);
+void CPartsChange_SetLoadFlag(int arg);
 extern "C" void disableGameFlag__Q22cf13CfGameManagerFv(void* arg);
 extern "C" int testResInfoFlag(unsigned long mask);
-extern "C" unsigned long CfT_DispatchFrameCounts();
 extern "C" bool CfRes_getE24Bit18();
 
 // us-800b25a8 - syncPlayerSubMgr
@@ -2493,14 +2494,12 @@ extern "C" void* findWorkById(UnkClass_805764CC* self, int id) {
 // (a) reconstruct the original reslist<T>::init template header verbatim
 // (template context may change IPA/scheduling), (b) unit-level flag split
 // (-O4,s) negotiation per walls #6/#13.
-extern "C" void* __construct_new_array(void* block, void* dtor, unsigned long flag,
-                                       unsigned long elemSize, unsigned long count);
 
 extern "C" void allocTboxPool(void* self, unsigned long handle, unsigned long count) {
     TboxInfoReslistPoolView* list = (TboxInfoReslistPoolView*)self;
     list->mSlots = (TboxPoolSlot*)__construct_new_array(
         allocate_array__Q23mtl10MemManagerFUlUl(count * 0x24 + 0x10, handle),
-        (void*)factoryCtorNop, 0, 0x24, count);
+        (ConstructorDestructor)factoryCtorNop, (ConstructorDestructor)0, 0x24, count);
     for (int i = 0; i < (int)count; i++) {
         list->mSlots[i].mLink0 = 0;
     }
@@ -2714,7 +2713,7 @@ void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list) {
     int small = testResInfoFlag(0x100) != 0;
     if (isSceneLoading__Q22cf13CfGameManagerFv() == 0 || big != 0) {
         if (small == 0) {
-        void* ctx = (void*)CfT_DispatchFrameCounts();
+        void* ctx = (void*)(u32)CfT_DispatchFrameCounts();
         getInstance__Q22cf14CBattleManagerFv();
         // Retail keeps three distinct iterator slots (init / step-back / end).
         F8C0IteratorNode outer;
@@ -2731,7 +2730,7 @@ void reloadMatchingItems(UnkClass_805764CC* self, const F8C0ListSource* list) {
         }
         linkItemNode__Q22cf13CfGameManagerFv(&mid, &outer, 0);
         if (testObj68bit6((u8*)p + 0x3e9c) == 0) {
-            u8 matched = (u8)getEneBdatColumn__Q22cf11CfObjectEneFPCc(p, lbl_eu_804FC4D8 + 0x47);
+            u8 matched = (u8)getEneBdatColumn__Q22cf11CfObjectEneFPCc(p, "POP_TIME");
             if (matched != 0 && CPartsChange_CheckReloadGate(ctx) == 0 &&
                 cfCam_queryVoxArts(reinterpret_cast<cf::CVoiceRec*>(p), 0x802) != 0) {
                 CfObjectMove_setRegionAttached((u8*)p + 0x3e9c, 0);
@@ -4058,7 +4057,6 @@ extern "C" void qsortEntries(void** firstV, void** lastV, int (*cmp)(const void*
 // Timer accumulator + world scan. Lapses to 1 once the shared accumulator
 // passes its threshold; otherwise walks the object list: objects near the
 // player (or failing their status gates with <4 processed) return 0.
-extern "C" float CfT_PlayRateGet();
 extern "C" s32 gflagGateMask8();
 extern "C" s32 scanBattleObjects() {
     extern float sReslistGaugeA;
@@ -4577,7 +4575,7 @@ void* spawnMaskedObject(UnkClass_805764CC* self, u32 mask,
             break;
         }
         {
-            const char* name = lbl_eu_804FC4D8 + 0x3d;
+            const char* name = "";
             B20B4EffView* ev = (B20B4EffView*)obj;
             ev->nameLen = (u32)strlen(name);
             strcpy(ev->name78, name);
@@ -4845,7 +4843,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 // Name-probe on the embedded controller view (obj-0x3e9c);
                 // bits 4/3/1 of the result select the per-object branches.
                 u8* minus = (obj != 0) ? (u8*)obj - 0x3e9c : 0;
-                u8 b18 = (u8)getEneBdatColumn__Q22cf11CfObjectEneFPCc(minus, lbl_eu_804FC4D8 + 0x3e);
+                u8 b18 = (u8)getEneBdatColumn__Q22cf11CfObjectEneFPCc(minus, "ene_type");
                 if (resFlag10 == 0) {
                     f22 = f17;
                     if ((b18 & 0x10) != 0) {
@@ -4880,7 +4878,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
             s32 df = cfCam_getBit2_64(obj);
             B47Vec3* pos = obj->pos2B();
             float tmp20 = 0;               // sp+0x20 out-param of B47A8
-            s32 audible = ((B47Fn)checkAudibleDistance)(0, f18v, pos,
+            s32 audible = ((B47Fn)checkAudibleDistance)(0, f18v, pos,  // DEBT(callcast): C symbol; retail callers use all-GPR or mixed-FPR views incompatible with one canonical decl
                                                 (const B47Vec3*)(unsigned long)df,
                                                 boosted, &tmp20, 0);
             if (bit8Flag != 0) {                audible = 1;
@@ -4899,7 +4897,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                 goto big15;
             }
             // r15==0 path: controller-view status walk.
-            if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x800) != 0) {
+            if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x800) != 0) {  // DEBT(callcast): Fv-mangled name declares 0 params; retail caller sets r3/r4
                 goto ctrl_tail;
             }
             if (cfCam_getBit2_64(obj) == 0 || audible != 0) {
@@ -4956,7 +4954,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
             }
         big15:
             // r15!=0 path: emit the {object, weight} event record.
-            if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x10) == 0) {
+            if (((Call2Fn)isObjectFlagMaskSet__Q22cf13CfGameManagerFv)(obj, 0x10) == 0) {  // DEBT(callcast): Fv-mangled name declares 0 params; retail caller sets r3/r4
                 if (andObj6Cmask((u8*)obj, 2) != 0) {
                     goto next;
                 }
@@ -4966,7 +4964,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
             {
                 // Retail reuses the dead base-position slot (sp+0x30) as the
                 // B4B88 scratch record.
-                if (((EvtFn)evtTypeSlot80)(obj, &base30) != 0) {
+                if (((EvtFn)evtTypeSlot80)(obj, &base30) != 0) {  // DEBT(callcast): C symbol; retail caller passes an extra scratch-record pointer in r4
                     setObj6Cbit1(obj);
                     goto next;
                 }
@@ -5006,7 +5004,7 @@ void gatherSpeedEntries(UnkClass_805764CC* self, IB8FC4Player* anchor, void* lis
                         B6C8F64Conv conv;
                         conv.w[0] = (u32)(unsigned long)scaleBase;
                         conv.w[1] = CfObjectMove_relaySubB0Slot68((u8*)owner + 0x3e9c);
-                        rec.w = rec.w / (float)(conv.d - lbl_eu_806669D0);
+                        rec.w = rec.w / (float)conv.w[1];
                     }
                 }
             emit:
@@ -5115,7 +5113,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
     int gateBits = ((flags & 0x80000) | (flags & 0x4)) != 0 ? 1 : 0;
 
     void* gm = getInstance__Q22cf13CfGameManagerFv();
-    u32 sp68 = isSceneActive__Q22cf13CfGameManagerFv(gm);
+    u32 sp68 = cf::CfGameManager::isSceneActive();
     u32 sp6C = isSceneReadyForInput__Q22cf13CfGameManagerFv(gm);
 
     if (arg == 0 || !arg->p1D()) {
@@ -5232,7 +5230,7 @@ extern "C" s32 scanAcquireTarget(UnkClass_805764CC* self, IB7Arg* arg) {
                         if (CollObjTestResIdReady(item) != 0) {
                             UIWin_Create44EE4Win(f9c >> 16, 1);
                         } else {
-                            CollObjSetResIdReady(item, 1);
+                            CollObjSetResIdReady(item);
                             if ((item->h158 & 0x200) != 0) {
                                 // Sequence-counter ladders (ids 0x61/0x66).
                                 u32 n = getEventValue40__Q22cf13CfGameManagerFv(0x61) + 1;
@@ -5452,7 +5450,6 @@ extern "C" int reslistIsBusy(void* self) {
     return (head - next) == 0;
 }
 
-#include "monolib/math/MathConstants.hpp"
 extern "C" void* scaleAboveZero() {
     extern float lbl_eu_80663ED8;
     return (void*)(lbl_eu_80663ED8 > ml::epsilon);
@@ -5618,16 +5615,12 @@ extern "C" void gmSpawnAfterAA2(u32 first, u32 second) {
 }
 
 // us-800ba1e4 - broadcast a model-side flag to every enumerated object.
-#include "kyoshin/CfEnumListHolder.hpp"
-extern "C" void startEnumObjects(void* list, u32 type, u32 filter);
-extern "C" void* getObjectIdAt(void* list, int index);
 extern "C" void setMonoFlag(void* value) {
     CfEnumListHolder holder;
     startEnumObjects((void*)holder.get(), 0x408, 0);
     for (int i = 0; i < getObjField620(holder.get()); i++) {
         void* obj = findObjectById((int)(u32)getObjectIdAt((void*)holder.get(), i));
-        cf::CfObjectModel* model = (cf::CfObjectModel*)__dynamic_cast(
-            obj, 0, &__RTTI__Q22cf13CfObjectModel, &__RTTI__Q22cf8CfObject, 0);
+        cf::CfObjectModel* model = dynamic_cast<cf::CfObjectModel*>(static_cast<cf::CfObject*>(obj));
         if (model != 0) {
             model->CfObjectModel_snapSubTarget((ml::CVec3*)value, 0.0f);
         }

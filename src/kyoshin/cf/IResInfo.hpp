@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "monolib/util/FixStr.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 struct CFileHandle; // full definition in monolib/device/CFileHandle.hpp
 
@@ -235,5 +236,3 @@ extern "C" bool testResInfoFlag(u32 flags);
 // slot helpers (kyoshin/cf/CfSoundMan.cpp) - retail C symbol names.
 extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" int CfSoundMan_CloseRecord(int);
-extern "C" void CfSoundMan_BindRecordBuffer(int, void*, int, int);
-extern "C" void CfSoundMan_OpenRecordPlayer(int, int, int, int);

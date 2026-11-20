@@ -10,7 +10,7 @@
 // - getArtsSlotRC / getArtsParamRC2 / IdTable_SumValues -> CChainActorList.hpp
 //   (int/const void* arts-query forms match the CActorParam.cpp definitions;
 //   IdTable_SumValues extern "C" int form is the single winning decl).
-// - func_800F3970 -> single shared import on CBattleManagerApi.hpp (pulled in
+// - func_800F3970 -> single shared import on CBattleManager.hpp (pulled in
 //   via CBattleManager.hpp below; CChain.hpp's copy is gone).
 // - getReloadParam0 -> canonical extern "C" u16() form (CAIAction.hpp,
 //   matching CfMapEffectManager.hpp / code_80135FDC.hpp).
@@ -490,7 +490,7 @@ CMenuPTGauge* PTGaugeCreate(CProcess* parent, CProcess* ctorArg) {
     // object; this also stops MWCC eliding the empty stub.
     CMenuPTGauge* gauge = static_cast<CMenuPTGauge*>(mtl::MemManager::allocate(0xA4, mem));
     if (gauge != NULL) {
-        gauge = ((PTGaugeCtorFn)__ct__CMenuPTGauge)(gauge, ctorArg);
+        gauge = ((PTGaugeCtorFn)__ct__CMenuPTGauge)(gauge, ctorArg);  // DEBT(callcast): retail ctor call returns the object in r3; plain ctor call is elided by MWCC
     }
     spPTGaugeInstance = gauge;
     // PTGaugeTaskMid deliberately does not inherit CProcess; retail still

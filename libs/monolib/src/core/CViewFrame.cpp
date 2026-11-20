@@ -96,13 +96,13 @@ bool CViewFrame::render() {
     ml::CCol4 col;
     ml::CRect viewRect;
     ml::CRect16 frameRect;
-    // Volatile: retail sth of mPos (0x230/0x232) is otherwise DCE'd.
-    volatile ml::CRect16 rect;
+    // Retail stores mPos (0x230/0x232) must not be DCE'd.
+    ml::CRect16 rect;
     ml::CRect16 clipRect;
     ml::CPnt16 scratchPos;
 
-    // Volatile check so the mOwner reload below is not CSE'd into the cmp load.
-    if (*(CView* volatile*)&mOwner == NULL) {
+    // Keep the mOwner reload below distinct from the null-test load.
+    if (mOwner == NULL) {
         return false;
     }
 
@@ -112,7 +112,7 @@ bool CViewFrame::render() {
         CView* owner = mOwner;
         CView* view = owner->mFrame.mOwner;
         ml::CRect16* r = (ml::CRect16*)&rect;
-        // Direct volatile stores keep the 0x230/232/1c8/1ca read order.
+        // Direct stores keep the 0x230/232/1c8/1ca read order.
         r->mPos.x = view->mFrame.mContentX;
         r->mPos.y = view->mFrame.mContentY;
         r->mSize.x = view->mRectData.mViewSize.x;
@@ -128,9 +128,9 @@ bool CViewFrame::render() {
         }
 
         if (expand != 0) {
-            // Fresh temp for the volatile reload: retail keeps the original
+            // Fresh temp for the reload: retail keeps the original
             // view pointer dead after the rect stores.
-            CView* view2 = *(CView* volatile*)&owner->mFrame.mOwner;
+            CView* view2 = owner->mFrame.mOwner;
             expand = false;
 
             {

@@ -1,12 +1,21 @@
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 // Self-contained includes: the file has no other includes and is parsed
 // standalone by the label-centralization gate.
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CItemBlockApi.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 
 #include <types.h>
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/menu/MenuSndApi.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "kyoshin/CUICfManager.hpp"
 void* getFP(const char* pName);
 namespace cf {
 class UnkClass_80082D90;
@@ -210,7 +219,6 @@ extern "C" u8 gmGlobalFlag34;
 extern "C" bool isAnyMenuOpen__9CMainMenuFv();
 extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(
     s32 playerIndex, bool requireFlag);
-extern "C" bool CamEvtGetFl46();
 extern "C" void BattleWork_TickDriver(UnkClass_8007E864* object);
 extern "C" void updateCameraState__Q22cf13CfGameManagerFv(
     cf::CfGameManager* manager) {
@@ -249,11 +257,9 @@ stateUpdated:
     BattleWork_TickDriver(manager->unkA8);
 }
 
-extern "C" void BattleWork_InitCtrlWork(UnkClass_8007E864* object);
-extern "C" void MenuSnd_StopAllSlots_8774(u32 object);
+#include "kyoshin/code_801A929C.hpp"
 extern "C" void CfResPcFileHost_clear(UnkClass_80085334* object);
 extern "C" void gmResetSubMgrs();
-extern "C" void* Selector_GetInstance();
 extern "C" void __dt__800FDEF8();
 
 // Canonical decl: ml::CVec3 (defined in CActParamAnimGame.cpp, declared in
@@ -275,10 +281,10 @@ extern "C" void resetManagerState__Q22cf13CfGameManagerFv(
         ArtsSelect_FreeSlots(manager->field_0xA4);
     }
     if (manager->unkA8 != nullptr) {
-        BattleWork_InitCtrlWork(manager->unkA8);
+        BattleWork_InitCtrlWork((CtrlWork*)manager->unkA8);
     }
     if (gmSubManager60 != 0) {
-        MenuSnd_StopAllSlots_8774(gmSubManager60);
+        MenuSnd_StopAllSlots_8774((SoundSlot*)gmSubManager60);
     }
     manager->unkB0 = nullptr;
     manager->unkB4 = nullptr;
@@ -794,10 +800,7 @@ typedef UnkClass_800817BC Unk8187CData;
 extern const float lbl_eu_806664A0;
 extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(u32 value,
                                                                       u32 index);
-extern "C" void bindPartnerO_(void* object, void* player,
-                                u32 value);
-extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, float first,
-                                float second);
+
 extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* player, float value);
 extern const float lbl_eu_80666564;
 extern "C" void setChildScl__(UnkClass_800817BC* object, float first, float second);
@@ -813,7 +816,7 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue,
                     createBattleActor__Q22cf13CfGameManagerFv(objectValue, 0);
                 if (object != nullptr) {
                     setChildScl__(object, lbl_eu_80666564, lbl_eu_8066649C);
-                    bindPartnerO_(object, player, 0);
+                    bindPartnerO_((cf::CfObjectEff*)object, (u8*)player, (u8*)0);
                 }
             }
             if (triggerFirstPlayer && i == 0) {
@@ -838,7 +841,7 @@ extern "C" void resetPlayerEffectsB__Q22cf13CfGameManagerFv(u32 objectValue,
                 UnkClass_800817BC* object =
                     createBattleActor__Q22cf13CfGameManagerFv(objectValue, 0);
                 if (object != nullptr) {
-                    bindPartnerO_(object, player, 0);
+                    bindPartnerO_((cf::CfObjectEff*)object, (u8*)player, (u8*)0);
                 }
             }
             if (triggerFirstPlayer && i == 0) {
@@ -897,8 +900,8 @@ extern "C" void queueSceneEventC__Q22cf13CfGameManagerFv(
 
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" u32 func_8009E120(UnkClass_8009EC9C* object, u16 value);
-extern "C" void getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value) {
-    func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(index)), value);
+extern "C" u32 getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value) {
+    return func_8009E120((UnkClass_8009EC9C*)CtrlObjectParam_GetCharEntry(static_cast<u16>(index)), value);
 }
 
 extern "C" void pushEventQueue__Q22cf13CfGameManagerFv(cf::CfGameManager* manager,
@@ -957,10 +960,7 @@ struct ResourceLookup81694 {
 };
 extern "C" Unk817A8Object* getManagerObjectA8__Q22cf13CfGameManagerFv();
 extern "C" bool isManagerFlag82C__Q22cf13CfGameManagerFv();
-extern "C" bool CfTFile_FirstEntry3(Unk817A8Object* object);
-extern "C" ResourceLookup81694* CfTFile_FindEntryByKey(Unk817A8Object* object,
-                                                u32 key);
-extern "C" u32 CfRes_getHeapHandle();
+
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self);
 // -inline noauto: this unit flag is what keeps the ctor calls inside this
@@ -976,8 +976,8 @@ extern "C" Unk80EE4Data* createPlayerEffectInstance__Q22cf13CfGameManagerFv(
     if (isManagerFlag82C__Q22cf13CfGameManagerFv()) {
         goto done;
     }
-    first = CfTFile_FindEntryByKey(object, firstKey);
-    second = CfTFile_FindEntryByKey(object, secondKey);
+    first = (ResourceLookup81694*)CfTFile_FindEntryByKey((CfTFile*)object, (int)firstKey);
+    second = (ResourceLookup81694*)CfTFile_FindEntryByKey((CfTFile*)object, (int)secondKey);
     if (first == nullptr || first->value == 0) {
         goto done;
     }
@@ -1010,7 +1010,8 @@ extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(
     cf::CfGameManager::getInstance();
     Unk817A8Object* object = getManagerObjectA8__Q22cf13CfGameManagerFv();
     UnkClass_800817BC* result = nullptr;
-    if (!isManagerFlag82C__Q22cf13CfGameManagerFv() && CfTFile_FirstEntry3(object)) {
+    if (!isManagerFlag82C__Q22cf13CfGameManagerFv() &&
+        CfTFile_FirstEntry3((CfTFile*)object) != nullptr) {
         u32 packed = CfRes_packThreeFields(12, gmGlobalFlag42,
                                            gmGlobalFlag44);
         u32 resource = CfRes_packFourFields(12, gmGlobalFlag42,
@@ -1164,11 +1165,9 @@ extern "C" void createItemFromBdatId__Q22cf13CfGameManagerFv(u32 value) {
     createMapObjectInstance__Q22cf13CfGameManagerFv(&lbl_eu_804FB824[0x6F], value, 0, 0);
 }
 
-extern "C" UnkClass_800821F8* CamEvtReleaseThenFire(CfCamEventManager* manager, u32 mode,
-                                             u32 value);
 extern "C" void assignCameraTarget__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
-    manager->unkB0 = CamEvtReleaseThenFire(manager->unkB4, 0, value);
+    manager->unkB0 = (UnkClass_800821F8*)CamEvtReleaseThenFire(manager->unkB4, 0, value);
 }
 
 extern "C" float lbl_eu_8066654C;
@@ -1427,7 +1426,7 @@ extern "C" void cfCam_zeroVec3(void* self);
 extern "C" f32 cosAnimFIdx(f32 angle);
 extern "C" f32 sinAnimFIdx(f32 angle);
 extern "C" void* writeVec3f(void* out, f32 x, f32 y, f32 z);
-extern "C" void* copyVec3Words(ml::CVec3* out, const ml::CVec3* src);
+extern "C" void* copyVec3Words(void* out, const void* src);
 extern "C" void addVec3f(void* a, const void* b);
 
 namespace cf {
@@ -1468,7 +1467,7 @@ extern "C" void func_8008064C__Q22cf13CfGameManagerFv(
         }
         ml::CVec3 tmp;
         writeVec3f(&tmp, vx, lbl_eu_80666498, vz);
-        copyVec3Words(static_cast<ml::CVec3*>(out), &tmp);
+        copyVec3Words(out, &tmp);
     }
         addVec3f(out,
                       reinterpret_cast<cf::CfObject*>(self)->CfObject_getPosVector());
@@ -1494,13 +1493,13 @@ extern "C" Unk80EE4Data* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* 
     return data;
 }
 
-extern "C" UnkClass_800AA714* Tok_ParseFile(u32 value);
+
 extern "C" Unk80EE4Data* spawnFromRecord(UnkClass_800AA714* first,
                                           UnkClass_800AA714* second, u32 value);
 extern "C" Unk80EE4Data* isObjectFlagSet__Q22cf13CfGameManagerFv(
     u32 first, u32 second, u32 value) {
-    UnkClass_800AA714* firstObject = Tok_ParseFile(first);
-    UnkClass_800AA714* secondObject = Tok_ParseFile(second);
+    UnkClass_800AA714* firstObject = (UnkClass_800AA714*)Tok_ParseFile((const char*)first);
+    UnkClass_800AA714* secondObject = (UnkClass_800AA714*)Tok_ParseFile((const char*)second);
     return spawnFromRecord(firstObject, secondObject, value);
 }
 
@@ -1601,7 +1600,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
     if (!testResInfoFlag(0x400)) {
         s32 byteOffset;
         UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)CtrlObjectParam_GetSlotTableBase();
-        volatile s32* values = getField04Ptr__Q22cf13CfGameManagerFv(data);
+        s32* values = getField04Ptr__Q22cf13CfGameManagerFv(data);
         CfRes_getInstanceField();
         byteOffset = 0;
         for (s32 i = 0; i < 13; ++i, byteOffset += 4) {
@@ -1636,8 +1635,8 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
     CfRes_setE28Mask(0x400);
 }
 extern "C" ItemListManager* getListB28__Fv();
-extern "C" void CfObjectPc_applyArtsEntry(ItemListObject* object, void* destination,
-                                u16 itemId);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_applyArtsEntry(cf::CfObjectPc* self, void* destination, s32 itemId);
 extern "C" void __ct__8009ED08(void* destination, u16 itemId);
 extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
                                                         u16 itemId) {
@@ -1647,7 +1646,7 @@ extern "C" void setupBattleCamera__Q22cf13CfGameManagerFv(void* destination,
     while (node != sentinel) {
         ItemListObject* object = static_cast<ItemListObject*>(node->object);
         if (itemId == object->itemId_0x3F28) {
-            CfObjectPc_applyArtsEntry(object, destination, itemId);
+            CfObjectPc_applyArtsEntry(reinterpret_cast<cf::CfObjectPc*>(object), destination, itemId);
             return;
         }
         node = node->next;
@@ -1829,14 +1828,12 @@ extern "C" Unk80EE4Data* createItemObjectWrapper__Q22cf13CfGameManagerFv(
     return data;
 }
 
-extern "C" u32 CamEvtResetManager(CfCamEventManager* manager, u32 first, u32 second,
-                               u32 third, u32 fourth, u32 fifth);
 extern "C" u32 CamEvtPushCamEntry(CfCamEventManager* manager, u32 first, u32 second,
                                u32 third, u32 fourth, u32 fifth, float value);
 extern "C" u32 notifyBattleSystem__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                                        u32 fourth, u32 fifth) {
-    return CamEvtResetManager(cf::CfGameManager::getInstance()->unkB4, first, second, third,
-                         fourth, fifth);
+    return CamEvtResetManager(cf::CfGameManager::getInstance()->unkB4,
+                              first, second, third, fourth, fifth);
 }
 
 extern "C" u32 isEffectReady__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
@@ -1848,7 +1845,6 @@ extern "C" u32 isEffectReady__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 
 extern "C" UnkClass_800821F8* CamEvtCreateSlotObj(u32 first, cf::CfObjectMove* second,
                                              u32 third, u32 fourth, u32 fifth,
                                              u32 sixth, u32 seventh);
-extern "C" void CamEvtReleaseMappedSlot(CfCamEventManager* manager, u32 flag);
 extern "C" void maybeCreateCameraMember__Q22cf13CfGameManagerFv(bool special, u32 value);
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
 extern "C" void getCamManagerData__Q22cf13CfGameManagerFv(u32 mode) {
@@ -2070,15 +2066,14 @@ extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value) {
 }
 
 extern "C" u32 lbl_eu_80661BC4;
-extern "C" bool isManagerInitialized__Q22cf13CfGameManagerFv();
+extern "C" int isManagerInitialized__Q22cf13CfGameManagerFv();
 extern "C" void clearQueuedEvents__Q22cf13CfGameManagerFv(u32 value, bool makeCurrent) {
     CtrlRemote_SetSharedBit(0x20, value);
     if (!isManagerInitialized__Q22cf13CfGameManagerFv() || makeCurrent) lbl_eu_80661BC4 = value;
 }
 
 extern "C" void enableGameFlag__Q22cf13CfGameManagerFv(u32 mask);
-extern "C" void Scn_SetTimeScale(CScn* scene, float value);
-extern "C" void CfSoundMan_PauseAllRecords(u32 value, u32 frames);
+void Scn_SetTimeScale(CScn* scene, float value);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable) {
     cf::CfGameManager::getInstance();
     if (enable) {
@@ -2206,9 +2201,9 @@ extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" void CfRes_rolloverResFields();
-extern "C" VoiceSource* firstReslistB68();
-extern "C" VoiceSource* insertReslistB68(VoiceSource* source);
-extern "C" void CfObjectMove_relaySubB0Slot40(VoiceSource* source, bool enabled);
+// Defined in CfObjectMove.cpp; no owner header carries this spelling yet.
+extern "C" void CfObjectMove_relaySubB0Slot40(cf::CfObject* object, bool enabled);
+
 extern "C" void processEffectList__Q22cf13CfGameManagerFv() {
     if (!gmInitFlag) {
         __ct__Q22cf13CfGameManagerFv(&gmInstance);
@@ -2217,12 +2212,12 @@ extern "C" void processEffectList__Q22cf13CfGameManagerFv() {
         gmInitFlag = 1;
     }
     gmPauseFlags |= 4;
-    VoiceSource* source = firstReslistB68();
+    VoiceSource* source = (VoiceSource*)firstReslistB68();
     while (source != nullptr) {
         if ((source->flags_0x64 & 0x80000000) != 0) {
-            CfObjectMove_relaySubB0Slot40(source, true);
+            CfObjectMove_relaySubB0Slot40((cf::CfObject*)source, true);
         }
-        source = insertReslistB68(source);
+        source = (VoiceSource*)insertReslistB68((cf::CfObject*)source);
     }
 }
 
@@ -2234,12 +2229,12 @@ extern "C" void processEventList__Q22cf13CfGameManagerFv() {
         gmInitFlag = 1;
     }
     gmPauseFlags &= ~4;
-    VoiceSource* source = firstReslistB68();
+    VoiceSource* source = (VoiceSource*)firstReslistB68();
     while (source != nullptr) {
         if ((source->flags_0x64 & 0x80000000) != 0) {
-            CfObjectMove_relaySubB0Slot40(source, false);
+            CfObjectMove_relaySubB0Slot40((cf::CfObject*)source, false);
         }
-        source = insertReslistB68(source);
+        source = (VoiceSource*)insertReslistB68((cf::CfObject*)source);
     }
 }
 
@@ -2436,7 +2431,6 @@ class CfPlayerComposite : public cf::CActorParam,
 
 extern "C" u32 cleanupPlayerEffectList__Q22cf13CfGameManagerFv(
     cf::UnkClass_CActorParam15E0* data, u32 value);
-extern "C" u32 IdTable_SumValues(void* data, u32 value);
 extern "C" u32 updatePlayerCameraLink__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value) {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
     CfPlayerComposite* composite = static_cast<CfPlayerComposite*>(player);
@@ -2457,7 +2451,7 @@ extern "C" u32 isEffectListEmpty__Q22cf13CfGameManagerFv(s32 playerIndex, u32 va
         cf::UnkClass_CActorParam15E0* data =
             composite->CActorParam_getStatusTable();
         if (data != nullptr) {
-            return IdTable_SumValues(data, value);
+            return IdTable_SumValues((CUnkObj8025FB10*)data, (int)value);
         }
     }
     return 0;
@@ -2480,14 +2474,15 @@ extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
     return result;
 }
 
-extern "C" void syncBattleState__Q22cf13CfGameManagerFv(cf::CfObjectMove* object) {
+extern "C" void syncBattleState__Q22cf13CfGameManagerFv(void* object) {
+    cf::CfObjectMove* moveObject = (cf::CfObjectMove*)object;
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     cf::CfObjectMove* oldFirst =
         *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0);
-    if (*getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0) != object) {
-        *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0) = object;
+    if (*getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0) != moveObject) {
+        *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0) = moveObject;
         for (s32 i = 1; i < 3; ++i) {
-            if (object ==
+            if (moveObject ==
                 *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, i)) {
                 *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, i) = oldFirst;
                 break;
@@ -2548,7 +2543,7 @@ extern "C" void clearFieldFlagsA__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" bool BpsStateSingletonToInt();
-extern "C" bool UIBattleHasPendingLoads();
+int UIBattleHasPendingLoads();
 extern "C" void UIBattleReleaseAll();
 extern "C" void updateVisionState__Q22cf13CfGameManagerFv(cf::CfGameManager* manager) {
     if (!BpsStateSingletonToInt() && !UIBattleHasPendingLoads() &&
@@ -2571,10 +2566,8 @@ extern "C" void updateVisionState__Q22cf13CfGameManagerFv(cf::CfGameManager* man
 extern "C" bool evtIsBusyBitSet();
 extern "C" int CTaskGame_hasLoadScreen();
 extern "C" u8 isFadeActive(void* object);
-extern "C" void CUICfManager_queuePauseMenu();
 extern "C" void* Scn_GetUnk80Handle(CScn* scene);
 extern "C" void* Scn_FindCamItem(void* scene, int index);
-extern "C" void CamEvtCopyBlk(CfCamEventManager* manager, void* object);
 extern "C" bool processEventQueueB__Q22cf13CfGameManagerFv() {
     bool result = evtIsBusyBitSet();
     if (!gmInitFlag) {
@@ -2587,7 +2580,7 @@ extern "C" bool processEventQueueB__Q22cf13CfGameManagerFv() {
     CScn* scene = gmScene;
     if (result && manager->unkB4 != nullptr) {
         void* object = Scn_FindCamItem(scene, -1);
-        CamEvtCopyBlk(manager->unkB4, object);
+        CamEvtCopyBlk(manager->unkB4, (CfCamEventCopySrc*)object);
     }
     if (Scn_GetUnk80Handle(gmScene) == nullptr) {
         result = true;
@@ -2608,9 +2601,9 @@ extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(cf::CfGameManager* ma
 extern "C" s16 gmTransitionCounter;
 extern "C" u32 gEventSequenceFlags;
 extern const float lbl_eu_80666508;
-extern "C" void MenuSnd_RestartBGM_88D34(u32 first, u8 enable, float value, float fadeTime);
+
 extern "C" void prepareTextBuffer__Q22cf13CfGameManagerFv() {
-    MenuSnd_RestartBGM_88D34(0, true, lbl_eu_80666508, lbl_eu_8066649C);
+    MenuSnd_RestartBGM_88D34((const char*)0, 1, lbl_eu_80666508, lbl_eu_8066649C);
     if (gmTransitionCounter != 0) {
         u32 flagsEE0 = gEventSequenceFlags;
         s16 resetValue = -1;
@@ -2875,7 +2868,7 @@ extern "C" bool KyoshinHeap_GetField58();
 extern "C" void KyoshinHeap_Reset78Stage();
 extern "C" void CfRes_delegateCleanup(void* object);
 extern "C" void CfRes_initStruct_64994(void* object);
-extern "C" u32 Tok_Pack08(u32 first, u32 second);
+
 extern "C" void KyoshinHeap_Reset58Stage();
 extern "C" void CfRes_clearE28Mask(u32 mask);
 extern "C" void linkEffectObjects__Q22cf13CfGameManagerFv(
@@ -2889,10 +2882,6 @@ struct Unk82C48Object {
     void (**tbl)(void* object);
 };
 extern "C" void* CfRes_getE14();
-extern "C" void* Selector_GetInstance();
-extern "C" void Selector_ReinitState(void* first, void* second, void* third);
-extern "C" void CfObjectMove_setModelListLock(void* object, u32 value);
-extern "C" void setFloatPair(float value);
 extern "C" void* CtrlObjectParam_MoveValueToHead(void* object, u16 value);
 extern const float lbl_eu_80666558;
 extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
@@ -2905,13 +2894,13 @@ extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
         getCfObjectPc__FPQ22cf12CfObjectMove(player));
     void* resource = CfRes_getE14();
     void* system = Selector_GetInstance();
-    Selector_ReinitState(system, object, resource);
+    Selector_ReinitState((cf::CfObjectSelectorData*)system, (u32)object, (u32)resource);
     if (object != nullptr) {
         gmInitArg = getItemId__Q22cf13CfGameManagerFv(
             reinterpret_cast<ItemListSubobject*>(player));
-        CfObjectMove_setModelListLock(reinterpret_cast<u8*>(object) + 0x3E9C, 1);
+        CfObjectMove_setModelListLock((cf::CfObjectMove*)(reinterpret_cast<u8*>(object) + 0x3E9C), 1);
         Selector_GetInstance();
-        setFloatPair(lbl_eu_80666558);
+        Selector_GetInstance()->setFloatPair(lbl_eu_80666558);
         void* data = CtrlObjectParam_GetSlotTableBase();
         u16 value = getItemId__Q22cf13CfGameManagerFv(
             reinterpret_cast<ItemListSubobject*>(

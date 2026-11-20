@@ -1646,8 +1646,8 @@ extern "C" void makePerspProj__8CGXCacheFv(void* cache, void* proj, f32 a,
 
 extern void* cacheInstance__9CDeviceGX;
 // Warning/Panic string blobs.
-extern u8 lbl_eu_80526324[];
-extern u8 lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 extern const char lbl_eu_805262F0[];
 extern const char lbl_eu_805262C8[];
 extern u8 lbl_eu_8052CF10[];

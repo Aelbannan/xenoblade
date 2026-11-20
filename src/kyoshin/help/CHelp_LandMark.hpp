@@ -29,7 +29,5 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId); // unified with CChain.hpp/CSuddenCommu.hpp/CPassiveSkill.hpp
-extern "C" void* CtrlRemote_ResetSlotArrayObj(void*);
-extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
 // CHelp base constructor with Fv symbol (retail name)
 extern "C" void __ct__Q22cf5CHelpFUlUl(cf::CHelp* self, void* owner, u32 param);

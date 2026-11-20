@@ -3,6 +3,7 @@
 // completion callback, voice removal, buffer-size override.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
@@ -80,7 +81,7 @@ void CVS_THREAD_HAGE::advanceSlot1() {
         default: // 0 -- dynamic selection: iterator must pass its check and
                  // the two slots must not conflict, otherwise retry.
             if (HpVoice_ValidIter(iter) != 0 &&
-                HpVoice_CheckPair26(self->field_0x20, self->field_0x24) == 0) {
+                HpVoice_CheckPair26((CVoiceHandleState*)self->field_0x20, (CVoiceHandleState*)self->field_0x24) == 0) {
                 voiceId = iter + 0xC1C;
             }
             break;

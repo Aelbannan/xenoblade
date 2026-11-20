@@ -5,11 +5,7 @@
 #include <nw4r/g3d.h>
 #include <nw4r/ut.h>
 
-// AnmObjVis's TypeName data symbol is not declared in any header; declare it
-// here (global-scope variable names are not mangled).
-extern const char lbl_eu_8051D520[];
-
-// ScnMdlSimple vtable (retail-owned by nw4r_data.s).
+// ScnMdlSimple vtable
 extern char lbl_eu_80569758[];
 
 
@@ -128,18 +124,6 @@ AnmObj* ScnMdlSimple::RemoveAnmObj(ScnMdlSimple::AnmObjType type) {
 
 namespace nw4r {
 namespace g3d {
-namespace {
-
-// The animation TypeName data symbols are declared in the public headers as
-// raw char arrays, but TypeObj's constructor binds a typed ResNameDataT view.
-// Rebind the same address through the typed reference; only the address is
-// stored, so the view width is irrelevant. Always inlined by MWCC.
-inline G3dObj::TypeObj MakeTypeObj(const char* pTypeName) {
-    return G3dObj::TypeObj(
-        *reinterpret_cast<const G3dObj::ResNameDataT<32>*>(pTypeName));
-}
-
-} // namespace
 
 AnmObj* ScnMdlSimple::GetAnmObj(AnmObjType type) {
     switch (type) {
@@ -380,12 +364,25 @@ bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         return false;
     }
 
+    // The unspecified type selects the concrete animation type from the
+    // object's RTTI, then uses the same attach path as an explicit type.
+    if (type == ANMOBJTYPE_NOT_SPECIFIED) {
+        if (G3dObj::DynamicCast<AnmObjChr>(pObj) != NULL) {
+            type = ANMOBJTYPE_CHR;
+        } else if (G3dObj::DynamicCast<AnmObjVis>(pObj) != NULL) {
+            type = ANMOBJTYPE_VIS;
+        } else if (G3dObj::DynamicCast<AnmObjMatClr>(pObj) != NULL) {
+            type = ANMOBJTYPE_MATCLR;
+        } else if (G3dObj::DynamicCast<AnmObjTexPat>(pObj) != NULL) {
+            type = ANMOBJTYPE_TEXPAT;
+        } else if (G3dObj::DynamicCast<AnmObjTexSrt>(pObj) != NULL) {
+            type = ANMOBJTYPE_TEXSRT;
+        }
+    }
+
     switch (type) {
     case ANMOBJTYPE_CHR: {
-        AnmObj* pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D5C0))) {
-            pAnmObj = pObj;
-        }
+        AnmObj* pAnmObj = G3dObj::DynamicCast<AnmObjChr>(pObj);
         if (pAnmObj == NULL) {
             return false;
         }
@@ -400,10 +397,7 @@ bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         return true;
     }
     case ANMOBJTYPE_VIS: {
-        AnmObj* pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D520))) {
-            pAnmObj = pObj;
-        }
+        AnmObj* pAnmObj = G3dObj::DynamicCast<AnmObjVis>(pObj);
         if (pAnmObj == NULL) {
             return false;
         }
@@ -418,10 +412,7 @@ bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         return true;
     }
     case ANMOBJTYPE_MATCLR: {
-        AnmObj* pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D530))) {
-            pAnmObj = pObj;
-        }
+        AnmObj* pAnmObj = G3dObj::DynamicCast<AnmObjMatClr>(pObj);
         if (pAnmObj == NULL) {
             return false;
         }
@@ -436,10 +427,7 @@ bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         return true;
     }
     case ANMOBJTYPE_TEXPAT: {
-        AnmObj* pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D560))) {
-            pAnmObj = pObj;
-        }
+        AnmObj* pAnmObj = G3dObj::DynamicCast<AnmObjTexPat>(pObj);
         if (pAnmObj == NULL) {
             return false;
         }
@@ -454,10 +442,7 @@ bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         return true;
     }
     case ANMOBJTYPE_TEXSRT: {
-        AnmObj* pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D590))) {
-            pAnmObj = pObj;
-        }
+        AnmObj* pAnmObj = G3dObj::DynamicCast<AnmObjTexSrt>(pObj);
         if (pAnmObj == NULL) {
             return false;
         }
@@ -471,86 +456,7 @@ bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
         pAnmObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
         return true;
     }
-    case ANMOBJTYPE_SHP: {
-        // Catch-all type: accept the first concrete animation type the object
-        // derives from.
-        AnmObj* pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D5C0))) {
-            pAnmObj = pObj;
-        }
-        if (pAnmObj != NULL) {
-            if (!pAnmObj->TestAnmFlag(AnmObj::FLAG_ANM_BOUND)) {
-                return false;
-            }
-            if (mpAnmObjChr != NULL) {
-                RemoveAnmObj(mpAnmObjChr);
-            }
-            mpAnmObjChr = static_cast<AnmObjChr*>(pAnmObj);
-            pAnmObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
-            return true;
-        }
-        pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D520))) {
-            pAnmObj = pObj;
-        }
-        if (pAnmObj != NULL) {
-            if (!pAnmObj->TestAnmFlag(AnmObj::FLAG_ANM_BOUND)) {
-                return false;
-            }
-            if (mpAnmObjVis != NULL) {
-                RemoveAnmObj(mpAnmObjVis);
-            }
-            mpAnmObjVis = static_cast<AnmObjVis*>(pAnmObj);
-            pAnmObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
-            return true;
-        }
-        pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D530))) {
-            pAnmObj = pObj;
-        }
-        if (pAnmObj != NULL) {
-            if (!pAnmObj->TestAnmFlag(AnmObj::FLAG_ANM_BOUND)) {
-                return false;
-            }
-            if (mpAnmObjMatClr != NULL) {
-                RemoveAnmObj(mpAnmObjMatClr);
-            }
-            mpAnmObjMatClr = static_cast<AnmObjMatClr*>(pAnmObj);
-            pAnmObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
-            return true;
-        }
-        pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D560))) {
-            pAnmObj = pObj;
-        }
-        if (pAnmObj != NULL) {
-            if (!pAnmObj->TestAnmFlag(AnmObj::FLAG_ANM_BOUND)) {
-                return false;
-            }
-            if (mpAnmObjTexPat != NULL) {
-                RemoveAnmObj(mpAnmObjTexPat);
-            }
-            mpAnmObjTexPat = static_cast<AnmObjTexPat*>(pAnmObj);
-            pAnmObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
-            return true;
-        }
-        pAnmObj = NULL;
-        if (pObj != NULL && pObj->IsDerivedFrom(MakeTypeObj(lbl_eu_8051D590))) {
-            pAnmObj = pObj;
-        }
-        if (pAnmObj != NULL) {
-            if (!pAnmObj->TestAnmFlag(AnmObj::FLAG_ANM_BOUND)) {
-                return false;
-            }
-            if (mpAnmObjTexSrt != NULL) {
-                RemoveAnmObj(mpAnmObjTexSrt);
-            }
-            mpAnmObjTexSrt = static_cast<AnmObjTexSrt*>(pAnmObj);
-            pAnmObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
-            return true;
-        }
-        break;
-    }
+    case ANMOBJTYPE_SHP:
     default:
         break;
     }

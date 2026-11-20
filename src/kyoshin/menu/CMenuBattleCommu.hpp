@@ -4,6 +4,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
+#include "kyoshin/cf/CfMapEffectManager.hpp" // MapFx_ResolveOwner owner declaration
 
 class CScn;
 class CProcess;
@@ -167,7 +168,6 @@ void removeRenderCB__4CScnFP10IScnRender(CScn* self, IScnRender* cb);
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* self, void* cb,
                                           u32 prio, u32 flag);
 // Battle actor helpers (unmangled retail symbols).
-CBattleCommuActor2* MapFx_ResolveOwner(CBattleCommuPlayer* source);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 // Shared ARC resource accessor / message manager.
@@ -190,3 +190,11 @@ extern const void* lbl_eu_80661C60;         // RTTI typeinfo (actor source type)
 extern const void* lbl_eu_80661BE8;         // RTTI typeinfo (actor dest type)
 
 // UI sound effect cue (mangles to playUISound__FUl).
+
+class CProcess;
+class CScn;
+
+// C++-linkage helpers owned by kyoshin/menu/CMenuBattleCommu.
+CMenuBattleCommu* battleCommuCreateRegister(CProcess* parent, CScn* scene);
+void battleCommuDisableAnims();
+bool battleCommuIsActive();

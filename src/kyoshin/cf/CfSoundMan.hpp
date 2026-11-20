@@ -11,15 +11,9 @@ struct FxSoundSlot {
     u8 mData[0x4FC];
 };
 
-// FX-slot effect setter (retail clearFxSlotEffect, defined in code_801C2C14.cpp).
-// extern "C" keeps the call reloc bound to the retail-unmangled name (a plain
-// C++ declaration would have MWCC append the parameter mangling).
-extern "C" int clearFxSlotEffect(FxSoundSlot* slots, int index, int frame);
+#include "kyoshin/cf/code_801C2C14.hpp"
 
-// FX-slot pair constructor (retail FxPair_Init, defined in
-// code_801C2C14.cpp): constructs the two 0x4FC-byte FX slots. extern "C" so
-// the call reloc binds to the retail-unmangled name.
-extern "C" FxSoundSlot* FxPair_Init(FxSoundSlot* self);
+struct FxSoundPair;
 
 // FX-slot pair destructor (retail __dt__801C3340, defined in
 // code_801C2C14.cpp): clears both slots' effects and destroys the member
@@ -31,7 +25,6 @@ extern "C" void* __dt__801C3340(FxSoundSlot* self, int flag);
 // tail-calls applyFxSlotEffect and passes its bool result through in r3 (the
 // fork's definition returns void; the bool declaration lets callers test it).
 // extern "C" keeps the call reloc bound to the retail-unmangled name.
-extern "C" bool func_801C358C(FxSoundSlot* slots, int idx, int fxType, u32 memSize, u32 size);
 
 // FX work-buffer size query (defined in code_800A75FC.cpp): returns the
 // per-slot allocation for FX slot index 0 or 1 (or 0). extern "C" keeps the
@@ -240,14 +233,14 @@ void* findObjectById(int id);
 // sits 0x10 bytes before the table; passed by address to __register_global_object).
 extern u8 gCfSoundSlotRegNode[0x10];
 
+#include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
+
 // MWCC runtime helpers (C linkage so the call relocs bind to the
 // retail-unmangled names; same pattern as CMenuQstCnt.hpp).
-extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int count);
 extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
 // Array-destruction helper (MWCC runtime; extern "C" keeps the call reloc
 // bound to the retail-unmangled name, same as __construct_array above).
-extern "C" void __destroy_arr(void*, void* dtor, int size, int count);
 
 // Sound-pause request parameters (retail .bss, 0x10 bytes).
 extern cf::CfSoundPauseParam gCfSoundPauseParam;
@@ -365,9 +358,27 @@ extern "C" void CamMan_ComputeViewFalloff(f32* outPan, f32* outVol, CfSndPoseBlo
 
 // nw4r math/db helpers and assert strings (retail symbols).
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern const char lbl_eu_80526324[];
-extern const char lbl_eu_80526300[];
 
 // Volume-scaling constants (retail .sdata2).
 extern const f32 lbl_eu_80667E88;
 extern const f32 lbl_eu_80667EA4;
+
+// Canonical C++ declarations for this unit's exported free functions.
+void CfSoundMan_UpdateAllRecords();
+void CfSoundMan_BindRecordBuffer(u32 idx, u32 p1, u32 p2, u32 p3);
+void CfSoundMan_OpenRecordPlayer(u32 idx, u32 p1, u32 p2, u32 p3);
+u32 CfSoundMan_IsRecordActive(u32 idx);
+u32 CfSoundMan_PlayRequest(u32 a, u32 b, u32 c, float volume);
+u32 CfSoundMan_PlayLinkedParam(u32 idx, u32 a, u32 b, float f1, float f2);
+void CfSoundMan_SetSlotVolume(s32 idx, u32 a, u32 b, float volume);
+void CfSoundMan_StopSlotByMode(s32 idx, s32 mode, u32 fadeFrames);
+void CfSoundMan_ApplySlotStop(s32 idx, u32 a, u32 b);
+void CfSoundMan_StopSoundSlots(u32 idx, u32 soundId, s32 stopFlag);
+void CfSoundMan_PauseSlotByMode(u32 idx, s32 mode, bool a, u32 b);
+void CfSoundMan_SetSlotPan(s32 idx, u32 a, float pan);
+void CfSoundMan_WriteSlotGain(s32 idx, u32 a, u32 b);
+void CfSoundMan_StopAllModes(s32 mode);
+void CfSoundMan_StopMaskedSlots(u32 mask, int stopFlag);
+void CfSoundMan_PauseAllRecords(bool pause, int fade);
+void CfSoundMan_ApplyFxSendAll(int idx, int fxType, float volume);
+void CfSoundMan_ClearFxEffect(u32 index, u32 frame);

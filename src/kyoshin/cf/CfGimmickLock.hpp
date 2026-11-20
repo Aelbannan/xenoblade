@@ -224,3 +224,7 @@ extern const void* sGimmickLockIdColumns[2];      // sda21 pointer table (first 
 extern char lbl_eu_805086EC[];   // column-name string for configFlags
 extern void* gmCurrentView;    // scene/manager global
 extern u32 gGimmickPartyFlags;
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+void gimmickLockClearBinding(cf::CfGimmickLock* self);
+int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target);

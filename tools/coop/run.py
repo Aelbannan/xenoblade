@@ -2829,6 +2829,11 @@ def main() -> int:
     p_faithful.add_argument("--init", action="store_true", help="write the baseline from the current tree")
     p_faithful.add_argument("--verbose", action="store_true", help="list the worst units")
     p_faithful.add_argument("--unit", help="print the breakdown for units matching this substring")
+    p_faithful.add_argument("--finish-line", action="store_true",
+                            help="print the PLAN_TO_DONE §1 finish-line table; no baseline access")
+    p_faithful.add_argument("--seed-headers", action="store_true",
+                            help="add missing hdr/ pseudo-units to the faithful baseline "
+                                 "(never rewrite existing entries)")
 
     p_order_gate = sub.add_parser(
         "text-order-gate",
@@ -3057,6 +3062,18 @@ def main() -> int:
     if args.command == "faithful":
         from tools.coop import faithful
 
+        if args.finish_line:
+            if args.ratchet or args.init or args.seed_headers:
+                print("error: --finish-line cannot be combined with "
+                      "--ratchet/--init/--seed-headers", file=sys.stderr)
+                return 2
+            return faithful.finish_line(config.region)
+        if args.seed_headers:
+            if args.ratchet or args.init:
+                print("error: --seed-headers cannot be combined with --ratchet/--init",
+                      file=sys.stderr)
+                return 2
+            return faithful.seed_headers(config.region)
         return faithful.gate(config.region, args.ratchet, args.init, args.verbose, args.unit)
 
     if args.command == "text-order-gate":

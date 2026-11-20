@@ -39,6 +39,8 @@ struct CArcItem {
     virtual ~CArcItem();              // vtable+0
     virtual bool func_0x4();          // vtable+4
     virtual bool func_0x8(int flag);  // vtable+8
+    void updateLoadState();
+    bool findFileEntry(const char* pPath, void** pOutStartAddr, u32* pOutLength);
     u8 pad_4[0x2C - 0x4];
     int unk2C;                        // 0x2C - CArcItem load state (2 = ready)
 };
@@ -146,10 +148,7 @@ extern "C" {
     list->mStartNodePtr->mNext = list->mStartNodePtr;
 }
 
-// CArcItem::updateLoadState() - C-linkage in the retail binary.
-void updateLoadState(CArcItem* self);
 
-// _reslist_base<CPackItem*>::~_reslist_base(int deleting)
  void* __dt___reslist_base_CPackItem(PackItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF48;
@@ -207,9 +206,8 @@ void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
     return self;
 }
 
-// DevFile_SubstLangPath is extern "C" in CDeviceFileCri.hpp, but including that
-// header would clash with this TU's C++ definition of findPackFileId.
-int DevFile_SubstLangPath(const char*);
+// Defined in monolib/src/device/CDeviceFile.cpp with C++ linkage.
+void DevFile_SubstLangPath(char* pPath);
 
 // Register one static arc filename: normalize the path through DevFile_SubstLangPath,
 // construct a CArcItem from the work region, and push it onto the singleton's
@@ -434,7 +432,6 @@ extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPk
 // Static lookup: walk the singleton's circular pack-item list (head at
 // +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
 // item's findFileEntry when the list is non-empty (retail unmangled reloc).
-extern "C" bool findFileEntry(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
 s32 findPackFileId(const char* pName, const char* pPath) {
     // Declared last-to-first: MWCC assigns stack slots in reverse declaration
     // order, so this yields retail's 0x8/0xc/0x10/0x14/0x18 slot layout.
@@ -463,7 +460,7 @@ bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFile
     u8* head = (u8*)sys->mArcList.mStartNodePtr;
     u8* first = *(u8**)head;
     if (first != head) {
-        return findFileEntry(((ArcItemListNode*)first)->mItem, pName, (void**)pOut, pFileId);
+        return ((ArcItemListNode*)first)->mItem->findFileEntry(pName, (void**)pOut, pFileId);
     }
     return false;
 }
@@ -491,7 +488,7 @@ bool CWorkSystemPack::wkStandbyLogin() {
     while (node != sentinel) {
         CArcItem* item = node->mItem;
         if (item->unk2C != 2) {
-            updateLoadState(item);
+            item->updateLoadState();
             return false;
         }
         node = node->mNext;
@@ -649,7 +646,7 @@ bool CWorkSystemPack::arePacksLoaded() {
 void CWorkSystemPack::wkUpdate() {
     ArcItemListNode* node = sWorkSystemPackInstance->mArcList.mStartNodePtr->mNext;
     while (node != sWorkSystemPackInstance->mArcList.mStartNodePtr) {
-        updateLoadState(node->mItem);
+        node->mItem->updateLoadState();
         node = node->mNext;
     }
     PackItemListNode* pnode = sWorkSystemPackInstance->mPackList.mStartNodePtr->mNext;

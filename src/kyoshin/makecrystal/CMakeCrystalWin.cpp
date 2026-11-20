@@ -11,6 +11,7 @@
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/menu/CMenuTutorial.hpp"
 
 /*
  * Constructor (retail unmangled `__ct__CMakeCrystalWin`). Written as a
@@ -110,7 +111,7 @@ void mkCrystalTeardown(CMakeCrystalWin* self) {
 
 void mkCrystalTick(){}
 
-u8 mkCrystalGetFlag4361(void* self) { return ((CMakeCrystalWin*)self)->field_4361; }
+u32 mkCrystalGetFlag4361(void* self) { return ((CMakeCrystalWin*)self)->field_4361; }
 
 // Retail 0x802149C8: returns 0 only when the game is not busy and the crystal
 // box is inactive and the window state is a non-zero value below 7.
@@ -196,7 +197,8 @@ void mkCrystalToState8Box(CMakeCrystalWin* self) {
         if (self->mCrystalBox.getCrystalBoxActive() != 0) {
             self->mCrystalBox.teardownCrystalBox();
             u32 cursor = (u32)self->mCrystalBox.rebuildCrystalBoxSelTable();
-            setCrystalCursor(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), cursor);
+            reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0])->setCrystalCursor(cursor);
+
             u8 a = self->mCrystalBox.getCrystalBoxKindA();
             u8 b = self->mCrystalBox.getCrystalBoxKindB();
             MakeCrystal_UnlinkFileSlot(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0]), a, b);
@@ -223,7 +225,7 @@ void mkCrystalToState9Ready(CMakeCrystalWin* self) {
 // display is ready, mark the window state as 0xa.
 void mkCrystalToStateAReady(CMakeCrystalWin* self) {
     if (self->mTitleAHelp.func_801C4124() != 0) {
-        if (getCrystalStateA(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)) != 0) {
+        if (reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)->getCrystalStateA() != 0) {
             self->field_4360 = 0xa;
         }
     }
@@ -233,7 +235,7 @@ void mkCrystalToStateAReady(CMakeCrystalWin* self) {
 // window as 0xb and start the banner; always forward the display mode to the
 // banner afterwards.
 void mkCrystalToStateBCharge(CMakeCrystalWin* self) {
-    if (getCrystalStateB(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)) != 0) {
+    if (reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea)->getCrystalStateB() != 0) {
         self->field_4360 = 0xb;
         self->mTitleAHelp.beginClose();
     }
@@ -247,11 +249,11 @@ void mkCrystalToStateBCharge(CMakeCrystalWin* self) {
 // as not ready.
 void mkCrystalRebuildOnChargeC(CMakeCrystalWin* self) {
     if (self->mTitleAHelp.func_801C4124() != 0) {
-        if (getCrystalStateC(reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0])) != 0) {
+        if (reinterpret_cast<CModelDispMakeCrystal*>(&self->mModelDispArea[0])->getCrystalStateC() != 0) {
             self->field_4360 = 0;
             MakeCrystal_CleanupFiles(reinterpret_cast<CModelDispMakeCrystal*>(self->mModelDispArea));
 
-            // Rebuild the crystal box: construct a temp, copy it in, destroy.
+            // Rebuild the crystal box
             // MWCC assigns stack slots in reverse declaration order, so the
             // CModelDispMakeCrystal temp (retail +0x8) is declared last.
             u8 boxTemp[0x1508];    // CMCCrystalBox temp at +0x2DE0

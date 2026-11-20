@@ -117,8 +117,8 @@ extern const float lbl_eu_8066AE20;
 // radians -> FIdx scale (128/pi) fed to SinFIdx/CosFIdx (ColiBuildXformRotScale / ColiBuildXformRotScaleOff).
 // ml::epsilon - plane-distance guard (ColiVisitGroupMember loop).
 // nw4r FSqrt assert strings (retail .data, shared with other TUs).
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 // SDA2 threshold/override constants (retail @sda21 relocs): 8066AE80 gates
 // the per-axis AABB move in ColiMoveAabbThreshold, 8066AE88 overwrites v.y in
 // ColiAccumScaledVec when the flag byte is set. 8066AE40 scales the +0x60
@@ -138,31 +138,29 @@ extern const float lbl_eu_8066AEA0;  // reset value for the current-segment glob
 extern const float lbl_eu_8066AE58;  // sphere test gate scale (ColiSweepClipSegment)
 extern const float lbl_eu_8066AE54;  // normal scale constant (ColiCastSegmentSphere)
 extern const float lbl_eu_8066AE6C;  // |component| < thresh -> treat as 0 (ColiCastRayAabb)
-extern const double lbl_eu_8066AE48; // 0x4330000080000000 (s32->f32 magic)
+extern const double lbl_eu_8066AE48; // shared magic double, used by the out-of-line converter
 
-// s32 -> f32 through the shared signed magic double (lbl_eu_8066AE48,
-// 0x4330000080000000 = 2^52 + 2^31): the value is stored as the low word of
-// a 0x43300000 double with the sign bit flipped, then the magic is subtracted.
-// Writing the words by hand keeps the named sdata2 reloc (MWCC would
-// otherwise emit its own anonymous 2^52 literal).
+// s32 -> f32 through a double conversion scratch: write the integer-to-double
+// cast in the source and narrow it back to f32. The retail magic-double entry
+// is a compiler pool artifact, not a named object, so these call sites do not
+// need a label. The union type remains for the scratch slots at the call sites
+// and for the out-of-line converter below.
 union ConvF64_AE48 {
     f64 d;
     u32 w[2];
 };
 
 static inline f32 s32ToF_ae48(ConvF64_AE48& c, u32 v) {
-    c.w[1] = v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066AE48);
+    c.d = (f64)(s32)v;
+    return (f32)c.d;
 }
 
-// Standalone s32->f32 through the same named magic (no anonymous pool
-// entry): used by the random-direction casts below so the TU emits no
-// .sdata2 of its own (retail .sdata2 is empty for this unit).
+// Standalone s32->f32 used by the random-direction casts: the same
+// integer-to-double conversion, narrowed once to f32. No named pool entry
+// is required at these uses.
 static inline f32 f32FromS32_ae48(s32 v) {
-    ConvF64_AE48 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066AE48);
+    f64 c = (f64)v;
+    return (f32)c;
 }
 
 // Non-inlined twin for call sites where retail emits a real bl to the
@@ -5301,7 +5299,7 @@ extern "C" bool ColiCheckStateGate(CColiObject* self) {
     // Retail call site passes only the object pointer (its TU saw a
     // one-parameter declaration); route through the 1-arg view so MWCC emits
     // no default-argument setup.
-    ((LocalObjCtor1)&ColiInitFlatSegment)(&local);
+    ((LocalObjCtor1)&ColiInitFlatSegment)(&local);  // DEBT(callcast): C symbol; retail caller passes only this, shared decl has 3 defaulted params
     local.field_0x314 = (u32)self;
     CColiObject* tgt = self->field_0x00_obj;
     proc.InitQuad((CColiProcTarget*)tgt, self->field_0x08, self->field_0x04);

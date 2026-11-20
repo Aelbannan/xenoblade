@@ -1,11 +1,15 @@
 
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 
 namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; }
 
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
 
 // retail: chainBindEffectLink(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
 extern "C" void bindChainEffect(void* self, void* a, void* b, int c, int d) {
@@ -13,10 +17,9 @@ extern "C" void bindChainEffect(void* self, void* a, void* b, int c, int d) {
     chainBindEffectLink((cf::CChainEffect*)&((cf::CChainActorPc*)self)->mChainEffectRaw, (int)a, 0xAA, (int)self,
                   (int)b, (c != 0) ? 0x5F : 0);
 }
-extern "C" int chainResolveMemberFromSrc(int, int);
 
 extern "C" int forwardChainVoiceB3(int arg) {
-    return chainResolveMemberFromSrc(0xb3, arg);
+    return (int)chainResolveMemberFromSrc(0xb3, (u32*)(u32)arg);
 }
 struct ChainActorInnerData {
     u8 _pad00[0x3f28];
@@ -42,13 +45,13 @@ extern "C" int translateChainActorState(void* self) {
     if (value == 13) return 12;
     return value;
 }
-extern "C" bool chainUnlinkOnOwnerMatch(void*);
 // Address anchor for the effect-link subobject at +0x74, forwarded to the
 // unlink matcher (void* callee, so the member is only an offset anchor).
 struct ChainEff74Anchor {
     u8 _pad00[0x74];
     u8 link74;
 };
+extern "C" bool chainUnlinkOnOwnerMatch(void*);
 extern "C" bool isChainEffectReady(void* self) { return chainUnlinkOnOwnerMatch(&((ChainEff74Anchor*)self)->link74); }
 extern "C" bool isChainActorEnabled() { return true; }
 // Real class tree: CChainActorPc is novtable, vptr at +0x70 (0x70 pad), ctor writes lbl_eu_805384E0 (JP __vt__Q22cf13CChainActorPc).
@@ -97,20 +100,19 @@ struct ChainBitWord {
 extern "C" int testChainActorBit(void*, void* p) {
     return ((((ChainBitWord*)p)->bits3F00 >> 1) & 1);
 }
-extern "C" void CChain_QueryVoiceNode();
 extern "C" void queryChainVoice() {
     CChain_QueryVoiceNode();
 }
 // retail: CChain_ReloadVoiceDispatch(a, *(self), b ? *b : 0)
-extern "C" void CChain_ReloadVoiceDispatch(void* a, void* b, void* c);
 extern "C" void reloadChainVoice(void* self, void* a, void* b) {
-    CChain_ReloadVoiceDispatch(a, *(void**)self, b ? *(void**)b : 0);
+    CChain_ReloadVoiceDispatch((u8*)a, (CChainBattleObjTail*)*(void**)self,
+                               (int)(b ? *(void**)b : 0));
 }
 
 // Resets chain state (setFieldAndClear) and clears the chain effect.
 extern "C" void resetChainActor(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
-    chainClearTwoWords((cf::CChainEffect*)&self->mChainEffectRaw);
+    chainClearTwoWords(&self->mChainEffectRaw);
 }
 // Local struct for accessing known fields within the large object at self->unk0
 struct CChainBigObj {
@@ -124,9 +126,7 @@ struct CChainBigObj {
 
 // Shared external declarations
 extern "C" void ColiSetMoveEnableFlag(void*, int);
-extern void CChainActor_CleanupVoiceEnd(cf::CChainActorPc*);
 extern u8* findChainBattleActor(cf::CChainActorPc*);
-extern void CChainActor_ToggleCancelVoice(cf::CChainActorPc*, int);
 __declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_80668AE8 = 1.0f;
 __declspec(section ".sdata2") const float lbl_eu_80668AEC = 0.0f;
 __declspec(section ".sdata2") const float lbl_eu_80668AF0 = 0.01f;
@@ -136,7 +136,7 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) const double lbl_eu_80
 // Uses multi-exit guard pattern to match retail control flow.
 void updateChainActor(cf::CChainActorPc* self) {
     CChainBigObj* big = (CChainBigObj*)self->unk0;
-    CChainActor_CleanupVoiceEnd(self);
+    ::CChainActor_CleanupVoiceEnd((cf::CChainActor*)self);
     if (!(self->unk6C & 1)) goto tail_check;
     if (((int(*)(u8*))((u8**)self->mVTable())[16])((u8*)self) == 0) goto state5_check;
     if (((int(*)(u8*))((u8**)self->mVTable())[26])((u8*)self) != 0) goto state5_check;
@@ -204,12 +204,11 @@ tail_check:
 // Resets the chain effect and calls CChainActor_ClearTargetRef on this actor.
 extern "C" void clearChainTarget(cf::CChainActorPc* self) {
     chainTeardownLinkClear((cf::CChainEffect*)&self->mChainEffectRaw);
-    CChainActor_ClearTargetRef(self);
+    ::CChainActor_ClearTargetRef((cf::CChainActor*)self);
 }
 // External declarations specific to applyChainDamage
 extern void* CtrlObjectParam_GetCharEntry(u32 index);
 extern int CtrlObjectParam_GetCurrentRowKey(void*);
-extern u32 IdTable_SumValues(u8*, u32);
 extern u8* getListB28();
 extern float calcBattleDamage(int, u8*, int);
 
@@ -252,7 +251,7 @@ arg0:
     float f30;
     if (((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj) != 0) {
         u8* param = (u8*)((int(*)(u8*))(*(u8***)unk0obj)[164])(unk0obj);
-        f30 = lbl_eu_80668AF0 * (float)(s16)IdTable_SumValues(param, 0x44);
+        f30 = lbl_eu_80668AF0 * (float)(s16)IdTable_SumValues((CUnkObj8025FB10*)param, 0x44);
     } else {
         f30 = lbl_eu_80668AEC;
     }
@@ -277,7 +276,7 @@ arg0:
         }
     }
 done:
-    CChainActor_ToggleCancelVoice(self, arg);
+    ::CChainActor_ToggleCancelVoice((cf::CChainActor*)self, (u32)arg);
 }
 // Retail symbol: CChainActor_ToggleMoveFlag
 
@@ -289,7 +288,7 @@ extern "C" void updateChainMoveFlag(cf::CChainActorPc* self, int arg) {
     if ((u32)arg != bit && arg == 0) {
         ColiSetMoveEnableFlag((void*)(self->unk0 + 0x44a8), 1);
     }
-    CChainActor_ToggleMoveFlag(self, arg);
+    ::CChainActor_ToggleMoveFlag((cf::CChainActor*)self, (u32)arg);
 }
 // Data pad so the C++ vptr lands at +0x70 (retail lwz r12, 0x70(r3)).
 struct CChainActorPcV70Data {
@@ -354,8 +353,7 @@ extern "C" int isChainMeterFull() {
     return reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter >= 0x12c;
 }
 extern "C" void resetChainMeter() {
-    extern void PartyGaugeSetClamped(void* self, int a);
-    PartyGaugeSetClamped(&reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter, 0);
+    cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(&reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter), 0);
 }
 // Compares the halfword at this->unk0 + 0x3f28 against the result of
 // CtrlObjectParam_GetSlotTableBase() (a global config struct). Returns 0, 1, or 2 if the

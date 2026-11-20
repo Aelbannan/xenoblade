@@ -38,10 +38,6 @@ extern f32 lbl_eu_8066AA6C;
 extern f32 lbl_eu_8066AA70;
 extern f32 lbl_eu_8066AA74;
 
-// Debug region name for the light-manager allocation (create() arg, .rodata
-// string).
-extern const char lbl_eu_80524044[];
-
 // Vec4 scale helper (defined in kyoshin/cf/CTaskEnvironment.cpp, flat-name
 // symbol): out = in * s with w unscaled.
 namespace ml {
@@ -275,7 +271,9 @@ extern "C" void* __construct_new_array(void* block, ConstructorDestructor ctor,
                                        u32 count);
 
 // Light-setup imports (CLight.cpp / CVirtualLightObj.cpp / CScnEnvLgtCtrl.cpp).
-extern "C" void LightCtlSetObj(CLight* self, nw4r::g3d::LightObj* lightObj);
+// This TU's CLight is a size-only stub, so the canonical CLight.hpp cannot be
+// included; declare the real C++ linkage here.
+void LightCtlSetObj(CLight* self, int lightObjPtr);
 extern "C" void LightCtlCopyObj(CLight* self, u32 value);
 extern "C" void LightCtlScaleColor(CLight* self, f32 intensity);
 class CScnEnvLgtCtrl;
@@ -394,16 +392,20 @@ public:
 }
 }
 
-// Scene light manager: vtable slot at +0 (stored manually from
-// lbl_eu_8056E868), four CVirtualLightObjPtr reslist members (+0x0C..+0x8B)
-// holding the amb/dir light nodes, three vec4 blend fields (+0x8C..+0xBB)
-// and the light arrays / allocations torn down by the dtor (+0xC0..+0xC8).
-// __declspec(novtable) suppresses MWCC's automatic vtable stores (the dtor
-// stores lbl_eu_8056E868 manually); the virtual dtor still supplies the
-// deleting epilogue (flag > 0 -> __dl__FPv).
-class __declspec(novtable) CScnVirtualLight {
+// Scene light manager: compiler-emitted vtable slot at +0, four
+// CVirtualLightObjPtr reslist members (+0x0C..+0x8B) holding the amb/dir
+// light nodes, three vec4 blend fields (+0x8C..+0xBB) and the light arrays /
+// allocations torn down by the dtor (+0xC0..+0xC8). The virtual dtor is the
+// key function and supplies the deleting epilogue (flag > 0 -> __dl__FPv).
+class CScnVirtualLight {
 public:
     virtual ~CScnVirtualLight();
+
+    // CScn releases this manager through ScnTermRelease::release; the fourth
+    // retail vtable word is that unimplemented slot.
+    virtual void release(int flag) = 0;
+
+    CScnVirtualLight(CScnVirtualLightSrc* src);
 
     CScnVirtualLightSrc* mSub;      // +0x04 (scene pool; ctor arg)
     u32 value08;                    // +0x08 (ALLOC_HANDLE, erased by the dtor)
@@ -425,16 +427,6 @@ public:
     u8 _D8[0xA8];                   // +0xD8..+0x17F
     u32 value480;                   // +0x180
 };
-
-// Flat-name ctor (retail __ct__CScnVirtualLight is unmangled; cf.
-// CScnItemLightNw4r.cpp). Stores the vtable manually (novtable), keeps the
-// scene pool at +0x4 and seeds the allocation handle.
-extern "C" CScnVirtualLight* __ct__CScnVirtualLight(CScnVirtualLight* self,
-                                                    CScnVirtualLightSrc* src);
-
-// CScnVirtualLight vtable (retail .data). Array-typed so MWCC emits absolute
-// lis/addi addressing for the dtor's manual store.
-extern u8 lbl_eu_8056E868[];
 
 // reslist<CVirtualLightObj> teardown (nw4r library, flat-name symbol): called
 // explicitly with flag -1 for each reslist member at the end of the

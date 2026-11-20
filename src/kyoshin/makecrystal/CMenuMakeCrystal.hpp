@@ -44,3 +44,10 @@ public:
     /* 0x43E4 */ u8 mField43E4;
     /* 0x43E5 */ u8 mField43E5;
 }; // size: 0x43E8
+
+struct CMakeCrystalCopyBlock;
+
+// C++-linkage helpers owned by kyoshin/makecrystal/CMenuMakeCrystal.
+void MakeCrystalCopyParamBlock(CMakeCrystalCopyBlock* dst, const CMakeCrystalCopyBlock* src);
+bool MakeCrystalIsCreated();
+void* MakeCrystalGetWinData();

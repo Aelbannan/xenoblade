@@ -34,10 +34,6 @@ extern "C" {
     void CtrlObjectParam_ClaimArtsSlotRow(cf::CfObjectActor*, int);
     cf::CfObjectActor* findObjB28ById(int);
     cf::CfObjectActor* findObjB48ById(int);
-    void CBattleMan_ClearActorStatus(cf::CBattleManager*, cf::CfObjectActor*, int);
-    void CBattleMan_RunBattleEvent(cf::CBattleManager*, cf::CfObjectActor*,
-                      cf::CBattleStateEntry*, int);
-    void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
     bool isGlobalCamFlagSet__Fi(int mask);
     cf::CfUnknownSub* CfCode_GetSubObject(cf::CfCode800F42AC* self);
 
@@ -278,7 +274,7 @@ int setEneBtlState(VMThread* pThread) {
     entry.unk20 = static_cast<f32>(arg7);
 
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    CBattleMan_RunBattleEvent(bm, actor, &entry, 0);
+    CBattleMan_RunBattleEvent((u32)bm, (u32)actor, &entry, (u32)0);
     return 0;
 }
 
@@ -346,7 +342,7 @@ int onEneArtsAttack(VMThread* pThread) {
                     // Mode 1: check if battle manager's current target sub-object
                     // matches unk50.
                     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                    u8* bmTarget = reinterpret_cast<u8*>(CBattleMan_FetchVisionObj(bm));
+                    u8* bmTarget = reinterpret_cast<u8*>(((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj());
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
@@ -361,7 +357,7 @@ int onEneArtsAttack(VMThread* pThread) {
                     // Mode 2: same as mode 1 but also requires bit 17 of
                     // bmTarget+0x824 to be set.
                     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                    u8* bmTarget = reinterpret_cast<u8*>(CBattleMan_FetchVisionObj(bm));
+                    u8* bmTarget = reinterpret_cast<u8*>(((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj());
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
@@ -443,7 +439,7 @@ int setPcBtlState(VMThread* pThread) {
     }
 
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    CBattleMan_RunBattleEvent(bm, actor, &entry, 0);
+    CBattleMan_RunBattleEvent((u32)bm, (u32)actor, &entry, (u32)0);
     return 0;
 }
 
@@ -458,7 +454,7 @@ extern "C" int clearEneBtlState(VMThread* pThread) {
     cf::CfObjectActor* actor = findObjB48ById(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        CBattleMan_ClearActorStatus(bm, actor, id2);
+        CBattleMan_ClearActorStatus(bm, actor, (void*)id2);
     }
     return 0;
 }
@@ -512,7 +508,7 @@ extern "C" int clearPcBtlState(VMThread* pThread) {
     cf::CfObjectActor* actor = findObjB28ById(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        CBattleMan_ClearActorStatus(bm, actor, id2);
+        CBattleMan_ClearActorStatus(bm, actor, (void*)id2);
     }
     return 0;
 }

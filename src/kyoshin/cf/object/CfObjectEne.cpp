@@ -1,6 +1,7 @@
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include <types.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <cstring>
 // harness_catalog.hpp pulls cf/CfGameManager.hpp (via CTaskGameEff.hpp),
 // whose extern "C" getInstance__Q22cf14CBattleManagerFv returns
@@ -17,8 +18,7 @@
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneTablePtrs/CfEneTailView/CfEneReloadSlot views
 
 #include "kyoshin/code_801F3BE0.hpp"  // getUnk80664658, GimBind/UnbindEnemyActor (owner)
-extern "C" unsigned long SuddenCommuIsStateActive(void* self);
-extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
+#include "kyoshin/cf/CSuddenCommu.hpp"
 extern "C" void ColiSetMoveVec2(void* region, int flag, f32 a, f32 b);
 // CAIAction.cpp C-ABI imports: the +0x3380 CAIAction subobject helpers
 // (declared in CfObjectPc.hpp for the Pc TU; this TU does not include it).
@@ -73,7 +73,7 @@ CfObjectEne::~CfObjectEne() {
 int cf::CfObjectEne::CfObject_UnkVirtualFunc2() {
     CfObjectModel::CfObject_UnkVirtualFunc2();
     setPointEnabled(1);
-    CfObjectMove_setModelDisplayFlag(static_cast<CfObjectMove*>(this), 1);
+    CfObjectMove_setModelDisplayFlag((cf::CfObjectMove*)this, 1);
     dispatchItemLoad(this, 0x100000);
     dispatchItemLoad(this, 0x08000000);
     dispatchItemLoad(this, 0x10000000);
@@ -915,17 +915,13 @@ extern "C" void CActorParam_copyAtkSetBlock__Q22cf11CActorParamFv(cf::CActorPara
     const cf::CfEneAttackEntry* s = &src->records[0];
     cf::CfEneAttackEntry* d = &dst->records[0];
     cf::CfEneAttackEntry* end = &dst->records[6];
-    // volatile keeps each access strictly in program order (retail: three
-    // separate u32 copies stored +4 / +0 / +8, never hoisted)
-    volatile cf::CfEneAttackHdrBlock* vh =
-        (volatile cf::CfEneAttackHdrBlock*)&dst->header;
-    const volatile cf::CfEneAttackSrcHdrBlock* vsh =
-        (const volatile cf::CfEneAttackSrcHdrBlock*)&src->header;
-    u32 t0 = vsh->header.h0;
-    u32 t4 = vsh->header.h4;
-    vh->header.h4 = t4;
-    vh->header.h0 = t0;
-    vh->header.h8 = vsh->header.h8;
+    // Header copy stays field-by-field (retail: three separate u32 copies
+    // stored +4 / +0 / +8).
+    u32 t0 = src->header.h0;
+    u32 t4 = src->header.h4;
+    dst->header.h4 = t4;
+    dst->header.h0 = t0;
+    dst->header.h8 = src->header.h8;
     do {
         d->field_0x20 = strlen(s->name);
         strcpy(d->name, s->name);
@@ -991,12 +987,12 @@ void* cf::CActorParam::CActorParam_getArtsSetBlock() { return &this->mArtsSet; }
 extern "C" void CActorParam_copyArtsSetBlock__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneArtsData* src) {
     cf::CfEneArtsArea* dst = (cf::CfEneArtsArea*)self;
-    const volatile cf::CfEneArtsEntry* s = &src->records[0];
-    volatile cf::CfEneArtsEntry* d = &dst->records[0];
+    const cf::CfEneArtsEntry* s = &src->records[0];
+    cf::CfEneArtsEntry* d = &dst->records[0];
     cf::CfEneArtsEntry* end = &dst->records[24];
     // retail expands the 0x34 header copy field-by-field; volatile keeps each
-    // access strictly in program order (plain assignments collapse into a
-    // block struct copy, which retail does not emit)
+    // access strictly in program order (plain assignments batch the loads into
+    // callee-saved registers, which retail does not emit)
     volatile cf::CfEneArtsHdrBlock* vh = (volatile cf::CfEneArtsHdrBlock*)&dst->header;
     const volatile cf::CfEneArtsSrcHdrBlock* vsh =
         (const volatile cf::CfEneArtsSrcHdrBlock*)&src->header;
@@ -1174,7 +1170,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc88(u32 val, u32 argA, u32 argB) 
     this->CActorParam_addSecondCurrency(argA);
     u8* obj = (u8*)this->unk15E0;
     if (obj != NULL) {
-        Counter_AddClamped(obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, argB);
+        Counter_AddClamped((CUnk8025FB10*)obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, argB);
     }
 }
 

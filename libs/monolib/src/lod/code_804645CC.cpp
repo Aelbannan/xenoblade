@@ -78,8 +78,6 @@ extern const char lbl_eu_8052CF10[];
 extern const char lbl_eu_8052CEF4[];
 extern const char lbl_eu_8052CF6C[];
 extern const char lbl_eu_8052CF50[];
-extern const char lbl_eu_8052CF3C[];
-extern const char lbl_eu_8052CF20[];
 extern const char lbl_eu_80661E98[];
 extern const char lbl_eu_80661EA8[];
 

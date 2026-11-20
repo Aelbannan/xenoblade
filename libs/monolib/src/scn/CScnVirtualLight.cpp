@@ -38,51 +38,47 @@ extern "C" CScnVirtualLightReslist* __ct__80492074(CScnVirtualLightReslist* obj)
     return obj;
 }
 
-// Retail __ct__CScnVirtualLight (flat name; cf. CScnItemLightNw4r.cpp):
-// installs the vtable, stores the scene pool, seeds the allocation handle to
-// INVALID, default-constructs the four reslists (__ct__80492074) and the
-// three blend vec4s (scnVlInitVec4), arms the enabled byte, then fetches the
-// pool's ALLOC_HANDLE through CScnItemPool_resolveScene + the vtable+0x2C virtual and
-// creates the manager region. The reslists reserve 8/8/8/2 nodes, the
-// CLight[0x80] / LightObj[0x80] arrays are built with __construct_new_array
-// and cross-linked via LightCtlSetObj, the 128-slot allocation is created,
-// and the lights are initialized by scnVlInitLights.
-extern "C" CScnVirtualLight* __ct__CScnVirtualLight(CScnVirtualLight* self,
-                                                    CScnVirtualLightSrc* src) {
-    *(void**)self = (void*)lbl_eu_8056E868;
-    self->mSub = src;
-    self->value08 = (u32)-1;
-    __ct__80492074(&self->res_0C);
-    __ct__80492074(&self->res_2C);
-    __ct__80492074(&self->res_4C);
-    __ct__80492074(&self->res_6C);
-    scnVlInitVec4(&self->field_0x8C);
-    scnVlInitVec4(&self->field_0x9C);
-    scnVlInitVec4(&self->field_0xAC);
+// CScnVirtualLight constructor: stores the scene pool, seeds the allocation
+// handle to INVALID, default-constructs the four reslists (__ct__80492074)
+// and the three blend vec4s (scnVlInitVec4), arms the enabled byte, then
+// fetches the pool's ALLOC_HANDLE through CScnItemPool_resolveScene + the
+// vtable+0x2C virtual and creates the manager region. The reslists reserve
+// 8/8/8/2 nodes, the CLight[0x80] / LightObj[0x80] arrays are built with
+// __construct_new_array and cross-linked via LightCtlSetObj, the 128-slot
+// allocation is created, and the lights are initialized by scnVlInitLights.
+CScnVirtualLight::CScnVirtualLight(CScnVirtualLightSrc* src) {
+    this->mSub = src;
+    this->value08 = (u32)-1;
+    __ct__80492074(&this->res_0C);
+    __ct__80492074(&this->res_2C);
+    __ct__80492074(&this->res_4C);
+    __ct__80492074(&this->res_6C);
+    scnVlInitVec4(&this->field_0x8C);
+    scnVlInitVec4(&this->field_0x9C);
+    scnVlInitVec4(&this->field_0xAC);
     f32 d4 = 5.0f;
     // comma sequencing pins the byte store ahead of the float store
-    self->enabled = 1, self->valueD4 = d4;
+    this->enabled = 1, this->valueD4 = d4;
     u32 handle = ((CScnVirtualLightHandleSrc*)CScnItemPool_resolveScene(src))->GetHandle();
-    self->value08 = mtl::MemManager::create(handle, 0x10000, lbl_eu_80524044);
-    scnVlReserve(&self->res_0C, self->value08, 8);
-    scnVlReserve(&self->res_2C, self->value08, 8);
-    scnVlReserve(&self->res_4C, self->value08, 8);
-    scnVlReserve(&self->res_6C, self->value08, 2);
-    self->mCLights = (CLight*)__construct_new_array(
-        mtl::MemManager::allocate_array(0x2010, self->value08),
+    this->value08 = mtl::MemManager::create(handle, 0x10000, "VLGT Mem");
+    scnVlReserve(&this->res_0C, this->value08, 8);
+    scnVlReserve(&this->res_2C, this->value08, 8);
+    scnVlReserve(&this->res_4C, this->value08, 8);
+    scnVlReserve(&this->res_6C, this->value08, 2);
+    this->mCLights = (CLight*)__construct_new_array(
+        mtl::MemManager::allocate_array(0x2010, this->value08),
         &__ct__6CLightFv, &__dt__6CLightFv, 0x40, 0x80);
-    self->mLightObjs = (nw4r::g3d::LightObj*)__construct_new_array(
-        mtl::MemManager::allocate_array(0x2210, self->value08),
+    this->mLightObjs = (nw4r::g3d::LightObj*)__construct_new_array(
+        mtl::MemManager::allocate_array(0x2210, this->value08),
         &__ct__Q34nw4r3g3d8LightObjFv, &__dt__Q34nw4r3g3d8LightObjFv, 0x44,
         0x80);
     int i = 0;
     do {
-        LightCtlSetObj(&self->mCLights[i], &self->mLightObjs[i]);
+        LightCtlSetObj(&this->mCLights[i], reinterpret_cast<int>(&this->mLightObjs[i]));
         i++;
     } while (i < 0x80);
-    self->mExtraAlloc = (u32*)mtl::MemManager::allocate_head(self->value08, 0x200, 4);
-    scnVlInitLights(self);
-    return self;
+    this->mExtraAlloc = (u32*)mtl::MemManager::allocate_head(this->value08, 0x200, 4);
+    scnVlInitLights(this);
 }
 
 // Empty deleting destructor (retail keeps the delete-if-flag epilogue).
@@ -120,11 +116,9 @@ extern "C" void scnVlDtorList(CScnVirtualLightReslist* self) {
 // four reslists (scnVlDtorList), free the CLight/LightObj arrays and the
 // extra allocation, erase the resource id, then run each reslist's explicit
 // dtor (retail __dt__reslist_CVirtualLightObj, flat-name import) in reverse
-// member order. The vtable (lbl_eu_8056E868) is stored manually because the
-// class is __declspec(novtable); the virtual dtor supplies the deleting
-// epilogue (flag > 0 -> __dl__FPv).
+// member order. The virtual dtor supplies the deleting epilogue
+// (flag > 0 -> __dl__FPv).
 CScnVirtualLight::~CScnVirtualLight() {
-    *(void**)this = (void*)lbl_eu_8056E868;
     scnVlResetMgr(this, 0);
     scnVlDtorList(&res_0C);
     scnVlDtorList(&res_4C);
@@ -1299,16 +1293,6 @@ extern "C" void scnVlResetMgr(CScnVirtualLight* self, int arg) {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.rodata] 0x80524030-0x80524050 (32B): RTTI name "CScnVirtualLight" (20B)
-// + "VLGT Mem" alloc-region tag (12B, declared extern in CScnVirtualLight.hpp).
-extern const char lbl_eu_80524030[20] = {
-    0x43,0x53,0x63,0x6E,0x56,0x69,0x72,0x74,0x75,0x61,0x6C,0x4C,0x69,0x67,0x68,0x74,
-    0x00,0x00,0x00,0x00,
-};
-const char lbl_eu_80524044[] = {
-    'V','L','G','T',' ','M','e','m','\0','\0','\0','\0',
-};
-
 // [.bss] 0x80658648-0x80658658 (16B): shared vec4 written by sinit_80494300
 // (declared extern in CScnVirtualLight.hpp).
 CTaskGame_setVec4_tmp lbl_eu_80658648;

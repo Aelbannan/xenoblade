@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "kyoshin/cf/CfResObjImpl.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)

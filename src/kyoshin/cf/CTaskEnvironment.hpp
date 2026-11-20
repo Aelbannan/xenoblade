@@ -183,7 +183,7 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // C-linkage imports used by the environment-light setup (retail symbols).
 extern "C" void scnVlResetMgr(CTaskEnvScnMgr* mgr, int flag);
-extern "C" void* Scn_CallUnk8C_V10(void* scene);
+extern "C" u32 Scn_CallUnk8C_V10(void* scene);
 extern "C" CTimeLightGrp* __ct__CTimeLightGrp(CTimeLightGrp* self,
                                                void* parent);
 extern "C" CVirtualLightObj* scnVlCreateAmb(CTaskEnvScnMgr* mgr, const u8* slot,
@@ -270,6 +270,8 @@ extern "C" void Env_MtxMulVec(ml::CVec3* out, const CTaskEnvRotMtx* m,
 // seconds clamped against the sdata2 limit constant.
 extern "C" void Env_SetClock(CTaskEnvTime* time, int hour, int minute,
                               int second);
+// Region code 0/1/2 for the current record column.
+u32 Env_RegionCode();
 // Allocate (0xEC bytes from the work-thread heap), construct and register a
 // CTaskEnvironment under 'parent'.
 CTaskEnvironment* Env_CreateTask(CProcess* parent, CProcess* arg);

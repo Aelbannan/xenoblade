@@ -4,6 +4,15 @@
 #include <exception>
 
 namespace std{
+    // MetroWerks RTTI locators are {const char* name, base-list} pairs in
+    // .sdata; name() reads word 0 directly.
+    class type_info {
+    public:
+        const char* name() const { return mName; }
+    private:
+        const char* mName;
+    };
+
     class bad_cast : public exception {
     public:
         virtual ~bad_cast(){}

@@ -440,7 +440,7 @@ public:
     void func_8008566C();
     void resetCameraManager();
     bool isSceneReadyForInput();
-    bool isSceneActive();
+    static bool isSceneActive();
     void cleanupMapEffects();
     void updatePlayerContainers();
     void func_80085978();  // body lives in the extern "C" Fv-symbol definition below
@@ -511,7 +511,7 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-extern "C" void BattleWork_InitCtrlWork(UnkClass_8007E864* object);
+#include "kyoshin/code_801A929C.hpp"
 extern "C" void CamEvtReleaseAllSlots(CfCamEventManager* object);
 extern "C" void* __dt__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, s32 deleteFlag);
@@ -527,7 +527,7 @@ extern "C" cf::CfObject* cfCam_getActiveObj(CfCamEventManager* manager);
 extern "C" bool CfScript_TestMask(u32 flag);
 extern "C" bool probeReadyLists();
 extern "C" void func_80141B20(cf::CfGameManager* manager);
-extern "C" void setMgrFixStrName(cf::CfGameManager* manager);
+extern "C" void setMgrFixStrName(const char* name);
 bool probeReadyLists();
 s32 bindPadSubobjects(s32 value);
 void gmTeardown();
@@ -543,30 +543,23 @@ extern "C" bool Scn_IsDefaultScale(CScn* scene);
 extern "C" bool Scn_IsScaleAtLeastOne(CScn* scene);
 extern "C" void MenuSnd_SetMasterAndPush_9510(float value);
 extern "C" void MenuSnd_SetSeVolPush_95F4(float value);
-extern "C" void firstReslistB48();
-extern "C" VoiceSource* firstReslistB68();
-extern "C" void nextReslistB48(void);
-extern "C" VoiceSource* insertReslistB68(VoiceSource* source = 0);
+extern "C" void* firstReslistB48();
+extern "C" void* firstReslistB68();
+extern "C" cf::CfObject* nextReslistB48(cf::CfObject* obj);
+extern "C" cf::CfObject* insertReslistB68(cf::CfObject* obj);
 extern "C" u32 lbl_eu_8065FC18[];
-extern "C" void getReslistB88();
+extern "C" void* getReslistB88();
 extern "C" void func_80141B54();
-extern "C" float CfT_PlayRateGet();
 extern "C" void func_8006A12C();
 extern "C" void func_8006A1A0();
-extern "C" void CfT_PlayClockSnapshot(u16*, u16*);
 extern "C" bool func_8006A2E0();
-extern "C" u32 CfT_FrameCountA();
-extern "C" u32 CfT_FrameCountB();
-extern "C" u32 CfT_FrameCountC();
 extern "C" void CfT_FrameCounterStore();
-extern "C" void CfT_FrameCounterLoad();
-void CfT_AdvanceFrameTimer();
-extern "C" void func_80141C6C(void*, void*);
+
 // func_8009DBF4 / CtrlObjectParam_WriteU16RowEntry are also declared (extern "C") in
 // include/kyoshin/cf/CItem.hpp; the CfGameManager unity TU does not include
 // that header, so they are re-declared here for the func_8007DCB8 bdat writer.
 extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
-extern "C" void CtrlObjectParam_WriteU16RowEntry(void* table, u16 index, u16 value);
+
 extern "C" void func_8009EF9C(void* data, u32 value);
 extern "C" void CItem_findOrCreateRec(u32 value, void* result, s32 mode, void* other);
 // func_8007DCB8 bdat-table scratch globals (.sbss /.data).
@@ -636,7 +629,6 @@ extern "C" void* __dt__801BF874(void* self, s32 deleteFlag);
 extern "C" void* __dt__Q22cf17UnkClass_8018EF3CFv(void* self, s32 deleteFlag);
 extern "C" void CfScript_ResetMgr();
 extern "C" void CtrlRemote_InitSharedBufVoid();
-extern "C" void CfTFile_CancelResetFull(cf::CfObjectMove* self);
 extern "C" u32 stopSoundMan__Fv();
 extern "C" void KyoshinHeap_Shutdown();
 extern "C" void Remove__8CProcessFv(CProcess* process);
@@ -693,8 +685,7 @@ extern "C" void __dt__8023E448();
 extern "C" void CItem_rerankAllKinds();
 void CItem_rerankAllKinds();
 extern "C" CfFileEventIdsView* CtrlRemote_GetFileEventIds();
-extern "C" void PartyGaugeSetClamped(u8* object, u32 value);
-// getInstance__Q22cf14CBattleManagerFv comes from CBattleManagerApi.hpp (void*);
+// getInstance__Q22cf14CBattleManagerFv comes from CBattleManager.hpp (void*);
 // callers cast at the use site.
 extern "C" void func_802959AC(cf::CHelpManager* object);
 extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* buffer, s32 mode);
@@ -708,7 +699,7 @@ extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b);
 // CHelpManager singleton (func_802959AC argument; .sdata).
 extern cf::CHelpManager* lbl_eu_80664A10;
 // Event-done halfword countdown flag (.sbss) cleared by resetBattlePresentation.
-extern u16 lbl_eu_80664774;
+extern u16 gCfNandRestoredEventFlag;
 // Fade/reset float pair written with the shared zero constant.
 extern float lbl_eu_80663ED8;
 extern float lbl_eu_80663EDC;
@@ -718,7 +709,7 @@ extern u32 gCfTEventFrameCounter;
 extern u32 gmFrameCounter;
 extern "C" void* func_80190840(void* object, u32* e04);
 extern "C" void func_801889D0(u32 object);
-// func_800D9354: single shared decl on kyoshin/cf/CBattleManagerApi.hpp.
+// func_800D9354: single shared decl on kyoshin/cf/CBattleManager.hpp.
 extern "C" void func_80295A88(cf::CHelpManager* object);
 extern "C" void func_802A1610();
 extern "C" void func_8006A75C();
@@ -760,8 +751,8 @@ extern "C" void CtrlRemote_SetSharedBit(u32 first, u32 second);
 // func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
 extern "C" void func_8013F244();
 extern "C" void CItem_clearSharedBox();
-extern "C" void* CCharVoiceMan_EnqueueFaintVoice();
-extern "C" s32 MiniMapHasGlobalData();
+extern "C" int CCharVoiceMan_EnqueueFaintVoice(void);
+
 extern "C" void func_8011C2FC();
 extern "C" void CfRes_callFunc_67F10(s32 value);
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
@@ -780,7 +771,6 @@ extern "C" void func_8027F148();
 extern "C" void func_80068C7C();
 extern "C" void func_80068D14();
 extern "C" void CfScript_ClearReq2();
-extern "C" void CBattleMan_SetPartyFlagReset(void* battle, u32 value);
 extern "C" void* func_8004B7C0(void* out, const ml::CVec3* src);
 extern "C" void func_80199678(void* ctrl, int flag); // 2-arg form per CtrlMovePC.cpp definition - keep in sync with TU-local decls
 // zero vector constant exported by the ml unit. Declared by

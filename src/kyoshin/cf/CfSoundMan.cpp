@@ -1,3 +1,5 @@
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/core/code_804E36DC.hpp" // Scn_FindCamItem (single owner decl)
@@ -50,9 +52,9 @@ extern "C" void* __dt__801BF80C(CfSoundRecord* _this, int flags);
 // console's sound mode).
 CfSoundManGlobal* __ct__801BF76C(CfSoundManGlobal* self) {
     self->field_0x00 = 0;
-    FxPair_Init(self->mFxSlots);
+    FxPair_Init((FxSoundPair*)self->mFxSlots);
     __construct_array(self->mRecords, (void*)CfSoundMan_CtorRecord,
-                      (void*)__dt__801BF80C, 0x268, 0xD);
+                      (ConstructorDestructor*)__dt__801BF80C, 0x268, 0xD);
     gSoundManInstance = self;
     if (!IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv()) {
         gSoundSystemInitFlag = 0;
@@ -103,7 +105,7 @@ void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
             nw4r::snd::SoundSystem::ShutdownSoundSystem();
         }
         gSoundManInstance = 0;
-        __destroy_arr(self->mRecords, (void*)__dt__801BF80C, 0x268, 0xD);
+        __destroy_arr(self->mRecords, (ConstructorDestructor*)__dt__801BF80C, 0x268, 0xD);
         __dt__801C3340(self->mFxSlots, -1);
         if (flags > 0) {
             operator delete(self);
@@ -1500,7 +1502,7 @@ extern "C" void* __dt__801C189C(CfSoundHandle* _this, int flags) {
 extern "C" {
 void* __dt__801C18F4(CfSoundSlot* _this, int flags) {
     if (_this != NULL) {
-        __destroy_arr((void*)_this, (void*)__dt__801C189C, 0x30, 0x40);
+        __destroy_arr((void*)_this, (ConstructorDestructor*)__dt__801C189C, 0x30, 0x40);
         if (flags > 0) {
             operator delete(_this);
         }
@@ -1513,7 +1515,7 @@ void* __dt__801C18F4(CfSoundSlot* _this, int flags) {
 // (__dt__801C18F4) as a global cleanup via the link cell before the table.
 void sinit_801C183C() {
     __construct_array((void*)gCfSoundSlots, (void*)CfSoundMan_InitSlotState,
-                      (void*)__dt__801C189C, 0x30, 0x40);
+                      (ConstructorDestructor*)__dt__801C189C, 0x30, 0x40);
     __register_global_object((void*)gCfSoundSlots, (void*)__dt__801C18F4,
                              (void*)gCfSoundSlotRegNode);
 }

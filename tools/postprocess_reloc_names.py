@@ -2766,13 +2766,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@GUARD@instance$", "lbl_eu_806654C0"),
         ),
     ),
-    "snd_BasicPlayer.o": UnitRules(
-        # Retail split carries NO data: the BasicPlayer vtable ships from
-        # nw4r_data.s @lbl_eu_8056A6E8 (stored by __ct via lis/addi).
-        exact_renames=(
-            ("__vt__Q44nw4r3snd6detail11BasicPlayer", "lbl_eu_8056A6E8"),
-        ),
-    ),
     "g3d_resnode.o": UnitRules(
         pool_patterns=(
             # CalcChrAnmResult pools its own 1.0f; retail loads it from

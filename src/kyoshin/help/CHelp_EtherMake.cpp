@@ -1,4 +1,5 @@
 #include "kyoshin/help/CHelp_EtherMake.hpp"
+#include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
 namespace cf {
 bool CHelp_EtherMake::isEtherReady() {

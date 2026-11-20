@@ -105,8 +105,8 @@ public:
     virtual ~CMCGetItemBox();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 isMCGetItemBoxReady();
-    u8 isMCGetItemBoxGridMode();
+    int isMCGetItemBoxReady();
+    int isMCGetItemBoxGridMode();
 
     UnkClass_8045F564 memRegion1;    // 0x04-0x13
     UnkClass_8045F564 memRegion2;    // 0x14-0x23
@@ -143,8 +143,25 @@ public:
     CMCItemBoxSub sub_314;           // 0x314
 };
 
+// Free functions operating on the item-box widget. Their C++ mangled names
+// are the retail symbols; the owning TU defines them.
+void loadMCGetItemBoxFiles(CMCGetItemBox* self);
+void updateMCGetItemBox(CMCGetItemBox* self);
+void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* drawInfo);
+void teardownMCGetItemBox(CMCGetItemBox* self);
+u8 isMCGetItemBoxActive(CMCGetItemBox* self);
+void confirmMCGetItemBox(CMCGetItemBox* self);
+void moveMCGetItemBoxRight(CMCGetItemBox* self);
+void moveMCGetItemBoxUp(CMCGetItemBox* self);
+void moveMCGetItemBoxDown(CMCGetItemBox* self);
+void toggleMCGetItemBoxSysWin(CMCGetItemBox* self);
+void openMCGetItemBoxSysWin(CMCGetItemBox* self);
+u32 getMCGetItemBoxPageState(CMCGetItemBox* self);
+void cacheMCGetItemBoxEntries(CMCGetItemBox* self);
+u32 getMCGetItemBoxKeyCode(CMCGetItemBox* self);
+
 // ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// C-linkage imports
 // ---------------------------------------------------------------------------
 
 // CItem_initItemImplInstances: canonical decl from CfGameManager.hpp.
@@ -159,8 +176,8 @@ extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
 extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" char lbl_eu_8050FF8C[];
-extern "C" void* lbl_eu_806640EC;  // declared u32 in CCollepedia.hpp, void* in CItemBoxLine.hpp -> kept void*
 extern "C" void* lbl_eu_806640D8;  // declared void* in CMCEffStart.hpp/CItemBoxLine.hpp -> kept void*
+extern char* lbl_eu_806640EC;  // canonical decl: CMCCrystalBox.hpp
 extern "C" void* lbl_eu_80664100;  // unused address anchor - kept void*
 extern "C" void* sCrystalItemTable;  // unused address anchor - kept void*
 extern "C" void* sCrystalMesTable;  // unused address anchor - kept void*
@@ -184,10 +201,10 @@ extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub
 // ---------------------------------------------------------------------------
 // OnFileEvent / getMCItemSubText imports (retail symbol names verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void copyVEC3(void*, void*);
-// code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
-extern "C" void Bdat_GetTable_AA34();
-extern "C" void* __ct__CTagProcessor(void*);
+extern "C" void copyVEC3(void*, const void*);  // canonical decl: CMCCrystalBox.hpp
+
+extern "C" void* Bdat_GetTable_AA34();  // canonical decl: CMCCrystalBox.hpp
+
 
 /* 28-byte message-format helper table read by getMCItemSubText's '%2' handler
    (indexed by the item's kind byte). */

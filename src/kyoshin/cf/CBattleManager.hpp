@@ -2,7 +2,6 @@
 
 #include <types.h>
 #include <cstring>
-#include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/IFactoryEvent.hpp"
 #include "kyoshin/cf/IBattleEvent.hpp"
 #include "kyoshin/cf/chain/CChain.hpp"
@@ -116,4 +115,43 @@ namespace cf{
         // (spInstance is the real static member declared above)
     };
 }
+
+// Single owner API for cf::CBattleManager. These declarations used to live in
+// kyoshin/cf/CBattleManager.hpp; callers now include this header.
+//
+// The singleton has two spellings for the same retail symbol: the real static
+// member above and this C-linkage import for TUs that keep the pointer opaque.
+extern "C" void* getInstance__Q22cf14CBattleManagerFv();
+
+// The old CBattleManagerSlot28 view is gone: vtable slot 0x28 is the real
+// cf::CBattleManager::CheckUnk84Flag(u32) declared above.
+
+// Per-frame battle-manager update (retail-unmangled updateBattleManager).
+extern "C" void updateBattleManager(cf::CBattleManager* self);
+
+// Battle event dispatch (retail-unmangled func_800F3970).
+extern "C" void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal);
+
+struct BattleObjAccessor;
+struct BattleMoveObjAccessor;
+struct Func800EA9A8_Arg5;
+
+bool CBattleMan_ListHasValue(void* mgr, unsigned int value);
+void* CBattleMan_NextListItem(void* self);
+void* CBattleMan_FindNextActorRef(void* self, void* value);
+void CBattleMan_HandleMoveType45(void* self, BattleObjAccessor* obj, void* enemy,
+                                 BattleMoveObjAccessor* move);
+void CBattleMan_FireActorEvent918(void* self, BattleObjAccessor* actor,
+                                  Func800EA9A8_Arg5* arg, void* id);
+void CBattleMan_RunBattleEvent(u32 a, u32 b, void* c, u32 d);
+void CBattleMan_ClearEventNotify(void* self, u32 id, u16 subId);
+void CBattleMan_ClearActorStatus(void* ignored, void* actor, void* arg);
+int CBattleMan_GetUnk94Count(void* self, int key);
+void CBattleMan_SetPartyFlagReset(cf::CBattleManager* mgr, u32 value);
+void CBattleMan_BumpUnk94Key(cf::CBattleManager* mgr, s32 key);
+s32 CBattleMan_FindActorByKind(cf::CBattleManager* mgr, s32 kind);
+void CBattleMan_RaiseBattleFlag10(cf::CBattleManager* mgr);
+void CBattleMan_DropBattleFlag10(cf::CBattleManager* mgr);
+void CBattleMan_MarkList48Flag40(void* self);
+void CBattleMan_RefreshChainEnum(cf::CBattleManager* mgr);
 

@@ -2,6 +2,8 @@
 // KizunagramIsHidden / KizunagramIsOpen: FULL_MATCH (byte-identical).
 
 #include "kyoshin/CPcKizunagram.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "kyoshin/CPcKizunagramHelpers.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 
 #include "monolib/device/CDeviceFile.hpp"
@@ -115,7 +117,7 @@ extern "C" void KizunagramTerm(CPcKizunagram* self) {
 }
 
 
-u8 KizunagramIsOpen(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
+int KizunagramIsOpen(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
 
 // CPcKizunaCur constructor: paint the fixed layout with the vtable and the
 // embedded accessor, then zero the following fields (visible flag = 1).
@@ -274,7 +276,7 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
             }
             for (u32 k = 1; k <= 6; k++) {
                 char buf[0x20];
-                sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
+                sprintf(buf, "on_pain%d", (u8)k);
                 u8 e8 = BdatGetU8Direct((const void*)table, (const char*)buf, (u8)n);
                 int rnd = (e8 & 0xff) + 0x29;
                 CtrlRemote_TouchBitByArg(rnd);
@@ -288,18 +290,18 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
                     visible = true;
                 }
                 int id = (e8 & 0xff) + 1;
-                char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+                char* str = (char*)BdatTouchStringCell("JNL_PClinelist", "pain2", id);
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                 if (p != 0) setPaneVisible(p, visible);
                 if (visible != 0) {
                     u32 tex = (u32)self->mArcRes->GetResource(
-                        (u32)((0x7469ull << 16) + 0x6d67), lbl_eu_8050D868 + 0xb5, 0);
+                        (u32)((0x7469ull << 16) + 0x6d67), "mf40_kiz_pclin_n.tpl", 0);
                     if (tex != 0) PaneSetTexPalette(p, (TPLPalette*)tex);
                 }
-                char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+                char* str2 = (char*)BdatTouchStringCell("JNL_PClinelist", "icon_pain", id);
                 nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
                 if (p2 != 0) setPaneVisible(p2, 0);
-                char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+                char* str3 = (char*)BdatTouchStringCell("JNL_PClinelist", "txt_pain", id);
                 nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
                 if (p3 != 0) setPaneVisible(p3, 0);
             }
@@ -311,16 +313,16 @@ extern "C" __declspec(noinline) void KizunagramRefreshRows(CPcKizunagram* self) 
                 if (CtrlRemote_TouchBitByArg(0x20) >= touchThreshold) {
                     for (u32 k = 1; k <= 6; k++) {
                         char buf[0x20];
-                        sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
+                        sprintf(buf, "on_pain%d", (u8)k);
                         u8 e8 = BdatGetU8Direct((const void*)table, (const char*)buf, (u8)n);
                         int id = (e8 & 0xff) + 1;
-                        char* str = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+                        char* str = (char*)BdatTouchStringCell("JNL_PClinelist", "pain2", id);
                         nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                         if (p != 0) setPaneVisible(p, 0);
-                        char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+                        char* str2 = (char*)BdatTouchStringCell("JNL_PClinelist", "icon_pain", id);
                         nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
                         if (p2 != 0) setPaneVisible(p2, 0);
-                        char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+                        char* str3 = (char*)BdatTouchStringCell("JNL_PClinelist", "txt_pain", id);
                         nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
                         if (p3 != 0) setPaneVisible(p3, 0);
                     }
@@ -350,7 +352,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
     // Second pass: refresh the 6 affinity rows (u32 counter -> cmplwi/ble).
     for (k = 1; k <= 6; k++) {
         char buf[0x20];
-        sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
+        sprintf(buf, "on_pain%d", (u8)k);
         u32 e8 = BdatGetU8Direct((const void*)table, (const char*)buf, (s8)self->mField28 + 1);
         // Two distinct mask forms stop MWCC from CSE-ing a single masked
         // temp; retail recomputes the byte after the rand call from a raw
@@ -358,7 +360,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
         u16 val = (u16)CtrlRemote_TouchBitByArg((e8 & 0xff) + 0x29);
         int id = (u8)e8 + 1;
 
-        char* str1 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+        char* str1 = (char*)BdatTouchStringCell("JNL_PClinelist", "pain2", id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
         if (isPaneVisible(pane) == 0) continue;
@@ -367,24 +369,24 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
         const char* s1;
         if (val < 0xbb8) {
             if (val < 0x7d0) {
-                s1 = (val < 0x3e8) ? lbl_eu_8050D868 + 0xe4 : lbl_eu_8050D868 + 0xf9;
+                s1 = (val < 0x3e8) ? "mf40_kiz_pclin_e.tpl" : "mf40_kiz_pclin_d.tpl";
             } else {
-                s1 = lbl_eu_8050D868 + 0x10e;
+                s1 = "mf40_kiz_pclin_c.tpl";
             }
         } else {
-            s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x138 : lbl_eu_8050D868 + 0x123;
+            s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? "mf40_kiz_pclin_a.tpl" : "mf40_kiz_pclin_b.tpl";
         }
         u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
         if (tex1 != 0) PaneSetTexPalette(pane, (TPLPalette*)tex1);
 
-        char* str2 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+        char* str2 = (char*)BdatTouchStringCell("JNL_PClinelist", "icon_pain", id);
         const char* s2;
         if (val >= 0xbb8) {
-            s2 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x1ad : lbl_eu_8050D868 + 0x195;
+            s2 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? "mf40_kiz_pcicon_a00.tpl" : "mf40_kiz_pcicon_b00.tpl";
         } else if (val >= 0x7d0) {
-            s2 = lbl_eu_8050D868 + 0x17d;
+            s2 = "mf40_kiz_pcicon_c00.tpl";
         } else {
-            s2 = (val >= 0x3e8) ? lbl_eu_8050D868 + 0x165 : lbl_eu_8050D868 + 0x14d;
+            s2 = (val >= 0x3e8) ? "mf40_kiz_pcicon_d00.tpl" : "mf40_kiz_pcicon_e00.tpl";
         }
         u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, s2, 0);
         if (tex2 != 0) {
@@ -393,7 +395,7 @@ void KizunagramBuildRowLookup(CPcKizunagram* self) {
             if (pane2 != 0) setPaneVisible(pane2, 1);
         }
 
-        char* str3 = (char*)BdatTouchStringCell(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+        char* str3 = (char*)BdatTouchStringCell("JNL_PClinelist", "txt_pain", id);
         setLayoutTextBoxNumber(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) setPaneVisible(pane3, 1);
@@ -617,7 +619,7 @@ extern "C" int KizunagramCheckRowHighlight(CPcKizunagram* self, const void* tabl
 int CPcKizunagram::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
         mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x12000,
-                                &lbl_eu_8050D868[0x26b], 0);
+                                "CPcKizunagram", 0);
         void* fileData;
         // RAII scratch-region guard; typed local so MWCC scopes the dtor like
         // retail (CLoad/CTitle idiom).
@@ -625,9 +627,9 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         fileData = mFileHandle->getData();
         mtl::MemManager::setMemInitFlag(false);
         mArcRes = CLibLayout::createArcResourceAccessor();
-        mArcRes->Attach(fileData, &lbl_eu_8050D868[0x279]);
-        buildLayout(&mLayout, mArcRes, &lbl_eu_8050D868[0x27d]);
-        bindLayoutAnimTransform(mLayout, &mAnimTransform, mArcRes, &lbl_eu_8050D868[0x293]);
+        mArcRes->Attach(fileData, "arc");
+        buildLayout(&mLayout, mArcRes, "mf40_kiz_pcline.brlyt");
+        bindLayoutAnimTransform(mLayout, &mAnimTransform, mArcRes, "mf40_kiz_pcline_in.brlan");
 
         // Bind the font handle into the layout's root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();

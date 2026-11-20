@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kyoshin/IUICf.hpp"
+#include "kyoshin/menu/CMenuBattleDamageSymbols.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"

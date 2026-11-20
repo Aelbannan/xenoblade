@@ -12,11 +12,11 @@
 // definition below does not collide with it as an illegal overload.
 
 #include "kyoshin/action/CActParamAnim.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // Legacy 1-arg prototype kept for the releaseAnimObj call site (see above).
-
+#include "kyoshin/action/CActParamAnimForeign.hpp"
 
 #include "kyoshin/action/CActParamData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -814,7 +814,7 @@ void switchSubAnim(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     view->field4BF = 0;
     view->field4C0 = 0;
     if (sel == 0) {
-        if (scn80496ChildIdsDiffer(view->object3A0 + 0xC) == 0)
+        if (scn80496ChildIdsDiffer((CScn80496B0C*)(view->object3A0 + 0xC)) == 0)
             flushParamPair(view->mChildData10, 0);
     } else {
         if (scn80496IsComplete(view->object3A0 + 0xC) == 0)
@@ -2507,7 +2507,7 @@ void fireBlendDflt__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // 76/59), if-form model chain without ternary (372B, -4 size), varargs
 // (.../va_list -- full FP save area + __va_arg reloc, 118/106), dead animId
 // copy-local (coalesces, identical), moving localSmall/localBig into their
-// branches (identical), volatile flag clears (canonicalized, identical),
+// branches (identical), flag clears (canonicalized, identical),
 // reference view alias instead of pointer (identical), nested-call form
 // (evalParamBySlot inlined into the BDCC arg list, canonicalized, identical).
 int fireParamGate__13CActParamAnimFv(CActParamAnim* self, u32 param) {
@@ -3465,21 +3465,21 @@ void CActParamAnim::startAnimA() {
 void CActParamAnim::startAnimA2() {
     u32 v = field0C;
     float f = 0.30000001192092896f;
-    *(volatile u32*)((u8*)this + 0x4A8) = 0x44A05;
-    *(volatile float*)((u8*)this + 0x484) = f;
+    field4A8 = 0x44A05;
+    field484 = f;
     field0C = v | 0x00800000;
 }
 
 void CActParamAnim::startAnimB() {
     float tmp = 0.30000001192092896f;
-    *(volatile unsigned int*)((char*)this + 0x4A8) = 0x44A09;
-    *(volatile float*)((char*)this + 0x484) = tmp;
+    field4A8 = 0x44A09;
+    field484 = tmp;
 }
 
 void CActParamAnim::startAnimC() {
     float tmp = 0.30000001192092896f;
-    *(volatile unsigned int*)((char*)this + 0x4A8) = 0x44A11;
-    *(volatile float*)((char*)this + 0x484) = tmp;
+    field4A8 = 0x44A11;
+    field484 = tmp;
 }
 
 extern "C" int isSpeedBelow(CActParamAnim* self) {
@@ -3788,7 +3788,7 @@ u32 CActParamAnim::checkFlag16() {
 
 u32 CActParamAnim::testAndClearFlag18() {
     u32 result = (field260 >> 18) & 1u;
-    *(volatile u32*)((u8*)this + 0x260) &= ~(1u << 18);
+    field260 &= ~(1u << 18);
     return result;
 }
 
@@ -3845,7 +3845,7 @@ extern "C" Quaternion* mulQuatSelf(Quaternion* self, const Quaternion* param) {
 
 extern "C" void storeAnimQuat(void* self, void* src){
     int f = *(int*)((char*)self + 224);
-    volatile int* vs = (volatile int*)src;
+    const int* vs = (const int*)src;
     int a = *vs++;
     int b = *vs++;
     int c = *vs++;
@@ -3919,6 +3919,7 @@ extern "C" f32 getOwnerFloat(void* obj) {
 }
 
 
+struct AnimFlags260View { u8 pad[0x260]; u32 flags; };
 extern "C" int takeAnimBit18(void* data) {
     u8* base = reinterpret_cast<u8*>(data);
     int result = ((((volatile CActParamAnim*)base)->field260) >> 18) & 1;
@@ -4219,11 +4220,8 @@ void CActParamAnim::stepAnimFrame(const ml::CVec3* /*v*/) {
     }
 }
 
-// Retail symbol is Fv but the body reads r4/r5: two extra args forwarded to
-// ScnRes_ResolveGroundHeight's (a, b) slots (forced-name global, same scheme as
-// CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv).
-void initAnimBlendVectors__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
-    ScnRes_ResolveGroundHeight(a, b, self->field4A8, 0, 0, 0,
+int CActParamAnim::initAnimBlendVectors(const ml::CVec3* a, const ml::CVec3* b) {
+    return ScnRes_ResolveGroundHeight((void*)a, (void*)b, this->field4A8, 0, 0, 0,
                   lbl_eu_80665EB8, lbl_eu_80665F6C, lbl_eu_80665F3C,
                   lbl_eu_80665F70, lbl_eu_80665EA0);
 }
@@ -4531,6 +4529,7 @@ extern "C" void startAnimModeA2(CActParamAnim* self) {
     self->field0C = v | 0x00800000;
 }
 
+inline void storeAnimRate(CActParamAnim* s, f32 f) { s->field484 = f; }
 extern "C" void startAnimModeB(CActParamAnim* self) {
     float f = lbl_eu_80665F18;
     *(volatile u32*)&self->field4A8 = 0x44A09;

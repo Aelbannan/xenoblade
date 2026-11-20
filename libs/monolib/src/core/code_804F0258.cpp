@@ -7,6 +7,7 @@
 #include <revolution/MTX.h>
 #include <math.h>
 #include "monolib/effect/code_804CC2B8.hpp"
+#include "monolib/effect/code_804D854C.hpp"
 #include "monolib/effect/CERand.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CCol4.hpp"
@@ -70,8 +71,6 @@ extern "C" {
 void snapTexCursor(void* desktop);
 void restoreTexCursor(void* desktop);
 void initEffectDrawCtx(void* draw);
-int setupEffectDrawCtx(void* draw, void* desktop, void* material);
-void releaseEffectDrawTex(void* draw);
 void blitEffectViewRect(void* draw, int a, const void* b);
 void SchedTexLoadCached(void* tex, int index, int cacheIndex, int wrap);
 
@@ -163,7 +162,7 @@ void drawMarkerEntry(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDr
     snapTexCursor(desktop);
     CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
-    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
+    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
             blitEffectViewRect(&draw, 0, 0);
             drawMarkerTrail(0, alpha, &draw, pos, reinterpret_cast<const f32*>(size),
@@ -178,7 +177,7 @@ void drawMarkerEntry(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDr
                           (s32)1, static_cast<CMarkerDistProvider*>(0),
                           reinterpret_cast<QuadTexCtx*>(mtxSrc), (s32)1);
         }
-        releaseEffectDrawTex(&draw);
+        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
     }
     restoreTexCursor(desktop);
 }
@@ -584,7 +583,7 @@ void blitTexQuad(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
     snapTexCursor(desktop);
     CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
-    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
+    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
             blitEffectViewRect(&draw, 0, 0);
             streamGradStrip(0, &draw, &p, reinterpret_cast<const f32*>(size), -1, NULL,
@@ -597,13 +596,10 @@ void blitTexQuad(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
             streamGradStrip(0, &draw, &p, reinterpret_cast<const f32*>(size), 1, mtxSrc,
                           a, fadeMax);
         }
-        releaseEffectDrawTex(&draw);
+        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
     }
     restoreTexCursor(desktop);
 }
-
-// Main FIFO window used by the direct vertex emitters (WGPIPE).
-static volatile FifoWord* const s_fifo = reinterpret_cast<volatile FifoWord*>(0xCC008000);
 
 // Pack a float into a 0-255 byte the way the retail emitters do: scale,
 // convert to int via the 0x4330 magic double, and keep the low byte.
@@ -1011,7 +1007,7 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
     snapTexCursor(desktop);
     CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
-    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
+    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
         bool bound = mtxSrc != NULL && mtxSrc->mTex != NULL && mtxSrc->mIndex >= 0;
         bool inside = quad->x >= 1.0f && quad->y >= 1.0f &&
                       quad->z >= 1.0f;
@@ -1036,7 +1032,7 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
             } else {
                 CDrawCtxLocal sub;
                 initEffectDrawCtx(&sub);
-                if (setupEffectDrawCtx(&sub, draw.field_0x00, NULL) != 0) {
+                if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&sub), reinterpret_cast<TexSrc*>(draw.field_0x00), NULL) != 0) {
                     blitEffectViewRect(&sub, 0, 0);
                     DbgSetTevSwapMode(mode);
                     drawTexQuad(0, &sub,
@@ -1045,7 +1041,7 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
                     DbgSetTevSwapMode(0);
                     drawTexQuad(0, &sub,
                                   reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
-                    releaseEffectDrawTex(&sub);
+                    releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&sub));
                 }
             }
             drawTexQuad(0, &draw, quad, -1, NULL);
@@ -1071,7 +1067,7 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
             } else {
                 CDrawCtxLocal sub;
                 initEffectDrawCtx(&sub);
-                if (setupEffectDrawCtx(&sub, draw.field_0x00, NULL) != 0) {
+                if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&sub), reinterpret_cast<TexSrc*>(draw.field_0x00), NULL) != 0) {
                     blitEffectViewRect(&sub, 0, 0);
                     DbgSetTevSwapMode(mode);
                     drawTexQuad(0, &sub,
@@ -1080,7 +1076,7 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
                     DbgSetTevSwapMode(0);
                     drawTexQuad(0, &sub,
                                   reinterpret_cast<const DrawQuad*>(sDefaultDrawQuad), -1, NULL);
-                    releaseEffectDrawTex(&sub);
+                    releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&sub));
                 }
             }
             if (mtxSrc->mTex != NULL) {
@@ -1090,7 +1086,7 @@ void drawGradQuad(void* desktop, DrawQuad* quad, s32 mode, void* material,
                           reinterpret_cast<QuadTexCtx*>(mtxSrc));
             DbgSetTevSwapMode(0);
         }
-        releaseEffectDrawTex(&draw);
+        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
     }
     restoreTexCursor(desktop);
 }
@@ -1125,8 +1121,6 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
     GXSetBlendMode(GX_BM_BLEND, (GXBlendFactor)4, (GXBlendFactor)5, GX_LO_CLEAR);
     GXLoadTexObj(tex, (GXTexMapID)texMap);
 
-    volatile FifoWord* f = s_fifo;
-
     if (mode < 0) {
         // Untextured gradient path: tint comes from the quad position scaled
         // by the ramp constant, packed to bytes.
@@ -1158,16 +1152,16 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
 
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 5);
         // Full-screen strip: (0,0)-(W,0)-(W,H)-(0,H)-(0,0).
-        f->f = zA; f->f = zB;
-        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
-        f->f = fbW; f->f = zB;
-        f->f = 0.0f; f->f = 1.0f; f->f = 0.0f;
-        f->f = fbW; f->f = fbH;
-        f->f = 0.0f; f->f = 1.0f; f->f = 1.0f;
-        f->f = zA; f->f = fbH;
-        f->f = 1.0f; f->f = 0.0f; f->f = 0.0f;
-        f->f = zA; f->f = zB;
-        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
+        WGPIPE.f = zA; WGPIPE.f = zB;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = fbW; WGPIPE.f = zB;
+        WGPIPE.f = 0.0f; WGPIPE.f = 1.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = fbW; WGPIPE.f = fbH;
+        WGPIPE.f = 0.0f; WGPIPE.f = 1.0f; WGPIPE.f = 1.0f;
+        WGPIPE.f = zA; WGPIPE.f = fbH;
+        WGPIPE.f = 1.0f; WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = zA; WGPIPE.f = zB;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
     } else {
         // Textured path: tint color packed from the quad position.
         GXColor col;
@@ -1221,23 +1215,23 @@ void drawTexQuad(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
         GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
 
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 5);
-        f->f = zA; f->f = zB;
-        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
-        f->f = 0.0f; f->f = 0.0f;
-        f->f = fbW; f->f = zB;
-        f->f = 0.0f; f->f = 1.0f; f->f = 0.0f;
-        f->f = fbW; f->f = fbH;
-        f->f = 0.0f; f->f = 1.0f; f->f = 1.0f;
-        f->f = 1.0f; f->f = 1.0f;
-        f->f = zA; f->f = fbH;
-        f->f = 0.0f; f->f = 0.0f; f->f = 1.0f;
-        f->f = zA; f->f = zB;
-        f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
+        WGPIPE.f = zA; WGPIPE.f = zB;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = fbW; WGPIPE.f = zB;
+        WGPIPE.f = 0.0f; WGPIPE.f = 1.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = fbW; WGPIPE.f = fbH;
+        WGPIPE.f = 0.0f; WGPIPE.f = 1.0f; WGPIPE.f = 1.0f;
+        WGPIPE.f = 1.0f; WGPIPE.f = 1.0f;
+        WGPIPE.f = zA; WGPIPE.f = fbH;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f; WGPIPE.f = 1.0f;
+        WGPIPE.f = zA; WGPIPE.f = zB;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
         if (ctx != NULL) {
             // The custom-matrix variant emits a wider texcoord tail.
-            f->f = 1.0f; f->f = 1.0f; f->f = 1.0f;
-            f->f = 0.0f; f->f = 0.0f; f->f = 0.0f;
-            f->f = 0.0f;
+            WGPIPE.f = 1.0f; WGPIPE.f = 1.0f; WGPIPE.f = 1.0f;
+            WGPIPE.f = 0.0f; WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+            WGPIPE.f = 0.0f;
         }
     }
 }
@@ -1293,21 +1287,20 @@ void drawTexQuad(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
         GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
 
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 5);
-        volatile FifoWord* f = s_fifo;
         // Vertex 1
-        f->f = zero; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
-        f->f = fbH; f->f = zero; f->f = zero; f->f = 1.0f;
+        WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero;
+        WGPIPE.f = fbH; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = 1.0f;
         // Vertex 2
-        f->f = zero; f->f = fbW; f->f = zero; f->f = zero; f->f = 1.0f;
-        f->f = fbH; f->f = fbW; f->f = zero; f->f = zero;
+        WGPIPE.f = zero; WGPIPE.f = fbW; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = 1.0f;
+        WGPIPE.f = fbH; WGPIPE.f = fbW; WGPIPE.f = zero; WGPIPE.f = zero;
         // Vertex 3
-        f->f = 1.0f; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
-        f->f = fbH; f->f = zero;
+        WGPIPE.f = 1.0f; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero;
+        WGPIPE.f = fbH; WGPIPE.f = zero;
         // Vertex 4
-        f->f = 1.0f; f->f = 1.0f; f->f = zero; f->f = fbW;
-        f->f = zero; f->f = fbH; f->f = zero;
+        WGPIPE.f = 1.0f; WGPIPE.f = 1.0f; WGPIPE.f = zero; WGPIPE.f = fbW;
+        WGPIPE.f = zero; WGPIPE.f = fbH; WGPIPE.f = zero;
         // Vertex 5
-        f->f = 1.0f; f->f = zero; f->f = zero; f->f = zero; f->f = zero;
+        WGPIPE.f = 1.0f; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero;
     }
 
     // Common/textured path: reconfigure and emit the textured quad strip.
@@ -1320,16 +1313,15 @@ void drawTexQuad(s32 texMap, void* drawCtx, const void* quadData, s32 mode,
     GXSetVtxDesc(GX_VA_TEX1, mode < 0 ? GX_NONE : GX_DIRECT);
 
     GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 5);
-    volatile FifoWord* f = s_fifo;
-    f->f = zero; f->f = zero;
-    f->f = zero; f->f = zero; f->f = zero;
-    f->f = fbH; f->f = zero;
-    f->f = 1.0f;
-    f->f = zero; f->f = fbW;
-    f->f = zero;
-    f->f = 1.0f;
-    f->f = fbH; f->f = fbW;
-    f->f = 1.0f; f->f = 1.0f;
+    WGPIPE.f = zero; WGPIPE.f = zero;
+    WGPIPE.f = zero; WGPIPE.f = zero; WGPIPE.f = zero;
+    WGPIPE.f = fbH; WGPIPE.f = zero;
+    WGPIPE.f = 1.0f;
+    WGPIPE.f = zero; WGPIPE.f = fbW;
+    WGPIPE.f = zero;
+    WGPIPE.f = 1.0f;
+    WGPIPE.f = fbH; WGPIPE.f = fbW;
+    WGPIPE.f = 1.0f; WGPIPE.f = 1.0f;
 }
 
 // Swap-mode tables indexed by mode: rows are swap table entries 0-3.
@@ -1483,7 +1475,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
 
     CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
-    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
+    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
         if (!(mtxSrc != NULL && mtxSrc->mTex != NULL && mtxSrc->mIndex >= 0)) {
             // Unbound path.
             if (1.0f == v.x && 1.0f == v.y) {
@@ -1493,7 +1485,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                 f32 loU[3];
                 CDrawCtxLocal subU;
                 initEffectDrawCtx(&subU);
-                if (setupEffectDrawCtx(&subU, draw.field_0x00, NULL) != 0) {
+                if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&subU), reinterpret_cast<TexSrc*>(draw.field_0x00), NULL) != 0) {
                     // Per-axis min/max band for the gradient falloff.
                     f32 t = v.x * 1.01f;
                     if (t < 1.0f) {
@@ -1525,7 +1517,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                                   (const f32*)&ml::CVec3::unit,
                                   (const f32*)&ml::CCol4::white, -1, 0,
                                   (QuadTexCtx*)NULL, 0);
-                    releaseEffectDrawTex(&subU);
+                    releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&subU));
                 }
             }
             emitGradQuad(0, &draw, reinterpret_cast<const ml::CVec3*>(quad),
@@ -1540,7 +1532,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                 f32 loB[3];
                 f32 hiB[3];
                 initEffectDrawCtx(&subB);
-                if (setupEffectDrawCtx(&subB, draw.field_0x00, NULL) != 0) {
+                if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&subB), reinterpret_cast<TexSrc*>(draw.field_0x00), NULL) != 0) {
                     f32 t = v.x * 1.01f;
                     if (t < 1.0f) {
                         loB[0] = t;
@@ -1571,7 +1563,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                                   (const f32*)&ml::CVec3::unit,
                                   (const f32*)&ml::CCol4::white, -1, 0,
                                   (QuadTexCtx*)NULL, 0);
-                    releaseEffectDrawTex(&subB);
+                    releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&subB));
                 }
             }
             if (mtxSrc->mTex != NULL) {
@@ -1582,7 +1574,7 @@ void drawGradBands(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* s
                           reinterpret_cast<const f32*>(size), 1, 1,
                           reinterpret_cast<QuadTexCtx*>(mtxSrc), 1);
         }
-        releaseEffectDrawTex(&draw);
+        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
     }
     restoreTexCursor(desktop);
 }
@@ -1715,12 +1707,11 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
         GXSetVtxDesc((GXAttr)0xE, GX_NONE);
 
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
-        volatile FifoWord* f = s_fifo;
-        f->f = ax; f->f = ay; f->f = z;
-        f->f = 0.0f; f->f = 0.0f;
-        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = 0.0f;
-        f->f = bx; f->f = by; f->f = z; f->f = uv[0]; f->f = uv[1];
-        f->f = ax; f->f = by; f->f = z; f->f = 0.0f; f->f = uv[1];
+        WGPIPE.f = ax; WGPIPE.f = ay; WGPIPE.f = z;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = bx; WGPIPE.f = ay; WGPIPE.f = z; WGPIPE.f = uv[0]; WGPIPE.f = 0.0f;
+        WGPIPE.f = bx; WGPIPE.f = by; WGPIPE.f = z; WGPIPE.f = uv[0]; WGPIPE.f = uv[1];
+        WGPIPE.f = ax; WGPIPE.f = by; WGPIPE.f = z; WGPIPE.f = 0.0f; WGPIPE.f = uv[1];
     } else {
         // Two-texture path with an optional custom second matrix.
         GXSetNumTexGens(2);
@@ -1775,16 +1766,15 @@ void emitGradQuad(int texMap, CDrawCtxLocal* drawCtx, const ml::CVec3* pos,
         GXSetVtxDesc((GXAttr)0xE, GX_DIRECT);
 
         GXBegin((GXPrimitive)0xA0, GX_VTXFMT0, 4);
-        volatile FifoWord* f = s_fifo;
-        f->f = ax; f->f = ay; f->f = z;
-        f->f = 0.0f; f->f = 0.0f;
-        f->f = 0.0f; f->f = 0.0f;
-        f->f = bx; f->f = ay; f->f = z; f->f = uv[0]; f->f = 0.0f;
-        f->f = 0.0f; f->f = 0.0f;
-        f->f = bx; f->f = by; f->f = z; f->f = uv[0]; f->f = uv[1];
-        f->f = 1.0f; f->f = 1.0f;
-        f->f = ax; f->f = by; f->f = z; f->f = 0.0f; f->f = uv[1];
-        f->f = 0.0f; f->f = 1.0f;
+        WGPIPE.f = ax; WGPIPE.f = ay; WGPIPE.f = z;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = bx; WGPIPE.f = ay; WGPIPE.f = z; WGPIPE.f = uv[0]; WGPIPE.f = 0.0f;
+        WGPIPE.f = 0.0f; WGPIPE.f = 0.0f;
+        WGPIPE.f = bx; WGPIPE.f = by; WGPIPE.f = z; WGPIPE.f = uv[0]; WGPIPE.f = uv[1];
+        WGPIPE.f = 1.0f; WGPIPE.f = 1.0f;
+        WGPIPE.f = ax; WGPIPE.f = by; WGPIPE.f = z; WGPIPE.f = 0.0f; WGPIPE.f = uv[1];
+        WGPIPE.f = 0.0f; WGPIPE.f = 1.0f;
     }
 }
 

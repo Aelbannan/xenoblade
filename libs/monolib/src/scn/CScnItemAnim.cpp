@@ -7,8 +7,10 @@
  */
 
 #include "libs/monolib/src/scn/CScnItemAnim.hpp"
+#include "monolib/src/scn/CScnItemPool.hpp"
 #include <cstring>
 #include <nw4r/db/db_assert.h>
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
 
 // ===========================================================================
 // CScnItemAnim::~CScnItemAnim - removes the item from the owning host's pool
@@ -86,7 +88,7 @@ CScnItemAnim* __ct__8049E710(CScnItemAnimHost* self,
     resFile.Init();
     resFile.Bind(resFile);
 
-    CScnItemAnim* item = CScnItemPool_allocSmallSlot(self->mPool);
+    CScnItemAnim* item = (CScnItemAnim*)CScnItemPool_allocSmallSlot((u8*)self->mPool);
     if (item != 0) {
         item->mParent = self;
         item->mType = 2;
@@ -113,7 +115,7 @@ CScnItemAnim* __ct__8049E710(CScnItemAnimHost* self,
         }
     }
 
-    CScnItemPool_registerOtherList(self->mPool, item, param);
+    ((u32 (*)(u8*, void*, u32))CScnItemPool_registerOtherList)((u8*)self->mPool, item, param);
     return item;
 }
 
@@ -141,7 +143,6 @@ extern "C" nw4r::g3d::ResFile ItemAnim_GetResFile_E8BC(CScnItemAnim* self) {
 namespace SIABlob {
 extern "C" void __dt__12CScnItemAnimFv();
 extern "C" void scnItemIdNoopB();
-extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void scnItemIdNoopA();
 extern "C" void ItemAnim_GetName_E8B4();
 extern "C" void ItemAnim_GetResFile_E8BC();
@@ -154,7 +155,7 @@ extern "C" u32 lbl_eu_8056EC90[12] = {
     (u32)&__RTTI__12CScnItemAnim, 0x00000000,
     (u32)&SIABlob::__dt__12CScnItemAnimFv,
     (u32)&SIABlob::scnItemIdNoopB,
-    (u32)&SIABlob::ScnCamNw4r_EmptyHook48,
+    (u32)&::ScnCamNw4r_EmptyHook48,
     (u32)&SIABlob::scnItemIdNoopA,
     (u32)&SIABlob::ItemAnim_GetName_E8B4,
     (u32)&SIABlob::ItemAnim_GetResFile_E8BC,

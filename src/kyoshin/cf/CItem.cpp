@@ -2,10 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CItem.hpp"
-#include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "monolib/device/CDeviceSC.hpp" // CDeviceSC::getLanguage
+
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
-
+#include "kyoshin/cf/CtrlObjectParam.hpp"
 // Forward declarations for item-related classes
 struct CItemInfo;
 struct CItemData;
@@ -840,16 +841,12 @@ void CItemData_setSlotFamily(u32 unused, CItemData* obj, int index, int value) {
         obj->field_07 = (u8)f7;
     }
 
-    // Volatile slot view: retail reloads the halfword after the CItem_rankVal
-    // call; MWCC folds a non-volatile reload into the stored register value.
     u16* slot = (u16*)&obj->field_08[index * 2];
     u32 h = slot[0];
     h = __rlwimi(h, value, 4, 16, 27);
     slot[0] = (u16)h;
     int rank = CItem_rankVal(value);
-    // Volatile re-read after the call: retail reloads the halfword here;
-    // a plain load would fold to the stored register value (callee is pure).
-    h = *(volatile u16*)slot;
+    h = slot[0];
     h = __rlwimi(h, rank, 1, 28, 30);
     slot[0] = (u16)h;
 }
@@ -1060,36 +1057,36 @@ extern "C" u32 CItemBlock_setKindFlag(u32 v, u32 set, u32 kind) {
             *w = *w | bit;
             goto done;
         }
-        // Volatile: retail re-reads the halfword after the test branch (no
-        // read-modify-write folding through the pointer).
+        // The halfword is re-read after the test branch (no read-modify-write
+        // folding through the pointer).
         if (kind == 4) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag14;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag14;
             if ((*w & bit) == 0) result = 1;
-            *w = *w | (u16)bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag14 |= (u16)bit;
             goto done;
         }
         if (kind == 5) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag16;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag16;
             if ((*w & bit) == 0) result = 1;
-            *w = *w | (u16)bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag16 |= (u16)bit;
             goto done;
         }
         if (kind == 6) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag18;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag18;
             if ((*w & bit) == 0) result = 1;
-            *w = *w | (u16)bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag18 |= (u16)bit;
             goto done;
         }
         if (kind == 7) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1A;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1A;
             if ((*w & bit) == 0) result = 1;
-            *w = *w | (u16)bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag1A |= (u16)bit;
             goto done;
         }
         if (kind == 8) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1C;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1C;
             if ((*w & bit) == 0) result = 1;
-            *w = *w | (u16)bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag1C |= (u16)bit;
             goto done;
         }
     } else {
@@ -1100,36 +1097,35 @@ extern "C" u32 CItemBlock_setKindFlag(u32 v, u32 set, u32 kind) {
             goto done;
         }
         // Clear-path halfword arms: ~bit via nor then masked to 16 bits
-        // (retail nor r3,r3,r3 + clrlwi r3,r3,16). Volatile keeps the
-        // post-branch reload.
+        // (retail nor r3,r3,r3 + clrlwi r3,r3,16). Re-read after the branch.
         if (kind == 4) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag14;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag14;
             if ((*w & bit) != 0) result = 1;
-            *w = *w & (u16)~bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag14 &= (u16)~bit;
             goto done;
         }
         if (kind == 5) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag16;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag16;
             if ((*w & bit) != 0) result = 1;
-            *w = *w & (u16)~bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag16 &= (u16)~bit;
             goto done;
         }
         if (kind == 6) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag18;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag18;
             if ((*w & bit) != 0) result = 1;
-            *w = *w & (u16)~bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag18 &= (u16)~bit;
             goto done;
         }
         if (kind == 7) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1A;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1A;
             if ((*w & bit) != 0) result = 1;
-            *w = *w & (u16)~bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag1A &= (u16)~bit;
             goto done;
         }
         if (kind == 8) {
-            volatile u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1C;
+            u16* w = &((CItemBlockCounters*)spItemBlock)->mFlag1C;
             if ((*w & bit) != 0) result = 1;
-            *w = *w & (u16)~bit;
+            ((CItemBlockCounters*)spItemBlock)->mFlag1C &= (u16)~bit;
             goto done;
         }
     }
@@ -2233,7 +2229,7 @@ void CItemParty_refreshSlots(CItemPartySlots* self) {
             t = ((u16*)cd)[(u16)s + 1];
             *sc = (s16)((cf::CtrlObjectParamData*)cd)->getShortAt1C((u32)s);
             CtrlObjectParam_WriteEquipSlotValue(cd, (u32)s, (void*)-1);
-            CtrlObjectParam_WriteU16RowEntry(cd, (u16)s, t);
+            CtrlObjectParam_WriteU16RowEntry((cf::CtrlObjectParamU16RowTable*)cd, (u16)s, t);
             sc++;
         }
         p += 8;
@@ -2566,7 +2562,7 @@ extern "C" __declspec(noinline) void CItem_buildSortName(CItemSortBuf* buf, u32 
     s = (const char*)getBdatStringColumnValue(h170, base + 0xd3, e + 0x9a);
     s3.mLen = (s32)strlen(s);
     strcpy(s3.mStr, s);
-    u8 lang = (u8)getLanguage__9CDeviceSCFv();
+    u8 lang = CDeviceSC::getLanguage();
     switch (lang) {
     case 2:  // s1 + prefix + s2 + s3
         t2[0].mLen = strlen(s1.mStr);
@@ -2756,9 +2752,9 @@ s32 CItem_rollTwoColPick(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32
             u32 n = self->mCount;
             self->mCount = n + 1;
             CItemExt* dst = &self->mItems[n];
-            // Volatile re-read: the mCount store may alias the address-taken
-            // scratch record, so retail reloads field_00 here instead of
-            // folding the stored register value.
+            // The mCount store may alias the address-taken scratch record,
+            // so the packed word is read again here rather than forwarded.
+            //
             u32 size2 = (u32)CItem_catSize(
                 (u16)((local.field_00 >> 16) & 0xF));
             memcpy(dst, &local, size2);
@@ -3148,14 +3144,14 @@ extern "C" void __declspec(noinline) CItem_rollWeighted4(CItemFour* self, u32 it
             added += CItem_rollSubColumns(self, item, count, handle, 1);
         }
         if ((s32)count > 1 && added > 1) {
-            s32 last = (s32)*(volatile u32*)&self->mCount - 1;
+            s32 last = (s32)self->mCount - 1;
             if (last >= 1 &&
                 (self->mItems[last].field_00 >> 20) ==
                     (self->mItems[last - 1].field_00 >> 20)) {
                 added--;
-                // Retail reloads mCount here rather than folding the value
-                // loaded for the family compare.
-                self->mCount = *(volatile u32*)&self->mCount - 1;
+                self->mCount = self->mCount - 1;
+                //
+                //
             }
         }
     }
@@ -3218,12 +3214,12 @@ extern "C" void CItem_rollWeighted4B(CItemFour* self, u32 item, u32 count) {
             added += CItem_rollTwoColAlt(self, item, count, handle, 2);
         }
         if ((s32)count > 1 && added > 1) {
-            s32 last = (s32)*(volatile u32*)&self->mCount - 1;
+            s32 last = (s32)self->mCount - 1;
             if (last >= 1 &&
                 (self->mItems[last].field_00 >> 20) ==
                     (self->mItems[last - 1].field_00 >> 20)) {
                 added--;
-                self->mCount = *(volatile u32*)&self->mCount - 1;
+                self->mCount = self->mCount - 1;
             }
         }
     }

@@ -210,8 +210,8 @@ extern "C" CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay
     u8* base = (u8*)mem;
     // novtable: install retail vtables by hand (primary at +0x0,
     // CDeviceVICb secondary at +0x1C4)
-    *(volatile void**)base = (void*)&lbl_eu_8056D028;
-    *(volatile void**)(base + 0x1C4) = (void*)((u8*)&lbl_eu_8056D028 + 0xA0);
+    *(void**)base = (void*)&lbl_eu_8056D028;
+    *(void**)(base + 0x1C4) = (void*)((u8*)&lbl_eu_8056D028 + 0xA0);
 
     // Initialize stream entry flags to 0
     for (int i = 0; i < 5; i++) {

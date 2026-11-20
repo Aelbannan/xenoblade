@@ -14,3 +14,11 @@ extern "C" u8* UIWin_BuildFlagBuf(u32 target);
 // owner copy in CUIWindowManager.hpp.
 class CItemQuery;
 extern "C" int UIWin_QueryItemAvail(CItemQuery* self, u32 arg1, u32 arg2);
+
+struct CFlagBuffer;
+
+// C++-linkage helpers owned by CUIWindowManager.cpp (canonical copies in
+// CUIWindowManager.hpp).
+int UIWin_CreateExtraWin();
+int UIWin_CreateCol6Check();
+void UIWin_FlagBufCommit(CFlagBuffer* self);

@@ -130,7 +130,7 @@ extern "C" {
 void MoveImplInitFields(void* self);
 void attachOwner(void* self, void* owner);
 void updatePosition(void* self);
-void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+
 char* Tok_FormatRes(void* handle);
 void MoveImplStartDispatch(void* self);
 }

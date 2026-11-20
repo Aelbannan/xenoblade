@@ -2,6 +2,7 @@
 
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include "kyoshin/menu/CMenuOption.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 
 // NOTE: kyoshin/harness_catalog.hpp deliberately omitted - its CScn clashes
 // with monolib/scn.hpp (pulled in by CTaskGame.hpp below).
@@ -46,7 +47,7 @@ extern "C" void BgTex_Acquire_3C14(CBgTex* self);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 
 // Option-menu input-handler callees (retail-unmangled func_ names).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).

@@ -20,11 +20,18 @@ extern char* lbl_eu_80536320[];  // quest-name table (30 entries, split1 .data)
 
 struct CFileHandle;
 struct CEventFile;
+class CQstLogInfo;
 
 // C-linkage imports used by QstLogInfo_LoadCommonArchive (retail names are unmangled).
 extern "C" u32 KyoshinHeap_GetField44();
 // Random / name-table helpers (retail unmangled).
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
+
+// Real C++ linkage helpers defined in CQstLogInfo.cpp (retail symbols carry
+// these manglings).
+void QstLogInfo_LoadArcHandle(CQstLogInfo* self);
+void QstLogInfo_LoadCommonArchive(CQstLogInfo* self);
+void QstLogInfo_DrawLayoutTail(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo);
 extern u32 lbl_eu_80573D18[];  // quest-name table (split1 .rodata)
 // Pane helpers (retail unmangled).
 
@@ -97,8 +104,8 @@ public:
     virtual ~CQstLogInfo();
     virtual bool OnFileEvent(CEventFile* event);
 
-    u8 QstLogInfo_GetLoadedMark();
-    u8 QstLogInfo_GetReadyMark();
+    int QstLogInfo_GetLoadedMark();
+    int QstLogInfo_GetReadyMark();
     void QstLogInfo_SetQuestIdSlot(u16 val);
 
     UnkClass_8045F564 mMemRegion;             // 0x04 - scratch region (0x10 bytes)

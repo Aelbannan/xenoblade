@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CtrlActApi.hpp"
 #include <nw4r/math/math_types.h>
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CMat34.hpp"
@@ -390,22 +391,22 @@ public:
     virtual void CtrlPc_UpdatePadState() = 0;  // 0x0C pure; retail slot is 0, overridden in CtrlPc/CtrlEnemy/CtrlRemote vtables
     virtual int CtrlNpcAlwaysFalse();  // 0x10
     virtual unsigned long ctrlActIsFlagBit15Clear();  // 0x14
-    virtual int ret0_800888E8();  // 0x18 cf::CtrlEnemy::ret0_800888E8
-    virtual int ret0_800888E0();  // 0x1C cf::CtrlEnemy::ret0_800888E0
-    virtual int ret0_800888D8();  // 0x20 cf::CtrlEnemy::ret0_800888D8
-    virtual int ret0_800888D0();  // 0x24 cf::CtrlEnemy::ret0_800888D0
-    virtual int ret0_800888C8();  // 0x28 cf::CtrlEnemy::ret0_800888C8
-    virtual int ret0_800888C0();  // 0x2C cf::CtrlEnemy::ret0_800888C0
-    virtual int ret0_800888B8();  // 0x30 cf::CtrlEnemy::ret0_800888B8
-    virtual int ret0_800888B0();  // 0x34 cf::CtrlEnemy::ret0_800888B0
-    virtual int ret0_800888A8();  // 0x38 cf::CtrlEnemy::ret0_800888A8
-    virtual int ret0_800888A0();  // 0x3C cf::CtrlEnemy::ret0_800888A0
-    virtual int ret0_80088898();  // 0x40 cf::CtrlEnemy::ret0_80088898
-    virtual int ret0_80088890();  // 0x44 cf::CtrlEnemy::ret0_80088890
-    virtual int ret0_80088888();  // 0x48 cf::CtrlEnemy::ret0_80088888
-    virtual int ret0_80088880();  // 0x4C cf::CtrlEnemy::ret0_80088880
-    virtual int ret0_80088878();  // 0x50 cf::CtrlEnemy::ret0_80088878
-    virtual int ret0_80088870();  // 0x54 cf::CtrlEnemy::ret0_80088870
+    virtual int ret0_800888E8();  // name-guess: no retail member name; return-0 stub at 0x800892C0, slot 0x18
+    virtual int ret0_800888E0();  // name-guess: no retail member name; return-0 stub at 0x800892B8, slot 0x1C
+    virtual int ret0_800888D8();  // name-guess: no retail member name; return-0 stub at 0x800892B0, slot 0x20
+    virtual int ret0_800888D0();  // name-guess: no retail member name; return-0 stub at 0x800892A8, slot 0x24
+    virtual int ret0_800888C8();  // name-guess: no retail member name; return-0 stub at 0x800892A0, slot 0x28
+    virtual int ret0_800888C0();  // name-guess: no retail member name; return-0 stub at 0x80089298, slot 0x2C
+    virtual int ret0_800888B8();  // name-guess: no retail member name; return-0 stub at 0x80089290, slot 0x30
+    virtual int ret0_800888B0();  // name-guess: no retail member name; return-0 stub at 0x80089288, slot 0x34
+    virtual int ret0_800888A8();  // name-guess: no retail member name; return-0 stub at 0x80089280, slot 0x38
+    virtual int ret0_800888A0();  // name-guess: no retail member name; return-0 stub at 0x80089278, slot 0x3C
+    virtual int ret0_80088898();  // name-guess: no retail member name; return-0 stub at 0x80089270, slot 0x40
+    virtual int ret0_80088890();  // name-guess: no retail member name; return-0 stub at 0x80089268, slot 0x44
+    virtual int ret0_80088888();  // name-guess: no retail member name; return-0 stub at 0x80089260, slot 0x48
+    virtual int ret0_80088880();  // name-guess: no retail member name; return-0 stub at 0x80089258, slot 0x4C
+    virtual int ret0_80088878();  // name-guess: no retail member name; return-0 stub at 0x80089250, slot 0x50
+    virtual int ret0_80088870();  // name-guess: no retail member name; return-0 stub at 0x80089248, slot 0x54
     virtual void parseActEntry();  // 0x58
     virtual void aimVoiceOwner();  // 0x5C
     virtual void updateActMain();  // 0x60
@@ -416,10 +417,10 @@ public:
     virtual int ctrlActCheckBlockedProbe(ml::CVec3* out);                                   // 0x74
     virtual int ctrlActDispatchEntry(void* entry);  // 0x78 (arts entry)
     virtual int runArtsAttack(void* entry);  // 0x7C (arts entry)
-    virtual int ret1_800888F4();  // 0x80 cf::CtrlEnemy::ret1_800888F4
-    virtual void CtrlEnemy_emptyStub_800888F0();  // 0x84
+    virtual int ret1_800888F4();  // name-guess: no retail member name; return-1 stub at 0x800892CC, slot 0x80
+    virtual void CtrlEnemy_emptyStub_800888F0();  // name-guess: no retail member name; empty void stub at 0x800892C8, slot 0x84
     virtual int handleActKind();  // 0x88
-    virtual void dispatchCtrlPcActions() = 0;  // 0x8C pure; retail slot is 0, overridden in CtrlPc/CtrlEnemy/CtrlRemote vtables
+    virtual void dispatchCtrlPcActions() = 0;  // name-guess: overrides are func_80098EF8/CtrlEnemy_UnkFunc_800877A8 (no real member name); slot 0x8C pure
     // NOTE: the retail table ends at +0x8C; there are no further slots.
 
     u32 mField4;               // 0x04 (flag word, bit 1 set by ctrlActDispatchEntry)
@@ -609,8 +610,7 @@ struct CtrlActChainObj {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" long testActorStatus(void* actor, void* outVal, unsigned long flags); // matches CfMapItemManager.hpp
-extern "C" void requestItemLoad(void* obj, u32 flag);
-extern "C" void* MapFx_ResolveOwner(void* r3);       // voice/battle-list resolve
+
 extern "C" int getAnimModelId(void* battleObj);  // battle-state page id
 extern "C" int isBattleStatusActive(void* obj, int id);
 // updateActMain / tickTargetAct extra imports (retail C-ABI names).
@@ -624,25 +624,20 @@ extern "C" int ColiWalkSegment(void* a, void* b, void* c, void* d, int e, int f,
 extern "C" int Coli_SweepSegNodes(void* a, void* b, void* c, int d, int e);
 // runArtsAttack imports: arts-param lookups, battle-manager sub-views and the
 // arts-id predicate. (getInstance__Q22cf14CBattleManagerFv is declared in
-// kyoshin/cf/CBattleManagerApi.hpp.)
+// kyoshin/cf/CBattleManager.hpp.)
 extern "C" void* getArtsSlotByFlatIdx(void* base, int index);
 extern "C" void* getArtsParamByIdx(void* base, int index);
-extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" int installVisionStateCallback(void* a, void* b);
 extern "C" int isBattleEventKind3(int val);
 // parseActEntry imports: status-block timers, battle-entry fetch, effect
 // requests and the chain/battle helpers.
-extern "C" void aiActionUpdateEntriesDelta(void* obj, f32 val);
-extern "C" void aiActionClearBlockADC(void* obj);
 extern "C" int aiFetchAction(void* obj, void* out);
-extern "C" void CBattleMan_RunBattleEvent(void* bm, void* player, void* req, int flag);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC(void* a, void* b);
 // getEffOwner is declared (mangled C++) in CfGameManager.hpp.
 extern "C" void* CPartsChange_GetActorTable(void* p);
 extern "C" void* CPartsChange_FindActorById(void* p, u16 arg);
-// CChain_TryActivateChain is declared in CtrlPc.hpp (C-ABI, (void*, int)).
 // In-TU kind setter used by the parseActEntry switch arms.
 void ctrlActSetupActionKind(cf::CtrlAct* self, u32 kind, int param);
 // Collision-query API: ScnRes_VertRayForward_E398 is declared in CtrlMoveBase.hpp

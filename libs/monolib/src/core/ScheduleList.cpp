@@ -257,7 +257,7 @@ void SchedList_StepAll(SLList* self, f32 dt) {
         count++;
     }
     if (count != 0) {
-        node = (*(volatile SLNode**)&self->mRes.mStartNodePtr)->mNext;
+        node = (*(SLNode**)&self->mRes.mStartNodePtr)->mNext;
         while (node != self->mRes.mStartNodePtr && node != 0) {
             ((CSchedule*)node->mItem)->Update(dt);
             node = node->mNext;
@@ -303,7 +303,7 @@ void SchedList_SweepAll(SLList* self) {
         count++;
     }
     if (count != 0) {
-        node = (*(volatile SLNode**)&self->mRes.mStartNodePtr)->mNext;
+        node = (*(SLNode**)&self->mRes.mStartNodePtr)->mNext;
         while (node != self->mRes.mStartNodePtr && node != 0) {
             schedReleaseAllItems((CSchedule*)node->mItem);
             node = node->mNext;
@@ -323,7 +323,7 @@ void SchedList_SweepMatched(SLList* self, u8* x) {
         count++;
     }
     if (count != 0) {
-        node = (*(volatile SLNode**)&self->mRes.mStartNodePtr)->mNext;
+        node = (*(SLNode**)&self->mRes.mStartNodePtr)->mNext;
         while (node != self->mRes.mStartNodePtr) {
             CSchedule* item = (CSchedule*)node->mItem;
             if (x == item->field_0x10) {

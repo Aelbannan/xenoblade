@@ -72,6 +72,7 @@ struct CTaskGamePtmfWords {
 
 
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 
 // 12-byte static Move-hook ptmf pool entry compared against CTTask mMoveFunc by
@@ -81,14 +82,11 @@ extern CTTask<CTaskGame>::MoveFunc lbl_eu_80525850;
 // Retail no-arg reset helper CTaskGame_resetStream (DISCOVERY target us-80044160 in
 // this unit); CTaskGame_stopVision calls it with the C-ABI flat name.
 extern "C" void CTaskGame_resetStream();
-// Retail per-mode cf::CTaskGameCf start helpers are FLAT C symbols
-// (0x800448B8 / 0x800448D8, no member mangling); the instance returned by
-// getInstance() flows through r3.
-extern "C" void startMode1New(cf::CTaskGameCf* instance);
+// cf::CTaskGameCf::startMode1New is a real member (declared in
+// kyoshin/cf/CTaskGameCf.hpp).
 extern "C" void startMode2Con(cf::CTaskGameCf* instance);
 // Sound-state reset helper (flat retail name; defined in code_80187F14.cpp).
 // Retail CTaskGame_resetStream calls it behind the unk68 bit 0x80 gate.
-extern "C" void MenuSnd_ResetFadeTargetB_9C7C();
 
 // NAND state-check helpers (flat retail names; defined in CfNandManager.cpp).
 // Retail call sites (CTaskGame_moveNandChk690 / CTaskGame_moveNandChkBA0 / CTaskGame_moveNandChkCCC) pass the
@@ -262,11 +260,11 @@ extern u32 lbl_eu_80664C28;
 // CfObjectSelectorObj.cpp / code_800B06A4.cpp) emit C-linkage symbols.
 extern "C" u32 getEffectTask();
 extern "C" void noopGameEffTask();
-extern "C" void* Selector_GetInstance();
 extern "C" void __dt__800FDEF8(void* obj);
 extern "C" void teardownGameMgr(void* obj);
 // Object-factory singleton accessor (C++ linkage -> retail getInstance__Fv).
-extern void* getInstance();
+class UnkClass_805764CC;
+extern UnkClass_805764CC* getInstance();
 
 // (definition moved above class CTaskGame; see CTaskGamePtmfWords)
 
@@ -357,7 +355,6 @@ extern "C" void EffCtl_StoreFlagAndParams(int a, int b);
 // Battle/script-time gate (flat retail name; stub body in
 // CTaskREvtSequence.cpp): retail CTaskGame_updateStream ORs its result with
 // isSceneLoading and forwards the boolean to the CRI active-setter.
-extern "C" int EvtSeqGetStateBit19();
 // Vision resource-copy helper (flat retail name; defined in this TU). Retail
 // CTaskGame_updateStream passes the unk18C struct fields and branches on the result.
 extern "C" int CTaskGame_openVision(u32 a, u32 b, u32 c, u32 d, u32 e, f32 f);
@@ -379,20 +376,17 @@ extern "C" void CTaskGame_fadeStream(int frames, float volume);
 // CTaskGame_openVision / CTaskGame_moveStartMission call sites (same scheme as the CLibCri
 // caller-shape imports above). Flat retail names; the defining TUs emit
 // C-linkage symbols.
-extern "C" int EvtSeqGetStateBit10();
 extern "C" void CUICfManager_openSaveMenu();
-extern "C" void CUICfManager_queueOptionMenu(u32 value);
 extern "C" u32 Scn_GetUnk80Resource(CScnNw4r* scene);
 extern "C" int formatVoiceFilePath(char* buffer, int index, int value);
 extern "C" int dispatchFilePlayback__7CLibCriFPCcUli(const char* filename, u32 allocHandle, int fileHandle);
 extern "C" u32 calcStreamBufferSize__7CLibCriFv(int arg);
-extern "C" int hasPackFile();
+// Defined in monolib/src/work/CWorkSystemPack.cpp with C++ linkage.
+int hasPackFile(const char* pName);
 extern "C" int func_804DDD54(const char* ext, const char* path, u32* v0, u32* v1, u32* v2, u32* v3);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int arg1);
-extern "C" void MenuSnd_ResetFadeTargetA_9C70();
-// Canonical C-linkage form, matching CDeviceFileCri.hpp's extern "C" block
-// (int(const char*)); a single spelling so both headers coexist in one TU.
-extern "C" int DevFile_SubstLangPath(const char* str);
+// Defined in monolib/src/device/CDeviceFile.cpp with C++ linkage.
+void DevFile_SubstLangPath(char* str);
 // cf::CTaskGameCf::create defined with the retail flat name (retail call
 // sites pass the parent + 0; the defining TU emits the Fv symbol).
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2);
@@ -474,7 +468,6 @@ extern "C" void refreshPoolMemory__17UnkClass_8047CD0CFv();
 extern "C" void* create__Q22cf13CfNandManagerFv(CProcess* parent, void* scene);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
                                                       u32 b);
-extern "C" u8 getLanguage__9CDeviceSCFv();
 extern "C" void GamePicStartFileLoad(CTaskGamePic* self, const char* path);
 extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* parent, int arg);
 // Scene-create name pointer (.sdata; points into .sdata2 string space).

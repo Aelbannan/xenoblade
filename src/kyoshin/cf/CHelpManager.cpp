@@ -4,10 +4,7 @@
 
 #include "kyoshin/cf/CHelpManager.hpp"
 #include "kyoshin/CTitle.hpp"
-// NOTE: do NOT include cf/CBattleManager.hpp here - its CfObjectActor ->
-// CAIAction chain declares getInstance__Q22cf14CBattleManagerFv as void*,
-// conflicting with the CBattleManagerView* declaration this TU already gets
-// via kyoshin/harness_catalog.hpp (cf/CfGameManager.hpp).
+// cf::CBattleManager comes from CHelpManager.hpp's owning-header include.
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
@@ -93,7 +90,7 @@ done:
     } else if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) {
         cond = 0;
     } else {
-        cond = (int)(((*(volatile u32*)&gmGameFlags >> 22) & 1) ^ 1);
+        cond = (int)(((*(u32*)&gmGameFlags >> 22) & 1) ^ 1);
     }
     if (cond != 0) {
         self->mField17 = 0;
@@ -141,12 +138,12 @@ void updateBattleHelpState(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
 
 int isHelpPopupReady(cf::CHelpManager* self) {
     // Two separate early-return guards, matching retail's branch-per-guard
-    // shape (volatile read keeps MWCC from if-converting the guards).
+    // shape (the pointer read keeps MWCC from if-converting the guards).
     if (self->mField17 == 0)
         return 0;
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0)
         return 0;
-    return (int)((((*(volatile u32*)&gmGameFlags) >> 22) & 1) ^ 1);
+    return (int)(((*(u32*)&gmGameFlags >> 22) & 1) ^ 1);
 }
 
 UNKWORD cf::CHelp::CHelp_UnkVirtualFunc5() { return 0; }
@@ -345,7 +342,7 @@ t->mObj60.mFieldC = 1.0f;
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj1F4, (void*)0x3359, 0x1A);
     t->mObj1F4.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;
-    t->mObj1F4.mField10 = (u32)lbl_eu_8050FF08;
+    t->mObj1F4.mField10 = (u32)"vs01240050";
 
     __ct__Q22cf5CHelpFUlUl(&t->mObj208, (void*)0x335A, 0x1B);
     t->mObj208.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390B8;

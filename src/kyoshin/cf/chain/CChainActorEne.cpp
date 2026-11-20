@@ -2,19 +2,19 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/chain/CChainActorEne.hpp"
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
-#include "kyoshin/cf/chain/CChainEffect.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
 #include "kyoshin/cf/object/CObjectState.hpp"
-#include "kyoshin/cf/chain/CChainEffectImports.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
 
 // ---- Cross-TU helper declarations ---------------------------------------
 // getEffOwner / findObjectById are mangled C++ retail symbols; the rest are
 // plain (unmangled) C-ABI functions and are declared with C linkage.
-extern "C" void* chainResolveMemberFromSrc(u32 cls, void* src);
-extern "C" void PartyGaugeSetClamped(u8* self, u32 ptg);
+extern "C" void chainUnlinkOnOwnerMatch(cf::CChainEffect* effect);
 extern "C" void* CPartsChange_GetActorTable(void);
 extern "C" void* CPartsChange_FindActorByObj(void* list, void* obj);
 extern "C" void* CPartsChange_FindActorById(void* list, u32 id);
@@ -72,7 +72,6 @@ struct BattleMeterView {
 // Operates on the CChainEffect at offset 0x74; compares r4 against effect.unk8's target
 // Retail calls it by its flat name (config/us/symbols.txt), so C linkage
 // keeps the call-site reloc unmangled like retail.
-extern "C" void chainUnlinkOnOwnerMatch(cf::CChainEffect* effect);
 
 // Resets chain state and clears the chain effect.
 extern "C" void ChainEne_InitClear_1308(cf::CChainActorEne* self, int val) {
@@ -82,8 +81,8 @@ extern "C" void ChainEne_InitClear_1308(cf::CChainActorEne* self, int val) {
 
 extern "C" void ChainEne_Teardown_133C(cf::CChainActorEne* self) {
     self->CChain_noop_A9E8();
-    chainTeardownLinkClear(self->mChainEffectRaw);
-    CChainActor_ClearTargetRef(self);
+    chainTeardownLinkClear((cf::CChainEffect*)self->mChainEffectRaw);
+    ::CChainActor_ClearTargetRef((cf::CChainActor*)self);
 }
 
 // Validates an enemy-chain candidate: non-null source, resolves the parts
@@ -109,7 +108,7 @@ extern "C" void ChainEne_BindEffectB9_1438(cf::CChainActorEne* self, int p1, int
 
 // Tail-calls chainResolveMemberFromSrc binding the actor to the 0xba effect class.
 extern "C" void* ChainEne_MakeEffectBa_1460(cf::CChainActorEne* self) {
-    return chainResolveMemberFromSrc(0xba, self);
+    return chainResolveMemberFromSrc(0xba, (u32*)self);
 }
 
 // True if this actor's timeline object is the one currently wired into the
@@ -245,5 +244,5 @@ extern "C" int ChainEne_GetZeroVia_18E4(void* self, void* arg) { return static_c
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.
 extern "C" void ChainEne_TouchBattle194_18F8(void) {
-    PartyGaugeSetClamped(reinterpret_cast<u8*>(&reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter), 0x12c);
+    cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>(reinterpret_cast<u8*>(&reinterpret_cast<BattleMeterView*>(getInstance__Q22cf14CBattleManagerFv())->meter)), 0x12c);
 }

@@ -6,8 +6,6 @@
 
 // Foreign .sdata/.sdata2 float constants referenced by this TU.
 extern float lbl_eu_80663964;
-extern float lbl_eu_80658638[3];
-extern float lbl_eu_806658E0;
 extern const float lbl_eu_8066A940;
 extern const float lbl_eu_8066A944;
 extern const float lbl_eu_8066A948;
@@ -70,7 +68,6 @@ extern void* Scn_GetCamItem9C(u32 unk, int id);
 extern void* getScnHandle();
 extern int ScnData_FwdBC9A0();
 extern bool ScnRes_VertRayForward_E398(mlCVec3* out, float x, float y, int a, int b);
-extern void ScnRes_Notify4Word_E3E0(const void* cb, void* mtx, u32 unk, int flag);
 extern bool ScnRes_CopyEntryHead(mlCVec3* v, int flag);
 extern bool ScnRes_CopyEntryMid(mlCVec3* v, int flag);
 extern void* ScnRes_GetEntryPtr_E50C(int idx);
@@ -117,8 +114,8 @@ extern const char lbl_eu_80530F08[];
 extern "C" const mlCVec3 unitY__Q22ml5CVec3;
 
 // Extra string/data labels referenced by the shadow functions.
-extern "C" const char lbl_eu_80526300[];
-extern "C" const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
 extern "C" const char lbl_eu_8056E578[];   // node-name table (char* fields @0x14/@0x18)
 extern "C" const float lbl_eu_80523F78[];  // per-instance scale table
 

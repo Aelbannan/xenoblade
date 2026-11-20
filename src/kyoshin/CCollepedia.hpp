@@ -1,13 +1,16 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/menu/MenuSndApi.hpp"
+
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
+
+class CSysWin;
 
 namespace nw4r {
 namespace lyt {
@@ -193,6 +196,18 @@ struct CCollepedia {
 
 
 
+// CCollepedia logic functions (C++ linkage, mangled retail symbols).
+void clpStartLoads(CCollepedia* self);
+void clpFreeAllRes(CCollepedia* self);
+void clpReqCloseVw(CCollepedia* self);
+void clpCursorLeft(CCollepedia* self);
+void clpCursorRght(CCollepedia* self);
+void clpCursorUp(CCollepedia* self);
+void clpCursorDown(CCollepedia* self);
+void clpOnCancel(CCollepedia* self);
+int clpCanClaim(CCollepedia* self);
+void clpSetPageVis(CCollepedia* self);
+
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
@@ -220,15 +235,14 @@ extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void CtrlObjectParam_SetStateBitFlag(u16, u32);
+
 extern "C" u32 CItem_findRecByFamily(u16);
 extern "C" void CItemData_initFromFamily(void*, u16, u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
-extern "C" float MenuSnd_GetMasterVol_95EC();
-extern "C" void CTaskGame_openStream(u32, const char*, void*, u32, u32, u32);
+
 extern "C" void copyVEC3(void*, const void*);
 
 // Additional imports for the CCollepedia constructor

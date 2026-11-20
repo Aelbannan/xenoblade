@@ -8,15 +8,11 @@
 // is needed or wanted here; the single optimize_for_size pair below marks the
 // one function retail demonstrably compiled in speed mode (see its comment).
 
-// harness_catalog dropped: this TU uses none of its VM/script-helper
-// headers, and it drags in the stale void*/void* CItem_initItemImplInstances
-// declaration (via CTaskGameEff -> CfGameManager) that conflicts with the
-// real one in kyoshin/cf/CItem.hpp (see below).
 #include <cstring>
-// Real item-impl owner BEFORE CItemBoxInfo.hpp: that header defines a
-// CItem_initItemImplInstances function-like macro that would rewrite the
-// declaration inside this header.
+extern "C" int Counter_TestBit(void*, u32);
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/cf/CItem.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -24,12 +20,10 @@
 
 // Unit-local imports (kept out of the class header so includers only see the classes).
 extern "C" char lbl_eu_805063BC[];
-extern "C" char lbl_eu_8050634C[];
-extern "C" char lbl_eu_80506380[];extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
-extern "C" int Counter_TestBit(void*, u32);extern "C" u32 IdTable_SumValues(void*, u32);
+extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32);
 extern "C" void SplitU32ToS16s(void*, u32);
-extern "C" void setGXColorS10(void*, u32, u32, u32, u32);
+
 extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
 extern "C" char lbl_eu_8052E590[];
 extern "C" char lbl_eu_8052E568[];
@@ -38,15 +32,6 @@ extern "C" void copyVEC3(void*, const void*);
 // signature as CSysWin.hpp / CMenuPlayAward.hpp).
 // More flat retail (unmangled) helpers used by the item-box renderers.
 extern "C" u32 func_801392C0();
-// cf/CfGameManager.hpp (pulled in via harness_catalog) already declares the
-// singleton no-arg form of this import at global scope; MWCC rejects a second,
-// differently-prototyped extern "C" declaration as an illegal overload. Keep
-// the item-pointer form (same unmangled symbol) in a namespace and shim the
-// call sites through it.
-namespace itemimplshim {
-extern "C" void* CItem_initItemImplInstances(void*);
-}
-#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" void setItemBoxVtxColor(void*, u32, const void*);
 // 9-byte flag-record builder: (out, unused, data) - param2 is never read in
 // retail (callers pass the item-box pointer through it).
@@ -64,56 +49,41 @@ extern u32 lbl_eu_80664098;
 
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
-// Real item-impl accessor (CItem.hpp) for this TU only: undo the
-// itemimplshim macro from CItemBoxInfo.hpp (other TUs keep using it).
-#undef CItem_initItemImplInstances
 
-// ===== typified split1 retail data (wave6) =====
-// MWCC 8-packs .rodata/.data objects: only labels at 8-aligned boundaries
+// MWCC 8-packs
 // get real symbols; interior names keep UNDEF extern reads (words stay zero,
 // relocs gate-skipped), exactly like the pre-typify linkage.
 
 
-// .rodata [0..0x48]: six "percent_X" rank strings, one 8-aligned object.
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) char lbl_eu_805062E8[0x48] =
-    "percent_E\000\000\000percent_D\000\000\000percent_C\000\000\000percent_B\000\000\000percent_A\000\000\000percent_S\000";
+// Rank names as individual constants; their retail labels point at the
+// separate 10-byte strings, not at a single packed character blob.
+static const char itemBoxRankE[] = "percent_E"; // name-guess: retail lbl_eu_805062E8 string
+static const char itemBoxRankD[] = "percent_D";
+static const char itemBoxRankC[] = "percent_C";
+static const char itemBoxRankB[] = "percent_B";
+static const char itemBoxRankA[] = "percent_A";
+static const char itemBoxRankS[] = "percent_S";
 
-// .rodata [0x48..0x80]: category string tables (7-word pointer tables, one
-// 8-aligned struct). Contents are UNDEF extern reads: the percent strings
-// (except the base) have no 8-aligned address for real symbols.
-extern const char lbl_eu_805062F4[];
-extern const char lbl_eu_80506300[];
-extern const char lbl_eu_8050630C[];
-extern const char lbl_eu_80506318[];
-extern const char lbl_eu_80506324[];
-struct Rodata_ItemBoxTbls { const void* t1[7]; const void* t2[7]; };
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTbls itemBoxInfoCategoryStringTables = {
-    { "", lbl_eu_805062E8, lbl_eu_805062F4, lbl_eu_80506300, lbl_eu_8050630C, lbl_eu_80506318, lbl_eu_80506324 },
-    { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 }
+// Category label tables: the second is the first reversed after its empty
+// header entry. MWCC emits them in definition order in .rodata.
+static const char* const itemBoxInfoCategoryStringTables[7] = {
+    "", itemBoxRankE, itemBoxRankD, itemBoxRankC, itemBoxRankB, itemBoxRankA, itemBoxRankS
 };
-#define lbl_eu_8050634C (itemBoxInfoCategoryStringTables.t2)
+static const char* const itemBoxCategoryLabelStrings[7] = { // name-guess: retail lbl_eu_8050634C table
+    "", itemBoxRankS, itemBoxRankA, itemBoxRankB, itemBoxRankC, itemBoxRankD, itemBoxRankE
+};
 
-// .rodata [0x80..0x920]: single 8-aligned tail struct (int table + reversed
-// string table + class names + format/path pool). Interior labels have no
-// 8-aligned address: code reaches the pool through member macros.
-struct Rodata_ItemBoxTail {
-    u32 ints[6];
-    const void* t[7];
+static const u32 itemBoxInfoEquippedTypeIds[6] = { 2, 4, 5, 6, 7, 8 };
+static const char* const itemBoxLabelStrings[7] = { // name-guess: retail lbl_eu_80506380 table
+    "", itemBoxRankS, itemBoxRankA, itemBoxRankB, itemBoxRankC, itemBoxRankD, itemBoxRankE
 };
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTail rodata_ItemBoxTail = {
-    { 2, 4, 5, 6, 7, 8 },
-    { "", lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 },
-};
-#define lbl_eu_80506380 (rodata_ItemBoxTail.t)
-// Interior blob is at +0x54 (non-8-aligned): member decay emits parent+0x54+imm.
+// Interior blob
 // Code must relocate against the retail symbol name with plain immediates.
 extern "C" char lbl_eu_805063BC[];
 
 // .sdata: two RTTI-ish pairs (class-name string + .data RTTI pad). Both
 // halves stay UNDEF reads: the strings are struct members below and the
 // pads live in the hand-typed .data at file end.
-extern "C" char lbl_eu_8050639C[];
-extern "C" char lbl_eu_805063AC[];
 
 
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
@@ -169,8 +139,9 @@ __attribute__((used)) u32 itemBoxInfo_nameValueBottomPad;
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
+#include "monolib/device/CDeviceSC.hpp" // CDeviceSC::getLanguage
 #include "monolib/lib/CLibLayout.hpp"  // CLibLayout::createArcResourceAccessor
-#include <nw4r/db/db_assert.h>  // nw4r::db::Panic
+#include <nw4r/db/db_assert.h>
 #include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam slots (+0xA4/+0x108/...) for char-data stats
 #include <new>
 
@@ -204,8 +175,7 @@ extern void* CItemBlock_getPtr20E8();
 extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
 // 6-byte item-box slot tables (pair of u32+u16 .sdata2 constants).
-// getLanguage__9CDeviceSCFv: real int-returning declaration comes from
-// kyoshin/cf/CItem.hpp (stale local u8 prototype deleted).
+
 extern void* lbl_eu_80664110;
 extern void* lbl_eu_80664090;
 
@@ -569,8 +539,8 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
     sprintf(rec.text, "%s",
             ((char* (*)(void*, const char*, u16))&BdatGetPtrDirect)(gd8, "rvs_caption", (u16)cat));
     u32 wide = 1;
-    if (getLanguage__9CDeviceSCFv() != 3) {
-        if (getLanguage__9CDeviceSCFv() != 2) {
+    if (CDeviceSC::getLanguage() != 3) {
+        if (CDeviceSC::getLanguage() != 2) {
             wide = 0;
         }
     }
@@ -612,7 +582,7 @@ CItemBoxNameRecord CItemBoxInfo::BuildNameRec(void* data, void* arg3) {
                 // 0x1C-byte move of the static label-pointer table into the
                 // stack copy (retail mtctr 3-pair loop + 4-byte tail).
                 {
-                    u32* s = (u32*)&lbl_eu_8050634C - 1;
+                    u32* s = (u32*)itemBoxCategoryLabelStrings - 1;
                     u32* d = (u32*)&tbl - 1;
                     for (u32 k = 0; k < 3; k++) {
                         d[1] = s[1];
@@ -1406,9 +1376,9 @@ void CItemBoxInfo::RenderKind3(u16 arg2, void* arg3, u32 arg4) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_para52",
                   BdatTouchStringCell("MNU_item", "name", rows + 0x15), 0);
 
-    // volatile: retail retains this never-read slot-kind table copy; a plain
-    // local gets it DCE'd.
-    volatile CItemBoxTagStage stage = { { 2, 4, 5, 6, 7, 8 } };
+    // The slot-kind table initializer is retained by retail; keep the real
+    // local value in the same source position.
+    CItemBoxTagStage stage = { { 2, 4, 5, 6, 7, 8 } };
     u8 playerByte = (u8)(arg4 >> 16);
 
     for (u32 i = 0; (u32)(u8)i < (u32)(u8)code80135FDC_getByte_64077(); i++) {
@@ -1523,9 +1493,9 @@ void CItemBoxInfo::RenderSlotList(u16 arg2, void* arg3) {
     }
 }
 void CItemBoxInfo::SetupSlotPanes() {
-    // No local base pointer: MWCC CSEs the repeated symbol offsets into one
-    // register, splitting the address into a pre-stmw volatile lis plus a
-    // post-stmw callee-saved addi exactly like retail.
+    // No local base pointer: MWCC keeps the repeated symbol offsets in one
+    // register, splitting the address into a pre-stmw lis plus a post-stmw
+    // callee-saved addi exactly like retail.
     char buf[0x20];
     u32 i;
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)mpLayout, "txt_value02", "", 0);
@@ -2069,13 +2039,13 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
     s32 effect = GetEffect(member, 0x21, NULL);
 // Float literals here match the ~7% HighFrame baseline; SDA 68040/44 names elsewhere
 // still open.
-    volatile s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + effect)));
+    s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + effect)));
     effect = GetEffect(member, 0x1, NULL);
-    volatile s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + effect)));
+    s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + effect)));
     effect = GetEffect(member, 0x31, NULL);
     s16 bar3 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + effect)));
     effect = GetEffect(member, 0x41, NULL);
-    volatile s16 bar4 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E) * (f32)(stA->s1E - (s16)artsSum + effect)));
+    s16 bar4 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E) * (f32)(stA->s1E - (s16)artsSum + effect)));
     effect = GetEffect(member, 0x51, NULL);
     s16 bar5 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + effect)));
     effect = GetEffect(member, 0x54, NULL);
@@ -3160,7 +3130,7 @@ void CItemBoxInfo::SetupDetail(u32 arg2, void* arg3, u32 arg4) {
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
             c1 = GetEffect(member, 0x51, NULL);
-            volatile s16 currentPhysicalDefense = (s16)(s32)(0.01f *
+            s16 currentPhysicalDefense = (s16)(s32)(0.01f *
                 ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
             GetEffect(member, 0x41, NULL);
             s32 c2 = GetEffect(member, 0x41, arg3);
@@ -4005,7 +3975,7 @@ u32 CItemBoxInfo::GetCondStat(void* b, u32 arg2) {
     u32 result = 0;
     obj = (u8*)CtrlObjectParam_GetCharEntry((u32)b) + 0x3534;
     if (Counter_TestBit(obj, arg2) != 0) {
-        result = IdTable_SumValues(obj, arg2);
+        result = IdTable_SumValues((CUnkObj8025FB10*)obj, arg2);
     }
     return result;
 }
@@ -4017,7 +3987,7 @@ u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
     u32 result = 0;
     obj = ((CItemBoxCharEntry*)CtrlObjectParam_GetCharEntry(arg1))->counterArea;
     if (Counter_TestBit(obj, arg2) != 0) {
-        result = IdTable_SumValues(obj, arg2);
+        result = IdTable_SumValues((CUnkObj8025FB10*)obj, arg2);
     }
     return result;
 }
@@ -4025,7 +3995,7 @@ u32 CItemBoxInfo2::GetCondStatById(u32 arg1, u32 arg2) {
 u32 CItemBoxInfo2::GetCondStat2D(void* arg1) {
     void* obj = (u8*)CtrlObjectParam_GetCharEntry((u8)(u32)arg1) + 0x3534;
     if (Counter_TestBit(obj, 0x2d) != 0) {
-        return IdTable_SumValues(obj, 0x2d);
+        return IdTable_SumValues((CUnkObj8025FB10*)obj, 0x2d);
     }
     return 0;
 }
@@ -4830,8 +4800,8 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
     }
     sprintf(rec.text, "%s", ((char*(*)(void*, const char*, u16))&BdatGetPtrDirect)(gd8, "rvs_caption", (u16)cat));
     u32 wide = 1;
-    if (getLanguage__9CDeviceSCFv() != 3) {
-        if (getLanguage__9CDeviceSCFv() != 2) {
+    if (CDeviceSC::getLanguage() != 3) {
+        if (CDeviceSC::getLanguage() != 2) {
             wide = 0;
         }
     }
@@ -4841,7 +4811,7 @@ CItemBoxNameRecord CItemBoxInfo2::BuildNameRec(void* data, void* arg3) {
     // the local array and formats the count-indexed label); every other char
     // advances the scan Shift-JIS-aware (lead-byte ranges advance 2). After
     // a marker, the remaining text is spliced after the replacement.
-    char* labels = (char*)lbl_eu_80506380;
+    char* labels = (char*)itemBoxLabelStrings;
     u32 labels2[4];
     char buf28[0x20];
     char buf48[0x20];
@@ -7372,12 +7342,12 @@ void sinit_801EABC4() {
     setGXColorS10(&itemBoxInfo_valueSpecialBottom, 0x1f, 0xa6, 0x1a, 0);
     SplitU32ToS16s(&itemBoxInfo_slotLabelTop, 0);
     SplitU32ToS16s(&itemBoxInfo_slotLabelBottom, 0);
-    setGXColorS10(&itemBoxInfo_slotValueTop, 0x80, 0x80, 0x80, 0);
-    setGXColorS10(&itemBoxInfo_slotValueBottom, 0x80, 0x80, 0x80, 0);
+    setGXColorS10((GXColorS10*)&itemBoxInfo_slotValueTop, 0x80, 0x80, 0x80, 0);
+    setGXColorS10((GXColorS10*)&itemBoxInfo_slotValueBottom, 0x80, 0x80, 0x80, 0);
     SplitU32ToS16s(&itemBoxInfo_nameLabelTop, 0);
     SplitU32ToS16s(&itemBoxInfo_nameLabelBottom, 0);
-    setGXColorS10(&itemBoxInfo_nameValueTop, 0xff, 0xff, 0xfa, 0);
-    setGXColorS10(&itemBoxInfo_nameValueBottom, 0x80, 0x80, 0x80, 0);
+    setGXColorS10((GXColorS10*)&itemBoxInfo_nameValueTop, 0xff, 0xff, 0xfa, 0);
+    setGXColorS10((GXColorS10*)&itemBoxInfo_nameValueBottom, 0x80, 0x80, 0x80, 0);
 }
 
 // Retail formatItemBoxName: fills the item-name buffer at item_data+0xD9 from
@@ -7402,8 +7372,8 @@ char* CItemBoxPage::GetItemName(u8 index) {
     char* out = mText.mName;
     sprintf(out, "%s", name);
     u8 is_jp = 1;
-    u8 lang = getLanguage__9CDeviceSCFv();
-    if (lang != 3 && getLanguage__9CDeviceSCFv() != 2) is_jp = 0;
+    u8 lang = CDeviceSC::getLanguage();
+    if (lang != 3 && CDeviceSC::getLanguage() != 2) is_jp = 0;
     char* scan = out;
     while (*scan) {
         if (*scan == '$') {
@@ -7429,7 +7399,7 @@ char* CItemBoxPage::GetItemName(u8 index) {
                 // the category string table; entry [1+category] is the text id.
                 u32 tbl[7];
                 u32* d = tbl;
-                u32* s = (u32*)&itemBoxInfoCategoryStringTables;
+                u32* s = (u32*)itemBoxInfoCategoryStringTables;
                 for (u32 k = 0; k < 3; k++) {
                     *d++ = *s++;
                 }

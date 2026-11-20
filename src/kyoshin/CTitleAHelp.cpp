@@ -355,8 +355,6 @@ bool isPaneVisible(nw4r::lyt::Pane* self) {
     return (bytes[0xBB] & 1) != 0;
 }
 
-void setGXColorS10(GXColorS10*, s16, s16, s16, s16);
-
 void sinit_801C4AE4() {
     setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664468), 0xa8, 0x52, 0x08, 0x00);
     setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664470), 0xa8, 0x52, 0x08, 0xff);
@@ -365,11 +363,12 @@ void sinit_801C4AE4() {
     setGXColorS10(reinterpret_cast<GXColorS10*>(&lbl_eu_80664480), 0x05, 0x80, 0xa6, 0xff);
 }
 
-void setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;
     color->r = r;
+    return color;
 }
 
 

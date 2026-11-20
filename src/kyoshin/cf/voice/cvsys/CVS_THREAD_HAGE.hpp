@@ -13,9 +13,7 @@ extern "C" {
     int IsThreadVoiceActive(CVS_THREAD* self);
     void DetachThreadVoice(CVS_THREAD* self, CCharVoice* voicePtr);
     int TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    int HpVoice_MapSubState(CVoiceHandle* handle);
     int HpVoice_ValidIter(int iter);
-    int HpVoice_CheckPair26(CVoiceHandle* handle1, CVoiceHandle* handle2);
     u8* CCharVoiceMan_AllocVoiceArena(int size);
     void __ct__cf_CVS_THREAD();
 

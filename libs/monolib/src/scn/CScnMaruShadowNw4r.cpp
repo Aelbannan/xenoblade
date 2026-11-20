@@ -10,7 +10,9 @@
 //   sinit_8048EAA4 -- static initializer (empty, .ctors registration)
 
 #include <harness_catalog.h>
+#include "monolib/scn/code_804BD8E8.hpp"
 #include "libs/monolib/src/scn/CScnMaruShadowNw4r.hpp"
+#include <monolib/scn/MaruShadowData.hpp>
 
 #include <cmath>
 #include <nw4r/math/math_arithmetic.h>
@@ -54,8 +56,8 @@ extern "C" u32 lbl_eu_8056E598[8];  // CScnMaruShadowNw4r vtable (defined below)
 // follows declaration order, so A944-first+f1-color is unreachable via decl
 // steering alone; likely needs the true original statement interleaving.
 extern "C" void __ct__CScnMaruShadowNw4r(CScnMaruShadowNw4r* self) {
-    const float b = lbl_eu_8066A948;
-    const float a = lbl_eu_8066A944;
+    const float b = 0.0f;
+    const float a = 1.0f;
     const float c = 0.9f;
 
     self->vtable = (u32)&lbl_eu_8056E598;
@@ -190,7 +192,7 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
 
     float anchorY = 0.0f;
     if ((self->field_0x28 & 0x10) != 0) {
-        fscale = lbl_eu_8066A944 + ctx->field_0x2E8;
+        fscale = 1.0f + ctx->field_0x2E8;
         anchorY = self->field_0x14;
         self->field_0x28 &= ~0x40;
     } else {
@@ -205,7 +207,7 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
             }
             pos.y += 0.1f;
         } else {
-            if (!ScnRes_VertRayForward_E398(&pos, -fscale, lbl_eu_8066A948, 0, 0)) {
+            if (!ScnRes_VertRayForward_E398(&pos, -fscale, 0.0f, 0, 0)) {
                 return;
             }
             void* hit = ScnRes_GetEntryPtr_E50C(0);
@@ -214,12 +216,12 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     }
 
     // Ground offset fades the shadow with height above the anchor plane.
-    self->field_0x20 = lbl_eu_8066A944;
+    self->field_0x20 = 1.0f;
     float lim = 0.7f * fscale;
     float d = ctx->field_0x2E0 - anchorY;
     if (d > lim) {
         float t = (d - 0.7f * fscale) / (0.3f * fscale);
-        self->field_0x20 = lbl_eu_8066A944 - t;
+        self->field_0x20 = 1.0f - t;
         if (self->field_0x20 < 0.0f) {
             self->field_0x20 = 0.0f;
         }
@@ -229,15 +231,15 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     float vy = self->field_0x1c;
     if (vy > 0.0f) {
         self->field_0x18 += vy;
-        if ((double)self->field_0x18 >= lbl_eu_8066A9A8) {
-            self->field_0x18 = lbl_eu_8066A944;
-            self->field_0x1c = lbl_eu_8066A948;
+        if ((double)self->field_0x18 >= 1.0) {
+            self->field_0x18 = 1.0f;
+            self->field_0x1c = 0.0f;
         }
     } else if (vy < 0.0f) {
         self->field_0x18 += vy;
-        if ((double)self->field_0x18 <= lbl_eu_8066A9B0) {
-            self->field_0x18 = lbl_eu_8066A948;
-            self->field_0x1c = lbl_eu_8066A948;
+        if ((double)self->field_0x18 <= 0.0) {
+            self->field_0x18 = 0.0f;
+            self->field_0x1c = 0.0f;
         }
     }
 
@@ -346,9 +348,9 @@ extern "C" void MaruShadowSetFlag40Store(u8* self, const void* other) {
 // collision query pass invokes this with scene-head extent words, a vertex
 // entry count and a centre offset. It opens a GX triangle batch and streams
 // `count` vertices - pairs from 24-byte-stride entries, then a remainder
-// loop at 12 bytes - projecting each through lbl_eu_80658638 bounds and
-// lbl_eu_806658E0 depth scale into the GX FIFO (paired-single extent check
-// in the prologue lowers to psq_l/ps_cmpo0).
+// loop at 12 bytes - projecting each through sMaruShadowCenter bounds and
+// sMaruShadowDepthScale depth scale into the GX FIFO (paired-single extent
+// check in the prologue lowers to psq_l/ps_cmpo0).
 void MaruShadowStreamVerts(void* entries, const float* head, u32 count, float offs) {
     // Centre-offset copies: retail spills these to stack homes.
     f32 t[4];
@@ -362,8 +364,8 @@ void MaruShadowStreamVerts(void* entries, const float* head, u32 count, float of
     GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, (u16)count);
 
     u8* walk = (u8*)entries;
-    const float* bnd = lbl_eu_80658638;
-    f32 ds = lbl_eu_806658E0;
+    const float* bnd = sMaruShadowCenter;
+    f32 ds = sMaruShadowDepthScale[0];
     f32 eps = 0.005f;
     f32 half = 0.5f;
 
@@ -413,15 +415,15 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
         float sx = *(float*)(rec + 0xC);
         float ty = *(float*)(rec + 0x2C);
         float tzOff = *(float*)(rec + 0x1C);
-        float* gvec = (float*)lbl_eu_80658638;
-        float depthScale = lbl_eu_8066A944 / (2.0f * f1);
+        float* gvec = sMaruShadowCenter;
+        float depthScale = 1.0f / (2.0f * f1);
         gvec[0] = sx;
         gvec[1] = ty;
         gvec[2] = tzOff - 0.5f * f2;
-        lbl_eu_806658E0 = depthScale;
+        sMaruShadowDepthScale[0] = depthScale;
 
-        const float k = lbl_eu_8066A944;
-        const float zero = lbl_eu_8066A948;
+        const float k = 1.0f;
+        const float zero = 0.0f;
         float mtx[3][4];
         mtx[0][0] = k; mtx[0][1] = zero; mtx[0][2] = zero; mtx[0][3] = sx;
         mtx[1][0] = zero; mtx[1][1] = k; mtx[1][2] = zero; mtx[1][3] = ty;
@@ -435,7 +437,7 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
         smtx[0][0] = k; smtx[0][1] = zero; smtx[0][2] = zero;
         smtx[1][0] = zero; smtx[1][1] = k; smtx[1][2] = zero;
         smtx[2][0] = zero; smtx[2][1] = zero; smtx[2][2] = k;
-        ScnRes_Notify4Word_E3E0(&MaruShadowStreamVerts, smtx, 0x00044A05, 0);
+        ScnRes_Notify4Word_E3E0((u32)&MaruShadowStreamVerts, (u32)smtx, 0x00044A05, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, (GXAttr)0xD, GX_TEX_ST, (GXCompType)0, 0);
         return;
     }
@@ -457,7 +459,7 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
     } else {
         mlCVec3 vv;
         vv.x = v2[0]; vv.y = v2[1]; vv.z = v2[2];
-        if (!ScnRes_VertRayForward_E398(&vv, -f1, lbl_eu_8066A948, 0, 0)) {
+        if (!ScnRes_VertRayForward_E398(&vv, -f1, 0.0f, 0, 0)) {
             return;
         }
         ScnRes_CopyEntryMid(&up, 0);
@@ -469,7 +471,7 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
     }
 
     float lenSq = up.x * up.x + up.z * up.z;
-    if (lenSq <= lbl_eu_8066A948) {
+    if (lenSq <= 0.0f) {
         Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
     float len = 0.0f;
@@ -515,10 +517,10 @@ void MaruShadowDrawQuad(CScnMaruShadowNw4r* self, ShadowCtx* ctx, float f1, floa
     GXLoadPosMtxImm((const float (*)[4])posMtx, GX_PNMTX0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     // Four vertices: position + two attribute bytes each (matches retail pipe writes).
-    GXPosition3f32(-f1, f1, lbl_eu_8066A948); GXColor1x8(0); GXColor1x8(0);
-    GXPosition3f32(f1, f1, lbl_eu_8066A948); GXColor1x8(1); GXColor1x8(0);
-    GXPosition3f32(f1, -f1, lbl_eu_8066A948); GXColor1x8(1); GXColor1x8(1);
-    GXPosition3f32(-f1, -f1, lbl_eu_8066A948); GXColor1x8(0); GXColor1x8(1);
+    GXPosition3f32(-f1, f1, 0.0f); GXColor1x8(0); GXColor1x8(0);
+    GXPosition3f32(f1, f1, 0.0f); GXColor1x8(1); GXColor1x8(0);
+    GXPosition3f32(f1, -f1, 0.0f); GXColor1x8(1); GXColor1x8(1);
+    GXPosition3f32(-f1, -f1, 0.0f); GXColor1x8(0); GXColor1x8(1);
 }
 
 // us-8049236c: MaruShadowDrawBillboard (0x384 bytes)
@@ -554,10 +556,10 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
     ShadowMtx rotPitch;
 
     float lenSq = dir->x * dir->x + dir->z * dir->z;
-    if (lenSq <= lbl_eu_8066A948) {
+    if (lenSq <= 0.0f) {
         Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    if (lenSq > lbl_eu_8066A948) {
+    if (lenSq > 0.0f) {
         // len scoped inside the guard: dies before the matrix builds, so it
         // never claims a callee-saved FP register.
         float len = lenSq * nw4r::math::FrSqrt(lenSq);
@@ -570,31 +572,31 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
     float sP = nw4r::math::SinFIdx(pitch * 40.743664f);
     float cP = nw4r::math::CosFIdx(pitch * 40.743664f);
     rotPitch.m[0][0] = cP; rotPitch.m[0][1] = -sP;
-    rotPitch.m[0][2] = lbl_eu_8066A948; rotPitch.m[0][3] = lbl_eu_8066A948;
+    rotPitch.m[0][2] = 0.0f; rotPitch.m[0][3] = 0.0f;
     rotPitch.m[1][0] = sP; rotPitch.m[1][1] = cP;
-    rotPitch.m[1][2] = lbl_eu_8066A948; rotPitch.m[1][3] = lbl_eu_8066A948;
-    rotPitch.m[2][0] = lbl_eu_8066A948; rotPitch.m[2][1] = lbl_eu_8066A948;
-    rotPitch.m[2][2] = lbl_eu_8066A944; rotPitch.m[2][3] = lbl_eu_8066A948;
+    rotPitch.m[1][2] = 0.0f; rotPitch.m[1][3] = 0.0f;
+    rotPitch.m[2][0] = 0.0f; rotPitch.m[2][1] = 0.0f;
+    rotPitch.m[2][2] = 1.0f; rotPitch.m[2][3] = 0.0f;
 
     // X-rotation by -angPitch.
     float sT = nw4r::math::SinFIdx(-angPitch * 40.743664f);
     float cT = nw4r::math::CosFIdx(-angPitch * 40.743664f);
-    rotTilt.m[0][0] = lbl_eu_8066A944; rotTilt.m[0][1] = lbl_eu_8066A948;
-    rotTilt.m[0][2] = lbl_eu_8066A948; rotTilt.m[0][3] = lbl_eu_8066A948;
-    rotTilt.m[1][0] = lbl_eu_8066A948; rotTilt.m[1][1] = cT;
-    rotTilt.m[1][2] = -sT; rotTilt.m[1][3] = lbl_eu_8066A948;
-    rotTilt.m[2][0] = lbl_eu_8066A948; rotTilt.m[2][1] = sT;
-    rotTilt.m[2][2] = cT; rotTilt.m[2][3] = lbl_eu_8066A948;
+    rotTilt.m[0][0] = 1.0f; rotTilt.m[0][1] = 0.0f;
+    rotTilt.m[0][2] = 0.0f; rotTilt.m[0][3] = 0.0f;
+    rotTilt.m[1][0] = 0.0f; rotTilt.m[1][1] = cT;
+    rotTilt.m[1][2] = -sT; rotTilt.m[1][3] = 0.0f;
+    rotTilt.m[2][0] = 0.0f; rotTilt.m[2][1] = sT;
+    rotTilt.m[2][2] = cT; rotTilt.m[2][3] = 0.0f;
 
     // Y-rotation by angYaw.
     float sY = nw4r::math::SinFIdx(angYaw * 40.743664f);
     float cY = nw4r::math::CosFIdx(angYaw * 40.743664f);
-    rotYaw.m[0][0] = cY; rotYaw.m[0][1] = lbl_eu_8066A948;
-    rotYaw.m[0][2] = sY; rotYaw.m[0][3] = lbl_eu_8066A948;
-    rotYaw.m[1][0] = lbl_eu_8066A948; rotYaw.m[1][1] = lbl_eu_8066A944;
-    rotYaw.m[1][2] = lbl_eu_8066A948; rotYaw.m[1][3] = lbl_eu_8066A948;
-    rotYaw.m[2][0] = -sY; rotYaw.m[2][1] = lbl_eu_8066A948;
-    rotYaw.m[2][2] = cY; rotYaw.m[2][3] = lbl_eu_8066A948;
+    rotYaw.m[0][0] = cY; rotYaw.m[0][1] = 0.0f;
+    rotYaw.m[0][2] = sY; rotYaw.m[0][3] = 0.0f;
+    rotYaw.m[1][0] = 0.0f; rotYaw.m[1][1] = 1.0f;
+    rotYaw.m[1][2] = 0.0f; rotYaw.m[1][3] = 0.0f;
+    rotYaw.m[2][0] = -sY; rotYaw.m[2][1] = 0.0f;
+    rotYaw.m[2][2] = cY; rotYaw.m[2][3] = 0.0f;
 
     // Rotations preserve the translation column, so concatenate in place
     // first, then stamp the anchor world position.
@@ -614,10 +616,10 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
     GXLoadPosMtxImm(copyDst.m, GX_PNMTX0);
 
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-    GXPosition3f32(-scale, scale, lbl_eu_8066A948); GXColor1x8(0); GXColor1x8(0);
-    GXPosition3f32(scale, scale, lbl_eu_8066A948); GXColor1x8(1); GXColor1x8(0);
-    GXPosition3f32(scale, -scale, lbl_eu_8066A948); GXColor1x8(1); GXColor1x8(1);
-    GXPosition3f32(-scale, -scale, lbl_eu_8066A948); GXColor1x8(0); GXColor1x8(1);
+    GXPosition3f32(-scale, scale, 0.0f); GXColor1x8(0); GXColor1x8(0);
+    GXPosition3f32(scale, scale, 0.0f); GXColor1x8(1); GXColor1x8(0);
+    GXPosition3f32(scale, -scale, 0.0f); GXColor1x8(1); GXColor1x8(1);
+    GXPosition3f32(-scale, -scale, 0.0f); GXColor1x8(0); GXColor1x8(1);
 }
 
 // us-804926f0: MaruShadowPickScale (0x20 bytes)

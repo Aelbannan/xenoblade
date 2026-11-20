@@ -8,19 +8,22 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef CItem_initItemImplInstances
 #include "kyoshin/CArtsInfo.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "kyoshin/CTitle.hpp"  // setGXColorS10 (canonical C++ declaration)
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "monolib/device/CDeviceFont.hpp"
-#include <nw4r/lyt.h>
+#include "monolib/device/CDeviceSC.hpp"
+
 #include <stdlib.h>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // Extern declarations for referenced symbols
+// Counter_TestBit is declared once in the owning header code_8025FB10.hpp.
 
 // String table base (rodata, accessed via sda21 relocation)
 extern char lbl_eu_8050B00C[];
@@ -265,11 +268,11 @@ void CArtsInfo_Cleanup(CArtsInfo* self) {
 
 // CArtsInfo_GetFlag48 - get field_0x48
 // .text:0x388, size 0x8
-u8 CArtsInfo_GetFlag48(CArtsInfo* self) { return self->field_0x48; }
+u32 CArtsInfo_GetFlag48(CArtsInfo* self) { return self->field_0x48; }
 
 // CArtsInfo_GetFlag49 - get field_0x49
 // .text:0x390, size 0x8
-u8 CArtsInfo_GetFlag49(CArtsInfo* self) { return self->field_0x49; }
+u32 CArtsInfo_GetFlag49(CArtsInfo* self) { return self->field_0x49; }
 
 // CArtsInfo_ReqState1 - state check (state==0 -> 1)
 // .text:0x398, size 0x20
@@ -824,7 +827,7 @@ extern "C" int CArtsInfo_GetEquipValue(CArtsInfo* self, int arg2) {
 extern "C" int CArtsInfo_GetSkill5C(CArtsInfo* self) {
     u8* obj = (u8*)CtrlObjectParam_GetCharEntry(self->field_0x54) + 0x3534;
     if (Counter_TestBit(obj, 0x5C) != 0) {
-        return IdTable_SumValues(obj, 0x5C);
+        return IdTable_SumValues((CUnkObj8025FB10*)obj, 0x5C);
     }
     return 0;
 }
@@ -833,7 +836,7 @@ extern "C" int CArtsInfo_GetSkill5C(CArtsInfo* self) {
 extern "C" u32 CArtsInfo_GetSkill2D(CArtsInfo* self) {
     u8* obj = (u8*)CtrlObjectParam_GetCharEntry(self->field_0x54) + 0x3534;
     if (Counter_TestBit(obj, 0x2D) != 0) {
-        return IdTable_SumValues(obj, 0x2D);
+        return IdTable_SumValues((CUnkObj8025FB10*)obj, 0x2D);
     }
     return 0;
 }
@@ -2285,7 +2288,7 @@ void CArtsInfo_FmtRow2C(CArtsInfo* self, u8 arg2, int arg3) {
 // characters so byte counts stay aligned. C linkage (retail symbol is unmangled; the
 // extern "C" declaration is in the header).
 void CArtsInfo_DotToCommaDE(CArtsInfo* self, u32 arg2, char* str) {
-    u8 lang = getLanguage__9CDeviceSCFv();
+    u8 lang = CDeviceSC::getLanguage();
     if (lang != 5) return;
 
     u8 r = BdatGetU8Direct((const void*)self->field_0x50, (char*)"tagFS", arg2);

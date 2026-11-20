@@ -70,11 +70,14 @@ struct TextKeyword {
 extern TextKeyword lbl_eu_8052A528[6];
 
 // cf cue-script decoder routines (this TU).  Retail symbols are unmangled C
-// names (func_XXXX), so the declarations use C linkage.
+// names, so the declarations use C linkage.
+// name-guess: the four CmText_* names are behavioural names for flat symbols in
+// config/{us,eu,jp}/symbols.txt (0x800C2224/2460/2578/270C in US); no original
+// source spelling or C++ mangling survives, so the roles come from their bodies.
 extern "C" {
-int func_800C17DC(const char* str, int* type, int* len);
+int CmText_DecodeSjisChar(const char* str, int* type, int* len);
 int func_800C1900(char* str, char** out, int maxLen);
-int func_800C1A18(CmTextProc* self, char* out, int maxLen);
-void func_800C1B30(CmTextProc* self, int key, const char* name, const char* value);
-void func_800C1CC4(CmTextProc* self, const char* text, CmTextTable* buf);
+int CmText_ReadWord(CmTextProc* self, char* out, int maxLen);
+void CmText_RegisterEntry(CmTextProc* self, int key, const char* name, const char* value);
+void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf);
 }

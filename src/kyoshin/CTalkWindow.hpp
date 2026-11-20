@@ -15,6 +15,7 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/CUICfManager_Res.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 class CScn;
 
@@ -264,7 +265,6 @@ void CUICfManager_queueFadeMenu(u8 a, int b, float c, float d, float e);
 void UIWin_CreateQuestWin(u16 id, int a, int b);
 void UIWin_CreateShopWin(u16 id);
 void UIWin_CreateBEDE0Win(u16 id);
-void CUICfManager_queueMakeCrystalMenu();
 void TagProcRenderPage(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
                     nw4r::lyt::Pane* c, int flag);
 void* __ct__CTagProcessor(void* self);

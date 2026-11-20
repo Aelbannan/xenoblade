@@ -11,6 +11,7 @@
 #include "kyoshin/CSelShopWin.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 class CScn;
 
@@ -67,10 +68,6 @@ extern "C" void getShopWinPanePos(nw4r::math::VEC3*, CSelShopWin*, int);
 // Shop-window widget hooks. Retail keeps these unmangled (C linkage); they take
 // the CSelShopWin explicitly. The is-loaded/animation-active queries return an
 // int so the caller's `!= 0` emits a plain cmpi (no u8 zero-extend).
-extern "C" void teardownShopWin(CSelShopWin*);
-extern "C" int isShopWinLoaded(CSelShopWin*);
-extern "C" int isShopWinAnimActive(CSelShopWin*);
-extern "C" void showShopWin(CSelShopWin*);
 
 // Select-shop singleton pointer (.sbss) cleared by Term.
 extern u32 lbl_eu_806642E8;
@@ -83,9 +80,6 @@ extern "C" int MenuShopSellIsCreated();
 // defines a minimal local CLibHbm view that clashes with the full CLibHbm
 // pulled in by CSelShopWin.hpp -> monolib/lib.hpp (same scheme as
 // CMenuUpdate / CMenuShopBuy). isFlag01Set takes the task-game instance.
-extern "C" void driveShopWinAnim(CSelShopWin*);
-extern "C" void loadShopWinArc(CSelShopWin*);
-extern "C" void drawShopWin(CSelShopWin*, nw4r::lyt::DrawInfo*);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
 
@@ -97,9 +91,6 @@ extern "C" void ShopSel_State3Done(CMenuSelectShop*);
 
 // Shop-window close animation hook + select-shop selection actions (retail
 // unmangled C-ABI symbols; defined in CSelShopWin/CUICfManager TUs).
-extern "C" void hideShopWin(CSelShopWin*);
-extern "C" void CUICfManager_queueShopBuyMenu(u32);
-extern "C" void CUICfManager_queueShopSellMenu();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 gmPauseFlags;             // cbRenderBefore gate flag (.sbss)

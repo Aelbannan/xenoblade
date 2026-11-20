@@ -13,7 +13,7 @@
 // into CFloorMap.cpp; the canonical u16 decl on code_80135FDC.hpp is now the
 // only shared one - no rename guard needed here.)
 #include <types.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <monolib/math/CVec3.hpp>
 #include <monolib/math/MTRand.hpp>
 

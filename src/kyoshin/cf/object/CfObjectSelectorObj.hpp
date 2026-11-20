@@ -4,6 +4,8 @@
 
 namespace cf{
 
+    class CfObjectSelectorData;
+
     class CfObjectSelectorObj{
     public:        
         virtual ~CfObjectSelectorObj();
@@ -40,3 +42,11 @@ namespace cf{
     }; //size = 0xC188
 
 } //namespace cf
+
+// Owned by CfObjectSelectorObj.cpp; C++ linkage matches the retail mangled names.
+cf::CfObjectSelectorObj* Selector_GetInstance();
+bool Selector_IssueRequest(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b, unsigned int c);
+u32 Selector_FetchResult(cf::CfObjectSelectorObj* obj);
+void Selector_ReinitState(cf::CfObjectSelectorData* obj, u32 a4, u32 a5);
+void Selector_SetActive(cf::CfObjectSelectorData* obj, u32 arg4);
+bool Selector_UpdateFilter(cf::CfObjectSelectorObj* obj, unsigned int c);

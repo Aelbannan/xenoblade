@@ -47,7 +47,6 @@ extern "C" {
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     u8*    CCharVoiceMan_AllocVoiceArena(int size);
     CVS_THREAD* __ct__cf_CVS_THREAD(CVS_THREAD* object);
-    int    HpVoice_MapSubState(CVoiceHandle* handle);
     CVoiceHandle* HpVoice_FindBySubState(int a);
     void*  findObjectById__Fi(int id);
     void*  MapFx_ResolveOwner(void* src);

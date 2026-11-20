@@ -6,6 +6,7 @@
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "kyoshin/CUIErrMesWin.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -314,8 +315,8 @@ extern "C" int ErrWin_PickOwnerRand_5AC8(CErrMesOwner* a, CErrMesOwner* b, CErrM
     if (!(b->field_0x3F00 & 0x2)) return -1;
     if (!(c->field_0x3F00 & 0x2)) return -1;
     if (ml::math::mtRand(100) >= 25) return -1;
-    int x = HpVoice_MapSubState(b);
-    int y = HpVoice_MapSubState(c);
+    int x = HpVoice_MapSubState((CVoiceHandle*)b);
+    int y = HpVoice_MapSubState((CVoiceHandle*)c);
     if (x == 1 && y == 3) return 0x900;
     if (x == 1 && y == 2) return 0x901;
     if (x == 1 && y == 4) return 0x902;

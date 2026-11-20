@@ -6,6 +6,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"

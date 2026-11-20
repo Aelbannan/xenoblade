@@ -11,6 +11,9 @@
 #include "kyoshin/code_80135FDC_State.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
+// Defined in CMiniMap.cpp; retail exports the plain C name.
+extern "C" s32 MiniMapHasGlobalData();
+
 // Forward declarations (full definitions live in the monolib/nw4r headers,
 // included by the TU that needs them).
 namespace nw4r {
@@ -65,6 +68,7 @@ extern char* sMiniMapLayoutNames[];
 #include "kyoshin/CTaskGame.hpp"
 
 #include "kyoshin/code_801F3BE0.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 // Cross-TU layout/BDAT helpers. Plain C++ declarations so MWCC re-derives the
 // retail mangled names (buildLayout__FPP... / drawLayout__FPP... / ...).
@@ -79,7 +83,6 @@ extern "C" int isVisionAnimating();
 extern "C" u32 isMapSelectActive();
 extern "C" bool MapSelectSCIsCreated();
 bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
-extern "C" u32 CUICfManager_queueWorldMapMenu();
 // (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
 // cf::CfGameManager pad-mode probe with an explicit int arg: the retail symbol

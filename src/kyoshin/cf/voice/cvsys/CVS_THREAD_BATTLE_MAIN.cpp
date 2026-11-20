@@ -1,5 +1,6 @@
 // Voice thread state machines for the battle-main voice system.
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -14,7 +15,6 @@ extern "C" {
     int  TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     int  RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
     void __ct__cf_CVS_THREAD(void* self);
-    int  HpVoice_MapSubState(CVoiceHandle* handle);
     void* CCharVoiceMan_AllocVoiceArena(int size);
     // Runtime rethrow (NMWException.h): noreturn so MWCC elides the
     // __end__catch epilogue of the catch-all handler.
@@ -213,16 +213,16 @@ struct BmSubVTV {
 //
 
 int BmVoice_FindPoolA(CVoiceHandle* owner);
-extern "C" int BmVoice_FindPoolB(CVoiceHandle* owner);
-// C-linkage so the retail unmangled symbol BmVoice_FindPoolC is referenced.
-extern "C" int BmVoice_FindPoolC(CVoiceHandle* owner);
-int BmVoice_HasEntry(CVoiceHandle* owner);
 int BmVoice_PlayA0(CVoiceHandle* self);
 int BmVoice_Play12C(CVoiceHandle* self);
 int BmVoice_Play0A(CVoiceHandle* self);
 int BmVoice_PlayReqB4(CVoiceHandle* self, int param);
 int BmVoice_Play32(CVoiceHandle* self);
 int BmVoice_PlayGated(CVoiceHandle* self, int param, int size);
+extern "C" int BmVoice_FindPoolB(CVoiceHandle* owner);
+// C-linkage so the retail unmangled symbol BmVoice_FindPoolC is referenced.
+extern "C" int BmVoice_FindPoolC(CVoiceHandle* owner);
+int BmVoice_HasEntry(CVoiceHandle* owner);
 
 // Scan the 60-stride list at lbl_eu_8053A4B8 for the entry whose id matches
 // the owner's +0x3F28 sub-state, then draw a random voice from pool A.

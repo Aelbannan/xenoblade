@@ -5,6 +5,7 @@
 // voice command-string selection.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "monolib/math/Random.hpp"
 
 // us-802add28 (__ct__802AB5F0)

@@ -52,6 +52,7 @@ struct UnkSceneView {
 };
 
 #include "kyoshin/code_801F3BE0.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 namespace cf {
     class CfObjectMap;
@@ -98,7 +99,6 @@ extern "C" {
     void* scnLgtCreateEnvController(void* mgr, const void* name, int flag);
     void scnLgtRemoveLgtItem(void* mgr, void* resource);
     void scnLgtPushLgtValue(void* mgr, u16 value, float amount);
-    void Scn_SetTimeScale(CScn* scene, float value);
     void* Scn_InitGlobalB(void* r3, void* r4, void* r5);
     void* scnImN4BuildByIdx(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
     void CfModel_InstallSub(void* r3, void* r4);
@@ -125,10 +125,9 @@ extern "C" void* CfRes_getLazyField10(void* r3, void* r4);
     void* KyoshinHeap_AllocFld34(void* r3);
     void* KyoshinHeap_GetField40();
 extern "C" void CfRes_tryUpdateSlot16C(void* r3);
-    u32 Tok_Pack08(u32 a, u32 b);
+
     int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);
-    void CfSoundMan_ClearFxEffect(u32 r3, u32 r4);
     // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp.
 
     // ---- this TU's own retail symbols (Fv-annotated / unmangled) ----
@@ -138,7 +137,10 @@ extern "C" void CfRes_tryUpdateSlot16C(void* r3);
     void CfObjectMap_updateEvents(cf::CfObjectMap* self);
 }
 
-// ---- data symbols (global scope: no mangling, plain extern is enough) ----
+// Real C++ declaration from monolib/scn/CScnTimeApi.hpp.
+void Scn_SetTimeScale(CScn* scene, float value);
+
+// ---- data symbols
 extern CView* gmCurrentView;     // global scene object (secondary)
 extern u32 gmPauseFlags;        // global flag word
 extern void* lbl_eu_806640A8;      // bdat table pointer

@@ -1,13 +1,18 @@
 #pragma once
 
 #include <types.h>
-#include <revolution/MEM.h>  // MEMAllocator member at +0x16AC
+#include "libs/monolib/src/scn/CScn_80496B0C.hpp"
+#include <revolution/MEM.h>
 #include <nw4r/math.h>
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "libs/monolib/src/scn/CMdlAnmEye.hpp"
-#include "monolib/scn/code_804BF59C.hpp"  // CScnEnvLgtData + ScnEnvLgt_ApplyFalloff (env-light update)
+#include "libs/monolib/src/scn/CMdlMouth.hpp"
+#include "libs/monolib/src/scn/CMdlAnmUV.hpp"
+#include "monolib/scn/code_804BF59C.hpp"  // CScnEnvLgtData + ScnEnvLgt_ApplyFalloff
+#include "monolib/scn/CMdlDynamics.hpp"
 
 class CScnVirtualLight;  // full definition in CScnVirtualLight.hpp (scnVlUpdate arg)
+class CMdlLook;
 
 // nw4r g3d types used as pointers only here (complete definitions are pulled
 // in by the .cpp where members are dereferenced).
@@ -441,8 +446,8 @@ public:
     /* 0x16C4 */ u16 field_0x16C4;                   // frame counter (u16, advanced by scnImN4FeedLook)
     /* 0x16C6 */ u8 _pad_0x16C6[0x2];                // to 0x16C8
     /* 0x16C8 */ CScnItemModelNw4rSub16C8 field_0x16C8;  // CMdlMaterial sub-object (0x38 bytes)
-    /* 0x1700 */ u8 field_0x1700[0x30];              // CMdlMouth sub-object
-    /* 0x1730 */ u8 field_0x1730[0x40];              // CMdlAnmUV sub-object
+    /* 0x1700 */ CMdlMouth field_0x1700;             // mouth-animation sub-object
+    /* 0x1730 */ CMdlAnmUV field_0x1730;             // UV-animation sub-object
     /* 0x1770 */ CMdlAnmEye field_0x1770;            // eye-anim state machine (0x30 bytes)
     /* 0x17A0 */ u8 field_0x17A0[0x28];              // CMdlDynamics sub-object
     /* 0x17C8 */ s32 field_0x17C8;                   // handle null-checked by scnImN4LookBind / scnImN4LookRel
@@ -455,7 +460,9 @@ public:
 
 // Cross-TU C-linkage placeholders (retail symbols are unmangled func_* names
 // until symbol recovery renames them; keep the C linkage to match relocs).
-extern "C" void setMdlLookTarget(s32 v);
+namespace ml { class CVec3; }
+// Defined in monolib/src/scn/CMdlLook.cpp with C++ linkage.
+void setMdlLookTarget(CMdlLook* look, const ml::CVec3* target);
 extern "C" void setMdlLookAngles(s32 v);
 extern "C" void simSetFlag8000000(CScnItemModelNw4r* self, u32 enable);
 extern "C" void simNotifyReadyTree(CScnItemModelNw4r* self);
@@ -482,8 +489,8 @@ extern "C" int simProbeVfunc34(CScnItemModelNw4r* self, u32 param);
 extern "C" void simSetFlag1Tree(CScnItemModel* self, u32 param);
 // CMdlLook handle feed (defined in CMdlLook.cpp): (handle, model, frame,
 // param).
-extern "C" void syncMdlLookSlots(s32 handle, CScnItemModelNw4r* self, u32 frame,
-                              u32 param);
+// Defined in monolib/src/scn/CMdlLook.cpp with C++ linkage.
+void syncMdlLookSlots(CMdlLook* look, u8* unk, u32 frame, u32 param);
 extern "C" void simSetFlag1MTree(CScnItemModelNw4r* self, u32 param);
 
 // Cross-TU imports used by scnImN4UnlinkChain / scnImN4SetNodeVis / scnImN4NotifyMat:
@@ -521,16 +528,14 @@ extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* sel
 
 // Cross-TU sub-object hooks (defined in CMdlDynamics.cpp; retail names are
 // unmangled func_* symbols).
-extern "C" void MdlDyn_MarkAllDynamic(u8* self);
 extern "C" void MdlDyn_AddVecAll(u8* self);
 
 // scnImN4Teardown cross-TU imports: anim sub-object teardown (defined in
 // CScn_80496B0C.cpp), pool deregistration (CScnItemModel.cpp), CMdlDynamics
 // release (CMdlDynamics.cpp), the scene root anm-scene removal (g3d_scnroot)
 // and the +0x16C8 sub-object destructor fragment.
-extern "C" void scn80496ReleaseChildren(void* self);
 extern "C" void simRemoveFromPool(CScnItemModel* self);
-extern "C" void MdlDyn_FreeAll(u8* self);
+
 // CMdlDynamics world-matrix sync (defined in CMdlDynamics.cpp), called by
 // scnImN4SyncShadow after the shadow-matrix copy pass.
 extern "C" void MdlDyn_Update(void* self, nw4r::math::MTX34* mtxs);
@@ -548,6 +553,8 @@ extern "C" u32 lbl_eu_8056DE80[];
 // first constructed model uses the getScnRoot49C path, later ones
 // getScnRoot44C). Owned by monolibdata2.o.
 extern u8 gScnImN4AllocPathFlag;
+
+#include <monolib/scn/MaruShadowData.hpp>
 
 // .sdata2 constants used by the ctor: 30.0f (radius flag threshold) and the
 // 2^52 u32->double conversion magic.
@@ -577,16 +584,13 @@ extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b);
 
 // Anim sub-object helpers used by scnImN4PoseHook (defined in
 // CScn_80496B0C.cpp / CMdlAnmUV.cpp / CMdlMouth.cpp).
-extern "C" void scn80496RefreshTRS(void* self, ml::CVec3* outA, ml::CVec3* outB,
-                              ml::CVec3* outC, u32 nodeIdx);
 extern "C" int UVAnm_PushPairSRT(void* self, u32 arg2, void* res);
-extern "C" int MdlMouthPollAnim(void* self, u32 arg2, void* res);
+
 
 // scnImN4UpdateVis per-frame anim helpers (defined in CMdlAnmEye.cpp /
 // CMdlMouth.cpp): eye-anim / mouth-anim refresh.
 extern "C" void EyeAnm_TickBlink(void* self);
-extern "C" void MdlMouthTeardown(void* self);
-// Fade-distance walk (defined in CScnItemModel.cpp): last-chain fade value.
+
 extern "C" float simGetLeafDist7B0(void* self);
 // Fade refresh (defined in CScnItemModel.cpp).
 extern "C" void simRefreshActDist(CScnItemModelNw4r* self);
@@ -599,7 +603,6 @@ extern "C" void simSetFlag2000000(CScnItemModelNw4r* self, u32 enable);
 extern "C" void simSetAndPropRate(CScnItemModelNw4r* self, f32 param);
 // CMdlDynamics per-frame refresh (defined in CMdlDynamics.cpp), scnImN4UpdateVis
 // +0x17A0 hook.
-extern "C" void MdlDyn_UpdateAnimSpeed(void* self);
 
 // Sub-object destructors invoked by the model dtor (retail fragment symbols;
 // defined in their own TUs).
@@ -630,14 +633,17 @@ extern const float lbl_eu_8066A8E4;   // 255.0f (scnImN4UpdateMatFade alpha scal
 extern const float lbl_eu_8066A900;
 extern char lbl_eu_8056E130[];   // panic file path (.data)
 extern char lbl_eu_8056E110[];   // panic format string (.data)
-extern char lbl_eu_8056E1C8[];   // node-id assert file path (.data)
-extern char lbl_eu_8056E1A8[];   // node-id assert format string (.data)
+extern const char lbl_eu_8056E1C8[0x1D0];  // node-id assert file path (.data)
+extern const char lbl_eu_8056E1A8[0x20];   // node-id assert format string (.data)
 extern char lbl_eu_80663900;     // panic vararg string (.sdata, @sda21)
+extern char lbl_eu_80663908;     // panic vararg string (.sdata, @sda21)
+
 extern char lbl_eu_8066390C;     // panic vararg string (.sdata, @sda21)
-extern char lbl_eu_8056E194[];   // node-resolve panic file path (.data)
-extern char lbl_eu_8056E178[];   // node-resolve panic format string (.data)
-extern char lbl_eu_80663910;     // node-resolve panic vararg string (.sdata, @sda21)
+extern const char lbl_eu_8056E194[0x11];  // node-resolve panic file path (.data)
+extern const char lbl_eu_8056E178[0x1A];  // node-resolve panic format string (.data)
+extern const char lbl_eu_80663910[0x8];   // node-resolve panic vararg string (.sdata, @sda21)
 extern char lbl_eu_80663918;     // node-resolve panic vararg string (.sdata, @sda21)
+
 extern char lbl_eu_80529678[];   // node-buffer panic file path (.data)
 extern char lbl_eu_80529658[];   // node-buffer panic format string (.data)
 
@@ -687,8 +693,8 @@ extern "C" nw4r::g3d::ResNode TexMan_FindNode_0AF4(void* self, const char* name)
 // imports (defined in CScnItemModel.cpp / CScn.cpp / CScnItemPool.cpp).
 extern "C" void simNotifyVfunc9C(CScnItemModelNw4r* self, u32 a, u32 b);
 extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param);
-extern "C" u32 CScnItemPool_hasFreeSlot(u8* pool, s32 kind);
-extern "C" u32 CScnItemPool_registerOtherList(u8* pool, CScnItemModelNw4r* model, u32 flag);
+
+
 
 // CopiedMatAccess's retail "Ex" accessors are real members (declared in the
 // shared g3d_scnmdl.h).
@@ -714,8 +720,8 @@ extern const float lbl_eu_8066A8FC;   // 1.0f (scnImN4UpdateBounds scale denomin
 
 // nw4r FSqrt assert source-file + message (.data) used by scnImN4UpdateBounds's
 // column-normalize Warning (retail file/line of the inlined FSqrt helper).
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 
 // Owner memory/nodelist lookup (defined in CScn.cpp): resolve the owner's
 // node at `idx` (-1 = default). scnImN4UpdateXform calls vtable-0x20 on the
@@ -755,7 +761,7 @@ extern "C" void* __ct__CScnEffectActNw4r(void* self);
 extern "C" void* __ct__CScnMaruShadowNw4r(void* self);
 extern "C" void* __ct__CMdlMaterial(void* self);
 extern "C" void* __ct__CMdlMouth(void* self);
-extern "C" void* __ct__CMdlAnmUV(void* self);
+
 extern "C" void* __ct__CMdlAnmEye(void* self);
 extern "C" void* __ct__CMdlDynamics(void* self);
 extern "C" void* __ct__CMdlLook(void* self);
@@ -775,7 +781,6 @@ extern "C" u32 getScnRootPtr(CScn* self);
 extern "C" void MdlDyn_BuildLists(void* self, void* model);
 extern "C" void setupFromModel(void* self, void* model);
 extern "C" void scanNodeUserData(void* self, void* node, void* mtx);
-extern "C" void MdlMouthBindModel(void* self, void* model);
 extern "C" void UVAnm_RegisterPairs(void* self, void* model);
 extern "C" void EyeAnm_RegisterMats(void* self, void* model);
 extern "C" void buildMdlLookMatrices(void* self, void* model);

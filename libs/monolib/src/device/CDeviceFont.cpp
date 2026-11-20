@@ -91,13 +91,7 @@ extern "C" const char lbl_eu_80522DB8[36] = {
     0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x49,0x6E,0x66,0x6F,0x20,0x2A,0x3E,
     0x00,0x00,0x00,0x00,
 };
-extern "C" const char lbl_eu_80522DDC[36] = {
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x4C,0x61,0x79,0x65,0x72,
-    0x00,0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x4C,0x6F,0x61,0x64,
-    0x65,0x72,0x00,0x00,
-};
 
-// === .sdata size=0x20 align=8 ===
 // RTTI locators {name-ptr, base-list} + font-path string pointers.
 extern "C" const char* lbl_eu_806636F8 = (const char*)&lbl_eu_80522D68;
 extern "C" const char* lbl_eu_806636FC = (const char*)&lbl_eu_80522D7C;
@@ -296,9 +290,7 @@ extern "C" {
 // names even though the calls pass trailing arguments through in r4+.
 void queueText__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1,
                                          u32 a2, u32 a3);
-void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
-void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 
 // Find the font layer for `fontId` (0 selects the device's current font id)
 // and tail-call the layer's queueText with the passed-through args.
@@ -382,7 +374,7 @@ void dispatchLayer3FF0__11CDeviceFontFv(u32 fontId, u32 a1) {
     layer = 0;
 found:
     if (layer == 0) return;
-    setBackgroundColor__16CDeviceFontLayerFv(layer, a1);
+    layer->setBackgroundColor((const ml::CCol4*)a1);
 }
 
 // Same lookup as dispatchLayerBB4, dispatching to the layer's setFontScale
@@ -461,7 +453,7 @@ void dispatchLayer438C__11CDeviceFontFv(u32 fontId, u32 a1) {
     layer = 0;
 found:
     if (layer == 0) return;
-    setFontId__16CDeviceFontLayerFv(layer, a1);
+    layer->setFontId(a1);
 }
 
 // ---------------------------------------------------------------------------
@@ -695,7 +687,7 @@ u32 CDeviceFont::func_804525F0() {
     CDeviceFont* font = spDeviceFont;
     if (font == 0) return 0;
 
-    const char* name = lbl_eu_80522DDC;
+    const char* name = "CDeviceFontLayer";
     CDeviceFontLayer* layer = (CDeviceFontLayer*)mtl::MemManager::allocate(
         0x2f8, CWorkThreadSystem::getWorkMem());
     if (layer != 0) {
@@ -843,7 +835,7 @@ void CDeviceFont::wkUpdate() {
             if (CDeviceFile::isInitialized()) {
                 // (retail keeps base in r3 and folds the offset into r30
                 // before the getWorkMem call).
-                name = &lbl_eu_80522DDC[0x11];
+                name = "CDeviceFontLoader";
                 CDeviceFontLoader* loader =
                     (CDeviceFontLoader*)mtl::MemManager::allocate(
                         0x210, CWorkThreadSystem::getWorkMem());
@@ -938,31 +930,9 @@ extern "C" void* getInstance__8CDesktopFv();
 // While this device owns the work-root exception, fade in a centered UTF-16
 // string over a shadowed quad (4 offset black passes + alpha-scaled gray
 // center pass) using an orthographic full-screen projection.
-// int->double without a TU-local pool (MWCC pools the 0x43300000 magic
-// doubles per-TU; retail keeps them in the shared CGXCache slice). Helpers
-// use the already-declared shared externs (CDeviceFont.hpp); the 0x43300000
-// word is a lis immediate, so no literal pools.
-static inline f64 S32ToF64_Shared(s32 v) {
-    union {
-        u32 w[2];
-        f64 d;
-    } t;
-    t.w[1] = (u32)v ^ 0x80000000u;
-    t.w[0] = 0x43300000u;
-    return t.d - lbl_eu_8066A3B8;
-}
-static inline f64 U16ToF64_Shared(u16 v) {
-    union {
-        u32 w[2];
-        f64 d;
-    } t;
-    t.w[1] = v;
-    t.w[0] = 0x43300000u;
-    return t.d - lbl_eu_8066A3C0;
-}
 
 void CDeviceFont::wkRender() {
-    // Exception handoff: while the desktop is up and we own the work-root
+    // Exception handoff:
     // exception, count frames; release the exception once the counter wraps
     // negative (retail: addic./ble after the increment).
     if (getInstance__8CDesktopFv() != 0) {
@@ -985,11 +955,9 @@ void CDeviceFont::wkRender() {
         sDeviceFontFrameCount = 0;
     }
 
-    // Fade-in alpha ramp over the first 1000 counted frames. Shared-bias
-    // s32->double (no TU-local pool); the xoris+uint-magic is exact for the
-    // signed range, matching retail's shared A3B8 use.
+    // Fade-in alpha ramp over the first 1000 counted frames.
     f32 fade = 0.6f *
-                   static_cast<f32>(S32ToF64_Shared(static_cast<s32>(
+                   static_cast<f32>(static_cast<f64>(static_cast<s32>(
                        sDeviceFontFrameCount - 1000)) /
                                    1000.0f) +
                0.4f;
@@ -1049,13 +1017,9 @@ void CDeviceFont::wkRender() {
     f32 scaledH;
 
     rmo = CDeviceVI::getRenderModeObj();
-    scaledW =
-        0.5f * static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) -
-                                           lbl_eu_8066A3C0);
+    scaledW = 0.5f * static_cast<f32>(static_cast<f64>(rmo->fbWidth));
     rmo = CDeviceVI::getRenderModeObj();
-    scaledH =
-        0.5f * static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
-                                           lbl_eu_8066A3C0);
+    scaledH = 0.5f * static_cast<f32>(static_cast<f64>(rmo->efbHeight));
 
     writer.SetupGX();
 
@@ -1068,12 +1032,10 @@ void CDeviceFont::wkRender() {
 
     f32 width;
     rmo = CDeviceVI::getRenderModeObj();
-    width =
-        static_cast<f32>(U16ToF64_Shared(rmo->fbWidth) - lbl_eu_8066A3C0);
+    width = static_cast<f32>(static_cast<f64>(rmo->fbWidth));
     rmo = CDeviceVI::getRenderModeObj();
     C_MTXOrtho(mtx, 0.0f,
-               static_cast<f32>(U16ToF64_Shared(rmo->efbHeight) -
-                                lbl_eu_8066A3C0),
+               static_cast<f32>(static_cast<f64>(rmo->efbHeight)),
                0.0f, width, 0.0f, -16777216.0f);
     GXSetProjection(mtx, GX_ORTHOGRAPHIC);
 

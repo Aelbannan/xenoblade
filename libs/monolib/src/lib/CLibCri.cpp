@@ -39,12 +39,14 @@ extern "C" {
 
 // CWorkSystemPack stubs
 extern "C" {
-    int hasPackFile(const char* ext);
     bool func_804DDD54(const char* ext, const char* filename,
                        int* out1, int* out2, int* out3, int* out4);
 }
 
-// CLibCri::spInstance is defined by CException.cpp (retail .sbss 0x806656D8,
+// Defined in monolib/src/work/CWorkSystemPack.cpp with C++ linkage.
+int hasPackFile(const char* ext);
+
+// CLibCri::spInstance is defined by CException.cpp
 // the TU that owns 0x806656C0-0x806656E0); only the AX callback pointer is
 // imported here (retail 0x806656DC, same slice).
 extern "C" void (*lbl_eu_806656DC)(void);

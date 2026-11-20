@@ -11,7 +11,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "kyoshin/CTaskGame.hpp"
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 
 #include <revolution/GX.h>

@@ -11,7 +11,8 @@
 #include "monolib/util/MemManager.hpp"
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
-#include "kyoshin/menu/CMenuPassiveSkillImports.hpp"
+#include "kyoshin/menu/CMenuPassiveSkill.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CTitleAHelpImports.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -257,7 +258,7 @@ tick:
 
     BgTex_Tick_3D54(&mBgTex);
     mTitleAHelp.updateHelp();
-    CPassiveSkill_update(mPassiveSkill);
+    CPassiveSkill_update((UI_CPassiveSkill*)mPassiveSkill);
 }
 
 // noinline: retail keeps the virtual dispatch as a real call (the thunks
@@ -314,14 +315,14 @@ CMenuPassiveSkill* CMenuPassiveSkill::create(CProcess* parent, CScn* scene) {
 // ---------------------------------------------------------------------------
 extern "C" void pollPassiveSkillReady(CMenuPassiveSkill* self) {
     if (BgTex_IsLoaded_3E34(&self->mBgTex) != 0 && self->mTitleAHelp.isInitialized() != 0 &&
-        CPassiveSkill_getVisibleIfReady(self->mPassiveSkill) != 0) {
+        CPassiveSkill_getVisibleIfReady((UI_CPassiveSkill*)self->mPassiveSkill) != 0) {
         self->mTitleAHelp.func_801C412C();
-        CPassiveSkill_open(self->mPassiveSkill);
+        CPassiveSkill_open((UI_CPassiveSkill*)self->mPassiveSkill);
         self->field_2AC = 1;
 
         playUISound(0x6d);
 
-        u8 curState = CPassiveSkill_pickOpenState(self->mPassiveSkill);
+        u8 curState = CPassiveSkill_pickOpenState((UI_CPassiveSkill*)self->mPassiveSkill);
         self->mTitleAHelp.func_801C41E8(curState);
     }
 }
@@ -334,7 +335,7 @@ void stub_us_80265db4() {}
 // Per-frame update (us-80265e54): once both the title/help widget and the
 // passive-skill sub-object report ready, mark the screen state as 2.
 extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self) {
-    if (self->mTitleAHelp.func_801C4124() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && CPassiveSkill_getActiveIfBusy((UI_CPassiveSkill*)self->mPassiveSkill) != 0) {
         self->field_2AC = 2;
     }
 }
@@ -352,7 +353,7 @@ extern "C" void updatePassiveSkillMenu(CMenuPassiveSkill* self) {
 // The shared tail pushes the sub-object's state byte into the help widget.
 // ---------------------------------------------------------------------------
 extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill* self) {
-    if (CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) == 0) {
+    if (CPassiveSkill_getActiveIfBusy((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
         return;
     }
 
@@ -378,7 +379,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
     if (isClassic != 0) {
         // -- classic-controller chain --
         int special = 0;
-        if (code80135FDC_getByte_64077() > 1 && CPassiveSkill_isSyswinOrLearned(self->mPassiveSkill) == 0) {
+        if (code80135FDC_getByte_64077() > 1 && CPassiveSkill_isSyswinOrLearned((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
             special = 1;
         }
         UI_CPassiveSkill_setByte180(self->mPassiveSkill, 0);
@@ -414,7 +415,7 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
         UI_CPassiveSkill_setByte180(self->mPassiveSkill, 0);
         u32 first = pad->field_0;
         if ((first & 0x00001000) != 0 && code80135FDC_getByte_64077() > 1 &&
-            CPassiveSkill_isSyswinOrLearned(self->mPassiveSkill) == 0) {
+            CPassiveSkill_isSyswinOrLearned((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
             // Reset the idle timer (sound op 2 when it had run past the F4
             // threshold), re-arm the state byte and handle the turbo masks.
             if (self->field_2B0 > lbl_eu_806688F4) {
@@ -455,13 +456,13 @@ extern "C" __declspec(noinline) void dispatchPassiveSkillInput(CMenuPassiveSkill
         }
     }
 
-    u8 curState = CPassiveSkill_pickOpenState(self->mPassiveSkill);
+    u8 curState = CPassiveSkill_pickOpenState((UI_CPassiveSkill*)self->mPassiveSkill);
     self->mTitleAHelp.func_801C41E8(curState);
 }
 
 // Same shape as updatePassiveSkillMenu but writes the +0x54 state flag instead.
 void setPassiveSkillReady(CMenuPassiveSkill* self) {
-    if (self->mTitleAHelp.func_801C4124() != 0 && CPassiveSkill_getActiveIfBusy(self->mPassiveSkill) != 0) {
+    if (self->mTitleAHelp.func_801C4124() != 0 && CPassiveSkill_getActiveIfBusy((UI_CPassiveSkill*)self->mPassiveSkill) != 0) {
         self->mField54 = 1;
     }
 }
@@ -471,10 +472,10 @@ void setPassiveSkillReady(CMenuPassiveSkill* self) {
 // cancel path and mark the screen state 3.
 extern "C" void advancePassiveSkillState(CMenuPassiveSkill* self) {
     if (CPassiveSkill_cellAtLeast8(self->mPassiveSkill) != 0) {
-        CPassiveSkill_confirm(self->mPassiveSkill);
+        CPassiveSkill_confirm((UI_CPassiveSkill*)self->mPassiveSkill);
     } else {
         self->mTitleAHelp.beginClose();
-        CPassiveSkill_close(self->mPassiveSkill);
+        CPassiveSkill_close((UI_CPassiveSkill*)self->mPassiveSkill);
         self->field_2AC = 3;
     }
 }

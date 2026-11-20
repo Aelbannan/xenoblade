@@ -141,9 +141,9 @@ public:
     int OnFileEvent(CEventFile* ev);
 
     void initCrystalSubStruct();
-    u8 getCrystalStateA();
-    u8 getCrystalStateB();
-    u8 getCrystalStateC();
+    u32 getCrystalStateA();
+    u32 getCrystalStateB();
+    u32 getCrystalStateC();
     void setCrystalCursor(u32 val);
     void destroyCrystalDispThunk4();
     void releaseCrystalDispThunk();
@@ -205,16 +205,24 @@ public:
     u8 mCursorState2[0x06];       // 0x2DD0
 };
 
+// Canonical C++ declarations for the free helpers defined by this unit.
+// MWCC mangles these names; callers include this header instead of keeping
+// flat extern "C" copies.
+void MakeCrystal_InitFiles(CModelDispMakeCrystal* self);
+void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self);
+void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo);
+int MakeCrystal_CheckReady(CModelDispMakeCrystal* self);
+int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self);
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for startEnumObjects
+
 extern "C" u8 lbl_eu_80664718[0x8]; // makecrystal crystal-probability state (sbss, 8 bytes)
 // Color table: rows of 3 bytes, indexed by character state - 1.
 struct CMCryColorRow { u8 c[3]; };
 extern "C" const CMCryColorRow lbl_eu_80535D90[];
 // Retail hard symbols with C linkage (defined in this TU's retail .o).
-extern "C" void initCrystalSubStruct(void* self);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(void* p);
-extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* obj, int flag);
+
 
 // Plain-C-linkage functions defined in this TU (retail symbol = plain name).
 extern "C" void MakeCrystal_ResetSlotList(CModelDispMakeCrystal*, u8);
@@ -238,7 +246,8 @@ extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dest, void* src);
 extern "C" size_t strlen(const char* s);
 extern "C" char* strcpy(char* dst, const char* src);
-extern "C" int ItemMenu_IsPresent();   // item-menu active gate (CMainMenu.cpp)
+// Defined in CMenuItem.cpp with C++ linkage.
+unsigned long ItemMenu_IsPresent();
 
 // Constructor data imports.
 extern "C" const void* lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)

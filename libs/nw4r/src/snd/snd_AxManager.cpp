@@ -1,10 +1,3 @@
-// The biquad filter preset classes are declared in snd_BiquadFilterPreset.h,
-// but retail emits their destructors from this translation unit (the last five
-// symbols of the AxManager .text split, right after __sinit_). snd.h pulls
-// that header in, so skip it here and declare the classes locally so MWCC
-// emits the __dt__ symbols from this TU. Nothing else in this TU (or in any
-// header it includes) references the BiquadFilter* types.
-#define NW4R_SND_BIQUAD_FILTER_PRESET_H
 #include <nw4r/snd.h>
 
 #include <revolution/AXFX.h>
@@ -24,6 +17,18 @@ NW4R_UT_LINKLIST_TYPEDEF_FORCE(FxBase);
 extern "C" const f64 lbl_eu_80669E80; // 0x43300000_00000000 (u32->f64 conv)
 
 u8 AxManager::sZeroBuffer[AxManager::ZERO_BUFFER_SIZE];
+
+// Retail .bss provider table indexed by the raw biquad selector. Slot 0 stays
+// null (filter disabled); slots 1..5 are filled with the five preset filter
+// objects by AxManager::Init. The following coefficient blocks are emitted by
+// the static preset instances below.
+static void* sBiquadProviderTable[128];
+
+static BiquadFilterLpf sLpf;
+static BiquadFilterHpf sHpf;
+static BiquadFilterBpf512 sBpf512;
+static BiquadFilterBpf1024 sBpf1024;
+static BiquadFilterBpf2048 sBpf2048;
 
 // NOTE (matching residual): retail constructs the six MoveValue members from
 // the ctor init list with 1.0f, emitting the 1.0 member-init stores and the
@@ -79,6 +84,15 @@ void AxManager::Init() {
     AXRegisterAuxCCallback(NULL, NULL);
 
     mNextAxRegisterCallback = AXRegisterCallback(AxCallbackFunc);
+
+    // Publish the five preset biquad providers. The table's first slot is
+    // deliberately left null (biquad selector 0 disables the filter).
+    std::memset(sBiquadProviderTable, 0, sizeof(sBiquadProviderTable));
+    sBiquadProviderTable[1] = (void*)&sLpf;
+    sBiquadProviderTable[2] = (void*)&sHpf;
+    sBiquadProviderTable[3] = (void*)&sBpf512;
+    sBiquadProviderTable[4] = (void*)&sBpf1024;
+    sBiquadProviderTable[5] = (void*)&sBpf2048;
 
     mInitialized = true;
 }
@@ -452,64 +466,7 @@ void AxManager::AiDmaCallbackFunc() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Biquad filter presets (see the note at the top of this file). These are the
-// real preset classes: the empty virtual destructors are defined here, so MWCC
-// emits both their destructors and their vtables from this translation unit.
-// ---------------------------------------------------------------------------
-} // namespace detail
-
-class BiquadFilterCallback {
-public:
-    struct BiquadCoef {
-        u16 b0;
-        u16 b1;
-        u16 b2;
-        u16 a1;
-        u16 a2;
-    };
-};
-
-namespace detail {
-
-class BiquadFilterLpf : public BiquadFilterCallback {
-public:
-    virtual ~BiquadFilterLpf();
-    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
-};
-
-class BiquadFilterHpf : public BiquadFilterCallback {
-public:
-    virtual ~BiquadFilterHpf();
-    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
-};
-
-class BiquadFilterBpf512 : public BiquadFilterCallback {
-public:
-    virtual ~BiquadFilterBpf512();
-    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
-};
-
-class BiquadFilterBpf1024 : public BiquadFilterCallback {
-public:
-    virtual ~BiquadFilterBpf1024();
-    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
-};
-
-class BiquadFilterBpf2048 : public BiquadFilterCallback {
-public:
-    virtual ~BiquadFilterBpf2048();
-    virtual void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
-};
-
-BiquadFilterLpf::~BiquadFilterLpf() {}
-BiquadFilterHpf::~BiquadFilterHpf() {}
-BiquadFilterBpf512::~BiquadFilterBpf512() {}
-BiquadFilterBpf1024::~BiquadFilterBpf1024() {}
-BiquadFilterBpf2048::~BiquadFilterBpf2048() {}
-
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
 
-unsigned char snd_AxManager_bss_pad[0x248] __attribute__((aligned(8)));

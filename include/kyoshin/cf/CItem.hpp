@@ -401,8 +401,8 @@ struct CItemNameBuf {
 // provides the definition).
 extern "C" void syncItemGroups__Q22cf13CfGameManagerFv();
 
-// Console language id (0..6).
-extern "C" int getLanguage__9CDeviceSCFv();
+// Console language id (0..6): CDeviceSC::getLanguage from
+// monolib/device/CDeviceSC.hpp.
 
 // ---------------------------------------------------------------------------
 // Party item-slot bookkeeping table (CItemParty_refreshSlots)
@@ -476,7 +476,7 @@ extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);
 // the u16 row-table readers/writers used by the party item-slot refresh.
 extern "C" u8* CtrlObjectParam_ResolveEquipItem(s16* arr, u32 idx);
 extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
-extern "C" void CtrlObjectParam_WriteU16RowEntry(void* table, u16 index, u16 value);
+
 
 // CfGameManager party-inventory queries (defined in the CfGameManager unity
 // TU, src/kyoshin/cf/CfGameManagerUnityHelpers.hpp): count/sum the items of

@@ -1,4 +1,5 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
 #include "kyoshin/cf/object/CDebugState.hpp"
@@ -656,7 +657,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual void CActorParam_addHate(void* arg, float x, float y, float z); //0x2C4
         virtual void CActorParam_resetGaugeEntry(void* arg); //0x2C8
         virtual void CActorParam_resetAllGaugeEntries(); //0x2CC
-        virtual void CActorParam_UnkVirtualFunc143(); //0x2D0
+        virtual void CActorParam_UnkVirtualFunc143(u32 id); //0x2D0
         virtual void* CActorParam_findGaugeEntry(unsigned int arg); //0x2D4
         virtual void CActorParam_UnkVirtualFunc145(); //0x2D8
         virtual void CActorParam_UnkVirtualFunc146(); //0x2DC
@@ -671,7 +672,7 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual s16 CActorParam_UnkVirtualFunc155(); //0x300
         virtual void CActorParam_resetTensionState(int arg); //0x304
         virtual int CActorParam_getStatusCount(); //0x308
-        virtual void CActorParam_UnkVirtualFunc158(); //0x30C
+        virtual void CActorParam_UnkVirtualFunc158(int delta); //0x30C
         virtual void CActorParam_UnkVirtualFunc159(); //0x310
         virtual void CActorParam_initStatusCounter(); //0x314
         virtual void CActorParam_UnkVirtualFunc161(); //0x318

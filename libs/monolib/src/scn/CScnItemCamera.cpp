@@ -5,6 +5,7 @@
 //         Remaining functions are NOT_STARTED stubs.
 
 #include <monolib/scn/CScnItemCamera.hpp>
+#include "monolib/src/scn/CScnItemPool.hpp"
 #include <monolib/device/CDeviceGX.hpp>
 #include <monolib/device/CDeviceVI.hpp>
 #include <monolib/util/FixStr.hpp>
@@ -13,6 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
 
 // Shared .sdata2 float constants referenced by this TU (retail pool names).
 // Declared here at global scope (plain extern -> no name mangling).
@@ -26,10 +28,10 @@ extern const f32 lbl_eu_8066AC1C;
 // Named-magic conversion helpers (retail references the shared pool labels
 // instead of pooling local .sdata2 entries; this TU emits no .sdata2).
 // (u16/s16 conversions now use plain builtin casts - see the ctor.)
-extern const char lbl_eu_80524258[];  // FixStr<32> format string (ScnCamFactory)
 extern const char lbl_eu_80526324[];  // nw4r db Warning file name
 // nw4r db Warning message (lbl_eu_80526300)
 extern const char lbl_eu_80526300[];
+static const char sCameraFormat[16] = "Camera%d";
 
 // Static camera default-parameter table initialized by sinit_8049FC60 (.bss).
 // Defined in this TU (dissolved monolibdata2): 12B + 28B retail split.
@@ -206,9 +208,9 @@ extern "C" void makePerspProj__8CGXCacheFv(CGXCache* cache, f32* projOut,
 // Scene-item pool helpers (retail reloc names are unmangled short forms, so
 // C-linkage declarations reproduce them; the retail map resolves the symbols).
 struct CScnCameraItemHost;
-extern "C" u32 CScnItemPool_hasFreeSlot(u8* self, s32 kind);
+
 extern "C" u8* CScnItemPool_allocBigSlot(u8* self);
-extern "C" u32 CScnItemPool_registerOtherList(u8* self, u8* other, u32 flag);
+
 // Runtime throw helper (NMWException.h is not included: it drags in
 // __ppc_eabi_linker.h which conflicts with __ppc_eabi_init.h's _stack_addr).
 // noreturn: MWCC elides the __end__catch epilogue of a catch handler that
@@ -346,9 +348,8 @@ void ScnCamPlaceAt(CScnItemCamera* self, const ml::CVec3* v) {
                         (const nw4r::math::VEC3*)v);
 
     // Member-wise float copy - matches the retail lfs/stfs temporaries.
-    // The volatile view blocks register forwarding so all three components
-    // reload from memory like retail.
-    volatile ml::CVec3& vwork = work;
+    // Read all three components from memory like retail (lfs/stfs pair).
+    ml::CVec3& vwork = work;
     dir.x = vwork.x;
     dir.y = vwork.y;
     dir.z = vwork.z;
@@ -803,13 +804,13 @@ void ScnCamTurnAim(CScnItemCamera* self, const ml::CVec3* delta) {
 // the pool is full).
 // ============================================================
 CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
-    if (CScnItemPool_hasFreeSlot(self->mPool, 4) == 0) {
+    if (CScnItemPool_hasFreeSlot((u8*)self->mPool, 4) == 0) {
         return 0;
     }
 
     // Build the camera name from the index before allocating.
     ml::FixStr<32> str(true);
-    str.format(lbl_eu_80524258, arg2);
+    str.format(sCameraFormat, arg2);
 
     u8* alloc = CScnItemPool_allocBigSlot(self->mPool);
     CScnItemCamera* cam = (CScnItemCamera*)alloc;
@@ -889,49 +890,13 @@ CScnItemCamera* ScnCamFactory(CScnCameraItemHost* self, int arg2) {
     lay->mDepthFarNear = lay->mDepthNear * lay->mAspectRatio;
     lay->mDepthFar = lay->mDepthMid * lay->mAspectRatio;
 
-    CScnItemPool_registerOtherList(self->mPool, alloc, 0);
+    ((u32 (*)(u8*, void*, u32))CScnItemPool_registerOtherList)((u8*)self->mPool, alloc, 0);
     return cam;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // referenced externs (functions / data labels)
 extern "C" void ScnCamNw4r_NullHook40();
-extern "C" void ScnCamNw4r_EmptyHook48();
-extern "C" void ScnCamNw4r_GetField10Ptr();
-extern "C" const u32 lbl_eu_80524268[108];  // .rodata string table (defined below)
-extern "C" u32 lbl_eu_80524274;
-extern "C" u32 lbl_eu_80524280;
-extern "C" u32 lbl_eu_8052428C;
-extern "C" u32 lbl_eu_80524298;
-extern "C" u32 lbl_eu_805242A8;
-extern "C" u32 lbl_eu_805242B4;
-extern "C" u32 lbl_eu_805242C0;
-extern "C" u32 lbl_eu_805242CC;
-extern "C" u32 lbl_eu_805242D8;
-extern "C" u32 lbl_eu_805242E4;
-extern "C" u32 lbl_eu_805242F0;
-extern "C" u32 lbl_eu_805242FC;
-extern "C" u32 lbl_eu_80524308;
-extern "C" u32 lbl_eu_80524314;
-extern "C" u32 lbl_eu_80524320;
-extern "C" u32 lbl_eu_8052432C;
-extern "C" u32 lbl_eu_80524338;
-extern "C" u32 lbl_eu_80524344;
-extern "C" u32 lbl_eu_80524350;
-extern "C" u32 lbl_eu_8052435C;
-extern "C" u32 lbl_eu_80524368;
-extern "C" u32 lbl_eu_80524374;
-extern "C" u32 lbl_eu_80524380;
-extern "C" u32 lbl_eu_8052438C;
-extern "C" u32 lbl_eu_80524398;
-extern "C" u32 lbl_eu_805243A8;
-extern "C" u32 lbl_eu_805243B4;
-extern "C" u32 lbl_eu_805243C0;
-extern "C" u32 lbl_eu_805243CC;
-extern "C" u32 lbl_eu_805243D8;
-extern "C" u32 lbl_eu_805243E4;
-extern "C" u32 lbl_eu_805243F0;
-extern "C" u32 lbl_eu_805243FC;
 extern "C" u32 __RTTI__14CScnItemCamera;
 extern "C" u32 lbl_eu_8066AC40;
 extern "C" u32 lbl_eu_8066AC48;
@@ -1012,53 +977,33 @@ extern "C" u32 lbl_eu_8056ECC0[213] = {
     (u32)&__RTTI__14CScnItemCamera, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&ScnCam_NoopVFunc, (u32)&ScnCamNw4r_EmptyHook48, (u32)&ScnCamViewReg, (u32)&ScnCamNw4r_GetField10Ptr, (u32)&ScnCamNw4r_NullHook40,
     0x00000000, (u32)&ScnCamRebuild, (u32)&lbl_eu_8066AC40, 0x00000000, (u32)&lbl_eu_8066AC48, 0x00000001, (u32)&lbl_eu_8066AC50, 0x00000001,
     (u32)&lbl_eu_8066AC58, 0x00000001, (u32)&lbl_eu_8066AC60, 0x00000001, (u32)&lbl_eu_8066AC68, 0x00000001, (u32)&lbl_eu_8066AC70, 0x00010001,
-    (u32)&lbl_eu_80524268, 0x00020001, (u32)&lbl_eu_80524274, 0x00010001, (u32)&lbl_eu_80524280, 0x00020001, (u32)&lbl_eu_8052428C, 0x00010001,
-    (u32)&lbl_eu_80524298, 0x00020001, (u32)&lbl_eu_805242A8, 0x00010001, (u32)&lbl_eu_805242B4, 0x00020001, (u32)&lbl_eu_8066AC78, 0x00010001,
-    (u32)&lbl_eu_8066AC7C, 0x0001FFFF, (u32)&lbl_eu_8066AC80, 0x00010001, (u32)&lbl_eu_8066AC88, 0x0001FFFF, (u32)&lbl_eu_805242C0, 0x0001FFFF,
+    (u32)"CONST_I_W", 0x00020001, (u32)"POOL_INT", 0x00010001, (u32)"POOL_INT_W", 0x00020001, (u32)"POOL_FIXED", 0x00010001,
+    (u32)"POOL_FIXED_W", 0x00020001, (u32)"POOL_STR", 0x00010001, (u32)"POOL_STR_W", 0x00020001, (u32)&lbl_eu_8066AC78, 0x00010001,
+    (u32)&lbl_eu_8066AC7C, 0x0001FFFF, (u32)&lbl_eu_8066AC80, 0x00010001, (u32)&lbl_eu_8066AC88, 0x0001FFFF, (u32)"ST_ARG_OMIT", 0x0001FFFF,
     (u32)&lbl_eu_8066AC90, 0x00000001, (u32)&lbl_eu_8066AC98, 0x00000001, (u32)&lbl_eu_8066ACA0, 0x00000001, (u32)&lbl_eu_8066ACA8, 0x00000001,
     (u32)&lbl_eu_8066ACB0, 0x0000FFFF, (u32)&lbl_eu_8066ACB8, 0x0000FFFF, (u32)&lbl_eu_8066ACC0, 0x0000FFFF, (u32)&lbl_eu_8066ACC8, 0x0000FFFF,
-    (u32)&lbl_eu_805242CC, 0x00000001, (u32)&lbl_eu_805242D8, 0x00000001, (u32)&lbl_eu_805242E4, 0x00000001, (u32)&lbl_eu_805242F0, 0x00000001,
-    (u32)&lbl_eu_805242FC, 0x0000FFFF, (u32)&lbl_eu_80524308, 0x0000FFFF, (u32)&lbl_eu_80524314, 0x0000FFFF, (u32)&lbl_eu_80524320, 0x0000FFFF,
-    (u32)&lbl_eu_8052432C, 0x00010001, (u32)&lbl_eu_80524338, 0x00020001, (u32)&lbl_eu_80524344, 0x0001FFFF, (u32)&lbl_eu_80524350, 0x0002FFFF,
+    (u32)"LD_ARG_0", 0x00000001, (u32)"LD_ARG_1", 0x00000001, (u32)"LD_ARG_2", 0x00000001, (u32)"LD_ARG_3", 0x00000001,
+    (u32)"ST_ARG_0", 0x0000FFFF, (u32)"ST_ARG_1", 0x0000FFFF, (u32)"ST_ARG_2", 0x0000FFFF, (u32)"ST_ARG_3", 0x0000FFFF,
+    (u32)"LD_STATIC", 0x00010001, (u32)"LD_STATIC_W", 0x00020001, (u32)"ST_STATIC", 0x0001FFFF, (u32)"ST_STATIC_W", 0x0002FFFF,
     (u32)&lbl_eu_8066ACD0, 0x0000FFFF, (u32)&lbl_eu_8066ACD8, 0x0000FFFD, (u32)&lbl_eu_8066ACE0, 0x00000001, (u32)&lbl_eu_8066ACE8, 0x00000001,
-    (u32)&lbl_eu_8052435C, 0x00000001, (u32)&lbl_eu_8066ACF0, 0x00010001, (u32)&lbl_eu_80524368, 0x00020001, (u32)&lbl_eu_80524374, 0x00010001,
-    (u32)&lbl_eu_80524380, 0x00020001, (u32)&lbl_eu_8052438C, 0x00010001, (u32)&lbl_eu_80524398, 0x00020001, (u32)&lbl_eu_8066ACF8, 0x00000000,
+    (u32)"LD_FALSE", 0x00000001, (u32)&lbl_eu_8066ACF0, 0x00010001, (u32)"LD_FUNC_W", 0x00020001, (u32)"LD_PLUGIN", 0x00010001,
+    (u32)"LD_PLUGIN_W", 0x00020001, (u32)"LD_FUNC_FAR", 0x00010001, (u32)"LD_FUNC_FAR_W", 0x00020001, (u32)&lbl_eu_8066ACF8, 0x00000000,
     (u32)&lbl_eu_8066AD00, 0x0000FFFF, (u32)&lbl_eu_8066AD04, 0x0000FFFF, (u32)&lbl_eu_8066AD0C, 0x0000FFFF, (u32)&lbl_eu_8066AD10, 0x0000FFFF,
     (u32)&lbl_eu_8066AD14, 0x0000FFFF, (u32)&lbl_eu_8066AD18, 0x0000FFFF, (u32)&lbl_eu_8066AD1C, 0x0000FFFF, (u32)&lbl_eu_8066AD20, 0x0000FFFF,
     (u32)&lbl_eu_8066AD24, 0x0000FFFF, (u32)&lbl_eu_8066AD28, 0x0000FFFF, (u32)&lbl_eu_8066AD30, 0x0000FFFF, (u32)&lbl_eu_8066AD38, 0x0000FFFF,
     (u32)&lbl_eu_8066AD3C, 0x0000FFFF, (u32)&lbl_eu_8066AD40, 0x0000FFFF, (u32)&lbl_eu_8066AD44, 0x0000FFFF, (u32)&lbl_eu_8066AD48, 0x0000FFFF,
     (u32)&lbl_eu_8066AD4C, 0x0000FFFF, (u32)&lbl_eu_8066AD50, 0x0000FFFF, (u32)&lbl_eu_8066AD58, 0x0000FFFF, (u32)&lbl_eu_8066AD60, 0x00020000,
-    (u32)&lbl_eu_8066AD64, 0x0002FFFF, (u32)&lbl_eu_8066AD68, 0x00010000, (u32)&lbl_eu_8066AD70, 0x00020000, (u32)&lbl_eu_805243A8, 0x00000000,
-    (u32)&lbl_eu_8066AD78, 0x00000000, (u32)&lbl_eu_8066AD7C, 0x00000000, (u32)&lbl_eu_8066AD84, 0x00010000, (u32)&lbl_eu_805243B4, 0x00020000,
-    (u32)&lbl_eu_805243C0, 0x00010000, (u32)&lbl_eu_805243CC, 0x00020000, (u32)&lbl_eu_8066AD8C, 0x00010000, (u32)&lbl_eu_805243D8, 0x00020000,
-    (u32)&lbl_eu_8066AD94, 0x00010000, (u32)&lbl_eu_805243E4, 0x00020000, (u32)&lbl_eu_8066AD9C, 0x0001FFFF, (u32)&lbl_eu_805243F0, 0x0002FFFF,
+    (u32)&lbl_eu_8066AD64, 0x0002FFFF, (u32)&lbl_eu_8066AD68, 0x00010000, (u32)&lbl_eu_8066AD70, 0x00020000, (u32)"CALL_IND", 0x00000000,
+    (u32)&lbl_eu_8066AD78, 0x00000000, (u32)&lbl_eu_8066AD7C, 0x00000000, (u32)&lbl_eu_8066AD84, 0x00010000, (u32)"PLUGIN_W", 0x00020000,
+    (u32)"CALL_FAR", 0x00010000, (u32)"CALL_FAR_W", 0x00020000, (u32)&lbl_eu_8066AD8C, 0x00010000, (u32)"GET_OC_W", 0x00020000,
+    (u32)&lbl_eu_8066AD94, 0x00010000, (u32)"GETTER_W", 0x00020000, (u32)&lbl_eu_8066AD9C, 0x0001FFFF, (u32)"SETTER_W", 0x0002FFFF,
     (u32)&lbl_eu_8066ADA4, 0x00010000, (u32)&lbl_eu_8066ADAC, 0x00020000, (u32)&lbl_eu_8066ADB4, 0x00000000, (u32)&lbl_eu_8066ADBC, 0x00000000,
     (u32)&lbl_eu_8066ADC4, 0x00010000, (u32)&lbl_eu_8066ADCC, 0x00000000, (u32)&lbl_eu_8066ADD0, 0x00000000, (u32)&lbl_eu_8066ADD4, 0x00000000,
     (u32)&lbl_eu_8066ADDC, 0x00000000, (u32)&lbl_eu_8066ADE0, (u32)&lbl_eu_8066ADE4, (u32)&lbl_eu_8066ADEC, (u32)&lbl_eu_8066ADF4, (u32)&lbl_eu_8066ADF8, (u32)&lbl_eu_8066AE00,
-    (u32)&lbl_eu_8066AE08, (u32)&lbl_eu_805243FC, (u32)&lbl_eu_8066AE10, (u32)&lbl_eu_8066AE18, (u32)&lbl_eu_8066AE1C,
+    (u32)&lbl_eu_8066AE08, (u32)"function", (u32)&lbl_eu_8066AE10, (u32)&lbl_eu_8066AE18, (u32)&lbl_eu_8066AE1C,
 };
 
-// [.rodata] 0x80524258-0x80524408 (0x1b0B) raw words ("Camera%d" first). The two RTTI type-name
-// strings that follow in retail ("CColiObjCall" / "CColiResCall" at
-// 0x80524408/0x80524418) belong to the coli units and are emitted by their
-// classes there, so they are no longer part of this blob.
-extern "C" const u32 lbl_eu_80524268[108] = {
-    0x43616D65, 0x72612564, 0x00000000, 0x00000000, 0x434F4E53, 0x545F495F, 0x57000000, 0x504F4F4C, 0x5F494E54, 0x00000000, 0x504F4F4C, 0x5F494E54,
-    0x5F570000, 0x504F4F4C, 0x5F464958, 0x45440000, 0x504F4F4C, 0x5F464958, 0x45445F57, 0x00000000,
-    0x504F4F4C, 0x5F535452, 0x00000000, 0x504F4F4C, 0x5F535452, 0x5F570000, 0x53545F41, 0x52475F4F,
-    0x4D495400, 0x4C445F41, 0x52475F30, 0x00000000, 0x4C445F41, 0x52475F31, 0x00000000, 0x4C445F41,
-    0x52475F32, 0x00000000, 0x4C445F41, 0x52475F33, 0x00000000, 0x53545F41, 0x52475F30, 0x00000000,
-    0x53545F41, 0x52475F31, 0x00000000, 0x53545F41, 0x52475F32, 0x00000000, 0x53545F41, 0x52475F33,
-    0x00000000, 0x4C445F53, 0x54415449, 0x43000000, 0x4C445F53, 0x54415449, 0x435F5700, 0x53545F53,
-    0x54415449, 0x43000000, 0x53545F53, 0x54415449, 0x435F5700, 0x4C445F46, 0x414C5345, 0x00000000,
-    0x4C445F46, 0x554E435F, 0x57000000, 0x4C445F50, 0x4C554749, 0x4E000000, 0x4C445F50, 0x4C554749,
-    0x4E5F5700, 0x4C445F46, 0x554E435F, 0x46415200, 0x4C445F46, 0x554E435F, 0x4641525F, 0x57000000,
-    0x43414C4C, 0x5F494E44, 0x00000000, 0x504C5547, 0x494E5F57, 0x00000000, 0x43414C4C, 0x5F464152,
-    0x00000000, 0x43414C4C, 0x5F464152, 0x5F570000, 0x4745545F, 0x4F435F57, 0x00000000, 0x47455454,
-    0x45525F57, 0x00000000, 0x53455454, 0x45525F57, 0x00000000, 0x66756E63, 0x74696F6E, 0x00000000,
-};
-
-// (.sdata 0x806638A8-0x80663A90 is not owned by this TU: it holds the RTTI
+// (.sdata 0x806638A8-0x80663A90 is not owned by this TU
 // records of the preceding scn TUs; retail splits leave it to its owners.)
 
 

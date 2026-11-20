@@ -9,6 +9,7 @@
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSetImports.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "monolib/util/MemManager.hpp"        // mtl::MemManager::allocate

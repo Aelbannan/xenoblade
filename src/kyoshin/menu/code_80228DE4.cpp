@@ -19,6 +19,7 @@
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/menu/CMenuQstCnt.hpp"
+#include "kyoshin/menu/CMenuTutorial.hpp"
 
 QstData::QstData() {
     mCount = 0;

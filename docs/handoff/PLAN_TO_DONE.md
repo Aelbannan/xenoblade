@@ -17,6 +17,29 @@ Written 2026-11-18 at the end of the "matching-pass-2026-10-23" session. Compani
    identifiers; no `lbl_eu_*` data labels; no `__declspec(section)`/`#pragma dont_inline`/
    `noinline`/`volatile` codegen forcing; no `*Imports.hpp` shadow declarations; no `code_XXXXXXXX`
    units; UNIT_RULES empty; names last.
+   **Finish line for "clean" (agreed 2026-11-20).** Measured by `tools/coop/run.py faithful`:
+
+   | Category | Kind | c10 count | c11 count (incl. 196 newly seeded headers) | Done when |
+   |---|---|---:|---:|---|
+   | label, mangled_c, section, offset_cast, view_struct, decl_shield, rule, rtti_off, foreign_data, noinline, volatile | hard | 24,194 · 2,052 · 882 · 1,841 · 1,191 · 17 · 272 · 15 · 410 · 133 · 117 | 22,414 · 2,422 · 794 · 1,767 · 1,212 · 16 · 271 · 15 · 400 · 140 · 83 (headers: label 419, mangled_c 396, noinline 7, view_struct 22) | **0** |
+   | volatile (all spellings) | soft | 831 | 601 | **0**, except real hardware/thread-shared objects declared `volatile` at their definition with `// volatile-ok: <why>` |
+   | blob_offset (pool read by offset) | soft | 4,735 | 6,580 (header seeding + new blob spellings) | **0** |
+   | sdata2_extern (float constant read through an extern) | soft | 2,050 | 2,121 | **0** |
+   | addr_func (`func_8xxxxxxx` names) | soft | 1,012 | 819 | **0** (JP symbols first, then a descriptive name from behaviour) |
+   | unk_name (`Unk…` / `UnkClass_…`) | soft | 1,135 | 3,152 (275 in headers; counter now includes header-side `Unk…` types) | **0** — real name if recoverable, else a behavioural name marked as a guess (see below) |
+   | field_0x (offset-named fields) | soft | 27,915 | 28,247 | **0** — real name if recoverable, else a behavioural name marked as a guess; only true padding stays unnamed, as an unnamed gap the compiler reproduces (no `reserved[]`/phantom slots) |
+
+   **Guessed names.** Only after a recorded search for the real name: JP/EU symbols, RTTI and
+   type-descriptor strings, assert/debug/format strings, known SDK/nw4r/CriWare names, and
+   bdat column names. Then a behavioural name may be used, tagged at its declaration with
+   `// name-guess: <evidence>` (e.g. `// name-guess: only written by setAnchor(), read as a
+   position`). Guesses are a different kind of exception from `faithful-ok`: the counter tracks them
+   separately so they can be revisited, and a later real name replaces them through
+   `rename_syms.py` (for symbols) or a plain source rename (for fields and locals).
+
+   Any line that stays an exception carries an inline `// faithful-ok: <reason>` comment and is
+   listed in the checkpoint report; exceptions are reviewed, not ratcheted in silently. Each
+   checkpoint report shows this table with current counts.
 3. **EU and JP** build and match with the same sources (currently only US is ever built).
 4. All gates green: link, extab, text-order, faithful ratchet, frozen unit rules, registry check.
 
@@ -25,6 +48,8 @@ the match count if it's done properly"), but every drop needs a stated structura
 debt to repay, not an accepted end state.
 
 ## 2. Where we are (2026-11-20, checkpoint 10 on `agents/matching-pass-2026-10-23`)
+
+**Checkpoint 11 (2026-11-20, hy4 label/volatile/data-fix wave):** functions at 100% 15,110 → 15,755 (+665 gained, 20 apparent losses: 12 renames, 3 LOSTFIX-proven retail ABI divergences tagged `// DEBT(callcast)`, CmText_RegisterEntry honest phantom exposure, EveTalkWin pre-existing, dispatchBattleAI/fadeIn/fadeOut ≈ byte-perfect); fuzzy 78.97 → 80.71; matched code 45.16 → 46.85%; matched data 53.22 → 53.20% (honest residuals: CScnItemCamera −432 / CScnFilter −24 pairing-only with raw bytes matching, CScnFogMan −168 vtable-vs-hand-written-assert-string order, code_80135FDC −144 pool order, CDeviceFont −112, math_triangular −96 and snd_AxManager −76 were fake bytes (hand vtables / padding removed), CDesktop −32 hand RTTI removed). Orchestrator reverted agent hacks: section-forced `.sdata2` pool emulation (code_80135FDC, math_triangular), hand RTTI (CDesktop, CScnFogMan), redundant pointer copies (LODMemMan), tail-filler rename (CTaskEnvironment). Gates: link missing 42, extab/text-order ratcheted, 884 tests OK, faithful OK (5 reviewed `*Imports.hpp` fold moves migrated: CChainEffect, CMenuPassiveSkill, code_80231950, CBattleManager, CtrlObjectParam).
 
 | Measure | Value |
 |---|---|
@@ -211,6 +236,16 @@ legally usable). Delete dead scaffolding, stale docs, `docs/ownership.csv`; rege
 status.
 
 ## 5. Immediate debts at the checkpoint (do these first)
+
+0. **Checkpoint 11 debts (2026-11-20).** Header freeze lifts after c11 — one header-fold agent at a time.
+   - CMenuQstCnt global spelled `sInstance__11CMenuQstCnt` → real `static CMenuQstCnt* sInstance;` member (same symbol).
+   - CScnFogMan: make the six assert strings (`lbl_eu_8056EBE0..EC60`) natural `g3d_fog.h` asserts so the compiler vtable lands first (+168 data).
+   - CfGimmickLock `sGimmickLockConfigColumn[0x0C]` sized slot for "rockTYPE" and remaining `__declspec(section)` defs → real column-table shape.
+   - CtrlMoveEne `f32 zero = 0.0f;` constant-copy locals (13 fns); CActorParam `*(const s16*)&u16` puns; CSysWinScenarioLog `OpenContent` int→float union.
+   - BDAT pointers `lbl_eu_80664090/0A8/0F4/0DC/0D4` → `sp…__Q22cf6CfBdat` real names (header); CfObjectActor.hpp stale `lbl_eu_80531090` extern.
+   - Mixed string pools blocked by foreign weak RTTI names ahead of the pool (code_80272AD8 IWorkEvent, CTitle, CCur, CPartyState) — needs owning-header RTTI placement.
+   - CTaskEnvironment `lbl_eu_80663D5C_tail[1]` phantom filler; label regex misses `lbl_eu_XXXXXXXX_suffix`.
+   - CMCCrystalBox split .text +0xC; Move__15CMenuArtsSelect 94→87 and CfObject_setMoveTargetVec 99.8→75.7 (header adaptations) — win back.
 
 0. **Checkpoint 10 debts (2026-11-20).** Live queue: `/tmp/xb/orch/debt_queue.md` (orchestrator scratch); the durable items:
    - code_800B06A4 `setMonoFlag` (us-800ba1e4) hand-calls `__dynamic_cast(obj, 0, &__RTTI__..., &__RTTI__..., 0)`; rewrite as `dynamic_cast<cf::CfObjectModel*>`, move the per-TU `startEnumObjects`/`getObjectIdAt` externs to their owner header (or revert the function).

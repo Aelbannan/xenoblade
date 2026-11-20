@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
+#include "kyoshin/cf/CfResReloadImpl.hpp"  // getReloadParam0 (owner)
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/harness_catalog.hpp"
@@ -11,6 +13,7 @@
 // suppress those declarations when included from this defining TU.
 #define CODE_80135FDC_CPP
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/math/math_types.h>
 #include <nw4r/lyt/lyt_animation.h>
@@ -73,45 +76,6 @@ struct CTagProcessorBase : public nw4r::ut::TagProcessorBase<wchar_t> {
     virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b); // 0x14
 };
 
-// nt: .sdata2 pool is declared FIRST so MWCC emits it before its own
-// anonymous conversion pool (enables drop_data_tail=((".sdata2", 0x90))).
-
-/* ===== BEGIN typified .sdata2 (retail 0x90 pool) ===== */
-// Retail order: floats -> 2^52 -> floats -> face-string pointers -> floats ->
-// doubles. Non-const (matches extern decls, keeps load codegen); the 4-byte
-// pads before each double come from 8-alignment. 67310-6733C are pointers
-// read through float-typed externs as u32 bit patterns (LookupRelateValue/AC3C).
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672D8 = 38.0f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672DC = -1000.0f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672E0 = 1000.0f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672E4 = 0.75f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672E8 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_806672EC = 0.2f;
-__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_806672F0 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_806672F8 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667300 = 0.6f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667304 = 0.5f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667308 = -1.0f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_8066730C = 60.0f;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667310 = sFacePaneN01;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667314 = sFacePaneM01;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667318 = sFacePaneN02;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066731C = sFacePaneM02;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667320 = sFacePaneN01;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667324 = sFacePaneM01;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667328 = sFacePaneN02;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066732C = sFacePaneM02;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667330 = sFacePaneN01;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667334 = sFacePaneM01;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_80667338 = sFacePaneN02;
-__declspec(section ".sdata2") __attribute__((used)) const char* lbl_eu_8066733C = sFacePaneM02;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667340 = 0.1f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667344 = 1.5f;
-__declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667348 = 64.0f;
-__declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667350 = 2.0;
-__declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667358 = 0.5;
-__declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667360 = 4503601774854144.0;
-/* ===== END typified .sdata2 ===== */
 
 /* ===== BEGIN typified .data (was absorb_kyoshin_code_80135FDC_cpp_data[0x118]) ===== */
 // Retail order: dispatch jumptable (opaque reloc blob) -> NW4R assert strings.
@@ -149,7 +113,7 @@ extern "C" {
 // lbl_eu_806640A8 / lbl_eu_806640D8 / lbl_eu_80664104 stay inline: they are
 // declared as void* in CCollepedia.hpp / CKizunaTalkList.hpp / CMCEffStart.hpp
 // (u32 here) - moving them into code_80135FDC.hpp would clash in those callers.
-extern u32 lbl_eu_806640A8;
+extern void* lbl_eu_806640A8;
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_80664104;
 // lbl_eu_806640EC stays inline: CMCGetItemBox.hpp declares it as void* - a
@@ -178,11 +142,7 @@ extern u8 lbl_eu_8052E590[];
 // Bdat_GetMaxRow_B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) - a
 // move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
 extern "C" u32 Bdat_GetMaxRow_B1EC(void*);
-// CtrlObjectParam_GetSlotTableBase stays inline: include/functions.hpp and CChainActorPc.hpp
-// declare it as int* - a move into code_80135FDC.hpp would clash in
-// CGame / CMenu* units that pull those headers transitively.
-extern "C" u8* CtrlObjectParam_GetSlotTableBase(void);
-// CtrlRemote_SetSharedBit stays inline: include/functions.hpp declares it as
+
 // void CtrlRemote_SetSharedBit(int, int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern "C" void CtrlRemote_SetSharedBit(u32 destination, u32 value);
@@ -342,8 +302,7 @@ extern "C" u32 Utf8ToWcsCopyFix(const char* src, u16* dst, u32 destLen) {
 // subi/cmpli range fusion while emitting the same cmpi+bgt/bng.
 // (An optimize_for_size pragma was tried here and has no effect on fusion.)
 extern "C" void SjisDotToCommaEU(char* str) {
-    extern int getLanguage__9CDeviceSCFv();
-    int lang = getLanguage__9CDeviceSCFv();
+    int lang = CDeviceSC::getLanguage();
     if ((u8)(lang + 0xFE) > 2) return;
     s8 c;
     s8 d;
@@ -590,7 +549,7 @@ extern "C" void LayoutSetTextBoxText(
         // CTagProcessorBase::Proc (slot 0x14, retail TagProcPreprocessMessage)
         const wchar_t* res = reinterpret_cast<CTagProcessorBase*>(tagProc)->Proc(
             reinterpret_cast<wchar_t*>(buf), 0,
-            lbl_eu_806672D8, lbl_eu_806672D8);
+            38.0f, 38.0f);
         wcscpy(reinterpret_cast<wchar_t*>(buf), res);
     }
 
@@ -648,7 +607,7 @@ extern "C" void SetLayoutSelfText(
         // retail passes the same float in f1 and f2
         const wchar_t* res = reinterpret_cast<CTagProcessorBase*>(tagProc)->Proc(
             reinterpret_cast<wchar_t*>(buf), 0,
-            lbl_eu_806672D8, lbl_eu_806672D8);
+            38.0f, 38.0f);
         wcscpy(reinterpret_cast<wchar_t*>(buf), res);
     }
 
@@ -722,7 +681,7 @@ void drawLayout(
         f32 bottom = rect.bottom;
         f32 top = rect.top;
         C_MTXOrtho(ortho, top, bottom, left, right,
-                   lbl_eu_806672DC, lbl_eu_806672E0);
+                   -1000.0f, 1000.0f);
         GXSetProjection(ortho, GX_ORTHOGRAPHIC);
 
         drawInfo->SetViewMtx(reinterpret_cast<const nw4r::math::MTX34&>(ml::CMat34::identity));
@@ -743,8 +702,8 @@ void SetWideLocAdjust(nw4r::lyt::DrawInfo* drawInfo) {
     // scale from the tuned sdata2 constants (wide aspect only).
     bool adj = !drawInfo->IsLocationAdjust();
     nw4r::math::VEC2 scale;
-    scale.x = lbl_eu_806672E4;
-    scale.y = lbl_eu_806672E8;
+    scale.x = 0.75f;
+    scale.y = 1.0f;
     drawInfo->SetLocationAdjustScale(scale);
     drawInfo->SetLocationAdjust(adj);
 }
@@ -837,23 +796,19 @@ ret0:
     return 0;
 }
 
-extern float lbl_eu_806672EC;
-extern const float lbl_eu_806672F0;
-extern float lbl_eu_806672E8;
-extern double lbl_eu_806672F8;
 u32 advanceAnimTransform(
     nw4r::lyt::AnimTransform* anim, float delta) {
     float newFrame = delta + anim->GetFrame();
     u32 result = 0;
     if (CDeviceVI::isTvFormatPal()) {
-        newFrame += lbl_eu_806672EC;
+        newFrame += 0.2f;
     }
     u16 frameSize = anim->GetFrameSize();
     if (newFrame >= static_cast<float>(frameSize)) {
         if (anim->IsLoopData()) {
-            newFrame = lbl_eu_806672F0;
+            newFrame = 0.0f;
         } else {
-            newFrame = static_cast<float>(anim->GetFrameSize()) - lbl_eu_806672E8;
+            newFrame = static_cast<float>(anim->GetFrameSize()) - 1.0f;
         }
         result = 1;
     }
@@ -867,16 +822,16 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float delta) {
     float newFrame = anim->GetFrame() - delta;
     u32 result = 0;
     if (CDeviceVI::isTvFormatPal()) {
-        newFrame -= lbl_eu_806672EC;
+        newFrame -= 0.2f;
     }
-    if (newFrame <= lbl_eu_806672F0) {
+    if (newFrame <= 0.0f) {
         if (anim->IsLoopData()) {
             // Builtin u16->f32 conversion emits retail's exact 0x4330 stack
-            // trick; the pooled magic literal is value-equal to sdata2
-            // lbl_eu_806672F8 (reloc-name-only drift, see MWCC_PATTERNS 7i).
-            newFrame = static_cast<float>(anim->GetFrameSize()) - lbl_eu_806672E8;
+            // trick; MWCC pools the same 2^52 magic from this cast in first-use
+            // order, so no named pool object is needed here.
+            newFrame = static_cast<float>(anim->GetFrameSize()) - 1.0f;
         } else {
-            newFrame = lbl_eu_806672F0;
+            newFrame = 0.0f;
         }
         result = 1;
     }
@@ -885,9 +840,9 @@ extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform* anim, float delta) {
 }
 
 extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
-    output->x = lbl_eu_806672F0;
-    output->y = lbl_eu_806672F0;
-    output->z = lbl_eu_806672F0;
+    output->x = 0.0f;
+    output->y = 0.0f;
+    output->z = 0.0f;
     if (pane == NULL) return;
 
     output->x = pane->GetTranslate().x;
@@ -896,9 +851,9 @@ extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pan
 
     nw4r::lyt::Pane* parent = pane->GetParent();
     nw4r::math::VEC3 accum;
-    accum.x = lbl_eu_806672F0;
-    accum.y = lbl_eu_806672F0;
-    accum.z = lbl_eu_806672F0;
+    accum.x = 0.0f;
+    accum.y = 0.0f;
+    accum.z = 0.0f;
     if (parent == NULL) goto add_out;
 
     accum.x = parent->GetTranslate().x;
@@ -907,9 +862,9 @@ extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pan
 
     nw4r::lyt::Pane* grandparent = parent->GetParent();
     nw4r::math::VEC3 temp;
-    temp.x = lbl_eu_806672F0;
-    temp.y = lbl_eu_806672F0;
-    temp.z = lbl_eu_806672F0;
+    temp.x = 0.0f;
+    temp.y = 0.0f;
+    temp.z = 0.0f;
     if (grandparent == NULL) goto add_accum;
 
     temp.x = grandparent->GetTranslate().x;
@@ -918,7 +873,7 @@ extern "C" void AccumPaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* pan
 
     nw4r::lyt::Pane* ggp = grandparent->GetParent();
     nw4r::math::VEC3 tmp2;
-    code80135FDC_setVec3(&tmp2, lbl_eu_806672F0, lbl_eu_806672F0, lbl_eu_806672F0);
+    code80135FDC_setVec3(&tmp2, 0.0f, 0.0f, 0.0f);
     if (ggp == NULL) goto add_temp;
 
     copyVEC3(&tmp2, &ggp->GetTranslate());
@@ -951,7 +906,7 @@ extern "C" void Vec3AddInto(nw4r::math::VEC3* output,
 extern "C" void AccumPaneWorldPosB(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
     // Single load: retail keeps the zero constant live in f1 across the whole
     // function (one lfs up front, stfs at every init site).
-    float z = lbl_eu_806672F0;
+    float z = 0.0f;
     output->x = z;
     output->y = z;
     output->z = z;
@@ -1015,9 +970,9 @@ done:;
 
 extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
                               nw4r::lyt::Pane* scale, nw4r::lyt::Pane* offset) {
-    output->x = lbl_eu_806672F0;
-    output->y = lbl_eu_806672F0;
-    output->z = lbl_eu_806672F0;
+    output->x = 0.0f;
+    output->y = 0.0f;
+    output->z = 0.0f;
     if (node != NULL) {
         if (node->GetParent() != NULL) {
             output->x = node->GetTranslate().x;
@@ -1029,9 +984,9 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* nod
             nw4r::math::VEC3 tmp2;
             nw4r::math::VEC3 temp;
             nw4r::math::VEC3 accum;
-            accum.x = lbl_eu_806672F0;
-            accum.y = lbl_eu_806672F0;
-            accum.z = lbl_eu_806672F0;
+            accum.x = 0.0f;
+            accum.y = 0.0f;
+            accum.z = 0.0f;
             if (parent != NULL) {
                 nw4r::lyt::Pane* grandparent = parent->GetParent();
                 if (grandparent != NULL) {
@@ -1039,9 +994,9 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* nod
                     accum.y = parent->GetTranslate().y;
                     accum.z = parent->GetTranslate().z;
 
-                    temp.x = lbl_eu_806672F0;
-                    temp.y = lbl_eu_806672F0;
-                    temp.z = lbl_eu_806672F0;
+                    temp.x = 0.0f;
+                    temp.y = 0.0f;
+                    temp.z = 0.0f;
                     if (grandparent != NULL) {
                         nw4r::lyt::Pane* ggp = grandparent->GetParent();
                         if (ggp != NULL) {
@@ -1049,9 +1004,9 @@ extern "C" void ScalePaneWorldPos(nw4r::math::VEC3* output, nw4r::lyt::Pane* nod
                             temp.y = grandparent->GetTranslate().y;
                             temp.z = grandparent->GetTranslate().z;
 
-                            tmp2.x = lbl_eu_806672F0;
-                            tmp2.y = lbl_eu_806672F0;
-                            tmp2.z = lbl_eu_806672F0;
+                            tmp2.x = 0.0f;
+                            tmp2.y = 0.0f;
+                            tmp2.z = 0.0f;
                             if (ggp != NULL) {
                                 nw4r::lyt::Pane* gggp = ggp->GetParent();
                                 if (gggp != NULL) {
@@ -1157,13 +1112,11 @@ extern "C" void PaneSetTexPalette(nw4r::lyt::Pane* a, TPLPalette* palette) {
 }
 
 void playUISound(u32 arg) {
-    extern f32 lbl_eu_80667300;
-    cf::CfSoundMan::playActorSound(0, arg, 0, 0, lbl_eu_80667300);
+    cf::CfSoundMan::playActorSound(0, arg, 0, 0, 0.6f);
 }
 
 extern "C" void code80135FDC_thunk_BFE8C(u8* arg) {
-    extern void CfSoundMan_StopSlotByMode(unsigned long, void*, unsigned long);
-    CfSoundMan_StopSlotByMode(0, arg, 0);
+    CfSoundMan_StopSlotByMode(0, (u32)(uintptr_t)arg, 0);
 }
 
 struct Table_80500188 {
@@ -1700,7 +1653,7 @@ struct ListData {
 extern "C" void BuildSlotItemLists(int arg) {
     gCollectedFlagCount = 0;
     gSlotItemCount = 0;
-    ListData* list = (ListData*)(CtrlObjectParam_GetSlotTableBase() + 4);
+    ListData* list = (ListData*)((u8*)CtrlObjectParam_GetSlotTableBase() + 4);
     for (u8 i = 0; i < 7; i++) {
         u32 v;
         if (i < 3) {
@@ -2036,7 +1989,7 @@ extern "C" f32 BlendFloatAvgScale(u32 a, u32 b, u32 c, f32 d) {
     f32 fa = (f32)a;
     f32 fb = (f32)b;
     f32 fc = (f32)c;
-    return (lbl_eu_80667304 * (fa + fb) + fc) / d;
+    return (0.5f * (fa + fb) + fc) / d;
 }
 
 extern "C" void InitCol6LodTables(const char* arg) {
@@ -2354,13 +2307,13 @@ extern "C" int CheckViewAngle60(const nw4r::math::VEC3* a, const nw4r::math::VEC
     if (fabsf(prod) < ml::epsilon) return 0;
 
     f32 t = dot / prod;
-    if (t < lbl_eu_80667308) t = lbl_eu_80667308;
-    if (t > lbl_eu_806672E8) t = lbl_eu_806672E8;
-    if (!(t <= lbl_eu_806672E8 && t >= lbl_eu_80667308)) {
+    if (t < -1.0f) t = -1.0f;
+    if (t > 1.0f) t = 1.0f;
+    if (!(t <= 1.0f && t >= -1.0f)) {
         Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
                                     (const char*)lbl_eu_805262C8);
     }
-    return ((f32)acos(t) * ml::rad2deg) <= lbl_eu_8066730C;
+    return ((f32)acos(t) * ml::rad2deg) <= 60.0f;
 }
 
 extern "C" u16 LookupRelateValue(u16 arg1, u16 arg2) {
@@ -2373,8 +2326,8 @@ extern "C" u16 LookupRelateValue(u16 arg1, u16 arg2) {
     u16 row0 = *(u16*)&r;
     if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
-    u32 arrA[2] = { *(u32*)&lbl_eu_80667310, *(u32*)&lbl_eu_80667314 };
-    u32 arrB[2] = { *(u32*)&lbl_eu_80667318, *(u32*)&lbl_eu_8066731C };
+    u32 arrA[2] = { (u32)sFacePaneN01, (u32)sFacePaneM01 };
+    u32 arrB[2] = { (u32)sFacePaneN02, (u32)sFacePaneM02 };
     void* fp2 = getFP(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u32 colB = arrB[flag];
@@ -2413,8 +2366,8 @@ extern "C" void AdjustRelateValue(u16 arg1, u16 arg2, s8 delta) {
     u16 row0 = *(u16*)&r;
     if (CtrlRemote_TouchBitByArg(0x20) >= row0) flag = 1;
 
-    u32 arrA[2] = { *(u32*)&lbl_eu_80667320, *(u32*)&lbl_eu_80667324 };
-    u32 arrB[2] = { *(u32*)&lbl_eu_80667328, *(u32*)&lbl_eu_8066732C };
+    u32 arrA[2] = { (u32)sFacePaneN01, (u32)sFacePaneM01 };
+    u32 arrB[2] = { (u32)sFacePaneN02, (u32)sFacePaneM02 };
     void* fp2 = getFP(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u32 colB = arrB[flag];
@@ -2461,10 +2414,10 @@ extern "C" void FetchRelatePair(u8* out1, u8* out2, int idx) {
 
     u32 arrB[2];
     u32 arrA[2];
-    arrA[0] = *(u32*)&lbl_eu_80667330;
-    arrA[1] = *(u32*)&lbl_eu_80667334;
-    arrB[0] = *(u32*)&lbl_eu_80667338;
-    arrB[1] = *(u32*)&lbl_eu_8066733C;
+    arrA[0] = (u32)sFacePaneN01;
+    arrA[1] = (u32)sFacePaneM01;
+    arrB[0] = (u32)sFacePaneN02;
+    arrB[1] = (u32)sFacePaneM02;
 
     void* fp2 = getFP(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
@@ -2516,15 +2469,15 @@ extern "C" void RevealMinimapArea() {
     if (CtrlRemote_TouchBitByArg(0x20) <= 4) return;
     if ((gmGameFlags & 0x100) == 0) return;
     void* cam = (void*)Scn_QueryUnk80State((CScn*)gmScene);
-    f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
-    if (f < lbl_eu_806672E8) return;
+    f32 f = 1.0f - *(f32*)((u8*)cam + 0xC);
+    if (f < 1.0f) return;
 
     void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return;
     u8 flag = (u8)lbl_eu_80664184;
     if (flag == 0) return;
 
-    void* bdat = (void*)lbl_eu_806640A8;
+    void* bdat = lbl_eu_806640A8;
     u16 row = 0;
     if (bdat != NULL) {
         Bdat_GetTable_AA34((const char*)(tbl + 0x22B));
@@ -2543,16 +2496,16 @@ extern "C" void RevealMinimapArea() {
         col2 = *(u8*)&r;
     }
     f64 dcol2 = (f64)col2;
-    f32 scale = (f32)dcol2 * lbl_eu_80667340;
+    f32 scale = (f32)dcol2 * 0.1f;
 
     // struct assignment: retail's copy is an inline mtctr/lwzu/stwu loop
     XBMapTable1 t1 = *(const XBMapTable1*)&tbl[0x418];
 
     cf::CfObject* pif = (cf::CfObject*)player;
     nw4r::math::VEC3* pos = (nw4r::math::VEC3*)pif->CfObject_getPosVector();
-    f32 sx = pos->x / scale * lbl_eu_80667344;
+    f32 sx = pos->x / scale * 1.5f;
     f32 sy = pos->y;
-    f32 sz = pos->z / scale * lbl_eu_80667344;
+    f32 sz = pos->z / scale * 1.5f;
 
     Bdat_GetTable_AA34((const char*)pos);
     u32 name = t1.w[flag];
@@ -2580,8 +2533,8 @@ extern "C" void RevealMinimapArea() {
     u16 rem = prev % 24;
     u16 q = prev / 24;
     // kept in a local so MWCC holds it in an fpr across the whole loop
-    f32 cell = lbl_eu_80667348;
-    f32 R = (f32)(lbl_eu_80667358 * (cell * sqrt(lbl_eu_80667350)));
+    f32 cell = 64.0f;
+    f32 R = (f32)(0.5 * (cell * sqrt(2.0)));
     f32 R2 = R * R;
     u32 baseOff = (idx - 1) * 0x240;
 
@@ -2866,7 +2819,7 @@ extern "C" int StepAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimRes
         u16 fs = anim->GetFrameSize();
         f32 limit = (f32)(u32)(fs - 1);
         if (f >= limit) return 1;
-        f32 d = f + lbl_eu_806672E8;
+        f32 d = f + 1.0f;
         if (d > limit) d = limit;
         SetAnimLinkFrame(self, arg, d);
         return 0;
@@ -2876,7 +2829,7 @@ extern "C" int StepAnimLinkFrame(nw4r::lyt::Pane* self, const nw4r::lyt::AnimRes
 
 extern "C" void AnimResetToFirst(nw4r::lyt::Pane* self, const nw4r::lyt::AnimResource* arg) {
     if (FindAnimLink(self, arg) != 0) {
-        SetAnimLinkFrame(self, arg, lbl_eu_806672F0);
+        SetAnimLinkFrame(self, arg, 0.0f);
     }
 }
 

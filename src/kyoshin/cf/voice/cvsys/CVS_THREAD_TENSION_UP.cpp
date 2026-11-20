@@ -4,6 +4,7 @@
 // update function, and voice-select + play function.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
@@ -25,8 +26,6 @@ extern "C" {
     int TryRequestVoice(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
     CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude);
-    int HpVoice_CheckPair26(CVoiceHandle* handle, CVoiceHandle* owner);
-    int HpVoice_MapSubState(CVoiceHandle* handle);
 }
 
 // The voice manager/factory object. The flags field at offset 0x3F00
@@ -215,10 +214,10 @@ void CVS_THREAD_TENSION_UP::selectAndPlay() {
     }
 
     // Special-case overrides checked against the freshly selected ID.
-    if (voiceId == 0x5E4 && HpVoice_CheckPair26(handle, self->field_0x20) != 0) {
+    if (voiceId == 0x5E4 && HpVoice_CheckPair26((CVoiceHandleState*)handle, (CVoiceHandleState*)self->field_0x20) != 0) {
         voiceId = 0x89F;
     }
-    if (voiceId == 0x5EB && HpVoice_CheckPair26(handle, self->field_0x20) != 0) {
+    if (voiceId == 0x5EB && HpVoice_CheckPair26((CVoiceHandleState*)handle, (CVoiceHandleState*)self->field_0x20) != 0) {
         voiceId = 0x451;
     }
 

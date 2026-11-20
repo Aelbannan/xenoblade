@@ -1,8 +1,10 @@
 #pragma once
 
 #include <types.h>
+#include "libs/monolib/src/scn/CScn_80496B0C.hpp"
 #include "monolib/math/CAttrTransform.hpp"
 #include <nw4r/g3d/res/g3d_resfile.h>
+
 
 // Scene item pool (defined in CScnItemPool.cpp; only used opaquely here).
 class CScnItemPool;
@@ -184,19 +186,12 @@ struct CScnItemModelEnvLight {
 // Cross-TU imports (retail C-ABI free functions defined in
 // CScn_80496B0C.cpp). extern "C" keeps the call reloc names verbatim
 // (reloc-site gate; MWCC would otherwise mangle C++ linkage names).
-extern "C" float scn80496GetChild1V6(u8* self);
 extern "C" float scn80496GetChild1Float(u8* self);
 extern "C" float scn80496GetChild2Float(u8* self);
-extern "C" f32 scn80496GetChild2V6(u8* self);
-extern "C" u32 scn80496IsNodeFlagBit(u8* self);
 extern "C" void scn80496CallChild1V5(u8* self, float value);
-extern "C" void scn80496RefreshBlendTag(u8* self, u32 tag);
-extern "C" void scn80496SetFloat178(u8* self, float val);
 extern "C" void scn80496UpdateCrossfade(u8* self);
 extern "C" u32 scn80496CrossfadeStep(u8* self, CScnItemAnimResFile* anim, int index,
                               u32 c, s32 f);
-extern "C" u32 scn80496BindChrAnmPack(u8* self, CScnItemAnimResFile* anim, int index,
-                              u32 c, s32 f, u32 g, u32 h);
 extern "C" u32 scn80496HasChild1Node(u8* self);
 
 // Cross-TU query: returns the model owned by the given scene owner's pool.

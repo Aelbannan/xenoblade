@@ -269,9 +269,7 @@ void EffCtl_EmptyStub84(void* scene);
 u32 SchedFx_CountTotal(void);
 void SchedRes_AllocElemTables(void);
 void __ct__804E4B64(int arg);
-void Trail_SnapFog(void* scene);
 u32 lytBindCanResolveTarget(void* link);
-void EffFxRenderDispatch(void* obj, void* arg);
 void func_804D401C(void* a, float f);
 // (memberized: EffFxInitNodeHead -> EffectInit::EffFxInitNodeHead; declaration moved into class EffectInit)
 void DbgPushPerspective(void* mtx);
@@ -292,6 +290,8 @@ u32 SchedFx_AllocPool(u32 p, u32 size);
 u32 SchedRes_FindEntryValue(u32* outC, CScheduleEntryData** out8, u32 a, u32 c);
 u32 SchedList_RouteAddReq(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4, u32 p5);
 extern EffectListNode* lbl_eu_80665A30;
+// Only the two mixed float/double expressions below still need the named pool
+// slots; writing a float literal there makes MWCC emit an extra 0.0/1.0 double.
 extern f32 lbl_eu_8066B0A0;
 extern f32 lbl_eu_8066B0A4;
 
@@ -365,7 +365,10 @@ struct EmitData {
 };
 }
 
-// Effect memory-region name string (.rodata at lbl_eu_805244E0, 0x20B
+// Defined in CETrail.cpp with C++ linkage.
+void Trail_SnapFog(CScnRootEnv* scene);
+
+// Effect memory-region name string
 // incl. zero padding; retail shape).
 extern "C" __declspec(align(8)) const char lbl_eu_805244E0[0x20] = "CEffectHeap";
 
@@ -378,7 +381,7 @@ extern "C" void EffSys_AdvanceChain(void* self) { func_804D401C((u8*)self + 0x24
 // sentinel -1 pairs at 0x1e/0x20, count 4 at 0x48), then chain-init the node
 // head at 0x24 via tail call.
 void EffSys_InitRoot(EffectRoot* self) {
-    f32 f = lbl_eu_8066B0A0;
+    f32 f = 0.0f;
     u32 zero = 0;
     s16 neg = -1;
     u32 four = 4;
@@ -419,8 +422,8 @@ extern "C" void EffRoot_InitDefaults(EffectRoot* self) {
     // second (f1); MWCC then schedules both sdata2 loads right after the call.
     // Load order/register naming: A0's temp must be born first (f0), A4's
     // second (f1); MWCC then schedules both sdata2 loads right after the call.
-    f32 f0 = lbl_eu_8066B0A0;
-    f32 f1 = lbl_eu_8066B0A4;
+    f32 f0 = 0.0f;
+    f32 f1 = 1.0f;
     u32 zero = 0;
     s16 neg = -1;
     self->field_0xdc[0] = zero;
@@ -461,7 +464,7 @@ void EffectRoot::EffRender_PassNoHide() {
     if (!((flags >> 11) & 1)) return;
     u32 hide = ((flags >> 7) & 1) || ((this->field_0x08->field_0x00 >> 7) & 1);
     if (hide != 0) return;
-    EffFxRenderDispatch(this->renderArg, this->field_0x08->field_0x0c);
+    EffFxRenderDispatch(reinterpret_cast<EffectInit*>(this->renderArg), this->field_0x08->field_0x0c);
 }
 
 // EffRender_PassHideSet: mirror of EffRender_PassNoHide - render only when the bit-7 hide
@@ -475,7 +478,7 @@ void EffectRoot::EffRender_PassHideSet() {
     if (!((flags >> 11) & 1)) return;
     u32 hide = ((flags >> 7) & 1) || ((this->field_0x08->field_0x00 >> 7) & 1);
     if (hide == 0) return;
-    EffFxRenderDispatch(this->renderArg, this->field_0x08->field_0x0c);
+    EffFxRenderDispatch(reinterpret_cast<EffectInit*>(this->renderArg), this->field_0x08->field_0x0c);
 }
 
 extern "C" s32 EffObj_GetPriority(EffObj* obj) {
@@ -573,7 +576,7 @@ extern "C" void EffSys_InitScene(EffectRoot* self, void* scene, u32 arg) {
         SchedRes_AllocElemTables();
         __ct__804E4B64(0);
         SchedRes_ReleaseEntries(0);
-        Trail_SnapFog(scene);
+        Trail_SnapFog((CScnRootEnv*)scene);
         EffCtl_EmptyStub84(scene);
     }
 }
@@ -650,7 +653,7 @@ void EffRender_PassBase(EffectRoot* self) {
     if ((flags >> 10) & 1) return;
     if ((flags >> 5) & 1) return;
     if ((flags >> 11) & 1) return;
-    EffFxRenderDispatch(self->renderArg, self->field_0x08->field_0x0c);
+    EffFxRenderDispatch(reinterpret_cast<EffectInit*>(self->renderArg), self->field_0x08->field_0x0c);
 }
 
 // EffRender_PassFilteredA: render pass over the registered effect list. Mirrors
@@ -699,7 +702,7 @@ void EffRender_PassFlag5(EffectRoot* self) {
     u16 flags = self->flags1;
     if ((flags >> 10) & 1) return;
     if (!((flags >> 5) & 1)) return;
-    EffFxRenderDispatch(self->renderArg, self->field_0x08->field_0x0c);
+    EffFxRenderDispatch(reinterpret_cast<EffectInit*>(self->renderArg), self->field_0x08->field_0x0c);
 }
 
 // EffRender_PassFilteredB: render pass twin of EffRender_PassFilteredA, running the other hide
@@ -847,8 +850,8 @@ s32 EffObject::Obj_Construct(const u8* base, const EffInitBlob* data, void* arg6
     u32 two = 2;
     u16 w = *(const u16*)(p06 + 0x14);
     u32 four = 4;
-    f32 fA0 = lbl_eu_8066B0A0;
-    f32 fA4 = lbl_eu_8066B0A4;
+    f32 fA0 = 0.0f;
+    f32 fA4 = 1.0f;
     s16 s0 = data->field_0x00;
     s16 s2 = data->field_0x02;
     u8 bD = data->field_0x0d;
@@ -1041,7 +1044,7 @@ static inline s32 EffMtxNearIdentity(EffObj* eo) {
 // entry f0, clamped/lerped between entries f2/f4 by the projected distance.
 // Inline: retail duplicates it at both spawn paths.
 static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
-    f32 factor = lbl_eu_8066B0A4;
+    f32 factor = 1.0f;
     if (obj->field_0xdc[0] == 0) {
         return factor;
     }
@@ -1060,9 +1063,7 @@ static inline f32 EffDepthFactor(EffObject* obj, Vec* pos) {
     } else {
         f32 v1 = u16ToF_b0b8(dd->f2);
         if (v1 < mag) {
-            // lbl_eu_8066B0A4 is 1.0f (retail loads this extern for both
-            // subtractions; a literal 1.0f would pool its own sdata2 entry).
-            factor = (lbl_eu_8066B0A4 - ratio) * (lbl_eu_8066B0A4 - (mag - v1) / (v2 - v1)) + ratio;
+            factor = (1.0f - ratio) * (1.0f - (mag - v1) / (v2 - v1)) + ratio;
         }
     }
     return factor;
@@ -1072,11 +1073,11 @@ extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
     EffFrameTail* ft = (EffFrameTail*)&obj->sub_0x17c[1];
     EffObj* eo = (EffObj*)obj;
 
-    if (obj->field_0x0c <= lbl_eu_8066B0A4) {
+    if (obj->field_0x0c <= 1.0f) {
         ((EffectRoot*)obj)->EffSys_RebindSceneLinks((void*)1, 0);
     }
     obj->field_0x14 = delta;
-    if ((f32)delta <= lbl_eu_8066B0A0) {
+    if ((f32)delta <= 0.0f) {
         return;
     }
 
@@ -1116,7 +1117,7 @@ extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
         s32 ok;
         if (obj->field_0x10 <= 0) {
             ok = 1;
-        } else if (obj->field_0x0c - lbl_eu_8066B0A4 >= s32ToF64_b0b0(obj->field_0x10)) {
+        } else if (obj->field_0x0c - 1.0f >= s32ToF64_b0b0(obj->field_0x10)) {
             ok = 1;
         } else {
             ok = 0;
@@ -1154,10 +1155,10 @@ extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
         {
             // Burn-down of field_0x18; only spawn once it hits zero.
             f32 old = obj->field_0x18;
-            if (!(old <= lbl_eu_8066B0A0)) {
+            if (!(old <= 0.0f)) {
                 old = old - obj->field_0x14;
                 obj->field_0x18 = old;
-                if (!(old <= lbl_eu_8066B0A0)) {
+                if (!(old <= 0.0f)) {
                     goto end;
                 }
             }
@@ -1219,39 +1220,39 @@ extern "C" void EffObj_Update(EffObject* obj, f32 delta) {
                     // Per-node timer slot burn-down (slot offset = field_0x22 * 4).
                     f32* slot = (f32*)((u8*)node + ((u32)obj->field_0x22 << 2));
                     f32 nv = *slot;
-                    if (lbl_eu_8066B0A0 < nv) {
+                    if (0.0f < nv) {
                         nv = nv - obj->field_0x14;
                         *slot = nv;
-                        if (lbl_eu_8066B0A0 < nv) {
+                        if (0.0f < nv) {
                             go = 0;
                         }
                     }
                 }
             }
             if (go) {
-                f32 d = nt - lbl_eu_8066B0A4;
+                f32 d = nt - 1.0f;
                 obj->sub_0x11c[0] = d;
-                SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], lbl_eu_8066B0A4,
+                SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], 1.0f,
                               (const void*)obj->field_0x08);
                 obj->sub_0x14c[0] = d;
-                SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], lbl_eu_8066B0A4,
+                SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], 1.0f,
                               (const void*)obj->field_0x08);
                 obj->sub_0x17c[0] = d;
-                SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], lbl_eu_8066B0A4,
+                SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], 1.0f,
                               (const void*)obj->field_0x08);
                 if (obj->field_0xdc[13] ? *(const u8*)((const u8*)obj->field_0xdc[13] - 0x1c) : 0) {
                     obj->sub_0x194[0] = d;
-                    SchedAnim_LerpVec24(obj->sub_0x194, (const void*)obj->field_0xdc[13], lbl_eu_8066B0A4,
+                    SchedAnim_LerpVec24(obj->sub_0x194, (const void*)obj->field_0xdc[13], 1.0f,
                                   (const void*)obj->field_0x08);
                 }
                 if (obj->field_0xdc[12] ? *(const u8*)((const u8*)obj->field_0xdc[12] - 0x19) : 0) {
                     obj->sub_0x1c4[0] = d;
-                    SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], lbl_eu_8066B0A4,
+                    SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], 1.0f,
                                   (const void*)obj->field_0x08);
                 }
                 if (obj->field_0xdc[14] ? *(const u8*)((const u8*)obj->field_0xdc[14] - 0x18) : 0) {
                     obj->sub_0x204[0] = d;
-                    SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], lbl_eu_8066B0A4,
+                    SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], 1.0f,
                                   (const void*)obj->field_0x08);
                 }
                 if (((EffectRoot*)obj)->EffSys_RebindSceneLinks((void*)1, node) != 0) {
@@ -1401,7 +1402,7 @@ extern "C" void EffFrame_Update(EffFrameObj* obj) {
     EffWMat emF8;
 
     if (((obj->flags1 >> 12) & 1) == 0) {
-        cZero = lbl_eu_8066B0A4;
+        cZero = 1.0f;
         if (((EffectRoot*)obj)->EffSys_RebindSceneLinks((void*)(u32)(obj->field_0x0c <= cZero), 0) != 0) {
             // Emission transform 1: negated 0x140 anchor + position 0x128,
             // concatenated with the 0x64 matrix.
@@ -1494,23 +1495,23 @@ void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
         EffectNode* node = SchedNode_FetchByIndex(scene->field_0x04);
         if (node == 0) return;
         f31 = ((const EffNode10*)node)->field_0x10;
-        obj->sub_0x11c[0] = f31 - lbl_eu_8066B0A4;
-        SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
-        obj->sub_0x14c[0] = f31 - lbl_eu_8066B0A4;
-        SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
-        obj->sub_0x17c[0] = f31 - lbl_eu_8066B0A4;
-        SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+        obj->sub_0x11c[0] = f31 - 1.0f;
+        SchedAnim_AdvanceVec28(obj->sub_0x11c, (const void*)obj->field_0xdc[2], 0.0f, (const void*)obj->field_0x08);
+        obj->sub_0x14c[0] = f31 - 1.0f;
+        SchedAnim_AdvanceVec28B(obj->sub_0x14c, (const void*)obj->field_0xdc[4], 0.0f, (const void*)obj->field_0x08);
+        obj->sub_0x17c[0] = f31 - 1.0f;
+        SchedAnim_AdvanceColor8(obj->sub_0x17c, (const void*)obj->field_0xdc[5], 0.0f, (const void*)obj->field_0x08);
         if ((obj->field_0xdc[13] ? *(const u8*)((const u8*)obj->field_0xdc[13] - 0x1c) : 0) != 0) {
-            obj->sub_0x194[0] = f31 - lbl_eu_8066B0A4;
-            SchedAnim_LerpVec24(obj->sub_0x194, (const void*)obj->field_0xdc[13], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+            obj->sub_0x194[0] = f31 - 1.0f;
+            SchedAnim_LerpVec24(obj->sub_0x194, (const void*)obj->field_0xdc[13], 0.0f, (const void*)obj->field_0x08);
         }
         if ((obj->field_0xdc[12] ? *(const u8*)((const u8*)obj->field_0xdc[12] - 0x19) : 0) != 0) {
-            obj->sub_0x1c4[0] = f31 - lbl_eu_8066B0A4;
-            SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+            obj->sub_0x1c4[0] = f31 - 1.0f;
+            SchedAnim_AdvanceQuad(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], 0.0f, (const void*)obj->field_0x08);
         }
         if ((obj->field_0xdc[14] ? *(const u8*)((const u8*)obj->field_0xdc[14] - 0x18) : 0) != 0) {
-            obj->sub_0x204[0] = f31 - lbl_eu_8066B0A4;
-            SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], lbl_eu_8066B0A0, (const void*)obj->field_0x08);
+            obj->sub_0x204[0] = f31 - 1.0f;
+            SchedAnim_AdvanceColor10(obj->sub_0x204, (const void*)obj->field_0xdc[14], 0.0f, (const void*)obj->field_0x08);
         }
     }
 
@@ -1530,7 +1531,7 @@ void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
         } else {
             f31 = 2.0f * out1.y;
         }
-        if (ScnRes_VertRayForward_E398((Vec*)&data.va, 0x4801, 0, 0, -f31, lbl_eu_8066B0A0) != 0) {
+        if (ScnRes_VertRayForward_E398((Vec*)&data.va, 0x4801, 0, 0, -f31, 0.0f) != 0) {
             ScnRes_CopyEntryHead(&data.va, 0);
         } else {
             data.va.y -= f31;
@@ -1554,7 +1555,7 @@ void EffObj_EmitUpdate(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
     }
     u32 bxy = (__fabs(data.d.x) <= ml::epsilon) && (__fabs(data.d.y) <= ml::epsilon);
     if (bxy && (__fabs(data.d.z) <= ml::epsilon)) {
-    } else if (data.d.x * data.d.x + data.d.y * data.d.y + data.d.z * data.d.z == lbl_eu_8066B0A0) {
+    } else if (data.d.x * data.d.x + data.d.y * data.d.y + data.d.z * data.d.z == 0.0f) {
         data.d = ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&data.d, (Vec*)&data.d);
@@ -1589,7 +1590,7 @@ s32 EffectRoot::EffSys_RebindSceneLinks(void* scene, void* node) {
     } else {
         state = 0;
     }
-    if (this->field_0x14 <= lbl_eu_8066B0A0) state = 0;
+    if (this->field_0x14 <= 0.0f) state = 0;
     if (scene != 0) state = 3;
     lytBindRefreshPlayer(&this->link1);
     if (state & 2) lytBindRefreshMatrix(&this->link1, node);

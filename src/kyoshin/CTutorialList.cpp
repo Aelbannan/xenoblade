@@ -11,6 +11,7 @@
 #include "kyoshin/CScrollBar.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CTutorialList.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -706,7 +707,7 @@ bool CTutorialList::OnFileEvent(CEventFile* event) {
 extern "C" int TutorialList_PlayTutorialVoice(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 0x2) == 0) return 0;
     if (((CVoiceHandleVTV*)self)->isActive() != 0) return 0;
-    if (HpVoice_MapSubState(self) != 5) return 0;
+    if (HpVoice_MapSubState((CVoiceHandle*)self) != 5) return 0;
     if (CCharVoiceMan_DispatchById(0xa0, 1) == 0) return 0;
     CCharVoice* voice = (CCharVoice*)self;
     if (self != 0) voice = &self->voice;

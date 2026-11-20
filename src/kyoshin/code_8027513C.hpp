@@ -8,6 +8,20 @@
 // ---------------------------------------------------------------------------
 
 class CScn;
+class UnkCode8027513C;
+
+// Camera-control dispatch helpers
+// (C++ linkage; retail emits their mangled names).
+void* initCamControlInstances();
+int camPadPress12(void* self);
+int camPadBit4Reg(void* self);
+int camPadBit5Reg(void* self);
+int camPadIsHeld2(void* self);
+int camPadIsHeld3(void* self);
+int camPadIsHeld0(void* self);
+int camPadIsHeld1(void* self);
+int camPadLngHld11(void* self);
+void tboxSyncChild(UnkCode8027513C* self, s16 arg);
 
 extern "C" float lbl_eu_806689D8; // -4.0
 extern "C" float lbl_eu_806689DC; // 0.9

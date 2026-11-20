@@ -13,13 +13,14 @@
 #define CTTASK_INLINE_DTOR
 #define IUIWINDOW_INLINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include <types.h>
 
 #include "kyoshin/CSysWinScenarioLog.hpp"
+#include "kyoshin/code_8028130C.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CFileHandle.hpp"
@@ -750,7 +751,7 @@ emit:
 // ---------------------------------------------------------------------------
 void SysWinLog_GateOwner(CScenarioLogOwner* self) {
     if ((self->field_0x3F00 & 4) != 0) {
-        if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), self) != 0) {
+        if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)self) != 0) {
             SysWinLog_DriveCounters(csysWinCall28C(self), 0);
         }
     }

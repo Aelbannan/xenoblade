@@ -12,10 +12,13 @@
 // vtable slots are reached through the CChainBattleObj interface mirror.
 
 #include "kyoshin/cf/chain/CChainTimer.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
 #include "kyoshin/cf/CVision.hpp" // visionSharedStateFlags, aiActionClearBits0006/F0
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
@@ -23,7 +26,9 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp" // lbl_eu_80538338
 #include <math.h>
 #include "kyoshin/cf/chain/CChainImports.hpp"
-#include "kyoshin/cf/CVisionImports.hpp"
+#include "kyoshin/cf/CVision.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
+#include "kyoshin/cf/CSuddenCommu.hpp"
 
 // Offset-typed view of cf::CBattleManager for the chain-start gates (the full
 // class header drags in a conflicting playActorSound declaration chain).
@@ -140,13 +145,13 @@ void ChainTmr_Update_D20C(cf::CChainState* self) {
             self->field_14++;
             if (self->field_14 >= 0x23) self->field_14 = 0;
 
-            s = sin(lbl_eu_80668A90 * self->field_14 / lbl_eu_80668A94);
+            s = sin(3.14f * (f32)self->field_14 / 35.0f);
             src[0] = lbl_eu_80656C40[0] * s;
-            prodT[0] = lbl_eu_80656C64[0] * (lbl_eu_80668A98 - s);
-            prodT[2] = lbl_eu_80656C64[2] * (lbl_eu_80668A98 - s);
+            prodT[0] = lbl_eu_80656C64[0] * (1.0f - s);
+            prodT[2] = lbl_eu_80656C64[2] * (1.0f - s);
             src[2] = lbl_eu_80656C40[2] * s;
             dst[2] = src[2] + prodT[2];
-            prodT[1] = lbl_eu_80656C64[1] * (lbl_eu_80668A98 - s);
+            prodT[1] = lbl_eu_80656C64[1] * (1.0f - s);
             src[1] = lbl_eu_80656C40[1] * s;
             dst[0] = src[0] + prodT[0];
             dst[1] = src[1] + prodT[1];
@@ -154,8 +159,8 @@ void ChainTmr_Update_D20C(cf::CChainState* self) {
         }
 
         tickChainTimer(&self->field_84);
-        if (self->field_4 != 0) self->field_4->v367(lbl_eu_80668A98);
-        if (self->field_8 != 0) self->field_8->v367(lbl_eu_80668A98);
+        if (self->field_4 != 0) self->field_4->v367(1.0f);
+        if (self->field_8 != 0) self->field_8->v367(1.0f);
     }
 }
 
@@ -172,84 +177,84 @@ void ChainTmr_CheckArts_D478(cf::CChainState* self, cf::CChainBattleObj* obj) {
     if (artsUnusable) {
         f32 sum = action->field_5C + action->field_60;
         int count;
-        if (sum < lbl_eu_80668AA8) {
+        if (sum < 0.0f) {
             count = 0;
         } else if ((action->field_74 & 0x80) != 0) {
             count = 0;
         } else {
-            f64 bias = (sum > lbl_eu_80668AA8) ? lbl_eu_80668AB0 : lbl_eu_80668AB8;
+            f64 bias = (sum > 0.0f) ? 0.5 : -0.5;
             count = (int)(sum + bias);
         }
         f32 rate;
         if (obj->v162() != 0) {
-            rate = lbl_eu_80668AC0 * (f32)IdTable_SumValues((void*)obj->v162(), 0x4c);
+            rate = 0.01f * (f32)IdTable_SumValues((CUnkObj8025FB10*)(void*)obj->v162(), 0x4c);
         } else {
-            rate = lbl_eu_80668AA8;
+            rate = 0.0f;
         }
         f32 delta = (f32)count * rate;
         action->field_5C += delta;
 
         f32 rate2;
         if (obj->v162() != 0) {
-            rate2 = lbl_eu_80668AC0 * (f32)IdTable_SumValues((void*)obj->v162(), 0x4c);
+            rate2 = 0.01f * (f32)IdTable_SumValues((CUnkObj8025FB10*)(void*)obj->v162(), 0x4c);
         } else {
-            rate2 = lbl_eu_80668AA8;
+            rate2 = 0.0f;
         }
         action->field_58 += rate2;
 
         if (CtrlObjectParam_GetSlotTableBase()[1] == 1) {
             f32 sum2 = action->field_5C + action->field_60;
             int count2;
-            if (sum2 < lbl_eu_80668AA8) {
+            if (sum2 < 0.0f) {
                 count2 = 0;
             } else if ((action->field_74 & 0x80) != 0) {
                 count2 = 0;
             } else {
-                f64 bias2 = (sum2 > lbl_eu_80668AA8) ? lbl_eu_80668AB0 : lbl_eu_80668AB8;
+                f64 bias2 = (sum2 > 0.0f) ? 0.5 : -0.5;
                 count2 = (int)(sum2 + bias2);
             }
             f32 rate3;
             if (obj->v162() != 0) {
-                rate3 = lbl_eu_80668AC0 * (f32)IdTable_SumValues((void*)obj->v162(), 0x4d);
+                rate3 = 0.01f * (f32)IdTable_SumValues((CUnkObj8025FB10*)(void*)obj->v162(), 0x4d);
             } else {
-                rate3 = lbl_eu_80668AA8;
+                rate3 = 0.0f;
             }
             f32 delta2 = (f32)count2 * rate3;
             action->field_5C += delta2;
 
             f32 rate4;
             if (obj->v162() != 0) {
-                rate4 = lbl_eu_80668AC0 * (f32)IdTable_SumValues((void*)obj->v162(), 0x4d);
+                rate4 = 0.01f * (f32)IdTable_SumValues((CUnkObj8025FB10*)(void*)obj->v162(), 0x4d);
             } else {
-                rate4 = lbl_eu_80668AA8;
+                rate4 = 0.0f;
             }
             action->field_58 += rate4;
         }
     } else {
         f32 sum3 = action->field_5C + action->field_60;
         int count3;
-        if (sum3 < lbl_eu_80668AA8) {
+        if (sum3 < 0.0f) {
             count3 = 0;
         } else if ((action->field_74 & 0x80) != 0) {
             count3 = 0;
         } else {
-            f64 bias3 = (sum3 > lbl_eu_80668AA8) ? lbl_eu_80668AB0 : lbl_eu_80668AB8;
+            f64 bias3 = (sum3 > 0.0f) ? 0.5 : -0.5;
             count3 = (int)(sum3 + bias3);
         }
         f32 rate5;
         if (obj->v162() != 0) {
-            rate5 = lbl_eu_80668AC0 * (f32)IdTable_SumValues((void*)obj->v162(), 0x41);
+            rate5 = 0.01f * (f32)IdTable_SumValues((CUnkObj8025FB10*)(void*)obj->v162(), 0x41);
         } else {
-            rate5 = lbl_eu_80668AA8;
+            rate5 = 0.0f;
         }
         f32 delta3 = (f32)count3 * rate5;
         action->field_5C += delta3;
 
         f32 rate6;
         if (obj->v162() != 0) {
-            rate6 = lbl_eu_80668AC0 * (f32)IdTable_SumValues((void*)obj->v162(), 0x41);
+            rate6 = 0.01f * (f32)IdTable_SumValues((CUnkObj8025FB10*)(void*)obj->v162(), 0x41);
         } else {
-            rate6 = lbl_eu_80668AA8;
+            rate6 = 0.0f;
         }
         action->field_58 += rate6;
     }
@@ -317,7 +322,7 @@ void cf::CChainState::Tmr_Advance() {
     case 3:
         this->Tmr_SetActive(0);
         visionSharedStateFlags &= 0xFE;
-        this->field_84.mTimer = lbl_eu_80668A98;
+        this->field_84.mTimer = 1.0f;
         this->field_84.mEnabled = 0;
         this->field_84.mPaused = 1;
         this->field_0 = 0;
@@ -327,7 +332,7 @@ void cf::CChainState::Tmr_Advance() {
 
 // Chain on/off switch for both chain members. Re-registers the vision/voice
 // sub-objects (aiRebootAction/E0 on +0x3380, vtable calls on the embedded
-// +0x3E9C voice), refreshes the wave target / arts music table, and toggles
+// +0x3E9C voice, refreshes the wave target / arts music table, and toggles
 // the arts-select menu.
 void cf::CChainState::Tmr_SetActive(int val) {
     if (this->field_4 != 0) {
@@ -347,7 +352,7 @@ void cf::CChainState::Tmr_SetActive(int val) {
             this->field_10 = this->field_8;
             this->field_14 = 0;
             this->field_8->v042();
-            requestItemLoad(this->field_8, 0x40);
+            requestItemLoad(reinterpret_cast<CfMapItemLoader*>(this->field_8), 0x40);
             dispatchItemLoad(this->field_8, 0x4000);
             this->field_8->mSub8.s06(0xeb);
             aiRebootAction(&this->field_8->mField3380);
@@ -363,7 +368,7 @@ void cf::CChainState::Tmr_SetActive(int val) {
                 (cf::CChainBattleObj*)MapFx_ResolveOwner(findObjectById(actorId));
             f32 distSq;
             if (voice == 0) {
-                distSq = lbl_eu_80668AC4;
+                distSq = 99999.0f;
             } else {
                 // Component copy into a second vector keeps both stack
                 // vectors live so MWCC emits the paired-single square-sum.
@@ -376,12 +381,12 @@ void cf::CChainState::Tmr_SetActive(int val) {
                 d.z = delta.z;
                 distSq = nw4r::math::VEC3LenSq(&d);
             }
-            if (distSq < lbl_eu_80668AC8)
+            if (distSq < 2500.0f)
                 this->field_8->mSub.v18(this->field_C);
             if (this->field_8->field_3F28 != 5)
                 this->field_8->v087();
             else
-                this->field_8->v082(lbl_eu_80668AA8);
+                this->field_8->v082(0.0f);
             if (this->field_8->field_3F60 != 0)
                 this->field_8->field_3F60->field_4EC |= 0x1000;
         } else {
@@ -448,7 +453,7 @@ int ChainTmr_Start_DE44(cf::CChainState* self, cf::CChainBattleObj* p1,
     self->field_C = p3;
     visionSharedStateFlags |= 1;
     startChainTimer(&self->field_84, (p1->field_3F00 >> 1) & 1);
-    self->field_84.mTimer = lbl_eu_80668AA8;
+    self->field_84.mTimer = 0.0f;
     self->field_84.mEnabled = 1;
     self->field_84.mPaused = 1;
     self->Tmr_SetActive(1);

@@ -1,6 +1,7 @@
 #define IWORK_EVENT_INLINE_DTOR
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -34,7 +35,6 @@ extern "C" {
 
 extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
 extern "C" u8 lbl_eu_80538858[];
-extern "C" void CtrlRemote_ResetSlotArrayByIndex(void*);
 extern "C" u8 lbl_eu_8050F7CC[];
 
 extern "C" u32 gSaveLoadOperation;
@@ -68,17 +68,11 @@ extern "C" int getTableValueByPair__Q22cf13CfGameManagerFv(int, int);
 
 // External function declarations
 // AnimRewindFrame declared in code_80135FDC.hpp
-extern const float lbl_eu_80668B68;
-extern const float lbl_eu_80668B6C;
-extern const float lbl_eu_80668B70;
-extern const float lbl_eu_80668B74;
 
-// Forward declarations for functions called before their definitions
 // extern "C" to match retail unmangled reloc names
 extern cf::CfAward award;
 extern u8 gCfAwardRegistration[];
-extern void __register_global_object(void*, void*, void*);
-extern void CtrlRemote_ResetSlotArrayObj(void*);
+extern "C" void* __register_global_object(void*, void*, void*);
 
 // CDeviceFile / MemManager / CSysWin / game system function declarations
 extern u32 gmPauseFlags;
@@ -179,7 +173,7 @@ void CSLCur::update() {
 
     switch (mState) {
     case 0:
-        advanceAnimTransform(mAnimLoop, lbl_eu_80668B68);
+        advanceAnimTransform(mAnimLoop, 1.0f);
         break;
     case 1:
         tickAnim();
@@ -210,7 +204,7 @@ void CSLCur::setPos(const nw4r::math::VEC3* pos) {
 }
 
 void CSLCur::tickAnim() {
-    if (advanceAnimTransform(mAnimPush, lbl_eu_80668B68) != 0) {
+    if (advanceAnimTransform(mAnimPush, 1.0f) != 0) {
         mState = 0;
         bindPane();
     }
@@ -220,7 +214,7 @@ void CSLCur::bindPane() {
     mLayout->UnbindAnimation(mAnimPush);
     mLayout->BindAnimation(mAnimLoop);
     mLayout->SetAnimationEnable(mAnimLoop, true);
-    mAnimLoop->SetFrame(lbl_eu_80668B6C);
+    mAnimLoop->SetFrame(0.0f);
     mLayout->Animate(0);
 }
 
@@ -266,14 +260,14 @@ void CSLSub::setBusy() {
 }
 
 void CSLSub::tickIn() {
-    if (advanceAnimTransform(mAnimTrans, lbl_eu_80668B68) != 0) {
+    if (advanceAnimTransform(mAnimTrans, 1.0f) != 0) {
         mState = 2;
         mIdle = 1;
     }
 }
 
 void CSLSub::tickOut() {
-    if (AnimRewindFrame(mAnimTrans, lbl_eu_80668B68) != 0) {
+    if (AnimRewindFrame(mAnimTrans, 1.0f) != 0) {
         mState = 0;
         mShown = 0;
         mIdle = 1;
@@ -282,7 +276,7 @@ void CSLSub::tickOut() {
 
 void CSLSub::bindPane() {
     mLayout->SetAnimationEnable(mAnimTrans, true);
-    mAnimTrans->SetFrame(lbl_eu_80668B6C);
+    mAnimTrans->SetFrame(0.0f);
     mLayout->Animate(0);
 }
 
@@ -471,9 +465,9 @@ void CSaveLoad::open() {
 
     // Set up float array for scrollbar init
     float vec[3];
-    vec[0] = lbl_eu_80668B70;
-    vec[1] = lbl_eu_80668B74;
-    vec[2] = lbl_eu_80668B6C;
+    vec[0] = 210.0f;
+    vec[1] = 118.0f;
+    vec[2] = 0.0f;
     mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
 
     int val = (int)(u16)gSaveSlotCount;
@@ -793,14 +787,14 @@ u8 CSaveLoad::getHelpKind() {
 }
 
 void CSaveLoad::tickOpenA() {
-    if (advanceAnimTransform(mAnimTransA, lbl_eu_80668B68) != 0) {
+    if (advanceAnimTransform(mAnimTransA, 1.0f) != 0) {
         mField121 = 2;
         enAnimB();
     }
 }
 
 void CSaveLoad::tickOpenB() {
-    if (advanceAnimTransform(mAnimTransB, lbl_eu_80668B68) != 0) {
+    if (advanceAnimTransform(mAnimTransB, 1.0f) != 0) {
         mField121 = 3;
         mCur.mVisible = 1;
         refresh();
@@ -809,14 +803,14 @@ void CSaveLoad::tickOpenB() {
 }
 
 void CSaveLoad::tickCloseB() {
-    if (AnimRewindFrame(mAnimTransB, lbl_eu_80668B68) != 0) {
+    if (AnimRewindFrame(mAnimTransB, 1.0f) != 0) {
         mField121 = 5;
         enAnimA();
     }
 }
 
 void CSaveLoad::tickCloseA() {
-    if (AnimRewindFrame(mAnimTransA, lbl_eu_80668B68) != 0) {
+    if (AnimRewindFrame(mAnimTransA, 1.0f) != 0) {
         mField121 = 0;
         mField123 = 1;
     }
@@ -1494,7 +1488,7 @@ cf::CfAward::~CfAward() {
     mVtbl = (char*)base + 8;
 
     // Call the cleanup function (subobject destructor)
-    CtrlRemote_ResetSlotArrayByIndex(this);
+    CtrlRemote_ResetSlotArrayByIndex((u32)this);
 }
 
 // Count valid entries (0-299) and award achievements based on thresholds.

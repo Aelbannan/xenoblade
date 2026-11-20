@@ -17,10 +17,12 @@
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 
 // CfGameManager gate query (retail 0x8007F91C): use the canonical static
 // member declaration from the owning header, not a TU-local free spelling.
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 #include <nw4r/math/math_types.h>
 
@@ -108,14 +110,14 @@ void* initCamControlInstances() {
     return camControlTable[index];
 }
 
-void camPadPress12(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPressed12(reinterpret_cast<int>(self)); }
-void camPadBit4Reg(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit4(reinterpret_cast<int>(self)); }
-void camPadBit5Reg(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit5(reinterpret_cast<int>(self)); }
-void camPadIsHeld2(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld2(reinterpret_cast<int>(self)); }
-void camPadIsHeld3(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld3(reinterpret_cast<int>(self)); }
-void camPadIsHeld0(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld0(reinterpret_cast<int>(self)); }
-void camPadIsHeld1(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld1(reinterpret_cast<int>(self)); }
-void camPadLngHld11(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->isLongHold11(reinterpret_cast<int>(self)); }
+int camPadPress12(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isPressed12(reinterpret_cast<int>(self)); }
+int camPadBit4Reg(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit4(reinterpret_cast<int>(self)); }
+int camPadBit5Reg(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isPadBit5(reinterpret_cast<int>(self)); }
+int camPadIsHeld2(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld2(reinterpret_cast<int>(self)); }
+int camPadIsHeld3(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld3(reinterpret_cast<int>(self)); }
+int camPadIsHeld0(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld0(reinterpret_cast<int>(self)); }
+int camPadIsHeld1(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isHeld1(reinterpret_cast<int>(self)); }
+int camPadLngHld11(void* self) { return static_cast<cf::ICamControl*>(initCamControlInstances())->isLongHold11(reinterpret_cast<int>(self)); }
 
 
 
@@ -217,7 +219,7 @@ void tboxState0Tick(UnkCode8027513C* self) {
                     ((CfObjectEffB0*)eff)->field_0xB0 = ptr;
 
                     self->field_0x74 = eff;
-                    bindPartnerO_(eff, self->field_0x14, 0);
+                    bindPartnerO_((cf::CfObjectEff*)eff, (u8*)self->field_0x14, (u8*)0);
 
                     cf::CfObjectMove* obj = self->field_0x14;
                     // +0xE0 getter returns +0x60 in f1; +0xDC setter stores it into eff+0x60.
@@ -275,7 +277,7 @@ void tboxState1Tick(UnkCode8027513C* self) {
     ((CfObjectEffB0*)eff)->field_0xB0 = ptr;
     
     self->field_0x74 = eff;
-    bindPartnerO_(eff, self->field_0x14, 0);
+    bindPartnerO_((cf::CfObjectEff*)eff, (u8*)self->field_0x14, (u8*)0);
     
     obj = self->field_0x14;
     // +0xE0 getter returns +0x60 in f1; +0xDC setter stores it into eff+0x60.

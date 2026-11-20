@@ -310,7 +310,7 @@ extern "C" u32 ColiProc_RunCollideScan(CColiWork* self, nw4r::math::VEC3* pVec,
     }
 
     typedef int (*F2AA4)(CColiWork*, CColiLinkObj*);
-    if (((F2AA4)ColiProc_ProcessSegments)(self, pLink) != 0) {
+    if (((F2AA4)ColiProc_ProcessSegments)(self, pLink) != 0) {  // DEBT(callcast): C symbol; canonical decl uses CColiObjDispatch*, caller passes local CColiLinkObj* view
         nw4r::math::VEC3* pG =
             &g_coliResCall.acc;
         nw4r::math::VEC3Add(pVec, pVec, pG);

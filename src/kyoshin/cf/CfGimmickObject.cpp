@@ -28,7 +28,7 @@ const Sdata2_GimmickObject sdata2_GimmickObject = {
 #define lbl_eu_806681BC (sdata2_GimmickObject.fBC)
 #define lbl_eu_806681C0 (sdata2_GimmickObject.dC0)
 #define lbl_eu_806681C8 (sdata2_GimmickObject.fC8a)
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"

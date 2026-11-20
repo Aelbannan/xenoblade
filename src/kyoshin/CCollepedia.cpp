@@ -2,7 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 class UnkClass_8045F564;
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
@@ -16,6 +18,8 @@ extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 #include "kyoshin/CTagProcessor.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/cf/CItemImpl.hpp"
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
 // (see the "C-linkage imports" section at the end of that header).
@@ -29,7 +33,6 @@ extern "C" void clpPrevPageIx(CLPCatalog*);
 extern "C" u8 clpGetPageCat(CLPCatalog*);
 extern "C" u32 func_80254144(CLPCatalog*);
 extern "C" void clpRefreshPage(CCollepedia*);
-extern "C" void clpSetPageVis();
 extern "C" void clpSetSelTxt(CCollepedia*);
 extern "C" void clpRefreshCur(CCollepedia*);
 extern "C" void clpNextCatPg(CCollepedia*);
@@ -400,8 +403,8 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
             break;
         }
         for (u16 j = 1; j <= (u16)numA; j++) {
-            if ((u8)BdatGetU8Direct((const void*)tblA, &lbl_eu_8050C6E8[0x16b], j) == cat &&
-                BdatGetU8Direct((const void*)tblA, &lbl_eu_8050C6E8[0x171], j) == 0 &&
+            if ((u8)BdatGetU8Direct((const void*)tblA, "mapID", j) == cat &&
+                BdatGetU8Direct((const void*)tblA, "category", j) == 0 &&
                 CtrlRemote_TouchBitByArg(j + 0x20c8) != 0) {
                 u8 cnt = self_->mCount;
                 self_->mPageTable.mPages[cnt].mCategory = cat;
@@ -419,8 +422,8 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
             CLPPage& pg = self_->mPageTable.mPages[j];
             u8 keyCur = pg.mCategory;
             u8 keyNext = self_->mPageTable.mPages[j + 1].mCategory;
-            if ((u8)BdatGetU8Direct((const void*)tblB, &s[0x17a], keyCur) >
-                (u8)BdatGetU8Direct((const void*)tblB, &s[0x17a], keyNext)) {
+            if ((u8)BdatGetU8Direct((const void*)tblB, "index", keyCur) >
+                (u8)BdatGetU8Direct((const void*)tblB, "index", keyNext)) {
                 pg.mCategory = keyNext;
                 self_->mPageTable.mPages[j + 1].mCategory = keyCur;
                 swapped = 1;
@@ -460,10 +463,10 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
         for (u16 c = 0; c < n; c++) {
             u16 itemId = ids[c];
             u16 kind = BdatGetItemId(itemId);
-            if ((u8)BdatGetU8Direct((const void*)lbl_eu_80664104, &lbl_eu_8050C6E8[0x16b], kind) != cat) {
+            if ((u8)BdatGetU8Direct((const void*)lbl_eu_80664104, "mapID", kind) != cat) {
                 continue;
             }
-            u8 sub = (u8)BdatGetU8Direct((const void*)lbl_eu_80664104, &lbl_eu_8050C6E8[0x180], kind);
+            u8 sub = (u8)BdatGetU8Direct((const void*)lbl_eu_80664104, "type", kind);
             if (row == 0) {
                 grp.mRows[0].mSubCategory = sub;
                 clpFillEntry(self_, g, row, 0, itemId);
@@ -491,34 +494,33 @@ extern "C" bool clpIsClaimabl(CLPCatalog* this_, u32 arg1, u32 arg2) {
 }
 
 // us-80256178
-// Handle item selection in the collepedia grid.
-// The selected CLPCell is cached once and accessed through real fields.
-// Retail rematerializes the page index per access, so typed addressing adds
-// base increments here (see MWCC_CASES DQ3).
+// Handle item selection in the collepedia grid. Every access goes through
+// the typed page-table / row / cell indexing (retail rematerializes the page
+// index per access rather than caching a cell pointer).
 // Grant path falls through first (if remaining<=0), consume call branched to.
-// Raw-offset spelling was retained here previously but was not faithful;
-// no matched function depended on it, so the typed form is kept.
+// The cached-cell spelling was not faithful; it also wrote mSortKey instead
+// of the cell's unlock-state byte, so the typed form is used here.
 extern "C" void clpSelectItem(CLPCatalog* self_, u32 row, u32 col) {
     if (row >= 6) return;
     if (col >= 5) return;
 
-    CLPCell* cell = &self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[row].mCells[col];
+    CtrlObjectParam_SetStateBitFlag(
+        self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[row].mCells[col].mKind, 1);
 
-    CtrlObjectParam_SetStateBitFlag(cell->mKind, 1);
-
-    cell->mSortKey = 3;
+    self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[row].mCells[col].mState = 3;
 
     u8 count = clpGetCellCnt(self_, row, col);
     s32 remaining = count - 1;
 
-    u16 itemId = cell->mItemId;
+    u16 itemId =
+        self_->mPageTable.mPages[(s8)self_->mCurrentPage].mRows[row].mCells[col].mItemId;
     u32 res = CItem_findRecByFamily(itemId);
 
     // Grant path falls through first in retail; consume call is branched to
     if (remaining <= 0) {
-        // Grant the item via its impl instance (virtual method at slot 0x10)
-        void* itemInst = CItem_initItemImplInstances((CItemData*)res);
-        ((void (*)(void*, u32))(*(void***)itemInst)[4])(itemInst, res);
+        // Grant the item via its impl instance (virtual slot 0x10 = vf10)
+        CItemImpl* itemInst = CItem_initItemImplInstances((CItemData*)res);
+        itemInst->vf10((CItemData*)res);
     } else {
         CItemData_initFromFamily((void*)res, itemId, remaining);
     }
@@ -605,7 +607,7 @@ extern "C" char* clpGetEntryStr(CLPCatalog* self_, u32 arg1, u32 arg2) {
     if (val == 0) return nullptr;
     u8 b = cell->mState;
     if (b == 1) return nullptr;
-    return (char*)BdatGetPtrDirect(lbl_eu_80664104, &lbl_eu_8050C6E8[0xAE], val);
+    return (char*)BdatGetPtrDirect(lbl_eu_80664104, "name", val);
 }
 
 // us-8025658c
@@ -623,7 +625,7 @@ extern "C" char* clpGetItemName(CLPCatalog* self_, u32 arg2, u32 arg3) {
 
     u16 check = cell->mKind;
     if (CtrlObjectParam_GetStateBitFlag(check) != 0) {
-        return (char*)BdatGetPtrDirect(gpClpItemMsgTable, &lbl_eu_8050C6E8[0x18f], val);
+        return (char*)BdatGetPtrDirect(gpClpItemMsgTable, "comment", val);
     }
     return NULL;
 }
@@ -660,9 +662,9 @@ extern "C" void clpFillEntry(CLPCatalog* self_, int a, int b, int c, u16 itemId)
     cell->mKind = kind;
 
     cell->mSortKey =
-        BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x197], (int)itemId);
+        BdatGetU16Direct((const void*)lbl_eu_806640EC, "icon", (int)itemId);
     cell->mNameId =
-        BdatGetU16Direct((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x18f], (int)itemId);
+        BdatGetU16Direct((const void*)lbl_eu_806640EC, "comment", (int)itemId);
 
     // Unlock state: 0=kindless, 3=owned, 2=new/claimable, 1=locked
     if (kind == 0) {
@@ -1288,8 +1290,8 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     playUISound(3);
 }
 
-void clpCanClaim(CCollepedia* self) {
-    clpIsClaimabl(&self->mCatalog, self->field_D9, self->field_D8);
+int clpCanClaim(CCollepedia* self) {
+    return clpIsClaimabl(&self->mCatalog, self->field_D9, self->field_D8);
 }
 
 extern "C" u8 clpIsOverlay(CCollepedia* self) {
@@ -1372,14 +1374,14 @@ void clpEnterDetail(CCollepedia* this_) {
 
     this_->field_49 = 9;
 
-    char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x12);
+    char* str = (char*)BdatTouchStringCell("MNU_collect", "name", 0x12);
     reinterpret_cast<CSysWin*>(&this_->field_9C)->setKindContent(reinterpret_cast<char*>(str), 0);
     reinterpret_cast<CSysWin*>(&this_->field_9C)->applyKind(1);
     reinterpret_cast<CSysWin*>(&this_->field_9C)->openPhase1();
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    MenuSnd_GetMasterVol_95EC();
-    CTaskGame_openStream(0, &lbl_eu_8050C6E8[0x1E9], handle, 2, 1, 0);
+    CTaskGame_openStream(0, "snd/adx/j01.adx", (u32)handle, 2, 1, 0,
+                         MenuSnd_GetMasterVol_95EC());
 }
 
 // us-80257cf0
@@ -1395,7 +1397,7 @@ extern "C" void collepediaCreateItemMulti(CCollepedia* this_) {
     s32 d9 = (s8)this_->field_D9;
     u16 entry = lbl_eu_8050C6A0[idx & 0xFF];
     u32 count = (u32)entry + 1;
-    u32 result = BdatGetU16Direct(gpClpCollectMsgTable, &lbl_eu_8050C6E8[0x1f9],
+    u32 result = BdatGetU16Direct(gpClpCollectMsgTable, "itemID",
         (u32)(u16)count + d9);
 
     u32 zero = 0;
@@ -1413,7 +1415,7 @@ void clpOpenComplete(CCollepedia* this_) {
 
     this_->field_49 = 0xD;
 
-    char* str = (char*)BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x13);
+    char* str = (char*)BdatTouchStringCell("MNU_collect", "name", 0x13);
     reinterpret_cast<CSysWin*>(&this_->field_9C)->setKindContent(reinterpret_cast<char*>(str), 0);
     reinterpret_cast<CSysWin*>(&this_->field_9C)->applyKind(1);
     reinterpret_cast<CSysWin*>(&this_->field_9C)->openPhase1();
@@ -1422,8 +1424,8 @@ void clpOpenComplete(CCollepedia* this_) {
     incrementEventCounter(0x86);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    MenuSnd_GetMasterVol_95EC();
-    CTaskGame_openStream(0, &lbl_eu_8050C6E8[0x200], handle, 2, 1, 0);
+    CTaskGame_openStream(0, "snd/adx/j02.adx", (u32)handle, 2, 1, 0,
+                         MenuSnd_GetMasterVol_95EC());
 }
 
 // us-80257e64
@@ -1446,7 +1448,7 @@ void clpTryShow(CCollepedia* this_) {
         gpClpItemMsgTable == nullptr || gpClpCollectMsgTable == nullptr) {
         return;
     }
-    clpSetPageVis();
+    clpSetPageVis(this_);
     clpRefreshPage(this_);
     clpSetSelTxt(this_);
     this_->field_50 = 1;
@@ -1534,7 +1536,7 @@ static double clpConvS32ToF64(s32 x) {
     // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
     u.w[1] = (u32)x ^ 0x80000000;
     u.w[0] = 0x43300000;
-    return u.d - lbl_eu_80668818;
+    return (double)x;
 }
 
 // us-802581d4
@@ -1544,41 +1546,41 @@ static double clpConvS32ToF64(s32 x) {
 extern "C" void clpRefreshPage(CCollepedia* this_) {
     char buf[0x18];
     u8 idx = (u8)(this_->mCatalog.mCurrentPage + 1); // retail reads the index byte unsigned
-    setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
+    setLayoutTextBoxNumber(this_->field_38, "txt_pg00", idx);
 
     // Move the cursor pane right by one slot width from the saved position.
     // The int->double step references the shared 2^52 pool entry explicitly.
     nw4r::lyt::Pane* cursorPane =
-        this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x28d], true);
+        this_->field_38->GetRootPane()->FindPaneByName("pic_pghole_on", true);
     nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)&this_->field_DC[0];
     pos.x = 16.0f * clpConvS32ToF64((s32)idx - 1) + pos.x;
     copyVEC3((float*)((u8*)cursorPane + 0x2C), &pos);
 
-    LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x29b],
+    LayoutSetTextBoxFmtValue(this_->field_38, "txt_map",
         clpGetPageNam(&this_->mCatalog), 0);
 
     // "collected / total" label: scale the completion ratio to slot count.
     // Call first, constant load second - matches retail schedule.
     float ratio = clpGetPagePrg(&this_->mCatalog);
     u8 slot = (u8)(100.0f * ratio); // fctiwz truncation
-    char* label = BdatTouchStringCell(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0xB);
-    sprintf(buf, &lbl_eu_8050C6E8[0x2a3], slot, label);
-    LayoutSetTextBoxText(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
+    char* label = BdatTouchStringCell("MNU_collect", "name", 0xB);
+    sprintf(buf, "%d%s", slot, label);
+    LayoutSetTextBoxText(this_->field_38, "txt_cmp", buf, 0);
 
     u32 count = func_80254144(&this_->mCatalog);
     // Exactly six rows exist per page; visibility still follows the count.
     for (u8 i = 0; i < 6; i++) {
         // Retail computes i+1 once per iteration into a callee-saved reg.
         u8 num = (u8)(i + 1);
-        sprintf(buf, &lbl_eu_8050C6E8[0x2b0], num);
+        sprintf(buf, "txt_ct%02d", num);
         LayoutSetTextBoxFmtValue(this_->field_38, buf, clpGetRowName(&this_->mCatalog, i), 0);
 
-        sprintf(buf, &lbl_eu_8050C6E8[0x2bb], num);
+        sprintf(buf, "nul_icon%02d", num);
         nw4r::lyt::Pane* namePane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
         setPaneVisible(namePane, i < (u8)count);
 
-        sprintf(buf, &lbl_eu_8050C6E8[0x2c8], num);
+        sprintf(buf, "pic_cmpbs%02d", num);
         nw4r::lyt::Pane* numPane =
             this_->field_38->GetRootPane()->FindPaneByName(buf, true);
         setPaneVisible(numPane, clpGetRowDone(&this_->mCatalog, i));
@@ -1600,7 +1602,7 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
     // Final pane visibility follows the page's completion flag.
     bool done = clpIsPageDone(&this_->mCatalog);
     nw4r::lyt::Pane* markPane = this_->field_38->GetRootPane()->FindPaneByName(
-        &lbl_eu_8050C6E8[0x2d6], true);
+        "nul_compall", true);
     setPaneVisible(markPane, done);
 }
 // Set two pane names on the layout using the current sub-array entry
@@ -1650,7 +1652,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
             reinterpret_cast<UnkClass_8045F564*>(reinterpret_cast<u8*>(this) + 0x04);
         int mem2 = (int)getHandleMEM2__Q23mtl10MemManagerFv();
         memRegion->createRegion(mem2, 0x8000,
-                                &lbl_eu_8050C6E8[0x30f], 0);
+                                "CCollepedia", 0);
 
         Class_8045F858 regionGuard(memRegion);
 
@@ -1667,12 +1669,12 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         field_4C = (u32)tagMem;
 
         field_30 = CLibLayout::createArcResourceAccessor();
-        field_30->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
+        field_30->Attach(fileData, "arc");
 
-        buildLayout(&field_38, field_30, &lbl_eu_8050C6E8[0x31f]);
-        bindLayoutAnimTransform(field_38, &field_3C, field_30, &lbl_eu_8050C6E8[0x335]);
-        bindLayoutAnimTransform(field_38, &field_40, field_30, &lbl_eu_8050C6E8[0x34e]);
-        bindLayoutAnimTransform(field_38, &field_44, field_30, &lbl_eu_8050C6E8[0x36c]);
+        buildLayout(&field_38, field_30, "mf55_sys01_cl00.brlyt");
+        bindLayoutAnimTransform(field_38, &field_3C, field_30, "mf55_sys01_cl00_in.brlan");
+        bindLayoutAnimTransform(field_38, &field_40, field_30, "mf55_sys01_cl00_in_info.brlan");
+        bindLayoutAnimTransform(field_38, &field_44, field_30, "mf55_sys01_cl00_compall.brlan");
 
         // Bind the device font into every text pane via the root pane.
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
@@ -1680,9 +1682,9 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         ApplyFontToTxtPanes(field_38->GetRootPane(), (const nw4r::ut::Font*)fontHandle);
 
         char* tagStr = (char*)getPackedFont();
-        setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x284], (u32)tagStr);
-        setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x306], (u32)tagStr);
-        setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x2a8], (u32)tagStr);
+        setLayoutTextBoxFont(field_38, "txt_pg00", (u32)tagStr);
+        setLayoutTextBoxFont(field_38, "txt_pg01", (u32)tagStr);
+        setLayoutTextBoxFont(field_38, "txt_cmp", (u32)tagStr);
 
         field_38->SetAnimationEnable(field_40, false);
         field_38->SetAnimationEnable(field_44, false);
@@ -1690,12 +1692,12 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         field_38->Animate(0);
 
         char* titleText =
-            BdatTouchStringCell(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 0xa);
-        LayoutSetTextBoxFmtValue(field_38, &lbl_eu_8050C6E8[0x38a], titleText, 0);
+            BdatTouchStringCell("MNU_collect", "name", 0xa);
+        LayoutSetTextBoxFmtValue(field_38, "txt_cmptit", titleText, 0);
 
         // Install our tag processor on the detail text-box pane.
         nw4r::lyt::Pane* textBox =
-            field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x2eb], true);
+            field_38->GetRootPane()->FindPaneByName("txt_comment", true);
         if (textBox != NULL) {
             static_cast<nw4r::lyt::TextBox*>(textBox)->SetTagProcessor(
                 reinterpret_cast<nw4r::ut::WideTagProcessor*>(tagMem));
@@ -1750,7 +1752,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
             reinterpret_cast<UnkClass_8045F564*>(reinterpret_cast<u8*>(this) + 0x14);
         int mem2 = (int)getHandleMEM2__Q23mtl10MemManagerFv();
         memRegion->createRegion(mem2, 0x100,
-                                &lbl_eu_8050C6E8[0x395], 0);
+                                "CCollepediaTex", 0);
 
         Class_8045F858 regionGuard(memRegion);
 
@@ -1758,7 +1760,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
 
         field_34 = CLibLayout::createArcResourceAccessor();
-        field_34->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
+        field_34->Attach(fileData, "arc");
 
         clpTryShow(this);
         field_28 = nullptr;
@@ -1772,9 +1774,9 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         // Resolve the two message files used by the item/quest name lookups.
         Bdat_GetTable_AA34();
-        gpClpItemMsgTable = getFP(&lbl_eu_8050C6E8[0x3a4]);
+        gpClpItemMsgTable = getFP("MNU_item_mes_b");
         Bdat_GetTable_AA34();
-        gpClpCollectMsgTable = (char*)getFP(&lbl_eu_8050C6E8[0x3b3]);
+        gpClpCollectMsgTable = (char*)getFP("MNU_col");
 
         clpTryShow(this);
         field_2C = nullptr;

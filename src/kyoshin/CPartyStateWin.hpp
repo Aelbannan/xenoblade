@@ -175,3 +175,8 @@ public:
     u8 _pad6BE6[2];                        // 0x6BE6..0x6BE8
     f32 field_6BE8;                        // 0x6BE8 (ctor init)
 };
+
+void PartyStateWin_TeardownWindow(CPartyStateWin* self);
+int PartyStateWin_GetLatchFlag(CPartyStateWin* self);
+int PartyStateWin_QueryMenuClose(CPartyStateWin* self);
+void PartyStateWin_ThunkDtor(void* self);

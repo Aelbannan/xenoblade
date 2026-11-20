@@ -12,7 +12,8 @@
 #include "kyoshin/CTaskGameImports.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "kyoshin/CUICfManager.hpp"
-#include "monolib/work/CProcess.hpp"
+#include "kyoshin/menu/CMenuTutorial.hpp"
+
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/scn/CScn.hpp"
@@ -49,10 +50,10 @@ void QstCnt_FinishAnim(CMenuQstCnt* self);
 
 // --- OOL base/subobject + helper/data imports are declared in CMenuQstCnt.hpp ---
 
-CMenuQstCnt* lbl_eu_80664720;
+CMenuQstCnt* sInstance__11CMenuQstCnt;  // name-guess: only unnamed 8-byte quest sbss slot; neighbours use sInstance__<class>
 
-// (lbl_eu_80664720 != 0) - retail lwz sda21; subic; subfe
-extern "C" int QstCnt_HasInstance_6B94() { return lbl_eu_80664720 != 0; }
+// (sInstance__11CMenuQstCnt != 0) - retail lwz sda21; subic; subfe
+extern "C" int QstCnt_HasInstance_6B94() { return sInstance__11CMenuQstCnt != 0; }
 
 
 // ---------------------------------------------------------------------------
@@ -160,7 +161,7 @@ void CMenuQstCnt::Term() {
         mLayout = 0;
     }
     mMemRegion.deleteRegion();
-    lbl_eu_80664720 = 0;
+    sInstance__11CMenuQstCnt = 0;
 }
 
 void CMenuQstCnt::Move() {
@@ -183,8 +184,8 @@ void CMenuQstCnt::Move() {
         // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
         // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
         f32 camDist = *(f32*)((u8*)cam + 0xC);
-        f32 result = lbl_eu_8066856C - camDist;
-        if (result < lbl_eu_8066856C) return;
+        f32 result = 1.0f - camDist;
+        if (result < 1.0f) return;
     }
     if (isQuestLogMenuActive()) return;
     if (PTNotice_IsActive_3C10()) return;
@@ -220,8 +221,8 @@ void CMenuQstCnt::cbRenderBefore() {
     {
         CTaskGameCamView* cam = (CTaskGameCamView*)Scn_QueryUnk80State(gmScene);
         f32 camDist = cam->field_C;
-        f32 result = lbl_eu_8066856C - camDist;
-        if (result < lbl_eu_8066856C) return;
+        f32 result = 1.0f - camDist;
+        if (result < 1.0f) return;
     }
     if (PTNotice_IsActive_3C10()) return;
     if (MenuTutorialIsCreated()) return;
@@ -238,7 +239,7 @@ void CMenuQstCnt::cbRenderBefore() {
 // active, only sync the new selection into it (returning 0); otherwise
 // allocate + construct + register a fresh menu (returning the object).
 CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, unsigned char c, unsigned char d, unsigned char e) {
-    CMenuQstCnt* g = lbl_eu_80664720;
+    CMenuQstCnt* g = sInstance__11CMenuQstCnt;
     if (g != 0 && g->mField64 == 0) {
         int changed = 0;
         if (g->mSelEntry.f0 == a) {
@@ -249,16 +250,16 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, uns
                 switch (g->mState8C) {
                 case 0:
                     g->mSelEntry.f4 = c;
-                    if (lbl_eu_80664720->mField19C) lbl_eu_80664720->RefreshDisplay();
+                    if (sInstance__11CMenuQstCnt->mField19C) sInstance__11CMenuQstCnt->RefreshDisplay();
                     break;
                 case 1:
                     g->mSelEntry.f4 = c;
-                    lbl_eu_80664720->RefreshDisplay();
+                    sInstance__11CMenuQstCnt->RefreshDisplay();
                     break;
                 case 2:
                     g->mSelEntry.f4 = c;
-                    lbl_eu_80664720->mValue90 = lbl_eu_80668568;
-                    lbl_eu_80664720->RefreshDisplay();
+                    sInstance__11CMenuQstCnt->mValue90 = 0.0f;
+                    sInstance__11CMenuQstCnt->RefreshDisplay();
                     break;
                 default:
                     changed = 1;
@@ -270,8 +271,8 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, uns
         }
         if (changed) {
             for (u8 i = 0; i < 0x20; i++) {
-                if (lbl_eu_80664720->mEntries[i].f0 == 0) {
-                    lbl_eu_80664720->mEntries[i] = QstEntry(a, b, c, d, e);
+                if (sInstance__11CMenuQstCnt->mEntries[i].f0 == 0) {
+                    sInstance__11CMenuQstCnt->mEntries[i] = QstEntry(a, b, c, d, e);
                     break;
                 }
             }
@@ -279,15 +280,15 @@ CMenuQstCnt* QstCnt_GetOrCreate(CProcess* parent, CScn* scene, u16 a, u16 b, uns
         return 0;
     }
     CMenuQstCnt* obj = new (CWorkThreadSystem::getWorkMem()) CMenuQstCnt(scene, a, b, c, d, e);
-    lbl_eu_80664720 = obj;
+    sInstance__11CMenuQstCnt = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
-    return lbl_eu_80664720;
+    return sInstance__11CMenuQstCnt;
 }
 
 
 void invalidateQstFlag() {
-    if (lbl_eu_80664720 != 0) {
-        lbl_eu_80664720->mField64 = 1;
+    if (sInstance__11CMenuQstCnt != 0) {
+        sInstance__11CMenuQstCnt->mField64 = 1;
     }
 }
 
@@ -322,12 +323,12 @@ void QstCnt_TickToOpened_6C5C(QstMenuData* self) {
 // displayed quest info.
 // Retail's prologue is -O4,s shaped (_savegpr_29 at 3 saved regs, elf-vector frame).
 void QstCnt_FinishAnim(CMenuQstCnt* self) {
-    if (AnimRewindFrame(self->mAnim88, lbl_eu_8066856C) == 0) return;
+    if (AnimRewindFrame(self->mAnim88, 1.0f) == 0) return;
     if (self->mEntries[0].f0 == 0) {
         self->mField64 = 1;
         return;
     }
-    self->mValue90 = lbl_eu_80668568;
+    self->mValue90 = 0.0f;
     self->mState8C = 0;
     self->mSelEntry = QstEntry(self->mEntries[0]);
     self->mEntries[0] = QstEntry(0, 0, 0, 0, 0);

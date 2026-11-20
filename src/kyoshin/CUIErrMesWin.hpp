@@ -149,6 +149,7 @@ struct CErrMesOwner {
     u32 field_0x3F10;           // 0x3F10 - comparison word
 };
 
+
 // CfObjectMove-like view (MapFx_ResolveOwner result / error-message owner): the
 // embedded CObjectParam sub-object sits at +0x3E9C and its +0x4C virtual
 // (CObjectParam_getSelfObjectId) returns the actor/action id fed to
@@ -247,7 +248,6 @@ extern "C" {
 extern "C" int CfRes_getD80Flag();
 void* Scn_FindCamItem(void* scene, int index);
 void* MapFx_ResolveOwner(void* source);
-int HpVoice_MapSubState(void* handle);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__7CSysWinFUc(void* syswin, int arg);
 void* CCharVoiceMan_DispatchById(int size, int align);

@@ -1,4 +1,5 @@
 #include "kyoshin/help/CHelp_LandMark.hpp"
+#include "kyoshin/cf/CtrlRemoteApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
 
@@ -45,7 +46,7 @@ extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkF
         if (self != nullptr) {
             subobj = reinterpret_cast<u8*>(reinterpret_cast<u32>(subobj) + 0xc);
         }
-        CtrlRemote_ResetSlotArrayByIndex(subobj);
+        CtrlRemote_ResetSlotArrayByIndex((u32)subobj);
 
         if (deleteFlag > 0) {
             operator delete(self);

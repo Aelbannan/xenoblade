@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 #include <nw4r/math/math_triangular.h>
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/cf/object/CfObject.hpp"
@@ -792,21 +793,15 @@ extern const f32 lbl_eu_804FB9C8[];
 // defined in CtrlMoveBase.cpp; CtrlMoveEne_TickMoveControl / CtrlMoveEne_CheckKeepMoving in this TU. The
 // extern "C" keeps the call-site relocs at the unmangled retail names.
 extern "C" long __ptmf_test(void* ptmf);
-extern "C" void moveBaseSyncVel(cf::CtrlMoveEne* self);
 extern "C" void CtrlMoveEne_TickMoveControl(cf::CtrlMoveEne* self);
 extern "C" int CtrlMoveEne_CheckKeepMoving(cf::CtrlMoveEne* self);
-// Defined in CtrlMoveBase.cpp (maskMoveChildFlags) and CtrlAct.cpp / CtrlMoveBase
-// (ctrlActClearState30 / ctrlActUpdateData70); called by CtrlMoveEne_ResetMoveState on the move-data
-// block / controller.
-extern "C" void maskMoveChildFlags(cf::CtrlMoveEne* self);
-extern "C" void ctrlActClearState30(cf::CCtrlMoveData* data);
-extern "C" void ctrlActUpdateData70(cf::CCtrlMoveData* data);
+// Defined in CtrlMoveBase.cpp (maskMoveChildFlags); called by
+// CtrlMoveEne_ResetMoveState on the move-data block / controller. The
+// ctrlAct* helpers are declared in the owning kyoshin/cf/CtrlAct.hpp.
 // Per-frame move helpers (CtrlMoveBase.cpp / CtrlMoveNpc.cpp): moveBaseUpdate
 // computes the approach direction, setMoveFacing commits a velocity.
 extern "C" int moveBaseUpdate(cf::CtrlMoveEne* self, ml::CVec3* out,
                              const ml::CVec3* src, int flagA, int flagB);
-extern "C" void setMoveFacing(cf::CtrlMoveEne* self, const ml::CVec3* vec,
-                              f32 f);
 extern "C" void moveBaseChase(cf::CtrlMoveEne* self, ml::CVec3* out,
                               const ml::CVec3* src);
 // Circular gimmick-object list accessor (CfGimmick.cpp) and battle-event
@@ -834,7 +829,6 @@ extern "C" void* ScnRes_GetEntryPtr_E50C(u32 index);
 extern "C" void* ScnRes_GetEntryHead2_E520(int index);
 extern "C" int ScnRes_EntryFlagThunk_E5A4(int a, int b);
 // CtrlMoveBase.cpp helper CtrlMoveEne_ProbeApproachPoint re-probes with (retail C-ABI name).
-extern "C" int moveBaseQuery(cf::CtrlMoveEne* self, ml::CVec3* pos);
 // In-unit approach probe (retail CtrlMoveEne_ProbeApproachPoint): extern "C" keeps the
 // call-site relocs in CtrlMoveEne_UpdateFleeWander / CtrlMoveEne_UpdatePursuit at the unmangled name.
 extern "C" int CtrlMoveEne_ProbeApproachPoint(cf::CtrlMoveEne* self, ml::CVec3* out,
@@ -878,7 +872,7 @@ extern "C" int CPartsChange_GetEnemySlotAt(void* self, int index);
 // extern "C" duplicate here collides when those headers are visible.
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 #include "kyoshin/code_801F3BE0.hpp"
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 extern "C" void unregisterBattleActor(void* self, void* obj);
 // CtrlMoveEne_UpdateBattleAI call site: game-flag query (C++ linkage mangles to the retail
 // isGlobalCamFlagSet__Fi).
@@ -972,10 +966,8 @@ extern const u8 lbl_eu_805279FC[];
 // site. maskMoveBaseFlags / writeMoveSlotFloat are defined in
 // CtrlMoveBase.cpp; setSnapFlags in CActParamAnim.cpp; getEneBdatColumn in
 // CfObjectEne.cpp; CtrlMoveEne_ResetMoveState / CtrlMoveEne_CheckActorState in this TU.
-extern "C" void maskMoveBaseFlags(cf::CtrlMoveEne* self);
 extern "C" void setSnapFlags(void* self, u32 a, u32 b, f32 value);
 extern "C" void* setAnimPosVec(void* out, const ml::CVec3* src);
-extern "C" void writeMoveSlotFloat(void* obj, f32 value);
 extern "C" void CtrlMoveEne_ResetMoveState(cf::CtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
 extern "C" void CtrlMoveEne_CheckActorState(cf::CtrlMoveEne* self, void* obj, int arg2, u32 arg3);
 extern "C" void CtrlMoveEne_TrackMoveTarget(cf::CtrlMoveEne* self, ml::CVec3* out, f32 f1);

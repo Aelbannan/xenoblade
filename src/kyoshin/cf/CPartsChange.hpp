@@ -266,3 +266,7 @@ public:
 };
 
 } // namespace cf
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+void CPartsChange_SetLoadFlag(int arg);
+void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);

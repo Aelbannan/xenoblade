@@ -4,10 +4,12 @@
 // pluginBtlRegist.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/cf/IFactoryEvent.hpp"
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 
 // Retail symbol has C linkage (plain reloc name); declared here per the
 // reloc-name fix rather than including the heavy menu header.
@@ -16,6 +18,7 @@ extern "C" bool CMenuArtsSelect_isCreated();
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 
 namespace cf {
 // Intrusive ring-list node used by CBattleManager's unit list (sentinel at +0x8).
@@ -48,12 +51,6 @@ struct BtlVisionSlotView { u8 _00[0x219C]; u8 visionSlot; };
 // ArtsSelect_GetContainer/ArtsSelect_Lookup/Bdat_GetTable_AA34/Bdat_GetMaxRow_B1EC in
 // kyoshin/code_801862C0.hpp.)
 extern "C" {
-    // CBattleManager helpers
-    int CBattleMan_GetUnk94Count(cf::CBattleManager*, int);
-    void CBattleMan_RefreshChainEnum(cf::CBattleManager*);
-    void CBattleMan_RaiseBattleFlag10(cf::CBattleManager*);
-    void CBattleMan_DropBattleFlag10(cf::CBattleManager*);
-
     // Enum list operations
     void __ct__800FC32C(void* list, int a, int b, int c);
 
@@ -61,9 +58,6 @@ extern "C" {
     void __ct__800FC32C(void* list, int a, int b, int c);
 
     // Camera / selector helpers
-    void* Selector_GetInstance();
-    void Selector_UpdateFilter(void* cam, void* target);
-    void setRequestParams(void* cam, u32 a, u32 b, u32 c);
 
     // Vision
     void routeVisionSlotFx(void* vision, void* visionList, int a, int b, int c);
@@ -71,7 +65,6 @@ extern "C" {
     // Voice / action helpers
     void* MapFx_ResolveOwner(void* source);
     void aiRebootAction(void* self);
-    void aiActionClearBits0006(void* self);
 
     // PTG / tension helpers
     void* ArtsSelect_GetContainer();
@@ -225,7 +218,7 @@ int selectTgt(VMThread* pThread) {
         void* slot = ArtsSelect_Lookup(mgr, ((BtlSlotIdView*)ocObj)->slotId4);
         if (slot != 0) {
             void* cam = Selector_GetInstance();
-            Selector_UpdateFilter(cam, ((BtlSlot74View*)slot)->ptr74);
+            Selector_UpdateFilter((cf::CfObjectSelectorObj*)cam, (unsigned int)(uintptr_t)((BtlSlot74View*)slot)->ptr74);
         }
     } else {
         CfEnumListHolder holder;
@@ -238,10 +231,10 @@ int selectTgt(VMThread* pThread) {
         list = holder.get();
         sortEntriesByDistance((CfMoveEnumList*)list, target);
         void* cam = Selector_GetInstance();
-        setRequestParams(cam, 0x80000003, 0, 0);
+        ((cf::CfObjectSelectorObj*)cam)->setRequestParams(0x80000003, 0, 0);
         void* val = findFirstCleanObjectId(holder.get());
         cam = Selector_GetInstance();
-        Selector_UpdateFilter(cam, val);
+        Selector_UpdateFilter((cf::CfObjectSelectorObj*)cam, (unsigned int)(uintptr_t)val);
     }
     return 0;
 }
@@ -369,7 +362,7 @@ int breakVision(VMThread* pThread) {
         vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     }
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    void* visionList = CBattleMan_FetchVisionObj(bm);
+    void* visionList = ((cf::CBattleManager*)bm)->CBattleMan_FetchVisionObj();
     if (visionList != 0) {
         void* actor = findObjectById__Fi(*(u32*)visionList);
         void* voiceAction = MapFx_ResolveOwner(actor);
@@ -393,7 +386,7 @@ int setPTG(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
         bm = cf::CBattleManager::getInstance();
-        PartyGaugeSetClamped((u8*)&((BtlGaugeView*)bm)->gauge194, ptg);
+        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)&((BtlGaugeView*)bm)->gauge194), ptg);
     }
     return 0;
 }

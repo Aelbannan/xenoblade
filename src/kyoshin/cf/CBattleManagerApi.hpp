@@ -44,3 +44,29 @@ extern "C" void updateBattleManager(cf::CBattleManager* self);
 // pointers so caller TUs with minimal CBattleManager views bind without
 // conversions (word-sized args -> identical call-site codegen).
 extern "C" void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal);
+
+// C++-linkage battle helpers defined in CBattleManager.cpp. Their retail
+// symbols are mangled, so callers take these declarations from this owner API
+// header instead of keeping per-TU extern copies.
+struct BattleObjAccessor;
+struct BattleMoveObjAccessor;
+struct Func800EA9A8_Arg5;
+
+bool CBattleMan_ListHasValue(void* mgr, unsigned int value);
+void* CBattleMan_NextListItem(void* self);
+void* CBattleMan_FindNextActorRef(void* self, void* value);
+void CBattleMan_HandleMoveType45(void* self, BattleObjAccessor* obj, void* enemy,
+                                 BattleMoveObjAccessor* move);
+void CBattleMan_FireActorEvent918(void* self, BattleObjAccessor* actor,
+                                  Func800EA9A8_Arg5* arg, void* id);
+void CBattleMan_RunBattleEvent(u32 a, u32 b, void* c, u32 d);
+void CBattleMan_ClearEventNotify(void* self, u32 id, u16 subId);
+void CBattleMan_ClearActorStatus(void* ignored, void* actor, void* arg);
+int CBattleMan_GetUnk94Count(void* self, int key);
+void CBattleMan_SetPartyFlagReset(cf::CBattleManager* mgr, u32 value);
+void CBattleMan_BumpUnk94Key(cf::CBattleManager* mgr, s32 key);
+s32 CBattleMan_FindActorByKind(cf::CBattleManager* mgr, s32 kind);
+void CBattleMan_RaiseBattleFlag10(cf::CBattleManager* mgr);
+void CBattleMan_DropBattleFlag10(cf::CBattleManager* mgr);
+void CBattleMan_MarkList48Flag40(void* self);
+void CBattleMan_RefreshChainEnum(cf::CBattleManager* mgr);

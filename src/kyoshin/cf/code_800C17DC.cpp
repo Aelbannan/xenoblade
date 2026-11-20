@@ -66,41 +66,6 @@ int CmText_DecodeSjisChar(const char* str, int* type, int* len) {
     return (unsigned char)str[0];
 }
 
-/// Read the next whitespace-delimited word out of the cursor at `self->cursor`
-/// into `out`, stopping at a newline or when `maxLen` characters have been
-/// consumed.  Returns 1 if something was consumed, 0 if the cursor is empty.
-int CmText_ReadWord(CmTextProc* self, char* out, int maxLen) {
-    char* o = out;
-    if ((u8)self->cursor[0] == 0) {
-        out[0] = 0;
-        return 0;
-    }
-    int pos = 0;
-    int result = 1;
-    while ((u8)self->cursor[0] != 0) {
-        int type, lenz;
-        u32 ch = CmText_DecodeSjisChar(self->cursor, &type, &lenz);
-        pos += lenz;
-        if (pos >= maxLen) {
-            result = 0;
-            break;
-        }
-        if (type == 1) {
-            *o++ = *self->cursor++;
-        } else if (type == 2) {
-            *o++ = *self->cursor++;
-            *o++ = *self->cursor++;
-        } else if (type == 3) {
-            if ((u16)ch == 0) break;
-            self->cursor += lenz;
-            break;
-        }
-    }
-    o[0] = 0;
-    return result;
-}
-
-
 /// Split a cue-script line into words, storing a pointer to each word start in
 /// `out`.  Words begin at a letter (A-Z/a-z) or a two-byte char and are
 /// separated by spaces/tabs; `#` and `//` start a comment that ends the line.
@@ -140,6 +105,41 @@ int func_800C1900(char* str, char** out, int maxLen) {
     }
     s[0] = 0;
     return count;
+}
+
+
+/// Read the next whitespace-delimited word out of the cursor at `self->cursor`
+/// into `out`, stopping at a newline or when `maxLen` characters have been
+/// consumed.  Returns 1 if something was consumed, 0 if the cursor is empty.
+int CmText_ReadWord(CmTextProc* self, char* out, int maxLen) {
+    char* o = out;
+    if ((u8)self->cursor[0] == 0) {
+        out[0] = 0;
+        return 0;
+    }
+    int pos = 0;
+    int result = 1;
+    while ((u8)self->cursor[0] != 0) {
+        int type, lenz;
+        u32 ch = CmText_DecodeSjisChar(self->cursor, &type, &lenz);
+        pos += lenz;
+        if (pos >= maxLen) {
+            result = 0;
+            break;
+        }
+        if (type == 1) {
+            *o++ = *self->cursor++;
+        } else if (type == 2) {
+            *o++ = *self->cursor++;
+            *o++ = *self->cursor++;
+        } else if (type == 3) {
+            if ((u16)ch == 0) break;
+            self->cursor += lenz;
+            break;
+        }
+    }
+    o[0] = 0;
+    return result;
 }
 
 
@@ -203,6 +203,13 @@ void CmText_RegisterEntry(CmTextProc* self, int key, const char* name, const cha
     }
 }
 
+// Routes to CmText_ParseTextBuffer with the global flag record as the leading
+// argument and passes its two arguments through unchanged.
+extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
+    CmText_ParseTextBuffer((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
+}
+
+
 /// Parse a cue-script text buffer into the table owned by `self`.  Each line is
 /// a keyword token followed by up to two parameters (`KEYWORD name value`); the
 /// keyword must appear in the lbl_eu_8052A528 dispatch table.  `buf` receives
@@ -239,21 +246,6 @@ void CmText_ParseTextBuffer(CmTextProc* self, const char* text, CmTextTable* buf
 }
 
 
-// Routes to CmText_ParseTextBuffer with the global flag record as the leading
-// argument and passes its two arguments through unchanged.
-extern "C" void CmText_ParseWithStaticProc(u32 arg0, u32 arg1) {
-    CmText_ParseTextBuffer((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
-}
-
-
-// Register a callback into the table slot selected by field20 and set the
-// continue flag that the dispatch loop CmText_DispatchCallbacks checks.
-extern "C" void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
-    lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = callback;
-    lbl_eu_805739F8.field24 = flag;
-}
-
-
 // Variadic prologue dump: on entry MWCC spills every register-argument into
 // this frame so callers can read them back out of memory. Empty body.
 extern "C" void CmText_VariadicNoop(...) {}
@@ -267,6 +259,14 @@ extern "C" void CmText_InitCallbackTable() {
     lbl_eu_805739F8.field24 = 0;
     memset(&lbl_eu_805739F8, 0, 0x20);
     lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = CmText_DefaultNoopCallback;
+}
+
+
+// Register a callback into the table slot selected by field20 and set the
+// continue flag that the dispatch loop CmText_DispatchCallbacks checks.
+extern "C" void CmText_RegisterCallback(void (*callback)(void), u8 flag) {
+    lbl_eu_805739F8.fns[lbl_eu_805739F8.field20] = callback;
+    lbl_eu_805739F8.field24 = flag;
 }
 
 

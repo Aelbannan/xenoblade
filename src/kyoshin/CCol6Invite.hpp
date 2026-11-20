@@ -1,38 +1,30 @@
 #pragma once
 
 #include <types.h>
-#include "monolib/work/CProcess.hpp"
+#include "kyoshin/IUIWindow.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 
 /*
   Collision-6 invite process. Singleton managed by CCol6System.
-  Inherits CProcess for work-thread lifecycle (Init/Term/Move/Draw).
+  Real MI shape: IUIWindow at +0x00 (IWorkEvent at +0x6C).
   Size 0x78 bytes.
 */
-class CCol6Invite : public CProcess {
+class CCol6Invite : public IUIWindow, public IWorkEvent {
 public:
     static CCol6Invite* sInstance;
 
+    CCol6Invite(u16 arg2, u8 arg3, u8 arg4)
+        : mArg2(arg2), mArg3(arg3), mArg4(arg4), mField74(0) {}
+
     static CCol6Invite* Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
-    virtual ~CCol6Invite();
 
     // CProcess overrides
     void Init() override;
     void Term() override;
     void Move() override;
-    void Draw() override;
 
-    /* 0x3C */ u32 mCallbackA[3]; // pointer-to-member-function null (3 words)
-    /* 0x48 */ u32 mCallbackB[3]; // pointer-to-member-function null (3 words)
-    /* 0x54 */ u32 mField54;      // init 0
-    /* 0x58 */ u32 mField58;      // init 0
-    /* 0x5C */ u32 mField5C;      // init 0
-    /* 0x60 */ s32 mIndex;        // init -1
-    /* 0x64 */ u8 mFlag64;        // byte flag, init 0
-    /* 0x65 */ u8 mFlag65;        // byte flag, init 0
-    /* 0x66 */ u8 mFlag66;        // byte flag, init 0
-    /* 0x67 */ u8 mActive;        // byte flag, init 1
-    /* 0x68 */ u32 mField68;      // init 0
-    /* 0x6C */ u32 mField6C;      // vtable-like ptr, init lbl_eu_8052FF3C + 0x24
+    virtual ~CCol6Invite();
+
     /* 0x70 */ u16 mArg2;         // from r4
     /* 0x72 */ u8 mArg3;          // from r5
     /* 0x73 */ u8 mArg4;          // from r6

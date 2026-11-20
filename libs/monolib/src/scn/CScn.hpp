@@ -40,7 +40,8 @@ extern "C" void __ct__8049E710();
 extern "C" void __ct__804820F8();
 extern "C" void startFade(CScnFadeMan*);
 extern "C" void* isFadeIdle(CScnFadeMan*);
-extern "C" void* isFadeSettled(CScnFadeMan*);
+// Defined in CScnFadeMan.cpp with C++ linkage.
+u32 isFadeSettled(CScnFadeMan*);
 extern "C" void* getFadeColorPtr(CScnFadeMan*);
 // The former flat imports CamMan_SwapViewParam_AED4, CamMan_FindItemA_B158,
 // CamMan_FindViewItemA and CamMan_FindViewItemB are real CScnCameraMan members

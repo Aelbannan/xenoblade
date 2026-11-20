@@ -155,3 +155,8 @@ protected:
     void OnFileEvent();
     void Draw();
 };
+
+// Flat retail-name CRI streaming helper defined in CTaskGame.cpp. Callers in
+// other TUs (e.g. CCollepedia) use this one canonical declaration.
+extern "C" void CTaskGame_openStream(u32 a1, const char* path, u32 a3, u32 a4,
+                              u32 a5, u32 a6, float volume);

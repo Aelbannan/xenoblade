@@ -4,8 +4,17 @@
 #include "monolib/work.hpp"
 #include "monolib/core/CProc.hpp"
 
-class IException;
 class CWorkThread;
+
+// Registered exception objects are referenced through this interface by
+// CException::AddToGlobalArray/RemoveFromGlobalArray and logExceptionMessage.
+// Retail vtable slot +0xC is a no-arg virtual; the method name is a guess.
+class IException {
+public:
+    virtual ~IException();
+    // name-guess: no-arg virtual at vtable +0xC (retail logExceptionMessage)
+    virtual void render() = 0;
+};
 
 class IGameException {
 public:
@@ -68,5 +77,5 @@ extern "C" {
 extern CException* spExceptionInstance;
 extern u32 sExceptionCount;
 extern u32 sExceptionState;
-extern CException* sRegisteredExceptions[16];
+extern IException* sRegisteredExceptions[16];
 }

@@ -2,11 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
-#include "monolib/coli/code_804B2FF0.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"  // Sc4798_GetSignedItemValue
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "monolib/math.hpp"      // ml::CVec3
 #include "monolib/util/MemManager.hpp"  // mtl::MemManager (allocate_array)
 #include <nw4r/math.h>            // VEC3Sub (paired-single) + PSVECMag
@@ -88,7 +88,8 @@ namespace cf {
         CfSelectorObjEnumList mList; // 0x04
     };
 
-    extern "C" void* getObjectIdAt(cf::CfObjEnumList* self, int index) {
+    extern "C" void* getObjectIdAt(void* list, int index) {
+        cf::CfObjEnumList* self = static_cast<cf::CfObjEnumList*>(list);
         return reinterpret_cast<void*>(self->mPtrArray[index]->objectId);
     }
 
@@ -96,7 +97,8 @@ namespace cf {
         return self->mPtrArray[index];
     }
 
-    extern "C" void* getObjectAt(cf::CfObjEnumList* self, u32 idx) {
+    extern "C" void* getObjectAt(void* list, u32 idx) {
+        cf::CfObjEnumList* self = static_cast<cf::CfObjEnumList*>(list);
         return self->mPtrArray[idx]->object;
     }
 }
@@ -125,10 +127,10 @@ static void enumClearObjFlags(CfObjEnumList::sObjInfo* begin,
 // entry's first word is cleared, capacity 702).
 void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
     // reslist<T> base ctor (inlined): the base vtable store is dead (the
-    // derived store below overwrites it), so it must go through a volatile
-    // write to survive dead-store elimination (flattened-reslist ctor
-    // schedule, MWCC_CASES "kyoshin code_800B06A4").
-    *(volatile u32*)self = (u32)&lbl_eu_8052585C[0];
+    // derived store below overwrites it), but retail still issues it here
+    // in the flattened-reslist ctor schedule (keeping the plain store
+    // preserves that dead write; MWCC_CASES "kyoshin code_800B06A4").
+    *(u32*)self = (u32)&lbl_eu_8052585C[0];
     self->mList = NULL;
     self->mCapacity = 0;
     self->mOwnsList = false;
@@ -197,7 +199,8 @@ void appendEnumEntries(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
 // (param - 0x80000000 selects one of five presets) and hand off to the main
 // enumerator runEnumObjects as a tail call.  An unset param (0) just clears the
 // lists.  The default case passes the raw (param, param2) pair through.
-extern "C" void startEnumObjects(cf::CfObjEnumList* self, u32 param, u32 param2) {
+extern "C" void startEnumObjects(void* self_, u32 param, u32 param2) {
+    cf::CfObjEnumList* self = static_cast<cf::CfObjEnumList*>(self_);
     self->mPtrCount = 0;
     self->mObjInfoCount = 0;
     if (param == 0) {
@@ -411,20 +414,14 @@ CfEnumObject* firstReslistBC8();
 CfEnumObject* insertReslistBC8(CfEnumObject*);
 CfEnumObject* firstReslistC08();
 CfEnumObject* insertReslistC08(CfEnumObject*);
-CfEnumActor* MapFx_ResolveOwner(CfEnumObject*);
 CfEnumActor* func_800BBC0C(CfEnumObject*);
 int isBattleStatusActive(void*, int);
 int isSpeedAbove(CfEnumActorAux*);
 int CtrlRemote_TouchBitByArg(int);
 CfEnumKind* CollObjHasFlag64Bit15(CfEnumObject*);
-int CBattleMan_ListHasValue(void*, CfEnumActor*);
-CfEnumActor* CBattleMan_NextListItem(void*);
-CfEnumActor* CBattleMan_FindNextActorRef(void*, CfEnumObject*);
 CfEnumObject* Selector_GetInstance();
 CfEnumObject* findObjectById__Fi(int);
 CfEnumObject* getPlayer__Q22cf13CfGameManagerFi(int);
-extern const float lbl_eu_80666EB8;
-extern const float lbl_eu_80666EBC;
 // In-TU definition later (list-rebuild partner check); C-linkage so the
 // retail unmangled reloc name matches (same convention as runEnumObjects).
 extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
@@ -518,7 +515,7 @@ int ColiCheckStateGate(void* self, void* a, void* b); // aux cone probe (two vec
             (rejected_) = true;                                               \
         }                                                                     \
         if (!(rejected_) && ((options_) & 0x2000) &&                          \
-            !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor_)) { \
+            !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor_)) { \
             (rejected_) = true;                                               \
         }                                                                     \
     } while (false)
@@ -554,8 +551,8 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     if (flags & 1) {
         getInstance__Fv();
         object = resetMgrReslist();
-        float zero = lbl_eu_80666EB8;
-        float one = lbl_eu_80666EBC;
+        float zero = 0.0f;
+        float one = 1.0f;
         while (object != 0) {
             rejected = false;
             if (!(options & 1) && !object->isEnabled()) {
@@ -604,11 +601,11 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x20) {
         getInstance__Fv();
         object = firstReslistB28();
-        float one = lbl_eu_80666EBC;
-        float zero = lbl_eu_80666EB8;
+        float one = 1.0f;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             if (!(object->flags64 & 2)) {
                 rejected = true;
             }
@@ -662,7 +659,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 8) {
         getInstance__Fv();
         object = firstReslistBA8();
-        float zero = lbl_eu_80666EB8;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
             if (!(object->flags64 & 0x200)) {
@@ -681,10 +678,10 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x100) {
         getInstance__Fv();
         object = firstReslistB48();
-        float one = lbl_eu_80666EBC;
+        float one = 1.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -727,7 +724,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
-                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor)) {
+                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor)) {
                 rejected = true;
             }
             if (rejected) {
@@ -743,10 +740,10 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x400000) {
         getInstance__Fv();
         object = firstReslistB48();
-        float one = lbl_eu_80666EBC;
+        float one = 1.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -765,7 +762,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
-                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor)) {
+                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor)) {
                 rejected = true;
             }
             if (rejected) {
@@ -781,8 +778,8 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x200) {
         getInstance__Fv();
         object = firstReslistB68();
-        float one = lbl_eu_80666EBC;
-        float zero = lbl_eu_80666EB8;
+        float one = 1.0f;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
             actor = func_800BBC0C(object);
@@ -811,7 +808,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x400) {
         getInstance__Fv();
         object = firstReslistB88();
-        float zero = lbl_eu_80666EB8;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
             if (!(object->flags64 & 0x80)) {
@@ -830,11 +827,11 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
 
         getInstance__Fv();
         object = firstReslistB48();
-        float one = lbl_eu_80666EBC;
-        float secondZero = lbl_eu_80666EB8;
+        float one = 1.0f;
+        float secondZero = 0.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -862,7 +859,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x80000) {
         getInstance__Fv();
         object = firstReslistBE8();
-        float zero = lbl_eu_80666EB8;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
             if (!(object->flags64 & 0x20)) {
@@ -882,7 +879,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x800) {
         getInstance__Fv();
         object = firstReslistBC8();
-        float zero = lbl_eu_80666EB8;
+        float zero = 0.0f;
         bool rejected = false;
         while (object != 0) {
             rejected = false;
@@ -917,7 +914,7 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
     } else if (flags & 0x1000) {
         getInstance__Fv();
         object = firstReslistC08();
-        float zero = lbl_eu_80666EB8;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
             if (!(object->flags64 & 0x100)) {
@@ -936,79 +933,79 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
         flags &= ~0x1000u;
     } else if (flags & 0x4000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = CBattleMan_NextListItem(manager);
+        CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
-        float one = lbl_eu_80666EBC;
-        float zero = lbl_eu_80666EB8;
+        float one = 1.0f;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = CBattleMan_FindNextActorRef(manager, object);
+                source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info15, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = CBattleMan_FindNextActorRef(manager, object);
+            source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x4000u;
     } else if (flags & 0x8000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = CBattleMan_NextListItem(manager);
+        CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
-        float one = lbl_eu_80666EBC;
-        float zero = lbl_eu_80666EB8;
+        float one = 1.0f;
+        float zero = 0.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             if (!(object->flags64 & 2)) {
                 rejected = true;
             }
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = CBattleMan_FindNextActorRef(manager, object);
+                source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info16, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = CBattleMan_FindNextActorRef(manager, object);
+            source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x8000u;
     } else if (flags & 0x10000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = CBattleMan_NextListItem(manager);
+        CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
-        float zero = lbl_eu_80666EB8;
-        float one = lbl_eu_80666EBC;
+        float zero = 0.0f;
+        float one = 1.0f;
         while (object != 0) {
             rejected = false;
-            actor = MapFx_ResolveOwner(object);
+            actor = (CfEnumActor*)MapFx_ResolveOwner(object);
             if (object->flags64 & 4) {
                 rejected = true;
             }
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = CBattleMan_FindNextActorRef(manager, object);
+                source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info17, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = CBattleMan_FindNextActorRef(manager, object);
+            source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x10000u;
     } else if (flags & 0x20000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = CBattleMan_NextListItem(manager);
+        CfEnumActor* source = (CfEnumActor*)CBattleMan_NextListItem(manager);
         object = source;
         while (object != 0) {
             rejected = false;
@@ -1021,13 +1018,13 @@ void cf::CfObjEnumList::runEnumObjects(int flags, u32 options) {
             }
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = CBattleMan_FindNextActorRef(manager, object);
+                source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info18, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = CBattleMan_FindNextActorRef(manager, object);
+            source = (CfEnumActor*)CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x20000u;
@@ -1171,7 +1168,7 @@ void resortByActorValue(cf::CfObjEnumList* self) {
     }
     for (u32 i = 0; i < self->mPtrCount; i++) {
         cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
-        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor != NULL) {
             p->field_14 = reinterpret_cast<CfEnumActorValueView*>(actor)->value128();
         }
@@ -1238,7 +1235,7 @@ extern "C" void sortEntriesByScreenX(cf::CfObjEnumList* self) {
             continue;
         }
         cf::CfObject* obj = reinterpret_cast<cf::CfObject*>(p->object);
-        CfEnumPosBlock* blk = reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_findNodeMatrix((const char*)lbl_eu_804FCD24));
+        CfEnumPosBlock* blk = reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_findNodeMatrix("move"));
         ml::CVec3 tmp;   // transform source copy (retail sp+0x18)
         if (blk != 0) {
             // Position floats sit at +0xC/+0x1C/+0x2C of the block.
@@ -1364,9 +1361,6 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
     ctx.sortFlag = list->field_062C;
     list->mPtrCount = 0;
 
-    const float padA = lbl_eu_80666EB8;        // probe offset x/z
-    const float padB = 0.1f;        // probe offset y
-    const float depthScale = 0.2f;  // z-blend factor
     struct SRect16 {
         s16 x, y, w, h;
     };
@@ -1392,7 +1386,7 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
             float ay = ac1->y;
             CfEnumPosBlock* ac2 =
                 reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_getPosVector());
-            t[1].z = depthScale * (t[1].z - ac2->y) + ay;
+            t[1].z = 0.2f * (t[1].z - ac2->y) + ay;
         } else {
             ml::CVec3* src = reinterpret_cast<ml::CVec3*>(
                 reinterpret_cast<CfEnumPosBlock*>(obj->CfObject_getPosVector()));
@@ -1434,9 +1428,9 @@ void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
                 if (keep) {
                     // Coli probe against t[k] offset by the border vector.
                     ml::CVec3 base;
-                    base.x = padA;
-                    base.y = padB;
-                    base.z = padA;
+                    base.x = 0.0f;
+                    base.y = 0.1f;
+                    base.z = 0.0f;
                     ml::CVec3 sum;
                     nw4r::math::VEC3Add(
                         (nw4r::math::VEC3*)&sum, (nw4r::math::VEC3*)&t[k],
@@ -1635,7 +1629,7 @@ void __ct__800FB044(cf::CfObjEnumList* list, ml::CVec3* spot, u32 options,
 
 // us-800fbd58 | rebuildByDistanceCone: rebuild the list by distance + facing cone from
 // spot.  dist = PSVECMag(obj->CfObject_getPosVector() - spot); the heading is wrapped into
-// [-pi, pi] and must fall inside +-cone*halfScale of angleOffset (arg3) while
+// [-pi, pi] and must fall inside +-cone*0.5f of angleOffset (arg3) while
 // targetDist (range + aux radius) reaches dist.  Options bit 2 inverts the
 // keep decision; kept entries get the 0x40 mark and are only re-appended when
 // flags bit 0 is set (otherwise appended unconditionally).
@@ -1662,8 +1656,6 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     const float pi = ml::pi;
     const float negPi = -pi;
     const float twoPi = ml::tau;
-    const float angScale = 0.024543693f;
-    const float halfScale = 0.5f;
     RebuildCtx ctx;
     *reinterpret_cast<CopyArr*>(ctx.arr) =
         *reinterpret_cast<CopyArr*>(self->mPtrArray);
@@ -1690,7 +1682,7 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         d.z = deltap->z;
         float dist = PSVECMag((const Vec*)dp);
         float ang =
-            angScale * nw4r::math::Atan2FIdx(d.x, d.z) - angleOffset;
+            0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z) - angleOffset;
         while (pi <= ang) {
             ang -= twoPi;
         }
@@ -1699,8 +1691,8 @@ void rebuildByDistanceCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         }
         // Rejection polarity: entries outside the cone are flagged 0x40.
         bool rejected =
-            !(targetDist >= dist && -(cone * halfScale) <= ang &&
-              ang <= cone * halfScale);
+            !(targetDist >= dist && -(cone * 0.5f) <= ang &&
+              ang <= cone * 0.5f);
         // Precise aux-side cone probe rescues coarse rejections (accept on
         // nonzero); the FD3FC fallback double-checks coarse acceptances
         // (reject on zero).
@@ -1757,8 +1749,6 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     self->mPtrCount = 0;
     const float pi = ml::pi;         // f22
     const float twoPi = ml::tau;      // f21
-    const float angScale = 0.024543693f;   // f29
-    const float halfScale = 0.5f;  // f31
     u32 invert = flags & 2;
     for (u32 i = 0; i < ctx.count; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
@@ -1779,15 +1769,15 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
         d.y = delta.y;
         d.z = delta.z;
         float dist = PSVECMag((const Vec*)&d);
-        float ang = angScale * nw4r::math::Atan2FIdx(d.x, d.z) - angleOffset;
+        float ang = 0.024543693f * nw4r::math::Atan2FIdx(d.x, d.z) - angleOffset;
         while (pi <= ang) {
             ang -= twoPi;
         }
         while (ang < -pi) {
             ang += twoPi;
         }
-        bool hit = targetDist >= dist && -cone * halfScale <= ang &&
-                   ang <= cone * halfScale;
+        bool hit = targetDist >= dist && -cone * 0.5f <= ang &&
+                   ang <= cone * 0.5f;
         if (hit) {
             // Second probe pass: recompute against the angleMax offset and
             // the cone2 half-angle.
@@ -1800,15 +1790,15 @@ void rebuildByDualCone(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
             d2.y = delta.y;
             d2.z = delta.z;
             dist = PSVECMag((const Vec*)&d2);
-            ang = angScale * nw4r::math::Atan2FIdx(d2.x, d2.z) - angleMax;
+            ang = 0.024543693f * nw4r::math::Atan2FIdx(d2.x, d2.z) - angleMax;
             while (pi <= ang) {
                 ang -= twoPi;
             }
             while (ang < -pi) {
                 ang += twoPi;
             }
-            hit = targetDist >= dist && -cone2 * halfScale <= ang &&
-                  ang <= cone2 * halfScale;
+            hit = targetDist >= dist && -cone2 * 0.5f <= ang &&
+                  ang <= cone2 * 0.5f;
         }
         if ((obj->field68 & 4) && hit && aux != 0) {
             // Both cone pairs must fail to clear the hit.
@@ -1876,20 +1866,20 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
     list->mPtrCount = 0;
 
     ml::CVec3 vb;
-    vb.x = lbl_eu_80666EB8;
-    vb.y = lbl_eu_80666EB8;
+    vb.x = 0.0f;
+    vb.y = 0.0f;
     vb.z = threshold;
     float s1 = nw4r::math::SinFIdx(40.743664f * angle);
     float c1 = nw4r::math::CosFIdx(40.743664f * angle);
     EnumRotMtx33 rot1;
     rot1._00 = c1;
-    rot1._01 = lbl_eu_80666EB8;
+    rot1._01 = 0.0f;
     rot1._02 = s1;
-    rot1._10 = lbl_eu_80666EB8;
-    rot1._11 = lbl_eu_80666EBC;
-    rot1._12 = lbl_eu_80666EB8;
+    rot1._10 = 0.0f;
+    rot1._11 = 1.0f;
+    rot1._12 = 0.0f;
     rot1._20 = -s1;
-    rot1._21 = lbl_eu_80666EB8;
+    rot1._21 = 0.0f;
     rot1._22 = c1;
     ml::CVec3 dirA;
     dirA.x = rot1._00 * vb.x + rot1._01 * vb.y + rot1._02 * vb.z;
@@ -1904,22 +1894,20 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
     pa.z = paTmp.z;
 
     ml::CVec3 va;
-    va.x = lbl_eu_80666EB8;
-    va.y = lbl_eu_80666EB8;
+    va.x = 0.0f;
+    va.y = 0.0f;
     va.z = range;
     float s2 = nw4r::math::SinFIdx(40.743664f * angle);
     float c2 = nw4r::math::CosFIdx(40.743664f * angle);
-    const double tMin = lbl_eu_80666EE0;
-    const double tMax = lbl_eu_80666EE8;
     EnumRotMtx33 rot2;
     rot2._00 = c2;
-    rot2._01 = lbl_eu_80666EB8;
+    rot2._01 = 0.0f;
     rot2._02 = s2;
-    rot2._10 = lbl_eu_80666EB8;
-    rot2._11 = lbl_eu_80666EBC;
-    rot2._12 = lbl_eu_80666EB8;
+    rot2._10 = 0.0f;
+    rot2._11 = 1.0f;
+    rot2._12 = 0.0f;
     rot2._20 = -s2;
-    rot2._21 = lbl_eu_80666EB8;
+    rot2._21 = 0.0f;
     rot2._22 = c2;
     ml::CVec3 dirB;
     dirB.x = rot2._00 * va.x + rot2._01 * va.y + rot2._02 * va.z;
@@ -1953,25 +1941,25 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
         float denom = dv.x * dv.x + dv.z * dv.z;
         float numer = dv.x * dxp + dv.z * dzp;
         float t = numer / denom;
-        if (t < tMin) {
-            t = lbl_eu_80666EB8;
+        if (t < 0.0) {
+            t = 0.0f;
         }
-        if (t > tMax) {
-            t = lbl_eu_80666EBC;
+        if (t > 1.0) {
+            t = 1.0f;
         }
         float qz = dv.z * t + pa.z;
         float qx = dv.x * t + pa.x;
         float dyq = pos->y - qz; // retail quirk: y compared against z coord
         float dxq = pos->x - qx;
         float d2 = dxq * dxq + dyq * dyq;
-        if (d2 > lbl_eu_80666EB8 || d2 == lbl_eu_80666EB8) {
+        if (d2 > 0.0f || d2 == 0.0f) {
             // finite
         } else {
             nw4r::db::Warning(warnFile, 0x273, warnMsg);
         }
         float dist;
-        if (d2 < lbl_eu_80666EB8 || d2 == lbl_eu_80666EB8) {
-            dist = lbl_eu_80666EB8;
+        if (d2 < 0.0f || d2 == 0.0f) {
+            dist = 0.0f;
         } else {
             dist = d2 * nw4r::math::FrSqrt(d2);
         }
@@ -2006,7 +1994,7 @@ void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float range,
 }
 
 // __ct__800FBF08: rebuild the object list filtering entries through the
-// arts-state gate: MapFx_ResolveOwner(object) then isBattleStatusActive(actor+8, tag).
+// arts-state gate: (CfEnumActor*)MapFx_ResolveOwner(object) then isBattleStatusActive(actor+8, tag).
 // flags bit 1 inverts the accept decision; accepted entries get the 0x70
 // mark and are only re-appended when flags bit 0 is set.
 void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
@@ -2040,7 +2028,7 @@ void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
     for (u32 i = 0; i < n; ++it, i++) {
         cf::CfObjEnumList::sObjInfo* p = *it;
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2095,7 +2083,7 @@ extern "C" void __ct__800FC040(cf::CfObjEnumList* list, u32 tag1, u32 tag2, u32 
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2148,7 +2136,7 @@ extern "C" void __ct__800FC19C(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2202,7 +2190,7 @@ extern "C" void __ct__800FC32C(cf::CfObjEnumList* list, u32 arg1, u32 arg2, u32 
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2259,7 +2247,7 @@ void __ct__800FC4FC(cf::CfObjEnumList* self, u32 flags, float threshold) {
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2315,7 +2303,7 @@ extern "C" void __ct__800FC648(cf::CfObjEnumList* self, u32 flags, float thresho
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2362,7 +2350,7 @@ extern "C" void __ct__800FC790(cf::CfObjEnumList* self, u32 flags, float thresho
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2409,7 +2397,7 @@ extern "C" void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float thresho
     u32 n = ctx.count;
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
-        CfEnumActor* actor = MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+        CfEnumActor* actor = (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2458,7 +2446,7 @@ extern "C" void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options)
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2466,7 +2454,7 @@ extern "C" void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options)
         bool rejected = false;
         u32 subId = actorView->sub.vfn13();
         if (subId != spotId ||
-            CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor) == 0) {
+            CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)actor) == 0) {
             rejected = true;
         }
         if (options & 2) {
@@ -2517,7 +2505,7 @@ extern "C" void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options)
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2578,7 +2566,7 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2589,15 +2577,15 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
         bool found = false;
         // Adjust the call result in place (stays in r3 through the null
         // check), then copy to cur once: retail cmpwi/beq/addi/mr order.
-        CfEnumActor* t = CBattleMan_NextListItem(getInstance__Q22cf14CBattleManagerFv());
+        CfEnumActor* t = (CfEnumActor*)CBattleMan_NextListItem(getInstance__Q22cf14CBattleManagerFv());
         if (t != 0) {
             t = reinterpret_cast<CfEnumActor*>(reinterpret_cast<u8*>(t) + 0x3E9C);
         }
         CfEnumObject* cur = reinterpret_cast<CfEnumObject*>(t);
         while (cur != 0) {
-            CfEnumActor* cand = MapFx_ResolveOwner(cur);
+            CfEnumActor* cand = (CfEnumActor*)MapFx_ResolveOwner(cur);
             if (cand == 0 || cand == actor) {
-                CfEnumActor* t2 = CBattleMan_FindNextActorRef(
+                CfEnumActor* t2 = (CfEnumActor*)CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
@@ -2605,7 +2593,7 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
                 }
                 cur = reinterpret_cast<CfEnumObject*>(t2);
             } else if (reinterpret_cast<CfEnumActorView*>(cand)->field_3F10 == arg1) {
-                CfEnumActor* t2 = CBattleMan_FindNextActorRef(
+                CfEnumActor* t2 = (CfEnumActor*)CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
@@ -2616,11 +2604,11 @@ extern "C" void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
                 actorId = reinterpret_cast<CfEnumActorView*>(actor)->field_3F10;
                 if (actorId ==
                         reinterpret_cast<CfEnumActorView*>(cand)->sub.vfn13() &&
-                    CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), cand) != 0) {
+                    CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)cand) != 0) {
                     found = true;
                     break;
                 }
-                CfEnumActor* t2 = CBattleMan_FindNextActorRef(
+                CfEnumActor* t2 = (CfEnumActor*)CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
@@ -2672,7 +2660,7 @@ void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2733,7 +2721,7 @@ void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
     for (u32 i = 0; i < n; i++) {
         cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         CfEnumActor* actor =
-            MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
+            (CfEnumActor*)MapFx_ResolveOwner(reinterpret_cast<CfEnumObject*>(p->object));
         if (actor == 0) {
             continue;
         }
@@ -2843,7 +2831,7 @@ extern "C" void* findPrevCleanObjectId(cf::CfObjEnumList* self, int index) {
 // us-800fdee4 | probePartnerSegment: list-rebuild partner check.  The `list` param
 // is unused (retail never reads r3); aux's position comes from vtable 0x128
 // (CfEnumPosBlock, floats at +0xC/+0x1C/+0x2C) or, if null, vtable 0xAC (plain
-// vec3).  The two Ys are nudged by lbl_eu_80666ECC and ordered so the first
+// vec3).  The two Ys are nudged by 0.1f and ordered so the first
 // arg to ScnRes_SegQueryForward_E348 has the larger Y.  A lazy-initialized 12-float probe
 // table (4 diagonal offsets) is added to both corners; any probe hit returns 1.
 extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
@@ -2902,17 +2890,17 @@ extern "C" int probePartnerSegment(cf::CfObjEnumList* list, CfEnumActor* aux,
     ml::CVec3::sub(zero, *high, *high);
     if (gCfEnumProbeOffsetsInitFlag == 0) {
         // Probe-offset table: four diagonal direction vectors.
-        gCfEnumListProbeOffsets[0] = lbl_eu_80666EBC;
-        gCfEnumListProbeOffsets[1] = lbl_eu_80666EB8;
-        gCfEnumListProbeOffsets[2] = lbl_eu_80666EBC;
+        gCfEnumListProbeOffsets[0] = 1.0f;
+        gCfEnumListProbeOffsets[1] = 0.0f;
+        gCfEnumListProbeOffsets[2] = 1.0f;
         gCfEnumListProbeOffsets[3] = lbl_eu_80666EF0;
-        gCfEnumListProbeOffsets[4] = lbl_eu_80666EB8;
-        gCfEnumListProbeOffsets[5] = lbl_eu_80666EBC;
+        gCfEnumListProbeOffsets[4] = 0.0f;
+        gCfEnumListProbeOffsets[5] = 1.0f;
         gCfEnumListProbeOffsets[6] = lbl_eu_80666EF0;
-        gCfEnumListProbeOffsets[7] = lbl_eu_80666EB8;
+        gCfEnumListProbeOffsets[7] = 0.0f;
         gCfEnumListProbeOffsets[8] = lbl_eu_80666EF0;
-        gCfEnumListProbeOffsets[9] = lbl_eu_80666EBC;
-        gCfEnumListProbeOffsets[10] = lbl_eu_80666EB8;
+        gCfEnumListProbeOffsets[9] = 1.0f;
+        gCfEnumListProbeOffsets[10] = 0.0f;
         gCfEnumListProbeOffsets[11] = lbl_eu_80666EF0;
         gCfEnumProbeOffsetsInitFlag = 1;
     }

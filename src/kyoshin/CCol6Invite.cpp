@@ -10,90 +10,23 @@
 // Retail data symbols referenced by this factory.
 CCol6Invite* CCol6Invite::sInstance;
 
-extern "C" {
-char lbl_eu_8052D238[];       // temporary vtable written before copying __ptmf_null
-char lbl_eu_8052FF3C[];       // CCol6Invite final vtable
-// __ptmf_null is declared extern in CCol6System.hpp (defined in CUICfManager.cpp).
-void __ct__8CProcessFv(CProcess*); // CProcess base constructor (abstract class, so extern)
-}
-
-// Byte-range shim over the CProcess header + owned fields so the factory can
-// write the vtable (+0x10), the __ptmf_null callback slots (+0x3C..0x53) and
-// the trailing scalars without raw pointer arithmetic. Matches CProcess's
-// 0x00-0x3B layout exactly (CProcess.hpp: CProcess : CChildListNode).
-struct CCol6InviteCtorShim {
-    u8 _00[0x10];
-    void* vtable;        // 0x10 - CProcess vtable, overwritten by this factory
-    u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
-    u32 callbacks[6];    // 0x3C-0x53 - __ptmf_null callback slots
-    u32 field54;         // 0x54
-    u32 field58;         // 0x58
-    u32 field5C;         // 0x5C
-    s32 index;           // 0x60 - init -1
-    u8 flag64;           // 0x64
-    u8 flag65;           // 0x65
-    u8 flag66;           // 0x66
-    u8 active;           // 0x67 - init 1
-    u32 field68;         // 0x68
-    u32 field6C;         // 0x6C - lbl_eu_8052FF3C + 0x24
-    u16 arg2;            // 0x70
-    u8 arg3;             // 0x72
-    u8 arg4;             // 0x73
-    u8 field74;          // 0x74
-};
-
 // Constructor/factory for the CCol6Invite singleton (retail unmangled symbol
 // __ct__CCol6Invite). Allocates 0x78 bytes from work memory, constructs the
-// CProcess base, fills the callback/field block, stores itself as the
-// singleton and registers as a child of `self`. Mirrors retail control flow:
-// the singleton store + Regist run even when the allocation failed (the
-// object register stays NULL) and the object (possibly NULL) is returned.
+// real IUIWindow/IWorkEvent bases, stores itself as the singleton and registers
+// as a child of `self`. The singleton store + Regist run even when the
+// allocation failed (the object register stays NULL).
 extern "C" CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, u8 arg4) {
-    CCol6InviteCtorShim* obj;
     // Return NULL if the singleton already exists.
     if (CCol6Invite::sInstance != 0) {
         return 0;
     }
     u32 workMem = CWorkThreadSystem::getWorkMem();
-    obj = (CCol6InviteCtorShim*)mtl::MemManager::allocate(0x78, workMem);
+    CCol6Invite* obj = (CCol6Invite*)mtl::MemManager::allocate(0x78, workMem);
+    // Placement-new emits the single null guard around the real base
+    // construction; the resulting pointer is reused for the singleton store.
+    obj = new (obj) CCol6Invite(arg2, arg3, arg4);
 
-    if (obj != 0) {
-        __ct__8CProcessFv((CProcess*)obj);
-        obj->vtable = (void*)lbl_eu_8052D238;
-
-        // Copy the null member-function pointer into both callback slots.
-        // Retail loads [1],[0],[2] then stores per slot.
-        const u32* ptmf = __ptmf_null;
-        u32 ptmfWord1 = ptmf[1];
-        u32 ptmfWord0 = ptmf[0];
-        obj->callbacks[0] = ptmfWord0;
-        obj->callbacks[1] = ptmfWord1;
-        obj->callbacks[2] = ptmf[2];
-        ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
-        obj->callbacks[3] = ptmfWord0;
-        obj->callbacks[4] = ptmfWord1;
-        obj->callbacks[5] = ptmf[2];
-
-        obj->field54 = 0;
-        obj->field58 = 0;
-        obj->field5C = 0;
-        obj->index = -1;
-        obj->flag64 = 0;
-        obj->flag65 = 0;
-        obj->flag66 = 0;
-        obj->active = 1;
-        obj->field68 = 0;
-
-        obj->vtable = (void*)lbl_eu_8052FF3C;
-        obj->field6C = (u32)(lbl_eu_8052FF3C + 0x24);
-        obj->arg2 = arg2;
-        obj->arg3 = arg3;
-        obj->arg4 = arg4;
-        obj->field74 = 0;
-    }
-
-    CCol6Invite::sInstance = (CCol6Invite*)obj;
+    CCol6Invite::sInstance = obj;
     ((CProcess*)obj)->Regist(self, false);
     return CCol6Invite::sInstance;
 }
@@ -101,20 +34,14 @@ extern "C" CCol6Invite* __ct__CCol6Invite(CCol6Invite* self, u16 arg2, u8 arg3, 
 // Destructor defined in CCol6System.cpp as the extern "C" free function
 // __dt__11CCol6InviteFv (retail form with nested null-guards + delete).
 
-// CProcess overrides (stubs).
-void CCol6Invite::Init() {}
-void CCol6Invite::Term() {}
-void CCol6Invite::Move() {}
-void CCol6Invite::Draw() {}
-
 // --- this-adjusting thunks over CCol6Hint / CCol6System (defined in the
-// CCol6System TU). Retail "this" lands at an embedded subobject offset; back
+// CCol6System TU). Retail
 // it off to the CProcess/CCol6Hint/CCol6System base and forward.
 
 // Col6HintDtorThunk6C: CCol6Hint dtor at subobject +0x6c.
 void Col6HintDtorThunk6C(u8* self) {
     typedef void* (*DtorFn)(CCol6Hint*);
-    ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x6c));
+    ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x6c));  // DEBT(callcast): Fv-mangled dtor is emitted as 2-arg D1 (this, flags); 1-arg view preserves r4 passthrough
 }
 
 // Col6HintRenderThunk70: CCol6Hint::cbRenderBefore at subobject +0x70.
@@ -125,7 +52,7 @@ void Col6HintRenderThunk70(u8* self) {
 // Col6SystemDtorThunk6C: CCol6System dtor at subobject +0x6c.
 void Col6SystemDtorThunk6C(u8* self) {
     typedef void* (*DtorFn)(CCol6System*);
-    ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x6c));
+    ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x6c));  // DEBT(callcast): Fv-mangled dtor is emitted as 2-arg D1 (this, flags); 1-arg view preserves r4 passthrough
 }
 
 // Col6SystemRenderThunk70: CCol6System::cbRenderBefore at subobject +0x70.
@@ -136,7 +63,7 @@ void Col6SystemRenderThunk70(u8* self) {
 // Col6SystemDtorThunk70: CCol6System dtor at subobject +0x70.
 void Col6SystemDtorThunk70(u8* self) {
     typedef void* (*DtorFn)(CCol6System*);
-    ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x70));
+    ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x70));  // DEBT(callcast): Fv-mangled dtor is emitted as 2-arg D1 (this, flags); 1-arg view preserves r4 passthrough
 }
 
 // Col6CheckBatDtorThunk6C (retail func_801640D0): CCol6CheckBat dtor at
@@ -145,7 +72,7 @@ void Col6CheckBatDtorThunk6C(u8* self) {
     // Retail thunk: subi r3,r3,0x6c; b __dt__13CCol6CheckBatFv -- r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6CheckBat*);
-    ((DtorFn)__dt__13CCol6CheckBatFv)(reinterpret_cast<CCol6CheckBat*>(self - 0x6c));
+    ((DtorFn)__dt__13CCol6CheckBatFv)(reinterpret_cast<CCol6CheckBat*>(self - 0x6c));  // DEBT(callcast): Fv-mangled dtor is emitted as 2-arg D1 (this, flags); 1-arg view preserves r4 passthrough
 }
 
 // Col6HintDtorThunk70 (retail func_801640F0): CCol6Hint dtor at subobject
@@ -154,7 +81,7 @@ void Col6HintDtorThunk70(u8* self) {
     // Retail thunk: subi r3,r3,0x70; b __dt__9CCol6HintFv -- r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6Hint*);
-    ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x70));
+    ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x70));  // DEBT(callcast): Fv-mangled dtor is emitted as 2-arg D1 (this, flags); 1-arg view preserves r4 passthrough
 }
 
 // Col6InviteDtorThunk6C: CCol6Invite dtor at subobject +0x6c. Backs `this` off to the
@@ -163,7 +90,7 @@ void Col6InviteDtorThunk6C(u8* self) {
     // Retail thunk: subi r3,r3,0x6c; b __dt__11CCol6InviteFv -- r4 (flags)
     // passes through untouched, so call through a 1-arg pointer view.
     typedef void* (*DtorFn)(CCol6Invite*);
-    ((DtorFn)__dt__11CCol6InviteFv)(reinterpret_cast<CCol6Invite*>(self - 0x6c));
+    ((DtorFn)__dt__11CCol6InviteFv)(reinterpret_cast<CCol6Invite*>(self - 0x6c));  // DEBT(callcast): Fv-mangled dtor is emitted as 2-arg D1 (this, flags); 1-arg view preserves r4 passthrough
 }
 
 // Standalone string formatting helper.

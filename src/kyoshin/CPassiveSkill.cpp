@@ -80,11 +80,8 @@ extern "C" void CPassiveSkillLine_enterStateB(UI::CPassiveSkillLine* self);
 // Cursor step helper (defined later in this TU).
 extern "C" void CPassiveSkillCur_finishOpenAnim(UI::CPassiveSkillCur* self);
 
-void CPassiveSkillLine_incCharIdx(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_decCharIdx(UI::CPassiveSkillLine* self);
-void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_cursorUp(u8* self);
-void CPassiveSkillLine_cursorRight(UI::CPassiveSkillLine* self);
 void CPassiveSkillLine_cursorLeft(UI::CPassiveSkillLine* self);
 void CPassiveSkillLine_closeDispatch(UI::CPassiveSkillLine* self);
 extern "C" void CPassiveSkillLine_handleInput(u8* self);
@@ -3299,7 +3296,8 @@ void CPassiveSkillLine_syncEquipState(UI::CPassiveSkillLine* self) {
             if (move != 0) {
                 cf::CfObjectMove* m = getCfObjectPc__FPQ22cf12CfObjectMove(move);
                 if (m != 0) {
-                    CfObjectPc_setupFrame(m, 0);
+((CfObjectPcSetupFrameFn)CfObjectPc_setupFrame)(
+                        reinterpret_cast<cf::CfObjectPc*>(m), 0);
                 }
             }
         }
@@ -3629,7 +3627,7 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
     }
 }
 // Return the +0x26 visibility byte once the +0x1B8 system window is ready.
-u8 CPassiveSkill_getVisibleIfReady(UI_CPassiveSkill* self) {
+int CPassiveSkill_getVisibleIfReady(UI_CPassiveSkill* self) {
     if (reinterpret_cast<CSysWin*>(self->field_1B8)->isReady() != 0) {
         return self->field_26;
     }
@@ -3637,7 +3635,7 @@ u8 CPassiveSkill_getVisibleIfReady(UI_CPassiveSkill* self) {
 }
 
 // Return the +0x27 byte once the +0x28 sub-object reports active.
-u8 CPassiveSkill_getActiveIfBusy(UI_CPassiveSkill* self) {
+int CPassiveSkill_getActiveIfBusy(UI_CPassiveSkill* self) {
     if (CPassiveSkillLine_isBusy(reinterpret_cast<UI_CPassiveSkill*>(self->_pad28)) != 0) {
         return self->field_27;
     }
@@ -3702,13 +3700,13 @@ void UI_CPassiveSkill_thunk28_67C44(u8* self) { CPassiveSkillLine_decCharIdx(rei
 
 void UI_CPassiveSkill_thunk28_68518(u8* self) { CPassiveSkillLine_closeDispatch(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
-// Pick the skill-menu open state (retail CPassiveSkill_pickOpenState): when the +0x1B8
+// Pick the skill-menu open state
 // system window is armed or the +0x180 byte is set, return the closed marker 0/0x5f;
 // otherwise key the +0x110 skill cell against the learned marker and the party-size
 // flag ((shared byte > 1) via the subfic/srwi carry idiom) to pick one of the eight
 // open-state ids, split by whether the menu-open configuration (0x3372/0x3508/0x20
 // BDAT values) is satisfied.
-s32 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
+u8 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self) {
     if (reinterpret_cast<CSysWin*>(&self->field_1B8)->isOpened() != 0) {
         return 0;
     }

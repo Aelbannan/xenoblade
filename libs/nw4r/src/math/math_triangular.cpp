@@ -1,14 +1,5 @@
 #include <nw4r/math.h>
 
-extern "C" void __dt__Q44nw4r3snd6detail11BasicPlayerFv();
-extern "C" void GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv();
-extern "C" void __dt__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void Shutdown__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void InitParam__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv();
-
 namespace nw4r {
 namespace math {
 
@@ -307,46 +298,6 @@ extern "C" __declspec(section ".data") __attribute__((aligned(8))) const unsigne
     0x42, 0x00, 0x00, 0x00, 0x3F, 0x20, 0x74, 0x67,
 };
 
-
-extern "C" void __dt__Q44nw4r3snd6detail11BasicPlayerFv();
-extern "C" void GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv();
-extern "C" void __dt__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void Shutdown__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void InitParam__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv();
-extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv();
-
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_8056A6E8[10] = {
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)&__dt__Q44nw4r3snd6detail11BasicPlayerFv,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)0x00000000,
-};
-
-extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* __vt__Q44nw4r3snd6detail10BasicSound[14] = {
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)&GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv,
-    (void*)&__dt__Q44nw4r3snd6detail10BasicSoundFv,
-    (void*)&Shutdown__Q44nw4r3snd6detail10BasicSoundFv,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)&InitParam__Q44nw4r3snd6detail10BasicSoundFv,
-    (void*)0x00000000,
-    (void*)0x00000000,
-    (void*)&OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv,
-    (void*)&UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv,
-    (void*)&UpdateParam__Q44nw4r3snd6detail10BasicSoundFv,
-};
-
 // Retail .sdata2 constants referenced by name so no local pool is emitted.
 extern "C" {
 }
@@ -473,6 +424,7 @@ void SinCosFIdx(register f32* pSin, register f32* pCos, register f32 fidx) {
     )
 
 }
+
 
 f32 Atan2FIdx(f32 y, f32 x) {
     f32 a, b, c;

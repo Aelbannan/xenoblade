@@ -6,6 +6,7 @@
 #include "kyoshin/CMiniMap.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"

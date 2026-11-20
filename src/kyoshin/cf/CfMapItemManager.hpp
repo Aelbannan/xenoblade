@@ -2,7 +2,13 @@
 
 #include <types.h>
 
-// Owner module header for kyoshin/cf/CfMapItemManager.cpp (retail battle
+class CfMapItemLoader;
+
+// Real C++ entry points defined in this TU (retail-mangled names).
+void MapItemStoreBytes567(void* self, u8 a, u8 b, u8 c);
+void requestItemLoad(CfMapItemLoader* self, u32 id);
+
+// Owner module header for kyoshin/cf/CfMapItemManager.cpp
 // flag/status helpers). These are the single unified declarations; TUs that
 // call them include this header.
 

@@ -2,6 +2,7 @@
 // A voice-slot state machine that cycles through character-voice lines.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 #include <cstring>
@@ -241,7 +242,7 @@ void CVS_THREAD_BATTLE_END::initSlots() {
     CVS_THREAD_BATTLE_END* self = this;
     mState = lbl_eu_80539964;
 
-    int cnt = HpVoice_CollectIdle(self->field_0x20, 3, 0);
+    int cnt = HpVoice_CollectIdle((CVoiceHandle**)self->field_0x20, 3, 0);
     self->field_0x34 = cnt;
     if (cnt <= 0) {
         self->PlayThreadVoice();

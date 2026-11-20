@@ -3,6 +3,7 @@
 // battle-start voice lines.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.hpp"
+#include "kyoshin/cf/voice/cvsys/HpVoiceApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/math/Random.hpp"
 #include <cstring>
@@ -78,7 +79,7 @@ void CVS_THREAD_BATTLE_BEGIN::initSlots() {
     CVS_THREAD_BATTLE_BEGIN* self = this;
     mState = lbl_eu_8053AC94;
 
-    int cnt = HpVoice_CollectIdle(&self->field_0x28[0], 3, 0);
+    int cnt = HpVoice_CollectIdle((CVoiceHandle**)&self->field_0x28[0], 3, 0);
     s16 scnt = (s16)cnt;
     self->field_0x38 = scnt;
     if (scnt > 0) return;

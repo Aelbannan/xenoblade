@@ -2906,8 +2906,8 @@ extern "C" void col6Win2Count(CCol6System* self) {
 
         if (ok != 0) {
             self->mFieldA4 = 0x16;
-            CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
-                          lbl_eu_80667578);
+            CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f,
+                          -1.0f);
         } else if (big != 0) {
             // "player N joined" banner in window 2.
             self->mFieldA4 = 0x23;
@@ -2975,12 +2975,12 @@ extern "C" void col6Win2Count(CCol6System* self) {
                     }
                 }
                 self->mFieldA4 = 0x15;
-                CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
-                              lbl_eu_80667578);
+                CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f,
+                              -1.0f);
             } else {
                 self->mFieldA4 = 0x15;
-                CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578,
-                              lbl_eu_80667578);
+                CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f,
+                              -1.0f);
             }
         }
     }
@@ -3164,12 +3164,12 @@ void col6Win2PerPl(CCol6System* self) {
             }
         }
         self->mFieldA4 = 0x15;
-        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f, -1.0f);
     } else {
         // Retail keeps a copy of this store/fade in BOTH arms (the b-over-else
         // emits the extra branch); do not hoist it out of the if/else.
         self->mFieldA4 = 0x15;
-        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f, -1.0f);
     }
 }
 
@@ -3258,12 +3258,12 @@ slotFound:
             }
         }
         self->mFieldA4 = 0x15;
-        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f, -1.0f);
     } else {
         // Retail keeps a copy of this store/fade in BOTH arms (the b-over-else
         // emits the extra branch); do not hoist it out of the if/else.
         self->mFieldA4 = 0x15;
-        CUICfManager_queueFadeMenu(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
+        CUICfManager_queueFadeMenu(0, 0, -1.0f, -1.0f, -1.0f);
     }
 }
 
@@ -3366,8 +3366,8 @@ scanned:
             }
             p++;
         }
-        mFlag64 = 1;
+        mField64 = 1;
     } else {
-        mFlag64 = 1;
+        mField64 = 1;
     }
 }

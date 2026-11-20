@@ -29,8 +29,5 @@ public:
 // ---------------------------------------------------------------------------
 
 // mpfsys::UnkClass_80471EC8 methods (defined in monolib/src/mpfsys)
-extern "C" void setColorMode__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
-extern "C" void clearFlag__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
-extern "C" void setFlag__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
 extern "C" void markDirty__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
 

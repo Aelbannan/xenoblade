@@ -8,6 +8,7 @@
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/core/code_804DEDA8.hpp"
 #include "monolib/effect/CERand.hpp"
+
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CVec4.hpp"
 #include "monolib/math/Random.hpp"
@@ -843,7 +844,7 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
             node->mNext = elem->mList;
             elem->mList = node;
         }
-        if (((*(volatile u16*)((u8*)owner + 0x1C)) >> 4) & 1) {
+        if (((*(u16*)((u8*)owner + 0x1C)) >> 4) & 1) {
             elem->mCount++;
         }
     } else {
@@ -852,7 +853,7 @@ extern "C" void SchedElem_ClaimNode(u32 key, CSchedFxObjView* obj, void* owner, 
         elem->mList = node;
         elem->mPrio = prio;
         elem->mVal = (u32)obj;
-        elem->mCount = ((*(volatile u16*)((u8*)owner + 0x1C)) >> 4) & 1;
+        elem->mCount = ((*(u16*)((u8*)owner + 0x1C)) >> 4) & 1;
         node->mNext = NULL;
         node->mKey = (void*)(u32)i;
         node->mObj = owner;
@@ -1092,12 +1093,13 @@ extern "C" CEffectObj* SchedFx_FetchByHandle(s16 handle) {
     return NULL;
 }
 
-// Effect-node pool element initializer (monolib/src/effect/code_804CC2B8.cpp,
-// retail symbol EffFxInitStructLinks). extern "C" keeps the call-site reloc name
-// matching retail.
-extern "C" void EffFxInitStructLinks(CEffectNode* node);
+// Effect-node pool element initializer (monolib/src/effect/code_804CC2B8.cpp).
+// The owning header conflicts with this TU's lbl_eu_8065FC18 view, so use the
+// real C++ declaration locally.
+struct EffectStruct;
+void EffFxInitStructLinks(EffectStruct* self);
 
-// Allocate the effect-node pool (stride 0x338) plus a follow-on 0x34-per-item
+
 // table: round the byte size up twice (32-byte granularity), record the pool
 // base/count, run the node initializer over each element, then zero the
 // follow-on table (returning its end pointer).
@@ -1112,7 +1114,7 @@ extern "C" void* SchedNode_AllocPool(u32 size, s32 count) {
     i = 0;
     s32 off = 0;
     while (i < count) {
-        EffFxInitStructLinks((CEffectNode*)((u8*)sEffectNodePool.mBase + off));
+        EffFxInitStructLinks(reinterpret_cast<EffectStruct*>((u8*)sEffectNodePool.mBase + off));
         off += 0x338;
         i++;
     }
@@ -1140,7 +1142,7 @@ extern "C" s32 SchedNode_ClaimActivate(CScheduleItem* item) {
             if (node->mMark >= 0) {
                 idx = (idx + 1) % sEffectNodePool.mCount;
             } else {
-                EffFxInitStructLinks(node);
+                EffFxInitStructLinks(reinterpret_cast<EffectStruct*>(node));
                 node->mMark = (s16)idx;
                 sEffectNodePool.mField08++;
                 sEffectNodePool.mLastHandle =
@@ -2267,12 +2269,12 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
     if (!(item->mField1C == 0.0f &&
           item->mField20 == 0.0f &&
           item->mField24 == 0.0f)) {
-        // volatile: retail re-loads these floats instead of CSE-ing them
+        // Retail re-loads these floats instead of CSE-ing them
         // with the copies taken above.
         f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                   0.5f;
         if (base != NULL) {
-            sc = *(volatile f32*)(base - 0xC);
+            sc = *(f32*)(base - 0xC);
         } else {
             sc = 0.0f;
         }
@@ -2280,7 +2282,7 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         rnd = (f32)ml::math::mtRand() / 2147483600.0f -
               0.5f;
         if (base != NULL) {
-            sc = *(volatile f32*)(base - 8);
+            sc = *(f32*)(base - 8);
         } else {
             sc = 0.0f;
         }
@@ -2288,7 +2290,7 @@ extern "C" void SchedAnim_InitPosDir(CSchedAnimItem* item, u8* base, u8 arg3) {
         rnd = (f32)ml::math::mtRand() / 2147483600.0f -
               0.5f;
         if (base != NULL) {
-            sc = *(volatile f32*)(base - 4);
+            sc = *(f32*)(base - 4);
         } else {
             sc = 0.0f;
         }
@@ -2429,11 +2431,11 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
         item->mField10 = c;
         item->mField0C = c;
     } else {
-        // volatile: these floats are re-loaded rather than reused from the
+        // These floats are re-loaded rather than reused from the
         // validation reads above.
-        f32 s10 = (base != NULL) ? *(volatile f32*)(base - 0x10)
+        f32 s10 = (base != NULL) ? *(f32*)(base - 0x10)
                                  : (-1.0f);
-        f32 s0C = (base != NULL) ? *(volatile f32*)(base - 0xC)
+        f32 s0C = (base != NULL) ? *(f32*)(base - 0xC)
                                  : (-1.0f);
         if (s10 < 0.0f && s0C < 0.0f) {
             item->mField14 = 1.0f;
@@ -2441,31 +2443,31 @@ extern "C" void SchedAnim_InitColor10(CSchedAnimItem* item, u8* base) {
             item->mField0C = 1.0f;
             f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                       0.5f;
-            f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
+            f32 sc = (base != NULL) ? *(f32*)(base - 0x14)
                                     : 0.0f;
             item->mField24 = 1.0f - rnd * sc;
         } else {
             f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                       0.5f;
-            f32 sc = (base != NULL) ? *(volatile f32*)(base - 0x14)
+            f32 sc = (base != NULL) ? *(f32*)(base - 0x14)
                                     : 0.0f;
             item->mField0C = 1.0f - rnd * sc;
             rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                   0.5f;
-            sc = (base != NULL) ? *(volatile f32*)(base - 0x10)
+            sc = (base != NULL) ? *(f32*)(base - 0x10)
                                 : (-1.0f);
             item->mField10 = 1.0f - rnd * sc;
             f32 c = 1.0f;
             item->mField24 = c;
             rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                   0.5f;
-            sc = (base != NULL) ? *(volatile f32*)(base - 0xC)
+            sc = (base != NULL) ? *(f32*)(base - 0xC)
                                 : (-1.0f);
             item->mField14 = c - rnd * sc;
         }
         f32 rnd = (f32)ml::math::mtRand() / 2147483600.0f -
                   0.5f;
-        f32 sc = (base != NULL) ? *(volatile f32*)(base - 8) : 0.0f;
+        f32 sc = (base != NULL) ? *(f32*)(base - 8) : 0.0f;
         u8 flag = item->field_0x04 | 0x10;
         item->mField18 = 1.0f - rnd * sc;
         item->field_0x04 = flag;

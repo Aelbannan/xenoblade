@@ -153,13 +153,13 @@ void CSelShopWin::teardownShopWin() {
 
 /* Returns whether the shop window has finished loading resources
    and is ready for interaction. (C-linkage: isShopWinLoaded) */
-u8 CSelShopWin::isShopWinLoaded() {
+int CSelShopWin::isShopWinLoaded() {
     return mIsLoaded;
 }
 
 /* Returns whether a show/hide animation is currently active.
    (C-linkage: isShopWinAnimActive) */
-u8 CSelShopWin::isShopWinAnimActive() {
+int CSelShopWin::isShopWinAnimActive() {
     return mAnimActive;
 }
 

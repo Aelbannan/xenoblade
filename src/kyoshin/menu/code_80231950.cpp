@@ -23,6 +23,8 @@
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSetImports.hpp"
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"  // CtrlObjectParam_SyncParamFromActor (owner)
+#include "kyoshin/code_8028130C.hpp" // scenario-log helpers (owning header)
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
 #include "monolib/util/MemManager.hpp"        // mtl::MemManager::allocate
@@ -141,7 +143,6 @@ extern "C" void artsRebuildUI(SArtsSub8022FA58* selfRaw) {
 }
 
 // Switch-case handlers used by ArtsLayoutPair_advance (same TU, defined below).
-void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self);
 extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
 
 extern "C" void ArtsLayoutPair_release(SArts2FDF4* self) {
@@ -166,7 +167,6 @@ extern "C" void ArtsLayoutPair_advance(SArts2FDF4* self) {
 // array types are not sdata-eligible and force lis/addi instead of sda21.
 extern u8 sArtsDemoModeFlag[8];
 // Switch-case handlers used by ArtsLayoutPair_advance (same TU, defined below).
-void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self);
 extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self);
 
 void ArtsCharList_selectNext(SArtsSub8022FA58* self) {
@@ -665,9 +665,7 @@ extern "C" void ArtsBusyPane_showPrimary(SArts30D18* self) {
     }
 }
 
-void ArtsElem_setDataByte(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off);
-
-// Shared tail of both artsClaimSlot arms (duplicated textually - retail
+// Shared tail of both artsClaimSlot arms
 // inlines it into each arm): re-arm the arts list, then if the player object
 // exists and its +0x3F28 id matches the sub-object's character byte, run its
 // refresh virtual (vtable +0x32C) and re-apply the slot view.
@@ -1442,7 +1440,7 @@ extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key) {
         *p += 1;
         row[2] = *p;
         SysWinLog_ScanGrid((u8*)base);
-        CtrlObjectParam_SyncParamFromActor(root);
+        CtrlObjectParam_SyncParamFromActor((cf::CtrlObjectParamArtsView*)root);
         artsRenderRow((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
     } else {
@@ -1468,7 +1466,7 @@ extern "C" void ArtsTable_bumpUsage(SArts322BC* self, int key) {
         *p += 1;
         row[2] = *p;
         SysWinLog_ScanGrid((u8*)base);
-        CtrlObjectParam_SyncParamFromActor(root);
+        CtrlObjectParam_SyncParamFromActor((cf::CtrlObjectParamArtsView*)root);
         artsRenderRow((SArts327B0*)self);
         ArtsTableCursor_refresh((SArts327B0*)self);
     }
@@ -2006,7 +2004,6 @@ int CMenuArtsSet_isWindowBusy(CArtsList* self) {
     return self->field_0x2A6;
 }
 
-void CArtsInfo_IsStateGE6(void* self);
 u32 CArtsList::CMenuArtsSet_isArtsInfoActive() { return CArtsInfo_IsStateGE6(&mSubObj74); }
 
 void CMenuArtsSet_beginOpen(CArtsList* self) {

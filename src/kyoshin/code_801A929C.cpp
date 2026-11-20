@@ -6,7 +6,9 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/object/CfObject.hpp" // owner of the +0xAC player slot (UVF23)
+#include "kyoshin/cf/CfCamEventApi.hpp"
 #include <math.h>
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // KEEP (extern-C cleanup 2026-10-23): CfSoundMan.hpp cannot be included in this TU (its headers clash with local copies).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
@@ -16,8 +18,7 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, 
 // Shared ctrl-state singleton pointer (retail .sbss).
 void* gpBattleCtrlStateWork;
 
-// Retail C-symbol import: camera/scene gate query.
-extern "C" int CamEvtGetFl46();
+// Camera/scene gate query declared by the owning CfCamEvent_1.hpp.
 
 // Byte view of a CtrlState entry's +0x2C match-slot word (mirrors
 // CtrlState::m2C, s16 init -1; the full struct is defined below).
@@ -174,18 +175,7 @@ struct D80VolObj {
     f32 field_0xC;
 };
 
-// Minimal BasicSound interface: only SetPlayerPriority is dereferenced.
-namespace nw4r {
-namespace snd {
-namespace detail {
-class BasicSound {
-public:
-    void SetPlayerPriority(int priority);
-};
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
-
+#include <nw4r/snd/snd_BasicSound.h>
 // Sound-slot record returned by CfSoundMan_TouchSlotById (+0x00 active sound object).
 struct SndSlotRef {
     nw4r::snd::detail::BasicSound* mSound;
@@ -196,17 +186,13 @@ union SndConv {
     f64 d;
 };
 
-extern "C" u32 getCameraDataBlock__Q22cf13CfGameManagerFv();
 extern "C" int CfRes_getD80Flag();
 D80VolObj* Scn_QueryUnk80State();
 extern "C" float VecMath_ClosestPtSeg(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);
 SndSlotRef* CfSoundMan_TouchSlotById(u16 handle);
-extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 // playActorSound__Q22cf10CfSoundManFUlUlUlUlf is declared by the catalog
 // (CCol6System.hpp): returns the sound handle.
-extern "C" void CfSoundMan_SetSlotVolume(s32 idx, u32 handle, u32 ticks, float volume);
-extern "C" void CfSoundMan_SetSlotPan(s32 idx, u16 handle, float value);
 extern const char lbl_eu_80526324[]; // nw4r::db::Warning source string
 extern const char lbl_eu_80526300[]; // nw4r::db::Warning format string
 extern char lbl_eu_80503FA0[];       // bdat column-name blob
@@ -657,7 +643,6 @@ extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
 extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 extern "C" void getControllerWordA37C__Q22cf13CfGameManagerFv();
-extern "C" u32 isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv();
 extern "C" u16 getReloadParam0(void); // chapter/episode clock (CAIAction.hpp canonical form)
 extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
@@ -686,7 +671,6 @@ public:
 // retail call passes an extra entry-base argument).
 extern "C" u32 Bdat_ReadCell_B434(void* table, const char* col, u32 colHandle,
                               s32 row, void* entryBase);
-extern "C" int CfSoundMan_IsRecordActive(int a);
 
 // Defined later in this TU (C linkage so call-site relocs bind to the
 // retail-unmangled names).
@@ -969,7 +953,6 @@ extern "C" u32 Bdat_GetMaxRow_B1EC(void* bdat);   // bdat row count
 extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 // Sound-slot play entry (defined in CfSoundMan.cpp); C linkage so the call
 // reloc binds to the retail-unmangled name.
-extern "C" void CfSoundMan_SetSlotVolume(s32 idx, u32 a, u32 b, float volume);
 
 // Bdat table handle owning the ctrl-state row range (import from split1).
 struct BdatTable;

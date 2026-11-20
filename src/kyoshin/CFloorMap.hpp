@@ -226,3 +226,7 @@ public:
     f32 field_3344;                          // 0x3344
     void SetMapTable(u8 id);
 };
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+void FloorMap_Log2Field208(void* self);
+void FloorMap_Log2Field333C(void* self);

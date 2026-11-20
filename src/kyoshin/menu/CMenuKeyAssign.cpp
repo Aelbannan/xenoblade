@@ -1,10 +1,11 @@
 #define IWORK_EVENT_INLINE_DTOR
 // kyoshin/menu/CMenuKeyAssign - key-assign (button mapping) menu (singleton).
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
+#include "kyoshin/menu/CMenuArtsSelect.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -28,6 +29,7 @@
 #include <stdio.h>
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/code_80135FDC_Lyt.hpp"
+#include "kyoshin/menu/CMenuBattleCommu.hpp"
 
 // View of the nw4r Pane bytes this TU touches (retail nw4r keeps the visible
 // flag in the low bit of the byte at +0xBB; the repo's nw4r header exposes it
@@ -158,8 +160,6 @@ struct CActorTargetView {
 extern "C" {
 // Move's gate helpers (retail unmangled; declared in their own TUs but not by
 // any included header).
-int CMenuArtsSelect_IsAvailable();
-int battleCommuIsActive();
 int GetZealObjPtr(void);
 int CMainMenu_IsOpen();
 // Arts-state gate helpers used by Move (retail unmangled; declared in their

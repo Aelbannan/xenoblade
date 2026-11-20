@@ -27,3 +27,8 @@ public:
     f32 unk38;                          // 0x38 - intensity
     f32 unk3C;                          // 0x3C - attenuation end
 };
+
+// Light-control entry points defined in monolib/src/scn/CLight.cpp.
+void LightCtlSetObj(CLight* self, int lightObjPtr);
+void LightCtlSetEnable(CLight* self, int enable);
+void LightCtlInitSpot(CLight* self, float cutoff, _GXSpotFn spotFn);

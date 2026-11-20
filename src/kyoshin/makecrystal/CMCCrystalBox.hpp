@@ -422,12 +422,9 @@ public:
 // imports. The names ARE the retail symbol names - keep verbatim.
 // Returns the destination pointer (retail reuses it as a call argument).
 extern "C" int func_8021A8EC(void*);
-extern "C" void MCCrystal_PlayAnim3B(void*);
-extern "C" void MCCrystal_PlayOutro(void*);
-extern "C" void MCCrystal_PlayAnim3A(void*);
 extern "C" char sMakeCrystalStrings[];
 extern "C" unsigned long lbl_eu_80508870[];
-// BDAT table pointer loaded via sda21 at the BdatGetPtrDirect call sites.
+
 extern unsigned long lbl_eu_806646D0;
 // Selection-table helpers on the +0x1480 box-head scratch (not CMCCrystalBox).
 // Crystal-slot refresh callbacks (defined in this TU).
@@ -436,13 +433,12 @@ extern unsigned long lbl_eu_806646D0;
 extern "C" __declspec(noinline) int isCrystalKindGem(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
 extern "C" void copyVEC3(void*, const void*);
-extern "C" void MCCrystal_PlayAnim4(void*);
-extern "C" void MCCrystal_OpenFromClosed(void*);
-extern "C" void MCCrystal_DrawLayout(void*, void*);
+
 extern "C" void MCCrystal_ShowItem(void*, unsigned short, void*);
 extern "C" void MCCrystal_ClearSlots(void*);   // crystal-info grid refresh (CMCCrystalInfo.cpp)
 extern "C" void MCCrystal_FillSlot(void*, unsigned char, unsigned short, unsigned short, unsigned char); // set crystal slot
-// CItem_initItemImplInstances: canonical CItemImpl*(CItemData*) declaration
+extern "C" int IsSkillItem(void*);
+
 // comes from kyoshin/cf/CfGameManager.hpp; call sites cast the item pointer.
 extern "C" u16 CItemBlock_getFlag120EC(int);
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
@@ -457,14 +453,11 @@ extern "C" float lbl_eu_80668490;
 extern "C" void* CItem_kindPtr(u32, s16);
 extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
-extern "C" void MCCrystal_Teardown(void*);
-extern "C" void MCCrystal_StepState(void*);
-extern "C" u32  IsSkillItem(void*);
+
 // State-machine anim-completion callbacks (defined in this TU; retail symbols
 // are unmangled). extern "C" first declaration keeps the switch call relocs
 // unmangled like retail; noinline keeps the bodies out-of-line.
-extern "C" void MCCrystal_AlignPane(char*, void*, unsigned char);
-// Wide-param view of the pane-number setter used by the window-kind refresh:
+
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
 // symbol as setLayoutTextBoxNumber.
@@ -491,4 +484,3 @@ extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsig
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void*, void*);   // 4-word mem-region copy
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
-extern "C" void MCCrystal_LoadLayouts(void*);   // crystal-info file-load (CMCCrystalInfo.cpp)

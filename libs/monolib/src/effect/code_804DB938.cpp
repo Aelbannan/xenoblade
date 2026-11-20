@@ -28,12 +28,9 @@ extern CESinCosEntry lbl_eu_80660038[360]; // sin table
 extern CESinCosEntry lbl_eu_80660B78[360]; // cos table
 }
 
-// Retail sdata2 literals (named from the EU map). const so MWCC hoists the
-// loads like retail (cf. MWCC_CASES extern-const float hoist note).
-extern f32 lbl_eu_8066B270; // 1.0f
+// Retail sdata2 literal (named from the EU map): the zero comparison must
+// keep its retail symbol name to hold CERot_AxisToMatrix's matched relocs.
 extern f32 lbl_eu_8066B274; // 0.0f
-extern f64 lbl_eu_8066B280; // 0x4330000080000000 (2^52+2^31), pool copy used
-                            // by the table initializer's int->float path
 
 // 0x4330000080000000 (2^52 + 2^31): MWCC's signed int -> float conversion
 // magic. Retail keeps copies in .sdata2 (lbl_eu_8066B268 / lbl_eu_8066B280);
@@ -234,7 +231,7 @@ int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
     // retail); shared CERotTrig stays frac-first for the cardinal builders.
     // CERotEulerXYZ/DCD94 use it too.
     f32 mag = PSVECMag(v);
-    bool nearOne = ml::math::abs(mag - lbl_eu_8066B270) <= ml::epsilon;
+    bool nearOne = ml::math::abs(mag - 1.0f) <= ml::epsilon;
     if (nearOne) {
         PSMTXIdentity(mtx);
         return 1;

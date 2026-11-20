@@ -6,7 +6,7 @@
 // relationship meet value (rlt_meet), and a timer for dialogue triggers.
 
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"   // exported ScMain_* / CfCode_* declarations
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -77,7 +77,7 @@ CfObjectNpc::~CfObjectNpc() {
 int CfObjectNpc::CfObject_UnkVirtualFunc2() {
     this->CfObjectModel::CfObject_UnkVirtualFunc2();
     mFlags68 |= 0x100000;
-    CfObjectMove_setModelDisplayFlag(this, 1);
+    CfObjectMove_setModelDisplayFlag((cf::CfObjectMove*)this, 1);
     CfObjectMove_setRegionAttached(this, 1);
     ColiSetMoveVec2(_60C_region, 0, *(const float*)&lbl_eu_80666AE4, *(const float*)&lbl_eu_80666AE8);
     *(u16*)&_60C_region[0xB2] = 0x15E;

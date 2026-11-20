@@ -440,7 +440,6 @@ bool  isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
 extern "C" {
 void moveBaseSway(void* self);  // one-arg delegate form
 void moveBaseRoute(void* self);  // one-arg delegate form
-void moveBaseScnCmd(void* self);  // one-arg delegate form
 void __ct__800D10DC(void* self, void* parent);  // CtrlEnemy base ctor
 void __ct__Q22cf11CtrlMoveEneFPQ22cf9CtrlEnemy(void* self, cf::CtrlEnemy* parent);  // +0x84 sub-object ctor (CtrlMoveEne::CtrlMoveEne(CtrlEnemy*); free-function owner ctor cannot member-init it yet)
 void* MapFx_ResolveOwner(void* source);              // voice/battle-list resolve
@@ -450,7 +449,7 @@ void aimMoveTarget(cf::CCtrlMoveBase* self, ml::CVec3* dst,
 int moveBaseSeekTo(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                   const ml::CVec3* src, int flag);
 // getInstance__Q22cf14CBattleManagerFv is declared by
-// kyoshin/cf/CBattleManagerApi.hpp (via cf/CtrlPc.hpp's include chain).
+// kyoshin/cf/CBattleManager.hpp (via cf/CtrlPc.hpp's include chain).
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);

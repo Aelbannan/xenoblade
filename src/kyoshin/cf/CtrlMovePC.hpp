@@ -145,9 +145,7 @@ void moveBaseLerp(cf::CCtrlMovePC* self, ml::CVec3* v);
 int  ScnRes_EntryFlagThunk_E5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
-void* CtrlObjectParam_GetSlotTableBase();
-void ctrlActUpdateData70(void* a);
-void maskMoveChildFlags(cf::CCtrlMovePC* self);
+int* CtrlObjectParam_GetSlotTableBase();
 int  moveBaseRoute(cf::CCtrlMovePC* self, ml::CVec3* out, int flag);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 }
@@ -164,7 +162,6 @@ int  Coli_SweepSegNodes(void* a, void* b, void* c, int d, int e);
 void* findObjectById__Fi(int id);
 void* setAnimPosVec(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
 void CfObjectMove_setMoveSpeedGated(void* a, f32 b);
-void maskMoveChildFlags(cf::CCtrlMovePC* self);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 }
 

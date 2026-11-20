@@ -14,7 +14,8 @@ extern char lbl_eu_8050E980[];
 extern u32 gmPauseFlags;
 // Singleton/word single defs (pre-code so no forwards are needed).
 CSysWinBuff* lbl_eu_806648E0 = 0;
-u32 lbl_eu_806648E4 = 0;
+// name-guess: getFP("MNU_buff") result, used by Move for the two BDAT lookups
+u32 sBuffMenuBdat = 0;
 // .sbss flag pool (MWCC rejects __declspec(section ".sbss") (33044), so
 // plain tentatives auto-route; explicit pad bytes reproduce the retail gaps
 // (EveTalkWin precedent). Unreferenced by code (size-only). Single defs
@@ -40,6 +41,7 @@ u32 camControlGc = 0;
 class CEventFile;
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
@@ -58,23 +60,22 @@ class CEventFile;
 CSysWinBuff::~CSysWinBuff() {}
 
 // ---------------------------------------------------------------------------
-// CSysWinBuff::OnFileEvent (us-80276f08) - IWorkEvent::OnFileEvent body.
-// When the loaded arc matches mFileHandle: hand its data buffer to CBdat
-// (releases the archive), re-store the loaded file-pointer (getFP) in the
-// global, clear the handle and return true; otherwise false. Only reachable
-// through the IWorkEvent sub-vtable, whose slot holds the compiler-emitted
-// +0x6C adjusting thunk that tail-jumps here (retail 0x80276F84).
+// CSysWinBuff::Init (us-802769cc)
+// Register the IScnRender sub-object with the scene, request the shared BDAT
+// archive against the IWorkEvent sub-object, rebuild the embedded CSysWin,
+// and kick its layout load. The CSysWin assignment constructs a temporary,
+// copies its non-vtable members, and destroys it - exactly retail's shape.
 // ---------------------------------------------------------------------------
-bool CSysWinBuff::OnFileEvent(CEventFile* pEventFile) {
-    if (mFileHandle == pEventFile->mFileHandle) {
-        void* data = mFileHandle->getData();
-        CBdat::setBdatEntry(2, data);
-        Bdat_GetTable_AA34();
-        lbl_eu_806648E4 = (u32)getFP("/common/jp/bdat_menu_mes.bin\0help\0MNU_buff" + 0x22);
-        mFileHandle = 0;
-        return true;
-    }
-    return false;
+void CSysWinBuff::Init() {
+    IScnRender* render = this;
+    mScene->addRenderCB(render, 0xd, 0);
+
+    IWorkEvent* workEvent = this;
+    mFileHandle = (CFileHandle*)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        KyoshinHeap_GetField44(), "/common/jp/bdat_menu_mes.bin", workEvent, 0, 0);
+
+    mSysWin = CSysWin(0);
+    mSysWin.loadSystemArc();
 }
 
 // ---------------------------------------------------------------------------
@@ -89,13 +90,68 @@ void CSysWinBuff::Term() {
     closeFileHandle(&mFileHandle);
     mSysWin.termLayout();
     CBdat::getEntry(2);
-    lbl_eu_806648E4 = 0;
+    sBuffMenuBdat = 0;
     lbl_eu_806648E0 = 0;
     IScnRender* render = this;
     mScene->removeRenderCB(render);
     DecMenuCounter64080();
     if (code80135FDC_getByte_64080() == 0)
         setPresentationFlag__Q22cf13CfGameManagerFv(false);
+}
+
+// ---------------------------------------------------------------------------
+// CSysWinBuff::Move (us-80276b88)
+// Gate prefix (task busy / render pause / menu state / tutorial), then the
+// four-state open/advance/close/input machine driving the embedded CSysWin.
+// ---------------------------------------------------------------------------
+void CSysWinBuff::Move() {
+    CTaskGame::getInstance();
+    if (CTaskGame::isFlag01Set() || (gmPauseFlags & 0x200000))
+        return;
+    if (IsMenuState621F0() == 0) return;
+    if (MenuTutorialIsCreated() != 0) return;
+    if ((gmGameFlags & 0x4000000) != 0) {
+        mField64 = 1;
+        return;
+    }
+
+    switch (mFlagB8) {
+    case 0:
+        if (mSysWin.isReady()) {
+            if (sBuffMenuBdat == 0) break;
+            mFlagB8 = 1;
+            u16 index = BdatGetU16Direct((void*)lbl_eu_806640E0, "help", mArgBA);
+            char* text = BdatGetPtrDirect((void*)sBuffMenuBdat, "help", index);
+            mSysWin.setKindContent(text, 0);
+            mSysWin.applyKind(1);
+            mSysWin.openPhase1();
+        }
+        break;
+    case 1:
+        if (mSysWin.isActive()) {
+            mFlagB8 = 2;
+        }
+        break;
+    case 2: {
+        CPad* pad = cf::CfGameManager::getCurrentPad();
+        bool pressed = cf::CfGameManager::isClassicController(-1)
+            ? (pad->mPressedButtonFlags & 0x200000) != 0
+            : (pad->mPressedButtonFlags & 0x10) != 0;
+        if (pressed) {
+            mFlagB8 = 3;
+            mSysWin.advancePhase3();
+        }
+        break;
+    }
+    case 3:
+        if (mSysWin.isActive()) {
+            mField67 = 0;
+            mField64 = 1;
+        }
+        break;
+    }
+
+    mSysWin.dispatchPhase();
 }
 
 // ---------------------------------------------------------------------------
@@ -135,19 +191,30 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
     return lbl_eu_806648E0;
 }
 
+CSysWinBuff* CSysWinBuff::getInstance() { return lbl_eu_806648E0; }
+
+// ---------------------------------------------------------------------------
+// CSysWinBuff::OnFileEvent
+// When the loaded arc matches mFileHandle: hand its data buffer to CBdat
+// (releases the archive), re-store the loaded file-pointer (getFP) in the
+// global, clear the handle and return true; otherwise false. Only reachable
+// through the IWorkEvent sub-vtable, whose slot holds the compiler-emitted
+// +0x6C adjusting thunk that tail-jumps here (retail 0x80276F84).
+// ---------------------------------------------------------------------------
+bool CSysWinBuff::OnFileEvent(CEventFile* pEventFile) {
+    if (mFileHandle == pEventFile->mFileHandle) {
+        void* data = mFileHandle->getData();
+        CBdat::setBdatEntry(2, data);
+        Bdat_GetTable_AA34();
+        sBuffMenuBdat = (u32)getFP("MNU_buff");
+        mFileHandle = 0;
+        return true;
+    }
+    return false;
+}
+
 // Two empty 4-byte text stubs at the tail of the retail .text slice
 // (0x80276FA4/0x80276FA8) - not yet identified, kept as the retail symbols.
 extern "C" void SysWinBuff_EmptyStubB20() {}
 
 extern "C" void SysWinBuff_EmptyStubB24() {}
-
-// Non-target members: CProcess overrides (stubs) and the singleton accessor.
-void CSysWinBuff::Init() {}
-void CSysWinBuff::Move() {}
-CSysWinBuff* CSysWinBuff::getInstance() { return lbl_eu_806648E0; }
-
-// Retail data pool: the arc-path/help/label string pool is a code literal (so
-// MWCC pools it after the compiler-generated RTTI type-name strings, matching
-// retail's .rodata order); the table below points at the three .sbss words
-// code_8027513C.cpp indexes.
-const char lbl_eu_8050EBC4[0x2c] = {0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f, 0x6a, 0x70, 0x2f, 0x62, 0x64, 0x61, 0x74, 0x5f, 0x6d, 0x65, 0x6e, 0x75, 0x5f, 0x6d, 0x65, 0x73, 0x2e, 0x62, 0x69, 0x6e, 0x00, 0x68, 0x65, 0x6c, 0x70, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x62, 0x75, 0x66, 0x66, 0x00, 0x00};

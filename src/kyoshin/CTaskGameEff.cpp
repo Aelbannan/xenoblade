@@ -2,7 +2,8 @@
 #define ISCN_RENDER_NO_DTOR // retail keeps ~IScnRender only as the forced-name __dt__80044BB0 copy
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/cf/CTaskGameEffAfter.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -299,7 +300,7 @@ extern "C" void* attachEffectById(EffHostObj* target, EffHostObj* host, u32 id, 
         if (dst != nullptr) {
             dst += 0x3E9C;
         }
-        bindPartnerO_(obj, dst, 0);
+        bindPartnerO_((cf::CfObjectEff*)obj, (u8*)dst, (u8*)0);
     }
     return obj;
 }
@@ -324,7 +325,7 @@ void* bindIndexedEffect(int index, void* manager) {
     void* eff = createNpcActor__Q22cf13CfGameManagerFv(index);
     void* obj = __dynamic_cast(eff, 0, &__RTTI__Q22cf11CfObjectEff, &__RTTI__Q22cf8CfObject, 0);
     if (obj != nullptr && manager != nullptr) {
-        bindPartnerO_(obj, manager, 0);
+        bindPartnerO_((cf::CfObjectEff*)obj, (u8*)manager, (u8*)0);
         void* data = static_cast<Mgr98View*>(manager)->sub98;
         if (data != nullptr) {
             setChild34Sc_(obj, &static_cast<Mgr304View*>(data)->anchor);

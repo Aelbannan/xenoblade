@@ -51,7 +51,6 @@ extern "C" int getParamSelS16(u8* obj, int arg);   // CActParamData short-value 
 // C-ABI imports (retail symbols unmangled).
 extern "C" void releaseVisionSlot(void* obj, int arg);   // vision slot release
 
-extern "C" int CChain_ProbeActorReady(void* battleSub, void* actor);  // battle sub-object query
 
 extern "C" void BtlDmg_SetDamageType(u8);
 
@@ -74,11 +73,8 @@ extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
 extern "C" float calcBattleDamage(void* obj, void* target, void* source);
 
-extern "C" void PartyGaugeAddClamped(void* obj, int value);   // party-gauge add
 
-extern "C" void CBattleMan_ClearEventNotify(void* battleMgr, void* actor, int flag);
 
-extern "C" void CChain_AccumGaugeDelta(void* battleSub, void* actor, float value);
 
 extern "C" int __ptmf_cmpr(void* a, void* b);
 

@@ -7,11 +7,13 @@
 // All 20 functions use placeholder retail symbols (extern "C") so hexdiff /
 // objdiff can pair them exactly with the retail object.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 
 #include "kyoshin/cf/CtrlMovePC.hpp"
+#include "kyoshin/cf/CtrlActApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/math/Random.hpp"
@@ -30,9 +32,7 @@ struct MoveFnTable {
 extern "C" {
 
 // CCtrlMoveBase helpers.
-void maskMoveBaseFlags(CCtrlMovePC* self);
 void moveBaseUnlink(CCtrlMovePC* self);
-void setMoveFacing(CCtrlMovePC* self, const Vec* v, f32 f);
 
 // ptmf runtime.
 extern int (CCtrlMovePC::*const __ptmf_null)();
@@ -80,7 +80,7 @@ CCtrlMovePC::CCtrlMovePC(void* owner, void* obj) : CCtrlMoveBase(owner) {
     setVtable(lbl_eu_80532D58);
 
     mStateFunc = __ptmf_null;
-    maskMoveBaseFlags(this);
+    maskMoveBaseFlags((void*)this);
 
     mStateFunc = lbl_eu_80532B60;
     moveBaseUnlink(this);
@@ -191,7 +191,7 @@ extern "C" int movePcFacingSinCosUpdate(CCtrlMovePC* self) {
         self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * s);
         f32 c = ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();
         self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * c);
-        setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+        setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, lbl_eu_80667B68);
     } else {
         self->mStateFunc = lbl_eu_80532C98;
         ((cf::CfMoveData*)self->mpDataPtr)->mField14 = lbl_eu_80667B60;
@@ -214,7 +214,7 @@ extern "C" int movePcCounterFacingUpdate(CCtrlMovePC* self) {
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
             f32 b = ((cf::CfObjectActor*)self->mObject)->CfObject_getMoveHeadAngle();
             self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * b);
-            setMoveFacing(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+            setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, lbl_eu_80667B68);
             return 0;
         }
     }
@@ -286,7 +286,7 @@ static inline void releaseTask(CCtrlMovePC* s) {
 extern "C" void movePcCondFullReset(void* selfv, int flag) {
     CCtrlMovePC* self = (CCtrlMovePC*)selfv;
     if (flag != 0) {
-        maskMoveBaseFlags(self);
+        maskMoveBaseFlags((void*)self);
         self->mStateFunc = lbl_eu_80532B78;
         moveBaseUnlink(self);
         self->mFlags4C = 0x80000000u;
@@ -314,7 +314,7 @@ extern "C" void movePcCondFullReset(void* selfv, int flag) {
 // ============================================================================
 extern "C" void movePcResetAndSetPos(CCtrlMovePC* self, const Vec* pos) {
     if (self->mFlags4C & 0x00800000u) {        // rlwinm. bit 8
-        maskMoveBaseFlags(self);
+        maskMoveBaseFlags((void*)self);
         self->mStateFunc = lbl_eu_80532B84;
         moveBaseUnlink(self);
         self->mFlags4C = 0x80000000u;
@@ -351,7 +351,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     self->mPlayer = (p0 != 0) ? (char*)p0 - 0x3e9c : 0;
     if ((self->mFlags4C & 0x100u) != 0) {
     // --- one-shot reset ---
-    maskMoveChildFlags(self);
+    maskMoveChildFlags((maskMoveChildFlags_obj*)self);
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -614,7 +614,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         sub2->mField3F4 = ml::CVec3::zero.y;
         sub2->mField3F8 = ml::CVec3::zero.z;
     }
-    maskMoveChildFlags(self);
+    maskMoveChildFlags((maskMoveChildFlags_obj*)self);
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -698,7 +698,7 @@ extern "C" int movePcUpdateWalk(cf::CCtrlMovePC* self) {
                 ml::CVec3 moved = self->mVecC0 + step;
                 ml::CVec3 movedCopy = moved;
                 (void)movedCopy;
-                if (((Probe2Fn)Coli_SweepSegNodes)(sEneColiProbe,
+                if (((Probe2Fn)Coli_SweepSegNodes)(sEneColiProbe,  // DEBT(callcast): C symbol; retail call view differs from the canonical typed declaration
                         (char*)self->mObject + 0x44a8)) {
                     self->mArr124[3] = 120;
                 }
@@ -1198,7 +1198,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
                 spd = 0.0f;
             }
 
-            setMoveFacing(self, (const Vec*)&self->mVec90, spd);
+            setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, spd);
             return 0;
         }
     } else {
@@ -1207,7 +1207,7 @@ extern "C" int movePcUpdateApproach(cf::CCtrlMovePC* self) {
             f32 ang = movePcProbeGoalAngle(self);
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
             self->mVec90.z = CosFIdx__Q24nw4r4mathFf(40.7436637878418f * ang);
-            setMoveFacing(self, (const Vec*)&self->mVec90, 0.20000000298023224f);
+            setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, 0.20000000298023224f);
             return 0;
         }
         self->mArr124[4] = 0;
@@ -1237,7 +1237,7 @@ extern "C" int movePcUpdateTop(cf::CCtrlMovePC* self) {
 
     if ((self->mFlags4C & 0x800000u) == 0) {
         self->mFlags4C |= 0x00800000u;
-        maskMoveChildFlags(self);
+        maskMoveChildFlags((maskMoveChildFlags_obj*)self);
         if (self->mTask != 0) {
             void* gm = cf::CfGameManager::getGameSubManager();
             if (gm != 0) {
@@ -1963,7 +1963,7 @@ extern "C" int movePcSteerToGoal(cf::CCtrlMovePC* self) {
         }
         self->mVec90.x = right.x * inv2 + self->mVec90.x;
         self->mVec90.z = right.z * inv2 + self->mVec90.z;
-        setMoveFacing(self, (const Vec*)&self->mVec90, spd);
+        setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, spd);
         return 0;
     }
 
@@ -2038,7 +2038,7 @@ extern "C" int movePcUpdateFollow(cf::CCtrlMovePC* self) {
                 ml::CVec3 out(delta);
                 if (moveBaseRoute(self, &out, 1) != 0) {
                     moveBaseChase(self, &self->mVec90, &out);
-                    setMoveFacing(self, (const Vec*)&self->mVec90, 0.20000000298023224f);
+                    setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, 0.20000000298023224f);
                     return 0;
                 }
             } else if (bestLen < 2.200000047683716f) {
@@ -2259,7 +2259,7 @@ extern "C" int movePcUpdateReposition(cf::CCtrlMovePC* self) {
         sub2->mField3F4 = ml::CVec3::zero.y;
         sub2->mField3F8 = ml::CVec3::zero.z;
     }
-    maskMoveChildFlags(self);
+    maskMoveChildFlags((maskMoveChildFlags_obj*)self);
     if (self->mTask != 0) {
         void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
@@ -2331,7 +2331,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
                                     *vp = scaled;
                                     moveBaseLerp(self, vp);
                                     self->mVec90 = *vp;
-                                    setMoveFacing(self, (const Vec*)&self->mVec90, 1.0f);
+                                    setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, 1.0f);
                                     flag = 0;
                                 }
                             }
@@ -2395,7 +2395,7 @@ extern "C" void movePcTickState(cf::CCtrlMovePC* self) {
                 }
             }
             if (blocked != 0) {
-                setMoveFacing(self, (const Vec*)&self->mVec90, 0.20000000298023224f);
+                setMoveFacing((cf::CCtrlMoveBase*)self, (const ml::CVec3*)&self->mVec90, 0.20000000298023224f);
                 self->mArr124[13] = 0;
                 self->mFlags4C &= ~0x40u;
                 flag = 0;

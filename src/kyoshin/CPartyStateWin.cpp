@@ -9,6 +9,8 @@
 #include "monolib/core/CTaskManager.hpp"
 #include "functions.hpp"
 #include "kyoshin/CPartyStateWinImports.hpp"
+#include "kyoshin/CModelDisp.hpp"
+#include "kyoshin/CPartyState.hpp"
 #include "kyoshin/CEquipChange.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/scn/CScn.hpp"
@@ -506,12 +508,12 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     }
 }
 
-u8 PartyStateWin_GetLatchFlag(CPartyStateWin* self) { return self->field_6BE5; }
+int PartyStateWin_GetLatchFlag(CPartyStateWin* self) { return self->field_6BE5; }
 
 // Party-state sub-step gate: once the embedded party state at +0x3038 is
 // ready (isPartyReady), advance its internal step (UIBattleReleaseAll).
 extern "C" void PartyStateWin_StepPartySub(CPartyStateWin* self) {
-    if (isPartyReady(reinterpret_cast<CPartyState*>(&self->_pad3038))) {
+    if (reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyReady()) {
         UIBattleReleaseAll();
     }
 }
@@ -538,7 +540,7 @@ int PartyStateWin_QueryMenuClose(CPartyStateWin* self) {
 // sub-objects, arm the window (state 0x1) and play the open sound.
 extern "C" void PartyStateWin_StateOpen(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->isInitialized() &&
-        isPartySettled(reinterpret_cast<CPartyState*>(&self->_pad3038))) {
+        reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartySettled()) {
         (*reinterpret_cast<CTitleAHelp*>(&self->_pad18)).func_801C412C();
         setupPartySelect(reinterpret_cast<CPartyState*>(&self->_pad3038));
         ModelDispStartFadeOut(reinterpret_cast<CModelDisp*>(&self->_pad50));
@@ -553,7 +555,7 @@ extern "C" void PartyStateWin_StateOpen(CPartyStateWin* self) {
 // the model display is ready, arm the window (state 0x2).
 extern "C" void PartyStateWin_StateGateOpen(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->func_801C4124() &&
-        isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
+        reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyIdle() &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
         self->field_6BE4 = 0x2;
     }
@@ -590,7 +592,7 @@ extern "C" void PartyStateWin_StatePartyInput(CPartyStateWin* self) {
     if (a) {
         cancelPartySelect(reinterpret_cast<CPartyState*>(&self->_pad3038));
         PartyStateWin_RefreshTitleHelp(self);
-        if (isPartyCloseRequested(reinterpret_cast<CPartyState*>(&self->_pad3038)) != 0) {
+        if (reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyCloseRequested() != 0) {
             BuildSlotItemLists(0);
             (*reinterpret_cast<CTitleAHelp*>(&self->_pad18)).markReplayClose();
             startPartyPanelClose(reinterpret_cast<CPartyState*>(&self->_pad3038));
@@ -598,7 +600,7 @@ extern "C" void PartyStateWin_StatePartyInput(CPartyStateWin* self) {
             self->field_6BE4 = 4;
         }
     } else if (b) {
-        if (isPartyHighlightSet(reinterpret_cast<CPartyState*>(&self->_pad3038)) != 0) {
+        if (reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyHighlightSet() != 0) {
             func_801FD594(reinterpret_cast<CPartyState*>(&self->_pad3038));
             PartyStateWin_RefreshTitleHelp(self);
         } else if (isPlayerReadyForEvent__Q22cf13CfGameManagerFv(0, 1)) {
@@ -637,10 +639,10 @@ extern "C" void PartyStateWin_StatePartyInput(CPartyStateWin* self) {
 // sound when it advances) and latch the 0x6BE5 flag.
 extern "C" void PartyStateWin_StateSettle(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->func_801C4124() &&
-        isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
+        reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyIdle() &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
         if (self->field_6BE5 == 0) {
-            if (isPartyReady(reinterpret_cast<CPartyState*>(&self->_pad3038))) {
+            if (reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyReady()) {
                 UIBattleReleaseAll();
             }
             self->field_6BE5 = 1;
@@ -656,7 +658,7 @@ extern "C" void PartyStateWin_StateSettle(CPartyStateWin* self) {
 // state 0x5.
 extern "C" void PartyStateWin_StateRefresh(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->func_801C4124() &&
-        isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
+        reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyIdle() &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50)) &&
         reinterpret_cast<CEquipChange*>(&self->_pad4150)->GetSelWhenReady() &&
         reinterpret_cast<CSysWin*>(&self->_pad6BA8)->isReady()) {
@@ -666,7 +668,7 @@ extern "C" void PartyStateWin_StateRefresh(CPartyStateWin* self) {
         (*reinterpret_cast<CTitleAHelp*>(&self->_pad18)).setNameText(name);
         (*reinterpret_cast<CTitleAHelp*>(&self->_pad18)).func_801C41E8(0x15);
         ModelDispEquip_SetEquipSlot(&self->mModelDispEquip,
-                      (u8)getPartySelectIndex(reinterpret_cast<CPartyState*>(&self->_pad3038)));
+                      (u8)reinterpret_cast<CPartyState*>(&self->_pad3038)->getPartySelectIndex());
         // The slot value goes through a local so the mask lands after the
         // receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24 -
         // same shape as PartyStateWin_StateEquipNext).
@@ -1046,7 +1048,7 @@ extern "C" void PartyStateWin_StateRebuild(CPartyStateWin* self) {
 // us-801fd2c8 | PartyStateWin_StateGateReopen (same body as PartyStateWin_StateGateOpen)
 extern "C" void PartyStateWin_StateGateReopen(CPartyStateWin* self) {
     if (reinterpret_cast<CTitleAHelp*>(&self->_pad18)->func_801C4124() &&
-        isPartyIdle(reinterpret_cast<CPartyState*>(&self->_pad3038)) &&
+        reinterpret_cast<CPartyState*>(&self->_pad3038)->isPartyIdle() &&
         ModelDispGetDoneFlag(reinterpret_cast<CModelDisp*>(&self->_pad50))) {
         self->field_6BE4 = 0x2;
     }
@@ -1105,8 +1107,8 @@ extern "C" void PartyStateWin_StateEquipRefresh(CPartyStateWin* self) {
                 CPartyStateWinListSlot* slot = reinterpret_cast<CPartyStateWinListSlot*>(
                     getEntryAt(holder.get(), 0));
                 if (slot->field_0x4 != 0) {
-                    CfObjectPc_setupFrame(
-                        getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4),
+                    ((CfObjectPcSetupFrameFn)CfObjectPc_setupFrame)(  // DEBT(callcast): name mangles 1 param (...FPQ22cf10CfObjectPc) but retail callers set extra r4
+                        reinterpret_cast<cf::CfObjectPc*>(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4)),
                         0);
                 }
             }
@@ -1141,7 +1143,7 @@ extern "C" void PartyStateWin_StateEquipExit(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         self->field_6BE4 = 0x11;
         ModelDispEquip_StartFadeOut(&self->mModelDispEquip);
-        ModelDispEquip_ResetColorWhite(&self->mModelDispEquip);
+        ModelDispEquip_ResetColorWhite(reinterpret_cast<CModelDispEquip*>(&self->mModelDispEquip));
     }
 }
 
@@ -1166,7 +1168,7 @@ extern "C" void PartyStateWin_StateEquipDisplay(CPartyStateWin* self) {
         int c6 = (held >> 2) & 1;
         int c7 = (held >> 3) & 1;
         if (down) {
-            ModelDispEquip_ResetColorWhite(&self->mModelDispEquip);
+            ModelDispEquip_ResetColorWhite(reinterpret_cast<CModelDispEquip*>(&self->mModelDispEquip));
         } else if (left) {
             ModelDispEquip_ScaleDepthDown(&self->mModelDispEquip);
         } else if (right) {
@@ -1207,7 +1209,7 @@ extern "C" void PartyStateWin_StateEquipDisplay(CPartyStateWin* self) {
         if (wUp) {
             (*reinterpret_cast<CTitleAHelp*>(&self->_pad18)).func_801C41E8(0x2d);
             if (down) {
-                ModelDispEquip_ResetColorWhite(&self->mModelDispEquip);
+                ModelDispEquip_ResetColorWhite(reinterpret_cast<CModelDispEquip*>(&self->mModelDispEquip));
             } else if (left) {
                 ModelDispEquip_ScaleDepthDown(&self->mModelDispEquip);
             } else if (right) {
@@ -1254,7 +1256,7 @@ extern "C" void PartyStateWin_StateEquipMenuOpen(CPartyStateWin* self) {
     if (ModelDispEquip_GetState20(&self->mModelDispEquip)) {
         self->field_6BE4 = 0x14;
         ModelDispEquip_StartFadeOut(&self->mModelDispEquip);
-        ModelDispEquip_ResetColorStep(&self->mModelDispEquip);
+        ModelDispEquip_ResetColorStep(reinterpret_cast<CModelDispEquip*>(&self->mModelDispEquip));
     }
 }
 
@@ -1507,9 +1509,9 @@ extern "C" void PartyStateWin_StoreVec4Quad(CPartyStateWin* self, const u32* src
 // stack local (retail reads its own frame at sp+0xC..0x2A; the only retail
 // caller passes just the object and the 4/5 type flag) - reproduced verbatim
 // so the stack reads land at the retail offsets.
-// Escape hatch so MWCC cannot delete the (retail-garbage) record reads:
-// reading through a volatile pointer keeps every load real and pinned in
-// ascending order before the address math (retail batch-load shape).
+// The (retail-garbage) record reads are ordinary member loads and stay
+// pinned in ascending order before the address math (retail batch-load
+// shape).
 extern "C" void PartyStateWin_PushRingRecord(CPartyStateWinRing* self, u32 flag) {
     // Uninitialized stack record: retail reads its own frame at sp+0xC..0x2A
     // (the only retail caller passes just the object and the type flag, so
@@ -1524,7 +1526,7 @@ extern "C" void PartyStateWin_PushRingRecord(CPartyStateWinRing* self, u32 flag)
     // interleave and the stwux. All temps are consumed from locals so the
     // loads batch into distinct registers instead of reloading per store.
     CPartyStateWinRec rec;
-    volatile CPartyStateWinRec* rp = &rec;
+    CPartyStateWinRec* rp = &rec;
     u32 v4;
     u32 v8;
     u32 vc;

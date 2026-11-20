@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_800A3B24.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/MTRand.hpp"
 #include "monolib/core/CDrawGX.hpp"
@@ -11,71 +12,28 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 
-// Retail SDA2/data constants referenced by the PS math helpers below. Declared
-// by retail label so the emitted @sda21 relocs match retail byte-for-byte; the
-// values themselves live in the retail binary's .sdata2/.data sections.
-extern const float lbl_eu_806667D8;  // 0.0f
-// 1.0f (lbl_eu_806667E8)
-extern const float lbl_eu_806667E8;
-// ml::epsilon (ml::epsilon)
-// pi (ml::pi)
-// 2*pi (ml::tau)
-// nw4r FSqrt assert source-file string + message (retail .data)
+// Retail data and string labels referenced by the PS math helpers below.
+// nw4r FSqrt assert source-file string + message.
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
-// squared-length guard used by the segment projection helper (lbl_eu_806667F8)
-extern const float lbl_eu_806667F8;
-// 0.5f (lbl_eu_806667F4) - random-direction offset
- extern const float lbl_eu_806667F4;
-// random-angle range (ml::halfpi)
-// random-angle table scale (lbl_eu_806667D0)
- extern const float lbl_eu_806667D0;
-// radians -> FIdx conversion factor (lbl_eu_806667D4)
- extern const float lbl_eu_806667D4;
-// s32->f32 conversion magic double (0x4330000080000000), referenced by the
-// builtin (float) cast in VecMath_RandomAngleOffset. MWCC pools that magic as a TU-local
-// @N label while retail references the shared .sdata2 blob, so the reloc name
-// drifts (MWCC_CASES §7i); the extern documents the retail symbol and is
-// the anchor a manual bit-pattern conversion would subtract (union + extern
-// emits the correct reloc name but the double fsub/fmul instead of the
-// builtin's fsubs, so the builtin is preferred here).
-extern double lbl_eu_806667E0;
-// random-angle offset table (lbl_eu_80572AA0); element 0 is never written
- extern float lbl_eu_80572AA0[4];
-// 2.0f (lbl_eu_806667EC) and -2.0f (lbl_eu_806667F0), spline basis weights
- extern const float lbl_eu_806667EC;
- extern const float lbl_eu_806667F0;
-// 0.3f (lbl_eu_80666804) - debug sphere alpha
- extern const float lbl_eu_80666804;
-// double 2.0 (lbl_eu_80666808) - sphere arc multiplier
- extern const double lbl_eu_80666808;
+// random-angle offset table; element 0 is never written.
+extern float lbl_eu_80572AA0[4];
 // Reference directions used by the facing-matrix builder: (0,1,0) up and
 // (1,0,1); each lazily initialized once (.data).
- extern ml::CVec3 lbl_eu_80572AB0;
- extern ml::CVec3 lbl_eu_80572ABC;
- extern s8 lbl_eu_80663E92;
- extern s8 lbl_eu_80663E93;
+extern ml::CVec3 lbl_eu_80572AB0;
+extern ml::CVec3 lbl_eu_80572ABC;
+extern s8 lbl_eu_80663E92;
+extern s8 lbl_eu_80663E93;
 // Scene/view globals consumed by the debug-draw setup helper.
 class CScn;
 class CView;
- extern CView* gmCurrentView;
+extern CView* gmCurrentView;
 // random-angle table index / one-time init flag (.sbss bytes)
- extern u8 lbl_eu_80663E90;
- extern s8 lbl_eu_80663E91;
-// capsule-axis constants for the collision probe helper (VecMath_GroundProbeDown)
- extern const float lbl_eu_80666814;
- extern const float lbl_eu_80666818;
- extern const float lbl_eu_8066681C;
- extern const float lbl_eu_80666820;
-// 0.25f (lbl_eu_806667FC) - sphere radius offset
- extern const float lbl_eu_806667FC;
-// -1.0f (lbl_eu_80666800) - box face-direction constant
- extern const float lbl_eu_80666800;
-// Box-face offset table {1.0f, 1.7f, 0.1f, 0.0f} (split1 .data) - Y raise
+extern u8 lbl_eu_80663E90;
+extern s8 lbl_eu_80663E91;
+// Box-face offset table {1.0f, 1.7f, 0.1f, 0.0f} - Y raise
 // offsets probed by the segment-vs-capsule helper VecMath_SegSphereProbe.
- extern float lbl_eu_80528178[4];
-// Radius scale applied by renderCylinder in non-capsule mode (lbl_eu_80666810)
- extern const float lbl_eu_80666810;
+extern float lbl_eu_80528178[4];
 
 
 // parameters: the retail call site in VecMath_GroundProbeDown only sets r3-r6 and f1
@@ -1010,16 +968,115 @@ extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager
 
 extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(cf::CfDebugDrawManager* self, const ml::CVec3* vec, const ml::CCol4* col, bool mode, float radius = 1.0f);
 
-void cf::CfDebugDrawManager::renderCylinder() {
-    const ml::CVec3* vec;   // forwarded dangling r4 (retail: li r6,0; b Fb)
-    const ml::CCol4* arg3;  // forwarded dangling r5
-    // 4-arg cast: the 5-arg declaration's default radius materializes
-    // `lfs f1, 1.0f` (retail leaves f1 dangling and tails in 0x8 bytes).
-    typedef void (*Fb4)(cf::CfDebugDrawManager*, const ml::CVec3*,
-                        const ml::CCol4*, bool);
-    ((Fb4)renderCylinder__Q22cf18CfDebugDrawManagerFb)(this, vec, arg3, 0);
-}
+#pragma push
+#pragma auto_inline off
+// Real body for the shared cylinder/capsule debug-draw routine. Retail passes
+// the axis end point in r4, the draw color in r5, the capsule flag in r6 and
+// the radius in f1; the default argument keeps the 0x8 tail-jump wrappers from
+// materializing f1 (they forward a dangling radius like retail does).
+//
+// Twelve transformed-point buffers are declared at function scope: MWCC gives
+// each draw.add site its own stack slot (retail frame layout), so they must
+// never be merged into block-scoped temporaries.
+extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(
+        cf::CfDebugDrawManager* self, const ml::CVec3* endPt, const ml::CCol4* col,
+        bool mode, float radius) {
+    ml::CVec3 p01, p02, p03, p04, p05, p06;
+    ml::CVec3 p07, p08, p09, p10, p11, p12;
+    // Axis direction: end - start via operator- (inlined VEC3Sub paired-single
+    // kernel into a temp, then component copy into dir).
+    ml::CVec3 dir = *endPt - self->mPos;
+    float len = PSVECMag(dir);
 
+    // Facing matrix along the axis, translated to the cylinder base.
+    ml::CMat34 mat;
+    VecMath_BuildFacingMatrix(&mat, &dir, &self->mPos);
+
+    if (mode == false) {
+        radius = radius * 0.77f;
+    }
+
+    CDrawGX draw;
+    TexMan_ApplyCamPersp_034C(gmScene, &draw, gmCurrentView);
+    draw.setCol(*col);
+
+    // Cylinder wall drawn as two 18-vertex triangle strips. Every angle is
+    // recomputed naively in double exactly like retail - no CSE between the
+    // CosFIdx/SinFIdx calls.
+    double twoPi = 2.0 * ml::pi;
+    int seg = 8;
+    draw.begin(6, 0x12);
+    for (int i = 0; i <= seg; i++) {
+        float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+        float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+        mat.mul(p01, ml::CVec3(c, s, 0.0f));
+        draw.add(ml::CVec3(p01));
+        mat.mul(p02, ml::CVec3(c, s, len));
+        draw.add(ml::CVec3(p02));
+    }
+    draw.end();
+    draw.begin(6, 0x12);
+    for (int i = 0; i <= seg; i++) {
+        float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+        float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+        mat.mul(p03, ml::CVec3(c, s, len));
+        draw.add(ml::CVec3(p03));
+        mat.mul(p04, ml::CVec3(c, s, 0.0f));
+        draw.add(ml::CVec3(p04));
+    }
+    draw.end();
+
+    if (mode != false) {
+        // Capsule: negative hemisphere cap center then its rim ring.
+        draw.begin(7, 0xa);
+        mat.mul(p05, ml::CVec3(0.0f, 0.0f, -radius));
+        draw.add(ml::CVec3(p05));
+        for (int i = 0; i <= seg; i++) {
+            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+            mat.mul(p06, ml::CVec3(c, s, 0.0f));
+            draw.add(ml::CVec3(p06));
+        }
+        draw.end();
+
+        // Positive cap: apex at len+radius, rim ring walked with descending
+        // angles (seg - i) like retail.
+        draw.begin(7, 0xa);
+        mat.mul(p07, ml::CVec3(0.0f, 0.0f, len + radius));
+        draw.add(ml::CVec3(p07));
+        for (int i = 0; i <= seg; i++) {
+            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
+            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
+            mat.mul(p08, ml::CVec3(c, s, len));
+            draw.add(ml::CVec3(p08));
+        }
+        draw.end();
+    } else {
+        // Plain cylinder caps: flat disc center + rim ring at each end.
+        draw.begin(7, 0xa);
+        mat.mul(p09, ml::CVec3(0.0f, 0.0f, 0.0f));
+        draw.add(ml::CVec3(p09));
+        for (int i = 0; i <= seg; i++) {
+            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
+            mat.mul(p10, ml::CVec3(c, s, 0.0f));
+            draw.add(ml::CVec3(p10));
+        }
+        draw.end();
+
+        draw.begin(7, 0xa);
+        mat.mul(p11, ml::CVec3(0.0f, 0.0f, len));
+        draw.add(ml::CVec3(p11));
+        for (int i = 0; i <= seg; i++) {
+            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
+            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
+            mat.mul(p12, ml::CVec3(c, s, len));
+            draw.add(ml::CVec3(p12));
+        }
+        draw.end();
+    }
+}
+#pragma pop
 int VecMath_GroundProbeDown(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
     // Push b up along the +Y capsule axis until the segment probe against c
     // misses, snapping to the probe object's height reference when it does.
@@ -1132,116 +1189,15 @@ int VecMath_GroundProbeDual(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* a
     return ret;
 }
 
-#pragma push
-#pragma auto_inline off
-// Real body for the shared cylinder/capsule debug-draw routine. Retail passes
-// the axis end point in r4, the draw color in r5, the capsule flag in r6 and
-// the radius in f1; the default argument keeps the 0x8 tail-jump wrappers from
-// materializing f1 (they forward a dangling radius like retail does).
-//
-// Twelve transformed-point buffers are declared at function scope: MWCC gives
-// each draw.add site its own stack slot (retail frame layout), so they must
-// never be merged into block-scoped temporaries.
-extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(
-        cf::CfDebugDrawManager* self, const ml::CVec3* endPt, const ml::CCol4* col,
-        bool mode, float radius) {
-    ml::CVec3 p01, p02, p03, p04, p05, p06;
-    ml::CVec3 p07, p08, p09, p10, p11, p12;
-    // Axis direction: end - start via operator- (inlined VEC3Sub paired-single
-    // kernel into a temp, then component copy into dir).
-    ml::CVec3 dir = *endPt - self->mPos;
-    float len = PSVECMag(dir);
-
-    // Facing matrix along the axis, translated to the cylinder base.
-    ml::CMat34 mat;
-    VecMath_BuildFacingMatrix(&mat, &dir, &self->mPos);
-
-    if (mode == false) {
-        radius = radius * 0.77f;
-    }
-
-    CDrawGX draw;
-    TexMan_ApplyCamPersp_034C(gmScene, &draw, gmCurrentView);
-    draw.setCol(*col);
-
-    // Cylinder wall drawn as two 18-vertex triangle strips. Every angle is
-    // recomputed naively in double exactly like retail - no CSE between the
-    // CosFIdx/SinFIdx calls.
-    double twoPi = 2.0 * ml::pi;
-    int seg = 8;
-    draw.begin(6, 0x12);
-    for (int i = 0; i <= seg; i++) {
-        float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-        float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-        mat.mul(p01, ml::CVec3(c, s, 0.0f));
-        draw.add(ml::CVec3(p01));
-        mat.mul(p02, ml::CVec3(c, s, len));
-        draw.add(ml::CVec3(p02));
-    }
-    draw.end();
-    draw.begin(6, 0x12);
-    for (int i = 0; i <= seg; i++) {
-        float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-        float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-        mat.mul(p03, ml::CVec3(c, s, len));
-        draw.add(ml::CVec3(p03));
-        mat.mul(p04, ml::CVec3(c, s, 0.0f));
-        draw.add(ml::CVec3(p04));
-    }
-    draw.end();
-
-    if (mode != false) {
-        // Capsule: negative hemisphere cap center then its rim ring.
-        draw.begin(7, 0xa);
-        mat.mul(p05, ml::CVec3(0.0f, 0.0f, -radius));
-        draw.add(ml::CVec3(p05));
-        for (int i = 0; i <= seg; i++) {
-            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-            mat.mul(p06, ml::CVec3(c, s, 0.0f));
-            draw.add(ml::CVec3(p06));
-        }
-        draw.end();
-
-        // Positive cap: apex at len+radius, rim ring walked with descending
-        // angles (seg - i) like retail.
-        draw.begin(7, 0xa);
-        mat.mul(p07, ml::CVec3(0.0f, 0.0f, len + radius));
-        draw.add(ml::CVec3(p07));
-        for (int i = 0; i <= seg; i++) {
-            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
-            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
-            mat.mul(p08, ml::CVec3(c, s, len));
-            draw.add(ml::CVec3(p08));
-        }
-        draw.end();
-    } else {
-        // Plain cylinder caps: flat disc center + rim ring at each end.
-        draw.begin(7, 0xa);
-        mat.mul(p09, ml::CVec3(0.0f, 0.0f, 0.0f));
-        draw.add(ml::CVec3(p09));
-        for (int i = 0; i <= seg; i++) {
-            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)i / seg));
-            mat.mul(p10, ml::CVec3(c, s, 0.0f));
-            draw.add(ml::CVec3(p10));
-        }
-        draw.end();
-
-        draw.begin(7, 0xa);
-        mat.mul(p11, ml::CVec3(0.0f, 0.0f, len));
-        draw.add(ml::CVec3(p11));
-        for (int i = 0; i <= seg; i++) {
-            float c = radius * nw4r::math::CosFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
-            float s = radius * nw4r::math::SinFIdx(40.743664f * (float)(twoPi * (double)(seg - i) / seg));
-            mat.mul(p12, ml::CVec3(c, s, len));
-            draw.add(ml::CVec3(p12));
-        }
-        draw.end();
-    }
+void cf::CfDebugDrawManager::renderCylinder() {
+    const ml::CVec3* vec;   // forwarded dangling r4 (retail: li r6,0; b Fb)
+    const ml::CCol4* arg3;  // forwarded dangling r5
+    // 4-arg cast: the 5-arg declaration's default radius materializes
+    // `lfs f1, 1.0f` (retail leaves f1 dangling and tails in 0x8 bytes).
+    typedef void (*Fb4)(cf::CfDebugDrawManager*, const ml::CVec3*,
+                        const ml::CCol4*, bool);
+    ((Fb4)renderCylinder__Q22cf18CfDebugDrawManagerFb)(this, vec, arg3, 0);  // DEBT(callcast): Fb-mangled name, retail call has 4 args and leaves f1 stale (no default radius)
 }
-#pragma pop
-
 void cf::CfDebugDrawManager::renderCapsule() {
     const ml::CVec3* vec;   // forwarded dangling r4 (retail: li r6,1; b Fb)
     const ml::CCol4* arg3;  // forwarded dangling r5
@@ -1249,5 +1205,5 @@ void cf::CfDebugDrawManager::renderCapsule() {
     // `lfs f1, 1.0f` (retail leaves f1 dangling and tails in 0x8 bytes).
     typedef void (*Fb4)(cf::CfDebugDrawManager*, const ml::CVec3*,
                         const ml::CCol4*, bool);
-    ((Fb4)renderCylinder__Q22cf18CfDebugDrawManagerFb)(this, vec, arg3, 1);
+    ((Fb4)renderCylinder__Q22cf18CfDebugDrawManagerFb)(this, vec, arg3, 1);  // DEBT(callcast): Fb-mangled name, retail call has 4 args and leaves f1 stale (no default radius)
 }

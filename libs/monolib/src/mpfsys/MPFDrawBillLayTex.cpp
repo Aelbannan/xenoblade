@@ -1,5 +1,6 @@
 #include "monolib/mpfsys/MPFDrawBillLayTex.hpp"
 #include "monolib/mpfsys/MPFDrawBillboard.hpp"
+#include "monolib/mpfsys/UnkClass_80471EC8.hpp"
 
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
@@ -72,7 +73,6 @@ extern "C" {
     void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
     void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
     void loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(f32);
     void setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(u8);
     void resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
     void applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -261,7 +261,7 @@ extern "C" void drawBillPaired(MPFDrawBillData* billboard, Vec* positions, MPFDr
     MPFDrawBillPair* pair = list->pairs;
     s32 count = (s32)(list->count >> 1);
     for (s32 i = 0; i < count; i++, pair++) {
-        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
+        mpfsys::UnkClass_80471EC8::setKeyAlpha(pair->parameter);
 
         u32 value = pair->index;
         u32 base = (value & lbl_eu_8066A72C) << 1;
@@ -580,7 +580,7 @@ extern "C" void submitBillPaired(void* self, MPFDrawBillData* billboard, MPFDraw
     MPFDrawBillPair* pair = list->pairs;
     s32 count = (s32)(list->count >> 1);
     for (s32 i = 0; i < count; i++, pair++) {
-        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
+        mpfsys::UnkClass_80471EC8::setKeyAlpha(pair->parameter);
         u32 value = pair->index;
         u32 base = (value & lbl_eu_8066A72C) << 2;
         base &= mask;

@@ -165,3 +165,12 @@ public:
     void EneSt_RefreshMenu();
     void EneSt_ScanSlotHighlight(Actor2Layout* actor2);
 };
+
+// Real C++ linkage helpers defined in CMenuEnemyState.cpp.
+void EneSt_CursorActivate(CPcSelectCursor* cursor);
+void EneSt_CursorToState3(CPcSelectCursor* cursor);
+void EneSt_CursorToState4(CPcSelectCursor* cursor);
+int EneSt_CursorGetFlag(CPcSelectCursor* cursor);
+void EneSt_CursorSet41(CPcSelectCursor* cursor, u8 value);
+void EneSt_CursorReset(CPcSelectCursor* cursor);
+void EneSt_MarkUnk54(CMenuEnemyState* state);

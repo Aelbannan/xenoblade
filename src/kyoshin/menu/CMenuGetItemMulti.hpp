@@ -237,7 +237,8 @@ struct CfGameManagerTermFields {
 // C-ABI imports (retail emits these unmangled). The .sbss/.rodata labels each
 // interacts with are noted on the decl.
 extern "C" void Bdat_GetTable_AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
-// CSysWin content setters (grade-up window setup in GetItemMulti_PruneEntries /
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self); // layout-memory region ctor
+
 // GetItemMulti_HandlePad); sysWinSwitchKindPane/BFC8 take CSysWin* (declared in CSysWin.hpp).
 // Item removal helpers (item sweeps in GetItemMulti_PruneEntries): release an entry
 // and notify the item system.
@@ -250,7 +251,8 @@ extern "C" void UIWin_BuildFlagBuf(u32 a, u32 id, u32 b);
 // Per-frame system-window/cursor updates (Move's tail after the state switch).
 // System-window lifecycle queries used by Move's state machine.
 // Item-menu active check (CMenuItem.cpp) and item-created callback (CUICfManager.cpp).
-extern "C" u32 ItemMenu_IsPresent();
+// Defined in CMenuItem.cpp with C++ linkage.
+unsigned long ItemMenu_IsPresent();
 extern "C" u32 CUICfManager_queuePauseItemMenu(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
 extern "C" void removeTboxById(u32 obj);             // action-source teardown (Term, after the gmGameFlags clear)
@@ -261,9 +263,10 @@ extern "C" void removeTboxById(u32 obj);             // action-source teardown (
 extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 c,
                                        u32 d, u32 e, u32 f, u8 g);
 
-// C++-linkage import: retail symbol is the mangled findObjectById__Fi
-// (actor id -> action source).
-int findObjectById(int id);
+// C++-linkage actor-id lookup; canonical owner is code_800B06A4.hpp.
+void* findObjectById(int id);
+
+
 
 // Character-record lookup helpers (GetItemMulti_ShowCat13's category-13 display):
 // CtrlObjectParam_GetCharEntry fetches the manager object for a slot id, and
@@ -288,3 +291,11 @@ struct CMenuGetItemCat13Record {
     u8 flagE8;
     u8 bitsE9;
 };
+
+class CProcess;
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+IUIWindow* GetItemMulti_CreateInstance(CProcess* pParent, CScn* pScene,
+                                       u32 a, u32 b, u32 c, u32 d, u32 e,
+                                       u32 f, u8 g);
+u8* GetItemMulti_CreateSimple(CProcess* pParent, u32 arg2, u32 arg3);

@@ -1,5 +1,5 @@
 {
- "baseline_count": 269,
+ "baseline_count": 265,
  "entries": {
   "AXFXChorusExp.o": {
    "class": "content",
@@ -4137,13 +4137,6 @@
   "CfObjectEff.o": {
    "class": "layout",
    "fields": {
-    "drop_data_range": [
-     [
-      ".data",
-      80,
-      488
-     ]
-    ],
     "exact_renames": [
      [
       "__vt__Q22cf8CfObject",
@@ -7737,16 +7730,6 @@
   "snd_BasicSound.o": {
    "class": "layout",
    "fields": {
-    "exact_renames": [
-     [
-      "__vt__Q44nw4r3snd6detail10BasicSound",
-      "lbl_eu_8056A710"
-     ]
-    ],
-    "extern_data_sections": [
-     ".sdata2",
-     ".data"
-    ],
     "pool_patterns": [
      [
       "hex:4330000080000000",

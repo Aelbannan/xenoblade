@@ -11,7 +11,7 @@ class CScn;
 // Global-scope data/function names are not mangled by MWCC; lbl_* keeps the
 // exact retail label.
 extern char lbl_eu_8053AE90[];    // CfHikariItemManager vtable (.data)
-u32 CfRes_getAllocHandle();
+extern "C" u32 CfRes_getAllocHandle();
 
 namespace cf {
 class CfHikariItemManager {
@@ -31,6 +31,11 @@ public:
     /* 0x11A0 */ u32 field_11A0;
 };
 } // namespace cf
+
+// Real C++ entry points defined in this TU (retail mangles these names).
+void hikariRemoveRecordTarget(cf::CfHikariItemManager* self, CfHikariItemRecord* target);
+void hikariSetFlagBit1(void* self);
+void hikariResetManagerRecords(cf::CfHikariItemManager* self);
 
 // ---------------------------------------------------------------------------
 // Catalog-TU shared context for the Hikari (light) item manager functions.

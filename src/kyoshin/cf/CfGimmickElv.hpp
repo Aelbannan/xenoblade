@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 struct CfGimmickElvData;
@@ -51,9 +52,6 @@ void ScnData_FwdB7DD4(void* ptr, u8 id);
 void* ScnData_FwdB80A4(void* ptr, u16 id);
 u16 ScnData_FwdB80CC(void* ptr, u8 id);
 UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);
-void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
-int CfSoundMan_IsRecordActive(int a);
-void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
 void CfSoundMan_WriteSlotParam(u16 id, void* pos);
 void __ptmf_scall(void* obj, void* ptmf);
 void GimmickElv_InitSubObjects(CfGimmickElvData* self);

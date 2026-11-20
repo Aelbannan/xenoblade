@@ -80,14 +80,14 @@ struct MpfsysViewEntry {
 };
 extern MpfsysViewEntry sBillboardCornerTable[2];
 extern u8 lbl_eu_80658410[];
-extern Mtx lbl_eu_80658458; // identity matrix (defined at the bottom of this TU)
+extern Mtx sMpfIdentityMatrix; // identity matrix (defined at the bottom of this TU)
 
 // sdata2 constants used by the five functions below.
 extern const u32 lbl_eu_8066A72C; // index mask
 extern u32 lbl_eu_8066A7A8;
 // Random-scale float constants (defined at the bottom of this TU).
-extern f32 lbl_eu_80663850;
-extern f32 lbl_eu_80663854;
+extern f32 sMpfWobbleScale;
+extern f32 sMpfJitterScale;
 extern const f64 lbl_eu_8066A768; // 2^52 (unsigned int -> double conversion)
 extern const f64 lbl_eu_8066A7C8; // 2^32 (unsigned int -> double conversion)
 
@@ -102,9 +102,9 @@ extern const char lbl_eu_80661E98[];
 extern const char lbl_eu_80661EA8[];
 extern const char lbl_eu_80661E98[4];
 extern const char lbl_eu_80661EA8[4];
-extern char lbl_eu_8066385C[4];
-extern char lbl_eu_80663860[4];
-extern char lbl_eu_80663864[4];
+extern char sMpfRefTag0[4];
+extern char sMpfRefTag1[4];
+extern char sMpfRefTag2[4];
 extern u32 lbl_eu_80665884;
 
 // Retail-named imports. These resolve against retail symbols (Scn_HasCamItem is
@@ -206,8 +206,8 @@ extern "C" void Init__Q34nw4r3g3d7ResFileFv(MpfsysResFileHandle*);
 // Map attach: validate the descriptor magic/revision, then bind the embedded
 // ResFile (alignment-panic, revision/tex checks, Init) and stash the camera /
 // view pair, before refreshing the layer state. Returns 1 on success.
-bool tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
-    mpfsys::UnkClass_80471EC8* self, void* a4, MpfsysResFileHandle* a5, void* a6, u32 a7) {
+bool mpfsys::UnkClass_80471EC8::tryAttach(
+    void* a4, MpfsysResFileHandle* a5, void* a6, u32 a7) {
     MpfsysResDesc* d = (MpfsysResDesc*)a4;
     if (d->field_0x0 == 0x4D504646 && d->field_0x4 == 0x3EA) {
         if (d->field_0x18 != 0) {
@@ -227,11 +227,11 @@ bool tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
             // Memberwise copy: struct assignment would emit an out-of-line
             // copy-assignment operator call that retail does not have.
             a5->mpData = resFile.mpData;
-            MpfsysResState* s = (MpfsysResState*)self;
+            MpfsysResState* s = (MpfsysResState*)this;
             s->field_0x2E08 = a6;
             s->field_0x2E0C = (void*)a7;
         }
-        self->initLayerRecords();
+        this->initLayerRecords();
         return true;
     }
     return false;
@@ -547,18 +547,18 @@ struct MpfsysCamBlock {
 // code_8047BB54.cpp). The literal mangled names are kept (MWCC emits
 // `__`-containing identifiers verbatim), matching the func_8047230C
 // precedent in this file.
-void clearFlag__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, int index) {
+void mpfsys::UnkClass_80471EC8::clearFlag(int index) {
     // Clear one bit of the 256-bit flag array at 0x2D00.
-    MpfsysFlagArray* flags = (MpfsysFlagArray*)self;
+    MpfsysFlagArray* flags = (MpfsysFlagArray*)this;
     if (index > 0xFF) {
         index = 0xFF;
     }
     flags->field_0x2D00[index >> 5] &= ~(1 << (index & 31));
 }
 
-void setFlag__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, int index) {
+void mpfsys::UnkClass_80471EC8::setFlag(int index) {
     // Set one bit of the 256-bit flag array at 0x2D00.
-    MpfsysFlagArray* flags = (MpfsysFlagArray*)self;
+    MpfsysFlagArray* flags = (MpfsysFlagArray*)this;
     if (index > 0xFF) {
         index = 0xFF;
     }
@@ -594,11 +594,10 @@ static inline GXColor ColorFromQuad(const f32* quad, f32 scale) {
     return c;
 }
 
-void getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
-    mpfsys::UnkClass_80471EC8* self, GXColor* outMat, GXColor* outFog) {
+void mpfsys::UnkClass_80471EC8::getLayerColors(GXColor* outMat, GXColor* outFog) {
     // Build two GXColors from the animation object's colour quads; both alphas
     // are forced to 0xFF only after both colours have been copied out.
-    MpfsysResState* s = (MpfsysResState*)self;
+    MpfsysResState* s = (MpfsysResState*)this;
     MpfsysAnimObj64* obj = (MpfsysAnimObj64*)s->field_0x2E08;
     MpfsysColorSrcPtr* src = (MpfsysColorSrcPtr*)obj->field_0x64;
     MpfsysColorBlock* cb = (MpfsysColorBlock*)src->field_0x8;
@@ -638,11 +637,10 @@ void getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
 
 void mpfsys::UnkClass_80471EC8::markDirty() { ((MpfsysResState*)this)->field_0x2E10 = 1; }
 
-void setColorMode__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, s32 mode) {
-    // Layer colour-mode setter. The retail symbol is annotated Fv but takes
-    // (self, mode) in r3/r4 - mode is stored at 0x2E04 and selects one of
+void mpfsys::UnkClass_80471EC8::setColorMode(s32 mode) {
+    // Layer colour-mode setter: mode is stored at 0x2E04 and selects one of
     // three fixed RGB colours written to the f32 triple at 0x2DE0.
-    MpfsysLayerColorState* state = (MpfsysLayerColorState*)self;
+    MpfsysLayerColorState* state = (MpfsysLayerColorState*)this;
     state->field_0x2E04 = mode;
     if (mode == 0) {
         f32 f = lbl_eu_8066A744;
@@ -698,15 +696,15 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
 
     // Randomised jitter: wobble scalar from draw 1, Z jitter from draw 2,
     // Y jitter from draw 3; the X component always adds zero.
-    f32 wob = st->field_2DE8 * (lbl_eu_80663850 * (f32)(rand() % 500));
+    f32 wob = st->field_2DE8 * (sMpfWobbleScale * (f32)(rand() % 500));
     f32 jz = st->field_2DEC *
              (0.4f *
-              (lbl_eu_80663850 * (f32)(rand() % 500) - 0.5f));
+              (sMpfWobbleScale * (f32)(rand() % 500) - 0.5f));
     rec->dir.x += lbl_eu_8066A744;
     rec->dir.z += jz;
     f32 jy = st->field_2DEC *
              (0.4f *
-              (lbl_eu_80663850 * (f32)(rand() % 500) - 0.5f));
+              (sMpfWobbleScale * (f32)(rand() % 500) - 0.5f));
     rec->dir.y += jy;
 
     {
@@ -785,10 +783,10 @@ void simulateLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     f32 dx = vel.x * vk;
     f32 dy = vel.y * vk;
     f32 dz = vel.z * vk;
-    dx *= lbl_eu_80663854 * (f32)(rand() % 100 + 100);
-    dy *= lbl_eu_80663854 * (f32)(rand() % 100 + 100);
+    dx *= sMpfJitterScale * (f32)(rand() % 100 + 100);
+    dy *= sMpfJitterScale * (f32)(rand() % 100 + 100);
     f32 shrink = 1.0f - 0.02f * dt;
-    dz *= lbl_eu_80663854 * (f32)(rand() % 100 + 100);
+    dz *= sMpfJitterScale * (f32)(rand() % 100 + 100);
     Q[1].x += dx;
     Q[1].y += dy;
     Q[1].z += dz;
@@ -957,7 +955,7 @@ struct MpfsysRandState {
 };
 
 // Scene-side time-step provider (returns a scalar in f1).
-extern "C" f32 Scn_GetFrameDelta(void* scene);
+f32 Scn_GetFrameDelta(void* scene);
 
 #pragma push
 void mpfsys::UnkClass_80471EC8::updateLayers() {
@@ -1038,7 +1036,7 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
         MpfMapResFile, texIndex);
     if (tex.mpData == NULL) {
         nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4, lbl_eu_80661E98,
-                        lbl_eu_8066385C);
+                        sMpfRefTag0);
     }
 
     GXTexObj texObj;
@@ -1048,7 +1046,7 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
     if (tex.mpData->flag & nw4r::g3d::ResTexData::FLAG_CIFMT) {
         if (tex.mpData == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4, lbl_eu_80661E98,
-                            lbl_eu_8066385C);
+                            sMpfRefTag0);
         }
         // Palette name: relative offset resolved against the tex data (null
         // when the offset is 0).
@@ -1079,17 +1077,17 @@ void setupMapTexture__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap,
         // assertion on the resolved ResPltt.
         if (pltt.mpData == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2A, lbl_eu_8052CF50, lbl_eu_80661EA8,
-                            lbl_eu_80663864);
+                            sMpfRefTag2);
         }
         u16 numEntries = pltt.mpData->numEntries;
         if (pltt.mpData == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF6C, 0x2A, lbl_eu_8052CF50, lbl_eu_80661EA8,
-                            lbl_eu_80663864);
+                            sMpfRefTag2);
         }
         GXTlutFmt plttFmt = pltt.mpData->fmt;
         if (pltt.mpData == NULL) {
             nw4r::db::Panic(lbl_eu_8052CF3C, 0x2A, lbl_eu_8052CF20, lbl_eu_80661EA8,
-                            lbl_eu_80663860);
+                            sMpfRefTag1);
         }
         u32 tblOfs = pltt.mpData->toPlttData;
         const void* table = (tblOfs != 0)
@@ -1340,8 +1338,7 @@ void drawMapLayer__Q26mpfsys17UnkClass_80471EC8Fv(
     GXInitLightColor(&lightObj, keyColor);
     GXLoadLightObjImm(&lightObj, GX_LIGHT1);
 
-    getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
-        (mpfsys::UnkClass_80471EC8*)sMpfsysDrawState,
+    ((mpfsys::UnkClass_80471EC8*)sMpfsysDrawState)->getLayerColors(
         (GXColor*)&lbl_eu_80665878, (GXColor*)&lbl_eu_8066587C);
 
     GXColor ambColor;
@@ -1603,17 +1600,17 @@ void loadLayerMatrix__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
     m[1][3] = ofs->y;
     m[2][3] = ofs->z;
 
-    PSMTXConcat(lbl_eu_80658458, m, out);
+    PSMTXConcat(sMpfIdentityMatrix, m, out);
     GXLoadPosMtxImm(out, 3);
     if (layerIdx != 0) {
         mpfsys::UnkClass_80471EC8* inst = (mpfsys::UnkClass_80471EC8*)sMpfsysDrawState;
         u8* ent = (u8*)inst->getLayerRecord(layerSel);
         ent += (((u32)idx + layerIdx) & lbl_eu_8066A72C) * 0xB4;
         PSMTXConcat(m, *(Mtx*)(ent + 0x84), out);
-        PSMTXConcat(lbl_eu_80658458, out, out);
+        PSMTXConcat(sMpfIdentityMatrix, out, out);
         GXLoadPosMtxImm(out, 6);
         PSMTXConcat(m, *(Mtx*)(ent + 0x54), out);
-        PSMTXConcat(lbl_eu_80658458, out, out);
+        PSMTXConcat(sMpfIdentityMatrix, out, out);
         GXLoadPosMtxImm(out, 9);
     }
 }
@@ -1785,12 +1782,10 @@ void mpfsys::UnkClass_80471EC8::applyTevColor() {
     GXSetTevColor(GX_TEVREG0, color);
 }
 
-// TEV key-color alpha setter. The retail symbol is annotated Fv but takes an
-// f32 scale in f1 (see the callers in MPFDrawBillLayTex.cpp), so the literal
-// mangled name is kept. Scales lbl_eu_8066A7D8 by the argument, stores the
-// converted byte as the alpha of the shared key color (lbl_eu_80663858),
-// then pushes that color as TEV K-color 0.
-void setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(f32 value) {
+// TEV key-color alpha setter. Scales lbl_eu_8066A7D8 by the argument,
+// stores the converted byte as the alpha of the shared key color
+// (lbl_eu_80663858), then pushes that color as TEV K-color 0.
+void mpfsys::UnkClass_80471EC8::setKeyAlpha(f32 value) {
     lbl_eu_80663858.a = (u8)(s32)(lbl_eu_8066A7D8 * value);
     GXColor color = lbl_eu_80663858;
     GXSetTevKColor(GX_KCOLOR0, color);
@@ -1885,15 +1880,15 @@ extern "C" u32 lbl_eu_80663848[2] = { (u32)&lbl_eu_80523D80, (u32)&lbl_eu_8056DB
 // patterns are 0x3B03126F / 0x3BA3D70A; use decimal literals (which round to
 // exactly those bits) - writing the hex ints as f32 would int->float convert
 // them into entirely different values.
-f32 lbl_eu_80663850 = 0.002f;
-f32 lbl_eu_80663854 = 0.005f;
+f32 sMpfWobbleScale = 0.002f; // name-guess: 0.002f random wobble scale in simulateLayer
+f32 sMpfJitterScale = 0.005f; // name-guess: 0.005f random dx/dy/dz scale in updateLayerPositions
 GXColor lbl_eu_80663858 = { 0xFF, 0xFF, 0xFF, 0xFF };
-char lbl_eu_8066385C[4] = {'r', 'e', 'f', '\0'};
-char lbl_eu_80663860[4] = {'r', 'e', 'f', '\0'};
-char lbl_eu_80663864[4] = {'r', 'e', 'f', '\0'};
+char sMpfRefTag0[4] = {'r', 'e', 'f', '\0'}; // name-guess: "ref" Panic vararg at setupMapTexture check 1
+char sMpfRefTag1[4] = {'r', 'e', 'f', '\0'}; // name-guess: adjacent "ref" string, no remaining code ref
+char sMpfRefTag2[4] = {'r', 'e', 'f', '\0'}; // name-guess: adjacent "ref" string, no remaining code ref
 
 // [.bss]
-Mtx lbl_eu_80658458;
+Mtx sMpfIdentityMatrix; // name-guess: zero-initialised 0x30 matrix passed as the PSMTXConcat identity operand
 
 // [.sbss] 0x80665860-0x80665888 (0x28 = 40B) zero-fill
 u32 sLastBillDrawData;

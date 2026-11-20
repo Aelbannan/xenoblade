@@ -1,4 +1,4 @@
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/object/CfObjectPoint.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"  // child-link interface (+0x38)

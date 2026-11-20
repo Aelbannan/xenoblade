@@ -3,7 +3,7 @@
 // name prefix; EyeAnm_TickBlink advances the blink state machine and pushes a
 // texture-SRT effect matrix per registered eye every frame.
 #include <harness_catalog.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <string.h>
 #include <monolib/math.hpp>
 #include <monolib/core/code_804E36DC.hpp>

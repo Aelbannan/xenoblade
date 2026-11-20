@@ -603,7 +603,7 @@ extern "C" void ColiQueryOrientBox(ColiObj* self, const Vec3* pts, const Vec3* b
     ColiQueryVec* mx = &sColiQueryBounds.max;
     mn->x = mn->y = mn->z = (-100000.0f);
     mx->x = mx->y = mx->z = 100000.0f;
-    const volatile Vec3* cc = (const volatile Vec3*)corners;
+    const Vec3* cc = (const Vec3*)corners;
     for (int i = 0; i < 8; i++) {
         if (cc->x < mn->x) mn->x = cc->x;
         if (cc->x > mx->x) mx->x = cc->x;

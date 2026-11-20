@@ -180,3 +180,7 @@ public:
 };
 
 } // namespace cf
+
+// Retail C-ABI battle/map owner resolver defined in CfMapEffectManager.cpp.
+// Single canonical declaration; other TUs include this owning header.
+extern "C" void* MapFx_ResolveOwner(void* effectObj);

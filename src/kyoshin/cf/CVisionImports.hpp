@@ -1,10 +1,15 @@
 #pragma once
+extern "C" int Counter_TestBit(void* data, u32 mode);
+#include "kyoshin/code_8025FB10.hpp"
 
 // TU-private imports for kyoshin/cf/CVision.cpp (moved out of the public
 // CVision.hpp, which keeps the class and the types it holds by value).
 
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/cf/CfMapItemManager.hpp" // requestItemLoad owner declaration
 
 // ---------------------------------------------------------------------------
 // C-linkage imports: retail symbol names relocated from CVision.cpp.
@@ -48,14 +53,12 @@ extern "C" f32 lbl_eu_80667D48;
 extern "C" f32 lbl_eu_80667CE8;
 
 extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
-extern "C" void cfCam_pushStateToActive();
+
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 // CTaskGame_openVision is owned by kyoshin/CTaskGame.hpp (single unified decl).
-extern "C" void aiActionClearBits0006(void* obj); // void return: CAIAction.cpp definition
 extern "C" void aiRebootAction(void* obj);
 extern "C" int findObjectById__Fi(int id);
 // ScMain_* / Sc4798_* exports are declared once in kyoshin/cf/code_800F42AC.hpp.
-extern "C" int CUICfManager_queueFactoryMenu(int id, float f);
 // Character-data lookup + row predicate pair used by CVision.cpp's
 // movie-gate checks (defined in CtrlObjectParam.cpp). Declared here because
 // sibling TUs declare the same retail symbols with different signatures or
@@ -65,7 +68,6 @@ extern "C" bool CtrlObjectParam_FindSlotTypeIndex(int* a, u32 b, int* outA, int*
 extern "C" u8 CtrlObjectParam_GetRowColumnByte(void* row);
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 extern "C" u8* getGlobalSda(void);
 extern "C" void cfCam_copySavedState(int id);
 extern u8 visionSharedStateFlags;
@@ -84,12 +86,9 @@ extern "C" const void* __RTTI__Q22cf8CfObject;
 extern "C" void aiRingPrepend(void* a, void* b);
 extern "C" int aiFetchAction(void* a, void* b);
 extern "C" bool isVisionSlotAnimating(u32 flags);
-extern "C" void* CBattleMan_FetchVisionObj(void* self);
 extern "C" void CtrlObjectParam_RunPartyArtsFlow(void* a, int b, void* c, int d, int e, int f, int g);
-extern "C" int Counter_TestBit(void* data, u32 mode);
 extern "C" void Vision_CopyFxActor(void* self, void* dst);
-extern "C" void requestItemLoad(void* obj, u32 flag);
-extern "C" f64 lbl_eu_80667D18;
+
 extern "C" f64 lbl_eu_80667D20;
 extern "C" f32 lbl_eu_80667CDC;
 extern "C" f32 lbl_eu_80667CD8;
@@ -100,7 +99,6 @@ extern "C" f64 lbl_eu_80667D58;
 // Mode-dispatch helpers used by routeVisionSlotFx's per-mode FX setup.
 extern "C" void restartVisionSlots(u32 a);
 extern "C" void CCharVoiceMan_EnqueuePendingActionVoice(u32 a, u32 b, void* c);
-extern "C" void SysWinLog_AdvanceTiers(u32 a);
 
 // 5-word data table
 extern "C" u32 visionEffectScaleWords[5];
@@ -147,8 +145,6 @@ extern "C" void CtrlRemote_SetSharedBit(u32 a, u32 b);
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 extern "C" void Vision_CopyEngageActor(void* obj, void* dst);
-extern "C" void CfSoundMan_ApplyFxSendAll(u32 a, u32 b, f32 c);
-extern "C" void CfSoundMan_ClearFxEffect(u32 a, u32 b);
 
 extern "C" long __ptmf_test(void* ptmf);
 extern "C" int __ptmf_cmpr(void* a, void* b);

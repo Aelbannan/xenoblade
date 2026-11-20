@@ -5,10 +5,8 @@
 // include (lint rule: no local extern "C" imports, use a proper header).
 
 extern "C" {
-// CErrMes helpers (defined in src/kyoshin/CErrMes.cpp - declared
-// without C linkage there, but the retail TU exports the plain linker name;
-// this C linkage in the importing TU preserves the plain-symbol reloc).
-void loadErrMesTable();
+// CErrMes helpers (defined in src/kyoshin/CErrMes.cpp). loadErrMesTable is
+// declared in kyoshin/CErrMes.hpp with its real C++ linkage.
 const char* getErrMesLangTable0();
 const char* getErrMesLangTable1();
 const char* getErrMesLangTable2();

@@ -11,7 +11,7 @@ extern char lbl_eu_8053AEA0[];
 extern char lbl_eu_8053AE90[];
 extern const char lbl_eu_80513580[];
 extern char lbl_eu_80513568[];
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
 
 #include "kyoshin/cf/CfHikariItemManager.hpp"

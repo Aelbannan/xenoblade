@@ -8,6 +8,7 @@
 // Class layout lives in kyoshin/cf/CtrlMoveNpc.hpp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 #include <monolib/math/CVec3.hpp>
 #include <revolution/MTX.h>
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -57,16 +58,13 @@ void activateLOD__8CTaskLODFv(s8 v);
 void deactivateLOD__8CTaskLODFv(u8 v);
 void ScnData_FwdB7D9C(void*, s8 v);
 void ScnData_FwdB7DD4(void*, u8 v);
-void maskMoveChildFlags(cf::CCtrlMoveBase* ths);
 int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
 
 // Movement base helpers / npc move helpers (unmangled global symbols).
 void moveBaseUpdate(CCtrlMoveNpc* ths, const ml::CVec3* a, const ml::CVec3* b,
                    int c, int d);
-void setMoveFacing(CCtrlMoveNpc* ths, const ml::CVec3* a, f32 f);
 void moveBaseUnlink(CCtrlMoveNpc* ths);
-void CtrlMoveEne_CommitHeadAngle(cf::CCtrlMoveData* data, f32 f);
 int  VecMath_CircleOverlapXZ(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
@@ -77,6 +75,8 @@ void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, .
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
 } // C-linkage import block
+// Defined in CtrlMoveEne.cpp (C++ linkage).
+void CtrlMoveEne_CommitHeadAngle(cf::CCtrlMoveData* data, f32 f);
 
 // Linker-label data imports. MWCC emits global-variable names unmangled.
 
@@ -103,7 +103,7 @@ extern const f32 lbl_eu_80667C74;
 extern const f32 lbl_eu_80667C78[2];
 
 // bdat column string table + row bitmap + other globals.
-extern const char lbl_eu_80503D30[];
+extern const char sNpcRowColumnNames[];
 extern u32 sNpcRowUsableBitmap[];
 extern void* lbl_eu_806640B4;   // active table bdat data
 extern u32 gCfTEventFrameCounter;     // global value copied into mField78
@@ -166,7 +166,7 @@ extern "C" void beginNpcMove(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale,
         ths->mField70 = v;
     }
 
-    maskMoveChildFlags((cf::CCtrlMoveBase*)ths);
+    maskMoveChildFlags((maskMoveChildFlags_obj*)(cf::CCtrlMoveBase*)ths);
     ths->mVelocity = ml::CVec3::zero;
     ths->mStateFunc = *reinterpret_cast<int (CCtrlMoveNpc::*const*)()>(sNpcMoveInitialStateFunc);
 }
@@ -207,7 +207,7 @@ int isNpcRowUsable(u32 idx, const char* p1, const char* p2, const char* p3,
     // Column values live in address-taken slots (full-word stores after each
     // call); the u8/u16 casts at each use site lower to lbz/lhz (retail
     // shape, cf. CfGimmickSaveOff ctor).
-    u32 v0 = getBdatStringColumnValue(bdat, lbl_eu_80503D30, idx);
+    u32 v0 = getBdatStringColumnValue(bdat, sNpcRowColumnNames, idx);
     u32 f = gmGameFlags;
     if ((f & (0x02000000u | 0x400u)) && *(u8*)&v0 != 0) {
         return 0;
@@ -282,7 +282,7 @@ void tickNpcMove(CCtrlMoveNpc* ths) {
 
         v2.set(lbl_eu_80667C5C, lbl_eu_80667C5C, lbl_eu_80667C5C);
         moveBaseUpdate(ths, &v2, &ths->mField58, 1, 0);
-        setMoveFacing(ths, &v2, speed);
+        setMoveFacing((cf::CCtrlMoveBase*)ths, &v2, speed);
         if (VecMath_CircleOverlapXZ(pos, &ths->mField58, speed, lbl_eu_80667C60) == 0) {
             return;
         }
@@ -320,7 +320,7 @@ extern "C" void refreshNpcRowFlags() {
     s32 base = (s32)Bdat_GetRowBase_B41C(bdat);
     s32 count = (s32)Bdat_GetMaxRow_B1EC(bdat);
     bitmap = sNpcRowUsableBitmap;
-    str = lbl_eu_80503D30;
+    str = sNpcRowColumnNames;
     s32 end = base + count;
 
     for (s32 idx = base; idx < end; idx++) {
@@ -395,7 +395,8 @@ char lbl_eu_80503D20[0x10] = {
     0x63,0x66,0x3A,0x3A,0x43,0x74,0x72,0x6C,0x4D,0x6F,0x76,0x65,0x4E,0x70,0x63,0x00,
 };
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
-const char lbl_eu_80503D30[0x40] = {
+// name-guess: nine BDAT column names used only by isNpcRowUsable / refreshNpcRowFlags
+const char sNpcRowColumnNames[0x40] = {
     0x65,0x72,0x61,0x73,0x65,0x00,0x71,0x75,0x65,0x73,0x74,0x49,0x44,0x00,0x71,0x73,
     0x74,0x5F,0x73,0x66,0x6C,0x67,0x00,0x71,0x73,0x74,0x5F,0x65,0x66,0x6C,0x67,0x00,
     0x73,0x66,0x6C,0x67,0x31,0x00,0x65,0x66,0x6C,0x67,0x31,0x00,0x73,0x66,0x6C,0x67,

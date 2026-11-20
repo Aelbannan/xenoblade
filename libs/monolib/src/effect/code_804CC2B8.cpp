@@ -18,6 +18,7 @@
 #include "monolib/effect/CETrail.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/effect/code_804CC2B8.hpp"
+#include "monolib/effect/code_804D854C.hpp"
 
 // Float constant 0.0f and the 0x4330000000000000 double magic, shared in this TU
 extern f32 lbl_eu_8066B0DC;
@@ -1046,10 +1047,9 @@ extern "C" void EffFxTestSegmentRegionB(EffectScene* self, const Vec* p2, const 
     res.y = out.y;
     res.z = out.z;
     if (!EffFxSegmentRegionTest((void*)self, (Vec*)p2, (Vec*)p3, &res)) return;
-    // Volatile load/store pair pins the flag update between the constant
-    // load and the final float store (retail order: lhz, lfs, rlwinm, sth,
-    // stfs).
-    u16 flags = *(volatile u16*)&self->field_0x06;
+    // Volatile stores pin the flag update between the constant load and the
+    // final float store (retail order: lhz, lfs, rlwinm, sth, stfs).
+    u16 flags = self->field_0x06;
     f32 z = lbl_eu_8066B0DC;
     *(volatile u16*)&self->field_0x06 = (u16)(flags & ~0x4000);
     *(volatile f32*)&self->field_0x1c = z;
@@ -1109,9 +1109,9 @@ extern "C" void EffFxTestSegmentRegionA(EffectScene* self, const Vec* p2, const 
     if (fo == 0) return;
     s32 v = (fo != 0) ? *(u8*)(fo - 0xa) : 0;
     if (v == 0) return;
-    // Volatile load/store pair pins the constant float load ahead of the flag
-    // update (retail order: lhz, lfs, rlwinm, sth, stfs); clears 0x4000.
-    u16 flags = *(volatile u16*)&self->field_0x06;
+    // Volatile stores pin the constant float load ahead of the flag update
+    // (retail order: lhz, lfs, rlwinm, sth, stfs); clears 0x4000.
+    u16 flags = self->field_0x06;
     f32 z = lbl_eu_8066B0DC;
     *(volatile u16*)&self->field_0x06 = (u16)(flags & ~0x4000);
     *(volatile f32*)&self->field_0x1c = z;
@@ -3180,9 +3180,9 @@ extern "C" void EffFxRenderType5Walk(EffectNode* nodeRaw, void* res) {
             PSMTXConcat(m->mMtx, node->mtx, out1);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&out1;
             // Retail keeps a second (dead-looking) copy of the result on the
-            // stack; volatile defeats MWCC's dead-store elimination.
+            // stack.
             {
-                volatile MtxCopy* vdst = (volatile MtxCopy*)&out2;
+                MtxCopy* vdst = (MtxCopy*)&out2;
                 const MtxCopy* vsrc = (const MtxCopy*)&out1;
                 vdst->w0 = vsrc->w0;
                 vdst->w1 = vsrc->w1;
@@ -3712,7 +3712,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)pushEffectFog)(0);
+        ((FogPushFn)pushEffectFog)(0);  // DEBT(callcast): retail name pushEffectFog__Fii has 2 params but callers set only r3; extra r4 is stale
         EffFxResetPlacerColors();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
@@ -3771,7 +3771,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)pushEffectFog)(0);
+        ((FogPushFn)pushEffectFog)(0);  // DEBT(callcast): retail name pushEffectFog__Fii has 2 params but callers set only r3; extra r4 is stale
         EffFxResetPlacerColors();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
@@ -3830,7 +3830,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)pushEffectFog)(0);
+        ((FogPushFn)pushEffectFog)(0);  // DEBT(callcast): retail name pushEffectFog__Fii has 2 params but callers set only r3; extra r4 is stale
         EffFxResetPlacerColors();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
@@ -3889,7 +3889,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)pushEffectFog)(0);
+        ((FogPushFn)pushEffectFog)(0);  // DEBT(callcast): retail name pushEffectFog__Fii has 2 params but callers set only r3; extra r4 is stale
         EffFxResetPlacerColors();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
@@ -3948,7 +3948,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
             }
             self->field_0x18 = idx;
         }
-        ((FogPushFn)pushEffectFog)(0);
+        ((FogPushFn)pushEffectFog)(0);  // DEBT(callcast): retail name pushEffectFog__Fii has 2 params but callers set only r3; extra r4 is stale
         EffFxResetPlacerColors();
         EffectNode* node;
         if (self->field_0x06 >= 0) {
@@ -4035,7 +4035,7 @@ void EffFxRenderDispatch(EffectInit* self, void* arg) {
         GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
         self->field_0x18 = 0;
     }
-    ((FogPushFn)pushEffectFog)(1);
+    ((FogPushFn)pushEffectFog)(1);  // DEBT(callcast): retail name pushEffectFog__Fii has 2 params but callers set only r3; extra r4 is stale
 }
 
 // Render-object layout shared by the GX polygon setup functions (targets 2/3).
@@ -4391,8 +4391,8 @@ void EffFxBuildTrailSegments(void* trailSeg, void* trail, const void* color, u32
                    u32 modeNonZero, const void* color2, const void* scale) {}
 
 s32 EffFxShuffleNodeLinks(void* unused, Node2Control* c, Node2** p5, Node2** p6,
-               Node2* volatile* p7,
-               Node2* volatile* p8, Node2** p9) {
+               Node2* volatile* p7, // volatile-ok: retail mangling EffFxShuffleNodeLinks__F…PVP5Node2PVP5Node2… encodes volatile
+               Node2* volatile* p8, Node2** p9) { // volatile-ok: retail mangling encodes PVP5Node2 for p7/p8
     // Retail reloads *p5 for every output slot (the stores may alias p5), so
     // keep one local per slot pair; the p9 walk chains through the temp.
     // p7/p8 take volatile pointees so each *p7/*p8 read is a real load,

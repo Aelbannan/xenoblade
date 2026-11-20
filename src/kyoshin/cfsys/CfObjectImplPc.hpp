@@ -1,7 +1,12 @@
 #pragma once
+extern "C" int Counter_TestBit(void* obj, u32 idx);
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 // Internal driver struct for CfObjectImplPc.
 // Function ObjPc_StoreSubVal_A274 accesses a sub-object at +0x18 and reads/writes an int at +0x3e98.
@@ -946,6 +951,11 @@ public:
 
 } // namespace cf
 
+// Free functions defined in CfObjectImplPc.cpp (real C++ linkage).
+void ObjPc_InitLink_5998(cf::CfObjectImplPc* self);
+void ObjPc_ForwardVf0C_A42C(cf::CfObjectImplPc* self, u32 a, u32 b, u32 c,
+                            u32 d, u32 e);
+
 // Event record passed as arg2 to ObjPc_EventDispatch_9A20 / MoveImplDispatchStart:
 // u16 event id at +0x0C, u16 gate at +0x2E, flag word at +0x30 (bit 1).
 struct CfObjectImplPcEvt {
@@ -979,8 +989,6 @@ void MoveImplInitFields(u8* self);
 void CharEffInit(u8* a, u8* b, u8* c);
 extern "C" void attachOwner(u8* self, u8* owner);
 u32 CfRes_getHeapHandle();
-char* CfObjectMove_getBdatNameCol11(u8* move, int index);
-char* CfObjectMove_getBdatNameCol7(u8* move, int index);
 void* MapFx_ResolveOwner(void* src); // canonical void* form (CAIAction/CtrlPc owners)
 // Enum-list helper family: single canonical extern "C" void* forms
 // (CVision.hpp owner) so TUs including several of these headers see one
@@ -989,7 +997,7 @@ void* getObjectAt(void* list, u32 idx); // canonical void* return (CVision.hpp o
 void sortEntriesByDistance(void* list, void* value);
 void* findFirstCleanObjectId(void* list);
 void startEnumObjects(void* list, u32 type, u32 filter);
-void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+
 void MoveImplGateEventCmd(void* self, u32 param); // canonical void* form (shared with CfObjectImplMove.hpp)
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);
 int isBattleEventKind1(int id);
@@ -1003,18 +1011,14 @@ void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b);
 // distinct overload here (MWCC 10197), and only this TU uses it.
 void setAnimCount(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
 void CCharVoiceMan_EnqueuePcStateVoice(void* obj);
-void CBattleMan_RunBattleEvent(void* mgr, void* obj, void* evtCopy, s32 flag);
 void MoveImplDispatchEvent(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
-void PartyGaugeAddClamped(void* obj, int value);
-void aiActionClearBlockADC(void* blk);
 void dropPendingFx(int value);
 void MoveImplDispatchStart(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
-// (func_800F3970: single shared import lives on CBattleManagerApi.hpp.)
+// (func_800F3970: single shared import lives on CBattleManager.hpp.)
 void MoveImplDriveTransition(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
 int getAnimChain(void* obj);
 // func_8004B9D4 is TU-local in CfObjectImplPc.cpp (same 5-arg form as below):
 // the shared CfObjectMove.hpp decl is a 4-arg overload (MWCC 10197).
-void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void CCharVoiceMan_EnqueuePcActionVoice(void* obj);
 void MoveImplDispatchRequest(void);
 void CtrlPc_DispatchPadAction(void* a, int b);
@@ -1022,12 +1026,9 @@ unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
                                                     unsigned int b,
                                                     unsigned int c);
 int IdTable_QuerySumFloat(void* obj, int id, u32* outW, f32* outF);
-void CBattleMan_FireActorEvent918(void* mgr, void* obj, void* arg, int a, int b);
 void calcBattleDamage(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
 void* findBattleStatusEntry(void* obj, int id);
-void CUICfManager_queueFactoryMenu(int a, float b);
-int CBattleMan_ListHasValue(void* mgr, void* obj);
 void* CtrlObjectParam_GetCharEntry(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
 u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
 }
@@ -1064,31 +1065,22 @@ extern void* lbl_eu_80661BE8;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);
-extern "C" void* Selector_GetInstance(void);
 extern "C" void func_800EC918(void* mgr, void* obj, void* obj2, void* arg,
                                u32 flag);
-extern "C" int Counter_TestBit(void* obj, u32 idx);
-extern "C" int IdTable_SumValues(void* obj, u32 idx); // canonical int form (owner decl: chain/CChainActorList.hpp)
 extern "C" void MoveImplNoopA(void* self);
 extern "C" void aiRingPrepend(void* blk, void* rec);
-extern "C" void CBattleMan_ClearEventNotify(void* mgr, void* obj, s32 id);
-extern "C" void CBattleMan_ClearActorStatus(void* mgr, void* obj, s32 id);
 extern "C" void spreadChainArtsHits(void* mgr, void* obj, u32 a, u32 b);
 extern "C" void unregisterBattleActor(void* mgr, void* obj);
-extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
-extern "C" int getSlotEffectId(int idx);
 extern "C" int findObjB48ById(int id);
 extern "C" void func_80084654__Q22cf13CfGameManagerFv(int flag);
-extern "C" int IdTable_MaxValueC(void* obj, u32 idx);
-extern "C" f32 IdTable_MaxValue10(void* obj, u32 idx);
 
 namespace ml {
 namespace math {
 int mtRand(int n);                   // mtRand__Q22ml4mathFi
 }
 }
-extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
+
 extern "C" void setChild34Sc_(void* obj, const void* src);
-extern "C" void setTargetObj_(void* obj, void* target);
+
 extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);

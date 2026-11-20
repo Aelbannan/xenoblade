@@ -9,6 +9,7 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // ============================================================
 // External globals
@@ -56,7 +57,6 @@ extern "C" u32 CfRes_lookupNameTable(u32*, int, u32*);
     void KyoshinHeap_Free78(void*, int);
     void walkReslistBE8vt(void*);
     void triggerObjsByType(void);
-    void CfSoundMan_StopSlotByMode(u32, u32, u32);
     void EffSched_LookupA(void*, void*);
     void EffSched_LookupB(void*, void*);
     s32 gflagGateMask8();
@@ -331,7 +331,7 @@ extern "C" void CfRes_cacheOrPublishSound(int unused, ResInfoEntry* self) {
     } else if (type == 9 && idx >= 0) {
         int slot = idx + 2;
         void* r = self->field_0x2C->getResourceBase(self, 0);
-        CfSoundMan_BindRecordBuffer(slot, r, self->field_0x18, 0x62800);
+        CfSoundMan_BindRecordBuffer(slot, (u32)(uintptr_t)r, self->field_0x18, 0x62800);
         CfSoundMan_OpenRecordPlayer(slot, 3, 0, 0);
     }
 }
@@ -354,7 +354,7 @@ extern "C" void CfRes_acquireSoundEntry(int unused, ResInfoEntry* self) {
     if (!(self->field_0x00 & 0x800) && entry != 0 && self->field_0x32 < 8) {
         int idx = self->field_0x32 + 5;
         CfSoundMan_CloseRecord(idx);
-        CfSoundMan_BindRecordBuffer(idx, entry, out, out);
+        CfSoundMan_BindRecordBuffer(idx, (u32)(uintptr_t)entry, (u32)(uintptr_t)out, (u32)(uintptr_t)out);
         void* base = self->field_0x2C->getResourceBase(self, 0);
         CfSoundMan_OpenRecordPlayer(idx, 5, (int)((char*)base + self->field_0x18),
                       self->field_0x1C - self->field_0x18);
@@ -795,13 +795,13 @@ extern "C" u8* CfRes_findHighEntryById(u8* self, u32 id, u32* outIdx, u32* outVa
 // either resets the 0x1ED0 counter (param ? 3.0 : 120.0) or decrements it
 // toward 0; then walks both grids, unloading/resetting entries whose state
 // flags say they are done, and clearing the resolution probe for the rest.
-// Retail reads the global flag word twice (bit 0x20 gate, then the rest),
-// so the volatile alias keeps both loads distinct.
+// Retail reads the global flag word twice (bit 0x20 gate, then the rest);
+// two plainly named reads keep those loads separate in the source.
 extern "C" bool CfRes_updateGrids(ResInfoContainer* self, bool param) {
     // Declaration order mirrors retail callee-saved coloring:
     // cond=r31, flag25=r30, res=r29, target=r28, base=r27, any=r26.
-    u32 fGate = *(volatile u32*)&gmGameFlags;
-    u32 flags = *(volatile u32*)&gmGameFlags;
+    u32 fGate = gmGameFlags;
+    u32 flags = gmGameFlags;
 
     bool cond;
     bool flag25;

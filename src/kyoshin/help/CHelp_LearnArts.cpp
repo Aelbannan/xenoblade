@@ -1,4 +1,5 @@
 #include "kyoshin/help/CHelp_LearnArts.hpp"
+#include "kyoshin/CQuestWindowApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CHelpManager.hpp"
 #include "kyoshin/cf/object/CfObjectPoint.hpp"

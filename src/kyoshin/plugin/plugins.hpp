@@ -10,10 +10,8 @@
 
 extern "C"{
 void pluginBtlRegist();
-void pluginUnitRegist();
 void pluginEveRegist();
 void pluginCfsRegist();
-void pluginCamRegist();
 void pluginTimeRegist();
 void pluginSndRegist();
 void pluginHelpRegist();
@@ -24,3 +22,7 @@ void ocMsgRegist();
 void ocUnitRegist();
 void ocCfpRegist();
 }
+
+// Defined with C++ linkage in their owning TUs.
+void pluginUnitRegist();
+void pluginCamRegist();

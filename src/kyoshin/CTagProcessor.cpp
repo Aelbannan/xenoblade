@@ -3257,9 +3257,9 @@ inline nw4r::ut::TagProcessorBase<wchar_t>::Operation CTagCodeRuby::Process(u16 
         // Distribute the excess width across lenHi chars: fold one char
         // space worth into the saved cursor x and give the scratch writer
         // the per-char share. int->float via the retail magic-constant idiom.
-        // volatile keeps MWCC from scalar-replacing the union and folding
-        // the subtract into an unsigned library conversion call.
-        volatile TagConvTemp conv;
+        // The union carries the int->float conversion bits directly, so
+        // the subtract stays a float operation rather than a library call.
+        TagConvTemp conv;
         conv.w.lo = (u32)lenHi ^ 0x80000000;
         conv.w.hi = 0x43300000;
         f32 lenF = (f32)(conv.d - lbl_eu_80667200);

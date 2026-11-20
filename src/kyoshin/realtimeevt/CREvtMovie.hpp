@@ -64,17 +64,13 @@ extern "C" {
 
 // Movie playback functions (CLibCri streaming family).
 void evtStopMoviePlayback(void);
-int evtHasMoviePlayer(void);
 int evtIsMoviePaused(void);
 void evtClearMoviePause(void);
 void evtStartMoviePlayback(const char* path, int flag, void* handle);
-void* EvtSeqGetC4FlagBit1(void);
 
 // Counter/timing functions.
 // EvtSeqGetWalkIndex is an unsigned tick counter; 8016A378/8016A35C return
 // signed timestamps (compared with a signed `cmpi` in retail).
-u32 EvtSeqGetWalkIndex(void);
-int EvtSeqGetEntryLimit(void);
 int EvtSeqGetCounter100(void);
 
 // Memory availability probe (CLibCri member, defined in the CLibCri TU).
@@ -86,3 +82,6 @@ void EvtMovie_StartPlayback_4980(CREvtMovie* self);
 void EvtMovie_TogglePlayback_4BA4(CREvtMovie* self);
 
 } // extern "C"
+
+// Defined in CTaskREvent.cpp (C++ linkage).
+int evtHasMoviePlayer(void);

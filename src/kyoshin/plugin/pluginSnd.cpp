@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/menu/MenuSndApi.hpp"
 
 // ---------------------------------------------------------------------------
 // C-ABI sound-system imports (retail symbols are unmangled; no proper C++
@@ -15,8 +16,6 @@ extern "C" {
 
     extern s32 MenuSnd_QuerySlotLive_89A04(s32 index);                        // sound-slot busy check
     extern s32 MenuSnd_TryPlayGated_97A0(const char* name, float vol, s32 flag);  // play archive voice
-    extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);        // CfSoundMan stop helper (matches CfObjectImplMove.hpp)
-    extern void MenuSnd_StopSlot0Clear_9318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
     extern void MenuSnd_SilenceByName_8986C(const char* name, float fadeTime); // stop voice by name
     extern void MenuSnd_RestartBGM_88D34(const char* name, bool enable, float value, float fadeTime); // play BGM
     extern void queueBdatTextA__Q22cf13CfGameManagerFv(u32 first, u32 second, bool enabled, float value); // field BGM state
@@ -38,7 +37,6 @@ struct SndVec3 {
 };
 
 extern "C" {
-    extern void MenuSnd_SetBalancePush_96A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
     extern void BattleWork_ApplyVolumeStore(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
     extern SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);                      // SE slot lookup (tail-call stub)
     extern void BattleWork_CopyPairToWork(SndVec3* pos, SndVec3* target);              // set map camera position

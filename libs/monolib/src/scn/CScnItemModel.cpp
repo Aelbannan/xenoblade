@@ -6,6 +6,8 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/code_804BF59C.hpp"
 #include "monolib/util/MemManager.hpp"
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
+#include "kyoshin/CModelDisp.hpp"
 
 // Cross-unit pool iterator (retail C-ABI, unmangled symbol; defined in
 // CScnItemPool.cpp). Iterates the pool's reslist and clears matching
@@ -112,8 +114,7 @@ CScnItemModel* __ct__CScnItemModel(CScnItemModel* self, CScnItemModelOwner* owne
     return self;
 }
 
-extern "C" void scn80496SetNodeIdByName(u8* self);
-extern "C" void simResetAnimAtC(u8* self) { ((void(*)(void*))scn80496SetNodeIdByName)((char*)self + 0xc); }
+extern "C" void simResetAnimAtC(u8* self, const char* name) { scn80496SetNodeIdByName((CScn80496B0C*)((char*)self + 0xc), name); }
 
 // simMarkTree100000: set/clear the 0x100000 flag at 0x7A4 on self, then walk
 // simMarkTree100000: set/clear the 0x100000 flag at 0x7A4 on self, then walk
@@ -640,7 +641,7 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                         result = simBindChrAnim(n3, resFile, index, c, f, g, h);
                     } else {
                         u32 leaf = simQueryLeafAnim(n2);
-                        result = scn80496BindChrAnmPack(n2->field_0xC, resFile, index, c, f, g, h);
+                        result = scn80496BindChrAnmPack((CScn80496B0C*)n2->field_0xC, (CScnItemAnim*)resFile, index, c, f, g, h);
                         if (leaf == 0 && simQueryLeafAnim(n2) != 0) {
                             n2->flags7A4 |= 0x200;
                         } else {
@@ -651,7 +652,7 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                 }
             } else {
                 u32 leaf = simQueryLeafAnim(n1);
-                result = scn80496BindChrAnmPack(n1->field_0xC, resFile, index, c, f, g, h);
+                result = scn80496BindChrAnmPack((CScn80496B0C*)n1->field_0xC, (CScnItemAnim*)resFile, index, c, f, g, h);
                 if (leaf == 0 && simQueryLeafAnim(n1) != 0) {
                     n1->flags7A4 |= 0x200;
                 } else {
@@ -792,7 +793,7 @@ extern "C" u32 simBindChrAnim(CScnItemModel* self, CScnItemAnimResFile* resFile,
                 leafAnim = scn80496HasChild1Node(self->field_0xC);
             }
         }
-        result = scn80496BindChrAnmPack(self->field_0xC, resFile, index, c, f, g, h);
+        result = scn80496BindChrAnmPack((CScn80496B0C*)self->field_0xC, (CScnItemAnim*)resFile, index, c, f, g, h);
         if (leafAnim == 0) {
             // deep walk #2: re-walk when the first leaf was null.
             u32 w2;
@@ -1584,15 +1585,15 @@ extern "C" float simGetLeafAnimDist(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimDist(n5);
                     }
-                    return scn80496GetChild1V6(n4->field_0xC);
+                    return scn80496GetChild1V6((CScn80496B0C*)n4->field_0xC);
                 }
-                return scn80496GetChild1V6(n3->field_0xC);
+                return scn80496GetChild1V6((CScn80496B0C*)n3->field_0xC);
             }
-            return scn80496GetChild1V6(n2->field_0xC);
+            return scn80496GetChild1V6((CScn80496B0C*)n2->field_0xC);
         }
-        return scn80496GetChild1V6(n1->field_0xC);
+        return scn80496GetChild1V6((CScn80496B0C*)n1->field_0xC);
     }
-    return scn80496GetChild1V6(self->field_0xC);
+    return scn80496GetChild1V6((CScn80496B0C*)self->field_0xC);
 }
 
 // simRefreshFlag8: refresh the 0x8 flag at 0x7A8 on self and every model in
@@ -1601,22 +1602,22 @@ extern "C" float simGetLeafAnimDist(CScnItemModel* self) {
 // tail calls scn80496CallChild1V5 on the last node's 0xC sub-object, and chains
 // longer than 4 recurse. Hand-unrolled like the other chain walks.
 extern "C" void simRefreshFlag8(CScnItemModel* self, float value) {
-    if (scn80496GetChild1V6(self->field_0xC) != value) {
+    if (scn80496GetChild1V6((CScn80496B0C*)self->field_0xC) != value) {
         self->flags7A8 |= 0x8;
     }
     CScnItemModel* n1 = self->field_0x7C4;
     if (n1 != 0) {
-        if (scn80496GetChild1V6(n1->field_0xC) != value) {
+        if (scn80496GetChild1V6((CScn80496B0C*)n1->field_0xC) != value) {
             n1->flags7A8 |= 0x8;
         }
         CScnItemModel* n2 = n1->field_0x7C4;
         if (n2 != 0) {
-            if (scn80496GetChild1V6(n2->field_0xC) != value) {
+            if (scn80496GetChild1V6((CScn80496B0C*)n2->field_0xC) != value) {
                 n2->flags7A8 |= 0x8;
             }
             CScnItemModel* n3 = n2->field_0x7C4;
             if (n3 != 0) {
-                if (scn80496GetChild1V6(n3->field_0xC) != value) {
+                if (scn80496GetChild1V6((CScn80496B0C*)n3->field_0xC) != value) {
                     n3->flags7A8 |= 0x8;
                 }
                 CScnItemModel* n4 = n3->field_0x7C4;
@@ -1705,15 +1706,15 @@ extern "C" f32 simGetLeafAnimDist4(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimDist4(n5);
                     }
-                    return scn80496GetChild2V6(n4->field_0xC);
+                    return scn80496GetChild2V6((CScn80496B0C*)n4->field_0xC);
                 }
-                return scn80496GetChild2V6(n3->field_0xC);
+                return scn80496GetChild2V6((CScn80496B0C*)n3->field_0xC);
             }
-            return scn80496GetChild2V6(n2->field_0xC);
+            return scn80496GetChild2V6((CScn80496B0C*)n2->field_0xC);
         }
-        return scn80496GetChild2V6(n1->field_0xC);
+        return scn80496GetChild2V6((CScn80496B0C*)n1->field_0xC);
     }
-    return scn80496GetChild2V6(self->field_0xC);
+    return scn80496GetChild2V6((CScn80496B0C*)self->field_0xC);
 }
 
 // simGetLeafAnimStatus: same 5-level chain walk as simGetLeafAnimDist3, tail-calling
@@ -1731,15 +1732,15 @@ extern "C" u32 simGetLeafAnimStatus(CScnItemModel* self) {
                     if (n5 != 0) {
                         return simGetLeafAnimStatus(n5);
                     }
-                    return scn80496IsNodeFlagBit(n4->field_0xC);
+                    return scn80496IsNodeFlagBit((CScn80496B0C*)n4->field_0xC);
                 }
-                return scn80496IsNodeFlagBit(n3->field_0xC);
+                return scn80496IsNodeFlagBit((CScn80496B0C*)n3->field_0xC);
             }
-            return scn80496IsNodeFlagBit(n2->field_0xC);
+            return scn80496IsNodeFlagBit((CScn80496B0C*)n2->field_0xC);
         }
-        return scn80496IsNodeFlagBit(n1->field_0xC);
+        return scn80496IsNodeFlagBit((CScn80496B0C*)n1->field_0xC);
     }
-    return scn80496IsNodeFlagBit(self->field_0xC);
+    return scn80496IsNodeFlagBit((CScn80496B0C*)self->field_0xC);
 }
 
 // simRefreshFadeDist: when value7B0 reaches 1.0, re-seed the fade distances from
@@ -1787,19 +1788,19 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
                         if (m5 != 0) {
                             d2 = simGetLeafAnimDist(m5);
                         } else {
-                            d2 = scn80496GetChild1V6(m4->field_0xC);
+                            d2 = scn80496GetChild1V6((CScn80496B0C*)m4->field_0xC);
                         }
                     } else {
-                        d2 = scn80496GetChild1V6(m3->field_0xC);
+                        d2 = scn80496GetChild1V6((CScn80496B0C*)m3->field_0xC);
                     }
                 } else {
-                    d2 = scn80496GetChild1V6(m2->field_0xC);
+                    d2 = scn80496GetChild1V6((CScn80496B0C*)m2->field_0xC);
                 }
             } else {
-                d2 = scn80496GetChild1V6(m1->field_0xC);
+                d2 = scn80496GetChild1V6((CScn80496B0C*)m1->field_0xC);
             }
         } else {
-            d2 = scn80496GetChild1V6(self->field_0xC);
+            d2 = scn80496GetChild1V6((CScn80496B0C*)self->field_0xC);
         }
         b = (d1 - f31) <= d2;
     }
@@ -1822,19 +1823,19 @@ extern "C" bool simRefreshFadeDist(CScnItemModel* self) {
                             if (p5 != 0) {
                                 d3 = simGetLeafAnimDist(p5);
                             } else {
-                                d3 = scn80496GetChild1V6(p4->field_0xC);
+                                d3 = scn80496GetChild1V6((CScn80496B0C*)p4->field_0xC);
                             }
                         } else {
-                            d3 = scn80496GetChild1V6(p3->field_0xC);
+                            d3 = scn80496GetChild1V6((CScn80496B0C*)p3->field_0xC);
                         }
                     } else {
-                        d3 = scn80496GetChild1V6(p2->field_0xC);
+                        d3 = scn80496GetChild1V6((CScn80496B0C*)p2->field_0xC);
                     }
                 } else {
-                    d3 = scn80496GetChild1V6(p1->field_0xC);
+                    d3 = scn80496GetChild1V6((CScn80496B0C*)p1->field_0xC);
                 }
             } else {
-                d3 = scn80496GetChild1V6(self->field_0xC);
+                d3 = scn80496GetChild1V6((CScn80496B0C*)self->field_0xC);
             }
             return lbl_eu_8066A8C0 >= d3;
         }
@@ -1881,19 +1882,19 @@ extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
                         if (m5 != 0) {
                             d2 = simGetLeafAnimDist4(m5);
                         } else {
-                            d2 = scn80496GetChild2V6(m4->field_0xC);
+                            d2 = scn80496GetChild2V6((CScn80496B0C*)m4->field_0xC);
                         }
                     } else {
-                        d2 = scn80496GetChild2V6(m3->field_0xC);
+                        d2 = scn80496GetChild2V6((CScn80496B0C*)m3->field_0xC);
                     }
                 } else {
-                    d2 = scn80496GetChild2V6(m2->field_0xC);
+                    d2 = scn80496GetChild2V6((CScn80496B0C*)m2->field_0xC);
                 }
             } else {
-                d2 = scn80496GetChild2V6(m1->field_0xC);
+                d2 = scn80496GetChild2V6((CScn80496B0C*)m1->field_0xC);
             }
         } else {
-            d2 = scn80496GetChild2V6(self->field_0xC);
+            d2 = scn80496GetChild2V6((CScn80496B0C*)self->field_0xC);
         }
         b = (d1 - f31) <= d2;
     }
@@ -1913,19 +1914,19 @@ extern "C" bool simRefreshFadeDist2(CScnItemModel* self) {
                             if (p5 != 0) {
                                 d3 = simGetLeafAnimDist4(p5);
                             } else {
-                                d3 = scn80496GetChild2V6(p4->field_0xC);
+                                d3 = scn80496GetChild2V6((CScn80496B0C*)p4->field_0xC);
                             }
                         } else {
-                            d3 = scn80496GetChild2V6(p3->field_0xC);
+                            d3 = scn80496GetChild2V6((CScn80496B0C*)p3->field_0xC);
                         }
                     } else {
-                        d3 = scn80496GetChild2V6(p2->field_0xC);
+                        d3 = scn80496GetChild2V6((CScn80496B0C*)p2->field_0xC);
                     }
                 } else {
-                    d3 = scn80496GetChild2V6(p1->field_0xC);
+                    d3 = scn80496GetChild2V6((CScn80496B0C*)p1->field_0xC);
                 }
             } else {
-                d3 = scn80496GetChild2V6(self->field_0xC);
+                d3 = scn80496GetChild2V6((CScn80496B0C*)self->field_0xC);
             }
             return lbl_eu_8066A8C0 >= d3;
         }
@@ -2002,19 +2003,19 @@ extern "C" void simSetLeafAnimTag(CScnItemModel* self, u32 tag) {
                     if (n5 != 0) {
                         simSetLeafAnimTag(n5, tag);
                     } else {
-                        scn80496RefreshBlendTag(n4->field_0xC, tag);
+                        scn80496RefreshBlendTag((CScn80496B0C*)n4->field_0xC, tag);
                     }
                 } else {
-                    scn80496RefreshBlendTag(n3->field_0xC, tag);
+                    scn80496RefreshBlendTag((CScn80496B0C*)n3->field_0xC, tag);
                 }
             } else {
-                scn80496RefreshBlendTag(n2->field_0xC, tag);
+                scn80496RefreshBlendTag((CScn80496B0C*)n2->field_0xC, tag);
             }
         } else {
-            scn80496RefreshBlendTag(n1->field_0xC, tag);
+            scn80496RefreshBlendTag((CScn80496B0C*)n1->field_0xC, tag);
         }
     } else {
-        scn80496RefreshBlendTag(self->field_0xC, tag);
+        scn80496RefreshBlendTag((CScn80496B0C*)self->field_0xC, tag);
     }
 }
 
@@ -2222,19 +2223,19 @@ extern "C" void simRefreshFadeChain(CScnItemModel* self) {
                     if (n5 != 0) {
                         result = simGetLeafAnimStatus(n5);
                     } else {
-                        result = scn80496IsNodeFlagBit(n4->field_0xC);
+                        result = scn80496IsNodeFlagBit((CScn80496B0C*)n4->field_0xC);
                     }
                 } else {
-                    result = scn80496IsNodeFlagBit(n3->field_0xC);
+                    result = scn80496IsNodeFlagBit((CScn80496B0C*)n3->field_0xC);
                 }
             } else {
-                result = scn80496IsNodeFlagBit(n2->field_0xC);
+                result = scn80496IsNodeFlagBit((CScn80496B0C*)n2->field_0xC);
             }
         } else {
-            result = scn80496IsNodeFlagBit(n1->field_0xC);
+            result = scn80496IsNodeFlagBit((CScn80496B0C*)n1->field_0xC);
         }
     } else {
-        result = scn80496IsNodeFlagBit(self->field_0xC);
+        result = scn80496IsNodeFlagBit((CScn80496B0C*)self->field_0xC);
     }
     if (result != 0) {
         return;
@@ -2275,40 +2276,40 @@ extern "C" void simRefreshFadeChain(CScnItemModel* self) {
                         if (p5 != 0) {
                             d = simGetLeafAnimDist(p5);
                         } else {
-                            d = scn80496GetChild1V6(p4->field_0xC);
+                            d = scn80496GetChild1V6((CScn80496B0C*)p4->field_0xC);
                         }
                     } else {
-                        d = scn80496GetChild1V6(p3->field_0xC);
+                        d = scn80496GetChild1V6((CScn80496B0C*)p3->field_0xC);
                     }
                 } else {
-                    d = scn80496GetChild1V6(p2->field_0xC);
+                    d = scn80496GetChild1V6((CScn80496B0C*)p2->field_0xC);
                 }
             } else {
-                d = scn80496GetChild1V6(p1->field_0xC);
+                d = scn80496GetChild1V6((CScn80496B0C*)p1->field_0xC);
             }
         } else {
-            d = scn80496GetChild1V6(self->field_0xC);
+            d = scn80496GetChild1V6((CScn80496B0C*)self->field_0xC);
         }
         if (d >= f31 - lbl_eu_8066A8C4) {
             // refresh the 0x8 flag: first 4 chain nodes inline, the tail
             // handled by simRefreshFlag8 (chain deeper than 4) or
             // scn80496CallChild1V5 (leaf).
-            if (scn80496GetChild1V6(self->field_0xC) != f31 - lbl_eu_8066A8C4) {
+            if (scn80496GetChild1V6((CScn80496B0C*)self->field_0xC) != f31 - lbl_eu_8066A8C4) {
                 self->flags7A8 |= 0x8;
             }
             CScnItemModel* q1 = self->field_0x7C4;
             if (q1 != 0) {
-                if (scn80496GetChild1V6(q1->field_0xC) != f31 - lbl_eu_8066A8C4) {
+                if (scn80496GetChild1V6((CScn80496B0C*)q1->field_0xC) != f31 - lbl_eu_8066A8C4) {
                     q1->flags7A8 |= 0x8;
                 }
                 CScnItemModel* q2 = q1->field_0x7C4;
                 if (q2 != 0) {
-                    if (scn80496GetChild1V6(q2->field_0xC) != f31 - lbl_eu_8066A8C4) {
+                    if (scn80496GetChild1V6((CScn80496B0C*)q2->field_0xC) != f31 - lbl_eu_8066A8C4) {
                         q2->flags7A8 |= 0x8;
                     }
                     CScnItemModel* q3 = q2->field_0x7C4;
                     if (q3 != 0) {
-                        if (scn80496GetChild1V6(q3->field_0xC) != f31 - lbl_eu_8066A8C4) {
+                        if (scn80496GetChild1V6((CScn80496B0C*)q3->field_0xC) != f31 - lbl_eu_8066A8C4) {
                             q3->flags7A8 |= 0x8;
                         }
                         CScnItemModel* q4 = q3->field_0x7C4;
@@ -2604,7 +2605,7 @@ void simToggleWordBits(u8* self, u32 flags, u32 enable) {
 extern "C" u32 lbl_eu_806624D0;   // foreign .sdata
 namespace SIMBlob {
 extern "C" void __dt__13CScnItemModelFv();
-extern "C" void simRefreshActDist(); extern "C" void ScnCamNw4r_EmptyHook48();
+extern "C" void simRefreshActDist();
 extern "C" void scnItemIdNoopA(); extern "C" void simGetValue7E4();
 extern "C" void simNotifyVfunc28(CScnItemModel* self, u32 a, u32 b); extern "C" int simProbeVfunc2C(CScnItemModel* self, u32 param);
 extern "C" void simNotifyVfunc30(CScnItemModel* self, u32 a, u32 b); extern "C" int simProbeVfunc34(CScnItemModel* self, u32 param);
@@ -2617,8 +2618,8 @@ extern "C" int simProbeModelVec(CScnItemModel* self, u32 a, u32 b); extern "C" v
 extern "C" void simNotifyReadyTree(CScnItemModel* self); extern "C" void simNotifyVfunc9C(CScnItemModel* self, u32 a, u32 b);
 extern "C" int simLinkSlot7B4(CScnItemModel* self, CScnItemModel* node); extern "C" int simLinkModel7C4(CScnItemModel* self, CScnItemModel* node);
 extern "C" void simNotifyVfuncB4(CScnItemModel* self, u32 param); extern "C" void simVtableTrue();
-extern "C" void simVtableFalse(); extern "C" void simVtableFalse3();
-extern "C" void simVtableFalse4(); extern "C" void simRemoveFromPool(CScnItemModel* self);
+extern "C" void simVtableFalse();
+extern "C" void simRemoveFromPool(CScnItemModel* self);
 extern "C" void simRefreshFadeChain(); extern "C" void simSetFlag20Link();
 extern "C" void simSetFlag100Link();
 }
@@ -2626,7 +2627,7 @@ extern "C" void simSetFlag100Link();
 // [.data] 0x8056DD70-0x8056DE80 (272B): CScnItemModel vtable + float constants
 extern "C" u32 lbl_eu_8056DD70[68] = {
     (u32)&lbl_eu_806624D0, 0x00000000, (u32)&SIMBlob::__dt__13CScnItemModelFv,
-    (u32)&SIMBlob::simRefreshActDist, (u32)&SIMBlob::ScnCamNw4r_EmptyHook48, (u32)&SIMBlob::scnItemIdNoopA,
+    (u32)&SIMBlob::simRefreshActDist, (u32)&ScnCamNw4r_EmptyHook48, (u32)&SIMBlob::scnItemIdNoopA,
     0x00000000, (u32)&SIMBlob::simGetValue7E4, 0x00000000, 0x00000000,
     (u32)&SIMBlob::simNotifyVfunc28, (u32)&SIMBlob::simProbeVfunc2C, (u32)&SIMBlob::simNotifyVfunc30,
     (u32)&SIMBlob::simProbeVfunc34, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -2639,7 +2640,7 @@ extern "C" u32 lbl_eu_8056DD70[68] = {
     (u32)&SIMBlob::simNotifyVfunc9C, 0x00000000, 0x00000000, 0x00000000,
     (u32)&SIMBlob::simLinkSlot7B4, (u32)&SIMBlob::simLinkModel7C4, (u32)&SIMBlob::simNotifyVfuncB4,
     0x00000000, (u32)&SIMBlob::simVtableTrue, (u32)&SIMBlob::simVtableFalse,
-    (u32)&SIMBlob::simVtableFalse3, (u32)&SIMBlob::simVtableFalse4, (u32)&SIMBlob::simRemoveFromPool,
+    (u32)&simVtableFalse3, (u32)&simVtableFalse4, (u32)&SIMBlob::simRemoveFromPool,
     (u32)&SIMBlob::simRefreshFadeChain, (u32)&SIMBlob::simSetFlag20Link, (u32)&SIMBlob::simSetFlag100Link,
     0x00000000,
     0x3F333333, 0x3F000000, 0x3F000000, 0x3F400000, 0x3F800000, 0x3F800000,

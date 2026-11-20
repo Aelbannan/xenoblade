@@ -1297,7 +1297,7 @@ struct CamEventVecSrc {
     f32 f_24;       // +0x24
 };
 
-extern "C" void cfCam_xformAimPairInv(ml::CVec3* v1, ml::CVec3* v2);
+
 
 // Defined in this TU (retail unmangled free functions; the extern "C"
 // declarations keep call relocs unmangled while the .cpp defines them as
@@ -1350,7 +1350,7 @@ extern "C" int CamEvtPickWeightedRow(int unused, int type_, CamEventSrc* src,
                              CamEventTargetInfo* other, u32* outRow, u32* outCol);
 extern "C" void CamEvtClearSlotBytes(u8* self);
 // Vector-normalize helper (body provided by this TU).
-extern "C" void VecMath_WrapAnglesPi(ml::CVec3* v);
+
 extern "C" f32 lbl_eu_8066642C;
 extern "C" f32 lbl_eu_80666430;
 extern "C" f32 lbl_eu_80666440;
@@ -1398,12 +1398,11 @@ extern "C" int CamEvtMapActionToCampaign(int action, int param);
 extern "C" void* Scn_FindCamItem(void* obj, int index);
 extern "C" void* CamEvtSetupFollowCam(CfCamEventManager* self, int unk34,
                                 void* srcArg, CfCamDataTable* cam);
-extern "C" int VecMath_IsTurnLeftXZ(void* dst, void* b, void* c);
+
 // Pose-solver helper called by CamEvtSolveAimPair.
 extern "C" void cfCam_applyBasis(void* out, void* in, void* vec, f32 f);
 extern "C" f32 lbl_eu_80666450;   // sdata2 damping factor
 struct CfObj90E4;
-extern "C" CfObj90E4* Selector_GetInstance(void);
 extern "C" int ScnRes_SegQueryForward_E348(void* a, void* b, u32 c, u32 d);
 extern "C" void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
@@ -1411,13 +1410,12 @@ extern "C" void CamEvtSolveAimPair(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* 
 extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
 extern "C" u32   CfRes_getAllocHandle(void);
 extern "C" void  func_80240878(u8* p);
-extern "C" void  MenuFx_ClearSlotFlags(u8* base);
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" void VecMath_CatmullRom(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               CfCamEventElem* c, CfCamEventElem* d, f32 t);
 extern "C" void VecMath_LerpVec(f32* out, CfCamEventElem* a, CfCamEventElem* b,
                               f32 t);
-extern "C" int MapFxClearSlotFlags(int state, int val);
-extern "C" int MapFxResetEntries(int state, int val);
 extern "C" int MapFxAllocEntry(int state, int arg0, int arg1);
-extern "C" u32 Tok_Pack20(int a, int b, int c);
+
+
+#include "kyoshin/cf/CfCamEventApi.hpp"

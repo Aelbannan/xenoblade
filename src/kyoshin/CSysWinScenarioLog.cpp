@@ -4,7 +4,7 @@
 #define CTTASK_INLINE_DTOR
 #define IUIWINDOW_INLINE_DTOR
 #include <nw4r/lyt/lyt_drawInfo.h>
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
@@ -30,14 +30,6 @@
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 
 // ---------------------------------------------------------------------------
-// CSysWinScenarioLog::~CSysWinScenarioLog (us-80280a38)
-// D1-inlined-into-D2 virtual dtor: the compiler destroys mMemRegion@0x7c, then
-// the CProcess base (through the inlined CTTask<IUIWindow>/IUIWindow dtors) and
-// the conditional operator delete.
-// ---------------------------------------------------------------------------
-CSysWinScenarioLog::~CSysWinScenarioLog() {}
-
-// ---------------------------------------------------------------------------
 // CSysWinScenarioLog::CSysWinScenarioLog (us-80280934)
 // Runs CProcess's ctor, lets the inlined CTTask<IUIWindow>/IUIWindow ctors write
 // the temp vptr + the two null ptmf hooks + the window control words, then the
@@ -53,20 +45,137 @@ CSysWinScenarioLog::CSysWinScenarioLog(CScn* scene)
 }
 
 // ---------------------------------------------------------------------------
-// SysWinLog_Create (us-80280e6c)
-// Allocate the CSysWinScenarioLog singleton from work memory, construct it,
-// store it, and register it as a child of `parent`. Returns null when already
-// created. (Regist is called even if the allocation failed, matching retail.)
+// CSysWinScenarioLog::~CSysWinScenarioLog (us-80280a38)
+// D1-inlined-into-D2 virtual dtor: the compiler destroys mMemRegion@0x7c, then
+// the CProcess base (through the inlined CTTask<IUIWindow>/IUIWindow dtors) and
+// the conditional operator delete.
 // ---------------------------------------------------------------------------
-CSysWinScenarioLog* SysWinLog_Create(CProcess* parent, u8* param) {
-    if (lbl_eu_80664908 != 0) {
-        return nullptr;
+CSysWinScenarioLog::~CSysWinScenarioLog() {}
+
+// ---------------------------------------------------------------------------
+// CSysWinScenarioLog::Init (us-80280aac)
+// Register this window's IScnRender sub-object (+0x70) with the owning scene,
+// then kick off both file loads against the IWorkEvent sub-object (+0x6C):
+// the layout archive from MEM2 and the BDAT common archive (+0x18 into the
+// string pool).
+// ---------------------------------------------------------------------------
+void CSysWinScenarioLog::Init() {
+    // Null-this tolerant sub-object selection: seed with the raw pointer,
+    // then overwrite with the embedded interface offset when this is live.
+    // A fresh selection per call site matches retail, which re-materializes
+    // the +0x6c IWorkEvent offset before each file request.
+    IScnRender* render = this;
+    mScene->addRenderCB(render, 0xD, 0);
+
+    IWorkEvent* ev74 = this;
+    mFileHandle74 = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev74, 0, 0);
+
+    IWorkEvent* ev78 = this;
+    mFileHandle78 = CDeviceFile::readCommonArchiveFile(
+        KyoshinHeap_GetField44(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
+}
+
+// ---------------------------------------------------------------------------
+// CSysWinScenarioLog::Term (us-80280b60)
+// Tear down the scenario-log window: wait for the VI, release the two file
+// handles and the BDAT archive, destroy the layout pair (vtable slot-2 call
+// with arg 1, guarded like retail's double-beq), free the arc accessor, clear
+// the mem region + globals, deregister the render callback from the scene, and
+// drop the open-window bookkeeping counter once per boot.
+// ---------------------------------------------------------------------------
+void CSysWinScenarioLog::Term() {
+    CDeviceVI::waitForDrawDone();
+    closeFileHandle(&mFileHandle74);
+    closeFileHandle(&mFileHandle78);
+    CBdat::getEntry(2);
+
+    if (mpLayout != 0) {
+        nw4r::lyt::Layout* p = mpLayout;
+        if (p != 0) {
+            ((CSysWinLayoutSlot2View*)p)->mSlot2(1);
+        }
+        mpLayout = 0;
     }
-    CSysWinScenarioLog* obj = new (mtl::MemManager::allocate(0xA4, CWorkThreadSystem::getWorkMem()))
-        CSysWinScenarioLog((CScn*)param);
-    lbl_eu_80664908 = (u32)obj;
-    obj->Regist(parent, false);
-    return (CSysWinScenarioLog*)lbl_eu_80664908;
+    if (mField94 != 0) {
+        nw4r::lyt::Layout* p = mField94;
+        if (p != 0) {
+            ((CSysWinLayoutSlot2View*)p)->mSlot2(1);
+        }
+        mField94 = 0;
+    }
+    releaseArcResourceAccessor(mpAccessor);
+    mpAccessor = 0;
+    lbl_eu_8066490C = 0;
+    mMemRegion.deleteRegion();
+    lbl_eu_80664908 = 0;
+
+    IScnRender* render = this;
+    mScene->removeRenderCB(render);
+
+    DecMenuCounter64080();
+    if (code80135FDC_getByte_64080() == 0) {
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CSysWinScenarioLog::Move (us-80280c54)
+// Advance the scenario-log window's opening/closing state machine.
+// Gate layout mirrors retail: the first guard folds to a direct branch to the
+// shared epilogue, the pause-bit guard renders as the branch-over-branch
+// (beq forward + b end, cbRenderBefore pattern), and the remaining guards are
+// separate single-condition early returns (direct conditional branches).
+// ---------------------------------------------------------------------------
+void CSysWinScenarioLog::Move() {
+    if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
+        (gmPauseFlags & 0x200000) != 0) {
+        return;
+    }
+    if (IsMenuState621F0() == 0) {
+        return;
+    }
+    if (MenuTutorialIsCreated() != 0) {
+        return;
+    }
+    if (mpLayout == 0) {
+        return;
+    }
+    {
+        switch (mState) {
+        case 0:
+            SysWinLog_OpenContent(this);
+            break;
+        case 1:
+            if (advanceAnimTransform(mpAnim, 1.0f) != 0) {
+                mState = 2;
+            }
+            break;
+        case 2: {
+            CSysWinPadView* pad = (CSysWinPadView*)cf::CfGameManager::getCurrentPad();
+            bool pressed;
+            if (cf::CfGameManager::isClassicController(-1) != 0) {
+                pressed = (pad->mButtons & 0x4600000) != 0;
+            } else {
+                pressed = (pad->mButtons & 0x1030) != 0;
+            }
+            if (pressed) {
+                mState = 3;
+                playUISound(6);
+                playUISound(0xE);
+            }
+            break;
+        }
+        case 3:
+            if (AnimRewindFrame(mpAnim, 1.0f) != 0) {
+                mField67 = 0;
+                mField64 = 1;
+            }
+            break;
+        }
+        // Layout virtual update (vtable slot 0x38) with a null argument.
+        ((CSysWinLayoutHook*)mpLayout)->mAt38(0);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -105,63 +214,23 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinScenarioLog::Move (us-80280c54)
-// Advance the scenario-log window's opening/closing state machine.
-// Gate layout mirrors retail: the first guard folds to a direct branch to the
-// shared epilogue, the pause-bit guard renders as the branch-over-branch
-// (beq forward + b end, cbRenderBefore pattern), and the remaining guards are
-// separate single-condition early returns (direct conditional branches).
+// SysWinLog_Create (us-80280e6c)
+// Allocate the CSysWinScenarioLog singleton from work memory, construct it,
+// store it, and register it as a child of `parent`. Returns null when already
+// created. (Regist is called even if the allocation failed, matching retail.)
 // ---------------------------------------------------------------------------
-void CSysWinScenarioLog::Move() {
-    if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
-        (gmPauseFlags & 0x200000) != 0) {
-        return;
+CSysWinScenarioLog* SysWinLog_Create(CProcess* parent, u8* param) {
+    if (lbl_eu_80664908 != 0) {
+        return nullptr;
     }
-    if (IsMenuState621F0() == 0) {
-        return;
-    }
-    if (MenuTutorialIsCreated() != 0) {
-        return;
-    }
-    if (mpLayout == 0) {
-        return;
-    }
-    {
-        switch (mState) {
-        case 0:
-            SysWinLog_OpenContent(this);
-            break;
-        case 1:
-            if (advanceAnimTransform(mpAnim, lbl_eu_80668AD0) != 0) {
-                mState = 2;
-            }
-            break;
-        case 2: {
-            CSysWinPadView* pad = (CSysWinPadView*)cf::CfGameManager::getCurrentPad();
-            bool pressed;
-            if (cf::CfGameManager::isClassicController(-1) != 0) {
-                pressed = (pad->mButtons & 0x4600000) != 0;
-            } else {
-                pressed = (pad->mButtons & 0x1030) != 0;
-            }
-            if (pressed) {
-                mState = 3;
-                playUISound(6);
-                playUISound(0xE);
-            }
-            break;
-        }
-        case 3:
-            if (AnimRewindFrame(mpAnim, lbl_eu_80668AD0) != 0) {
-                mField67 = 0;
-                mField64 = 1;
-            }
-            break;
-        }
-        // Layout virtual update (vtable slot 0x38) with a null argument.
-        ((CSysWinLayoutHook*)mpLayout)->mAt38(0);
-    }
+    CSysWinScenarioLog* obj = new (mtl::MemManager::allocate(0xA4, CWorkThreadSystem::getWorkMem()))
+        CSysWinScenarioLog((CScn*)param);
+    lbl_eu_80664908 = (u32)obj;
+    obj->Regist(parent, false);
+    return (CSysWinScenarioLog*)lbl_eu_80664908;
 }
+
+extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh);
 
 // ---------------------------------------------------------------------------
 // SysWinLog_OpenContent (us-80280ef0)
@@ -232,17 +301,6 @@ extern "C" void SysWinLog_OpenContent(CSysWinScenarioLog* self) {
     pv->field_0x50 = (f32)(convH.d - lbl_eu_80668AD8);
 }
 
-extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh);
-
-// ---------------------------------------------------------------------------
-// CSysWinScenarioLog::OnFileEvent: the IWorkEvent slot (+0x34 of the sub-vtable)
-// forwards straight to the file-event handler, so the compiler folds the body
-// into the +0x6C adjusting thunk and emits nothing else.
-// ---------------------------------------------------------------------------
-bool CSysWinScenarioLog::OnFileEvent(CEventFile* pEventFile) {
-    return SysWinLog_BuildLayout(this, (CFileHandle*)pEventFile);
-}
-
 // ---------------------------------------------------------------------------
 // SysWinLog_BuildLayout (us-80281104)
 // File-event handler for the scenario-log window. When the exchanged file
@@ -294,68 +352,10 @@ extern "C" bool SysWinLog_BuildLayout(CSysWinScenarioLog* self, CFileHandle* fh)
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinScenarioLog::Init (us-80280aac)
-// Register this window's IScnRender sub-object (+0x70) with the owning scene,
-// then kick off both file loads against the IWorkEvent sub-object (+0x6C):
-// the layout archive from MEM2 and the BDAT common archive (+0x18 into the
-// string pool).
+// CSysWinScenarioLog::OnFileEvent: the IWorkEvent slot (+0x34 of the sub-vtable)
+// forwards straight to the file-event handler, so the compiler folds the body
+// into the +0x6C adjusting thunk and emits nothing else.
 // ---------------------------------------------------------------------------
-void CSysWinScenarioLog::Init() {
-    // Null-this tolerant sub-object selection: seed with the raw pointer,
-    // then overwrite with the embedded interface offset when this is live.
-    // A fresh selection per call site matches retail, which re-materializes
-    // the +0x6c IWorkEvent offset before each file request.
-    IScnRender* render = this;
-    mScene->addRenderCB(render, 0xD, 0);
-
-    IWorkEvent* ev74 = this;
-    mFileHandle74 = CDeviceFile::readFile(
-        mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev74, 0, 0);
-
-    IWorkEvent* ev78 = this;
-    mFileHandle78 = CDeviceFile::readCommonArchiveFile(
-        KyoshinHeap_GetField44(), &lbl_eu_8050EE24[0x18], ev78, 0, 0);
-}
-
-// ---------------------------------------------------------------------------
-// CSysWinScenarioLog::Term (us-80280b60)
-// Tear down the scenario-log window: wait for the VI, release the two file
-// handles and the BDAT archive, destroy the layout pair (vtable slot-2 call
-// with arg 1, guarded like retail's double-beq), free the arc accessor, clear
-// the mem region + globals, deregister the render callback from the scene, and
-// drop the open-window bookkeeping counter once per boot.
-// ---------------------------------------------------------------------------
-void CSysWinScenarioLog::Term() {
-    CDeviceVI::waitForDrawDone();
-    closeFileHandle(&mFileHandle74);
-    closeFileHandle(&mFileHandle78);
-    CBdat::getEntry(2);
-
-    if (mpLayout != 0) {
-        nw4r::lyt::Layout* p = mpLayout;
-        if (p != 0) {
-            ((CSysWinLayoutSlot2View*)p)->mSlot2(1);
-        }
-        mpLayout = 0;
-    }
-    if (mField94 != 0) {
-        nw4r::lyt::Layout* p = mField94;
-        if (p != 0) {
-            ((CSysWinLayoutSlot2View*)p)->mSlot2(1);
-        }
-        mField94 = 0;
-    }
-    releaseArcResourceAccessor(mpAccessor);
-    mpAccessor = 0;
-    lbl_eu_8066490C = 0;
-    mMemRegion.deleteRegion();
-    lbl_eu_80664908 = 0;
-
-    IScnRender* render = this;
-    mScene->removeRenderCB(render);
-
-    DecMenuCounter64080();
-    if (code80135FDC_getByte_64080() == 0) {
-        setPresentationFlag__Q22cf13CfGameManagerFv(false);
-    }
+bool CSysWinScenarioLog::OnFileEvent(CEventFile* pEventFile) {
+    return SysWinLog_BuildLayout(this, (CFileHandle*)pEventFile);
 }

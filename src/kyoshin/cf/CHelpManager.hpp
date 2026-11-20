@@ -5,6 +5,7 @@
 #include "kyoshin/help/CHelp_LandMark.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "monolib/util/reslist.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 
 namespace cf {
 
@@ -106,20 +107,7 @@ struct CHelpBattleObjArg {
     u32 mField3F08; // 0x3F08
 };
 
-// cf::CBattleManager stand-in so updateBattleHelpState can call its real
-// static member (mangled name = the retail import
-// getInstance__Q22cf14CBattleManagerFv). The actor list at +0x44 is the real
-// shared reslist<T> from monolib; only the preceding fields are opaque here
-// because CBattleManager.hpp conflicts with the C-linkage declaration this
-// TU receives from the harness catalog.
-class CBattleManager {
-public:
-    static CBattleManager* getInstance();
-    u8 pad_00[0x44];                     // 0x0..0x43
-    reslist<CfObjectActor*> mActorList3; // 0x44
-};
 
-// --- Static help-table entry shapes (sHelpDispatchObjects) ---
 // The TU static initializer (sinit_80295DB0) builds every entry of the help
 // table: base CHelp ctor call, then interface-table (vtable) override at +0x8
 // and the extra payload fields. These mirrors only model the fields the sinit
@@ -341,7 +329,7 @@ extern "C" cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkFv(
     cf::CHelp_LandMark* self, s32 deleteFlag);
 // Compiler-runtime atexit registration (used by the sinit for the
 // CHelp_LandMark entry's destructor).
-extern void __register_global_object(void* object, void* dtor, void* cookie);
+extern "C" void* __register_global_object(void* object, void* dtor, void* cookie);
 extern void* sDefaultHelpItemList[]; // default mListB item array
 extern cf::CHelpTableEntry sScenarioHelpTable[]; // mField10 -> item-array table
 extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();

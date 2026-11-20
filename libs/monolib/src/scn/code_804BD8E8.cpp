@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/scn/code_804BD8E8.hpp"
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <revolution/MTX.h>
 #include <nw4r/math/math_types.h>
@@ -476,9 +477,9 @@ int ScnRes_HasHighFlagEntry_E5AC() {
 
 extern u8 ScnResGroundCrossFlag;
 extern u8 ScnResCrossNotifyFlag;
-u8 ScnRes_GetCrossFlagA_E5B8() { return ScnResGroundCrossFlag; }
+int ScnRes_GetCrossFlagA_E5B8() { return ScnResGroundCrossFlag; }
 
-u8 ScnRes_GetCrossFlagB_E5C0() { return ScnResCrossNotifyFlag; }
+int ScnRes_GetCrossFlagB_E5C0() { return ScnResCrossNotifyFlag; }
 
 // Scan the resource entries for one whose info selects an enabled mask bit.
 s32 ScnRes_AnyEntryValued_E5C8() {

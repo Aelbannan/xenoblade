@@ -1,4 +1,8 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
+#include "kyoshin/cf/chain/CChainApi.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+
 #include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
@@ -9,14 +13,15 @@
 namespace cf { class CfObjectActor; }
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
+#include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/math/Random.hpp"
 #include <new>
 #include <cstring>
 #include "kyoshin/cf/chain/CChainActorListImports.hpp"
-#include "kyoshin/cf/chain/CChainComboImports.hpp"
-#include "kyoshin/cf/CVisionImports.hpp"
+#include "kyoshin/cf/chain/CChainCombo.hpp"
+#include "kyoshin/cf/CVision.hpp"
 
 // C-linkage pseudo-imports for this TU now live in the "C-linkage imports"
 // section of kyoshin/cf/chain/CChainActorList.hpp (real imports).
@@ -608,7 +613,7 @@ extern "C" int Chain_RollActivation(cf::CChainMsg* self) {
     // Route through an unprototyped pointer type so the call passes none;
     // MWCC folds the constant function address back into a direct bl.
     typedef int (*UnprotoChainRollFn)();
-    if (((UnprotoChainRollFn)Chain_CheckChanceRoll)() != 0) {
+    if (((UnprotoChainRollFn)Chain_CheckChanceRoll)() != 0) {  // DEBT(callcast): C symbol with 3 params; retail call site is a stale-register call with no args set up
         chainResolveMemberPtr(0xc3, 0);
         self->field_0x0 = 0xa;
         return 1;
@@ -636,7 +641,7 @@ int Chain_CheckChanceRoll(cf::CChainChanceS* self,
     u32 val;
     if (objA->v160() != 0) {
         objA->v160();
-        val = (u16)IdTable_SumValues(objA, 0x6b);
+        val = (u16)IdTable_SumValues((CUnkObj8025FB10*)objA, 0x6b);
     } else {
         val = 0;
     }
@@ -1017,10 +1022,6 @@ extern "C" void* __dt__Q22cf11CChainTimerFv(void*, int);
 extern "C" void* __dt__Q22cf12CChainMemberFv(void*, int);
 extern "C" void* __dt__Q22cf11CChainActorFv(void*, int);
 extern "C" void CChain_setFieldAndClear(void*, int);
-extern "C" void CChainActor_CleanupVoiceEnd(void*);
-extern "C" void CChainActor_ClearTargetRef(void*);
-extern "C" void CChainActor_ToggleCancelVoice(void*, int);
-extern "C" void CChainActor_ToggleMoveFlag(void*, int);
 extern "C" int CChainActor_CheckReady(void*, int);
 extern "C" int CChainActor_ScanArtsSlots(void*, int);
 extern "C" int CChainActor_CheckFacing(void*);
@@ -1066,10 +1067,10 @@ extern "C" __declspec(section ".data") __attribute__((used, aligned(4)))
 u32 lbl_eu_80538290[29] = {
     (u32)__RTTI__Q22cf11CChainActor, 0, (u32)&__dt__Q22cf11CChainActorFv,
     (u32)CChain_setFieldAndClear,      // +0x0C  (slot 2)
-    (u32)CChainActor_CleanupVoiceEnd,  // +0x10
-    (u32)CChainActor_ClearTargetRef,   // +0x14
-    (u32)CChainActor_ToggleCancelVoice,// +0x18
-    (u32)CChainActor_ToggleMoveFlag,   // +0x1C
+    (u32)::CChainActor_CleanupVoiceEnd,  // +0x10
+    (u32)::CChainActor_ClearTargetRef,   // +0x14
+    (u32)::CChainActor_ToggleCancelVoice,// +0x18
+    (u32)::CChainActor_ToggleMoveFlag,   // +0x1C
     (u32)CChainActor_CheckReady,       // +0x20
     (u32)CChainActor_ScanArtsSlots,    // +0x24
     (u32)CChainActor_CheckFacing,      // +0x28

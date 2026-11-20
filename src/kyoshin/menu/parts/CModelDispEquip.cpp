@@ -2,10 +2,13 @@
 // High-level C/C++ reconstruction
 
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
+#include "monolib/work/CEventFile.hpp"
+
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 
 // Forward decls: state-dispatch callees defined later in this TU.
 extern "C" void ModelDispEquip_BuildDisplay(CModelDispEquip*);
@@ -39,8 +42,8 @@ CModelDispEquip::CModelDispEquip(u32 somePtr, s32 equipSlot) {
     weaponId = 0;
     this->equipSlot = equipSlot;
     state = 0;
-    alpha = lbl_eu_80668270;
-    alphaTimer = lbl_eu_80668274;
+    alpha = 1.0f;
+    alphaTimer = 0.0f;
     state20 = 1;
     state21 = 1;
     FileSlot* slot = &this->fileSlots[0];
@@ -96,7 +99,7 @@ extern "C" void ModelDispEquip_ClearFileSlot(u8* ptr) {
 extern "C" void* __dt__801FF6F0(CActParamHolder* self, int flag) {
     if (!self)
         goto done;
-    __destroy_arr(self->actParams, (void*)__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
+    __destroy_arr(self->actParams, (ConstructorDestructor*)__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
     __dt__Q22cf17CActParamAnimGameFv(reinterpret_cast<cf::CActParamAnimGame*>(&self->actParam), -1);
     if (flag > 0)
         ::operator delete(self);
@@ -129,7 +132,7 @@ extern "C" void ModelDispEquip_SyncScalePose(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)equipScaleBaseA;
     *(V3*)self->scale2 = *(const V3*)equipScaleBaseB;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -234,11 +237,11 @@ extern "C" u32 ModelDispEquip_GetEquipSlot(CModelDispEquip* self) {
 // flipped to 2), push the new alpha into the act-param object, and write the
 // quad color (1, 1, 1, 1-alpha) into both animation-model slots.
 void ModelDispEquip_StepFadeOut(CModelDispEquip* self) {
-    self->alphaTimer += lbl_eu_80668270;
-    if (self->alphaTimer >= lbl_eu_80668278) {
-        self->alpha -= lbl_eu_8066827C;
-        if (self->alpha < lbl_eu_80668274) {
-            self->alpha = lbl_eu_80668274;
+    self->alphaTimer += 1.0f;
+    if (self->alphaTimer >= 5.0f) {
+        self->alpha -= 0.2f;
+        if (self->alpha < 0.0f) {
+            self->alpha = 0.0f;
             self->state = 2;
             self->state20 = 1;
         }
@@ -251,8 +254,8 @@ void ModelDispEquip_StepFadeOut(CModelDispEquip* self) {
             u32 w[4];
         };
         u32 tmp[4];
-        ModelDispEquip_StoreFloat4(reinterpret_cast<float*>(tmp), lbl_eu_80668270, lbl_eu_80668270,
-                      lbl_eu_80668270, lbl_eu_80668270 - self->alpha);
+        ModelDispEquip_StoreFloat4(reinterpret_cast<float*>(tmp), 1.0f, 1.0f,
+                      1.0f, 1.0f - self->alpha);
         // Word-copy gives retail's paired load/store schedule.
         // p declared before the loop index so MWCC's low-to-high scratch
         // coloring lands it in r4 with the index in r5 (retail allocation).
@@ -282,9 +285,9 @@ extern "C" void ModelDispEquip_StoreFloat4(float* dest, float a, float b, float 
 // poke the act-param object with the new alpha, then write the quad color
 // (clamp, clamp, clamp, clamp - alpha) into both animation-model slots.
 extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip* self) {
-    self->alpha += lbl_eu_8066827C;
-    if (self->alpha > lbl_eu_80668270) {
-        self->alpha = lbl_eu_80668270;
+    self->alpha += 0.2f;
+    if (self->alpha > 1.0f) {
+        self->alpha = 1.0f;
         self->state = 0;
         self->state20 = 1;
     }
@@ -294,8 +297,8 @@ extern "C" void ModelDispEquip_StepFadeIn(CModelDispEquip* self) {
         obj->vfunc48(self->alpha);
     }
     u32 tmp[4];
-    ModelDispEquip_StoreFloat4((float*)tmp, lbl_eu_80668270, lbl_eu_80668270, lbl_eu_80668270,
-                  lbl_eu_80668270 - self->alpha);
+    ModelDispEquip_StoreFloat4((float*)tmp, 1.0f, 1.0f, 1.0f,
+                  1.0f - self->alpha);
     // Word-copy gives retail's paired load/store schedule.
     // p declared before the loop index for retail scratch coloring (r4/r5).
     struct V4 { u32 w[4]; };
@@ -448,8 +451,8 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 // lets the optimizer pick a different mask encoding here.
                 holder->actParam.field_0x0C =
                     __rlwinm(holder->actParam.field_0x0C, 0, 24, 22);
-                setAnimSubPos(&holder->actParam,
-                    (const f32*)writeVec3f(tmpB, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274));
+                setAnimSubPos((CActParamAnim*)&holder->actParam, (const CActParamAnimData3*)
+                    (const f32*)writeVec3f(tmpB, 0.2f, 0.0f, 0.0f));
                 holder->actParam.field_0x0C |= 0x160;
                 // Copy-then-adjust shape (retail cmpwi/mr/beq/addi): default
                 // is self itself, not null.
@@ -457,14 +460,14 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                 if (self != 0)
                     parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
                 ModelDispEquip_SetActParamParent(&holder->actParam, parentArg);
-                writeVec3f(tmpA, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
+                writeVec3f(tmpA, 0.2f, 0.0f, 0.0f);
                 // Word-copy gives retail's lwz/stw schedule (a float copy would
                 // emit lfs/stfs).
                 struct V3 {
                     u32 w[3];
                 };
                 *(V3*)&self->colorR = *(const V3*)tmpA;
-                self->colorA = lbl_eu_80668274;
+                self->colorA = 0.0f;
                 CModelDispParamSlot* mainSlot = CfRes_getArrayElem18Idx(be);
                 if ((actor->field_3F08 & 0x1000) != 0) {
                     holder->animModelPtrs[0] = Scn_SetupAnimDefault(self->somePtr,
@@ -496,7 +499,7 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                             if (am == 0 || holder->unk_55C == 0)
                                 continue;
                             holder->actParams[i].field_0x378 = i;
-                            AnimGame_SetStateFlags(&holder->actParams[i]);
+                            AnimGame_SetStateFlags((cf::CActParamAnimGame*)&holder->actParams[i]);
                             attachAnimObj(&holder->actParams[i], am, holder->unk_55C,
                                           reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
                             func_8004B9D4(&holder->actParams[i],
@@ -726,8 +729,8 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
                   holder->field_0x08, f6);
     pushAnimNode(&holder->actParam, holder->field_0x04, f7);
     holder->actParam.field_0x0C &= ~0x800000;
-    setAnimSubPos(&holder->actParam,
-                  (const f32*)writeVec3f(tmpB, 0.2f, lbl_eu_80668274, lbl_eu_80668274));
+    setAnimSubPos((CActParamAnim*)&holder->actParam, (const CActParamAnimData3*)
+                  (const f32*)writeVec3f(tmpB, 0.2f, 0.0f, 0.0f));
     holder->actParam.field_0x0C |= 0x160;
     // Copy-then-adjust shape (retail cmpwi/mr/beq/addi): default is self
     // itself, not null.
@@ -735,14 +738,14 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
     if (self != 0)
         parentArg = reinterpret_cast<u32>(reinterpret_cast<u8*>(self) + 4);
     ModelDispEquip_SetActParamParent(&holder->actParam, parentArg);
-    writeVec3f(tmpA, 0.2f, lbl_eu_80668274, lbl_eu_80668274);
+    writeVec3f(tmpA, 0.2f, 0.0f, 0.0f);
     // Word-copy gives retail's lwz/stw color schedule (float assigns would
     // emit lfs/stfs). f8 is interleaved mid-copy like retail.
     struct V3 {
         u32 w[3];
     };
     *(V3*)&self->colorR = *(const V3*)tmpA;
-    self->colorA = lbl_eu_80668274;
+    self->colorA = 0.0f;
 
     u32 f8 = (u32)self->fileSlots[8].data;
     __ct__CMcaFile(&mca, f8);
@@ -753,7 +756,7 @@ extern "C" void ModelDispEquip_BuildEquipModel(CModelDispEquip* self) {
         CScnItemModel* am = reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
         if (am != 0 && holder->unk_55C != 0) {
             holder->actParams[i].field_0x378 = i;
-            AnimGame_SetStateFlags(&holder->actParams[i]);
+            AnimGame_SetStateFlags((cf::CActParamAnimGame*)&holder->actParams[i]);
             attachAnimObj(&holder->actParams[i], am, holder->unk_55C, f8);
             func_8004B9D4(&holder->actParams[i], (int)(u32)getAnimModelId(&holder->actParam), 0, -1, 0);
         }
@@ -934,7 +937,7 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
         if (cfMove != 0) {
             CModelDispActor* actor = getCfObjectPc(cfMove);
             // Retail initializes res (r5) before idx (r30).
-            CModelDispNameParam* res = 0;
+            const char* res = 0;
             int idx = 0;
             // Retail builds the dispatch as cmpwi/beq chains with out-of-line
             // case bodies (switch codegen), sharing one res check per kind.
@@ -950,7 +953,7 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
                     res = CfObjectMove_getBdatNameCol11(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 }
-                if (res != 0) ModelDispEquip_RearmAnimSlotChecked(self, actor, res, idx);
+                if (res != 0) ModelDispEquip_RearmAnimSlotChecked(self, actor, (void*)res, idx);
                 break;
             case 1:
                 switch (subKind) {
@@ -963,7 +966,7 @@ extern "C" void ModelDispEquip_SwapPartyEquip(CModelDispEquip* self, CModelDispP
                     res = CfObjectMove_getBdatNameCol7(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 }
-                if (res != 0) ModelDispEquip_RearmAnimSlotChecked(self, actor, res, idx);
+                if (res != 0) ModelDispEquip_RearmAnimSlotChecked(self, actor, (void*)res, idx);
                 break;
             }
         }
@@ -1180,9 +1183,9 @@ extern "C" void ModelDispEquip_PrevEquipSlot(CModelDispEquip* self) {
 // act-param flags guards the setTurnScale call.
 extern "C" void ModelDispEquip_FadeAlphaUp(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 != 0) {
-        self->colorA += lbl_eu_80668280;
+        self->colorA += 0.1f;
         self->actParamHolder.actParam.field_0x0C &= ~0x20;
-        setTurnScale(&self->actParamHolder.actParam, self->colorA);
+        setTurnScale((CActParamAnim*)&self->actParamHolder.actParam, self->colorA);
         self->actParamHolder.actParam.field_0x0C |= 0x20;
     }
 }
@@ -1193,9 +1196,9 @@ extern "C" void ModelDispEquip_FadeAlphaUp(CModelDispEquip* self) {
 // Fade alpha down (mirror of ModelDispEquip_FadeAlphaUp).
 extern "C" void ModelDispEquip_FadeAlphaDown(CModelDispEquip* self) {
     if (self->actParamHolder.field_0x00 != 0) {
-        self->colorA -= lbl_eu_80668280;
+        self->colorA -= 0.1f;
         self->actParamHolder.actParam.field_0x0C &= ~0x20;
-        setTurnScale(&self->actParamHolder.actParam, self->colorA);
+        setTurnScale((CActParamAnim*)&self->actParamHolder.actParam, self->colorA);
         self->actParamHolder.actParam.field_0x0C |= 0x20;
     }
 }
@@ -1205,13 +1208,13 @@ extern "C" void ModelDispEquip_FadeAlphaDown(CModelDispEquip* self) {
 // ============================================================
 // Ramp scale1[1]/scale2[1] up by the step, clamped at the upper bounds.
 extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquip* self) {
-    self->scale1[1] += lbl_eu_80668280;
-    if (self->scale1[1] > lbl_eu_80668284)
-        self->scale1[1] = lbl_eu_80668284;
-    self->scale2[1] += lbl_eu_80668280;
-    if (self->scale2[1] > lbl_eu_80668288)
-        self->scale2[1] = lbl_eu_80668288;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    self->scale1[1] += 0.1f;
+    if (self->scale1[1] > 4.0f)
+        self->scale1[1] = 4.0f;
+    self->scale2[1] += 0.1f;
+    if (self->scale2[1] > 3.5f)
+        self->scale2[1] = 3.5f;
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1219,13 +1222,13 @@ extern "C" void ModelDispEquip_ScaleHeightUp(CModelDispEquip* self) {
 // ============================================================
 // Ramp scale1[1]/scale2[1] down by the step, clamped at the lower bounds.
 extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquip* self) {
-    self->scale1[1] -= lbl_eu_80668280;
-    if (self->scale1[1] < lbl_eu_8066828C)
-        self->scale1[1] = lbl_eu_8066828C;
-    self->scale2[1] -= lbl_eu_80668280;
-    if (self->scale2[1] < lbl_eu_80668290)
-        self->scale2[1] = lbl_eu_80668290;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    self->scale1[1] -= 0.1f;
+    if (self->scale1[1] < -1.0f)
+        self->scale1[1] = -1.0f;
+    self->scale2[1] -= 0.1f;
+    if (self->scale2[1] < -1.5f)
+        self->scale2[1] = -1.5f;
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1233,10 +1236,10 @@ extern "C" void ModelDispEquip_ScaleHeightDown(CModelDispEquip* self) {
 // ============================================================
 // Decrement scale1[2] toward lbl_eu_80668294, then sync pose + scales.
 extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquip* self) {
-    self->scale1[2] -= lbl_eu_80668280;
-    if (self->scale1[2] < lbl_eu_80668294)
-        self->scale1[2] = lbl_eu_80668294;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    self->scale1[2] -= 0.1f;
+    if (self->scale1[2] < 2.0f)
+        self->scale1[2] = 2.0f;
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1244,10 +1247,10 @@ extern "C" void ModelDispEquip_ScaleDepthDown(CModelDispEquip* self) {
 // ============================================================
 // Increment scale1[2] toward lbl_eu_80668298 (mirror of ModelDispEquip_ScaleDepthDown).
 extern "C" void ModelDispEquip_ScaleDepthUp(CModelDispEquip* self) {
-    self->scale1[2] += lbl_eu_80668280;
-    if (self->scale1[2] > lbl_eu_80668298)
-        self->scale1[2] = lbl_eu_80668298;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    self->scale1[2] += 0.1f;
+    if (self->scale1[2] > 8.0f)
+        self->scale1[2] = 8.0f;
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1263,13 +1266,13 @@ void ModelDispEquip_ResetColorStep(CModelDispEquip* self) {
             u32 w[3];
         };
         u32 tmp[4];
-        writeVec3f(tmp, lbl_eu_8066827C, lbl_eu_80668274, lbl_eu_80668274);
+        writeVec3f(tmp, 0.2f, 0.0f, 0.0f);
         *(V3*)&self->colorR = *(const V3*)tmp;
-        self->colorA = lbl_eu_80668274;
+        self->colorA = 0.0f;
         self->actParamHolder.actParam.field_0x0C &= ~0x20;
-        setTurnScale(&self->actParamHolder.actParam, self->colorA);
+        setTurnScale((CActParamAnim*)&self->actParamHolder.actParam, self->colorA);
         self->actParamHolder.actParam.field_0x0C = (self->actParamHolder.actParam.field_0x0C | 0x20) & ~0x100;
-        setAnimSubPos(&self->actParamHolder.actParam, &self->colorR);
+        setAnimSubPos((CActParamAnim*)&self->actParamHolder.actParam, (const CActParamAnimData3*)&self->colorR);
         self->actParamHolder.actParam.field_0x0C |= 0x100;
     }
     struct V3 {
@@ -1277,7 +1280,7 @@ void ModelDispEquip_ResetColorStep(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)equipScaleBaseA;
     *(V3*)self->scale2 = *(const V3*)equipScaleBaseB;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
@@ -1291,13 +1294,13 @@ void ModelDispEquip_ResetColorWhite(CModelDispEquip* self) {
             u32 w[3];
         };
         u32 tmp[4];
-        writeVec3f(tmp, lbl_eu_80668274, lbl_eu_80668274, lbl_eu_80668274);
+        writeVec3f(tmp, 0.0f, 0.0f, 0.0f);
         *(V3*)&self->colorR = *(const V3*)tmp;
-        self->colorA = lbl_eu_80668274;
+        self->colorA = 0.0f;
         self->actParamHolder.actParam.field_0x0C &= ~0x20;
-        setTurnScale(&self->actParamHolder.actParam, self->colorA);
+        setTurnScale((CActParamAnim*)&self->actParamHolder.actParam, self->colorA);
         self->actParamHolder.actParam.field_0x0C = (self->actParamHolder.actParam.field_0x0C | 0x20) & ~0x100;
-        setAnimSubPos(&self->actParamHolder.actParam, &self->colorR);
+        setAnimSubPos((CActParamAnim*)&self->actParamHolder.actParam, (const CActParamAnimData3*)&self->colorR);
         self->actParamHolder.actParam.field_0x0C |= 0x100;
     }
     struct V3 {
@@ -1305,15 +1308,15 @@ void ModelDispEquip_ResetColorWhite(CModelDispEquip* self) {
     };
     *(V3*)self->scale1 = *(const V3*)equipScaleBaseA;
     *(V3*)self->scale2 = *(const V3*)equipScaleBaseB;
-    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), lbl_eu_80668274, self->scale1, self->scale2);
+    ScnCamPointAt(Scn_FindCamItem(reinterpret_cast<void*>(self->somePtr), -1), 0.0f, self->scale1, self->scale2);
 }
 
 // ============================================================
 // us-802036f0 | sinit_802019F8
 // ============================================================
 extern "C" void sinit_802019F8() {
-    writeVec3f(equipScaleBaseA, lbl_eu_80668274, lbl_eu_8066829C, lbl_eu_80668278);
-    writeVec3f(equipScaleBaseB, lbl_eu_80668274, lbl_eu_80668270, lbl_eu_80668274);
+    writeVec3f(equipScaleBaseA, 0.0f, 1.5f, 5.0f);
+    writeVec3f(equipScaleBaseB, 0.0f, 1.0f, 0.0f);
 }
 
 // ============================================================

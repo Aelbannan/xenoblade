@@ -171,19 +171,19 @@ bool CProc::pssDetachView(WORK_ID id){
 
 struct PssCreateWalkFrame {
     // Keep the two list walks typed; these are iterator state, not untyped storage.
-    _reslist_node<WORK_ID>* volatile size0;
-    _reslist_node<WORK_ID>* volatile size4;
-    _reslist_node<WORK_ID>* volatile size8;
+    _reslist_node<WORK_ID>* size0;
+    _reslist_node<WORK_ID>* size4;
+    _reslist_node<WORK_ID>* size8;
     _reslist_node<WORK_ID>* volatile sizeC;
-    _reslist_node<WORK_ID>* volatile front1;
-    _reslist_node<WORK_ID>* volatile size2_0;
-    _reslist_node<WORK_ID>* volatile size2_4;
-    _reslist_node<WORK_ID>* volatile size2_8;
+    _reslist_node<WORK_ID>* front1;
+    _reslist_node<WORK_ID>* size2_0;
+    _reslist_node<WORK_ID>* size2_4;
+    _reslist_node<WORK_ID>* size2_8;
     _reslist_node<WORK_ID>* volatile size2_C;
-    _reslist_node<WORK_ID>* volatile front2;
-    _reslist_node<CWorkThread*>* volatile child0;
-    _reslist_node<CWorkThread*>* volatile child4;
-    _reslist_node<CWorkThread*>* volatile child8;
+    _reslist_node<WORK_ID>* front2;
+    _reslist_node<CWorkThread*>* child0;
+    _reslist_node<CWorkThread*>* child4;
+    _reslist_node<CWorkThread*>* child8;
     _reslist_node<CWorkThread*>* volatile childC;
     ml::CRect16 frameOffset;
     ml::CRect16 clientRect;

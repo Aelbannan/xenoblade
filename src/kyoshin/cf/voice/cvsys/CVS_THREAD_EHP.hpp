@@ -126,11 +126,7 @@ int RequestVoicePlayback(CCharVoice* voicePtr, int voiceId, int arg);
 CVoiceHandle* HpVoice_PickIdleVoice(CVoiceHandle* exclude);
 CVoiceHandle* CCharVoiceMan_DispatchById(int size, int align);
 CVoiceHandleList* getReslistB48();
-int HpVoice_CheckIdleGate(CVoiceHandle* handle);
-int HpVoice_MapSubState(CVoiceHandle* handle);
-int HpVoice_CheckPair26(CVoiceHandle* handle1, CVoiceHandle* handle2);
 // Collect free voice handles from `slots`; returns usable count.
-int HpVoice_CollectIdle(CVoiceHandle** slots, int count, CVoiceHandle* exclude);
 }
 
 // Slot-state triples used by the EHP playback selector (selectEhpVoiceByHp).

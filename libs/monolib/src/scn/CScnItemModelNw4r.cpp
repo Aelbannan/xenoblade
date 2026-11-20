@@ -2,7 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/src/scn/CScnItemPool.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <monolib/scn/CScn.hpp>
 
 #include <string.h>
@@ -27,7 +28,10 @@
 
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"
-// Retail u32->f32 conversion magic (lbl_eu_8066A8F0 = 0x4330000000000000,
+#include "libs/monolib/src/scn/CMdlMouth.hpp"
+#include "libs/monolib/src/scn/CMdlAnmUV.hpp"
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
+
 // 2^52) via the union trick, so the ctor's float compare emits no local
 // .sdata2 pool.
 union F64Conv_A8F0 {
@@ -48,7 +52,7 @@ struct DblCvtSlots {
     u32 hi;
     u32 lo;
 };
-static inline f32 cvtToF_A8F0(volatile DblCvtSlots& s) {
+static inline f32 cvtToF_A8F0(DblCvtSlots& s) {
     f64 d = *(const f64*)&s;
     return (f32)(d - lbl_eu_8066A8F0);
 }
@@ -72,7 +76,7 @@ extern "C" void scnImN4SetShadFlg(u8* self) {
     m->shadowNodes[1].field_0x1E |= 1;
 }
 
-extern "C" void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic(((CScnItemModelNw4r*)self)->field_0x17A0); }
+extern "C" void scnImN4DynStart(u8* self) { MdlDyn_MarkAllDynamic(reinterpret_cast<CMdlDynSet*>(((CScnItemModelNw4r*)self)->field_0x17A0)); }
 
 void MdlDyn_AddVecAll(u8* self);
 extern "C" void scnImN4DynStop(u8* self) { ((void(*)(void*))MdlDyn_AddVecAll)(((CScnItemModelNw4r*)self)->field_0x17A0); }
@@ -176,13 +180,13 @@ extern "C" void  scnImN4SetTevSwap(CScnItemModelNw4r* self, u32 enable) {
     simNotifyVfuncB4((CScnItemModel*)self, enable);
 }
 
-extern "C" void MdlMouthSetMode(u8* self);
-extern "C" void  scnImN4MouthFnA(u8* self) { ((void(*)(void*))MdlMouthSetMode)(((CScnItemModelNw4r*)self)->field_0x1700); }
+// Called through the vtable with r4/r5 live: the retail tail-branch passes
+// them straight to the mouth helpers, so use a one-argument function-pointer
+// view of the canonical C-linkage declarations in CMdlMouth.hpp.
+extern "C" void  scnImN4MouthFnA(u8* self) { ((void(*)(void*))MdlMouthSetMode)(&((CScnItemModelNw4r*)self)->field_0x1700); }
+extern "C" void  scnImN4MouthFnB(u8* self) { ((void(*)(void*))MdlMouthSetValue)(&((CScnItemModelNw4r*)self)->field_0x1700); }
 
-extern "C" void MdlMouthSetValue(u8* self);
-extern "C" void  scnImN4MouthFnB(u8* self) { ((void(*)(void*))MdlMouthSetValue)(((CScnItemModelNw4r*)self)->field_0x1700); }
-
-extern "C" u32  scnImN4GetMouth08(u8* self) { return *(u32*)&((CScnItemModelNw4r*)self)->field_0x1700[8]; }
+extern "C" u32  scnImN4GetMouth08(u8* self) { return (u32)((CScnItemModelNw4r*)self)->field_0x1700.field_0x08; }
 
 // scnImN4FwdEyeAnim: forward `param` to the chain-last node's vtable-0x64
 // handler (when linked), then to the +0x1770 eye-anim state machine.
@@ -346,7 +350,7 @@ extern "C" void scnImN4UpdateVis(CScnItemModelNw4r* self) {
     ((CScnItemModelNw4rScnScale*)self->field_0x147C)->mScale[2] =
         self->field_0x30C;
     if (self->field_0x7A4 & 0x1000) {
-        MdlDyn_UpdateAnimSpeed(&self->field_0x17A0);
+        MdlDyn_UpdateAnimSpeed(reinterpret_cast<CMdlDynModelRef*>(&self->field_0x17A0));
     }
     if (!(self->field_0x7A4 & 0x1000)) {
         if (((CScnItemModelNw4rV74*)self)->v27() == 0 &&
@@ -539,7 +543,7 @@ extern "C" void  scnImN4UpdateXform(CScnItemModelNw4r* self) {
             self->field_0x7A0 &= ~2;
         }
         if (!(self->field_0x7A8 & 0x1000)) {
-            MdlDyn_MarkAllDynamic(self->field_0x17A0);
+            MdlDyn_MarkAllDynamic(reinterpret_cast<CMdlDynSet*>(self->field_0x17A0));
         }
     }
 }
@@ -705,8 +709,9 @@ extern "C" void  scnImN4UnlinkChain(CScnItemModelNw4r* self) {
 
 // scnImN4Teardown: teardown of a CScnItemModelNw4r (see retail flow).
 extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
-    scn80496ReleaseChildren(&self->field_0xC);
+    scn80496ReleaseChildren((CScn80496B0C*)&self->field_0xC);
     simRemoveFromPool((CScnItemModel*)self);
+
     self->member824.field_4 = 0;
     if (self->member824.field_C != 0xFFFFFFFF) {
         if (self->member824.field_0 != 0) {
@@ -780,7 +785,7 @@ extern "C" void  scnImN4Teardown(CScnItemModelNw4r* self) {
             self->field_0x17C8 = 0;
         }
     }
-    MdlDyn_FreeAll(self->field_0x17A0);
+    MdlDyn_FreeAll(reinterpret_cast<CMdlDynamics*>(self->field_0x17A0));
     u32 f = self->field_0x7A4;
     if (!(f & 0x20) && !(f & 0x100) && !(f & 0x04000000)) {
         RootNw4r_DetachCamChild(self->field_04->field_0x8C, (CScnCamLayout*)self);
@@ -935,7 +940,7 @@ extern "C" void  scnImN4ResetAnims(CScnItemModelNw4r* self) {
 // (linear scan), then bubble-sort the table ascending (adjacent swaps,
 // repeat while a pass changed anything).
 extern "C" void scnImN4AddFrameId(CScnItemModelNw4r* self, u32 value) {
-    u32* p = *(u32* volatile*)&self->field_0x17CC;
+    u32* p = *(u32**)&self->field_0x17CC;
     u32* const end = p + self->field_0x17D0;
     while (p != end && *p != value) {
         p++;
@@ -968,10 +973,9 @@ extern "C" void scnImN4AddFrameId(CScnItemModelNw4r* self, u32 value) {
 }
 
 extern "C" void  scnImN4LookBind(CScnItemModelNw4r* self, u32 param) {
-    (void)param;
     s32 v = self->field_0x17C8;
     if (v == 0) return;
-    setMdlLookTarget(v);
+    setMdlLookTarget((CMdlLook*)v, (const ml::CVec3*)param);
 }
 
 extern "C" void  scnImN4LookRel(CScnItemModelNw4r* self) {
@@ -1040,7 +1044,7 @@ extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* sel
 extern "C" void  scnImN4FeedLook(CScnItemModelNw4r* self, u32 param2, u32 param3,
                    CScnItemModelNw4rFrameOut* out) {
     if (self->field_0x17C8 != 0) {
-        syncMdlLookSlots(self->field_0x17C8, self, out->field_6, param2);
+        syncMdlLookSlots((CMdlLook*)self->field_0x17C8, (u8*)self, out->field_6, param2);
     }
     u32 next = self->field_0x16C4 + 1;
     u32 limit = self->field_0x17D0;
@@ -1296,10 +1300,10 @@ extern "C" void  scnImN4PoseHook(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResul
     if (self->field_0x14A0 == frame->field_6) {
         if (((CScnItemModelNw4rAnimC*)self->field_0xC)->field_0x0 != 0) {
             nw4r::math::VEC3 v;
-            scn80496RefreshTRS((void*)self->field_0xC, (ml::CVec3*)&self->vec7CC,
+            scn80496RefreshTRS((CScn80496B0C*)self->field_0xC, (ml::CVec3*)&self->vec7CC,
                           (ml::CVec3*)&self->vec7D8, (ml::CVec3*)&v,
                           self->field_0x14A0);
-            out->SetTranslate(&v);
+
             {
                 const nw4r::math::MTX34* mtx =
                     (const nw4r::math::MTX34*)&((ml::CAttrTransform*)simGetLeafActData(self))->mLocalMat;
@@ -1403,7 +1407,7 @@ extern "C" CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
     }
-    if (CScnItemPool_hasFreeSlot(self->field_0x60, 1) == 0) {
+    if (CScnItemPool_hasFreeSlot((u8*)self->field_0x60, 1) == 0) {
         return 0;
     }
     nw4r::g3d::ResFile resFile(resFileData);
@@ -1451,7 +1455,7 @@ extern "C" CScnItemModelNw4r* scnImN4BuildByIdx(CScnItemModelNw4r* self,
     }
     pool = self->field_0x60;  // retail loads the pool before the vtable call
     u32 listId = ((CScnItemModelNw4rVtbl*)model)->v04();
-    CScnItemPool_registerOtherList(pool, model, listId);
+    ((u32 (*)(u8*, void*, u32))CScnItemPool_registerOtherList)((u8*)pool, model, listId);
     if (!bound) {
         model->field_0x7A4 |= 0x800000;
     } else {
@@ -1472,7 +1476,7 @@ extern "C" CScnItemModelNw4r* scnImN4CreateModel(CScnItemModelNw4r* self,
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
     }
-    if (CScnItemPool_hasFreeSlot(self->field_0x60, 1) == 0) {
+    if (CScnItemPool_hasFreeSlot((u8*)self->field_0x60, 1) == 0) {
         return 0;
     }
     nw4r::g3d::ResFile resFile(resFileData);
@@ -1508,7 +1512,7 @@ extern "C" CScnItemModelNw4r* scnImN4CreateModel(CScnItemModelNw4r* self,
     }
     u8* pool = self->field_0x60;  // retail loads the pool before the vtable call
     u32 listId = ((CScnItemModelNw4rVtbl*)model)->v04();
-    CScnItemPool_registerOtherList(pool, model, listId);
+    ((u32 (*)(u8*, void*, u32))CScnItemPool_registerOtherList)((u8*)pool, model, listId);
     if (!bound) {
         model->field_0x7A4 |= 0x800000;
     } else {
@@ -2637,11 +2641,11 @@ extern "C" void  scnImN4SetBit27(CScnItemModelNw4r* self, u32 enable) {
 
 extern "C" void* scnImN4AllocFromBuf(u8* self, unsigned int size) {
     void* buffer = *(void**)((char*)self + 8);
-    volatile unsigned int* used = (volatile unsigned int*)((char*)buffer + 0x860);
-    if (size >= 0xC00 - *used) return 0;
-    unsigned int current = *used;
+    CScnItemModelNw4rAlloc* alloc = (CScnItemModelNw4rAlloc*)buffer;
+    if (size >= 0xC00 - alloc->used) return 0;
+    unsigned int current = alloc->used;
     void* result = (char*)buffer + current + 0x864;
-    *used = current + size;
+    alloc->used = current + size;
     return result;
 }
 
@@ -2665,7 +2669,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
 
     // Magic-double converters; MWCC hoists the hi-word stores (0x4330)
     // into the prologue ahead of the base-class call.
-    volatile DblCvtSlots cvtA, cvtB;
+    DblCvtSlots cvtA, cvtB;
     cvtA.hi = 0x43300000u;
     cvtB.hi = 0x43300000u;
 
@@ -2710,7 +2714,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     self->field_0x16C4 = 0;
     __ct__CMdlMaterial(&self->field_0x16C8);
     __ct__CMdlMouth(&self->field_0x1700);
-    __ct__CMdlAnmUV(&self->field_0x1730);
+    new (&self->field_0x1730) CMdlAnmUV;
     __ct__CMdlAnmEye(&self->field_0x1770);
     __ct__CMdlDynamics(&self->field_0x17A0);
     self->field_0x17C8 = 0;
@@ -2837,7 +2841,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         setupFromModel(&self->field_0x16C8, self);
     }
     if (flags & 0x40) {
-        scn80496SetupChildren(&self->field_0xC, (CScn*)pSrc, self, 2);
+        scn80496SetupChildren((CScn80496B0C*)&self->field_0xC, (CScn*)pSrc, (CScnModel80496B0C*)self, 2);
     }
 
     // Anm-scene: bind the first scene animation, construct the AnmScnRes,
@@ -3035,7 +3039,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
         }
     }
 
-    MdlMouthBindModel(&self->field_0x1700, self);
+    MdlMouthBindModel(&self->field_0x1700, (CMdlOwnerCtx*)self);
 
     // CMdlLook: carve 0x74 bytes from the +0x864 pool when it fits, else
     // allocate from the scene root's MemManager handle. The placement-new
@@ -3177,7 +3181,7 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     return self;
 }
 
-
+extern "C" void scnImN4SyncShadow(CScnItemModelNw4r* self, nw4r::math::MTX34* mtxs);
 extern "C" void  scnImN4CbWorldMtx(u8* self) { ((void(*)(void*))scnImN4SyncShadow)((char*)self - 0x1464); }
 
 extern "C" void  scnImN4CbFeedLook(u8* self) { ((void(*)(void*))scnImN4FeedLook)((char*)self - 0x1464); }
@@ -3343,7 +3347,6 @@ extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6
 extern "C" void __dt__Q34nw4r3g3d15IScnObjCallbackFv();
 extern "C" void __dt__Q34nw4r3g3d18ICalcWorldCallbackFv();
 extern "C" void CfObjectMove_getStatusBit1678();
-extern "C" void ScnCamNw4r_EmptyHook48();
 extern "C" void simGetRate858();
 extern "C" void simVtableTrue();
 extern "C" void simGetValue7E4();
@@ -3423,4 +3426,4 @@ extern "C" u32 lbl_eu_8056DE80[386] = {
 // (hpp: extern u8) + 7 pad bytes, then the second 8-byte zero-fill slot.
 u8 gScnImN4AllocPathFlag;
 u32 gScnImN4AllocPathFlag_pad;
-u32 lbl_eu_806658E0[2];
+f32 sMaruShadowDepthScale[2];

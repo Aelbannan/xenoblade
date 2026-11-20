@@ -77,9 +77,7 @@ extern void PSVECNormalize(const Vec*, Vec*);
 extern void* getCurrentView__5CViewFv();
 extern void* Scn_HasCamItem(void*, void*);
 extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
-extern void CfT_PlayClockSnapshot(u16*, u16*);
-extern int CfT_DispatchFrameCounts();
-extern u16 getReloadParam0();
+
 extern u8 sNw4rMaterialFile[];
 extern u8 sNw4rTexMapAssertMsg[];
 extern u32 sThresholdLookup[28];
@@ -189,7 +187,7 @@ extern ml::CVec3 zero__Q22ml5CVec3;
 //  declare them with different signatures and are co-included by callers)
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 idx);
 extern "C" int CtrlObjectParam_GetItemBitFlag(u32 idx);
-extern "C" void CtrlObjectParam_SetItemBitFlag(u32 idx, u32 value);
+
 extern "C" void CItemBlock_setFlag120EC(u8, u32);
 
 extern "C" void activateLOD__8CTaskLODFv(s8);

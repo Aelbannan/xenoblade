@@ -141,9 +141,9 @@ void CMCCrystalList::crystalListDrawIfActive(nw4r::lyt::DrawInfo* drawInfo)
     }
 }
 
-u8 CMCCrystalList::crystalListGetDataFlag() { return mDataFlag; }
+u32 CMCCrystalList::crystalListGetDataFlag() { return mDataFlag; }
 
-u8 CMCCrystalList::crystalListIsActive() { return mIsActive; }
+u32 CMCCrystalList::crystalListIsActive() { return mIsActive; }
 
 // Forward decls for functions defined later in this TU. They are C-linkage in
 // retail (unmangled symbols), so extern "C" keeps the call relocs unmangled.
@@ -205,56 +205,56 @@ void crystalListState3To4(CMCCrystalList* self)
 void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     char buf[0x20];
     // BDAT name lookup happens BEFORE the slot number is computed.
-    char* name = BdatGetPtrDirect((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x36], id);
+    char* name = BdatGetPtrDirect((const void*)lbl_eu_806640D8, "name", id);
     u32 slot = idx + 1;
-    sprintf(buf, &lbl_eu_805092C0[0x3b], slot);
+    sprintf(buf, "txt_listname%02d", slot);
     LayoutSetTextBoxFmtValue(self->mLayout, buf, name, 0);
-    sprintf(buf, &lbl_eu_805092C0[0x4c], slot);
+    sprintf(buf, "txt_listvalue%02d", slot);
     setLayoutTextBoxNumber(self->mLayout, buf, countArg);
-    sprintf(buf, &lbl_eu_805092C0[0x5e], slot);
-    char* desc = BdatTouchStringCell(&lbl_eu_805092C0[0x6f], &lbl_eu_805092C0[0x36], 0x21);
+    sprintf(buf, "txt_listpara%02d", slot);
+    char* desc = BdatTouchStringCell("MNU_item", "name", 0x21);
     LayoutSetTextBoxFmtValue(self->mLayout, buf, desc, 0);
 
     void* tex = NULL;
-    switch (BdatGetU8Direct((const void*)lbl_eu_806640D8, &lbl_eu_805092C0[0x78], id)) {
+    switch (BdatGetU8Direct((const void*)lbl_eu_806640D8, "atr_type", id)) {
     case 0:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0x81], NULL);
+            "mf00_reg30_crys00.tpl", NULL);
         break;
     case 4:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0x97], NULL);
+            "mf00_reg30_crys01.tpl", NULL);
         break;
     case 5:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0xad], NULL);
+            "mf00_reg30_crys02.tpl", NULL);
         break;
     case 6:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0xc3], NULL);
+            "mf00_reg30_crys03.tpl", NULL);
         break;
     case 7:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0xd9], NULL);
+            "mf00_reg30_crys04.tpl", NULL);
         break;
     case 8:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0xef], NULL);
+            "mf00_reg30_crys05.tpl", NULL);
         break;
     case 9:
         tex = self->mArcResAccessor2->GetResource(
             nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
-            &lbl_eu_805092C0[0x105], NULL);
+            "mf00_reg30_crys06.tpl", NULL);
         break;
     }
     if (tex != NULL) {
-        sprintf(buf, &lbl_eu_805092C0[0x11b], slot);
+        sprintf(buf, "pic_ethcol%02d", slot);
         PaneSetTexPaletteByName(self->mLayout, (const char*)buf, (TPLPalette*)tex);
     }
 }
@@ -303,9 +303,9 @@ extern "C" void crystalListClearSlots(CMCCrystalList* self, u32 arg) {
 void crystalListAlignSlot(CMCCrystalList* self, int idx)
 {
     char buf[0x28];
-    sprintf(buf, &lbl_eu_805092C0[0x14b], idx + 1);
+    sprintf(buf, "nul_list%02d", idx + 1);
     nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
-    void* paneA = rootPane->FindPaneByName(&lbl_eu_805092C0[0x158], true);
+    void* paneA = rootPane->FindPaneByName("nul_proportion", true);
     void* paneB = rootPane->FindPaneByName(buf, true);
     ScalePaneWorldPos((nw4r::math::VEC3*)self, (nw4r::lyt::Pane*)paneB, (nw4r::lyt::Pane*)paneA, rootPane);
 }
@@ -327,11 +327,11 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
     u32 result;
     char buf[0x20];
 
-    sprintf(buf, &lbl_eu_805092C0[0x5e], slot);
+    sprintf(buf, "txt_listpara%02d", slot);
     paneA = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    sprintf(buf, &lbl_eu_805092C0[0x4c], slot);
+    sprintf(buf, "txt_listvalue%02d", slot);
     paneB = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    sprintf(buf, &lbl_eu_805092C0[0x13e], slot);
+    sprintf(buf, "pic_heat%02d", slot);
     paneC = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
 
     result = 1;
@@ -342,7 +342,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             crystalListDisableAnims(self);
             AnimResetToFirst(paneC, self->mAnimRes5);
             void* tex = self->mArcResAccessor->GetResource(
-                0x74696D67, &lbl_eu_805092C0[0x167], NULL); // 'itmg'
+                0x74696D67, "mf10_cry00_heat.tpl", NULL); // 'itmg'
             if (tex != NULL) {
                 PaneSetTexPalette(paneC, (TPLPalette*)tex);
             }
@@ -359,7 +359,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
             crystalListDisableAnims(self);
             AnimResetToFirst(paneC, self->mAnimRes5);
             void* tex = self->mArcResAccessor->GetResource(
-                0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
+                0x74696D67, "mf10_cry00_mega.tpl", NULL);
             if (tex != NULL) {
                 PaneSetTexPalette(paneC, (TPLPalette*)tex);
             }
@@ -367,7 +367,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
         } else {
             self->mSlotStates[idx] = 0;
             void* tex = self->mArcResAccessor->GetResource(
-                0x74696D67, &lbl_eu_805092C0[0x167], NULL);
+                0x74696D67, "mf10_cry00_heat.tpl", NULL);
             if (tex != NULL) {
                 PaneSetTexPalette(paneC, (TPLPalette*)tex);
                 crystalListDisableAnims(self);
@@ -380,7 +380,7 @@ void crystalListUpdateSlot(CMCCrystalList* self, u32 idx, u32 val, int kind) {
         self->mSlotStates[idx] = 0;
         {
             void* tex = self->mArcResAccessor->GetResource(
-                0x74696D67, &lbl_eu_805092C0[0x17b], NULL);
+                0x74696D67, "mf10_cry00_mega.tpl", NULL);
             if (tex != NULL) {
                 PaneSetTexPalette(paneC, (TPLPalette*)tex);
                 crystalListDisableAnims(self);
@@ -411,7 +411,7 @@ void crystalListResetAnim3(CMCCrystalList* self)
 {
     crystalListEnableAnim3(self);
     float f = self->mAnimTrans3->GetFrameSize();
-    f = f - lbl_eu_80668548 - lbl_eu_80668544;
+    f = f - 1.0f;
     self->mAnimTrans3->SetFrame(f);
     self->mLayout->Animate(0);
 }

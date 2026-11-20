@@ -1,4 +1,6 @@
 #pragma once
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectActor.hpp"
@@ -46,14 +48,15 @@ struct UnkStruct_8009D7E4_Ret {
 extern "C" void __ct__8009F8B8(u8* obj);   // CtrlObjectParam.cpp (arts/param ctor)
 extern "C" void CtrlObjectParam_InitArtsSlotSet(u8* obj);    // CtrlObjectParam.cpp
 extern "C" int CtrlObjectParam_LearnArtsSlots(u8* obj);    // CtrlObjectParam.cpp
-extern "C" void ObjPc_ForwardVf0C_A42C(u8* obj);    // CfObjectImplPc.cpp
+namespace cf { class CfObjectImplPc; }
+void ObjPc_ForwardVf0C_A42C(cf::CfObjectImplPc* self, u32 a, u32 b, u32 c,
+                            u32 d, u32 e);    // CfObjectImplPc.cpp
 extern "C" void CtrlObjectParam_ClaimArtsSlotRow(u8* obj, int value);      // CtrlObjectParam.cpp
 extern "C" UnkStruct_8009D7E4_Ret* CtrlObjectParam_GetArtsStatsRow(u8* obj, int index);  // arts data lookup
 extern "C" void aiResetTables(u8* obj);                  // CAIAction.cpp
 extern "C" void aiInstallArts(u8* obj, u32 a, u32 b);    // CAIAction.cpp
 
 extern "C" void CtrlObjectParam_RefreshCharEntry(void* self, u32 arg2);     // CtrlObjectParam.cpp
-extern "C" void CfObjectMove_setModelDisplayFlag(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void CfObjectMove_setRegionAttached(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void ColiSetMoveVec2(void* region, int param, float a, float b);
 extern "C" void __ct__8009ED08(void* destination, u32 itemId);   // CtrlObjectParam.cpp
@@ -65,7 +68,7 @@ extern "C" unsigned long CfRes_getAllocHandle();   // bdat heap handle getter
 extern "C" void CActorParam_copyAll(cf::CActorParam* dst, cf::CActorParam* src);       // CActorParam.cpp
 extern "C" void aiActionStoreIndexedBytes(u8* self, int index, int a2, int a3, int a4,
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
-// getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
+// getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManager.hpp
 // (pulled in via CAIAction.hpp).
 extern "C" void CtrlObjectParam_RaiseArtsLevelBy(u8* obj, int flag);         // CtrlObjectParam.cpp
 extern "C" void* CtrlObjectParam_GetCharEntry(u32 index);   // CtrlObjectParam.cpp (character-data lookup; owner canonical u32 form)
@@ -78,7 +81,6 @@ extern const float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc
 extern const float lbl_eu_80666B28;
 extern const double lbl_eu_80666B30; // 4503601774854144.0 (2^52+2^51): doubles as the int->double biased-magic constant
 extern "C" void BpsStateQueueDamage(u8* obj, int a, int b, int c);
-extern "C" void Counter_AddClamped(u8* obj, u32 value, int a);
 extern "C" void CtrlObjectParam_BumpArtsCounter(u8* obj, int flag);
 extern "C" int CtrlObjectParam_ReapplyArtsSet(u8* obj);
 extern "C" void fireLvUpMode4(u8* obj);
@@ -121,7 +123,6 @@ extern "C" {
 void* Bdat_GetTable_AA34();                         // bdat manager refresh (void* return - must match CArtsInfo.hpp:679 / the other ~40 decls; divergent extern "C" types = 10197)
 u32 Bdat_GetRowBase_B41C(void* mgr);                  // first bdat row index (canonical form per ocBdat.cpp def)
 u32 Bdat_GetMaxRow_B1EC(void* mgr);                  // bdat row count (canonical form per ocBdat.cpp def)
-unsigned long SuddenCommuIsStateActive(void* obj);        // battle-manager state probe (unified with CChainTimer.hpp)
 }
 // cf::CfSoundMan lives on kyoshin/cf/CfSoundMan.hpp (single definition;
 // include it where playActorSound is needed).
@@ -291,3 +292,7 @@ namespace cf {
         //0x0-45C0: CfObjectActor
     };
 }
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
+void CfObjectPc_applyArtsEntry(cf::CfObjectPc* self, void* dest, s32 itemId);

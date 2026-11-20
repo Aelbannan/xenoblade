@@ -2,21 +2,24 @@
 
 #include <types.h>
 
+struct MpfsysResFileHandle;
+typedef struct _GXColor GXColor;
+
 namespace mpfsys {
 
 class UnkClass_80471EC8 {
 public:
-    void tryAttach();
+    bool tryAttach(void* desc, MpfsysResFileHandle* resFile, void* view, u32 arg);
     void update();
     void submitDraw();
     void buildDisplayList();
     void setLayerScale();
-    void clearFlag();
-    void setFlag();
-    void getLayerColors();
+    void clearFlag(int index);
+    void setFlag(int index);
+    void getLayerColors(GXColor* outMat, GXColor* outFog);
     void initLayerRecords();
     void markDirty();
-    void setColorMode();
+    void setColorMode(s32 mode);
     void simulateLayer();
     void updateLayers();
     void* getLayerRecord(u8 layerIndex);
@@ -35,7 +38,7 @@ public:
     void loadTevKColor();
     void applyMatColor();
     void applyTevColor();
-    void setKeyAlpha();
+    static void setKeyAlpha(f32 value);
     void setFogIndex();
     void resetAmbient();
     void applyAmbient();

@@ -83,3 +83,7 @@ public:
     CScnItemCameraSubObj mSubObjArray2[6];       // 0x258 (6 * 0x10 = 0x60 bytes)
     // end: 0x2B8
 };
+
+// Camera helpers defined in monolib/src/scn/CScnItemCamera.cpp.
+void ScnCamDepthUp(CScnItemCamera* self);
+void ScnCamLoadMtx(CScnItemCamera* self, const ml::CMat34* mtx);

@@ -3,18 +3,12 @@
 #include <types.h>
 #include <monolib/scn/CScnFilter.hpp>
 
-extern "C" {
-    extern u32 lbl_eu_8056EB60[];   // CScnFilter vtable
-
-}
-
-extern "C" void __ct__CScnFilter(CScnFilter* self) {
-    *(u32**)self = lbl_eu_8056EB60;
-    self->mEnabled = 0;
-    self->mUnk0C = 0;
-    self->mIntensity = 0.0f;
-    self->mUnk14 = 0;
-    self->mFlags = (u32)self->mEnabled | 3;
+CScnFilter::CScnFilter() {
+    mEnabled = 0;
+    mUnk0C = 0;
+    mIntensity = 0.0f;
+    mUnk14 = 0;
+    mFlags = (u32)mEnabled | 3;
 }
 
 CScnFilter::~CScnFilter() {
@@ -41,20 +35,20 @@ struct CScnFilterCallback {
 
 static BOOL check_over(CScnFilter* self);
 
-extern "C" void FilterUpdateIntensity(CScnFilter* self, CScnFilterHost* host) {
+void CScnFilter::updateIntensity(CScnFilterHost* host) {
     // proceed only while the filter is active and not yet saturated
-    if (self->mUnk0C == 0) {
+    if (mUnk0C == 0) {
         return;
     }
-    if (check_over(self)) {
+    if (check_over(this)) {
         return;
     }
     // accumulate this frame's delta into the filter intensity
     f32 delta = host->field_0x84->field_0x0C;
-    self->mIntensity += delta;
-    if (check_over(self)) {
-        if (self->mUnk14 != 0) {
-            self->mUnk14->unk_08(host, self);
+    mIntensity += delta;
+    if (check_over(this)) {
+        if (mUnk14 != 0) {
+            mUnk14->unk_08(host, this);
         }
     }}
 
@@ -74,15 +68,3 @@ static BOOL check_over(CScnFilter* self) {
     }
     return over;
 }
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.data] 0x8056EB60-0x8056EB78 (24B): CScnFilter vtable. The typeinfo pair
-// __RTTI__10CScnFilter is owned by a foreign TU.
-extern "C" u32 __RTTI__10CScnFilter;
-extern "C" void __dt__10CScnFilterFv();
-extern "C" u32 lbl_eu_8056EB60[6] = {
-    (u32)&__RTTI__10CScnFilter, 0x00000000,
-    (u32)&__dt__10CScnFilterFv,
-    (u32)&FilterUpdateIntensity,
-    0x00000000, 0x00000000,
-};

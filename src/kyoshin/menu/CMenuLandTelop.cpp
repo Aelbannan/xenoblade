@@ -3,8 +3,9 @@
 // Matching session: Term / cbRenderBefore / consumeTelopEntry / createLandTelop /
 // constructor (the retail ctor is the unmangled global __ct__CMenuLandTelop).
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 
 #include "kyoshin/menu/CMenuLandTelop.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -218,7 +219,7 @@ void CMenuLandTelop::Move() {
                     u32 rec = data + 0x3534;
                     u32 weight = 100;
                     if (Counter_TestBit((void*)rec, 0x8a) != 0) {
-                        weight = IdTable_SumValues((void*)rec, 0x8a) + 100;
+                        weight = IdTable_SumValues((CUnkObj8025FB10*)(void*)rec, 0x8a) + 100;
                     }
                     f64 frac = ((f64)(u32)(msgId * weight) - bias) * scale;
                     f64 limit =

@@ -271,6 +271,10 @@ extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+
+void Col6_ClearGlobals_D0B8();
+int Col6_ScanItemSlots_D310();
+void Col6_ReserveBoxSlot_D3A0();
 extern "C" void CUICfManager_setMessageWindowVisible(u8 enable);                                // message-window show/hide
 extern "C" void UIWin_CreateQuestWin(int id, int a, int b);                     // window open request
 extern u32 gmPauseFlags;  // .sbss mode bitfield (bit 0x400000 gates hint draws)

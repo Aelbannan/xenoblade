@@ -41,8 +41,8 @@ extern "C" void FloorMap_UpdateCursorMove(CFloorMap* self);
 extern "C" void FloorMap_UpdateWorldMap(CFloorMap* self);
 extern "C" void FloorMap_HandleMapDown(CFloorMap* self);
 extern "C" void FloorMap_NormalizeMapPos(CFloorMap* self);
-extern "C" void FloorMap_Log2Field208(CFloorMap* self);
-extern "C" void FloorMap_Log2Field333C(CFloorMap* self);
+void FloorMap_Log2Field208(void* self);
+void FloorMap_Log2Field333C(void* self);
 extern "C" void FloorMap_ScrollDown(CFloorMap* self);
 extern "C" void FloorMap_ScrollUp(CFloorMap* self);
 extern "C" void FloorMap_ScrollRight(CFloorMap* self);
@@ -523,9 +523,9 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
         } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
             FloorMap_NormalizeMapPos(&self->mFloorMap);
         } else if ((pressed & 0x01000000) != 0) {
-            FloorMap_Log2Field208(&self->mFloorMap);
+            FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
         } else if ((pressed & 0x200) != 0) {
-            FloorMap_Log2Field333C(&self->mFloorMap);
+            FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
         } else {
             // D-pad held: each direction moves the cursor once per press
             // transition; when no direction is held, confirm the selection.
@@ -616,9 +616,9 @@ extern "C" void MapSelectSCHandleInput(CMenuMapSelectSC* self) {
             } else if ((pad->mTurboPressButtonFlags & 0x2) != 0) {
                 FloorMap_NormalizeMapPos(&self->mFloorMap);
             } else if ((pressed & 0x800) != 0) {
-                FloorMap_Log2Field208(&self->mFloorMap);
+                FloorMap_Log2Field208(reinterpret_cast<void*>(&self->mFloorMap));
             } else if ((pressed & 0x200) != 0) {
-                FloorMap_Log2Field333C(&self->mFloorMap);
+                FloorMap_Log2Field333C(reinterpret_cast<void*>(&self->mFloorMap));
             } else {
                 u32 flag = 1;
                 if ((pad->mHeldButtonFlags & 0x8000) != 0) {

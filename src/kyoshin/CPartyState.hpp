@@ -24,12 +24,12 @@ public:
     CPartyState();
     ~CPartyState();
     bool OnFileEvent(CEventFile* pEventFile);
-    u8 isPartySettled();
-    u8 isPartyIdle();
-    u8 isPartyReady();
-    u32 isPartyHighlightSet();
-    u8 isPartyCloseRequested();
-    u8 getPartySelectIndex();
+    int isPartySettled();
+    int isPartyIdle();
+    int isPartyReady();
+    int isPartyHighlightSet();
+    int isPartyCloseRequested();
+    int getPartySelectIndex();
 
     void* mVtbl;                                // 0x00 - lbl_eu_805353C8
     UnkClass_8045F564 mMemRegion;               // 0x04 (0x10 bytes)
@@ -162,7 +162,8 @@ public:
 
 // Party-select helpers (unmangled retail symbols).
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
-extern "C" void CtrlObjectParam_SwapSlotValues(int*, u8, u8);
+#include "kyoshin/cf/CtrlObjectParamSymbols.hpp"
+
 extern "C" u32 CtrlRemote_TouchBitByArg(u32);
 
 // Party-slot data-table pointers (.sdata).
@@ -220,8 +221,6 @@ extern "C" void positionPartyPane(CPartyState*, float, float, u32, u32);
 // C library formatted output (retail symbol unmangled).
 extern "C" int sprintf(char*, const char*, ...);
 
-// Frame-timer getter (kyoshin/cf/CfTFile.cpp, retail unmangled).
-extern "C" u32 CfT_FrameTimerGet();
 
 // Text/layout binding helper (code_80135FDC.cpp, retail unmangled; the
 // canonical header code_80135FDC.hpp conflicts with CEquipItemBox.hpp in

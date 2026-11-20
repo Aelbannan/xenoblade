@@ -1,19 +1,25 @@
 // Auto-scaffolded catalog TU for kyoshin/cfsys/CfObjectImplWalker
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/menu/code_8018C5FC.hpp"
 #include "kyoshin/code_801F3BE0.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "kyoshin/code_8025FB10.hpp"
+#include "monolib/scn/CScn.hpp"
 
 #include "kyoshin/cfsys/CfObjectImplWalker.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
 #include <monolib/device/CDeviceVI.hpp>
 #include <string.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCameraDataBlock (owner)
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/CQuestWindowApi.hpp"
+#include "kyoshin/CUIWindowManagerApi.hpp"
 
 // MWCC runtime helper (float -> unsigned conversion) used by retail call sites.
 extern "C" u32 __cvt_fp2unsigned(double);
@@ -27,7 +33,7 @@ namespace cf {
 // walker's own status fields (six u32s, a byte and a float).
 void Walker_ResetBattleHook(cf::CfObjectImplWalker* self) {
     ((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->setPartyMaskFlag(1, 1);
-    ObjPc_InitLink_5998(self);
+    ObjPc_InitLink_5998(reinterpret_cast<cf::CfObjectImplPc*>(self));
     self->field_384 = 0;
     self->field_388 = 0;
     self->field_38C = 0;
@@ -38,7 +44,7 @@ void Walker_ResetBattleHook(cf::CfObjectImplWalker* self) {
     self->field_3A0 = lbl_eu_80666B84;
 }
 
-// Per-frame battle-object sync: pushes the move sub-object's current value
+// Per-frame battle-object sync
 // through the battle hooks, then walks the presentation/event flags to arm
 // the battle-start/stop notifications, syncs the walker state hooks and
 // dispatches the battle/talk notifications before the per-frame area update.
@@ -124,12 +130,12 @@ void Walker_OnBattleChange(cf::CfObjectImplWalker* self) {
     }
 L2DBC:
     if (getInstance__Q22cf14CBattleManagerFv() != 0) {
-        PartyGaugeSetClamped((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0);
+        cf::PartyGaugeSetClamped(reinterpret_cast<cf::UnkClass_8018C5FC*>((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194), 0);
     }
     func_80084654__Q22cf13CfGameManagerFv(1);
 L2DE0:
     // Move-value changed?
-    if (self->field_18->vf12C() == lbl_eu_80666B84) return;
+    if (self->field_18->vf12C() == 0.0f) return;
 
     {
         cf::CfWalkBattleObj* bo = self->field_18;
@@ -146,13 +152,12 @@ L2DE0:
         if ((f64)self->field_3A0 < frames) goto L2EA0;
     }
     func_80084654__Q22cf13CfGameManagerFv(0);
-    self->field_3A0 = lbl_eu_80666B84;
+    self->field_3A0 = 0.0f;
 L2EA0:
     // Track the battle manager's current target record; when the flag probe
     // is set and the record is live, a matching id disarms and exits early.
     {
-        cf::CfWalkEA444* rec = (cf::CfWalkEA444*)CBattleMan_FetchVisionObj(
-            getInstance__Q22cf14CBattleManagerFv());
+        cf::CfWalkEA444* rec = (cf::CfWalkEA444*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet(0x4000000) == 0) goto L2EE8;
         if (rec == 0) goto L2EE8;
@@ -193,7 +198,7 @@ L2EE8:
         // Start the battle: notify the battle hooks, arm the move
         // sub-object's fight command and close the manager call.
         ((cf::CfWalkBattleObjSync*)(uintptr_t)self->field_18)
-            ->vf11C(lbl_eu_80666B8C);
+            ->vf11C(1.0f);
         ((cf::CfWalkBattleObjSync*)(uintptr_t)self->field_18)->vf314();
         CfObjectMove_setAnimModeArgs((u8*)&self->field_18->mSub, 0x2f, 1, -1, 1);
         self->field_18->mSub.m08(0x200);
@@ -240,7 +245,7 @@ L30FC:
         cf::CfWalkBattleObj* bo2 = self->field_18;
         u32 v2 = bo2->field_04->b30()->field_0;
         if (testActorStatus(bo2, &v2, 0x1c) != 0) goto L313C;
-        self->field_3A0 = lbl_eu_80666B84;
+        self->field_3A0 = 0.0f;
     }
 L313C:
     return;
@@ -254,14 +259,14 @@ L313C:
 void Walker_DispatchTalkSrc(cf::CfObjectImplWalker* self) {
     u32 v1, v2, v3, v4, v5;
     if (gmGameFlags & 0x5000000) return;
-    if (Scn_GetFrameDelta(gmScene) == lbl_eu_80666B84) return;
-    u32 gid = Selector_GetInstance()->field_90E4;
+    if (Scn_GetFrameDelta(gmScene) == 0.0f) return;
+    u32 gid = ((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4;
     u32 gid0 = gid;
     cf::CfWalkTalkSrc* actor =
-        (cf::CfWalkTalkSrc*)findObjectById((int)Selector_GetInstance()->field_90E4);
+        (cf::CfWalkTalkSrc*)findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
     if (gid0 == 0) goto L3284;
     if (actor == 0 || actor->t160() == 0) goto L320C;
-    if (!(actor->field_64 & 8) || actor->t16C() == lbl_eu_80666B84) goto L3234;
+    if (!(actor->field_64 & 8) || actor->t16C() == 0.0f) goto L3234;
 L320C:
     self->vf70(0);
     dispatchItemLoad(self->field_18, 0x800000);
@@ -307,9 +312,9 @@ L3360:
         sortEntriesByDistance(holder.get(), selector);
         if (((cf::CfWalkEnumList*)holder.get())->field_620 != 0) {
             void* item = getObjectIdAt(holder.get(), 0);
-            if (Selector_IssueRequest(Selector_GetInstance(), 0x80000003, 0,
+            if (Selector_IssueRequest((cf::CfObjectSelectorObj*)Selector_GetInstance(), 0x80000003, 0,
                               (u32)(uintptr_t)item) != 0) {
-                self->vf70(Selector_GetInstance()->field_90E4);
+                self->vf70(((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
             } else {
                 self->field_18->mSub.m08(0x200);
             }
@@ -332,8 +337,8 @@ L34E4:
     // sub-object's current target, bounce the notification to the selector
     // or the move sub-object depending on the battle-manager state.
     {
-        if (Selector_GetInstance()->field_90E4 == 0) goto L3600;
-        u32 gid2 = Selector_GetInstance()->field_90E4;
+        if (((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4 == 0) goto L3600;
+        u32 gid2 = ((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4;
         if (gid2 == self->field_18->mSub.m4C()) goto end;
         if (isBattleStatusActive(&self->field_18->_pad08[0], 0x11) != 0) goto end;
         if (((cf::CfWalkField3ED4*)self->field_18->mSub.field_38)->vf40() == 0) {
@@ -348,14 +353,14 @@ L34E4:
         if (self->field_18->vf298()->field_4 == 0) goto end;
     }
 L35D8:
-    self->vf70(Selector_GetInstance()->field_90E4);
+    self->vf70(((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
     goto end;
 L3600:
     if (self->field_18->mSub.m4C() == 0) goto end;
     if (gmGameFlags & 0x1000000) goto end;
     {
         u32 m = self->field_18->mSub.m4C();
-        if (Selector_IssueRequest(Selector_GetInstance(), 0x80000003, 0, m) != 0) {
+        if (Selector_IssueRequest((cf::CfObjectSelectorObj*)Selector_GetInstance(), 0x80000003, 0, m) != 0) {
             if (((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->vf28(1) != 0) {
                 self->vf80();
             }
@@ -379,13 +384,13 @@ void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self) {
     if (Scn_GetFrameDelta(gmScene) != lbl_eu_80666B84 && cast != 0) {
         cf::CfWalkBattleSub* sub = (cf::CfWalkBattleSub*)cast;
         if (sub->vf44() != 0) {
-            setTargetFlag04(Selector_GetInstance());
+            ((cf::CfObjectSelectorObj*)Selector_GetInstance())->setTargetFlag04();
         }
         if (sub->vf48() != 0) {
-            setTargetFlag08(Selector_GetInstance());
+            ((cf::CfObjectSelectorObj*)Selector_GetInstance())->setTargetFlag08();
         }
         if (sub->vf20() != 0) {
-            Selector_FetchResult(Selector_GetInstance());
+            Selector_FetchResult((cf::CfObjectSelectorObj*)Selector_GetInstance());
             self->vf70(0);
         }
         if (sub->vf18() != 0) {
@@ -422,12 +427,12 @@ void Walker_DispatchBattleCmd(cf::CfObjectImplWalker* self, u32 battleId, u32 cm
     switch (cmd) {
         case 0x12:
             self->field_18->mSub.m10(4);
-            setRequestParams(Selector_GetInstance(), 0x80000003, 0, 0);
+            ((cf::CfObjectSelectorObj*)Selector_GetInstance())->setRequestParams( 0x80000003, 0, 0);
             break;
         case 0x7:
             self->field_18->mSub.m10(0x400);
             self->field_18->mSub.field_68 &= ~0x800;
-            setRequestParams(Selector_GetInstance(), 0x80000004, 0x4002, 0);
+            ((cf::CfObjectSelectorObj*)Selector_GetInstance())->setRequestParams( 0x80000004, 0x4002, 0);
             break;
         case 0x2: {
             cf::CfWalkBattleObj* bo = self->field_18;
@@ -462,17 +467,16 @@ void Walker_DispatchBattleCmd(cf::CfObjectImplWalker* self, u32 battleId, u32 cm
 // sub-object, sweeps the party list feeding the move's fight state, and
 // arms the area's battle-exit notification when nothing else is fighting.
 void Walker_UpdatePartyBattle(cf::CfObjectImplWalker* self) {
-    if (Selector_GetInstance()->field_90E4 != 0) {
+    if (((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4 != 0) {
         self->vf80();
     }
     self->field_18->field_04->b20(0x400000);
     self->field_18->field_04->b20(0x800000);
-    void* gm = getCameraDataBlock__Q22cf13CfGameManagerFv(
-        getInstance__Q22cf13CfGameManagerFv());
+    void* gm = cf::CfGameManager::getInstance()->getCameraDataBlock();
     if (gm != 0) {
         cfCam_setClear04(gm, 0x10, 1);
         if (Selector_GetInstance() != 0) {
-            void* obj = findObjectById((int)Selector_GetInstance()->field_90E4);
+            void* obj = findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
             if (obj != 0) {
                 ((cf::CfWalkDynMgr*)gm)->vf2C(((cf::CfWalkObjAC*)obj)->vfAC());
             }
@@ -523,7 +527,7 @@ void Walker_LeaveBattle(cf::CfObjectImplWalker* self) {
 // battle list (or from the move sub-object), then walks the enum list of
 // battle actors and applies a sight-line clamp to the selected one.
 void Walker_ToggleTargetSel(cf::CfObjectImplWalker* self) {
-    void* v = findObjectById((int)Selector_GetInstance()->field_90E4);
+    void* v = findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
     if (v == 0) {
         v = findObjectById((int)self->field_18->mSub.m4C());
     }
@@ -570,7 +574,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
     if (t >= 0x167 && t <= 0x169) return;
     if (t >= 0x437 && t <= 0x439) return;
     if (getUnk80664658()->mFlags & 0x4000000) return;
-    void* actor = findObjectById((int)Selector_GetInstance()->field_90E4);
+    void* actor = findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
     if (actor == 0) {
         actor = findObjectById((int)self->field_18->mSub.m4C());
     }
@@ -590,7 +594,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
     if (((u32)__cntlzw((u32)__cntlzw(f64 & 8) >> 5) >> 5) != 0) {
         cf::CfWalkTalkSrc* mgr = (cf::CfWalkTalkSrc*)CfObjectMove_getSelfIfActive(actor);
         if (mgr->vf228() == 9) return;
-        if (mgr->vf174() < lbl_eu_80666B8C) return;
+        if (mgr->vf174() < 1.0f) return;
         if (!(mgr->field_68 & 0x100000)) return;
         if (mgr->field_68 & 0x6000) return;
         if (Scn_IsDefaultScale((CScn*)gmScene) == 0) return;
@@ -608,13 +612,13 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
             // Ground-probe the talk position; retail passes a fresh copy of
             // the sum vector to the probe (by-value temp).
             int blocked = 1;
-            ml::CVec3 local(lbl_eu_80666B84, 0.8f, lbl_eu_80666B84);
+            ml::CVec3 local(0.0f, 0.8f, 0.0f);
             ml::CVec3 pos = *(ml::CVec3*)msub->mAC();
             ml::CVec3 sum = pos + local;
             ml::CVec3 arg = sum;
             if (ScnRes_VertRayForward_E398(&arg, 0x4a05, 0, 0, -6.0f,
-                              lbl_eu_80666B84) != 0) {
-                if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > lbl_eu_80666B84) {
+                              0.0f) != 0) {
+                if (((ml::CVec3*)ScnRes_GetEntryHead2_E520(0))->y > 0.0f) {
                     blocked = 0;
                 }
             }
@@ -631,13 +635,13 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
             if (!(sub->field_270 & 0x400000)) {
                 if (mgr->field_64 & 1) {
                     ((cf::CfObject*)mgr)->requestVoice(
-                        0x1195, -1, lbl_eu_80666B8C, 30.0f);
+                        0x1195, -1, 1.0f, 30.0f);
                 } else {
                     // Retail converts the sdata2 constant through
                     // __cvt_fp2unsigned for the fourth argument.
                     CfObjectMove_relaySubB0Slot54(mgr, 0x65, 0,
                                   (u32)__cvt_fp2unsigned(80.0f),
-                                  lbl_eu_80666B8C, 30.0f);
+                                  1.0f, 30.0f);
                 }
             }
         }
@@ -649,7 +653,7 @@ void Walker_ExitBattleSweep(cf::CfObjectImplWalker* self) {
         }
         gmGameFlags |= 0x1000000;
         if (((cf::CfWalkActorObj*)actor)->field_C4 != 0) {
-            self->field_18->mSub.m1AC((u32)actor, lbl_eu_804FC694);
+            self->field_18->mSub.m1AC((u32)actor, "JUhead");
         }
         // Clamp the sight-line of every other talk source in the area.
         {
@@ -736,8 +740,8 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
             if (item->field_08 < (f32)q) goto L3ADC;
             if (item->field_08 > (f32)(q * 3)) goto L3ADC;
             if (found != 0) goto L3ADC;
-            if (src->t16C() != lbl_eu_80666B84) goto L3ADC;
-            if (src->vf174() != lbl_eu_80666B8C) goto L3ADC;
+            if (src->t16C() != 0.0f) goto L3ADC;
+            if (src->vf174() != 1.0f) goto L3ADC;
             if (src->t160() == 0) goto L3ADC;
             if (src->field_C4 == 0) goto L3ADC;
             if (src->t164() == 0) goto L3ADC;
@@ -773,16 +777,16 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
                 goto L3C68;
             }
             UIWin_ControlWindowLists(1, 0);
-            self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
+            self->field_18->mSub.m1AC(0, "JUhead");
             dispatchItemLoad(self->field_18, 3);
             gmGameFlags &= ~0x800000;
-            void* actor = findObjectById((int)Selector_GetInstance()->field_90E4);
+            void* actor = findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
             if (actor == 0) goto L4070;
             ((cf::CfWalkTalkSrc*)actor)->t08(1);
             ((cf::CfWalkTalkSrc*)actor)->t10(3);
             ((cf::CfWalkTalkSrc*)actor)->t48(0);
             if (((cf::CfWalkActorObj*)actor)->field_64 & 8) {
-                ((cf::CfWalkTalkSrc*)actor)->t1AC(0, lbl_eu_804FC694);
+                ((cf::CfWalkTalkSrc*)actor)->t1AC(0, "JUhead");
             }
             goto L4070;
         }
@@ -840,13 +844,13 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
                             u32 t = ((cf::CfWalkArtRec*)art)->field_4;
                             bool isFC = (t == 0xfc || t == 0xfd);
                             if (isFC) {
-                                UIWin_FlagBufCommit(art);
+                                UIWin_FlagBufCommit((CFlagBuffer*)art);
                                 self->vf30(0x10000, 1);
                                 goto L4070;
                             }
                             if (t == 0x2) {
                                 if (UIWin_GetTimer() == 0) {
-                                    UIWin_FlagBufCommit(art);
+                                    UIWin_FlagBufCommit((CFlagBuffer*)art);
                                 } else {
                                     UIWin_ThunkFlagBufReset(art);
                                 }
@@ -886,7 +890,7 @@ void Walker_SweepBattleActors(cf::CfObjectImplWalker* self) {
                     }
                 }
             }
-            self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
+            self->field_18->mSub.m1AC(0, "JUhead");
             dispatchItemLoad(self->field_18, 3);
             gmGameFlags &= ~0x800000;
     L4064:;
@@ -922,7 +926,7 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
     case 0: {
         self->field_398 = slot;
         cf::CfWalkTalkSrc* obj =
-            (cf::CfWalkTalkSrc*)findObjectById((int)Selector_GetInstance()->field_90E4);
+            (cf::CfWalkTalkSrc*)findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
         if (obj != NULL) {
             obj->t10(1);
         }
@@ -933,14 +937,14 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
             // Column reads use the deref-of-storage idiom: binding the accessor
             // result to an address-taken u32 gives it a stack home, so the
             // first-byte test compiles to retail's stw/lbz round-trip.
-            u32 cKind = (u32)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 7, idx);
+            u32 cKind = (u32)getBdatStringColumnValue(fp, "type", idx);
             if (*(const u8*)&cKind == battleId) {
-                u32 cType = (u32)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 0xc, idx);
+                u32 cType = (u32)getBdatStringColumnValue(fp, "server", idx);
                 u16 v = self->field_18->mSub.field_8C;
                 if (v == 8) v = 3;
                 if (v == *(const u8*)&cType) {
                     char* col3 =
-                        (char*)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 0x13, idx);
+                        (char*)getBdatStringColumnValue(fp, "message", idx);
                     UIWin_CreateTalkWin(self->field_18->mSub.field_74, col3, 1);
                     self->field_388++;
                     return 1;
@@ -976,18 +980,18 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
         // colors this counter freshly (r23) instead of extending the param.
         for (int row = 0; row < rowCount; row++) {
             int idx = row + 1;
-            u32 cKind = (u32)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 7, idx);
+            u32 cKind = (u32)getBdatStringColumnValue(fp, "type", idx);
             if (*(const u8*)&cKind == battleId) {
-                u32 cType = (u32)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 0xc, idx);
+                u32 cType = (u32)getBdatStringColumnValue(fp, "server", idx);
                 u16 v = self->field_18->mSub.field_8C;
                 if (v == 8) v = 3;
                 if (v == *(const u8*)&cType) {
-                    u32 cFight = (u32)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 0x1b, idx);
+                    u32 cFight = (u32)getBdatStringColumnValue(fp, "receiver", idx);
                     if (*(const u8*)&cFight == t8c) {
                         // This column is indexed beyond byte 0, so it stays a
                         // real pointer in a register (no round-trip).
                         char* pTime =
-                            (char*)getBdatStringColumnValue(fp, lbl_eu_804FC694 + 0x24, idx);
+                            (char*)getBdatStringColumnValue(fp, "low_receiver", idx);
                         // "MM" style two-digit seconds field (colon marker).
                         s32 digit = (s8)pTime[9] - '0';
                         if ((u8)pTime[0xb] == ':') {
@@ -999,19 +1003,19 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
                         u32 rem = (u32)rand();
                         f32 rate = (f32)(s32)hit;
                         if ((f32)(s32)(rem % 100) <
-                            rate * lbl_eu_80666BC0 * 0.6f +
+                            rate * 0.02f * 0.6f +
                                 20.0f) {
                             self->field_390 = 1;
                         }
                         char* col5 = (char*)getBdatStringColumnValue(
-                            fp, lbl_eu_804FC694 +
-                                (self->field_390 ? 0x31 : 0x24),
+                            fp, self->field_390 ? "high_receiver"
+                                                : "low_receiver",
                             idx);
                         UIWin_CreateTalkWin(talk->field_74, col5, 1);
                         self->field_38C = idx;
                         self->field_388++;
                         cf::CfWalkMoveSub* msub = self->field_18 ? &self->field_18->mSub : 0;
-                        talk->t1AC((u32)msub, lbl_eu_804FC694);
+                        talk->t1AC((u32)msub, "JUhead");
                         talk->t10(1);
                         awardCount91();
                         return 1;
@@ -1024,12 +1028,12 @@ int Walker_StepBattleArts(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) 
     case 2: {
         if (self->field_390 == 0) goto reset;
         char* col = (char*)getBdatStringColumnValue(
-            fp, lbl_eu_804FC694 + 0x3f, self->field_38C);
+            fp, "high_server", self->field_38C);
         UIWin_CreateTalkWin(self->field_18->mSub.field_74, col, 1);
         cf::CfWalkTalkSrc* talk =
             (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById((int)self->field_394));
         if (talk != 0) {
-            self->field_18->mSub.m1AC((u32)talk, lbl_eu_804FC694);
+            self->field_18->mSub.m1AC((u32)talk, "JUhead");
         }
         self->field_388++;
         return 1;
@@ -1042,14 +1046,14 @@ reset:
         cf::CfWalkTalkSrc* talk =
             (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById((int)self->field_394));
         if (talk != 0) {
-            talk->t1AC(0, lbl_eu_804FC694);
+            talk->t1AC(0, "JUhead");
             talk->t10(3);
         }
         cf::CfWalkTalkSrc* talk2 =
             (cf::CfWalkTalkSrc*)func_800BBC0C(
-                findObjectById((int)Selector_GetInstance()->field_90E4));
+                findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4));
         if (talk2 != 0) {
-            self->field_18->mSub.m1AC((u32)talk2, lbl_eu_804FC694);
+            self->field_18->mSub.m1AC((u32)talk2, "JUhead");
         }
         self->field_384 = 0;
         self->field_388 = 0;
@@ -1080,7 +1084,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
     if (count != 0) return;
     if (gmGameFlags & 0x9048000) return;
     cf::CfWalkTalkSrc* actor =
-        (cf::CfWalkTalkSrc*)findObjectById((int)Selector_GetInstance()->field_90E4);
+        (cf::CfWalkTalkSrc*)findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
     if (actor == 0) return;
     if (QstCnt_HasInstance_6B94() != 0) return;
     // Retail spills only the hours half to a callee-saved register; the
@@ -1096,7 +1100,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
         cf::CfWalkTalkSrc* mgr = (cf::CfWalkTalkSrc*)CfObjectMove_getSelfIfActive(
             (void*)(uintptr_t)actor);
         if (mgr->vf228() != 2) return;
-        if (mgr->vf174() < lbl_eu_80666B8C) return;
+        if (mgr->vf174() < 1.0f) return;
         if (!(mgr->field_68 & 0x100000)) return;
         if (mgr->field_68 & 0x6000) return;
         if (mgr->t1C(0x1000) != 0) return;
@@ -1110,7 +1114,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
         mgr->t48(self->field_18->mSub.field_74);
         self->vf30(0x80000000, 1);
         gmGameFlags |= 0x90000000;
-        self->field_18->mSub.m1AC((u32)(uintptr_t)actor, lbl_eu_804FC694);
+        self->field_18->mSub.m1AC((u32)(uintptr_t)actor, "JUhead");
 
         // Sweep the party list; clamp the sight-line of every talk source
         // except the one we are starting the battle with.
@@ -1138,7 +1142,7 @@ void Walker_TryStartBattle(cf::CfObjectImplWalker* self) {
         u32* p = (u32*)CtrlObjectParam_GetSlotTableBase() + 1;
         for (u32 j = 0; j < 9; j++, p++) {
             if (*p != 0 &&
-                Counter_TestBit(CtrlObjectParam_GetCharEntry((u16)*p) + 0x3534, 0x8f) != 0) {
+                Counter_TestBit((u8*)CtrlObjectParam_GetCharEntry((u16)*p) + 0x3534, 0x8f) != 0) {
                 found = 1;
             }
         }
@@ -1157,7 +1161,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     // Resolve the global actor and its talk-source manager.
     void* tbl98;
     cf::CfWalkTalkSrc* mgr = (cf::CfWalkTalkSrc*)CfObjectMove_getSelfIfActive(
-        findObjectById((int)Selector_GetInstance()->field_90E4));
+        findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4));
     tbl98 = lbl_eu_80664098;
 
     int found = 0;
@@ -1185,7 +1189,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
 
         if (found == 0 || mgr == 0) {
             // No candidate: detach the move sub-object and reset to state 5.
-            self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
+            self->field_18->mSub.m1AC(0, "JUhead");
             dispatchItemLoad(self->field_18, 3);
             gmGameFlags &= ~0x1000000;
             self->field_388 = 5;
@@ -1196,13 +1200,13 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     case 0:
         if (mgr->t1C(1) != 0) {
             // First contact: pick the intro line for the actor kind.
-            char* strbase = lbl_eu_804FC694;
+            char* strbase = "JUhead";
             char* p = (char*)getBdatStringColumnValue(
                 tbl98, strbase + 0x4b,
                 (int)mgr->field_8C);
             u8 kind = *(u8*)p;
             char* col = (char*)getBdatStringColumnValue(
-                lbl_eu_806640C4, lbl_eu_804FC694 + 0x57, kind);
+                lbl_eu_806640C4, "exc_talk1", kind);
             UIWin_ControlWindowLists(1, 1);
             self->field_394 = mgr->field_74;
             self->field_38C = kind;
@@ -1210,12 +1214,12 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
             // Retail converts the sdata2 constant through __cvt_fp2unsigned.
             CfObjectMove_relaySubB0Slot54(mgr, 0x65, 0,
                           (u32)__cvt_fp2unsigned(80.0f),
-                          lbl_eu_80666B8C, 30.0f);
+                          1.0f, 30.0f);
             self->field_388++;
         }
         break;
     case 1: {
-        UIWin_CreateTalkWin(self->field_394, lbl_eu_804FC694 + 0x61, 1);
+        UIWin_CreateTalkWin(self->field_394, "<ex>", 1);
         u32 st = self->field_388;
         self->field_388 = st + 1;
         CfObjectMove_relaySubB0Slot58(mgr, 0x65, 0, st);
@@ -1225,17 +1229,17 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
         if (ItemEx_GetFlagByte() != 0) {
             UIWin_CreateTalkWin(self->field_394,
                           (char*)getBdatStringColumnValue(
-                              lbl_eu_806640C4, lbl_eu_804FC694 + 0x66,
+                              lbl_eu_806640C4, "exc_talk2",
                               self->field_38C),
                           1);
             CfObjectMove_relaySubB0Slot54(mgr, 0x66, 0,
                           (u32)__cvt_fp2unsigned(80.0f),
-                          lbl_eu_80666B8C, 30.0f);
+                          1.0f, 30.0f);
             self->field_388++;
         } else {
             UIWin_CreateTalkWin(self->field_394,
                           (char*)getBdatStringColumnValue(
-                              lbl_eu_806640C4, lbl_eu_804FC694 + 0x70,
+                              lbl_eu_806640C4, "exc_talk3",
                               self->field_38C),
                           1);
             self->field_388 = 5;
@@ -1244,7 +1248,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     case 3: {
         // Queue the follow-up event with fixed flags (last arg on stack).
         char* ev = (char*)getBdatStringColumnValue(
-            tbl98, lbl_eu_804FC694 + 0x7a, (int)mgr->field_8C);
+            tbl98, "present", (int)mgr->field_8C);
         UIWin_CreateItemMulti(*(u16*)&ev, 0, 0, 0, 0, 1, 0, 1, 0);
         self->field_388++;
         break;
@@ -1252,7 +1256,7 @@ int Walker_AdvanceBattleStep(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     case 4:
         UIWin_CreateTalkWin(self->field_394,
                       (char*)getBdatStringColumnValue(
-                          lbl_eu_806640C4, lbl_eu_804FC694 + 0x70,
+                          lbl_eu_806640C4, "exc_talk3",
                           self->field_38C),
                       1);
         self->field_388++;
@@ -1334,8 +1338,8 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)holder.get())->field_620; j++) {
                 void* item = MapFx_ResolveOwner(
                     getObjectAt(holder.get(), (int)j));
-                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
-                              &spawn, 0x20, 0);
+                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)item,
+                              (Func800EA9A8_Arg5*)&spawn, (void*)0x20);
             }
         }
         sub = rec->f162();
@@ -1349,8 +1353,8 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)holder.get())->field_620; j++) {
                 void* item = MapFx_ResolveOwner(
                     getObjectAt(holder.get(), (int)j));
-                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
-                              &spawn, 0x21, 0);
+                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)item,
+                              (Func800EA9A8_Arg5*)&spawn, (void*)0x21);
             }
         }
         sub = rec->f162();
@@ -1362,8 +1366,8 @@ void Walker_FanfareBattleStart(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)holder.get())->field_620; j++) {
                 void* item = MapFx_ResolveOwner(
                     getObjectAt(holder.get(), (int)j));
-                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
-                              &spawn, 0x33, 0);
+                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), (BattleObjAccessor*)item,
+                              (Func800EA9A8_Arg5*)&spawn, (void*)0x33);
             }
         }
         sub = rec->f162();
@@ -1388,7 +1392,7 @@ static inline bool WalkEq(u32 a, u32 b) { return a == b; }
 void Walker_SwitchTargetParty(cf::CfObjectImplWalker* self, u32 arg) {
     if (!WalkEq(self->field_18->mSub.m4C(), arg)) {
         self->field_18->mSub.m50(arg);
-        u32 g = Selector_GetInstance()->field_90E4;
+        u32 g = ((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4;
         if (!WalkEq(self->field_18->mSub.m4C(), g)) {
             // Re-read the move sub-object's own battle id after the global gate.
             cf::CfWalkMoveSub& sub = self->field_18->mSub;
@@ -1435,7 +1439,7 @@ void Walker_BindBattleObj(cf::CfObjectImplWalker* self) {
         if (gmGameFlags & 0x400000) return;
     }
     actor =
-        (cf::CfWalkActorObj*)findObjectById((int)Selector_GetInstance()->field_90E4);
+        (cf::CfWalkActorObj*)findObjectById((int)((cf::CfWalkGlobal*)Selector_GetInstance())->field_90E4);
     if (actor == 0) return;
     u32 flags = actor->field_64;
     if ((flags & 0x100) == 0) return;
@@ -1493,13 +1497,13 @@ void Walker_FinishLeave(cf::CfObjectImplWalker* self) {
         if (sub != nullptr) {
             // Named temp forces MWCC to load the float constant between the two
             // virtual calls, matching retail's instruction order.
-            f32 dist = sub->vf14() - lbl_eu_80666B8C;
+            f32 dist = sub->vf14() - 1.0f;
             if (dist == sub->vf0C()) {
                 CItem_openAreaEventBox(obj->field_734, obj->field_738);
                 // Local pointer makes MWCC materialize the address with a
                 // lis/addi pair instead of an SDA21 reference.
                 char* str = &lbl_eu_80573E18;
-                UIWin_CreateB4790Win(str, 0);
+                UIWin_CreateB4790Win((u32)str, 0);
                 gmGameFlags &= ~0x200000;
                 self->field_39C = 0;
                 // Bump the area step counters for the leaving area.

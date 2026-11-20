@@ -56,12 +56,7 @@ public:
 // Forward: free function operating on the CChain/CChainActor memory layout
 extern "C" void CChain_setFieldAndClear(void*, int);
 
-extern "C" void chainClearTwoWords(void*);
-extern "C" void chainTeardownLinkClear(void*);
-extern "C" void CChainActor_ClearTargetRef(void*);
 extern "C" int isBattleStatusActive(void*, int);
 extern "C" int CChainActor_CheckReady(void*, void*);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 
-// Retail symbol: CChainActor_ToggleMoveFlag
-extern "C" void CChainActor_ToggleMoveFlag(void*, int);

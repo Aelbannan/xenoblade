@@ -1,5 +1,6 @@
 #include "monolib/core.hpp"
 #include <decomp.h>
+#include <typeinfo>
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 #include "functions.hpp"  // CTaskGame_setVec4 (vec4 setter)
@@ -27,10 +28,10 @@ extern const char lbl_eu_80522F44[];
 // Retail .sdata2 color constants used by the ctor frame color and the
 // wkStandbyLogin clear-color fills.
 extern const f32 lbl_eu_8066A450[];
-// Compiler-emitted vtable; the flat retail ctor stores its address at +0.
-extern u32 __vt__8CDesktop[40];
-// Dissolved .sdata type descriptor (word 0 = "Desktop" string pointer).
-extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663760[2] = { (u32)&lbl_eu_8066A450, 0 };
+
+// Type tag whose RTTI locator is the .sdata descriptor at 0x80663760
+// ({name, 0}); typeid(Desktop).name() is the view name.
+class Desktop {};
 
 // Retail sbss singletons. CDesktop::spIcon/spInstance/sIconInitialized live in
 // the CDeviceGX retail sbss range (lbl_eu_806656A8/AC/B0, defined there); the
@@ -49,11 +50,12 @@ struct CWorkEvent3Param {
 
 // Retail installs the dissolved vtable by hand (novtable TU) and reads the
 // frame-color constants from the shared .sdata2 pool, not literals.
+extern u32 __vt__8CDesktop[40];
 CDesktop::CDesktop(const char* pName, CWorkThread* pParent) :
 CProc(pName, pParent, MAX_CHILD),
 mView(nullptr) {
-    mType = THREAD_CDESKTOP;
     *(u32**)this = __vt__8CDesktop;
+    mType = THREAD_CDESKTOP;
     lbl_eu_806656AC = this;
     unk1EC.set(0.5f, 0.5f, 0.5f, 1.0f);
     CView::setDefaultFrameColor(unk1EC);
@@ -85,9 +87,9 @@ CDesktopException* CDesktop::getException(){
         return nullptr; 
     }
 
-    // volatile keeps the singleton load below the null check (retail order);
+    // Keep the singleton load below the null check (retail order);
     // the instruction emitted is the same plain lwz.
-    return reinterpret_cast<CDesktopException*>(*reinterpret_cast<volatile u32*>(&CDesktopException::spInstance));
+    return reinterpret_cast<CDesktopException*>(*reinterpret_cast<u32*>(&CDesktopException::spInstance));
 }
 
 void CDesktop::wkUpdate() {
@@ -155,10 +157,10 @@ bool CDesktop::wkStandbyLogin(){
     view->mContextMsg.mRing.field6 = view->mContextMsg.mRing.mSize - 1;
     mView->unk460 = 0x13;
 
-    // Name the view after the "Desktop" string (both the view-local name and
-    // the inherited CWorkThread name; the base name only while still empty).
-    // lbl_eu_80663760[0] holds the "Desktop" string pointer (sdata2 pool).
-    const char* desktop = reinterpret_cast<const char*>(lbl_eu_80663760[0]);
+    // Name the view after the desktop type's RTTI name (both the view-local
+    // name and the inherited CWorkThread name; the base name only while
+    // still empty).
+    const char* desktop = typeid(Desktop).name();
     mView->mName.mLength = strlen(desktop);
     strcpy(mView->mName.mString, desktop);
     if(mView->CWorkThread::mName.mLength == 0){

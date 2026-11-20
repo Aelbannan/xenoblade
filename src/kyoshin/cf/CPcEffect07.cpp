@@ -2,17 +2,17 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 
 #include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // gmScene scene view
-#include <monolib/scn/CScnTimeApi.hpp>       // Scn_GetFrameDelta frame-delta query
+#include <monolib/scn/CScn.hpp>       // Scn_GetFrameDelta frame-delta query
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
 extern "C" void* __dt__Q22cf11CPcEffect07Fv(void*, int);
 
 extern "C" { extern char lbl_eu_80533744[]; }  // vtable data (retail .data)
-extern "C" void freePcEffects(cf::CPcEffect07*);  // effect cleanup
 
 namespace cf {}
 using namespace cf;
@@ -53,8 +53,8 @@ CPcEffect07::CPcEffect07(PcEffectActorView* actor) {
     }
 
     maxEffects = 0;
-    mField5C = lbl_eu_80667DE8;
-    mField60 = lbl_eu_80667DE8;
+    mField5C = 0.0f;
+    mField60 = 0.0f;
     lbl_eu_80664398 = (PcEffectData*)this;
 }
 } // namespace cf
@@ -69,7 +69,7 @@ extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
     if (this_ != 0) {
         *(u32*)((char*)this_ + 0) = (u32)lbl_eu_80533744;
         *(u32*)((char*)this_ + 4) = (u32)lbl_eu_80533744 + 0x10;
-        freePcEffects(this_);
+        freePcEffects(reinterpret_cast<PcEffectData*>(this_));
         if ((void*)lbl_eu_80664398 == (void*)this_) {
             lbl_eu_80664398 = 0;
         }
@@ -95,7 +95,7 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
     s32 slot = slotSel;
     if (data == 0)
         return -1;
-    if (data->mField5C > lbl_eu_80667DE8)
+    if (data->mField5C > 0.0f)
         return -1;
 
     // Effect id lookup: type -> 0x700 + n.
@@ -138,7 +138,7 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
         reinterpret_cast<PcEffectScheduleSub*>(lbl_eu_80664398->mActor);
     if (sub != NULL)
         sub = &reinterpret_cast<PcEffectActorView*>(sub)->mSub;
-    bindPartnerO_(obj, sub, 0);
+    bindPartnerO_((cf::CfObjectEff*)obj, (u8*)sub, (u8*)0);
 
     // Store the object into the entry, then replace the table-sourced
     // transform pointer with the holder fetched from the sub-object
@@ -175,7 +175,7 @@ extern "C" s32 spawnPcEffect(u8 type, s32 slotSel) {
     // Record the type byte in the entry and globally, reset the cooldown.
     ((PcEffectSpawnRec*)((char*)lbl_eu_80664398 + off))->mId = type;
     lbl_eu_80664398->maxEffects = type;
-    lbl_eu_80664398->mField5C = lbl_eu_80667DEC;
+    lbl_eu_80664398->mField5C = 52.0f;
     return slot;
 }
 
@@ -270,7 +270,7 @@ s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
     PcEffectData* data = lbl_eu_80664398;
     if (data == 0)
         return 0;
-    if (data->mField60 > lbl_eu_80667DE8)
+    if (data->mField60 > 0.0f)
         return -1;
 
     PcEffectEntry* e = NULL;
@@ -295,9 +295,9 @@ s32 startPcEffect(u32 handle, s32 index, s32 bankByte, s32 amount) {
     if (e->mActive != 1)
         return 0;
 
-    setTargetObj_(e->mObj, (void*)handle);
+    setTargetObj_((cf::CfObjectEff*)e->mObj, (u8*)(void*)handle);
     e->mActive = 2;
-    f32 lim = lbl_eu_80667DF0;
+    f32 lim = 2.0f;
     e->_10 = amount;
     e->_14 = bankByte;
     lbl_eu_80664398->mField60 = lim;
@@ -329,13 +329,13 @@ int isSlotActive(int index) {
     return (val == 1) ? 1 : 0;
 }
 
-bool hasAnyActiveSlot() {
+int hasAnyActiveSlot() {
     PcEffectData* data = lbl_eu_80664398;
-    if (!data) return false;
+    if (!data) return 0;
     for (int i = 0; i < 3; i++) {
-        if (data->entries[i].mActive != 0) return true;
+        if (data->entries[i].mActive != 0) return 1;
     }
-    return false;
+    return 0;
 }
 
 int countActiveSlots() {
@@ -363,14 +363,7 @@ PcEffectSchedHolder* getSchedHolder(CPcEffect07* self, s32 id, s32 sel, s32 amou
         result = self->mField0C->mSub.GetSlot(lbl_eu_805049F8[tblIdx]);
     }
     if (amount > 0 && result != NULL && result->mSched != NULL) {
-        // s32 -> f32 via the shared 0x43300000 magic double; the xor of the
-        // high bit reproduces MWCC's xoris sign-bias conversion.
-        PcEffectF64Conv conv;
-        conv.w[1] = (u32)amount ^ 0x80000000;
-        conv.w[0] = 0x43300000;
-        // No explicit f32 cast: MWCC folds the double subtraction straight
-        // into the f32 parameter register (retail emits a lone fsubs).
-        schedSetStepIntervals(result->mSched, conv.d - lbl_eu_80667DF8, lbl_eu_80667DF4);
+        schedSetStepIntervals(result->mSched, (f32)amount, 1.0f);
     }
     return result;
 }
@@ -425,17 +418,17 @@ void tickPcEffects(CPcEffect07* self) {
 
     // Step each timer down by the scene's frame delta and clamp to epsilon.
     f32 nv;
-    if (self->mField5C > lbl_eu_80667DE8) {
+    if (self->mField5C > 0.0f) {
         nv = self->mField5C - Scn_GetFrameDelta(gmScene);
         self->mField5C = nv;
-        if (nv < lbl_eu_80667DE8)
-            self->mField5C = lbl_eu_80667DE8;
+        if (nv < 0.0f)
+            self->mField5C = 0.0f;
     }
-    if (self->mField60 > lbl_eu_80667DE8) {
+    if (self->mField60 > 0.0f) {
         nv = self->mField60 - Scn_GetFrameDelta(gmScene);
         self->mField60 = nv;
-        if (nv < lbl_eu_80667DE8)
-            self->mField60 = lbl_eu_80667DE8;
+        if (nv < 0.0f)
+            self->mField60 = 0.0f;
     }
 }
 

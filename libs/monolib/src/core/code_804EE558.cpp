@@ -16,19 +16,14 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/MathConstants.hpp"
 #include "monolib/device/CDeviceGX.hpp"
+#include "monolib/effect/code_804D854C.hpp"
 
 extern "C" {
 
 // Shared read-only literals (monolibdata2 .sdata2).
-extern const u32 lbl_eu_8066B400;    // 0xFFFFFFFF (GXColor white)
-extern const u32 lbl_eu_8066B404;    // 0xFFFFFFFF (GXColor white)
 extern const float lbl_eu_8066B408;  // 0.0f
 extern const float lbl_eu_8066B40C;  // 1.0f
-extern const float lbl_eu_8066B410;  // -1.0f
 extern const float lbl_eu_8066B414;  // 0.5f
-extern const float lbl_eu_8066B418; // gradient scale
-extern const float lbl_eu_8066B41C; // gradient scale
-extern const float lbl_eu_8066B420;  // 255.0f
 
 // Gradient tables
 struct CGradEntry {
@@ -46,8 +41,6 @@ extern void* Scn_FindCamItem(void* rsrc, int idx);
 extern void snapTexCursor(void* desktop);
 extern void restoreTexCursor(void* desktop);
 extern void initEffectDrawCtx(void* draw);
-extern int setupEffectDrawCtx(void* draw, void* desktop, void* material);
-extern void releaseEffectDrawTex(void* draw);
 extern void blitEffectViewRect(void* draw, int a, int b);
 extern void CERotEulerXYZ(void* dst, void* src);
 extern void CERotEulerZXY(void* dst, void* src);
@@ -169,7 +162,7 @@ struct CLytBind {
 };
 
 // Draw context built on the stack by initEffectDrawCtx/setupEffectDrawCtx.
-struct CDrawCtx {
+struct CDrawCtxLocal {
     u32 mField00;
     GXTexObj* mTexObj; // 0x04
 };
@@ -379,14 +372,14 @@ extern "C" u32 lytBindCanResolveTarget(CLytBind* self) {
 extern "C" void buildMarkerFan(ml::CVec3* verts) {
     for (s16 i = 0; i < 10; i++) {
         if (i == 0) {
-            verts[i].set(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
+            verts[i].set(0.0f, 0.0f, 0.0f);
         } else if (i < 9) {
             float deg = (float)(i - 1) * 45.0f;
             float rad = 0.017453292f * deg;
             float angle = 57.29578f * rad;
             verts[i].x = gradLookup(lbl_eu_80660B78, angle);
             verts[i].y = gradLookup(lbl_eu_80660038, angle);
-            verts[i].z = lbl_eu_8066B408;
+            verts[i].z = 0.0f;
         } else {
             verts[i] = verts[1];
         }
@@ -399,7 +392,7 @@ extern "C" void buildMarkerFan(ml::CVec3* verts) {
 extern "C" void placeMarkerFan(ml::CVec3* verts, const ml::CVec3* pos,
                               const ml::CVec3& size, float angle) {
     Mtx rotMtx;
-    if (angle != lbl_eu_8066B408) {
+    if (angle != 0.0f) {
         CERotZMatrix(rotMtx, angle);
     }
 
@@ -415,7 +408,7 @@ extern "C" void placeMarkerFan(ml::CVec3* verts, const ml::CVec3* pos,
             v.x *= size.x;
             v.y *= size.y;
             v.z *= size.z;
-            if (angle != lbl_eu_8066B408) {
+            if (angle != 0.0f) {
                 // Retail copies the rotated vector through two stack temps
                 // before storing back into v.
                 ml::CVec3 rotated;
@@ -436,20 +429,20 @@ extern "C" float clampMarkerFan(ml::CVec3* verts) {
     float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
     float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
 
-    float scale = lbl_eu_8066B40C;
+    float scale = 1.0f;
     for (s16 i = 1; i < 9; i++) {
-        float t = lbl_eu_8066B40C;
+        float t = 1.0f;
         float dx = ml::math::abs(verts[i].x - verts[0].x);
-        if (dx != lbl_eu_8066B408) {
-            if (verts[i].x < lbl_eu_8066B408) {
+        if (dx != 0.0f) {
+            if (verts[i].x < 0.0f) {
                 t = verts[0].x / dx;
             } else if (fbW < verts[i].x) {
                 t = (fbW - verts[0].x) / dx;
             }
         }
         float dy = ml::math::abs(verts[i].y - verts[0].y);
-        if (dy != lbl_eu_8066B408) {
-            if (verts[i].y < lbl_eu_8066B408) {
+        if (dy != 0.0f) {
+            if (verts[i].y < 0.0f) {
                 t = verts[0].y / dy;
             } else if (fbH < verts[i].y) {
                 t = (fbH - verts[0].y) / dy;
@@ -460,8 +453,8 @@ extern "C" float clampMarkerFan(ml::CVec3* verts) {
         }
     }
 
-    if (scale == lbl_eu_8066B40C) {
-        return lbl_eu_8066B40C;
+    if (scale == 1.0f) {
+        return 1.0f;
     }
 
     for (s16 i = 1; i < 10; i++) {
@@ -492,15 +485,15 @@ extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3*
         if (i < 9) {
             orig = verts[i];
             bool clamped = false;
-            if (verts[i].x < lbl_eu_8066B408) {
-                verts[i].x = lbl_eu_8066B408;
+            if (verts[i].x < 0.0f) {
+                verts[i].x = 0.0f;
                 clamped = true;
             } else if (fbW < verts[i].x) {
                 verts[i].x = fbW;
                 clamped = true;
             }
-            if (verts[i].y < lbl_eu_8066B408) {
-                verts[i].y = lbl_eu_8066B408;
+            if (verts[i].y < 0.0f) {
+                verts[i].y = 0.0f;
                 clamped = true;
             } else if (fbH < verts[i].y) {
                 verts[i].y = fbH;
@@ -513,46 +506,46 @@ extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3*
             d = orig - verts[0];
             float rx;
             float ry;
-            if (d.x == lbl_eu_8066B408) {
-                rx = lbl_eu_8066B40C;
+            if (d.x == 0.0f) {
+                rx = 1.0f;
             } else {
                 rx = ml::math::abs((verts[i].x - verts[0].x) / d.x);
             }
-            if (d.y == lbl_eu_8066B408) {
-                ry = lbl_eu_8066B40C;
+            if (d.y == 0.0f) {
+                ry = 1.0f;
             } else {
                 ry = ml::math::abs((verts[i].y - verts[0].y) / d.y);
             }
 
             // Drag factor for the z components (0: tex/color z stays put).
-            float zf = lbl_eu_8066B408;
+            float zf = 0.0f;
 
             tdiff = tex[i] - tex[0];
             tscaled.set(tdiff.x * rx, tdiff.y * ry, tdiff.z * zf);
             tex[i] = tex[0] + tscaled;
-            if (tex[i].x < lbl_eu_8066B408) {
-                tex[i].x = lbl_eu_8066B408;
-            } else if (lbl_eu_8066B40C < tex[i].x) {
-                tex[i].x = lbl_eu_8066B40C;
+            if (tex[i].x < 0.0f) {
+                tex[i].x = 0.0f;
+            } else if (1.0f < tex[i].x) {
+                tex[i].x = 1.0f;
             }
-            if (tex[i].y < lbl_eu_8066B408) {
-                tex[i].y = lbl_eu_8066B408;
-            } else if (lbl_eu_8066B40C < tex[i].y) {
-                tex[i].y = lbl_eu_8066B40C;
+            if (tex[i].y < 0.0f) {
+                tex[i].y = 0.0f;
+            } else if (1.0f < tex[i].y) {
+                tex[i].y = 1.0f;
             }
 
             cdiff = colors[i] - colors[0];
             cscaled.set(cdiff.x * rx, cdiff.y * ry, cdiff.z * zf);
             colors[i] = colors[0] + cscaled;
-            if (colors[i].x < lbl_eu_8066B408) {
-                colors[i].x = lbl_eu_8066B408;
-            } else if (lbl_eu_8066B40C < colors[i].x) {
-                colors[i].x = lbl_eu_8066B40C;
+            if (colors[i].x < 0.0f) {
+                colors[i].x = 0.0f;
+            } else if (1.0f < colors[i].x) {
+                colors[i].x = 1.0f;
             }
-            if (colors[i].y < lbl_eu_8066B408) {
-                colors[i].y = lbl_eu_8066B408;
-            } else if (lbl_eu_8066B40C < colors[i].y) {
-                colors[i].y = lbl_eu_8066B40C;
+            if (colors[i].y < 0.0f) {
+                colors[i].y = 0.0f;
+            } else if (1.0f < colors[i].y) {
+                colors[i].y = 1.0f;
             }
         } else {
             verts[i] = verts[1];
@@ -563,17 +556,17 @@ extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3*
 }
 
 // drawScreenMarkerFan: GX renderer for the marker fan.
-extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
+extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtxLocal* draw, const ml::CVec3* pos,
                              const float* color, const ml::CVec3* size, void* clampInfo,
                              s16 flag, CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha,
                              float vertRot) {
     float fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
     float fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
 
-    if (pos->x < lbl_eu_8066B408 || fbW < pos->x) {
+    if (pos->x < 0.0f || fbW < pos->x) {
         return 0;
     }
-    if (pos->y < lbl_eu_8066B408 || fbH < pos->y) {
+    if (pos->y < 0.0f || fbH < pos->y) {
         return 0;
     }
 
@@ -581,16 +574,16 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
     if (flag < 0) {
         buildMarkerFan(verts);
     } else {
-        verts[0] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
-        verts[1] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
-        verts[2] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B40C, lbl_eu_8066B408);
-        verts[3] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B40C, lbl_eu_8066B408);
-        verts[4] = ml::CVec3(-1.0f, lbl_eu_8066B40C, lbl_eu_8066B408);
-        verts[5] = ml::CVec3(-1.0f, lbl_eu_8066B408, lbl_eu_8066B408);
-        verts[6] = ml::CVec3(-1.0f, -1.0f, lbl_eu_8066B408);
-        verts[7] = ml::CVec3(lbl_eu_8066B408, -1.0f, lbl_eu_8066B408);
-        verts[8] = ml::CVec3(lbl_eu_8066B40C, -1.0f, lbl_eu_8066B408);
-        verts[9] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
+        verts[0] = ml::CVec3(0.0f, 0.0f, 0.0f);
+        verts[1] = ml::CVec3(1.0f, 0.0f, 0.0f);
+        verts[2] = ml::CVec3(1.0f, 1.0f, 0.0f);
+        verts[3] = ml::CVec3(0.0f, 1.0f, 0.0f);
+        verts[4] = ml::CVec3(-1.0f, 1.0f, 0.0f);
+        verts[5] = ml::CVec3(-1.0f, 0.0f, 0.0f);
+        verts[6] = ml::CVec3(-1.0f, -1.0f, 0.0f);
+        verts[7] = ml::CVec3(0.0f, -1.0f, 0.0f);
+        verts[8] = ml::CVec3(1.0f, -1.0f, 0.0f);
+        verts[9] = ml::CVec3(1.0f, 0.0f, 0.0f);
     }
 
     ml::CVec3 scaledSize = *size * 0.5f;
@@ -607,7 +600,7 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
         if (i < 9) {
             tex[i].x = verts[i].x / fbW;
             tex[i].y = verts[i].y / fbH;
-            tex[i].z = lbl_eu_8066B408;
+            tex[i].z = 0.0f;
         } else {
             tex[i] = tex[1];
         }
@@ -620,7 +613,7 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
         clampMarkerFanAttrs(verts, tex, (ml::CVec3*)colors);
     }
 
-    if (alpha > lbl_eu_8066B408) {
+    if (alpha > 0.0f) {
         float gfbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
         float rad = ml::deg2rad * angleDeg;
         float deg = ml::rad2deg * rad;
@@ -629,15 +622,15 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
         float ay = alpha * (size->y / gfbH);
         tex[0].x = tex[0].x + size->x * (ax * gradLookup(lbl_eu_80660038, deg)) / gfbW;
         tex[0].y = tex[0].y + size->y * (ay * gradLookup(lbl_eu_80660B78, deg)) / gfbH;
-        if (tex[0].x < lbl_eu_8066B408) {
-            tex[0].x = lbl_eu_8066B408;
-        } else if (lbl_eu_8066B40C < tex[0].x) {
-            tex[0].x = lbl_eu_8066B40C;
+        if (tex[0].x < 0.0f) {
+            tex[0].x = 0.0f;
+        } else if (1.0f < tex[0].x) {
+            tex[0].x = 1.0f;
         }
-        if (tex[0].y < lbl_eu_8066B408) {
-            tex[0].y = lbl_eu_8066B408;
-        } else if (lbl_eu_8066B40C < tex[0].y) {
-            tex[0].y = lbl_eu_8066B40C;
+        if (tex[0].y < 0.0f) {
+            tex[0].y = 0.0f;
+        } else if (1.0f < tex[0].y) {
+            tex[0].y = 1.0f;
         }
     }
 
@@ -671,7 +664,7 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
         GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
                       GX_AF_NONE);
         GXColor amb;
-        *(u32*)&amb = lbl_eu_8066B400;
+        *(u32*)&amb = 0xFFFFFFFFu;
         setChanAmbColor(GX_COLOR0A0, &amb);
         GXColor mat;
         *(u32*)&mat = *(u32*)&matColor;
@@ -709,17 +702,17 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
             // setScale + replaceTranslation folded inline so every zero is the
             // shared extern 0.0f (retail keeps no .sdata2 pool in this TU).
             mtxSrc->mTexMtx.m[0][0] = mtxSrc->mScaleX;
-            mtxSrc->mTexMtx.m[0][1] = lbl_eu_8066B408;
-            mtxSrc->mTexMtx.m[0][2] = lbl_eu_8066B408;
-            mtxSrc->mTexMtx.m[0][3] = mtxSrc->mField0C + lbl_eu_8066B408;
-            mtxSrc->mTexMtx.m[1][0] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[0][1] = 0.0f;
+            mtxSrc->mTexMtx.m[0][2] = 0.0f;
+            mtxSrc->mTexMtx.m[0][3] = mtxSrc->mField0C + 0.0f;
+            mtxSrc->mTexMtx.m[1][0] = 0.0f;
             mtxSrc->mTexMtx.m[1][1] = mtxSrc->mScaleY;
-            mtxSrc->mTexMtx.m[1][2] = lbl_eu_8066B408;
-            mtxSrc->mTexMtx.m[1][3] = mtxSrc->mField10 + lbl_eu_8066B408;
-            mtxSrc->mTexMtx.m[2][0] = lbl_eu_8066B408;
-            mtxSrc->mTexMtx.m[2][1] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[1][2] = 0.0f;
+            mtxSrc->mTexMtx.m[1][3] = mtxSrc->mField10 + 0.0f;
+            mtxSrc->mTexMtx.m[2][0] = 0.0f;
+            mtxSrc->mTexMtx.m[2][1] = 0.0f;
             mtxSrc->mTexMtx.m[2][2] = mtxSrc->mScaleZ;
-            mtxSrc->mTexMtx.m[2][3] = mtxSrc->mField14 + lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[2][3] = mtxSrc->mField14 + 0.0f;
             GXLoadTexMtxImm(mtxSrc->mTexMtx.mtx, GX_TEXMTX1, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_TEXMTX1, GX_FALSE,
                               0x7D);
@@ -728,7 +721,7 @@ extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtx* draw, const ml::CVec3
         GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
                       GX_AF_NONE);
         GXColor amb;
-        *(u32*)&amb = lbl_eu_8066B404;
+        *(u32*)&amb = 0xFFFFFFFFu;
         setChanAmbColor(GX_COLOR0A0, &amb);
         GXColor mat;
         *(u32*)&mat = *(u32*)&matColor;
@@ -767,9 +760,9 @@ extern "C" void drawScreenMarker(void* desktop, const ml::CVec3* pos, const floa
     }
 
     snapTexCursor(desktop);
-    CDrawCtx draw;
+    CDrawCtxLocal draw;
     initEffectDrawCtx(&draw);
-    if (setupEffectDrawCtx(&draw, desktop, material) != 0) {
+    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
         if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
             blitEffectViewRect(&draw, 0, 0);
             drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, -1, NULL, angleDeg, alpha,
@@ -782,7 +775,7 @@ extern "C" void drawScreenMarker(void* desktop, const ml::CVec3* pos, const floa
             drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
                           vertRot);
         }
-        releaseEffectDrawTex(&draw);
+        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
     }
     restoreTexCursor(desktop);
 }

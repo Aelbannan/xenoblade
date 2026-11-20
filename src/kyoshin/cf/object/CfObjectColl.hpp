@@ -123,3 +123,14 @@ extern u8 lbl_eu_80528800[];
 extern u8 lbl_eu_805287E0[];
 extern u8 lbl_eu_805287C0[];
 extern u8 lbl_eu_805287A0[];
+
+// Free collision helpers defined in CfObjectColl.cpp (real C++ linkage).
+void CollObjSetupRotBoxFromAVec(cf::CfObjectColl* self, cf::CollVec* a,
+                                const ml::CVec3* ext, f32 angle);
+void CollObjSetupRotBoxState5(cf::CfObjectColl* self, ml::CVec3* pos,
+                              const ml::CVec3* ext, f32 angle);
+void CollObjSetupRotBoxState4Timed(cf::CfObjectColl* self, ml::CVec3* pos,
+                                   const ml::CVec3* ext, f32 angle);
+void CollObjSetNameSlot(cf::CfObjectColl* self, const char* name, int index);
+void CollObjPackResIdWords(void* self, u32 a, u32 b);
+u32 CollObjSetResIdReady(void* self);

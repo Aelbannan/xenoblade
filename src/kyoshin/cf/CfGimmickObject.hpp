@@ -26,6 +26,7 @@ struct CfGimmickTableSet {
 // NOTE: CtrlMovePC.hpp is not included here; only cf::CCtrlMovePC /
 // movePcCondFullReset are needed, declared below.
 #include "types.h"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // Per-area table entry at +0x84 (2 entries x 0x10 bytes). Each entry holds
 // u16 sequence windows / ids scanned by the per-frame eligibility checks
@@ -267,7 +268,6 @@ extern "C" int CfGimmick_CheckPartyIdLoaded(void* self, u32 arg);
 extern "C" void CfGimmick_PostGimmickName(u16 id);
 extern "C" int CfGimmick_CheckStateFlag2CC8(void* obj);
 extern "C" int CfGimmick_CheckStateFlag1D44(void* obj);
-u32 CfT_FrameCountA();
 int CfGimmick_QueryTrigger(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
 void CItem_consumeFamilyCnt(unsigned int a, int b);
@@ -283,11 +283,9 @@ void CItem_createBoxContents(u16 id);
 void CfGimmick_UpdateProximity(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
                   int e, int g);
 extern "C" void setChildV40__(void* obj, void* src);  // matches CfObjectImplMove.hpp (const void* is a distinct type)
-int CfSoundMan_IsRecordActive(int a);
 // Single shared flat-name form (extern "C" keeps MWCC from re-mangling;
 // see CfObjectImplMove.hpp).
 extern "C" u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
-void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
 CfGimmickSoundSlot* CfSoundMan_TouchSlotById(u16 handle);
 int CPartsChange_SpawnById(int id);
 void CamEvtProgramEventCam(int idx);
@@ -348,3 +346,7 @@ struct CfGimmickListNodeRoot {
     u8 pad[4];
     CfGimmickListNode* root;   // +0x04
 };
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+void GimObjSetBusyBit(void* self);
+void GimObjRebuildColliders(cf::CfGimmickObject* self);

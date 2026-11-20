@@ -9,8 +9,11 @@
 #define CItem_initItemImplInstances CItem_initItemImplInstances_staleVoid
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
+#include "kyoshin/CPresentWinApi.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "kyoshin/CNumSelect.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
@@ -30,7 +33,8 @@
 #undef CItem_slotCnt
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/device/CDeviceFont.hpp"
-#include <nw4r/ut/ut_TagProcessorBase.h>
+#include "monolib/device/CDeviceSC.hpp"
+
 #include <stdio.h>
 #include <string.h>
 #include <nw4r/lyt.h>
@@ -39,11 +43,11 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/CfEnumListHolder.hpp"
 #include "monolib/util/MemManager.hpp"  // canonical mtl::MemManager::allocate
+#include "kyoshin/CTitleAHelp.hpp"  // setGXColorS10 (defined in CTitleAHelp.cpp)
 
 // Retail helper forms used by this TU (kept out of CItemBoxGrid.hpp: owners
 // that also include CItemBoxInfo.hpp declare them with other parameter types).
-GXColorS10* setGXColorS10(GXColorS10*, s16, s16, s16, s16);
-extern "C" void SplitU32ToS16s(short*, unsigned long);
+
 
 // Forward declarations for external functions
 void* __dt__13CArtsBookItemFv(void* self, int mode);
@@ -62,22 +66,10 @@ void deleteRegion__17UnkClass_8045F564Fv(void*);
 // constants; F48 = signed-int magic 0x4330000080000000))->GetItemValueFloat(F40 = plain 2^52).
 extern const double lbl_eu_80667F40;
 extern const double lbl_eu_80667F48;
-extern const float lbl_eu_80667F80;
-extern const float lbl_eu_80667F78;
-extern const float lbl_eu_80667F30;
 extern const float lbl_eu_80667F34;
-extern const float lbl_eu_80667F38;
-extern const float lbl_eu_80667F50;
-extern const float lbl_eu_80667F54;
-extern const float lbl_eu_80667F58;
-extern const float lbl_eu_80667F74;
-extern const float lbl_eu_80667F7C;
 extern const float lbl_eu_80667F88;
 extern const float lbl_eu_80667F8C;
-extern const float lbl_eu_80667F90;
-extern const float lbl_eu_80667F94;
 extern const float lbl_eu_80667F98;
-extern const float lbl_eu_80667F84;
 extern const double lbl_eu_80667F60;
 extern const double lbl_eu_80667F68;
 
@@ -568,7 +560,7 @@ check_next:;
         float fdiv = fcnt / f30;
         int rows = (int)fdiv;
         float frac = fdiv - (float)rows;
-        if (lbl_eu_80667F34 != frac) rows++;
+        if (0.0f != frac) rows++;
         if (!(u8)rows) rows = 1;
         ((CItemBoxGridFull*)p)->field_2803 = (u8)rows;
         ((CItemBoxGridFull*)p)->field_2804 = 0;
@@ -579,7 +571,7 @@ check_next:;
         float fdiv = fcnt / f30;
         int rows = (int)fdiv;
         float frac = fdiv - (float)rows;
-        if (lbl_eu_80667F34 != frac) rows++;
+        if (0.0f != frac) rows++;
         if (!(u8)rows) rows = 1;
         ((CItemBoxGridFull*)p)->field_2803 = (u8)rows;
         if ((s8)((CItemBoxGridFull*)p)->field_2804 >= (s8)((CItemBoxGridFull*)p)->field_2803) {
@@ -627,7 +619,7 @@ u32 CItemBoxGridFull::CalcGridRowCount() {
     float div = f / 30.0f;
     s32 result = (s32)div;
     float frac = div - (float)result;
-    if (lbl_eu_80667F34 != frac) result++;
+    if (0.0f != frac) result++;
     return (u8)result;
 }
 
@@ -699,7 +691,7 @@ u32 CItemBoxGridFull::GetCellSellPrice(u16 idx) {
         void* charData = (void*)CtrlObjectParam_GetCharEntry((u32)(u8)member);
         void* ptr = (void*)(((CItemBoxCharEntry*)charData)->counterArea);
         if (Counter_TestBit(ptr, 0x93)) {
-            basePrice += IdTable_SumValues(ptr, 0x93);
+            basePrice += IdTable_SumValues((CUnkObj8025FB10*)ptr, 0x93);
         }
     }
 
@@ -737,7 +729,7 @@ u32 CItemBoxGridFull::GetScaledItemValue(u32 id, void* item, int reserved) {
             void* charData = (void*)CtrlObjectParam_GetCharEntry(member);
             void* ptr = (void*)(((CItemBoxCharEntry*)charData)->counterArea);
             if (Counter_TestBit(ptr, 0x8f)) {
-                base += IdTable_SumValues(ptr, 0x8f);
+                base += IdTable_SumValues((CUnkObj8025FB10*)ptr, 0x8f);
             }
         }
         result = (u32)RoundHalfAway0((float)(result * base) * 0.01f);
@@ -1056,8 +1048,8 @@ char* CItemBoxGridFull::FormatCellItemName(u16 idx) {
         sprintf((char*)(p + 0x2825), (const char*)"%s", desc);
 
         int langFlag = 1;
-        if ((u8)getLanguage__9CDeviceSCFv() != 3) {
-            if ((u8)getLanguage__9CDeviceSCFv() != 2) langFlag = 0;
+        if (CDeviceSC::getLanguage() != 3) {
+            if (CDeviceSC::getLanguage() != 2) langFlag = 0;
         }
 
         // Retail keeps the slot-byte word offset and both pool bases in
@@ -1540,7 +1532,7 @@ void CItemBoxGridFull::CompactGridEntries() {
         float fdiv = (float)cnt / 30.0f;
         int rows = (int)fdiv;
         float frac = fdiv - (float)rows;
-        if (lbl_eu_80667F34 != frac) rows++;
+        if (0.0f != frac) rows++;
         if (!(u8)rows) rows = 1;
         this->field_2803 = (u8)rows;
         this->field_2804 = 0;
@@ -1604,7 +1596,7 @@ u32 CItemBoxGridFull::GetItemBasePrice(void* item) {
         LookupItemTypeTable(kind);
         u16 lookup = BdatGetU16Direct((void*)lbl_eu_806640D8, "money", (u16)shortKind);
         u8 count = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
-        float f = lbl_eu_80667F78;
+        float f = 1.0f;
         while (count-- != 0) f += 0.2f;
         result = (u32)((float)lookup * f);
     } else {
@@ -1655,7 +1647,7 @@ s32 CItemBoxGridFull::GetShopItemValue(u32 id, void* item) {
         u32 count;
         if (item) count = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
         else count = (u8)BdatGetU8Direct((const void*)tbl, "jwl_slot", shortKind & 0xFFFF);
-        float f = lbl_eu_80667F78;
+        float f = 1.0f;
         while (count-- != 0) f += 0.2f;
         result = (u32)((float)lookup * f);
     } else {
@@ -2722,7 +2714,7 @@ void CItemBoxGrid::UpdateItemBox() {
     reinterpret_cast<CNumSelect*>(p + 0x3e4)->UpdateStates();
     ((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_Move();
     ((CExchangeWin*)(p + 0x440))->ExWin_TickUpdate();
-    updatePresentWin(p + 0x468);
+    updatePresentWin(reinterpret_cast<CPresentWin*>(p + 0x468));
     reinterpret_cast<CSysWin*>(p + 0x4ac)->dispatchPhase();
     reinterpret_cast<CSysWin*>(p + 0x4e8)->dispatchPhase();
 }
@@ -2749,7 +2741,7 @@ void CItemBoxGrid::DrawItemBoxGrid(nw4r::lyt::DrawInfo* drawInfo) {
     ((CExchangeWin*)(p + 0x440))->ExWin_DrawLayout(drawInfo);
     reinterpret_cast<CSysWin*>(p + 0x4ac)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>((void*)drawInfo));
     reinterpret_cast<CSysWin*>(p + 0x4e8)->drawLayout(reinterpret_cast<nw4r::lyt::DrawInfo*>((void*)drawInfo));
-    drawPresentWin(p + 0x468, drawInfo);
+    drawPresentWin(reinterpret_cast<CPresentWin*>(p + 0x468), drawInfo);
     ((CBaseCur*)(p + 0xd0))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     ((CBaseCur*)(p + 0x70))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
     ((CBaseCur*)(p + 0xa0))->DrawLayout((nw4r::lyt::DrawInfo*)drawInfo);
@@ -2859,7 +2851,7 @@ u32 CItemBoxGrid::IsSubWinActive() {
     if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsOpen()) return 1;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return 1;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 1;
-    if (isPresentActive(p + 0x468)) return 1;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return 1;
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return 1;
     return reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened();
 }
@@ -2983,7 +2975,7 @@ void CItemBoxGrid::GridMoveCursorLeft() {
         }
         return;
     }
-    if (isPresentActive(p + 0x468)) return;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     // Negated so the p544/p528/p527 chain nests in the false arm (retail
     // branches forward past the D3328 block instead of jumping to a shared end).
     if (!((CSortMenu*)(p + 0xe8))->IsOpen()) {
@@ -3130,7 +3122,7 @@ void CItemBoxGrid::GridMoveCursorRight() {
         }
         return;
     }
-    if (isPresentActive(p + 0x468)) return;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
         if (((CSortMenu*)(p + 0xe8))->IsIdle()) {
             ((CSortMenu*)(p + 0xe8))->CursorDown();
@@ -3225,10 +3217,10 @@ void CItemBoxGrid::GridMoveCursorDown() {
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
-    if (isPresentActive(p + 0x468)) {
-        if (!isPresentSettled(p + 0x468)) return;
-        if (isPresentBusy(p + 0x468)) return;
-        dispatchCounterStepBack(p + 0x468);
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+        if (!isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
+        if (isPresentBusy(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
+        dispatchCounterStepBack(reinterpret_cast<CPresentWin*>(p + 0x468));
         playUISound(1);
         return;
     }
@@ -3310,10 +3302,10 @@ void CItemBoxGrid::GridMoveCursorUp() {
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
-    if (isPresentActive(p + 0x468)) {
-        if (!isPresentSettled(p + 0x468)) return;
-        if (isPresentBusy(p + 0x468)) return;
-        stepPresentCounter(p + 0x468);
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+        if (!isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
+        if (isPresentBusy(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
+        stepPresentCounter(reinterpret_cast<CPresentWin*>(p + 0x468));
         playUISound(1);
         return;
     }
@@ -3394,7 +3386,7 @@ void CItemBoxGrid::NextGridPage() {
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
-    if (isPresentActive(p + 0x468)) return;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     sub = p + 0x54c;
     ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->IncGridPageIndex();
     // Retail calls LookupIndexedByte twice: once for the compare, once for
@@ -3418,7 +3410,7 @@ void CItemBoxGrid::PrevGridPage() {
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
-    if (isPresentActive(p + 0x468)) return;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     sub = p + 0x54c;
     ((CItemBoxGridFull*)((CItemBoxGridFull*)sub))->DecGridPageIndex();
     // retail branches over the store when a < b (bc 12,0), so negate
@@ -3437,7 +3429,7 @@ void CItemBoxGrid::OpenSortMenu() {
     u8* p = (u8*)this;
     if (!this->field_542 && !this->field_528 && !reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened() &&
         !reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened() && !((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag() &&
-        !isPresentActive(p + 0x468) && !this->field_544) {
+        !isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468)) && !this->field_544) {
         if (((CSortMenu*)(p + 0xe8))->IsOpen()) {
             if (!((CSortMenu*)(p + 0xe8))->IsIdle()) return;
             UpdateCursors();
@@ -3506,21 +3498,21 @@ void CItemBoxGrid::HandleCancelBtn(int confirmed) {
         if (!confirmed) playUISound(6);
         goto exit;
     }
-    if (isPresentActive(p + 0x468)) {
-        if (!isPresentSettled(p + 0x468)) goto exit;
-        if (isPresentBusy(p + 0x468)) {
-            advancePresentState(p + 0x468);
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+        if (!isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) goto exit;
+        if (isPresentBusy(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+            advancePresentState(reinterpret_cast<CPresentWin*>(p + 0x468));
             this->field_58 = 0x11;
             UpdateCursors();
             ((CBaseCur*)(p + 0x70))->SetVisible(1);
             ((CBaseCur*)(p + 0xd0))->SetVisible(0);
-        } else if (getPresentPath(p + 0x468)) {
-            togglePresentPath(p + 0x468);
+        } else if (getPresentPath(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+            togglePresentPath(reinterpret_cast<CPresentWin*>(p + 0x468));
             u32 buf[4];
-            getPresentPaneWorldPos(buf, p + 0x468);
+            getPresentPaneWorldPos((nw4r::math::VEC3*)buf, reinterpret_cast<CPresentWin*>(p + 0x468));
             ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         } else {
-            advancePresentState(p + 0x468);
+            advancePresentState(reinterpret_cast<CPresentWin*>(p + 0x468));
             this->field_58 = 0x11;
             UpdateCursors();
             ((CBaseCur*)(p + 0x70))->SetVisible(1);
@@ -3644,11 +3636,11 @@ void CItemBoxGrid::func_801CCAF0() {
         *(u32*)(p + 0x58) = 8;
         return;
     }
-    if (isPresentActive(p + 0x468)) {
-        if (!isPresentSettled(p + 0x468)) return;
-        if (getPresentPath(p + 0x468)) {
-            if (isPresentBusy(p + 0x468)) {
-                advancePresentState(p + 0x468);
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+        if (!isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
+        if (getPresentPath(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+            if (isPresentBusy(reinterpret_cast<CPresentWin*>(p + 0x468))) {
+                advancePresentState(reinterpret_cast<CPresentWin*>(p + 0x468));
                 *(u32*)(p + 0x58) = 0x11;
                 UpdateCursors();
                 ((CBaseCur*)(p + 0x70))->SetVisible(1);
@@ -3696,9 +3688,9 @@ void CItemBoxGrid::func_801CCAF0() {
                 RebuildGridCat();
             }
         } else {
-            togglePresentPath(p + 0x468);
+            togglePresentPath(reinterpret_cast<CPresentWin*>(p + 0x468));
             u8 temp[16];
-            getPresentPaneWorldPos(temp, p + 0x468);
+            getPresentPaneWorldPos((nw4r::math::VEC3*)temp, reinterpret_cast<CPresentWin*>(p + 0x468));
             ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)temp);
         }
         playUISound(3);
@@ -3939,7 +3931,7 @@ void CItemBoxGrid::func_801CCAF0() {
     }
     if (p[0x528]) return;
     if (!((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsOpenedFlag()) return;
-    if (!isPresentSettled(p + 0x468)) return;
+    if (!isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     {
         sub = (CItemBoxGridFull*)(p + 0x54c);
         entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
@@ -3998,7 +3990,7 @@ void CItemBoxGrid::TickItemBoxGrid() {
     if (p[0x528]) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
-    if (isPresentActive(p + 0x468)) return;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (p[0x544]) {
         if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) {
@@ -4068,7 +4060,7 @@ void CItemBoxGrid::SelectCatRow() {
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return;
-    if (isPresentActive(p + 0x468)) return;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return;
     if (this->field_544) return;
     this->field_525 = -1;
@@ -4087,7 +4079,7 @@ u8 CItemBoxGrid::GetPromptState() {
     if (reinterpret_cast<CNumSelect*>(p + 0x3e4)->IsOpen()) return 0;
     if (((CItemBoxGridSubMenu*)(p + 0x418))->GridSubMenu_IsVisibleFlag()) return 0;
     if (((CExchangeWin*)(p + 0x440))->getField24()) return 0;
-    if (isPresentActive(p + 0x468)) return 0;
+    if (isPresentActive(reinterpret_cast<CPresentWin*>(p + 0x468))) return 0;
     if (reinterpret_cast<CSysWin*>(p + 0x4ac)->isOpened()) return 0;
     if (reinterpret_cast<CSysWin*>(p + 0x4e8)->isOpened()) return 0;
     if (((CSortMenu*)(p + 0xe8))->IsOpen()) return 2;
@@ -4107,7 +4099,7 @@ u8 CItemBoxGrid::GetPromptState() {
 // Animate grid panels (alt variant).
 void CItemBoxGrid::AdvanceOpenAnim() {
     u8* p = (u8*)this;
-    if (!advanceAnimTransform(this->field_48, lbl_eu_80667F78)) return;
+    if (!advanceAnimTransform(this->field_48, 1.0f)) return;
     this->field_44->SetAnimationEnable(this->field_50, 0);
     this->field_44->SetAnimationEnable(this->field_48, 0);
     this->field_44->SetAnimationEnable(this->field_4C, 1);
@@ -4116,7 +4108,7 @@ void CItemBoxGrid::AdvanceOpenAnim() {
 
 void CItemBoxGrid::FinishOpenAnim() {
     u8* p = (u8*)this;
-    if (advanceAnimTransform(this->field_4C, lbl_eu_80667F78)) {
+    if (advanceAnimTransform(this->field_4C, 1.0f)) {
         this->field_58 = 3;
         this->field_44->SetAnimationEnable(this->field_48, 0);
         this->field_44->SetAnimationEnable(this->field_4C, 0);
@@ -4148,14 +4140,14 @@ void CItemBoxGrid::CheckState4_Animate() {
     if (this->field_527 != 4) {
         return;
     }
-    advanceAnimTransform(this->field_50, lbl_eu_80667F78);
+    advanceAnimTransform(this->field_50, 1.0f);
 }
 
 
 // Animate grid panels.
 void CItemBoxGrid::AdvanceCloseAnim() {
     u8* p = (u8*)this;
-    if (!AnimRewindFrame(this->field_4C, lbl_eu_80667F78)) return;
+    if (!AnimRewindFrame(this->field_4C, 1.0f)) return;
     this->field_44->SetAnimationEnable(this->field_4C, 0);
     this->field_44->SetAnimationEnable(this->field_50, 0);
     this->field_44->SetAnimationEnable(this->field_48, 1);
@@ -4164,7 +4156,7 @@ void CItemBoxGrid::AdvanceCloseAnim() {
 
 void CItemBoxGrid::FinishCloseAnim() {
     void* self = this; // noinline: dispatch table calls keep `bl`
-    float f = lbl_eu_80667F78;
+    float f = 1.0f;
     u8* p = (u8*)self;
     nw4r::lyt::AnimTransform* obj = this->field_48;
     if (AnimRewindFrame(obj, f)) {
@@ -4357,10 +4349,10 @@ void CItemBoxGrid::FinishExchange() {
 // Handle sub-object activation (variant).
 void CItemBoxGrid::ShowPresentCur() {
     u8* p = (u8*)this;
-    if (!isPresentSettled(p + 0x468)) return;
+    if (!isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) return;
     this->field_58 = 0x10;
     u8 temp[16];
-    getPresentPaneWorldPos(temp, p + 0x468);
+    getPresentPaneWorldPos((nw4r::math::VEC3*)temp, reinterpret_cast<CPresentWin*>(p + 0x468));
     ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
     ((CBaseCur*)(p + 0xd0))->SetVisible(1);
 }
@@ -4368,7 +4360,7 @@ void CItemBoxGrid::ShowPresentCur() {
 // Check if sub-obj is active; set state to 3 and clear flag.
 void CItemBoxGrid::FinishPresent() {
     u8* p = (u8*)this;
-    if (isPresentSettled(p + 0x468)) {
+    if (isPresentSettled(reinterpret_cast<CPresentWin*>(p + 0x468))) {
         this->field_58 = 3;
         p[0x528] = 0;
     }
@@ -5261,7 +5253,7 @@ void CItemBoxGrid::UnequipPartyItem(int kind, int id) {
                     CItemBoxGridMoveObj* mv = (CItemBoxGridMoveObj*)
                         getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_04);
                     if ((u8)pass == mv->field_3f28) {
-                        CfObjectPc_setupFrame(mv, 0);
+                        CfObjectPc_setupFrame(reinterpret_cast<cf::CfObjectPc*>(mv));
                         break;
                     }
                 }
@@ -5474,9 +5466,9 @@ bool CItemBoxGrid::OnFileEvent(CEventFile* pEventFile) {
     ((CBaseCur*)(p + 0x88))->initLayout();
     // Cursor-09 move bounds.
     CibgVec3 vecMin;
-    code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMin), -56.0f, -68.0f, lbl_eu_80667F34);
+    code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMin), -56.0f, -68.0f, 0.0f);
     CibgVec3 vecMax;
-    code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMax), lbl_eu_80667F98, -68.0f, lbl_eu_80667F34);
+    code80135FDC_setVec3((nw4r::math::VEC3*)((float*)&vecMax), lbl_eu_80667F98, -68.0f, 0.0f);
     ((CCur09*)(p + 0x88))->SetTwoPanes(reinterpret_cast<const nw4r::math::VEC3*>(&vecMax),
                                        reinterpret_cast<const nw4r::math::VEC3*>(&vecMin));
     *reinterpret_cast<CCur18*>(p + 0xa0) = CCur18(CUICfManager_getArcResourceAccessor());

@@ -1,12 +1,14 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"  // Counter_TestBit (owner)
 
 #include <types.h>
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 #include "kyoshin/cfsys/CfWalkerCore.hpp"
+#include "kyoshin/CUICfManager.hpp"
 
 namespace cf {
 
@@ -913,7 +915,8 @@ extern "C" {
 void ObjPc_NotifyVf10_6EC0(void* self);
 void CfObjectImplMoveClearLinkIfMatch(void* self);
 void ObjPc_BattleStartReset_969C(void* self);
-void ObjPc_InitLink_5998(void* self);
+namespace cf { class CfObjectImplPc; }
+void ObjPc_InitLink_5998(cf::CfObjectImplPc* self);
 void Walker_DispatchBattleSub(cf::CfObjectImplWalker* self);
 void Walker_FinishLeave(cf::CfObjectImplWalker* self);
 void MoveImplRepositionEffect(void* self);
@@ -921,23 +924,23 @@ void ObjPc_BattleChangeDriver_5B00(void);
 extern "C" void updatePosition(void* self);
 void UIWin_BuildFlagBufRec(u32 a, u32 b, u32 c);
 bool QstCnt_HasInstance_6B94(void);
+
 u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
 u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
 int isQuestLogMenuActive(void);
 int KizunagramIsCreated(void);
 int CMenuTutorialList_IsActive(void);
 void MenuUpdate_SignalGlobalField64(void);
-void* CtrlObjectParam_GetSlotTableBase(void);
+int* CtrlObjectParam_GetSlotTableBase(void);
 u32 CtrlObjectParam_GetCharEntry(u32 id);
-int Counter_TestBit(u32 a, u32 b);
 void BtlDmg_FilterNotifyDamage(u32 a, u32 b, u32 c);
 void evalBattleTarget(void* mgr, void* battleObj);
-cf::CfWalkGlobal* Selector_GetInstance();
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
 void* CfObjectMove_getSelfIfActive(void* objParam);
 void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b, u32 c); // 4-arg form (this TU passes st; def CfObjectMove.cpp takes void*)
 // Shop-exchange flag (CMenuItemExchange.cpp): bare retail symbol, so C linkage.
-extern "C" u8 ItemEx_GetFlagByte();
+// Defined in CMenuItemExchange.cpp (C++ linkage).
+u8 ItemEx_GetFlagByte();
 // Enum-list helpers: get__16CfEnumListHolderFv is the extern "C" void* form
 // from CVision.hpp / CtrlPc.hpp (already in scope); the rest are TU-local.
 void startEnumObjects(void* list, u32 type, u32 filter);
@@ -949,22 +952,15 @@ void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void* MapFx_ResolveOwner(void* src);
 void CfObjectTbox_ForwardToImpl(void* obj, int flag);
 void UIWin_ControlWindowLists(u32 a, u32 b);
-void* getInstance__Q22cf13CfGameManagerFv(); // canonical void* form (CBattleManagerApi.hpp owner)
-void setRequestParams(void* obj, u32 a, u32 b, u32 c);
-void setTargetFlag04(void* obj);
-void setTargetFlag08(void* obj);
-u32 Selector_FetchResult(void* obj);
+void* getInstance__Q22cf13CfGameManagerFv(); // canonical void* form (CBattleManager.hpp owner)
 void Selector_ReissueRequest();
 void ObjPc_BattleEventDispatch_819C();
 void ObjPc_BattleActorScan_86E8(void* self);
 void registerBattleActor(void* mgr, void* obj);
 void cfCam_setClear04(void* obj, u32 mask, int flag);
 u32 CtrlRemote_TouchBitByArg(u32 resourceId);
-int CUICfManager_queueFactoryMenu(int id, float f);
 void simSetLeafAnimTag(void* obj, u32 flags);
 void CItem_openAreaEventBox(u32 a, u32 b);
-void UIWin_CreateB4790Win(void* str, int flags);
-void* getCameraDataBlock__Q22cf13CfGameManagerFv(void* self);
 u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
 void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 void queueEventId__Q22cf13CfGameManagerFv(u32 id);
@@ -977,7 +973,6 @@ void* getObjectAt(void* list, u32 index);
 void sortEntriesByDistance(void* list, void* value);
 void* findFirstCleanObjectId(void* list);
 void* getEntryAt(void* list, u32 index); // canonical void* form (CAIAction/CItemBoxGrid)
-int Selector_IssueRequest(cf::CfWalkGlobal* g, u32 a, u32 b, u32 c);
 int isBattleStatusActive(void* obj, int id); // canonical (void*,int) form
 
 // Bdat table helpers.
@@ -991,14 +986,11 @@ int rand(void);
 
 // Battle-manager effect/party helpers.
 void CCharVoiceMan_EnqueueBattleBeginVoice(void* obj);
-void CBattleMan_FireActorEvent918(void* mgr, void* item, void* rec, u32 id, u32 flag);
 int IdTable_QuerySumMaxFloat(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
 int IdTable_QuerySumFloat(void* obj, u32 id, u32* outA, f32* outB);
 int IdTable_GetSum(void* obj, u32 id, u32* outA);
-void UIWin_CreateItemMulti(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h, u32 i);
 u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
 int getNullPtrC__Q22cf13CfGameManagerFv(u32 mask);
-void* CBattleMan_FetchVisionObj(void* mgr);
 // NOTE: real decl below returns cf::CfWalkEA444* via overload-free rename.
 
 // Action/art play + system helpers.
@@ -1021,12 +1013,10 @@ void awardQuestFlags(void);
 void CtrlObjectParam_SetWorkTailValue(u32 id);
 void* UIWin_BuildFlagBufBySlot(u32 id);
 void* UIWin_BuildFlagBufCanShow(u32 id);
-void UIWin_FlagBufCommit(void* obj);
 void UIWin_ThunkFlagBufReset(void* obj);
 void UIWin_FlagBufReset(void* obj);
 int UIWin_GetTimer(void);
 void UIWin_ClearTimer(void);
-int getQuestWindow(void);
 
 // Enum-list constructors (decompiler placeholder addresses; same pattern as
 // __dt__16CfEnumListHolderFv).

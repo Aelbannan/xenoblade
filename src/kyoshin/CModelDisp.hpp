@@ -99,3 +99,8 @@ struct CDispHolderWordView {
 // (__construct_array itself is declared in CModelDispEquip.hpp.)
 extern "C" void* ModelDispConstructSub(CModelDispSub* sub);
 extern "C" u8* __dt__801FBF0C(CModelDispSub* obj, int flag);
+
+// C++-linkage helpers owned by kyoshin/CModelDisp.
+int ModelDispGetDoneFlag(void* self);
+int simVtableFalse3(void* self);
+int simVtableFalse4(void* self);

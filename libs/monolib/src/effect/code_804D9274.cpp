@@ -20,11 +20,9 @@
 extern "C" {
 void CERotXMatrix(Mtx mtx, f32 angle);
 
-// Shared sdata2 constants (retail linker names).
-extern f32 lbl_eu_8066B1E8; // pi/2
-extern f32 lbl_eu_8066B1F0; // 2^31
-extern f32 lbl_eu_8066B1FC; // 180/pi
-extern f32 lbl_eu_8066B210; // pi/180
+// Shared sdata2 constant: the 2^31 divisor of mtRand() keeps its retail
+// symbol name to hold the matched loads at their original pool offsets.
+extern f32 lbl_eu_8066B1F0;
 
 // Degree-indexed sin/cos tables: 360 entries of {value, slope} pairs,
 // populated at runtime by monolib/src/core/code_804EE558.cpp.
@@ -38,8 +36,8 @@ extern CESinCosEntry lbl_eu_80660B78[360]; // cos table
 // Retail keeps the FSqrt assert strings in split1.s (lbl_eu_80526300 =
 // "FSqrt: Input is out of the domain.", lbl_eu_80526324 = "arithmetic.h");
 // reference the named externs so no local .rodata string table is emitted.
-extern "C" const char lbl_eu_80526300[];  // "FSqrt: Input is out of the domain."
-extern "C" const char lbl_eu_80526324[];  // "arithmetic.h"
+extern const char lbl_eu_80526300[];  // "FSqrt: Input is out of the domain."
+extern const char lbl_eu_80526324[];  // "arithmetic.h"
 
 // Uniform random in [0, 1).
 static inline f32 randF() {
@@ -57,7 +55,7 @@ static inline f32 fSqrt(f32 x) {
 
 // Table-interpolated sin/cos of an angle given in radians.
 static inline f32 sinTbl(f32 rad) {
-    f32 deg = rad * lbl_eu_8066B1FC;
+    f32 deg = rad * 57.29578f;
     int i = (int)deg;
     int idx = i % 360;
     if (idx < 0) {
@@ -68,7 +66,7 @@ static inline f32 sinTbl(f32 rad) {
 }
 
 static inline f32 cosTbl(f32 rad) {
-    f32 deg = rad * lbl_eu_8066B1FC;
+    f32 deg = rad * 57.29578f;
     int i = (int)deg;
     int idx = i % 360;
     if (idx < 0) {
@@ -80,7 +78,7 @@ static inline f32 cosTbl(f32 rad) {
 
 // cerandRotateX90Wrapper: load pi/2 and tail-call the X-axis rotation helper.
 void cerandRotateX90Wrapper(Mtx mtx) {
-    CERotXMatrix(mtx, lbl_eu_8066B1E8);
+    CERotXMatrix(mtx, 1.5707964f);
 }
 
 // cerandTransposeObjCC: transpose the matrix stored at obj+0xCC into mtx.
@@ -210,7 +208,7 @@ void cerandRandArc(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir)
     if (range == 0) {
         range = 360;
     }
-    f32 angle = (f32)range * randF() * lbl_eu_8066B210;
+    f32 angle = (f32)range * randF() * 0.017453292f;
 
     out->x = temp.x * cosTbl(angle);
     out->y = 0.0f;

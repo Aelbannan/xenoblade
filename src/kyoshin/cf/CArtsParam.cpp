@@ -3,6 +3,7 @@
 #include <monolib/device/CDeviceVI.hpp>
 
 #include "kyoshin/cf/CArtsParam.hpp"
+#include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math/math_triangular.h>
 #include <nw4r/math/math_arithmetic.h>
@@ -219,9 +220,6 @@ extern u16 gmGlobalFlag42;               // current area id
 // C-linkage-less imports (retail symbols are unmangled but no header declares
 // them with C linkage; declared here with C++ linkage for compilation - reloc
 // names at these call sites drift until the headers are updated).
-extern int hasAnyActiveSlot();
-extern int findActiveEntryID();
-extern int getFirstFreeSlot();
 extern int getEffectBankByte();
 extern int IdTable_GetSum(void* self, int id, void* out);
 extern void* lookupBattleStatusEntry(void* self, unsigned int id);
@@ -288,7 +286,7 @@ int checkArtsFull(void* param, void* actor, int flags) {
                     if (hasAnyActiveSlot() == 0) {
                         result |= 0x80;
                     } else {
-                        int chain = findActiveEntryID();
+                        int chain = findActiveEntryID(-1);
                         if (chain == -1) {
                             result |= 0x20;
                         } else {

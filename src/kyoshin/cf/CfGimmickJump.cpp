@@ -1,9 +1,12 @@
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 #include "kyoshin/cf/CfGimmickJump.hpp"
 extern const char lbl_eu_80508728[];
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 struct __data_CfGimmickJump {
     unsigned char a[0x24];
@@ -55,8 +58,6 @@ static float speedScale = 1.0f;
 static float nearDistSq = 1.0f;  // H3 label-owner decl (gmScene; gmGameFlags)
 
 // Warning string literals used by the jump pull-vector sanity check.
-extern char lbl_eu_80526324[];
-extern char lbl_eu_80526300[];
 
 namespace cf {
 
@@ -90,7 +91,6 @@ extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
 extern CfGimmickWork* createBattleActor__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern int CfSoundMan_TouchSlotById(u16 handle);
 extern void CfSoundMan_WriteSlotParam(u16 handle, void* position);
-extern void CfSoundMan_ApplySlotStop(int kind, u16 handle, int mode);
 extern u16 CfGimmick_PlaySoundAtPosScaled(u16 effectId, void* position, f32 distance);
 extern void setAnimHeight(void* target, f32 amount);
 extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line,

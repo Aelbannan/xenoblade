@@ -3,13 +3,18 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/cf/CfGimmickLock.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
 namespace cf {}
 using namespace cf;
+
+// name-guess: BDAT column-name string read for the lock config flags (retail lbl_eu_805086EC)
+extern const char sGimmickLockConfigColumn[0x0C];
+
+__declspec(section ".sdata") __attribute__((used)) const void* sGimmickLockIdColumns[2] = { "popID1", nullptr };
 
 // Constructor: __ct__cf_CfGimmickLock (0x224 bytes).  The retail symbol is a
 // C-linkage name (no C++ mangling markers), so it is emitted as an extern "C"
@@ -52,7 +57,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
         *(u16*)((u8*)self + (u32)i * 2 + 0x84) = (u8)(*(u16*)&v);
     }
 
-    u32 vCfg = getBdatStringColumnValue(holder, (const char*)lbl_eu_805086EC, row);
+    u32 vCfg = getBdatStringColumnValue(holder, sGimmickLockConfigColumn, row);
     self->configFlags = *(u8*)&vCfg;
 
     // Derived vtable init hook (slot 0x20).
@@ -71,7 +76,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
 
     self->flags |= 0x8;
     self->field_1F8 = 0x3c;
-    self->field_1F4 = lbl_eu_806683B0;
+    self->field_1F4 = 2.0f;
     return self;
 }
 
@@ -98,7 +103,7 @@ cf::CfGimmickLock::~CfGimmickLock() {
             Coli_ListRemoveNode(sEneColiProbe, &this->subB);
         }
         this->flags &= ~0x1000;
-        this->field_1F4 = lbl_eu_806683B0;
+        this->field_1F4 = 2.0f;
     }
 
     __dt__804B095C(&this->subB, -1);
@@ -176,7 +181,7 @@ extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
                             Coli_ListRemoveNode(sEneColiProbe, &self->subB);
                         }
                         self->flags &= ~0x1000;
-                        self->field_1F4 = lbl_eu_806683B0;
+                        self->field_1F4 = 2.0f;
                     }
                 }
                 if ((self->flags & 0x10) != 0 &&
@@ -204,7 +209,7 @@ extern "C" void CfGimmickLock_Update(cf::CfGimmickLock* self) {
                     CfGimmickLockGetTargetFn getTarget =
                         *(CfGimmickLockGetTargetFn*)(*(u32*)player + 0xac);
                     void* target = getTarget(player);
-                    if (ColiCheckMoveRadius(&self->subA, target, 1, 0, lbl_eu_806683B4 + f31) != 0) {
+                    if (ColiCheckMoveRadius(&self->subA, target, 1, 0, 0.01f + f31) != 0) {
                         if ((self->flags & 0x8) == 0) {
                             CfGimmick_PostGimmickName(self->resourceId);
                             self->field_1F8 = 0x3c;
@@ -234,7 +239,7 @@ cleanup:
             Coli_ListRemoveNode(sEneColiProbe, &self->subB);
         }
         self->flags &= ~0x1000;
-        self->field_1F4 = lbl_eu_806683B0;
+        self->field_1F4 = 2.0f;
     }
     if ((self->flags & 2) != 0) {
         self->flags &= ~0x803;
@@ -244,7 +249,7 @@ cleanup:
                 Coli_ListRemoveNode(sEneColiProbe, &self->subB);
             }
             self->flags &= ~0x1000;
-            self->field_1F4 = lbl_eu_806683B0;
+            self->field_1F4 = 2.0f;
         }
     }
     if ((self->flags & 0xF00) != 0) {
@@ -266,7 +271,7 @@ void gimmickLockClearBinding(cf::CfGimmickLock* self) {
                 Coli_ListRemoveNode(sEneColiProbe, &self->subB);
             }
             self->flags &= ~0x1000;
-            self->field_1F4 = lbl_eu_806683B0;
+            self->field_1F4 = 2.0f;
         }
     }
 }
@@ -285,7 +290,7 @@ void CfGimmickLock_Rebuild(cf::CfGimmickLock* self) {
 
     if (self->stateIndex - 3 <= 1) {
         f32 vec[3];
-        vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8;
+        vec[1] = (self->extent1 - self->extent2) * 0.5f;
         vec[0] = self->extent0;
         vec[2] = self->extent3;
         ColiSetMoveVecFlagged(&self->subA, vec);
@@ -295,7 +300,7 @@ void CfGimmickLock_Rebuild(cf::CfGimmickLock* self) {
 
     if (self->stateIndex - 3 <= 1) {
         f32 vec[3];
-        vec[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * lbl_eu_806683B8;
+        vec[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * 0.5f;
         vec[0] = self->position.x;
         vec[2] = self->position.z;
         ColiSetAxisBlockRotInverse(&self->subA, vec, &self->rotation);
@@ -329,7 +334,7 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
             f32 vec[3];
             vec[0] = self->position.x;
             vec[2] = self->position.z;
-            vec[1] = t * lbl_eu_806683B8;
+            vec[1] = t * 0.5f;
             ColiSetAxisBlockRotInverse(&self->subA, vec, &self->rotation);
         } else if (self->stateIndex - 1 <= 1) {
             f32 vec[3];
@@ -370,30 +375,30 @@ extern "C" void CfGimmickLock_Refresh(cf::CfGimmickLock* self) {
                 Coli_ListRemoveNode(sEneColiProbe, &self->subB);
             }
             self->flags &= ~0x1000;
-            self->field_1F4 = lbl_eu_806683B0;
+            self->field_1F4 = 2.0f;
         }
         return;
     }
 
     // Open countdown: shrink the radius, then place the outer region.
-    f32 f = self->field_1F4 - lbl_eu_806683BC * Scn_GetFrameDelta(gmScene);
+    f32 f = self->field_1F4 - 0.05f * Scn_GetFrameDelta(gmScene);
     self->field_1F4 = f;
-    if (f < lbl_eu_806683C0) {
-        self->field_1F4 = lbl_eu_806683C0;
+    if (f < 1.0f) {
+        self->field_1F4 = 1.0f;
     }
 
     int flag = (self->configFlags & 4) != 0 ? 1 : 0;
     if (self->stateIndex - 3 <= 1) {
         f32 vec[3];
         vec[0] = self->extent0;
-        vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8;
+        vec[1] = (self->extent1 - self->extent2) * 0.5f;
         vec[2] = self->extent3;
         VEC3Scale((nw4r::math::VEC3*)vec, (const nw4r::math::VEC3*)vec, self->field_1F4);
         ColiSetMoveVecFlagged(&self->subB, vec);
 
         f32 vec2[3];
         vec2[0] = self->position.x;
-        vec2[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * lbl_eu_806683B8;
+        vec2[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * 0.5f;
         vec2[2] = self->position.z;
         ColiSetAxisBlockRotInverse(&self->subB, vec2, &self->rotation);
     } else if (self->stateIndex - 1 <= 1) {
@@ -437,14 +442,14 @@ extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
             if (self->stateIndex - 3 <= 1) {
                 f32 diff = self->extent1 - self->extent2;
                 f32 vec[3];
-                vec[2] = self->extent3 / lbl_eu_806683C4;
-                vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
-                vec[0] = self->extent0 / lbl_eu_806683C4;
+                vec[2] = self->extent3 / 30.0f;
+                vec[1] = diff * 0.5f / 30.0f;
+                vec[0] = self->extent0 / 30.0f;
                 ((cf::CfGimmickLockObj*)self->field_78)->setPos(vec);
                 setChild34Sc_(self->field_78, vec);
             } else {
                 ((cf::CfGimmickLockObj*)self->field_78)->setPos(&self->position.x);
-                ((cf::CfGimmickLockObj*)self->field_78)->setScale(self->extent0 / lbl_eu_806683C4);
+                ((cf::CfGimmickLockObj*)self->field_78)->setScale(self->extent0 / 30.0f);
             }
             // Touch the target of every fight-list entry.
             CfGimmickList* list = getReslistB48();
@@ -464,12 +469,12 @@ extern "C" void CfGimmickLock_Activate(cf::CfGimmickLock* self) {
             if (self->stateIndex - 3 <= 1) {
                 f32 diff = self->extent1 - self->extent2;
                 f32 vec[3];
-                vec[2] = self->extent3 / lbl_eu_806683C4;
-                vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
-                vec[0] = self->extent0 / lbl_eu_806683C4;
+                vec[2] = self->extent3 / 30.0f;
+                vec[1] = diff * 0.5f / 30.0f;
+                vec[0] = self->extent0 / 30.0f;
                 setChild34Sc_(mgr, vec);
             } else if (self->stateIndex - 1 <= 1) {
-                ((cf::CfGimmickLockObj*)mgr)->setScale(self->extent0 / lbl_eu_806683C4);
+                ((cf::CfGimmickLockObj*)mgr)->setScale(self->extent0 / 30.0f);
             } else {
                 // Out-of-range placement: skip the tail update entirely.
                 return;
@@ -531,23 +536,13 @@ int gimmickLockDispatchState(cf::CfGimmickLock* self, void* target) {
     return 0;
 }
 
-// typed data sections -- source shape for retail bytes (replaces absorb blobs)
-// .rodata 0x20: two strings with pad; .sdata 0x10: two 8-byte pointer tables; .sdata2 0x20: "popID1" + 6 floats
+// typed data sections -- source shape for retail bytes
+// .rodata 0x20: RTTI name string followed by the BDAT column-name string.
 extern "C" {
 extern char lbl_eu_80508668[];
 extern char lbl_eu_805358EC[];
-extern const char lbl_eu_806683A8[];
 }
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805086D8[0x14] = "cf::CfGimmickLock";
-__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805086EC[0x0C] = "rockTYPE";
+__declspec(section ".rodata") __attribute__((used)) const char sGimmickLockConfigColumn[0x0C] = "rockTYPE";
 
 __declspec(section ".sdata") __attribute__((used)) const void* __RTTI__Q22cf12CfGimmickElv[2] = { lbl_eu_80508668, lbl_eu_805358EC };
-__declspec(section ".sdata") __attribute__((used)) const void* sGimmickLockIdColumns[2] = { lbl_eu_806683A8, nullptr };
-
-__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_806683A8[] = "popID1";
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B0 = 2.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B4 = 0.01f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B8 = 0.5f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683BC = 0.05f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683C0 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683C4 = 30.0f;

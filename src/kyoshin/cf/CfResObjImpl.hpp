@@ -3,23 +3,7 @@
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
-// Minimal nw4r sound-object interface used by ResObj_NotifySound_C888 (sound slot +0x00
-// dereferenced to call SetPlayerPriority). Declared here at global scope
-// rather than via snd_BasicSound.h; MWCC mangles the member call to the
-// retail name SetPlayerPriority__Q44nw4r3snd6detail10BasicSoundFi (same
-// pattern as CfResReloadImpl.hpp - a copy inside namespace cf would mangle
-// the extra cf scope into the name).
-namespace nw4r {
-namespace snd {
-namespace detail {
-class BasicSound {
-public:
-    void SetPlayerPriority(int priority);
-};
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
-
+#include <nw4r/snd/snd_BasicSound.h>
 class CScnItemModel; // fwd; real owner of parent+0x98 model (hot header)
 
 namespace cf {
@@ -210,7 +194,6 @@ extern "C" void CfResObj_noop10();
 extern "C" void CfObjectMove_relaySubB0Slot14(void* self);
 extern "C" void CfResObj_noop24();
 extern "C" void CfResObj_noop28();
-extern "C" void CfResObj_noop2C();
 extern "C" bool CfResObj_false38();
 extern "C" void CfResObj_unk3C();
 extern "C" void CfResObj_noop40();

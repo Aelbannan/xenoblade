@@ -26,3 +26,15 @@ namespace cf {
         void resetChainTime();
     };
 }
+
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+
+// TU-private imports for kyoshin/cf/chain/CChainTime.cpp (moved out of the public
+// CChainTime.hpp, which keeps the classes).
+
+extern "C" void startChainTimer(cf::CChainTime*, u8);
+extern "C" void tickChainTimer(cf::CChainTime*);
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+namespace cf { class CBattleManager; }
+extern "C" void refreshBattleActors(cf::CBattleManager*, f32, int);

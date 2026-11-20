@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CPresentWinApi.hpp"
 #include "monolib/device/CDeviceFontInfo.hpp"
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include <nw4r/lyt.h>

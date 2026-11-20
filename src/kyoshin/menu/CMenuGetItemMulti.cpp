@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+
 #include "kyoshin/code_80135FDC_Bdat.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -13,8 +13,8 @@ extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 // the CfPadData.hpp include chain). Rename it away; this TU never uses it.
 #include "kyoshin/code_80135FDC.hpp"
 // The battle-manager singleton getter has ONE canonical declaration in
-// kyoshin/cf/CBattleManagerApi.hpp; no rename guard is needed anymore.
-#include "kyoshin/cf/CBattleManagerApi.hpp"
+// kyoshin/cf/CBattleManager.hpp; no rename guard is needed anymore.
+#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -142,7 +142,6 @@ struct CMenuGetItemTextureResource {
 
 extern "C" {
 extern char lbl_eu_80504A3C[];
-extern f32 lbl_eu_80667E00;
 extern u32 lbl_eu_806640EC;
 extern void* lbl_eu_80664108;
 
@@ -453,7 +452,7 @@ void CMenuGetItemMulti::Init() {
     }
 
     mLayout->SetAnimationEnable(mAnim, true);
-    mAnim->SetFrame(lbl_eu_80667E00);
+    mAnim->SetFrame(0.0f);
     mLayout->Animate(0);
 
     nw4r::lyt::Pane* closePane = mLayout->GetRootPane()->FindPaneByName(
@@ -1058,7 +1057,7 @@ body:
         playUISound(0x2d);
         break;
     case 1:  // opening animation: position the cursor on the active item
-        if (advanceAnimTransform(mAnim, lbl_eu_80667E10) == 0) break;
+        if (advanceAnimTransform(mAnim, 1.0f) == 0) break;
         mCursor.SetVisible(1);
         {
             char buf[32];

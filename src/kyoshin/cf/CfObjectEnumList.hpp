@@ -51,7 +51,11 @@ public:
 
 } // namespace cf
 
-// Sortable-list interface used by partitionSortList (retail vtable slots +0x10
+// Retail C-ABI element accessor defined in CfObjectEnumList.cpp. Kept as the
+// single canonical declaration; all callers include this owning header.
+extern "C" void* getObjectAt(void* list, u32 idx);
+
+// Sortable-list interface
 // get(), +0x14 value(); the retail vtable has two extra leading slots vs the
 // Sortable-list interface used by partitionSortList.  The retail vtable is 8
 // bytes past the declaration's slot 0 (MWCC emits two leading non-user
@@ -234,6 +238,10 @@ extern "C" int ColiCheckMoveGate(void* self, void* spot, float threshold); // di
 // List-rebuild constructors defined in CfObjectEnumList.cpp. Their retail
 // linker names are flat, so callers take these canonical declarations from
 // the owning header instead of keeping per-TU copies.
+// Flat-name entry points defined in this TU; their one canonical declaration
+// lives in the API header so callers need not pull in the class views below.
+#include "kyoshin/cf/CfObjectEnumListApi.hpp"
+
 extern "C" void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags);
 extern "C" void __ct__800FC4FC(cf::CfObjEnumList* list, u32 flags, float threshold);
 extern "C" void __ct__800FCF1C(cf::CfObjEnumList* list, int arg1, u32 options);

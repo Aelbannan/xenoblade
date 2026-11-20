@@ -1,7 +1,9 @@
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <monolib/math/Random.hpp>
-#include "kyoshin/cf/chain/CChainComboImports.hpp"
+#include "kyoshin/cf/chain/CChainCombo.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+
 
 namespace cf{
     CChainCombo::CChainCombo(){
@@ -74,12 +76,12 @@ void payoutChainCombo(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
             // Slot +0x184 is CActorParam_addSecondGauge (takes the id).
             vobj->CActorParam_addSecondGauge(value);
-            chainResolveMemberPtr(0xbf, vobj);
+            chainResolveMemberPtr(0xbf, (int)vobj);
         }
     }
-    // Volatile final store: makes MWCC schedule the epilogue with the LR
+    // The final store makes MWCC schedule the epilogue with the LR
     // restore first (retail order).
-    volatile bool* pending = &self->mPending;
+    bool* pending = &self->mPending;
     *pending = false;
 }
 

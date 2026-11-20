@@ -1,5 +1,7 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/menu/CMenuEnemyState.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
+#include "kyoshin/menu/CMenuEnemyState.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_GetSummedInt
 #include "kyoshin/code_80135FDC_Lyt.hpp"
 #include "kyoshin/code_80135FDC_State.hpp"
@@ -21,7 +23,6 @@ extern "C" void EneSt_RegisterPanel(CMenuEnemyState* self, u32 actorId);
 // (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)
 extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
-extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" void CamMan_ProjectToScreen(void* out, void* pose, const void* in);
 extern "C" void* CPartsChange_GetEnemySlotAt(void* a, u32 idx);
 extern "C" void* lookupCA0By45C0(void);
@@ -441,7 +442,6 @@ extern void* findObjectById(int);
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // Last-selected actor id source (was declared in kyoshin/CTaskGame.hpp, which
 // is not includable here due to the concurrent Scn_QueryUnk80State/A8 conflict).
-extern "C" void* Selector_GetInstance();
 
 // Unit functions whose retail linker symbols are UNMANGLED: declare them
 // extern "C" so call sites emit the unmangled reloc names (retail uses C
@@ -474,7 +474,6 @@ extern const f64 sEnemyTextDoubleBias; // damage-text double bias
 extern "C" void* MapFx_ResolveOwner(void* obj);
 // sdata2 member aliases (after the last local decl, before later uses).
 void CfModel_NotifyReady(void* model);
-void CfModel_GetSpeedRate(void* model);
 
 
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
@@ -738,7 +737,7 @@ void CMenuEnemyState::Move() {
                             sEnemyPulseVector[0] = s;
                             sEnemyPulseVector[1] = s;
                             sEnemyPulseVector[2] = (sdata2_MESPool.fE8);
-                            CfModel_GetSpeedRate(obj);
+                            CfModel_GetSpeedRate(obj, sEnemyPulseVector);
                         }
 
                         noTarget = 0;
@@ -1104,7 +1103,7 @@ void EneSt_CursorToState3(CPcSelectCursor* self) {
 }
 
 // Cursor flag-byte getter (retail bare EneSt_CursorGetFlag).
-u8 EneSt_CursorGetFlag(CPcSelectCursor* self) {
+int EneSt_CursorGetFlag(CPcSelectCursor* self) {
     return self->byte40;
 }
 
@@ -1369,7 +1368,7 @@ void CMenuEnemyState::EneSt_RefreshMenu() {
     u32 lastId;
     MenuEnemyPanel* panel;
     panel = &this->panels[23];
-    lastId = static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
+    lastId = reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
     u8* panelData = reinterpret_cast<u8*>(panel);
 
     if (panel->visible != 0) {
@@ -1755,7 +1754,7 @@ void CPcSelectCursor::EneSt_CursorUpdate() {
     if (target != NULL) {
         // Retail re-calls getInstance here (second reloc) instead of reusing bm.
         BattleTargetView* bt = static_cast<BattleTargetView*>(
-            CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
+            cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj());
         if (bt != NULL && bt->field04 != NULL &&
             target->field74 == reinterpret_cast<u32>(bt->field04)) {
             arrow = reinterpret_cast<ObjBBFlag*>(this->field34);
@@ -1918,7 +1917,7 @@ void CMenuEnemyState::EneSt_RefreshNameColor(u8* panelData) {
     // Enemy slot list scan: light unk40 when a slot holds the same actor id.
     // (Retail reloads panel->unk40 for the clear and the set.)
     reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
-    u32 lastId = static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
+    u32 lastId = reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4;
     Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(
         findObjectById(static_cast<int>(lastId)));
     if (lastObj != NULL) {
@@ -1972,11 +1971,11 @@ void CMenuEnemyState::EneSt_UpdatePanelHighlight(u8* panelData) {
 
     // Retail evaluates actorId first (cmpl r3,r0 operand order).
     if (panel->actorId !=
-        static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4) {
+        reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4) {
         return;
     }
     Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(findObjectById(
-        static_cast<int>(static_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4)));
+        static_cast<int>(reinterpret_cast<Fe68CView*>(Selector_GetInstance())->lastId90E4)));
     if (lastObj == NULL) return;
 
     u32 sub74 = lastObj->word74;
@@ -2426,7 +2425,7 @@ void EneSt_UpdateIndicator(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v
     }
     reinterpret_cast<ObjBBFlag*>(panel->unk48)->flagBB &= 0xFE;
 
-    void* bmRes = CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance());
+    void* bmRes = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
     if (bmRes == NULL) {
         return;
     }

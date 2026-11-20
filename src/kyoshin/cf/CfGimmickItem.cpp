@@ -9,8 +9,8 @@
 
 #include "kyoshin/cf/CfGimmickItem.hpp"
 
-// BDAT column result: retail spills each raw call result to a word frame
-// slot and narrows on use (lbz/lhz); a volatile word union reproduces that.
+// BDAT column result: the raw call result lives in a word frame slot and is
+// narrowed on use (lbz/lhz); the word union models that storage.
 union BdatCol {
     u32 w;
     u8 b;
@@ -43,7 +43,7 @@ cf::CfGimmickItem::CfGimmickItem(int rowId) {
 
     // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
     // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
-    volatile BdatCol c66;
+    BdatCol c66;
     c66.w = getBdatStringColumnValue((void*)bdat, "rectype", rowId);
     this->field_66 = c66.b;
     for (int i = 0; i < 3; ++i) {
@@ -51,66 +51,66 @@ cf::CfGimmickItem::CfGimmickItem(int rowId) {
         char c = (char)('A' + i);
         char* itemColumn = lbl_eu_806627B8[0];
         itemColumn[0] = lostColumn[0] = c;
-        volatile BdatCol cid;
+        BdatCol cid;
         cid.w = getBdatStringColumnValue((void*)bdat, itemColumn, rowId);
         lostColumn = lbl_eu_806627B8[1];
         this->field_84[i] = cid.h;
-        volatile BdatCol clost;
+        BdatCol clost;
         clost.w = getBdatStringColumnValue((void*)bdat, lostColumn, rowId);
         if (clost.b != 0) {
             this->field_74 |= (1u << i);
         }
     }
 
-    volatile BdatCol c8A;
+    BdatCol c8A;
     c8A.w = getBdatStringColumnValue((void*)bdat, "geItem", rowId);
     this->field_8A = c8A.h;
-    volatile BdatCol c6A;
+    BdatCol c6A;
     c6A.w = getBdatStringColumnValue((void*)bdat, "MSG1", rowId);
     this->field_6A = c6A.h;
-    volatile BdatCol c8C;
+    BdatCol c8C;
     c8C.w = getBdatStringColumnValue((void*)bdat, "MSG2", rowId);
     this->field_8C = c8C.h;
-    volatile BdatCol c98;
+    BdatCol c98;
     c98.w = getBdatStringColumnValue((void*)bdat, "time", rowId);
     this->field_98 = c98.b;
-    volatile BdatCol c70;
+    BdatCol c70;
     c70.w = getBdatStringColumnValue((void*)bdat, "LODObj", rowId);
     this->field_70 = c70.b;
-    volatile BdatCol c99;
+    BdatCol c99;
     c99.w = getBdatStringColumnValue((void*)bdat, "LODSub", rowId);
     this->field_99 = c99.b;
-    volatile BdatCol c9A;
+    BdatCol c9A;
     c9A.w = getBdatStringColumnValue((void*)bdat, "LODType", rowId);
     this->field_9A = c9A.b;
-    volatile BdatCol c9B;
+    BdatCol c9B;
     c9B.w = getBdatStringColumnValue((void*)bdat, "EFF", rowId);
     this->field_9B = c9B.b;
-    volatile BdatCol c92;
+    BdatCol c92;
     c92.w = getBdatStringColumnValue((void*)bdat, "camID", rowId);
     this->field_92 = c92.h;
-    volatile BdatCol c8E;
+    BdatCol c8E;
     c8E.w = getBdatStringColumnValue((void*)bdat, "swtSE", rowId);
     this->field_8E = c8E.h;
-    volatile BdatCol c90;
+    BdatCol c90;
     c90.w = getBdatStringColumnValue((void*)bdat, "finSE", rowId);
     this->field_90 = c90.h;
-    volatile BdatCol c9C;
+    BdatCol c9C;
     c9C.w = getBdatStringColumnValue((void*)bdat, "ct", rowId);
     this->field_9C = c9C.b;
-    volatile BdatCol c6C;
+    BdatCol c6C;
     c6C.w = getBdatStringColumnValue((void*)bdat, ((char**)gGimmickBdatColumns)[13], rowId);
     this->field_6C = c6C.h;
-    volatile BdatCol c6E;
+    BdatCol c6E;
     c6E.w = getBdatStringColumnValue((void*)bdat, ((char**)gGimmickBdatColumns)[14], rowId);
     this->field_6E = c6E.h;
-    volatile BdatCol c94;
+    BdatCol c94;
     c94.w = getBdatStringColumnValue((void*)bdat, ((char**)gGimmickBdatColumns)[15], rowId);
     this->field_94 = c94.h;
-    volatile BdatCol c96;
+    BdatCol c96;
     c96.w = getBdatStringColumnValue((void*)bdat, "quest_Max", rowId);
     this->field_96 = c96.b;
-    volatile BdatCol c97;
+    BdatCol c97;
     c97.w = getBdatStringColumnValue((void*)bdat, "quest_Min\0\0\0", rowId);
     this->field_97 = c97.b;
 

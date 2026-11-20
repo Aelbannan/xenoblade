@@ -2,18 +2,19 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // CfObjectMove_setAnimModeArgs (owner decl)
 #include "kyoshin/cf/object/CfObjectActor.hpp"  // CActorParam_getScale on the owning actor
 #include "kyoshin/cf/CfResReloadImpl.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"  // real owner of parent+0x98 (vfunc64/vfunc88)
-// IResInfo's Tok_FormatStr uses FixStr; this TU needs the u8* form - hide the
-// FixStr decl so the two extern "C" overloads don't collide (10197).
-#define Tok_FormatStr IResInfo_Tok_FormatStr
 #include "kyoshin/cf/IResInfo.hpp"
-#undef Tok_FormatStr
-extern "C" int Tok_FormatStr(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
+// Canonical Tok_FormatStr declaration comes from IResInfo.hpp (ml::FixStr).
+// The work buffer is the same 0x40-byte lexical token buffer.
+//
+//
 
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -292,10 +293,9 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
     }
     u32 f6c = self->field_00->field_6C;
     if (f6c & 0x2) {
-        // volatile read: retail reloads field_6C for the store instead of
-        // clearing the cached copy
-        self->field_00->field_6C =
-            *(volatile u32*)&self->field_00->field_6C & ~0x3u;
+        // Retail reloads field_6C for the store instead of clearing the
+        // cached copy.
+        self->field_00->field_6C = self->field_00->field_6C & ~0x3u;
         return;
     }
     if (!(f6c & 0x1)) {
@@ -316,8 +316,8 @@ extern "C" void runReloadDrive(cf::CfResReloadImpl* self) {
         // Two independent SDA reads, both hoisted above the tests (retail
         // issues lwz r3/lwz r4 back to back). Empty then-branch keeps
         // MWCC's beq-next/b-exit pair.
-        u32 chkA = *(volatile u32*)&gmGameFlags;
-        u32 chkB = *(volatile u32*)&gmGameFlags;
+        u32 chkA = gmGameFlags;
+        u32 chkB = gmGameFlags;
         if (!((chkA & 0x02000000) | (chkA & 0x400)) && !(chkB & 0x40000)) {
             ;
         } else {
@@ -393,7 +393,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
     if (entry->field_04 != self->field_00->field_70) {
         self->resetReloadState();
         CfRes_stub_63990();
-        notifyDetach_(self->field_00);
+        notifyDetach_((u8*)self->field_00);
         return;
     }
     if ((f6c & 0x2) != 0) {  // redundant re-test, kept for byte-identity (cr1)
@@ -431,7 +431,7 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
                 return;
             }
             if (self->field_04 > lbl_eu_80667698) {
-                self->field_04 -= ((float (*)())CfT_PlayRateGet)();
+                self->field_04 -= CfT_PlayRateGet();
                 return;
             }
         }
@@ -450,16 +450,16 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
     if (self->field_00->field_6C & 0x10) {
         if (self->field_00->field_9C == 0) {
             // single object: retail has buf at sp+8 and the dead word at
-            // sp+0x48; volatile struct keeps the dead store alive and pins
+            // sp+0x48; a real local word keeps the dead store alive and pins
             // the two stores' relative order (stb before stw)
             struct {
                 u8 buf[0x40];
-                volatile u32 tail;
+                u32 tail;
             } work;
             u8* wp = &work.buf[0];
             wp[0] = 0;
             work.tail = 0;
-            Tok_FormatStr(wp, entry->field_04, 1, 0);
+            Tok_FormatStr(reinterpret_cast<ml::FixStr<64>&>(wp), (u32)(uintptr_t)entry->field_04, 1, 0);
             u8* slot1C = entry->field_2C->getHandle1C(entry);
             self->field_00->field_94 = slot1C;
             // three-arg call: getD80Flag result lands in r3 like retail
@@ -483,11 +483,11 @@ extern "C" void advanceReload(cf::CfResReloadImpl* self) {
 reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8066769C);
     }
     CfObjectMove_initAnimTarget((cf::CfObjectMove*)self->field_00);
-    // volatile on both stores + the parent read pins retail's order:
+    // Both stores and the parent read pin retail's order:
     // stb 1e / lwz parent / sth 1c
-    *(volatile u8*)&self->field_1E = 0;
-    cf::CfResReloadParent* pv = *(cf::CfResReloadParent* volatile*)&self->field_00;
-    *(volatile u16*)&self->field_1C = 0;
+    self->field_1E = 0;
+    cf::CfResReloadParent* pv = self->field_00;
+    self->field_1C = 0;
     if (!(pv->field_64 & 0x08000000)) {
         self->field_1E = 1;
     }
@@ -575,6 +575,7 @@ eee4:
     if (*(volatile u16*)&obj->field_45CA & 0x6) {
         goto effc;
     }
+    //
     obj->field_45CA &= 0xFFFE;    // Set flag bit 0 unless the +0xC4 sub-object (+0x0C bit 1) or the object's
     // own +0x3374 bit 15 suppresses it (nested early-exit shape, like retail).
     if (self->field_00->field_C4 != 0 &&
@@ -642,7 +643,7 @@ extern "C" void resetReloadState(cf::CfResReloadImpl* self) {
     self->field_00->field_6C &= 0xFFD88C0C;  // clears 0x002773F3 flag bits
     self->field_1C = 3;
     self->field_08 = 0;
-    notifyDetach_(self->field_00);
+    notifyDetach_((u8*)self->field_00);
     if (self->field_0C != 0) {
         self->field_0C = 0;
         *(s16*)&self->field_0A = -1;
@@ -825,9 +826,9 @@ extern "C" void updateReloadTypeState(u16 areaId, u16 subId) {
     } else {
         sReloadLocationChanged |= 0x1;
     }
-    *(volatile float*)&sReloadTimer = lbl_eu_806676C8;
-    *(volatile u16*)&sReloadAreaId = areaId;
-    *(volatile u16*)&sReloadSubId = subId;
+    sReloadTimer = lbl_eu_806676C8;
+    sReloadAreaId = areaId;
+    sReloadSubId = subId;
 }
 
 // Position vector view with the loop-operator -= so MWCC PS-vectorizes the
@@ -1076,11 +1077,11 @@ extern "C" u16 getReloadCand(cf::CfResReloadImpl* self, u16* out1, u16* counter,
     u16 initial = *counter;
     if (lbl_eu_806640A8 != 0) {
         u16 rnd = (u16)CfT_DispatchFrameCounts();
-        // Two separate volatile reads: retail keeps both SDA loads back to
-        // back (first feeds the odd-bit test, second the even-mask clear).
-        u16 f0raw = *(volatile u16*)&sReloadLocationChanged;
+        // Two separate reads: retail keeps both SDA loads back to back
+        // (first feeds the odd-bit test, second the even-mask clear).
+        u16 f0raw = sReloadLocationChanged;
         f0 = f0raw & 1;
-        u16 masked = *(volatile u16*)&sReloadLocationChanged & 0xFFFE;
+        u16 masked = sReloadLocationChanged & 0xFFFE;
         sReloadLocationChanged = masked;
         u16 mrand = (u16)ml::math::mtRand(0x64);
         *counter = 2;
@@ -1218,12 +1219,12 @@ extern "C" void runReloadMain(cf::CfResReloadImpl* self) {
             u16 o3;
             u16 o2;
             u16 ret = getReloadCand(self, &o1, &sReloadType, &o2, &o3);
-            // Volatile accesses keep the two SDA loads of gmGameFlags
-            // unmerged around the count store.
-            u32 chkA = *(volatile u32*)&gmGameFlags;
-            *(volatile u16*)&sReloadCount = ret;
-            u32 chkB = *(volatile u32*)&gmGameFlags;
-            *(volatile float*)&sReloadTimer = (f32)o1 * lbl_eu_80666210;
+            // Two SDA loads of gmGameFlags stay unmerged around the count
+            // store.
+            u32 chkA = gmGameFlags;
+            sReloadCount = ret;
+            u32 chkB = gmGameFlags;
+            sReloadTimer = (f32)o1 * lbl_eu_80666210;
             float delay;
             if ((chkA & 0x00400000) || ((chkB & 0x02000000) | (chkB & 0x400))) {
                 delay = lbl_eu_806676B4;

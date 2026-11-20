@@ -2,39 +2,31 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/realtimeevt/CREvtCamera.hpp"
+#include "monolib/math/CVec4.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "nw4r/g3d/res/g3d_resanmchr.h"
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
+
 
 // External function declarations
 extern "C" {
-    CREvtCamManager* getCameraDataBlock__Q22cf13CfGameManagerFv();
-    void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
-    void  cfCam_setClear04(void* mgr, u32 mask, int flag);
-    unsigned char getLODData__8CTaskLODFv(s16 taskID);
+    UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
+    void cfCam_setClear04(void* mgr, u32 mask, int flag);
     void activateLOD__8CTaskLODFv(s16 taskID);
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void attachLODObject__8CTaskLODFv(s16 taskID, int flag);
-    int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(const char*, u8**, u32*);
     CScnItemModel* Scn_SetupAnim(u32 global, u8* handle, int flag, int flag2);
     bool Scn_IsAnimActiveOrNull(void* ptr);
     void* Scn_InitGlobalA(void* mgr, void* param, int flag);
-    void ScnCamDepthUp();
     void ScnCamLoadMtx(CREvtCamObj* camObj, const f32 mtx[3][4]);
     CREvtCamObj* Scn_FindCamItem(u32 mgr, int a);
-    void simSetFlag2000Chain(CScnItemModel* obj, int flag);
-    void simSetLeafDist7B0(CScnItemModel* obj, float val);
     float simGetLeafAnimDist2(void* obj);
-    nw4r::g3d::ChrAnmResult* scnImN4AnimFn(CScnItemModel* model, const char* name, f32 time);
-    int EvtSeqGetCounter100();
-    void* evtGetManagerAddr();
-    void EvtSeqPublishIdHalfwords();
-    void EvtSeqResolveAnmChr(void* obj, const char* name, u32* out);
-    int EvtSeqFindResAddr(void* obj, const char* name, void* out);
-    int EvtSeqResolveAnmChr2(void* obj, const char* name, void* out1, void* out2);
     void simBindChrAnim(void* obj, void* param, int a, int b, int c, int d, int e);
-    float simGetLeafAnimDist2(void* obj);
-    void* getGlobalSda();
-    void Env_SetClock(void* sda, u32 a, u32 b, u32 c);
+    u32 evtGetManagerAddr();
+    u32 REvtCam_IsTaskListEmpty();
+    u8 REvtCam_GetFieldA5Flag();
+    u32 REvtCam_IsField98Set();
+    u32 REvtCam_IsMode2B0Eq1();
+    u32 REvtCam_IsMode2B0Eq2();
     int atoi(const char* str);
 }
 
@@ -52,10 +44,10 @@ cf::CREvtCamera::CREvtCamera(u32 param)
     // Mirror the game manager's camera settings into this camera. Each
     // getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE calls).
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-        if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
-            mField8C = getCameraDataBlock__Q22cf13CfGameManagerFv()->getFov();
-            mField440 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1EC;
-            mField444 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1F0;
+        if (((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->field_0x0C) {
+            mField8C = ((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->getFov();
+            mField440 = ((CREvtPlayerObj*)((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->field_0x0C)->field_0x1EC;
+            mField444 = ((CREvtPlayerObj*)((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->field_0x0C)->field_0x1F0;
         }
     }
 
@@ -77,7 +69,7 @@ cf::CREvtCamera::~CREvtCamera() {
     // Each getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE
     // function calls) - retail makes 3 calls before cfCam_setClear04.
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-        if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
+        if (((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->field_0x0C) {
             cfCam_setClear04(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 0);
 
             if (mFieldA4) {
@@ -89,10 +81,10 @@ cf::CREvtCamera::~CREvtCamera() {
                 y = mMatrix58[1][3];
                 x = mMatrix58[0][3];
                 f32 pos[3] = { x, y, z };
-                getCameraDataBlock__Q22cf13CfGameManagerFv()->setPosition(pos);
+                ((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->setPosition(pos);
             }
 
-            getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(mField8C);
+            ((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->setFov(mField8C);
 
             // Restore the player object's stored fields. Declaring both
             // locals first then assigning keeps MWCC's f30/f31 allocation
@@ -102,10 +94,10 @@ cf::CREvtCamera::~CREvtCamera() {
             f30 = mField444;
             f31 = mField440;
             CREvtPlayerObj* player =
-                (CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C;
+                (CREvtPlayerObj*)((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->field_0x0C;
             player->field_0x1EC = f31;
             player->field_0x1F0 = f30;
-            ScnCamDepthUp();
+            ScnCamDepthUp((CScnItemCamera*)player);
         }
     }
 
@@ -129,7 +121,7 @@ cf::CREvtCamera::~CREvtCamera() {
 // All reads go through the global singleton (CREvtCamera::sInstance) since the
 // CTaskLOD calls may modify it.
 // ============================================================================
-extern "C" void REvtCam_ActivateTasks(CREvtCamera* taskData) {
+extern "C" void REvtCam_ActivateTasks(int taskData) {
     if (!CREvtCamera::sInstance) return;
 
     if (taskData) {
@@ -172,7 +164,7 @@ extern "C" void REvtCam_ActivateTasks(CREvtCamera* taskData) {
 // REvtCam_ActivateLodTasks (0x80181790, size 0x80)
 // Activates every task in the global camera's mTaskArray1A6 list.
 // ============================================================================
-extern "C" void REvtCam_ActivateLodTasks(CREvtCamera* self) {
+extern "C" void REvtCam_ActivateLodTasks() {
     if (!CREvtCamera::sInstance) return;
     for (s32 i = 0; i < (s32)CREvtCamera::sInstance->mTaskCount2AC; i++) {
         s16 taskID = CREvtCamera::sInstance->mTaskArray1A6[i];
@@ -239,14 +231,14 @@ void cf::CREvtCamera::vfunc_1C() {
     if (!camObj) return;
 
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-        getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(mMatrix28[2][3]);
+        ((CREvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())->setFov(mMatrix28[2][3]);
     }
     camObj->field_0x1E0 = mMatrix28[2][3];
-    ScnCamDepthUp();
+    ScnCamDepthUp((CScnItemCamera*)camObj);
     camObj->field_0x1EC = mMatrix28[0][3];
     camObj->field_0x1F0 = mMatrix28[1][3];
-    ScnCamDepthUp();
-    ScnCamLoadMtx(camObj, mMatrix58);
+    ScnCamDepthUp((CScnItemCamera*)camObj);
+ScnCamLoadMtx((CREvtCamObj*)camObj, (const f32 (*)[4])mMatrix58);
     mFieldA4 = 1;
 }
 
@@ -288,39 +280,39 @@ extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData, void* som
             self->mField20 = (u32)taskObj;
             simBindChrAnim((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
             self->mField43C = (s32)(u32)simGetLeafAnimDist2((void*)self->mField1C);
-            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 4, &self->mField98);
-            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 15, &self->mField9C);
-            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 23, &self->mFieldA0);
-            EvtSeqResolveAnmChr((void*)self->mField20, lbl_eu_805036D8 + 30, &self->mField2B0);
+            EvtSeqResolveAnmChr((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 4, (s32*)&self->mField98);
+            EvtSeqResolveAnmChr((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 15, (s32*)&self->mField9C);
+            EvtSeqResolveAnmChr((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 23, (s32*)&self->mFieldA0);
+            EvtSeqResolveAnmChr((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 30, (s32*)&self->mField2B0);
 
             if (!CREvtCamera::sInstance->mFieldA5) {
-                ((CREvtCamTaskEvent*)evtGetManagerAddr())->field_1B8 = 1;
+                ((CREvtCamTaskEvent*)(uintptr_t)evtGetManagerAddr())->field_1B8 = 1;
             }
 
             const char* timeStr;
             u32* taskBuf;
             s32 taskCount;
-            if (EvtSeqFindResAddr((void*)self->mField20, lbl_eu_805036D8 + 38, &timeStr)) {
+            if (EvtSeqFindResAddr((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 38, (s32*)&timeStr)) {
                 int val = atoi(timeStr);
                 u16 v = (u16)val;
                 if ((u32)(u16)(v / 100) == 99 && (u32)(u16)(v % 100) == 99) {
                     EvtSeqPublishIdHalfwords();
                 } else {
                     func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
-                    Env_SetClock(getGlobalSda(), (u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
+                    Env_SetClock((CTaskEnvTime*)getGlobalSda(), (int)(u32)(u16)(v / 100), (int)(u32)(u16)(v % 100), 0);
                 }
             }
 
             // The two task-id lists reuse the same stack locals (retail
             // reloads taskBuf/taskCount from 8(sp)/12(sp) for both loops).
-            if (EvtSeqResolveAnmChr2((void*)self->mField20, lbl_eu_805036D8 + 43, &taskBuf, &taskCount)) {
+            if (EvtSeqResolveAnmChr2((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 43, (s32*)&taskBuf, &taskCount)) {
                 for (s32 i = 0; i < taskCount; i++) {
                     self->mTaskArrayA6[self->mTaskCount2A8] = (s16)taskBuf[i];
                     self->mTaskCount2A8++;
                 }
             }
 
-            if (EvtSeqResolveAnmChr2((void*)self->mField20, lbl_eu_805036D8 + 51, &taskBuf, &taskCount)) {
+            if (EvtSeqResolveAnmChr2((u8*)(uintptr_t)self->mField20, lbl_eu_805036D8 + 51, (s32*)&taskBuf, &taskCount)) {
                 for (s32 i = 0; i < taskCount; i++) {
                     self->mTaskArray1A6[self->mTaskCount2AC] = (s16)taskBuf[i];
                     self->mTaskCount2AC++;
@@ -334,7 +326,7 @@ extern "C" void REvtCam_SetupEvent(CREvtCamera* self, void* eventData, void* som
 // ============================================================================
 // REvtCam_IsTaskListEmpty (0x80181D3C, size 0x14) - already implemented
 // ============================================================================
-extern "C" unsigned long REvtCam_IsTaskListEmpty() {
+u32 REvtCam_IsTaskListEmpty() {
     unsigned long* ptr = (unsigned long*)CREvtCamera::sInstance;
     unsigned long v = ptr[0xa0 / 4];
     return v ? 0 : 1;
@@ -343,28 +335,28 @@ extern "C" unsigned long REvtCam_IsTaskListEmpty() {
 // ============================================================================
 // REvtCam_GetFieldA5Flag (0x80181D50, size 0xC)
 // ============================================================================
-extern "C" unsigned char REvtCam_GetFieldA5Flag() {
+u8 REvtCam_GetFieldA5Flag() {
     return CREvtCamera::sInstance->mFieldA5;
 }
 
 // ============================================================================
 // REvtCam_IsField98Set (0x80181D5C, size 0x18)
 // ============================================================================
-extern "C" unsigned long REvtCam_IsField98Set() {
+u32 REvtCam_IsField98Set() {
     return CREvtCamera::sInstance->mField98 == 1 ? 1 : 0;
 }
 
 // ============================================================================
 // REvtCam_IsMode2B0Eq1 (0x80181D74, size 0x18)
 // ============================================================================
-extern "C" unsigned long REvtCam_IsMode2B0Eq1() {
+u32 REvtCam_IsMode2B0Eq1() {
     return CREvtCamera::sInstance->mField2B0 == 1 ? 1 : 0;
 }
 
 // ============================================================================
 // REvtCam_IsMode2B0Eq2 (0x80181D8C, size 0x18)
 // ============================================================================
-extern "C" unsigned long REvtCam_IsMode2B0Eq2() {
+u32 REvtCam_IsMode2B0Eq2() {
     return CREvtCamera::sInstance->mField2B0 == 2 ? 1 : 0;
 }
 

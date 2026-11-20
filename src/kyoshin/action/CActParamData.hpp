@@ -523,7 +523,8 @@ struct ActParamRegRec {
 class CScnItemAnim;
 // Name-lookup import (defined in libs/monolib/src/scn/CScnItemAnim.cpp);
 // retail references it under an unmangled symbol.
-extern "C" int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name);
+// Defined in monolib/src/scn/CScnItemAnim.cpp with C++ linkage.
+int ItemAnim_FindIndex_E648(CScnItemAnim* self, const char* name);
 // Register a stream's record chain into the table's slots; returns 0.
 extern "C" int registerParamSlots(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node);
 extern "C" int copyParamNameRec(ActParamStack* self, ActParamStrRec* dst, ActParamStrRec* src);
@@ -664,10 +665,10 @@ struct ActParamCbViewD3C {
     virtual void invoke18(void* obj, void* src);  // vt+0x18
 };
 extern "C" void walkParamRecords(CActParamData* self, ActParamD3CMember* member);
+extern "C" void walkParamBlkB(void* self);
 int evalParamTiming(CActParamData* self,
                                        ActParamD3CMember* member,
                                        ActParamD3CTimeRec* rec, int gate);
-
 // ---- initParamBlock ----
 // Record-chain walker driven through the handler table lbl_eu_80570788.
 struct ActParamT1Rec {

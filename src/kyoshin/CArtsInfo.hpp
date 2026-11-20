@@ -1,4 +1,5 @@
 #pragma once
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
 #include "monolib/work/CEventFile.hpp"
@@ -166,7 +167,6 @@ union CArtsSlotFlags {
 // SjisDotToCommaEU is defined in code_80135FDC.cpp (C linkage);
 // CArtsInfo_DotToCommaDE is a same-unit retail symbol (unmangled, C linkage).
 extern "C" void CArtsInfo_DotToCommaDE(CArtsInfo*, u32, char*);
-extern "C" int getLanguage__9CDeviceSCFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
@@ -199,9 +199,7 @@ extern "C" int sprintf(char*, const char*, ...);
 // Imports from the IdTable_SumValues accessor family (code_8025FB10.cpp).
 // Retail call sites bind to the unmangled names, so keep C linkage
 // (same style as CItemBoxGrid.hpp).
-extern "C" int Counter_TestBit(void*, u32);
 // int-return form: single winning decl shared with chain/CChainActorList.hpp.
-extern "C" int IdTable_SumValues(void*, u32);
 
 // Float -> s32 conversion helper used by the arts-grid percentage functions
 // (CArtsInfo_FmtRow09): takes the scaled float in f1 and returns the truncated
@@ -268,3 +266,27 @@ extern "C" void CArtsInfo_Refresh(CArtsInfo* self);
 // Float constant in the small data area (sda21-accessed via lfs): the anchor
 // pane x-translate written by OnFileEvent.
 extern float lbl_eu_806686D0;
+
+// CArtsInfo helpers defined in CArtsInfo.cpp. Retail mangles these names as
+// C++ free functions taking CArtsInfo*, so the declarations live here with
+// C++ linkage (the definitions inherit it).
+void CArtsInfo_LoadFiles(CArtsInfo* self);
+void CArtsInfo_UpdateAnims(CArtsInfo* self);
+void CArtsInfo_Draw(CArtsInfo* self, void* drawInfo);
+void CArtsInfo_Cleanup(CArtsInfo* self);
+u32 CArtsInfo_GetFlag48(CArtsInfo* self);
+u32 CArtsInfo_GetFlag49(CArtsInfo* self);
+void CArtsInfo_ReqState1(CArtsInfo* self);
+void CArtsInfo_ReqState4(CArtsInfo* self);
+void CArtsInfo_OpenDetail6(CArtsInfo* self);
+void CArtsInfo_ToStateA(CArtsInfo* self);
+void CArtsInfo_ToStateC(CArtsInfo* self);
+void CArtsInfo_SetCharId(CArtsInfo* self, u8 val);
+void CArtsInfo_SetField55(CArtsInfo* self, u8 val);
+void CArtsInfo_SetField56(CArtsInfo* self, u8 val);
+void CArtsInfo_SetLevel58(CArtsInfo* self, u16 val);
+void CArtsInfo_RefreshIfReady(CArtsInfo* self);
+void CArtsInfo_CursorPrev(CArtsInfo* self);
+void CArtsInfo_CursorNext(CArtsInfo* self);
+u32 CArtsInfo_IsCursorZero(CArtsInfo* self);
+u32 CArtsInfo_IsStateGE6(CArtsInfo* self);

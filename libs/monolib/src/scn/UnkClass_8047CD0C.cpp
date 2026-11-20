@@ -15,6 +15,7 @@
 #include <types.h>
 #include <monolib/util/MemManager.hpp>
 #include <monolib/scn/UnkClass_8047E110.hpp>
+#include <monolib/scn/UnkClass_8047CD0C.hpp>
 
 // ------------------------------------------------------------------
 // Node object type (0x28-byte elements in the pool's node array).  The
@@ -390,7 +391,7 @@ extern "C" void sinit_8047D290() {
 UnkClass_8047CD0C sWalkTableLocator;  // node pool (0x20)
 u8 lbl_eu_80658560[0xA8];           // scene manager (UnkClass_8047E110)
 u8 sWalkWaypointTable[0x30];
-u8 lbl_eu_80658638[0x10];
+f32 sMaruShadowCenter[4];
 // NOTE: retail's split carries no FORCEACTIVE functions for this TU, and
 // every bss symbol below is a non-static definition, so nothing can be
 // dead-stripped.

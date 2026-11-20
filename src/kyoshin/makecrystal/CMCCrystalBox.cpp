@@ -55,20 +55,6 @@ struct CrystalItemImpl {
     virtual void vf08() = 0;
 };
 
-// sdata2 constants used by MakeCrystal_CollectByTarget's ceil(count / scale) computation.
-// NOTE: defining these two in source makes MWCC const-propagate the literals
-// and emit extra .sdata2 pool words (measured: 0x20 vs retail 0x18).  They must
-// come from the code path that uses them once that is reconstructed.
-#pragma section data_type ".sdata2" ".sdata2"
-extern __declspec(section ".sdata2") f32 lbl_eu_80668458 = 30.0f;  // 30.0f scale
-// lbl_eu_8066845C is the 0.0f used for the fractional-part comparison.
-extern __declspec(section ".sdata2") f32 lbl_eu_8066845C = 0.0f;
-#pragma section data_type ".data" ".bss"
-// NOTE: the two 2^52 (4503599627370496.0) f64 constants the retail references
-// (lbl_eu_80668460 for the u16->float and lbl_eu_80668468 for the int->float
-// conversion) are synthesised internally by MWCC for the (f32)d->count and
-// (f32)t casts; they cannot be named in source, so their reloc labels stay as
-// decomp-pool entries (@...) and register as un-fixable reloc drift.
 
 CMCCrystalData::CMCCrystalData() {
     count = 0;
@@ -123,10 +109,10 @@ void CMCCrystalData::collectByTarget(u8 target) {
     }
     // Page count = ceil(filled count / 30), rounded by hand.
     f32 v = (f32)count;
-    v = v / lbl_eu_80668458;
+    v = v / 30.0f;
     int t = (int)v;
     f32 frac = v - (f32)t;
-    if (lbl_eu_8066845C != frac)
+    if (0.0f != frac)
         t++;
     limit = (u8)t;
     current = 0;
@@ -434,7 +420,7 @@ void CMCCrystalBox::updateCrystalBoxState() {
     case 0: break;
     case 1: onCrystalAnimToState2(); break;
     case 2: onCrystalAnimToState3(); break;
-    case 3: advanceAnimTransform(this->mAnim2, lbl_eu_80668470); break;
+    case 3: advanceAnimTransform(this->mAnim2, 1.0f); break;
     case 4: onCrystalAnimToState5(); break;
     case 5: onCrystalAnimToIdle(); break;
     case 6: playCrystalAnim14(); this->unk64 = 7; break;
@@ -556,9 +542,9 @@ void CMCCrystalBox::openCrystalBox() {
     rebuildCrystalGridTable();
     float vec[3];
     // Retail reuses setVec3's returned dest pointer as the vec argument.
-    this->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3((nw4r::math::VEC3*)vec, lbl_eu_80668474,
-                                                     lbl_eu_80668478,
-                                                     lbl_eu_8066845C)));
+    this->mScrollBar.InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(code80135FDC_setVec3((nw4r::math::VEC3*)vec, -71.0f,
+                                                     44.0f,
+                                                     0.0f)));
     // Distinct expression shapes per call keep MWCC from CSE-ing the
     // +0x250 base address into one register (retail recomputes it).
     this->mScrollBar.UpdateThumb(8, 0);
@@ -679,7 +665,7 @@ void CMCCrystalBox::stepCrystalBoxCursorPrev() {
             if ((s8)this->unk2CD < -2) {
                 this->unk2CD = 2;
             }
-            if (*(volatile u8*)&this->mSelTable.mCount > 1) { // per-arm reload
+            if (*(u8*)&this->mSelTable.mCount > 1) { // per-arm reload
                 if ((s8)this->unk2CD == -1) this->unk2CD = -2;
             } else if (this->mSelTable.mCount == 1) {
                 if ((s8)this->unk2CD < 0) this->unk2CD = 2;
@@ -1729,14 +1715,14 @@ void CMCCrystalBox::deselectCrystalBoxItem() {
 // Retail 0x802189D4: when sub-object 6's animation finishes, enter state 2
 // and play back animation 7.
 void CMCCrystalBox::onCrystalAnimToState2() {
-    if (advanceAnimTransform(this->mAnim0, lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(this->mAnim0, 1.0f) != 0) {
         this->unk64 = 2;
         playCrystalAnim7();
     }
 }
 
 void CMCCrystalBox::onCrystalAnimToState3() {
-    if (advanceAnimTransform(this->mAnim1, lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(this->mAnim1, 1.0f) == 0) return;
     this->unk64 = 3;
     playCrystalAnim8();
     this->unk69 = 1;
@@ -1748,21 +1734,21 @@ void CMCCrystalBox::onCrystalAnimToState3() {
 // Retail 0x80218A94: when sub-object 7's animation finishes, play back
 // animation 6 and enter state 5.
 void CMCCrystalBox::onCrystalAnimToState5() {
-    if (AnimRewindFrame(this->mAnim1, lbl_eu_80668470) != 0) {
+    if (AnimRewindFrame(this->mAnim1, 1.0f) != 0) {
         playCrystalAnim6();
         this->unk64 = 5;
     }
 }
 
 void CMCCrystalBox::onCrystalAnimToIdle() {
-    if (AnimRewindFrame(this->mAnim0, lbl_eu_80668470) == 0) return;
+    if (AnimRewindFrame(this->mAnim0, 1.0f) == 0) return;
     this->unk69 = 1;
     this->unk64 = 0;
     this->mCur07.SetVisible(0);
 }
 
 void CMCCrystalBox::onCrystalAnim14Idle() {
-    if (advanceAnimTransform(this->mAnim8, lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(this->mAnim8, 1.0f) == 0) return;
     this->unk69 = 1;
     this->unk64 = 0;
     this->mCur07.SetVisible(0);
@@ -1771,14 +1757,14 @@ void CMCCrystalBox::onCrystalAnim14Idle() {
 // Retail 0x80218B90: when sub-object 9's animation finishes, enter state 9
 // and play back animation 10.
 void CMCCrystalBox::onCrystalAnimToState9() {
-    if (advanceAnimTransform(this->mAnim3, lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(this->mAnim3, 1.0f) != 0) {
         this->unk64 = 9;
         playCrystalAnim10();
     }
 }
 
 void CMCCrystalBox::onCrystalAnim9ToState3() {
-    if (advanceAnimTransform(this->mAnim4, lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(this->mAnim4, 1.0f) == 0) return;
     this->unk69 = 1;
     refreshCrystalBoxCursors();
     this->unk64 = 3;
@@ -1786,32 +1772,32 @@ void CMCCrystalBox::onCrystalAnim9ToState3() {
 
 // Retail 0x80218C30: when sub-object 11's animation finishes, enter state 3.
 void CMCCrystalBox::onCrystalAnim11State3() {
-    if (advanceAnimTransform(this->mAnim5, lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(this->mAnim5, 1.0f) != 0) {
         this->unk64 = 3;
     }
 }
 
 void CMCCrystalBox::onCrystalAnim12State3() {
-    if (advanceAnimTransform(this->mAnim6, lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(this->mAnim6, 1.0f) == 0) return;
     this->unk64 = 3;
-    this->mAnim6->SetFrame(lbl_eu_8066845C);
+    this->mAnim6->SetFrame(0.0f);
 }
 
 // Retail 0x80218CC4: when sub-object 13's animation finishes, enter state 3.
 void CMCCrystalBox::onCrystalAnim13State3() {
-    if (advanceAnimTransform(this->mAnim7, lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(this->mAnim7, 1.0f) != 0) {
         this->unk64 = 3;
     }
 }
 
 void CMCCrystalBox::onCrystalAnimToState14() {
-    if (AnimRewindFrame(this->mAnim4, lbl_eu_80668470) == 0) return;
+    if (AnimRewindFrame(this->mAnim4, 1.0f) == 0) return;
     this->unk64 = 0xe;
     playCrystalAnim9();
 }
 
 void CMCCrystalBox::onCrystalAnimResetState3() {
-    if (AnimRewindFrame(this->mAnim3, lbl_eu_80668470) == 0) return;
+    if (AnimRewindFrame(this->mAnim3, 1.0f) == 0) return;
     this->unk69 = 1;
     this->data.current = 0;   // +0x13DC
     refreshCrystalBoxName();
@@ -2211,11 +2197,7 @@ void CMCCrystalBox::updateCrystalBoxRows() {
     // clrlwi'd copy in a callee-saved register).
     u8 active = (d->limit != 0) ? d->limit : 1;
     // Declared topmost so MWCC's reverse-declaration stack allocation
-    // reproduces retail: vec@0x8, buf2@0x18, buf@0x38, cvts@0x58/0x60.
-    union {
-        double d;
-        u32 w[2];
-    } selCvt, freeCvt;
+    // reproduces retail: vec@0x8, buf2@0x18, buf@0x38, cvt temps@0x58/0x60.
     char buf[0x20];
     char buf2[0x20];
     float vec[3];
@@ -2239,16 +2221,11 @@ void CMCCrystalBox::updateCrystalBoxRows() {
         vec[1] = this->field_14F8;
         vec[2] = this->field_14FC;
         // Slide the highlight one row step per selected crystal and up one
-        // step per unused row. The int -> double conversions go through the
-        // retail sdata2 magic constants (signed path 2^52+2^31 for the
-        // current row, unsigned path 2^52 for the free-row count).
-        selCvt.w[0] = 0x43300000u;
-        selCvt.w[1] = (u32)((u8)(d->current + 1) - 1) ^ 0x80000000u;
-        freeCvt.w[0] = 0x43300000u;
-        freeCvt.w[1] = (u32)(u8)(10 - active);
-        double selStep = (selCvt.d - lbl_eu_80668468) * lbl_eu_8066847C;
-        double freeStep = (freeCvt.d - lbl_eu_80668460) * lbl_eu_8066847C;
-        vec[0] = vec[0] + (selStep + freeStep);
+        // step per unused row. The signed/unsigned int -> float conversions
+        // emit the retail 2^52+2^31 and 2^52 pool words at their first uses.
+        f32 selVal = (f32)(double)((s32)((u8)(d->current + 1) - 1));
+        f32 freeVal = (f32)(double)((u32)(u8)(10 - active));
+        vec[0] = vec[0] + (selVal * 16.0f + freeVal * 16.0f);
         copyVEC3(&((PaneTranslateMirror*)pane)->mX, vec);
     } else {
         setPaneVisible(((CrystalBoxSubObj5*)this->mLayout)->layout->vf_3C(
@@ -2373,7 +2350,7 @@ void CMCCrystalBox::refreshCrystalBoxCursors() {
     bool flag;          // window-kind <2 guard (retail keeps it in r30; bool: no int->bool convert)
     struct PaneW44 { u8 pad[0x44]; f32 w44; };  // +0x44 scale float (per-statement view)
     if (this->unk1500 != 0) {
-        MCCrystal_AlignPane(buf2C, &this->crystalInfo, this->unk1501);
+        MCCrystal_AlignPane(reinterpret_cast<CMCCrystalInfo*>(buf2C), &this->crystalInfo, static_cast<u32>(this->unk1501));
         this->mCur18B.setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf2C));
         this->mCur18B.SetVisible(1);
         this->mCur07.SetVisible(0);
@@ -2633,7 +2610,7 @@ void CMCCrystalBox::playCrystalAnim11() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim5);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim5, true);
-    this->mAnim5->SetFrame(lbl_eu_8066845C);
+    this->mAnim5->SetFrame(0.0f);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
@@ -2648,7 +2625,7 @@ void CMCCrystalBox::playCrystalAnim13() {
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->UnbindAllAnimation();
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->BindAnimation(this->mAnim7);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->SetAnimationEnable(this->mAnim7, true);
-    this->mAnim7->SetFrame(lbl_eu_8066845C);
+    this->mAnim7->SetFrame(0.0f);
     reinterpret_cast<nw4r::lyt::Layout*>(this->mLayout)->Animate(0);
 }
 
@@ -2761,20 +2738,13 @@ void CMCCrystalBox::showCrystalBoxStatus() {
             PaneSetTexPaletteByName((nw4r::lyt::Layout*)this->mLayout, sMakeCrystalStrings + 0x351, (TPLPalette*)res3);
         }
         // Countdown pane: scale id into a screen coordinate, then format
-        // id/30 and id/20 into the +0x365 label. Manual uint->double
-        // conversion (the 0x43300000 / 2^52 trick) keeps lbl_eu_80668460 a
-        // named import; the struct-wrapped buffer sorts before the cvt temp
-        // so their stack slots match retail (sp+0x08 / sp+0x28). Divisions
-        // stay after the BdatTouchStringCell call (retail order).
+        // id/30 and id/20 into the +0x365 label. The u32->f32 conversion
+        // emits the 2^52 pool word at its retail first-use position; the
+        // struct-wrapped buffer sorts before the cvt temp so their stack
+        // slots match retail (sp+0x08 / sp+0x28). Divisions stay after the
+        // BdatTouchStringCell call (retail order).
         struct { u8 b[0x20]; } buf;
-        struct {
-            u32 hi;
-            u32 lo;
-        } cvt;
-        cvt.lo = id;
-        cvt.hi = 0x43300000;
-        u16 val = (u16)(lbl_eu_80668484 * (*(double*)&cvt - lbl_eu_80668460)
-                        + lbl_eu_80668480);
+        u16 val = (u16)(0.04f * (f32)(double)(u32)id + 100.0f);
         char* num = BdatTouchStringCell(sMakeCrystalStrings + 0x1d5, sMakeCrystalStrings + 0x1e1,
                                   0x30);
         sprintf((char*)buf.b, sMakeCrystalStrings + 0x35e, (u8)(val / 30), num,
@@ -3033,10 +3003,10 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         // setVec3 into a temp, then copy to the passed-by-address destination.
         nw4r::math::VEC3 s1;
         nw4r::math::VEC3 v1 = *reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-            (nw4r::math::VEC3*)((float*)&s1), lbl_eu_80668488, lbl_eu_8066848C, lbl_eu_8066845C));
+            (nw4r::math::VEC3*)((float*)&s1), -58.0f, -57.0f, 0.0f));
         nw4r::math::VEC3 s2;
         nw4r::math::VEC3 v2 = *reinterpret_cast<nw4r::math::VEC3*>(code80135FDC_setVec3(
-            (nw4r::math::VEC3*)((float*)&s2), lbl_eu_80668490, lbl_eu_8066848C, lbl_eu_8066845C));
+            (nw4r::math::VEC3*)((float*)&s2), 370.0f, -57.0f, 0.0f));
         this->mCur09.SetTwoPanes(&v2, &v1);
 
         mCur18A = CCur18(CUICfManager_getArcResourceAccessor());

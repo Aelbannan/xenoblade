@@ -52,7 +52,7 @@ extern const char lbl_eu_80503F58[];
 
 // Retail symbols are C-linkage (unmangled); declared here because the declaring
 // header code_800AA008.hpp uses C++ mangling that drifts the reloc names.
-extern "C" void Tok_Unpack(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+#include "kyoshin/code_800AA008_Tok.hpp"
 extern "C" int Tok_FormatStr(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 
 namespace cf{

@@ -10,6 +10,49 @@ extern s32 ahxdcd_refcnt;               /* 0x805E64D8 init/finish refcount */
 extern u8 ahxdcd_hdrbuf[];              /* 0x805E64E0 0x200-byte decode buffer */
 
 extern s32 AHXBSR_GetBitStm(void* self, s32 bits);
+extern s32 ADX_DecodeHeader(void* tbl, s32 size, void* out, void* out2);
+extern const s16 ahx_key_table[];
+
+static s32 SKG_GenerateKey(u8* key, s32 count, s16* out1, s16* out2, s16* out3) {
+    s16 x1, x2, x3;
+    s32 i;
+
+    if (ahxdcd_key_init == 0) {
+        ahxdcd_key_init = ahxdcd_key_init + 1;
+    }
+
+    *out1 = 0;
+    *out2 = 0;
+    *out3 = 0;
+
+    if (key == NULL && count <= 0) {
+        return 0;
+    }
+
+    x1 = ahx_key_table[0x100];
+    for (i = 0; i < count; i++) {
+        s32 m = x1 * ahx_key_table[0x80 + (s8)key[i]];
+        x1 = ahx_key_table[m % 1024];
+    }
+
+    x2 = ahx_key_table[0x200];
+    for (i = 0; i < count; i++) {
+        s32 m = x2 * ahx_key_table[0x80 + (s8)key[i]];
+        x2 = ahx_key_table[m % 1024];
+    }
+
+    x3 = ahx_key_table[0x300];
+    for (i = 0; i < count; i++) {
+        s32 m = x3 * ahx_key_table[0x80 + (s8)key[i]];
+        x3 = ahx_key_table[m % 1024];
+    }
+
+    *out1 = x1;
+    *out2 = x2;
+    *out3 = x3;
+
+    return 0;
+}
 
 
 void AHXSJD_SetupAtbl(u32 val) { AHXDCD_SetupAtbl(val); }
@@ -168,52 +211,6 @@ void AHXDCD_SetBsr(void* self, void* bsr) {
     AHXDCD_Reset(self);
     ((AHXDCDState*)self)->bsr = bsr;
 }
-
-extern s32 AHXBSR_GetBitStm(void* bs, s32 nbits);
-extern s32 ADX_DecodeHeader(void* tbl, s32 size, void* out, void* out2);
-extern const s16 ahx_key_table[];
-
-s32 SKG_GenerateKey(u8* key, s32 count, s16* out1, s16* out2, s16* out3) {
-    s16 x1, x2, x3;
-    s32 i;
-
-    if (ahxdcd_key_init == 0) {
-        ahxdcd_key_init = ahxdcd_key_init + 1;
-    }
-
-    *out1 = 0;
-    *out2 = 0;
-    *out3 = 0;
-
-    if (key == NULL && count <= 0) {
-        return 0;
-    }
-
-    x1 = ahx_key_table[0x100];
-    for (i = 0; i < count; i++) {
-        s32 m = x1 * ahx_key_table[0x80 + (s8)key[i]];
-        x1 = ahx_key_table[m % 1024];
-    }
-
-    x2 = ahx_key_table[0x200];
-    for (i = 0; i < count; i++) {
-        s32 m = x2 * ahx_key_table[0x80 + (s8)key[i]];
-        x2 = ahx_key_table[m % 1024];
-    }
-
-    x3 = ahx_key_table[0x300];
-    for (i = 0; i < count; i++) {
-        s32 m = x3 * ahx_key_table[0x80 + (s8)key[i]];
-        x3 = ahx_key_table[m % 1024];
-    }
-
-    *out1 = x1;
-    *out2 = x2;
-    *out3 = x3;
-
-    return 0;
-}
-
 
 s32 AHXDCD_DecodeHeader(void* self) {
     u8 buf[0x40];
@@ -664,7 +661,7 @@ u32 ahxdcd_key_init;                   /* 0x805E64D0 key-table init guard */
  * and the six-byte key material used for extended headers. */
 const f32 ahxdcd_zero_f32 = 0.0f;
 const double ahxdcd_two52 = 4503601774854144.0;
-const char ahxdcd_key_material[8] = {
-    0x43,0x52,0x49,0x2D,0x4D,0x57,0x00,0x00
+const char ahxdcd_key_material[7] = {
+    0x43,0x52,0x49,0x2D,0x4D,0x57,0x00
 };
 

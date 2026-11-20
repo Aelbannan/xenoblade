@@ -23,6 +23,7 @@ struct SFogRootView {
 
 class CScnFogMan {
 public:
+    CScnFogMan(u32 param);
     virtual ~CScnFogMan();
 
     union {                           // 0x4 scene-view object

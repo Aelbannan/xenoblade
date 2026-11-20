@@ -6,12 +6,14 @@
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
 // 3-arg declaration during include and re-declare the 1-arg form below.
 #include "kyoshin/CPartyStateWinImports.hpp"
+#include "kyoshin/CQuestWindow.hpp"
 #include "kyoshin/menu/CMenuPTState.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
@@ -402,21 +404,18 @@ struct CMenuPTWinCopyView {
 extern "C" int UIBattleGetFlagE8();
 extern "C" int Scn_SetPauseFlag(CScn* scn, int flag);
 extern "C" void BgTex_Release_3D9C(u8* obj);
-extern "C" void PartyStateWin_TeardownWindow(u8* obj);
-extern "C" void CUICfManager_setTimeout30();
+
 extern "C" void processEventList__Q22cf13CfGameManagerFv();
 extern "C" void processEffectList__Q22cf13CfGameManagerFv();
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
 
 // System-window open query + sound helpers (Move, state 3).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 
 // CPartyStateWin sub-object drivers used by CMenuPTState::Move (defined in
 // CPartyStateWin.cpp under their retail unmangled names).
-extern "C" int PartyStateWin_QueryMenuClose(CPartyStateWin* self);
 extern "C" void PartyStateWin_StepPartySub(CPartyStateWin* self);
-extern "C" int PartyStateWin_GetLatchFlag(CPartyStateWin* self);
 extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self);
 
 // CBgTex per-frame helpers - retail dispatches them under plain unmangled
@@ -1043,7 +1042,7 @@ void CMenuPTState::Term() {
     Scn_SetPauseFlag(static_cast<CScn*>(mStoredParent), 1);
     static_cast<CScn*>(mStoredParent)->removeRenderCB(this);
     BgTex_Release_3D9C((u8*)&mBgTex);
-    PartyStateWin_TeardownWindow((u8*)&mPartyStateWin);
+    PartyStateWin_TeardownWindow(&mPartyStateWin);
     sInstance = 0;
     processEventList__Q22cf13CfGameManagerFv();
     setPresentationFlag__Q22cf13CfGameManagerFv(false);

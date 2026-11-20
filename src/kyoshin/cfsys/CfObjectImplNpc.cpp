@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cfsys/CfObjectImplNpc.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // us-800cb118: NPC init - reset the talk index to -1, prepare via

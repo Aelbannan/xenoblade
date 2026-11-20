@@ -2,12 +2,16 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp" // CfObjectMove_setAnimModeArgs (owner decl)
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getInstance (owner)
 #include "kyoshin/cfsys/CfObjectImplMove.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
 #include <nw4r/math.h>
 #include <revolution/mtx/mtxvec.h>
 #include <revolution/mtx/quat.h>
@@ -16,6 +20,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CAIActionApi.hpp"
 namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 // Variant ScnRes_VertRayForward_E398 ABI (r7 ptr + f1 float) for the MoveImplGroundProbeA /
@@ -295,16 +300,16 @@ void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         self->field_0x18->f43();
         break;
     case 0xb:
-        requestItemLoad(self->field_0x18, 0x40);
+        requestItemLoad(reinterpret_cast<CfMapItemLoader*>(self->field_0x18), 0x40);
         // fallthrough
     case 9:
     case 0xc: {
         self->field_0x18->f43();
-        getInstance__Q22cf13CfGameManagerFv();
+        cf::CfGameManager::getInstance();
         if (isGlobalCamFlagSet(0x04000000))
             break;
         CfMoveBMId* bmId =
-            (CfMoveBMId*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+            (CfMoveBMId*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
         if (bmId == nullptr ||
             self->field_0x18->sub.field_74 != bmId->field_0)
             break;
@@ -351,10 +356,9 @@ void MoveImplDispatchEvent(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     case 0xf: {
         self->field_0x18->f43();
         CfSoundMan_StopSlotByMode(0, 0x194, 0);
-        getInstance__Q22cf13CfGameManagerFv();
+        cf::CfGameManager::getInstance();
         if (!isGlobalCamFlagSet(0x04000000)) {
-            CfMoveBMId* bmId = (CfMoveBMId*)CBattleMan_FetchVisionObj(
-                getInstance__Q22cf14CBattleManagerFv());
+            CfMoveBMId* bmId = (CfMoveBMId*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
             if (bmId != nullptr &&
                 self->field_0x18->sub.field_74 == bmId->field_0) {
                 void* src = CfCode_GetSubObject();
@@ -429,7 +433,7 @@ void MoveImplGateEventCmd(void* selfV, u32 id) {
     // Presentation/event gate: when the 0x04000000 event flag is set, skip all
     // move dispatch. Otherwise map the incoming id to an embedded sub-object
     // command (vtable 0x20c). Case order is retail's body emission order.
-    getInstance__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
@@ -486,7 +490,7 @@ void MoveImplGateEventCmd(void* selfV, u32 id) {
 // repositions / clears move effects, and finally fires the 0x200 request when
 // actor id 5 is registered and its float counter exceeds the threshold.
 void MoveImplSweepMoveEffects(CfObjectImplMoveObj* self) {
-    getInstance__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::getInstance();
     if (!isGlobalCamFlagSet(0x400) && Scn_GetFrameDelta(gmScene) != 0.0f) {
         void* src = (void*)self->field_0x18->sub.vfn13();
         if (src == nullptr) {
@@ -576,7 +580,7 @@ void MoveImplRepositionEffect(CfObjectImplMoveObj* self) {
     CfMoveEvt60* evt = (CfMoveEvt60*)actor->sub.field_C4;      // actor +0x3F60
     if (evt == nullptr)
         return;
-    getInstance__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::getInstance();
     if (Scn_GetFrameDelta(gmScene) == 0.0f)
         return;
     f32 t = evt->field_4F8;
@@ -673,7 +677,7 @@ void MoveImplDriveRequest(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param)
     }
     // Common path: attach to the driver, pass the flag, then dispatch by
     // effect type (bitmask {1,4,5,6} or {0x85,0x86} reaches the actor id).
-    bindPartnerO_(obj, self->mSubObj, 0);
+    bindPartnerO_((cf::CfObjectEff*)obj, (u8*)self->mSubObj, (u8*)0);
     obj->vfn194(bit7);
     if (self->mSubObj->field_0x98 != 0) {
         setChild34Sc_(obj, (u8*)self->mSubObj->field_0x98 + 0x304);
@@ -688,17 +692,15 @@ void MoveImplDriveRequest(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param)
         keep = 0;
     }
     if (keep != 0) {
-        setTargetObj_(obj, findObjectById((int)self->field_0x18->vf298()->field_0x4));
+        setTargetObj_((cf::CfObjectEff*)obj, (u8*)findObjectById((int)self->field_0x18->vf298()->field_0x4));
     }
     if (type7 == 2 || type7 == 5 || type7 == 0x85) {
         if (self->mSubObj->field_0x6F8 != 0) {
-            bindPartnerO_(obj, nullptr,
-                (u32)((CfMoveDriverSubObj*)self->mSubObj->field_0x6F8)->vfnA8());
+            bindPartnerO_((cf::CfObjectEff*)obj, (u8*)nullptr, (u8*)(u32)((CfMoveDriverSubObj*)self->mSubObj->field_0x6F8)->vfnA8());
         }
     } else if (type7 == 3 || type7 == 6 || type7 == 0x86) {
         if (self->mSubObj->field_0x6FC != 0) {
-            bindPartnerO_(obj, nullptr,
-                (u32)((CfMoveDriverSubObj*)self->mSubObj->field_0x6FC)->vfnA8());
+            bindPartnerO_((cf::CfObjectEff*)obj, (u8*)nullptr, (u8*)(u32)((CfMoveDriverSubObj*)self->mSubObj->field_0x6FC)->vfnA8());
         }
     }
     if (param->field_0xF != 0 && obj != 0 && obj->field_0x94 != 0) {
@@ -1016,7 +1018,7 @@ extern "C" void MoveImplTriggerCamShake(CfObjectImplMoveObj* self, CfMoveCd460Ta
                           (nw4r::math::VEC3*)&shake.vecA, scale);
     nw4r::math::VEC3Scale((nw4r::math::VEC3*)&shake.vecB,
                           (nw4r::math::VEC3*)&shake.vecB, scale);
-    CamEvtForwardShakeFlag(&shake, 0);
+    CamEvtForwardShakeFlag((int)(uintptr_t)&shake, 0);
 }
 
 extern "C" void CfObjectMove_setRegionAttached(void*, int);
@@ -1070,12 +1072,12 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         }
         actor->sub.vfn90(1.0f);
         if (kind == 2 || kind == 0x11) {
-            getInstance__Q22cf13CfGameManagerFv();
+            cf::CfGameManager::getInstance();
             if (!isGlobalCamFlagSet(0x400)) {
                 actor->vf2AC();
             }
         } else {
-            getInstance__Q22cf13CfGameManagerFv();
+            cf::CfGameManager::getInstance();
             if (!isGlobalCamFlagSet(0x400)) {
                 if (kind == 0x2d) {
                     u32 prev = actor->vf2A4()->field_48;
@@ -1089,9 +1091,9 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         }
     }
     if (kind == 0x31) {
-        if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) == nullptr) {
+        if (cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj() == nullptr) {
             actor->vf2B0();
-        } else if ((((CfMoveBM824*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
+        } else if ((((CfMoveBM824*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj())
                         ->field_824 &
                        0x800) == 0) {
             actor->vf2B0();
@@ -1129,17 +1131,17 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         // sweep over the bound event object's state word.
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
         CfActorObj* ac1 = self->field_0x18;
-        if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) != nullptr &&
-            ((CfMoveBMId*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
+        if (cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj() != nullptr &&
+            ((CfMoveBMId*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj())
                     ->field_0 == ac1->sub.field_74 &&
             isBattleStatusActive(ac1->field_08, 0xf) == 0 &&
             isBattleStatusActive(ac1->field_08, 9) == 0 &&
             isBattleStatusActive(ac1->field_08, 0xc) == 0 &&
             isBattleStatusActive(ac1->field_08, 0xb) == 0 &&
-            (((CfMoveBM824*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
+            (((CfMoveBM824*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj())
                  ->field_824 &
                 0x800) == 0) {
-            ScMain_Reset((ScMain*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()));
+            ScMain_Reset((ScMain*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj());
         }
         CfActorObj* ac2 = self->field_0x18;
         CfMoveC4Obj* evt = (CfMoveC4Obj*)ac2->sub.field_C4;
@@ -1153,7 +1155,7 @@ void MoveImplDriveTransition(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                     dispatchItemLoad(ac2, 0x10);
                     goto tail;
                 }
-                if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), ac2) == 0) {
+                if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)ac2) == 0) {
                     CfActorObj* ac3 = self->field_0x18;
                     if ((ac3->field_3374 & 8) == 0) {
                         u32 v1d = ac3->field_04->b30()->field_0;
@@ -1505,7 +1507,7 @@ extern "C" void MoveImplRebindHandler(CfObjectImplMoveObj* self, void* param) {
     if (testActorStatus(actor, &valB, 0xb) != 0) {
         return;
     }
-    getInstance__Q22cf13CfGameManagerFv();
+    cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
@@ -1530,7 +1532,7 @@ extern "C" void MoveImplSyncBattleRoster(CfObjectImplMoveObj* self) {
     if (findObjectById((int)self->field_0x18->sub.vfn13()) == 0) {
         return;
     }
-    void* bmRes = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
+    void* bmRes = cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
     if (bmRes == nullptr) {
         return;
     }
@@ -1767,7 +1769,7 @@ void MoveImplGroundProbeA(CfObjectImplMoveObj* self, CfMoveContact* param) {
     nw4r::math::VEC3 chk = lifted;
     // Variant ABI (r7 ptr + f1): cast keeps the retail arg marshaling while
     // the header decl stays canonical (CfCam BE398Fn convention).
-    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&chk, 0, 0, 0, &lifted, -1.0f) == 0) {
+    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&chk, 0, 0, 0, &lifted, -1.0f) == 0) {  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
         return;
     }
     ScnRes_CopyEntryHead(&world, 0);
@@ -2018,7 +2020,7 @@ void MoveImplGroundProbeB(CfObjectImplMoveObj* self, CfMoveContact* param) {
     probe.x = wpos.x;
     probe.y = wpos.y;
     probe.z = wpos.z;
-    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&probe, 0, 0, 0, &wpos, -3.0f) == 0)
+    if (((BE398PtrF32)ScnRes_VertRayForward_E398)(&probe, 0, 0, 0, &wpos, -3.0f) == 0)  // DEBT(callcast): C symbol; retail callers use several incompatible arities / GPR-vs-FPR arg views
         return;
     ScnRes_CopyEntryHead(&world, 0);
     CfMoveVec3f nrm;

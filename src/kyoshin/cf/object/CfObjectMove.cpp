@@ -1,10 +1,15 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectMove
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "nw4r/g3d/res/g3d_resfile.h"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
-// CfObjectMove_setRegionAttached: unified on `void*, int` (the definition below);
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
+#include "kyoshin/cf/CfCamEventApi.hpp"
+#include "kyoshin/cf/CCharEffectHelpers.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
+
 #include "kyoshin/cf/CfResObjImpl.hpp"
 // no shield needed (CfResObjImpl.hpp decl spelling aligned).
 // Owning-class virtuals for the +0xC4 target (CActParamAnim family: this TU's
@@ -206,7 +211,7 @@ if (cond == 0 && this->CfObject_checkSubReady() != 0 && effReady != 0 && scaleHi
                     pointEnable = 1;
                 }
                 int q = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
-                CharEffSetPointEnabled((void*)q, pointEnable);
+                CharEffSetPointEnabled((CCharEffect*)q, pointEnable);
             }
         }
     }
@@ -273,7 +278,7 @@ void cf::CfObjectMove::CfObjectModel_releaseModelSub() {
     if (sub != 0 && this->mFieldC0 != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
-            CharEffDetachBySubId((void*)r, this->mSubObj98);
+            CharEffDetachBySubId((CCharEffect*)r, (CScnItemModel*)this->mSubObj98);
         }
     }
     this->CfObjectModel::CfObjectModel_UnkVirtualFunc1();
@@ -604,9 +609,9 @@ void cf::CfObjectMove::CfObject_setMoveTargetVec(const ml::CVec3* vec) {
     if (target != 0) {
         // One-arg call: retail leaves r4 (the vec) untouched for the base
         // call below, so the source passes only the C4 target.
-        setAnimSubPos(target);
+        ((void (*)(void*))setAnimSubPos)(target);
     }
-    CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(this, vec);
+    ((cf::CfObjectModel*)this)->CfObject_setMoveTargetVec(vec);
 }
 
 // Retail symbol is Fv but the body reads r4 (a position vector forwarded to
@@ -616,7 +621,7 @@ void cf::CfObjectMove::CfObject_setMoveTargetVec(const ml::CVec3* vec) {
 void cf::CfObjectMove::CfObject_syncMoveTarget(const ml::CVec3* vec) {
     cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)this->mTargetC4;
     if (target != 0) {
-        setAnimLastPos(target);
+        ((bool (*)(void*))setAnimLastPos)(target);
         if (this->mSubObj98 != 0) {
             scnImN4DynStart(this->mSubObj98);
         }
@@ -736,7 +741,7 @@ void cf::CfObjectMove::CfObject_setRotVec(void* src) {
 // float arg (same scheme as CfObject_setMoveYaw). (Old method body
 // moved verbatim onto the retail Fv name.)
 void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
-    CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
+    ((cf::CfObjectModel*)self)->CfObject_setMoveHeadAngle(value);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
         setTurnAngle(target, value);
@@ -754,10 +759,10 @@ void CfObject_setMoveHeadAngle__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, fl
 // (bit 2) gates a setTurnScale call plus a +0x400 flag set (mTargetC4 is
 // re-read after the call), and the 6C0 target's +0xC word receives the value.
 void CfObject_setMoveYaw__Q22cf12CfObjectMoveFf(cf::CfObjectMove* self, float value) {
-    CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
+    ((cf::CfObjectModel*)self)->CfObject_setMoveHeadAngle(value);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
-        setTurnScale(target, value);
+        setTurnScale((CActParamAnim*)target, value);
         CfObjectMoveC4Flags* view = (CfObjectMoveC4Flags*)self->mTargetC4;
         view->flags |= 0x400;
     }
@@ -862,13 +867,12 @@ void cf::CfObjectMove::CfObjectMove_writeTargetField(int v) {
 float cf::CfObjectMove::CfObject_getMoveSpeedRate() {
     // Getter for the value CfObject_pushRefreshValue's target writes at
     // +0x388; falls back to the shared time source when no target. The
-    // shared header declares CfT_PlayRateGet void; it really returns float,
-    // so call it through a cast (same as CtrlNpc.cpp).
+    // CfT_PlayRateGet is declared with its real float return in CfTFile.hpp.
     void* target = this->mTargetC4;
     if (target != 0) {
         return *(float*)((char*)target + 0x388);
     }
-    return ((float (*)())CfT_PlayRateGet)();
+    return CfT_PlayRateGet();
 }
 
 float cf::CfObjectMove::CfObject_readRefreshValue() {
@@ -876,7 +880,7 @@ float cf::CfObjectMove::CfObject_readRefreshValue() {
     if (target != 0) {
         return *(float*)((char*)target + 0x38C);
     }
-    return ((float (*)())CfT_PlayRateGet)();
+    return CfT_PlayRateGet();
 }
 
 // Retail symbol is Fv but ocUnit setNpcPath leaves r4-r7/f1 live into
@@ -888,7 +892,8 @@ void cf::CfObjectMove::CfObjectMove_refreshNpcState(int modeA, int modeB, int co
     // Dispatch to the NPC movement-target handler (tail call, r3 only).
     cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
-        CtrlNpcInitMoveWindow(target);
+        typedef void (*CtrlNpcInitMoveWindowTail)(cf::CtrlNpc*);  // DEBT(callcast): retail tail-calls 6-arg CtrlNpcInitMoveWindow with r4-r7/f1 inherited (size 0x14; LOSTFIX proof)
+        ((CtrlNpcInitMoveWindowTail)CtrlNpcInitMoveWindow)(target);
     }
 }
 
@@ -919,7 +924,7 @@ void cf::CfObjectMove::CfObjectMove_commandNpcTarget(int arg) {
     (void)arg;
     cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
-        func_80094E44(target);
+        func_80094E44(target, (u32)arg);
     }
 }
 
@@ -928,7 +933,7 @@ void cf::CfObjectMove::CfObjectMove_restartNpcTarget(int a, int b, int c) {
     // Tail-call the NPC movement-target handler (r3 only); see Func7/8/12/13.
     cf::CtrlNpc* target = (cf::CtrlNpc*)this->mTarget6C0;
     if (target != 0) {
-        CtrlNpcArmMoveTarget5(target);
+        CtrlNpcArmMoveTarget5(target, a, b, c);
     }
 }
 
@@ -980,7 +985,7 @@ void CfObjectMove_setEffectSlotBit__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
-            CharEffSetSlotBit((void*)r, arg);
+            CharEffSetSlotBit((CCharEffect*)r, arg);
         }
     }
 }
@@ -990,7 +995,7 @@ void CfObjectMove_transferSlotBits__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
-            CharEffMoveBit((void*)r, arg);
+            CharEffMoveBit((CCharEffect*)r, arg);
         }
     }
 }
@@ -1007,7 +1012,7 @@ void CfObjectMove_attachEffectSlot__Q22cf12CfObjectMoveFUlUlUlUlUl(cf::CfObjectM
             int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
             // c is widened here so the int->short conversion emits the retail
             // extsh at the call site (MWCC defers it after the plain moves).
-            CharEffRegisterSlot((void*)r, a, b, (s16)c, d, e);
+CharEffRegisterSlot((CCharEffect*)r, a, (CCharEffectSlot*)b, (u16)(s16)c, (u16)d, (u8)e);
         }
     }
 }
@@ -1019,8 +1024,7 @@ void cf::CfObjectMove::CfObjectMove_flushEffectSlots() {
     cf::CfObject* sub = (cf::CfObject*)mSubObj38;
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
-            ((cf::CfSubObj38Slots*)mSubObj38)->getCharEffect();
-            CharEffReleaseSlots0A10();
+            CharEffReleaseSlots0A10((CCharEffect*)((cf::CfSubObj38Slots*)mSubObj38)->getCharEffect());
         }
     }
 }
@@ -1054,7 +1058,7 @@ void CfObjectMove_signalEffectSlot__Q22cf12CfObjectMoveFUl(cf::CfObjectMove* sel
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
-            CharEffSetPointEnabled((void*)r, arg);
+            CharEffSetPointEnabled((CCharEffect*)r, arg);
         }
     }
 }
@@ -1072,7 +1076,7 @@ void cf::CfObjectMove::CfObjectModel_detachEffectSlot(void* arg) {
     if (sub != 0) {
         if (((cf::CfSubObj38Slots*)sub)->getCharEffect() != 0) {
             int r = ((cf::CfSubObj38Slots*)this->mSubObj38)->getCharEffect();
-            CharEffRemoveByPtr((void*)r, (void*)arg);
+            CharEffRemoveByPtr((CCharEffect*)r, (void*)arg);
         }
     }
 }
@@ -1213,7 +1217,7 @@ void CfObjectMove_releaseSlotById__Q22cf12CfObjectMoveFi(cf::CfObjectMove* self,
             if (sub38 != 0) {
                 if (((cf::CfSubObj38Slots*)sub38)->getCharEffect() != 0) {
                     int q = ((cf::CfSubObj38Slots*)self->mSubObj38)->getCharEffect();
-                    CharEffDetachBySubId((void*)q, self->mField6F8[index]);
+                    CharEffDetachBySubId((CCharEffect*)q, (CScnItemModel*)self->mField6F8[index]);
                 }
             }
             Scn_IsAnimActiveOrNull(self->mField6F8[index]);
@@ -1420,6 +1424,7 @@ void cf::CfObjectMove::CfObject_rearmAnimSlot(u32 value, u32 index) {
 
 
 
+// Already inside namespace cf (opened above); do not open a nested cf::cf.
 void CfResObj_noop2C() {}
 
 extern "C" void CfObjectMove_relaySubB0Slot40(void* self) {
@@ -2054,7 +2059,7 @@ void CfObjectMove_ensureAnimTargets(cf::CfObjectMove* self) {
                 ((cf::CfObjectMoveC8View*)ta)->field_4F4 = self;
             }
             if ((&self->mTargetC8)[i] != 0) {
-                AnimGame_SetStateFlags((&self->mTargetC8)[i]);
+                AnimGame_SetStateFlags((cf::CActParamAnimGame*)(&self->mTargetC8)[i]);
                 u32 anim = (u32)reinterpret_cast<cf::CfObjectModel*>(self)->CfObjectModel_getAnimFlags();
                 attachAnimObj((&self->mTargetC8)[i], slot, self->mField6D8, anim);
                 if (self->mTargetC4 != 0) {
@@ -2393,7 +2398,7 @@ void* lbl_eu_80529690[] = {
     (void*)CObjectParam_getParamPtr__Q22cf12CfObjectMoveFv, (void*)CObjectParam_hasObjectName__Q22cf12CObjectParamFv, (void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv, (void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
     (void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFi, (void*)__dt__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv, (void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
     (void*)CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv, (void*)CfObject_updateMoveRate__Q22cf12CfObjectMoveFv, (void*)CfObject_releaseMoveTargets__Q22cf12CfObjectMoveFv, (void*)CfObject_UnkVirtualFunc7__Q22cf12CfObjectMoveFv,
-    (void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv, (void*)CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv, (void*)CfObject_forwardSubObject__Q22cf12CfObjectMoveFv, (void*)CfObject_notifyMemberRemoved__Q22cf8CfObjectFv,
+(void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv,
     (void*)CfObject_refreshSubB0__Q22cf12CfObjectMoveFv, (void*)CfObject_queryTargetState__Q22cf12CfObjectMoveFv, (void*)CfObject_pushRefreshValue__Q22cf12CfObjectMoveFf, (void*)CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv,
     (void*)CfObject_pushRefreshExtra__Q22cf12CfObjectMoveFf, (void*)CfObject_readRefreshValue__Q22cf12CfObjectMoveFv, (void*)CfObject_checkTargetState__Q22cf12CfObjectMoveFv, (void*)CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFPCQ22ml5CVec3,
     (void*)CfObject_setPosXZ__Q22cf13CfObjectModelFff, (void*)CfObject_setPosXYZ__Q22cf8CfObjectFv, (void*)CfObject_syncMoveTarget__Q22cf12CfObjectMoveFPCQ22ml5CVec3, (void*)CfObject_getPosVector__Q22cf12CfObjectMoveFv,

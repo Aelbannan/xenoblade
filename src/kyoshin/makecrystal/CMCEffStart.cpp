@@ -95,19 +95,6 @@ const void* __RTTI__14CMCCrystalList[2] = {
     (const void*)lbl_eu_80536008
 };
 
-// .sdata2 constants in retail order (0.0f, 1.0f, int->float magic, 5.0f;
-// MWCC 8-pads the section, reproducing the trailing zero word).
-extern "C" {
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668550 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668554 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used))
-const double lbl_eu_80668558 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used))
-const float lbl_eu_80668560 = 5.0f;
-} // extern "C"
-
 // .rodata RTTI names in retail order. Explicit char arrays (one per class)
 // so MWCC 4-packs them exactly like retail; the compiler-pooled @ copies
 // trail the pool below and are tail-dropped by UnitRules.
@@ -224,12 +211,12 @@ u8 CMCEffStart::isFinished() {
 
 void CMCEffStart::startInAnim() {
     unk4 = 1;
-    mAnimTrans->SetFrame(lbl_eu_80668550);
+    mAnimTrans->SetFrame(0.0f);
     unk5 = 0;
 }
 
 void CMCEffStart::updateInAnim() {
-    if(advanceAnimTransform(mAnimTrans, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans, 1.0f)) {
         unk4 = 0;
         unk5 = 1;
     }
@@ -337,7 +324,7 @@ void CMCEffUpPrm::update() {
         return;
     }
     for(u8 i = 0; i < 8; ++i) {
-        if((s8)unkStruct[i].unk8 == 1 && advanceAnimTransform(unkStruct[i].animTrans, lbl_eu_80668554) != 0) {
+        if((s8)unkStruct[i].unk8 == 1 && advanceAnimTransform(unkStruct[i].animTrans, 1.0f) != 0) {
             unkStruct[i].unk8 = 0;
         }
         unkStruct[i].layout->Animate(0);
@@ -457,7 +444,7 @@ void CMCEffSuccess::startIn() {
     }
     unk4 = 1;
     bindInAnim();
-    mAnimTrans10->SetFrame(lbl_eu_80668550);
+    mAnimTrans10->SetFrame(0.0f);
     unk5 = 0;
     playUISound(0x91);
 }
@@ -466,20 +453,20 @@ void CMCEffSuccess::startOut() {
     if(unk4 == 2) {
         unk4 = 3;
         bindOutAnim();
-        mAnimTrans14->SetFrame(lbl_eu_80668550);
+        mAnimTrans14->SetFrame(0.0f);
         unk5 = 0;
     }
 }
 
 void CMCEffSuccess::updateIn() {
-    if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554) != 0) {
+    if(advanceAnimTransform(mAnimTrans10, 1.0f) != 0) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
 void CMCEffSuccess::updateOut() {
-    if(advanceAnimTransform(mAnimTrans14, lbl_eu_80668554) != 0) {
+    if(advanceAnimTransform(mAnimTrans14, 1.0f) != 0) {
         unk4 = 0;
         unk5 = 1;
     }
@@ -587,7 +574,7 @@ void CMCEffCrystal::update() {
         default:
             break;
     }
-    advanceAnimTransform(mAnimTrans30, lbl_eu_80668554);
+    advanceAnimTransform(mAnimTrans30, 1.0f);
     mLayoutC->Animate(0);
     mLayout18->Animate(0);
     mLayout2c->Animate(0);
@@ -626,9 +613,9 @@ void CMCEffCrystal::startIn() {
     if(unk4 == 0) {
         unk4 = 1;
         bindInAnimTrace();
-        mAnimTrans10->SetFrame(lbl_eu_80668550);
+        mAnimTrans10->SetFrame(0.0f);
         bindInAnimCrystal();
-        mAnimTrans1c->SetFrame(lbl_eu_80668550);
+        mAnimTrans1c->SetFrame(0.0f);
         unk5 = 0;
         setPaneVisible(mLayout2c->GetRootPane(), 1);
     }
@@ -638,10 +625,10 @@ void CMCEffCrystal::startOut() {
     if(unk4 == 3) {
         unk4 = 4;
         bindOutAnimTrace();
-        mAnimTrans14->SetFrame(lbl_eu_80668550);
+        mAnimTrans14->SetFrame(0.0f);
         bindOutAnim();
         if(mLayout2c->GetRootPane()->IsVisible()) {
-            mAnimTrans28->SetFrame(lbl_eu_80668550);
+            mAnimTrans28->SetFrame(0.0f);
         } else {
             mAnimTrans28->SetFrame(mAnimTrans28->GetFrameSize() - 1);
         }
@@ -653,7 +640,7 @@ void CMCEffCrystal::startChange() {
     if(unk4 == 3) {
         unk4 = 5;
         bindChangeAnim();
-        mAnimTrans20->SetFrame(lbl_eu_80668550);
+        mAnimTrans20->SetFrame(0.0f);
         unk5 = 0;
     }
 }
@@ -662,7 +649,7 @@ void CMCEffCrystal::startSpecial() {
     if(unk4 == 3) {
         unk4 = 6;
         bindSpecialAnim();
-        mAnimTrans24->SetFrame(lbl_eu_80668550);
+        mAnimTrans24->SetFrame(0.0f);
         unk5 = 0;
         setPaneVisible(mLayout2c->GetRootPane(), 0);
     }
@@ -714,22 +701,22 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
 }
 
 void CMCEffCrystal::updateIn() {
-    advanceAnimTransform(mAnimTrans1c, lbl_eu_80668554);
-    if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554) != 0) {
+    advanceAnimTransform(mAnimTrans1c, 1.0f);
+    if(advanceAnimTransform(mAnimTrans10, 1.0f) != 0) {
         unk4 = 2;
     }
 }
 
 void CMCEffCrystal::checkInDone() {
-    if(advanceAnimTransform(mAnimTrans1c, lbl_eu_80668554) != 0) {
+    if(advanceAnimTransform(mAnimTrans1c, 1.0f) != 0) {
         unk4 = 3;
         unk5 = 1;
     }
 }
 
 void CMCEffCrystal::updateOut() {
-    u32 unk1 = advanceAnimTransform(mAnimTrans14, lbl_eu_80668554);
-    u32 unk2 = advanceAnimTransform(mAnimTrans28, lbl_eu_80668554);
+    u32 unk1 = advanceAnimTransform(mAnimTrans14, 1.0f);
+    u32 unk2 = advanceAnimTransform(mAnimTrans28, 1.0f);
     if(unk1 != 0 && unk2 != 0) {
         unk4 = 0;
         unk5 = 1;
@@ -737,11 +724,11 @@ void CMCEffCrystal::updateOut() {
 }
 
 void CMCEffCrystal::updateChange() {
-    if(advanceAnimTransform(mAnimTrans20, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans20, 1.0f)) {
         unk4 = 3;
         unk5 = 1;
     }
-    if(mAnimTrans20->GetFrame() >= lbl_eu_80668560) {
+    if(mAnimTrans20->GetFrame() >= 5.0f) {
         char* name = BdatGetPtrDirect(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], unk36);
         char* itemName = (char*)BdatTouchStringCell(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
         char buffer[0x20];
@@ -751,7 +738,7 @@ void CMCEffCrystal::updateChange() {
 }
 
 void CMCEffCrystal::updateSpecial() {
-    if(advanceAnimTransform(mAnimTrans24, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans24, 1.0f)) {
         unk4 = 3;
         unk5 = 1;
     }
@@ -920,7 +907,7 @@ void CMCEffCylinder::startIn() {
     if(unk4 == 0) {
         unk4 = 1;
         bindInAnim();
-        mAnimTrans10->SetFrame(lbl_eu_80668550);
+        mAnimTrans10->SetFrame(0.0f);
         unk5 = 0;
     }
 }
@@ -929,7 +916,7 @@ void CMCEffCylinder::startOut() {
     if(unk4 == 2) {
         unk4 = 3;
         bindOutAnim();
-        mAnimTrans18->SetFrame(lbl_eu_80668550);
+        mAnimTrans18->SetFrame(0.0f);
         unk5 = 0;
     }
 }
@@ -938,7 +925,7 @@ void CMCEffCylinder::startChange() {
     if(unk4 == 2) {
         unk4 = 4;
         bindChangeAnim();
-        mAnimTrans14->SetFrame(lbl_eu_80668550);
+        mAnimTrans14->SetFrame(0.0f);
         unk5 = 0;
     }
 }
@@ -948,21 +935,21 @@ void CMCEffCylinder::setNumber(u8 arg) {
 }
 
 void CMCEffCylinder::updateIn() {
-    if(advanceAnimTransform(mAnimTrans10, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans10, 1.0f)) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
 void CMCEffCylinder::updateOut() {
-    if(advanceAnimTransform(mAnimTrans18, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans18, 1.0f)) {
         unk4 = 0;
         unk5 = 1;
     }
 }
 
 void CMCEffCylinder::updateChange() {
-    if(advanceAnimTransform(mAnimTrans14, lbl_eu_80668554)) {
+    if(advanceAnimTransform(mAnimTrans14, 1.0f)) {
         unk4 = 2;
         unk5 = 1;
     }

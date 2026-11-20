@@ -50,16 +50,17 @@ extern u8 lbl_eu_8052E444[];
 // --- imports for the free menu-create / probe helpers (CUICfManager.cpp) ---
 // Signature choices match co-included headers (CTaskGame.hpp, CMenuQstCnt.hpp,
 // CMainMenu.hpp) so TUs that include several of these headers stay legal.
-extern u32 lbl_eu_80664184;      // scene-mode global (u8-narrowed reads)
+class IUIWindow;
+
 extern const f32 lbl_eu_806672C8; // proximity float constant (.sdata2, r2-sda21)
 extern "C" int CMainMenu_IsOpen();  // matches CTaskGame.hpp
 extern "C" u32 GetItemMulti_IsActiveFlag();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int PTNotice_IsActive_3C10();  // matches CMenuQstCnt.hpp (int)
-extern "C" int MenuTutorialIsCreated();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
+extern "C" u32 MenuTutorialIsCreated();  // definition: CMenuTutorial.cpp (u32)
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
 extern "C" u32 CtrlRemote_TouchBitByArg(u32 resourceId);      // resource getter (CMiniMap.cpp)
-extern "C" u32 hasQuestWindow();                    // close-quest-menu gate (CMainMenu.hpp)
+extern "C" bool hasQuestWindow();                    // close-quest-menu gate (CQuestWindow.cpp)
 extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName)
 // C-library delete operators (flat retail symbols; shared runtime helpers).
 // Canonical void-return form - MUST match the ~100 other __dl__FPv decls
@@ -91,11 +92,11 @@ extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 extern "C" int isQuestLogMenuActive();
 extern "C" bool CMenuArtsSelect_isCreated();
 // Window/IUI helpers (flat retail names; defining TU is CUIWindowManager.cpp).
-extern "C" void UIWin_CreatePTChange(int mode);
-extern "C" void UIWin_CreateB4790Win(u8* str, int flags);
-extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u32);
-extern "C" void UIWin_CreateSysWin0(char* msg, int a, int b);
-extern "C" void UIWin_CreateSysWin1(char* a, char* b, int c, int d);
+extern "C" IUIWindow* UIWin_CreatePTChange(u32 flag);
+extern "C" IUIWindow* UIWin_CreateB4790Win(u32 arg1, u32 arg2);
+extern "C" IUIWindow* UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u8);
+extern "C" IUIWindow* UIWin_CreateSysWin0(const char* str, void* arg1, u32 arg2);
+extern "C" IUIWindow* UIWin_CreateSysWin1(u32 arg0, void* arg1, void* arg2, u32 arg3);
 // Enum-list holder helpers for CUICfManager_checkMenuOpenGate (defining TU: code_80043E08 TU).
 // __ct__16CfEnumListHolderFUlUl takes the holder itself (declared in the .cpp next to the
 // CUICfEnumListHolder type).
@@ -484,3 +485,29 @@ private:
     // function (Fv name + real CEventFile* arg); grant it member access.
     friend bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* evt);
 }; // size = 0xC94
+
+// Canonical C++ declarations for this unit's exported free functions.
+u32 CUICfManager_queueQuestLogMenu(u32 arg);
+u32 CUICfManager_queueBaseMenuItem();
+u32 CUICfManager_queueFactoryMenu(u32 param, f32 value);
+u32 CUICfManager_queueShopBuyMenu(u32 param);
+u32 CUICfManager_queueShopSellMenu();
+u32 CUICfManager_queuePTStateMenu();
+u32 CUICfManager_queueMakeCrystalMenu();
+u32 CUICfManager_queueArtsSetMenu();
+u32 CUICfManager_queueMapSelectMenu();
+u32 CUICfManager_queueWorldMapMenu();
+u32 CUICfManager_queuePauseMenu();
+u32 CUICfManager_queueCollepediaMenu();
+u32 CUICfManager_queueKizunagramMenu(u32 arg);
+u32 CUICfManager_queuePassiveSkillMenu();
+u32 CUICfManager_queuePlayAwardMenu();
+u32 CUICfManager_queueKizunaTalkMenu();
+u32 CUICfManager_queueSaveMenu(u32 arg0, u32 arg1);
+u32 CUICfManager_queueOptionMenu(u32 arg);
+u32 CUICfManager_queueTutorialListMenu(u32 arg);
+u32 CUICfManager_queueGameClearMenu();
+u32 CUICfManager_queueGetItemMenuNarrowed(u32 arg);
+u32 CUICfManager_queueGetItemMenuById(u32 arg);
+u32 CUICfManager_queueMultiGetItemMenu(u32 arg);
+int CUICfManager_tryResetSlots();

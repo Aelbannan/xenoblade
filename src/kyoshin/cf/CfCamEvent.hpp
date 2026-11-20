@@ -166,7 +166,7 @@ extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(void* self, void* arg1, void* a
 extern "C" u32 CfRes_getHeapHandle();
 void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup
 void cleanupMapEffects__Q22cf13CfGameManagerFv();
-extern const volatile unsigned char lbl_eu_80527048[];                          // CfCamEvent vtable label
+extern const unsigned char lbl_eu_80527048[];                          // CfCamEvent vtable label
 
 // Per-frame update (CfCamEvt_Update) imports.
 extern "C" void stubEmptyE__Q22cf13CfGameManagerFv(u32);
@@ -181,7 +181,7 @@ extern "C" void cfCam_nop07C0(void*, void*, void*);
 extern "C" int cfCam_correctCamGround(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
 extern "C" void cfCam_applyRelPos(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
-extern "C" float Scn_GetFrameDelta();                     // scene elapsed-time getter
+float Scn_GetFrameDelta(void* view);
 extern "C" int ScnRes_VertRayForward_E398(void*, u32, u32, u32, f32, f32);
 extern "C" void ScnRes_CopyEntryHead(void*, int);
 extern "C" void scnImN4DynStart();

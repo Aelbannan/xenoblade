@@ -1,7 +1,9 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp" // getObjectAt owner declaration
+#include "kyoshin/cf/CfMapEffectManager.hpp" // MapFx_ResolveOwner owner declaration
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 CtrlRemote_TestSharedBit(u32* buffer, s32 index);
@@ -134,9 +136,6 @@ struct CfMoveEnumList;
 void* findObjectById(int id);
 
 // Voice/battle-list sweep helpers (retail unmangled C-ABI names).
-// Signature matches CfObjectImplMove.hpp (both headers appear together).
-extern "C" void* getObjectAt(CfMoveEnumList* list, u32 idx);
-extern "C" void* MapFx_ResolveOwner(void* r3);
 class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
 // matches the CtrlPc.hpp declaration.
@@ -150,7 +149,6 @@ extern "C" void CCharVoiceMan_EnqueueOrderVoice1();
 extern "C" void CCharVoiceMan_FlagPendingVoice();
 extern "C" void CCharVoiceMan_EnqueueOrderVoice0();
 extern "C" void CCharVoiceMan_EnqueueOrderVoice2();
-extern "C" int battleCommuIsActive();
 
 // CtrlPc view exposing vf38 (vtable slot 0xA0) for CtrlRemote_MenuComboSweep's menu-state
 // word reads (CtrlPc.hpp stops at vf37 = 0x9C). The Nth declared virtual sits
@@ -318,7 +316,6 @@ public:
 // nw4r math helpers and battle-manager chain probe (retail C-ABI names).
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern "C" int CChain_HasMemberEntry(void* a, void* b);
 extern "C" u32 SkipTimer_IsActiveFlag();
 
 // Debug-assert strings pooled by the Warning call in func_80098EF8 (retail
@@ -356,9 +353,6 @@ struct CfObjAe80 {
 };
 
 // Selector-system helpers (retail C-ABI names; CfObjectSelectorObj.cpp).
-extern "C" void Selector_SetActive(void* obj, u32 arg);
-extern "C" unsigned long testFlagBit10(void* obj);
-extern "C" void setRequestParams(void* obj, u32 a, u32 b, u32 c);
 
 // vf37() (vtable slot 0x9C) result view for CtrlRemote_MenuBattleSweep: menu-state flag
 // words at 0x00 / 0x04 / 0x08 / 0x10 / 0x14.
@@ -533,14 +527,10 @@ struct CtrlEnumListSweep {
 // ---------------------------------------------------------------------------
 
 extern "C" int CfCmd_PickChain(void* res, void* actor, int mode, void* filter);
-extern "C" unsigned long SuddenCommuIsStateActive(void* self);
 extern "C" void AddZealEffect(void* obj, int arg);
-extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" u32 getAnimModelId(void* obj);
 extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
 extern "C" void CCharVoiceMan_PushChainVoiceNode(void* a, void* b);
-extern "C" void battleCommuDisableAnims();
-extern "C" void PartyGaugeAddClamped(void* obj, int value);
 
 namespace cf {
 class CChainState;

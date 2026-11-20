@@ -197,5 +197,65 @@ class PoolDefinitionTests(unittest.TestCase):
             self.assertIn("return 0.5f;", after)
 
 
+class ExternCBlockTests(unittest.TestCase):
+    @staticmethod
+    def _scan(src: str, kinds: dict[str, str]) -> tuple[str, fl.ScanResult]:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "Unit.cpp"
+            path.write_text(src)
+            values = {
+                name: fl.LabelValue(kind, 0x3F000000, 4, "0.5f", 0.5, ".sdata2")
+                for name, kind in kinds.items()
+            }
+            scan = fl.scan_source([path], values, ["f"], set())
+            return fl.render(scan.texts, scan.edits)[path], scan
+
+    def test_one_line_extern_c_block_is_not_rewritten_into_a_literal(self) -> None:
+        # Regression: EXTERN_DECL_RE cannot see past the `{`, so the label in
+        # `extern "C" { extern const float lbl; }` used to become `0.5f`,
+        # leaving invalid C++ (`extern const float 0.5f;`).
+        after, scan = self._scan(
+            'extern "C" { extern const float lbl_eu_8066AAC0; }\n'
+            "float f() { return lbl_eu_8066AAC0; }\n",
+            {"lbl_eu_8066AAC0": fl.KIND_FLOAT},
+        )
+        self.assertEqual(after, "float f() { return 0.5f; }\n")
+        self.assertEqual([e.kind for e in scan.edits], ["literal", "decl"])
+
+    def test_linkage_blocks_drop_definitions_and_keep_foreign_declarations(self) -> None:
+        after, _scan = self._scan(
+            'extern "C" {\nextern const float lbl_eu_8066AAC4;\n}\n'
+            'extern "C" { void keep(); extern const float lbl_eu_8066AAC8; }\n'
+            'extern "C" { const float lbl_eu_8066AAD0 = 1.5f; }\n'
+            "float f() { return lbl_eu_8066AAC4 + lbl_eu_8066AAC8 + lbl_eu_8066AAD0; }\n",
+            {n: fl.KIND_FLOAT for n in
+             ("lbl_eu_8066AAC4", "lbl_eu_8066AAC8", "lbl_eu_8066AAD0")},
+        )
+        self.assertNotIn("extern \"C\" { }", after)
+        self.assertNotIn("float 0.5f", after)
+        self.assertIn('extern "C" { void keep(); }', after)
+        self.assertIn("const float lbl_eu_8066AAD0 = 1.5f;", after)
+        self.assertIn("return 0.5f + 0.5f + 0.5f;", after)
+
+    def test_one_line_block_with_two_labels_is_removed_once(self) -> None:
+        after, scan = self._scan(
+            'extern "C" { extern const float lbl_eu_8066AAE0; '
+            'extern const float lbl_eu_8066AAE4; }\n'
+            "float f() { return lbl_eu_8066AAE0 + lbl_eu_8066AAE4; }\n",
+            {n: fl.KIND_FLOAT for n in ("lbl_eu_8066AAE0", "lbl_eu_8066AAE4")},
+        )
+        self.assertEqual(after, "float f() { return 0.5f + 0.5f; }\n")
+        self.assertEqual(sum(1 for e in scan.edits if e.kind == "decl"), 1)
+
+    def test_non_replaceable_linkage_declaration_survives(self) -> None:
+        after, scan = self._scan(
+            'extern "C" { extern const float lbl_eu_8066AAD8; }\n'
+            "float f() { return lbl_eu_8066AAD8; }\n",
+            {"lbl_eu_8066AAD8": fl.KIND_SHARED},
+        )
+        self.assertIn('extern "C" { extern const float lbl_eu_8066AAD8; }', after)
+        self.assertEqual([e.kind for e in scan.edits], [])
+
+
 if __name__ == "__main__":
     unittest.main()

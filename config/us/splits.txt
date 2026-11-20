@@ -5420,7 +5420,7 @@ nw4r/src/math/math_arithmetic.cpp:
 nw4r/src/math/math_triangular.cpp:
 	.text       start:0x8040D090 end:0x8040D364
 
-	.data        start:0x8056a5e0 end:0x8056a748
+	.data        start:0x8056a5e0 end:0x8056A6E8
 	.rodata        start:0x8051d7f8 end:0x8051e808
 	.sdata2        start:0x80669E20 end:0x80669E40
 nw4r/src/math/math_types.cpp:
@@ -5438,7 +5438,6 @@ nw4r/src/snd/snd_AxManager.cpp:
 	.sdata2     start:0x80669e78 end:0x80669e90
 
 	.bss        start:0x80637b20 end:0x80637f68
-	.data        start:0x8056a748 end:0x8056a798
 	.sbss        start:0x806654a8 end:0x806654c0
 nw4r/src/snd/snd_AxVoice.cpp:
 	.text       start:0x80410224 end:0x80412EE4
@@ -5463,16 +5462,19 @@ nw4r/src/snd/snd_BankFile.cpp:
 
 nw4r/src/snd/snd_BasicPlayer.cpp:
 	.text       start:0x80414410 end:0x80414804
+	.data       start:0x8056A6E8 end:0x8056A710
 	.sdata2     start:0x80669ee0 end:0x80669ee8
 
 nw4r/src/snd/snd_BasicSound.cpp:
 	.text       start:0x80414804 end:0x80415E78
 	.ctors      start:0x804FA0DC end:0x804FA0E0
+	.data       start:0x8056A710 end:0x8056A748
 	.sdata2     start:0x80669ee8 end:0x80669ef8
 
 	.sbss        start:0x806654d0 end:0x806654d8
 nw4r/src/snd/snd_BiquadFilterPreset.cpp:
 	.text       start:0x80415E78 end:0x80416144
+	.data       start:0x8056a748 end:0x8056a798
 	.sdata2     start:0x80669ef8 end:0x80669f08
 
 	.rodata        start:0x8051e808 end:0x8051fc40
@@ -6508,6 +6510,7 @@ monolib/src/scn/CScnVirtualLight.cpp:
 	.text	start:0x80495EE8 end:0x80498390
 	.sdata2     start:0x8066aa10 end:0x8066aa80
 	.data       start:0x8056E868 end:0x8056E878
+	.sdata      start:0x806639C0 end:0x806639C8
 monolib/src/scn/code_8049431C.cpp:
 	extab       start:0x8001F040 end:0x8001F068
 	extabindex  start:0x80036D90 end:0x80036DCC
@@ -6546,6 +6549,7 @@ monolib/src/scn/CScn_80496B0C.cpp:
 	.sdata        start:0x806639E0 end:0x806639E8
 monolib/src/scn/CScnBlend.cpp:
 	.sdata2     start:0x8066AAE0 end:0x8066AAF0
+	.sdata      start:0x806639E8 end:0x806639F8
 	.data	start:0x8056E9E8 end:0x8056EA08
 	.rodata	start:0x805240A0 end:0x805240B8
 	.text	start:0x8049CD50 end:0x8049D2BC
@@ -6580,11 +6584,13 @@ monolib/src/scn/CScnFilterMan.cpp:
 	.rodata	start:0x80524138 end:0x80524218
 	.text	start:0x804A0AA4 end:0x804A1EE8
 monolib/src/scn/CScnFogMan.cpp:
+	.sdata      start:0x80663A68 end:0x80663A70
 	.sdata2     start:0x8066ABB0 end:0x8066ABE0
 	.data	start:0x8056EBD0 end:0x8056EC70
 	.rodata	start:0x80524218 end:0x80524228
 	.text	start:0x804A1EE8 end:0x804A24DC
 monolib/src/scn/CScnFrame.cpp:
+	.sdata      start:0x80663A70 end:0x80663A78
 	.sdata2     start:0x8066ABE0 end:0x8066ABF0
 	.data	start:0x8056EC70 end:0x8056EC80
 	.rodata	start:0x80524228 end:0x80524238

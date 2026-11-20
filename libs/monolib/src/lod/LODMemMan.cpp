@@ -8,6 +8,7 @@
 #define IWORK_EVENT_INLINE_DTOR
 #include <harness_catalog.h>
 #include "monolib/lod/UnkClass_8046D144.hpp"
+#include "monolib/scn/code_804BD8E8.hpp"
 #include "monolib/core/CView.hpp"           // CView::getCurrentView
 #include "monolib/core/code_804E36DC.hpp"   // Scn_GetFrameDelta (frame delta, C ABI)
 #include "nw4r/g3d/g3d_obj.h"               // nw4r::g3d::G3dObj::Destroy
@@ -525,7 +526,6 @@ struct LODMemManLayout {
 // `__F<params>` to plain C++ declarations at call sites, so C linkage keeps
 // the exact retail names (the Fv suffix is a decompiler guess).  The func_*
 // bodies are the retail-named member stubs / definitions below.
-extern "C" u32 ScnRes_IsStateActive_E4A0();
 // ScnRes_Notify2Word_E458 returns the scan-query result in r3 (its void-typed
 // definition in scn/code_804BD8E8.cpp tail-calls launchRayScan, leaving the
 // result live; this TU's prototype exposes it so the refreshGroupFromList

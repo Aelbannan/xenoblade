@@ -12,5 +12,3 @@ public:
 } // namespace cf
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" UNKWORD MakeCrystalIsCreated();
-extern "C" UNKWORD MakeCrystalGetWinData();

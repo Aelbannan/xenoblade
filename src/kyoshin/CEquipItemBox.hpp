@@ -1,4 +1,6 @@
 #pragma once
+extern "C" int Counter_TestBit(void*, u32);
+#include "kyoshin/code_8025FB10.hpp"
 
 #include <types.h>
 #include "kyoshin/CBaseCur.hpp"
@@ -13,6 +15,7 @@
 #include "kyoshin/CUICfManager_Res.hpp"  // getPackedFont
 #include "kyoshin/CItemBoxGrid_Color.hpp"  // CopyVec4s, GXColorS10 helpers
 #include "kyoshin/CQuestWindow_Pane.hpp"  // setPaneVisible / isPaneVisible
+#include "kyoshin/CTitleAHelp.hpp"  // setGXColorS10 (defined in CTitleAHelp.cpp)
 
 
 namespace nw4r {
@@ -438,8 +441,7 @@ struct CItemBoxInfo;
 // (retail mangled setItemBoxIndex__FP12CItemBoxInfoUcs; C++ linkage).
 
 // Item-box list refresh helpers (CItemBoxInfo TU, retail plain names).
-extern "C" u8 ItemBoxGetTab(const u8*, unsigned int);
-// Layout text/visibility bind (retail mangled setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc).
+
 // Same-TU grid helper (retail plain name; defined in this .cpp).
 // Same-TU dispatch helpers used by sortEIBGridByPage (defined in this .cpp).
 // Same-TU grid sort helpers dispatched by sortEIBGridByPage (defined below).
@@ -452,7 +454,7 @@ extern "C" int KyoshinHeap_GetField44(void);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
 // .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
 extern "C" void SplitU32ToS16s(void*, u32);
-GXColorS10* setGXColorS10(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+
 extern s16 equipItemBox_sortMenuColorSrcTop[4];
 extern s16 equipItemBox_sortMenuColorSrcBottom[4];
 extern s16 equipItemBox_sortMenuTabNeutralTop[4];
@@ -521,7 +523,8 @@ namespace cf { class CfObjectMove; class CfObjectPc; }
 cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" void* getEntryAt(void*, u32);
-extern "C" void CfObjectPc_setupFrame(void* obj, u32 arg);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
 
 // Equipment-slot clear helpers (retail plain names; declared here instead of
 // pulling in the big cf/CtrlObjectParam headers).
@@ -536,7 +539,6 @@ extern "C" u32 CItemBlock_countKindSlots(u8);
 extern "C" s32 CItem_slotCnt(u32);   // canonical form from cf/CItem.hpp/CItem.cpp
 
 // Char-data status lookup (code_8025FB10 TU): tests a flag at obj+0x3534.
-extern "C" int Counter_TestBit(void*, u32);
 
 // .sdata2 float/double constants used by the equip-box helpers (sda21
 // relocs). 80668B2C is the drop-rate scale; 80668B30/34/38 are pane offsets.

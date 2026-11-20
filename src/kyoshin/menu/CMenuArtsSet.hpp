@@ -938,3 +938,14 @@ public:
     u8 mState;              // 0x360
     float mTimer;           // 0x364
 };
+
+// Canonical declarations for the free helpers defined by
+// kyoshin/menu/code_80231950.cpp. MWCC gives these C++ linkage names, so
+// callers must use these declarations instead of per-TU prototypes.
+namespace nw4r { namespace lyt { class DrawInfo; } }
+void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self);
+void ArtsElem_setDataByte(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off);
+void CArtsList_startLoad(CArtsList* self);
+int CArtsList_isReady(CArtsList* self);
+void CMenuArtsSet_draw(CArtsList* self, nw4r::lyt::DrawInfo* info);
+void CMenuArtsSet_beginOpen(CArtsList* self);

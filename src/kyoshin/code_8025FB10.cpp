@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_8025FB10.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 
@@ -114,14 +115,6 @@ extern char lbl_eu_80537734[];
 extern char lbl_eu_80537700[];
 extern char lbl_eu_805376EC[];
 extern char lbl_eu_805376B8[];
-
-// Shared sdata2 constant: the int->double conversion magic (2^52 + 2^51)
-// that retail's idiom subtracts.
-
-// Planted copy of the shared int->double conversion magic (2^52 + 2^51);
-// defining it lets MWCC's constant pool reuse the retail symbol for the
-// implicit-conversion lfd relocs instead of a TU-local @N label.
-static const f64 lbl_eu_806688C8 = 4503601774854144.0;
 }
 
 #define _NW4R_CONCAT(a, b) a##b
@@ -1381,8 +1374,9 @@ FSTORE:
 
 // us-802638d8 - test bit (index & 0x1F) of bitmap word (index >> 5)
 // at +0x870. Returns 0/1.
-u8 Counter_TestBit(CUnk8025FB10* obj, u32 index) {
-    return (obj->mBitmap[index >> 5] & (1 << (index & 0x1F))) != 0;
+int Counter_TestBit(void* obj, u32 index) {
+    CUnk8025FB10* counters = (CUnk8025FB10*)obj;
+    return (counters->mBitmap[index >> 5] & (1 << (index & 0x1F))) != 0;
 }
 
 // us-80263904 - gated counter add: when the script flag at slot

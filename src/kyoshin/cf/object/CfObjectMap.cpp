@@ -1,12 +1,14 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectMap
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lod/CTaskLOD.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "monolib/math/CVec4.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 #include "kyoshin/cf/IResInfo.hpp"  // real CResLookup owner (getResourceBase/isInUse/cmpField4Eq)
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"  // real CScnEnvLgtCtrlListItem owner (v25/v31/v32/v33/v35)
@@ -128,7 +130,7 @@ extern "C" int CfObjectMap_resolveResource(cf::CfObjectMap* self, u32 a, u32 b) 
     u32 packed = self->field_0x2F38;
     if (packed != 0) {
         char buf[0x40];
-        volatile u32 len = 0;
+        u32 len = 0;
         buf[0] = 0;
         int field1 = (packed >> 20) & 0x7F;
         int field2 = (packed >> 10) & 0x3FF;
@@ -266,7 +268,7 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
         if (self->field_0xE4 != 0) {
             acquireLODResource__8CTaskLODFv(self->field_0xE4, 0);
             bindTaskToLOD__8CTaskLODFv(*reinterpret_cast<void**>(&self->field_0x90[8]));
-            CTaskLOD::notifyLODTick(lbl_eu_80666A38);
+            CTaskLOD::notifyLODTick(0.0f);
         }
         if (self->field_0xE8 != 0) {
             CScnEnvLgtCtrlListItem* fx = static_cast<CScnEnvLgtCtrlListItem*>(
@@ -276,30 +278,30 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
             if (fx != 0) {
                 fx->v31(1, 1);
 
-                ml::CVec3 dir1(lbl_eu_80666A38, lbl_eu_80666A3C, lbl_eu_80666A3C);
+                ml::CVec3 dir1(0.0f, 1.0f, 1.0f);
                 f32 len1 = dir1.y * dir1.y + dir1.x * dir1.x + dir1.z * dir1.z;
                 if (dir1.x == len1) {
                     dir1 = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(dir1, dir1);
                 }
-                ml::CVec3 scale1(lbl_eu_80666A40, lbl_eu_80666A40, lbl_eu_80666A40);
+                ml::CVec3 scale1(0.5f, 0.5f, 0.5f);
                 fx->v32(1, 0, &dir1, &scale1);
 
-                ml::CVec3 dir2(lbl_eu_80666A38, lbl_eu_80666A3C, lbl_eu_80666A44);
+                ml::CVec3 dir2(0.0f, 1.0f, -1.0f);
                 f32 len2 = dir2.y * dir2.y + dir2.x * dir2.x + dir2.z * dir2.z;
                 if (dir2.x == len2) {
                     dir2 = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(dir2, dir2);
                 }
-                ml::CVec3 scale2(lbl_eu_80666A40, lbl_eu_80666A40, lbl_eu_80666A40);
+                ml::CVec3 scale2(0.5f, 0.5f, 0.5f);
                 fx->v32(1, 1, &dir2, &scale2);
 
                 u32 bdat = getBdatStringColumnValue(lbl_eu_806640A8, &lbl_eu_804FC538[5], lbl_eu_80664184);
                 if ((bdat & 1) == 0) {
                     fx->v31(1, 0);
-                    ml::CVec3 dir3(lbl_eu_80666A48, lbl_eu_80666A4C, lbl_eu_80666A48);
+                    ml::CVec3 dir3(0.15f, 46.0f, 0.15f);
                     fx->v33(0, 0, &dir3);
                     fx->v35(0, 0, 0x12, 0x1E, 5, 0x1E, 0x1E);
                 }
@@ -309,8 +311,8 @@ extern "C" void CfObjectMap_updateEvents(cf::CfObjectMap* self) {
     }
     self->field_0x2F44 = 10;
     reloadOccFrustums__Q22cf12CTaskCullingFv();
-    if (Scn_GetFrameDelta(gmScene) > lbl_eu_80666A50) {
-        Scn_SetTimeScale(gmScene, lbl_eu_80666A3C);
+    if (Scn_GetFrameDelta(gmScene) > 0.05f) {
+        Scn_SetTimeScale(gmScene, 1.0f);
     }
     CfSoundMan_ClearFxEffect(0, 0);
     CfSoundMan_ClearFxEffect(1, 0);
@@ -322,7 +324,7 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     float scale = Scn_GetFrameDelta(gmScene);
     float value = self->field_0x2F48 * scale;
     if (gmGameFlags & 0x04000000) {
-        value = lbl_eu_80666A38;
+        value = 0.0f;
     }
     if (&self->field_0xF0 != 0) {
         setMpfFloatParam__17UnkClass_8047BB54Fv(&self->field_0xF0, value);
@@ -332,12 +334,12 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     if (getUnk80664658()->mFlags & 0x80) {
         v = getUnk80664658()->field_0x210 & 0xFFFF;
     }
-    value = lbl_eu_80666A54;
+    value = 60.0f;
     self->field_0x2F44--;
     if ((s32)self->field_0x2F44 < 0) {
         self->field_0x2F44 = 0;
     } else {
-        value = lbl_eu_80666A38;
+        value = 0.0f;
     }
     // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
     updateLODRange__8CTaskLODFv(v, value);
@@ -355,13 +357,13 @@ extern "C" void CfObjectMap_updateFrame(cf::CfObjectMap* self) {
     if (fx != 0) {
         if (gmGameFlags & 0x02000000) {
             if (self->field_0x2F41 == 0) {
-                float vec[4] = {lbl_eu_80666A58, lbl_eu_80666A5C, lbl_eu_80666A60, lbl_eu_80666A64};
-                fx->v33(0, 0, vec);
+                ml::CVec4 vec(0.085f, 0.111f, 0.19f, 10000.0f);
+                fx->v33(0, 0, &vec);
                 self->field_0x2F41 = !self->field_0x2F41;
             }
         } else if (self->field_0x2F41 != 0) {
-            float vec[3] = {lbl_eu_80666A48, lbl_eu_80666A4C, lbl_eu_80666A48};
-            fx->v33(0, 0, vec);
+            ml::CVec3 vec(0.15f, 46.0f, 0.15f);
+            fx->v33(0, 0, &vec);
             self->field_0x2F41 = !self->field_0x2F41;
         }
     }

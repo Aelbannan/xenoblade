@@ -207,7 +207,11 @@ public:
 
 } // namespace UI
 
-// Offset view used by the layout-release helper CPassiveSkillLayoutRef_release: the layout
+void CPassiveSkillLine_incCharIdx(UI::CPassiveSkillLine* self);
+void CPassiveSkillLine_cursorDown(UI::CPassiveSkillLine* self);
+void CPassiveSkillLine_cursorRight(UI::CPassiveSkillLine* self);
+
+// Offset view used by the layout-release helper
 // pointer it drops sits at +0x4. CPassiveSkillCur_releaseBoth passes the +0x20 region of a
 // CPassiveSkillCur, so field_4 aliases that object's +0x24 layout.
 struct UI_PassiveSkillLayoutRef {
@@ -384,6 +388,22 @@ public:
     u8 _pad1A0[0x18];    // 0x1A0
     u8 field_1B8[0x40];  // 0x1B8 - CSysWin sub-object region (thunk1b8 target)
 };
+
+void CPassiveSkill_update(UI_CPassiveSkill* self);
+int CPassiveSkill_getVisibleIfReady(UI_CPassiveSkill* self);
+int CPassiveSkill_getActiveIfBusy(UI_CPassiveSkill* self);
+u32 CPassiveSkill_cellAtLeast8(u8* self);
+void CPassiveSkill_open(UI_CPassiveSkill* self);
+void CPassiveSkill_close(UI_CPassiveSkill* self);
+void CPassiveSkill_confirm(UI_CPassiveSkill* self);
+u8 CPassiveSkill_pickOpenState(UI_CPassiveSkill* self);
+s32 CPassiveSkill_isSyswinOrLearned(UI_CPassiveSkill* self);
+
+void UI_CPassiveSkill_thunk28_68594(u8* self);
+void UI_CPassiveSkill_thunk28_67E2C(u8* self);
+void UI_CPassiveSkill_thunk28_68250(u8* self);
+void UI_CPassiveSkill_thunk28_67C44(u8* self);
+void UI_CPassiveSkill_thunk28_68518(u8* self);
 
 class CPassiveSkill {
 public:
@@ -613,7 +633,9 @@ struct CPSkillEnumListCount {
 extern "C" void startEnumObjects(void*, u32, u32);
 extern "C" CPSkillEnumListSlot* getEntryAt(void*, u32);
 extern "C" cf::CfObjectMove* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
-extern "C" void CfObjectPc_setupFrame(cf::CfObjectMove* move, u32 flag);
+namespace cf { class CfObjectPc; }
+void CfObjectPc_setupFrame(cf::CfObjectPc* obj);
+typedef void (*CfObjectPcSetupFrameFn)(cf::CfObjectPc*, u32);  // DEBT(callcast): retail passes live r4 to 1-arg CfObjectPc_setupFrame (mangled arity 1; LOSTFIX proof)
 
 // 5-byte category filter copied from the .sdata2 constants by CPassiveSkillLine_syncEquipState:
 // the word is stored as a unit (lwz/stw) then the trailing byte (stb), and

@@ -141,8 +141,8 @@ extern "C" void schedDetachChildSlot(void* effect, void* parent);
 
 // Model / animation
 extern "C" nw4r::g3d::ChrAnmResult* scnImN4AnimFn(void* model, const char* animName, f32 time);
-extern "C" void* scnImN4BuildByIdx(void* global, void* handle, int, int, int, int);
-extern "C" void simSetLeafDist7B0(void* model, f32 val);
+extern "C" u8* scnImN4BuildByIdx(u8* global, u8* handle, int, int, int, int);
+extern "C" void simSetLeafDist7B0(void* self, f32 value);
 extern "C" void simSetFlag2000Chain(void* model, int val);
 extern "C" void simBindChrAnim(void* model, void* animData, int, int, int, int, int);
 
@@ -153,11 +153,12 @@ extern "C" void* Scn_InitGlobalA(void* global, void* bdat, int val);
 // Random
 
 // Device
-extern "C" int getLanguage__9CDeviceSCFv();
+// getLanguage is the real static member CDeviceSC::getLanguage; callers
+// include monolib/device/CDeviceSC.hpp (no pre-mangled extern here).
 extern "C" bool getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
     const char* name, void* handle, u32* outSize);
 
-// Globals (retail linker symbols)
+// Globals
 extern "C" {
     extern u32 lbl_eu_8065FC18[];    // effect-singleton manager object (array forces @ha/@l)
     extern const char* lbl_eu_80662470;  // "effTgt"

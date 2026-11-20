@@ -1,4 +1,5 @@
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CBgTex.hpp"
 #include "revolution/gx/GXPixel.h"
@@ -34,10 +35,8 @@ void waitForDrawDone__9CDeviceVIFv();
 void CUICfManager_createQueuedMenus();
 void BgTex_Draw_3D7C(void* self, nw4r::lyt::DrawInfo* di);   // CBgTex layout draw
 void BgTex_Tick_3D54(void* self);                            // CBgTex animate
-int  mkCrystalGetFlag4361(void* self);                            // CMakeCrystalWin query
-// (memberized: mkCrystalIsBusyState -> CMakeCrystalWin::mkCrystalIsBusyState; declaration moved into class CMakeCrystalWin) // CMakeCrystalWin query
+
 void mkCrystalTick(void* self);                            // CMakeCrystalWin tick
-int  CMainMenu_GetInstancePtr();
 void ArtsInfo_SetReadyFlag();
 void __ct__6CBgTexFUc(void* self, int arg);
 void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* self, const void* src);
@@ -50,15 +49,14 @@ void mkCrystalTeardown(void*);
 extern "C" void MakeCrystalInitWin(void* self);
 void BgTex_Acquire_3C14(void* self);                            // CBgTex init
 void MakeCrystalCopyDispArea(void* dst, const void* src);            // big state copy
-void MakeCrystalCopyBox(void* dst, const void* src);            // big state copy
-// Weak CTitleAHelp::operator= (emitted out of line in retail). Interim C spelling:
+void MakeCrystalCopyBox(void* dst, const void* src);                  // crystal-box state copy
+
 // a real assignment inlines here until the sibling copies in Init are real
 // assignments too (MWCC_CASES inlining Rule B).
 extern "C" void __as__11CTitleAHelpFRC11CTitleAHelp(void* dst, void* src);
 void MakeCrystalCopyStateRecord(void* dst, const void* src);            // state record copy
 void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* render, u32 a, u32 b);
 int  CtrlRemote_TouchBitByArg(int id);
-void MiniMapSetActiveFlag();
 void CCharVoiceMan_FlushAll();
 void MenuSnd_StopAllSlots_89C88();
 void CTaskGame_stopVision();
@@ -66,6 +64,15 @@ void* __dt__15CMakeCrystalWinFv(void*, int); // Init's stack temporary
 void __dt__6CBgTexFv(void*, int);
 void __ct__CMakeCrystalWin(void* self, u32 arg4, u32 arg5);
 }
+
+// Real C++ declarations from the owning CMakeCrystalWin.hpp.
+u32 mkCrystalGetFlag4361(void* self);
+u32 mkCrystalGetWord10(void* self);
+
+// Defined in CMiniMap.cpp (C++ linkage, retail symbol MiniMapSetActiveFlag__Fv).
+void MiniMapSetActiveFlag();
+
+// Declared by kyoshin/CMainMenu.hpp.
 
 // UI sound effect (playUISound__FUl).
 // MakeCrystalInitWin helper: init the CBgTex sub-object and arm the state byte.
@@ -363,12 +370,10 @@ CMenuMakeCrystal* CMenuMakeCrystal::create(CProcess* parent, CScn* scene) {
 }
 
 bool MakeCrystalIsCreated() { return CMenuMakeCrystal::sInstance != nullptr; }
-void* mkCrystalGetWord10(void*);
-
 void* MakeCrystalGetWinData() {
     unsigned char* p = reinterpret_cast<unsigned char*>(CMenuMakeCrystal::sInstance);
     if (p != 0) {
-        return mkCrystalGetWord10(p + 0x80);
+        return reinterpret_cast<void*>(mkCrystalGetWord10(p + 0x80));
     }
     return 0;
 }

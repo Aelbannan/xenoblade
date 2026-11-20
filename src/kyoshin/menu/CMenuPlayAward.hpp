@@ -291,7 +291,7 @@ extern "C" void BgTex_Tick_3D54(CBgTex* self);
 
 // CfGameManager controller-type query + save/skip busy queries (retail
 // pre-mangled / unmangled C symbols; same scheme as CMenuTutorialList.hpp).
-extern "C" int CMainMenu_GetInstancePtr();
+// CMainMenu_GetInstancePtr is declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 
 // Shared layout-arc resource manager (retail-unmangled; ArcResourceAccessor

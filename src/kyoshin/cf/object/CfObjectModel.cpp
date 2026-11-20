@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/CfBdat.hpp"
@@ -85,17 +86,17 @@ cf::CfObjectModel::CfObjectModel() {
     g34->w34 = 0;
     *(void**)this = (void*)__vt__Q22cf8CfObject;
     mSubObj38 = 0;
-    mPos3C = lbl_eu_80666A68;
-    mPos40 = lbl_eu_80666A68;
-    mPos44 = lbl_eu_80666A68;
-    g48->f48 = lbl_eu_80666A68;
-    mField4C = lbl_eu_80666A68;
-    g50->f50 = lbl_eu_80666A68;
+    mPos3C = 0.0f;
+    mPos40 = 0.0f;
+    mPos44 = 0.0f;
+    g48->f48 = 0.0f;
+    mField4C = 0.0f;
+    g50->f50 = 0.0f;
     Sub54Flt* sub54 = reinterpret_cast<Sub54Flt*>(&mSubObj54);
-    sub54->a = lbl_eu_80666A68;
-    sub54->b = lbl_eu_80666A68;
-    sub54->c = lbl_eu_80666A68;
-    mFloat60 = lbl_eu_80666A6C;
+    sub54->a = 0.0f;
+    sub54->b = 0.0f;
+    sub54->c = 0.0f;
+    mFloat60 = 1.0f;
     mFlags68 = 0;
     g6c->w6c = 0;
     g6c->w70 = 0;
@@ -124,8 +125,8 @@ cf::CfObjectModel::CfObjectModel() {
     // Phase-2-only constants (defined after the call, so they cannot go
     // nonvolatile; they let MWCC reuse one load per pool across the four
     // stores instead of reloading per use).
-    float one2 = lbl_eu_80666A6C;
-    float zero2 = lbl_eu_80666A68;
+    float one2 = 1.0f;
+    float zero2 = 0.0f;
     t90->fa0 = zero2;
     t90->fa4[0] = one2;
     t90->fa4[1] = one2;
@@ -208,7 +209,7 @@ u8* __dt__800BAA24(u8* object, s32 deleteFlag) {
 // run the model-specific cleanup pair (vtable 0x17C then 0x178) and reset
 // the +0x70/+0x90/+0x94 words plus the +0x68 flag mask.
 void cf::CfObjectModel::CfObjectModel_teardownModel() {
-    notifyDetach_(this);
+    notifyDetach_((u8*)this);
     if (mSubObj38 != 0) {
         // +0xAC with no args, return discarded = CfObject_getPosVector
         // (us-800BB3A8: lwz r12,0xAC(r12)/bctrl, r3 unused after).
@@ -402,27 +403,27 @@ u32 CfObj_KindBit7(cf::CfObject* obj) {
 // Copies the vector into the sub-object transform's position and refreshes
 // it, then mirrors the vector into this object's +0x3C position (retail
 // symbol is Fv even though the body reads r4).
-void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
-    if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
+void cf::CfObjectModel::CfObject_setMoveTargetVec(const ml::CVec3* vec) {
+    if (this->mSubObj98 != 0) {
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(this->mSubObj98));
         transform->mPos = *vec;
         transform->update();
     }
     // Retail copies through GPRs (lwz/stw): MWCC emits integer copies for
     // CVec3 (nameless-union float) struct assignments, not lfs/stfs.
-    *reinterpret_cast<ml::CVec3*>(&self->mPos3C) = *vec;
+    *reinterpret_cast<ml::CVec3*>(&this->mPos3C) = *vec;
 }
 
-// Copies the vector into the sub-object transform's position and refreshes
+// Copies the vector into the sub-object transform's position
 // it, then mirrors the vector into this object's +0x3C position (retail
 // symbol is Fv even though the body reads r4; same body as the +0x9C slot).
-void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
-    if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
+void cf::CfObjectModel::CfObject_UnkVirtualFunc22(const ml::CVec3* vec) {
+    if (this->mSubObj98 != 0) {
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(this->mSubObj98));
         transform->mPos = *vec;
         transform->update();
     }
-    *reinterpret_cast<ml::CVec3*>(&self->mPos3C) = *vec;
+    *reinterpret_cast<ml::CVec3*>(&this->mPos3C) = *vec;
 }
 
 // Collision/ground-query helpers used by UnkVirtualFunc25 below (retail ABI:
@@ -461,31 +462,31 @@ extern "C" void CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(
     }
 
     if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5)) >> 5) != 0) {
-        VecMath_GroundProbeDown(pos, &probe, filter, scale, lbl_eu_80666A68);
+        VecMath_GroundProbeDown(pos, &probe, filter, scale, 0.0f);
 
         // Probe down from the hit point...
-        int found = ScnRes_VertRayForward_E398(&probe, 0, 0x40000, 0, lbl_eu_80666A70,
-                                  lbl_eu_80666A74);
+        int found = ScnRes_VertRayForward_E398(&probe, 0, 0x40000, 0, -0.5f,
+                                  0.7071f);
         if (found != 0) {
             ScnRes_CopyEntryHead(&hitPos, 0);
             ScnRes_CopyEntryMid(&normal, 0);
             // ...then re-probe from a lifted copy of the hit point.
-            ml::CVec3 offset(lbl_eu_80666A68, lbl_eu_80666A78, lbl_eu_80666A68);
+            ml::CVec3 offset(0.0f, 0.19f, 0.0f);
             ml::CVec3 sum = probe + offset;
             lifted.set(sum);
-            if (ScnRes_VertRayForward_E398(&lifted, 0x44a05, 0, 0, lbl_eu_80666A7C,
-                              lbl_eu_80666A74)) {
+            if (ScnRes_VertRayForward_E398(&lifted, 0x44a05, 0, 0, -1.3900001f,
+                              0.7071f)) {
                 found = 0;
             }
         }
         if (found != 0) {
-            probe.y -= lbl_eu_80666A6C;
+            probe.y -= 1.0f;
         }
     } else {
         // Same call shape with the selected filter (retail reuses the filter
         // word here: r5 is not reloaded on this path, so the else probe uses
         // the default 0x44a09, not a fresh 0x4a05 immediate).
-        VecMath_GroundProbeDown(pos, &probe, filter, scale, lbl_eu_80666A68);
+        VecMath_GroundProbeDown(pos, &probe, filter, scale, 0.0f);
     }
     self->CfObject_setMoveTargetVec(&probe);
 }
@@ -495,10 +496,10 @@ extern "C" void CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f(
 // the cf-chain vtable slot +0xB4 (CfObject_snapMoveTarget, hidden args).
 void cf::CfObjectModel::CfObject_setPosXZ(float a, float b) {
     float arr[3];
-    arr[1] = lbl_eu_80666A80;
+    arr[1] = 0.5f;
     arr[0] = a;
     arr[2] = b;
-    this->CfObject_snapMoveTarget(reinterpret_cast<ml::CVec3*>(arr), lbl_eu_80666A84);
+    this->CfObject_snapMoveTarget(reinterpret_cast<ml::CVec3*>(arr), 1000.0f);
 }
 
 // Return a pointer-typed word: the sub-object's derived value +0xB8, or
@@ -541,13 +542,13 @@ void* cf::CfObjectModel::CfObject_getField48() {
 // Stores the value into the sub-object transform's rotation-Y and refreshes
 // it, then stores it at +0x4C (retail symbol is Fv even though the body
 // reads f1).
-void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
-    if (self->mSubObj98 != 0) {
-        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(self->mSubObj98));
+void cf::CfObjectModel::CfObject_setMoveHeadAngle(float value) {
+    if (this->mSubObj98 != 0) {
+        ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(simGetLeafActData(this->mSubObj98));
         transform->mRot.y = value;
         transform->update();
     }
-    self->mField4C = value;
+    this->mField4C = value;
 }
 
 float cf::CfObjectModel::CfObject_getMoveHeadAngle() {
@@ -605,7 +606,7 @@ u32 CfModel_GetEffOwner(cf::CfObjectModel* self) {
 // a non-const member emits stw-then-lwz (2 structural).
 float cf::CfObjectModel::CfObject_getHeightDiff() const {
     if (this->mSubObj98 == 0) {
-        return lbl_eu_80666A68;
+        return 0.0f;
     }
     CfObjectModelVec3 outA, outB;
     TexMan_GetDefaultXf_0A44(this->mSubObj98, &outA, &outB);
@@ -714,13 +715,13 @@ void CfModel_SyncVisFlag(cf::CfObjectModel* self, u32 flag) {
 // Sets/clears the +0x68 0x00100000 flag, then forwards (sub, flag) to the
 // model visibility helper as a tail call when the sub-object's +0x7A4 bit-1
 // flag differs (retail symbol is Fv even though the body reads r4).
-void CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int flag) {
+void cf::CfObjectModel::CfObject_UnkVirtualFunc66(int flag) {
     if (flag != 0) {
-        self->mFlags68 |= 0x00100000;
+        this->mFlags68 |= 0x00100000;
     } else {
-        self->mFlags68 &= ~0x00100000;
+        this->mFlags68 &= ~0x00100000;
     }
-    cf::CfObjectModelSub98* sub = self->mSubObj98;
+    cf::CfObjectModelSub98* sub = this->mSubObj98;
     if (sub != 0 && ((sub->field_7A4 >> 1) & 1) != flag) {
         simSetFlag2OnTree(sub, flag);
     }
@@ -749,9 +750,9 @@ void cf::CfObjectModel::CfObject_setVisibleFlag(int flag) {
 // sub-object's vtable slot +0x48 when a sub-object is present. The retail
 // symbol is Fv (no params) even though the function reads f1, so the exact
 // mangled name is written verbatim (MWCC emits names containing __ as-is).
-void CfObject_syncModelRate__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
-    cf::CfObjectModelSub98* sub = self->mSubObj98;
-    self->field_A0 = value;
+void cf::CfObjectModel::CfObject_syncModelRate(float value) {
+    cf::CfObjectModelSub98* sub = this->mSubObj98;
+    this->field_A0 = value;
     if (sub == 0) {
         return;
     }
@@ -874,8 +875,8 @@ int cf::CfObjectModel::CfObject_UnkVirtualFunc68(const ml::CVec3* vec) {
     if (sub != 0) {
         result = 0;
         if ((sub->field_7A4 & 0x2) != 0) {
-            if (this->CfObject_getProgressLow() < lbl_eu_80666A6C &&
-                this->CfObject_getProgressHigh() > lbl_eu_80666A68) {
+            if (this->CfObject_getProgressLow() < 1.0f &&
+                this->CfObject_getProgressHigh() > 0.0f) {
                 result = 1;
             }
         }
@@ -891,9 +892,9 @@ void CfModel_NotifyReady(cf::CfObjectModel* self) {
     if (self->mSubObj98 != 0) {
         reinterpret_cast<CScnItemModel*>(self->mSubObj98)->notifyModelReady();
         float vec[3];
-        vec[0] = lbl_eu_80666A6C;
-        vec[1] = lbl_eu_80666A6C;
-        vec[2] = lbl_eu_80666A6C;
+        vec[0] = 1.0f;
+        vec[1] = 1.0f;
+        vec[2] = 1.0f;
         reinterpret_cast<CScnItemModel*>(self->mSubObj98)->probeModelVec(vec, 0);
     }
 }
@@ -976,7 +977,7 @@ void CfModel_ReattachTrg(cf::CfObjectModel* self) {
     }
 }
 
-void* CfObjectModel_checkTargetNode__Q22cf13CfObjectModelFv(void* self) { return 0; }
+void* cf::CfObjectModel::CfObjectModel_checkTargetNode(void* arg) { return 0; }
 
 // CfObject.hpp declares this with (float, float) params but the retail symbol is Fv (no params),
 // so we emit the exact mangled name via extern "C" to match the retail .o symbol table.
@@ -987,7 +988,7 @@ extern "C" void CfObject_setPosXZ__Q22cf8CfObjectFv(cf::CfObject* self, float a,
     // pointer shapes; -ipa off breaks the leaf shape; GC/3.0a5.2 fixes the
     // order but the TU requires Wii/1.1 (never_inline attr, 22 byte-identical
     // siblings). Witness rejects (store offsets are non-register bits).
-    float c = lbl_eu_80666A68;
+    float c = 0.0f;
     self->mPos3C = a;
     self->mPos44 = b;
     self->mPos40 = c;
@@ -1170,6 +1171,14 @@ void CfObject_getSubPosWord__Q22cf13CfObjectModelFv();
 void CfObject_getPosSample__Q22cf13CfObjectModelCFi();
 void CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3();
 void CfObjectModel_getModelName__Q22cf13CfObjectModelFv();
+// Member definitions above emit these exact retail names; name them here for
+// the hand-built vtable arrays below (no new symbols are introduced).
+void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFPCQ22ml5CVec3();
+void CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFPCQ22ml5CVec3();
+void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFf();
+void CfObject_syncModelRate__Q22cf13CfObjectModelFf();
+void CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFi();
+void CfObjectModel_checkTargetNode__Q22cf13CfObjectModelFPv();
 void CfObjectModel_snapToBone__Q22cf13CfObjectModelFPQ22cf8CfObjectPCc();
 void CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv();
 void CfObject_setVisibleFlag__Q22cf13CfObjectModelFi();
@@ -1227,17 +1236,17 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_pushRefreshExtra__Q22cf8CfObjectFf,
     (const void*)CfObject_readRefreshValue__Q22cf8CfObjectFv,
     (const void*)CfObject_checkTargetState__Q22cf8CfObjectFv,
-    (const void*)CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_setMoveTargetVec__Q22cf13CfObjectModelFPCQ22ml5CVec3,
     (const void*)CfObject_setPosXZ__Q22cf13CfObjectModelFff,
     (const void*)CfObject_setPosXYZ__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFPCQ22ml5CVec3,
     (const void*)CfObject_getPosVector__Q22cf13CfObjectModelFv,
     (const void*)CfObject_getPosTriple__Q22cf13CfObjectModelFv,
     (const void*)CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f,
     (const void*)CfObject_applyMoveOffset__Q22cf8CfObjectFPCQ22ml5CVec3f,
     (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
     (const void*)CfObject_getField48__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFf,
     (const void*)CfObject_setMoveYaw__Q22cf13CfObjectModelFv,
     (const void*)CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setScaledHeadAngle__Q22cf13CfObjectModelFv,
@@ -1278,7 +1287,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_setVisibleFlag__Q22cf13CfObjectModelFi,
     (const void*)CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3,
     (const void*)CfObject_isVisibleFlag__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_syncModelRate__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_syncModelRate__Q22cf13CfObjectModelFf,
     (const void*)CfObject_getProgressLow__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setProgressHigh__Q22cf13CfObjectModelFf,
     (const void*)CfObject_getProgressHigh__Q22cf13CfObjectModelFv,
@@ -1348,17 +1357,17 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_pushRefreshExtra__Q22cf8CfObjectFf,
     (const void*)CfObject_readRefreshValue__Q22cf8CfObjectFv,
     (const void*)CfObject_checkTargetState__Q22cf8CfObjectFv,
-    (const void*)CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_setMoveTargetVec__Q22cf13CfObjectModelFPCQ22ml5CVec3,
     (const void*)CfObject_setPosXZ__Q22cf13CfObjectModelFff,
     (const void*)CfObject_setPosXYZ__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFPCQ22ml5CVec3,
     (const void*)CfObject_getPosVector__Q22cf13CfObjectModelFv,
     (const void*)CfObject_getPosTriple__Q22cf13CfObjectModelFv,
     (const void*)CfObject_snapMoveTarget__Q22cf8CfObjectFPQ22ml5CVec3f,
     (const void*)CfObject_applyMoveOffset__Q22cf8CfObjectFPCQ22ml5CVec3f,
     (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
     (const void*)CfObject_getField48__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFf,
     (const void*)CfObject_setMoveYaw__Q22cf13CfObjectModelFv,
     (const void*)CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setScaledHeadAngle__Q22cf13CfObjectModelFv,
@@ -1395,11 +1404,11 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_readKindFlagWord__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setMoveBusyState__Q22cf8CfObjectFi,
     (const void*)CfObject_setMoveReadyFlag__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFi,
     (const void*)CfObject_setVisibleFlag__Q22cf13CfObjectModelFi,
     (const void*)CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFPCQ22ml5CVec3,
     (const void*)CfObject_isVisibleFlag__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_syncModelRate__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_syncModelRate__Q22cf13CfObjectModelFf,
     (const void*)CfObject_getProgressLow__Q22cf13CfObjectModelFv,
     (const void*)CfObject_setProgressHigh__Q22cf13CfObjectModelFf,
     (const void*)CfObject_getProgressHigh__Q22cf13CfObjectModelFv,
@@ -1408,7 +1417,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObjectModel_getModelName__Q22cf13CfObjectModelFv,
     (const void*)CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv,
     (const void*)CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv,
-    (const void*)CfObjectModel_checkTargetNode__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_checkTargetNode__Q22cf13CfObjectModelFPv,
     (const void*)CfObjectModel_snapSubTarget__Q22cf13CfObjectModelFPQ22ml5CVec3f,
     (const void*)CfObjectModel_getSubFlag04__Q22cf13CfObjectModelFv,
     (const void*)CfObjectModel_getModelFloatA8__Q22cf13CfObjectModelFv,
@@ -1532,22 +1541,3 @@ __declspec(section ".data") __attribute__((used)) const char lbl_eu_80529678[0x1
 __declspec(section ".rodata") __attribute__((aligned(8))) u8 lbl_eu_804FC548[0x8] __attribute__((used)) = {
     0x00, 'm', 'o', 'v', 'e', 0x00, 0x00, 0x00
 };
-
-// .sdata2 0x20: position/probe constants in retail order. Scalar consts are
-// out: MWCC -ipa file folds their values into code (regressing Unk56/Unk7)
-// and volatile reorders the loads (regressing Unk56 harder); the aggregate
-// keeps the pool bytes ordered while its member loads stay opaque like the
-// old UNDEF externs. Hpp keeps plain `extern const float` decls (ignored by
-// codegen once the use sites rewrite to members below).
-struct Sdata2_ModelPool { float f68, f6C, f70, f74, f78, f7C, f80, f84; };
-__declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2_ModelPool sdata2_ModelPool = {0.0f, 1.0f, -0.5f, 0.7071f, 0.19f, -1.3900001f, 0.5f, 1000.0f};
-#define lbl_eu_80666A68 (sdata2_ModelPool.f68)
-#define lbl_eu_80666A6C (sdata2_ModelPool.f6C)
-#define lbl_eu_80666A70 (sdata2_ModelPool.f70)
-#define lbl_eu_80666A74 (sdata2_ModelPool.f74)
-#define lbl_eu_80666A78 (sdata2_ModelPool.f78)
-#define lbl_eu_80666A7C (sdata2_ModelPool.f7C)
-#define lbl_eu_80666A80 (sdata2_ModelPool.f80)
-#define lbl_eu_80666A84 (sdata2_ModelPool.f84)
-

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/CTaskGameEffApi.hpp"
+#include "kyoshin/CTaskGameEff.hpp"
 #include "kyoshin/TagProcCompareIds.hpp"
 
 #include <nw4r/db/db_assert.h>

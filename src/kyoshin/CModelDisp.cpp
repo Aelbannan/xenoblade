@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/action/CActParamAnim.hpp"
 #include "kyoshin/CModelDisp.hpp"
 // CfObjectImplMove.hpp (via harness_catalog) declares the canonical extern "C"
 // void* form of startEnumObjects; CModelDispEquip.hpp re-declares it with a
@@ -14,6 +15,7 @@
 #undef startEnumObjects
 #undef getPlayer__Q22cf13CfGameManagerFi
 #include "kyoshin/CfEnumListHolder.hpp"
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 
 // Cross-TU calls (retail unmangled symbols; declared in CModelDisp.hpp)
 extern "C" void ModelDispUpdateSlots(CModelDisp* self);
@@ -32,7 +34,6 @@ extern "C" void* ModelDispConstructSub(CModelDispSub* sub) {
     return sub;
 }
 
-extern "C" void __destroy_arr(void*, void*, int, int);
 
 // Sub-object destructor: destroys the two-member CActParamAnimGame array at
 // +0x550 (0x53C stride) and the single one at +0xC, then frees the object
@@ -43,7 +44,7 @@ extern "C" void __destroy_arr(void*, void*, int, int);
 #pragma optimize_for_size on
 u8* __dt__801FBF0C(CModelDispSub* obj, int flag) {
     if (obj != 0) {
-        __destroy_arr((char*)obj + 0x550, (void*)__dt__Q22cf17CActParamAnimGameFv,
+        __destroy_arr((char*)obj + 0x550, (ConstructorDestructor*)__dt__Q22cf17CActParamAnimGameFv,
                       0x53C, 2);
         __dt__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)((char*)obj + 0xC), -1);
         if (flag > 0) {
@@ -163,7 +164,7 @@ extern "C" void ModelDispTeardownAll(CModelDisp* self) {
 }
 #pragma optimize_for_size off
 
-u8 ModelDispGetDoneFlag(void* self) { return ((CModelDisp*)self)->field_2FE4; }
+int ModelDispGetDoneFlag(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
 // retail: if (field_2FD8 == 2) { field_2FD8 = 3; field_2FE4 = 0; }
 extern "C" void ModelDispStartFadeIn(CModelDisp* self) {
@@ -215,7 +216,7 @@ extern "C" __declspec(noinline) void ModelDispDriveFadeOut(CModelDisp* self) {
 #pragma push
 #pragma optimize_for_size on
 CModelDisp::~CModelDisp() {
-    __destroy_arr(&mSubs[0], (void*)__dt__801FBF0C, 0xFF0, 3);
+    __destroy_arr(&mSubs[0], (ConstructorDestructor*)__dt__801FBF0C, 0xFF0, 3);
 }
 #pragma pop
 
@@ -373,7 +374,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
             vec[0] = f0;
             vec[1] = f1;
             vec[2] = f2;
-            setAnimSubPos(&h->actParam, vec);
+            setAnimSubPos((CActParamAnim*)&h->actParam, (const CActParamAnimData3*)vec);
             ((CDispHolderWordView*)h)->flags18 |= 0x160;
             ((CDispHolderWordView*)h)->owner10 = self;
             ((CDispHolderWordView*)h)->owner40 = self;
@@ -408,7 +409,7 @@ extern "C" __declspec(noinline) void ModelDispUpdateSlots(CModelDisp* self) {
                     if (mp != NULL && h->unk_55C != NULL) {
                         CActParamAnimView* ap = &h->actParams[j];
                         ap->field_0x378 = j;
-                        AnimGame_SetStateFlags(ap);
+                        AnimGame_SetStateFlags((cf::CActParamAnimGame*)ap);
                         attachAnimObj(
                             ap, mp, h->unk_55C,
                             reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
@@ -509,7 +510,7 @@ void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
                 CModelDispSlot* slot = getEntryAt((CModelDispEnumList*)holder.get(), 0);
                 if (slot->field_04 != NULL) {
                     CModelDispActor* actor = getCfObjectPc(slot->field_04);
-                    CModelDispNameParam* res = NULL; // name param from the lookup
+                    const char* res = NULL; // name param from the lookup
                     s32 flag = 0;                    // slot kind for the rebinder
                     // Retail compiles both dispatches as switch statements
                     // (chained cmpi + beq arms).
@@ -526,7 +527,7 @@ void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
                             break;
                         }
                         if (res != NULL) {
-                            ModelDispRebindSlot(self, (s32)actor, i, res, flag);
+                            ModelDispRebindSlot(self, (s32)actor, i, (void*)res, flag);
                         }
                         break;
                     case 1:
@@ -541,7 +542,7 @@ void ModelDispScanRebind(CModelDisp* self, CModelDispParent* param, s32 enable,
                             break;
                         }
                         if (res != NULL) {
-                            ModelDispRebindSlot(self, (s32)actor, i, res, flag);
+                            ModelDispRebindSlot(self, (s32)actor, i, (void*)res, flag);
                         }
                         break;
                     }

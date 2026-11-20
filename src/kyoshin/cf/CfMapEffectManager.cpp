@@ -3,8 +3,11 @@
 
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
-#include "kyoshin/cf/object/CfObjectEff.hpp"
+#include "kyoshin/cf/object/CfObjectEff.hpp"  // cf::CfObjectEff definition
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
+#include "kyoshin/cf/CfResReloadImpl.hpp"  // getReloadParam0 (owner)
 #include "kyoshin/cf/CfMapMineManager.hpp" // extern "C" lookupWorkAtAddr/800B9404/8003B1EC/8003B41C
 #include "monolib/device/CDeviceSC.hpp"   // CDeviceSC::getLanguage
 #include <string.h>
@@ -13,15 +16,15 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" {
-void setChild5CFl_(char* obj, int flag); // CfObjectEff flag setter
-u16 getReloadParam0();                     // play-time seconds getter
+
 void setChildScl__(cf::CfObject* object, float first, float second);
 // CfGameManager phase/counter getters (same signatures as CfGimmickItem.hpp;
 // CfGimmickItem.hpp itself cannot be included here - its CfGimmick.hpp
 // re-declares CtrlRemote_TouchBitByArg with a conflicting signature).
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
-void CfT_DispatchFrameCounts();
+// Retail call shape: pre-mangled member symbol with the object id in r3 and
+// a second (unused) GPR left at 0; no owner header carries this spelling yet.
 void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 }
 
@@ -351,7 +354,7 @@ void CfMapEffectManager::updateRow(int index, u8* bdat) {
             newObj->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
             newObj->CfObject_setRotVec((const ml::CVec3*)args);
             if (extra != 0) {
-                bindPartnerO_(newObj, extra, 0);
+                bindPartnerO_((cf::CfObjectEff*)newObj, (u8*)extra, (u8*)0);
             }
             GameSubManagerCamState* cam =
                 (GameSubManagerCamState*)cf::CfGameManager::getGameSubManager();

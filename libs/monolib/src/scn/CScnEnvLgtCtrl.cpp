@@ -7,7 +7,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/scn/CScnTimeApi.hpp"
+#include "monolib/scn/CScn.hpp"
 #include <nw4r/db/db_assert.h>            // nw4r::db::Panic
 #include <nw4r/g3d/g3d_anmclr.h>
 #include <nw4r/g3d/g3d_anmobj.h>
@@ -26,9 +26,11 @@
 #include <revolution/MTX.h>              // PSMTXConcat / PSMTXIdentity / PSVECNormalize
 #include "monolib/math/CCol3.hpp"        // ml::CCol3::black (CVec3 via CLight.hpp)
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
+#include <new>
+#include "monolib/scn/code_804BD8E8.hpp"
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"  // getScnRootSlot10 / Scn_GetFrameDelta queries
-#include "libs/monolib/src/scn/CScnFogMan.hpp"  // CScnFogMan::field_0x28 (scnLgtApplyFogByte)
+#include "libs/monolib/src/scn/CScnFogMan.hpp"
 #include "monolib/math/CVec4.hpp"       // ml::CVec4 (scnLgtDispatchEnv slot/walk vecs)
 // The catalog header declares the post-update hook ScnEnvLgt_noopF940 as (void),
 // which conflicts with the real signature declared in CScnEnvLgtCtrl.hpp
@@ -1323,7 +1325,7 @@ extern "C" int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* vi
             LightCtlSetColor(view, &out);
         }
         LightCtlSetDir(view, (const u8*)entry + 0xC);
-        LightCtlSetEnable(view, 1);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         return 1;
     }
     CScnEnvLgtCtrlLgtVec4 out;
@@ -1338,7 +1340,7 @@ extern "C" int scnLgtApplyLightCmd(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* vi
         LightCtlSetAttnMode(view, 1);
         LightCtlSetColor(view, &out);
         LightCtlSetDir(view, (const u8*)&ctl->field_0x30[0]);
-        LightCtlSetEnable(view, 1);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         return 1;
     }
     return 0;
@@ -1377,7 +1379,7 @@ extern "C" int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightVi
         LightCtlSetPos(view, (const u8*)entry);
         LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
                       entry->field_0x2C);
-        LightCtlSetEnable(view, 1);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         return 1;
     }
     CScnEnvLgtCtrlLgtVec4 out;
@@ -1387,7 +1389,7 @@ extern "C" int scnLgtApplyLightCmdScaled(CScnEnvLgtCtrl* self, CScnEnvLgtLightVi
         LightCtlSetColor(view, &out);
         LightCtlSetPos(view, (const u8*)&ctl->field_0x30[0]);
         LightCtlInitDistAttn(view, ctl->field_0x44, ctl->field_0x48, ctl->field_0x4C);
-        LightCtlSetEnable(view, 1);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         return 1;
     }
     return 0;
@@ -1426,8 +1428,8 @@ extern "C" int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* 
         LightCtlSetDir(view, (const u8*)entry + 0xC);
         LightCtlInitDistAttn(view, entry->field_0x34, entry->field_0x28,
                       entry->field_0x2C);
-        LightCtlInitSpot(view, entry->field_0x38, entry->field_0x30);
-        LightCtlSetEnable(view, 1);
+        LightCtlInitSpot(reinterpret_cast<CLight*>(view), entry->field_0x30, (_GXSpotFn)entry->field_0x38);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         return 1;
     }
     CScnEnvLgtCtrlLgtVec4 out;
@@ -1438,8 +1440,8 @@ extern "C" int scnLgtApplyLightCmdEx(CScnEnvLgtCtrl* self, CScnEnvLgtLightView* 
         LightCtlSetPos(view, (const u8*)&ctl->field_0x30[0]);
         LightCtlSetDir(view, (const u8*)&ctl->field_0x44);
         LightCtlInitDistAttn(view, ctl->field_0x50, ctl->field_0x54, ctl->field_0x58);
-        LightCtlInitSpot(view, ctl->field_0x5C, ctl->field_0x60);
-        LightCtlSetEnable(view, 1);
+        LightCtlInitSpot(reinterpret_cast<CLight*>(view), ctl->field_0x60, (_GXSpotFn)ctl->field_0x5C);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         return 1;
     }
     return 0;
@@ -1513,7 +1515,7 @@ extern "C" void scnLgtPushSlotLights(
             LightCtlSetColor(view, &pos);
         }
         self->field_0x130[self->field_0xE4] = zero;
-        LightCtlSetEnable(view, 1);
+        LightCtlSetEnable(reinterpret_cast<CLight*>(view), 1);
         self->field_0xE4++;
     }
 }
@@ -1750,9 +1752,9 @@ extern "C" void scnLgtRefreshEntryFade(CScnEnvLgtCtrl* self,
     f32 ratio = kLgtZeroShared;   // fraction toward the previous candidate
     f32 fadeT = ratio;             // blend weight toward the winning row
     f32 outW;
-    // volatile keeps both triples memory-resident like retail (frame spills).
-    volatile CScnEnvLgtCtrlV3 outPos;
-    volatile CScnEnvLgtCtrlV3 center;
+    // Both triples stay memory-resident like retail (frame spills).
+    CScnEnvLgtCtrlV3 outPos;
+    CScnEnvLgtCtrlV3 center;
 
     if (best == NULL) {
         // No fitting row: push the entry's own fallback quad.
@@ -3964,9 +3966,7 @@ extern "C" void scnLgtSetBlendBloom(CScnEnvLgtCtrl* self, int init) {
         if (!(self->flags & 0x8)) {
             CScnEnvLgtBlend* blend = (CScnEnvLgtBlend*)mtl::MemManager::allocate(
                 0x6C, Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)self->field_0x04_ptr));
-            if (blend != 0) {
-                blend = __ct__CScnBlend(blend);
-            }
+            blend = (CScnEnvLgtBlend*)new ((CScnBlend*)blend) CScnBlend;
             self->field_0x28_blend = blend;
             CScnEnvLgtBloom* bloom = (CScnEnvLgtBloom*)mtl::MemManager::allocate(
                 0x84, Scn_CallUnk8C_V8((CScnItemModelNw4rOwner*)self->field_0x04_ptr));

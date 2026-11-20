@@ -1,7 +1,9 @@
 #pragma once
 
+#include "kyoshin/cf/object/CfObjectMoveHelpers.hpp"
 #include <types.h>
-#include "monolib/work/CEventFile.hpp"
+#include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
+
 #include "monolib/device/CFileHandle.hpp"
 
 // Owner-class definitions for the recovered virtual calls in this TU.
@@ -313,19 +315,19 @@ extern const u32 equipSignAnimTable[2];
 // Imports used by this unit's functions. Retail C symbols: extern "C" keeps
 // MWCC from C++-mangling the call relocs (plain decls emit tickAnimFrame__FP..).
 extern "C" void tickAnimFrame(CActParamAnimView* self);
-extern "C" bool setAnimSubPos(CActParamAnimView* self, const f32* value);
+
 extern "C" CModelDispEffectView* EffRoot_AddSchedReq(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
 extern "C" void schedAttachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
 extern "C" s32 getInstance__Q22ml6MTRandFv();
 extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" int atoi(const char* str);
-extern "C" bool setTurnScale(void*, f32);
+
 extern "C" void* Scn_FindCamItem(void*, int);
 extern "C" void ScnCamPointAt(void*, f32, void*, void*);
 extern "C" void* getAnimChain(void* self);
-// func_8004B9D4: canonical CActParamAnim.hpp declaration (void*, int,int,int,int).
-extern "C" void __destroy_arr(void*, void*, int, int);
-// cf::CActParamAnimGame destructor address (defined in kyoshin/cf/CActParamAnimGame.cpp).
+// __destroy_arr is declared once by the MWCC runtime owner header above.
+
+extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);
 extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
 
 // ---- Cross-TU imports (retail C/verbatim-mangled symbol names) ----
@@ -347,8 +349,6 @@ extern "C" void startEnumObjects(CModelDispEnumList* list, u32 type, u32 filter)
 extern "C" CModelDispSlot* getEntryAt(CModelDispEnumList* list, u32 index);
 extern "C" void schedClearFlag15Update(CModelDispEffectView* effect);
 extern "C" void schedDetachChildSlot(CModelDispEffectView* effect, CModelDispEffectView* parent);
-extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol11(cf::CfObjectMove* move, int index);
-extern "C" CModelDispNameParam* CfObjectMove_getBdatNameCol7(cf::CfObjectMove* move, int index);
 extern "C" CModelDispNameParam* CfModel_GetBdatString(u8 value);
 extern "C" u32 bdatBitFromCol(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);
@@ -374,12 +374,17 @@ extern "C" void releaseAnimObj(CActParamAnimView* self, CModelDispObj* obj);
 extern "C" void pushAnimNode(CActParamAnimView* self, CModelDispObj* obj, u32 param);
 extern "C" void attachAnimObj(CActParamAnimView* self, CScnItemModel* model, CModelDispObj* anim, u32 param);
 extern "C" CModelDispObj* getAnimModelId(CActParamAnimView* self);
-extern "C" void AnimGame_SetStateFlags(CActParamAnimView* self);
+// Defined in kyoshin/cf/CActParamAnimGame.cpp with C++ linkage.
+void AnimGame_SetStateFlags(cf::CActParamAnimGame* self);
 extern "C" void simAttachModel(CScnItemModel* model, CModelDispNameParam* param);
 extern "C" void __ct__CMcaFile(CModelDispMca* self, u32 anim);
-extern "C" void __construct_array(void*, void*, void*, int, int);
-extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);
+// __construct_array is declared once by the MWCC runtime owner header above.
+
 extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 // C++-mangled import: getCfObjectPc(cf::CfObjectMove*) => getCfObjectPc__FPQ22cf12CfObjectMove.
 CModelDispActor* getCfObjectPc(cf::CfObjectMove* move);
+
+// Free functions defined in this TU (real C++ linkage, retail-mangled names).
+void ModelDispEquip_ResetColorStep(CModelDispEquip* self);
+void ModelDispEquip_ResetColorWhite(CModelDispEquip* self);

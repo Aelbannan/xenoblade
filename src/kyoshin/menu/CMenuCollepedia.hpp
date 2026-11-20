@@ -53,16 +53,13 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 // setPresentationFlag: canonical setPresentationFlag__Q22cf13CfGameManagerFv(bool).
-extern "C" int CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void BgTex_Release_3D9C(CBgTex* self);
 // isIdle declared int (not u8) so callers compare with cmpwi directly (no byte mask).
 
 // CCollepedia callees (retail-unmangled func_ names).
 extern "C" int clpGetInputOk(CCollepedia* self);
-extern "C" void clpFreeAllRes(CCollepedia* self);
-extern "C" void clpReqCloseVw(CCollepedia* self);
-extern "C" void clpOnCancel(CCollepedia* self);
 extern "C" int clpIsOverlay(CCollepedia* self);
 extern "C" u32 clpIsBusy(CCollepedia* self);
 
@@ -72,17 +69,11 @@ extern "C" void __dt__11CCollepediaFv(CCollepedia* self, int dealloc);
 extern "C" void __as__17UnkClass_8045F564FRC17UnkClass_8045F564(void* dst, void* src);
 // CTitleAHelp::CTitleAHelp_load() is declared in kyoshin/CTitleAHelp.hpp.
 extern "C" int BgTex_Acquire_3C14(CBgTex* self);
-extern "C" void clpStartLoads(CCollepedia* self);
 
 // Colle_HandleInput callees (retail-unmangled func_ names).
-extern "C" int clpCanClaim(CCollepedia* self);
 extern "C" void clpPrevCatPg(CCollepedia* self);
 extern "C" void clpNextCatPg(CCollepedia* self);
 extern "C" void clpOnConfirm(CCollepedia* self);
-extern "C" void clpCursorLeft(CCollepedia* self);
-extern "C" void clpCursorRght(CCollepedia* self);
-extern "C" void clpCursorUp(CCollepedia* self);
-extern "C" void clpCursorDown(CCollepedia* self);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol
 // (the no-arg member wrapper drops it), so call through the C name directly.
 

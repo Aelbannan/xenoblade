@@ -1935,12 +1935,12 @@ fail:
 extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math::VEC3* out,
                   CMdlDynElem98* elem, nw4r::math::MTX34* matrices) {
     // Unit-sphere pole anchor, starting at the origin.
-    ml::CVec3 axis(lbl_eu_8066B3D0, lbl_eu_8066B3D0, lbl_eu_8066B3D0);
+    ml::CVec3 axis(0.0f, 0.0f, 0.0f);
     nw4r::math::VEC3 ret1;
     nw4r::math::VEC3 ret2;
     nw4r::math::VEC3 ret3;
     nw4r::math::VEC3 ret4;
-    f32 one = lbl_eu_8066B3D4;
+    f32 one = 1.0f;
 
     // world = view * (local * pos)
     PSMTXMultVec(elem->field_0x4.mtx, (const Vec*)pos, (Vec*)&ret1);
@@ -1950,8 +1950,8 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
     world = ml::CVec3(*(ml::CVec3*)&ret2);
 
     // Project onto the unit sphere around both Y poles.
-    f32 radius = lbl_eu_8066B3D4;
-    f32 zero = lbl_eu_8066B3D0;
+    f32 radius = 1.0f;
+    f32 zero = 0.0f;
     for (s32 i = 0; i < 2; i++) {
         axis.y = (i == 0) ? one : -one;
 
@@ -1986,7 +1986,7 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
     }
     f32 radSq = world.x * world.x + world.z * world.z;
     if (radSq < one * one) {
-        if (radSq != lbl_eu_8066B3D0) {
+        if (radSq != 0.0f) {
             // Resolve the element's res node (offset at 0x5C, 4-aligned).
             MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
             nw4r::g3d::ResMdl mdl((void*)(unsigned long)root->field_0x146C);
@@ -2012,9 +2012,9 @@ extern "C" s32 MdlDyn_PushPole(MdlDynObj* obj, nw4r::math::VEC3* pos, nw4r::math
 
             // Project the XZ point onto the unit circle.
             f32 len = sqrt(radSq);
-            f32 inv = lbl_eu_8066B3D4 / len;
-            world.x = world.x * inv * lbl_eu_8066B3D4;
-            world.z = world.z * inv * lbl_eu_8066B3D4;
+            f32 inv = 1.0f / len;
+            world.x = world.x * inv * 1.0f;
+            world.z = world.z * inv * 1.0f;
 
             // Push the position back out through the matrix chain.
             ml::CVec3 orig = *(ml::CVec3*)pos;
@@ -2065,7 +2065,7 @@ extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math:
             ml::CVec3 view;
             PSMTXMultVec(e->field_0x64.mtx, (const Vec*)&world, (Vec*)&view);
             world = view;
-            if (world.y > lbl_eu_8066B3D0) {
+            if (world.y > 0.0f) {
                 // Resolve the element's res node (offset at 0x5C, 4-aligned).
                 MdlResRoot* root = (MdlResRoot*)obj->field_0x4;
                 nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
@@ -2092,7 +2092,7 @@ extern "C" void MdlDyn_SolveElem(MdlDynObj* obj, CMdlDynTarget* tgt, nw4r::math:
 
                 // Project onto the anchor plane: flatten view-space y, push
                 // back through the element world matrix then the anchor matrix.
-                world.y = lbl_eu_8066B3D0;
+                world.y = 0.0f;
                 ml::CVec3 p1;
                 PSMTXMultVec(e->field_0x34.mtx, (const Vec*)&world, (Vec*)&p1);
                 ml::CVec3 p2;
@@ -2178,7 +2178,7 @@ void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
     ml::CVec3* zeroVec = &ml::CVec3::zero;
     CMdlDynList** it = (CMdlDynList**)this->buf08.field_0x0;
     const f32 blendK = 0.5f;   // contact-point scale
-    const f32 clipY = lbl_eu_8066B3D0;    // view-space y threshold
+    const f32 clipY = 0.0f;    // view-space y threshold
     const f32 penScale = 0.7f; // penetration scale
     const f32 relaxScale = 0.9f;
     const f32 relaxPos = 0.1f;

@@ -411,15 +411,19 @@ extern CGXCache* cacheInstance__9CDeviceGX;
 // The unit's -ipa off policy keeps every ring setter's `bl` to it.
 extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
 
-// Retail .sdata2 magic doubles
-// the definitions live in the monolib shared data blob). Referenced by name
-// through the s32ToF/u16ToF helpers below so the lfd relocs name the retail
-// slots instead of MWCC's anonymous @N pool entries (docs/MWCC_CASES.md
-// section 7i manual bit construction).
+// Retail .sdata2 imports (definitions live in the monolib shared data blob).
+// The magic doubles are referenced by name through the s32ToF/u16ToF helpers
+// below so the lfd relocs name the retail slots instead of MWCC's anonymous
+// @N pool entries (docs/MWCC_CASES.md section 7i manual bit construction).
 extern const double lbl_eu_8066A388;  // s32->f64 magic (2^52+2^31)
 extern const double lbl_eu_8066A390;  // u32->f64 magic (2^52)
 extern const f32 lbl_eu_8066A378;
 extern const f32 lbl_eu_8066A380;
+extern const f32 lbl_eu_8066A37C;     // 255.0f color scale
+extern const f32 lbl_eu_8066A398;     // scissor aspect multiplier
+extern const f32 lbl_eu_8066A39C;     // projection znear scale
+extern const f32 lbl_eu_8066A3A0;
+extern const f32 lbl_eu_8066A3A4;
 
 // Retail .sdata u32s used by the ring cache-update functions (imports; the
 // definitions live in the monolib shared data blob, not this TU).
@@ -511,8 +515,6 @@ CGXCache::~CGXCache() {
 // r5. Retail symbol is Fv-mangled although r4/r5 are live register params
 // (same pattern as dispatchCmdGX / findRingEntry).
 extern "C" u32 VIGetNextField(void);
-extern const f32 lbl_eu_8066A37C;
-extern const f32 lbl_eu_8066A380;
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
 extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd);
 
@@ -766,13 +768,8 @@ extern "C" void execGXCmd__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
     }
 }
 
-// Retail .sdata2/.sdata imports used by the cache-update and projection
-// functions below (definitions live in the monolib shared data blob).
-extern const f32 lbl_eu_8066A37C;   // 255.0f color scale
-// Aspect multiplier (scissor-rect ratio x this constant) and the znear scale
-// used when refitting the projection matrix to the 0x510 sub-rect.
-extern const f32 lbl_eu_8066A398;
-extern const f32 lbl_eu_8066A39C;
+// Retail .sdata imports used by the cache-update functions below
+// (definitions live in the monolib shared data blob).
 extern u32 sTevColorNoWid;
 extern u32 sTevColorTxWid;
 
@@ -1415,9 +1412,6 @@ void CGXCache::resetTevState() {
 }
 
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
-extern const f32 lbl_eu_8066A37C;
-extern const f32 lbl_eu_8066A3A0;
-extern const f32 lbl_eu_8066A3A4;
 extern u32 sTevColorNoWid;
 extern "C" void disableTexGen__8CGXCacheFv(void* self);
 extern "C" void resetTevState__8CGXCacheFv(void* self);

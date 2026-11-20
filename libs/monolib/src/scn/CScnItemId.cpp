@@ -1,16 +1,17 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnItemId
 #include <harness_catalog.h>
+#include "monolib/src/scn/CScnItemPool.hpp"
 #include <cstring>
 #include "libs/monolib/src/scn/CScnItemId.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/scn/code_804BC9EC.hpp"
+#include <monolib/scn/CScnItemCameraNw4r.hpp>
 
 // Foreign data labels referenced by the CScnItemId vtable/param block.
 extern "C" u32 __RTTI__10CScnItemId;
 extern "C" u32 lbl_eu_806624D8;
 // Foreign function referenced by the dispatch table.
-extern "C" void ScnCamNw4r_EmptyHook48();
 // Retail destructor mangled name (CScnItemId::~CScnItemId) for the vtable reloc.
 extern "C" void __dt__10CScnItemIdFv();
 // Forward declarations for in-TU extern "C" functions referenced by the vtable.
@@ -55,7 +56,7 @@ CScnItemId::~CScnItemId() {
 // ===========================================================================
 CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
     CScnItemId* item = NULL;
-    if (CScnItemPool_hasFreeSlot(self->mPool, 5) == 0) {
+    if (CScnItemPool_hasFreeSlot((u8*)self->mPool, 5) == 0) {
         return 0;
     }
 
@@ -108,7 +109,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
         }
     }
 
-    CScnItemPool_registerOtherList(self->mPool, item, value);
+    ((u32 (*)(u8*, void*, u32))CScnItemPool_registerOtherList)((u8*)self->mPool, item, value);
     return item;
 }
 

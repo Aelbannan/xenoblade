@@ -1,4 +1,5 @@
 #include "kyoshin/code_800AA008.hpp"
+#include "kyoshin/code_800AA008_Tok.hpp"
 
 #include <cstring>
 #include <cstdio>

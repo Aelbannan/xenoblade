@@ -7,9 +7,13 @@
 // non-target matches.
 
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
+#include "kyoshin/cf/object/CfObjectEffSymbols.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlPc.hpp"
+#include "kyoshin/CMainMenu.hpp" // CMainMenu_GetInstancePtr
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "monolib/core/CPadManager.hpp"
@@ -61,7 +65,7 @@ void CtrlPc_UpdateLockOnAim(cf::CtrlPc* self) {
 
     cf::CfGameManager::getInstance();
     gmSub = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
-    CfObj90E4* g = Selector_GetInstance();
+    CfObj90E4* g = (CfObj90E4*)Selector_GetInstance();
     vh = (CtrlVoiceHandle*)(void*)findObjectById__Fi((int)g->mField90E4);
     p = self->mField5C;
     v1 = *p->mField4->vf30();
@@ -206,7 +210,7 @@ void CtrlPc_UpdatePadState(cf::CtrlPc* self) {
     if (testActorStatus(obj, &v5, 0x800000) != 0) {
         goto probe100;
     }
-    if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), obj) == 0) {
+    if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), (unsigned int)obj) == 0) {
         goto probe100;
     }
     self->mField5C->mSub3E9C.v00(0x100);
@@ -398,7 +402,7 @@ void CtrlPc_HandleMenuSelect(cf::CtrlPc* self) {
                 if (self->mField5C != 0) {
                     tgt = &self->mField5C->mSub3E9C;
                 }
-                bindPartnerO_(hand, tgt, 0);
+                bindPartnerO_((cf::CfObjectEff*)hand, (u8*)tgt, (u8*)0);
             }
         } else if (sw == 1) {
             CtrlPc_DispatchPadAction(self, 5);
@@ -408,7 +412,7 @@ void CtrlPc_HandleMenuSelect(cf::CtrlPc* self) {
                 if (self->mField5C != 0) {
                     tgt = &self->mField5C->mSub3E9C;
                 }
-                bindPartnerO_(hand, tgt, 0);
+                bindPartnerO_((cf::CfObjectEff*)hand, (u8*)tgt, (u8*)0);
             }
         }
         return;
@@ -650,8 +654,7 @@ extern "C" void cachedMoveReq(void* self, float value);
 extern "C" int moveBaseRoute();
 extern "C" void CtrlPad_Delegate899C0(cf::CtrlPc* self) {
     float c = 30.0f;
-    typedef void (*Fn)(void*, float);
-    ((Fn)cachedMoveReq)(&self->mSubObj8C, c);
+    cachedMoveReq(&self->mSubObj8C, c);
 }
 
 // Move-base tail-call delegates (retail CtrlPad_Delegate89B24 / CtrlPad_Delegate89E88 /
@@ -659,16 +662,14 @@ extern "C" void CtrlPad_Delegate899C0(cf::CtrlPc* self) {
 // tail-jump to the matching handler, passing the incoming registers through.
 // (Pre-clobber stub family names: delegateTo89E88 / delegateTo89F68.)
 extern "C" int CtrlPad_Delegate89B24(cf::CtrlPc* self, void* out) {
-    typedef int (*Fn)(void*, void*);
-    return ((Fn)moveBaseSway)(&self->mSubObj8C, out);
+    return moveBaseSway((cf::CCtrlMoveBase*)&self->mSubObj8C, (ml::CVec3*)out);
 }
 extern "C" int CtrlPad_Delegate89E88(cf::CtrlPc* self, void* out) {
     typedef int (*Fn)(void*, void*);
-    return ((Fn)moveBaseRoute)(&self->mSubObj8C, out);
+    return ((Fn)moveBaseRoute)(&self->mSubObj8C, out);  // DEBT(callcast): moveBaseRoute__FPQ22cf13CCtrlMoveBasePCQ22ml5CVec3i has 3 params; retail thunk passes only r3/r4
 }
 extern "C" int CtrlPad_Delegate89F68(cf::CtrlPc* self, void* out) {
-    typedef int (*Fn)(void*, void*);
-    return ((Fn)moveBaseScnCmd)(&self->mSubObj8C, out);
+    return moveBaseScnCmd((cf::CCtrlMoveBase*)&self->mSubObj8C);
 }
 
 // Cached-pad-handle getter (retail CtrlPad_GetField1D4): the +0x1D4 word

@@ -68,7 +68,7 @@ public:
 
 // C-linkage accessors matching retail unmangled symbols.
 extern "C" u8 KizunagramIsHidden(CPcKizunagram* pKizunagram);
-extern "C" u8 KizunagramIsOpen(CPcKizunagram* pKizunagram);
+extern "C" int KizunagramIsOpen(CPcKizunagram* pKizunagram);
 
 // ---------------------------------------------------------------------------
 // CPcKizunaCur - the per-character cursor sub-object (0x18 bytes) embedded at

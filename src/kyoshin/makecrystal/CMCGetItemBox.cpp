@@ -246,7 +246,7 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         // bdat-managed entry: name comes from the item database.
         void* inst = CItem_initItemImplInstances((CItemData*)p);
         u32 v = (u32)((u32(*)(void*, void*))(*(void***)inst)[0x22])(inst, p);
-        char* s = BdatGetPtrDirect((void*)lbl_eu_80664100, &lbl_eu_8050FF8C[0x16], (u16)v);
+        char* s = BdatGetPtrDirect((void*)lbl_eu_80664100, "comment", (u16)v);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
@@ -342,8 +342,8 @@ char* getMCItemSubText(CMCItemBoxSub* sub, u16 index) {
         u8 v = (u8)(pad102 + 0xFC);
         void* tbl2 = (void*)sCrystalMesTable;
         if (v <= 5 || pad102 == 2) tbl2 = (void*)sCrystalItemTable;
-        u32 n = BdatGetU16Direct((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x16], id);
-        char* s = BdatGetPtrDirect(tbl2, &lbl_eu_8050FF8C[0x16], (u16)n);
+        u32 n = BdatGetU16Direct((void*)lbl_eu_806640EC, "comment", id);
+        char* s = BdatGetPtrDirect(tbl2, "comment", (u16)n);
         ((ml::FixStr<128>*)&sub->name)->format(&lbl_eu_8050FF8C[0], s);
         return (char*)&sub->name;
     }
@@ -506,9 +506,9 @@ u8 isMCGetItemBoxActive(CMCGetItemBox* self) {
     return 0;
 }
 
-u8 CMCGetItemBox::isMCGetItemBoxReady() { return mField55; }
+int CMCGetItemBox::isMCGetItemBoxReady() { return mField55; }
 
-u8 CMCGetItemBox::isMCGetItemBoxGridMode() { return mField303; }
+int CMCGetItemBox::isMCGetItemBoxGridMode() { return mField303; }
 
 // Open the item box from an external caller: guard on the current state, reset
 // the item-box info and refresh both the layout text and the cursor widgets.
@@ -1264,7 +1264,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
     if (this->fileHandle1 == pEventFile->mFileHandle) {
         // === main item-box layout file loaded ===
         this->memRegion1.createRegion(mtl::MemManager::getHandleMEM2(), 0x20000,
-                                      &lbl_eu_8050FF8C[0x1f8], 0);
+                                      "CMCGetItemBox", 0);
         Class_8045F858 regionGuard1(&this->memRegion1);
 
         CFileHandle* h1 = this->fileHandle1;

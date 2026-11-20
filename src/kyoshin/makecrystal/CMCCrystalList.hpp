@@ -58,8 +58,8 @@ public:
     virtual ~CMCCrystalList();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 crystalListGetDataFlag();
-    u8 crystalListIsActive();
+    u32 crystalListGetDataFlag();
+    u32 crystalListIsActive();
     void crystalListDrawIfActive(nw4r::lyt::DrawInfo* drawInfo);
 
     /* 0x00 */ // IWorkEvent base (vptr)
@@ -81,3 +81,11 @@ public:
     /* 0x56 */ u8 mDataFlag;
     /* 0x57 */ u8 mIsActive;
 };
+
+// Free state helpers defined in CMCCrystalList.cpp.
+void crystalListLoadFiles(CMCCrystalList* self);
+void crystalListState0To1(CMCCrystalList* self);
+void crystalListState3To4(CMCCrystalList* self);
+void crystalListState3To6(CMCCrystalList* self);
+void crystalListState3To7(CMCCrystalList* self);
+void crystalListState3To8(CMCCrystalList* self);

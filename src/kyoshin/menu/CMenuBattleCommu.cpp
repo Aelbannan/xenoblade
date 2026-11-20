@@ -260,7 +260,7 @@ draw:
 
     CBattleCommuPlayer* player =
         reinterpret_cast<CBattleCommuPlayer*>(cf::CfGameManager::getPlayer(0));
-    CBattleCommuActor2* actor2 = MapFx_ResolveOwner(player);
+    CBattleCommuActor2* actor2 = (CBattleCommuActor2*)MapFx_ResolveOwner(player);
     if (actor2 != 0) {
         u32 id = *actor2->mSub04->getActorId();
         if (testActorStatus(actor2, &id, 0x803) != 0) {
@@ -351,7 +351,7 @@ bool battleCommuIsActive() {
 void showBattleCommu(CMenuBattleCommu* self) {
     CBattleCommuPlayer* player =
         reinterpret_cast<CBattleCommuPlayer*>(cf::CfGameManager::getPlayer(0));
-    CBattleCommuActor2* actor2 = MapFx_ResolveOwner(player);
+    CBattleCommuActor2* actor2 = (CBattleCommuActor2*)MapFx_ResolveOwner(player);
     if (actor2 == 0) {
         return;
     }
@@ -566,7 +566,7 @@ void battleCommuAdvanceAnim80(CMenuBattleCommu* self) {
 
     CBattleCommuPlayer* player =
         reinterpret_cast<CBattleCommuPlayer*>(cf::CfGameManager::getPlayer(0));
-    CBattleCommuActor2* actor2 = MapFx_ResolveOwner(player);
+    CBattleCommuActor2* actor2 = (CBattleCommuActor2*)MapFx_ResolveOwner(player);
     if (actor2 != 0) {
         u32 id = *actor2->mSub04->getActorId();
         if (testActorStatus(actor2, &id, 0x803) != 0) {

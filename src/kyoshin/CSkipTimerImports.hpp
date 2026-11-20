@@ -3,6 +3,7 @@
 // Unit-private imports for kyoshin/CSkipTimer. Function declarations owned by
 // this TU live in CSkipTimer.hpp; only external callees/data are listed here.
 #include "kyoshin/CSkipTimer.hpp"
+#include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/CQuestWindow_Pane.hpp"
 
 extern "C" char lbl_eu_80510568[];
@@ -14,6 +15,6 @@ extern "C" const float lbl_eu_80662C78;
 extern "C" const float lbl_eu_80668C48;
 
 // cf::CfGameManager and menu-singleton helpers from other units.
-extern "C" u32 CMainMenu_GetInstancePtr();
+// Declared by kyoshin/CMainMenu.hpp.
 extern "C" void ArtsInfo_SetReadyFlag();
 extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);

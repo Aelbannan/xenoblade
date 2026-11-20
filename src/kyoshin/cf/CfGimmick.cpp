@@ -11,6 +11,7 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/CfGameManager.hpp"   // cf::CfGameManager
 
 // Typed view of the CfGimmick collider block passed to
 // CfGimmick_BuildColliderMtx by CfGimmick_UpdateColliderMatrix: basis floats
@@ -49,24 +50,7 @@ u32 gGimmickSelectedRow;
 
 struct CfGimmickVec3;
 
-namespace cf {
-// KEEP: minimal cf::CfGameManager view. CfGameManager.hpp (isTimerActive is now
-// static there) still conflicts here on CtrlRemote_SetSharedBit (2-arg import vs
-// this TU's 1-arg view) and the unkB0 layout this TU writes.
-// Static members here emit the same pre-mangled retail symbols without a
-// `this` load.  getPlayer() coexists with CfObjectMove.hpp's extern "C"
-// declaration of the same symbol (different scopes - no overload).
-class CfGameManager {
-public:
-    static CfObjectMove* getPlayer(int playerIndex);
-    static bool isTimerActive();
-    u8 pad[0xB0];               // 0x00..0xAF
-    UnkClass_800821F8* unkB0;   // 0xB0 - cleared by CfGimmick_ClearManagerBinding
-    void clearPlayerEffect();
-};
-} // namespace cf
 
-// Bdat column names: MWCC pools these string literals in first-use order,
 // which is also the retail .rodata/.sdata2 order (short names in .sdata2).
 extern "C" int CfGimmick_CheckerKind0Always(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
 extern "C" int CfGimmick_CheckerCylinderXZ(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
@@ -679,7 +663,7 @@ extern "C" void CfGimmick_SetGlobalFlagC0042() {
 
 extern "C" void CfGimmick_SetGlobalFlagC0002() {
     CGimmickGlobal* p = getUnk80664658();
-    *(volatile u32*)&p->mFlags |= 0x000C0002;
+    *(u32*)&p->mFlags |= 0x000C0002;
 }
 
 extern "C" void CfGimmick_SetGlobalFlag8008() {

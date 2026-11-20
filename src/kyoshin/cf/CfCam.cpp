@@ -478,7 +478,7 @@ extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag) {
     else
         static_cast<cf::CfCamFollow*>(obj)->field_0x04 &= ~mask;
 }
-extern "C" int cfCam_getUnkC4(void* self) { return *(int*)((char*)self + 0xc4); }
+extern "C" int cfCam_getUnkC4(void* self) { return static_cast<cf::CfCamFollow*>(self)->field_0x9C.words[10]; }
 extern "C" int cfCam_getBit0_0x530(void* p) {
     return *(unsigned short*)((unsigned char*)p + 0x530) & 1;
 }
@@ -501,7 +501,7 @@ extern "C" void cfCam_clearUnk1D4Bits(cf::CfCamFollow* _this, unsigned int mask)
     _this->unk1D4 &= ~mask;
 }
 extern "C" int cfCam_getBit1_0x4EC(void* _this) {
-    return (*(int*)((char*)_this + 0x4EC) >> 1) & 1;
+    return (static_cast<cf::CfCamFollow*>(_this)->field_0x4EC >> 1) & 1;
 }
 // Store the shared follow-distance float into *out, then re-init the global
 // camera-relative position vec3.
@@ -538,7 +538,7 @@ extern "C" float cfCam_scaleByConst(float f) {
 extern "C" void cfCam_setBit9_Unk04(unsigned* p) {
     p[1] |= 0x200;
 }
-extern "C" void* cfCam_getUnk9CPtr(void* ptr) { return (char*)ptr + 0x9c; }
+extern "C" void* cfCam_getUnk9CPtr(void* ptr) { return &static_cast<cf::CfCamFollow*>(ptr)->field_0x9C; }
 extern "C" bool cfCam_testUnk04Bit8(void* param_1) {
     return ((bool (*)(void*, int))cfCam_testUnk04Bits)(param_1, 256);
 }
@@ -661,7 +661,7 @@ extern "C" int cfCam_getBit12_Unk04(void* ptr) {
 extern "C" void cfCam_clearUnk04Bits_EDFF(cf::CfCamFollow* self) { self->field_0x04 &= 0xFFFFEDFFu; }
 
 extern "C" bool cfCam_setUnk1E0AndValidate(void* obj, float val) {
-    *(float*)((char*)obj + 0x1e0) = val;
+    static_cast<cf::CfCamFollow*>(obj)->unk1E0 = val;
     return ScnCamDepthUp((CScnItemCamera*)obj);
 }
 extern "C" void cfCam_stub_80071B74() {}
@@ -672,7 +672,7 @@ extern "C" int cfCam_getGlobal_80665958() {
 }
 extern "C" void* cfCam_getUnk60Ptr(void* self) { return static_cast<char*>(self) + 0x60; }
 extern "C" void* cfCam_getUnk6CPtr(void* ptr) {
-    return (char*)ptr + 0x6c;
+    return &static_cast<cf::CfCamFollow*>(ptr)->unk68[4];
 }
 extern "C" int cfCam_getBit19_0x0C(void* _this) {
     return ((*(unsigned*)((char*)_this + 0xc)) >> 19) & 1;
@@ -2618,7 +2618,7 @@ int cfCam_selectCamTarget(cf::CfCamFollow* self, void* arg, float* out1, float* 
         if (self->unk254 != 0) {
             self->unk254 -= 1;
         } else if (flags2 == 0) {
-            if (isSceneActive__Q22cf13CfGameManagerFv() == 0) {
+            if (cf::CfGameManager::isSceneActive() == 0) {
                 cfCam_tuneZoomDist(self);
             }
         }
@@ -3827,16 +3827,16 @@ void propagateFollowParam(cf::CfCamFollow* self, int cond) {
 // follow camera. The final copy reuses the +0x40 vector as the source for
 // self's +0x10 slot.
 extern "C" void cfCam_copyCamState(cf::CfCamFollow* self, cf::CfObject* src) {
-    cf::CfCamStateView* state = reinterpret_cast<cf::CfCamStateView*>(
+    cf::CfCamFollow* state = static_cast<cf::CfCamFollow*>(
         __dynamic_cast(src, 0, &__RTTI__Q22cf11CfCamFollow, &lbl_eu_80661B30, 0));
     if (state != NULL) {
-        cf::CfCamStateView* dst = reinterpret_cast<cf::CfCamStateView*>(self);
-        copyVec3Words(&dst->field34, &state->field34);
-        copyVec3Words(&dst->field28, &state->field28);
-        copyVec3Words(&dst->field58, &state->field58);
-        copyVec3Words(&dst->field40, &state->field40);
-        dst->field1E0 = state->field1E0;
-        copyVec3Words(&dst->field10, &state->field40);
+        cf::CfCamFollow* dst = self;
+        copyVec3Words(&dst->field_0x34, &state->field_0x34);
+        copyVec3Words(&dst->field_0x28, &state->field_0x28);
+        copyVec3Words(&dst->field_0x58, &state->field_0x58);
+        copyVec3Words(&dst->field_0x40, &state->field_0x40);
+        dst->unk1E0 = state->unk1E0;
+        copyVec3Words(&dst->unk10[0], &state->field_0x40);
     }
 }
 // cfCam_offsetFromDir: build the follow-camera offset vector from a direction

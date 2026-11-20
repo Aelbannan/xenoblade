@@ -318,7 +318,6 @@ char* CItem_defaultNameStr() {
 // Recovered CItemData bitfield area (offsets 0x7/0x8/0x18)
 struct ItemByte7 { u8 pad0 : 6; u8 b01 : 2; };
 struct ItemWord8 { u32 pad0 : 11; u32 f11 : 11; u32 pad1 : 3; u32 f7 : 7; };
-struct ItemHalf18 { u16 bit15 : 1; u16 low15 : 15; };
 // Opaque CItemInfo byte at +22 (CItemInfo_getByte22 and its two dups).
 struct CItemInfoByte22 { u8 _pad[22]; u8 byte22; };
 // Plain word at +8 of a byte buffer (CItem_getWord8Bits10).
@@ -326,9 +325,6 @@ struct CItemWordAt8 { u8 _pad[8]; u32 word; };
 // 8-byte sub-record with the category/id halfword at +4
 // (CItemExt_getSubRecId reads p + idx*8 + 0xc, i.e. word+4 of entry idx).
 struct CItemSubRec8 { u8 _pad[4]; u16 catId; u16 _pad2; };
-// Half18 bitfield pair at +0x18 of a byte buffer (CItem_setHalf18Bit15 /
-// CItem_setHalf18Low15 write p + 0x18 through ItemHalf18).
-struct CItemHalf18At18 { u8 _pad[0x18]; ItemHalf18 half18; };
 // u16 table at +8 of a byte buffer (CItem_getIndexedCat/Id read tab[idx]
 // through (u16*)(p + 8); CItem_packSlotValRank writes base + index*2 + 8).
 struct CItemU16Tab8 { u8 _pad[8]; u16 tab[1]; };
@@ -3465,13 +3461,13 @@ u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { obj->field_10 
 
 u16 CItemParam_getField16(u32, CItemParam* obj) { return obj->field_10; }
 
-extern "C" void CItem_setHalf18Bit15(void* u, u8* p, u32 val) { ((CItemHalf18At18*)p)->half18.bit15 = (u16)val; }
+extern "C" void CItem_setHalf18Bit15(void* u, CItemParam* p, u32 val) { p->field_18_bit15 = (u16)val; }
 
-u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (obj->field_18 >> 15) & 1; }
+u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return obj->field_18_bit15; }
 
-extern "C" void CItem_setHalf18Low15(void* u, u8* p, u32 val) { ((CItemHalf18At18*)p)->half18.low15 = (u16)val; }
+extern "C" void CItem_setHalf18Low15(void* u, CItemParam* p, u32 val) { p->field_18_low15 = (u16)val; }
 
-u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return obj->field_18 & 0x7FFF; }
+u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return obj->field_18_low15; }
 
 extern "C" void CItem_setByte7Low2Dup(void* u, u8* p, u32 val) { ((ItemByte7*)(p + 7))->b01 = (u8)val; }
 

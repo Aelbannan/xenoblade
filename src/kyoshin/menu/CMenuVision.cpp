@@ -35,6 +35,7 @@ extern u32 visionPaneNameTable[];     // 6 pane-name pointers
 extern CMenuVision* sVisionMenuInstance;
 
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"  // ScMain_* typed exports
 
 
@@ -86,13 +87,6 @@ VisionQuad visionTevColorMode3C23Second;
 VisionQuad visionTevColorMode3C23First;
 VisionQuad visionTevColorDefaultSecond;
 VisionQuad visionTevColorDefaultFirst;
-
-// Pad accessor for pane float fields at known retail offsets
-struct PaneTransAccess {
-    u8 _pad[0x4C];
-    f32 transX;
-    f32 transY;
-};
 
 struct MenuVisionBattleData {
     int actor;
@@ -551,7 +545,7 @@ extern "C" void driveVisionUpdate(int flags) {
         if (actor == 0) {
             return;
         }
-        if (*(u32*)((u8*)actor + 0x64) & 4) {
+        if (static_cast<CUIBattleAction*>(actor)->field_64 & 4) {
             void* actorBase = actor;
             if (actor != 0) {
                 actorBase = (u8*)actor - 0x3E9C;
@@ -563,7 +557,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 case 3: case 4: case 5: case 6: case 8: case 12:
                     image = menuVisionResource(lbl_eu_80504268 + 0x232); break;
                 case 1:
-                    if (*(u16*)((u8*)actorBase + 0x3F28) == 0x1A1) {
+                    if (static_cast<cf::CVisionObjV*>(actorBase)->field_3F28 == 0x1A1) {
                         image = menuVisionResource(lbl_eu_80504268 + 0x247);
                     } else {
                         image = menuVisionResource(lbl_eu_80504268 + 0x25C);
@@ -576,7 +570,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 case 10:
                     image = menuVisionResource(lbl_eu_80504268 + 0x29B); break;
                 case 2:
-                    switch (*(u16*)((u8*)actorBase + 0x3F28)) {
+                    switch (static_cast<cf::CVisionObjV*>(actorBase)->field_3F28) {
                     case 0x3D: case 0x3E: case 0x4B5:
                     case 0x5FF: case 0x600: case 0x601: case 0x961:
                         image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
@@ -596,7 +590,7 @@ extern "C" void driveVisionUpdate(int flags) {
                     }
                     break;
                 case 11:
-                    switch (*(u16*)((u8*)actorBase + 0x3F28)) {
+                    switch (static_cast<cf::CVisionObjV*>(actorBase)->field_3F28) {
                     case 0x965: image = menuVisionResource(lbl_eu_80504268 + 0x271); break;
                     case 0x961: image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
                     case 0x962: case 0x963: image = menuVisionResource(lbl_eu_80504268 + 0x247); break;
@@ -712,7 +706,7 @@ extern "C" void driveVisionUpdate(int flags) {
             if (actor == 0) {
                 return;
             }
-            u32 actorFlags = *(u32*)((u8*)actor + 0x64);
+            u32 actorFlags = static_cast<CUIBattleAction*>(actor)->field_64;
             if (actorFlags & 4) {
                 void* actorBase = actor;
                 if (actor != 0) {
@@ -722,7 +716,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 case 3: case 4: case 5: case 6: case 8: case 12:
                     image = menuVisionResource(lbl_eu_80504268 + 0x232); break;
                 case 1:
-                    if (*(u16*)((u8*)actorBase + 0x3F28) == 0x1A1) {
+                    if (static_cast<cf::CVisionObjV*>(actorBase)->field_3F28 == 0x1A1) {
                         image = menuVisionResource(lbl_eu_80504268 + 0x247);
                     } else {
                         image = menuVisionResource(lbl_eu_80504268 + 0x25C);
@@ -735,7 +729,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 case 10:
                     image = menuVisionResource(lbl_eu_80504268 + 0x29B); break;
                 case 2:
-                    switch (*(u16*)((u8*)actorBase + 0x3F28)) {
+                    switch (static_cast<cf::CVisionObjV*>(actorBase)->field_3F28) {
                     case 0x3D: case 0x3E: case 0x4B5:
                     case 0x5FF: case 0x600: case 0x601: case 0x961:
                         image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
@@ -755,7 +749,7 @@ extern "C" void driveVisionUpdate(int flags) {
                     }
                     break;
                 case 11:
-                    switch (*(u16*)((u8*)actorBase + 0x3F28)) {
+                    switch (static_cast<cf::CVisionObjV*>(actorBase)->field_3F28) {
                     case 0x965: image = menuVisionResource(lbl_eu_80504268 + 0x271); break;
                     case 0x961: image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
                     case 0x962: case 0x963: image = menuVisionResource(lbl_eu_80504268 + 0x247); break;
@@ -774,7 +768,7 @@ extern "C" void driveVisionUpdate(int flags) {
                 if (actor != 0) {
                     actor = (u8*)actor - 0x3E9C;
                 }
-                switch (*(u16*)((u8*)actor + 0x3F28)) {
+                switch (static_cast<cf::CVisionObjV*>(actor)->field_3F28) {
                 case 1: image = menuVisionResource(lbl_eu_80504268 + 0x44E); break;
                 case 2: image = menuVisionResource(lbl_eu_80504268 + 0x462); break;
                 case 3: image = menuVisionResource(lbl_eu_80504268 + 0x476); break;
@@ -998,15 +992,10 @@ extern "C" void driveVisionUpdate(int flags) {
 
         CMenuVisionEntry& barEntry = menu->mEntries[4];
         nw4r::lyt::Pane* bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
-        PaneTransAccess* trans = reinterpret_cast<PaneTransAccess*>(bar);
-        nw4r::math::VEC2 position;
-        position.x = trans->transX;
-        position.y = trans->transY;
-        position.x = 298.0f * ScMain_GetRatio((ScMain*)battle);
+        nw4r::lyt::Size size = bar->GetSize();
+        size.width = 298.0f * ScMain_GetRatio((ScMain*)battle);
         bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
-        trans = reinterpret_cast<PaneTransAccess*>(bar);
-        trans->transX = position.x;
-        trans->transY = position.y;
+        bar->SetSize(size);
         menuVisionBegin(barEntry);
     }
 }
@@ -1156,15 +1145,10 @@ L_continue:
                 nw4r::lyt::Pane* pane1 = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);
                 if (pane1->IsVisible()) {
                     nw4r::lyt::Pane* posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
-                    PaneTransAccess* trans = reinterpret_cast<PaneTransAccess*>(posPane);
-                    nw4r::math::VEC2 position;
-                    position.x = trans->transX;
-                    position.y = trans->transY;
-                    position.x = 298.0f * ScMain_GetRatio((ScMain*)bmObj);
+                    nw4r::lyt::Size size = posPane->GetSize();
+                    size.width = 298.0f * ScMain_GetRatio((ScMain*)bmObj);
                     posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
-                    trans = reinterpret_cast<PaneTransAccess*>(posPane);
-                    trans->transX = position.x;
-                    trans->transY = position.y;
+                    posPane->SetSize(size);
                 }
             } else {
                 // Battle ended: stop every anim except mAnim2 and play it from 0.

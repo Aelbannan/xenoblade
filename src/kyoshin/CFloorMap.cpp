@@ -8,6 +8,7 @@
 
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CScrollBar.hpp"
@@ -51,7 +52,6 @@ extern u32 sFloorMapArchivePaths[];
 // u32 return view (the canonical header decl is u16 and would drop the mask).
 
 extern "C" void* createPicture__10CLibLayoutFv();
-extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
 
@@ -1255,11 +1255,10 @@ void* FloorMap_CreateMarkerPicture(void* self, const char* name, f32 x, f32 y, v
     if (!picture) return NULL;
 
     void* pic = createPicture__10CLibLayoutFv();
-    SetName__Q34nw4r3lyt4PaneFPCc(pic, paneName);
+    nw4r::lyt::Pane* pane = static_cast<nw4r::lyt::Pane*>(pic);
+    pane->SetName(paneName);
 
     nw4r::math::_VEC3 vec = { x, y, 0.0f };
-
-    nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)pic;
     pane->SetSRTElement(0, x);
     pane->SetSRTElement(1, y);
     pane->SetSRTElement(2, 0.0f);
@@ -4091,7 +4090,6 @@ extern "C" void FloorMap_ConfirmSelect(void* self) {
 }
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
-extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44();
 
 // Size-optimized region: the shared string-table copy below must keep its
@@ -4104,7 +4102,7 @@ void FloorMap_LoadMapFiles(void* self) {
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, "menu/jp/FloorMap.arc", self, 0, 0);
     u32 handle2 = KyoshinHeap_GetField44();
-    *(void**)(p + 0x30) = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(handle2, "/common/jp/bdat_menu_map.bin", self, 0, 0);
+    *(void**)(p + 0x30) = CDeviceFile::readCommonArchiveFile(handle2, "/common/jp/bdat_menu_map.bin", static_cast<IWorkEvent*>(self), 0, 0);
     // Build the local map-file name table from the shared string table
     // (entries 1..28), copied two pointers at a time.
     // Counted mtctr/bdnz copy: temp-first declaration order colors the

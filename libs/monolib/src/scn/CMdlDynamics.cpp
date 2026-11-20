@@ -2131,18 +2131,6 @@ struct CMdlDynEntry {
     u32 unk08; // 0x8 flag; 0 resets the accumulator position
 };
 
-// Aligned index record reached through a shape node's 0x5C relative offset;
-// its 0x10 word indexes the anchor-matrix array. Alignment checked at runtime.
-struct DynIdxNode {
-    u8 pad[0x5C];
-    u32 off5C; // 0x5C
-};
-
-struct DynAlignRec {
-    u8 pad[0x10];
-    u32 field_0x10; // 0x10 matrix index
-};
-
 // Scratch view with the CMdlDynBuffer layout, released manually per element.
 struct BufViewRec {
     u8* data;
@@ -2285,16 +2273,17 @@ void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
                     if (vFlat.y > clipY) {
                         MdlResRoot* root = (MdlResRoot*)this->field_0x4;
                         nw4r::g3d::ResMdl mdl((void*)root->field_0x146C);
-                        unsigned long raw =
-                            (unsigned long)mdl.GetResNode((u32)e->field_0x0).ptr();
-                        if (raw == 0) {
+                        nw4r::g3d::ResNode node =
+                            mdl.GetResNode((u32)e->field_0x0);
+                        if (!node.IsValid()) {
                             nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
                                             lbl_eu_80663910, lbl_eu_80663CB8);
                         }
-                        DynIdxNode* node = (DynIdxNode*)raw;
-                        DynAlignRec* rec = 0;
-                        if (node->off5C != 0) {
-                            rec = (DynAlignRec*)((u8*)node + node->off5C);
+                        nw4r::g3d::ResNodeData* rec = 0;
+                        if (node.ptr()->toParentNode != 0) {
+                            rec = node
+                                      .ofs_to_ptr_raw<nw4r::g3d::ResNodeData>(
+                                          node.ptr()->toParentNode);
                             if ((((u32)rec) & 3) != 0) {
                                 nw4r::db::Panic(lbl_eu_8056E820, 0x2c,
                                                 lbl_eu_8056E7F8);
@@ -2304,7 +2293,7 @@ void CMdlDynamics::Dyn_SolveContacts(nw4r::math::MTX34* matrices) {
                             nw4r::db::Panic(lbl_eu_80529678, 0x53,
                                             lbl_eu_80529658);
                         }
-                        u32 n = rec->field_0x10;
+                        u32 n = rec->mtxID;
 
                         // Flatten view-space y, push through the world matrix
                         // and the anchor matrix; the penetration vector is

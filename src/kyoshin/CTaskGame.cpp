@@ -233,8 +233,8 @@ void CTaskGame::Init(){
     unk7C = 0;
     CTaskGame_setVec4_tmp buf;
     Scn_ReleaseUnk80(unk74, 0,
-                  CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74,
-                                lbl_eu_80665D74, 1.0f));
+                  CTaskGame_setVec4(&buf, 0.0f, 0.0f,
+                                0.0f, 1.0f));
 
     create__Q22cf11CTaskGameCfFv(this, 1);
     cf::CTaskGameCf* gameCf = cf::CTaskGameCf::getInstance();
@@ -328,7 +328,7 @@ extern "C" void GamePicShiftTexParams(void* self, u32 index, const u32* src);
 // Target us-800413bc: bump the frame counter; when the window-state gate
 // (CTaskGame_windowGate) is clear: store fps*5 into unk78, switch the move-hook
 // ptmf to pool lbl_eu_805255C8, clear the busy byte at unkCC+0x8C, push the
-// lbl_eu_80665D74 constant through the vec4 setter into the unkCC object
+// 0.0f constant through the vec4 setter into the unkCC object
 // (index 0), then set the busy byte at unkD0+0x8C and repeat for unkD0.
 // -O4,s: retail keeps a plain mulli for fps*5.
 extern "C" void CTaskGame_movePrepDual(CTaskGame* self) {
@@ -345,11 +345,11 @@ extern "C" void CTaskGame_movePrepDual(CTaskGame* self) {
         reinterpret_cast<CTaskGameFlag8C*>(self->unkCC)->field_0x8C = 0;
         CTaskGame_setVec4_tmp buf1;
         GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC), 0,
-                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
+                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, 0.0f, 0.0f, 0.0f, 0.0f)));
         reinterpret_cast<CTaskGameFlag8C*>(self->unkD0)->field_0x8C = 1;
         CTaskGame_setVec4_tmp buf2;
         GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0), 0,
-                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
+                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, 0.0f, 0.0f, 0.0f, 0.0f)));
     }
 }
 // Target us-80041f80: set the move-hook ptmf from a .data pool entry. Bit
@@ -1064,13 +1064,13 @@ extern "C" void CTaskGame_moveFadeOut(CTaskGame* self) {
     reinterpret_cast<CTaskGameFlag8C*>(self->unkCC)->field_0x8C = 1;
     CTaskGame_setVec4_tmp buf1;
     GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC), 0,
-                  reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f)));
+                  reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, 0.0f, 0.0f, 0.0f, 1.0f)));
     CTaskGame_setVec4_tmp buf2;
     GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC),
                   getTargetFramerate__9CDeviceVIFv() >> 1,
-                  reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
+                  reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, 0.0f, 0.0f, 0.0f, 0.0f)));
     CTaskGame_setVec4_tmp buf3;
-    Scn_ReleaseUnk80(self->unk74, 0, CTaskGame_setVec4(&buf3, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
+    Scn_ReleaseUnk80(self->unk74, 0, CTaskGame_setVec4(&buf3, 0.0f, 0.0f, 0.0f, 0.0f));
     u32 v0;
     u32* pool = reinterpret_cast<u32*>(lbl_eu_8052558C);
     v0 = pool[0];
@@ -1132,7 +1132,7 @@ extern "C" void CTaskGame_moveFadeTick(CTaskGame* self) {
                 CTaskGame_setVec4_tmp buf;
                 GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC),
                               getTargetFramerate__9CDeviceVIFv() >> 1,
-                              reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f)));
+                              reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf, 0.0f, 0.0f, 0.0f, 1.0f)));
                 CTaskGame_setLoadScreen(1, 1);
                 u32 v0;
                 u32* pool = reinterpret_cast<u32*>(lbl_eu_805255B0);
@@ -1180,7 +1180,7 @@ extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
             CTaskGame_setVec4_tmp buf1;
             GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0),
                           getTargetFramerate__9CDeviceVIFv() >> 1,
-                          reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f)));
+                          reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, 0.0f, 0.0f, 0.0f, 1.0f)));
             CTaskGame_setLoadScreen(1, 1);
             // Pool entry view: MWCC keeps the entry address relative to the
             // materialized pool base (retail addi r3,r29,off / lwz off(rX)).
@@ -1199,7 +1199,7 @@ extern "C" void CTaskGame_moveWaitPad(CTaskGame* self) {
             CTaskGame_setVec4_tmp buf2;
             GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0),
                           getTargetFramerate__9CDeviceVIFv() >> 1,
-                          reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f)));
+                          reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, 0.0f, 0.0f, 0.0f, 1.0f)));
             CTaskGame_setLoadScreen(1, 1);
             CTaskGamePtmfPool* pool2 = reinterpret_cast<CTaskGamePtmfPool*>(
                 reinterpret_cast<u32>(base) + 0x78);
@@ -1239,15 +1239,15 @@ extern "C" void CTaskGame_moveTeardown(CTaskGame* self) {
     if (self->unkCC != 0) {
         CTaskGame_setVec4_tmp buf1;
         GamePicShiftTexParams(reinterpret_cast<void*>(self->unkCC), 0,
-                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f)));
+                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf1, 0.0f, 0.0f, 0.0f, 1.0f)));
     }
     if (self->unkD0 != 0) {
         CTaskGame_setVec4_tmp buf2;
         GamePicShiftTexParams(reinterpret_cast<void*>(self->unkD0), 0,
-                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f)));
+                      reinterpret_cast<const u32*>(CTaskGame_setVec4(&buf2, 0.0f, 0.0f, 0.0f, 1.0f)));
     }
     CTaskGame_setVec4_tmp buf3;
-    Scn_ReleaseUnk80(self->unk74, 0, CTaskGame_setVec4(&buf3, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f));
+    Scn_ReleaseUnk80(self->unk74, 0, CTaskGame_setVec4(&buf3, 0.0f, 0.0f, 0.0f, 1.0f));
     if (self->unkCC != 0) {
         reinterpret_cast<CTaskGameFlag39*>(self->unkCC)->field_0x39 = 1;
         self->unkCC = 0;
@@ -1808,7 +1808,7 @@ extern "C" void CTaskGame_moveTitleTick(CTaskGame* self) {
             }
             CTaskGame_setVec4_tmp buf;
             Scn_ReleaseUnk80(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
-                          CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f));
+                          CTaskGame_setVec4(&buf, 0.0f, 0.0f, 0.0f, 1.0f));
             u32 v0;
             u32* pool = reinterpret_cast<u32*>(lbl_eu_80525790);
             v0 = pool[0];
@@ -1872,7 +1872,7 @@ void CTaskGame_stub_80041F54(){}
 // are both clear: switch the move-hook ptmf to pool lbl_eu_805257C0, then
 // depending on the unk188 flag run the scene empty-per-frame stub with a vec4
 // (trailing lbl_eu_80665D6C constant when unk188 is set, else all
-// lbl_eu_80665D74) and arg1 0 or framerate/2, clear unk188, set the unkF0
+// 0.0f) and arg1 0 or framerate/2, clear unk188, set the unkF0
 // object's +0xE9 byte, and clear unk68 bit 0x1000.
 extern "C" void CTaskGame_moveAfterSave(CTaskGame* self) {
     if (CTaskGame_windowGate(self) != 0) {
@@ -1891,11 +1891,11 @@ extern "C" void CTaskGame_moveAfterSave(CTaskGame* self) {
     if (self->unk188 != 0) {
         CTaskGame_setVec4_tmp buf;
         Scn_ReleaseUnk80(self->unk74, 0,
-                      CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f));
+                      CTaskGame_setVec4(&buf, 0.0f, 0.0f, 0.0f, 1.0f));
     } else {
         CTaskGame_setVec4_tmp buf2;
         Scn_ReleaseUnk80(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
-                      CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
+                      CTaskGame_setVec4(&buf2, 0.0f, 0.0f, 0.0f, 0.0f));
     }
     self->unk188 = 0;
     if (self->unkF0 != 0) {
@@ -1923,11 +1923,11 @@ extern "C" void CTaskGame_moveAfterOpt(CTaskGame* self) {
     if (self->unk188 != 0) {
         CTaskGame_setVec4_tmp buf;
         Scn_ReleaseUnk80(self->unk74, 0,
-                      CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f));
+                      CTaskGame_setVec4(&buf, 0.0f, 0.0f, 0.0f, 1.0f));
     } else {
         CTaskGame_setVec4_tmp buf2;
         Scn_ReleaseUnk80(self->unk74, getTargetFramerate__9CDeviceVIFv() >> 1,
-                      CTaskGame_setVec4(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74));
+                      CTaskGame_setVec4(&buf2, 0.0f, 0.0f, 0.0f, 0.0f));
     }
     self->unk188 = 0;
     if (self->unkF0 != 0) {
@@ -1968,11 +1968,11 @@ extern "C" void CTaskGame_moveExitFade(CTaskGame* self) {
         words->field_0x44 = pool[2];
     } else {
         self->unk78 = getTargetFramerate__9CDeviceVIFv() >> 1;
-        CTaskGame_fadeStream(getTargetFramerate__9CDeviceVIFv() >> 1, lbl_eu_80665D74);
+        CTaskGame_fadeStream(getTargetFramerate__9CDeviceVIFv() >> 1, 0.0f);
         CTaskGame_setVec4_tmp buf;
         Scn_ReleaseUnk80(self->unk74,
                       getTargetFramerate__9CDeviceVIFv() >> 1,
-                      CTaskGame_setVec4(&buf, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, 1.0f));
+                      CTaskGame_setVec4(&buf, 0.0f, 0.0f, 0.0f, 1.0f));
         u32 v1;
         u32* pool2 = reinterpret_cast<u32*>(lbl_eu_805257E4);
         v1 = pool2[0];

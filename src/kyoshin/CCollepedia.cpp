@@ -22,6 +22,11 @@ extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CItemImpl.hpp"
 
+// name-guess: 30-entry BDAT category row lookup table owned by this TU.
+static const u16 sClpPageCategoryTable[30] = {
+    0x0000, 0x0000, 0x0001, 0x0008, 0x000F, 0x0016, 0x001A, 0x0020, 0x0027, 0x002E, 0x0000, 0x0032, 0x0036, 0x003C, 0x0000, 0x0040, 0x0047, 0x004E, 0x0054, 0x0058, 0x0000, 0x005F, 0x0000, 0x0066, 0x006D, 0x0074, 0x0078, 0x0000, 0x0000, 0x0000
+};
+
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
 // (see the "C-linkage imports" section at the end of that header).
 
@@ -82,10 +87,10 @@ extern "C" void* __dt__802531C4(void* self, int dealloc_flag) {
 void clpInitLayout(CCollepedia* this_) {
     buildLayout(&this_->field_8,
         (nw4r::lyt::ArcResourceAccessor*)this_->field_4,
-        &lbl_eu_8050C6E8[0x00]);
+        "mf00_reg00_curs09.brlyt");
     bindLayoutAnimTransform(this_->field_8, &this_->field_c_ptr,
         (nw4r::lyt::ArcResourceAccessor*)this_->field_4,
-        &lbl_eu_8050C6E8[0x18]);
+        "mf00_reg00_curs09_roop.brlan");
 
     // Set up position for first pane
     float vec1[3];
@@ -93,7 +98,7 @@ void clpInitLayout(CCollepedia* this_) {
 
     // Find first pane and copy position
     nw4r::lyt::Pane* pane1 = this_->field_8->GetRootPane()->FindPaneByName(
-        &lbl_eu_8050C6E8[0x35], true);
+        "pic_pgarw_r", true);
     copyVEC3((void*)&pane1->GetTranslate(), vec1);
 
     // Set up position for second pane
@@ -102,7 +107,7 @@ void clpInitLayout(CCollepedia* this_) {
 
     // Find second pane and copy position
     nw4r::lyt::Pane* pane2 = this_->field_8->GetRootPane()->FindPaneByName(
-        &lbl_eu_8050C6E8[0x41], true);
+        "pic_pgarw_l", true);
     copyVEC3((void*)&pane2->GetTranslate(), vec2);
 
     // Call UnbindAllAnimation, then bind specific ones
@@ -192,8 +197,8 @@ extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
 //   ),
 // With that rule the function is byte-identical (mismatch: 0).
 extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
-    buildLayout(&pg->mpLayout, pg->mpAccessor, &lbl_eu_8050C6E8[0x4d]);
-    bindLayoutAnimTransform(pg->mpLayout, &pg->mpAnimTrans, pg->mpAccessor, &lbl_eu_8050C6E8[0x66]);
+    buildLayout(&pg->mpLayout, pg->mpAccessor, "mf70_cf60_syswin12.brlyt");
+    bindLayoutAnimTransform(pg->mpLayout, &pg->mpAnimTrans, pg->mpAccessor, "mf70_cf60_syswin12_in.brlan");
 
     // Bind the device font: root pane first (retail loads it before the
     // CDeviceFont call), then fetch the font handle from vtable slot 9.
@@ -203,33 +208,39 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
     ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)fontHandle);
 
     char* tagStr = (char*)CUICfManager_getPackedFont9C();
-    setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
-    setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x92], (u32)tagStr);
+    setLayoutTextBoxFont(pg->mpLayout, "txt_sysmes03_00", (u32)tagStr);
+    setLayoutTextBoxFont(pg->mpLayout, "txt_sysmes04_00", (u32)tagStr);
 
     pg->mpLayout->SetAnimationEnable(pg->mpAnimTrans, true);
     pg->mpLayout->Animate(0);
 
     // Fixed description/label panes: five category labels plus the header.
-    LayoutSetTextBoxFmtValue(pg->mpLayout, &lbl_eu_8050C6E8[0xb3], BdatTouchStringCell(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 12), 0);
-    LayoutSetTextBoxFmtValue(pg->mpLayout, &lbl_eu_8050C6E8[0xc0], BdatTouchStringCell(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 15), 0);
-    LayoutSetTextBoxFmtValue(pg->mpLayout, &lbl_eu_8050C6E8[0xcd], BdatTouchStringCell(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 16), 0);
-    LayoutSetTextBoxFmtValue(pg->mpLayout, &lbl_eu_8050C6E8[0xda], BdatTouchStringCell(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 13), 0);
-    LayoutSetTextBoxFmtValue(pg->mpLayout, &lbl_eu_8050C6E8[0xe5], BdatTouchStringCell(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 14), 0);
-    LayoutSetTextBoxFmtValue(pg->mpLayout, &lbl_eu_8050C6E8[0x103], BdatTouchStringCell(&lbl_eu_8050C6E8[0xf0], &lbl_eu_8050C6E8[0xfe], 0x2b), 0);
+    const char* cat12 = BdatTouchStringCell("MNU_collect", "name", 12);
+    LayoutSetTextBoxFmtValue(pg->mpLayout, "txt_sysmes02", cat12, 0);
+    const char* cat15 = BdatTouchStringCell("MNU_collect", "name", 15);
+    LayoutSetTextBoxFmtValue(pg->mpLayout, "txt_sysmes03", cat15, 0);
+    const char* cat16 = BdatTouchStringCell("MNU_collect", "name", 16);
+    LayoutSetTextBoxFmtValue(pg->mpLayout, "txt_sysmes04", cat16, 0);
+    const char* cat13 = BdatTouchStringCell("MNU_collect", "name", 13);
+    LayoutSetTextBoxFmtValue(pg->mpLayout, "txt_slct01", cat13, 0);
+    const char* cat14 = BdatTouchStringCell("MNU_collect", "name", 14);
+    LayoutSetTextBoxFmtValue(pg->mpLayout, "txt_slct02", cat14, 0);
+    const char* keyHelp = BdatTouchStringCell("MNU_kyeassign", "help", 0x2b);
+    LayoutSetTextBoxFmtValue(pg->mpLayout, "txt_close00", keyHelp, 0);
 
     // Sample-texture msg id: lookup table picked by controller type; result is
     // arg2 of the id lookup (retail keeps it in r4 across the branch merge).
     const char* texTable = cf::CfGameManager::isClassicController(-1) != 0
-        ? &lbl_eu_8050C6E8[0x10f] : &lbl_eu_8050C6E8[0x118];
+        ? "fileID_2" : "fileID_1";
 
-    u16 id = BdatGetU16ByTableKey(&lbl_eu_8050C6E8[0xf0], texTable, 0x2b);
+    u16 id = BdatGetU16ByTableKey("MNU_kyeassign", texTable, 0x2b);
     char* texName = MakeTplNameSysFile(id);
 
     nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager_getArcResourceAccessor();
     TPLPalette* resource = (TPLPalette*)resAcc->GetResource(0x74696D67, texName, NULL);
 
     if (resource != NULL) {
-        PaneSetTexPaletteByName(pg->mpLayout, &lbl_eu_8050C6E8[0x121], resource);
+        PaneSetTexPaletteByName(pg->mpLayout, "pic_btn00", resource);
 
         // TPL dims captured before the pane lookup (retail keeps them in
         // callee-saved regs across FindPaneByName).
@@ -237,7 +248,7 @@ extern "C" void clpSetupDetPg(CLPPageSetup* pg) {
         u16 w = header->width;
         u16 h = header->height;
 
-        nw4r::lyt::Pane* pane = pg->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x121], true);
+        nw4r::lyt::Pane* pane = pg->mpLayout->GetRootPane()->FindPaneByName("pic_btn00", true);
         if (pane != NULL) {
             CLPSize size;
             size.width = (f32)(u32)w;
@@ -304,16 +315,22 @@ extern "C" void clpCloseDetPg(CCollepedia* this_) {
 
 // Set two named panes (0x82, 0x92) on the layout at field_4
 extern "C" void clpSetPageNum(CCollepedia* this_, unsigned char arg) {
-    setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x82], (unsigned char)1);
-    setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x92], arg);
+    setLayoutTextBoxNumber(this_->field_4, "txt_sysmes03_00", (unsigned char)1);
+    setLayoutTextBoxNumber(this_->field_4, "txt_sysmes04_00", arg);
+}
+
+// name-guess: the retail pool contains an orphan "txt_sysmes01" between
+// pic_btn00 and pic_btnbs01; its original caller was link-stripped.
+void clpSetSysMessage01Pane(CCollepedia* self) {
+    setLayoutTextBoxNumber(self->field_4, "txt_sysmes01", 0);
 }
 
 extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
     if (arg2 != NULL) {
-        PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x138], (TPLPalette*)arg2);
+        PaneSetTexPaletteByName(this_->field_4, "pic_btnbs01", (TPLPalette*)arg2);
     }
     if (arg3 != NULL) {
-        PaneSetTexPaletteByName(this_->field_4, &lbl_eu_8050C6E8[0x144], (TPLPalette*)arg3);
+        PaneSetTexPaletteByName(this_->field_4, "pic_icon01", (TPLPalette*)arg3);
     }
 }
 
@@ -323,9 +340,9 @@ extern "C" void clpSetPageTex(CCollepedia* this_, char* arg2, char* arg3) {
 // Retail reloads rootPane from *(layout+0x10) each time (no caching)
 extern "C" void clpCalcCurPos(CCollepedia* this_, LayoutContainer* container, int arg3) {
     char buf[0x28];
-    sprintf(buf, &lbl_eu_8050C6E8[0x14f], arg3 + 1);
+    sprintf(buf, "txt_slct%02d", arg3 + 1);
     nw4r::lyt::Pane* pane1 = container->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 = container->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
+    nw4r::lyt::Pane* pane2 = container->mpLayout->GetRootPane()->FindPaneByName("nul_proportion", true);
     ScalePaneWorldPos((nw4r::math::VEC3*)this_, pane1, pane2, container->mpLayout->GetRootPane());
 }
 
@@ -394,7 +411,6 @@ extern "C" void clpBuildPages(CLPCatalog* self_) {
     void* tblA = ::cf::CfBdat::spLandmarkListFileData;
     void* tblB = ::cf::CfBdat::spFldMapListFileData;
     u32 numA = Bdat_GetMaxRow_B1EC(tblA);
-    char* const s = lbl_eu_8050C6E8;
     for (u8 cat = 2; cat <= 0x19; cat++) {
         switch (cat) {
         case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
@@ -547,9 +563,9 @@ extern "C" void clpPrevPageIx(CLPCatalog* obj) {
 extern "C" char* clpGetPageNam(CLPCatalog* self) {
     u8 val = self->mPageTable.mPages[(s8)self->mCurrentPage].mCategory;
     if (val == 0x1a) {
-        return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], 0x14);
+        return BdatTouchStringCell("MNU_collect", "name", 0x14);
     } else {
-        return (char*)BdatGetPtrDirect((const void*)::cf::CfBdat::spFldMapListFileData, (const char*)&lbl_eu_8050C6E8[0xAE], val);
+        return BdatGetPtrDirect(::cf::CfBdat::spFldMapListFileData, "name", val);
     }
 }
 
@@ -562,7 +578,7 @@ extern "C" char* clpGetRowName(CLPCatalog* self, u32 index) {
     if (index >= 6) return 0;
     u8 val = self->mPageTable.mPages[(s8)self->mCurrentPage].mRows[index].mSubCategory;
     if (val != 0) {
-        return (char*)BdatTouchStringCell((const char*)&lbl_eu_8050C6E8[0xA2], (const char*)&lbl_eu_8050C6E8[0xAE], val);
+        return BdatTouchStringCell("MNU_collect", "name", val);
     }
     return 0;
 }
@@ -589,7 +605,7 @@ extern "C" u16 clpGetCelIcon(CLPCatalog* this_, u32 arg2, u32 arg3) {
     if (arg3 >= 5) return 0;
     u16 val = this_->mPageTable.mPages[(s8)this_->mCurrentPage].mRows[arg2].mCells[arg3].mItemId;
     if (val == 0) return 0;
-    return BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, &lbl_eu_8050C6E8[0x185], val);
+    return BdatGetU16Direct((const void*)::cf::CfBdat::spItmItemListFileData, "icon_base", val);
 }
 
 // Load the collected-progress float of the current page.
@@ -817,13 +833,13 @@ CCollepedia::CCollepedia() {
 // retail codegen (byte stores for the header, bulk struct copy for the data).
 void clpStartLoads(CCollepedia* this_) {
     this_->field_24 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050C6E8[0x19c], this_, 0, 0);
+        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), "menu/jp/Collepedia.arc", this_, 0, 0);
 
     this_->field_28 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050C6E8[0x1b3], this_, 0, 0);
+        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), "menu/jp/tpl/ItemIcon.arc", this_, 0, 0);
 
     this_->field_2C = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        KyoshinHeap_GetField44(), &lbl_eu_8050C6E8[0x1cc], this_, 0, 0);
+        KyoshinHeap_GetField44(), "common/jp/bdat_menu_item.bin", this_, 0, 0);
 
     // Virtual call on CSysWin at this+0x9C: loadSystemArc at vtable +0x88.
     ((CSysWin*)&this_->field_9C)->loadSystemArc();
@@ -1269,7 +1285,7 @@ extern "C" void clpOnConfirm(CCollepedia* this_) {
     if (clpIsClaimabl(&this_->mCatalog, this_->field_D9, this_->field_D8) == 0) return;
 
     char* desc = clpGetEntryStr(&this_->mCatalog, this_->field_D9, this_->field_D8);
-    LayoutSetTextBoxFmtValue(this_->field_28F0, &lbl_eu_8050C6E8[0x12b], desc, 0);
+    LayoutSetTextBoxFmtValue(this_->field_28F0, "txt_sysmes01", desc, 0);
 
     clpSetPageNum(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]),
         clpGetCellCnt(&this_->mCatalog, this_->field_D9, this_->field_D8));
@@ -1395,7 +1411,7 @@ extern "C" void collepediaCreateItemMulti(CCollepedia* this_) {
     // live result of the index expression before the +1 / fmt setup.
     u32 idx = clpGetPageCat(&this_->mCatalog);
     s32 d9 = (s8)this_->field_D9;
-    u16 entry = lbl_eu_8050C6A0[idx & 0xFF];
+    u16 entry = sClpPageCategoryTable[idx & 0xFF];
     u32 count = (u32)entry + 1;
     u32 result = BdatGetU16Direct(gpClpCollectMsgTable, "itemID",
         (u32)(u16)count + d9);
@@ -1436,8 +1452,8 @@ void clpPlayTblSe(CCollepedia* this_) {
     this_->field_49 = 0x10;
 
     // Table lookup folded into the call so the index comes straight from clpGetPageCat
-    u32 result = BdatGetU16Direct(gpClpCollectMsgTable, &lbl_eu_8050C6E8[0x1f9],
-        lbl_eu_8050C6A0[clpGetPageCat(&this_->mCatalog) & 0xFF]);
+    u32 result = BdatGetU16Direct(gpClpCollectMsgTable, "itemID",
+        sClpPageCategoryTable[clpGetPageCat(&this_->mCatalog) & 0xFF]);
     UIWin_CreateItemMulti((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
@@ -1463,21 +1479,21 @@ void clpSetSlotTex(CCollepedia* this_, const char* name, int mode) {
     // Mode 3 intentionally shares mode 2's resource and falls through without break.
     switch (mode) {
     case 0:
-        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x210], NULL);
+        res = this_->field_30->GetResource(0x74696D67, "mf55_sys01_icbsno00.tpl", NULL);
         break;
     case 1:
-        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x228], NULL);
+        res = this_->field_30->GetResource(0x74696D67, "mf55_sys01_icbsof00.tpl", NULL);
         break;
     case 2:
-        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x240], NULL);
+        res = this_->field_30->GetResource(0x74696D67, "mf55_sys01_icbs00.tpl", NULL);
         break;
     case 3:
-        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x240], NULL);
+        res = this_->field_30->GetResource(0x74696D67, "mf55_sys01_icbs00.tpl", NULL);
     }
 
     if (res != NULL) {
         char buf[0x28];
-        sprintf(buf, &lbl_eu_8050C6E8[0x256], name + 1);
+        sprintf(buf, "pic_btnbs%02d", name + 1);
         PaneSetTexPaletteByName(this_->field_38, (const char*)buf, (TPLPalette*)res);
     }
 }
@@ -1492,36 +1508,16 @@ void clpSetSlotIcn(CCollepedia* this_, const char* name, u32 mode, int id) {
             // Detail view: resolve the texture name from the item id via the second accessor.
             tex = this_->field_34->GetResource(0x74696D67, MakeTplNameSysFile(id), NULL);
         else
-            tex = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x264], NULL);
+            tex = this_->field_30->GetResource(0x74696D67, "mf00_com00_dmy.tpl", NULL);
     } else {
-        tex = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x264], NULL);
+        tex = this_->field_30->GetResource(0x74696D67, "mf00_com00_dmy.tpl", NULL);
     }
 
     if (tex != NULL) {
         char buf[0x28];
-        sprintf(buf, &lbl_eu_8050C6E8[0x277], name + 1);
+        sprintf(buf, "pic_icon%02d", name + 1);
         PaneSetTexPaletteByName(this_->field_38, (const char*)buf, (TPLPalette*)tex);
     }
-}
-
-// us-80258658
-// Iterate sub-array entries, set pane visibility for each, copy position for current entry, update display
-void clpSetPageVis(CCollepedia* this_) {
-    char buf[0x20];
-    register u8 count = this_->mCatalog.mCount;
-    for (u8 i = 1; i <= 0x16; i++) {
-        sprintf(buf, &lbl_eu_8050C6E8[0x2F7], i);
-
-        setPaneVisible(this_->field_38->GetRootPane()->FindPaneByName(buf, true), i <= count);
-
-        if (i == count) {
-            copyVEC3(this_->field_DC,
-                (void*)&this_->field_38->GetRootPane()->FindPaneByName(buf, true)->GetTranslate());
-        }
-    }
-
-    setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x306], count);
-    setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], 1);
 }
 
 // Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i idiom,
@@ -1608,9 +1604,9 @@ extern "C" void clpRefreshPage(CCollepedia* this_) {
 // Set two pane names on the layout using the current sub-array entry
 extern "C" void clpSetSelTxt(CCollepedia* this_) {
     char* str1 = clpGetEntryStr(&this_->mCatalog, this_->field_D9, this_->field_D8);
-    LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2e2], str1, 0);
+    LayoutSetTextBoxFmtValue(this_->field_38, "txt_name", str1, 0);
     char* str2 = clpGetItemName(&this_->mCatalog, this_->field_D9, this_->field_D8);
-    LayoutSetTextBoxFmtValue(this_->field_38, &lbl_eu_8050C6E8[0x2eb], str2, this_->field_4C);
+    LayoutSetTextBoxFmtValue(this_->field_38, "txt_comment", str2, this_->field_4C);
 }
 // us-80258550 Refresh the collepedia display: detail view routes through the shared
 // formatter, list view formats the current entry name and moves the cursor.
@@ -1625,11 +1621,11 @@ extern "C" void clpRefreshCur(CCollepedia* this_) {
         ((CBaseCur*)&this_->field_54[0x30])->setRootPaneTranslate((nw4r::math::VEC3*)work);
     } else {
         char* name = reinterpret_cast<char*>(work + 0x18);
-        sprintf(reinterpret_cast<char*>(work + 0x18), &lbl_eu_8050C6E8[0x256],
+        sprintf(reinterpret_cast<char*>(work + 0x18), "pic_btnbs%02d",
             (s8)this_->field_D9 * 5 + (s8)this_->field_D8 + 1);
 
         nw4r::lyt::Pane* pane1 = this_->field_38->GetRootPane()->FindPaneByName(name, true);
-        nw4r::lyt::Pane* pane2 = this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
+        nw4r::lyt::Pane* pane2 = this_->field_38->GetRootPane()->FindPaneByName("nul_proportion", true);
 
         ScalePaneWorldPos(reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C), pane1, pane2,
             this_->field_38->GetRootPane());
@@ -1637,6 +1633,26 @@ extern "C" void clpRefreshCur(CCollepedia* this_) {
         ((CBaseCur*)&this_->field_54)->setRootPaneTranslate(
             reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C));
     }
+}
+
+// us-80258658
+// Iterate sub-array entries, set pane visibility for each, copy position for current entry, update display
+void clpSetPageVis(CCollepedia* this_) {
+    char buf[0x20];
+    u8 count = this_->mCatalog.mCount;
+    for (u8 i = 1; i <= 0x16; i++) {
+        sprintf(buf, "pic_pghole%02d", i);
+
+        setPaneVisible(this_->field_38->GetRootPane()->FindPaneByName(buf, true), i <= count);
+
+        if (i == count) {
+            copyVEC3(this_->field_DC,
+                (void*)&this_->field_38->GetRootPane()->FindPaneByName(buf, true)->GetTranslate());
+        }
+    }
+
+    setLayoutTextBoxNumber(this_->field_38, "txt_pg01", count);
+    setLayoutTextBoxNumber(this_->field_38, "txt_pg00", 1);
 }
 
 // us-80258748

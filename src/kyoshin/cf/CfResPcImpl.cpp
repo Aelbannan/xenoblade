@@ -739,7 +739,7 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
         msg->clear();
         int v1 = (self)->CfResPcImpl_getSlotTableEntry(0);
         int v2 = (self)->CfResPcImpl_getSlotTableEntry(0);
-        msg->format(lbl_eu_80503BC4, (const char*)Tok_FormatRes((void*)v2), v1);
+        msg->format("%s(%x)", (const char*)Tok_FormatRes((void*)v2), v1);
         return;
     }
     if (self->field_00->field_6C & 0x2) {
@@ -830,7 +830,7 @@ void CfResPcImpl_advance(cf::CfResPcImpl* self) {
         void* hnd = Scn_SetupAnim(CfRes_getD80Flag(), (u32)self->field_00->field_90, -1, 1);
         u8* d = (u8*)__dynamic_cast(hnd, 0, &lbl_eu_806624C0, &lbl_eu_806624D0, 0);
         CfModel_InstallSub(self->field_00, d);
-        simResetAnimAtC(self->field_00->field_98, lbl_eu_80503BC4 + 7);
+        simResetAnimAtC(self->field_00->field_98, "JUspA");
         ((cf::CfResPcResObj*)self->field_00->field_98)->field_7A4 |= 0x400000;
         if (self->field_00->field_98 != 0) {
             reinterpret_cast<CScnItemModel*>(self->field_00->field_98)->vfunc64(0);
@@ -1447,11 +1447,6 @@ __declspec(section ".rodata") __attribute__((aligned(8), used))
 char lbl_eu_80503BA8[0x10] = "CScnItemModel";
 __declspec(section ".rodata") __attribute__((aligned(8), used))
 char lbl_eu_80503BB8[0x0C] = "CScnItem";
-// .rodata 0x14: "%s(%x)" format (used by msg->format) followed by "JuspA"
-// (used via lbl_eu_80503BC4 + 7); one retail object, one sized array.
-// (no aligned(8): retail packs this at 0x94, an 8-align would pad to 0x98).
-__declspec(section ".rodata") __attribute__((used))
-char lbl_eu_80503BC4[0x14] = "%s(%x)\0JUspA";
 // .data 0x30: PMF dispatch rows ({0,-1,func}; free-function targets are not
 // expressible as PMFs, so init via the raw-word view like CfResObjImpl).
 __declspec(section ".data") __attribute__((aligned(8), used))

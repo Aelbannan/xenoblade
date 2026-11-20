@@ -80,7 +80,7 @@ extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, 
 
 extern u8 sNw4rMaterialFile[];
 extern u8 sNw4rTexMapAssertMsg[];
-extern u32 sThresholdLookup[28];
+extern const u32 sThresholdLookup[28];
 extern char gTplNameBuffer[];
 extern char gIconNameBuffer[];
 
@@ -129,14 +129,14 @@ extern const char lbl_eu_80526324[]; // const: matches CActParamAnimGame.cpp def
 extern const char lbl_eu_80526300[];  // const char: matches CfSoundMan.hpp chain (u8/char variants broke CMiniMap TU)
 extern const char lbl_eu_805262F0[];
 extern const char lbl_eu_805262C8[];
-extern u8 sSjisWordTable[];
-extern u8 sLodCharMap[];
+extern const u8 sSjisWordTable[];
+extern const u8 sLodCharMap[];
 // Minimap pointer tables: heterogeneous (strings + NULLs); entries are relocs.
-extern const void* sMinimapPtrTablePlain[32];
-extern const void* sMinimapPtrTable34[34];
+extern const void* const sMinimapPtrTablePlain[32];
+extern const void* const sMinimapPtrTable34[34];
 // 13-entry float table copied wholesale to the stack by GetFloatTableEntry.
 struct FloatTable13 { f32 w[13]; };
-extern FloatTable13 sRankFloatTable;
+extern const FloatTable13 sRankFloatTable;
 extern char gItemNameBuffer[];
 extern ml::CVec3 zero__Q22ml5CVec3;
 
@@ -166,4 +166,4 @@ extern "C" void* getInstance__14Class_80296898Fv();
 }
 
 struct Table_80500188;
-extern "C" struct Table_80500188 sThresholdPairTable;
+extern "C" const struct Table_80500188 sThresholdPairTable;

@@ -116,7 +116,7 @@ namespace cf {
 // pointer, and arms the event-sequence flag bits from the name substrings.
 // The retail symbol is the pre-mangled global name (not a member), so this is
 // a C-linkage free ctor (CTaskREvent precedent).
-__declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
+cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     cf::CTaskREvtSequence* self, const char* name) {
     // CProcess base ctor, then the interim CTTask vtable at +0x10
     // (overwritten below), then the null PTMF members at +0x3C/+0x48 in the
@@ -185,9 +185,8 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     self->field_0x120 = 0;
     self->field_0x124 = 0;
     self->field_0x128 = 0;
-    // volatile-qualified store pins the stfs at its field-slot position
-    // (MWCC otherwise hoists it up next to the lfs); addressing stays folded.
-    *(volatile f32*)&self->field_0x12C = f0;
+    // Plain store at the field slot (no forced reload).
+    self->field_0x12C = f0;
     self->field_0x130 = 1;
     self->field_0x134 = 0;
     self->field_0x138 = 0;

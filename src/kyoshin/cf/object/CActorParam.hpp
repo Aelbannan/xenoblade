@@ -14,38 +14,10 @@
 // `extern float` leaves the lfs after the GPR saves (4-byte shift).
 extern const float lbl_eu_806677E4; // sdata2: default gauge value (CActorParam_resetGaugeBattleEntry)
 extern const float lbl_eu_806677E0; // sdata2: gauge default (CActorParam_resetGaugeEntry/resetAllGaugeEntries)
-extern char lbl_eu_80503438[]; // rodata column-name string block (CActorParam_getLevelExp)
-extern double lbl_eu_80667848; // sdata2: +0.5 rounding constant (CActorParam_findMaxGaugeEntry/findMinGaugeEntry)
-extern double lbl_eu_80667850; // sdata2: -0.5 rounding constant (CActorParam_findMaxGaugeEntry/findMinGaugeEntry)
 extern const float lbl_eu_806677E8; // sdata2: gauge lower clamp (CActorParam_updateHateEntries)
 extern const float lbl_eu_80667864; // sdata2: gauge upper clamp (CActorParam_updateHateEntries)
-extern const double lbl_eu_806677F8; // sdata2: 0x4330000080000000 u32->double magic (CActorParam_applyStatusHeal)
-extern float lbl_eu_80667830; // sdata2: scale constant (CActorParam_applyStatusHeal)
-extern const double lbl_eu_806677F0; // sdata2: u8/u16->double magic 0x4330000000000000 (Func10/159)
-extern const float lbl_eu_80667818; // sdata2: arts-magnitude scale (Func10)
 extern const float lbl_eu_806677EC; // sdata2: 30.0f gauge divisor (Func140 / CActorParam_updateTick; const so it hoists above the frame stores)
-extern const float lbl_eu_80667868; // sdata2: SP/exp gain scale (CActorParam_applyEventStatus)
-extern const float lbl_eu_8066786C; // sdata2: arts-gauge threshold (CActorParam_applyEventStatus)
-extern const float lbl_eu_80667800; // sdata2: 2.0f arts-slot default (Func140; const so the load is scheduled before the unk0 store)
-extern const float lbl_eu_80667804; // sdata2: 3.0f arts-slot default (Func140; const so MWCC loads it once for the two stores)
 // ml::pi (pi) is declared in CfObjectEnumList.hpp
-// CActorParam_updateStatusEntries constants (const so MWCC hoists each into a
-// callee-saved FPR above the main battle-entry loop, matching retail).
-extern const float lbl_eu_80667814; // 0.05f crit-scale
-extern const double lbl_eu_80667820; // 0.15 clamp-level rate
-extern const float lbl_eu_80667828; // -1.0f negate
-extern const float lbl_eu_8066782C; // 0.5f half multiplier
-extern const float lbl_eu_80667834; // 0.9f
-extern const float lbl_eu_80667838; // 0.1f status tick
-extern const float lbl_eu_8066783C; // 5.0f default duration
-extern const float lbl_eu_80667840; // 2.5f boost multiplier
-extern const float lbl_eu_80667844; // 4.0f extended duration
-extern const float lbl_eu_80667808; // sdata2: unk1620 default (ctor)
-extern const float lbl_eu_8066780C; // sdata2: unk1630 multiplier (ctor)
-extern const float lbl_eu_80667810; // sdata2: unk1630 pi divisor (ctor)
-extern const float lbl_eu_80667858; // sdata2: 0.7f (defined by this TU)
-extern const float lbl_eu_8066785C; // sdata2: 0.001f (defined by this TU)
-extern const float lbl_eu_80667860; // sdata2: 9999.0f (defined by this TU)
 
 namespace cf {
 

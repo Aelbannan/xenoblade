@@ -217,12 +217,12 @@ extern "C" void artsShiftProg(SArtsSub8022FA58* self, int arg2) {
 // pane interface and show it. (0x0C/0x10 roles are swapped vs the matched
 // ArtsLayoutPair_completeLayoutIn twin.)
 void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x16 == 0) {
         self->field_0x08->v11(self->field_0x0C, 0);
         self->field_0x08->v11(self->field_0x10, 1);
-        self->field_0x10->field_0x10 = lbl_eu_8066864C;
+        self->field_0x10->field_0x10 = 0.0f;
         self->field_0x18 = 1;
         if (self->field_0x17 != 0) {
             setPaneVisible(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x8F, 1), 1);
@@ -237,11 +237,11 @@ void ArtsLayoutPair_completeLayoutOut(SArts2FF74* self) {
 // 0x08 driver, reset the 0x0C float, mark the 0x18/0x16 state, then load
 // both window labels through the driver's field_0x10 pane interface.
 extern "C" void ArtsLayoutPair_completeLayoutIn(SArts30070* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
-        self->field_0x0C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x0C->field_0x10 = 0.0f;
         self->field_0x18 = 0;
         self->field_0x16 = 1;
         setPaneVisible(((SArts3CObj*)self->field_0x08->field_0x10)->v13(lbl_eu_8050AC70 + 0x7F, 1), 0);
@@ -973,12 +973,12 @@ extern "C" void ArtsSlotCursor_refresh(SArtsSub8022FA58* self) {
 // both sub-panels via vtable slot 0x2C (v11) then bump the 0x24 state.
 // Layout-in driver twin of ArtsLayout_runLayoutIn's shape (0x08/0x0C/0x10 fields).
 void ArtsLayout_runLayoutOut(SArts31480* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x23 == 0) {
         self->field_0x08->v11(self->field_0x0C, 0);
         self->field_0x08->v11(self->field_0x10, 1);
-        self->field_0x10->field_0x10 = lbl_eu_8066864C;
+        self->field_0x10->field_0x10 = 0.0f;
         self->field_0x24 = 1;
     }
 }
@@ -987,11 +987,11 @@ void ArtsLayout_runLayoutOut(SArts31480* self) {
 // the animation finished, drive both sub-panes (v11 at +0x2C), reset the
 // 0x0C float, show the panes, and bump the 0x23/0x24 state.
 void ArtsLayout_runLayoutIn(SArts3150C* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
-        self->field_0x0C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x0C->field_0x10 = 0.0f;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 0);
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 1);
         self->field_0x24 = 2;
@@ -1002,12 +1002,12 @@ void ArtsLayout_runLayoutIn(SArts3150C* self) {
 // Same driver as ArtsLayout_runLayoutOut but for the offset-0x14 sub-object; the
 // 0x24 state is bumped to 3 instead of 1.
 void ArtsLayout_runTwinLayoutOut(SArts315BC* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     advanceAnimTransform(self->field_0x18, duration);
     if (self->field_0x23 == 0) {
         self->field_0x14->v11(self->field_0x18, 0);
         self->field_0x14->v11(self->field_0x1C, 1);
-        self->field_0x1C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x1C->field_0x10 = 0.0f;
         self->field_0x24 = 3;
     }
 }
@@ -1017,11 +1017,11 @@ void ArtsLayout_runTwinLayoutOut(SArts315BC* self) {
 // driver's v11 slot, reset the 0x18 float, show/hide via the 0x08/0x14 pane
 // pointees, and mark state 0x24=0 / busy 0x23=1.
 void ArtsLayout_runTwinLayoutIn(SArts31648* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     if (advanceAnimTransform(self->field_0x1C, duration) != 0) {
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
-        self->field_0x18->field_0x10 = lbl_eu_8066864C;
+        self->field_0x18->field_0x10 = 0.0f;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
         self->field_0x24 = 0;
@@ -1572,12 +1572,12 @@ extern "C" void ArtsTable_toggleBusyPanes(SArts32888* self) {
 
 // Twin of ArtsLayout_runLayoutOut (same 0x08/0x0C/0x10 driver layout).
 extern "C" void ArtsTableLayout_runLayoutOut(SArts31480* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x23 == 0) {
         self->field_0x08->v11(self->field_0x0C, 0);
         self->field_0x08->v11(self->field_0x10, 1);
-        self->field_0x10->field_0x10 = lbl_eu_8066864C;
+        self->field_0x10->field_0x10 = 0.0f;
         self->field_0x24 = 1;
     }
 }
@@ -1586,11 +1586,11 @@ extern "C" void ArtsTableLayout_runLayoutOut(SArts31480* self) {
 // 0x10; when finished, drive both panes via the 0x08 driver, reset the 0x0C
 // float, show the 0x14 pane, and mark state 0x24=2 / busy 0x23=1.
 extern "C" void ArtsTableLayout_runLayoutIn(SArts3150C* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
-        self->field_0x0C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x0C->field_0x10 = 0.0f;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 0);
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 1);
         self->field_0x24 = 2;
@@ -1600,23 +1600,23 @@ extern "C" void ArtsTableLayout_runLayoutIn(SArts3150C* self) {
 
 // Twin of ArtsLayout_runTwinLayoutOut (offset-0x14 driver layout, state bump to 3).
 extern "C" void ArtsTableLayout_runTwinLayoutOut(SArts315BC* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     advanceAnimTransform(self->field_0x18, duration);
     if (self->field_0x23 == 0) {
         self->field_0x14->v11(self->field_0x18, 0);
         self->field_0x14->v11(self->field_0x1C, 1);
-        self->field_0x1C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x1C->field_0x10 = 0.0f;
         self->field_0x24 = 3;
     }
 }
 
 // Twin of ArtsLayout_runTwinLayoutIn (identical body, separate retail symbol).
 extern "C" void ArtsTableLayout_runTwinLayoutIn(SArts31648* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     if (advanceAnimTransform(self->field_0x1C, duration) != 0) {
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
-        self->field_0x18->field_0x10 = lbl_eu_8066864C;
+        self->field_0x18->field_0x10 = 0.0f;
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x08->field_0x10, 1);
         setPaneVisible((nw4r::lyt::Pane*)self->field_0x14->field_0x10, 0);
         self->field_0x24 = 0;
@@ -2685,7 +2685,7 @@ extern "C" u32 CMenuArtsSet_getHelpMode(CArtsList* self) {
 // both list sub-panels with the current entry, scroll the bar in with the
 // 3-float init vector, then kick the scrollbar tick.
 void CMenuArtsSet_completeLayoutIn(CArtsList* self) {
-    if (advanceAnimTransform(self->field_0x20, lbl_eu_80668648) == 0) return;
+    if (advanceAnimTransform(self->field_0x20, 1.0f) == 0) return;
     self->field_0x1C->v11(self->field_0x20, 0);
     self->field_0x1C->v11(self->field_0x24, 1);
     self->field_0x2C = 2;
@@ -2694,13 +2694,13 @@ void CMenuArtsSet_completeLayoutIn(CArtsList* self) {
     float vec[3];
     vec[0] = lbl_eu_80668678;
     vec[1] = lbl_eu_8066867C;
-    vec[2] = lbl_eu_8066864C;
+    vec[2] = 0.0f;
     reinterpret_cast<CScrollBar*>((u8*)&self->mScrollBar)->InitRootPane(reinterpret_cast<const nw4r::math::VEC3*>(vec));
     reinterpret_cast<CScrollBar*>((u8*)&self->mScrollBar)->requestScrollIn();
 }
 
 extern "C" void CMenuArtsSet_enterInteract(CArtsList* self) {
-    if (advanceAnimTransform(self->field_0x24, lbl_eu_80668648) != 0) {
+    if (advanceAnimTransform(self->field_0x24, 1.0f) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
         ArtsSubCursor_setVisible((SArtsSub8022FA58*)&self->mSubObj148, 1);
@@ -2712,7 +2712,7 @@ extern "C" void CMenuArtsSet_enterInteract(CArtsList* self) {
 // sub-panes via the field_0x1C interface, advance the state to 5, reset the
 // 0x148 sub-object, and request the scroll bar scroll-out.
 void CMenuArtsSet_completeLayoutOut(CArtsList* self) {
-    float duration = lbl_eu_80668648;
+    float duration = 1.0f;
     if (AnimRewindFrame(self->field_0x24, duration) != 0) {
         self->field_0x1C->v11(self->field_0x24, 0);
         self->field_0x1C->v11(self->field_0x20, 1);
@@ -2723,7 +2723,7 @@ void CMenuArtsSet_completeLayoutOut(CArtsList* self) {
 }
 
 extern "C" void CMenuArtsSet_finishCloseAnim(SArts3506C* self) {
-    if (AnimRewindFrame(self->mAnim20, lbl_eu_80668648) != 0) {
+    if (AnimRewindFrame(self->mAnim20, 1.0f) != 0) {
         self->field_0x31 = 1;
         self->field_0x2C = 0;
     }

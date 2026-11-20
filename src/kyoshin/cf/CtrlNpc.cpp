@@ -626,7 +626,7 @@ void CtrlNpcInitMoveWindow(cf::CtrlNpc* self, u32 a, u32 b, int count,
 #undef lbl_eu_806666A8
 #undef lbl_eu_806666AC
 #undef lbl_eu_806666B0
-void __declspec(noinline) CtrlNpcSetupMoveAction(cf::CtrlNpc* self,
+void CtrlNpcSetupMoveAction(cf::CtrlNpc* self,
                                         const ml::CVec3* vec, f32 scale,
                                         f32 paramB) {
     cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
@@ -797,13 +797,7 @@ void CtrlNpcSetFlagActivate(cf::CtrlNpc* self, u8 val) {
     NpcCharView(obj)->field_6C4 = 1;
 }
 
-// TU-local view of the CfObjectModel float at +0xA4 read by
-// CfObject_getProgressHigh (exact layout; no named member exists yet).
-struct CtrlNpcModelA4View {
-    u8 _pad[0xA4];   // 0x00-0xA3
-    float field_A4;  // 0xA4-0xA7
-};
-float cf::CfObjectModel::CfObject_getProgressHigh() { return reinterpret_cast<CtrlNpcModelA4View*>(this)->field_A4; }
+float cf::CfObjectModel::CfObject_getProgressHigh() { return this->mMoveRates.x; }
 
 float cf::CfObjectModel::CfObject_getProgressLow() { return static_cast<cf::CfObjectModel*>(this)->field_A0; }
 
@@ -999,7 +993,7 @@ void CtrlNpcAdvanceWaypoint(cf::CtrlNpc* self);
 // game-clock delta into normalized travel progress, then either snaps to the
 // final waypoint or interpolates along the containing segment, steering /
 // teleporting the character accordingly.
-void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
+void CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
     if (self->field_15C == 0 || self->field_168 == 0)
         return;
 
@@ -1182,7 +1176,7 @@ void __declspec(noinline) CtrlNpcRestartMoveTimer(cf::CtrlNpc* self) {
         ml::CVec3 hd = last - *prev;
         nw4r::math::Atan2FIdx(hd.x, hd.z);
         reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&last, 50.0f);
-        ColiSetAxisBlockInverse((u8*)ch + 0x60C,
+        ColiSetAxisBlockInverse(ch->_60C_region,
                       reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector()));
 
         f32 f158 = self->field_158;

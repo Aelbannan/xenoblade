@@ -86,28 +86,6 @@ struct CEquipItemData {
     u8 unk7;    // 0x7
 };
 
-/* Item-list region of the CItemBoxInfo object at unk_20c + 0xB0, written by
-   refreshEIBItemList's list refresh: u16 ids, 12 VEC3 records (i*0xC), two per-item
-   byte tables (+0xA8 / +0xB4) and a per-item s16 table (+0xC0). */
-struct CEquipItemBoxItemListView {
-    u16 field_00[0xC];            // 0x00..0x17 u16 item ids
-    u8 field_18[0x90];            // 0x18..0xA7 12 x 0xC records (VEC3 copies)
-    u8 field_A8[0x18];            // 0xA8..0xBF per-item bytes (+0xA8 / +0xB4)
-    s16 field_C0[0xC];            // 0xC0..0xD7 per-item shorts
-    u8 field_D8;                  // 0xD8 scratch byte (selected column)
-    u8 _padD9[0x100 - 0xD9];
-};
-
-/* Overlay for the per-page u16 item array at +0x210 with the per-index u8
-   table at +0x2C4 and s16 table at +0x2D0 (read by refreshEIBItemList). */
-struct CEquipItemBoxPageDataView {
-    u8 pad00[0x210];
-    u16 field_210[0x20];    // 0x210..0x24F per-page u16 ids
-    u8 pad250[0x2C4 - 0x250];
-    u8 field_2C4[0xC];      // 0x2C4..0x2CF per-index bytes
-    s16 field_2D0[0xC];     // 0x2D0..0x2DF per-index shorts
-};
-
 /* Item instance (retail CItemBase-ish). Only the id word at +0x0, the
    flag halfword at +0x4 and the byte at +0x7 are read by this TU's helpers. */
 struct CItemInstance {
@@ -352,21 +330,6 @@ struct CEquipItemBoxMoveTable {
    useEIBSelectedItem's slot-clearing tail. */
 struct CEquipItemBoxCatTable12 {
     u8 b[0xC];
-};
-
-/* CfObjectMove search-result entry: the word at +0x4 must be non-zero
-   before the move object is resolved. */
-struct CEquipItemBoxMoveEntryView {
-    void* vtable;   // 0x0
-    u32 field_4;    // 0x4 validity word
-};
-
-/* Stack-allocated enum-list holder/list used by useEIBSelectedItem's CfMove
-   search (__ct__16CfEnumListHolderFv ctor / get__16CfEnumListHolderFv getter / __dt__16CfEnumListHolderFv dtor;
-   the list's element count sits at +0x620). */
-struct CEquipItemBoxEnumList {
-    u8 _pad00[0x620];
-    u32 field_620;  // 0x620
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

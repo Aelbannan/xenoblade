@@ -10,6 +10,7 @@
 namespace cf {
 
 class CfObjectActor;
+struct CVoiceActorState; // real type: kyoshin/cf/voice/CCharVoiceMan.hpp
 
 // Retail cf::CHelp_Always: the always-enabled help leaf queried by the
 // manager before dispatching a scenario tip.
@@ -90,11 +91,8 @@ struct CHelpTableEntry {
     void** mItems; // 0x4
 };
 
-// Battle-object argument for updateBattleHelpState (flags word at +0x3F08).
-struct CHelpBattleObjArg {
-    u8 pad[0x3F08]; // 0x0..0x3F07
-    u32 mField3F08; // 0x3F08
-};
+// updateBattleHelpState takes the real battle actor state (its voice-state
+// header declares the flags word at +0x3F08).
 
 
 // The TU static initializer (sinit_80295DB0) builds every entry of the help
@@ -321,5 +319,4 @@ extern "C" void* __register_global_object(void* object, void* dtor, void* cookie
 extern void* sDefaultHelpItemList[]; // default mListB item array
 extern cf::CHelpTableEntry sScenarioHelpTable[]; // mField10 -> item-array table
 extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
-extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // scenario sequence counter
 extern "C" u32 CHelp_ForwardPartyNotice(); // help-active check (trampoline to MenuTutorialIsCreated)

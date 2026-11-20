@@ -16,26 +16,26 @@ extern const char lbl_8066DCF8[4] = {0, 0, 0, 0};
 
 extern "C" void* getFont__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
 extern "C" void* getFontConst__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
-extern "C" u16 getLineHeight__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_5C; }
-extern "C" u32 getBufferSize__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_58; }
-extern "C" u16 getMode__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->mMode; }
-extern "C" u16 getState__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->mState; }
-extern "C" u32 getFlags__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_04; }
+u16 CDeviceFontInfoExt::getLineHeight() { return field_5C; }
+u32 CDeviceFontInfoExt::getBufferSize() { return field_58; }
+u32 CDeviceFontInfoExt::getMode() { return mMode; }
+u32 CDeviceFontInfoExt::getState() { return mState; }
+s32 CDeviceFontInfoExt::getFlags() { return field_04; }
 
-extern "C" void advanceState__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
-    u32 v = self->field_60;
-    if (v - 1 <= 1) self->field_60 = v + 1;
+void CDeviceFontInfoExt::advanceState() {
+    u32 v = field_60;
+    if (v - 1 <= 1) field_60 = v + 1;
 }
-extern "C" void initState__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
-    u32 v = self->field_60;
-    if (v == 0) self->field_60 = v + 1;
+void CDeviceFontInfoExt::initState() {
+    u32 v = field_60;
+    if (v == 0) field_60 = v + 1;
 }
-extern "C" u32 isStateNonZero__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
-    u32 v = self->field_60;
+u32 CDeviceFontInfoExt::isStateNonZero() {
+    u32 v = field_60;
     return ((u32)(-(s32)v | (s32)v)) >> 31;
 }
-extern "C" u32 isStateReady__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
-    s32 v = (s32)self->field_60;
+u32 CDeviceFontInfoExt::isStateReady() {
+    s32 v = (s32)field_60;
     return v >= 3;
 }
 
@@ -57,10 +57,9 @@ struct DeviceFontCharWork {
     char src[3];
     nw4r::ut::Glyph glyph;
 };
-extern "C" const char* getCharGlyph__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self,
-                                                       const char* pStr, u32** ppTexture,
-                                                       u32* pCellX, u32* pCellY,
-                                                       u32* pGlyphWidth) {
+const char* CDeviceFontInfoExt::getCharGlyph(const char* pStr, void** ppTexture,
+                                             u32* pCellX, u32* pCellY,
+                                             u32* pGlyphWidth) {
     DeviceFontCharWork work;
 
     reinterpret_cast<u16&>(work.src[0]) = 0;
@@ -132,12 +131,12 @@ extern "C" const char* getCharGlyph__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* 
     work.srcLen = strlen(work.src);
     ENCConvertStringUtf8ToUtf16(work.dest, &work.destLen, (const u8*)work.src, &work.srcLen);
 
-    nw4r::ut::Font* font = reinterpret_cast<nw4r::ut::Font*>(reinterpret_cast<u8*>(self) + 0x1C);
+    nw4r::ut::Font* font = reinterpret_cast<nw4r::ut::Font*>(reinterpret_cast<u8*>(this) + 0x1C);
     font->GetGlyph(&work.glyph, work.dest[0]);
 
     *pCellX = work.glyph.cellX;
     *pCellY = work.glyph.cellY;
-    *ppTexture = static_cast<u32*>(work.glyph.pTexture);
+    *ppTexture = work.glyph.pTexture;
     // 3-byte CharWidths copy: halfword first, trailing charWidth byte stored
     // after the metric exports.
     s8 cw = work.glyph.widths.charWidth;
@@ -148,14 +147,11 @@ extern "C" const char* getCharGlyph__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* 
 }
 extern "C" void create__18CDeviceFontInfoExtFv() {}
 
-extern "C" u32 lbl_eu_8056C740[0xF];
-
 extern "C" void __ct__Q34nw4r2ut10PackedFontFv(void* self);
 extern "C" void Destroy__Q34nw4r2ut10PackedFontFv(void* self);
 extern "C" void __dt__Q34nw4r2ut10PackedFontFv(void* self, int flag);
 
 CDeviceFontInfoExt::CDeviceFontInfoExt() {
-    *(void**)this = lbl_eu_8056C740;
     field_04 = 0;
     *(u32*)((u8*)this + 0x08) = 0;
     *(u32*)((u8*)this + 0x0C) = 0;
@@ -165,13 +161,11 @@ CDeviceFontInfoExt::CDeviceFontInfoExt() {
 }
 
 // CDeviceFontInfoExt::~CDeviceFontInfoExt() (us-8045742c, 0x88) -- mirrors the
-// accepted CDeviceFontInfoRom dtor recipe: explicit vptr re-store (MWCC folds
-// its own auto-store into this one, as in the ctor above), PackedFont::Destroy,
-// guarded deallocate of the +0x18 buffer, explicit PackedFont dtor call with
-// the MWCC destroy-without-delete flag (-1, cf. drawGX()->~CDrawGX()), and the
-// implicit deleting-flag operator delete.
+// accepted CDeviceFontInfoRom dtor recipe: compiler-emitted vptr re-store,
+// PackedFont::Destroy, guarded deallocate of the +0x18 buffer, explicit
+// PackedFont dtor call with the MWCC destroy-without-delete flag (-1, cf.
+// drawGX()->~CDrawGX()), and the implicit deleting-flag operator delete.
 CDeviceFontInfoExt::~CDeviceFontInfoExt() {
-    *(void**)this = lbl_eu_8056C740;
     Destroy__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
     if (*(void**)((u8*)this + 0x18) != NULL) {
         mtl::MemManager::deallocate(*(void**)((u8*)this + 0x18));
@@ -179,46 +173,4 @@ CDeviceFontInfoExt::~CDeviceFontInfoExt() {
     }
     __dt__Q34nw4r2ut10PackedFontFv((u8*)((u32)this + 0x1C), -1);
 }
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// forward refs
-namespace D2Blob {
-extern "C" void __dt__18CDeviceFontInfoExtFv();
-}
-extern "C" u32 lbl_eu_80663718[0x2];
-extern "C" u32 lbl_eu_80663720[0x2];
-extern "C" const char lbl_eu_80522E00[0x18];
-extern "C" const char lbl_eu_80522E18[0x10];
-extern "C" u32 lbl_eu_8056C740[0xF];
-extern "C" u32 lbl_eu_8056C77C[0x3];
-
-// [.data] 0x8056C740-0x8056C788 (72 bytes)
-extern "C" u32 lbl_eu_8056C740[0xF] = {
-    (u32)&lbl_eu_80663718[0], 0x00000000,
-    (u32)&D2Blob::__dt__18CDeviceFontInfoExtFv,
-    (u32)getFlags__18CDeviceFontInfoExtFv,
-    (u32)getState__18CDeviceFontInfoExtFv,
-    (u32)getMode__18CDeviceFontInfoExtFv,
-    (u32)getBufferSize__18CDeviceFontInfoExtFv,
-    (u32)getLineHeight__18CDeviceFontInfoExtFv,
-    (u32)getCharGlyph__18CDeviceFontInfoExtFv,
-    (u32)getFont__18CDeviceFontInfoExtFv,
-    (u32)getFontConst__18CDeviceFontInfoExtFv,
-    (u32)advanceState__18CDeviceFontInfoExtFv,
-    (u32)initState__18CDeviceFontInfoExtFv,
-    (u32)isStateNonZero__18CDeviceFontInfoExtFv,
-    (u32)isStateReady__18CDeviceFontInfoExtFv,
-};
-extern "C" u32 lbl_eu_8056C77C[0x3] = { (u32)&lbl_eu_80663720[0], 0x00000000, 0x00000000 };
-
-// [.rodata] 0x80522E00-0x80522E28 (40 bytes)
-extern "C" const char lbl_eu_80522E00[0x18] = {
-    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6f,0x6e,0x74,0x49,0x6e,0x66,0x6f,0x45,
-    0x78,0x74,0x00,0x00,0x00,0x00,0x00,0x00 };
-extern "C" const char lbl_eu_80522E18[0x10] = {
-    0x49,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6f,0x6e,0x74,0x49,0x6e,0x66,0x6f,0x00 };
-
-// [.sdata] 0x80663718-0x80663728 (16 bytes)
-extern "C" u32 lbl_eu_80663718[0x2] = { (u32)&lbl_eu_80522E00[0], (u32)&lbl_eu_8056C77C[0] };
-extern "C" u32 lbl_eu_80663720[0x2] = { (u32)&lbl_eu_80522E18[0], 0x00000000 };
 

@@ -1,17 +1,28 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/device/CDeviceFont.hpp"
 
-class CDeviceFontInfoExt {
+class CDeviceFontInfoExt : public IDeviceFontInfo {
 public:
     CDeviceFontInfoExt();
     virtual ~CDeviceFontInfoExt();
-    void getCharGlyph();
-    void create();
-    void advanceState();
-    void initState();
-    void isStateNonZero();
-    void isStateReady();
+
+    virtual const char* getCharGlyph(const char* pStr, void** ppTexture, u32* pCellX,
+                                     u32* pCellY, u32* pGlyphWidth);
+    static CDeviceFontInfoExt* create();
+    virtual void advanceState();
+    virtual void initState();
+    virtual u32 isStateNonZero();
+    virtual u32 isStateReady();
+
+    virtual nw4r::ut::Font* getFont();
+    virtual const nw4r::ut::Font* getFontConst();
+    virtual u16 getLineHeight();
+    virtual u32 getBufferSize();
+    virtual u32 getMode();
+    virtual u32 getState();
+    virtual s32 getFlags();
 
     u32 field_04;
     void* mFontData;  //written from allocate_tail void*
@@ -23,12 +34,4 @@ public:
     u16 field_5C;
     u16 _5E;
     u32 field_60;
-
-    void* getFont();
-    void* getFontConst();
-    u16 getLineHeight();
-    u32 getBufferSize();
-    u16 getMode();
-    u16 getState();
-    u32 getFlags();
 };

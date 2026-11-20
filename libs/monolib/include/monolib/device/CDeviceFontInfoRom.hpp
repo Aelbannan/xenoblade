@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-#include "monolib/device/CDeviceFontInfo.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "nw4r/ut/ut_RomFont.h"
 
 /**
@@ -12,7 +12,7 @@
  * an nw4r::ut::RomFont for rendering. Created as a singleton via create().
  * Size: 0x34.
  */
-class CDeviceFontInfoRom : public CDeviceFontInfo {
+class CDeviceFontInfoRom : public IDeviceFontInfo {
 public:
     CDeviceFontInfoRom();
     virtual ~CDeviceFontInfoRom();
@@ -33,7 +33,7 @@ public:
     virtual u32 isStateNonZero();
     virtual u32 isStateReady();
 
-    // 0x00: CDeviceFontInfo base (vptr)
+    // 0x00: IDeviceFontInfo base (vptr)
     u32 field_0x04;              // 0x04 - unknown init flag/counter
     void* mFontData;             // 0x08 - allocated font data buffer
     void* mFontInfo;             // 0x0C - font info pointer (set if OSInitFont succeeds)

@@ -264,7 +264,7 @@ void UnkClass_805764CC::set_u32_00(u32 val){field_0x00 = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
 
 extern "C" void copyWordAt4(void* a, void* b) {
-    ((WordBufView*)a)->w0 = ((WordBufView*)b)->w1;
+    ((reslist<cf::CfObject*>*)a)->field_0x00 = ((reslist<cf::CfObject*>*)b)->field_0x04;
 }
 void init_182C(){}
 // us-800b2198 - second reslist<cf::IFactoryEvent*> destructor,
@@ -814,7 +814,7 @@ extern "C" void ringInsertSorted(UnkClass_800B0AD8* self, UnkClass_805764CC** it
         }
     }
 }
-u32 UnkClass_805764CC::get_u32_74(){return *(u32*)((u8*)this + 0x74);}
+u32 UnkClass_805764CC::get_u32_74(){return field_0x20.field_0x74;}
 void init_39C8(){}
 
 // us-800b39C8 variant of poolInsertBack that inserts BEFORE the
@@ -909,14 +909,13 @@ extern "C" void walkReslistByName(UnkClass_805764CC* self, const char* name) {
         }
     }
 }
-struct FindListNodeView { void* next; u32 field04; void* object; }; // ItemListNode-shaped (+0 next, +8 object)
 // List-walk search: start at *headPtr and skip nodes until the cursor equals
 // *valA or its +8 link equals *valB, advancing *headPtr past each skipped
 // node; store the found node to *out (retail findListNode).
 extern "C" void findListNode(void** out, void** headPtr, void** valA, void** valB) {
-    FindListNodeView* node;
-    while ((node = (FindListNodeView*)*headPtr) != (FindListNodeView*)*valA && node->object != *valB) {
-        *headPtr = node->next;
+    CfReslistNode* node;
+    while ((node = (CfReslistNode*)*headPtr) != (CfReslistNode*)*valA && node->mItem != *valB) {
+        *headPtr = node->mNext;
     }
     *out = node;
 }
@@ -1047,16 +1046,16 @@ extern "C" u16 getGlobalU16_4314(){extern u16 sPartsChangeLoadState; return sPar
 void init_4F6C(){}
 void init_4F80(){}
 void init_4F90(){}
-u32 UnkClass_805764CC::get_u32_70(){return *(u32*)((u8*)this + 0x70);}
+u32 UnkClass_805764CC::get_u32_70(){return field_0x20.field_0x70;}
 void init_4FAC(){}
 void init_535C(){}
 void init_570C(){}
 void init_587C(){}
 void init_5944(){}
 void init_5948(){}
-void UnkClass_805764CC::clear_380(){*(u32*)((u8*)this + 896) = 0;}
+void UnkClass_805764CC::clear_380(){field_0x20.field_0x380 = 0;}
 void* UnkClass_805764CC::getNull(){return 0;}
-u32 UnkClass_805764CC::get_u32_380(){return *(u32*)((u8*)this + 0x380);}
+u32 UnkClass_805764CC::get_u32_380(){return field_0x20.field_0x380;}
 
 // us-800b13c0 - __dt__800B0AF4
 // Destructor for UnkClass_800B0AD8. Clears counters and frees memory if flags > 0.
@@ -1089,16 +1088,16 @@ void init_6494(){}
 u32 shift_u32_hi8_alt4(u32 val){return (val >> 16) & 0xFF;}
 void init_64B8(){}
 u32 shift_u32_and(u32 a, u32 b){return a & b;}
-u32 UnkClass_805764CC::get_u32_98(){return *(u32*)((u8*)this + 0x98);}
+u32 UnkClass_805764CC::get_u32_98(){return field_0x20.field_0x98;}
 u16 UnkClass_805764CC::get_u16_45C0(){return *(u16*)((u8*)this + 0x45C0);}
 u32 shift_u32_hi8_alt5(u32 val){return (val >> 16) & 0xFF;}
 void init_64F8(){}
 void init_6508(){}
 void UnkClass_805764CC::appendToBuffer(void* other){
-    unsigned int count = *(unsigned int*)((unsigned char*)this + 0x700);
+    unsigned int count = field_0x20.field_0x700;
     unsigned int val = *(unsigned int*)other;
     unsigned int newCount = count + 1;
-    *(unsigned int*)((unsigned char*)this + 0x700) = newCount;
+    field_0x20.field_0x700 = newCount;
     float fval = *(float*)((unsigned char*)other + 4);
     void* dest = (unsigned char*)this + count * 8;
     *(unsigned int*)dest = val;
@@ -1122,15 +1121,15 @@ extern "C" int isTypeId1to24(void* self) {
     }
     return result;
 }
-void* UnkClass_805764CC::getPtr_1A8(){return (void*)((u8*)this + 0x1a8);}
-void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}
+void* UnkClass_805764CC::getPtr_1A8(){return &field_0x20.field_0x1A8;}
+void UnkClass_805764CC::clear_700(){field_0x20.field_0x700 = 0;}
 void init_6800(){}
 void init_68A8(){}
 void init_6AF4(){}
 extern "C" UnkClass_805764CC* getGameMgr() { return getInstance(); }
-extern "C" void* getListB28__Fv() { return (void*)((char*)getInstance() + 0xB28); }
-extern "C" void* getReslistC08() { return (char*)getInstance() + 0xC08; }
-extern "C" void* getReslistC48() { return (char*)getInstance() + 0xC48; }
+extern "C" void* getListB28__Fv() { return &getInstance()->field_0xB28; }
+extern "C" void* getReslistC08() { return &getInstance()->field_0xC08; }
+extern "C" void* getReslistC48() { return &getInstance()->field_0xC48; }
 extern "C" reslist<cf::CfObject*>* prepareReslistC28() {
     UnkClass_805764CC* obj = getInstance();
     rebuildReslistC28(obj);
@@ -1191,7 +1190,7 @@ void init_708C(){}
 void init_70FC(){}
 u32 gvar_get40F4(void){ return (u32)::cf::CfBdat::spItmWpnListFileData;}
 
-void* UnkClass_805764CC::getPtr_720(){return (void*)((u8*)this + 0x720);}
+void* UnkClass_805764CC::getPtr_720(){return &field_0x20.field_0x720;}
 void init_7214(){}
 void init_72DC(){}
 
@@ -1205,7 +1204,7 @@ void init_7410(){}
 unsigned short gvar_get408C_alt1(){return lbl_eu_8066408C;}
 unsigned short gvar_get408C_alt2(){return lbl_eu_8066408C;}
 void UnkClass_805764CC::maskField_6C(u32 mask, int enable){
-    u32* field = (u32*)((u8*)this + 0x6C);
+    u32* field = &field_0x20.field_0x6C;
     if (enable) { *field |= mask; } else { *field &= ~mask; }
 }
 extern "C" u16 getGlobalU16_3E42(){extern u16 gmGlobalFlag42; return gmGlobalFlag42;}
@@ -1653,12 +1652,12 @@ void init_dispatchTarget_7(){}
 void sub_dispatchWithArgs(u32 a, u32 b){Tok_Pack08(a, b); ((void(*)())init_dispatchTarget_7)();}
 void init_9548(){}
 void init_957C(){}
-void UnkClass_805764CC::set_u32_734(u32 val){*(u32*)((u8*)this + 0x734) = val;}
-void UnkClass_805764CC::set_u8_73A(u8 a, u8 b){this->field_0x20.unk0[0x71A] = a; this->field_0x20.unk0[0x71B] = b;}
-void UnkClass_805764CC::set_u32_720(u32 val){*(u32*)((u8*)this + 0x720) = val;}
-void UnkClass_805764CC::set_u16_738(u16 val){*(u16*)((u8*)this + 0x738) = val;}
+void UnkClass_805764CC::set_u32_734(u32 val){field_0x20.field_0x734 = val;}
+void UnkClass_805764CC::set_u8_73A(u8 a, u8 b){field_0x20.field_0x73A = a; field_0x20.field_0x73B = b;}
+void UnkClass_805764CC::set_u32_720(u32 val){field_0x20.field_0x720 = val;}
+void UnkClass_805764CC::set_u16_738(u16 val){field_0x20.field_0x738 = val;}
 void init_96E8(){}
-void UnkClass_805764CC::set_float_730(float val){*(float*)((u8*)this + 0x730) = val;}
+void UnkClass_805764CC::set_float_730(float val){field_0x20.field_0x730 = val;}
 // us-800ba028 - __ct__800B970C
 // Constructor for a class with base vtable lbl_eu_8052AC98, final vtable lbl_eu_80537FB0,
 // CCharVoice at offset 0x28, and fields at 0x6C/0x70.
@@ -1735,7 +1734,7 @@ extern "C" void spawnFromRecord(void* argA, void* argB, void* argC) {
     mapKindToSpawn(buf, (u32)(uintptr_t)argC);
 }
 void init_98C8(){}
-u32 UnkClass_805764CC::get_u32_620(){return *(u32*)((u8*)this + 0x620);}
+u32 UnkClass_805764CC::get_u32_620(){return field_0x20.field_0x620;}
 void init_998C(){}
 void init_99BC(){}
 void fwd_99EC_body(){}
@@ -1780,17 +1779,17 @@ extern "C" void __ct__reslist_cf_IFactoryEvent(void*);
 UnkClass_805764CC::UnkClass_805764CC() {
     __ct__reslist_cf_CfObject(this);
     new ((void*)&field_0x20) UnkClass_800B0AD8();
-    __ct__reslist_cf_CfObject((u8*)this + 0xb28);
-    __ct__reslist_cf_CfObject((u8*)this + 0xb48);
-    __ct__reslist_cf_CfObject((u8*)this + 0xb68);
-    __ct__reslist_cf_CfObject((u8*)this + 0xb88);
-    __ct__reslist_cf_CfObject((u8*)this + 0xba8);
-    __ct__reslist_cf_CfObject((u8*)this + 0xbc8);
-    __ct__reslist_cf_CfObject((u8*)this + 0xbe8);
-    __ct__reslist_cf_CfObject((u8*)this + 0xc08);
-    __ct__reslist_cf_CfObject((u8*)this + 0xc28);
-    __ct__reslist_cf_TboxInfo((u8*)this + 0xc48);
-    __ct__reslist_cf_IFactoryEvent((u8*)this + 0xc80);
+    __ct__reslist_cf_CfObject(&this->field_0xB28);
+    __ct__reslist_cf_CfObject(&this->field_0xB48);
+    __ct__reslist_cf_CfObject(&this->field_0xB68);
+    __ct__reslist_cf_CfObject(&this->field_0xB88);
+    __ct__reslist_cf_CfObject(&this->field_0xBA8);
+    __ct__reslist_cf_CfObject(&this->field_0xBC8);
+    __ct__reslist_cf_CfObject(&this->field_0xBE8);
+    __ct__reslist_cf_CfObject(&this->field_0xC08);
+    __ct__reslist_cf_CfObject(&this->field_0xC28);
+    __ct__reslist_cf_TboxInfo(&this->field_0xC48);
+    __ct__reslist_cf_IFactoryEvent(&this->field_0xC80);
     field_0xCA0 = 0;
     mMapItemManager = nullptr;
     mValueItemManager = nullptr;
@@ -2142,7 +2141,7 @@ extern "C" int iterWordsDiffer(void* a, void* b) {
 }
 // us-800b35f4 - accessor returning field at +0x4
 extern "C" u32 getWordAt4(u8* self) {
-    return ((WordBufView*)self)->w1;
+    return ((reslist<cf::CfObject*>*)self)->field_0x04;
 }
 // us-800b3aa0 - extract bit 7 of field at +0x64
 // extern "C": retail exports the unmangled name.
@@ -3574,7 +3573,7 @@ extern "C" void tickObjectLists(UnkClass_805764CC* self, void* arg, void* other)
     }
     // Count nodes in the BEC list head (sentinel-terminated circular chain).
     u32 count = 0;
-    u32 becHead = *(u32*)((u8*)self + 0xBEC);
+    u32 becHead = self->field_0xBE8.field_0x04;
     for (u32 p = *(u32*)becHead; p != becHead; p = *(u32*)p) {
         count++;
     }

@@ -60,19 +60,6 @@ extern const f32 lbl_eu_806671F0;
 // the TextWriter font size from it; retail: .sdata2:0x80667260).
 extern const f32 lbl_eu_80667260;
 
-// sdata2 float constants used by the tag-writer position clamp
-// (TagProcCalcPageLayout: line-height/offset math + the y snap thresholds;
-// retail .sdata2:0x806671F4..0x8066724C).
-extern const f32 lbl_eu_806671F4;
-extern const f32 lbl_eu_80667230;
-extern const f32 lbl_eu_80667234;
-extern const f32 lbl_eu_80667238;
-extern const f32 lbl_eu_8066723C;
-extern const f32 lbl_eu_80667240;
-extern const f32 lbl_eu_80667244;
-extern const f32 lbl_eu_80667248;
-extern const f32 lbl_eu_8066724C;
-
 // sdata2 float constant used by TagProcStepMessage's auto-speed gate
 // (retail .sdata2:0x80667208).
 extern const f32 lbl_eu_80667208;
@@ -721,31 +708,7 @@ void copyVEC2(float* dst, const float* src);
 // C++-linkage imports (retail emits the mangled forms).
 void* findObjectById(int id);  // findObjectById__Fi (talk-source index lookup)
 
-// Tag-code singleton instances (retail .sbss:0x80663FE0..0x80664038, 4 bytes
-// each - just the vtable pointer). Declared with plain u32 so MWCC treats
-// them as sbss-eligible and emits the r13 sda21 access sinit uses; the symbol
-// map places them at the retail addresses.
-extern u32 lbl_eu_80663FE0;
-extern u32 lbl_eu_80663FE4;
-extern u32 lbl_eu_80663FE8;
-extern u32 lbl_eu_80663FEC;
-extern u32 lbl_eu_80663FF0;
-extern u32 lbl_eu_80663FF4;
-extern u32 lbl_eu_80663FF8;
-extern u32 lbl_eu_80663FFC;
-extern u32 lbl_eu_80664000;
-extern u32 lbl_eu_80664004;
-extern u32 lbl_eu_80664008;
-extern u32 lbl_eu_8066400C;
-extern u32 lbl_eu_80664010;
-extern u32 lbl_eu_80664014;
-extern u32 lbl_eu_80664018;
-extern u32 lbl_eu_8066401C;
-extern u32 lbl_eu_80664020;
-extern u32 lbl_eu_80664024;
-extern u32 lbl_eu_80664028;
-extern u32 lbl_eu_8066402C;
-extern u32 lbl_eu_80664030;
-extern u32 lbl_eu_80664034;
-extern u32 lbl_eu_80664038;
+// The tag-code singleton instances (retail .sbss:0x80663FE0..0x80664038)
+// are real file-local objects defined in CTagProcessor.cpp; no extern
+// declarations are needed here.
 

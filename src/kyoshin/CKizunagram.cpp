@@ -32,8 +32,6 @@ extern "C" void kizScaleVec3(float* dst, const float* src, float scale);
 // by its mangled retail identifier (see CSaveLoad for the same pattern).
 extern const float lbl_eu_80668828;
 extern const float lbl_eu_80668834;
-extern const float lbl_eu_80668830;
-extern const float lbl_eu_8066884C;
 extern const float lbl_eu_80668850;
 extern const float lbl_eu_80668854;
 extern const float lbl_eu_80668858;
@@ -43,7 +41,6 @@ extern const float lbl_eu_80668860;
 extern const float lbl_eu_80668864;
 extern const float lbl_eu_80668868;
 extern const float lbl_eu_8066886C;
-extern const float lbl_eu_80668870;
 extern u32 lbl_eu_80668838;
 extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
@@ -1118,7 +1115,6 @@ extern "C" void lineTickSelOut(UnkKizunaSelfAB* self) {
     }
 }
 
-extern const float lbl_eu_80668828;
 void CKizunagram_resetFields(u8* self){
     *(u8*)(self + 0x34) = 0;
     *(u16*)(self + 0x36) = 0;
@@ -1859,27 +1855,27 @@ extern "C" void lineClearSelect(void* self) {
 }
 
 // retail: lbz 0xdd; xori; subic; subfe; stb - toggle (x^1)!=0 under -O4,s
-extern "C" void kizToggleHelp(void* self) {
-    *(u8*)((char*)self + 0xDD) = (u8)((*(u8*)((char*)self + 0xDD) ^ 1) != 0);
+extern "C" void kizToggleHelp(CKizunagram* self) {
+    self->fieldDD = (u8)((self->fieldDD ^ 1) != 0);
 }
 
 // retail: if (field_62) { field_39 = 2; tail lineEnterMode1(self+0x68) }
 // attribute MWCC folds their bodies into tickKizMain's switch arms.
-extern "C" void tryKizMode2(void* self) {
-    if (*(u8*)((char*)self + 0x62) != 0) {
-        *(u8*)((char*)self + 0x39) = 2;
+extern "C" void tryKizMode2(UnkKizunaSelfC580* self) {
+    if (self->sub4C.field16 != 0) {
+        self->field39 = 2;
         lineEnterMode1((UnkKizunaSelf59228*)((char*)self + 0x68));
     }
 }
 
 // Gate: when both the +0x61 and +0x7D bytes are set, raise the +0x39/+0x3C
 // state and tail-call the +0xAC sub-object with the +0x8C flag.
-extern "C" void tryKizMode3(void* self) {
-    if (*(u8*)((u8*)self + 0x61) == 0)
+extern "C" void tryKizMode3(UnkKizunaSelfC580* self) {
+    if (self->sub4C.field15 == 0)
         return;
     if (*(u8*)((u8*)self + 0x7D) == 0)
         return;
-    *((u8*)self + 0x39) = 3;
+    self->field39 = 3;
     *((u8*)self + 0x3C) = 1;
     if (*(u8*)((u8*)self + 0x8C) != 0)
         setCurPanePhase((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 1);

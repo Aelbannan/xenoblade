@@ -38,8 +38,8 @@ struct ScheduleList : IScheduleContainer {
 typedef _reslist_node<CSchedule*> SLNode;
 
 template<> _reslist_base<CSchedule*>::~_reslist_base() {
-    SLNode* node;
     SLNode* cur;
+    SLNode* node;
     node = mStartNodePtr->mNext;
     while (node != mStartNodePtr) {
         cur = node;

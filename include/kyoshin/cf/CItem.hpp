@@ -276,7 +276,8 @@ struct CItemParam {
     /* 0x0E */ u16 field_0E;
     /* 0x10 */ u16 field_10;
     u8 field_12[6];
-    /* 0x18 */ u16 field_18;
+    /* 0x18 */ u16 field_18_bit15 : 1;  // name-guess: retail +0x18 bit-15 setter/getter
+    u16 field_18_low15 : 15;            // name-guess: retail +0x18 low-15 mask
 };
 
 // Object exposing an item size via its 4th virtual (vtable slot 0x14;

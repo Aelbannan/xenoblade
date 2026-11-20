@@ -204,7 +204,6 @@ extern "C" BattleActor* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* o
 extern "C" bool pushYawToLink(void*);
 
 
-extern char lbl_eu_804FD1E0[];
 extern u8 lbl_eu_804FD0D0[];
 
 // func_80104454 (retail symbol is UNMANGLED; header member decl is a
@@ -2444,9 +2443,9 @@ void CMenuArtsSelect::advanceConfirmState() {
                             // select keeps name in r30; only this ternary
                             // shape emits the branch-over-branch.
                             name = (name != NULL) ? name : lbl_eu_80661E08;
-                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x69,
+                            LayoutSetTextBoxFmtValue(unk80, "txt_suject",
                                           reinterpret_cast<char*>(p), 0);
-                            LayoutSetTextBoxFmtValue(unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                            LayoutSetTextBoxFmtValue(unk80, "txt_helpmess", name,
                                           reinterpret_cast<u32>(unk294));
                         }
                     } else {
@@ -3493,30 +3492,30 @@ ret0:
 void CMenuArtsSelect::bindEntryPanes() {
     char buf[0x28];
     for (s32 i = 0; i < 9; i++) {
-        sprintf(buf, lbl_eu_804FD1E0 + 0x2c4, i);
+        sprintf(buf, "pic_arts%02d", i);
         unk200[i] = reinterpret_cast<nw4r::lyt::Pane*>(
             unk80->GetRootPane()->FindPaneByName(buf, true));
-        sprintf(buf, lbl_eu_804FD1E0 + 0x2d1, i);
+        sprintf(buf, "pic_icon%02d", i);
         unk224[i] = reinterpret_cast<nw4r::lyt::Pane*>(
             unk80->GetRootPane()->FindPaneByName(buf, true));
-        sprintf(buf, lbl_eu_804FD1E0 + 0x2de, i);
+        sprintf(buf, "pic_ref%02d", i);
         unk248[i] = reinterpret_cast<nw4r::lyt::Pane*>(
             unk80->GetRootPane()->FindPaneByName(buf, true));
     }
     unk26C[0] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x2ea, true));
+        unk80->GetRootPane()->FindPaneByName("pic_messwin00", true));
     unk26C[1] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x2f8, true));
+        unk80->GetRootPane()->FindPaneByName("pic_messwin01", true));
     unk26C[2] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x306, true));
+        unk80->GetRootPane()->FindPaneByName("pic_messwin02", true));
     unk26C[3] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x314, true));
+        unk80->GetRootPane()->FindPaneByName("pic_messwin03", true));
     unk26C[4] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x322, true));
+        unk80->GetRootPane()->FindPaneByName("pic_messwin04", true));
     unk26C[5] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x69, true));
+        unk80->GetRootPane()->FindPaneByName("txt_suject", true));
     unk26C[6] = reinterpret_cast<nw4r::lyt::Pane*>(
-        unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true));
+        unk80->GetRootPane()->FindPaneByName("txt_helpmess", true));
 }
 
 

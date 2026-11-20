@@ -13,6 +13,8 @@
 #include "monolib/scn/code_804BD8E8.hpp"
 #include "libs/monolib/src/scn/CScnMaruShadowNw4r.hpp"
 #include <monolib/scn/MaruShadowData.hpp>
+#include "monolib/math/CAttrTransform.hpp"
+#include <nw4r/g3d/res/g3d_resuserdata.h>
 
 #include <cmath>
 #include <nw4r/math/math_arithmetic.h>
@@ -253,14 +255,14 @@ void MaruShadowUpdate(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
 
     bool draw = true;
     if ((self->field_0x28 & 2) != 0) {
-        void* rec = Scn_GetCamItem9C(ctx->field_0x04, -1);
-        float cx = *(float*)((char*)rec + 0xC);
-        float cy = *(float*)((char*)rec + 0x1C);
-        float cz = *(float*)((char*)rec + 0x2C);
-        void* obj = simGetLeafActData(ctx);
-        float dx = *(float*)((char*)obj + 0xB8) - cx;
-        float dy = *(float*)((char*)obj + 0xBC) - cy;
-        float dz = *(float*)((char*)obj + 0xC0) - cz;
+        ml::CMat34* rec = static_cast<ml::CMat34*>(Scn_GetCamItem9C(ctx->field_0x04, -1));
+        float cx = rec->m[0][3];
+        float cy = rec->m[1][3];
+        float cz = rec->m[2][3];
+        ml::CAttrTransform* obj = static_cast<ml::CAttrTransform*>(simGetLeafActData(ctx));
+        float dx = obj->mPrevPos.x - cx;
+        float dy = obj->mPrevPos.y - cy;
+        float dz = obj->mPrevPos.z - cz;
         float dist = (float)sqrt((double)(dx * dx + dy * dy + dz * dz));
         if (dist > self->field_0x0C) {
             rgba[3] = 0;
@@ -623,12 +625,12 @@ void MaruShadowDrawBillboard(CScnMaruShadowNw4r* shadow, ShadowCtx* ctx, float s
 }
 
 // us-804926f0: MaruShadowPickScale (0x20 bytes)
-extern "C" void MaruShadowPickScale(void* obj, int condition) {
+extern "C" void MaruShadowPickScale(CScnMaruShadowNw4r* obj, int condition) {
     if (condition != 0) {
-        *(float*)((char*)obj + 0x1c) = lbl_eu_8066A994;
+        obj->field_0x1c = lbl_eu_8066A994;
         return;
     }
-    *(float*)((char*)obj + 0x1c) = lbl_eu_8066A9CC;
+    obj->field_0x1c = lbl_eu_8066A9CC;
 }
 
 // us-80492710: MaruShadowBuildScaleTable (0x39C bytes)
@@ -670,7 +672,7 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
         if (((u32)dic.ptr & 3) != 0) {
             nw4r::db::Panic(alignFile, 0x54, alignFmt);
         }
-        void* entry = __vc__Q34nw4r3g3d6ResDicCFPCc(dic, key);
+        ResUserDataItem* entry = static_cast<ResUserDataItem*>(__vc__Q34nw4r3g3d6ResDicCFPCc(dic, key));
         if (((u32)entry & 3) != 0) {
             nw4r::db::Panic(dicFile, 0x26, dicFmt);
         }
@@ -682,13 +684,13 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
             if (entry == NULL) {
                 nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, assertFmt, lbl_eu_80663970);
             }
-            if (*(u32*)((char*)entry + 0xC) != 1) {
+            if (entry->valueType != 1) {
                 nw4r::db::Panic(lbl_eu_80530E74, 0x3D, lbl_eu_80530E30);
             }
             if (entry == NULL) {
                 nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, assertFmt, lbl_eu_8066396C);
             }
-            u32 off = *(u32*)((char*)entry + 4);
+            u32 off = entry->dataOffset;
             void* data = off != 0 ? (char*)entry + off : 0;
             float f = *(float*)data;
             count++;
@@ -708,7 +710,7 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
         if (((u32)dic2.ptr & 3) != 0) {
             nw4r::db::Panic(alignFile, 0x54, alignFmt);
         }
-        void* entry2 = __vc__Q34nw4r3g3d6ResDicCFPCc(dic2, lbl_eu_80663960);
+        ResUserDataItem* entry2 = static_cast<ResUserDataItem*>(__vc__Q34nw4r3g3d6ResDicCFPCc(dic2, lbl_eu_80663960));
         if (((u32)entry2 & 3) != 0) {
             nw4r::db::Panic(dicFile, 0x26, dicFmt);
         }
@@ -716,13 +718,13 @@ void MaruShadowBuildScaleTable(CScnMaruShadowNw4r* shadow, u32* flagAcc, ShadowC
             if (entry2 == NULL) {
                 nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, assertFmt, lbl_eu_80663970);
             }
-            if (*(u32*)((char*)entry2 + 0xC) != 0) {
+            if (entry2->valueType != 0) {
                 nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
             }
             if (entry2 == NULL) {
                 nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78, assertFmt, lbl_eu_8066396C);
             }
-            u32 off2 = *(u32*)((char*)entry2 + 4);
+            u32 off2 = entry2->dataOffset;
             void* data2 = off2 != 0 ? (char*)entry2 + off2 : 0;
             u32 v = *(u32*)data2;
             if ((v & 1) != 0) {
@@ -783,7 +785,7 @@ extern "C" void sinit_8048EAA4() {}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace MSBlob {
-extern "C" void MaruShadowPickScale();
+extern "C" void MaruShadowPickScale(CScnMaruShadowNw4r*, int);
 extern "C" void MaruShadowStubTrue();
 extern "C" void MaruShadowUpdate();
 extern "C" void MaruShadowSetFlag40Store();

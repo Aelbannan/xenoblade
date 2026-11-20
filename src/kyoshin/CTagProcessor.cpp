@@ -1606,23 +1606,23 @@ void TagProcCalcPageLayout(void* unused, nw4r::lyt::TextBox* msg, nw4r::lyt::Pan
     f32 xy[2];
     wcscpy(buf, msg->GetStringBuffer());
     TagProcMeasureText(xy, msg, buf);
-    xy[1] = lbl_eu_80667234 * (xy[1] - lbl_eu_806671F4) + lbl_eu_80667230;
-    xy[0] += lbl_eu_80667238;
-    if (xy[1] < lbl_eu_80667230)
-        xy[1] = lbl_eu_80667230;
+    xy[1] = 20.0f * (xy[1] - 1.0f) + 70.0f;
+    xy[0] += 64.0f;
+    if (xy[1] < 70.0f)
+        xy[1] = 70.0f;
     f32 y = xy[1];
-    if (y >= lbl_eu_8066723C)
-        xy[1] = lbl_eu_8066723C;
-    else if (y >= lbl_eu_80667240)
-        xy[1] = lbl_eu_80667240;
-    else if (y >= lbl_eu_80667244)
-        xy[1] = lbl_eu_80667244;
-    else if (y >= lbl_eu_80667248)
-        xy[1] = lbl_eu_80667248;
-    else if (y >= lbl_eu_8066724C)
-        xy[1] = lbl_eu_8066724C;
-    else if (y >= lbl_eu_80667230)
-        xy[1] = lbl_eu_80667230;
+    if (y >= 170.0f)
+        xy[1] = 170.0f;
+    else if (y >= 150.0f)
+        xy[1] = 150.0f;
+    else if (y >= 130.0f)
+        xy[1] = 130.0f;
+    else if (y >= 110.0f)
+        xy[1] = 110.0f;
+    else if (y >= 90.0f)
+        xy[1] = 90.0f;
+    else if (y >= 70.0f)
+        xy[1] = 70.0f;
     out->SetSize(*(const nw4r::lyt::Size*)xy);
 }
 

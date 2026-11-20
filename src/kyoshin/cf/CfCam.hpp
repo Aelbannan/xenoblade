@@ -10,6 +10,11 @@
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 #include "kyoshin/cf/object/CfObject.hpp"  // owner of the 0x74/0xAC/0xCC/0x120/0x128/0x12C slots (unk164 / 73DDC / 74090 / 74230)
 
+// 48-byte / 12-word camera data block copied whole by cfCam_copyBlock48.
+struct CfCamWordBlock48 {
+    u32 words[12];
+};
+
 namespace cf {
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
 class CfObject;     // active camera-state object (cfCam_getActiveObj return)
@@ -48,7 +53,6 @@ extern "C" int cfCam_testPad100(void* self);
 extern "C" int CfRes_getE24Bit22();
 extern "C" int cfCam_getE28Bit24();
 
-extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" int cfCam_maskUnk1D4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
 extern "C" void cfCam_resetHist(cf::CfCamFollow* self, u8* src);         // CfCam sibling (retail 0x8006E18C)
 extern "C" u8* cfCam_vec3AtIndex(u8*, int); // CfCam sibling (retail 0x8006BF14), body at bottom of CfCam.cpp; noinline keeps the retail bl at call sites
@@ -190,10 +194,15 @@ struct __declspec(novtable) CfCamFollow : CfCam {
     f32 field_0x2C;
     f32 field_0x30; // 0x30 camera position z
     f32 field_0x34;
-    u8 unk38[0x64 - 0x38];
+    u8 unk38[0x40 - 0x38];
+    ml::CVec3 field_0x40; // 0x40 state-block vector
+    u8 unk4C[0x58 - 0x4C];
+    ml::CVec3 field_0x58; // 0x58 state-block vector
     u32 field_0x64;        // 0x64 raw flag word
     u8 unk68[0x70 - 0x68]; // 0x68..0x70
-    u8 unk70[0xC0]; // 0x70..0x130
+    u8 unk70[0x9C - 0x70]; // 0x70..0x9C
+    CfCamWordBlock48 field_0x9C; // 0x9C..0xCC (real type: cfCam_copyBlock48 block)
+    u8 unkCC[0x130 - 0xCC]; // 0xCC..0x130
     u8 unk130[0x160 - 0x130];
     void* unk160; // 0x160 ctor arg2
     CfObject* unk164; // 0x164 follow-target handle (ctor arg1; CfObject vtable slots 0x74/0xAC/0xCC/0x128)
@@ -269,22 +278,6 @@ struct __declspec(novtable) CfCamFollow : CfCam {
     virtual void* cfCam_getActivePad();                  // 0x70 (new: pad-action source)
     virtual int runCamAction(int id);              // 0x74 (new: pad-action dispatch)
 };
-
-// Layout view over the follow-camera state block copied wholesale by
-// cfCam_copyCamState from the dynamic-cast source object into CfCamFollow.
-struct CfCamStateView {
-    u8 pad00[0x10];
-    ml::CVec3 field10;      // 0x10
-    u8 pad1C[0x28 - 0x1C];
-    ml::CVec3 field28;      // 0x28
-    ml::CVec3 field34;      // 0x34
-    ml::CVec3 field40;      // 0x40
-    u8 pad4C[0x58 - 0x4C];
-    ml::CVec3 field58;      // 0x58
-    u8 pad64[0x1E0 - 0x64];
-    f32 field1E0;           // 0x1E0
-};
-
 
 // cf::CfCamEvent - camera event state. Full definition lives in
 // CfCamEvent.hpp (which includes this header); keep only the forward
@@ -457,11 +450,6 @@ int cfCam_getBit27_64(void* obj);
 float dotVec3f(const f32* a, const f32* b); // vec dot product
 float cfCam_mulSda2Const(float x);
 }
-
-// 48-byte / 12-word camera data block copied whole by cfCam_copyBlock48.
-struct CfCamWordBlock48 {
-    u32 words[12];
-};
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1, void* arg2);
 

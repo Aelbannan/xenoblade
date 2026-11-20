@@ -6,7 +6,9 @@
 #include "kyoshin/CTitle.hpp"
 // cf::CBattleManager comes from CHelpManager.hpp's owning-header include.
 #include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
+#include "kyoshin/cf/voice/CCharVoiceMan.hpp"
 
 // Free-function form (not the member ctor): the retail ignores the incoming
 // `this` and carves the real instance from MEM2 - the member form makes MWCC
@@ -52,7 +54,7 @@ void resetHelpManager(cf::CHelpManager* self) {
     self->mField18 = 0;
     bindHelpListItems(&self->mListA, NULL, 0);
     bindHelpListItems(&self->mListB, NULL, 0);
-    self->mField10 = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+    self->mField10 = cf::CfGameManager::getQueuedFileEventCount();
     bindHelpListItems(&self->mListB, sDefaultHelpItemList, 1);
     // Pick the item array whose key matches the current scenario sequence.
     for (int i = 0; sScenarioHelpTable[i].mKey != 0; i++) {
@@ -67,8 +69,8 @@ void resetHelpManager(cf::CHelpManager* self) {
 void updateHelpManager(cf::CHelpManager* self) {
     if (gmPauseFlags & 0x1000000) return;
     // Re-sync the list when the scenario sequence moved on.
-    if (self->mField10 != (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv()) {
-        self->mField10 = (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+    if (self->mField10 != (s32)cf::CfGameManager::getQueuedFileEventCount()) {
+        self->mField10 = (s32)cf::CfGameManager::getQueuedFileEventCount();
         bindHelpListItems(&self->mListB, sDefaultHelpItemList, 1);
         for (int i = 0; sScenarioHelpTable[i].mKey != 0; i++) {
             if (self->mField10 == sScenarioHelpTable[i].mKey) {
@@ -127,9 +129,9 @@ void dispatchScenarioHelp(cf::CHelpManager* self) {
     }
 }
 
-void updateBattleHelpState(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
+void updateBattleHelpState(cf::CHelpManager* self, cf::CVoiceActorState* obj) {
     // During battle: record whether the actor list is non-empty.
-    if (obj->mField3F08 & 0x10000) {
+    if (obj->field_3F08 & 0x10000) {
         // During battle: record whether the actor list (mActorList3) is
         // non-empty via the inlined reslist size walk.
         self->mField18 = (u8)(cf::CBattleManager::getInstance()->mActorList3.size() != 0);

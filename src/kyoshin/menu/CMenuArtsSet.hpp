@@ -1175,11 +1175,9 @@ void CArtsInfo_Cleanup(CArtsInfo* self);
 // CSysWin teardown (defined in CSysWin.cpp, C symbol).
 
 // .sdata2 floats for the layout-animation drivers (ArtsLayout_runLayoutOut etc.).
-// const is load-bearing: it lets MWCC treat the pool load as a constant and
-// hoist the lfs above the frame stores (retail position 3) - plain extern
-// float places it after the stores (4-byte shift, MWCC_CASES).
-extern const float lbl_eu_80668648;
-extern const float lbl_eu_8066864C;
+// The driver's 1.0f/0.0f are now plain literals at their use sites; MWCC
+// pools them into the same .sdata2 slots and keeps the hoisted lfs position
+// (the old extern-const declarations were only needed for those pool loads).
 // .sdata2 floats for ArtsSlotCursor_refresh's 9-entry cursor position table.
 extern const float lbl_eu_80668650;
 extern const float lbl_eu_80668654;

@@ -88,7 +88,6 @@ extern u32 lbl_eu_8066A7A8;
 // Random-scale float constants (defined at the bottom of this TU).
 extern f32 sMpfWobbleScale;
 extern f32 sMpfJitterScale;
-extern const f64 lbl_eu_8066A768; // 2^52 (unsigned int -> double conversion)
 extern const f64 lbl_eu_8066A7C8; // 2^32 (unsigned int -> double conversion)
 
 // nw4r assertion strings for setupMapTexture.
@@ -98,14 +97,11 @@ extern const char lbl_eu_8052CF6C[];
 extern const char lbl_eu_8052CF50[];
 extern const char lbl_eu_8052CF3C[];
 extern const char lbl_eu_8052CF20[];
-extern const char lbl_eu_80661E98[];
-extern const char lbl_eu_80661EA8[];
 extern const char lbl_eu_80661E98[4];
 extern const char lbl_eu_80661EA8[4];
 extern char sMpfRefTag0[4];
 extern char sMpfRefTag1[4];
 extern char sMpfRefTag2[4];
-extern u32 lbl_eu_80665884;
 
 // Retail-named imports. These resolve against retail symbols (Scn_HasCamItem is
 // defined in scn/CScn.cpp, func_80477F80 in MPFDrawDisplayList.cpp,

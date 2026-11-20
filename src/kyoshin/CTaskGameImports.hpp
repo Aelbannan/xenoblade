@@ -302,10 +302,9 @@ struct CTaskGameFlags68 {
 };
 
 // Float constant used by retail CTaskGame_moveFadeOut as the 4th arg of the first
-// vec4 setter call (lbl_eu_80665D6C, .sdata2; lbl_eu_80665D74 is declared in
-// include/lbls_kyoshin.hpp).
+// vec4 setter call (lbl_eu_80665D6C, .sdata2); the shared zero argument is a
+// source 0.0f literal.
 extern const f32 lbl_eu_80665D6C;
-extern const f32 lbl_eu_80665D74;
 
 // FixStr<32> view of the caption buffer at CTaskGame +0x104 (mLength at
 // +0x124); CTaskGame_moveSetCaption assigns the default caption through this view.

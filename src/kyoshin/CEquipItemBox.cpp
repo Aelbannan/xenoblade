@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfBdat.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_8025FB10.hpp"
@@ -3420,13 +3421,13 @@ int CEquipItemBox::useEIBSelectedItem() {
         // resulting entry and resolve its CfObjectMove.
         CEquipItemBoxMoveTable tbl = sEquipMoveSearchTypes;
         CfEnumListHolder holder;
-        void* list = holder.get();
-        startEnumObjects(list, tbl.w[slot], 0);
-        list = holder.get();
-        if (((CEquipItemBoxEnumList*)list)->field_620 >= 1) {
-            CEquipItemBoxMoveEntryView* entry =
-                (CEquipItemBoxMoveEntryView*)getEntryAt(list, 0);
-            if (entry != 0 && entry->field_4 != 0) {
+        cf::CfObjEnumList* enumList = holder.get();
+        startEnumObjects(enumList, tbl.w[slot], 0);
+        enumList = holder.get();
+        if (enumList->mPtrCount >= 1) {
+            cf::CfObjEnumList::sObjInfo* entry =
+                static_cast<cf::CfObjEnumList::sObjInfo*>(getEntryAt(enumList, 0));
+            if (entry != 0 && entry->object != 0) {
                 void* moveObj = getCfObjectPc((cf::CfObjectMove*)entry);
                 if (kindByte != 3) {
                     // Clear the item from the owning party member's slots.

@@ -65,8 +65,6 @@ void CopyTabSlotVec(u32*, void*, u32);
 void deleteRegion__17UnkClass_8045F564Fv(void*);
 // .sdata2 conversion magics referenced by ((CItemBoxGridFull*)(retail pool
 // constants; F48 = signed-int magic 0x4330000080000000))->GetItemValueFloat(F40 = plain 2^52).
-extern const double lbl_eu_80667F40;
-extern const double lbl_eu_80667F48;
 extern const float lbl_eu_80667F34;
 extern const float lbl_eu_80667F88;
 extern const float lbl_eu_80667F8C;
@@ -2467,19 +2465,11 @@ float CItemBoxGridFull::GetItemValueFloat(void* entry) {
     // Bit 2 of the kind flag entry gates a party-bonus multiplier.
     if ((BdatGetU8Direct((const void*)tbl, (const char*)"flag", (u16)kind) & 4)) {
         void* charData = CtrlObjectParam_GetCharEntry(1);
-        // Reading the product back through a signed union member blocks
-        // MWCC's non-negative range fold, so the conversion uses the signed
-        // xoris magic (lbl_eu_80667F48).
-        union {
-            u32 u;
-            int i;
-        } prod;
-        prod.u = (idx & 0xFFFF) * (u16)CtrlObjectParam_GetArtsDataWord(charData);
-        idx = (u32)(u16)(s32)((float)prod.i * 1.5f);
+        u32 prod = (idx & 0xFFFF) * (u16)CtrlObjectParam_GetArtsDataWord(charData);
+        idx = (u32)(u16)(s32)((float)(s32)prod * 1.5f);
     }
     if ((u32)(u16)idx > 999) idx = 999;
-    // Truncated result converted back through the 2^52 magic (lbl_eu_80667F40).
-    return (float)((double)(u16)idx - lbl_eu_80667F40);
+    return (float)(u16)idx;
 }
 
 u32 CItemBoxGridFull::HasEquippedSlot(void* item) {
@@ -4918,8 +4908,8 @@ void CItemBoxGrid::RebuildGridUI() {
         convPage.w[0] = 0x43300000;
         convRows.w[1] = (u32)(u8)(10 - rows);
         convPage.w[1] = (u32)(pageDisp - 1) ^ 0x80000000;
-        float tPage = (float)(convPage.d - lbl_eu_80667F48);
-        float tRows = (float)(convRows.d - lbl_eu_80667F40);
+        float tPage = (float)(convPage.d - 4503601774854144.0);
+        float tRows = (float)(convRows.d - 4503599627370496.0);
         float offset = step * tPage + step * tRows;
         v[0] += offset;
         copyVEC3((u8*)&((nw4r::lyt::Pane*)ret3)->GetTranslate(), v);

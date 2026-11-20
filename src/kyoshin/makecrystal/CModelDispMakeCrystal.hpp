@@ -231,10 +231,10 @@ int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 
-extern "C" u8 lbl_eu_80664718[0x8]; // makecrystal crystal-probability state (sbss, 8 bytes)
+extern "C" u8 sCrystalProbState[0x8]; // name-guess: crystal-probability state bytes at sbss 0x80664718
 // Color table: rows of 3 bytes, indexed by character state - 1.
 struct CMCryColorRow { u8 c[3]; };
-extern "C" const CMCryColorRow lbl_eu_80535D90[];
+extern "C" const CMCryColorRow sCrystalColorTable[]; // name-guess: 8 color rows indexed by collected-flag byte
 // Retail hard symbols with C linkage (defined in this TU's retail .o).
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(void* p);
 

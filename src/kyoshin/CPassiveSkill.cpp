@@ -24,6 +24,9 @@
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/lib.hpp"
 extern "C" void writePanePos(nw4r::lyt::Pane*, float*);
 extern "C" void TagCopyVec2f(float* dst, float* src);
 class UnkClass_8045F564;
@@ -280,8 +283,8 @@ extern "C" void CPassiveSkillInfo_init(UI_CPassiveSkillInfo* self) {
                   &lbl_eu_8050DC20[0x111]);
     // Bind the font handle into the layout's root pane.
     nw4r::lyt::Pane* rootPane = self->field_8->GetRootPane();
-    CDeviceFontView* font = reinterpret_cast<CDeviceFontView*>(getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_8));
-    ApplyFontToTxtPanes(rootPane, (const nw4r::ut::Font*)font->vf7());
+    CDeviceFontInfo* font = static_cast<CDeviceFontInfo*>(CDeviceFont::getFontInfo(1, self->field_8));
+    ApplyFontToTxtPanes(rootPane, font->getFont());
     u32 textVal = (u32)CUICfManager_getPackedFont9C();
     if (textVal != 0) {
         setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x12d], textVal);
@@ -2464,9 +2467,9 @@ extern "C" void CPassiveSkillLine_updateSkillTabs(UI::CPassiveSkillLine* self) {
             setPaneVisible(self->cells[4][i].mpLayout->GetRootPane(), 0);
         }
     }
-    CPSkillCharData3DD0* data = reinterpret_cast<CPSkillCharData3DD0*>(CtrlObjectParam_GetCharEntry(id));
+    cf::CtrlObjectParamEntry* data = reinterpret_cast<cf::CtrlObjectParamEntry*>(CtrlObjectParam_GetCharEntry(id));
     u32 cur = data->field_3DD0;
-    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>((u8*)data + 0x3534);
+    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(data->artsGroups);
     for (u8 row = 0; row < 5; row++) {
         sprintf(buf, "pic_ef%02d_00", row + 1);
         nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(buf, true);
@@ -3447,7 +3450,6 @@ UI::CPassiveSkill::~CPassiveSkill() {}
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp for their TUs).
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u32 KyoshinHeap_GetField44();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
@@ -3460,7 +3462,7 @@ extern "C" void __dt__7CSysWinFv(void*, int);
 // entry's 32 per-slot records in the char-data learn table at +0x3534.
 extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
     self->field_18 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), "menu/jp/PassiveSkill.arc",
+        (u32)mtl::MemManager::getHandleMEM2(), "menu/jp/PassiveSkill.arc",
         (void*)self, 0, 0);
     self->field_1C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
         KyoshinHeap_GetField44(), "common/jp/bdat_menu_psv.bin", (void*)self, 0, 0);
@@ -3488,7 +3490,7 @@ extern "C" void CPassiveSkill_loadSkillData(UI::CPassiveSkill* self) {
     self->mSysWin.field_38 = reinterpret_cast<CSysWin*>(tempW)->field_38;
     self->mSysWin.field_39 = reinterpret_cast<CSysWin*>(tempW)->field_39;
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(tempW), -1);
-    reinterpret_cast<UI_CPassiveSkillSysWinView*>(&self->mSysWin)->v34();
+    self->mSysWin.loadSystemArc();
     for (u8 i = 1; i <= 0x15; i++) {
         u8 ch = (u8)(i + 0x28);
         u16 v = CtrlRemote_TouchBitByArg(ch);
@@ -3601,7 +3603,6 @@ extern "C" void CPassiveSkill_draw(UI_CPassiveSkill* self, u8* arg2) {
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
-extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void CtrlObjectParam_SyncParamFromActorEx(void*, u32);
 // UI::CPassiveSkill teardown (retail CPassiveSkill_teardown): close the shared bdat
 // reader, release the two file handles and the arc resource accessor, tear
@@ -3616,7 +3617,7 @@ extern "C" void CPassiveSkill_teardown(UI::CPassiveSkill* self) {
     reinterpret_cast<CSysWin*>(&self->mSysWin)->termLayout();
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->field_20);
     self->field_20 = 0;
-    deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
+    self->mUnk8.deleteRegion();
     for (u8 i = 1; i <= 8; i++) {
         CtrlObjectParam_SyncParamFromActorEx(CtrlObjectParam_GetCharEntry(i), 1);
     }
@@ -3922,10 +3923,7 @@ extern "C" void func_8026DB64() {}
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CEquipItemBox.hpp / CCollepedia.hpp for their TUs).
-extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
-extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 class CEventFile;
 
 // UI::CPassiveSkill file-event handler (retail
@@ -3939,8 +3937,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
                                                           CEventFile* ev) {
     u32 handle = (u32)*(void**)((u8*)ev + 4);
     if (self->field_18 == handle) {
-        createRegion__17UnkClass_8045F564FiiPCci(
-            &self->mUnk8, (int)getHandleMEM2__Q23mtl10MemManagerFv(), 0x40000,
+        self->mUnk8.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x40000,
             &lbl_eu_8050DC20[0xa12], 0);
         u8 guard[8];
         u8 lineRaw[0x190];
@@ -3948,7 +3945,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         void* fh = (void*)self->field_18;
         void* buf = *(void**)((u8*)fh + 4);
         *(void**)((u8*)fh + 4) = 0;
-        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        mtl::MemManager::setMemInitFlag(false);
         self->field_20 = (u32)CLibLayout::createArcResourceAccessor();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
             (nw4r::lyt::ArcResourceAccessor*)self->field_20, buf,
@@ -4019,7 +4016,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         CPassiveSkillLine_rebuildLayouts(reinterpret_cast<UI::CPassiveSkillLine*>(&self->mLine));
         CPassiveSkill_learnAllSkills(self);
         self->field_18 = 0;
-        validateHeap__17UnkClass_8045F564Fv(&self->mUnk8);
+        self->mUnk8.validateHeap();
         __dt__14Class_8045F858Fv(guard, -1);
         return 1;
     }

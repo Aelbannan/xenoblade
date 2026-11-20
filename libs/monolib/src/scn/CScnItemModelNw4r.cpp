@@ -23,6 +23,7 @@
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
+#include <nw4r/g3d/res/g3d_resuserdata.h>
 
 #include "monolib/util/MemManager.hpp"
 
@@ -1624,47 +1625,11 @@ extern "C" bool  scnImN4UnlinkOth(CScnItemModelNw4r* self, CScnItemModelNw4r* ot
     return removed;
 }
 
-// ===========================================================================
-// nw4r g3d ResUserData accessor reconstruction (g3d_resuser_ac.h semantics)
-// ===========================================================================
-// Mirrors CMdlMaterial.cpp's reconstruction; the last-arg panic strings are
-// this call site's own (.sdata) labels. scnImN4ScanUserData iterates the +0x824
-// node table and scans each node's ResUserData for a named item.
-
-// One named item: name string, value type, and relative offsets.
-struct Nw4rUserDataItem {
-    u32 field_0x00;      // +0x00
-    s32 dataOffset;      // +0x04: relative offset to the value (0 = null)
-    u32 field_0x08;      // +0x08
-    u32 valueType;       // +0x0C: 0 = S32 (asserted)
-    s32 nameOffset;      // +0x10: relative offset to the name string
-};
-
-// A single 0x10-byte reference slot in the dic index array.
-struct Nw4rUserDataRef {
-    s32 dataOffset;      // +0x00: relative offset (from the dic base) to item
-    u32 field_0x04;
-    u32 field_0x08;
-    u32 field_0x0C;
-};
-
-// Dic accessor base: sits 4 bytes into the user-data block (ud + 4).
-// numData at +0x04, index array (0x10-byte refs) at +0x24.
-struct Nw4rUserDataDic {
-    u32 field_0x00;
-    u32 numData;             // +0x04: number of reference slots
-    u32 field_0x08;
-    u32 field_0x0C;
-    u32 field_0x10;
-    u32 field_0x14;
-    u32 field_0x18;
-    u32 field_0x1C;
-    u32 field_0x20;
-    Nw4rUserDataRef refs[1];  // +0x24
-};
+// ResUserData layouts now come from the canonical nw4r g3d header;
+// the last-arg panic strings below remain this call site's own (.sdata) labels.
 // GetNumData(): null + alignment asserts, then the item count.
 // Called in the loop condition (retail re-runs the asserts each iteration).
-static inline u32 ResUserDataNumData(const void* ud, Nw4rUserDataDic* dic) {
+static inline u32 ResUserDataNumData(const void* ud, ResUserDataDic* dic) {
     if (ud == NULL) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
                         lbl_eu_80530CF0, &lbl_eu_8066391C);
@@ -1678,8 +1643,8 @@ static inline u32 ResUserDataNumData(const void* ud, Nw4rUserDataDic* dic) {
 // operator[](int): leading asserts, then a dic-null nest with the bounds
 // check; retail keeps THREE redundant dic-null panics inside the nest plus
 // the outer early-out to a NULL item.
-static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
-                                                  Nw4rUserDataDic* dic,
+static inline ResUserDataItem* ResUserDataItemAt(const void* ud,
+                                                  ResUserDataDic* dic,
                                                   s32 idx) {
     if (ud == NULL) {
         nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
@@ -1689,7 +1654,7 @@ static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
         nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
     }
 
-    Nw4rUserDataItem* item = NULL;
+    ResUserDataItem* item = NULL;
 
     if (dic != NULL) {
         s32 valid = 0;
@@ -1716,7 +1681,7 @@ static inline Nw4rUserDataItem* ResUserDataItemAt(const void* ud,
         }
         s32 refOff = dic->refs[idx].dataOffset;
         item = (refOff != 0)
-                   ? reinterpret_cast<Nw4rUserDataItem*>(
+                   ? reinterpret_cast<ResUserDataItem*>(
                          reinterpret_cast<u8*>(dic) + refOff)
                    : NULL;
     }
@@ -1746,12 +1711,12 @@ extern "C" void scnImN4ScanUserData(CScnItemModelNw4r* self) {
         if (ud == NULL) continue;
 
         // The accessor base sits 4 bytes into the user-data block.
-        Nw4rUserDataDic* dic =
-            (Nw4rUserDataDic*)(reinterpret_cast<u32>(ud) + 4);
+        ResUserDataDic* dic =
+            (ResUserDataDic*)(reinterpret_cast<u32>(ud) + 4);
         // Count re-evaluated every iteration through the asserting getter
         // (retail re-runs the asserts in the condition).
         for (s32 i = 0; i < (s32)ResUserDataNumData(ud, dic); i++) {
-            Nw4rUserDataItem* item = ResUserDataItemAt(ud, dic, i);
+            ResUserDataItem* item = ResUserDataItemAt(ud, dic, i);
             // GetName(): alignment assert, null assert, then the name.
             if ((reinterpret_cast<u32>(item) & 3) != 0) {
                 nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
@@ -2389,7 +2354,6 @@ extern char lbl_eu_8056E100[];
 extern char lbl_eu_8056E0E0[];
 extern char lbl_eu_8056E168[];
 extern char lbl_eu_8056E140[];
-extern char lbl_eu_80663908;     // panic vararg string (.sdata, @sda21)
 
 // scnImN4UpdateShadowPos: shadow-node world-position refresh. Copies the six floats
 // at ResMdlData+0x74 into the +0x2EC table (with null/alignment asserts),
@@ -3349,9 +3313,6 @@ extern "C" void CfObjectMove_getStatusBit1678();
 extern "C" void simGetRate858();
 extern "C" void simVtableTrue();
 extern "C" void simGetValue7E4();
-extern "C" void* lbl_eu_806624D8;
-extern "C" void* __RTTI__Q34nw4r3g3d15IScnObjCallback;
-
 extern "C" u32 lbl_eu_8056DE80[386] = {
     (u32)&lbl_eu_806624C0, 0x00000000, (u32)&__dt__17CScnItemModelNw4rFv, (u32)&scnImN4UpdateVis, (u32)&ScnCamNw4r_EmptyHook48, (u32)&scnImN4UpdateXform,
     (u32)&scnImN4GetResName, (u32)&simGetValue7E4, (u32)&scnImN4GetTblCnt, (u32)&scnImN4GetNodeName, (u32)&scnImN4SetNodeHid, (u32)&scnImN4GetHidByNm,

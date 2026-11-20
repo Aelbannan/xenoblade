@@ -166,9 +166,9 @@ void AXRNA_EntryErrFunc(void* fn) { RNAERR_EntryErrFunc(fn); }
 
 void axrna_voice_drop(void* voice);
 void AXRNA_Destroy(AXRNA_OBJ* self);
-void AXRNA_SetTransSw(void* self, s32 sw);
-void AXRNA_SetPlaySw(void* self, s32 sw);
-void AXRNA_SetSfreq(void* self, s32 sfreq);
+void AXRNA_SetTransSw(AXRNA_OBJ* self, s32 sw);
+void AXRNA_SetPlaySw(AXRNA_OBJ* self, s32 sw);
+void AXRNA_SetSfreq(AXRNA_OBJ* self, s32 sfreq);
 void AXRNA_SetMain(void* self, u32 index, s32 val);
 void criware_8039A8E0(AXRNA_OBJ* self, u32 flags);
 void axrna_update_play(AXRNA_OBJ* self);
@@ -416,12 +416,12 @@ void AXRNA_Destroy(AXRNA_OBJ* self) {
     memset(self, 0, 0xE4);
 }
 
-void AXRNA_SetTransSw(void* self, s32 sw) {
+void AXRNA_SetTransSw(AXRNA_OBJ* self, s32 sw) {
     /* Declaration order drives MWCC callee-saved assignment (retail:
      * ch=r29, p38=r28, p48=r27, loop counter=r26). */
     u8* ch;
-    u8* p38;
-    u8* p48;
+    SJ_CHUNK* p38;
+    SJ_CHUNK* p48;
     s32 cur;
     s32 i, j, k;
     if (self == NULL)
@@ -429,40 +429,40 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
     if (self == NULL) {
         cur = -1;
     } else {
-        cur = (s32)(*(u8*)((u8*)self + 1) & 1);
+        cur = (s32)(self->sw & 1);
     }
     if (sw == cur)
         return;
     if (sw == 1) {
         GCRNA_LockCs();
         ch = (u8*)self;
-        p38 = (u8*)self + 0x38;
-        p48 = (u8*)self + 0x48;
-        for (i = 0; i < (s8)((u8*)self)[3]; i++) {
+        p38 = &self->chunkB[0];
+        p48 = &self->chunkA[0];
+        for (i = 0; i < (s8)self->chanNum; i++) {
             void* sj = *(void**)(ch + 0x30);
             SJ_VT(sj)->reset(sj);
-            memset(p38, 0, 8);
-            memset(p48, 0, 8);
-            if (*(s32*)((u8*)self + 0xb4) == 1) {
+            memset(p38, 0, sizeof(*p38));
+            memset(p48, 0, sizeof(*p48));
+            if (self->streamMode == 1) {
                 void* sj2 = *(void**)(ch + 0xc8);
                 SJ_VT(sj2)->reset(sj2);
             }
             *(s32*)(ch + 0x58) = 0;
             ch += 4;
-            p38 += 8;
-            p48 += 8;
+            p38++;
+            p48++;
         }
-        *(s32*)((u8*)self + 0x60) = 0;
-        *(s32*)((u8*)self + 0x64) = 0;
-        *(s32*)((u8*)self + 0x70) = 0;
-        *(s32*)((u8*)self + 0x74) = 0;
-        *(s32*)((u8*)self + 0x04) = -1;
-        *(s32*)((u8*)self + 0xa4) = 0;
-        *(s32*)((u8*)self + 0xc4) = 0;
-        *(u8*)((u8*)self + 1) |= 1;
+        self->halfFeedPos = 0;
+        self->feedTotal = 0;
+        self->flashPos = 0;
+        self->flashTotal = 0;
+        self->playPos = -1;
+        self->feedPos = 0;
+        self->tsSkipCnt = 0;
+        self->sw |= 1;
         GCRNA_UnlockCs();
     } else if (sw == 0) {
-        for (i = 0; i < (s32)(s8)((u8*)self)[3]; i++) {
+        for (i = 0; i < (s32)(s8)self->chanNum; i++) {
             s32 cnt = 0;
             for (j = 0; j < 0x14; j++) {
                 for (k = 0; k < 0xa; k++) {
@@ -491,13 +491,13 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
             }
         }
         /* NB: bug-for-bug, retail masks with 2 (clears every other flag bit) */
-        *(u8*)((u8*)self + 1) &= 2;
+        self->sw &= 2;
     } else {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x142));
     }
 }
 
-void AXRNA_SetPlaySw(void* self, s32 sw) {
+void AXRNA_SetPlaySw(AXRNA_OBJ* self, s32 sw) {
     /* Walking per-channel pointer (stride 4): voices at +8, buffer bases
      * at +0x10. Stop flag byte: bit1 = playing, bit0 = transferring.
      * NB: flag/fmt hold the hoisted AXPBADDR header words across the
@@ -513,13 +513,13 @@ void AXRNA_SetPlaySw(void* self, s32 sw) {
     if (self == NULL) {
         cur = -1;
     } else {
-        cur = (s32)((*(u8*)((u8*)self + 1) >> 1) & 1);
+        cur = (self->sw >> 1) & 1;
     }
     if (sw == cur)
         return;
     GCRNA_LockCs();
     if (sw == 1) {
-        if (*(s32*)((u8*)self + 0xa4) == 0 || *(s32*)((u8*)self + 0xa4) > 0x800) {
+        if (self->feedPos == 0 || self->feedPos > 0x800) {
             sw = 0;
         } else {
             sw = 0x800;
@@ -533,7 +533,7 @@ void AXRNA_SetPlaySw(void* self, s32 sw) {
                 AXPBADDR addr;
                 /* AX addresses split hi/lo around the 0x80000000 base */
                 u32 mem = *(u32*)(p + 0x10);
-                u32 loop = *(u32*)((u8*)self + 0x18);
+                u32 loop = self->bufSmpl;
                 u32 base = mem + 0x80000000u;
                 u32 t = loop * 2;
                 u32 endm = base + t - 2;
@@ -551,7 +551,7 @@ void AXRNA_SetPlaySw(void* self, s32 sw) {
             }
             p += 4;
         }
-        *(u8*)((u8*)self + 1) |= 2;
+        self->sw |= 2;
     } else if (sw == 0) {
         p = (u8*)self;
         for (i = 0; i < (s8)((u8*)self)[3]; i++) {
@@ -560,7 +560,7 @@ void AXRNA_SetPlaySw(void* self, s32 sw) {
             p += 4;
         }
         /* NB: bug-for-bug, retail masks with 1 (clears every other flag bit) */
-        *(u8*)((u8*)self + 1) &= 1;
+        self->sw &= 1;
     } else {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x163));
     }
@@ -889,7 +889,7 @@ void AXRNA_SetNumChan(AXRNA_OBJ* self, u8 numChan) {
     }
 }
 
-void AXRNA_SetSfreq(void* self, s32 sfreq) {
+void AXRNA_SetSfreq(AXRNA_OBJ* self, s32 sfreq) {
     u8* p;
     s32 hi;
     u16 lo;
@@ -900,7 +900,7 @@ void AXRNA_SetSfreq(void* self, s32 sfreq) {
     if (sfreq == 0x7d1c) {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x4b5));
     }
-    *(s32*)((u8*)self + 0x1c) = sfreq;
+    self->sfreq = sfreq;
     /* AX SRC ratio: integer part = rate/32000 (magic 0x10624dd3, shift 11);
      * fraction part computed as (rate<<8)/125 (same magic, shift 3). */
     hi = sfreq / 32000;
@@ -908,7 +908,7 @@ void AXRNA_SetSfreq(void* self, s32 sfreq) {
     p = (u8*)self;
     /* NB: reuse sfreq as the channel-loop counter so MWCC recycles its
      * register (retail: li r26, 0 over the dead parameter). */
-    for (i = 0; i < (s8)((u8*)self)[2]; i++) {
+    for (i = 0; i < self->numChan; i++) {
         GCRNA_LockCs();
         {
             void* e = *(void**)(p + 8);
@@ -920,7 +920,7 @@ void AXRNA_SetSfreq(void* self, s32 sfreq) {
                 src.last_samples[1] = 0;
                 src.last_samples[2] = 0;
                 src.last_samples[3] = 0;
-                AXSetVoiceSrcType(e, *(s32*)((u8*)self + 0xa0));
+                AXSetVoiceSrcType(e, self->srcType);
                 /* reload: AXSetVoiceSrcType may have changed the slot */
                 AXSetVoiceSrc(*(void**)(p + 8), &src);
             }

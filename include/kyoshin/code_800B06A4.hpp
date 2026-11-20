@@ -819,7 +819,32 @@ public:
     u32 getCount();
     u32 getSize();
     void* getRingElem(u32 index);
-    u8 unk0[0xAF8];
+    u8 unk0[0x4C];
+    // name-guess: member names follow the retail accessors get_u32_74,
+    // getPtr_1A8 and set_float_730. Offsets in the comments are absolute in
+    // UnkClass_805764CC; this object sits at owner+0x20.
+    u32 field_0x6C;             // owner 0x6C
+    u32 field_0x70;             // owner 0x70
+    u32 field_0x74;             // owner 0x74
+    u8 unk58[0x78 - 0x58];      // owner 0x78 .. 0x97
+    u32 field_0x98;             // owner 0x98 (this object's 0x78)
+    u8 unk9C[0x188 - 0x7C];     // owner 0x9C .. 0x1A7
+    u8 field_0x1A8;             // owner 0x1A8 (address taken by getPtr_1A8)
+    u8 unk1A9[0x360 - 0x189];   // owner 0x1A9 .. 0x37F
+    u32 field_0x380;            // owner 0x380
+    u8 unk384[0x600 - 0x364];   // owner 0x384 .. 0x61F
+    u32 field_0x620;            // owner 0x620
+    u8 unk624[0x6E0 - 0x604];   // owner 0x624 .. 0x6FF
+    u32 field_0x700;            // owner 0x700 (append/clear counter)
+    u8 unk704[0x720 - 0x704];   // owner 0x704 .. 0x71F
+    u32 field_0x720;            // owner 0x720
+    u8 unk724[0x710 - 0x704];   // owner 0x724 .. 0x72F
+    float field_0x730;          // owner 0x730
+    u32 field_0x734;            // owner 0x734
+    u16 field_0x738;            // owner 0x738
+    u8 field_0x73A;             // owner 0x73A
+    u8 field_0x73B;             // owner 0x73B
+    u8 unk73C[0xAF8 - 0x71C];   // owner 0x73C .. 0xB17
     UnkClass_800B0AD8* unkAF8;
     u32 unkAFC;
     u32 unkB00;

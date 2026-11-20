@@ -4,54 +4,31 @@
 #include <cstring>
 #include <cmath>
 
-// Retail SDA slots and data for MemManager (blob monolibdata1.s dissolve).
-// The retail names for the member statics are the lbl_eu_* slots below
-// (getHandleMEM2/setHandleMEM2 already use lbl_eu_8066350C); the member
-// definitions were renamed to these globals so the .o emits the retail
-// symbol names/bytes exactly.
-extern "C" const char lbl_eu_8066A1A8[5] = "Mem1"; // region names owned by this TU
-extern "C" const char lbl_eu_8066A1B0[5] = "Mem2";
-extern "C" const double lbl_eu_8066A1C8; // 2^52 u32->double magic (compiler-pooled at its first use)
-
+// MemManager's static members are defined here, in retail address order.
+// rename_syms.py maps the retired retail slots to these real definitions.
 extern "C" {
-// .rodata 0x80522410: the two OSReport strings ("ProgArea (%x / %x)\n" and
-// "ProgSizeOver/*...*/\n"), byte-exact SJIS.
-const char lbl_eu_80522410[0x48] =    "ProgArea (%x / %x)\n\x00"
-    "ProgSizeOver/*"
-    "\x83\x76\x83\x8D\x83\x4F\x83\x89\x83\x80\x97\xCC\x88\xE6\x82\xAA\x8C\xC0\x8A\x45\x82\xF0\x92\xB4\x82\xA6\x82\xDC\x82\xB5\x82\xBD"
-    "*/\n"
-    "\x00\x00";
-
 // .sdata 0x80663500-0x80663518 (declaration order = retail address order):
-const char* lbl_eu_80663500 = lbl_eu_8066A1A8;  // scRegionNameMEM1
-const char* lbl_eu_80663504 = lbl_eu_8066A1B0;  // scRegionNameMEM2
-u32 lbl_eu_80663508 = 0xFFFFFFFF;               // sHandleMEM1 (INVALID_HANDLE)
-mtl::ALLOC_HANDLE lbl_eu_8066350C = 0xFFFFFFFF; // sHandleMEM2 (INVALID_HANDLE)
-u8 lbl_eu_80663510 = 1;                         // lbl_80665E38
+const char* mtl::MemManager::scRegionNameMEM1 = "Mem1";
+const char* mtl::MemManager::scRegionNameMEM2 = "Mem2";
+mtl::ALLOC_HANDLE mtl::MemManager::sHandleMEM1 = INVALID_HANDLE;
+mtl::ALLOC_HANDLE mtl::MemManager::sHandleMEM2 = INVALID_HANDLE;
+bool mtl::MemManager::lbl_80665E38 = true;
 
-u8 lbl_eu_80663511 = 1;                         // lbl_80665E39
-u32 lbl_eu_80663514 = OS_MEM_MB_TO_B(6);       // MemRegion::sMaxSizeMEM1
+bool mtl::MemManager::lbl_80665E39 = true;
+u32 mtl::MemManager::MemRegion::sMaxSizeMEM1 = OS_MEM_MB_TO_B(6);
 
 // .bss 0x80653EE0: the region-array storage (retail sRegionBuffer).
 mtl::RawArray<mtl::MemManager::MemRegion, mtl::MAX_ALLOC_REGION> sRegionBuffer__Q23mtl10MemManager;
 
-// .sbss 0x80665570-0x8066557D (declaration order = retail address order;
-// the natural u32 alignment of lbl_eu_80665578 creates the retail 3-byte gap
-// between lbl_eu_80665574 and lbl_eu_80665578):
-u32 lbl_eu_80665570;    // sRegionUniqueId
+// .sbss: declaration order and natural u32 alignment reproduce retail gaps.
+u32 mtl::MemManager::sRegionUniqueId;
 
-bool lbl_eu_80665574;   // lbl_80667E54
+bool mtl::MemManager::lbl_80667E54;
 
-u32 lbl_eu_80665578;    // MemRegion::sMaxSizeMEM2
+u32 mtl::MemManager::MemRegion::sMaxSizeMEM2;
 
-bool lbl_eu_8066557C;   // sIsOptimalAlloc
+bool mtl::MemManager::sIsOptimalAlloc;
 }
-
-// u32 -> double bit-reinterpret for the 2^52 conversion magic.
-union U32ToDouble {
-    u32 w[2];
-    double d;
-};
 
 namespace mtl {
 
@@ -84,7 +61,7 @@ MemManager::MemRegion::~MemRegion() {
     ALLOC_HANDLE handle;
     ALLOC_HANDLE hMEM1;
     //Must deallocate if this region is not the MEM1/MEM2 region
-    if ((handle = mHandle) != (hMEM1 = lbl_eu_80663508)
+    if ((handle = mHandle) != (hMEM1 = sHandleMEM1)
         && handle != MemManager::getHandleMEM2()) {
         MemManager::deallocateImpl(mStartAddress);
     }
@@ -114,22 +91,22 @@ MemManager::MemRegion::~MemRegion() {
 Configures the maximum size of the root memory regions.
 */
 void MemManager::MemRegion::setRegionMaxSize(u32 maxMEM1, u32 maxMEM2) {
-    lbl_eu_80663514 = maxMEM1;
-    lbl_eu_80665578 = maxMEM2;
+    sMaxSizeMEM1 = maxMEM1;
+    sMaxSizeMEM2 = maxMEM2;
 }
 
 /*
 Gets the maximum root MEM1 memory region size, in bytes.
 */
 u32 MemManager::MemRegion::getMEM1MaxSize() {
-    return lbl_eu_80663514;
+    return sMaxSizeMEM1;
 }
 
 /*
 Gets the maximum root MEM2 memory region size, in bytes.
 */
 u32 MemManager::MemRegion::getMEM2MaxSize() {
-    return lbl_eu_80665578;
+    return sMaxSizeMEM2;
 }
 
 /*
@@ -489,8 +466,8 @@ and creates the main program regions in MEM1 and MEM2.
 */
 #pragma global_optimizer off //:)
 void MemManager::initialize() {
-    lbl_eu_80665570 = 0;
-    lbl_eu_80663511 = true;
+    sRegionUniqueId = 0;
+    lbl_80665E39 = true;
     //Initialize the memory region array entries
     sRegionBuffer__Q23mtl10MemManager.initialize();
 
@@ -506,24 +483,24 @@ void MemManager::initialize() {
     }
 
     //Remaining program region %x / maximum %x
-    OSReport(lbl_eu_80522410, mem1RegionSize,
+    OSReport("ProgArea (%x / %x)\n", mem1RegionSize,
         MemRegion::getMEM1MaxSize());
 
     if (mem1RegionLo >= mem1RegionMax) {
         //Program region exceeded the limit
-        OSReport(&lbl_eu_80522410[0x14]);
+        OSReport("ProgSizeOver/*\x83\x76\x83\x8D\x83\x4F\x83\x89\x83\x80\x97\xCC\x88\xE6\x82\xAA\x8C\xC0\x8A\x45\x82\xF0\x92\xB4\x82\xA6\x82\xDC\x82\xB5\x82\xBD*/\n");
     }
 
-    lbl_eu_80663510 = true;
+    lbl_80665E38 = true;
 
     (void)OSGetMEM2ArenaHi(); //unused
 
-    lbl_eu_80663508 = create(mem1RegionLo,
-        (u8*)OSGetMEM1ArenaHi() - (u8*)mem1RegionMax, lbl_eu_80663500);
+    sHandleMEM1 = create(mem1RegionLo,
+        (u8*)OSGetMEM1ArenaHi() - (u8*)mem1RegionMax, scRegionNameMEM1);
 
-    // Retail SDA slot is lbl_eu_8066350C (same as getHandleMEM2 / setHandleMEM2).
-    lbl_eu_8066350C = create(OSGetMEM2ArenaLo(),
-        (u8*)MEM2_REGION_END - (u8*)OSGetMEM2ArenaLo(), lbl_eu_80663504);
+    // This is the same static member used by getHandleMEM2 / setHandleMEM2.
+    sHandleMEM2 = create(OSGetMEM2ArenaLo(),
+        (u8*)MEM2_REGION_END - (u8*)OSGetMEM2ArenaLo(), scRegionNameMEM2);
 }
 #pragma global_optimizer reset
 
@@ -556,7 +533,7 @@ ALLOC_HANDLE MemManager::create(void* head, u32 size, const char* name) {
         }
 
         //Allocation handle encodes a unique ID
-        handle = static_cast<ALLOC_HANDLE>(lbl_eu_80665570++ << 8 | handle);
+        handle = static_cast<ALLOC_HANDLE>(sRegionUniqueId++ << 8 | handle);
 
         region->mHandle = handle;
         region->mStartAddress = head;
@@ -605,7 +582,7 @@ ALLOC_HANDLE MemManager::create(ALLOC_HANDLE handle, u32 size, const char* name)
     ALLOC_HANDLE child = create(
         allocate_ex(dataSize, handle, 16), dataSize, name);
     
-    lbl_eu_80665574 = false;
+    lbl_80667E54 = false;
     return child;
 }
 
@@ -661,7 +638,7 @@ ALLOC_HANDLE MemManager::create_tail(ALLOC_HANDLE handle, u32 size, const char* 
         }
 
         //Allocation handle encodes a unique ID
-        child = static_cast<ALLOC_HANDLE>(lbl_eu_80665570++ << 8 | i);
+        child = static_cast<ALLOC_HANDLE>(sRegionUniqueId++ << 8 | i);
 
         entry->mHandle = child;
         entry->mStartAddress = block;
@@ -688,7 +665,7 @@ ALLOC_HANDLE MemManager::create_tail(ALLOC_HANDLE handle, u32 size, const char* 
         break;
     }
 
-    lbl_eu_80665574 = false;
+    lbl_80667E54 = false;
     return child;
 }
 
@@ -722,7 +699,7 @@ MEM1 is used for most object-related allocations
 where performance is a priority.
 */
 ALLOC_HANDLE MemManager::getHandleMEM1() {
-    return lbl_eu_80663508;
+    return sHandleMEM1;
 }
 
 /*
@@ -732,7 +709,7 @@ MEM1 is used for most object-related allocations
 where performance is a priority.
 */
 void MemManager::setHandleMEM1(ALLOC_HANDLE handle) {
-    lbl_eu_80663508 = handle;
+    sHandleMEM1 = handle;
 }
 
 /*
@@ -740,8 +717,8 @@ Gets the allocation handle for the root MEM2 region.
 MEM2 is used for assets and other large allocations.
 */
 ALLOC_HANDLE MemManager::getHandleMEM2() {
-    // Retail SDA reloc is lbl_eu_8066350C@sda21, not sHandleMEM2__Q23mtl10MemManager.
-    return lbl_eu_8066350C;
+    // This is the same static member written by setHandleMEM2.
+    return sHandleMEM2;
 }
 
 /*
@@ -750,7 +727,7 @@ MEM2 is used for assets and other large allocations.
 */
 void MemManager::setHandleMEM2(ALLOC_HANDLE handle) {
     // Same retail SDA slot as getHandleMEM2 (do not dual-write sHandleMEM2).
-    lbl_eu_8066350C = handle;
+    sHandleMEM2 = handle;
 }
 
 /*
@@ -833,7 +810,7 @@ DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
     }
 
     //Something is very wrong
-    if (lbl_eu_80663508 == INVALID_HANDLE) {
+    if (sHandleMEM1 == INVALID_HANDLE) {
         return true;
     }
 
@@ -1073,21 +1050,21 @@ u16 MemManager::calculateCrc(const void* data, u32 len) {
 }
 
 void MemManager::setMemInitFlag(bool value) {
-    lbl_eu_80663511 = value;
+    lbl_80665E39 = value;
 }
 
 /*
 Tests whether optimal memory allocation is enabled.
 */
 bool MemManager::isOptimalAlloc() {
-    return lbl_eu_8066557C;
+    return sIsOptimalAlloc;
 }
 
 /*
 Sets whether optimal memory allocation is enabled.
 */
 void MemManager::setOptimalAlloc(bool enable) {
-    lbl_eu_8066557C = enable;
+    sIsOptimalAlloc = enable;
 }
 
 /*

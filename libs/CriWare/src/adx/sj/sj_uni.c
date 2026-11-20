@@ -4,10 +4,6 @@ __declspec(section ".rodata") __attribute__((aligned(8))) char SJUNI_Uuid[0x10] 
     0x2E, 0x53, 0x4F, 0xA3, 0xAF, 0x97, 0x11, 0xD2, 0xA5, 0x27, 0x00, 0x60, 0x08, 0x94, 0x48, 0xBC
 };
 
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80518E00[0x150] = {
-    0x53, 0x4A, 0x55, 0x4E, 0x49, 0x20, 0x45, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x20, 0x3A, 0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x20, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x20, 0x69, 0x73, 0x20, 0x70, 0x61, 0x73, 0x73, 0x65, 0x64, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x31, 0x00, 0x20, 0x3A, 0x20, 0x53, 0x70, 0x65, 0x63, 0x69, 0x66, 0x69, 0x65, 0x64, 0x20, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x65, 0x20, 0x69, 0x73, 0x20, 0x69, 0x6E, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x32, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x33, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x34, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x35, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x36, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x37, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x38, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x36, 0x39, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x30, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x31, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x32, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x33, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x34, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x35, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x36, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x37, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x38, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x37, 0x39, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x38, 0x30, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x38, 0x31, 0x00, 0x45, 0x32, 0x30, 0x30, 0x34, 0x30, 0x39, 0x30, 0x32, 0x38, 0x32, 0x00, 0x00
-};
-
 extern void SJUNI_Destroy();
 extern void *SJUNI_GetUuid();
 extern void SJUNI_Reset();
@@ -18,7 +14,8 @@ extern int SJUNI_GetNumData();
 extern int SJUNI_IsGetChunk();
 extern void SJUNI_EntryErrFunc();
 
-__declspec(section ".data") __attribute__((aligned(8))) void *lbl_eu_80565C60[12] = {
+// Recovered from config/jp/symbols.txt: sjuni_vtbl (.data size:0x30).
+void *sjuni_vtbl[12] __attribute__((aligned(8))) = {
     0, 0, 0,
     SJUNI_Destroy,
     SJUNI_GetUuid,
@@ -82,7 +79,7 @@ int   sjuni_IsGetChunk(SJUNI *self, int mode, int size, int *out);
 
 /* --- SJUNI_Error --- */
 void SJUNI_Error(void) {
-    SJERR_CallErr(lbl_eu_80518E00);
+    SJERR_CallErr("SJUNI Error");
 }
 
 /* --- SJUNI_Init --- */
@@ -126,7 +123,7 @@ void *sjuni_Create(int index, void *pool_mem, int pool_size) {
 
     SJUNI *self = &((SJUNI *)SJUNI_HandleTable)[i];
     self->valid = 1;
-    self->vtable = lbl_eu_80565C60;
+    self->vtable = sjuni_vtbl;
     self->index = (s8)index;
     self->uuid = SJUNI_Uuid;
     self->pool_mem = (u8 *)pool_mem;
@@ -146,13 +143,13 @@ void SJUNI_Destroy(void *self_ptr) {
     char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x27);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf1, 0x40, "E2004090261");
         CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x53);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf2, 0x40, "E2004090262");
         CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
@@ -173,14 +170,14 @@ void *SJUNI_GetUuid(void *self_ptr) {
     char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x5F);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf1, 0x40, "E2004090263");
         CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x6B);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf2, 0x40, "E2004090264");
         CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = NULL;
@@ -201,13 +198,13 @@ void SJUNI_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
     char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x77);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf1, 0x40, "E2004090265");
         CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x83);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf2, 0x40, "E2004090266");
         CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
@@ -231,14 +228,14 @@ void SJUNI_Reset(void *self) {
 void sjuni_Reset(SJUNI *self) {
     if (self == NULL) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x8F);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090267");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x9B);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090268");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else {
@@ -280,16 +277,16 @@ int SJUNI_GetNumData(void *self, int mode) {
 int sjuni_GetNumData(SJUNI *self, int mode) {
     if (self == NULL) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xA7);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090269");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         return 0;
     }
     if (self->valid == 0) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xB3);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090270");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         return 0;
@@ -323,14 +320,14 @@ int SJUNI_GetChunk(void *self, int mode, int size, SJ_CHUNK *out) {
 void sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out) {
     if (self == NULL) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xBF);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090271");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xCB);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090272");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if ((u32)mode > 3) {
@@ -395,16 +392,16 @@ int SJUNI_PutChunk(void *self, int mode, SJ_CHUNK *chunk) {
 void sjuni_PutChunk(SJUNI *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xD7);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090273");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         goto exit;
     }
     if (self->valid == 0) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xE3);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090274");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         goto exit;
@@ -463,16 +460,16 @@ int SJUNI_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
 void sjuni_UngetChunk(SJUNI *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xEF);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090275");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         goto exit;
     }
     if (self->valid == 0) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xFB);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090276");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         goto exit;
@@ -532,16 +529,16 @@ int SJUNI_IsGetChunk(void *self, int mode, int size, int *out) {
 int sjuni_IsGetChunk(SJUNI *self, int mode, int size, int *out) {
     if (self == NULL) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x107);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090277");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         return 0;
     }
     if (self->valid == 0) {
         char buf[64];
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x113);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf, 0x40, "E2004090278");
         CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         return 0;
@@ -580,14 +577,14 @@ int SJUNI_GetNumChunk(void *self_ptr, int mode) {
     char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        const char *suffix = lbl_eu_80518E00 + 0xC;
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x11F);
+        const char *suffix = " : NULL pointer is passed.";
+        CRICRW_Strcpy(buf1, 0x40, "E2004090279");
         CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        const char *suffix = lbl_eu_80518E00 + 0x33;
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x12B);
+        const char *suffix = " : Specified handle is invalid.";
+        CRICRW_Strcpy(buf2, 0x40, "E2004090280");
         CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = 0;
@@ -604,3 +601,24 @@ int SJUNI_GetNumChunk(void *self_ptr, int mode) {
     return r;
 }
 #pragma pop
+
+// name-guess: retail error-code pool ends with E2004090281/E2004090282; these
+// validation functions were dead-stripped from the linked game but their
+// literals remain in this TU's string table.
+void SJUNI_CheckPoolParams(void *self_ptr, int mode) {
+    SJUNI *self = (SJUNI *)self_ptr;
+    char buf[64];
+    if (self == NULL) {
+        CRICRW_Strcpy(buf, 0x40, "E2004090281");
+        CRICRW_Strcat(buf, 0x40, " : NULL pointer is passed.");
+        SJERR_CallErr(buf);
+    } else if (self->valid == 0 || (u32)mode > 3) {
+        CRICRW_Strcpy(buf, 0x40, "E2004090282");
+        CRICRW_Strcat(buf, 0x40, " : Specified handle is invalid.");
+        SJERR_CallErr(buf);
+    }
+}
+
+void SJUNI_CheckPoolParamsEx(void *self_ptr) {
+    SJUNI_CheckPoolParams(self_ptr, 0);
+}

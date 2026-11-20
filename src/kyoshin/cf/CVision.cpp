@@ -139,24 +139,7 @@ extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D08 = 0.16666667f;
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D0C = 1.3333334f;
 extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D10 = 10.0f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D18 = 0.5;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D20 = -0.5;
 #pragma section data_type ".data" ".data"
-// Signed int->float magic (2^52 + 2^31 = 4503601774854144.0); lets MWCC reuse
-// the retail symbol for (double) casts instead of emitting TU-local @N labels.
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D28 = 4503601774854144.0;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D30 = 0.25f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D34 = 0.415f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D38 = 8.0f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D3C = 12.0f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D40 = 300.0f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D44 = 0.6666667f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D48 = 2.5f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D4C = 0.15f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D50 = 2500.0f;
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f32 lbl_eu_80667D54 = 0.1f;
-// Unsigned int->float magic (2^52 = 4503599627370496.0).
-extern "C" __declspec(section ".sdata2") __attribute__((used)) f64 lbl_eu_80667D58 = 4503599627370496.0;
 
 // Most C-linkage pseudo-imports for this TU now live in the "C-linkage
 // imports" section of kyoshin/cf/CVision.hpp (real imports). The few kept
@@ -1601,7 +1584,7 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
             if (sub->field_84 & 0x80) {
                 r0 = 0;
             } else {
-                f64 adj = (sum > lbl_eu_80667CD4) ? lbl_eu_80667D18 : lbl_eu_80667D20;
+                f64 adj = (sum > lbl_eu_80667CD4) ? 0.5 : -0.5;
                 r0 = (int)(sum + adj);
             }
         } else {
@@ -1626,7 +1609,7 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
             if (d2->w_74pair[0] & 0x80) {
                 r0b = 0;
             } else {
-                f64 adj2 = (sum2 > lbl_eu_80667CD4) ? lbl_eu_80667D18 : lbl_eu_80667D20;
+                f64 adj2 = (sum2 > lbl_eu_80667CD4) ? 0.5 : -0.5;
                 r0b = (int)(sum2 + adj2);
             }
         } else {
@@ -1640,24 +1623,14 @@ extern "C" void matchVisionModelCallback(CVision* self, CVisionBattleObj* obj, C
                 if (d3->w_74pair[0] & 0x80) {
                     r0c = 0;
                 } else {
-                    f64 adj3 = (sum3 > lbl_eu_80667CD4) ? lbl_eu_80667D18 : lbl_eu_80667D20;
+                    f64 adj3 = (sum3 > lbl_eu_80667CD4) ? 0.5 : -0.5;
                     r0c = (int)(sum3 + adj3);
                 }
             } else {
                 r0c = 0;
             }
-            // Retail converts the int through the NAMED 0x4330 double magic
-            // lbl_eu_80667D28 (signed int -> double) before the
-            // single-precision add; the union keeps MWCC from emitting a
-            // TU-local @N pool copy of the magic.
             if (r0c > 0) {
-                union {
-                    u32 w[2];
-                    double d;
-                } conv6C;
-                conv6C.w[0] = 0x43300000u;
-                conv6C.w[1] = (u32)r0c ^ 0x80000000u;
-                sub->f_6C += (f32)(conv6C.d - lbl_eu_80667D28);
+                sub->f_6C += (f32)(f64)r0c;
             }
         }
     }
@@ -1735,8 +1708,8 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
     if (w1) {
         if (changed) {
             ((CVisionBMView*)CBattleManager::getInstance())->vt34(8,
-                                                                  lbl_eu_80667D30,
-                                                                  lbl_eu_80667D34);
+                                                                  0.25f,
+                                                                  0.415f);
         }
     }
     int w2;
@@ -1750,8 +1723,8 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
         driveVisionUpdate(8);
     }
     int w3;
-    if (cv->field_26198 - cv->field_261A0 <= lbl_eu_80667D34 &&
-        lbl_eu_80667D34 < cv->field_26194 - cv->field_261A0) {
+    if (cv->field_26198 - cv->field_261A0 <= 0.415f &&
+        0.415f < cv->field_26194 - cv->field_261A0) {
         w3 = 1;
     } else {
         w3 = 0;
@@ -1762,8 +1735,8 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
         }
     }
     int w4;
-    if (cv->field_26198 - cv->field_261A0 <= lbl_eu_80667D34 &&
-        lbl_eu_80667D34 < cv->field_26194 - cv->field_261A0) {
+    if (cv->field_26198 - cv->field_261A0 <= 0.415f &&
+        0.415f < cv->field_26194 - cv->field_261A0) {
         w4 = 1;
     } else {
         w4 = 0;
@@ -1806,11 +1779,6 @@ extern "C" void gateVisionByFusionParam(CVision* self) {
 // forwardVisionShowRequests).
 // ---------------------------------------------------------------------------
 extern "C" void forwardVisionShowRequests(CVision* self) {
-    // MWCC colors callee-saved GPRs in reverse declaration order (locals), so
-    // the declaration sequence below reproduces the retail mapping
-    // (convHi=r31, sub=r30, i=r29, p=r28, cv=r27); the parameter dies into the
-    // trailing local copy and is never spilled.
-    u32 convHi = 0x43300000u;
     CVisionSub* sub;
     int i;
     CVisionFusionSub* p;
@@ -1829,29 +1797,21 @@ extern "C" void forwardVisionShowRequests(CVision* self) {
         w1 = 0;
     }
     if (w1) {
-        f32 scl = lbl_eu_80667D38;
+        f32 scl = 8.0f;
         if (CfCode_GetSubObject((cf::CfCode800F42AC*)sub) != 0) {
             if (((CVisionRefObj*)CfCode_GetSubObject((cf::CfCode800F42AC*)sub))->b_42 == 1) {
-                scl = lbl_eu_80667D3C;
+                scl = 12.0f;
             }
         }
-        // Per-player offset accumulation. The signed int result goes through
-        // the 0x4330/xoris double trick against the NAMED .sdata2 magic
-        // lbl_eu_80667D28 (hoisted into a saved FPR), then folds into the
-        // running scale.
+        // Per-player offset accumulation folds the signed stat into the
+        // running scale through a double conversion.
         for (i = 0; i < 3; i++) {
             p = (CVisionFusionSub*)MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
             if (p != 0) {
                 if (p->vf290() != 0) {
                     s32 out;
                     if (IdTable_GetSum(p->vf290(), 0x6c, &out) != 0) {
-                        union {
-                            u32 w[2];
-                            double d;
-                        } conv;
-                        conv.w[0] = convHi;
-                        conv.w[1] = (u32)out ^ 0x80000000u;
-                        scl += (f32)(conv.d - lbl_eu_80667D28);
+                        scl += (f32)(f64)out;
                     }
                 }
             }
@@ -1863,7 +1823,7 @@ extern "C" void forwardVisionShowRequests(CVision* self) {
             scl = lbl_eu_80667D00;
         }
         if (CBattleManager::getInstance()->CheckUnk84Flag(0x800) != 0) {
-            scl = lbl_eu_80667D40;
+            scl = 300.0f;
         }
         sub->field_830 = scl;
         driveVisionUpdate(0x10);
@@ -1938,7 +1898,7 @@ extern "C" void runVisionResetWindows(CVision* self) {
         lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
         cfCam_pushStateToActive((cf::CfCamFollow*)0);
     }
-    f32 t3 = lbl_eu_80667D44;
+    f32 t3 = 0.6666667f;
     int w3;
     if (self->field_26198 - self->field_261A0 <= t3 &&
         t3 < self->field_26194 - self->field_261A0) {
@@ -2122,8 +2082,8 @@ extern "C" void driveSubVisionFx(CVision* self) {
 
     // Release window check shared by the baseline path and post-setup.
     int w;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D48 &&
-        lbl_eu_80667D48 < self->field_26194 - self->field_261A0) {
+    if (self->field_26198 - self->field_261A0 <= 2.5f &&
+        2.5f < self->field_26194 - self->field_261A0) {
         w = 1;
     } else {
         w = 0;
@@ -2338,7 +2298,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
     }
 
     // Damage timing: engage when incoming damage would exceed max HP or drop
-    // the HP fraction below the lbl_eu_80667D4C threshold.
+    // the HP fraction below the 0.15f threshold.
     if (obj != (CVisionObjV*)target) {
         f32 total = lbl_eu_80667CD4;
         u32 hits = 0;
@@ -2351,7 +2311,7 @@ extern "C" int tryEngageVisionCutscene(CVision* self, CVisionObjV* obj, CVisionO
             f32 hpDen = target->vt12C();
             f32 hpCur = target->vt128();
             f32 frac = (hpCur - total) / hpDen;
-            if (frac <= lbl_eu_80667D4C) {
+            if (frac <= 0.15f) {
                 engage = 1;
             }
         }
@@ -2566,9 +2526,7 @@ extern "C" void checkVisionCallbackState(CVision* self) {
             CtrlRemote_SetSharedBit(0x30e3, 1);
         }
         // Per-player: the fusion-state query runs twice (test then fetch);
-        // the stat is passed as a plain float through the NAMED 0x4330
-        // double magic lbl_eu_80667D28 (union keeps MWCC from emitting a
-        // TU-local @N pool copy of the magic).
+        // the stat is passed as a plain float.
         int i = 0;
         do {
             void* p = MapFx_ResolveOwner(getPlayer__Q22cf13CfGameManagerFi(i));
@@ -2577,13 +2535,7 @@ extern "C" void checkVisionCallbackState(CVision* self) {
                     void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
                     s32 out;
                     if (IdTable_GetSum(r, 0x39, &out) != 0) {
-                        union {
-                            u32 w[2];
-                            double d;
-                        } convOut;
-                        convOut.w[0] = 0x43300000u;
-                        convOut.w[1] = (u32)out ^ 0x80000000u;
-                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)(convOut.d - lbl_eu_80667D28));
+                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)(f64)out);
                     }
                 }
             }
@@ -2657,7 +2609,7 @@ extern "C" void driveVisionFxUpdates(CVision* self) {
     } while (n < 5);
     *p1->vf2A4() = *p1->vf29C(0);
     if (p1 != p2) {
-        p1->vf2C4(p2, lbl_eu_80667CD4, lbl_eu_80667D50, lbl_eu_80667CD4);
+        p1->vf2C4(p2, lbl_eu_80667CD4, 2500.0f, lbl_eu_80667CD4);
     }
     sub->field_0C->field_7C = lbl_eu_80667CFC;
     CfSoundMan_ClearFxEffect(0, 0);
@@ -2912,14 +2864,8 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
             CVisionU32F32U32 e;
-            union {
-                u32 w[2];
-                double d;
-            } convStage3;
-            convStage3.w[0] = 0x43300000u;
-            convStage3.w[1] = (u32)stage ^ 0x80000000u;
             e.a = 3;
-            e.b = lbl_eu_80667CE4 * (convStage3.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
+            e.b = lbl_eu_80667CE4 * (f64)(s32)stage + lbl_eu_80667CF0;
             e.c = 0;
             arr[idx] = e;
             self->unk261C4.field_68++;
@@ -2944,14 +2890,8 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
             CVisionU32F32U32 e;
-            union {
-                u32 w[2];
-                double d;
-            } convStage4;
-            convStage4.w[0] = 0x43300000u;
-            convStage4.w[1] = (u32)stage ^ 0x80000000u;
             e.a = 4;
-            e.b = lbl_eu_80667CE4 * (convStage4.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
+            e.b = lbl_eu_80667CE4 * (f64)(s32)stage + lbl_eu_80667CF0;
             e.c = 0;
             arr[idx] = e;
             self->unk261C4.field_68++;
@@ -2967,32 +2907,17 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
         {
             CBattleManager* bm = CBattleManager::getInstance();
             // vtable +0x34: fade the vision gauge by mode/8 seconds.
-            // (double)mode runs through the NAMED 0x4330 magic
-            // lbl_eu_80667D28; the union keeps MWCC from emitting a
-            // TU-local @N pool copy of the magic.
-            union {
-                u32 w[2];
-                double d;
-            } convMode;
-            convMode.w[0] = 0x43300000u;
-            convMode.w[1] = (u32)mode ^ 0x80000000u;
             ((void (*)(void*, u32, f32, f32))(*(void***)bm)[0x34 / 4])(
-                bm, 0x13, lbl_eu_80667D54,
-                lbl_eu_80667CE4 * (convMode.d - lbl_eu_80667D28));
+                bm, 0x13, 0.1f,
+                lbl_eu_80667CE4 * (f64)(s32)mode);
         }
         if (mode < 4) {
             u32 sum = self->unk261C4.field_64 + self->unk261C4.field_68;
             u32 idx = sum % self->unk261C4.w6C;
             CVisionU32F32U32* arr = (CVisionU32F32U32*)self->unk261C4.w60;
             CVisionU32F32U32 e;
-            union {
-                u32 w[2];
-                double d;
-            } convStage5;
-            convStage5.w[0] = 0x43300000u;
-            convStage5.w[1] = (u32)stage ^ 0x80000000u;
             e.a = 5;
-            e.b = lbl_eu_80667CE4 * (convStage5.d - lbl_eu_80667D28) + lbl_eu_80667CF0;
+            e.b = lbl_eu_80667CE4 * (f64)(s32)stage + lbl_eu_80667CF0;
             e.c = 0;
             arr[idx] = e;
             self->unk261C4.field_68++;
@@ -3016,16 +2941,7 @@ void routeVisionSlotFx(CVision* self, void* slotPtr, int mode, int voiceEnabled,
             if (Counter_TestBit((void*)pl->vf290(), 0x8c) == 0) continue;
             u16 objId = ((CVisionObjV*)pl)->field_3F28;
             u32 rv = (u32)fu->vf1E8(data);
-            // Unsigned int -> double through the NAMED 2^52 magic
-            // lbl_eu_80667D58 (no sign-bit xor); the union keeps MWCC from
-            // emitting a TU-local @N pool copy of the magic.
-            union {
-                u32 w[2];
-                double d;
-            } convRv;
-            convRv.w[0] = 0x43300000u;
-            convRv.w[1] = rv;
-            s32 n = (s32)(data.f[4] * (convRv.d - lbl_eu_80667D58));
+            s32 n = (s32)(data.f[4] * (f64)rv);
             void* handle = CtrlObjectParam_GetCharEntry(objId);
             CtrlObjectParam_RunPartyArtsFlow(handle, n, 0, (int)fu->vf108(), 0, 0, 1);
         }
@@ -3087,7 +3003,7 @@ extern "C" void manageVisionSlotFx(CVision* self, void* slot, void* dataArg) {
                 return;
             }
             f32 f1 = outF;
-            f64 adj = (f1 > lbl_eu_80667CD4) ? lbl_eu_80667D18 : lbl_eu_80667D20;
+            f64 adj = (f1 > lbl_eu_80667CD4) ? 0.5 : -0.5;
             int r = (int)(f1 + adj);
             if ((u32)summed != (u32)r || ((bs->w_824 >> 10) & 1) != ((bs->w_88 >> 12) & 1) ||
                 v26 != bs->w_828 || v25 != bs->w_82C) {

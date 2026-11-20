@@ -59,10 +59,10 @@
 #include "kyoshin/CfEnumListHolder.hpp"
 
 // Typified wave7: retail .data color table (8 rows of 3 bytes; struct + use
-// site already exist in the hpp: `lbl_eu_80535D90->c`).
+// site already exist in the hpp: `sCrystalColorTable->c`).
 extern "C" {
 __declspec(section ".data") __attribute__((used))
-const CMCryColorRow lbl_eu_80535D90[8] = {
+extern const CMCryColorRow sCrystalColorTable[8] = { // name-guess: 8 rows of per-character crystal-draw colors indexed by collected-flag byte
     {{0x19, 0x19, 0x32}}, {{0x50, 0x0A, 0x0A}},
     {{0x05, 0x5A, 0x05}}, {{0x3C, 0x0F, 0x19}},
     {{0x0F, 0x3C, 0x19}}, {{0x0A, 0x0A, 0x50}},
@@ -368,7 +368,7 @@ extern const f32 lbl_eu_806684A4;
 // sim leaf act data at +0x0 and +0xC (no retail name in any region).
 __attribute__((aligned(8))) __attribute__((used)) u8 sCrystalLeafVecA[0xC];
 __attribute__((used)) u8 sCrystalLeafVecB[0xC];
-__attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80664718[8];
+__attribute__((aligned(8))) __attribute__((used)) u8 sCrystalProbState[8]; // name-guess: crystal-probability state bytes at sbss 0x80664718
 
 
 
@@ -734,15 +734,15 @@ void MakeCrystal_StartCharge(CModelDispMakeCrystal* self)
     // Table lookup: byte-array indexing through a named offset so MWCC
     // keeps the scaled offset in a register (mulli) for both loads.
     int off = ((int)GetCollectedFlagByte(bbc) - 1) * 3;
-    const u8* tbl = lbl_eu_80535D90->c;
+    const u8* tbl = sCrystalColorTable->c;
     u8 c0 = tbl[off];
     u8 c1 = tbl[off + 1];
     u8 c2 = tbl[off + 2];
-    lbl_eu_80664718[3] = 0;
-    lbl_eu_80664718[0] = c0;
-    lbl_eu_80664718[1] = c1;
-    lbl_eu_80664718[2] = c2;
-    lbl_eu_80664718[5] = 1;
+    sCrystalProbState[3] = 0;
+    sCrystalProbState[0] = c0;
+    sCrystalProbState[1] = c1;
+    sCrystalProbState[2] = c2;
+    sCrystalProbState[5] = 1;
     MakeCrystal_RefreshSlotEntries(reinterpret_cast<CModelDispMakeCrystal*>(base));
 }
 
@@ -873,10 +873,10 @@ void MakeCrystal_TickRise(CModelDispMakeCrystal* self)
     // Crystal-probability state (sbss, shared with MakeCrystal_StartCharge). Referenced
     // directly so MWCC re-materializes the @sda21 address at each use instead
     // of holding it in a callee-saved register (retail reloads it too).
-    if (lbl_eu_80664718[5]) {
-        u8 n31 = lbl_eu_80664718[3];
-        u8 n29 = lbl_eu_80664718[1];
-        u8 n28 = lbl_eu_80664718[0];
+    if (sCrystalProbState[5]) {
+        u8 n31 = sCrystalProbState[3];
+        u8 n29 = sCrystalProbState[1];
+        u8 n28 = sCrystalProbState[0];
         s8 roll = (s8)((s32)ml::MTRand::getInstance()->rand31() % 100);
         s8 new3;
         if (roll < (s8)n28) {
@@ -885,16 +885,16 @@ void MakeCrystal_TickRise(CModelDispMakeCrystal* self)
             // bin the roll by cumulative thresholds; yields 2 or 3
             new3 = (s8)(2 + (roll >= (s8)((s8)n28 + (s8)n29)));
         }
-        lbl_eu_80664718[3] = (u8)new3;
+        sCrystalProbState[3] = (u8)new3;
         if ((u8)new3 == n31) {
-            lbl_eu_80664718[4]++;
+            sCrystalProbState[4]++;
         } else {
-            lbl_eu_80664718[4] = 0;
+            sCrystalProbState[4] = 0;
         }
     }
     if (*reinterpret_cast<u32*>(base + 0x10)) {
         u8* p = reinterpret_cast<u8*>(*reinterpret_cast<u32*>(base + 0x10));
-        switch (lbl_eu_80664718[3]) {
+        switch (sCrystalProbState[3]) {
         case 0:
             if (p[0x59] != 1) p[0x59] = 1;
             break;
@@ -1015,7 +1015,7 @@ void MakeCrystal_NopD3E4(CModelDispMakeCrystal* self)
     if (v < lbl_eu_806684DC) return;
     *f2dcc = lbl_eu_806684A4;
     base[0x13bf]++;
-    lbl_eu_80664718[4]++;
+    sCrystalProbState[4]++;
     MakeCrystal_PlaceCrystals(self);
     u8 r0 = base[0x13bf];
     if (r0 >= 0xa) {
@@ -1196,13 +1196,6 @@ extern "C" void setCrystalPosEntry(
 struct MCCountHead {
     u8 _pad00[4];
     u16 count04;
-};
-
-// Address anchor for the inline CMCEffSuccess at +0xD5C (the
-// isFinished__FPv callee takes void*, so only the offset is modeled).
-struct MCCSuccessAnchor {
-    u8 _pad00[0xd5c];
-    CMCEffSuccess effD5C;
 };
 
 void MakeCrystal_StateCrystalFull(CModelDispMakeCrystal* self)
@@ -1390,7 +1383,7 @@ void MakeCrystal_StateCrystalDone(CModelDispMakeCrystal* self)
 
 void MakeCrystal_StateSuccessChk(CModelDispMakeCrystal* self)
 {
-    if (isFinished__FPv(&((MCCSuccessAnchor*)self)->effD5C)) {
+    if (isFinished__FPv(&self->mEffSuccess)) {
         u8* base = reinterpret_cast<u8*>(self);
         u8* entries = reinterpret_cast<CModelDispMakeCrystal*>(base)->mEntries;
         if (entries[0]) {
@@ -2438,7 +2431,7 @@ void MakeCrystal_DispatchState(CModelDispMakeCrystal* self)
 // with MakeCrystal_SpawnCrystalItem(self, 2, 0).
 void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
 {
-    switch (lbl_eu_80664718[3]) {
+    switch (sCrystalProbState[3]) {
     case 0: {
         // Single placement: pick a random slot, offset the crystal entry by
         // a random amount (extra +1 for char 2, or the streak count for
@@ -2455,7 +2448,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
             ml::MTRand::getInstance();
             d += (s8)((s8)(rand31__Q22ml6MTRandFv() % 5) + 1);
         } else if (c == 4) {
-            d = (s8)(lbl_eu_80664718[4] + 1);
+            d = (s8)(sCrystalProbState[4] + 1);
         }
         setCrystalPosEntry(
             entries,
@@ -2485,7 +2478,7 @@ void MakeCrystal_PlaceCrystals(CModelDispMakeCrystal* self)
                 ml::MTRand::getInstance();
                 d += (s8)((s8)(rand31__Q22ml6MTRandFv() % 5) + 1);
             } else if (c == 4) {
-                d = (s8)(lbl_eu_80664718[4] + 1);
+                d = (s8)(sCrystalProbState[4] + 1);
             }
             setCrystalPosEntry(
                 entries,
@@ -3415,7 +3408,7 @@ extern "C" void MakeCrystal_ClearAnimSlot(void* obj, u32 id)
 extern "C" void releaseCrystalDispThunk(CModelDispMakeCrystal* self) { ((void(*)(void*))MakeCrystal_ClearAnimSlot)((char*)self - 0x8); }
 
 void sinit_80221DDC() {
-    initCrystalData(lbl_eu_80664718);
+    initCrystalData(sCrystalProbState);
     writeVec3f(sCrystalLeafVecA, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
     writeVec3f(sCrystalLeafVecB, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
 }

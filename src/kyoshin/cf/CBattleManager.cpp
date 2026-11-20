@@ -197,7 +197,7 @@ __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DD0 = 0.6f
 __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DD4 = 1.0f;
 // The zero constant at +0xC occupies the alignment gap before the double.
 __declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666DE0 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DE8 = 0.5f;
+__attribute__((used)) const float lbl_eu_80666DE8 = 0.5f;
 __declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666E08 = 4503599627370496.0;
 __declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E10 = 0.024543693f;
 }
@@ -300,13 +300,11 @@ u32 sAttackSoundIdTable[13] = {
 
 extern "C" {
 // 804FCA3C: 6 x s16 (code indexes by actor vfunc result).
-__declspec(section ".rodata") __attribute__((used))
-s16 sStatusCountTable[6] = {0, 0, 10, 15, 30, 0};
+extern const s16 sStatusCountTable[6] = {0, 0, 10, 15, 30, 0};
 
 } // extern "C"
 // 804FCA48: 36 x u32 rate table (tail words are 8.0f/4.0f/2.0f views).
-__declspec(section ".rodata") __attribute__((used))
-u32 sBattleEffectParamTable[36] = {
+extern const u32 sBattleEffectParamTable[36] = {
     0x00000000u,
     0x00000100u,
     0x00000020u,
@@ -329,13 +327,11 @@ u32 sBattleEffectParamTable[36] = {
 };
 
 // 804FCAD8: 3 x u32 (code uses [2] as the int 100; never as float).
-__declspec(section ".rodata") __attribute__((used))
-u32 sDamageRateThresholds[3] = {0, 0, 100};
+extern const u32 sDamageRateThresholds[3] = {0, 0, 100};
 
 extern "C" {
 // 804FCAE4: 3 x float rate table {8.0, 4.0, 2.0}.
-__declspec(section ".rodata") __attribute__((used))
-float sDamageRates[3] = {8.0f, 4.0f, 2.0f};
+extern const float sDamageRates[3] = {8.0f, 4.0f, 2.0f};
 
 } // extern "C"
 // 804FCAF0: 32 x u32 arts-power table; last 4 words are the
@@ -379,15 +375,15 @@ u32 sArtsPowerTable[32] = {
 // retail gaps exactly (explicit sizes take a stricter path that pads after
 // >32-byte runs). Sizes below are content+NUL: B70=19, B84=28, BA0=34,
 // BC4=29, BE4=36.
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FCB70[] = "cf::CBattleManager";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FCB84[] = "reslist<cf::IBattleEvent *>";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FCBA0[] = "_reslist_base<cf::IBattleEvent *>";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FCBC4[] = "reslist<cf::CfObjectActor *>";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FCBE4[] = "_reslist_base<cf::CfObjectActor *>";
 
 // ============================================================
@@ -772,7 +768,7 @@ extern "C" f64 lbl_eu_80666E60;  // -0.5 (f64)
 extern "C" f32 lbl_eu_80666E7C;  // 75.0f
 extern "C" f32 lbl_eu_80666E80;  // 2.5f
 extern "C" f32 lbl_eu_80666E84;  // 0.1f
-extern "C" f32 lbl_eu_80666DE8;  // 0.5f
+extern "C" const f32 lbl_eu_80666DE8;  // 0.5f
 extern "C" f32 lbl_eu_80666E30;  // 0.9f
 extern "C" f32 lbl_eu_80666DFC;  // 2.0f
 extern "C" f32 lbl_eu_80666E10;  // 0.024543693f (2*pi/256)
@@ -783,7 +779,7 @@ extern "C" f32 lbl_eu_80666E70;  // 0.35f
 extern "C" f32 lbl_eu_80666E74;  // 0.01f (squared-distance epsilon)
 // (ml::pi comes from CfObjectEne.hpp; an extra extern "C" copy here
 // breaks the C++-linkage declaration when the header is included twice.)
-extern "C" s16 sStatusCountTable[];
+extern "C" const s16 sStatusCountTable[];
 // --- shared battle-helper externs used by the updateBattleAction / processBattleMove ports ---
 extern "C" u16 getReloadParam0();                              // current chapter/episode
 extern "C" void* bindIndexedEffect(u32 cls, int param);          // object factory
@@ -823,8 +819,8 @@ extern "C" void BtlDmg_SetByte777(u8);
 extern "C" void BtlDmg_SetDamageType(u8);
 extern "C" void BtlDmg_SetDamageDir(u8);
 extern "C" void BtlDmg_NotifyDamage(void*, u32);
-extern u32 sDamageRateThresholds[3];  // {0,0,100} (3rd used as int)
-extern "C" float sDamageRates[3];// {8.0f,4.0f,2.0f} rate table
+extern const u32 sDamageRateThresholds[3];  // {0,0,100} (3rd used as int)
+extern "C" const float sDamageRates[3];// {8.0f,4.0f,2.0f} rate table
 // --- forward decls for same-TU battle functions defined later in this file ---
 extern "C" void processBattleMove(cf::CBattleManager*, void*, void*, void*);
 extern "C" void spreadChainArtsHits(void*, void*, void*, void*);
@@ -4380,7 +4376,7 @@ void initBattleActorState(void* self_, void* actor_) {
     cf::CBattleManager* mgr = (cf::CBattleManager*)self_;
     cf::CfObjectActor* actor = (cf::CfObjectActor*)actor_;
     extern const void* lbl_eu_8052B110[];
-    extern u32 sBattleEffectParamTable[];
+    extern const u32 sBattleEffectParamTable[];
     // int->double conversion temporaries (0x4330 trick), pre-seeded once.
     cf::CfActorF64Conv convA;
     cf::CfActorF64Conv convB;
@@ -4454,7 +4450,7 @@ void initBattleActorState(void* self_, void* actor_) {
     // 24-word splash parameter table copied pairwise from .rodata.
     u32 splash[24];
     {
-        u32* src = sBattleEffectParamTable;
+        const u32* src = sBattleEffectParamTable;
         u32* dst = splash;
         for (s32 i = 0; i < 12; i++) {
             dst[0] = src[0];

@@ -2738,52 +2738,52 @@ extern "C" void func_80062CD0() {}
 // typed pointer tables match byte-for-byte. Only the first object of each
 // section carries aligned(8) (retail gaps are 1-3 bytes, packed).
 // .rodata type-name strings (sizes = gaps to next label).
-__declspec(section ".rodata") __attribute__((aligned(8), used))
+__attribute__((aligned(8), used))
 const char lbl_eu_804FB1E0[0x10] = "cf::CfResTask";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB1F0[0x18] = "CTTask<cf::CfResTask>";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB208[0x0C] = "cf::CfRes";
 // .rodata 0x44: bdat column-name block + map path template.
 __declspec(section ".rodata") __attribute__((used))
 char lbl_eu_804FB214[0x44] = "map\0" "mpf\0" "id\0" "lgt\0" "kp\0" "occ\0" "bin\0" ".id\0" ".lod\0" "mapbdat/jp/bdat_ma%02d%02d.bin";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB258[0x18] = "reslist<unsigned short>";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB270[0x20] = "_reslist_base<unsigned short>";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB290[0x18] = "cf::IResInfoEneNpcEvent";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 // NOTE: MWCC pads any lone 20-byte .rodata object to 24 (literals, braces
 // and u32 words alike), shifting every follower +4; each 20+16 label pair is
 // therefore one 36-byte blob (Elv pattern) with offset defines. The sdata
 // inits below consume the defines (reloc+addend, zero bytes in-file).
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char rodata_pair_B2A8[0x24] = "cf::IResInfoEneNpc\0\0cf::IResInfoPc";
 #define lbl_eu_804FB2A8 (rodata_pair_B2A8 + 0x00)
 #define lbl_eu_804FB2BC (rodata_pair_B2A8 + 0x14)
 
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char rodata_pair_B2CC[0x24] = "cf::IResInfoMapBdat\0cf::IResInfoObj";
 #define lbl_eu_804FB2CC (rodata_pair_B2CC + 0x00)
 #define lbl_eu_804FB2E0 (rodata_pair_B2CC + 0x14)
 
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char rodata_pair_B2F0[0x24] = "cf::IResInfoTBox\0\0\0\0cf::IResInfoSe";
 #define lbl_eu_804FB2F0 (rodata_pair_B2F0 + 0x00)
 #define lbl_eu_804FB304 (rodata_pair_B2F0 + 0x14)
 
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char rodata_pair_B314[0x24] = "cf::IResInfoEffect\0\0cf::IResInfoLOD";
 #define lbl_eu_804FB314 (rodata_pair_B314 + 0x00)
 #define lbl_eu_804FB328 (rodata_pair_B314 + 0x14)
 
 const char lbl_eu_804FB338[0x10] = "cf::IResInfoID";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB348[0x18] = "cf::IResInfoPreloadMap";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB360[0x10] = "cf::IResInfoMap";
-__declspec(section ".rodata") __attribute__((used))
+__attribute__((used))
 const char lbl_eu_804FB370[0x10] = "cf::IResInfo";
 // .sdata2 archive keys (defined before the .sdata pointers below).
 __declspec(section ".sdata2") __attribute__((aligned(8), used))

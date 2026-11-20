@@ -1133,7 +1133,7 @@ extern "C" u32 SearchThresholdIdx(u32 val) {
     // Two-per-iteration 1-indexed walking copy from -1 (retail -4 bias
     // with lwz+4/lwzu+8 and stw+4/stwu+8 under CTR-14).
     u32* d = words - 1;
-    u32* s = sThresholdLookup - 1;
+    const u32* s = sThresholdLookup - 1;
     u32* dd = &d[1];
     for (int i = 0; i < 14; i++) {
         const u32 a = s[1];
@@ -2460,7 +2460,7 @@ extern "C" int GetMapItemBitFlag(u8 max, u8 count, u32 off) {
 extern "C" void RevealMinimapArea() {
     // retail materializes the table base once (r22) and derives every
     // sub-table (+0x418/+0x378/+0x2F0) and column name from it
-    u8* tbl = sSjisWordTable;
+    const u8* tbl = sSjisWordTable;
     if (CtrlRemote_TouchBitByArg(0x20) <= 4) return;
     if ((gmGameFlags & 0x100) == 0) return;
     ScnFadeColor* cam = Scn_QueryUnk80State((CScn*)gmScene);
@@ -2956,8 +2956,7 @@ extern "C" int CheckState2CC8Active(u32 id) {
 // Hidden gap_* padding folds into each neighbor array tail.
 
 // 0x80500108: encoding tag (u16 "SJIS") + word table + -1 terminator.
-__declspec(section ".rodata") __attribute__((used))
-u8 sSjisWordTable[0x80] = {
+__attribute__((used)) const u8 sSjisWordTable[0x80] = {
     0x00, 0x53, 0x00, 0x4A, 0x00, 0x49, 0x00, 0x53, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x56, 0x00, 0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x3A,
     0x00, 0x00, 0x00, 0x57, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00, 0x00, 0x28,
@@ -2969,20 +2968,17 @@ u8 sSjisWordTable[0x80] = {
 };
 
 // 0x80500188: u16-pair table read via ((u16*)&t)[idx-1] (GetU16PairEntry).
-__declspec(section ".rodata") __attribute__((used))
-struct Table_80500188 sThresholdPairTable = {{
+__attribute__((used)) const struct Table_80500188 sThresholdPairTable = {{
     0x00000001, 0x00560074, 0x00AE0105, 0x01140137, 0x015F01D1, 0x01D201F0, 0x02180263, 0x02720281, 0x02A902D1, 0x02EF032B, 0x032B0352, 0x0353037B, 0x039903C1, 0x03CA0000
 }};
 
 // 0x805001C0: u32 lookup with -1 sentinels (SearchThresholdIdx).
-__declspec(section ".rodata") __attribute__((used))
-u32 sThresholdLookup[28] = {
+__attribute__((used)) const u32 sThresholdLookup[28] = {
     0xFFFFFFFF, 0x00000001, 0x00000056, 0x00000074, 0x000000AE, 0x00000105, 0x00000114, 0x00000137, 0x0000015F, 0x000001D1, 0x000001D2, 0x000001F0, 0x00000218, 0x00000263, 0x00000272, 0x00000281, 0x000002A9, 0x000002D1, 0x000002EF, 0xFFFFFFFF, 0x0000032B, 0x00000352, 0x00000353, 0x0000037B, 0x00000399, 0x000003C1, 0xFFFFFFFF, 0xFFFFFFFF
 };
 
 // 0x80500230: LOD-char table (InitCol6LodTables copies 5 words + 1 byte).
-__declspec(section ".rodata") __attribute__((used))
-u8 sLodCharMap[0x18] = {
+__attribute__((used)) const u8 sLodCharMap[0x18] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x51, 0x52, 0x53, 0x54, 0xFF, 0x00, 0x00, 0x00
 };
 
@@ -3005,8 +3001,7 @@ extern const MinimapPtrTable sMinimapPtrTable2401 = {
 };
 
 // 0x80500480: no name prefix (32 slots).
-__declspec(section ".rodata") __attribute__((used))
-extern const void* sMinimapPtrTablePlain[32] = {
+__attribute__((used)) extern const void* const sMinimapPtrTablePlain[32] = {
     NULL, "minimaplist0101", "minimaplist0201", "minimaplist0301", "minimaplist0401", "minimaplist0402", "minimaplist0501", "minimaplist0601", "minimaplist0701", NULL, "minimaplist0901", "minimaplist1001", "minimaplist1101", "minimaplist1201", "minimaplist1202", "minimaplist1301", "minimaplist1401", "minimaplist1501", "minimaplist1601", "minimaplist1601", "minimaplist1701", NULL, "minimaplist1901", "minimaplist2001", "minimaplist2101", "minimaplist2201", "minimaplist2301", &sMinimapPtrTable2401, NULL, NULL, NULL, NULL
 };
 
@@ -3020,14 +3015,12 @@ extern const MinimapPtrTable sMinimapPtrTable1801 = {
 };
 
 // 0x805005A8: no name prefix (34 slots).
-__declspec(section ".rodata") __attribute__((used))
-extern const void* sMinimapPtrTable34[34] = {
+__attribute__((used)) extern const void* const sMinimapPtrTable34[34] = {
     NULL, "minimaplist0101", "minimaplist0201", "minimaplist0301", "minimaplist0401", "minimaplist0402", "minimaplist0501", "minimaplist0601", "minimaplist0701", NULL, "minimaplist0901", "minimaplist1001", "minimaplist1101", "minimaplist1201", "minimaplist1202", "minimaplist1301", "minimaplist1401", "minimaplist1501", "minimaplist1601", "minimaplist1601", "minimaplist1701", NULL, "minimaplist1901", "minimaplist2001", "minimaplist2101", "minimaplist2201", "minimaplist2301", &sMinimapPtrTable2401, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 // 0x80500630: 13-entry float table (GetFloatTableEntry copies it to the stack).
-__declspec(section ".rodata") __attribute__((used))
-FloatTable13 sRankFloatTable = {{1.5f, 2.0f, 1.7f, 1.7f, 3.7f, 1.5f, 1.9f, 1.7f, 1.7f, 1.6f, 1.5f, 1.7f, 1.7f}};
+__attribute__((used)) const FloatTable13 sRankFloatTable = {{1.5f, 2.0f, 1.7f, 1.7f, 3.7f, 1.5f, 1.9f, 1.7f, 1.7f, 1.6f, 1.5f, 1.7f, 1.7f}};
 
 // 0x80500664: BDAT column-name pool (68 NUL-separated strings, tail-padded).
 __attribute__((used))

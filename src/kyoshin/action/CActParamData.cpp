@@ -943,77 +943,6 @@ extern "C" u32 evalParamChain(u8* dataRaw, u32* out, u32 recRaw, u32 initFlag, u
     return result;
 }
 
-// Per-frame update of both sub-object float blocks: shift current into the
-// shadow slot, accumulate the entry's threshold float, then recompute the
-// crossed-threshold flag and streak counters.
-void updateParamFloats(CActParamData* self, float arg1, float arg2) {
-    // Sub-object A
-    // References keep the store program-order (retail scheduling).
-    float& prevA = self->mA2B0;
-    float& curA = self->mFloat2B4;
-    prevA = curA;
-    self->mFloat2B4 = arg1;
-    u32 countA = self->mA2BC + 1;
-    ActParamData388* entryA = static_cast<ActParamData388*>(self->mEntry04);
-    self->mA2BC = countA;
-    float incA = entryA->mFloat388;
-    self->mA2C8 = self->mA2C8 + incA;
-    if (static_cast<CActParamAnim*>(self->mObj10)->calcAnimBlendWeight(0)) {
-        self->mA2C0 = self->mA2C0 + 1;
-    }
-    u8 fireA;
-    if (self->mA260 & 0x4000) {
-        fireA = (self->mFloat2B4 < self->mA2B0 && self->mA2C8 > lbl_eu_80665F88)
-                    ? 1
-                    : 0;
-    } else {
-        fireA = 0;
-    }
-    self->mA2C4 = fireA;
-    if (self->mFloat2B4 < self->mA2B0) {
-        self->mA2B0 = self->mFloat2B4 - lbl_eu_80665F88;
-    }
-    if (self->mFloat2B4 == self->mA2B0) {
-        self->mA2B8 = self->mA2B8 + 1;
-    } else {
-        self->mA2B8 = 0;
-    }
-    // Sub-object B (mirror of A)
-    float& prevB = self->mFloat330;
-    float& curB = self->mFloat334;
-    prevB = curB;
-    self->mFloat334 = arg2;
-    u32 countB = self->mField33C + 1;
-    ActParamData388* entryB = static_cast<ActParamData388*>(self->mEntry04);
-    self->mField33C = countB;
-    float incB = entryB->mFloat388;
-    self->mFloat348 = self->mFloat348 + incB;
-
-    if (static_cast<CActParamAnim*>(self->mObj10)->calcAnimBlendWeight(1)) {
-        self->mField340 = self->mField340 + 1;
-    }
-    u8 fireB;
-    if (self->mField2E0 & 0x4000) {
-        fireB = (self->mFloat334 < self->mFloat330 &&
-                 self->mFloat348 > lbl_eu_80665F88)
-                    ? 1
-                    : 0;
-    } else {
-        fireB = 0;
-    }
-    self->mByte344 = fireB;
-    if (self->mFloat334 < self->mFloat330) {
-        self->mFloat330 = self->mFloat334 - lbl_eu_80665F88;
-    }
-    if (self->mFloat334 == self->mFloat330) {
-        self->mField338 = self->mField338 + 1;
-    } else {
-        self->mField338 = 0;
-    }
-    if (self->mA260 & 0x1000000) {
-        setAnimGate();
-    }
-}
 
 // Full initializer for the parameter data object: resets every sub-object
 // field to its default constant, clears the short table to -1, zeroes the
@@ -1039,20 +968,20 @@ void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA,
     self->mFloat28C = -1.0f;
     self->_pad290 = 0;
     self->mByte291 = 0;
-    self->mA2A0 = lbl_eu_80665F80;
-    self->mA2A4 = lbl_eu_80665F80;
+    self->mA2A0 = 0.0f;
+    self->mA2A4 = 0.0f;
     self->mA2A8 = 0;
     self->mA294 = 0;
     self->mA298 = 0;
     self->mStr29C = 0;
     self->mA2AC = 0;
-    self->mA2B0 = lbl_eu_80665F80;
-    self->mFloat2B4 = lbl_eu_80665F80;
+    self->mA2B0 = 0.0f;
+    self->mFloat2B4 = 0.0f;
     self->mA2B8 = 0;
     self->mA2BC = 0;
     self->mA2C0 = 0;
     self->mA2C4 = 0;
-    self->mA2C8 = lbl_eu_80665F80;
+    self->mA2C8 = 0.0f;
     self->mField2CC = 0;
     self->mFloat2D0 = -1.0f;
     self->mField2D4 = 0;
@@ -1073,20 +1002,20 @@ void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA,
     self->mFloat30C = -1.0f;
     self->mByte310 = 0;
     self->mByte311 = 0;
-    self->mFloat320 = lbl_eu_80665F80;
-    self->mFloat324 = lbl_eu_80665F80;
+    self->mFloat320 = 0.0f;
+    self->mFloat324 = 0.0f;
     self->mField328 = 0;
     self->mField314 = 0;
     self->mField318 = 0;
     self->mField31C = 0;
     self->mField32C = 0;
-    self->mFloat330 = lbl_eu_80665F80;
-    self->mFloat334 = lbl_eu_80665F80;
+    self->mFloat330 = 0.0f;
+    self->mFloat334 = 0.0f;
     self->mField338 = 0;
     self->mField33C = 0;
     self->mField340 = 0;
     self->mByte344 = 0;
-    self->mFloat348 = lbl_eu_80665F80;
+    self->mFloat348 = 0.0f;
     self->mField34C = 0;
     self->mFloat350 = -1.0f;
     self->mField354 = 0;
@@ -1137,6 +1066,78 @@ void initActParamData(CActParamData* self, void* entry, void* obj, void* nodeA,
         cnt = self->mCount210;
         self->mNodes1F0[cnt] = nodeB;
         self->mCount210 = cnt + 1;
+    }
+}
+
+// Per-frame update of both sub-object float blocks: shift current into the
+// shadow slot, accumulate the entry's threshold float, then recompute the
+// crossed-threshold flag and streak counters.
+void updateParamFloats(CActParamData* self, float arg1, float arg2) {
+    // Sub-object A
+    // References keep the store program-order (retail scheduling).
+    float& prevA = self->mA2B0;
+    float& curA = self->mFloat2B4;
+    prevA = curA;
+    self->mFloat2B4 = arg1;
+    u32 countA = self->mA2BC + 1;
+    ActParamData388* entryA = static_cast<ActParamData388*>(self->mEntry04);
+    self->mA2BC = countA;
+    float incA = entryA->mFloat388;
+    self->mA2C8 = self->mA2C8 + incA;
+    if (static_cast<CActParamAnim*>(self->mObj10)->calcAnimBlendWeight(0)) {
+        self->mA2C0 = self->mA2C0 + 1;
+    }
+    u8 fireA;
+    if (self->mA260 & 0x4000) {
+        fireA = (self->mFloat2B4 < self->mA2B0 && self->mA2C8 > 1.0f)
+                    ? 1
+                    : 0;
+    } else {
+        fireA = 0;
+    }
+    self->mA2C4 = fireA;
+    if (self->mFloat2B4 < self->mA2B0) {
+        self->mA2B0 = self->mFloat2B4 - 1.0f;
+    }
+    if (self->mFloat2B4 == self->mA2B0) {
+        self->mA2B8 = self->mA2B8 + 1;
+    } else {
+        self->mA2B8 = 0;
+    }
+    // Sub-object B (mirror of A)
+    float& prevB = self->mFloat330;
+    float& curB = self->mFloat334;
+    prevB = curB;
+    self->mFloat334 = arg2;
+    u32 countB = self->mField33C + 1;
+    ActParamData388* entryB = static_cast<ActParamData388*>(self->mEntry04);
+    self->mField33C = countB;
+    float incB = entryB->mFloat388;
+    self->mFloat348 = self->mFloat348 + incB;
+
+    if (static_cast<CActParamAnim*>(self->mObj10)->calcAnimBlendWeight(1)) {
+        self->mField340 = self->mField340 + 1;
+    }
+    u8 fireB;
+    if (self->mField2E0 & 0x4000) {
+        fireB = (self->mFloat334 < self->mFloat330 &&
+                 self->mFloat348 > 1.0f)
+                    ? 1
+                    : 0;
+    } else {
+        fireB = 0;
+    }
+    self->mByte344 = fireB;
+    if (self->mFloat334 < self->mFloat330) {
+        self->mFloat330 = self->mFloat334 - 1.0f;
+    }
+    if (self->mFloat334 == self->mFloat330) {
+        self->mField338 = self->mField338 + 1;
+    } else {
+        self->mField338 = 0;
+    }
+    if (self->mA260 & 0x1000000) {
+        setAnimGate();
     }
 }
 // Step to the next record in the chain.
@@ -1278,7 +1279,7 @@ extern "C" int checkParamBlks(void* self) {
 // 45 reg_swap, 864B vs 924B):
 // - Semantics fully reconstructed and verified against ASM (see handlers).
 // - Fixed this session: union-based 0x4330 u16->double idiom with named
-//   lbl_eu_80665F90 subtraction (plain (double)(u32) casts pool a TU-local
+//   2^52 magic subtraction (plain (double)(u32) casts pool a TU-local
 //   cookie and add f27/f28 saves); notify14 RETURNS the replacement time
 //   (kept in f1 across the call) - fixing that dropped one callee-save fpr
 //   and aligned the frame at 96B; evalParamTiming stub is extern "C"
@@ -1320,7 +1321,7 @@ extern "C" void walkParamRecords(CActParamData* self,
     u32 mode = stream->mField0C;
     u16 off = stream->mHeadOff00;
     // 2^52 magic shared by every u16->double conversion below.
-    double base = lbl_eu_80665F90;
+    double base = 4503599627370496.0;
     u32 bitSel = (mode >> 9) & 1;
     ActParamD3CRec* rec = reinterpret_cast<ActParamD3CRec*>(
         reinterpret_cast<u8*>(stream) + off);
@@ -1346,7 +1347,7 @@ body9:
             int h = 0;
             if (val > member->mFloat50) {
                 if (static_cast<ActParamData388*>(self->mEntry04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     h = 1;
                 }
             }
@@ -1359,7 +1360,7 @@ body9:
                 int h = 0;
                 if (val == member->mFloat50) {
                     if (static_cast<ActParamData388*>(self->mEntry04)
-                            ->mFloat388 > lbl_eu_80665F80) {
+                            ->mFloat388 > 0.0f) {
                         h = 1;
                     }
                 }
@@ -1400,7 +1401,7 @@ bodyF:
             val = static_cast<ActParamObj5*>(self->mEntry04)->notify14();
         }
         int en;
-        if (member->mFloat50 <= lbl_eu_80665F80 &&
+        if (member->mFloat50 <= 0.0f &&
             member->mFloat54 >= 8.0f) {
             en = 0;
         } else {
@@ -1411,7 +1412,7 @@ bodyF:
                 hit = 0;
                 if (val > member->mFloat50) {
                     if (static_cast<ActParamData388*>(self->mEntry04)
-                            ->mFloat388 > lbl_eu_80665F80) {
+                            ->mFloat388 > 0.0f) {
                         hit = 1;
                     }
                 }
@@ -1425,7 +1426,7 @@ bodyF:
                     int h = 0;
                     if (val == member->mFloat50) {
                         if (static_cast<ActParamData388*>(self->mEntry04)
-                                ->mFloat388 > lbl_eu_80665F80) {
+                                ->mFloat388 > 0.0f) {
                             h = 1;
                         }
                     }
@@ -1503,7 +1504,7 @@ extern "C" void walkParamBlkB(void* self) {
 //   for the both-zero fail path + phase-B fail (210 -> 175).
 // - Ruled out: single-exit ret/goto form (adds _savegpr_27/_restgpr_27,
 //   239/219); inverted (!(range)) phase-A shape (same regression);
-//   hoisted `const double base = lbl_eu_80665F90` local (248 - shifts the
+//   hoisted `const double base = 2^52 magic` local (248 - shifts the
 //   magic load above the both-zero block); split load/subtract
 //   (`t = cvt.d; t = t - ...`) - byte-identical output, no effect.
 // - Residual walls:
@@ -1547,12 +1548,12 @@ extern "C" int evalParamTiming(CActParamData* self,
         // Phase A: convert time word 1.
         cvt.w[1] = rec->mTime08;
         cvt.w[0] = 0x43300000;
-        double t = cvt.d - lbl_eu_80665F90;
+        double t = cvt.d - 4503599627370496.0;
         if (t == lbl_eu_80665F80) {
             // The callback returns the replacement time value.
             t = static_cast<ActParamObj5*>(self->mEntry04)->notify14();
         }
-        if (member->mFloat50 <= lbl_eu_80665F80 &&
+        if (member->mFloat50 <= 0.0f &&
             member->mFloat54 >= 8.0f) {
             // Already inside the passive range: never fire phase A.
             fire = 0;
@@ -1562,7 +1563,7 @@ extern "C" int evalParamTiming(CActParamData* self,
             if (t <= member->mFloat54) {
                 if (t > member->mFloat50) {
                     if (static_cast<ActParamData388*>(self->mEntry04)
-                            ->mFloat388 > lbl_eu_80665F80) {
+                            ->mFloat388 > 0.0f) {
                         hit = 1;
                     }
                 }
@@ -1572,7 +1573,7 @@ extern "C" int evalParamTiming(CActParamData* self,
                 if (t == member->mFloat54) {
                     if (t == member->mFloat50) {
                         if (static_cast<ActParamData388*>(self->mEntry04)
-                                ->mFloat388 > lbl_eu_80665F80) {
+                                ->mFloat388 > 0.0f) {
                             g3 = 1;
                         }
                     }
@@ -1595,14 +1596,14 @@ extern "C" int evalParamTiming(CActParamData* self,
     // Phase B: convert time word 2.
     cvt.w[1] = rec->mTime0A;
     cvt.w[0] = 0x43300000;
-    double t2 = cvt.d - lbl_eu_80665F90;
+    double t2 = cvt.d - 4503599627370496.0;
     if (t2 == lbl_eu_80665F80) {
         // The callback returns the replacement time value.
         t2 = static_cast<ActParamObj5*>(self->mEntry04)->notify14();
     }
     fire = 1;
     int hit = 1;
-    if (gate == 0 && member->mFloat50 <= lbl_eu_80665F80 &&
+    if (gate == 0 && member->mFloat50 <= 0.0f &&
         member->mFloat54 >= 8.0f) {
         fire = 0;
     } else {
@@ -1610,7 +1611,7 @@ extern "C" int evalParamTiming(CActParamData* self,
         if (t2 <= member->mFloat54) {
             if (t2 > member->mFloat50) {
                 if (static_cast<ActParamData388*>(self->mEntry04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     g2 = 1;
                 }
             }
@@ -1620,7 +1621,7 @@ extern "C" int evalParamTiming(CActParamData* self,
             if (t2 == member->mFloat54) {
                 if (t2 == member->mFloat50) {
                     if (static_cast<ActParamData388*>(self->mEntry04)
-                            ->mFloat388 > lbl_eu_80665F80) {
+                            ->mFloat388 > 0.0f) {
                         if (member->mField58 < 1) {
                             g3 = 1;
                         }
@@ -1931,20 +1932,20 @@ void CActParamData::resetParamSubB() {
     mFloat30C = -1.0f;
     mByte310 = 0;
     mByte311 = 0;
-    mFloat320 = lbl_eu_80665F80;
-    mFloat324 = lbl_eu_80665F80;
+    mFloat320 = 0.0f;
+    mFloat324 = 0.0f;
     mField328 = 0;
     mField314 = 0;
     mField318 = 0;
     mField31C = 0;
     mField32C = 0;
-    mFloat330 = lbl_eu_80665F80;
-    mFloat334 = lbl_eu_80665F80;
+    mFloat330 = 0.0f;
+    mFloat334 = 0.0f;
     mField338 = 0;
     mField33C = 0;
     mField340 = 0;
     mByte344 = 0;
-    mFloat348 = lbl_eu_80665F80;
+    mFloat348 = 0.0f;
     mField34C = 0;
     mFloat350 = -1.0f;
     mField354 = 0;
@@ -2008,7 +2009,7 @@ int getParamSelS16(CActParamData* self, int sel) {
     // Builtin s16 casts: MWCC emits the lis/xoris/stw/stw/lfd/fsubs magic
     // idiom per check (byte-identical to retail; see MWCC_CASES 7i). The
     // 2^52 magic constant pools to a TU-local cookie that the repo reloc
-    // map canonicalizes to lbl_eu_80665F98.
+    // map canonicalizes to the 2^52 + 2^31 magic pool entry.
     if ((float)v > limit) {
         return 0;
     }
@@ -2101,7 +2102,7 @@ int evalParamCb18(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         // the replacement time value.
         t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
     }
-    if (vals->mFloat50 <= lbl_eu_80665F80) {
+    if (vals->mFloat50 <= 0.0f) {
         if (vals->mFloat54 >= 8.0f) {
             // Range already satisfied: never fire.
             fire = 0;
@@ -2114,7 +2115,7 @@ int evalParamCb18(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         int ok = 0;
         if (t <= vals->mFloat54) {
             ok = (t > vals->mFloat50) &&
-                 (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+                 (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f);
             if (ok != 0) {
                 pass = 1;
             }
@@ -2128,7 +2129,7 @@ int evalParamCb18(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         int edge = 0;
         if (t == vals->mFloat54) {
             int hit = (t == vals->mFloat50) &&
-                      (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+                      (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f);
             if (hit != 0) {
                 pass = 1;
             }
@@ -2176,7 +2177,7 @@ int applyParamMask(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
         t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
     }
     int fire;
-    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= 8.0f) {
+    if (vals->mFloat50 <= 0.0f && vals->mFloat54 >= 8.0f) {
         // Range already satisfied: never fire.
         fire = 0;
         goto apply;
@@ -2185,7 +2186,7 @@ int applyParamMask(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
     int pass = 0;
     if (t <= vals->mFloat54) {
         int ok = (t > vals->mFloat50) &&
-                 (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+                 (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f);
         if (ok != 0) {
             pass = 1;
         }
@@ -2199,7 +2200,7 @@ int applyParamMask(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
     int edge = 0;
     if (t == vals->mFloat54) {
         int hit = (t == vals->mFloat50) &&
-                  (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+                  (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f);
         if (hit != 0) {
             pass = 1;
         }
@@ -2333,7 +2334,7 @@ int evalParamCb28(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     }
     // The halfword time is widened once to double via the 0x4330
     // magic-high-word idiom; subtracting the NAMED 2^52 constant makes MWCC
-    // reference retail's lbl_eu_80665F90 sdata2 pool entry.
+    // reference the compiler-emitted 2^52 sdata2 pool entry.
     union {
         u32 w[2];
         double d;
@@ -2342,7 +2343,7 @@ int evalParamCb28(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     // The named-const load is interleaved between the stores to mirror
     // retail's scheduling.
     cvt.w[1] = src->mShort08;
-    double base = lbl_eu_80665F90;
+    double base = 4503599627370496.0;
     cvt.w[0] = 0x43300000;
     double t = cvt.d - base;
     if (lbl_eu_80665F80 == t) {
@@ -2350,7 +2351,7 @@ int evalParamCb28(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         // the replacement time value.
         t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
     }
-    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= 8.0f) {
+    if (vals->mFloat50 <= 0.0f && vals->mFloat54 >= 8.0f) {
         // Range already satisfied: never fire.
         fire = 0;
         goto invoke;
@@ -2363,7 +2364,7 @@ int evalParamCb28(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         if (t <= vals->mFloat54) {
             if (t > vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     inner = 1;
                 }
             }
@@ -2382,7 +2383,7 @@ int evalParamCb28(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
             inner = 0;
             if (t == vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     inner = 1;
                 }
             }
@@ -2425,7 +2426,7 @@ ret:
 // retzero split). Retail shape = flags-fail inline li+b, mField14 beq to a
 // shared tail also serving fire==0/cb==null (goto retzero form matches).
 // Plain (float) cast pools 2^52 to a TU-local cookie (@118xx name drift);
-// the named-const subtraction forces lbl_eu_80665F90 but adds frsp+fsub.
+// the named-const subtraction forces the 2^52 pool entry but adds frsp+fsub.
 // Ruled out: && bool forms (+16B), union composite shared with callback arg
 // (arg is &src+0x0C), cvt.w[1]-sourced cast (duplicate buffer).
 int evalParamTimed(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
@@ -2445,7 +2446,7 @@ int evalParamTimed(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
         // the replacement time value.
         t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
     }
-    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= 8.0f) {
+    if (vals->mFloat50 <= 0.0f && vals->mFloat54 >= 8.0f) {
         // Range already satisfied: never fire.
         fire = 0;
         goto invoke;
@@ -2456,7 +2457,7 @@ int evalParamTimed(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
         if (t <= vals->mFloat54) {
             if (t > vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     pass = 1;
                 }
             }
@@ -2472,7 +2473,7 @@ int evalParamTimed(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
             int hit = 0;
             if (t == vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     hit = 1;
                 }
             }
@@ -2776,7 +2777,7 @@ float getParamFloatByName(CActParamData* self, int sel) {
                 char* name2 = sel != 0 ? reinterpret_cast<char*>(self->mField31C) : self->mStr29C;
                 if (strcmp(name2, p2 + 0x14) == 0) {
                     float alt = sel != 0 ? self->mFloat30C : self->mFloat28C;
-                    if (alt < lbl_eu_80665F80) {
+                    if (alt < 0.0f) {
                         res = alt;
                     }
                 }
@@ -2937,7 +2938,7 @@ int evalParamBase(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         static_cast<ActParamObj5*>(host->mObj04)->notify14();
     }
     int fire;
-    if (vals->mFloat50 <= lbl_eu_80665F80) {
+    if (vals->mFloat50 <= 0.0f) {
         if (vals->mFloat54 >= 8.0f) {
             fire = 1;
             goto invoke;
@@ -2946,12 +2947,12 @@ int evalParamBase(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     fire = 0;
     if (t > vals->mFloat54) {
         if (t > vals->mFloat50) {
-            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f) {
                 fire = 1;
             }
         }
     } else if (t == vals->mFloat54 && t == vals->mFloat50 &&
-               static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+               static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f) {
         if (vals->mField58 < 1) {
             fire = 1;
         }
@@ -2988,7 +2989,7 @@ int evalParamCb0C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     // Volatile view blocks CSE with the head conversion, so this copy is
     // recomputed after the call and stays in a volatile FP register.
     float t = static_cast<float>(src->mShort08v);
-    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= 8.0f) {
+    if (vals->mFloat50 <= 0.0f && vals->mFloat54 >= 8.0f) {
         // Range already satisfied: never fire.
         fire = 0;
     } else {
@@ -2999,7 +3000,7 @@ int evalParamCb0C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         } else {
             int gate2Ok = 0;
             if (t > vals->mFloat50) {
-                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f) {
                     gate2Ok = 1;
                 }
             }
@@ -3010,7 +3011,7 @@ int evalParamCb0C(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
             if (t == vals->mFloat54) {
                 int gate3Ok = 0;
                 if (t == vals->mFloat50) {
-                    if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+                    if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f) {
                         gate3Ok = 1;
                     }
                 }
@@ -3048,7 +3049,7 @@ int evalParamCb14(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     float t = static_cast<float>(src->mShort08);
     // fire defaults to 1; only the range/edge tests below can clear it.
     int fire = 1;
-    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= 8.0f) {
+    if (vals->mFloat50 <= 0.0f && vals->mFloat54 >= 8.0f) {
         // Already inside the passive range: never fire.
         fire = 0;
     } else {
@@ -3056,7 +3057,7 @@ int evalParamCb14(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         if (t <= vals->mFloat54) {
             if (t > vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     hit = 1;
                 }
             }
@@ -3066,7 +3067,7 @@ int evalParamCb14(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
             if (t == vals->mFloat54) {
                 if (t == vals->mFloat50) {
                     if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                        lbl_eu_80665F80) {
+                        0.0f) {
                         hit = 1;
                     }
                 }
@@ -3094,7 +3095,7 @@ int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     }
     // The halfword time is widened once to double via the 0x4330
     // magic-high-word idiom; subtracting the NAMED 2^52 constant makes MWCC
-    // reference retail's lbl_eu_80665F90 sdata2 pool entry.
+    // reference the compiler-emitted 2^52 sdata2 pool entry.
     union {
         u32 w[2];
         double d;
@@ -3102,7 +3103,7 @@ int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     // Halfword first, magic word second: retail's store order on the frame.
     cvt.w[1] = src->mShort08;
     cvt.w[0] = 0x43300000;
-    double t = cvt.d - lbl_eu_80665F90;
+    double t = cvt.d - 4503599627370496.0;
     if (lbl_eu_80665F80 == t) {
         // notify14 returns the time as a double, so t stays live in f1
         // across the call (retail reuses the ABI return register).
@@ -3112,7 +3113,7 @@ int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     int flag;
     int both;
     int edge;
-    if (vals->mFloat50 <= lbl_eu_80665F80) {
+    if (vals->mFloat50 <= 0.0f) {
         if (vals->mFloat54 >= 8.0f) {
             // Range already satisfied: never fire.
             fire = 0;
@@ -3126,7 +3127,7 @@ int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     if (!(t <= vals->mFloat54)) {
         flag = 0;
         if (t > vals->mFloat50) {
-            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f) {
                 flag = 1;
             }
         }
@@ -3143,7 +3144,7 @@ int evalParamByte(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         if (t == vals->mFloat54) {
             both = 0;
             if (t == vals->mFloat50) {
-                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > 0.0f) {
                     both = 1;
                 }
             }
@@ -3190,7 +3191,7 @@ int evalParamFloat(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
         t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
     }
     int fire;
-    if (vals->mFloat50 <= lbl_eu_80665F80) {
+    if (vals->mFloat50 <= 0.0f) {
         if (vals->mFloat54 >= 8.0f) {
             // Already inside the passive range: never fire.
             fire = 0;
@@ -3207,7 +3208,7 @@ int evalParamFloat(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
             tmp = 0;
             if (t > vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     tmp = 1;
                 }
             }
@@ -3226,7 +3227,7 @@ int evalParamFloat(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParam
         if (t == vals->mFloat54) {
             if (t == vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
-                    lbl_eu_80665F80) {
+                    0.0f) {
                     hit = 1;
                 }
             }
@@ -3304,9 +3305,9 @@ extern "C" void* initParamBlock(ActParamT1Host* host, ActParamT1Dst* dst, ActPar
     dst->mByte30 = 0;
     dst->mFloat28 = -1.0f;
     dst->mFloat44 = f40;
-    dst->mFloat40 = lbl_eu_80665F80;
+    dst->mFloat40 = 0.0f;
     dst->mField48 = 0;
-    dst->mFloat68 = lbl_eu_80665F80;
+    dst->mFloat68 = 0.0f;
     dst->mField78 = 0;
     dst->mField3C = old38;
     dst->mField38 = 0;

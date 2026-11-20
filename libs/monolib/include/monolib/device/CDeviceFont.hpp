@@ -3,34 +3,39 @@
 #include <types.h>
 
 #include "monolib/device/CDeviceBase.hpp"
-#include "monolib/device/CDeviceFontInfo.hpp"
 #include "monolib/util/reslist.hpp"
 
 #include <nw4r/lyt/lyt_layout.h>
 
 // IDeviceFontInfo - font-info provider interface (impls CDeviceFontInfoRom /
-// CDeviceFontInfoExt live in the CDeviceFont unit; see
-// libs/monolib/src/device/CDeviceFont.hpp). Retail vtable: RTTI @0x0,
+// CDeviceFontInfoExt live in the CDeviceFont unit). Retail vtable: RTTI @0x0,
 // 0 @0x4, dtor @0x8, then user virtuals in declaration order. Slot +0x24
 // (getFont) yields the font handle bound into layout panes by
 // ApplyFontToTxtPanes. novtable: tables live in the data blob; the interface is
 // used only through pointers, so no TU emits a vtable for it.
+namespace nw4r { namespace ut { class Font; } }
+
 class __declspec(novtable) IDeviceFontInfo {
 public:
-    virtual ~IDeviceFontInfo();  // 0x8
-    virtual s32 getFlags();      // 0xC
-    virtual u32 getState();      // 0x10
-    virtual u32 getMode();       // 0x14
-    virtual u32 getBufferSize(); // 0x18
-    virtual u16 getLineHeight(); // 0x1C
-    virtual void getCharGlyph();// 0x20
-    virtual void* getFont();     // 0x24
-    virtual void* getFontConst();// 0x28
-    virtual void advanceState(); // 0x2C
-    virtual void initState();    // 0x30
-    virtual u32 isStateNonZero();// 0x34
-    virtual u32 isStateReady();  // 0x38
+    virtual ~IDeviceFontInfo() {}                                       // 0x8
+    virtual s32 getFlags() = 0;                                         // 0xC
+    virtual u32 getState() = 0;                                         // 0x10
+    virtual u32 getMode() = 0;                                          // 0x14
+    virtual u32 getBufferSize() = 0;                                    // 0x18
+    virtual u16 getLineHeight() = 0;                                    // 0x1C
+    virtual const char* getCharGlyph(const char* str, void** texOut,
+                                     u32* xOut, u32* yOut,
+                                     u32* widthOut) = 0;                 // 0x20
+    virtual nw4r::ut::Font* getFont() = 0;                              // 0x24
+    virtual const nw4r::ut::Font* getFontConst() = 0;                   // 0x28
+    virtual void advanceState() = 0;                                    // 0x2C
+    virtual void initState() = 0;                                       // 0x30
+    virtual u32 isStateNonZero() = 0;                                   // 0x34
+    virtual u32 isStateReady() = 0;                                     // 0x38
 };
+
+// Legacy spelling used by the font-device layer and kyoshin callers.
+typedef IDeviceFontInfo CDeviceFontInfo;
 
 namespace nw4r { namespace lyt { class Layout; } }
 

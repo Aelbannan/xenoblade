@@ -206,7 +206,6 @@ void clpSetPageVis(CCollepedia* self);
 // ---------------------------------------------------------------------------
 extern "C" u32 GetItemMulti_IsActiveFlag();
 extern "C" u32 CItem_sumFamilyByte6(u16);
-extern "C" char lbl_eu_8050C6E8[];
 extern "C" const float lbl_eu_80668800;
 extern "C" const float lbl_eu_806687F0;
 extern "C" const float lbl_eu_806687F4;
@@ -220,7 +219,6 @@ extern "C" void UIWin_CreateItemMulti(u32, u32, u32, u32, u32, u32, u32, u32, u3
 extern "C" char* gpClpCollectMsgTable;
 extern "C" void* gpClpItemMsgTable;
 extern "C" u32 CtrlObjectParam_GetStateBitFlag(u16);
-extern "C" u16 lbl_eu_8050C6A0[];
 // CCur per-frame update
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);

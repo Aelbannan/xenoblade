@@ -570,9 +570,6 @@ extern const void* lbl_eu_806624C8[2];
 extern const void* lbl_eu_806624D0[2];
 extern const void* lbl_eu_806624D8[2];
 
-// Debug/format string used by CfResPcImpl_advance (.rodata).
-extern char lbl_eu_80503BC4[];
-
 // Free-function vtable-slot targets owned by other TUs (retail .data
 // lbl_eu_80532774 references these unmangled names; the same-named virtuals
 // above are scoped methods and do not collide).

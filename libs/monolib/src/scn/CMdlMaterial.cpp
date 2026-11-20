@@ -6,6 +6,7 @@
 #include "monolib/scn/CMdlMaterial.hpp"
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/g3d/res/g3d_resmat.h>
+#include <nw4r/g3d/res/g3d_resuserdata.h>
 #include <nw4r/g3d/g3d_scnmdl.h>
 #include <nw4r/db/db_assert.h>
 #include <revolution/GX.h>
@@ -119,42 +120,6 @@ struct MdlMatApplier {
     /* 0x00 */ u8 pad_0x00[4];
     /* 0x04 */ MdlMatContext* ctx;
     /* 0x08 */ GXColor* colors;     // Null disables application
-};
-
-// ===========================================================================
-// nw4r g3d ResUserData reconstruction (g3d_resuser_ac.h accessor semantics)
-// ===========================================================================
-
-// One named item: name string, value type, and relative offsets.
-struct ResUserDataItem {
-    u32 field_0x00;      // +0x00
-    s32 dataOffset;      // +0x04: relative offset to the value (0 = null)
-    u32 field_0x08;      // +0x08
-    u32 valueType;       // +0x0C: 0 = S32 (asserted)
-    s32 nameOffset;      // +0x10: relative offset to the name string
-};
-
-// A single 0x10-byte reference slot in the dic index array.
-struct ResUserDataRef {
-    s32 dataOffset;      // +0x00: relative offset (from the dic base) to ResUserDataItem
-    u32 field_0x04;
-    u32 field_0x08;
-    u32 field_0x0C;
-};
-
-// Dic accessor base: sits 4 bytes into the user-data block (ud + 4).
-// numData at +0x04, index array (0x10-byte refs) at +0x24.
-struct ResUserDataDic {
-    u32 field_0x00;
-    u32 numData;             // +0x04: number of reference slots
-    u32 field_0x08;
-    u32 field_0x0C;
-    u32 field_0x10;
-    u32 field_0x14;
-    u32 field_0x18;
-    u32 field_0x1C;
-    u32 field_0x20;
-    ResUserDataRef refs[1];  // +0x24
 };
 
 // ---------------------------------------------------------------------------
@@ -649,7 +614,6 @@ extern "C" void notifyGroupChain(CMdlMaterial* selfPtr, void* arg, MdlMaterialOw
 extern "C" u32 __RTTI__12CMdlMaterial;          // .sdata RTTI locator (defined below)
 
 
-extern "C" const u32 lbl_eu_80524798[7];  // .rodata name string (defined below)
 extern "C" void __dt__12CMdlMaterialFv();  // member dtor (this TU, retail reloc)
 
 extern "C" u32 CMdlMaterialVtable[54] = {
@@ -664,14 +628,17 @@ extern "C" u32 CMdlMaterialVtable[54] = {
     0x61745F61, 0x632E6800,
 };
 
-// [.rodata] 0x80524798-0x805247B4 (0x1C): "CMdlMaterial" + "mtIris03" names.
-extern "C" const u32 lbl_eu_80524798[7] = {
-    0x434D646C, 0x4D617465, 0x7269616C, 0x00000000, 0x6D744972, 0x69733033, 0x00000000,
-};
-
 // [.sdata] 0x80663C30-0x80663C58 (0x28): RTTI pairs + "ref" strings.
 
-extern "C" u32 lbl_sd_02[2] = { (u32)&lbl_eu_80524798, 0x00000000 };
+extern "C" const char* lbl_sd_02[2] = { "CMdlMaterial", NULL };
+
+// name-guess: the second retail RTTI-adjacent name has no surviving use site.
+// Keeping it in a non-static function makes MWCC pool it after "CMdlMaterial"
+// while mwld dead-strips the function itself.
+u32 CMdlMaterial_mtIris03Name() {
+    return strlen("mtIris03");
+}
+
 extern u32 lbl_sd_04 = 0x72656600;
 extern u32 lbl_sd_05 = 0x72656600;
 extern u32 lbl_sd_06 = 0x72656600;

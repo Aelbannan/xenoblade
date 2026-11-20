@@ -288,6 +288,9 @@ def _with_build_lock(region: str, fn, stale_timeout: int = STALE_TIMEOUT) -> int
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
     acquired = False
+    t_wait = time.monotonic()
+    t_hold = None
+    rc = 2
     try:
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -348,8 +351,12 @@ def _with_build_lock(region: str, fn, stale_timeout: int = STALE_TIMEOUT) -> int
             except OSError:
                 os.close(fd)
                 fd = -1
-        return fn()
+        t_hold = time.monotonic()
+        rc = fn()
+        return rc
     finally:
+        if t_hold is not None:
+            _log_lock_use(region, t_hold - t_wait, time.monotonic() - t_hold, rc)
         if fd >= 0:
             try:
                 fcntl.flock(fd, fcntl.LOCK_UN)
@@ -359,6 +366,20 @@ def _with_build_lock(region: str, fn, stale_timeout: int = STALE_TIMEOUT) -> int
                 os.close(fd)
             except OSError:
                 pass
+
+
+def _log_lock_use(region: str, wait_s: float, hold_s: float, rc) -> None:
+    """Append wait/hold seconds for one locked run.py operation (diagnostics
+    only; same file as hexdiff: build/<region>/lock_wait.jsonl)."""
+    try:
+        rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "pid": os.getpid(),
+               "tool": "run.py " + " ".join(sys.argv[1:3]),
+               "wait_s": round(wait_s, 2), "hold_s": round(hold_s, 2),
+               "rc": rc if isinstance(rc, int) else None}
+        with (Path("build") / region / "lock_wait.jsonl").open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec) + "\n")
+    except Exception:
+        pass
 
 
 def _build_unlocked(project: Project, hint: str) -> int:

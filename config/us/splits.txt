@@ -1398,7 +1398,7 @@ kyoshin/menu/CMenuGetItemMulti.cpp:
 	.text       start:0x801B3E28 end:0x801BBA44
 	.ctors      start:0x804FA03C end:0x804FA040
 
-	.data        start:0x80533788 end:0x805338bc
+	.data        start:0x80533788 end:0x805339c0
 	.rodata        start:0x80504a28 end:0x805050b0
 	.sbss        start:0x806643a0 end:0x80664420
 	.sdata2        start:0x80667e00 end:0x80667e30
@@ -1408,6 +1408,7 @@ kyoshin/cf/CSuddenCommu.cpp:
 	.text       start:0x801BBA44 end:0x801BE330
 	.ctors      start:0x804FA040 end:0x804FA044
 
+	.data        start:0x805339c0 end:0x80533a98
 	.rodata        start:0x805050b0 end:0x805050e4
 	.sdata        start:0x806625d8 end:0x80662610
 	.sdata2        start:0x80667e30 end:0x80667e68
@@ -1416,7 +1417,7 @@ kyoshin/menu/CMenuKizunaTalk.cpp:
 	extabindex  start:0x8002AF40 end:0x8002AFE8
 	.text       start:0x801BE330 end:0x801BF69C
 
-	.data        start:0x805338bc end:0x80533b98
+	.data        start:0x80533a98 end:0x80533b98
 	.rodata        start:0x805050e4 end:0x80505310
 	.sbss        start:0x80664420 end:0x80664428
 	.sdata        start:0x80662610 end:0x80662620

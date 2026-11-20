@@ -818,7 +818,44 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "Lets --all verify planned renames whose new name no longer "
         "contains the old one (memberize-bulk gate).",
     )
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--decomp-obj",
+        metavar="PATH",
+        help="diff this pre-built decomp object instead of the unit's build "
+        "output (implies --no-build; takes NO build lock; objdiff scores come "
+        "from a private one-unit project). Used by tools/coop/probe.py.",
+    )
+    args = parser.parse_args(argv)
+    if args.decomp_obj:
+        args.no_build = True
+    return args
+
+
+def _generate_probe_report(project: Project, unit, retail_path: Path,
+                           decomp_obj: Path, tmp_dir: Path) -> dict:
+    """objdiff report for ONE unit, base = a private probe object.
+
+    Same report args as the checkpoint reports, so percentages agree with
+    the shared report; reads no other build output.
+    """
+    import json as _json
+    units = _json.loads((project.root / "objdiff.json").read_text())
+    proj = {k: v for k, v in units.items() if k != "units"}
+    proj["custom_make"] = "true"
+    entry = next(u for u in units["units"] if u["name"] == unit.name)
+    entry = dict(entry)
+    entry["target_path"] = str(Path(retail_path).resolve())
+    entry["base_path"] = str(Path(decomp_obj).resolve())
+    entry.pop("scratch", None)
+    proj["units"] = [entry]
+    (tmp_dir / "objdiff.json").write_text(_json.dumps(proj))
+    out = tmp_dir / "report.json"
+    cmd = [project.objdiff_bin(), "report", "generate", "-p", str(tmp_dir),
+           "-o", str(out), "-f", "json", *project.config.objdiff_report_args]
+    proc = subprocess.run(cmd, cwd=tmp_dir, check=False, capture_output=True, text=True)
+    if proc.returncode != 0 or not out.is_file():
+        raise RuntimeError(f"objdiff probe report failed (rc={proc.returncode}): {proc.stderr[-2000:]}")
+    return _json.loads(out.read_text())
 
 
 def _select_baseline(args: argparse.Namespace, project: Project) -> tuple[Path | None, str | None, str | None]:
@@ -865,6 +902,11 @@ def _run(argv: list[str] | None = None) -> int:
     if args.list is not None:
         return _cmd_list(args, retail_path, project, unit)
 
+    if args.decomp_obj:
+        decomp_path = Path(args.decomp_obj).expanduser().resolve()
+        if not decomp_path.is_file():
+            print(f"ERROR: --decomp-obj not found: {decomp_path}", file=sys.stderr)
+            return 1
     if decomp_path is None:
         print(f"ERROR: no decomp (base) object for unit {unit.name}", file=sys.stderr)
         return 1
@@ -924,7 +966,11 @@ def _run(argv: list[str] | None = None) -> int:
     objdiff_fns: list = []
     try:
         with tempfile.TemporaryDirectory(prefix="hexdiff-objdiff-") as tmp_dir:
-            objdiff_report = generate_report(project, Path(tmp_dir) / "report.json")
+            if args.decomp_obj:
+                objdiff_report = _generate_probe_report(
+                    project, unit, retail_path, decomp_path, Path(tmp_dir))
+            else:
+                objdiff_report = generate_report(project, Path(tmp_dir) / "report.json")
         unit_fns = parse_report(
             objdiff_report, unit.name,
             decomp_symbols=({unit.name: decomp_symbol_names}
@@ -1865,17 +1911,46 @@ def _output_json(
 def run(argv: list[str] | None = None) -> int:
     """Keep the just-built objects stable until all comparison reads finish."""
     args = _parse_args(argv)
-    if args.list is not None:
+    if args.list is not None or args.decomp_obj:
+        # --decomp-obj reads only the retail object and a private probe
+        # object, so it needs no repo build lock.
         return _run(argv)
     config = load_config(None, _REPO)
     lock_path = _REPO / "build" / config.region / ".hexdiff.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
+    import time as _time
+    t0 = _time.monotonic()
     with lock_path.open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
+        t1 = _time.monotonic()
+        rc = 2
         try:
-            return _run(argv)
+            rc = _run(argv)
+            return rc
         finally:
             fcntl.flock(lock, fcntl.LOCK_UN)
+            _log_lock_use(config.region, args, t1 - t0, _time.monotonic() - t1, rc)
+
+
+def _log_lock_use(region: str, args: argparse.Namespace, wait_s: float,
+                  hold_s: float, rc: int) -> None:
+    """Append one JSON line per locked hexdiff run (wait vs hold seconds).
+
+    build/<region>/lock_wait.jsonl is diagnostics only (gitignored build dir);
+    failures to log never affect the run.
+    """
+    try:
+        import json as _json
+        import time as _time
+        rec = {"ts": _time.strftime("%Y-%m-%dT%H:%M:%S"), "pid": os.getpid(),
+               "tool": "hexdiff", "unit": args.unit,
+               "mode": "all" if args.all else ("symbol" if args.symbol else "other"),
+               "wait_s": round(wait_s, 2), "hold_s": round(hold_s, 2), "rc": rc}
+        path = _REPO / "build" / region / "lock_wait.jsonl"
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(_json.dumps(rec) + "\n")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

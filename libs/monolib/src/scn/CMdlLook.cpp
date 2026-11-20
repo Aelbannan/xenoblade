@@ -6,6 +6,7 @@
 #include "libs/monolib/src/scn/CMdlAnmEye.hpp" // simGetLeafDist7B0 fade query
 #include <nw4r/math/math_types.h>
 #include <nw4r/math/math_triangular.h>
+#include <nw4r/db/db_assert.h>
 #include <revolution/MTX.h>
 #include <math.h>
 #include "monolib/math/CVec3.hpp"
@@ -43,16 +44,12 @@ struct MdlLookWork {
 // sdata2 float pool constants used by the look controller
 extern const float lbl_eu_8066B370; // 0.0f
 extern const float lbl_eu_8066B37C; // 0.1f
-extern const float lbl_eu_8066B380; // 1.0f
 
 // Warning message strings (retail .rodata)
 extern const char lbl_eu_805262F0[];
 extern const char lbl_eu_805262C8[];
 extern const char lbl_eu_8052ADB0[];
 extern const char lbl_eu_8052AD88[];
-
-// nw4r::db::Warning (retail mangled symbol)
-void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 extern "C" u32 lbl_eu_805701E0[0x4];
 
@@ -138,7 +135,7 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
 
     f32 delta = Scn_GetFrameDelta(unk->field_0x04);
     f32 fade = simGetLeafDist7B0(unk) * delta;
-    if (fade == lbl_eu_8066B370) {
+    if (fade == 0.0f) {
         // Faded out: only guard against a fully-degenerate facing vector.
         if (!(unk->field_0x7a8 & 1)) {
             if (__fabs(look->field_0x40.x) > eps && __fabs(look->field_0x40.y) > eps
@@ -148,8 +145,8 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
         }
     } else {
         f32 s24 = Scn_GetFrameDelta(unk->field_0x04);
-        if (s24 > lbl_eu_8066B380) {
-            s24 = lbl_eu_8066B380;
+        if (s24 > 1.0f) {
+            s24 = 1.0f;
         }
         if (!(unk->field_0x7a8 & 1)) {
             // World-space path: collapse the facing vector toward its z.
@@ -173,7 +170,7 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
             PSMTXMultVec(invMtx.m, look->field_0x34, dir);
             if (!(__fabs(dir.x) > eps && __fabs(dir.y) > eps && __fabs(dir.z) > eps)) {
                 f32 len2 = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
-                if (len2 == lbl_eu_8066B370) {
+                if (len2 == 0.0f) {
                     dir = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(dir, dir);
@@ -202,7 +199,7 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                     // Skip axes whose aim error is fully degenerate.
                     if (!(__fabs(d2.x) > eps && __fabs(d2.y) > eps && __fabs(d2.z) > eps)) {
                         f32 len2b = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-                        if (len2b == lbl_eu_8066B370) {
+                        if (len2b == 0.0f) {
                             diff = ml::CVec3::zero;
                         } else {
                             PSVECNormalize(diff, diff);
@@ -222,18 +219,18 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                                 if (dotAD < -1.0f) {
                                     dotAD = -1.0f;
                                 }
-                                if (dotAD > lbl_eu_8066B380) {
-                                    dotAD = lbl_eu_8066B380;
+                                if (dotAD > 1.0f) {
+                                    dotAD = 1.0f;
                                 }
-                                if (dotAD > lbl_eu_8066B380 && dotAD < -1.0f) {
-                                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef,
-                                                                 lbl_eu_805262C8);
+                                if (dotAD > 1.0f && dotAD < -1.0f) {
+                                    nw4r::db::Warning(lbl_eu_805262F0, 0xef,
+                                                      lbl_eu_805262C8);
                                 }
                                 ang = acos(dotAD);
                             }
                             // Flip the rotation sense when the axis opposes the error.
                             f32 sd = crossV.x * axis.x + crossV.y * axis.y + crossV.z * axis.z;
-                            if (sd < lbl_eu_8066B370) {
+                            if (sd < 0.0f) {
                                 ang = -ang;
                             }
                             look->field_0x64[k] +=
@@ -261,20 +258,20 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                 f32 zz = quat.z + quat.z;
                 f32 xx = quat.x + quat.x;
                 f32 t = quat.w * yy - quat.x * zz;
-                if (t >= lbl_eu_8066B380) {
+                if (t >= 1.0f) {
                     if (t > -1.0f) {
                         t = -1.0f;
                     }
                 } else {
-                    t = lbl_eu_8066B380;
+                    t = 1.0f;
                 }
                 if (t < -1.0f) {
                     t = -1.0f;
-                } else if (t > lbl_eu_8066B380) {
-                    t = lbl_eu_8066B380;
+                } else if (t > 1.0f) {
+                    t = 1.0f;
                 }
-                if (t > lbl_eu_8066B380 && t < -1.0f) {
-                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_8052ADB0, 0xe4, lbl_eu_8052AD88);
+                if (t > 1.0f && t < -1.0f) {
+                    nw4r::db::Warning(lbl_eu_8052ADB0, 0xe4, lbl_eu_8052AD88);
                 }
 
                 pitchAng = asin(t);
@@ -286,20 +283,20 @@ extern "C" void aimMdlLook(CMdlLook* look, u8* unkBytes,
                 if (pitchAng >= ml::halfpi) {
                     yawAng = 0.024543693f
                              * nw4r::math::Atan2FIdx(cxy - cwz,
-                                                     lbl_eu_8066B380 - (cxx + czz));
-                    rollAng = lbl_eu_8066B370;
+                                                     1.0f - (cxx + czz));
+                    rollAng = 0.0f;
                 } else if (pitchAng <= -ml::halfpi) {
                     rollAng = -(0.024543693f
                                 * nw4r::math::Atan2FIdx(cxy - cwz,
-                                                        lbl_eu_8066B380 - (cxx + czz)));
-                    yawAng = lbl_eu_8066B370;
+                                                        1.0f - (cxx + czz)));
+                    yawAng = 0.0f;
                 } else {
                     f32 numY = quat.y * zz + quat.w * xx;
-                    nw4r::math::Atan2FIdx(numY, lbl_eu_8066B380 - (cxx + cyy));
+                    nw4r::math::Atan2FIdx(numY, 1.0f - (cxx + cyy));
                     yawAng = 0.024543693f * numY;
                     rollAng = 0.024543693f
                               * nw4r::math::Atan2FIdx(cxy + cwz,
-                                                      lbl_eu_8066B380 - (cyy + czz));
+                                                      1.0f - (cyy + czz));
                 }
 
                 look->field_0x40.x = rollAng;

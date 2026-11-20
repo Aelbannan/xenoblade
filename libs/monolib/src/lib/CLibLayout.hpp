@@ -21,10 +21,7 @@ struct CLibLayoutHashElem {
     MEMiHeapHead* field_4;     // 0x4: optional frame heap
 };
 
-// __declspec(novtable): the retail TU emits no implicit vtable/RTTI/vptr
-// stores; the vtable (lbl_eu_8056D350) is defined explicitly at the bottom of
-// CLibLayout.cpp and installed by hand in the ctor (CLibG3d pattern).
-class __declspec(novtable) CLibLayout : public CWorkThread {
+class CLibLayout : public CWorkThread {
 public:
     CLibLayout(const char* pName, CWorkThread* pParent);
     virtual ~CLibLayout();
@@ -62,11 +59,9 @@ public:
     u8 pad_2BC[0x4];                   // 0x2BC-0x2BF
 };
 
-// Default layout-region name string and the active layout-allocator pointer.
-// Global-scope variables are not C++-mangled, so plain extern decls emit the
-// exact retail lbl_eu_* symbols. lbl_eu_805231BC is DEFINED in CLibLayout.cpp
-// (retail owns the storage there); no decl here -- a duplicate extern in this
-// TU trips MWCC 10322 (illegal name overloading) at the definition site.
+// Default layout-region name: the compiler pools the two retail strings in
+// CLibLayout.cpp, where lbl_eu_805231BC is declared; no duplicate extern here
+// (that spelling trips MWCC 10322 at the definition site).
 
 
 // layoutAllocCallback/layoutFreeCallback are the CLibLayout allocator callbacks. Their

@@ -3,6 +3,7 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CCol4.hpp"
+#include "kyoshin/cf/object/CfObjectColl.hpp"  // canonical 0.0/1.0 declarations
 
 // C-linkage imports: both carry unmangled verbatim retail symbol names, so
 // they must keep C linkage.
@@ -16,8 +17,7 @@ extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(const ml::CVec3* sta
 // Debug color constants for the collision-cylinder render (loaded from .sdata2).
 // Global-scope variables are not mangled by MWCC, so plain extern declarations
 // emit the retail label names directly.
-extern const float lbl_eu_80666910; // 0.0
-extern const float lbl_eu_80666914; // 1.0
+// lbl_eu_80666910 (0.0) and lbl_eu_80666914 (1.0) come from CfObjectColl.hpp.
 extern const float lbl_eu_80666918; // 0.3
 extern const float lbl_eu_8066692C; // 0.1
 extern const float lbl_eu_80666930; // 0.5

@@ -5,7 +5,10 @@
 #include <monolib/scn/code_804BC9EC.hpp>
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
-namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
+namespace nw4r {
+namespace math { f32 FrSqrt(f32 x); }
+namespace db { void Warning(const char*, int, const char*, ...); }
+}
 
 // Entry in the top-level chunk list (8 bytes each)
 struct ScnResEntry {
@@ -108,24 +111,12 @@ extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin) // 1/3
 // extern const f32 0.0f; // 0.0f
 // extern const f32 255.0f; // 255.0f
 
-// nw4r math functions
-void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-
 // String constants for warning
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
 extern u32 lbl_eu_80665968[2];
 extern u8 lbl_eu_8065F418[0x10];
-
-// Shared float pools referenced by the render path (retail loads them via
-// lfs @sda21; local literals would grow .sdata2 past its 0-byte slice):
-// 0.33333334f = 1/3, 0.0f = 0.0f, 255.0f = 255.0f.
-
-extern const f32 lbl_eu_80663AD0;  // 50.0f (pass-A cull margin)
-extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin)
-
-
 
 // Dissolved monolibdata2 .data tail owned by this TU (0x8056F940-0x8056F9B2).
 extern "C" u32 lbl_eu_80663AE0[2];
@@ -355,7 +346,7 @@ void Coli_RenderChunks(Mtx modelMtx, u8* viewData, u8* renderParams) {
             if (t2 > radiusSq) radiusSq = t2;
 
             if (!(radiusSq > 0.0f || radiusSq == 0.0f)) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 radius;
             if (radiusSq == 0.0f || radiusSq < 0.0f) {
@@ -573,7 +564,9 @@ __declspec(align(8)) u32 lbl_eu_80665968[2];
 extern "C" { u32 lbl_eu_80665970; u32 lbl_eu_80665974; u32 lbl_eu_80665978; }
 
 // [.data] 0x8056F940-0x8056F9B2: dissolved monolibdata2 tail objects.
-f32 lbl_eu_8056F940[4] = { 0.6f, 0.2f, 0.3f, 0.1f };
+// name-guess: 4-f32 falloff curve indexed by light mode in
+// ScnEnvLgt_ApplyFalloff (0x804C4180 lis / 0x804C41FC lfsx); no retail name.
+f32 sScnEnvLgtFalloffCurve[4] = { 0.6f, 0.2f, 0.3f, 0.1f };
 void* lbl_eu_8056F950[4] = {
     (void*)lbl_eu_80663AE0,
     NULL,

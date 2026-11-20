@@ -130,14 +130,6 @@ extern const float lbl_eu_8066AE40;
 extern const float lbl_eu_8066AE8C;
 extern const float lbl_eu_8066AE90;
 extern const float lbl_eu_8066AE94;  // rotation angle scale (nw4r RAD_TO_FIDX)
-extern const float lbl_eu_8066AE38;  // radius/angle gate scale (ColiInitAngleSpec)
-extern const float lbl_eu_8066AE60;  // FIdx->angle scale (ColiTestSphereCone)
-extern const float lbl_eu_8066AE98;  // move-scale factor (ColiResolveNodeMove)
-extern const float lbl_eu_8066AE9C;  // same-priority push weight (ColiResolveNodeMove)
-extern const float lbl_eu_8066AEA0;  // reset value for the current-segment global
-extern const float lbl_eu_8066AE58;  // sphere test gate scale (ColiSweepClipSegment)
-extern const float lbl_eu_8066AE54;  // normal scale constant (ColiCastSegmentSphere)
-extern const float lbl_eu_8066AE6C;  // |component| < thresh -> treat as 0 (ColiCastRayAabb)
 extern const double lbl_eu_8066AE48; // shared magic double, used by the out-of-line converter
 
 // s32 -> f32 through a double conversion scratch: write the integer-to-double
@@ -171,11 +163,6 @@ static f32 f32FromS32_ae48_bl(s32 v) {
     c.w[1] = (u32)v ^ 0x80000000u;
     return (f32)(c.d - lbl_eu_8066AE48);
 }
-extern const float lbl_eu_8066AE70;  // upper t bound init (ColiCastRayAabb)
-extern const float lbl_eu_8066AE74;  // lower t bound init (ColiCastRayAabb)
-extern const float lbl_eu_8066AE64;  // triangle half-space gate (ColiSweepTriangle)
-extern const float lbl_eu_8066AE5C;  // near-parallel determinant gate (ColiClipStripRadius)
-extern const float lbl_eu_8066AE68;  // exit-face reach init (ColiSweepPointBox)
 
 // Data word written into the proc object's +0x08 slot at the start of the
 // sweep/contact helpers (ColiSweepBoxContact / ColiSweepSphereBound).

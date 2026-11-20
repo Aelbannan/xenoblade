@@ -1,12 +1,19 @@
 """Opt-in post-pass that credits *proven* objdiff report artifacts.
 
-``build/<region>/report.json`` is objdiff's raw output.  Two legitimate
+``build/<region>/report.json`` is objdiff's raw output.  Three legitimate
 artifacts make it under-report byte-identical objects:
 
 * **linker tail padding** — a retail split section ends at the next unit's
   start, so it carries zero bytes that align the next TU.  :mod:`data_match`
   already credits those in ``run.py data diff``; here the same proof is
   projected into a *copy* of the report.
+* **weak-dedup linked-view exclusions** — mwld keeps one copy of each weak
+  definition and drops the others, so a raw decomp object can carry extra
+  weak RTTI/vtable copies (and compiler-local strings only they reference)
+  that retail does not.  :func:`weak_dedup.linked_view` is the *same* view
+  ``run.py data diff`` compares; a section is credited only when
+  :func:`data_match.check_data_sections` (or ``check_extab_sections`` for the
+  exception tables) proves the remaining retail bytes identical.
 * **anonymous ``@N`` literal relocs** — MWCC numbers TU-local string/float
   pools per translation unit, so retail names ``@1254`` and decomp names
   ``@18982`` can be the same datum.  objdiff's ``functionRelocDiffs`` modes
@@ -35,11 +42,15 @@ from typing import Any, Mapping
 
 from tools.coop.lib.data_match import (
     DATA_SECTIONS,
+    EXTAB_SECTIONS,
     NOBITS,
     _parse,
+    check_data_sections,
+    check_extab_sections,
     link_tail_padding,
 )
-from tools.coop.lib.reloc_canon import type_class
+from tools.coop.lib.reloc_canon import LinkerLayout, LinkerLayoutError, type_class
+from tools.coop.lib.weak_dedup import linked_view
 from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
     FunctionBytes,
@@ -64,6 +75,10 @@ class CreditCensus:
     functions_credited: int = 0
     bytes_credited: int = 0
     skipped_units: int = 0
+    weak_units_viewed: int = 0
+    weak_data_sections: int = 0
+    weak_extab_sections: int = 0
+    weak_bytes_credited: int = 0
     details: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
@@ -78,6 +93,9 @@ class CreditCensus:
             f"functions: {self.functions_scanned} candidate functions, "
             f"{self.functions_credited} credited",
             f"bytes:     {self.bytes_credited} retail padding bytes credited",
+            f"weak dedup: {self.weak_units_viewed} linked views, "
+            f"{self.weak_data_sections} data + {self.weak_extab_sections} extab "
+            f"sections credited ({self.weak_bytes_credited} retail bytes certified)",
         ]
         if self.details:
             lines.append("credits:")
@@ -211,6 +229,84 @@ def _credit_sections(
         census.details.append(f"{unit.get('name')}/{name}: +0x{pad:X} link tail padding")
 
 
+def _credit_linked_view(
+    unit: dict[str, Any],
+    r_path: Path,
+    d_path: Path,
+    project_root: Path,
+    region: str,
+    layout: LinkerLayout | None,
+    layout_error: str | None,
+    census: CreditCensus,
+) -> None:
+    """Project ``run.py data diff``'s linked-view proof into the report.
+
+    The exclusions come only from :func:`weak_dedup.linked_view`; the match
+    verdict comes only from :func:`data_match.check_data_sections` and
+    :func:`data_match.check_extab_sections` on that view.  No weak-dedup
+    heuristic is re-implemented here, and a section with no proven verdict is
+    left exactly as objdiff reported it.
+    """
+    wanted = [
+        sec for sec in unit.get("sections", [])
+        if sec.get("name") in DATA_SECTIONS + EXTAB_SECTIONS
+        and sec.get("fuzzy_match_percent") is not None
+        and float(sec["fuzzy_match_percent"]) < 100.0
+    ]
+    if not wanted:
+        return
+    try:
+        view = linked_view(d_path, project_root, region, unit.get("name") or "",
+                           retail_object=r_path)
+    except (OSError, ValueError, struct.error, IndexError) as exc:
+        census.details.append(f"{unit.get('name')}/*: linked view unavailable ({exc})")
+        return
+    if not view.excluded:
+        return  # no weak/dedup exclusions: nothing beyond the padding rule to prove
+    census.weak_units_viewed += 1
+    try:
+        data_result = check_data_sections(r_path, view.path)
+    except (OSError, ValueError, struct.error, IndexError) as exc:
+        census.details.append(f"{unit.get('name')}/*: linked data diff unavailable ({exc})")
+        return
+
+    extab_result = None
+    if any(sec.get("name") in EXTAB_SECTIONS for sec in wanted):
+        if layout is None:
+            census.details.append(
+                f"{unit.get('name')}/extab*: left uncredited: no proven linked "
+                f"extab rule ({layout_error or 'linker layout unavailable'})")
+        else:
+            try:
+                extab_result = check_extab_sections(r_path, view.path, layout=layout)
+            except (OSError, ValueError, struct.error, IndexError) as exc:
+                census.details.append(
+                    f"{unit.get('name')}/extab*: left uncredited: {exc}")
+
+    by_name = {s.name: s for s in data_result.sections}
+    if extab_result is not None:
+        by_name.update({s.name: s for s in extab_result.sections})
+    for sec in wanted:
+        name = sec["name"]
+        result = by_name.get(name)
+        if result is None or not result.ok:
+            continue
+        _set_percent(sec, 100.0)
+        sec["weak_dedup_credit"] = {
+            "exclusions": list(view.excluded),
+            "proof": result.detail,
+            "linked_view": str(view.path),
+        }
+        census.weak_bytes_credited += int(sec.get("size") or 0)
+        if name in EXTAB_SECTIONS:
+            census.weak_extab_sections += 1
+        else:
+            census.weak_data_sections += 1
+        census.details.append(
+            f"{unit.get('name')}/{name}: {result.detail} "
+            f"(linked view, {len(view.excluded)} exclusions)")
+
+
 def _unique_function(functions: list[FunctionBytes], *names: str) -> FunctionBytes | None:
     for name in names:
         if not name:
@@ -341,18 +437,31 @@ def credit_report(
     unit_objects: Mapping[str, tuple[Path, Path]],
     *,
     credit_anonymous_relocs: bool = True,
+    credit_weak_dedup: bool = True,
+    project_root: str | Path | None = None,
+    region: str | None = None,
     source_report: str | Path | None = None,
 ) -> tuple[dict[str, Any], CreditCensus]:
     """Return an adjusted deep copy of *report* plus a credit census.
 
     ``unit_objects`` maps a report unit name to ``(retail_object, decomp_object)``.
-    Units without both objects are skipped (never guessed).  The input report
-    is left untouched; callers write the result to a *different* path.
+    Units without both objects are skipped (never guessed).  Weak-dedup
+    credits additionally need the region's ``project_root`` (splits/symbols)
+    and are skipped when it is absent.  The input report is left untouched;
+    callers write the result to a *different* path.
     """
     if isinstance(report.get("credit"), dict):
         raise ValueError("report is already a credit-adjusted copy")
     adjusted = copy.deepcopy(dict(report))
     census = CreditCensus(units_scanned=len(adjusted.get("units", [])))
+    use_weak = bool(credit_weak_dedup and project_root and region)
+    layout: LinkerLayout | None = None
+    layout_error: str | None = None
+    if use_weak:
+        try:
+            layout = LinkerLayout.load(Path(project_root), region)
+        except (LinkerLayoutError, OSError, ValueError) as exc:
+            layout_error = str(exc)
     dirty_units = 0
     for unit in adjusted.get("units", []):
         paths = unit_objects.get(unit.get("name"))
@@ -365,24 +474,30 @@ def credit_report(
             continue
         r_parsed, d_parsed = _parse(r_path), _parse(d_path)
         r_bytes, d_bytes = r_path.read_bytes(), d_path.read_bytes()
-        before = (census.sections_credited, census.functions_credited)
+        before = (census.sections_credited, census.functions_credited,
+                  census.weak_data_sections + census.weak_extab_sections)
         _credit_sections(unit, r_parsed, d_parsed, r_bytes, d_bytes, census)
         if credit_anonymous_relocs:
             _credit_functions(unit, r_path, d_path, r_parsed, d_parsed,
                               r_bytes, d_bytes, census)
-        after_sections, after_functions = census.sections_credited, census.functions_credited
-        if before != (after_sections, after_functions):
+        if use_weak:
+            _credit_linked_view(unit, r_path, d_path, Path(project_root), region,
+                                layout, layout_error, census)
+        after = (census.sections_credited, census.functions_credited,
+                 census.weak_data_sections + census.weak_extab_sections)
+        if before != after:
             dirty_units += 1
-            _retally_unit(unit, functions_changed=after_functions != before[1],
-                          sections_changed=after_sections != before[0])
+            _retally_unit(unit, functions_changed=after[1] != before[1],
+                          sections_changed=after[0] != before[0] or after[2] != before[2])
     census.units_changed = dirty_units
     if dirty_units:
         _retally_report(adjusted)
     adjusted["credit"] = {
         "tool": "tools/coop/lib/report_credit.py",
-        "version": 1,
+        "version": 2,
         "source_report": str(source_report) if source_report else None,
         "anonymous_relocs": bool(credit_anonymous_relocs),
+        "weak_dedup": bool(use_weak),
         "census": census.as_dict(),
     }
     return adjusted, census

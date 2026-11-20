@@ -12,6 +12,9 @@
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
 
+static const char* effTgt = "effTgt";
+static const char* effAtr = "effAtr";
+static const char* eff = "eff";
 
 // C-linkage imports relocated to CREvtEffect.hpp (see the "C-linkage imports"
 // section there). This TU still defines the CREvt* functions below.
@@ -126,13 +129,13 @@ void cf::CREvtEffect::refreshChrAnim() {
     // Distinct result locals per anim group: each dies after its Get*
     // trio so model (live across all three) can claim r31 (retail).
     nw4r::g3d::ChrAnmResult* resultEff =
-        scnImN4AnimFn(model, lbl_eu_80662478, (f32)(int)EvtSeqGetCounter100());
+        scnImN4AnimFn(model, eff, (f32)(int)EvtSeqGetCounter100());
     resultEff->GetTranslate((nw4r::math::VEC3*)mAnm2Translate);
     resultEff->GetRotateDeg((nw4r::math::VEC3*)mAnm2Rotate);
     resultEff->GetScale((nw4r::math::VEC3*)mAnm2Scale);
 
     nw4r::g3d::ChrAnmResult* resultAtr =
-        scnImN4AnimFn(model, lbl_eu_80662474, (f32)(int)EvtSeqGetCounter100());
+        scnImN4AnimFn(model, effAtr, (f32)(int)EvtSeqGetCounter100());
     resultAtr->GetTranslate((nw4r::math::VEC3*)mAnm1Translate);
     resultAtr->GetRotateDeg((nw4r::math::VEC3*)mAnm1Rotate);
     resultAtr->GetScale((nw4r::math::VEC3*)mAnm1Scale);
@@ -140,11 +143,11 @@ void cf::CREvtEffect::refreshChrAnim() {
     // Normalize the alpha in mAnm1Scale.z: keep the integer part and drop the
     // fractional part once it falls below the epsilon threshold.
     f32 alpha = mAnm1Scale[2];
-    if (alpha > lbl_eu_8066793C) {
+    if (alpha > 1.0f) {
         int intPart = (int)alpha;
         f32 fracPart = alpha - (f32)intPart;
         if (fracPart > 0.9f) {
-            fracPart = lbl_eu_80667940;
+            fracPart = 0.9f;
         }
         mAnm1Scale[2] = (f32)(int)mAnm1Scale[2] + fracPart;
     }
@@ -157,7 +160,7 @@ void cf::CREvtEffect::refreshChrAnim() {
 
     // "effTgt" animation -> mAnm3Translate
     nw4r::g3d::ChrAnmResult* resultTgt =
-        scnImN4AnimFn(model, lbl_eu_80662470, (f32)(int)EvtSeqGetCounter100());
+        scnImN4AnimFn(model, effTgt, (f32)(int)EvtSeqGetCounter100());
     resultTgt->GetTranslate((nw4r::math::VEC3*)mAnm3Translate);
 
     // Refresh the spawned effects when the translate.y threshold is crossed
@@ -215,7 +218,7 @@ bool cf::CREvtEffect::spawnEffect() {
     // Scale: mAnm1Scale.y clamped below -1.0 to 0.0
     f32 scale = mAnm1Scale[1];
     if (scale < 0.5f) {
-        scale = lbl_eu_80667940;
+        scale = 0.9f;
     }
 
     // Culling mode forces effect state 7
@@ -382,20 +385,20 @@ void cf::CREvtEffect::initModel(void* src, void* bdatEntry) {
                 &lbl_eu_80503800[0], &handle, 0);
 
         mModel = scnImN4BuildByIdx((u8*)gmScene, (u8*)handle, 1, 1, 0, 0x50);
-            simSetLeafDist7B0(mModel, lbl_eu_8066793C);
+            simSetLeafDist7B0(mModel, 1.0f);
             ((CLibLayoutModel*)mModel)->mFlags |= 4;
 
             // Bind the three anim nodes by name.
-            mNodeB4 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, lbl_eu_80662474);
-            mNodeB8 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, lbl_eu_80662478);
-            mNodeBC = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, lbl_eu_80662470);
+            mNodeB4 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, effAtr);
+            mNodeB8 = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, eff);
+            mNodeBC = ((void* (*)(CLibLayoutModel*, const char*))((void**)((CLibLayoutModel*)mModel)->vtable)[15])((CLibLayoutModel*)mModel, effTgt);
 
             // Cache the anim node ids; retail keeps the model in a register
             // across all three calls.
             CLibLayoutModel* animModel = (CLibLayoutModel*)mModel;
-            mNodeIdC0 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662478);
-            mNodeIdC4 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662474);
-            mNodeIdC8 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, lbl_eu_80662470);
+            mNodeIdC0 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, eff);
+            mNodeIdC4 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, effAtr);
+            mNodeIdC8 = ((s32 (*)(CLibLayoutModel*, const char*))((void**)animModel->vtable)[17])(animModel, effTgt);
 
             simSetFlag2000Chain(mModel, 1);
         }

@@ -69,7 +69,7 @@ struct ScnManagerLayout {
 // A890/A8A0 are defined in this TU (see tools/coop/lbls_exclusions.json):
 // planting the conversion magic under its retail name lets MWCC's literal
 // pool unify the builtin int->float conversions onto it.
-const f32 lbl_eu_8066A890 = 1.0f; // box half-size / clearance radius
+extern "C" const f32 lbl_eu_8066A890; // box half-size / clearance radius
 // nw4r db Warning rodata strings
 extern const char lbl_eu_80526300[];
 extern const char lbl_eu_80526324[];
@@ -80,6 +80,17 @@ extern u32 sDefaultProbeCallbackRef[3];    // default reference block (defined b
 extern u8 sWalkWaypointTable[0x30];
 extern s8 sWalkWaypointInitFlags[8]; // init-once flag (read as signed char)
 extern ScnPtmf sDefaultWalkBoxCallbackRef;   // default 12-byte reference block
+
+union F64Conv_A8A0 {
+    f64 d;
+    u32 w[2];
+};
+static inline f64 s32ToF64_A8A0(s32 v) {
+    F64Conv_A8A0 c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return c.d - 4503601774854144.0;
+}
 
 // Real-signature views of the findClosestNeighbor member stub
 // (retail Fv mangling; signatures recovered from caller register setup).
@@ -134,7 +145,7 @@ extern "C" void init__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const u32* src = __ptmf_null;
     self->field_0x0 = (u32)desc;
     // clearance radius: loaded up front so the f-sum below reuses it
-    f32 clearance = lbl_eu_8066A890;
+    f32 clearance = 1.0f;
     self->nodes = (ScnWalkNode*)((u32)desc + desc->offNodes);
     self->field_0x8 = (u32)desc + desc->offEdges;
     self->field_0xC = (u32)desc + desc->offField14;
@@ -823,19 +834,22 @@ extern "C" s32 fetchWalkTarget__17UnkClass_8047E110Fv(UnkClass_8047E110* self, S
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
+            const f32 vDepth = lbl_eu_8066A8B4;
+            const f32 vFlat = lbl_eu_8066A8AC;
+            ((f32*)sWalkWaypointTable)[0] = vFlat;
             f32* wp = (f32*)sWalkWaypointTable;
-            wp[0] = lbl_eu_8066A8AC;
-            wp[1] = lbl_eu_8066A8AC;
-            wp[2] = lbl_eu_8066A8B4;
-            wp[3] = lbl_eu_8066A8AC;
-            wp[4] = lbl_eu_8066A8AC;
-            wp[5] = lbl_eu_8066A890;
-            wp[6] = lbl_eu_8066A8B4;
-            wp[7] = lbl_eu_8066A8AC;
-            wp[8] = lbl_eu_8066A8AC;
-            wp[9] = lbl_eu_8066A890;
-            wp[10] = lbl_eu_8066A8AC;
-            wp[11] = lbl_eu_8066A8AC;
+            const f32 vHalf = 1.0f;
+            wp[1] = vFlat;
+            wp[2] = vDepth;
+            wp[3] = vFlat;
+            wp[4] = vFlat;
+            wp[5] = vHalf;
+            wp[6] = vDepth;
+            wp[7] = vFlat;
+            wp[8] = vFlat;
+            wp[9] = vHalf;
+            wp[10] = vFlat;
+            wp[11] = vFlat;
             sWalkWaypointInitFlags[0] = 1;
         }
 
@@ -1575,7 +1589,7 @@ extern "C" void rebuildWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     CVec3 dir = boxMin - boxMax;
     mgr.field_0x7C = paramF;
     mgr.field_0x80 = lbl_eu_8066A8AC;
-    mgr.field_0x84 = (-1.0f);
+    mgr.field_0x84 = lbl_eu_8066A8B4;
     mgr.dir = dir;
     if (mgr.dir.x != lbl_eu_8066A8AC || mgr.dir.z != lbl_eu_8066A8AC) {
         f32 lenSq = mgr.dir.z * mgr.dir.z
@@ -1754,10 +1768,10 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const f32 zeroF = lbl_eu_8066A8AC;
     for (s32 pass = 0; pass < 90; ++pass) {
         const ScnWalkNode& cn = m.nodes[idx];
-        f32 curMinX = (0.5f * (f32)(cn.x));
-        f32 curMinZ = (0.5f * (f32)(cn.z));
-        f32 curMaxX = (f32)(cell * (f64)(cn.width + 1)) + curMinX;
-        f32 curMaxZ = (f32)(cell * (f64)(cn.depth + 1)) + curMinZ;
+        f32 curMinX = lbl_eu_8066A898 * cn.x;
+        f32 curMinZ = lbl_eu_8066A898 * cn.z;
+        f32 curMaxX = (f32)(cell * s32ToF64_A8A0(cn.width + 1)) + curMinX;
+        f32 curMaxZ = (f32)(cell * s32ToF64_A8A0(cn.depth + 1)) + curMinZ;
 
         u16 cnt = m.edges[cn.edgeOffset];
         const u16* p = &m.edges[cn.edgeOffset + 1];
@@ -1767,10 +1781,10 @@ extern "C" s32 stepWalker__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
             const ScnWalkNode& nn = m.nodes[n];
             if (nn.reserved8 & 2)
                 continue;
-            f32 nMinX = (0.5f * (f32)(nn.x));
-            f32 nMinZ = (0.5f * (f32)(nn.z));
-            f32 nMaxX = (f32)(cell * (f64)(nn.width + 1)) + nMinX;
-            f32 nMaxZ = (f32)(cell * (f64)(nn.depth + 1)) + nMinZ;
+            f32 nMinX = lbl_eu_8066A898 * nn.x;
+            f32 nMinZ = lbl_eu_8066A898 * nn.z;
+            f32 nMaxX = (f32)(cell * s32ToF64_A8A0(nn.width + 1)) + nMinX;
+            f32 nMaxZ = (f32)(cell * s32ToF64_A8A0(nn.depth + 1)) + nMinZ;
 
             if (curMaxX == nMinX) {
                 // neighbour directly on the +x side: vertical portal

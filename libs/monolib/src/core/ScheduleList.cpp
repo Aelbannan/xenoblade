@@ -1,144 +1,65 @@
 // Auto-scaffolded catalog TU for monolib/src/core/ScheduleList
-// Dissolved-data form (monolibdata2 splice): the retail split object carries
-// the ScheduleList / reslist / IScheduleContainer data sections with RELOCS
-// (zero bytes in the .o, real addresses at link), so every pointer is spelled
-// as `(u32)&symbol` (R_PPC_ADDR32) rather than a literal. The vtables/RTTI
-// are therefore reproduced as raw extern "C" arrays instead of C++ virtual
-// class auto-emission (which would add compiler-generated vtables/typeinfo
-// with different layout and names).
+// The ScheduleList / reslist / IScheduleContainer vtables and RTTI are emitted
+// by MWCC from the real polymorphic classes below. Their retail linker labels
+// are mapped to the compiler spellings in config/*/symbols.txt.
 
 #include <harness_catalog.h>
 #include "monolib/core/CSchedule.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/util/reslist.hpp"
 
-// Imports from code_804E36DC.cpp / CSchedule.cpp (defined there with C
-// linkage; the canonical declarations live in headers that are out of this
-// TU's writable scope).
 extern "C" void schedReleaseAllItems(CSchedule* self);
-// CSchedule::FeedTargetDist/Update are members now; see monolib/core/CSchedule.hpp.
-// (line kept to hold downstream -ipa line numbers stable.)
 extern "C" void __ct__CSchedule(CSchedule* self);
-// (Sched_Init is now CSchedule::Init; stale decl retired 2026-10-18.)
-// (line kept to hold downstream -ipa line numbers stable.)
-// (line kept to hold downstream -ipa line numbers stable.)
-extern "C" void __dt__9CScheduleFv(void* self, int flag);
 
-// MWCC runtime delete helpers (retail `delete` / `delete[]` lowering).
-
-// ---------------------------------------------------------------------------
-// Plain layout mirror of the ScheduleList object (non-polymorphic; the C++
-// virtual machinery would auto-emit vtables/RTTI this TU deliberately
-// sprawls as raw data).
-//
-//  0x0 ScheduleList vtable ptr
-//  0x4 embedded reslist<CSchedule> (its own vptr)
-//    0x4 mStartNodePtr           0xc mStartNode (12B)
-//    0x18 mList  0x1c mCapacity  0x20 unk1C   (size 0x24)
-// ---------------------------------------------------------------------------
-struct SLNode {
-    SLNode* mNext;   // 0x0
-    SLNode* mPrev;   // 0x4
-    void*   mItem;   // 0x8
+// name-guess: the class names are the retail RTTI strings; the member names
+// follow the existing SchedList_* retail entry points at their vtable slots.
+struct __declspec(novtable) IScheduleContainer {
+    virtual ~IScheduleContainer() = 0;
 };
+inline IScheduleContainer::~IScheduleContainer() {}
 
-struct SLResBase {
-    void*   vtable;         // 0x0
-    SLNode* mStartNodePtr;  // 0x4
-    SLNode  mStartNode;     // 0x8 (8..0x14)
-    SLNode* mList;          // 0x14
-    int     mCapacity;      // 0x18
-    unsigned char unk1C;    // 0x1c
+struct ScheduleList : IScheduleContainer {
+    ScheduleList();
+    virtual ~ScheduleList();
+    virtual void step(f32 dt);
+    virtual void sweepAll();
+    virtual void sweepMatched(u8* x);
+    virtual CSchedule* add(ScheduleEntry* entries, u8* p8, u8* pc,
+                          u32 fa, u32 fb, u8* p10);
+    virtual void drop(CSchedule* item);
+    virtual void dropByField14(u32 x);
+    virtual void clearMatchTags(u32 x);
+    virtual u32 tally();
+    virtual void* ringHead();
+
+    reslist<CSchedule*> mRes;
 };
 
-struct SLList {
-    void*     mSelfVtbl;    // 0x0
-    SLResBase mRes;         // 0x4
-};
+typedef _reslist_node<CSchedule*> SLNode;
 
-// Forward declarations so cross-section reloc expressions resolve (the
-// .data <-> .sdata locator rings reference each other's labels).
-extern "C" const char lbl_eu_80524740[16];
-extern "C" const char lbl_eu_80524750[24];
-extern "C" const char lbl_eu_80524768[28];
-extern "C" const char lbl_eu_80524784[20];
-extern "C" u32 __RTTI__12ScheduleList[2];
-extern "C" u32 lbl_eu_80663C18[2];
-extern "C" u32 lbl_eu_80663C20[2];
-extern "C" u32 __RTTI__18IScheduleContainer[2];
-extern "C" u32 lbl_eu_805700A8[3];
-extern "C" u32 lbl_eu_805700B4[3];
-extern "C" u32 lbl_eu_805700C0[3];
-extern "C" u32 lbl_eu_805700CC[3];
+template<> _reslist_base<CSchedule*>::~_reslist_base() {
+    SLNode* node;
+    SLNode* cur;
+    node = mStartNodePtr->mNext;
+    while (node != mStartNodePtr) {
+        cur = node;
+        node = node->mNext;
+        cur->mNext = 0;
+    }
+    mStartNodePtr->mNext = mStartNodePtr;
+    mStartNodePtr->mPrev = mStartNodePtr;
+    if (unk1C == 0) {
+        if (mList != 0) {
+            operator delete[](mList);
+            mList = 0;
+        }
+    }
+}
 
-// ============================================================================
-// .rodata (88B, align 8): RTTI typeinfo name strings (no relocs).
-// ============================================================================
-extern "C" __declspec(align(8)) const char lbl_eu_80524740[16] = {
-    'S','c','h','e','d','u','l','e','L','i','s','t', 0,0,0,0,
-};
-extern "C" const char lbl_eu_80524750[24] = {
-    'r','e','s','l','i','s','t','<','C','S','c','h','e','d','u','l','e',' ','*','>', 0,0,0,0,
-};
-extern "C" const char lbl_eu_80524768[28] = {
-    '_','r','e','s','l','i','s','t','_','b','a','s','e','<','C','S','c','h','e','d','u','l','e',' ','*','>', 0,0,
-};
-extern "C" const char lbl_eu_80524784[20] = {
-    'I','S','c','h','e','d','u','l','e','C','o','n','t','a','i','n','e','r', 0,0,
-};
+// ~reslist<CSchedule*> inlines the base destructor body exactly as retail.
+template<> reslist<CSchedule*>::~reslist() {}
 
-// ============================================================================
-// .sdata (32B, align 8): RTTI locators { typeinfo name, base vtable }.
-// ============================================================================
-extern "C" __declspec(align(8)) u32 __RTTI__12ScheduleList[2] = {
-    (u32)&lbl_eu_80524740, (u32)&lbl_eu_805700A8,
-};
-extern "C" u32 lbl_eu_80663C18[2] = {
-    (u32)&lbl_eu_80524750, (u32)&lbl_eu_805700C0,
-};
-extern "C" u32 lbl_eu_80663C20[2] = {
-    (u32)&lbl_eu_80524768, 0,
-};
-extern "C" u32 __RTTI__18IScheduleContainer[2] = {
-    (u32)&lbl_eu_80524784, 0,
-};
-
-// ============================================================================
-// .data (96B, align 8): ScheduleList vtable (48B) + 4 x 12B sub-tables.
-// ============================================================================
-extern "C" SLResBase* __dt___reslist_base_CSchedule(SLResBase* self, int flag);
-extern "C" SLResBase* __dt__reslist_CSchedule(SLResBase* self, int flag);
-extern "C" SLList* __dt__12ScheduleListFv(SLList* self, int flag);
-extern "C" void SchedList_StepAll(SLList* self, f32 dt);
-extern "C" void SchedList_SweepAll(SLList* self);
-extern "C" void SchedList_SweepMatched(SLList* self, u8* x);
-extern "C" CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
-                                    u8* p8, u8* pc, u32 fa, u32 fb, u8* p10);
-extern "C" void SchedList_DropItem(SLList* self, CSchedule* x);
-extern "C" void SchedList_DropByField14(SLList* self, u32 x);
-extern "C" void SchedList_ClearMatchTags(SLList* self, u32 x);
-extern "C" u32 SchedList_TallyItems(SLList* self);
-extern "C" void* SchedList_RingHead(u8* self);
-
-extern "C" __declspec(align(8)) u32 lbl_eu_80570078[12] __attribute__((weak)) = {
-    (u32)&__RTTI__12ScheduleList, 0x00000000,
-    (u32)&__dt__12ScheduleListFv, (u32)&SchedList_StepAll,
-    (u32)&SchedList_SweepAll, (u32)&SchedList_SweepMatched,
-    (u32)&SchedList_AddItem, (u32)&SchedList_DropItem,
-    (u32)&SchedList_DropByField14, (u32)&SchedList_ClearMatchTags,
-    (u32)&SchedList_TallyItems, (u32)&SchedList_RingHead,
-};
-extern "C" u32 lbl_eu_805700A8[3] = {
-    (u32)&__RTTI__18IScheduleContainer, 0, 0,
-};
-extern "C" u32 lbl_eu_805700B4[3] __attribute__((weak)) = {
-    (u32)&lbl_eu_80663C18, 0, (u32)&__dt__reslist_CSchedule,
-};
-extern "C" u32 lbl_eu_805700C0[3] = {
-    (u32)&lbl_eu_80663C20, 0, 0,
-};
-extern "C" u32 lbl_eu_805700CC[3] __attribute__((weak)) = {
-    (u32)&lbl_eu_80663C20, 0, (u32)&__dt___reslist_base_CSchedule,
-};
+typedef ScheduleList SLList;
 
 // ============================================================================
 // .sbss (24B): zero-init globals owned by this unit.
@@ -198,50 +119,30 @@ static u32 slAllocHandle(void) {
     return *(u32*)&lbl_eu_8065FC18[2];
 }
 
-// ---------------------------------------------------------------------------
-// ScheduleList constructor body. Retail has ONE ScheduleList::ScheduleList
-// that MWCC inlined at every allocation site (__ct__804E4B64 once,
-// __ct__804E4F9C twice) - spelled as a macro so each site compiles its own
-// copy exactly like an inlined callee. Store order mirrors retail codegen:
-// ScheduleList vptr, embedded-reslist ctor vptr (base, then overridden by
-// the derived reslist table after member init), member init, node array.
-// ---------------------------------------------------------------------------
-#define SCHEDULELIST_CTOR_BODY(list)                                       \
-    do {                                                                   \
-        SLNode* slNode;                                                    \
-        SLNode* slCur;                                                     \
-        u32 slI;                                                           \
-        (list)->mSelfVtbl = (void*)&lbl_eu_80570078;                       \
-        (list)->mRes.vtable = (void*)&lbl_eu_805700CC;                     \
-        (list)->mRes.mList = 0;                                            \
-        (list)->mRes.mCapacity = 0;                                        \
-        (list)->mRes.unk1C = 0;                                            \
-        (list)->mRes.mStartNodePtr = &(list)->mRes.mStartNode;             \
-        (list)->mRes.mStartNodePtr->mNext = (list)->mRes.mStartNodePtr;    \
-        (list)->mRes.mStartNodePtr->mPrev = (list)->mRes.mStartNodePtr;    \
-        (list)->mRes.vtable = (void*)&lbl_eu_805700B4;                     \
-        (list)->mRes.mList =                                               \
-            (SLNode*)mtl::MemManager::allocate_array(0x1800, slAllocHandle()); \
-        for (slI = 0x200; slI != 0; slI--) {                               \
-            (list)->mRes.mList[slI - 1].mNext = 0;                         \
-        }                                                                  \
-        (list)->mRes.mCapacity = 0x200;                                    \
-        slNode = (list)->mRes.mStartNodePtr->mNext;                        \
-        while (slNode != (list)->mRes.mStartNodePtr) {                     \
-            slCur = slNode;                                                \
-            slNode = slNode->mNext;                                        \
-            slCur->mNext = 0;                                              \
-        }                                                                  \
-        (list)->mRes.mStartNodePtr->mNext = (list)->mRes.mStartNodePtr;    \
-        (list)->mRes.mStartNodePtr->mPrev = (list)->mRes.mStartNodePtr;    \
-    } while (0)
+// Compiler-generated ScheduleList ctor installs both vptrs; only the node
+// reservation remains in the source-level constructor.
+ScheduleList::ScheduleList() {
+    mRes.mList = (SLNode*)mtl::MemManager::allocate_array(0x1800, slAllocHandle());
+    for (u32 i = 0x200; i != 0; i--) {
+        mRes.mList[i - 1].mNext = 0;
+    }
+    mRes.mCapacity = 0x200;
+    SLNode* slNode = mRes.mStartNodePtr->mNext;
+    while (slNode != mRes.mStartNodePtr) {
+        SLNode* slCur = slNode;
+        slNode = slNode->mNext;
+        slCur->mNext = 0;
+    }
+    mRes.mStartNodePtr->mNext = mRes.mStartNodePtr;
+    mRes.mStartNodePtr->mPrev = mRes.mStartNodePtr;
+}
 
 // ---------------------------------------------------------------------------
 // SchedList_StepAll: step every schedule (CSchedule::Update with a delta), then
 // remove-and-destroy any schedule whose flags select the removal path
 // (bit 10 set, bit 15 clear).
 // ---------------------------------------------------------------------------
-void SchedList_StepAll(SLList* self, f32 dt) {
+void ScheduleList::step(f32 dt) {
     SLNode* node;
     u32 count = 0;
     CSchedule* item;
@@ -250,24 +151,24 @@ void SchedList_StepAll(SLList* self, f32 dt) {
     SLNode* rnode;
     int removed;
 
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel) {
         node = node->mNext;
         count++;
     }
     if (count != 0) {
-        node = (*(SLNode**)&self->mRes.mStartNodePtr)->mNext;
-        while (node != self->mRes.mStartNodePtr && node != 0) {
-            ((CSchedule*)node->mItem)->Update(dt);
+        node = (*(SLNode**)&mRes.mStartNodePtr)->mNext;
+        while (node != mRes.mStartNodePtr && node != 0) {
+            (node->mItem)->Update(dt);
             node = node->mNext;
         }
         do {
             removed = 0;
-            sentinel = self->mRes.mStartNodePtr;
+            sentinel = mRes.mStartNodePtr;
             rnode = sentinel->mNext;
             while (rnode != sentinel && rnode != 0) {
-                item = (CSchedule*)rnode->mItem;
+                item = rnode->mItem;
                 if (item->field_0x00.b10 && !item->field_0x00.b15) {
                     if (item != 0) {
                         if (item != 0) {
@@ -292,40 +193,40 @@ void SchedList_StepAll(SLList* self, f32 dt) {
 }
 
 // SchedList_SweepAll: schedReleaseAllItems on each schedule, guarded by a non-empty list.
-void SchedList_SweepAll(SLList* self) {
+void ScheduleList::sweepAll() {
     SLNode* node;
     u32 count = 0;
     SLNode* sentinel;
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel) {
         node = node->mNext;
         count++;
     }
     if (count != 0) {
-        node = (*(SLNode**)&self->mRes.mStartNodePtr)->mNext;
-        while (node != self->mRes.mStartNodePtr && node != 0) {
-            schedReleaseAllItems((CSchedule*)node->mItem);
+        node = (*(SLNode**)&mRes.mStartNodePtr)->mNext;
+        while (node != mRes.mStartNodePtr && node != 0) {
+            schedReleaseAllItems(node->mItem);
             node = node->mNext;
         }
     }
 }
 
 // SchedList_SweepMatched: CSchedule::FeedTargetDist on each schedule whose field_0x10 matches x.
-void SchedList_SweepMatched(SLList* self, u8* x) {
+void ScheduleList::sweepMatched(u8* x) {
     SLNode* node;
     u32 count = 0;
     SLNode* sentinel;
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel) {
         node = node->mNext;
         count++;
     }
     if (count != 0) {
-        node = (*(SLNode**)&self->mRes.mStartNodePtr)->mNext;
-        while (node != self->mRes.mStartNodePtr) {
-            CSchedule* item = (CSchedule*)node->mItem;
+        node = (*(SLNode**)&mRes.mStartNodePtr)->mNext;
+        while (node != mRes.mStartNodePtr) {
+            CSchedule* item = node->mItem;
             if (x == item->field_0x10) {
                 item->FeedTargetDist();
             }
@@ -338,8 +239,8 @@ void SchedList_SweepMatched(SLList* self, u8* x) {
 // SchedList_AddItem: allocate a CSchedule, initialize it with the six forwarded
 // arguments, and push it onto the ring's first free slot.
 // ---------------------------------------------------------------------------
-CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
-                         u8* p8, u8* pc, u32 fa, u32 fb, u8* p10) {
+CSchedule* ScheduleList::add(ScheduleEntry* entries, u8* p8, u8* pc,
+                             u32 fa, u32 fb, u8* p10) {
     SLNode* sentinel;
     SLNode* temp;
     u32 capacity;
@@ -367,16 +268,16 @@ CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
         }
         return 0;
     }
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     i = 0;
-    capacity = self->mRes.mCapacity;
+    capacity = mRes.mCapacity;
     while (i < capacity) {
-        if (self->mRes.mList[i].mNext == 0) {
+        if (mRes.mList[i].mNext == 0) {
             break;
         }
         i++;
     }
-    temp = &self->mRes.mList[i];
+    temp = &mRes.mList[i];
     // reslist setItem: the original wraps the store in try/catch(...){throw;}
     // - under -Cpp_exceptions on each inlined instance carries null-guards
     // plus an exception-frame sp-save.
@@ -397,11 +298,11 @@ CSchedule* SchedList_AddItem(SLList* self, ScheduleEntry* entries,
 }
 
 // SchedList_DropItem: find node holding x, destroy x, unlink the node.
-void SchedList_DropItem(SLList* self, CSchedule* x) {
+void ScheduleList::drop(CSchedule* x) {
     SLNode* node;
     SLNode* sentinel;
     if (x == 0) return;
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel && node->mItem != x) {
         node = node->mNext;
@@ -423,16 +324,16 @@ void SchedList_DropItem(SLList* self, CSchedule* x) {
 
 // SchedList_DropByField14: remove first node whose item's field_0x14 matches x;
 // field_0x18 match clears instead.
-void SchedList_DropByField14(SLList* self, u32 x) {
+void ScheduleList::dropByField14(u32 x) {
     SLNode* node;
     SLNode* cur;
     CSchedule* item;
     if (x == 0) return;
-    node = self->mRes.mStartNodePtr->mNext;
-    while (node != self->mRes.mStartNodePtr) {
+    node = (*(SLNode**)&mRes.mStartNodePtr)->mNext;
+    while (node != mRes.mStartNodePtr) {
         cur = node;
         node = node->mNext;
-        item = (CSchedule*)cur->mItem;
+        item = cur->mItem;
         if (item->field_0x14 == x) {
             if (item != 0) {
                 if (item != 0) {
@@ -454,18 +355,18 @@ void SchedList_DropByField14(SLList* self, u32 x) {
 }
 
 // SchedList_ClearMatchTags: clear any schedule's field_0x14/field_0x18 that matches x.
-void SchedList_ClearMatchTags(SLList* self, u32 x) {
+void ScheduleList::clearMatchTags(u32 x) {
     u32 zero = 0;
     SLNode* cur;
     SLNode* node;
     SLNode* sentinel;
     CSchedule* item;
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     node = sentinel->mNext;
-    while (node != self->mRes.mStartNodePtr) {
+    while (node != mRes.mStartNodePtr) {
         cur = node;
         node = node->mNext;
-        item = (CSchedule*)cur->mItem;
+        item = cur->mItem;
         if (item->field_0x14 == x) {
             item->field_0x14 = zero;
         } else if (item->field_0x18 == x) {
@@ -475,11 +376,11 @@ void SchedList_ClearMatchTags(SLList* self, u32 x) {
 }
 
 // SchedList_TallyItems: count the schedules in the ring (excludes the sentinel).
-u32 SchedList_TallyItems(SLList* self) {
+u32 ScheduleList::tally() {
     SLNode* node;
     SLNode* sentinel;
     u32 count = 0;
-    sentinel = self->mRes.mStartNodePtr;
+    sentinel = mRes.mStartNodePtr;
     node = sentinel->mNext;
     while (node != sentinel) {
         node = node->mNext;
@@ -489,11 +390,11 @@ u32 SchedList_TallyItems(SLList* self) {
 }
 
 // SchedList_RingHead: walk the sentinel ring back to its head.
-void* SchedList_RingHead(u8* self) {
-    u8* head = *(u8**)((u8*)self + 8);
-    u8* cur = *(u8**)head;
+void* ScheduleList::ringHead() {
+    SLNode* head = mRes.mStartNodePtr;
+    SLNode* cur = head->mNext;
     while (cur != head) {
-        cur = *(u8**)cur;
+        cur = cur->mNext;
     }
     return head;
 }
@@ -509,7 +410,7 @@ void __ct__804E4B64(int arg) {
     } else {
         list = (SLList*)mtl::MemManager::allocate(0x24, slAllocHandle());
         if (list != 0) {
-            SCHEDULELIST_CTOR_BODY(list);
+            new (list) ScheduleList();
         }
     }
     if (arg == 0) {
@@ -520,131 +421,35 @@ void __ct__804E4B64(int arg) {
     }
 }
 
-// __dt___reslist_base_CSchedule: clear ring, free slot array, optionally free
-// self. CW destructors return this; the entry null-guard and the vptr store
-// back to the base-class table are part of retail codegen.
-SLResBase* __dt___reslist_base_CSchedule(SLResBase* base, int flag) {
-    SLNode* node;
-    SLNode* cur;
-    if (base != 0) {
-        *(void**)&base->vtable = (void*)&lbl_eu_805700CC;
-        node = base->mStartNodePtr->mNext;
-        while (node != base->mStartNodePtr) {
-            cur = node;
-            node = node->mNext;
-            cur->mNext = 0;
-        }
-        base->mStartNodePtr->mNext = base->mStartNodePtr;
-        base->mStartNodePtr->mPrev = base->mStartNodePtr;
-        if (base->unk1C == 0) {
-            if (base->mList != 0) {
-                operator delete[](base->mList);
-                base->mList = 0;
-            }
-        }
-        if (flag > 0) {
-            operator delete(base);
-        }
-    }
-    return base;
-}
-
-// __dt__reslist_CSchedule: ~reslist<CSchedule*> - doubled entry guard around
-// the (inlined base) dtor body storing the base-class vtable; the delete-self
-// flag check sits outside the inner guard.
-SLResBase* __dt__reslist_CSchedule(SLResBase* self, int flag) {
-    SLNode* node;
-    SLNode* cur;
-    if (self != 0) {
-        if (self != 0) {
-            *(void**)&self->vtable = (void*)&lbl_eu_805700CC;
-            node = self->mStartNodePtr->mNext;
-            while (node != self->mStartNodePtr) {
-                cur = node;
-                node = node->mNext;
-                cur->mNext = 0;
-            }
-            self->mStartNodePtr->mNext = self->mStartNodePtr;
-            self->mStartNodePtr->mPrev = self->mStartNodePtr;
-            if (self->unk1C == 0) {
-                if (self->mList != 0) {
-                    operator delete[](self->mList);
-                    self->mList = 0;
-                }
-            }
-        }
-        if (flag > 0) {
-            operator delete(self);
-        }
-    }
-    return self;
-}
-
-// ---------------------------------------------------------------------------
-// __dt__12ScheduleListFv: destroy every schedule in the ring (virtual dtor
-// dispatch), unlink nodes, run the embedded reslist member dtor inline
-// (doubled guard + derived-reslist vptr store), then optionally free self.
-// ---------------------------------------------------------------------------
-SLList* __dt__12ScheduleListFv(SLList* self, int flag) {
-    SLResBase* res;
+// ~ScheduleList destroys the schedules and clears the ring; MWCC emits the
+// ScheduleList vptr store and inlines ~reslist after the source body.
+ScheduleList::~ScheduleList() {
     SLNode* iNode;
-    SLNode* iCur;
     CSchedule* item;
     SLNode* clNode;
     SLNode* clCur;
-    SLNode* mNode;
-    SLNode* mCur;
 
-    if (self != 0) {
-        *(void**)&self->mSelfVtbl = (void*)&lbl_eu_80570078;
-        iNode = self->mRes.mStartNodePtr->mNext;
-        while (iNode != self->mRes.mStartNodePtr) {
-            item = (CSchedule*)iNode->mItem;
+    iNode = mRes.mStartNodePtr->mNext;
+    while (iNode != mRes.mStartNodePtr) {
+        item = iNode->mItem;
+        if (item != 0) {
             if (item != 0) {
-                if (item != 0) {
-                    scheduleDestroy(item);
-                }
-                iNode->mItem = 0;
+                scheduleDestroy(item);
             }
-            iNode = iNode->mNext;
+            iNode->mItem = 0;
         }
-        clNode = self->mRes.mStartNodePtr->mNext;
-        while (clNode != self->mRes.mStartNodePtr) {
-            SLNode* clCur = clNode;
-            clNode = clNode->mNext;
-            clCur->mNext = 0;
-        }
-        self->mRes.mStartNodePtr->mNext = self->mRes.mStartNodePtr;
-        self->mRes.mStartNodePtr->mPrev = self->mRes.mStartNodePtr;
-
-        res = &self->mRes;
-        if (res != 0) {
-            if (res != 0) {
-                *(void**)&res->vtable = (void*)&lbl_eu_805700CC;
-                mNode = res->mStartNodePtr->mNext;
-                while (mNode != res->mStartNodePtr) {
-                    mCur = mNode;
-                    mNode = mNode->mNext;
-                    mCur->mNext = 0;
-                }
-                res->mStartNodePtr->mNext = res->mStartNodePtr;
-                res->mStartNodePtr->mPrev = res->mStartNodePtr;
-                if (res->unk1C == 0) {
-                    if (res->mList != 0) {
-                        operator delete[](res->mList);
-                        res->mList = 0;
-                    }
-                }
-            }
-        }
-        if (flag > 0) {
-            operator delete(self);
-        }
+        iNode = iNode->mNext;
     }
-    return self;
+    clNode = mRes.mStartNodePtr->mNext;
+    while (clNode != mRes.mStartNodePtr) {
+        clCur = clNode;
+        clNode = clNode->mNext;
+        clCur->mNext = 0;
+    }
+    mRes.mStartNodePtr->mNext = mRes.mStartNodePtr;
+    mRes.mStartNodePtr->mPrev = mRes.mStartNodePtr;
 }
 
-// SchedList_TeardownAll: terminate the global schedule lists.
 extern "C" void SchedList_TeardownAll(u32 x) {
     if (x != 0) {
         if (sAlternateScheduleList != 0) {
@@ -727,7 +532,7 @@ void __ct__804E4F9C() {
     } else {
         list = (SLList*)mtl::MemManager::allocate(0x24, slAllocHandle());
         if (list != 0) {
-            SCHEDULELIST_CTOR_BODY(list);
+            new (list) ScheduleList();
         }
     }
     sMainScheduleList = list;
@@ -743,7 +548,7 @@ void __ct__804E4F9C() {
         } else {
             list = (SLList*)mtl::MemManager::allocate(0x24, slAllocHandle());
             if (list != 0) {
-                SCHEDULELIST_CTOR_BODY(list);
+                new (list) ScheduleList();
             }
         }
         sAlternateScheduleList = list;

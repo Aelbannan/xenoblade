@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 
-__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051BF28[0x28] = {
+__attribute__((aligned(8))) const char lbl_eu_8051BF28[0x28] = {
     0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x31, 0x20, 0x4D, 0x57, 0x53, 0x46, 0x44, 0x5F, 0x4D, 0x61, 0x6C, 0x6C, 0x6F, 0x63, 0x3A, 0x20, 0x63, 0x6E, 0x74, 0x20, 0x6F, 0x76, 0x65, 0x72, 0x2E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
@@ -12,7 +12,7 @@ extern char lbl_eu_8051CCD8[];
 extern char lbl_eu_8051C550[];
 extern char lbl_eu_8051CC98[];
 
-__declspec(section ".rodata") __attribute__((aligned(4))) const void *lbl_eu_8051BF50[9] = {
+__attribute__((aligned(4))) const void * const lbl_eu_8051BF50[9] = {
     lbl_eu_8051C8B0,
     lbl_eu_8051C8F0,
     lbl_eu_8051C940,
@@ -23,7 +23,7 @@ __declspec(section ".rodata") __attribute__((aligned(4))) const void *lbl_eu_805
     lbl_eu_8051CC98
 };
 
-__declspec(section ".rodata") __attribute__((aligned(4))) const void *lbl_eu_8051BF74[9] = {
+__attribute__((aligned(4))) const void * const lbl_eu_8051BF74[9] = {
     lbl_eu_8051C8B0,
     0,
     lbl_eu_8051C940,
@@ -32,7 +32,7 @@ __declspec(section ".rodata") __attribute__((aligned(4))) const void *lbl_eu_805
     0,0
 };
 
-__declspec(section ".rodata") __attribute__((aligned(4))) const void *lbl_eu_8051BF98[10] = {
+__attribute__((aligned(4))) const void * const lbl_eu_8051BF98[10] = {
     lbl_eu_8051C8B0,
     lbl_eu_8051C8F0,
     lbl_eu_8051C940,

@@ -6,11 +6,14 @@ namespace cf {
 
 // CREvtMem - realtime event memory manager (singleton)
 // Size: 0x2C
-// Singleton pointer at lbl_eu_80664260
+// Singleton pointer is CREvtMem::sInstance.
 class CREvtMem {
 public:
     CREvtMem();
     virtual ~CREvtMem();
+
+    // name-guess: sole singleton pointer at 0x80664260, written by the ctor.
+    static CREvtMem* sInstance;
 
     // Carve a 256-byte aligned block from the realtime-event arena.
     u8* allocArena(u32 size) {
@@ -38,10 +41,6 @@ public:
 };
 
 } // namespace cf
-
-// The realtime-event memory singleton (sbss; stored by the ctor, cleared by
-// the dtor).
-extern cf::CREvtMem* lbl_eu_80664260;
 
 // Arena bounds helpers imported from the CInfoCf TU (bodies in
 // kyoshin/cf/CInfoCf.cpp, reading singleton lbl_eu_80664250).

@@ -252,14 +252,12 @@ extern const float lbl_eu_80667E9C;
 
 // Default FX-send volume (retail .sdata2; passed to CfSoundMan_StartSlotSound by
 // CfSoundMan_StartTableSound when starting a sound slot at the default volume).
-extern const float lbl_eu_80667EA0;
 
 // Master-volume backing store (retail .sdata, 8 bytes; written by
 // setMasterVolume).
 extern float gSoundMasterVolume;
 
 // Volume ramp multiplier (retail .sdata2 const; used by setMasterVolume).
-extern const float lbl_eu_80667E8C;
 
 // Retail sound-manager pointer (unmangled at global scope).
 extern cf::CfSoundManGlobal* gSoundManInstance;
@@ -357,11 +355,8 @@ extern "C" void CamMan_ComputeViewFalloff(f32* outPan, f32* outVol, CfSndPoseBlo
                               CfSoundPos3* pos, f32 nearDist, f32 farDist);
 
 // nw4r math/db helpers and assert strings (retail symbols).
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 // Volume-scaling constants (retail .sdata2).
-extern const f32 lbl_eu_80667E88;
-extern const f32 lbl_eu_80667EA4;
 
 // Canonical C++ declarations for this unit's exported free functions.
 void CfSoundMan_UpdateAllRecords();

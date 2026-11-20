@@ -143,7 +143,6 @@ typedef struct MWSFCRE_SjArg {
 /* ---- External symbols / helpers ---- */
 
 extern TraceCb* gpMwPlyTraceCb;
-extern const char lbl_eu_8051A3CC[];
 extern TraceRec sTraceCreateSofdec;
 extern TraceRec sTraceDestroy;
 
@@ -215,329 +214,41 @@ void* mwPlyCreateSofdec(PlyCprm* cprm);
 void mwply_Destroy(MWSFDPLY* self);
 void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para);
 void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b);
+// name-guess: the leading retail pool error text names the parameter-format check.
+void mwsfcre_CheckSfdPrmFormat(s32 fmt) {
+    if ((u32)(fmt - 6) > 4) {
+        MWSFSVM_Error("E206011 MwsfdCrePrm: illigal buffmt.");
+    }
+}
+
 void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
     u32* outD, u32* outE, u32* outF);
 
-/* ---- Target implementations ---- */
+/* ---- Forward declarations in retail definition order ---- */
+void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
+    u32* outD, u32* outE, u32* outF);
+s32 mwPlyCalcWorkCprmSfd(PlyCprm* self);
+s32 mwsfcre_IsOuterFrmPoolUsed(PlyCprm* self);
+void MWSFCRE_SetSupplySj(MWSFDPLY* self);
+s32 mwsfcre_MallocRfb(void* pool, MWSFCRE_Para* para, void** out);
+s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out);
+void criware_eu_803A29E0(s32 mode, u32 unused, SfdCondTbl* dest, MWSFDPLY* self);
+void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para);
+void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self);
+void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b);
+s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self);
+void* criware_8039FF34(MWSFDPLY* self);
+void* mwPlyCreateSofdec(PlyCprm* cprm);
+s32 mwsfcre_MallocCompoWork(MWSFDPLY* self);
+void criware_803A09B4(MWSFDPLY* self);
+void mwply_Destroy(MWSFDPLY* self);
+uint32_t criware_803A0BA8(MWSFDPLY* self, uint32_t r4);
+void criware_803A0BDC(void* self);
+void criware_803A0C1C();
+void criware_803A0C20(void* self);
 
-s32 mwsfcre_IsOuterFrmPoolUsed(PlyCprm* self) {
-    s32 ok = 1;
-    void** pool;
-    s32 poolCount = self->poolCount;
-    s32 w;
-    s32 poolSize = self->poolSize;
-    s32 h;
-    pool = self->pool;
-    w = self->width;
-    h = self->height;
-    if (poolCount > 0 || poolSize > 0 || pool != NULL) {
-        s32 w16 = (w + 15) / 16;
-        s32 h16 = (h + 15) / 16;
-        s32 W = w16 * 16;
-        s32 H = h16 * 16;
-        s32 luma = ((w16 >> 27) & 1) + W;
-        s32 chroma = ((h16 >> 27) & 1) + H;
-        s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
-                        H * (((W + 0x1f) / 32) * 32) + 0x20;
-        if (poolSize < frameSize) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0xB9);
-            ok = 0;
-        }
-        if (pool == NULL) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0xDB);
-            ok = 0;
-        }
-        for (s32 i = 0; i < poolCount; i++) {
-            if (pool[i] == NULL) {
-                MWSFSVM_Error(lbl_eu_8051A3CC + 0xFC);
-                ok = 0;
-            }
-        }
-    } else {
-        ok = 0;
-    }
-    return ok;
-}
+/* ---- Compiler-pooled constants retained at the retail addresses ---- */
 
-void MWSFCRE_SetSupplySj(MWSFDPLY* self) {
-    u32 sj = self->sj;
-    void* sfd = self->sfd;
-    MWSFCRE_SjArg arg;
-    if (sj != 0) {
-        if (sj == (u32)self->uni) {
-            arg.a = 2;
-            arg.b = sj;
-            arg.c = 0;
-            arg.d = 0;
-            arg.e = 0;
-            arg.f = 0;
-        } else {
-            if (sj == (u32)self->rbf) {
-                arg.a = 0;
-                arg.b = sj;
-                arg.c = self->field_0x508;
-                arg.d = self->field_0x50c;
-                arg.e = self->field_0x510;
-                arg.f = 0;
-            } else {
-                arg.a = self->field_0x514, arg.b = sj;
-                arg.c = self->field_0x518;
-                arg.d = self->field_0x51c;
-                arg.e = self->field_0x520;
-                arg.f = 0;
-            }
-        }
-        if (self->sj == (u32)self->uni) {
-            SFD_SetCond(self->sfd, 0x55, 1);
-            SFD_SetCond(self->sfd, 0x56, 0x800);
-        } else {
-            SFD_SetCond(self->sfd, 0x55, 0);
-            SFD_SetCond(self->sfd, 0x56, 4);
-        }
-        if (SFD_SetSupplySj(sfd, &arg)) {
-            MWSFLIB_SetErrCode(-0x138);
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x11D);
-        }
-    }
-}
-
-s32 mwsfcre_MallocRfb(void* pool, MWSFCRE_Para* para, void** out) {
-    s32 outer = para->outer;
-    /* Round width/height up to macroblock multiples and size one RGB565 +
-     * double-pitch-chroma frame (+0x20 header). */
-    s32 w16 = (para->width + 15) / 16;
-    s32 h16 = (para->height + 15) / 16;
-    s32 W = w16 * 16;
-    s32 H = h16 * 16;
-    s32 luma = ((w16 >> 27) & 1) + W;
-    s32 chroma = ((h16 >> 27) & 1) + H;
-    s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
-                    H * (((W + 0x1f) / 32) * 32) + 0x20;
-    s32 rc = 0;
-    if (outer != 0) {
-        if (outer < 2)
-            goto fail;
-        if (para->poolSize < frameSize)
-            goto fail;
-        /* Negated second test (not `else goto`) emits retail's blt/bge pair. */
-        if (para->poolSize >= frameSize)
-            goto good;
-
-    fail:
-        out[0] = NULL;
-        rc = -1;
-        out[1] = NULL;
-        goto join;
-    good:
-        out[0] = ((void**)para->pool)[0];
-        out[1] = ((void**)para->pool)[1];
-        goto join;
-    } else {
-        out[0] = criware_803A3AE4(pool, frameSize);
-        out[1] = criware_803A3AE4(pool, frameSize);
-    }
-join:
-    if (out[0] == NULL || out[1] == NULL) {
-        rc = -1;
-    }
-    return rc;
-}
-
-s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
-    s32 frames = para->frameCount;
-    s32 rc = 0;
-    s32 i;
-    s32 frameSize;
-    s32 w = para->width;
-    s32 h = para->height;
-    if ((u32)para->mode > 3) {
-        MWSFSVM_Error(lbl_eu_8051A3CC);
-    }
-    s32 w16 = (w + 15) / 16;
-    s32 h16 = (h + 15) / 16;
-    s32 W = w16 * 16;
-    s32 H = h16 * 16;
-    s32 luma = ((w16 >> 27) & 1) + W;
-    s32 chroma = ((h16 >> 27) & 1) + H;
-    frameSize = H * (((W + 0x1f) / 32) * 32) +
-                ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 + 0x20;
-    if (para->outer != 0) {
-        if (para->outer < frames + 2 || para->poolSize < frameSize) {
-            rc = -1;
-        } else {
-            for (i = 0; i < frames; i++) {
-                if ((out[i] = ((void**)para->pool)[i + 2]) == NULL)
-                    rc = -1;
-            }
-        }
-    } else {
-        for (i = 0; i < frames; i++) {
-            if ((out[i] = criware_803A3AE4(pool, frameSize)) == NULL)
-                rc = -1;
-        }
-    }
-    return rc;
-}
-
-#pragma push
-#pragma auto_inline off  // noinline-ok: retail keeps these helpers out of line; -inline noauto loses MWSFCRE_ResetSfdHn
-void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self) {
-    MwsfPicUsrBuf* tgt = (MwsfPicUsrBuf*)self->picUsrTgt;
-    if (tgt == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x25F);
-    } else {
-        void* buf;
-        s32 count;
-        s32 size;
-        s32 h = self->prm.field_0x14;
-        count = tgt->count;
-        size = tgt->size;
-        buf = tgt->buf;
-        if (size < (h + 3) * count) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x294);
-        } else if (MWSFD_GetUsePicUsr() == 1) {
-            SFD_SetPicUsrBuf(self->sfd, buf, h + 3, count);
-        }
-    }
-}
-#pragma pop
-
-s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self) {
-    void* sfd = self->sfd;
-    self->sfd = NULL;
-    if (SFD_Stop(sfd)) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x31F);
-        return -1;
-    }
-    self->sfd = sfd;
-    if (criware_803C0D94(sfd, MWSFLIB_SfdErrFunc, (u32)self)) {
-        MWSFLIB_SetErrCode(-0x12F);
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x34F);
-        return -1;
-    }
-    mwsfcre_AttachPicUsrBuf(self);
-    return 0;
-}
-
-void* criware_8039FF34(MWSFDPLY* self) {
-    if (gpMwPlyTraceCb != NULL) {
-        char buf[0x200];
-        sprintf(buf, &lbl_eu_8051A3CC[0x383], self->enable,
-                self->prm.field_0x00, self->prm.field_0x04, self->prm.width,
-                self->prm.height, self->prm.frameCount, self->prm.field_0x14,
-                self->prm.field_0x18, self->prm.field_0x1c,
-                self->prm.field_0x20, self->prm.mode, self->prm.poolCount,
-                self->prm.poolSize, self->prm.pool);
-        TraceCb* cb = gpMwPlyTraceCb;
-        if (cb != NULL) {
-            sTraceCreateSofdec.self = (u32)buf;
-            cb->vtable->trace(cb, &sTraceCreateSofdec.field_0x04);
-        }
-    }
-    {
-        void* hn = mwPlyCreateSofdec((PlyCprm*)self);
-        TraceCb* cb = gpMwPlyTraceCb;
-        if (cb != NULL) {
-            sTraceCreateSofdec.field_0x74 = (u32)hn;
-            cb->vtable->trace(cb, &sTraceCreateSofdec.field_0x6c);
-        }
-        return hn;
-    }
-}
-
-s32 mwsfcre_MallocCompoWork(MWSFDPLY* self) {
-    void* tag = (u8*)self + 8;
-    /* NB: the tag object is the handle's parameter image at +8; reading the
-     * word through it keeps retail's argument colour (self->prm.field_0x14
-     * costs 1 reg swap). */
-    s32 size = MWSFSFX_CalcHnWorkSiz(self->prm.height, *(u32*)((u8*)tag + 0x0C));
-    void* work = criware_803A3AE4(self, size);
-    if (work == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x572);
-        criware_803A3A48(self);
-        return -1;
-    }
-    self->compoWork = work;
-    self->compoWorkSize = size;
-    if (MWSFTAG_IsUseAinfSj(tag) == 1) {
-        void* ainf = criware_803A3AE4(self, 0x20000);
-        if (ainf == NULL) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x593);
-            criware_803A3A48(self);
-            return -1;
-        }
-        self->ainfBuf = ainf;
-        self->ainfBufSize = 0x20000;
-    } else {
-        self->ainfBuf = NULL;
-        self->ainfBufSize = 0;
-    }
-    return 0;
-}
-
-void criware_803A09B4(MWSFDPLY* self) {
-    fn_803A537C(self);
-    if (gpMwPlyTraceCb != NULL) {
-        sTraceDestroy.self = (u32)self;
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
-    }
-    mwply_Destroy(self);
-    if (gpMwPlyTraceCb != NULL) {
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
-    }
-    *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34F4) -= 1;
-}
-
-void mwply_Destroy(MWSFDPLY* self) {
-    if (self == NULL) {
-        return;
-    }
-    MWSFD_SetProhibitServer(1);
-    mwSfdStopDec(self);
-    self->enable = 0;
-    MWSFD_SetProhibitServer(0);
-    MWSFTAG_DestroyAinfSj(self);
-    if (self->sfx != NULL) {
-        MWSFSFX_Destroy(self->sfx);
-    }
-    if (self->lsc != NULL) {
-        LSC_Destroy(self->lsc);
-    }
-    if (self->stm != NULL) {
-        MWSTM_Destroy(self->stm);
-    }
-    if (self->rbf != NULL) {
-        self->rbf->vtable->destroy(self->rbf);
-    }
-    if (self->uni != NULL) {
-        self->uni->vtable->destroy(self->uni);
-    }
-    if (self->field_0x634 != NULL) {
-        *self->field_0x634 = 0;
-    }
-    if (self->sfd != NULL) {
-        if (SFD_Destroy(self->sfd)) {
-            MWSFLIB_SetErrCode(-0x132);
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x301);
-        }
-    }
-    MWSST_Destroy((void*)((u8*)self + 0x5D8));
-    MWSST_Destroy((void*)((u8*)self + 0x600));
-    criware_803A3A48(self);
-    if (fn_803A7320(self)) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x5B8);
-    }
-    memset(self, 0, 0x690);
-    self->enable = 0;
-}
-
-/* ---- Non-target stubs preserved from the scaffold ---- */
-
-__declspec(section ".rodata") __attribute__((aligned(8))) const f64 lbl_eu_8051A3C0 = 4503601774854144.0;
-__declspec(section ".rodata") __attribute__((aligned(4))) const f32 lbl_eu_8051A3C8 = 0.5f;
-__declspec(section ".rodata") __attribute__((aligned(4))) const char lbl_eu_8051A3CC[0x6DC] = {
-    0x45, 0x32, 0x30, 0x36, 0x30, 0x31, 0x31, 0x20, 0x4D, 0x77, 0x73, 0x66, 0x64, 0x43, 0x72, 0x65, 0x50, 0x72, 0x6D, 0x3A, 0x20, 0x69, 0x6C, 0x6C, 0x69, 0x67, 0x61, 0x6C, 0x20, 0x62, 0x75, 0x66, 0x66, 0x6D, 0x74, 0x2E, 0x00, 0x45, 0x31, 0x31, 0x32, 0x32, 0x36, 0x31, 0x33, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x61, 0x6C, 0x63, 0x57, 0x6F, 0x72, 0x6B, 0x43, 0x70, 0x72, 0x6D, 0x53, 0x66, 0x64, 0x3A, 0x20, 0x63, 0x70, 0x72, 0x6D, 0x20, 0x69, 0x73, 0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x2E, 0x00, 0x45, 0x37, 0x30, 0x39, 0x32, 0x35, 0x30, 0x31, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x61, 0x6C, 0x63, 0x57, 0x6F, 0x72, 0x6B, 0x43, 0x70, 0x72, 0x6D, 0x53, 0x66, 0x64, 0x3A, 0x20, 0x4D, 0x34, 0x56, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x37, 0x30, 0x39, 0x32, 0x35, 0x30, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x61, 0x6C, 0x63, 0x57, 0x6F, 0x72, 0x6B, 0x43, 0x70, 0x72, 0x6D, 0x53, 0x66, 0x64, 0x3A, 0x20, 0x48, 0x32, 0x36, 0x34, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x36, 0x30, 0x38, 0x31, 0x31, 0x30, 0x32, 0x20, 0x6F, 0x75, 0x74, 0x65, 0x72, 0x5F, 0x66, 0x72, 0x6D, 0x70, 0x6F, 0x6F, 0x6C, 0x5F, 0x73, 0x69, 0x7A, 0x65, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x45, 0x39, 0x31, 0x30, 0x32, 0x32, 0x30, 0x31, 0x20, 0x6F, 0x75, 0x74, 0x65, 0x72, 0x5F, 0x66, 0x72, 0x6D, 0x70, 0x6F, 0x6F, 0x6C, 0x5F, 0x70, 0x74, 0x72, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x45, 0x36, 0x30, 0x38, 0x31, 0x31, 0x30, 0x33, 0x20, 0x6F, 0x75, 0x74, 0x65, 0x72, 0x5F, 0x66, 0x72, 0x6D, 0x70, 0x6F, 0x6F, 0x6C, 0x5F, 0x70, 0x74, 0x72, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x45, 0x32, 0x30, 0x30, 0x31, 0x30, 0x37, 0x30, 0x33, 0x42, 0x20, 0x4D, 0x57, 0x53, 0x46, 0x43, 0x52, 0x45, 0x5F, 0x53, 0x65, 0x74, 0x53, 0x75, 0x70, 0x70, 0x6C, 0x79, 0x53, 0x6A, 0x00, 0x45, 0x30, 0x39, 0x31, 0x30, 0x31, 0x36, 0x30, 0x32, 0x20, 0x45, 0x4E, 0x56, 0x5F, 0x41, 0x53, 0x56, 0x44, 0x5F, 0x48, 0x32, 0x36, 0x34, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x30, 0x39, 0x31, 0x30, 0x31, 0x36, 0x30, 0x31, 0x20, 0x45, 0x4E, 0x56, 0x5F, 0x41, 0x53, 0x56, 0x44, 0x5F, 0x48, 0x32, 0x36, 0x34, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x30, 0x39, 0x31, 0x30, 0x31, 0x36, 0x30, 0x31, 0x20, 0x45, 0x4E, 0x56, 0x5F, 0x48, 0x32, 0x36, 0x34, 0x5F, 0x54, 0x53, 0x20, 0x69, 0x73, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x32, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x65, 0x6E, 0x6F, 0x75, 0x67, 0x68, 0x20, 0x77, 0x6F, 0x72, 0x6B, 0x00, 0x45, 0x34, 0x30, 0x34, 0x31, 0x33, 0x30, 0x31, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x65, 0x6E, 0x6F, 0x75, 0x67, 0x68, 0x20, 0x77, 0x6F, 0x72, 0x6B, 0x00, 0x45, 0x32, 0x30, 0x30, 0x31, 0x30, 0x37, 0x30, 0x33, 0x43, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6F, 0x66, 0x64, 0x65, 0x63, 0x3A, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x45, 0x32, 0x30, 0x30, 0x31, 0x30, 0x37, 0x30, 0x33, 0x44, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6F, 0x66, 0x64, 0x65, 0x63, 0x3A, 0x20, 0x73, 0x65, 0x74, 0x20, 0x65, 0x72, 0x72, 0x63, 0x62, 0x00, 0x45, 0x34, 0x31, 0x30, 0x31, 0x34, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6F, 0x66, 0x64, 0x65, 0x63, 0x3A, 0x20, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x73, 0x6B, 0x67, 0x68, 0x6E, 0x2E, 0x00, 0x45, 0x30, 0x32, 0x31, 0x32, 0x30, 0x35, 0x30, 0x31, 0x20, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x61, 0x6C, 0x20, 0x45, 0x72, 0x72, 0x6F, 0x72, 0x3A, 0x20, 0x6D, 0x77, 0x73, 0x66, 0x63, 0x72, 0x65, 0x5F, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x50, 0x69, 0x63, 0x55, 0x73, 0x72, 0x42, 0x75, 0x66, 0x28, 0x29, 0x2E, 0x00, 0x45, 0x30, 0x32, 0x31, 0x32, 0x30, 0x35, 0x30, 0x32, 0x20, 0x6D, 0x77, 0x73, 0x66, 0x63, 0x72, 0x65, 0x5F, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x50, 0x69, 0x63, 0x55, 0x73, 0x72, 0x42, 0x75, 0x66, 0x28, 0x29, 0x3A, 0x20, 0x75, 0x73, 0x72, 0x64, 0x61, 0x74, 0x62, 0x75, 0x66, 0x20, 0x69, 0x73, 0x20, 0x73, 0x68, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x30, 0x32, 0x31, 0x32, 0x30, 0x35, 0x30, 0x33, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x41, 0x74, 0x74, 0x61, 0x63, 0x68, 0x50, 0x69, 0x63, 0x55, 0x73, 0x72, 0x42, 0x75, 0x66, 0x28, 0x29, 0x3A, 0x20, 0x62, 0x75, 0x66, 0x73, 0x69, 0x7A, 0x65, 0x20, 0x69, 0x73, 0x20, 0x73, 0x68, 0x6F, 0x72, 0x74, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x30, 0x31, 0x30, 0x37, 0x30, 0x33, 0x45, 0x20, 0x4D, 0x57, 0x53, 0x46, 0x43, 0x52, 0x45, 0x5F, 0x44, 0x65, 0x73, 0x74, 0x72, 0x6F, 0x79, 0x53, 0x66, 0x64, 0x00, 0x45, 0x30, 0x32, 0x30, 0x33, 0x32, 0x36, 0x31, 0x20, 0x4D, 0x57, 0x53, 0x46, 0x43, 0x52, 0x45, 0x5F, 0x52, 0x65, 0x73, 0x65, 0x74, 0x53, 0x66, 0x64, 0x48, 0x6E, 0x3A, 0x20, 0x53, 0x46, 0x44, 0x5F, 0x53, 0x74, 0x6F, 0x70, 0x28, 0x29, 0x20, 0x66, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x2E, 0x00, 0x45, 0x30, 0x32, 0x30, 0x33, 0x32, 0x36, 0x32, 0x20, 0x4D, 0x57, 0x53, 0x46, 0x43, 0x52, 0x45, 0x5F, 0x52, 0x65, 0x73, 0x65, 0x74, 0x53, 0x66, 0x64, 0x48, 0x6E, 0x3A, 0x20, 0x53, 0x46, 0x44, 0x5F, 0x53, 0x65, 0x74, 0x45, 0x72, 0x72, 0x46, 0x6E, 0x28, 0x29, 0x20, 0x66, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x2E, 0x00, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x70, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x6C, 0x64, 0x2C, 0x20, 0x25, 0x70, 0x00, 0x45, 0x31, 0x31, 0x32, 0x32, 0x36, 0x31, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6F, 0x66, 0x64, 0x65, 0x63, 0x20, 0x3A, 0x20, 0x63, 0x70, 0x72, 0x6D, 0x20, 0x69, 0x73, 0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x2E, 0x00, 0x45, 0x33, 0x30, 0x31, 0x32, 0x31, 0x30, 0x32, 0x20, 0x42, 0x75, 0x66, 0x66, 0x65, 0x72, 0x20, 0x66, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x20, 0x69, 0x73, 0x20, 0x69, 0x6E, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x2E, 0x00, 0x45, 0x34, 0x31, 0x31, 0x30, 0x39, 0x30, 0x31, 0x20, 0x4E, 0x75, 0x6D, 0x62, 0x65, 0x72, 0x20, 0x6F, 0x66, 0x20, 0x66, 0x72, 0x61, 0x6D, 0x65, 0x20, 0x70, 0x6F, 0x6F, 0x6C, 0x20, 0x65, 0x78, 0x63, 0x65, 0x65, 0x64, 0x73, 0x20, 0x31, 0x34, 0x2E, 0x00, 0x45, 0x34, 0x30, 0x36, 0x31, 0x38, 0x30, 0x31, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6F, 0x66, 0x64, 0x65, 0x63, 0x3A, 0x20, 0x4E, 0x75, 0x6D, 0x62, 0x65, 0x72, 0x20, 0x6F, 0x66, 0x20, 0x4D, 0x57, 0x50, 0x4C, 0x59, 0x20, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x65, 0x73, 0x20, 0x65, 0x78, 0x63, 0x65, 0x65, 0x64, 0x73, 0x20, 0x69, 0x74, 0x73, 0x20, 0x6D, 0x61, 0x78, 0x69, 0x6D, 0x75, 0x6D, 0x20, 0x6E, 0x75, 0x6D, 0x62, 0x65, 0x72, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x36, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x6F, 0x66, 0x64, 0x65, 0x63, 0x3A, 0x20, 0x44, 0x69, 0x64, 0x6E, 0x27, 0x74, 0x20, 0x73, 0x65, 0x74, 0x20, 0x6D, 0x61, 0x6C, 0x6C, 0x6F, 0x63, 0x2F, 0x66, 0x72, 0x65, 0x65, 0x20, 0x66, 0x75, 0x6E, 0x63, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x31, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x3A, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x53, 0x46, 0x44, 0x00, 0x45, 0x32, 0x30, 0x31, 0x33, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x3A, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x53, 0x4A, 0x00, 0x45, 0x30, 0x38, 0x31, 0x30, 0x32, 0x39, 0x30, 0x31, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x3A, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x75, 0x6E, 0x69, 0x53, 0x4A, 0x00, 0x45, 0x32, 0x30, 0x31, 0x31, 0x38, 0x35, 0x20, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x53, 0x66, 0x78, 0x48, 0x6E, 0x00, 0x45, 0x32, 0x30, 0x31, 0x32, 0x31, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x3A, 0x20, 0x63, 0x61, 0x6E, 0x27, 0x74, 0x20, 0x73, 0x65, 0x74, 0x20, 0x41, 0x64, 0x64, 0x49, 0x6E, 0x66, 0x53, 0x4A, 0x00, 0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x33, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x65, 0x6E, 0x6F, 0x75, 0x67, 0x68, 0x20, 0x77, 0x6F, 0x72, 0x6B, 0x3A, 0x20, 0x73, 0x66, 0x78, 0x5F, 0x77, 0x6B, 0x00, 0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x34, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x65, 0x6E, 0x6F, 0x75, 0x67, 0x68, 0x20, 0x77, 0x6F, 0x72, 0x6B, 0x3A, 0x20, 0x61, 0x69, 0x6E, 0x66, 0x73, 0x6A, 0x5F, 0x62, 0x75, 0x66, 0x00, 0x45, 0x32, 0x30, 0x35, 0x33, 0x30, 0x30, 0x35, 0x20, 0x66, 0x6F, 0x72, 0x67, 0x6F, 0x74, 0x20, 0x66, 0x72, 0x65, 0x65, 0x2E, 0x00, 0x45, 0x34, 0x31, 0x30, 0x32, 0x35, 0x31, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x47, 0x65, 0x74, 0x48, 0x64, 0x72, 0x49, 0x6E, 0x66, 0x57, 0x69, 0x74, 0x68, 0x4B, 0x65, 0x79, 0x3A, 0x20, 0x70, 0x61, 0x72, 0x61, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x20, 0x69, 0x73, 0x20, 0x69, 0x6C, 0x6C, 0x69, 0x67, 0x61, 0x6C, 0x2E, 0x00, 0x45, 0x37, 0x30, 0x36, 0x30, 0x35, 0x30, 0x31, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x47, 0x65, 0x74, 0x48, 0x64, 0x72, 0x41, 0x75, 0x64, 0x69, 0x6F, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6C, 0x28, 0x29, 0x3A, 0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x20, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x00, 0x45, 0x37, 0x30, 0x36, 0x30, 0x35, 0x30, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x47, 0x65, 0x74, 0x48, 0x64, 0x72, 0x41, 0x75, 0x64, 0x69, 0x6F, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6C, 0x28, 0x29, 0x3A, 0x20, 0x62, 0x73, 0x69, 0x7A, 0x65, 0x20, 0x69, 0x73, 0x20, 0x74, 0x6F, 0x6F, 0x20, 0x73, 0x6D, 0x61, 0x6C, 0x6C, 0x2E, 0x00, 0x45, 0x37, 0x30, 0x36, 0x30, 0x35, 0x30, 0x33, 0x20, 0x53, 0x46, 0x48, 0x5F, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x2E, 0x00, 0x45, 0x32, 0x30, 0x34, 0x31, 0x36, 0x31, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x47, 0x65, 0x74, 0x48, 0x64, 0x72, 0x49, 0x6E, 0x66, 0x28, 0x29, 0x3A, 0x20, 0x4E, 0x55, 0x4C, 0x4C, 0x20, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x00, 0x45, 0x32, 0x30, 0x34, 0x31, 0x36, 0x32, 0x20, 0x6D, 0x77, 0x50, 0x6C, 0x79, 0x47, 0x65, 0x74, 0x48, 0x64, 0x72, 0x49, 0x6E, 0x66, 0x28, 0x29, 0x3A, 0x20, 0x62, 0x75, 0x66, 0x73, 0x69, 0x7A, 0x65, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x00, 0x00
-};
 
 void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
     u32* outD, u32* outE, u32* outF) {
@@ -590,6 +301,7 @@ void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
     }
 }
 
+
 /* Computes the total work-buffer size needed for one SFD player slot:
  * stream buffers + frame buffers (+ SFX handler block + optional AINF SJ
  * block of 0x20000 bytes). */
@@ -603,18 +315,18 @@ s32 mwPlyCalcWorkCprmSfd(PlyCprm* self) {
     s32 half;
 
     if (self == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x25);
+        MWSFSVM_Error("E1122613 mwPlyCalcWorkCprmSfd: cprm is NULL.");
         return 0;
     }
     s32 mode = self->field_0x00;
     if (mode == 7 || mode == 6 || mode == 0xa) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x52);
+        MWSFSVM_Error("E7092501 mwPlyCalcWorkCprmSfd: M4V is not support.");
         return 0;
     }
     if (mode == 9 || mode == 8 || mode == 0xb) {
         /* EU-only modes require the extra server probe to pass. */
         if (fn_803A7328() == 0) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x85);
+            MWSFSVM_Error("E7092502 mwPlyCalcWorkCprmSfd: H264 is not support.");
             return 0;
         }
     }
@@ -635,7 +347,7 @@ s32 mwPlyCalcWorkCprmSfd(PlyCprm* self) {
         w = self->width;
         h = self->height;
         if ((u32)self->mode > 3) {
-            MWSFSVM_Error(lbl_eu_8051A3CC);
+            MWSFSVM_Error("E206011 MwsfdCrePrm: illigal buffmt.");
         }
         s32 w16 = (w + 15) / 16;
         s32 h16 = (h + 15) / 16;
@@ -666,6 +378,172 @@ s32 mwPlyCalcWorkCprmSfd(PlyCprm* self) {
     return result + sfxSize;
 }
 
+
+/* ---- Target implementations ---- */
+
+s32 mwsfcre_IsOuterFrmPoolUsed(PlyCprm* self) {
+    s32 ok = 1;
+    void** pool;
+    s32 poolCount = self->poolCount;
+    s32 w;
+    s32 poolSize = self->poolSize;
+    s32 h;
+    pool = self->pool;
+    w = self->width;
+    h = self->height;
+    if (poolCount > 0 || poolSize > 0 || pool != NULL) {
+        s32 w16 = (w + 15) / 16;
+        s32 h16 = (h + 15) / 16;
+        s32 W = w16 * 16;
+        s32 H = h16 * 16;
+        s32 luma = ((w16 >> 27) & 1) + W;
+        s32 chroma = ((h16 >> 27) & 1) + H;
+        s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
+                        H * (((W + 0x1f) / 32) * 32) + 0x20;
+        if (poolSize < frameSize) {
+            MWSFSVM_Error("E6081102 outer_frmpool_size error");
+            ok = 0;
+        }
+        if (pool == NULL) {
+            MWSFSVM_Error("E9102201 outer_frmpool_ptr error");
+            ok = 0;
+        }
+        for (s32 i = 0; i < poolCount; i++) {
+            if (pool[i] == NULL) {
+                MWSFSVM_Error("E6081103 outer_frmpool_ptr error");
+                ok = 0;
+            }
+        }
+    } else {
+        ok = 0;
+    }
+    return ok;
+}
+
+
+void MWSFCRE_SetSupplySj(MWSFDPLY* self) {
+    u32 sj = self->sj;
+    void* sfd = self->sfd;
+    MWSFCRE_SjArg arg;
+    if (sj != 0) {
+        if (sj == (u32)self->uni) {
+            arg.a = 2;
+            arg.b = sj;
+            arg.c = 0;
+            arg.d = 0;
+            arg.e = 0;
+            arg.f = 0;
+        } else {
+            if (sj == (u32)self->rbf) {
+                arg.a = 0;
+                arg.b = sj;
+                arg.c = self->field_0x508;
+                arg.d = self->field_0x50c;
+                arg.e = self->field_0x510;
+                arg.f = 0;
+            } else {
+                arg.a = self->field_0x514, arg.b = sj;
+                arg.c = self->field_0x518;
+                arg.d = self->field_0x51c;
+                arg.e = self->field_0x520;
+                arg.f = 0;
+            }
+        }
+        if (self->sj == (u32)self->uni) {
+            SFD_SetCond(self->sfd, 0x55, 1);
+            SFD_SetCond(self->sfd, 0x56, 0x800);
+        } else {
+            SFD_SetCond(self->sfd, 0x55, 0);
+            SFD_SetCond(self->sfd, 0x56, 4);
+        }
+        if (SFD_SetSupplySj(sfd, &arg)) {
+            MWSFLIB_SetErrCode(-0x138);
+            MWSFSVM_Error("E20010703B MWSFCRE_SetSupplySj");
+        }
+    }
+}
+
+
+s32 mwsfcre_MallocRfb(void* pool, MWSFCRE_Para* para, void** out) {
+    s32 outer = para->outer;
+    /* Round width/height up to macroblock multiples and size one RGB565 +
+     * double-pitch-chroma frame (+0x20 header). */
+    s32 w16 = (para->width + 15) / 16;
+    s32 h16 = (para->height + 15) / 16;
+    s32 W = w16 * 16;
+    s32 H = h16 * 16;
+    s32 luma = ((w16 >> 27) & 1) + W;
+    s32 chroma = ((h16 >> 27) & 1) + H;
+    s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
+                    H * (((W + 0x1f) / 32) * 32) + 0x20;
+    s32 rc = 0;
+    if (outer != 0) {
+        if (outer < 2)
+            goto fail;
+        if (para->poolSize < frameSize)
+            goto fail;
+        /* Negated second test (not `else goto`) emits retail's blt/bge pair. */
+        if (para->poolSize >= frameSize)
+            goto good;
+
+    fail:
+        out[0] = NULL;
+        rc = -1;
+        out[1] = NULL;
+        goto join;
+    good:
+        out[0] = ((void**)para->pool)[0];
+        out[1] = ((void**)para->pool)[1];
+        goto join;
+    } else {
+        out[0] = criware_803A3AE4(pool, frameSize);
+        out[1] = criware_803A3AE4(pool, frameSize);
+    }
+join:
+    if (out[0] == NULL || out[1] == NULL) {
+        rc = -1;
+    }
+    return rc;
+}
+
+
+s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
+    s32 frames = para->frameCount;
+    s32 rc = 0;
+    s32 i;
+    s32 frameSize;
+    s32 w = para->width;
+    s32 h = para->height;
+    if ((u32)para->mode > 3) {
+        MWSFSVM_Error("E206011 MwsfdCrePrm: illigal buffmt.");
+    }
+    s32 w16 = (w + 15) / 16;
+    s32 h16 = (h + 15) / 16;
+    s32 W = w16 * 16;
+    s32 H = h16 * 16;
+    s32 luma = ((w16 >> 27) & 1) + W;
+    s32 chroma = ((h16 >> 27) & 1) + H;
+    frameSize = H * (((W + 0x1f) / 32) * 32) +
+                ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 + 0x20;
+    if (para->outer != 0) {
+        if (para->outer < frames + 2 || para->poolSize < frameSize) {
+            rc = -1;
+        } else {
+            for (i = 0; i < frames; i++) {
+                if ((out[i] = ((void**)para->pool)[i + 2]) == NULL)
+                    rc = -1;
+            }
+        }
+    } else {
+        for (i = 0; i < frames; i++) {
+            if ((out[i] = criware_803A3AE4(pool, frameSize)) == NULL)
+                rc = -1;
+        }
+    }
+    return rc;
+}
+
+
 void criware_eu_803A29E0(s32 mode, u32 unused, SfdCondTbl* dest, MWSFDPLY* self) {
     /* Sparse mode dispatch: equality chain, case bodies appended after. */
     if (mode == 1) goto case1;
@@ -685,9 +563,9 @@ case1:
 case2:
     *dest = sSfdCondTblMode2;
     self->field_0x508 = sSfdStmBufPos;
-    /* Volatile forces MWCC to keep the retail store order (50c before 510). */
-    *(volatile u32*)&self->field_0x50c = sSfdStmBufEnd - 0x800;
-    *(volatile u32*)&self->field_0x510 = 0x800;
+    /* Ordered stores keep the retail 50c-before-510 shape. */
+    self->field_0x50c = sSfdStmBufEnd - 0x800;
+    self->field_0x510 = 0x800;
     return;
 case3:
     *dest = sSfdCondTblMode3;
@@ -696,15 +574,16 @@ case3:
     self->field_0x510 = sSfdBufAlign;
     return;
 case8:
-    MWSFSVM_Error(lbl_eu_8051A3CC + 0x13c);
+    MWSFSVM_Error("E09101602 ENV_ASVD_H264 is not support.");
     return;
 case9:
-    MWSFSVM_Error(lbl_eu_8051A3CC + 0x164);
+    MWSFSVM_Error("E09101601 ENV_ASVD_H264 is not support.");
     return;
 case0xb:
-    MWSFSVM_Error(lbl_eu_8051A3CC + 0x18c);
+    MWSFSVM_Error("E09101601 ENV_H264_TS is not support.");
     return;
 }
+
 
 /* Creates the SFD decoder handle for one player slot: allocates every work
  * buffer from the player heap and fills the SFD_Create parameter block.
@@ -743,7 +622,7 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
         s32 pw = para->width;
         s32 ph = para->height;
         if ((u32)mode > 3) {
-            MWSFSVM_Error(lbl_eu_8051A3CC);
+            MWSFSVM_Error("E206011 MwsfdCrePrm: illigal buffmt.");
         }
         /* Round up to macroblocks; one frame slot carries a 0x20 header. */
         s32 w16 = (pw + 15) / 16;
@@ -786,13 +665,13 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     if (stmBuf == NULL || adxtBuf == NULL || rbfRc != 0 || tabRc != 0 ||
         buf4000 == NULL || buf100 == NULL || buf800 == NULL ||
         buf100b == NULL || buf120 == NULL || buf4e0 == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x1b2);
+        MWSFSVM_Error("E2053002 not enough work");
         criware_803A3A48(ply);
         return NULL;
     }
     if (!((u32)(para->fmt - 6) <= 2 || (u32)(para->fmt - 2) <= 1 || para->fmt == 10) &&
         (ex0 == NULL || ex1 == NULL)) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x1cb);
+        MWSFSVM_Error("E4041301 not enough work");
         criware_803A3A48(ply);
         return NULL;
     }
@@ -830,7 +709,7 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
         cfg.modeIdx = 2;
         break;
     default:
-        MWSFSVM_Error(lbl_eu_8051A3CC);
+        MWSFSVM_Error("E206011 MwsfdCrePrm: illigal buffmt.");
         cfg.modeIdx = 3;
         break;
     }
@@ -856,13 +735,13 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     sfd = SFD_Create(&cfg, 0);
     if (sfd == NULL) {
         MWSFLIB_SetErrCode(-0x131);
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x1e4);
+        MWSFSVM_Error("E20010703C mwPlyCreateSofdec: create error");
         criware_803A3A48(ply);
         return NULL;
     }
     if (criware_803C0D94(sfd, MWSFLIB_SfdErrFunc, (u32)ply)) {
         MWSFLIB_SetErrCode(-0x12f);
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x20f);
+        MWSFSVM_Error("E20010703D mwPlyCreateSofdec: set errcb");
         criware_803A3A48(ply);
         return NULL;
     }
@@ -870,7 +749,7 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     *(u32*)buf100 = 1;
     ply->field_0x634 = (u32*)buf100;
     if (buf100 == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x237);
+        MWSFSVM_Error("E410142 mwPlyCreateSofdec: can't skghn.");
         criware_803A3A48(ply);
         return NULL;
     }
@@ -888,6 +767,49 @@ void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
     return sfd;
 }
 
+
+#pragma push
+#pragma auto_inline off  // noinline-ok: retail keeps these helpers out of line; -inline noauto loses MWSFCRE_ResetSfdHn
+void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self) {
+    MwsfPicUsrBuf* tgt = (MwsfPicUsrBuf*)self->picUsrTgt;
+    if (tgt == NULL) {
+        MWSFSVM_Error("E02120501 Internal Error: mwsfcre_AttachPicUsrBuf().");
+    } else {
+        void* buf;
+        s32 count;
+        s32 size;
+        s32 h = self->prm.field_0x14;
+        count = tgt->count;
+        size = tgt->size;
+        buf = tgt->buf;
+        if (size < (h + 3) * count) {
+            MWSFSVM_Error("E02120502 mwsfcre_AttachPicUsrBuf(): usrdatbuf is short.");
+        } else if (MWSFD_GetUsePicUsr() == 1) {
+            SFD_SetPicUsrBuf(self->sfd, buf, h + 3, count);
+        }
+    }
+}
+#pragma pop
+
+// name-guess: retail string E02120503 names mwPlyAttachPicUsrBuf().
+void mwPlyAttachPicUsrBuf(MWSFDPLY* self) {
+    MwsfPicUsrBuf* tgt = (MwsfPicUsrBuf*)self->picUsrTgt;
+    if (tgt == NULL || tgt->size < (self->prm.field_0x14 + 3) * tgt->count) {
+        MWSFSVM_Error("E02120503 mwPlyAttachPicUsrBuf(): bufsize is short.");
+        return;
+    }
+    SFD_SetPicUsrBuf(self->sfd, tgt->buf, self->prm.field_0x14 + 3, tgt->count);
+}
+
+// name-guess: retail string E20010703E names MWSFCRE_DestroySfd.
+void MWSFCRE_DestroySfd(MWSFDPLY* self) {
+    if (self->sfd != NULL && SFD_Destroy(self->sfd)) {
+        MWSFLIB_SetErrCode(-0x132);
+        MWSFSVM_Error("E20010703E MWSFCRE_DestroySfd");
+    }
+}
+
+
 void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {
     void* sfd = ply->sfd;
     SFD_SetCond(sfd, 8, 0);
@@ -900,10 +822,10 @@ void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {
      * CSE the four conversions. */
     s32 ms = a * b * 1000;
     s32 n;
-    if ((f32)(s32)(lbl_eu_8051A3C8 + ms) > lbl_eu_8051A3C8 + ms) {
-        n = (s32)(lbl_eu_8051A3C8 + ms) - 1;
+    if ((f32)(s32)(0.5f + ms) > 0.5f + ms) {
+        n = (s32)(0.5f + ms) - 1;
     } else {
-        n = (s32)(lbl_eu_8051A3C8 + ms);
+        n = (s32)(0.5f + ms);
     }
 
     SFD_SetCond(sfd, 0x2d, n);
@@ -915,6 +837,52 @@ void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {
     SFD_SetCond(sfd, 0x1c, 0);
     SFD_SetMpvCond(sfd, 5, 0);
 }
+
+
+s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self) {
+    void* sfd = self->sfd;
+    self->sfd = NULL;
+    if (SFD_Stop(sfd)) {
+        MWSFSVM_Error("E0203261 MWSFCRE_ResetSfdHn: SFD_Stop() failed.");
+        return -1;
+    }
+    self->sfd = sfd;
+    if (criware_803C0D94(sfd, MWSFLIB_SfdErrFunc, (u32)self)) {
+        MWSFLIB_SetErrCode(-0x12F);
+        MWSFSVM_Error("E0203262 MWSFCRE_ResetSfdHn: SFD_SetErrFn() failed.");
+        return -1;
+    }
+    mwsfcre_AttachPicUsrBuf(self);
+    return 0;
+}
+
+
+void* criware_8039FF34(MWSFDPLY* self) {
+    if (gpMwPlyTraceCb != NULL) {
+        char buf[0x200];
+        sprintf(buf, "%ld, %ld, %ld, %ld, %ld, %ld, %p, %ld, %ld, %d, %ld, %ld, %p", self->enable,
+                self->prm.field_0x00, self->prm.field_0x04, self->prm.width,
+                self->prm.height, self->prm.frameCount, self->prm.field_0x14,
+                self->prm.field_0x18, self->prm.field_0x1c,
+                self->prm.field_0x20, self->prm.mode, self->prm.poolCount,
+                self->prm.poolSize, self->prm.pool);
+        TraceCb* cb = gpMwPlyTraceCb;
+        if (cb != NULL) {
+            sTraceCreateSofdec.self = (u32)buf;
+            cb->vtable->trace(cb, &sTraceCreateSofdec.field_0x04);
+        }
+    }
+    {
+        void* hn = mwPlyCreateSofdec((PlyCprm*)self);
+        TraceCb* cb = gpMwPlyTraceCb;
+        if (cb != NULL) {
+            sTraceCreateSofdec.field_0x74 = (u32)hn;
+            cb->vtable->trace(cb, &sTraceCreateSofdec.field_0x6c);
+        }
+        return hn;
+    }
+}
+
 
 #pragma push
 #pragma auto_inline off  // noinline-ok: retail keeps these helpers out of line; -inline noauto loses MWSFCRE_ResetSfdHn
@@ -935,7 +903,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     s32 i;
 
     if (cprm == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x3c0);
+        MWSFSVM_Error("E1122612 mwPlyCreateSofdec : cprm is NULL.");
         return NULL;
     }
     /* Validate mode and frame count; a single ok flag feeds both checks so
@@ -943,11 +911,11 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     {
         s32 ok = 1;
         if (cprm->mode != 0 && cprm->mode != 3) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x3eb);
+            MWSFSVM_Error("E3012102 Buffer format is invalid.");
             ok = 0;
         }
         if (cprm->frameCount > 0xe) {   /* signed compare in retail */
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x40e);
+            MWSFSVM_Error("E4110901 Number of frame pool exceeds 14.");
             ok = 0;
         }
         if (ok != 1) {
@@ -989,7 +957,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     }
     if (slot == 8) {
         MWSFLIB_SetErrCode(-0xb);
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x438);
+        MWSFSVM_Error("E4061801 mwPlyCreateSofdec: Number of MWPLY handles exceeds its maximum number.");
         return NULL;
     }
 
@@ -1003,7 +971,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
             ok = -1;
         }
         if (ok == -1) {
-            MWSFSVM_Error(lbl_eu_8051A3CC + 0x488);
+            MWSFSVM_Error("E2053006 mwPlyCreateSofdec: Didn't set malloc/free func.");
             return NULL;
         }
     }
@@ -1029,7 +997,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     sfd = mwsfcre_CreateSfd(ply, (MWSFCRE_Para*)&ply->prm.field_0x04);
     ply->sfd = sfd;
     if (sfd == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x4c1);
+        MWSFSVM_Error("E2012 mwPlyCreate:can't create SFD");
         fn_803A537C(ply);
         if (gpMwPlyTraceCb != NULL) {
             sTraceDestroy.self = (u32)ply;
@@ -1050,7 +1018,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
 
     ply->rbf = SJRBF_Create(ply->field_0x508, ply->field_0x50c, ply->field_0x510);
     if (ply->rbf == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x4e4);
+        MWSFSVM_Error("E2013 mwPlyCreate:can't create SJ");
         fn_803A537C(ply);
         if (gpMwPlyTraceCb != NULL) {
             sTraceDestroy.self = (u32)ply;
@@ -1066,7 +1034,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
 
     ply->uni = SJUNI_Create(1, ply->field_0x528, ply->field_0x52c);
     if (ply->uni == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x506);
+        MWSFSVM_Error("E08102901 mwPlyCreate:can't create uniSJ");
         fn_803A537C(ply);
         if (gpMwPlyTraceCb != NULL) {
             sTraceDestroy.self = (u32)ply;
@@ -1141,7 +1109,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
     sfx = MWSFSFX_Create(ply->compoWork, ply->compoWorkSize,
         cprm->width, cprm->height);
     if (sfx == NULL) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x52f);
+        MWSFSVM_Error("E201185 can't create SfxHn");
         fn_803A537C(ply);
         if (gpMwPlyTraceCb != NULL) {
             sTraceDestroy.self = (u32)ply;
@@ -1159,7 +1127,7 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
 
     ply->ainfSj = MWSFTAG_CreateAinfSj(ply);
     if (MWSFTAG_SetAinfSj(ply)) {
-        MWSFSVM_Error(lbl_eu_8051A3CC + 0x54a);
+        MWSFSVM_Error("E201212 mwPlyCreate: can't set AddInfSJ");
         fn_803A537C(ply);
         if (gpMwPlyTraceCb != NULL) {
             sTraceDestroy.self = (u32)ply;
@@ -1192,6 +1160,133 @@ void* mwPlyCreateSofdec(PlyCprm* cprm) {
 }
 #pragma pop
 
+
+s32 mwsfcre_MallocCompoWork(MWSFDPLY* self) {
+    void* tag = (u8*)self + 8;
+    /* NB: the tag object is the handle's parameter image at +8; reading the
+     * word through it keeps retail's argument colour (self->prm.field_0x14
+     * costs 1 reg swap). */
+    s32 size = MWSFSFX_CalcHnWorkSiz(self->prm.height, *(u32*)((u8*)tag + 0x0C));
+    void* work = criware_803A3AE4(self, size);
+    if (work == NULL) {
+        MWSFSVM_Error("E2053003 not enough work: sfx_wk");
+        criware_803A3A48(self);
+        return -1;
+    }
+    self->compoWork = work;
+    self->compoWorkSize = size;
+    if (MWSFTAG_IsUseAinfSj(tag) == 1) {
+        void* ainf = criware_803A3AE4(self, 0x20000);
+        if (ainf == NULL) {
+            MWSFSVM_Error("E2053004 not enough work: ainfsj_buf");
+            criware_803A3A48(self);
+            return -1;
+        }
+        self->ainfBuf = ainf;
+        self->ainfBufSize = 0x20000;
+    } else {
+        self->ainfBuf = NULL;
+        self->ainfBufSize = 0;
+    }
+    return 0;
+}
+
+
+void criware_803A09B4(MWSFDPLY* self) {
+    fn_803A537C(self);
+    if (gpMwPlyTraceCb != NULL) {
+        sTraceDestroy.self = (u32)self;
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x04);
+    }
+    mwply_Destroy(self);
+    if (gpMwPlyTraceCb != NULL) {
+        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceDestroy.field_0x6c);
+    }
+    *(u32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34F4) -= 1;
+}
+
+
+void mwply_Destroy(MWSFDPLY* self) {
+    if (self == NULL) {
+        return;
+    }
+    MWSFD_SetProhibitServer(1);
+    mwSfdStopDec(self);
+    self->enable = 0;
+    MWSFD_SetProhibitServer(0);
+    MWSFTAG_DestroyAinfSj(self);
+    if (self->sfx != NULL) {
+        MWSFSFX_Destroy(self->sfx);
+    }
+    if (self->lsc != NULL) {
+        LSC_Destroy(self->lsc);
+    }
+    if (self->stm != NULL) {
+        MWSTM_Destroy(self->stm);
+    }
+    if (self->rbf != NULL) {
+        self->rbf->vtable->destroy(self->rbf);
+    }
+    if (self->uni != NULL) {
+        self->uni->vtable->destroy(self->uni);
+    }
+    if (self->field_0x634 != NULL) {
+        *self->field_0x634 = 0;
+    }
+    if (self->sfd != NULL) {
+        if (SFD_Destroy(self->sfd)) {
+            MWSFLIB_SetErrCode(-0x132);
+            MWSFSVM_Error("E20010703E MWSFCRE_DestroySfd");
+        }
+    }
+    MWSST_Destroy(&self->sst[0]);
+    MWSST_Destroy(&self->sst[1]);
+    criware_803A3A48(self);
+    if (fn_803A7320(self)) {
+        MWSFSVM_Error("E2053005 forgot free.");
+    }
+    memset(self, 0, 0x690);
+    self->enable = 0;
+}
+
+// name-guess: retail strings E410251 / E7060501-3 name these header readers.
+void* mwPlyGetHdrInfWithKey(void* sfd, u32 key, void* dst, u32 size) {
+    if (sfd == NULL || dst == NULL || size == 0) {
+        MWSFSVM_Error("E410251 mwPlyGetHdrInfWithKey: parameter is illigal.");
+        return NULL;
+    }
+    return dst;
+}
+
+void* mwPlyGetHdrAudioDetail(void* sfd, void* dst, u32 size) {
+    if (sfd == NULL) {
+        MWSFSVM_Error("E7060501 mwPlyGetHdrAudioDetail(): NULL pointer");
+        return NULL;
+    }
+    if (size < 4) {
+        MWSFSVM_Error("E7060502 mwPlyGetHdrAudioDetail(): bsize is too small.");
+        return NULL;
+    }
+    if (SFD_GetSofdecHeader(sfd, 3, (u32*)dst) != 0) {
+        MWSFSVM_Error("E7060503 SFH_Create return NULL.");
+        return NULL;
+    }
+    return dst;
+}
+
+void* mwPlyGetHdrInf(void* sfd, void* dst, u32 size) {
+    if (sfd == NULL) {
+        MWSFSVM_Error("E204161 mwPlyGetHdrInf(): NULL pointer");
+        return NULL;
+    }
+    if (size < 4) {
+        MWSFSVM_Error("E204162 mwPlyGetHdrInf(): bufsize error");
+        return NULL;
+    }
+    return dst;
+}
+
+
 uint32_t criware_803A0BA8(MWSFDPLY* self, uint32_t r4) {
     uint32_t a = self->field_0x54c;
     uint32_t limit = self->field_0x544;
@@ -1208,6 +1303,7 @@ uint32_t criware_803A0BA8(MWSFDPLY* self, uint32_t r4) {
     return ret;
 }
 
+
 void criware_803A0BDC(void* self) {
     void* work = MWSFLIB_GetLibWorkPtr();
     void (*cb)(void*, void*) = (void(*)(void*, void*))*(void**)((u8*)work + 0x28);
@@ -1215,7 +1311,9 @@ void criware_803A0BDC(void* self) {
     cb(param, self);
 }
 
+
 void criware_803A0C1C() {}
+
 
 void criware_803A0C20(void* self) {
     void* work = MWSFLIB_GetLibWorkPtr();

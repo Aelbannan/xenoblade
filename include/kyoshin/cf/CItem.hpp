@@ -41,8 +41,6 @@ extern "C" int sprintf(char*, const char*, ...);
 
 // BDAT handle used by CItem_rollWeighted4's weighted random-roll lookups.
 
-// Item-name string pool (also the +0x42 column-name argument in CItemRec_packFromBdat).
-extern char lbl_eu_80501C58[];
 
 // Global item block base pointer (allocated once; freed by __dt__80157150).
 extern char* spItemBlock;

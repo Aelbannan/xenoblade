@@ -21,9 +21,6 @@
 extern "C" {
 
 // Shared read-only literals (monolibdata2 .sdata2).
-extern const float lbl_eu_8066B408;  // 0.0f
-extern const float lbl_eu_8066B40C;  // 1.0f
-extern const float lbl_eu_8066B414;  // 0.5f
 
 // Gradient tables
 struct CGradEntry {
@@ -188,6 +185,17 @@ struct CFanColor {
 };
 
 } // namespace
+
+// Forward declarations for the renderer helpers defined below (retail text order).
+extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtxLocal* draw, const ml::CVec3* pos,
+                                    const float* color, const ml::CVec3* size, void* clampInfo,
+                                    s16 flag, CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha,
+                                    float vertRot);
+extern "C" void buildMarkerFan(ml::CVec3* verts);
+extern "C" void placeMarkerFan(ml::CVec3* verts, const ml::CVec3* pos, const ml::CVec3& size,
+                               float angle);
+extern "C" float clampMarkerFan(ml::CVec3* verts);
+extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* colors);
 
 // lytBindSetupForPane: set up the bind object for a pane.
 extern "C" void lytBindSetupForPane(CLytBind* self, CBindPane* pane, s32 type, u32 id, u8 flag) {
@@ -366,6 +374,229 @@ extern "C" u32 lytBindCanResolveTarget(CLytBind* self) {
         break;
     }
     return self->mPane != NULL ? 1 : 0;
+}
+
+// drawScreenMarker: high-level marker draw entry point.
+extern "C" void drawScreenMarker(void* desktop, const ml::CVec3* pos, const float* color,
+                              const ml::CVec3* size, void* clampInfo, void* material,
+                              CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha, float vertRot) {
+    if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
+        return;
+    }
+
+    snapTexCursor(desktop);
+    CDrawCtxLocal draw;
+    initEffectDrawCtx(&draw);
+    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
+        if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
+            blitEffectViewRect(&draw, 0, 0);
+            drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, -1, NULL, angleDeg, alpha,
+                          vertRot);
+        } else {
+            blitEffectViewRect(&draw, 0, 0);
+            if (mtxSrc->mTex != NULL) {
+                SchedTexLoadCached(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
+            }
+            drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
+                          vertRot);
+        }
+        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
+    }
+    restoreTexCursor(desktop);
+}
+
+// drawScreenMarkerFan: GX renderer for the marker fan.
+extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtxLocal* draw, const ml::CVec3* pos,
+                             const float* color, const ml::CVec3* size, void* clampInfo,
+                             s16 flag, CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha,
+                             float vertRot) {
+    float fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    float fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+
+    if (pos->x < 0.0f || fbW < pos->x) {
+        return 0;
+    }
+    if (pos->y < 0.0f || fbH < pos->y) {
+        return 0;
+    }
+
+    ml::CVec3 verts[10];
+    if (flag < 0) {
+        buildMarkerFan(verts);
+    } else {
+        verts[0] = ml::CVec3(0.0f, 0.0f, 0.0f);
+        verts[1] = ml::CVec3(1.0f, 0.0f, 0.0f);
+        verts[2] = ml::CVec3(1.0f, 1.0f, 0.0f);
+        verts[3] = ml::CVec3(0.0f, 1.0f, 0.0f);
+        verts[4] = ml::CVec3(-1.0f, 1.0f, 0.0f);
+        verts[5] = ml::CVec3(-1.0f, 0.0f, 0.0f);
+        verts[6] = ml::CVec3(-1.0f, -1.0f, 0.0f);
+        verts[7] = ml::CVec3(0.0f, -1.0f, 0.0f);
+        verts[8] = ml::CVec3(1.0f, -1.0f, 0.0f);
+        verts[9] = ml::CVec3(1.0f, 0.0f, 0.0f);
+    }
+
+    ml::CVec3 scaledSize = *size * 0.5f;
+    placeMarkerFan(verts, pos, scaledSize, vertRot);
+
+    if (clampInfo != NULL) {
+        alpha *= clampMarkerFan(verts);
+    }
+
+    ml::CVec3 tex[10];
+    fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    for (s16 i = 0; i < 10; i++) {
+        if (i < 9) {
+            tex[i].x = verts[i].x / fbW;
+            tex[i].y = verts[i].y / fbH;
+            tex[i].z = 0.0f;
+        } else {
+            tex[i] = tex[1];
+        }
+    }
+
+    CFanColor colors[10];
+    memcpy(colors, sMarkerFanVertexColors, 0x78);
+
+    if (clampInfo == NULL) {
+        clampMarkerFanAttrs(verts, tex, (ml::CVec3*)colors);
+    }
+
+    if (alpha > 0.0f) {
+        float gfbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+        float rad = 0.017453292f * angleDeg;
+        float deg = 57.29578f * rad;
+        float gfbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+        float ax = alpha * (size->x / gfbW);
+        float ay = alpha * (size->y / gfbH);
+        tex[0].x = tex[0].x + size->x * (ax * gradLookup(lbl_eu_80660038, deg)) / gfbW;
+        tex[0].y = tex[0].y + size->y * (ay * gradLookup(lbl_eu_80660B78, deg)) / gfbH;
+        if (tex[0].x < 0.0f) {
+            tex[0].x = 0.0f;
+        } else if (1.0f < tex[0].x) {
+            tex[0].x = 1.0f;
+        }
+        if (tex[0].y < 0.0f) {
+            tex[0].y = 0.0f;
+        } else if (1.0f < tex[0].y) {
+            tex[0].y = 1.0f;
+        }
+    }
+
+    GXColor matColor;
+    matColor.r = (u8)(255.0f * color[0]);
+    matColor.g = (u8)(255.0f * color[1]);
+    matColor.b = (u8)(255.0f * color[2]);
+    matColor.a = (u8)(255.0f * color[3]);
+
+    float h4628 = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
+    float w4628 = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    pushProjMtx(1, w4628, h4628);
+
+    Mtx ident;
+    PSMTXIdentity(ident);
+    GXLoadPosMtxImm(ident, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+    GXInitTexObjFilter(draw->mTexObj, GX_LINEAR, GX_LINEAR);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+    GXLoadTexObj(draw->mTexObj, (GXTexMapID)texMapId);
+
+    if (flag < 0) {
+        GXSetNumTexGens(1);
+        GXSetNumTevStages(1);
+        Mtx* texMtx = getTexMtx(1, 0);
+        GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
+        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
+                          0x7D);
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+                      GX_AF_NONE);
+        GXColor amb = {0xFF, 0xFF, 0xFF, 0xFF};
+        setChanAmbColor(GX_COLOR0A0, &amb);
+        GXColor mat;
+        *(u32*)&mat = *(u32*)&matColor;
+        setChanMatColor(GX_COLOR0A0, &mat);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_S, GX_F32, 0);
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
+        GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, 10);
+        for (int i = 0; i < 10; i++) {
+            GXPosition3f32(verts[i].x, verts[i].y, verts[i].z);
+            GXTexCoord2f32(tex[i].x, tex[i].y);
+        }
+    } else {
+        if (mtxSrc == NULL) {
+            GXSetNumTexGens(2);
+            GXSetNumTevStages(2);
+            Mtx* texMtx = getTexMtx(1, 0);
+            GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
+            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
+                              0x7D);
+            GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_IDENTITY, GX_FALSE,
+                              0x7D);
+        } else {
+            GXSetNumTexGens(2);
+            GXSetNumTevStages(2);
+            Mtx* texMtx = getTexMtx(1, 0);
+            GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
+            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
+                              0x7D);
+            // setScale + replaceTranslation folded inline so every zero is the
+            // shared extern 0.0f (retail keeps no .sdata2 pool in this TU).
+            mtxSrc->mTexMtx.m[0][0] = mtxSrc->mScaleX;
+            mtxSrc->mTexMtx.m[0][1] = 0.0f;
+            mtxSrc->mTexMtx.m[0][2] = 0.0f;
+            mtxSrc->mTexMtx.m[0][3] = mtxSrc->mField0C + 0.0f;
+            mtxSrc->mTexMtx.m[1][0] = 0.0f;
+            mtxSrc->mTexMtx.m[1][1] = mtxSrc->mScaleY;
+            mtxSrc->mTexMtx.m[1][2] = 0.0f;
+            mtxSrc->mTexMtx.m[1][3] = mtxSrc->mField10 + 0.0f;
+            mtxSrc->mTexMtx.m[2][0] = 0.0f;
+            mtxSrc->mTexMtx.m[2][1] = 0.0f;
+            mtxSrc->mTexMtx.m[2][2] = mtxSrc->mScaleZ;
+            mtxSrc->mTexMtx.m[2][3] = mtxSrc->mField14 + 0.0f;
+            GXLoadTexMtxImm(mtxSrc->mTexMtx.mtx, GX_TEXMTX1, GX_MTX_2x4);
+            GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_TEXMTX1, GX_FALSE,
+                              0x7D);
+        }
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+                      GX_AF_NONE);
+        GXColor amb = {0xFF, 0xFF, 0xFF, 0xFF};
+        setChanAmbColor(GX_COLOR0A0, &amb);
+        GXColor mat;
+        *(u32*)&mat = *(u32*)&matColor;
+        setChanMatColor(GX_COLOR0A0, &mat);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+        GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, (GXTexMapID)flag, GX_COLOR_NULL);
+        setTevColorIn6(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, 0);
+        GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
+        setTevAlphaIn6(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO, 0);
+        GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_S, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX1, GX_TEX_S, GX_F32, 0);
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
+        GXBegin(GX_TRIANGLEFAN, GX_VTXFMT1, 10);
+        for (int i = 0; i < 10; i++) {
+            GXPosition3f32(verts[i].x, verts[i].y, verts[i].z);
+            GXTexCoord2f32(tex[i].x, tex[i].y);
+            GXTexCoord2f32(colors[i].r, colors[i].g);
+        }
+    }
+
+    return 1;
 }
 
 // buildMarkerFan: build the 10-vertex octagon fan (center + ring + close).
@@ -555,264 +786,39 @@ extern "C" void clampMarkerFanAttrs(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3*
     }
 }
 
-// drawScreenMarkerFan: GX renderer for the marker fan.
-extern "C" u32 drawScreenMarkerFan(u32 texMapId, CDrawCtxLocal* draw, const ml::CVec3* pos,
-                             const float* color, const ml::CVec3* size, void* clampInfo,
-                             s16 flag, CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha,
-                             float vertRot) {
-    float fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    float fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
-
-    if (pos->x < 0.0f || fbW < pos->x) {
-        return 0;
-    }
-    if (pos->y < 0.0f || fbH < pos->y) {
-        return 0;
-    }
-
-    ml::CVec3 verts[10];
-    if (flag < 0) {
-        buildMarkerFan(verts);
-    } else {
-        verts[0] = ml::CVec3(0.0f, 0.0f, 0.0f);
-        verts[1] = ml::CVec3(1.0f, 0.0f, 0.0f);
-        verts[2] = ml::CVec3(1.0f, 1.0f, 0.0f);
-        verts[3] = ml::CVec3(0.0f, 1.0f, 0.0f);
-        verts[4] = ml::CVec3(-1.0f, 1.0f, 0.0f);
-        verts[5] = ml::CVec3(-1.0f, 0.0f, 0.0f);
-        verts[6] = ml::CVec3(-1.0f, -1.0f, 0.0f);
-        verts[7] = ml::CVec3(0.0f, -1.0f, 0.0f);
-        verts[8] = ml::CVec3(1.0f, -1.0f, 0.0f);
-        verts[9] = ml::CVec3(1.0f, 0.0f, 0.0f);
-    }
-
-    ml::CVec3 scaledSize = *size * 0.5f;
-    placeMarkerFan(verts, pos, scaledSize, vertRot);
-
-    if (clampInfo != NULL) {
-        alpha *= clampMarkerFan(verts);
-    }
-
-    ml::CVec3 tex[10];
-    fbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    fbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    for (s16 i = 0; i < 10; i++) {
-        if (i < 9) {
-            tex[i].x = verts[i].x / fbW;
-            tex[i].y = verts[i].y / fbH;
-            tex[i].z = 0.0f;
-        } else {
-            tex[i] = tex[1];
-        }
-    }
-
-    CFanColor colors[10];
-    memcpy(colors, sMarkerFanVertexColors, 0x78);
-
-    if (clampInfo == NULL) {
-        clampMarkerFanAttrs(verts, tex, (ml::CVec3*)colors);
-    }
-
-    if (alpha > 0.0f) {
-        float gfbW = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
-        float rad = ml::deg2rad * angleDeg;
-        float deg = ml::rad2deg * rad;
-        float gfbH = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
-        float ax = alpha * (size->x / gfbW);
-        float ay = alpha * (size->y / gfbH);
-        tex[0].x = tex[0].x + size->x * (ax * gradLookup(lbl_eu_80660038, deg)) / gfbW;
-        tex[0].y = tex[0].y + size->y * (ay * gradLookup(lbl_eu_80660B78, deg)) / gfbH;
-        if (tex[0].x < 0.0f) {
-            tex[0].x = 0.0f;
-        } else if (1.0f < tex[0].x) {
-            tex[0].x = 1.0f;
-        }
-        if (tex[0].y < 0.0f) {
-            tex[0].y = 0.0f;
-        } else if (1.0f < tex[0].y) {
-            tex[0].y = 1.0f;
-        }
-    }
-
-    GXColor matColor;
-    matColor.r = (u8)(255.0f * color[0]);
-    matColor.g = (u8)(255.0f * color[1]);
-    matColor.b = (u8)(255.0f * color[2]);
-    matColor.a = (u8)(255.0f * color[3]);
-
-    float h4628 = (float)getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    float w4628 = (float)getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    pushProjMtx(1, w4628, h4628);
-
-    Mtx ident;
-    PSMTXIdentity(ident);
-    GXLoadPosMtxImm(ident, GX_PNMTX0);
-    GXSetCurrentMtx(GX_PNMTX0);
-    GXInitTexObjFilter(draw->mTexObj, GX_LINEAR, GX_LINEAR);
-    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
-    GXLoadTexObj(draw->mTexObj, (GXTexMapID)texMapId);
-
-    if (flag < 0) {
-        GXSetNumTexGens(1);
-        GXSetNumTevStages(1);
-        Mtx* texMtx = getTexMtx(1, 0);
-        GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
-        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
-                          0x7D);
-        GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
-                      GX_AF_NONE);
-        GXColor amb;
-        *(u32*)&amb = 0xFFFFFFFFu;
-        setChanAmbColor(GX_COLOR0A0, &amb);
-        GXColor mat;
-        *(u32*)&mat = *(u32*)&matColor;
-        setChanMatColor(GX_COLOR0A0, &mat);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A0);
-        GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_S, GX_F32, 0);
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
-        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
-        GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, 10);
-        for (int i = 0; i < 10; i++) {
-            GXPosition3f32(verts[i].x, verts[i].y, verts[i].z);
-            GXTexCoord2f32(tex[i].x, tex[i].y);
-        }
-    } else {
-        if (mtxSrc == NULL) {
-            GXSetNumTexGens(2);
-            GXSetNumTevStages(2);
-            Mtx* texMtx = getTexMtx(1, 0);
-            GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
-            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
-                              0x7D);
-            GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_IDENTITY, GX_FALSE,
-                              0x7D);
-        } else {
-            GXSetNumTexGens(2);
-            GXSetNumTevStages(2);
-            Mtx* texMtx = getTexMtx(1, 0);
-            GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
-            GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
-                              0x7D);
-            // setScale + replaceTranslation folded inline so every zero is the
-            // shared extern 0.0f (retail keeps no .sdata2 pool in this TU).
-            mtxSrc->mTexMtx.m[0][0] = mtxSrc->mScaleX;
-            mtxSrc->mTexMtx.m[0][1] = 0.0f;
-            mtxSrc->mTexMtx.m[0][2] = 0.0f;
-            mtxSrc->mTexMtx.m[0][3] = mtxSrc->mField0C + 0.0f;
-            mtxSrc->mTexMtx.m[1][0] = 0.0f;
-            mtxSrc->mTexMtx.m[1][1] = mtxSrc->mScaleY;
-            mtxSrc->mTexMtx.m[1][2] = 0.0f;
-            mtxSrc->mTexMtx.m[1][3] = mtxSrc->mField10 + 0.0f;
-            mtxSrc->mTexMtx.m[2][0] = 0.0f;
-            mtxSrc->mTexMtx.m[2][1] = 0.0f;
-            mtxSrc->mTexMtx.m[2][2] = mtxSrc->mScaleZ;
-            mtxSrc->mTexMtx.m[2][3] = mtxSrc->mField14 + 0.0f;
-            GXLoadTexMtxImm(mtxSrc->mTexMtx.mtx, GX_TEXMTX1, GX_MTX_2x4);
-            GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_TEXMTX1, GX_FALSE,
-                              0x7D);
-        }
-        GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
-                      GX_AF_NONE);
-        GXColor amb;
-        *(u32*)&amb = 0xFFFFFFFFu;
-        setChanAmbColor(GX_COLOR0A0, &amb);
-        GXColor mat;
-        *(u32*)&mat = *(u32*)&matColor;
-        setChanMatColor(GX_COLOR0A0, &mat);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A0);
-        GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-        GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, (GXTexMapID)flag, GX_COLOR_NULL);
-        setTevColorIn6(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, 0);
-        GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
-        setTevAlphaIn6(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO, 0);
-        GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_S, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX1, GX_TEX_S, GX_F32, 0);
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
-        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
-        GXBegin(GX_TRIANGLEFAN, GX_VTXFMT1, 10);
-        for (int i = 0; i < 10; i++) {
-            GXPosition3f32(verts[i].x, verts[i].y, verts[i].z);
-            GXTexCoord2f32(tex[i].x, tex[i].y);
-            GXTexCoord2f32(colors[i].r, colors[i].g);
-        }
-    }
-
-    return 1;
-}
-
-// drawScreenMarker: high-level marker draw entry point.
-extern "C" void drawScreenMarker(void* desktop, const ml::CVec3* pos, const float* color,
-                              const ml::CVec3* size, void* clampInfo, void* material,
-                              CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha, float vertRot) {
-    if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
-        return;
-    }
-
-    snapTexCursor(desktop);
-    CDrawCtxLocal draw;
-    initEffectDrawCtx(&draw);
-    if (setupEffectDrawCtx(reinterpret_cast<CDrawCtx*>(&draw), reinterpret_cast<TexSrc*>(desktop), material) != 0) {
-        if (mtxSrc == NULL || mtxSrc->mTex == NULL || mtxSrc->mIndex < 0) {
-            blitEffectViewRect(&draw, 0, 0);
-            drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, -1, NULL, angleDeg, alpha,
-                          vertRot);
-        } else {
-            blitEffectViewRect(&draw, 0, 0);
-            if (mtxSrc->mTex != NULL) {
-                SchedTexLoadCached(mtxSrc->mTex, mtxSrc->mIndex, 1, mtxSrc->mField08);
-            }
-            drawScreenMarkerFan(0, &draw, pos, color, size, clampInfo, 1, mtxSrc, angleDeg, alpha,
-                          vertRot);
-        }
-        releaseEffectDrawTex(reinterpret_cast<CDrawCtx*>(&draw));
-    }
-    restoreTexCursor(desktop);
-}
-
 // sinit_804F01C8: static initializer for the per-vertex color table.
 extern "C" void sinit_804F01C8() {
     float* t = sMarkerFanVertexColors;
-    t[0] = lbl_eu_8066B414;
-    t[1] = lbl_eu_8066B414;
-    t[2] = lbl_eu_8066B408;
-    t[3] = lbl_eu_8066B40C;
-    t[4] = lbl_eu_8066B414;
-    t[5] = lbl_eu_8066B408;
-    t[6] = lbl_eu_8066B40C;
-    t[7] = lbl_eu_8066B40C;
-    t[8] = lbl_eu_8066B408;
-    t[9] = lbl_eu_8066B414;
-    t[10] = lbl_eu_8066B40C;
-    t[11] = lbl_eu_8066B408;
-    t[12] = lbl_eu_8066B408;
-    t[13] = lbl_eu_8066B40C;
-    t[14] = lbl_eu_8066B408;
-    t[15] = lbl_eu_8066B408;
-    t[16] = lbl_eu_8066B414;
-    t[17] = lbl_eu_8066B408;
-    t[18] = lbl_eu_8066B408;
-    t[19] = lbl_eu_8066B408;
-    t[20] = lbl_eu_8066B408;
-    t[21] = lbl_eu_8066B414;
-    t[22] = lbl_eu_8066B408;
-    t[23] = lbl_eu_8066B408;
-    t[24] = lbl_eu_8066B40C;
-    t[25] = lbl_eu_8066B408;
-    t[26] = lbl_eu_8066B408;
-    t[27] = lbl_eu_8066B414;
-    t[28] = lbl_eu_8066B414;
-    t[29] = lbl_eu_8066B408;
+    t[0] = 0.5f;
+    t[1] = 0.5f;
+    t[2] = 0.0f;
+    t[3] = 1.0f;
+    t[4] = 0.5f;
+    t[5] = 0.0f;
+    t[6] = 1.0f;
+    t[7] = 1.0f;
+    t[8] = 0.0f;
+    t[9] = 0.5f;
+    t[10] = 1.0f;
+    t[11] = 0.0f;
+    t[12] = 0.0f;
+    t[13] = 1.0f;
+    t[14] = 0.0f;
+    t[15] = 0.0f;
+    t[16] = 0.5f;
+    t[17] = 0.0f;
+    t[18] = 0.0f;
+    t[19] = 0.0f;
+    t[20] = 0.0f;
+    t[21] = 0.5f;
+    t[22] = 0.0f;
+    t[23] = 0.0f;
+    t[24] = 1.0f;
+    t[25] = 0.0f;
+    t[26] = 0.0f;
+    t[27] = 0.5f;
+    t[28] = 0.5f;
+    t[29] = 0.0f;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

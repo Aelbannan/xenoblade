@@ -312,7 +312,7 @@ void CfT_PlayClockAccumulate(u32 a, u32 b) {
     // Discarded fmod: retail still performs the call.
     fmod(gCfTPlayClockSeconds, 43200.0);
     CfT_SelectDisplayMode((u16)x, (u16)y);
-    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockRemainder = 0.0f;
     gCfTPlayClockPrevSeconds = gCfTPlayClockSeconds;
     gCfTPlayClockSeconds =
         1800.0f * (float)a + 30.0f * (float)b;
@@ -325,7 +325,7 @@ void CfT_PlayClockAccumulate(u32 a, u32 b) {
 // before the conversion so retail's fmuls-before-stack-lfd schedule holds.
 void CfT_PlayClockAdvanceFrame(u32 v) {
     float t = (float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
-    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockRemainder = 0.0f;
     gCfTPlayClockSeconds = 1800.0f * (float)v + 30.0f * t;
 }
 
@@ -337,7 +337,7 @@ void CfT_PlayClockAdvanceFrame(u32 v) {
 void CfT_PlayClockAdvanceInt(u32 v) {
     float t = (float)fmod(gCfTPlayClockSeconds / 30.0f, 60.0);
     u16 m = (u16)(int)t;
-    gCfTPlayClockRemainder = lbl_eu_80666238;
+    gCfTPlayClockRemainder = 0.0f;
     gCfTPlayClockSeconds =
         1800.0f * (float)(u16)(int)t + 30.0f * (float)v;
 }

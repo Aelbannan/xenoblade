@@ -1,7 +1,7 @@
 // TU: kyoshin/realtimeevt/CREvtMem
 // Class: cf::CREvtMem (namespace cf)
 // Vtable at 0x80530A30
-// Singleton pointer at lbl_eu_80664260
+// Singleton pointer at cf::CREvtMem::sInstance
 // Size: 0x2C
 
 #include <types.h>
@@ -12,7 +12,7 @@
 cf::CREvtMem::CREvtMem()
     : flags(0), field_08(0), field_0C(0), arenaStart(0), arenaEnd(0), arenaSize(0), currentPos(0),
       someFloat(0.0f) {
-    lbl_eu_80664260 = this;
+    cf::CREvtMem::sInstance = this;
     ptr1 = nullptr;
     ptr2 = nullptr;
 }
@@ -24,25 +24,25 @@ cf::CREvtMem::CREvtMem()
 // ============================================================================
 cf::CREvtMem::~CREvtMem() {
     // Check flag bit 1 (0x2) - MEM2 allocation 1
-    if (lbl_eu_80664260->flags & 0x2) {
-        if (lbl_eu_80664260->ptr1 != nullptr) {
-            mtl::MemManager::deallocate(lbl_eu_80664260->ptr1);
-            lbl_eu_80664260->ptr1 = nullptr;
+    if (cf::CREvtMem::sInstance->flags & 0x2) {
+        if (cf::CREvtMem::sInstance->ptr1 != nullptr) {
+            mtl::MemManager::deallocate(cf::CREvtMem::sInstance->ptr1);
+            cf::CREvtMem::sInstance->ptr1 = nullptr;
         }
-        lbl_eu_80664260->flags &= ~0x2;
+        cf::CREvtMem::sInstance->flags &= ~0x2;
     }
 
     // Check flag bit 2 (0x4) - MEM2 allocation 2
-    if (lbl_eu_80664260->flags & 0x4) {
-        if (lbl_eu_80664260->ptr2 != nullptr) {
-            mtl::MemManager::deallocate(lbl_eu_80664260->ptr2);
-            lbl_eu_80664260->ptr2 = nullptr;
+    if (cf::CREvtMem::sInstance->flags & 0x4) {
+        if (cf::CREvtMem::sInstance->ptr2 != nullptr) {
+            mtl::MemManager::deallocate(cf::CREvtMem::sInstance->ptr2);
+            cf::CREvtMem::sInstance->ptr2 = nullptr;
         }
-        lbl_eu_80664260->flags &= ~0x4;
+        cf::CREvtMem::sInstance->flags &= ~0x4;
     }
 
     // Clear singleton; the deleting epilogue then frees the object itself.
-    lbl_eu_80664260 = nullptr;
+    cf::CREvtMem::sInstance = nullptr;
 }
 
 // ============================================================================
@@ -52,29 +52,29 @@ cf::CREvtMem::~CREvtMem() {
 // ============================================================================
 u32 initEvtMemArena(u32 size, u32 offset) {
     // Establish the arena bounds from the realtime event region.
-    lbl_eu_80664260->field_08 = (u32)InfoCfGetUnk0C();
-    lbl_eu_80664260->field_0C = (u32)InfoCfGetUnk10();
-    lbl_eu_80664260->arenaStart = lbl_eu_80664260->field_08;
-    lbl_eu_80664260->arenaEnd = lbl_eu_80664260->field_08 + lbl_eu_80664260->field_0C;
-    lbl_eu_80664260->arenaSize = lbl_eu_80664260->arenaEnd - lbl_eu_80664260->arenaStart;
-    lbl_eu_80664260->currentPos = lbl_eu_80664260->arenaStart;
+    cf::CREvtMem::sInstance->field_08 = (u32)InfoCfGetUnk0C();
+    cf::CREvtMem::sInstance->field_0C = (u32)InfoCfGetUnk10();
+    cf::CREvtMem::sInstance->arenaStart = cf::CREvtMem::sInstance->field_08;
+    cf::CREvtMem::sInstance->arenaEnd = cf::CREvtMem::sInstance->field_08 + cf::CREvtMem::sInstance->field_0C;
+    cf::CREvtMem::sInstance->arenaSize = cf::CREvtMem::sInstance->arenaEnd - cf::CREvtMem::sInstance->arenaStart;
+    cf::CREvtMem::sInstance->currentPos = cf::CREvtMem::sInstance->arenaStart;
 
     u32 chunk = size;
     if (chunk == 0) chunk = 0x100000;
 
-    if (offset + chunk + 0x1000 < lbl_eu_80664260->arenaSize) {
-        lbl_eu_80664260->ptr1 = lbl_eu_80664260->allocArena(chunk);
+    if (offset + chunk + 0x1000 < cf::CREvtMem::sInstance->arenaSize) {
+        cf::CREvtMem::sInstance->ptr1 = cf::CREvtMem::sInstance->allocArena(chunk);
     } else {
         // Too big for the arena - allocate from MEM2 instead.
-        lbl_eu_80664260->ptr1 = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), chunk, 0x20);
-        lbl_eu_80664260->flags |= 0x2;
+        cf::CREvtMem::sInstance->ptr1 = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), chunk, 0x20);
+        cf::CREvtMem::sInstance->flags |= 0x2;
     }
 
-    if (offset + (chunk * 2) + 0x1000 < lbl_eu_80664260->arenaSize) {
-        lbl_eu_80664260->ptr2 = lbl_eu_80664260->allocArena(chunk);
+    if (offset + (chunk * 2) + 0x1000 < cf::CREvtMem::sInstance->arenaSize) {
+        cf::CREvtMem::sInstance->ptr2 = cf::CREvtMem::sInstance->allocArena(chunk);
     } else {
-        lbl_eu_80664260->ptr2 = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), chunk, 0x20);
-        lbl_eu_80664260->flags |= 0x4;
+        cf::CREvtMem::sInstance->ptr2 = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), chunk, 0x20);
+        cf::CREvtMem::sInstance->flags |= 0x4;
     }
 
     return chunk;
@@ -85,21 +85,21 @@ u32 initEvtMemArena(u32 size, u32 offset) {
 // ============================================================================
 void freeEvtMemAll(void) {
     // Check flag bit 1 (0x2)
-    if (lbl_eu_80664260->flags & 0x2) {
-        if (lbl_eu_80664260->ptr1 != nullptr) {
-            mtl::MemManager::deallocate(lbl_eu_80664260->ptr1);
-            lbl_eu_80664260->ptr1 = nullptr;
+    if (cf::CREvtMem::sInstance->flags & 0x2) {
+        if (cf::CREvtMem::sInstance->ptr1 != nullptr) {
+            mtl::MemManager::deallocate(cf::CREvtMem::sInstance->ptr1);
+            cf::CREvtMem::sInstance->ptr1 = nullptr;
         }
-        lbl_eu_80664260->flags &= ~0x2;
+        cf::CREvtMem::sInstance->flags &= ~0x2;
     }
 
     // Check flag bit 2 (0x4)
-    if (lbl_eu_80664260->flags & 0x4) {
-        if (lbl_eu_80664260->ptr2 != nullptr) {
-            mtl::MemManager::deallocate(lbl_eu_80664260->ptr2);
-            lbl_eu_80664260->ptr2 = nullptr;
+    if (cf::CREvtMem::sInstance->flags & 0x4) {
+        if (cf::CREvtMem::sInstance->ptr2 != nullptr) {
+            mtl::MemManager::deallocate(cf::CREvtMem::sInstance->ptr2);
+            cf::CREvtMem::sInstance->ptr2 = nullptr;
         }
-        lbl_eu_80664260->flags &= ~0x4;
+        cf::CREvtMem::sInstance->flags &= ~0x4;
     }
 }
 
@@ -109,7 +109,7 @@ void freeEvtMemAll(void) {
 // Returns pointer to allocated memory, or 0 if fails
 // ============================================================================
 u8* allocEvtMemAligned(u32 size, u32 alignment, int useMEM1) {
-    cf::CREvtMem* m = lbl_eu_80664260;
+    cf::CREvtMem* m = cf::CREvtMem::sInstance;
     u32 end = m->arenaEnd;
 
     if (m->currentPos + size > end) {
@@ -135,7 +135,7 @@ u8* allocEvtMemAligned(u32 size, u32 alignment, int useMEM1) {
 // If ptr is within the arena, do nothing. Otherwise, deallocate from heap.
 // ============================================================================
 void freeEvtMemPtr(u8* ptr) {
-    cf::CREvtMem* mem = lbl_eu_80664260;
+    cf::CREvtMem* mem = cf::CREvtMem::sInstance;
 
     // If ptr lies inside the arena, it was arena-allocated - do nothing.
     if (mem->arenaStart <= (u32)ptr && mem->arenaEnd > (u32)ptr) {
@@ -153,10 +153,10 @@ void freeEvtMemPtr(u8* ptr) {
 // ============================================================================
 u8* getEvtMemSlot(u32 idx) {
     // Reads slot [idx] from the pointer array that begins at ptr1 (+0x10).
-    return ((u8**)&lbl_eu_80664260->ptr1)[idx];
+    return ((u8**)&cf::CREvtMem::sInstance->ptr1)[idx];
 }
 
 // [.sbss] 0x80664260-0x80664268 (8B): event-memory singleton pointer + 4
 // retail pad bytes (label spans 0x8; only the pointer is ever referenced).
-cf::CREvtMem* lbl_eu_80664260 = nullptr;
+cf::CREvtMem* cf::CREvtMem::sInstance = nullptr;
 u8 gap_10_80664264_sbss[4];

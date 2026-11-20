@@ -200,6 +200,7 @@ def cmd_report_credit(
     objdiff_json: Path,
     unit_filter: Optional[str],
     credit_anonymous_relocs: bool,
+    credit_weak_dedup: bool,
     json_output: bool,
 ) -> int:
     """Write an adjusted *copy* of an objdiff report (never the raw one)."""
@@ -236,6 +237,9 @@ def cmd_report_credit(
     adjusted, census = credit_report(
         report, unit_objects,
         credit_anonymous_relocs=credit_anonymous_relocs,
+        credit_weak_dedup=credit_weak_dedup,
+        project_root=project.root,
+        region=config.region,
         source_report=report_path,
     )
     atomic_write_text(out_path, json.dumps(adjusted, indent=2) + "\n")
@@ -2484,7 +2488,7 @@ def main() -> int:
 
     p_credit = sub.add_parser(
         "report-credit-padding", aliases=["report-credit"],
-        help="Write an adjusted objdiff report copy crediting proven linker padding / @N relocs",
+        help="Write an adjusted objdiff report copy crediting proven linker padding / weak-dedup exclusions / @N relocs",
     )
     p_credit.add_argument("--input", type=Path, default=None,
                           help="raw report (default: build/<region>/report.json)")
@@ -2494,7 +2498,9 @@ def main() -> int:
                           help="unit -> retail/decomp object map (default: objdiff.json)")
     p_credit.add_argument("--unit", help="only credit this unit name")
     p_credit.add_argument("--no-anonymous-relocs", action="store_true",
-                          help="only credit linker tail padding")
+                          help="do not credit anonymous @N literal relocs")
+    p_credit.add_argument("--no-weak-dedup", action="store_true",
+                          help="do not credit linked-view weak/dedup exclusions")
     p_credit.add_argument("--json", action="store_true",
                           help="print the census as JSON")
 
@@ -2957,6 +2963,7 @@ def main() -> int:
             objdiff_json=args.objdiff_json or config.objdiff_json,
             unit_filter=args.unit,
             credit_anonymous_relocs=not args.no_anonymous_relocs,
+            credit_weak_dedup=not args.no_weak_dedup,
             json_output=args.json,
         )
     if args.command == "ctx":

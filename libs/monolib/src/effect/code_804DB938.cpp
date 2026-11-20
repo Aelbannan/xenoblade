@@ -36,22 +36,7 @@ extern f32 lbl_eu_8066B274; // 0.0f
 // magic. Retail keeps copies in .sdata2 (lbl_eu_8066B268 / lbl_eu_8066B280);
 // the table initializer's conversion binds to lbl_eu_8066B280.
 
-// Table based sincos + rotation build.
-static void CERotTrig(Mtx m, f32 rad, char axis) {
-    f32 deg = 57.29578f * rad;
-    int n = (int)deg;
-    f32 frac = deg - (f32)n;
-    int idx = n % 360;
-    if (idx < 0) {
-        idx += 360;
-    }
-    const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
-    const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
-    PSMTXRotTrig(m, frac * sinE->delta + sinE->value,
-                 frac * cosE->delta + cosE->value, axis);
-}
-
-// idx-first variant of CERotTrig: identical body, but declaring the %360
+// Table based sincos + rotation: declaring the %360
 // result before the (float)n cast flips MWCC's scratch coloring for callers
 // whose register context needs mulhw r3 / xoris r0 (CERot_AxisToMatrix).
 static void CERotTrigIdxFirst(Mtx m, f32 rad, char axis) {
@@ -104,52 +89,6 @@ static void CERotTrigIdxFirstY(Mtx m, f32 rad) {
 // inlined body independently (cf. CERotTrigIdxFirstZ/Y).
 static void CERotTrigIdxFirstX(Mtx m, f32 rad) {
     f32 deg = 57.29578f * rad;
-    int n = (int)deg;
-    int idx = n % 360;
-    f32 frac = deg - (f32)n;
-    if (idx < 0) {
-        idx += 360;
-    }
-    const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
-    const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
-    PSMTXRotTrig(m, frac * sinE->delta + sinE->value,
-                 frac * cosE->delta + cosE->value, 'x');
-}
-
-// Third-rotation variants for CERotEulerOrder (UNUSED, negative result):
-// commuted multiply (rad first) canonicalizes to identical codegen vs the
-// IdxFirst forms, so they cannot reorder the float loads. Kept (not deleted)
-// to preserve TU line numbers for -ipa file codegen stability (Aug 2026).
-static void CERotTrigThirdZ(Mtx m, f32 rad) {
-    f32 deg = rad * 57.29578f;
-    int n = (int)deg;
-    int idx = n % 360;
-    f32 frac = deg - (f32)n;
-    if (idx < 0) {
-        idx += 360;
-    }
-    const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
-    const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
-    PSMTXRotTrig(m, frac * sinE->delta + sinE->value,
-                 frac * cosE->delta + cosE->value, 'z');
-}
-
-static void CERotTrigThirdY(Mtx m, f32 rad) {
-    f32 deg = rad * 57.29578f;
-    int n = (int)deg;
-    int idx = n % 360;
-    f32 frac = deg - (f32)n;
-    if (idx < 0) {
-        idx += 360;
-    }
-    const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
-    const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
-    PSMTXRotTrig(m, frac * sinE->delta + sinE->value,
-                 frac * cosE->delta + cosE->value, 'y');
-}
-
-static void CERotTrigThirdX(Mtx m, f32 rad) {
-    f32 deg = rad * 57.29578f;
     int n = (int)deg;
     int idx = n % 360;
     f32 frac = deg - (f32)n;
@@ -228,7 +167,7 @@ void CERotYConcat(ml::CMat34* mtx, f32 rad) {
 
 int CERot_AxisToMatrix(Mtx mtx, const Vec* v) {
     // NOTE: uses the idx-first trig variant (mulhw r3 / xoris r0 like
-    // retail); shared CERotTrig stays frac-first for the cardinal builders.
+    // retail).
     // CERotEulerXYZ/DCD94 use it too.
     f32 mag = PSVECMag(v);
     bool nearOne = ml::math::abs(mag - 1.0f) <= ml::epsilon;

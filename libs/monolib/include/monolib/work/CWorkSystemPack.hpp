@@ -17,10 +17,10 @@ typedef _reslist_node<CArcItem*> ArcItemListNode;
 typedef _reslist_base<CArcItem*> ArcItemListBase;
 typedef reslist<CArcItem*> ArcItemList;
 
-class __declspec(novtable) CWorkSystemPack : public CWorkThread {
+class CWorkSystemPack : public CWorkThread {
 public:
     CWorkSystemPack(const char* pName, CWorkThread* pParent);
-    ~CWorkSystemPack();
+    virtual ~CWorkSystemPack();
 
     DECL_WORKTHREAD_CREATE(CWorkSystemPack);
 
@@ -30,9 +30,9 @@ public:
     static bool areArcsReady();
     static void SavePkhFilenamesArrayPtr(const char* const[]);
     static void SaveStaticArcFilenameStringPtr(const char* const*);
-    bool wkStandbyLogin();
-    bool wkStandbyLogout();
-    void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+    virtual void wkUpdate();
 
     //0x0: vtable
 

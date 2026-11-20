@@ -260,6 +260,10 @@ inline f32 s32ToF_b0b0(u32 v) {
 // below the C-linkage block.
 void __dt__804DF744();
 
+// ScheduleList.cpp (C++ linkage).
+void __ct__804E4B64(int arg);
+void __ct__804E4F9C();
+
 extern "C" {
 void SchedRes_ClearLiveCount(void);
 void SchedList_TeardownAll(u32 x);
@@ -268,7 +272,6 @@ void EffCtl_EmptyStub8C(void);
 void EffCtl_EmptyStub84(void* scene);
 u32 SchedFx_CountTotal(void);
 void SchedRes_AllocElemTables(void);
-void __ct__804E4B64(int arg);
 u32 lytBindCanResolveTarget(void* link);
 void func_804D401C(void* a, float f);
 // (memberized: EffFxInitNodeHead -> EffectInit::EffFxInitNodeHead; declaration moved into class EffectInit)
@@ -828,7 +831,6 @@ extern "C" u32 EffRoot_AddSchedReq(EffectRoot* self, u32 a, u32 b, u32 c, u32 d,
                          e, b);
 }
 
-extern "C" void __ct__804E4F9C();
 extern "C" void EffSys_Init4F9C(void) { __ct__804E4F9C(); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

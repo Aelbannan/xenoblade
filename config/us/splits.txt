@@ -6319,6 +6319,7 @@ monolib/src/lib/CLibVM.cpp:
 	.sbss	start:0x80665720 end:0x80665730
 	.sdata	start:0x806637F0 end:0x806637F8
 	.text	start:0x804640B0 end:0x804642D8
+	.sdata2	start:0x8066A5B0 end:0x8066A5B8
 monolib/src/lib/UnkClass_80460308.cpp:
 	.rodata	start:0x805231F8 end:0x80523248
 	.text	start:0x804642D8 end:0x80464C04

@@ -76,7 +76,7 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     // Scale matrix (z fixed to the SDA 1.0f constant), then rotation via the
     // explicit FIdx variant with 40.7436637878418f as radians->FIdx scale.
     CMat34 rotMat;
-    pFrustum->mMat.setScale(CVec3(pFrustum->mScale.x, pFrustum->mScale.y, lbl_eu_80667C88));
+    pFrustum->mMat.setScale(CVec3(pFrustum->mScale.x, pFrustum->mScale.y, 1.0f));
     nw4r::math::MTX34RotXYZFIdx(rotMat,
         pFrustum->mRot.x * 40.7436637878418f,
         pFrustum->mRot.y * 40.7436637878418f,
@@ -88,14 +88,14 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     pFrustum->mMat.addTranslation(pFrustum->mPos);
     pFrustum->mMat.invert(&pFrustum->mMatInv);
 
-    pFrustum->mDir.x = lbl_eu_80667C8C;
-    pFrustum->mDir.y = lbl_eu_80667C8C;
-    pFrustum->mDir.z = lbl_eu_80667C88;
+    pFrustum->mDir.x = 0.0f;
+    pFrustum->mDir.y = 0.0f;
+    pFrustum->mDir.z = 1.0f;
     nw4r::math::VEC3TransformNormal(pFrustum->mDir, pFrustum->mMat, pFrustum->mDir);
     pFrustum->mDir.normalizeSub();
 
-    pFrustum->unk124 = lbl_eu_80667C8C;
-    pFrustum->unk128 = lbl_eu_80667C8C;
+    pFrustum->unk124 = 0.0f;
+    pFrustum->unk128 = 0.0f;
 
     // Walk the retail-owned corner table with a persistent cursor.
     CVec3* coord = reinterpret_cast<CVec3*>(lbl_eu_805757F0);
@@ -113,13 +113,13 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
 
     // nw4r FSqrt inline: warn on out-of-range input, sqrt via FrSqrt, else clamp.
     float maxDistSq = pFrustum->unk128;
-    if(!(maxDistSq >= lbl_eu_80667C8C)){
+    if(!(maxDistSq >= 0.0f)){
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
-    if(maxDistSq <= lbl_eu_80667C8C){
+    if(maxDistSq <= 0.0f){
         pFrustum->unk128 = maxDistSq * nw4r::math::FrSqrt(maxDistSq);
     }else{
-        pFrustum->unk128 = lbl_eu_80667C8C;
+        pFrustum->unk128 = 0.0f;
     }
 
     // The whole plane build is gated on the low flag bits.
@@ -231,7 +231,7 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
     toCenter.set(diff);
     float dot = CVec3::dot(pFrustum->mDir, toCenter);
 
-    if(dot < lbl_eu_80667C8C){
+    if(dot < 0.0f){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);
         pFrustum->mPlane1.set(unk24->unk10C, pFrustum->unk90[0], pFrustum->unk90[1]);
         pFrustum->mPlane2.set(unk24->unk10C, pFrustum->unk90[1], pFrustum->unk90[2]);

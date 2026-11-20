@@ -61,18 +61,18 @@ extern "C" s32 CItem_rollBoxContents(u32 row, u32 flag) {
         u32 v;
         u8 b[4];
     } t5;
-    t0.v = getBdatStringColumnValue(handle, lbl_eu_80501C58, row);
+    t0.v = getBdatStringColumnValue(handle, "drop_nml", row);
     entries[1] = (u16)t0.b[0];
-    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x9, row);
+    t1.v = getBdatStringColumnValue(handle, "drop_rar", row);
     entries[2] = (u16)t1.b[0];
-    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x12, row);
+    t2.v = getBdatStringColumnValue(handle, "drop_spr", row);
     entries[3] = (u16)t2.b[0];
     entries[0] = 0;
-    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x1b, row);
+    t3.v = getBdatStringColumnValue(handle, "drop_nml_per", row);
     weights[1] = t3.b[0];
-    t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x28, row);
+    t4.v = getBdatStringColumnValue(handle, "drop_rar_per", row);
     weights[2] = t4.b[0];
-    t5.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x35, row);
+    t5.v = getBdatStringColumnValue(handle, "drop_spr_per", row);
     weights[3] = t5.b[0];
     if (flag != 0) {
         weights[3] = weights[3] * 3;
@@ -158,7 +158,7 @@ extern "C" void CItemRec_packFromBdat(CItemRec* rec, u32 a, u32 b, u32 c, u32 d)
         u32 v;
         u8 b[4];
     } t0;
-    t0.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0x42, a);
+    t0.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "percent", a);
     u32 val = t0.b[0];
     if (val == 0) {
         union {
@@ -190,6 +190,14 @@ extern "C" void CItemRec_packFromBdat(CItemRec* rec, u32 a, u32 b, u32 c, u32 d)
 // Category-driven item-name refresh on an inventory slot (52-byte CItemExt):
 // clear the count, then re-derive it from the BDAT name column when the
 // packed word's family id and category select a valid handle.
+
+// name-guess: dead-stripped BDAT item-id helper; these two literals precede
+// the TU's first jwl_slot use in the retail pool.
+extern "C" void CItem_lookupItemIdColumns(void* h, u32 row) {
+    getBdatStringColumnValue(h, "itemID", row);
+    getBdatStringColumnValue(h, "rankType", row);
+}
+
 extern "C" void CItem_reCount(CItemExt* self) {
     u32 word = self->field_00;
     self->mCount = 0;
@@ -303,11 +311,9 @@ extern "C" u32 CItemData_lookupBdatCol(CItemData* self, const char* colName) {
 }
 
 char* CItem_defaultNameStr() {
-    extern char lbl_eu_80501C58[];
-    return &lbl_eu_80501C58[0x63];
+    return "";
 }
 
-extern char lbl_eu_80501C58[];
 
 // Recovered CItemData bitfield area (offsets 0x7/0x8/0x18)
 struct ItemByte7 { u8 pad0 : 6; u8 b01 : 2; };
@@ -327,7 +333,7 @@ struct CItemHalf18At18 { u8 _pad[0x18]; ItemHalf18 half18; };
 // through (u16*)(p + 8); CItem_packSlotValRank writes base + index*2 + 8).
 struct CItemU16Tab8 { u8 _pad[8]; u16 tab[1]; };
 
-extern "C" const char* CItem_cDefaultName(void) { return &lbl_eu_80501C58[0x63]; }
+extern "C" const char* CItem_cDefaultName(void) { return ""; }
 
 const char* CItemRec_lookup88(u32 unused, CItemRec* rec) {
     u32 v = rec->field_00;
@@ -336,7 +342,7 @@ const char* CItemRec_lookup88(u32 unused, CItemRec* rec) {
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
     u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
-    const char* result = lbl_eu_80501C58 + 0x63;
+    const char* result = "";
     if (s) result = s;
     return result;
 }
@@ -358,7 +364,7 @@ const char* CItemRec_lookup8C(u32 unused, CItemRec* rec) {
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
     // Eager default-string address + conditional select (retail: lis/cmpi/
     // addi/addi/beq/mr - not a branchy ternary).
-    const char* result = lbl_eu_80501C58 + 0x63;
+    const char* result = "";
     if (s) result = s;
     return result;
 }
@@ -371,7 +377,7 @@ const char* CItemRec_twin88b(u32 unused, CItemRec* rec) {
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
     u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
-    const char* result = lbl_eu_80501C58 + 0x63;
+    const char* result = "";
     if (s) result = s;
     return result;
 }
@@ -389,10 +395,10 @@ const char* CItemRec_getNameIfKind2(u32 unused, CItemRec* rec) {
         // Volatile re-read after the call (retail reloads the packed word).
         u32 v2 = rec->field_00;
         const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
-        result = lbl_eu_80501C58 + 0x63;
+        result = "";
         if (s) result = s;
     } else {
-        result = lbl_eu_80501C58 + 0x63;
+        result = "";
     }
     return result;
 }
@@ -475,7 +481,7 @@ const char* CItemRec_twin88c(u32 unused, CItemRec* rec) {
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
     u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
-    const char* result = lbl_eu_80501C58 + 0x63;
+    const char* result = "";
     if (s) result = s;
     return result;
 }
@@ -488,7 +494,7 @@ const char* CItemRec_twin8Cb(u32 unused, CItemRec* rec) {
     void* h = CItem_resolveFamilyBdat(v >> 20, &b, &a);
     u32 v2 = rec->field_00;
     const char* s = (const char*)getBdatStringColumnValue(h, col, (v2 >> 5) & 0x7FF);
-    const char* result = lbl_eu_80501C58 + 0x63;
+    const char* result = "";
     if (s) result = s;
     return result;
 }
@@ -615,16 +621,16 @@ extern "C" void CItemData_refreshShuffle(u32 unused, CItemData* self) {
     u16 kind;   // 0x0a
     u16 row;    // 0x08
     void* handle = CItem_resolveFamilyBdat(self->field_00 >> 20, &kind, &row);
-    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x64, row);
+    t1.v = getBdatStringColumnValue(handle, "crs_type", row);
     u32 byte1 = t1.b[0];
     self->field_08[0xE] = (u8)byte1;
-    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, row);
+    t2.v = getBdatStringColumnValue(handle, "atr_type", row);
     u32 f7 = self->field_07;
     f7 = __rlwimi(f7, t2.b[0], 2, 24, 29);
     self->field_07 = (u8)f7;
-    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x76, row);
+    t3.v = getBdatStringColumnValue(handle, "rank_type_low", row);
     u32 byte3 = t3.b[0];
-    t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x84, row);
+    t4.v = getBdatStringColumnValue(handle, "rank_type_up", row);
     u32 byte4 = t4.b[0];
     u32 rnd;
     if (byte3 != byte4) {
@@ -633,9 +639,9 @@ extern "C" void CItemData_refreshShuffle(u32 unused, CItemData* self) {
         rnd = byte3;
     }
     CItem_initItemImplInstances(self)->vf0C(self, (u16)rnd);
-    t5.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x6d, row);
+    t5.v = getBdatStringColumnValue(handle, "atr_type", row);
     u32 byte5 = t5.b[0];
-    t6.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x91, row);
+    t6.v = getBdatStringColumnValue(handle, "skill_max", row);
     u32 rnd2 = (u16)ml::math::mtRand(1, t6.b[0] + 1);
     u32 idx = (byte1 == 2) ? 2 : 0;
     if (ml::math::mtRand(100) < 25) idx++;
@@ -746,9 +752,9 @@ extern "C" void CItem_refRow2(u32 unused, CItemData* self) {
     t3.v = getBdatStringColumnValue(handle, "atr_type", row);
     t4.v = getBdatStringColumnValue(handle, "skill1", row);
     halfs[0] = (u16)t4.b[0];
-    t5.v = getBdatStringColumnValue(handle, "\x83\x47\x81\x5b\x83\x65\x83\x8b\x8d\x7a\x90\xce", row);
+    t5.v = getBdatStringColumnValue(handle, "skill2", row);
     halfs[1] = (u16)t5.b[0];
-    t6.v = getBdatStringColumnValue(::cf::CfBdat::spCurBtlEneListFileData, "name", (u16)n);
+    t6.v = getBdatStringColumnValue(::cf::CfBdat::spCurBtlEneListFileData, "named", (u16)n);
     // Branchless boolean scaled by 2, computed before the rand call
     // (retail: neg/or/srawi then rlwinm extracting bit 30 -> 0 or 2).
     // One variable chains count -> roll index -> max.
@@ -836,7 +842,7 @@ void CItemData_setSlotFamily(u32 unused, CItemData* obj, int index, int value) {
         // Read the MSB of the BDAT result; the union keeps the call result
         // on the stack (big-endian b[0] is the high byte).
         union { u32 value; u8 b[4]; } tmp;
-        tmp.value = getBdatStringColumnValue(::cf::CfBdat::spBtlSkillListFileData, lbl_eu_80501C58 + 0x6d, value);
+        tmp.value = getBdatStringColumnValue(::cf::CfBdat::spBtlSkillListFileData, "atr_type", value);
         u32 f7 = obj->field_07;
         f7 = __rlwimi(f7, tmp.b[0], 2, 24, 29);
         obj->field_07 = (u8)f7;
@@ -1479,9 +1485,9 @@ CItemExt* CItem_freeRec(u32 arg, s16* pOut, u32 family) {
 extern "C" __declspec(noinline) void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB) {
     void* handle = ::cf::CfBdat::spItmItemListFileData;
     union { u32 v; u16 h[2]; } t1, t2;
-    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xbd, v);
+    t1.v = getBdatStringColumnValue(handle, "itemType", v);
     *(u16*)outA = t1.h[0];
-    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x4a, v);
+    t2.v = getBdatStringColumnValue(handle, "itemID", v);
     *(u16*)outB = t2.h[0];
     // Dispatch on the category written to outA (re-read through the pointer:
     // the intervening call may alias it).
@@ -1515,7 +1521,7 @@ u16 CItem_getKindFromFamily(int param) {
         u32 value;
         u16 half[2];
     } tmp;
-    tmp.value = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, param);
+    tmp.value = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", param);
     return tmp.half[0];
 }
 
@@ -1530,7 +1536,7 @@ extern "C" u16 CItem_getNameIdFromFam(u16 value) {
             u32 v;
             u16 h[2];
         } tmp;
-        tmp.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x4a,
+        tmp.v = getBdatStringColumnValue(handle, "itemID",
                                          value);
         return tmp.h[0];
     }
@@ -1547,7 +1553,7 @@ extern "C" u32 CItem_sumFamilyByte6(u32 family) {
             u32 v;
             u16 h[2];
         } tmp;
-        tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
+        tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", family);
         CItemExt* list = (CItemExt*)CItemBlock_getKindList(tmp.h[0], &count, &stride);
         if (list != 0) {
             u8* base = (u8*)list;
@@ -1671,13 +1677,13 @@ extern "C" __declspec(noinline) CItemExt* CItem_findOrCreateRec(u32 a, s16* pOut
         u32 v;
         u16 h[2];
     } t2;
-    t1.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "qst_name", a);
+    t1.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", a);
     u32 flag = 0;
     if ((u32)(t1.h[0] - 10) <= 3) flag = 1;
     CItemExt* result;
     if (flag) {
         // Duplicate lookup kept: retail calls the +0xBD column twice.
-        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "qst_name", a);
+        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", a);
         result = 0;
         if (t2.h[0] != 0) {
             // Declaration order pins the stack slots: n@0x10, stride@0x14.
@@ -1790,7 +1796,7 @@ extern "C" CItemExt* CItem_findRecByFamily(u32 family) {
         u32 v;
         u16 h[2];
     } tmp;
-    tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
+    tmp.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", family);
     if (tmp.h[0] == 0) return 0;
     CItemExt* list = (CItemExt*)CItemBlock_getKindList(tmp.h[0], &count, &stride);
     if (list != 0) {
@@ -2389,7 +2395,7 @@ extern "C" CItemExt* CItemData_lookupOrAlloc(CItemData* self, s16* pOut) {
     s32 count;  // 0x10
     s32 stride2;// 0x0C
     s16 out1;   // 0x08
-    t.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, self->field_00 >> 20);
+    t.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", self->field_00 >> 20);
     u32 flag = 0;
     if ((u32)(t.h[0] - 10) <= 3) flag = 1;
     // Saved-register order matters: declared first -> highest (i->r31,
@@ -2464,11 +2470,11 @@ extern "C" s32 CItem_consumeFamilyCnt(u32 family, s32 count) {
     } t2;    // 0x10
     s32 stride; // 0x0C
     s32 n;   // 0x08
-    t.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
+    t.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", family);
     u32 flag = 0;
     if ((u32)(t.h[0] - 10) <= 3) flag = 1;
     while (count > 0) {
-        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, lbl_eu_80501C58 + 0xbd, family);
+        t2.v = getBdatStringColumnValue(::cf::CfBdat::spItmItemListFileData, "itemType", family);
         CItemExt* rec;
         if (t2.h[0] == 0) {
             rec = 0;
@@ -2511,6 +2517,15 @@ found:
 // console-language-specific order (some languages weave the prefix in
 // between the parts). The running lengths are tracked per stage and the
 // final length is written to buf->field_40.
+
+// name-guess: dead-stripped name-column helper; SJIS/name/qst_name fill the
+// retail pool gap between itemType and cylinder_name.
+extern "C" void CItem_lookupNameColumns(void* h, u32 row) {
+    getBdatStringColumnValue(h, "\x83\x47\x81\x5b\x83\x65\x83\x8b\x8d\x7a\x90\xce", row);
+    getBdatStringColumnValue(h, "name", row);
+    getBdatStringColumnValue(h, "qst_name", row);
+}
+
 extern "C" __declspec(noinline) void CItem_buildSortName(CItemSortBuf* buf, u32 a,
                                                     u32 b, u32 c, u32 d,
                                                     u32 e, u32 f) {
@@ -3265,10 +3280,10 @@ static u32 ItemColByte(void* handle, const char* col, u32 row) {
 // 3: roll 1 + one more + a third item).
 extern "C" void CItem_openAreaEventBox(s32 kind, u32 row) {
     void* handle = ::cf::CfBdat::spCurBtlEneListFileData;
-    u32 item1 = ItemColByte(handle, lbl_eu_80501C58, row);
-    u32 item2 = ItemColByte(handle, lbl_eu_80501C58 + 0x9, row);
-    u32 item3 = ItemColByte(handle, lbl_eu_80501C58 + 0x12, row);
-    u32 mode = ItemColByte(handle, lbl_eu_80501C58 + 0xb7, row);
+    u32 item1 = ItemColByte(handle, "drop_nml", row);
+    u32 item2 = ItemColByte(handle, "drop_rar", row);
+    u32 item3 = ItemColByte(handle, "drop_spr", row);
+    u32 mode = ItemColByte(handle, "named", row);
     CItemFour* block = &lbl_eu_80573E18;
     block->mCount = 0;
     // Retail computes the (mode == 2) boolean once (subi/cntlzw/srwi) and
@@ -3345,10 +3360,10 @@ extern "C" s32 CItem_createBoxContents(u32 id) {
     s32 total = (s32)Bdat_GetMaxRow_B1EC(handle);
     for (s32 i = 0; i < total; i++) {
         s32 row = i + base;
-        t.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x13a, row);
+        t.v = getBdatStringColumnValue(handle, "gimID", row);
         if (id == t.h[0]) {
             for (s32 j = 1; j <= 4; j++) {
-                sprintf(buf, lbl_eu_80501C58 + 0x140, j);
+                sprintf(buf, "itm%dID", j);
                 t2.v = getBdatStringColumnValue(handle, buf, row);
                 if (t2.h[0] != 0) {
                     CItemData_initFromFamily((CItemData*)&scratch, (u16)t2.h[0], 1);

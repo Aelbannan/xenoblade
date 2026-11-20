@@ -1,4 +1,5 @@
 #include <harness_catalog.h>
+#include "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_types.h"
 __declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051B190 = 0.8;
 __declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051B198 = 4503601774854144.0;
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051B1A0[0x610] = {
@@ -185,7 +186,9 @@ typedef struct MWSFDPLY {
     s32  field_0x4fc;       /* 0x4fc */
     s32  field_0x500;       /* 0x500 */
     s32  field_0x504;       /* 0x504 */
-    u8   field_0x508[0xc];  /* 0x508..0x513 */
+    u8   field_0x508[0x4];  /* 0x508..0x50b */
+    s32  field_0x50c;       /* 0x50c */
+    u8   field_0x510[0x4];  /* 0x510..0x513 */
     s32  field_0x514;       /* 0x514 */
     s32  field_0x518;       /* 0x518 */
     s32  field_0x51c;       /* 0x51c */
@@ -225,13 +228,6 @@ typedef struct MWSFDPLY {
  * object whose vtable exposes a method at +0x24; each instrumented helper
  * stores its args into a per-function record (lbl_eu_80566*) and fires the
  * callback on entry (sub-record at +0x04) and exit (+0x6c). */
-typedef struct SfdTraceVtable {
-    u8  pad_0x00[0x24];
-    void (*trace)(void* self, void* rec);
-} SfdTraceVtable;
-typedef struct SfdTraceObj {
-    const SfdTraceVtable* vtable;
-} SfdTraceObj;
 typedef struct SfdTraceRec {
     u32 name;           /* 0x00 */
     u32 entry;          /* 0x04 */
@@ -253,7 +249,7 @@ typedef struct SfdCbObj {
 } SfdCbObj;
 
 /* --- Cross-TU helpers referenced by the targets below --- */
-extern SfdTraceObj* gpMwPlyTraceCb;
+extern SfdTraceCtx* gpMwPlyTraceCb;
 extern SfdTraceRec sTraceRequestStop;
 extern SfdTraceRec sTraceStop;
 extern s32 MWSFD_IsEnableHndl(void* self);
@@ -289,8 +285,8 @@ extern void MWSFSEE_StartFnameSub1(void* self, s32 a, s32 b);
 extern void MWSFSEE_StartFnameSub2(void* self, s32 a, s32 b);
 extern SfdTraceRec sTraceStartFname;
 
-int mwPlySfdStart(void *h) {
-    if (SFD_Start(*(void **)((u8 *)h + 0x58))) {
+int mwPlySfdStart(MWSFDPLY *h) {
+    if (SFD_Start(h->field_0x58)) {
         MWSFLIB_SetErrCode(-0x133);
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x1B);
         return -0x133;
@@ -298,8 +294,8 @@ int mwPlySfdStart(void *h) {
     return 0;
 }
 
-int mwPlyTermSupply(void *h) {
-    if (SFD_TermSupply(*(void **)((u8 *)h + 0x58)))
+int mwPlyTermSupply(MWSFDPLY *h) {
+    if (SFD_TermSupply(h->field_0x58))
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x62);
 }
 
@@ -400,7 +396,7 @@ void mwPlyStartFname(MWSFDPLY* self, const char* fname) {
     if (gpMwPlyTraceCb) {
         sTraceStartFname.self = (u32)self;
         sTraceStartFname.field_0x18 = (u32)fname;
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStartFname.entry);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceStartFname.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x130);
@@ -428,7 +424,7 @@ void mwPlyStartFname(MWSFDPLY* self, const char* fname) {
         MWSFSEE_StartFnameSub2(self, 0, -1);
     }
     if (gpMwPlyTraceCb) {
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStartFname.exit);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceStartFname.exit);
     }
 }
 
@@ -480,7 +476,7 @@ void mwSfdStopDec(MWSFDPLY* self) {
 void mwPlyStop(MWSFDPLY* self) {
     if (gpMwPlyTraceCb) {
         sTraceRequestStop.self = (u32)self;
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.entry);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceRequestStop.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
@@ -492,11 +488,11 @@ void mwPlyStop(MWSFDPLY* self) {
         }
     }
     if (gpMwPlyTraceCb) {
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.exit);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceRequestStop.exit);
     }
     if (gpMwPlyTraceCb) {
         sTraceStop.self = (u32)self;
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStop.entry);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceStop.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x3ae);
@@ -507,7 +503,7 @@ void mwPlyStop(MWSFDPLY* self) {
         LSC_Stop(self->field_0x64);
     }
     if (gpMwPlyTraceCb) {
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceStop.exit);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceStop.exit);
     }
 }
 
@@ -549,22 +545,22 @@ void mwPlyPause(MWSFDPLY* self, s32 pause) {
     self->field_0x92 = (s8)pause;
 }
 
-int MWSFPLY_SetFlowLimit(void *h) {
-    MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32*)((u8*)h + 0x50C)));
+int MWSFPLY_SetFlowLimit(MWSFDPLY *h) {
+    MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_eu_8051B190 * (double)(s32)h->field_0x50c));
 }
 
-int mwPlyChkSupply(void *h) {
-    void *stm = *(void **)((u8 *)h + 0x5C);
-    if (stm && MWSTM_GetStat(stm) == 3 && SFD_TermSupply(*(void **)((u8 *)h + 0x58)))
+int mwPlyChkSupply(MWSFDPLY *h) {
+    void *stm = h->field_0x5c;
+    if (stm && MWSTM_GetStat(stm) == 3 && SFD_TermSupply(h->field_0x58))
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x62);
 }
 
-int MWSFPLY_RecordFname(void *h, const char *fname) {
-    if ((s32)strlen(fname) > *(s32 *)((u8 *)h + 0x4EC)) {
+int MWSFPLY_RecordFname(MWSFDPLY *h, const char *fname) {
+    if ((s32)strlen(fname) > h->field_0x4ec) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x185);
-        strncpy(*(char **)((u8 *)h + 0x4E8), fname, *(u32 *)((u8 *)h + 0x4EC));
+        strncpy(h->field_0x4e8, fname, (u32)h->field_0x4ec);
     } else {
-        strcpy(*(char **)((u8 *)h + 0x4E8), fname);
+        strcpy(h->field_0x4e8, fname);
     }
 }
 
@@ -589,7 +585,7 @@ void mwPlyStartSj(MWSFDPLY* self, s32 sj) {
 void fn_803A537C(MWSFDPLY* self) {
     if (gpMwPlyTraceCb) {
         sTraceRequestStop.self = (u32)self;
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.entry);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceRequestStop.entry);
     }
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
@@ -601,7 +597,7 @@ void fn_803A537C(MWSFDPLY* self) {
         }
     }
     if (gpMwPlyTraceCb) {
-        gpMwPlyTraceCb->vtable->trace(gpMwPlyTraceCb, &sTraceRequestStop.exit);
+        gpMwPlyTraceCb->vtbl->trace(gpMwPlyTraceCb, &sTraceRequestStop.exit);
     }
 }
 

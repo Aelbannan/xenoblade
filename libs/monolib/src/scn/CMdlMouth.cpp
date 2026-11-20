@@ -17,6 +17,9 @@
 // are defined as extern "C" functions so MWCC emits no auto vtable/RTTI.
 extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag);
 extern "C" u32 lbl_eu_805701B0[];
+extern const f32 CMdlMouthSrtOffsets[3];
+extern const char* sMouthNodeName;
+extern const char* sMouthEyeMaterialName;
 
 // Minimal typed view of the owner model (a CScnItemModelNw4r) fields used
 // here. 0x146C is the model resource data, 0x147C the g3d scene object.
@@ -74,7 +77,7 @@ extern "C" void MdlMouthBindModel(CMdlMouth* ths, CMdlOwnerCtx* model) {
     // Bind the named node if present; the inner panics are DB_ASSERTs on the
     // same validity check, so MWCC reuses the outer compare (dead code).
     nw4r::g3d::ResNode node =
-        nw4r::g3d::ResMdl(model->field_0x146C).GetResNode(lbl_eu_80663C58);
+        nw4r::g3d::ResMdl(model->field_0x146C).GetResNode(sMouthNodeName);
     if (node.IsValid()) {
         if (!node.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
@@ -102,7 +105,7 @@ extern "C" void MdlMouthBindModel(CMdlMouth* ths, CMdlOwnerCtx* model) {
                             lbl_eu_806638E8, lbl_eu_80663C68);
         }
         const char* nm = resMat.ofs_to_ptr<char>(resMat.ref().name);
-        if (strstr(nm, lbl_eu_80663C5C) != NULL) {
+        if (strstr(nm, sMouthEyeMaterialName) != NULL) {
             if (!resMat.IsValid()) {
                 nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
                                 lbl_eu_806638E8, lbl_eu_80663C68);
@@ -220,7 +223,7 @@ extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
         // before the two shared constants so the scratch colors come out
         // f0=one, f1=neg, f2=offset (retail order), while the _03 store stays
         // in offset order.
-        f32 t = lbl_eu_805247B4[idx];
+        f32 t = CMdlMouthSrtOffsets[idx];
         nw4r::math::MTX34 m;
         m._00 = 1.0f;
         m._01 = 0.0f;
@@ -243,15 +246,18 @@ extern "C" void MdlMouthTeardown(CMdlMouth* ths) {
 // ===== Dissolved data owned by this TU =====
 // [.rodata] 0x805247B4-0x805247D0 (28B): SRT offset table {0, 0.25f, 0.5f}
 // indexed by the mouth-open stage, then the RTTI class-name string.
-extern const f32 lbl_eu_805247B4[3] = { 0.0f, 0.25f, 0.5f };
+// name-guess: 3-entry SRT offset table indexed by mouth-open stage
+extern const f32 CMdlMouthSrtOffsets[3] = { 0.0f, 0.25f, 0.5f };
 extern const char lbl_eu_805247C0[0x10] = "CMdlMouth";
 // [.sdata] 0x80663C58-0x80663C74 (28B): name pointers, RTTI locator
 // {name, 0}, two "ref" Panic args, and a pointer into the shared pool.
 extern const char lbl_eu_8066B308[];
 extern const char lbl_eu_805247A8[];
 extern const char lbl_eu_8066B340[];
-const char* lbl_eu_80663C58 = lbl_eu_8066B308;
-const char* lbl_eu_80663C5C = lbl_eu_805247A8;
+// name-guess: .sdata pointer to the "JUjaw" node name at 0x8066B308
+const char* sMouthNodeName = lbl_eu_8066B308;
+// name-guess: .sdata pointer to the "mtIris03" material needle at 0x805247A8
+const char* sMouthEyeMaterialName = lbl_eu_805247A8;
 extern "C" const void* __RTTI__9CMdlMouth[2] = { (const void*)lbl_eu_805247C0, 0 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C68[4] = { 0x72,0x65,0x66,0x00 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C6C[4] = { 0x72,0x65,0x66,0x00 };

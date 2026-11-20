@@ -34,8 +34,6 @@ struct ScnResData {
     int count;         // 0x78
 };
 
-extern ScnResData lbl_eu_8065F32C;
-
 // Entry in the top-level chunk list (8 bytes each)
 struct ScnResEntry {
     u16 type;

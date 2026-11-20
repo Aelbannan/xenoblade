@@ -161,9 +161,6 @@ extern "C" bool getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
 // Globals
 extern "C" {
     extern u32 lbl_eu_8065FC18[];    // effect-singleton manager object (array forces @ha/@l)
-    extern const char* lbl_eu_80662470;  // "effTgt"
-    extern const char* lbl_eu_80662474;  // "effAtr"
-    extern const char* lbl_eu_80662478;  // "eff"
     extern const char lbl_eu_80503800[]; // "EFFMonochrome\0MonoRGB\0"
     extern const f32 lbl_eu_8066793C;    // 0.0f
     extern const f32 lbl_eu_80667940;    // 1.0f

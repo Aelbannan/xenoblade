@@ -1,5 +1,4 @@
-extern const char lbl_eu_80526324[];
-extern const char lbl_eu_80526300[];
+#include <nw4r/math.h>
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // Scn_QueryUnk80State (single owner decl)
 #include "monolib/core/code_804E36DC.hpp" // Scn_FindCamItem (single owner decl)
@@ -7,7 +6,6 @@ extern const char lbl_eu_80526300[];
 #include "monolib/util/MemManager.hpp"
 #include <math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (gmScene; gmGameFlags)
-namespace nw4r { namespace math { f32 FrSqrt(f32 x); } }
 
 using namespace cf;
 
@@ -272,7 +270,7 @@ u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
                     goto skipScale;
                 }
                 CfSndCamView* view = (CfSndCamView*)Scn_QueryUnk80State((CScn*)scn);
-                volume = volume * (lbl_eu_80667E88 - view->field_0x0C);
+                volume = volume * (1.0f - view->field_0x0C);
             }
         skipScale:;
         }
@@ -418,7 +416,7 @@ void CfSoundMan_WriteSlotGain(s32 idx, u32 a, u32 b) {
 void setMasterVolume(float f1, float f2) {
     gSoundMasterVolume = f1;
     nw4r::snd::detail::AxManager::GetInstance().SetMasterVolume(
-        f1, (int)(lbl_eu_80667E8C * f2));
+        f1, (int)(1000.0f * f2));
 }
 
 // Returns the current master volume from the nw4r AxManager. The inline
@@ -657,16 +655,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                                 &cam->mPos);
             diff = *(CfSoundPos3*)&tmp;
             f32 distSq = tmp.x * tmp.x + tmp.z * tmp.z;
-            if (distSq < lbl_eu_80667EA0) {
-                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
-                                             lbl_eu_80526300);
-            }
-            f32 len;
-            if (distSq <= lbl_eu_80667EA0) {
-                len = lbl_eu_80667EA0;
-            } else {
-                len = distSq * nw4r::math::FrSqrt(distSq);
-            }
+            f32 len = nw4r::math::FSqrt(distSq);
             if (len >= slot->field_0x18 ||
                 (f32)__fabs((f64)diff.y) < slot->field_0x18) {
                 // Out of range: fade out, stop, or tear down depending on
@@ -674,7 +663,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                 u16 flags = slot->field_0x2A;
                 if ((flags & 0xC) != 0) {
                     if (slot->mSound != 0) {
-                        slot->mSound->SetVolume(lbl_eu_80667EA0, 0);
+                        slot->mSound->SetVolume(0.0f, 0);
                     }
                 } else if ((flags & 0x10) != 0) {
                     if (slot->mSound != 0) {
@@ -692,7 +681,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                 if (gSoundSystemInitFlag != 0) {
                     // Mono output: fixed reference volume.
                     if (slot->mSound != 0) {
-                        slot->mSound->SetVolume(lbl_eu_80667EA0, 15);
+                        slot->mSound->SetVolume(0.0f, 15);
                     }
                 } else {
                     int scn = CfRes_getD80Flag();
@@ -710,7 +699,7 @@ extern "C" void CfSoundMan_UpdateSlot(CfSoundSlot* slot) {
                     }
                     if (scn != 0) {
                         vol = vol *
-                              (lbl_eu_80667E9C -
+                              (1.0f -
                                ((CfSndCamView*)Scn_QueryUnk80State((CScn*)scn))
                                    ->field_0x0C);
                     }
@@ -1023,7 +1012,7 @@ extern "C" u32 CfSoundMan_StartSlotSound(CfSoundRecord* rec, s32 id, float volum
                 }
             }
             if (fadeFrames != 0 && slot->mSound != 0) {
-                slot->mSound->SetVolume(lbl_eu_80667EA0, 0);
+                slot->mSound->SetVolume(0.0f, 0);
             }
             if (slot->mSound != 0) {
                 slot->mSound->SetVolume(volume, (int)fadeFrames);
@@ -1089,7 +1078,7 @@ extern "C" u32 CfSoundMan_StartTableSound(CfSoundRecord* rec, u32 a, CfSoundSlot
     if (result == -1) {
         res = 0xFFFF;
     } else {
-        res = CfSoundMan_StartSlotSound(rec, result, lbl_eu_80667EA0, 0, 0);
+        res = CfSoundMan_StartSlotSound(rec, result, 0.0f, 0, 0);
     }
     sid = res & 0xFFFF;
     if (sid != 0xFFFF) {
@@ -1151,7 +1140,7 @@ extern "C" u32 CfSoundMan_PlaySoundSimple(CfSoundRecord* rec, s32 param, u32 sou
     if (result == -1) {
         res = 0xFFFF;
     } else {
-        res = CfSoundMan_StartSlotSound(rec, result, lbl_eu_80667EA0, 0, 0);
+        res = CfSoundMan_StartSlotSound(rec, result, 0.0f, 0, 0);
     }
     u32 sid = res & 0xFFFF;
     if (sid != 0xFFFF) {

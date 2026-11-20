@@ -16,6 +16,11 @@
 static const f32 sLeftEyeBlinkAngles[3] = { 0.0f, 0.335999995470047f, 0.671999990940094f }; // name-guess: CMdlAnmEye.hpp calls the first table the left-eye angles
 static const f32 sRightEyeBlinkAngles[3] = { 0.0f, -0.125f, -0.25f }; // name-guess: CMdlAnmEye.hpp calls the second table the negated right-eye angles
 
+// Foreign .sdata2 string owned outside this unit (retail "mtEye" material-name prefix).
+extern const char lbl_eu_8066B358[];
+// name-guess: .sdata pointer targets the "mtEye" material-name prefix used as the left-eye strstr needle.
+const char* sLeftEyeMaterialPrefix = lbl_eu_8066B358;
+
 // Minimal view of the owner model
 // 0x146C is the model resource data, 0x147C the g3d scene object (ScnMdl).
 // Forward owner view used at +0x04 (same role as CMdlMouth's
@@ -82,7 +87,7 @@ extern "C" void EyeAnm_RegisterMats(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
                             lbl_eu_806638E8, lbl_eu_80663C98);
         }
         const char* nm = mat.ofs_to_ptr<char>(mat.ref().name);
-        if (nm == strstr(nm, lbl_eu_80663C88)) {
+        if (nm == strstr(nm, sLeftEyeMaterialPrefix)) {
             if (!mat.IsValid()) {
                 nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
                                 lbl_eu_806638E8, lbl_eu_80663C98);
@@ -202,14 +207,10 @@ extern "C" void EyeAnm_TickBlink(CMdlAnmEye* self) {
 
 // [.rodata] 0x805247E8-0x80524810 (40B): eye-blink angle tables + RTTI name.
 // Exact retail values (0x3EAC0831 / 0x3F2C0831 / 0xBE000000 / 0xBE800000).
-extern const char lbl_eu_80524800[0x10] = "CMdlAnmEye";
 // [.sdata] 0x80663C88-0x80663CA0 (24B): {name-ptr, 0} pair, RTTI locator
-// {name, 0}, "ref" string. The retail symbol at +0x0 is 8B (pointer + 0);
-// the hpp exposes only the pointer, so the zero half is a separate symbol.
-extern const char lbl_eu_8066B358[];
-const char* lbl_eu_80663C88 = lbl_eu_8066B358;
-extern __declspec(section ".sdata") const u32 lbl_eu_80663C8C = 0x00000000;
-extern "C" const void* __RTTI__10CMdlAnmEye[2] = { (const void*)lbl_eu_80524800, 0 };
+// {name, 0}, "ref" string. The pointer object is defined at first use;
+// the second word is compiler alignment padding after the 4-byte pointer.
+extern "C" const void* __RTTI__10CMdlAnmEye[2] = { "CMdlAnmEye", 0 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C98[4] = { 0x72,0x65,0x66,0x00 };
 extern __declspec(section ".sdata") const u32 lbl_eu_80663C9C = 0x00000000;
 // [.data] vtable.

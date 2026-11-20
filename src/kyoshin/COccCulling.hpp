@@ -6,21 +6,9 @@
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (ml::epsilon)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-// Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
-extern "C" const float lbl_eu_80667C88;
-extern "C" const float lbl_eu_80667C8C;
-// .sdata2 radians -> FIdx scale used by the explicit MTX34RotXYZFIdx call.
-extern "C" const float lbl_eu_80667C90;
 // nw4r db Warning() file/message rodata strings (retail .data).
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
-// Retail-owned .bss corner-point table (0x805757F0) read by setFrustum.
-extern f32 lbl_eu_805757F0[12];
-// Retail COccCulling vtable (.data:0x80532ED0, split1); decomp __vt__11COccCulling
-// fails reloc name match, so the class is __declspec(novtable) and the ctor/dtor
-// store the retail label explicitly (MWCC_CASES "Retail-owned vtable data").
-extern "C" void* lbl_eu_80532ED0[];
-
 //Some type of view frustum?
 struct CCullFrustum{
     enum Flags{
@@ -32,12 +20,12 @@ struct CCullFrustum{
     void init(const ml::CVec3& pos, const ml::CVec3& rot, const ml::CVec3& scale, u32 flags){
         mPos = pos;
         mRot = rot;
-        mScale = ml::CVec3(scale.x, scale.y, lbl_eu_80667C88);
+        mScale = ml::CVec3(scale.x, scale.y, 1.0f);
         mInFirstList = true;
-        unkC0[0] = lbl_eu_80667C88;
-        unkC0[1] = lbl_eu_80667C88;
-        unkC0[2] = lbl_eu_80667C88;
-        unkC0[3] = lbl_eu_80667C88;
+        unkC0[0] = 1.0f;
+        unkC0[1] = 1.0f;
+        unkC0[2] = 1.0f;
+        unkC0[3] = 1.0f;
         unk12C = 1;
         mFlags = flags;
     }
